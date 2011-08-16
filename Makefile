@@ -1,13 +1,23 @@
 BIN = cube51-sim
 
-SRC = core.c  disasm.c  emu.c  logicboard.c  mainview.c \
-      memeditor.c  opcodes.c  options.c  popups.c
+OBJS = \
+	core.o \
+	disasm.o \
+	emu.o \
+	logicboard.o \
+	mainview.o \
+	memeditor.o \
+	opcodes.o \
+	options.o \
+	popups.o
+
+CFLAGS += -O3 -Werror
+LDFLAGS += -lncurses
 
 all: $(BIN)
 
 clean:
-	rm -f $(BIN)
+	rm -f $(BIN) $(OBJS)
 
-$(BIN): $(SRC) *.h
-	gcc -o $(BIN) $(SRC) -lncurses -O3
-
+$(BIN): $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)

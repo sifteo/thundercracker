@@ -66,19 +66,20 @@ extern int p2out;
 extern int p3out;
 
 // current clock count
-unsigned int clocks;
+extern unsigned int clocks;
 
-int opt_exception_iret_sp;
-int opt_exception_iret_acc;
-int opt_exception_iret_psw;
-int opt_exception_acc_to_a;
-int opt_exception_stack;
-int opt_exception_invalid;
-int opt_clock_select;
-int opt_clock_hz;
-int opt_step_instruction;
-int opt_input_outputlow;
+extern int opt_exception_iret_sp;
+extern int opt_exception_iret_acc;
+extern int opt_exception_iret_psw;
+extern int opt_exception_acc_to_a;
+extern int opt_exception_stack;
+extern int opt_exception_invalid;
+extern int opt_clock_select;
+extern int opt_clock_hz;
+extern int opt_step_instruction;
+extern int opt_input_outputlow;
 
+extern const char *opt_flash_filename;
 
 
 // emu.c

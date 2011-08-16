@@ -46,6 +46,8 @@ int opt_clock_select = 3;
 int opt_clock_hz = 16*1000*1000;
 int opt_step_instruction = 0;
 
+const char *opt_flash_filename = "flash.bin";
+
 int clockspeeds[] = { 
     33*1000*1000,
     24*1000*1000, 

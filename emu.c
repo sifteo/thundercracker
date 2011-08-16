@@ -268,7 +268,7 @@ void change_view(struct em8051 *aCPU, int changeto)
     }
 }
 
-int main(int parc, char ** pars) 
+int main(int argc, char ** argv) 
 {
     int ch = 0;
     struct em8051 emu;
@@ -289,129 +289,134 @@ int main(int parc, char ** pars)
     emu.xwrite = NULL;
     reset(&emu, 1);    
 
-    if (parc > 1)
+    if (argc > 1)
     {
-        for (i = 1; i < parc; i++)
+        for (i = 1; i < argc; i++)
         {
-            if (pars[i][0] == '-' || pars[i][0] == '/')
+            if (argv[i][0] == '-')
             {
-                if (strcmp("step_instruction",pars[i]+1) == 0)
+                if (strcmp("step_instruction",argv[i]+1) == 0)
                 {
                     opt_step_instruction = 1;
                 }
                 else
-                if (strcmp("si",pars[i]+1) == 0)
+                if (strcmp("si",argv[i]+1) == 0)
                 {
                     opt_step_instruction = 1;
                 }
                 else
-                if (strcmp("noexc_iret_sp",pars[i]+1) == 0)
+                if (strcmp("noexc_iret_sp",argv[i]+1) == 0)
                 {
                     opt_exception_iret_sp = 0;
                 }
                 else
-                if (strcmp("nosp",pars[i]+1) == 0)
+                if (strcmp("nosp",argv[i]+1) == 0)
                 {
                     opt_exception_iret_sp = 0;
                 }
                 else
-                if (strcmp("noexc_iret_acc",pars[i]+1) == 0)
+                if (strcmp("noexc_iret_acc",argv[i]+1) == 0)
                 {
                     opt_exception_iret_acc = 0;
                 }
                 else
-                if (strcmp("noacc",pars[i]+1) == 0)
+                if (strcmp("noacc",argv[i]+1) == 0)
                 {
                     opt_exception_iret_acc = 0;
                 }
                 else
-                if (strcmp("noexc_iret_psw",pars[i]+1) == 0)
+                if (strcmp("noexc_iret_psw",argv[i]+1) == 0)
                 {
                     opt_exception_iret_psw = 0;
                 }
                 else
-                if (strcmp("nopsw",pars[i]+1) == 0)
+                if (strcmp("nopsw",argv[i]+1) == 0)
                 {
                     opt_exception_iret_psw = 0;
                 }
                 else
-                if (strcmp("noexc_acc_to_a",pars[i]+1) == 0)
+                if (strcmp("noexc_acc_to_a",argv[i]+1) == 0)
                 {
                     opt_exception_acc_to_a = 0;
                 }
                 else
-                if (strcmp("noaa",pars[i]+1) == 0)
+                if (strcmp("noaa",argv[i]+1) == 0)
                 {
                     opt_exception_acc_to_a = 0;
                 }
                 else
-                if (strcmp("noexc_stack",pars[i]+1) == 0)
+                if (strcmp("noexc_stack",argv[i]+1) == 0)
                 {
                     opt_exception_stack = 0;
                 }
                 else
-                if (strcmp("nostk",pars[i]+1) == 0)
+                if (strcmp("nostk",argv[i]+1) == 0)
                 {
                     opt_exception_stack = 0;
                 }
                 else
-                if (strcmp("noexc_invalid_op",pars[i]+1) == 0)
+                if (strcmp("noexc_invalid_op",argv[i]+1) == 0)
                 {
                     opt_exception_invalid = 0;
                 }
                 else
-                if (strcmp("noiop",pars[i]+1) == 0)
+                if (strcmp("noiop",argv[i]+1) == 0)
                 {
                     opt_exception_invalid = 0;
                 }
                 else
-                if (strcmp("iolowlow",pars[i]+1) == 0)
+                if (strcmp("iolowlow",argv[i]+1) == 0)
                 {
                     opt_input_outputlow = 0;
                 }
                 else
-                if (strcmp("iolowrand",pars[i]+1) == 0)
+                if (strcmp("iolowrand",argv[i]+1) == 0)
                 {
                     opt_input_outputlow = 2;
                 }
                 else
-                if (strncmp("clock=",pars[i]+1,6) == 0)
+                if (strncmp("clock=",argv[i]+1,6) == 0)
                 {
                     opt_clock_select = 12;
-                    opt_clock_hz = atoi(pars[i]+7);
+                    opt_clock_hz = atoi(argv[i]+7);
                     if (opt_clock_hz <= 0)
                         opt_clock_hz = 1;
+                }
+                if (strncmp("flash=",argv[i]+1,6) == 0)
+                {
+		    opt_flash_filename = argv[i]+7;
                 }
                 else
                 {
                     printf("Help:\n\n"
-                        "emu8051 [options] [filename]\n\n"
-                        "Both the filename and options are optional. Available options:\n\n"
-                        "Option            Alternate   description\n"
-                        "-step_instruction -si         Step one instruction at a time\n"
-                        "-noexc_iret_sp    -nosp       Disable sp iret exception\n"
-                        "-noexc_iret_acc   -noacc      Disable acc iret exception\n"
-                        "-noexc_iret_psw   -nopsw      Disable pdw iret exception\n"
-                        "-noexc_acc_to_a   -noaa       Disable acc-to-a invalid instruction exception\n"
-                        "-noexc_stack      -nostk      Disable stack abnormal behaviour exception\n"
-                        "-noexc_invalid_op -noiop      Disable invalid opcode exception\n"
-                        "-iolowlow         If out pin is low, hi input from same pin is low\n"
-                        "-iolowrand        If out pin is low, hi input from same pin is random\n"
-                        "-clock=value      Set clock speed, in Hz\n"
-                        );
+			   "%s [options] [firmware.ihx]\n\n"
+			   "Both the filename and options are optional. Available options:\n\n"
+			   "Option            Alternate   description\n"
+			   "-step_instruction -si         Step one instruction at a time\n"
+			   "-noexc_iret_sp    -nosp       Disable sp iret exception\n"
+			   "-noexc_iret_acc   -noacc      Disable acc iret exception\n"
+			   "-noexc_iret_psw   -nopsw      Disable pdw iret exception\n"
+			   "-noexc_acc_to_a   -noaa       Disable acc-to-a invalid instruction exception\n"
+			   "-noexc_stack      -nostk      Disable stack abnormal behaviour exception\n"
+			   "-noexc_invalid_op -noiop      Disable invalid opcode exception\n"
+			   "-iolowlow         If out pin is low, hi input from same pin is low\n"
+			   "-iolowrand        If out pin is low, hi input from same pin is random\n"
+			   "-clock=value      Set clock speed, in Hz\n"
+			   "-flash=file.bin   Set Flash memory filename\n",
+			   argv[0]);
                     return -1;
                 }
             }
             else
             {
-                if (load_obj(&emu, pars[i]) != 0)
+                if (load_obj(&emu, argv[i]) != 0)
                 {
-                    printf("File '%s' load failure\n\n",pars[i]);
+                    printf("File '%s' load failure\n\n",argv[i]);
                     return -1;
                 }
                 else
                 {
-                    strcpy(filename, pars[i]);
+                    strcpy(filename, argv[i]);
                 }
             }
         }
