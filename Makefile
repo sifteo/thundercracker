@@ -5,5 +5,9 @@ SRC = core.c  disasm.c  emu.c  logicboard.c  mainview.c \
 
 all: $(BIN)
 
+clean:
+	rm -f $(BIN)
+
 $(BIN): $(SRC) *.h
-	gcc -o $(BIN) $(SRC) -lncurses -g
+	gcc -o $(BIN) $(SRC) -lncurses -O3
+

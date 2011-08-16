@@ -509,6 +509,7 @@ int main(int parc, char ** pars)
         case PADPLUS:
 #endif
         case '+':
+        case '=':   // + without shift :)
             speed--;
             if (speed < 0)
                 speed = 0;
@@ -564,12 +565,12 @@ int main(int parc, char ** pars)
             if (speed == 2 && runmode)
             {
                 targettime += 1;
-                targetclocks += (opt_clock_hz / 12000) - 1;
+                targetclocks += (opt_clock_hz / 16000) - 1;
             }
             if (speed < 2 && runmode)
             {
-                targettime += 10;
-                targetclocks += (opt_clock_hz / 1200) - 1;
+		targettime += 15;  // Run for 15ms between display refreshes
+                targetclocks += (opt_clock_hz / 10) - 1;
             }
 
             do
@@ -582,7 +583,7 @@ int main(int parc, char ** pars)
                     while (!ticked)
                     {
                         targetclocks--;
-                        clocks += 12;
+                        clocks++;
                         ticked = tick(&emu);
                         logicboard_tick(&emu);
                     }
@@ -590,8 +591,8 @@ int main(int parc, char ** pars)
                 else
                 {
                     targetclocks--;
-                    clocks += 12;
-                    ticked = tick(&emu);
+                    clocks++;
+		    ticked = tick(&emu);
                     logicboard_tick(&emu);
                 }
 
