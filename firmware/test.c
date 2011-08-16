@@ -60,36 +60,43 @@ static void lcd_data_byte(uint8_t b)
     P0DIR = 0xFF;     	// Release bus
 }
 
-static void lcd_data_from_flash(uint32_t flash_addr, unsigned len)
+static void lcd_data_from_flash(uint8_t page, uint8_t chunk, uint8_t c_start, uint8_t c_len)
 {
     P0DIR = 0x00;	// Drive bus with high address byte
-    P0 = flash_addr >> 15;
+    P0 = page;
     FLASH_LAT2 = 1;     // Latch 2 strobe
     FLASH_LAT2 = 0;
-    P0 = flash_addr >> 7;
+    P0 = chunk;
     FLASH_LAT1 = 1;     // Latch 1 strobe
     FLASH_LAT1 = 0;
     P0DIR = 0xFF;       // Release bus
     FLASH_OE = 0;	// Let the flash drive the bus
 
     // P1 acts as a counter that holds 7 bits of address as well as our write strobe
-    P1 = flash_addr << 1;
+    P1 = c_start << 1;
 
-    // It takes 2x as many increment cycles as we have bytes to write
-    len <<= 1;
-
-    while (len--)
-	P1++;
+    while (c_len--) {
+	P1++;   // Write strobe high. Bam!
+	P1++;   // Write strobe low, load next address
+    }
 
     FLASH_OE = 1; 	// Release bus
 }
 
-
 void main()
 {
+    unsigned frame = 0;
+    
     hardware_init();
+
     while (1) {
+	unsigned chunk;
+
 	lcd_cmd_byte(LCD_CMD_RAMWR);
-	lcd_data_from_flash(0x1000, 63);
+
+	for (chunk = 0; chunk < 256; chunk++)
+	    lcd_data_from_flash(frame, chunk, 0, 128);
+
+	frame = (frame + 1) & 7;
     }
 }

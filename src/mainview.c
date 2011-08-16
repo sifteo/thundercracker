@@ -591,9 +591,9 @@ void mainview_update(struct em8051 *aCPU)
     }
 
     {
-	const unsigned int lcd_update_interval = 8000;
 	static unsigned int lcd_prev_clocks = 0;
 	static float lcd_wrs = 0;
+	unsigned int lcd_update_interval = opt_clock_hz / 2;
 	float cycles_to_sec = 1.0f / opt_clock_hz;
 	float msec = 1000.0f * clocks * cycles_to_sec;
 	float clock_mhz = opt_clock_hz / (1000*1000.0f);

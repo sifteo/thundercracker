@@ -17,7 +17,7 @@ OBJS = \
 CFLAGS += -O3 -Werror $(shell pkg-config --cflags sdl)
 LDFLAGS += -lncurses $(shell pkg-config --libs sdl)
 
-all: $(BIN) firmware
+all: $(BIN) firmware flash.bin
 
 $(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
@@ -27,6 +27,9 @@ $(BIN): $(OBJS)
 firmware:
 	make -C firmware
 
+flash.bin: assets/flashgen.py assets/*.png
+	python $<
+
 clean:
-	rm -f $(BIN) $(OBJS)
+	rm -f $(BIN) $(OBJS) flash.bin
 	make -C firmware clean

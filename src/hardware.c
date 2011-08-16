@@ -77,7 +77,7 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
     uint8_t mcu_data_drv = cpu->mSFR[REG_P0DIR] != 0xFF;
 
     struct flash_pins flashp = {
-	.addr = ((p1 & 0xFE) >> 1) | (addr_latch_1 << 7) | (addr_latch_2 << 15),
+	.addr = ((p1 & 0xFE) >> 1) | ((int)addr_latch_1 << 7) | ((int)addr_latch_2 << 15),
 	.oe = p2 & (1 << 5),
 	.ce = p2 & (1 << 4),
 	.we = p2 & (1 << 3),
@@ -97,8 +97,8 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
 
     /* Address latch write cycles (Assume active high level-triggered for now) */
 
-    if (p2 & 0x04) addr_latch_1 = shared_bus;
-    if (p2 & 0x08) addr_latch_2 = shared_bus;
+    if (p2 & 0x40) addr_latch_1 = shared_bus;
+    if (p2 & 0x80) addr_latch_2 = shared_bus;
 
     /* After every simulation cycle, resolve the new state of the shared bus. */
    

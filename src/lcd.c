@@ -102,7 +102,7 @@ static void lcd_reset(void)
     lcd.xs = 0;
     lcd.ys = 0;
     lcd.xe = LCD_WIDTH - 1;
-    lcd.ye = LCD_WIDTH - 1;
+    lcd.ye = LCD_HEIGHT - 1;
 }
 
 void lcd_init(void)
@@ -166,7 +166,7 @@ static void lcd_data(uint8_t byte)
 	lcd.fb_mem[FB_MASK & ((lcd.row << FB_ROW_SHIFT) + lcd.cmd_bytecount)] = byte;
 	lcd.cmd_bytecount++;
 	lcd.need_repaint = 1;
-	if (lcd.cmd_bytecount > (lcd.xe << 1)) {
+	if (lcd.cmd_bytecount > 1 + (lcd.xe << 1)) {
 	    lcd.cmd_bytecount = lcd.xs << 1;
 	    lcd.row++;
 	    if (lcd.row > lcd.ye)
@@ -174,7 +174,6 @@ static void lcd_data(uint8_t byte)
 	}
 	break;
     }
-
 }
 
 void lcd_cycle(struct lcd_pins *pins)
