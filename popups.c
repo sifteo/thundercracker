@@ -432,7 +432,7 @@ void emu_help(struct em8051 *aCPU)
 
     runmode = 0;
     setSpeed(speed, runmode);
-    exc = subwin(stdscr, 14, 70, (LINES-14)/2, (COLS-70)/2);
+    exc = subwin(stdscr, 18, 74, (LINES-18)/2, (COLS-74)/2);
     wattron(exc,A_REVERSE);
     werase(exc);
     box(exc,ACS_VLINE,ACS_HLINE);
@@ -441,30 +441,36 @@ void emu_help(struct em8051 *aCPU)
     wrefresh(exc);
 
     wmove(exc, 2, 2);
-    waddstr(exc, "8051 Emulator v. 0.72 - http://iki.fi/sol/");
+    waddstr(exc, "Sifteo prototype simulator - M. Elizabeth Scott <beth@sifteo.com>");
     wmove(exc, 3, 2);
+    waddstr(exc, "Copyright (c) 2011 Sifteo, Inc.");
+
+    wmove(exc, 5, 2);
+    waddstr(exc, "8051 Emulator v. 0.72 - http://iki.fi/sol/");
+    wmove(exc, 6, 2);
     waddstr(exc, "Copyright (c) 2006 Jari Komppa");
-    wmove(exc, 13, 22);
+
+    wmove(exc, 17, 22);
     wattron(exc,A_REVERSE);
     waddstr(exc, "Press any key to continue");
     wattroff(exc,A_REVERSE);
 
 
-    mvwaddstr(exc, 5, 6, "h - This help");
-    mvwaddstr(exc, 6, 6, "l - Load intel hex file");
-    mvwaddstr(exc, 7, 2, "space - Single step");
-    mvwaddstr(exc, 8, 6, "r - Toggle run mode");
-    mvwaddstr(exc, 9, 2, "+ & - - Adjust run speed");
-    mvwaddstr(exc, 10, 6, "v - Change views");
-    mvwaddstr(exc, 11, 3, "home - Reset (with options)");
+    mvwaddstr(exc, 8, 6, "h - This help");
+    mvwaddstr(exc, 9, 6, "l - Load intel hex file");
+    mvwaddstr(exc, 10, 2, "space - Single step");
+    mvwaddstr(exc, 11, 6, "r - Toggle run mode");
+    mvwaddstr(exc, 12, 2, "+ & - - Adjust run speed");
+    mvwaddstr(exc, 13, 6, "v - Change views");
+    mvwaddstr(exc, 14, 3, "home - Reset (with options)");
 
-    mvwaddstr(exc, 5, 32, "shift-q - Quit");
-    mvwaddstr(exc, 6, 32, "cursors - Move cursor");
-    mvwaddstr(exc, 7, 32, "0-9,a-f - Adjust values");
-    mvwaddstr(exc, 8, 36, "tab - Switch editor focus");
-    mvwaddstr(exc, 9, 36, "end - Reset tick/time counter");
-    mvwaddstr(exc, 10, 38, "k - Set or clear breakpoint");
-    mvwaddstr(exc, 11, 38, "g - Go to address (adjust PC)");
+    mvwaddstr(exc, 8, 32, "shift-q - Quit");
+    mvwaddstr(exc, 9, 32, "cursors - Move cursor");
+    mvwaddstr(exc, 10, 32, "0-9,a-f - Adjust values");
+    mvwaddstr(exc, 11, 36, "tab - Switch editor focus");
+    mvwaddstr(exc, 12, 36, "end - Reset tick/time counter");
+    mvwaddstr(exc, 13, 38, "k - Set or clear breakpoint");
+    mvwaddstr(exc, 14, 38, "g - Go to address (adjust PC)");
 
     wrefresh(exc);
 
