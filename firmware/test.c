@@ -88,7 +88,8 @@ static void lcd_data_from_flash(uint32_t flash_addr, unsigned len)
 void main()
 {
     hardware_init();
-    lcd_cmd_byte(LCD_CMD_RAMWR);
-    while (1)
+    while (1) {
+	lcd_cmd_byte(LCD_CMD_RAMWR);
 	lcd_data_from_flash(0x1000, 63);
+    }
 }

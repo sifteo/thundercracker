@@ -32,6 +32,7 @@ static struct {
     SDL_Surface *surface;
     int is_running;
     int need_repaint;
+    uint32_t write_count;
 
     /* 16-bit RGB 5-6-5 format */
     uint8_t fb_mem[FB_SIZE];
@@ -137,8 +138,9 @@ static void lcd_cmd(uint8_t op)
 	// Return to start row/column
 	lcd.row = lcd.ys;
 	lcd.cmd_bytecount = lcd.xs << 1;
-
+	lcd.write_count++;
 	break;
+
     }
 }
 
@@ -200,4 +202,11 @@ void lcd_cycle(struct lcd_pins *pins)
     }
 
     lcd.prev_pins = *pins;
+}
+
+uint32_t lcd_write_count(void)
+{
+    uint32_t cnt = lcd.write_count;
+    lcd.write_count = 0;
+    return cnt;
 }

@@ -129,24 +129,23 @@ void build_main_view(struct em8051 *aCPU)
     oldcols = COLS;
     oldrows = LINES;
 
-    codebox = subwin(stdscr, LINES-16, 42, 16, 0);
+    codebox = subwin(stdscr, LINES-17, 42, 17, 0);
     box(codebox,ACS_VLINE,ACS_HLINE);
     mvwaddstr(codebox, 0, 2, "PC");
     mvwaddstr(codebox, 0, 8, "Opcodes");
     mvwaddstr(codebox, 0, 18, "Assembly");
-    mvwaddstr(codebox, LINES-18, 0, ">");
-    mvwaddstr(codebox, LINES-18, 41, "<");
-    codeoutput = subwin(codebox, LINES-18, 39, 17, 2);
+    mvwaddstr(codebox, LINES-19, 0, ">");
+    mvwaddstr(codebox, LINES-19, 41, "<");
+    codeoutput = subwin(codebox, LINES-19, 39, 18, 2);
     scrollok(codeoutput, TRUE);
 
-    regbox = subwin(stdscr, LINES-16, 38, 16, 42);
+    regbox = subwin(stdscr, LINES-17, 38, 17, 42);
     box(regbox,0,0);
     mvwaddstr(regbox, 0, 2, "A -R0-R1-R2-R3-R4-R5-R6-R7-B -DPTR");
-    mvwaddstr(regbox, LINES-18, 0, ">");
-    mvwaddstr(regbox, LINES-18, 37, "<");
-    regoutput = subwin(regbox, LINES-18, 35, 17, 44);
+    mvwaddstr(regbox, LINES-19, 0, ">");
+    mvwaddstr(regbox, LINES-19, 37, "<");
+    regoutput = subwin(regbox, LINES-19, 35, 18, 44);
     scrollok(regoutput, TRUE);
-
 
     rambox = subwin(stdscr, 10, 31, 0, 0);
     box(rambox,0,0);
@@ -154,12 +153,12 @@ void build_main_view(struct em8051 *aCPU)
     mvwaddstr(rambox, 0, 4, memtypes[memmode]);
     ramview = subwin(rambox, 8, 29, 1, 1);
 
-    stackbox = subwin(stdscr, 16, 6, 0, 31);
+    stackbox = subwin(stdscr, 17, 6, 0, 31);
     box(stackbox,0,0);
     mvwaddstr(stackbox, 0, 1, "Stck");
     mvwaddstr(stackbox, 8, 0, ">");
     mvwaddstr(stackbox, 8, 5, "<");
-    stackview = subwin(stackbox, 14, 4, 1, 32);
+    stackview = subwin(stackbox, 15, 4, 1, 32);
 
     ioregbox = subwin(stdscr, 8, 24, 0, 37);
     box(ioregbox,0,0);
@@ -177,17 +176,17 @@ void build_main_view(struct em8051 *aCPU)
     pswoutput = subwin(pswbox, 6, 16, 1, 63);
     scrollok(pswoutput, TRUE);
 
-    spregbox = subwin(stdscr, 8, 43, 8, 37);
+    spregbox = subwin(stdscr, 9, 43, 8, 37);
     box(spregbox,0,0);
     mvwaddstr(spregbox, 0, 2, "TMOD-TCON--TH0-TL0--TH1-TL1--SCON-PCON");
-    mvwaddstr(spregbox, 6, 0, ">");
-    mvwaddstr(spregbox, 6, 42, "<");
-    spregoutput = subwin(spregbox, 6, 40, 9, 39);
+    mvwaddstr(spregbox, 7, 0, ">");
+    mvwaddstr(spregbox, 7, 42, "<");
+    spregoutput = subwin(spregbox, 7, 40, 9, 39);
     scrollok(spregoutput, TRUE);
 
-    miscbox = subwin(stdscr, 6, 31, 10, 0);
+    miscbox = subwin(stdscr, 7, 31, 10, 0);
     box(miscbox,0,0);
-    miscview = subwin(miscbox, 4, 28, 11, 2);
+    miscview = subwin(miscbox, 5, 28, 11, 2);
     
     refresh();
     wrefresh(codeoutput);
@@ -591,11 +590,27 @@ void mainview_update(struct em8051 *aCPU)
         }
     }
 
+    {
+	const unsigned int lcd_update_interval = 8000;
+	static unsigned int lcd_prev_clocks = 0;
+	static float lcd_wrs = 0;
+	float cycles_to_sec = 1.0f / opt_clock_hz;
+	float msec = 1000.0f * clocks * cycles_to_sec;
+	float clock_mhz = opt_clock_hz / (1000*1000.0f);
 
-    werase(miscview);
-    wprintw(miscview, "\nCycles :% 10u\n", clocks);
-    wprintw(miscview, "Time   :% 14.3fms\n", 1000.0f * clocks * (1.0f/opt_clock_hz));
-    wprintw(miscview, "HW     : nRF24LE1 @%0.1fMHz", opt_clock_hz / (1000*1000.0f));
+	/* Periodically update the LCD write frequency indicator */
+	if ((clocks - lcd_prev_clocks) > lcd_update_interval) {
+	    float elapsed = (clocks - lcd_prev_clocks) * cycles_to_sec;
+	    lcd_wrs = lcd_write_count() / elapsed;
+	    lcd_prev_clocks = clocks;
+	}
+
+	werase(miscview);
+	wprintw(miscview, "\nCycles :% 10u\n", clocks);
+	wprintw(miscview, "LCD    :% 14.3f WR/s\n", lcd_wrs);
+	wprintw(miscview, "Time   :% 14.3f ms\n", msec);
+	wprintw(miscview, "HW     : nRF24LE1 @%0.1fMHz", clock_mhz);
+    }
 
     werase(ramview);
     for (i = 0; i < 8; i++)
@@ -652,7 +667,7 @@ void mainview_update(struct em8051 *aCPU)
                 (bytevalue >> 0) & 1);
     }
 
-    for (i = 0; i < 14; i++)
+    for (i = 0; i < 15; i++)
     {
 		int offset = (i + aCPU->mSFR[REG_SP]-7)&0xff;
 		if (offset < 0x80)

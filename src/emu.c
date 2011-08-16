@@ -504,7 +504,7 @@ int main(int argc, char ** argv)
             }
             if (speed < 2 && runmode)
             {
-		targettime += 15;  // Run for 15ms between display refreshes
+		targettime += 30;  // Run for 30ms between display refreshes
                 targetclocks += (opt_clock_hz / 10) - 1;
             }
 
