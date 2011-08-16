@@ -95,6 +95,11 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
     flash_cycle(&flashp);
     lcd_cycle(&lcdp);
 
+    /* Address latch write cycles (Assume active high level-triggered for now) */
+
+    if (p2 & 0x04) addr_latch_1 = shared_bus;
+    if (p2 & 0x08) addr_latch_2 = shared_bus;
+
     /* After every simulation cycle, resolve the new state of the shared bus. */
    
     switch ((mcu_data_drv << 2) | (flashp.data_drv << 1) | lcdp.data_drv) {

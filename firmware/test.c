@@ -1,3 +1,11 @@
+/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
+ *
+ * Sifteo prototype firmware
+ * M. Elizabeth Scott <beth@sifteo.com>
+ *
+ * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ */
+
 #include <stdint.h>
 #include <mcs51/8051.h>
 
@@ -16,41 +24,71 @@ sfr at 0x96 P3DIR;
 #define LCD_DCX          P2_1
 #define LCD_RDX          P2_0
 
+#define FLASH_LAT2       P2_7
+#define FLASH_LAT1       P2_6
 #define FLASH_OE         P2_5
 #define FLASH_CE         P2_4
 #define FLASH_WE         P2_3
 
-static void lcd_byte(uint8_t b)
+
+static void hardware_init(void)
 {
-  P0 = b;
-  LCD_WRX = 1;
-  LCD_WRX = 0;
+    P1 = 0x00;  	// Address/strobe low
+    P2 = 0x28;   	// Chipselects active, output enables inactive
+    P0DIR = 0xFF;	// Shared bus, floating
+    P1DIR = 0x00;  	// Driven address/control lines
+    P2DIR = 0x00;   	// Driven control lines
 }
 
 static void lcd_cmd_byte(uint8_t b)
 {
-  LCD_DCX = 0;
-  P0 = b;
-  LCD_WRX = 1;
-  LCD_WRX = 0;
-  LCD_DCX = 1;
+    LCD_DCX = 0;      	// Command mode
+    P0DIR = 0x00;     	// Drive command onto bus
+    P0 = b;
+    LCD_WRX = 1;      	// Write strobe
+    LCD_WRX = 0;
+    P0DIR = 0xFF;     	// Release bus
+    LCD_DCX = 1;      	// Back to data mode
 }
+
+static void lcd_data_byte(uint8_t b)
+{
+    P0DIR = 0x00;     	// Drive data onto bus
+    P0 = b;
+    LCD_WRX = 1;      	// Write strobe
+    LCD_WRX = 0;
+    P0DIR = 0xFF;     	// Release bus
+}
+
+static void lcd_data_from_flash(uint32_t flash_addr, unsigned len)
+{
+    P0DIR = 0x00;	// Drive bus with high address byte
+    P0 = flash_addr >> 15;
+    FLASH_LAT2 = 1;     // Latch 2 strobe
+    FLASH_LAT2 = 0;
+    P0 = flash_addr >> 7;
+    FLASH_LAT1 = 1;     // Latch 1 strobe
+    FLASH_LAT1 = 0;
+    P0DIR = 0xFF;       // Release bus
+    FLASH_OE = 0;	// Let the flash drive the bus
+
+    // P1 acts as a counter that holds 7 bits of address as well as our write strobe
+    P1 = flash_addr << 1;
+
+    // It takes 2x as many increment cycles as we have bytes to write
+    len <<= 1;
+
+    while (len--)
+	P1++;
+
+    FLASH_OE = 1; 	// Release bus
+}
+
 
 void main()
 {
-  uint8_t i = 0;
-
-  P1 = 0x00;      // Address/strobe low
-  P2 = 0x3C;      // Chipselects high
-  P0DIR = 0xFF;   // Shared bus, floating
-  P1DIR = 0x00;   // Driven address/control lines
-  P2DIR = 0x00;   // Driven control lines
-
-  // Select LCD, take control of the data bus
-  P0DIR = 0x00;
-  LCD_CSX = 0;
-
-  lcd_cmd_byte(LCD_CMD_RAMWR);
-  while (1)
-    lcd_byte(i++);
+    hardware_init();
+    lcd_cmd_byte(LCD_CMD_RAMWR);
+    while (1)
+	lcd_data_from_flash(0x1000, 63);
 }
