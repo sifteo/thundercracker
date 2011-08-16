@@ -1,3 +1,5 @@
+/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*- */
+
 /* 8051 emulator 
  * Copyright 2006 Jari Komppa
  *
