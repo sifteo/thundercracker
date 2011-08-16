@@ -19,4 +19,5 @@ void flash_exit(void)
 
 void flash_cycle(struct flash_pins *pins)
 {
+    pins->data_drv = 0;
 }

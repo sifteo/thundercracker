@@ -44,6 +44,7 @@
 #include "emu8051.h"
 #include "emulator.h"
 #include "hardware.h"
+#include "lcd.h"
 
 unsigned char history[HISTORY_LINES * (128 + 64 + sizeof(int))];
 

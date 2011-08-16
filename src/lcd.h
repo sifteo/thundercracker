@@ -23,7 +23,6 @@ struct lcd_pins {
 };
 
 void lcd_init(void);
-void lcd_toggle_window(void);
 void lcd_exit(void);
 void lcd_cycle(struct lcd_pins *pins);
 

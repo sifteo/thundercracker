@@ -14,8 +14,8 @@ OBJS = \
 	src/lcd.o \
 	src/flash.o \
 
-CFLAGS += -O3 -Werror
-LDFLAGS += -lncurses
+CFLAGS += -O3 -Werror $(shell pkg-config --cflags sdl)
+LDFLAGS += -lncurses $(shell pkg-config --libs sdl)
 
 all: $(BIN) firmware
 

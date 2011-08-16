@@ -101,7 +101,7 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
     case 0:     /* Floating... */ break;
     case 1:  	shared_bus = lcdp.data_out; break;
     case 2:     shared_bus = flashp.data_out; break;
-    case 4:     shared_bus = p0;
+    case 4:     shared_bus = p0; break;
     default:
 	/* Bus contention! */
 	cpu->except(cpu, EXCEPTION_BUS_CONTENTION);
