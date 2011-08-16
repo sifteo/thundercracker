@@ -1,23 +1,29 @@
 BIN = cube51-sim
 
 OBJS = \
-	core.o \
-	disasm.o \
-	emu.o \
-	logicboard.o \
-	mainview.o \
-	memeditor.o \
-	opcodes.o \
-	options.o \
-	popups.o
+	src/core.o \
+	src/disasm.o \
+	src/emu.o \
+	src/logicboard.o \
+	src/mainview.o \
+	src/memeditor.o \
+	src/opcodes.o \
+	src/options.o \
+	src/popups.o
 
 CFLAGS += -O3 -Werror
 LDFLAGS += -lncurses
 
-all: $(BIN)
-
-clean:
-	rm -f $(BIN) $(OBJS)
+all: $(BIN) firmware
 
 $(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+.PHONY: firmware clean
+
+firmware:
+	make -C firmware
+
+clean:
+	rm -f $(BIN) $(OBJS)
+	make -C firmware clean
