@@ -224,6 +224,7 @@ enum EM8051_EXCEPTION
     EXCEPTION_IRET_PSW_MISMATCH, // psw not preserved over interrupt call (doesn't care about P, F0 or UNUSED)
     EXCEPTION_IRET_SP_MISMATCH,  // sp not preserved over interrupt call
     EXCEPTION_IRET_ACC_MISMATCH, // acc not preserved over interrupt call
-    EXCEPTION_ILLEGAL_OPCODE     // for the single 'reserved' opcode in the architecture
+    EXCEPTION_ILLEGAL_OPCODE,    // for the single 'reserved' opcode in the architecture
+    EXCEPTION_BUS_CONTENTION,    // Hardware bus contention
 };
 

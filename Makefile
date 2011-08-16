@@ -9,7 +9,10 @@ OBJS = \
 	src/memeditor.o \
 	src/opcodes.o \
 	src/options.o \
-	src/popups.o
+	src/popups.o \
+	src/hardware.o \
+	src/lcd.o \
+	src/flash.o \
 
 CFLAGS += -O3 -Werror
 LDFLAGS += -lncurses

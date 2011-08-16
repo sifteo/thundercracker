@@ -79,7 +79,6 @@ extern int opt_exception_invalid;
 extern int opt_clock_select;
 extern int opt_clock_hz;
 extern int opt_step_instruction;
-extern int opt_input_outputlow;
 
 extern const char *opt_flash_filename;
 
@@ -87,7 +86,6 @@ extern const char *opt_flash_filename;
 // emu.c
 extern int getTick();
 extern void setSpeed(int speed, int runmode);
-extern int emu_sfrread(struct em8051 *aCPU, int aRegister);
 extern void refreshview(struct em8051 *aCPU);
 extern void change_view(struct em8051 *aCPU, int changeto);
 

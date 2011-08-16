@@ -36,12 +36,14 @@
 #include <unistd.h>
 #endif
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "curses.h"
 #include "emu8051.h"
 #include "emulator.h"
+#include "hardware.h"
 
 unsigned char history[HISTORY_LINES * (128 + 64 + sizeof(int))];
 
@@ -164,72 +166,6 @@ void setSpeed(int speed, int runmode)
     }
 }
 
-
-
-
-int emu_sfrread(struct em8051 *aCPU, int aRegister)
-{    
-    int outputbyte = -1;
-
-    if (view == LOGICBOARD_VIEW)
-    {
-        if (aRegister == REG_P0 + 0x80)
-        {
-            outputbyte = p0out;
-        }
-        if (aRegister == REG_P1 + 0x80)
-        {
-            outputbyte =  p1out;
-        }
-        if (aRegister == REG_P2 + 0x80)
-        {
-            outputbyte =  p2out;
-        }
-        if (aRegister == REG_P3 + 0x80)
-        {
-            outputbyte =  p3out;
-        }
-    }
-    else
-    {
-        if (aRegister == REG_P0 + 0x80)
-        {
-            outputbyte = p0out = emu_readvalue(aCPU, "P0 port read", p0out, 2);
-        }
-        if (aRegister == REG_P1 + 0x80)
-        {
-            outputbyte = p1out = emu_readvalue(aCPU, "P1 port read", p1out, 2);
-        }
-        if (aRegister == REG_P2 + 0x80)
-        {
-            outputbyte = p2out = emu_readvalue(aCPU, "P2 port read", p2out, 2);
-        }
-        if (aRegister == REG_P3 + 0x80)
-        {
-            outputbyte = p3out = emu_readvalue(aCPU, "P3 port read", p3out, 2);
-        }
-    }
-    if (outputbyte != -1)
-    {
-        if (opt_input_outputlow == 1)
-        {
-            // option: output 1 even though ouput latch is 0
-            return outputbyte;
-        }
-        if (opt_input_outputlow == 0)
-        {
-            // option: output 0 if output latch is 0
-            return outputbyte & aCPU->mSFR[aRegister - 0x80];
-        }
-        // option: dump random values for output bits with
-        // output latches set to 0
-        return outputbyte & aCPU->mSFR[aRegister - 0x80] | 
-            (rand() & ~aCPU->mSFR[aRegister - 0x80]);
-    }    
-    return aCPU->mSFR[aRegister - 0x80];
-    
-}
-
 void refreshview(struct em8051 *aCPU)
 {
     change_view(aCPU, view);
@@ -286,7 +222,7 @@ int main(int argc, char ** argv)
     emu.mUpperData   = malloc(128);
     emu.mSFR         = malloc(128);
     emu.except       = &emu_exception;
-    emu.sfrread      = &emu_sfrread;
+    emu.sfrwrite     = &hardware_sfrwrite;
     emu.xread = NULL;
     emu.xwrite = NULL;
     reset(&emu, 1);    
@@ -367,16 +303,6 @@ int main(int argc, char ** argv)
                     opt_exception_invalid = 0;
                 }
                 else
-                if (strcmp("iolowlow",argv[i]+1) == 0)
-                {
-                    opt_input_outputlow = 0;
-                }
-                else
-                if (strcmp("iolowrand",argv[i]+1) == 0)
-                {
-                    opt_input_outputlow = 2;
-                }
-                else
                 if (strncmp("clock=",argv[i]+1,6) == 0)
                 {
                     opt_clock_select = 12;
@@ -449,6 +375,7 @@ int main(int argc, char ** argv)
     keypad(stdscr, TRUE); // cursors entered as single characters
 
     build_main_view(&emu);
+    hardware_init(&emu);
 
     // Loop until user hits 'shift-Q'
 
@@ -644,6 +571,7 @@ int main(int argc, char ** argv)
     while ( (ch = getch()) != 'Q' );
 
     endwin();
+    hardware_exit();
 
     return EXIT_SUCCESS;
 }

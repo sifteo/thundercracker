@@ -132,6 +132,8 @@ void emu_exception(struct em8051 *aCPU, int aCode)
                                      break;
     case EXCEPTION_ILLEGAL_OPCODE: waddstr(exc,"Invalid opcode: 0xA5 encountered"); 
                                    break;
+    case EXCEPTION_BUS_CONTENTION: waddstr(exc,"Hardware bus contention occurred"); 
+                                   break;
     default:
         waddstr(exc,"Unknown exception"); 
     }
