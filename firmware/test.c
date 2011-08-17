@@ -76,11 +76,11 @@ static void lcd_data_from_flash(uint8_t page, uint8_t chunk, uint8_t c_start, ui
     P1 = c_start;
 
     while (c_len--) {
-	// High byte
+	// Low byte
 	P1++;   // Write strobe high. Bam!
 	P1++;   // Write strobe low, load next address
 
-	// Low byte
+	// High byte
 	P1++;   // Write strobe high. Bam!
 	P1++;   // Write strobe low, load next address
     }
