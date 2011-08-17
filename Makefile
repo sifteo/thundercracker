@@ -31,5 +31,5 @@ flash.bin: assets/flashgen.py assets/*.png
 	python $<
 
 clean:
-	rm -f $(BIN) $(OBJS) flash.bin
+	rm -f $(BIN) $(OBJS) flash.bin *.ihx
 	make -C firmware clean
