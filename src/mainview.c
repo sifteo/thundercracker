@@ -89,7 +89,7 @@ WINDOW *spregbox = NULL, *spregoutput = NULL;
 WINDOW *miscbox = NULL, *miscview = NULL;
 
 
-char *memtypes[]={"Low","Upr","SFR","Ext","ROM"};
+char *memtypes[]={"Lo","Up","SF","Ex","RO"};
 char *regtypes[]={"     A ",
                   "    R0 ",
                   "    R1 ",
@@ -606,7 +606,7 @@ void mainview_update(struct em8051 *aCPU)
 	}
 
 	werase(miscview);
-	wprintw(miscview, "\nCycles :% 10u\n", clocks);
+	wprintw(miscview, "\nCycles :% 14u\n", clocks);
 	wprintw(miscview, "LCD    : ");
         wattron(miscview, A_REVERSE);
 	wprintw(miscview, "% 13.3f WR/s\n", lcd_wrs);
@@ -637,7 +637,7 @@ void mainview_update(struct em8051 *aCPU)
 
     if (focus == 0)
     {
-        mvwprintw(miscview, 0,0,"%s%04X: %d %d %d %d %d %d %d %d", 
+        mvwprintw(miscview, 0,0,"%s %04X: %d %d %d %d %d %d %d %d", 
                 memtypes[memmode],
                 memcursorpos / 2 + memoffset,
                 (bytevalue >> 7) & 1,
