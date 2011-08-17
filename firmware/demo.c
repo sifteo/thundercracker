@@ -425,6 +425,74 @@ void lcd_render_sprites_32x32(uint8_t segment)
     ADDR_PORT = segment;
     CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
 
+#define SPRITE_ROW(i)							\
+	if (oam[i].y++ & mask)						\
+	    sx##i = 0x80;						\
+	else {								\
+	    sx##i = oam[i].x;						\
+	    sah##i = (oam[i].y & 0x1E) | (i << 5);			\
+	    sal##i = (oam[i].y & 1) << 7;				\
+	    n_active++;							\
+	    active_id = i;						\
+	}
+
+#define SPRITE_TEST(lbl, i)    						\
+	lbl##_sprite_test_##i:						\
+	    if (!(sx##i & mask))					\
+		goto lbl##_sprite_target_##i;			      	\
+
+#define SPRITE_TARGET(lbl, i, _X)    					\
+	lbl##_sprite_target_##i:					\
+	    CTRL_PORT = CTRL_IDLE;					\
+	    ADDR_PORT = sah##i;						\
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
+	    ADDR_PORT = sal##i | (sx##i << 2);				\
+	    if (BUS_PORT != CHROMA_KEY) {				\
+		ADDR_INC4();						\
+		continue;						\
+	    } else {							\
+		_X;							\
+	    }
+
+#define BG_BEGIN()							\
+    	CTRL_PORT = CTRL_IDLE;						\
+	BUS_DIR = 0;							\
+	BUS_PORT = 0xFF;						\
+
+#define BG_END()							\
+	BUS_DIR = 0xFF;							\
+
+#define BG_PIXEL()							\
+        BG_BEGIN();							\
+	ADDR_INC4();							\
+	BG_END();
+
+#define BG_TARGET(lbl)							\
+    	lbl##_background:						\
+	    BG_PIXEL();							\
+	    continue;
+
+#define SPRITE_SINGLE(i)						\
+        case i:								\
+	    do {							\
+		sx##i++;						\
+		if (!(sx##i & mask)) {					\
+		    CTRL_PORT = CTRL_IDLE;				\
+		    ADDR_PORT = sah##i;					\
+		    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;	\
+		    ADDR_PORT = sal##i | (sx##i << 2);			\
+		    if (BUS_PORT != CHROMA_KEY) {			\
+			ADDR_INC4();					\
+		    } else {						\
+			goto single##i##_bg;				\
+		    }							\
+		} else {						\
+ 		    single##i##_bg:					\
+		    BG_PIXEL();						\
+		}							\
+	    } while (--x);						\
+	    break;	
+
     y = LCD_HEIGHT;
     do {
 	uint8_t sah0, sah1, sah2, sah3;
@@ -432,6 +500,9 @@ void lcd_render_sprites_32x32(uint8_t segment)
 
 	register uint8_t mask;
 	register uint8_t sx0, sx1, sx2, sx3;
+
+	uint8_t n_active = 0;
+	uint8_t active_id;
 	
 	x = LCD_WIDTH;
 	mask = m;
@@ -444,65 +515,59 @@ void lcd_render_sprites_32x32(uint8_t segment)
 	 * We'll also pre-calculate the Y portion of the address for
 	 * any visible sprite.
 	 */
-#define SPRITE_ROW(i)							\
-	if (oam[i].y++ & mask)						\
-	    sx##i = 0x80;						\
-	else {								\
-	    sx##i = oam[i].x;						\
-	    sah##i = (oam[i].y & 0x1E) | (i << 5);			\
-	    sal##i = (oam[i].y & 1) << 7;				\
+	SPRITE_ROW(0);
+	SPRITE_ROW(1);
+	SPRITE_ROW(2);
+        SPRITE_ROW(3);
+
+	/*
+	 * This code stands in for an AWESOME SCANLINE CLASSIFIER
+	 *
+	 * We use multiple scanline rendering algorithms, depending on
+	 * how many sprites are active during this line. Later there
+	 * might be a fast way to pre-classify these, and have a table
+	 * of function pointers per-scanline? *shrug loudly*
+	 */
+
+	if (n_active == 0) {
+	    /* No sprites enabled. Just do a background burst */
+	    
+	    uint8_t i;	    
+
+	    BG_BEGIN();
+	    for (i = 0; i < 8; i++)
+		ADDR_INC64();
+	    BG_END();
+
+	} else if (n_active == 1) {
+	    /* Just a single sprite */
+
+	    switch (active_id) {
+		SPRITE_SINGLE(0);
+		SPRITE_SINGLE(1);
+		SPRITE_SINGLE(2);
+		SPRITE_SINGLE(3);
+	    }
+
+	} else {
+	    /* Generic 4-sprite rendering */
+
+	    do {
+		sx0++;
+		sx1++;
+		sx2++;
+		sx3++;
+		SPRITE_TEST(r4, 0);
+		SPRITE_TEST(r4, 1);
+		SPRITE_TEST(r4, 2);
+		SPRITE_TEST(r4, 3);
+		BG_TARGET(r4);
+		SPRITE_TARGET(r4, 0, goto r4_sprite_test_1);
+		SPRITE_TARGET(r4, 1, goto r4_sprite_test_2);
+		SPRITE_TARGET(r4, 2, goto r4_sprite_test_3);
+		SPRITE_TARGET(r4, 3, goto r4_background);
+	    } while (--x);
 	}
-
-	SPRITE_ROW(0)
-	SPRITE_ROW(1)
-	SPRITE_ROW(2)
-        SPRITE_ROW(3)
-
-	do {
-	    sx0++;
-	    sx1++;
-	    sx2++;
-	    sx3++;
-
-#define SPRITE_TEST(i)    						\
-	    sprite_test_##i:						\
-	    if (!(sx##i & mask)) 					\
-		goto sprite_target_##i;					\
-
-	    SPRITE_TEST(0)
-            SPRITE_TEST(1)
-	    SPRITE_TEST(2)
-	    SPRITE_TEST(3)
-
-   	    /* Behind the sprites. Draw a solid color (Currently white) */
-
-	background:
- 	    CTRL_PORT = CTRL_IDLE;
-	    BUS_DIR = 0;
-	    BUS_PORT = 0xFF;
-	    ADDR_INC4();
-	    BUS_DIR = 0xFF;
-	    continue;
-
-#define SPRITE_TARGET(i, _X)    					\
-	    sprite_target_##i:						\
-		CTRL_PORT = CTRL_IDLE;					\
-	        ADDR_PORT = sah##i;					\
-		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
-		ADDR_PORT = sal##i | (sx##i << 2);			\
-		if (BUS_PORT != CHROMA_KEY) {				\
-		    ADDR_INC4();	\
-		    continue;						\
-		} else {						\
-		    _X;							\
-		}
-
-	    SPRITE_TARGET(0, goto sprite_test_1)
-	    SPRITE_TARGET(1, goto sprite_test_2)
-	    SPRITE_TARGET(2, goto sprite_test_3)
-	    SPRITE_TARGET(3, goto background)
-
-	} while (--x);
 
     } while (--y);
 
@@ -659,8 +724,8 @@ void monster_init(uint8_t id)
 
     oam[id].x = 170 + ((r >> 0) & 63);
     oam[id].y = 170 + ((r >> 8) & 63);
-    oam[id].xd = ((r >> 15) & 15) - 8;
-    oam[id].yd = ((r >> 23) & 15) - 8;
+    oam[id].xd = ((r >> 15) & 7) - 4;
+    oam[id].yd = ((r >> 23) & 7) - 4;
 }
 
 void monster_update(uint8_t id)
@@ -688,7 +753,7 @@ void main()
 	uint16_t frame;
 
 	// Background only
-	if (1) {
+	if (0) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
 		lcd_cmd_byte(LCD_CMD_RAMWR);
@@ -697,7 +762,7 @@ void main()
 	}
 
 	// Full-screen sprite only
-	if (1) {
+	if (0) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint8_t spr_f = (frame >> 2) & 7;
 		uint32_t spr_addr = (uint32_t)spr_f << 15;
@@ -707,7 +772,7 @@ void main()
 	}
 	
 	// Chroma key
-	if (1) {
+	if (0) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint8_t spr_f = (frame >> 1) & 7;
 		uint32_t spr_addr = (uint32_t)spr_f << 15;
@@ -718,7 +783,7 @@ void main()
 	}
 
 	// Static 16x16 tile graphics (Chroma Extra-lite)
-	if (1) {
+	if (0) {
 	    gems_init();
 	    for (frame = 0; frame < 256; frame++) {
 		lcd_cmd_byte(LCD_CMD_RAMWR);
@@ -741,7 +806,7 @@ void main()
 	}
 
 	// Some oldskool rotozooming, why not?
-	if (1) {
+	if (0) {
 	    for (frame = 0; frame < 128; frame++) {
 		uint8_t frame_l = frame;
 		lcd_cmd_byte(LCD_CMD_RAMWR);
