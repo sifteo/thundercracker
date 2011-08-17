@@ -1064,7 +1064,7 @@ static int mov_bitaddr_c(struct em8051 *aCPU)
 
 static int movc_a_indir_a_dptr(struct em8051 *aCPU)
 {
-    int address = (aCPU->mSFR[REG_DPH] << 8) | (aCPU->mSFR[REG_DPL] << 0) + ACC;
+    int address = ((aCPU->mSFR[REG_DPH] << 8) | (aCPU->mSFR[REG_DPL] << 0)) + ACC;
     ACC = aCPU->mCodeMem[address & (aCPU->mCodeMemSize - 1)];
     PC++;
     return 3;
