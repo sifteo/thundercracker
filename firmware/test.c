@@ -48,7 +48,15 @@ sfr at 0x96 P3DIR;
 #define LCD_CMD_RASET	0x2B
 #define LCD_CMD_RAMWR	0x2C
 
+uint8_t xdata tilemap[256];
 
+#define TILE(s, x, y)  (tilemap[(x) + ((y)<<(s))])
+
+
+/*
+ * Blatantly insufficient for a real chip, but so far this sets up
+ * everything the simulator cares about.
+ */
 void hardware_init(void)
 {
     BUS_DIR = 0xFF;
@@ -60,6 +68,9 @@ void hardware_init(void)
     CTRL_DIR = 0;
 }
 
+/*
+ * One-off LCD command byte. Slow but who cares?
+ */
 void lcd_cmd_byte(uint8_t b)
 {
     CTRL_PORT = CTRL_LCD_CMD;
@@ -71,6 +82,9 @@ void lcd_cmd_byte(uint8_t b)
     CTRL_PORT = CTRL_IDLE;
 }
 
+/*
+ * One-off LCD data byte. Really slow, for setup only.
+ */
 void lcd_data_byte(uint8_t b)
 {
     BUS_DIR = 0;
@@ -126,6 +140,9 @@ table:
 __endasm ;
 }
 
+/*
+ * Flexible copy from any flash address to the LCD
+ */
 void lcd_flash_copy(uint32_t addr, uint16_t pixel_count)
 {
     for (;;) {
@@ -161,6 +178,10 @@ void lcd_flash_copy(uint32_t addr, uint16_t pixel_count)
     }
 }
 
+/*
+ * Optimized copy, assumes everything is perfectly aligned and always
+ * blits a full screen of data.
+ */
 void lcd_flash_copy_fullscreen(uint32_t addr)
 {
     uint8_t addr_high = (uint8_t)(addr >> 13) & 0xFE;
@@ -191,6 +212,11 @@ void lcd_flash_copy_fullscreen(uint32_t addr)
     } while (--chunk);
 }
 
+/*
+ * Arbitrary-sized chromakey blit. If we hit a pixel that matches our
+ * chromakey, we show data from a background image instead of the
+ * foreground.
+ */
 void lcd_flash_chromakey(uint32_t fgAddr, uint32_t bgAddr, uint16_t pixel_count)
 {
     do {
@@ -249,6 +275,10 @@ void lcd_flash_chromakey(uint32_t fgAddr, uint32_t bgAddr, uint16_t pixel_count)
     } while (pixel_count);
 }
 
+/*
+ * Optimized chroma-key blit. Assumes perfect alignment, and copies a
+ * full screen of data.
+ */
 void lcd_flash_chromakey_fullscreen(uint32_t fgAddr, uint32_t bgAddr)
 {
     uint8_t fg_high = (uint8_t)(fgAddr >> 13) & 0xFE;
@@ -312,6 +342,150 @@ void lcd_flash_chromakey_fullscreen(uint32_t fgAddr, uint32_t bgAddr)
     } while (--chunk);
 }
 
+/*
+ * Tile graphics!
+ *
+ * There are a lot of tile modes we could use. For example, the
+ * 7x3=21-bit address bus is really well suited for a layout that has
+ * 128 accessible 8x8 tiles at a time, since we then need to change
+ * only one of the address bytes per-tile.
+ *
+ * However, even a relatively simple game like Chroma Shuffle couldn't
+ * use that mode. with an 8x8 tile size, it would need at least 640
+ * tiles, which is quite a bit beyond this hypothetical mode's
+ * 128-tile limit.
+ *
+ * There are probably tons of uses for a 8x8 mode with a 16-bit tile
+ * ID- for example, games that use a lot of text, and need to be able
+ * to combine text with graphics.
+ *
+ * But for this demo, I'm going the other direction and implementing a
+ * 16x16 mode with 8-bit tile IDs. Each tile occupies an aligned
+ * 512-byte chunk of memory. The tilemap is 8x8, and only occupies 64
+ * bytes.
+ *
+ * For simplicity, we're still requiring that a tile segment begins on
+ * a 16kB boundary.
+ *
+ * This mode isn't especially suited for arbitrary text, but it's good
+ * for puzzle games where the game pieces are relatively large.
+ */
+void lcd_render_tiles_16x16_8bit(uint8_t segment)
+{
+    uint8_t map_index = 0;
+    uint8_t y_low = 0;
+    uint8_t y_high = 0;
+
+    do {
+	// Loop over map columns
+	do {
+	    uint8_t tile_index = tilemap[map_index++];
+		
+	    ADDR_PORT = segment + ((tile_index >> 4) & 0x0E);
+	    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+	    ADDR_PORT = y_high + (tile_index << 3);
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	    ADDR_PORT = y_low;
+
+	    // Burst out one row of one tile (16 pixels)
+
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 1
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 2
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 3
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 4
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 5
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 6
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 7
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 8
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 9
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 10
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 11
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 12
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 13
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 14
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 15
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 16
+	    
+	} while (map_index & 7);
+
+	/*
+	 * We can store four tile rows per address chunk.
+	 * After that, roll over y_high. We'll do four such
+	 * roll-overs per 16 pixel tile.
+	 */
+
+	y_low += 64;
+	if (y_low)
+	    map_index += 0xF8;  // No map advancement
+	else {
+	    y_high += 2;
+	    if (y_high & 8)
+		y_high = 0;
+	    else
+		map_index += 0xF8;  // No map advancement
+	}
+    } while (!(map_index & 64));
+}
+
+void gems_draw_gem(uint8_t x, uint8_t y, uint8_t index)
+{
+    // A gem is 32x32, a.k.a. a 2x2 tile grid
+    index <<= 2;
+    TILE(3, 0 + (x << 1), 0 + (y << 1)) = 0 + index;
+    TILE(3, 1 + (x << 1), 0 + (y << 1)) = 1 + index;
+    TILE(3, 0 + (x << 1), 1 + (y << 1)) = 2 + index;
+    TILE(3, 1 + (x << 1), 1 + (y << 1)) = 3 + index;
+}
+
+uint32_t xor128(void)
+{
+    // Simple PRNG.
+    // Reference: http://en.wikipedia.org/wiki/Xorshift
+
+    static uint32_t x = 123456789;
+    static uint32_t y = 362436069;
+    static uint32_t z = 521288629;
+    static uint32_t w = 88675123;
+    uint32_t t;
+ 
+    t = x ^ (x << 11);
+    x = y; y = z; z = w;
+    return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
+}
+
+void gems_init()
+{
+    // Draw a uniform grid of gems, all alike.
+
+    uint8_t x, y;
+
+    for (y = 0; y < 4; y++)
+	for (x = 0; x < 4; x++)
+	    gems_draw_gem(x, y, 0);
+}
+
+void gems_shuffle()
+{
+    // Mix it up, replace a few pseudo-random gems.
+
+    uint32_t r = xor128();
+    uint8_t i = 4;
+
+    do {
+	uint8_t gem = (uint8_t)r % 40;
+	uint8_t x = (r >> 6) & 3;
+	uint8_t y = (r >> 4) & 3;
+
+	gems_draw_gem(x, y, gem);
+
+	r >>= 8;
+    } while (--i);
+}
+
+
+/*
+ * IT IS DEMO TIME.
+ */
 
 void main()
 {
@@ -321,24 +495,26 @@ void main()
 	unsigned frame;
 
 	// Background only
-	if (1)
+	if (1) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
 		lcd_cmd_byte(LCD_CMD_RAMWR);
 		lcd_flash_copy_fullscreen(bg_addr);
 	    }
+	}
 
 	// Sprite only
-	if (1)
+	if (1) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint8_t spr_f = (frame >> 2) & 7;
 		uint32_t spr_addr = (uint32_t)spr_f << 15;
 		lcd_cmd_byte(LCD_CMD_RAMWR);
 		lcd_flash_copy_fullscreen(spr_addr);
 	    }
+	}
 	
 	// Chroma key
-	if (1)
+	if (1) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint8_t spr_f = (frame >> 1) & 7;
 		uint32_t spr_addr = (uint32_t)spr_f << 15;
@@ -346,5 +522,16 @@ void main()
 		lcd_cmd_byte(LCD_CMD_RAMWR);
 		lcd_flash_chromakey_fullscreen(spr_addr, bg_addr);
 	    }
+	}
+
+	// Static 16x16 tile graphics (Chroma Extra-lite)
+	if (1) {
+	    gems_init();
+	    for (frame = 0; frame < 256; frame++) {
+		lcd_cmd_byte(LCD_CMD_RAMWR);
+		lcd_render_tiles_16x16_8bit(0x34);
+		gems_shuffle();
+	    }
+	}
     }
 }

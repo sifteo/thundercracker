@@ -20,15 +20,22 @@ def imageToRGB565(f, image, ckey=None, trunc=None):
         # Always little-endian
         f.write(struct.pack("<H", rgb16))
         i += 1
-
-        if trunc and i == trunc:
+        if trunc and i >= trunc:
             return
-
 
 f = open("flash.bin", "wb")
 
-imageToRGB565(f, Image.open("assets/Owlbear1.png"), ckey=0x4FF5)    	# 4 frames at 0x000000
-imageToRGB565(f, Image.open("assets/Owlbear2.png"), ckey=0x4FF5)    	# 4 frames at 0x020000
+# 0x000000 - 0x03FFFF : Owlbear sprites, 8 frames at 128x128
+f.seek(0)
+imageToRGB565(f, Image.open("assets/Owlbear1.png"), ckey=0x4FF5)
+imageToRGB565(f, Image.open("assets/Owlbear2.png"), ckey=0x4FF5)
 
-imageToRGB565(f, Image.open("assets/background.png"))  			# 128x512 at  0x040000
-imageToRGB565(f, Image.open("assets/background.png"), trunc=0x8000)     # 128x128 (wrap-around XXX)
+# 0x040000 - 0x067FFF : Background image, 128x512 with an extra 128 lines of wrap room (XXX)
+f.seek(0x40000)
+imageToRGB565(f, Image.open("assets/background.png"))
+imageToRGB565(f, Image.open("assets/background.png"), trunc=128*128)
+
+# 0x068000 - 0x087FFF : Tile data, 16x16 mode, 256 tiles (Must be 16k-aligned)
+f.seek(0x34 << 13)
+imageToRGB565(f, Image.open("assets/gem-tiles.png"))
+
