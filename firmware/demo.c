@@ -439,12 +439,9 @@ void lcd_render_tiles_16x16_8bit(uint8_t segment)
     } while (!(map_index & 64));
 }
 
-/*
- * A very naive and unrealistic sprite renderer... but gotta start somewhere.
- */
 void lcd_render_sprites_32x32(uint8_t segment)
 {
-    register uint8_t x, y;
+    uint8_t x, y;
 
     // We keep the segment constant. Everything has to fit in 16 kB for this mode.
     ADDR_PORT = segment;
@@ -452,49 +449,73 @@ void lcd_render_sprites_32x32(uint8_t segment)
 
     y = LCD_HEIGHT;
     do {
-	x = LCD_WIDTH;
-	do {
-	    uint8_t saddr, sx, sy;
-	    idata uint8_t *o = (idata uint8_t *)&oam;
+	uint8_t sx0, sx1, sx2, sx3;
+	uint8_t sah0, sah1, sah2, sah3;
+	uint8_t sal0, sal1, sal2, sal3;
 
-#define SPRITE_TEST(i)	       		\
-	    sy = y + oam[i].y;		\
-	    sx = x + oam[i].x;		\
-	    if (!((sx | sy) & 0xE0)) {	\
-		saddr = i << 5;		\
-		goto sprite_found;	\
-	    }				\
-	    
+	x = LCD_WIDTH;
+
+	/*
+	 * Prepare each row. If a sprite doesn't occur at all on this
+	 * row, disable it by interpreting its column position as
+	 * off-screen, so that the X test below will hide the sprite.
+	 *
+	 * We'll also pre-calculate the Y portion of the address for
+	 * any visible sprite.
+	 */
+#define SPRITE_ROW(i)							\
+	if (oam[i].y++ & 0xE0)						\
+	    sx##i = 0x80;						\
+	else {								\
+	    sx##i = oam[i].x;						\
+	    sah##i = (oam[i].y & 0x1E) | (i << 5);			\
+	    sal##i = (oam[i].y & 1) << 7;				\
+	}
+
+	SPRITE_ROW(0)
+	SPRITE_ROW(1)
+	SPRITE_ROW(2)
+        SPRITE_ROW(3)
+
+	do {
+	    sx0++;
+	    sx1++;
+	    sx2++;
+	    sx3++;
+
+#define SPRITE_TEST(i)    						\
+	    if (!(sx##i & 0xE0)) {					\
+		CTRL_PORT = CTRL_IDLE;					\
+		ADDR_PORT = sah##i;					\
+		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
+		ADDR_PORT = sal##i | (sx##i << 2);			\
+		if (BUS_PORT != CHROMA_KEY) {				\
+		    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;	\
+		    continue;						\
+		}							\
+	    }								\
+
 	    SPRITE_TEST(0)
-	    SPRITE_TEST(1)
+            SPRITE_TEST(1)
 	    SPRITE_TEST(2)
 	    SPRITE_TEST(3)
 
-	    /* Nothing found. Draw a dummy background. */
+	    /* Nothing found. Draw a dummy background from the end of the segment. */
 
-	    CTRL_PORT = CTRL_IDLE;
-	    ADDR_PORT = 0;
+ 	    CTRL_PORT = CTRL_IDLE;
+	    ADDR_PORT = 0xFE;
 	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-	    ADDR_PORT = 0;
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;
-	    continue;
-
-	    sprite_found:
-
-	    /*
-	     * Yes, we're re-addressing every single pixel. But this
-	     * loop compiles down to a very tight little chunk of
-	     * assembly, so... it's actually not so bad.
-	     */
-
-	    CTRL_PORT = CTRL_IDLE;
-	    ADDR_PORT = (sy & 0xFE) | saddr;
-	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-	    ADDR_PORT = (sx << 2) | ((sy & 1) << 7);
+	    ADDR_PORT = 0xFE;
 	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;
 
 	} while (--x);
+
     } while (--y);
+
+    oam[0].y += 128;
+    oam[1].y += 128;
+    oam[2].y += 128;
+    oam[3].y += 128;
 }
 
 // Signed 8-bit sin()
@@ -726,7 +747,7 @@ void main()
 	}
 
 	// Some oldskool affine transformation, why not?
-	if (1) {
+	if (0) {
 	    for (frame = 0; frame < 128; frame++) {
 		uint8_t frame_l = frame;
 		lcd_cmd_byte(LCD_CMD_RAMWR);
