@@ -59,7 +59,7 @@ sfr at 0x96 P3DIR;
 xdata uint8_t tilemap[256];
 
 // For now, a very limited number of 32x32 sprites
-idata struct {
+near struct {
     uint8_t x, y;
     int8_t xd, yd;
 } oam[NUM_SPRITES];
@@ -444,27 +444,25 @@ void lcd_render_tiles_16x16_8bit(uint8_t segment)
  */
 void lcd_render_sprites_32x32(uint8_t segment)
 {
-    uint8_t x, y;
+    register uint8_t x, y;
 
     // We keep the segment constant. Everything has to fit in 16 kB for this mode.
     ADDR_PORT = segment;
     CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
 
-    y = 0;
+    y = LCD_HEIGHT;
     do {
-	x = 0;
+	x = LCD_WIDTH;
 	do {
 	    uint8_t saddr, sx, sy;
 	    idata uint8_t *o = (idata uint8_t *)&oam;
-	    
+
 #define SPRITE_TEST(i)	       		\
-	    sy = y - oam[i].y;		\
-	    if (sy < 32) {		\
-	    	sx = x - oam[i].x;	\
-		if (sx < 32) {		\
-		    saddr = i << 5;	\
-		    goto sprite_found;	\
-		}			\
+	    sy = y + oam[i].y;		\
+	    sx = x + oam[i].x;		\
+	    if (!((sx | sy) & 0xE0)) {	\
+		saddr = i << 5;		\
+		goto sprite_found;	\
 	    }				\
 	    
 	    SPRITE_TEST(0)
@@ -495,8 +493,8 @@ void lcd_render_sprites_32x32(uint8_t segment)
 	    ADDR_PORT = (sx << 2) | ((sy & 1) << 7);
 	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;
 
-	} while (!((++x) & LCD_WIDTH));
-    } while (!((++y) & LCD_HEIGHT));
+	} while (--x);
+    } while (--y);
 }
 
 // Signed 8-bit sin()
@@ -526,7 +524,7 @@ int8_t sin8(uint8_t angle)
     }
 }
 
-void lcd_render_rotate_32x32(uint8_t segment, uint8_t angle)
+void lcd_render_rotate_64x64(uint8_t segment, uint8_t angle)
 {
     uint8_t y, x;
     int16_t x_acc = 0;
@@ -564,14 +562,13 @@ void lcd_render_rotate_32x32(uint8_t segment, uint8_t angle)
 
 	    if (sy != osy) {
 		CTRL_PORT = CTRL_IDLE;
-		ADDR_PORT = sy & 0x1E;
+		ADDR_PORT = (sy << 1) & 0x7E;
 		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
 		osy = sy;
-		osx = 0xFF;
 	    }
 
 	    if (sx != osx) {
-		addr = ((sx & 0x1F) << 2) | ((sy & 1) << 7);
+		addr = sx << 2;
 		osx = sx;
 	    }
 
@@ -645,22 +642,22 @@ void monster_init(uint8_t id)
 {
     uint32_t r = xor128();
 
-    oam[id].x = (r >> 0) & 127;
-    oam[id].y = (r >> 8) & 127;
-    oam[id].xd = ((r >> 16) & 7) - 4;
-    oam[id].yd = ((r >> 24) & 7) - 4;
+    oam[id].x = 170 + ((r >> 0) & 63);
+    oam[id].y = 170 + ((r >> 8) & 63);
+    oam[id].xd = ((r >> 15) & 15) - 8;
+    oam[id].yd = ((r >> 23) & 15) - 8;
 }
 
 void monster_update(uint8_t id)
 {
-#define UPDATE_AXIS(a)							\
-    oam[id].a += oam[id].a##d;						\
-    if ((oam[id].a > LCD_WIDTH - 32 && oam[id].a##d > 0) ||		\
-	(oam[id].a <= (uint8_t)-oam[id].a##d && oam[id].a##d < 0)) \
-	oam[id].a##d = -oam[id].a##d;
+    oam[id].x = oam[id].x + oam[id].xd;
+    oam[id].y = oam[id].y + oam[id].yd;
 
-    UPDATE_AXIS(x)
-    UPDATE_AXIS(y)
+    // Bounce (Yes, very weird coord system)
+    if (oam[id].x < 160)
+	oam[id].xd = -oam[id].xd;
+    if (oam[id].y < 160)
+	oam[id].yd = -oam[id].yd;
 }
 
 
@@ -733,7 +730,7 @@ void main()
 	    for (frame = 0; frame < 128; frame++) {
 		uint8_t frame_l = frame;
 		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_render_rotate_32x32(0x88000 >> 13, 0xc0 - frame);
+		lcd_render_rotate_64x64(0x8c000 >> 13, 0xc0 - frame);
 	    }
 	}	
     }
