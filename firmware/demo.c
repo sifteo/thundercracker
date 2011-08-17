@@ -753,7 +753,7 @@ void main()
 	uint16_t frame;
 
 	// Background only
-	if (0) {
+	if (1) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
 		lcd_cmd_byte(LCD_CMD_RAMWR);
@@ -762,7 +762,7 @@ void main()
 	}
 
 	// Full-screen sprite only
-	if (0) {
+	if (1) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint8_t spr_f = (frame >> 2) & 7;
 		uint32_t spr_addr = (uint32_t)spr_f << 15;
@@ -772,7 +772,7 @@ void main()
 	}
 	
 	// Chroma key
-	if (0) {
+	if (1) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint8_t spr_f = (frame >> 1) & 7;
 		uint32_t spr_addr = (uint32_t)spr_f << 15;
@@ -783,7 +783,7 @@ void main()
 	}
 
 	// Static 16x16 tile graphics (Chroma Extra-lite)
-	if (0) {
+	if (1) {
 	    gems_init();
 	    for (frame = 0; frame < 256; frame++) {
 		lcd_cmd_byte(LCD_CMD_RAMWR);
@@ -797,7 +797,7 @@ void main()
 	    uint8_t i;
 	    for (i = 0; i < NUM_SPRITES; i++)
 		monster_init(i);
-	    for (frame = 0; frame < 128; frame++) {
+	    for (frame = 0; frame < 256; frame++) {
 		lcd_cmd_byte(LCD_CMD_RAMWR);
 		lcd_render_sprites_32x32(0x88000 >> 13);
 		for (i = 0; i < NUM_SPRITES; i++)
@@ -806,7 +806,7 @@ void main()
 	}
 
 	// Some oldskool rotozooming, why not?
-	if (0) {
+	if (1) {
 	    for (frame = 0; frame < 128; frame++) {
 		uint8_t frame_l = frame;
 		lcd_cmd_byte(LCD_CMD_RAMWR);
