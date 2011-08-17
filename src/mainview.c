@@ -607,7 +607,10 @@ void mainview_update(struct em8051 *aCPU)
 
 	werase(miscview);
 	wprintw(miscview, "\nCycles :% 10u\n", clocks);
-	wprintw(miscview, "LCD    :% 14.3f WR/s\n", lcd_wrs);
+	wprintw(miscview, "LCD    : ");
+        wattron(miscview, A_REVERSE);
+	wprintw(miscview, "% 13.3f WR/s\n", lcd_wrs);
+        wattroff(miscview, A_REVERSE);
 	wprintw(miscview, "Time   :% 14.3f ms\n", msec);
 	wprintw(miscview, "HW     : nRF24LE1 @%0.1fMHz", clock_mhz);
     }
