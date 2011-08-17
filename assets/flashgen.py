@@ -36,6 +36,9 @@ imageToRGB565(f, Image.open("assets/background.png"))
 imageToRGB565(f, Image.open("assets/background.png"), trunc=128*128)
 
 # 0x068000 - 0x087FFF : Tile data, 16x16 mode, 256 tiles (Must be 16k-aligned)
-f.seek(0x34 << 13)
+f.seek(0x68000)
 imageToRGB565(f, Image.open("assets/gem-tiles.png"))
 
+# 0x088000 - 0x089FFF : Four 32x32 monster sprites
+f.seek(0x88000)
+imageToRGB565(f, Image.open("assets/monsters.png"))

@@ -19,6 +19,11 @@ sfr at 0x96 P3DIR;
 #define LCD_PIXELS	(LCD_WIDTH * LCD_HEIGHT)
 #define LCD_ROW_SHIFT	8
 
+#define ANGLE_90      	64
+#define ANGLE_180      	128
+#define ANGLE_270      	192
+#define ANGLE_360	256
+
 #define CHROMA_KEY	0xF5
 
 #define BUS_PORT	P0
@@ -48,9 +53,16 @@ sfr at 0x96 P3DIR;
 #define LCD_CMD_RASET	0x2B
 #define LCD_CMD_RAMWR	0x2C
 
-uint8_t xdata tilemap[256];
+#define TILE(s, x, y)	(tilemap[(x) + ((y)<<(s))])
+#define NUM_SPRITES	4
 
-#define TILE(s, x, y)  (tilemap[(x) + ((y)<<(s))])
+xdata uint8_t tilemap[256];
+
+// For now, a very limited number of 32x32 sprites
+idata struct {
+    uint8_t x, y;
+    int8_t xd, yd;
+} oam[NUM_SPRITES];
 
 
 /*
@@ -427,6 +439,153 @@ void lcd_render_tiles_16x16_8bit(uint8_t segment)
     } while (!(map_index & 64));
 }
 
+/*
+ * A very naive and unrealistic sprite renderer... but gotta start somewhere.
+ */
+void lcd_render_sprites_32x32(uint8_t segment)
+{
+    uint8_t x, y;
+
+    // We keep the segment constant. Everything has to fit in 16 kB for this mode.
+    ADDR_PORT = segment;
+    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+
+    y = 0;
+    do {
+	x = 0;
+	do {
+	    uint8_t saddr, sx, sy;
+	    idata uint8_t *o = (idata uint8_t *)&oam;
+	    
+#define SPRITE_TEST(i)	       		\
+	    sy = y - oam[i].y;		\
+	    if (sy < 32) {		\
+	    	sx = x - oam[i].x;	\
+		if (sx < 32) {		\
+		    saddr = i << 5;	\
+		    goto sprite_found;	\
+		}			\
+	    }				\
+	    
+	    SPRITE_TEST(0)
+	    SPRITE_TEST(1)
+	    SPRITE_TEST(2)
+	    SPRITE_TEST(3)
+
+	    /* Nothing found. Draw a dummy background. */
+
+	    CTRL_PORT = CTRL_IDLE;
+	    ADDR_PORT = 0;
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	    ADDR_PORT = 0;
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;
+	    continue;
+
+	    sprite_found:
+
+	    /*
+	     * Yes, we're re-addressing every single pixel. But this
+	     * loop compiles down to a very tight little chunk of
+	     * assembly, so... it's actually not so bad.
+	     */
+
+	    CTRL_PORT = CTRL_IDLE;
+	    ADDR_PORT = (sy & 0xFE) | saddr;
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	    ADDR_PORT = (sx << 2) | ((sy & 1) << 7);
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;
+
+	} while (!((++x) & LCD_WIDTH));
+    } while (!((++y) & LCD_HEIGHT));
+}
+
+// Signed 8-bit sin()
+int8_t sin8(uint8_t angle)
+{
+    static const code int8_t lut[] = {
+	0x00, 0x03, 0x06, 0x09, 0x0c, 0x10, 0x13, 0x16,
+	0x19, 0x1c, 0x1f, 0x22, 0x25, 0x28, 0x2b, 0x2e,
+	0x31, 0x33, 0x36, 0x39, 0x3c, 0x3f, 0x41, 0x44,
+	0x47, 0x49, 0x4c, 0x4e, 0x51, 0x53, 0x55, 0x58,
+	0x5a, 0x5c, 0x5e, 0x60, 0x62, 0x64, 0x66, 0x68,
+	0x6a, 0x6b, 0x6d, 0x6f, 0x70, 0x71, 0x73, 0x74,
+	0x75, 0x76, 0x78, 0x79, 0x7a, 0x7a, 0x7b, 0x7c,
+	0x7d, 0x7d, 0x7e, 0x7e, 0x7e, 0x7f, 0x7f, 0x7f,
+    };
+
+    if (angle & 0x80) {
+	if (angle & 0x40)
+	    return -lut[255 - angle];
+	else
+	    return -lut[angle & 0x3F];
+    } else {
+	if (angle & 0x40)
+	    return lut[127 - angle];
+	else
+	    return lut[angle];
+    }
+}
+
+void lcd_render_rotate_32x32(uint8_t segment, uint8_t angle)
+{
+    uint8_t y, x;
+    int16_t x_acc = 0;
+    int16_t y_acc = 0;
+    
+    int16_t sin_val = sin8(angle);
+    int16_t cos_val = sin8(ANGLE_90 - angle);
+
+    uint8_t sx, sy, osx = 0xFF, osy = 0xFF;
+    uint8_t addr;
+
+    // We keep the segment constant. Everything has to fit in 16 kB for this mode.
+    ADDR_PORT = segment;
+    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+
+    y = LCD_HEIGHT;
+    do {
+	int16_t x_acc_row = x_acc;
+	int16_t y_acc_row = y_acc;
+
+	x = LCD_WIDTH;
+	do {
+	    x_acc_row += cos_val;
+	    y_acc_row += sin_val;
+
+	    sx = x_acc_row >> 8;
+	    sy = y_acc_row >> 8;
+
+	    /*
+	     * XXX: Could speed this up by replacing these explicit comparisons
+	     *      with inline asm that uses the flags resulting from updating
+	     *      the low byte of x_acc_row/y_acc_row. We already know whether
+	     *      we switched pixels, since it was a byte overflow!
+	     */
+
+	    if (sy != osy) {
+		CTRL_PORT = CTRL_IDLE;
+		ADDR_PORT = sy & 0x1E;
+		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+		osy = sy;
+		osx = 0xFF;
+	    }
+
+	    if (sx != osx) {
+		addr = ((sx & 0x1F) << 2) | ((sy & 1) << 7);
+		osx = sx;
+	    }
+
+	    ADDR_PORT = addr;
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;
+
+	} while (--x);
+
+	x_acc -= sin_val;
+	y_acc += cos_val;
+
+    } while (--y);
+}
+
 void gems_draw_gem(uint8_t x, uint8_t y, uint8_t index)
 {
     // A gem is 32x32, a.k.a. a 2x2 tile grid
@@ -482,6 +641,28 @@ void gems_shuffle()
     } while (--i);
 }
 
+void monster_init(uint8_t id)
+{
+    uint32_t r = xor128();
+
+    oam[id].x = (r >> 0) & 127;
+    oam[id].y = (r >> 8) & 127;
+    oam[id].xd = ((r >> 16) & 7) - 4;
+    oam[id].yd = ((r >> 24) & 7) - 4;
+}
+
+void monster_update(uint8_t id)
+{
+#define UPDATE_AXIS(a)							\
+    oam[id].a += oam[id].a##d;						\
+    if ((oam[id].a > LCD_WIDTH - 32 && oam[id].a##d > 0) ||		\
+	(oam[id].a <= (uint8_t)-oam[id].a##d && oam[id].a##d < 0)) \
+	oam[id].a##d = -oam[id].a##d;
+
+    UPDATE_AXIS(x)
+    UPDATE_AXIS(y)
+}
+
 
 /*
  * IT IS DEMO TIME.
@@ -492,10 +673,10 @@ void main()
     hardware_init();
 
     while (1) {
-	unsigned frame;
+	uint16_t frame;
 
 	// Background only
-	if (1) {
+	if (0) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
 		lcd_cmd_byte(LCD_CMD_RAMWR);
@@ -503,8 +684,8 @@ void main()
 	    }
 	}
 
-	// Sprite only
-	if (1) {
+	// Full-screen sprite only
+	if (0) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint8_t spr_f = (frame >> 2) & 7;
 		uint32_t spr_addr = (uint32_t)spr_f << 15;
@@ -514,7 +695,7 @@ void main()
 	}
 	
 	// Chroma key
-	if (1) {
+	if (0) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint8_t spr_f = (frame >> 1) & 7;
 		uint32_t spr_addr = (uint32_t)spr_f << 15;
@@ -525,13 +706,35 @@ void main()
 	}
 
 	// Static 16x16 tile graphics (Chroma Extra-lite)
-	if (1) {
+	if (0) {
 	    gems_init();
 	    for (frame = 0; frame < 256; frame++) {
 		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_render_tiles_16x16_8bit(0x34);
+		lcd_render_tiles_16x16_8bit(0x68000 >> 13);
 		gems_shuffle();
 	    }
 	}
+
+	// Dynamic 32x32 sprites
+	if (1) {
+	    uint8_t i;
+	    for (i = 0; i < NUM_SPRITES; i++)
+		monster_init(i);
+	    for (frame = 0; frame < 128; frame++) {
+		lcd_cmd_byte(LCD_CMD_RAMWR);
+		lcd_render_sprites_32x32(0x88000 >> 13);
+		for (i = 0; i < NUM_SPRITES; i++)
+		    monster_update(i);
+	    }
+	}
+
+	// Some oldskool affine transformation, why not?
+	if (1) {
+	    for (frame = 0; frame < 128; frame++) {
+		uint8_t frame_l = frame;
+		lcd_cmd_byte(LCD_CMD_RAMWR);
+		lcd_render_rotate_32x32(0x88000 >> 13, 0xc0 - frame);
+	    }
+	}	
     }
 }
