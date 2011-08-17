@@ -56,7 +56,7 @@ int oldcols, oldrows;
 // are we in single-step or run mode
 int runmode = 0;
 // current run speed, lower is faster
-int speed = 6;
+int speed = 1;
 
 // instruction count; needed to replay history correctly
 unsigned int icount = 0;

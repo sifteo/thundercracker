@@ -73,11 +73,88 @@ static void lcd_data_from_flash(uint8_t page, uint8_t chunk, uint8_t c_start, ui
     FLASH_OE = 0;	// Let the flash drive the bus
 
     // P1 acts as a counter that holds 7 bits of address as well as our write strobe
-    P1 = c_start << 1;
+    P1 = c_start;
 
     while (c_len--) {
+	// High byte
 	P1++;   // Write strobe high. Bam!
 	P1++;   // Write strobe low, load next address
+
+	// Low byte
+	P1++;   // Write strobe high. Bam!
+	P1++;   // Write strobe low, load next address
+    }
+
+    FLASH_OE = 1; 	// Release bus
+}
+
+static void lcd_ckey_data_from_flash(uint8_t page1, uint8_t chunk1, uint8_t c_start1,
+				     uint8_t page2, uint8_t chunk2, uint8_t c_start2,
+				     uint8_t c_len, uint8_t ckey)
+{
+    uint8_t i;
+    
+    P0DIR = 0x00;	// Drive bus with high address byte
+    P0 = page1;
+    FLASH_LAT2 = 1;     // Latch 2 strobe
+    FLASH_LAT2 = 0;
+    P0 = chunk1;
+    FLASH_LAT1 = 1;     // Latch 1 strobe
+    FLASH_LAT1 = 0;
+    P0DIR = 0xFF;       // Release bus
+    FLASH_OE = 0;	// Let the flash drive the bus
+
+    P1 = c_start1;
+
+    for (i = 0; i < c_len; i++) {
+	if (P0 == ckey) {
+	    // Transparent pixel
+	    
+	    /*
+	     * Swap over to a different page/chunk (slow!)
+	     *
+	     * (LOTS of room for optimization here.. also reduce latch
+	     * fluff by taking advantage of the edge-triggered
+	     * behaviour. No need to clear latch enable bits
+	     * immediately.)
+	     */
+
+	    FLASH_OE = 1;
+	    P0DIR = 0x00;
+	    P0 = page2;
+	    FLASH_LAT2 = 1;
+	    FLASH_LAT2 = 0;
+	    P0 = chunk2;
+	    FLASH_LAT1 = 1;
+	    FLASH_LAT1 = 0;
+	    P0DIR = 0xFF;
+	    FLASH_OE = 0;
+	    P1 = c_start2 + (i << 2);
+
+	    P1++;
+	    P1++;
+	    P1++;
+	    P1++;
+
+	    FLASH_OE = 1;
+	    P0DIR = 0x00;
+	    P0 = page1;
+	    FLASH_LAT2 = 1;
+	    FLASH_LAT2 = 0;
+	    P0 = chunk1;
+	    FLASH_LAT1 = 1;
+	    FLASH_LAT1 = 0;
+	    P0DIR = 0xFF;
+	    FLASH_OE = 0;
+	    P1 = c_start1 + (i << 2);
+
+	} else {
+	    // Opaque pixel. Write normally.
+	    P1++;
+	    P1++;
+	    P1++;
+	    P1++;
+	}
     }
 
     FLASH_OE = 1; 	// Release bus
@@ -86,17 +163,44 @@ static void lcd_data_from_flash(uint8_t page, uint8_t chunk, uint8_t c_start, ui
 void main()
 {
     unsigned frame = 0;
+    unsigned line = 0;
     
     hardware_init();
 
     while (1) {
-	unsigned chunk;
-
 	lcd_cmd_byte(LCD_CMD_RAMWR);
+	frame++;
 
-	for (chunk = 0; chunk < 256; chunk++)
-	    lcd_data_from_flash(frame, chunk, 0, 128);
+	// Background only
+#if 0
+	for (line = 0; line < 128; line++) {
+	    unsigned bg_y = (line + (frame << 1)) & 511;
+	    lcd_data_from_flash(8 + (bg_y >> 7), bg_y << 1, 0, 64);
+	    lcd_data_from_flash(8 + (bg_y >> 7), 1 + (bg_y << 1), 0, 64);
+	}
+#endif
 
-	frame = (frame + 1) & 7;
+	// Sprite only
+#if 0
+	for (line = 0; line < 128; line++) {
+	    lcd_data_from_flash(frame & 7, line << 1, 0, 64);
+	    lcd_data_from_flash(frame & 7, 1 + (line << 1), 0, 64);
+	}
+#endif
+
+	// Chroma key
+#if 1
+	for (line = 0; line < 128; line++) {
+	    unsigned bg_y = (line + (frame << 1)) & 511;
+	    unsigned spr_f = (frame >> 1) & 7;
+
+	    lcd_ckey_data_from_flash(spr_f, line << 1, 0,
+				     8 + (bg_y >> 7), bg_y << 1, 0,
+				     64, 0xF5);
+	    lcd_ckey_data_from_flash(spr_f, 1 + (line << 1), 0,
+				     8 + (bg_y >> 7), 1 + (bg_y << 1), 0,
+				     64, 0xF5);
+	}
+#endif
     }
 }

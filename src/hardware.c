@@ -44,12 +44,14 @@
 static uint8_t addr_latch_1;
 static uint8_t addr_latch_2;
 static uint8_t shared_bus;
+static uint8_t prev_p2;
 
 void hardware_init(struct em8051 *cpu)
 {
     addr_latch_1 = 0;
     addr_latch_2 = 0;
     shared_bus = 0;
+    prev_p2 = 0;
 
     cpu->mSFR[REG_P0DIR] = 0xFF;
     cpu->mSFR[REG_P1DIR] = 0xFF;
@@ -95,10 +97,11 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
     flash_cycle(&flashp);
     lcd_cycle(&lcdp);
 
-    /* Address latch write cycles (Assume active high level-triggered for now) */
+    /* Address latch write cycles, triggered by rising edge */
 
-    if (p2 & 0x40) addr_latch_1 = shared_bus;
-    if (p2 & 0x80) addr_latch_2 = shared_bus;
+    if ((p2 & 0x40) && !(prev_p2 & 0x40)) addr_latch_1 = shared_bus;
+    if ((p2 & 0x80) && !(prev_p2 & 0x40)) addr_latch_2 = shared_bus;
+    prev_p2 = p2;
 
     /* After every simulation cycle, resolve the new state of the shared bus. */
    
