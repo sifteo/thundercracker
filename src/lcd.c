@@ -84,11 +84,12 @@ static int lcd_thread(void *param)
     while (lcd.is_running) {
 	SDL_Event event;
 	while (SDL_PollEvent(&event));
-	SDL_Delay(5);
 
 	if (lcd.need_repaint) {
 	    lcd.need_repaint = 0;
 	    lcd_repaint();
+	} else {
+	    SDL_Delay(10);
 	}
     }
 
