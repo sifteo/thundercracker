@@ -545,14 +545,14 @@ int8_t sin8(uint8_t angle)
     }
 }
 
-void lcd_render_rotate_64x64(uint8_t segment, uint8_t angle)
+void lcd_render_affine_64x64(uint8_t segment, uint8_t angle, uint8_t scale)
 {
     uint8_t y, x;
     int16_t x_acc = 0;
     int16_t y_acc = 0;
     
-    int16_t sin_val = sin8(angle);
-    int16_t cos_val = sin8(ANGLE_90 - angle);
+    int16_t sin_val = (sin8(angle) * (int16_t)scale) >> 6;
+    int16_t cos_val = (sin8(ANGLE_90 - angle) * (int16_t)scale) >> 6;
 
     uint8_t sx, sy, osx = 0xFF, osy = 0xFF;
     uint8_t addr;
@@ -694,7 +694,7 @@ void main()
 	uint16_t frame;
 
 	// Background only
-	if (0) {
+	if (1) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
 		lcd_cmd_byte(LCD_CMD_RAMWR);
@@ -703,7 +703,7 @@ void main()
 	}
 
 	// Full-screen sprite only
-	if (0) {
+	if (1) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint8_t spr_f = (frame >> 2) & 7;
 		uint32_t spr_addr = (uint32_t)spr_f << 15;
@@ -713,7 +713,7 @@ void main()
 	}
 	
 	// Chroma key
-	if (0) {
+	if (1) {
 	    for (frame = 0; frame < 256; frame++) {
 		uint8_t spr_f = (frame >> 1) & 7;
 		uint32_t spr_addr = (uint32_t)spr_f << 15;
@@ -724,7 +724,7 @@ void main()
 	}
 
 	// Static 16x16 tile graphics (Chroma Extra-lite)
-	if (0) {
+	if (1) {
 	    gems_init();
 	    for (frame = 0; frame < 256; frame++) {
 		lcd_cmd_byte(LCD_CMD_RAMWR);
@@ -746,12 +746,12 @@ void main()
 	    }
 	}
 
-	// Some oldskool affine transformation, why not?
-	if (0) {
+	// Some oldskool rotozooming, why not?
+	if (1) {
 	    for (frame = 0; frame < 128; frame++) {
 		uint8_t frame_l = frame;
 		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_render_rotate_64x64(0x8c000 >> 13, 0xc0 - frame);
+		lcd_render_affine_64x64(0x8c000 >> 13, 0xc0 - frame, 0xa0 - frame);
 	    }
 	}	
     }
