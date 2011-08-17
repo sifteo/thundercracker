@@ -48,6 +48,12 @@ sfr at 0x96 P3DIR;
 #define CTRL_LCD_CMD	(CTRL_FLASH_WE | CTRL_FLASH_OE)
 #define CTRL_FLASH_OUT	(CTRL_FLASH_WE | CTRL_LCD_DCX)
 
+#define ADDR_INC2()	{ ADDR_PORT++; ADDR_PORT++; }
+#define ADDR_INC4()	{ ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; }
+#define ADDR_INC32()	{ ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); \
+ 	                  ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
+#define ADDR_INC64()	{ ADDR_INC32(); ADDR_INC32(); }
+
 #define LCD_CMD_NOP  	0x00
 #define LCD_CMD_CASET	0x2A
 #define LCD_CMD_RASET	0x2B
@@ -88,8 +94,7 @@ void lcd_cmd_byte(uint8_t b)
     CTRL_PORT = CTRL_LCD_CMD;
     BUS_DIR = 0;
     BUS_PORT = b;
-    ADDR_PORT++;
-    ADDR_PORT++;
+    ADDR_INC2();
     BUS_DIR = 0xFF;
     CTRL_PORT = CTRL_IDLE;
 }
@@ -101,8 +106,7 @@ void lcd_data_byte(uint8_t b)
 {
     BUS_DIR = 0;
     BUS_PORT = b;
-    ADDR_PORT++;
-    ADDR_PORT++;
+    ADDR_INC2();
     BUS_DIR = 0xFF;
 }
 
@@ -210,14 +214,7 @@ void lcd_flash_copy_fullscreen(uint32_t addr)
 	ADDR_PORT = 0;
 
 	do {
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 0
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 1
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 2
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 3
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 4
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 5
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 6
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 7
+	    ADDR_INC32();
 	} while (--i);
 
 	if (!(addr_mid += 2)) addr_high += 2;
@@ -266,10 +263,7 @@ void lcd_flash_chromakey(uint32_t fgAddr, uint32_t bgAddr, uint16_t pixel_count)
 		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
 		ADDR_PORT = bg_low + ((burst_count - i - 1) << 2);
 		
-		ADDR_PORT++;
-		ADDR_PORT++;
-		ADDR_PORT++;
-		ADDR_PORT++;
+		ADDR_INC4();
 
 		ADDR_PORT = fg_high;
 		CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
@@ -278,10 +272,7 @@ void lcd_flash_chromakey(uint32_t fgAddr, uint32_t bgAddr, uint16_t pixel_count)
 		ADDR_PORT = fg_low + ((burst_count - i - 1) << 2);
 
 	    } else {
-		ADDR_PORT++;
-		ADDR_PORT++;
-		ADDR_PORT++;
-		ADDR_PORT++;
+		ADDR_INC4();
 	    }
 	}
     } while (pixel_count);
@@ -323,7 +314,7 @@ void lcd_flash_chromakey_fullscreen(uint32_t fgAddr, uint32_t bgAddr)
 		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
 		ADDR_PORT = a; 						\
 									\
-		ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;ADDR_PORT++;	\
+		ADDR_INC4();						\
 									\
 		ADDR_PORT = fg_high;					\
 		CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;		\
@@ -331,7 +322,7 @@ void lcd_flash_chromakey_fullscreen(uint32_t fgAddr, uint32_t bgAddr)
 		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
 		ADDR_PORT = a + 4;					\
 	    } else {							\
-		ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;	\
+		ADDR_INC4();	\
 	    }
 
 	    CHROMA_TEST CHROMA_TEST CHROMA_TEST CHROMA_TEST
@@ -400,23 +391,7 @@ void lcd_render_tiles_16x16_8bit(uint8_t segment)
 	    ADDR_PORT = y_low;
 
 	    // Burst out one row of one tile (16 pixels)
-
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 1
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 2
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 3
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 4
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 5
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 6
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 7
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 8
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 9
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 10
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 11
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 12
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 13
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 14
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 15
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; // 16
+	    ADDR_INC64();
 	    
 	} while (map_index & 7);
 
@@ -441,6 +416,9 @@ void lcd_render_tiles_16x16_8bit(uint8_t segment)
 
 void lcd_render_sprites_32x32(uint8_t segment)
 {
+    // XXX: Trick to force SDCC to allocate 'mask' as a register rather than using an immediate.
+    volatile uint8_t m = 0xE0;
+
     uint8_t x, y;
 
     // We keep the segment constant. Everything has to fit in 16 kB for this mode.
@@ -449,11 +427,14 @@ void lcd_render_sprites_32x32(uint8_t segment)
 
     y = LCD_HEIGHT;
     do {
-	uint8_t sx0, sx1, sx2, sx3;
 	uint8_t sah0, sah1, sah2, sah3;
 	uint8_t sal0, sal1, sal2, sal3;
 
+	register uint8_t mask;
+	register uint8_t sx0, sx1, sx2, sx3;
+	
 	x = LCD_WIDTH;
+	mask = m;
 
 	/*
 	 * Prepare each row. If a sprite doesn't occur at all on this
@@ -464,7 +445,7 @@ void lcd_render_sprites_32x32(uint8_t segment)
 	 * any visible sprite.
 	 */
 #define SPRITE_ROW(i)							\
-	if (oam[i].y++ & 0xE0)						\
+	if (oam[i].y++ & mask)						\
 	    sx##i = 0x80;						\
 	else {								\
 	    sx##i = oam[i].x;						\
@@ -484,29 +465,42 @@ void lcd_render_sprites_32x32(uint8_t segment)
 	    sx3++;
 
 #define SPRITE_TEST(i)    						\
-	    if (!(sx##i & 0xE0)) {					\
-		CTRL_PORT = CTRL_IDLE;					\
-		ADDR_PORT = sah##i;					\
-		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
-		ADDR_PORT = sal##i | (sx##i << 2);			\
-		if (BUS_PORT != CHROMA_KEY) {				\
-		    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;	\
-		    continue;						\
-		}							\
-	    }								\
+	    sprite_test_##i:						\
+	    if (!(sx##i & mask)) 					\
+		goto sprite_target_##i;					\
 
 	    SPRITE_TEST(0)
             SPRITE_TEST(1)
 	    SPRITE_TEST(2)
 	    SPRITE_TEST(3)
 
-	    /* Nothing found. Draw a dummy background from the end of the segment. */
+   	    /* Behind the sprites. Draw a solid color (Currently white) */
 
+	background:
  	    CTRL_PORT = CTRL_IDLE;
-	    ADDR_PORT = 0xFE;
-	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-	    ADDR_PORT = 0xFE;
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;
+	    BUS_DIR = 0;
+	    BUS_PORT = 0xFF;
+	    ADDR_INC4();
+	    BUS_DIR = 0xFF;
+	    continue;
+
+#define SPRITE_TARGET(i, _X)    					\
+	    sprite_target_##i:						\
+		CTRL_PORT = CTRL_IDLE;					\
+	        ADDR_PORT = sah##i;					\
+		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
+		ADDR_PORT = sal##i | (sx##i << 2);			\
+		if (BUS_PORT != CHROMA_KEY) {				\
+		    ADDR_INC4();	\
+		    continue;						\
+		} else {						\
+		    _X;							\
+		}
+
+	    SPRITE_TARGET(0, goto sprite_test_1)
+	    SPRITE_TARGET(1, goto sprite_test_2)
+	    SPRITE_TARGET(2, goto sprite_test_3)
+	    SPRITE_TARGET(3, goto background)
 
 	} while (--x);
 
@@ -594,7 +588,7 @@ void lcd_render_affine_64x64(uint8_t segment, uint8_t angle, uint8_t scale)
 	    }
 
 	    ADDR_PORT = addr;
-	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;
+	    ADDR_INC4();
 
 	} while (--x);
 
