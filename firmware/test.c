@@ -49,7 +49,7 @@ sfr at 0x96 P3DIR;
 #define LCD_CMD_RAMWR	0x2C
 
 
-static void hardware_init(void)
+void hardware_init(void)
 {
     BUS_DIR = 0xFF;
 
@@ -60,7 +60,7 @@ static void hardware_init(void)
     CTRL_DIR = 0;
 }
 
-static void lcd_cmd_byte(uint8_t b)
+void lcd_cmd_byte(uint8_t b)
 {
     CTRL_PORT = CTRL_LCD_CMD;
     BUS_DIR = 0;
@@ -71,7 +71,7 @@ static void lcd_cmd_byte(uint8_t b)
     CTRL_PORT = CTRL_IDLE;
 }
 
-static void lcd_data_byte(uint8_t b)
+void lcd_data_byte(uint8_t b)
 {
     BUS_DIR = 0;
     BUS_PORT = b;
@@ -80,7 +80,11 @@ static void lcd_data_byte(uint8_t b)
     BUS_DIR = 0xFF;
 }
 
-static void lcd_addr_burst(uint8_t pixels)
+/*
+ * Lookup table that can burst up to 32 pixels at a time.
+ * We probably spend so much time setting this up that the savings are negated :P
+ */
+void lcd_addr_burst(uint8_t pixels)
 {
     pixels;
 
@@ -122,7 +126,7 @@ table:
 __endasm ;
 }
 
-static void lcd_flash_copy(uint32_t addr, uint16_t pixel_count)
+void lcd_flash_copy(uint32_t addr, uint16_t pixel_count)
 {
     for (;;) {
 	uint8_t addr_high = (uint8_t)(addr >> 13) & 0xFE;
@@ -157,7 +161,37 @@ static void lcd_flash_copy(uint32_t addr, uint16_t pixel_count)
     }
 }
 
-static void lcd_flash_chromakey(uint32_t fgAddr, uint32_t bgAddr, uint16_t pixel_count)
+void lcd_flash_copy_fullscreen(uint32_t addr)
+{
+    uint8_t addr_high = (uint8_t)(addr >> 13) & 0xFE;
+    uint8_t addr_mid  = (uint8_t)(addr >> 6) & 0xFE;
+    uint8_t chunk = 0;
+
+    do {
+	uint8_t i = 8;  // 64 pixels, as eight 8-pixel chunks
+
+	ADDR_PORT = addr_high;
+	CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+	ADDR_PORT = addr_mid;
+	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	ADDR_PORT = 0;
+
+	do {
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 0
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 1
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 2
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 3
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 4
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 5
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 6
+	    ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;  // 7
+	} while (--i);
+
+	if (!(addr_mid += 2)) addr_high += 2;
+    } while (--chunk);
+}
+
+void lcd_flash_chromakey(uint32_t fgAddr, uint32_t bgAddr, uint16_t pixel_count)
 {
     do {
 	uint8_t fg_high = (uint8_t)(fgAddr >> 13) & 0xFE;
@@ -215,42 +249,102 @@ static void lcd_flash_chromakey(uint32_t fgAddr, uint32_t bgAddr, uint16_t pixel
     } while (pixel_count);
 }
 
+void lcd_flash_chromakey_fullscreen(uint32_t fgAddr, uint32_t bgAddr)
+{
+    uint8_t fg_high = (uint8_t)(fgAddr >> 13) & 0xFE;
+    uint8_t fg_mid  = (uint8_t)(fgAddr >> 6) & 0xFE;
+    
+    uint8_t bg_high = (uint8_t)(bgAddr >> 13) & 0xFE;
+    uint8_t bg_mid  = (uint8_t)(bgAddr >> 6) & 0xFE;
+
+    uint8_t chunk = 0;
+
+    ADDR_PORT = fg_high;
+    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+    ADDR_PORT = fg_mid;
+    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+    ADDR_PORT = 0;
+
+    do {
+	uint8_t cycle = 8;
+
+	do {
+	    // Partially unrolled loop, 64 = 8x8
+
+#define CHROMA_TEST 							\
+	    if (BUS_PORT == CHROMA_KEY) { 				\
+		uint8_t a = ADDR_PORT; 					\
+									\
+		ADDR_PORT = bg_high; 					\
+		CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;		\
+		ADDR_PORT = bg_mid; 					\
+		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
+		ADDR_PORT = a; 						\
+									\
+		ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;ADDR_PORT++;	\
+									\
+		ADDR_PORT = fg_high;					\
+		CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;		\
+		ADDR_PORT = fg_mid;					\
+		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
+		ADDR_PORT = a + 4;					\
+	    } else {							\
+		ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++;	\
+	    }
+
+	    CHROMA_TEST CHROMA_TEST CHROMA_TEST CHROMA_TEST
+	    CHROMA_TEST CHROMA_TEST CHROMA_TEST CHROMA_TEST
+
+#undef CHROMA_TEST
+
+	} while (--cycle);
+
+	if (!(fg_mid += 2)) fg_high += 2;
+	if (!(bg_mid += 2)) bg_high += 2;
+
+	// Must load the first pixel of the next chunk, for the colorkey test
+	ADDR_PORT = fg_high;
+	CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+	ADDR_PORT = fg_mid;
+	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	ADDR_PORT = 0;
+
+    } while (--chunk);
+}
+
+
 void main()
 {
-    unsigned frame = 0;
-    unsigned line = 0;
-    
     hardware_init();
 
     while (1) {
-	lcd_cmd_byte(LCD_CMD_RAMWR);
-	frame++;
+	unsigned frame;
 
 	// Background only
-#if 0
-	{
-	    uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
-	    lcd_flash_copy(bg_addr, LCD_PIXELS);
-	}
-#endif
+	if (1)
+	    for (frame = 0; frame < 256; frame++) {
+		uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
+		lcd_cmd_byte(LCD_CMD_RAMWR);
+		lcd_flash_copy_fullscreen(bg_addr);
+	    }
 
 	// Sprite only
-#if 0
-	{
-	    uint8_t spr_f = (frame >> 1) & 7;
-	    uint32_t spr_addr = (uint32_t)spr_f << 15;
-	    lcd_flash_copy(spr_addr, LCD_PIXELS);
-	}
-#endif
-
+	if (1)
+	    for (frame = 0; frame < 256; frame++) {
+		uint8_t spr_f = (frame >> 2) & 7;
+		uint32_t spr_addr = (uint32_t)spr_f << 15;
+		lcd_cmd_byte(LCD_CMD_RAMWR);
+		lcd_flash_copy_fullscreen(spr_addr);
+	    }
+	
 	// Chroma key
-#if 1
-	{
-	    uint8_t spr_f = (frame >> 1) & 7;
-	    uint32_t spr_addr = (uint32_t)spr_f << 15;
-	    uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
-	    lcd_flash_chromakey(spr_addr, bg_addr, LCD_PIXELS);
-	}
-#endif
+	if (1)
+	    for (frame = 0; frame < 256; frame++) {
+		uint8_t spr_f = (frame >> 1) & 7;
+		uint32_t spr_addr = (uint32_t)spr_f << 15;
+		uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0x7F) << (LCD_ROW_SHIFT + 2));
+		lcd_cmd_byte(LCD_CMD_RAMWR);
+		lcd_flash_chromakey_fullscreen(spr_addr, bg_addr);
+	    }
     }
 }
