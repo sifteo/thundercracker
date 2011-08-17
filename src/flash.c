@@ -13,7 +13,7 @@
 #include "flash.h"
 
 /* Maximum flash size supported by our addressing scheme */
-#define FLASH_SIZE   (1 << 23)
+#define FLASH_SIZE   (1 << 21)
 #define FLASH_MASK   (FLASH_SIZE - 1)
 
 struct {
