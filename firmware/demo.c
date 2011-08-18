@@ -472,15 +472,19 @@ void lcd_render_sprites_32x32(uint8_t segment)
 	    BG_PIXEL();							\
 	    continue;
 
+    /*
+     * XXX: A lot more optimization here should be possible, since we can easily
+     *      decompose the scanline into at most three segments: background before,
+     *      sprite body, and background after.
+     */
 #define SPRITE_SINGLE(i)						\
         case i:								\
+	    ADDR_PORT = sah##i;						\
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
 	    do {							\
 		sx##i++;						\
+		ADDR_PORT = sal##i | (sx##i << 2);			\
 		if (!(sx##i & mask)) {					\
-		    CTRL_PORT = CTRL_IDLE;				\
-		    ADDR_PORT = sah##i;					\
-		    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;	\
-		    ADDR_PORT = sal##i | (sx##i << 2);			\
 		    if (BUS_PORT != CHROMA_KEY) {			\
 			ADDR_INC4();					\
 		    } else {						\
@@ -489,6 +493,7 @@ void lcd_render_sprites_32x32(uint8_t segment)
 		} else {						\
  		    single##i##_bg:					\
 		    BG_PIXEL();						\
+		    CTRL_PORT = CTRL_FLASH_OUT;				\
 		}							\
 	    } while (--x);						\
 	    break;	
@@ -752,6 +757,19 @@ void main()
     while (1) {
 	uint16_t frame;
 
+	// Dynamic 32x32 sprites
+	if (1) {
+	    uint8_t i;
+	    for (i = 0; i < NUM_SPRITES; i++)
+		monster_init(i);
+	    for (frame = 0; frame < 256; frame++) {
+		lcd_cmd_byte(LCD_CMD_RAMWR);
+		lcd_render_sprites_32x32(0x88000 >> 13);
+		for (i = 0; i < NUM_SPRITES; i++)
+		    monster_update(i);
+	    }
+	}
+
 	// Background only
 	if (1) {
 	    for (frame = 0; frame < 256; frame++) {
@@ -789,19 +807,6 @@ void main()
 		lcd_cmd_byte(LCD_CMD_RAMWR);
 		lcd_render_tiles_16x16_8bit(0x68000 >> 13);
 		gems_shuffle();
-	    }
-	}
-
-	// Dynamic 32x32 sprites
-	if (1) {
-	    uint8_t i;
-	    for (i = 0; i < NUM_SPRITES; i++)
-		monster_init(i);
-	    for (frame = 0; frame < 256; frame++) {
-		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_render_sprites_32x32(0x88000 >> 13);
-		for (i = 0; i < NUM_SPRITES; i++)
-		    monster_update(i);
 	    }
 	}
 
