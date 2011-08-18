@@ -389,8 +389,18 @@ void lcd_render_tiles_16x16_8bit_8wide(uint8_t segment)
 /*
  * Tile graphics mode: 8x8 tiles, 16-bit tile indices, 20x20
  * tile map, with support for pixel panning in X and Y.
+ *
+ * This lines up fairly well with our addressing scheme. Each tile
+ * is 128 bytes, which lines up perfectly with our low 7 bits of
+ * addressing. To avoid unnecessary shifting, we directly assign
+ * the two-byte tile index to the lower and upper address parts.
+ *
+ * This means the entirety of flash is addressable from the tilemap.
+ * It also means that bits 0 and 8 of the tile index are reserved, and
+ * currently must be zero. In the future these could be used for
+ * transparency, if we supported multiple tile layers.
  */
-void lcd_render_tiles_8x8_16bit_20wide(uint8_t segment, uint8_t pan_x, uint8_t pan_y)
+void lcd_render_tiles_8x8_16bit_20wide(uint8_t pan_x, uint8_t pan_y)
 {
     uint8_t map_index = 0;
     uint8_t y_low = 0;
@@ -401,7 +411,7 @@ void lcd_render_tiles_8x8_16bit_20wide(uint8_t segment, uint8_t pan_x, uint8_t p
 	do {
 	    uint8_t tile_index = tilemap.bytes[map_index++];
 		
-	    ADDR_PORT = segment + ((tile_index >> 4) & 0x0E);
+	    ADDR_PORT = ((tile_index >> 4) & 0x0E);
 	    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
 	    ADDR_PORT = y_high + (tile_index << 3);
 	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
@@ -707,59 +717,6 @@ uint32_t xor128(void)
     return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
 }
 
-void gems_init(void)
-{
-    // Draw a uniform grid of gems, all alike.
-
-    uint8_t x, y;
-
-    for (y = 0; y < 4; y++)
-	for (x = 0; x < 4; x++)
-	    gems_draw_gem(x, y, 0);
-}
-
-void gems_shuffle(void)
-{
-    // Mix it up, replace a few pseudo-random gems.
-
-    uint32_t r = xor128();
-    uint8_t i = 4;
-
-    do {
-	uint8_t gem = (uint8_t)r % 40;
-	uint8_t x = (r >> 6) & 3;
-	uint8_t y = (r >> 4) & 3;
-
-	gems_draw_gem(x, y, gem);
-
-	r >>= 8;
-    } while (--i);
-}
-
-void monster_init(uint8_t id)
-{
-    uint32_t r = xor128();
-
-    do {
-	oam[id].x = 170 + ((r >> 0) & 63);
-	oam[id].y = 170 + ((r >> 8) & 63);
-	oam[id].xd = ((r >> 15) & 7) - 4;
-	oam[id].yd = ((r >> 23) & 7) - 4;
-    } while (oam[id].xd == 0 && oam[id].yd == 0);
-}
-
-void monster_update(uint8_t id)
-{
-    oam[id].x = oam[id].x + oam[id].xd;
-    oam[id].y = oam[id].y + oam[id].yd;
-
-    // Bounce (Yes, very weird coord system)
-    if (oam[id].x < 160)
-	oam[id].xd = -oam[id].xd;
-    if (oam[id].y < 160)
-	oam[id].yd = -oam[id].yd;
-}
-
 
 /*************************************************************
  * IT IS DEMO TIME.
@@ -769,13 +726,32 @@ void monster_update(uint8_t id)
 void demo_gems(void)
 {
     uint16_t frame;
+    uint8_t x, y;
 
-    gems_init();
+    // Draw a uniform grid of gems, all alike.
+    for (y = 0; y < 4; y++)
+	for (x = 0; x < 4; x++)
+	    gems_draw_gem(x, y, 0);
 
     for (frame = 0; frame < 256; frame++) {
 	lcd_cmd_byte(LCD_CMD_RAMWR);
 	lcd_render_tiles_16x16_8bit_8wide(0x68000 >> 13);
-	gems_shuffle();
+
+	// Mix it up, replace a few pseudo-random gems.
+	{
+	    uint32_t r = xor128();
+	    uint8_t i = 4;
+
+	    do {
+		uint8_t gem = (uint8_t)r % 40;
+		uint8_t x = (r >> 6) & 3;
+		uint8_t y = (r >> 4) & 3;
+
+		gems_draw_gem(x, y, gem);
+
+		r >>= 8;
+	    } while (--i);
+	}
     }
 }
 
@@ -785,14 +761,33 @@ void demo_monsters(void)
     uint16_t frame;
     uint8_t i;
 
-    for (i = 0; i < NUM_SPRITES; i++)
-	monster_init(i);
+    // Init sprites
+    for (i = 0; i < NUM_SPRITES; i++) {
+	uint32_t r = xor128();
+
+	do {
+	    oam[i].x = 170 + ((r >> 0) & 63);
+	    oam[i].y = 170 + ((r >> 8) & 63);
+	    oam[i].xd = ((r >> 15) & 7) - 4;
+	    oam[i].yd = ((r >> 23) & 7) - 4;
+	} while (oam[i].xd == 0 && oam[i].yd == 0);
+    }
 
     for (frame = 0; frame < 256; frame++) {
 	lcd_cmd_byte(LCD_CMD_RAMWR);
 	lcd_render_sprites_32x32(0x88000 >> 13);
-	for (i = 0; i < NUM_SPRITES; i++)
-	    monster_update(i);
+
+	// Update sprites
+	for (i = 0; i < NUM_SPRITES; i++) {
+	    oam[i].x = oam[i].x + oam[i].xd;
+	    oam[i].y = oam[i].y + oam[i].yd;
+
+	    // Bounce (Yes, very weird coord system)
+	    if (oam[i].x < 160)
+		oam[i].xd = -oam[i].xd;
+	    if (oam[i].y < 160)
+		oam[i].yd = -oam[i].yd;
+	}
     }
 }
 
@@ -851,13 +846,15 @@ void demo_rotozoom(void)
 void demo_tile_panning(void)
 {
     uint16_t frame;
-
-    gems_init();
+    int i, j;
+    
+    for (i = 0; i < 20; i++)
+	for (j = 0; j < 20; j++)
+	    TILE20(i, j) = i + j*20;
 
     for (frame = 0; frame < 256; frame++) {
 	lcd_cmd_byte(LCD_CMD_RAMWR);
-	lcd_render_tiles_8x8_16bit_20wide(0x68000 >> 13, frame >> 2, 0);
-	gems_shuffle();
+	lcd_render_tiles_8x8_16bit_20wide(0, 0);
     }
 }
 
@@ -866,12 +863,12 @@ void main(void)
     hardware_init();
 
     while (1) {
-	//demo_fullscreen_bg();
-	//demo_owlbear_sprite();
-	//demo_owlbear_chromakey();
-	//demo_gems();
-	demo_tile_panning();
+	demo_fullscreen_bg();
+	demo_owlbear_sprite();
+	demo_owlbear_chromakey();
+	demo_gems();
+	//demo_tile_panning();
 	demo_monsters();
-	//demo_rotozoom();
+	demo_rotozoom();
     }
 }
