@@ -553,8 +553,6 @@ void lcd_render_sprites_32x32(uint8_t segment)
 	if (n_active == 0) {
 	    /* No sprites enabled. Just do a background burst */
 	    
-	    uint8_t i;	    
-
 	    BG_BEGIN();
 	    lcd_addr_burst(LCD_WIDTH);
 	    BG_END();
@@ -709,7 +707,7 @@ uint32_t xor128(void)
     return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
 }
 
-void gems_init()
+void gems_init(void)
 {
     // Draw a uniform grid of gems, all alike.
 
@@ -720,7 +718,7 @@ void gems_init()
 	    gems_draw_gem(x, y, 0);
 }
 
-void gems_shuffle()
+void gems_shuffle(void)
 {
     // Mix it up, replace a few pseudo-random gems.
 
@@ -742,10 +740,12 @@ void monster_init(uint8_t id)
 {
     uint32_t r = xor128();
 
-    oam[id].x = 170 + ((r >> 0) & 63);
-    oam[id].y = 170 + ((r >> 8) & 63);
-    oam[id].xd = ((r >> 15) & 7) - 4;
-    oam[id].yd = ((r >> 23) & 7) - 4;
+    do {
+	oam[id].x = 170 + ((r >> 0) & 63);
+	oam[id].y = 170 + ((r >> 8) & 63);
+	oam[id].xd = ((r >> 15) & 7) - 4;
+	oam[id].yd = ((r >> 23) & 7) - 4;
+    } while (oam[id].xd == 0 && oam[id].yd == 0);
 }
 
 void monster_update(uint8_t id)
@@ -761,87 +761,117 @@ void monster_update(uint8_t id)
 }
 
 
-/*
+/*************************************************************
  * IT IS DEMO TIME.
  */
 
-void main()
+// Static 16x16 tile graphics (Chroma Extra-lite)
+void demo_gems(void)
+{
+    uint16_t frame;
+
+    gems_init();
+
+    for (frame = 0; frame < 256; frame++) {
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_render_tiles_16x16_8bit_8wide(0x68000 >> 13);
+	gems_shuffle();
+    }
+}
+
+// Dynamic 32x32 sprites
+void demo_monsters(void)
+{
+    uint16_t frame;
+    uint8_t i;
+
+    for (i = 0; i < NUM_SPRITES; i++)
+	monster_init(i);
+
+    for (frame = 0; frame < 256; frame++) {
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_render_sprites_32x32(0x88000 >> 13);
+	for (i = 0; i < NUM_SPRITES; i++)
+	    monster_update(i);
+    }
+}
+
+// Full-screen ackground only
+void demo_fullscreen_bg(void)
+{
+    uint16_t frame;
+
+    for (frame = 0; frame < 256; frame++) {
+	uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_flash_copy_fullscreen(bg_addr);
+    }
+}
+
+// Full-screen sprite only
+void demo_owlbear_sprite(void)
+{
+    uint16_t frame;
+
+    for (frame = 0; frame < 256; frame++) {
+	uint8_t spr_f = (frame >> 2) & 7;
+	uint32_t spr_addr = (uint32_t)spr_f << 15;
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_flash_copy_fullscreen(spr_addr);
+    }
+}
+
+// Chroma key
+void demo_owlbear_chromakey(void)
+{
+    uint16_t frame;
+
+    for (frame = 0; frame < 256; frame++) {
+	uint8_t spr_f = (frame >> 1) & 7;
+	uint32_t spr_addr = (uint32_t)spr_f << 15;
+	uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0x7F) << (LCD_ROW_SHIFT + 2));
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_flash_chromakey_fullscreen(spr_addr, bg_addr);
+    }
+}
+
+// Some oldskool rotozooming, why not?
+void demo_rotozoom(void)
+{
+    uint16_t frame;
+    
+    for (frame = 0; frame < 128; frame++) {
+	uint8_t frame_l = frame;
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_render_affine_64x64(0x8c000 >> 13, 0xc0 - frame, 0xa0 - frame);
+    }
+}	
+
+// Scrollable 8x8 pixel tiles, in a 20x20 map
+void demo_tile_panning(void)
+{
+    uint16_t frame;
+
+    gems_init();
+
+    for (frame = 0; frame < 256; frame++) {
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_render_tiles_8x8_16bit_20wide(0x68000 >> 13, frame >> 2, 0);
+	gems_shuffle();
+    }
+}
+
+void main(void)
 {
     hardware_init();
 
     while (1) {
-	uint16_t frame;
-
-	// Scrollable 8x8 pixel tiles, in a 20x20 map
-	if (1) {
-	    gems_init();
-	    for (frame = 0; frame < 256; frame++) {
-		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_render_tiles_8x8_16bit_20wide(0x68000 >> 13, frame >> 2, 0);
-		gems_shuffle();
-	    }
-	}
-
-	// Static 16x16 tile graphics (Chroma Extra-lite)
-	if (1) {
-	    gems_init();
-	    for (frame = 0; frame < 256; frame++) {
-		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_render_tiles_16x16_8bit_8wide(0x68000 >> 13);
-		gems_shuffle();
-	    }
-	}
-
-	// Dynamic 32x32 sprites
-	if (1) {
-	    uint8_t i;
-	    for (i = 0; i < NUM_SPRITES; i++)
-		monster_init(i);
-	    for (frame = 0; frame < 256; frame++) {
-		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_render_sprites_32x32(0x88000 >> 13);
-		for (i = 0; i < NUM_SPRITES; i++)
-		    monster_update(i);
-	    }
-	}
-
-	// Background only
-	if (1) {
-	    for (frame = 0; frame < 256; frame++) {
-		uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
-		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_flash_copy_fullscreen(bg_addr);
-	    }
-	}
-
-	// Full-screen sprite only
-	if (1) {
-	    for (frame = 0; frame < 256; frame++) {
-		uint8_t spr_f = (frame >> 2) & 7;
-		uint32_t spr_addr = (uint32_t)spr_f << 15;
-		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_flash_copy_fullscreen(spr_addr);
-	    }
-	}
-	
-	// Chroma key
-	if (1) {
-	    for (frame = 0; frame < 256; frame++) {
-		uint8_t spr_f = (frame >> 1) & 7;
-		uint32_t spr_addr = (uint32_t)spr_f << 15;
-		uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0x7F) << (LCD_ROW_SHIFT + 2));
-		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_flash_chromakey_fullscreen(spr_addr, bg_addr);
-	    }
-	}
-
-	// Some oldskool rotozooming, why not?
-	if (1) {
-	    for (frame = 0; frame < 128; frame++) {
-		uint8_t frame_l = frame;
-		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_render_affine_64x64(0x8c000 >> 13, 0xc0 - frame, 0xa0 - frame);
-	    }
-	}	
+	//demo_fullscreen_bg();
+	//demo_owlbear_sprite();
+	//demo_owlbear_chromakey();
+	//demo_gems();
+	demo_tile_panning();
+	demo_monsters();
+	//demo_rotozoom();
     }
 }
