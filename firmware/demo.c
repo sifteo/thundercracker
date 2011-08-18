@@ -30,10 +30,8 @@ sfr at 0x96 P3DIR;
 
 #define BUS_PORT	P0
 #define BUS_DIR 	P0DIR
-
 #define ADDR_PORT	P1
 #define ADDR_DIR	P1DIR
-
 #define CTRL_PORT	P2
 #define CTRL_DIR 	P2DIR
 
@@ -52,6 +50,8 @@ sfr at 0x96 P3DIR;
 
 #define ADDR_INC2()	{ ADDR_PORT++; ADDR_PORT++; }
 #define ADDR_INC4()	{ ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; }
+#define ADDR_INC32()	{ ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); \
+			  ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
 
 #define LCD_CMD_NOP  	0x00
 #define LCD_CMD_CASET	0x2A
@@ -73,6 +73,9 @@ near struct {
     uint8_t x, y;
     int8_t xd, yd;
 } oam[NUM_SPRITES];
+
+static const uint16_t code earthbound_fourside_160[] =
+#include "earthbound_fourside_160.h"
 
 
 /*
@@ -122,8 +125,7 @@ static void lcd_addr_burst(uint8_t pixels)
     if (hi)
 	// Fast DJNZ loop, 8-pixel bursts
 	do {
-	    ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4();
-	    ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4();
+	    ADDR_INC32();
 	} while (--hi);
 
     if (low)
@@ -402,42 +404,54 @@ void lcd_render_tiles_16x16_8bit_8wide(uint8_t segment)
  */
 void lcd_render_tiles_8x8_16bit_20wide(uint8_t pan_x, uint8_t pan_y)
 {
-    uint8_t map_index = 0;
-    uint8_t y_low = 0;
-    uint8_t y_high = 0;
+    uint8_t tile_pan_x = pan_x >> 3;
+    uint8_t tile_pan_y = pan_y >> 3;
+    uint8_t line_addr = pan_y << 5;
+    uint8_t first_column_addr = (pan_x << 2) & 0x1C;
+    uint8_t last_tile_width = pan_x & 7;
+    uint8_t first_tile_width = 8 - last_tile_width;
+    xdata uint8_t *map = &tilemap.bytes[(tile_pan_y << 5) + (tile_pan_y << 3) + (tile_pan_x << 1)];
+    uint8_t y = LCD_HEIGHT;
 
     do {
-	// Loop over map columns
+	uint8_t x;
+
+	// First tile on the line, (1 <= width <= 8)
+	ADDR_PORT = *(map++);
+	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	ADDR_PORT = *(map++);
+	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
+	ADDR_PORT = line_addr + first_column_addr;
+	lcd_addr_burst(first_tile_width);
+	
+	// There are always 15 full tiles on-screen
+	x = 15;
 	do {
-	    uint8_t tile_index = tilemap.bytes[map_index++];
-		
-	    ADDR_PORT = ((tile_index >> 4) & 0x0E);
-	    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
-	    ADDR_PORT = y_high + (tile_index << 3);
+	    ADDR_PORT = *(map++);
 	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-	    ADDR_PORT = y_low;
+	    ADDR_PORT = *(map++);
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
+	    ADDR_PORT = line_addr;
+	    ADDR_INC32();
+	} while (--x);
 
-	    lcd_addr_burst(16);
-	    
-	} while (map_index & 7);
-
-	/*
-	 * We can store four tile rows per address chunk.
-	 * After that, roll over y_high. We'll do four such
-	 * roll-overs per 16 pixel tile.
-	 */
-
-	y_low += 64;
-	if (y_low)
-	    map_index += 0xF8;  // No map advancement
-	else {
-	    y_high += 2;
-	    if (y_high & 8)
-		y_high = 0;
-	    else
-		map_index += 0xF8;  // No map advancement
+	// Might be one more partial tile, (0 <= width <= 7)
+	if (last_tile_width) {
+	    ADDR_PORT = map[0];
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	    ADDR_PORT = map[1];
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
+	    ADDR_PORT = line_addr;
+	    lcd_addr_burst(last_tile_width);
 	}
-    } while (!(map_index & 64));
+
+	line_addr += 32;
+	if (line_addr)
+	    map -= 32;
+	else
+	    map += 8;
+
+    } while (--y);
 }
 
 void lcd_render_sprites_32x32(uint8_t segment)
@@ -846,15 +860,16 @@ void demo_rotozoom(void)
 void demo_tile_panning(void)
 {
     uint16_t frame;
-    int i, j;
-    
-    for (i = 0; i < 20; i++)
-	for (j = 0; j < 20; j++)
-	    TILE20(i, j) = i + j*20;
+    uint16_t i;
+
+    for (i = 0; i < 400; i++)
+	tilemap.words[i] = earthbound_fourside_160[i];
 
     for (frame = 0; frame < 256; frame++) {
 	lcd_cmd_byte(LCD_CMD_RAMWR);
-	lcd_render_tiles_8x8_16bit_20wide(0, 0);
+
+	lcd_render_tiles_8x8_16bit_20wide(16 + (sin8(frame << 4) >> 5),
+					  16 + (sin8(frame << 3) >> 5));
     }
 }
 
@@ -867,7 +882,7 @@ void main(void)
 	demo_owlbear_sprite();
 	demo_owlbear_chromakey();
 	demo_gems();
-	//demo_tile_panning();
+	demo_tile_panning();
 	demo_monsters();
 	demo_rotozoom();
     }

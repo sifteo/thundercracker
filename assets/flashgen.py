@@ -46,3 +46,7 @@ imageToRGB565(f, Image.open("assets/monsters.png"), ckey=0x4FF5)
 # 0x08c000 - 0x08DFFF : 64x64 terrain background
 f.seek(0x8c000)
 imageToRGB565(f, Image.open("assets/terrain64.png"))
+
+# 0x090000 : 8x8 tile base address
+f.seek(0x90000)
+imageToRGB565(f, Image.open("assets/tiles.png"))
