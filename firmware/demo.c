@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <mcs51/8051.h>
 
+#pragma disable_warning 84   // Variable may be used before initialization
+
 sfr at 0x93 P0DIR;
 sfr at 0x94 P1DIR;
 sfr at 0x95 P2DIR;
@@ -50,19 +52,21 @@ sfr at 0x96 P3DIR;
 
 #define ADDR_INC2()	{ ADDR_PORT++; ADDR_PORT++; }
 #define ADDR_INC4()	{ ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; }
-#define ADDR_INC32()	{ ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); \
- 	                  ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
-#define ADDR_INC64()	{ ADDR_INC32(); ADDR_INC32(); }
 
 #define LCD_CMD_NOP  	0x00
 #define LCD_CMD_CASET	0x2A
 #define LCD_CMD_RASET	0x2B
 #define LCD_CMD_RAMWR	0x2C
 
-#define TILE(s, x, y)	(tilemap[(x) + ((y)<<(s))])
+#define TILE8(x, y)	(tilemap.bytes[(x) + ((y)<<3)])			// 8-bit tiles, 8x100 grid
+#define TILE20(x, y)	(tilemap.words[(x) + ((y)<<4) + ((y)<<2)])	// 16-bit tiles, 20x20 grid
+
 #define NUM_SPRITES	4
 
-xdata uint8_t tilemap[256];
+xdata union {
+    uint8_t bytes[800];
+    uint16_t words[400];
+} tilemap;
 
 // For now, a very limited number of 32x32 sprites
 near struct {
@@ -110,50 +114,23 @@ void lcd_data_byte(uint8_t b)
     BUS_DIR = 0xFF;
 }
 
-/*
- * Lookup table that can burst up to 32 pixels at a time.
- * We probably spend so much time setting this up that the savings are negated :P
- */
-void lcd_addr_burst(uint8_t pixels)
+static void lcd_addr_burst(uint8_t pixels)
 {
-    pixels;
+    uint8_t hi = pixels >> 3;
+    uint8_t low = pixels & 0x7;
 
-__asm
-    ; Equivalent to:
-    ; a = 0x100 - (pixels << 3)
+    if (hi)
+	// Fast DJNZ loop, 8-pixel bursts
+	do {
+	    ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4();
+	    ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4();
+	} while (--hi);
 
-    clr a
-    clr c
-    subb a, dpl
-    rl a
-    rl a
-    rl a
-    anl a, #0xF8
-
-    mov DPTR, #table
-    jmp @a+DPTR
-
-table:
-    ; This table holds 128 copies of "inc ADDR_PORT".
-    ; It occupies exactly 256 bytes in memory, and the full table represents 32 pixels worth of burst transfer.
-
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 1 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 2 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 3 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 4 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 5 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 6 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 7 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 8 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 9 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 10 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 11 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 12 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 13 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 14 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 15 x 8
-    .db 5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT,5,ADDR_PORT  ; 16 x 8
-__endasm ;
+    if (low)
+	// Fast DJNZ loop, single pixels
+	do {
+	    ADDR_INC4();
+	} while (--low);
 }
 
 /*
@@ -173,8 +150,7 @@ void lcd_flash_copy(uint32_t addr, uint16_t pixel_count)
 	ADDR_PORT = addr_low;
 
 	if (pixel_count > 64 && addr_low == 0) {
-	    lcd_addr_burst(32);
-	    lcd_addr_burst(32);
+	    lcd_addr_burst(64);
 	    pixel_count -= 64;
 	    addr += 128;
 
@@ -205,17 +181,13 @@ void lcd_flash_copy_fullscreen(uint32_t addr)
     uint8_t chunk = 0;
 
     do {
-	uint8_t i = 8;  // 64 pixels, as eight 8-pixel chunks
-
 	ADDR_PORT = addr_high;
 	CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
 	ADDR_PORT = addr_mid;
 	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
 	ADDR_PORT = 0;
 
-	do {
-	    ADDR_INC32();
-	} while (--i);
+	lcd_addr_burst(64);
 
 	if (!(addr_mid += 2)) addr_high += 2;
     } while (--chunk);
@@ -373,7 +345,7 @@ void lcd_flash_chromakey_fullscreen(uint32_t fgAddr, uint32_t bgAddr)
  * This mode isn't especially suited for arbitrary text, but it's good
  * for puzzle games where the game pieces are relatively large.
  */
-void lcd_render_tiles_16x16_8bit(uint8_t segment)
+void lcd_render_tiles_16x16_8bit_8wide(uint8_t segment)
 {
     uint8_t map_index = 0;
     uint8_t y_low = 0;
@@ -382,7 +354,7 @@ void lcd_render_tiles_16x16_8bit(uint8_t segment)
     do {
 	// Loop over map columns
 	do {
-	    uint8_t tile_index = tilemap[map_index++];
+	    uint8_t tile_index = tilemap.bytes[map_index++];
 		
 	    ADDR_PORT = segment + ((tile_index >> 4) & 0x0E);
 	    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
@@ -391,7 +363,51 @@ void lcd_render_tiles_16x16_8bit(uint8_t segment)
 	    ADDR_PORT = y_low;
 
 	    // Burst out one row of one tile (16 pixels)
-	    ADDR_INC64();
+	    lcd_addr_burst(16);
+	    
+	} while (map_index & 7);
+
+	/*
+	 * We can store four tile rows per address chunk.
+	 * After that, roll over y_high. We'll do four such
+	 * roll-overs per 16 pixel tile.
+	 */
+
+	y_low += 64;
+	if (y_low)
+	    map_index += 0xF8;  // No map advancement
+	else {
+	    y_high += 2;
+	    if (y_high & 8)
+		y_high = 0;
+	    else
+		map_index += 0xF8;  // No map advancement
+	}
+    } while (!(map_index & 64));
+}
+
+/*
+ * Tile graphics mode: 8x8 tiles, 16-bit tile indices, 20x20
+ * tile map, with support for pixel panning in X and Y.
+ */
+void lcd_render_tiles_8x8_16bit_20wide(uint8_t segment, uint8_t pan_x, uint8_t pan_y)
+{
+    uint8_t map_index = 0;
+    uint8_t y_low = 0;
+    uint8_t y_high = 0;
+
+    do {
+	// Loop over map columns
+	do {
+	    uint8_t tile_index = tilemap.bytes[map_index++];
+		
+	    ADDR_PORT = segment + ((tile_index >> 4) & 0x0E);
+	    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+	    ADDR_PORT = y_high + (tile_index << 3);
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	    ADDR_PORT = y_low;
+
+	    lcd_addr_burst(16);
 	    
 	} while (map_index & 7);
 
@@ -540,8 +556,7 @@ void lcd_render_sprites_32x32(uint8_t segment)
 	    uint8_t i;	    
 
 	    BG_BEGIN();
-	    for (i = 0; i < 8; i++)
-		ADDR_INC64();
+	    lcd_addr_burst(LCD_WIDTH);
 	    BG_END();
 
 	} else if (n_active == 1) {
@@ -672,10 +687,10 @@ void gems_draw_gem(uint8_t x, uint8_t y, uint8_t index)
 {
     // A gem is 32x32, a.k.a. a 2x2 tile grid
     index <<= 2;
-    TILE(3, 0 + (x << 1), 0 + (y << 1)) = 0 + index;
-    TILE(3, 1 + (x << 1), 0 + (y << 1)) = 1 + index;
-    TILE(3, 0 + (x << 1), 1 + (y << 1)) = 2 + index;
-    TILE(3, 1 + (x << 1), 1 + (y << 1)) = 3 + index;
+    TILE8(0 + (x << 1), 0 + (y << 1)) = 0 + index;
+    TILE8(1 + (x << 1), 0 + (y << 1)) = 1 + index;
+    TILE8(0 + (x << 1), 1 + (y << 1)) = 2 + index;
+    TILE8(1 + (x << 1), 1 + (y << 1)) = 3 + index;
 }
 
 uint32_t xor128(void)
@@ -757,6 +772,26 @@ void main()
     while (1) {
 	uint16_t frame;
 
+	// Scrollable 8x8 pixel tiles, in a 20x20 map
+	if (1) {
+	    gems_init();
+	    for (frame = 0; frame < 256; frame++) {
+		lcd_cmd_byte(LCD_CMD_RAMWR);
+		lcd_render_tiles_8x8_16bit_20wide(0x68000 >> 13, frame >> 2, 0);
+		gems_shuffle();
+	    }
+	}
+
+	// Static 16x16 tile graphics (Chroma Extra-lite)
+	if (1) {
+	    gems_init();
+	    for (frame = 0; frame < 256; frame++) {
+		lcd_cmd_byte(LCD_CMD_RAMWR);
+		lcd_render_tiles_16x16_8bit_8wide(0x68000 >> 13);
+		gems_shuffle();
+	    }
+	}
+
 	// Dynamic 32x32 sprites
 	if (1) {
 	    uint8_t i;
@@ -797,16 +832,6 @@ void main()
 		uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0x7F) << (LCD_ROW_SHIFT + 2));
 		lcd_cmd_byte(LCD_CMD_RAMWR);
 		lcd_flash_chromakey_fullscreen(spr_addr, bg_addr);
-	    }
-	}
-
-	// Static 16x16 tile graphics (Chroma Extra-lite)
-	if (1) {
-	    gems_init();
-	    for (frame = 0; frame < 256; frame++) {
-		lcd_cmd_byte(LCD_CMD_RAMWR);
-		lcd_render_tiles_16x16_8bit(0x68000 >> 13);
-		gems_shuffle();
 	    }
 	}
 
