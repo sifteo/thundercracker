@@ -180,7 +180,7 @@ void build_main_view(struct em8051 *aCPU)
 
     spregbox = subwin(stdscr, 9, 43, 8, 37);
     box(spregbox,0,0);
-    mvwaddstr(spregbox, 0, 2, "TMOD-TCON--TH0-TL0--TH1-TL1--S0CON-PCON");
+    mvwaddstr(spregbox, 0, 2, "TMOD-TCON--TH0-TL0--TH1-TL1--S0CON-P0CON");
     mvwaddstr(spregbox, 7, 0, ">");
     mvwaddstr(spregbox, 7, 42, "<");
     spregoutput = subwin(spregbox, 7, 40, 9, 39);
@@ -585,7 +585,7 @@ void mainview_update(struct em8051 *aCPU)
                 history[hoffs + REG_TH1],
                 history[hoffs + REG_TL1],
                 history[hoffs + REG_S0CON],
-                history[hoffs + REG_PCON]);
+                history[hoffs + REG_P0CON]);
             wprintw(spregoutput, "%s", temp);
 
             lastclock++;
