@@ -4,7 +4,6 @@ OBJS = \
 	src/core.o \
 	src/disasm.o \
 	src/emu.o \
-	src/logicboard.o \
 	src/mainview.o \
 	src/memeditor.o \
 	src/opcodes.o \
@@ -17,8 +16,8 @@ OBJS = \
 PY_PATH := /opt/local/bin:/usr/bin
 PYTHON  := python2.7
 
-CFLAGS += -O3 -Werror $(shell pkg-config --cflags sdl)
-LDFLAGS += -lncurses $(shell pkg-config --libs sdl)
+CFLAGS += -O3 -g -Werror $(shell pkg-config --cflags sdl)
+LDFLAGS += -g -lncurses $(shell pkg-config --libs sdl)
 
 all: $(BIN) firmware flash.bin
 

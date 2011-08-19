@@ -40,10 +40,13 @@ After "make" finishes, you should have a "cube51-sim" binary, a
 Run:
   ./cube51-sim demo.ihx
 
-This will load the compiled firmware into the simulator. It will start
-out paused, in case you want to change parameters or set breakpoints
-before running. If you just want to run, press "r" in the console
-window.
+This will load the compiled firmware into the simulator, and start it
+running. The 'h' key will open help for the console, so you can see
+the other supported keys.
+
+Note that the firmware starts running immediately, since this is typically
+what you'll want. If you want to inspect something or add a breakpoint
+before starting execution, you can stop the simulation then reset it.
 
 Assumptions
 -----------

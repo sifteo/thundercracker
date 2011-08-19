@@ -35,8 +35,7 @@ enum EMU_VIEWS
 {
     MAIN_VIEW = 0,
     MEMEDITOR_VIEW = 1,
-    LOGICBOARD_VIEW = 2,
-    OPTIONS_VIEW = 3
+    OPTIONS_VIEW = 2
 };
 
 
@@ -103,13 +102,6 @@ extern void mainview_editor_keys(struct em8051 *aCPU, int ch);
 extern void build_main_view(struct em8051 *aCPU);
 extern void wipe_main_view();
 extern void mainview_update(struct em8051 *aCPU);
-
-// logicboard.c
-extern void wipe_logicboard_view();
-extern void build_logicboard_view(struct em8051 *aCPU);
-extern void logicboard_editor_keys(struct em8051 *aCPU, int ch);
-extern void logicboard_update(struct em8051 *aCPU);
-extern void logicboard_tick(struct em8051 *aCPU);
 
 // memeditor.c
 extern void wipe_memeditor_view();

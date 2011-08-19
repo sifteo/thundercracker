@@ -56,9 +56,9 @@ int historyline = 0;
 // last known columns and rows; for screen resize detection
 int oldcols, oldrows;
 // are we in single-step or run mode
-int runmode = 0;
+int runmode = 1;
 // current run speed, lower is faster
-int speed = 1;
+int speed = 0;
 
 // instruction count; needed to replay history correctly
 unsigned int icount = 0;
@@ -77,7 +77,11 @@ int p3out = 0;
 
 int breakpoint = -1;
 
-// returns time in 1ms units
+/*
+ * returns time in 1ms units
+ *
+ * This is actually kinda slow! Don't call it so often damnit! --beth
+ */
 int getTick()
 {
 #ifdef _MSC_VER
@@ -132,13 +136,25 @@ void setSpeed(int speed, int runmode)
     {
         slk_set(4, "r)un", 0);
         slk_refresh();        
-	halfdelay(1);
+        nocbreak();
+        cbreak();
+
+	/*
+	 * GRR. This will block the whole main loop, which blocks the
+	 * SDL event loop on Mac/Win hosts.  But this blocking
+	 * behaviour is expected by all the popup code.
+	 *
+	 * I should really try and get the ncurses UI separated out
+	 * onto a separate thread...  --beth
+	 */
+	nodelay(stdscr, FALSE); 
         return;
     }
     else
     {
         slk_set(4, "r)unning", 0);
         slk_refresh();        
+	nodelay(stdscr, TRUE);
     }
 
     if (speed < 4)
@@ -178,9 +194,6 @@ void change_view(struct em8051 *aCPU, int changeto)
     case MAIN_VIEW:
         wipe_main_view();
         break;
-    case LOGICBOARD_VIEW:
-        wipe_logicboard_view();
-        break;
     case MEMEDITOR_VIEW:
         wipe_memeditor_view();
         break;
@@ -193,9 +206,6 @@ void change_view(struct em8051 *aCPU, int changeto)
     {
     case MAIN_VIEW:
         build_main_view(aCPU);
-        break;
-    case LOGICBOARD_VIEW:
-        build_logicboard_view(aCPU);
         break;
     case MEMEDITOR_VIEW:
         build_memeditor_view(aCPU);
@@ -361,7 +371,6 @@ int main(int argc, char ** argv)
     cbreak(); // no buffering
     noecho(); // no echoing
     keypad(stdscr, TRUE); // cursors entered as single characters
-    nodelay(stdscr, TRUE);  // Non-blocking input
 
     slk_set(1, "h)elp", 0);
     slk_set(2, "l)oad", 0);
@@ -373,8 +382,8 @@ int main(int argc, char ** argv)
     setSpeed(speed, runmode);
    
     SDL_Init(SDL_INIT_VIDEO);
-    build_main_view(&emu);
     hardware_init(&emu);
+    build_main_view(&emu);
 
     /*
      * Unified event loop... we need to handle both SDL and ncurses
@@ -410,11 +419,8 @@ int main(int argc, char ** argv)
         case KEY_F(3):
             change_view(&emu, 2);
             break;
-        case KEY_F(4):
-            change_view(&emu, 3);
-            break;
         case 'v':
-            change_view(&emu, (view + 1) % 4);
+            change_view(&emu, (view + 1) % 3);
             break;
         case 'k':
             if (breakpoint != -1)
@@ -489,9 +495,6 @@ int main(int argc, char ** argv)
             case MAIN_VIEW:
                 mainview_editor_keys(&emu, ch);
                 break;
-            case LOGICBOARD_VIEW:
-                logicboard_editor_keys(&emu, ch);
-                break;
             case MEMEDITOR_VIEW:
                 memeditor_editor_keys(&emu, ch);
                 break;
@@ -516,36 +519,56 @@ int main(int argc, char ** argv)
             }
             if (speed < 2 && runmode)
             {
-		targettime += 30;  // Run for 30ms between display refreshes
-                targetclocks += (opt_clock_hz / 10) - 1;
+		// Run for at least 30ms between display refreshes
+		targettime += 30;  
+		targetclocks += (opt_clock_hz * 30 / 1000) - 1;
             }
 
             do
             {
                 int old_pc;
                 old_pc = emu.mPC;
+
                 if (opt_step_instruction)
                 {
+		    /* Run one tick at a time (single step) */
+
                     ticked = 0;
                     while (!ticked)
                     {
                         targetclocks--;
                         clocks++;
                         ticked = tick(&emu);
-                        logicboard_tick(&emu);
                     }
+
+		    if (emu.mPC == breakpoint)
+			emu_exception(&emu, -1);
                 }
-                else
+                else if (speed == 0)
                 {
+		    /*
+		     * Fastest speed. Run ticks in large batches, so we don't spend
+		     * all this CPU time in silly places like getTick() or ncurses.
+		     */
+
+                    ticked = 0;
+		    while (targetclocks > 0) {
+			targetclocks--;
+			clocks++;
+			ticked = tick(&emu);
+		    }
+
+                } else {
+		    /*
+		     * Generic, run one clock cycle.
+		     */
+
                     targetclocks--;
                     clocks++;
 		    ticked = tick(&emu);
-                    logicboard_tick(&emu);
-                }
+		}
 
-                if (emu.mPC == breakpoint)
-                    emu_exception(&emu, -1);
-
+		// Update history in all speeds but the fastest, if we ran an actual instruction
                 if (ticked)
                 {
                     icount++;
@@ -569,9 +592,6 @@ int main(int argc, char ** argv)
         {
         case MAIN_VIEW:
             mainview_update(&emu);
-            break;
-        case LOGICBOARD_VIEW:
-            logicboard_update(&emu);
             break;
         case MEMEDITOR_VIEW:
             memeditor_update(&emu);
