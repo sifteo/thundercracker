@@ -28,6 +28,8 @@
  * Curses-based emulator front-end
  */
 
+#include <stdint.h>
+
 // how many lines of history to remember
 #define HISTORY_LINES 20
 
@@ -67,7 +69,7 @@ extern int p2out;
 extern int p3out;
 
 // current clock count
-extern unsigned int clocks;
+extern uint64_t clocks;
 
 extern int opt_exception_iret_sp;
 extern int opt_exception_iret_acc;

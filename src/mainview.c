@@ -28,9 +28,11 @@
  * Main view-related stuff for the curses-based emulator front-end
  */
 
+#include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "curses.h"
 #include "emu8051.h"
 #include "emulator.h"
@@ -591,27 +593,40 @@ void mainview_update(struct em8051 *aCPU)
     }
 
     {
-	static unsigned int lcd_prev_clocks = 0;
+	// Some displays periodically update
+	unsigned int update_interval = opt_clock_hz / 2;
+	static uint64_t update_prev_clocks = 0;
+	static uint32_t update_prev_time = 0;
+
 	static float lcd_wrs = 0;
-	unsigned int lcd_update_interval = opt_clock_hz / 2;
+	static float clock_ratio = 0;
+
 	float cycles_to_sec = 1.0f / opt_clock_hz;
 	float msec = 1000.0f * clocks * cycles_to_sec;
 	float clock_mhz = opt_clock_hz / (1000*1000.0f);
 
 	/* Periodically update the LCD write frequency indicator */
-	if ((clocks - lcd_prev_clocks) > lcd_update_interval) {
-	    float elapsed = (clocks - lcd_prev_clocks) * cycles_to_sec;
-	    lcd_wrs = lcd_write_count() / elapsed;
-	    lcd_prev_clocks = clocks;
+	if ((clocks - update_prev_clocks) > update_interval) {
+	    uint32_t now = SDL_GetTicks();
+	    if (update_prev_time) {
+		
+		float virtual_elapsed = (clocks - update_prev_clocks) * cycles_to_sec;
+		float real_elapsed = (uint32_t)(now - update_prev_time) * (1.0f/1000);
+
+		lcd_wrs = lcd_write_count() / virtual_elapsed;
+		clock_ratio = virtual_elapsed / real_elapsed;
+	    }
+	    update_prev_time = now;
+	    update_prev_clocks = clocks;
 	}
 
 	werase(miscview);
-	wprintw(miscview, "\nCycles :% 14u\n", clocks);
-	wprintw(miscview, "LCD    : ");
+	wprintw(miscview, "\nLCD    : ");
         wattron(miscview, A_REVERSE);
-	wprintw(miscview, "% 13.3f WR/s\n", lcd_wrs);
+	wprintw(miscview, "% 13.3f FPS\n", lcd_wrs);
         wattroff(miscview, A_REVERSE);
 	wprintw(miscview, "Time   :% 14.3f ms\n", msec);
+	wprintw(miscview, "Speed  :% 14.3f %%\n", clock_ratio * 100);
 	wprintw(miscview, "HW     : nRF24LE1 @%0.1fMHz", clock_mhz);
     }
 

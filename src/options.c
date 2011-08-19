@@ -44,23 +44,23 @@ int opt_exception_acc_to_a = 1;
 int opt_exception_stack = 1;
 int opt_exception_invalid = 1;
 int opt_input_outputlow = 1;
-int opt_clock_select = 3;
+int opt_clock_select = 6;
 int opt_clock_hz = 16*1000*1000;
-int opt_step_instruction = 0;
+int opt_step_instruction = 1;
 
 const char *opt_flash_filename = "flash.bin";
 
 int clockspeeds[] = { 
-    33*1000*1000,
-    24*1000*1000, 
-    22*1000*1000, 
-    12*1000*1000, 
-    11*1000*1000, 
-       73728*100,
-     6*1000*1000,
-     5*1000*1000,
-       49152*100,
-     3*1000*1000,
+  1000*1000*1000,
+   100*1000*1000, 
+    72*1000*1000, 
+    64*1000*1000, 
+    32*1000*1000, 
+    20*1000*1000,
+    16*1000*1000,
+     8*1000*1000,
+     4*1000*1000,
+     2*1000*1000,
        1000*1000,
         100*1000
 };
@@ -185,7 +185,7 @@ void options_update(struct em8051 *aCPU)
     for (i = 0; i < 10; i++)
         mvprintw(i * 2 + 3, 2, "  ");
     attron(A_REVERSE);
-    mvprintw(3, 4, "< Hardware: 'super' 8051 >");
+    mvprintw(3, 4, "< Hardware: nRF24LE1 >");
     mvprintw(5, 4, "< Clock at % 8.3f MHz >", opt_clock_hz / (1000*1000.0f));
     mvprintw(9, 4, "< Step steps %s >", opt_step_instruction ? "single instruction" : "single cpu cycle  ");
     /*

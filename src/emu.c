@@ -64,7 +64,7 @@ int speed = 1;
 unsigned int icount = 0;
 
 // current clock count
-unsigned int clocks = 0;
+uint64_t clocks = 0;
 
 // currently active view
 int view = MAIN_VIEW;
@@ -77,21 +77,8 @@ int p3out = 0;
 
 int breakpoint = -1;
 
-/*
- * returns time in 1ms units
- *
- * This is actually kinda slow! Don't call it so often damnit! --beth
- */
-int getTick()
-{
-#ifdef _MSC_VER
-    return GetTickCount();
-#else
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    return now.tv_sec * 1000 + now.tv_usec / 1000;
-#endif
-}
+uint64_t target_clocks;
+uint32_t target_time;
 
 void emu_sleep(int value)
 {
@@ -104,6 +91,10 @@ void emu_sleep(int value)
 
 void setSpeed(int speed, int runmode)
 {   
+    // Reset timebase
+    target_clocks = clocks;
+    target_time = SDL_GetTicks();
+
     switch (speed)
     {
     case 7:
@@ -487,12 +478,12 @@ int main(int argc, char ** argv)
         case KEY_HOME:
             if (emu_reset(&emu))
             {
-                clocks = 0;
+                target_clocks = clocks = 0;
                 ticked = 1;
             }
             break;
         case KEY_END:
-            clocks = 0;
+            target_clocks = clocks = 0;
             ticked = 1;
             break;
         default:
@@ -514,21 +505,25 @@ int main(int argc, char ** argv)
 
         if (ch == 32 || runmode)
         {
-            int targettime;
-            unsigned int targetclocks;
-            targetclocks = 1;
-            targettime = getTick();
+	    /*
+	     * Put more time on the clock. This accumulates at every
+	     * iteration, so we'll compensate for any momentary errors
+	     * and settle on the correct average speed.
+	     */
 
             if (speed == 2 && runmode)
             {
-                targettime += 1;
-                targetclocks += (opt_clock_hz / 16000) - 1;
+                target_time += 1;
+                target_clocks += opt_clock_hz / 16000;
             }
+
             if (speed < 2 && runmode)
             {
 		// Run for at least 30ms between display refreshes
-		targettime += 30;  
-		targetclocks += (opt_clock_hz * 30 / 1000) - 1;
+		const int quanta = 30;
+
+		target_time += quanta;
+		target_clocks += opt_clock_hz / 1000 * quanta;
             }
 
             do
@@ -536,14 +531,24 @@ int main(int argc, char ** argv)
                 int old_pc;
                 old_pc = emu.mPC;
 
-                if (opt_step_instruction)
-                {
-		    /* Run one tick at a time (single step) */
+		if (speed == 0) {
+		    /*
+		     * Fastest speed. Run ticks in large batches, so we don't spend
+		     * all this CPU time in silly places like SDL_GetTicks() or ncurses.
+		     */
+
+		    while (target_clocks > clocks) {
+			clocks++;
+			tick(&emu);
+		    }
+                    ticked = 0;
+		}
+                else if (opt_step_instruction) {
+		    /* Keep running until we actually execute an instruction */
 
                     ticked = 0;
                     while (!ticked)
                     {
-                        targetclocks--;
                         clocks++;
                         ticked = tick(&emu);
                     }
@@ -551,26 +556,11 @@ int main(int argc, char ** argv)
 		    if (emu.mPC == breakpoint)
 			emu_exception(&emu, -1);
                 }
-                else if (speed == 0)
-                {
-		    /*
-		     * Fastest speed. Run ticks in large batches, so we don't spend
-		     * all this CPU time in silly places like getTick() or ncurses.
-		     */
-
-                    ticked = 0;
-		    while (targetclocks > 0) {
-			targetclocks--;
-			clocks++;
-			ticked = tick(&emu);
-		    }
-
-                } else {
+		else {
 		    /*
 		     * Generic, run one clock cycle.
 		     */
 
-                    targetclocks--;
                     clocks++;
 		    ticked = tick(&emu);
 		}
@@ -587,10 +577,12 @@ int main(int argc, char ** argv)
                     memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128 + 64, &old_pc, sizeof(int));
                 }
             }
-            while (targettime > getTick() && targetclocks > 0);
-
-            while (targettime > getTick())
+            while ((int32_t)(target_time - SDL_GetTicks()) > 0
+		   && target_clocks > clocks);
+	    
+            while ((int32_t)(target_time - SDL_GetTicks()) > 0)
             {
+		// Running too fast. Slow down a bit!
                 emu_sleep(1);
             }
         }
