@@ -15,6 +15,8 @@ OBJS = \
 	src/spi.o \
 	src/irq.o \
 
+CDEPS = src/*.h
+
 PY_PATH := /opt/local/bin:/usr/bin
 PYTHON  := python2.7
 
@@ -25,6 +27,9 @@ all: $(BIN) firmware flash.bin
 
 $(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+%.o: %.c $(CDEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 .PHONY: firmware clean
 

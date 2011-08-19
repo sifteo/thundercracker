@@ -38,179 +38,57 @@
 
 //#define static
 
-void mem_memonic(int aValue, char *aBuffer)
-{
-    int done = 0;
+static const char const *sfr_names[128] = {
+    "P0",        "SP",        "DPL",       "DPLH",     
+    "DPL1",      "DPH1",      "SFR_86",    "SFR_87",   
+    "TCON",      "TMOD",      "TL0",       "TL1",      
+    "TH0",       "TH1",       "SFR_8E",    "P3CON",    
+    "P1",        "SFR_91",    "DPS",       "P0DIR",    
+    "P1DIR",     "P2DIR",     "P3DIR",     "P2CON",    
+    "S0CON",     "S0BUF",     "SFR_9A",    "SFR_9B",   
+    "SFR_9C",    "SFR_9D",    "P0CON",     "P1CON",    
+    "P2",        "PWMDC0",    "PWMDC1",    "CLKCTRL",  
+    "PWRDWN",    "WUCON",     "INTEXP",    "MEMCON",   
+    "IEN0",      "IP0",       "S0RELL",    "RTC2CPT01",
+    "RTC2CPT10", "CLKLFCTRL", "OPMCON",    "WDSV",     
+    "P3",        "RSTREAS",   "PWMCON",    "RTC2CON",  
+    "RTC2CMP0",  "RTC2CMP1",  "RTC2CPT00", "SFR_B7",   
+    "IEN1",      "IP1",       "S0RELH",    "SFR_BB",   
+    "SPISCON0",  "SFR_BD",    "SPISSTAT",  "SPISDAT",  
+    "IRCON",     "CCEN",      "CCL1",      "CCH1",     
+    "CCL2",      "CCH2",      "CCL3",      "CCH3",     
+    "T2CON",     "MPAGE",     "CRCL",      "CRCH",     
+    "TL2",       "TH2",       "WUOPC1",    "WUOPC0",   
+    "PSW",       "ADCCON3",   "ADCCON2",   "ADCCON1",  
+    "ADCDATH",   "ADCDATL",   "RNGCTL",    "RNGDAT",   
+    "ADCON",     "W2SADR",    "W2DAT",     "COMPCON",  
+    "POFCON",    "CCPDATIA",  "CCPDATIB",  "CCPDATO",  
+    "ACC",       "W2CON1",    "W2CON0",    "SFR_E3",   
+    "SPIRCON0",  "SPIRCON1",  "SPIRSTAT",  "SPIRDAT",  
+    "RFCON",     "MD0",       "MD1",       "MD2",      
+    "MD3",       "MD4",       "MD5",       "ARCON",    
+    "B",         "SFR_F1",    "SFR_F2",    "SFR_F3",   
+    "SFR_F4",    "SFR_F5",    "SFR_F6",    "SFR_F7",   
+    "FSR",       "FPCR",      "FCR",       "SFR_FB",   
+    "SPIMCON0",  "SPIMCON1",  "SPIMSTAT",  "SPIMDAT",  
+};
 
+void mem_mnemonic(int aValue, char *aBuffer)
+{
     if (aValue > 0x7f)
-    {
-        switch (aValue - 0x80)
-        {
-        case REG_ACC:
-            strcpy(aBuffer, "ACC"); 
-            done = 1;
-            break;
-        case REG_B:
-            strcpy(aBuffer, "B");
-            done = 1;
-            break;
-        case REG_PSW:
-            strcpy(aBuffer, "PSW");
-            done = 1;
-            break;
-        case REG_SP:
-            strcpy(aBuffer, "SP");
-            done = 1;
-            break;
-        case REG_DPL:
-            strcpy(aBuffer, "DPL");
-            done = 1;
-            break;
-        case REG_DPH:
-            strcpy(aBuffer, "DPH");
-            done = 1;
-            break;
-        case REG_P0:
-            strcpy(aBuffer, "P0");
-            done = 1;
-            break;
-        case REG_P1:
-            strcpy(aBuffer, "P1");
-            done = 1;
-            break;
-        case REG_P2:
-            strcpy(aBuffer, "P2");
-            done = 1;
-            break;
-        case REG_P3:
-            strcpy(aBuffer, "P3");
-            done = 1;
-            break;
-        case REG_IP:
-            strcpy(aBuffer, "IP");
-            done = 1;
-            break;
-        case REG_IE:
-            strcpy(aBuffer, "IE");
-            done = 1;
-            break;
-        case REG_TMOD:
-            strcpy(aBuffer, "TMOD");
-            done = 1;
-            break;
-        case REG_TCON:
-            strcpy(aBuffer, "TCON");
-            done = 1;
-            break;
-        case REG_TH0:
-            strcpy(aBuffer, "TH0");
-            done = 1;
-            break;
-        case REG_TL0:
-            strcpy(aBuffer, "TL0");
-            done = 1;
-            break;
-        case REG_TH1:
-            strcpy(aBuffer, "TH1");
-            done = 1;
-            break;
-        case REG_TL1:
-            strcpy(aBuffer, "TL1");
-            done = 1;
-            break;
-        case REG_SCON:
-            strcpy(aBuffer, "SCON");
-            done = 1;
-            break;
-        case REG_PCON:
-            strcpy(aBuffer, "PCON");
-            done = 1;
-            break;
-        }
-    }
-    if (!done)
-    {
+	strcpy(aBuffer, sfr_names[aValue - 0x80]);
+    else
         sprintf(aBuffer, "%02Xh", aValue);
-    }
 }
 
-void bitaddr_memonic(int aValue, char *aBuffer)
+void bitaddr_mnemonic(int aValue, char *aBuffer)
 {
-    char regname[16];
+    char regname[32];
 
     if (aValue > 0x7f)
-    {
-        switch ((aValue & 0xf8) - 0x80)
-        {
-        case REG_ACC:
-            strcpy(regname, "ACC"); 
-            break;
-        case REG_B:
-            strcpy(regname, "B");
-            break;
-        case REG_PSW:
-            strcpy(regname, "PSW");
-            break;
-        case REG_SP:
-            strcpy(regname, "SP");
-            break;
-        case REG_DPL:
-            strcpy(regname, "DPL");
-            break;
-        case REG_DPH:
-            strcpy(regname, "DPH");
-            break;
-        case REG_P0:
-            strcpy(regname, "P0");
-            break;
-        case REG_P1:
-            strcpy(regname, "P1");
-            break;
-        case REG_P2:
-            strcpy(regname, "P2");
-            break;
-        case REG_P3:
-            strcpy(regname, "P3");
-            break;
-        case REG_IP:
-            strcpy(regname, "IP");
-            break;
-        case REG_IE:
-            strcpy(regname, "IE");
-            break;
-        case REG_TMOD:
-            strcpy(regname, "TMOD");
-            break;
-        case REG_TCON:
-            strcpy(regname, "TCON");
-            break;
-        case REG_TH0:
-            strcpy(regname, "TH0");
-            break;
-        case REG_TL0:
-            strcpy(regname, "TL0");
-            break;
-        case REG_TH1:
-            strcpy(regname, "TH1");
-            break;
-        case REG_TL1:
-            strcpy(regname, "TL1");
-            break;
-        case REG_SCON:
-            strcpy(regname, "SCON");
-            break;
-        case REG_PCON:
-            strcpy(regname, "PCON");
-            break;
-        default:
-            sprintf(regname, "%02Xh",(aValue & 0xF8));
-            break;
-        }
-    }
+	mem_mnemonic(aValue & 0xf8, regname);
     else
-    {
         sprintf(regname, "%02Xh", aValue >> 3);
-    }
 
     sprintf(aBuffer, "%s.%d", regname, aValue & 7);
 }
@@ -247,7 +125,7 @@ static int disasm_inc_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_inc_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"INC   %s",        
         mem);
     
@@ -263,8 +141,8 @@ static int disasm_inc_indir_rx(struct em8051 *aCPU, int aPosition, char *aBuffer
 
 static int disasm_jbc_bitaddr_offset(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"JBC   %s, #%+d",        
         baddr,
         (signed char)aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)]);
@@ -302,7 +180,7 @@ static int disasm_dec_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_dec_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"DEC   %s",        
         mem);
     
@@ -319,8 +197,8 @@ static int disasm_dec_indir_rx(struct em8051 *aCPU, int aPosition, char *aBuffer
 
 static int disasm_jb_bitaddr_offset(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"JB   %s, #%+d",        
         baddr,
         (signed char)aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)]);
@@ -348,7 +226,7 @@ static int disasm_add_a_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_add_a_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"ADD   A, %s",        
         mem);
     
@@ -364,8 +242,8 @@ static int disasm_add_a_indir_rx(struct em8051 *aCPU, int aPosition, char *aBuff
 
 static int disasm_jnb_bitaddr_offset(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"JNB   %s, #%+d",        
         baddr,
         (signed char)aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)]);
@@ -393,7 +271,7 @@ static int disasm_addc_a_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_addc_a_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"ADDC  A, %s",        
         mem);
     
@@ -417,7 +295,7 @@ static int disasm_jc_offset(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_orl_mem_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"ORL   %s, A",        
         mem);
     
@@ -426,7 +304,7 @@ static int disasm_orl_mem_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_orl_mem_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"ORL   %s, #%02Xh",        
         mem,
         aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)]);
@@ -443,7 +321,7 @@ static int disasm_orl_a_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_orl_a_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"ORL   A, %s",        
         mem);
     
@@ -467,7 +345,7 @@ static int disasm_jnc_offset(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_anl_mem_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"ANL   %s, A",
         mem);
     
@@ -476,7 +354,7 @@ static int disasm_anl_mem_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_anl_mem_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"ANL   %s, #%02Xh",        
         mem,
         aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)]);
@@ -493,7 +371,7 @@ static int disasm_anl_a_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_anl_a_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"ANL   A, %s",
         mem);
     
@@ -517,7 +395,7 @@ static int disasm_jz_offset(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_xrl_mem_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"XRL   %s, A",
         mem);
     
@@ -526,7 +404,7 @@ static int disasm_xrl_mem_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_xrl_mem_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"XRL   %s, #%02Xh",        
         mem,
         aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)]);
@@ -543,7 +421,7 @@ static int disasm_xrl_a_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_xrl_a_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"XRL   A, %s",
         mem);
     
@@ -567,8 +445,8 @@ static int disasm_jnz_offset(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_orl_c_bitaddr(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"ORL   C, %s",
         baddr);
     return 2;
@@ -589,7 +467,7 @@ static int disasm_mov_a_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_mov_mem_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"MOV   %s, #%02Xh",        
         mem,
         aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)]);
@@ -615,8 +493,8 @@ static int disasm_sjmp_offset(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_anl_c_bitaddr(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"ANL   C, %s",
         baddr);
     return 2;
@@ -636,10 +514,10 @@ static int disasm_div_ab(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_mov_mem_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem1[16];
-    char mem2[16];
-    mem_memonic(aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)], mem1);
-    mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem2);
+    char mem1[32];
+    char mem2[32];
+    mem_mnemonic(aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)], mem1);
+    mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem2);
     sprintf(aBuffer,"MOV   %s, %s",        
         mem1,
         mem2);
@@ -648,7 +526,7 @@ static int disasm_mov_mem_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_mov_mem_indir_rx(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"MOV   %s, @R%d",        
         mem,
         aCPU->mCodeMem[(aPosition)&(aCPU->mCodeMemSize-1)]&1);
@@ -667,8 +545,8 @@ static int disasm_mov_dptr_imm(struct em8051 *aCPU, int aPosition, char *aBuffer
 
 static int disasm_mov_bitaddr_c(struct em8051 *aCPU, int aPosition, char *aBuffer) 
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"MOV   %s, C",
         baddr);
     return 2;
@@ -689,7 +567,7 @@ static int disasm_subb_a_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_subb_a_mem(struct em8051 *aCPU, int aPosition, char *aBuffer) 
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"SUBB  A, %s",
         mem);
     
@@ -705,8 +583,8 @@ static int disasm_subb_a_indir_rx(struct em8051 *aCPU, int aPosition, char *aBuf
 
 static int disasm_orl_c_compl_bitaddr(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"ORL   C, /%s",
         baddr);
     return 2;
@@ -714,8 +592,8 @@ static int disasm_orl_c_compl_bitaddr(struct em8051 *aCPU, int aPosition, char *
 
 static int disasm_mov_c_bitaddr(struct em8051 *aCPU, int aPosition, char *aBuffer) 
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"MOV   C, %s",
         baddr);
     return 2;
@@ -735,7 +613,7 @@ static int disasm_mul_ab(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_mov_indir_rx_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"MOV   @R%d, %s",        
         aCPU->mCodeMem[(aPosition)&(aCPU->mCodeMemSize-1)]&1,
         mem);
@@ -746,8 +624,8 @@ static int disasm_mov_indir_rx_mem(struct em8051 *aCPU, int aPosition, char *aBu
 
 static int disasm_anl_c_compl_bitaddr(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"ANL   C, /%s",
         baddr);
     return 2;
@@ -756,8 +634,8 @@ static int disasm_anl_c_compl_bitaddr(struct em8051 *aCPU, int aPosition, char *
 
 static int disasm_cpl_bitaddr(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"CPL   %s",
         baddr);
     return 2;
@@ -779,7 +657,7 @@ static int disasm_cjne_a_imm_offset(struct em8051 *aCPU, int aPosition, char *aB
 
 static int disasm_cjne_a_mem_offset(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"CJNE  A, %s, #%+d",
         mem,
         (signed char)(aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)]));
@@ -797,7 +675,7 @@ static int disasm_cjne_indir_rx_imm_offset(struct em8051 *aCPU, int aPosition, c
 
 static int disasm_push_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"PUSH  %s",
         mem);
     
@@ -807,8 +685,8 @@ static int disasm_push_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_clr_bitaddr(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"CLR   %s",
         baddr);
     return 2;
@@ -828,7 +706,7 @@ static int disasm_swap_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_xch_a_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"XCH   A, %s",
         mem);
     
@@ -845,7 +723,7 @@ static int disasm_xch_a_indir_rx(struct em8051 *aCPU, int aPosition, char *aBuff
 
 static int disasm_pop_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"POP   %s",
         mem);
     
@@ -854,8 +732,8 @@ static int disasm_pop_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_setb_bitaddr(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char baddr[16];
-    bitaddr_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
+    char baddr[32];
+    bitaddr_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], baddr);
     sprintf(aBuffer,"SETB  %s",
         baddr);
     return 2;
@@ -875,7 +753,7 @@ static int disasm_da_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_djnz_mem_offset(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"DJNZ  %s, #%+d",        
         mem,
         (signed char)(aCPU->mCodeMem[(aPosition + 2)&(aCPU->mCodeMemSize-1)]));
@@ -911,7 +789,7 @@ static int disasm_clr_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_mov_a_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"MOV   A, %s",
         mem);
     
@@ -947,7 +825,7 @@ static int disasm_cpl_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_mov_mem_a(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"MOV   %s, A",
         mem);
     
@@ -1023,7 +901,7 @@ static int disasm_mov_rx_imm(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_mov_mem_rx(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"MOV   %s, R%d",
         mem,
         aCPU->mCodeMem[aPosition&(aCPU->mCodeMemSize-1)]&7);
@@ -1039,7 +917,7 @@ static int disasm_subb_a_rx(struct em8051 *aCPU, int aPosition, char *aBuffer)
 
 static int disasm_mov_rx_mem(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    char mem[16];mem_memonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
+    char mem[32];mem_mnemonic(aCPU->mCodeMem[(aPosition + 1)&(aCPU->mCodeMemSize-1)], mem);
     sprintf(aBuffer,"MOV   R%d, %s",
         aCPU->mCodeMem[aPosition&(aCPU->mCodeMemSize-1)]&7,
         mem);
