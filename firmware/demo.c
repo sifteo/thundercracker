@@ -416,6 +416,13 @@ void lcd_render_tiles_8x8_16bit_20wide(uint8_t pan_x, uint8_t pan_y)
     do {
 	uint8_t x;
 
+	/*
+	 * XXX: There is a HUGE optimization opportunity here with regard to map addressing.
+	 *      The dptr manipulation code that SDCC generates here is very bad... and it's
+	 *      possible we might want to use some of the nRF24LE1's specific features, like
+	 *      the PDATA addressing mode.
+	 */
+
 	// First tile on the line, (1 <= width <= 8)
 	ADDR_PORT = *(map++);
 	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
@@ -646,17 +653,15 @@ int8_t sin8(uint8_t angle)
     }
 }
 
-void lcd_render_affine_64x64(uint8_t segment, uint8_t angle, uint8_t scale)
+// This is the magic size, 64x128, 16KB, 14 bits. Make it part of your consciousness.
+void lcd_render_affine_64x128(uint8_t segment, uint8_t angle, uint8_t scale)
 {
     uint8_t y, x;
-    int16_t x_acc = 0;
-    int16_t y_acc = 0;
+    uint16_t x_acc = 0;
+    uint16_t y_acc = 0;
     
-    int16_t sin_val = (sin8(angle) * (int16_t)scale) >> 6;
-    int16_t cos_val = (sin8(ANGLE_90 - angle) * (int16_t)scale) >> 6;
-
-    uint8_t sx, sy, osx = 0xFF, osy = 0xFF;
-    uint8_t addr;
+    register uint16_t sin_val = (sin8(angle) * (int16_t)scale) >> 6;
+    register uint16_t cos_val = (sin8(ANGLE_90 - angle) * (int16_t)scale) >> 6;
 
     // We keep the segment constant. Everything has to fit in 16 kB for this mode.
     ADDR_PORT = segment;
@@ -664,38 +669,23 @@ void lcd_render_affine_64x64(uint8_t segment, uint8_t angle, uint8_t scale)
 
     y = LCD_HEIGHT;
     do {
-	int16_t x_acc_row = x_acc;
-	int16_t y_acc_row = y_acc;
+	register uint16_t x_acc_row = x_acc;
+	register uint16_t y_acc_row = y_acc;
 
-	x = LCD_WIDTH;
+	x = LCD_WIDTH / 4;
 	do {
-	    x_acc_row += cos_val;
-	    y_acc_row += sin_val;
 
-	    sx = x_acc_row >> 8;
-	    sy = y_acc_row >> 8;
-
-	    /*
-	     * XXX: Could speed this up by replacing these explicit comparisons
-	     *      with inline asm that uses the flags resulting from updating
-	     *      the low byte of x_acc_row/y_acc_row. We already know whether
-	     *      we switched pixels, since it was a byte overflow!
-	     */
-
-	    if (sy != osy) {
-		CTRL_PORT = CTRL_IDLE;
-		ADDR_PORT = (sy << 1) & 0x7E;
-		CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-		osy = sy;
-	    }
-
-	    if (sx != osx) {
-		addr = sx << 2;
-		osx = sx;
-	    }
-
-	    ADDR_PORT = addr;
+#define AFFINE_PIXEL()					       		\
+	    CTRL_PORT = CTRL_FLASH_OUT;					\
+	    ADDR_PORT = (uint8_t)((y_acc_row += sin_val) >> 8) << 1;	\
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
+	    ADDR_PORT = (uint8_t)((x_acc_row += cos_val) >> 8) << 2;	\
 	    ADDR_INC4();
+
+	    AFFINE_PIXEL();
+	    AFFINE_PIXEL();
+	    AFFINE_PIXEL();
+	    AFFINE_PIXEL();
 
 	} while (--x);
 
@@ -733,7 +723,7 @@ uint32_t xor128(void)
 
 void text_char(uint8_t x, uint8_t y, char c)
 {
-    const uint32_t base_addr = 0x8e000 >> 7;
+    const uint32_t base_addr = 0x90000 >> 7;
 
     uint16_t char_index = c - ' ';
     uint16_t addr = base_addr + (char_index << 1);
@@ -871,7 +861,7 @@ void demo_rotozoom(void)
     for (frame = 0; frame < 128; frame++) {
 	uint8_t frame_l = frame;
 	lcd_cmd_byte(LCD_CMD_RAMWR);
-	lcd_render_affine_64x64(0x8c000 >> 13, 0xc0 - frame, 0xa0 - frame);
+	lcd_render_affine_64x128(0x8c000 >> 13, 0xc0 - frame, 0xa0 - frame);
     }
 }	
 
@@ -925,13 +915,13 @@ void main(void)
     hardware_init();
 
     while (1) {
-	demo_text();
-	demo_fullscreen_bg();
-	demo_owlbear_sprite();
-	demo_owlbear_chromakey();
-	demo_gems();
-	demo_tile_panning();
-	demo_monsters();
+	//demo_text();
+	//demo_fullscreen_bg();
+	//demo_owlbear_sprite();
+	//demo_owlbear_chromakey();
+	//demo_gems();
+	//demo_tile_panning();
+	//demo_monsters();
 	demo_rotozoom();
     }
 }

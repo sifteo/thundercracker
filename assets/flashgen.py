@@ -44,14 +44,15 @@ imageToRGB565(f, Image.open("assets/gem-tiles.png"))
 f.seek(0x88000)
 imageToRGB565(f, Image.open("assets/monsters.png"), ckey=0x4FF5)
 
-# 0x08C000 - 0x08DFFF : 64x64 terrain background
+# 0x08C000 - 0x08FFFF : 64x128 terrain background
 f.seek(0x8c000)
 imageToRGB565(f, Image.open("assets/terrain64.png"))
+imageToRGB565(f, Image.open("assets/terrain64.png"))
 
-# 0x08E000 - 0x093FFF : 8x16 font, Droid Sans Mono (open source)
-f.seek(0x8e000)
+# 0x090000 - 0x097FFF : 8x16 font, Droid Sans Mono (open source)
+f.seek(0x90000)
 imageToRGB565(f, Image.open("assets/font-tiles.png"))
 
-# 0x094000 : 8x8 tile base address
-f.seek(0x94000)
+# 0x098000 : 8x8 tile base address
+f.seek(0x98000)
 imageToRGB565(f, Image.open("assets/tiles.png"))
