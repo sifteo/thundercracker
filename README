@@ -34,11 +34,12 @@ On Mac OS, I used MacPorts to install the dependencies:
 Usage
 -----
 
-After "make" finishes, you should have a "cube51-sim" binary, a
-"demo.ihx" firmware image, and "flash.bin" asset image.
+After "make" finishes, you should have a "cube51-sim" binary, some
+.ihx firmware images in the "firmware" directory, and a populated
+"flash.bin" asset image.
 
 Run:
-  ./cube51-sim demo.ihx
+  ./cube51-sim firmware/demo.ihx
 
 This will load the compiled firmware into the simulator, and start it
 running. The 'h' key will open help for the console, so you can see
