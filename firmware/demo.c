@@ -824,7 +824,7 @@ void demo_monsters(void)
     }
 }
 
-// Full-screen ackground only
+// Full-screen background only
 void demo_fullscreen_bg(void)
 {
     uint16_t frame;
