@@ -28,6 +28,8 @@
  * Curses-based emulator front-end
  */
 
+#include <SDL.h>   // For SDL's main() wrapper
+
 #ifdef _MSC_VER
 #include <windows.h>
 #undef MOUSE_MOVED
