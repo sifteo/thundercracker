@@ -926,13 +926,13 @@ void main(void)
     hardware_init();
 
     while (1) {
-	//demo_text();
-	//demo_fullscreen_bg();
-	//demo_owlbear_sprite();
-	//demo_owlbear_chromakey();
-	//demo_gems();
-	//demo_tile_panning();
-	//demo_monsters();
+	demo_text();
+	demo_fullscreen_bg();
+	demo_owlbear_sprite();
+	demo_owlbear_chromakey();
+	demo_gems();
+	demo_tile_panning();
+	demo_monsters();
 	demo_rotozoom();
     }
 }
