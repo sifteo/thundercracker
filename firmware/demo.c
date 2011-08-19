@@ -925,14 +925,43 @@ void main(void)
 {
     hardware_init();
 
+    /*
+     * Other video modes to try:
+     *
+     *  - Low-res framebuffer modes
+     *
+     *      - 64x64, 2-bit indexed color
+     *      - 32x32, 4-bit indexed color, smooth panning
+     *      - 32x32, 8-bit indexed color
+     *      - 32x32, 8-bit RGB
+     *
+     *  - "Master" tile/sprite mode: A generic and pretty featureful
+     *    mode for which we can implement optimized subsets when
+     *    particular features aren't in use.
+     *
+     *      - 8 sprites on an 8x8-pixel 20x20 tile bg
+     *      - 8 normal sprites, colorkeyed 64x128 affine sprite, tile BG
+     *      - 8 sprites, each with one of 2 affine transforms optionally
+     *        applied, tile BG with optional affine transform
+     *
+     *  - Tile rotation? Try using the two reserved tile index bits
+     *    to change tile orientation?
+     *
+     *  - "Bootstrap" mode, for an idle screen that we show when
+     *    cubes are disconnected. Also used for asset upload progress.
+     *
+     *      - Shouldn't make use of either xdata or flash!
+     *      - Could use very small tileset, 2-bit pallette, from code memory
+     */
+     
     while (1) {
-	demo_text();
-	demo_fullscreen_bg();
-	demo_owlbear_sprite();
-	demo_owlbear_chromakey();
-	demo_gems();
-	demo_tile_panning();
-	demo_monsters();
-	demo_rotozoom();
+        demo_text();
+        demo_fullscreen_bg();
+        demo_owlbear_sprite();
+        demo_owlbear_chromakey();
+        demo_gems();
+        demo_tile_panning();
+        demo_monsters();
+        demo_rotozoom();
     }
 }
