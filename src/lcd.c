@@ -30,6 +30,8 @@
 static struct {
     SDL_Thread *thread;
     SDL_Surface *surface;
+    SDL_sem *initSem;
+
     int is_running;
     int need_repaint;
     uint32_t write_count;
@@ -81,6 +83,10 @@ static int lcd_thread(void *param)
 
     SDL_WM_SetCaption("Simulated LCD", NULL);
 
+    // Initialization finished after we've redrawn once
+    lcd_repaint();
+    SDL_SemPost(lcd.initSem);
+
     while (lcd.is_running) {
 	if (lcd.need_repaint) {
 	    lcd.need_repaint = 0;
@@ -105,15 +111,40 @@ static void lcd_reset(void)
 
 void lcd_init(void)
 {
+    SDL_Init(SDL_INIT_VIDEO);
     lcd_reset();
     lcd.is_running = 1;
+
+    lcd.initSem = SDL_CreateSemaphore(0);
     lcd.thread = SDL_CreateThread(lcd_thread, NULL);
+    SDL_SemWait(lcd.initSem);
 }
 
 void lcd_exit(void)
 {
+    /*
+     * XXX: Let the thred die on its own. SDL_Quit and SDL_WaitThread
+     *      are both crashing on my Mac, somewhere deep in pthread
+     *      code.
+     */
     lcd.is_running = 0;
-    SDL_WaitThread(lcd.thread, NULL);
+}
+
+int lcd_eventloop(void)
+{
+    SDL_Event event;
+    
+    while (SDL_PollEvent(&event)) {
+	switch (event.type) {
+	    
+	case SDL_QUIT:
+	    return 1;
+	    break;
+	    
+	}
+    }
+
+    return 0;
 }
 
 static inline uint8_t clamp(uint8_t val, uint8_t min, uint8_t max)

@@ -24,6 +24,7 @@ struct lcd_pins {
 
 void lcd_init(void);
 void lcd_exit(void);
+int lcd_eventloop(void);
 
 uint32_t lcd_write_count(void);
 void lcd_cycle(struct lcd_pins *pins);

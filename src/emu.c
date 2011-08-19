@@ -359,6 +359,19 @@ int main(int argc, char ** argv)
             }
         }
     }
+   
+    /*
+     * Init hardware earlyish. Initializing the LCD controller will create an SDL window.
+     *
+     * On Mac OS, due to some ugly SDL threading quirks, we get some
+     * warnings on the console during the first redraw. We would
+     * prefer to get the unpleasantness over with early, then repaint
+     * over the screen when we init ncurses.  On a less kludgey note,
+     * this also allows us to bail out if there's an error without
+     * having to worry about putting the console back into a usable
+     * state.
+     */
+    hardware_init(&emu);
 
     //  Initialize ncurses
 
@@ -380,28 +393,15 @@ int main(int argc, char ** argv)
     slk_set(7, "home=rst", 0);
     slk_set(8, "s-Q)quit", 0);
     setSpeed(speed, runmode);
-   
-    SDL_Init(SDL_INIT_VIDEO);
-    hardware_init(&emu);
-    build_main_view(&emu);
 
-    /*
-     * Unified event loop... we need to handle both SDL and ncurses
-     * events on the main thread.
-     */
+    // Draw the first screen
+    build_main_view(&emu);
 
     do
     {
-	SDL_Event event;
-	while (SDL_PollEvent(&event)) {
-	    switch (event.type) {
-
-	    case SDL_QUIT:
-		ch = 'Q';
-		break;
-
-	    }
-	}
+	// Need to handle SDL events on the main thread!
+	if (lcd_eventloop())
+	    break;
 
         if (LINES != oldrows ||
             COLS != oldcols)
@@ -605,7 +605,6 @@ int main(int argc, char ** argv)
 
     endwin();
     hardware_exit();
-    SDL_Quit();
     
     return EXIT_SUCCESS;
 }
