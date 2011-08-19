@@ -56,9 +56,9 @@ int historyline = 0;
 // last known columns and rows; for screen resize detection
 int oldcols, oldrows;
 // are we in single-step or run mode
-int runmode = 1;
+int runmode = 0;
 // current run speed, lower is faster
-int speed = 0;
+int speed = 1;
 
 // instruction count; needed to replay history correctly
 unsigned int icount = 0;
@@ -354,6 +354,13 @@ int main(int argc, char ** argv)
                 }
                 else
                 {
+		    /*
+		     * Loaded firmware successfully. Remember the
+		     * file, and start running it full-speed!
+		     */
+		    
+		    runmode = 1;
+		    speed = 0;
                     strcpy(filename, argv[i]);
                 }
             }
