@@ -14,6 +14,9 @@ OBJS = \
 	src/lcd.o \
 	src/flash.o \
 
+PY_PATH := /opt/local/bin:/usr/bin
+PYTHON  := python2.7
+
 CFLAGS += -O3 -Werror $(shell pkg-config --cflags sdl)
 LDFLAGS += -lncurses $(shell pkg-config --libs sdl)
 
@@ -28,7 +31,7 @@ firmware:
 	make -C firmware
 
 flash.bin: assets/flashgen.py assets/*.png
-	python $<
+	PATH=$(PY_PATH) $(PYTHON) $<
 
 clean:
 	rm -f $(BIN) $(OBJS) flash.bin *.ihx
