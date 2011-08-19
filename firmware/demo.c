@@ -657,10 +657,12 @@ int8_t sin8(uint8_t angle)
 void lcd_render_affine_64x128(uint8_t segment, uint8_t angle, uint8_t scale)
 {
     uint8_t y, x;
-    uint16_t x_acc = 0;
-    uint16_t y_acc = 0;
+
+    uint16_t x_acc = 0x80;  // 1/2 texel rounding adjustment
+    uint16_t y_acc = 0x80;
     
-    register uint16_t sin_val = (sin8(angle) * (int16_t)scale) >> 6;
+    uint16_t sin_val = (sin8(angle) * (int16_t)scale) >> 6;
+    register uint16_t sin2_val = sin_val + sin_val;
     register uint16_t cos_val = (sin8(ANGLE_90 - angle) * (int16_t)scale) >> 6;
 
     // We keep the segment constant. Everything has to fit in 16 kB for this mode.
@@ -672,20 +674,29 @@ void lcd_render_affine_64x128(uint8_t segment, uint8_t angle, uint8_t scale)
 	register uint16_t x_acc_row = x_acc;
 	register uint16_t y_acc_row = y_acc;
 
-	x = LCD_WIDTH / 4;
+	x = LCD_WIDTH / 8;
 	do {
 
-#define AFFINE_PIXEL()					       		\
+	    /*
+	     * For speed, output unrolled bursts of two pixels, with
+	     * only half-precision on the Y texture axis. This causes
+	     * some additional rotation artifacts, but when the texture
+	     * is nearly right-side-up the artifacts are minimal.
+	     */
+
+#define AFFINE_PIXELS()					       	\
 	    CTRL_PORT = CTRL_FLASH_OUT;					\
-	    ADDR_PORT = (uint8_t)((y_acc_row += sin_val) >> 8) << 1;	\
+	    ADDR_PORT = (uint8_t)((y_acc_row += sin2_val) >> 8) << 1;	\
 	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;		\
+	    ADDR_PORT = (uint8_t)((x_acc_row += cos_val) >> 8) << 2;	\
+	    ADDR_INC4();						\
 	    ADDR_PORT = (uint8_t)((x_acc_row += cos_val) >> 8) << 2;	\
 	    ADDR_INC4();
 
-	    AFFINE_PIXEL();
-	    AFFINE_PIXEL();
-	    AFFINE_PIXEL();
-	    AFFINE_PIXEL();
+	    AFFINE_PIXELS();
+	    AFFINE_PIXELS();
+	    AFFINE_PIXELS();
+	    AFFINE_PIXELS();
 
 	} while (--x);
 
@@ -861,7 +872,7 @@ void demo_rotozoom(void)
     for (frame = 0; frame < 128; frame++) {
 	uint8_t frame_l = frame;
 	lcd_cmd_byte(LCD_CMD_RAMWR);
-	lcd_render_affine_64x128(0x8c000 >> 13, 0xc0 - frame, 0xa0 - frame);
+	lcd_render_affine_64x128(0x8c000 >> 13, -frame, 0xa0 - frame);
     }
 }	
 
