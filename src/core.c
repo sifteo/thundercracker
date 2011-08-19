@@ -1,7 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*- */
 
 /* 8051 emulator core
- * Copyright 2006 Jari Komppa
+ * Copyright (c) 2006 Jari Komppa
  *
  * Permission is hereby granted, free of charge, to any person obtaining 
  * a copy of this software and associated documentation files (the 
@@ -32,13 +32,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "emu8051.h"
+#include "hardware.h"
+
+void disasm_setptrs(struct em8051 *aCPU);
+void op_setptrs(struct em8051 *aCPU);
+void handle_interrupts(struct em8051 *aCPU);
+
 
 static void timer_tick(struct em8051 *aCPU)
 {
     int increment;
     int v;
-
-    // TODO: External int 0 flag
 
     if ((aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0)) == (TMODMASK_M0_0 | TMODMASK_M1_0))
     {
@@ -187,8 +191,6 @@ static void timer_tick(struct em8051 *aCPU)
         }
     }
 
-    // TODO: External int 1 
-
     {   // Timer/counter 1 
         
         increment = 0;
@@ -268,141 +270,6 @@ static void timer_tick(struct em8051 *aCPU)
             }
         }
     }
-
-    // TODO: serial port, timer2, other stuff
-}
-
-void handle_interrupts(struct em8051 *aCPU)
-{
-    int dest_ip = -1;
-    int hi = 0;
-    int lo = 0;
-
-    // can't interrupt high level
-    if (aCPU->mInterruptActive > 1) 
-        return;    
-
-    if (aCPU->mSFR[REG_IE] & IEMASK_EA)
-    {
-        // Interrupts enabled
-        if (aCPU->mSFR[REG_IE] & IEMASK_EX0 && aCPU->mSFR[REG_TCON] & TCONMASK_IE0)
-        {
-            // External int 0 
-            dest_ip = 0x3;
-            if (aCPU->mSFR[REG_IP] & IPMASK_PX0)
-                hi = 1;
-            lo = 1;
-        }
-        if (aCPU->mSFR[REG_IE] & IEMASK_ET0 && aCPU->mSFR[REG_TCON] & TCONMASK_TF0 && !hi)
-        {
-            // Timer/counter 0 
-            if (!lo)
-            {
-                dest_ip = 0xb;
-                lo = 1;
-            }
-            if (aCPU->mSFR[REG_IP] & IPMASK_PT0)
-            {
-                hi = 1;
-                dest_ip = 0xb;
-            }
-        }
-        if (aCPU->mSFR[REG_IE] & IEMASK_EX1 && aCPU->mSFR[REG_TCON] & TCONMASK_IE1 && !hi)
-        {
-            // External int 1 
-            if (!lo)
-            {
-                dest_ip = 0x13;
-                lo = 1;
-            }
-            if (aCPU->mSFR[REG_IP] & IPMASK_PX1)
-            {
-                hi = 1;
-                dest_ip = 0x13;
-            }
-        }
-        if (aCPU->mSFR[REG_IE] & IEMASK_ET1 && aCPU->mSFR[REG_TCON] & TCONMASK_TF1 && !hi)
-        {
-            // Timer/counter 1 enabled
-            if (!lo)
-            {
-                dest_ip = 0x1b;
-                lo = 1;
-            }
-            if (aCPU->mSFR[REG_IP] & IPMASK_PT1)
-            {
-                hi = 1;
-                dest_ip = 0x1b;
-            }
-        }
-        if (aCPU->mSFR[REG_IE] & IEMASK_ES && !hi)
-        {
-            // Serial port interrupt 
-            if (!lo)
-            {
-                dest_ip = 0x23;
-                lo = 1;
-            }
-            if (aCPU->mSFR[REG_IP] & IPMASK_PS)
-            {
-                hi = 1;
-                dest_ip = 0x23;
-            }
-            // TODO
-        }
-        if (aCPU->mSFR[REG_IE] & IEMASK_ET2 && !hi)
-        {
-            // Timer 2 (8052 only)
-            if (!lo)
-            {
-                dest_ip = 0x2b; // guessed
-                lo = 1;
-            }
-            if (aCPU->mSFR[REG_IP] & IPMASK_PT2)
-            {
-                hi = 1;
-                dest_ip = 0x2b; // guessed
-            }
-            // TODO
-        }
-    }
-    
-    // no interrupt
-    if (dest_ip == -1)
-        return;
-
-    // can't interrupt same-level
-    if (aCPU->mInterruptActive == 1 && !hi)
-        return; 
-
-    // some interrupt occurs; perform LCALL
-    push_to_stack(aCPU, aCPU->mPC & 0xff);
-    push_to_stack(aCPU, aCPU->mPC >> 8);
-    aCPU->mPC = dest_ip;
-    // wait for 2 ticks instead of one since we were not executing
-    // this LCALL before.
-    aCPU->mTickDelay = 2;
-    switch (dest_ip)
-    {
-    case 0xb:
-        aCPU->mSFR[REG_TCON] &= ~TCONMASK_TF0; // clear overflow flag
-        break;
-    case 0x1b:
-        aCPU->mSFR[REG_TCON] &= ~TCONMASK_TF1; // clear overflow flag
-        break;
-    }
-
-    if (hi)
-    {
-        aCPU->mInterruptActive |= 2;
-    }
-    else
-    {
-        aCPU->mInterruptActive = 1;
-    }
-    aCPU->int_a[hi] = aCPU->mSFR[REG_ACC];
-    aCPU->int_psw[hi] = aCPU->mSFR[REG_PSW];
-    aCPU->int_sp[hi] = aCPU->mSFR[REG_SP];
 }
 
 int tick(struct em8051 *aCPU)
@@ -437,6 +304,7 @@ int tick(struct em8051 *aCPU)
     }
 
     timer_tick(aCPU);
+    hardware_tick(aCPU);
 
     return ticked;
 }
@@ -445,9 +313,6 @@ int decode(struct em8051 *aCPU, int aPosition, unsigned char *aBuffer)
 {
     return aCPU->dec[aCPU->mCodeMem[aPosition & (aCPU->mCodeMemSize - 1)]](aCPU, aPosition, aBuffer);
 }
-
-void disasm_setptrs(struct em8051 *aCPU);
-void op_setptrs(struct em8051 *aCPU);
 
 void reset(struct em8051 *aCPU, int aWipe)
 {
@@ -477,7 +342,7 @@ void reset(struct em8051 *aCPU, int aWipe)
     op_setptrs(aCPU);
 
     // Clean internal variables
-    aCPU->mInterruptActive = 0;
+    aCPU->irq_count = 0;
 }
 
 

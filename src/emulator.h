@@ -85,7 +85,6 @@ extern const char *opt_flash_filename;
 
 
 // emu.c
-extern int getTick();
 extern void setSpeed(int speed, int runmode);
 extern void refreshview(struct em8051 *aCPU);
 extern void change_view(struct em8051 *aCPU, int changeto);

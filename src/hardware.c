@@ -36,17 +36,6 @@
 #include "flash.h"
 #include "spi.h"
 
-/* Vendor-specific SFRs on the nRF24LE1 */
-#define REG_P0DIR       (0x93 - 0x80)
-#define REG_P1DIR       (0x94 - 0x80)
-#define REG_P2DIR       (0x95 - 0x80)
-#define REG_P3DIR       (0x96 - 0x80)
-#define REG_SPIRCON0    (0xE4 - 0x80)
-#define REG_SPIRCON1    (0xE5 - 0x80)
-#define REG_SPIRSTAT    (0xE6 - 0x80)
-#define REG_SPIRDAT     (0xE7 - 0x80)
-#define REG_RFCON       (0xE8 - 0x80)
-
 static struct {
     uint8_t lat1;
     uint8_t lat2;
@@ -68,10 +57,10 @@ void hardware_init(struct em8051 *cpu)
     cpu->mSFR[REG_P2DIR] = 0xFF;
     cpu->mSFR[REG_P3DIR] = 0xFF;
     
-    cpu->mSFR[REG_SPIRCON0] = 0x01;
-    cpu->mSFR[REG_SPIRCON1] = 0x0F;
-    cpu->mSFR[REG_SPIRSTAT] = 0x03;
-    cpu->mSFR[REG_SPIRDAT] = 0x00;
+    cpu->mSFR[REG_SRCON0] = 0x01;
+    cpu->mSFR[REG_SRCON1] = 0x0F;
+    cpu->mSFR[REG_SRSTAT] = 0x03;
+    cpu->mSFR[REG_SRDAT] = 0x00;
     cpu->mSFR[REG_RFCON] = 0x02;
  
     //hw.radio_spi.callback = radio_spi_cb;
@@ -151,10 +140,11 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
     case REG_P0DIR:
     case REG_P1DIR:
     case REG_P2DIR:
+	// Only need to simulate the graphics subsystem when a relevant SFR write occurs
         hardware_gfx_tick(cpu);
         break;
             
-    case REG_SPIRDAT:
+    case REG_SRDAT:
         spi_write_data(&hw.radio_spi, cpu->mSFR[reg]);
         break;
 
@@ -166,10 +156,16 @@ int hardware_sfrread(struct em8051 *cpu, int reg)
     reg -= 0x80;
     switch (reg) {
      
-    case REG_SPIRDAT:
+    case REG_SRDAT:
         return spi_read_data(&hw.radio_spi);
             
     default:    
         return cpu->mSFR[reg];
     }
+}
+
+void hardware_tick(struct em8051 *cpu)
+{
+    if (spi_tick(&hw.radio_spi, &cpu->mSFR[REG_SRCON0]))
+	cpu->mSFR[REG_IRCON] |= IRCON_RFSPI;
 }

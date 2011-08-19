@@ -28,6 +28,11 @@
  * Emulator core header file
  */
 
+#ifndef __EMU8051_H
+#define __EMU8051_H
+
+#include <stdint.h>
+
 struct em8051;
 
 // Operation: returns number of ticks the operation should take
@@ -59,6 +64,8 @@ typedef void (*em8051xwrite)(struct em8051 *aCPU, int aAddress, int aValue);
 typedef int (*em8051xread)(struct em8051 *aCPU, int aAddress);
 
 
+#define NUM_IRQ_LEVELS  4
+
 struct em8051
 {
     unsigned char *mCodeMem; // 1k - 64k, must be power of 2
@@ -78,12 +85,15 @@ struct em8051
     em8051xread xread; // callback: external memory being read
     em8051xwrite xwrite; // callback: external memory being written
 
-    // Internal values for interrupt services etc.
-    int mInterruptActive;
-    // Stored register values for interrupts (exception checking)
-    int int_a[2];
-    int int_psw[2];
-    int int_sp[2];
+    uint8_t irq_count;		// Number of currently active IRQ handlers
+
+    struct {
+	// Stored register values for sanity-checking ISRs
+	uint8_t a, psw, sp;
+
+	// Priority of *this* interrupt handler
+	uint8_t priority;
+    } irql[NUM_IRQ_LEVELS];
 };
 
 // set the emulator into reset state. Must be called before tick(), as
@@ -113,26 +123,38 @@ void push_to_stack(struct em8051 *aCPU, int aValue);
 // SFR register locations
 enum SFR_REGS
 {
-    REG_ACC = 0xE0 - 0x80,
-    REG_B   = 0xF0 - 0x80,
-    REG_PSW = 0xD0 - 0x80,
-    REG_SP  = 0x81 - 0x80,
-    REG_DPL = 0x82 - 0x80,
-    REG_DPH = 0x83 - 0x80,
-    REG_P0  = 0x80 - 0x80,
-    REG_P1  = 0x90 - 0x80,
-    REG_P2  = 0xA0 - 0x80,
-    REG_P3  = 0xB0 - 0x80,
-    REG_IP  = 0xB8 - 0x80,
-    REG_IE  = 0xA8 - 0x80,
-    REG_TMOD = 0x89 - 0x80,
-    REG_TCON = 0x88 - 0x80,
-    REG_TH0 = 0x8C - 0x80,
-    REG_TL0 = 0x8A - 0x80,
-    REG_TH1 = 0x8D - 0x80,
-    REG_TL1 = 0x8B - 0x80,
-    REG_SCON = 0x98 - 0x80,
-    REG_PCON = 0x87 - 0x80
+    REG_P0	= 0x80 - 0x80,
+    REG_SP	= 0x81 - 0x80,
+    REG_DPL	= 0x82 - 0x80,
+    REG_DPH	= 0x83 - 0x80,
+    REG_PCON	= 0x87 - 0x80,
+    REG_TCON	= 0x88 - 0x80,
+    REG_TMOD	= 0x89 - 0x80,
+    REG_TL0	= 0x8A - 0x80,
+    REG_TL1	= 0x8B - 0x80,
+    REG_TH1	= 0x8D - 0x80,
+    REG_TH0	= 0x8C - 0x80,
+    REG_P1	= 0x90 - 0x80,
+    REG_P0DIR	= 0x93 - 0x80,	// Pin directions
+    REG_P1DIR	= 0x94 - 0x80,
+    REG_P2DIR	= 0x95 - 0x80,
+    REG_P3DIR	= 0x96 - 0x80,
+    REG_S0CON	= 0x98 - 0x80,
+    REG_P2	= 0xA0 - 0x80,
+    REG_IEN0	= 0xA8 - 0x80,
+    REG_IP0	= 0xA9 - 0x80,
+    REG_P3	= 0xB0 - 0x80,
+    REG_IEN1	= 0xB8 - 0x80,
+    REG_IP1	= 0xB9 - 0x80,
+    REG_IRCON	= 0xC0 - 0x80,
+    REG_PSW	= 0xD0 - 0x80,
+    REG_ACC	= 0xE0 - 0x80,
+    REG_SRCON0	= 0xE4 - 0x80,	// Radio SPI Port
+    REG_SRCON1	= 0xE5 - 0x80,
+    REG_SRSTAT	= 0xE6 - 0x80,
+    REG_SRDAT	= 0xE7 - 0x80,
+    REG_RFCON	= 0xE8 - 0x80,	// Radio control
+    REG_B	= 0xF0 - 0x80,
 };
 
 enum PSW_BITS
@@ -159,16 +181,35 @@ enum PSW_MASKS
     PSWMASK_C = 0x80
 };
 
-enum IE_MASKS
+enum IRQ_MASKS
 {
-    IEMASK_EX0 = 0x01,
-    IEMASK_ET0 = 0x02,
-    IEMASK_EX1 = 0x04,
-    IEMASK_ET1 = 0x08,
-    IEMASK_ES  = 0x10,
-    IEMASK_ET2 = 0x20,
-    IEMASK_UNUSED = 0x40,
-    IEMASK_EA  = 0x80
+    IRQM0_IFP	= (1 << 0),
+    IRQM0_TF0	= (1 << 1),
+    IRQM0_PFAIL	= (1 << 2),
+    IRQM0_TF1	= (1 << 3),
+    IRQM0_SER	= (1 << 4),
+    IRQM0_TF2	= (1 << 5),
+    IRQM0_EN	= (1 << 7),
+
+    IRQM1_RFSPI	= (1 << 0),
+    IRQM1_RF	= (1 << 1),
+    IRQM1_SPI	= (1 << 2),
+    IRQM1_WUOP	= (1 << 3),
+    IRQM1_MISC	= (1 << 4),
+    IRQM1_TICK	= (1 << 5),
+    IRQM1_TMR2EX = (1 << 7),
+};
+
+enum IRCON_MASKS
+{
+    IRCON_RFSPI	= (1 << 0),
+    IRCON_RF	= (1 << 1),
+    IRCON_SPI	= (1 << 2),
+    IRCON_WUOP	= (1 << 3),
+    IRCON_MISC	= (1 << 4),
+    IRCON_TICK	= (1 << 5),
+    IRCON_TF2	= (1 << 6),
+    IRCON_EXF2	= (1 << 7),
 };
 
 enum PT_MASKS
@@ -228,3 +269,4 @@ enum EM8051_EXCEPTION
     EXCEPTION_BUS_CONTENTION,    // Hardware bus contention
 };
 
+#endif

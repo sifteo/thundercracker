@@ -459,26 +459,27 @@ static int jnb_bitaddr_offset(struct em8051 *aCPU)
 
 static int reti(struct em8051 *aCPU)
 {
-    if (aCPU->mInterruptActive)
+    if (aCPU->irq_count)
     {
-        if (aCPU->except)
-        {
-            int hi = 0;
-            if (aCPU->mInterruptActive > 1)
-                hi = 1;
-            if (aCPU->int_a[hi] != aCPU->mSFR[REG_ACC])
+	int i = --aCPU->irq_count;
+
+	/*
+	 * If we have an exception handler, do extra sanity-checking
+	 * to make sure an interrupt handler restores its state
+	 * properly.
+	 */
+        if (aCPU->except) {
+	    int psw_bits = PSWMASK_OV | PSWMASK_RS0 | PSWMASK_RS1 | PSWMASK_AC | PSWMASK_C;
+
+            if (aCPU->irql[i].a != aCPU->mSFR[REG_ACC])
                 aCPU->except(aCPU, EXCEPTION_IRET_ACC_MISMATCH);
-            if (aCPU->int_sp[hi] != aCPU->mSFR[REG_SP])
+
+            if (aCPU->irql[i].sp != aCPU->mSFR[REG_SP])
                 aCPU->except(aCPU, EXCEPTION_IRET_SP_MISMATCH);    
-            if ((aCPU->int_psw[hi] & (PSWMASK_OV | PSWMASK_RS0 | PSWMASK_RS1 | PSWMASK_AC | PSWMASK_C)) !=                 
-                (aCPU->mSFR[REG_PSW] & (PSWMASK_OV | PSWMASK_RS0 | PSWMASK_RS1 | PSWMASK_AC | PSWMASK_C)))
+
+            if ((aCPU->irql[i].psw & psw_bits) != (aCPU->mSFR[REG_PSW] & psw_bits))
                 aCPU->except(aCPU, EXCEPTION_IRET_PSW_MISMATCH);
         }
-
-        if (aCPU->mInterruptActive & 2)
-            aCPU->mInterruptActive &= ~2;
-        else
-            aCPU->mInterruptActive = 0;
     }
 
     PC = pop_from_stack(aCPU) << 8;

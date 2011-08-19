@@ -11,7 +11,9 @@
 
 void hardware_init(struct em8051 *cpu);
 void hardware_exit(void);
+
 void hardware_sfrwrite(struct em8051 *cpu, int reg);
 int hardware_sfrread(struct em8051 *cpu, int reg);
+void hardware_tick(struct em8051 *cpu);
 
 #endif
