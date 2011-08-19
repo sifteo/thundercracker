@@ -7,19 +7,9 @@
  */
 
 #include <stdint.h>
-#include <mcs51/8051.h>
+#include "hardware.h"
 
 #pragma disable_warning 84   // Variable may be used before initialization
-
-__sfr __at 0x93 P0DIR;
-__sfr __at 0x94 P1DIR;
-__sfr __at 0x95 P2DIR;
-__sfr __at 0x96 P3DIR;
-
-#define LCD_WIDTH 	128
-#define LCD_HEIGHT	128
-#define LCD_PIXELS	(LCD_WIDTH * LCD_HEIGHT)
-#define LCD_ROW_SHIFT	8
 
 #define ANGLE_90      	64
 #define ANGLE_180      	128
@@ -27,36 +17,6 @@ __sfr __at 0x96 P3DIR;
 #define ANGLE_360	256
 
 #define CHROMA_KEY	0xF5
-
-#define BUS_PORT	P0
-#define BUS_DIR 	P0DIR
-#define ADDR_PORT	P1
-#define ADDR_DIR	P1DIR
-#define CTRL_PORT	P2
-#define CTRL_DIR 	P2DIR
-
-#define CTRL_LCD_RDX	(1 << 0)
-#define CTRL_LCD_DCX	(1 << 1)
-#define CTRL_LCD_CSX	(1 << 2)
-#define CTRL_FLASH_WE	(1 << 3)
-#define CTRL_FLASH_CE	(1 << 4)
-#define CTRL_FLASH_OE	(1 << 5)
-#define CTRL_FLASH_LAT1	(1 << 6)
-#define CTRL_FLASH_LAT2	(1 << 7)
-
-#define CTRL_IDLE	(CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_LCD_DCX)
-#define CTRL_LCD_CMD	(CTRL_FLASH_WE | CTRL_FLASH_OE)
-#define CTRL_FLASH_OUT	(CTRL_FLASH_WE | CTRL_LCD_DCX)
-
-#define ADDR_INC2()	{ ADDR_PORT++; ADDR_PORT++; }
-#define ADDR_INC4()	{ ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; }
-#define ADDR_INC32()	{ ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); \
-			  ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
-
-#define LCD_CMD_NOP  	0x00
-#define LCD_CMD_CASET	0x2A
-#define LCD_CMD_RASET	0x2B
-#define LCD_CMD_RAMWR	0x2C
 
 #define TILE8(x, y)	(tilemap.bytes[(x) + ((y)<<3)])			// 8-bit tiles, 8x100 grid
 #define TILE20(x, y)	(tilemap.words[(x) + ((y)<<4) + ((y)<<2)])	// 16-bit tiles, 20x20 grid
