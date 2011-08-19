@@ -165,4 +165,46 @@ __sfr __at 0xFD SPIMCON1;
 __sfr __at 0xFE SPIMSTAT;
 __sfr __at 0xFF SPIMDAT;
 
+// IEN0 bits
+__sbit __at 0xA8 IEN_IFP;
+__sbit __at 0xA9 IEN_TF0;
+__sbit __at 0xAA IEN_POF;
+__sbit __at 0xAB IEN_TF1;
+__sbit __at 0xAC IEN_RI0_TI0;
+__sbit __at 0xAD IEN_TF2_EXF2;
+__sbit __at 0xAF IEN_EN;
+
+// IEN1 bits
+__sbit __at 0xB8 IEN_RFSPI;
+__sbit __at 0xB9 IEN_RF;
+__sbit __at 0xBA IEN_SPI;
+__sbit __at 0xBB IEN_WUOP;
+__sbit __at 0xBC IEN_MISC;
+__sbit __at 0xBD IEN_TICK;
+__sbit __at 0xBF IEN_EXF2;
+
+// IRCON bits
+__sbit __at 0xC0 IR_RFSPI;
+__sbit __at 0xC1 IR_RF;
+__sbit __at 0xC2 IR_SPI;
+__sbit __at 0xC3 IR_WUP0;
+__sbit __at 0xC4 IR_MISC;
+__sbit __at 0xC5 IR_TICK;
+__sbit __at 0xC6 IR_TF2;
+__sbit __at 0xC7 IR_EXF2;
+
+// Interrupt vector numbers
+#define VECTOR_IFP	0
+#define VECTOR_TF0	1
+#define VECTOR_PFAIL	2
+#define VECTOR_TF1	3
+#define VECTOR_SER	4
+#define VECTOR_TF2	5
+#define VECTOR_RFSPI	8
+#define VECTOR_RF	9
+#define VECTOR_SPI	10
+#define VECTOR_WUOP	11
+#define VECTOR_MISC	12
+#define VECTOR_TICK	13
+
 #endif // __HARDWARE_H

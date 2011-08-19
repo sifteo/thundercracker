@@ -58,25 +58,25 @@ void handle_interrupts(struct em8051 *cpu)
      * See Figure 46 in section 9.2 of the nRF24LE1 Product Specification.
      */
     static const struct {
-	uint16_t vector;
+	uint16_t irqn;
 	uint8_t ien_sfr;
 	uint8_t ien_mask;  // Also priority mask
 	uint8_t req_sfr;
 	uint8_t req_mask;
 	uint8_t autoclear;
     } irq_lut[] = {
-	{ 0x0003, REG_IEN0, IRQM0_IFP,   REG_TCON,  TCONMASK_IE0, 0 },
-	{ 0x0043, REG_IEN1, IRQM1_RFSPI, REG_IRCON, IRCON_RFSPI, 0 },
-	{ 0x000B, REG_IEN0, IRQM0_TF0,   REG_TCON,  TCONMASK_TF0, 0 },
-	{ 0x004B, REG_IEN1, IRQM1_RF,    REG_IRCON, IRCON_RF, 0 },
-	{ 0x0013, REG_IEN0, IRQM0_PFAIL, REG_TCON,  TCONMASK_IE1, 0 },
-	{ 0x0053, REG_IEN1, IRQM1_SPI,   REG_IRCON, IRCON_SPI, IRCON_SPI },
-	{ 0x001B, REG_IEN0, IRQM0_TF1,   REG_TCON,  TCONMASK_TF1, 0 },
-	{ 0x005B, REG_IEN1, IRQM1_WUOP,  REG_IRCON, IRCON_WUOP, IRCON_WUOP },
-	{ 0x0023, REG_IEN0, IRQM0_SER,   REG_S0CON, 0x03, 0 },
-	{ 0x0063, REG_IEN1, IRQM1_MISC,  REG_IRCON, IRCON_MISC, IRCON_MISC },
-	{ 0x002B, REG_IEN0, IRQM0_TF2,   REG_IRCON, IRCON_TF2 | IRCON_EXF2, 0 },
-	{ 0x006B, REG_IEN1, IRQM1_TICK,  REG_IRCON, IRCON_TICK, IRCON_TICK },
+	{ 0,  REG_IEN0, IRQM0_IFP,   REG_TCON,  TCONMASK_IE0, 0 },
+	{ 8,  REG_IEN1, IRQM1_RFSPI, REG_IRCON, IRCON_RFSPI, 0 },
+	{ 1,  REG_IEN0, IRQM0_TF0,   REG_TCON,  TCONMASK_TF0, 0 },
+	{ 9,  REG_IEN1, IRQM1_RF,    REG_IRCON, IRCON_RF, 0 },
+	{ 2,  REG_IEN0, IRQM0_PFAIL, REG_TCON,  TCONMASK_IE1, 0 },
+	{ 10, REG_IEN1, IRQM1_SPI,   REG_IRCON, IRCON_SPI, IRCON_SPI },
+	{ 3,  REG_IEN0, IRQM0_TF1,   REG_TCON,  TCONMASK_TF1, 0 },
+	{ 11, REG_IEN1, IRQM1_WUOP,  REG_IRCON, IRCON_WUOP, IRCON_WUOP },
+	{ 4,  REG_IEN0, IRQM0_SER,   REG_S0CON, 0x03, 0 },
+	{ 12, REG_IEN1, IRQM1_MISC,  REG_IRCON, IRCON_MISC, IRCON_MISC },
+	{ 5,  REG_IEN0, IRQM0_TF2,   REG_IRCON, IRCON_TF2 | IRCON_EXF2, 0 },
+	{ 13, REG_IEN1, IRQM1_TICK,  REG_IRCON, IRCON_TICK, IRCON_TICK },
     };
 
     int i;
@@ -102,7 +102,7 @@ void handle_interrupts(struct em8051 *cpu)
 	}
 
     if (found_i >= 0)
-	if (irq_invoke(cpu, found_prio, irq_lut[found_i].vector)) {
+	if (irq_invoke(cpu, found_prio, irq_lut[found_i].irqn * 8 + 3)) {
 	    // Auto-clear if needed
 	    cpu->mSFR[irq_lut[found_i].req_sfr] &= ~irq_lut[found_i].autoclear;
 	}

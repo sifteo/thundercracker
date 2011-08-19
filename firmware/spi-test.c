@@ -9,9 +9,18 @@
 #include <stdint.h>
 #include "hardware.h"
 
-void main(void)
+__xdata uint8_t c;
+
+void rfspi_isr(void) __interrupt (VECTOR_RFSPI)
 {
-
-
+  c++;
+  IR_RFSPI = 0;
 }
 
+void main(void)
+{
+  IEN_EN = 1;
+  IEN_RFSPI = 1;
+
+  IR_RFSPI = 1;
+}
