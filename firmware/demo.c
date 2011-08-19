@@ -11,10 +11,10 @@
 
 #pragma disable_warning 84   // Variable may be used before initialization
 
-sfr at 0x93 P0DIR;
-sfr at 0x94 P1DIR;
-sfr at 0x95 P2DIR;
-sfr at 0x96 P3DIR;
+__sfr __at 0x93 P0DIR;
+__sfr __at 0x94 P1DIR;
+__sfr __at 0x95 P2DIR;
+__sfr __at 0x96 P3DIR;
 
 #define LCD_WIDTH 	128
 #define LCD_HEIGHT	128
@@ -63,18 +63,18 @@ sfr at 0x96 P3DIR;
 
 #define NUM_SPRITES	4
 
-xdata union {
+__xdata union {
     uint8_t bytes[800];
     uint16_t words[400];
 } tilemap;
 
 // For now, a very limited number of 32x32 sprites
-near struct {
+__near struct {
     uint8_t x, y;
     int8_t xd, yd;
 } oam[NUM_SPRITES];
 
-static const uint16_t code earthbound_fourside_160[] =
+static const uint16_t __code earthbound_fourside_160[] =
 #include "earthbound_fourside_160.h"
 
 
@@ -410,7 +410,7 @@ void lcd_render_tiles_8x8_16bit_20wide(uint8_t pan_x, uint8_t pan_y)
     uint8_t first_column_addr = (pan_x << 2) & 0x1C;
     uint8_t last_tile_width = pan_x & 7;
     uint8_t first_tile_width = 8 - last_tile_width;
-    xdata uint8_t *map = &tilemap.bytes[(tile_pan_y << 5) + (tile_pan_y << 3) + (tile_pan_x << 1)];
+    __xdata uint8_t *map = &tilemap.bytes[(tile_pan_y << 5) + (tile_pan_y << 3) + (tile_pan_x << 1)];
     uint8_t y = LCD_HEIGHT;
 
     do {
@@ -622,7 +622,7 @@ void lcd_render_sprites_32x32(uint8_t segment)
 // Signed 8-bit sin()
 int8_t sin8(uint8_t angle)
 {
-    static const code int8_t lut[] = {
+    static const __code int8_t lut[] = {
 	0x00, 0x03, 0x06, 0x09, 0x0c, 0x10, 0x13, 0x16,
 	0x19, 0x1c, 0x1f, 0x22, 0x25, 0x28, 0x2b, 0x2e,
 	0x31, 0x33, 0x36, 0x39, 0x3c, 0x3f, 0x41, 0x44,
@@ -896,7 +896,7 @@ void demo_text(void)
 {
     uint16_t frame;
     uint8_t x, y;
-    static const code char scroller[] =
+    static const __code char scroller[] =
 	"Whoaaaa, it's one of those old-fashioned demoscene text scrollers, "
 	"but it's going so fast that you can't even read it! What's this doing "
 	"in a microcontroller anyway??? ";
