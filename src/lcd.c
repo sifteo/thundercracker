@@ -82,9 +82,6 @@ static int lcd_thread(void *param)
     SDL_WM_SetCaption("Simulated LCD", NULL);
 
     while (lcd.is_running) {
-	SDL_Event event;
-	while (SDL_PollEvent(&event));
-
 	if (lcd.need_repaint) {
 	    lcd.need_repaint = 0;
 	    lcd_repaint();
@@ -108,7 +105,6 @@ static void lcd_reset(void)
 
 void lcd_init(void)
 {
-    SDL_Init(SDL_INIT_VIDEO);
     lcd_reset();
     lcd.is_running = 1;
     lcd.thread = SDL_CreateThread(lcd_thread, NULL);
@@ -118,7 +114,6 @@ void lcd_exit(void)
 {
     lcd.is_running = 0;
     SDL_WaitThread(lcd.thread, NULL);
-    SDL_Quit();
 }
 
 static inline uint8_t clamp(uint8_t val, uint8_t min, uint8_t max)

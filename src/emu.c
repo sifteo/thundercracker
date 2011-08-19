@@ -132,9 +132,7 @@ void setSpeed(int speed, int runmode)
     {
         slk_set(4, "r)un", 0);
         slk_refresh();        
-        nocbreak();
-        cbreak();
-        nodelay(stdscr, FALSE);        
+	halfdelay(1);
         return;
     }
     else
@@ -147,13 +145,12 @@ void setSpeed(int speed, int runmode)
     {
         nocbreak();
         cbreak();
-        nodelay(stdscr, TRUE);
     }
     else
     {
         switch(speed)
         {
-        case 7:
+	case 7:
             halfdelay(20);
             break;
         case 6:
@@ -360,7 +357,12 @@ int main(int argc, char ** argv)
 	    fprintf(stderr, "Error initialising ncurses.\n");
 	    exit(EXIT_FAILURE);
     }
- 
+
+    cbreak(); // no buffering
+    noecho(); // no echoing
+    keypad(stdscr, TRUE); // cursors entered as single characters
+    nodelay(stdscr, TRUE);  // Non-blocking input
+
     slk_set(1, "h)elp", 0);
     slk_set(2, "l)oad", 0);
     slk_set(3, "spc=step", 0);
@@ -370,20 +372,28 @@ int main(int argc, char ** argv)
     slk_set(8, "s-Q)quit", 0);
     setSpeed(speed, runmode);
    
-
-    //  Switch of echoing and enable keypad (for arrow keys etc)
-
-    cbreak(); // no buffering
-    noecho(); // no echoing
-    keypad(stdscr, TRUE); // cursors entered as single characters
-
+    SDL_Init(SDL_INIT_VIDEO);
     build_main_view(&emu);
     hardware_init(&emu);
 
-    // Loop until user hits 'shift-Q'
+    /*
+     * Unified event loop... we need to handle both SDL and ncurses
+     * events on the main thread.
+     */
 
     do
     {
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+	    switch (event.type) {
+
+	    case SDL_QUIT:
+		ch = 'Q';
+		break;
+
+	    }
+	}
+
         if (LINES != oldrows ||
             COLS != oldcols)
         {
@@ -575,6 +585,7 @@ int main(int argc, char ** argv)
 
     endwin();
     hardware_exit();
-
+    SDL_Quit();
+    
     return EXIT_SUCCESS;
 }
