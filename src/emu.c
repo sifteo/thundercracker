@@ -224,6 +224,7 @@ int main(int argc, char ** argv)
     emu.mSFR         = malloc(128);
     emu.except       = &emu_exception;
     emu.sfrwrite     = &hardware_sfrwrite;
+    emu.sfrread      = &hardware_sfrread;
     emu.xread = NULL;
     emu.xwrite = NULL;
     reset(&emu, 1);    

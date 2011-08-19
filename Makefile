@@ -12,6 +12,7 @@ OBJS = \
 	src/hardware.o \
 	src/lcd.o \
 	src/flash.o \
+	src/spi.o \
 
 PY_PATH := /opt/local/bin:/usr/bin
 PYTHON  := python2.7

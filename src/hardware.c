@@ -34,30 +34,49 @@
 #include "emulator.h"
 #include "lcd.h"
 #include "flash.h"
+#include "spi.h"
 
 /* Vendor-specific SFRs on the nRF24LE1 */
-#define REG_P0DIR  (0x93 - 0x80)
-#define REG_P1DIR  (0x94 - 0x80)
-#define REG_P2DIR  (0x95 - 0x80)
-#define REG_P3DIR  (0x96 - 0x80)
+#define REG_P0DIR       (0x93 - 0x80)
+#define REG_P1DIR       (0x94 - 0x80)
+#define REG_P2DIR       (0x95 - 0x80)
+#define REG_P3DIR       (0x96 - 0x80)
+#define REG_SPIRCON0    (0xE4 - 0x80)
+#define REG_SPIRCON1    (0xE5 - 0x80)
+#define REG_SPIRSTAT    (0xE6 - 0x80)
+#define REG_SPIRDAT     (0xE7 - 0x80)
+#define REG_RFCON       (0xE8 - 0x80)
 
-static uint8_t addr_latch_1;
-static uint8_t addr_latch_2;
-static uint8_t shared_bus;
-static uint8_t prev_ctrl_port;
+static struct {
+    uint8_t lat1;
+    uint8_t lat2;
+    uint8_t bus;
+    uint8_t prev_ctrl_port;
+    
+    struct spi_master radio_spi;
+} hw;
 
 void hardware_init(struct em8051 *cpu)
 {
-    addr_latch_1 = 0;
-    addr_latch_2 = 0;
-    shared_bus = 0;
-    prev_ctrl_port = 0;
+    hw.lat1 = 0;
+    hw.lat2 = 0;
+    hw.bus = 0;
+    hw.prev_ctrl_port = 0;
 
     cpu->mSFR[REG_P0DIR] = 0xFF;
     cpu->mSFR[REG_P1DIR] = 0xFF;
     cpu->mSFR[REG_P2DIR] = 0xFF;
     cpu->mSFR[REG_P3DIR] = 0xFF;
-
+    
+    cpu->mSFR[REG_SPIRCON0] = 0x01;
+    cpu->mSFR[REG_SPIRCON1] = 0x0F;
+    cpu->mSFR[REG_SPIRSTAT] = 0x03;
+    cpu->mSFR[REG_SPIRDAT] = 0x00;
+    cpu->mSFR[REG_RFCON] = 0x02;
+ 
+    //hw.radio_spi.callback = radio_spi_cb;
+    spi_init(&hw.radio_spi);
+    
     flash_init(opt_flash_filename);
     lcd_init();
 }
@@ -82,11 +101,11 @@ void hardware_gfx_tick(struct em8051 *cpu)
     uint8_t mcu_data_drv = cpu->mSFR[REG_P0DIR] != 0xFF;
 
     struct flash_pins flashp = {
-	.addr = addr7 | ((uint32_t)addr_latch_1 << 7) | ((uint32_t)addr_latch_2 << 14),
+	.addr = addr7 | ((uint32_t)hw.lat1 << 7) | ((uint32_t)hw.lat2 << 14),
 	.oe = ctrl_port & (1 << 5),
 	.ce = ctrl_port & (1 << 4),
 	.we = ctrl_port & (1 << 3),
-	.data_in = shared_bus,
+	.data_in = hw.bus,
     };
 
     struct lcd_pins lcdp = {
@@ -94,7 +113,7 @@ void hardware_gfx_tick(struct em8051 *cpu)
 	.dcx = ctrl_port & (1 << 1),
 	.wrx = addr_port & (1 << 0),
 	.rdx = ctrl_port & (1 << 0),
-	.data_in = shared_bus,
+	.data_in = hw.bus,
     };
 
     flash_cycle(&flashp);
@@ -102,28 +121,29 @@ void hardware_gfx_tick(struct em8051 *cpu)
 
     /* Address latch write cycles, triggered by rising edge */
 
-    if ((ctrl_port & 0x40) && !(prev_ctrl_port & 0x40)) addr_latch_1 = addr7;
-    if ((ctrl_port & 0x80) && !(prev_ctrl_port & 0x80)) addr_latch_2 = addr7;
-    prev_ctrl_port = ctrl_port;
+    if ((ctrl_port & 0x40) && !(hw.prev_ctrl_port & 0x40)) hw.lat1 = addr7;
+    if ((ctrl_port & 0x80) && !(hw.prev_ctrl_port & 0x80)) hw.lat2 = addr7;
+    hw.prev_ctrl_port = ctrl_port;
 
     /* After every simulation cycle, resolve the new state of the shared bus. */
    
     switch ((mcu_data_drv << 2) | (flashp.data_drv << 1) | lcdp.data_drv) {
     case 0:     /* Floating... */ break;
-    case 1:  	shared_bus = lcdp.data_out; break;
-    case 2:     shared_bus = flashp.data_out; break;
-    case 4:     shared_bus = bus_port; break;
+    case 1:  	hw.bus = lcdp.data_out; break;
+    case 2:     hw.bus = flashp.data_out; break;
+    case 4:     hw.bus = bus_port; break;
     default:
 	/* Bus contention! */
 	cpu->except(cpu, EXCEPTION_BUS_CONTENTION);
     }
     
-    cpu->mSFR[REG_P0] = shared_bus;
+    cpu->mSFR[REG_P0] = hw.bus;
 }
 
 void hardware_sfrwrite(struct em8051 *cpu, int reg)
 {
-    switch (reg - 0x80) {
+    reg -= 0x80;
+    switch (reg) {
 
     case REG_P0:
     case REG_P1:
@@ -131,8 +151,25 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
     case REG_P0DIR:
     case REG_P1DIR:
     case REG_P2DIR:
-	hardware_gfx_tick(cpu);
-	break;
+        hardware_gfx_tick(cpu);
+        break;
+            
+    case REG_SPIRDAT:
+        spi_write_data(&hw.radio_spi, cpu->mSFR[reg]);
+        break;
 
+    }
+}
+
+int hardware_sfrread(struct em8051 *cpu, int reg)
+{
+    reg -= 0x80;
+    switch (reg) {
+     
+    case REG_SPIRDAT:
+        return spi_read_data(&hw.radio_spi);
+            
+    default:    
+        return cpu->mSFR[reg];
     }
 }
