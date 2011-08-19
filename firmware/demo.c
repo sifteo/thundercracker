@@ -731,6 +731,25 @@ uint32_t xor128(void)
     return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
 }
 
+void text_char(uint8_t x, uint8_t y, char c)
+{
+    const uint32_t base_addr = 0x8e000 >> 7;
+
+    uint16_t char_index = c - ' ';
+    uint16_t addr = base_addr + (char_index << 1);
+    uint16_t tile = ((addr << 1) & 0xFE) | ((addr << 2) & 0xFE00);
+
+    TILE20(x, y) = tile;
+    TILE20(x, y+1) = tile + 2;
+}
+
+void text_string(uint8_t x, uint8_t y, const char *str)
+{
+    char c;
+    while ((c = *(str++)))
+	text_char(x++, y, c);
+}    
+
 
 /*************************************************************
  * IT IS DEMO TIME.
@@ -867,9 +886,37 @@ void demo_tile_panning(void)
 
     for (frame = 0; frame < 256; frame++) {
 	lcd_cmd_byte(LCD_CMD_RAMWR);
-
 	lcd_render_tiles_8x8_16bit_20wide(16 + (sin8(frame << 4) >> 5),
 					  16 + (sin8(frame << 3) >> 5));
+    }
+}
+
+// Text demo, with an 8x16 antialiased font
+void demo_text(void)
+{
+    uint16_t frame;
+    uint8_t x, y;
+    static const code char scroller[] =
+	"Whoaaaa, it's one of those old-fashioned demoscene text scrollers, "
+	"but it's going so fast that you can't even read it! What's this doing "
+	"in a microcontroller anyway??? ";
+
+    for (x = 0; x < 20; x++)
+	for (y = 0; y < 20; y += 2)
+	    text_char(x, y, ' ');
+    
+    text_string(3, 6, "Hello, world!");
+    text_string(8, 9, "^_^");
+
+    for (frame = 0; frame < 256; frame++) {
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_render_tiles_8x8_16bit_20wide(12 + (sin8(frame << 1) >> 5),
+					  16 + (sin8(frame << 3) >> 5));
+
+	x = 19;
+	do {
+	    text_char(x, 14, scroller[(x + frame) % (sizeof scroller-1)]);
+	} while (--x);
     }
 }
 
@@ -878,6 +925,7 @@ void main(void)
     hardware_init();
 
     while (1) {
+	demo_text();
 	demo_fullscreen_bg();
 	demo_owlbear_sprite();
 	demo_owlbear_chromakey();
