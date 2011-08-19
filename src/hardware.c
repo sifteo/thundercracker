@@ -68,7 +68,7 @@ void hardware_exit(void)
     lcd_exit();
 }
 
-void hardware_sfrwrite(struct em8051 *cpu, int reg)
+void hardware_gfx_tick(struct em8051 *cpu)
 {
     // Port output values, pull-up when floating
     uint8_t bus_port = cpu->mSFR[REG_P0] | cpu->mSFR[REG_P0DIR];
@@ -119,4 +119,20 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
     }
     
     cpu->mSFR[REG_P0] = shared_bus;
+}
+
+void hardware_sfrwrite(struct em8051 *cpu, int reg)
+{
+    switch (reg - 0x80) {
+
+    case REG_P0:
+    case REG_P1:
+    case REG_P2:
+    case REG_P0DIR:
+    case REG_P1DIR:
+    case REG_P2DIR:
+	hardware_gfx_tick(cpu);
+	break;
+
+    }
 }

@@ -40,7 +40,7 @@ static struct {
     uint8_t fb_mem[FB_SIZE];
 
     /* Hardware interface */
-    struct lcd_pins prev_pins;
+    uint8_t prev_wrx;
 
     /* LCD Controller State */
     uint8_t current_cmd;
@@ -217,17 +217,17 @@ void lcd_cycle(struct lcd_pins *pins)
     // Assume we aren't driving the data output for now
     pins->data_drv = 0;
 
-    if (pins->wrx && !lcd.prev_pins.wrx && !pins->dcx && !pins->csx) {
-	/* Command write strobe */
-	lcd_cmd(pins->data_in);
+    if (!pins->csx && pins->wrx && !lcd.prev_wrx) {
+	if (pins->dcx) {
+	    /* Data write strobe */
+	    lcd_data(pins->data_in);
+	} else {
+	    /* Command write strobe */
+	    lcd_cmd(pins->data_in);
+	}
     }
 
-    if (pins->wrx && !lcd.prev_pins.wrx && pins->dcx && !pins->csx) {
-	/* Data write strobe */
-	lcd_data(pins->data_in);
-    }
-
-    lcd.prev_pins = *pins;
+    lcd.prev_wrx = pins->wrx;
 }
 
 uint32_t lcd_write_count(void)
