@@ -952,6 +952,11 @@ void main(void)
      *
      *      - Shouldn't make use of either xdata or flash!
      *      - Could use very small tileset, 2-bit pallette, from code memory
+     *
+     *  - At least one mode that would support 'sliding' game elements.
+     *    Either multiple tile backgrounds (with chroma key), or a sprite
+     *    mode which uses a tile-based layout such that areas of the screen
+     *    could be dynamically converted between sprites and backgrounds.
      */
      
     while (1) {
