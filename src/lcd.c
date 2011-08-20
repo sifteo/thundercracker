@@ -109,13 +109,13 @@ void lcd_init(void)
     lcd_reset();
     lcd.is_running = 1;
 
-	/*
-	 * On Mac OS and Linux we can seemingly create our window on any thread.
-	 * On Win32, it needs to happen on the main thread.
-	 */
+    /*
+     * On Mac OS and Linux we can seemingly create our window on any thread.
+     * On Win32, it needs to happen on the main thread.
+     */
     lcd.surface = SDL_SetVideoMode(WIN_WIDTH, WIN_HEIGHT, 16, 0);
     if (lcd.surface == NULL)
-		return 1;
+        return;
 
     SDL_WM_SetCaption("Simulated LCD", NULL);
 
