@@ -20,11 +20,11 @@ Prerequisites
 
 - make
 - gcc
-- python, for the asset generator script
-- PIL (Python Imaging Library), also for asset generation
 - libSDL, for the LCD output
 - ncurses, for the debug console
 - sdcc, for compiling the firmware
+- Optional, only needed if you want to regenerate the asset image:
+  Python, and PIL (Python Imaging Library)
 
 Tested on Linux and Mac OS X.
 
