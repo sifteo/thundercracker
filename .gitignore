@@ -1,5 +1,6 @@
 Debug/
 Release/
+ipch/
 *.dll
 *.exe
 *~
@@ -7,5 +8,6 @@ Release/
 *.opensdf
 *.pdb
 *.sdf
+*.suo
 *.vcxproj.user
 cube51-sim
