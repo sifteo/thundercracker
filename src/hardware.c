@@ -35,15 +35,23 @@
 #include "lcd.h"
 #include "flash.h"
 #include "spi.h"
+#include "radio.h"
 
 static struct {
     uint8_t lat1;
     uint8_t lat2;
     uint8_t bus;
     uint8_t prev_ctrl_port;
-    
+
+    int rfcken;
     struct spi_master radio_spi;
 } hw;
+
+// RFCON bits
+#define RFCON_RFCKEN	0x04
+#define RFCON_RFCSN	0x02
+#define RFCON_RFCE	0x01
+
 
 void hardware_init(struct em8051 *cpu)
 {
@@ -61,18 +69,20 @@ void hardware_init(struct em8051 *cpu)
     cpu->mSFR[REG_SPIRCON1] = 0x0F;
     cpu->mSFR[REG_SPIRSTAT] = 0x03;
     cpu->mSFR[REG_SPIRDAT] = 0x00;
-    cpu->mSFR[REG_RFCON] = 0x02;
+    cpu->mSFR[REG_RFCON] = RFCON_RFCSN;
  
-    //hw.radio_spi.callback = radio_spi_cb;
+    hw.radio_spi.callback = radio_spi_byte;
     spi_init(&hw.radio_spi);
     
     flash_init(opt_flash_filename);
+    radio_init();
     lcd_init();
 }
 
 void hardware_exit(void)
 {
     flash_exit();
+    radio_exit();
     lcd_exit();
 }
 
@@ -148,6 +158,12 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
         spi_write_data(&hw.radio_spi, cpu->mSFR[reg]);
         break;
 
+    case REG_RFCON:
+	hw.rfcken = !!(cpu->mSFR[reg] & RFCON_RFCKEN);
+	radio_ctrl(!(cpu->mSFR[reg] & RFCON_RFCSN),   // Active low
+		   !!(cpu->mSFR[reg] & RFCON_RFCE));  // Active high
+	break;
+
     }
 }
 
@@ -168,4 +184,7 @@ void hardware_tick(struct em8051 *cpu)
 {
     if (spi_tick(&hw.radio_spi, &cpu->mSFR[REG_SPIRCON0]))
 	cpu->mSFR[REG_IRCON] |= IRCON_RFSPI;
+
+    if (hw.rfcken && radio_tick())
+	cpu->mSFR[REG_IRCON] |= IRCON_RF;
 }

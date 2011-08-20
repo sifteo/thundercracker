@@ -36,6 +36,7 @@
 #define SPI_REG_STATUS  2       // FIFO status
 #define SPI_REG_DATA    3       // FIFO Data I/O
 
+#define SPI_ENABLE	0x01
 #define SPI_CLOCK_MASK  0x70    // Clock bits in CON0
 #define SPI_CLOCK_SHIFT 4
 
@@ -48,12 +49,12 @@
 struct spi_master {
     uint8_t (*callback)(uint8_t mosi);
     
-    uint8_t tx_fifo[2];  // Writes pushed -> into [0]
-    uint8_t rx_fifo[2];  // Reads pulled <- from [0]
-    uint8_t tx_count;
-    uint8_t rx_count;
-    
-    uint32_t timer;
+    uint8_t tx_fifo[2]; // Writes pushed -> into [0]
+    uint8_t rx_fifo[2]; // Reads pulled <- from [0]
+    uint8_t tx_count;	// Number of bytes in tx_fifo
+    uint8_t rx_count;	// Number of bytes in rx_fifo
+    uint8_t tx_mosi;	// Transmit shift register
+    uint32_t timer;     // Cycle count remaining on current byte
 };
 
 void spi_init(struct spi_master *self);

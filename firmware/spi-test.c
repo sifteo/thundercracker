@@ -9,11 +9,13 @@
 #include <stdint.h>
 #include "hardware.h"
 
-__xdata uint8_t c;
+__xdata uint8_t irq_count;
 
 void rfspi_isr(void) __interrupt (VECTOR_RFSPI)
 {
-  c++;
+  SPIRDAT = 0x55;
+
+  irq_count++;
   IR_RFSPI = 0;
 }
 
@@ -21,6 +23,5 @@ void main(void)
 {
   IEN_EN = 1;
   IEN_RFSPI = 1;
-
-  IR_RFSPI = 1;
+  SPIRCON1 = 0xF - SPI_TX_READY;
 }

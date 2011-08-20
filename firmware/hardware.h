@@ -207,4 +207,11 @@ __sbit __at 0xC7 IR_EXF2;
 #define VECTOR_MISC	12
 #define VECTOR_TICK	13
 
+// SPI Master status bits, used in CON1 and STATUS
+#define SPI_RX_FULL     0x08
+#define SPI_RX_READY    0x04
+#define SPI_TX_EMPTY    0x02
+#define SPI_TX_READY    0x01
+
+
 #endif // __HARDWARE_H

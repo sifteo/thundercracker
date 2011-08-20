@@ -14,6 +14,7 @@ OBJS = \
 	src/flash.o \
 	src/spi.o \
 	src/irq.o \
+	src/radio.o \
 
 CDEPS = src/*.h
 
