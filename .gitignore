@@ -4,4 +4,8 @@ Release/
 *.exe
 *~
 *.o
+*.opensdf
+*.pdb
+*.sdf
+*.vcxproj.user
 cube51-sim
