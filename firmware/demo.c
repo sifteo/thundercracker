@@ -757,9 +757,9 @@ void demo_monsters(void)
 
     // Init sprites
     for (i = 0; i < NUM_SPRITES; i++) {
-	uint32_t r = xor128();
-
 	do {
+    	    uint32_t r = xor128();
+
 	    oam[i].x = 170 + ((r >> 0) & 63);
 	    oam[i].y = 170 + ((r >> 8) & 63);
 	    oam[i].xd = ((r >> 15) & 7) - 4;
