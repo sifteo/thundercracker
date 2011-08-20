@@ -55,10 +55,19 @@ unsigned char history[HISTORY_LINES * (128 + 64 + sizeof(int))];
 int historyline = 0;
 // last known columns and rows; for screen resize detection
 int oldcols, oldrows;
-// are we in single-step or run mode
-int runmode = 0;
-// current run speed, lower is faster
-int speed = 1;
+
+/*
+ * XXX: UI defaults to running at 10Hz when no firmware is loaded,
+ *      not because this is really useful, but because the SDL
+ *      event loop is wedged any time we're actually single-stepping.
+ *      This is especially annoying on Windows, when we are greeted
+ *      with an unresponsive and immovable window.
+ *
+ *      These defaults are overridden when a firmware file is loaded
+ *      on the command line, so that we then run at maximum speed.
+ */
+int runmode = 1;
+int speed = 4;
 
 // instruction count; needed to replay history correctly
 unsigned int icount = 0;
