@@ -8,3 +8,6 @@
 *.lst
 *.map
 *.asm
+*.cdb
+*.lk
+*.omf
