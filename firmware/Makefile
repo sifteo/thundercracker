@@ -1,13 +1,13 @@
 all: demo.ihx spi-test.ihx
 
 CDEPS = *.h
-CC = sdcc
+SDCC = sdcc
 
 demo.ihx: demo.c $(CDEPS)
-	$(CC) $<
+	$(SDCC) $<
 
 spi-test.ihx: spi-test.c $(CDEPS)
-	$(CC) $<
+	$(SDCC) $<
 
 clean:
 	rm -f *.ihx *.mem *.rel *.rst *.sym *.lnk *.lst *.map *.asm
