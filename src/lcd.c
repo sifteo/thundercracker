@@ -59,17 +59,17 @@ static void lcd_repaint(void)
 
     SDL_LockSurface(lcd.surface);
 
-    for (y = LCD_HEIGHT; y--;) {
-	for (i = SCALE; i--;) {
-	    s_line = src;
-	    for (x = LCD_WIDTH; x--;) {
-		for (j = SCALE; j--;)
-		    *(dest++) = *s_line;
-		s_line++;
-	    }
+	for (y = LCD_HEIGHT; y--;) {
+		for (i = SCALE; i--;) {
+			s_line = src;
+			for (x = LCD_WIDTH; x--;) {
+				for (j = SCALE; j--;)
+					*(dest++) = *s_line;
+				s_line++;
+			}
+		}
+		src += LCD_WIDTH;
 	}
-	src += LCD_WIDTH;
-    }
 
     SDL_UnlockSurface(lcd.surface);
     SDL_Flip(lcd.surface);
@@ -77,23 +77,17 @@ static void lcd_repaint(void)
 
 static int lcd_thread(void *param)
 {
-    lcd.surface = SDL_SetVideoMode(WIN_WIDTH, WIN_HEIGHT, 16, 0);
-    if (lcd.surface == NULL)
-	return;
-
-    SDL_WM_SetCaption("Simulated LCD", NULL);
-
     // Initialization finished after we've redrawn once
     lcd_repaint();
     SDL_SemPost(lcd.initSem);
 
     while (lcd.is_running) {
-	if (lcd.need_repaint) {
-	    lcd.need_repaint = 0;
-	    lcd_repaint();
-	} else {
-	    SDL_Delay(10);
-	}
+		if (lcd.need_repaint) {
+			lcd.need_repaint = 0;
+			lcd_repaint();
+		} else {
+			SDL_Delay(10);
+		}
     }
 
     return 0;
@@ -114,6 +108,16 @@ void lcd_init(void)
     SDL_Init(SDL_INIT_VIDEO);
     lcd_reset();
     lcd.is_running = 1;
+
+	/*
+	 * On Mac OS and Linux we can seemingly create our window on any thread.
+	 * On Win32, it needs to happen on the main thread.
+	 */
+    lcd.surface = SDL_SetVideoMode(WIN_WIDTH, WIN_HEIGHT, 16, 0);
+    if (lcd.surface == NULL)
+		return 1;
+
+    SDL_WM_SetCaption("Simulated LCD", NULL);
 
     lcd.initSem = SDL_CreateSemaphore(0);
     lcd.thread = SDL_CreateThread(lcd_thread, NULL);
@@ -147,7 +151,7 @@ int lcd_eventloop(void)
     return 0;
 }
 
-static inline uint8_t clamp(uint8_t val, uint8_t min, uint8_t max)
+static uint8_t clamp(uint8_t val, uint8_t min, uint8_t max)
 {
     if (val < min) val = min;
     if (val > max) val = max;

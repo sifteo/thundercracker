@@ -99,21 +99,21 @@ void hardware_gfx_tick(struct em8051 *cpu)
     // Is the MCU driving any bit of the shared bus?
     uint8_t mcu_data_drv = cpu->mSFR[REG_P0DIR] != 0xFF;
 
-    struct flash_pins flashp = {
-	.addr = addr7 | ((uint32_t)hw.lat1 << 7) | ((uint32_t)hw.lat2 << 14),
-	.oe = ctrl_port & (1 << 5),
-	.ce = ctrl_port & (1 << 4),
-	.we = ctrl_port & (1 << 3),
-	.data_in = hw.bus,
-    };
+	struct flash_pins flashp = {
+		/* addr    */ addr7 | ((uint32_t)hw.lat1 << 7) | ((uint32_t)hw.lat2 << 14),
+		/* oe      */ ctrl_port & (1 << 5),
+		/* ce      */ ctrl_port & (1 << 4),
+		/* we      */ ctrl_port & (1 << 3),
+		/* data_in */ hw.bus,
+	};
 
-    struct lcd_pins lcdp = {
-	.csx = ctrl_port & (1 << 2),
-	.dcx = ctrl_port & (1 << 1),
-	.wrx = addr_port & (1 << 0),
-	.rdx = ctrl_port & (1 << 0),
-	.data_in = hw.bus,
-    };
+	struct lcd_pins lcdp = {
+		/* csx     */ ctrl_port & (1 << 2),
+		/* dcx     */ ctrl_port & (1 << 1),
+		/* wrx     */ addr_port & (1 << 0),
+		/* rdx     */ ctrl_port & (1 << 0),
+		/* data_in */ hw.bus,
+	};
 
     flash_cycle(&flashp);
     lcd_cycle(&lcdp);

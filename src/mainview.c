@@ -36,6 +36,7 @@
 #include "curses.h"
 #include "emu8051.h"
 #include "emulator.h"
+#include "lcd.h"
 
 /*
     The history-based display assumes that there's no
