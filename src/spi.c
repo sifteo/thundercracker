@@ -6,6 +6,23 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+ /*
+  * XXX: This makes a few big assumptions about the SPI hardware, based on my
+  *      reading of the data sheet and my best guess as to how the hardare is
+  *      implemented. But all of these need to be verified on the actual hardware!
+  *      These can all be checked pretty easily with some test programs and an oscope.
+  *
+  * 1. There are no hidden wait states between register writes and starting a transfer.
+  *
+  * 2. There is no additional interrupt latency, beyond the already-assumed LCALL latency.
+  *
+  * 3. The SPI clock is started when a transfer starts. It is not a global free-running clock.
+  *
+  * 4. The two-level FIFO queue does NOT include the actual I/O shift register, which is
+  *    in a separate hardware register. In other words, it is possible to have up to two
+  *    bytes queued, plus a third byte that is partially transmitted.
+  */
+
 #include <stdint.h>
 #include "spi.h"
 
