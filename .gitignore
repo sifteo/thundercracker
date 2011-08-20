@@ -1,3 +1,7 @@
+Debug/
+Release/
+*.dll
+*.exe
 *~
 *.o
 cube51-sim
