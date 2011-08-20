@@ -75,8 +75,28 @@ static void lcd_repaint(void)
     SDL_Flip(lcd.surface);
 }
 
+static void lcd_create_surface(void)
+{
+    /*
+     * On Mac OS and Linux we can seemingly create our window on any thread.
+     * On Win32, it needs to happen on the main thread.
+     */
+
+    lcd.surface = SDL_SetVideoMode(WIN_WIDTH, WIN_HEIGHT, 16, 0);
+    if (lcd.surface == NULL) {
+	printf("Error creating SDL surface!\n");
+	exit(1);
+    }
+
+    SDL_WM_SetCaption("Simulated LCD", NULL);
+}
+
 static int lcd_thread(void *param)
 {
+#ifndef _WIN32
+    lcd_create_surface();
+#endif 
+   
     // Initialization finished after we've redrawn once
     lcd_repaint();
     SDL_SemPost(lcd.initSem);
@@ -109,15 +129,9 @@ void lcd_init(void)
     lcd_reset();
     lcd.is_running = 1;
 
-    /*
-     * On Mac OS and Linux we can seemingly create our window on any thread.
-     * On Win32, it needs to happen on the main thread.
-     */
-    lcd.surface = SDL_SetVideoMode(WIN_WIDTH, WIN_HEIGHT, 16, 0);
-    if (lcd.surface == NULL)
-        return;
-
-    SDL_WM_SetCaption("Simulated LCD", NULL);
+#ifdef _WIN32
+    lcd_create_surface();
+#endif 
 
     lcd.initSem = SDL_CreateSemaphore(0);
     lcd.thread = SDL_CreateThread(lcd_thread, NULL);
