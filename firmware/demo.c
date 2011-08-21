@@ -917,6 +917,11 @@ void main(void)
      *    Either multiple tile backgrounds (with chroma key), or a sprite
      *    mode which uses a tile-based layout such that areas of the screen
      *    could be dynamically converted between sprites and backgrounds.
+     *
+     *  - I think we could do some cool things with a mode that supported
+     *    linear (X-axis only) scaling with per-scanline control over scale
+     *    factor and source address. This would allow some limited 3D rotation
+     *    effects, as well as 2.5D "ray-casting" style game engines.
      */
      
     while (1) {
