@@ -775,68 +775,54 @@ void text_string(uint8_t x, uint8_t y, const char *str)
 }    
 
 /*
- * Simple ray-caster. Instead of working off of a grid-based map, for this demo we
+ * Extremely simplified ray-caster. Currently this is not fully perspective-correct, it uses
+ * an orthographic projection for the ray intersection, but we still have some (somewhat fake)
+ * nonlinear scaling based on distance.
+ *
+ * Instead of working off of a grid-based map, for this demo we
  * have functions to check individual rays, and we'll store the result if the given
  * ray is closer than the last stored ray. So it's a bit like a 1D z-buffer :)
  */
 
-uint16_t ray_distance;
+uint16_t ray_distance = 0x7FFF;
 uint8_t ray_texcoord;
-uint8_t ray_angle;
-int8_t ray_sin, ray_cos;
-
-void ray_begin(void)
-{
-    ray_distance = 0x7FFF;
-    ray_angle = -64;
-    ray_sin = sin8(ray_angle);
-    ray_cos = sin8(ANGLE_90 - ray_angle);    
-}
 
 void ray_render(void)
 {
-    uint16_t width = 0xFFF / ray_distance;
+    uint16_t width = 0x7000 / ray_distance;
     if (width > LCD_WIDTH)
         width = LCD_WIDTH;
     
     lcd_render_1d_texture(ray_texcoord, width);
     
     ray_distance = 0x7FFF;
-    ray_angle++;
-    ray_sin = sin8(ray_angle);
-    ray_cos = sin8(ANGLE_90 - ray_angle);    
 }
 
-void ray_test_segment(int8_t x1, int8_t y1, int8_t x2, int8_t y2)
+void ray_test_segment(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {
-    int16_t mx = x2-x1;
-    int16_t my = y2-y1;
-    uint16_t a, d;
+    int8_t mx = x2-x1;
+    int8_t my = y2-y1;
+    uint16_t a;
+    uint16_t d;
     
+    if (!my)
+        // Edge-on segment, invisible
+        return;
+
     /*
      * Solve for the texture coordinate first.
-     *
-     * By solving the system of equations for the line segment and ray,
-     * we can get a value which is 0 at (x1, y1), 1 at (x2, y2), or outside
-     * the range [0, 1] if we miss the line segment:
-     *
-     *   (sin(a) * x1 - cos(a) * y1) / (my * cos(a) - mx * sin(a))
-     *
-     * Or, reformulating this for our fixed-point coordinates:
-     *
-     *   64 * (sin8 * x1 - cos8 * y1) / (my * cos8 - mx * sin8) 
      */
-    a = (ray_sin * (int16_t)x1 - ray_cos * (int16_t)y1) / ((ray_cos * my - ray_sin * mx) >> 6);
+    a = (-y1 << 6) / my;
     if (a >= 64)
         return;
     
     /*
-     * Now by solving the equations for distance, we get:
-     *
-     *   d = (x1 - y1 * mx / my) / (cos(a) - sin(a) * mx / my)
+     * If we're actually in the segment, solve distance
      */
-    d = ((x1 - y1 * mx / my) << 8) / (ray_cos - ray_sin * mx / my);
+    d = x1 - y1 * mx / my;
+    
     if (d < ray_distance) {
+        // New winner for the closest ray
         ray_distance = d;
         ray_texcoord = a << 1;
     }
@@ -859,25 +845,18 @@ void demo_cube(void)
          * Since this is 2.5D, our "cube" is actually a rotating square.
          * Calculate the vertices.
          */
-        uint8_t angle = frame; // & (ANGLE_90 - 1);
-        const int8_t dist = 50;
+        uint8_t angle = 0x20 + (0x3F & (frame << 1));
+        const int16_t x0 = 325;
+        const int16_t y0 = -64;
         
-        int8_t x1 = dist + sin8(ANGLE_90 - angle)/4;        
-        int8_t y1 = sin8(angle)/4;
-
-        int8_t x2 = dist + sin8(ANGLE_180 - angle)/4;        
-        int8_t y2 = sin8(ANGLE_90 + angle)/4;
-        
-        int8_t x3 = dist + sin8(ANGLE_270 - angle)/4;
-        int8_t y3 = sin8(ANGLE_180 + angle)/4;
-
+        int8_t s = sin8(angle)/2;
+        int8_t c = sin8(ANGLE_90 - angle)/2;
         
 	lcd_cmd_byte(LCD_CMD_RAMWR);
-        ray_begin();
         
         do {
-            ray_test_segment(x1, y1, x2, y2);
-            ray_test_segment(x2, y2, x3, y3);
+            ray_test_segment(x0-c, y+y0-s, x0-s, y+y0+c);
+            ray_test_segment(x0-s, y+y0+c, x0+c, y+y0+s);
             
             ray_render();
         } while (--y);
@@ -1109,15 +1088,15 @@ void main(void)
      */
      
     while (1) {
-        //demo_text();
-        //demo_fullscreen_bg();
-        //demo_owlbear_sprite();
-        //demo_owlbear_chromakey();
-        //demo_gems();
-        //demo_tile_panning();
-        //demo_monsters();
-        //demo_rotozoom();
-        //demo_sin_scaler();
+        demo_text();
+        demo_fullscreen_bg();
+        demo_owlbear_sprite();
+        demo_owlbear_chromakey();
+        demo_gems();
+        demo_tile_panning();
+        demo_monsters();
+        demo_rotozoom();
+        demo_sin_scaler();
         demo_cube();
     }
 }
