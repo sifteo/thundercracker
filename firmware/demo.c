@@ -666,6 +666,69 @@ void lcd_render_affine_64x128(uint8_t segment, uint8_t angle, uint8_t scale)
     } while (--y);
 }
 
+// Common lookup table used for fixed-point distance and scale calculations:
+//   [int((64 << 8) / (width+0.5)) for width in range(128)]
+static const __code uint16_t lut_64_fp8_div[] = {
+    32768, 10922, 6553, 4681, 3640, 2978, 2520, 2184, 1927, 1724, 1560, 1424, 1310,
+    1213, 1129, 1057, 992, 936, 885, 840, 799, 762, 728, 697, 668, 642, 618, 595,
+    574, 555, 537, 520, 504, 489, 474, 461, 448, 436, 425, 414, 404, 394, 385, 376,
+    368, 360, 352, 344, 337, 330, 324, 318, 312, 306, 300, 295, 289, 284, 280, 275,
+    270, 266, 262, 258, 254, 250, 246, 242, 239, 235, 232, 229, 225, 222, 219, 217,
+    214, 211, 208, 206, 203, 201, 198, 196, 193, 191, 189, 187, 185, 183, 181, 179,
+    177, 175, 173, 171, 169, 168, 166, 164, 163, 161, 159, 158, 156, 155, 153, 152,
+    151, 149, 148, 146, 145, 144, 143, 141, 140, 139, 138, 137, 135, 134, 133, 132,
+    131, 130, 129, 128
+};
+
+/*
+ * Render one scanline, with 1-dimensional texture mapping suitable for
+ * "rotating cube" type effects, or for 2.5-D ray casting.
+ * Source material is a 64-pixel wide texture, at the specified scanline address.
+ */
+const uint8_t texmap_segment = 0x8c000 >> 13;
+const uint8_t texmap_bg_left = 0xFF;
+const uint8_t texmap_bg_right = 0xFF;
+void lcd_render_1d_texture(uint8_t row_addr, uint8_t width)
+{
+    uint8_t l_margin, r_margin;
+    register uint16_t scale;
+    register uint16_t acc = 0x80;  // 1/2 pixel rounding adjustment
+    
+    // Scaling calculations, per-scanline
+    r_margin = l_margin = LCD_WIDTH - width;
+    l_margin = l_margin >> 1;
+    r_margin = (r_margin + 1) >> 1;
+    scale = lut_64_fp8_div[width];
+    
+    if (l_margin) {
+        CTRL_PORT = CTRL_IDLE;
+        BUS_DIR = 0;
+        BUS_PORT = texmap_bg_left;
+        lcd_addr_burst(l_margin);
+        BUS_DIR = 0xFF;
+    }
+    
+    if (width) {
+        ADDR_PORT = texmap_segment;
+        CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+        ADDR_PORT = row_addr;
+        CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+        
+        do {
+            ADDR_PORT = (uint8_t)((acc += scale) >> 8) << 2;
+            ADDR_INC4();
+        } while (--width);
+    }
+
+    if (r_margin) {
+        CTRL_PORT = CTRL_IDLE;
+        BUS_DIR = 0;
+        BUS_PORT = texmap_bg_right;
+        lcd_addr_burst(r_margin);
+        BUS_DIR = 0xFF;
+    }
+}
+
 void gems_draw_gem(uint8_t x, uint8_t y, uint8_t index)
 {
     // A gem is 32x32, a.k.a. a 2x2 tile grid
@@ -711,10 +774,115 @@ void text_string(uint8_t x, uint8_t y, const char *str)
 	text_char(x++, y, c);
 }    
 
+/*
+ * Simple ray-caster. Instead of working off of a grid-based map, for this demo we
+ * have functions to check individual rays, and we'll store the result if the given
+ * ray is closer than the last stored ray. So it's a bit like a 1D z-buffer :)
+ */
+
+uint16_t ray_distance;
+uint8_t ray_texcoord;
+uint8_t ray_angle;
+int8_t ray_sin, ray_cos;
+
+void ray_begin(void)
+{
+    ray_distance = 0x7FFF;
+    ray_angle = -64;
+    ray_sin = sin8(ray_angle);
+    ray_cos = sin8(ANGLE_90 - ray_angle);    
+}
+
+void ray_render(void)
+{
+    uint16_t width = 0xFFF / ray_distance;
+    if (width > LCD_WIDTH)
+        width = LCD_WIDTH;
+    
+    lcd_render_1d_texture(ray_texcoord, width);
+    
+    ray_distance = 0x7FFF;
+    ray_angle++;
+    ray_sin = sin8(ray_angle);
+    ray_cos = sin8(ANGLE_90 - ray_angle);    
+}
+
+void ray_test_segment(int8_t x1, int8_t y1, int8_t x2, int8_t y2)
+{
+    int16_t mx = x2-x1;
+    int16_t my = y2-y1;
+    uint16_t a, d;
+    
+    /*
+     * Solve for the texture coordinate first.
+     *
+     * By solving the system of equations for the line segment and ray,
+     * we can get a value which is 0 at (x1, y1), 1 at (x2, y2), or outside
+     * the range [0, 1] if we miss the line segment:
+     *
+     *   (sin(a) * x1 - cos(a) * y1) / (my * cos(a) - mx * sin(a))
+     *
+     * Or, reformulating this for our fixed-point coordinates:
+     *
+     *   64 * (sin8 * x1 - cos8 * y1) / (my * cos8 - mx * sin8) 
+     */
+    a = (ray_sin * (int16_t)x1 - ray_cos * (int16_t)y1) / ((ray_cos * my - ray_sin * mx) >> 6);
+    if (a >= 64)
+        return;
+    
+    /*
+     * Now by solving the equations for distance, we get:
+     *
+     *   d = (x1 - y1 * mx / my) / (cos(a) - sin(a) * mx / my)
+     */
+    d = ((x1 - y1 * mx / my) << 8) / (ray_cos - ray_sin * mx / my);
+    if (d < ray_distance) {
+        ray_distance = d;
+        ray_texcoord = a << 1;
+    }
+}
+
 
 /*************************************************************
  * IT IS DEMO TIME.
  */
+
+// Rotating cube effect
+void demo_cube(void)
+{
+    uint16_t frame;
+    
+    for (frame = 0; frame < 256; frame++) {
+        uint8_t y = LCD_HEIGHT;
+        
+        /* 
+         * Since this is 2.5D, our "cube" is actually a rotating square.
+         * Calculate the vertices.
+         */
+        uint8_t angle = frame; // & (ANGLE_90 - 1);
+        const int8_t dist = 50;
+        
+        int8_t x1 = dist + sin8(ANGLE_90 - angle)/4;        
+        int8_t y1 = sin8(angle)/4;
+
+        int8_t x2 = dist + sin8(ANGLE_180 - angle)/4;        
+        int8_t y2 = sin8(ANGLE_90 + angle)/4;
+        
+        int8_t x3 = dist + sin8(ANGLE_270 - angle)/4;
+        int8_t y3 = sin8(ANGLE_180 + angle)/4;
+
+        
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+        ray_begin();
+        
+        do {
+            ray_test_segment(x1, y1, x2, y2);
+            ray_test_segment(x2, y2, x3, y3);
+            
+            ray_render();
+        } while (--y);
+    }
+}
 
 // Static 16x16 tile graphics (Chroma Extra-lite)
 void demo_gems(void)
@@ -871,13 +1039,29 @@ void demo_text(void)
 
     for (frame = 0; frame < 256; frame++) {
 	lcd_cmd_byte(LCD_CMD_RAMWR);
-	lcd_render_tiles_8x8_16bit_20wide(12 + (sin8(frame << 1) >> 5),
+        lcd_render_tiles_8x8_16bit_20wide(12 + (sin8(frame << 1) >> 5),
 					  16 + (sin8(frame << 3) >> 5));
 
 	x = 19;
 	do {
 	    text_char(x, 14, scroller[(x + frame) % (sizeof scroller-1)]);
 	} while (--x);
+    }
+}
+
+// Sine wave 1D texture scaler
+void demo_sin_scaler(void)
+{
+    uint16_t frame;
+    uint8_t row_addr;
+    
+    for (frame = 0; frame < 256; frame++) {
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+
+        row_addr = 0;
+        do {
+            lcd_render_1d_texture(row_addr, 64 + sin8(frame*4 + row_addr)/4);
+        } while (row_addr += 2);
     }
 }
 
@@ -925,13 +1109,15 @@ void main(void)
      */
      
     while (1) {
-        demo_text();
-        demo_fullscreen_bg();
-        demo_owlbear_sprite();
-        demo_owlbear_chromakey();
-        demo_gems();
-        demo_tile_panning();
-        demo_monsters();
-        demo_rotozoom();
+        //demo_text();
+        //demo_fullscreen_bg();
+        //demo_owlbear_sprite();
+        //demo_owlbear_chromakey();
+        //demo_gems();
+        //demo_tile_panning();
+        //demo_monsters();
+        //demo_rotozoom();
+        //demo_sin_scaler();
+        demo_cube();
     }
 }
