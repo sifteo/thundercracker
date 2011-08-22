@@ -1088,6 +1088,9 @@ void main(void)
      */
      
     while (1) {
+        demo_cube();
+        demo_sin_scaler();
+        demo_rotozoom();
         demo_text();
         demo_fullscreen_bg();
         demo_owlbear_sprite();
@@ -1095,8 +1098,5 @@ void main(void)
         demo_gems();
         demo_tile_panning();
         demo_monsters();
-        demo_rotozoom();
-        demo_sin_scaler();
-        demo_cube();
     }
 }
