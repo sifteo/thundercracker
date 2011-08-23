@@ -44,8 +44,11 @@ int radio_tick(void)
 	 */
 
 	uint8_t payload[256];
+	int len = network_rx(payload);
 
-	network_rx(payload);
+	if (len >= 0)
+	    printf("%d\n", len);
+	
 	radio.rx_timer = RX_INTERVAL_CYCLES;
     }	
 

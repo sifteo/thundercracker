@@ -118,7 +118,7 @@ static int network_rx_into_buffer(void)
 	if (net.rx_count >= packet_len) {
 	    /*
 	     * We have a packet! Is it a message? We currently ignore
-	     * remote ACKs. (We're providing unidirectionalflow
+	     * remote ACKs. (We're providing unidirectional flow
 	     * control, not consuming the remote end's flow control.)
 	     *
 	     * We also ignore the source address, since our hardware
@@ -148,7 +148,6 @@ static int network_rx_into_buffer(void)
 	     * No packet buffered. Try to read more!
 	     */
 
-	    network_try_connect();
 	    recv_len = recv(net.fd, net.rx_buffer + net.rx_count,
 			    sizeof net.rx_buffer - net.rx_count, 0);
 
@@ -225,8 +224,6 @@ static void network_addr_to_bytes(uint64_t addr, uint8_t *bytes)
 void network_tx(uint64_t addr, void *payload, int len)
 {
     uint8_t buffer[512];
-
-    network_try_connect();
 
     if (len <= 255 - 8) {
 	buffer[0] = len + 8;
