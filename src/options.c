@@ -37,16 +37,10 @@
 
 static int activerow = 0;
 
-int opt_exception_iret_sp = 1;
-int opt_exception_iret_acc = 1;
-int opt_exception_iret_psw = 1;
-int opt_exception_acc_to_a = 1;
-int opt_exception_stack = 1;
-int opt_exception_invalid = 1;
-int opt_input_outputlow = 1;
 int opt_clock_select = 6;
 int opt_clock_hz = 16*1000*1000;
 int opt_step_instruction = 1;
+int opt_debug = 0;
 
 const char *opt_flash_filename = "flash.bin";
 const char *opt_net_host = "127.0.0.1";
@@ -108,30 +102,7 @@ void options_editor_keys(struct em8051 *aCPU, int ch)
             opt_clock_hz = clockspeeds[opt_clock_select];
             break;
         case 2:
-            opt_input_outputlow--;
-            if (opt_input_outputlow < 0)
-                opt_input_outputlow = 0;
-            break;
-        case 3:
             opt_step_instruction = !opt_step_instruction;
-            break;
-        case 4:
-            opt_exception_iret_sp = !opt_exception_iret_sp;
-            break;
-        case 5:
-            opt_exception_iret_acc = !opt_exception_iret_acc;
-            break;
-        case 6:
-            opt_exception_iret_psw = !opt_exception_iret_psw;
-            break;
-        case 7:
-            opt_exception_acc_to_a = !opt_exception_acc_to_a;
-            break;
-        case 8:
-            opt_exception_stack = !opt_exception_stack;
-            break;
-        case 9:
-            opt_exception_invalid = !opt_exception_invalid;
             break;
         }
         break;
@@ -150,30 +121,7 @@ void options_editor_keys(struct em8051 *aCPU, int ch)
                 opt_clock_hz = 1;
             break;
         case 2:
-            opt_input_outputlow++;
-            if (opt_input_outputlow > 2)
-                opt_input_outputlow = 2;
-            break;
-        case 3:
             opt_step_instruction = !opt_step_instruction;
-            break;
-        case 4:
-            opt_exception_iret_sp = !opt_exception_iret_sp;
-            break;
-        case 5:
-            opt_exception_iret_acc = !opt_exception_iret_acc;
-            break;
-        case 6:
-            opt_exception_iret_psw = !opt_exception_iret_psw;
-            break;
-        case 7:
-            opt_exception_acc_to_a = !opt_exception_acc_to_a;
-            break;
-        case 8:
-            opt_exception_stack = !opt_exception_stack;
-            break;
-        case 9:
-            opt_exception_invalid = !opt_exception_invalid;
             break;
         }
         break;
@@ -189,17 +137,7 @@ void options_update(struct em8051 *aCPU)
     attron(A_REVERSE);
     mvprintw(3, 4, "< Hardware: nRF24LE1 >");
     mvprintw(5, 4, "< Clock at % 8.3f MHz >", opt_clock_hz / (1000*1000.0f));
-    mvprintw(9, 4, "< Step steps %s >", opt_step_instruction ? "single instruction" : "single cpu cycle  ");
-    /*
-    mvprintw(7, 4, "< option >");
-    */
-    mvprintw(7, 4, "< High inputs from ports with low out level should be %c >", "01?"[opt_input_outputlow]);
-    mvprintw(11, 4, "< Interrupt handler sp watch exception %s >", opt_exception_iret_sp?"enabled ":"disabled");
-    mvprintw(13, 4, "< Interrupt handler acc watch exception %s >", opt_exception_iret_acc?"enabled ":"disabled");
-    mvprintw(15, 4, "< Interrupt handler psw watch exception %s >", opt_exception_iret_psw?"enabled ":"disabled");
-    mvprintw(17, 4, "< Acc-to-a opcode exception %s >", opt_exception_acc_to_a?"enabled ":"disabled");
-    mvprintw(19, 4, "< Stack exception %s >", opt_exception_stack?"enabled ":"disabled");
-    mvprintw(21, 4, "< Illegal opcode exception %s >", opt_exception_invalid?"enabled ":"disabled"); 
+    mvprintw(7, 4, "< Step steps %s >", opt_step_instruction ? "single instruction" : "single cpu cycle  ");
     attroff(A_REVERSE);
     mvprintw(activerow * 2 + 3, 2, "->");
 }

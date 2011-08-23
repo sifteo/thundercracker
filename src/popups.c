@@ -75,28 +75,6 @@ void emu_exception(struct em8051 *aCPU, int aCode)
 {
     WINDOW * exc;
 
-    switch (aCode)
-    {
-    case EXCEPTION_IRET_SP_MISMATCH:
-        if (opt_exception_iret_sp) return;
-        break;
-    case EXCEPTION_IRET_ACC_MISMATCH:
-        if (opt_exception_iret_acc) return;
-        break;
-    case EXCEPTION_IRET_PSW_MISMATCH:
-        if (opt_exception_iret_psw) return;
-        break;
-    case EXCEPTION_ACC_TO_A:
-        if (!opt_exception_acc_to_a) return;
-        break;
-    case EXCEPTION_STACK:
-        if (!opt_exception_stack) return;
-        break;
-    case EXCEPTION_ILLEGAL_OPCODE:
-        if (!opt_exception_invalid) return;
-        break;
-    }
-
     nocbreak();
     cbreak();
     nodelay(stdscr, FALSE);

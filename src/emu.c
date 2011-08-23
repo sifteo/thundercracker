@@ -216,182 +216,92 @@ void change_view(struct em8051 *aCPU, int changeto)
     }
 }
 
-int main(int argc, char ** argv) 
+void run_cycle_batch(struct em8051 *aCPU)
+{
+    /*
+     * Put more time on the clock. This accumulates at every
+     * iteration, so we'll compensate for any momentary errors
+     * and settle on the correct average speed.
+     */
+    
+    if (speed == 2 && runmode)
+	{
+	    target_time += 1;
+	    target_clocks += opt_clock_hz / 16000;
+	}
+
+    if (speed < 2 && runmode)
+	{
+	    // Run for at least 30ms between display refreshes
+	    const int quanta = 30;
+
+	    target_time += quanta;
+	    target_clocks += opt_clock_hz / 1000 * quanta;
+	}
+
+    do
+	{
+	    int old_pc;
+	    old_pc = aCPU->mPC;
+	    int ticked;
+
+	    if (speed == 0) {
+		/*
+		 * Fastest speed. Run ticks in large batches, so we don't spend
+		 * all this CPU time in silly places like SDL_GetTicks() or ncurses.
+		 */
+
+		while (target_clocks > clocks) {
+		    clocks++;
+		    tick(aCPU);
+		}
+		ticked = 0;
+	    }
+	    else if (opt_step_instruction) {
+		/* Keep running until we actually execute an instruction */
+
+		ticked = 0;
+		while (!ticked) {
+		    clocks++;
+		    ticked = tick(aCPU);
+		}
+
+		if (aCPU->mPC == breakpoint)
+		    emu_exception(aCPU, -1);
+	    }
+	    else {
+		/*
+		 * Generic, run one clock cycle.
+		 */
+
+		clocks++;
+		ticked = tick(aCPU);
+	    }
+
+	    // Update history in all speeds but the fastest, if we ran an actual instruction
+	    if (ticked) {
+		icount++;
+
+		historyline = (historyline + 1) % HISTORY_LINES;
+
+		memcpy(history + (historyline * (128 + 64 + sizeof(int))), aCPU->mSFR, 128);
+		memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128, aCPU->mLowerData, 64);
+		memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128 + 64, &old_pc, sizeof(int));
+	    }
+	}
+    while ((int32_t)(target_time - SDL_GetTicks()) > 0
+	   && target_clocks > clocks);
+	    
+    // Running too fast? Slow down a bit!
+
+    while ((int32_t)(target_time - SDL_GetTicks()) > 0)
+	emu_sleep(1);
+}
+
+void debug_main(struct em8051 *aCPU)
 {
     int ch = 0;
-    struct em8051 emu;
-    int i;
     int ticked = 1;
-
-    memset(&emu, 0, sizeof(emu));
-    emu.mCodeMem     = malloc(65536);
-    emu.mCodeMemSize = 65536;
-    emu.mExtData     = malloc(65536);
-    emu.mExtDataSize = 65536;
-    emu.mLowerData   = malloc(128);
-    emu.mUpperData   = malloc(128);
-    emu.mSFR         = malloc(128);
-    emu.except       = &emu_exception;
-    emu.sfrwrite     = &hardware_sfrwrite;
-    emu.sfrread      = &hardware_sfrread;
-    emu.xread = NULL;
-    emu.xwrite = NULL;
-    reset(&emu, 1);    
-
-    if (argc > 1)
-    {
-        for (i = 1; i < argc; i++)
-        {
-            if (argv[i][0] == '-')
-            {
-                if (strcmp("step_instruction",argv[i]+1) == 0)
-                {
-                    opt_step_instruction = 1;
-                }
-                else
-                if (strcmp("si",argv[i]+1) == 0)
-                {
-                    opt_step_instruction = 1;
-                }
-                else
-                if (strcmp("noexc_iret_sp",argv[i]+1) == 0)
-                {
-                    opt_exception_iret_sp = 0;
-                }
-                else
-                if (strcmp("nosp",argv[i]+1) == 0)
-                {
-                    opt_exception_iret_sp = 0;
-                }
-                else
-                if (strcmp("noexc_iret_acc",argv[i]+1) == 0)
-                {
-                    opt_exception_iret_acc = 0;
-                }
-                else
-                if (strcmp("noacc",argv[i]+1) == 0)
-                {
-                    opt_exception_iret_acc = 0;
-                }
-                else
-                if (strcmp("noexc_iret_psw",argv[i]+1) == 0)
-                {
-                    opt_exception_iret_psw = 0;
-                }
-                else
-                if (strcmp("nopsw",argv[i]+1) == 0)
-                {
-                    opt_exception_iret_psw = 0;
-                }
-                else
-                if (strcmp("noexc_acc_to_a",argv[i]+1) == 0)
-                {
-                    opt_exception_acc_to_a = 0;
-                }
-                else
-                if (strcmp("noaa",argv[i]+1) == 0)
-                {
-                    opt_exception_acc_to_a = 0;
-                }
-                else
-                if (strcmp("noexc_stack",argv[i]+1) == 0)
-                {
-                    opt_exception_stack = 0;
-                }
-                else
-                if (strcmp("nostk",argv[i]+1) == 0)
-                {
-                    opt_exception_stack = 0;
-                }
-                else
-                if (strcmp("noexc_invalid_op",argv[i]+1) == 0)
-                {
-                    opt_exception_invalid = 0;
-                }
-                else
-                if (strcmp("noiop",argv[i]+1) == 0)
-                {
-                    opt_exception_invalid = 0;
-                }
-                else
-                if (strncmp("clock=",argv[i]+1,6) == 0)
-                {
-                    opt_clock_select = 12;
-                    opt_clock_hz = atoi(argv[i]+7);
-                    if (opt_clock_hz <= 0)
-                        opt_clock_hz = 1;
-                }
-                if (strncmp("flash=",argv[i]+1,6) == 0)
-                {
-		    opt_flash_filename = argv[i]+7;
-                }
-                if (strncmp("host=",argv[i]+1,5) == 0)
-                {
-		    opt_net_host = argv[i]+6;
-                }
-                if (strncmp("port=",argv[i]+1,5) == 0)
-                {
-		    opt_net_port = argv[i]+6;
-                }
-                else
-                {
-                    printf("Help:\n\n"
-			   "%s [options] [firmware.ihx]\n\n"
-			   "Both the filename and options are optional. Available options:\n\n"
-			   "Option            Alternate   description\n"
-			   "-step_instruction -si         Step one instruction at a time\n"
-			   "-noexc_iret_sp    -nosp       Disable sp iret exception\n"
-			   "-noexc_iret_acc   -noacc      Disable acc iret exception\n"
-			   "-noexc_iret_psw   -nopsw      Disable pdw iret exception\n"
-			   "-noexc_acc_to_a   -noaa       Disable acc-to-a invalid instruction exception\n"
-			   "-noexc_stack      -nostk      Disable stack abnormal behaviour exception\n"
-			   "-noexc_invalid_op -noiop      Disable invalid opcode exception\n"
-			   "-iolowlow         If out pin is low, hi input from same pin is low\n"
-			   "-iolowrand        If out pin is low, hi input from same pin is random\n"
-			   "-clock=value      Set clock speed, in Hz\n"
-			   "-flash=file.bin   Set Flash memory filename\n",
-			   "-host=hostname    Hostname for nethub connection\n",
-			   "-port=port        Port number for nethub connection\n",
-			   argv[0]);
-                    return -1;
-                }
-            }
-            else
-            {
-                if (load_obj(&emu, argv[i]) != 0)
-                {
-                    printf("File '%s' load failure\n\n",argv[i]);
-                    return -1;
-                }
-                else
-                {
-		    /*
-		     * Loaded firmware successfully. Remember the
-		     * file, and start running it full-speed!
-		     */
-		    
-		    runmode = 1;
-		    speed = 0;
-                    strcpy(filename, argv[i]);
-                }
-            }
-        }
-    }
-   
-    /*
-     * Init hardware earlyish. Initializing the LCD controller will create an SDL window.
-     *
-     * On Mac OS, due to some ugly SDL threading quirks, we get some
-     * warnings on the console during the first redraw. We would
-     * prefer to get the unpleasantness over with early, then repaint
-     * over the screen when we init ncurses.  On a less kludgey note,
-     * this also allows us to bail out if there's an error without
-     * having to worry about putting the console back into a usable
-     * state.
-     */
-    hardware_init(&emu);
-
-    //  Initialize ncurses
 
     slk_init(1);
     if ( (initscr()) == NULL ) {
@@ -413,7 +323,7 @@ int main(int argc, char ** argv)
     setSpeed(speed, runmode);
 
     // Draw the first screen
-    build_main_view(&emu);
+    build_main_view(aCPU);
 
     do
     {
@@ -424,41 +334,41 @@ int main(int argc, char ** argv)
         if (LINES != oldrows ||
             COLS != oldcols)
         {
-            refreshview(&emu);
+            refreshview(aCPU);
         }
         switch (ch)
         {
         case KEY_F(1):
-            change_view(&emu, 0);
+            change_view(aCPU, 0);
             break;
         case KEY_F(2):
-            change_view(&emu, 1);
+            change_view(aCPU, 1);
             break;
         case KEY_F(3):
-            change_view(&emu, 2);
+            change_view(aCPU, 2);
             break;
         case 'v':
-            change_view(&emu, (view + 1) % 3);
+            change_view(aCPU, (view + 1) % 3);
             break;
         case 'k':
             if (breakpoint != -1)
             {
                 breakpoint = -1;
-                emu_popup(&emu, "Breakpoint", "Breakpoint cleared.");
+                emu_popup(aCPU, "Breakpoint", "Breakpoint cleared.");
             }
             else
             {
-                breakpoint = emu_readvalue(&emu, "Set Breakpoint", emu.mPC, 4);
+                breakpoint = emu_readvalue(aCPU, "Set Breakpoint", aCPU->mPC, 4);
             }
             break;
         case 'g':
-            emu.mPC = emu_readvalue(&emu, "Set Program Counter", emu.mPC, 4);
+            aCPU->mPC = emu_readvalue(aCPU, "Set Program Counter", aCPU->mPC, 4);
             break;
         case 'h':
-            emu_help(&emu);
+            emu_help(aCPU);
             break;
         case 'l':
-            emu_load(&emu);
+            emu_load(aCPU);
             break;
         case ' ':
             runmode = 0;
@@ -496,7 +406,7 @@ int main(int argc, char ** argv)
             setSpeed(speed, runmode);
             break;
         case KEY_HOME:
-            if (emu_reset(&emu))
+            if (emu_reset(aCPU))
             {
                 target_clocks = clocks = 0;
                 ticked = 1;
@@ -511,119 +421,143 @@ int main(int argc, char ** argv)
             switch (view)
             {
             case MAIN_VIEW:
-                mainview_editor_keys(&emu, ch);
+                mainview_editor_keys(aCPU, ch);
                 break;
             case MEMEDITOR_VIEW:
-                memeditor_editor_keys(&emu, ch);
+                memeditor_editor_keys(aCPU, ch);
                 break;
             case OPTIONS_VIEW:
-                options_editor_keys(&emu, ch);
+                options_editor_keys(aCPU, ch);
                 break;
             }
             break;
         }
 
         if (ch == 32 || runmode)
-        {
-	    /*
-	     * Put more time on the clock. This accumulates at every
-	     * iteration, so we'll compensate for any momentary errors
-	     * and settle on the correct average speed.
-	     */
-
-            if (speed == 2 && runmode)
-            {
-                target_time += 1;
-                target_clocks += opt_clock_hz / 16000;
-            }
-
-            if (speed < 2 && runmode)
-            {
-		// Run for at least 30ms between display refreshes
-		const int quanta = 30;
-
-		target_time += quanta;
-		target_clocks += opt_clock_hz / 1000 * quanta;
-            }
-
-            do
-            {
-                int old_pc;
-                old_pc = emu.mPC;
-
-		if (speed == 0) {
-		    /*
-		     * Fastest speed. Run ticks in large batches, so we don't spend
-		     * all this CPU time in silly places like SDL_GetTicks() or ncurses.
-		     */
-
-		    while (target_clocks > clocks) {
-			clocks++;
-			tick(&emu);
-		    }
-                    ticked = 0;
-		}
-                else if (opt_step_instruction) {
-		    /* Keep running until we actually execute an instruction */
-
-                    ticked = 0;
-                    while (!ticked)
-                    {
-                        clocks++;
-                        ticked = tick(&emu);
-                    }
-
-		    if (emu.mPC == breakpoint)
-			emu_exception(&emu, -1);
-                }
-		else {
-		    /*
-		     * Generic, run one clock cycle.
-		     */
-
-                    clocks++;
-		    ticked = tick(&emu);
-		}
-
-		// Update history in all speeds but the fastest, if we ran an actual instruction
-                if (ticked)
-                {
-                    icount++;
-
-                    historyline = (historyline + 1) % HISTORY_LINES;
-
-                    memcpy(history + (historyline * (128 + 64 + sizeof(int))), emu.mSFR, 128);
-                    memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128, emu.mLowerData, 64);
-                    memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128 + 64, &old_pc, sizeof(int));
-                }
-            }
-            while ((int32_t)(target_time - SDL_GetTicks()) > 0
-		   && target_clocks > clocks);
-	    
-            while ((int32_t)(target_time - SDL_GetTicks()) > 0)
-            {
-		// Running too fast. Slow down a bit!
-                emu_sleep(1);
-            }
-        }
+	    run_cycle_batch(aCPU);
 
         switch (view)
         {
         case MAIN_VIEW:
-            mainview_update(&emu);
+            mainview_update(aCPU);
             break;
         case MEMEDITOR_VIEW:
-            memeditor_update(&emu);
+            memeditor_update(aCPU);
             break;
         case OPTIONS_VIEW:
-            options_update(&emu);
+            options_update(aCPU);
             break;
         }
     }
     while ( (ch = getch()) != 'Q' );
 
     endwin();
+}
+
+void nodebug_main(struct em8051 *aCPU)
+{
+    runmode = 1;
+    speed = 0;
+
+    while (!lcd_eventloop())
+	run_cycle_batch(aCPU);
+}
+
+int main(int argc, char ** argv) 
+{
+    struct em8051 emu;
+    int i;
+ 
+    memset(&emu, 0, sizeof(emu));
+    emu.mCodeMem     = malloc(65536);
+    emu.mCodeMemSize = 65536;
+    emu.mExtData     = malloc(65536);
+    emu.mExtDataSize = 65536;
+    emu.mLowerData   = malloc(128);
+    emu.mUpperData   = malloc(128);
+    emu.mSFR         = malloc(128);
+    emu.except       = &emu_exception;
+    emu.sfrwrite     = &hardware_sfrwrite;
+    emu.sfrread      = &hardware_sfrread;
+    emu.xread = NULL;
+    emu.xwrite = NULL;
+    reset(&emu, 1);    
+ 
+    if (argc > 1) {
+        for (i = 1; i < argc; i++) {
+            if (argv[i][0] == '-') {
+                if (strcmp("step_instruction",argv[i]+1) == 0)
+                    opt_step_instruction = 1;
+                else if (strcmp("si",argv[i]+1) == 0)
+                    opt_step_instruction = 1;
+                else if (strcmp("d",argv[i]+1) == 0)
+                    opt_debug = 1;
+                else if (strcmp("debug",argv[i]+1) == 0)
+                    opt_debug = 1;
+                else if (strncmp("clock=",argv[i]+1,6) == 0) {
+                    opt_clock_select = 12;
+                    opt_clock_hz = atoi(argv[i]+7);
+                    if (opt_clock_hz <= 0)
+                        opt_clock_hz = 1;
+                } 
+		else if (strncmp("flash=",argv[i]+1,6) == 0)
+		    opt_flash_filename = argv[i]+7;
+                else if (strncmp("host=",argv[i]+1,5) == 0)
+		    opt_net_host = argv[i]+6;
+                else if (strncmp("port=",argv[i]+1,5) == 0)
+		    opt_net_port = argv[i]+6;
+                else {
+                    printf("Help:\n\n"
+			   "%s [options] [firmware.ihx]\n\n"
+			   "Both the filename and options are optional. Available options:\n\n"
+			   "Option            Alternate   description\n"
+			   "-debug            -d          Enable ncurses debug UI\n"
+			   "-step_instruction -si         Step one instruction at a time\n"
+			   "\n"
+			   "-clock=value      Set clock speed, in Hz\n"
+			   "-flash=file.bin   Set Flash memory filename\n",
+			   "-host=hostname    Hostname for nethub connection\n",
+			   "-port=port        Port number for nethub connection\n",
+			   argv[0]);
+                    return -1;
+                }
+            } else {
+                if (load_obj(&emu, argv[i]) != 0) {
+                    printf("File '%s' load failure\n\n",argv[i]);
+                    return -1;
+                } else {
+		    /*
+		     * Loaded firmware successfully. Remember the
+		     * file, and start running it full-speed!
+		     */
+		    
+		    runmode = 1;
+		    speed = 1;
+                    strcpy(filename, argv[i]);
+                }
+            }
+        }
+    }
+   
+    /*
+     * Init hardware earlyish. Initializing the LCD controller will create an SDL window.
+     *
+     * On Mac OS, due to some ugly SDL threading quirks, we get some
+     * warnings on the console during the first redraw. We would
+     * prefer to get the unpleasantness over with early, then repaint
+     * over the screen when we init ncurses.  On a less kludgey note,
+     * this also allows us to bail out if there's an error without
+     * having to worry about putting the console back into a usable
+     * state.
+     */
+    hardware_init(&emu);
+
+    if (opt_debug)
+	debug_main(&emu);
+    else
+	nodebug_main(&emu);
+
     hardware_exit();
-    
-    return EXIT_SUCCESS;
+
+    return 0;
 }

@@ -71,15 +71,10 @@ extern int p3out;
 // current clock count
 extern uint64_t clocks;
 
-extern int opt_exception_iret_sp;
-extern int opt_exception_iret_acc;
-extern int opt_exception_iret_psw;
-extern int opt_exception_acc_to_a;
-extern int opt_exception_stack;
-extern int opt_exception_invalid;
 extern int opt_clock_select;
 extern int opt_clock_hz;
 extern int opt_step_instruction;
+extern int opt_debug;
 
 extern const char *opt_flash_filename;
 extern const char *opt_net_host;

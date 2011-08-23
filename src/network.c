@@ -6,9 +6,22 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+/*
+ * This network simulation assumes we're going to be checking for RX
+ * packets very frequently, as part of the hardware simulation. To keep
+ * the syscall overhead from overwhelming us, we have a separate thread
+ * that spends its time waiting on I/O. When a packet is received, it's
+ * buffered, then the main thread uses a semaphore to wake up the waiting
+ * I/O thread after the buffer is available.
+ *
+ * We use SDL for multithreading primitives here, just so we don't
+ * have to introduce any new dependencies.
+ */
+
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <SDL.h>
 #include "network.h"
 
 #ifdef _WIN32
@@ -32,80 +45,31 @@
 
 struct {
     struct addrinfo *addr;
+    SDL_Thread *thread;
+    SDL_sem *rx_sem;
     uint64_t rf_addr;
     int fd;
     int is_connected;
+    int is_running;
+
+    // Raw receive buffer
     int rx_count;
     uint8_t rx_buffer[1024];
+
+    // Received packet buffer
+    int rx_packet_len;
+    uint8_t rx_packet[256];
 } net;
 
-static void network_set_nonblock(unsigned long mode)
-{
-#ifdef _WIN32
-    ioctlsocket(net.fd, FIONBIO, &mode);
-#else
-    fcntl(net.fd, F_SETFL, mode ? O_NONBLOCK : 0);
-#endif
-}
-
-static void network_try_connect(void)
-{
-    if (net.is_connected)
-	return;
-
-    if (net.fd < 0) {
-	net.rx_count = 0;
-
-	net.fd = socket(net.addr->ai_family, net.addr->ai_socktype, net.addr->ai_protocol);
-	if (net.fd < 0)
-	    return;
-
-	network_set_nonblock(1);
-    }
-
-    if (!connect(net.fd, net.addr->ai_addr, net.addr->ai_addrlen)) {
-	net.is_connected = 1;
-
-	if (net.rf_addr)
-	    network_set_addr(net.rf_addr);
-    }
-}
-
-void network_init(const char *host, const char *port)
-{
-    struct addrinfo hints;
-#ifdef _WIN32
-    WSADATA wsaData;
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
-#endif
-
-    net.fd = -1;
-    net.is_connected = 0;
-    
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-    
-    if (getaddrinfo(host, port, &hints, &net.addr)) {
-	perror("getaddrinfo");
-	exit(1);
-    }
-}
 
 static void network_disconnect(void)
 {
     if (net.fd >= 0)
 	close(net.fd);
+
     net.fd = -1;
     net.is_connected = 0;
 }   
-
-void network_exit(void)
-{
-    network_disconnect();
-    freeaddrinfo(net.addr);
-}
 
 static void network_tx_bytes(uint8_t *data, int len)
 {
@@ -122,46 +86,34 @@ static void network_tx_bytes(uint8_t *data, int len)
     }
 }
 
-static void network_addr_to_bytes(uint64_t addr, uint8_t *bytes)
+static void network_try_connect(void)
 {
-    int i;
-    for (i = 0; i < 8; i++) {
-	bytes[i] = addr;
-	addr >>= 8;
+    if (net.fd < 0) {
+	net.rx_count = 0;
+
+	net.fd = socket(net.addr->ai_family, net.addr->ai_socktype, net.addr->ai_protocol);
+	if (net.fd < 0)
+	    return;
+    }
+
+    if (!connect(net.fd, net.addr->ai_addr, net.addr->ai_addrlen)) {
+	net.is_connected = 1;
+
+	if (net.rf_addr)
+	    network_set_addr(net.rf_addr);
+    } else {
+	// Connection error, don't retry immediately
+	usleep(300000);
     }
 }
 
-void network_set_addr(uint64_t addr)
-{
-    uint8_t packet[10] = { 0, NETHUB_SET_ADDR };
-    network_addr_to_bytes(addr, &packet[2]);
-    network_tx_bytes(packet, sizeof packet);
-}
-
-void network_tx(uint64_t addr, void *payload, int len)
-{
-    uint8_t buffer[512];
-
-    network_try_connect();
-
-    if (len <= 255 - 8) {
-	buffer[0] = len + 8;
-	buffer[1] = NETHUB_MSG;
-	network_addr_to_bytes(addr, buffer + 2);
-	memcpy(buffer + 10, payload, len);
-
-	network_tx_bytes(buffer, len + 10);
-    }
-}
-
-int network_rx(uint8_t payload[256])
+static int network_rx_into_buffer(void)
 {
     int recv_len = 1;
 	
     for (;;) {
 	int packet_len = 2 + (int)net.rx_buffer[0];
 	uint8_t packet_type = net.rx_buffer[1];
-	int result = 0;
 
 	if (net.rx_count >= packet_len) {
 	    /*
@@ -177,16 +129,19 @@ int network_rx(uint8_t payload[256])
 		static uint8_t ack[] = { 0, NETHUB_ACK };
 		network_tx_bytes(ack, sizeof ack);
 
-		result = packet_len - 10;
-		memcpy(payload, net.rx_buffer + 10, result);
+		memcpy(net.rx_packet, net.rx_buffer + 10,
+		       packet_len - 10);
+
+		// This assignment transfers buffer ownership to the main thread
+		net.rx_packet_len = packet_len - 10;
 	    }
 
 	    // Remove packet from buffer
 	    memmove(net.rx_buffer, net.rx_buffer + packet_len, net.rx_count - packet_len);
 	    net.rx_count -= packet_len;
 
-	    if (result)
-		return result;
+	    if (net.rx_packet_len)
+		return 1;
 
 	} else {
 	    /*
@@ -208,5 +163,98 @@ int network_rx(uint8_t payload[256])
     }
 
     return 0;
+}
+
+static int network_thread(void *param)
+{
+    while (net.is_running) {
+	if (!net.is_connected)
+	    network_try_connect();
+	
+	if (net.rx_packet_len < 0) {
+	    if (network_rx_into_buffer())
+		SDL_SemWait(net.rx_sem);
+	}
+    }
+}
+
+void network_init(const char *host, const char *port)
+{
+    struct addrinfo hints;
+#ifdef _WIN32
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
+    
+    memset(&net, 0, sizeof net);
+    net.fd = -1;
+    net.is_running = 1;
+    net.rx_packet_len = -1;
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+    
+    if (getaddrinfo(host, port, &hints, &net.addr)) {
+	perror("getaddrinfo");
+	exit(1);
+    }
+
+    net.thread = SDL_CreateThread(network_thread, NULL);
+}
+
+void network_exit(void)
+{
+    network_disconnect();
+    freeaddrinfo(net.addr);
+
+    net.is_running = 0;
+    SDL_SemPost(net.rx_sem);
+}
+
+static void network_addr_to_bytes(uint64_t addr, uint8_t *bytes)
+{
+    int i;
+    for (i = 0; i < 8; i++) {
+	bytes[i] = addr;
+	addr >>= 8;
+    }
+}
+
+void network_tx(uint64_t addr, void *payload, int len)
+{
+    uint8_t buffer[512];
+
+    network_try_connect();
+
+    if (len <= 255 - 8) {
+	buffer[0] = len + 8;
+	buffer[1] = NETHUB_MSG;
+	network_addr_to_bytes(addr, buffer + 2);
+	memcpy(buffer + 10, payload, len);
+
+	network_tx_bytes(buffer, len + 10);
+    }
+}
+
+void network_set_addr(uint64_t addr)
+{
+    uint8_t packet[10] = { 0, NETHUB_SET_ADDR };
+    network_addr_to_bytes(addr, &packet[2]);
+    network_tx_bytes(packet, sizeof packet);
+}
+
+int network_rx(uint8_t payload[256])
+{
+    int len = net.rx_packet_len;
+
+    if (len >= 0) {
+	memcpy(payload, net.rx_packet, len);
+	net.rx_packet_len = -1;
+	SDL_SemPost(net.rx_sem);
+    }
+ 
+    return len;
 }
 
