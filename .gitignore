@@ -9,5 +9,6 @@ ipch/
 *.pdb
 *.sdf
 *.suo
+*.pyc
 *.vcxproj.user
 cube51-sim
