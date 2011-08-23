@@ -82,6 +82,8 @@ extern int opt_clock_hz;
 extern int opt_step_instruction;
 
 extern const char *opt_flash_filename;
+extern const char *opt_net_host;
+extern const char *opt_net_port;
 
 
 // emu.c

@@ -36,6 +36,7 @@
 #include "flash.h"
 #include "spi.h"
 #include "radio.h"
+#include "network.h"
 
 static struct {
     uint8_t lat1;
@@ -73,7 +74,8 @@ void hardware_init(struct em8051 *cpu)
  
     hw.radio_spi.callback = radio_spi_byte;
     spi_init(&hw.radio_spi);
-    
+
+    network_init(opt_net_host, opt_net_port);
     flash_init(opt_flash_filename);
     radio_init();
     lcd_init();
@@ -84,6 +86,7 @@ void hardware_exit(void)
     flash_exit();
     radio_exit();
     lcd_exit();
+    network_exit();
 }
 
 void hardware_gfx_tick(struct em8051 *cpu)

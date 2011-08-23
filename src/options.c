@@ -49,6 +49,8 @@ int opt_clock_hz = 16*1000*1000;
 int opt_step_instruction = 1;
 
 const char *opt_flash_filename = "flash.bin";
+const char *opt_net_host = "127.0.0.1";
+const char *opt_net_port = "2405";
 
 int clockspeeds[] = { 
   1000*1000*1000,

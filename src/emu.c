@@ -325,6 +325,14 @@ int main(int argc, char ** argv)
                 {
 		    opt_flash_filename = argv[i]+7;
                 }
+                if (strncmp("host=",argv[i]+1,5) == 0)
+                {
+		    opt_net_host = argv[i]+6;
+                }
+                if (strncmp("port=",argv[i]+1,5) == 0)
+                {
+		    opt_net_port = argv[i]+6;
+                }
                 else
                 {
                     printf("Help:\n\n"
@@ -342,6 +350,8 @@ int main(int argc, char ** argv)
 			   "-iolowrand        If out pin is low, hi input from same pin is random\n"
 			   "-clock=value      Set clock speed, in Hz\n"
 			   "-flash=file.bin   Set Flash memory filename\n",
+			   "-host=hostname    Hostname for nethub connection\n",
+			   "-port=port        Port number for nethub connection\n",
 			   argv[0]);
                     return -1;
                 }

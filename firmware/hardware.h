@@ -193,6 +193,11 @@ __sbit __at 0xC5 IR_TICK;
 __sbit __at 0xC6 IR_TF2;
 __sbit __at 0xC7 IR_EXF2;
 
+// RFCON bits
+__sbit __at 0xE8 RF_CE;
+__sbit __at 0xE9 RF_CSN;
+__sbit __at 0xEA RF_CKEN;
+
 // Interrupt vector numbers
 #define VECTOR_IFP	0
 #define VECTOR_TF0	1

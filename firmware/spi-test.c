@@ -21,6 +21,7 @@ void rfspi_isr(void) __interrupt (VECTOR_RFSPI)
 
 void main(void)
 {
+  RF_CKEN = 1;
   IEN_EN = 1;
   IEN_RFSPI = 1;
   SPIRCON1 = 0xF - SPI_TX_READY;

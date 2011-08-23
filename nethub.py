@@ -104,9 +104,9 @@ class Hub:
         self.clientToAddr = {}
 
     def removeClient(self, client):
-        if client in self.clientToAddr:
-            addr = self.clientToAddr[client]
-            del self.clientToAddr[client]
+        if id(client) in self.clientToAddr:
+            addr = self.clientToAddr[id(client)]
+            del self.clientToAddr[id(client)]
             l = self.addrToClients[addr]
             l.remove(client)
             if not l:
@@ -114,7 +114,7 @@ class Hub:
 
     def clientSetAddr(self, client, addr):
         self.removeClient(client)        
-        self.clientToAddr[client] = addr
+        self.clientToAddr[id(client)] = addr
         self.addrToClients.setdefault(addr, []).append(client)
     
     def getDests(self, addr):
@@ -124,7 +124,6 @@ class Hub:
 class NethubClient(asyncore.dispatcher_with_send):
     def __init__(self, hub, addr, s):
         self.hub = hub
-        self.address = 0xFFFFFFFFFFFFFFFF & hash(addr)  # Assign a temporary address
         self.recv_buffer = ""
 
         # Currently pending output message
@@ -134,6 +133,9 @@ class NethubClient(asyncore.dispatcher_with_send):
         # Waiting on ACKs for a message that was sent to this client?
         self.acks_pending = 0
 
+        # Assign a temporary address
+        self.setAddress(hash(addr))
+
         log(self, "New connection from %s:%d" % addr)
 
         s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -141,6 +143,10 @@ class NethubClient(asyncore.dispatcher_with_send):
 
     def __str__(self):
         return "client(%016x)" % self.address
+
+    def setAddress(self, addr):
+        self.address = 0xFFFFFFFFFFFFFFFF & addr
+        self.hub.clientSetAddr(self, self.address)
 
     def handle_close(self):
         self.close()
@@ -187,10 +193,9 @@ class NethubClient(asyncore.dispatcher_with_send):
         if len(packet) != 10:
             log(self, "Incorrect length for address packet")
         else:
-            addr = struct.unpack("<Q", packet[2:])
+            addr = struct.unpack("<Q", packet[2:])[0]
             log(self, "Setting address to %016x" % addr)
-            self.address = addr
-            self.hub.clientSetAddr(self, self.address)
+            self.setAddress(addr)
 
     def packet_01(self, packet):
         if len(packet) < 8:
@@ -200,7 +205,7 @@ class NethubClient(asyncore.dispatcher_with_send):
         # Dispatch one message at a time
         assert not self.current_dests
 
-        addr = struct.unpack("<Q", packet[2:10])
+        addr = struct.unpack("<Q", packet[2:10])[0]
         payload = packet[10:]
         self.current_dests = list(self.hub.getDests(addr))
 
