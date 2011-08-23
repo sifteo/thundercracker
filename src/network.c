@@ -238,6 +238,7 @@ void network_tx(uint64_t addr, void *payload, int len)
 void network_set_addr(uint64_t addr)
 {
     uint8_t packet[10] = { 0, NETHUB_SET_ADDR };
+    net.rf_addr = addr;
     network_addr_to_bytes(addr, &packet[2]);
     network_tx_bytes(packet, sizeof packet);
 }
