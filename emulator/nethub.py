@@ -264,6 +264,9 @@ class Hub:
 
 
 class NethubClient(PacketDispatcher):
+    # How many packets can we send out without expecting an ACK?
+    MAX_TX_DEPTH = 4
+
     def __init__(self, hub, addr, s):
         self.hub = hub
         self.recv_buffer = ""
@@ -275,8 +278,8 @@ class NethubClient(PacketDispatcher):
         self.current_dests = ()
         self.current_msg = None
         
-        # Waiting on ACKs for a message that was sent to this client?
-        self.acks_pending = 0
+        # Current TX queue depth for this node
+        self.tx_depth = 0
 
         # Assign a temporary address
         self.setAddress(hash(addr))
@@ -298,15 +301,15 @@ class NethubClient(PacketDispatcher):
 
     def close(self):
         log(self, "Closed connection")
-        self.acks_pending = 0
+        self.tx_depth = 0
         self.hub.removeClient(self.address)
         PacketDispatcher.close(self)
 
     def packet_02(self, packet):
         if len(packet) != 2:
             log(self, "Incorrect length for ACK")
-        if self.acks_pending:
-            self.acks_pending -= 1
+        if self.tx_depth:
+            self.tx_depth -= 1
         else:
             log(self, "Received unsolicited ACK")
 
@@ -356,13 +359,13 @@ class NethubClient(PacketDispatcher):
             if not dest.connected:
                 # Disconnected while we were waiting, ignore it
                 pass
-            elif dest.acks_pending:
+            elif dest.tx_depth > self.MAX_TX_DEPTH:
                 # Keep waiting on this client
                 still_busy.append(dest)
             else:
                 # Send it, and expect an ACK
                 log(self, "send to %s -- %s" % (dest, binascii.b2a_hex(self.current_msg)))
-                dest.acks_pending += 1
+                dest.tx_depth += 1
                 dest.send(struct.pack("<BBQ", 8+len(self.current_msg), 1,
                                       self.address) + self.current_msg)
 
