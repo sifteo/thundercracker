@@ -280,12 +280,12 @@ static uint8_t radio_spi_cmd_data(uint8_t cmd, unsigned index, uint8_t mosi)
     switch (cmd) {
 
     case CMD_R_RX_PAYLOAD:
-	return radio.rx_fifo[radio.rx_fifo_tail].payload[radio.spi_index % PAYLOAD_MAX];
+	return radio.rx_fifo[radio.rx_fifo_tail].payload[index % PAYLOAD_MAX];
 
     case CMD_W_TX_PAYLOAD:
     case CMD_W_TX_PAYLOAD_NO_ACK:
     case CMD_W_ACK_PAYLOAD:
-	radio.tx_fifo[radio.tx_fifo_head].payload[radio.spi_index % PAYLOAD_MAX] = mosi;
+	radio.tx_fifo[radio.tx_fifo_head].payload[index % PAYLOAD_MAX] = mosi;
 	return 0xFF;
 
     case CMD_W_REGISTER | REG_STATUS:

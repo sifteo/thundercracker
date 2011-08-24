@@ -13,7 +13,8 @@ static __xdata union {
     uint8_t bytes[1024];
     struct {
 	uint8_t pan_x, pan_y;
-	uint8_t tilemap[800];
+	uint8_t reserved[29];
+	uint8_t tilemap[800];	// 0x001F
     };
 } vram;
 
@@ -67,14 +68,16 @@ void rf_isr(void) __interrupt(VECTOR_RF)
     SPIRDAT = 0;				// Write next dummy byte
     while (!(SPIRSTAT & SPI_RX_READY));		// Wait for payload byte
     i = SPIRDAT;				// Read payload byte (Block address)
-    i = (i << 5) - i;
-    wptr = &vram.bytes[i]; 			// Calculate offset to 31-byte block
+    wptr = vram.bytes; 				// Calculate offset to 31-byte block
+    wptr += i << 5;
+    wptr -= i;
 
-    for (i = 0; i < RF_PAYLOAD_MAX - 2; i++) {
+    i = RF_PAYLOAD_MAX - 2;
+    do {
 	SPIRDAT = 0;				// Write next dummy byte
 	while (!(SPIRSTAT & SPI_RX_READY));	// Wait for payload byte
 	*(wptr++) = SPIRDAT;			// Read payload byte
-    }
+    } while (--i);
 
     while (!(SPIRSTAT & SPI_RX_READY));		// Wait for last payload byte
     *wptr = SPIRDAT;				// Read last payload byte
