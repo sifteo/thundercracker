@@ -54,7 +54,7 @@ void rf_isr(void) __interrupt(VECTOR_RF)
 
     RF_CSN = 0;					// Begin SPI transaction
     SPIRDAT = RF_CMD_R_RX_PAYLOAD;		// Command byte
-    SPIRDAT = 0;				// First dummy byte, keep the TX FIFO full
+    SPIRDAT = 0;				// First dummy write, keep the TX FIFO full
     while (!(SPIRSTAT & SPI_RX_READY));		// Wait for Command/STATUS byte
     SPIRDAT;					// Dummy read of STATUS byte
     for (i = 0; i < sizeof payload - 1; i++) {

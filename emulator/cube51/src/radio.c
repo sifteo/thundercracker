@@ -18,7 +18,7 @@
 #include "radio.h"
 
 #define RX_INTERVAL_US       750
-#define RX_INTERVAL_CYCLES   (opt_clock_hz * RX_INTERVAL_US / 1000 / 1000)
+#define RX_INTERVAL_CYCLES   (int)(opt_clock_hz * (uint64_t)RX_INTERVAL_US / 1000 / 1000)
 extern int opt_clock_hz;
 
 /* SPI Commands */
