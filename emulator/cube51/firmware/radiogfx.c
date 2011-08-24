@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * SPI Radio + ??? = Profit!
+ * nRF Radio + Graphics Engine + ??? = Profit!
  *
  * M. Elizabeth Scott <beth@sifteo.com>
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -12,10 +12,10 @@
 static __xdata union {
     uint8_t bytes[1024];
     struct {
+	uint8_t pan_x, pan_y;
 	uint8_t tilemap[800];
     };
 } vram;
-
 
 static void rf_reg_write(uint8_t reg, uint8_t value)
 {
@@ -34,7 +34,7 @@ static void rf_reg_write(uint8_t reg, uint8_t value)
 void rf_isr(void) __interrupt(VECTOR_RF)
 {
     register uint8_t i;
-    register uint8_t __xdata *wptr = vram.bytes;
+    register uint8_t __xdata *wptr;
     
     /*
      * Write the STATUS register, to clear the IRQ.
@@ -63,11 +63,19 @@ void rf_isr(void) __interrupt(VECTOR_RF)
     SPIRDAT = 0;				// First dummy write, keep the TX FIFO full
     while (!(SPIRSTAT & SPI_RX_READY));		// Wait for Command/STATUS byte
     SPIRDAT;					// Dummy read of STATUS byte
-    for (i = 0; i < RF_PAYLOAD_MAX - 1; i++) {
+
+    SPIRDAT = 0;				// Write next dummy byte
+    while (!(SPIRSTAT & SPI_RX_READY));		// Wait for payload byte
+    i = SPIRDAT;				// Read payload byte (Block address)
+    i = (i << 5) - i;
+    wptr = &vram.bytes[i]; 			// Calculate offset to 31-byte block
+
+    for (i = 0; i < RF_PAYLOAD_MAX - 2; i++) {
 	SPIRDAT = 0;				// Write next dummy byte
 	while (!(SPIRSTAT & SPI_RX_READY));	// Wait for payload byte
 	*(wptr++) = SPIRDAT;			// Read payload byte
     }
+
     while (!(SPIRSTAT & SPI_RX_READY));		// Wait for last payload byte
     *wptr = SPIRDAT;				// Read last payload byte
     RF_CSN = 1;					// End SPI transaction
@@ -91,8 +99,10 @@ static void lcd_addr_burst(uint8_t pixels)
 	} while (--low);
 }
 
-static void lcd_render_tiles_8x8_16bit_20wide(uint8_t pan_x, uint8_t pan_y)
+static void lcd_render_tiles_8x8_16bit_20wide(void)
 {
+    uint8_t pan_x = vram.pan_x;
+    uint8_t pan_y = vram.pan_y;
     uint8_t tile_pan_x = pan_x >> 3;
     uint8_t tile_pan_y = pan_y >> 3;
     uint8_t line_addr = pan_y << 5;
@@ -182,6 +192,6 @@ void main(void)
 
     while (1) {
 	lcd_cmd_byte(LCD_CMD_RAMWR);
-	lcd_render_tiles_8x8_16bit_20wide(0, 0);
+	lcd_render_tiles_8x8_16bit_20wide();
     }
 }

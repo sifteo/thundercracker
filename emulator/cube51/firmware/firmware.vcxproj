@@ -48,7 +48,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="demo.c" />
-    <ClCompile Include="spi-test.c" />
+    <ClCompile Include="radiogfx.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hardware.h" />

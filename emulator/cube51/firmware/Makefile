@@ -1,4 +1,4 @@
-all: demo.ihx spi-test.ihx
+all: demo.ihx radiogfx.ihx
 
 CDEPS = *.h
 SDCC = sdcc
@@ -6,7 +6,7 @@ SDCC = sdcc
 demo.ihx: demo.c $(CDEPS)
 	$(SDCC) $<
 
-spi-test.ihx: spi-test.c $(CDEPS)
+radiogfx.ihx: radiogfx.c $(CDEPS)
 	$(SDCC) $<
 
 clean:
