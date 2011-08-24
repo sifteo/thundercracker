@@ -22,8 +22,8 @@ CDEPS = src/*.h
 PY_PATH := /opt/local/bin:/usr/bin
 PYTHON  := python2.7
 
-CFLAGS += -O3 -g -Werror $(shell pkg-config --cflags sdl)
-LDFLAGS += -g -lncurses $(shell pkg-config --libs sdl)
+CFLAGS += -O3 -g -Werror $(shell sdl-config --cflags)
+LDFLAGS += -g -lncurses $(shell sdl-config --libs)
 
 all: $(BIN) firmware flash.bin
 
