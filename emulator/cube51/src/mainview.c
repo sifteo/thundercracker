@@ -636,7 +636,7 @@ void mainview_update(struct em8051 *aCPU)
         wattron(miscview, A_REVERSE);
 	wprintw(miscview, "% 13.3f FPS \n", lcd_wrs);
         wattroff(miscview, A_REVERSE);
-	wprintw(miscview, "Radio  :% 5d rx % 4.2f kB/s\n", (int)radio_rx, radio_b / 1000);
+	wprintw(miscview, "Radio  :% 5d RX% 6.2f kB/s\n", (int)radio_rx, radio_b / 1000);
 	wprintw(miscview, "Time   :% 14.3f ms\n", msec);
 	wprintw(miscview, "Clocks :% 14llu\n", clocks);
 	wprintw(miscview, "Speed  :% 6.1f%% %0.1f MHz\n", clock_ratio * 100, clock_mhz);
