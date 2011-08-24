@@ -116,7 +116,7 @@ class PacketDispatcher(asyncore.dispatcher_with_send):
         self.recv_buffer += self.recv(8192)
         while self.recv_buffer:
             packetLen = ord(self.recv_buffer[0]) + 2
-            if len(self.recv_buffer) >= packetLen and self.readable():
+            if len(self.recv_buffer) >= packetLen:
                 # We can handle one message
                 self.handle_packet(self.recv_buffer[:packetLen])
                 self.recv_buffer = self.recv_buffer[packetLen:]
@@ -136,13 +136,15 @@ class PacketDispatcher(asyncore.dispatcher_with_send):
         if len(packet) < 8:
             log(self, "Incorrect length for data packet")
             return
-
         addr = struct.unpack("<Q", packet[2:10])[0]
         payload = packet[10:]
         self.handle_msg(addr, payload)
 
+    def ack(self):
+        self.send("\x00\x02")
+
     def handle_msg(self, addr, payload):
-        pass
+        self.ack()
 
 
 class AbstractClient(PacketDispatcher):
@@ -157,9 +159,6 @@ class AbstractClient(PacketDispatcher):
 
     def setAddress(self, addr):
         self.send(struct.pack("<BBQ", 8, 0, addr))
-
-    def ack(self):
-        self.send("\x00\x02")
 
 
 class ClientProducer(AbstractClient):
@@ -191,6 +190,7 @@ class ClientConsumer(AbstractClient):
     def handle_msg(self, addr, payload):
         self.ack()
         log(self, "received from %016x, %s" % (addr, binascii.b2a_hex(payload)))
+        time.sleep(0.2)
 
     def packet_02(self, p):
         # ACK
@@ -214,7 +214,7 @@ class ClientPipe(AbstractClient):
     def handle_msg(self, addr, payload):
         self.ack()
         if addr == self.destAddr:
-            sys.stdout.write(binascii.b2a_hex(payload))
+            sys.stdout.write("%s\n" % binascii.b2a_hex(payload))
         else:
             log(self, "Unsolicited packet from %016x" % addr)
 
@@ -260,13 +260,16 @@ class Hub:
         self.addrToClients.setdefault(addr, []).append(client)
     
     def getDests(self, addr):
-        return self.addrToClients.get(addr, ())
+        return [l for l in self.addrToClients.get(addr, ()) if l.connected]
 
 
 class NethubClient(PacketDispatcher):
     def __init__(self, hub, addr, s):
         self.hub = hub
         self.recv_buffer = ""
+
+        # Messages that we haven't started dispatching yet
+        self.msg_backlog = []
 
         # Currently pending output message
         self.current_dests = ()
@@ -316,10 +319,27 @@ class NethubClient(PacketDispatcher):
             self.setAddress(addr)
 
     def handle_msg(self, addr, payload):
-        # Dispatch one message at a time
-        assert not self.current_dests
-        self.current_dests = list(self.hub.getDests(addr))
+        self.msg_backlog.append((addr, payload))
+        self.handle_msg_backlog()
 
+    def handle_msg_backlog(self):
+        while True:
+            # Dispatch one message at a time
+            if not self.current_dests:
+                if not self.msg_backlog:
+                    return
+                self.prepare_next_dest()
+
+            # Process our pending message, if any
+            if self.current_dests:
+                if not self.process_current_dest():
+                    return
+
+    def prepare_next_dest(self):
+        addr, payload = self.msg_backlog[0]
+        self.msg_backlog = self.msg_backlog[1:]
+
+        self.current_dests = list(self.hub.getDests(addr))
         if self.current_dests:
             self.current_msg = payload
         else:
@@ -327,31 +347,34 @@ class NethubClient(PacketDispatcher):
             log(self, "NAK, nobody is listening at %016x" % addr)
             self.send('\x00\x03')
 
+    def process_current_dest(self):
+        # Try to further dispatch the current packet. Returns True on completion
+
+        still_busy = []
+        for dest in self.current_dests:
+
+            if not dest.connected:
+                # Disconnected while we were waiting, ignore it
+                pass
+            elif dest.acks_pending:
+                # Keep waiting on this client
+                still_busy.append(dest)
+            else:
+                # Send it, and expect an ACK
+                log(self, "send to %s -- %s" % (dest, binascii.b2a_hex(self.current_msg)))
+                dest.acks_pending += 1
+                dest.send(struct.pack("<BBQ", 8+len(self.current_msg), 1,
+                                      self.address) + self.current_msg)
+
+        self.current_dests = still_busy
+        if not still_busy:
+            # Fully delivered. Send our own ACK.
+            self.ack()
+            return True
+
     def readable(self):
-        # Process our pending message, if any, and see if we're ready to accept more data
-        if self.current_dests:
-            still_busy = []
-            for dest in self.current_dests:
-
-                if not dest.connected:
-                    # Client was closed, ignore it and pretend the message was delivered.
-                    pass
-                elif dest.acks_pending:
-                    # Keep waiting on this client
-                    still_busy.append(dest)
-                else:
-                    # Send it, and expect an ACK
-                    log(self, "send to %s -- %s" % (dest, binascii.b2a_hex(self.current_msg)))
-                    dest.acks_pending += 1
-                    dest.send(struct.pack("<BBQ", 8+len(self.current_msg), 1,
-                                          self.address) + self.current_msg)
-
-            self.current_dests = still_busy
-            if not still_busy:
-                # Fully delivered. Send our own ACK.
-                self.send('\x00\x02')
-
-        return not self.current_dests
+        self.handle_msg_backlog()
+        return PacketDispatcher.readable(self)
 
 
 class NethubServer(asyncore.dispatcher):
