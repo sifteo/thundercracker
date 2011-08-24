@@ -60,16 +60,21 @@
 import argparse, asyncore, socket, struct
 import binascii, time, sys, threading
 
-
-def log(origin, message):
-    sys.stderr.write("%s -- %s\n" % (origin, message))
+class Logger:
+    verbose = True
+    def __call__(self, origin, message):
+        if self.verbose:
+            sys.stderr.write("%s -- %s\n" % (origin, message))
+log = Logger()
 
 def hexint(i):
     return int(i, 16)
 
 def main():
     parser = argparse.ArgumentParser(description="Network hub for Sifteo radio simulation")
-    parser.add_argument('--port', metavar='N', type=int, default=2405,
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        help="Don't log to stderr")
+    parser.add_argument('-p', '--port', metavar='N', type=int, default=2405,
                         help="TCP port number to listen/connect on")
     parser.add_argument('--bind', metavar='ADDR', default="",
                         help="Network interface to bind our server to")
@@ -85,6 +90,7 @@ def main():
                        help="listen on ADDR, print incoming packets to stdout")
 
     args = parser.parse_args()
+    log.verbose = not args.quiet
 
     if args.pipe:
         client = ClientPipe(args.bind, args.port, args.pipe)
