@@ -73,58 +73,66 @@ void emu_popup(struct em8051 *aCPU, char *aTitle, char *aMessage)
 
 void emu_exception(struct em8051 *aCPU, int aCode)
 {
-    WINDOW * exc;
+    const char *name;
+    static const char *exc_names[] = {
+	"SP exception: stack address > 127",
+	"Invalid operation: acc-to-a move",
+	"PSW not preserved over interrupt call",
+	"SP not preserved over interrupt call",
+	"ACC not preserved over interrupt call",
+	"Invalid opcode: 0xA5 encountered",
+	"Hardware bus contention occurred",
+	"SPI FIFO overrun/underrun",
+	"Radio FIFO overrun/underrun",
+    };
 
-    nocbreak();
-    cbreak();
-    nodelay(stdscr, FALSE);
-    halfdelay(1);
-    while (getch() > 0) {}
+    if (aCode == -1)
+	name = "Breakpoint reached";
+    else if (aCode < sizeof exc_names / sizeof exc_names[0])
+	name = exc_names[aCode];
+    else
+	name = "Unknown exception";
 
+    if (opt_debug) {
+	/*
+	 * ncurses popup window
+	 */
 
-    runmode = 0;
-    setSpeed(speed, runmode);
-    exc = subwin(stdscr, 7, 50, (LINES-6)/2, (COLS-50)/2);
-    wattron(exc,A_REVERSE);
-    werase(exc);
-    box(exc,ACS_VLINE,ACS_HLINE);
-    mvwaddstr(exc, 0, 2, "Exception");
-    wattroff(exc,A_REVERSE);
-    wmove(exc, 2, 2);
+	WINDOW * exc;
 
-    switch (aCode)
-    {
-    case -1: waddstr(exc,"Breakpoint reached");
-             break;
-    case EXCEPTION_STACK: waddstr(exc,"SP exception: stack address > 127");
-                          wmove(exc, 3, 2);
-                          waddstr(exc,"with no upper memory, or SP roll over."); 
-                          break;
-    case EXCEPTION_ACC_TO_A: waddstr(exc,"Invalid operation: acc-to-a move operation"); 
-                             break;
-    case EXCEPTION_IRET_PSW_MISMATCH: waddstr(exc,"PSW not preserved over interrupt call"); 
-                                      break;
-    case EXCEPTION_IRET_SP_MISMATCH: waddstr(exc,"SP not preserved over interrupt call"); 
-                                     break;
-    case EXCEPTION_IRET_ACC_MISMATCH: waddstr(exc,"ACC not preserved over interrupt call"); 
-                                     break;
-    case EXCEPTION_ILLEGAL_OPCODE: waddstr(exc,"Invalid opcode: 0xA5 encountered"); 
-                                   break;
-    case EXCEPTION_BUS_CONTENTION: waddstr(exc,"Hardware bus contention occurred"); 
-                                   break;
-    default:
-        waddstr(exc,"Unknown exception"); 
+	nocbreak();
+	cbreak();
+	nodelay(stdscr, FALSE);
+	halfdelay(1);
+	while (getch() > 0) {}
+
+	runmode = 0;
+	setSpeed(speed, runmode);
+	exc = subwin(stdscr, 7, 50, (LINES-6)/2, (COLS-50)/2);
+	wattron(exc,A_REVERSE);
+	werase(exc);
+	box(exc,ACS_VLINE,ACS_HLINE);
+	mvwaddstr(exc, 0, 2, "Exception");
+	wattroff(exc,A_REVERSE);
+	wmove(exc, 2, 2);
+	waddstr(exc, name);
+	wmove(exc, 6, 12);
+	wattron(exc,A_REVERSE);
+	waddstr(exc, "Press any key to continue");
+	wattroff(exc,A_REVERSE);
+	wrefresh(exc);
+
+	getch();
+	delwin(exc);
+	change_view(aCPU, MAIN_VIEW);
+
+    } else {
+	/*
+	 * Complain to stderr
+	 */
+
+	fprintf(stderr, "EXCEPTION at 0x%04x: %s\n", aCPU->mPC, name);
     }
-    wmove(exc, 6, 12);
-    wattron(exc,A_REVERSE);
-    waddstr(exc, "Press any key to continue");
-    wattroff(exc,A_REVERSE);
-
-    wrefresh(exc);
-
-    getch();
-    delwin(exc);
-    change_view(aCPU, MAIN_VIEW);
 }
 
 void emu_load(struct em8051 *aCPU)

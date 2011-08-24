@@ -10,8 +10,9 @@
 #define _RADIO_H
 
 #include <stdint.h>
+#include "emu8051.h"
 
-void radio_init(void);
+void radio_init(struct em8051 *cpu);
 void radio_exit(void);
 
 // For debugger

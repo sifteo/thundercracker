@@ -73,11 +73,12 @@ void hardware_init(struct em8051 *cpu)
     cpu->mSFR[REG_RFCON] = RFCON_RFCSN;
  
     hw.radio_spi.callback = radio_spi_byte;
+    hw.radio_spi.cpu = cpu;
     spi_init(&hw.radio_spi);
 
     network_init(opt_net_host, opt_net_port);
     flash_init(opt_flash_filename);
-    radio_init();
+    radio_init(cpu);
     lcd_init();
 }
 

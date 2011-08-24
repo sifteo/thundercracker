@@ -206,7 +206,7 @@ __sfr __at 0xE2 W2CON0;
 __sfr __at 0xE4 SPIRCON0;
 __sfr __at 0xE5 SPIRCON1;
 __sfr __at 0xE6 SPIRSTAT;
-__sfr __at 0xE7 SPIRDAT;
+__sfr __at 0xE7 volatile SPIRDAT;
 __sfr __at 0xE8 RFCON;
 __sfr __at 0xE9 MD0;
 __sfr __at 0xEA MD1;

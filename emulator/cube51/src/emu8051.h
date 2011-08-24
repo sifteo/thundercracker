@@ -343,6 +343,8 @@ enum EM8051_EXCEPTION
     EXCEPTION_IRET_ACC_MISMATCH, // acc not preserved over interrupt call
     EXCEPTION_ILLEGAL_OPCODE,    // for the single 'reserved' opcode in the architecture
     EXCEPTION_BUS_CONTENTION,    // Hardware bus contention
+    EXCEPTION_SPI_XRUN,		 // SPI FIFO overrun/underrun
+    EXCEPTION_RADIO_XRUN,	 // Radio FIFO overrun/underrun
 };
 
 #endif

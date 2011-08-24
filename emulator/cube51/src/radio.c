@@ -77,14 +77,16 @@ extern int opt_clock_hz;
 #define FIFO_TX_REUSE		0x40
 
 #define FIFO_SIZE		3
+#define PAYLOAD_MAX		32
 
 struct radio_packet {
     uint8_t len;
-    uint8_t payload[32];
+    uint8_t payload[PAYLOAD_MAX];
 };
 
 struct {
     int rx_timer;
+    uint8_t irq_state;
 
     /*
      * Keep these consecutive, for the debugger's memory editor view.
@@ -100,8 +102,8 @@ struct {
 	    uint8_t rx_fifo_count;	// 2C
 	    uint8_t tx_fifo_count;	// 2D
 	    uint8_t rx_fifo_head;	// 2E
-	    uint8_t tx_fifo_head;	// 2F
-	    uint8_t rx_fifo_tail;	// 30
+	    uint8_t rx_fifo_tail;	// 2F
+	    uint8_t tx_fifo_head;	// 30
 	    uint8_t tx_fifo_tail;	// 31
 	    uint8_t csn;		// 32
 	    uint8_t ce;			// 33
@@ -112,11 +114,14 @@ struct {
 
     struct radio_packet rx_fifo[FIFO_SIZE];
     struct radio_packet tx_fifo[FIFO_SIZE];
+
+    struct em8051 *cpu;	// Only for exception reporting!
 } radio;
 
-void radio_init(void)
+void radio_init(struct em8051 *cpu)
 {
     memset(&radio, 0, sizeof radio);
+    radio.cpu = cpu;
 
     radio.regs[REG_CONFIG] = 0x08;
     radio.regs[REG_EN_AA] = 0x3F;
@@ -190,6 +195,34 @@ static void radio_spi_cmd_begin(uint8_t cmd)
     }
 }
 
+static void radio_spi_cmd_end(uint8_t cmd)
+{
+    /*
+     * End a command, invoked at the point where CS is deasserted.
+     */
+    switch (cmd) {
+
+    case CMD_W_TX_PAYLOAD:
+    case CMD_W_TX_PAYLOAD_NO_ACK:
+    case CMD_W_ACK_PAYLOAD:
+	radio.tx_fifo[radio.tx_fifo_head].len = radio.spi_index;
+	if (radio.tx_fifo_count < FIFO_SIZE) {
+	    radio.tx_fifo_count++;
+	    radio.tx_fifo_head = (radio.tx_fifo_head + 1) % FIFO_SIZE;
+	} else
+	    radio.cpu->except(radio.cpu, EXCEPTION_RADIO_XRUN);
+	break;
+
+    case CMD_R_RX_PAYLOAD:
+	if (radio.rx_fifo_count > 0) {
+	    radio.rx_fifo_count--;
+	    radio.rx_fifo_tail = (radio.rx_fifo_tail + 1) % FIFO_SIZE;
+	} else
+	    radio.cpu->except(radio.cpu, EXCEPTION_RADIO_XRUN);
+	break;
+    }
+}
+
 static uint8_t *radio_reg_ptr(uint8_t reg, unsigned byte_index)
 {
     reg &= sizeof radio.regs - 1;
@@ -228,15 +261,31 @@ static uint64_t radio_pack_addr(uint8_t reg)
 
 static uint8_t radio_spi_cmd_data(uint8_t cmd, unsigned index, uint8_t mosi)
 {
-    if (cmd < CMD_R_REGISTER + sizeof radio.regs)
-	return *radio_reg_ptr(cmd, index);
+    switch (cmd) {
 
-    if (cmd < CMD_W_REGISTER + sizeof radio.regs) {
-	*radio_reg_ptr(cmd, index) = mosi;
+    case CMD_R_RX_PAYLOAD:
+	return radio.rx_fifo[radio.rx_fifo_tail].payload[radio.spi_index % PAYLOAD_MAX];
+
+    case CMD_W_TX_PAYLOAD:
+    case CMD_W_TX_PAYLOAD_NO_ACK:
+    case CMD_W_ACK_PAYLOAD:
+	radio.tx_fifo[radio.tx_fifo_head].payload[radio.spi_index % PAYLOAD_MAX] = mosi;
 	return 0xFF;
+
+    case CMD_W_REGISTER | REG_STATUS:
+	// Status has write-1-to-clear bits
+	mosi &= STATUS_RX_DR | STATUS_TX_DS | STATUS_MAX_RT;
+	*radio_reg_ptr(cmd, index) &= ~mosi;
+	return 0xFF;
+
+    default:
+	if (cmd < CMD_R_REGISTER + sizeof radio.regs)
+	    return *radio_reg_ptr(cmd, index);
+	if (cmd < CMD_W_REGISTER + sizeof radio.regs) {
+	    *radio_reg_ptr(cmd, index) = mosi;
+	    return 0xFF;
+	}
     }
-
-
     return 0xFF;
 }
 
@@ -261,6 +310,11 @@ void radio_ctrl(int csn, int ce)
     if (csn && !radio.csn) {
 	// Begin new SPI command
 	radio.spi_index = -1;
+    }
+
+    if (!csn && radio.csn) {
+	// End an SPI command
+	radio_spi_cmd_end(radio.spi_cmd);
     }
     
     radio.csn = csn;
@@ -287,23 +341,28 @@ static void radio_rx_opportunity(void)
 
 	radio.rx_fifo_head = (radio.rx_fifo_head + 1) % FIFO_SIZE;
 	radio.rx_fifo_count++;
+	radio.regs[REG_STATUS] |= STATUS_RX_DR;
 
 	if (radio.tx_fifo_count) {
 	    // ACK with payload
 	    network_tx(src_addr, tx_tail->payload, tx_tail->len);
 	    radio.tx_fifo_tail = (radio.tx_fifo_tail + 1) % FIFO_SIZE;
 	    radio.tx_fifo_count--;
+	    radio.regs[REG_STATUS] |= STATUS_TX_DS;
 	} else {
 	    // ACK without payload (empty TX fifo)
 	    network_tx(src_addr, NULL, 0);
 	}
-    }
+    } else
+	radio.cpu->except(radio.cpu, EXCEPTION_RADIO_XRUN);
 
     radio_update_status();
 }
 
 int radio_tick(void)
 {
+    uint8_t irq_prev = radio.irq_state;
+
     /*
      * Simulate the rate at which we can actually receive RX packets
      * over the air, by giving ourselves a receive opportunity at
@@ -314,6 +373,7 @@ int radio_tick(void)
 	radio_rx_opportunity();
     }
 
-    return radio.regs[REG_CONFIG] & radio.regs[REG_STATUS] &
+    radio.irq_state = radio.regs[REG_CONFIG] & radio.regs[REG_STATUS] &
 	(STATUS_RX_DR | STATUS_TX_DS | STATUS_MAX_RT);
+    return radio.irq_state && !irq_prev;
 }
