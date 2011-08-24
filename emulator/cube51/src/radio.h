@@ -17,6 +17,8 @@ void radio_exit(void);
 
 // For debugger
 uint8_t *radio_regs(void);
+uint32_t radio_byte_count(void);
+uint32_t radio_rx_count(void);
 
 uint8_t radio_spi_byte(uint8_t mosi);
 void radio_ctrl(int csn, int ce);

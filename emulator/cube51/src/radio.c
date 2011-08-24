@@ -86,6 +86,8 @@ struct radio_packet {
 
 struct {
     int rx_timer;
+    uint32_t byte_count;
+    uint32_t rx_count;
     uint8_t irq_state;
 
     /*
@@ -153,6 +155,20 @@ void radio_exit(void)
 uint8_t *radio_regs(void)
 {
     return radio.regs;
+}
+
+uint32_t radio_rx_count(void)
+{
+    uint32_t c = radio.rx_count;
+    radio.rx_count = 0;
+    return c;
+}
+
+uint32_t radio_byte_count(void)
+{
+    uint32_t c = radio.byte_count;
+    radio.byte_count = 0;
+    return c;
 }
 
 static void radio_update_status(void)
@@ -343,8 +359,13 @@ static void radio_rx_opportunity(void)
 	radio.rx_fifo_count++;
 	radio.regs[REG_STATUS] |= STATUS_RX_DR;
 
+	// Statistics for the debugger
+	radio.rx_count++;
+	radio.byte_count += len;
+
 	if (radio.tx_fifo_count) {
 	    // ACK with payload
+	    radio.byte_count += tx_tail->len;
 	    network_tx(src_addr, tx_tail->payload, tx_tail->len);
 	    radio.tx_fifo_tail = (radio.tx_fifo_tail + 1) % FIFO_SIZE;
 	    radio.tx_fifo_count--;

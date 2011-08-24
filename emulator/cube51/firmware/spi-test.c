@@ -1,18 +1,23 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Simple test for the on-board SPI controller, in interrupt-driven mode.
- * M. Elizabeth Scott <beth@sifteo.com>
+ * SPI Radio + ??? = Profit!
  *
+ * M. Elizabeth Scott <beth@sifteo.com>
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
 #include <stdint.h>
 #include "hardware.h"
 
-static __xdata uint8_t debug = 0;
-static __xdata uint8_t payload[32];
+static __xdata union {
+    uint8_t bytes[1024];
+    struct {
+	uint8_t tilemap[800];
+    };
+} vram;
 
-void rf_reg_write(uint8_t reg, uint8_t value)
+
+static void rf_reg_write(uint8_t reg, uint8_t value)
 {
     RF_CSN = 0;
 
@@ -29,6 +34,7 @@ void rf_reg_write(uint8_t reg, uint8_t value)
 void rf_isr(void) __interrupt(VECTOR_RF)
 {
     register uint8_t i;
+    register uint8_t __xdata *wptr = vram.bytes;
     
     /*
      * Write the STATUS register, to clear the IRQ.
@@ -57,20 +63,112 @@ void rf_isr(void) __interrupt(VECTOR_RF)
     SPIRDAT = 0;				// First dummy write, keep the TX FIFO full
     while (!(SPIRSTAT & SPI_RX_READY));		// Wait for Command/STATUS byte
     SPIRDAT;					// Dummy read of STATUS byte
-    for (i = 0; i < sizeof payload - 1; i++) {
+    for (i = 0; i < RF_PAYLOAD_MAX - 1; i++) {
 	SPIRDAT = 0;				// Write next dummy byte
 	while (!(SPIRSTAT & SPI_RX_READY));	// Wait for payload byte
-	payload[i] = SPIRDAT;			// Read payload byte
+	*(wptr++) = SPIRDAT;			// Read payload byte
     }
     while (!(SPIRSTAT & SPI_RX_READY));		// Wait for last payload byte
-    payload[i] = SPIRDAT;			// Read last payload byte
+    *wptr = SPIRDAT;				// Read last payload byte
     RF_CSN = 1;					// End SPI transaction
-    
-    debug++;    
+}
+
+static void lcd_addr_burst(uint8_t pixels)
+{
+    uint8_t hi = pixels >> 3;
+    uint8_t low = pixels & 0x7;
+
+    if (hi)
+	// Fast DJNZ loop, 8-pixel bursts
+	do {
+	    ADDR_INC32();
+	} while (--hi);
+
+    if (low)
+	// Fast DJNZ loop, single pixels
+	do {
+	    ADDR_INC4();
+	} while (--low);
+}
+
+static void lcd_render_tiles_8x8_16bit_20wide(uint8_t pan_x, uint8_t pan_y)
+{
+    uint8_t tile_pan_x = pan_x >> 3;
+    uint8_t tile_pan_y = pan_y >> 3;
+    uint8_t line_addr = pan_y << 5;
+    uint8_t first_column_addr = (pan_x << 2) & 0x1C;
+    uint8_t last_tile_width = pan_x & 7;
+    uint8_t first_tile_width = 8 - last_tile_width;
+    __xdata uint8_t *map = &vram.tilemap[(tile_pan_y << 5) + (tile_pan_y << 3) + (tile_pan_x << 1)];
+    uint8_t y = LCD_HEIGHT;
+
+    do {
+	uint8_t x;
+
+	/*
+	 * XXX: There is a HUGE optimization opportunity here with regard to map addressing.
+	 *      The dptr manipulation code that SDCC generates here is very bad... and it's
+	 *      possible we might want to use some of the nRF24LE1's specific features, like
+	 *      the PDATA addressing mode.
+	 */
+
+	// First tile on the line, (1 <= width <= 8)
+	ADDR_PORT = *(map++);
+	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	ADDR_PORT = *(map++);
+	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
+	ADDR_PORT = line_addr + first_column_addr;
+	lcd_addr_burst(first_tile_width);
+	
+	// There are always 15 full tiles on-screen
+	x = 15;
+	do {
+	    ADDR_PORT = *(map++);
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	    ADDR_PORT = *(map++);
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
+	    ADDR_PORT = line_addr;
+	    ADDR_INC32();
+	} while (--x);
+
+	// Might be one more partial tile, (0 <= width <= 7)
+	if (last_tile_width) {
+	    ADDR_PORT = map[0];
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+	    ADDR_PORT = map[1];
+	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
+	    ADDR_PORT = line_addr;
+	    lcd_addr_burst(last_tile_width);
+	}
+
+	line_addr += 32;
+	if (line_addr)
+	    map -= 32;
+	else
+	    map += 8;
+
+    } while (--y);
+}
+
+void lcd_cmd_byte(uint8_t b)
+{
+    CTRL_PORT = CTRL_LCD_CMD;
+    BUS_DIR = 0;
+    BUS_PORT = b;
+    ADDR_INC2();
+    BUS_DIR = 0xFF;
+    CTRL_PORT = CTRL_IDLE;
 }
 
 void main(void)
 {
+    // I/O port init
+    BUS_DIR = 0xFF;
+    ADDR_PORT = 0;
+    ADDR_DIR = 0;
+    CTRL_PORT = CTRL_IDLE;
+    CTRL_DIR = 0;
+
     // Radio clock running
     RF_CKEN = 1;
 
@@ -81,4 +179,9 @@ void main(void)
 
     // Start receiving
     RF_CE = 1;
+
+    while (1) {
+	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_render_tiles_8x8_16bit_20wide(0, 0);
+    }
 }

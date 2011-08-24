@@ -56,6 +56,8 @@
  * nRF24L01 Radio
  */
 
+#define RF_PAYLOAD_MAX		32
+
 /* SPI Commands */
 #define RF_CMD_R_REGISTER	0x00
 #define RF_CMD_W_REGISTER	0x20

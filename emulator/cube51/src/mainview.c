@@ -92,7 +92,7 @@ WINDOW *spregbox = NULL, *spregoutput = NULL;
 WINDOW *miscbox = NULL, *miscview = NULL;
 
 
-char *memtypes[]={"Lo","Up","SF","Ex","RO"};
+char *memtypes[]={"Lower","Upper","SFR","External","ROM"};
 char *regtypes[]={"     A ",
                   "    R0 ",
                   "    R1 ",
@@ -595,40 +595,48 @@ void mainview_update(struct em8051 *aCPU)
 
     {
 	// Some displays periodically update
-	unsigned int update_interval = opt_clock_hz / 2;
+	unsigned int update_interval = opt_clock_hz;
 	static uint64_t update_prev_clocks = 0;
 	static uint32_t update_prev_time = 0;
 
 	static float lcd_wrs = 0;
 	static float clock_ratio = 0;
+	static float radio_b = 0;
+	static float radio_rx = 0;
 
 	float cycles_to_sec = 1.0f / opt_clock_hz;
 	float msec = 1000.0f * clocks * cycles_to_sec;
 	float clock_mhz = opt_clock_hz / (1000*1000.0f);
 
-	/* Periodically update the LCD write frequency indicator */
+	/* Periodically update most of the stats */
 	if (clocks < update_prev_clocks || (clocks - update_prev_clocks) > update_interval) {
 	    uint32_t now = SDL_GetTicks();
-	    if (clocks > update_prev_clocks && now > update_prev_time) {
-		
+
+	    if (clocks > update_prev_clocks && now > update_prev_time) {		
 		float virtual_elapsed = (clocks - update_prev_clocks) * cycles_to_sec;
 		float real_elapsed = (uint32_t)(now - update_prev_time) * (1.0f/1000);
 
 		lcd_wrs = lcd_write_count() / virtual_elapsed;
+		radio_b = radio_byte_count() / virtual_elapsed;
+		radio_rx = radio_rx_count() / virtual_elapsed;
 		clock_ratio = virtual_elapsed / real_elapsed;
 	    } else {
                 lcd_wrs = 0;
+		radio_b = 0;
+		radio_rx = 0;
                 clock_ratio = 0;
             }
+
 	    update_prev_time = now;
-	    update_prev_clocks = clocks;
+    update_prev_clocks = clocks;
 	}
 
 	werase(miscview);
-	wprintw(miscview, "\nLCD    : ");
+	wprintw(miscview, "LCD    : ");
         wattron(miscview, A_REVERSE);
-	wprintw(miscview, "% 13.3f FPS\n", lcd_wrs);
+	wprintw(miscview, "% 13.3f FPS \n", lcd_wrs);
         wattroff(miscview, A_REVERSE);
+	wprintw(miscview, "Radio  :% 5d rx % 4.2f kB/s\n", (int)radio_rx, radio_b / 1000);
 	wprintw(miscview, "Time   :% 14.3f ms\n", msec);
 	wprintw(miscview, "Clocks :% 14llu\n", clocks);
 	wprintw(miscview, "Speed  :% 6.1f%% %0.1f MHz\n", clock_ratio * 100, clock_mhz);
@@ -653,41 +661,6 @@ void mainview_update(struct em8051 *aCPU)
     }
 
     refresh_regoutput(aCPU, 1);
-
-    if (focus == 0)
-    {
-        mvwprintw(miscview, 0,0,"%s %04X: %d %d %d %d %d %d %d %d", 
-                memtypes[memmode],
-                memcursorpos / 2 + memoffset,
-                (bytevalue >> 7) & 1,
-                (bytevalue >> 6) & 1,
-                (bytevalue >> 5) & 1,
-                (bytevalue >> 4) & 1,
-                (bytevalue >> 3) & 1,
-                (bytevalue >> 2) & 1,
-                (bytevalue >> 1) & 1,
-                (bytevalue >> 0) & 1);
-    }
-
-    if (focus == 1)
-    {
-        bytevalue = getregoutput(aCPU, cursorpos / 2);
-        if (cursorpos / 2 == 10)
-            bytevalue = (getregoutput(aCPU, 10) >> 8) & 0xff;
-        if (cursorpos / 2 == 11)
-            bytevalue = getregoutput(aCPU, 10) & 0xff;
-
-        mvwprintw(miscview, 0,0,"%s: %d %d %d %d %d %d %d %d", 
-                regtypes[cursorpos / 2],
-                (bytevalue >> 7) & 1,
-                (bytevalue >> 6) & 1,
-                (bytevalue >> 5) & 1,
-                (bytevalue >> 4) & 1,
-                (bytevalue >> 3) & 1,
-                (bytevalue >> 2) & 1,
-                (bytevalue >> 1) & 1,
-                (bytevalue >> 0) & 1);
-    }
 
     for (i = 0; i < 15; i++)
     {
