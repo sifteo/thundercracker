@@ -22,6 +22,6 @@ void network_exit(void);
 
 void network_set_addr(uint64_t addr);
 void network_tx(uint64_t addr, void *payload, int len);
-int network_rx(uint8_t payload[256]);
+int network_rx(uint64_t *addr, uint8_t payload[256]);
 
 #endif

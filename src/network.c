@@ -58,6 +58,7 @@ struct {
 
     // Received packet buffer
     int rx_packet_len;
+    uint64_t rx_addr;
     uint8_t rx_packet[256];
 } net;
 
@@ -73,6 +74,9 @@ static void network_disconnect(void)
 
 static void network_tx_bytes(uint8_t *data, int len)
 {
+    if (net.fd < 0 || !net.is_connected)
+	return;
+
     while (len > 0) {
 	int ret = send(net.fd, data, len, 0);
 
@@ -84,6 +88,33 @@ static void network_tx_bytes(uint8_t *data, int len)
 	    break;
 	}
     }
+}
+
+static void network_addr_to_bytes(uint64_t addr, uint8_t *bytes)
+{
+    int i;
+    for (i = 0; i < 8; i++) {
+	bytes[i] = addr;
+	addr >>= 8;
+    }
+}
+
+static uint64_t network_addr_from_bytes(uint8_t *bytes)
+{
+    uint64_t addr = 0;
+    int i;
+    for (i = 7; i >= 0; i--) {
+	addr <<= 8;
+	addr |= bytes[i];
+    }
+    return addr;
+}
+
+static void network_set_addr_internal(uint64_t addr)
+{
+    uint8_t packet[10] = { 8, NETHUB_SET_ADDR };
+    network_addr_to_bytes(addr, &packet[2]);
+    network_tx_bytes(packet, sizeof packet);
 }
 
 static void network_try_connect(void)
@@ -100,7 +131,7 @@ static void network_try_connect(void)
 	net.is_connected = 1;
 
 	if (net.rf_addr)
-	    network_set_addr(net.rf_addr);
+	    network_set_addr_internal(net.rf_addr);
     } else {
 	// Connection error, don't retry immediately
 	usleep(300000);
@@ -120,15 +151,13 @@ static int network_rx_into_buffer(void)
 	     * We have a packet! Is it a message? We currently ignore
 	     * remote ACKs. (We're providing unidirectional flow
 	     * control, not consuming the remote end's flow control.)
-	     *
-	     * We also ignore the source address, since our hardware
-	     * doesn't know who sent a message.
 	     */
-	     
+	    
 	    if (packet_type == NETHUB_MSG) {
 		static uint8_t ack[] = { 0, NETHUB_ACK };
 		network_tx_bytes(ack, sizeof ack);
 
+		net.rx_addr = network_addr_from_bytes(net.rx_buffer + 2);
 		memcpy(net.rx_packet, net.rx_buffer + 10,
 		       packet_len - 10);
 
@@ -140,7 +169,7 @@ static int network_rx_into_buffer(void)
 	    memmove(net.rx_buffer, net.rx_buffer + packet_len, net.rx_count - packet_len);
 	    net.rx_count -= packet_len;
 
-	    if (net.rx_packet_len)
+	    if (packet_type == NETHUB_MSG)
 		return 1;
 
 	} else {
@@ -150,7 +179,6 @@ static int network_rx_into_buffer(void)
 
 	    recv_len = recv(net.fd, net.rx_buffer + net.rx_count,
 			    sizeof net.rx_buffer - net.rx_count, 0);
-
 	    if (recv_len <= 0) {
 		if (recv_len == 0 || errno != EAGAIN)
 		    network_disconnect();
@@ -172,7 +200,7 @@ static int network_thread(void *param)
 	
 	if (net.rx_packet_len < 0) {
 	    if (network_rx_into_buffer())
-		SDL_SemWait(net.rx_sem);
+    		SDL_SemWait(net.rx_sem);
 	}
     }
 }
@@ -212,15 +240,6 @@ void network_exit(void)
     SDL_SemPost(net.rx_sem);
 }
 
-static void network_addr_to_bytes(uint64_t addr, uint8_t *bytes)
-{
-    int i;
-    for (i = 0; i < 8; i++) {
-	bytes[i] = addr;
-	addr >>= 8;
-    }
-}
-
 void network_tx(uint64_t addr, void *payload, int len)
 {
     uint8_t buffer[512];
@@ -237,17 +256,18 @@ void network_tx(uint64_t addr, void *payload, int len)
 
 void network_set_addr(uint64_t addr)
 {
-    uint8_t packet[10] = { 0, NETHUB_SET_ADDR };
-    net.rf_addr = addr;
-    network_addr_to_bytes(addr, &packet[2]);
-    network_tx_bytes(packet, sizeof packet);
+    if (net.rf_addr != addr) {
+	net.rf_addr = addr;
+	network_set_addr_internal(addr);
+    }
 }
 
-int network_rx(uint8_t payload[256])
+int network_rx(uint64_t *addr, uint8_t payload[256])
 {
     int len = net.rx_packet_len;
 
     if (len >= 0) {
+	*addr = net.rx_addr;
 	memcpy(payload, net.rx_packet, len);
 	net.rx_packet_len = -1;
 	SDL_SemPost(net.rx_sem);

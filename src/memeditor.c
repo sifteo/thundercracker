@@ -34,6 +34,7 @@
 #include "curses.h"
 #include "emu8051.h"
 #include "emulator.h"
+#include "radio.h"
 
 struct memeditor
 {
@@ -46,13 +47,15 @@ struct memeditor
     int memviewoffset;
 };
 
-static struct memeditor eds[5];
+#define NUM_EDITORS 6
+
+static struct memeditor eds[NUM_EDITORS];
 static int focus = 0;
 
 void wipe_memeditor_view()
 {
     int i;
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < NUM_EDITORS; i++)
     {
         delwin(eds[i].view);
         delwin(eds[i].box);
@@ -61,6 +64,7 @@ void wipe_memeditor_view()
 
 void build_memeditor_view(struct em8051 *aCPU)
 {
+    int i, y;
     erase();
     
     eds[0].lines = (LINES / 3);
@@ -93,38 +97,43 @@ void build_memeditor_view(struct em8051 *aCPU)
     eds[2].memarea = aCPU->mSFR;
     eds[2].memviewoffset = 128;
 
+    y = 0;
     eds[3].lines = LINES / 2;
-    eds[3].box = subwin(stdscr, eds[3].lines, 40, 0, 40);
+    eds[3].box = subwin(stdscr, eds[3].lines, 40, y, 40);
     box(eds[3].box,ACS_VLINE,ACS_HLINE);
     mvwaddstr(eds[3].box, 0, 2, "External");
     eds[3].view = subwin(eds[3].box, eds[3].lines - 2, 38, 1, 41);    
     eds[3].maxmem = aCPU->mExtDataSize;
     eds[3].memarea = aCPU->mExtData;
     eds[3].memviewoffset = 0;
+    y += eds[3].lines;
 
-    eds[4].lines = LINES / 2;
-    eds[4].box = subwin(stdscr, eds[3].lines, 40, eds[3].lines, 40);
+    eds[4].lines = LINES / 2 - 9;
+    eds[4].box = subwin(stdscr, eds[4].lines, 40, y, 40);
     box(eds[4].box,ACS_VLINE,ACS_HLINE);
     mvwaddstr(eds[4].box, 0, 2, "ROM");
-    eds[4].view = subwin(eds[4].box, eds[4].lines - 2, 38, eds[3].lines + 1, 41);
+    eds[4].view = subwin(eds[4].box, eds[4].lines - 2, 38, y + 1, 41);
     eds[4].maxmem = aCPU->mCodeMemSize;
     eds[4].memarea = aCPU->mCodeMem;     
     eds[4].memviewoffset = 0;
+    y += eds[4].lines;
+
+    eds[5].lines = 9;
+    eds[5].box = subwin(stdscr, eds[5].lines, 40, y, 40);
+    box(eds[5].box,ACS_VLINE,ACS_HLINE);
+    mvwaddstr(eds[5].box, 0, 2, "Radio");
+    eds[5].view = subwin(eds[5].box, eds[5].lines - 2, 38, y + 1, 41);
+    eds[5].maxmem = 0x38;
+    eds[5].memarea = radio_regs();
+    eds[5].memviewoffset = 0;
 
     // TODO: make sure cursorpos / memoffset are within legal values,
     // but don't mess them up otherwise
 
-    eds[0].cursorpos = 0;
-    eds[1].cursorpos = 0;
-    eds[2].cursorpos = 0;
-    eds[3].cursorpos = 0;
-    eds[4].cursorpos = 0;
-
-    eds[0].memoffset = 0;
-    eds[1].memoffset = 0;
-    eds[2].memoffset = 0;
-    eds[3].memoffset = 0;
-    eds[4].memoffset = 0;
+    for (i = 0; i < NUM_EDITORS; i++) {
+	eds[i].cursorpos = 0;
+	eds[i].memoffset = 0;
+    }
 
     refresh();
 }
@@ -141,7 +150,7 @@ void memeditor_editor_keys(struct em8051 *aCPU, int ch)
             focus++;
         if (focus == 3 && aCPU->mExtDataSize == 0)
             focus++;
-        if (focus == 5)
+        if (focus == NUM_EDITORS)
             focus = 0;
         break;
     case KEY_NPAGE:
@@ -242,7 +251,7 @@ void memeditor_editor_keys(struct em8051 *aCPU, int ch)
 void memeditor_update(struct em8051 *aCPU)
 {
     int i, j, bytevalue;
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < NUM_EDITORS; i++)
     {
         werase(eds[i].view);
         if (eds[i].memarea)
@@ -277,7 +286,7 @@ void memeditor_update(struct em8051 *aCPU)
     wprintw(eds[focus].view,"%X", (bytevalue >> (4 * (!(eds[focus].cursorpos & 1)))) & 0xf);
     wattroff(eds[focus].view, A_REVERSE);
 
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < NUM_EDITORS; i++)
         wrefresh(eds[i].view);
 
     refresh();

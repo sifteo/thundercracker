@@ -9,20 +9,28 @@
 #include <stdint.h>
 #include "hardware.h"
 
-__xdata uint8_t irq_count;
-
-void rfspi_isr(void) __interrupt (VECTOR_RFSPI)
+void rf_reg_write(uint8_t reg, uint8_t value)
 {
-  SPIRDAT = 0x55;
+    RF_CSN = 0;
 
-  irq_count++;
-  IR_RFSPI = 0;
+    SPIRDAT = RF_CMD_W_REGISTER | reg;
+    SPIRDAT = value;
+    while (!(SPIRSTAT & SPI_RX_READY));
+    SPIRDAT;
+    while (!(SPIRSTAT & SPI_RX_READY));
+    SPIRDAT;
+
+    RF_CSN = 1;
 }
-
+    
 void main(void)
 {
   RF_CKEN = 1;
-  IEN_EN = 1;
-  IEN_RFSPI = 1;
-  SPIRCON1 = 0xF - SPI_TX_READY;
+  RF_CE = 1;
+
+  while (1) {
+      rf_reg_write(RF_REG_CONFIG, 0);
+      rf_reg_write(RF_REG_CONFIG, 1);
+  }
+
 }
