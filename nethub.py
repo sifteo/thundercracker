@@ -57,45 +57,181 @@
 #     00 03
 #
 
-import argparse, asyncore, socket, struct, binascii, time
+import argparse, asyncore, socket, struct
+import binascii, time, sys, threading
 
 
 def log(origin, message):
-    print "%s -- %s" % (origin, message)
+    sys.stderr.write("%s -- %s\n" % (origin, message))
+
+def hexint(i):
+    return int(i, 16)
 
 def main():
     parser = argparse.ArgumentParser(description="Network hub for Sifteo radio simulation")
     parser.add_argument('--port', metavar='N', type=int, default=2405,
-                        help="TCP port number to listen on")
+                        help="TCP port number to listen/connect on")
     parser.add_argument('--bind', metavar='ADDR', default="",
                         help="Network interface to bind our server to")
+    
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--server', action='store_true', default=True,
+                       help="Run the central network hub server")
+    group.add_argument('--pipe', metavar='ADDR', type=hexint,
+                       help="stdin transmits to ADDR, responses go to stdout")
+    group.add_argument('--produce', metavar='ADDR', type=hexint,
+                       help="spam junk packets at ADDR")
+    group.add_argument('--consume', metavar='ADDR', type=hexint,
+                       help="listen on ADDR, print incoming packets to stdout")
 
     args = parser.parse_args()
-    server = NethubServer(args.bind, args.port)
+
+    if args.pipe:
+        client = ClientPipe(args.bind, args.port, args.pipe)
+    elif args.produce:
+        client = ClientProducer(args.bind, args.port, args.produce)
+    elif args.consume:
+        client = ClientConsumer(args.bind, args.port, args.consume)
+    elif args.server:
+        server = NethubServer(args.bind, args.port)
+
     asyncore.loop()
 
-def test_producer(addr):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('127.0.0.1', 2405))
-    s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-    i = 0
-    while True:
-        i += 1
-        print "Sending %d" % i
-        s.send(struct.pack("<BBQI", 12, 1, addr, i))
-        s.recv(8192)
 
-def test_consumer(addr):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('127.0.0.1', 2405))
-    s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 512)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 512)
-    s.send(struct.pack("<BBQ", 8, 0, addr))
-    while True:
-        print binascii.b2a_hex(s.recv(14))
-        time.sleep(1)
-        s.send("\x00\x02")
+class PacketDispatcher(asyncore.dispatcher_with_send):
+    """Base dispatcher class which handles incoming packets, buffering and dispatching
+       each one to a member function.
+       """
+    def __init__(self, s=None):
+        self.recv_buffer = ""
+        asyncore.dispatcher_with_send.__init__(self, s)
+
+    def handle_read(self):
+        self.recv_buffer += self.recv(8192)
+        while self.recv_buffer:
+            packetLen = ord(self.recv_buffer[0]) + 2
+            if len(self.recv_buffer) >= packetLen and self.readable():
+                # We can handle one message
+                self.handle_packet(self.recv_buffer[:packetLen])
+                self.recv_buffer = self.recv_buffer[packetLen:]
+            else:
+                # Waiting
+            	return
+
+    def handle_packet(self, packet):
+        ptype = ord(packet[1])
+        f = getattr(self, "packet_%02x" % ptype, None)
+        if f:
+            f(packet)
+        else:
+            log(self, "Unhandled packet %s" % binascii.b2a_hex(packet))
+
+    def packet_01(self, packet):
+        if len(packet) < 8:
+            log(self, "Incorrect length for data packet")
+            return
+
+        addr = struct.unpack("<Q", packet[2:10])[0]
+        payload = packet[10:]
+        self.handle_msg(addr, payload)
+
+    def handle_msg(self, addr, payload):
+        pass
+
+
+class AbstractClient(PacketDispatcher):
+    def __init__(self, host, port):
+        PacketDispatcher.__init__(self)
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connect((host, port))
+        self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+    def __str__(self):
+        return "client"
+
+    def setAddress(self, addr):
+        self.send(struct.pack("<BBQ", 8, 0, addr))
+
+    def ack(self):
+        self.send("\x00\x02")
+
+
+class ClientProducer(AbstractClient):
+    def __init__(self, host, port, destAddr):
+        self.destAddr = destAddr
+        self.sequence = 0
+        AbstractClient.__init__(self, host, port)
+        self.produce()
+
+    def produce(self):
+        self.sequence = (self.sequence + 1) & 0xFFFFFFFF
+        log(self, "sending to %016x, %08x" % (self.destAddr, self.sequence))
+        self.send(struct.pack("<BBQI", 12, 1, self.destAddr, self.sequence))
+
+    def packet_02(self, p):
+        # ACK
+        self.produce()
+
+    def packet_03(self, p):
+        # NACK
+        self.produce()
+
+
+class ClientConsumer(AbstractClient):
+    def __init__(self, host, port, srcAddr):
+        AbstractClient.__init__(self, host, port)
+        self.setAddress(srcAddr)
+
+    def handle_msg(self, addr, payload):
+        self.ack()
+        log(self, "received from %016x, %s" % (addr, binascii.b2a_hex(payload)))
+
+    def packet_02(self, p):
+        # ACK
+        pass
+
+    def packet_03(self, p):
+        # NACK
+        pass
+
+
+class ClientPipe(AbstractClient):
+    def __init__(self, host, port, destAddr):
+        self.destAddr = destAddr
+        AbstractClient.__init__(self, host, port)
+
+        self.sem = threading.Semaphore(0)
+        self.thread = threading.Thread(target=self.thread_func)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def handle_msg(self, addr, payload):
+        self.ack()
+        if addr == self.destAddr:
+            sys.stdout.write(binascii.b2a_hex(payload))
+        else:
+            log(self, "Unsolicited packet from %016x" % addr)
+
+    def thread_func(self):
+        while True:
+            l = sys.stdin.readline().strip()
+            try:
+                payload = binascii.a2b_hex(l)
+            except TypeError:
+                log(self, "Badly formed input line, packets must be in hexadecimal")
+                continue
+
+            self.send(struct.pack("<BBQ", 8+len(payload), 1,
+                                  self.destAddr) + payload)
+            self.sem.acquire()
+
+    def packet_02(self, p):
+        # ACK
+        self.sem.release()
+
+    def packet_03(self, p):
+        # NACK
+        self.sem.release()
 
 
 class Hub:
@@ -121,7 +257,7 @@ class Hub:
         return self.addrToClients.get(addr, ())
 
 
-class NethubClient(asyncore.dispatcher_with_send):
+class NethubClient(PacketDispatcher):
     def __init__(self, hub, addr, s):
         self.hub = hub
         self.recv_buffer = ""
@@ -139,7 +275,7 @@ class NethubClient(asyncore.dispatcher_with_send):
         log(self, "New connection from %s:%d" % addr)
 
         s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        asyncore.dispatcher_with_send.__init__(self, s)
+        PacketDispatcher.__init__(self, s)
 
     def __str__(self):
         return "client(%016x)" % self.address
@@ -155,31 +291,7 @@ class NethubClient(asyncore.dispatcher_with_send):
         log(self, "Closed connection")
         self.acks_pending = 0
         self.hub.removeClient(self.address)
-        asyncore.dispatcher_with_send.close(self)
-
-    def handle_read(self):
-        self.recv_buffer += self.recv(8192)
-        while self.recv_buffer:
-            packetLen = ord(self.recv_buffer[0]) + 2
-            if len(self.recv_buffer) >= packetLen and self.readable():
-                # We can handle one message
-                self.handle_packet(self.recv_buffer[:packetLen])
-                self.recv_buffer = self.recv_buffer[packetLen:]
-            else:
-                # Waiting
-            	return
-
-    def handle_packet(self, packet):
-        # Try to handle the next incoming packet. Returns True if we
-        # can consume it, or False if not. This should only return
-        # False if the client is (or is about to become) non-readable.
-
-        ptype = ord(packet[1])
-        f = getattr(self, "packet_%02x" % ptype, None)
-        if f:
-            return f(packet)
-        else:
-            log(self, "Unhandled packet %s" % binascii.b2a_hex(packet))
+        PacketDispatcher.close(self)
 
     def packet_02(self, packet):
         if len(packet) != 2:
@@ -197,16 +309,9 @@ class NethubClient(asyncore.dispatcher_with_send):
             log(self, "Setting address to %016x" % addr)
             self.setAddress(addr)
 
-    def packet_01(self, packet):
-        if len(packet) < 8:
-            log(self, "Incorrect length for data packet")
-            return
-
+    def handle_msg(self, addr, payload):
         # Dispatch one message at a time
         assert not self.current_dests
-
-        addr = struct.unpack("<Q", packet[2:10])[0]
-        payload = packet[10:]
         self.current_dests = list(self.hub.getDests(addr))
 
         if self.current_dests:
