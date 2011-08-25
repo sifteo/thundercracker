@@ -9,7 +9,7 @@ def main():
     ms = MapScroller(tr, m)
 
     while True:
-        t = time.clock() * 2.5
+        t = time.clock() * 0.5
         ms.scroll(int(512 + 150 * math.sin(t)),
                   int(512 + 150 * math.cos(t)))
         tr.refresh()
