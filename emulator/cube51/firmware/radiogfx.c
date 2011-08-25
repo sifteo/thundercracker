@@ -13,9 +13,60 @@ static __xdata union {
     uint8_t bytes[1024];
     struct {
 	uint8_t tilemap[800];
-	uint8_t pan_x, pan_y;
+	uint8_t pan_x, pan_y;	
+	uint8_t frame_trigger;
     };
 } vram;
+
+static __idata union {
+    uint8_t bytes[1];
+    struct {
+	/*
+	 * Our standard response packet format. This currently all
+	 * comes to a total of 15 bytes. We probably also want a
+	 * variable-length "tail" on this packet, to allow us to
+	 * transmit specific data that the master requested, like HWID
+	 * or firmware version. But this is the high-frequency
+	 * telemetry data that we ALWAYS send at the full packet rate.
+	 */
+
+	/*
+	 * Lightly cooked accel data. I'm assuming we are doing only
+	 * basic statistics on the ADC data before handing it off to
+	 * the master- just the bare minimum to allow it to get useful
+	 * information even if it's running our comms at a lower
+	 * packet rate. So, we'll keep a running count of the number
+	 * of samples we've taken since the last packet, and we'll
+	 * report the minimum, maximum, and total readings. This will
+	 * let the master notice shaking or sharp motion, as well as
+	 * to get a more accurate filtered signal for each axis.
+	 *
+	 * This all comes to 10 bytes.
+	 */
+	uint8_t accel_min[2];
+	uint8_t accel_max[2];
+	uint8_t accel_count[2];
+	uint16_t accel_total[2];
+
+	/*
+	 * For synchronizing LCD refreshes, the master can keep track
+	 * of how many repaints the cube has performed. Ideally these
+	 * repaints would be in turn sync'ed with the LCDC's hardware
+	 * refresh timer. If we're tight on space, we don't need a
+	 * full byte for this. Even a one-bit toggle woudl work,
+	 * though we might want two bits to allow deeper queues.
+	 */
+	uint8_t frame_count;
+
+	/*
+	 * Need ~5 bits per sensor (5 other cubes * 4 sides + 1 idle =
+	 * 21 states) So, there are plenty of bits free in here to
+	 * encode things like button state.
+	 */
+	uint8_t neighbor[4];
+    };
+} ack_data;
+
 
 static void rf_reg_write(uint8_t reg, uint8_t value)
 {
@@ -33,9 +84,6 @@ static void rf_reg_write(uint8_t reg, uint8_t value)
 
 void rf_isr(void) __interrupt(VECTOR_RF)
 {
-    register uint8_t i;
-    register uint8_t __xdata *wptr;
-    
     /*
      * Write the STATUS register, to clear the IRQ.
      * We also get a STATUS read for free here.
@@ -66,21 +114,49 @@ void rf_isr(void) __interrupt(VECTOR_RF)
 
     SPIRDAT = 0;				// Write next dummy byte
     while (!(SPIRSTAT & SPI_RX_READY));		// Wait for payload byte
-    i = SPIRDAT;				// Read payload byte (Block address)
-    wptr = vram.bytes; 				// Calculate offset to 31-byte block
-    wptr += i << 5;
-    wptr -= i;
 
-    i = RF_PAYLOAD_MAX - 2;
-    do {
-	SPIRDAT = 0;				// Write next dummy byte
-	while (!(SPIRSTAT & SPI_RX_READY));	// Wait for payload byte
-	*(wptr++) = SPIRDAT;			// Read payload byte
-    } while (--i);
+    {
+	register uint8_t i;
+	register uint8_t __xdata *wptr;
+	
+	i = SPIRDAT;				// Read payload byte (Block address)
+	wptr = vram.bytes; 			// Calculate offset to 31-byte block
+	wptr += i << 5;
+	wptr -= i;
 
-    while (!(SPIRSTAT & SPI_RX_READY));		// Wait for last payload byte
-    *wptr = SPIRDAT;				// Read last payload byte
-    RF_CSN = 1;					// End SPI transaction
+	i = RF_PAYLOAD_MAX - 2;
+	do {
+	    SPIRDAT = 0;			// Write next dummy byte
+	    while (!(SPIRSTAT & SPI_RX_READY));	// Wait for payload byte
+	    *(wptr++) = SPIRDAT;		// Read payload byte
+	} while (--i);
+
+	while (!(SPIRSTAT & SPI_RX_READY));	// Wait for last payload byte
+	*wptr = SPIRDAT;			// Read last payload byte
+	RF_CSN = 1;				// End SPI transaction
+    }
+
+    /*
+     * Create a new reply packet, refill the ACK queue.
+     */
+
+    RF_CSN = 0;					// Begin SPI transaction
+    SPIRDAT = RF_CMD_W_ACK_PAYLD;		// Command byte
+
+    {
+	register uint8_t i = sizeof ack_data;
+	register uint8_t __idata *rptr = &ack_data.bytes[0];
+
+	do {
+	    SPIRDAT = *(rptr++);                // Queue the next TX byte
+	    while (!(SPIRSTAT & SPI_RX_READY));	// Wait for dummy response byte
+	    SPIRDAT;		                // Read dummy byte
+	} while (--i);
+    }
+
+    while (!(SPIRSTAT & SPI_RX_READY));	        // Wait for the last dummy response byte
+    SPIRDAT;		                        // Read dummy byte
+    RF_CSN = 1;				        // End SPI transaction
 }
 
 static void lcd_addr_burst(uint8_t pixels)
@@ -202,7 +278,9 @@ void main(void)
     RF_CE = 1;
 
     while (1) {
+	while (vram.frame_trigger == ack_data.frame_count);
 	lcd_cmd_byte(LCD_CMD_RAMWR);
 	lcd_render_tiles_8x8_16bit_20wide();
+	ack_data.frame_count++;
     }
 }

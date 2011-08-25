@@ -8,10 +8,8 @@ def main():
     m = Map("assets/earthbound_fourside_full.map", width=256)
     ms = MapScroller(tr, m)
 
-    t = 0
     while True:
-        t += 0.01
-
+        t = time.clock() * 2.5
         ms.scroll(int(512 + 150 * math.sin(t)),
                   int(512 + 150 * math.cos(t)))
         tr.refresh()
@@ -62,22 +60,39 @@ class TileRenderer:
     """Abstraction for the tile-based graphics renderer. Keeps an in-memory
        copy of the cube's VRAM, and sends updates via the radio as necessary.
        """
+
+    FRAME_COUNT = 10
+    MAX_FRAMES_AHEAD = 2
     
     def __init__(self, net, baseAddr):
         self.net = net
         self.baseAddr = baseAddr
         self.vram = [0] * 1024
         self.dirty = {}
-        self.fill(0)
+
+        # Flow control
+        self.local_frame_count = 0
+        self.remote_frame_count = 0
+        self.net.registerCallback(self._telemetryCb)
+
+    def _telemetryCb(self, t):
+        self.remote_frame_count = t[self.FRAME_COUNT]
 
     def refresh(self):
+        # Flow control
+        self.local_frame_count = (self.local_frame_count + 1) & 0xFF
+        while ((0xFF & (self.local_frame_count - self.remote_frame_count))
+               > self.MAX_FRAMES_AHEAD):
+            # XXX: Waste time in a less ugly manner with variable payload len
+            self.net.send('\x20')
+            
+        # Trigger the firmware to refresh the LCD 
+        self.poke(802, self.local_frame_count)
+
         chunks = self.dirty.keys()
         chunks.sort()
         self.dirty = {}    
  
-        # XXX: Debugging... show the list of dirty chunks for each refresh.
-        print chunks
-
         for chunk in chunks:
             bytes = [chunk] + self.vram[chunk * 31:(chunk+1) * 31]
             self.net.send(''.join(map(chr, bytes)))
@@ -120,8 +135,9 @@ class ThreadedNethubInterface:
        when any responses are received from the cube.
        """
 
-    def __init__(self, callback=None, address=0x020000e7e7e7e7e7, host="127.0.0.1", port=2405):
-        self.callback = callback
+    def __init__(self, address=0x020000e7e7e7e7e7, host="127.0.0.1", port=2405):
+        self.callbacks = []
+        self.telemetry = [0] * 32
         self.address = address
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((host, port))
@@ -134,6 +150,9 @@ class ThreadedNethubInterface:
         self.thread = threading.Thread(target=self.rx_thread)
         self.thread.daemon = True
         self.thread.start()
+
+    def registerCallback(self, cb):
+        self.callbacks.append(cb)
 
     def send(self, payload):
         self.ack_sem.acquire()
@@ -149,8 +168,12 @@ class ThreadedNethubInterface:
 
                     if msg_type == '\x01':
                         self.socket.send('\x00\x02')
-                        if self.callback:
-                            self.callback(buf[2:])
+
+                        # Store telemetry updates, and immediately notify callbacks
+                        if packet_len > 10:
+                            self.telemetry = map(ord, buf[10:packet_len])
+                            for cb in self.callbacks:
+                                cb(self.telemetry)
 
                     elif msg_type in '\x02\x03':
                         self.ack_sem.release()
