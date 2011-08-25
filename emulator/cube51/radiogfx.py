@@ -4,15 +4,19 @@ import socket, asyncore, threading, Queue, struct, time, math
 
 
 def main():
-    tr = TileRenderer(NetworkMaster(), 0x98000)
+    net = NetworkMaster()
+    accel = Accelerometers(net)
+    tr = TileRenderer(net, 0x98000)
     m = Map("assets/earthbound_fourside_full.map", width=256)
     ms = MapScroller(tr, m)
+    x, y = 0, 0
 
-    epoch = time.time()
     while True:
-        t = (time.time() - epoch) * 0.75
-        ms.scroll(int(512 + 150 * math.sin(t)),
-                  int(512 + 150 * math.cos(t)))
+        accel.next()
+        x += accel.x * 15
+        y += accel.y * 15
+
+        ms.scroll(x, y)
         tr.refresh()
 
 
@@ -33,6 +37,8 @@ class MapScroller:
         # This method works because 'blit' knows how to wrap around on the VRAM
         # buffer, and because our TileRenderer is good at removing unnecessary changes.
 
+        x = int(x + 0.5)
+        y = int(y + 0.5)
         self.tr.pan(x % 160, y % 160)
         self.tr.blit(self.map, dstx=x>>3, dsty=y>>3,
                      srcx=x>>3, srcy=y>>3, w=17, h=17)
@@ -80,7 +86,7 @@ class TileRenderer:
         self.net.register_callback(self._telemetryCb)
 
     def _telemetryCb(self, t):
-        self.remote_frame_count = t[self.FRAME_COUNT]
+        self.remote_frame_count = ord(t[self.FRAME_COUNT])
 
     def refresh_alt(self):
         # XXX: This is an alternate refresh implementation that includes
@@ -150,6 +156,40 @@ class TileRenderer:
         for j in xrange(h):
             for i in xrange(w):
                 self.plot(mapobj.data[(srcx+i) + mapobj.width * (srcy+j)], dstx+i, dsty+j)
+
+
+class Accelerometers:
+    """Data aggregator for the accelerometer sensors"""
+    def __init__(self, net):
+        self.net = net
+        self.x = self.y = self.xCount = self.yCount = 0
+        self.next()
+        self.net.register_callback(self._telemetryCb)
+
+    def next(self):
+        """Reset the aggregation buffer, and calcuate averages for the last window of time"""
+        if self.xCount:
+            self.x = self.xTotal / 2048.0 / self.xCount - 1.0
+        if self.yCount:
+            self.y = self.yTotal / 2048.0 / self.yCount - 1.0
+
+        self.xMin = self.yMin = 0xFF
+        self.xMax = self.yMax = 0
+        self.xCount = self.yCount = 0
+        self.xTotal = self.yTotal = 0
+
+    def _telemetryCb(self, data):
+        """Aggregate the per-packet telemetry data"""
+        (xMin, yMin, xMax, yMax, xCount, yCount, xTotal, yTotal) = struct.unpack(
+            "<BBBBBBHH", data[:10])
+        self.xMin = min(self.xMin, xMin)
+        self.yMin = min(self.yMin, yMin)
+        self.xMax = max(self.xMax, xMax)
+        self.yMax = max(self.yMax, yMax)
+        self.xCount += xCount
+        self.xTotal += xTotal
+        self.yCount += yCount
+        self.yTotal += yTotal
 
 
 class NetworkMaster(asyncore.dispatcher_with_send):
@@ -232,7 +272,7 @@ class NetworkMaster(asyncore.dispatcher_with_send):
 
             # Store telemetry updates, and immediately notify callbacks
             if len(packet) > 10:
-                self.telemetry = map(ord, packet[10:])
+                self.telemetry = packet[10:]
                 for cb in self.callbacks:
                     cb(self.telemetry)
 

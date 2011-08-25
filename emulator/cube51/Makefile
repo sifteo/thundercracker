@@ -14,6 +14,7 @@ OBJS = \
 	src/lcd.o \
 	src/flash.o \
 	src/spi.o \
+	src/adc.o \
 	src/irq.o \
 	src/radio.o \
 	src/network.o \

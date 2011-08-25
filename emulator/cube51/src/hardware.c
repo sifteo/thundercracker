@@ -81,6 +81,7 @@ void hardware_init(struct em8051 *cpu)
     flash_init(opt_flash_filename);
     radio_init(cpu);
     lcd_init();
+    adc_init();
 }
 
 void hardware_exit(void)
@@ -156,6 +157,10 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
 	// Only need to simulate the graphics subsystem when a relevant SFR write occurs
         hardware_gfx_tick(cpu);
         break;
+ 
+    case REG_ADCCON1:
+	adc_start();
+	break;
             
     case REG_SPIRDAT:
         spi_write_data(&hw.radio_spi, cpu->mSFR[reg]);
@@ -192,6 +197,9 @@ void hardware_tick(struct em8051 *cpu)
 	cpu->mSFR[REG_P2] |= 0x01;
 
     /* Simulate interrupts */
+
+    if (adc_tick(cpu->mSFR))
+	cpu->mSFR[REG_IRCON] |= IRCON_MISC;
 
     if (spi_tick(&hw.radio_spi, &cpu->mSFR[REG_SPIRCON0]))
 	cpu->mSFR[REG_IRCON] |= IRCON_RFSPI;

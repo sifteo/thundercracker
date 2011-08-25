@@ -17,10 +17,9 @@
 #include <string.h>
 #include "radio.h"
 #include "network.h"
+#include "emulator.h"
 
-#define RX_INTERVAL_US       750
-#define RX_INTERVAL_CYCLES   (int)(opt_clock_hz * (uint64_t)RX_INTERVAL_US / 1000 / 1000)
-extern int opt_clock_hz;
+#define RX_INTERVAL_US	750
 
 /* SPI Commands */
 #define CMD_R_REGISTER		0x00
@@ -391,7 +390,7 @@ int radio_tick(void)
      * fixed clock cycle intervals.
      */
     if (radio.ce && --radio.rx_timer <= 0) {
-	radio.rx_timer = RX_INTERVAL_CYCLES;
+	radio.rx_timer = USEC_TO_CYCLES(RX_INTERVAL_US);
 	radio_rx_opportunity();
     }
 

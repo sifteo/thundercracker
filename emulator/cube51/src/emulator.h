@@ -28,7 +28,11 @@
  * Curses-based emulator front-end
  */
 
+#ifndef _EMULATOR_H
+#define _EMULATOR_H
+
 #include <stdint.h>
+#include "emu8051.h"
 
 // how many lines of history to remember
 #define HISTORY_LINES 20
@@ -62,12 +66,6 @@ extern int speed;
 // currently active view
 extern int view;
 
-// old port out values
-extern int p0out;
-extern int p1out;
-extern int p2out;
-extern int p3out;
-
 // current clock count
 extern uint64_t clocks;
 
@@ -82,6 +80,9 @@ extern const char *opt_profile_filename;
 extern const char *opt_net_host;
 extern const char *opt_net_port;
 
+#define USEC_TO_CYCLES(_x)  ((int)(opt_clock_hz * (uint64_t)(_x) / 1000000ULL))
+#define NSEC_TO_CYCLES(_x)  ((int)(opt_clock_hz * (uint64_t)(_x) / 1000000000ULL))
+#define HZ_TO_CYCLES(_x)    ((int)(opt_clock_hz / (_x)))
 
 // emu.c
 extern void setSpeed(int speed, int runmode);
@@ -115,6 +116,4 @@ extern void build_options_view(struct em8051 *aCPU);
 extern void options_editor_keys(struct em8051 *aCPU, int ch);
 extern void options_update(struct em8051 *aCPU);
 
-
-
-
+#endif

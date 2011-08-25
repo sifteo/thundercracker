@@ -157,6 +157,49 @@ void rf_isr(void) __interrupt(VECTOR_RF)
     while (!(SPIRSTAT & SPI_RX_READY));	        // Wait for the last dummy response byte
     SPIRDAT;		                        // Read dummy byte
     RF_CSN = 1;				        // End SPI transaction
+
+    /*
+     * Reset the one-shot portions of our telemetry buffer
+     */
+
+    ack_data.accel_min[0] = 0xFF;
+    ack_data.accel_min[1] = 0xFF;
+    ack_data.accel_max[0] = 0x00;
+    ack_data.accel_max[1] = 0x00;
+    ack_data.accel_count[0] = 0;
+    ack_data.accel_count[1] = 0;
+    ack_data.accel_total[0] = 0;
+    ack_data.accel_total[1] = 0;
+}
+
+void adc_isr(void) __interrupt(VECTOR_MISC)
+{
+    // Sample the hardware state
+    uint16_t sample = (ADCDATH << 8) | ADCDATL;
+    uint8_t con1 = ADCCON1;
+    uint8_t sample_h = sample >> 4;
+
+    // We're only using the first two channels
+    const uint8_t channel_mask = 0x04;
+    uint8_t channel = !!(con1 & channel_mask);
+
+    /*
+     * If we aren't yet in danger of overflowing the accumulator, add
+     * this sample to it. (We're accumulating 12-bit samples in a 16-bit buffer)
+     */
+    if (ack_data.accel_count[channel] != 0xF) {
+	ack_data.accel_total[channel] += sample;
+	ack_data.accel_count[channel]++;
+    }
+
+    /*
+     * Update the 8-bit min/max metrics
+     */
+    if (sample_h < ack_data.accel_min[channel])  ack_data.accel_min[channel] = sample_h;
+    if (sample_h > ack_data.accel_max[channel])  ack_data.accel_max[channel] = sample_h;
+
+    // Next channel
+    ADCCON1 = con1 ^ channel_mask;
 }
 
 static void lcd_addr_burst(uint8_t pixels)
@@ -273,6 +316,13 @@ void main(void)
     rf_reg_write(RF_REG_CONFIG, RF_STATUS_RX_DR);
     IEN_EN = 1;
     IEN_RF = 1;
+
+    // Set up continuous 12-bit, 4 ksps A/D conversion with interrupt
+    // (Max precision, and enough speed to keep our telemetry buffers fed.)
+    ADCCON3 = 0xE0;
+    ADCCON2 = 0x25;
+    ADCCON1 = 0x80;
+    IEN_MISC = 1;
 
     // Start receiving
     RF_CE = 1;

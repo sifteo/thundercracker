@@ -27,6 +27,7 @@
     <ClCompile Include="src\popups.c" />
     <ClCompile Include="src\radio.c" />
     <ClCompile Include="src\spi.c" />
+    <ClCompile Include="src\adc.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\emu8051.h" />
@@ -38,6 +39,7 @@
     <ClInclude Include="src\network.h" />
     <ClInclude Include="src\radio.h" />
     <ClInclude Include="src\spi.h" />
+    <ClInclude Include="src\adc.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="deps\win32\pdcurses\pdcurses.lib" />

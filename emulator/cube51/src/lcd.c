@@ -8,15 +8,14 @@
 
 #include <stdint.h>
 #include "lcd.h"
+#include "emulator.h"
 
 #define CMD_NOP      0x00
 #define CMD_CASET    0x2A
 #define CMD_RASET    0x2B
 #define CMD_RAMWR    0x2C
 
-#define TE_WIDTH_US       1000
-#define TE_WIDTH_CYCLES   (int)(opt_clock_hz * (uint64_t)TE_WIDTH_US / 1000 / 1000)
-extern int opt_clock_hz;
+#define TE_WIDTH_US  1000
 
 
 static struct {
@@ -140,7 +139,7 @@ uint16_t *lcd_framebuffer(void)
 void lcd_te_pulse(void)
 {
     // This runs on the GUI thread, use a lock-free timer.
-    lcd.te_timer_head += TE_WIDTH_CYCLES;
+    lcd.te_timer_head += USEC_TO_CYCLES(TE_WIDTH_US);
 }
 
 int lcd_te_tick(void)

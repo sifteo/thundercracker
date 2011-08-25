@@ -27,7 +27,14 @@ static struct {
 } frontend;
 
 
-static uint8_t clamp64(uint64_t val, uint64_t min, uint64_t max)
+static uint64_t clamp64(uint64_t val, uint64_t min, uint64_t max)
+{
+    if (val < min) val = min;
+    if (val > max) val = max;
+    return val;
+}
+
+static uint32_t clamp32(uint32_t val, uint32_t min, uint32_t max)
 {
     if (val < min) val = min;
     if (val > max) val = max;
@@ -123,6 +130,35 @@ static void frontend_resize_window(void)
     frontend_draw_frame();
 }
 
+static uint16_t frontend_scale_coord(uint32_t coord, uint16_t width)
+{
+    /*
+     * Convert a pixel coordinate to a normalized value in the range
+     * [0, 0xFFFF], with proper rounding and boundary condition
+     * handling.
+     */
+    uint32_t max_coord = width - 1;
+    return clamp32(0, 0xFFFF, (coord * 0xFFFF + max_coord / 2) / max_coord);
+}
+
+static void frontend_mouse_update(uint16_t x, uint16_t y, uint8_t buttons)
+{
+    uint16_t scaled_x = frontend_scale_coord(x, frontend.scale * LCD_WIDTH);
+    uint16_t scaled_y = frontend_scale_coord(y, frontend.scale * LCD_HEIGHT);
+
+    uint16_t accel_x = 0x8000;
+    uint16_t accel_y = 0x8000;
+
+    if (buttons & SDL_BUTTON_LEFT) {
+	// Mouse drag: Simulate a tilt
+	accel_x = scaled_x;
+	accel_y = scaled_y;
+    }
+
+    adc_set_input(0, accel_x);
+    adc_set_input(1, accel_y);
+}
+
 void frontend_init(struct em8051 *cpu)
 {
     SDL_Init(SDL_INIT_VIDEO);
@@ -134,6 +170,7 @@ void frontend_init(struct em8051 *cpu)
     frontend.frame_hz_divisor = 2;
 
     frontend_resize_window();
+    frontend_mouse_update(0, 0, 0);
     SDL_WM_SetCaption("Thundercracker", NULL);
 }
 
@@ -142,7 +179,7 @@ void frontend_exit(void)
     SDL_Quit();
 }
 
-static frontend_keydown(SDL_KeyboardEvent *evt)
+static void frontend_keydown(SDL_KeyboardEvent *evt)
 {
     switch (evt->keysym.sym) {
 
@@ -177,6 +214,15 @@ int frontend_loop(void)
 
 	    case SDL_KEYDOWN:
 		frontend_keydown(&event.key);
+		break;
+
+	    case SDL_MOUSEMOTION:
+		frontend_mouse_update(event.motion.x, event.motion.y, event.motion.state);
+		break;
+
+	    case SDL_MOUSEBUTTONDOWN:
+	    case SDL_MOUSEBUTTONUP:
+		frontend_mouse_update(event.button.x, event.button.y, event.button.state);
 		break;
 	    
 	    }
