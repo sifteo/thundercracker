@@ -97,6 +97,8 @@ void frontend_resize_window(void)
 	printf("Error creating SDL surface!\n");
 	exit(1);
     }
+
+    frontend_repaint();
 }
 
 void frontend_init(struct em8051 *cpu)
