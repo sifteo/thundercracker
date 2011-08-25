@@ -463,19 +463,47 @@ void nodebug_main(struct em8051 *aCPU)
 	run_cycle_batch(aCPU);
 }
 
+void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
+{
+    unsigned addr;
+    FILE *f = fopen(filename, "w");
+
+    if (!f) {
+	perror("Error opening profiler output file");
+	return;
+    }
+
+    for (addr = 0; addr < aCPU->mCodeMemSize; addr++) {
+	uint64_t count = aCPU->mProfilerMem[addr];
+
+	if (count) {
+	    char assembly[128];
+
+            decode(aCPU, addr, assembly);
+	    fprintf(f, "%04X: % 12lld % 8.4f%%   %s\n",
+		    addr, count, (count * 100) / (float)aCPU->profilerTotal,
+		    assembly);
+	}
+    }    
+
+    fclose(f);
+    fprintf(stderr, "Profiler output written to '%s'\n", filename);
+}
+
 int main(int argc, char ** argv) 
 {
     struct em8051 emu;
     int i;
  
     memset(&emu, 0, sizeof(emu));
-    emu.mCodeMem     = malloc(65536);
-    emu.mCodeMemSize = 65536;
-    emu.mExtData     = malloc(65536);
-    emu.mExtDataSize = 65536;
-    emu.mLowerData   = malloc(128);
-    emu.mUpperData   = malloc(128);
-    emu.mSFR         = malloc(128);
+    emu.mExtDataSize = 1024;
+    emu.mCodeMemSize = 16*1024;
+    emu.mCodeMem     = calloc(1, emu.mCodeMemSize);
+    emu.mProfilerMem = calloc(sizeof emu.mProfilerMem[0], emu.mCodeMemSize);
+    emu.mExtData     = calloc(1, emu.mExtDataSize);
+    emu.mLowerData   = calloc(1, 128);
+    emu.mUpperData   = calloc(1, 128);
+    emu.mSFR         = calloc(1, 128);
     emu.except       = &emu_exception;
     emu.sfrwrite     = &hardware_sfrwrite;
     emu.sfrread      = &hardware_sfrread;
@@ -486,15 +514,11 @@ int main(int argc, char ** argv)
     if (argc > 1) {
         for (i = 1; i < argc; i++) {
             if (argv[i][0] == '-') {
-                if (strcmp("step_instruction",argv[i]+1) == 0)
-                    opt_step_instruction = 1;
-                else if (strcmp("si",argv[i]+1) == 0)
-                    opt_step_instruction = 1;
+                if (strcmp("vp",argv[i]+1) == 0)
+                    opt_visual_profiler = 1;
                 else if (strcmp("d",argv[i]+1) == 0)
                     opt_debug = 1;
-                else if (strcmp("debug",argv[i]+1) == 0)
-                    opt_debug = 1;
-                else if (strncmp("clock=",argv[i]+1,6) == 0) {
+		else if (strncmp("clock=",argv[i]+1,6) == 0) {
                     opt_clock_select = 12;
                     opt_clock_hz = atoi(argv[i]+7);
                     if (opt_clock_hz <= 0)
@@ -502,6 +526,8 @@ int main(int argc, char ** argv)
                 } 
 		else if (strncmp("flash=",argv[i]+1,6) == 0)
 		    opt_flash_filename = argv[i]+7;
+		else if (strncmp("profile=",argv[i]+1,8) == 0)
+		    opt_profile_filename = argv[i]+9;
                 else if (strncmp("host=",argv[i]+1,5) == 0)
 		    opt_net_host = argv[i]+6;
                 else if (strncmp("port=",argv[i]+1,5) == 0)
@@ -509,11 +535,12 @@ int main(int argc, char ** argv)
                 else {
                     printf("Help:\n\n"
 			   "%s [options] [firmware.ihx]\n\n"
-			   "Both the filename and options are optional. Available options:\n\n"
-			   "Option            Alternate   description\n"
-			   "-debug            -d          Enable ncurses debug UI\n"
-			   "-step_instruction -si         Step one instruction at a time\n"
+			   "Both the filename and options are optional. Available options:\n"
 			   "\n"
+			   "-d          Enable ncurses debug UI\n"
+			   "-vp         Visual profiler mode, shows realtime CPU cycle heat-map\n"
+			   "\n"
+			   "-profile=out.txt  Profile performance, and write annotated disassembly\n"
 			   "-clock=value      Set clock speed, in Hz\n"
 			   "-flash=file.bin   Set Flash memory filename\n",
 			   "-host=hostname    Hostname for nethub connection\n",
@@ -558,6 +585,9 @@ int main(int argc, char ** argv)
 	nodebug_main(&emu);
 
     hardware_exit();
+
+    if (opt_profile_filename)
+	profiler_write_disassembly(&emu, opt_profile_filename);
 
     return 0;
 }

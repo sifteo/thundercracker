@@ -9,6 +9,8 @@
 #ifndef _LCD_H
 #define _LCD_H
 
+#include "emu8051.h"
+
 struct lcd_pins {
     /* Configured for an 8-bit parallel bus, in 80-system mode */
 
@@ -22,7 +24,7 @@ struct lcd_pins {
     uint8_t   data_drv;   // OUT, active-high
 };
 
-void lcd_init(void);
+void lcd_init(struct em8051 *profile_cpu);
 void lcd_exit(void);
 int lcd_eventloop(void);
 

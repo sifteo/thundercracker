@@ -293,8 +293,15 @@ int tick(struct em8051 *aCPU)
 
     if (aCPU->mTickDelay == 0)
     {
-        aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[aCPU->mPC & (aCPU->mCodeMemSize - 1)]](aCPU);
+	unsigned pc = aCPU->mPC & (aCPU->mCodeMemSize - 1);
+
+        aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU);
         ticked = 1;
+
+	// Count cycles spent at this instruction byte
+	aCPU->mProfilerMem[pc] += aCPU->mTickDelay;
+	aCPU->profilerTotal += aCPU->mTickDelay;
+
         // update parity bit
         v = aCPU->mSFR[REG_ACC];
         v ^= v >> 4;

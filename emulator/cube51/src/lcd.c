@@ -14,6 +14,11 @@
 #define LCD_HEIGHT   128
 #define SCALE        3
 
+#define MARGIN           2
+#define PROFILER_BYTES   16384
+#define PROFILER_LINES   (2 * MARGIN + PROFILER_BYTES / LCD_WIDTH)
+#define RGB565(r,g,b)    ((((r) >> 3)<<11) | (((g) >> 2)<<5) | ((b) >> 3))
+
 #define FB_SIZE      0x10000
 #define FB_MASK      0xFFFF
 #define FB_ROW_SHIFT 8
@@ -31,6 +36,8 @@ static struct {
     SDL_Thread *thread;
     SDL_Surface *surface;
     SDL_sem *initSem;
+
+    struct em8051 *profile_cpu;
 
     int is_running;
     int need_repaint;
@@ -50,6 +57,20 @@ static struct {
 } lcd;
 
 
+static uint8_t clamp8(uint8_t val, uint8_t min, uint8_t max)
+{
+    if (val < min) val = min;
+    if (val > max) val = max;
+    return val;
+}
+
+static uint8_t clamp64(uint64_t val, uint64_t min, uint64_t max)
+{
+    if (val < min) val = min;
+    if (val > max) val = max;
+    return val;
+}
+
 static void lcd_repaint(void)
 {
     int x, y, i, j;
@@ -59,17 +80,43 @@ static void lcd_repaint(void)
 
     SDL_LockSurface(lcd.surface);
 
-	for (y = LCD_HEIGHT; y--;) {
-		for (i = SCALE; i--;) {
-			s_line = src;
-			for (x = LCD_WIDTH; x--;) {
-				for (j = SCALE; j--;)
-					*(dest++) = *s_line;
-				s_line++;
-			}
-		}
-		src += LCD_WIDTH;
+    /*
+     * Scaled LCD view
+     */
+    for (y = LCD_HEIGHT; y--;) {
+	for (i = SCALE; i--;) {
+	    s_line = src;
+	    for (x = LCD_WIDTH; x--;) {
+		for (j = SCALE; j--;)
+		    *(dest++) = *s_line;
+		s_line++;
+	    }
 	}
+	src += LCD_WIDTH;
+    }
+
+    /*
+     * Visual profiler
+     */
+    if (lcd.profile_cpu) {
+	static uint64_t shadow[PROFILER_BYTES];
+	uint64_t *profiler = lcd.profile_cpu->mProfilerMem;
+	uint64_t *shadow_p = shadow;
+
+	dest += LCD_WIDTH * SCALE * MARGIN;
+
+	for (shadow_p = shadow; shadow_p < shadow + PROFILER_BYTES; shadow_p++) {
+	    uint64_t count = *profiler - *shadow_p;
+	    uint64_t heat_r = count ? clamp64(count / 1, 64, 255) : 0;
+	    uint64_t heat_gb = count ? clamp64(count / 10, 64, 255) : 0;
+	    uint16_t pixel = RGB565(heat_r, heat_gb, heat_gb);
+
+	    *shadow_p = *profiler; 
+	    profiler++;
+	    for (j = SCALE; j--;)
+		*(dest++) = pixel;		    
+	}
+    }
 
     SDL_UnlockSurface(lcd.surface);
     SDL_Flip(lcd.surface);
@@ -82,13 +129,19 @@ static void lcd_create_surface(void)
      * On Win32, it needs to happen on the main thread.
      */
 
-    lcd.surface = SDL_SetVideoMode(WIN_WIDTH, WIN_HEIGHT, 16, 0);
+    unsigned width = WIN_WIDTH;
+    unsigned height = WIN_HEIGHT;
+
+    if (lcd.profile_cpu)
+	height += PROFILER_LINES;
+
+    lcd.surface = SDL_SetVideoMode(width, height, 16, 0);
     if (lcd.surface == NULL) {
 	printf("Error creating SDL surface!\n");
 	exit(1);
     }
 
-    SDL_WM_SetCaption("Simulated LCD", NULL);
+    SDL_WM_SetCaption("Thundercracker", NULL);
 }
 
 static int lcd_thread(void *param)
@@ -123,11 +176,12 @@ static void lcd_reset(void)
     lcd.ye = LCD_HEIGHT - 1;
 }
 
-void lcd_init(void)
+void lcd_init(struct em8051 *profile_cpu)
 {
     SDL_Init(SDL_INIT_VIDEO);
     lcd_reset();
     lcd.is_running = 1;
+    lcd.profile_cpu = profile_cpu;
 
 #ifdef _WIN32
     lcd_create_surface();
@@ -165,13 +219,6 @@ int lcd_eventloop(void)
     return 0;
 }
 
-static uint8_t clamp(uint8_t val, uint8_t min, uint8_t max)
-{
-    if (val < min) val = min;
-    if (val > max) val = max;
-    return val;
-}
-
 static void lcd_cmd(uint8_t op)
 {
     lcd.current_cmd = op;
@@ -195,15 +242,15 @@ static void lcd_data(uint8_t byte)
 
     case CMD_CASET:
 	switch (lcd.cmd_bytecount++) {
-	case 1:  lcd.xs = clamp(byte, 0, 0x83);
-	case 3:  lcd.xe = clamp(byte, 0, 0x83);
+	case 1:  lcd.xs = clamp8(byte, 0, 0x83);
+	case 3:  lcd.xe = clamp8(byte, 0, 0x83);
 	}
 	break;
 
     case CMD_RASET:
 	switch (lcd.cmd_bytecount++) {
-	case 1:  lcd.ys = clamp(byte, 0, 0xa1);
-	case 3:  lcd.ye = clamp(byte, 0, 0xa1);
+	case 1:  lcd.ys = clamp8(byte, 0, 0xa1);
+	case 3:  lcd.ye = clamp8(byte, 0, 0xa1);
 	}
 	break;
 

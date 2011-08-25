@@ -68,7 +68,7 @@ typedef int (*em8051xread)(struct em8051 *aCPU, int aAddress);
 
 struct em8051
 {
-    unsigned char *mCodeMem; // 1k - 64k, must be power of 2
+    unsigned char *mCodeMem;      // 1k - 64k, must be power of 2
     int mCodeMemSize; 
     unsigned char *mExtData; // 0 - 64k, must be power of 2
     int mExtDataSize;
@@ -84,6 +84,10 @@ struct em8051
     em8051sfrwrite sfrwrite; // callback: SFR register written
     em8051xread xread; // callback: external memory being read
     em8051xwrite xwrite; // callback: external memory being written
+
+    // Profiler state
+    uint64_t *mProfilerMem;
+    uint64_t profilerTotal;
 
     uint8_t irq_count;		// Number of currently active IRQ handlers
 
