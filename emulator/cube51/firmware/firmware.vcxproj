@@ -36,7 +36,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <NMakePreprocessorDefinitions>
     </NMakePreprocessorDefinitions>
-    <NMakeBuildCommandLine>SDCC=..\deps\win32\sdcc\bin\sdcc.exe make</NMakeBuildCommandLine>
+    <NMakeBuildCommandLine>make SDCC=..\deps\win32\sdcc\bin\sdcc.exe</NMakeBuildCommandLine>
     <NMakeCleanCommandLine>make clean</NMakeCleanCommandLine>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

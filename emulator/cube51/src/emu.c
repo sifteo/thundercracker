@@ -89,15 +89,6 @@ int breakpoint = -1;
 uint64_t target_clocks;
 uint32_t target_time;
 
-void emu_sleep(int value)
-{
-#ifdef _MSC_VER
-    Sleep(value);
-#else
-    usleep(value * 1000);
-#endif
-}
-
 void setSpeed(int speed, int runmode)
 {   
     // Reset timebase
@@ -241,8 +232,7 @@ void run_cycle_batch(struct em8051 *aCPU)
 
     do
 	{
-	    int old_pc;
-	    old_pc = aCPU->mPC;
+            int old_pc = aCPU->mPC;
 	    int ticked;
 
 	    if (speed == 0) {
@@ -295,7 +285,7 @@ void run_cycle_batch(struct em8051 *aCPU)
     // Running too fast? Slow down a bit!
 
     while ((int32_t)(target_time - SDL_GetTicks()) > 0)
-	emu_sleep(1);
+        SDL_Delay(1);
 }
 
 void debug_main(struct em8051 *aCPU)
@@ -465,7 +455,7 @@ void nodebug_main(struct em8051 *aCPU)
 
 void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
 {
-    unsigned addr;
+    int addr;
     FILE *f = fopen(filename, "w");
 
     if (!f) {

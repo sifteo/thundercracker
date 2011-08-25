@@ -65,8 +65,13 @@ struct {
 
 static void network_disconnect(void)
 {
-    if (net.fd >= 0)
+    if (net.fd >= 0) {
+#ifdef _WIN32
+        closesocket(net.fd);
+#else
 	close(net.fd);
+#endif
+    }
 
     net.fd = -1;
     net.is_connected = 0;
@@ -94,7 +99,7 @@ static void network_addr_to_bytes(uint64_t addr, uint8_t *bytes)
 {
     int i;
     for (i = 0; i < 8; i++) {
-	bytes[i] = addr;
+	bytes[i] = (uint8_t) addr;
 	addr >>= 8;
     }
 }
@@ -134,7 +139,7 @@ static void network_try_connect(void)
 	    network_set_addr_internal(net.rf_addr);
     } else {
 	// Connection error, don't retry immediately
-	usleep(300000);
+	SDL_Delay(300);
     }
 }
 
@@ -203,6 +208,7 @@ static int network_thread(void *param)
     		SDL_SemWait(net.rx_sem);
 	}
     }
+    return 0;
 }
 
 void network_init(const char *host, const char *port)

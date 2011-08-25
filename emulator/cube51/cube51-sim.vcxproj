@@ -20,6 +20,7 @@
     <ClCompile Include="src\lcd.c" />
     <ClCompile Include="src\mainview.c" />
     <ClCompile Include="src\memeditor.c" />
+    <ClCompile Include="src\network.c" />
     <ClCompile Include="src\opcodes.c" />
     <ClCompile Include="src\options.c" />
     <ClCompile Include="src\popups.c" />
@@ -32,6 +33,7 @@
     <ClInclude Include="src\flash.h" />
     <ClInclude Include="src\hardware.h" />
     <ClInclude Include="src\lcd.h" />
+    <ClInclude Include="src\network.h" />
     <ClInclude Include="src\radio.h" />
     <ClInclude Include="src\spi.h" />
   </ItemGroup>

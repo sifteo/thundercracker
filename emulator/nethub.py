@@ -72,8 +72,8 @@ def hexint(i):
 
 def main():
     parser = argparse.ArgumentParser(description="Network hub for Sifteo radio simulation")
-    parser.add_argument('-q', '--quiet', action='store_true',
-                        help="Don't log to stderr")
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help="Enable log output on stderr")
     parser.add_argument('-p', '--port', metavar='N', type=int, default=2405,
                         help="TCP port number to listen/connect on")
     parser.add_argument('--bind', metavar='ADDR', default="",
@@ -90,7 +90,7 @@ def main():
                        help="listen on ADDR, print incoming packets to stdout")
 
     args = parser.parse_args()
-    log.verbose = not args.quiet
+    log.verbose = args.verbose
 
     if args.pipe:
         client = ClientPipe(args.bind, args.port, args.pipe)
