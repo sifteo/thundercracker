@@ -6,15 +6,39 @@ import socket, threading, struct
 def main():
     tr = TileRenderer(ThreadedNethubInterface(), 0x98000)
     m = Map("assets/earthbound_fourside_full.map", width=256)
+    ms = MapScroller(tr, m)
 
     while True:
-        for i in range(256<<3):
-            tr.pan(i&7, 0)
-            tr.blit(m, srcx=i>>3, srcy=50, w=20, h=20)
+        for i in range(1024 - 160):
+            ms.scroll(0, i)
             tr.refresh()
 
 
+class MapScroller:
+    """Implements efficient tear-free scrolling, by only updating
+       tiles that are off-screen, just before they come on-screen.
+       """
+
+    def __init__(self, renderer, mapobj):
+        self.tr = renderer
+        self.map = mapobj
+
+    def scroll(self, x, y):
+        # Scroll to the specified coordinates. We could be WAY smarter about
+        # the actual process of doing this update, but right now I'm implementing
+        # it in a totally brute-force manner to keep this test harness simple.
+        #
+        # This method works because 'blit' knows how to wrap around on the VRAM
+        # buffer, and because our TileRenderer is good at removing unnecessary changes.
+
+        self.tr.pan(x & 0x7F, y & 0x7F)
+        self.tr.blit(self.map, dstx=x>>3, dsty=y>>3,
+                     srcx=x>>3, srcy=y>>3, w=17, h=17)
+
+
 class Map:
+    """Container for tile-based map/index data."""
+
     def __init__(self, filename=None, width=None):
         self.width = width
         if filename:
@@ -32,6 +56,10 @@ class Map:
 
     
 class TileRenderer:
+    """Abstraction for the tile-based graphics renderer. Keeps an in-memory
+       copy of the cube's VRAM, and sends updates via the radio as necessary.
+       """
+    
     def __init__(self, net, baseAddr):
         self.net = net
         self.baseAddr = baseAddr
@@ -40,24 +68,31 @@ class TileRenderer:
         self.fill(0)
 
     def refresh(self):
-        for chunk in self.dirty:
+        chunks = self.dirty.keys()
+        chunks.sort()
+        self.dirty = {}    
+        print chunks
+
+        for chunk in chunks:
             bytes = [chunk] + self.vram[chunk * 31:(chunk+1) * 31]
             self.net.send(''.join(map(chr, bytes)))
-        self.dirty = {}    
+
+    def poke(self, addr, value):
+        if self.vram[addr] != value:
+            self.vram[addr] = value
+            self.dirty[addr // 31] = True
 
     def pan(self, x, y):
         """Set the hardware panning registers"""
-        self.vram[0] = x
-        self.vram[1] = y
-        self.dirty[0] = True
+        self.poke(800, x)
+        self.poke(801, y)
 
     def plot(self, tile, x, y):
         """Draw a tile in the hardware tilemap, by coordinate and tile index."""
         addr = self.baseAddr + (tile << 7)
-        offset = 0x001F + x*2 + y*40
-        self.vram[offset] = (addr >> 6) & 0xFE
-        self.vram[offset+1] = (addr >> 13) & 0xFE
-        self.dirty[offset // 31] = True
+        offset = (x % 20)*2 + (y % 20)*40
+        self.poke(offset, (addr >> 6) & 0xFE)
+        self.poke(offset + 1, (addr >> 13) & 0xFE)
 
     def fill(self, tile, x=0, y=0, w=20, h=20):
         """Fill a box of tiles, all using the same index"""
@@ -75,6 +110,11 @@ class TileRenderer:
 
 
 class ThreadedNethubInterface:
+    """Simple radio interface emulation, using nethub. This can send
+       packets synchronously, and invoke a callback asynchronously
+       when any responses are received from the cube.
+       """
+
     def __init__(self, callback=None, address=0x020000e7e7e7e7e7, host="127.0.0.1", port=2405):
         self.callback = callback
         self.address = address

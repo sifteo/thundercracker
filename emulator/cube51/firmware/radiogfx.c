@@ -12,9 +12,8 @@
 static __xdata union {
     uint8_t bytes[1024];
     struct {
+	uint8_t tilemap[800];
 	uint8_t pan_x, pan_y;
-	uint8_t reserved[29];
-	uint8_t tilemap[800];	// 0x001F
     };
 } vram;
 
