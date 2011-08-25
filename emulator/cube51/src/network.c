@@ -33,6 +33,7 @@
 #else
 #   include <sys/types.h>
 #   include <sys/socket.h>
+#   include <sys/select.h>
 #   include <netinet/in.h>
 #   include <fcntl.h>
 #   include <netdb.h>
@@ -133,7 +134,26 @@ static void network_try_connect(void)
     }
 
     if (!connect(net.fd, net.addr->ai_addr, net.addr->ai_addrlen)) {
+	unsigned long arg;
+
 	net.is_connected = 1;
+
+#ifdef _WIN32
+	arg = 1;
+	ioctlsocket(net.fd, FIONBIO, &arg);
+#else
+	fcntl(net.fd, F_SETFL, O_NONBLOCK | fcntl(net.fd, F_GETFL));
+#endif
+
+#ifdef SO_NOSIGPIPE
+	arg = 1;
+	setsockopt(net.fd, SOL_SOCKET, SO_NOSIGPIPE, &arg, sizeof arg);
+#endif
+
+#ifdef TCP_NODELAY
+	arg = 1;
+	setsockopt(net.fd, IPPROTO_TCP, TCP_NODELAY, &arg, sizeof arg);
+#endif
 
 	if (net.rf_addr)
 	    network_set_addr_internal(net.rf_addr);
@@ -143,11 +163,14 @@ static void network_try_connect(void)
     }
 }
 
-static int network_rx_into_buffer(void)
+static void network_rx_into_buffer(void)
 {
     int recv_len = 1;
+    fd_set rfds;
+
+    FD_ZERO(&rfds);
 	
-    for (;;) {
+    while (net.is_running && net.is_connected) {
 	int packet_len = 2 + (int)net.rx_buffer[0];
 	uint8_t packet_type = net.rx_buffer[1];
 
@@ -162,6 +185,9 @@ static int network_rx_into_buffer(void)
 		static uint8_t ack[] = { 0, NETHUB_ACK };
 		network_tx_bytes(ack, sizeof ack);
 
+		// Make sure the packet buffer is available
+		SDL_SemWait(net.rx_sem);
+
 		net.rx_addr = network_addr_from_bytes(net.rx_buffer + 2);
 		memcpy(net.rx_packet, net.rx_buffer + 10,
 		       packet_len - 10);
@@ -174,14 +200,18 @@ static int network_rx_into_buffer(void)
 	    memmove(net.rx_buffer, net.rx_buffer + packet_len, net.rx_count - packet_len);
 	    net.rx_count -= packet_len;
 
-	    if (packet_type == NETHUB_MSG)
-		return 1;
-
 	} else {
 	    /*
 	     * No packet buffered. Try to read more!
+	     *
+	     * We have the socket in nonblocking mode so that our
+	     * writes will not block, but here we do want a blocking
+	     * read.
 	     */
 
+	    FD_SET(net.fd, &rfds);
+	    select(net.fd + 1, &rfds, NULL, NULL, NULL);
+	    
 	    recv_len = recv(net.fd, net.rx_buffer + net.rx_count,
 			    sizeof net.rx_buffer - net.rx_count, 0);
 	    if (recv_len <= 0) {
@@ -193,20 +223,15 @@ static int network_rx_into_buffer(void)
 	    net.rx_count += recv_len;
 	}
     }
-
-    return 0;
 }
 
 static int network_thread(void *param)
 {
     while (net.is_running) {
-	if (!net.is_connected)
+	if (net.is_connected)
+	    network_rx_into_buffer();
+	else
 	    network_try_connect();
-	
-	if (net.rx_packet_len < 0) {
-	    if (network_rx_into_buffer())
-    		SDL_SemWait(net.rx_sem);
-	}
     }
     return 0;
 }
@@ -233,6 +258,9 @@ void network_init(const char *host, const char *port)
 	perror("getaddrinfo");
 	exit(1);
     }
+
+    // Buffer is initially available
+    net.rx_sem = SDL_CreateSemaphore(1);
 
     net.thread = SDL_CreateThread(network_thread, NULL);
 }
