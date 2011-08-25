@@ -158,11 +158,17 @@ int frontend_loop(void)
 	}
 
 	if (frontend.running) {
-	    // Nap if we're idle, otherwise update the screen
-	    if (lcd_check_for_repaint())
+	    if (lcd_check_for_repaint()) {
+		// Updating at full speed
 		frontend_repaint();
-	    else
+	    } else if (opt_visual_profiler) {
+		// Slower updates for profiler only, when LCD is idle
+		frontend_repaint();
 		SDL_Delay(10);
+	    } else {
+		// Totally idle, take a nap.
+		SDL_Delay(10);
+	    }
 	}
     }
 }
