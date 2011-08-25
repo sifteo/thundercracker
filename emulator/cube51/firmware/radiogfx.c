@@ -279,7 +279,8 @@ void main(void)
 
     while (1) {
 	// Sync with master
-	while (vram.frame_trigger == ack_data.frame_count);
+	// XXX disabled, see refresh_alt()
+	// while (vram.frame_trigger == ack_data.frame_count);
 
 	// Sync with LCD
 	while (!CTRL_LCD_TE);

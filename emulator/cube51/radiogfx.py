@@ -82,7 +82,12 @@ class TileRenderer:
     def _telemetryCb(self, t):
         self.remote_frame_count = t[self.FRAME_COUNT]
 
-    def refresh(self):
+    def refresh_alt(self):
+        # XXX: This is an alternate refresh implementation that includes
+        #      proper flow control and at least some manner of update
+        #      optimization... but this python code is so slow that it's
+        #      running kinda badly right now.
+
         # Flow control. We aren't staying strictly synchronous with
         # the cube firmware here, since that would leave the cube idle
         # when it could be rendering. But we'll keep a coarser-grained count of
@@ -102,38 +107,35 @@ class TileRenderer:
                 time.sleep(0)
             
         # Trigger the firmware to refresh the LCD 
-        self.poke(802, self.local_frame_count)
+        self.vram[802] = self.local_frame_count
+        self.dirty[802 // 31] = True
 
-        if 0:
-            chunks = self.dirty.keys()
-            chunks.sort()
-            self.dirty = {}    
-        else:
-            # XXX: In this crappy python test code, it's hard to keep the frame rate
-            # consistent when we're sending out very variable amounts of data on each
-            # frame. For now, don't even try to optimize our output pattern.
-            chunks = range(0x20)
- 
+        chunks = self.dirty.keys()
+        chunks.sort()
+        self.dirty = {}    
+        
         for chunk in chunks:
             bytes = [chunk] + self.vram[chunk * 31:(chunk+1) * 31]
             self.net.send_msg(''.join(map(chr, bytes)))
 
-    def poke(self, addr, value):
-        if self.vram[addr] != value:
-            self.vram[addr] = value
-            self.dirty[addr // 31] = True
+    def refresh(self):
+        for chunk in range(0x20):
+            bytes = [chunk] + self.vram[chunk * 31:(chunk+1) * 31]
+            self.net.send_msg(''.join(map(chr, bytes)))
 
     def pan(self, x, y):
         """Set the hardware panning registers"""
-        self.poke(800, x)
-        self.poke(801, y)
+        self.vram[800] = x
+        self.vram[801] = y
+        #self.dirty[800 // 31] = True
 
     def plot(self, tile, x, y):
         """Draw a tile in the hardware tilemap, by coordinate and tile index."""
         addr = self.baseAddr + (tile << 7)
         offset = (x % 20)*2 + (y % 20)*40
-        self.poke(offset, (addr >> 6) & 0xFE)
-        self.poke(offset + 1, (addr >> 13) & 0xFE)
+        self.vram[offset] = (addr >> 6) & 0xFE
+        self.vram[offset+1] = (addr >> 13) & 0xFE
+        #self.dirty[offset // 31] = True
 
     def fill(self, tile, x=0, y=0, w=20, h=20):
         """Fill a box of tiles, all using the same index"""
