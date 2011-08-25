@@ -119,9 +119,16 @@ static frontend_keydown(SDL_KeyboardEvent *evt)
 {
     switch (evt->keysym.sym) {
 
+	// Change scale
     case 's':
-	if (++frontend.scale == 5)
+	if (++frontend.scale == 6)
 	    frontend.scale = 1;
+	frontend_resize_window();
+	break;
+
+	// Toggle profiler
+    case 'p':
+	opt_visual_profiler = !opt_visual_profiler;
 	frontend_resize_window();
 	break;
 
