@@ -1,4 +1,4 @@
-all: demo.ihx radiogfx.ihx
+all: demo.ihx radiogfx.ihx tear.ihx
 
 CDEPS = *.h
 SDCC = sdcc
@@ -7,6 +7,9 @@ demo.ihx: demo.c $(CDEPS)
 	$(SDCC) $<
 
 radiogfx.ihx: radiogfx.c $(CDEPS)
+	$(SDCC) $<
+
+tear.ihx: tear.c $(CDEPS)
 	$(SDCC) $<
 
 clean:

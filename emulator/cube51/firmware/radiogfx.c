@@ -264,7 +264,7 @@ void main(void)
     ADDR_PORT = 0;
     ADDR_DIR = 0;
     CTRL_PORT = CTRL_IDLE;
-    CTRL_DIR = 0;
+    CTRL_DIR = 0x01;
 
     // Radio clock running
     RF_CKEN = 1;
@@ -278,7 +278,12 @@ void main(void)
     RF_CE = 1;
 
     while (1) {
+	// Sync with master
 	while (vram.frame_trigger == ack_data.frame_count);
+
+	// Sync with LCD
+	while (!CTRL_LCD_TE);
+	
 	lcd_cmd_byte(LCD_CMD_RAMWR);
 	lcd_render_tiles_8x8_16bit_20wide();
 	ack_data.frame_count++;

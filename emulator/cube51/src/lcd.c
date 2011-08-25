@@ -14,9 +14,15 @@
 #define CMD_RASET    0x2B
 #define CMD_RAMWR    0x2C
 
+#define TE_WIDTH_US       1000
+#define TE_WIDTH_CYCLES   (int)(opt_clock_hz * (uint64_t)TE_WIDTH_US / 1000 / 1000)
+extern int opt_clock_hz;
+
+
 static struct {
-    int need_repaint;
     uint32_t write_count;
+    uint32_t te_timer_head;
+    uint32_t te_timer_tail;
 
     /* 16-bit RGB 5-6-5 format */
     uint8_t fb_mem[FB_SIZE];
@@ -41,7 +47,6 @@ static uint8_t clamp(uint8_t val, uint8_t min, uint8_t max)
 void lcd_init(void)
 {
     lcd.current_cmd = CMD_NOP;
-    lcd.need_repaint = 1;
     lcd.xs = 0;
     lcd.ys = 0;
     lcd.xe = LCD_WIDTH - 1;
@@ -86,7 +91,6 @@ static void lcd_data(uint8_t byte)
     case CMD_RAMWR:
 	lcd.fb_mem[FB_MASK & ((lcd.row << FB_ROW_SHIFT) + lcd.cmd_bytecount)] = byte;
 	lcd.cmd_bytecount++;
-	lcd.need_repaint = 1;
 	if (lcd.cmd_bytecount > 1 + (lcd.xe << 1)) {
 	    lcd.cmd_bytecount = lcd.xs << 1;
 	    lcd.row++;
@@ -108,9 +112,6 @@ void lcd_cycle(struct lcd_pins *pins)
      *   - 16-bit color depth, RGB-565 (3AH = 05)
      */
 
-    // Assume we aren't driving the data output for now
-    pins->data_drv = 0;
-
     if (!pins->csx && pins->wrx && !lcd.prev_wrx) {
 	if (pins->dcx) {
 	    /* Data write strobe */
@@ -131,14 +132,28 @@ uint32_t lcd_write_count(void)
     return cnt;
 }
 
-int lcd_check_for_repaint(void)
-{
-    int r = lcd.need_repaint;
-    lcd.need_repaint = 0;
-    return r;
-}
-
 uint16_t *lcd_framebuffer(void)
 {
     return (uint16_t *) lcd.fb_mem;
+}
+
+void lcd_te_pulse(void)
+{
+    // This runs on the GUI thread, use a lock-free timer.
+    lcd.te_timer_head += TE_WIDTH_CYCLES;
+}
+
+int lcd_te_tick(void)
+{
+    /*
+     * We have a separate entry point for the TE timer, since it
+     * really does need to happen every tick rather than just when
+     * there's a graphics pin state change.
+     */
+
+    if (lcd.te_timer_head != lcd.te_timer_tail) {
+	lcd.te_timer_tail++;
+	return 1;
+    }
+    return 0;
 }

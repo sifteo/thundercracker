@@ -50,7 +50,7 @@ void hardware_init(void)
     ADDR_DIR = 0;
 
     CTRL_PORT = CTRL_IDLE;
-    CTRL_DIR = 0;
+    CTRL_DIR = 0x01;
 }
 
 /*
@@ -64,6 +64,14 @@ void lcd_cmd_byte(uint8_t b)
     ADDR_INC2();
     BUS_DIR = 0xFF;
     CTRL_PORT = CTRL_IDLE;
+}
+
+void lcd_begin_frame(void)
+{
+    lcd_cmd_byte(LCD_CMD_RAMWR);
+
+    // Optional: Vertical sync
+    //while (!CTRL_LCD_TE);
 }
 
 /*
@@ -852,7 +860,7 @@ void demo_cube(void)
         int8_t s = sin8(angle)/2;
         int8_t c = sin8(ANGLE_90 - angle)/2;
         
-	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_begin_frame();
         
         do {
             ray_test_segment(x0-c, y+y0-s, x0-s, y+y0+c);
@@ -875,7 +883,7 @@ void demo_gems(void)
 	    gems_draw_gem(x, y, 0);
 
     for (frame = 0; frame < 256; frame++) {
-	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_begin_frame();
 	lcd_render_tiles_16x16_8bit_8wide(0x68000 >> 13);
 
 	// Mix it up, replace a few pseudo-random gems.
@@ -915,7 +923,7 @@ void demo_monsters(void)
     }
 
     for (frame = 0; frame < 256; frame++) {
-	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_begin_frame();
 	lcd_render_sprites_32x32(0x88000 >> 13);
 
 	// Update sprites
@@ -939,7 +947,7 @@ void demo_fullscreen_bg(void)
 
     for (frame = 0; frame < 256; frame++) {
 	uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0xFF) << (LCD_ROW_SHIFT + 1));
-	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_begin_frame();
 	lcd_flash_copy_fullscreen(bg_addr);
     }
 }
@@ -952,7 +960,7 @@ void demo_owlbear_sprite(void)
     for (frame = 0; frame < 256; frame++) {
 	uint8_t spr_f = (frame >> 2) & 7;
 	uint32_t spr_addr = (uint32_t)spr_f << 15;
-	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_begin_frame();
 	lcd_flash_copy_fullscreen(spr_addr);
     }
 }
@@ -966,7 +974,7 @@ void demo_owlbear_chromakey(void)
 	uint8_t spr_f = (frame >> 1) & 7;
 	uint32_t spr_addr = (uint32_t)spr_f << 15;
 	uint32_t bg_addr = 0x40000LU + ((uint32_t)(frame & 0x7F) << (LCD_ROW_SHIFT + 2));
-	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_begin_frame();
 	lcd_flash_chromakey_fullscreen(spr_addr, bg_addr);
     }
 }
@@ -978,7 +986,7 @@ void demo_rotozoom(void)
     
     for (frame = 0; frame < 128; frame++) {
 	uint8_t frame_l = frame;
-	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_begin_frame();
 	lcd_render_affine_64x128(0x8c000 >> 13, -frame, 0xa0 - frame);
     }
 }	
@@ -993,7 +1001,7 @@ void demo_tile_panning(void)
 	tilemap.words[i] = earthbound_fourside_160[i];
 
     for (frame = 0; frame < 256; frame++) {
-	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_begin_frame();
 	lcd_render_tiles_8x8_16bit_20wide(16 + (sin8(frame << 4) >> 5),
 					  16 + (sin8(frame << 3) >> 5));
     }
@@ -1017,7 +1025,7 @@ void demo_text(void)
     text_string(8, 9, "^_^");
 
     for (frame = 0; frame < 256; frame++) {
-	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_begin_frame();
         lcd_render_tiles_8x8_16bit_20wide(12 + (sin8(frame << 1) >> 5),
 					  16 + (sin8(frame << 3) >> 5));
 
@@ -1035,7 +1043,7 @@ void demo_sin_scaler(void)
     uint8_t row_addr;
     
     for (frame = 0; frame < 256; frame++) {
-	lcd_cmd_byte(LCD_CMD_RAMWR);
+	lcd_begin_frame();
 
         row_addr = 0;
         do {

@@ -12,7 +12,7 @@
 #define LCD_WIDTH    128
 #define LCD_HEIGHT   128
 
-#define FB_SIZE      0x10000
+#define FB_SIZE      0x10000    // Enough for LCD itself, and for profiler display
 #define FB_MASK      0xFFFF
 #define FB_ROW_SHIFT 8
 
@@ -25,19 +25,17 @@ struct lcd_pins {
     uint8_t   wrx;        // IN, rising edge
     uint8_t   rdx;        // IN, rising edge
     uint8_t   data_in;    // IN
-
-    uint8_t   data_out;   // OUT
-    uint8_t   data_drv;   // OUT, active-high
 };
 
 void lcd_init(void);
 
-int lcd_check_for_repaint(void);
 uint16_t *lcd_framebuffer(void);
+void lcd_te_pulse(void);
 
 // For debugger
 uint32_t lcd_write_count(void);
 
 void lcd_cycle(struct lcd_pins *pins);
+int lcd_te_tick(void);
 
 #endif

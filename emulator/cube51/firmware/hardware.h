@@ -20,7 +20,8 @@
 #define CTRL_PORT	P2
 #define CTRL_DIR 	P2DIR
 
-#define CTRL_LCD_RDX	(1 << 0)
+__sbit __at 0xA0 CTRL_LCD_TE;
+
 #define CTRL_LCD_DCX	(1 << 1)
 #define CTRL_LCD_CSX	(1 << 2)
 #define CTRL_FLASH_WE	(1 << 3)

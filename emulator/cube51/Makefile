@@ -24,7 +24,7 @@ PY_PATH := /opt/local/bin:/usr/bin
 PYTHON  := python2.7
 
 CFLAGS += -O3 -g -Werror $(shell sdl-config --cflags)
-LDFLAGS += -g -lncurses $(shell sdl-config --libs)
+LDFLAGS += -g -lGL -lncurses $(shell sdl-config --libs)
 
 all: $(BIN) firmware flash.bin
 
