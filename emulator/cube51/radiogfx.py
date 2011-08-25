@@ -9,12 +9,14 @@ def main():
     tr = TileRenderer(net, 0x98000)
     m = Map("assets/earthbound_fourside_full.map", width=256)
     ms = MapScroller(tr, m)
-    x, y = 0, 0
+
+    x, y = 155, 1689
+    speed = 12
 
     while True:
         accel.next()
-        x += accel.x * 15
-        y += accel.y * 15
+        x = min(2048-160, max(0, x + accel.x * speed))
+        y = min(2048-160, max(0, y + accel.y * speed))
 
         ms.scroll(x, y)
         tr.refresh()
