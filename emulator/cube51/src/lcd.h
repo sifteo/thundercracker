@@ -9,7 +9,13 @@
 #ifndef _LCD_H
 #define _LCD_H
 
-#include "emu8051.h"
+#define LCD_WIDTH    128
+#define LCD_HEIGHT   128
+
+#define FB_SIZE      0x10000
+#define FB_MASK      0xFFFF
+#define FB_ROW_SHIFT 8
+
 
 struct lcd_pins {
     /* Configured for an 8-bit parallel bus, in 80-system mode */
@@ -24,9 +30,10 @@ struct lcd_pins {
     uint8_t   data_drv;   // OUT, active-high
 };
 
-void lcd_init(struct em8051 *profile_cpu);
-void lcd_exit(void);
-int lcd_eventloop(void);
+void lcd_init(void);
+
+int lcd_check_for_repaint(void);
+uint16_t *lcd_framebuffer(void);
 
 // For debugger
 uint32_t lcd_write_count(void);

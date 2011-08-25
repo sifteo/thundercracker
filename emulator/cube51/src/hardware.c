@@ -80,14 +80,13 @@ void hardware_init(struct em8051 *cpu)
     network_init(opt_net_host, opt_net_port);
     flash_init(opt_flash_filename);
     radio_init(cpu);
-    lcd_init(opt_visual_profiler ? cpu : NULL);
+    lcd_init();
 }
 
 void hardware_exit(void)
 {
     flash_exit();
     radio_exit();
-    lcd_exit();
     network_exit();
 }
 

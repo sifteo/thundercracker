@@ -10,6 +10,7 @@ OBJS = \
 	src/options.o \
 	src/popups.o \
 	src/hardware.o \
+	src/frontend.o \
 	src/lcd.o \
 	src/flash.o \
 	src/spi.o \

@@ -46,28 +46,21 @@
 #include "emu8051.h"
 #include "emulator.h"
 #include "hardware.h"
-#include "lcd.h"
+#include "frontend.h"
 
 unsigned char history[HISTORY_LINES * (128 + 64 + sizeof(int))];
-
 
 // current line in the history cyclic buffers
 int historyline = 0;
 // last known columns and rows; for screen resize detection
 int oldcols, oldrows;
 
-/*
- * XXX: UI defaults to running at 10Hz when no firmware is loaded,
- *      not because this is really useful, but because the SDL
- *      event loop is wedged any time we're actually single-stepping.
- *      This is especially annoying on Windows, when we are greeted
- *      with an unresponsive and immovable window.
- *
- *      These defaults are overridden when a firmware file is loaded
- *      on the command line, so that we then run at maximum speed.
- */
-int runmode = 1;
-int speed = 4;
+int runmode = 0;
+int speed = 1;
+
+// Emulation thread
+SDL_Thread *emu_thread;
+int emu_thread_running;
 
 // instruction count; needed to replay history correctly
 unsigned int icount = 0;
@@ -288,8 +281,9 @@ void run_cycle_batch(struct em8051 *aCPU)
         SDL_Delay(1);
 }
 
-void debug_main(struct em8051 *aCPU)
+int debug_main(void *arg)
 {
+    struct em8051 *aCPU = arg;
     int ch = 0;
     int ticked = 1;
 
@@ -317,9 +311,6 @@ void debug_main(struct em8051 *aCPU)
 
     do
     {
-	// Need to handle SDL events on the main thread!
-	if (lcd_eventloop())
-	    break;
 
         if (LINES != oldrows ||
             COLS != oldcols)
@@ -439,18 +430,25 @@ void debug_main(struct em8051 *aCPU)
             break;
         }
     }
-    while ( (ch = getch()) != 'Q' );
+    while ( (ch = getch()) != 'Q' && emu_thread_running );
 
     endwin();
+    frontend_async_quit();
+    return 0;
 }
 
-void nodebug_main(struct em8051 *aCPU)
+int nodebug_main(void *arg)
 {
+    struct em8051 *aCPU = arg;
+
     runmode = 1;
     speed = 0;
 
-    while (!lcd_eventloop())
+    while (emu_thread_running)
 	run_cycle_batch(aCPU);
+
+    frontend_async_quit();
+    return 0;
 }
 
 void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
@@ -557,24 +555,20 @@ int main(int argc, char ** argv)
         }
     }
    
-    /*
-     * Init hardware earlyish. Initializing the LCD controller will create an SDL window.
-     *
-     * On Mac OS, due to some ugly SDL threading quirks, we get some
-     * warnings on the console during the first redraw. We would
-     * prefer to get the unpleasantness over with early, then repaint
-     * over the screen when we init ncurses.  On a less kludgey note,
-     * this also allows us to bail out if there's an error without
-     * having to worry about putting the console back into a usable
-     * state.
-     */
     hardware_init(&emu);
+    frontend_init(&emu);
 
-    if (opt_debug)
-	debug_main(&emu);
-    else
-	nodebug_main(&emu);
+    // Emulation/debug main loop on another thread
+    emu_thread_running = 1;
+    emu_thread = SDL_CreateThread(opt_debug ? debug_main : nodebug_main, &emu);
 
+    // GUI main loop on the main thread (SDL kind of requires this)
+    frontend_loop();
+
+    emu_thread_running = 0;
+    SDL_WaitThread(emu_thread, NULL);
+
+    frontend_exit();
     hardware_exit();
 
     if (opt_profile_filename)
