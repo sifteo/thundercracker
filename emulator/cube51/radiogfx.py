@@ -8,8 +8,9 @@ def main():
     m = Map("assets/earthbound_fourside_full.map", width=256)
     ms = MapScroller(tr, m)
 
+    epoch = time.time()
     while True:
-        t = time.clock() * 1.5
+        t = (time.time() - epoch) * 0.75
         ms.scroll(int(512 + 150 * math.sin(t)),
                   int(512 + 150 * math.cos(t)))
         tr.refresh()
@@ -103,9 +104,15 @@ class TileRenderer:
         # Trigger the firmware to refresh the LCD 
         self.poke(802, self.local_frame_count)
 
-        chunks = self.dirty.keys()
-        chunks.sort()
-        self.dirty = {}    
+        if 0:
+            chunks = self.dirty.keys()
+            chunks.sort()
+            self.dirty = {}    
+        else:
+            # XXX: In this crappy python test code, it's hard to keep the frame rate
+            # consistent when we're sending out very variable amounts of data on each
+            # frame. For now, don't even try to optimize our output pattern.
+            chunks = range(0x20)
  
         for chunk in chunks:
             bytes = [chunk] + self.vram[chunk * 31:(chunk+1) * 31]
