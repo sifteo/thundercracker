@@ -111,53 +111,62 @@ static void lcd_render_tiles_8x8_16bit_20wide(void)
     uint8_t first_column_addr = (pan_x << 2) & 0x1C;
     uint8_t last_tile_width = pan_x & 7;
     uint8_t first_tile_width = 8 - last_tile_width;
-    __xdata uint8_t *map = &vram.tilemap[(tile_pan_y << 5) + (tile_pan_y << 3) + (tile_pan_x << 1)];
+    __xdata uint8_t *map_line = &vram.tilemap[(tile_pan_y << 5) + (tile_pan_y << 3)];
     uint8_t y = LCD_HEIGHT;
 
     do {
 	uint8_t x;
+	uint8_t map_x = tile_pan_x << 1;
 
 	/*
 	 * XXX: There is a HUGE optimization opportunity here with regard to map addressing.
 	 *      The dptr manipulation code that SDCC generates here is very bad... and it's
 	 *      possible we might want to use some of the nRF24LE1's specific features, like
 	 *      the PDATA addressing mode.
+	 *
+	 * XXX: I rather unscrupulously hacked this to add full horizontal and vertical
+	 *      wrap-around support. There's also a lot of room for optimization here.
 	 */
 
 	// First tile on the line, (1 <= width <= 8)
-	ADDR_PORT = *(map++);
+	ADDR_PORT = map_line[map_x++];
 	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-	ADDR_PORT = *(map++);
+	ADDR_PORT = map_line[map_x++];
 	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
 	ADDR_PORT = line_addr + first_column_addr;
 	lcd_addr_burst(first_tile_width);
-	
+	if (map_x == 40)
+	    map_x = 0;
+
 	// There are always 15 full tiles on-screen
 	x = 15;
 	do {
-	    ADDR_PORT = *(map++);
+	    ADDR_PORT = map_line[map_x++];
 	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-	    ADDR_PORT = *(map++);
+	    ADDR_PORT = map_line[map_x++];
 	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
 	    ADDR_PORT = line_addr;
 	    ADDR_INC32();
+	    if (map_x == 40)
+		map_x = 0;
 	} while (--x);
 
 	// Might be one more partial tile, (0 <= width <= 7)
 	if (last_tile_width) {
-	    ADDR_PORT = map[0];
+	    ADDR_PORT = map_line[map_x++];
 	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-	    ADDR_PORT = map[1];
+	    ADDR_PORT = map_line[map_x++];
 	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
 	    ADDR_PORT = line_addr;
 	    lcd_addr_burst(last_tile_width);
 	}
 
 	line_addr += 32;
-	if (line_addr)
-	    map -= 32;
-	else
-	    map += 8;
+	if (!line_addr) {
+	    map_line += 40;
+	    if (map_line > &vram.tilemap[799])
+		map_line -= 800;
+	}
 
     } while (--y);
 }

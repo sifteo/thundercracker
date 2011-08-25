@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import socket, threading, struct
+import socket, threading, struct, time, math
 
 
 def main():
@@ -8,10 +8,13 @@ def main():
     m = Map("assets/earthbound_fourside_full.map", width=256)
     ms = MapScroller(tr, m)
 
+    t = 0
     while True:
-        for i in range(1024 - 160):
-            ms.scroll(0, i)
-            tr.refresh()
+        t += 0.01
+
+        ms.scroll(int(512 + 150 * math.sin(t)),
+                  int(512 + 150 * math.cos(t)))
+        tr.refresh()
 
 
 class MapScroller:
@@ -31,7 +34,7 @@ class MapScroller:
         # This method works because 'blit' knows how to wrap around on the VRAM
         # buffer, and because our TileRenderer is good at removing unnecessary changes.
 
-        self.tr.pan(x & 0x7F, y & 0x7F)
+        self.tr.pan(x % 160, y % 160)
         self.tr.blit(self.map, dstx=x>>3, dsty=y>>3,
                      srcx=x>>3, srcy=y>>3, w=17, h=17)
 
@@ -71,6 +74,8 @@ class TileRenderer:
         chunks = self.dirty.keys()
         chunks.sort()
         self.dirty = {}    
+ 
+        # XXX: Debugging... show the list of dirty chunks for each refresh.
         print chunks
 
         for chunk in chunks:
