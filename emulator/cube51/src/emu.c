@@ -471,7 +471,8 @@ void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
 
             decode(aCPU, addr, assembly);
 	    fprintf(f, "%04X: % 12lld % 8.4f%%   %s\n",
-		    addr, count, (count * 100) / (float)aCPU->profilerTotal,
+		    addr, (long long int)count,
+		    (count * 100) / (float)aCPU->profilerTotal,
 		    assembly);
 	}
     }    
