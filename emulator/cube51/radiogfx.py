@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import socket, threading, struct, time, math
+import socket, asyncore, threading, Queue, struct, time, math
 
 
 def main():
-    tr = TileRenderer(ThreadedNethubInterface(), 0x98000)
+    tr = TileRenderer(NetworkMaster(), 0x98000)
     m = Map("assets/earthbound_fourside_full.map", width=256)
     ms = MapScroller(tr, m)
 
@@ -61,8 +61,11 @@ class TileRenderer:
        copy of the cube's VRAM, and sends updates via the radio as necessary.
        """
 
+    # Telemetry packet offset
     FRAME_COUNT = 10
-    MAX_FRAMES_AHEAD = 2
+
+    MAX_FRAMES_AHEAD = 3
+    WARP_FRAMES_AHEAD = 10
     
     def __init__(self, net, baseAddr):
         self.net = net
@@ -73,18 +76,29 @@ class TileRenderer:
         # Flow control
         self.local_frame_count = 0
         self.remote_frame_count = 0
-        self.net.registerCallback(self._telemetryCb)
+        self.net.register_callback(self._telemetryCb)
 
     def _telemetryCb(self, t):
         self.remote_frame_count = t[self.FRAME_COUNT]
 
     def refresh(self):
-        # Flow control
+        # Flow control. We aren't staying strictly synchronous with
+        # the cube firmware here, since that would leave the cube idle
+        # when it could be rendering. But we'll keep a coarser-grained count of
+        # how much faster we are than the cube, and slow down if needbe.
+
         self.local_frame_count = (self.local_frame_count + 1) & 0xFF
-        while ((0xFF & (self.local_frame_count - self.remote_frame_count))
-               > self.MAX_FRAMES_AHEAD):
-            # XXX: Waste time in a less ugly manner with variable payload len
-            self.net.send('\x20')
+        while True:
+            ahead = 0xFF & (self.local_frame_count - self.remote_frame_count)
+
+            if ahead <= self.MAX_FRAMES_AHEAD:
+                break
+            elif ahead > self.WARP_FRAMES_AHEAD:
+                # Way behind! Let's do a time warp...
+                self.local_frame_count = self.remote_frame_count
+            else:
+                # XXX: Ugly way to kill time...
+                time.sleep(0)
             
         # Trigger the firmware to refresh the LCD 
         self.poke(802, self.local_frame_count)
@@ -95,7 +109,7 @@ class TileRenderer:
  
         for chunk in chunks:
             bytes = [chunk] + self.vram[chunk * 31:(chunk+1) * 31]
-            self.net.send(''.join(map(chr, bytes)))
+            self.net.send_msg(''.join(map(chr, bytes)))
 
     def poke(self, addr, value):
         if self.vram[addr] != value:
@@ -129,64 +143,94 @@ class TileRenderer:
                 self.plot(mapobj.data[(srcx+i) + mapobj.width * (srcy+j)], dstx+i, dsty+j)
 
 
-class ThreadedNethubInterface:
-    """Simple radio interface emulation, using nethub. This can send
-       packets synchronously, and invoke a callback asynchronously
-       when any responses are received from the cube.
-       """
+class NetworkMaster(asyncore.dispatcher_with_send):
+    """Simple radio interface emulation, using nethub.
+
+       - Incoming telemetry packets simply update the 'latest' telemetry state,
+         and optionally invoke any registered callbacks.
+
+       - Outgoing packets are sent as fast as possible. If we have any 'dead air'
+         in between packets, we'll send a 'ping' just to get a fresh telemetry
+         update in response.
+
+       """    
+    LOCAL_TX_DEPTH = 2 		# Depth of local transmit queue
+    REMOTE_TX_DEPTH = 2		# Number of unacknowledged transmitted packets in flight
 
     def __init__(self, address=0x020000e7e7e7e7e7, host="127.0.0.1", port=2405):
+        asyncore.dispatcher_with_send.__init__(self, map={})
+
+        self.recv_buffer = ""
+        self.tx_queue = Queue.Queue(self.LOCAL_TX_DEPTH)
+        self.tx_depth = 0
+        self.ping_buffer = struct.pack("<BBQB", 9, 1, address, 0x20)
+        
         self.callbacks = []
         self.telemetry = [0] * 32
         self.address = address
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((host, port))
+
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connect((host, port))
         self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-        # Semaphore controls TX queue depth
-        self.tx_depth = 5
-        self.ack_sem = threading.Semaphore(self.tx_depth)
-
-        self.thread = threading.Thread(target=self.rx_thread)
+        self.thread = threading.Thread(target=self._threadMain)
         self.thread.daemon = True
         self.thread.start()
 
-    def registerCallback(self, cb):
+    def _threadMain(self):
+        self._pump_tx_queue()
+        asyncore.loop(map=self._map)
+
+    def _pump_tx_queue(self):
+        if self.tx_depth < self.REMOTE_TX_DEPTH:
+            self.tx_depth += 1
+            try:
+                self.send(self.tx_queue.get(block=False))
+            except Queue.Empty:
+                self.send(self.ping_buffer)
+
+    def register_callback(self, cb):
         self.callbacks.append(cb)
 
-    def send(self, payload):
-        self.ack_sem.acquire()
-        self.socket.send(struct.pack("<BBQ", 8+len(payload), 1, self.address) + payload)
+    def send_msg(self, payload):
+        data = struct.pack("<BBQ", 8+len(payload), 1, self.address) + payload
+        while True:
+            try:
+                self.tx_queue.put(data, timeout=1)
+                return
+            except Queue.Full:
+                # Try again (Don't block for too long, or the process will be hard to kill)
+                pass
 
-    def rx_thread(self):
-        try:
-            buf = ""
-            while True:
-                if len(buf) >= 2 and len(buf) >= ord(buf[0]) + 2:
-                    packet_len = ord(buf[0]) + 2
-                    msg_type = buf[1]
+    def handle_read(self):
+        self.recv_buffer += self.recv(8192)
+        while self.recv_buffer:
+            packetLen = ord(self.recv_buffer[0]) + 2
+            if len(self.recv_buffer) >= packetLen:
+                # We can handle one message
+                self._handle_packet(self.recv_buffer[:packetLen])
+                self.recv_buffer = self.recv_buffer[packetLen:]
+            else:
+                # Waiting
+            	return
 
-                    if msg_type == '\x01':
-                        self.socket.send('\x00\x02')
+    def _handle_packet(self, packet):
+        msg_type = packet[1]
 
-                        # Store telemetry updates, and immediately notify callbacks
-                        if packet_len > 10:
-                            self.telemetry = map(ord, buf[10:packet_len])
-                            for cb in self.callbacks:
-                                cb(self.telemetry)
+        if msg_type == '\x01':
+            # ACK
+            self.send("\x00\x02")
 
-                    elif msg_type in '\x02\x03':
-                        self.ack_sem.release()
+            # Store telemetry updates, and immediately notify callbacks
+            if len(packet) > 10:
+                self.telemetry = map(ord, packet[10:])
+                for cb in self.callbacks:
+                    cb(self.telemetry)
 
-                    buf = buf[packet_len:]
-                else:
-                    block = self.socket.recv(8192)
-                    if not block:
-                        raise IOError("Socket receive error")
-                    buf += block
-        finally:
-            for i in range(self.tx_depth):
-                self.ack_sem.release()
+        elif msg_type in '\x02\x03':
+            # Incoming ACK or NACK
+            self.tx_depth -= 1
+            self._pump_tx_queue()
 
 
 if __name__ == "__main__":
