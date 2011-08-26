@@ -63,6 +63,13 @@ typedef void (*em8051xwrite)(struct em8051 *aCPU, int aAddress, int aValue);
 // (can be used to control some peripherals)
 typedef int (*em8051xread)(struct em8051 *aCPU, int aAddress);
 
+struct profile_data
+{
+    uint64_t total_cycles;
+    uint64_t loop_cycles;
+    uint64_t loop_prev;
+    uint64_t loop_hits;
+};
 
 #define NUM_IRQ_LEVELS  4
 
@@ -86,7 +93,7 @@ struct em8051
     em8051xwrite xwrite; // callback: external memory being written
 
     // Profiler state
-    uint64_t *mProfilerMem;
+    struct profile_data *mProfilerMem;
     uint64_t profilerTotal;
 
     uint8_t irq_count;		// Number of currently active IRQ handlers

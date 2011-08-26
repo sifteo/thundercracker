@@ -454,6 +454,7 @@ int nodebug_main(void *arg)
 void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
 {
     int addr;
+    struct profile_data *pd = aCPU->mProfilerMem;
     FILE *f = fopen(filename, "w");
 
     if (!f) {
@@ -461,17 +462,19 @@ void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
 	return;
     }
 
-    for (addr = 0; addr < aCPU->mCodeMemSize; addr++) {
-	uint64_t count = aCPU->mProfilerMem[addr];
+    fprintf(f, "total_cycles  %%_cycles  loop_len  loop_count    addr   disassembly\n");
 
-	if (count) {
+    for (addr = 0; addr < aCPU->mCodeMemSize; addr++, pd++) {
+	if (pd->total_cycles) {
 	    char assembly[128];
 
             decode(aCPU, addr, assembly);
-	    fprintf(f, "%04X: % 12lld % 8.4f%%   %s\n",
-		    addr, (long long int)count,
-		    (count * 100) / (float)aCPU->profilerTotal,
-		    assembly);
+	    fprintf(f, "% 12lld % 8.4f%% [% 8lld x % 9lld ]  %04x:  %s\n",
+		    (long long int)pd->total_cycles,
+		    (pd->total_cycles * 100) / (float)aCPU->profilerTotal,
+		    (long long int)(pd->loop_hits ? pd->loop_cycles / pd->loop_hits : 0),
+		    (long long int)pd->loop_hits,
+		    addr, assembly);
 	}
     }    
 

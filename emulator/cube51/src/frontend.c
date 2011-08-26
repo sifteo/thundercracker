@@ -124,13 +124,14 @@ static uint32_t clamp32(uint32_t val, uint32_t min, uint32_t max)
 static void frontend_update_profiler(uint16_t *dest)
 {
     static uint64_t shadow[PROFILER_BYTES];
-    uint64_t *profiler, *shadow_p;
+    struct profile_data *profiler;
+    uint64_t *shadow_p;
     uint64_t max_count = 0;
 
     // First pass, look for the maximum count
     for (shadow_p = shadow, profiler = frontend.cpu->mProfilerMem;
          shadow_p < shadow + PROFILER_BYTES; shadow_p++, profiler++) {
-    	uint64_t count = *profiler - *shadow_p;
+    	uint64_t count = profiler->total_cycles - *shadow_p;
         if (count > max_count)
             max_count = count;
     }
@@ -138,7 +139,7 @@ static void frontend_update_profiler(uint16_t *dest)
     // Second pass, draw the map
     for (shadow_p = shadow, profiler = frontend.cpu->mProfilerMem;
          shadow_p < shadow + PROFILER_BYTES; shadow_p++, profiler++) {
-	uint64_t count = *profiler - *shadow_p;
+	uint64_t count = profiler->total_cycles - *shadow_p;
         uint16_t pixel;
 
         if (count)
@@ -146,7 +147,7 @@ static void frontend_update_profiler(uint16_t *dest)
         else
             pixel = 0;
 
-	*shadow_p = *profiler; 
+	*shadow_p = profiler->total_cycles; 
 	*(dest++) = pixel;		    
     }
 }
