@@ -56,3 +56,7 @@ imageToRGB565(f, Image.open("assets/font-tiles.png"))
 # 0x098000 : 8x8 tile base address
 f.seek(0x98000)
 imageToRGB565(f, Image.open("assets/tiles.png"))
+
+# 0x0D0000 : 64x64 cat sprite!
+f.seek(0xd0000)
+imageToRGB565(f, Image.open("assets/cat.png"))
