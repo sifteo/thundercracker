@@ -10,16 +10,23 @@ def main():
     m = Map("assets/earthbound_fourside_full.map", width=256)
     ms = MapScroller(tr, m)
 
+    # Monster sprite
+    tr.sprite[0].setSize(32, 32)
+    tr.sprite[0].setImage(0x8c000)
+
     x, y = 155, 1689
     speed = 12
 
     while True:
-        accel.next()
         x = min(2048-160, max(0, x + accel.x * speed))
         y = min(2048-160, max(0, y + accel.y * speed))
-
         ms.scroll(x, y)
+
+        tr.sprite[0].moveTo(64 + accel.x*64 - 16,
+                            64 + accel.y*64 - 16)
+
         tr.refresh()
+        accel.next()
 
 
 class MapScroller:
@@ -64,7 +71,52 @@ class Map:
         self.data = data
         self.height = len(data) // self.width
 
-    
+
+class Sprite:
+    """Abstraction for one sprite engine. Owned by the TileRenderer."""
+    def __init__(self, tr, vramAddr):
+        self.tr = tr
+        self.vramAddr = vramAddr
+        self.x, self.y = 0, 0
+        self.setImage(0)
+        self.setSize(0, 0)
+
+    def setSize(self, x, y):
+        """Set a new size. Must be a power of two."""
+        self.size = (x, y)
+
+        if x and y:
+            # Configure the mask registers
+            self.tr.vram[self.vramAddr + 2] = 0xFF & (0xFF ^ (x - 1))
+            self.tr.vram[self.vramAddr + 3] = 0xFF & (0xFF ^ (y - 1))
+        else:
+            # Sprite disabled
+            self.tr.vram[self.vramAddr + 2] = 0xFF
+            self.tr.vram[self.vramAddr + 3] = 0xFF
+
+    def setImage(self, flashAddr):
+        self.addrH = (flashAddr >> 13) & 0xFE
+        self.addrL = (flashAddr >> 6) & 0xFE
+
+        # Update high byte of address
+        self.tr.vram[self.vramAddr + 4] = self.addrH
+
+        # Update the low byte
+        self.moveTo(self.x, self.y)
+
+    def moveTo(self, x, y):
+        """Move the upper left corner to pixel location (x, y)"""
+        self.x, self.y = x, y
+
+        # Calculate the X/Y accumulators
+        self.tr.vram[self.vramAddr + 0] = 0xFF & (-int(x))
+        self.tr.vram[self.vramAddr + 1] = 0xFF & (-int(y))
+
+        # Update the low address byte
+        # XXX: Account for offset when Y is partially clipped
+        self.tr.vram[self.vramAddr + 5] = self.addrL
+
+
 class TileRenderer:
     """Abstraction for the tile-based graphics renderer. Keeps an in-memory
        copy of the cube's VRAM, and sends updates via the radio as necessary.
@@ -81,6 +133,9 @@ class TileRenderer:
         self.baseAddr = baseAddr
         self.vram = [0] * 1024
         self.dirty = {}
+        
+        # Sprite renderers
+        self.sprite = [Sprite(self, 803 + 6*i) for i in range(2)]
 
         # Flow control
         self.local_frame_count = 0

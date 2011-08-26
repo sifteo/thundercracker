@@ -9,12 +9,20 @@
 #include <stdint.h>
 #include "hardware.h"
 
+#define NUM_SPRITES  	2
+#define CHROMA_KEY	0xF5
+
 static __xdata union {
     uint8_t bytes[1024];
     struct {
 	uint8_t tilemap[800];
-	uint8_t pan_x, pan_y;	
+	uint8_t pan_x, pan_y;
 	uint8_t frame_trigger;
+	struct {
+	    uint8_t x, y;
+	    uint8_t mask_x, mask_y;
+	    uint8_t addr_h, addr_l;
+	} sprites[NUM_SPRITES];
     };
 } vram;
 
@@ -202,84 +210,227 @@ void adc_isr(void) __interrupt(VECTOR_MISC)
     ADCCON1 = con1 ^ channel_mask;
 }
 
-static void lcd_addr_burst(uint8_t pixels)
+/*
+ * This is a rather big master rendering function that can handle
+ * panning and wrapping tile graphics, and up to two sprite overlays
+ * of up to 64x64 pixels each.
+ *
+ * Sprites are specified in a quite low-level way, as a combination of
+ * X/Y accumulators and masks. We increment the accumulators at each
+ * row/column, and when the accumulator & the mask is zero, the sprite
+ * is drawn. Sprite size may be chosen by changing the number of bits
+ * in the mask, but all sprites have a row stride of 64 pixels.
+ * Additionally, the low part of the sprite address is incremented
+ * before every active scanline for that sprite. This must be
+ * compensated for when setting up sprite parameters.
+ *
+ * XXX: The fixed row stride may be a problem if we have no good way to make use
+ *      of non-64-pixel-aligned data in flash.
+ *
+ * XXX: There is a HUGE optimization opportunity here with regard to map addressing.
+ *      The dptr manipulation code that SDCC generates here is very bad... and it's
+ *      possible we might want to use some of the nRF24LE1's specific features, like
+ *      the PDATA addressing mode.
+ *
+ * XXX: I rather unscrupulously hacked this to add full horizontal and vertical
+ *      wrap-around support. There's also a lot of room for optimization here.
+ *
+ * XXX: Combining the tile and sprite code here was yet another giant hack. I'm sure
+ *      there's a lot more to tighten up here...
+ */
+static void lcd_render(void)
 {
-    uint8_t hi = pixels >> 3;
-    uint8_t low = pixels & 0x7;
+    uint8_t pan_x, pan_y;		// Pixel panning
+    uint8_t sah0, sah1;			// Sprite address high-byte
+    uint8_t sal0, sal1;			// Sprite address low-byte
+    register uint8_t smx0, smx1;	// Horizontal sprite masks
+    uint8_t smy0, smy1;			// Vertical sprite masks
+    uint8_t sx0, sx1;			// Per-row sprite X accumulator
+    register uint8_t sxr0, sxr1;	// Register (per-pixel) sprite X accumulator
+    register uint8_t spa0, spa1;	// Sprite pixel address (sxr << 2)
+    uint8_t sy0, sy1;		       	// Sprite Y accumulator
 
-    if (hi)
-	// Fast DJNZ loop, 8-pixel bursts
-	do {
-	    ADDR_INC32();
-	} while (--hi);
-
-    if (low)
-	// Fast DJNZ loop, single pixels
-	do {
-	    ADDR_INC4();
-	} while (--low);
-}
-
-static void lcd_render_tiles_8x8_16bit_20wide(void)
-{
-    uint8_t pan_x = vram.pan_x;
-    uint8_t pan_y = vram.pan_y;
-    uint8_t tile_pan_x = pan_x >> 3;
-    uint8_t tile_pan_y = pan_y >> 3;
-    uint8_t line_addr = pan_y << 5;
-    uint8_t first_column_addr = (pan_x << 2) & 0x1C;
-    uint8_t last_tile_width = pan_x & 7;
-    uint8_t first_tile_width = 8 - last_tile_width;
-    __xdata uint8_t *map_line = &vram.tilemap[(tile_pan_y << 5) + (tile_pan_y << 3)];
     uint8_t y = LCD_HEIGHT;
 
+    uint8_t tile_pan_y, tile_pan_bytes;
+    uint8_t line_addr, first_column_addr;
+    uint8_t last_tile_width, first_tile_width;
+    __xdata uint8_t *map_line;
+
+    /*
+     * Inside a critical section, copy the panning registers and all
+     * sprite parameters in from VRAM. We don't want these to be split
+     * between old and new values if a radio packet comes in while
+     * we're rendering.
+     */
+
+    IEN_EN = 0;
+
+    pan_x = vram.pan_x;
+    pan_y = vram.pan_y;
+
+    sx0 = vram.sprites[0].x;
+    sy0 = vram.sprites[0].y;
+    smx0 = vram.sprites[0].mask_x;
+    smy0 = vram.sprites[0].mask_y;
+    sal0 = vram.sprites[0].addr_l;
+    sah0 = vram.sprites[0].addr_h;
+
+    sx1 = vram.sprites[1].x;
+    sy1 = vram.sprites[1].y;
+    smx1 = vram.sprites[1].mask_x;
+    smy1 = vram.sprites[1].mask_y;
+    sal1 = vram.sprites[1].addr_l;
+    sah1 = vram.sprites[1].addr_h;
+
+    IEN_EN = 1;
+    
+    /*
+     * Panning calculations
+     */
+
+    line_addr = pan_y << 5;
+    first_column_addr = (pan_x << 2) & 0x1C;
+    last_tile_width = pan_x & 7;
+    first_tile_width = 8 - last_tile_width;
+    tile_pan_y = pan_y >> 3;
+    tile_pan_bytes = (pan_x >> 2) & 0xFE;
+    map_line = &vram.tilemap[(tile_pan_y << 5) + (pan_y & 0xF8)];
+
+    /*
+     * Rendering Macros
+     */
+
+#define MAP_LATCH_TILE()				\
+    ADDR_PORT = map_line[map_x];			\
+    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;	\
+    ADDR_PORT = map_line[map_x+1];			\
+    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;	\
+
+#define MAP_NEXT_TILE()					\
+    map_x += 2;						\
+    if (map_x == 40)					\
+	map_x = 0;					\
+
+#define PIXEL_BURST(_count) {				\
+	uint8_t _i = (_count);				\
+	do {						\
+	    ADDR_INC4();				\
+	} while (--_i);					\
+    }							\
+
+#define SPRITE_ROW(i)					\
+    sy##i++;						\
+    if (sy##i & smy##i)					\
+	sxr##i = 0x80;					\
+    else {						\
+	sal##i += 2;					\
+	sxr##i = sx##i;					\
+	spa##i = (sxr##i - 1) << 2;			\
+	spr_active = 1;					\
+    }							\
+
+#define SPRITE_PIXEL(i, _X)				\
+    ADDR_PORT = sal##i;					\
+    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;	\
+    ADDR_PORT = sah##i;					\
+    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;	\
+    ADDR_PORT = spa##i += 4;				\
+    if (BUS_PORT != CHROMA_KEY) {			\
+	ADDR_INC4();					\
+    } else {						\
+	_X;						\
+    }							\
+
+    /*
+     * Rendering Loop
+     */
+
     do {
-	uint8_t x;
-	uint8_t map_x = tile_pan_x << 1;
+	uint8_t map_x = tile_pan_bytes;
+	uint8_t spr_active = 0;
 
-	/*
-	 * XXX: There is a HUGE optimization opportunity here with regard to map addressing.
-	 *      The dptr manipulation code that SDCC generates here is very bad... and it's
-	 *      possible we might want to use some of the nRF24LE1's specific features, like
-	 *      the PDATA addressing mode.
-	 *
-	 * XXX: I rather unscrupulously hacked this to add full horizontal and vertical
-	 *      wrap-around support. There's also a lot of room for optimization here.
-	 */
+	SPRITE_ROW(0);
+	SPRITE_ROW(1);
 
-	// First tile on the line, (1 <= width <= 8)
-	ADDR_PORT = map_line[map_x++];
-	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-	ADDR_PORT = map_line[map_x++];
-	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
-	ADDR_PORT = line_addr + first_column_addr;
-	lcd_addr_burst(first_tile_width);
-	if (map_x == 40)
-	    map_x = 0;
+	if (spr_active) {
+	    /*
+	     * This row has sprites! Use a more general rendering loop.
+	     */
 
-	// There are always 15 full tiles on-screen
-	x = 15;
-	do {
-	    ADDR_PORT = map_line[map_x++];
-	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-	    ADDR_PORT = map_line[map_x++];
-	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
-	    ADDR_PORT = line_addr;
-	    ADDR_INC32();
-	    if (map_x == 40)
-		map_x = 0;
-	} while (--x);
+	    uint8_t x = 15;
 
-	// Might be one more partial tile, (0 <= width <= 7)
-	if (last_tile_width) {
-	    ADDR_PORT = map_line[map_x++];
-	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-	    ADDR_PORT = map_line[map_x++];
-	    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
-	    ADDR_PORT = line_addr;
-	    lcd_addr_burst(last_tile_width);
+	    // XXX: First partial tile
+	    MAP_LATCH_TILE();
+	    MAP_NEXT_TILE();
+	    ADDR_PORT = line_addr + first_column_addr;
+	    PIXEL_BURST(first_tile_width);
+
+	    sxr0 += first_tile_width;
+	    sxr1 += first_tile_width;
+	    spa0 += first_tile_width << 2;
+	    spa1 += first_tile_width << 2;
+
+	    // There are always 15 full tiles on-screen
+	    do {
+
+		SPRITE_PIXEL(0, ADDR_INC4() );
+		SPRITE_PIXEL(0, ADDR_INC4() );
+		SPRITE_PIXEL(0, ADDR_INC4() );
+		SPRITE_PIXEL(0, ADDR_INC4() );
+		SPRITE_PIXEL(0, ADDR_INC4() );
+		SPRITE_PIXEL(0, ADDR_INC4() );
+		SPRITE_PIXEL(0, ADDR_INC4() );
+		SPRITE_PIXEL(0, ADDR_INC4() );
+
+		/*
+		MAP_LATCH_TILE();
+		MAP_NEXT_TILE();
+		ADDR_PORT = line_addr;
+		ADDR_INC32();
+		*/
+
+	    } while (--x);
+
+	    // XXX: Last partial tile
+	    if (last_tile_width) {
+		MAP_LATCH_TILE();
+		MAP_NEXT_TILE();
+		ADDR_PORT = line_addr;
+		PIXEL_BURST(last_tile_width);
+	    }
+
+	} else {
+	    /*
+	     * No sprites. Use a scanline renderer optimized for tiles only.
+	     */
+
+	    uint8_t x = 15;
+
+	    // First tile on the line, (1 <= width <= 8)
+	    MAP_LATCH_TILE();
+	    MAP_NEXT_TILE();
+	    ADDR_PORT = line_addr + first_column_addr;
+	    PIXEL_BURST(first_tile_width);
+
+	    // There are always 15 full tiles on-screen
+	    do {
+		MAP_LATCH_TILE();
+		MAP_NEXT_TILE();
+		ADDR_PORT = line_addr;
+		ADDR_INC32();
+	    } while (--x);
+
+	    // Might be one more partial tile, (0 <= width <= 7)
+	    if (last_tile_width) {
+		MAP_LATCH_TILE();
+		MAP_NEXT_TILE();
+		ADDR_PORT = line_addr;
+		PIXEL_BURST(last_tile_width);
+	    }
 	}
 
+	// Fixup the line address for our next scanline
 	line_addr += 32;
 	if (!line_addr) {
 	    map_line += 40;
@@ -333,10 +484,10 @@ void main(void)
 	// while (vram.frame_trigger == ack_data.frame_count);
 
 	// Sync with LCD
-	while (!CTRL_LCD_TE);
+	//while (!CTRL_LCD_TE);
 	
 	lcd_cmd_byte(LCD_CMD_RAMWR);
-	lcd_render_tiles_8x8_16bit_20wide();
+	lcd_render();
 	ack_data.frame_count++;
     }
 }
