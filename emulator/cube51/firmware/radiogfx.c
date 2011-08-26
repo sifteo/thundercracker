@@ -330,7 +330,7 @@ static void lcd_render(void)
 	spr_active = 1;					\
     }							\
 
-#define SPRITE_PIXEL(i, _X)				\
+#define SPRITE_PIXEL(i, _ad)				\
     ADDR_PORT = sal##i;					\
     CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;	\
     ADDR_PORT = sah##i;					\
@@ -339,8 +339,11 @@ static void lcd_render(void)
     if (BUS_PORT != CHROMA_KEY) {			\
 	ADDR_INC4();					\
     } else {						\
-	_X;						\
+	MAP_LATCH_TILE();				\
+	ADDR_PORT = line_addr + _ad;			\
+	ADDR_INC4();					\
     }							\
+    sxr##i++;						\
 
     /*
      * Rendering Loop
@@ -373,22 +376,34 @@ static void lcd_render(void)
 
 	    // There are always 15 full tiles on-screen
 	    do {
+		if ((sxr0 & smx0) && ((sxr0 + 7) & smx0)) {
+		    // All 8 pixels are non-sprite
 
-		SPRITE_PIXEL(0, ADDR_INC4() );
-		SPRITE_PIXEL(0, ADDR_INC4() );
-		SPRITE_PIXEL(0, ADDR_INC4() );
-		SPRITE_PIXEL(0, ADDR_INC4() );
-		SPRITE_PIXEL(0, ADDR_INC4() );
-		SPRITE_PIXEL(0, ADDR_INC4() );
-		SPRITE_PIXEL(0, ADDR_INC4() );
-		SPRITE_PIXEL(0, ADDR_INC4() );
+		    MAP_LATCH_TILE();
+		    MAP_NEXT_TILE();
+		    ADDR_PORT = line_addr;
+		    ADDR_INC32();
 
-		/*
-		MAP_LATCH_TILE();
-		MAP_NEXT_TILE();
-		ADDR_PORT = line_addr;
-		ADDR_INC32();
-		*/
+		    sxr0 += 8;
+		    sxr1 += 8;
+		    spa0 += 32;
+		    spa1 += 32;
+
+		} else {
+		    // A mixture of sprite and tile pixels
+
+		    SPRITE_PIXEL(0, 0x0);
+		    SPRITE_PIXEL(0, 0x4);
+		    SPRITE_PIXEL(0, 0x8);
+		    SPRITE_PIXEL(0, 0xc);
+		    SPRITE_PIXEL(0, 0x10);
+		    SPRITE_PIXEL(0, 0x14);
+		    SPRITE_PIXEL(0, 0x18);
+		    SPRITE_PIXEL(0, 0x1c);
+
+		    MAP_NEXT_TILE();
+		}
+
 
 	    } while (--x);
 

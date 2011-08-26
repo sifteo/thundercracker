@@ -10,9 +10,10 @@ def main():
     m = Map("assets/earthbound_fourside_full.map", width=256)
     ms = MapScroller(tr, m)
 
-    # Monster sprite
-    tr.sprite[0].setSize(32, 32)
-    tr.sprite[0].setImage(0x8c000)
+    # Cat sprite!
+    cat = tr.sprite[0]
+    cat.setSize(64, 64)
+    cat.setImage(0xd0000)
 
     x, y = 155, 1689
     speed = 12
@@ -22,8 +23,7 @@ def main():
         y = min(2048-160, max(0, y + accel.y * speed))
         ms.scroll(x, y)
 
-        tr.sprite[0].moveTo(64 + accel.x*64 - 16,
-                            64 + accel.y*64 - 16)
+        cat.moveCenterTo(64 + accel.x*64, 64 + accel.y*64)
 
         tr.refresh()
         accel.next()
@@ -106,22 +106,28 @@ class Sprite:
 
     def moveTo(self, x, y):
         """Move the upper left corner to pixel location (x, y)"""
+
         self.x, self.y = x, y
+        x = -int(x)
+        y = -int(y)
 
         # Calculate the X/Y accumulators
-        self.tr.vram[self.vramAddr + 0] = 0xFF & (-int(x))
-        self.tr.vram[self.vramAddr + 1] = 0xFF & (-int(y))
+        self.tr.vram[self.vramAddr + 0] = 0xFF & x
+        self.tr.vram[self.vramAddr + 1] = 0xFF & y
 
         # Update the low address byte
-        # XXX: Account for offset when Y is partially clipped
-        self.tr.vram[self.vramAddr + 5] = self.addrL
+        # Account for offset when Y is partially clipped
+        self.tr.vram[self.vramAddr + 5] = self.addrL + max(0, y) * 2
+
+    def moveCenterTo(self, x, y):
+        self.moveTo(x - self.size[0]/2, y - self.size[1]/2)
 
 
 class TileRenderer:
     """Abstraction for the tile-based graphics renderer. Keeps an in-memory
        copy of the cube's VRAM, and sends updates via the radio as necessary.
        """
-
+ 
     # Telemetry packet offset
     FRAME_COUNT = 10
 
