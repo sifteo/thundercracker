@@ -58,6 +58,7 @@ static int adc_conversion_nsec(uint8_t *regs)
 	    (regs[REG_ADCCON3] & ADCCON3_RESOL_MASK)) {
 
     // tAcq = 0.75us
+    default:
     case 0x00:  return 3000;
     case 0x40:  return 3200;
     case 0x80:  return 3400;

@@ -6,13 +6,25 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#ifdef _WIN32
+#   define WIN32_LEAN_AND_MEAN
+#   include <windows.h>
+#   pragma comment(lib, "opengl32.lib")
+#endif
+
 #include <stdint.h>
 #include <SDL.h>
 #include <GL/gl.h>
+
 #include "emu8051.h"
 #include "emulator.h"
 #include "frontend.h"
 #include "lcd.h"
+#include "adc.h"
+
+#ifndef GL_UNSIGNED_SHORT_5_6_5
+#   define GL_UNSIGNED_SHORT_5_6_5 0x8363
+#endif
 
 #define PROFILER_BYTES  16384
 #define PROFILER_LINES  (PROFILER_BYTES / LCD_WIDTH)
@@ -51,7 +63,7 @@ static void frontend_update_profiler(uint16_t *dest)
 	uint64_t count = *profiler - *shadow_p;
 	uint64_t heat_r = count ? clamp64(count / 1, 64, 255) : 0;
 	uint64_t heat_gb = count ? clamp64(count / 10, 64, 255) : 0;
-	uint16_t pixel = RGB565(heat_r, heat_gb, heat_gb);
+	uint16_t pixel = (uint16_t) RGB565(heat_r, heat_gb, heat_gb);
 
 	*shadow_p = *profiler; 
 	profiler++;
@@ -76,7 +88,6 @@ static void frontend_update_texture(void)
 
 static void frontend_draw_frame(void)
 {
-    int i;
     static const GLfloat vertexArray[] = {
 	0, 1,  -1,-1, 0,
 	1, 1,   1,-1, 0,
@@ -87,8 +98,7 @@ static void frontend_draw_frame(void)
     glInterleavedArrays(GL_T2F_V3F, 0, vertexArray);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    for (i = 0; i < frontend.frame_hz_divisor; i++)
-	SDL_GL_SwapBuffers();
+    SDL_GL_SwapBuffers();
 }
 
 static void frontend_resize_window(void)
@@ -199,7 +209,7 @@ static void frontend_keydown(SDL_KeyboardEvent *evt)
     }
 }
 
-int frontend_loop(void)
+void frontend_loop(void)
 {
     while (frontend.running) {
 	SDL_Event event;
@@ -229,9 +239,13 @@ int frontend_loop(void)
 	}
 
 	if (frontend.running) {
-	    frontend_update_texture();
+            int i;
+            
+            frontend_update_texture();
 	    lcd_te_pulse();
-	    frontend_draw_frame();
+            
+            for (i = 0; i < frontend.frame_hz_divisor; i++)
+	        frontend_draw_frame();
 	}
     }
 }

@@ -37,6 +37,7 @@
 #include "emu8051.h"
 #include "emulator.h"
 #include "lcd.h"
+#include "radio.h"
 
 /*
     The history-based display assumes that there's no

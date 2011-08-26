@@ -12,7 +12,7 @@
 void frontend_init(struct em8051 *cpu);
 void frontend_exit(void);
 
-int frontend_loop(void);
+void frontend_loop(void);
 void frontend_async_quit(void);
 
 #endif
