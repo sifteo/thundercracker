@@ -129,7 +129,7 @@ class TileRenderer:
        """
  
     # Telemetry packet offset
-    FRAME_COUNT = 10
+    FRAME_COUNT = 0
 
     MAX_FRAMES_AHEAD = 3
     WARP_FRAMES_AHEAD = 10
@@ -232,23 +232,16 @@ class Accelerometers:
     def next(self):
         """Reset the aggregation buffer, and calcuate averages for the last window of time"""
         if self.xCount:
-            self.x = self.xTotal / 2048.0 / self.xCount - 1.0
+            self.x = self.xTotal / 128.0 / self.xCount - 1.0
         if self.yCount:
-            self.y = self.yTotal / 2048.0 / self.yCount - 1.0
+            self.y = self.yTotal / 128.0 / self.yCount - 1.0
 
-        self.xMin = self.yMin = 0xFF
-        self.xMax = self.yMax = 0
         self.xCount = self.yCount = 0
         self.xTotal = self.yTotal = 0
 
     def _telemetryCb(self, data):
         """Aggregate the per-packet telemetry data"""
-        (xMin, yMin, xMax, yMax, xCount, yCount, xTotal, yTotal) = struct.unpack(
-            "<BBBBBBHH", data[:10])
-        self.xMin = min(self.xMin, xMin)
-        self.yMin = min(self.yMin, yMin)
-        self.xMax = max(self.xMax, xMax)
-        self.yMax = max(self.yMax, yMax)
+        (xCount, yCount, xTotal, yTotal) = struct.unpack("<BBHH", data[1:7])
         self.xCount += xCount
         self.xTotal += xTotal
         self.yCount += yCount

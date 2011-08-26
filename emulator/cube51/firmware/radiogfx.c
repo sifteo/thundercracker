@@ -26,7 +26,12 @@ static __xdata union {
     };
 } vram;
 
-static __idata union {
+
+#define ACK_LENGTH  		11
+#define ACK_ACCEL_COUNTS	1
+#define ACK_ACCEL_TOTALS	3
+
+static __near union {
     uint8_t bytes[1];
     struct {
 	/*
@@ -39,24 +44,6 @@ static __idata union {
 	 */
 
 	/*
-	 * Lightly cooked accel data. I'm assuming we are doing only
-	 * basic statistics on the ADC data before handing it off to
-	 * the master- just the bare minimum to allow it to get useful
-	 * information even if it's running our comms at a lower
-	 * packet rate. So, we'll keep a running count of the number
-	 * of samples we've taken since the last packet, and we'll
-	 * report the minimum, maximum, and total readings. This will
-	 * let the master notice shaking or sharp motion, as well as
-	 * to get a more accurate filtered signal for each axis.
-	 *
-	 * This all comes to 10 bytes.
-	 */
-	uint8_t accel_min[2];
-	uint8_t accel_max[2];
-	uint8_t accel_count[2];
-	uint16_t accel_total[2];
-
-	/*
 	 * For synchronizing LCD refreshes, the master can keep track
 	 * of how many repaints the cube has performed. Ideally these
 	 * repaints would be in turn sync'ed with the LCDC's hardware
@@ -65,6 +52,10 @@ static __idata union {
 	 * though we might want two bits to allow deeper queues.
 	 */
 	uint8_t frame_count;
+
+        // Averaged accel data
+	uint8_t accel_count[2];
+	uint16_t accel_total[2];
 
 	/*
 	 * Need ~5 bits per sensor (5 other cubes * 4 sides + 1 idle =
@@ -76,138 +67,180 @@ static __idata union {
 } ack_data;
 
 
-static void rf_reg_write(uint8_t reg, uint8_t value)
+/*
+ * Radio ISR --
+ *
+ *    Receive one packet from the radio, store it in xram, and write
+ *    out a new buffered ACK packet.
+ */
+
+void rf_isr(void) __interrupt(VECTOR_RF) __naked __using(1)
 {
-    RF_CSN = 0;
+    _asm
+	push	acc
+	push	dpl
+	push	dph
+	push	psw
+	mov	psw, #0x08			; Register bank 1
 
-    SPIRDAT = RF_CMD_W_REGISTER | reg;
-    SPIRDAT = value;
-    while (!(SPIRSTAT & SPI_RX_READY));
-    SPIRDAT;
-    while (!(SPIRSTAT & SPI_RX_READY));
-    SPIRDAT;
+	; Start reading incoming packet
+	; Do this first, since we can benefit from any latency reduction we can get.
 
-    RF_CSN = 1;
-}
+	clr	_RF_CSN				; Begin SPI transaction
+	mov	_SPIRDAT, #RF_CMD_R_RX_PAYLOAD	; Start reading RX packet
+	mov	_SPIRDAT, #0			; First dummy byte, keep the TX FIFO full
 
-void rf_isr(void) __interrupt(VECTOR_RF)
-{
-    /*
-     * Write the STATUS register, to clear the IRQ.
-     * We also get a STATUS read for free here.
-     */
+	mov	a, _SPIRSTAT			; Wait for Command/STATUS byte
+	jnb	acc.2, (.-2)
+	mov	a, _SPIRDAT			; Ignore STATUS byte
+	mov	_SPIRDAT, #0			; Write next dummy byte
 
-    RF_CSN = 0;					// Begin SPI transaction
-    SPIRDAT = RF_CMD_W_REGISTER |		// Command byte
-	RF_REG_STATUS;
-    SPIRDAT = 0x70;				// Prefill TX FIFO with STATUS write
-    while (!(SPIRSTAT & SPI_RX_READY));		// Wait for Command/STATUS byte
-    SPIRDAT;					// Dummy read of STATUS byte
-    while (!(SPIRSTAT & SPI_RX_READY));		// Wait for payload byte
-    SPIRDAT;					// Dummy read
-    RF_CSN = 1;					// End SPI transaction
+	mov	a, _SPIRSTAT			; Wait for RX byte 0, block address
+	jnb	acc.2, (.-2)
+	mov	r0, _SPIRDAT			; Read block address. This is in units of 31 bytes
+	mov	_SPIRDAT, #0			; Write next dummy byte
 
-    /*
-     * If we had reason to check for other interrupts, we could use
-     * the value of STATUS we read above to do so. But in this case,
-     * we only get IRQs for incoming packets, so we're guaranteed to
-     * have a packet waiting for us in the FIFO right now. Read it.
-     */
+	; Apply the block address offset. Nominally this requires 16-bit multiplication by 31,
+	; but that is really expensive. Instead, we can express N*31 as (N<<5)-N. But that still
+	; requires a 16-bit shift, and it is ugly to implement on the 8051 instruction set. So,
+	; we implement a different function that happens to equal N*31 for the values we care
+	; about, and which uses only 8-bit math:
+	;
+	;   low(N*31) = (a << 5) - a
+	;   high(N*31) = (a - 1) >> 3   (EXCEPT when a==0)
 
-    RF_CSN = 0;					// Begin SPI transaction
-    SPIRDAT = RF_CMD_R_RX_PAYLOAD;		// Command byte
-    SPIRDAT = 0;				// First dummy write, keep the TX FIFO full
-    while (!(SPIRSTAT & SPI_RX_READY));		// Wait for Command/STATUS byte
-    SPIRDAT;					// Dummy read of STATUS byte
+	mov	a, r0
+	anl	a, #0x07	; Pre-mask before shifting...
+	swap	a  		; << 5
+	rlc	a		; Also sets C=0, for the subb below
+	subb	a, r0
+	mov	dpl, a
 
-    SPIRDAT = 0;				// Write next dummy byte
-    while (!(SPIRSTAT & SPI_RX_READY));		// Wait for payload byte
+	mov	a, r0
+	jz	1$
+	dec	a
+1$:	swap	a		; >> 3
+	rl	a
+	anl	a, #0x3		; Mask at 1024 bytes total
+	mov	dph, a
 
-    {
-	register uint8_t i;
-	register uint8_t __xdata *wptr;
+	; Transfer 29 packet bytes in bulk to xram. (The first one and last two bytes are special)
+	; If this loop takes at least 16 clock cycles per iteration, we do not need to
+	; explicitly wait on the SPI engine, we can just stay synchronized with it.
+
+	mov	r1, #29
+2$:	mov	a, _SPIRDAT	; 2  Read payload byte
+	mov	_SPIRDAT, #0	; 3  Write the next dummy byte
+	movx	@dptr, a	; 5
+	inc	dptr		; 1
+	nop			; 1  (Pad to 16 clock cycles)
+	nop			; 1
+	djnz	r1, 2$		; 3
+
+	; Last two bytes, drain the SPI RX FIFO
+
+	mov	a, _SPIRDAT	; Read payload byte
+	movx	@dptr, a
+	inc	dptr
+	mov	a, _SPIRDAT	; Read payload byte
+	movx	@dptr, a
+	setb	_RF_CSN		; End SPI transaction
+
+	; nRF Interrupt acknowledge
+
+	clr	_RF_CSN						; Begin SPI transaction
+	mov	_SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_STATUS)	; Start writing to STATUS
+	mov	_SPIRDAT, #RF_STATUS_RX_DR			; Clear interrupt flag
+	mov	a, _SPIRSTAT					; RX dummy byte 0
+	jnb	acc.2, (.-2)
+	mov	a, _SPIRDAT
+	mov	a, _SPIRSTAT					; RX dummy byte 1
+	jnb	acc.2, (.-2)
+	mov	a, _SPIRDAT
+	setb	_RF_CSN						; End SPI transaction
+
+	; Write the ACK packet, from our buffer.
+
+	clr	_RF_CSN					; Begin SPI transaction
+	mov	_SPIRDAT, #RF_CMD_W_ACK_PAYLD		; Start sending ACK packet
+	mov	r1, #_ack_data
+	mov	r0, #ACK_LENGTH
+
+3$:	mov	_SPIRDAT, @r1
+	inc	r1
+	mov	a, _SPIRSTAT				; RX dummy byte
+	jnb	acc.2, (.-2)
+	mov	a, _SPIRDAT
+	djnz	r0, 3$
+
+	mov	a, _SPIRSTAT				; RX last dummy byte
+	jnb	acc.2, (.-2)
+	mov	a, _SPIRDAT
+	setb	_RF_CSN					; End SPI transaction
+
+	; Clear the accelerometer accumulators
+
+	mov	(_ack_data + ACK_ACCEL_TOTALS + 0), #0
+	mov	(_ack_data + ACK_ACCEL_TOTALS + 1), #0
+	mov	(_ack_data + ACK_ACCEL_TOTALS + 2), #0
+	mov	(_ack_data + ACK_ACCEL_TOTALS + 3), #0
+	mov	(_ack_data + ACK_ACCEL_COUNTS + 0), #0
+	mov	(_ack_data + ACK_ACCEL_COUNTS + 1), #0
+
+	pop	psw
+	pop	dph
+	pop	dpl
+	pop	acc
+	reti
 	
-	i = SPIRDAT;				// Read payload byte (Block address)
-	wptr = vram.bytes; 			// Calculate offset to 31-byte block
-	wptr += i << 5;
-	wptr -= i;
-
-	i = RF_PAYLOAD_MAX - 2;
-	do {
-	    SPIRDAT = 0;			// Write next dummy byte
-	    while (!(SPIRSTAT & SPI_RX_READY));	// Wait for payload byte
-	    *(wptr++) = SPIRDAT;		// Read payload byte
-	} while (--i);
-
-	while (!(SPIRSTAT & SPI_RX_READY));	// Wait for last payload byte
-	*wptr = SPIRDAT;			// Read last payload byte
-	RF_CSN = 1;				// End SPI transaction
-    }
-
-    /*
-     * Create a new reply packet, refill the ACK queue.
-     */
-
-    RF_CSN = 0;					// Begin SPI transaction
-    SPIRDAT = RF_CMD_W_ACK_PAYLD;		// Command byte
-
-    {
-	register uint8_t i = sizeof ack_data;
-	register uint8_t __idata *rptr = &ack_data.bytes[0];
-
-	do {
-	    SPIRDAT = *(rptr++);                // Queue the next TX byte
-	    while (!(SPIRSTAT & SPI_RX_READY));	// Wait for dummy response byte
-	    SPIRDAT;		                // Read dummy byte
-	} while (--i);
-    }
-
-    while (!(SPIRSTAT & SPI_RX_READY));	        // Wait for the last dummy response byte
-    SPIRDAT;		                        // Read dummy byte
-    RF_CSN = 1;				        // End SPI transaction
-
-    /*
-     * Reset the one-shot portions of our telemetry buffer
-     */
-
-    ack_data.accel_min[0] = 0xFF;
-    ack_data.accel_min[1] = 0xFF;
-    ack_data.accel_max[0] = 0x00;
-    ack_data.accel_max[1] = 0x00;
-    ack_data.accel_count[0] = 0;
-    ack_data.accel_count[1] = 0;
-    ack_data.accel_total[0] = 0;
-    ack_data.accel_total[1] = 0;
+    _endasm ;
 }
 
-void adc_isr(void) __interrupt(VECTOR_MISC)
+/*
+ * A/D Converter ISR --
+ *
+ *    Stores this sample in the ack_data buffer, and swaps channels.
+ */
+
+void adc_isr(void) __interrupt(VECTOR_MISC) __naked __using(1)
 {
-    // Sample the hardware state
-    uint16_t sample = (ADCDATH << 8) | ADCDATL;
-    uint8_t con1 = ADCCON1;
-    uint8_t sample_h = sample >> 4;
+    _asm
+	push	acc
+	push	psw
+	mov	psw, #0x08			; Register bank 1
 
-    // We're only using the first two channels
-    const uint8_t channel_mask = 0x04;
-    uint8_t channel = !!(con1 & channel_mask);
+	mov	a,_ADCCON1			; What channel are we on? We only have two.
+	jb	acc.2, 1$
 
-    /*
-     * If we aren't yet in danger of overflowing the accumulator, add
-     * this sample to it. (We're accumulating 12-bit samples in a 16-bit buffer)
-     */
-    if (ack_data.accel_count[channel] != 0xF) {
-	ack_data.accel_total[channel] += sample;
-	ack_data.accel_count[channel]++;
-    }
+	; Channel 0
+	mov	a, (_ack_data + ACK_ACCEL_TOTALS + 0)
+	add	a, _ADCDATH
+	mov	(_ack_data + ACK_ACCEL_TOTALS + 0), a
+	mov	a, (_ack_data + ACK_ACCEL_TOTALS + 1)
+	addc	a, #0
+	mov	(_ack_data + ACK_ACCEL_TOTALS + 1), a
+	inc	(_ack_data + ACK_ACCEL_COUNTS + 0)
 
-    /*
-     * Update the 8-bit min/max metrics
-     */
-    if (sample_h < ack_data.accel_min[channel])  ack_data.accel_min[channel] = sample_h;
-    if (sample_h > ack_data.accel_max[channel])  ack_data.accel_max[channel] = sample_h;
+	xrl	_ADCCON1,#0x04			; Channel swap
+	pop	psw
+	pop	acc
+	reti
 
-    // Next channel
-    ADCCON1 = con1 ^ channel_mask;
+	; Channel 1
+1$:	mov	a, (_ack_data + ACK_ACCEL_TOTALS + 2)
+	add	a, _ADCDATH
+	mov	(_ack_data + ACK_ACCEL_TOTALS + 2), a
+	mov	a, (_ack_data + ACK_ACCEL_TOTALS + 3)
+	addc	a, #0
+	mov	(_ack_data + ACK_ACCEL_TOTALS + 3), a
+	inc	(_ack_data + ACK_ACCEL_COUNTS + 1)
+
+	xrl	_ADCCON1,#0x04			; Channel swap
+	pop	psw
+	pop	acc
+	reti
+
+    _endasm ;
 }
 
 /*
@@ -466,6 +499,20 @@ void lcd_cmd_byte(uint8_t b)
     CTRL_PORT = CTRL_IDLE;
 }
 
+static void rf_reg_write(uint8_t reg, uint8_t value)
+{
+    RF_CSN = 0;
+
+    SPIRDAT = RF_CMD_W_REGISTER | reg;
+    SPIRDAT = value;
+    while (!(SPIRSTAT & SPI_RX_READY));
+    SPIRDAT;
+    while (!(SPIRSTAT & SPI_RX_READY));
+    SPIRDAT;
+
+    RF_CSN = 1;
+}
+
 void main(void)
 {
     // I/O port init
@@ -483,9 +530,8 @@ void main(void)
     IEN_EN = 1;
     IEN_RF = 1;
 
-    // Set up continuous 12-bit, 4 ksps A/D conversion with interrupt
-    // (Max precision, and enough speed to keep our telemetry buffers fed.)
-    ADCCON3 = 0xE0;
+    // Set up continuous 8-bit, 4 ksps A/D conversion with interrupt
+    ADCCON3 = 0x40;
     ADCCON2 = 0x25;
     ADCCON1 = 0x80;
     IEN_MISC = 1;
