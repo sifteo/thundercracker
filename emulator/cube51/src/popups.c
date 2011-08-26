@@ -216,7 +216,6 @@ int emu_readvalue(struct em8051 *aCPU, const char *aPrompt, int aOldvalue, int a
     int pos = 0;
     int ch = 0;
     char temp[16];
-    pos = aValueSize;    
 
     runmode = 0;
     setSpeed(speed, runmode);
@@ -275,6 +274,7 @@ int emu_readvalue(struct em8051 *aCPU, const char *aPrompt, int aOldvalue, int a
         wmove(exc,2,3 + pos);
         wrefresh(exc);
         ch = getch();
+
         if (ch >= '0' && ch <= '9' || ch >= 'a' && ch <= 'f' || ch >= 'A' && ch <= 'F')
         {
             if (pos < aValueSize)
@@ -285,7 +285,7 @@ int emu_readvalue(struct em8051 *aCPU, const char *aPrompt, int aOldvalue, int a
                 waddch(exc,ch);
             }
         }
-        if (ch == KEY_DC || ch == 8)
+        if (ch == KEY_DC || ch == 8 || ch == 0x107)
         {
             if (pos > 0)
             {
