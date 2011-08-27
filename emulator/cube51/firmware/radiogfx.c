@@ -76,7 +76,7 @@ static __near union {
 
 void rf_isr(void) __interrupt(VECTOR_RF) __naked __using(1)
 {
-    _asm
+    __asm
 	push	acc
 	push	dpl
 	push	dph
@@ -193,7 +193,7 @@ void rf_isr(void) __interrupt(VECTOR_RF) __naked __using(1)
 	pop	acc
 	reti
 	
-    _endasm ;
+    __endasm ;
 }
 
 /*
@@ -204,7 +204,7 @@ void rf_isr(void) __interrupt(VECTOR_RF) __naked __using(1)
 
 void adc_isr(void) __interrupt(VECTOR_MISC) __naked __using(1)
 {
-    _asm
+    __asm
 	push	acc
 	push	psw
 	mov	psw, #0x08			; Register bank 1
@@ -240,7 +240,7 @@ void adc_isr(void) __interrupt(VECTOR_MISC) __naked __using(1)
 	pop	acc
 	reti
 
-    _endasm ;
+    __endasm ;
 }
 
 /*

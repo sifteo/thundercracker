@@ -23,9 +23,21 @@ CDEPS = src/*.h
 
 PY_PATH := /opt/local/bin:/usr/bin
 PYTHON  := python2.7
+OS := $(shell uname)
 
-CFLAGS += -O3 -g -Werror $(shell sdl-config --cflags)
-LDFLAGS += -g -lGL -lncurses $(shell sdl-config --libs)
+CFLAGS += -O3 -g -Werror
+LDFLAGS += -g
+
+CFLAGS += $(shell sdl-config --cflags)
+LDFLAGS += -lncurses $(shell sdl-config --libs)
+
+ifeq ($(OS),Darwin)
+	CFLAGS += -framework OpenGL
+	LDFLAGS += -framework OpenGL
+else
+	LDFLAGS += -lGL
+endif
+
 
 all: $(BIN) firmware flash.bin
 

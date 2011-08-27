@@ -12,9 +12,14 @@
 #   pragma comment(lib, "opengl32.lib")
 #endif
 
+#ifdef __MACH__
+#   include <OpenGL/gl.h>
+#else
+#   include <GL/gl.h>
+#endif
+
 #include <stdint.h>
 #include <SDL.h>
-#include <GL/gl.h>
 
 #include "emu8051.h"
 #include "emulator.h"
