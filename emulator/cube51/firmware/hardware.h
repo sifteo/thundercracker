@@ -39,6 +39,24 @@ __sbit __at 0xA0 CTRL_LCD_TE;
 #define ADDR_INC32()	{ ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); \
 			  ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
 
+#define PIXEL_BURST(_count) {				\
+	register uint8_t _i = (_count);			\
+	do {						\
+	    ADDR_INC4();				\
+	} while (--_i);					\
+    }
+
+#define ADDR_FROM_DPTR_INC()			        	\
+    _asm							\
+	movx	ADDR_PORT, @dptr				\
+	inc	dptr						\
+	mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	\
+	movx	ADDR_PORT, @dptr				\
+	inc	dptr						\
+	mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	\
+    _endasm
+
+
 /*
  * LCD Controller
  */

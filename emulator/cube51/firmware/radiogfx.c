@@ -7,25 +7,51 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 #include "hardware.h"
 
-#define NUM_SPRITES  	2
-#define CHROMA_KEY	0xF5
+
+/**********************************************************************
+ * Data Formats
+ **********************************************************************/
+
+#define NUM_SPRITES  		2
+#define CHROMA_KEY		0xF5
+
+#define VRAM_LATCHED		800
+#define VRAM_LATCHED_SIZE	(NUM_SPRITES * 6 + 2)
+
+#define LVRAM_PAN_X		0
+#define LVRAM_PAN_Y		1
+#define LVRAM_SPRITES		3
+
+#define LVRAM_SPR_X(i)		(LVRAM_SPRITES + (i)*6 + 0)
+#define LVRAM_SPR_Y(i)		(LVRAM_SPRITES + (i)*6 + 1)
+#define LVRAM_SPR_MX(i)		(LVRAM_SPRITES + (i)*6 + 2)
+#define LVRAM_SPR_MY(i)		(LVRAM_SPRITES + (i)*6 + 3)
+#define LVRAM_SPR_AH(i)		(LVRAM_SPRITES + (i)*6 + 4)
+#define LVRAM_SPR_AL(i)		(LVRAM_SPRITES + (i)*6 + 5)
+
+struct sprite_info {
+    uint8_t x, y;
+    uint8_t mask_x, mask_y;
+    uint8_t addr_h, addr_l;
+};
+
+struct latched_vram {
+    // The small portion of VRAM that we latch before every frame
+    uint8_t pan_x, pan_y;
+    struct sprite_info sprites[NUM_SPRITES];
+};
 
 static __xdata union {
     uint8_t bytes[1024];
     struct {
 	uint8_t tilemap[800];
-	uint8_t pan_x, pan_y;
+	struct latched_vram latched;
 	uint8_t frame_trigger;
-	struct {
-	    uint8_t x, y;
-	    uint8_t mask_x, mask_y;
-	    uint8_t addr_h, addr_l;
-	} sprites[NUM_SPRITES];
     };
 } vram;
-
 
 #define ACK_LENGTH  		11
 #define ACK_ACCEL_COUNTS	1
@@ -66,6 +92,10 @@ static __near union {
     };
 } ack_data;
 
+
+/**********************************************************************
+ * Interrupt Handlers
+ **********************************************************************/
 
 /*
  * Radio ISR --
@@ -243,6 +273,23 @@ void adc_isr(void) __interrupt(VECTOR_MISC) __naked __using(1)
     _endasm ;
 }
 
+
+/**********************************************************************
+ * Graphics Engine
+ **********************************************************************/
+
+// Latched/local data for sprites, panning
+static __near struct latched_vram lvram;
+
+static uint8_t x_bg_first_w;	// Width of first displayed background tile, [1, 8]
+static uint8_t x_bg_last_w;	// Width of first displayed background tile, [0, 7]
+static uint8_t x_bg_first_addr;	// Low address offset for first displayed tile
+static uint8_t x_bg_wrap;	// Load value for a dec counter to the next X map wraparound
+
+static uint8_t y_bg_addr_l;	// Low part of tile addresses, inc by 32 each line
+static uint16_t y_bg_map;	// Map address for the first tile on this line
+
+#if 0
 /*
  * This is a rather big master rendering function that can handle
  * panning and wrapping tile graphics, and up to two sprite overlays
@@ -273,51 +320,6 @@ void adc_isr(void) __interrupt(VECTOR_MISC) __naked __using(1)
  */
 static void lcd_render(void)
 {
-    uint8_t pan_x, pan_y;		// Pixel panning
-    uint8_t sah0, sah1;			// Sprite address high-byte
-    uint8_t sal0, sal1;			// Sprite address low-byte
-    register uint8_t smx0, smx1;	// Horizontal sprite masks
-    uint8_t smy0, smy1;			// Vertical sprite masks
-    uint8_t sx0, sx1;			// Per-row sprite X accumulator
-    register uint8_t sxr0, sxr1;	// Register (per-pixel) sprite X accumulator
-    register uint8_t spa0, spa1;	// Sprite pixel address (sxr << 2)
-    uint8_t sy0, sy1;		       	// Sprite Y accumulator
-
-    uint8_t y = LCD_HEIGHT;
-
-    uint8_t tile_pan_y, tile_pan_bytes;
-    uint8_t line_addr, first_column_addr;
-    uint8_t last_tile_width, first_tile_width;
-    __xdata uint8_t *map_line;
-
-    /*
-     * Inside a critical section, copy the panning registers and all
-     * sprite parameters in from VRAM. We don't want these to be split
-     * between old and new values if a radio packet comes in while
-     * we're rendering.
-     */
-
-    IEN_EN = 0;
-
-    pan_x = vram.pan_x;
-    pan_y = vram.pan_y;
-
-    sx0 = vram.sprites[0].x;
-    sy0 = vram.sprites[0].y;
-    smx0 = vram.sprites[0].mask_x;
-    smy0 = vram.sprites[0].mask_y;
-    sal0 = vram.sprites[0].addr_l;
-    sah0 = vram.sprites[0].addr_h;
-
-    sx1 = vram.sprites[1].x;
-    sy1 = vram.sprites[1].y;
-    smx1 = vram.sprites[1].mask_x;
-    smy1 = vram.sprites[1].mask_y;
-    sal1 = vram.sprites[1].addr_l;
-    sah1 = vram.sprites[1].addr_h;
-
-    IEN_EN = 1;
-    
     /*
      * Panning calculations
      */
@@ -489,7 +491,117 @@ static void lcd_render(void)
     } while (--y);
 }
 
-void lcd_cmd_byte(uint8_t b)
+#endif
+
+static void lcd_line_bg(void)
+{
+    uint8_t x = 15;
+    uint8_t bg_wrap = x_bg_wrap;
+
+    DPTR = _y_bg_map;
+
+    ADDR_FROM_DPTR_INC();
+    if (!--bg_wrap) DPTR -= 40;
+    ADDR_PORT = y_bg_addr_l + x_bg_first_addr;
+    PIXEL_BURST(x_bg_first_w);
+
+
+    // There are always 15 full tiles on-screen
+    do {
+	ADDR_FROM_DPTR_INC();
+	if (!--bg_wrap) DPTR -= 40;
+	ADDR_PORT = y_bg_addr_l;
+	ADDR_INC32();
+    } while (--x);
+
+    // Might be one more partial tile, (0 <= width <= 7)
+    if (x_bg_last_w) {
+	ADDR_FROM_DPTR_INC();
+	if (!--bg_wrap) DPTR -= 40;
+	ADDR_PORT = y_bg_addr_l;
+	PIXEL_BURST(x_bg_last_w);
+    }
+}
+
+
+/*
+ * lcd_render --
+ *
+ *    This generates one full frame.  Most of the work is done by per-
+ *    scanline rendering functions, but this handles parameter latching
+ *    and we handle most Y coordinate calculations.
+ */
+
+static void lcd_render(void)
+{
+    uint8_t y = LCD_HEIGHT;
+
+    /*
+     * Copy a critical portion of VRAM into internal RAM, both for
+     * fast access and for consistency. We copy it with interrupts
+     * disabled, so a radio packet can't be processed partway through.
+     */
+
+    IEN_EN = 0;
+    _asm
+	mov	dptr, #(_vram + VRAM_LATCHED)
+	mov	r0, #VRAM_LATCHED_SIZE
+	mov	r1, #_lvram
+1$:	movx	a, @dptr
+	mov	@r1, a
+	inc	dptr
+	inc	r1
+	djnz	r0, 1$
+    _endasm ;
+    IEN_EN = 1;
+
+    /*
+     * Top-of-frame setup
+     */
+
+    {
+	uint8_t tile_pan_x = lvram.pan_x >> 3;
+	uint8_t tile_pan_y = lvram.pan_y >> 3;
+
+	y_bg_addr_l = lvram.pan_y << 5;
+	y_bg_map = lvram.pan_y & 0xF8;			// Y tile * 4
+	y_bg_map += tile_pan_y << 5;			// Y tile * 16
+	y_bg_map += tile_pan_x << 1;			// X tile * 2;
+
+	x_bg_last_w = lvram.pan_x & 7;
+	x_bg_first_w = 8 - x_bg_last_w;
+	x_bg_first_addr = (lvram.pan_x << 2) & 0x1C;
+	x_bg_wrap = 20 - tile_pan_x;
+    }
+
+    do {
+	/*
+	 * Choose a scanline renderer
+	 */
+
+	lcd_line_bg();
+
+	/*
+	 * Update Y axis variables
+	 */
+
+	y_bg_addr_l += 32;
+	if (!y_bg_addr_l) {
+	    // Next tile, with vertical wrap
+	    y_bg_map += 40;
+	    if (y_bg_map >= 800)
+		y_bg_map -= 800;
+	}
+
+    } while (--y);
+}
+
+
+/**********************************************************************
+ * Main Program
+ **********************************************************************/
+
+static void lcd_cmd_byte(uint8_t b)
 {
     CTRL_PORT = CTRL_LCD_CMD;
     BUS_DIR = 0;
@@ -545,7 +657,7 @@ void main(void)
 	// while (vram.frame_trigger == ack_data.frame_count);
 
 	// Sync with LCD
-	//while (!CTRL_LCD_TE);
+	while (!CTRL_LCD_TE);
 	
 	lcd_cmd_byte(LCD_CMD_RAMWR);
 	lcd_render();
