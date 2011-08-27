@@ -39,6 +39,7 @@
 
 enum EMU_VIEWS
 {
+    NO_VIEW = -1,
     MAIN_VIEW = 0,
     MEMEDITOR_VIEW = 1,
     OPTIONS_VIEW = 2

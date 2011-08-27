@@ -69,7 +69,7 @@ unsigned int icount = 0;
 uint64_t clocks = 0;
 
 // currently active view
-int view = MAIN_VIEW;
+int view = NO_VIEW;
 
 // old port out values
 int p0out = 0;
@@ -186,6 +186,15 @@ void change_view(struct em8051 *aCPU, int changeto)
         break;
     }
     view = changeto;
+
+    if (COLS < 80 || LINES < 24) {
+	werase(stdscr);
+	waddstr(stdscr, "Screen is too small for the debugger!\n"
+		"Please resize your terminal window.");
+	view = NO_VIEW;
+    } else if (view == NO_VIEW)
+	view = MAIN_VIEW;
+
     switch (view)
     {
     case MAIN_VIEW:
@@ -306,19 +315,12 @@ int debug_main(void *arg)
     slk_set(8, "s-Q)quit", 0);
     setSpeed(speed, runmode);
 
-    // Draw the first screen
-    build_main_view(aCPU);
-
-    do
-    {
-
-        if (LINES != oldrows ||
-            COLS != oldcols)
-        {
+    do {
+        if (LINES != oldrows || COLS != oldcols)
             refreshview(aCPU);
-        }
-        switch (ch)
-        {
+
+        switch (ch) {
+
         case KEY_F(1):
             change_view(aCPU, 0);
             break;
