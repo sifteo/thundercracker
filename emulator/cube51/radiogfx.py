@@ -332,8 +332,17 @@ class NetworkMaster(asyncore.dispatcher_with_send):
                 for cb in self.callbacks:
                     cb(self.telemetry)
 
-        elif msg_type in '\x02\x03':
-            # Incoming ACK or NACK
+        elif msg_type == '\x02':
+            # ACK
+            self.tx_depth -= 1
+            self._pump_tx_queue()
+
+        elif msg_type == '\x03':
+            # NAK. Handle this like an ACK too, but delay
+            # before sending anything else, so we don't spin
+            # eating CPU if there's no destination to rate-limit
+            # our transmissions.
+            time.sleep(0.1)
             self.tx_depth -= 1
             self._pump_tx_queue()
 
