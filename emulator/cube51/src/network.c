@@ -152,7 +152,7 @@ static void network_try_connect(void)
 
 #ifdef TCP_NODELAY
 	arg = 1;
-	setsockopt(net.fd, IPPROTO_TCP, TCP_NODELAY, &arg, sizeof arg);
+	setsockopt(net.fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
 #endif
 
 	if (net.rf_addr)

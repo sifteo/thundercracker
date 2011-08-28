@@ -38,7 +38,7 @@
 
 //#define static
 
-static const char const *sfr_names[128] = {
+static const char *sfr_names[128] = {
     "P0",        "SP",        "DPL",       "DPH",     
     "DPL1",      "DPH1",      "SFR_86",    "SFR_87",   
     "TCON",      "TMOD",      "TL0",       "TL1",      

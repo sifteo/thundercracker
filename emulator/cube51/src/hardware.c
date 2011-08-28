@@ -38,6 +38,7 @@
 #include "spi.h"
 #include "radio.h"
 #include "network.h"
+#include "adc.h"
 
 static struct {
     uint8_t lat1;
