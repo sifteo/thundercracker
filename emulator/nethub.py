@@ -63,8 +63,7 @@ import binascii, time, sys, threading
 class Logger:
     verbose = True
     def __call__(self, origin, message):
-        if self.verbose:
-            sys.stderr.write("%s -- %s\n" % (origin, message))
+        sys.stderr.write("%s -- %s\n" % (origin, message))
 log = Logger()
 
 def hexint(i):
@@ -125,26 +124,39 @@ class PacketDispatcher(asyncore.dispatcher_with_send):
             	return
 
     def handle_packet(self, packet):
-        ptype = ord(packet[1])
-        f = getattr(self, "packet_%02x" % ptype, None)
-        if f:
-            f(packet)
+        ptype = packet[1]
+
+        if ptype == '\x01':
+            if len(packet) < 10:
+                log(self, "Incorrect length for data packet")
+            else:
+                addr = struct.unpack("<Q", packet[2:10])[0]
+                payload = packet[10:]
+                self.handle_msg(addr, payload)
+
+        elif ptype == '\x02':
+            self.handle_ack(True)
+        elif ptype == '\x03':
+            self.handle_ack(False)                    
+
+        elif ptype == '\x00':
+            if len(packet) != 10:
+                log(self, "Incorrect length for address packet")
+            else:
+                addr = struct.unpack("<Q", packet[2:10])[0]
+                self.handle_address(addr)
+
         else:
             log(self, "Unhandled packet %s" % binascii.b2a_hex(packet))
-
-    def packet_01(self, packet):
-        if len(packet) < 8:
-            log(self, "Incorrect length for data packet")
-            return
-        addr = struct.unpack("<Q", packet[2:10])[0]
-        payload = packet[10:]
-        self.handle_msg(addr, payload)
 
     def ack(self):
         self.send("\x00\x02")
 
     def handle_msg(self, addr, payload):
         self.ack()
+
+    def handle_ack(self, success):
+        pass
 
 
 class AbstractClient(PacketDispatcher):
@@ -173,12 +185,7 @@ class ClientProducer(AbstractClient):
         log(self, "sending to %016x, %08x" % (self.destAddr, self.sequence))
         self.send(struct.pack("<BBQI", 12, 1, self.destAddr, self.sequence))
 
-    def packet_02(self, p):
-        # ACK
-        self.produce()
-
-    def packet_03(self, p):
-        # NACK
+    def handle_ack(self, success):
         self.produce()
 
 
@@ -191,14 +198,6 @@ class ClientConsumer(AbstractClient):
         self.ack()
         log(self, "received from %016x, %s" % (addr, binascii.b2a_hex(payload)))
         time.sleep(0.2)
-
-    def packet_02(self, p):
-        # ACK
-        pass
-
-    def packet_03(self, p):
-        # NACK
-        pass
 
 
 class ClientPipe(AbstractClient):
@@ -231,12 +230,7 @@ class ClientPipe(AbstractClient):
                                   self.destAddr) + payload)
             self.sem.acquire()
 
-    def packet_02(self, p):
-        # ACK
-        self.sem.release()
-
-    def packet_03(self, p):
-        # NACK
+    def handle_ack(self, success):
         self.sem.release()
 
 
@@ -305,21 +299,15 @@ class NethubClient(PacketDispatcher):
         self.hub.removeClient(self.address)
         PacketDispatcher.close(self)
 
-    def packet_02(self, packet):
-        if len(packet) != 2:
-            log(self, "Incorrect length for ACK")
-        if self.tx_depth:
+    def handle_ack(self, success):
+        if self.tx_depth and success:
             self.tx_depth -= 1
         else:
             log(self, "Received unsolicited ACK")
 
-    def packet_00(self, packet):
-        if len(packet) != 10:
-            log(self, "Incorrect length for address packet")
-        else:
-            addr = struct.unpack("<Q", packet[2:])[0]
-            log(self, "Setting address to %016x" % addr)
-            self.setAddress(addr)
+    def handle_address(self, addr):
+        log(self, "Setting address to %016x" % addr)
+        self.setAddress(addr)
 
     def handle_msg(self, addr, payload):
         self.msg_backlog.append((addr, payload))
@@ -364,7 +352,8 @@ class NethubClient(PacketDispatcher):
                 still_busy.append(dest)
             else:
                 # Send it, and expect an ACK
-                log(self, "send to %s -- %s" % (dest, binascii.b2a_hex(self.current_msg)))
+                if log.verbose:
+                    log(self, "send to %s -- %s" % (dest, binascii.b2a_hex(self.current_msg)))
                 dest.tx_depth += 1
                 dest.send(struct.pack("<BBQ", 8+len(self.current_msg), 1,
                                       self.address) + self.current_msg)
