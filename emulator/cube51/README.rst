@@ -1,5 +1,5 @@
 Experimental simulator for an 8051-based cube ("microcube")
------------------------------------------------------------
+===========================================================
 
 This is a hardware simulator that aims to do a cycle-accurate
 simulation of the subset of hardware that we're using. If everything
@@ -9,11 +9,11 @@ simulator should exactly match real hardware.
 What does it simulate?
 ----------------------
 
- * An 8051 CPU core (nRF24LE1 cycle timings)
- * A shared 8-bit parallel bus
- * Two 8-bit address latches
- * A NOR Flash memory, with 21-bit address and 8-bit data
- * An LCD controller (SPFD5414)
+* An 8051 CPU core (nRF24LE1 cycle timings)
+* A shared 8-bit parallel bus
+* Two 8-bit address latches
+* A NOR Flash memory, with 21-bit address and 8-bit data
+* An LCD controller (SPFD5414)
 
 Prerequisites
 -------------
@@ -38,7 +38,8 @@ After "make" finishes, you should have a "cube51-sim" binary, some
 .ihx firmware images in the "firmware" directory, and a populated
 "flash.bin" asset image.
 
-Run:
+Run::
+
   ./cube51-sim firmware/demo.ihx
 
 This will load the compiled firmware into the simulator, and start it
@@ -78,4 +79,4 @@ Assumptions
 9. We can write compelling games using no more than 16 MBits of
    *uncompressed* tile/sprite/image data per cube.
 
-... probably others too.
+probably others too.
