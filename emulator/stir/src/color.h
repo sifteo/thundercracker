@@ -30,9 +30,9 @@ struct CIELab {
     }
   
     CIELab(uint32_t rgb) {
-	double r = 65535.0 * (uint8_t)rgb / 255.0;
-	double g = 65535.0 * (uint8_t)(rgb >> 8) / 255.0;
-	double b = 65535.0 * (uint8_t)(rgb >> 16) / 255.0;
+	double red = (uint8_t)rgb;
+	double green = (uint8_t)(rgb >> 8);
+	double blue = (uint8_t)(rgb >> 16);
 
 	double xyz[3] = { 0, 0, 0 };
 	static const double m[3][3] = {
@@ -41,12 +41,12 @@ struct CIELab {
 	    {0, 0, 0.82521143890000004}
 	};
 	for (int i = 0; i < 3; i++) {
-	    xyz[i] += m[i][0] * r;
-	    xyz[i] += m[i][1] * g;
-	    xyz[i] += m[i][2] * b;
+	    xyz[i] += m[i][0] * red;
+	    xyz[i] += m[i][1] * green;
+	    xyz[i] += m[i][2] * blue;
 	}
 
-	static const float d50_white[3] = {0.964220, 1, 0.825211}; 
+	static const double d50_white[3] = {0.964220, 1, 0.825211}; 
 	for (int i = 0; i < 3; i++) {
 	    xyz[i] = f_cbrt(xyz[i] / d50_white[i]);
 	}
@@ -64,7 +64,7 @@ struct CIELab {
   
 	static const double ep = 216.0 / 24389.0;
 	static const double ka = 24389.0 / 27.0;
-	static const float d50_white[3]={0.964220,1,0.825211}; 
+	static const double d50_white[3] = {0.964220, 1, 0.825211}; 
 
 	double xyz[3];
         xyz[0] = 255.0 * d50_white[0] * (fx*fx*fx>ep?fx*fx*fx:(116.0*fx-16.0)/ka);  
@@ -116,7 +116,7 @@ private:
     double f_cbrt(double r){  
 	static const double ep = 216.0 / 24389.0;
 	static const double ka = 24389.0 / 27.0;
-	r/=65535.0;  
+	r/=255.0;
 	return r > ep ? pow(r,1/3.0) : (ka*r+16)/116.0;  
     }  
 };

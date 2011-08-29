@@ -9,7 +9,8 @@ int main() {
     RGB565 color16_2(rgb);
     CIELab cie(rgb);
 
-    printf("%04x %04x %08x %08x (%g, %g, %g)\n", c, color16_2.value, rgb, cie.rgb(), cie.L, cie.a, cie.b);
+    if (c != color16_2.value || rgb != cie.rgb())
+	printf("%04x %04x %08x %08x (%g, %g, %g)\n", c, color16_2.value, rgb, cie.rgb(), cie.L, cie.a, cie.b);
   }
 
   return 0;
