@@ -39,24 +39,6 @@ __sbit __at 0xA0 CTRL_LCD_TE;
 #define ADDR_INC32()	{ ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); \
 			  ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
 
-#define PIXEL_BURST(_count) {				\
-	register uint8_t _i = (_count);			\
-	do {						\
-	    ADDR_INC4();				\
-	} while (--_i);					\
-    }
-
-#define ADDR_FROM_DPTR_INC()			        	\
-    _asm							\
-	movx	ADDR_PORT, @dptr				\
-	inc	dptr						\
-	mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	\
-	movx	ADDR_PORT, @dptr				\
-	inc	dptr						\
-	mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	\
-    _endasm
-
-
 /*
  * LCD Controller
  */
@@ -133,8 +115,17 @@ __sbit __at 0xA0 CTRL_LCD_TE;
 #define RF_FIFO_TX_REUSE	0x40
 
 /*
+ * CPU instruction macros
+ */
+
+#define RL(x)   (((x) << 1) | ((x) >> 7)
+#define RR(x)   (((x) >> 1) | ((x) << 7)
+
+/*
  * CPU Special Function Registers
  */
+
+__sfr16 __at 0x8382 DPTR;
 
 __sfr __at 0x80 P0;
 __sfr __at 0x81 SP;

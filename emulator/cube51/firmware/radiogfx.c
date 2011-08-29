@@ -289,235 +289,203 @@ static uint8_t x_bg_wrap;	// Load value for a dec counter to the next X map wrap
 static uint8_t y_bg_addr_l;	// Low part of tile addresses, inc by 32 each line
 static uint16_t y_bg_map;	// Map address for the first tile on this line
 
-#if 0
-/*
- * This is a rather big master rendering function that can handle
- * panning and wrapping tile graphics, and up to two sprite overlays
- * of up to 64x64 pixels each.
- *
- * Sprites are specified in a quite low-level way, as a combination of
- * X/Y accumulators and masks. We increment the accumulators at each
- * row/column, and when the accumulator & the mask is zero, the sprite
- * is drawn. Sprite size may be chosen by changing the number of bits
- * in the mask, but all sprites have a row stride of 64 pixels.
- * Additionally, the low part of the sprite address is incremented
- * before every active scanline for that sprite. This must be
- * compensated for when setting up sprite parameters.
- *
- * XXX: The fixed row stride may be a problem if we have no good way to make use
- *      of non-64-pixel-aligned data in flash.
- *
- * XXX: There is a HUGE optimization opportunity here with regard to map addressing.
- *      The dptr manipulation code that SDCC generates here is very bad... and it's
- *      possible we might want to use some of the nRF24LE1's specific features, like
- *      the PDATA addressing mode.
- *
- * XXX: I rather unscrupulously hacked this to add full horizontal and vertical
- *      wrap-around support. There's also a lot of room for optimization here.
- *
- * XXX: Combining the tile and sprite code here was yet another giant hack. I'm sure
- *      there's a lot more to tighten up here...
- */
-static void lcd_render(void)
-{
-    /*
-     * Panning calculations
-     */
+// Called once per tile, to check for horizontal map wrapping
+#define MAP_WRAP_CHECK() {			  	\
+	if (!--bg_wrap)					\
+	    DPTR -= 40;					\
+    }
 
-    line_addr = pan_y << 5;
-    first_column_addr = (pan_x << 2) & 0x1C;
-    last_tile_width = pan_x & 7;
-    first_tile_width = 8 - last_tile_width;
-    tile_pan_y = pan_y >> 3;
-    tile_pan_bytes = (pan_x >> 2) & 0xFE;
-    map_line = &vram.tilemap[(tile_pan_y << 5) + (pan_y & 0xF8)];
-
-    /*
-     * Rendering Macros
-     */
-
-#define MAP_LATCH_TILE()				\
-    ADDR_PORT = map_line[map_x];			\
-    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;	\
-    ADDR_PORT = map_line[map_x+1];			\
-    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;	\
-
-#define MAP_NEXT_TILE()					\
-    map_x += 2;						\
-    if (map_x == 40)					\
-	map_x = 0;					\
-
+// Output a nonzero number of of pixels, not known at compile-time
 #define PIXEL_BURST(_count) {				\
-	uint8_t _i = (_count);				\
+	register uint8_t _i = (_count);			\
 	do {						\
 	    ADDR_INC4();				\
 	} while (--_i);					\
-    }							\
+    }
 
-#define SPRITE_ROW(i)					\
-    sy##i++;						\
-    if (sy##i & smy##i)					\
-	sxr##i = 0x80;					\
-    else {						\
-	sal##i += 2;					\
-	sxr##i = sx##i;					\
-	spa##i = (sxr##i - 1) << 2;			\
-	spr_active = 1;					\
-    }							\
+// Load a 16-bit tile address from DPTR without incrementing
+#pragma sdcc_hash +
+#define ADDR_FROM_DPTR() {					\
+    _asm movx	a, @dptr					_endasm; \
+    _asm mov	ADDR_PORT, a					_endasm; \
+    _asm inc	dptr						_endasm; \
+    _asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	_endasm; \
+    _asm movx	a, @dptr					_endasm; \
+    _asm mov	ADDR_PORT, a					_endasm; \
+    _asm dec	dpl						_endasm; \
+    _asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	_endasm; \
+    }
 
-#define SPRITE_PIXEL(i, _ad)				\
-    ADDR_PORT = sal##i;					\
-    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;	\
-    ADDR_PORT = sah##i;					\
-    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;	\
-    ADDR_PORT = spa##i += 4;				\
-    if (BUS_PORT != CHROMA_KEY) {			\
-	ADDR_INC4();					\
-    } else {						\
-	MAP_LATCH_TILE();				\
-	ADDR_PORT = line_addr + _ad;			\
-	ADDR_INC4();					\
-    }							\
-    sxr##i++;						\
+// Load a 16-bit tile address from DPTR, and auto-increment
+#pragma sdcc_hash +
+#define ADDR_FROM_DPTR_INC() {					\
+    _asm movx	a, @dptr					_endasm; \
+    _asm mov	ADDR_PORT, a					_endasm; \
+    _asm inc	dptr						_endasm; \
+    _asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	_endasm; \
+    _asm movx	a, @dptr					_endasm; \
+    _asm mov	ADDR_PORT, a					_endasm; \
+    _asm inc	dptr						_endasm; \
+    _asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	_endasm; \
+    }
 
-    /*
-     * Rendering Loop
-     */
+// Add 2 to DPTR. (Can do this in 2 clocks with inline assembly)
+#define DPTR_INC2() {						\
+    _asm inc	dptr						_endasm; \
+    _asm inc	dptr						_endasm; \
+    }
 
-    do {
-	uint8_t map_x = tile_pan_bytes;
-	uint8_t spr_active = 0;
-
-	SPRITE_ROW(0);
-	SPRITE_ROW(1);
-
-	if (spr_active) {
-	    /*
-	     * This row has sprites! Use a more general rendering loop.
-	     */
-
-	    uint8_t x = 15;
-
-	    // XXX: First partial tile
-	    MAP_LATCH_TILE();
-	    MAP_NEXT_TILE();
-	    ADDR_PORT = line_addr + first_column_addr;
-	    PIXEL_BURST(first_tile_width);
-
-	    sxr0 += first_tile_width;
-	    sxr1 += first_tile_width;
-	    spa0 += first_tile_width << 2;
-	    spa1 += first_tile_width << 2;
-
-	    // There are always 15 full tiles on-screen
-	    do {
-		if ((sxr0 & smx0) && ((sxr0 + 7) & smx0)) {
-		    // All 8 pixels are non-sprite
-
-		    MAP_LATCH_TILE();
-		    MAP_NEXT_TILE();
-		    ADDR_PORT = line_addr;
-		    ADDR_INC32();
-
-		    sxr0 += 8;
-		    sxr1 += 8;
-		    spa0 += 32;
-		    spa1 += 32;
-
-		} else {
-		    // A mixture of sprite and tile pixels
-
-		    SPRITE_PIXEL(0, 0x0);
-		    SPRITE_PIXEL(0, 0x4);
-		    SPRITE_PIXEL(0, 0x8);
-		    SPRITE_PIXEL(0, 0xc);
-		    SPRITE_PIXEL(0, 0x10);
-		    SPRITE_PIXEL(0, 0x14);
-		    SPRITE_PIXEL(0, 0x18);
-		    SPRITE_PIXEL(0, 0x1c);
-
-		    MAP_NEXT_TILE();
-		}
+// Load a 16-bit address from sprite LVRAM
+#define ADDR_FROM_SPRITE(_i) {				\
+	ADDR_PORT = lvram.sprites[_i].addr_l;		\
+	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;	\
+	ADDR_PORT = lvram.sprites[_i].addr_h;		\
+	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;	\
+    }
 
 
-	    } while (--x);
-
-	    // XXX: Last partial tile
-	    if (last_tile_width) {
-		MAP_LATCH_TILE();
-		MAP_NEXT_TILE();
-		ADDR_PORT = line_addr;
-		PIXEL_BURST(last_tile_width);
-	    }
-
-	} else {
-	    /*
-	     * No sprites. Use a scanline renderer optimized for tiles only.
-	     */
-
-	    uint8_t x = 15;
-
-	    // First tile on the line, (1 <= width <= 8)
-	    MAP_LATCH_TILE();
-	    MAP_NEXT_TILE();
-	    ADDR_PORT = line_addr + first_column_addr;
-	    PIXEL_BURST(first_tile_width);
-
-	    // There are always 15 full tiles on-screen
-	    do {
-		MAP_LATCH_TILE();
-		MAP_NEXT_TILE();
-		ADDR_PORT = line_addr;
-		ADDR_INC32();
-	    } while (--x);
-
-	    // Might be one more partial tile, (0 <= width <= 7)
-	    if (last_tile_width) {
-		MAP_LATCH_TILE();
-		MAP_NEXT_TILE();
-		ADDR_PORT = line_addr;
-		PIXEL_BURST(last_tile_width);
-	    }
-	}
-
-	// Fixup the line address for our next scanline
-	line_addr += 32;
-	if (!line_addr) {
-	    map_line += 40;
-	    if (map_line > &vram.tilemap[799])
-		map_line -= 800;
-	}
-
-    } while (--y);
-}
-
-#endif
+/*
+ * lcd_line_bg --
+ *
+ *    Scanline renderer, draws a single tiled background layer.
+ */
 
 static void lcd_line_bg(void)
 {
     uint8_t x = 15;
     uint8_t bg_wrap = x_bg_wrap;
 
-    DPTR = _y_bg_map;
+    DPTR = y_bg_map;
 
+    // First partial or full tile
     ADDR_FROM_DPTR_INC();
-    if (!--bg_wrap) DPTR -= 40;
+    MAP_WRAP_CHECK();
     ADDR_PORT = y_bg_addr_l + x_bg_first_addr;
     PIXEL_BURST(x_bg_first_w);
-
 
     // There are always 15 full tiles on-screen
     do {
 	ADDR_FROM_DPTR_INC();
-	if (!--bg_wrap) DPTR -= 40;
+	MAP_WRAP_CHECK();
 	ADDR_PORT = y_bg_addr_l;
 	ADDR_INC32();
     } while (--x);
 
-    // Might be one more partial tile, (0 <= width <= 7)
+    // Might be one more partial tile
     if (x_bg_last_w) {
 	ADDR_FROM_DPTR_INC();
-	if (!--bg_wrap) DPTR -= 40;
+	MAP_WRAP_CHECK();
+	ADDR_PORT = y_bg_addr_l;
+	PIXEL_BURST(x_bg_last_w);
+    }
+}
+
+/*
+ * lcd_line_bg_spr0 --
+ *
+ *    Scanline renderer: One tiled background, one sprite (index 0)
+ *
+ *    XXX: This doesn't handle horizontal tile edge cases yet.
+ *
+ *    XXX: Sprite format may change. I don't really like the
+ *         requirement for 64-pixel stride right now, and I've been
+ *         expecting to converge sprites and backgrounds to both use
+ *         the same scanline loops. (Sprites would internally just be
+ *         represented as sequential arrays of tiles.  On a
+ *         per-scanline basis, we would use different functions to
+ *         load tile indices for each layer depending on whether it's
+ *         a normal bg or if it's a sprite.)
+ */
+
+static void lcd_line_bg_spr0(void)
+{
+    uint8_t x = 15;
+    uint8_t bg_wrap = x_bg_wrap;
+    register uint8_t spr0_mask = lvram.sprites[0].mask_x;
+    register uint8_t spr0_x = lvram.sprites[0].x + x_bg_first_w;
+    uint8_t spr0_pixel_addr = (spr0_x - 1) << 2;
+
+    DPTR = y_bg_map;
+
+    // First partial or full tile
+    ADDR_FROM_DPTR_INC();
+    MAP_WRAP_CHECK();
+    ADDR_PORT = y_bg_addr_l + x_bg_first_addr;
+    PIXEL_BURST(x_bg_first_w);
+
+    // There are always 15 full tiles on-screen
+    do {
+	if ((spr0_x & spr0_mask) && ((spr0_x + 7) & spr0_mask)) {
+	    // All 8 pixels are non-sprite
+
+	    ADDR_FROM_DPTR_INC();
+	    MAP_WRAP_CHECK();
+	    ADDR_PORT = y_bg_addr_l;
+	    ADDR_INC32();
+	    spr0_x += 8;
+	    spr0_pixel_addr += 32;
+
+	} else {
+	    // A mixture of sprite and tile pixels.
+
+#define SPR0_OPAQUE(i)				\
+	test_##i:				\
+	    if (BUS_PORT == CHROMA_KEY)		\
+		goto transparent_##i;		\
+	    ADDR_INC4();			\
+
+#define SPR0_TRANSPARENT_TAIL(i)		\
+	transparent_##i:			\
+	    ADDR_FROM_DPTR();			\
+	    ADDR_PORT = y_bg_addr_l + (i*4);	\
+	    ADDR_INC4();			\
+
+#define SPR0_TRANSPARENT(i, j)			\
+	    SPR0_TRANSPARENT_TAIL(i);		\
+	    ADDR_FROM_SPRITE(0);		\
+	    ADDR_PORT = spr0_pixel_addr + (j*4);\
+	    goto test_##j;			\
+
+#define SPR0_END()				\
+	    spr0_x += 8;			\
+	    spr0_pixel_addr += 32;		\
+	    DPTR_INC2();			\
+	    MAP_WRAP_CHECK();			\
+	    continue;				\
+
+	    // Fast path: All opaque pixels in a row.
+
+	    ADDR_FROM_SPRITE(0);
+	    ADDR_PORT = spr0_pixel_addr;
+	    SPR0_OPAQUE(0);
+	    SPR0_OPAQUE(1);
+	    SPR0_OPAQUE(2);
+	    SPR0_OPAQUE(3);
+	    SPR0_OPAQUE(4);
+	    SPR0_OPAQUE(5);
+	    SPR0_OPAQUE(6);
+	    SPR0_OPAQUE(7);
+	    SPR0_END();
+
+	    // Transparent pixel jump targets
+
+	    SPR0_TRANSPARENT(0, 1);
+	    SPR0_TRANSPARENT(1, 2);
+	    SPR0_TRANSPARENT(2, 3);
+	    SPR0_TRANSPARENT(3, 4);
+	    SPR0_TRANSPARENT(4, 5);
+	    SPR0_TRANSPARENT(5, 6);
+	    SPR0_TRANSPARENT(6, 7);
+	    SPR0_TRANSPARENT_TAIL(7);
+	    SPR0_END();
+	}
+
+    } while (--x);
+
+    // Might be one more partial tile
+    if (x_bg_last_w) {
+	ADDR_FROM_DPTR_INC();
+	MAP_WRAP_CHECK();
 	ADDR_PORT = y_bg_addr_l;
 	PIXEL_BURST(x_bg_last_w);
     }
@@ -575,11 +543,31 @@ static void lcd_render(void)
     }
 
     do {
+	uint8_t active_sprites = 0;
+
+	/*
+	 * Per-line sprite accounting. Update all Y coordinates, and
+	 * see which sprites are active. (Unrolled loop here, to allow
+	 * calculating masks and array addresses at compile-time.)
+	 */
+
+#define SPRITE_Y_ACCT(i)						\
+	if (!(++lvram.sprites[i].y & lvram.sprites[i].mask_y)) {	\
+	    active_sprites |= 1 << i;					\
+	    lvram.sprites[i].addr_l += 2;				\
+	}							   	\
+
+	SPRITE_Y_ACCT(0);
+	SPRITE_Y_ACCT(1);
+
 	/*
 	 * Choose a scanline renderer
 	 */
 
-	lcd_line_bg();
+	switch (active_sprites) {
+	case 0x00:	lcd_line_bg(); break;
+	case 0x01:	lcd_line_bg_spr0(); break;
+	}
 
 	/*
 	 * Update Y axis variables
@@ -657,7 +645,7 @@ void main(void)
 	// while (vram.frame_trigger == ack_data.frame_count);
 
 	// Sync with LCD
-	while (!CTRL_LCD_TE);
+	//while (!CTRL_LCD_TE);
 	
 	lcd_cmd_byte(LCD_CMD_RAMWR);
 	lcd_render();
