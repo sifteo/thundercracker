@@ -28,7 +28,8 @@ Prerequisites
 
 Tested on Linux and Mac OS X.
 
-On Mac OS, I used MacPorts to install the dependencies:
+On Mac OS, I used MacPorts to install the dependencies::
+
   sudo port install py27-pil sdcc ncurses libsdl
 
 Usage
