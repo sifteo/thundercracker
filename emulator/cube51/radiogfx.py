@@ -141,7 +141,7 @@ class TileRenderer:
         self.dirty = {}
         
         # Sprite renderers
-        self.sprite = [Sprite(self, 803 + 6*i) for i in range(2)]
+        self.sprite = [Sprite(self, 802 + 6*i) for i in range(2)]
 
         # Flow control
         self.local_frame_count = 0
@@ -176,8 +176,8 @@ class TileRenderer:
                 time.sleep(0)
             
         # Trigger the firmware to refresh the LCD 
-        self.vram[802] = self.local_frame_count
-        self.dirty[802 // 31] = True
+        self.vram[800] = self.local_frame_count
+        self.dirty[800 // 31] = True
 
         chunks = self.dirty.keys()
         chunks.sort()

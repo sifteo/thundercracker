@@ -115,8 +115,17 @@ __sbit __at 0xA0 CTRL_LCD_TE;
 #define RF_FIFO_TX_REUSE	0x40
 
 /*
+ * CPU instruction macros
+ */
+
+#define RL(x)   (((x) << 1) | ((x) >> 7)
+#define RR(x)   (((x) >> 1) | ((x) << 7)
+
+/*
  * CPU Special Function Registers
  */
+
+__sfr16 __at 0x8382 DPTR;
 
 __sfr __at 0x80 P0;
 __sfr __at 0x81 SP;
