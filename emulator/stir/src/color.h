@@ -55,6 +55,9 @@ struct RGB565 {
 	value = (r5 << 11) | (g6 << 5) | b5;
     }
 
+    // Make a slight (1 LSB) modification to the low byte
+    RGB565 wiggle() const;
+
     uint8_t red() const {
 	/*
 	 * A good approximation is (r5 << 3) | (r5 >> 2), but this
@@ -149,6 +152,17 @@ struct CIELab {
     }
 
     static void initialize(void);
+
+    // Algorithms in CIE L*a*b* color space
+    static int findMajorAxis(RGB565 *colors, size_t count);
+
+    struct sortAxis : public std::binary_function<RGB565 &, RGB565 &, bool> {
+        sortAxis(int _axis) : axis(_axis) {}
+	int axis;
+	bool operator()(const RGB565 &a, const RGB565 &b) {
+	    return CIELab(a).axis[axis] < CIELab(b).axis[axis];
+	}
+    };
     
 private:
     double f_cbrt(double r);
@@ -209,22 +223,12 @@ class ColorReducer {
 
     void updateInverseLUT();
     double meanSquaredError();
-    int findMajorAxis(box &b);
-    void sortBox(box &b, int axis);
     bool splitBox(box &b);
     void splitBox(box &b, int at);
 
     RGB565 boxMedian(box &b) {
 	return colors[(b.begin + b.end) >> 1];
     }
-    
-    struct labSort : public std::binary_function<RGB565 &, RGB565 &, bool> {
-        labSort(int _axis) : axis(_axis) {}
-	int axis;
-	bool operator()(const RGB565 &a, const RGB565 &b) {
-	    return CIELab(a).axis[axis] < CIELab(b).axis[axis];
-	}
-    };
 };
     
 

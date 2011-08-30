@@ -17,6 +17,21 @@
 CIELab CIELab::lut565[0x10000];
 
 
+RGB565 RGB565::wiggle() const
+{
+    // Make a slight (1 LSB) modification to the low byte
+
+    uint16_t rg = value & 0xFFE0;
+    uint16_t b = value & 0x1F;
+
+    if (b == 0x1F)
+	b--;
+    else
+	b++;
+
+    return (uint16_t)(rg | b);
+}
+
 CIELab::CIELab(uint32_t rgb)
 {
     double red = (uint8_t)rgb;
@@ -134,7 +149,7 @@ void ColorReducer::reduce(double maxMSE)
      */
 
     // Base case: One single color.
-    box root = { 0, colors.size() };
+    box root = { 0, (unsigned)colors.size() };
     boxes.clear();
     boxes.push_back(root);
     boxQueue.clear();
@@ -151,9 +166,14 @@ void ColorReducer::reduce(double maxMSE)
 
 	unsigned boxIndex = *boxQueue.begin();
 	struct box& b = boxes[boxIndex];
-	int major = findMajorAxis(b);
 	boxQueue.pop_front();
-	sortBox(b, major);
+
+	int major = CIELab::findMajorAxis(&colors[b.begin], b.end - b.begin);
+
+	std::sort(colors.begin() + b.begin,
+		  colors.begin() + b.end,
+		  CIELab::sortAxis(major));
+
 	splitBox(b);
     }
 }
@@ -208,17 +228,17 @@ double ColorReducer::meanSquaredError()
     return error / total;
 }
 
-int ColorReducer::findMajorAxis(box &b)
+int CIELab::findMajorAxis(RGB565 *colors, size_t count)
 {
     /*
-     * Of all the colors in a particular box, find the component axis
-     * which occupies the widest range of values. This is the axis we
-     * would get the most benefit from splitting along.
+     * Of all the colors given, find the component axis which occupies
+     * the widest range of values. This is the axis we would get the
+     * most benefit from splitting along.
      */
 
     double labMin[3] = { DBL_MAX, DBL_MAX, DBL_MAX };
     double labMax[3] = { DBL_MIN, DBL_MIN, DBL_MIN };
-    for (unsigned i = b.begin; i < b.end; i++) {
+    for (unsigned i = 0; i < count; i++) {
 	CIELab c = CIELab(colors[i]);
 
 	for (int a = 0; a < 3; a++) {
@@ -241,18 +261,6 @@ int ColorReducer::findMajorAxis(box &b)
     }
 
     return major;
-}
-
-void ColorReducer::sortBox(box &b, int axis)
-{
-    /*
-     * Sort all colors in a particular box in ascending order by
-     * the specified CIE L*a*b* axis.
-     */
-
-    std::sort(colors.begin() + b.begin,
-	      colors.begin() + b.end,
-	      labSort(axis));
 }
 
 bool ColorReducer::splitBox(box &b)
