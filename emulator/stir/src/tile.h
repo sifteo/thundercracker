@@ -49,7 +49,8 @@ class Tile {
 	return mPixels[x + y * SIZE];
     }
 
-    double meanSquaredError(Tile &other);
+    double multiScaleError(Tile &other);
+
     TileRef reduce(ColorReducer &reducer, double maxMSE);
 
  private:
@@ -104,6 +105,12 @@ class TilePool {
     TileStack *add(TileRef t);
     TileStack *closest(TileRef t, double &mse);
     void optimize();
+
+    void render(uint8_t *rgba, size_t stride, unsigned width);
+
+    unsigned size() {
+	return sets.size();
+    }
 
  private:
     std::list<TileStack> sets;

@@ -61,18 +61,65 @@ Tile::Tile(uint8_t *rgba, size_t stride)
 	}	    
 }
 
-double Tile::meanSquaredError(Tile &other)
+double Tile::multiScaleError(Tile &other)
 {
     /*
-     * Measure the Mean Squared Error between every corresponding
-     * pixel in the two tiles.
+     * This is an error metric which works by combining MSEs measurd
+     * at mutliple scales. This approximates the extra perceptual
+     * sensitivity we have to image defects which don't just look bad
+     * close-up but also from afar.
      */
 
-    double error = 0;
-    for (unsigned i = 0; i < PIXELS; i++)
-	error += CIELab(mPixels[i]).meanSquaredError(CIELab(other.mPixels[i]));
+    static const struct {
+	unsigned size, pixCount;
+	double weight;
+    } *s, tileScales[] = {
+	/*
+	 * Currently we're giving much more weight to large-scale
+	 * differences than to small-scale. These weights are
+	 * arbitrary, they can be tweaked manually to obtain the most
+	 * consistent image quality for a given target MSE level.
+	 */
 
-    return error / PIXELS;
+	{ 1, 1,	  1.0 },
+	{ 2, 4,   2.0 },
+	{ 4, 16,  3.0 },
+	{ 8, 64,  4.0 },
+    };
+
+    double error = 0;
+    unsigned total = 0;
+
+    // Each image scale
+    for (s = tileScales; s != &tileScales[sizeof tileScales /
+					  sizeof tileScales[0]]; s++) {
+
+	// Y/X decimation blocks
+	for (unsigned y1 = 0; y1 < SIZE; y1 += s->size) {
+	    for (unsigned x1 = 0; x1 < SIZE; x1 += s->size) {
+
+		CIELab acc1, acc2;
+
+		// Y/X pixels
+		for (unsigned y2 = y1; y2 < y1 + s->size; y2++) {
+		    for (unsigned x2 = x1; x2 < x1 + s->size; x2++) {
+			acc1 += pixel(x2, y2);
+			acc2 += other.pixel(x2, y2);
+		    }
+		}
+
+		// Average the pixels in each decimation block
+		acc1 /= s->pixCount;
+		acc2 /= s->pixCount;
+
+		// Weighted MSE contribution
+		error += acc1.meanSquaredError(acc2) * s->weight;
+		total++;
+	    }
+	}
+    }
+
+    return error / total;
 }
 
 void Tile::render(uint8_t *rgba, size_t stride)
@@ -218,7 +265,7 @@ TileStack *TilePool::closest(TileRef t, double &mse)
     TileStack *closest = NULL;
 
     for (std::list<TileStack>::iterator i = sets.begin(); i != sets.end(); i++) {
-	double err = i->median()->meanSquaredError(*t);
+	double err = i->median()->multiScaleError(*t);
 	if (err < distance) {
 	    distance = err;
 	    closest = &*i;
@@ -300,4 +347,21 @@ void TilePool::optimize()
     // Now reduce each tile, using the agreed-upon color palette
     for (std::list<TileStack>::iterator i = sets.begin(); i != sets.end(); i++)
 	i->optimized = i->median()->reduce(reducer, maxMSE);    
+}
+
+void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
+{
+    // Draw all tiles in this pool to an RGBA framebuffer, for proofing purposes
+    
+    unsigned x = 0, y = 0;
+    for (std::list<TileStack>::iterator i = sets.begin(); i != sets.end(); i++) {
+	TileRef t = i->median();
+	t->render(rgba + (x * Tile::SIZE * 4) + (y * Tile::SIZE * stride), stride);
+
+	x++;
+	if (x == width) {
+	    x = 0;
+	    y++;
+	}
+    }
 }

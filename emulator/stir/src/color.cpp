@@ -164,25 +164,15 @@ void ColorReducer::reduce(double maxMSE)
      * up over time.
      */
 
-    double prevMSE = 0;
-    unsigned prevBoxCount = 0;
-
     while (!boxQueue.empty()) {
-	const double caution = 4;
 	double mse = meanSquaredError();
-	double slope = prevBoxCount ? (prevMSE - mse) / (boxes.size() - prevBoxCount) : 0;
-	int numSplits = prevBoxCount ? (mse - maxMSE) / slope / caution : 1;
-	if (numSplits < 1)
-	    numSplits = 1;
+	int numSplits = 1 + boxQueue.size() / 50;
 
-	fprintf(stderr, "Optimizing palette... %d colors, MSE %g > %g (slope %.04f, %d)\n",
-		(int)boxes.size(), mse, maxMSE, slope, numSplits);
+	fprintf(stderr, "Optimizing palette... %d colors, MSE %g > %g\n",
+		(int)boxes.size(), mse, maxMSE);
 
 	if (mse <= maxMSE)
 	    break;
-
-	prevMSE = mse;
-	prevBoxCount = boxes.size();
 
 	for (unsigned i = 0; i < numSplits && !boxQueue.empty(); i++) {
 	    unsigned boxIndex = *boxQueue.begin();

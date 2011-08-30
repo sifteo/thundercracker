@@ -32,12 +32,17 @@ int main(int argc, char **argv) {
     pool.optimize();
 
     std::vector<uint8_t> image;
-    image.resize(4 * Tile::PIXELS * tg.width() * tg.height());
-    tg.render(&image[0], 4 * Tile::SIZE * tg.width());
+    unsigned width = Tile::SIZE * tg.width() * 2;
+    unsigned height = Tile::SIZE * tg.height();
+    size_t pitch = width * 4;
+    image.resize(pitch * height);
+
+    tg.render(&image[pitch/2], pitch);
+    pool.render(&image[0], pitch, tg.width());
 
     LodePNG::Encoder encoder;
     std::vector<uint8_t> pngOut;
-    encoder.encode(pngOut, &image[0], tg.width() * Tile::SIZE, tg.height() * Tile::SIZE);
+    encoder.encode(pngOut, &image[0], width, height);
     LodePNG::saveFile(pngOut, argv[2]);
 
     return 0;
