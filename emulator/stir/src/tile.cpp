@@ -8,20 +8,8 @@
 
 #include "tile.h"
 
-Tile::Tile(uint32_t *rgba, uint32_t stride) {
-    /*
-     * Convert RGBA image data to RGB565 indexed colo
+Tile::Tile(uint8_t *rgba, uint32_t stride)
+{
+    for (i
     
-
 }
-
-    static const SIZE = 8;       // Number of pixels on a side
-    static const PIXELS = 64;    // Total pixels in a tile
-
- private:
-    uint8_t mPixels[PIXELS];
-    uint16_t mPalette[PIXELS];
-    unsigned mColorCount;
-};
-
-#endif

@@ -137,16 +137,16 @@ void ColorReducer::reduce(double maxMSE)
     box root = { 0, colors.size() };
     boxes.clear();
     boxes.push_back(root);
+    boxQueue.clear();
     boxQueue.push_back(0);
 
     // Keep splitting until our error is low enough or we run out of boxes
     while (!boxQueue.empty()) {
 	double mse = meanSquaredError();
-	
 	if (mse <= maxMSE)
 	    break;
 
-	fprintf(stderr, "Color optimization... %d colors, MSE %g > %g\n",
+	fprintf(stderr, "Optimizing palette... %d colors, MSE %g > %g\n",
 		(int)boxes.size(), mse, maxMSE);
 
 	unsigned boxIndex = *boxQueue.begin();
@@ -266,7 +266,6 @@ bool ColorReducer::splitBox(box &b)
      *
      * If we never find one (the box is all one color), returns false.
      * On success, returns true and appends a new box to the box vector.
-     * Updates both boxes' color averages.
      */
 
     // Max number of steps: Half the width, rounded up.
@@ -296,9 +295,8 @@ void ColorReducer::splitBox(box &b, int at)
 {
     /*
      * Split a box at the specified position, between index at and
-     * at+1.  Update both boxes' color averages, and updates the
-     * inverse LUT. Because this appends to 'boxes', we invalidate
-     * the peakMSE pointer.
+     * at+1, and update the inverse color LUT. Both new boxes are
+     * added to the box queue.
      */
 
     box newBox = { at+1, b.end };
