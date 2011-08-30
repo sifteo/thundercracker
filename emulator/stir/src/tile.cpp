@@ -92,6 +92,28 @@ void Tile::render(uint8_t *rgba, size_t stride)
 	}
 }
 
+TileRef Tile::reduce(ColorReducer &reducer, double maxMSE)
+{
+    /*
+     * Reduce a tile's color palette, using a completed optimized
+     * ColorReducer instance.  Uses maxMSE to provide hysteresis for
+     * the color selections, emphasizing color runs when possible.
+     */
+
+    TileRef result = TileRef(new Tile());
+    RGB565 run;
+
+    for (unsigned i = 0; i < PIXELS; i++) {
+	RGB565 color = reducer.nearest(mPixels[i]);
+	double error = CIELab(color).meanSquaredError(CIELab(run));
+	if (error > maxMSE)
+	    run = color;
+	result->mPixels[i] = run;
+    }
+
+    return result;
+}
+
 void TileStack::add(TileRef t)
 {
     tiles.push_back(t);
@@ -104,6 +126,8 @@ TileRef TileStack::median()
      * Create a new tile based on the per-pixel median of every tile in the set.
      */
 
+    if (optimized)
+	return optimized;
     if (cache)
 	return cache;
 
@@ -165,11 +189,17 @@ TileStack *TilePool::add(TileRef t)
     double mse;
     TileStack *c = closest(t, mse);
 
+    totalTiles++;
+
     if (c == NULL || mse > maxMSE) {
 	// Too far away. Start a new set.
 	sets.push_front(TileStack());
 	c = &*sets.begin();
-	fprintf(stderr, "Optimizing tiles... %d sets\n", (int) sets.size());
+    }
+
+    if (!(totalTiles % 256)) {
+	fprintf(stderr, "Optimizing tiles... %u sets / %u total (%.03f %%)\n",
+		(unsigned) sets.size(), totalTiles, sets.size() * 100.0 / totalTiles);
     }
 
     c->add(t);
@@ -245,4 +275,29 @@ void TileGrid::render(uint8_t *rgba, size_t stride)
 	    TileRef t = tile(x, y)->median();
 	    t->render(rgba + (x * Tile::SIZE * 4) + (y * Tile::SIZE * stride), stride);
 	}
+}
+
+void TilePool::optimize()
+{
+    /*
+     * Global optimizations to apply after filling a tile
+     * pool. Currently, this just does a global palette optimization
+     * using the same MSE we're using elsewhere.
+     */
+
+    ColorReducer reducer;
+
+    // First, add ALL tile data to the reducer's pool    
+    for (std::list<TileStack>::iterator i = sets.begin(); i != sets.end(); i++) {
+	TileRef t = i->median();
+	for (unsigned j = 0; j < Tile::PIXELS; j++)
+	    reducer.add(t->pixel(j));
+    }
+
+    // Ask the reducer to do its own (slow!) global optimization
+    reducer.reduce(maxMSE);
+
+    // Now reduce each tile, using the agreed-upon color palette
+    for (std::list<TileStack>::iterator i = sets.begin(); i != sets.end(); i++)
+	i->optimized = i->median()->reduce(reducer, maxMSE);    
 }

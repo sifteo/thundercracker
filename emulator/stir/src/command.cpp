@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
     TileGrid tg = TileGrid(&pool);
 
     tg.load(argv[1]);
+    pool.optimize();
 
     std::vector<uint8_t> image;
     image.resize(4 * Tile::PIXELS * tg.width() * tg.height());

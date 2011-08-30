@@ -36,7 +36,7 @@ class Tile {
     static const uint16_t CHROMA_KEY = 0x4FF5;
 
     void render(uint8_t *rgba, size_t stride);
-
+   
     bool usingChromaKey() {
 	return mUsingChromaKey;
     }
@@ -50,6 +50,7 @@ class Tile {
     }
 
     double meanSquaredError(Tile &other);
+    TileRef reduce(ColorReducer &reducer, double maxMSE);
 
  private:
     Tile() {}
@@ -81,8 +82,11 @@ class TileStack {
  private:
     static const unsigned MAX_SIZE = 128;
 
+    friend class TilePool;
+
     std::vector<TileRef> tiles;
     TileRef cache;
+    TileRef optimized;
 };
 
 
@@ -95,13 +99,15 @@ class TileStack {
 class TilePool {
  public:
     TilePool(double _maxMSE)
-        : maxMSE(_maxMSE) {}
+        : maxMSE(_maxMSE), totalTiles(0) {}
 
     TileStack *add(TileRef t);
     TileStack *closest(TileRef t, double &mse);
+    void optimize();
 
  private:
     std::list<TileStack> sets;
+    unsigned totalTiles;
     double maxMSE;
 };
 

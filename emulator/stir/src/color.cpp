@@ -155,26 +155,50 @@ void ColorReducer::reduce(double maxMSE)
     boxQueue.clear();
     boxQueue.push_back(0);
 
-    // Keep splitting until our error is low enough or we run out of boxes
+    /*
+     * Keep splitting until our error is low enough or we run out of boxes.
+     *
+     * It's actually much more expensive to calculate the MSE (and the
+     * color LUT it requires) than it is to perform palette
+     * splits.. so we'll try to do multiple splits at a time, speeding
+     * up over time.
+     */
+
+    double prevMSE = 0;
+    unsigned prevBoxCount = 0;
+
     while (!boxQueue.empty()) {
+	const double caution = 4;
 	double mse = meanSquaredError();
+	double slope = prevBoxCount ? (prevMSE - mse) / (boxes.size() - prevBoxCount) : 0;
+	int numSplits = prevBoxCount ? (mse - maxMSE) / slope / caution : 1;
+	if (numSplits < 1)
+	    numSplits = 1;
+
+	fprintf(stderr, "Optimizing palette... %d colors, MSE %g > %g (slope %.04f, %d)\n",
+		(int)boxes.size(), mse, maxMSE, slope, numSplits);
+
 	if (mse <= maxMSE)
 	    break;
 
-	fprintf(stderr, "Optimizing palette... %d colors, MSE %g > %g\n",
-		(int)boxes.size(), mse, maxMSE);
+	prevMSE = mse;
+	prevBoxCount = boxes.size();
 
-	unsigned boxIndex = *boxQueue.begin();
-	struct box& b = boxes[boxIndex];
-	boxQueue.pop_front();
+	for (unsigned i = 0; i < numSplits && !boxQueue.empty(); i++) {
+	    unsigned boxIndex = *boxQueue.begin();
+	    struct box& b = boxes[boxIndex];
+	    boxQueue.pop_front();
 
-	int major = CIELab::findMajorAxis(&colors[b.begin], b.end - b.begin);
+	    int major = CIELab::findMajorAxis(&colors[b.begin], b.end - b.begin);
 
-	std::sort(colors.begin() + b.begin,
-		  colors.begin() + b.end,
-		  CIELab::sortAxis(major));
+	    std::sort(colors.begin() + b.begin,
+		      colors.begin() + b.end,
+		      CIELab::sortAxis(major));
 
-	splitBox(b);
+	    splitBox(b);
+	}
+
+	updateInverseLUT();
     }
 }
 
@@ -303,8 +327,7 @@ void ColorReducer::splitBox(box &b, int at)
 {
     /*
      * Split a box at the specified position, between index at and
-     * at+1, and update the inverse color LUT. Both new boxes are
-     * added to the box queue.
+     * at+1. Both new boxes are added to the box queue.
      */
 
     box newBox = { at+1, b.end };
@@ -313,6 +336,5 @@ void ColorReducer::splitBox(box &b, int at)
     boxQueue.push_back(&b - &boxes[0]);
     boxQueue.push_back(boxes.size());
     boxes.push_back(newBox);
-    updateInverseLUT();
 }
 
