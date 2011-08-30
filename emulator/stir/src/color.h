@@ -9,121 +9,26 @@
 #ifndef _COLOR_H
 #define _COLOR_H
 
+#include <vector>
+#include <functional>
+#include <list>
 #include <stdint.h>
-#include <math.h>
 
 
-struct CIELab {
-    // Based on the CIE L*a*b code used by dcraw. See: http://www.rawness.es/cielab/?lang=en
-    //
-    // To the extent possible under law, Manuel Llorens <manuelllorens@gmail.com>
-    // has waived all copyright and related or neighboring rights to this work.
-    // This code is licensed under CC0 v1.0, see license information at
-    // http://creativecommons.org/publicdomain/zero/1.0/
-
-    double L, a, b;
-    
-    CIELab(double _L, double _a, double _b) {
-	L = _L;
-	a = _a;
-	b = _b;
-    }
-  
-    CIELab(uint32_t rgb) {
-	double red = (uint8_t)rgb;
-	double green = (uint8_t)(rgb >> 8);
-	double blue = (uint8_t)(rgb >> 16);
-
-	double xyz[3] = { 0, 0, 0 };
-	static const double m[3][3] = {
-	    {0.79767484649999998, 0.13519170820000001, 0.031353408800000003},
-	    {0.28804020250000001, 0.71187413249999998, 8.5665099999999994e-05},
-	    {0, 0, 0.82521143890000004}
-	};
-	for (int i = 0; i < 3; i++) {
-	    xyz[i] += m[i][0] * red;
-	    xyz[i] += m[i][1] * green;
-	    xyz[i] += m[i][2] * blue;
-	}
-
-	static const double d50_white[3] = {0.964220, 1, 0.825211}; 
-	for (int i = 0; i < 3; i++) {
-	    xyz[i] = f_cbrt(xyz[i] / d50_white[i]);
-	}
-
-	L = 116.0 * xyz[1] - 16.0;
-	a = 500.0 * (xyz[0] - xyz[1]);
-	b = 200.0 * (xyz[1] - xyz[2]);
-    }
-
-    uint32_t rgb() const {
-        // Convert L*a*b* to XYZ  
-	double fy = (L+16.0)/116.0;
-        double fx = fy + a/500.0;
-        double fz = fy - b/200.0;
-  
-	static const double ep = 216.0 / 24389.0;
-	static const double ka = 24389.0 / 27.0;
-	static const double d50_white[3] = {0.964220, 1, 0.825211}; 
-
-	double xyz[3];
-        xyz[0] = 255.0 * d50_white[0] * (fx*fx*fx>ep?fx*fx*fx:(116.0*fx-16.0)/ka);  
-        xyz[1] = 255.0 * d50_white[1] * (L>ka*ep?pow(fy,3.0):L/ka);  
-        xyz[2] = 255.0 * d50_white[2] * (fz*fz*fz>ep?fz*fz*fz:(116.0*fz-16.0)/ka);  
-  
-        // Convert XYZ to RGB  
-	double rgb[3] = { 0, 0, 0 };
-	static const double m[3][3] = {
-	    {1.3459434662015495, -0.54459884249024337, -6.9388939039072284e-18},
-	    {-0.25560754075639425, 1.5081672430343562, 3.9573379295720912e-18},
-	    {-0.05111177218797338, 0.020535140503506362, 1.2118106376869808}
-	};
-	for (int i = 0; i < 3; i++) {
-            rgb[0] += xyz[i] * m[i][0];  
-            rgb[1] += xyz[i] * m[i][1];  
-            rgb[2] += xyz[i] * m[i][2];  
-        }  
-
-	uint32_t rgb32 = 0;
-	for (int i = 0; i < 3; i++) {
-	    // Round, not truncate
-	    double v = rgb[i] + 0.5;
-
-	    if (v < 0) v = 0;
-	    if (v > 255) v = 255;
-
-	    rgb32 |= (uint8_t)v << (i*8);
-        }  
-
-	return rgb32;
-    }  
-    
-    CIELab& operator+= (const CIELab &other) {
-	L += other.L;
-	a += other.a;
-	b += other.b;
-	return *this;
-    }
-    
-    CIELab& operator/= (const double &other) {
-	L /= other;
-	a /= other;
-	b /= other;
-	return *this;
-    }
-
-private:
-    double f_cbrt(double r){  
-	static const double ep = 216.0 / 24389.0;
-	static const double ka = 24389.0 / 27.0;
-	r/=255.0;
-	return r > ep ? pow(r,1/3.0) : (ka*r+16)/116.0;  
-    }  
-};
-
+/*
+ * RGB565 --
+ *
+ *    16-bit 5:6:5 color representation and conversion routines. This
+ *    has been verified for accurate round-trip conversion to and from
+ *    8-bit RGB.
+ */
 
 struct RGB565 {
     uint16_t value;
+
+    RGB565() {
+	value = 0;
+    }
 
     RGB565(uint16_t _value) {
 	value = _value;
@@ -133,6 +38,11 @@ struct RGB565 {
 	RGB565 v((uint8_t)rgb, (uint8_t)(rgb >> 8), (uint8_t)(rgb >> 16));
 	value = v.value;
     }
+
+    RGB565(uint8_t *rgb) {
+	RGB565 v(rgb[0], rgb[1], rgb[2]);
+	value = v.value;
+    }	
     
     RGB565(uint8_t r, uint8_t g, uint8_t b) {
 	/*
@@ -171,6 +81,151 @@ struct RGB565 {
     bool operator==(RGB565 &other) const {
 	return value == other.value;
     }
+
+    bool operator!=(RGB565 &other) const {
+	return value != other.value;
+    }
 };
+
+
+/*
+ * CIELab --
+ *
+ *    CIE L*a*b* colorspace data type and conversion routines.  Based
+ *    on the CIE L*a*b* code used by dcraw. See:
+ *
+ *       http://www.rawness.es/cielab/?lang=en
+ *
+ *    The following waiver applied to the original unmodified code:
+ *
+ *    To the extent possible under law, Manuel Llorens <manuelllorens@gmail.com>
+ *    has waived all copyright and related or neighboring rights to this work.
+ *    This code is licensed under CC0 v1.0, see license information at
+ *    http://creativecommons.org/publicdomain/zero/1.0/
+ *
+ *    This routine has been verified for accurate round-trip
+ *    conversion of 8-bit RGB colors.
+ */
+
+struct CIELab {
+
+    union {
+	struct {
+	    double L, a, b;
+	};
+	double axis[3];
+    };
+
+    CIELab() {
+	L = a = b = 0;
+    }
+    
+    CIELab(double _L, double _a, double _b) {
+	L = _L;
+	a = _a;
+	b = _b;
+    }
+  
+    CIELab(uint32_t rgb);
+    uint32_t rgb() const;
+    double meanSquaredError(CIELab other);
+
+    CIELab(RGB565 rgb) {
+	*this = lut565[rgb.value];
+    }
+    
+    CIELab& operator+= (const CIELab &other) {
+	L += other.L;
+	a += other.a;
+	b += other.b;
+	return *this;
+    }
+    
+    CIELab& operator/= (const double &other) {
+	L /= other;
+	a /= other;
+	b /= other;
+	return *this;
+    }
+
+    static void initialize(void);
+    
+private:
+    double f_cbrt(double r);
+    static CIELab lut565[0x10000];
+};
+
+
+/*
+ * ColorReducer --
+ *
+ *    Maintains a pool of color values, reduces those values using a
+ *    particular maximum particular number of colors, and performs
+ *    lookups in this color pool to find the nearest color to any
+ *    given value.
+ *
+ *    Every occurrence of every pixel should be add()'ed to the
+ *    ColorReducer, so that its prevalence in the input data can be
+ *    properly assessed.
+ *
+ *    This uses the median cut algorithm, operating internally using
+ *    CIE L*a*b* color space. To determine the amount of color
+ *    reduction possible, this uses a Mean Squared Error analysis,
+ *    weighted according to the color difference and the number of
+ *    affected pixels.
+ */
+
+class ColorReducer {
+ public:
+    ColorReducer();
+
+    void reduce(double maxMSE);
+
+    void add(RGB565 color) {
+	colors.push_back(color);
+	colorWeights[color.value]++;
+    }
+
+    RGB565 nearest(RGB565 color) {
+	return boxMedian(boxes[inverseLUT[color.value]]);
+    }
+
+    unsigned numColors() {
+	return boxes.size();
+    }
+
+ private:
+    // One median-cut box. Holds a (cached) average color for the box,
+    // as well as indices for the box's boundaries within the 'colors' vector.
+    struct box {
+	unsigned begin, end;
+    };
+
+    std::vector<RGB565> colors;
+    std::vector<box> boxes;
+    std::list<unsigned> boxQueue;
+    uint16_t inverseLUT[0x10000];
+    uint32_t colorWeights[0x10000];
+
+    void updateInverseLUT();
+    double meanSquaredError();
+    int findMajorAxis(box &b);
+    void sortBox(box &b, int axis);
+    bool splitBox(box &b);
+    void splitBox(box &b, int at);
+
+    RGB565 boxMedian(box &b) {
+	return colors[(b.begin + b.end) >> 1];
+    }
+    
+    struct labSort : public std::binary_function<RGB565 &, RGB565 &, bool> {
+        labSort(int _axis) : axis(_axis) {}
+	int axis;
+	bool operator()(const RGB565 &a, const RGB565 &b) {
+	    return CIELab(a).axis[axis] < CIELab(b).axis[axis];
+	}
+    };
+};
+    
 
 #endif
