@@ -49,7 +49,31 @@ class Tile {
 	return mPixels[x + y * SIZE];
     }
 
-    double multiScaleError(Tile &other);
+    RGB565 pixelWrap(unsigned x, unsigned y) {
+	return pixel(x & 7, y & 7);
+    }
+
+    // http://en.wikipedia.org/wiki/Sobel_operator
+    double sobelGx(unsigned x, unsigned y) {
+	return ( - CIELab(pixelWrap(x-1, y-1)).L
+		 + CIELab(pixelWrap(x+1, y-1)).L
+		 -2* CIELab(pixelWrap(x-1, y)).L
+		 +2* CIELab(pixelWrap(x+1, y)).L
+		 - CIELab(pixelWrap(x-1, y+1)).L
+		 + CIELab(pixelWrap(x+1, y+1)).L );
+    }
+    double sobelGy(unsigned x, unsigned y) {
+	return ( - CIELab(pixelWrap(x-1, y-1)).L
+		 + CIELab(pixelWrap(x-1, y+1)).L
+		 -2* CIELab(pixelWrap(x, y-1)).L
+		 +2* CIELab(pixelWrap(x, y+1)).L
+		 - CIELab(pixelWrap(x+1, y-1)).L
+		 + CIELab(pixelWrap(x+1, y+1)).L );
+    }
+
+    double errorMetric(Tile &other);
+    double meanSquaredError(Tile &other, int scale=1);
+    double sobelError(Tile &other);
 
     TileRef reduce(ColorReducer &reducer, double maxMSE);
 
@@ -116,6 +140,8 @@ class TilePool {
     std::list<TileStack> sets;
     unsigned totalTiles;
     double maxMSE;
+
+    void optimizePalette();
 };
 
 

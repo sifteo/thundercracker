@@ -61,65 +61,76 @@ Tile::Tile(uint8_t *rgba, size_t stride)
 	}	    
 }
 
-double Tile::multiScaleError(Tile &other)
+double Tile::errorMetric(Tile &other)
 {
     /*
-     * This is an error metric which works by combining MSEs measurd
-     * at mutliple scales. This approximates the extra perceptual
-     * sensitivity we have to image defects which don't just look bad
-     * close-up but also from afar.
+     * This is a rather ad-hoc attempt at a perceptually-optimized
+     * error metric. It is a form of multi-scale MSE metric, plus we
+     * attempt to take into account the geometric structure of a tile
+     * by comparing a luminance edge detection map.
+     */
+    return (0.30 * sobelError(other) +            // Contrast structure
+	    0.10 * meanSquaredError(other, 1) +   // Fine color
+	    1.00 * meanSquaredError(other, 4));   // Coarse color
+}
+
+double Tile::meanSquaredError(Tile &other, int scale)
+{
+    /*
+     * This is a mean squared error metric which can operate at
+     * different scales. This operates as if the tiles in question
+     * had been scaled down by a factor of 'scale' first.
+     *
+     * This only really makes sense with scales of 1, 2, 4, or 8.
      */
 
-    static const struct {
-	unsigned size, pixCount;
-	double weight;
-    } *s, tileScales[] = {
-	/*
-	 * Currently we're giving much more weight to large-scale
-	 * differences than to small-scale. These weights are
-	 * arbitrary, they can be tweaked manually to obtain the most
-	 * consistent image quality for a given target MSE level.
-	 */
-
-	{ 1, 1,	  1.0 },
-	{ 2, 4,   2.0 },
-	{ 4, 16,  3.0 },
-	{ 8, 64,  4.0 },
-    };
-
+    int scale2 = scale * scale;
     double error = 0;
     unsigned total = 0;
 
-    // Each image scale
-    for (s = tileScales; s != &tileScales[sizeof tileScales /
-					  sizeof tileScales[0]]; s++) {
+    // Y/X decimation blocks
+    for (unsigned y1 = 0; y1 < SIZE; y1 += scale) {
+	for (unsigned x1 = 0; x1 < SIZE; x1 += scale) {
+	    
+	    CIELab acc1, acc2;
 
-	// Y/X decimation blocks
-	for (unsigned y1 = 0; y1 < SIZE; y1 += s->size) {
-	    for (unsigned x1 = 0; x1 < SIZE; x1 += s->size) {
-
-		CIELab acc1, acc2;
-
-		// Y/X pixels
-		for (unsigned y2 = y1; y2 < y1 + s->size; y2++) {
-		    for (unsigned x2 = x1; x2 < x1 + s->size; x2++) {
-			acc1 += pixel(x2, y2);
-			acc2 += other.pixel(x2, y2);
-		    }
+	    // Y/X pixels
+	    for (unsigned y2 = y1; y2 < y1 + scale; y2++) {
+		for (unsigned x2 = x1; x2 < x1 + scale; x2++) {
+		    acc1 += pixel(x2, y2);
+		    acc2 += other.pixel(x2, y2);
 		}
-
-		// Average the pixels in each decimation block
-		acc1 /= s->pixCount;
-		acc2 /= s->pixCount;
-
-		// Weighted MSE contribution
-		error += acc1.meanSquaredError(acc2) * s->weight;
-		total++;
 	    }
+
+	    // Average the pixels in each decimation block
+	    acc1 /= scale2;
+	    acc2 /= scale2;
+
+	    error += acc1.meanSquaredError(acc2);
+	    total++;
 	}
     }
 
     return error / total;
+}
+
+double Tile::sobelError(Tile &other)
+{
+    /*
+     * An error metric based solely on detecting structural luminance
+     * differences using the Sobel operator.
+     */
+
+    double error = 0;
+
+    for (unsigned y = 0; y < SIZE; y++)
+	for (unsigned x = 0; x < SIZE; x++) {
+	    double gx = sobelGx(x, y) - other.sobelGx(x, y);
+	    double gy = sobelGy(x, y) - other.sobelGy(x, y);
+	    error += gx * gx + gy * gy;
+	}
+
+    return error / PIXELS;
 }
 
 void Tile::render(uint8_t *rgba, size_t stride)
@@ -149,6 +160,9 @@ TileRef Tile::reduce(ColorReducer &reducer, double maxMSE)
 
     TileRef result = TileRef(new Tile());
     RGB565 run;
+
+    // Hysteresis amount
+    maxMSE *= 0.9;
 
     for (unsigned i = 0; i < PIXELS; i++) {
 	RGB565 color = reducer.nearest(mPixels[i]);
@@ -265,7 +279,7 @@ TileStack *TilePool::closest(TileRef t, double &mse)
     TileStack *closest = NULL;
 
     for (std::list<TileStack>::iterator i = sets.begin(); i != sets.end(); i++) {
-	double err = i->median()->multiScaleError(*t);
+	double err = i->median()->errorMetric(*t);
 	if (err < distance) {
 	    distance = err;
 	    closest = &*i;
@@ -332,6 +346,12 @@ void TilePool::optimize()
      * using the same MSE we're using elsewhere.
      */
 
+    if (maxMSE > 0)
+	optimizePalette();
+}
+
+void TilePool::optimizePalette()
+{
     ColorReducer reducer;
 
     // First, add ALL tile data to the reducer's pool    

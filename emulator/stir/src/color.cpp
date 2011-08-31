@@ -166,7 +166,7 @@ void ColorReducer::reduce(double maxMSE)
 
     while (!boxQueue.empty()) {
 	double mse = meanSquaredError();
-	int numSplits = 1 + boxQueue.size() / 50;
+	int numSplits = 1 + boxQueue.size() / 20;
 
 	fprintf(stderr, "Optimizing palette... %d colors, MSE %g > %g\n",
 		(int)boxes.size(), mse, maxMSE);
