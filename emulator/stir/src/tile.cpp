@@ -9,10 +9,21 @@
 #include <stdio.h>
 #include <float.h>
 #include <algorithm>
+#include <set>
 #include "tile.h"
 #include "lodepng.h"
 
+
+Tile::Tile()
+    : mUsingChromaKey(false)
+    {}
+
+Tile::Tile(bool usingChromaKey)
+    : mUsingChromaKey(usingChromaKey)
+    {}
+
 Tile::Tile(uint8_t *rgba, size_t stride)
+    : mUsingChromaKey(false)
 {
     /*
      * Load the tile image from a full-color RGBA source bitmap.
@@ -61,6 +72,22 @@ Tile::Tile(uint8_t *rgba, size_t stride)
 	}	    
 }
 
+void Tile::constructPalette(void)
+{
+    std::set<RGB565> colors;
+
+    for (unsigned i = 0; i < PIXELS; i++)
+	colors.insert(mPixels[i]);
+    
+    mPalette.numColors = colors.size();
+
+    if (mPalette.hasLUT()) {
+	unsigned index = 0;
+	for (std::set<RGB565>::iterator i = colors.begin(); i != colors.end(); i++)
+	    mPalette.colors[index++] = *i;
+    }
+}
+
 double Tile::errorMetric(Tile &other)
 {
     /*
@@ -69,6 +96,7 @@ double Tile::errorMetric(Tile &other)
      * attempt to take into account the geometric structure of a tile
      * by comparing a luminance edge detection map.
      */
+
     return (0.30 * sobelError(other) +            // Contrast structure
 	    0.10 * meanSquaredError(other, 1) +   // Fine color
 	    1.00 * meanSquaredError(other, 4));   // Coarse color
@@ -158,7 +186,7 @@ TileRef Tile::reduce(ColorReducer &reducer, double maxMSE)
      * the color selections, emphasizing color runs when possible.
      */
 
-    TileRef result = TileRef(new Tile());
+    TileRef result = TileRef(new Tile(mUsingChromaKey));
     RGB565 run;
 
     // Hysteresis amount
@@ -174,6 +202,10 @@ TileRef Tile::reduce(ColorReducer &reducer, double maxMSE)
 
     return result;
 }
+
+TilePalette::TilePalette()
+    : numColors(0)
+    {}
 
 void TileStack::add(TileRef t)
 {
@@ -235,7 +267,7 @@ TileRef TileStack::median()
     return cache;
 }
 
-TileStack *TilePool::add(TileRef t)
+TileStackRef TilePool::add(TileRef t)
 {
     /*
      * Add a new tile to the pool, and try to optimize it if we can.
@@ -248,14 +280,15 @@ TileStack *TilePool::add(TileRef t)
      */
 
     double mse;
-    TileStack *c = closest(t, mse);
+    TileStackRef c = closest(t, mse);
 
     totalTiles++;
 
-    if (c == NULL || mse > maxMSE) {
+    if (!c || mse > maxMSE) {
 	// Too far away. Start a new set.
-	sets.push_front(TileStack());
-	c = &*sets.begin();
+
+	c = TileStackRef(new TileStack());
+	sets.push_back(c);
     }
 
     if (!(totalTiles % 256)) {
@@ -267,7 +300,7 @@ TileStack *TilePool::add(TileRef t)
     return c;
 }
 
-TileStack *TilePool::closest(TileRef t, double &mse)
+TileStackRef TilePool::closest(TileRef t, double &mse)
 {
     /*
      * Search for the closest tile set for the provided tile image.
@@ -276,13 +309,13 @@ TileStack *TilePool::closest(TileRef t, double &mse)
      */
 
     double distance = DBL_MAX;
-    TileStack *closest = NULL;
+    TileStackRef closest;
 
-    for (std::list<TileStack>::iterator i = sets.begin(); i != sets.end(); i++) {
-	double err = i->median()->errorMetric(*t);
+    for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
+	double err = (*i)->median()->errorMetric(*t);
 	if (err < distance) {
 	    distance = err;
-	    closest = &*i;
+	    closest = *i;
 	}
     }
 
@@ -355,8 +388,8 @@ void TilePool::optimizePalette()
     ColorReducer reducer;
 
     // First, add ALL tile data to the reducer's pool    
-    for (std::list<TileStack>::iterator i = sets.begin(); i != sets.end(); i++) {
-	TileRef t = i->median();
+    for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
+	TileRef t = (*i)->median();
 	for (unsigned j = 0; j < Tile::PIXELS; j++)
 	    reducer.add(t->pixel(j));
     }
@@ -365,8 +398,10 @@ void TilePool::optimizePalette()
     reducer.reduce(maxMSE);
 
     // Now reduce each tile, using the agreed-upon color palette
-    for (std::list<TileStack>::iterator i = sets.begin(); i != sets.end(); i++)
-	i->optimized = i->median()->reduce(reducer, maxMSE);    
+    for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
+	TileStackRef ts = *i;
+	ts->optimized = ts->median()->reduce(reducer, maxMSE);
+    }
 }
 
 void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
@@ -374,8 +409,8 @@ void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
     // Draw all tiles in this pool to an RGBA framebuffer, for proofing purposes
     
     unsigned x = 0, y = 0;
-    for (std::list<TileStack>::iterator i = sets.begin(); i != sets.end(); i++) {
-	TileRef t = i->median();
+    for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
+	TileRef t = (*i)->median();
 	t->render(rgba + (x * Tile::SIZE * 4) + (y * Tile::SIZE * stride), stride);
 
 	x++;
@@ -385,3 +420,65 @@ void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
 	}
     }
 }
+
+unsigned TilePool::orderingCost()
+{
+    /*
+     * Measure the current cost associated with the ordering of tiles
+     * in our pool. This is based on the expected encoding of a tile's
+     * colors, given those tiles coming before it in the pool.
+     *
+     * This assumes that the color LUT is maintained using an LRU
+     * eviction policy.
+     *
+     * XXX: Once we're actually encoding this in a flash loadstream,
+     *      share code here so we don't risk the optimizer and the
+     *      compressor getting out of sync.
+     */
+
+    const unsigned modeSwitchCost = 1;   // Opcode/runlength byte
+    const unsigned lutLoadCost = 3;      // Opcode/index byte, plus 16-bit color
+
+    unsigned cost = 0;
+    TilePalette::ColorMode mode = TilePalette::CM_INVALID;
+    std::list<RGB565> lut;
+
+    for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
+	const TilePalette &pal = (*i)->median()->palette();
+	TilePalette::ColorMode nextMode = pal.colorMode();
+
+	if (nextMode != mode) {
+	    cost += modeSwitchCost;
+	    mode = nextMode;
+	}
+
+	// Account for each color in this tile
+	for (unsigned c = 0; c < pal.numColors; c++) {
+	    RGB565 color = pal.colors[c];
+	    std::list<RGB565>::iterator li;
+
+	    for (li = lut.begin(); li != lut.end(); li++)
+		if (*li == color)
+		    break;
+
+	    if (li == lut.end()) {
+		// Color not found, we'll be adding something new.
+		cost += lutLoadCost;
+
+		// Do we need to make room for it?
+		if (lut.size() == TilePalette::LUT_MAX)
+		    lut.pop_back();
+
+	    } else {
+		// Found it. Remove so we can bump it.
+		lut.erase(li);
+	    }
+
+	    // This color is now most recent
+	    lut.push_front(c);
+	}
+    }
+
+    return cost;
+}
+

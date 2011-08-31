@@ -81,12 +81,16 @@ struct RGB565 {
 	return red() | (green() << 8) | (blue() << 16);
     }
 
-    bool operator==(RGB565 &other) const {
+    bool operator== (const RGB565 &other) const {
 	return value == other.value;
     }
 
-    bool operator!=(RGB565 &other) const {
+    bool operator!= (const RGB565 &other) const {
 	return value != other.value;
+    }
+
+    bool operator< (const RGB565 &other) const {
+	return value < other.value;
     }
 };
 

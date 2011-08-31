@@ -16,6 +16,60 @@
 class Tile;
 class TileStack;
 typedef std::shared_ptr<Tile> TileRef;
+typedef std::shared_ptr<TileStack> TileStackRef;
+
+
+/*
+ * TilePalette --
+ *
+ *    The color palette for one single tile. This is a small utility
+ *    object that we use as part of the tile order optimization, in
+ *    order to search for runs of tiles with common colors.
+ *
+ *    Tiles will only have indexed color palettes if we have
+ *    LUT_MAX or fewer distinct colors. If numColors is greater
+ *    than LUT_MAX, the colors[] array is not valid.
+ */
+
+struct TilePalette {
+    TilePalette();
+
+    static const unsigned LUT_MAX = 16;
+
+    uint8_t numColors;
+    RGB565 colors[LUT_MAX];
+
+    enum ColorMode {
+	CM_INVALID = 0,
+	CM_LUT1,
+	CM_LUT2,
+	CM_LUT4,
+	CM_LUT16,
+	CM_TRUE,
+    };
+
+    ColorMode colorMode() const {
+	if (numColors <= 1)  return CM_LUT1;
+	if (numColors <= 2)  return CM_LUT2;
+	if (numColors <= 4)  return CM_LUT4;
+	if (numColors <= 16) return CM_LUT16;
+	return CM_TRUE;
+    }
+
+    bool hasLUT() const {
+	// Do we have a color LUT at all?
+	return numColors <= LUT_MAX;
+    }
+
+    bool hasColor(RGB565 c) const {
+	// Is a particular color in the LUT?
+	if (hasLUT())
+	    for (unsigned i = 0; i < numColors; i++)
+		if (colors[i] == c)
+		    return true;
+	return false;
+    }
+};
 
 
 /*
@@ -71,6 +125,13 @@ class Tile {
 		 + CIELab(pixelWrap(x+1, y+1)).L );
     }
 
+    const TilePalette &palette() {
+	// Lazily build the palette info
+	if (!mPalette.numColors)
+	    constructPalette();
+	return mPalette;
+    }	
+
     double errorMetric(Tile &other);
     double meanSquaredError(Tile &other, int scale=1);
     double sobelError(Tile &other);
@@ -78,12 +139,15 @@ class Tile {
     TileRef reduce(ColorReducer &reducer, double maxMSE);
 
  private:
-    Tile() {}
+    Tile();
+    Tile(bool usingChromaKey);
+    void constructPalette(void);
 
     friend class TileStack;
 
     RGB565 mPixels[PIXELS];
     bool mUsingChromaKey;
+    TilePalette mPalette;
 };
 
 
@@ -126,8 +190,8 @@ class TilePool {
     TilePool(double _maxMSE)
         : maxMSE(_maxMSE), totalTiles(0) {}
 
-    TileStack *add(TileRef t);
-    TileStack *closest(TileRef t, double &mse);
+    TileStackRef add(TileRef t);
+    TileStackRef closest(TileRef t, double &mse);
     void optimize();
 
     void render(uint8_t *rgba, size_t stride, unsigned width);
@@ -137,11 +201,14 @@ class TilePool {
     }
 
  private:
-    std::list<TileStack> sets;
+    typedef std::list<TileStackRef> Collection;
+    Collection sets;
+
     unsigned totalTiles;
     double maxMSE;
 
     void optimizePalette();
+    unsigned orderingCost();
 };
 
 
@@ -168,14 +235,14 @@ class TileGrid {
 	return mHeight;
     }
 
-    TileStack *tile(unsigned x, unsigned y) {
+    TileStackRef tile(unsigned x, unsigned y) {
 	return tiles[x + y * mWidth];
     }
 
  private:
     TilePool *mPool;
     unsigned mWidth, mHeight;
-    std::vector<TileStack*> tiles;
+    std::vector<TileStackRef> tiles;
 };
 
 #endif
