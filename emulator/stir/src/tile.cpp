@@ -10,6 +10,7 @@
 #include <float.h>
 #include <algorithm>
 #include <set>
+#include <map>
 #include "tile.h"
 #include "lodepng.h"
 
@@ -74,17 +75,33 @@ Tile::Tile(uint8_t *rgba, size_t stride)
 
 void Tile::constructPalette(void)
 {
-    std::set<RGB565> colors;
+    /*
+     * Create a TilePalette for this particular tile. If the tile has few enough colors
+     * that we can make a LUT, the palette will include a populated LUT. Additionally,
+     * as a heuristic to help us provide color matches across transitions from higher
+     * tile color depth to lower color depth, we try to order the most popular colors
+     * at the begining of the LUT.
+     */
+
+    // Tracks unique colors, and their frequencies
+    std::map<RGB565, unsigned> colors;
 
     for (unsigned i = 0; i < PIXELS; i++)
-	colors.insert(mPixels[i]);
-    
+	colors[mPixels[i]] = colors[mPixels[i]] + 1;
+
     mPalette.numColors = colors.size();
 
     if (mPalette.hasLUT()) {
+	// Sort the colors using an inverse mapping.
+
+	std::multimap<unsigned, RGB565> lutSorter;
+	for (std::map<RGB565, unsigned>::iterator i = colors.begin(); i != colors.end(); i++)
+	    lutSorter.insert(std::pair<unsigned, RGB565>(i->second, i->first));
+
 	unsigned index = 0;
-	for (std::set<RGB565>::iterator i = colors.begin(); i != colors.end(); i++)
-	    mPalette.colors[index++] = *i;
+	for (std::multimap<unsigned, RGB565>::reverse_iterator i = lutSorter.rbegin();
+	     i != lutSorter.rend(); i++)
+	    mPalette.colors[index++] = i->second;
     }
 }
 
@@ -206,6 +223,81 @@ TileRef Tile::reduce(ColorReducer &reducer, double maxMSE) const
 TilePalette::TilePalette()
     : numColors(0)
     {}
+
+TileCodecLUT::TileCodecLUT()
+{
+    for (int i = 0; i < LUT_MAX; i++)
+	mru.push_back(i);
+}
+
+unsigned TileCodecLUT::encode(const TilePalette &pal)
+{
+    /*
+     * Modify the current LUT state in order to accomodate the given
+     * tile palette, and measure the associated cost (in bytes).
+     */
+
+    const unsigned runBreakCost = 1;   // Breaking a run of tiles, need a new opcode/runlength byte
+    const unsigned lutLoadCost = 3;    // Opcode/index byte, plus 16-bit color
+
+    unsigned cost = 0;
+    TilePalette::ColorMode mode = pal.colorMode();
+
+    // Account for each color in this tile
+    if (pal.hasLUT()) {
+	std::vector<RGB565> missing;
+
+	/*
+	 * Reverse-iterate over the tile's colors, so that the most
+	 * popular colors (at the beginning of the palette) will end
+	 * up at the beginning of the MRU list afterwards.
+	 */
+
+	for (int c = pal.numColors - 1; c >= 0; c--) {
+	    RGB565 color = pal.colors[c];
+	    int index = findColor(color);
+
+	    if (index < 0) {
+		// Don't have this color yet. Add it to a temporary list of colors that we need
+		missing.push_back(color);
+
+	    } else {
+		// We already have this color in the LUT! Bump it to the front of the MRU list.
+		mru.remove(index);
+		mru.push_front(index);
+	    }
+	}
+
+	/*
+	 * After bumping any colors that we do need, add colors we
+	 * don't yet have. We replace starting with the least recently
+	 * used LUT entries and the least popular missing colors. The
+	 * most popular missing colors will end up at the front of the
+	 * MRU list.
+	 *
+	 * Because of the reversal above, the most popular missing
+	 * colors are at the end of the vector. So, we iterate in
+	 * reverse once more.
+	 */
+
+	for (std::vector<RGB565>::reverse_iterator i = missing.rbegin();
+	     i != missing.rend(); i++) {
+
+	    int index = mru.back();
+	    mru.pop_back();
+	    colors[index] = *i;
+	    mru.push_front(index);
+	    cost += lutLoadCost;
+	}
+    }
+
+    // We have to break a run if we're switching modes OR reloading a LUT entry.
+    if (mode != lastMode || cost != 0)
+	cost += runBreakCost;
+    lastMode = mode;
+
+    return cost;
+}
 
 void TileStack::add(TileRef t)
 {
@@ -421,67 +513,6 @@ void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
     }
 }
 
-unsigned TilePool::orderingCost()
-{
-    /*
-     * Measure the current cost associated with the ordering of tiles
-     * in our pool. This is based on the expected encoding of a tile's
-     * colors, given those tiles coming before it in the pool.
-     *
-     * This assumes that the color LUT is maintained using an LRU
-     * eviction policy.
-     *
-     * XXX: Once we're actually encoding this in a flash loadstream,
-     *      share code here so we don't risk the optimizer and the
-     *      compressor getting out of sync.
-     */
-
-    const unsigned modeSwitchCost = 1;   // Opcode/runlength byte
-    const unsigned lutLoadCost = 3;      // Opcode/index byte, plus 16-bit color
-
-    unsigned cost = 0;
-    TilePalette::ColorMode mode = TilePalette::CM_INVALID;
-    std::list<RGB565> lut;
-
-    for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
-	const TilePalette &pal = (*i)->median()->palette();
-	TilePalette::ColorMode nextMode = pal.colorMode();
-
-	if (nextMode != mode) {
-	    cost += modeSwitchCost;
-	    mode = nextMode;
-	}
-
-	// Account for each color in this tile
-	for (unsigned c = 0; c < pal.numColors; c++) {
-	    RGB565 color = pal.colors[c];
-	    std::list<RGB565>::iterator li;
-
-	    for (li = lut.begin(); li != lut.end(); li++)
-		if (*li == color)
-		    break;
-
-	    if (li == lut.end()) {
-		// Color not found, we'll be adding something new.
-		cost += lutLoadCost;
-
-		// Do we need to make room for it?
-		if (lut.size() == TilePalette::LUT_MAX)
-		    lut.pop_back();
-
-	    } else {
-		// Found it. Remove so we can bump it.
-		lut.erase(li);
-	    }
-
-	    // This color is now most recent
-	    lut.push_front(c);
-	}
-    }
-
-    return cost;
-}
-
 void TilePool::optimizeOrder()
 {
     /*
@@ -489,13 +520,38 @@ void TilePool::optimizeOrder()
      * that this is a very computationally difficult problem- it's
      * actually an asymmetric travelling salesman problem!
      *
-     * This is a silly hill-climbing algorithm based on swapping
-     * halves of our pool. It's inspired by 2-opt, but it isn't
-     * actually 2-opt because this is an ATSP, and we have no desire
-     * to reverse the order with which we're visiting tiles on every
-     * iteration.
-     *
-     * XXX: Silly hill climbing was very silly. Scrapped all that,
-     *      let's try a greedy algorithm tomorrow.
+     * It isn't even remotely computationally feasible to come up with
+     * a globally optimal solution, so we just use a greedy heuristic
+     * which tries to pick the best next tile. This uses
+     * TileCodecLUT::encode() as a cost metric.
      */
+
+    Collection newOrder;
+    TileCodecLUT codec;
+
+    fprintf(stderr, "Optimizing tile order...\n");
+
+    while (!sets.empty()) {
+
+	unsigned bestCost = (unsigned) -1;
+	Collection::iterator bestIter;
+
+	// Use a forked copy of the codec to ask what the cost would be for each possible choice
+	for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
+	    TileCodecLUT codecFork = codec;
+	    unsigned cost = codecFork.encode((*i)->median()->palette());
+	    if (cost < bestCost) {
+		bestCost = cost;
+		bestIter = i;
+	    }
+	}
+
+	// Apply the new codec state permanently
+	codec.encode((*bestIter)->median()->palette());
+
+	// Pick the best tile!
+	newOrder.splice(newOrder.end(), sets, bestIter);
+    }
+
+    sets.swap(newOrder);
 }

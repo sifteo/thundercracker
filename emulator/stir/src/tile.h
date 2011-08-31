@@ -29,6 +29,9 @@ typedef std::tr1::shared_ptr<TileStack> TileStackRef;
  *    Tiles will only have indexed color palettes if we have
  *    LUT_MAX or fewer distinct colors. If numColors is greater
  *    than LUT_MAX, the colors[] array is not valid.
+ *
+ *    We keep colors[] ordered by decreasing popularity. See
+ *    Tile::constructPalette().
  */
 
 struct TilePalette {
@@ -56,21 +59,51 @@ struct TilePalette {
 	return CM_TRUE;
     }
 
+    unsigned maxLUTIndex() {
+	if (numColors <= 1)  return 0;
+	if (numColors <= 2)  return 1;
+	if (numColors <= 4)  return 3;
+	return 15;
+    }
+
     bool hasLUT() const {
 	// Do we have a color LUT at all?
 	return numColors <= LUT_MAX;
     }
-
-    bool hasColor(RGB565 c) const {
-	// Is a particular color in the LUT?
-	if (hasLUT())
-	    for (unsigned i = 0; i < numColors; i++)
-		if (colors[i] == c)
-		    return true;
-	return false;
-    }
 };
 
+
+/*
+ * TileCodecLUT --
+ *
+ *    This is similar to TilePalette, but here instead of tracking the
+ *    colors used in a particular tile, we'll track the state of the
+ *    color LUT in the tile encoder/decoder.
+ *
+ *    This is used for actually encoding tiles, as well as for
+ *    estimating the cost of encoding a particular tile using the
+ *    current encoder state.
+ */
+
+struct TileCodecLUT {
+    static const unsigned LUT_MAX = 16;
+
+    RGB565 colors[LUT_MAX];
+    TilePalette::ColorMode lastMode;
+    std::list<int> mru;
+
+    TileCodecLUT();
+
+    unsigned encode(const TilePalette &pal);
+
+    int findColor(RGB565 c) const {
+	// Is a particular color in the LUT? Return the index.
+	for (unsigned i = 0; i < LUT_MAX; i++)
+	    if (colors[i] == c)
+		return i;
+	return -1;
+    }
+};
 
 /*
  * Tile --
@@ -192,6 +225,7 @@ class TilePool {
 
     TileStackRef add(TileRef t);
     TileStackRef closest(TileRef t, double &mse);
+
     void optimize();
 
     void render(uint8_t *rgba, size_t stride, unsigned width);
@@ -208,9 +242,7 @@ class TilePool {
     double maxMSE;
 
     void optimizePalette();
-
     void optimizeOrder();
-    unsigned orderingCost();
 };
 
 
