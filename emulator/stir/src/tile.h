@@ -208,6 +208,8 @@ class TilePool {
     double maxMSE;
 
     void optimizePalette();
+
+    void optimizeOrder();
     unsigned orderingCost();
 };
 

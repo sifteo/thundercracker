@@ -374,13 +374,13 @@ void TileGrid::render(uint8_t *rgba, size_t stride)
 void TilePool::optimize()
 {
     /*
-     * Global optimizations to apply after filling a tile
-     * pool. Currently, this just does a global palette optimization
-     * using the same MSE we're using elsewhere.
+     * Global optimizations to apply after filling a tile pool.
      */
 
     if (maxMSE > 0)
 	optimizePalette();
+
+    optimizeOrder();
 }
 
 void TilePool::optimizePalette()
@@ -482,3 +482,20 @@ unsigned TilePool::orderingCost()
     return cost;
 }
 
+void TilePool::optimizeOrder()
+{
+    /*
+     * Optimize the order of our tiles within the pool. It turns out
+     * that this is a very computationally difficult problem- it's
+     * actually an asymmetric travelling salesman problem!
+     *
+     * This is a silly hill-climbing algorithm based on swapping
+     * halves of our pool. It's inspired by 2-opt, but it isn't
+     * actually 2-opt because this is an ATSP, and we have no desire
+     * to reverse the order with which we're visiting tiles on every
+     * iteration.
+     *
+     * XXX: Silly hill climbing was very silly. Scrapped all that,
+     *      let's try a greedy algorithm tomorrow.
+     */
+}
