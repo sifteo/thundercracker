@@ -89,26 +89,26 @@ class Tile {
     // Firmware chroma-key color
     static const uint16_t CHROMA_KEY = 0x4FF5;
 
-    void render(uint8_t *rgba, size_t stride);
+    void render(uint8_t *rgba, size_t stride) const;
    
-    bool usingChromaKey() {
+    bool usingChromaKey() const {
 	return mUsingChromaKey;
     }
 
-    RGB565 pixel(unsigned i) {
+    RGB565 pixel(unsigned i) const {
 	return mPixels[i];
     }
 
-    RGB565 pixel(unsigned x, unsigned y) {
+    RGB565 pixel(unsigned x, unsigned y) const {
 	return mPixels[x + y * SIZE];
     }
 
-    RGB565 pixelWrap(unsigned x, unsigned y) {
+    RGB565 pixelWrap(unsigned x, unsigned y) const {
 	return pixel(x & 7, y & 7);
     }
 
     // http://en.wikipedia.org/wiki/Sobel_operator
-    double sobelGx(unsigned x, unsigned y) {
+    double sobelGx(unsigned x, unsigned y) const {
 	return ( - CIELab(pixelWrap(x-1, y-1)).L
 		 + CIELab(pixelWrap(x+1, y-1)).L
 		 -2* CIELab(pixelWrap(x-1, y)).L
@@ -116,7 +116,7 @@ class Tile {
 		 - CIELab(pixelWrap(x-1, y+1)).L
 		 + CIELab(pixelWrap(x+1, y+1)).L );
     }
-    double sobelGy(unsigned x, unsigned y) {
+    double sobelGy(unsigned x, unsigned y) const {
 	return ( - CIELab(pixelWrap(x-1, y-1)).L
 		 + CIELab(pixelWrap(x-1, y+1)).L
 		 -2* CIELab(pixelWrap(x, y-1)).L
@@ -132,11 +132,11 @@ class Tile {
 	return mPalette;
     }	
 
-    double errorMetric(Tile &other);
-    double meanSquaredError(Tile &other, int scale=1);
-    double sobelError(Tile &other);
+    double errorMetric(const Tile &other) const;
+    double meanSquaredError(const Tile &other, int scale=1) const;
+    double sobelError(const Tile &other) const;
 
-    TileRef reduce(ColorReducer &reducer, double maxMSE);
+    TileRef reduce(ColorReducer &reducer, double maxMSE) const;
 
  private:
     Tile();

@@ -88,7 +88,7 @@ void Tile::constructPalette(void)
     }
 }
 
-double Tile::errorMetric(Tile &other)
+double Tile::errorMetric(const Tile &other) const
 {
     /*
      * This is a rather ad-hoc attempt at a perceptually-optimized
@@ -102,7 +102,7 @@ double Tile::errorMetric(Tile &other)
 	    1.00 * meanSquaredError(other, 4));   // Coarse color
 }
 
-double Tile::meanSquaredError(Tile &other, int scale)
+double Tile::meanSquaredError(const Tile &other, int scale) const
 {
     /*
      * This is a mean squared error metric which can operate at
@@ -142,7 +142,7 @@ double Tile::meanSquaredError(Tile &other, int scale)
     return error / total;
 }
 
-double Tile::sobelError(Tile &other)
+double Tile::sobelError(const Tile &other) const
 {
     /*
      * An error metric based solely on detecting structural luminance
@@ -161,7 +161,7 @@ double Tile::sobelError(Tile &other)
     return error / PIXELS;
 }
 
-void Tile::render(uint8_t *rgba, size_t stride)
+void Tile::render(uint8_t *rgba, size_t stride) const
 {
     // Draw this tile to an RGBA framebuffer, for proofing purposes
 
@@ -178,7 +178,7 @@ void Tile::render(uint8_t *rgba, size_t stride)
 	}
 }
 
-TileRef Tile::reduce(ColorReducer &reducer, double maxMSE)
+TileRef Tile::reduce(ColorReducer &reducer, double maxMSE) const
 {
     /*
      * Reduce a tile's color palette, using a completed optimized
