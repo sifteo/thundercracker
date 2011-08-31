@@ -10,13 +10,13 @@
 #define _TILE_H
 
 #include <stdint.h>
-#include <memory>
+#include <tr1/memory>
 #include <color.h>
 
 class Tile;
 class TileStack;
-typedef std::shared_ptr<Tile> TileRef;
-typedef std::shared_ptr<TileStack> TileStackRef;
+typedef std::tr1::shared_ptr<Tile> TileRef;
+typedef std::tr1::shared_ptr<TileStack> TileStackRef;
 
 
 /*

@@ -8,7 +8,7 @@ OBJS = \
 
 CDEPS = src/*.h
 
-CCFLAGS += -O3 -g -Werror -Isrc -std=c++0x
+CCFLAGS += -O3 -g -Werror -Isrc
 LDFLAGS += -g -lm -lstdc++
 
 all: $(BIN)
