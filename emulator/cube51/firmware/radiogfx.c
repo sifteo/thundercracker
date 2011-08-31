@@ -306,33 +306,33 @@ static uint16_t y_bg_map;	// Map address for the first tile on this line
 // Load a 16-bit tile address from DPTR without incrementing
 #pragma sdcc_hash +
 #define ADDR_FROM_DPTR() {					\
-    _asm movx	a, @dptr					_endasm; \
-    _asm mov	ADDR_PORT, a					_endasm; \
-    _asm inc	dptr						_endasm; \
-    _asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	_endasm; \
-    _asm movx	a, @dptr					_endasm; \
-    _asm mov	ADDR_PORT, a					_endasm; \
-    _asm dec	dpl						_endasm; \
-    _asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	_endasm; \
+    __asm movx	a, @dptr					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm inc	dptr						__endasm; \
+    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	__endasm; \
+    __asm movx	a, @dptr					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm dec	dpl						__endasm; \
+    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	__endasm; \
     }
 
 // Load a 16-bit tile address from DPTR, and auto-increment
 #pragma sdcc_hash +
 #define ADDR_FROM_DPTR_INC() {					\
-    _asm movx	a, @dptr					_endasm; \
-    _asm mov	ADDR_PORT, a					_endasm; \
-    _asm inc	dptr						_endasm; \
-    _asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	_endasm; \
-    _asm movx	a, @dptr					_endasm; \
-    _asm mov	ADDR_PORT, a					_endasm; \
-    _asm inc	dptr						_endasm; \
-    _asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	_endasm; \
+    __asm movx	a, @dptr					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm inc	dptr						__endasm; \
+    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	__endasm; \
+    __asm movx	a, @dptr					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm inc	dptr						__endasm; \
+    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	__endasm; \
     }
 
 // Add 2 to DPTR. (Can do this in 2 clocks with inline assembly)
 #define DPTR_INC2() {						\
-    _asm inc	dptr						_endasm; \
-    _asm inc	dptr						_endasm; \
+    __asm inc	dptr						__endasm; \
+    __asm inc	dptr						__endasm; \
     }
 
 // Load a 16-bit address from sprite LVRAM
@@ -515,7 +515,7 @@ static void lcd_render(void)
      */
 
     IEN_EN = 0;
-    _asm
+    __asm
 	mov	dptr, #(_vram + VRAM_LATCHED)
 	mov	r0, #VRAM_LATCHED_SIZE
 	mov	r1, #_lvram
@@ -524,7 +524,7 @@ static void lcd_render(void)
 	inc	dptr
 	inc	r1
 	djnz	r0, 1$
-    _endasm ;
+    __endasm ;
     IEN_EN = 1;
 
     /*
