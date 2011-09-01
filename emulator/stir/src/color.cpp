@@ -134,7 +134,7 @@ ColorReducer::ColorReducer()
     memset(colorWeights, 0, sizeof colorWeights);
 }
 
-void ColorReducer::reduce(double maxMSE)
+void ColorReducer::reduce(double maxMSE, Logger &log)
 {
     /*
      * This is a median-cut style color reducer. We start with a
@@ -148,7 +148,7 @@ void ColorReducer::reduce(double maxMSE)
      * box that gives us the most bang for our colortable buck.
      */
 
-    fprintf(stderr, "Optimizing palette...\n");
+    log.taskBegin("Optimizing palette");
 
     // Base case: One single color.
     box root = { 0, (unsigned)colors.size() };
@@ -169,8 +169,7 @@ void ColorReducer::reduce(double maxMSE)
     while (!boxQueue.empty()) {
 	double mse = meanSquaredError();
 
-	fprintf(stderr, "\r\t%d colors (MSE %g)    ",
-		(int)boxes.size(), mse);
+	log.taskProgress("%d colors (MSE %g)", (int)boxes.size(), mse);
 
 	if (mse <= maxMSE)
 	    break;
@@ -195,7 +194,7 @@ void ColorReducer::reduce(double maxMSE)
 	updateInverseLUT();
     }
 
-    fprintf(stderr, "\n");
+    log.taskEnd();
 }
 
 void ColorReducer::updateInverseLUT()

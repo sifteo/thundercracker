@@ -12,10 +12,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "tile.h"
+
 #include "lodepng.h"
+#include "tile.h"
 
 int main(int argc, char **argv) {
+    ConsoleLogger log;
 
     if (argc != 4) {
 	fprintf(stderr, "usage: %s in.png out.png mse\n", argv[0]);
@@ -29,13 +31,17 @@ int main(int argc, char **argv) {
     TileGrid tg = TileGrid(&pool);
 
     tg.load(argv[1]);
-    pool.optimize();
+    pool.optimize(log);
 
     std::vector<uint8_t> image;
     unsigned width = Tile::SIZE * tg.width() * 2;
     unsigned height = Tile::SIZE * tg.height();
     size_t pitch = width * 4;
     image.resize(pitch * height);
+
+    std::vector<uint8_t> loadstream;
+    pool.encode(loadstream);
+    LodePNG::saveFile(loadstream, "loadstream.bin");
 
     tg.render(&image[pitch/2], pitch);
     pool.render(&image[0], pitch, tg.width());

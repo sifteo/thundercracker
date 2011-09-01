@@ -5,6 +5,8 @@ OBJS = \
 	src/command.o \
 	src/lodepng.o \
 	src/tile.o \
+	src/tilecodec.o \
+	src/logger.o \
 
 CDEPS = src/*.h
 

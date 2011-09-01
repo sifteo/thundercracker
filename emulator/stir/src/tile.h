@@ -13,6 +13,8 @@
 #include <tr1/memory>
 #include <color.h>
 
+#include "logger.h"
+
 class Tile;
 class TileStack;
 typedef std::tr1::shared_ptr<Tile> TileRef;
@@ -71,43 +73,6 @@ struct TilePalette {
     }
 };
 
-
-/*
- * TileCodecLUT --
- *
- *    This is similar to TilePalette, but here instead of tracking the
- *    colors used in a particular tile, we'll track the state of the
- *    color LUT in the tile encoder/decoder.
- *
- *    This is used for actually encoding tiles, as well as for
- *    estimating the cost of encoding a particular tile using the
- *    current encoder state.
- */
-
-struct TileCodecLUT {
-    // Current state of the color table
-    static const unsigned LUT_MAX = 16;
-    RGB565 colors[LUT_MAX];
-
-    // List of LUT indices that were replaced by the last encode()
-    std::vector<int> newColors;
-
-    TileCodecLUT();
-
-    unsigned encode(const TilePalette &pal);
-
-    int findColor(RGB565 c) const {
-	// Is a particular color in the LUT? Return the index.
-	for (unsigned i = 0; i < LUT_MAX; i++)
-	    if (colors[i] == c)
-		return i;
-	return -1;
-    }
-
-private:
-    std::list<int> mru;
-    TilePalette::ColorMode lastMode;
-};
 
 /*
  * Tile --
@@ -212,6 +177,7 @@ class TileStack {
 
     std::vector<TileRef> tiles;
     TileRef cache;
+    unsigned index;
 };
 
 
@@ -228,7 +194,8 @@ class TilePool {
 
     typedef uint32_t Serial;
 
-    void optimize();
+    void optimize(Logger &log);
+    void encode(std::vector<uint8_t>& out);
     void render(uint8_t *rgba, size_t stride, unsigned width);
 
     Serial add(TileRef t) {
@@ -242,6 +209,11 @@ class TilePool {
 	return tiles[s];
     }
 
+    unsigned index(Serial s) const {
+	// Get the index of an optimized tile image, by serial number
+	return stackIndex[s]->index;
+    }
+
     unsigned size() const {
 	// Size of the optimized tile pool
 	return stackList.size();
@@ -251,12 +223,12 @@ class TilePool {
     std::list<TileStack> stackList;       // Reorderable list of all stacked tiles
     std::vector<TileRef> tiles;           // Current best image for each tile, by Serial
     std::vector<TileStack*> stackIndex;   // Current optimized stack for each tile, by Serial
-
+ 
     double maxMSE;
 
-    void optimizePalette();
-    void optimizeTiles();
-    void optimizeOrder();
+    void optimizePalette(Logger &log);
+    void optimizeTiles(Logger &log);
+    void optimizeOrder(Logger &log);
 
     TileStack *closest(TileRef t, double &mse);
 };

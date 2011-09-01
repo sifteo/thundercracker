@@ -11,7 +11,9 @@
 #include <algorithm>
 #include <set>
 #include <map>
+
 #include "tile.h"
+#include "tilecodec.h"
 #include "lodepng.h"
 
 
@@ -224,85 +226,6 @@ TilePalette::TilePalette()
     : numColors(0)
     {}
 
-TileCodecLUT::TileCodecLUT()
-{
-    for (int i = 0; i < LUT_MAX; i++)
-	mru.push_back(i);
-}
-
-unsigned TileCodecLUT::encode(const TilePalette &pal)
-{
-    /*
-     * Modify the current LUT state in order to accomodate the given
-     * tile palette, and measure the associated cost (in bytes).
-     */
-
-    const unsigned runBreakCost = 1;   // Breaking a run of tiles, need a new opcode/runlength byte
-    const unsigned lutLoadCost = 3;    // Opcode/index byte, plus 16-bit color
-
-    unsigned cost = 0;
-    TilePalette::ColorMode mode = pal.colorMode();
-
-    newColors.resize(0);
-
-    // Account for each color in this tile
-    if (pal.hasLUT()) {
-	std::vector<RGB565> missing;
-
-	/*
-	 * Reverse-iterate over the tile's colors, so that the most
-	 * popular colors (at the beginning of the palette) will end
-	 * up at the beginning of the MRU list afterwards.
-	 */
-
-	for (int c = pal.numColors - 1; c >= 0; c--) {
-	    RGB565 color = pal.colors[c];
-	    int index = findColor(color);
-
-	    if (index < 0) {
-		// Don't have this color yet. Add it to a temporary list of colors that we need
-		missing.push_back(color);
-
-	    } else {
-		// We already have this color in the LUT! Bump it to the front of the MRU list.
-		mru.remove(index);
-		mru.push_front(index);
-	    }
-	}
-
-	/*
-	 * After bumping any colors that we do need, add colors we
-	 * don't yet have. We replace starting with the least recently
-	 * used LUT entries and the least popular missing colors. The
-	 * most popular missing colors will end up at the front of the
-	 * MRU list.
-	 *
-	 * Because of the reversal above, the most popular missing
-	 * colors are at the end of the vector. So, we iterate in
-	 * reverse once more.
-	 */
-
-	for (std::vector<RGB565>::reverse_iterator i = missing.rbegin();
-	     i != missing.rend(); i++) {
-
-	    int index = mru.back();
-	    mru.pop_back();
-	    colors[index] = *i;
-	    mru.push_front(index);
-	    
-	    newColors.push_back(index);
-	    cost += lutLoadCost;
-	}
-    }
-
-    // We have to break a run if we're switching modes OR reloading a LUT entry.
-    if (mode != lastMode || cost != 0)
-	cost += runBreakCost;
-    lastMode = mode;
-
-    return cost;
-}
-
 void TileStack::add(TileRef t)
 {
     tiles.push_back(t);
@@ -432,20 +355,20 @@ void TileGrid::render(uint8_t *rgba, size_t stride)
 	}
 }
 
-void TilePool::optimize()
+void TilePool::optimize(Logger &log)
 {
     /*
      * Global optimizations to apply after filling a tile pool.
      */
 
     if (maxMSE > 0)
-	optimizePalette();
+	optimizePalette(log);
 
-    optimizeTiles();
-    optimizeOrder();
+    optimizeTiles(log);
+    optimizeOrder(log);
 }
 
-void TilePool::optimizePalette()
+void TilePool::optimizePalette(Logger &log)
 {
     /*
      * Palette optimization, for use after add() but before optimizeTiles().
@@ -463,14 +386,14 @@ void TilePool::optimizePalette()
 	    reducer.add((*i)->pixel(j));
 
     // Ask the reducer to do its own (slow!) global optimization
-    reducer.reduce(maxMSE);
+    reducer.reduce(maxMSE, log);
 
     // Now reduce each tile, using the agreed-upon color palette
     for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
 	*i = (*i)->reduce(reducer, maxMSE);
 }
 
-void TilePool::optimizeTiles()
+void TilePool::optimizeTiles(Logger &log)
 {
     /*
      * Collect individual tiles, from "tiles", into TileStacks, stored
@@ -479,7 +402,7 @@ void TilePool::optimizeTiles()
 
     stackIndex.resize(0);
 
-    fprintf(stderr, "Optimizing tiles...\n");
+    log.taskBegin("Optimizing tiles");
 
     for (std::vector<TileRef>::iterator t = tiles.begin(); t != tiles.end();) {
 	double mse;
@@ -497,15 +420,15 @@ void TilePool::optimizeTiles()
 	t++;
 
 	if (t == tiles.end() || !(stackIndex.size() % 32))
-	    fprintf(stderr, "\r\t%u stacks (%.03f%% compression)    ",
-		    (unsigned) stackList.size(),
-		    100.0 - stackList.size() * 100.0 / tiles.size());
+	    log.taskProgress("%u stacks (%.03f%% compression)",
+			     (unsigned) stackList.size(),
+			     100.0 - stackList.size() * 100.0 / tiles.size());
     }
 
-    fprintf(stderr, "\n");
+    log.taskEnd();
 }
 
-void TilePool::optimizeOrder()
+void TilePool::optimizeOrder(Logger &log)
 {
     /*
      * Optimize the order of our tiles within the pool. It turns out
@@ -522,7 +445,7 @@ void TilePool::optimizeOrder()
     TileCodecLUT codec;
     unsigned totalCost = 0;
 
-    fprintf(stderr, "Optimizing tile order...\n");
+    log.taskBegin("Optimizing tile order");
 
     while (!stackList.empty()) {
 
@@ -543,16 +466,17 @@ void TilePool::optimizeOrder()
 	totalCost += codec.encode(bestIter->median()->palette());
 
 	// Pick the best tile!
+	bestIter->index = newOrder.size();
 	newOrder.splice(newOrder.end(), stackList, bestIter);
 
 	if (!(stackList.size() % 32))
-	    fprintf(stderr, "\r\t%d tiles (cost %d)    ",
-		    (int) newOrder.size(), totalCost);
+	    log.taskProgress("%d tiles (cost %d)",
+			     (int) newOrder.size(), totalCost);
     }
 
     stackList.swap(newOrder);
 
-    fprintf(stderr, "\n");
+    log.taskEnd();
 }
 
 void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
@@ -570,4 +494,14 @@ void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
 	    y++;
 	}
     }
+}
+
+void TilePool::encode(std::vector<uint8_t>& out)
+{
+    TileCodec codec;
+
+    for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++)
+	codec.encode(i->median(), out);
+
+    codec.flush(out);
 }

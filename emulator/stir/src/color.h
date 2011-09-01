@@ -14,6 +14,8 @@
 #include <list>
 #include <stdint.h>
 
+#include "logger.h"
+
 
 /*
  * RGB565 --
@@ -197,7 +199,7 @@ class ColorReducer {
  public:
     ColorReducer();
 
-    void reduce(double maxMSE);
+    void reduce(double maxMSE, Logger &log);
 
     void add(RGB565 color) {
 	colors.push_back(color);
