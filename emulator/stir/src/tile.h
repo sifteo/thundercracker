@@ -16,7 +16,6 @@
 class Tile;
 class TileStack;
 typedef std::tr1::shared_ptr<Tile> TileRef;
-typedef std::tr1::shared_ptr<TileStack> TileStackRef;
 
 
 /*
@@ -208,7 +207,6 @@ class TileStack {
 
     std::vector<TileRef> tiles;
     TileRef cache;
-    TileRef optimized;
 };
 
 
@@ -221,28 +219,41 @@ class TileStack {
 class TilePool {
  public:
     TilePool(double _maxMSE)
-        : maxMSE(_maxMSE), totalTiles(0) {}
+        : maxMSE(_maxMSE) {}
 
-    TileStackRef add(TileRef t);
-    TileStackRef closest(TileRef t, double &mse);
+    typedef uint32_t Serial;
 
     void optimize();
-
     void render(uint8_t *rgba, size_t stride, unsigned width);
 
-    unsigned size() {
-	return sets.size();
+    Serial add(TileRef t) {
+	Serial s = (Serial)tiles.size();
+	tiles.push_back(t);
+	return s;
+    }
+
+    TileRef tile(Serial s) const {
+	// Get a tile image, from the serial number returned by add()
+	return tiles[s];
+    }
+
+    unsigned size() const {
+	// Size of the optimized tile pool
+	return stackList.size();
     }
 
  private:
-    typedef std::list<TileStackRef> Collection;
-    Collection sets;
+    std::list<TileStack> stackList;       // Reorderable list of all stacked tiles
+    std::vector<TileRef> tiles;           // Current best image for each tile, by Serial
+    std::vector<TileStack*> stackIndex;   // Current optimized stack for each tile, by Serial
 
-    unsigned totalTiles;
     double maxMSE;
 
     void optimizePalette();
+    void optimizeTiles();
     void optimizeOrder();
+
+    TileStack *closest(TileRef t, double &mse);
 };
 
 
@@ -269,14 +280,14 @@ class TileGrid {
 	return mHeight;
     }
 
-    TileStackRef tile(unsigned x, unsigned y) {
+    TilePool::Serial tile(unsigned x, unsigned y) {
 	return tiles[x + y * mWidth];
     }
 
  private:
     TilePool *mPool;
     unsigned mWidth, mHeight;
-    std::vector<TileStackRef> tiles;
+    std::vector<TilePool::Serial> tiles;
 };
 
 #endif

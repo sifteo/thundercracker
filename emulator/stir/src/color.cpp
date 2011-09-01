@@ -148,6 +148,8 @@ void ColorReducer::reduce(double maxMSE)
      * box that gives us the most bang for our colortable buck.
      */
 
+    fprintf(stderr, "Optimizing palette...\n");
+
     // Base case: One single color.
     box root = { 0, (unsigned)colors.size() };
     boxes.clear();
@@ -166,13 +168,15 @@ void ColorReducer::reduce(double maxMSE)
 
     while (!boxQueue.empty()) {
 	double mse = meanSquaredError();
-	int numSplits = 1 + boxQueue.size() / 20;
 
-	fprintf(stderr, "Optimizing palette... %d colors, MSE %g > %g\n",
+	fprintf(stderr, "\r\t%d colors, MSE %g > %g    ",
 		(int)boxes.size(), mse, maxMSE);
 
 	if (mse <= maxMSE)
 	    break;
+
+	// Heuristic
+	int numSplits = 1 + boxQueue.size() / 20;
 
 	for (unsigned i = 0; i < numSplits && !boxQueue.empty(); i++) {
 	    unsigned boxIndex = *boxQueue.begin();
@@ -190,6 +194,8 @@ void ColorReducer::reduce(double maxMSE)
 
 	updateInverseLUT();
     }
+
+    fprintf(stderr, "\n");
 }
 
 void ColorReducer::updateInverseLUT()

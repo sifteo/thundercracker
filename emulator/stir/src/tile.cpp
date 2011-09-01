@@ -311,8 +311,6 @@ TileRef TileStack::median()
      * Create a new tile based on the per-pixel median of every tile in the set.
      */
 
-    if (optimized)
-	return optimized;
     if (cache)
 	return cache;
 
@@ -359,55 +357,22 @@ TileRef TileStack::median()
     return cache;
 }
 
-TileStackRef TilePool::add(TileRef t)
-{
-    /*
-     * Add a new tile to the pool, and try to optimize it if we can.
-     *
-     * Returns a TileStack reference which can be used now or
-     * later (within the lifetime of the TilePool) to retrieve the
-     * latest median for all tiles we've consolidated with the
-     * provided one, and to refer to this particular unique set of
-     * tiles.
-     */
-
-    double mse;
-    TileStackRef c = closest(t, mse);
-
-    totalTiles++;
-
-    if (!c || mse > maxMSE) {
-	// Too far away. Start a new set.
-
-	c = TileStackRef(new TileStack());
-	sets.push_back(c);
-    }
-
-    if (!(totalTiles % 256)) {
-	fprintf(stderr, "Optimizing tiles... %u sets / %u total (%.03f %%)\n",
-		(unsigned) sets.size(), totalTiles, sets.size() * 100.0 / totalTiles);
-    }
-
-    c->add(t);
-    return c;
-}
-
-TileStackRef TilePool::closest(TileRef t, double &mse)
+TileStack* TilePool::closest(TileRef t, double &mse)
 {
     /*
      * Search for the closest tile set for the provided tile image.
-     * Returns the tile set itsef, if any was found, and the MSE
+     * Returns the tile stack, if any was found, and the MSE
      * between the provided tile and that tile's current median.
      */
 
     double distance = DBL_MAX;
-    TileStackRef closest;
+    TileStack *closest = NULL;
 
-    for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
-	double err = (*i)->median()->errorMetric(*t);
+    for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
+	double err = i->median()->errorMetric(*t);
 	if (err < distance) {
 	    distance = err;
-	    closest = *i;
+	    closest = &*i;
 	}
     }
 
@@ -458,7 +423,7 @@ void TileGrid::render(uint8_t *rgba, size_t stride)
     
     for (unsigned y = 0; y < mHeight; y++)
 	for (unsigned x = 0; x < mWidth; x++) {
-	    TileRef t = tile(x, y)->median();
+	    TileRef t = mPool->tile(tile(x, y));
 	    t->render(rgba + (x * Tile::SIZE * 4) + (y * Tile::SIZE * stride), stride);
 	}
 }
@@ -472,45 +437,68 @@ void TilePool::optimize()
     if (maxMSE > 0)
 	optimizePalette();
 
+    optimizeTiles();
     optimizeOrder();
 }
 
 void TilePool::optimizePalette()
 {
+    /*
+     * Palette optimization, for use after add() but before optimizeTiles().
+     *
+     * This operates on all tile images in 'tiles', replacing each
+     * with a reduced-color version created using a global color
+     * palette optimization process.
+     */
+
     ColorReducer reducer;
 
     // First, add ALL tile data to the reducer's pool    
-    for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
-	TileRef t = (*i)->median();
+    for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
 	for (unsigned j = 0; j < Tile::PIXELS; j++)
-	    reducer.add(t->pixel(j));
-    }
+	    reducer.add((*i)->pixel(j));
 
     // Ask the reducer to do its own (slow!) global optimization
     reducer.reduce(maxMSE);
 
     // Now reduce each tile, using the agreed-upon color palette
-    for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
-	TileStackRef ts = *i;
-	ts->optimized = ts->median()->reduce(reducer, maxMSE);
-    }
+    for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
+	*i = (*i)->reduce(reducer, maxMSE);
 }
 
-void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
+void TilePool::optimizeTiles()
 {
-    // Draw all tiles in this pool to an RGBA framebuffer, for proofing purposes
-    
-    unsigned x = 0, y = 0;
-    for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
-	TileRef t = (*i)->median();
-	t->render(rgba + (x * Tile::SIZE * 4) + (y * Tile::SIZE * stride), stride);
+    /*
+     * Collect individual tiles, from "tiles", into TileStacks, stored
+     * in 'stackList' and 'stackIndex'.
+     */
 
-	x++;
-	if (x == width) {
-	    x = 0;
-	    y++;
+    stackIndex.resize(0);
+
+    fprintf(stderr, "Optimizing tiles...\n");
+
+    for (std::vector<TileRef>::iterator t = tiles.begin(); t != tiles.end();) {
+	double mse;
+	TileStack *c = closest(*t, mse);
+	
+	if (!c || mse > maxMSE) {
+	    // Too far away. Start a new set.
+
+	    stackList.push_back(TileStack());
+	    c = &stackList.back();
 	}
+
+	c->add(*t);
+	stackIndex.push_back(c);	
+	t++;
+
+	if (t == tiles.end() || !(stackIndex.size() % 32))
+	    fprintf(stderr, "\r\t%u stacks / %u total (%.03f %%)    ",
+		    (unsigned) stackList.size(), (unsigned) tiles.size(),
+		    stackList.size() * 100.0 / tiles.size());
     }
+
+    fprintf(stderr, "\n");
 }
 
 void TilePool::optimizeOrder()
@@ -526,20 +514,21 @@ void TilePool::optimizeOrder()
      * TileCodecLUT::encode() as a cost metric.
      */
 
-    Collection newOrder;
+    std::list<TileStack> newOrder;
     TileCodecLUT codec;
+    unsigned totalCost = 0;
 
     fprintf(stderr, "Optimizing tile order...\n");
 
-    while (!sets.empty()) {
+    while (!stackList.empty()) {
 
 	unsigned bestCost = (unsigned) -1;
-	Collection::iterator bestIter;
+	std::list<TileStack>::iterator bestIter;
 
 	// Use a forked copy of the codec to ask what the cost would be for each possible choice
-	for (Collection::iterator i = sets.begin(); i != sets.end(); i++) {
+	for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
 	    TileCodecLUT codecFork = codec;
-	    unsigned cost = codecFork.encode((*i)->median()->palette());
+	    unsigned cost = codecFork.encode(i->median()->palette());
 	    if (cost < bestCost) {
 		bestCost = cost;
 		bestIter = i;
@@ -547,11 +536,34 @@ void TilePool::optimizeOrder()
 	}
 
 	// Apply the new codec state permanently
-	codec.encode((*bestIter)->median()->palette());
+	totalCost += codec.encode(bestIter->median()->palette());
 
 	// Pick the best tile!
-	newOrder.splice(newOrder.end(), sets, bestIter);
+	newOrder.splice(newOrder.end(), stackList, bestIter);
+
+	if (!(stackList.size() % 32))
+	    fprintf(stderr, "\r\t%d / %d tiles (cost %d)    ",
+		    (int) newOrder.size(), (int) stackList.size(), totalCost);
     }
 
-    sets.swap(newOrder);
+    stackList.swap(newOrder);
+
+    fprintf(stderr, "\n");
+}
+
+void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
+{
+    // Draw all tiles in this pool to an RGBA framebuffer, for proofing purposes
+    
+    unsigned x = 0, y = 0;
+    for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
+	TileRef t = i->median();
+	t->render(rgba + (x * Tile::SIZE * 4) + (y * Tile::SIZE * stride), stride);
+
+	x++;
+	if (x == width) {
+	    x = 0;
+	    y++;
+	}
+    }
 }
