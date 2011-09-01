@@ -85,11 +85,12 @@ struct TilePalette {
  */
 
 struct TileCodecLUT {
+    // Current state of the color table
     static const unsigned LUT_MAX = 16;
-
     RGB565 colors[LUT_MAX];
-    TilePalette::ColorMode lastMode;
-    std::list<int> mru;
+
+    // List of LUT indices that were replaced by the last encode()
+    std::vector<int> newColors;
 
     TileCodecLUT();
 
@@ -102,6 +103,10 @@ struct TileCodecLUT {
 		return i;
 	return -1;
     }
+
+private:
+    std::list<int> mru;
+    TilePalette::ColorMode lastMode;
 };
 
 /*

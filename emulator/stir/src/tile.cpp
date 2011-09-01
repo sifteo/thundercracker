@@ -243,6 +243,8 @@ unsigned TileCodecLUT::encode(const TilePalette &pal)
     unsigned cost = 0;
     TilePalette::ColorMode mode = pal.colorMode();
 
+    newColors.resize(0);
+
     // Account for each color in this tile
     if (pal.hasLUT()) {
 	std::vector<RGB565> missing;
@@ -287,6 +289,8 @@ unsigned TileCodecLUT::encode(const TilePalette &pal)
 	    mru.pop_back();
 	    colors[index] = *i;
 	    mru.push_front(index);
+	    
+	    newColors.push_back(index);
 	    cost += lutLoadCost;
 	}
     }
@@ -493,9 +497,9 @@ void TilePool::optimizeTiles()
 	t++;
 
 	if (t == tiles.end() || !(stackIndex.size() % 32))
-	    fprintf(stderr, "\r\t%u stacks / %u total (%.03f %%)    ",
-		    (unsigned) stackList.size(), (unsigned) tiles.size(),
-		    stackList.size() * 100.0 / tiles.size());
+	    fprintf(stderr, "\r\t%u stacks (%.03f%% compression)    ",
+		    (unsigned) stackList.size(),
+		    100.0 - stackList.size() * 100.0 / tiles.size());
     }
 
     fprintf(stderr, "\n");
@@ -542,8 +546,8 @@ void TilePool::optimizeOrder()
 	newOrder.splice(newOrder.end(), stackList, bestIter);
 
 	if (!(stackList.size() % 32))
-	    fprintf(stderr, "\r\t%d / %d tiles (cost %d)    ",
-		    (int) newOrder.size(), (int) stackList.size(), totalCost);
+	    fprintf(stderr, "\r\t%d tiles (cost %d)    ",
+		    (int) newOrder.size(), totalCost);
     }
 
     stackList.swap(newOrder);

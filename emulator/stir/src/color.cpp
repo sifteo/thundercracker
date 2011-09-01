@@ -169,8 +169,8 @@ void ColorReducer::reduce(double maxMSE)
     while (!boxQueue.empty()) {
 	double mse = meanSquaredError();
 
-	fprintf(stderr, "\r\t%d colors, MSE %g > %g    ",
-		(int)boxes.size(), mse, maxMSE);
+	fprintf(stderr, "\r\t%d colors (MSE %g)    ",
+		(int)boxes.size(), mse);
 
 	if (mse <= maxMSE)
 	    break;
