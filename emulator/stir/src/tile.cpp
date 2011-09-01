@@ -116,9 +116,9 @@ double Tile::errorMetric(const Tile &other) const
      * by comparing a luminance edge detection map.
      */
 
-    return (20.0 * sobelError(other) +            // Contrast structure
-	    0.05 * meanSquaredError(other, 1) +   // Fine color
-	    0.90 * meanSquaredError(other, 4));   // Coarse color
+    return (10.00 * sobelError(other) +            // Contrast structure
+	    0.025 * meanSquaredError(other, 1) +   // Fine color
+	    0.450 * meanSquaredError(other, 4));   // Coarse color
 }
 
 double Tile::meanSquaredError(const Tile &other, int scale) const
