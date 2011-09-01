@@ -193,6 +193,7 @@ class TilePool {
         : maxMSE(_maxMSE) {}
 
     typedef uint32_t Serial;
+    typedef uint16_t Index;
 
     void optimize(Logger &log);
     void encode(std::vector<uint8_t>& out);
@@ -204,14 +205,14 @@ class TilePool {
 	return s;
     }
 
-    TileRef tile(Serial s) const {
-	// Get a tile image, from the serial number returned by add()
-	return tiles[s];
-    }
-
-    unsigned index(Serial s) const {
+    Index index(Serial s) const {
 	// Get the index of an optimized tile image, by serial number
 	return stackIndex[s]->index;
+    }
+
+    TileRef tile(Index s) const {
+	// Get a tile image, from the zero-based index
+	return stackArray[s]->median();
     }
 
     unsigned size() const {
@@ -221,6 +222,7 @@ class TilePool {
 
  private:
     std::list<TileStack> stackList;       // Reorderable list of all stacked tiles
+    std::vector<TileStack*> stackArray;   // Vector version of 'stackList', built after indices are known.
     std::vector<TileRef> tiles;           // Current best image for each tile, by Serial
     std::vector<TileStack*> stackIndex;   // Current optimized stack for each tile, by Serial
  
@@ -228,6 +230,7 @@ class TilePool {
 
     void optimizePalette(Logger &log);
     void optimizeTiles(Logger &log);
+    void optimizeTilesPass(bool gather, Logger &log);
     void optimizeOrder(Logger &log);
 
     TileStack *closest(TileRef t, double &mse);

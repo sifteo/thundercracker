@@ -116,9 +116,9 @@ double Tile::errorMetric(const Tile &other) const
      * by comparing a luminance edge detection map.
      */
 
-    return (0.30 * sobelError(other) +            // Contrast structure
-	    0.10 * meanSquaredError(other, 1) +   // Fine color
-	    1.00 * meanSquaredError(other, 4));   // Coarse color
+    return (20.0 * sobelError(other) +            // Contrast structure
+	    0.05 * meanSquaredError(other, 1) +   // Fine color
+	    0.90 * meanSquaredError(other, 4));   // Coarse color
 }
 
 double Tile::meanSquaredError(const Tile &other, int scale) const
@@ -169,15 +169,28 @@ double Tile::sobelError(const Tile &other) const
      */
 
     double error = 0;
+    double total = 0;
 
     for (unsigned y = 0; y < SIZE; y++)
 	for (unsigned x = 0; x < SIZE; x++) {
-	    double gx = sobelGx(x, y) - other.sobelGx(x, y);
-	    double gy = sobelGy(x, y) - other.sobelGy(x, y);
-	    error += gx * gx + gy * gy;
-	}
 
-    return error / PIXELS;
+	    double selfGx = sobelGx(x, y);
+	    double selfGy = sobelGx(x, y);
+
+	    double otherGx = other.sobelGx(x, y);
+	    double otherGy = other.sobelGx(x, y);
+
+	    double gx = selfGx - otherGx;
+	    double gy = selfGy - otherGy;
+
+	    error += gx * gx + gy * gy;
+
+	    total += selfGx * selfGx + otherGx * otherGx;
+	    total += selfGy * selfGy + otherGy * otherGy;
+	}
+    
+    // Contrast difference over total contrast
+    return error / (1 + total);
 }
 
 void Tile::render(uint8_t *rgba, size_t stride) const
@@ -350,7 +363,7 @@ void TileGrid::render(uint8_t *rgba, size_t stride)
     
     for (unsigned y = 0; y < mHeight; y++)
 	for (unsigned x = 0; x < mWidth; x++) {
-	    TileRef t = mPool->tile(tile(x, y));
+	    TileRef t = mPool->tile(mPool->index(tile(x, y)));
 	    t->render(rgba + (x * Tile::SIZE * 4) + (y * Tile::SIZE * stride), stride);
 	}
 }
@@ -396,36 +409,81 @@ void TilePool::optimizePalette(Logger &log)
 void TilePool::optimizeTiles(Logger &log)
 {
     /*
+     * The tile optimizer is a greedy algorithm that works in two
+     * passes: First, we collect tiles into stacks, using an MSE
+     * comparison based on the stack's *current* median at the
+     * time. This produces a good estimate of the stacks we'll need,
+     * but there is no guarantee that the stack we place a tile in
+     * will be the most optimal stack for that tile, or that each
+     * stack median turns out to be unique.
+     *
+     * After this collection pass, we run a second pass which does not
+     * modify the stored medians, but just chooses the best stack for
+     * each input tile. In this stage, it is possible that not every
+     * input stack will be used.
+     *
      * Collect individual tiles, from "tiles", into TileStacks, stored
      * in 'stackList' and 'stackIndex'.
      */
 
-    stackIndex.resize(0);
+    log.taskBegin("Gathering tiles");
+    stackList.clear();
+    optimizeTilesPass(true, log);
+    log.taskEnd();
 
     log.taskBegin("Optimizing tiles");
+    stackIndex.clear();
+    optimizeTilesPass(false, log);
+    log.taskEnd();
+}
+    
+void TilePool::optimizeTilesPass(bool gather, Logger &log)
+{
+    // A single pass from the two-pass optimizeTiles() algorithm
+
+    std::set<TileStack *> activeStacks;
 
     for (std::vector<TileRef>::iterator t = tiles.begin(); t != tiles.end();) {
 	double mse;
 	TileStack *c = closest(*t, mse);
 	
-	if (!c || mse > maxMSE) {
-	    // Too far away. Start a new set.
+	if (gather) {
+	    // Create or augment a TileStack
 
-	    stackList.push_back(TileStack());
-	    c = &stackList.back();
+	    if (!c || mse > maxMSE) {
+		stackList.push_back(TileStack());
+		c = &stackList.back();
+	    }
+	    c->add(*t);
+
+	} else {
+	    // Remember this stack, we've selected it for good.
+
+	    stackIndex.push_back(c);	
+	    activeStacks.insert(c);
 	}
 
-	c->add(*t);
-	stackIndex.push_back(c);	
 	t++;
-
-	if (t == tiles.end() || !(stackIndex.size() % 32))
-	    log.taskProgress("%u stacks (%.03f%% compression)",
-			     (unsigned) stackList.size(),
-			     100.0 - stackList.size() * 100.0 / tiles.size());
+	if (t == tiles.end() || !(stackIndex.size() % 32)) {
+	    unsigned stacks = gather ? stackList.size() : activeStacks.size();
+	    log.taskProgress("%u stacks (%.03f%% compression)", stacks,
+			     100.0 - stacks * 100.0 / tiles.size());
+	}
     }
 
-    log.taskEnd();
+    if (!gather) {
+	// Permanently delete unused stacks
+
+	std::list<TileStack>::iterator i = stackList.begin();
+
+	while (i != stackList.end()) {
+	    std::list<TileStack>::iterator j = i;
+	    i++;
+
+	    if (!activeStacks.count(&*j))
+		stackList.erase(j);
+	}
+    }
 }
 
 void TilePool::optimizeOrder(Logger &log)
@@ -439,6 +497,9 @@ void TilePool::optimizeOrder(Logger &log)
      * a globally optimal solution, so we just use a greedy heuristic
      * which tries to pick the best next tile. This uses
      * TileCodecLUT::encode() as a cost metric.
+     *
+     * This is where we assign an index to each stack, and build the
+     * stackArray.
      */
 
     std::list<TileStack> newOrder;
@@ -446,6 +507,8 @@ void TilePool::optimizeOrder(Logger &log)
     unsigned totalCost = 0;
 
     log.taskBegin("Optimizing tile order");
+
+    stackArray.clear();
 
     while (!stackList.empty()) {
 
@@ -465,8 +528,9 @@ void TilePool::optimizeOrder(Logger &log)
 	// Apply the new codec state permanently
 	totalCost += codec.encode(bestIter->median()->palette());
 
-	// Pick the best tile!
-	bestIter->index = newOrder.size();
+	// Pick the best tile, and assign it a permanent index
+	bestIter->index = stackArray.size();
+	stackArray.push_back(&*bestIter);
 	newOrder.splice(newOrder.end(), stackList, bestIter);
 
 	if (!(stackList.size() % 32))

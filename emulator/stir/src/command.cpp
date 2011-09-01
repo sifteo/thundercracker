@@ -51,5 +51,11 @@ int main(int argc, char **argv) {
     encoder.encode(pngOut, &image[0], width, height);
     LodePNG::saveFile(pngOut, argv[2]);
 
+    fprintf(stderr, "\nAsset statistics:\n");
+    fprintf(stderr, "%30s: %d\n", "Total tiles", pool.size());
+    fprintf(stderr, "%30s: %.01f kB\n", "Installed size in NOR", pool.size() * 128 / 1024.0, pool.size());
+    fprintf(stderr, "%30s: %.01f kB\n", "Loadstream size", loadstream.size() / 1024.0);
+    fprintf(stderr, "%30s: %.02f s\n", "Load time estimate", loadstream.size() / 40000.0);
+
     return 0;
 }
