@@ -114,24 +114,6 @@ class Tile {
 	return pixel(x & 7, y & 7);
     }
 
-    // http://en.wikipedia.org/wiki/Sobel_operator
-    double sobelGx(unsigned x, unsigned y) const {
-	return ( - CIELab(pixelWrap(x-1, y-1)).L
-		 + CIELab(pixelWrap(x+1, y-1)).L
-		 -2* CIELab(pixelWrap(x-1, y)).L
-		 +2* CIELab(pixelWrap(x+1, y)).L
-		 - CIELab(pixelWrap(x-1, y+1)).L
-		 + CIELab(pixelWrap(x+1, y+1)).L );
-    }
-    double sobelGy(unsigned x, unsigned y) const {
-	return ( - CIELab(pixelWrap(x-1, y-1)).L
-		 + CIELab(pixelWrap(x-1, y+1)).L
-		 -2* CIELab(pixelWrap(x, y-1)).L
-		 +2* CIELab(pixelWrap(x, y+1)).L
-		 - CIELab(pixelWrap(x+1, y-1)).L
-		 + CIELab(pixelWrap(x+1, y+1)).L );
-    }
-
     const TilePalette &palette() {
 	// Lazily build the palette info
 	if (!mPalette.numColors)
@@ -139,22 +121,27 @@ class Tile {
 	return mPalette;
     }	
 
-    double errorMetric(const Tile &other) const;
-    double meanSquaredError(const Tile &other, int scale=1) const;
-    double sobelError(const Tile &other) const;
+    double errorMetric(Tile &other);
+    double meanSquaredError(Tile &other, int scale=1);
+    double sobelError(Tile &other);
 
     TileRef reduce(ColorReducer &reducer, double maxMSE) const;
 
  private:
-    Tile();
-    Tile(bool usingChromaKey);
-    void constructPalette(void);
+    Tile(bool usingChromaKey=false);
+    void constructPalette();
+    void constructSobel();
 
     friend class TileStack;
 
-    RGB565 mPixels[PIXELS];
     bool mUsingChromaKey;
+    bool mHasSobel;
     TilePalette mPalette;
+
+    RGB565 mPixels[PIXELS];
+    double mSobelGx[PIXELS];
+    double mSobelGy[PIXELS];
+    double mSobelTotal;
 };
 
 

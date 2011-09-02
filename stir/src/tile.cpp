@@ -17,16 +17,12 @@
 #include "lodepng.h"
 
 
-Tile::Tile()
-    : mUsingChromaKey(false)
-    {}
-
 Tile::Tile(bool usingChromaKey)
-    : mUsingChromaKey(usingChromaKey)
+    : mUsingChromaKey(usingChromaKey), mHasSobel(false)
     {}
 
 Tile::Tile(uint8_t *rgba, size_t stride)
-    : mUsingChromaKey(false)
+    : mUsingChromaKey(false), mHasSobel(false)
 {
     /*
      * Load the tile image from a full-color RGBA source bitmap.
@@ -107,7 +103,48 @@ void Tile::constructPalette(void)
     }
 }
 
-double Tile::errorMetric(const Tile &other) const
+void Tile::constructSobel()
+{
+    /*
+     * Build a Sobel gradient approximation matrix for this tile.
+     *
+     * See: http://en.wikipedia.org/wiki/Sobel_operator
+     */
+
+    mHasSobel = true;
+    mSobelTotal = 0;
+
+    unsigned i = 0;
+    for (unsigned y = 0; y < SIZE; y++)
+	for (unsigned x = 0; x < SIZE; x++, i++) {
+
+	    // Luminance of eight neighbor pixels
+	    float l00 = CIELab(pixelWrap(x-1, y-1)).L;
+	    float l10 = CIELab(pixelWrap(x  , y-1)).L;
+	    float l20 = CIELab(pixelWrap(x+1, y-1)).L;
+	    float l01 = CIELab(pixelWrap(x-1, y  )).L;
+	    float l21 = CIELab(pixelWrap(x+1, y  )).L;
+	    float l02 = CIELab(pixelWrap(x-1, y+1)).L;
+	    float l12 = CIELab(pixelWrap(x  , y+1)).L;
+	    float l22 = CIELab(pixelWrap(x+1, y+1)).L;
+
+	    mSobelGx[i] = -l00 +l20 -l01 -l01 +l21 +l21 -l02 +l22;
+	    mSobelGy[i] = -l00 +l02 -l10 -l10 +l12 +l12 -l20 +l22;
+
+	    mSobelTotal += mSobelGx[i] * mSobelGx[i];
+	    mSobelTotal += mSobelGy[i] * mSobelGy[i];
+	}
+
+#ifdef DEBUG_SOBEL
+    for (i = 0; i < PIXELS; i++) {
+	int x = std::max(0, std::min(255, (int)(128 + mSobelGx[i])));
+	int y = std::max(0, std::min(255, (int)(128 + mSobelGy[i])));
+	mPixels[i] = RGB565(x, y, (x+y)/2);
+    }
+#endif
+}    
+
+double Tile::errorMetric(Tile &other)
 {
     /*
      * This is a rather ad-hoc attempt at a perceptually-optimized
@@ -121,7 +158,7 @@ double Tile::errorMetric(const Tile &other) const
 	    0.450 * meanSquaredError(other, 4));   // Coarse color
 }
 
-double Tile::meanSquaredError(const Tile &other, int scale) const
+double Tile::meanSquaredError(Tile &other, int scale)
 {
     /*
      * This is a mean squared error metric which can operate at
@@ -161,7 +198,7 @@ double Tile::meanSquaredError(const Tile &other, int scale) const
     return error / total;
 }
 
-double Tile::sobelError(const Tile &other) const
+double Tile::sobelError(Tile &other)
 {
     /*
      * An error metric based solely on detecting structural luminance
@@ -169,28 +206,21 @@ double Tile::sobelError(const Tile &other) const
      */
 
     double error = 0;
-    double total = 0;
 
-    for (unsigned y = 0; y < SIZE; y++)
-	for (unsigned x = 0; x < SIZE; x++) {
+    if (!mHasSobel)
+	constructSobel();
+    if (!other.mHasSobel)
+	other.constructSobel();
 
-	    double selfGx = sobelGx(x, y);
-	    double selfGy = sobelGx(x, y);
+    for (unsigned i = 0; i < PIXELS; i++) {
+	double gx = mSobelGx[i] - other.mSobelGx[i];
+	double gy = mSobelGy[i] - other.mSobelGy[i];
 
-	    double otherGx = other.sobelGx(x, y);
-	    double otherGy = other.sobelGx(x, y);
-
-	    double gx = selfGx - otherGx;
-	    double gy = selfGy - otherGy;
-
-	    error += gx * gx + gy * gy;
-
-	    total += selfGx * selfGx + otherGx * otherGx;
-	    total += selfGy * selfGy + otherGy * otherGy;
-	}
+	error += gx * gx + gy * gy;
+    }
     
     // Contrast difference over total contrast
-    return error / (1 + total);
+    return error / (1 + mSobelTotal + other.mSobelTotal);
 }
 
 void Tile::render(uint8_t *rgba, size_t stride) const
@@ -492,7 +522,7 @@ void TilePool::optimizeTilesPass(bool gather, Logger &log)
 	}
 
 	t++;
-	if (t == tiles.end() || !(stackIndex.size() % 32)) {
+	if (t == tiles.end() || !(stackIndex.size() % 64)) {
 	    unsigned stacks = gather ? stackList.size() : activeStacks.size();
 	    log.taskProgress("%u stacks (%.03f%% compression)", stacks,
 			     100.0 - stacks * 100.0 / tiles.size());
@@ -561,7 +591,7 @@ void TilePool::optimizeOrder(Logger &log)
 	stackArray.push_back(&*bestIter);
 	newOrder.splice(newOrder.end(), stackList, bestIter);
 
-	if (!(stackList.size() % 32))
+	if (!(stackList.size() % 64))
 	    log.taskProgress("%d tiles (cost %d)",
 			     (int) newOrder.size(), totalCost);
     }

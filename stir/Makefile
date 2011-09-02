@@ -14,7 +14,7 @@ OBJS_lsdec = \
 
 CDEPS = src/*.h
 
-CCFLAGS += -O3 -g -Werror -Isrc
+CCFLAGS += -O3 -g -ffast-math -Werror -Isrc
 LDFLAGS += -g -lm -lstdc++
 
 all: $(BINS)
