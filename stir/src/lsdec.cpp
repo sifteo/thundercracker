@@ -25,6 +25,9 @@
 #define OP_TILE_P4_R4	0xa0
 #define OP_TILE_P16	0xc0
 #define OP_SPECIAL	0xe0
+#define OP_ADDRESS	0xe1
+#define OP_END		0xff
+
 
 #define FLASH_WRITE_8(b) {			\
 	flash.push_back((uint8_t) (b));		\
@@ -44,24 +47,29 @@
 static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
 {
     static uint16_t lut[LUT_SIZE];
+    static uint16_t p16run;
     static uint16_t lutVector;
     static uint8_t opcode;
     static uint8_t state;
     static uint8_t partial;
     static uint8_t counter;
-    static uint8_t prevNybble;
-    static uint8_t prevPrevNybble;
+    static uint8_t rle1;
+    static uint8_t rle2;
 
     enum {
 	S_OPCODE = 0,
+	S_ADDR_LOW,
+	S_ADDR_HIGH,
 	S_LUT1_COLOR1,
 	S_LUT1_COLOR2,
 	S_LUT16_VEC1,
 	S_LUT16_VEC2,
 	S_LUT16_COLOR1,
 	S_LUT16_COLOR2,
-	S_TILE_RAW,
-	S_TILE_RLE,
+	S_TILE_RLE4,
+	S_TILE_P16_MASK,
+	S_TILE_P16_LOW,
+	S_TILE_P16_HIGH,
     };
 
     switch (state) {
@@ -72,11 +80,11 @@ static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
 
 	case OP_LUT1:
 	    state = S_LUT1_COLOR1;
-	    break;
+	    return;
 
 	case OP_LUT16:
 	    state = S_LUT16_VEC1;
-	    break;
+	    return;
 
 	case OP_TILE_P0: {
 	    // Trivial solid-color tile, no repeats
@@ -84,57 +92,80 @@ static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
 	    uint16_t color = lut[byte & 0x0F];
 	    for (i = 0; i < 64; i++)
 		FLASH_WRITE_16(color);
-	    break;
+	    return;
 	}
 
 	case OP_TILE_P1_R4:
 	case OP_TILE_P2_R4:
 	case OP_TILE_P4_R4:
 	    counter = 64;
-	    prevNybble = 0xFF;
-	    state = S_TILE_RLE;
-	    break;
+	    rle1 = 0xFF;
+	    state = S_TILE_RLE4;
+	    return;
 
 	case OP_TILE_P16:
-	    counter = 128;
-	    state = S_TILE_RAW;
-	    break;
+	    counter = 8;
+	    state = S_TILE_P16_MASK;
+	    return;
 
 	case OP_SPECIAL:
-	    break;
+	    switch (opcode) {
+
+	    case OP_ADDRESS:
+		state = S_ADDR_LOW;
+		return;
+
+	    case OP_END:
+		printf("EOF Token\n");
+		return;
+
+	    default:
+		return;
+	    }
 	}
-	break;
+    }
+
+    case S_ADDR_LOW: {
+	partial = byte;
+	state = S_ADDR_HIGH;
+	return;
+    }
+
+    case S_ADDR_HIGH: {
+	printf("Load address: %02x.%02x\n", byte, partial);
+	state = S_OPCODE;
+	return;
     }
 
     case S_LUT1_COLOR1: {
 	partial = byte;
 	state = S_LUT1_COLOR2;
-	break;
+	return;
     }
 
     case S_LUT1_COLOR2: {
 	lut[opcode & 0x0F] = partial | (byte << 8);
 	state = S_OPCODE;
-	break;
+	return;
     }
 
     case S_LUT16_VEC1: {
 	partial = byte;
 	state = S_LUT16_VEC2;
-	break;
+	return;
     }
 
     case S_LUT16_VEC2: {
 	lutVector = partial | (byte << 8);
 	counter = 0;
 	state = S_LUT16_COLOR1;
-	break;
+	return;
     }
 
     case S_LUT16_COLOR1: {
 	partial = byte;
 	state = S_LUT16_COLOR2;
-	break;
+	return;
     }
 
     case S_LUT16_COLOR2: {
@@ -147,23 +178,10 @@ static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
 	lutVector >>= 1;
 	counter++;
 	state = lutVector ? S_LUT16_COLOR1 : S_OPCODE;
-	break;
+	return;
     }	
 
-    case S_TILE_RAW: {
-	FLASH_WRITE_8(byte);
-
-	if (!--counter)
-	    if (opcode & ARG_MASK) {
-		opcode--;
-		counter = 128;
-	    } else {
-		state = S_OPCODE;
-	    }
-	break;
-    }
-
-    case S_TILE_RLE: {
+    case S_TILE_RLE4: {
 	uint8_t nybbleI = 2;
 
 	// Loop over the two nybbles in our input byte, processing both identically.
@@ -171,21 +189,21 @@ static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
 	    uint8_t nybble = byte & 0x0F;
 	    uint8_t runLength;
 
-	    if (prevNybble == prevPrevNybble) {
+	    if (rle1 == rle2) {
 		// This is a run, and "nybble" is the run length.
 		runLength = nybble;
 
 		// Fill the whole byte, so we can do right-rotates below to our heart's content.
-		nybble = prevNybble | (prevNybble << 4);
+		nybble = rle1 | (rle1 << 4);
 
 		// Disarm the run detector with a byte that can never occur in 'nybble'.
-		prevNybble = 0xF0;
+		rle1 = 0xF0;
 
 	    } else {
 		// Not a run yet, just a literal nybble
 		runLength = 1;
-		prevPrevNybble = prevNybble;
-		prevNybble = nybble;
+		rle2 = rle1;
+		rle1 = nybble;
 	    }
 
 	    // Unpack each nybble at the current bit depth
@@ -228,13 +246,62 @@ static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
 		    counter += 64;
 		} else {
 		    state = S_OPCODE;
-		    break;
+		    return;
 		}
 
 	    byte = (byte >> 4) | (byte << 4);
 	} while (--nybbleI);
 	
-	break;
+	return;
+    }
+
+    case S_TILE_P16_MASK: {
+	rle1 = byte;  // Mask byte for the next 8 pixels
+	rle2 = 8;     // Remaining pixels in mask
+
+	p16_emit_runs:
+	do {
+	    if (rle1 & 1) {
+		state = S_TILE_P16_LOW;
+		return;
+	    }
+	    FLASH_WRITE_16(p16run);
+	    rle1 = (rle1 >> 1) | (rle1 << 7);
+	} while (--rle2);
+
+	p16_next_mask:
+	if (--counter) {
+	    state = S_TILE_P16_MASK;
+	} else if (opcode & ARG_MASK) {
+	    opcode--;
+	    counter = 8;
+	    state = S_TILE_P16_MASK;
+	} else {
+	    state = S_OPCODE;
+	}
+
+	return;
+    }
+
+    case S_TILE_P16_LOW: {
+	FLASH_WRITE_8(byte);
+	partial = byte;
+	state = S_TILE_P16_HIGH;
+	return;
+    }
+
+    case S_TILE_P16_HIGH: {
+	p16run = partial | (byte << 8);
+	FLASH_WRITE_8(byte);
+
+	if (--rle2) {
+	    // Still more pixels in this mask.
+	    rle1 = (rle1 >> 1) | (rle1 << 7);
+	    goto p16_emit_runs;
+	} else {
+	    // End of the mask byte or the whole tile
+	    goto p16_next_mask;
+	}
     }
     }
 }

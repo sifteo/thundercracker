@@ -161,7 +161,7 @@ void RLECodec4::encodeRun(std::vector<uint8_t>& out, bool terminal)
 }
 
 TileCodec::TileCodec()
-    : opIsBuffered(false), statBucket(TilePalette::CM_INVALID)
+    : opIsBuffered(false), statBucket(TilePalette::CM_INVALID), p16run(0xFFFFFFFF)
 {
     memset(&stats, 0, sizeof stats);
     tileCount = 0;
@@ -200,7 +200,7 @@ void TileCodec::encode(const TileRef tile, std::vector<uint8_t>& out)
     case TilePalette::CM_LUT2:	tileOpcode = OP_TILE_P1_R4;	break;
     case TilePalette::CM_LUT4:	tileOpcode = OP_TILE_P2_R4;	break;
     case TilePalette::CM_LUT16:	tileOpcode = OP_TILE_P4_R4;	break;
-    default:			tileOpcode = OP_TILE_P16;	break;
+    default:			tileOpcode = OP_TILE_P16_RM;	break;
     }
 
     /*
@@ -222,10 +222,10 @@ void TileCodec::encode(const TileRef tile, std::vector<uint8_t>& out)
     newStatsTile(colorMode);
 
     switch (tileOpcode) {
-    case OP_TILE_P1_R4:		encodeTileRLE(tile, 1);		break;
-    case OP_TILE_P2_R4:		encodeTileRLE(tile, 2);		break;
-    case OP_TILE_P4_R4:		encodeTileRLE(tile, 4);		break;
-    case OP_TILE_P16:           encodeTileUncompressed(tile);	break;
+    case OP_TILE_P1_R4:		encodeTileRLE4(tile, 1);	break;
+    case OP_TILE_P2_R4:		encodeTileRLE4(tile, 2);	break;
+    case OP_TILE_P4_R4:		encodeTileRLE4(tile, 4);	break;
+    case OP_TILE_P16_RM:        encodeTileMasked16(tile);	break;
     }
 }
 
@@ -297,8 +297,12 @@ void TileCodec::encodeWord(uint16_t w)
     dataBuf.push_back((uint8_t) (w >> 8));
 }
 
-void TileCodec::encodeTileRLE(const TileRef tile, unsigned bits)
+void TileCodec::encodeTileRLE4(const TileRef tile, unsigned bits)
 {
+    /*
+     * Simple indexed-color tiles, compressed using our 4-bit RLE codec.
+     */
+    
     uint8_t nybble = 0;
     unsigned pixelIndex = 0;
     unsigned bitIndex = 0;
@@ -319,10 +323,34 @@ void TileCodec::encodeTileRLE(const TileRef tile, unsigned bits)
     }
 }
 
-void TileCodec::encodeTileUncompressed(const TileRef tile)
+void TileCodec::encodeTileMasked16(const TileRef tile)
 {
-    for (unsigned i = 0; i < Tile::PIXELS; i++)
-	encodeWord(tile->pixel(i).value);
+    /*
+     * This is a different form of RLE, which encodes repeats at a
+     * pixel granularity, but with interleaved repeat information and
+     * pixel data.
+     *
+     * We emit rows which begin with an 8-bit mask, containing between
+     * 0 and 8 pixel values. A '1' bit in the mask corresponds to a
+     * new pixel value, and a '0' is copied from the previous
+     * value. Color runs may persist across the entire load stream.
+     */
+
+    for (unsigned y = 0; y < Tile::SIZE; y++) {
+	uint8_t mask = 0;
+
+	for (unsigned x = 0; x < Tile::SIZE; x++)
+	    if (tile->pixel(x, y).value != p16run) {
+		mask |= 1 << x;
+		p16run = tile->pixel(x, y).value;
+	    }
+
+	dataBuf.push_back(mask);
+
+	for (unsigned x = 0; x < Tile::SIZE; x++)
+	    if (mask & (1 << x))
+		encodeWord(tile->pixel(x, y).value);
+    }
 }
 
 void TileCodec::dumpStatistics(Logger &log)
@@ -343,4 +371,18 @@ void TileCodec::dumpStatistics(Logger &log)
     }
 
     log.infoEnd();
+}
+
+void TileCodec::address(uint32_t linearAddress, std::vector<uint8_t>& out)
+{
+    encodeOp(OP_ADDRESS, out);
+    dataBuf.push_back((uint8_t) ((linearAddress >> 7) << 1));
+    dataBuf.push_back((uint8_t) ((linearAddress >> 14) << 1));
+    flush(out);
+}
+
+void TileCodec::end(std::vector<uint8_t>& out)
+{
+    encodeOp(OP_END, out);
+    flush(out);
 }

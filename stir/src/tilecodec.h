@@ -102,6 +102,9 @@ class TileCodec {
     void encode(const TileRef tile, std::vector<uint8_t>& out);
     void flush(std::vector<uint8_t>& out);
 
+    void address(uint32_t linearAddress, std::vector<uint8_t>& out);
+    void end(std::vector<uint8_t>& out);
+
     void dumpStatistics(Logger &log);
 
  private:
@@ -117,8 +120,11 @@ class TileCodec {
 	OP_TILE_P1_R4	= 0x60,	// Tiles with 1-bit pixels and 4-bit RLE encoding (arg = count-1)
 	OP_TILE_P2_R4	= 0x80,	// Tiles with 2-bit pixels and 4-bit RLE encoding (arg = count-1)
 	OP_TILE_P4_R4	= 0xa0,	// Tiles with 4-bit pixels and 4-bit RLE encoding (arg = count-1)
-	OP_TILE_P16	= 0xc0, // Tile with uncompressed 16-bit pixels (arg = count-1)
-	OP_SPECIAL	= 0xe0, // Special symbol
+	OP_TILE_P16_RM	= 0xc0, // Tile with 16-bit pixels and 8-bit repetition mask (arg = count-1)
+	OP_SPECIAL	= 0xe0, // Special symbols (below)
+
+	OP_ADDRESS	= 0xe1, // Followed by a 2-byte (7:7 format) tile address
+	OP_END          = 0xff, // End of compressed data
     };
 
     bool opIsBuffered;
@@ -127,6 +133,7 @@ class TileCodec {
     unsigned tileCount;
     TileCodecLUT lut;
     RLECodec4 rle;
+    uint32_t p16run;
 
     // Stats
     struct {
@@ -140,8 +147,8 @@ class TileCodec {
     void encodeOp(uint8_t op, std::vector<uint8_t>& out);
     void encodeLUT(uint16_t newColors, std::vector<uint8_t>& out);
     void encodeWord(uint16_t w);
-    void encodeTileRLE(const TileRef tile, unsigned bits);
-    void encodeTileUncompressed(const TileRef tile);
+    void encodeTileRLE4(const TileRef tile, unsigned bits);
+    void encodeTileMasked16(const TileRef tile);
 };
 
 

@@ -660,10 +660,13 @@ void TilePool::encode(std::vector<uint8_t>& out, Logger *log)
 {
     TileCodec codec;
 
+    // XXX: Each pool should have a configurable base address
+    codec.address(0, out);
+
     for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++)
 	codec.encode(i->median(), out);
-
-    codec.flush(out);
+    
+    codec.end(out);
 
     if (log)
 	codec.dumpStatistics(*log);
