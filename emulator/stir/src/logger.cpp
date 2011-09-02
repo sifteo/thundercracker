@@ -34,3 +34,21 @@ void ConsoleLogger::taskEnd()
 {
     fprintf(stderr, "\n");
 }
+
+void ConsoleLogger::infoBegin(const char *name)
+{
+    fprintf(stderr, "\n%s:\n", name);
+}
+
+void ConsoleLogger::infoLine(const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
+}
+
+void ConsoleLogger::infoEnd()
+{}

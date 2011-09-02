@@ -44,13 +44,18 @@ struct TilePalette {
     RGB565 colors[LUT_MAX];
 
     enum ColorMode {
-	CM_INVALID = 0,
+	CM_INVALID = -1,
+
 	CM_LUT1,
 	CM_LUT2,
 	CM_LUT4,
 	CM_LUT16,
 	CM_TRUE,
+
+	CM_COUNT,
     };
+
+    static const char *colorModeName(ColorMode m);
 
     ColorMode colorMode() const {
 	if (numColors <= 1)  return CM_LUT1;
@@ -60,8 +65,8 @@ struct TilePalette {
 	return CM_TRUE;
     }
 
-    unsigned maxLUTIndex() {
-	if (numColors <= 1)  return 0;
+    unsigned maxLUTIndex() const {
+	if (numColors <= 1)  return 15;  // Solid-color opcode can reach any LUT entry
 	if (numColors <= 2)  return 1;
 	if (numColors <= 4)  return 3;
 	return 15;
@@ -196,7 +201,8 @@ class TilePool {
     typedef uint16_t Index;
 
     void optimize(Logger &log);
-    void encode(std::vector<uint8_t>& out);
+    void encode(std::vector<uint8_t>& out, Logger *log = NULL);
+
     void render(uint8_t *rgba, size_t stride, unsigned width);
 
     Serial add(TileRef t) {
@@ -263,6 +269,8 @@ class TileGrid {
     TilePool::Serial tile(unsigned x, unsigned y) {
 	return tiles[x + y * mWidth];
     }
+
+    void encodeMap(std::vector<uint8_t> &out, uint32_t baseAddress=0);
 
  private:
     TilePool *mPool;

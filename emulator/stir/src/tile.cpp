@@ -239,6 +239,18 @@ TilePalette::TilePalette()
     : numColors(0)
     {}
 
+const char *TilePalette::colorModeName(ColorMode m)
+{
+    switch (m) {
+    case CM_LUT1:	return "CM_LUT1";
+    case CM_LUT2:	return "CM_LUT2";
+    case CM_LUT4:	return "CM_LUT4";
+    case CM_LUT16:	return "CM_LUT16";
+    case CM_TRUE:	return "CM_TRUE";
+    default:		return "<invalid>";
+    }
+}
+
 void TileStack::add(TileRef t)
 {
     tiles.push_back(t);
@@ -365,6 +377,22 @@ void TileGrid::render(uint8_t *rgba, size_t stride)
 	for (unsigned x = 0; x < mWidth; x++) {
 	    TileRef t = mPool->tile(mPool->index(tile(x, y)));
 	    t->render(rgba + (x * Tile::SIZE * 4) + (y * Tile::SIZE * stride), stride);
+	}
+}
+
+void TileGrid::encodeMap(std::vector<uint8_t> &out, uint32_t baseAddress)
+{
+    for (unsigned y = 0; y < mHeight; y++)
+	for (unsigned x = 0; x < mWidth; x++) {
+	    TilePool::Index index = mPool->index(tile(x, y));
+
+	    // Split 7:7:7 address calculations
+	    uint32_t address = baseAddress + (index << 7);
+	    uint8_t high = (address >> 14) << 1;
+	    uint8_t low = (address >> 7) << 1;
+	    
+	    out.push_back(low);
+	    out.push_back(high);
 	}
 }
 
@@ -560,7 +588,7 @@ void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
     }
 }
 
-void TilePool::encode(std::vector<uint8_t>& out)
+void TilePool::encode(std::vector<uint8_t>& out, Logger *log)
 {
     TileCodec codec;
 
@@ -568,4 +596,7 @@ void TilePool::encode(std::vector<uint8_t>& out)
 	codec.encode(i->median(), out);
 
     codec.flush(out);
+
+    if (log)
+	codec.dumpStatistics(*log);
 }

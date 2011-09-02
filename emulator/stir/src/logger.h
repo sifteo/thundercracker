@@ -12,17 +12,27 @@
 class Logger {
  public:
     virtual ~Logger();
+
     virtual void taskBegin(const char *name) = 0;
     virtual void taskProgress(const char *fmt, ...) = 0;
     virtual void taskEnd() = 0;
+
+    virtual void infoBegin(const char *name) = 0;
+    virtual void infoLine(const char *fmt, ...) = 0;
+    virtual void infoEnd() = 0;
 };
 
 class ConsoleLogger : public Logger {
  public:
     virtual ~ConsoleLogger();
+
     virtual void taskBegin(const char *name);
     virtual void taskProgress(const char *fmt, ...);
     virtual void taskEnd();
+
+    virtual void infoBegin(const char *name);
+    virtual void infoLine(const char *fmt, ...);
+    virtual void infoEnd();
 };
 
 #endif

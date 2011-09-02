@@ -1,4 +1,7 @@
 *.o
 *~
 stir
+tilemap.bin
+loadstream.bin
+out.png
 
