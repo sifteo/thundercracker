@@ -7,6 +7,8 @@
  */
 
 #include <string.h>
+#include <assert.h>
+
 #include "tilecodec.h"
 
 
@@ -118,7 +120,7 @@ void RLECodec4::encode(uint8_t nybble, std::vector<uint8_t>& out)
 
 void RLECodec4::flush(std::vector<uint8_t>& out)
 {
-    encodeRun(out);
+    encodeRun(out, true);
     if (isNybbleBuffered)
 	encodeNybble(0, out);
 }
@@ -134,7 +136,7 @@ void RLECodec4::encodeNybble(uint8_t value, std::vector<uint8_t>& out)
     }
 }
 
-void RLECodec4::encodeRun(std::vector<uint8_t>& out)
+void RLECodec4::encodeRun(std::vector<uint8_t>& out, bool terminal)
 {
     if (runCount > 0) {
 	encodeNybble(runNybble, out);
@@ -142,9 +144,12 @@ void RLECodec4::encodeRun(std::vector<uint8_t>& out)
 	if (runCount > 1) {
 	    encodeNybble(runNybble, out);
 
-	    if (runCount > 2) {
+	    if (runCount == 2 && !terminal)
+		// Null runs can be omitted at the end of an encoding block
+		encodeNybble(0, out);
+
+	    else if (runCount > 2)
 		encodeNybble(runCount - 2, out);
-	    }
 	}
     }
 
@@ -237,6 +242,8 @@ void TileCodec::flush(std::vector<uint8_t>& out)
 	    tileCount = 0;
 	}
 
+	rle.flush(dataBuf);
+
 	out.push_back(opcodeBuf);
 	out.insert(out.end(), dataBuf.begin(), dataBuf.end());
 	dataBuf.clear();
@@ -288,13 +295,13 @@ void TileCodec::encodeWord(uint16_t w)
 
 void TileCodec::encodeTileRLE(const TileRef tile, unsigned bits)
 {
-    RLECodec4 rle;
     uint8_t nybble = 0;
     unsigned pixelIndex = 0;
     unsigned bitIndex = 0;
  
     while (pixelIndex < Tile::PIXELS) {
 	uint8_t color = lut.findColor(tile->pixel(pixelIndex));
+	assert(color < (1 << bits));
 	nybble |= color << bitIndex;
 
 	pixelIndex++;
@@ -306,8 +313,6 @@ void TileCodec::encodeTileRLE(const TileRef tile, unsigned bits)
 	    bitIndex = 0;
 	}
     }
-
-    rle.flush(dataBuf);
 }
 
 void TileCodec::encodeTileUncompressed(const TileRef tile)

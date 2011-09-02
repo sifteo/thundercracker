@@ -76,7 +76,7 @@ class RLECodec4 {
     int runCount;
 
     void encodeNybble(uint8_t value, std::vector<uint8_t>& out);
-    void encodeRun(std::vector<uint8_t>& out);
+    void encodeRun(std::vector<uint8_t>& out, bool terminal=false);
 };
 
 
@@ -120,6 +120,7 @@ class TileCodec {
     std::vector<uint8_t> dataBuf;
     unsigned tileCount;
     TileCodecLUT lut;
+    RLECodec4 rle;
 
     // Stats
     struct {
