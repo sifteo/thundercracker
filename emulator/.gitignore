@@ -1,0 +1,6 @@
+*~
+*.o
+*.pyc
+*.vcxproj.user
+simcube
+flash.bin

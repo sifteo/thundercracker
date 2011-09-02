@@ -1,0 +1,14 @@
+*~
+flash.bin
+*.ihx
+*.mem
+*.rel
+*.rst
+*.sym
+*.lnk
+*.lst
+*.map
+*.asm
+*.cdb
+*.lk
+*.omf
