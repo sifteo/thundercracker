@@ -560,7 +560,7 @@ void TilePool::optimizeTilesPass(bool gather, Logger &log)
 	}
 
 	t++;
-	if (t == tiles.end() || !(stackIndex.size() % 64)) {
+	if (t == tiles.end() || !(stackIndex.size() % 128)) {
 	    unsigned stacks = gather ? stackList.size() : activeStacks.size();
 	    log.taskProgress("%u stacks (%.03f%% compression)", stacks,
 			     100.0 - stacks * 100.0 / tiles.size());
@@ -629,7 +629,7 @@ void TilePool::optimizeOrder(Logger &log)
 	stackArray.push_back(&*bestIter);
 	newOrder.splice(newOrder.end(), stackList, bestIter);
 
-	if (!(stackList.size() % 64))
+	if (!(stackList.size() % 128))
 	    log.taskProgress("%d tiles (cost %d)",
 			     (int) newOrder.size(), totalCost);
     }

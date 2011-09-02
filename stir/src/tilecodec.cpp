@@ -15,7 +15,7 @@
 TileCodecLUT::TileCodecLUT()
 {
     for (int i = 0; i < LUT_MAX; i++)
-	mru.push_back(i);
+	mru[i] = i;
 }
 
 unsigned TileCodecLUT::encode(const TilePalette &pal)
@@ -42,7 +42,8 @@ unsigned TileCodecLUT::encode(const TilePalette &pal, uint16_t &newColors)
 
     // Account for each color in this tile
     if (pal.hasLUT()) {
-	std::vector<RGB565> missing;
+	unsigned numMissing = 0;
+	RGB565 missing[LUT_MAX];
 
 	/*
 	 * Reverse-iterate over the tile's colors, so that the most
@@ -57,12 +58,16 @@ unsigned TileCodecLUT::encode(const TilePalette &pal, uint16_t &newColors)
 	    if (index < 0) {
 		// Don't have this color yet, or it isn't reachable.
 		// Add it to a temporary list of colors that we need
-		missing.push_back(color);
+		missing[numMissing++] = color;
 
 	    } else {
-		// We already have this color in the LUT! Bump it to the front of the MRU list.
-		mru.remove(index);
-		mru.push_front(index);
+		// We already have this color in the LUT! Bump it to the head of the MRU list.
+
+		for (unsigned i = 0; i < LUT_MAX - 1; i++)
+		    if (mru[i] == index) {
+			bumpMRU(i, index);
+			break;
+		    }
 	    }
 	}
 
@@ -78,20 +83,19 @@ unsigned TileCodecLUT::encode(const TilePalette &pal, uint16_t &newColors)
 	 * reverse once more.
 	 */
 
-	for (std::vector<RGB565>::reverse_iterator i = missing.rbegin();
-	     i != missing.rend(); i++) {
+	while (numMissing) {
 
 	    // Find the oldest index that is reachable by this tile's LUT
-	    int index = 0;
-	    for (std::list<int>::reverse_iterator iMRU = mru.rbegin(); iMRU != mru.rend(); iMRU++)
-		if (*iMRU <= maxLUTIndex) {
-		    index = *iMRU;
-		    mru.remove(index);
-		    mru.push_front(index);
+	    unsigned index;
+	    for (unsigned i = 0; i < LUT_MAX; i++) {
+		index = mru[i];
+		if (index <= maxLUTIndex) {
+		    bumpMRU(i, index);
 		    break;
 		}
+	    }
 
-	    colors[index] = *i;
+	    colors[index] = missing[--numMissing];
 	    newColors |= 1 << index;
 	    cost += lutLoadCost;
 	}

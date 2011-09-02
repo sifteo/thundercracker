@@ -44,8 +44,14 @@ struct TileCodecLUT {
     }
 
 private:
-    std::list<int> mru;
+    void bumpMRU(unsigned mruIndex, unsigned lutIndex) {
+	for (;mruIndex < LUT_MAX - 1; mruIndex++)
+	    mru[mruIndex] = mru[mruIndex + 1];
+	mru[mruIndex] = lutIndex;
+    }
+
     TilePalette::ColorMode lastMode;
+    uint8_t mru[LUT_MAX];   // Newest entries at the end, oldest at the front.
 };
 
 
