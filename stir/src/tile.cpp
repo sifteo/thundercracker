@@ -18,11 +18,11 @@
 
 
 Tile::Tile(bool usingChromaKey)
-    : mUsingChromaKey(usingChromaKey), mHasSobel(false)
+    : mUsingChromaKey(usingChromaKey), mHasSobel(false), mHasDec4(false)
     {}
 
 Tile::Tile(uint8_t *rgba, size_t stride)
-    : mUsingChromaKey(false), mHasSobel(false)
+    : mUsingChromaKey(false), mHasSobel(false), mHasDec4(false)
 {
     /*
      * Load the tile image from a full-color RGBA source bitmap.
@@ -144,58 +144,96 @@ void Tile::constructSobel()
 #endif
 }    
 
-double Tile::errorMetric(Tile &other)
+void Tile::constructDec4()
+{
+    /*
+     * Build a decimated 2x2 pixel representation of this tile, using
+     * averaged CIELab colors.
+     */
+
+    const unsigned scale = SIZE / 2;
+    unsigned i = 0;
+
+    mHasDec4 = true;
+
+    for (unsigned y1 = 0; y1 < SIZE; y1 += scale)
+	for (unsigned x1 = 0; x1 < SIZE; x1 += scale) {
+	    CIELab acc;
+
+	    // Y/X pixels
+	    for (unsigned y2 = y1; y2 < y1 + scale; y2++)
+		for (unsigned x2 = x1; x2 < x1 + scale; x2++)
+		    acc += pixel(x2, y2);
+	    
+	    acc /= scale * scale;
+	    mDec4[i++] = acc;
+	}
+
+#ifdef DEBUG_DEC4
+    for (unsigned y = 0; y < SIZE; y++)
+	for (unsigned x = 0; x < SIZE; x++)
+	    mPixels[x + (y * SIZE)] = mDec4[x/scale + y/scale * 2].rgb();
+#endif
+}
+
+double Tile::errorMetric(Tile &other, double limit)
 {
     /*
      * This is a rather ad-hoc attempt at a perceptually-optimized
      * error metric. It is a form of multi-scale MSE metric, plus we
      * attempt to take into account the geometric structure of a tile
      * by comparing a luminance edge detection map.
+     *
+     * If we exceed 'limit', the test can exit early. This lets us
+     * calculate the easy metrics first, and skip the rest if we're
+     * already over.
      */
 
-    return (10.00 * sobelError(other) +            // Contrast structure
-	    0.025 * meanSquaredError(other, 1) +   // Fine color
-	    0.450 * meanSquaredError(other, 4));   // Coarse color
+    double error = 0;
+
+    error += 0.450 * coarseMSE(other);
+    if (error > limit)
+	return DBL_MAX;
+
+    error += 0.025 * fineMSE(other);
+    if (error > limit)
+	return DBL_MAX;
+
+    error += 10.00 * sobelError(other);
+    return error;
 }
 
-double Tile::meanSquaredError(Tile &other, int scale)
+double Tile::fineMSE(Tile &other)
 {
     /*
-     * This is a mean squared error metric which can operate at
-     * different scales. This operates as if the tiles in question
-     * had been scaled down by a factor of 'scale' first.
-     *
-     * This only really makes sense with scales of 1, 2, 4, or 8.
+     * A normal pixel-wise mean squared error metric.
      */
 
-    int scale2 = scale * scale;
     double error = 0;
-    unsigned total = 0;
 
-    // Y/X decimation blocks
-    for (unsigned y1 = 0; y1 < SIZE; y1 += scale) {
-	for (unsigned x1 = 0; x1 < SIZE; x1 += scale) {
-	    
-	    CIELab acc1, acc2;
+    for (unsigned i = 0; i < PIXELS; i++)
+	error += CIELab(mPixels[i]).meanSquaredError(CIELab(other.mPixels[i]));
 
-	    // Y/X pixels
-	    for (unsigned y2 = y1; y2 < y1 + scale; y2++) {
-		for (unsigned x2 = x1; x2 < x1 + scale; x2++) {
-		    acc1 += pixel(x2, y2);
-		    acc2 += other.pixel(x2, y2);
-		}
-	    }
+    return error / PIXELS;
+}
 
-	    // Average the pixels in each decimation block
-	    acc1 /= scale2;
-	    acc2 /= scale2;
+double Tile::coarseMSE(Tile &other)
+{
+    /*
+     * A reduced scale MSE metric using the 2x2 pixel decimated version of our tile.
+     */
 
-	    error += acc1.meanSquaredError(acc2);
-	    total++;
-	}
-    }
+    double error = 0;
 
-    return error / total;
+    if (!mHasDec4)
+	constructDec4();
+    if (!other.mHasDec4)
+	other.constructDec4();
+
+    for (unsigned i = 0; i < 4; i++)
+	error += mDec4[i].meanSquaredError(other.mDec4[i]);
+
+    return error / 4;
 }
 
 double Tile::sobelError(Tile &other)
@@ -351,7 +389,7 @@ TileStack* TilePool::closest(TileRef t, double &mse)
     TileStack *closest = NULL;
 
     for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
-	double err = i->median()->errorMetric(*t);
+	double err = i->median()->errorMetric(*t, distance);
 	if (err < distance) {
 	    distance = err;
 	    closest = &*i;

@@ -10,6 +10,7 @@
 #define _TILE_H
 
 #include <stdint.h>
+#include <float.h>
 #include <tr1/memory>
 #include <color.h>
 
@@ -121,8 +122,10 @@ class Tile {
 	return mPalette;
     }	
 
-    double errorMetric(Tile &other);
-    double meanSquaredError(Tile &other, int scale=1);
+    double errorMetric(Tile &other, double limit=DBL_MAX);
+
+    double fineMSE(Tile &other); 
+    double coarseMSE(Tile &other);
     double sobelError(Tile &other);
 
     TileRef reduce(ColorReducer &reducer, double maxMSE) const;
@@ -131,14 +134,17 @@ class Tile {
     Tile(bool usingChromaKey=false);
     void constructPalette();
     void constructSobel();
+    void constructDec4();
 
     friend class TileStack;
 
     bool mUsingChromaKey;
     bool mHasSobel;
+    bool mHasDec4;
     TilePalette mPalette;
 
     RGB565 mPixels[PIXELS];
+    CIELab mDec4[4];
     double mSobelGx[PIXELS];
     double mSobelGy[PIXELS];
     double mSobelTotal;
