@@ -1,7 +1,10 @@
 BIN = ../cube.ihx
 
 OBJS = \
-	radiogfx.rel \
+	graphics.rel \
+	radio.rel \
+	sensors.rel \
+	main.rel \
 
 CDEPS = *.h
 SDCC = sdcc

@@ -1,13 +1,13 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
  * Hardware platform definitions
- * M. Elizabeth Scott <beth@sifteo.com>
  *
+ * M. Elizabeth Scott <beth@sifteo.com>
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef __HARDWARE_H
-#define __HARDWARE_H
+#ifndef _HARDWARE_H
+#define _HARDWARE_H
 
 /*
  * Graphics I/O Ports
@@ -118,8 +118,11 @@ __sbit __at 0xA0 CTRL_LCD_TE;
  * CPU instruction macros
  */
 
-#define RL(x)   (((x) << 1) | ((x) >> 7)
-#define RR(x)   (((x) >> 1) | ((x) << 7)
+#define rl(x)   (((x) << 1) | ((x) >> 7)
+#define rr(x)   (((x) >> 1) | ((x) << 7)
+
+#define sti()   { IEN_EN = 1; }
+#define cli()   { IEN_EN = 0; }
 
 /*
  * CPU Special Function Registers

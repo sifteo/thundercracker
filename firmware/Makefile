@@ -1,6 +1,6 @@
 all: cube.ihx
 
-.PHONY: all clean
+.PHONY: all clean cube.ihx
 
 cube.ihx:
 	make -C cube
