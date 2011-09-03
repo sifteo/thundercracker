@@ -12,10 +12,9 @@
 #define LCD_WIDTH    128
 #define LCD_HEIGHT   128
 
-#define FB_SIZE      0x10000    // Enough for LCD itself, and for profiler display
-#define FB_MASK      0xFFFF
-#define FB_ROW_SHIFT 8
-
+#define FB_SIZE      0x8000
+#define FB_MASK      0x3FFF
+#define FB_ROW_SHIFT 7
 
 struct lcd_pins {
     /* Configured for an 8-bit parallel bus, in 80-system mode */
@@ -29,7 +28,10 @@ struct lcd_pins {
 
 void lcd_init(void);
 
+// FB memory, if display is on. Otherwise, NULL.
 uint16_t *lcd_framebuffer(void);
+
+// Emit a TE pulse, if TE is enabled.
 void lcd_te_pulse(void);
 
 // For debugger

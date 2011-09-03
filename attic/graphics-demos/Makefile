@@ -2,12 +2,13 @@ all: demo.ihx tear.ihx flash.bin
 
 CDEPS = *.h
 SDCC = sdcc
+CFLAGS = -I../../firmware/cube
 
 demo.ihx: demo.c $(CDEPS)
-	$(SDCC) $<
+	$(SDCC) $< $(CFLAGS)
 
 tear.ihx: tear.c $(CDEPS)
-	$(SDCC) $<
+	$(SDCC) $< $(CFLAGS)
 
 clean:
 	rm -f flash.bin *.ihx *.mem *.rel *.rst *.sym *.lnk *.lst *.map *.asm

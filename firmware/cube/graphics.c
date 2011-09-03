@@ -238,6 +238,13 @@ static void lcd_cmd_byte(uint8_t b)
     CTRL_PORT = CTRL_IDLE;
 }
 
+static void lcd_data_byte(uint8_t b)
+{
+    BUS_DIR = 0;
+    BUS_PORT = b;
+    ADDR_INC2();
+    BUS_DIR = 0xFF;
+}
 
 /*
  * graphics_render --
@@ -343,4 +350,15 @@ void graphics_init(void)
     ADDR_DIR = 0;
     CTRL_PORT = CTRL_IDLE;
     CTRL_DIR = 0x01;
+
+    // LCD controller, wake up!
+    lcd_cmd_byte(LCD_CMD_SLPOUT);
+    
+    // Display on.
+    // XXX: Should wait until after the first complete frame has been rendered.
+    lcd_cmd_byte(LCD_CMD_DISPON);
+
+    // Write in 16-bit color mode
+    lcd_cmd_byte(LCD_CMD_COLMOD);
+    lcd_data_byte(LCD_COLMOD_16);
 }

@@ -37,6 +37,14 @@ void lcd_cmd_byte(uint8_t b)
     CTRL_PORT = CTRL_IDLE;
 }
 
+void lcd_data_byte(uint8_t b)
+{
+    BUS_DIR = 0;
+    BUS_PORT = b;
+    ADDR_INC2();
+    BUS_DIR = 0xFF;
+}
+
 void main(void)
 {
     uint8_t y;
@@ -48,6 +56,13 @@ void main(void)
     ADDR_DIR = 0;
     CTRL_PORT = CTRL_IDLE;
     CTRL_DIR = 0x01;
+
+    lcd_cmd_byte(LCD_CMD_SLPOUT);
+    lcd_cmd_byte(LCD_CMD_DISPON);
+    lcd_cmd_byte(LCD_CMD_TEON);
+
+    lcd_cmd_byte(LCD_CMD_COLMOD);
+    lcd_data_byte(LCD_COLMOD_16);
 
     while (1) {
 	color ^= 0xFF;

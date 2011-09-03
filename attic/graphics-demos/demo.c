@@ -39,21 +39,6 @@ static const uint16_t __code earthbound_fourside_160[] =
 
 
 /*
- * Blatantly insufficient for a real chip, but so far this sets up
- * everything the simulator cares about.
- */
-void hardware_init(void)
-{
-    BUS_DIR = 0xFF;
-
-    ADDR_PORT = 0;
-    ADDR_DIR = 0;
-
-    CTRL_PORT = CTRL_IDLE;
-    CTRL_DIR = 0x01;
-}
-
-/*
  * One-off LCD command byte. Slow but who cares?
  */
 void lcd_cmd_byte(uint8_t b)
@@ -66,14 +51,6 @@ void lcd_cmd_byte(uint8_t b)
     CTRL_PORT = CTRL_IDLE;
 }
 
-void lcd_begin_frame(void)
-{
-    lcd_cmd_byte(LCD_CMD_RAMWR);
-
-    // Optional: Vertical sync
-    //while (!CTRL_LCD_TE);
-}
-
 /*
  * One-off LCD data byte. Really slow, for setup only.
  */
@@ -83,6 +60,30 @@ void lcd_data_byte(uint8_t b)
     BUS_PORT = b;
     ADDR_INC2();
     BUS_DIR = 0xFF;
+}
+
+void hardware_init(void)
+{
+    BUS_DIR = 0xFF;
+    ADDR_PORT = 0;
+    ADDR_DIR = 0;
+    CTRL_PORT = CTRL_IDLE;
+    CTRL_DIR = 0x01;
+
+    lcd_cmd_byte(LCD_CMD_SLPOUT);
+    lcd_cmd_byte(LCD_CMD_DISPON);
+    lcd_cmd_byte(LCD_CMD_TEON);
+
+    lcd_cmd_byte(LCD_CMD_COLMOD);
+    lcd_data_byte(LCD_COLMOD_16);
+}
+
+void lcd_begin_frame(void)
+{
+    lcd_cmd_byte(LCD_CMD_RAMWR);
+
+    // Optional: Vertical sync
+    //while (!CTRL_LCD_TE);
 }
 
 static void lcd_addr_burst(uint8_t pixels)

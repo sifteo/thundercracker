@@ -96,6 +96,13 @@ static void frontend_update_texture(void)
     GLsizei width = LCD_WIDTH;
     GLsizei height = LCD_HEIGHT;
 
+    if (fb) {
+	glEnable(GL_TEXTURE_2D);
+    } else {
+	glDisable(GL_TEXTURE_2D);
+	return;
+    }
+
     if (opt_visual_profiler) {       
         // Update the profiler only every N frames
         if (++frontend.profiler_div_timer >= 3) {
@@ -155,7 +162,6 @@ static void frontend_resize_window(void)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
-    glEnable(GL_TEXTURE_2D);
     glShadeModel(GL_SMOOTH);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
