@@ -34,9 +34,9 @@ RGB565 RGB565::wiggle() const
 
 CIELab::CIELab(uint32_t rgb)
 {
-    double red = (uint8_t)rgb;
-    double green = (uint8_t)(rgb >> 8);
-    double blue = (uint8_t)(rgb >> 16);
+    double red = decodeGamma((uint8_t)rgb);
+    double green = decodeGamma((uint8_t)(rgb >> 8));
+    double blue = decodeGamma((uint8_t)(rgb >> 16));
 
     double xyz[3] = { 0, 0, 0 };
     static const double m[3][3] = {
@@ -91,18 +91,24 @@ uint32_t CIELab::rgb() const
 
     uint32_t rgb32 = 0;
     for (int i = 0; i < 3; i++) {
-	// Round, not truncate
-	double v = rgb[i] + 0.5;
-
-	if (v < 0) v = 0;
-	if (v > 255) v = 255;
-
-	rgb32 |= (uint8_t)v << (i*8);
+	rgb32 |= encodeGamma(rgb[i]) << (i*8);
     }  
 
     return rgb32;
 }  
     
+double CIELab::decodeGamma(uint8_t v)
+{
+    return pow(v / 255.0, gamma) * 255.0; 
+}
+
+uint8_t CIELab::encodeGamma(double v)
+{
+    // Round, not truncate
+    double i = pow(v / 255.0, 1.0 / gamma) * 255.0 + 0.5;
+    return (uint8_t) std::max(0.0, std::min(255.0, i));
+}
+
 double CIELab::f_cbrt(double r)
 { 
     static const double ep = 216.0 / 24389.0;

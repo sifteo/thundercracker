@@ -125,6 +125,8 @@ struct CIELab {
 	double axis[3];
     };
 
+    static const double gamma = 2.2;
+
     CIELab() {
 	L = a = b = 0;
     }
@@ -171,7 +173,10 @@ struct CIELab {
     };
     
 private:
-    double f_cbrt(double r);
+    static double f_cbrt(double r);
+    static double decodeGamma(uint8_t v);
+    static uint8_t encodeGamma(double v);
+
     static CIELab lut565[0x10000];
 };
 
