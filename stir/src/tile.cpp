@@ -199,7 +199,7 @@ double Tile::errorMetric(Tile &other, double limit)
     if (error > limit)
 	return DBL_MAX;
 
-    error += 10.00 * sobelError(other);
+    error += 5.00 * sobelError(other);
     return error;
 }
 
