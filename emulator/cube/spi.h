@@ -59,6 +59,9 @@ struct spi_master {
     uint8_t rx_count;	// Number of bytes in rx_fifo
     uint8_t tx_mosi;	// Transmit shift register
     uint32_t timer;     // Cycle count remaining on current byte
+
+    uint8_t irq_state;
+    uint8_t status_dirty;
 };
 
 void spi_init(struct spi_master *self);

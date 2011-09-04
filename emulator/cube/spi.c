@@ -30,9 +30,10 @@
 
 void spi_init(struct spi_master *self)
 {
-    self->rx_count = 0;
     self->tx_count = 0;
+    self->rx_count = 0;
     self->timer = 0;
+    self->status_dirty = 1;
 }
 
 void spi_write_data(struct spi_master *self, uint8_t mosi)
@@ -41,6 +42,7 @@ void spi_write_data(struct spi_master *self, uint8_t mosi)
 	memmove(self->tx_fifo + 1, self->tx_fifo, SPI_FIFO_SIZE - 1);
 	self->tx_fifo[0] = mosi;
 	self->tx_count++;
+	self->status_dirty = 1;
     } else
 	self->cpu->except(self->cpu, EXCEPTION_SPI_XRUN);
 }
@@ -52,6 +54,7 @@ uint8_t spi_read_data(struct spi_master *self)
     if (self->rx_count > 0)  {
 	memmove(self->rx_fifo, self->rx_fifo + 1, SPI_FIFO_SIZE - 1);
 	self->rx_count--;
+	self->status_dirty = 1;
     } else
 	self->cpu->except(self->cpu, EXCEPTION_SPI_XRUN);
 
@@ -100,6 +103,7 @@ int spi_tick(struct spi_master *self, uint8_t *regs)
 	    else
 		self->cpu->except(self->cpu, EXCEPTION_SPI_XRUN);
 	}
+	self->status_dirty = 1;
     }
 
     if (self->tx_count && !self->timer) {
@@ -114,14 +118,20 @@ int spi_tick(struct spi_master *self, uint8_t *regs)
 
 	self->tx_mosi = self->tx_fifo[--self->tx_count];
 	self->timer = spi_ticks_per_byte(con0);
+	self->status_dirty = 1;
     }	
 
-    // Update status register
-    regs[SPI_REG_STATUS] = 
-	(self->rx_count == SPI_FIFO_SIZE ? SPI_RX_FULL : 0) |
-	(self->rx_count != 0 ? SPI_RX_READY : 0) |
-	(self->tx_count == 0 ? SPI_TX_EMPTY : 0) |
-	(self->tx_count != SPI_FIFO_SIZE ? SPI_TX_READY : 0);
+    if (self->status_dirty) {
+	// Update status register
+	regs[SPI_REG_STATUS] = 
+	    (self->rx_count == SPI_FIFO_SIZE ? SPI_RX_FULL : 0) |
+	    (self->rx_count != 0 ? SPI_RX_READY : 0) |
+	    (self->tx_count == 0 ? SPI_TX_EMPTY : 0) |
+	    (self->tx_count != SPI_FIFO_SIZE ? SPI_TX_READY : 0);
+	
+	self->irq_state = !!(regs[SPI_REG_STATUS] & ~regs[SPI_REG_CON1]);
+	self->status_dirty = 0;
+    }
 
-    return !!(regs[SPI_REG_STATUS] & ~regs[SPI_REG_CON1]);
+    return self->irq_state;
 }

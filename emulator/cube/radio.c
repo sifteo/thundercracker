@@ -89,6 +89,7 @@ struct {
     uint32_t byte_count;
     uint32_t rx_count;
     uint8_t irq_state;
+    uint8_t irq_edge;
 
     /*
      * Keep these consecutive, for the debugger's memory editor view.
@@ -171,6 +172,16 @@ uint32_t radio_byte_count(void)
     return c;
 }
 
+static void radio_update_irq(void)
+{
+    uint8_t irq_prev = radio.irq_state;
+
+    radio.irq_state = radio.regs[REG_CONFIG] & radio.regs[REG_STATUS] &
+	(STATUS_RX_DR | STATUS_TX_DS | STATUS_MAX_RT);
+
+    radio.irq_edge |= radio.irq_state && !irq_prev;
+}
+
 static void radio_update_status(void)
 {
     radio.regs[REG_FIFO_STATUS] =
@@ -188,6 +199,8 @@ static void radio_update_status(void)
 	radio.regs[REG_STATUS] |= STATUS_RX_P_MASK;
 
     radio.regs[REG_RX_PW_P0] = radio.rx_fifo[radio.rx_fifo_tail].len;
+
+    radio_update_irq();
 }
 
 static void radio_spi_cmd_begin(uint8_t cmd)
@@ -292,6 +305,7 @@ static uint8_t radio_spi_cmd_data(uint8_t cmd, unsigned index, uint8_t mosi)
 	// Status has write-1-to-clear bits
 	mosi &= STATUS_RX_DR | STATUS_TX_DS | STATUS_MAX_RT;
 	*radio_reg_ptr(cmd, index) &= ~mosi;
+	radio_update_irq();
 	return 0xFF;
 
     default:
@@ -382,8 +396,6 @@ static void radio_rx_opportunity(void)
 
 int radio_tick(void)
 {
-    uint8_t irq_prev = radio.irq_state;
-
     /*
      * Simulate the rate at which we can actually receive RX packets
      * over the air, by giving ourselves a receive opportunity at
@@ -394,7 +406,9 @@ int radio_tick(void)
 	radio_rx_opportunity();
     }
 
-    radio.irq_state = radio.regs[REG_CONFIG] & radio.regs[REG_STATUS] &
-	(STATUS_RX_DR | STATUS_TX_DS | STATUS_MAX_RT);
-    return radio.irq_state && !irq_prev;
+    {
+	uint8_t irq = radio.irq_edge;
+	radio.irq_edge = 0;
+	return irq;
+    }
 }
