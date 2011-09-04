@@ -87,6 +87,8 @@ static void flash_write(void)
     result = fwrite(flash.data, FLASH_SIZE, 1, flash.file);
     if (result != 1)
 	perror("Error writing flash");
+
+    fflush(flash.file);
 }
 
 void flash_exit(void)
