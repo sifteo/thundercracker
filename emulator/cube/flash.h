@@ -22,6 +22,8 @@ struct flash_pins {
 
 void flash_init(const char *filename);
 void flash_exit(void);
+
+uint32_t flash_cycle_count(void);
 void flash_cycle(struct flash_pins *pins);
 
 #endif

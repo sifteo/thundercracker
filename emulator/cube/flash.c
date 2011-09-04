@@ -43,6 +43,8 @@
 struct {
     FILE *file;
     uint8_t data[FLASH_SIZE];
+    uint32_t prev_addr;
+    uint32_t cycle_count;
 } flash;
 
 void flash_init(const char *filename)
@@ -70,9 +72,36 @@ void flash_exit(void)
     fclose(flash.file);
 }
 
+uint32_t flash_cycle_count(void)
+{
+    uint32_t c = flash.cycle_count;
+    flash.cycle_count = 0;
+    return c;
+}
+
 void flash_cycle(struct flash_pins *pins)
 {
-    // XXX: Read-only for now
-    pins->data_drv = !pins->oe && !pins->ce;
-    pins->data_out = flash.data[FLASH_MASK & pins->addr];
+    if (pins->ce) {
+	// Chip disabled
+	pins->data_drv = 0;
+	flash.prev_addr = -1;
+	return;
+    }
+
+    if (pins->oe) {
+	flash.prev_addr = -1;
+    } else {
+	// Read mode
+	
+	uint32_t addr = FLASH_MASK & pins->addr;
+
+	pins->data_drv = 1;
+	pins->data_out = flash.data[addr];
+
+	if (addr != flash.prev_addr) {
+	    // For power consumption accounting purposes, this counts as a read cycle.
+	    flash.cycle_count++;
+	    flash.prev_addr = addr;
+	}
+    }
 }

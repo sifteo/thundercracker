@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <math.h>
 #include "curses.h"
 #include "emu8051.h"
 #include "emulator.h"
@@ -604,6 +605,7 @@ void mainview_update(struct em8051 *aCPU)
 	static float clock_ratio = 0;
 	static float radio_b = 0;
 	static float radio_rx = 0;
+	static float flash_hz = 0;
 
 	float cycles_to_sec = 1.0f / opt_clock_hz;
 	float msec = 1000.0f * clocks * cycles_to_sec;
@@ -620,26 +622,28 @@ void mainview_update(struct em8051 *aCPU)
 		lcd_wrs = lcd_write_count() / virtual_elapsed;
 		radio_b = radio_byte_count() / virtual_elapsed;
 		radio_rx = radio_rx_count() / virtual_elapsed;
+		flash_hz = flash_cycle_count() / virtual_elapsed;
 		clock_ratio = virtual_elapsed / real_elapsed;
 	    } else {
                 lcd_wrs = 0;
 		radio_b = 0;
 		radio_rx = 0;
                 clock_ratio = 0;
+		flash_hz = 0;
             }
 
 	    update_prev_time = now;
-    update_prev_clocks = clocks;
+	    update_prev_clocks = clocks;
 	}
 
 	werase(miscview);
 	wprintw(miscview, "LCD    : ");
         wattron(miscview, A_REVERSE);
-	wprintw(miscview, "% 13.3f FPS \n", lcd_wrs);
+	wprintw(miscview, "% 8.3f FPS \n", lcd_wrs);
         wattroff(miscview, A_REVERSE);
+	wprintw(miscview, "Flash  :% 7.3f MHz\n", flash_hz / 1000000.0);
 	wprintw(miscview, "Radio  :% 5d RX% 6.2f kB/s\n", (int)radio_rx, radio_b / 1000);
-	wprintw(miscview, "Time   :% 14.3f ms\n", msec);
-	wprintw(miscview, "Clocks :% 14llu\n", clocks);
+	wprintw(miscview, "Time   : %07.2f ms %04llu ck\n", fmod(msec, 10000.0), clocks % 10000);
 	wprintw(miscview, "Speed  :% 6.1f%% %0.1f MHz\n", clock_ratio * 100, clock_mhz);
     }
 
