@@ -39,6 +39,7 @@
 #include "emulator.h"
 #include "lcd.h"
 #include "radio.h"
+#include "flash.h"
 
 /*
     The history-based display assumes that there's no
@@ -607,6 +608,8 @@ void mainview_update(struct em8051 *aCPU)
 	static float radio_rx = 0;
 	static float flash_hz = 0;
 
+	enum busy_flag flash_busy = flash_busy_flag();
+
 	float cycles_to_sec = 1.0f / opt_clock_hz;
 	float msec = 1000.0f * clocks * cycles_to_sec;
 	float clock_mhz = opt_clock_hz / (1000*1000.0f);
@@ -641,7 +644,11 @@ void mainview_update(struct em8051 *aCPU)
         wattron(miscview, A_REVERSE);
 	wprintw(miscview, "% 8.3f FPS \n", lcd_wrs);
         wattroff(miscview, A_REVERSE);
-	wprintw(miscview, "Flash  :% 7.3f MHz\n", flash_hz / 1000000.0);
+
+	wprintw(miscview, "Flash  :% 7.3f MHz  %c%c\n", flash_hz / 1000000.0,
+		flash_busy & BF_PROGRAM ? 'W' : '-',
+		flash_busy & BF_ERASE   ? 'E' : '-');
+
 	wprintw(miscview, "Radio  :% 5d RX% 6.2f kB/s\n", (int)radio_rx, radio_b / 1000);
 	wprintw(miscview, "Time   : %07.2f ms %04llu ck\n", fmod(msec, 10000.0), clocks % 10000);
 	wprintw(miscview, "Speed  :% 6.1f%% %0.1f MHz\n", clock_ratio * 100, clock_mhz);

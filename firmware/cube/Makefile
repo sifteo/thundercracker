@@ -4,6 +4,7 @@ OBJS = \
 	graphics.rel \
 	radio.rel \
 	sensors.rel \
+	flash.rel \
 	main.rel \
 
 CDEPS = *.h

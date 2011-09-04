@@ -207,4 +207,8 @@ void hardware_tick(struct em8051 *cpu)
 
     if (hw.rfcken && radio_tick())
 	cpu->mSFR[REG_IRCON] |= IRCON_RF;
+
+    /* Other hardware with timers to update */
+
+    flash_tick();
 }

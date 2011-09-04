@@ -11,7 +11,7 @@
 #include "sensors.h"
 #include "graphics.h"
 #include "hardware.h"
-
+#include "flash.h"
 
 void main(void)
 {
@@ -21,6 +21,17 @@ void main(void)
     sti();
 
     while (1) {
+
+	/*
+	 * XXX: torture the flash a bit!
+	 */
+	flash_erase_chip();
+	{
+	    uint8_t i;
+	    for (i = 0; i < 128; i++)
+		flash_program_byte(i);
+	}
+
 	// Sync with master
 	// XXX disabled, see refresh_alt()
 	// while (vram.frame_trigger == ack_data.frame_count);

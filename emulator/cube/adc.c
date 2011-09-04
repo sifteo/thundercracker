@@ -158,8 +158,7 @@ int adc_tick(uint8_t *regs)
 	return 0;
 
     if (adc.period_timer) {
-	adc.period_timer--;
-	if (!adc.period_timer)
+	if (!--adc.period_timer)
 	    adc.triggered = 1;
     }	    
 

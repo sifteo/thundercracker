@@ -9,6 +9,12 @@
 #ifndef _FLASH_H
 #define _FLASH_H
 
+enum busy_flag {
+    BF_IDLE     = 0,
+    BF_PROGRAM  = (1 << 0),
+    BF_ERASE    = (1 << 1),
+};
+
 struct flash_pins {
     uint32_t  addr;       // IN
     uint8_t   oe;         // IN, active-low
@@ -24,6 +30,9 @@ void flash_init(const char *filename);
 void flash_exit(void);
 
 uint32_t flash_cycle_count(void);
+enum busy_flag flash_busy_flag(void);
+
+void flash_tick(void);
 void flash_cycle(struct flash_pins *pins);
 
 #endif
