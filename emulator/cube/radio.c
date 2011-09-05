@@ -212,11 +212,15 @@ static void radio_spi_cmd_begin(uint8_t cmd)
     switch (cmd) {
 
     case CMD_FLUSH_TX:
+	radio.tx_fifo_head = 0;
+	radio.tx_fifo_tail = 0;
 	radio.tx_fifo_count = 0;
 	radio_update_status();
 	break;
 
     case CMD_FLUSH_RX:
+	radio.rx_fifo_head = 0;
+	radio.rx_fifo_tail = 0;
 	radio.rx_fifo_count = 0;
 	radio_update_status();
 	break;
