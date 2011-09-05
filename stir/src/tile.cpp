@@ -658,16 +658,25 @@ void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
 
 void TilePool::encode(std::vector<uint8_t>& out, Logger *log)
 {
-    TileCodec codec;
+    TileCodec codec(out);
 
     // XXX: Each pool should have a configurable base address
-    codec.address(0, out);
+    FlashAddress addr = 0;
+    unsigned blocks = FlashAddress::tilesToBlocks(stackList.size());
 
+    if (log) {
+	log->taskBegin("Encoding tiles");
+	log->taskProgress("Starting at 0x%06x, erasing %d blocks",
+			  addr.linear, blocks);
+    }
+
+    codec.address(addr);
     for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++)
-	codec.encode(i->median(), out);
-    
-    codec.end(out);
+	codec.encode(i->median(), true);
+    codec.flush();
 
-    if (log)
+    if (log) {
+	log->taskEnd();
 	codec.dumpStatistics(*log);
+    }
 }

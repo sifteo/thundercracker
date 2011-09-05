@@ -87,6 +87,55 @@ class RLECodec4 {
 
 
 /*
+ * FlashAddress --
+ *
+ *    Addresses in our cube's flash memory have some special
+ *    properties and representations. All tiles are aligned on a
+ *    tile-size multiple, and we also have large flash blocks (64K)
+ *    which set our erase granularity.
+ *
+ *    The device firmware doesn't use linear addresses, instead it
+ *    uses addresses that have been broken into three left-justified
+ *    7-bit chunks. Due to the hardware conventions, these chunks are
+ *    named "low", "lat1", and "lat2". The upper chunks are programmed
+ *    into the two hardware latches.
+ */
+
+struct FlashAddress {
+    uint32_t linear;
+
+    static const unsigned FLASH_SIZE = 2 * 1024 * 1024;
+    static const unsigned BLOCK_SIZE = 64 * 1024;
+    static const unsigned TILE_SIZE = 128;
+    static const unsigned TILES_PER_BLOCK = BLOCK_SIZE / TILE_SIZE;
+    
+    FlashAddress(uint32_t addr)
+        : linear(addr) {}
+
+    FlashAddress(uint8_t lat2, uint8_t lat1, uint8_t low = 0)
+        : linear( ((lat2 >> 1) << 14) |
+		  ((lat1 >> 1) << 7 ) |
+		  ((low  >> 1)      ) ) {} 
+
+    uint8_t low() const {
+	return linear << 1;
+    }
+
+    uint8_t lat1() const {
+	return (linear >> 7) << 1;
+    }
+
+    uint8_t lat2() const {
+	return (linear >> 14) << 1;
+    }
+
+    static unsigned tilesToBlocks(unsigned tiles) {
+	return (tiles + TILES_PER_BLOCK - 1) / TILES_PER_BLOCK;
+    }
+};
+
+
+/*
  * TileCodec --
  *
  *    A stateful compressor for streams of Tile data.  The encoded
@@ -97,13 +146,12 @@ class RLECodec4 {
 
 class TileCodec {
  public:
-    TileCodec();
+    TileCodec(std::vector<uint8_t>& buffer);
 
-    void encode(const TileRef tile, std::vector<uint8_t>& out);
-    void flush(std::vector<uint8_t>& out);
-
-    void address(uint32_t linearAddress, std::vector<uint8_t>& out);
-    void end(std::vector<uint8_t>& out);
+    void address(FlashAddress addr);
+    void erase(unsigned numBlocks);
+    void encode(const TileRef tile, bool autoErase=false);
+    void flush();
 
     void dumpStatistics(Logger &log);
 
@@ -123,17 +171,20 @@ class TileCodec {
 	OP_TILE_P16_RM	= 0xc0, // Tile with 16-bit pixels and 8-bit repetition mask (arg = count-1)
 	OP_SPECIAL	= 0xe0, // Special symbols (below)
 
-	OP_ADDRESS	= 0xe1, // Followed by a 2-byte (7:7 format) tile address
-	OP_END          = 0xff, // End of compressed data
+	OP_ADDRESS	= 0xe1, // Followed by a 2-byte (lat1:lat2) tile address
+	OP_ERASE        = 0xf5, // Followed by count-1 of 64K blocks, and a 1-byte checksum
     };
+
+    std::vector<uint8_t>& out;
+    std::vector<uint8_t> dataBuf;
 
     bool opIsBuffered;
     uint8_t opcodeBuf;
-    std::vector<uint8_t> dataBuf;
     unsigned tileCount;
     TileCodecLUT lut;
     RLECodec4 rle;
     uint32_t p16run;
+    FlashAddress currentAddress;
 
     // Stats
     struct {
@@ -144,8 +195,8 @@ class TileCodec {
     unsigned statBucket;
 
     void newStatsTile(unsigned bucket);
-    void encodeOp(uint8_t op, std::vector<uint8_t>& out);
-    void encodeLUT(uint16_t newColors, std::vector<uint8_t>& out);
+    void encodeOp(uint8_t op);
+    void encodeLUT(uint16_t newColors);
     void encodeWord(uint16_t w);
     void encodeTileRLE4(const TileRef tile, unsigned bits);
     void encodeTileMasked16(const TileRef tile);

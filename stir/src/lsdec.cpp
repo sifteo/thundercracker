@@ -26,16 +26,19 @@
 #define OP_TILE_P16	0xc0
 #define OP_SPECIAL	0xe0
 #define OP_ADDRESS	0xe1
-#define OP_END		0xff
+#define OP_ERASE	0xf5
 
+uint32_t flash_addr;
 
 #define FLASH_WRITE_8(b) {			\
 	flash.push_back((uint8_t) (b));		\
+	flash_addr++;				\
     }
 
 #define FLASH_WRITE_16(b) {			\
 	flash.push_back((uint8_t) (b));		\
 	flash.push_back((uint8_t) ((b) >> 8));	\
+	flash_addr += 2;	       		\
     }
 
 
@@ -60,6 +63,8 @@ static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
 	S_OPCODE = 0,
 	S_ADDR_LOW,
 	S_ADDR_HIGH,
+	S_ERASE_COUNT,
+	S_ERASE_CHECK,
 	S_LUT1_COLOR1,
 	S_LUT1_COLOR2,
 	S_LUT16_VEC1,
@@ -115,8 +120,8 @@ static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
 		state = S_ADDR_LOW;
 		return;
 
-	    case OP_END:
-		printf("EOF Token\n");
+	    case OP_ERASE:
+		state = S_ERASE_COUNT;
 		return;
 
 	    default:
@@ -132,7 +137,23 @@ static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
     }
 
     case S_ADDR_HIGH: {
-	printf("Load address: %02x.%02x\n", byte, partial);
+	flash_addr = ((byte >> 1) << 7) | ((partial >> 1) << 14);
+	printf("Load address: 0x%06x\n", flash_addr);
+
+	state = S_OPCODE;
+	return;
+    }
+
+    case S_ERASE_COUNT: {
+	partial = byte;
+	state = S_ERASE_CHECK;
+	return;
+    }
+
+    case S_ERASE_CHECK: {
+	printf("Erase: %d blocks, chk %02x (expect %02x)\n", partial + 1, byte,
+	       0xFF ^ (uint8_t)(-partial -(uint8_t)((flash_addr >> 14) << 1)
+				-(uint8_t)((flash_addr >> 7) << 1)));
 	state = S_OPCODE;
 	return;
     }

@@ -160,15 +160,25 @@ void RLECodec4::encodeRun(std::vector<uint8_t>& out, bool terminal)
     runCount = 0;
 }
 
-TileCodec::TileCodec()
-    : opIsBuffered(false), statBucket(TilePalette::CM_INVALID), p16run(0xFFFFFFFF)
+TileCodec::TileCodec(std::vector<uint8_t>& buffer)
+    : opIsBuffered(false), statBucket(TilePalette::CM_INVALID),
+      p16run(0xFFFFFFFF), out(buffer), tileCount(0),
+      currentAddress(0)
 {
     memset(&stats, 0, sizeof stats);
-    tileCount = 0;
 }
 
-void TileCodec::encode(const TileRef tile, std::vector<uint8_t>& out)
+void TileCodec::encode(const TileRef tile, bool autoErase)
 {
+    /*
+     * Auto-erase mode spreads out our erases over the course of the
+     * write, erasing each block right before we start programming it.
+     */
+    if (autoErase && !(currentAddress.linear % FlashAddress::BLOCK_SIZE))
+	erase(1);
+
+    currentAddress.linear += FlashAddress::TILE_SIZE;
+
     /*
      * First off, encode LUT changes.
      */
@@ -177,7 +187,7 @@ void TileCodec::encode(const TileRef tile, std::vector<uint8_t>& out)
     uint16_t newColors;
     lut.encode(pal, newColors);
     if (newColors)
-	encodeLUT(newColors, out);
+	encodeLUT(newColors);
 
     /*
      * Now encode the tile bitmap data. We do this in a
@@ -192,7 +202,7 @@ void TileCodec::encode(const TileRef tile, std::vector<uint8_t>& out)
 
 	/* Trivial one-color tile. Just emit a bare OP_TILE_P0 opcode. */
     case TilePalette::CM_LUT1:
-	encodeOp(OP_TILE_P0 | lut.findColor(pal.colors[0]), out);
+	encodeOp(OP_TILE_P0 | lut.findColor(pal.colors[0]));
 	newStatsTile(colorMode);
 	return;
 
@@ -211,7 +221,7 @@ void TileCodec::encode(const TileRef tile, std::vector<uint8_t>& out)
     if (!opIsBuffered
 	|| tileOpcode != (opcodeBuf & OP_MASK)
 	|| (opcodeBuf & ARG_MASK) == ARG_MASK)
-	encodeOp(tileOpcode, out);
+	encodeOp(tileOpcode);
     else
 	opcodeBuf++;
 
@@ -236,7 +246,7 @@ void TileCodec::newStatsTile(unsigned bucket)
     tileCount++;
 }
 
-void TileCodec::flush(std::vector<uint8_t>& out)
+void TileCodec::flush()
 {
     if (opIsBuffered) {
 	if (statBucket != TilePalette::CM_INVALID) {
@@ -255,22 +265,22 @@ void TileCodec::flush(std::vector<uint8_t>& out)
     }
 }
 
-void TileCodec::encodeOp(uint8_t op, std::vector<uint8_t>& out)
+void TileCodec::encodeOp(uint8_t op)
 {
-    flush(out);
+    flush();
 
     opIsBuffered = true;
     opcodeBuf = op;
 }
 
-void TileCodec::encodeLUT(uint16_t newColors, std::vector<uint8_t>& out)
+void TileCodec::encodeLUT(uint16_t newColors)
 {
     if (newColors & (newColors - 1)) {
 	/*
 	 * More than one new color. Emit OP_LUT16.
 	 */
 
-	encodeOp(OP_LUT16, out);
+	encodeOp(OP_LUT16);
 	encodeWord(newColors);
 
 	for (unsigned index = 0; index < 16; index++)
@@ -284,7 +294,7 @@ void TileCodec::encodeLUT(uint16_t newColors, std::vector<uint8_t>& out)
 
 	for (unsigned index = 0; index < 16; index++)
 	    if (newColors & (1 << index)) {
-		encodeOp(OP_LUT1 | index, out);
+		encodeOp(OP_LUT1 | index);
 		encodeWord(lut.colors[index].value);
 		break;
 	    }
@@ -373,16 +383,26 @@ void TileCodec::dumpStatistics(Logger &log)
     log.infoEnd();
 }
 
-void TileCodec::address(uint32_t linearAddress, std::vector<uint8_t>& out)
+void TileCodec::address(FlashAddress addr)
 {
-    encodeOp(OP_ADDRESS, out);
-    dataBuf.push_back((uint8_t) ((linearAddress >> 7) << 1));
-    dataBuf.push_back((uint8_t) ((linearAddress >> 14) << 1));
-    flush(out);
+    currentAddress = addr;
+
+    encodeOp(OP_ADDRESS);
+    dataBuf.push_back(addr.lat1());
+    dataBuf.push_back(addr.lat2());
+    flush();
 }
 
-void TileCodec::end(std::vector<uint8_t>& out)
+void TileCodec::erase(unsigned numBlocks)
 {
-    encodeOp(OP_END, out);
-    flush(out);
+    if (numBlocks) {
+	uint8_t count = numBlocks - 1;
+	uint8_t check = -count -currentAddress.lat1() - currentAddress.lat2();
+	check ^= 0xFF;
+
+	encodeOp(OP_ERASE);
+	dataBuf.push_back(count);
+	dataBuf.push_back(check);
+    }
+    flush();
 }
