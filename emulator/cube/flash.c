@@ -28,7 +28,7 @@
 #define FLUSH_TIME_US  100000
 
 struct cmd_state {
-    uint16_t addr;
+    uint32_t addr;
     uint8_t data;
 };
 

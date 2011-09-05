@@ -25,11 +25,11 @@ void main(void)
 	/*
 	 * XXX: torture the flash a bit!
 	 */
-	flash_erase_chip();
+	flash_erase(0);
 	{
 	    uint8_t i;
 	    for (i = 0; i < 128; i++)
-		flash_program_byte(i);
+		flash_program(i);
 	}
 
 	// Sync with master

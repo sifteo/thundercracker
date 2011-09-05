@@ -13,27 +13,29 @@
 #include "hardware.h"
 
 /*
- * Wait for an earlier write/erase to finish. This happens implicitly
- * in the functions here, but you need to call it explicitly before
- * any flash reads.
+ * High-level loadstream decoder interface
  */
+
+extern uint8_t __idata flash_fifo[64];
+extern uint8_t flash_fifo_head;
+
+void flash_init(void);
+void flash_handle_fifo();
 void flash_wait(void);
 
 /*
- * Flash erase operations.
+ * Low-level hardware abstraction layer
  */
-void flash_erase_chip(void);
 
-/*
- * Flash programming. The address is stored globally, and
- * auto-incremented after every programmed byte.
- */
+#define FLASH_SIZE		(2 * 1024 * 1024)
+#define FLASH_BLOCK_SIZE	(64 * 1024)
+#define FLASH_NUM_BLOCKS	32
 
 extern uint8_t flash_addr_low;
 extern uint8_t flash_addr_lat1;
 extern uint8_t flash_addr_lat2;
 
-// Programs one byte, and increments flash_addr.
-void flash_program_byte(uint8_t dat);
+void flash_erase(uint8_t blockCount);
+void flash_program(uint8_t dat);
 
 #endif
