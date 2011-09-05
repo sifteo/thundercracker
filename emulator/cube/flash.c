@@ -55,23 +55,23 @@ struct {
 
     // Memory array
     uint8_t data[FLASH_SIZE];
-} flash;
+} flashmem;
 
 
 void flash_init(const char *filename)
 {
     size_t result;
 
-    flash.file = fopen(filename, "rb+");
-    if (!flash.file) {
-        flash.file = fopen(filename, "wb+");
+    flashmem.file = fopen(filename, "rb+");
+    if (!flashmem.file) {
+        flashmem.file = fopen(filename, "wb+");
     }
-    if (!flash.file) {
+    if (!flashmem.file) {
 	perror("Error opening flash");
 	exit(1);
     }
 
-    result = fread(flash.data, 1, FLASH_SIZE, flash.file);
+    result = fread(flashmem.data, 1, FLASH_SIZE, flashmem.file);
     if (result < 0) {
 	perror("Error reading flash");
 	exit(1);
@@ -82,47 +82,47 @@ static void flash_write(void)
 {
     size_t result;
     
-    fseek(flash.file, 0, SEEK_SET);
+    fseek(flashmem.file, 0, SEEK_SET);
 
-    result = fwrite(flash.data, FLASH_SIZE, 1, flash.file);
+    result = fwrite(flashmem.data, FLASH_SIZE, 1, flashmem.file);
     if (result != 1)
 	perror("Error writing flash");
 
-    fflush(flash.file);
+    fflush(flashmem.file);
 }
 
 void flash_exit(void)
 {
-    if (flash.write_timer)
+    if (flashmem.write_timer)
 	flash_write();
-    fclose(flash.file);
+    fclose(flashmem.file);
 }
 
 uint32_t flash_cycle_count(void)
 {
-    uint32_t c = flash.cycle_count;
-    flash.cycle_count = 0;
+    uint32_t c = flashmem.cycle_count;
+    flashmem.cycle_count = 0;
     return c;
 }
 
 enum busy_flag flash_busy_flag(void)
 {
     // These busy flags are only reset after they're read.
-    enum busy_flag f = flash.busy_status;
-    flash.busy_status = 0;
+    enum busy_flag f = flashmem.busy_status;
+    flashmem.busy_status = 0;
     return f;
 }
 
 static int flash_match_command(struct command_sequence *seq)
 {
     unsigned i;
-    uint8_t fifo_index = flash.cmd_fifo_head - CMD_LENGTH + 1;
+    uint8_t fifo_index = flashmem.cmd_fifo_head - CMD_LENGTH + 1;
    
     for (i = 0; i < CMD_LENGTH; i++, fifo_index++) {
 	fifo_index &= CMD_FIFO_MASK;
 
-	if ( (flash.cmd_fifo[fifo_index].addr & seq[i].addr_mask) != seq[i].addr ||
-	     (flash.cmd_fifo[fifo_index].data & seq[i].data_mask) != seq[i].data )
+	if ( (flashmem.cmd_fifo[fifo_index].addr & seq[i].addr_mask) != seq[i].addr ||
+	     (flashmem.cmd_fifo[fifo_index].data & seq[i].data_mask) != seq[i].data )
 	    return 0;
     }
 
@@ -131,44 +131,44 @@ static int flash_match_command(struct command_sequence *seq)
 
 static void flash_match_commands(void)
 {
-    struct cmd_state *st = &flash.cmd_fifo[flash.cmd_fifo_head];
+    struct cmd_state *st = &flashmem.cmd_fifo[flashmem.cmd_fifo_head];
 
-    if (flash.busy != BF_IDLE)
+    if (flashmem.busy != BF_IDLE)
 	return;
 
     if (flash_match_command(cmd_byte_program)) {
-	flash.data[st->addr] &= st->data;
-	flash.status_byte = STATUS_DATA_INV & ~st->data;
-	flash.busy = BF_PROGRAM;
-	flash.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-	flash.busy_timer = USEC_TO_CYCLES(PROGRAM_TIME_US);
+	flashmem.data[st->addr] &= st->data;
+	flashmem.status_byte = STATUS_DATA_INV & ~st->data;
+	flashmem.busy = BF_PROGRAM;
+	flashmem.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
+	flashmem.busy_timer = USEC_TO_CYCLES(PROGRAM_TIME_US);
 	
     } else if (flash_match_command(cmd_sector_erase)) {
-	memset(flash.data + (st->addr & ~(SECTOR_SIZE - 1)), 0xFF, SECTOR_SIZE);
-	flash.busy = BF_ERASE;
-	flash.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-	flash.busy_timer = USEC_TO_CYCLES(ERASE_SECTOR_TIME_US);
+	memset(flashmem.data + (st->addr & ~(SECTOR_SIZE - 1)), 0xFF, SECTOR_SIZE);
+	flashmem.busy = BF_ERASE;
+	flashmem.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
+	flashmem.busy_timer = USEC_TO_CYCLES(ERASE_SECTOR_TIME_US);
 	
     } else if (flash_match_command(cmd_block_erase)) {
-	memset(flash.data + (st->addr & ~(BLOCK_SIZE - 1)), 0xFF, BLOCK_SIZE);
-	flash.busy = BF_ERASE;
-	flash.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-	flash.busy_timer = USEC_TO_CYCLES(ERASE_BLOCK_TIME_US);
+	memset(flashmem.data + (st->addr & ~(BLOCK_SIZE - 1)), 0xFF, BLOCK_SIZE);
+	flashmem.busy = BF_ERASE;
+	flashmem.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
+	flashmem.busy_timer = USEC_TO_CYCLES(ERASE_BLOCK_TIME_US);
 
     } else if (flash_match_command(cmd_chip_erase)) {
-	memset(flash.data, 0xFF, FLASH_SIZE);
-	flash.busy = BF_ERASE;
-	flash.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-	flash.busy_timer = USEC_TO_CYCLES(ERASE_CHIP_TIME_US);
+	memset(flashmem.data, 0xFF, FLASH_SIZE);
+	flashmem.busy = BF_ERASE;
+	flashmem.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
+	flashmem.busy_timer = USEC_TO_CYCLES(ERASE_CHIP_TIME_US);
     }
 }
 
 static void flash_update_status_byte(void)
 {
-    flash.status_byte ^= STATUS_TOGGLE;
+    flashmem.status_byte ^= STATUS_TOGGLE;
 
-    if (flash.busy == BF_ERASE)
-	flash.status_byte ^= STATUS_ERASE_TOGGLE;
+    if (flashmem.busy == BF_ERASE)
+	flashmem.status_byte ^= STATUS_ERASE_TOGGLE;
 }
 
 void flash_tick(void)
@@ -177,17 +177,17 @@ void flash_tick(void)
      * March time forward on the current operation, if any.
      */
 
-    if (flash.busy) {
-	if (!--flash.busy_timer)
-	    flash.busy = BF_IDLE;
+    if (flashmem.busy) {
+	if (!--flashmem.busy_timer)
+	    flashmem.busy = BF_IDLE;
     }
-    if (flash.write_timer) {
-	if (!--flash.write_timer)
+    if (flashmem.write_timer) {
+	if (!--flashmem.write_timer)
 	    flash_write();
     }
 
     // Latch any busy flags long enough for the UI to see them.
-    flash.busy_status |= flash.busy;
+    flashmem.busy_status |= flashmem.busy;
 }
 
 void flash_cycle(struct flash_pins *pins)
@@ -195,8 +195,8 @@ void flash_cycle(struct flash_pins *pins)
     if (pins->ce) {
 	// Chip disabled
 	pins->data_drv = 0;
-	flash.cycle_prev_addr = -1;
-	flash.prev_we = 1;
+	flashmem.cycle_prev_addr = -1;
+	flashmem.prev_we = 1;
 
     } else {
 	uint32_t addr = (FLASH_SIZE - 1) & pins->addr;
@@ -205,12 +205,12 @@ void flash_cycle(struct flash_pins *pins)
 	 * Command writes are triggered on a falling WE edge.
 	 */
 
-	if (!pins->we && flash.prev_we) {
-	    flash.cmd_fifo[flash.cmd_fifo_head].addr = addr;
-	    flash.cmd_fifo[flash.cmd_fifo_head].data = pins->data_in;
+	if (!pins->we && flashmem.prev_we) {
+	    flashmem.cmd_fifo[flashmem.cmd_fifo_head].addr = addr;
+	    flashmem.cmd_fifo[flashmem.cmd_fifo_head].data = pins->data_in;
 	    flash_match_commands();
-	    flash.cmd_fifo_head = CMD_FIFO_MASK & (flash.cmd_fifo_head + 1);
-	    flash.cycle_count++;
+	    flashmem.cmd_fifo_head = CMD_FIFO_MASK & (flashmem.cmd_fifo_head + 1);
+	    flashmem.cycle_count++;
 	}
 
 	/*
@@ -225,23 +225,23 @@ void flash_cycle(struct flash_pins *pins)
 	 */
 
 	if (pins->oe) {
-	    flash.cycle_prev_addr = -1;
+	    flashmem.cycle_prev_addr = -1;
 	} else {
 
 	    // Toggle bits only change on an OE edge.
-	    if (flash.prev_oe)
+	    if (flashmem.prev_oe)
 		flash_update_status_byte();
 
 	    pins->data_drv = 1;
-	    pins->data_out = flash.busy ? flash.status_byte : flash.data[addr];
+	    pins->data_out = flashmem.busy ? flashmem.status_byte : flashmem.data[addr];
 
-	    if (addr != flash.cycle_prev_addr) {
-		flash.cycle_count++;
-		flash.cycle_prev_addr = addr;
+	    if (addr != flashmem.cycle_prev_addr) {
+		flashmem.cycle_count++;
+		flashmem.cycle_prev_addr = addr;
 	    }
 	}
     }
 
-    flash.prev_we = pins->we;
-    flash.prev_oe = pins->oe;
+    flashmem.prev_we = pins->we;
+    flashmem.prev_oe = pins->oe;
 }

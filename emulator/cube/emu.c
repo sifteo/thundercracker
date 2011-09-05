@@ -484,6 +484,10 @@ void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
     fprintf(stderr, "Profiler output written to '%s'\n", filename);
 }
 
+#ifdef __MACOSX__
+// Necessary if we're using -fwhole-program, so that the real main() can see our SDL_main.
+__attribute ((externally_visible))
+#endif
 int main(int argc, char ** argv) 
 {
     struct em8051 emu;
