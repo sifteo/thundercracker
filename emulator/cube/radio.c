@@ -308,6 +308,9 @@ static uint8_t radio_spi_cmd_data(uint8_t cmd, unsigned index, uint8_t mosi)
 	radio_update_irq();
 	return 0xFF;
 
+    case CMD_R_RX_PL_WID:
+	return radio.rx_fifo[radio.rx_fifo_tail].len;
+
     default:
 	if (cmd < CMD_R_REGISTER + sizeof radio.regs)
 	    return *radio_reg_ptr(cmd, index);
