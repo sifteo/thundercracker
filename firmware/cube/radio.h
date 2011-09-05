@@ -51,6 +51,8 @@ union ack_format {
 	 * encode things like button state.
 	 */
 	uint8_t neighbor[4];
+
+	uint8_t flash_fifo_bytes;
     };
 };
 

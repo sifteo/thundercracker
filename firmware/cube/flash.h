@@ -16,7 +16,8 @@
  * High-level loadstream decoder interface
  */
 
-extern uint8_t __idata flash_fifo[64];
+#define FLASH_FIFO_MASK  63
+extern uint8_t __idata flash_fifo[FLASH_FIFO_MASK + 1];
 extern uint8_t flash_fifo_head;
 
 void flash_init(void);

@@ -21,16 +21,8 @@ void main(void)
     sti();
 
     while (1) {
-
-	/*
-	 * XXX: torture the flash a bit!
-	 */
-	flash_erase(0);
-	{
-	    uint8_t i;
-	    for (i = 0; i < 128; i++)
-		flash_program(i);
-	}
+	// Process queued flash commands between frames
+	flash_handle_fifo();
 
 	// Sync with master
 	// XXX disabled, see refresh_alt()
@@ -38,7 +30,7 @@ void main(void)
 
 	// Sync with LCD
 	//while (!CTRL_LCD_TE);
-	
+
 	graphics_render();
 	ack_data.frame_count++;
     }
