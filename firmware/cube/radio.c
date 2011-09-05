@@ -8,103 +8,272 @@
 
 #include "hardware.h"
 #include "radio.h"
+#include "flash.h"
 
+/*
+ * The ACK reply buffer lives in near memory. It needs to, so that
+ * the ADC ISR can access it very quickly.
+ */
 union ack_format __near ack_data;
 
+/*
+ * Radio protocol opcodes.
+ *
+ * Our basic opcode format is a 2-bit command and a 6-bit length, with
+ * length always encoded as the actual length - 1. This lets us fit
+ * the most common commands into a single byte, and the 6-bit length
+ * allows us to amortize the opcode size to less than a byte per
+ * packet.
+ *
+ * Opcodes may persist past the end of a radio packet if and only if
+ * that packet is the maximum length. At the end of any non-maximal
+ * length packet, the radio state machine is reset. If you need to
+ * explicitly reset the state machine, you can send a zero-length
+ * packet.
+ *
+ * XXX: Figure out how best to allocate this opcode space once we get
+ *      a sample of some real-world radio traffic for a game.
+ */
+
+#define RF_OP_MASK		0xc0
+#define RF_ARG_MASK		0x3f
+
+// Major opcodes
+#define RF_OP_SPECIAL		0x00    // Multiplexor for special opcodes
+#define RF_OP_VRAM_SKIP		0x40	// Seek forward arg+1 bytes
+#define RF_OP_VRAM_DATA		0x80    // Write arg+1 bytes to VRAM
+#define RF_OP_FLASH_QUEUE	0xc0    // Write arg+1 bytes to flash loadstream FIFO
+
+// Special minor opcodes
+#define RF_OP_VRAM_ADDRESS	0x00	// Change the VRAM write pointer
+#define RF_OP_VRAM_DIRECT	0x01	// Change write mode: Direct
+#define RF_OP_VRAM_VERTICAL	0x02	// Change write mode: Top-to-bottom
+
+/*
+ * Assembly macros.
+ */
+
+#define SPI_WAIT						__endasm; \
+	__asm	mov	a, _SPIRSTAT				__endasm; \
+	__asm	jnb	acc.2, (.-2)				__endasm; \
+	__asm
+
+#define RX_NEXT_BYTE						__endasm; \
+	__asm	djnz	R_PACKET_REMAINING, rx_byte_loop	__endasm; \
+	__asm	ljmp	rx_complete				__endasm; \
+	__asm
+
+/*
+ * Register usage in RF_BANK.
+ */
+
+#define R_TMP			r0
+#define R_BYTE			r3
+#define R_FLASH_COUNT		r4
+#define R_VRAM_COUNT		r5
+#define R_PACKET_REMAINING	r6
+#define R_PACKET_LEN		r7
+
+static uint16_t rf_vram_ptr;		// Lives in DPTR during the ISR
 
 /*
  * Radio ISR --
  *
- *    Receive one packet from the radio, store it in xram, and write
- *    out a new buffered ACK packet.
+ *    Receive one packet from the radio, store it according to our
+ *    opcode state machine, and write out a new buffered ACK
+ *    packet. This is very performance critical, and we can save on
+ *    some key sources of overhead by using assembly, and managing
+ *    our register usage manually.
  */
 
-void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(1)
+void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK)
 {
     __asm
 	push	acc
 	push	dpl
 	push	dph
 	push	psw
-	mov	psw, #0x08			; Register bank 1
+	mov	psw, #(RF_BANK << 3)
+	mov	dpl, _rf_vram_ptr
+	mov	dph, (_rf_vram_ptr + 1)
 
-	; Start reading incoming packet
-	; Do this first, since we can benefit from any latency reduction we can get.
+	;--------------------------------------------------------------------
+	; Packet receive setup
+	;--------------------------------------------------------------------
+
+	; Read the length of this received packet
+
+	clr	_RF_CSN				; Begin SPI transaction
+	mov	_SPIRDAT, #RF_CMD_R_RX_PL_WID	; Read RX Payload Width command
+	mov	_SPIRDAT, #0			; First dummy byte, keep the TX FIFO full
+	SPI_WAIT	  			; Wait for Command/STATUS byte
+	mov	a, _SPIRDAT			; Ignore STATUS byte
+	SPI_WAIT   				; Wait for width byte
+	mov	a, _SPIRDAT			; Total packet length
+	setb	_RF_CSN				; End SPI transaction
+
+	; If the packet is greater than RF_PAYLOAD_MAX, it is an error. We need
+	; to discard it. This should be really rare, and honestly we only
+	; do this because the data sheet claims it is SUPER IMPORTANT.
+	; 
+	; Since we have some code here to do an RX_FLUSH anyway, we also
+	; send zero-length packets through this path. A zero-length packet
+	; only has the effects of (1) causing an ACK transmission, and (2)
+	; resetting the RX state machine, both of which are things we can do
+	; cheaply through this path. And as we can see below, throwing out
+	; zero-length packets early means much less special-casing in the
+	; RX loop!
+
+	mov	R_PACKET_LEN, a
+	jz	#6$				; Skip right to RX_FLUSH if zero-length
+	mov	R_PACKET_REMAINING, a
+
+	add	a, #(0xFF - RF_PAYLOAD_MAX)
+	jnc	#4$				; Jump if R_PACKET_LENGTH < RF_PAYLOAD_MAX
+
+6$:
+	clr	_RF_CSN				; Begin SPI transaction
+	mov	_SPIRDAT, #RF_CMD_FLUSH_RX	; RX_FLUSH command
+	SPI_WAIT				; Wait for command byte
+	mov	a, _SPIRDAT			; Ignore dummy STATUS byte
+	ljmp	#rx_complete			; Skip the RX loop (and end SPI transaction)
+4$:
+
+	; Start reading the incoming packet, then loop over all bytes.
+	; We try to keep the SPI FIFOs full here, and we expect the
+	; byte processing loop to be at least 16 clock cycles long, so
+	; we do not explicitly check the SPI status after each byte.
 
 	clr	_RF_CSN				; Begin SPI transaction
 	mov	_SPIRDAT, #RF_CMD_R_RX_PAYLOAD	; Start reading RX packet
 	mov	_SPIRDAT, #0			; First dummy byte, keep the TX FIFO full
+	SPI_WAIT	  			; Wait for Command/STATUS byte
+	mov	a, _SPIRDAT			; Ignore status
+	SPI_WAIT	  			; Wait for first data byte
 
-	mov	a, _SPIRSTAT			; Wait for Command/STATUS byte
-	jnb	acc.2, (.-2)
-	mov	a, _SPIRDAT			; Ignore STATUS byte
-	mov	_SPIRDAT, #0			; Write next dummy byte
+rx_byte_loop:
+	mov	R_BYTE, _SPIRDAT		; Store received byte
 
-	mov	a, _SPIRSTAT			; Wait for RX byte 0, block address
-	jnb	acc.2, (.-2)
-	mov	r0, _SPIRDAT			; Read block address. This is in units of 31 bytes
-	mov	_SPIRDAT, #0			; Write next dummy byte
-
-	; Apply the block address offset. Nominally this requires 16-bit multiplication by 31,
-	; but that is really expensive. Instead, we can express N*31 as (N<<5)-N. But that still
-	; requires a 16-bit shift, and it is ugly to implement on the 8051 instruction set. So,
-	; we implement a different function that happens to equal N*31 for the values we care
-	; about, and which uses only 8-bit math:
-	;
-	;   low(N*31) = (a << 5) - a
-	;   high(N*31) = (a - 1) >> 3   (EXCEPT when a==0)
-
-	mov	a, r0
-	anl	a, #0x07	; Pre-mask before shifting...
-	swap	a  		; << 5
-	rlc	a		; Also sets C=0, for the subb below
-	subb	a, r0
-	mov	dpl, a
-
-	mov	a, r0
-	jz	1$
+	mov	a, R_PACKET_REMAINING		; Skip if this is the last RX byte
 	dec	a
-1$:	swap	a		; >> 3
-	rl	a
-	anl	a, #0x3		; Mask at 1024 bytes total
-	mov	dph, a
+	jz	8$
+	mov	_SPIRDAT, #0			; Write next dummy byte, start next RX
+8$:
 
-	; Transfer 29 packet bytes in bulk to xram. (The first one and last two bytes are special)
-	; If this loop takes at least 16 clock cycles per iteration, we do not need to
-	; explicitly wait on the SPI engine, we can just stay synchronized with it.
+	;--------------------------------------------------------------------
+	; Data byte handlers
+	;--------------------------------------------------------------------
 
-	mov	r1, #29
-2$:	mov	a, _SPIRDAT	; 2  Read payload byte
-	mov	_SPIRDAT, #0	; 3  Write the next dummy byte
-	movx	@dptr, a	; 5
-	inc	dptr		; 1
-	nop			; 1  (Pad to 16 clock cycles)
-	nop			; 1
-	djnz	r1, 2$		; 3
+	; These handlers should be sorted in order of decreasing
+	; frequency, to save clock cycles on the most frequent ops.
 
-	; Last two bytes, drain the SPI RX FIFO
+	;---------------------------------
+	; VRAM Write Data
+	;---------------------------------
 
-	mov	a, _SPIRDAT	; Read payload byte
+	mov	a, R_VRAM_COUNT			; Are we in a VRAM write operation?
+	jz	9$
+
+	mov	a, R_BYTE			; Store R_BYTE at current VRAM pointer
 	movx	@dptr, a
 	inc	dptr
-	mov	a, _SPIRDAT	; Read payload byte
-	movx	@dptr, a
+
+	dec	R_VRAM_COUNT			; Next packet byte, next opcode byte
+	RX_NEXT_BYTE
+9$:
+
+	;---------------------------------
+	; Flash Write Data
+	;---------------------------------
+
+	mov	a, R_FLASH_COUNT		; Are we in a Flash enqueue operation?
+	jz	10$
+
+	mov	R_TMP, _flash_fifo_head		; Load the flash write pointer
+
+	mov	a, R_BYTE			; Store R_BYTE in the FIFO
+	mov	@R_TMP, a
+
+	mov	a, R_TMP			; Next FIFO location
+	inc	a
+	anl	a, #FLASH_FIFO_MASK
+	mov	_flash_fifo_head, a
+
+	dec	R_FLASH_COUNT			; Next packet byte, next opcode byte
+	RX_NEXT_BYTE
+10$:
+
+	;--------------------------------------------------------------------
+	; Opcode byte handlers
+	;--------------------------------------------------------------------
+
+	mov	a, R_BYTE
+	anl	a, #RF_OP_MASK
+
+	;---------------------------------
+	; VRAM Write Data
+	;---------------------------------
+
+	cjne	a, #RF_OP_VRAM_DATA, 11$
+	mov	a, R_BYTE
+	anl	a, #RF_ARG_MASK
+	inc	a
+	mov	R_VRAM_COUNT, a
+	RX_NEXT_BYTE
+11$:
+
+	;---------------------------------
+	; Flash Write Data
+	;---------------------------------
+
+	cjne	a, #RF_OP_FLASH_QUEUE, 12$
+	mov	a, R_BYTE
+	anl	a, #RF_ARG_MASK
+	inc	a
+	mov	R_FLASH_COUNT, a
+	RX_NEXT_BYTE
+12$:
+
+	;---------------------------------
+	; Other
+	;---------------------------------
+
+	; Catch-all for unimplemented opcodes...
+	RX_NEXT_BYTE
+
+	;--------------------------------------------------------------------
+	; Packet receive completion
+	;--------------------------------------------------------------------
+
+rx_complete:
+
 	setb	_RF_CSN		; End SPI transaction
+
+	; If the packet was not exactly the maximum length, reset our state machine now.
+	; Note that we do not have to initialize all of our registers, just those that keep
+	; track of the intra-opcode state. State that persists between opcodes, like the VRAM
+	; pointer, should not be touched.
+
+	cjne	R_PACKET_LEN, #RF_PAYLOAD_MAX, 7$
+
+	mov	R_FLASH_COUNT, #0
+	mov	R_VRAM_COUNT, #0
+7$:
 
 	; nRF Interrupt acknowledge
 
 	clr	_RF_CSN						; Begin SPI transaction
 	mov	_SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_STATUS)	; Start writing to STATUS
 	mov	_SPIRDAT, #RF_STATUS_RX_DR			; Clear interrupt flag
-	mov	a, _SPIRSTAT					; RX dummy byte 0
-	jnb	acc.2, (.-2)
+	SPI_WAIT						; RX dummy byte 0
 	mov	a, _SPIRDAT
-	mov	a, _SPIRSTAT					; RX dummy byte 1
-	jnb	acc.2, (.-2)
+	SPI_WAIT						; RX dummy byte 1
 	mov	a, _SPIRDAT
 	setb	_RF_CSN						; End SPI transaction
 
-	; Write the ACK packet, from our buffer.
+	;--------------------------------------------------------------------
+	; ACK packet write
+	;--------------------------------------------------------------------
 
 	clr	_RF_CSN					; Begin SPI transaction
 	mov	_SPIRDAT, #RF_CMD_W_ACK_PAYLD		; Start sending ACK packet
@@ -113,13 +282,11 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(1)
 
 3$:	mov	_SPIRDAT, @r1
 	inc	r1
-	mov	a, _SPIRSTAT				; RX dummy byte
-	jnb	acc.2, (.-2)
+	SPI_WAIT					; RX dummy byte
 	mov	a, _SPIRDAT
 	djnz	r0, 3$
 
-	mov	a, _SPIRSTAT				; RX last dummy byte
-	jnb	acc.2, (.-2)
+	SPI_WAIT					; RX last dummy byte
 	mov	a, _SPIRDAT
 	setb	_RF_CSN					; End SPI transaction
 
@@ -132,6 +299,8 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(1)
 	mov	(_ack_data + ACK_ACCEL_COUNTS + 0), #0
 	mov	(_ack_data + ACK_ACCEL_COUNTS + 1), #0
 
+	mov	_rf_vram_ptr, dpl
+	mov	(_rf_vram_ptr + 1), dph
 	pop	psw
 	pop	dph
 	pop	dpl
@@ -159,7 +328,11 @@ void radio_init(void)
 {
     // Radio clock running
     RF_CKEN = 1;
-    
+
+    // Use dynamic payload lengths
+    radio_reg_write(RF_REG_FEATURE, 0x07);
+    radio_reg_write(RF_REG_DYNPD, 0x01);
+
     // Enable RX interrupt
     radio_reg_write(RF_REG_CONFIG, RF_STATUS_RX_DR);
     IEN_RF = 1;

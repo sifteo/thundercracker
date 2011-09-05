@@ -12,10 +12,21 @@
 #include <stdint.h>
 #include "hardware.h"
 
-void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(1);
+/*
+ * Separate register bank for RF IRQ handlers. This register bank is
+ * ONLY used here, so we can rely on its values to persist across IRQs.
+ * This is where we store state for the packet receive state machine.
+ */
+#define RF_BANK  1
+
+void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK);
 void radio_init(void);
 
-#define ACK_LENGTH  		11
+/*
+ * ACK reply buffer format
+ */
+
+#define ACK_LENGTH  		12
 #define ACK_ACCEL_COUNTS	1
 #define ACK_ACCEL_TOTALS	3
 

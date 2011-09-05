@@ -22,7 +22,7 @@ void main(void)
 
     while (1) {
 	// Process queued flash commands between frames
-	flash_handle_fifo();
+	//flash_handle_fifo();
 
 	// Sync with master
 	// XXX disabled, see refresh_alt()

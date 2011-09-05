@@ -16,16 +16,19 @@
  * A/D Converter ISR --
  *
  *    Stores this sample in the ack_data buffer, and swaps channels.
+ *
+ *    This ISR does not switch register banks, because it does not
+ *    use registers. Only the accumulator needs to be saved. Performance
+ *    here is really important, since the ISR is invoked so frequently.
  */
 
-void adc_isr(void) __interrupt(VECTOR_MISC) __naked __using(1)
+void adc_isr(void) __interrupt(VECTOR_MISC) __naked
 {
     __asm
 	push	acc
 	push	psw
-	mov	psw, #0x08			; Register bank 1
 
-	mov	a,_ADCCON1			; What channel are we on? We only have two.
+	mov	a,_ADCCON1		; What channel are we on? We only have two.
 	jb	acc.2, 1$
 
 	; Channel 0

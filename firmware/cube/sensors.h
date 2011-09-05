@@ -12,6 +12,6 @@
 #include "hardware.h"
 
 void sensors_init();
-void adc_isr(void) __interrupt(VECTOR_MISC) __naked __using(1);
+void adc_isr(void) __interrupt(VECTOR_MISC) __naked;
 
 #endif
