@@ -3,4 +3,5 @@
 *.pyc
 *.vcxproj.user
 simcube
+*.dSYM
 flash.bin
