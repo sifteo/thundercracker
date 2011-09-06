@@ -42,6 +42,8 @@ struct {
     uint32_t cycle_count;
     uint32_t write_count;
     uint32_t erase_count;
+    uint32_t busy_ticks;
+    uint32_t idle_ticks;
     enum busy_flag busy_status;
 
     // Command state
@@ -113,6 +115,14 @@ enum busy_flag flash_busy_flag(void)
     return f;
 }
 
+unsigned flash_busy_percent(void)
+{
+    unsigned percent = flashmem.busy_ticks * 100 / (flashmem.busy_ticks + flashmem.idle_ticks);
+    flashmem.busy_ticks = 0;
+    flashmem.idle_ticks = 0;
+    return percent;
+}
+
 static int flash_match_command(struct command_sequence *seq)
 {
     unsigned i;
@@ -180,7 +190,11 @@ void flash_tick(void)
     if (flashmem.busy) {
 	if (!--flashmem.busy_timer)
 	    flashmem.busy = BF_IDLE;
+	flashmem.busy_ticks++;
+    } else {
+	flashmem.idle_ticks++;
     }
+
     if (flashmem.write_timer) {
 	if (!--flashmem.write_timer)
 	    flash_write();

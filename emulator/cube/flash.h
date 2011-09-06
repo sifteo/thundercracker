@@ -31,6 +31,7 @@ void flash_exit(void);
 
 uint32_t flash_cycle_count(void);
 enum busy_flag flash_busy_flag(void);
+unsigned flash_busy_percent(void);
 
 void flash_tick(void);
 void flash_cycle(struct flash_pins *pins);

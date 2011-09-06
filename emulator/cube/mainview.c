@@ -645,9 +645,10 @@ void mainview_update(struct em8051 *aCPU)
 	wprintw(miscview, "% 8.3f FPS \n", lcd_wrs);
         wattroff(miscview, A_REVERSE);
 
-	wprintw(miscview, "Flash  :% 7.3f MHz  %c%c\n", flash_hz / 1000000.0,
+	wprintw(miscview, "Flash  :% 7.3f MHz %c%c % 3u%%\n", flash_hz / 1000000.0,
 		flash_busy & BF_PROGRAM ? 'W' : '-',
-		flash_busy & BF_ERASE   ? 'E' : '-');
+		flash_busy & BF_ERASE   ? 'E' : '-',
+		flash_busy_percent());
 
 	wprintw(miscview, "Radio  :% 5d RX% 6.2f kB/s\n", (int)radio_rx, radio_b / 1000);
 	wprintw(miscview, "Time   : %07.2f ms %04llu ck\n", fmod(msec, 10000.0), clocks % 10000);
