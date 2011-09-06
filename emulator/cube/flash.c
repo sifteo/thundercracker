@@ -117,7 +117,8 @@ enum busy_flag flash_busy_flag(void)
 
 unsigned flash_busy_percent(void)
 {
-    unsigned percent = flashmem.busy_ticks * 100 / (flashmem.busy_ticks + flashmem.idle_ticks);
+    uint32_t total_ticks = flashmem.busy_ticks + flashmem.idle_ticks;
+    unsigned percent = total_ticks ? flashmem.busy_ticks * 100 / total_ticks : 0;
     flashmem.busy_ticks = 0;
     flashmem.idle_ticks = 0;
     return percent;
