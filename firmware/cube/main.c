@@ -22,16 +22,14 @@ void main(void)
 
     while (1) {
 	// Process queued flash commands between frames
-	//flash_handle_fifo();
+	flash_handle_fifo();
 
-	// Sync with master
-	// XXX disabled, see refresh_alt()
-	// while (vram.frame_trigger == ack_data.frame_count);
+	if (vram.frame_trigger != ack_data.frame_count) {
+	    // Sync with LCD
+	    //while (!CTRL_LCD_TE);
 
-	// Sync with LCD
-	//while (!CTRL_LCD_TE);
-
-	graphics_render();
-	ack_data.frame_count++;
+	    graphics_render();
+	    ack_data.frame_count++;
+	}
     }
 }

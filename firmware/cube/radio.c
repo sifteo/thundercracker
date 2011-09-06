@@ -189,15 +189,19 @@ rx_byte_loop:
 	mov	a, R_FLASH_COUNT		; Are we in a Flash enqueue operation?
 	jz	10$
 
-	mov	R_TMP, _flash_fifo_head		; Load the flash write pointer
+	mov	R_TMP, a
 
+	mov     a, _flash_fifo_head		; Load the flash write pointer
+	add	a, #_flash_fifo			; Address relative to flash_fifo[]
+	mov	R_TMP, a
 	mov	a, R_BYTE			; Store R_BYTE in the FIFO
 	mov	@R_TMP, a
 
-	mov	a, R_TMP			; Next FIFO location
+	mov	a, _flash_fifo_head		; Advance head pointer
 	inc	a
 	anl	a, #FLASH_FIFO_MASK
 	mov	_flash_fifo_head, a
+
 
 	dec	R_FLASH_COUNT			; Next packet byte, next opcode byte
 	RX_NEXT_BYTE
@@ -254,7 +258,9 @@ rx_complete:
 	; track of the intra-opcode state. State that persists between opcodes, like the VRAM
 	; pointer, should not be touched.
 
-	cjne	R_PACKET_LEN, #RF_PAYLOAD_MAX, 7$
+	mov	a, R_PACKET_LEN
+	xrl	a, #RF_PAYLOAD_MAX
+	jz	7$
 
 	mov	R_FLASH_COUNT, #0
 	mov	R_VRAM_COUNT, #0
