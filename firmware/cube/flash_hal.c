@@ -113,8 +113,9 @@ void flash_erase(uint8_t blockCount)
 	    blockCount--;
 	    flash_addr_lat2 += 4;
 	}
-    }
 
+	BUS_DIR = 0xFF;
+    }
     BUS_DIR = 0xFF;
 }
 

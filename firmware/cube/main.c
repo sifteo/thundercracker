@@ -18,13 +18,15 @@ void main(void)
     graphics_init();
     sensors_init();
     radio_init();
+    flash_init();
     sti();
 
     while (1) {
 	// Process queued flash commands between frames
 	flash_handle_fifo();
 
-	if (vram.frame_trigger != ack_data.frame_count) {
+	//if (vram.frame_trigger != ack_data.frame_count) {
+	if (1) {
 	    // Sync with LCD
 	    //while (!CTRL_LCD_TE);
 

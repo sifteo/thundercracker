@@ -48,6 +48,7 @@ union ack_format __near ack_data;
 #define RF_OP_VRAM_ADDRESS	0x00	// Change the VRAM write pointer
 #define RF_OP_VRAM_DIRECT	0x01	// Change write mode: Direct
 #define RF_OP_VRAM_VERTICAL	0x02	// Change write mode: Top-to-bottom
+#define RF_OP_FLASH_RESET       0x03    // Reset the flash decoder state machine
 
 /*
  * Assembly macros.
@@ -237,6 +238,21 @@ rx_byte_loop:
 	mov	R_FLASH_COUNT, a
 	RX_NEXT_BYTE
 12$:
+
+	;--------------------------------------------------------------------
+	; Special opcode byte handlers
+	;--------------------------------------------------------------------
+
+	mov	a, R_BYTE
+
+	;---------------------------------
+	; Flash Write Data
+	;---------------------------------
+
+	cjne	a, #RF_OP_FLASH_RESET, 13$
+	mov	_flash_fifo_head, #FLASH_HEAD_RESET
+	RX_NEXT_BYTE
+13$:
 
 	;---------------------------------
 	; Other

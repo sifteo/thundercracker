@@ -29,8 +29,8 @@
 #include "hardware.h"
 #include "radio.h"
 
-uint8_t __idata flash_fifo[FLASH_FIFO_MASK + 1];
-uint8_t flash_fifo_head;
+volatile uint8_t __idata flash_fifo[FLASH_FIFO_MASK + 1];
+volatile uint8_t flash_fifo_head;
 
 
 /*
@@ -120,7 +120,9 @@ void flash_init(void)
 
 void flash_handle_fifo(void)
 {
-    while (flash_fifo_head != fifo_tail) {
+    uint8_t byte, head;
+
+    while (1) {
 	/*
 	 * Dequeue one byte from the FIFO.
 	 *
@@ -128,7 +130,21 @@ void flash_handle_fifo(void)
 	 * overwrite the location we just freed up in the FIFO buffer.
 	 */
 
-	uint8_t byte = flash_fifo[fifo_tail];	
+	head = flash_fifo_head;
+
+	// Out-of-band cue to reset the state machine
+	if (head == FLASH_HEAD_RESET) {
+	    flash_fifo_head = 0;
+	    flash_init();
+	    ack_data.flash_fifo_bytes++;
+	    return;
+	}
+
+	// Out of data. Do something else!
+	if (head == fifo_tail)
+	    return;
+
+	byte = flash_fifo[fifo_tail];	
 	fifo_tail = (fifo_tail + 1) & FLASH_FIFO_MASK;
 	ack_data.flash_fifo_bytes++;
 

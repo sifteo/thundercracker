@@ -17,6 +17,8 @@ def main():
     net = NetworkMaster()
     loader = FlashLoader(net)
     data = open(args.file, 'rb').read()
+
+    loader.reset()
     loader.send(data)
 
 
@@ -24,38 +26,65 @@ class FlashLoader:
     """Send a flash loadstream, with flow control, as fast as the cube will accept it."""
 
     OP_FLASH_QUEUE = 0xC0
+    OP_FLASH_RESET = 0x03
     ACK_FIFO_BYTES = 11
-    PACKET_SIZE = 32
-    THRESHOLD = 16
+    OP_ARG_MAX = 0x40
+
     FIFO_MAX = 63
+    MIN_PACKET = 31
 
     def __init__(self, net):
         self.net = net
         self.cv = threading.Condition()
-        self.buffer_space = self.FIFO_MAX
+        self.ack_count = 0
+        self.send_count = 0
         self.prev_ack_byte = None
         net.register_callback(self._callback)
 
+    def reset(self):
+        """Reset the flash decoder's state machine. A reset starts with a special
+           radio opcode, which sends the reset to the flash decoder asynchronously
+           and out-of-band with the actual FIFO data. We need to wait for the reset
+           to be acknowledged, which happens in the form of a one-byte FIFO ack.
+           """
+
+        print "Resetting flash decoder..."
+
+        self.cv.acquire()
+        self.ack_count = 0
+        self.send_count = 0
+
+        self.net.send_msg(chr(self.OP_FLASH_RESET))
+        while self.ack_count == 0:
+            self.cv.wait(1)
+
+        self.ack_count = 0
+        self.cv.release()
+
+        print "Reset finished."
+
     def send(self, data):
+        """Stream a large data buffer to the flash decoder, keeping the decoder's
+           FIFO full as best we can.
+           """
+
         while data:
             self.cv.acquire()
-
-            while self.buffer_space < self.THRESHOLD or self.prev_ack_byte is None: 
+            while True:
+                fifo_space = self.FIFO_MAX - (self.send_count - self.ack_count)
+                print "State: sent=%d acked=%d free=%d" % (self.send_count, self.ack_count, fifo_space)
+                if fifo_space >= self.MIN_PACKET:
+                    break
                 self.cv.wait(1)
-
-            blockSize = min(len(data), self.buffer_space)
-            self.buffer_space -= blockSize
             self.cv.release()
 
-            print "Sending %d bytes" % blockSize
-            self._sendBlock(chr(self.OP_FLASH_QUEUE + blockSize - 1) + data[:blockSize])
-            data = data[blockSize:]
+            blockSize = min(self.OP_ARG_MAX, min(len(data), fifo_space))
+            self.send_count += blockSize
 
-    def _sendBlock(self, data):
-        while data:
-            packetSize = min(len(data), self.PACKET_SIZE)
-            self.net.send_msg(data[:packetSize])
-            data = data[packetSize:]
+            print "Sending %d bytes" % blockSize
+
+            self.net.send_multiple(chr(self.OP_FLASH_QUEUE + blockSize - 1) + data[:blockSize])
+            data = data[blockSize:]
 
     def _callback(self, ack):
         ack_byte = ord(ack[self.ACK_FIFO_BYTES])
@@ -65,7 +94,7 @@ class FlashLoader:
         if self.prev_ack_byte is not None:
             ack_len = 0xFF & (ack_byte - self.prev_ack_byte)
             if ack_len:
-                self.buffer_space += ack_len
+                self.ack_count += ack_len
                 self.cv.notify()
 
         self.prev_ack_byte = ack_byte
@@ -83,8 +112,11 @@ class NetworkMaster(asyncore.dispatcher_with_send):
          update in response.
 
        """    
-    LOCAL_TX_DEPTH = 5 		# Depth of local transmit queue
-    REMOTE_TX_DEPTH = 2		# Number of unacknowledged transmitted packets in flight
+
+    LOCAL_TX_DEPTH = 2 		# Depth of local transmit queue
+    REMOTE_TX_DEPTH = 1		# Number of unacknowledged transmitted packets in flight
+
+    MAX_PACKET_SIZE = 32
 
     def __init__(self, address=0x020000e7e7e7e7e7, host="127.0.0.1", port=2405):
         asyncore.dispatcher_with_send.__init__(self, map={})
@@ -130,6 +162,12 @@ class NetworkMaster(asyncore.dispatcher_with_send):
             except Queue.Full:
                 # Try again (Don't block for too long, or the process will be hard to kill)
                 pass
+
+    def send_multiple(self, payload):
+        while payload:
+            packetSize = min(len(payload), self.MAX_PACKET_SIZE)
+            self.send_msg(payload[:packetSize])
+            payload = payload[packetSize:]
 
     def handle_read(self):
         self.recv_buffer += self.recv(8192)
