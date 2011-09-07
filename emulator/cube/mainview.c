@@ -607,6 +607,7 @@ void mainview_update(struct em8051 *aCPU)
 	static float radio_b = 0;
 	static float radio_rx = 0;
 	static float flash_hz = 0;
+	static unsigned flash_percent = 0;
 
 	enum busy_flag flash_busy = flash_busy_flag();
 
@@ -627,12 +628,14 @@ void mainview_update(struct em8051 *aCPU)
 		radio_rx = radio_rx_count() / virtual_elapsed;
 		flash_hz = flash_cycle_count() / virtual_elapsed;
 		clock_ratio = virtual_elapsed / real_elapsed;
+		flash_percent = flash_busy_percent();
 	    } else {
                 lcd_wrs = 0;
 		radio_b = 0;
 		radio_rx = 0;
                 clock_ratio = 0;
 		flash_hz = 0;
+		flash_percent = 0;
             }
 
 	    update_prev_time = now;
@@ -648,7 +651,7 @@ void mainview_update(struct em8051 *aCPU)
 	wprintw(miscview, "Flash  :% 7.3f MHz %c%c % 3u%%\n", flash_hz / 1000000.0,
 		flash_busy & BF_PROGRAM ? 'W' : '-',
 		flash_busy & BF_ERASE   ? 'E' : '-',
-		flash_busy_percent());
+		flash_percent);
 
 	wprintw(miscview, "Radio  :% 5d RX% 6.2f kB/s\n", (int)radio_rx, radio_b / 1000);
 	wprintw(miscview, "Time   : %07.2f ms %04llu ck\n", fmod(msec, 10000.0), clocks % 10000);
