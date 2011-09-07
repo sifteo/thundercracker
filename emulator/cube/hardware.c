@@ -210,5 +210,5 @@ void hardware_tick(struct em8051 *cpu)
 
     /* Other hardware with timers to update */
 
-    flash_tick();
+    flash_tick(cpu);
 }

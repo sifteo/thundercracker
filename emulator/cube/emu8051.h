@@ -69,6 +69,7 @@ struct profile_data
     uint64_t loop_cycles;
     uint64_t loop_prev;
     uint64_t loop_hits;
+    uint64_t flash_idle;
 };
 
 #define NUM_IRQ_LEVELS  4

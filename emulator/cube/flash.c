@@ -190,15 +190,28 @@ static void flash_update_status_byte(void)
 	flashmem.status_byte ^= STATUS_ERASE_TOGGLE;
 }
 
-void flash_tick(void)
+void flash_tick(struct em8051 *cpu)
 {
     /*
      * March time forward on the current operation, if any.
      */
 
     if (flashmem.busy) {
-	if (!--flashmem.busy_timer)
+	if (!--flashmem.busy_timer) {
 	    flashmem.busy = BF_IDLE;
+
+	    /*
+	     * For performance tuning, it's useful to know where the
+	     * flash first became idle.  If it was while we were
+	     * waiting, great. If it was during flash decoding, we're
+	     * wasting time!
+	     */
+	    {
+		unsigned pc = cpu->mPC & (cpu->mCodeMemSize - 1);
+		struct profile_data *pd = &cpu->mProfilerMem[pc];
+		pd->flash_idle++;
+	    }
+	}
 	flashmem.busy_ticks++;
     } else {
 	flashmem.idle_ticks++;

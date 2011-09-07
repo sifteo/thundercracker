@@ -464,16 +464,17 @@ void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
 	return;
     }
 
-    fprintf(f, "total_cycles  %%_cycles  loop_len  loop_count    addr   disassembly\n");
+    fprintf(f, "total_cycles  %%_cycles  fl_idle  loop_len  loop_count    addr   disassembly\n");
 
     for (addr = 0; addr < aCPU->mCodeMemSize; addr++, pd++) {
 	if (pd->total_cycles) {
 	    char assembly[128];
 
             decode(aCPU, addr, assembly);
-	    fprintf(f, "% 12lld % 8.4f%% [% 8lld x % 9lld ]  %04x:  %s\n",
+	    fprintf(f, "%12lld %8.4f%% %8lld [%8lld x %9lld ]  %04x:  %s\n",
 		    (long long int)pd->total_cycles,
 		    (pd->total_cycles * 100) / (float)aCPU->profilerTotal,
+		    (long long int)pd->flash_idle,
 		    (long long int)(pd->loop_hits ? pd->loop_cycles / pd->loop_hits : 0),
 		    (long long int)pd->loop_hits,
 		    addr, assembly);
