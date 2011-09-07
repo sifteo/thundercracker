@@ -259,7 +259,7 @@ class Hub:
 
 class NethubClient(PacketDispatcher):
     # How many packets can we send out without expecting an ACK?
-    MAX_TX_DEPTH = 4
+    MAX_TX_DEPTH = 0
 
     def __init__(self, hub, addr, s):
         self.hub = hub
