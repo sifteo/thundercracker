@@ -12,6 +12,9 @@ emulator
 firmware
   Firmware source for cubes and master.
 
+sdk
+  Development kit for game software, running on the master.
+
 stir
   Our asset preparation tool, the Sifteo Tiled Image Reducer.
 
