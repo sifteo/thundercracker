@@ -160,6 +160,7 @@ static void network_try_connect(void)
     } else {
 	// Connection error, don't retry immediately
 	SDL_Delay(300);
+	network_disconnect();
     }
 }
 
