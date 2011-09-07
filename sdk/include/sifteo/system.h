@@ -4,31 +4,22 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_CUBE_H
-#define _SIFTEO_CUBE_H
+#ifndef _SIFTEO_SYSTEM_H
+#define _SIFTEO_SYSTEM_H
 
 namespace Sifteo {
 
-
 /**
- * Represents one Sifteo cube. This object may have a lifetime that is
- * distinct from that of our actual connection to a physical
- * cube. Applications need to expect Cube instances to disconnect or
- * reappear at any time. A disconnected Cube instance will ignore any
- * data we direct toward it.
+ * Global operations that apply to the system as a whole.
  */
 
-class Cube {
-
-};
-
-
-/**
- * Global operations that apply to all Sifteo cubes.
- */
-
-class CubeManager {
+class System {
  public:
+
+    /**
+     * One-time initialization for the game runtime
+     */
+    static void init();
 
     /**
      * Draw one frame, nearly simultaneously, on every connected cube

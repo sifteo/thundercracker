@@ -6,24 +6,19 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <sifteo/system.h>
 #include "radio.h"
 
 namespace Sifteo {
 
-void Sifteo::RadioManager::produce(PacketTransmission &tx)
+void System::init()
 {
-    static RadioAddress addr = { 0x02, { 0xe7, 0xe7, 0xe7, 0xe7, 0xe7 }};
-
-    tx.dest = &addr;
-    tx.packet.len = 5;
+    Radio::open();
 }
 
-void Sifteo::RadioManager::acknowledge(const PacketBuffer &packet)
+void System::draw()
 {
-}
-
-void Sifteo::RadioManager::timeout()
-{
+    Radio::halt();
 }
 
 };  // namespace Sifteo
