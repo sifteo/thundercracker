@@ -16,7 +16,7 @@
  * High-level loadstream decoder interface
  */
 
-#define FLASH_FIFO_MASK    63
+#define FLASH_FIFO_MASK    127
 #define FLASH_HEAD_RESET   0xFF		// Special value, reset the flash state machine
 
 volatile extern uint8_t __idata flash_fifo[FLASH_FIFO_MASK + 1];

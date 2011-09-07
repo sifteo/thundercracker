@@ -13,11 +13,14 @@ LDFLAGS += -g
 
 all: $(BINS)
 
-hello: examples/hello.o $(OBJS_lib)
+hello: $(OBJS_lib) examples/hello.o examples/loadstream.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
+
+%.o: %.bin
+	objcopy -I binary $< -O elf64-x86-64 -B i386:x86-64 $@
 
 .PHONY: clean
 

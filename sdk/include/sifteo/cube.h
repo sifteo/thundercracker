@@ -23,25 +23,6 @@ class Cube {
 };
 
 
-/**
- * Global operations that apply to all Sifteo cubes.
- */
-
-class CubeManager {
- public:
-
-    /**
-     * Draw one frame, nearly simultaneously, on every connected cube
-     * that has pending graphical changes. If we're producing frames
-     * faster than the cube's display refresh rate, this call will
-     * block briefly to keep the game's frame rate matched with the
-     * hardware frame rate.
-     */
-    static void draw();
-
-};
-
-
 };  // namespace Sifteo
 
 #endif

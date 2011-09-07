@@ -6,23 +6,72 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <string.h>
+#include <stdio.h>    // XXX
+#include <stdlib.h>   // XXX
 #include "radio.h"
+
+/*
+ * XXX: Hack for testing loadstream performance
+ */
+
+extern uint8_t _binary_examples_loadstream_bin_end[];
+extern uint8_t _binary_examples_loadstream_bin_size[];
+extern uint8_t _binary_examples_loadstream_bin_start[];
 
 namespace Sifteo {
 
-void Sifteo::RadioManager::produce(PacketTransmission &tx)
+static uint8_t *ls_ptr = _binary_examples_loadstream_bin_start;
+static uint32_t buf_space = 127;
+static uint32_t ls_remaining = (uint32_t) (uintptr_t) _binary_examples_loadstream_bin_size;
+static uint8_t prev_ack;
+
+
+void RadioManager::produce(PacketTransmission &tx)
 {
     static RadioAddress addr = { 0x02, { 0xe7, 0xe7, 0xe7, 0xe7, 0xe7 }};
-
+    uint32_t size = ls_remaining;
+    
     tx.dest = &addr;
-    tx.packet.len = 5;
+
+    if (size > 31) size = 31;
+    if (size > buf_space) size = buf_space;
+
+    if (size) {
+	tx.packet.len = size + 1;
+	tx.packet.bytes[0] = 0xC0 | (size - 1);
+	memcpy(tx.packet.bytes + 1, ls_ptr, size);
+	ls_ptr += size;
+	ls_remaining -= size;
+	buf_space -= size;
+    } else {
+	tx.packet.len = 0;
+    }
+
+    if (ls_remaining == 0) {
+	printf("Done\n");
+	exit(0);
+    }
 }
 
-void Sifteo::RadioManager::acknowledge(const PacketBuffer &packet)
+void RadioManager::acknowledge(const PacketBuffer &packet)
+{
+    if (packet.len > 11) {
+	uint8_t ack = packet.bytes[11];
+	buf_space += (uint8_t)(ack - prev_ack);
+	prev_ack = ack;
+    }
+}
+
+void RadioManager::timeout()
 {
 }
 
-void Sifteo::RadioManager::timeout()
+void RadioManager::add(RadioEndpoint *ep)
+{
+}
+
+void RadioManager::remove(RadioEndpoint *ep)
 {
 }
 

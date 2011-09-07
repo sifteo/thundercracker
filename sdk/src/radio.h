@@ -13,6 +13,8 @@
 
 namespace Sifteo {
 
+class RadioManager;
+
 
 /**
  * All the identifying information necessary to direct a message
@@ -88,6 +90,27 @@ class Radio {
     static void halt();
 };
     
+
+/**
+ * Abstract base class: Message dispatcher for one peer. Each
+ * RadioEndpoint is scheduled to produce packets by the
+ * RadioManager. Any timeouts or acknowledgments are delivered to the
+ * corresponding RadioEndpoint.
+ *
+ * These entry points are called in interrupt context.
+ */
+
+class RadioEndpoint {
+ protected:
+    friend class RadioManager;
+
+    // Called in interrupt context
+    virtual void produce(PacketTransmission &tx) = 0;
+    virtual void acknowledge(const PacketBuffer &packet) = 0;
+    virtual void timeout() = 0;
+};
+    
+
 /**
  * Multiplexes radio communications to and from multiple cubes.
  * This class is non-platform-specific, and it is where Radio
@@ -100,8 +123,8 @@ class Radio {
  
 class RadioManager {
  public:
-    //static void pair(Cube &addr);
-    static const unsigned MAX_CUBES = 6;
+    void add(RadioEndpoint *ep);
+    void remove(RadioEndpoint *ep);
 
     /**
      * ISR Delegates, called by Radio's implementation. For every
@@ -112,6 +135,38 @@ class RadioManager {
     static void produce(PacketTransmission &tx);
     static void acknowledge(const PacketBuffer &packet);
     static void timeout();
+
+    // Must be a power of two
+    static const unsigned MAX_ENDPOINTS = 32;
+
+ private:
+    /*
+     * All connected endpoints. When an endpoint is disconnected due
+     * to a timeout, it is automatically removed (in interrupt
+     * context) by setting its slot to NULL without modifying any
+     * other slots.
+     */
+    unsigned numSlots;
+    RadioEndpoint *epSlots[MAX_ENDPOINTS];
+
+    /* XXX: How to track when it's safe to reuse a slot? */
+
+    /*
+     * Round-robin endpoint scheduling. We currently give every
+     * endpoint an opportunity to produce one packet per round. Note
+     * that this is updated from the interrupt context. If the main
+     * context removes a slot we're using, it can't delete or
+     * otherwise make the slot invalid until after we have moved on to
+     * the next slot and updated currentSlot.
+     */
+    unsigned currentSlot;
+
+    /*
+     * FIFO buffer of slot numbers that have pending acknowledgments.
+     * This lets us match up ACKs with endpoints. Accessed ONLY in interrupt context.
+     */
+    uint8_t epFifo[MAX_ENDPOINTS];
+    unsigned epHead, epTail;
 };
 
 };  // namespace Sifteo

@@ -6,7 +6,6 @@
 
 #include <sifteo.h>
 
-
 int main()
 {
     Sifteo::System::init();
