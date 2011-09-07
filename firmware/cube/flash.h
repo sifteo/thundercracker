@@ -22,6 +22,8 @@
 volatile extern uint8_t __idata flash_fifo[FLASH_FIFO_MASK + 1];
 volatile extern uint8_t flash_fifo_head;
 
+#pragma callee_saves flash_wait, flash_erase, flash_program
+
 void flash_init(void);
 void flash_handle_fifo();
 void flash_wait(void);
