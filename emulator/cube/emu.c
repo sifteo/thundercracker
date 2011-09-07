@@ -540,7 +540,7 @@ int main(int argc, char ** argv)
 			   "\n"
 			   "-profile=out.txt  Profile performance, and write annotated disassembly\n"
 			   "-clock=value      Set clock speed, in Hz\n"
-			   "-flash=file.bin   Set Flash memory filename\n"
+			   "-flash=file.bin   Set path for file-backed Flash memory (default: not file-backed)\n"
 			   "-host=hostname    Hostname for nethub connection\n"
 			   "-port=port        Port number for nethub connection\n",
 			   argv[0]);

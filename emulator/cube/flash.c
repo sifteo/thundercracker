@@ -62,42 +62,50 @@ struct {
 
 void flash_init(const char *filename)
 {
-    size_t result;
+    if (filename) {
+	size_t result;
 
-    flashmem.file = fopen(filename, "rb+");
-    if (!flashmem.file) {
-        flashmem.file = fopen(filename, "wb+");
-    }
-    if (!flashmem.file) {
-	perror("Error opening flash");
-	exit(1);
-    }
+	flashmem.file = fopen(filename, "rb+");
+	if (!flashmem.file) {
+	    flashmem.file = fopen(filename, "wb+");
+	}
+	if (!flashmem.file) {
+	    perror("Error opening flash");
+	    exit(1);
+	}
 
-    result = fread(flashmem.data, 1, FLASH_SIZE, flashmem.file);
-    if (result < 0) {
-	perror("Error reading flash");
-	exit(1);
-    }	
+	result = fread(flashmem.data, 1, FLASH_SIZE, flashmem.file);
+	if (result < 0) {
+	    perror("Error reading flash");
+	    exit(1);
+	}	
+ 
+    } else {
+	flashmem.file = NULL;
+    }
 }
 
 static void flash_write(void)
 {
-    size_t result;
-    
-    fseek(flashmem.file, 0, SEEK_SET);
+    if (flashmem.file) {
+	size_t result;
+	
+	fseek(flashmem.file, 0, SEEK_SET);
 
-    result = fwrite(flashmem.data, FLASH_SIZE, 1, flashmem.file);
-    if (result != 1)
-	perror("Error writing flash");
+	result = fwrite(flashmem.data, FLASH_SIZE, 1, flashmem.file);
+	if (result != 1)
+	    perror("Error writing flash");
 
-    fflush(flashmem.file);
+	fflush(flashmem.file);
+    }
 }
 
 void flash_exit(void)
 {
     if (flashmem.write_timer)
 	flash_write();
-    fclose(flashmem.file);
+    if (flashmem.file)
+	fclose(flashmem.file);
 }
 
 uint32_t flash_cycle_count(void)
