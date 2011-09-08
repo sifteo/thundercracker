@@ -1,4 +1,4 @@
-BIN = ../cube.ihx
+BIN = cube.ihx
 
 OBJS = \
 	graphics.rel \

@@ -1,4 +1,5 @@
 *~
+*.hex
 *.ihx
 *.mem
 *.rel

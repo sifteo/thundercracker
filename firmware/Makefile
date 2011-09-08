@@ -1,10 +1,13 @@
-all: cube.ihx
+BIN = cube.hex
 
-.PHONY: all clean cube.ihx
+all: $(BIN)
 
-cube.ihx:
+.PHONY: all clean $(BIN)
+
+$(BIN):
 	make -C cube
+	cp cube/cube.ihx cube.hex
 
 clean:
 	make -C cube clean
-	rm -f *.mem *.rel *.rst *.sym *.lnk *.lst *.map *.asm *.ihx
+	rm -f $(BIN)
