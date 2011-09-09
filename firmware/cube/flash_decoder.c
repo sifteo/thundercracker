@@ -55,24 +55,6 @@ volatile uint8_t flash_fifo_head;
  * Loadstream codec state
  */
 
-enum {
-    S_OPCODE = 0,
-    S_ADDR_LOW,
-    S_ADDR_HIGH,
-    S_ERASE_COUNT,
-    S_ERASE_CHECK,
-    S_LUT1_COLOR1,
-    S_LUT1_COLOR2,
-    S_LUT16_VEC1,
-    S_LUT16_VEC2,
-    S_LUT16_COLOR1,
-    S_LUT16_COLOR2,
-    S_TILE_RLE4,
-    S_TILE_P16_MASK,
-    S_TILE_P16_LOW,
-    S_TILE_P16_HIGH,
-};
-
 // Color lookup table
 static __idata struct {
     uint8_t low[LUT_SIZE];
@@ -98,8 +80,31 @@ static union {
 
 static uint8_t fifo_tail;
 static uint8_t opcode;
-static uint8_t state;
 static uint8_t counter;
+static uint8_t byte;
+static void (*state)(void);
+
+/*
+ * Decoder implementation.
+ */
+
+static void state_OPCODE(void);
+static void state_ADDR_LOW(void);
+static void state_ADDR_HIGH(void);
+static void state_ERASE_COUNT(void);
+static void state_ERASE_CHECK(void);
+static void state_LUT1_COLOR1(void);
+static void state_LUT1_COLOR2(void);
+static void state_LUT16_VEC1(void);
+static void state_LUT16_VEC2(void);
+static void state_LUT16_COLOR1(void);
+static void state_LUT16_COLOR2(void);
+static void state_TILE_P1_R4(void);
+static void state_TILE_P2_R4(void);
+static void state_TILE_P4_R4(void);
+static void state_TILE_P16_MASK(void);
+static void state_TILE_P16_LOW(void);
+static void state_TILE_P16_HIGH(void);
 
 void flash_init(void)
 {
@@ -115,14 +120,26 @@ void flash_init(void)
     } while (--i);
 
     fifo_tail = flash_fifo_head;
-    state = S_OPCODE;
+    state = state_OPCODE;
 }
 
 void flash_handle_fifo(void)
 {
-    uint8_t byte, head;
+    /*
+     * Out-of-band cue to reset the state machine.
+     *
+     * We don't have to check for this every byte, since latency in
+     * initiating a reset isn't especially important.
+     */
+    
+    if (flash_fifo_head == FLASH_HEAD_RESET) {
+	flash_fifo_head = 0;
+	flash_init();
+	ack_data.flash_fifo_bytes++;
+	return;
+    }
 
-    while (1) {
+    while (flash_fifo_head != fifo_tail) {
 	/*
 	 * Dequeue one byte from the FIFO.
 	 *
@@ -130,282 +147,293 @@ void flash_handle_fifo(void)
 	 * overwrite the location we just freed up in the FIFO buffer.
 	 */
 
-	head = flash_fifo_head;
-
-	// Out-of-band cue to reset the state machine
-	if (head == FLASH_HEAD_RESET) {
-	    flash_fifo_head = 0;
-	    flash_init();
-	    ack_data.flash_fifo_bytes++;
-	    return;
-	}
-
-	// Out of data. Do something else!
-	if (head == fifo_tail)
-	    return;
-
 	byte = flash_fifo[fifo_tail];	
 	fifo_tail = (fifo_tail + 1) & FLASH_FIFO_MASK;
 	ack_data.flash_fifo_bytes++;
 
-	/*
-	 * We have a state machine that processes exactly one byte per invocation.
-	 */
-
-	switch (state) {
-
-	case S_OPCODE: {
-	    opcode = byte;
-	    switch (opcode & OP_MASK) {
-
-	    case OP_LUT1:
-		state = S_LUT1_COLOR1;
-		goto byte_done;
-
-	    case OP_LUT16:
-		state = S_LUT16_VEC1;
-		goto byte_done;
-
-	    case OP_TILE_P0: {
-		// Trivial solid-color tile, no repeats
-		uint8_t i = 64;
-		byte &= 0x0F;
-		do {
-		    flash_program(lut.low[byte]);
-		    flash_program(lut.high[byte]);
-		} while (--i);
-		goto byte_done;
-	    }
-
-	    case OP_TILE_P1_R4:
-	    case OP_TILE_P2_R4:
-	    case OP_TILE_P4_R4:
-		counter = 64;
-		ovl.rle1 = 0xFF;
-		state = S_TILE_RLE4;
-		goto byte_done;
-
-	    case OP_TILE_P16:
-		counter = 8;
-		state = S_TILE_P16_MASK;
-		goto byte_done;
-
-	    case OP_SPECIAL:
-		switch (opcode) {
-
-		case OP_ADDRESS:
-		    state = S_ADDR_LOW;
-		    goto byte_done;
-
-		case OP_ERASE:
-		    state = S_ERASE_COUNT;
-		    goto byte_done;
-
-		default:
-		    goto byte_done;
-		}
-	    }
-	}
-
-	case S_ADDR_LOW: {
-	    flash_addr_low = 0;
-	    flash_addr_lat1 = byte;
-	    state = S_ADDR_HIGH;
-	    goto byte_done;
-	}
-
-	case S_ADDR_HIGH: {
-	    flash_addr_lat2 = byte;
-	    state = S_OPCODE;
-	    goto byte_done;
-	}
-
-	case S_ERASE_COUNT: {
-	    counter = byte;
-	    state = S_ERASE_CHECK;
-	    goto byte_done;
-	}
-
-	case S_ERASE_CHECK: {
-	    uint8_t check = 0xFF ^ (-counter -flash_addr_lat1 -flash_addr_lat2);
-	    if (check == byte)
-		flash_erase(counter);
-	    state = S_OPCODE;
-	    goto byte_done;
-	}
-
-	case S_LUT1_COLOR1: {
-	    lut.low[opcode & 0x0F] = byte;
-	    state = S_LUT1_COLOR2;
-	    goto byte_done;
-	}
-
-	case S_LUT1_COLOR2: {
-	    lut.high[opcode & 0x0F] = byte;
-	    state = S_OPCODE;
-	    goto byte_done;
-	}
-
-	case S_LUT16_VEC1: {
-	    ovl.lutvec.low = byte;
-	    state = S_LUT16_VEC2;
-	    goto byte_done;
-	}
-
-	case S_LUT16_VEC2: {
-	    ovl.lutvec.high = byte;
-	    counter = 0;
-	    state = S_LUT16_COLOR1;
-	    goto byte_done;
-	}
-
-	case S_LUT16_COLOR1: {
-	    while (!(ovl.lutvec.low & 1)) {
-		// Skipped LUT entry
-		ovl.lutvec.word >>= 1;
-		counter++;
-	    }
-	    lut.low[counter] = byte;
-	    state = S_LUT16_COLOR2;
-	    goto byte_done;
-	}
-
-	case S_LUT16_COLOR2: {
-	    lut.high[counter] = byte;
-	    ovl.lutvec.word >>= 1;
-	    counter++;
-	    state = ovl.lutvec.word ? S_LUT16_COLOR1 : S_OPCODE;
-	    goto byte_done;
-	}	
-
-	case S_TILE_RLE4: {
-	    uint8_t nybbleI = 2;
-
-	    // Loop over the two nybbles in our input byte, processing both identically.
-	    do {
-		uint8_t nybble = byte & 0x0F;
-		uint8_t runLength, i;
-
-		if (ovl.rle1 == ovl.rle2) {
-		    // This is a run, and "nybble" is the run length.
-		    runLength = nybble;
-
-		    // Fill the whole byte, so we can do right-rotates below to our heart's content.
-		    nybble = ovl.rle1 | (ovl.rle1 << 4);
-
-		    // Disarm the run detector with a byte that can never occur in 'nybble'.
-		    ovl.rle1 = 0xF0;
-
-		} else {
-		    // Not a run yet, just a literal nybble
-		    runLength = 1;
-		    ovl.rle2 = ovl.rle1;
-		    ovl.rle1 = nybble;
-		}
-
-		// Unpack each nybble at the current bit depth
-		while (runLength) {
-		    runLength--;
-
-		    switch (opcode & OP_MASK) {
-
-		    case OP_TILE_P1_R4:
-			i = 4;
-			do {
-			    flash_program(lut.low[nybble & 1]);
-			    flash_program(lut.high[nybble & 1]);
-			    nybble = rr(nybble);
-			    counter--;
-			} while (--i);
-			break;
-
-		    case OP_TILE_P2_R4:
-			i = 2;
-			do {
-			    flash_program(lut.low[nybble & 3]);
-			    flash_program(lut.high[nybble & 3]);
-			    nybble = rr(nybble);
-			    nybble = rr(nybble);
-			    counter--;
-			} while (--i);
-			break;
-
-		    case OP_TILE_P4_R4:
-			flash_program(lut.low[nybble & 0xF]);
-			flash_program(lut.high[nybble & 0xF]);
-			counter--;
-			break;
-	    
-		    }
-		}
-
-		// Finished with this tile? Next.
-		if ((int8_t)counter <= 0)
-		    if (opcode & ARG_MASK) {
-			opcode--;
-			counter += 64;
-		    } else {
-			state = S_OPCODE;
-			goto byte_done;
-		    }
-
-		byte = (byte >> 4) | (byte << 4);
-	    } while (--nybbleI);
-	
-	    goto byte_done;
-	}
-
-	case S_TILE_P16_MASK: {
-	    ovl.rle1 = byte;  // Mask byte for the next 8 pixels
-	    ovl.rle2 = 8;     // Remaining pixels in mask
-
-	    p16_emit_runs:
-	    do {
-		if (ovl.rle1 & 1) {
-		    state = S_TILE_P16_LOW;
-		    goto byte_done;
-		}
-		flash_program(lut.p16_low);
-		flash_program(lut.p16_high);
-		ovl.rle1 = rr(ovl.rle1);
-	    } while (--ovl.rle2);
-
-	    p16_next_mask:
-	    if (--counter) {
-		state = S_TILE_P16_MASK;
-	    } else if (opcode & ARG_MASK) {
-		opcode--;
-		counter = 8;
-		state = S_TILE_P16_MASK;
-	    } else {
-		state = S_OPCODE;
-	    }
-
-	    goto byte_done;
-	}
-
-	case S_TILE_P16_LOW: {
-	    flash_program(byte);
-	    lut.p16_low = byte;
-	    state = S_TILE_P16_HIGH;
-	    goto byte_done;
-	}
-
-	case S_TILE_P16_HIGH: {
-	    lut.p16_high = byte;
-	    flash_program(byte);
-
-	    if (--ovl.rle2) {
-		// Still more pixels in this mask.
-		ovl.rle1 = rr(ovl.rle1);
-		goto p16_emit_runs;
-	    } else {
-		// End of the mask byte or the whole tile
-		goto p16_next_mask;
-	    }
-	}
-	}
-
-    byte_done: ;
+	state();
     }
+}
+
+/*
+ * State machine.
+ *
+ * This is a state machine, in which each state is implemented as a
+ * function chunk that we jump to. The state transition functions
+ * process exactly one byte per invocation.
+ */
+
+static void state_OPCODE(void)
+{
+    opcode = byte;
+    switch (opcode & OP_MASK) {
+
+    case OP_LUT1:
+	state = state_LUT1_COLOR1;
+	return;
+
+    case OP_LUT16:
+	state = state_LUT16_VEC1;
+	return;
+
+    case OP_TILE_P0: {
+	// Trivial solid-color tile, no repeats
+	uint8_t i = 64;
+	byte &= 0x0F;
+	do {
+	    flash_program(lut.low[byte]);
+	    flash_program(lut.high[byte]);
+	} while (--i);
+	return;
+    }
+	
+    case OP_TILE_P1_R4:
+	counter = 64;
+	ovl.rle1 = 0xFF;
+	state = state_TILE_P1_R4;
+	return;
+
+    case OP_TILE_P2_R4:
+	counter = 64;
+	ovl.rle1 = 0xFF;
+	state = state_TILE_P2_R4;
+	return;
+
+    case OP_TILE_P4_R4:
+	counter = 64;
+	ovl.rle1 = 0xFF;
+	state = state_TILE_P4_R4;
+	return;
+	
+    case OP_TILE_P16:
+	counter = 8;
+	state = state_TILE_P16_MASK;
+	return;
+
+    case OP_SPECIAL:
+	switch (opcode) {
+	    
+	case OP_ADDRESS:
+	    state = state_ADDR_LOW;
+	    return;
+
+	case OP_ERASE:
+	    state = state_ERASE_COUNT;
+	    return;
+	    
+	default:
+	    return;
+	}
+	
+    default:
+	// Undefined opcode
+	return;
+    }
+}
+
+static void state_ADDR_LOW(void)
+{
+    flash_addr_low = 0;
+    flash_addr_lat1 = byte;
+    state = state_ADDR_HIGH;
+}
+
+static void state_ADDR_HIGH(void)
+{
+    flash_addr_lat2 = byte;
+    state = state_OPCODE;
+}
+
+static void state_ERASE_COUNT(void)
+{
+    counter = byte;
+    state = state_ERASE_CHECK;
+}
+
+static void state_ERASE_CHECK(void)
+{
+    uint8_t check = 0xFF ^ (-counter -flash_addr_lat1 -flash_addr_lat2);
+    if (check == byte)
+	flash_erase(counter);
+    state = state_OPCODE;
+}
+
+static void state_LUT1_COLOR1(void)
+{
+    lut.low[opcode & 0x0F] = byte;
+    state = state_LUT1_COLOR2;
+}
+
+static void state_LUT1_COLOR2(void)
+{
+    lut.high[opcode & 0x0F] = byte;
+    state = state_OPCODE;
+}
+
+static void state_LUT16_VEC1(void)
+{
+    ovl.lutvec.low = byte;
+    state = state_LUT16_VEC2;
+}
+
+static void state_LUT16_VEC2(void)
+{
+    ovl.lutvec.high = byte;
+    counter = 0;
+    state = state_LUT16_COLOR1;
+}
+
+static void state_LUT16_COLOR1(void)
+{
+    while (!(ovl.lutvec.low & 1)) {
+	// Skipped LUT entry
+	ovl.lutvec.word >>= 1;
+	counter++;
+    }
+    lut.low[counter] = byte;
+    state = state_LUT16_COLOR2;
+}
+
+static void state_LUT16_COLOR2(void)
+{
+    lut.high[counter] = byte;
+    ovl.lutvec.word >>= 1;
+    counter++;
+    state = ovl.lutvec.word ? state_LUT16_COLOR1 : state_OPCODE;
+}	
+
+#define RLE4_BEGIN()					\
+    bit nibIndex = 1;					\
+    uint8_t nybble = byte & 0x0F;			\
+    uint8_t runLength;					\
+    for (;;) {						\
+	if (ovl.rle1 == ovl.rle2) {			\
+	    runLength = nybble;				\
+	    nybble = ovl.rle1 | swap(ovl.rle1);		\
+	    ovl.rle1 = 0xF0;				\
+	    if (!runLength)				\
+		goto no_runs;				\
+	} else {					\
+	    runLength = 1;				\
+	    ovl.rle2 = ovl.rle1;			\
+	    ovl.rle1 = nybble;				\
+	}						\
+
+#define RLE4_END()					\
+    no_runs:						\
+	if (!counter || (counter & 0x80))		\
+	    if (opcode & ARG_MASK) {			\
+		opcode--;				\
+		counter += 64;				\
+	    } else {					\
+		state = state_OPCODE;			\
+		return;					\
+	    }						\
+	if (!nibIndex)					\
+	    return;					\
+	nibIndex = 0;					\
+	nybble = byte >> 4;				\
+    }
+
+static void state_TILE_P1_R4(void)
+{
+    RLE4_BEGIN() {
+
+	runLength = rl(runLength);
+	runLength = rl(runLength);
+	counter -= runLength;
+
+	do {
+	    flash_program(lut.low[nybble & 1]);
+	    flash_program(lut.high[nybble & 1]);
+	    nybble = rr(nybble);
+	} while (--runLength);
+
+    } RLE4_END();
+}
+		
+static void state_TILE_P2_R4(void)
+{
+    RLE4_BEGIN() {
+
+	runLength = rl(runLength);
+	counter -= runLength;
+
+	do {
+	    flash_program(lut.low[nybble & 3]);
+	    flash_program(lut.high[nybble & 3]);
+	    nybble = rr(nybble);
+	    nybble = rr(nybble);
+	} while (--runLength);
+
+    } RLE4_END();
+}
+
+static void state_TILE_P4_R4(void)
+{
+    RLE4_BEGIN() {
+		
+	counter -= runLength;
+
+	do {
+	    flash_program(lut.low[nybble & 0xF]);
+	    flash_program(lut.high[nybble & 0xF]);
+	} while (--runLength);
+
+    } RLE4_END();
+}
+
+#define P16_EMIT_RUNS() {			\
+	do {					\
+	    if (ovl.rle1 & 1) {			\
+		state = state_TILE_P16_LOW;	\
+		return;				\
+	    }					\
+	    flash_program(lut.p16_low);		\
+	    flash_program(lut.p16_high);	\
+	    ovl.rle1 = rr(ovl.rle1);		\
+	} while (--ovl.rle2);			\
+    }
+
+#define P16_NEXT_MASK() {			\
+        if (--counter) {			\
+	    state = state_TILE_P16_MASK;	\
+	} else if (opcode & ARG_MASK) {		\
+	    opcode--;				\
+	    counter = 8;			\
+	    state = state_TILE_P16_MASK;	\
+	} else {				\
+	    state = state_OPCODE;		\
+	}					\
+    }
+
+static void state_TILE_P16_MASK(void)
+{
+    ovl.rle1 = byte;  // Mask byte for the next 8 pixels
+    ovl.rle2 = 8;     // Remaining pixels in mask
+    
+    P16_EMIT_RUNS();
+    P16_NEXT_MASK();
+}
+
+static void state_TILE_P16_LOW(void)
+{
+    flash_program(byte);
+    lut.p16_low = byte;
+    state = state_TILE_P16_HIGH;
+}
+
+static void state_TILE_P16_HIGH(void)
+{
+    lut.p16_high = byte;
+    flash_program(byte);
+
+    if (--ovl.rle2) {
+	// Still more pixels in this mask.
+	ovl.rle1 = rr(ovl.rle1);
+
+	P16_EMIT_RUNS();
+    }
+
+    P16_NEXT_MASK();
 }

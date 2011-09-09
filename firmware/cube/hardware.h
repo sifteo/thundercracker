@@ -138,6 +138,7 @@ __sbit __at 0xA0 CTRL_LCD_TE;
 
 #define rl(x)   (((x) << 1) | ((x) >> 7))
 #define rr(x)   (((x) >> 1) | ((x) << 7))
+#define swap(x) (((x) >> 4) | ((x) << 4))
 
 #define sti()   { IEN_EN = 1; }
 #define cli()   { IEN_EN = 0; }
