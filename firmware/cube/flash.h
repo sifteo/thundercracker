@@ -38,11 +38,10 @@ void flash_handle_fifo();
 extern uint8_t flash_addr_low;
 extern uint8_t flash_addr_lat1;
 extern uint8_t flash_addr_lat2;
-extern uint8_t flash_run_len;
 
 void flash_erase(uint8_t blockCount);
 void flash_program_start(void);
-void flash_program_words(uint16_t dat) __naked;
+void flash_program_word(uint16_t dat) __naked;
 
 
 #endif

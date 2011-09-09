@@ -19,7 +19,6 @@
 uint8_t flash_addr_low;
 uint8_t flash_addr_lat1;
 uint8_t flash_addr_lat2;
-uint8_t flash_run_len;
 
 /*
  * We can poll in a much tigher loop (and therefore exit the polling
@@ -139,11 +138,11 @@ void flash_program_start(void)
     __endasm ;
 }    
 
-void flash_program_words(uint16_t dat) __naked
+void flash_program_word(uint16_t dat) __naked
 {
     /*
      * Program two bytes, at any aligned address. Increment the
-     * address. Then repeat all this, a total of "flash_run_len" times.
+     * address.
      *
      * The run length must be at least 1.
      * The bytes MUST have been erased first.
@@ -247,13 +246,7 @@ void flash_program_words(uint16_t dat) __naked
 	add	a, #2
 	mov	_flash_addr_low, a
 	jz	11$
-
-	; Loop over run length
-13$:
-	djnz	_flash_run_len, 14$
 	ret
-14$:	ljmp	_flash_program_words
-
 
 	; Low byte overflow 
 11$:
@@ -261,7 +254,7 @@ void flash_program_words(uint16_t dat) __naked
 	add	a, #2
 	mov	_flash_addr_lat1, a
 	jz	12$
-	sjmp	13$
+	ret
 
         ; Lat1 overflow
 12$:
@@ -286,7 +279,7 @@ void flash_program_words(uint16_t dat) __naked
 	mov	c, BUS_PORT.7
 	mov	_flash_poll_data, c
 
-	sjmp	13$
+	ret
 
     __endasm ;
 }

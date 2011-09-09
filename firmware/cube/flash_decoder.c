@@ -193,8 +193,21 @@ static void state_OPCODE(void)
 
     case OP_TILE_P0:
 	// Trivial solid-color tile, no repeats
-	flash_run_len = 64;
-	flash_program_words(lut.colors[byte & 0xF].word);
+	__asm
+	    mov   a, _byte
+	    anl   a, #0xF
+	    rl    a 
+	    add   a, #_lut
+	    mov   r0, a
+	    mov   DPL, @r0
+	    inc   r0
+	    mov   DPH, @r0
+
+	    mov   r0, #64
+	    1$:
+	    lcall _flash_program_word
+	    djnz  r0, 1$
+	__endasm ;
 	return;
 	
     case OP_TILE_P1_R4:
@@ -339,8 +352,7 @@ static void state_TILE_P1_R4(void)
 
 	do {
 	    uint8_t idx = nybble & 1;
-	    flash_run_len = 1;
-	    flash_program_words(lut.colors[idx].word);
+	    flash_program_word(lut.colors[idx].word);
 	    nybble = rr(nybble);
 	} while (--runLength);
 
@@ -387,8 +399,7 @@ static void state_TILE_P2_R4(void)
 	
 	do {
 	    uint8_t idx = nybble & 3;
-	    flash_run_len = 1;
-	    flash_program_words(lut.colors[idx].word);
+	    flash_program_word(lut.colors[idx].word);
 	    nybble = rr(nybble);
 	    nybble = rr(nybble);
 	} while (--runLength);
@@ -413,24 +424,27 @@ static void state_TILE_P4_R4(void)
 {
     __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
+    uint8_t runLength;
 
     for (;;) {
        if (ovl.rle1 == ovl.rle2) {
-           counter -= (flash_run_len = nybble);
+           counter -= (runLength = nybble);
            nybble = ovl.rle1;
            ovl.rle1 = 0xF0;
 	   
-           if (!flash_run_len)
+           if (!runLength)
                goto no_runs;
 
        } else {
-           flash_run_len = 1;
+           runLength = 1;
            counter --;
            ovl.rle2 = ovl.rle1;
            ovl.rle1 = nybble;
        }
 
-       flash_program_words(lut.colors[nybble].word);
+       do {
+	   flash_program_word(lut.colors[nybble].word);
+       } while (--runLength);
     
     no_runs:
        if (!counter || (counter & 0x80))
@@ -454,8 +468,7 @@ static void state_TILE_P4_R4(void)
 		state = state_TILE_P16_LOW;	\
 		return;				\
 	    }					\
-	    flash_run_len = 1;			\
-	    flash_program_words(lut.p16.word);	\
+	    flash_program_word(lut.p16.word);	\
 	    ovl.rle1 = rr(ovl.rle1);		\
 	} while (--ovl.rle2);			\
     }
@@ -490,8 +503,7 @@ static void state_TILE_P16_LOW(void)
 static void state_TILE_P16_HIGH(void)
 {
     lut.p16.high = byte;
-    flash_run_len = 1;
-    flash_program_words(lut.p16.word);
+    flash_program_word(lut.p16.word);
 
     if (--ovl.rle2) {
 	// Still more pixels in this mask.
