@@ -48,7 +48,7 @@ void RadioManager::produce(PacketTransmission &tx)
 	tx.packet.len = 0;
     }
 
-    if (ls_remaining == 0) {
+    if (ls_remaining == 0 && buf_space == 127) {
 	printf("Done\n");
 	exit(0);
     }

@@ -8,7 +8,6 @@
 
 #include <string.h>
 #include "hardware.h"
-#include "flash.h"
 #include "graphics.h"
 
 
@@ -259,9 +258,6 @@ static void lcd_data_byte(uint8_t b)
 void graphics_render(void)
 {
     uint8_t y = LCD_HEIGHT;
-
-    // Make sure flash is readable
-    flash_wait();
 
     // Address the LCD
     lcd_cmd_byte(LCD_CMD_RAMWR);

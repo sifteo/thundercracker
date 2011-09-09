@@ -40,11 +40,20 @@
 #include "network.h"
 #include "adc.h"
 
+#define BUS_PORT	REG_P0
+#define ADDR_PORT	REG_P1
+#define CTRL_PORT	REG_P2
+
+#define BUS_PORT_DIR	REG_P0DIR
+#define ADDR_PORT_DIR	REG_P1DIR
+#define CTRL_PORT_DIR	REG_P2DIR
+
 static struct {
     uint8_t lat1;
     uint8_t lat2;
     uint8_t bus;
     uint8_t prev_ctrl_port;
+    uint8_t flash_drv;
 
     int rfcken;
     struct spi_master radio_spi;
@@ -95,15 +104,15 @@ void hardware_exit(void)
 void hardware_gfx_tick(struct em8051 *cpu)
 {
     // Port output values, pull-up when floating
-    uint8_t bus_port = cpu->mSFR[REG_P0] | cpu->mSFR[REG_P0DIR];
-    uint8_t addr_port = cpu->mSFR[REG_P1] | cpu->mSFR[REG_P1DIR];
-    uint8_t ctrl_port = cpu->mSFR[REG_P2] | cpu->mSFR[REG_P2DIR];
+    uint8_t bus_port = cpu->mSFR[BUS_PORT] | cpu->mSFR[BUS_PORT_DIR];
+    uint8_t addr_port = cpu->mSFR[ADDR_PORT] | cpu->mSFR[ADDR_PORT_DIR];
+    uint8_t ctrl_port = cpu->mSFR[CTRL_PORT] | cpu->mSFR[CTRL_PORT_DIR];
 
     // 7-bit address in high bits of p1
     uint8_t addr7 = addr_port >> 1;
 
     // Is the MCU driving any bit of the shared bus?
-    uint8_t mcu_data_drv = cpu->mSFR[REG_P0DIR] != 0xFF;
+    uint8_t mcu_data_drv = cpu->mSFR[BUS_PORT_DIR] != 0xFF;
 
     struct flash_pins flashp = {
 	/* addr    */ addr7 | ((uint32_t)hw.lat1 << 7) | ((uint32_t)hw.lat2 << 14),
@@ -130,18 +139,23 @@ void hardware_gfx_tick(struct em8051 *cpu)
     if ((ctrl_port & 0x80) && !(hw.prev_ctrl_port & 0x80)) hw.lat2 = addr7;
     hw.prev_ctrl_port = ctrl_port;
 
-    /* After every simulation cycle, resolve the new state of the shared bus. */
-   
+    /*
+     * After every simulation cycle, resolve the new state of the
+     * shared bus.  We update the bus once now, but flash memory may
+     * additionally update more often (every tick).
+     */
+ 
     switch ((mcu_data_drv << 1) | flashp.data_drv) {
     case 0:     /* Floating... */ break;
-    case 1:     hw.bus = flashp.data_out; break;
+    case 1:     hw.bus = flash_data_out(); break;
     case 2:     hw.bus = bus_port; break;
     default:
 	/* Bus contention! */
 	cpu->except(cpu, EXCEPTION_BUS_CONTENTION);
     }
     
-    cpu->mSFR[REG_P0] = hw.bus;
+    hw.flash_drv = flashp.data_drv;  
+    cpu->mSFR[BUS_PORT] = hw.bus;
 }
 
 void hardware_sfrwrite(struct em8051 *cpu, int reg)
@@ -149,13 +163,13 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
     reg -= 0x80;
     switch (reg) {
 
-    case REG_P0:
-    case REG_P1:
-    case REG_P2:
-    case REG_P0DIR:
-    case REG_P1DIR:
-    case REG_P2DIR:
-	// Only need to simulate the graphics subsystem when a relevant SFR write occurs
+    case BUS_PORT:
+    case ADDR_PORT:
+    case CTRL_PORT:
+    case BUS_PORT_DIR:
+    case ADDR_PORT_DIR:
+    case CTRL_PORT_DIR:
+	// Usually we only need to simulate the graphics subsystem when a relevant SFR write occurs
         hardware_gfx_tick(cpu);
         break;
  
@@ -193,9 +207,9 @@ void hardware_tick(struct em8051 *cpu)
 {
     /* Update the LCD Tearing Effect line */
 
-    cpu->mSFR[REG_P2] &= 0xFE;
+    cpu->mSFR[CTRL_PORT] &= 0xFE;
     if (lcd_te_tick())
-	cpu->mSFR[REG_P2] |= 0x01;
+	cpu->mSFR[CTRL_PORT] |= 0x01;
 
     /* Simulate interrupts */
 
@@ -211,4 +225,6 @@ void hardware_tick(struct em8051 *cpu)
     /* Other hardware with timers to update */
 
     flash_tick(cpu);
+    if (hw.flash_drv)
+	cpu->mSFR[BUS_PORT] = flash_data_out();
 }

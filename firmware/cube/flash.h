@@ -22,11 +22,10 @@
 volatile extern uint8_t __idata flash_fifo[FLASH_FIFO_MASK + 1];
 volatile extern uint8_t flash_fifo_head;
 
-#pragma callee_saves flash_init,flash_wait,flash_erase,flash_program
+#pragma callee_saves flash_init,flash_erase,flash_program_start,flash_program_word
 
 void flash_init(void);
 void flash_handle_fifo();
-void flash_wait(void);
 
 /*
  * Low-level hardware abstraction layer
@@ -39,8 +38,11 @@ void flash_wait(void);
 extern uint8_t flash_addr_low;
 extern uint8_t flash_addr_lat1;
 extern uint8_t flash_addr_lat2;
+extern uint8_t flash_run_len;
 
 void flash_erase(uint8_t blockCount);
-void flash_program(uint8_t dat);
+void flash_program_start(void);
+void flash_program_words(uint16_t dat) __naked;
+
 
 #endif

@@ -59,21 +59,22 @@ volatile uint8_t flash_fifo_head;
  * Loadstream codec state
  */
 
+union word16 {
+    uint16_t word;
+    struct {
+	uint8_t low, high;
+    };
+};
+
 // Color lookup table
 static __idata struct {
-    uint8_t bytes[LUT_SIZE * 2];
-    uint8_t p16_low;
-    uint8_t p16_high;
+    union word16 colors[LUT_SIZE];
+    union word16 p16;
 } lut;
 
 // Overlaid memory for individual states' use
 static union {
-    union {
-	uint16_t word;
-	struct {
-	    uint8_t low, high;
-	};
-    } lutvec;
+    union word16 lutvec;
 
     struct {
 	uint8_t rle1;
@@ -115,7 +116,7 @@ void flash_init(void)
      * Reset the state machine, reset the LUT.
      */
 
-    __idata uint8_t *l = &lut.bytes[0];
+    __idata uint8_t *l = (__idata uint8_t *) &lut;
     uint8_t i = sizeof lut;
 
     do {
@@ -142,7 +143,14 @@ void flash_handle_fifo(void)
 	return;
     }
 
-    while (flash_fifo_head != fifo_tail) {
+    // Nothing to do
+    if (flash_fifo_head == fifo_tail)
+	return;
+
+    // Prep the flash hardware to start writing
+    flash_program_start();
+
+    do {
 	/*
 	 * Dequeue one byte from the FIFO.
 	 *
@@ -155,7 +163,11 @@ void flash_handle_fifo(void)
 	ack_data.flash_fifo_bytes++;
 
 	state();
-    }
+
+    } while (flash_fifo_head != fifo_tail);
+
+    // Release the bus
+    CTRL_PORT = CTRL_IDLE;
 }
 
 /*
@@ -179,25 +191,11 @@ static void state_OPCODE(void)
 	state = state_LUT16_VEC1;
 	return;
 
-    case OP_TILE_P0: {
+    case OP_TILE_P0:
 	// Trivial solid-color tile, no repeats
-	uint8_t i = 64;
-	uint8_t index = byte & 0xF;
-	const uint8_t __idata *color = lut.bytes;
-	uint8_t low, high;
-
-	index = rl(index);
-	color = lut.bytes + index;
-	low = *color;
-	color++;
-	high = *color;
-
-	do {
-	    flash_program(low);
-	    flash_program(high);
-	} while (--i);
+	flash_run_len = 64;
+	flash_program_words(lut.colors[byte & 0xF].word);
 	return;
-    }
 	
     case OP_TILE_P1_R4:
 	counter = 64;
@@ -246,13 +244,13 @@ static void state_OPCODE(void)
 static void state_ADDR_LOW(void)
 {
     flash_addr_low = 0;
-    flash_addr_lat1 = byte;
+    flash_addr_lat1 = byte & 0xFE;
     state = state_ADDR_HIGH;
 }
 
 static void state_ADDR_HIGH(void)
 {
-    flash_addr_lat2 = byte;
+    flash_addr_lat2 = byte & 0xFE;
     state = state_OPCODE;
 }
 
@@ -272,15 +270,13 @@ static void state_ERASE_CHECK(void)
 
 static void state_LUT1_COLOR1(void)
 {
-    opcode &= 0xF;
-    opcode = rl(opcode);
-    lut.bytes[opcode] = byte;
+    lut.colors[opcode & 0xF].low = byte;
     state = state_LUT1_COLOR2;
 }
 
 static void state_LUT1_COLOR2(void)
 {
-    lut.bytes[opcode + 1] = byte;
+    lut.colors[opcode & 0xF].high = byte;
     state = state_OPCODE;
 }
 
@@ -303,15 +299,14 @@ static void state_LUT16_COLOR1(void)
 	// Skipped LUT entry
 	ovl.lutvec.word >>= 1;
 	counter++;
-	counter++;
     }
-    lut.bytes[counter++] = byte;
+    lut.colors[counter].low = byte;
     state = state_LUT16_COLOR2;
 }
 
 static void state_LUT16_COLOR2(void)
 {
-    lut.bytes[counter++] = byte;
+    lut.colors[counter++].high = byte;
     ovl.lutvec.word >>= 1;
     state = ovl.lutvec.word ? state_LUT16_COLOR1 : state_OPCODE;
 }	
@@ -321,6 +316,7 @@ static void state_TILE_P1_R4(void)
     __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
     uint8_t runLength;
+
     for (;;) {
 	if (ovl.rle1 == ovl.rle2) {
 	    runLength = nybble;
@@ -343,14 +339,8 @@ static void state_TILE_P1_R4(void)
 
 	do {
 	    uint8_t idx = nybble & 1;
-	    const uint8_t __idata *color;
-
-	    idx = rl(idx);
-	    color = lut.bytes + idx;
-
-	    flash_program(*color);
-	    flash_program(color[1]);
-
+	    flash_run_len = 1;
+	    flash_program_words(lut.colors[idx].word);
 	    nybble = rr(nybble);
 	} while (--runLength);
 
@@ -375,6 +365,7 @@ static void state_TILE_P2_R4(void)
     __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
     uint8_t runLength;
+
     for (;;) {
 	if (ovl.rle1 == ovl.rle2) {
 	    runLength = nybble;
@@ -396,14 +387,8 @@ static void state_TILE_P2_R4(void)
 	
 	do {
 	    uint8_t idx = nybble & 3;
-	    const uint8_t __idata *color;
-
-	    idx = rl(idx);
-	    color = lut.bytes + idx;
-
-	    flash_program(*color);
-	    flash_program(color[1]);
-
+	    flash_run_len = 1;
+	    flash_program_words(lut.colors[idx].word);
 	    nybble = rr(nybble);
 	    nybble = rr(nybble);
 	} while (--runLength);
@@ -428,35 +413,24 @@ static void state_TILE_P4_R4(void)
 {
     __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
-    uint8_t runLength;
+
     for (;;) {
        if (ovl.rle1 == ovl.rle2) {
-           runLength = nybble;
+           counter -= (flash_run_len = nybble);
            nybble = ovl.rle1;
            ovl.rle1 = 0xF0;
 	   
-           if (!runLength)
+           if (!flash_run_len)
                goto no_runs;
-	   
-           counter -= runLength;
-	   
+
        } else {
-           runLength = 1;
+           flash_run_len = 1;
            counter --;
            ovl.rle2 = ovl.rle1;
            ovl.rle1 = nybble;
        }
 
-       do {
-	   uint8_t idx = nybble;
-	   const uint8_t __idata *color;
-	   
-	   idx = rl(idx);
-	   color = lut.bytes + idx;
-	   
-	   flash_program(*color);
-	   flash_program(color[1]);
-       } while (--runLength);
+       flash_program_words(lut.colors[nybble].word);
     
     no_runs:
        if (!counter || (counter & 0x80))
@@ -480,8 +454,8 @@ static void state_TILE_P4_R4(void)
 		state = state_TILE_P16_LOW;	\
 		return;				\
 	    }					\
-	    flash_program(lut.p16_low);		\
-	    flash_program(lut.p16_high);	\
+	    flash_run_len = 1;			\
+	    flash_program_words(lut.p16.word);	\
 	    ovl.rle1 = rr(ovl.rle1);		\
 	} while (--ovl.rle2);			\
     }
@@ -509,15 +483,15 @@ static void state_TILE_P16_MASK(void)
 
 static void state_TILE_P16_LOW(void)
 {
-    flash_program(byte);
-    lut.p16_low = byte;
+    lut.p16.low = byte;
     state = state_TILE_P16_HIGH;
 }
 
 static void state_TILE_P16_HIGH(void)
 {
-    lut.p16_high = byte;
-    flash_program(byte);
+    lut.p16.high = byte;
+    flash_run_len = 1;
+    flash_program_words(lut.p16.word);
 
     if (--ovl.rle2) {
 	// Still more pixels in this mask.
