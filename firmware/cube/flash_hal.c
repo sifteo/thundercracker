@@ -162,7 +162,7 @@ void flash_program(uint8_t dat)
 	mov	CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
 	mov	ADDR_PORT, _flash_addr_low
 	mov	BUS_PORT, DPL
-    _endasm ;
+    __endasm ;
     CTRL_PORT = CTRL_FLASH_CMD;
     CTRL_PORT = CTRL_IDLE;
     BUS_DIR = 0xFF;

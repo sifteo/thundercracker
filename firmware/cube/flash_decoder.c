@@ -318,7 +318,7 @@ static void state_LUT16_COLOR2(void)
 
 static void state_TILE_P1_R4(void)
 {
-    bit nibIndex = 1;
+    __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
     uint8_t runLength;
     for (;;) {
@@ -372,7 +372,7 @@ static void state_TILE_P1_R4(void)
 		
 static void state_TILE_P2_R4(void)
 {
-    bit nibIndex = 1;
+    __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
     uint8_t runLength;
     for (;;) {
@@ -426,7 +426,7 @@ static void state_TILE_P2_R4(void)
 
 static void state_TILE_P4_R4(void)
 {
-    bit nibIndex = 1;
+    __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
     uint8_t runLength;
     for (;;) {
