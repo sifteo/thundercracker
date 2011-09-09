@@ -41,7 +41,6 @@ int opt_clock_select = 6;
 int opt_clock_hz = 16*1000*1000;
 int opt_step_instruction = 1;
 int opt_debug = 0;
-int opt_visual_profiler = 0;
 
 const char *opt_flash_filename = NULL;
 const char *opt_profile_filename = NULL;

@@ -36,4 +36,8 @@ unsigned flash_busy_percent(void);
 void flash_tick(struct em8051 *cpu);
 void flash_cycle(struct flash_pins *pins);
 
+// For the front-end's flash memory visualization
+uint32_t flash_size(void);
+uint8_t *flash_buffer(void);
+
 #endif

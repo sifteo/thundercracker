@@ -513,9 +513,7 @@ int main(int argc, char ** argv)
     if (argc > 1) {
         for (i = 1; i < argc; i++) {
             if (argv[i][0] == '-') {
-                if (strcmp("vp",argv[i]+1) == 0)
-                    opt_visual_profiler = 1;
-                else if (strcmp("d",argv[i]+1) == 0)
+                if (strcmp("d",argv[i]+1) == 0)
                     opt_debug = 1;
 		else if (strncmp("clock=",argv[i]+1,6) == 0) {
                     opt_clock_select = 12;
@@ -537,7 +535,6 @@ int main(int argc, char ** argv)
 			   "Both the filename and options are optional. Available options:\n"
 			   "\n"
 			   "-d          Enable ncurses debug UI\n"
-			   "-vp         Visual profiler mode, shows realtime CPU cycle heat-map\n"
 			   "\n"
 			   "-profile=out.txt  Profile performance, and write annotated disassembly\n"
 			   "-clock=value      Set clock speed, in Hz\n"

@@ -74,7 +74,6 @@ extern int opt_clock_select;
 extern int opt_clock_hz;
 extern int opt_step_instruction;
 extern int opt_debug;
-extern int opt_visual_profiler;
 
 extern const char *opt_flash_filename;
 extern const char *opt_profile_filename;

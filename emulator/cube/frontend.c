@@ -26,6 +26,7 @@
 #include "frontend.h"
 #include "lcd.h"
 #include "adc.h"
+#include "flash.h"
 #include "heatpalette.h"
 
 #ifndef GL_UNSIGNED_SHORT_5_6_5
@@ -35,13 +36,22 @@
 #define PROFILER_BYTES  16384
 #define PROFILER_LINES  (PROFILER_BYTES / LCD_WIDTH)
 
+#define FLASH_TILE_SIZE    8
+#define FLASH_TILE_BYTES   (FLASH_TILE_SIZE * FLASH_TILE_SIZE * 2)
+#define FLASH_TILE_WIDTH   192
+#define FLASH_TILE_HEIGHT  86
+
 static struct {
     SDL_Surface *surface;
     struct em8051 *cpu;
     int frame_hz_divisor;
     int profiler_div_timer;
     int running;
+
+    // Display modes, controllable at runtime
     int scale;
+    int enable_profiler;
+    int enable_flash;
 } frontend;
 
 
@@ -92,29 +102,53 @@ static void frontend_update_profiler(uint16_t *dest)
 
 static void frontend_update_texture(void)
 {
-    uint16_t *fb = lcd_framebuffer();
-    GLsizei width = LCD_WIDTH;
-    GLsizei height = LCD_HEIGHT;
+    if (frontend.enable_flash) {
+	unsigned tx, ty;
+	unsigned remaining = flash_size();
+	uint8_t *ptr = flash_buffer();
 
-    if (fb) {
 	glEnable(GL_TEXTURE_2D);
+
+	for (ty = 0; ty < FLASH_TILE_HEIGHT; ty++)
+	    for (tx = 0; tx < FLASH_TILE_WIDTH; tx++) {
+
+		glTexSubImage2D(GL_TEXTURE_2D, 0,
+				tx * FLASH_TILE_SIZE, ty * FLASH_TILE_SIZE,
+				FLASH_TILE_SIZE, FLASH_TILE_SIZE,
+				GL_RGB, GL_UNSIGNED_SHORT_5_6_5, ptr);
+
+		remaining -= FLASH_TILE_BYTES;
+		ptr += FLASH_TILE_BYTES;
+
+		if (remaining < FLASH_TILE_BYTES)
+		    return;
+	    }
+
     } else {
-	glDisable(GL_TEXTURE_2D);
-	return;
+	uint16_t *fb = lcd_framebuffer();
+	GLsizei width = LCD_WIDTH;
+	GLsizei height = LCD_HEIGHT;
+
+	if (fb) {
+	    glEnable(GL_TEXTURE_2D);
+	} else {
+	    glDisable(GL_TEXTURE_2D);
+	    return;
+	}
+
+	if (frontend.enable_profiler) {
+	    // Update the profiler only every N frames
+	    if (++frontend.profiler_div_timer >= 3) {
+		frontend.profiler_div_timer = 0;
+		frontend_update_profiler(fb + (LCD_WIDTH * LCD_HEIGHT));
+	    }
+
+	    height += PROFILER_LINES;
+	}
+
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
+			GL_RGB, GL_UNSIGNED_SHORT_5_6_5, fb);
     }
-
-    if (opt_visual_profiler) {       
-        // Update the profiler only every N frames
-        if (++frontend.profiler_div_timer >= 3) {
-            frontend.profiler_div_timer = 0;
-	    frontend_update_profiler(fb + (LCD_WIDTH * LCD_HEIGHT));
-        }
-
-        height += PROFILER_LINES;
-    }
-
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB,
-		 GL_UNSIGNED_SHORT_5_6_5, fb);
 }
 
 static void frontend_draw_frame(void)
@@ -134,16 +168,29 @@ static void frontend_draw_frame(void)
 
 static void frontend_resize_window(void)
 {
-    unsigned width = LCD_WIDTH;
-    unsigned height = LCD_HEIGHT;
+    unsigned texWidth, texHeight;
+    unsigned winWidth, winHeight;
 
-    if (opt_visual_profiler)
-	height += PROFILER_LINES;
+    if (frontend.enable_flash) {
 
-    width *= frontend.scale;
-    height *= frontend.scale;
-    
-    frontend.surface = SDL_SetVideoMode(width, height, 16, SDL_OPENGL);
+	texWidth = FLASH_TILE_SIZE * FLASH_TILE_WIDTH;
+	texHeight = FLASH_TILE_SIZE * FLASH_TILE_HEIGHT;
+
+	winWidth = texWidth;
+	winHeight = texHeight;
+
+    } else {
+	texWidth = LCD_WIDTH;
+	texHeight = LCD_HEIGHT;
+
+	if (frontend.enable_profiler)
+	    texHeight += PROFILER_LINES;
+
+	winWidth = texWidth * frontend.scale;
+	winHeight = texHeight * frontend.scale;
+    }
+       
+    frontend.surface = SDL_SetVideoMode(winWidth, winHeight, 16, SDL_OPENGL);
     if (frontend.surface == NULL) {
 	printf("Error creating SDL surface!\n");
 	exit(1);
@@ -151,7 +198,7 @@ static void frontend_resize_window(void)
 
     SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
 
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, winWidth, winHeight);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -165,6 +212,9 @@ static void frontend_resize_window(void)
     glShadeModel(GL_SMOOTH);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, texWidth, texHeight, 0, GL_RGB,
+		 GL_UNSIGNED_SHORT_5_6_5, NULL);
 
     frontend_update_texture();
     frontend_draw_frame();
@@ -232,7 +282,13 @@ static void frontend_keydown(SDL_KeyboardEvent *evt)
 
 	// Toggle profiler
     case 'p':
-	opt_visual_profiler = !opt_visual_profiler;
+	frontend.enable_profiler = !frontend.enable_profiler;
+	frontend_resize_window();
+	break;
+
+	// Toggle flash
+    case 'f':
+	frontend.enable_flash = !frontend.enable_flash;
 	frontend_resize_window();
 	break;
 

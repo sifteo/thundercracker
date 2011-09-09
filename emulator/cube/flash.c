@@ -281,3 +281,13 @@ void flash_cycle(struct flash_pins *pins)
     flashmem.prev_we = pins->we;
     flashmem.prev_oe = pins->oe;
 }
+
+uint32_t flash_size(void)
+{
+    return sizeof flashmem.data;
+}
+
+uint8_t *flash_buffer(void)
+{
+    return flashmem.data;
+}
