@@ -36,24 +36,26 @@ void flash_wait(void)
      * bus. If we get two consecutive reads which are identical, the
      * operation is complete.
      *
-     * Toggle bits are updated on falling edges of OE, so we do have to
-     * keep toggling CTRL_PORT between CTRL_IDLE and CTRL_FLASH_OUT.
+     * Toggle bits are updated on falling edges of OE, so we do have
+     * to keep toggling CTRL_PORT between CTRL_IDLE and
+     * CTRL_FLASH_OUT.
+     *
+     * This is in inline assembly primarily to reduce the register
+     * footprint.  We can do this using only ACC, but sdcc insists on
+     * using an additional register that ends up getting
+     * pushed/popped.  The same code is inlined below, in
+     * flash_program, for the same reason.
      */
 
-    uint8_t x, y;
-
-    CTRL_PORT = CTRL_FLASH_OUT;
-    x = BUS_PORT;
-    CTRL_PORT = CTRL_IDLE;
-
-    do {
-	CTRL_PORT = CTRL_FLASH_OUT;
-	y = x;
-	x = BUS_PORT;
-	CTRL_PORT = CTRL_IDLE;
-    } while (x != y);
+    __asm
+	mov	CTRL_PORT, #CTRL_FLASH_OUT
+1$:	mov	a, BUS_PORT
+	mov	CTRL_PORT, #CTRL_IDLE
+	mov	CTRL_PORT, #CTRL_FLASH_OUT
+	cjne	a, BUS_PORT, 1$
+	mov	CTRL_PORT, #CTRL_IDLE
+    __endasm ;
 }
-
 
 void flash_erase(uint8_t blockCount)
 {
@@ -122,30 +124,61 @@ void flash_erase(uint8_t blockCount)
 void flash_program(uint8_t dat)
 {
     /*
-     * Program one byte, at any address. Note that this can only flip '1' bits to '0'.
+     * Program one byte, at any address. This effectively bitwise ANDs
+     * 'dat' with the current flash address, and increments the
+     * address.
+     *
+     * This is partly in inline asm so that we can more carefully
+     * control how registers are used. That, plus the "#pragma
+     * callee_saves", makes this function much more efficient for the
+     * decoder to call frequently.
      */
 
     // lat2 isn't used by CMD_PREFIX, so we can set it while we wait.
     ADDR_PORT = flash_addr_lat2;
     CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
 
-    flash_wait();
-    BUS_DIR = 0;
+    // flash_wait(), inlined
+    __asm
+	mov	CTRL_PORT, #CTRL_FLASH_OUT
+	1$:
+	mov	a, BUS_PORT
+	mov	CTRL_PORT, #CTRL_IDLE
+	mov	CTRL_PORT, #CTRL_FLASH_OUT
+	cjne	a, BUS_PORT, 1$
+	mov	CTRL_PORT, #CTRL_IDLE
+    __endasm ;
 
     // Write unlock prefix
+    BUS_DIR = 0;
     FLASH_CMD_PREFIX(0xAAA, 0xAA);
     FLASH_CMD_PREFIX(0x555, 0x55);
     FLASH_CMD_PREFIX(0xAAA, 0xA0);
 
-    ADDR_PORT = flash_addr_lat1;
-    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;
-    ADDR_PORT = flash_addr_low;
-    BUS_PORT = dat;
+    // Write data byte, without any temporary registers
+    dat = dat;
+    __asm
+	mov	ADDR_PORT, _flash_addr_lat1
+	mov	CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
+	mov	ADDR_PORT, _flash_addr_low
+	mov	BUS_PORT, DPL
+    _endasm ;
     CTRL_PORT = CTRL_FLASH_CMD;
     CTRL_PORT = CTRL_IDLE;
     BUS_DIR = 0xFF;
 
-    if (!(flash_addr_low += 2))
-	if (!(flash_addr_lat1 += 2))
-	    flash_addr_lat2 += 2;
+    // Increment flash_addr, without any temporaries
+    __asm
+	mov	a, _flash_addr_low
+	add	a, #2
+	mov	_flash_addr_low, a
+	jnz	2$
+	mov	a, _flash_addr_lat1
+	add	a, #2
+	mov	_flash_addr_lat1, a
+	jnz	2$
+	inc	_flash_addr_lat2
+	inc	_flash_addr_lat2
+	2$:
+    __endasm ;
 }
