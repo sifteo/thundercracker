@@ -17,12 +17,16 @@
  * in iram. The radio ISR will write incoming commands to this
  * lockless FIFO, which we process in-between frames.
  *
- * The FIFO is small, just large enough for two max-size radio
- * packets.  The only way we have to prevent the master from
- * overrunning this buffer is to provide flow control feedback, in the
- * form of a byte counter in the ack buffer. The master uses this to
- * keep a worst-case estiamate of the cube's current remaining buffer
- * space.
+ * We have an end-to-end flow control mechanism in which the master
+ * receives feedback in our ACK packet, indicating how many bytes
+ * we've fully processed. It uses this to determine how much space is
+ * available in the FIFO.
+ *
+ * The FIFO is relatively small; just large enough to give us time to
+ * re-start the radio streaming when the buffer has room, without it
+ * becoming empty in the mean time. This means that the required
+ * buffer space is proportional to radio latency, and if we can keep
+ * the radio latency low, we can keep the buffer size to a minimum.
  */
 
 #include "flash.h"
