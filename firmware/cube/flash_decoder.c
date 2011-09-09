@@ -57,8 +57,7 @@ volatile uint8_t flash_fifo_head;
 
 // Color lookup table
 static __idata struct {
-    uint8_t low[LUT_SIZE];
-    uint8_t high[LUT_SIZE];
+    uint8_t bytes[LUT_SIZE * 2];
     uint8_t p16_low;
     uint8_t p16_high;
 } lut;
@@ -112,7 +111,7 @@ void flash_init(void)
      * Reset the state machine, reset the LUT.
      */
 
-    __idata uint8_t *l = &lut.low[0];
+    __idata uint8_t *l = &lut.bytes[0];
     uint8_t i = sizeof lut;
 
     do {
@@ -179,10 +178,19 @@ static void state_OPCODE(void)
     case OP_TILE_P0: {
 	// Trivial solid-color tile, no repeats
 	uint8_t i = 64;
-	byte &= 0x0F;
+	uint8_t index = byte & 0xF;
+	const uint8_t __idata *color = lut.bytes;
+	uint8_t low, high;
+
+	index = rl(index);
+	color = lut.bytes + index;
+	low = *color;
+	color++;
+	high = *color;
+
 	do {
-	    flash_program(lut.low[byte]);
-	    flash_program(lut.high[byte]);
+	    flash_program(low);
+	    flash_program(high);
 	} while (--i);
 	return;
     }
@@ -260,13 +268,15 @@ static void state_ERASE_CHECK(void)
 
 static void state_LUT1_COLOR1(void)
 {
-    lut.low[opcode & 0x0F] = byte;
+    opcode &= 0xF;
+    opcode = rl(opcode);
+    lut.bytes[opcode] = byte;
     state = state_LUT1_COLOR2;
 }
 
 static void state_LUT1_COLOR2(void)
 {
-    lut.high[opcode & 0x0F] = byte;
+    lut.bytes[opcode + 1] = byte;
     state = state_OPCODE;
 }
 
@@ -289,98 +299,175 @@ static void state_LUT16_COLOR1(void)
 	// Skipped LUT entry
 	ovl.lutvec.word >>= 1;
 	counter++;
+	counter++;
     }
-    lut.low[counter] = byte;
+    lut.bytes[counter++] = byte;
     state = state_LUT16_COLOR2;
 }
 
 static void state_LUT16_COLOR2(void)
 {
-    lut.high[counter] = byte;
+    lut.bytes[counter++] = byte;
     ovl.lutvec.word >>= 1;
-    counter++;
     state = ovl.lutvec.word ? state_LUT16_COLOR1 : state_OPCODE;
 }	
 
-#define RLE4_BEGIN()					\
-    bit nibIndex = 1;					\
-    uint8_t nybble = byte & 0x0F;			\
-    uint8_t runLength;					\
-    for (;;) {						\
-	if (ovl.rle1 == ovl.rle2) {			\
-	    runLength = nybble;				\
-	    nybble = ovl.rle1 | swap(ovl.rle1);		\
-	    ovl.rle1 = 0xF0;				\
-	    if (!runLength)				\
-		goto no_runs;				\
-	} else {					\
-	    runLength = 1;				\
-	    ovl.rle2 = ovl.rle1;			\
-	    ovl.rle1 = nybble;				\
-	}						\
-
-#define RLE4_END()					\
-    no_runs:						\
-	if (!counter || (counter & 0x80))		\
-	    if (opcode & ARG_MASK) {			\
-		opcode--;				\
-		counter += 64;				\
-	    } else {					\
-		state = state_OPCODE;			\
-		return;					\
-	    }						\
-	if (!nibIndex)					\
-	    return;					\
-	nibIndex = 0;					\
-	nybble = byte >> 4;				\
-    }
-
 static void state_TILE_P1_R4(void)
 {
-    RLE4_BEGIN() {
-
-	runLength = rl(runLength);
-	runLength = rl(runLength);
-	counter -= runLength;
+    bit nibIndex = 1;
+    uint8_t nybble = byte & 0x0F;
+    uint8_t runLength;
+    for (;;) {
+	if (ovl.rle1 == ovl.rle2) {
+	    runLength = nybble;
+	    nybble = ovl.rle1 | swap(ovl.rle1);
+	    ovl.rle1 = 0xF0;
+	    
+	    if (!runLength)
+		goto no_runs;
+	    
+	    runLength = rl(runLength);
+	    runLength = rl(runLength);
+	    counter -= runLength;
+	    
+	} else {
+	    runLength = 4;
+	    counter -= 4;
+	    ovl.rle2 = ovl.rle1;
+	    ovl.rle1 = nybble;
+	}
 
 	do {
-	    flash_program(lut.low[nybble & 1]);
-	    flash_program(lut.high[nybble & 1]);
+	    uint8_t idx = nybble & 1;
+	    const uint8_t __idata *color;
+
+	    idx = rl(idx);
+	    color = lut.bytes + idx;
+
+	    flash_program(*color);
+	    flash_program(color[1]);
+
 	    nybble = rr(nybble);
 	} while (--runLength);
 
-    } RLE4_END();
+    no_runs:
+	if (!counter || (counter & 0x80))
+	    if (opcode & ARG_MASK) {
+		opcode--;
+		counter += 64;
+	    } else {
+		state = state_OPCODE;
+		return;
+	    }
+	if (!nibIndex)
+	    return;
+	nibIndex = 0;
+	nybble = byte >> 4;
+    }
 }
 		
 static void state_TILE_P2_R4(void)
 {
-    RLE4_BEGIN() {
-
-	runLength = rl(runLength);
-	counter -= runLength;
-
+    bit nibIndex = 1;
+    uint8_t nybble = byte & 0x0F;
+    uint8_t runLength;
+    for (;;) {
+	if (ovl.rle1 == ovl.rle2) {
+	    runLength = nybble;
+	    nybble = ovl.rle1 | swap(ovl.rle1);
+	    ovl.rle1 = 0xF0;
+	    
+	    if (!runLength)
+		goto no_runs;
+	    
+	    runLength = rl(runLength);
+	    counter -= runLength;
+	    
+	} else {
+	    runLength = 2;
+	    counter -= 2;
+	    ovl.rle2 = ovl.rle1;
+	    ovl.rle1 = nybble;
+	}
+	
 	do {
-	    flash_program(lut.low[nybble & 3]);
-	    flash_program(lut.high[nybble & 3]);
+	    uint8_t idx = nybble & 3;
+	    const uint8_t __idata *color;
+
+	    idx = rl(idx);
+	    color = lut.bytes + idx;
+
+	    flash_program(*color);
+	    flash_program(color[1]);
+
 	    nybble = rr(nybble);
 	    nybble = rr(nybble);
 	} while (--runLength);
 
-    } RLE4_END();
+    no_runs:
+	if (!counter || (counter & 0x80))
+	    if (opcode & ARG_MASK) {
+		opcode--;
+		counter += 64;
+	    } else {
+		state = state_OPCODE;
+		return;
+	    }
+	if (!nibIndex)
+	    return;
+	nibIndex = 0;
+	nybble = byte >> 4;
+    }
 }
 
 static void state_TILE_P4_R4(void)
 {
-    RLE4_BEGIN() {
-		
-	counter -= runLength;
+    bit nibIndex = 1;
+    uint8_t nybble = byte & 0x0F;
+    uint8_t runLength;
+    for (;;) {
+       if (ovl.rle1 == ovl.rle2) {
+           runLength = nybble;
+           nybble = ovl.rle1;
+           ovl.rle1 = 0xF0;
+	   
+           if (!runLength)
+               goto no_runs;
+	   
+           counter -= runLength;
+	   
+       } else {
+           runLength = 1;
+           counter --;
+           ovl.rle2 = ovl.rle1;
+           ovl.rle1 = nybble;
+       }
 
-	do {
-	    flash_program(lut.low[nybble & 0xF]);
-	    flash_program(lut.high[nybble & 0xF]);
-	} while (--runLength);
-
-    } RLE4_END();
+       do {
+	   uint8_t idx = nybble;
+	   const uint8_t __idata *color;
+	   
+	   idx = rl(idx);
+	   color = lut.bytes + idx;
+	   
+	   flash_program(*color);
+	   flash_program(color[1]);
+       } while (--runLength);
+    
+    no_runs:
+       if (!counter || (counter & 0x80))
+           if (opcode & ARG_MASK) {
+               opcode--;
+               counter += 64;
+           } else {
+               state = state_OPCODE;
+               return;
+           }
+       if (!nibIndex)
+	   return;
+       nibIndex = 0;
+       nybble = byte >> 4;
+    }
 }
 
 #define P16_EMIT_RUNS() {			\
