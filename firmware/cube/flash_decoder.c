@@ -91,23 +91,25 @@ static void (*state)(void);
  * Decoder implementation.
  */
 
-static void state_OPCODE(void);
-static void state_ADDR_LOW(void);
-static void state_ADDR_HIGH(void);
-static void state_ERASE_COUNT(void);
-static void state_ERASE_CHECK(void);
-static void state_LUT1_COLOR1(void);
-static void state_LUT1_COLOR2(void);
-static void state_LUT16_VEC1(void);
-static void state_LUT16_VEC2(void);
-static void state_LUT16_COLOR1(void);
-static void state_LUT16_COLOR2(void);
-static void state_TILE_P1_R4(void);
-static void state_TILE_P2_R4(void);
-static void state_TILE_P4_R4(void);
-static void state_TILE_P16_MASK(void);
-static void state_TILE_P16_LOW(void);
-static void state_TILE_P16_HIGH(void);
+static void state_OPCODE(void) __naked;
+static void state_ADDR_LOW(void) __naked;
+static void state_ADDR_HIGH(void) __naked;
+static void state_ERASE_COUNT(void) __naked;
+static void state_ERASE_CHECK(void) __naked;
+static void state_LUT1_COLOR1(void) __naked;
+static void state_LUT1_COLOR2(void) __naked;
+static void state_LUT16_VEC1(void) __naked;
+static void state_LUT16_VEC2(void) __naked;
+static void state_LUT16_COLOR1(void) __naked;
+static void state_LUT16_COLOR2(void) __naked;
+static void state_TILE_P1_R4(void) __naked;
+static void state_TILE_P2_R4(void) __naked;
+static void state_TILE_P4_R4(void) __naked;
+static void state_TILE_P16_MASK(void) __naked;
+static void state_TILE_P16_LOW(void) __naked;
+static void state_TILE_P16_HIGH(void) __naked;
+
+#define STATE_RETURN()  __asm ljmp state_return __endasm
 
 void flash_init(void)
 {
@@ -142,20 +144,30 @@ void flash_handle_fifo(void)
 	return;
     }
 
-    while (flash_fifo_head != fifo_tail) {
-	/*
-	 * Dequeue one byte from the FIFO.
-	 *
-	 * As soon as we increment flash_fifo_bytes, the master may
-	 * overwrite the location we just freed up in the FIFO buffer.
-	 */
+    __asm
+	state_return:
+    __endasm ;
 
-	byte = flash_fifo[fifo_tail];	
-	fifo_tail = (fifo_tail + 1) & FLASH_FIFO_MASK;
-	ack_data.flash_fifo_bytes++;
+    if (flash_fifo_head == fifo_tail)
+	return;
 
-	state();
-    }
+    /*
+     * Dequeue one byte from the FIFO.
+     *
+     * As soon as we increment flash_fifo_bytes, the master may
+     * overwrite the location we just freed up in the FIFO buffer.
+     */
+
+    byte = flash_fifo[fifo_tail];	
+    fifo_tail = (fifo_tail + 1) & FLASH_FIFO_MASK;
+    ack_data.flash_fifo_bytes++;
+
+    __asm
+	clr   a
+	mov   dpl, _state
+	mov   dph, (_state+1)
+	jmp   @a+dptr
+    __endasm ;
 }
 
 /*
@@ -166,18 +178,18 @@ void flash_handle_fifo(void)
  * process exactly one byte per invocation.
  */
 
-static void state_OPCODE(void)
+static void state_OPCODE(void) __naked
 {
     opcode = byte;
     switch (opcode & OP_MASK) {
 
     case OP_LUT1:
 	state = state_LUT1_COLOR1;
-	return;
+	STATE_RETURN();
 
     case OP_LUT16:
 	state = state_LUT16_VEC1;
-	return;
+	STATE_RETURN();
 
     case OP_TILE_P0: {
 	// Trivial solid-color tile, no repeats
@@ -196,108 +208,116 @@ static void state_OPCODE(void)
 	    flash_program(low);
 	    flash_program(high);
 	} while (--i);
-	return;
+	STATE_RETURN();
     }
 	
     case OP_TILE_P1_R4:
 	counter = 64;
 	ovl.rle1 = 0xFF;
 	state = state_TILE_P1_R4;
-	return;
+	STATE_RETURN();
 
     case OP_TILE_P2_R4:
 	counter = 64;
 	ovl.rle1 = 0xFF;
 	state = state_TILE_P2_R4;
-	return;
+	STATE_RETURN();
 
     case OP_TILE_P4_R4:
 	counter = 64;
 	ovl.rle1 = 0xFF;
 	state = state_TILE_P4_R4;
-	return;
+	STATE_RETURN();
 	
     case OP_TILE_P16:
 	counter = 8;
 	state = state_TILE_P16_MASK;
-	return;
+	STATE_RETURN();
 
     case OP_SPECIAL:
 	switch (opcode) {
 	    
 	case OP_ADDRESS:
 	    state = state_ADDR_LOW;
-	    return;
+	    STATE_RETURN();
 
 	case OP_ERASE:
 	    state = state_ERASE_COUNT;
-	    return;
+	    STATE_RETURN();
 	    
 	default:
-	    return;
+	    STATE_RETURN();
 	}
 	
     default:
 	// Undefined opcode
-	return;
+	STATE_RETURN();
     }
 }
 
-static void state_ADDR_LOW(void)
+static void state_ADDR_LOW(void) __naked
 {
     flash_addr_low = 0;
     flash_addr_lat1 = byte;
     state = state_ADDR_HIGH;
+    STATE_RETURN();
 }
 
-static void state_ADDR_HIGH(void)
+static void state_ADDR_HIGH(void) __naked
 {
     flash_addr_lat2 = byte;
     state = state_OPCODE;
+    STATE_RETURN();
 }
 
-static void state_ERASE_COUNT(void)
+static void state_ERASE_COUNT(void) __naked
 {
     counter = byte;
     state = state_ERASE_CHECK;
+    STATE_RETURN();
 }
 
-static void state_ERASE_CHECK(void)
+static void state_ERASE_CHECK(void) __naked
 {
     uint8_t check = 0xFF ^ (-counter -flash_addr_lat1 -flash_addr_lat2);
     if (check == byte)
 	flash_erase(counter);
     state = state_OPCODE;
+    STATE_RETURN();
 }
 
-static void state_LUT1_COLOR1(void)
+static void state_LUT1_COLOR1(void) __naked
 {
     opcode &= 0xF;
     opcode = rl(opcode);
     lut.bytes[opcode] = byte;
     state = state_LUT1_COLOR2;
+    STATE_RETURN();
 }
 
-static void state_LUT1_COLOR2(void)
+static void state_LUT1_COLOR2(void) __naked
 {
     lut.bytes[opcode + 1] = byte;
     state = state_OPCODE;
+    STATE_RETURN();
 }
 
-static void state_LUT16_VEC1(void)
+static void state_LUT16_VEC1(void) __naked
 {
     ovl.lutvec.low = byte;
     state = state_LUT16_VEC2;
+    STATE_RETURN();
 }
 
-static void state_LUT16_VEC2(void)
+static void state_LUT16_VEC2(void) __naked
 {
     ovl.lutvec.high = byte;
     counter = 0;
     state = state_LUT16_COLOR1;
+    STATE_RETURN();
 }
 
-static void state_LUT16_COLOR1(void)
+static void state_LUT16_COLOR1(void) __naked
 {
     while (!(ovl.lutvec.low & 1)) {
 	// Skipped LUT entry
@@ -307,16 +327,18 @@ static void state_LUT16_COLOR1(void)
     }
     lut.bytes[counter++] = byte;
     state = state_LUT16_COLOR2;
+    STATE_RETURN();
 }
 
-static void state_LUT16_COLOR2(void)
+static void state_LUT16_COLOR2(void) __naked
 {
     lut.bytes[counter++] = byte;
     ovl.lutvec.word >>= 1;
     state = ovl.lutvec.word ? state_LUT16_COLOR1 : state_OPCODE;
+    STATE_RETURN();
 }	
 
-static void state_TILE_P1_R4(void)
+static void state_TILE_P1_R4(void) __naked
 {
     __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
@@ -361,16 +383,16 @@ static void state_TILE_P1_R4(void)
 		counter += 64;
 	    } else {
 		state = state_OPCODE;
-		return;
+		STATE_RETURN();
 	    }
 	if (!nibIndex)
-	    return;
+	    STATE_RETURN();
 	nibIndex = 0;
 	nybble = byte >> 4;
     }
 }
 		
-static void state_TILE_P2_R4(void)
+static void state_TILE_P2_R4(void) __naked
 {
     __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
@@ -415,16 +437,16 @@ static void state_TILE_P2_R4(void)
 		counter += 64;
 	    } else {
 		state = state_OPCODE;
-		return;
+		STATE_RETURN();
 	    }
 	if (!nibIndex)
-	    return;
+	    STATE_RETURN();
 	nibIndex = 0;
 	nybble = byte >> 4;
     }
 }
 
-static void state_TILE_P4_R4(void)
+static void state_TILE_P4_R4(void) __naked
 {
     __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
@@ -465,10 +487,10 @@ static void state_TILE_P4_R4(void)
                counter += 64;
            } else {
                state = state_OPCODE;
-               return;
+               STATE_RETURN();
            }
        if (!nibIndex)
-	   return;
+	   STATE_RETURN();
        nibIndex = 0;
        nybble = byte >> 4;
     }
@@ -478,7 +500,7 @@ static void state_TILE_P4_R4(void)
 	do {					\
 	    if (ovl.rle1 & 1) {			\
 		state = state_TILE_P16_LOW;	\
-		return;				\
+		STATE_RETURN();				\
 	    }					\
 	    flash_program(lut.p16_low);		\
 	    flash_program(lut.p16_high);	\
@@ -498,23 +520,25 @@ static void state_TILE_P4_R4(void)
 	}					\
     }
 
-static void state_TILE_P16_MASK(void)
+static void state_TILE_P16_MASK(void) __naked
 {
     ovl.rle1 = byte;  // Mask byte for the next 8 pixels
     ovl.rle2 = 8;     // Remaining pixels in mask
     
     P16_EMIT_RUNS();
     P16_NEXT_MASK();
+    STATE_RETURN();
 }
 
-static void state_TILE_P16_LOW(void)
+static void state_TILE_P16_LOW(void) __naked
 {
     flash_program(byte);
     lut.p16_low = byte;
     state = state_TILE_P16_HIGH;
+    STATE_RETURN();
 }
 
-static void state_TILE_P16_HIGH(void)
+static void state_TILE_P16_HIGH(void) __naked
 {
     lut.p16_high = byte;
     flash_program(byte);
@@ -527,4 +551,5 @@ static void state_TILE_P16_HIGH(void)
     }
 
     P16_NEXT_MASK();
+    STATE_RETURN();
 }
