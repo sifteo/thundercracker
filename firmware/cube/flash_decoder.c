@@ -131,6 +131,10 @@ void flash_init(void)
 
 void flash_handle_fifo(void)
 {
+    // Nothing to do? Exit early.
+    if (flash_fifo_head == fifo_tail)
+	return;
+
     /*
      * Out-of-band cue to reset the state machine.
      *
@@ -145,21 +149,17 @@ void flash_handle_fifo(void)
 	return;
     }
 
-    // Nothing to do
-    if (flash_fifo_head == fifo_tail)
-	return;
-
     // Prep the flash hardware to start writing
     flash_program_start();
 
+    // This is where STATE_RETURN() drops us after each state finishes.
     __asm
 	state_return:
     __endasm ;
 
     if (flash_fifo_head == fifo_tail) {
-	// Release the bus
+	// No more data? Release the bus and get out.
 	CTRL_PORT = CTRL_IDLE;
-
 	return;
     }
 
