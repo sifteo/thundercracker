@@ -9,7 +9,7 @@
 #include <string.h>
 #include "hardware.h"
 #include "graphics.h"
-
+#include "flash.h"
 
 // Latched/local data for sprites, panning
 static __near struct latched_vram lvram;
@@ -339,20 +339,26 @@ void graphics_render(void)
 		y_bg_map -= 800;
 	}
 
+	/*
+	 * Cleanup. Put the bus back in a sane state.
+	 * Especially important:
+	 *
+	 *   - Turn off the output drivers
+	 *
+	 *   - Deassert any lingering latch enables,
+	 *     so that future code which is expecting to
+	 *     emit a rising edge will actually do so.
+	 */
+	CTRL_PORT = CTRL_IDLE;
+
+	/*
+	 * Pump the flash memory FIFO between scanlines, to decrease
+	 * the latency penalty for the FIFO running empty during asset
+	 * downloading.
+	 */
+	flash_handle_fifo();
+
     } while (--y);
-
-    /*
-     * Cleanup. Put the bus back in a sane state.
-     * Especially important:
-     *
-     *   - Turn off the output drivers
-     *
-     *   - Deassert any lingering latch enables,
-     *     so that future code which is expecting to
-     *     emit a rising edge will actually do so.
-     */
-
-    CTRL_PORT = CTRL_IDLE;
 }
 
 

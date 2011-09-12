@@ -22,7 +22,6 @@ void main(void)
     sti();
 
     while (1) {
-	// Process queued flash commands between frames
 	flash_handle_fifo();
 
 	//if (vram.frame_trigger != ack_data.frame_count) {

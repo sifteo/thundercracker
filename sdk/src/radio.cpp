@@ -19,8 +19,10 @@ namespace Sifteo {
 
 #include "ls.h"
 
+#define FIFO_MAX  63
+
 const static uint8_t *ls_ptr = loadstream;
-static uint32_t buf_space = 127;
+static uint32_t buf_space = FIFO_MAX;
 static uint32_t ls_remaining = sizeof loadstream;
 static uint8_t prev_ack;
 
@@ -46,7 +48,7 @@ void RadioManager::produce(PacketTransmission &tx)
 	tx.packet.len = 0;
     }
 
-    if (ls_remaining == 0 && buf_space == 127) {
+    if (ls_remaining == 0 && buf_space == FIFO_MAX) {
 	printf("Done\n");
 	exit(0);
     }
