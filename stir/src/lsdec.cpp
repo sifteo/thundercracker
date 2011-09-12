@@ -261,7 +261,7 @@ static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
 	    }
 
 	    // Finished with this tile? Next.
-	    if ((int8_t)counter <= 0)
+	    if ((int8_t)counter <= 0) {
 		if (opcode & ARG_MASK) {
 		    opcode--;
 		    counter += 64;
@@ -269,6 +269,7 @@ static void handleByte(uint8_t byte, std::vector<uint8_t>& flash)
 		    state = S_OPCODE;
 		    return;
 		}
+	    }
 
 	    byte = (byte >> 4) | (byte << 4);
 	} while (--nybbleI);
