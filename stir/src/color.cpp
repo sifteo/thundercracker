@@ -138,10 +138,11 @@ void CIELab::initialize(void)
 
 ColorReducer::ColorReducer()
 {
-    memset(colorWeights, 0, sizeof colorWeights);
+    for (unsigned v = 0; v < 0x10000; v++)
+	colorMSE[v] = DBL_MAX;
 }
 
-void ColorReducer::reduce(double maxMSE, Logger &log)
+void ColorReducer::reduce(Logger &log)
 {
     /*
      * This is a median-cut style color reducer. We start with a
@@ -165,7 +166,8 @@ void ColorReducer::reduce(double maxMSE, Logger &log)
     boxQueue.push_back(0);
 
     /*
-     * Keep splitting until our error is low enough or we run out of boxes.
+     * Keep splitting until all colors are within the acceptable
+     * tolerance, or we run out of boxes.
      *
      * It's actually much more expensive to calculate the MSE (and the
      * color LUT it requires) than it is to perform palette
@@ -174,11 +176,11 @@ void ColorReducer::reduce(double maxMSE, Logger &log)
      */
 
     while (!boxQueue.empty()) {
-	double mse = meanSquaredError();
+	unsigned errors = countErrors();
 
-	log.taskProgress("%d colors (MSE %g)", (int)boxes.size(), mse);
+	log.taskProgress("%d colors in palette, %d errors remaining", (int)boxes.size(), errors);
 
-	if (mse <= maxMSE)
+	if (errors == 0)
 	    break;
 
 	// Heuristic
@@ -232,26 +234,37 @@ void ColorReducer::updateInverseLUT()
     }
 }
 
-double ColorReducer::meanSquaredError()
+unsigned ColorReducer::countErrors()
 {
     /*
-     * Measure the Mean Squared Error error experienced by every
-     * original pixel when transformed into the current set of reduced
-     * colors.
+     * Count how many original pixels, after converting them through
+     * the current palette, are outside their requested error
+     * tolerance.
+     *
+     * XXX: We may get better results if we can do a directed
+     *      deepening of the color tree, so that colors with lower
+     *      error tolerances get refined first. As is, this is
+     *      probably just going to effectively give us a global
+     *      refinement level that matches the minimum MSE of any input
+     *      color.
+     *
+     * XXX: We can early-out if we find even a single error, so long
+     *      as we don't care about showing the error count as a
+     *      progress indicator.  This also means we can probably opt
+     *      not to use the LUT, or even to build the LUT lazily.
      */
 
-    double error = 0;
-    unsigned total = 0;
-    unsigned v;
+    unsigned errors = 0;
 
-    for (v = 0; v < 0x10000; v++) {
+    for (unsigned v = 0; v < 0x10000; v++) {
 	RGB565 color((uint16_t)v);
-	unsigned weight = colorWeights[v];
-	error += CIELab(nearest(color)).meanSquaredError(CIELab(color)) * weight;
-	total += weight;
+	double mse = colorMSE[v];
+
+	if (CIELab(nearest(color)).meanSquaredError(CIELab(color)) > mse)
+	    errors++;
     }
 
-    return error / total;
+    return errors;
 }
 
 int CIELab::findMajorAxis(RGB565 *colors, size_t count)

@@ -205,11 +205,11 @@ class ColorReducer {
  public:
     ColorReducer();
 
-    void reduce(double maxMSE, Logger &log);
+    void reduce(Logger &log);
 
-    void add(RGB565 color) {
-	colors.push_back(color);
-	colorWeights[color.value]++;
+    void add(RGB565 color, double maxMSE) {
+	colors.push_back(color.value);
+	colorMSE[color.value] = std::min(maxMSE, colorMSE[color.value]);
     }
 
     RGB565 nearest(RGB565 color) {
@@ -231,10 +231,10 @@ class ColorReducer {
     std::vector<box> boxes;
     std::list<unsigned> boxQueue;
     uint16_t inverseLUT[0x10000];
-    uint32_t colorWeights[0x10000];
+    double colorMSE[0x10000];
 
     void updateInverseLUT();
-    double meanSquaredError();
+    unsigned countErrors();
     bool splitBox(box &b);
     void splitBox(box &b, int at);
 

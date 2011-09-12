@@ -16,9 +16,15 @@ namespace Stir {
 Logger::~Logger() {}
 ConsoleLogger::~ConsoleLogger() {}
 
+void ConsoleLogger::setVerbose(bool verbose)
+{
+    mVerbose = verbose;
+}
+
 void ConsoleLogger::taskBegin(const char *name)
 {
-    fprintf(stderr, "%s...\n", name);
+    if (mVerbose)
+	fprintf(stderr, "%s...\n", name);
 }
 
 void ConsoleLogger::taskProgress(const char *fmt, ...)
@@ -26,20 +32,26 @@ void ConsoleLogger::taskProgress(const char *fmt, ...)
     va_list ap;
 
     va_start(ap, fmt);
-    fprintf(stderr, "\r\t");
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "    ");
+
+    if (mVerbose) {
+	fprintf(stderr, "\r\t");
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "    ");
+    }
+
     va_end(ap);
 }
 
 void ConsoleLogger::taskEnd()
 {
-    fprintf(stderr, "\n");
+    if (mVerbose)
+	fprintf(stderr, "\n");
 }
 
 void ConsoleLogger::infoBegin(const char *name)
 {
-    fprintf(stderr, "\n%s:\n", name);
+    if (mVerbose)
+	fprintf(stderr, "\n%s:\n", name);
 }
 
 void ConsoleLogger::infoLine(const char *fmt, ...)
@@ -47,8 +59,12 @@ void ConsoleLogger::infoLine(const char *fmt, ...)
     va_list ap;
 
     va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
+
+    if (mVerbose) {
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+    }
+
     va_end(ap);
 }
 

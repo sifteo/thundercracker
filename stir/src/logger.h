@@ -30,6 +30,8 @@ class ConsoleLogger : public Logger {
  public:
     virtual ~ConsoleLogger();
 
+    void setVerbose(bool verbose=true);
+
     virtual void taskBegin(const char *name);
     virtual void taskProgress(const char *fmt, ...);
     virtual void taskEnd();
@@ -39,6 +41,9 @@ class ConsoleLogger : public Logger {
     virtual void infoEnd();
 
     virtual void error(const char *fmt, ...);
+
+ private:
+    bool mVerbose;
 };
 
 };  // namespace Stir

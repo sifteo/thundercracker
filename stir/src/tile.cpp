@@ -14,18 +14,18 @@
 
 #include "tile.h"
 #include "tilecodec.h"
-#include "lodepng.h"
 
 namespace Stir {
 
 
-Tile::Tile(bool usingChromaKey)
-    : mUsingChromaKey(usingChromaKey), mHasSobel(false), mHasDec4(false)
+Tile::Tile(bool usingChromaKey, double maxMSE)
+    : mUsingChromaKey(usingChromaKey), mHasSobel(false), mHasDec4(false), mMaxMSE(maxMSE)
     {}
 
-Tile::Tile(uint8_t *rgba, size_t stride)
+Tile::Tile(uint8_t *rgba, size_t stride, double quality)
     : mUsingChromaKey(false), mHasSobel(false), mHasDec4(false)
 {
+    mMaxMSE = qualityToMSE(quality);
     /*
      * Load the tile image from a full-color RGBA source bitmap.
      */
@@ -71,6 +71,21 @@ Tile::Tile(uint8_t *rgba, size_t stride)
 
 	    dest++;
 	}	    
+}
+
+double Tile::qualityToMSE(double quality)
+{
+    /*
+     * Convert from the user-visible "quality" to a maximum MSE limit.
+     * User-visible quality numbers are in the range [0, 10]. Larger
+     * is better.
+     *
+     * With this scaling, MSE increases nonlinearly from 0 at quality
+     * 10, to 5 and quality 1, and eventually 500 at quality 0.
+     */
+
+    double err = 10.0 - std::min(10.0, std::max(0.0, quality));
+    return err * err * 5;
 }
 
 void Tile::constructPalette(void)
@@ -280,7 +295,7 @@ void Tile::render(uint8_t *rgba, size_t stride) const
 	}
 }
 
-TileRef Tile::reduce(ColorReducer &reducer, double maxMSE) const
+TileRef Tile::reduce(ColorReducer &reducer) const
 {
     /*
      * Reduce a tile's color palette, using a completed optimized
@@ -288,16 +303,16 @@ TileRef Tile::reduce(ColorReducer &reducer, double maxMSE) const
      * the color selections, emphasizing color runs when possible.
      */
 
-    TileRef result = TileRef(new Tile(mUsingChromaKey));
+    TileRef result = TileRef(new Tile(mUsingChromaKey, mMaxMSE));
     RGB565 run;
 
     // Hysteresis amount
-    maxMSE *= 0.9;
-
+    double limit = mMaxMSE * 0.9;
+    
     for (unsigned i = 0; i < PIXELS; i++) {
 	RGB565 color = reducer.nearest(mPixels[i]);
 	double error = CIELab(color).meanSquaredError(CIELab(run));
-	if (error > maxMSE)
+	if (error > limit)
 	    run = color;
 	result->mPixels[i] = run;
     }
@@ -406,7 +421,7 @@ TileGrid::TileGrid(TilePool *pool)
     : mPool(pool), mWidth(0), mHeight(0)
     {}
 
-void TileGrid::load(uint8_t *rgba, size_t stride, unsigned width, unsigned height)
+void TileGrid::load(uint8_t *rgba, size_t stride, unsigned width, unsigned height, double quality)
 {
     mWidth = width / Tile::SIZE;
     mHeight = height / Tile::SIZE;
@@ -415,28 +430,10 @@ void TileGrid::load(uint8_t *rgba, size_t stride, unsigned width, unsigned heigh
     for (unsigned y = 0; y < mHeight; y++)
 	for (unsigned x = 0; x < mWidth; x++) {
 	    TileRef t = TileRef(new Tile(rgba + (x * Tile::SIZE * 4) +
-					 (y * Tile::SIZE * stride), stride));
+					 (y * Tile::SIZE * stride),
+					 stride, quality));
 	    tiles[x + y * mWidth] = mPool->add(t);
 	}
-}
-
-bool TileGrid::load(const char *pngFilename)
-{
-    std::vector<uint8_t> image;
-    std::vector<uint8_t> png;
-    LodePNG::Decoder decoder;
- 
-    LodePNG::loadFile(png, pngFilename);
-    if (png.empty())
-	return false;
-
-    decoder.decode(image, png);
-    if (image.empty())
-	return false;
-
-    load(&image[0], decoder.getWidth() * 4, decoder.getWidth(), decoder.getHeight());
-
-    return true;
 }
 
 void TileGrid::render(uint8_t *rgba, size_t stride)
@@ -472,9 +469,7 @@ void TilePool::optimize(Logger &log)
      * Global optimizations to apply after filling a tile pool.
      */
 
-    if (maxMSE > 0)
-	optimizePalette(log);
-
+    optimizePalette(log);
     optimizeTiles(log);
     optimizeOrder(log);
 }
@@ -494,14 +489,14 @@ void TilePool::optimizePalette(Logger &log)
     // First, add ALL tile data to the reducer's pool    
     for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
 	for (unsigned j = 0; j < Tile::PIXELS; j++)
-	    reducer.add((*i)->pixel(j));
+	    reducer.add((*i)->pixel(j), (*i)->getMaxMSE());
 
     // Ask the reducer to do its own (slow!) global optimization
-    reducer.reduce(maxMSE, log);
+    reducer.reduce(log);
 
     // Now reduce each tile, using the agreed-upon color palette
     for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
-	*i = (*i)->reduce(reducer, maxMSE);
+	*i = (*i)->reduce(reducer);
 }
 
 void TilePool::optimizeTiles(Logger &log)
@@ -548,7 +543,7 @@ void TilePool::optimizeTilesPass(bool gather, Logger &log)
 	if (gather) {
 	    // Create or augment a TileStack
 
-	    if (!c || mse > maxMSE) {
+	    if (!c || mse > (*t)->getMaxMSE()) {
 		stackList.push_back(TileStack());
 		c = &stackList.back();
 	    }

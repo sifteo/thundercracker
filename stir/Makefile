@@ -10,14 +10,15 @@ OBJS_lua = \
 	src/lua/loadlib.o src/lua/linit.o
 
 OBJS_stir = \
-	$(OBJS_lua) \
 	src/color.o \
-	src/command.o \
-	src/script.o \
-	src/lodepng.o \
 	src/tile.o \
 	src/tilecodec.o \
+	src/imagestack.o \
+	src/script.o \
+	src/command.o \
 	src/logger.o \
+	src/lodepng.o \
+	$(OBJS_lua) \
 
 OBJS_lsdec = \
 	src/lsdec.o \
@@ -25,7 +26,7 @@ OBJS_lsdec = \
 
 CDEPS = src/*.h
 
-CFLAGS += -O3 -g -ffast-math -Werror -Wall
+CFLAGS += -O3 -g -ffast-math -Werror -Wall -DLUA_USE_MKSTEMP
 LDFLAGS += -g -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 

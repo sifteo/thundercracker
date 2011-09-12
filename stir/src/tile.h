@@ -91,7 +91,7 @@ struct TilePalette {
 
 class Tile {
  public:
-    Tile(uint8_t *rgba, size_t stride);
+    Tile(uint8_t *rgba, size_t stride, double quality);
 
     static const unsigned SIZE = 8;       // Number of pixels on a side
     static const unsigned PIXELS = 64;    // Total pixels in a tile
@@ -124,16 +124,22 @@ class Tile {
 	return mPalette;
     }	
 
+    double getMaxMSE() {
+	return mMaxMSE;
+    }
+
     double errorMetric(Tile &other, double limit=DBL_MAX);
 
     double fineMSE(Tile &other); 
     double coarseMSE(Tile &other);
     double sobelError(Tile &other);
 
-    TileRef reduce(ColorReducer &reducer, double maxMSE) const;
+    TileRef reduce(ColorReducer &reducer) const;
 
  private:
-    Tile(bool usingChromaKey=false);
+    Tile(bool usingChromaKey=false, double maxMSE=0.0);
+
+    static double qualityToMSE(double quality);
     void constructPalette();
     void constructSobel();
     void constructDec4();
@@ -143,6 +149,7 @@ class Tile {
     bool mUsingChromaKey;
     bool mHasSobel;
     bool mHasDec4;
+    double mMaxMSE;
     TilePalette mPalette;
 
     RGB565 mPixels[PIXELS];
@@ -189,9 +196,6 @@ class TileStack {
 
 class TilePool {
  public:
-    TilePool(double _maxMSE)
-        : maxMSE(_maxMSE) {}
-
     typedef uint32_t Serial;
     typedef uint16_t Index;
 
@@ -227,8 +231,6 @@ class TilePool {
     std::vector<TileRef> tiles;           // Current best image for each tile, by Serial
     std::vector<TileStack*> stackIndex;   // Current optimized stack for each tile, by Serial
  
-    double maxMSE;
-
     void optimizePalette(Logger &log);
     void optimizeTiles(Logger &log);
     void optimizeTilesPass(bool gather, Logger &log);
@@ -248,9 +250,7 @@ class TileGrid {
  public:
     TileGrid(TilePool *pool);
 
-    void load(uint8_t *rgba, size_t stride, unsigned width, unsigned height);
-    bool load(const char *pngFilename);
-    
+    void load(uint8_t *rgba, size_t stride, unsigned width, unsigned height, double quality);
     void render(uint8_t *rgba, size_t stride);
 
     unsigned width() {
