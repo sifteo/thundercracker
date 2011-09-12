@@ -88,6 +88,9 @@ static uint8_t counter;
 static uint8_t byte;
 static void (*state)(void);
 
+// Shared temporaries, within a state
+static __bit nibIndex;
+
 /*
  * Decoder implementation.
  */
@@ -348,9 +351,9 @@ static void state_LUT16_COLOR2(void) __naked
 
 static void state_TILE_P1_R4(void) __naked
 {
-    __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
     uint8_t runLength;
+    nibIndex = 1;
 
     for (;;) {
 	if (ovl.rle1 == ovl.rle2) {
@@ -396,10 +399,10 @@ static void state_TILE_P1_R4(void) __naked
 		
 static void state_TILE_P2_R4(void) __naked
 {
-    __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
     uint8_t runLength;
-
+    nibIndex = 1;
+    
     for (;;) {
 	if (ovl.rle1 == ovl.rle2) {
 	    runLength = nybble;
@@ -444,9 +447,9 @@ static void state_TILE_P2_R4(void) __naked
 
 static void state_TILE_P4_R4(void) __naked
 {
-    __bit nibIndex = 1;
     uint8_t nybble = byte & 0x0F;
-    uint8_t runLength;
+    register uint8_t runLength;
+    nibIndex = 1;
 
     for (;;) {
        if (ovl.rle1 == ovl.rle2) {
@@ -464,9 +467,12 @@ static void state_TILE_P4_R4(void) __naked
            ovl.rle1 = nybble;
        }
 
-       do {
-	   flash_program_word(lut.colors[nybble].word);
-       } while (--runLength);
+       {
+	   register uint16_t color = lut.colors[nybble].word;
+	   do {
+	       flash_program_word(color);
+	   } while (--runLength);
+       }
     
     no_runs:
        if (!counter || (counter & 0x80))
