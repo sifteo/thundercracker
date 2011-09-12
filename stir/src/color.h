@@ -16,6 +16,7 @@
 
 #include "logger.h"
 
+namespace Stir {
 
 /*
  * RGB565 --
@@ -241,6 +242,7 @@ class ColorReducer {
 	return colors[(b.begin + b.end) >> 1];
     }
 };
-    
+
+};  // namespace Stir
 
 #endif

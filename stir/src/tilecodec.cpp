@@ -11,6 +11,7 @@
 
 #include "tilecodec.h"
 
+namespace Stir {
 
 TileCodecLUT::TileCodecLUT()
 {
@@ -406,3 +407,5 @@ void TileCodec::erase(unsigned numBlocks)
     }
     flush();
 }
+
+};  // namespace Stir

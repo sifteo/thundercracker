@@ -9,6 +9,8 @@
 #ifndef _LOGGER_H
 #define _LOGGER_H
 
+namespace Stir {
+
 class Logger {
  public:
     virtual ~Logger();
@@ -34,6 +36,8 @@ class ConsoleLogger : public Logger {
     virtual void infoLine(const char *fmt, ...);
     virtual void infoEnd();
 };
+
+};  // namespace Stir
 
 #endif
 

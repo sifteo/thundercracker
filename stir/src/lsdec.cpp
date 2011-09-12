@@ -392,7 +392,7 @@ int main(int argc, char **argv)
 		uint8_t low = tileMap[mapIndex];
 		uint8_t high = tileMap[mapIndex + 1];
 		unsigned address = (high << 13) + (low << 6) + (tileY << 4) + (tileX << 1);
-		RGB565 color((uint16_t)( flash[address] | (flash[address+1] << 8) ));
+		Stir::RGB565 color((uint16_t)( flash[address] | (flash[address+1] << 8) ));
 
 		rgba.push_back(color.red());
 		rgba.push_back(color.green());

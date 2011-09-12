@@ -11,6 +11,8 @@
 
 #include "logger.h"
 
+namespace Stir {
+
 Logger::~Logger() {}
 ConsoleLogger::~ConsoleLogger() {}
 
@@ -52,3 +54,5 @@ void ConsoleLogger::infoLine(const char *fmt, ...)
 
 void ConsoleLogger::infoEnd()
 {}
+
+};  // namespace Stir

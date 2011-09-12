@@ -12,6 +12,7 @@
 #include "tile.h"
 #include "logger.h"
 
+namespace Stir {
 
 /*
  * TileCodecLUT --
@@ -202,5 +203,6 @@ class TileCodec {
     void encodeTileMasked16(const TileRef tile);
 };
 
+};  // namespace Stir
 
 #endif

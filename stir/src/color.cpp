@@ -14,8 +14,9 @@
 #include <algorithm>
 #include "color.h"
 
-CIELab CIELab::lut565[0x10000];
+namespace Stir {
 
+CIELab CIELab::lut565[0x10000];
 
 RGB565 RGB565::wiggle() const
 {
@@ -339,3 +340,4 @@ void ColorReducer::splitBox(box &b, int at)
     boxes.push_back(newBox);
 }
 
+};  // namespace Stir

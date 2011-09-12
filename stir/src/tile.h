@@ -16,6 +16,8 @@
 
 #include "logger.h"
 
+namespace Stir {
+
 class Tile;
 class TileStack;
 typedef std::tr1::shared_ptr<Tile> TileRef;
@@ -270,5 +272,7 @@ class TileGrid {
     unsigned mWidth, mHeight;
     std::vector<TilePool::Serial> tiles;
 };
+
+};  // namespace Stir
 
 #endif
