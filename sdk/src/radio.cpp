@@ -15,15 +15,13 @@
  * XXX: Hack for testing loadstream performance
  */
 
-extern uint8_t _binary_examples_loadstream_bin_end[];
-extern uint8_t _binary_examples_loadstream_bin_size[];
-extern uint8_t _binary_examples_loadstream_bin_start[];
-
 namespace Sifteo {
 
-static uint8_t *ls_ptr = _binary_examples_loadstream_bin_start;
+#include "ls.h"
+
+const static uint8_t *ls_ptr = loadstream;
 static uint32_t buf_space = 127;
-static uint32_t ls_remaining = (uint32_t) (uintptr_t) _binary_examples_loadstream_bin_size;
+static uint32_t ls_remaining = sizeof loadstream;
 static uint8_t prev_ack;
 
 
