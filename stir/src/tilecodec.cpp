@@ -11,10 +11,11 @@
 
 #include "tilecodec.h"
 
+namespace Stir {
 
 TileCodecLUT::TileCodecLUT()
 {
-    for (int i = 0; i < LUT_MAX; i++)
+    for (unsigned i = 0; i < LUT_MAX; i++)
 	mru[i] = i;
 }
 
@@ -110,7 +111,7 @@ unsigned TileCodecLUT::encode(const TilePalette &pal, uint16_t &newColors)
 }
 
 RLECodec4::RLECodec4()
-    : runNybble(0), bufferedNybble(0), runCount(0), isNybbleBuffered(false)
+    : runNybble(0), bufferedNybble(0), isNybbleBuffered(false), runCount(0)
     {}
     
 void RLECodec4::encode(uint8_t nybble, std::vector<uint8_t>& out)
@@ -161,9 +162,9 @@ void RLECodec4::encodeRun(std::vector<uint8_t>& out, bool terminal)
 }
 
 TileCodec::TileCodec(std::vector<uint8_t>& buffer)
-    : opIsBuffered(false), statBucket(TilePalette::CM_INVALID),
-      p16run(0xFFFFFFFF), out(buffer), tileCount(0),
-      currentAddress(0)
+    : out(buffer), opIsBuffered(false), 
+      tileCount(0), p16run(0xFFFFFFFF),
+      currentAddress(0), statBucket(TilePalette::CM_INVALID)
 {
     memset(&stats, 0, sizeof stats);
 }
@@ -406,3 +407,5 @@ void TileCodec::erase(unsigned numBlocks)
     }
     flush();
 }
+
+};  // namespace Stir

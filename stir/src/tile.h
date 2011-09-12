@@ -12,9 +12,11 @@
 #include <stdint.h>
 #include <float.h>
 #include <tr1/memory>
-#include <color.h>
 
+#include "color.h"
 #include "logger.h"
+
+namespace Stir {
 
 class Tile;
 class TileStack;
@@ -270,5 +272,7 @@ class TileGrid {
     unsigned mWidth, mHeight;
     std::vector<TilePool::Serial> tiles;
 };
+
+};  // namespace Stir
 
 #endif

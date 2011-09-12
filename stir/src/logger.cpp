@@ -11,6 +11,8 @@
 
 #include "logger.h"
 
+namespace Stir {
+
 Logger::~Logger() {}
 ConsoleLogger::~ConsoleLogger() {}
 
@@ -52,3 +54,16 @@ void ConsoleLogger::infoLine(const char *fmt, ...)
 
 void ConsoleLogger::infoEnd()
 {}
+
+void ConsoleLogger::error(const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    fprintf(stderr, "-!- ");
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
+}
+
+};  // namespace Stir

@@ -16,6 +16,8 @@
 #include "tilecodec.h"
 #include "lodepng.h"
 
+namespace Stir {
+
 
 Tile::Tile(bool usingChromaKey)
     : mUsingChromaKey(usingChromaKey), mHasSobel(false), mHasDec4(false)
@@ -680,3 +682,5 @@ void TilePool::encode(std::vector<uint8_t>& out, Logger *log)
 	codec.dumpStatistics(*log);
     }
 }
+
+};  // namespace Stir

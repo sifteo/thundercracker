@@ -18,7 +18,7 @@
 #include "tile.h"
 
 int main(int argc, char **argv) {
-    ConsoleLogger log;
+    Stir::ConsoleLogger log;
 
     if (argc != 4) {
 	fprintf(stderr, "usage: %s in.png out.png mse\n", argv[0]);
@@ -28,18 +28,18 @@ int main(int argc, char **argv) {
     struct timeval startTime;
     gettimeofday(&startTime, NULL);
 
-    CIELab::initialize();
+    Stir::CIELab::initialize();
 
     double maxMSE = atof(argv[3]);
-    TilePool pool = TilePool(maxMSE);
-    TileGrid tg = TileGrid(&pool);
+    Stir::TilePool pool = Stir::TilePool(maxMSE);
+    Stir::TileGrid tg = Stir::TileGrid(&pool);
 
     tg.load(argv[1]);
     pool.optimize(log);
 
     std::vector<uint8_t> image;
-    unsigned width = Tile::SIZE * tg.width() * 2;
-    unsigned height = Tile::SIZE * tg.height();
+    unsigned width = Stir::Tile::SIZE * tg.width() * 2;
+    unsigned height = Stir::Tile::SIZE * tg.height();
     size_t pitch = width * 4;
     image.resize(pitch * height);
 

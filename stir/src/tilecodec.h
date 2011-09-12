@@ -12,6 +12,7 @@
 #include "tile.h"
 #include "logger.h"
 
+namespace Stir {
 
 /*
  * TileCodecLUT --
@@ -35,7 +36,7 @@ struct TileCodecLUT {
     unsigned encode(const TilePalette &pal, uint16_t &newColors);
     unsigned encode(const TilePalette &pal);
 
-    int findColor(RGB565 c, int maxIndex = LUT_MAX - 1) const {
+    int findColor(RGB565 c, unsigned maxIndex = LUT_MAX - 1) const {
 	// Is a particular color in the LUT? Return the index.
 	for (unsigned i = 0; i <= maxIndex; i++)
 	    if (colors[i] == c)
@@ -79,7 +80,7 @@ class RLECodec4 {
     
     uint8_t runNybble, bufferedNybble;
     bool isNybbleBuffered;
-    int runCount;
+    unsigned runCount;
 
     void encodeNybble(uint8_t value, std::vector<uint8_t>& out);
     void encodeRun(std::vector<uint8_t>& out, bool terminal=false);
@@ -192,8 +193,8 @@ class TileCodec {
 	unsigned tiles;
 	unsigned dataBytes;
     } stats[TilePalette::CM_COUNT];
-    unsigned statBucket;
-
+    int statBucket;
+    
     void newStatsTile(unsigned bucket);
     void encodeOp(uint8_t op);
     void encodeLUT(uint16_t newColors);
@@ -202,5 +203,6 @@ class TileCodec {
     void encodeTileMasked16(const TileRef tile);
 };
 
+};  // namespace Stir
 
 #endif
