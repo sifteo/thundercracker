@@ -12,8 +12,8 @@
 #include <stdint.h>
 #include <float.h>
 #include <tr1/memory>
-#include <color.h>
 
+#include "color.h"
 #include "logger.h"
 
 namespace Stir {

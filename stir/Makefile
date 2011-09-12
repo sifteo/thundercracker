@@ -13,6 +13,7 @@ OBJS_stir = \
 	$(OBJS_lua) \
 	src/color.o \
 	src/command.o \
+	src/script.o \
 	src/lodepng.o \
 	src/tile.o \
 	src/tilecodec.o \
@@ -24,7 +25,7 @@ OBJS_lsdec = \
 
 CDEPS = src/*.h
 
-CFLAGS += -O3 -g -ffast-math -Werror -Isrc
+CFLAGS += -O3 -g -ffast-math -Werror -Wall
 LDFLAGS += -g -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 

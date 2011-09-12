@@ -182,7 +182,7 @@ void ColorReducer::reduce(double maxMSE, Logger &log)
 	    break;
 
 	// Heuristic
-	int numSplits = 1 + boxQueue.size() / 20;
+	unsigned numSplits = 1 + boxQueue.size() / 20;
 
 	for (unsigned i = 0; i < numSplits && !boxQueue.empty(); i++) {
 	    unsigned boxIndex = *boxQueue.begin();
@@ -309,7 +309,7 @@ bool ColorReducer::splitBox(box &b)
     // Start with the middle index, rounded down.
     unsigned middle = (b.end + b.begin) >> 1;
 
-    for (int step = 0; step < maxSteps; step++) {
+    for (unsigned step = 0; step < maxSteps; step++) {
 	unsigned split = middle + step;
 	if (split >= b.begin && split+1 < b.end && colors[split] != colors[split+1]) {
 	    splitBox(b, split);
