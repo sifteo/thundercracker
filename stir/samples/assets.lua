@@ -20,5 +20,18 @@ MainAssets = group{}
 -- asset. A simple image asset can be defined just by loading a PNG
 -- file, and giving it a name:
 
-Owlbear = image{"samples/sunset512.png"}
+Sunset = image{"samples/sunset512.png"}
+
+-- Every image asset can have one or more frames. These can actually
+-- be animation frames, or perhaps just multiple identically-sized
+-- images that are used in tandem, such as the glyphs in a font.
+--
+-- A multi-frame asset can be defined using multiple filenames, by
+-- passing in a list of PNG files. Or if you use larger PNG files
+-- and specify a smaller width and/or height, the large image
+-- will be automatically segmented into frames. Frames are ordered
+-- left to right, top to bottom.
+
+Owlbear = image{"samples/owlbear.png", width=128, height=128}
+
 
