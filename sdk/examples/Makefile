@@ -1,4 +1,4 @@
-SUBDIRS = src examples
+SUBDIRS = hello
 
 .PHONY: clean subdirs $(SUBDIRS)
 

@@ -1,0 +1,26 @@
+SDK_DIR = ../..
+STIR = ../../../stir/stir
+ASSETS = assets
+
+BIN = hello
+OBJS = $(ASSETS).gen.o main.o
+
+CDEPS = $(SDK_DIR)/include/sifteo/*.h
+ASSETDEPS = $(ASSETS).lua *.png
+
+CCFLAGS += -Os -g -Werror -I$(SDK_DIR)/include
+LDFLAGS += -g $(SDK_DIR)/src/tcsdk.a
+
+$(BIN): $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+%.o: %.cpp $(CDEPS) $(ASSETDEPS)
+	$(CC) -c -o $@ $< $(CCFLAGS)
+
+$(ASSETS).gen.cpp: $(ASSETDEPS)
+	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html
+
+.PHONY: clean
+
+clean:
+	rm -f $(BIN) *.o $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html

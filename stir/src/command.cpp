@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 
     Stir::CIELab::initialize();
 
-    if (script.run(scriptFile))
+    if (!script.run(scriptFile))
 	return 1;
 
     return 0;
