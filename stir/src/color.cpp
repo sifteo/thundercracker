@@ -188,8 +188,6 @@ void ColorReducer::reduce(Logger &log)
 	errorStack.push_back(i);
 
     while (!boxQueue.empty()) {
-	log.taskProgress("%d colors in palette", (int)boxes.size());
-
 	/*
 	 * Try to reduce the size of the error stack. Any colors that
 	 * are now within range can be popped off of it permanently.
@@ -206,6 +204,9 @@ void ColorReducer::reduce(Logger &log)
 	    else
 		break;
 	}
+
+	if (boxes.size() % 64 == 0 || !errorStack.size())
+	    log.taskProgress("%d colors in palette", (int)boxes.size());
 
 	if (!errorStack.size())
 	    break;

@@ -18,7 +18,7 @@ Logger::~Logger() {}
 ConsoleLogger::~ConsoleLogger() {}
 
 ConsoleLogger::ConsoleLogger()
-    : mVerbose(false)
+    : mVerbose(false), mNeedNewline(false)
     {}
 
 void ConsoleLogger::setVerbose(bool verbose)
@@ -48,6 +48,7 @@ void ConsoleLogger::taskProgress(const char *fmt, ...)
 	fprintf(stderr, "\r\t");
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "    ");
+	mNeedNewline = true;
     }
 
     va_end(ap);
@@ -55,8 +56,10 @@ void ConsoleLogger::taskProgress(const char *fmt, ...)
 
 void ConsoleLogger::taskEnd()
 {
-    if (mVerbose)
+    if (mNeedNewline) {
 	fprintf(stderr, "\n");
+	mNeedNewline = false;
+    }
 }
 
 void ConsoleLogger::infoBegin(const char *name)
@@ -85,6 +88,11 @@ void ConsoleLogger::infoEnd()
 void ConsoleLogger::error(const char *fmt, ...)
 {
     va_list ap;
+
+    if (mNeedNewline) {
+	fprintf(stderr, "\n");
+	mNeedNewline = false;
+    }
 
     va_start(ap, fmt);
     fprintf(stderr, "-!- ");

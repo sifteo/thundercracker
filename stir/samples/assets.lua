@@ -33,5 +33,3 @@ Sunset = image{"samples/sunset512.png"}
 -- left to right, top to bottom.
 
 Owlbear = image{"samples/owlbear.png", width=128, height=128}
-
-

@@ -49,6 +49,7 @@ class ConsoleLogger : public Logger {
 
  private:
     bool mVerbose;
+    bool mNeedNewline;
 };
 
 };  // namespace Stir

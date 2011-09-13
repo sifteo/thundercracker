@@ -137,6 +137,8 @@ void ProofWriter::writeGroup(const Group &group)
 {
     if (!mStream.is_open())
 	return;
+
+    mLog.taskBegin("Generating proof");
     
     mStream << "<h1>" << HTMLEscape(group.getName()) << "</h1>\n";
 
@@ -154,6 +156,8 @@ void ProofWriter::writeGroup(const Group &group)
 	    tileGrid(*j);
 	}
     }
+
+    mLog.taskEnd();
 }
 
 void ProofWriter::close()
