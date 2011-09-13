@@ -78,14 +78,12 @@ double Tile::qualityToMSE(double quality)
     /*
      * Convert from the user-visible "quality" to a maximum MSE limit.
      * User-visible quality numbers are in the range [0, 10]. Larger
-     * is better.
-     *
-     * With this scaling, MSE increases nonlinearly from 0 at quality
-     * 10, to 5 and quality 1, and eventually 500 at quality 0.
+     * is better. I've tried to scale this so that it's intuitively
+     * similar to the quality metrics used by e.g. JPEG.
      */
 
     double err = 10.0 - std::min(10.0, std::max(0.0, quality));
-    return err * err * 5;
+    return err * 500;
 }
 
 void Tile::constructPalette(void)
@@ -217,7 +215,8 @@ double Tile::errorMetric(Tile &other, double limit)
 	return DBL_MAX;
 
     error += 5.00 * sobelError(other);
-    return error;
+
+    return error * 60.0;
 }
 
 double Tile::fineMSE(Tile &other)
@@ -290,7 +289,7 @@ TileRef Tile::reduce(ColorReducer &reducer) const
     RGB565 run;
 
     // Hysteresis amount
-    double limit = mMaxMSE * 0.9;
+    double limit = mMaxMSE * 0.05;
     
     for (unsigned i = 0; i < PIXELS; i++) {
 	RGB565 color = reducer.nearest(mPixels[i]);
