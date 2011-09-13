@@ -118,6 +118,14 @@ public:
 	return mImages;
     }
 
+    std::vector<uint8_t> &getLoadstream() {
+	return mLoadstream;
+    }
+
+    const std::vector<uint8_t> &getLoadstream() const {
+	return mLoadstream;
+    }
+
     void setDefault(lua_State *L);
     static Group *getDefault(lua_State *L);
 
@@ -126,7 +134,7 @@ private:
     TilePool pool;
     std::string mName;
     std::set<Image*> mImages;
-
+    std::vector<uint8_t> mLoadstream;
 };
 
 

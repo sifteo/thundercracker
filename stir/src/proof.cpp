@@ -99,8 +99,12 @@ ProofWriter::ProofWriter(Logger &log, const char *filename)
 	    log.error("Error opening proof file '%s'", filename);
     }
     
-    if (mStream.is_open())
+    if (mStream.is_open()) {
+	mStream.setf(std::ios::fixed, std::ios::floatfield);  
+	mStream.precision(2);
+	
 	head();
+    }
 }
 
 void ProofWriter::head()
@@ -136,7 +140,7 @@ void ProofWriter::head()
 	"      background: #222; \n"
         "      font-family: verdana, tahoma, helvetica, arial, sans-serif; \n"
 	"      font-size: 12px; \n"
-	"      margin: 10px 10px 50px 10px; \n"
+	"      margin: 10px 5px 50px 5px; \n"
 	"    } \n"
 	"\n"
 	"    div.grid { \n"
@@ -148,11 +152,12 @@ void ProofWriter::head()
 	"    } \n"
 	"\n"
 	"    h1 { \n"
-	"      color: #fff; \n"
+	"      background: #fff; \n"
+	"      color: #222; \n"
 	"      font-size: 22px; \n"
 	"      font-weight: normal; \n"
 	"      clear: both; \n"
-	"      padding: 10px 0; \n"
+	"      padding: 10px; \n"
 	"      margin: 0; \n"
 	"    } \n"
 	"\n"
@@ -161,8 +166,12 @@ void ProofWriter::head()
 	"      font-size: 16px; \n"
 	"      font-weight: normal; \n"
 	"      clear: both; \n"
-	"      padding: 10px 0; \n"
+	"      padding: 10px; \n"
 	"      margin: 0; \n"
+	"    } \n"
+	"\n"
+	"    p { \n"
+	"      padding: 0 10px; \n"
 	"    } \n"
 	"\n"
 	"  </style>\n"
@@ -177,7 +186,12 @@ void ProofWriter::writeGroup(const Group &group)
 
     mLog.taskBegin("Generating proof");
     
-    mStream << "<h1>" << HTMLEscape(group.getName()) << "</h1>\n";
+    mStream <<
+	"<h1>" << HTMLEscape(group.getName()) << "</h1>\n"
+	"<p>\n"
+	       << group.getPool().size() << " tiles, "
+	       << group.getLoadstream().size() / 1024.0 << " kB stream\n"
+	"</p>\n";
 
     defineTiles(group.getPool());
 

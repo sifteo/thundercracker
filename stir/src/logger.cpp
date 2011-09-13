@@ -65,7 +65,7 @@ void ConsoleLogger::taskEnd()
 void ConsoleLogger::infoBegin(const char *name)
 {
     if (mVerbose)
-	fprintf(stderr, "\n%s:\n", name);
+	fprintf(stderr, "%s:\n", name);
 }
 
 void ConsoleLogger::infoLine(const char *fmt, ...)
@@ -75,6 +75,7 @@ void ConsoleLogger::infoLine(const char *fmt, ...)
     va_start(ap, fmt);
 
     if (mVerbose) {
+	fprintf(stderr, "  ");
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
     }

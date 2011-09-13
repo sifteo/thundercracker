@@ -113,33 +113,9 @@ int main(int argc, char **argv)
 
 
 /* Junk...
-
-    std::vector<uint8_t> image;
-    unsigned width = Stir::Tile::SIZE * tg.width() * 2;
-    unsigned height = Stir::Tile::SIZE * tg.height();
-    size_t pitch = width * 4;
-    image.resize(pitch * height);
-
     std::vector<uint8_t> loadstream;
     pool.encode(loadstream, &log);
     LodePNG::saveFile(loadstream, "loadstream.bin");
-
-    std::vector<uint8_t> map;
-    tg.encodeMap(map);
-    LodePNG::saveFile(map, "tilemap.bin");
-
-    tg.render(&image[pitch/2], pitch);
-    pool.render(&image[0], pitch, tg.width());
-
-    LodePNG::Encoder encoder;
-    std::vector<uint8_t> pngOut;
-    encoder.encode(pngOut, &image[0], width, height);
-    LodePNG::saveFile(pngOut, argv[2]);
-
-    std::vector<uint8_t> zLoadstream;
-    std::vector<uint8_t> zMap;
-    LodePNG::compress(zLoadstream, loadstream);
-    LodePNG::compress(zMap, map);
 
     log.infoBegin("Asset statistics");
     log.infoLine("%30s: %d", "Total tiles", pool.size());

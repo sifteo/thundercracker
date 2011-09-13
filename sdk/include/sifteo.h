@@ -9,5 +9,6 @@
 
 #include <sifteo/cube.h>
 #include <sifteo/system.h>
+#include <sifteo/asset.h>
 
 #endif

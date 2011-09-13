@@ -89,10 +89,12 @@ bool Script::run(const char *filename)
     
     for (std::set<Group*>::iterator i = groups.begin(); i != groups.end(); i++) {
 	Group *group = *i;
+	TilePool &pool = group->getPool();
 
 	log.heading(group->getName().c_str());
 
-	group->getPool().optimize(log);
+	pool.optimize(log);
+	pool.encode(group->getLoadstream(), &log);
 
 	proof.writeGroup(*group);
 	header.writeGroup(*group);
