@@ -33,3 +33,8 @@ Sunset = image{"samples/sunset512.png"}
 -- left to right, top to bottom.
 
 Owlbear = image{"samples/owlbear.png", width=128, height=128}
+
+-- A font is a good example of an image with a very small per-frame
+-- size, but many many frames. This is a basic 8x16 pixel font.
+
+Font = image{"samples/font-8x16.png", width=8, height=16}
