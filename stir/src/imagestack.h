@@ -39,7 +39,7 @@ class ImageStack {
     void setHeight(int height);
     void setFrames(int frames);
 
-    void storeFrame(unsigned frame, TileGrid &tg, double quality);
+    void storeFrame(unsigned frame, TileGrid &tg, const TileOptions &opt);
 
     unsigned getWidth() const {
 	return mWidth;

@@ -127,7 +127,7 @@ void ImageStack::finishLoading()
     return NULL;
 }
 
-void ImageStack::storeFrame(unsigned frame, TileGrid &tg, double quality)
+void ImageStack::storeFrame(unsigned frame, TileGrid &tg, const TileOptions &opt)
 {
     source *s = getSourceForFrame(frame);
     if (!s)
@@ -141,7 +141,7 @@ void ImageStack::storeFrame(unsigned frame, TileGrid &tg, double quality)
     unsigned y = gridY * mHeight;
     unsigned stride = s->decoder.getWidth() * 4;
 
-    tg.load(&s->rgba[x*4 + y*stride], stride, mWidth, mHeight, quality);   
+    tg.load(opt, &s->rgba[x*4 + y*stride], stride, mWidth, mHeight);
 }
 
 };  // namespace Stir

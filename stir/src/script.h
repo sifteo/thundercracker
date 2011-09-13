@@ -165,7 +165,7 @@ public:
  private:
     Group *mGroup;
     ImageStack mImages;
-    lua_Number mQuality;
+    TileOptions mTileOpt;
     std::vector<TileGrid> mGrids;
     std::string mName;
 

@@ -20,7 +20,7 @@ MainAssets = group{}
 -- asset. A simple image asset can be defined just by loading a PNG
 -- file, and giving it a name:
 
-Sunset = image{"samples/sunset512.png"}
+Sunset = image{"samples/sunset512.png", quality=5}
 
 -- Every image asset can have one or more frames. These can actually
 -- be animation frames, or perhaps just multiple identically-sized
@@ -36,5 +36,12 @@ Owlbear = image{"samples/owlbear.png", width=128, height=128}
 
 -- A font is a good example of an image with a very small per-frame
 -- size, but many many frames. This is a basic 8x16 pixel font.
+--
+-- "Pinning" an asset means to preserve the uniqueness and order
+-- of every single tile in the image. Normaly this would be a bad
+-- idea, since it negates much of the compression that STIR can
+-- perform. But on an image that isn't very compressible anyway,
+-- it can be a win because we don't need to include a separate map.
+-- The map is implied by the order in which the tiles occur in memory.
 
-Font = image{"samples/font-8x16.png", width=8, height=16}
+Font = image{"samples/font-8x16.png", width=8, height=16, pinned=true}

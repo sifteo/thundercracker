@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <float.h>
 #include <tr1/memory>
+#include <set>
 
 #include "color.h"
 #include "logger.h"
@@ -83,6 +84,25 @@ struct TilePalette {
 
 
 /*
+ * TileOptions --
+ *
+ *    Per-tile options that affect the behavior of the optimizer.
+ */
+
+struct TileOptions {
+    TileOptions(double _quality=0, bool _pinned=false)
+        : quality(_quality), pinned(_pinned), chromaKey(false)
+        {}
+
+    double getMaxMSE() const;
+    
+    double quality;
+    bool pinned;
+    bool chromaKey;
+};
+
+
+/*
  * Tile --
  *
  *    One fixed-size image tile, in palettized RGB565 color. 
@@ -91,17 +111,13 @@ struct TilePalette {
 
 class Tile {
  public:
-    Tile(uint8_t *rgba, size_t stride, double quality);
+    Tile(const TileOptions &opt, uint8_t *rgba, size_t stride);
 
     static const unsigned SIZE = 8;       // Number of pixels on a side
     static const unsigned PIXELS = 64;    // Total pixels in a tile
 
     // Firmware chroma-key color
     static const uint16_t CHROMA_KEY = 0x4FF5;
-
-    bool usingChromaKey() const {
-	return mUsingChromaKey;
-    }
 
     RGB565 pixel(unsigned i) const {
 	return mPixels[i];
@@ -122,8 +138,8 @@ class Tile {
 	return mPalette;
     }	
 
-    double getMaxMSE() {
-	return mMaxMSE;
+    const TileOptions &options() const {
+	return mOptions;
     }
 
     double errorMetric(Tile &other, double limit=DBL_MAX);
@@ -135,19 +151,18 @@ class Tile {
     TileRef reduce(ColorReducer &reducer) const;
 
  private:
-    Tile(bool usingChromaKey=false, double maxMSE=0.0);
+    Tile();
+    Tile(const TileOptions &opt);
 
-    static double qualityToMSE(double quality);
     void constructPalette();
     void constructSobel();
     void constructDec4();
 
     friend class TileStack;
 
-    bool mUsingChromaKey;
     bool mHasSobel;
     bool mHasDec4;
-    double mMaxMSE;
+    TileOptions mOptions;
     TilePalette mPalette;
 
     RGB565 mPixels[PIXELS];
@@ -172,17 +187,25 @@ class Tile {
 
 class TileStack {
  public:
+    TileStack();
+
     void add(TileRef t);
     TileRef median();
 
+    bool isPinned() const {
+	return mPinned;
+    }
+
  private:
     static const unsigned MAX_SIZE = 128;
+    static const unsigned NO_INDEX = (unsigned)-1;
 
     friend class TilePool;
 
     std::vector<TileRef> tiles;
     TileRef cache;
     unsigned index;
+    bool mPinned;
 };
 
 
@@ -228,9 +251,10 @@ class TilePool {
     std::vector<TileStack*> stackIndex;   // Current optimized stack for each tile, by Serial
  
     void optimizePalette(Logger &log);
-    void optimizeTiles(Logger &log);
-    void optimizeTilesPass(bool gather, Logger &log);
     void optimizeOrder(Logger &log);
+    void optimizeTiles(Logger &log);
+    void optimizeTilesPass(Logger &log, std::set<TileStack *> &activeStacks,
+			   bool gather, bool pinned);
 
     TileStack *closest(TileRef t, double &mse);
 };
@@ -246,7 +270,8 @@ class TileGrid {
  public:
     TileGrid(TilePool *pool);
 
-    void load(uint8_t *rgba, size_t stride, unsigned width, unsigned height, double quality);
+    void load(const TileOptions &opt, uint8_t *rgba,
+	      size_t stride, unsigned width, unsigned height);
 
     unsigned width() const {
 	return mWidth;

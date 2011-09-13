@@ -18,14 +18,17 @@
 namespace Stir {
 
 
-Tile::Tile(bool usingChromaKey, double maxMSE)
-    : mUsingChromaKey(usingChromaKey), mHasSobel(false), mHasDec4(false), mMaxMSE(maxMSE)
+Tile::Tile()
+    : mHasSobel(false), mHasDec4(false)
     {}
 
-Tile::Tile(uint8_t *rgba, size_t stride, double quality)
-    : mUsingChromaKey(false), mHasSobel(false), mHasDec4(false)
+Tile::Tile(const TileOptions &opt)
+    : mHasSobel(false), mHasDec4(false), mOptions(opt)
+    {}
+
+Tile::Tile(const TileOptions &opt, uint8_t *rgba, size_t stride)
+    : mHasSobel(false), mHasDec4(false), mOptions(opt)
 {
-    mMaxMSE = qualityToMSE(quality);
     /*
      * Load the tile image from a full-color RGBA source bitmap.
      */
@@ -35,12 +38,10 @@ Tile::Tile(uint8_t *rgba, size_t stride, double quality)
     unsigned x, y;
 
     // First pass.. are there any transparent pixels?
-    mUsingChromaKey = false;
     for (row = rgba, y = SIZE; y; --y, row += stride)
 	for (pixel = row, x = SIZE; x; --x, pixel += 4)
 	    if (pixel[3] < alphaThreshold)
-		mUsingChromaKey = true;
-    
+		mOptions.chromaKey = true;
 
     // Second pass.. convert to RGB565, possibly with colorkey.
     RGB565 *dest = mPixels;
@@ -48,7 +49,7 @@ Tile::Tile(uint8_t *rgba, size_t stride, double quality)
 	for (pixel = row, x = SIZE; x; --x, pixel += 4) {
 	    RGB565 color = RGB565(pixel);
 
-	    if (!mUsingChromaKey) {
+	    if (!mOptions.chromaKey) {
 		// No transparency in the image, we're allowed to use any color.
 		*dest = color;
 	    }
@@ -73,7 +74,7 @@ Tile::Tile(uint8_t *rgba, size_t stride, double quality)
 	}	    
 }
 
-double Tile::qualityToMSE(double quality)
+double TileOptions::getMaxMSE() const
 {
     /*
      * Convert from the user-visible "quality" to a maximum MSE limit.
@@ -285,11 +286,11 @@ TileRef Tile::reduce(ColorReducer &reducer) const
      * the color selections, emphasizing color runs when possible.
      */
 
-    TileRef result = TileRef(new Tile(mUsingChromaKey, mMaxMSE));
+    TileRef result = TileRef(new Tile(mOptions));
     RGB565 run;
 
     // Hysteresis amount
-    double limit = mMaxMSE * 0.05;
+    double limit = mOptions.getMaxMSE() * 0.05;
     
     for (unsigned i = 0; i < PIXELS; i++) {
 	RGB565 color = reducer.nearest(mPixels[i]);
@@ -318,10 +319,18 @@ const char *TilePalette::colorModeName(ColorMode m)
     }
 }
 
+TileStack::TileStack()
+    : index(NO_INDEX), mPinned(false)
+    {}
+
 void TileStack::add(TileRef t)
 {
     tiles.push_back(t);
     cache = TileRef();
+
+    // A stack with any pinned tiles in it is itself pinned.
+    if (t->options().pinned)
+	mPinned = true;
 }
 
 TileRef TileStack::median()
@@ -403,7 +412,8 @@ TileGrid::TileGrid(TilePool *pool)
     : mPool(pool), mWidth(0), mHeight(0)
     {}
 
-void TileGrid::load(uint8_t *rgba, size_t stride, unsigned width, unsigned height, double quality)
+void TileGrid::load(const TileOptions &opt, uint8_t *rgba,
+		    size_t stride, unsigned width, unsigned height)
 {
     mWidth = width / Tile::SIZE;
     mHeight = height / Tile::SIZE;
@@ -411,9 +421,10 @@ void TileGrid::load(uint8_t *rgba, size_t stride, unsigned width, unsigned heigh
 
     for (unsigned y = 0; y < mHeight; y++)
 	for (unsigned x = 0; x < mWidth; x++) {
-	    TileRef t = TileRef(new Tile(rgba + (x * Tile::SIZE * 4) +
+	    TileRef t = TileRef(new Tile(opt,
+					 rgba + (x * Tile::SIZE * 4) +
 					 (y * Tile::SIZE * stride),
-					 stride, quality));
+					 stride));
 	    tiles[x + y * mWidth] = mPool->add(t);
 	}
 }
@@ -444,7 +455,7 @@ void TilePool::optimizePalette(Logger &log)
     // First, add ALL tile data to the reducer's pool    
     for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
 	for (unsigned j = 0; j < Tile::PIXELS; j++)
-	    reducer.add((*i)->pixel(j), (*i)->getMaxMSE());
+	    reducer.add((*i)->pixel(j), (*i)->options().getMaxMSE());
 
     // Ask the reducer to do its own (slow!) global optimization
     reducer.reduce(log);
@@ -474,48 +485,58 @@ void TilePool::optimizeTiles(Logger &log)
      * in 'stackList' and 'stackIndex'.
      */
 
-    log.taskBegin("Gathering tiles");
+    std::set<TileStack *> activeStacks;
     stackList.clear();
-    optimizeTilesPass(true, log);
+    stackIndex.clear();
+    stackIndex.resize(tiles.size());
+
+    log.taskBegin("Gathering pinned tiles");
+    optimizeTilesPass(log, activeStacks, true, true);
+    log.taskEnd();
+
+    log.taskBegin("Gathering unpinned tiles");
+    optimizeTilesPass(log, activeStacks, true, false);
     log.taskEnd();
 
     log.taskBegin("Optimizing tiles");
-    stackIndex.clear();
-    optimizeTilesPass(false, log);
+    optimizeTilesPass(log, activeStacks, false, false);
     log.taskEnd();
 }
     
-void TilePool::optimizeTilesPass(bool gather, Logger &log)
+void TilePool::optimizeTilesPass(Logger &log, std::set<TileStack *> &activeStacks,
+				 bool gather, bool pinned)
 {
-    // A single pass from the two-pass optimizeTiles() algorithm
+    // A single pass from the multi-pass optimizeTiles() algorithm
 
-    std::set<TileStack *> activeStacks;
+    for (Serial serial = 0; serial < tiles.size(); serial++) {
+	TileRef tr = tiles[serial];
 
-    for (std::vector<TileRef>::iterator t = tiles.begin(); t != tiles.end();) {
-	double mse;
-	TileStack *c = closest(*t, mse);
+	if (tr->options().pinned == pinned) {
+	    double mse;
+	    TileStack *c = pinned ? NULL : closest(tr, mse);
 	
-	if (gather) {
-	    // Create or augment a TileStack
+	    if (gather) {
+		// Create or augment a TileStack
 
-	    if (!c || mse > (*t)->getMaxMSE()) {
-		stackList.push_back(TileStack());
-		c = &stackList.back();
+		if (!c || mse > tr->options().getMaxMSE()) {
+		    stackList.push_back(TileStack());
+		    c = &stackList.back();
+		}
+		c->add(tr);
 	    }
-	    c->add(*t);
 
-	} else {
-	    // Remember this stack, we've selected it for good.
-
-	    stackIndex.push_back(c);	
-	    activeStacks.insert(c);
+	    if (!gather || pinned) {
+		// Remember this stack, we've selected it for good.
+		
+		stackIndex[serial] = c;	
+		activeStacks.insert(c);
+	    }
 	}
 
-	t++;
-	if (t == tiles.end() || !(stackIndex.size() % 128)) {
+	if (serial == tiles.size() - 1 || !(serial % 128)) {
 	    unsigned stacks = gather ? stackList.size() : activeStacks.size();
-	    log.taskProgress("%u stacks (%.03f%% compression)", stacks,
-			     100.0 - stacks * 100.0 / tiles.size());
+	    log.taskProgress("%u stacks (%.03f%% of total)", stacks,
+			     stacks * 100.0 / tiles.size());
 	}
     }
 
@@ -553,33 +574,50 @@ void TilePool::optimizeOrder(Logger &log)
     std::list<TileStack> newOrder;
     TileCodecLUT codec;
     unsigned totalCost = 0;
+    bool pinned = true;
 
     log.taskBegin("Optimizing tile order");
 
     stackArray.clear();
 
     while (!stackList.empty()) {
+	std::list<TileStack>::iterator chosen;
 
-	unsigned bestCost = (unsigned) -1;
-	std::list<TileStack>::iterator bestIter;
+	if (pinned && stackList.front().isPinned()) {
+	    /*
+	     * We found a consecutive pair of pinned tiles. We're obligated to maintain
+	     * the ordering of these tiles, so there's no opportunity for optimization.
+	     */
+	    
+	    chosen = stackList.begin();
 
-	// Use a forked copy of the codec to ask what the cost would be for each possible choice
-	for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
-	    TileCodecLUT codecFork = codec;
-	    unsigned cost = codecFork.encode(i->median()->palette());
-	    if (cost < bestCost) {
-		bestCost = cost;
-		bestIter = i;
+	} else {
+	    /*
+	     * Pick the lowest-cost tile next. Use a forked copy of
+	     * the codec to ask what the cost would be for each
+	     * possible choice.
+	     */
+
+	    unsigned bestCost = (unsigned) -1;
+
+	    for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
+		TileCodecLUT codecFork = codec;
+		unsigned cost = codecFork.encode(i->median()->palette());
+		if (cost < bestCost) {
+		    bestCost = cost;
+		    chosen = i;
+		}
 	    }
 	}
 
 	// Apply the new codec state permanently
-	totalCost += codec.encode(bestIter->median()->palette());
+	totalCost += codec.encode(chosen->median()->palette());
 
 	// Pick the best tile, and assign it a permanent index
-	bestIter->index = stackArray.size();
-	stackArray.push_back(&*bestIter);
-	newOrder.splice(newOrder.end(), stackList, bestIter);
+	pinned = chosen->isPinned();
+	chosen->index = stackArray.size();
+	stackArray.push_back(&*chosen);
+	newOrder.splice(newOrder.end(), stackList, chosen);
 
 	if (!(stackList.size() % 128))
 	    log.taskProgress("%d tiles (cost %d)",

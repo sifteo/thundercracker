@@ -129,6 +129,43 @@ void ProofWriter::head()
 	"     } \n"
 	"\n"
 	"  </script>\n"
+	"  <style>\n"
+	"\n"
+	"    body { \n"
+	"      color: #eee; \n"
+	"      background: #222; \n"
+        "      font-family: verdana, tahoma, helvetica, arial, sans-serif; \n"
+	"      font-size: 12px; \n"
+	"      margin: 10px 10px 50px 10px; \n"
+	"    } \n"
+	"\n"
+	"    div.grid { \n"
+	"      float: left; \n"
+	"    } \n"
+	"\n"
+	"    div.clear { \n"
+	"      clear: both; \n"
+	"    } \n"
+	"\n"
+	"    h1 { \n"
+	"      color: #fff; \n"
+	"      font-size: 22px; \n"
+	"      font-weight: normal; \n"
+	"      clear: both; \n"
+	"      padding: 10px 0; \n"
+	"      margin: 0; \n"
+	"    } \n"
+	"\n"
+	"    h2 { \n"
+	"      color: #fff; \n"
+	"      font-size: 16px; \n"
+	"      font-weight: normal; \n"
+	"      clear: both; \n"
+	"      padding: 10px 0; \n"
+	"      margin: 0; \n"
+	"    } \n"
+	"\n"
+	"  </style>\n"
 	"</head>\n"
 	"<body>\n";
 }
@@ -143,12 +180,15 @@ void ProofWriter::writeGroup(const Group &group)
     mStream << "<h1>" << HTMLEscape(group.getName()) << "</h1>\n";
 
     defineTiles(group.getPool());
+
     tileRange(0, group.getPool().size());
 
     for (std::set<Image*>::iterator i = group.getImages().begin();
 	 i != group.getImages().end(); i++) {
 
 	Image *image = *i;
+
+	mStream << "<h2>" << HTMLEscape(image->getName()) << "</h2>\n";
 
 	for (std::vector<TileGrid>::const_iterator j = image->getGrids().begin();
 	     j != image->getGrids().end(); j++) {
@@ -165,7 +205,10 @@ void ProofWriter::close()
     if (!mStream.is_open())
 	return;
 
-    mStream << "</body></html>\n";
+    mStream <<
+	"<div class=\"clear\" />\n"
+	"</body></html>\n";
+
     mStream.close();
 }
 

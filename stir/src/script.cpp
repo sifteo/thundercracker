@@ -341,9 +341,9 @@ Image::Image(lua_State *L)
     }
 
     if (Script::argMatch(L, "quality")) {
-	mQuality = lua_tonumber(L, -1);
+	mTileOpt.quality = lua_tonumber(L, -1);
     } else {
-	mQuality = mGroup->getQuality();
+	mTileOpt.quality = mGroup->getQuality();
     }
 
     if (Script::argMatch(L, "frames"))
@@ -352,6 +352,8 @@ Image::Image(lua_State *L)
 	mImages.setWidth(lua_tointeger(L, -1));
     if (Script::argMatch(L, "height"))
 	mImages.setHeight(lua_tointeger(L, -1));
+    if (Script::argMatch(L, "pinned"))
+	mTileOpt.pinned = lua_toboolean(L, -1);
 
     if (Script::argMatch(L, 1)) {
 	/*
@@ -425,7 +427,7 @@ int Image::frames(lua_State *L)
 
 int Image::quality(lua_State *L)
 {
-    lua_pushnumber(L, mQuality);
+    lua_pushnumber(L, mTileOpt.quality);
     return 1;
 }
 
@@ -441,7 +443,7 @@ void Image::createGrids()
 
     for (unsigned frame = 0; frame < mImages.getFrames(); frame++) {
 	mGrids.push_back(TileGrid(&mGroup->getPool()));
-	mImages.storeFrame(frame, mGrids.back(), mQuality);
+	mImages.storeFrame(frame, mGrids.back(), mTileOpt);
     }
 }
 
