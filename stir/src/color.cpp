@@ -16,7 +16,7 @@
 
 namespace Stir {
 
-CIELab CIELab::lut565[0x10000];
+CIELab CIELab::lut565[CIELab::LUT_SIZE];
 
 RGB565 RGB565::wiggle() const
 {
@@ -132,14 +132,17 @@ void CIELab::initialize(void)
 {
     // Initialize the global lookup table from RGB565 to CIE L*a*b*
     
-    for (unsigned v = 0; v < 0x10000; v++)
+    for (unsigned v = 0; v < LUT_SIZE; v++)
 	lut565[v] = CIELab(RGB565((uint16_t)v).rgb());
 }
 
 ColorReducer::ColorReducer()
+    : newestLUTStamp(1)
 {
-    for (unsigned v = 0; v < 0x10000; v++)
+    for (unsigned v = 0; v < LUT_SIZE; v++) {
 	colorMSE[v] = DBL_MAX;
+	inverseLUTStamps[v] = 0;
+    }
 }
 
 void ColorReducer::reduce(Logger &log)
@@ -164,102 +167,93 @@ void ColorReducer::reduce(Logger &log)
      * Keep splitting until all colors are within the acceptable
      * tolerance, or we run out of boxes.
      *
-     * It's actually much more expensive to calculate the MSE (and the
-     * color LUT it requires) than it is to perform palette
-     * splits.. so we'll try to do multiple splits at a time, speeding
-     * up over time.
+     * It's actually much more expensive to calculate the MSE and the
+     * color LUT than it is to perform palette splits. So, we're extra
+     * careful here to minimize the overhead of error measurement. The
+     * LUT is calculated lazily, and we always avoid error
+     * calculations for colors that couldn't possibly contribute to
+     * the success or failure of the current iteration: We always stop
+     * after finding one color that's out of the acceptable tolerance,
+     * and we avoid re-checking colors that have already been solved.
+     *
+     * The lazy LUT calculations are handled automatically by
+     * nearest(), but we use a stack of not-yet-solved colors here in
+     * order to reduce the number of LUT entries we ever have to
+     * touch.
      */
 
+    std::vector<uint16_t> errorStack;
+
+    for (unsigned i = 0; i < LUT_SIZE; i++)
+	errorStack.push_back(i);
+
     while (!boxQueue.empty()) {
-	unsigned errors = countErrors();
+	log.taskProgress("%d colors in palette", (int)boxes.size());
 
-	log.taskProgress("%d colors in palette, %d errors remaining", (int)boxes.size(), errors);
+	/*
+	 * Try to reduce the size of the error stack. Any colors that
+	 * are now within range can be popped off of it permanently.
+	 */
 
-	if (errors == 0)
-	    break;
+	while (errorStack.size()) {
+	    unsigned v = errorStack.back();
+	    RGB565 color((uint16_t)v);
+	    double maxMSE = colorMSE[v];
+	    double mse = CIELab(nearest(color)).meanSquaredError(CIELab(color));
 
-	// Heuristic
-	unsigned numSplits = 1 + boxQueue.size() / 20;
-
-	for (unsigned i = 0; i < numSplits && !boxQueue.empty(); i++) {
-	    unsigned boxIndex = *boxQueue.begin();
-	    struct box& b = boxes[boxIndex];
-	    boxQueue.pop_front();
-
-	    int major = CIELab::findMajorAxis(&colors[b.begin], b.end - b.begin);
-
-	    std::sort(colors.begin() + b.begin,
-		      colors.begin() + b.end,
-		      CIELab::sortAxis(major));
-
-	    splitBox(b);
+	    if (mse <= maxMSE)
+		errorStack.pop_back();
+	    else
+		break;
 	}
 
-	updateInverseLUT();
+	if (!errorStack.size())
+	    break;
+
+	/*
+	 * Perform the next split
+	 */
+	
+	unsigned boxIndex = *boxQueue.begin();
+	struct box& b = boxes[boxIndex];
+	boxQueue.pop_front();
+
+	int major = CIELab::findMajorAxis(&colors[b.begin], b.end - b.begin);
+
+	std::sort(colors.begin() + b.begin,
+		  colors.begin() + b.end,
+		  CIELab::sortAxis(major));
+	
+	splitBox(b);
+
+	// Invalidate all inverseLUT entries
+	newestLUTStamp++;
     }
 
     log.taskEnd();
 }
 
-void ColorReducer::updateInverseLUT()
+void ColorReducer::updateInverseLUT(RGB565 color)
 {
     /*
-     * Regenerate the lookup table which converts RGB565 colors to our
-     * reduced palette, as used by nearest().
-     *
-     * XXX: This is really slow.
+     * Regenerate one entry in the lookup table which converts RGB565
+     * colors to our reduced palette, as used by nearest().
      */
 
-    unsigned v;
+    box *b = NULL;
+    double distance = DBL_MAX;
+    CIELab reference(color);
 
-    for (v = 0; v < 0x10000; v++) {
-	box *b = NULL;
-	double distance = DBL_MAX;
-	CIELab reference(RGB565((uint16_t)v));
-
-	for (std::vector<box>::iterator i = boxes.begin(); i != boxes.end(); i++) {
-	    double err = reference.meanSquaredError(CIELab(boxMedian(*i)));
-	    if (err < distance) {
-		distance = err;
-		b = &*i;
-	    }
+    for (std::vector<box>::iterator i = boxes.begin(); i != boxes.end(); i++) {
+	double err = reference.meanSquaredError(CIELab(boxMedian(*i)));
+	if (err < distance) {
+	    distance = err;
+	    b = &*i;
 	}
-
-	inverseLUT[v] = b - &boxes[0];
-    }
-}
-
-unsigned ColorReducer::countErrors()
-{
-    /*
-     * Count how many original pixels, after converting them through
-     * the current palette, are outside their requested error
-     * tolerance.
-     *
-     * XXX: We may get better results if we can do a directed
-     *      deepening of the color tree, so that colors with lower
-     *      error tolerances get refined first. As is, this is
-     *      probably just going to effectively give us a global
-     *      refinement level that matches the minimum MSE of any input
-     *      color.
-     *
-     * XXX: We can early-out if we find even a single error, so long
-     *      as we don't care about showing the error count as a
-     *      progress indicator.  This also means we can probably opt
-     *      not to use the LUT, or even to build the LUT lazily.
-     */
-
-    unsigned errors = 0;
-
-    for (unsigned v = 0; v < 0x10000; v++) {
-	RGB565 color((uint16_t)v);
-	double mse = colorMSE[v];
-
-	if (CIELab(nearest(color)).meanSquaredError(CIELab(color)) > mse)
-	    errors++;
     }
 
-    return errors;
+    inverseLUT[color.value] = b - &boxes[0];
+    inverseLUTStamps[color.value] = newestLUTStamp;
 }
 
 int CIELab::findMajorAxis(RGB565 *colors, size_t count)

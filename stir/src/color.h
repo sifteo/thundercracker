@@ -178,7 +178,8 @@ private:
     static double decodeGamma(uint8_t v);
     static uint8_t encodeGamma(double v);
 
-    static CIELab lut565[0x10000];
+    static const unsigned LUT_SIZE = 0x10000;
+    static CIELab lut565[LUT_SIZE];
 };
 
 
@@ -213,6 +214,8 @@ class ColorReducer {
     }
 
     RGB565 nearest(RGB565 color) {
+	if (inverseLUTStamps[color.value] != newestLUTStamp)
+	    updateInverseLUT(color);
 	return boxMedian(boxes[inverseLUT[color.value]]);
     }
 
@@ -227,16 +230,19 @@ class ColorReducer {
 	unsigned begin, end;
     };
 
+    static const unsigned LUT_SIZE = 0x10000;
+
     std::vector<RGB565> colors;
     std::vector<box> boxes;
     std::list<unsigned> boxQueue;
-    uint16_t inverseLUT[0x10000];
-    double colorMSE[0x10000];
+    uint16_t inverseLUT[LUT_SIZE];
+    uint32_t inverseLUTStamps[LUT_SIZE];
+    double colorMSE[LUT_SIZE];
+    uint32_t newestLUTStamp;
 
-    void updateInverseLUT();
-    unsigned countErrors();
     bool splitBox(box &b);
     void splitBox(box &b, int at);
+    void updateInverseLUT(RGB565 color);
 
     RGB565 boxMedian(box &b) {
 	return colors[(b.begin + b.end) >> 1];
