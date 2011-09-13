@@ -12,6 +12,7 @@ OBJS_lua = \
 OBJS_stir = \
 	src/script.o \
 	src/proof.o \
+	src/proof_html.o \
 	src/cppwriter.o \
 	src/imagestack.o \
 	src/tile.o \
@@ -28,6 +29,7 @@ OBJS_lsdec = \
 
 CDEPS = src/*.h
 
+PYTHON := python
 CFLAGS += -O3 -g -ffast-math -Werror -Wall -DLUA_USE_MKSTEMP
 LDFLAGS += -g -lm -lstdc++
 CCFLAGS := $(CFLAGS)
@@ -45,6 +47,9 @@ lsdec: $(OBJS_lsdec)
 
 %.o: %.c $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
+
+src/proof_html.cpp: src/proof_html.py
+	$(PYTHON) $< $@
 
 .PHONY: clean
 

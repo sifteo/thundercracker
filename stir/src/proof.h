@@ -45,6 +45,8 @@ class ProofWriter {
     void close();
 
  private:
+    static const char *header;
+
     Logger &mLog;
     std::ofstream mStream;
 
