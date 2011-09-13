@@ -22,7 +22,7 @@ header = """
        for (var i = 0; i < tiles.length; i++) {
 
          // Load it using a Data URI and anonymous img element
-         var img = new Image(8, 8);
+         var img = new Image();
          img.src = prefix + tiles[i];
 
          // Keep a list of closures that can be used to redraw
@@ -41,8 +41,9 @@ header = """
 
      allTileGrids = [];
      highlightTile = null;
+     nextHighlightTile = null;
 
-     function TileGrid(pool, canvasId) {
+     function TileGrid(pool, canvasId, tileSize) {
        var obj = this;
 
        allTileGrids.push(this);
@@ -50,12 +51,14 @@ header = """
        this.pool = pool;
        this.canvas = document.getElementById(canvasId);
        this.ctx = this.canvas.getContext("2d");
-       this.width = this.canvas.width / 8;
-       this.height = this.canvas.height / 8;
+
+       this.size = tileSize;
+       this.width = this.canvas.width / this.size;
+       this.height = this.canvas.height / this.size;
 
        this.canvas.onmousemove = function(evt) {
-         setTileHighlight(obj.tileAt(Math.floor(mouseX(evt) / 8),
-                                     Math.floor(mouseY(evt) / 8)));
+         setTileHighlight(obj.tileAt(Math.floor(mouseX(evt) / obj.size),
+                                     Math.floor(mouseY(evt) / obj.size)));
        }
 
        this.canvas.onmouseout = function(evt) {
@@ -120,21 +123,22 @@ header = """
        if (tile) {
 
          this.ctx.globalAlpha = 1.0;
-         this.ctx.drawImage(tile, x*8, y*8);
+         this.ctx.drawImage(tile, 0, 0, tile.width, tile.height, 
+                            x*this.size, y*this.size, this.size, this.size);
 
          if (highlightTile != null && tile != highlightTile) {
            // Dim this tile
            this.ctx.globalAlpha = 0.5;
            this.ctx.fillStyle = "#000";
-           this.ctx.fillRect(x*8, y*8, 8, 8);
+           this.ctx.fillRect(x*this.size, y*this.size, this.size, this.size);
          }
 
        } else {
  
          // Background
          this.ctx.globalAlpha = 1.0;
-         this.ctx.fillStyle = "#000";
-         this.ctx.fillRect(x*8, y*8, 8, 8);
+         this.ctx.fillStyle = "#222";
+         this.ctx.fillRect(x*this.size, y*this.size, this.size, this.size);
        }
      }
 
@@ -163,29 +167,41 @@ header = """
      function setTileHighlight(t) {
        /*
         * Change the tile that's currently highlighted.
+        *
+        * We do this lazily via a timer callback, to optimize
+        * out changes that are occurring faster than we can draw them,
+        * or spurious mouse-out events that occur before moving into a
+        * different grid.
         */
 
-       if (t != highlightTile) {
-         var prev = highlightTile;
-         highlightTile = t;
+       if (nextHighlightTile != t) {
+         nextHighlightTile = t;
 
-         if (prev == null || t == null) {
-           /*
-            * Transitions from highlighted to not highlighted or vice versa
-            * require a full draw, since we're dimming all non-hilighted tiles.
-            */
+         setTimeout(function() {
+
+           if (nextHighlightTile != highlightTile) {
+             var prev = highlightTile;
+             highlightTile = nextHighlightTile;
+
+             if (prev == null || highlightTile == null) {
+               /*
+                * Transitions from highlighted to not highlighted or vice versa
+                * require a full draw, since we're dimming all non-hilighted tiles.
+                */
           
-           for (var i in allTileGrids)
-             allTileGrids[i].draw();
+               for (var i in allTileGrids)
+                 allTileGrids[i].draw();
 
-         } else {
-           /*
-            * Only draw the affected tiles
-            */
+             } else {
+               /*
+                * Only draw the affected tiles
+                */
 
-           drawTile(prev);
-           drawTile(t);
-         }
+               drawTile(prev);
+               drawTile(highlightTile);
+             }
+           }
+         }, 0);
        }
      }
 

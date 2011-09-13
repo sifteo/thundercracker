@@ -52,9 +52,9 @@ class ProofWriter {
     std::ofstream mStream;
 
     void defineTiles(const TilePool &pool);
-    unsigned newCanvas(unsigned tilesW, unsigned tilesH);
-    void tileRange(unsigned begin, unsigned end);
-    void tileGrid(const TileGrid &grid);
+    unsigned newCanvas(unsigned tilesW, unsigned tilesH, unsigned tileSize);
+    void tileRange(unsigned begin, unsigned end, unsigned tileSize, unsigned width);
+    void tileGrid(const TileGrid &grid, unsigned tileSize);
 };
 
 

@@ -48,24 +48,32 @@ void DataURIEncode(const std::vector<uint8_t> &data, const std::string &mime, st
 void TileURIEncode(const Tile &t, std::string &out)
 {
     /*
-     * Encode a tile image as a data URI
+     * Encode a tile image as a data URI.
+     *
+     * We scale it up, in order to effectively counteract the
+     * browser's image filtering and give us nearest-neighbor even
+     * when zoomed in.
      */
+
+    const unsigned scale = 4;
+    const unsigned pixels = scale * Tile::SIZE;
 
     LodePNG::Encoder encoder;
     std::vector<uint8_t> png;
     std::vector<uint8_t> image;
 
-    image.reserve(4 * Tile::SIZE * Tile::SIZE);
-    for (unsigned y = 0; y < Tile::SIZE; y++)
-	for (unsigned x = 0; x < Tile::SIZE; x++) {
-	    RGB565 color = t.pixel(x, y);
+    image.reserve(4 * pixels * pixels);
+
+    for (unsigned y = 0; y < pixels; y++)
+	for (unsigned x = 0; x < pixels; x++) {
+	    RGB565 color = t.pixel(x / scale, y / scale);
 	    image.push_back(color.red());
 	    image.push_back(color.green());
 	    image.push_back(color.blue());
 	    image.push_back(0xFF);
 	}
 
-    encoder.encode(png, &image[0], Tile::SIZE, Tile::SIZE);
+    encoder.encode(png, &image[0], pixels, pixels);
     DataURIEncode(png, "image/png", out);
 }
 
@@ -123,7 +131,7 @@ void ProofWriter::writeGroup(const Group &group)
 
     defineTiles(group.getPool());
 
-    tileRange(0, group.getPool().size());
+    tileRange(0, group.getPool().size(), Tile::SIZE, 64);
 
     for (std::set<Image*>::iterator i = group.getImages().begin();
 	 i != group.getImages().end(); i++) {
@@ -135,7 +143,7 @@ void ProofWriter::writeGroup(const Group &group)
 	for (std::vector<TileGrid>::const_iterator j = image->getGrids().begin();
 	     j != image->getGrids().end(); j++) {
 
-	    tileGrid(*j);
+	    tileGrid(*j, Tile::SIZE * 2);
 	}
     }
 
@@ -184,34 +192,37 @@ void ProofWriter::defineTiles(const TilePool &pool)
     mStream << "]);</script>\n";
 }
 
-unsigned ProofWriter::newCanvas(unsigned tilesW, unsigned tilesH)
+unsigned ProofWriter::newCanvas(unsigned tilesW, unsigned tilesH, unsigned tileSize)
 {
     mID++;
     mStream << "<canvas id=\"i" << mID << "\" width=\""
-	    << (tilesW * Tile::SIZE) << "px\" height=\""
-	    << (tilesH * Tile::SIZE) << "px\"></canvas>";
+	    << (tilesW * tileSize) << "px\" height=\""
+	    << (tilesH * tileSize) << "px\"></canvas>";
     return mID;
 }
 
-void ProofWriter::tileRange(unsigned begin, unsigned end)
+void ProofWriter::tileRange(unsigned begin, unsigned end, unsigned tileSize, unsigned width)
 {
-    unsigned width = 64;
     unsigned height = ((end - begin) + (width - 1)) / width;
-    unsigned id = newCanvas(width, height);
+    unsigned id = newCanvas(width, height, tileSize);
 
-    mStream << "<script>(new TileGrid(pool, \"i" << id << "\")).range(" << begin << ", " << end << ");</script>";
+    mStream << "<script>(new TileGrid(pool, \"i" << id << "\", " << tileSize
+	    << ")).range(" << begin << ", " << end << ");</script>";
 }
 
-void ProofWriter::tileGrid(const TileGrid &grid)
+void ProofWriter::tileGrid(const TileGrid &grid, unsigned tileSize)
 {
-    unsigned id = newCanvas(grid.width(), grid.height());
+    unsigned id = newCanvas(grid.width(), grid.height(), tileSize);
 
-    mStream << "<script>(new TileGrid(pool, \"i" << id << "\")).array([";
+    mStream << "<script>(new TileGrid(pool, \"i" << id << "\", " << tileSize
+	    << ")).array([";
+
     for (unsigned y = 0; y < grid.height(); y++)
 	for (unsigned x = 0; x < grid.width(); x++) {
 	    TilePool::Index index = grid.getPool().index(grid.tile(x, y));
 	    mStream << index << ",";
 	}
+
     mStream << "]);</script>";
 }
 
