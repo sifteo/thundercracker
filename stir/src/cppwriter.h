@@ -31,11 +31,15 @@ class CPPWriter {
 
     void close();
 
- private:
+ protected:
+    static const char *indent;
     Logger &mLog;
     std::ofstream mStream;
 
     void head();
+    virtual void foot();
+
+    void writeArray(const std::vector<uint8_t> &array);
 };
 
 
@@ -64,6 +68,15 @@ class CPPHeaderWriter : public CPPWriter {
  public:
     CPPHeaderWriter(Logger &log, const char *filename);
     void writeGroup(const Group &group);
+
+ protected:
+    void head();
+    virtual void foot();
+
+ private:
+    std::string guardName;
+
+    void createGuardName(const char *filename);
 };
 
 

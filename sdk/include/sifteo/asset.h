@@ -32,12 +32,10 @@ namespace Sifteo {
  *      that effort into improving the loadstream codec.
  */
 
-class AssetGroup {
-
- private:
-    /* Initialized data */
-    static const uint8_t *mStream;
-    static const uint32_t mStreamLen;
+struct AssetGroup {
+    /* Data initialized by STIR */
+    const uint8_t *mStream;
+    uint32_t mStreamLen;
 };
 
 
