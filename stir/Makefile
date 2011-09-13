@@ -12,6 +12,7 @@ OBJS_lua = \
 OBJS_stir = \
 	src/script.o \
 	src/proof.o \
+	src/cppwriter.o \
 	src/imagestack.o \
 	src/tile.o \
 	src/tilecodec.o \

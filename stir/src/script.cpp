@@ -11,6 +11,7 @@
 
 #include "script.h"
 #include "proof.h"
+#include "cppwriter.h"
 
 namespace Stir {
 
@@ -83,6 +84,8 @@ bool Script::run(const char *filename)
     collect();
 
     ProofWriter proof(log, outputProof);
+    CPPHeaderWriter header(log, outputHeader);
+    CPPSourceWriter source(log, outputSource);
     
     for (std::set<Group*>::iterator i = groups.begin(); i != groups.end(); i++) {
 	Group *group = *i;
@@ -90,10 +93,15 @@ bool Script::run(const char *filename)
 	log.heading(group->getName().c_str());
 
 	group->getPool().optimize(log);
+
 	proof.writeGroup(*group);
+	header.writeGroup(*group);
+	source.writeGroup(*group);
     }
 
     proof.close();
+    header.close();
+    source.close();
 
     return true;
 }
