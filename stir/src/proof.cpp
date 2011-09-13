@@ -91,7 +91,7 @@ std::string HTMLEscape(const std::string &s)
 
 
 ProofWriter::ProofWriter(Logger &log, const char *filename)
-    : mLog(log)
+    : mLog(log), mID(0)
 {
     if (filename) {
 	mStream.open(filename);
@@ -101,82 +101,10 @@ ProofWriter::ProofWriter(Logger &log, const char *filename)
     
     if (mStream.is_open()) {
 	mStream.setf(std::ios::fixed, std::ios::floatfield);  
-	mStream.precision(2);
-	
-	head();
+	mStream.precision(2);	
+
+	mStream << header;
     }
-}
-
-void ProofWriter::head()
-{
-    unsigned ts = Tile::SIZE;
-
-    mStream <<
-	"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \n"
-	"    \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n"
-	"<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
-	"<head>\n"
-	"  <script>\n"
-	"\n"
-	"     function tileRef(i) { \n"
-	"       document.write('<img src=\"' + poolPrefix + pool[i] + '\" width=\""<<ts<<"\" height=\""<<ts<<"\" />'); \n"
-	"     } \n"
-	"\n"
-	"     function tileRange(begin, end) { \n"
-	"       for (var i = begin; i < end; i++) \n"
-	"         tileRef(i); \n"
-	"     } \n"
-	"\n"
-	"     function tileArray(arr) { \n"
-	"       for (var i = 0; i < arr.length; i++) \n"
-	"         tileRef(arr[i]); \n"
-	"     } \n"
-	"\n"
-	"  </script>\n"
-	"  <style>\n"
-	"\n"
-	"    body { \n"
-	"      color: #eee; \n"
-	"      background: #222; \n"
-        "      font-family: verdana, tahoma, helvetica, arial, sans-serif; \n"
-	"      font-size: 12px; \n"
-	"      margin: 10px 5px 50px 5px; \n"
-	"    } \n"
-	"\n"
-	"    div.grid { \n"
-	"      float: left; \n"
-	"    } \n"
-	"\n"
-	"    div.clear { \n"
-	"      clear: both; \n"
-	"    } \n"
-	"\n"
-	"    h1 { \n"
-	"      background: #fff; \n"
-	"      color: #222; \n"
-	"      font-size: 22px; \n"
-	"      font-weight: normal; \n"
-	"      clear: both; \n"
-	"      padding: 10px; \n"
-	"      margin: 0; \n"
-	"    } \n"
-	"\n"
-	"    h2 { \n"
-	"      color: #fff; \n"
-	"      font-size: 16px; \n"
-	"      font-weight: normal; \n"
-	"      clear: both; \n"
-	"      padding: 10px; \n"
-	"      margin: 0; \n"
-	"    } \n"
-	"\n"
-	"    p { \n"
-	"      padding: 0 10px; \n"
-	"    } \n"
-	"\n"
-	"  </style>\n"
-	"</head>\n"
-	"<body>\n";
 }
  
 void ProofWriter::writeGroup(const Group &group)
@@ -248,45 +176,43 @@ void ProofWriter::defineTiles(const TilePool &pool)
 	while (prefixLen && uri[i].compare(0, prefixLen, uri[0], 0, prefixLen))
 	    prefixLen--;
 
-    mStream << 
-	"<script>\n"
-	"poolPrefix = \"" << uri[0].substr(0, prefixLen) << "\";\n"
-	"pool = [\n";
+    mStream << "<script>pool = defineTiles(\"" << uri[0].substr(0, prefixLen) << "\",[";
 
     for (unsigned i = 0; i < pool.size(); i++)
-	mStream << "\"" << uri[i].substr(prefixLen) << "\",\n";
+	mStream << "\"" << uri[i].substr(prefixLen) << "\",";
 
-    mStream << 
-	"];\n"
-	"</script>\n";
+    mStream << "]);</script>\n";
+}
+
+unsigned ProofWriter::newCanvas(unsigned tilesW, unsigned tilesH)
+{
+    mID++;
+    mStream << "<canvas id=\"i" << mID << "\" width=\""
+	    << (tilesW * Tile::SIZE) << "px\" height=\""
+	    << (tilesH * Tile::SIZE) << "px\"></canvas>";
+    return mID;
 }
 
 void ProofWriter::tileRange(unsigned begin, unsigned end)
 {
-    mStream << "<script>tileRange(" << begin << ", " << end << ");</script>\n";
+    unsigned width = 64;
+    unsigned height = ((end - begin) + (width - 1)) / width;
+    unsigned id = newCanvas(width, height);
+
+    mStream << "<script>(new TileGrid(pool, \"i" << id << "\")).range(" << begin << ", " << end << ");</script>";
 }
 
 void ProofWriter::tileGrid(const TileGrid &grid)
 {
-    unsigned pixelW = grid.width() * Tile::SIZE;
-    unsigned pixelH = grid.height() * Tile::SIZE;
+    unsigned id = newCanvas(grid.width(), grid.height());
 
-    mStream <<
-	"<div class=\"grid\" style=\"width: "<<pixelW<<"px; height: "<<pixelH<<"px;\" >\n"
-	"  <script>\n"
-	"    tileArray([\n";
-    
+    mStream << "<script>(new TileGrid(pool, \"i" << id << "\")).array([";
     for (unsigned y = 0; y < grid.height(); y++)
 	for (unsigned x = 0; x < grid.width(); x++) {
 	    TilePool::Index index = grid.getPool().index(grid.tile(x, y));
 	    mStream << index << ",";
 	}
-
-    mStream <<
-	"\n"
-	"    ]);\n"
-	"  </script>\n"
-	"</div>\n";
+    mStream << "]);</script>";
 }
 
 

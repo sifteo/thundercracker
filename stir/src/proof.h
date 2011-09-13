@@ -48,11 +48,11 @@ class ProofWriter {
     static const char *header;
 
     Logger &mLog;
+    unsigned mID;
     std::ofstream mStream;
 
-    void head();
-
     void defineTiles(const TilePool &pool);
+    unsigned newCanvas(unsigned tilesW, unsigned tilesH);
     void tileRange(unsigned begin, unsigned end);
     void tileGrid(const TileGrid &grid);
 };

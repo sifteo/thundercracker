@@ -20,7 +20,7 @@ MainAssets = group{}
 -- asset. A simple image asset can be defined just by loading a PNG
 -- file, and giving it a name:
 
-Sunset = image{"samples/sunset512.png", quality=5}
+--Sunset = image{"samples/sunset512.png", quality=5}
 
 -- Every image asset can have one or more frames. These can actually
 -- be animation frames, or perhaps just multiple identically-sized

@@ -14,19 +14,67 @@ header = """
 <head> 
   <script> 
  
-     function tileRef(i) { 
-       document.write('<img src="' + poolPrefix + pool[i] + '" width="8" height="8" />'); 
-     } 
- 
-     function tileRange(begin, end) { 
-       for (var i = begin; i < end; i++) 
-         tileRef(i); 
-     } 
- 
-     function tileArray(arr) { 
-       for (var i = 0; i < arr.length; i++) 
-         tileRef(arr[i]); 
-     } 
+     /*
+      * Define a tile pool (per-group)
+      */
+
+     function defineTiles(prefix, tiles) {
+       for (var i = 0; i < tiles.length; i++) {
+         var img = new Image(8, 8);
+         img.src = prefix + tiles[i];
+         tiles[i] = img;
+       }
+       return tiles;
+     }
+
+     /*
+      * Object for a single TileGrid, with some interactive features.
+      * Renders onto an HTML5 Canvas
+      */
+
+     allTileGrids = []
+
+     function TileGrid(pool, canvasId) {
+         allTileGrids.push(this);
+         this.pool = pool;
+         this.canvas = document.getElementById(canvasId);
+         this.ctx = this.canvas.getContext("2d");
+         this.width = this.canvas.width / 8;
+         this.height = this.canvas.height / 8;
+     }
+
+     TileGrid.prototype.range = function(begin, end) {
+         this.tiles = [];
+         for (var i = begin; i < end; i++)
+             this.tiles[i - begin] = i;
+     }
+
+     TileGrid.prototype.array = function(a) {
+         this.tiles = a;
+     }
+
+     TileGrid.prototype.draw = function() {
+       var i = 0;
+
+       for (var y = 0; y < this.height; y++)
+         for (var x = 0; x < this.width; x++) {
+
+           this.ctx.drawImage(this.pool[this.tiles[i]], x*8, y*8);
+
+           i++;
+           if (i >= this.tiles.length)
+             return;
+         }
+     }
+
+     /*
+      * Draw all TileGrids after our images have loaded
+      */
+
+     function drawAllTileGrids() {
+       for (var i in allTileGrids)
+         allTileGrids[i].draw();
+     }
  
   </script> 
   <style> 
@@ -38,21 +86,12 @@ header = """
       font-size: 12px; 
       margin: 10px 5px 50px 5px; 
     } 
- 
-    div.grid { 
-      float: left; 
-    } 
- 
-    div.clear { 
-      clear: both; 
-    } 
- 
+  
     h1 { 
       background: #fff; 
       color: #222; 
       font-size: 22px; 
       font-weight: normal; 
-      clear: both; 
       padding: 10px; 
       margin: 0; 
     } 
@@ -61,7 +100,6 @@ header = """
       color: #fff; 
       font-size: 16px; 
       font-weight: normal; 
-      clear: both; 
       padding: 10px; 
       margin: 0; 
     } 
@@ -69,10 +107,15 @@ header = """
     p { 
       padding: 0 10px; 
     } 
+
+    canvas {
+      padding: 0;
+      margin: 0;
+    }
  
   </style> 
 </head> 
-<body> 
+<body onload="drawAllTileGrids()"> 
 """
 
 cppTemplate = """
