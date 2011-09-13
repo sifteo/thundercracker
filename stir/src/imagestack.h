@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <vector>
 
+#include "tile.h"
 #include "lodepng.h"
 
 namespace Stir {
@@ -38,15 +39,17 @@ class ImageStack {
     void setHeight(int height);
     void setFrames(int frames);
 
-    int getWidth() const {
+    void storeFrame(unsigned frame, TileGrid &tg, double quality);
+
+    unsigned getWidth() const {
 	return mWidth;
     }
 
-    int getHeight() const {
+    unsigned getHeight() const {
 	return mHeight;
     }
 
-    int getFrames() const {
+    unsigned getFrames() const {
 	return mFrames;
     }
 
@@ -54,7 +57,7 @@ class ImageStack {
 	return mConsistent;
     }
 
-    bool divisibleBy(int size) const {
+    bool divisibleBy(unsigned size) const {
 	return !(getWidth() % size) && !(getHeight() % size);
     }
 
@@ -62,14 +65,18 @@ class ImageStack {
     struct source {
 	LodePNG::Decoder decoder;
 	std::vector<uint8_t> rgba;
+	unsigned firstFrame;
+	unsigned numFrames;
     };
 
     bool mConsistent;
-    int mWidth;
-    int mHeight;
-    int mFrames;
+    unsigned mWidth;
+    unsigned mHeight;
+    unsigned mFrames;
 
     std::vector<source*> sources;
+
+    source *getSourceForFrame(unsigned frame);
 };
 
 

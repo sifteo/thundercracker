@@ -10,11 +10,12 @@ OBJS_lua = \
 	src/lua/loadlib.o src/lua/linit.o
 
 OBJS_stir = \
-	src/color.o \
+	src/script.o \
+	src/proof.o \
+	src/imagestack.o \
 	src/tile.o \
 	src/tilecodec.o \
-	src/imagestack.o \
-	src/script.o \
+	src/color.o \
 	src/command.o \
 	src/logger.o \
 	src/lodepng.o \

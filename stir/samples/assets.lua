@@ -20,4 +20,5 @@ MainAssets = group{}
 -- asset. A simple image asset can be defined just by loading a PNG
 -- file, and giving it a name:
 
-Owlbear = image{"samples/owlbear.png"}
+Owlbear = image{"samples/sunset512.png"}
+

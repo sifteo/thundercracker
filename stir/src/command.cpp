@@ -114,12 +114,6 @@ int main(int argc, char **argv)
 
 /* Junk...
 
-    Stir::TilePool pool = Stir::TilePool(maxMSE);
-    Stir::TileGrid tg = Stir::TileGrid(&pool);
-
-    tg.load(argv[1]);
-    pool.optimize(log);
-
     std::vector<uint8_t> image;
     unsigned width = Stir::Tile::SIZE * tg.width() * 2;
     unsigned height = Stir::Tile::SIZE * tg.height();

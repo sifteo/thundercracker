@@ -15,6 +15,9 @@ extern "C" {
 #   include "lua/lualib.h"
 }
 
+#include <vector>
+#include <set>
+
 #include "lunar.h"
 #include "logger.h"
 #include "tile.h"
@@ -53,12 +56,15 @@ public:
     const char *outputSource;
     const char *outputProof;
 
+    std::set<Group*> groups;
+
     friend class Group;
     friend class Image;
 
     bool luaRunFile(const char *filename);
-    static bool matchExtension(const char *filename, const char *ext);
+    void collect();
 
+    static bool matchExtension(const char *filename, const char *ext);
     static Script *getInstance(lua_State *L);
 
     // Utilities for foolproof table argument unpacking
@@ -88,12 +94,39 @@ public:
 	return quality;
     }
 
+    const TilePool &getPool() const {
+	return pool;
+    }
+
+    TilePool &getPool() {
+	return pool;
+    }
+
+    void setName(const char *s) {
+	mName = s;
+    }
+
+    const std::string &getName() const {
+	return mName;
+    }
+
+    void addImage(Image *i) {
+	mImages.insert(i);
+    }
+
+    const std::set<Image*> &getImages() const {
+	return mImages;
+    }
+
     void setDefault(lua_State *L);
     static Group *getDefault(lua_State *L);
 
 private:
     lua_Number quality;
     TilePool pool;
+    std::string mName;
+    std::set<Image*> mImages;
+
 };
 
 
@@ -113,10 +146,30 @@ public:
 
     Image(lua_State *L);
 
+    void setName(const char *s) {
+	mName = s;
+    }
+
+    std::string &getName() {
+	return mName;
+    }
+
+    Group *getGroup() {
+	return mGroup;
+    }
+
+    const std::vector<TileGrid> &getGrids() const {
+	return mGrids;
+    }
+
  private:
     Group *mGroup;
     ImageStack mImages;
     lua_Number mQuality;
+    std::vector<TileGrid> mGrids;
+    std::string mName;
+
+    void createGrids();
 
     int width(lua_State *L);
     int height(lua_State *L);

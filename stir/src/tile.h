@@ -99,8 +99,6 @@ class Tile {
     // Firmware chroma-key color
     static const uint16_t CHROMA_KEY = 0x4FF5;
 
-    void render(uint8_t *rgba, size_t stride) const;
-   
     bool usingChromaKey() const {
 	return mUsingChromaKey;
     }
@@ -202,8 +200,6 @@ class TilePool {
     void optimize(Logger &log);
     void encode(std::vector<uint8_t>& out, Logger *log = NULL);
 
-    void render(uint8_t *rgba, size_t stride, unsigned width);
-
     Serial add(TileRef t) {
 	Serial s = (Serial)tiles.size();
 	tiles.push_back(t);
@@ -251,21 +247,22 @@ class TileGrid {
     TileGrid(TilePool *pool);
 
     void load(uint8_t *rgba, size_t stride, unsigned width, unsigned height, double quality);
-    void render(uint8_t *rgba, size_t stride);
 
-    unsigned width() {
+    unsigned width() const {
 	return mWidth;
     }
 
-    unsigned height() {
+    unsigned height() const {
 	return mHeight;
     }
 
-    TilePool::Serial tile(unsigned x, unsigned y) {
+    TilePool::Serial tile(unsigned x, unsigned y) const {
 	return tiles[x + y * mWidth];
     }
 
-    void encodeMap(std::vector<uint8_t> &out, uint32_t baseAddress=0);
+    const TilePool &getPool() const {
+	return *mPool;
+    }
 
  private:
     TilePool *mPool;

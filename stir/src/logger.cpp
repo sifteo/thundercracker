@@ -14,11 +14,22 @@
 namespace Stir {
 
 Logger::~Logger() {}
+
 ConsoleLogger::~ConsoleLogger() {}
+
+ConsoleLogger::ConsoleLogger()
+    : mVerbose(false)
+    {}
 
 void ConsoleLogger::setVerbose(bool verbose)
 {
     mVerbose = verbose;
+}
+
+void ConsoleLogger::heading(const char *name)
+{
+    if (mVerbose)
+	fprintf(stderr, "======== %s ========\n", name);
 }
 
 void ConsoleLogger::taskBegin(const char *name)

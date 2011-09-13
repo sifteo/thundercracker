@@ -149,11 +149,6 @@ void ColorReducer::reduce(Logger &log)
      * single box that encloses all pixels in the image, and we
      * iteratively subdivide boxes until we reach the targetted MSE
      * metric.
-     *
-     * The method we pick to choose a box to subdivide, in this case,
-     * is based on measuring the potential improvement to the total
-     * MSE we would get by subdividing that box. We always pick the
-     * box that gives us the most bang for our colortable buck.
      */
 
     log.taskBegin("Optimizing palette");

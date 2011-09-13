@@ -15,6 +15,8 @@ class Logger {
  public:
     virtual ~Logger();
 
+    virtual void heading(const char *name) = 0;
+
     virtual void taskBegin(const char *name) = 0;
     virtual void taskProgress(const char *fmt, ...) = 0;
     virtual void taskEnd() = 0;
@@ -28,9 +30,12 @@ class Logger {
 
 class ConsoleLogger : public Logger {
  public:
+    ConsoleLogger();
     virtual ~ConsoleLogger();
 
     void setVerbose(bool verbose=true);
+
+    virtual void heading(const char *name);
 
     virtual void taskBegin(const char *name);
     virtual void taskProgress(const char *fmt, ...);

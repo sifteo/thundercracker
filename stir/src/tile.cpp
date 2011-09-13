@@ -278,23 +278,6 @@ double Tile::sobelError(Tile &other)
     return error / (1 + mSobelTotal + other.mSobelTotal);
 }
 
-void Tile::render(uint8_t *rgba, size_t stride) const
-{
-    // Draw this tile to an RGBA framebuffer, for proofing purposes
-
-    unsigned x, y;
-    uint8_t *row, *dest;
-
-    for (y = 0, row = rgba; y < SIZE; y++, row += stride)
-	for (x = 0, dest = row; x < SIZE; x++, dest += 4) {
-	    RGB565 color = pixel(x, y);
-	    dest[0] = color.red();
-	    dest[1] = color.green();
-	    dest[2] = color.blue();
-	    dest[3] = 0xFF;
-	}
-}
-
 TileRef Tile::reduce(ColorReducer &reducer) const
 {
     /*
@@ -433,33 +416,6 @@ void TileGrid::load(uint8_t *rgba, size_t stride, unsigned width, unsigned heigh
 					 (y * Tile::SIZE * stride),
 					 stride, quality));
 	    tiles[x + y * mWidth] = mPool->add(t);
-	}
-}
-
-void TileGrid::render(uint8_t *rgba, size_t stride)
-{
-    // Draw this image to an RGBA framebuffer, for proofing purposes
-    
-    for (unsigned y = 0; y < mHeight; y++)
-	for (unsigned x = 0; x < mWidth; x++) {
-	    TileRef t = mPool->tile(mPool->index(tile(x, y)));
-	    t->render(rgba + (x * Tile::SIZE * 4) + (y * Tile::SIZE * stride), stride);
-	}
-}
-
-void TileGrid::encodeMap(std::vector<uint8_t> &out, uint32_t baseAddress)
-{
-    for (unsigned y = 0; y < mHeight; y++)
-	for (unsigned x = 0; x < mWidth; x++) {
-	    TilePool::Index index = mPool->index(tile(x, y));
-
-	    // Split 7:7:7 address calculations
-	    uint32_t address = baseAddress + (index << 7);
-	    uint8_t high = (address >> 14) << 1;
-	    uint8_t low = (address >> 7) << 1;
-	    
-	    out.push_back(low);
-	    out.push_back(high);
 	}
 }
 
@@ -634,23 +590,6 @@ void TilePool::optimizeOrder(Logger &log)
     stackList.swap(newOrder);
 
     log.taskEnd();
-}
-
-void TilePool::render(uint8_t *rgba, size_t stride, unsigned width)
-{
-    // Draw all tiles in this pool to an RGBA framebuffer, for proofing purposes
-    
-    unsigned x = 0, y = 0;
-    for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
-	TileRef t = i->median();
-	t->render(rgba + (x * Tile::SIZE * 4) + (y * Tile::SIZE * stride), stride);
-
-	x++;
-	if (x == width) {
-	    x = 0;
-	    y++;
-	}
-    }
 }
 
 void TilePool::encode(std::vector<uint8_t>& out, Logger *log)

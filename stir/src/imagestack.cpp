@@ -6,6 +6,8 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <stdio.h>
+
 #include "imagestack.h"
 
 namespace Stir {
@@ -23,24 +25,24 @@ ImageStack::~ImageStack()
 
 void ImageStack::setWidth(int width)
 {
-    if (width > 0 && (mWidth == 0 || mWidth == width))
-	mWidth = width;
+    if (width > 0 && (mWidth == 0 || mWidth == (unsigned)width))
+	mWidth = (unsigned)width;
     else
 	mConsistent = false;
 }
 
 void ImageStack::setHeight(int height)
 {
-    if (height > 0 && (mHeight == 0 || mHeight == height))
-	mHeight = height;
+    if (height > 0 && (mHeight == 0 || mHeight == (unsigned)height))
+	mHeight = (unsigned)height;
     else
 	mConsistent = false;
 }
 
 void ImageStack::setFrames(int frames)
 {
-    if (frames > 0 && (mFrames == 0 || mFrames == frames))
-	mFrames = frames;
+    if (frames > 0 && (mFrames == 0 || mFrames == (unsigned)frames))
+	mFrames = (unsigned)frames;
     else
 	mConsistent = false;
 }
@@ -105,11 +107,41 @@ void ImageStack::finishLoading()
 	    continue;
 	}
 
-	frames += (width / mWidth) + (height / mHeight);
+	(*i)->firstFrame = frames;
+	(*i)->numFrames = (width / mWidth) * (height / mHeight);
+	frames += (*i)->numFrames;
     }
     
     setFrames(frames);
 }
 
+ ImageStack::source *ImageStack::getSourceForFrame(unsigned frame)
+{
+    for (std::vector<source*>::iterator i = sources.begin(); i != sources.end(); i++) {
+	source *s = *i;
+
+	if (frame < (s->firstFrame + s->numFrames))
+	    return s;
+    }
+
+    return NULL;
+}
+
+void ImageStack::storeFrame(unsigned frame, TileGrid &tg, double quality)
+{
+    source *s = getSourceForFrame(frame);
+    if (!s)
+	return;
+
+    unsigned index = frame - s->firstFrame;
+    unsigned gridW = s->decoder.getWidth() / mWidth;
+    unsigned gridX = index % gridW;
+    unsigned gridY = index / gridW;
+    unsigned x = gridX * mWidth;
+    unsigned y = gridY * mHeight;
+    unsigned stride = s->decoder.getWidth() * 4;
+
+    tg.load(&s->rgba[x*4 + y*stride], stride, mWidth, mHeight, quality);   
+}
 
 };  // namespace Stir

@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "script.h"
+#include "proof.h"
 
 namespace Stir {
 
@@ -78,6 +79,21 @@ bool Script::run(const char *filename)
 
     if (!luaRunFile(filename))
 	return false;
+
+    collect();
+
+    ProofWriter proof(log, outputProof);
+    
+    for (std::set<Group*>::iterator i = groups.begin(); i != groups.end(); i++) {
+	Group *group = *i;
+
+	log.heading(group->getName().c_str());
+
+	group->getPool().optimize(log);
+	proof.writeGroup(*group);
+    }
+
+    proof.close();
 
     return true;
 }
@@ -223,6 +239,40 @@ bool Script::argEnd(lua_State *L)
     return success;
 }
 
+void Script::collect()
+{
+    /*
+     * Scan through the global variables leftover after running a
+     * script, and collect groups and images.
+     *
+     * We don't add images to their respective groups until this
+     * point, since we want to be sure we only process assets that
+     * remain in the global namespace.
+     */
+
+    lua_pushnil(L);
+    while (lua_next(L, LUA_GLOBALSINDEX)) {
+	lua_pushvalue(L, -2);   // Make a copy of the key object
+	const char *name = lua_tostring(L, -1);
+	Group *group = Lunar<Group>::cast(L, -2);
+	Image *image = Lunar<Image>::cast(L, -2);
+
+	if (name && name[0] != '_') {
+	    if (group) {
+		group->setName(name);
+		groups.insert(group);
+	    }
+	    if (image) {
+		image->setName(name);
+		image->getGroup()->addImage(image);
+	    }
+	}
+
+	lua_pop(L, 2);
+    };
+    lua_pop(L, 1);
+}
+
 
 Group::Group(lua_State *L)
 {
@@ -342,7 +392,9 @@ Image::Image(lua_State *L)
 	luaL_error(L, "Image size %dx%d is not divisible by %d-pixel tile size",
 		   mImages.getWidth(), mImages.getHeight(), Tile::SIZE);
 	return;
-    }	
+    }
+
+    createGrids();
 }
 
 int Image::width(lua_State *L)
@@ -373,6 +425,16 @@ int Image::group(lua_State *L)
 {
     Lunar<Group>::push(L, mGroup, false);
     return 1;
+}
+
+void Image::createGrids()
+{
+    mGrids.clear();
+
+    for (unsigned frame = 0; frame < mImages.getFrames(); frame++) {
+	mGrids.push_back(TileGrid(&mGroup->getPool()));
+	mImages.storeFrame(frame, mGrids.back(), mQuality);
+    }
 }
 
 
