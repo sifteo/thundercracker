@@ -2,7 +2,10 @@ BIN = master.a
 SDK_DIR = ../../sdk
 
 OBJS = \
+	common/syscall.o \
+	common/runtime.o \
 	common/radio.o \
+	common/cube.o \
 	sim/radio_nethub.o \
 	sim/main.o \
 

@@ -110,22 +110,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-
-/* Junk...
-    std::vector<uint8_t> loadstream;
-    pool.encode(loadstream, &log);
-    LodePNG::saveFile(loadstream, "loadstream.bin");
-
-    log.infoBegin("Asset statistics");
-    log.infoLine("%30s: %d", "Total tiles", pool.size());
-    log.infoLine("%30s: %.02f kB", "Installed size in NOR", pool.size() * 128 / 1024.0, pool.size());
-    log.infoLine("%30s: %.02f kB", "Loadstream size", loadstream.size() / 1024.0);
-    log.infoLine("%30s: %.02f kB", "Compressed loadstream", zLoadstream.size() / 1024.0);
-    log.infoLine("%30s: %.02f s", "Load time estimate", loadstream.size() / 40000.0);
-    log.infoLine("%30s: %.02f kB", "Uncompressed map", map.size() / 1024.0);
-    log.infoLine("%30s: %.02f kB", "Compressed map", zMap.size() / 1024.0);
-    log.infoLine("%30s: %.02f kB", "Compressed total", (zLoadstream.size() + zMap.size()) / 1024.0);
-    log.infoEnd();
-
-*/

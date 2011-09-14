@@ -8,72 +8,56 @@
 
 #include <string.h>
 #include "radio.h"
+#include "cube.h"
 
-/*
- * XXX: Hack for testing loadstream performance
- */
+_SYSCubeID RadioManager::epFifo[RadioManager::FIFO_SIZE];
+uint8_t RadioManager::epHead;
+uint8_t RadioManager::epTail;
+_SYSCubeID RadioManager::schedNext;
 
-namespace Sifteo {
-
-    /*
-#define FIFO_MAX  63
-
-const static uint8_t *ls_ptr = loadstream;
-static uint32_t buf_space = FIFO_MAX;
-static uint32_t ls_remaining = sizeof loadstream;
-static uint8_t prev_ack;
-    */
 
 void RadioManager::produce(PacketTransmission &tx)
 {
     /*
-    static RadioAddress addr = { 0x02, { 0xe7, 0xe7, 0xe7, 0xe7, 0xe7 }};
-    uint32_t size = ls_remaining;
-    
-    tx.dest = &addr;
+     * Currently we just try all cubes in round-robin order until we
+     * find one that will give us a packet.
+     *
+     * XXX: We don't have a fallback when there are zero enabled slots
+     *
+     * XXX: This isn't the most efficient use of our time, especially
+     *      if all cubes are idling and don't need to transmit packets
+     *      at the full rate. We should be able to throttle down the
+     *      transmit rate in these cases.
+     */
 
-    if (size > 31) size = 31;
-    if (size > buf_space) size = buf_space;
+    for (;;) {
+	// No more enabled slots? Loop back to zero.
+	if (!(CubeSlot::vecEnabled >> schedNext))
+	    schedNext = 0;
 
-    if (size) {
-	tx.packet.len = size + 1;
-	tx.packet.bytes[0] = 0xC0 | (size - 1);
-	memcpy(tx.packet.bytes + 1, ls_ptr, size);
-	ls_ptr += size;
-	ls_remaining -= size;
-	buf_space -= size;
-    } else {
-	tx.packet.len = 0;
+	_SYSCubeID id = schedNext++;
+	CubeSlot &slot = CubeSlot::instances[id];
+
+	if (slot.enabled() && slot.radioProduce(tx)) {
+	    // Remember this slot in our queue.
+	    fifoPush(id);
+	    break;
+	}
     }
-
-    if (ls_remaining == 0 && buf_space == FIFO_MAX) {
-	printf("Done\n");
-	exit(0);
-    }
-    */
 }
 
 void RadioManager::acknowledge(const PacketBuffer &packet)
 {
-    /*
-    if (packet.len > 11) {
-	uint8_t ack = packet.bytes[11];
-	buf_space += (uint8_t)(ack - prev_ack);
-	prev_ack = ack;
-    }
-    */
+    CubeSlot &slot = CubeSlot::instances[fifoPop()];
+
+    if (slot.enabled())
+	slot.radioAcknowledge(packet);
 }
 
 void RadioManager::timeout()
 {
-}
+    CubeSlot &slot = CubeSlot::instances[fifoPop()];
 
-void RadioManager::add(RadioEndpoint *ep)
-{
+    if (slot.enabled())
+	slot.radioTimeout();
 }
-
-void RadioManager::remove(RadioEndpoint *ep)
-{
-}
-
-};  // namespace Sifteo

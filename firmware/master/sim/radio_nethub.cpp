@@ -41,8 +41,6 @@
 
 #include "radio.h"
 
-namespace Sifteo {
-
 /*
  * Network protocol constants
  */
@@ -338,5 +336,3 @@ void Radio::halt()
     if (self.isConnected && self.txTail > self.txHead)
 	SifteoRadio_send();
 }
-
-};  // namespace Sifteo

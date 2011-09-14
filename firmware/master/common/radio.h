@@ -9,9 +9,7 @@
 #ifndef _SIFTEO_RADIO_H
 #define _SIFTEO_RADIO_H
 
-#include <stdint.h>
-
-namespace Sifteo {
+#include <sifteo/abi.h>
 
 class RadioManager;
 
@@ -89,43 +87,16 @@ class Radio {
     static void open();
     static void halt();
 };
-    
-
-/**
- * Abstract base class: Message dispatcher for one peer. Each
- * RadioEndpoint is scheduled to produce packets by the
- * RadioManager. Any timeouts or acknowledgments are delivered to the
- * corresponding RadioEndpoint.
- *
- * These entry points are called in interrupt context.
- */
-
-class RadioEndpoint {
- protected:
-    friend class RadioManager;
-
-    // Called in interrupt context
-    virtual void produce(PacketTransmission &tx) = 0;
-    virtual void acknowledge(const PacketBuffer &packet) = 0;
-    virtual void timeout() = 0;
-};
-    
 
 /**
  * Multiplexes radio communications to and from multiple cubes.
  * This class is non-platform-specific, and it is where Radio
  * delegates the work of actually creating and consuming raw
  * packets.
- *
- * We maintain a set of per-cube transmit buffers, with distinct
- * buffering schemes for VRAM, Flash, and other data.
  */
  
 class RadioManager {
  public:
-    void add(RadioEndpoint *ep);
-    void remove(RadioEndpoint *ep);
-
     /**
      * ISR Delegates, called by Radio's implementation. For every
      * produce()'d packet, we are guaranteed to respond in FIFO
@@ -136,39 +107,37 @@ class RadioManager {
     static void acknowledge(const PacketBuffer &packet);
     static void timeout();
 
-    // Must be a power of two
-    static const unsigned MAX_ENDPOINTS = 32;
-
  private:
     /*
-     * All connected endpoints. When an endpoint is disconnected due
-     * to a timeout, it is automatically removed (in interrupt
-     * context) by setting its slot to NULL without modifying any
-     * other slots.
-     */
-    unsigned numSlots;
-    RadioEndpoint *epSlots[MAX_ENDPOINTS];
-
-    /* XXX: How to track when it's safe to reuse a slot? */
-
-    /*
-     * Round-robin endpoint scheduling. We currently give every
-     * endpoint an opportunity to produce one packet per round. Note
-     * that this is updated from the interrupt context. If the main
-     * context removes a slot we're using, it can't delete or
-     * otherwise make the slot invalid until after we have moved on to
-     * the next slot and updated currentSlot.
-     */
-    unsigned currentSlot;
-
-    /*
      * FIFO buffer of slot numbers that have pending acknowledgments.
-     * This lets us match up ACKs with endpoints. Accessed ONLY in interrupt context.
+     * This lets us match up ACKs with endpoints. Accessed ONLY in
+     * interrupt context.
+     *
+     * The FIFO_SIZE must be deep enough to cover the worst-case
+     * queueing depth of the Radio implementation. On real hardware
+     * this will be quite small. This is also independent of the
+     * number of cubes in use.
+     *
+     * Must be a power of two.
      */
-    uint8_t epFifo[MAX_ENDPOINTS];
-    unsigned epHead, epTail;
-};
 
-};  // namespace Sifteo
+    static const unsigned FIFO_SIZE = 8;
+
+    static _SYSCubeID epFifo[FIFO_SIZE];
+    static uint8_t epHead;		// Oldest ACK slot ID
+    static uint8_t epTail;		// Location for next packet's slot ID
+    static _SYSCubeID schedNext;	// Next cube in the schedule rotation
+
+    static void fifoPush(_SYSCubeID id) {
+	epFifo[epTail] = id;
+	epTail = (epTail + 1) & (FIFO_SIZE - 1);
+    }
+
+    static _SYSCubeID fifoPop() {
+	_SYSCubeID id = epFifo[epHead];
+	epHead = (epHead + 1) & (FIFO_SIZE - 1);
+	return id;
+    }
+};
 
 #endif

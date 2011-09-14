@@ -34,10 +34,10 @@ extern "C" {
  * firmware -> game, OUT is game -> firmware.
  */
 
-#define _SYS_NUM_CUBE_IDS   32
+#define _SYS_NUM_CUBE_SLOTS   32
 
-typedef uint8_t _SYSCubeID;
-typedef uint32_t _SYSCubeIDVector;
+typedef uint8_t _SYSCubeID;		/// Cube slot index
+typedef uint32_t _SYSCubeIDVector;	/// One bit for each cube slot
 
 /*
  * XXX: It would be nice to further compress the loadstream when storing
@@ -88,6 +88,7 @@ struct _SYSEventVectors {
     void (*cubeFound)(_SYSCubeID cid);
     void (*cubeLost)(_SYSCubeID cid);
     void (*assetDone)(struct _SYSAssetGroup *group);
+    void *reserved[32 - 3];
 };
 
 extern struct _SYSEventVectors _SYS_vectors;

@@ -6,21 +6,20 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-/*
- * Entry point program for simulation use, i.e. when compiling for a
- * desktop OS rather than for the actual master cube.
- */
-
-#include <sifteo/abi.h>
-#include "radio.h"
 #include "runtime.h"
 
+jmp_buf Runtime::jmpExit;
 
-int main(int argc, char **argv)
+
+void Runtime::run()
 {
-    Radio::open();
+    if (setjmp(jmpExit))
+	return;
 
-    Runtime::run();
+    siftmain();
+}
 
-    return 0;
+void Runtime::exit()
+{
+    longjmp(jmpExit, 1);
 }
