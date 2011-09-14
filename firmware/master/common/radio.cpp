@@ -7,8 +7,6 @@
  */
 
 #include <string.h>
-#include <stdio.h>    // XXX
-#include <stdlib.h>   // XXX
 #include "radio.h"
 
 /*
@@ -17,18 +15,18 @@
 
 namespace Sifteo {
 
-#include "ls.h"
-
+    /*
 #define FIFO_MAX  63
 
 const static uint8_t *ls_ptr = loadstream;
 static uint32_t buf_space = FIFO_MAX;
 static uint32_t ls_remaining = sizeof loadstream;
 static uint8_t prev_ack;
-
+    */
 
 void RadioManager::produce(PacketTransmission &tx)
 {
+    /*
     static RadioAddress addr = { 0x02, { 0xe7, 0xe7, 0xe7, 0xe7, 0xe7 }};
     uint32_t size = ls_remaining;
     
@@ -52,15 +50,18 @@ void RadioManager::produce(PacketTransmission &tx)
 	printf("Done\n");
 	exit(0);
     }
+    */
 }
 
 void RadioManager::acknowledge(const PacketBuffer &packet)
 {
+    /*
     if (packet.len > 11) {
 	uint8_t ack = packet.bytes[11];
 	buf_space += (uint8_t)(ack - prev_ack);
 	prev_ack = ack;
     }
+    */
 }
 
 void RadioManager::timeout()

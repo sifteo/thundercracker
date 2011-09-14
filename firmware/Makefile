@@ -1,13 +1,18 @@
-BIN = cube.hex
+TARGETS := cube.hex master.a
 
-all: $(BIN)
+all: $(TARGETS)
 
-.PHONY: all clean $(BIN)
+.PHONY: all clean $(TARGETS)
 
-$(BIN):
-	make -C cube
-	cp cube/cube.ihx cube.hex
+cube.hex:
+	@make -C cube
+	@cp cube/cube.ihx cube.hex
+
+master.a:
+	@make -C master
+	@cp master/master.a master.a
 
 clean:
-	make -C cube clean
-	rm -f $(BIN)
+	@make -C cube clean
+	@make -C master clean
+	rm -f $(TARGETS)

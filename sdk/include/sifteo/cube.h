@@ -11,11 +11,11 @@ namespace Sifteo {
 
 
 /**
- * Represents one Sifteo cube. This object may have a lifetime that is
- * distinct from that of our actual connection to a physical
- * cube. Applications need to expect Cube instances to disconnect or
- * reappear at any time. A disconnected Cube instance will ignore any
- * data we direct toward it.
+ * Represents one Sifteo cube. These Cube objects are statically
+ * allocated, and really they represent a slot for a potential cube in
+ * your game. If you only work with three cubes, you only need to
+ * allocate three cube objects.  Every cube starts out in a
+ * disconnected state.
  */
 
 class Cube {

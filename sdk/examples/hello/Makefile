@@ -1,4 +1,5 @@
 SDK_DIR = ../..
+MASTER_LIB = ../../../firmware/master.a
 STIR = ../../../stir/stir
 ASSETS = assets
 
@@ -9,9 +10,9 @@ CDEPS = $(SDK_DIR)/include/sifteo/*.h
 ASSETDEPS = $(ASSETS).lua *.png
 
 CCFLAGS += -Os -g -Werror -I$(SDK_DIR)/include
-LDFLAGS += -g $(SDK_DIR)/src/tcsdk.a
+LDFLAGS += -g
 
-$(BIN): $(OBJS)
+$(BIN): $(OBJS) $(MASTER_LIB)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp $(CDEPS) $(ASSETDEPS)

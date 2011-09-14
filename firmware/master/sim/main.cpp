@@ -6,19 +6,17 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include <sifteo/system.h>
-#include "radio.h"
+/*
+ * Entry point program for simulation use, i.e. when compiling for a
+ * desktop OS rather than for the actual master cube.
+ */
 
-namespace Sifteo {
+#include <sifteo/syscall.h>
 
-void System::init()
+
+int main(int argc, char **argv)
 {
-    Radio::open();
-}
+    siftmain();
 
-void System::draw()
-{
-    Radio::halt();
+    return 0;
 }
-
-};  // namespace Sifteo

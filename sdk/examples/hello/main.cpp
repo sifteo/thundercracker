@@ -6,13 +6,9 @@
 
 #include <sifteo.h>
 
-int main()
+void siftmain()
 {
-    Sifteo::System::init();
-
     while (1) {
-	Sifteo::System::draw();
+	//Sifteo::System::draw();
     }
-
-    return 0;
 }
