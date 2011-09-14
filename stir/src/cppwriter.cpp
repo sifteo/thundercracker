@@ -48,17 +48,18 @@ void CPPWriter::close()
 
 void CPPWriter::writeArray(const std::vector<uint8_t> &array)
 {
-    mStream <<
-	indent << "// " << array.size() << " bytes\n" <<
-	indent;
+    char buf[8];
+
+    mStream << indent;
 
     for (unsigned i = 0; i < array.size(); i++) {
 	if (i && !(i % 16))
 	    mStream << "\n" << indent;
 
-	unsigned byte = array[i];
-	mStream << "0x" << std::hex << (byte >> 4) << (byte & 0xF) << std::dec << ",";
+	sprintf(buf, "0x%02x,", array[i]);
+	mStream << buf;
     }
+
     mStream << "\n";
 }
 
@@ -69,18 +70,29 @@ CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
 
 void CPPSourceWriter::writeGroup(const Group &group)
 {
+    char buf[32];
+
+    sprintf(buf, "0x%016llx", (long long unsigned int) group.getSignature());
+
     mStream <<
 	"\n"
-	"static const uint8_t " << group.getName() << "_stream[] = {\n";
+	"static const struct {\n" <<
+	indent << "struct _SYSAssetGroupHeader hdr;\n" <<
+	indent << "uint8_t data[" << group.getLoadstream().size() << "];\n"
+	"} " << group.getName() << "_data = {{\n" <<
+	indent << "/* hdrSize   */ sizeof(struct _SYSAssetGroupHeader),\n" <<
+	indent << "/* reserved  */ 0,\n" <<
+	indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
+	indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
+	indent << "/* signature */ " << buf << ",\n"
+	"}, {\n";
 
     writeArray(group.getLoadstream());
 
     mStream <<
-	"};\n"
-	"\n"
-	"const Sifteo::AssetGroup " << group.getName() << " = {\n" <<
-	indent << group.getName() << "_stream, sizeof " << group.getName() << "_stream,\n"
-	"};\n";
+	"}};\n\n"
+	"Sifteo::AssetGroup " << group.getName() <<
+	" = {{ &" << group.getName() << "_data.hdr }};\n";
 }
 
 
@@ -140,7 +152,7 @@ void CPPHeaderWriter::writeGroup(const Group &group)
 {
     mStream << 
 	"\n"
-	"extern const Sifteo::AssetGroup " << group.getName() << ";\n";
+	"extern Sifteo::AssetGroup " << group.getName() << ";\n";
 }
 
 

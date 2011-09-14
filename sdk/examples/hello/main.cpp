@@ -7,13 +7,13 @@
 #include <stdio.h>   // Only available on the simulator, of course
 #include <sifteo.h>
 
-static void onCubeFound(CubeID c)
+static void onCubeFound(_SYSCubeID c)
 {
     printf("Found cube %d\n", c);
 }
 
 void siftmain()
 {
-    SYS_vectors.cubeFound = onCubeFound;
-    SYS_setEnabledCubes(0x07);
+    _SYS_vectors.cubeFound = onCubeFound;
+    _SYS_enableCubes(0x07);
 }

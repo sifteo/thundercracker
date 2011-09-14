@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "sha.h"
 #include "script.h"
 #include "proof.h"
 #include "cppwriter.h"
@@ -322,6 +323,28 @@ Group *Group::getDefault(lua_State *L)
     return obj;
 }
 
+uint64_t Group::getSignature() const
+{
+    /*
+     * Signatures are calculated automatically, as a portion of the
+     * SHA1 hash of the loadstream.
+     */
+
+    SHA_CTX ctx;
+    sha1_byte digest[SHA1_DIGEST_LENGTH];
+
+    SHA1_Init(&ctx);
+    SHA1_Update(&ctx, (sha1_byte *) &getLoadstream()[0], (unsigned) getLoadstream().size());
+    SHA1_Final(digest, &ctx);
+
+    uint64_t sig = 0;
+    for (unsigned i = 0; i < sizeof sig; i++) {
+	sig <<= 8;
+	sig |= digest[i];
+    }
+
+    return sig;
+}
 
 Image::Image(lua_State *L)
 {

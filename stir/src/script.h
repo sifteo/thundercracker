@@ -128,6 +128,7 @@ public:
 
     void setDefault(lua_State *L);
     static Group *getDefault(lua_State *L);
+    uint64_t getSignature() const;
 
 private:
     lua_Number quality;

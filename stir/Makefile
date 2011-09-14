@@ -21,6 +21,7 @@ OBJS_stir = \
 	src/command.o \
 	src/logger.o \
 	src/lodepng.o \
+	src/sha1.o \
 	$(OBJS_lua) \
 
 CDEPS = src/*.h

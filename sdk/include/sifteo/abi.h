@@ -11,6 +11,10 @@
  * syntactic sugar, this defines the rigid boundary between a game and
  * its execution environment. Everything in this file posesses a
  * binary compatibility guarantee.
+ *
+ * The ABI is defined in plain C, and all symbols are namespaced with
+ * '_SYS' so that it's clear they aren't meant to be used directly by
+ * game code. The one exception is siftmain(), the user entry point.
  */
 
 #ifndef _SIFTEO_ABI_H
@@ -25,37 +29,72 @@ extern "C" {
 
 /**
  * Data types which are valid across the user/system boundary.
+ *
+ * Data directions are from the userspace's perspective. IN is
+ * firmware -> game, OUT is game -> firmware.
  */
 
-#define NUM_CUBE_IDS   32
-typedef uint8_t CubeID;
-typedef uint32_t CubeIDVector;
+#define _SYS_NUM_CUBE_IDS   32
 
-struct AssetGroup;
+typedef uint8_t _SYSCubeID;
+typedef uint32_t _SYSCubeIDVector;
+
+/*
+ * XXX: It would be nice to further compress the loadstream when storing
+ *      it in the master's flash. There's a serious memory tradeoff here,
+ *      though, and right now I'm assuming RAM is more important than
+ *      flash to conserve. I've been using LZ77 successfully for this
+ *      compressor, but that requires a large output window buffer. This
+ *      is clearly an area for improvement, and we might be able to tweak
+ *      an existing compression algorithm to work well. Or perhaps we put
+ *      that effort into improving the loadstream codec.
+ */
+
+struct _SYSAssetGroupHeader {
+    uint8_t hdrSize;		/// OUT    Size of header / offset to compressed data
+    uint8_t reserved;		/// OUT    Reserved, must be zero
+    uint16_t numTiles;		/// OUT    Uncompressed size, in tiles
+    uint32_t dataSize;		/// OUT    Size of compressed data, in bytes
+    uint64_t signature;		/// OUT    Unique identity for this group
+};
+
+struct _SYSAssetGroupCube {
+    uint32_t baseAddr;		/// IN     Base address where this group is installed
+    uint32_t progress;		/// IN     Loading progress, in bytes
+};
+
+struct _SYSAssetGroup {
+    const struct _SYSAssetGroupHeader *hdr;	/// OUT    Static data for this asset group
+    struct _SYSAssetGroupCube *cubes;		/// IN     Per-cube information array (length >= MSB of reqCubes)
+    _SYSCubeIDVector reqCubes;			/// IN     Which cubes have requested to load this group?
+    _SYSCubeIDVector doneCubes;			/// IN     Which cubes have finished installing this group?
+};
+
+struct _SYSVideoBuffer {
+    uint8_t  bytes[1024];	/// OUT    Raw cube RAM contents
+    uint32_t cm64[16];		/// INOUT  Change map, at a resolution of 1 bit per 16-bit word
+    uint32_t cm4;		/// INOUT  Change map, at a resolution of 1 bit per 32 bytes
+};
 
 
 /**
  * Event vectors. These can be changed at runtime in order to handle
  * events within the game binary. All vectors are NULL (no-op) by
- * default.
+ * default. The vector table lives at an agreed-upon address in
+ * game-accessable RAM.
  */
 
-struct EventVectors {
-    void (*frame)();			/// Perform game logic or drawing updates for one frame
-    void (*cubeFound)(CubeID cid);
-    void (*cubeLost)(CubeID cid);
-    void (*loadAssetsDone)(CubeID cid);
+struct _SYSEventVectors {
+    void (*cubeFound)(_SYSCubeID cid);
+    void (*cubeLost)(_SYSCubeID cid);
+    void (*assetDone)(struct _SYSAssetGroup *group);
 };
 
-extern struct EventVectors SYS_vectors;
+extern struct _SYSEventVectors _SYS_vectors;
 
 
 /**
  * Entry point to the game binary.
- *
- * If it returns, that is equivalent to entering an infinite
- * SYS_yield() loop. Typically a game uses siftmain() to set up
- * event handlers in SYS_vectors, then it returns.
  */
 
 void siftmain(void);
@@ -65,12 +104,15 @@ void siftmain(void);
  * Low-level system call interface.
  */
     
-void SYS_exit(void);				/// Explicitly exit the game, returning to the main menu
-void SYS_yield(void);				/// Temporarily cede control to the firmware
-void SYS_paint(void);				/// Enqueue a new rendering frame
-void SYS_setEnabledCubes(CubeIDVector cv);	/// Which cubes will be trying to connect?
+void _SYS_exit(void);				/// Equivalent to return from siftmain()
+void _SYS_yield(void);				/// Temporarily cede control to the firmware
+void _SYS_draw(void);				/// Enqueue a new rendering frame
 
-void SYS_loadAssets(CubeID cid, struct AssetGroup *group);
+void _SYS_enableCubes(_SYSCubeIDVector cv);	/// Which cubes will be trying to connect?
+void _SYS_disableCubes(_SYSCubeIDVector cv);
+
+void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf);
+void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
 
 
 #ifdef __cplusplus

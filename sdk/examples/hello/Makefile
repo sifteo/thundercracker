@@ -7,7 +7,7 @@ BIN = hello
 OBJS = $(ASSETS).gen.o main.o
 
 CDEPS = $(SDK_DIR)/include/sifteo/*.h
-ASSETDEPS = $(ASSETS).lua *.png
+ASSETDEPS = $(STIR) $(ASSETS).lua *.png
 
 CCFLAGS += -Os -g -Werror -I$(SDK_DIR)/include
 LDFLAGS += -g

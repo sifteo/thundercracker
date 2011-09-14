@@ -11,7 +11,7 @@
  * desktop OS rather than for the actual master cube.
  */
 
-#include <sifteo/syscall.h>
+#include <sifteo/abi.h>
 #include "radio.h"
 
 
