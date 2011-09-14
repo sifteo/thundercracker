@@ -33,6 +33,8 @@ MainAssets = group{}
 -- left to right, top to bottom.
 
 Owlbear = image{"samples/owlbear.png", width=128, height=128}
+Disapproval = image{"samples/zspriteb.png", width=32, height=48}
+
 
 -- A font is a good example of an image with a very small per-frame
 -- size, but many many frames. This is a basic 8x16 pixel font.

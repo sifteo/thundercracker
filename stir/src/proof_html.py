@@ -39,31 +39,39 @@ header = """
       * Renders onto an HTML5 Canvas
       */
 
-     allTileGrids = [];
+     allTileGrids = {};
      highlightTile = null;
      nextHighlightTile = null;
 
      function TileGrid(pool, canvasId, tileSize) {
        var obj = this;
 
-       allTileGrids.push(this);
+       allTileGrids[canvasId] = this;
 
        this.pool = pool;
-       this.canvas = document.getElementById(canvasId);
+       this.canvas = document.getElementById("i" + canvasId);
        this.ctx = this.canvas.getContext("2d");
 
        this.size = tileSize;
        this.width = this.canvas.width / this.size;
        this.height = this.canvas.height / this.size;
+       this.mouse = null
 
        this.canvas.onmousemove = function(evt) {
-         setTileHighlight(obj.tileAt(Math.floor(mouseX(evt) / obj.size),
-                                     Math.floor(mouseY(evt) / obj.size)));
+         obj.updateMouse([Math.floor(mouseX(evt) / obj.size),
+                          Math.floor(mouseY(evt) / obj.size)]);
        }
 
        this.canvas.onmouseout = function(evt) {
-         setTileHighlight(null);
+         obj.updateMouse(null);
        }
+     }
+
+     TileGrid.prototype.updateMouse = function(mouse) {
+       if (mouse)
+         setTileHighlight(this.tileAt(mouse[0], mouse[1]));
+       else
+         setTileHighlight(null);
      }
 
      TileGrid.prototype.range = function(begin, end) {
@@ -227,6 +235,52 @@ header = """
        return y - evt.target.offsetTop;
      }
 
+     // Keep track of a global 'mode' for each multi-frame asset to display in.
+     displayMode = {}
+     animFrame = {}
+     animTimers = {}
+
+     function toggleDisplayMode(firstId, idCount, mode) {
+       if (displayMode[firstId] == mode)
+         mode = null;
+
+       displayMode[firstId] = mode;
+
+       if (mode == "anim") {
+         // Animation sequence only resets on "play". When paused, we intentionally
+         // keep the last previous frame visible. (Play/Pause behaviour)
+         animFrame[firstId] = 0;
+       }
+
+       document.getElementById("buttonAll" + firstId).className = (mode == "all") ? "button buttonOn" : "button";
+       document.getElementById("buttonAnim" + firstId).className = (mode == "anim") ? "button buttonOn" : "button";
+
+       updateVisibility(firstId, idCount);
+
+       if (animTimers[firstId]) {
+         clearInterval(animTimers[firstId]);
+         animTimers[firstId] = null;
+       }
+       if (mode == "anim") {
+         animTimers[firstId] = setInterval(function() { updateVisibility(firstId, idCount); }, 100);
+       }
+     }
+
+     function updateVisibility(firstId, idCount) {
+       var mode = displayMode[firstId];
+       var frame = animFrame[firstId];
+
+       if (mode == "anim") {
+         frame = (frame + 1) % idCount;
+         animFrame[firstId] = frame;
+       }
+
+       for (var i = 0; i < idCount; i++) {
+         var visible = mode == "all" ? true : frame == i;
+         document.getElementById("i" + (firstId + i)).style.display = visible ? "inline" : "none";
+       }
+     }
+
   </script> 
   <style> 
  
@@ -263,7 +317,39 @@ header = """
       padding: 0;
       margin: 0;
     }
+
+    span.button {
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -o-user-select: none;
+      user-select: none;
+      cursor: pointer;
+
+      vertical-align: middle;
+      font-size: 12px; 
+      margin: 0 0 0 2px;
+      padding: 1px 5px;
+      background: #555;
+      color: #000;
+    }
+
+    span.buttonOn {
+      background: #fb7;
+    }
  
+    span.button:hover {
+      background: #888;
+    }
+
+    span.buttonOn:hover {
+      background: #fda;
+    }
+
+    span.button:first-child {
+      margin: 0 0 0 12px;
+    }
+
   </style> 
 </head> 
 <body onload="onload()">

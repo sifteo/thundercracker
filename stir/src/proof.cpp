@@ -131,19 +131,33 @@ void ProofWriter::writeGroup(const Group &group)
 
     defineTiles(group.getPool());
 
-    tileRange(0, group.getPool().size(), Tile::SIZE, 64);
+    tileRange(0, group.getPool().size(), Tile::SIZE, 96);
 
     for (std::set<Image*>::iterator i = group.getImages().begin();
 	 i != group.getImages().end(); i++) {
 
 	Image *image = *i;
 
-	mStream << "<h2>" << HTMLEscape(image->getName()) << "</h2>\n";
+	mStream << "<h2>" << HTMLEscape(image->getName());
 
+	unsigned firstId = mID + 1;
+	unsigned idCount = image->getGrids().size();
+	if (idCount > 1) {
+	    mStream << "<span class=\"button\" id=\"buttonAll" << firstId
+		    << "\" onclick=\"toggleDisplayMode(" << firstId << ", " << idCount << ", \'all\')\">all</span>";
+
+	    mStream << "<span class=\"button\" id=\"buttonAnim" << firstId
+		    << "\" onclick=\"toggleDisplayMode(" << firstId << ", " << idCount << ", \'anim\')\">play</span>";
+	}
+
+	mStream << "</h2>\n";
+
+        bool hidden = false;
 	for (std::vector<TileGrid>::const_iterator j = image->getGrids().begin();
 	     j != image->getGrids().end(); j++) {
 
-	    tileGrid(*j, Tile::SIZE * 2);
+	    tileGrid(*j, Tile::SIZE * 2, hidden);
+            hidden = true;
 	}
     }
 
@@ -152,14 +166,10 @@ void ProofWriter::writeGroup(const Group &group)
 
 void ProofWriter::close()
 {
-    if (!mStream.is_open())
-	return;
-
-    mStream <<
-	"<div class=\"clear\" />\n"
-	"</body></html>\n";
-
-    mStream.close();
+    if (mStream.is_open()) {
+	mStream << "</body></html>\n";
+	mStream.close();
+    }
 }
 
 void ProofWriter::defineTiles(const TilePool &pool)
@@ -192,12 +202,19 @@ void ProofWriter::defineTiles(const TilePool &pool)
     mStream << "]);</script>\n";
 }
 
-unsigned ProofWriter::newCanvas(unsigned tilesW, unsigned tilesH, unsigned tileSize)
+unsigned ProofWriter::newCanvas(unsigned tilesW, unsigned tilesH, unsigned tileSize, bool hidden)
 {
     mID++;
+
     mStream << "<canvas id=\"i" << mID << "\" width=\""
 	    << (tilesW * tileSize) << "px\" height=\""
-	    << (tilesH * tileSize) << "px\"></canvas>";
+	    << (tilesH * tileSize) << "px\" ";
+
+    if (hidden)
+	mStream << "style=\"display: none;\" ";
+
+    mStream << "></canvas>";
+
     return mID;
 }
 
@@ -206,15 +223,15 @@ void ProofWriter::tileRange(unsigned begin, unsigned end, unsigned tileSize, uns
     unsigned height = ((end - begin) + (width - 1)) / width;
     unsigned id = newCanvas(width, height, tileSize);
 
-    mStream << "<script>(new TileGrid(pool, \"i" << id << "\", " << tileSize
+    mStream << "<script>(new TileGrid(pool, " << id << ", " << tileSize
 	    << ")).range(" << begin << ", " << end << ");</script>";
 }
 
-void ProofWriter::tileGrid(const TileGrid &grid, unsigned tileSize)
+void ProofWriter::tileGrid(const TileGrid &grid, unsigned tileSize, bool hidden)
 {
-    unsigned id = newCanvas(grid.width(), grid.height(), tileSize);
+    unsigned id = newCanvas(grid.width(), grid.height(), tileSize, hidden);
 
-    mStream << "<script>(new TileGrid(pool, \"i" << id << "\", " << tileSize
+    mStream << "<script>(new TileGrid(pool, " << id << ", " << tileSize
 	    << ")).array([";
 
     for (unsigned y = 0; y < grid.height(); y++)
