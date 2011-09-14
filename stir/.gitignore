@@ -1,6 +1,5 @@
 *.o
 *~
-lsdec
 stir
 tilemap.bin
 loadstream.bin

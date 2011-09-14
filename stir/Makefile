@@ -1,4 +1,4 @@
-BINS = stir lsdec
+BINS = stir
 
 OBJS_lua = \
 	src/lua/lapi.o src/lua/lcode.o src/lua/ldebug.o src/lua/ldo.o src/lua/ldump.o \
@@ -23,10 +23,6 @@ OBJS_stir = \
 	src/lodepng.o \
 	$(OBJS_lua) \
 
-OBJS_lsdec = \
-	src/lsdec.o \
-	src/lodepng.o \
-
 CDEPS = src/*.h
 
 PYTHON := python
@@ -37,9 +33,6 @@ CCFLAGS := $(CFLAGS)
 all: $(BINS)
 
 stir: $(OBJS_stir)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
-lsdec: $(OBJS_lsdec)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp $(CDEPS)
