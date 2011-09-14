@@ -87,8 +87,11 @@ void CPPSourceWriter::writeGroup(const Group &group)
 CPPHeaderWriter::CPPHeaderWriter(Logger &log, const char *filename)
     : CPPWriter(log, filename)
 {
-    createGuardName(filename);
-    head();
+    if (filename)
+	createGuardName(filename);
+
+    if (mStream.is_open())
+	head();
 }
 
 void CPPHeaderWriter::createGuardName(const char *filename)
