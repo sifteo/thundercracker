@@ -251,7 +251,7 @@ const char *Stir::ProofWriter::header =
     "\n"
     "       displayMode[firstId] = mode;\n"
     "\n"
-    "       if (mode == \"anim\") {\n"
+    "       if (mode == \"anim\" || mode == \"all\") {\n"
     "         // Animation sequence only resets on \"play\". When paused, we intentionally\n"
     "         // keep the last previous frame visible. (Play/Pause behaviour)\n"
     "         animFrame[firstId] = 0;\n"

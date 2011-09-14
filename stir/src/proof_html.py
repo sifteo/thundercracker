@@ -246,7 +246,7 @@ header = """
 
        displayMode[firstId] = mode;
 
-       if (mode == "anim") {
+       if (mode == "anim" || mode == "all") {
          // Animation sequence only resets on "play". When paused, we intentionally
          // keep the last previous frame visible. (Play/Pause behaviour)
          animFrame[firstId] = 0;
