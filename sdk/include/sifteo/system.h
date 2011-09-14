@@ -18,28 +18,6 @@ namespace Sifteo {
 
 class System {
  public:
-
-    /**
-     * Do nothing, until any event arrives. This allows the firmware
-     * to schedule other asynchronous operations now, or to put the
-     * CPU in a lower power mode.
-     */
-
-    static void yield() {
-	SYS_yield();
-    }
-
-    /**
-     * Draw one frame, nearly simultaneously, on every connected cube
-     * that has pending graphical changes. If we're producing frames
-     * faster than the cube's display refresh rate, this call will
-     * block briefly to keep the game's frame rate matched with the
-     * hardware frame rate.
-     */
-
-    static void draw() {
-	SYS_draw();
-    }
 };
 
 

@@ -12,10 +12,13 @@
  */
 
 #include <sifteo/syscall.h>
+#include "radio.h"
 
 
 int main(int argc, char **argv)
 {
+    Sifteo::Radio::open();
+
     siftmain();
 
     return 0;
