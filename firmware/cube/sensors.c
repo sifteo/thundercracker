@@ -32,13 +32,13 @@ void adc_isr(void) __interrupt(VECTOR_MISC) __naked
 	jb	acc.2, 1$
 
 	; Channel 0
-	mov	a, (_ack_data + ACK_ACCEL_TOTALS + 0)
+	mov	a, (_ack_data + RF_ACK_ACCEL_TOTALS + 0)
 	add	a, _ADCDATH
-	mov	(_ack_data + ACK_ACCEL_TOTALS + 0), a
-	mov	a, (_ack_data + ACK_ACCEL_TOTALS + 1)
+	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 0), a
+	mov	a, (_ack_data + RF_ACK_ACCEL_TOTALS + 1)
 	addc	a, #0
-	mov	(_ack_data + ACK_ACCEL_TOTALS + 1), a
-	inc	(_ack_data + ACK_ACCEL_COUNTS + 0)
+	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 1), a
+	inc	(_ack_data + RF_ACK_ACCEL_COUNTS + 0)
 
 	xrl	_ADCCON1,#0x04			; Channel swap
 	pop	psw
@@ -46,13 +46,13 @@ void adc_isr(void) __interrupt(VECTOR_MISC) __naked
 	reti
 
 	; Channel 1
-1$:	mov	a, (_ack_data + ACK_ACCEL_TOTALS + 2)
+1$:	mov	a, (_ack_data + RF_ACK_ACCEL_TOTALS + 2)
 	add	a, _ADCDATH
-	mov	(_ack_data + ACK_ACCEL_TOTALS + 2), a
-	mov	a, (_ack_data + ACK_ACCEL_TOTALS + 3)
+	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 2), a
+	mov	a, (_ack_data + RF_ACK_ACCEL_TOTALS + 3)
 	addc	a, #0
-	mov	(_ack_data + ACK_ACCEL_TOTALS + 3), a
-	inc	(_ack_data + ACK_ACCEL_COUNTS + 1)
+	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 3), a
+	inc	(_ack_data + RF_ACK_ACCEL_COUNTS + 1)
 
 	xrl	_ADCCON1,#0x04			; Channel swap
 	pop	psw

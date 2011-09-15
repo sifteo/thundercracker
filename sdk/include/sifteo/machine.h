@@ -7,11 +7,19 @@
 #ifndef _SIFTEO_MACHINE_H
 #define _SIFTEO_MACHINE_H
 
+#include <stdint.h>
+
 /*
- * Machine-specific definitions
+ * Machine-specific utility definitions
  */
 
+#ifndef MIN
+#define MIN(a,b)   ((a) < (b) ? (a) : (b))
+#define MAX(a,b)   ((a) > (b) ? (a) : (b))
+#endif
+
 namespace Sifteo {
+
 
 /**
  * Atomic operations 

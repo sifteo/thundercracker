@@ -40,10 +40,60 @@
 #define RF_OP_FLASH_QUEUE	0xc0    // Write arg+1 bytes to flash loadstream FIFO
 
 // Special minor opcodes
-#define RF_OP_VRAM_ADDRESS	0x00	// Change the VRAM write pointer
-#define RF_OP_VRAM_DIRECT	0x01	// Change write mode: Direct
-#define RF_OP_VRAM_VERTICAL	0x02	// Change write mode: Top-to-bottom
-#define RF_OP_FLASH_RESET       0x03    // Reset the flash decoder state machine
+#define RF_OP_NOP		0x00	// Reserved for explicit no-op
+#define RF_OP_FLASH_RESET       0x01    // Reset the flash decoder state machine
+
+/*
+ * ACK packet format
+ */
+
+#define RF_ACK_LENGTH  		12
+
+// Offset defines (for use in inline assembly)
+#define RF_ACK_ACCEL_COUNTS	1
+#define RF_ACK_ACCEL_TOTALS	3
+
+typedef union {
+    uint8_t bytes[RF_ACK_LENGTH];
+    struct {
+	/*
+	 * Our standard response packet format. This currently all
+	 * comes to a total of 15 bytes. We probably also want a
+	 * variable-length "tail" on this packet, to allow us to
+	 * transmit specific data that the master requested, like HWID
+	 * or firmware version. But this is the high-frequency
+	 * telemetry data that we ALWAYS send at the full packet rate.
+	 */
+
+	/*
+	 * For synchronizing LCD refreshes, the master can keep track
+	 * of how many repaints the cube has performed. Ideally these
+	 * repaints would be in turn sync'ed with the LCDC's hardware
+	 * refresh timer. If we're tight on space, we don't need a
+	 * full byte for this. Even a one-bit toggle woudl work,
+	 * though we might want two bits to allow deeper queues.
+	 */
+	uint8_t frame_count;
+
+        // Averaged accel data
+	uint8_t accel_count[2];
+	uint8_t accel_total_bytes[4];  // Two unaligned 16-bit values
+
+	/*
+	 * Need ~5 bits per sensor (5 other cubes * 4 sides + 1 idle =
+	 * 21 states) So, there are plenty of bits free in here to
+	 * encode things like button state.
+	 */
+	uint8_t neighbor[4];
+
+	/*
+	 * Number of bytes processed by the flash decoder so
+	 * far. Increments and wraps around, never decrements or
+	 * resets.
+	 */
+	uint8_t flash_fifo_bytes;
+    };
+} RF_ACKType;
 
 /*
  * Flash Loadstream codec

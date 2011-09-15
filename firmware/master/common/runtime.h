@@ -22,13 +22,15 @@ class Runtime {
     static void run();
     static void exit();
 
-    static bool checkUserPointer(void *ptr, intptr_t size, bool allowNULL=false) {
+    static bool checkUserPointer(const void *ptr, intptr_t size, bool allowNULL=false) {
 	/*
 	 * XXX: Validate a memory address that was provided to us by the game,
 	 *      make sure it isn't outside the game's sandbox region. This code
 	 *      MUST use overflow-safe arithmetic!
 	 *
 	 * Also checks for NULL pointers, assuming allowNULL isn't true.
+	 *
+	 * May be called anywhere, at any time, including from interrupt context.
 	 */
 
 	if (!ptr && !allowNULL)

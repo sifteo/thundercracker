@@ -12,6 +12,7 @@
 #include <sifteo/abi.h>
 #include <sifteo/machine.h>
 #include "radio.h"
+#include "runtime.h"
 
 
 /**
@@ -34,10 +35,13 @@ class CubeSlot {
 
     static CubeSlot instances[_SYS_NUM_CUBE_SLOTS];
 
-    // One-bit flags for each cube are packed into global vectors
-    static _SYSCubeIDVector vecEnabled;
-    static _SYSCubeIDVector flashResetWait;
-    static _SYSCubeIDVector flashResetSent;
+    /*
+     * One-bit flags for each cube are packed into global vectors
+     */
+    static _SYSCubeIDVector vecEnabled;		/// Cube enabled
+    static _SYSCubeIDVector flashResetWait;	/// We need to reset flash before writing to it
+    static _SYSCubeIDVector flashResetSent;	/// We've sent an unacknowledged flash reset	
+    static _SYSCubeIDVector ackValid;		/// At least one valid ACK has been received
 
     _SYSCubeID id() const {
 	return this - &instances[0];
@@ -57,6 +61,18 @@ class CubeSlot {
 
     bool isAssetGroupLoaded(_SYSAssetGroup *a) {
 	return !!(bit() & a->doneCubes);
+    }
+
+    _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
+	/*
+	 * Safely return this cube's per-cube data on a particular
+	 * asset group.  If the user-pointer check fails, returns
+	 * NULL.
+	 */
+	_SYSCubeID i = id();
+	if (Runtime::checkUserPointer(group->cubes, (sizeof group->cubes[0]) * (i + 1)))
+	    return &group->cubes[i];
+	return 0;
     }
 
     void loadAssets(_SYSAssetGroup *a);
@@ -84,9 +100,11 @@ class CubeSlot {
     _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
 
-    /// State of flash loader
-    uint8_t loadPrevACK;
-    uint8_t loadBufferAvail;
+    uint8_t rfOpcode;		/// Current in-progress radio opcode
+    uint8_t loadPrevACK;	/// Last ACK token from flash decoder
+    uint8_t loadBufferAvail;	/// Amount of flash buffer space available
+
+    void txContinue(PacketTransmission &tx);
 };
 
 

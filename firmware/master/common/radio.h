@@ -9,7 +9,9 @@
 #ifndef _SIFTEO_RADIO_H
 #define _SIFTEO_RADIO_H
 
+#include <string.h>
 #include <sifteo/abi.h>
+#include "runtime.h"
 
 class RadioManager;
 
@@ -35,6 +37,29 @@ struct PacketBuffer {
     static const unsigned MAX_LEN = 32;
     uint8_t *bytes;
     unsigned len;
+
+    bool isFull() {
+	return len == MAX_LEN;
+    }
+
+    unsigned bytesFree() {
+	return MAX_LEN - len;
+    }
+
+    void append(uint8_t b) {
+	bytes[len++] = b;
+    }
+
+    void append(uint8_t *src, unsigned count) {
+	memcpy(bytes + len, src, count);
+	len += count;
+    }
+
+    void appendUser(uint8_t *src, unsigned count) {
+	if (Runtime::checkUserPointer(src, count))
+	    memcpy(bytes + len, src, count);
+	len += count;
+    }
 };
 
 /**

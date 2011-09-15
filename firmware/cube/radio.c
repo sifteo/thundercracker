@@ -15,7 +15,7 @@
  * The ACK reply buffer lives in near memory. It needs to, so that
  * the ADC ISR can access it very quickly.
  */
-union ack_format __near ack_data;
+RF_ACKType __near ack_data;
 
 /*
  * Assembly macros.
@@ -266,7 +266,7 @@ rx_complete:
 	clr	_RF_CSN					; Begin SPI transaction
 	mov	_SPIRDAT, #RF_CMD_W_ACK_PAYLD		; Start sending ACK packet
 	mov	r1, #_ack_data
-	mov	r0, #ACK_LENGTH
+	mov	r0, #RF_ACK_LENGTH
 
 3$:	mov	_SPIRDAT, @r1
 	inc	r1
@@ -280,12 +280,12 @@ rx_complete:
 
 	; Clear the accelerometer accumulators
 
-	mov	(_ack_data + ACK_ACCEL_TOTALS + 0), #0
-	mov	(_ack_data + ACK_ACCEL_TOTALS + 1), #0
-	mov	(_ack_data + ACK_ACCEL_TOTALS + 2), #0
-	mov	(_ack_data + ACK_ACCEL_TOTALS + 3), #0
-	mov	(_ack_data + ACK_ACCEL_COUNTS + 0), #0
-	mov	(_ack_data + ACK_ACCEL_COUNTS + 1), #0
+	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 0), #0
+	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 1), #0
+	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 2), #0
+	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 3), #0
+	mov	(_ack_data + RF_ACK_ACCEL_COUNTS + 0), #0
+	mov	(_ack_data + RF_ACK_ACCEL_COUNTS + 1), #0
 
 	mov	_rf_vram_ptr, dpl
 	mov	(_rf_vram_ptr + 1), dph
