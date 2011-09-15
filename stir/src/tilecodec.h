@@ -76,7 +76,7 @@ class RLECodec4 {
     void flush(std::vector<uint8_t>& out);
 
  private:
-    static const unsigned MAX_RUN = 15;
+    static const unsigned MAX_RUN = 17;
     
     uint8_t runNybble, bufferedNybble;
     bool isNybbleBuffered;
