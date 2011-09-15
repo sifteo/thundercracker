@@ -332,9 +332,10 @@ uint64_t Group::getSignature() const
 
     SHA_CTX ctx;
     sha1_byte digest[SHA1_DIGEST_LENGTH];
+    std::vector<uint8_t> ls = getLoadstream();
 
     SHA1_Init(&ctx);
-    SHA1_Update(&ctx, (sha1_byte *) &getLoadstream()[0], (unsigned) getLoadstream().size());
+    SHA1_Update(&ctx, &ls[0], ls.size());
     SHA1_Final(digest, &ctx);
 
     uint64_t sig = 0;
