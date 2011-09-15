@@ -9,9 +9,10 @@ OBJS = \
 	sim/radio_nethub.o \
 	sim/main.o \
 
-CDEPS = common/*.h $(SDK_DIR)/include/sifteo/*.h
+FIRMWARE_INC = ../include
+CDEPS = common/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
 
-CCFLAGS += -Os -g -Werror -I$(SDK_DIR)/include -Icommon
+CCFLAGS += -Os -g -Werror -I$(SDK_DIR)/include -I$(FIRMWARE_INC) -Icommon
 
 $(BIN): $(OBJS)
 	rm -f $@

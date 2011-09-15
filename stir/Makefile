@@ -24,10 +24,12 @@ OBJS_stir = \
 	src/sha1.o \
 	$(OBJS_lua) \
 
-CDEPS = src/*.h
+FIRMWARE_INC = ../firmware/include
+CDEPS = src/*.h $(FIRMWARE_INC)/*.h
 
 PYTHON := python
-CFLAGS += -O3 -g -ffast-math -Werror -Wall -DLUA_USE_MKSTEMP
+
+CFLAGS += -O3 -g -ffast-math -Werror -Wall -DLUA_USE_MKSTEMP -I$(FIRMWARE_INC)
 LDFLAGS += -g -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 

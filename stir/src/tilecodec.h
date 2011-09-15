@@ -157,25 +157,6 @@ class TileCodec {
     void dumpStatistics(Logger &log);
 
  private:
-
-    // Low 5 bits is an argument, upper 3 bits are an opcode:
-    enum Opcode {
-	OP_MASK		= 0xe0,
-	ARG_MASK	= 0x1f,
-
-	OP_LUT1		= 0x00,	// Single color 16-bit LUT entry (argument is index)
-	OP_LUT16	= 0x20,	// Up to 16 LUT entries follow a 16-bit vector of indices
-	OP_TILE_P0	= 0x40, // One trivial solid-color tile (arg = color index)
-	OP_TILE_P1_R4	= 0x60,	// Tiles with 1-bit pixels and 4-bit RLE encoding (arg = count-1)
-	OP_TILE_P2_R4	= 0x80,	// Tiles with 2-bit pixels and 4-bit RLE encoding (arg = count-1)
-	OP_TILE_P4_R4	= 0xa0,	// Tiles with 4-bit pixels and 4-bit RLE encoding (arg = count-1)
-	OP_TILE_P16_RM	= 0xc0, // Tile with 16-bit pixels and 8-bit repetition mask (arg = count-1)
-	OP_SPECIAL	= 0xe0, // Special symbols (below)
-
-	OP_ADDRESS	= 0xe1, // Followed by a 2-byte (lat1:lat2) tile address
-	OP_ERASE        = 0xf5, // Followed by count-1 of 64K blocks, and a 1-byte checksum
-    };
-
     std::vector<uint8_t>& out;
     std::vector<uint8_t> dataBuf;
 

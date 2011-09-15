@@ -9,6 +9,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include <protocol.h>
 #include "tilecodec.h"
 
 namespace Stir {
@@ -201,17 +202,17 @@ void TileCodec::encode(const TileRef tile, bool autoErase)
 
     switch (colorMode) {
 
-	/* Trivial one-color tile. Just emit a bare OP_TILE_P0 opcode. */
+	/* Trivial one-color tile. Just emit a bare FLS_OP_TILE_P0 opcode. */
     case TilePalette::CM_LUT1:
-	encodeOp(OP_TILE_P0 | lut.findColor(pal.colors[0]));
+	encodeOp(FLS_OP_TILE_P0 | lut.findColor(pal.colors[0]));
 	newStatsTile(colorMode);
 	return;
 
 	/* Repeatable tile types */
-    case TilePalette::CM_LUT2:	tileOpcode = OP_TILE_P1_R4;	break;
-    case TilePalette::CM_LUT4:	tileOpcode = OP_TILE_P2_R4;	break;
-    case TilePalette::CM_LUT16:	tileOpcode = OP_TILE_P4_R4;	break;
-    default:			tileOpcode = OP_TILE_P16_RM;	break;
+    case TilePalette::CM_LUT2:	tileOpcode = FLS_OP_TILE_P1_R4;	break;
+    case TilePalette::CM_LUT4:	tileOpcode = FLS_OP_TILE_P2_R4;	break;
+    case TilePalette::CM_LUT16:	tileOpcode = FLS_OP_TILE_P4_R4;	break;
+    default:			tileOpcode = FLS_OP_TILE_P16;	break;
     }
 
     /*
@@ -220,8 +221,8 @@ void TileCodec::encode(const TileRef tile, bool autoErase)
      */
 
     if (!opIsBuffered
-	|| tileOpcode != (opcodeBuf & OP_MASK)
-	|| (opcodeBuf & ARG_MASK) == ARG_MASK)
+	|| tileOpcode != (opcodeBuf & FLS_OP_MASK)
+	|| (opcodeBuf & FLS_ARG_MASK) == FLS_ARG_MASK)
 	encodeOp(tileOpcode);
     else
 	opcodeBuf++;
@@ -233,10 +234,10 @@ void TileCodec::encode(const TileRef tile, bool autoErase)
     newStatsTile(colorMode);
 
     switch (tileOpcode) {
-    case OP_TILE_P1_R4:		encodeTileRLE4(tile, 1);	break;
-    case OP_TILE_P2_R4:		encodeTileRLE4(tile, 2);	break;
-    case OP_TILE_P4_R4:		encodeTileRLE4(tile, 4);	break;
-    case OP_TILE_P16_RM:        encodeTileMasked16(tile);	break;
+    case FLS_OP_TILE_P1_R4:	encodeTileRLE4(tile, 1);	break;
+    case FLS_OP_TILE_P2_R4:	encodeTileRLE4(tile, 2);	break;
+    case FLS_OP_TILE_P4_R4:	encodeTileRLE4(tile, 4);	break;
+    case FLS_OP_TILE_P16:	encodeTileMasked16(tile);	break;
     }
 }
 
@@ -278,10 +279,10 @@ void TileCodec::encodeLUT(uint16_t newColors)
 {
     if (newColors & (newColors - 1)) {
 	/*
-	 * More than one new color. Emit OP_LUT16.
+	 * More than one new color. Emit FLS_OP_LUT16.
 	 */
 
-	encodeOp(OP_LUT16);
+	encodeOp(FLS_OP_LUT16);
 	encodeWord(newColors);
 
 	for (unsigned index = 0; index < 16; index++)
@@ -290,12 +291,12 @@ void TileCodec::encodeLUT(uint16_t newColors)
 
     } else {
 	/*
-	 * Exactly one new color. Use OP_LUT1.
+	 * Exactly one new color. Use FLS_OP_LUT1.
 	 */
 
 	for (unsigned index = 0; index < 16; index++)
 	    if (newColors & (1 << index)) {
-		encodeOp(OP_LUT1 | index);
+		encodeOp(FLS_OP_LUT1 | index);
 		encodeWord(lut.colors[index].value);
 		break;
 	    }
@@ -388,7 +389,7 @@ void TileCodec::address(FlashAddress addr)
 {
     currentAddress = addr;
 
-    encodeOp(OP_ADDRESS);
+    encodeOp(FLS_OP_ADDRESS);
     dataBuf.push_back(addr.lat1());
     dataBuf.push_back(addr.lat2());
     flush();
@@ -401,7 +402,7 @@ void TileCodec::erase(unsigned numBlocks)
 	uint8_t check = -count -currentAddress.lat1() - currentAddress.lat2();
 	check ^= 0xFF;
 
-	encodeOp(OP_ERASE);
+	encodeOp(FLS_OP_ERASE);
 	dataBuf.push_back(count);
 	dataBuf.push_back(check);
     }

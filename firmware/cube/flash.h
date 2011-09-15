@@ -10,16 +10,15 @@
 #define _FLASH_H
 
 #include <stdint.h>
+
+#include <protocol.h>
 #include "hardware.h"
 
 /*
  * High-level loadstream decoder interface
  */
 
-#define FLASH_FIFO_MASK    63
-#define FLASH_HEAD_RESET   0xFF		// Special value, reset the flash state machine
-
-volatile extern uint8_t __idata flash_fifo[FLASH_FIFO_MASK + 1];
+volatile extern uint8_t __idata flash_fifo[FLS_FIFO_SIZE];
 volatile extern uint8_t flash_fifo_head;
 
 #pragma callee_saves flash_init,flash_erase,flash_program_start,flash_program_word

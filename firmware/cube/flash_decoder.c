@@ -32,28 +32,11 @@
 #include "flash.h"
 #include "hardware.h"
 #include "radio.h"
+#include <protocol.h>
 
-volatile uint8_t __idata flash_fifo[FLASH_FIFO_MASK + 1];
+volatile uint8_t __idata flash_fifo[FLS_FIFO_SIZE];
 volatile uint8_t flash_fifo_head;
 
-
-/*
- * Loadstream codec constants
- */
-
-#define LUT_SIZE	16
-#define OP_MASK	 	0xe0
-#define ARG_MASK 	0x1f
-#define OP_LUT1		0x00
-#define OP_LUT16	0x20
-#define OP_TILE_P0	0x40
-#define OP_TILE_P1_R4	0x60
-#define OP_TILE_P2_R4	0x80
-#define OP_TILE_P4_R4	0xa0
-#define OP_TILE_P16	0xc0
-#define OP_SPECIAL	0xe0
-#define OP_ADDRESS	0xe1
-#define OP_ERASE	0xf5
 
 /*
  * Loadstream codec state
@@ -68,7 +51,7 @@ union word16 {
 
 // Color lookup table
 static __idata struct {
-    union word16 colors[LUT_SIZE];
+    union word16 colors[FLS_LUT_SIZE];
     union word16 p16;
 } lut;
 
@@ -145,7 +128,7 @@ void flash_handle_fifo(void)
      * initiating a reset isn't especially important.
      */
     
-    if (flash_fifo_head == FLASH_HEAD_RESET) {
+    if (flash_fifo_head == FLS_FIFO_RESET) {
 	flash_fifo_head = 0;
 	flash_init();
 	ack_data.flash_fifo_bytes++;
@@ -174,7 +157,7 @@ void flash_handle_fifo(void)
      */
 
     byte = flash_fifo[fifo_tail];	
-    fifo_tail = (fifo_tail + 1) & FLASH_FIFO_MASK;
+    fifo_tail = (fifo_tail + 1) & (FLS_FIFO_SIZE - 1);
     ack_data.flash_fifo_bytes++;
 
     __asm
@@ -196,17 +179,17 @@ void flash_handle_fifo(void)
 static void state_OPCODE(void) __naked
 {
     opcode = byte;
-    switch (opcode & OP_MASK) {
+    switch (opcode & FLS_OP_MASK) {
 
-    case OP_LUT1:
+    case FLS_OP_LUT1:
 	state = state_LUT1_COLOR1;
 	STATE_RETURN();
 
-    case OP_LUT16:
+    case FLS_OP_LUT16:
 	state = state_LUT16_VEC1;
 	STATE_RETURN();
 
-    case OP_TILE_P0:
+    case FLS_OP_TILE_P0:
 	// Trivial solid-color tile, no repeats
 	__asm
 	    mov   a, _byte
@@ -225,37 +208,37 @@ static void state_OPCODE(void) __naked
 	__endasm ;
 	STATE_RETURN();
 	
-    case OP_TILE_P1_R4:
+    case FLS_OP_TILE_P1_R4:
 	counter = 64;
 	ovl.rle1 = 0xFF;
 	state = state_TILE_P1_R4;
 	STATE_RETURN();
 
-    case OP_TILE_P2_R4:
+    case FLS_OP_TILE_P2_R4:
 	counter = 64;
 	ovl.rle1 = 0xFF;
 	state = state_TILE_P2_R4;
 	STATE_RETURN();
 
-    case OP_TILE_P4_R4:
+    case FLS_OP_TILE_P4_R4:
 	counter = 64;
 	ovl.rle1 = 0xFF;
 	state = state_TILE_P4_R4;
 	STATE_RETURN();
 	
-    case OP_TILE_P16:
+    case FLS_OP_TILE_P16:
 	counter = 8;
 	state = state_TILE_P16_MASK;
 	STATE_RETURN();
 
-    case OP_SPECIAL:
+    case FLS_OP_SPECIAL:
 	switch (opcode) {
 	    
-	case OP_ADDRESS:
+	case FLS_OP_ADDRESS:
 	    state = state_ADDR_LOW;
 	    STATE_RETURN();
 
-	case OP_ERASE:
+	case FLS_OP_ERASE:
 	    state = state_ERASE_COUNT;
 	    STATE_RETURN();
 	    
@@ -383,7 +366,7 @@ static void state_TILE_P1_R4(void) __naked
 
     no_runs:
 	if (!counter || (counter & 0x80))
-	    if (opcode & ARG_MASK) {
+	    if (opcode & FLS_ARG_MASK) {
 		opcode--;
 		counter += 64;
 	    } else {
@@ -431,7 +414,7 @@ static void state_TILE_P2_R4(void) __naked
 
     no_runs:
 	if (!counter || (counter & 0x80))
-	    if (opcode & ARG_MASK) {
+	    if (opcode & FLS_ARG_MASK) {
 		opcode--;
 		counter += 64;
 	    } else {
@@ -476,7 +459,7 @@ static void state_TILE_P4_R4(void) __naked
     
     no_runs:
        if (!counter || (counter & 0x80))
-           if (opcode & ARG_MASK) {
+           if (opcode & FLS_ARG_MASK) {
                opcode--;
                counter += 64;
            } else {
@@ -494,7 +477,7 @@ static void state_TILE_P4_R4(void) __naked
 	do {					\
 	    if (ovl.rle1 & 1) {			\
 		state = state_TILE_P16_LOW;	\
-		STATE_RETURN();				\
+		STATE_RETURN();			\
 	    }					\
 	    flash_program_word(lut.p16.word);	\
 	    ovl.rle1 = rr(ovl.rle1);		\
@@ -504,7 +487,7 @@ static void state_TILE_P4_R4(void) __naked
 #define P16_NEXT_MASK() {			\
         if (--counter) {			\
 	    state = state_TILE_P16_MASK;	\
-	} else if (opcode & ARG_MASK) {		\
+	} else if (opcode & FLS_ARG_MASK) {	\
 	    opcode--;				\
 	    counter = 8;			\
 	    state = state_TILE_P16_MASK;	\

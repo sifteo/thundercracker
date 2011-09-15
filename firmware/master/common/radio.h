@@ -46,7 +46,7 @@ struct PacketBuffer {
 
 struct PacketTransmission {
     PacketBuffer packet;
-    RadioAddress *dest;
+    const RadioAddress *dest;
 };
 
 /**

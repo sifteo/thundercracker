@@ -10,16 +10,10 @@
 
 using namespace Sifteo;
 
-static void onCubeFound(_SYSCubeID c)
-{
-    printf("Found cube %d\n", c);
-    _SYS_loadAssets(0, &GameAssets.sys);
-}
-
 void siftmain()
 {
-    _SYS_vectors.cubeFound = onCubeFound;
-    _SYS_enableCubes(0x07);
+    _SYS_enableCubes(1 << 0);
+    _SYS_loadAssets(0, &GameAssets.sys);
 
     while (1) {
 	System::draw();

@@ -8,9 +8,11 @@ OBJS = \
 	flash_decoder.rel \
 	main.rel \
 
-CDEPS = *.h
+FIRMWARE_INC = ../include
+CDEPS = *.h $(FIRMWARE_INC)/*.h
+
 SDCC = sdcc
-CFLAGS =
+CFLAGS = -I$(FIRMWARE_INC)
 
 $(BIN): $(OBJS)
 	$(SDCC) -o $@ $(OBJS)

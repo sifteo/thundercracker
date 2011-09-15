@@ -9,46 +9,13 @@
 #include "hardware.h"
 #include "radio.h"
 #include "flash.h"
+#include <protocol.h>
 
 /*
  * The ACK reply buffer lives in near memory. It needs to, so that
  * the ADC ISR can access it very quickly.
  */
 union ack_format __near ack_data;
-
-/*
- * Radio protocol opcodes.
- *
- * Our basic opcode format is a 2-bit command and a 6-bit length, with
- * length always encoded as the actual length - 1. This lets us fit
- * the most common commands into a single byte, and the 6-bit length
- * allows us to amortize the opcode size to less than a byte per
- * packet.
- *
- * Opcodes may persist past the end of a radio packet if and only if
- * that packet is the maximum length. At the end of any non-maximal
- * length packet, the radio state machine is reset. If you need to
- * explicitly reset the state machine, you can send a zero-length
- * packet.
- *
- * XXX: Figure out how best to allocate this opcode space once we get
- *      a sample of some real-world radio traffic for a game.
- */
-
-#define RF_OP_MASK		0xc0
-#define RF_ARG_MASK		0x3f
-
-// Major opcodes
-#define RF_OP_SPECIAL		0x00    // Multiplexor for special opcodes
-#define RF_OP_VRAM_SKIP		0x40	// Seek forward arg+1 bytes
-#define RF_OP_VRAM_DATA		0x80    // Write arg+1 bytes to VRAM
-#define RF_OP_FLASH_QUEUE	0xc0    // Write arg+1 bytes to flash loadstream FIFO
-
-// Special minor opcodes
-#define RF_OP_VRAM_ADDRESS	0x00	// Change the VRAM write pointer
-#define RF_OP_VRAM_DIRECT	0x01	// Change write mode: Direct
-#define RF_OP_VRAM_VERTICAL	0x02	// Change write mode: Top-to-bottom
-#define RF_OP_FLASH_RESET       0x03    // Reset the flash decoder state machine
 
 /*
  * Assembly macros.
@@ -200,9 +167,8 @@ rx_byte_loop:
 
 	mov	a, _flash_fifo_head		; Advance head pointer
 	inc	a
-	anl	a, #FLASH_FIFO_MASK
+	anl	a, #(FLS_FIFO_SIZE - 1)
 	mov	_flash_fifo_head, a
-
 
 	dec	R_FLASH_COUNT			; Next packet byte, next opcode byte
 	RX_NEXT_BYTE
@@ -250,7 +216,7 @@ rx_byte_loop:
 	;---------------------------------
 
 	cjne	a, #RF_OP_FLASH_RESET, 13$
-	mov	_flash_fifo_head, #FLASH_HEAD_RESET
+	mov	_flash_fifo_head, #FLS_FIFO_RESET
 	RX_NEXT_BYTE
 13$:
 

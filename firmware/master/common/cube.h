@@ -10,6 +10,7 @@
 #define _SIFTEO_CUBE_H
 
 #include <sifteo/abi.h>
+#include <sifteo/machine.h>
 #include "radio.h"
 
 
@@ -32,7 +33,11 @@ class CubeSlot {
     void radioTimeout();
 
     static CubeSlot instances[_SYS_NUM_CUBE_SLOTS];
+
+    // One-bit flags for each cube are packed into global vectors
     static _SYSCubeIDVector vecEnabled;
+    static _SYSCubeIDVector flashResetWait;
+    static _SYSCubeIDVector flashResetSent;
 
     _SYSCubeID id() const {
 	return this - &instances[0];
@@ -67,17 +72,21 @@ class CubeSlot {
     }
 
     static void enableCubes(_SYSCubeIDVector cv) {
-	vecEnabled |= cv;
+	Sifteo::Atomic::Or(vecEnabled, cv);
     }
 
     static void disableCubes(_SYSCubeIDVector cv) {
-	vecEnabled &= cv;
+	Sifteo::Atomic::And(vecEnabled, ~cv);
     }
 
  private:
     /// Data buffers, provided by game code
-    struct _SYSAssetGroup *loadGroup;
-    struct _SYSVideoBuffer *vbuf;
+    _SYSAssetGroup *loadGroup;
+    _SYSVideoBuffer *vbuf;
+
+    /// State of flash loader
+    uint8_t loadPrevACK;
+    uint8_t loadBufferAvail;
 };
 
 
