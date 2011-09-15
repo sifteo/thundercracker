@@ -16,9 +16,6 @@
 
 namespace Stir {
 
-// Lua registry keys
-#define REG_SCRIPT		"Stir::Script"
-
 // Important global variables
 #define GLOBAL_DEFGROUP		"_defaultGroup"
 #define GLOBAL_QUALITY		"quality"
@@ -51,22 +48,8 @@ Script::Script(Logger &l)
     lua_pushinteger(L, 9);
     lua_setglobal(L, GLOBAL_QUALITY);
 
-    // Store 'this' for use by getInstance()
-    lua_pushliteral(L, REG_SCRIPT);
-    lua_pushlightuserdata(L, this);
-    lua_settable(L, LUA_REGISTRYINDEX);
-
     Lunar<Group>::Register(L);
     Lunar<Image>::Register(L);
-}
-
-Script *Script::getInstance(lua_State *L)
-{
-    lua_pushliteral(L, REG_SCRIPT);
-    lua_gettable(L, LUA_REGISTRYINDEX);
-    Script *obj = static_cast<Script*>(lua_touserdata(L, -1));
-    lua_pop(L, 1);
-    return obj;
 }
 
 Script::~Script()

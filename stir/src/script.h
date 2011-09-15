@@ -65,7 +65,6 @@ public:
     void collect();
 
     static bool matchExtension(const char *filename, const char *ext);
-    static Script *getInstance(lua_State *L);
 
     // Utilities for foolproof table argument unpacking
     static bool argBegin(lua_State *L, const char *className);
