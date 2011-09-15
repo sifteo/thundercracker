@@ -7,6 +7,20 @@
 #ifndef _SIFTEO_CUBE_H
 #define _SIFTEO_CUBE_H
 
+/*
+ * Every game can individually define a compile-time limit for the
+ * number of supported cubes. It must be less than or equal to the
+ * firmware limit (currently 32). Many data structures are statically
+ * allocated using this number, so if a game is running low on RAM it
+ * can decrease the limit, or if it needs more cubes it can be
+ * increased.
+ */
+
+#ifndef CUBE_ALLOCATION
+#define CUBE_ALLOCATION  6
+#endif
+
+
 namespace Sifteo {
 
 

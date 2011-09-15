@@ -92,7 +92,7 @@ void CPPSourceWriter::writeGroup(const Group &group)
     mStream <<
 	"}};\n\n"
 	"Sifteo::AssetGroup " << group.getName() <<
-	" = {{ &" << group.getName() << "_data.hdr }};\n";
+	" = {{ &" << group.getName() << "_data.hdr, " << group.getName() << ".cubes }};\n";
 }
 
 

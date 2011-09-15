@@ -65,7 +65,7 @@ struct _SYSAssetGroupCube {
 
 struct _SYSAssetGroup {
     const struct _SYSAssetGroupHeader *hdr;	/// OUT    Static data for this asset group
-    struct _SYSAssetGroupCube *cubes;		/// IN     Per-cube information array (length >= MSB of reqCubes)
+    struct _SYSAssetGroupCube *cubes;		/// OUT    Array of per-cube state buffers
     _SYSCubeIDVector reqCubes;			/// IN     Which cubes have requested to load this group?
     _SYSCubeIDVector doneCubes;			/// IN     Which cubes have finished installing this group?
 };

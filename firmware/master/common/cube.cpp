@@ -6,6 +6,8 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <stdio.h> // XXX
+
 #include <protocol.h>
 #include <sifteo/machine.h>
 
@@ -45,6 +47,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     static const RadioAddress addr = { 0x02, { 0xe7, 0xe7, 0xe7, 0xe7, 0xe7 }};
     tx.dest = &addr;
     tx.packet.len = 0;
+
+    printf("produce, %08x %08x\n", flashResetSent, flashResetWait);
 
     if (vbuf->cm4) {
 	/* Video buffer updates */

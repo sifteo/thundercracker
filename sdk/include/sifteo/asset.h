@@ -8,7 +8,8 @@
 #define _SIFTEO_ASSET_H
 
 #include <stdint.h>
-#include "abi.h"
+#include <sifteo/abi.h>
+#include <sifteo/cube.h>
 
 namespace Sifteo {
 
@@ -25,6 +26,7 @@ namespace Sifteo {
 class AssetGroup {
  public:
     _SYSAssetGroup sys;
+    _SYSAssetGroupCube cubes[CUBE_ALLOCATION];
 };
 
 

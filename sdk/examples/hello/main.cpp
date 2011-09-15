@@ -12,6 +12,9 @@ using namespace Sifteo;
 
 void siftmain()
 {
+    
+    GameAssets.sys.cubes++;  // XXX
+
     _SYS_enableCubes(1 << 0);
     _SYS_loadAssets(0, &GameAssets.sys);
 
