@@ -8,22 +8,89 @@ import sys
 
 
 class Histogram:
-    def __init__(self, codeSpace):
-        self.hist = [0] * codeSpace
+    def __init__(self, codeSpace=None):
+        self.codeSpace = codeSpace
+        self.hist = {}
         self.total = 0
 
     def mark(self, code):
-        self.hist[code] += 1
+        self.hist[code] = self.hist.get(code, 0) + 1
         self.total += 1
     
     def show(self):
-        print "Histogram of %d-code space" % len(self.hist)
-        for i, count in enumerate(self.hist):            
-            if count:
-                t = count * float(len(self.hist)) / self.total
-                print "  [%4x] %8.03f  %s" % (i, t, "." * min(count, int(t * 16.0)))
+        if not self.codeSpace:
+            self.codeSpace = len(self.hist)
+
+        print "Histogram of %d-code space" % self.codeSpace
+
+        items = self.hist.items()
+        items.sort(cmp=lambda a,b: cmp(b[1], a[1]))
+
+        for i, count in items: 
+            if not count:
+                break
+            t = count * float(len(self.hist)) / self.total
+            print " %-20r -- %8.03f  %s" % (i, t, "." * min(count, int(t * 2.0)))
 
 
+class PNG_predictor:
+    # Base class for predictors from the PNG spec
+    #
+    # Note that these aren't actually compression algorithms, just
+    # filters that can be used in front of another compressor. For us,
+    # it plus gzip marks something that should put up a good fight
+    # against the custom algorithms below.
+    #
+
+    verbose = False
+
+    def encode(self, tileW, arr):
+        result = []
+        samplePoints = (-1, -tileW, -tileW-1)
+
+        for i, word in enumerate(arr):
+
+            samples = [0] * len(samplePoints)
+            for sI, sD in enumerate(samplePoints):
+                if i + sD >= 0:
+                    samples[sI] = arr[i+sD]
+
+
+            p = self.predictor(*samples)
+            diff = word - p
+
+            if self.verbose:
+                print "[%4d] %5d -- [%s] -- %2d %5d" % (
+                    i, word,
+                    ' '.join(["%5d" % x for x in samples]),
+                    p, diff)
+
+            result.append(struct.pack(">H", 0xFFFF & diff))
+
+        return ''.join(result)
+
+
+class PNG_paeth(PNG_predictor):
+    def predictor(self, a, b, c):
+        p = a + b - c
+        pa = abs(p - a)
+        pb = abs(p - b)
+        pc = abs(p - c)
+        if pa <= pb and pa <= pc:
+            return a
+        if pb <= pc:
+            return b
+        return c
+
+class PNG_sub(PNG_predictor):
+    def predictor(self, a, b, c):
+        return a
+
+class PNG_up(PNG_predictor):
+    def predictor(self, a, b, c):
+        return b
+
+        
 class DeltaCode:
     #
     # Windowed delta encoder. Literals are two bytes, compressed codes
@@ -477,9 +544,12 @@ class DVarNib_s4(NybbleCoder):
     #   1110 dddd dddd ddss             4096 codes      deltas +/- 512  [-584, -74] and [75, 585]
     #   1111 wwww wwww wwww wwww        65536 codes     literal word values
     #
+    # This is a bit like a Golomb-Rice code, except that we've explicitly chosen
+    # these code lengths and delta assignments in order to keep everything
+    # nybble-aligned, so we don't need any bit shifting in the decoder.
 
     useRLE4 = False
-    verbose = True
+    #verbose = True
 
     def encode(self, tileW, arr):
         nybbles = []
@@ -568,6 +638,160 @@ class DVarNib_s4(NybbleCoder):
         return self.packNybbles(nybbles)
 
 
+class DVarGeneral:
+    #
+    # A more general sampled-window delta encoder. Like DVarNib_s4,
+    # but without the specific encoding restrictions. This is less
+    # intended to be useful on its own, and more just a tool for
+    # inspecting the statistics of our data set after doing the
+    # sampled delta encoding but before any kind of encoding that
+    # assumes a particular code distribution.
+    #
+    # In short, it's a tool to keep me honest about assumptions made
+    # when picking codes.
+    #
+
+    verbose = True
+
+    def encode(self, tileW, arr):
+        nybbles = []
+        samplePoints = (-1, -2, -tileW, -tileW-1)
+        prevCode = None
+        runLen = 0
+        self.hist = Histogram()
+        binWidth = 1
+
+        for i, word in enumerate(arr):
+            iterNybbles = []
+
+            # Find the sampling point with the closest diff
+            diff = 0x10000
+            s = -1
+            samples = [0] * len(samplePoints)
+            for sI, sD in enumerate(samplePoints):
+                if i + sD >= 0:
+                    samples[sI] = arr[i+sD]
+                    if abs(word - samples[sI]) < abs(diff):
+                        diff = word - arr[i+sD]
+                        s = sI
+
+            code = ('diff', s, diff / binWidth, diff % binWidth)
+
+            if code == prevCode:
+                runLen += 1
+            else:
+                if prevCode:
+                    self.storeCode(prevCode)
+                if runLen:
+                    self.storeCode(('run', runLen))
+                runLen = 0
+            prevCode = code
+
+        self.hist.show()
+        return ''
+
+    def storeCode(self, c):
+        self.hist.mark(c[:3])
+
+
+class DNibRF(NybbleCoder):
+    #
+    # Nybble-based delta encoder with four-sample window,
+    # and a more realistic encoding that could be used over our radio.
+    #
+    # This codec often won't get better ratios than DVarNib_s4, but
+    # there are a few important areas where it's better:
+    #
+    #   - Vertical patterns compress much better
+    #   - Runs usually compress better
+    #   - Worst-case performance is much better, data will never expand
+    #   - Most importantly, this format is totally radio-ready. It includes
+    #     the extra codes we need to handle VRAM addressing, and it is
+    #     much simpler to compress and decompress.
+    #
+    # Sample points, as above:
+    #
+    #  . . . . .
+    #  . 3 2 . .
+    #  1 0 X . .
+    #  . . . . .
+    #
+    # Primary code types:
+    #
+    #  01ss                  copy sample #s
+    #  10ss dddd             diff against sample #s, of d-7
+    #  11xx xxxx xxxx xxxx   literal 14-bit index
+    #
+    # Special code types:
+    #
+    #  00nn                               repeat preceeding primary code, n+1 times
+    #  000n 00nn                          skip n+1 output words
+    #  0010 00nn nnnn                     repeat last code n+5 times
+    #  0011 000x xxxx xxxx                literal 9-bit destination word address
+    #  0011 0010 xxxx xxxx xxxx xxxx      literal 16-bit word
+    #  0011 0011                          escape to flash mode for remainder of packet, reset if last byte
+    #
+    #  10xx 0111                          reserved for future use (redundant diff encoding)
+    #
+
+    useRLE4 = False
+    verbose = True
+
+    def encode(self, tileW, arr):
+        nybbles = []
+        samplePoints = (-1, -2, -tileW, -tileW-1)
+        runLen = 0
+        prevCode = None
+
+        for i, word in enumerate(arr):
+
+            # Find the sampling point with the closest diff
+            diff = 0x10000
+            s = -1
+            samples = [0] * len(samplePoints)
+            for sI, sD in enumerate(samplePoints):
+                if i + sD >= 0:
+                    samples[sI] = arr[i+sD]
+                    if abs(word - samples[sI]) < abs(diff):
+                        diff = word - arr[i+sD]
+                        s = sI
+
+            # Turn this into a primary code
+
+            if diff == 0:
+                code = (0x4 | s,)
+            elif diff >= -7 and diff <= 8:
+                code = (0x8 | s, diff+7)
+            else:
+                code = (0xc | (word >> 12), 0xF & (word >> 8), 0xF & (word >> 4), 0xF & word)
+
+            # RLE
+
+            if code == prevCode and runLen < 68:
+                runLen += 1
+            else:
+                if prevCode:
+                    nybbles.extend(prevCode)
+                if runLen:
+                    if runLen < 5:
+                        nybbles.append(runLen - 1)
+                    else:
+                        assert runLen <= 68
+                        nybbles.extend((0x2, (runLen - 5) >> 4, (runLen - 5) & 0xF))
+                runLen = 0
+            prevCode = code
+
+            if self.verbose:
+                print "[%4d] %5d -- [%s] -- %2d %5d -- (%2d) %s" % (
+                    i, word,
+                    ' '.join(["%5d" % x for x in samples]),
+                    s, diff,
+                    runLen, ''.join('%x' % x for x in code),
+                    )
+
+        return self.packNybbles(nybbles)
+
+
 def competition(name, tileW, data, *codecs):
     raw = struct.pack(">%dH" % len(data), *data)
     results = [ ("raw", raw), ]
@@ -599,15 +823,20 @@ def runTests():
             print "\n========================== %s\n" % name
   
             competition(name, tileW, data,
-                        DeltaCode_w2_d5,
+                        #PNG_paeth,
+                        #PNG_sub,
+                        #PNG_up,
+                        #DeltaCode_w2_d5,
                         DeltaCode_w5_d2,
-                        DeltaCode_r_w4_d2,
+                        #DeltaCode_r_w4_d2,
                         DeltaCode_r_w5_d1,
-                        DeltaCode_d7,
-                        DeltaCode_r_d6,
-                        DVarNib_r4,
+                        #DeltaCode_d7,
+                        #DeltaCode_r_d6,
+                        #DVarNib_r4,
                         DVarNib_2,
                         DVarNib_s4,
+                        #DVarGeneral,
+                        DNibRF,
                         )
 
 runTests()
