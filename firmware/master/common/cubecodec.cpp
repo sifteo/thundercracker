@@ -70,6 +70,15 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 	    uint32_t idx1 = CLZ(cm1);
 	    uint16_t addr = (idx32 << 5) | idx1;
 
+	    /*
+	     * XXX: This is allowed to abort encoding right now
+	     *      because it's dumb and needs to output codezilla
+	     *      and it may not fit in the packet buffer. But the
+	     *      real encoder would never generate codes larger
+	     *      than the txBits buffer, so we should always be
+	     *      able to fully fill a packet buffer before
+	     *      quitting.
+	     */
 	    if (!encodeVRAM(buf, addr, vb->words[addr]))
 		return;
 
@@ -89,6 +98,14 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data)
     /*
      * XXX: Big honkin' literal codes! Debugging only... This takes a
      *      massive 5 bytes to encode one tile index!
+     *
+     * Note: Delta encoding is going to be kinda tricky. Since
+     *       userspace can modify the VRAM buffer between ISRs, we can
+     *       only reference deltas which haven't been modified. One
+     *       way to do this would be with second CM that tracks which
+     *       values we know have been flushed to the hardware
+     *       successfully. The userspace code would be required to
+     *       clear bits in that CM *before* touching them in VRAM.
      */
 
     printf("Encode %04x %04x\n", addr, data);
