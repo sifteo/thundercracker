@@ -478,16 +478,17 @@ class DVarNib_s4(NybbleCoder):
     #   1111 wwww wwww wwww wwww        65536 codes     literal word values
     #
 
-    #verbose = True
+    useRLE4 = False
+    verbose = True
 
     def encode(self, tileW, arr):
         nybbles = []
         code = -1
-        prevLen = 0
 
         samplePoints = (-1, -2, -tileW, -tileW-1)
         
         for i, word in enumerate(arr):
+            iterNybbles = []
 
             # Find the sampling point with the closest diff
             diff = 0x10000
@@ -496,8 +497,8 @@ class DVarNib_s4(NybbleCoder):
             for sI, sD in enumerate(samplePoints):
                 if i + sD >= 0:
                     samples[sI] = arr[i+sD]
-                    if abs(arr[i+sD] - word) < abs(diff):
-                        diff = arr[i+sD] - word
+                    if abs(word - samples[sI]) < abs(diff):
+                        diff = word - arr[i+sD]
                         s = sI
 
             # Allocate codes
@@ -513,7 +514,7 @@ class DVarNib_s4(NybbleCoder):
             else:
                 # Flush any buffered code
                 if code >= 0:
-                    self.toNybbles(nybbles, 1, code)
+                    self.toNybbles(iterNybbles, 1, code)
                     code = -1
 
                 if diff == 0 and s == 0:
@@ -532,31 +533,32 @@ class DVarNib_s4(NybbleCoder):
 
                 elif diff < 0:
                     if diff >= -9:
-                        self.toNybbles(nybbles, 2, s | ((diff + 9) << 2))
+                        self.toNybbles(iterNybbles, 2, s | ((diff + 9) << 2))
                     elif diff >= -73:
-                        self.toNybbles(nybbles, 3, s | ((diff + 73) << 2))
+                        self.toNybbles(iterNybbles, 3, s | ((diff + 73) << 2))
                     elif diff >= -584:
-                        self.toNybbles(nybbles, 4, s | ((diff + 584) << 2))
+                        self.toNybbles(iterNybbles, 4, s | ((diff + 584) << 2))
                     else:
-                        self.toNybbles(nybbles, 5, word)
+                        self.toNybbles(iterNybbles, 5, word)
                 else:
                     if diff <= 10:
-                        self.toNybbles(nybbles, 2, s | ((diff - 3 + 8) << 2))
+                        self.toNybbles(iterNybbles, 2, s | ((diff - 3 + 8) << 2))
                     elif diff <= 74:
-                        self.toNybbles(nybbles, 3, s | ((diff - 11 + 64) << 2))
+                        self.toNybbles(iterNybbles, 3, s | ((diff - 11 + 64) << 2))
                     elif diff <= 585:
-                        self.toNybbles(nybbles, 4, s | ((diff - 75 + 512) << 2))
+                        self.toNybbles(iterNybbles, 4, s | ((diff - 75 + 512) << 2))
                     else:
-                        self.toNybbles(nybbles, 5, word)
+                        self.toNybbles(iterNybbles, 5, word)
 
             if self.verbose:
                 print "[%4d] %5d -- [%s] -- %2d %5d -- %s" % (
                     i, word,
                     ' '.join(["%5d" % x for x in samples]),
                     s, diff,
-                    "#" * (len(nybbles) - prevLen),
+                    ''.join('%x' % x for x in iterNybbles),
                     )
-            prevLen = len(nybbles)
+
+            nybbles.extend(iterNybbles)
 
         # Flush any buffered code
         if code >= 0:
