@@ -40,6 +40,7 @@ class DeltaCode:
 
     def __init__(self):
         self.window = [0] * self.windowSize
+        self.winHist = Histogram(self.windowSize)
         self.freq = {}
     
     def incFreq(self, symbol):
@@ -49,18 +50,27 @@ class DeltaCode:
         self.window = [word] + self.window[:-1]
 
     def findCode(self, word):
+        bestIndex = None
+        bestDiff = 0x10000
+
         for pastIndex, pastWord in enumerate(self.window):
             diff = word - pastWord
             if diff >= self.deltaRange[0] and diff <= self.deltaRange[1]:
 
-                code = (self.REF, pastIndex, diff)
-                self.incFreq(code)
-                return code
+                if abs(diff) < abs(bestDiff):
+                    bestDiff = diff
+                    bestIndex = pastIndex
 
-        self.incFreq(None)
-        return (self.LITERAL, word)
+        if bestIndex:
+            self.winHist.mark(bestIndex)
+            code = (self.REF, bestIndex, bestDiff)
+            self.incFreq(code)
+            return code
+        else:
+            self.incFreq(None)
+            return (self.LITERAL, word)
 
-    def encode(self, arr):
+    def encode(self, tileW, arr):
         result = []
 
         for i, word in enumerate(arr):
@@ -69,7 +79,7 @@ class DeltaCode:
             replace = False
 
             if self.rle and len(result) >= 2 and code == result[-2]:
-                # Might be a run, this code matches the second-to-last one
+                 # Might be a run, this code matches the second-to-last one
 
                 if result[-1][0] == self.REPEAT and result[-1][1] < self.repeatMax:
                     # Increment
@@ -93,6 +103,7 @@ class DeltaCode:
             self.pushWindow(word)
 
         if self.verbose:
+            self.winHist.show()
             self.freqSummary()
 
         return ''.join(map(self.packCode, result))
@@ -123,7 +134,7 @@ class DeltaCode_w2_d5(DeltaCode):
 class DeltaCode_w5_d2(DeltaCode):
     windowSize = 1 << 5
     deltaRange = (-1, 2)
-    
+
     def packCode(self, code):
         if code[0] == self.REF:
             return chr(0x80 | (code[1] << 2) | (code[2] + 1))
@@ -313,7 +324,7 @@ class DVarNib_r4(NybbleCoder):
     # These nybbles are then put through the same RLE4 codec we use
     # in loadstream data.
 
-    def encode(self, arr):
+    def encode(self, tileW, arr):
         nybbles = []
         prev = 0
         
@@ -361,9 +372,7 @@ class DVarNib_2(NybbleCoder):
     #   1111 dddd dddd dddd dddd        65536 codes     literal word values
     #
 
-    #verbose = True
-
-    def encode(self, arr):
+    def encode(self, tileW, arr):
         nybbles = []
         prev = 0
         code = -1
@@ -421,16 +430,131 @@ class DVarNib_2(NybbleCoder):
         return self.packNybbles(nybbles)
 
 
-def competition(name, data, *codecs):
-    raw = struct.pack(">%dH" % len(data), *data)
+class DVarNib_s4(NybbleCoder):
+    #
+    # Four-point sampled window
+    #
+    # This is an attempt to combine the encoding features of DVarNib_2
+    # with the best parts of a windowed codec. In datasets where
+    # windowed compression gives us MUCH better results, like "title",
+    # the reason windowed works so well is that it finds nearby tiles
+    # with similar values. Larger window sizes are super-useful if they
+    # let us find matches from vertically adjacent tiles.
+    #
+    # In the case of our VRAM compression codec, we really don't want
+    # to spend the CPU on scanning a large window LZ77-style. So, we'd
+    # like to do few comparisons. We can take advantage of the fact
+    # that most matches in our windowed codecs come from tiles which
+    # are very nearby. If we know about both horizontal and vertical
+    # dimensions in the image, we can limit each to a few tiles. This
+    # reduces the number of codes we need to use, and it keeps the
+    # number of comparisons in the comppressor to a minimum.
+    #
+    # Here's the pattern we currently check, where X is the tile being
+    # compressed, and '.' is a tile we ignore:
+    #
+    #  . . . . .
+    #  . 3 2 . .
+    #  1 0 X . .
+    #  . . . . .
+    #
+    # The delta algorithm is generalized such that a delta is always
+    # taken in reference to one of these four sampling points. So, it
+    # eats two bits out of our code space.
+    #
+    #   0lll                            8 codes         run lengths [1,6], sequence lengths [1, 2]
+    #   10dd ddss                       64 codes,       deltas +/- 8,   [-7, 8]
+    #   110d dddd ddss                  512 codes       deltas +/- 64   [-71, -8] and [9, 72]
+    #   1110 dddd dddd ddss             4096 codes      deltas +/- 512  [-582, -72] and [73, 583]
+    #   1111 wwww wwww wwww wwww        65536 codes     literal word values
+    #
 
-    results = [
-        ("raw", raw),
-        ]
+    #verbose = True
+
+    def encode(self, tileW, arr):
+        nybbles = []
+        code = -1
+
+        samplePoints = (-1, -2, -tileW, -tileW-1)
+        
+        for i, word in enumerate(arr):
+
+            # Find the sampling point with the closest diff
+            diff = 0x10000
+            s = -1
+            samples = [0] * len(samplePoints)
+            for sI, sD in enumerate(samplePoints):
+                if i + sD >= 0:
+                    samples[sI] = arr[i+sD]
+                    if abs(arr[i+sD] - word) < abs(diff):
+                        diff = arr[i+sD] - word
+                        s = sI
+
+            if self.verbose:
+                print "[%4d] %5d -- [%s] -- %2d %5d" % (
+                    i, word,
+                    ' '.join(["%5d" % x for x in samples]),
+                    s, diff,
+                    )
+
+            # Just like DVarNib_2...
+
+            if diff == 0 and code >= 0 and code <= 4:
+                # Extend an existing run
+                code += 1
+
+            elif diff == 1 and code == 6:
+                # Extend an existing sequence
+                code += 1
+
+            else:
+                # Flush any buffered code
+                if code >= 0:
+                    self.toNybbles(nybbles, 1, code)
+                    code = -1
+
+                if diff == 0 and s == 0:
+                    # Start a run
+                    code = 0
+
+                elif diff == 1 and s == 0:
+                    # Start a sequence
+                    code = 6
+
+                elif diff < 0:
+                    if diff >= -7:
+                        self.toNybbles(nybbles, 2, s | ((diff + 7) << 2))
+                    elif diff >= -71:
+                        self.toNybbles(nybbles, 3, s | ((diff + 71) << 2))
+                    elif diff >= -582:
+                        self.toNybbles(nybbles, 4, s | ((diff + 582) << 2))
+                    else:
+                        self.toNybbles(nybbles, 5, word)
+                else:
+                    if diff <= 8:
+                        self.toNybbles(nybbles, 2, s | ((diff + 7) << 2))
+                    elif diff <= 72:
+                        self.toNybbles(nybbles, 3, s | ((diff - 9 + 64) << 2))
+                    elif diff <= 583:
+                        self.toNybbles(nybbles, 4, s | ((diff - 73 + 512) << 2))
+                    else:
+                        self.toNybbles(nybbles, 5, word)
+
+        # Flush any buffered code
+        if code >= 0:
+            self.toNybbles(nybbles, 1, code)
+
+        self.showHist();
+        return self.packNybbles(nybbles)
+
+
+def competition(name, tileW, data, *codecs):
+    raw = struct.pack(">%dH" % len(data), *data)
+    results = [ ("raw", raw), ]
 
     for c in codecs:
         print "-- %s -- %s" % (name, c.__name__)
-        result = c().encode(data)
+        result = c().encode(tileW, data)
         open("result-%s-%s.bin" % (name, c.__name__), "wb").write(result)
         results.append((c.__name__, result))
 
@@ -453,7 +577,8 @@ def runTests():
     for name, tileW, data in  mapdata.items:
         if len(sys.argv) < 2 or name in sys.argv:
             print "\n========================== %s\n" % name
-            competition(name, data,
+  
+            competition(name, tileW, data,
                         DeltaCode_w2_d5,
                         DeltaCode_w5_d2,
                         DeltaCode_r_w4_d2,
@@ -462,6 +587,7 @@ def runTests():
                         DeltaCode_r_d6,
                         DVarNib_r4,
                         DVarNib_2,
+                        DVarNib_s4,
                         )
 
 runTests()
