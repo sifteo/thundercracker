@@ -462,10 +462,19 @@ class DVarNib_s4(NybbleCoder):
     # taken in reference to one of these four sampling points. So, it
     # eats two bits out of our code space.
     #
-    #   0lll                            8 codes         run lengths [1,6], sequence lengths [1, 2]
-    #   10dd ddss                       64 codes,       deltas +/- 8,   [-7, 8]
-    #   110d dddd ddss                  512 codes       deltas +/- 64   [-71, -8] and [9, 72]
-    #   1110 dddd dddd ddss             4096 codes      deltas +/- 512  [-582, -72] and [73, 583]
+    #   0lll                            8 codes
+    #     0000                                          run length 1
+    #     0001                                          run length 2
+    #     0010                                          run length 3
+    #     0011                                          run length 4
+    #     0100                                          delta -1
+    #     0101                                          delta +2
+    #     0110                                          sequence len 1
+    #     0111                                          sequence len 2
+    #
+    #   10dd ddss                       64 codes,       deltas +/- 8,   [-9, -2] and [3, 10]
+    #   110d dddd ddss                  512 codes       deltas +/- 64   [-73, -10] and [11, 74]
+    #   1110 dddd dddd ddss             4096 codes      deltas +/- 512  [-584, -74] and [75, 585]
     #   1111 wwww wwww wwww wwww        65536 codes     literal word values
     #
 
@@ -474,6 +483,7 @@ class DVarNib_s4(NybbleCoder):
     def encode(self, tileW, arr):
         nybbles = []
         code = -1
+        prevLen = 0
 
         samplePoints = (-1, -2, -tileW, -tileW-1)
         
@@ -490,20 +500,13 @@ class DVarNib_s4(NybbleCoder):
                         diff = arr[i+sD] - word
                         s = sI
 
-            if self.verbose:
-                print "[%4d] %5d -- [%s] -- %2d %5d" % (
-                    i, word,
-                    ' '.join(["%5d" % x for x in samples]),
-                    s, diff,
-                    )
+            # Allocate codes
 
-            # Just like DVarNib_2...
-
-            if diff == 0 and code >= 0 and code <= 4:
+            if s == 0 and diff == 0 and code >= 0 and code <= 2:
                 # Extend an existing run
                 code += 1
 
-            elif diff == 1 and code == 6:
+            elif s == 0 and diff == 1 and code == 6:
                 # Extend an existing sequence
                 code += 1
 
@@ -521,24 +524,39 @@ class DVarNib_s4(NybbleCoder):
                     # Start a sequence
                     code = 6
 
+                elif diff == 2 and s == 0:
+                    code = 5
+
+                elif diff == -1 and s == 0:
+                    code = 4
+
                 elif diff < 0:
-                    if diff >= -7:
-                        self.toNybbles(nybbles, 2, s | ((diff + 7) << 2))
-                    elif diff >= -71:
-                        self.toNybbles(nybbles, 3, s | ((diff + 71) << 2))
-                    elif diff >= -582:
-                        self.toNybbles(nybbles, 4, s | ((diff + 582) << 2))
+                    if diff >= -9:
+                        self.toNybbles(nybbles, 2, s | ((diff + 9) << 2))
+                    elif diff >= -73:
+                        self.toNybbles(nybbles, 3, s | ((diff + 73) << 2))
+                    elif diff >= -584:
+                        self.toNybbles(nybbles, 4, s | ((diff + 584) << 2))
                     else:
                         self.toNybbles(nybbles, 5, word)
                 else:
-                    if diff <= 8:
-                        self.toNybbles(nybbles, 2, s | ((diff + 7) << 2))
-                    elif diff <= 72:
-                        self.toNybbles(nybbles, 3, s | ((diff - 9 + 64) << 2))
-                    elif diff <= 583:
-                        self.toNybbles(nybbles, 4, s | ((diff - 73 + 512) << 2))
+                    if diff <= 10:
+                        self.toNybbles(nybbles, 2, s | ((diff - 3 + 8) << 2))
+                    elif diff <= 74:
+                        self.toNybbles(nybbles, 3, s | ((diff - 11 + 64) << 2))
+                    elif diff <= 585:
+                        self.toNybbles(nybbles, 4, s | ((diff - 75 + 512) << 2))
                     else:
                         self.toNybbles(nybbles, 5, word)
+
+            if self.verbose:
+                print "[%4d] %5d -- [%s] -- %2d %5d -- %s" % (
+                    i, word,
+                    ' '.join(["%5d" % x for x in samples]),
+                    s, diff,
+                    "#" * (len(nybbles) - prevLen),
+                    )
+            prevLen = len(nybbles)
 
         # Flush any buffered code
         if code >= 0:
