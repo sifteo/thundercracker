@@ -6,6 +6,7 @@ OBJS = \
 	common/runtime.o \
 	common/radio.o \
 	common/cube.o \
+	common/cubecodec.o \
 	sim/radio_nethub.o \
 	sim/main.o \
 

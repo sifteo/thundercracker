@@ -13,51 +13,7 @@
 #include <sifteo/machine.h>
 #include "radio.h"
 #include "runtime.h"
-
-
-/**
- * A utility class to buffer bit-streams as we transmit them to a cube.
- *
- * Intended only for little-endian machines with fast bit shifting,
- * like ARM or x86!
- */
-
-class BitBuffer {
- public:
-    void init() {
-	bits = 0;
-	count = 0;
-    }
-
-    unsigned flush(PacketBuffer &buf) {
-	unsigned byteWidth = MIN(buf.bytesFree(), count >> 3);
-	buf.append((uint8_t *) &bits, byteWidth);
-
-	unsigned bitWidth = byteWidth << 3;
-	bits >>= bitWidth;
-	count -= bitWidth;
-
-	return byteWidth;
-    }
-
-    bool hasRoomForFlush(PacketBuffer &buf, unsigned additionalBits=0) {
-	// Does the buffer have room for every complete byte in the buffer, plus additionalBits?
-	return buf.bytesFree() >= ((count + additionalBits) >> 3);
-    }
-
-    void append(uint32_t value, unsigned width) {
-	bits |= value << count;
-	count += width;
-    }
-
-    void appendMasked(uint32_t value, unsigned width) {
-	append(value & ((1 << width) - 1), width);
-    }
-
- private:
-    uint32_t bits;
-    uint8_t count;
-};
+#include "cubecodec.h"
 
 
 /**
@@ -141,13 +97,15 @@ class CubeSlot {
     }
 
  private:
-    /// Data buffers, provided by game code
+    // Data buffers, provided by game code
     _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
 
-    BitBuffer txBits;		/// Buffer of transmittable codes
-    uint8_t loadPrevACK;	/// Last ACK token from flash decoder
-    uint8_t loadBufferAvail;	/// Amount of flash buffer space available
+    // Packet encoder state
+    CubeCodec codec;
+
+    // ACK tracking
+    uint8_t loadPrevACK;
 };
 
 

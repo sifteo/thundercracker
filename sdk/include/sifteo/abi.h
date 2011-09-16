@@ -71,9 +71,12 @@ struct _SYSAssetGroup {
 };
 
 struct _SYSVideoBuffer {
-    uint8_t  bytes[1024];	/// OUT    Raw cube RAM contents
-    uint32_t cm64[16];		/// INOUT  Change map, at a resolution of 1 bit per 16-bit word
-    uint32_t cm4;		/// INOUT  Change map, at a resolution of 1 bit per 32 bytes
+    union {
+	uint16_t words[512];	/// OUT    Raw cube RAM contents
+	uint8_t bytes[1024];
+    };
+    uint32_t cm1[16];		/// INOUT  Change map, at a resolution of 1 bit per word
+    uint32_t cm16;		/// INOUT  Change map, at a resolution of 1 bit per 16 words
 };
 
 

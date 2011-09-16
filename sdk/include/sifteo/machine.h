@@ -22,20 +22,31 @@ namespace Sifteo {
 
 
 /**
- * Atomic operations 
+ * Atomic operations.
+ *
+ * Guaranteed memory atomicity (single-instruction read-modify-write)
+ * and write ordering.
  *
  * XXX: Implement these for each supported platform
  */
 
 class Atomic {
  public:
+
+    static void barrier() {
+	__asm__ __volatile__ ("" : : : "memory");
+    }
     
     static void Or(uint32_t &dest, uint32_t src) {
+	barrier();
 	dest |= src;
+	barrier();
     }
 
     static void And(uint32_t &dest, uint32_t src) {
+	barrier();
 	dest &= src;
+	barrier();
     }
 
 };
