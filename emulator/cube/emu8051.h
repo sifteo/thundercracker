@@ -141,6 +141,7 @@ enum SFR_REGS
     REG_DPH          = 0x83 - 0x80,
     REG_DPL1         = 0x84 - 0x80,
     REG_DPH1         = 0x85 - 0x80,
+    REG_DEBUG        = 0x86 - 0x80,   // Simulator only
     REG_TCON         = 0x88 - 0x80,
     REG_TMOD         = 0x89 - 0x80,
     REG_TL0          = 0x8A - 0x80,

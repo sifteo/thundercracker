@@ -187,6 +187,10 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
 		   !!(cpu->mSFR[reg] & RFCON_RFCE));  // Active high
 	break;
 
+    case REG_DEBUG:
+	fprintf(stderr, "Debug: %02x\n", cpu->mSFR[reg]);
+	break;
+
     }
 }
 

@@ -40,7 +40,7 @@
 
 static const char *sfr_names[128] = {
     "P0",        "SP",        "DPL",       "DPH",     
-    "DPL1",      "DPH1",      "SFR_86",    "SFR_87",   
+    "DPL1",      "DPH1",      "DEBUG",     "SFR_87",   
     "TCON",      "TMOD",      "TL0",       "TL1",      
     "TH0",       "TH1",       "SFR_8E",    "P3CON",    
     "P1",        "SFR_91",    "DPS",       "P0DIR",    
