@@ -2,6 +2,9 @@
  *
  * Thundercracker common protocol definitions
  *
+ * This file is part of the internal implementation of the Sifteo SDK.
+ * Confidential, not for redistribution.
+ *
  * M. Elizabeth Scott <beth@sifteo.com>
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
