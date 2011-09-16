@@ -4,6 +4,24 @@ import mapdata
 import struct
 import zlib
 import binascii
+import sys
+
+
+class Histogram:
+    def __init__(self, codeSpace):
+        self.hist = [0] * codeSpace
+        self.total = 0
+
+    def mark(self, code):
+        self.hist[code] += 1
+        self.total += 1
+    
+    def show(self):
+        print "Histogram of %d-code space" % len(self.hist)
+        for i, count in enumerate(self.hist):            
+            if count:
+                t = count * float(len(self.hist)) / self.total
+                print "  [%4x] %8.03f  %s" % (i, t, "." * min(count, int(t * 16.0)))
 
 
 class DeltaCode:
@@ -105,10 +123,24 @@ class DeltaCode_w2_d5(DeltaCode):
 class DeltaCode_w5_d2(DeltaCode):
     windowSize = 1 << 5
     deltaRange = (-1, 2)
-
+    
     def packCode(self, code):
         if code[0] == self.REF:
             return chr(0x80 | (code[1] << 2) | (code[2] + 1))
+        if code[0] == self.LITERAL:
+            return struct.pack(">H", code[1])
+
+class DeltaCode_r_w5_d1(DeltaCode):
+    rle = True
+    repeatMax = (1 << 6) - 1
+    windowSize = 1 << 5
+    deltaRange = (0, 1)
+    
+    def packCode(self, code):
+        if code[0] == self.REF:
+            return chr(0x80 | (code[1] << 1) | code[2])
+        if code[0] == self.REPEAT:
+            return chr(0xC0 | code[1])
         if code[0] == self.LITERAL:
             return struct.pack(">H", code[1])
 
@@ -198,7 +230,71 @@ class RLECodec4:
         self.runCount = 0
 
 
-class VariableDeltaCode:
+class NybbleCoder:
+    #
+    # Base class for codecs that use a variable-length nybble-oriented codespace:
+    #
+    #   0ddd                            8 codes
+    #   10dd dddd                       64 codes
+    #   110d dddd dddd                  512 codes
+    #   1110 dddd dddd dddd             4096 codes
+    #   1111 dddd dddd dddd dddd        65536 codes
+    #
+
+    verbose = False
+    useRLE4 = True
+
+    def __init__(self):
+        self.hist = [Histogram(5),
+                     Histogram(8),
+                     Histogram(64),
+                     Histogram(512),
+                     Histogram(4096),
+                     Histogram(65536)]
+
+    def showHist(self):
+        if self.verbose:
+            for h in self.hist:
+                h.show()
+
+    def packNybbles(self, nybbles):
+        out = []
+        rle = RLECodec4()
+        for nyb in nybbles:
+            if self.useRLE4:
+                rle.encode(nyb, out)
+            else:
+                rle.encodeNybble(nyb, out)
+        rle.flush(out)
+        return ''.join(out)
+
+    def toNybbles(self, out, count, value):
+        self.hist[0].mark(count - 1)
+        self.hist[count].mark(value)
+
+        if count == 1:
+            out.append(value & 0x7)
+        elif count == 2:
+            out.append(0x8 | (0x3 & (value >> 4)))
+            out.append(       0xF & (value >> 0))
+        elif count == 3:
+            out.append(0xc | (0x1 & (value >> 8)))
+            out.append(       0xF & (value >> 4))
+            out.append(       0xF & (value >> 0))
+        elif count == 4:
+            out.append(0xe)
+            out.append(       0xF & (value >> 8))
+            out.append(       0xF & (value >> 4))
+            out.append(       0xF & (value >> 0))
+        elif count == 5:
+            out.append(0xf)
+            out.append(       0xF & (value >> 12))
+            out.append(       0xF & (value >> 8))
+            out.append(       0xF & (value >> 4))
+            out.append(       0xF & (value >> 0))
+
+
+class DVarNib_r4(NybbleCoder):
     #
     # Delta/RLE encoder with a variable-width nybble-based scheme for
     # storing deltas. There is no literal token, instead we can store
@@ -213,20 +309,17 @@ class VariableDeltaCode:
     #   110d dddd dddd                  512 codes       deltas [-291, -36] and [37, 292]
     #   1110 dddd dddd dddd             4096 codes      deltas [-2339, -292] and [293, 2340]
     #   1111 dddd dddd dddd dddd        65536 codes     literal word values
-
-    verbose = False
+    #
+    # These nybbles are then put through the same RLE4 codec we use
+    # in loadstream data.
 
     def encode(self, arr):
         nybbles = []
-        self.freq = {}
         prev = 0
         
         for i, word in enumerate(arr):
             diff = word - prev
             prev = word
-
-            log = self.signedLog2(diff)
-            self.freq[log] = self.freq.get(log, 0) + 1
 
             if diff < 0:
                 if diff >= -3:
@@ -251,98 +344,124 @@ class VariableDeltaCode:
                 else:
                     self.toNybbles(nybbles, 5, word)
 
-        if self.verbose:
-            self.freqSummary()
+        self.showHist();
+        return self.packNybbles(nybbles)
 
-        out = []
-        rle = RLECodec4()
-        for nyb in nybbles:
-            rle.encode(nyb, out)
-        rle.flush(out)
-        return ''.join(out)
 
-    def signedLog2(self, x):
-        log = 0
-        d = 1
-        if x < 0:
-            x = -x
-            d = -d
-        while x:
-            x = x >> 1
-            log = log + d
-        return log
+class DVarNib_2(NybbleCoder):
+    #
+    # This is a refinement of VariableDeltaCode. It reallocates the
+    # low end of the code space, for easier access to codings for
+    # small runs and sequences.
+    #
+    #   0ddd                            8 codes         run lengths [1,6], sequence lengths [1, 2]
+    #   10dd dddd                       64 codes        deltas [-32, -1] and [2, 33]
+    #   110d dddd dddd                  512 codes       deltas [-288, -33] and [34, 289]
+    #   1110 dddd dddd dddd             4096 codes      deltas [-2336, -289] and [290, 2337]
+    #   1111 dddd dddd dddd dddd        65536 codes     literal word values
+    #
 
-    def toNybbles(self, out, count, value):
-        if count == 1:
-            out.append(value & 0x7)
-        elif count == 2:
-            out.append(0x8 | (0x3 & (value >> 4)))
-            out.append(       0xF & (value >> 0))
-        elif count == 3:
-            out.append(0xc | (0x1 & (value >> 8)))
-            out.append(       0xF & (value >> 4))
-            out.append(       0xF & (value >> 0))
-        elif count == 4:
-            out.append(0xe)
-            out.append(       0xF & (value >> 8))
-            out.append(       0xF & (value >> 4))
-            out.append(       0xF & (value >> 0))
-        elif count == 5:
-            out.append(0xf)
-            out.append(       0xF & (value >> 12))
-            out.append(       0xF & (value >> 8))
-            out.append(       0xF & (value >> 4))
-            out.append(       0xF & (value >> 0))
+    #verbose = True
 
-    def freqSummary(self):
-        freq = [(v, k) for k, v in self.freq.items()]
-        freq.sort()
-        freq.reverse()
+    def encode(self, arr):
+        nybbles = []
+        prev = 0
+        code = -1
         
-        total = 0
-        for count, code in freq:
-            total += count
+        for i, word in enumerate(arr):
+            diff = word - prev
+            prev = word
 
-        print
-        for count, code in freq[:20]:
-            print "%8d, %5.2f%% -- %r" % (count, count * 100.0 / total, code)
+            if diff == 0 and code >= 0 and code <= 4:
+                # Extend an existing run
+                code += 1
+
+            elif diff == 1 and code == 6:
+                # Extend an existing sequence
+                code += 1
+
+            else:
+                # Flush any buffered code
+                if code >= 0:
+                    self.toNybbles(nybbles, 1, code)
+                    code = -1
+
+                if diff == 0:
+                    # Start a run
+                    code = 0
+
+                elif diff == 1:
+                    # Start a sequence
+                    code = 6
+
+                elif diff < 0:
+                    if diff >= -32:
+                        self.toNybbles(nybbles, 2, diff + 32)
+                    elif diff >= -288:
+                        self.toNybbles(nybbles, 3, diff + 288)
+                    elif diff >= -2336:
+                        self.toNybbles(nybbles, 4, diff + 2336)
+                    else:
+                        self.toNybbles(nybbles, 5, word)
+                else:
+                    if diff <= 33:
+                        self.toNybbles(nybbles, 2, diff - 2 + 32)
+                    elif diff <= 289:
+                        self.toNybbles(nybbles, 3, diff - 34 + 256)
+                    elif diff <= 2337:
+                        self.toNybbles(nybbles, 4, diff - 290 + 2048)
+                    else:
+                        self.toNybbles(nybbles, 5, word)
+
+        # Flush any buffered code
+        if code >= 0:
+            self.toNybbles(nybbles, 1, code)
+
+        self.showHist();
+        return self.packNybbles(nybbles)
 
 
 def competition(name, data, *codecs):
     raw = struct.pack(">%dH" % len(data), *data)
 
-    sizes = [
-        ("raw", len(raw)),
+    results = [
+        ("raw", raw),
         ]
 
     for c in codecs:
         print "-- %s -- %s" % (name, c.__name__)
         result = c().encode(data)
         open("result-%s-%s.bin" % (name, c.__name__), "wb").write(result)
-        sizes.append((c.__name__, len(result)))
+        results.append((c.__name__, result))
 
     # Try out zlib too
     for level in (1, 7, 9):
-        sizes.append(("deflate-%d" % level, len(zlib.compress(raw, level))))
+        results.append(("deflate-%d" % level, zlib.compress(raw, level)))
+
+    results.sort(cmp = lambda a, b: cmp(len(a[1]), len(b[1])))
 
     print
-    sizes.sort(cmp = lambda a, b: cmp(a[1], b[1]))
-    for name, l in sizes:
-        print "  %-18s: %6d (%6.02f%% )" % (name, l, 100 - (l * 100.0 / len(raw)))
+    for name, data in results:
+        z = zlib.compress(data, 9)
+        print "  %-18s: %6d (%6.02f%% )   gz: %6d (%6.02f%%)" % (
+            name, len(data), 100 - (len(data) * 100.0 / len(raw)),
+            len(z), 100 - (len(z) * 100.0 / len(raw)))
     print 
 
 
 def runTests():
-    for name, data in  mapdata.data.items():
-        print "\n========================== %s\n" % name
-        competition(name, data,
-                    DeltaCode_w2_d5,
-                    DeltaCode_w5_d2,
-                    DeltaCode_r_w4_d2,
-                    DeltaCode_d7,
-                    DeltaCode_r_d6,
-                    VariableDeltaCode)
-
-
+    for name, tileW, data in  mapdata.items:
+        if len(sys.argv) < 2 or name in sys.argv:
+            print "\n========================== %s\n" % name
+            competition(name, data,
+                        DeltaCode_w2_d5,
+                        DeltaCode_w5_d2,
+                        DeltaCode_r_w4_d2,
+                        DeltaCode_r_w5_d1,
+                        DeltaCode_d7,
+                        DeltaCode_r_d6,
+                        DVarNib_r4,
+                        DVarNib_2,
+                        )
 
 runTests()
