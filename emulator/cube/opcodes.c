@@ -44,6 +44,10 @@
 #define RX_ADDRESS ((OPCODE & 7) + 8 * ((PSW & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0))
 #define CARRY ((PSW & PSWMASK_C) >> PSW_C)
 
+#define CUR_DPL   ((aCPU->mSFR[REG_DPS] & 1) ? REG_DPL1 : REG_DPL)
+#define CUR_DPH   ((aCPU->mSFR[REG_DPS] & 1) ? REG_DPH1 : REG_DPH)
+
+
 static int read_mem(struct em8051 *aCPU, int aAddress)
 {
     if (aAddress > 0x7f)
@@ -843,7 +847,7 @@ static int orl_c_bitaddr(struct em8051 *aCPU)
 
 static int jmp_indir_a_dptr(struct em8051 *aCPU)
 {
-    PC = ((aCPU->mSFR[REG_DPH] << 8) | (aCPU->mSFR[REG_DPL])) + ACC;
+    PC = ((aCPU->mSFR[CUR_DPH] << 8) | (aCPU->mSFR[CUR_DPL])) + ACC;
     return 2;
 }
 
@@ -1030,8 +1034,8 @@ static int mov_mem_indir_rx(struct em8051 *aCPU)
 
 static int mov_dptr_imm(struct em8051 *aCPU)
 {
-    aCPU->mSFR[REG_DPH] = OPERAND1;
-    aCPU->mSFR[REG_DPL] = OPERAND2;
+    aCPU->mSFR[CUR_DPH] = OPERAND1;
+    aCPU->mSFR[CUR_DPL] = OPERAND2;
     PC += 3;
     return 3;
 }
@@ -1065,7 +1069,7 @@ static int mov_bitaddr_c(struct em8051 *aCPU)
 
 static int movc_a_indir_a_dptr(struct em8051 *aCPU)
 {
-    int address = ((aCPU->mSFR[REG_DPH] << 8) | (aCPU->mSFR[REG_DPL] << 0)) + ACC;
+    int address = ((aCPU->mSFR[CUR_DPH] << 8) | (aCPU->mSFR[CUR_DPL] << 0)) + ACC;
     ACC = aCPU->mCodeMem[address & (aCPU->mCodeMemSize - 1)];
     PC++;
     return 3;
@@ -1184,9 +1188,9 @@ static int mov_c_bitaddr(struct em8051 *aCPU)
 
 static int inc_dptr(struct em8051 *aCPU)
 {
-    aCPU->mSFR[REG_DPL]++;
-    if (!aCPU->mSFR[REG_DPL])
-        aCPU->mSFR[REG_DPH]++;
+    aCPU->mSFR[CUR_DPL]++;
+    if (!aCPU->mSFR[CUR_DPL])
+        aCPU->mSFR[CUR_DPH]++;
     PC++;
     return 1;
 }
@@ -1616,7 +1620,7 @@ static int xchd_a_indir_rx(struct em8051 *aCPU)
 
 static int movx_a_indir_dptr(struct em8051 *aCPU)
 {
-    int dptr = (aCPU->mSFR[REG_DPH] << 8) | aCPU->mSFR[REG_DPL];
+    int dptr = (aCPU->mSFR[CUR_DPH] << 8) | aCPU->mSFR[CUR_DPL];
     if (aCPU->xread)
     {
         ACC = aCPU->xread(aCPU, dptr);
@@ -1693,7 +1697,7 @@ static int mov_a_indir_rx(struct em8051 *aCPU)
 
 static int movx_indir_dptr_a(struct em8051 *aCPU)
 {
-    int dptr = (aCPU->mSFR[REG_DPH] << 8) | aCPU->mSFR[REG_DPL];
+    int dptr = (aCPU->mSFR[CUR_DPH] << 8) | aCPU->mSFR[CUR_DPL];
     if (aCPU->xwrite)
     {
         aCPU->xwrite(aCPU, dptr, ACC);
