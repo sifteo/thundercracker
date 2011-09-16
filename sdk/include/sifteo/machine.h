@@ -30,23 +30,62 @@ namespace Sifteo {
  * XXX: Implement these for each supported platform
  */
 
-class Atomic {
- public:
+namespace Atomic {
 
-    static void barrier() {
+    static inline void Barrier() {
 	__asm__ __volatile__ ("" : : : "memory");
     }
     
-    static void Or(uint32_t &dest, uint32_t src) {
-	barrier();
+    static inline void Or(uint32_t &dest, uint32_t src) {
+	Barrier();
 	dest |= src;
-	barrier();
+	Barrier();
     }
 
-    static void And(uint32_t &dest, uint32_t src) {
-	barrier();
+    static inline void And(uint32_t &dest, uint32_t src) {
+	Barrier();
 	dest &= src;
-	barrier();
+	Barrier();
+    }
+
+};
+
+
+/**
+ * Assembly intrinsics
+ *
+ * These functions basic operations that our hardware can do very
+ * fast, but for with no analog exists in C.
+ *
+ * XXX: Implement these for each supported platform
+ */
+
+namespace Intrinsic {
+
+    static inline uint32_t CLZ(uint32_t r) {
+	// Count leading zeroes. One instruction on ARM.
+	
+	uint32_t c;
+	for (c = 0; c < 32; c++) {
+	    if (r & 0x80000000)
+		break;
+	    else
+		r <<= 1;
+	}
+	return c;
+    }
+
+    static inline uint32_t ROR(uint32_t a, uint32_t b) {
+	// Rotate right. One instruction on ARM
+
+	if (b < 32)
+	    return (a >> b) | (a << (32 - b));
+	else
+	    return 0;
+    }
+
+    static inline uint32_t ROL(uint32_t a, uint32_t b) {
+	return ROR(a, 32 - b);
     }
 
 };

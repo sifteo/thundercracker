@@ -68,6 +68,8 @@ class BitBuffer {
 class CubeCodec {
  public:
     void encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb);
+    bool encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data);
+
     bool flashReset(PacketBuffer &buf);
     bool flashSend(PacketBuffer &buf, _SYSAssetGroup *group, _SYSAssetGroupCube *ac, bool &done);
 
@@ -84,35 +86,8 @@ class CubeCodec {
     uint8_t codeD;		/// Codec "D" state (coded delta)
     uint8_t codeRuns;		/// Codec run count
     uint16_t codePtr;		/// Codec's VRAM write pointer state (word address)
-    uint16_t scanPtr;		/// Current word address in scanning the VRAM buffer
 
-    // Video buffer predicates
-
-    static const unsigned NUM_VRAM_WORDS = 512;
-
-    static bool testCM1(const _SYSVideoBuffer *vb, uint16_t wordAddr) {
-	// Is this address marked for change in CM1?
-	return vb->cm1[wordAddr >> 5] & (1 << (wordAddr & 31));
-    }
-
-    static uint16_t next1(uint16_t word) {
-	// Next address, by 1 word
-	return (word + 1) & (NUM_VRAM_WORDS - 1);
-    }
-
-    static bool testCM16(const _SYSVideoBuffer *vb, uint16_t wordAddr) {
-	// Is this address marked for change in CM16?
-	return vb->cm16 & (1 << (wordAddr >> 4));
-    }
-
-    static uint16_t next16(uint16_t word) {
-	// Next 16-word address bucket
-	return ((word & ~15) + 16) & (NUM_VRAM_WORDS - 1);
-    }
-
-    // Code packing functions, for the VRAM compression algorithm
-
-    void txSkip();
+    static const unsigned PTR_MASK = 511;
 };
 
 #endif

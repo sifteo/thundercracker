@@ -75,8 +75,20 @@ struct _SYSVideoBuffer {
 	uint16_t words[512];	/// OUT    Raw cube RAM contents
 	uint8_t bytes[1024];
     };
+
+    /*
+     * Change bitmaps are ordered MSB-first, to support fast lookups
+     * with CLZ. Always set bits using atomic read/modify/write
+     * primitives. Order matters. Write first to VRAM, then to cm1,
+     * then cm32. Note that only the upper 16 bits of cm32 are used.
+     *
+     * Streaming over the radio can begin any time after cm32 has been
+     * updated. For bandwidth efficiency, it's best to wait until
+     * after a large update, then OR a single value with cm32 in order
+     * to trigger the update.
+     */
     uint32_t cm1[16];		/// INOUT  Change map, at a resolution of 1 bit per word
-    uint32_t cm16;		/// INOUT  Change map, at a resolution of 1 bit per 16 words
+    uint32_t cm32;		/// INOUT  Change map, at a resolution of 1 bit per 32 words
 };
 
 

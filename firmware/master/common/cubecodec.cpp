@@ -6,12 +6,15 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <stdio.h> //XXX
+
 #include <protocol.h>
 #include <sifteo/machine.h>
 
 #include "cubecodec.h"
 
 using namespace Sifteo;
+using namespace Sifteo::Intrinsic;
 
 
 void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
@@ -19,11 +22,6 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
     // This cube has no framebuffer at the moment, its rendering is disabled
     if (!vb)
 	return;
-
-    // Nothing changed in the framebufer
-    if (!vb->cm16)
-	return;
-
 
     /*
      * Note that we have to sweep that change map as we go. Since
@@ -33,31 +31,79 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
      * code to run during this ISR. So there's no need to worry about
      * atomicity in updating the cm here.
      *
-     * So we take a simple strategy here. Every corresponding bit in
-     * cm1 is cleared as soon as we buffer a compression code that
-     * accounts for a single word. At every 16-word boundary, we check
-     * the prior 16 change bits in cm1. If they're all still clear, we
-     * clear a bit in cm16.
+     * Also note that we don't need to keep a separate pointer to
+     * track our scan location in VRAM, since it's very cheap to use
+     * our changemap to locate the first word in VRAM that needs
+     * to be sent.
      *
-     * This accounts for the fact that userspace may (and probably
-     * will) continue to write to VRAM between packets. We'll catch
-     * any of these new writes on the next iteration through the
-     * buffer. We never seek our VRAM pointer backwards until reaching
-     * the end of the buffer.
+     * Because of this, we effectively do a top-down scan of VRAM for
+     * every RF packet. If something earlier on in the framebuffer was
+     * changed by userspace, we'll go back and resend it before
+     * sending later portions of the buffer. That's good in a way,
+     * since it gives us a way to set a kind of QoS priority based on
+     * VRAM address. But it means that userspace needs to consciously
+     * delay writing to the changemap if it wants to avoid sending
+     * redundant or out-of-order updates over the radio while a large
+     * or multi-part update is in progress.
+     *
+     * This loop terminates when all of VRAM has been flushed, or when
+     * we fill up the output packet. We assume that this function
+     * begins with space available in the packet buffer.
      */
-
+ 
     do {
-	if (testCM16(vb, scanPtr)) {
-	    // Something exists in this 16-word block
-	    
-	    
+	/* This AND is important, it prevents out-of-bounds indexing
+	 * or infinite looping if userspace gives us a bogus cm32
+	 * value! This is equivalent to bounds-checking idx32 and addr
+	 * below, as well as checking for infinite looping. Much more
+	 * efficient to do it here though :)
+	 */
+	uint32_t cm32 = vb->cm32 & 0xFFFF0000;
 
+	if (!cm32)
+	    break;
+
+	uint32_t idx32 = CLZ(cm32);
+	uint32_t cm1 = vb->cm1[idx32];
+
+	if (cm1) {
+	    uint32_t idx1 = CLZ(cm1);
+	    uint16_t addr = (idx32 << 5) | idx1;
+
+	    if (!encodeVRAM(buf, addr, vb->words[addr]))
+		return;
+
+	    cm1 &= ROR(0x7FFFFFFF, idx1);
+	    vb->cm1[idx32] = cm1;
 	}
-    } while (!buf.isFull() && vb->cm16);
 
-
+	if (!cm1) {
+	    cm32 &= ROR(0x7FFFFFFF, idx32);
+	    vb->cm32 = cm32;
+	}
+    } while (!buf.isFull());
 }
 
+bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data)
+{
+    /*
+     * XXX: Big honkin' literal codes! Debugging only... This takes a
+     *      massive 5 bytes to encode one tile index!
+     */
+
+    printf("Encode %04x %04x\n", addr, data);
+    
+    if (!txBits.hasRoomForFlush(buf, 16 + 24))
+	return false;
+
+    txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
+    txBits.flush(buf);
+
+    txBits.append(0x23 | (data << 8), 24);
+    txBits.flush(buf);
+
+    return true;
+}
 
 bool CubeCodec::flashReset(PacketBuffer &buf)
 {
