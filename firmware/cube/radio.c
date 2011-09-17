@@ -114,8 +114,8 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK)
 	setb	_radio_state_reset_not_pending
 
 	mov	R_STATE, #0
-	mov	dpl, #0
-	mov	dph, #0
+	mov	_DPL1, #0
+	mov	_DPH1, #0
 
 no_state_reset:
 
@@ -183,8 +183,8 @@ no_rx_flush:
 	; State Machine
 	;--------------------------------------------------------------------
 
-	mov	dpl, #(rxs_default)
-	mov	dph, #(rxs_default >> 8)
+	mov	DPL, #(rxs_default)
+	mov	DPH, #(rxs_default >> 8)
 
 rx_loop:					; Fetch the next byte or nybble
 	mov	a, R_NYBBLE_COUNT
@@ -341,12 +341,13 @@ rxs_rle:
 	mov	R_LOW, a	; Stow temporarily
 
 	mov	_DPS, #1	; Switch to VRAM DPTR
-	mov	a, dpl		; 16-bit add, dptr += R_LOW
+	mov	a, _DPL1	; 16-bit add, dptr += R_LOW
 	add	a, R_LOW
-	mov	dpl, a
-	mov	a, dph
+	mov	_DPL1, a
+	mov	a, _DPH1
 	addc	a, #0
-	mov	dph, a
+	anl	a, #3		; Wrap DPH1 at 1 kB
+	mov	_DPH1, a
 	mov	_DPS, #0
 
 	mov	R_STATE, #0
@@ -405,10 +406,10 @@ rxs_word9:
 	mov	_DPS, #1	; Switch to VRAM DPTR
 	clr	c  		; Words -> Bytes, carry bit 8 over into DPH.
 	rlc	a
-	mov	DPL, a
+	mov	_DPL1, a
 	mov	a, R_HIGH
 	rlc	a
-	mov	DPH, a
+	mov	_DPH1, a	; Max value 00000011
 	mov	_DPS, #0
 
 	mov	R_STATE, #0
