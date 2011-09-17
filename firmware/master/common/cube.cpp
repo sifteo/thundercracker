@@ -54,36 +54,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     tx.packet.len = 0;
 
     /*
-     * First priority: Continue an opcode we already started
-     */
-
-    if (rfOpcode != RF_OP_NOP) {
-	txContinue(tx);
-	if (tx.packet.isFull())
-	    return true;
-    }
-
-    /*
-     * Second priority: Begin a flash decoder reset
-     *
-     * We can only do this if a reset is needed, hasn't already been
-     * sent, and we have a valid ACK (so there's a baseline for
-     * checking whether the reset has been acknowledged.) Send the
-     * reset token, and synchronously reset any flash-related IRQ
-     * state.
-     */
-
-    if ((flashResetWait & bit()) && !(flashResetSent & bit()) && (ackValid & bit())) {
-	Atomic::Or(flashResetSent, bit());
-	loadBufferAvail = FLS_FIFO_SIZE - 1;
-
-	tx.packet.append(RF_OP_FLASH_RESET);
-	if (tx.packet.isFull())
-	    return true;	   
-    }
-
-    /*
-     * Third priority: Video buffer updates
+     * First priority: Send video buffer updates
      */
 
     if (vbuf->cm4) {
@@ -91,47 +62,99 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     }
 
     /*
-     * Fourth priority: Asset downloading
+     * Second priority: Download assets to flash
      */
 
-    _SYSAssetGroup *group = loadGroup;
-    if (group && !(flashResetWait & bit())) {
+    if (flashResetWait & bit()) {
+
 	/*
-	 * A note on security: Typically we have to be very paranoid
-	 * about values obtained via the _SYS data structures, and we
-	 * especially have to be careful when we're in an ISR. We have
-	 * to read the values only once, then validate them before
-	 * using.
+	 * We need to reset the flash decoder before we can send any data.
 	 *
-	 * But here, nothing is really at stake if a buggy or
-	 * malicious program gives us progress/dataSize values that
-	 * are inconsistent. The worst that can happen is we generate
-	 * a bogus length for the opcode below, and we send some
-	 * garbage to the cube's flash decoder. Memory overruns and
-	 * state consistency are rigidly enforced by txContinue().
+	 * We can only do this if a reset is needed, hasn't already
+	 * been sent, and we have a valid ACK (so there's a baseline
+	 * for checking whether the reset has been acknowledged.) Send
+	 * the reset token, and synchronously reset any flash-related
+	 * IRQ state.
+	 */
+
+	if (!(flashResetSent & bit()) &&
+	    (ackValid & bit()) &&
+	    txBits.hasRoomForFlush(tx.packet, 12)) {
+
+	    Atomic::Or(flashResetSent, bit());
+	    loadBufferAvail = FLS_FIFO_SIZE - 1;
+
+	    /*
+	     * Escape to flash mode (two-nybble code 33) plus one extra
+	     * dummy nybble to force a byte flush. Must be the last full
+	     * byte in the packet to trigger a reset.
+	     */
+	    txBits.append(0x333, 12);
+	    txBits.flush(tx.packet);
+	    txBits.init();
+
+	    // Must end the packet after a flash escape.
+	    return true;
+	}
+
+    } else {
+
+	/*
+	 * Not waiting on a reset. See if we need to send asset data.
+	 *
+	 * Since we're dealing with asset group pointers as well as
+	 * per-cube state that reside in untrusted memory, this code
+	 * has to be carefully written to read each user value exactly
+	 * once, and check it before use.
+	 *
+	 * We only do this if we have asset data, obviously, but also
+	 * if the cube has enough buffer space to accept it, and if
+	 * there's enough room in the packet for both the escape code
+	 * and at least one byte of flash data.
+	 *
+	 * After this initial check, any further checks exist only as
+	 * protection against buggy or malicious user code.
 	 */
 
 	_SYSAssetGroup *group = loadGroup;
-	const _SYSAssetGroupHeader *ghdr = group->hdr;
-	_SYSAssetGroupCube *ac = assetCube(group);
-	uint32_t dataSize = Runtime::checkUserPointer(ghdr, sizeof *ghdr) ? ghdr->dataSize : 0;
-	uint32_t progress = ac ? ac->progress : 0;
-	uint8_t packetSize;
 
-	packetSize = MIN(RF_ARG_MASK + 1, dataSize - progress);
-	packetSize = MIN(packetSize, loadBufferAvail);
+	if (group && loadBufferAvail &&
+	    txBits.hasRoomForFlush(tx.packet, 12 + 8)) {
 
-	if (packetSize) {
-	    rfOpcode = RF_OP_FLASH_QUEUE | (packetSize - 1);  
-	    loadBufferAvail -= packetSize;
+	    const _SYSAssetGroupHeader *ghdr = group->hdr;
+	    _SYSAssetGroupCube *ac = assetCube(group);
 
-	    tx.packet.append(rfOpcode);
-	    if (tx.packet.isFull())
-		return true;	   
-	
-	    txContinue(tx);
-	    if (tx.packet.isFull())
-		return true;
+	    if (ac && Runtime::checkUserPointer(ghdr, sizeof *ghdr)) {
+		uint32_t dataSize = ghdr->dataSize;
+		uint32_t progress = ac->progress;
+
+		if (progress < dataSize) {
+		    uint8_t *src = (uint8_t *)ghdr + ghdr->hdrSize + progress;
+		    uint32_t count;
+		
+		    txBits.append(0x333, 12);
+		    txBits.flush(tx.packet);
+		    txBits.init();
+
+		    count = MIN(tx.packet.bytesFree(), dataSize - progress);
+		    count = MIN(count, loadBufferAvail);
+
+		    tx.packet.appendUser(src, count);
+
+		    progress += count;
+		    loadBufferAvail -= count;
+		    ac->progress = progress;
+
+		    if (progress >= dataSize) {
+			/* Finished asset loading */
+			Atomic::Or(group->doneCubes, bit());
+			loadGroup = NULL;
+		    }
+
+		    // Must end the packet after a flash escape.
+		    return true;
+		}
+	    }
 	}
     }
 
@@ -141,63 +164,6 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
      *      return true to request a ping packet at some particular interval.
      */
     return true;
-}
-
-void CubeSlot::txContinue(PacketTransmission &tx)
-{
-    /*
-     * Pick up where we left off, generating transmittable bytes for
-     * the current RF opcode. This needs to handle any opcode that
-     * takes arguments.
-     */
-
-    switch (rfOpcode & RF_OP_MASK) {
-
-    case RF_OP_FLASH_QUEUE: {
-	/*
-	 * Continue writing Flash loadstream data.
-	 *
-	 * Since we're dealing with asset group pointers as well as
-	 * per-cube state that reside in untrusted memory, this code
-	 * has to be carefully written to read each value exactly
-	 * once, and check it before use.
-	 */
-
-	_SYSAssetGroup *group = loadGroup;
-	const _SYSAssetGroupHeader *ghdr = group->hdr;
-	_SYSAssetGroupCube *ac = assetCube(group);
-	bool ghdrValid = Runtime::checkUserPointer(ghdr, sizeof *ghdr);
-	uint32_t dataSize = ghdrValid ? ghdr->dataSize : 0;
-	uint32_t progress = ac ? ac->progress : 0;
-
-	if (progress < dataSize) {
-	    uint8_t *src = ghdrValid ? (uint8_t *)ghdr + ghdr->hdrSize + progress : 0;
-	    uint32_t count;
-
-	    count = MIN(tx.packet.bytesFree(), dataSize - progress);
-	    count = MIN(count, (rfOpcode & RF_ARG_MASK) + 1);
-
-	    tx.packet.appendUser(src, count);
-	    progress += count;
-	    rfOpcode -= count;
-
-	    if (ac)
-		ac->progress = progress;
-
-	    if ((rfOpcode & RF_OP_MASK) != RF_OP_FLASH_QUEUE)
-		rfOpcode = RF_OP_NOP;
-	}
-
-	if (progress >= dataSize) {
-	    /* Finished asset loading */
-	    Atomic::Or(group->doneCubes, bit());
-	    loadGroup = NULL;
-	}
-
-	break;
-    }
-
-    }
 }
 
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
