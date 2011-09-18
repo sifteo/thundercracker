@@ -197,7 +197,18 @@ rx_loop:					; Fetch the next byte or nybble
 	mov	_SPIRDAT, #0
 2$:	mov	R_INPUT, a
 
-	; Branch to state handler
+	; Branch to state handler.
+
+	; All state handlers must be within a 255-byte delta of
+	; rxs_default! If you add code to the state machine,
+	; check radio.rst to make sure you have not crossed
+	; this barrier.
+	;
+	; This code is currently VERY close to the limit.
+	; If you are exceeding it, first try to optimize the
+	; other state machine code to squeeze out a few bytes.
+	; If that is not enough, you can put less frequently
+	; used sections of code elsewhere, and ljmp to them.
 
 	mov	a, R_STATE
 	jmp	@a+dptr	
@@ -248,6 +259,8 @@ rxs_default_not_rle:
 	mov	R_DIFF, #0
 
 	mov	R_STATE, #(rxs_literal - rxs_default)
+
+rx_next_sjmp:
 	RX_NEXT_NYBBLE
 
 	;-------------------------------------------
@@ -260,8 +273,7 @@ rxs_diff_1:
 rx_next_wrdelta_default:
 	mov	R_STATE, #0
 	lcall	#_rx_write_deltas
-rx_next_sjmp:
-	RX_NEXT_NYBBLE
+	sjmp	#rx_next_sjmp
 
 	;-------------------------------------------
 	; Literal 14-bit index
@@ -357,23 +369,24 @@ rxs_rle:
 
 	; -------- 0010 00nn nnnn -- Write n+5 delta-words
 
-	jb	acc.0, 16$
+	jb	acc.0, not_wrdelta
 
 	mov	a, R_INPUT
 	swap	a
 	anl	a, #0x30	; Mask to 00nn0000
 	mov	R_LOW, a
 
-	mov	R_STATE, #(15$ - rxs_default)
+	mov	R_STATE, #(rxs_wrdelta_1 - rxs_default)
+rx_next_sjmp2:
 	sjmp	rx_next_sjmp
 
-15$:
+rxs_wrdelta_1:
 	mov	a, R_INPUT
 	anl	a, #0xF
 	orl	AR_LOW, a	; Complete word 00nnnnnn
 	sjmp 	rx_next_wrdelta_default
 
-16$:
+not_wrdelta:
 
 	; -------- 0011 000x xxxx xxxx -- Set literal 9-bit word address
 
@@ -385,9 +398,7 @@ rxs_rle:
 	mov	R_HIGH, a
 
 	mov	R_STATE, #(rxs_word9 - rxs_default)
-
-rx_next_sjmp2:
-	sjmp	rx_next_sjmp
+	sjmp	rx_next_sjmp2
 
 rxs_word9:
 	mov	a, R_INPUT
