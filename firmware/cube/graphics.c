@@ -384,20 +384,12 @@ void graphics_init(void)
     lcd_cmd_byte(LCD_CMD_COLMOD);
     lcd_data_byte(LCD_COLMOD_16);
 
-    /*
-     * Just to make debugging easier, init VRAM with all sprites off,
-     * and with sequential tiles displayed on bg0.
-     */
+    /* XXX: Below is for testing only. Eventually we'll have an idle-screen to draw. */
+
+    /* All sprites off by default */
 
     for (i = 0; i < NUM_SPRITES; i++) {
 	vram.latched.sprites[i].mask_x = 0xFF;
 	vram.latched.sprites[i].mask_y = 0xFF;
     }
-
-    i = 0;
-    do {
-	uint16_t addr = ((i & 0xF) << 1) + (uint16_t)(i >> 4) * 40;
-	vram.tilemap[addr] = i << 1;
-	vram.tilemap[++addr] = (i >> 7) << 1;
-    } while (++i);
 }
