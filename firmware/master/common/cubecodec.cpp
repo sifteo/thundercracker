@@ -6,8 +6,6 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include <stdio.h> //XXX
-
 #include <protocol.h>
 #include <sifteo/machine.h>
 
@@ -108,8 +106,6 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data)
      *       clear bits in that CM *before* touching them in VRAM.
      */
 
-    printf("Encode %04x %04x\n", addr, data);
-    
     if (!txBits.hasRoomForFlush(buf, 16 + 24))
 	return false;
 
