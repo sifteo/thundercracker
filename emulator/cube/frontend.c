@@ -324,6 +324,11 @@ void frontend_loop(void)
 	    }
 	}
 
+	if (!runmode) {
+	    // Paused
+	    SDL_Delay(50);
+	}
+
 	if (frontend.running) {
             int i;
             
