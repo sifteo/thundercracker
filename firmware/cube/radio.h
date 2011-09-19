@@ -24,5 +24,6 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK);
 void radio_init(void);
 
 extern RF_ACKType __near ack_data;
+extern uint8_t __near ack_len;
 
 #endif

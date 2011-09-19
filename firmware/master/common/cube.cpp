@@ -17,7 +17,7 @@ CubeSlot CubeSlot::instances[_SYS_NUM_CUBE_SLOTS];
 _SYSCubeIDVector CubeSlot::vecEnabled;
 _SYSCubeIDVector CubeSlot::flashResetWait;
 _SYSCubeIDVector CubeSlot::flashResetSent;
-_SYSCubeIDVector CubeSlot::ackValid;
+_SYSCubeIDVector CubeSlot::flashACKValid;
 
 
 void CubeSlot::loadAssets(_SYSAssetGroup *a) {
@@ -62,15 +62,17 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 	 * We need to reset the flash decoder before we can send any data.
 	 *
 	 * We can only do this if a reset is needed, hasn't already
-	 * been sent, and we have a valid ACK (so there's a baseline
-	 * for checking whether the reset has been acknowledged.) Send
-	 * the reset token, and synchronously reset any flash-related
-	 * IRQ state.
+	 * been sent. Send the reset token, and synchronously reset
+	 * any flash-related IRQ state.
+	 *
+	 * Note the flash reset's dual purpose, of both resetting the
+	 * cube's flash state machine and triggering the cube to send
+	 * us an ACK packet with a valid flash byte count. So, we
+	 * actually end up sending two resets if we haven't yet seen a
+	 * valid flash ACK from this cube.
 	 */
 
-	if (!(flashResetSent & bit()) &&
-	    (ackValid & bit()) &&
-	    codec.flashReset(tx.packet)) {
+	if (!(flashResetSent & bit()) && codec.flashReset(tx.packet)) {
 
 	    // Remember that we're waiting for a reset ACK
 	    Atomic::Or(flashResetSent, bit());
@@ -109,26 +111,33 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
 
-    if (packet.len < sizeof *ack)
-	return;
+    if (packet.len >= offsetof(RF_ACKType, flash_fifo_bytes) + 1) {
+	// This ACK includes a valid flash_fifo_bytes counter
 
-    if (ackValid & bit()) {
-	// Two valid ACK packets in a row.
+	if (flashACKValid & bit()) {
+	    // Two valid ACKs in a row, we can count bytes.
 
-	uint8_t loadACK = ack->flash_fifo_bytes - loadPrevACK;
+	    uint8_t loadACK = ack->flash_fifo_bytes - flashPrevACK;
 
-	if (flashResetWait & bit()) {
-	    // We're waiting on a reset
-	    if (loadACK)
-		Atomic::And(flashResetWait, ~bit());
+	    if (flashResetWait & bit()) {
+		// We're waiting on a reset
+		if (loadACK)
+		    Atomic::And(flashResetWait, ~bit());
+	    } else {
+		// Acknowledge FIFO bytes
+		codec.flashAckBytes(loadACK);
+	    }
+
 	} else {
-	    // Acknowledge FIFO bytes
-	    codec.flashAckBytes(loadACK);
-	}
+	    // Now we've seen one ACK. If we're doing a reset, send the token again.
+	   
+	    Atomic::Or(flashACKValid, bit());
+	    Atomic::And(flashResetSent, ~bit());	    
+	}	
+
+	flashPrevACK = ack->flash_fifo_bytes;
     }
 
-    loadPrevACK = ack->flash_fifo_bytes;
-    Atomic::Or(ackValid, bit());
 }
 
 void CubeSlot::radioTimeout()

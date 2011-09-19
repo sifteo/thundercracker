@@ -194,35 +194,36 @@
  *
  * CUBE -> Master (ACK) packet format
  *
- * XXX: Right now, we send back this entire ACK packet in every
- *      response.  We can optimize this by defining a few shorter ACK
- *      formats, with the specific format indicated by a unique packet
- *      length. This lets us compress the ACK packet without expanding
- *      it by adding any header bytes.
+ * The overall ACK structure (RF_ACKType) defines all possible data
+ * that we may send back in an ACK response. Any bytes at the end of
+ * the packet which were unchanged from the previous ACK may be
+ * omitted. In the most trivial case, if nothing at all has changed,
+ * we'll let the hardware send back an empty ACK.
  *
- *      One simple option is to place the most frequently updated
- *      fields at the front of the packet, and simply truncate off any
- *      bytes that haven't changed since the last one.
+ * The full ACK packet may be requested at any time by sending a flash
+ * decoder state machine reset code. (See above).
+ *
+ * Right now it's helpful for our specific packet lengths to be
+ * strings of all '1' bits, since we cna more efficiently track the
+ * ACK length in the cube firmware. Right now, we can send packets of
+ * length 0, 1, 3, 7, and 8.
  */
 
-#define RF_ACK_LENGTH  		12
+#define RF_ACK_LEN_EMPTY	0
+#define RF_ACK_LEN_FRAME	1
+#define RF_ACK_LEN_ACCEL	3
+#define RF_ACK_LEN_NEIGHBOR	7
+#define RF_ACK_LEN_MAX 		8
 
-// Offset defines (for use in inline assembly)
-#define RF_ACK_ACCEL_COUNTS	1
-#define RF_ACK_ACCEL_TOTALS	3
+#define RF_ACK_FRAME		0
+#define RF_ACK_ACCEL		1
+#define RF_ACK_NEIGHBOR		3
+#define RF_ACK_FLASH_FIFO	7
+
 
 typedef union {
-    uint8_t bytes[RF_ACK_LENGTH];
+    uint8_t bytes[RF_ACK_LEN_MAX];
     struct {
-	/*
-	 * Our standard response packet format. This currently all
-	 * comes to a total of 15 bytes. We probably also want a
-	 * variable-length "tail" on this packet, to allow us to
-	 * transmit specific data that the master requested, like HWID
-	 * or firmware version. But this is the high-frequency
-	 * telemetry data that we ALWAYS send at the full packet rate.
-	 */
-
 	/*
 	 * For synchronizing LCD refreshes, the master can keep track
 	 * of how many repaints the cube has performed. Ideally these
@@ -233,9 +234,8 @@ typedef union {
 	 */
 	uint8_t frame_count;
 
-        // Averaged accel data
-	uint8_t accel_count[2];
-	uint8_t accel_total_bytes[4];  // Two unaligned 16-bit values
+        // 8-bit analog accelerometer data
+	uint8_t accel[2];
 
 	/*
 	 * Need ~5 bits per sensor (5 other cubes * 4 sides + 1 idle =
@@ -247,7 +247,10 @@ typedef union {
 	/*
 	 * Number of bytes processed by the flash decoder so
 	 * far. Increments and wraps around, never decrements or
-	 * resets.
+	 * resets. Also increments once on a flash reset completion.
+	 *
+	 * We should probably keep this always as the last item in the
+	 * ACK packet format.
 	 */
 	uint8_t flash_fifo_bytes;
     };

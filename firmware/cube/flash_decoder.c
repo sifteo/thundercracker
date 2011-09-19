@@ -131,7 +131,12 @@ void flash_handle_fifo(void)
     if (flash_fifo_head == FLS_FIFO_RESET) {
 	flash_fifo_head = 0;
 	flash_init();
-	ack_data.flash_fifo_bytes++;
+
+	__asm
+	    inc	(_ack_data + RF_ACK_FLASH_FIFO)
+	    mov	_ack_len, #RF_ACK_LEN_MAX
+	__endasm ;
+
 	return;
     }
 
@@ -158,7 +163,11 @@ void flash_handle_fifo(void)
 
     byte = flash_fifo[fifo_tail];	
     fifo_tail = (fifo_tail + 1) & (FLS_FIFO_SIZE - 1);
-    ack_data.flash_fifo_bytes++;
+
+    __asm
+	inc	(_ack_data + RF_ACK_FLASH_FIFO)
+	mov	_ack_len, #RF_ACK_LEN_MAX
+    __endasm ;
 
     __asm
 	clr   a

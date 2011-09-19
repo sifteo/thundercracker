@@ -11,11 +11,9 @@
 #include "flash.h"
 #include <protocol.h>
 
-/*
- * The ACK reply buffer lives in near memory. It needs to, so that
- * the ADC ISR can access it very quickly.
- */
 RF_ACKType __near ack_data;
+uint8_t __near ack_len;
+
 
 /*
  * Assembly macros.
@@ -569,29 +567,25 @@ rx_complete_0:
 	; ACK packet write
 	;--------------------------------------------------------------------
 
+	mov	a, _ack_len
+	jz	no_ack					; Skip the ACK entirely if empty
+	mov	_ack_len, #RF_ACK_LEN_EMPTY
+
 	clr	_RF_CSN					; Begin SPI transaction
 	mov	_SPIRDAT, #RF_CMD_W_ACK_PAYLD		; Start sending ACK packet
-	mov	r1, #_ack_data
-	mov	r0, #RF_ACK_LENGTH
+	mov	R_TMP, #_ack_data
+	mov	R_INPUT, a				; Packet length
 
-3$:	mov	_SPIRDAT, @r1
-	inc	r1
+3$:	mov	_SPIRDAT, @R_TMP
+	inc	R_TMP
 	SPI_WAIT					; RX dummy byte
 	mov	a, _SPIRDAT
-	djnz	r0, 3$
+	djnz	R_INPUT, 3$
 
 	SPI_WAIT					; RX last dummy byte
 	mov	a, _SPIRDAT
 	setb	_RF_CSN					; End SPI transaction
-
-	; Clear the accelerometer accumulators
-
-	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 0), #0
-	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 1), #0
-	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 2), #0
-	mov	(_ack_data + RF_ACK_ACCEL_TOTALS + 3), #0
-	mov	(_ack_data + RF_ACK_ACCEL_COUNTS + 0), #0
-	mov	(_ack_data + RF_ACK_ACCEL_COUNTS + 1), #0
+no_ack:
 
 	pop	psw
 	pop	dph

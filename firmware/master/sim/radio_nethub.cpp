@@ -218,6 +218,9 @@ static void SifteoRadio_consume()
 
     for (;;) {
 	uint8_t queueLen = self.rxTail - self.rxHead;
+	if (queueLen < NETHUB_HDR_LEN)
+	    break;
+
 	uint8_t *packet = &self.rxBuffer[self.rxHead];
 	uint8_t packetLen = packet[0] + NETHUB_HDR_LEN;
 

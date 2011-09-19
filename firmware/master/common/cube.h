@@ -42,7 +42,7 @@ class CubeSlot {
     static _SYSCubeIDVector vecEnabled;		/// Cube enabled
     static _SYSCubeIDVector flashResetWait;	/// We need to reset flash before writing to it
     static _SYSCubeIDVector flashResetSent;	/// We've sent an unacknowledged flash reset	
-    static _SYSCubeIDVector ackValid;		/// At least one valid ACK has been received
+    static _SYSCubeIDVector flashACKValid;	/// 'flashPrevACK' is valid
 
     _SYSCubeID id() const {
 	return this - &instances[0];
@@ -105,7 +105,7 @@ class CubeSlot {
     CubeCodec codec;
 
     // ACK tracking
-    uint8_t loadPrevACK;
+    uint8_t flashPrevACK;
 };
 
 
