@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+
 #include <sifteo.h>
 #include "assets.gen.h"
 
@@ -13,12 +14,17 @@ using namespace Sifteo;
 
 static _SYSVideoBuffer vbuf;
 
+void markCM(uint16_t addr)
+{
+    Atomic::Or(vbuf.cm1[addr >> 5], 0x80000000 >> (addr & 31));
+    Atomic::Or(vbuf.cm32, 0x80000000 >> (addr >> 5));
+}
+
 void vPoke(uint16_t addr, uint16_t word)
 {
     if (vbuf.words[addr] != word) {
 	vbuf.words[addr] = word;
-	Atomic::Or(vbuf.cm1[addr >> 5], 0x80000000 >> (addr & 31));
-	Atomic::Or(vbuf.cm32, 0x80000000 >> (addr >> 5));
+	markCM(addr);
     }
 }
 
@@ -52,6 +58,9 @@ void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
 
 void siftmain()
 {
+    for (unsigned i = 0; i < 20*20; i++)
+	markCM(i);
+
     _SYS_enableCubes(1 << 0);
     _SYS_loadAssets(0, &GameAssets.sys);
     _SYS_setVideoBuffer(0, &vbuf);
@@ -60,7 +69,6 @@ void siftmain()
     font_printf(1, 3, "(>\")>  <(\"<)");
 
     int x = 0;
-
     while (1) {
 	font_printf(1, 6, "%08x", ++x);
 	System::draw();
