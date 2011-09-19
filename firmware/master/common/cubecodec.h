@@ -67,6 +67,10 @@ class BitBuffer {
 
 class CubeCodec {
  public:
+    void stateReset() {	
+	codePtr = 0;
+    }
+
     void encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb);
     bool encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data);
 
@@ -86,6 +90,10 @@ class CubeCodec {
     uint8_t codeD;		/// Codec "D" state (coded delta)
     uint8_t codeRuns;		/// Codec run count
     uint16_t codePtr;		/// Codec's VRAM write pointer state (word address)
+
+    void codePtrAdd(uint16_t words) {
+	codePtr = (codePtr + words) & PTR_MASK;
+    }
 
     static const unsigned PTR_MASK = 511;
 };

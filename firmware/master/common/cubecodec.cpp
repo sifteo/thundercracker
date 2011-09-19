@@ -68,17 +68,16 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 	    uint32_t idx1 = CLZ(cm1);
 	    uint16_t addr = (idx32 << 5) | idx1;
 
-	    /*
-	     * XXX: This is allowed to abort encoding right now
-	     *      because it's dumb and needs to output codezilla
-	     *      and it may not fit in the packet buffer. But the
-	     *      real encoder would never generate codes larger
-	     *      than the txBits buffer, so we should always be
-	     *      able to fully fill a packet buffer before
-	     *      quitting.
-	     */
-	    if (!encodeVRAM(buf, addr, vb->words[addr]))
-		return;
+	    if (!encodeVRAM(buf, addr, vb->words[addr])) {
+		/*
+		 * We ran out of room to encode. This should be rare,
+		 * happening only when we're near the end of the
+		 * packet buffer AND we're encoding a very large code,
+		 * like a literal 16-bit write plus a literal address
+		 * change.
+		 */
+		break;
+	    }
 
 	    cm1 &= ROR(0x7FFFFFFF, idx1);
 	    vb->cm1[idx32] = cm1;
@@ -94,27 +93,72 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data)
 {
     /*
-     * XXX: Big honkin' literal codes! Debugging only... This takes a
-     *      massive 5 bytes to encode one tile index!
-     *
-     * Note: Delta encoding is going to be kinda tricky. Since
-     *       userspace can modify the VRAM buffer between ISRs, we can
-     *       only reference deltas which haven't been modified. One
-     *       way to do this would be with second CM that tracks which
-     *       values we know have been flushed to the hardware
-     *       successfully. The userspace code would be required to
-     *       clear bits in that CM *before* touching them in VRAM.
+     * Address coding
      */
 
-    if (!txBits.hasRoomForFlush(buf, 16 + 24))
+    if (addr != codePtr) {
+	// We need to change the write address
+
+	uint16_t delta = (addr - codePtr) & PTR_MASK;
+
+	if (delta <= 8) {
+	    // We can use a short skip code
+
+	    if (!txBits.hasRoomForFlush(buf, 8))
+		return false;
+	    delta--;
+	    txBits.append((delta & 1) | ((delta << 3) & 0x30), 8);
+	    txBits.flush(buf);
+
+	} else {
+	    // Too large a delta, use a longer literal code
+
+	    if (!txBits.hasRoomForFlush(buf, 16 + 24))
+		return false;
+	    txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
+	    txBits.flush(buf);
+	}
+
+	codePtr = addr;
+    }
+
+    /*
+     * Data coding
+     */
+
+    if (data & 0x0101) {
+	/*
+	 * This value has the reserved LSBs set, so it can't be
+	 * encoded as a 14-bit index.  The only way to encode this
+	 * value is as a full 16-bit literal.
+	 */
+
+	if (!txBits.hasRoomForFlush(buf, 24))
+	    return false;
+	txBits.append(0x23 | (data << 8), 24);
+	txBits.flush(buf);
+	codePtrAdd(1);
+	return true;
+    }
+
+    /*
+     * Yes, this is a valid 14-bit index.
+     * See if we can encode it as a delta from one of our four sample points.
+     */
+
+    uint16_t index = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
+
+    // XXX: Delta encoding
+
+    /*
+     * No delta found. Encode as a 14-bit literal.
+     */
+    
+    if (!txBits.hasRoomForFlush(buf, 16))
 	return false;
-
-    txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
+    txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
     txBits.flush(buf);
-
-    txBits.append(0x23 | (data << 8), 24);
-    txBits.flush(buf);
-
+    codePtrAdd(1);
     return true;
 }
 

@@ -347,7 +347,8 @@ rxs_rle:
 	mov	a, R_INPUT
 	rlc	a		; Rotate into next nybble
 	anl	a, #7		; Mask to 3 bits
-	rl	a  		; Bytes to words
+	inc	a		; Skip n+1 words
+	rl	a  		; Words to bytes
 	mov	R_LOW, a	; Stow temporarily
 
 	mov	_DPS, #1	; Switch to VRAM DPTR

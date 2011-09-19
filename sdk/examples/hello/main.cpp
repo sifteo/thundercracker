@@ -70,7 +70,9 @@ void siftmain()
 
     int x = 0;
     while (1) {
-	font_printf(1, 6, "%08x", ++x);
+	static const char spinner[] = "-\\|/";
+	x++;
+	font_printf(1, 6, "%08x   %c", x, spinner[(x >> 10) & 3]);
 	System::draw();
     }
 }

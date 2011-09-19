@@ -73,12 +73,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 	 */
 
 	if (!(flashResetSent & bit()) && codec.flashReset(tx.packet)) {
-
 	    // Remember that we're waiting for a reset ACK
 	    Atomic::Or(flashResetSent, bit());
-
-	    // Must end the packet after a flash escape.
-	    return true;
 	}
 
     } else {
@@ -93,11 +89,14 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 		Atomic::Or(group->doneCubes, bit());
 		loadGroup = NULL;
 	    }
-
-	    // Must end the packet after a flash escape.
-	    return true;
 	}
     }
+
+    /*
+     * If we didn't emit a full packet, that implies an encoder state reset.
+     */
+    if (!tx.packet.isFull())
+	codec.stateReset();
 
     /*
      * XXX: We don't have to always return true... we can return false if
