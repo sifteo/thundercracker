@@ -30,7 +30,11 @@ void main(void)
 	    //while (!CTRL_LCD_TE);
 
 	    graphics_render();
-	    ack_data.frame_count++;
+
+	    __asm
+		inc	(_ack_data + RF_ACK_FRAME)
+		orl	_ack_len, #RF_ACK_LEN_FRAME
+	    __endasm ;
 	}
     }
 }
