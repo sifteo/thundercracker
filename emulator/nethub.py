@@ -58,12 +58,21 @@
 #
 
 import argparse, asyncore, socket, struct
-import binascii, time, sys, threading
+import binascii, time, sys, threading, re
 
 class Logger:
     verbose = True
+    nybbleswap = False
+
     def __call__(self, origin, message):
         sys.stderr.write("%s -- %s\n" % (origin, message))
+
+    def b2a(self, data):
+        s = binascii.b2a_hex(data)
+        if self.nybbleswap:
+            s = re.sub("(.)(.)", "\\2\\1", s)
+        return s
+
 log = Logger()
 
 def hexint(i):
@@ -71,8 +80,11 @@ def hexint(i):
 
 def main():
     parser = argparse.ArgumentParser(description="Network hub for Sifteo radio simulation")
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help="Enable log output on stderr")
+    parser.add_argument('-v', '--verbose', action='append_const', dest='verbose', const=True,
+                        help="Log packets to stderr. Specify twice to log even empty packets.")
+    parser.add_argument('-n', '--nybble-swap', action='store_true', dest='nybbleswap', 
+                        help="Swap nybbles in logged packets.")
+
     parser.add_argument('-p', '--port', metavar='N', type=int, default=2405,
                         help="TCP port number to listen/connect on")
     parser.add_argument('--bind', metavar='ADDR', default="",
@@ -89,7 +101,8 @@ def main():
                        help="listen on ADDR, print incoming packets to stdout")
 
     args = parser.parse_args()
-    log.verbose = args.verbose
+    log.verbose = len(args.verbose)
+    log.nybbleswap = args.nybbleswap
 
     if args.pipe:
         client = ClientPipe(args.bind, args.port, args.pipe)
@@ -147,7 +160,7 @@ class PacketDispatcher(asyncore.dispatcher_with_send):
                 self.handle_address(addr)
 
         else:
-            log(self, "Unhandled packet %s" % binascii.b2a_hex(packet))
+            log(self, "Unhandled packet %s" % log.b2a(packet))
 
     def ack(self):
         self.send("\x00\x02")
@@ -196,7 +209,7 @@ class ClientConsumer(AbstractClient):
 
     def handle_msg(self, addr, payload):
         self.ack()
-        log(self, "received from %016x, %s" % (addr, binascii.b2a_hex(payload)))
+        log(self, "received from %016x, %s" % (addr, log.b2a(payload)))
         time.sleep(0.2)
 
 
@@ -213,7 +226,7 @@ class ClientPipe(AbstractClient):
     def handle_msg(self, addr, payload):
         self.ack()
         if addr == self.destAddr:
-            sys.stdout.write("%s\n" % binascii.b2a_hex(payload))
+            sys.stdout.write("%s\n" % log.b2a(payload))
         else:
             log(self, "Unsolicited packet from %016x" % addr)
 
@@ -352,8 +365,8 @@ class NethubClient(PacketDispatcher):
                 still_busy.append(dest)
             else:
                 # Send it, and expect an ACK
-                if log.verbose:
-                    log(self, "send to %s -- %s" % (dest, binascii.b2a_hex(self.current_msg)))
+                if (log.verbose >= 1 and self.current_msg) or log.verbose >= 2:
+                    log(self, "send to %s -- %s" % (dest, log.b2a(self.current_msg)))
                 dest.tx_depth += 1
                 dest.send(struct.pack("<BBQ", 8+len(self.current_msg), 1,
                                       self.address) + self.current_msg)
