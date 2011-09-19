@@ -23,3 +23,6 @@ deps
 
 attic
   Old or experimental code, not part of the main toolchain.
+
+hw
+  Hardware schematics and layout
