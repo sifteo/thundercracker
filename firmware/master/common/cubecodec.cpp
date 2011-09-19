@@ -209,6 +209,17 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
 
     /*
      * No delta found. Encode as a 14-bit literal.
+     *
+     * Note that this code can come very close to overflowing our
+     * txBits buffer! The buffer is big enough for 32 bits. We may
+     * arrive here with 4 bits already buffered. Then there's another
+     * 12 from flushDSRuns, and 16 for the literal code. That's
+     * exactly 32 bits!
+     *
+     * It's important that we always atomically emit the flushDSRuns()
+     * AND the literal code, or neither. It isn't valid for us to end
+     * a packet with a flushed run, since the run may not be processed
+     * until the next non-run nybble arrives.
      */
 
     if (!txBits.hasRoomForFlush(buf, 16))

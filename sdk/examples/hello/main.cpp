@@ -68,16 +68,15 @@ void siftmain()
     _SYS_loadAssets(0, &GameAssets.sys);
     _SYS_setVideoBuffer(0, &vbuf);
 
-
     font_printf(0, 0, "Hello World!");
-    //font_printf(1, 3, "(>\")>  <(\"<)");
+    font_printf(1, 3, "(>\")>  <(\"<)");
 
     int x = 0;
     while (1) {
 	static const char spinner[] = "-\\|/";
 	char c = spinner[(x >> 10) & 3];
 	x++;
-
+	
 	//font_printf(1, 6, "%08x   %c%c%c", x, c, c, c);
 
 	System::draw();

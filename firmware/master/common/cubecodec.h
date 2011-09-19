@@ -35,8 +35,14 @@ class BitBuffer {
 	buf.append((uint8_t *) &bits, byteWidth);
 
 	unsigned bitWidth = byteWidth << 3;
-	bits >>= bitWidth;
 	count -= bitWidth;
+
+	/*
+	 * This ?: is important if the buffer is totally
+	 * full. Shifting a uint32_t by 32 would be undefined in C,
+	 * and compilers will in fact give us very nonzero results.
+	 */
+	bits = count ? (bits >> bitWidth) : 0;
 
 	return byteWidth;
     }
