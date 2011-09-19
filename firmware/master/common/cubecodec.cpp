@@ -17,6 +17,9 @@ using namespace Sifteo::Intrinsic;
 
 void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 {
+    // Flush any lingering bits from before.
+    txBits.flush(buf);
+
     // This cube has no framebuffer at the moment, its rendering is disabled
     if (!vb)
 	return;
@@ -103,8 +106,6 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
 	if (delta <= 8) {
 	    // We can use a short skip code
 
-	    if (!txBits.hasRoomForFlush(buf, 8))
-		return false;
 	    delta--;
 	    flushDSRuns();
 	    txBits.append((delta & 1) | ((delta << 3) & 0x30), 8);
@@ -113,8 +114,6 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
 	} else {
 	    // Too large a delta, use a longer literal code
 
-	    if (!txBits.hasRoomForFlush(buf, 16 + 24))
-		return false;
 	    flushDSRuns();
 	    txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
 	    txBits.flush(buf);
@@ -122,6 +121,9 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
 
 	codePtr = addr;
     }
+
+    if (buf.isFull())
+	return false;
 
     /*
      * Data coding
@@ -134,9 +136,12 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
 	 * value is as a full 16-bit literal.
 	 */
 
-	if (!txBits.hasRoomForFlush(buf, 24))
-	    return false;
+	// Be careful with buffer space, since this is a huge code!
 	flushDSRuns();
+	txBits.flush(buf);
+	if (buf.isFull())
+	    return false;
+
 	txBits.append(0x23 | (data << 8), 24);
 	txBits.flush(buf);
 
@@ -209,22 +214,14 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
 
     /*
      * No delta found. Encode as a 14-bit literal.
-     *
-     * Note that this code can come very close to overflowing our
-     * txBits buffer! The buffer is big enough for 32 bits. We may
-     * arrive here with 4 bits already buffered. Then there's another
-     * 12 from flushDSRuns, and 16 for the literal code. That's
-     * exactly 32 bits!
-     *
-     * It's important that we always atomically emit the flushDSRuns()
-     * AND the literal code, or neither. It isn't valid for us to end
-     * a packet with a flushed run, since the run may not be processed
-     * until the next non-run nybble arrives.
      */
 
-    if (!txBits.hasRoomForFlush(buf, 16))
-	return false;
+    // Be careful with buffer space, since this is a huge code!
     flushDSRuns();
+    txBits.flush(buf);
+    if (buf.isFull())
+	return false;
+
     txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
     txBits.flush(buf);
 
