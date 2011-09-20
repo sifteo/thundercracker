@@ -92,11 +92,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 	}
     }
 
-    /*
-     * If we didn't emit a full packet, that implies an encoder state reset.
-     */
-    if (!tx.packet.isFull())
-	codec.stateReset();
+    // Finalize this packet. Must be last.
+    codec.endPacket(tx.packet);
 
     /*
      * XXX: We don't have to always return true... we can return false if

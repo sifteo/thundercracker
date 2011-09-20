@@ -6,6 +6,15 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+//#define DEBUG
+
+#ifdef DEBUG
+#include <stdio.h>
+#define DBG(x) printf x
+#else
+#define DBG(x)
+#endif
+
 #include <protocol.h>
 #include <sifteo/machine.h>
 
@@ -47,7 +56,8 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 
     if (vb) {
 	do {
-	    /* This AND is important, it prevents out-of-bounds indexing
+	    /*
+	     * This AND is important, it prevents out-of-bounds indexing
 	     * or infinite looping if userspace gives us a bogus cm32
 	     * value! This is equivalent to bounds-checking idx32 and addr
 	     * below, as well as checking for infinite looping. Much more
@@ -64,6 +74,8 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 	    if (cm1) {
 		uint32_t idx1 = CLZ(cm1);
 		uint16_t addr = (idx32 << 5) | idx1;
+
+		DBG(("-encode addr %04x, data %04x\n", addr, vb->words[addr]));
 
 		if (!encodeVRAMAddr(buf, addr) ||
 		    !encodeVRAMData(buf, vb, vb->words[addr])) {
@@ -92,38 +104,43 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
     /*
      * If we have room in the buffer, and nothing left to render,
      * see if we can flush leftover bits out to the hardware. We may
-     * have residual bits in txBits, and we may have to emit a run
-     * (which requires following it by a non-run code, like a skip.)
+     * have residual bits in txBits, and we may have to emit a run.
      */
 
-    if (!buf.isFull())
-	txBits.flush(buf);
+    // Emit buffered bits
+    txBits.flush(buf);
 
-    if (!buf.isFull() && codeRuns)
-	// Emit a small skip code, to flush the run
-	encodeVRAMAddr(buf, (codePtr + 1) & PTR_MASK);
+    // Flush out an RLE run, if one is buffered
+    if (!buf.isFull()) {
+	flushDSRuns(true);
+	txBits.flush(buf);
+    }
 }
 
 bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
 {
-    if (buf.isFull())
-	return false;
-
     if (addr != codePtr) {
 	uint16_t delta = (addr - codePtr) & PTR_MASK;
+
+	flushDSRuns(true);
+	txBits.flush(buf);
+	if (buf.isFull())
+	    return false;
 
 	if (delta <= 8) {
 	    // We can use a short skip code
 
+	    DBG((" addr delta %d\n", delta));
+
 	    delta--;
-	    flushDSRuns();
 	    txBits.append((delta & 1) | ((delta << 3) & 0x30), 8);
 	    txBits.flush(buf);
 
 	} else {
 	    // Too large a delta, use a longer literal code
 
-	    flushDSRuns();
+	    DBG((" addr literal %04x\n", addr));
+
 	    txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
 	    txBits.flush(buf);
 	}
@@ -136,6 +153,9 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
 
 bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t data)
 {
+    if (buf.isFull())
+	return false;
+
     if (data & 0x0101) {
 	/*
 	 * This value has the reserved LSBs set, so it can't be
@@ -143,11 +163,12 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
 	 * value is as a full 16-bit literal.
 	 */
 
-	// Be careful with buffer space, since this is a huge code!
-	flushDSRuns();
+	flushDSRuns(true);
 	txBits.flush(buf);
 	if (buf.isFull())
 	    return false;
+
+	DBG((" data literal-16 %04x\n", data));
 
 	txBits.append(0x23 | (data << 8), 24);
 	txBits.flush(buf);
@@ -223,14 +244,11 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
      * No delta found. Encode as a 14-bit literal.
      */
 
-    // Be careful with buffer space, since this is a huge code!
-    flushDSRuns();
-    txBits.flush(buf);
-    if (buf.isFull())
-	return false;
-
+    flushDSRuns(false);
     txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
     txBits.flush(buf);
+
+    DBG((" data literal-14 %04x\n", index));
 
     codePtrAdd(1);
     codeS = 0;
@@ -246,17 +264,10 @@ void CubeCodec::encodeDS(uint8_t d, uint8_t s)
 	codeRuns++;
 
     } else {
-	// Can't combine with our previous run
-	flushDSRuns();
+	flushDSRuns(false);
 
-	if (d == RF_VRAM_DIFF_BASE) {
-	    // Copy code
-	    txBits.append(0x4 | s, 4);
-	} else {
-	    // Diff code
-	    txBits.append(0x8 | s | (d << 4), 8);
-	}
-	
+	DBG((" ds %d %d\n", d, s));
+	appendDS(d, s);
 	codeD = d;
 	codeS = s;
     }
@@ -264,14 +275,30 @@ void CubeCodec::encodeDS(uint8_t d, uint8_t s)
     codePtrAdd(1);
 }
 
-void CubeCodec::flushDSRuns()
+void CubeCodec::flushDSRuns(bool rleSafe)
 {
     /*
-     * Emit a run code. This should only be called if we know that we
-     * can buffer another code without ending the packet short- since
-     * a run isn't actually processed until a subsequent non-run code
-     * occurs, due to the way we use doubled runs as special tokens.
+     * Emit a run code.
+     *
+     * Because we treat doubled run codes as a short form of escape, we
+     * have to be very careful about which codes we emit immediately after
+     * a flushDSRuns(). It is ONLY safe to emit an RLE code if the next
+     * code we emit is a copy, a diff, or a literal index code.
+     *
+     * If 'rleSafe' is false, the caller is guaranteeing taht the next
+     * code is already safe. If not, we will perform a simple transformation
+     * on the run code. The last run will be converted back to a non-RLE
+     * copy or diff code.
      */
+
+    if (!codeRuns)
+	return;
+
+    DBG((" flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
+
+    // Save room for the trailing non-RLE code
+    if (rleSafe)
+	codeRuns--;
 
     if (codeRuns) {
 	uint8_t r = codeRuns - 1;
@@ -285,10 +312,14 @@ void CubeCodec::flushDSRuns()
 	    r -= 4;
 	    txBits.append(0x2 | ((r << 8) & 0xF00) | (r & 0x30), 12);
 	}
-
-	// It isn't allowed to have two consecutive run tokens. Make sure that doesn't happen
-	codeS = -1;
     }
+
+    // Trailing non-RLE code
+    if (rleSafe)
+	appendDS(codeD, codeS);
+
+    // Can't emit another run immediately after this one
+    codeD = -1;
 }
 
 bool CubeCodec::flashReset(PacketBuffer &buf)

@@ -200,7 +200,7 @@
 
 /**************************************************************************
  *
- * CUBE -> Master (ACK) packet format
+ * Cube -> Master (ACK) packet format
  *
  * The overall ACK structure (RF_ACKType) defines all possible data
  * that we may send back in an ACK response. Any bytes at the end of

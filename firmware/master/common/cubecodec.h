@@ -89,6 +89,22 @@ class CubeCodec {
     void flashAckBytes(uint8_t count) {
 	loadBufferAvail += count;
     }
+
+    void endPacket(PacketBuffer &buf) {
+	/*
+	 * If we didn't emit a full packet, that implies an encoder state reset.
+	 *
+	 * If we have any partial codes buffered, they'll be lost forever. So,
+	 * flush them out by adding a nybble which doesn't mean anything on its own.
+	 */
+	
+	if (!buf.isFull()) {
+	    stateReset();
+	    txBits.append(3, 4);
+	    txBits.flush(buf);
+	    txBits.init();
+	}
+    }
     
  private:
     // Try to keep these ordered to minimize padding...
@@ -123,8 +139,18 @@ class CubeCodec {
 	return index - wordToIndex(vb->words[ptr]) + RF_VRAM_DIFF_BASE;
     }
 
+    void appendDS(uint8_t d, uint8_t s) {
+	if (d == RF_VRAM_DIFF_BASE) {
+	    // Copy code
+	    txBits.append(0x4 | s, 4);
+	} else {
+	    // Diff code
+	    txBits.append(0x8 | s | (d << 4), 8);
+	}
+    }
+
     void encodeDS(uint8_t d, uint8_t s);
-    void flushDSRuns();
+    void flushDSRuns(bool rleSafe);
 
     static const unsigned PTR_MASK = 511;
 };

@@ -71,11 +71,10 @@ void siftmain()
     font_printf(0, 0, "Hello World!");
     font_printf(1, 3, "(>\")>  <(\"<)");
 
-    int y = 0;
+    int x = 0;
     while (1) {
 	static const char spinner[] = "-\\|/";
-	y++;
-	unsigned x = y >> 12;
+	x++;
 	char c = spinner[x & 3];
 		
 	font_printf(1, 6, "%08x   %c%c%c", x, c, c, c);
