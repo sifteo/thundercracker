@@ -24,7 +24,9 @@ static void showMonster(const MonsterData *m)
 
 void siftmain()
 {
-    unsigned fpMonster = 0;
+    int fpMonster = 0;
+    const int shift = 14;
+    const int fpMax = arraysize(monsters) << shift;
     const MonsterData *currentMonster = NULL;
 
     cube.vbuf.init();
@@ -35,9 +37,14 @@ void siftmain()
     while (1) {
 	_SYSAccelState state;
 	_SYS_getAccel(cube.id(), &state);
+
 	fpMonster += state.x;
 
-	const MonsterData *m = monsters[ (fpMonster >> 14) % arraysize(monsters) ];
+	while (fpMonster < 0) fpMonster += fpMax;
+	while (fpMonster > fpMax) fpMonster -= fpMax;
+
+	const MonsterData *m = monsters[fpMonster >> shift];
+
 	if (m != currentMonster) {
 	    showMonster(m);
 	    currentMonster = m;

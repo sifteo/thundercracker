@@ -23,6 +23,14 @@ def RGB565(r, g, b):
     b5 = (b * 31 + 128) // 255;
     return (r5 << 11) | (g6 << 5) | b5
 
+def RL4(x):
+    # 4-bit left rotate
+    return ((x << 1) | (x >> 3)) & 0xF
+
+def RR4(x):
+    # 4-bit right rotate
+    return ((x << 3) | (x >> 1)) & 0xF
+
 
 def convert(number, name, data):
     orig = Image.open(cStringIO.StringIO(data)).convert("RGBA")
@@ -36,7 +44,6 @@ def convert(number, name, data):
 
     # Make a 16-color palette
     im = im.quantize(16)
-    im.save("foo.png")
 
     print """
 // #%d -- %s
@@ -47,12 +54,15 @@ static const struct MonsterData %s = {""" % (number, name, name)
         for x in range(32):
 
             # Sample in the center of each pixel
-            sx = (x - 0.5) * 1000 / 30
-            sy = (y - 0.5) * 1000 / 30
+            sx = (x - 0.5) * im.size[0] / 30
+            sy = (y - 0.5) * im.size[1] / 30
             if sx >= 0 and sy >= 0 and sx < im.size[0] and sy < im.size[1]:
                 index = im.getpixel((sx, sy))
             else:
                 index = 0
+
+            # Palette swizzle: Use even indices first, since those compress much better
+            index = RL4(index)
 
             if x & 1:
                 byte = nybble | (index << 4)
@@ -65,7 +75,12 @@ static const struct MonsterData %s = {""" % (number, name, name)
     for i in range(16):
         if (i % 8) == 0:
             print "    ",
-        rgb = RGB565(*palette[i*3:i*3+3])
+    
+        # Inverse palette swizzle
+        offset = RR4(i) * 3
+            
+        rgb = RGB565(*palette[offset:offset+3])
+
         print "0x%02x,0x%02x," % (rgb & 0xFF, rgb >> 8),
         if (i % 8) == 7:
             print
