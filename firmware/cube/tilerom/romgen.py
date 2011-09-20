@@ -91,8 +91,8 @@ class Tiler:
     def renderTile(self, index):
         # Render a tile image, given its 14-bit index
 
-        palBase = ((index >> 10) & 0xF) << 2
-        mode = (index >> 9) & 1
+        palBase = ((index >> 9) & 0xF) << 2
+        mode = (index >> 13) & 1
         address = index & 0x1FF
 
         tile = Image.new("RGB", (TILE, TILE))
@@ -101,7 +101,14 @@ class Tiler:
             y = i / TILE
 
             if mode:
-                index = self.tiles[address][i] | (self.tiles[(address + 1) % MAX_TILES][i] << 1)
+                if (address & 0x7F) == 0x7F:
+                    # DPL roll-over behavior is not defined.
+                    # In our current implementation this will cause an advancement by one
+                    # scanline, but apps shoudln't rely on that behaviour. So, this is a reserved
+                    # index. Mark it as blank in the atlas.
+                    index = 0
+                else:
+                    index = self.tiles[address][i] | (self.tiles[address + 1][i] << 1)
             else:
                 index = self.tiles[address][i]
 
@@ -137,6 +144,8 @@ class Tiler:
  * This is the last 4K + 128 bytes of the code ROM. If there's a bug
  * that causes us to read past the end of rom_tiles, we really don't
  * want to allow anyone to read back our (secret) firmware ROM.
+ *
+ * rom_tiles[] must be located on a 256-byte boundary.
  */
 
 const __code __at (0x2f80) uint8_t rom_palettes[] = {
@@ -144,8 +153,8 @@ const __code __at (0x2f80) uint8_t rom_palettes[] = {
 
 const __code __at (0x3000) uint8_t rom_tiles[] = {
 %s};
-""".lstrip() % (self.cByteArray(self.paletteBytes()),
-                self.cByteArray(self.tileBytes())))
+""".lstrip() % (self.cByteArray(self.swizzlePalette(self.paletteBytes())),
+                self.cByteArray(self.swizzleTiles(self.tileBytes()))))
 
     def cByteArray(self, bytes, width=16, indent="    "):
         # Format a list of byte values as a C array
@@ -177,6 +186,34 @@ const __code __at (0x3000) uint8_t rom_tiles[] = {
                         byte |= 1 << x
                 bytes.append(byte)
         return bytes
+
+    # Swizzling:
+    #
+    # Since we're free to choose the addressing scheme for these arrays
+    # to be anything we want, and there's no reason to access them in order,
+    # we choose an arrangement which is optimized to allow the graphics loops
+    # to make as few calculations as possible. In particular, we really try
+    # hard to avoid bit shifting, since there's no fast way to do it on the
+    # 8051. This means taking advantage of bits in their existing alignment
+    # within the byte we found them in.
+
+    def swizzlePalette(self, bytes):
+        # Address swizzling for palette:
+        #    0ppp pbcc -> 0ppp pccb       
+
+        return [bytes[ (i & 0xF8) |
+                       ((i & 3) << 1) |
+                       ((i & 4) >> 2) ] for i in range(len(bytes))]
+
+    def swizzleTiles(self, bytes):
+        # Address swizzling for tiles:
+        #    0000 lttl tttt tttl -> 0000 tttt tttt tlll
+
+        return [bytes[ ((i & 0x0600) << 1) |
+                       ((i & 0x00FE) << 2) |
+                       ((i & 0x0800) >> 9) |
+                       ((i & 0x0100) >> 7) |
+                       ((i & 0x0001) )] for i in range(len(bytes))]
 
 
 if __name__ == "__main__":

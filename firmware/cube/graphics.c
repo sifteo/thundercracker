@@ -552,6 +552,224 @@ static void vm_bg0(void)
 
 
 /***********************************************************************
+ * _SYS_VM_BG0_ROM
+ **********************************************************************/
+
+/*
+ * This mode has a VRAM layout identical to _SYS_VM_BG0, but the tile
+ * source data is coming from ROM rather than from Flash.  The tile
+ * indices are actually packed words containing a ROM address, a tile
+ * mode (1-bit or 2-bit), and a 4-bit palette selector.
+ *
+ * See tilerom/README.rst for more on this mode.
+ */
+
+// Data in tilerom.c
+extern __code uint8_t rom_palettes[];
+extern __code uint8_t rom_tiles[];
+
+
+/*
+ * Assembly macro to output a single pixel from the palette,
+ * assuming the palette byte offset has already been calculated
+ * in ACC, and DPTR points to the palette base address.
+ */
+#define VM_BG0_ROM_PIXEL()			__endasm ; \
+	__asm	mov	r0, a			__endasm ; \
+	__asm	movc	a, @a+DPTR		__endasm ; \
+	__asm	mov	BUS_PORT, a		__endasm ; \
+	__asm	mov	ADDR_PORT, #1		__endasm ; \
+	__asm	mov	ADDR_PORT, #0		__endasm ; \
+	__asm	mov	a, r0			__endasm ; \
+	__asm	orl	a, #4			__endasm ; \
+	__asm	movc	a, @a+DPTR		__endasm ; \
+	__asm	mov	BUS_PORT, a		__endasm ; \
+	__asm	mov	ADDR_PORT, #1		__endasm ; \
+	__asm	mov	ADDR_PORT, #0		__endasm ; \
+	__asm
+
+
+static void vm_bg0_rom_tiles(void) __naked
+{
+    /*
+     * Low-level tile renderer for _SYS_VM_BG0.
+     *
+     * Swizzling map:
+     *
+     *   Map:      76543210 fedcba98
+     *   DPL:      7654321i             <- one bit of line-index
+     *   DPH:                   i21i    <- two bits of line-index
+     *   Palette:            6543bcc	<- one byte-select, two color-select bits            
+     *   Mode:              0           <- selects 1 or 2 planes
+     *
+     * Registers:
+     *
+     *   r0: Scratch
+     *   r1: Plane 0 shift register
+     *   r2: Plane 1 shift register
+     *   r3: Palette base
+     *   r4: Pixel loop      IN
+     *   r5: Tile loop       IN
+     *   r6: DPL line index  IN
+     *   r7: DPH line index  IN
+     */
+
+    __asm
+
+	; Tile loop
+2$:
+	movx	a, @dptr		; Tile map, low byte
+	inc	dptr
+	orl	a, r6			;    OR in our one per-line bit
+	mov	_DPL1, a		;    Tile ROM pointer in DPTR1
+
+	movx	a, @dptr		; Tile map, high byte
+	inc	dptr
+	mov	r0, a
+	anl	a, #0x06		;    Mask off only allowed MSB bits
+	orl	a, #(_rom_tiles >> 8)	;    OR in base address
+	orl	a, r7			;    OR in per-line bits
+	mov	_DPH1, a		;    Complete Tile ROM pointer
+	mov	a, r0
+
+	jb	acc.7, 3$		; Are we using 4-color mode?
+
+	; 2-color mode
+
+	anl	a, #0x78		; Mask off four palette-select bits
+	mov	r3, a			; Use directly as palette base address
+	mov	_DPS, #1		; Now switch to DPTR1. (DPTR is used only for the tile map)
+
+	clr 	a			; Grab tile bitmap byte
+	movc	a, @a+dptr
+	mov	r1, a			;    Store in Plane 0 register
+
+	mov	dptr, #_rom_palettes	; Point to the ROM palette array
+
+1$:					; Loop over pixels
+	mov	a, r1			; Calculate palette offset from shift register
+	rrc	a  			;    Shift out LSB
+	mov	r1, a
+	mov	a, r3			;    Palette base
+	addc	a, #0			;    Index in C -> LSB
+
+	VM_BG0_ROM_PIXEL()
+
+	djnz	r4, 1$			; Next bit
+5$:	mov	_DPS, #0		; Must restore DPTR
+	mov	r4, #8			; Subsequent tiles will always have 8 pixels
+	djnz	r5, 2$			; Next tile
+	ret
+
+	; 4-color mode
+
+3$:
+	anl	a, #0x78		; Mask off four palette-select bits
+	mov	r3, a			; Use directly as palette base address
+	mov	_DPS, #1		; Now switch to DPTR1. (DPTR is used only for the tile map)
+
+	clr 	a			; Grab first tile bitmap byte
+	movc	a, @a+dptr
+	mov	r1, a			;    Store in Plane 0 register
+	mov	a, #2			; Offset by one tile (Undefined across 128-tile boundaries)
+	movc	a, @a+dptr		; Grab second bitmap byte
+	mov	r2, a			;    Store in Plane 1 register
+
+	mov	dptr, #_rom_palettes	; Point to the ROM palette array
+
+4$:					; Loop over pixels
+
+	mov	a, r2			; Calculate palette offset from shift register
+	rrc	a  			;    Shift out LSB
+	mov	r2, a
+	clr	a
+	addc	a, #0			;    Index in C -> a
+	mov	r0, a
+
+	mov	a, r1
+	rrc	a  			;    Shift out LSB
+	mov	r1, a
+	mov	a, r0
+	rlc	a			;    Shift in LSB
+	orl	a, r3			;    Palette base
+
+	VM_BG0_ROM_PIXEL()
+
+	djnz	r4, 4$			; Next bit
+	sjmp	5$
+
+    __endasm ;
+}
+
+static void vm_bg0_rom_line(void)
+{
+    LCD_WRITE_BEGIN();
+
+    DPTR = y_bg0_map;
+
+    /*
+     * Set up per-line DPTR values. The three useful bits from
+     * y_bg0_addr_l are kind of sprayed out all over the DPTR word, in
+     * an effort to keep the actual tile address bits mapping 1:1
+     * without any slow bit shifting.
+     *
+     * So, we have some awkward per-line setup here to do. Bits 7:5 in
+     * y_bg0_addr_l need to map to bits 3 and 0 in r7, and bit 0 in r6
+     * respectively.
+     *
+     *   y_bg0_addr_l:   765xxxxx
+     *             r6:   xxxxxxx5
+     *             r7:   xxxx7xx6
+     *
+     * All 'x' bits here are guaranteed to be zero.
+     */
+
+    __asm
+	mov	a, _y_bg0_addr_l	; 765xxxxx
+	swap	a			; xxxx765x
+	rr	a			; xxxxx765
+	mov	r6, a
+	anl	ar6, #1
+	clr	c
+	rrc	a			; xxxxxx76 5
+	clr	c
+	rrc	a			; xxxxxxx7 6
+	rl	a			; xxxxxx7x 6
+	rl	a			; xxxxx7xx 6
+	rlc	a			; xxxx7xx6 x
+	mov	r7, a
+    __endasm ;
+
+
+    __asm
+	mov	r4, #8
+	mov	r5, #16
+	lcall	_vm_bg0_rom_tiles
+    __endasm ;
+
+    LCD_WRITE_END();
+    CTRL_PORT = CTRL_IDLE;
+}
+
+static void vm_bg0_rom(void)
+{
+    uint8_t y = 128;
+
+    lcd_begin_frame();
+    vm_bg0_setup();
+
+    do {
+	vm_bg0_rom_line();
+	vm_bg0_next();
+	flash_handle_fifo();
+    } while (--y);    
+
+    lcd_end_frame();
+    MODE_RETURN();
+}
+
+
+/***********************************************************************
  * Graphics mode dispatch
  **********************************************************************/
 
@@ -590,7 +808,7 @@ void graphics_render(void) __naked
 2$:
 	ljmp	_vm_powerdown
 	nop
-        ljmp	_vm_02
+        ljmp	_vm_bg0_rom
 	nop
 	ljmp	_vm_fb32
 	nop
