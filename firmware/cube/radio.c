@@ -29,6 +29,17 @@ uint8_t __near ack_len;
 	__asm	ljmp	rx_complete			__endasm; \
 	__asm
 
+#pragma sdcc_hash +
+#define DPTR1_ADD_CONST(v)				__endasm; \
+	__asm	mov	a, _DPL1			__endasm; \
+	__asm	add	a, #((v) & 0xFF)		__endasm; \
+	__asm	mov	_DPL1, a			__endasm; \
+	__asm	mov	a, _DPH1			__endasm; \
+	__asm	addc	a, #((v) >> 8)			__endasm; \
+	__asm	mov	_DPH1, a			__endasm; \
+	__asm
+
+
 /*
  * Register usage in RF_BANK.
  */
@@ -45,7 +56,7 @@ uint8_t __near ack_len;
 #define R_SAMPLE		r3		// Low two bits, sample index. Other bits undefined.
 #define AR_SAMPLE		(RF_BANK*8 + 3)
 
-#define R_DIFF			r4		// Low nybble, 4-bit diff.  Other bits undefined.
+#define R_DIFF			r4		// 4-bit raw diff in low nybble
 #define AR_DIFF			(RF_BANK*8 + 4)
 
 #define R_STATE			r5		// 8-bit pointer to next state
@@ -66,15 +77,107 @@ static __bit radio_state_reset_not_pending;	// Next packet should start with a c
  * Utility function used by the Radio ISR to splat one or more
  * delta-encoded words into VRAM. Parameters are passed in register
  * bank RF_BANK: R_SAMPLE, R_DIFF, R_LOW (run count - 1).
+ *
+ * This function is allowed to trash the following registers only:
+ *    R_TMP, R_HIGH
  */
 
 static void rx_write_deltas(void) __naked __using(RF_BANK)
 {
     __asm
 
-        ; XXX Write Me
-    
+	inc	R_LOW		; Convert to zero-based sample count
+	mov	_DPS, #1	; Switch to VRAM DPTR
+
+rx_write_delta_loop:
+
+	; Jump backwards by the sample distance
+
+	mov	a, R_SAMPLE
+	anl	a, #3
+	jz	bs0
+	dec	a
+	jz	bs1
+	dec	a
+	jz	bs2
+bs3:	DPTR1_ADD_CONST(-RF_VRAM_SAMPLE_3 * 2)
+bsE:
+
+	; Grab a sample, storing it in R_HIGH:R_TMP
+
+	movx	a, @dptr
+	mov	R_TMP, a
+	inc	dptr
+	movx	a, @dptr
+	mov	R_HIGH, a
+
+	; Jump forwards, to the write location
+
+	mov	a, R_SAMPLE
+	anl	a, #3
+	jz	fs0
+	dec	a
+	jz	fs1
+	dec	a
+	jz	fs2
+fs3:	DPTR1_ADD_CONST(RF_VRAM_SAMPLE_3 * 2 - 1)
+fsE:
+
+	; Convert raw Diff to 8-bit signed diff
+
+	mov	a, R_DIFF
+	anl	a, #0xF
+	add	a, #-7
+	clr	c
+	rlc	a
+
+	; Store the modified index
+
+	jb	acc.7, neg_diff		; Is it a negative diff?
+
+	; Positive diff
+	add	a, R_TMP
+	movx	@dptr, a
+	inc	dptr
+
+	mov	a, R_HIGH		; High portion (C) multiplied by two
+	jnc	rxw_loop
+	add	a, #2
+rxw_loop:
+	movx	@dptr, a
+	inc 	dptr
+	djnz	R_LOW, #rx_write_delta_loop
+	mov	_DPS, #0    
 	ret
+
+	; Fragments for sample lookup
+	; (Down here because sjmp and cjne have a longer range than djnz)
+
+bs2:	DPTR1_ADD_CONST(-RF_VRAM_SAMPLE_2 * 2)
+	sjmp	bsE
+bs1:	DPTR1_ADD_CONST(-RF_VRAM_SAMPLE_1 * 2)
+	sjmp	bsE
+bs0:	DPTR1_ADD_CONST(-RF_VRAM_SAMPLE_0 * 2)
+	sjmp	bsE
+
+fs2:	DPTR1_ADD_CONST(RF_VRAM_SAMPLE_2 * 2 - 1)
+	sjmp	fsE
+fs1:	DPTR1_ADD_CONST(RF_VRAM_SAMPLE_1 * 2 - 1)
+	sjmp	fsE
+fs0:	DPTR1_ADD_CONST(RF_VRAM_SAMPLE_0 * 2 - 1)
+	sjmp	fsE
+
+	; Negative diff
+
+neg_diff:
+	add	a, R_TMP
+	movx	@dptr, a
+	inc	dptr
+
+	mov	a, R_HIGH
+	jc	rxw_loop
+	add	a, #0xFE
+	sjmp	rxw_loop
 
     __endasm ;
 }
@@ -221,17 +324,17 @@ rxs_default:
 
 	; ------------ Nybble 00nn -- RLE
 
-	jnz	rxs_default_not_rle
+	jnz	27$
 	mov	AR_LOW, R_INPUT
 	mov	R_STATE, #(rxs_rle - rxs_default)
 	RX_NEXT_NYBBLE
 
 	; ------------ Nybble 01ss -- Copy
 
-rxs_default_not_rle:
+27$:
 	cjne	a, #0x4, 11$
 	mov	AR_SAMPLE, R_INPUT
-	mov	R_DIFF, #0
+	mov	R_DIFF, #RF_VRAM_DIFF_BASE
 	mov	R_LOW, #0
 	lcall	#_rx_write_deltas
 	RX_NEXT_NYBBLE
@@ -254,7 +357,7 @@ rxs_default_not_rle:
 	mov	R_HIGH, a	; Store into R_HIGH, as xx000000
 
 	mov	R_SAMPLE, #0	; Any subsequent runs will copy this word (S=0 D=0)
-	mov	R_DIFF, #0
+	mov	R_DIFF, #RF_VRAM_DIFF_BASE
 
 	mov	R_STATE, #(rxs_literal - rxs_default)
 
@@ -268,7 +371,6 @@ rx_next_sjmp:
 rxs_diff_1:
 	mov	AR_DIFF, R_INPUT
 	mov	R_LOW, #0
-rx_next_wrdelta_default:
 	mov	R_STATE, #0
 	lcall	#_rx_write_deltas
 	sjmp	#rx_next_sjmp
@@ -325,18 +427,21 @@ rxs_literal:
 	; as a normal nybble after processing the runs from our first
 	; RLE nybble.
 
-	; -------- 00nn -- Plain RLE code OR beginning of special code
-
 rxs_rle:
+
 	mov	a, R_INPUT
 	anl	a, #0xc
+
+	; -------- 00nn -- Plain RLE code
+
 	jz	13$
 
+	anl	AR_LOW, #0xF		; Only the low nybble is part of the valid run length
 	lcall	#_rx_write_deltas
 	mov	R_STATE, #0
-	sjmp	rxs_default_not_rle	; Dont bother re-checking for RLE
-13$:
+	sjmp	rxs_default		; Re-process this nybble starting from the default state
 
+13$:
 	mov	a, R_LOW	; Check low two bits of the _first_ RLE nybble
 
 	; -------- 000n 00nn -- Skip n+1 output words
@@ -376,14 +481,12 @@ rxs_rle:
 	mov	R_LOW, a
 
 	mov	R_STATE, #(rxs_wrdelta_1 - rxs_default)
+
 rx_next_sjmp2:
 	sjmp	rx_next_sjmp
 
 rxs_wrdelta_1:
-	mov	a, R_INPUT
-	anl	a, #0xF
-	orl	AR_LOW, a	; Complete word 00nnnnnn
-	sjmp 	rx_next_wrdelta_default
+	sjmp	rxs_wrdelta_1_fragment
 
 not_wrdelta:
 
@@ -486,7 +589,23 @@ rx_not_word9:
 	; left in the packet, it acts as a flash reset.
 
 	mov	R_STATE, #0	; Back to default state
-	; ...fall through
+	sjmp	rx_flash
+
+
+	; -------- 0010 00nn nnnn -- Write n+5 delta-words
+	; (Continued from above, due to jump length limits)
+
+rxs_wrdelta_1_fragment:
+
+	mov	a, R_INPUT
+	anl	a, #0xF
+	orl	a, R_LOW	; Complete word 00nnnnnn
+	add	a, #4		; n+5  (rx_write_deltas already adds 1)
+	mov	R_LOW, a
+
+	mov	R_STATE, #0
+	lcall	#_rx_write_deltas
+	sjmp	#rx_next_sjmp2
 
 	;--------------------------------------------------------------------
 	; Flash FIFO Write
@@ -512,6 +631,8 @@ rx_not_word9:
 	; This is a pretty tight loop- we need to take at least 16 clock cycles
 	; between SPI reads, and the timing here is kind of close. So, the loop
 	; is annotated with cycle counts.
+
+rx_flash:
 
 	mov	a, R_NYBBLE_COUNT
 	dec	a

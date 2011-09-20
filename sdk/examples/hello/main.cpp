@@ -23,8 +23,10 @@ void markCM(uint16_t addr)
 void vPoke(uint16_t addr, uint16_t word)
 {
     if (vbuf.words[addr] != word) {
+	Atomic::Store(vbuf.lock, 0x80000000 >> (addr >> 4));
 	vbuf.words[addr] = word;
 	markCM(addr);
+	Atomic::Store(vbuf.lock, 0);
     }
 }
 
@@ -35,7 +37,7 @@ void vPokeIndex(uint16_t addr, uint16_t tile)
 
 void font_putc(uint8_t x, uint8_t y, char c)
 {
-    const uint8_t pitch = 20;
+    const uint8_t pitch = 18;
     uint16_t index = (c - ' ') << 1;
 
     vPokeIndex(x + pitch*y, index);
@@ -58,6 +60,7 @@ void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
 
 void siftmain()
 {
+    // Contents of the cube's VRAM starts out unknown
     for (unsigned i = 0; i < 20*20; i++)
 	markCM(i);
 
@@ -71,8 +74,11 @@ void siftmain()
     int x = 0;
     while (1) {
 	static const char spinner[] = "-\\|/";
+	char c = spinner[(x >> 10) & 3];
 	x++;
-	font_printf(1, 6, "%08x   %c", x, spinner[(x >> 10) & 3]);
+	
+	//font_printf(1, 6, "%08x   %c%c%c", x, c, c, c);
+
 	System::draw();
     }
 }

@@ -25,7 +25,7 @@ static uint16_t y_bg_map;	// Map address for the first tile on this line
 // Called once per tile, to check for horizontal map wrapping
 #define MAP_WRAP_CHECK() {			  	\
 	if (!--bg_wrap)					\
-	    DPTR -= 40;					\
+	    DPTR -= RF_VRAM_STRIDE *2;			\
     }
 
 // Output a nonzero number of of pixels, not known at compile-time
@@ -290,14 +290,14 @@ void graphics_render(void)
 	uint8_t tile_pan_y = lvram.pan_y >> 3;
 
 	y_bg_addr_l = lvram.pan_y << 5;
-	y_bg_map = lvram.pan_y & 0xF8;			// Y tile * 4
+	y_bg_map = tile_pan_y << 2;			// Y tile * 2
 	y_bg_map += tile_pan_y << 5;			// Y tile * 16
 	y_bg_map += tile_pan_x << 1;			// X tile * 2;
 
 	x_bg_last_w = lvram.pan_x & 7;
 	x_bg_first_w = 8 - x_bg_last_w;
 	x_bg_first_addr = (lvram.pan_x << 2) & 0x1C;
-	x_bg_wrap = 20 - tile_pan_x;
+	x_bg_wrap = RF_VRAM_STRIDE - tile_pan_x;
     }
 
     do {
@@ -334,9 +334,9 @@ void graphics_render(void)
 	y_bg_addr_l += 32;
 	if (!y_bg_addr_l) {
 	    // Next tile, with vertical wrap
-	    y_bg_map += 40;
-	    if (y_bg_map >= 800)
-		y_bg_map -= 800;
+	    y_bg_map += RF_VRAM_STRIDE * 2;
+	    if (y_bg_map >= RF_VRAM_STRIDE * RF_VRAM_STRIDE * 2)
+		y_bg_map -= RF_VRAM_STRIDE * RF_VRAM_STRIDE * 2;
 	}
 
 	/*

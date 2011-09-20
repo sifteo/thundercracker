@@ -17,6 +17,9 @@ using namespace Sifteo::Intrinsic;
 
 void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 {
+    // Flush any lingering bits from before.
+    txBits.flush(buf);
+
     // This cube has no framebuffer at the moment, its rendering is disabled
     if (!vb)
 	return;
@@ -68,7 +71,7 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 	    uint32_t idx1 = CLZ(cm1);
 	    uint16_t addr = (idx32 << 5) | idx1;
 
-	    if (!encodeVRAM(buf, addr, vb->words[addr])) {
+	    if (!encodeVRAM(buf, addr, vb->words[addr], vb)) {
 		/*
 		 * We ran out of room to encode. This should be rare,
 		 * happening only when we're near the end of the
@@ -90,37 +93,37 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
     } while (!buf.isFull());
 }
 
-bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data)
+bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
+			   _SYSVideoBuffer *vb)
 {
     /*
      * Address coding
      */
 
     if (addr != codePtr) {
-	// We need to change the write address
-
 	uint16_t delta = (addr - codePtr) & PTR_MASK;
 
 	if (delta <= 8) {
 	    // We can use a short skip code
 
-	    if (!txBits.hasRoomForFlush(buf, 8))
-		return false;
 	    delta--;
+	    flushDSRuns();
 	    txBits.append((delta & 1) | ((delta << 3) & 0x30), 8);
 	    txBits.flush(buf);
 
 	} else {
 	    // Too large a delta, use a longer literal code
 
-	    if (!txBits.hasRoomForFlush(buf, 16 + 24))
-		return false;
+	    flushDSRuns();
 	    txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
 	    txBits.flush(buf);
 	}
 
 	codePtr = addr;
     }
+
+    if (buf.isFull())
+	return false;
 
     /*
      * Data coding
@@ -133,33 +136,152 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data)
 	 * value is as a full 16-bit literal.
 	 */
 
-	if (!txBits.hasRoomForFlush(buf, 24))
+	// Be careful with buffer space, since this is a huge code!
+	flushDSRuns();
+	txBits.flush(buf);
+	if (buf.isFull())
 	    return false;
+
 	txBits.append(0x23 | (data << 8), 24);
 	txBits.flush(buf);
+
 	codePtrAdd(1);
+	codeS = 0;
+	codeD = RF_VRAM_DIFF_BASE;
+
 	return true;
     }
 
     /*
      * Yes, this is a valid 14-bit index.
-     * See if we can encode it as a delta from one of our four sample points.
+     *
+     * See if we can encode it as a delta or copy from one of our four
+     * sample points.  If we find a copy, that always wins and we can
+     * exit early. Otherwise, see if any of the deltas are small
+     * enough to encode.
      */
 
-    uint16_t index = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
+    uint16_t index = wordToIndex(data);
 
-    // XXX: Delta encoding
+    unsigned s0 = deltaSample(vb, index, RF_VRAM_SAMPLE_0);
+    if (s0 == RF_VRAM_DIFF_BASE) {
+	encodeDS(s0, 0);
+	txBits.flush(buf); 
+	return true;
+    }
+    
+    unsigned s1 = deltaSample(vb, index, RF_VRAM_SAMPLE_1);
+    if (s1 == RF_VRAM_DIFF_BASE) {
+	encodeDS(s1, 1);
+	txBits.flush(buf); 
+	return true;
+    }
+
+    unsigned s2 = deltaSample(vb, index, RF_VRAM_SAMPLE_2);
+    if (s2 == RF_VRAM_DIFF_BASE) {
+	encodeDS(s2, 2);
+	txBits.flush(buf); 
+	return true;
+    }
+
+    unsigned s3 = deltaSample(vb, index, RF_VRAM_SAMPLE_3);
+    if (s3 == RF_VRAM_DIFF_BASE) {
+	encodeDS(s3, 3);
+	txBits.flush(buf); 
+	return true;
+    }
+
+    if (s0 < 0x10) {
+	encodeDS(s0, 0);
+	txBits.flush(buf); 
+	return true;
+    }
+    if (s1 < 0x10) {
+	encodeDS(s1, 1);
+	txBits.flush(buf); 
+	return true;
+    }
+    if (s2 < 0x10) {
+	encodeDS(s2, 2);
+	txBits.flush(buf); 
+	return true;
+    }
+    if (s3 < 0x10) {
+	encodeDS(s3, 3);
+	txBits.flush(buf); 
+	return true;
+    }
 
     /*
      * No delta found. Encode as a 14-bit literal.
      */
-    
-    if (!txBits.hasRoomForFlush(buf, 16))
+
+    // Be careful with buffer space, since this is a huge code!
+    flushDSRuns();
+    txBits.flush(buf);
+    if (buf.isFull())
 	return false;
+
     txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
     txBits.flush(buf);
+
     codePtrAdd(1);
+    codeS = 0;
+    codeD = RF_VRAM_DIFF_BASE;
+
     return true;
+}
+
+void CubeCodec::encodeDS(uint8_t d, uint8_t s)
+{
+    if (d == codeD && s == codeS && codeRuns != RF_VRAM_MAX_RUN) {
+	// Extend an existing run
+	codeRuns++;
+
+    } else {
+	// Can't combine with our previous run
+	flushDSRuns();
+
+	if (d == RF_VRAM_DIFF_BASE) {
+	    // Copy code
+	    txBits.append(0x4 | s, 4);
+	} else {
+	    // Diff code
+	    txBits.append(0x8 | s | (d << 4), 8);
+	}
+	
+	codeD = d;
+	codeS = s;
+    }
+
+    codePtrAdd(1);
+}
+
+void CubeCodec::flushDSRuns()
+{
+    /*
+     * Emit a run code. This should only be called if we know that we
+     * can buffer another code without ending the packet short- since
+     * a run isn't actually processed until a subsequent non-run code
+     * occurs, due to the way we use doubled runs as special tokens.
+     */
+
+    if (codeRuns) {
+	uint8_t r = codeRuns - 1;
+	codeRuns = 0;
+
+	if (r < 4) {
+	    // Short run
+	    txBits.append(r, 4);
+	} else {
+	    // Longer run
+	    r -= 4;
+	    txBits.append(0x2 | ((r << 8) & 0xF00) | (r & 0x30), 12);
+	}
+
+	// It isn't allowed to have two consecutive run tokens. Make sure that doesn't happen
+	codeS = -1;
+    }
 }
 
 bool CubeCodec::flashReset(PacketBuffer &buf)

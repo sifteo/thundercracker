@@ -360,4 +360,14 @@ enum EM8051_EXCEPTION
     EXCEPTION_RADIO_XRUN,	 // Radio FIFO overrun/underrun
 };
 
+// The active DPTR registers depend on the value of DPS.
+
+#define SEL_DPL(dps)   (((dps) & 1) ? REG_DPL1 : REG_DPL)
+#define SEL_DPH(dps)   (((dps) & 1) ? REG_DPH1 : REG_DPH)
+
+// The active DPTR registers depend on the value of DPS.
+#define CUR_DPL	       SEL_DPL(aCPU->mSFR[REG_DPS])
+#define CUR_DPH        SEL_DPH(aCPU->mSFR[REG_DPS])
+
+
 #endif

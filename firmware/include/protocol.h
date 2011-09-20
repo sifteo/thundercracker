@@ -165,7 +165,7 @@
  *           9 4321 8765 
  *
  *   0011 0010 xxxx xxxx xxxx xxxx      Write a literal 16-bit word
- *             3210 7654 ba98 fedc
+ *             3210 7654 ba98 fedc      Writes the index to VRAM, then sets S=0, D=0.
  *
  *   0011 0011                          Escape to flash mode
  *
@@ -187,7 +187,15 @@
  * be written to the decoder until the reset has been acknowledged.
  */
 
+#define RF_VRAM_MAX_RUN    (0x3F + 5)
+#define RF_VRAM_DIFF_BASE  7
+
 #define RF_VRAM_STRIDE	   18
+
+#define RF_VRAM_SAMPLE_0   1
+#define RF_VRAM_SAMPLE_1   2
+#define RF_VRAM_SAMPLE_2   (RF_VRAM_STRIDE)
+#define RF_VRAM_SAMPLE_3   (RF_VRAM_STRIDE + 1)
 
 
 /**************************************************************************

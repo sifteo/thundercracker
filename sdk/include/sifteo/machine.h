@@ -28,7 +28,6 @@
 
 namespace Sifteo {
 
-
 /**
  * Atomic operations.
  *
@@ -56,6 +55,18 @@ namespace Atomic {
 	Barrier();
     }
 
+    static inline void Store(uint32_t &dest, uint32_t src) {
+	Barrier();
+	dest = src;
+	Barrier();
+    }
+
+    static inline uint32_t Load(uint32_t &src) {
+	Barrier();
+	uint32_t dest = src;
+	Barrier();
+	return dest;
+    }
 };
 
 

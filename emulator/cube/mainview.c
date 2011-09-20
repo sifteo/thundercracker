@@ -233,7 +233,7 @@ int getregoutput(struct em8051 *aCPU, int pos)
     case 9:
         return aCPU->mSFR[REG_B];
     case 10:
-        return aCPU->mSFR[REG_DPH] << 8 | aCPU->mSFR[REG_DPL];
+        return aCPU->mSFR[CUR_DPH] << 8 | aCPU->mSFR[CUR_DPL];
     }
     return 0;
 }
@@ -274,8 +274,8 @@ void setregoutput(struct em8051 *aCPU, int pos, int val)
         aCPU->mSFR[REG_B] = val;
         break;
     case 10:
-        aCPU->mSFR[REG_DPH] = (val >> 8) & 0xff;
-        aCPU->mSFR[REG_DPL] = val & 0xff;
+        aCPU->mSFR[CUR_DPH] = (val >> 8) & 0xff;
+        aCPU->mSFR[CUR_DPL] = val & 0xff;
         break;
     }
 }
@@ -481,7 +481,7 @@ void refresh_regoutput(struct em8051 *aCPU, int cursor)
         aCPU->mLowerData[6 + rx],
         aCPU->mLowerData[7 + rx],
         aCPU->mSFR[REG_B],
-        (aCPU->mSFR[REG_DPH]<<8)|aCPU->mSFR[REG_DPL]);
+        (aCPU->mSFR[CUR_DPH]<<8)|aCPU->mSFR[CUR_DPL]);
 
     if (focus == 1 && cursor)
     {   
@@ -555,7 +555,8 @@ void mainview_update(struct em8051 *aCPU)
                 history[hoffs + 128 + 6 + rx],
                 history[hoffs + 128 + 7 + rx],
                 history[hoffs + REG_B],
-                (history[hoffs + REG_DPH]<<8)|history[hoffs + REG_DPL]);
+		    (history[hoffs + SEL_DPH(history[hoffs + REG_DPS])]<<8) |
+		     history[hoffs + SEL_DPL(history[hoffs + REG_DPS])]);
             if (focus == 1)
                 refresh_regoutput(aCPU, 0);
             wprintw(regoutput,"%s",temp);

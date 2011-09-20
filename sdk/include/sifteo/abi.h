@@ -70,25 +70,72 @@ struct _SYSAssetGroup {
     _SYSCubeIDVector doneCubes;			/// IN     Which cubes have finished installing this group?
 };
 
+/*
+ * The _SYSVideoBuffer is a low-level data structure that serves to
+ * collect graphics state updates so that the system can send them
+ * over the radio to cubes.
+ *
+ * These buffers allow the system to send graphics data at the most
+ * optimal time, in the most optimal format, and without any
+ * unnecessary redundancy.
+ *
+ * VRAM is organized as a 1 kB array of bytes or words. We keep a few
+ * bitmaps at different resolutions, for the synchronization protocol
+ * below.  These bitmaps are ordered MSB-first.
+ *
+ * To support the system's asynchronous access requirements, these
+ * buffers have a very strict synchronization protocol that user code
+ * must observe:
+ *
+ *  1. Set the 'lock' bit(s) for any words you plan to update,
+ *     using Atomic::Store().
+ *
+ *  2. Update the VRAM buffer, using any method and in any order you like.
+ *
+ *  3. Set change bits in cm1, using Atomic::Or()
+ *
+ *  4. Set change bits in cm32, using Atomic::Or(). After this point the
+ *     system may start sending data over the radio at any time.
+ *
+ *  5. As soon after step (4), clear the lock bits you set in (1). Since
+ *     the system treats lock bits as read-only, you can do this using
+ *     Atomic::Store() again.
+ *
+ * Note that cm32 is the primary trigger that the system uses in order
+ * to determine if hardware VRAM needs to be updated. The lock bits do
+ * not prevent the system from reading VRAM, but rather they're used as
+ * part of the following invariant:
+ *
+ *  - For any given word, we are guaranteed that the hardware's value
+ *    matches the current buffered value if and only if the 'lock' bit
+ *    is zero and the 'cm1' bit is zero.
+ *
+ * If not for the lock bits, this invariant would not be possible to
+ * maintain, since the system would have no idea when userspace code
+ * has modified the buffer, if it hasn't yet set the cm1 bits.
+ *
+ * Streaming over the radio can begin any time after cm32 has been
+ * updated. For bandwidth efficiency, it's best to wait until after a
+ * large update, then OR a single value with cm32 in order to trigger
+ * the update.
+ *
+ * The system may still start streaming updates while the 'lock' bit
+ * is set, but it will not be able to use the full range of protocol
+ * optimization techniques, since some of these rely on knowing for
+ * certain the values of words that have already been transmitted. So
+ * it is recommended that userspace clear the 'lock' bits as soon as
+ * possible after cm32 is set.
+ */
+
 struct _SYSVideoBuffer {
     union {
 	uint16_t words[512];	/// OUT    Raw cube RAM contents
 	uint8_t bytes[1024];
     };
 
-    /*
-     * Change bitmaps are ordered MSB-first, to support fast lookups
-     * with CLZ. Always set bits using atomic read/modify/write
-     * primitives. Order matters. Write first to VRAM, then to cm1,
-     * then cm32. Note that only the upper 16 bits of cm32 are used.
-     *
-     * Streaming over the radio can begin any time after cm32 has been
-     * updated. For bandwidth efficiency, it's best to wait until
-     * after a large update, then OR a single value with cm32 in order
-     * to trigger the update.
-     */
     uint32_t cm1[16];		/// INOUT  Change map, at a resolution of 1 bit per word
     uint32_t cm32;		/// INOUT  Change map, at a resolution of 1 bit per 32 words
+    uint32_t lock;		/// OUT    Lock map, at a resolution of 1 bit per 16 words
 };
 
 
