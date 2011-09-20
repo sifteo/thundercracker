@@ -191,6 +191,7 @@
 #define RF_VRAM_DIFF_BASE  7
 
 #define RF_VRAM_STRIDE	   18
+
 #define RF_VRAM_SAMPLE_0   1
 #define RF_VRAM_SAMPLE_1   2
 #define RF_VRAM_SAMPLE_2   (RF_VRAM_STRIDE)

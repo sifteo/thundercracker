@@ -37,7 +37,7 @@ void vPokeIndex(uint16_t addr, uint16_t tile)
 
 void font_putc(uint8_t x, uint8_t y, char c)
 {
-    const uint8_t pitch = 20;
+    const uint8_t pitch = 18;
     uint16_t index = (c - ' ') << 1;
 
     vPokeIndex(x + pitch*y, index);
@@ -68,10 +68,9 @@ void siftmain()
     _SYS_loadAssets(0, &GameAssets.sys);
     _SYS_setVideoBuffer(0, &vbuf);
 
-    font_printf(0, 0, "ABCDEFG");
 
     font_printf(0, 0, "Hello World!");
-    font_printf(1, 3, "(>\")>  <(\"<)");
+    //font_printf(1, 3, "(>\")>  <(\"<)");
 
     int x = 0;
     while (1) {
@@ -79,7 +78,7 @@ void siftmain()
 	char c = spinner[(x >> 10) & 3];
 	x++;
 
-	font_printf(1, 6, "%08x   %c%c%c", x, c, c, c);
+	//font_printf(1, 6, "%08x   %c%c%c", x, c, c, c);
 
 	System::draw();
     }

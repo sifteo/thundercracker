@@ -226,9 +226,8 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
 
 void CubeCodec::encodeDS(uint8_t d, uint8_t s)
 {
-    if (0 && d == codeD && s == codeS && codeRuns != RF_VRAM_MAX_RUN) {
+    if (d == codeD && s == codeS && codeRuns != RF_VRAM_MAX_RUN) {
 	// Extend an existing run
-	// XXX: Disabled for now
 	codeRuns++;
 
     } else {

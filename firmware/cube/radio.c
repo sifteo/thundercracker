@@ -324,14 +324,14 @@ rxs_default:
 
 	; ------------ Nybble 00nn -- RLE
 
-	jnz	rxs_default_not_rle
+	jnz	27$
 	mov	AR_LOW, R_INPUT
 	mov	R_STATE, #(rxs_rle - rxs_default)
 	RX_NEXT_NYBBLE
 
 	; ------------ Nybble 01ss -- Copy
 
-rxs_default_not_rle:
+27$:
 	cjne	a, #0x4, 11$
 	mov	AR_SAMPLE, R_INPUT
 	mov	R_DIFF, #RF_VRAM_DIFF_BASE
@@ -371,7 +371,6 @@ rx_next_sjmp:
 rxs_diff_1:
 	mov	AR_DIFF, R_INPUT
 	mov	R_LOW, #0
-rx_next_wrdelta_default:
 	mov	R_STATE, #0
 	lcall	#_rx_write_deltas
 	sjmp	#rx_next_sjmp
@@ -428,18 +427,21 @@ rxs_literal:
 	; as a normal nybble after processing the runs from our first
 	; RLE nybble.
 
-	; -------- 00nn -- Plain RLE code OR beginning of special code
-
 rxs_rle:
+
 	mov	a, R_INPUT
 	anl	a, #0xc
+
+	; -------- 00nn -- Plain RLE code
+
 	jz	13$
 
+	anl	AR_LOW, #0xF		; Only the low nybble is part of the valid run length
 	lcall	#_rx_write_deltas
 	mov	R_STATE, #0
-	sjmp	rxs_default_not_rle	; Dont bother re-checking for RLE
-13$:
+	sjmp	rxs_default		; Re-process this nybble starting from the default state
 
+13$:
 	mov	a, R_LOW	; Check low two bits of the _first_ RLE nybble
 
 	; -------- 000n 00nn -- Skip n+1 output words
@@ -479,14 +481,12 @@ rxs_rle:
 	mov	R_LOW, a
 
 	mov	R_STATE, #(rxs_wrdelta_1 - rxs_default)
+
 rx_next_sjmp2:
 	sjmp	rx_next_sjmp
 
 rxs_wrdelta_1:
-	mov	a, R_INPUT
-	anl	a, #0xF
-	orl	AR_LOW, a	; Complete word 00nnnnnn
-	sjmp 	rx_next_wrdelta_default
+	sjmp	rxs_wrdelta_1_fragment
 
 not_wrdelta:
 
@@ -589,7 +589,23 @@ rx_not_word9:
 	; left in the packet, it acts as a flash reset.
 
 	mov	R_STATE, #0	; Back to default state
-	; ...fall through
+	sjmp	rx_flash
+
+
+	; -------- 0010 00nn nnnn -- Write n+5 delta-words
+	; (Continued from above, due to jump length limits)
+
+rxs_wrdelta_1_fragment:
+
+	mov	a, R_INPUT
+	anl	a, #0xF
+	orl	a, R_LOW	; Complete word 00nnnnnn
+	add	a, #4		; n+5  (rx_write_deltas already adds 1)
+	mov	R_LOW, a
+
+	mov	R_STATE, #0
+	lcall	#_rx_write_deltas
+	sjmp	#rx_next_sjmp2
 
 	;--------------------------------------------------------------------
 	; Flash FIFO Write
@@ -615,6 +631,8 @@ rx_not_word9:
 	; This is a pretty tight loop- we need to take at least 16 clock cycles
 	; between SPI reads, and the timing here is kind of close. So, the loop
 	; is annotated with cycle counts.
+
+rx_flash:
 
 	mov	a, R_NYBBLE_COUNT
 	dec	a
