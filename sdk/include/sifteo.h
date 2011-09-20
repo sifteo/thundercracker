@@ -7,10 +7,13 @@
 #ifndef _SIFTEO_H
 #define _SIFTEO_H
 
-#include <sifteo/machine.h>
 #include <sifteo/abi.h>
-#include <sifteo/system.h>
 #include <sifteo/cube.h>
+#include <sifteo/machine.h>
+#include <sifteo/system.h>
 #include <sifteo/asset.h>
+#include <sifteo/limits.h>
+#include <sifteo/macros.h>
+#include <sifteo/video.h>
 
 #endif

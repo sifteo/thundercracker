@@ -11,6 +11,9 @@
 
 #include <sifteo/abi.h>
 #include <sifteo/machine.h>
+#include <sifteo/macros.h>
+#include <sifteo/limits.h>
+
 #include <protocol.h>
 #include "radio.h"
 #include "runtime.h"

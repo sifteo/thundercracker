@@ -35,7 +35,7 @@ void _SYS_yield(void)
     Radio::halt();
 }
 
-void _SYS_draw(void)
+void _SYS_paint(void)
 {
     Radio::halt();
 }

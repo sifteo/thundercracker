@@ -171,7 +171,7 @@ void siftmain(void);
     
 void _SYS_exit(void);				/// Equivalent to return from siftmain()
 void _SYS_yield(void);				/// Temporarily cede control to the firmware
-void _SYS_draw(void);				/// Enqueue a new rendering frame
+void _SYS_paint(void);				/// Enqueue a new rendering frame
 
 void _SYS_enableCubes(_SYSCubeIDVector cv);	/// Which cubes will be trying to connect?
 void _SYS_disableCubes(_SYSCubeIDVector cv);

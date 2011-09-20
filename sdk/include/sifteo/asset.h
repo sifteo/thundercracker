@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 #include <sifteo/abi.h>
-#include <sifteo/cube.h>
+#include <sifteo/limits.h>
 
 namespace Sifteo {
 

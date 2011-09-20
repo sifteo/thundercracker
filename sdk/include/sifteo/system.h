@@ -55,8 +55,8 @@ class System {
      * the duration of one frame.
      */
 
-    static void draw() {
-	_SYS_draw();
+    static void paint() {
+	_SYS_paint();
     }
 
 };

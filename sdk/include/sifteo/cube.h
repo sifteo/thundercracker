@@ -7,19 +7,8 @@
 #ifndef _SIFTEO_CUBE_H
 #define _SIFTEO_CUBE_H
 
-/*
- * Every game can individually define a compile-time limit for the
- * number of supported cubes. It must be less than or equal to the
- * firmware limit (currently 32). Many data structures are statically
- * allocated using this number, so if a game is running low on RAM it
- * can decrease the limit, or if it needs more cubes it can be
- * increased.
- */
-
-#ifndef CUBE_ALLOCATION
-#define CUBE_ALLOCATION  6
-#endif
-
+#include <sifteo/asset.h>
+#include <sifteo/video.h>
 
 namespace Sifteo {
 
@@ -33,7 +22,33 @@ namespace Sifteo {
  */
 
 class Cube {
+ public:
+    typedef _SYSCubeID ID;
 
+    Cube(ID id)
+	: mID(id) {}
+
+    void enable() {
+	_SYS_setVideoBuffer(mID, &vram.sys);
+	_SYS_enableCubes(1 << mID);
+    }
+
+    void disable() {
+	_SYS_disableCubes(1 << mID);
+    }
+
+    void loadAssets(AssetGroup &group) {
+	_SYS_loadAssets(mID, &group.sys);
+    }
+
+    ID id() const {
+	return mID;
+    }
+
+    VideoBuffer vram;
+
+ private:
+    ID mID;
 };
 
 

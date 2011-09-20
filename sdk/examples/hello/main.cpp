@@ -12,27 +12,11 @@
 
 using namespace Sifteo;
 
-static _SYSVideoBuffer vbuf;
-
-void markCM(uint16_t addr)
-{
-    Atomic::Or(vbuf.cm1[addr >> 5], 0x80000000 >> (addr & 31));
-    Atomic::Or(vbuf.cm32, 0x80000000 >> (addr >> 5));
-}
-
-void vPoke(uint16_t addr, uint16_t word)
-{
-    if (vbuf.words[addr] != word) {
-	Atomic::Store(vbuf.lock, 0x80000000 >> (addr >> 4));
-	vbuf.words[addr] = word;
-	markCM(addr);
-	Atomic::Store(vbuf.lock, 0);
-    }
-}
+static Cube cube(0);
 
 void vPokeIndex(uint16_t addr, uint16_t tile)
 {
-    vPoke(addr, ((tile << 1) & 0xFE) | ((tile << 2) & 0xFE00));
+    cube.vram.poke(addr, ((tile << 1) & 0xFE) | ((tile << 2) & 0xFE00));
 }
 
 void font_putc(uint8_t x, uint8_t y, char c)
@@ -60,16 +44,15 @@ void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
 
 void siftmain()
 {
-    // Contents of the cube's VRAM starts out unknown
-    for (unsigned i = 0; i < 20*20; i++)
-	markCM(i);
-
-    _SYS_enableCubes(1 << 0);
-    _SYS_loadAssets(0, &GameAssets.sys);
-    _SYS_setVideoBuffer(0, &vbuf);
+    cube.enable();
+    cube.loadAssets(GameAssets);
 
     font_printf(0, 0, "Hello World!");
     font_printf(1, 3, "(>\")>  <(\"<)");
+
+    for (unsigned y = 0; y < 5; y++)
+	for (unsigned x = 0; x < 15; x++)
+	    vPokeIndex(1+x + (10+y)*18, x + y*15 + 192);
 
     int x = 0;
     while (1) {
@@ -79,6 +62,8 @@ void siftmain()
 		
 	font_printf(1, 6, "%08x   %c%c%c", x, c, c, c);
 
-	System::draw();
+	cube.vram.unlock();
+
+	System::paint();
     }
 }
