@@ -25,14 +25,18 @@ def RGB565(r, g, b):
 
 
 def convert(number, name, data):
-    orig = Image.open(cStringIO.StringIO(data))
+    orig = Image.open(cStringIO.StringIO(data)).convert("RGBA")
 
-    # Convert to RGB (Apply alpha channel if necessary)
-    im = Image.new("RGB", orig.size)
-    im.paste(orig, None)
+    # White background
+    bg = Image.new("RGBA", orig.size)
+    bg.paste((255, 255, 255, 255))
+
+    # Convert to RGB, without alpha
+    im = Image.composite(orig, bg, orig).convert("RGB")
 
     # Make a 16-color palette
     im = im.quantize(16)
+    im.save("foo.png")
 
     print """
 // #%d -- %s

@@ -56,11 +56,11 @@ static void onAccelChange(_SYSCubeID cid)
     _SYSAccelState state;
 
     _SYS_getAccel(cid, &state);
-    font_printf(2, 6, "Tilt: %02x %02x", state.x, state.y);
+    font_printf(2, 6, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
 
     // XXX: Cheesy panning hack
-    int8_t px = -((state.x >> 4) - (0x80 >> 4));
-    int8_t py = -((state.y >> 4) - (0x80 >> 4));
+    int8_t px = -(state.x >> 4);
+    int8_t py = -(state.y >> 4);
     if (px < 0) px += 18*8;
     if (py < 0) py += 18*8;
     cube.vbuf.poke(0x3fc/2, ((uint8_t)py << 8) | (uint8_t)px);

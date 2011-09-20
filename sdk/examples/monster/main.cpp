@@ -24,16 +24,25 @@ static void showMonster(const MonsterData *m)
 
 void siftmain()
 {
+    unsigned fpMonster = 0;
+    const MonsterData *currentMonster = NULL;
+
     cube.vbuf.init();
     cube.vbuf.sys.vram.mode = _SYS_VM_FB32;
     cube.vbuf.sys.vram.flags = _SYS_VF_CONTINUOUS;
     cube.enable();
 
-    for (unsigned m = 0; m < arraysize(monsters); m++) {
-	printf("Showing monster %d\n", m);
-	showMonster(monsters[m]);
+    while (1) {
+	_SYSAccelState state;
+	_SYS_getAccel(cube.id(), &state);
+	fpMonster += state.x;
 
-	for (unsigned j = 0; j < 1000; j++)
-	    System::paint();
+	const MonsterData *m = monsters[ (fpMonster >> 14) % arraysize(monsters) ];
+	if (m != currentMonster) {
+	    showMonster(m);
+	    currentMonster = m;
+	}
+
+	System::paint();
     }
 }
