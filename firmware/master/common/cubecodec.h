@@ -11,6 +11,7 @@
 
 #include <sifteo/abi.h>
 #include <sifteo/machine.h>
+#include <protocol.h>
 #include "radio.h"
 #include "runtime.h"
 
@@ -69,10 +70,12 @@ class CubeCodec {
  public:
     void stateReset() {	
 	codePtr = 0;
+	codeS = -1;
     }
 
     void encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb);
-    bool encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data);
+    bool encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
+		    _SYSVideoBuffer *vb);
 
     bool flashReset(PacketBuffer &buf);
     bool flashSend(PacketBuffer &buf, _SYSAssetGroup *group, _SYSAssetGroupCube *ac, bool &done);
@@ -94,6 +97,28 @@ class CubeCodec {
     void codePtrAdd(uint16_t words) {
 	codePtr = (codePtr + words) & PTR_MASK;
     }
+
+    uint16_t wordToIndex(uint16_t data) {
+	return ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
+    }
+
+    unsigned deltaSample(_SYSVideoBuffer *vb, uint16_t index, uint16_t offset) {
+	uint16_t ptr = codePtr - offset;
+
+	ptr &= PTR_MASK;
+
+	if ((vb->lock & (0x80000000 >> (ptr >> 4))) ||
+	    (vb->cm1[ptr >> 5] & (0x80000000 >> (ptr & 31)))) {
+
+	    // Can't match a locked or modified word
+	    return (unsigned) -1;
+	}
+
+	return index - wordToIndex(vb->words[ptr]) + RF_VRAM_DIFF_BASE;
+    }
+
+    void encodeDS(uint8_t d, uint8_t s);
+    void flushDSRuns();
 
     static const unsigned PTR_MASK = 511;
 };

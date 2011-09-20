@@ -44,9 +44,6 @@
 #define RX_ADDRESS ((OPCODE & 7) + 8 * ((PSW & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0))
 #define CARRY ((PSW & PSWMASK_C) >> PSW_C)
 
-#define CUR_DPL   ((aCPU->mSFR[REG_DPS] & 1) ? REG_DPL1 : REG_DPL)
-#define CUR_DPH   ((aCPU->mSFR[REG_DPS] & 1) ? REG_DPH1 : REG_DPH)
-
 
 static int read_mem(struct em8051 *aCPU, int aAddress)
 {
