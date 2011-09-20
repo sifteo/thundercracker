@@ -54,6 +54,9 @@ class CPPSourceWriter : public CPPWriter {
  public:
     CPPSourceWriter(Logger &log, const char *filename);
     void writeGroup(const Group &group);
+
+ private:
+    void writeImage(const Image &image);
 };
 
 

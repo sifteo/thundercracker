@@ -93,8 +93,62 @@ void CPPSourceWriter::writeGroup(const Group &group)
 	"}};\n\n"
 	"Sifteo::AssetGroup " << group.getName() <<
 	" = {{ &" << group.getName() << "_data.hdr, " << group.getName() << ".cubes }};\n";
+
+    for (std::set<Image*>::iterator i = group.getImages().begin();
+	 i != group.getImages().end(); i++)
+	writeImage(**i);
 }
 
+void CPPSourceWriter::writeImage(const Image &image)
+{
+    char buf[16];
+    const std::vector<TileGrid> &grids = image.getGrids();
+    unsigned width = grids.empty() ? 0 : grids[0].width();
+    unsigned height = grids.empty() ? 0 : grids[0].height();
+
+    if (!image.isPinned()) {
+	/*
+	 * Write out uncompressed tile grid.
+	 *
+	 * XXX: Compression!
+	 */
+
+	mStream << "\nstatic const uint16_t " << image.getName() << "_tiles[] = {\n";
+
+	for (unsigned f = 0; f < grids.size(); f++) {
+	    const TileGrid &grid = grids[f];
+	    const TilePool &pool = grid.getPool();
+
+	    mStream << indent << "// Frame " << f << "\n";
+	
+	    for (unsigned y = 0; y < height; y++) {
+		mStream << indent;
+		for (unsigned x = 0; x < width; x++) {
+		    sprintf(buf, "0x%04x,", pool.index(grid.tile(x, y)));
+		    mStream << buf;
+		}
+		mStream << "\n";
+	    }
+	}
+	
+	mStream << "};\n";
+    }
+
+    mStream <<
+	"\n"
+	"Sifteo::AssetImage " << image.getName() << " = {\n" <<
+	indent << "/* width   */ " << width << ",\n" <<
+	indent << "/* height  */ " << height << ",\n" <<
+	indent << "/* frames  */ " << grids.size() << ",\n" <<
+	indent << "/* tiles   */ ";
+
+    if (image.isPinned())
+	mStream << "0";
+    else
+	mStream << image.getName() << "_tiles";
+
+    mStream << ",\n};\n";
+}
 
 CPPHeaderWriter::CPPHeaderWriter(Logger &log, const char *filename)
     : CPPWriter(log, filename)
@@ -136,7 +190,8 @@ void CPPHeaderWriter::head()
     mStream <<
 	"\n"
 	"#ifndef " << guardName << "\n"
-	"#define " << guardName << "\n";
+	"#define " << guardName << "\n"
+	"\n";
 }
 
 void CPPHeaderWriter::foot()
@@ -150,9 +205,14 @@ void CPPHeaderWriter::foot()
 
 void CPPHeaderWriter::writeGroup(const Group &group)
 {
-    mStream << 
-	"\n"
-	"extern Sifteo::AssetGroup " << group.getName() << ";\n";
+    mStream << "extern Sifteo::AssetGroup " << group.getName() << ";\n";
+
+    for (std::set<Image*>::iterator i = group.getImages().begin();
+	 i != group.getImages().end(); i++) {
+	Image *image = *i;
+
+	mStream << "extern const Sifteo::AssetImage " << image->getName() << ";\n";
+    }
 }
 
 

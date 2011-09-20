@@ -30,6 +30,24 @@ class AssetGroup {
 };
 
 
+/**
+ * An asset image.
+ *
+ * XXX: Find a better binary representation of these, probably with some
+ *      random-access-friendly form of dictionary compression. Right now
+ *      this is very much just a placeholder!
+ */
+
+class AssetImage {
+ public:
+    unsigned width;
+    unsigned height;
+    unsigned frames;
+
+    const uint16_t *tiles;
+};
+
+
 };  // namespace Sifteo
 
 #endif

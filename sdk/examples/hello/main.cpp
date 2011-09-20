@@ -50,9 +50,9 @@ void siftmain()
     font_printf(0, 0, "Hello World!");
     font_printf(1, 3, "(>\")>  <(\"<)");
 
-    for (unsigned y = 0; y < 5; y++)
-	for (unsigned x = 0; x < 15; x++)
-	    vPokeIndex(1+x + (10+y)*18, x + y*15 + 192);
+    for (unsigned y = 0; y < Logo.height; y++)
+	for (unsigned x = 0; x < Logo.width; x++)
+	    vPokeIndex(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
 
     int x = 0;
     while (1) {

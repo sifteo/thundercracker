@@ -158,7 +158,7 @@ public:
 	mName = s;
     }
 
-    std::string &getName() {
+    const std::string &getName() const {
 	return mName;
     }
 
@@ -168,6 +168,10 @@ public:
 
     const std::vector<TileGrid> &getGrids() const {
 	return mGrids;
+    }
+
+    bool isPinned() const {
+	return mTileOpt.pinned;
     }
 
  private:
