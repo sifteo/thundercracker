@@ -17,13 +17,6 @@ using namespace Sifteo::Intrinsic;
 
 void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 {
-    // Flush any lingering bits from before.
-    txBits.flush(buf);
-
-    // This cube has no framebuffer at the moment, its rendering is disabled
-    if (!vb)
-	return;
-
     /*
      * Note that we have to sweep that change map as we go. Since
      * we're running in an ISR, at higher priority than user code,
@@ -51,54 +44,70 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
      * we fill up the output packet. We assume that this function
      * begins with space available in the packet buffer.
      */
- 
-    do {
-	/* This AND is important, it prevents out-of-bounds indexing
-	 * or infinite looping if userspace gives us a bogus cm32
-	 * value! This is equivalent to bounds-checking idx32 and addr
-	 * below, as well as checking for infinite looping. Much more
-	 * efficient to do it here though :)
-	 */
-	uint32_t cm32 = vb->cm32 & 0xFFFF0000;
 
-	if (!cm32)
-	    break;
+    if (vb) {
+	do {
+	    /* This AND is important, it prevents out-of-bounds indexing
+	     * or infinite looping if userspace gives us a bogus cm32
+	     * value! This is equivalent to bounds-checking idx32 and addr
+	     * below, as well as checking for infinite looping. Much more
+	     * efficient to do it here though :)
+	     */
+	    uint32_t cm32 = vb->cm32 & 0xFFFF0000;
 
-	uint32_t idx32 = CLZ(cm32);
-	uint32_t cm1 = vb->cm1[idx32];
-
-	if (cm1) {
-	    uint32_t idx1 = CLZ(cm1);
-	    uint16_t addr = (idx32 << 5) | idx1;
-
-	    if (!encodeVRAM(buf, addr, vb->words[addr], vb)) {
-		/*
-		 * We ran out of room to encode. This should be rare,
-		 * happening only when we're near the end of the
-		 * packet buffer AND we're encoding a very large code,
-		 * like a literal 16-bit write plus a literal address
-		 * change.
-		 */
+	    if (!cm32)
 		break;
+
+	    uint32_t idx32 = CLZ(cm32);
+	    uint32_t cm1 = vb->cm1[idx32];
+
+	    if (cm1) {
+		uint32_t idx1 = CLZ(cm1);
+		uint16_t addr = (idx32 << 5) | idx1;
+
+		if (!encodeVRAMAddr(buf, addr) ||
+		    !encodeVRAMData(buf, vb, vb->words[addr])) {
+
+		    /*
+		     * We ran out of room to encode. This should be rare,
+		     * happening only when we're near the end of the
+		     * packet buffer AND we're encoding a very large code,
+		     * like a literal 16-bit write plus a literal address
+		     * change.
+		     */
+		    break;
+		}
+
+		cm1 &= ROR(0x7FFFFFFF, idx1);
+		vb->cm1[idx32] = cm1;
 	    }
 
-	    cm1 &= ROR(0x7FFFFFFF, idx1);
-	    vb->cm1[idx32] = cm1;
-	}
+	    if (!cm1) {
+		cm32 &= ROR(0x7FFFFFFF, idx32);
+		vb->cm32 = cm32;
+	    }
+	} while (!buf.isFull());
+    }
 
-	if (!cm1) {
-	    cm32 &= ROR(0x7FFFFFFF, idx32);
-	    vb->cm32 = cm32;
-	}
-    } while (!buf.isFull());
+    /*
+     * If we have room in the buffer, and nothing left to render,
+     * see if we can flush leftover bits out to the hardware. We may
+     * have residual bits in txBits, and we may have to emit a run
+     * (which requires following it by a non-run code, like a skip.)
+     */
+
+    if (!buf.isFull())
+	txBits.flush(buf);
+
+    if (!buf.isFull() && codeRuns)
+	// Emit a small skip code, to flush the run
+	encodeVRAMAddr(buf, (codePtr + 1) & PTR_MASK);
 }
 
-bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
-			   _SYSVideoBuffer *vb)
+bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
 {
-    /*
-     * Address coding
-     */
+    if (buf.isFull())
+	return false;
 
     if (addr != codePtr) {
 	uint16_t delta = (addr - codePtr) & PTR_MASK;
@@ -122,13 +131,11 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
 	codePtr = addr;
     }
 
-    if (buf.isFull())
-	return false;
+    return true;
+}
 
-    /*
-     * Data coding
-     */
-
+bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t data)
+{
     if (data & 0x0101) {
 	/*
 	 * This value has the reserved LSBs set, so it can't be

@@ -80,8 +80,8 @@ class CubeCodec {
     }
 
     void encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb);
-    bool encodeVRAM(PacketBuffer &buf, uint16_t addr, uint16_t data,
-		    _SYSVideoBuffer *vb);
+    bool encodeVRAMAddr(PacketBuffer &buf, uint16_t addr);
+    bool encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t data);
 
     bool flashReset(PacketBuffer &buf);
     bool flashSend(PacketBuffer &buf, _SYSAssetGroup *group, _SYSAssetGroupCube *ac, bool &done);
