@@ -83,11 +83,14 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 	bool done = false;
 	_SYSAssetGroup *group = loadGroup;
 
-	if (group && codec.flashSend(tx.packet, group, assetCube(group), done)) {
+	if (group && !(group->doneCubes & bit()) &&
+	    codec.flashSend(tx.packet, group, assetCube(group), done)) {
+
 	    if (done) {
 		/* Finished asset loading */
 		Atomic::Or(group->doneCubes, bit());
-		loadGroup = NULL;
+		Atomic::Or(Event::assetDoneCubes, bit());
+		Event::setPending(Event::ASSET_DONE);
 	    }
 	}
     }

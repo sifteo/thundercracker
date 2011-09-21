@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include <sifteo.h>
 #include "assets.gen.h"
@@ -14,12 +15,12 @@ using namespace Sifteo;
 
 static Cube cube(0);
 
-void vPokeIndex(uint16_t addr, uint16_t tile)
+static void vPokeIndex(uint16_t addr, uint16_t tile)
 {
     cube.vram.poke(addr, ((tile << 1) & 0xFE) | ((tile << 2) & 0xFE00));
 }
 
-void font_putc(uint8_t x, uint8_t y, char c)
+static void font_putc(uint8_t x, uint8_t y, char c)
 {
     const uint8_t pitch = 18;
     uint16_t index = (c - ' ') << 1;
@@ -28,7 +29,7 @@ void font_putc(uint8_t x, uint8_t y, char c)
     vPokeIndex(x + pitch*(y+1), index+1);
 }
 
-void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
+static void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
 {
     char buf[128];
     char *p = buf;
@@ -42,28 +43,33 @@ void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
     va_end(ap);
 }
 
-void siftmain()
+static void onAssetDone(struct _SYSAssetGroup *group)
 {
-    cube.enable();
-    cube.loadAssets(GameAssets);
+    printf("Asset loading done\n");
 
     font_printf(0, 0, "Hello World!");
-    font_printf(1, 3, "(>\")>  <(\"<)");
 
     for (unsigned y = 0; y < Logo.height; y++)
 	for (unsigned x = 0; x < Logo.width; x++)
 	    vPokeIndex(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
 
-    int x = 0;
+    cube.vram.unlock();
+}
+
+void siftmain()
+{
+    _SYS_vectors.assetDone = onAssetDone;
+
+    cube.vram.init();
+    memset(cube.vram.sys.words, 0, sizeof cube.vram.sys.words);
+    cube.vram.sys.words[402] = 0xFFFF;
+    cube.vram.sys.words[405] = 0xFFFF;
+    cube.vram.unlock();
+
+    cube.enable();
+    cube.loadAssets(GameAssets);
+
     while (1) {
-	static const char spinner[] = "-\\|/";
-	x++;
-	char c = spinner[x & 3];
-		
-	font_printf(1, 6, "%08x   %c%c%c", x, c, c, c);
-
-	cube.vram.unlock();
-
 	System::paint();
     }
 }

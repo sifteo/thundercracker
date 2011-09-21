@@ -7,6 +7,7 @@
 #ifndef _SIFTEO_VIDEO_H
 #define _SIFTEO_VIDEO_H
 
+#include <sifteo/macros.h>
 #include <sifteo/machine.h>
 
 namespace Sifteo {
@@ -67,6 +68,25 @@ class VideoBuffer {
 	}
     }
 
+    /**
+     * Read one word of VRAM
+     */
+    uint16_t peek(uint16_t addr) const {
+	return sys.words[addr];
+    }
+
+    /**
+     * Initialize the buffer. Note that this doesn't initialize the *contents*
+     * of VRAM, as that's format specific. This just initializes the change maps,
+     * so that on the next unlock() we'll send the entire buffer.
+     */
+    void init() {
+	sys.lock = 0xFFFFFFFF;
+	nextCM32 = 0xFFFFFFFF;
+	for (unsigned i = 0; i < arraysize(sys.cm1); i++)
+	    sys.cm1[i] = 0xFFFFFFFF;
+    }
+
     _SYSVideoBuffer sys;    
     
  private:
@@ -75,15 +95,15 @@ class VideoBuffer {
     }
 
     uint32_t maskCM1(uint16_t addr) {
-	return 0x80000000 >> (addr & 31);
+	return Intrinsic::LZ(addr & 31);
     }
 
     uint32_t maskCM32(uint16_t addr) {
-	return 0x80000000 >> (addr >> 5);
+	return Intrinsic::LZ(addr >> 5);
     }
 
     uint32_t maskLock(uint16_t addr) {
-	return 0x80000000 >> (addr >> 4);
+	return Intrinsic::LZ(addr >> 4);
     }
 
     uint32_t nextCM32;

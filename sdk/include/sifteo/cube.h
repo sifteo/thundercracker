@@ -30,11 +30,11 @@ class Cube {
 
     void enable() {
 	_SYS_setVideoBuffer(mID, &vram.sys);
-	_SYS_enableCubes(1 << mID);
+	_SYS_enableCubes(Intrinsic::LZ(mID));
     }
 
     void disable() {
-	_SYS_disableCubes(1 << mID);
+	_SYS_disableCubes(Intrinsic::LZ(mID));
     }
 
     void loadAssets(AssetGroup &group) {

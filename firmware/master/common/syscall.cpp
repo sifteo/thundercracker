@@ -33,11 +33,12 @@ void _SYS_exit(void)
 void _SYS_yield(void)
 {
     Radio::halt();
+    Event::dispatch();
 }
 
 void _SYS_paint(void)
 {
-    Radio::halt();
+    _SYS_yield();
 }
 
 void _SYS_enableCubes(_SYSCubeIDVector cv)
