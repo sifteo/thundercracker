@@ -24,8 +24,7 @@ void main(void)
     while (1) {
 	flash_handle_fifo();
 
-	//if (vram.frame_trigger != ack_data.frame_count) {
-	if (1) {
+	if (vram.frame_trigger != ack_data.frame_count) {
 	    // Sync with LCD
 	    //while (!CTRL_LCD_TE);
 
