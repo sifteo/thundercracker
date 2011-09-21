@@ -32,7 +32,7 @@ void RadioManager::produce(PacketTransmission &tx)
 
     for (;;) {
 	// No more enabled slots? Loop back to zero.
-	if (!(CubeSlot::vecEnabled >> schedNext))
+	if (!(_SYSCubeIDVector)(CubeSlot::vecEnabled << schedNext))
 	    schedNext = 0;
 
 	_SYSCubeID id = schedNext++;

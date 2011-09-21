@@ -37,7 +37,7 @@ extern "C" {
 #define _SYS_NUM_CUBE_SLOTS   32
 
 typedef uint8_t _SYSCubeID;		/// Cube slot index
-typedef uint32_t _SYSCubeIDVector;	/// One bit for each cube slot
+typedef uint32_t _SYSCubeIDVector;	/// One bit for each cube slot, MSB-first
 
 /*
  * XXX: It would be nice to further compress the loadstream when storing
@@ -138,6 +138,14 @@ struct _SYSVideoBuffer {
     uint32_t lock;		/// OUT    Lock map, at a resolution of 1 bit per 16 words
 };
 
+/**
+ * Accelerometer state
+ */
+
+struct _SYSAccelState {
+    uint8_t x;
+    uint8_t y;
+};
 
 /**
  * Event vectors. These can be changed at runtime in order to handle
@@ -151,7 +159,8 @@ struct _SYSVideoBuffer {
 struct _SYSEventVectors {
     void (*cubeFound)(_SYSCubeID cid);
     void (*cubeLost)(_SYSCubeID cid);
-    void (*assetDone)(struct _SYSAssetGroup *group);
+    void (*assetDone)(_SYSCubeID cid);
+    void (*accelChange)(_SYSCubeID cid);
     void *reserved[_SYS_MAX_VECTORS - 3];
 };
 
@@ -178,6 +187,8 @@ void _SYS_disableCubes(_SYSCubeIDVector cv);
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf);
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
+
+void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
 
 
 #ifdef __cplusplus

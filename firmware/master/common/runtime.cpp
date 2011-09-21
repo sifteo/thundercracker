@@ -7,8 +7,16 @@
  */
 
 #include "runtime.h"
+#include "cube.h"
+
+using namespace Sifteo;
 
 jmp_buf Runtime::jmpExit;
+
+bool Event::dispatchInProgress;
+uint32_t Event::pending;
+uint32_t Event::assetDoneCubes;
+uint32_t Event::accelChangeCubes;
 
 
 void Runtime::run()
@@ -22,4 +30,45 @@ void Runtime::run()
 void Runtime::exit()
 {
     longjmp(jmpExit, 1);
+}
+
+void Event::dispatch()
+{
+    /*
+     * Skip event dispatch if we're already in an event handler
+     */
+
+    if (dispatchInProgress)
+	return;
+    dispatchInProgress = true;
+
+    /*
+     * Process events, by type
+     */
+
+    while (pending) {
+	uint32_t event = Intrinsic::CLZ(pending);
+	switch (event) {
+
+	case ASSET_DONE:
+	    while (assetDoneCubes) {
+		uint32_t slot = Intrinsic::CLZ(assetDoneCubes);
+		assetDone(slot);
+		Atomic::And(assetDoneCubes, ~Intrinsic::LZ(slot));
+	    }
+	    break;
+
+	case ACCEL_CHANGE:
+	    while (accelChangeCubes) {
+		uint32_t slot = Intrinsic::CLZ(accelChangeCubes);
+		accelChange(slot);
+		Atomic::And(accelChangeCubes, ~Intrinsic::LZ(slot));
+	    }
+	    break;
+
+	}
+	Atomic::And(pending, ~Intrinsic::LZ(event));
+    }
+
+    dispatchInProgress = false;
 }

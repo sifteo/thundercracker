@@ -132,8 +132,8 @@ class CubeCodec {
 
 	ptr &= PTR_MASK;
 
-	if ((vb->lock & (0x80000000 >> (ptr >> 4))) ||
-	    (vb->cm1[ptr >> 5] & (0x80000000 >> (ptr & 31)))) {
+	if ((vb->lock & Sifteo::Intrinsic::LZ(ptr >> 4)) ||
+	    (vb->cm1[ptr >> 5] & Sifteo::Intrinsic::LZ(ptr & 31))) {
 
 	    // Can't match a locked or modified word
 	    return (unsigned) -1;

@@ -11,6 +11,7 @@
 
 #include <setjmp.h>
 #include <sifteo/abi.h>
+#include <sifteo/machine.h>
 
 
 /**
@@ -41,6 +42,64 @@ class Runtime {
  
  private:
     static jmp_buf jmpExit;
+};
+
+
+/**
+ * Event dispatcher
+ *
+ * Pending events are tracked with a hierarchy of change bitmaps.
+ * Bitmaps should always be set from most specific to least specific.
+ * For example, with asset downloading, an individual cube's bit
+ * in assetDoneCubes
+ */
+
+class Event {
+ public:
+    static void dispatch();
+
+    enum Type {
+	ASSET_DONE = 0,
+	ACCEL_CHANGE,
+    };
+    
+    static void setPending(Type t) {
+	Sifteo::Atomic::Or(pending, Sifteo::Intrinsic::LZ(t));
+    }
+
+    static bool dispatchInProgress;	/// Reentrancy detector
+    static uint32_t pending;		/// CLZ map of all pending events
+    static uint32_t assetDoneCubes;	/// CLZ map, by cube slot, of asset download completion
+    static uint32_t accelChangeCubes;	/// CLZ map, by cube slot, of accelerometer changes
+
+ private:
+    /*
+     * Vector entry points.
+     *
+     * XXX: This is an ugly placeholder for something
+     *      probably-machine-specific and data-driven to enter the
+     *      interpreter quickly and make an asynchronous procedure call.
+     */
+
+    static void cubeFound(_SYSCubeID cid) {
+	if (_SYS_vectors.cubeFound)
+	    _SYS_vectors.cubeFound(cid);
+    }
+
+    static void cubeLost(_SYSCubeID cid) {
+	if (_SYS_vectors.cubeLost)
+	    _SYS_vectors.cubeLost(cid);
+    }
+
+    static void assetDone(_SYSCubeID cid) {
+	if (_SYS_vectors.assetDone)
+	    _SYS_vectors.assetDone(cid);
+    }
+
+    static void accelChange(_SYSCubeID cid) {
+	if (_SYS_vectors.accelChange)
+	    _SYS_vectors.accelChange(cid);
+    }
 };
 
 

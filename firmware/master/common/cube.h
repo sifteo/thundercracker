@@ -49,7 +49,7 @@ class CubeSlot {
     }
 
     _SYSCubeIDVector bit() const {
-	return 1 << id();
+	return Sifteo::Intrinsic::LZ(id());
     }
 
     bool enabled() const {
@@ -62,6 +62,14 @@ class CubeSlot {
 
     bool isAssetGroupLoaded(_SYSAssetGroup *a) {
 	return !!(bit() & a->doneCubes);
+    }
+
+    _SYSAssetGroup *getLastAssetGroup(void) const {
+	return loadGroup;
+    }
+
+    void getAccelState(struct _SYSAccelState *state) {
+	*state = accelState;
     }
 
     _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
@@ -85,7 +93,7 @@ class CubeSlot {
     
     static _SYSCubeIDVector truncateVector(_SYSCubeIDVector cv) {
 	// For security/reliability, all cube vectors from game code must be checked
-	return cv & (_SYSCubeIDVector)((1ULL << _SYS_NUM_CUBE_SLOTS) - 1);
+	return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
     }
 
     static void enableCubes(_SYSCubeIDVector cv) {
@@ -97,7 +105,22 @@ class CubeSlot {
     }
 
  private:
-    // Data buffers, provided by game code
+    /*
+     * Data buffers, provided by game code.
+     *
+     * 'vbuf' is non-NULL any time this cube has a buffer attached. We
+     * will try to send out any changes in that buffer. The buffer
+     * pointer is guaranteed to remain valid until it's set to NULL or
+     * to a different pointer, which can happen only outside of IRQ
+     * context.
+     *
+     * The loadGroup pointer can be set only in non-IRQ context, and
+     * only by application code. It represents the current group we're
+     * downloading, or the last group that was sent. The 'loadGroup'
+     * pointer is not automatically NULL'ed after we finish loading the
+     * group, since it's used for event dispatch purposes as well.
+     */
+
     _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
 
@@ -106,6 +129,9 @@ class CubeSlot {
 
     // ACK tracking
     uint8_t flashPrevACK;
+
+    // Sensors
+    _SYSAccelState accelState;
 };
 
 

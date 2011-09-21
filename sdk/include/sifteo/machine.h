@@ -77,6 +77,11 @@ namespace Intrinsic {
 	return c;
     }
 
+    static inline uint32_t LZ(uint32_t l) {
+	// Generate number with 'l' leading zeroes. Inverse of CLZ.
+	return 0x80000000 >> l;
+    }
+
     static inline uint32_t ROR(uint32_t a, uint32_t b) {
 	// Rotate right. One instruction on ARM
 

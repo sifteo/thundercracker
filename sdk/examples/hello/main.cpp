@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include <sifteo.h>
 #include "assets.gen.h"
@@ -14,21 +15,23 @@ using namespace Sifteo;
 
 static Cube cube(0);
 
-void vPokeIndex(uint16_t addr, uint16_t tile)
+// XXX: Should be part of VRAM-mode-specific object
+static void poke_index(uint16_t addr, uint16_t tile)
 {
     cube.vram.poke(addr, ((tile << 1) & 0xFE) | ((tile << 2) & 0xFE00));
 }
 
-void font_putc(uint8_t x, uint8_t y, char c)
+// XXX: Should have a higher level font object, supported by STIR.
+static void font_putc(uint8_t x, uint8_t y, char c)
 {
     const uint8_t pitch = 18;
     uint16_t index = (c - ' ') << 1;
 
-    vPokeIndex(x + pitch*y, index);
-    vPokeIndex(x + pitch*(y+1), index+1);
+    poke_index(x + pitch*y, index);
+    poke_index(x + pitch*(y+1), index+1);
 }
 
-void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
+static void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
 {
     char buf[128];
     char *p = buf;
@@ -42,28 +45,69 @@ void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
     va_end(ap);
 }
 
-void siftmain()
+static void nextFrame()
 {
-    cube.enable();
-    cube.loadAssets(GameAssets);
+    // XXX: cheesy frame trigger
+    static uint8_t trig = 0;
+    cube.vram.poke(407, ++trig);
+}
 
-    font_printf(0, 0, "Hello World!");
-    font_printf(1, 3, "(>\")>  <(\"<)");
+static void onAccelChange(_SYSCubeID cid)
+{
+    _SYSAccelState state;
 
+    _SYS_getAccel(cid, &state);
+    font_printf(2, 6, "Tilt: %02x %02x", state.x, state.y);
+
+    // XXX: Cheesy panning hack
+    int8_t px = -((state.x >> 4) - (0x80 >> 4));
+    int8_t py = -((state.y >> 4) - (0x80 >> 4));
+    if (px < 0) px += 18*8;
+    if (py < 0) py += 18*8;
+    cube.vram.poke(400, ((uint8_t)py << 8) | (uint8_t)px);
+
+    nextFrame();
+    cube.vram.unlock();
+}
+
+static void onAssetDone(_SYSCubeID cid)
+{
+    printf("Asset loading done\n");
+
+    font_printf(2, 2, "Hello World!");
+
+    // XXX: Drawing the logo manually, since there is no blit primitive yet
     for (unsigned y = 0; y < Logo.height; y++)
 	for (unsigned x = 0; x < Logo.width; x++)
-	    vPokeIndex(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
+	    poke_index(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
 
-    int x = 0;
+    cube.vram.unlock();
+
+    // Draw our accelerometer data now, plus on every change.
+    _SYS_vectors.accelChange = onAccelChange;
+    onAccelChange(cid);
+}
+
+void siftmain()
+{
+    // XXX: Mode-specific VRAM initialization
+    cube.vram.init();
+    memset(cube.vram.sys.words, 0, sizeof cube.vram.sys.words);
+    cube.vram.sys.words[402] = 0xFFFF;
+    cube.vram.sys.words[405] = 0xFFFF;
+    nextFrame();
+    cube.vram.unlock();
+
+    cube.enable();
+
+    // XXX: Wait for cube to connect here...
+
+    // Download assets, and continue when they're done.
+    printf("Loading assets...\n");
+    _SYS_vectors.assetDone = onAssetDone;
+    cube.loadAssets(GameAssets);
+
     while (1) {
-	static const char spinner[] = "-\\|/";
-	x++;
-	char c = spinner[x & 3];
-		
-	font_printf(1, 6, "%08x   %c%c%c", x, c, c, c);
-
-	cube.vram.unlock();
-
 	System::paint();
     }
 }

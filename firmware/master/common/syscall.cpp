@@ -33,11 +33,12 @@ void _SYS_exit(void)
 void _SYS_yield(void)
 {
     Radio::halt();
+    Event::dispatch();
 }
 
 void _SYS_paint(void)
 {
-    Radio::halt();
+    _SYS_yield();
 }
 
 void _SYS_enableCubes(_SYSCubeIDVector cv)
@@ -58,8 +59,15 @@ void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
 
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group)
 {
-    if (Runtime::checkUserPointer(group, sizeof *group)	&& CubeSlot::validID(cid))
+    if (Runtime::checkUserPointer(group, sizeof *group) && CubeSlot::validID(cid))
 	CubeSlot::instances[cid].loadAssets(group);
 }
+
+void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state)
+{
+    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid))
+	CubeSlot::instances[cid].getAccelState(state);
+}
+
 
 }  // extern "C"
