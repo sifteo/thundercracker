@@ -50,7 +50,15 @@ static void onAccelChange(_SYSCubeID cid)
     _SYSAccelState state;
 
     _SYS_getAccel(cid, &state);
-    font_printf(1, 3, "Tilt: %02x %02x", state.x, state.y);
+    font_printf(2, 6, "Tilt: %02x %02x", state.x, state.y);
+
+    // XXX: Cheesy panning hack
+    int8_t px = -((state.x >> 4) - (0x80 >> 4));
+    int8_t py = -((state.y >> 4) - (0x80 >> 4));
+    if (px < 0) px += 18*8;
+    if (py < 0) py += 18*8;
+    cube.vram.poke(400, ((uint8_t)py << 8) | (uint8_t)px);
+
     cube.vram.unlock();
 }
 
@@ -58,7 +66,7 @@ static void onAssetDone(_SYSCubeID cid)
 {
     printf("Asset loading done\n");
 
-    font_printf(0, 0, "Hello World!");
+    font_printf(2, 2, "Hello World!");
 
     // XXX: Drawing the logo manually, since there is no blit primitive yet
     for (unsigned y = 0; y < Logo.height; y++)
