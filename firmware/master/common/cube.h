@@ -68,6 +68,10 @@ class CubeSlot {
 	return loadGroup;
     }
 
+    void getAccelState(struct _SYSAccelState *state) {
+	*state = accelState;
+    }
+
     _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
 	/*
 	 * Safely return this cube's per-cube data on a particular
@@ -125,6 +129,9 @@ class CubeSlot {
 
     // ACK tracking
     uint8_t flashPrevACK;
+
+    // Sensors
+    _SYSAccelState accelState;
 };
 
 

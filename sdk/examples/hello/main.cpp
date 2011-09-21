@@ -15,18 +15,20 @@ using namespace Sifteo;
 
 static Cube cube(0);
 
-static void vPokeIndex(uint16_t addr, uint16_t tile)
+// XXX: Should be part of VRAM-mode-specific object
+static void poke_index(uint16_t addr, uint16_t tile)
 {
     cube.vram.poke(addr, ((tile << 1) & 0xFE) | ((tile << 2) & 0xFE00));
 }
 
+// XXX: Should have a higher level font object, supported by STIR.
 static void font_putc(uint8_t x, uint8_t y, char c)
 {
     const uint8_t pitch = 18;
     uint16_t index = (c - ' ') << 1;
 
-    vPokeIndex(x + pitch*y, index);
-    vPokeIndex(x + pitch*(y+1), index+1);
+    poke_index(x + pitch*y, index);
+    poke_index(x + pitch*(y+1), index+1);
 }
 
 static void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
@@ -43,23 +45,36 @@ static void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
     va_end(ap);
 }
 
-static void onAssetDone(struct _SYSAssetGroup *group)
+static void onAccelChange(_SYSCubeID cid)
+{
+    _SYSAccelState state;
+
+    _SYS_getAccel(cid, &state);
+    font_printf(1, 3, "Tilt: %02x %02x", state.x, state.y);
+    cube.vram.unlock();
+}
+
+static void onAssetDone(_SYSCubeID cid)
 {
     printf("Asset loading done\n");
 
     font_printf(0, 0, "Hello World!");
 
+    // XXX: Drawing the logo manually, since there is no blit primitive yet
     for (unsigned y = 0; y < Logo.height; y++)
 	for (unsigned x = 0; x < Logo.width; x++)
-	    vPokeIndex(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
+	    poke_index(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
 
     cube.vram.unlock();
+
+    // Draw our accelerometer data now, plus on every change.
+    _SYS_vectors.accelChange = onAccelChange;
+    onAccelChange(cid);
 }
 
 void siftmain()
 {
-    _SYS_vectors.assetDone = onAssetDone;
-
+    // XXX: Mode-specific VRAM initialization
     cube.vram.init();
     memset(cube.vram.sys.words, 0, sizeof cube.vram.sys.words);
     cube.vram.sys.words[402] = 0xFFFF;
@@ -67,6 +82,12 @@ void siftmain()
     cube.vram.unlock();
 
     cube.enable();
+
+    // XXX: Wait for cube to connect here...
+
+    // Download assets, and continue when they're done.
+    printf("Loading assets...\n");
+    _SYS_vectors.assetDone = onAssetDone;
     cube.loadAssets(GameAssets);
 
     while (1) {

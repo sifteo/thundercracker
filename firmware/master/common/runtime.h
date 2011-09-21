@@ -60,6 +60,7 @@ class Event {
 
     enum Type {
 	ASSET_DONE = 0,
+	ACCEL_CHANGE,
     };
     
     static void setPending(Type t) {
@@ -69,6 +70,7 @@ class Event {
     static bool dispatchInProgress;	/// Reentrancy detector
     static uint32_t pending;		/// CLZ map of all pending events
     static uint32_t assetDoneCubes;	/// CLZ map, by cube slot, of asset download completion
+    static uint32_t accelChangeCubes;	/// CLZ map, by cube slot, of accelerometer changes
 
  private:
     /*
@@ -89,9 +91,14 @@ class Event {
 	    _SYS_vectors.cubeLost(cid);
     }
 
-    static void assetDone(struct _SYSAssetGroup *group) {
+    static void assetDone(_SYSCubeID cid) {
 	if (_SYS_vectors.assetDone)
-	    _SYS_vectors.assetDone(group);
+	    _SYS_vectors.assetDone(cid);
+    }
+
+    static void accelChange(_SYSCubeID cid) {
+	if (_SYS_vectors.accelChange)
+	    _SYS_vectors.accelChange(cid);
     }
 };
 

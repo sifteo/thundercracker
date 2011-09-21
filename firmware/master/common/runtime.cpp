@@ -16,6 +16,7 @@ jmp_buf Runtime::jmpExit;
 bool Event::dispatchInProgress;
 uint32_t Event::pending;
 uint32_t Event::assetDoneCubes;
+uint32_t Event::accelChangeCubes;
 
 
 void Runtime::run()
@@ -49,25 +50,19 @@ void Event::dispatch()
 	uint32_t event = Intrinsic::CLZ(pending);
 	switch (event) {
 
-	    /*
-	     * Asset load completed.
-	     *
-	     * We track these by cube slot, since there are a limited
-	     * number of cubes in the architecture and a less bounded
-	     * number of asset groups. If a new asset group download
-	     * begins before an event for the last one was sent, the
-	     * event is suppressed.
-	     */
 	case ASSET_DONE:
 	    while (assetDoneCubes) {
 		uint32_t slot = Intrinsic::CLZ(assetDoneCubes);
-		CubeSlot &cube = CubeSlot::instances[slot];
-		_SYSAssetGroup *group = cube.getLastAssetGroup();
-
-		if (group && cube.isAssetGroupLoaded(group))
-		    assetDone(group);
-
+		assetDone(slot);
 		Atomic::And(assetDoneCubes, ~Intrinsic::LZ(slot));
+	    }
+	    break;
+
+	case ACCEL_CHANGE:
+	    while (accelChangeCubes) {
+		uint32_t slot = Intrinsic::CLZ(accelChangeCubes);
+		accelChange(slot);
+		Atomic::And(accelChangeCubes, ~Intrinsic::LZ(slot));
 	    }
 	    break;
 

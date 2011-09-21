@@ -110,7 +110,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
 
-    if (packet.len >= offsetof(RF_ACKType, flash_fifo_bytes) + 1) {
+    if (packet.len >= offsetof(RF_ACKType, flash_fifo_bytes) + sizeof ack->flash_fifo_bytes) {
 	// This ACK includes a valid flash_fifo_bytes counter
 
 	if (flashACKValid & bit()) {
@@ -137,6 +137,16 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 	flashPrevACK = ack->flash_fifo_bytes;
     }
 
+    if (packet.len >= offsetof(RF_ACKType, accel) + sizeof ack->accel) {
+	// Has valid accelerometer data. Is it different from our previous state?
+
+	if (ack->accel[0] != accelState.x || ack->accel[1] != accelState.y) {
+	    accelState.x = ack->accel[0];
+	    accelState.y = ack->accel[1];
+	    Atomic::Or(Event::accelChangeCubes, bit());
+	    Event::setPending(Event::ACCEL_CHANGE);
+	}
+    }
 }
 
 void CubeSlot::radioTimeout()
