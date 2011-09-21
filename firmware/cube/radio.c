@@ -30,13 +30,13 @@ uint8_t __near ack_len;
 	__asm
 
 #pragma sdcc_hash +
-#define DPTR1_ADD_CONST(v)				__endasm; \
+#define DPTR_DELTA(v)					__endasm; \
 	__asm	mov	a, _DPL1			__endasm; \
 	__asm	add	a, #((v) & 0xFF)		__endasm; \
-	__asm	mov	_DPL1, a			__endasm; \
+	__asm	mov	_DPL, a				__endasm; \
 	__asm	mov	a, _DPH1			__endasm; \
 	__asm	addc	a, #((v) >> 8)			__endasm; \
-	__asm	mov	_DPH1, a			__endasm; \
+	__asm	mov	_DPH, a				__endasm; \
 	__asm
 
 
@@ -79,19 +79,20 @@ static __bit radio_state_reset_not_pending;	// Next packet should start with a c
  * bank RF_BANK: R_SAMPLE, R_DIFF, R_LOW (run count - 1).
  *
  * This function is allowed to trash the following registers only:
- *    R_TMP, R_HIGH
+ *    R_TMP, R_HIGH, R_STATE
+ *
+ * Since this function is effectively a VRAM-to-VRAM copy, we can operate
+ * much more efficiently by using both DPTRs simultaneously. So, we trash
+ * DPL/DPH temporarily, then restore them to the state pointer after.
+ *
+ * We're expected to set R_STATE to 0 after we're done.
  */
 
 static void rx_write_deltas(void) __naked __using(RF_BANK)
 {
     __asm
 
-	inc	R_LOW		; Convert to zero-based sample count
-	mov	_DPS, #1	; Switch to VRAM DPTR
-
-rx_write_delta_loop:
-
-	; Jump backwards by the sample distance
+	; Jump DPL/DPH backwards by the sample distance
 
 	mov	a, R_SAMPLE
 	anl	a, #3
@@ -100,84 +101,82 @@ rx_write_delta_loop:
 	jz	bs1
 	dec	a
 	jz	bs2
-bs3:	DPTR1_ADD_CONST(-RF_VRAM_SAMPLE_3 * 2)
+bs3:	DPTR_DELTA(-RF_VRAM_SAMPLE_3 * 2)
+	sjmp	bsE
+bs2:	DPTR_DELTA(-RF_VRAM_SAMPLE_2 * 2)
+	sjmp	bsE
+bs1:	DPTR_DELTA(-RF_VRAM_SAMPLE_1 * 2)
+	sjmp	bsE
+bs0:	DPTR_DELTA(-RF_VRAM_SAMPLE_0 * 2)
 bsE:
 
-	; Grab a sample, storing it in R_HIGH:R_TMP
+	; We loop R_LOW+1 times total
 
-	movx	a, @dptr
-	mov	R_TMP, a
-	inc	dptr
-	movx	a, @dptr
-	mov	R_HIGH, a
+	inc	R_LOW
 
-	; Jump forwards, to the write location
-
-	mov	a, R_SAMPLE
-	anl	a, #3
-	jz	fs0
-	dec	a
-	jz	fs1
-	dec	a
-	jz	fs2
-fs3:	DPTR1_ADD_CONST(RF_VRAM_SAMPLE_3 * 2 - 1)
-fsE:
-
-	; Convert raw Diff to 8-bit signed diff
+	; Convert raw Diff to 8-bit signed diff, stow in R_STATE
 
 	mov	a, R_DIFF
 	anl	a, #0xF
 	add	a, #-7
 	clr	c
 	rlc	a
+	mov	R_STATE, a
+	jb	acc.7, 3$	; Negative diff
 
-	; Store the modified index
+	; ---- Loop for positive diffs
 
-	jb	acc.7, neg_diff		; Is it a negative diff?
-
-	; Positive diff
-	add	a, R_TMP
+2$:
+	movx	a, @dptr	; Add and copy low byte
+	inc	dptr
+	add	a, R_STATE
+	mov	_DPS, #1
 	movx	@dptr, a
 	inc	dptr
+	mov	_DPS, #0
 
-	mov	a, R_HIGH		; High portion (C) multiplied by two
-	jnc	rxw_loop
-	add	a, #2
-rxw_loop:
+	movx	a, @dptr	; Add and copy high byte
+	inc	dptr
+	jnc	1$
+	add	a, #2		; Add Carry to bit 1
+1$:	mov	_DPS, #1
 	movx	@dptr, a
-	inc 	dptr
-	djnz	R_LOW, #rx_write_delta_loop
-	mov	_DPS, #0    
+	inc	dptr
+	mov	_DPS, #0
+	djnz	R_LOW, 2$	; Loop
+
+	; Restore registers and exit
+	mov	R_STATE, #0
+	mov	DPL, #(rxs_default)	
+	mov	DPH, #(rxs_default >> 8)
 	ret
 
-	; Fragments for sample lookup
-	; (Down here because sjmp and cjne have a longer range than djnz)
+	; ---- Loop for negative diffs
 
-bs2:	DPTR1_ADD_CONST(-RF_VRAM_SAMPLE_2 * 2)
-	sjmp	bsE
-bs1:	DPTR1_ADD_CONST(-RF_VRAM_SAMPLE_1 * 2)
-	sjmp	bsE
-bs0:	DPTR1_ADD_CONST(-RF_VRAM_SAMPLE_0 * 2)
-	sjmp	bsE
-
-fs2:	DPTR1_ADD_CONST(RF_VRAM_SAMPLE_2 * 2 - 1)
-	sjmp	fsE
-fs1:	DPTR1_ADD_CONST(RF_VRAM_SAMPLE_1 * 2 - 1)
-	sjmp	fsE
-fs0:	DPTR1_ADD_CONST(RF_VRAM_SAMPLE_0 * 2 - 1)
-	sjmp	fsE
-
-	; Negative diff
-
-neg_diff:
-	add	a, R_TMP
+3$:
+	movx	a, @dptr	; Add and copy low byte
+	inc	dptr
+	add	a, R_STATE
+	mov	_DPS, #1
 	movx	@dptr, a
 	inc	dptr
+	mov	_DPS, #0
 
-	mov	a, R_HIGH
-	jc	rxw_loop
-	add	a, #0xFE
-	sjmp	rxw_loop
+	movx	a, @dptr	; Add and copy high byte
+	inc	dptr
+	jc	4$
+	add	a, #0xFE	; Subtract borrow from bit 1
+4$:	mov	_DPS, #1
+	movx	@dptr, a
+	inc	dptr
+	mov	_DPS, #0
+	djnz	R_LOW, 3$	; Loop
+
+	; Restore registers and exit
+	mov	R_STATE, #0
+	mov	DPL, #(rxs_default)	
+	mov	DPH, #(rxs_default >> 8)
+	ret
 
     __endasm ;
 }
@@ -371,7 +370,6 @@ rx_next_sjmp:
 rxs_diff_1:
 	mov	AR_DIFF, R_INPUT
 	mov	R_LOW, #0
-	mov	R_STATE, #0
 	lcall	#_rx_write_deltas
 	sjmp	#rx_next_sjmp
 
@@ -438,7 +436,6 @@ rxs_rle:
 
 	anl	AR_LOW, #0xF		; Only the low nybble is part of the valid run length
 	lcall	#_rx_write_deltas
-	mov	R_STATE, #0
 	sjmp	rxs_default		; Re-process this nybble starting from the default state
 
 13$:
@@ -603,7 +600,6 @@ rxs_wrdelta_1_fragment:
 	add	a, #4		; n+5  (rx_write_deltas already adds 1)
 	mov	R_LOW, a
 
-	mov	R_STATE, #0
 	lcall	#_rx_write_deltas
 	sjmp	#rx_next_sjmp2
 
