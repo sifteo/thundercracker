@@ -139,7 +139,7 @@ class CubeCodec {
 	    return (unsigned) -1;
 	}
 
-	return index - wordToIndex(vb->words[ptr]) + RF_VRAM_DIFF_BASE;
+	return index - wordToIndex(vb->vram.words[ptr]) + RF_VRAM_DIFF_BASE;
     }
 
     void appendDS(uint8_t d, uint8_t s) {

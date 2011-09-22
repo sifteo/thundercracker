@@ -18,7 +18,7 @@ static Cube cube(0);
 // XXX: Should be part of VRAM-mode-specific object
 static void poke_index(uint16_t addr, uint16_t tile)
 {
-    cube.vram.poke(addr, ((tile << 1) & 0xFE) | ((tile << 2) & 0xFE00));
+    cube.vbuf.poke(addr, ((tile << 1) & 0xFE) | ((tile << 2) & 0xFE00));
 }
 
 // XXX: Should have a higher level font object, supported by STIR.
@@ -49,7 +49,7 @@ static void nextFrame()
 {
     // XXX: cheesy frame trigger
     static uint8_t trig = 0;
-    cube.vram.poke(407, ++trig);
+    cube.vbuf.poke(407, ++trig);
 }
 
 static void onAccelChange(_SYSCubeID cid)
@@ -64,10 +64,10 @@ static void onAccelChange(_SYSCubeID cid)
     int8_t py = -((state.y >> 4) - (0x80 >> 4));
     if (px < 0) px += 18*8;
     if (py < 0) py += 18*8;
-    cube.vram.poke(400, ((uint8_t)py << 8) | (uint8_t)px);
+    cube.vbuf.poke(400, ((uint8_t)py << 8) | (uint8_t)px);
 
     nextFrame();
-    cube.vram.unlock();
+    cube.vbuf.unlock();
 }
 
 static void onAssetDone(_SYSCubeID cid)
@@ -81,7 +81,7 @@ static void onAssetDone(_SYSCubeID cid)
 	for (unsigned x = 0; x < Logo.width; x++)
 	    poke_index(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
 
-    cube.vram.unlock();
+    cube.vbuf.unlock();
 
     // Draw our accelerometer data now, plus on every change.
     _SYS_vectors.accelChange = onAccelChange;
@@ -91,12 +91,12 @@ static void onAssetDone(_SYSCubeID cid)
 void siftmain()
 {
     // XXX: Mode-specific VRAM initialization
-    cube.vram.init();
-    memset(cube.vram.sys.words, 0, sizeof cube.vram.sys.words);
-    cube.vram.sys.words[402] = 0xFFFF;
-    cube.vram.sys.words[405] = 0xFFFF;
+    cube.vbuf.init();
+    memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
+    cube.vbuf.sys.vram.words[402] = 0xFFFF;
+    cube.vbuf.sys.vram.words[405] = 0xFFFF;
     nextFrame();
-    cube.vram.unlock();
+    cube.vbuf.unlock();
 
     cube.enable();
 

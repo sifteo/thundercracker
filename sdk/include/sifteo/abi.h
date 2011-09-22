@@ -71,6 +71,79 @@ struct _SYSAssetGroup {
 };
 
 /*
+ * _SYSVideoRAM is a representation of the 1KB of RAM resident in each
+ * cube, which is used for storing the state of its graphics engine.
+ *
+ * The combination of this VRAM and the cube's current flash memory
+ * contents must contain all information necessary to compose a frame
+ * of graphics.
+ *
+ * The specific layout of this RAM may change depending on video mode
+ * settings. This union describes several different ways to access the
+ * VRAM.
+ */
+
+#define _SYS_VRAM_SIZE		1024	// Total size of VRAM, in bytes
+#define _SYS_VRAM_BG0_WIDTH	18	// Width/height of BG0 tile grid
+#define _SYS_VRAM_BG1_WIDTH	16	// Width/height of BG1 bitmap
+#define _SYS_VRAM_BG1_TILES	144	// Total number of opaque tiles in BG1
+#define _SYS_VRAM_SPRITES	8	// Maximum number of linear sprites
+ 
+// Bits for 'flags'
+
+#define _SYS_VF_TOGGLE		0x02	// Toggle bit, to trigger a new frame render
+#define _SYS_VF_RESERVED_0	0x04
+#define _SYS_VF_RESERVED_1	0x08
+#define _SYS_VF_RESERVED_2	0x10
+#define _SYS_VF_XY_SWAP		0x20	// Swap X and Y axes during render
+#define _SYS_VF_X_FLIP		0x40	// Flip X axis during render
+#define _SYS_VF_Y_FLIP		0x80	// Flip Y axis during render
+
+// Values for 'mode'
+
+#define _SYS_VM_BG0		0x00	// Background BG0: 18x18 grid
+#define _SYS_VM_BG0_BG1		0x02    // BG0, plus overlay BG1: 16x16 bitmap + 144 indices
+#define _SYS_VM_BG0_SPR_BG1	0x04	// BG0, multiple linear sprites, then BG1
+
+struct _SYSSpriteInfo {
+    uint16_t tile;			// 0x00
+    uint8_t mask_x;			// 0x02
+    uint8_t mask_y;			// 0x03
+    uint8_t pos_x;			// 0x04
+    uint8_t pos_y;			// 0x05
+};
+
+union _SYSVideoRAM {
+    uint8_t bytes[1024];
+    uint16_t words[512];
+
+    struct {
+	uint8_t _res[0x3fe];
+	uint8_t mode;			// 0x3fe
+	uint8_t flags;			// 0x3ff
+    } global;
+
+    struct {
+	uint16_t tiles[324];		// 0x000 - 0x287
+	
+	// XXX
+	uint8_t  x;
+	uint8_t  y;
+    } bg0;
+
+    struct {
+	uint8_t _res[0x288];
+	uint16_t tiles[144];		// 0x288 - 0x3a7
+	uint16_t bitmap[16];		// 0x3a8 - 0x3c7
+    } bg1;
+
+    struct {
+	uint8_t _res[0x3c8];
+	struct _SYSSpriteInfo spr[8];	// 0x3c8 - 0x3f7
+    } spr;
+};
+
+/*
  * The _SYSVideoBuffer is a low-level data structure that serves to
  * collect graphics state updates so that the system can send them
  * over the radio to cubes.
@@ -128,11 +201,7 @@ struct _SYSAssetGroup {
  */
 
 struct _SYSVideoBuffer {
-    union {
-	uint16_t words[512];	/// OUT    Raw cube RAM contents
-	uint8_t bytes[1024];
-    };
-
+    union _SYSVideoRAM vram;
     uint32_t cm1[16];		/// INOUT  Change map, at a resolution of 1 bit per word
     uint32_t cm32;		/// INOUT  Change map, at a resolution of 1 bit per 32 words
     uint32_t lock;		/// OUT    Lock map, at a resolution of 1 bit per 16 words
