@@ -68,8 +68,7 @@ uint8_t __near ack_len;
 #define R_NYBBLE_COUNT		r7
 #define AR_NYBBLE_COUNT		(RF_BANK*8 + 7)
 
-// Not shown: Current VRAM pointer lives persistently in DPL1/DPH1.
-
+static uint16_t vram_dptr;			// Current VRAM write pointer
 static __bit radio_state_reset_not_pending;	// Next packet should start with a clean slate
 
 
@@ -147,8 +146,7 @@ bsE:
 
 	; Restore registers and exit
 	mov	R_STATE, #0
-	mov	DPL, #(rxs_default)	
-	mov	DPH, #(rxs_default >> 8)
+	mov	dptr, #rxs_default
 	ret
 
 	; ---- Loop for negative diffs
@@ -174,8 +172,7 @@ bsE:
 
 	; Restore registers and exit
 	mov	R_STATE, #0
-	mov	DPL, #(rxs_default)	
-	mov	DPH, #(rxs_default >> 8)
+	mov	dptr, #rxs_default
 	ret
 
     __endasm ;
@@ -201,8 +198,13 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK)
 	push	acc
 	push	dpl
 	push	dph
+	push	_DPS
+	push	_DPL1
+	push	_DPH1
 	push	psw
 	mov	psw, #(RF_BANK << 3)
+	mov	_DPL1, _vram_dptr
+	mov	_DPH1, _vram_dptr+1
 
 	;--------------------------------------------------------------------
 	; State machine reset
@@ -213,7 +215,7 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK)
 	jb	_radio_state_reset_not_pending, no_state_reset
 	setb	_radio_state_reset_not_pending
 
-	mov	R_STATE, #0
+	mov	R_STATE, #0	   
 	mov	_DPL1, #0
 	mov	_DPH1, #0
 
@@ -283,8 +285,7 @@ no_rx_flush:
 	; State Machine
 	;--------------------------------------------------------------------
 
-	mov	DPL, #(rxs_default)
-	mov	DPH, #(rxs_default >> 8)
+	mov	dptr, #rxs_default
 
 rx_loop:					; Fetch the next byte or nybble
 	mov	a, R_NYBBLE_COUNT
@@ -400,7 +401,7 @@ rxs_literal:
 	clr	c		; Shift a zero into R_LOW, and MSB into C
 	mov	a, R_LOW
 	rlc	a
-	movx	@dptr,a		; Store low byte
+	movx	@dptr, a	; Store low byte
 	inc	dptr
 
 	mov	a, R_INPUT
@@ -408,7 +409,7 @@ rxs_literal:
 	rlc	a		; And again (dummy bit)
 	anl	a, #0x3E	; Mask covers input nybble plus shifted MSB
 	orl	a, R_HIGH	; Combine with saved two MSBs
-	movx	@dptr,a		; Store high byte
+	movx	@dptr, a	; Store high byte
 	inc	dptr
 
 	mov	_DPS, #0
@@ -705,7 +706,12 @@ rx_complete_0:
 	setb	_RF_CSN					; End SPI transaction
 no_ack:
 
+	mov	_vram_dptr, _DPL1
+	mov	_vram_dptr+1, _DPH1
 	pop	psw
+	pop	_DPH1
+	pop	_DPL1
+	pop	_DPS
 	pop	dph
 	pop	dpl
 	pop	acc

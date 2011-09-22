@@ -79,8 +79,8 @@ struct _SYSAssetGroup {
  * of graphics.
  *
  * The specific layout of this RAM may change depending on video mode
- * settings. This union describes several different ways to access the
- * VRAM.
+ * settings. This union describes multiple different ways to access
+ * the VRAM.
  */
 
 #define _SYS_VRAM_SIZE		1024	// Total size of VRAM, in bytes
@@ -88,12 +88,13 @@ struct _SYSAssetGroup {
 #define _SYS_VRAM_BG1_WIDTH	16	// Width/height of BG1 bitmap
 #define _SYS_VRAM_BG1_TILES	144	// Total number of opaque tiles in BG1
 #define _SYS_VRAM_SPRITES	8	// Maximum number of linear sprites
- 
+#define _SYS_CHROMA_KEY		0xF5	// Chroma key byte
+
 // Bits for 'flags'
 
 #define _SYS_VF_TOGGLE		0x02	// Toggle bit, to trigger a new frame render
-#define _SYS_VF_RESERVED_0	0x04
-#define _SYS_VF_RESERVED_1	0x08
+#define _SYS_VF_SYNC		0x04	// Sync with LCD vertical refresh
+#define _SYS_VF_CONTINUOUS	0x08	// Render continuously, without waiting for toggle
 #define _SYS_VF_RESERVED_2	0x10
 #define _SYS_VF_XY_SWAP		0x20	// Swap X and Y axes during render
 #define _SYS_VF_X_FLIP		0x40	// Flip X axis during render
@@ -101,9 +102,23 @@ struct _SYSAssetGroup {
 
 // Values for 'mode'
 
-#define _SYS_VM_BG0		0x00	// Background BG0: 18x18 grid
-#define _SYS_VM_BG0_BG1		0x02    // BG0, plus overlay BG1: 16x16 bitmap + 144 indices
-#define _SYS_VM_BG0_SPR_BG1	0x04	// BG0, multiple linear sprites, then BG1
+#define _SYS_VM_MASK		0x1c	// Mask of valid bits in VM_MASK
+
+#define _SYS_VM_POWERDOWN	0x00	// Power saving mode, LCD is off
+#define _SYS_VM_BG0_ROM		0x04	// BG0, with tile data from internal ROM
+#define _SYS_VM_FB32		0x08	// 32x32 pixel 16-color framebuffer
+#define _SYS_VM_FB64		0x0c	// 64x64 pixel 2-color framebuffer
+#define _SYS_VM_SOLID		0x10	// Solid color, from 'color'
+#define _SYS_VM_BG0		0x14	// Background BG0: 18x18 grid
+#define _SYS_VM_BG0_BG1		0x18    // BG0, plus overlay BG1: 16x16 bitmap + 144 indices
+#define _SYS_VM_BG0_SPR_BG1	0x1c	// BG0, multiple linear sprites, then BG1
+
+// Important VRAM addresses
+
+#define _SYS_VA_COLORMAP	0x200
+#define _SYS_VA_COLOR		0x3f8
+#define _SYS_VA_MODE		0x3fe
+#define _SYS_VA_FLAGS		0x3ff
 
 struct _SYSSpriteInfo {
     uint16_t tile;			// 0x00
@@ -118,29 +133,23 @@ union _SYSVideoRAM {
     uint16_t words[512];
 
     struct {
-	uint8_t _res[0x3fe];
+	uint16_t bg0_tiles[324];	// 0x000 - 0x287
+	uint16_t bg1_tiles[144];	// 0x288 - 0x3a7
+	uint16_t bg1_bitmap[16];	// 0x3a8 - 0x3c7
+	struct _SYSSpriteInfo spr[8];	// 0x3c8 - 0x3f7
+	uint16_t color;			// 0x3f8 - 0x3f9
+	uint8_t bg1_x;			// 0x3fa
+	uint8_t bg1_y;			// 0x3fb
+	uint8_t bg0_x;			// 0x3fc
+	uint8_t bg0_y;			// 0x3fd
 	uint8_t mode;			// 0x3fe
 	uint8_t flags;			// 0x3ff
-    } global;
+    };
 
     struct {
-	uint16_t tiles[324];		// 0x000 - 0x287
-	
-	// XXX
-	uint8_t  x;
-	uint8_t  y;
-    } bg0;
-
-    struct {
-	uint8_t _res[0x288];
-	uint16_t tiles[144];		// 0x288 - 0x3a7
-	uint16_t bitmap[16];		// 0x3a8 - 0x3c7
-    } bg1;
-
-    struct {
-	uint8_t _res[0x3c8];
-	struct _SYSSpriteInfo spr[8];	// 0x3c8 - 0x3f7
-    } spr;
+	uint8_t fb[512];		// 0x000 - 0x1ff
+	uint16_t colormap[16];		// 0x200 - 0x21f
+    };
 };
 
 /*

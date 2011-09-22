@@ -2,6 +2,7 @@ BIN = cube.ihx
 
 OBJS = \
 	graphics.rel \
+	lcd.rel \
 	radio.rel \
 	sensors.rel \
 	flash_hal.rel \
@@ -9,10 +10,11 @@ OBJS = \
 	main.rel \
 
 FIRMWARE_INC = ../include
-CDEPS = *.h $(FIRMWARE_INC)/*.h
+SDK_DIR = ../../sdk
 
 SDCC = sdcc
-CFLAGS = -I$(FIRMWARE_INC)
+CDEPS = *.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
+CFLAGS = -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
 
 $(BIN): $(OBJS)
 	$(SDCC) -o $@ $(OBJS)

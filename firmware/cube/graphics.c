@@ -8,25 +8,21 @@
 
 #include <string.h>
 #include "hardware.h"
-#include "graphics.h"
+#include "lcd.h"
 #include "flash.h"
+#include "radio.h"
 
-// Latched/local data for sprites, panning
-static __near struct latched_vram lvram;
 
-static uint8_t x_bg_first_w;	// Width of first displayed background tile, [1, 8]
-static uint8_t x_bg_last_w;	// Width of first displayed background tile, [0, 7]
-static uint8_t x_bg_first_addr;	// Low address offset for first displayed tile
-static uint8_t x_bg_wrap;	// Load value for a dec counter to the next X map wraparound
+/***********************************************************************
+ * Common Macros
+ **********************************************************************/
 
-static uint8_t y_bg_addr_l;	// Low part of tile addresses, inc by 32 each line
-static uint16_t y_bg_map;	// Map address for the first tile on this line
-
-// Called once per tile, to check for horizontal map wrapping
-#define MAP_WRAP_CHECK() {			  	\
-	if (!--bg_wrap)					\
-	    DPTR -= RF_VRAM_STRIDE *2;			\
-    }
+#pragma sdcc_hash +
+#define MODE_RETURN() {						\
+		__asm	inc	(_ack_data + RF_ACK_FRAME)	__endasm ; \
+		__asm	orl	_ack_len, #RF_ACK_LEN_FRAME	__endasm ; \
+		return;						\
+	}
 
 // Output a nonzero number of of pixels, not known at compile-time
 #define PIXEL_BURST(_count) {				\
@@ -68,67 +64,11 @@ static uint16_t y_bg_map;	// Map address for the first tile on this line
     __asm inc	dptr						__endasm; \
     }
 
-// Load a 16-bit address from sprite LVRAM
-#define ADDR_FROM_SPRITE(_i) {				\
-	ADDR_PORT = lvram.sprites[_i].addr_l;		\
-	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;	\
-	ADDR_PORT = lvram.sprites[_i].addr_h;		\
-	CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;	\
-    }
-
 
 /*
- * line_bg --
- *
- *    Scanline renderer, draws a single tiled background layer.
+ * XXXX Junk...
  */
-
-static void line_bg(void)
-{
-    uint8_t x = 15;
-    uint8_t bg_wrap = x_bg_wrap;
-
-    DPTR = y_bg_map;
-
-    // First partial or full tile
-    ADDR_FROM_DPTR_INC();
-    MAP_WRAP_CHECK();
-    ADDR_PORT = y_bg_addr_l + x_bg_first_addr;
-    PIXEL_BURST(x_bg_first_w);
-
-    // There are always 15 full tiles on-screen
-    do {
-	ADDR_FROM_DPTR_INC();
-	MAP_WRAP_CHECK();
-	ADDR_PORT = y_bg_addr_l;
-	ADDR_INC32();
-    } while (--x);
-
-    // Might be one more partial tile
-    if (x_bg_last_w) {
-	ADDR_FROM_DPTR_INC();
-	MAP_WRAP_CHECK();
-	ADDR_PORT = y_bg_addr_l;
-	PIXEL_BURST(x_bg_last_w);
-    }
-}
-
-/*
- * line_bg_spr0 --
- *
- *    Scanline renderer: One tiled background, one sprite (index 0)
- *
- *    XXX: This doesn't handle horizontal tile edge cases yet.
- *
- *    XXX: Sprite format may change. I don't really like the
- *         requirement for 64-pixel stride right now, and I've been
- *         expecting to converge sprites and backgrounds to both use
- *         the same scanline loops. (Sprites would internally just be
- *         represented as sequential arrays of tiles.  On a
- *         per-scanline basis, we would use different functions to
- *         load tile indices for each layer depending on whether it's
- *         a normal bg or if it's a sprite.)
- */
+#if 0
 
 static void line_bg_spr0(void)
 {
@@ -226,79 +166,6 @@ static void line_bg_spr0(void)
 	ADDR_PORT = y_bg_addr_l;
 	PIXEL_BURST(x_bg_last_w);
     }
-}
-
-
-static void lcd_cmd_byte(uint8_t b)
-{
-    CTRL_PORT = CTRL_LCD_CMD;
-    BUS_DIR = 0;
-    BUS_PORT = b;
-    ADDR_INC2();
-    BUS_DIR = 0xFF;
-    CTRL_PORT = CTRL_IDLE;
-}
-
-static void lcd_data_byte(uint8_t b)
-{
-    BUS_DIR = 0;
-    BUS_PORT = b;
-    ADDR_INC2();
-    BUS_DIR = 0xFF;
-}
-
-/*
- * graphics_render --
- *
- *    This generates one full frame.  Most of the work is done by per-
- *    scanline rendering functions, but this handles parameter latching
- *    and we handle most Y coordinate calculations.
- */
-
-void graphics_render(void)
-{
-    uint8_t y = LCD_HEIGHT;
-
-    // Address the LCD
-    lcd_cmd_byte(LCD_CMD_RAMWR);
-
-    /*
-     * Copy a critical portion of VRAM into internal RAM, both for
-     * fast access and for consistency. We copy it with interrupts
-     * disabled, so a radio packet can't be processed partway through.
-     */
-
-    cli();
-    __asm
-	mov	dptr, #(_vram + VRAM_LATCHED)
-	mov	r0, #VRAM_LATCHED_SIZE
-	mov	r1, #_lvram
-1$:	movx	a, @dptr
-	mov	@r1, a
-	inc	dptr
-	inc	r1
-	djnz	r0, 1$
-    __endasm ;
-    sti();
-
-    /*
-     * Top-of-frame setup
-     */
-
-    {
-	uint8_t tile_pan_x = lvram.pan_x >> 3;
-	uint8_t tile_pan_y = lvram.pan_y >> 3;
-
-	y_bg_addr_l = lvram.pan_y << 5;
-	y_bg_map = tile_pan_y << 2;			// Y tile * 2
-	y_bg_map += tile_pan_y << 5;			// Y tile * 16
-	y_bg_map += tile_pan_x << 1;			// X tile * 2;
-
-	x_bg_last_w = lvram.pan_x & 7;
-	x_bg_first_w = 8 - x_bg_last_w;
-	x_bg_first_addr = (lvram.pan_x << 2) & 0x1C;
-	x_bg_wrap = RF_VRAM_STRIDE - tile_pan_x;
-    }
 
     do {
 	uint8_t active_sprites = 0;
@@ -326,70 +193,371 @@ void graphics_render(void)
 	case 0x00:	line_bg(); break;
 	case 0x01:	line_bg_spr0(); break;
 	}
+#endif
 
-	/*
-	 * Update Y axis variables
-	 */
 
-	y_bg_addr_l += 32;
-	if (!y_bg_addr_l) {
-	    // Next tile, with vertical wrap
-	    y_bg_map += RF_VRAM_STRIDE * 2;
-	    if (y_bg_map >= RF_VRAM_STRIDE * RF_VRAM_STRIDE * 2)
-		y_bg_map -= RF_VRAM_STRIDE * RF_VRAM_STRIDE * 2;
-	}
 
-	/*
-	 * Cleanup. Put the bus back in a sane state.
-	 * Especially important:
-	 *
-	 *   - Turn off the output drivers
-	 *
-	 *   - Deassert any lingering latch enables,
-	 *     so that future code which is expecting to
-	 *     emit a rising edge will actually do so.
-	 */
-	CTRL_PORT = CTRL_IDLE;
+static void vm_02(void)
+{
+    MODE_RETURN();
+}
 
-	/*
-	 * Pump the flash memory FIFO between scanlines, to decrease
-	 * the latency penalty for the FIFO running empty during asset
-	 * downloading.
-	 */
-	flash_handle_fifo();
+static void vm_06(void)
+{
+    MODE_RETURN();
+}
 
-    } while (--y);
+static void vm_0c(void)
+{
+    MODE_RETURN();
+}
+
+static void vm_0e(void)
+{
+    MODE_RETURN();
 }
 
 
-void graphics_init(void)
+/***********************************************************************
+ * _SYS_VM_POWERDOWN
+ **********************************************************************/
+
+static void vm_powerdown(void)
 {
-    uint8_t i;
+    lcd_sleep();
+    MODE_RETURN();
+}
 
-    // I/O port init
-    BUS_DIR = 0xFF;
-    ADDR_PORT = 0;
-    ADDR_DIR = 0;
-    CTRL_PORT = CTRL_IDLE;
-    CTRL_DIR = 0x01;
 
-    // LCD controller, wake up!
-    lcd_cmd_byte(LCD_CMD_SLPOUT);
-    
-    // Display on.
-    // XXX: Should wait until after the first complete frame has been rendered.
-    lcd_cmd_byte(LCD_CMD_DISPON);
+/***********************************************************************
+ * _SYS_VM_SOLID
+ **********************************************************************/
 
-    // Write in 16-bit color mode
-    lcd_cmd_byte(LCD_CMD_COLMOD);
-    lcd_data_byte(LCD_COLMOD_16);
+/*
+ * Copy vram.color to the LCD bus, and repeat for every pixel.
+ */
 
-    /* XXX: Below is for testing only. Eventually we'll have an idle-screen to draw. */
+static void vm_solid(void)
+{
+    lcd_begin_frame();
+    LCD_WRITE_BEGIN();
 
-    /* All sprites off by default */
+    __asm
+	mov	dptr, #_SYS_VA_COLOR
+	movx	a, @dptr
+	mov	r0, a
+	inc	dptr
+	movx	a, @dptr
 
-    for (i = 0; i < NUM_SPRITES; i++) {
-	vram.latched.sprites[i].mask_x = 0xFF;
-	vram.latched.sprites[i].mask_y = 0xFF;
+	mov	r1, #64
+1$:	mov	r2, #0
+2$:
+
+	mov	BUS_PORT, r0
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+
+	mov	BUS_PORT, a
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+
+	djnz	r2, 2$
+	djnz	r1, 1$
+    __endasm ;
+
+    LCD_WRITE_END();
+    lcd_end_frame();
+    MODE_RETURN();
+}
+
+
+/***********************************************************************
+ * _SYS_VM_FB32
+ **********************************************************************/
+
+/*
+ * 16-color 32x32 framebuffer mode.
+ *
+ * To support fast color lookups without copying the whole LUT into
+ * internal memory, we use both DPTRs here.
+ */
+
+static void vm_fb32_pixel(void) __naked {
+    /*
+     * Draw four pixels of the same color, from the LUT index at 'a'.
+     * Trashes only r0 and a. Assumes DPH1 is already pointed at the colormap.
+     */
+
+    __asm
+
+	rl	a
+	mov	_DPL1, a
+
+	mov	_DPS, #1
+	movx	a, @dptr
+	mov	r0, a
+	inc	dptr
+	movx	a, @dptr
+	mov	_DPS, #0
+
+	mov	BUS_PORT, r0
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+	mov	BUS_PORT, a
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+
+	mov	BUS_PORT, r0
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+	mov	BUS_PORT, a
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+
+	mov	BUS_PORT, r0
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+	mov	BUS_PORT, a
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+
+	mov	BUS_PORT, r0
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+	mov	BUS_PORT, a
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+
+	ret
+
+    __endasm;
+}
+
+void vm_fb32(void)
+{
+    lcd_begin_frame();
+    LCD_WRITE_BEGIN();
+
+    __asm
+	mov	_DPH1, #(_SYS_VA_COLORMAP >> 8)
+	
+	mov	r1, #0		; Loop over 2 banks in DPH
+1$:	mov	r2, #0		; Loop over 16 big-pixels per bank
+2$:	mov	r3, #4		; Loop over 4 lines per big-pixel
+3$:	mov	DPH, r1
+	mov	DPL, r2
+	mov	r4, #16		; Loop over 16 horizontal bytes per line
+4$:
+
+	movx	a, @dptr
+	inc	dptr
+	mov	r5, a
+
+	anl	a, #0xF		; Pixel from low nybble
+	lcall	_vm_fb32_pixel
+
+	mov	a, r5		; Pixel from high nybble
+	anl	a, #0xF0
+	swap	a
+	lcall	_vm_fb32_pixel
+
+	djnz	r4, 4$		; Next byte
+	djnz	r3, 3$		; Next line
+
+	mov	a, r2		; Next framebuffer line
+	add	a, #0x10
+	mov	r2, a
+	jnz	2$
+
+	mov	a, r1		; Next DPH bank
+	jnz	5$
+	inc	r1
+	sjmp	1$
+5$:
+
+    __endasm ;
+
+    LCD_WRITE_END();
+    lcd_end_frame();
+    MODE_RETURN();
+}
+
+
+/***********************************************************************
+ * _SYS_VM_BG0
+ **********************************************************************/
+
+static uint8_t x_bg0_first_w;		// Width of first displayed background tile, [1, 8]
+static uint8_t x_bg0_last_w;		// Width of first displayed background tile, [0, 7]
+static uint8_t x_bg0_first_addr;	// Low address offset for first displayed tile
+static uint8_t x_bg0_wrap;		// Load value for a dec counter to the next X map wraparound
+
+static uint8_t y_bg0_addr_l;		// Low part of tile addresses, inc by 32 each line
+static uint16_t y_bg0_map;		// Map address for the first tile on this line
+
+// Called once per tile, to check for horizontal map wrapping
+#define BG0_WRAP_CHECK() {			  	\
+	if (!--bg0_wrap)				\
+	    DPTR -= RF_VRAM_STRIDE *2;			\
     }
+
+static void vm_bg0_line(void)
+{
+    /*
+     * Scanline renderer, draws a single tiled background layer.
+     */
+
+    uint8_t x = 15;
+    uint8_t bg0_wrap = x_bg0_wrap;
+
+    DPTR = y_bg0_map;
+
+    // First partial or full tile
+    ADDR_FROM_DPTR_INC();
+    BG0_WRAP_CHECK();
+    ADDR_PORT = y_bg0_addr_l + x_bg0_first_addr;
+    PIXEL_BURST(x_bg0_first_w);
+
+    // There are always 15 full tiles on-screen
+    do {
+	ADDR_FROM_DPTR_INC();
+	BG0_WRAP_CHECK();
+	ADDR_PORT = y_bg0_addr_l;
+	ADDR_INC32();
+    } while (--x);
+
+    // Might be one more partial tile
+    if (x_bg0_last_w) {
+	ADDR_FROM_DPTR_INC();
+	BG0_WRAP_CHECK();
+	ADDR_PORT = y_bg0_addr_l;
+	PIXEL_BURST(x_bg0_last_w);
+    }
+
+    // Release the bus
+    CTRL_PORT = CTRL_IDLE;
+}
+
+static void vm_bg0_setup(void)
+{
+    /*
+     * Once-per-frame setup for BG0
+     */
+     
+    uint8_t pan_x, pan_y;
+    uint8_t tile_pan_x, tile_pan_y;
+
+    cli();
+    pan_x = vram.bg0_x;
+    pan_y = vram.bg0_y;
+    sti();
+
+    tile_pan_x = pan_x >> 3;
+    tile_pan_y = pan_y >> 3;
+
+    y_bg0_addr_l = pan_y << 5;
+    y_bg0_map = tile_pan_y << 2;		// Y tile * 2
+    y_bg0_map += tile_pan_y << 5;		// Y tile * 16
+    y_bg0_map += tile_pan_x << 1;		// X tile * 2;
+
+    x_bg0_last_w = pan_x & 7;
+    x_bg0_first_w = 8 - x_bg0_last_w;
+    x_bg0_first_addr = (pan_x << 2) & 0x1C;
+    x_bg0_wrap = _SYS_VRAM_BG0_WIDTH - tile_pan_x;
+}
+
+static void vm_bg0_next(void)
+{
+    /*
+     * Advance BG0 state to the next line
+     */
+
+    y_bg0_addr_l += 32;
+    if (!y_bg0_addr_l) {
+	// Next tile, with vertical wrap
+	y_bg0_map += _SYS_VRAM_BG0_WIDTH * 2;
+	if (y_bg0_map >= _SYS_VRAM_BG0_WIDTH * _SYS_VRAM_BG0_WIDTH * 2)
+	    y_bg0_map -= _SYS_VRAM_BG0_WIDTH * _SYS_VRAM_BG0_WIDTH * 2;
+    }
+}
+
+static void vm_bg0(void)
+{
+    uint8_t y = 128;
+
+    lcd_begin_frame();
+    vm_bg0_setup();
+
+    do {
+	vm_bg0_line();
+	vm_bg0_next();
+	flash_handle_fifo();
+    } while (--y);    
+
+    lcd_end_frame();
+    MODE_RETURN();
+}
+
+
+/***********************************************************************
+ * Graphics mode dispatch
+ **********************************************************************/
+
+void graphics_render(void) __naked
+{
+    /*
+     * Check the toggle bit (rendering trigger), in bit 1 of
+     * vram.flags. If it matches the LSB of frame_count, we have
+     * nothing to do.
+     */
+
+    __asm
+	mov	dptr, #_SYS_VA_FLAGS
+	movx	a, @dptr
+	jb	acc.3, 1$			; Handle _SYS_VF_CONTINUOUS
+	rr	a
+	xrl	a, (_ack_data + RF_ACK_FRAME)	; Compare _SYS_VF_TOGGLE with frame_count LSB
+	rrc	a
+	jnc	3$				; Return if no toggle
+1$:
+    __endasm ;
+
+    /*
+     * Video mode jump table.
+     *
+     * Video modes only use even-numbered values. This is good from a
+     * compression standpoint, since our wire protocol for VRAM likes
+     * the LSB to be zero. It also means that we can use this as a
+     * very quick offset into a table of sjmp instructions.
+     *
+     * This acts as a tail-call. The mode-specific function returns
+     * on our behalf, after acknowledging the frame.
+     */
+
+    __asm
+	mov	dptr, #_SYS_VA_MODE
+	movx	a, @dptr
+	anl	a, #_SYS_VM_MASK
+	mov	dptr, #2$
+	jmp	@a+dptr
+2$:
+	ljmp	_vm_powerdown
+	nop
+        ljmp	_vm_02
+	nop
+	ljmp	_vm_fb32
+	nop
+	ljmp	_vm_06
+	nop
+	ljmp	_vm_solid
+	nop
+	ljmp	_vm_bg0
+	nop
+	ljmp	_vm_0c
+	nop
+	ljmp	_vm_0e
+
+3$:	ret
+
+    __endasm ;
 }

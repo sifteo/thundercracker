@@ -48,8 +48,7 @@ static void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
 static void nextFrame()
 {
     // XXX: cheesy frame trigger
-    static uint8_t trig = 0;
-    cube.vbuf.poke(407, ++trig);
+    cube.vbuf.poke(511, cube.vbuf.sys.vram.words[511] ^ (_SYS_VF_TOGGLE << 8));
 }
 
 static void onAccelChange(_SYSCubeID cid)
@@ -64,7 +63,7 @@ static void onAccelChange(_SYSCubeID cid)
     int8_t py = -((state.y >> 4) - (0x80 >> 4));
     if (px < 0) px += 18*8;
     if (py < 0) py += 18*8;
-    cube.vbuf.poke(400, ((uint8_t)py << 8) | (uint8_t)px);
+    cube.vbuf.poke(0x3fc/2, ((uint8_t)py << 8) | (uint8_t)px);
 
     nextFrame();
     cube.vbuf.unlock();
@@ -93,8 +92,7 @@ void siftmain()
     // XXX: Mode-specific VRAM initialization
     cube.vbuf.init();
     memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
-    cube.vbuf.sys.vram.words[402] = 0xFFFF;
-    cube.vbuf.sys.vram.words[405] = 0xFFFF;
+    cube.vbuf.sys.vram.mode = _SYS_VM_BG0;
     nextFrame();
     cube.vbuf.unlock();
 
