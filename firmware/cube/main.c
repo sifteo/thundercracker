@@ -9,13 +9,13 @@
 #include <stdint.h>
 #include "radio.h"
 #include "sensors.h"
-#include "graphics.h"
+#include "lcd.h"
 #include "hardware.h"
 #include "flash.h"
 
 void main(void)
 {
-    graphics_init();
+    lcd_init();
     sensors_init();
     radio_init();
     flash_init();
@@ -23,17 +23,6 @@ void main(void)
 
     while (1) {
 	flash_handle_fifo();
-
-	if (vram.frame_trigger != ack_data.frame_count) {
-	    // Sync with LCD
-	    //while (!CTRL_LCD_TE);
-
-	    graphics_render();
-
-	    __asm
-		inc	(_ack_data + RF_ACK_FRAME)
-		orl	_ack_len, #RF_ACK_LEN_FRAME
-	    __endasm ;
-	}
+	graphics_render();
     }
 }

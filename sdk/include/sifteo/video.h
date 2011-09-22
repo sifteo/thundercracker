@@ -61,9 +61,9 @@ class VideoBuffer {
      * one unlock().
      */
     void poke(uint16_t addr, uint16_t word) {
-	if (sys.words[addr] != word) {
+	if (sys.vram.words[addr] != word) {
 	    lock(addr);
-	    sys.words[addr] = word;
+	    sys.vram.words[addr] = word;
 	    Atomic::Or(selectCM1(addr), maskCM1(addr));
 	}
     }
@@ -72,7 +72,7 @@ class VideoBuffer {
      * Read one word of VRAM
      */
     uint16_t peek(uint16_t addr) const {
-	return sys.words[addr];
+	return sys.vram.words[addr];
     }
 
     /**

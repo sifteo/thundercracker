@@ -75,10 +75,10 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 		uint32_t idx1 = CLZ(cm1);
 		uint16_t addr = (idx32 << 5) | idx1;
 
-		DBG(("-encode addr %04x, data %04x\n", addr, vb->words[addr]));
+		DBG(("-encode addr %04x, data %04x\n", addr, vb->vram.words[addr]));
 
 		if (!encodeVRAMAddr(buf, addr) ||
-		    !encodeVRAMData(buf, vb, vb->words[addr])) {
+		    !encodeVRAMData(buf, vb, vb->vram.words[addr])) {
 
 		    /*
 		     * We ran out of room to encode. This should be rare,

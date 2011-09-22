@@ -29,7 +29,7 @@ class Cube {
 	: mID(id) {}
 
     void enable() {
-	_SYS_setVideoBuffer(mID, &vram.sys);
+	_SYS_setVideoBuffer(mID, &vbuf.sys);
 	_SYS_enableCubes(Intrinsic::LZ(mID));
     }
 
@@ -45,7 +45,7 @@ class Cube {
 	return mID;
     }
 
-    VideoBuffer vram;
+    VideoBuffer vbuf;
 
  private:
     ID mID;
