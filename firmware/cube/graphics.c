@@ -32,6 +32,16 @@
 	} while (--_i);					\
     }
 
+// Output one pixel with static colors from two registers
+#define PIXEL_FROM_REGS(l, h)					__endasm; \
+    __asm mov	BUS_PORT, l					__endasm; \
+    __asm inc	ADDR_PORT					__endasm; \
+    __asm inc	ADDR_PORT					__endasm; \
+    __asm mov	BUS_PORT, h					__endasm; \
+    __asm inc	ADDR_PORT					__endasm; \
+    __asm inc	ADDR_PORT					__endasm; \
+    __asm
+
 // Load a 16-bit tile address from DPTR without incrementing
 #pragma sdcc_hash +
 #define ADDR_FROM_DPTR() {					\
@@ -253,13 +263,7 @@ static void vm_solid(void)
 1$:	mov	r2, #0
 2$:
 
-	mov	BUS_PORT, r0
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-
-	mov	BUS_PORT, a
-	inc	ADDR_PORT
-	inc	ADDR_PORT
+        PIXEL_FROM_REGS(r0, a)
 
 	djnz	r2, 2$
 	djnz	r1, 1$
@@ -289,7 +293,6 @@ static void vm_fb32_pixel(void) __naked {
      */
 
     __asm
-
 	rl	a
 	mov	_DPL1, a
 
@@ -300,36 +303,12 @@ static void vm_fb32_pixel(void) __naked {
 	movx	a, @dptr
 	mov	_DPS, #0
 
-	mov	BUS_PORT, r0
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-	mov	BUS_PORT, a
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-
-	mov	BUS_PORT, r0
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-	mov	BUS_PORT, a
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-
-	mov	BUS_PORT, r0
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-	mov	BUS_PORT, a
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-
-	mov	BUS_PORT, r0
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-	mov	BUS_PORT, a
-	inc	ADDR_PORT
-	inc	ADDR_PORT
+    	PIXEL_FROM_REGS(r0, a)
+	PIXEL_FROM_REGS(r0, a)
+	PIXEL_FROM_REGS(r0, a)
+	PIXEL_FROM_REGS(r0, a)
 
 	ret
-
     __endasm;
 }
 
@@ -342,8 +321,8 @@ void vm_fb32(void)
 	mov	_DPH1, #(_SYS_VA_COLORMAP >> 8)
 	
 	mov	r1, #0		; Loop over 2 banks in DPH
-1$:	mov	r2, #0		; Loop over 16 big-pixels per bank
-2$:	mov	r3, #4		; Loop over 4 lines per big-pixel
+1$:	mov	r2, #0		; Loop over 16 framebuffer lines per bank
+2$:	mov	r3, #4		; Loop over 4 display lines per framebuffer line
 3$:	mov	DPH, r1
 	mov	DPL, r2
 	mov	r4, #16		; Loop over 16 horizontal bytes per line
@@ -374,6 +353,79 @@ void vm_fb32(void)
 	inc	r1
 	sjmp	1$
 5$:
+
+    __endasm ;
+
+    LCD_WRITE_END();
+    lcd_end_frame();
+    MODE_RETURN();
+}
+
+
+/***********************************************************************
+ * _SYS_VM_FB64
+ **********************************************************************/
+
+/*
+ * 2-color 64x64 framebuffer mode.
+ */
+
+void vm_fb64(void)
+{
+    lcd_begin_frame();
+    LCD_WRITE_BEGIN();
+
+    __asm
+	; Copy colormap[0] and colormap[1] to r4-7
+
+	mov	dptr, #_SYS_VA_COLORMAP
+	movx	a, @dptr
+	mov	r4, a
+	inc	dptr
+	movx	a, @dptr
+	mov	r5, a
+	inc	dptr
+	movx	a, @dptr
+	mov	r6, a
+	inc	dptr
+	movx	a, @dptr
+	mov	r7, a
+
+	mov	_DPH1, #0	; Loop over two banks	
+1$:	mov	r0, #0		; Loop over 32 framebuffer lines per bank
+2$:	mov	r1, #2		; Loop over 2 screen lines per framebuffer line
+3$:	mov	DPH, _DPH1
+	mov	DPL, r0
+	mov	r2, #8		; Loop over 8 horizontal bytes per line
+4$:	movx	a, @dptr
+	inc	dptr
+	mov	r3, #8		; Loop over 8 pixels per byte
+5$:	rrc	a		; Shift out one pixel
+	jc	6$
+
+        PIXEL_FROM_REGS(r4, r5)	; colormap[0]
+	PIXEL_FROM_REGS(r4, r5)
+	djnz	r3, 5$		; Next pixel
+	djnz	r2, 4$		; Next byte
+	djnz	r1, 3$		; Next line
+	sjmp	7$		; Next line
+
+6$:	PIXEL_FROM_REGS(r6, r7)	; colormap[1]
+	PIXEL_FROM_REGS(r6, r7)
+	djnz	r3, 5$		; Next pixel
+	djnz	r2, 4$		; Next byte
+	djnz	r1, 3$		; Next line
+
+7$:	mov	a, r0		; Next framebuffer line
+	add	a, #8
+	mov	r0, a
+	jnz	2$
+
+	mov	a, _DPH1	; Next DPH bank
+	jnz	8$
+	inc	_DPH1
+	sjmp	1$
+8$:
 
     __endasm ;
 
@@ -525,11 +577,6 @@ void graphics_render(void) __naked
     /*
      * Video mode jump table.
      *
-     * Video modes only use even-numbered values. This is good from a
-     * compression standpoint, since our wire protocol for VRAM likes
-     * the LSB to be zero. It also means that we can use this as a
-     * very quick offset into a table of sjmp instructions.
-     *
      * This acts as a tail-call. The mode-specific function returns
      * on our behalf, after acknowledging the frame.
      */
@@ -547,7 +594,7 @@ void graphics_render(void) __naked
 	nop
 	ljmp	_vm_fb32
 	nop
-	ljmp	_vm_06
+	ljmp	_vm_fb64
 	nop
 	ljmp	_vm_solid
 	nop
