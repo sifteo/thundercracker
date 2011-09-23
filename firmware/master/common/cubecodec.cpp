@@ -6,13 +6,15 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>
-#define DBG(x) printf x
+#define DBG(x)        printf x
+#define DBG_BITS(b)   b.debug()
 #else
 #define DBG(x)
+#define DBG_BITS(b)
 #endif
 
 #include <protocol.h>
@@ -23,6 +25,13 @@
 using namespace Sifteo;
 using namespace Sifteo::Intrinsic;
 
+
+void BitBuffer::debug()
+{
+#ifdef DEBUG
+    DBG(("  bits %08x (%d)\n", bits, count));
+#endif   
+}
 
 void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 {
@@ -134,6 +143,7 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
 
 	    delta--;
 	    txBits.append((delta & 1) | ((delta << 3) & 0x30), 8);
+	    DBG_BITS(txBits);
 	    txBits.flush(buf);
 
 	} else {
@@ -142,6 +152,7 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
 	    DBG((" addr literal %04x\n", addr));
 
 	    txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
+	    DBG_BITS(txBits);
 	    txBits.flush(buf);
 	}
 
@@ -227,6 +238,7 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
 	DBG((" data literal-16 %04x\n", data));
 
 	txBits.append(0x23 | (data << 8), 24);
+	DBG_BITS(txBits);	    
 	txBits.flush(buf);
 
 	codePtrAdd(1);
@@ -239,10 +251,11 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
 	flushDSRuns(false);
 
 	uint16_t index = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
-	txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
-	txBits.flush(buf);
-
 	DBG((" data literal-14 %04x\n", index));
+
+	txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
+	DBG_BITS(txBits);
+	txBits.flush(buf);
 
 	codePtrAdd(1);
 	codeS = 0;
@@ -302,10 +315,12 @@ void CubeCodec::flushDSRuns(bool rleSafe)
 	if (r < 4) {
 	    // Short run
 	    txBits.append(r, 4);
+	    DBG_BITS(txBits);
 	} else {
 	    // Longer run
 	    r -= 4;
 	    txBits.append(0x2 | ((r << 8) & 0xF00) | (r & 0x30), 12);
+	    DBG_BITS(txBits);
 	}
     }
 

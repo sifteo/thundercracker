@@ -64,6 +64,8 @@ class BitBuffer {
 	append(value & ((1 << width) - 1), width);
     }
 
+    void debug();
+
  private:
     uint32_t bits;
     uint8_t count;
