@@ -145,7 +145,7 @@ class CubeCodec {
 	int16_t dI = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
 	int16_t sI = ((sample & 0xFF) >> 1) | ((sample & 0xFF00) >> 2);
 
-	return sI - dI + RF_VRAM_DIFF_BASE;
+	return dI - sI + RF_VRAM_DIFF_BASE;
     }
 
     void appendDS(uint8_t d, uint8_t s) {
