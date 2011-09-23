@@ -6,10 +6,11 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>
+#include <assert.h>
 #define DBG(x)        printf x
 #define DBG_BITS(b)   b.debug()
 #else
@@ -30,6 +31,7 @@ void BitBuffer::debug()
 {
 #ifdef DEBUG
     DBG(("  bits %08x (%d)\n", bits, count));
+    assert(count <= 32);
 #endif   
 }
 
@@ -62,6 +64,9 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
      * we fill up the output packet. We assume that this function
      * begins with space available in the packet buffer.
      */
+
+    // Emit buffered bits from the previous packet
+    txBits.flush(buf);
 
     if (vb) {
 	do {
@@ -124,6 +129,15 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 	flushDSRuns(true);
 	txBits.flush(buf);
     }
+
+#ifdef DEBUG
+    if (buf.len) {
+	DBG(("---- Packet: [%2d] ", buf.len));
+	for (unsigned i = 0; i < buf.len; i++)
+	    DBG(("%02x", buf.bytes[i]));
+	DBG(("\n"));
+    }
+#endif
 }
 
 bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
@@ -299,37 +313,36 @@ void CubeCodec::flushDSRuns(bool rleSafe)
      * copy or diff code.
      */
 
-    if (!codeRuns)
-	return;
-
-    DBG((" flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
-
-    // Save room for the trailing non-RLE code
-    if (rleSafe)
-	codeRuns--;
-
     if (codeRuns) {
-	uint8_t r = codeRuns - 1;
-	codeRuns = 0;
+	DBG((" flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
 
-	if (r < 4) {
-	    // Short run
-	    txBits.append(r, 4);
-	    DBG_BITS(txBits);
-	} else {
-	    // Longer run
-	    r -= 4;
-	    txBits.append(0x2 | ((r << 8) & 0xF00) | (r & 0x30), 12);
-	    DBG_BITS(txBits);
+	// Save room for the trailing non-RLE code
+	if (rleSafe)
+	    codeRuns--;
+
+	if (codeRuns) {
+	    uint8_t r = codeRuns - 1;
+	    codeRuns = 0;
+	    
+	    if (r < 4) {
+		// Short run
+		txBits.append(r, 4);
+		DBG_BITS(txBits);
+	    } else {
+		// Longer run
+		r -= 4;
+		txBits.append(0x2 | ((r << 8) & 0xF00) | (r & 0x30), 12);
+		DBG_BITS(txBits);
+	    }
 	}
+
+	// Trailing non-RLE code
+	if (rleSafe)
+	    appendDS(codeD, codeS);
+
+	// Can't emit another run immediately after a flush
+	codeD = -1;
     }
-
-    // Trailing non-RLE code
-    if (rleSafe)
-	appendDS(codeD, codeS);
-
-    // Can't emit another run immediately after this one
-    codeD = -1;
 }
 
 bool CubeCodec::flashReset(PacketBuffer &buf)

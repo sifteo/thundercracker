@@ -576,6 +576,9 @@ rx_not_word9:
 	inc	dptr
 	mov	_DPS, #0
 
+	mov	R_SAMPLE, #0	; Any subsequent runs will copy this word (S=0 D=0)
+	mov	R_DIFF, #RF_VRAM_DIFF_BASE
+
 	mov	R_STATE, #0	; Back to default state
 	sjmp	rx_next_sjmp2
 
