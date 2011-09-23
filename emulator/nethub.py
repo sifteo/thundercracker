@@ -101,7 +101,7 @@ def main():
                        help="listen on ADDR, print incoming packets to stdout")
 
     args = parser.parse_args()
-    log.verbose = len(args.verbose)
+    log.verbose = len(args.verbose or '')
     log.nybbleswap = args.nybbleswap
 
     if args.pipe:

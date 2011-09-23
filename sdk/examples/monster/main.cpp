@@ -15,43 +15,28 @@ static Cube cube(0);
 
 static void showMonster(const MonsterData *m)
 {
+    // XXX: Resetting CM each time for compression debug
+    cube.vbuf.init();
+
     // XXX: Waiting for a real compare-and-copy syscall
     for (unsigned i = 0; i < sizeof *m / 2; i++)
 	cube.vbuf.poke(i, ((uint16_t *)m->fb)[i]);
+
+    cube.vbuf.sys.vram.mode = _SYS_VM_FB32;
+    cube.vbuf.sys.vram.flags = _SYS_VF_CONTINUOUS;
+
     cube.vbuf.unlock();
-}
-
-static void onAccelChange(_SYSCubeID cid)
-{
-    _SYSAccelState state;
-    _SYS_getAccel(cid, &state);
-
-    printf("Accel %d, %d\n", state.x, state.y);
-
-    if (state.x > 0xC0) {
-	static unsigned i = 0;
-	const MonsterData *m = monsters[i];
-
-	printf("Showing monster %d\n", i);
-
-	showMonster(m);
-
-	i = (i + 1) % arraysize(monsters);
-    }
 }
 
 void siftmain()
 {
-    cube.vbuf.init();
-    memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
-    cube.vbuf.sys.vram.mode = _SYS_VM_FB32;
-    cube.vbuf.sys.vram.flags = _SYS_VF_CONTINUOUS;
-    cube.vbuf.unlock();
-
-    _SYS_vectors.accelChange = onAccelChange;
     cube.enable();
 
-    while (1) {
-	System::paint();
+    for (unsigned m = 0; m < arraysize(monsters); m++) {
+	printf("Showing monster %d\n", m);
+	showMonster(monsters[m]);
+
+	for (unsigned j = 0; j < 5000; j++)
+	    System::paint();
     }
 }
