@@ -285,6 +285,7 @@ no_rx_flush:
 	; State Machine
 	;--------------------------------------------------------------------
 
+	mov	_DPS, #0
 	mov	dptr, #rxs_default
 
 rx_loop:					; Fetch the next byte or nybble
