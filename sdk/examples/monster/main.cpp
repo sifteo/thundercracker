@@ -5,6 +5,7 @@
  */
 
 #include <sifteo.h>
+#include <stdio.h>
 #include <string.h>
 #include "monsters.h"
 
@@ -25,11 +26,18 @@ static void onAccelChange(_SYSCubeID cid)
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
 
-    static unsigned i = 0;
-    const MonsterData *m = monsters[i];
-    i = (i + 1) % arraysize(monsters);
+    printf("Accel %d, %d\n", state.x, state.y);
 
-    showMonster(m);
+    if (state.x > 0xC0) {
+	static unsigned i = 0;
+	const MonsterData *m = monsters[i];
+
+	printf("Showing monster %d\n", i);
+
+	showMonster(m);
+
+	i = (i + 1) % arraysize(monsters);
+    }
 }
 
 void siftmain()
@@ -42,9 +50,6 @@ void siftmain()
 
     _SYS_vectors.accelChange = onAccelChange;
     cube.enable();
-
-    memcpy(cube.vbuf.sys.vram.fb, &marlock_mavenfarm, sizeof(struct MonsterData));
-
 
     while (1) {
 	System::paint();

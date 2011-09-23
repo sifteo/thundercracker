@@ -123,11 +123,7 @@ class CubeCodec {
 	codePtr = (codePtr + words) & PTR_MASK;
     }
 
-    uint16_t wordToIndex(uint16_t data) {
-	return ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
-    }
-
-    unsigned deltaSample(_SYSVideoBuffer *vb, uint16_t index, uint16_t offset) {
+    unsigned deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t offset) {
 	uint16_t ptr = codePtr - offset;
 
 	ptr &= PTR_MASK;
@@ -138,8 +134,18 @@ class CubeCodec {
 	    // Can't match a locked or modified word
 	    return (unsigned) -1;
 	}
+ 
+	uint16_t sample = vb->vram.words[ptr];
 
-	return index - wordToIndex(vb->vram.words[ptr]) + RF_VRAM_DIFF_BASE;
+	if ((sample & 0x0101) != (data & 0x0101)) {
+	    // Different LSBs, can't possibly reach it via a delta
+	    return (unsigned) -1;
+	}
+
+	int16_t dI = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
+	int16_t sI = ((sample & 0xFF) >> 1) | ((sample & 0xFF00) >> 2);
+
+	return sI - dI + RF_VRAM_DIFF_BASE;
     }
 
     void appendDS(uint8_t d, uint8_t s) {

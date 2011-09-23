@@ -156,63 +156,35 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
     if (buf.isFull())
 	return false;
 
-    if (data & 0x0101) {
-	/*
-	 * This value has the reserved LSBs set, so it can't be
-	 * encoded as a 14-bit index.  The only way to encode this
-	 * value is as a full 16-bit literal.
-	 */
-
-	flushDSRuns(true);
-	txBits.flush(buf);
-	if (buf.isFull())
-	    return false;
-
-	DBG((" data literal-16 %04x\n", data));
-
-	txBits.append(0x23 | (data << 8), 24);
-	txBits.flush(buf);
-
-	codePtrAdd(1);
-	codeS = 0;
-	codeD = RF_VRAM_DIFF_BASE;
-
-	return true;
-    }
-
     /*
-     * Yes, this is a valid 14-bit index.
-     *
-     * See if we can encode it as a delta or copy from one of our four
-     * sample points.  If we find a copy, that always wins and we can
-     * exit early. Otherwise, see if any of the deltas are small
-     * enough to encode.
+     * See if we can encode this word as a delta or copy from one of
+     * our four sample points.  If we find a copy, that always wins
+     * and we can exit early. Otherwise, see if any of the deltas are
+     * small enough to encode.
      */
 
-    uint16_t index = wordToIndex(data);
-
-    unsigned s0 = deltaSample(vb, index, RF_VRAM_SAMPLE_0);
+    unsigned s0 = deltaSample(vb, data, RF_VRAM_SAMPLE_0);
     if (s0 == RF_VRAM_DIFF_BASE) {
 	encodeDS(s0, 0);
 	txBits.flush(buf); 
 	return true;
     }
     
-    unsigned s1 = deltaSample(vb, index, RF_VRAM_SAMPLE_1);
+    unsigned s1 = deltaSample(vb, data, RF_VRAM_SAMPLE_1);
     if (s1 == RF_VRAM_DIFF_BASE) {
 	encodeDS(s1, 1);
 	txBits.flush(buf); 
 	return true;
     }
 
-    unsigned s2 = deltaSample(vb, index, RF_VRAM_SAMPLE_2);
+    unsigned s2 = deltaSample(vb, data, RF_VRAM_SAMPLE_2);
     if (s2 == RF_VRAM_DIFF_BASE) {
 	encodeDS(s2, 2);
 	txBits.flush(buf); 
 	return true;
     }
 
-    unsigned s3 = deltaSample(vb, index, RF_VRAM_SAMPLE_3);
+    unsigned s3 = deltaSample(vb, data, RF_VRAM_SAMPLE_3);
     if (s3 == RF_VRAM_DIFF_BASE) {
 	encodeDS(s3, 3);
 	txBits.flush(buf); 
@@ -241,18 +213,41 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
     }
 
     /*
-     * No delta found. Encode as a 14-bit literal.
+     * No delta found. Encode as a literal.
      */
 
-    flushDSRuns(false);
-    txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
-    txBits.flush(buf);
+    if (data & 0x0101) {
+	// 16-bit literal
 
-    DBG((" data literal-14 %04x\n", index));
+	flushDSRuns(true);
+	txBits.flush(buf);
+	if (buf.isFull())
+	    return false;
 
-    codePtrAdd(1);
-    codeS = 0;
-    codeD = RF_VRAM_DIFF_BASE;
+	DBG((" data literal-16 %04x\n", data));
+
+	txBits.append(0x23 | (data << 8), 24);
+	txBits.flush(buf);
+
+	codePtrAdd(1);
+	codeS = 0;
+	codeD = RF_VRAM_DIFF_BASE;
+
+    } else {
+	// 14-bit literal
+
+	flushDSRuns(false);
+
+	uint16_t index = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
+	txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
+	txBits.flush(buf);
+
+	DBG((" data literal-14 %04x\n", index));
+
+	codePtrAdd(1);
+	codeS = 0;
+	codeD = RF_VRAM_DIFF_BASE;
+    }
 
     return true;
 }

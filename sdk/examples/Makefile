@@ -1,4 +1,4 @@
-SUBDIRS = hello
+SUBDIRS = hello monster
 
 .PHONY: clean subdirs $(SUBDIRS)
 
