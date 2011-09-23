@@ -93,6 +93,9 @@ void emu_exception(struct em8051 *aCPU, int aCode)
     else
 	name = "Unknown exception";
 
+    if (aCPU->traceFile)
+	fprintf(aCPU->traceFile, "EXCEPTION at 0x%04x: %s\n", aCPU->mPC, name);
+
     if (opt_debug) {
 	/*
 	 * ncurses popup window

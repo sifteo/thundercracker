@@ -77,6 +77,7 @@ extern int opt_debug;
 
 extern const char *opt_flash_filename;
 extern const char *opt_profile_filename;
+extern const char *opt_trace_filename;
 extern const char *opt_net_host;
 extern const char *opt_net_port;
 

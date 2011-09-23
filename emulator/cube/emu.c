@@ -525,6 +525,8 @@ int main(int argc, char ** argv)
 		    opt_flash_filename = argv[i]+7;
 		else if (strncmp("profile=",argv[i]+1,8) == 0)
 		    opt_profile_filename = argv[i]+9;
+		else if (strncmp("trace=",argv[i]+1,6) == 0)
+		    opt_trace_filename = argv[i]+7;
                 else if (strncmp("host=",argv[i]+1,5) == 0)
 		    opt_net_host = argv[i]+6;
                 else if (strncmp("port=",argv[i]+1,5) == 0)
@@ -537,6 +539,7 @@ int main(int argc, char ** argv)
 			   "-d          Enable ncurses debug UI\n"
 			   "\n"
 			   "-profile=out.txt  Profile performance, and write annotated disassembly\n"
+			   "-trace=out.txt    Write a full execution trace to disk\n"
 			   "-clock=value      Set clock speed, in Hz\n"
 			   "-flash=file.bin   Set path for file-backed Flash memory (default: not file-backed)\n"
 			   "-host=hostname    Hostname for nethub connection\n"
@@ -562,6 +565,14 @@ int main(int argc, char ** argv)
         }
     }
    
+    if (opt_trace_filename) {
+	emu.traceFile = fopen(opt_trace_filename, "w");
+	if (!emu.traceFile) {
+	    perror("Error opening trace file");
+	    return 1;
+	}
+    }
+
     hardware_init(&emu);
     frontend_init(&emu);
 
@@ -580,6 +591,9 @@ int main(int argc, char ** argv)
 
     if (opt_profile_filename)
 	profiler_write_disassembly(&emu, opt_profile_filename);
+
+    if (emu.traceFile)
+	fclose(emu.traceFile);
 
     return 0;
 }

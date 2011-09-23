@@ -44,6 +44,7 @@ int opt_debug = 0;
 
 const char *opt_flash_filename = NULL;
 const char *opt_profile_filename = NULL;
+const char *opt_trace_filename = NULL;
 const char *opt_net_host = "127.0.0.1";
 const char *opt_net_port = "2405";
 

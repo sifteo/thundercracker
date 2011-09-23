@@ -31,6 +31,7 @@
 #ifndef __EMU8051_H
 #define __EMU8051_H
 
+#include <stdio.h>
 #include <stdint.h>
 
 struct em8051;
@@ -96,6 +97,7 @@ struct em8051
     // Profiler state
     struct profile_data *mProfilerMem;
     uint64_t profilerTotal;
+    FILE *traceFile;
 
     uint8_t irq_count;		// Number of currently active IRQ handlers
 

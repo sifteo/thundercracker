@@ -272,6 +272,33 @@ static void timer_tick(struct em8051 *aCPU)
     }
 }
 
+static void traceExecution(struct em8051 *mCPU)
+{
+    char assembly[128];
+    uint8_t bank = (mCPU->mSFR[REG_PSW] & (PSWMASK_RS0|PSWMASK_RS1)) >> PSW_RS0;
+
+    decode(mCPU, mCPU->mPC, assembly);
+
+    fprintf(mCPU->traceFile,
+	    "%10llu  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] DP=[%d %04x %04x] DBG=%02x\n",
+	    (long long unsigned) mCPU->profilerTotal,
+	    mCPU->mPC, assembly,
+	    mCPU->mSFR[REG_ACC],
+	    bank,
+	    mCPU->mSFR[bank*8 + 0],
+	    mCPU->mSFR[bank*8 + 1],
+	    mCPU->mSFR[bank*8 + 2],
+	    mCPU->mSFR[bank*8 + 3],
+	    mCPU->mSFR[bank*8 + 4],
+	    mCPU->mSFR[bank*8 + 5],
+	    mCPU->mSFR[bank*8 + 6],
+	    mCPU->mSFR[bank*8 + 7],
+	    mCPU->mSFR[REG_DPS] & 1,
+	    (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
+	    (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
+	    mCPU->mSFR[REG_DEBUG]);
+}
+
 int tick(struct em8051 *aCPU)
 {
     int v;
@@ -319,6 +346,13 @@ int tick(struct em8051 *aCPU)
         v &= 0xf;
         v = (0x6996 >> v) & 1;
         aCPU->mSFR[REG_PSW] = (aCPU->mSFR[REG_PSW] & ~PSWMASK_P) | (v * PSWMASK_P);
+
+	/*
+	 * Write execution trace
+	 */
+
+	if (aCPU->traceFile)
+	    traceExecution(aCPU);
     }
 
     timer_tick(aCPU);
