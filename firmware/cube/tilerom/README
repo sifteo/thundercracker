@@ -1,0 +1,114 @@
+=======================
+ ROM Tileset Generator
+=======================
+
+This is the script and source data used for generating the cube's ROM
+tileset. This is a specialized set of tiles that we bake into the
+firmware ROM. It is allocated a 4kB chunk of our total 16kB ROM space.
+
+These tiles are used primarily for the cube's "idle" mode, i.e. when
+they aren't connected to a master. But since these tiles are
+universally available, we also want them to be well suited to
+'loading' screens, and to debugging.
+
+How is this different from STIR?
+================================
+
+STIR is the asset preparation tool used by games. We don't
+use STIR for generating the tile ROM, for a few important reasons:
+
+1. The format of the Tile ROM is very specialized, and we don't use
+   this same format anywhere else in Thundercracker. So, there's no
+   need to develop a particularly general toolset for it.
+
+2. The tile ROM is designed once, prior to manufacturing, and consumed
+   many times. Game authors can conceivably use some subset of these
+   tiles for loading screens and debugging. So, the contents of this
+   map can actually become part of our ABI. We want the generation
+   process, then, to be very deterministic.
+
+3. The artwork is all very carefully constructed, with no want or need
+   for lossy compression. We're already taking the trouble to manually
+   prepare 1/2-bit tiles and palettes.
+
+So, how do I use this tileset?
+==============================
+
+As part of the ROM generation process, we'll create an "atlas" that
+is effectively a rendering of the 8x8 pixel data you'd get for every
+possible 14-bit tile index. This is a much bigger image than the actual
+ROM data, since it also accounts for every possible palette and encoding.
+But it's effectively a map of every single image that it's possible to
+get the firmware to display. So, after we've baked in a particular ROM
+tileset, that image is now the palette of tiles that a game designer
+gets to work with while in ROM graphics mode.
+
+Index format
+============
+
+The ROM tiles use a special index format, different from that used by
+normal flash memory addressing:
+
+======== ==============================
+Bits     Usage
+======== ==============================
+15:12    4-bit palette selector
+11       Mode. 0: 2-color, 1: 4-color
+10:9     Upper 2 bits of address
+8        Reserved, always zero
+7:1      Lower 7 bits of address
+0        Reserved, always zero
+
+This scheme allows selecting one of 16 pre-defined palettes, and interpreting
+a particular data pointer either as a 1-bit (monochrome) tile or as a 2-bit
+planar image. A 2-bit planar tile is actually structured as two consecutive
+1-bit images, each with one bit-plane from the original 4-color tile.
+
+Addresses are always specified in multiples of 8 bytes. This encoding
+uses a 9-bit address, which can reach exactly 4 KB of ROM.
+
+Input Files
+===========
+
+src-palettes.png
+   Contains the palette color definitions. Must be 4x16 pixels. Each pixel
+   is taken to be a palette entry.
+
+src-tiles.png
+   Master source image for tile data. Must be a multiple of 8x8 pixels, and
+   must be 4-color indexed. Each 8x8 tile is examined in order, left to
+   right then top to bottom. If the tile contains only two colors, it's encoded
+   as a single monochrome tile. If it contains four colors, it's encoded as
+   a set of planar tiles. Any tiles which would be exact matches for tiles
+   already encoded are discarded.
+
+This means that it's always safe to add new tiles at the end of the
+image. This will never cause existing tiles to be reordered, so it
+will not break binary compatibility.
+
+Output Files
+============
+
+tilerom-atlas.png
+   This is a 128x128 tile (1024x1024 pixel) image which represents the rendered
+   output for every valid 14-bit index. It will appear to be several copies of
+   the ROM tileset, with different palettes and encodings. Each position in this
+   image directly corresponds to the bit pattern you'd use to specify that image
+   in a background map. This image can be used as an input for STIR.
+
+tilerom.c
+   Source code, to be compiled into the firmware ROM.
+
+ROM Font
+========
+
+An ASCII font is included in the ROM, for use mainly by debugging or
+informational displays. It is at the very top of src-tiles, in ASCII
+order starting with character 0x20 (space).
+
+The font is a slightly modified version of the free "Apple ]["
+typeface by Ivan Rood: http://www.dafont.com/ivan-oliver.d1555
+
+ - The lowercase p and q were modified to fit in the 8x8 character cell.
+ - The tilde was replaced with something a bit cuter.
+ - The lowercase t was moved left by one pixel to improve kerning.
