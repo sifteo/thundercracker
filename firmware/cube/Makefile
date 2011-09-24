@@ -8,6 +8,7 @@ OBJS = \
 	flash_hal.rel \
 	flash_decoder.rel \
 	main.rel \
+	draw.rel \
 	tilerom.rel \
 
 FIRMWARE_INC = ../include

@@ -29,33 +29,39 @@ class Tiler:
     def __init__(self):
         self.tiles = []
         self.memo = {}
+        self.images = []
+        self.atlas = {}
 
     def loadPalette(self, filename):
         self.palette = tuple(Image.open(filename).getdata())
         if len(self.palette) != 16 * 4:
             raise ValueError("Must have exactly 16 palettes, of 4 colors each")
 
-    def loadTiles(self, filename):
-        image = Image.open(filename)
+    def carveImage(self, image):
         width, height = image.size
 
         if (width % TILE) or (height % TILE):
-            raise ValueError("Map size %dx%d pixels is not a multiple of our %d pixel tile-size"
+            raise ValueError("Image of size %dx%d pixels is not a multiple of our %d pixel tile-size"
                              % (width, height, self.tileSize))
         width /= TILE
         height /= TILE
 
         for y in range(height):
             for x in range(width):
-                self.loadTile(tuple(image.crop((x * TILE, y * TILE,
-                                                (x+1) * TILE, (y+1) * TILE)).getdata()))
+                yield (x*TILE, y*TILE, tuple(image.crop((x * TILE, y * TILE,
+                                                         (x+1) * TILE, (y+1) * TILE)).getdata()))
+
+    def loadTiles(self, filename):
+        for x, y, tile in self.carveImage(Image.open(filename)):
+            self.loadTile(tile)
 
         if len(self.tiles) > MAX_TILES:
             raise ValueError("Out of room in the tile map (%d tiles found, max is %d)"
                              % (len(self.tiles), MAX_TILES))
 
         # Unused tiles are reserved with all '1' bits, equivalent to blank flash memory.
-        # This means we can still program those tiles later if we need to.
+        # This means we can still program those tiles later if we need to, on OTP parts.
+
         while len(self.tiles) < MAX_TILES:
             self.tiles.append((1,) * (TILE * TILE))
 
@@ -116,20 +122,48 @@ class Tiler:
     
         return tile
 
-    def saveAtlas(self, filename):
+    def createAtlas(self, filename):
+        # Generate an atlas image, which shows how all possible tile
+        # indices will appear when rendered by our firmware. We save
+        # an atlas dictionary, used by loadImage(), and we generate
+        # a master image that can be used as a design reference or
+        # as an input file for STIR.
+
         width = 128
         height = MAX_INDEX / width
         image = Image.new("RGB", (width*TILE, height*TILE))
 
         for y in range(height):
             for x in range(width):
-                image.paste(self.renderTile(x + y*width),
-                            (x*TILE, y*TILE))
+                index = x + y*width
+                tile = self.renderTile(index)
+                raw = tuple(tile.getdata())
+
+                if raw not in self.atlas:
+                    # First tile in the atlas always gets priority
+                    self.atlas[raw] = index
+
+                image.paste(tile, (x*TILE, y*TILE))
 
         image.save(filename)
 
-    def saveCode(self, filename):
-        open(filename, 'w').write("""
+    def loadImage(self, filename):
+        image = Image.open(filename).convert("RGB")
+        indices = []
+
+        for x, y, tile in self.carveImage(image):
+            index = self.atlas.get(tile)
+            if index is None:
+                raise ValueError("Image %s has a tile at (%d, %d) which is not in the atlas!"
+                                 % (filename, x, y))
+            indices.append(index)
+
+        name = os.path.splitext(os.path.split(filename)[1])[0].replace('-','_')
+        self.images.append((name, image.size, indices))
+
+    def saveCodeArrays(self, filename, arrays):
+        f = open(filename, 'w')
+        f.write("""
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
  * Tile ROM for Thundercracker cube firmware.
@@ -141,20 +175,32 @@ class Tiler:
 #include <stdint.h>
 
 /*
- * This is the last 4K + 128 bytes of the code ROM. If there's a bug
- * that causes us to read past the end of rom_tiles, we really don't
- * want to allow anyone to read back our (secret) firmware ROM.
+ * ROM graphics data grows downward from the end of the code ROM.
+ * Besides keeping our address layout simple, this makes it much
+ * harder to exploit a firmware bug in order to read back our
+ * (secret) firmware ROM.
  *
- * rom_tiles[] must be located on a 256-byte boundary.
+ * Tile data must be aligned on a 256-byte boundary. Currently
+ * we place it in the last 4kB of ROM space.
  */
+""".lstrip())
 
-const __code __at (0x2f80) uint8_t rom_palettes[] = {
-%s};
+        addr = 0x4000
+        for name, data in arrays:
+            addr -= len(data)
+            f.write("\nconst __code __at (0x%04x) uint8_t %s[] = {\n%s};\n"
+                    % (addr, name, self.cByteArray(data)))
 
-const __code __at (0x3000) uint8_t rom_tiles[] = {
-%s};
-""".lstrip() % (self.cByteArray(self.swizzlePalette(self.paletteBytes())),
-                self.cByteArray(self.swizzleTiles(self.tileBytes()))))
+    def saveCode(self, filename):
+        arrays = [
+            ('rom_tiles', self.swizzleTiles(self.tileBytes())),
+            ('rom_palettes', self.swizzlePalette(self.paletteBytes())),
+            ]
+
+        for name, size, indices in self.images:
+            arrays.append((name, self.imageBytes(size, indices)))
+
+        self.saveCodeArrays(filename, arrays)
 
     def cByteArray(self, bytes, width=16, indent="    "):
         # Format a list of byte values as a C array
@@ -215,10 +261,59 @@ const __code __at (0x3000) uint8_t rom_tiles[] = {
                        ((i & 0x0100) >> 7) |
                        ((i & 0x0001) )] for i in range(len(bytes))]
 
+    def getCommonMSB(self, indices):
+        # If an image can use a single common most significant byte, figure out what
+        # that byte is. If not, returns None.
+
+        msb = None
+        for i in indices:
+            mi = i >> 8
+            if msb is not None and mi != msb:
+                return None
+            msb = mi
+        return msb
+
+    def imageBytes(self, size, indices):
+        # Image data, in general, is 16-bit. But if all the MSBs in the image are
+        # identical, we can use a smaller 8-bit format. This is very common for images
+        # that don't switch palettes or color modes.
+
+        bytes = [size[0] // TILE, size[1] // TILE]
+        msb = self.getCommonMSB(indices)
+
+        if msb is None:
+            # Needs to be 16-bit
+            bytes.append(0xFF)
+            for i in indices:
+                bytes.append(i & 0xFF)
+                bytes.append(i >> 8)
+
+        else:
+            # Can use smaller 8-bit format
+            bytes.append(msb)
+            for i in indices:
+                bytes.append(i & 0xFF)
+
+        return bytes
+
 
 if __name__ == "__main__":
     t = Tiler()
     t.loadPalette("tilerom/src-palettes.png")
     t.loadTiles("tilerom/src-tiles.png")
-    t.saveAtlas("tilerom/tilerom-atlas.png")
+    t.createAtlas("tilerom/tilerom-atlas.png")
+
+    for img in (
+        "tilerom/img-logo.png",
+        "tilerom/img-battery.png",
+        "tilerom/img-radio-0.png",
+        "tilerom/img-radio-1.png",
+        "tilerom/img-radio-2.png",
+        "tilerom/img-radio-3.png",
+        "tilerom/img-power.png",
+        "tilerom/img-happy-cube.png",
+        "tilerom/img-barberpole.png",
+        ):
+        t.loadImage(img)
+
     t.saveCode("tilerom.c")

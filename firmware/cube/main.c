@@ -12,6 +12,11 @@
 #include "lcd.h"
 #include "hardware.h"
 #include "flash.h"
+#include "draw.h"
+
+extern const __code uint8_t img_logo[];
+extern const __code uint8_t img_battery[];
+extern const __code uint8_t img_power[];
 
 void main(void)
 {
@@ -21,29 +26,34 @@ void main(void)
     flash_init();
     sti();
 
-    /*
-     * XXX: Draw idle-mode screen. For now, we're just testing _SYS_VM_BG0_ROM.
-     */
-    {
-	uint8_t x;
-	const char __code *title = " Thundercracker    prototype!     ";
+    draw_clear();
+    draw_xy = XY(1,1);
+    draw_attr = ATTR_RED;
+    draw_string("Thunder");
+    draw_attr = ATTR_ORANGE;
+    draw_string("cracker");
 
-	vram.mode = _SYS_VM_BG0_ROM;
-	vram.flags = _SYS_VF_CONTINUOUS;
+    draw_xy = XY(1,5);
+    draw_attr = ATTR_NONE;
+    draw_image(img_logo);
 
-	x = 0;
-	do {
-	    vram.bg0_tiles[(x & 0xF) + (x >> 4)*18] = (uint8_t)(x << 1) | ((x & 0x80) << 2) | 0x8800;
-	} while (--x);
+    draw_xy = XY(0,11);
+    draw_image(img_battery);
 
-	x = 0;
-	while (*title) {
-	    vram.bg0_tiles[x++] = (*title - ' ') << 1;
-	    title++;
-	}
-    }
+    draw_xy = XY(5,11);
+    draw_attr = ATTR_RED;
+    draw_image(img_battery);
+
+    draw_xy = XY(1,12);
+    draw_attr = ATTR_NONE;
+    draw_image(img_power);
 
     while (1) {
+	static uint8_t frame;
+	draw_xy = XY(14,15);
+	draw_attr = ATTR_GRAY;
+	draw_hex(frame++);
+
 	flash_handle_fifo();
 	graphics_render();
     }
