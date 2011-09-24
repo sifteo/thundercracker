@@ -92,7 +92,7 @@ void siftmain()
     // XXX: Mode-specific VRAM initialization
     cube.vbuf.init();
     memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
-    cube.vbuf.sys.vram.mode = _SYS_VM_BG0;
+    cube.vbuf.sys.vram.mode = _SYS_VM_BG0_ROM;
     nextFrame();
     cube.vbuf.unlock();
 
