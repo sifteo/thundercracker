@@ -614,6 +614,15 @@ static void vm_bg0_rom_tiles(void) __naked
      *   r7: DPH line index  IN
      */
 
+    /*
+     * XXX: To do:
+     *
+     *  - Panning
+     *
+     *  - Performance optimization (Can we keep 2 colors in registers, like
+     *    in fb64 mode? Reaing codespace is really slow.)
+     */
+
     __asm
 
 	; Tile loop
@@ -739,7 +748,6 @@ static void vm_bg0_rom_line(void)
 	rlc	a			; xxxx7xx6 x
 	mov	r7, a
     __endasm ;
-
 
     __asm
 	mov	r4, #8
