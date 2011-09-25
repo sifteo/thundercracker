@@ -45,6 +45,18 @@
     __asm inc	ADDR_PORT					__endasm; \
     __asm
 
+// Repeat the same register value for both color bytes
+#define PIXEL_FROM_REG(l)					__endasm; \
+    __asm mov	BUS_PORT, l					__endasm; \
+    __asm inc	ADDR_PORT					__endasm; \
+    __asm inc	ADDR_PORT					__endasm; \
+    __asm inc	ADDR_PORT					__endasm; \
+    __asm inc	ADDR_PORT					__endasm; \
+    __asm
+
+// Assembly macro wrapper for ADDR_INC4
+#define ASM_ADDR_INC4()	  __endasm; ADDR_INC4(); __asm
+
 // Load a 16-bit tile address from DPTR without incrementing
 #pragma sdcc_hash +
 #define ADDR_FROM_DPTR() {					\
@@ -558,85 +570,78 @@ static void vm_bg0(void)
  * But we also use it internally, when no master is connected. This mode
  * is used by the local drawing module, draw.c
  *
- * See tilerom/README for more on this mode.
+ * This implementation is fairly highly optimized, in part because it takes
+ * a lot of effort just to get up to a 30 FPS single-layer display when
+ * we have to clock out pixel data in software rather than bursting it from
+ * flash. Performance in this mode is actually pretty important, since the
+ * less time we spend drawing during a loading or idle screen, the more time
+ * we have to be writing to flash or going into low-power sleep mode.
+ *
+ * See tilerom/README for more info.
+ *
+ * Swizzling map:
+ *
+ *   Map:      76543210 fedcba98
+ *   DPL:      7654321i             <- one bit of line-index
+ *   DPH:                   i21i    <- two bits of line-index
+ *   Palette:           7654....	<- one replicated palette-select nybble
+ *   Mode:                  0       <- selects 1 or 2 planes
+ *
+ * Registers, main bank:
+ *
+ *   r0: Scratch
+ *   r1: Plane 0 shift register
+ *   r2: Plane 1 shift register
+ *   r3: Palette base
+ *   r4: Pixel loop
+ *   r5: Tile loop
+ *   r6: Byte/line DPL
+ *   r7: Byte/line DPH
+ *
+ * GFX_BANK is used to hold a local copy of the current palette.
+ * It must be reloaded any time r3 is changed:
+ *
+ *   r0: Color 0, LSB/MSB
+ *   r1: (spare)
+ *   r2: Color 1, LSB
+ *   r3: Color 1, MSB
+ *   r4: Color 2, LSB
+ *   r5: Color 2, MSB
+ *   r6: Color 3, LSB
+ *   r7: Color 3, MSB
  */
 
 // Data in tilerom.c
 extern __code uint8_t rom_palettes[];
 extern __code uint8_t rom_tiles[];
 
-static void vm_bg0_rom_palette(void) __naked __using(GFX_BANK)
+static void vm_bg0_rom_tile(void) __naked __using(GFX_BANK)
 {
     /*
-     * Load a new ROM palette, given the base in the upper nybble
-     * of r3. The lower nybble must be masked to zero. This function
-     * switches to GFX_BANK, and does not restore the bank on exit.
+     * Load the next single tile from BG0. This sets up
+     * r3, r6, and r7, and it loads the raw high-byte of the index
+     * into r0.
      *
-     * Either dptr may be active. Trashes dptr and a.
+     * Additionally, if the palette has changed, we load a new
+     * ROM palette. We return with the correct palette in GFX_BANK.
+     *
+     * Returns with DPTR1 active. Register bank is undefined.
+     * (May be GFX_BANK or default bank)
      */
 
     __asm
-	mov	a, r3		; Multiplication by 17
-	swap	a
-	orl	a, r3
-
-	mov	psw, #(GFX_BANK << 3)
-	mov	dptr, #_rom_palettes
-
-	; Tail call to generated code, loads r0-r7.
-	jmp	@a+dptr
-
-    __endasm ; 
-}
-
-static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
-{
-    /*
-     * Low-level tile renderer for _SYS_VM_BG0.
-     *
-     * Swizzling map:
-     *
-     *   Map:      76543210 fedcba98
-     *   DPL:      7654321i             <- one bit of line-index
-     *   DPH:                   i21i    <- two bits of line-index
-     *   Palette:           7654....	<- one replicated palette-select nybble
-     *   Mode:                  0       <- selects 1 or 2 planes
-     *
-     * Registers, main bank:
-     *
-     *   r0: Scratch
-     *   r1: Plane 0 shift register
-     *   r2: Plane 1 shift register
-     *   r3: Palette base
-     *   r4: Pixel loop      IN
-     *   r5: Tile loop       IN
-     *   r6: DPL line index  IN
-     *   r7: DPH line index  IN
-     *
-     * GFX_BANK is used to hold a local copy of the current palette.
-     */
-
-    __asm
-
-	mov	r3, #0xFF		; Init with invalid palette base, force first load
-
-	; Tile loop
-2$:
-
-	; Read the tile map, carve up all the fields in our 14-bit index
 
 	movx	a, @dptr		; Tile map, low byte
 	inc	dptr
-	orl	a, r6			;    OR in our one per-line bit
-	mov	_DPL1, a		;    Tile ROM pointer in DPTR1
+	anl     6, #1			; Combine with LSB from r6
+	orl	6, a
 
 	movx	a, @dptr		; Tile map, high byte
 	inc	dptr
-	mov	r0, a			;    Save raw MSB in scratch reg
-	anl	a, #0x06		;    Mask off only allowed MSB bits
-	orl	a, #(_rom_tiles >> 8)	;    OR in base address
-	orl	a, r7			;    OR in per-line bits
-	mov	_DPH1, a		;    Complete Tile ROM pointer
+	mov	r0, a			; Save raw copy
+	anl	a, #0x06
+	anl	7, #0xF9		; Combine with line-index and base address
+	orl	7, a
 
 	mov	_DPS, #1		; Switch to DPTR1. (DPTR is used only for the tile map)
 
@@ -648,20 +653,36 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 
 	mov	a, r0
 	anl	a, #0xf0		; Mask off four palette-select bits
-
-	xrl	a, r3
-	jz	6$			;    Palette has not changed
+	xrl	a, r3			;    Compare with r3
+	jz	1$			;    Palette has not changed
 	xrl	a, r3			;    Make this the new current palette
 	mov	r3, a
 
-	push	_DPL1
-	push	_DPH1
-	lcall	_vm_bg0_rom_palette
-	pop	_DPH1
-	pop	_DPL1
-	mov	psw, #0
+	mov	psw, #(GFX_BANK << 3)
+	mov	dptr, #_rom_palettes
 
-6$:
+	jmp	@a+dptr			; Tail call to generated code, loads r0-r7.
+	
+1$:	ret				; No palette change
+
+    __endasm ; 
+}
+
+static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
+{
+
+    __asm
+
+	mov	r3, #0xFF		; Init with invalid palette base, force first load
+
+	; Tile loop
+2$:
+
+	lcall	_vm_bg0_rom_tile
+	mov	psw, #0
+	mov	_DPL1, r6
+	mov	_DPH1, r7
+
 	; Fetch Plane 0 byte. This is necessary for both the 2-color and 4-color paths.
 
 	clr 	a			; Grab tile bitmap byte
@@ -681,7 +702,6 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 	djnz	r5, 2$			; Next tile
 	ret
 
-
 	; ---- 4-color mode
 
 3$:
@@ -700,7 +720,7 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 	rrc	a
 	mov	ar1, a
 	jc	10$
-	PIXEL_FROM_REGS(r0,r1)
+	PIXEL_FROM_REG(r0)
 	djnz	ar4, 4$
 	sjmp	8$
 10$:	PIXEL_FROM_REGS(r2,r3)
@@ -721,60 +741,79 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 
 	; ---- 2-color loop (unrolled)
 
+	; This is optimized for runs of index 0.  Since we require index 0
+	; to have identical MSB and LSB, we can use this to avoid reloading
+	; BUS_PORT at all, unless we hit a '1' bit.
+
 13$:
 	mov	a, r1
 	mov	psw, #(GFX_BANK << 3)
+	mov	BUS_PORT, r0
 
 	rrc	a			; Index 0 ladder
 	jc	30$
-	PIXEL_FROM_REGS(r0,r1)
+	ASM_ADDR_INC4()
 	rrc	a
 	jc	31$
-21$:	PIXEL_FROM_REGS(r0,r1)
+21$:	ASM_ADDR_INC4()
 	rrc	a
 	jc	32$
-22$:	PIXEL_FROM_REGS(r0,r1)
+22$:	ASM_ADDR_INC4()
 	rrc	a
 	jc	33$
-23$:	PIXEL_FROM_REGS(r0,r1)
+23$:	ASM_ADDR_INC4()
 	rrc	a
 	jc	34$
-24$:	PIXEL_FROM_REGS(r0,r1)
+24$:	ASM_ADDR_INC4()
 	rrc	a
 	jc	35$
-25$:	PIXEL_FROM_REGS(r0,r1)
+25$:	ASM_ADDR_INC4()
 	rrc	a
 	jc	36$
-26$:	PIXEL_FROM_REGS(r0,r1)
+26$:	ASM_ADDR_INC4()
 	rrc	a
 	jc	37$
-27$:	PIXEL_FROM_REGS(r0,r1)
+27$:	ASM_ADDR_INC4()
 	ljmp	8$
 
 30$:	PIXEL_FROM_REGS(r2,r3)		; Index 1 ladder
 	rrc	a
-	jnc	21$
+	jnc	41$
 31$:	PIXEL_FROM_REGS(r2,r3)
 	rrc	a
-	jnc	22$
+	jnc	42$
 32$:	PIXEL_FROM_REGS(r2,r3)
 	rrc	a
-	jnc	23$
+	jnc	43$
 33$:	PIXEL_FROM_REGS(r2,r3)
 	rrc	a
-	jnc	24$
+	jnc	44$
 34$:	PIXEL_FROM_REGS(r2,r3)
 	rrc	a
-	jnc	25$
+	jnc	45$
 35$:	PIXEL_FROM_REGS(r2,r3)
 	rrc	a
-	jnc	26$
+	jnc	46$
 36$:	PIXEL_FROM_REGS(r2,r3)
 	rrc	a
-	jnc	27$
+	jnc	47$
 37$:	PIXEL_FROM_REGS(r2,r3)
 	ljmp	8$
 
+41$:	mov	BUS_PORT, r0		; Transition 1 -> 0 ladder
+	ljmp	21$
+42$:	mov	BUS_PORT, r0
+	ljmp	22$
+43$:	mov	BUS_PORT, r0
+	ljmp	23$
+44$:	mov	BUS_PORT, r0
+	ljmp	24$
+45$:	mov	BUS_PORT, r0
+	ljmp	25$
+46$:	mov	BUS_PORT, r0
+	ljmp	26$
+47$:	mov	BUS_PORT, r0
+	ljmp	27$
 
     __endasm ;
 }
@@ -815,6 +854,7 @@ static void vm_bg0_rom_line(void)
 	rl	a			; xxxxxx7x 6
 	rl	a			; xxxxx7xx 6
 	rlc	a			; xxxx7xx6 x
+	orl	a, #(_rom_tiles >> 8)	; Add base address
 	mov	r7, a
     __endasm ;
 
@@ -823,6 +863,27 @@ static void vm_bg0_rom_line(void)
 	mov	r5, #16
 	lcall	_vm_bg0_rom_tiles
     __endasm ;
+
+/*
+    ADDR_FROM_DPTR_INC();
+    BG0_WRAP_CHECK();
+    ADDR_PORT = y_bg0_addr_l + x_bg0_first_addr;
+    PIXEL_BURST(x_bg0_first_w);
+
+    do {
+	ADDR_FROM_DPTR_INC();
+	BG0_WRAP_CHECK();
+	ADDR_PORT = y_bg0_addr_l;
+	ADDR_INC32();
+    } while (--x);
+
+    if (x_bg0_last_w) {
+	ADDR_FROM_DPTR_INC();
+	BG0_WRAP_CHECK();
+	ADDR_PORT = y_bg0_addr_l;
+	PIXEL_BURST(x_bg0_last_w);
+    }
+*/
 
     LCD_WRITE_END();
     CTRL_PORT = CTRL_IDLE;

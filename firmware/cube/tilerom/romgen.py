@@ -221,27 +221,31 @@ class Tiler:
         # selected palette. It's valuable to be able to reload the palette
         # quickly and without changing dptr. A "mov Rn, #literal" instruction
         # only takes two bytes, so we can store the whole palette as a
-        # field of small subroutines, at a cost of 17 bytes per palette.
+        # field of small subroutines.
         #
-        # Indexing into this field is accomplished simply by copying the
-        # palette index into both nybbles of one byte, as the highest palette
-        # index begins at offset 0xFF.
+        # As another multipurpose optimization, we assume that color 0 has
+        # identical MSB and LSB. This lets us store only 7 bytes per palette,
+        # letting us fit the whole palette into 16 bytes. This makes the
+        # addressing code a good bit smaller. We also save time during
+        # rendering by reloading BUS_PORT only once per pixel during these
+        # (very common) background pixels.
 
         bytes = []
 
         for i, color in enumerate(self.palette):
             value = RGB565(*color)
-            reg = (i & 3) << 1
+            palIndex = i & 3
 
-            bytes.append(0x78 + reg)    # mov Rn, #literal
+            bytes.append(0x78 + (palIndex*2))
             bytes.append(value & 0xFF)
-            reg += 1
 
-            bytes.append(0x78 + reg)    # mov Rn, #literal
-            bytes.append(value >> 8)
+            if palIndex:
+                bytes.append(0x78 + (palIndex*2) + 1)
+                bytes.append(value >> 8)
 
-            if reg == 7:
+            if palIndex == 3:
                 bytes.append(0x22)      # ret
+                bytes.append(0x00)      # nop (pad to 16 bytes)
 
         return bytes
 
