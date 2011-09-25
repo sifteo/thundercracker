@@ -38,15 +38,15 @@ extern uint8_t draw_attr;
  * Attribute flags. These bytes are XOR'ed with the most significant byte of
  * an image or character index. They can be used to shift the color palette.
  */
-#define ATTR_NONE	(8 * 0)
-#define ATTR_BLUE	(8 * 1)
-#define ATTR_ORANGE	(8 * 2)
-#define ATTR_INVORANGE	(8 * 3)
-#define ATTR_RED	(8 * 4)
-#define ATTR_GRAY	(8 * 5)
-#define ATTR_INV	(8 * 6)
-#define ATTR_INVGRAY	(8 * 7)
-#define ATTR_LTBLUE	(8 * 8)
-#define ATTR_LTORANGE	(8 * 9)
+#define ATTR_NONE	0x00
+#define ATTR_BLUE	0x10
+#define ATTR_ORANGE	0x20
+#define ATTR_INVORANGE	0x30
+#define ATTR_RED	0x40
+#define ATTR_GRAY	0x50
+#define ATTR_INV	0x60
+#define ATTR_INVGRAY	0x70
+#define ATTR_LTBLUE	0x80
+#define ATTR_LTORANGE	0x90
 
 #endif

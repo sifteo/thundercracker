@@ -97,8 +97,8 @@ class Tiler:
     def renderTile(self, index):
         # Render a tile image, given its 14-bit index
 
-        palBase = ((index >> 9) & 0xF) << 2
-        mode = (index >> 13) & 1
+        palBase = ((index >> 10) & 0xF) << 2
+        mode = (index >> 9) & 1
         address = index & 0x1FF
 
         tile = Image.new("RGB", (TILE, TILE))
@@ -194,7 +194,7 @@ class Tiler:
     def saveCode(self, filename):
         arrays = [
             ('rom_tiles', self.swizzleTiles(self.tileBytes())),
-            ('rom_palettes', self.swizzlePalette(self.paletteBytes())),
+            ('rom_palettes', self.paletteBytes()),
             ]
 
         for name, size, indices in self.images:
@@ -215,11 +215,34 @@ class Tiler:
         return ''.join(parts)
 
     def paletteBytes(self):
+        # Palettes are stored in format very specific to the graphics
+        # engine's implementation. During the inner loop of BG0_ROM, we
+        # use one entire register bank as a fast copy of the currently
+        # selected palette. It's valuable to be able to reload the palette
+        # quickly and without changing dptr. A "mov Rn, #literal" instruction
+        # only takes two bytes, so we can store the whole palette as a
+        # field of small subroutines, at a cost of 17 bytes per palette.
+        #
+        # Indexing into this field is accomplished simply by copying the
+        # palette index into both nybbles of one byte, as the highest palette
+        # index begins at offset 0xFF.
+
         bytes = []
-        for color in self.palette:
+
+        for i, color in enumerate(self.palette):
             value = RGB565(*color)
+            reg = (i & 3) << 1
+
+            bytes.append(0x78 + reg)    # mov Rn, #literal
             bytes.append(value & 0xFF)
+            reg += 1
+
+            bytes.append(0x78 + reg)    # mov Rn, #literal
             bytes.append(value >> 8)
+
+            if reg == 7:
+                bytes.append(0x22)      # ret
+
         return bytes
 
     def tileBytes(self):
@@ -242,14 +265,6 @@ class Tiler:
     # hard to avoid bit shifting, since there's no fast way to do it on the
     # 8051. This means taking advantage of bits in their existing alignment
     # within the byte we found them in.
-
-    def swizzlePalette(self, bytes):
-        # Address swizzling for palette:
-        #    0ppp pbcc -> 0ppp pccb       
-
-        return [bytes[ (i & 0xF8) |
-                       ((i & 3) << 1) |
-                       ((i & 4) >> 2) ] for i in range(len(bytes))]
 
     def swizzleTiles(self, bytes):
         # Address swizzling for tiles:

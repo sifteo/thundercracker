@@ -12,6 +12,9 @@
 #include "flash.h"
 #include "radio.h"
 
+// Temporary bank used by some graphics modes
+#define GFX_BANK  2
+
 
 /***********************************************************************
  * Common Macros
@@ -206,16 +209,6 @@ static void line_bg_spr0(void)
 #endif
 
 
-
-static void vm_02(void)
-{
-    MODE_RETURN();
-}
-
-static void vm_06(void)
-{
-    MODE_RETURN();
-}
 
 static void vm_0c(void)
 {
@@ -561,35 +554,42 @@ static void vm_bg0(void)
  * indices are actually packed words containing a ROM address, a tile
  * mode (1-bit or 2-bit), and a 4-bit palette selector.
  *
- * See tilerom/README.rst for more on this mode.
+ * This mode is available for use by games, as just another video mode.
+ * But we also use it internally, when no master is connected. This mode
+ * is used by the local drawing module, draw.c
+ *
+ * See tilerom/README for more on this mode.
  */
 
 // Data in tilerom.c
 extern __code uint8_t rom_palettes[];
 extern __code uint8_t rom_tiles[];
 
+static void vm_bg0_rom_palette(void) __naked __using(GFX_BANK)
+{
+    /*
+     * Load a new ROM palette, given the base in the upper nybble
+     * of r3. The lower nybble must be masked to zero. This function
+     * switches to GFX_BANK, and does not restore the bank on exit.
+     *
+     * Either dptr may be active. Trashes dptr and a.
+     */
 
-/*
- * Assembly macro to output a single pixel from the palette,
- * assuming the palette byte offset has already been calculated
- * in ACC, and DPTR points to the palette base address.
- */
-#define VM_BG0_ROM_PIXEL()			__endasm ; \
-	__asm	mov	r0, a			__endasm ; \
-	__asm	movc	a, @a+DPTR		__endasm ; \
-	__asm	mov	BUS_PORT, a		__endasm ; \
-	__asm	mov	ADDR_PORT, #1		__endasm ; \
-	__asm	mov	ADDR_PORT, #0		__endasm ; \
-	__asm	mov	a, r0			__endasm ; \
-	__asm	orl	a, #4			__endasm ; \
-	__asm	movc	a, @a+DPTR		__endasm ; \
-	__asm	mov	BUS_PORT, a		__endasm ; \
-	__asm	mov	ADDR_PORT, #1		__endasm ; \
-	__asm	mov	ADDR_PORT, #0		__endasm ; \
-	__asm
+    __asm
+	mov	a, r3		; Multiplication by 17
+	swap	a
+	orl	a, r3
 
+	mov	psw, #(GFX_BANK << 3)
+	mov	dptr, #_rom_palettes
 
-static void vm_bg0_rom_tiles(void) __naked
+	; Tail call to generated code, loads r0-r7.
+	jmp	@a+dptr
+
+    __endasm ; 
+}
+
+static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 {
     /*
      * Low-level tile renderer for _SYS_VM_BG0.
@@ -599,10 +599,10 @@ static void vm_bg0_rom_tiles(void) __naked
      *   Map:      76543210 fedcba98
      *   DPL:      7654321i             <- one bit of line-index
      *   DPH:                   i21i    <- two bits of line-index
-     *   Palette:            6543bcc	<- one byte-select, two color-select bits            
-     *   Mode:              0           <- selects 1 or 2 planes
+     *   Palette:           7654....	<- one replicated palette-select nybble
+     *   Mode:                  0       <- selects 1 or 2 planes
      *
-     * Registers:
+     * Registers, main bank:
      *
      *   r0: Scratch
      *   r1: Plane 0 shift register
@@ -612,21 +612,19 @@ static void vm_bg0_rom_tiles(void) __naked
      *   r5: Tile loop       IN
      *   r6: DPL line index  IN
      *   r7: DPH line index  IN
-     */
-
-    /*
-     * XXX: To do:
      *
-     *  - Panning
-     *
-     *  - Performance optimization (Can we keep 2 colors in registers, like
-     *    in fb64 mode? Reaing codespace is really slow.)
+     * GFX_BANK is used to hold a local copy of the current palette.
      */
 
     __asm
 
+	mov	r3, #0xFF		; Init with invalid palette base, force first load
+
 	; Tile loop
 2$:
+
+	; Read the tile map, carve up all the fields in our 14-bit index
+
 	movx	a, @dptr		; Tile map, low byte
 	inc	dptr
 	orl	a, r6			;    OR in our one per-line bit
@@ -634,78 +632,104 @@ static void vm_bg0_rom_tiles(void) __naked
 
 	movx	a, @dptr		; Tile map, high byte
 	inc	dptr
-	mov	r0, a
+	mov	r0, a			;    Save raw MSB in scratch reg
 	anl	a, #0x06		;    Mask off only allowed MSB bits
 	orl	a, #(_rom_tiles >> 8)	;    OR in base address
 	orl	a, r7			;    OR in per-line bits
 	mov	_DPH1, a		;    Complete Tile ROM pointer
+
+	mov	_DPS, #1		; Switch to DPTR1. (DPTR is used only for the tile map)
+
+	; Load the palette, only if it has changed since the last tile.
+	; We bank on having relatively few palette changes, so that we
+	; can amortize the relatively high cost of reading palette data
+	; from code memory. It is very slow to do this on each pixel,
+	; even just for the single palette index we need.
+
 	mov	a, r0
+	anl	a, #0xf0		; Mask off four palette-select bits
 
-	jb	acc.7, 3$		; Are we using 4-color mode?
+	xrl	a, r3
+	jz	6$			;    Palette has not changed
+	xrl	a, r3			;    Make this the new current palette
+	mov	r3, a
 
-	; 2-color mode
+	push	_DPL1
+	push	_DPH1
+	lcall	_vm_bg0_rom_palette
+	pop	_DPH1
+	pop	_DPL1
+	mov	psw, #0
 
-	anl	a, #0x78		; Mask off four palette-select bits
-	mov	r3, a			; Use directly as palette base address
-	mov	_DPS, #1		; Now switch to DPTR1. (DPTR is used only for the tile map)
+6$:
+	; Fetch Plane 0 byte. This is necessary for both the 2-color and 4-color paths.
 
 	clr 	a			; Grab tile bitmap byte
 	movc	a, @a+dptr
 	mov	r1, a			;    Store in Plane 0 register
 
-	mov	dptr, #_rom_palettes	; Point to the ROM palette array
+	; Bit unpacking loop
 
-1$:					; Loop over pixels
-	mov	a, r1			; Calculate palette offset from shift register
-	rrc	a  			;    Shift out LSB
-	mov	r1, a
-	mov	a, r3			;    Palette base
-	addc	a, #0			;    Index in C -> LSB
+	mov	a, r0			; Mode bit:
+	jb	acc.3, 3$		;    Are we using 4-color mode?
 
-	VM_BG0_ROM_PIXEL()
+	; 2-color loop
 
-	djnz	r4, 1$			; Next bit
-5$:	mov	_DPS, #0		; Must restore DPTR
+	mov	a, r1
+	mov	psw, #(GFX_BANK << 3)
+
+1$:
+	rrc	a
+	jc	7$
+	PIXEL_FROM_REGS(r0,r1)
+	djnz	ar4, 1$
+	sjmp	8$
+7$:	PIXEL_FROM_REGS(r2,r3)
+	djnz	ar4, 1$
+8$:
+
+	mov	psw, #0			; Restore bank
+	mov	_DPS, #0		; Must restore DPTR
 	mov	r4, #8			; Subsequent tiles will always have 8 pixels
 	djnz	r5, 2$			; Next tile
 	ret
 
 	; 4-color mode
-
 3$:
-	anl	a, #0x78		; Mask off four palette-select bits
-	mov	r3, a			; Use directly as palette base address
-	mov	_DPS, #1		; Now switch to DPTR1. (DPTR is used only for the tile map)
 
-	clr 	a			; Grab first tile bitmap byte
-	movc	a, @a+dptr
-	mov	r1, a			;    Store in Plane 0 register
 	mov	a, #2			; Offset by one tile (Undefined across 128-tile boundaries)
 	movc	a, @a+dptr		; Grab second bitmap byte
 	mov	r2, a			;    Store in Plane 1 register
+	mov	psw, #(GFX_BANK << 3)
 
-	mov	dptr, #_rom_palettes	; Point to the ROM palette array
+4$:
+	mov	a, ar2			; Shift out LSB on Plane 1
+	rrc	a
+	mov	ar2, a
+	jc	9$
 
-4$:					; Loop over pixels
+	mov	a, ar1			; Plane 1 = 0, test Plane 0
+	rrc	a
+	mov	ar1, a
+	jc	10$
+	PIXEL_FROM_REGS(r0,r1)
+	djnz	ar4, 4$
+	sjmp	8$
+10$:	PIXEL_FROM_REGS(r2,r3)
+	djnz	ar4, 4$
+	sjmp	8$
 
-	mov	a, r2			; Calculate palette offset from shift register
-	rrc	a  			;    Shift out LSB
-	mov	r2, a
-	clr	a
-	addc	a, #0			;    Index in C -> a
-	mov	r0, a
-
-	mov	a, r1
-	rrc	a  			;    Shift out LSB
-	mov	r1, a
-	mov	a, r0
-	rlc	a			;    Shift in LSB
-	orl	a, r3			;    Palette base
-
-	VM_BG0_ROM_PIXEL()
-
-	djnz	r4, 4$			; Next bit
-	sjmp	5$
+9$:
+	mov	a, ar1			; Plane 1 = 1, test Plane 0
+	rrc	a
+	mov	ar1, a
+	jc	12$
+	PIXEL_FROM_REGS(r4,r5)
+	djnz	ar4, 4$
+	sjmp	8$
+12$:	PIXEL_FROM_REGS(r6,r7)
+	djnz	ar4, 4$
+	sjmp	8$
 
     __endasm ;
 }
