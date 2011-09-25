@@ -748,7 +748,8 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 13$:
 	mov	a, r1
 	mov	psw, #(GFX_BANK << 3)
-	mov	BUS_PORT, r0
+	mov	BUS_PORT, r0		; Default to index 0
+	jz	14$			; Blank-tile loop
 
 	rrc	a			; Index 0 ladder
 	jc	30$
@@ -775,6 +776,8 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 	jc	37$
 27$:	ASM_ADDR_INC4()
 	ljmp	8$
+
+14$:	ljmp	15$			; Longer jump to blank-tile loop
 
 30$:	PIXEL_FROM_REGS(r2,r3)		; Index 1 ladder
 	rrc	a
@@ -814,6 +817,16 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 	ljmp	26$
 47$:	mov	BUS_PORT, r0
 	ljmp	27$
+
+15$:	ASM_ADDR_INC4()			; Blank byte, no comparisons
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ljmp	8$
 
     __endasm ;
 }
