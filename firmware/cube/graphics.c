@@ -671,32 +671,20 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 	; Bit unpacking loop
 
 	mov	a, r0			; Mode bit:
-	jb	acc.3, 3$		;    Are we using 4-color mode?
-
-	; 2-color loop
-
-	mov	a, r1
-	mov	psw, #(GFX_BANK << 3)
-
-1$:
-	rrc	a
-	jc	7$
-	PIXEL_FROM_REGS(r0,r1)
-	djnz	ar4, 1$
-	sjmp	8$
-7$:	PIXEL_FROM_REGS(r2,r3)
-	djnz	ar4, 1$
+	jnb	acc.3, 13$		;    Are we using 2-color mode?
+	sjmp	3$			;    4-color mode
+	
 8$:
-
 	mov	psw, #0			; Restore bank
 	mov	_DPS, #0		; Must restore DPTR
 	mov	r4, #8			; Subsequent tiles will always have 8 pixels
 	djnz	r5, 2$			; Next tile
 	ret
 
-	; 4-color mode
-3$:
 
+	; ---- 4-color mode
+
+3$:
 	mov	a, #2			; Offset by one tile (Undefined across 128-tile boundaries)
 	movc	a, @a+dptr		; Grab second bitmap byte
 	mov	r2, a			;    Store in Plane 1 register
@@ -730,6 +718,63 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 12$:	PIXEL_FROM_REGS(r6,r7)
 	djnz	ar4, 4$
 	sjmp	8$
+
+	; ---- 2-color loop (unrolled)
+
+13$:
+	mov	a, r1
+	mov	psw, #(GFX_BANK << 3)
+
+	rrc	a			; Index 0 ladder
+	jc	30$
+	PIXEL_FROM_REGS(r0,r1)
+	rrc	a
+	jc	31$
+21$:	PIXEL_FROM_REGS(r0,r1)
+	rrc	a
+	jc	32$
+22$:	PIXEL_FROM_REGS(r0,r1)
+	rrc	a
+	jc	33$
+23$:	PIXEL_FROM_REGS(r0,r1)
+	rrc	a
+	jc	34$
+24$:	PIXEL_FROM_REGS(r0,r1)
+	rrc	a
+	jc	35$
+25$:	PIXEL_FROM_REGS(r0,r1)
+	rrc	a
+	jc	36$
+26$:	PIXEL_FROM_REGS(r0,r1)
+	rrc	a
+	jc	37$
+27$:	PIXEL_FROM_REGS(r0,r1)
+	ljmp	8$
+
+30$:	PIXEL_FROM_REGS(r2,r3)		; Index 1 ladder
+	rrc	a
+	jnc	21$
+31$:	PIXEL_FROM_REGS(r2,r3)
+	rrc	a
+	jnc	22$
+32$:	PIXEL_FROM_REGS(r2,r3)
+	rrc	a
+	jnc	23$
+33$:	PIXEL_FROM_REGS(r2,r3)
+	rrc	a
+	jnc	24$
+34$:	PIXEL_FROM_REGS(r2,r3)
+	rrc	a
+	jnc	25$
+35$:	PIXEL_FROM_REGS(r2,r3)
+	rrc	a
+	jnc	26$
+36$:	PIXEL_FROM_REGS(r2,r3)
+	rrc	a
+	jnc	27$
+37$:	PIXEL_FROM_REGS(r2,r3)
+	ljmp	8$
+
 
     __endasm ;
 }
