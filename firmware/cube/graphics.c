@@ -54,8 +54,9 @@
     __asm inc	ADDR_PORT					__endasm; \
     __asm
 
-// Assembly macro wrapper for ADDR_INC4
+// Assembly macro wrapper for ADDR_INC
 #define ASM_ADDR_INC4()	  __endasm; ADDR_INC4(); __asm
+#define ASM_ADDR_INC32()  __endasm; ADDR_INC32(); __asm
 
 // Load a 16-bit tile address from DPTR without incrementing
 #pragma sdcc_hash +
@@ -590,11 +591,11 @@ static void vm_bg0(void)
  * Registers, main bank:
  *
  *   r0: Scratch
- *   r1: Plane 0 shift register
+ *   r1: X wrap counter
  *   r2: Plane 1 shift register
  *   r3: Palette base
  *   r4: Pixel loop
- *   r5: Tile loop
+ *   r5: Tile loop / Pixel skip count
  *   r6: Byte/line DPL
  *   r7: Byte/line DPH
  *
@@ -602,7 +603,7 @@ static void vm_bg0(void)
  * It must be reloaded any time r3 is changed:
  *
  *   r0: Color 0, LSB/MSB
- *   r1: (spare)
+ *   r1: Plane 0 shift register
  *   r2: Color 1, LSB
  *   r3: Color 1, MSB
  *   r4: Color 2, LSB
@@ -615,7 +616,7 @@ static void vm_bg0(void)
 extern __code uint8_t rom_palettes[];
 extern __code uint8_t rom_tiles[];
 
-static void vm_bg0_rom_tile(void) __naked __using(GFX_BANK)
+static void vm_bg0_rom_next_tile(void) __naked __using(GFX_BANK)
 {
     /*
      * Load the next single tile from BG0. This sets up
@@ -643,6 +644,15 @@ static void vm_bg0_rom_tile(void) __naked __using(GFX_BANK)
 	anl	7, #0xF9		; Combine with line-index and base address
 	orl	7, a
 
+	djnz	r1, 2$			; X wrap check
+	mov	a, dpl
+	add	a, #(-RF_VRAM_STRIDE*2)
+	mov	dpl, a
+	mov	a, dph
+	addc	a, #((-RF_VRAM_STRIDE*2) >> 8)
+	mov	dph, a
+2$:
+
 	mov	_DPS, #1		; Switch to DPTR1. (DPTR is used only for the tile map)
 
 	; Load the palette, only if it has changed since the last tile.
@@ -668,17 +678,22 @@ static void vm_bg0_rom_tile(void) __naked __using(GFX_BANK)
     __endasm ; 
 }
 
-static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
+static void vm_bg0_rom_tiles_fast(void) __naked __using(GFX_BANK)
 {
+    /*
+     * Fast burst of whole tiles, with tile count in r5.
+     *
+     * This handles the bulk of the frame rendering (everything but
+     * initial and final partial-tiles), so it's where the heavy duty
+     * optimizations are made.
+     */
 
     __asm
-
-	mov	r3, #0xFF		; Init with invalid palette base, force first load
 
 	; Tile loop
 2$:
 
-	lcall	_vm_bg0_rom_tile
+	lcall	_vm_bg0_rom_next_tile
 	mov	psw, #0
 	mov	_DPL1, r6
 	mov	_DPH1, r7
@@ -687,7 +702,7 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 
 	clr 	a			; Grab tile bitmap byte
 	movc	a, @a+dptr
-	mov	r1, a			;    Store in Plane 0 register
+	mov	(GFX_BANK*8+1), a	;    Store in Plane 0 register
 
 	; Bit unpacking loop
 
@@ -698,7 +713,6 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 8$:
 	mov	psw, #0			; Restore bank
 	mov	_DPS, #0		; Must restore DPTR
-	mov	r4, #8			; Subsequent tiles will always have 8 pixels
 	djnz	r5, 2$			; Next tile
 	ret
 
@@ -708,6 +722,7 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 	mov	a, #2			; Offset by one tile (Undefined across 128-tile boundaries)
 	movc	a, @a+dptr		; Grab second bitmap byte
 	mov	r2, a			;    Store in Plane 1 register
+	mov	r4, #8			; Loop over 8 bytes
 	mov	psw, #(GFX_BANK << 3)
 
 4$:
@@ -716,9 +731,9 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 	mov	ar2, a
 	jc	9$
 
-	mov	a, ar1			; Plane 1 = 0, test Plane 0
+	mov	a, r1			; Plane 1 = 0, test Plane 0
 	rrc	a
-	mov	ar1, a
+	mov	r1, a
 	jc	10$
 	PIXEL_FROM_REG(r0)
 	djnz	ar4, 4$
@@ -728,9 +743,9 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 	sjmp	8$
 
 9$:
-	mov	a, ar1			; Plane 1 = 1, test Plane 0
+	mov	a, r1			; Plane 1 = 1, test Plane 0
 	rrc	a
-	mov	ar1, a
+	mov	r1, a
 	jc	12$
 	PIXEL_FROM_REGS(r4,r5)
 	djnz	ar4, 4$
@@ -746,8 +761,8 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 	; BUS_PORT at all, unless we hit a '1' bit.
 
 13$:
-	mov	a, r1
 	mov	psw, #(GFX_BANK << 3)
+	mov	a, r1
 	mov	BUS_PORT, r0		; Default to index 0
 	jz	14$			; Blank-tile loop
 
@@ -818,15 +833,106 @@ static void vm_bg0_rom_tiles(void) __naked __using(GFX_BANK)
 47$:	mov	BUS_PORT, r0
 	ljmp	27$
 
-15$:	ASM_ADDR_INC4()			; Blank byte, no comparisons
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
+15$:	ASM_ADDR_INC32()		; Blank byte, no comparisons
 	ljmp	8$
+
+    __endasm ;
+}
+
+static void vm_bg0_rom_tile_partial(void) __naked __using(GFX_BANK)
+{
+    /*
+     * Output a single tile. Skips the first r5 bits, then outputs r4 bits.
+     * r5 may be zero, r4 must not be.
+     *
+     * This is only used for at most two tiles per line.
+     */
+
+    __asm
+
+	lcall	_vm_bg0_rom_next_tile
+	mov	psw, #0
+	mov	_DPL1, r6
+	mov	_DPH1, r7
+
+	clr 	a			; Grab tile bitmap byte
+	movc	a, @a+dptr
+	mov	(GFX_BANK*8+1), a	;    Store in Plane 0 register
+
+	mov	a, #2			; Offset by one tile (Undefined across 128-tile boundaries)
+	movc	a, @a+dptr		; Grab second bitmap byte
+	mov	r2, a			;    Store in Plane 1 register
+
+11$:	cjne	r5, #0, 10$		; Bit skip loop
+
+	mov	a, r0			; Mode bit:
+	mov	psw, #(GFX_BANK << 3)	;    Switch to GFX_BANK on our way out...
+	jb	acc.3, 4$		;    Are we using 4-color mode?
+	
+	; ---- 2-color mode
+
+7$:
+	mov	a, r1			; Plane 1 = 0, test Plane 0
+	rrc	a
+	mov	r1, a
+	jc	8$
+	PIXEL_FROM_REG(r0)
+	djnz	ar4, 7$
+	sjmp	5$
+8$:	PIXEL_FROM_REGS(r2,r3)
+	djnz	ar4, 7$
+
+	; ---- Cleanup
+
+5$:
+	mov	psw, #0			; Restore bank
+	mov	_DPS, #0		; Must restore DPTR
+	ret
+
+	; ---- Bottom half of bit skip loop
+
+10$:	dec    r5
+
+	mov    a, (GFX_BANK*8+1)	; Plane 0
+	rr     a
+	mov    (GFX_BANK*8+1), a
+
+	mov    a, r2			; Plane 1
+	rr     a
+	mov    r2, a
+
+	sjmp   11$
+
+	; ---- 4-color mode
+
+4$:
+	mov	a, ar2			; Shift out LSB on Plane 1
+	rrc	a
+	mov	ar2, a
+	jc	2$
+
+	mov	a, r1			; Plane 1 = 0, test Plane 0
+	rrc	a
+	mov	r1, a
+	jc	3$
+	PIXEL_FROM_REG(r0)
+	djnz	ar4, 4$
+	sjmp	5$
+3$:	PIXEL_FROM_REGS(r2,r3)
+	djnz	ar4, 4$
+	sjmp	5$
+
+2$:
+	mov	a, r1			; Plane 1 = 1, test Plane 0
+	rrc	a
+	mov	r1, a
+	jc	6$
+	PIXEL_FROM_REGS(r4,r5)
+	djnz	ar4, 4$
+	sjmp	5$
+6$:	PIXEL_FROM_REGS(r6,r7)
+	djnz	ar4, 4$
+	sjmp	5$
 
     __endasm ;
 }
@@ -835,7 +941,23 @@ static void vm_bg0_rom_line(void)
 {
     LCD_WRITE_BEGIN();
 
+    /*
+     * The main BG0 code keeps track of the start address in the map,
+     * updating it for each line. During this function, we keep the source
+     * address in DPTR at all times.
+     */
+
     DPTR = y_bg0_map;
+
+    /*
+     * Reset the palette cache, by setting an invalid palette base address.
+     * This will never match a tile's actual palette base, so we'll reload
+     * on the first tile.
+     */
+
+    __asm
+	mov	r3, #0xFF
+    __endasm ;
 
     /*
      * Set up per-line DPTR values. The three useful bits from
@@ -871,32 +993,33 @@ static void vm_bg0_rom_line(void)
 	mov	r7, a
     __endasm ;
 
+    /*
+     * Segment the line into a fast full-tile burst, and up to two slower partial tiles.
+     */
+
     __asm
-	mov	r4, #8
-	mov	r5, #16
-	lcall	_vm_bg0_rom_tiles
+
+	; First tile, may be skipping up to 7 pixels from the beginning
+
+	mov	r4, _x_bg0_first_w
+	mov	r5, _x_bg0_last_w
+	lcall	_vm_bg0_rom_tile_partial
+
+	; Always have a run of 15 full tiles
+
+	mov	r5, #15
+	lcall	_vm_bg0_rom_tiles_fast
+
+	; May have a final partial tile
+
+	mov	a, _x_bg0_last_w
+	jz	1$
+	mov	r4, a
+	mov	r5, #0
+	lcall	_vm_bg0_rom_tile_partial
+1$:
+
     __endasm ;
-
-/*
-    ADDR_FROM_DPTR_INC();
-    BG0_WRAP_CHECK();
-    ADDR_PORT = y_bg0_addr_l + x_bg0_first_addr;
-    PIXEL_BURST(x_bg0_first_w);
-
-    do {
-	ADDR_FROM_DPTR_INC();
-	BG0_WRAP_CHECK();
-	ADDR_PORT = y_bg0_addr_l;
-	ADDR_INC32();
-    } while (--x);
-
-    if (x_bg0_last_w) {
-	ADDR_FROM_DPTR_INC();
-	BG0_WRAP_CHECK();
-	ADDR_PORT = y_bg0_addr_l;
-	PIXEL_BURST(x_bg0_last_w);
-    }
-*/
 
     LCD_WRITE_END();
     CTRL_PORT = CTRL_IDLE;
