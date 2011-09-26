@@ -16,8 +16,11 @@ static Cube cube(0);
 static void showMonster(const MonsterData *m)
 {
     // XXX: Waiting for a real compare-and-copy syscall
-    for (unsigned i = 0; i < sizeof *m / 2; i++)
+    for (unsigned i = 0; i < 256; i++)
 	cube.vbuf.poke(i, ((uint16_t *)m->fb)[i]);
+
+    for (unsigned i = 0; i < 16; i++)
+	cube.vbuf.poke(i + 384, ((uint16_t *)m->fb)[i + 256]);
 
     cube.vbuf.unlock();
 }
