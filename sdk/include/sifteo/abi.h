@@ -242,7 +242,8 @@ struct _SYSEventVectors {
     void (*cubeLost)(_SYSCubeID cid);
     void (*assetDone)(_SYSCubeID cid);
     void (*accelChange)(_SYSCubeID cid);
-    void *reserved[_SYS_MAX_VECTORS - 3];
+
+    void *reserved[_SYS_MAX_VECTORS - 4];
 };
 
 extern struct _SYSEventVectors _SYS_vectors;
