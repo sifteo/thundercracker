@@ -116,14 +116,17 @@ static void vm_solid(void)
     LCD_WRITE_BEGIN();
 
     __asm
-	mov	dptr, #_SYS_VA_COLOR
+	mov	dptr, #_SYS_VA_NUM_LINES
+	movx	a, @dptr
+	mov	r1, a
+
+	mov	dptr, #_SYS_VA_COLORMAP
 	movx	a, @dptr
 	mov	r0, a
 	inc	dptr
 	movx	a, @dptr
 
-	mov	r1, #64
-1$:	mov	r2, #0
+1$:	mov	r2, #LCD_WIDTH
 2$:
 
         PIXEL_FROM_REGS(r0, a)
@@ -145,81 +148,84 @@ static void vm_solid(void)
 /*
  * 16-color 32x32 framebuffer mode.
  *
+ * 16-entry colormap, 16 bytes per line.
+ *
  * To support fast color lookups without copying the whole LUT into
  * internal memory, we use both DPTRs here.
  */
 
-static void vm_fb32_pixel(void) __naked {
-    /*
-     * Draw four pixels of the same color, from the LUT index at 'a'.
-     * Trashes only r0 and a. Assumes DPH1 is already pointed at the colormap.
-     */
-
-    __asm
-	rl	a
-	mov	_DPL1, a
-
-	mov	_DPS, #1
-	movx	a, @dptr
-	mov	r0, a
-	inc	dptr
-	movx	a, @dptr
-	mov	_DPS, #0
-
-    	PIXEL_FROM_REGS(r0, a)
-	PIXEL_FROM_REGS(r0, a)
-	PIXEL_FROM_REGS(r0, a)
-	PIXEL_FROM_REGS(r0, a)
-
-	ret
-    __endasm;
-}
-
-void vm_fb32(void)
+void vm_fb32_line(uint16_t src)
 {
-    lcd_begin_frame();
-    LCD_WRITE_BEGIN();
-
+    src = src;
     __asm
 	mov	_DPH1, #(_SYS_VA_COLORMAP >> 8)
 	
-	mov	r1, #0		; Loop over 2 banks in DPH
-1$:	mov	r2, #0		; Loop over 16 framebuffer lines per bank
-2$:	mov	r3, #4		; Loop over 4 display lines per framebuffer line
-3$:	mov	DPH, r1
-	mov	DPL, r2
 	mov	r4, #16		; Loop over 16 horizontal bytes per line
 4$:
 
 	movx	a, @dptr
 	inc	dptr
 	mov	r5, a
+	mov	_DPS, #1
 
-	anl	a, #0xF		; Pixel from low nybble
-	lcall	_vm_fb32_pixel
+	; Low nybble
 
-	mov	a, r5		; Pixel from high nybble
+	anl	a, #0xF
+	rl	a
+	mov	_DPL1, a
+	movx	a, @dptr
+	mov	r0, a
+	inc	dptr
+	movx	a, @dptr
+
+    	PIXEL_FROM_REGS(r0, a)
+	PIXEL_FROM_REGS(r0, a)
+	PIXEL_FROM_REGS(r0, a)
+	PIXEL_FROM_REGS(r0, a)
+
+	; High nybble
+
+	mov	a, r5
 	anl	a, #0xF0
 	swap	a
-	lcall	_vm_fb32_pixel
+	rl	a
+	mov	_DPL1, a
+	movx	a, @dptr
+	mov	r0, a
+	inc	dptr
+	movx	a, @dptr
 
+    	PIXEL_FROM_REGS(r0, a)
+	PIXEL_FROM_REGS(r0, a)
+	PIXEL_FROM_REGS(r0, a)
+	PIXEL_FROM_REGS(r0, a)
+
+	mov	_DPS, #0
 	djnz	r4, 4$		; Next byte
-	djnz	r3, 3$		; Next line
-
-	mov	a, r2		; Next framebuffer line
-	add	a, #0x10
-	mov	r2, a
-	jnz	2$
-
-	mov	a, r1		; Next DPH bank
-	jnz	5$
-	inc	r1
-	sjmp	1$
-5$:
 
     __endasm ;
 
-    LCD_WRITE_END();
+}
+
+static void vm_fb32(void)
+{
+    uint8_t y = vram.num_lines >> 2;
+    uint16_t src = 0;
+
+    lcd_begin_frame();
+
+    do {
+	LCD_WRITE_BEGIN();
+	vm_fb32_line(src);
+	vm_fb32_line(src);
+	vm_fb32_line(src);
+	vm_fb32_line(src);
+	src += 16;
+	LCD_WRITE_END();
+
+	flash_handle_fifo();
+    } while (--y);    
+
     lcd_end_frame();
     MODE_RETURN();
 }
@@ -231,16 +237,18 @@ void vm_fb32(void)
 
 /*
  * 2-color 64x64 framebuffer mode.
+ *
+ * Two-entry colormap, 8 bytes per line.
  */
 
-void vm_fb64(void)
+void vm_fb64_line(uint16_t ptr)
 {
-    lcd_begin_frame();
-    LCD_WRITE_BEGIN();
-
+    ptr = ptr;
     __asm
+
 	; Copy colormap[0] and colormap[1] to r4-7
 
+	mov	_DPS, #1
 	mov	dptr, #_SYS_VA_COLORMAP
 	movx	a, @dptr
 	mov	r4, a
@@ -253,12 +261,8 @@ void vm_fb64(void)
 	inc	dptr
 	movx	a, @dptr
 	mov	r7, a
+	mov	_DPS, #0
 
-	mov	_DPH1, #0	; Loop over two banks	
-1$:	mov	r0, #0		; Loop over 32 framebuffer lines per bank
-2$:	mov	r1, #2		; Loop over 2 screen lines per framebuffer line
-3$:	mov	DPH, _DPH1
-	mov	DPL, r0
 	mov	r2, #8		; Loop over 8 horizontal bytes per line
 4$:	movx	a, @dptr
 	inc	dptr
@@ -270,29 +274,121 @@ void vm_fb64(void)
 	PIXEL_FROM_REGS(r4, r5)
 	djnz	r3, 5$		; Next pixel
 	djnz	r2, 4$		; Next byte
-	djnz	r1, 3$		; Next line
-	sjmp	7$		; Next line
+	sjmp	7$
 
 6$:	PIXEL_FROM_REGS(r6, r7)	; colormap[1]
 	PIXEL_FROM_REGS(r6, r7)
 	djnz	r3, 5$		; Next pixel
 	djnz	r2, 4$		; Next byte
-	djnz	r1, 3$		; Next line
 
-7$:	mov	a, r0		; Next framebuffer line
-	add	a, #8
-	mov	r0, a
-	jnz	2$
-
-	mov	a, _DPH1	; Next DPH bank
-	jnz	8$
-	inc	_DPH1
-	sjmp	1$
-8$:
+7$:
 
     __endasm ;
+}
 
-    LCD_WRITE_END();
+
+static void vm_fb64(void)
+{
+    uint8_t y = vram.num_lines >> 1;
+    uint16_t src = 0;
+
+    lcd_begin_frame();
+
+    do {
+        LCD_WRITE_BEGIN();
+	vm_fb64_line(src);
+	vm_fb64_line(src);
+	src += 8;
+        LCD_WRITE_END();
+
+	flash_handle_fifo();
+    } while (--y);    
+
+    lcd_end_frame();
+    MODE_RETURN();
+}
+
+
+/***********************************************************************
+ * _SYS_VM_FB128
+ **********************************************************************/
+
+/*
+ * 2-color 128x48 framebuffer mode.
+ *
+ * Yes, this is too small to fit the screen :)
+ *
+ * If num_lines > 48, this buffer will repeat itself. That effect may
+ * be useful perhaps, but this is actually intended to be used for
+ * split-screen or letterboxed effects, particularly variable-spacing
+ * text.
+ *
+ * Two-entry colormap, 16 bytes per line.
+ */
+
+void vm_fb128_line(uint16_t ptr)
+{
+    ptr = ptr;
+    __asm
+
+	; Copy colormap[0] and colormap[1] to r4-7
+
+	mov	_DPS, #1
+	mov	dptr, #_SYS_VA_COLORMAP
+	movx	a, @dptr
+	mov	r4, a
+	inc	dptr
+	movx	a, @dptr
+	mov	r5, a
+	inc	dptr
+	movx	a, @dptr
+	mov	r6, a
+	inc	dptr
+	movx	a, @dptr
+	mov	r7, a
+	mov	_DPS, #0
+
+	mov	r2, #16		; Loop over 16 horizontal bytes per line
+4$:	movx	a, @dptr
+	inc	dptr
+	mov	r3, #8		; Loop over 8 pixels per byte
+5$:	rrc	a		; Shift out one pixel
+	jc	6$
+
+        PIXEL_FROM_REGS(r4, r5)	; colormap[0]
+	djnz	r3, 5$		; Next pixel
+	djnz	r2, 4$		; Next byte
+	sjmp	7$
+
+6$:	PIXEL_FROM_REGS(r6, r7)	; colormap[1]
+	djnz	r3, 5$		; Next pixel
+	djnz	r2, 4$		; Next byte
+
+7$:
+
+    __endasm ;
+}
+
+
+static void vm_fb128(void)
+{
+    uint8_t y = vram.num_lines;
+    uint16_t src = 0;
+
+    lcd_begin_frame();
+
+    do {
+        LCD_WRITE_BEGIN();
+	vm_fb128_line(src);
+        LCD_WRITE_END();
+
+	src += 16;
+	if ((src >> 8) == (_SYS_VA_COLORMAP >> 8))
+	   src = 0;
+
+	flash_handle_fifo();
+    } while (--y);    
+
     lcd_end_frame();
     MODE_RETURN();
 }
@@ -398,7 +494,7 @@ static void vm_bg0_next(void)
 
 static void vm_bg0(void)
 {
-    uint8_t y = 128;
+    uint8_t y = vram.num_lines;
 
     lcd_begin_frame();
     vm_bg0_setup();
@@ -893,7 +989,7 @@ static void vm_bg0_rom_line(void)
 
 static void vm_bg0_rom(void)
 {
-    uint8_t y = 128;
+    uint8_t y = vram.num_lines;
 
     lcd_begin_frame();
     vm_bg0_setup();
@@ -1104,21 +1200,37 @@ void graphics_render(void) __naked
 	mov	dptr, #2$
 	jmp	@a+dptr
 2$:
-	ljmp	_vm_powerdown
+	ljmp	_vm_powerdown	; 0x00
 	nop
-        ljmp	_vm_bg0_rom
+        ljmp	_vm_bg0_rom	; 0x04
 	nop
-	ljmp	_vm_fb32
+	ljmp	_vm_solid	; 0x08
 	nop
-	ljmp	_vm_fb64
+	ljmp	_vm_fb32	; 0x0c
 	nop
-	ljmp	_vm_solid
+	ljmp	_vm_fb64	; 0x10
 	nop
-	ljmp	_vm_bg0
+	ljmp	_vm_fb128	; 0x14
 	nop
-	ljmp	_vm_bg0_bg1
+	ljmp	_vm_bg0		; 0x18
 	nop
-	ljmp	_vm_bg0_spr_bg1
+	ljmp	_vm_bg0_bg1	; 0x1c
+	nop
+	ljmp	_vm_bg0_spr_bg1	; 0x20
+	nop
+	ljmp	_vm_powerdown	; 0x24 (unused)
+	nop
+	ljmp	_vm_powerdown	; 0x28 (unused)
+	nop
+	ljmp	_vm_powerdown	; 0x2c (unused)
+	nop
+	ljmp	_vm_powerdown	; 0x30 (unused)
+	nop
+	ljmp	_vm_powerdown	; 0x34 (unused)
+	nop
+	ljmp	_vm_powerdown	; 0x38 (unused)
+	nop
+	ljmp	_vm_powerdown	; 0x3c (unused)
 
 3$:	ret
 

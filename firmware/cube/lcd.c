@@ -40,6 +40,7 @@ void lcd_begin_frame()
 {
     uint8_t flags = vram.flags;
     uint8_t mode = vram.mode;
+    uint8_t first_line = vram.first_line;
 
     LCD_WRITE_BEGIN();
     LCD_CMD_MODE();
@@ -59,7 +60,16 @@ void lcd_begin_frame()
     LCD_BYTE(flags & (LCD_MADCTR_MY | LCD_MADCTR_MX | LCD_MADCTR_MV));
     LCD_CMD_MODE();
 
-    // Start writing, at the top of the framebuffer
+    // Set the row address to first_line
+    LCD_BYTE(LCD_CMD_RASET);
+    LCD_DATA_MODE();
+    LCD_BYTE(0);
+    LCD_BYTE(first_line);
+    LCD_BYTE(0);
+    LCD_BYTE(LCD_HEIGHT - 1);
+    LCD_CMD_MODE();
+
+    // Start writing
     LCD_BYTE(LCD_CMD_RAMWR);
 
     LCD_DATA_MODE();

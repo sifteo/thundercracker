@@ -34,6 +34,7 @@ void draw_clear()
 	cjne	a, dph, 1$
     __endasm ;
 
+    vram.num_lines = 128;
     vram.mode = _SYS_VM_BG0_ROM;
     
     /*

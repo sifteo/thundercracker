@@ -63,7 +63,7 @@ static void onAccelChange(_SYSCubeID cid)
     int8_t py = -(state.y >> 4);
     if (px < 0) px += 18*8;
     if (py < 0) py += 18*8;
-    cube.vbuf.poke(0x3fc/2, ((uint8_t)py << 8) | (uint8_t)px);
+    cube.vbuf.poke(0x3fa/2, ((uint8_t)py << 8) | (uint8_t)px);
 
     nextFrame();
     cube.vbuf.unlock();
@@ -92,7 +92,8 @@ void siftmain()
     // XXX: Mode-specific VRAM initialization
     cube.vbuf.init();
     memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
-    cube.vbuf.sys.vram.mode = _SYS_VM_BG0_ROM;
+    cube.vbuf.sys.vram.mode = _SYS_VM_BG0;
+    cube.vbuf.sys.vram.num_lines = 128;
     nextFrame();
     cube.vbuf.unlock();
 
