@@ -69,10 +69,30 @@ class VideoBuffer {
     }
 
     /**
+     * Like poke(), but modifies a single byte. Less efficient, but
+     * sometimes you really do just want to modify one byte.
+     */
+    void pokeb(uint16_t addr, uint8_t byte) {
+	if (sys.vram.bytes[addr] != byte) {
+	    uint16_t addrw = addr >> 1;
+	    lock(addrw);
+	    sys.vram.bytes[addr] = byte;
+	    Atomic::Or(selectCM1(addrw), maskCM1(addrw));
+	}
+    }
+
+    /**
      * Read one word of VRAM
      */
     uint16_t peek(uint16_t addr) const {
 	return sys.vram.words[addr];
+    }
+
+    /**
+     * Read one byte of VRAM
+     */
+    uint8_t peekb(uint16_t addr) const {
+	return sys.vram.bytes[addr];
     }
 
     /**
