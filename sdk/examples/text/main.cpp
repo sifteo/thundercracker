@@ -160,7 +160,10 @@ void siftmain()
     cube.vbuf.sys.vram.colormap[0] = color_lerp(0);
     cube.vbuf.sys.vram.colormap[1] = color_lerp(0);
     cube.vbuf.unlock();
-    flush_frame();
+
+    // XXX: cheesy delay
+    for (unsigned i = 0; i < 100; i++)
+	flush_frame();
 
     /*
      * Now set up a letterboxed 128x48 mode
