@@ -1012,12 +1012,26 @@ static void vm_bg0_rom(void)
 /*
  * Background BG0, plus a BG1 "overlay" which is a smaller-than-screen-sized
  * tile grid that is allocated configurably using a separate bit vector.
+ *
+ * BG1 has some important differences relative to BG0:
+ * 
+ *   - It is screen-sized (16x16) rather than 18x18. BG1 is not intended
+ *     for 'endless' scrolling, like BG0 is.
+ *
+ *   - When panned, it does not wrap at the map edge. Pixels from 128
+ *     to 255 are transparent in both axes, so the overlay can be smoothly
+ *     scrolled into and out of frame.
+ *
+ *   - Tile addresses in BG1 cannot be computed using a simple multiply,
+ *     they must be accumulated by counting '1' bits in the allocation
+ *     bitmap.
  */
 
 void vm_bg0_bg1(void)
 {
     MODE_RETURN();
 }
+
 
 /***********************************************************************
  * _SYS_VM_BG0_SPR_BG1
