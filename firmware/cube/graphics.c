@@ -54,10 +54,6 @@
     __asm inc	ADDR_PORT					__endasm; \
     __asm
 
-// Assembly macro wrapper for ADDR_INC
-#define ASM_ADDR_INC4()	  __endasm; ADDR_INC4(); __asm
-#define ASM_ADDR_INC32()  __endasm; ADDR_INC32(); __asm
-
 // Load a 16-bit tile address from DPTR without incrementing
 #pragma sdcc_hash +
 #define ADDR_FROM_DPTR() {					\
@@ -89,6 +85,12 @@
     __asm inc	dptr						__endasm; \
     __asm inc	dptr						__endasm; \
     }
+
+// Assembly macro wrappers
+#define ASM_ADDR_INC4()			__endasm; ADDR_INC4(); __asm
+#define ASM_ADDR_INC32()		__endasm; ADDR_INC32(); __asm
+#define ASM_ADDR_FROM_DPTR()		__endasm; ADDR_FROM_DPTR(); __asm
+#define ASM_ADDR_FROM_DPTR_INC()	__endasm; ADDR_FROM_DPTR_INC(); __asm
 
 
 /***********************************************************************
@@ -1027,8 +1029,102 @@ static void vm_bg0_rom(void)
  *     bitmap.
  */
 
+/*
+ *   c: Current BG1 tile bit
+ *  r5: Tile count
+ *  r6: BG1 tile bitmap (next)
+ *  r7: BG1 tile bitmap (current)
+ */
+
+#define BG1_NEXT_BIT()			__endasm; \
+    __asm mov	a, r7			__endasm; \
+    __asm rrc	a			__endasm; \
+    __asm mov	r7, a			__endasm; \
+    __asm
+
+
+static void vm_bg0_bg1_line(void) __naked
+{
+    __asm
+
+	mov	r5, #16
+
+	mov	_DPL, _y_bg0_map
+	mov	_DPH, (_y_bg0_map+1)
+
+	mov	_DPL1, #(_SYS_VA_BG1_TILES)
+	mov	_DPH1, #(_SYS_VA_BG1_TILES >> 8)
+	mov	r7, #0x55
+
+	; Tile loop (BG0)
+1$:
+	ASM_ADDR_FROM_DPTR_INC()
+	mov	ADDR_PORT, _y_bg0_addr_l
+
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	jc	3$
+6$:
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+
+	BG1_NEXT_BIT()
+	djnz	r5, 1$
+
+	; Cleanup
+4$:
+	mov	CTRL_PORT, #CTRL_IDLE
+	ret
+
+	; Tile loop (BG1)
+
+2$:
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	jnc	5$
+3$:
+	mov	_DPS, #1
+	ASM_ADDR_FROM_DPTR_INC()
+	mov	ADDR_PORT, _y_bg0_addr_l
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+	ASM_ADDR_INC4()
+
+	BG1_NEXT_BIT()
+	djnz	r5, 2$
+	sjmp	4$
+
+	; Transition (BG1 -> BG0)
+5$:
+	mov	_DPS, #0
+	ASM_ADDR_FROM_DPTR_INC()
+	mov	ADDR_PORT, _y_bg0_addr_l
+	ljmp	6$
+
+    __endasm ;
+}
+
 void vm_bg0_bg1(void)
 {
+    uint8_t y = vram.num_lines;
+
+    lcd_begin_frame();
+    vm_bg0_setup();
+
+    do {
+	vm_bg0_bg1_line();
+	vm_bg0_next();
+	flash_handle_fifo();
+    } while (--y);    
+
+    lcd_end_frame();
     MODE_RETURN();
 }
 

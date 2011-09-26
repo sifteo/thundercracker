@@ -116,7 +116,11 @@ struct _SYSAssetGroup {
 
 // Important VRAM addresses
 
+#define _SYS_VA_BG0_TILES	0x000
+#define _SYS_VA_BG1_TILES	0x288
 #define _SYS_VA_COLORMAP	0x300
+#define _SYS_VA_BG1_BITMAP	0x3a8
+#define _SYS_VA_SPR		0x3c8
 #define _SYS_VA_FIRST_LINE     	0x3fc
 #define _SYS_VA_NUM_LINES      	0x3fd
 #define _SYS_VA_MODE		0x3fe

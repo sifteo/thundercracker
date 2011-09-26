@@ -1,4 +1,4 @@
-SUBDIRS = hello monster text
+SUBDIRS = hello monster text scroller
 
 .PHONY: clean subdirs $(SUBDIRS)
 

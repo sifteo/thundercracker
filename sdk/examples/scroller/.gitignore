@@ -1,0 +1,6 @@
+*~
+*.o
+*.gen.h
+*.gen.cpp
+assets.html
+scroller
