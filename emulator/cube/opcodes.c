@@ -33,6 +33,16 @@
 #include <string.h>
 #include "emu8051.h"
 
+/*
+ * Should we count MOVC source bytes when profiling?
+ *
+ * This isn't really consistent with how the profiler as a whole
+ * works, but it can be useful for visualizing data usage on the
+ * visual profiler. It's kind of a weird option, so feel free to turn
+ * it off if this gets in the way of anything more useful :)
+ */
+#define PROFILE_MOVC
+
 #define BAD_VALUE 0x77
 #define PSW aCPU->mSFR[REG_PSW]
 #define ACC aCPU->mSFR[REG_ACC]
@@ -936,7 +946,13 @@ static int anl_c_bitaddr(struct em8051 *aCPU)
 static int movc_a_indir_a_pc(struct em8051 *aCPU)
 {
     int address = PC + 1 + ACC;
-    ACC = aCPU->mCodeMem[address & (aCPU->mCodeMemSize - 1)];
+    address &= aCPU->mCodeMemSize - 1;
+
+#ifdef PROFILE_MOVC
+    aCPU->mProfilerMem[address].total_cycles++;
+#endif
+
+    ACC = aCPU->mCodeMem[address];
     PC++;
     return 3;
 }
@@ -1067,7 +1083,13 @@ static int mov_bitaddr_c(struct em8051 *aCPU)
 static int movc_a_indir_a_dptr(struct em8051 *aCPU)
 {
     int address = ((aCPU->mSFR[CUR_DPH] << 8) | (aCPU->mSFR[CUR_DPL] << 0)) + ACC;
-    ACC = aCPU->mCodeMem[address & (aCPU->mCodeMemSize - 1)];
+    address &= aCPU->mCodeMemSize - 1;
+
+#ifdef PROFILE_MOVC
+    aCPU->mProfilerMem[address].total_cycles++;
+#endif
+
+    ACC = aCPU->mCodeMem[address];
     PC++;
     return 3;
 }
