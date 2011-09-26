@@ -39,21 +39,20 @@ void main(void)
 
     draw_xy = XY(0,11);
     draw_image(img_battery);
+    draw_xy = XY(1,12);
+    draw_image(img_power);
 
     draw_xy = XY(5,11);
     draw_attr = ATTR_RED;
     draw_image(img_battery);
+    draw_xy = XY(6,12);
+    draw_string("red");
 
-    draw_xy = XY(1,12);
-    draw_attr = ATTR_NONE;
-    draw_image(img_power);
+    draw_xy = XY(14,15);
+    draw_attr = ATTR_GRAY;
+    draw_hex(0xF5);
 
     while (1) {
-	static uint8_t frame;
-	draw_xy = XY(14,15);
-	draw_attr = ATTR_GRAY;
-	draw_hex(frame++);
-
 	flash_handle_fifo();
 	graphics_render();
     }

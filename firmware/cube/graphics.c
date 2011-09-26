@@ -960,6 +960,14 @@ static void vm_bg0_rom_line(void)
     __endasm ;
 
     /*
+     * We keep the wrap counter stored in a register, for fast x-wrap checks.
+     */
+
+    __asm
+        mov	r1, _x_bg0_wrap
+    __endasm ;
+
+    /*
      * Set up per-line DPTR values. The three useful bits from
      * y_bg0_addr_l are kind of sprayed out all over the DPTR word, in
      * an effort to keep the actual tile address bits mapping 1:1
@@ -1014,8 +1022,9 @@ static void vm_bg0_rom_line(void)
 
 	mov	a, _x_bg0_last_w
 	jz	1$
-	mov	r4, a
-	mov	r5, #0
+	inc	r1		; Negate the x-wrap check for this tile
+	mov	r4, a		; Width computed earlier
+	mov	r5, #0		; No skipped bits
 	lcall	_vm_bg0_rom_tile_partial
 1$:
 
