@@ -1,23 +1,4 @@
-CC_SIM = gcc
-CC_STM32 = arm-none-eabi-gcc
-
-SDK_DIR = $(TC_DIR)/sdk
-MASTER_DIR = $(TC_DIR)/firmware/master
-STIR = $(TC_DIR)/stir/stir
-
-ASSETS = assets
-BINS += $(BIN_SIM) $(BIN_STM32)
-CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
-
-CCFLAGS += -Os -g -Wall -Werror -fno-exceptions -I$(SDK_DIR)/include
-CCFLAGS_SIM := $(CCFLAGS)
-CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3
-
-LDFLAGS_SIM :=
-LDFLAGS_STM32 := -Wl,--gc-sections,-u,vector_table -T $(MASTER_DIR)/stm32/target.ld
-
-LIBS_SIM := $(MASTER_DIR)/master-sim.a
-LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
+include $(TC_DIR)/firmware/master/Makefile.defs
 
 all: $(BINS)
 

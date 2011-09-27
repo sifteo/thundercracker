@@ -20,13 +20,14 @@ OBJS_STM32 = \
 	stm32/setup.stm32.o \
 	stm32/radio.stm32.o \
 
-SDK_DIR = ../../sdk
-FIRMWARE_INC = ../include
-
-CDEPS = common/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
+TC_DIR = ../..
+FIRMWARE_INC := ../include
 CCFLAGS += -I$(FIRMWARE_INC) -Icommon
 
-include Makefile.rules
+include Makefile.defs
+
+# Override default CDEPS
+CDEPS := common/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
 
 all: $(BINS)
 
@@ -37,6 +38,12 @@ $(BIN_SIM): $(OBJS_SIM)
 $(BIN_STM32): $(OBJS_STM32)
 	rm -f $@
 	$(AR) r $@ $^
+
+%.sim.o: %.cpp $(CDEPS)
+	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
+
+%.stm32.o: %.cpp $(CDEPS)
+	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
 
 .PHONY: all clean
 
