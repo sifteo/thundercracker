@@ -19,7 +19,7 @@ void lcd_init()
     ADDR_PORT = 0;
     ADDR_DIR = 0;
     CTRL_PORT = CTRL_IDLE;
-    CTRL_DIR = 0x01;
+    CTRL_DIR = CTRL_DIR_VALUE;
 
     // Make sure LCD is asleep. This is the default on powerup.
     lcd_sleep();

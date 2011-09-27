@@ -13,22 +13,23 @@
  * Graphics I/O Ports
  */
 
-#define BUS_PORT	P0
-#define BUS_DIR 	P0DIR
-#define ADDR_PORT	P1
-#define ADDR_DIR	P1DIR
-#define CTRL_PORT	P2
-#define CTRL_DIR 	P2DIR
+#define ADDR_PORT	P0
+#define ADDR_DIR	P0DIR
+#define BUS_PORT	P2
+#define BUS_DIR 	P2DIR
+#define CTRL_PORT	P3
+#define CTRL_DIR 	P3DIR
 
-__sbit __at 0xA0 CTRL_LCD_TE;
+__sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
 
-#define CTRL_LCD_DCX	(1 << 1)
-#define CTRL_LCD_CSX	(1 << 2)
-#define CTRL_FLASH_WE	(1 << 3)
-#define CTRL_FLASH_CE	(1 << 4)
-#define CTRL_FLASH_OE	(1 << 5)
-#define CTRL_FLASH_LAT1	(1 << 6)
-#define CTRL_FLASH_LAT2	(1 << 7)
+#define CTRL_LCD_DCX	(1 << 0)
+#define CTRL_FLASH_LAT1	(1 << 1)
+#define CTRL_FLASH_LAT2	(1 << 2)
+#define CTRL_FLASH_WE	(1 << 5)
+#define CTRL_FLASH_OE	(1 << 6)
+
+#define CTRL_DIR_VALUE  (~(CTRL_LCD_DCX | CTRL_FLASH_LAT1 | CTRL_FLASH_LAT2 | \
+			   CTRL_FLASH_WE | CTRL_FLASH_OE))
 
 #define CTRL_IDLE	(CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_LCD_DCX)
 #define CTRL_FLASH_CMD	(CTRL_FLASH_OE | CTRL_LCD_DCX)

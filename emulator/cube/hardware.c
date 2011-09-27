@@ -15,17 +15,14 @@
  *
  * We're using three 8-bit I/O ports:
  *
- *  P0.7-0   Shared data bus, Flash + LCD
- *  P1.7-1   Flash A6-A0
- *  P1.0     LCD WRX
- *  P2.7     Latch A20-A14 from P1.7-1 on rising edge
- *  P2.6     Latch A13-A7 from P1.7-1 on rising edge
- *  P2.5     Flash OE
- *  P2.4     Flash CE
- *  P2.3     Flash WE
- *  P2.2     LCD CSX
- *  P2.1     LCD DCX
- *  P2.0     LCD TE Input
+ *  P3.6     Flash OE
+ *  P3.5     Flash WE
+ *  P3.2     Latch A20-A14 from P1.7-1 on rising edge
+ *  P3.1     Latch A13-A7 from P1.7-1 on rising edge
+ *  P3.0     LCD DCX
+ *  P2.7-0   Shared data bus, Flash + LCD
+ *  P0.7-1   Flash A6-A0
+ *  P0.0     LCD WRX
  */
 
 #include <stdio.h>
@@ -40,13 +37,21 @@
 #include "network.h"
 #include "adc.h"
 
-#define BUS_PORT	REG_P0
-#define ADDR_PORT	REG_P1
-#define CTRL_PORT	REG_P2
+#define ADDR_PORT	REG_P0
+#define BUS_PORT	REG_P2
+#define CTRL_PORT	REG_P3
 
-#define BUS_PORT_DIR	REG_P0DIR
-#define ADDR_PORT_DIR	REG_P1DIR
-#define CTRL_PORT_DIR	REG_P2DIR
+#define ADDR_PORT_DIR	REG_P0DIR
+#define BUS_PORT_DIR	REG_P2DIR
+#define CTRL_PORT_DIR	REG_P3DIR
+
+#define CTRL_LCD_DCX	(1 << 0)
+#define CTRL_FLASH_LAT1	(1 << 1)
+#define CTRL_FLASH_LAT2	(1 << 2)
+#define CTRL_FLASH_WE	(1 << 5)
+#define CTRL_FLASH_OE	(1 << 6)
+
+#define CTRL_LCD_TE	0	// XXX: TE pin not available in our hardware
 
 static struct {
     uint8_t lat1;
@@ -116,17 +121,17 @@ void hardware_gfx_tick(struct em8051 *cpu)
 
     struct flash_pins flashp = {
 	/* addr    */ addr7 | ((uint32_t)hw.lat1 << 7) | ((uint32_t)hw.lat2 << 14),
-	/* oe      */ ctrl_port & (1 << 5),
-	/* ce      */ ctrl_port & (1 << 4),
-	/* we      */ ctrl_port & (1 << 3),
+	/* oe      */ ctrl_port & CTRL_FLASH_OE,
+	/* ce      */ 0,
+	/* we      */ ctrl_port & CTRL_FLASH_WE,
 	/* data_in */ hw.bus,
     };
 
     struct lcd_pins lcdp = {
-	/* csx     */ ctrl_port & (1 << 2),
-	/* dcx     */ ctrl_port & (1 << 1),
-	/* wrx     */ addr_port & (1 << 0),
-	/* rdx     */ ctrl_port & (1 << 0),
+	/* csx     */ 0,
+	/* dcx     */ ctrl_port & CTRL_LCD_DCX,
+	/* wrx     */ addr_port & 1,
+	/* rdx     */ 0,
 	/* data_in */ hw.bus,
     };
 
@@ -135,8 +140,8 @@ void hardware_gfx_tick(struct em8051 *cpu)
 
     /* Address latch write cycles, triggered by rising edge */
 
-    if ((ctrl_port & 0x40) && !(hw.prev_ctrl_port & 0x40)) hw.lat1 = addr7;
-    if ((ctrl_port & 0x80) && !(hw.prev_ctrl_port & 0x80)) hw.lat2 = addr7;
+    if ((ctrl_port & CTRL_FLASH_LAT1) && !(hw.prev_ctrl_port & CTRL_FLASH_LAT1)) hw.lat1 = addr7;
+    if ((ctrl_port & CTRL_FLASH_LAT2) && !(hw.prev_ctrl_port & CTRL_FLASH_LAT2)) hw.lat2 = addr7;
     hw.prev_ctrl_port = ctrl_port;
 
     /*
@@ -211,9 +216,9 @@ void hardware_tick(struct em8051 *cpu)
 {
     /* Update the LCD Tearing Effect line */
 
-    cpu->mSFR[CTRL_PORT] &= 0xFE;
+    cpu->mSFR[CTRL_PORT] &= ~CTRL_LCD_TE;
     if (lcd_te_tick())
-	cpu->mSFR[CTRL_PORT] |= 0x01;
+	cpu->mSFR[CTRL_PORT] |= CTRL_LCD_TE;
 
     /* Simulate interrupts */
 
