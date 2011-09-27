@@ -1,6 +1,14 @@
 CC_SIM = gcc
 CC_STM32 = arm-none-eabi-gcc
 
+SDK_DIR = $(TC_DIR)/sdk
+MASTER_DIR = $(TC_DIR)/firmware/master
+STIR = $(TC_DIR)/stir/stir
+
+ASSETS = assets
+BINS += $(BIN_SIM) $(BIN_STM32)
+CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
+
 CCFLAGS += -Os -g -Wall -Werror -fno-exceptions -I$(SDK_DIR)/include
 CCFLAGS_SIM := $(CCFLAGS)
 CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3
@@ -11,8 +19,34 @@ LDFLAGS_STM32 := -Wl,--gc-sections,-u,vector_table -T $(MASTER_DIR)/stm32/target
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 
+all: $(BINS)
+
 %.sim.o: %.cpp $(CDEPS)
 	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
 
 %.stm32.o: %.cpp $(CDEPS)
 	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
+
+ocd:
+	openocd -f $(MASTER_DIR)/stm32/openocd.cfg
+
+program: $(BIN_STM32)
+	openocd -f $(MASTER_DIR)/stm32/openocd.cfg \
+		-c init \
+		-c "reset halt" \
+		-c "flash write_image erase $<" \
+		-c "reset run"
+
+$(BIN_SIM): $(OBJS_SIM) $(LIBS_SIM)
+	$(CC_SIM) -o $@ $^ $(LDFLAGS_SIM)
+
+$(BIN_STM32): $(OBJS_STM32) $(LIBS_STM32)
+	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
+
+$(ASSETS).gen.cpp: $(ASSETDEPS)
+	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html
+
+.PHONY: clean all
+
+clean:
+	rm -f $(BINS) *.o $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
