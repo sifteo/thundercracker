@@ -66,7 +66,10 @@ namespace Intrinsic {
 
     static inline uint32_t CLZ(uint32_t r) {
 	// Count leading zeroes. One instruction on ARM.
-	
+
+#ifdef __GNUC__
+	return __builtin_clz(r);
+#else	
 	uint32_t c;
 	for (c = 0; c < 32; c++) {
 	    if (r & 0x80000000)
@@ -75,6 +78,7 @@ namespace Intrinsic {
 		r <<= 1;
 	}
 	return c;
+#endif
     }
 
     static inline uint32_t LZ(uint32_t l) {

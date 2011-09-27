@@ -1,3 +1,7 @@
 *~
 *.o
-text
+*.gen.h
+*.gen.cpp
+assets.html
+*.sim
+*.stm32

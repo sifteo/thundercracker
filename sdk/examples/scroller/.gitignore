@@ -3,4 +3,5 @@
 *.gen.h
 *.gen.cpp
 assets.html
-scroller
+*.sim
+*.stm32

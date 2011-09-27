@@ -34,6 +34,7 @@
 #   include <sys/socket.h>
 #   include <sys/select.h>
 #   include <netinet/in.h>
+#   include <netinet/tcp.h>
 #   include <fcntl.h>
 #   include <netdb.h>
 #   include <unistd.h>
@@ -156,10 +157,8 @@ static void SifteoRadio_tryConnect()
 	setsockopt(self.fd, SOL_SOCKET, SO_NOSIGPIPE, &arg, sizeof arg);
 #endif
 
-#ifdef TCP_NODELAY
 	arg = 1;
 	setsockopt(self.fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
-#endif
     }
 }
 

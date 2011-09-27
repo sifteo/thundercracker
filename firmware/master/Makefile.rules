@@ -1,0 +1,18 @@
+CC_SIM = gcc
+CC_STM32 = arm-none-eabi-gcc
+
+CCFLAGS += -Os -g -Wall -Werror -fno-exceptions -I$(SDK_DIR)/include
+CCFLAGS_SIM := $(CCFLAGS)
+CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3
+
+LDFLAGS_SIM :=
+LDFLAGS_STM32 := -Wl,--gc-sections,-u,vector_table -T $(MASTER_DIR)/stm32/target.ld
+
+LIBS_SIM := $(MASTER_DIR)/master-sim.a
+LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
+
+%.sim.o: %.cpp $(CDEPS)
+	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
+
+%.stm32.o: %.cpp $(CDEPS)
+	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)

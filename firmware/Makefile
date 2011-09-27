@@ -10,7 +10,6 @@ cube.hex:
 
 master.a:
 	@make -C master
-	@cp master/master.a master.a
 
 clean:
 	@make -C cube clean

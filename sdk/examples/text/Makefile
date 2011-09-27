@@ -1,21 +1,28 @@
 SDK_DIR = ../..
-MASTER_LIB = ../../../firmware/master.a
+MASTER_DIR = ../../../firmware/master
 
-BIN = text
-OBJS = main.o
+BIN_SIM = text.sim
+OBJS_SIM = main.sim.o
+LIBS_SIM = $(MASTER_DIR)/master-sim.a
 
-CDEPS = $(SDK_DIR)/include/sifteo/*.h
+BIN_STM32 = text.stm32
+OBJS_STM32 = main.stm32.o
+LIBS_STM32 = $(MASTER_DIR)/master-stm32.a
 
-CCFLAGS += -Os -g -Werror -I$(SDK_DIR)/include
-LDFLAGS += -g
+BINS = $(BIN_SIM) $(BIN_STM32)
+CDEPS = $(SDK_DIR)/include/sifteo/*.h *.h
 
-$(BIN): $(OBJS) $(MASTER_LIB)
-	$(CC) -o $@ $^ $(LDFLAGS)
+include $(MASTER_DIR)/Makefile.rules
 
-%.o: %.cpp $(CDEPS)
-	$(CC) -c -o $@ $< $(CCFLAGS)
+all: $(BINS)
 
-.PHONY: clean
+$(BIN_SIM): $(OBJS_SIM) $(LIBS_SIM)
+	$(CC_SIM) -o $@ $^ $(LDFLAGS_SIM)
+
+$(BIN_STM32): $(OBJS_STM32) $(LIBS_STM32)
+	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
+
+.PHONY: clean all
 
 clean:
-	rm -f $(BIN) *.o
+	rm -f $(BINS) *.o

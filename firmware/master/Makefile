@@ -1,28 +1,44 @@
-BIN = master.a
+BIN_SIM = master-sim.a
+BIN_STM32 = master-stm32.a
+BINS = $(BIN_SIM) $(BIN_STM32)
+
+OBJS_SIM = \
+	common/syscall.sim.o \
+	common/runtime.sim.o \
+	common/radio.sim.o \
+	common/cube.sim.o \
+	common/cubecodec.sim.o \
+	sim/radio_nethub.sim.o \
+	sim/main.sim.o \
+
+OBJS_STM32 = \
+	common/syscall.stm32.o \
+	common/runtime.stm32.o \
+	common/radio.stm32.o \
+	common/cube.stm32.o \
+	common/cubecodec.stm32.o \
+	stm32/setup.stm32.o \
+	stm32/radio.stm32.o \
+
 SDK_DIR = ../../sdk
-
-OBJS = \
-	common/syscall.o \
-	common/runtime.o \
-	common/radio.o \
-	common/cube.o \
-	common/cubecodec.o \
-	sim/radio_nethub.o \
-	sim/main.o \
-
 FIRMWARE_INC = ../include
+
 CDEPS = common/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
+CCFLAGS += -I$(FIRMWARE_INC) -Icommon
 
-CCFLAGS += -Os -g -Werror -I$(SDK_DIR)/include -I$(FIRMWARE_INC) -Icommon
+include Makefile.rules
 
-$(BIN): $(OBJS)
+all: $(BINS)
+
+$(BIN_SIM): $(OBJS_SIM)
 	rm -f $@
-	$(AR) r $@ $(OBJS)
+	$(AR) r $@ $^
 
-%.o: %.cpp $(CDEPS)
-	$(CC) -c -o $@ $< $(CCFLAGS)
+$(BIN_STM32): $(OBJS_STM32)
+	rm -f $@
+	$(AR) r $@ $^
 
-.PHONY: clean
+.PHONY: all clean
 
 clean:
-	rm -f $(BIN) $(OBJS)
+	rm -f $(BINS) $(OBJS_SIM) $(OBJS_STM32)

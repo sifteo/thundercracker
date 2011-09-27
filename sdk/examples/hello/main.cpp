@@ -71,8 +71,6 @@ static void onAccelChange(_SYSCubeID cid)
 
 static void onAssetDone(_SYSCubeID cid)
 {
-    printf("Asset loading done\n");
-
     font_printf(2, 2, "Hello World!");
 
     // XXX: Drawing the logo manually, since there is no blit primitive yet
@@ -102,7 +100,6 @@ void siftmain()
     // XXX: Wait for cube to connect here...
 
     // Download assets, and continue when they're done.
-    printf("Loading assets...\n");
     _SYS_vectors.assetDone = onAssetDone;
     cube.loadAssets(GameAssets);
 
