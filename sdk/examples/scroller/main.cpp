@@ -35,10 +35,11 @@ void siftmain()
     for (unsigned y = 0; y < Overlay.height; y++)
 	for (unsigned x = 0; x < Overlay.width; x++)
 	    poke_index(offsetof(_SYSVideoRAM, bg1_tiles)/2 +
-		       x + y*16, Overlay.tiles[x + y*Overlay.width]);
+		       x + y*Overlay.width,
+		       Overlay.tiles[x + y*Overlay.width]);
 
-    for (unsigned y = 1; y < 11; y++)
-	cube.vbuf.sys.vram.bg1_bitmap[y]  = 0x0FF0;
+    for (unsigned y = 0; y < Overlay.height; y++)
+	cube.vbuf.sys.vram.bg1_bitmap[y+2] = ((1 << Overlay.width) - 1) << 4; 
 
     cube.enable();
     cube.loadAssets(GameAssets);

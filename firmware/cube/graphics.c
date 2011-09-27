@@ -56,7 +56,7 @@
 
 // Load a 16-bit tile address from DPTR without incrementing
 #pragma sdcc_hash +
-#define ADDR_FROM_DPTR() {					\
+#define ADDR_FROM_DPTR0() {					\
     __asm movx	a, @dptr					__endasm; \
     __asm mov	ADDR_PORT, a					__endasm; \
     __asm inc	dptr						__endasm; \
@@ -64,6 +64,19 @@
     __asm movx	a, @dptr					__endasm; \
     __asm mov	ADDR_PORT, a					__endasm; \
     __asm dec	dpl						__endasm; \
+    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	__endasm; \
+    }
+
+// Load a 16-bit tile address from DPTR1 without incrementing
+#pragma sdcc_hash +
+#define ADDR_FROM_DPTR1() {					\
+    __asm movx	a, @dptr					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm inc	dptr						__endasm; \
+    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	__endasm; \
+    __asm movx	a, @dptr					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm dec	_DPL1						__endasm; \
     __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	__endasm; \
     }
 
@@ -89,7 +102,9 @@
 // Assembly macro wrappers
 #define ASM_ADDR_INC4()			__endasm; ADDR_INC4(); __asm
 #define ASM_ADDR_INC32()		__endasm; ADDR_INC32(); __asm
-#define ASM_ADDR_FROM_DPTR()		__endasm; ADDR_FROM_DPTR(); __asm
+#define ASM_DPTR_INC2()			__endasm; DPTR_INC2(); __asm
+#define ASM_ADDR_FROM_DPTR0()		__endasm; ADDR_FROM_DPTR0(); __asm
+#define ASM_ADDR_FROM_DPTR1()		__endasm; ADDR_FROM_DPTR1(); __asm
 #define ASM_ADDR_FROM_DPTR_INC()	__endasm; ADDR_FROM_DPTR_INC(); __asm
 
 
@@ -1031,84 +1046,229 @@ static void vm_bg0_rom(void)
 
 /*
  *   c: Current BG1 tile bit
+ *  r0: Scratch
  *  r5: Tile count
  *  r6: BG1 tile bitmap (next)
  *  r7: BG1 tile bitmap (current)
  */
 
-#define BG1_NEXT_BIT()			__endasm; \
-    __asm mov	a, r7			__endasm; \
-    __asm rrc	a			__endasm; \
-    __asm mov	r7, a			__endasm; \
+static uint8_t x_bg1_first_w;		// Width of first displayed background tile, [1, 8]
+static uint8_t x_bg1_last_w;		// Width of first displayed background tile, [0, 7]
+static uint8_t x_bg1_first_addr;	// Low address offset for first displayed tile
+static uint8_t x_bg1_shift;		// Amount to shift bitmap by at the start of the line, plus one
+
+static uint8_t y_bg1_addr_l;		// Low part of tile addresses, inc by 32 each line
+static uint8_t y_bg1_word;		// Low part of bitmap address for this line
+static uint16_t y_bg1_map;		// Map address for the first tile on this line
+
+// Shift the next tile bit into C
+#define BG1_NEXT_BIT()						__endasm; \
+    __asm mov	a, r6						__endasm; \
+    __asm clr	c						__endasm; \
+    __asm rrc   a						__endasm; \
+    __asm mov	r6, a						__endasm; \
+    __asm mov	a, r7						__endasm; \
+    __asm rrc	a						__endasm; \
+    __asm mov	r7, a						__endasm; \
+    __asm
+
+// Load bitmap from globals. If 'a' is zero on exit, no bits are set.
+#define BG1_LOAD_BITS()						__endasm; \
+    __asm mov	_DPL, _y_bg1_word				__endasm; \
+    __asm mov	_DPH, #(_SYS_VA_BG1_BITMAP >> 8)		__endasm; \
+    __asm movx	a, @dptr					__endasm; \
+    __asm mov	r7, a						__endasm; \
+    __asm inc	dptr						__endasm; \
+    __asm movx	a, @dptr					__endasm; \
+    __asm mov	r6, a						__endasm; \
+    __asm orl	a, r7						__endasm; \
+    __asm
+
+#define BG0_BG1_LOAD_MAPS()					__endasm; \
+    __asm mov	_DPL, _y_bg0_map				__endasm; \
+    __asm mov	_DPH, (_y_bg0_map+1)				__endasm; \
+    __asm mov	_DPL1, _y_bg1_map				__endasm; \
+    __asm mov	_DPH1, (_y_bg1_map+1)				__endasm; \
+    __asm
+
+#define CHROMA_PREP()						__endasm; \
+    __asm mov	a, #_SYS_CHROMA_KEY				__endasm; \
+    __asm
+
+#define CHROMA_JMP_IF_OPAQUE(lbl)				__endasm; \
+    __asm cjne	a, BUS_PORT, lbl				__endasm; \
+    __asm
+
+// Next BG0 tile
+#define ASM_BG0_NEXT()						__endasm; \
+    __asm BG1_NEXT_BIT()					__endasm; \
+    __asm inc	dptr						__endasm; \
+    __asm inc	dptr						__endasm; \
+    __asm ASM_ADDR_FROM_DPTR0()					__endasm; \
+    __asm mov	ADDR_PORT, _y_bg0_addr_l			__endasm; \
+    __asm
+
+// State transition, BG0 pixel to BG1 pixel, at nonzero X offset
+#define STATE_BG0_TO_BG1(x)					__endasm; \
+    __asm inc	_DPS						__endasm; \
+    __asm ASM_ADDR_FROM_DPTR1()					__endasm; \
+    __asm mov	a, _y_bg1_addr_l				__endasm; \
+    __asm add	a, #((x) * 4)					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm
+
+// State transition, BG0 pixel to BG1 pixel, at zero X offset
+#define STATE_BG0_TO_BG1_0()					__endasm; \
+    __asm inc	_DPS						__endasm; \
+    __asm ASM_ADDR_FROM_DPTR1()					__endasm; \
+    __asm mov	ADDR_PORT, _y_bg1_addr_l			__endasm; \
+    __asm
+
+// State transition, BG1 pixel to BG0 pixel, at nonzero X offset
+#define STATE_BG1_TO_BG0(x)					__endasm; \
+    __asm dec	_DPS						__endasm; \
+    __asm ASM_ADDR_FROM_DPTR0()					__endasm; \
+    __asm mov	a, _y_bg0_addr_l				__endasm; \
+    __asm add	a, #((x) * 4)					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm
+
+// State transition, BG1 pixel to BG0 pixel, at zero X offset
+#define STATE_BG1_TO_BG0_0()					__endasm; \
+    __asm dec	_DPS						__endasm; \
+    __asm ASM_ADDR_FROM_DPTR0()					__endasm; \
+    __asm mov	ADDR_PORT, _y_bg0_addr_l			__endasm; \
     __asm
 
 
-static void vm_bg0_bg1_line(void) __naked
+static void vm_bg0_bg1_tiles_fast_p0(void) __naked
 {
+    /*
+     * Render 'r5' full tiles, with BG0 and BG1 visible.
+     * Handles cases where the panning delta between BG0 and BG1 is zero.
+     *
+     * This is an unrolled state machine, with state ladders for
+     * BG0 pixels and BG1 pixels. Our state vector consists of
+     * layer (BG0/BG1) and X pixel. On entry, we must already be set
+     * up for the first pixel of BG0.
+     */
+
     __asm
 
-	mov	r5, #16
-
-	mov	_DPL, _y_bg0_map
-	mov	_DPH, (_y_bg0_map+1)
-
-	mov	_DPL1, #(_SYS_VA_BG1_TILES)
-	mov	_DPH1, #(_SYS_VA_BG1_TILES >> 8)
-	mov	r7, #0x55
-
-	; Tile loop (BG0)
-1$:
-	ASM_ADDR_FROM_DPTR_INC()
-	mov	ADDR_PORT, _y_bg0_addr_l
-
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	jc	3$
-6$:
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-
-	BG1_NEXT_BIT()
+1$:	jc	2$		; Switch to BG1?
+20$:	ASM_ADDR_INC4()		; BG0 Pixel 0
+21$:	ASM_ADDR_INC4()		; BG0 Pixel 1
+22$:	ASM_ADDR_INC4()		; BG0 Pixel 2
+23$:	ASM_ADDR_INC4()		; BG0 Pixel 3
+24$:	ASM_ADDR_INC4()		; BG0 Pixel 4
+25$:	ASM_ADDR_INC4()		; BG0 Pixel 5
+26$:	ASM_ADDR_INC4()		; BG0 Pixel 6
+27$:	ASM_ADDR_INC4()		; BG0 Pixel 7
+28$:	ASM_BG0_NEXT()		; Next BG0 tile
 	djnz	r5, 1$
-
-	; Cleanup
-4$:
-	mov	CTRL_PORT, #CTRL_IDLE
 	ret
 
-	; Tile loop (BG1)
-
-2$:
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	jnc	5$
-3$:
-	mov	_DPS, #1
-	ASM_ADDR_FROM_DPTR_INC()
-	mov	ADDR_PORT, _y_bg0_addr_l
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-	ASM_ADDR_INC4()
-
-	BG1_NEXT_BIT()
-	djnz	r5, 2$
-	sjmp	4$
-
-	; Transition (BG1 -> BG0)
-5$:
-	mov	_DPS, #0
-	ASM_ADDR_FROM_DPTR_INC()
-	mov	ADDR_PORT, _y_bg0_addr_l
-	ljmp	6$
+2$:	STATE_BG0_TO_BG1_0()	; BG0 -> BG1
+30$:	ASM_ADDR_INC4()		; BG1 Pixel 0
+31$:	ASM_ADDR_INC4()		; BG1 Pixel 1
+32$:	ASM_ADDR_INC4()		; BG1 Pixel 2
+33$:	ASM_ADDR_INC4()		; BG1 Pixel 3
+34$:	ASM_ADDR_INC4()		; BG1 Pixel 4
+35$:	ASM_ADDR_INC4()		; BG1 Pixel 5
+36$:	ASM_ADDR_INC4()		; BG1 Pixel 6
+37$:	ASM_ADDR_INC4()		; BG1 Pixel 7
+	ASM_DPTR_INC2()		; Next BG1 tile
+	dec	_DPS		; BG1 -> BG0
+	ljmp	28$		;   continue with ASM_BG0_NEXT
 
     __endasm ;
+}
+
+static void vm_bg0_bg1_line(void)
+{
+    /*
+     * Scanline renderer: BG0 and BG1 visible.
+     */
+
+    __asm
+
+	BG1_LOAD_BITS()
+	jnz	1$
+	ljmp	_vm_bg0_line		; No BG1 bits on this line
+1$:					    
+
+	BG0_BG1_LOAD_MAPS()
+	ASM_ADDR_FROM_DPTR0()
+	mov	ADDR_PORT, _y_bg0_addr_l
+
+	mov	r5, #16
+	lcall	_vm_bg0_bg1_tiles_fast_p0
+
+	mov	CTRL_PORT, #CTRL_IDLE
+
+    __endasm ;
+}
+
+static void vm_bg1_setup(void)
+{
+    /*
+     * Once-per-frame setup for BG1
+     */
+     
+    uint8_t pan_x, pan_y;
+    uint8_t tile_pan_x, tile_pan_y;
+
+    cli();
+    pan_x = vram.bg1_x;
+    pan_y = vram.bg1_y;
+    sti();
+
+    tile_pan_x = pan_x >> 3;
+    tile_pan_y = pan_y >> 3;
+
+    y_bg1_addr_l = pan_y << 5;
+    y_bg1_word = (tile_pan_y << 1) + (_SYS_VA_BG1_BITMAP & 0xFF);
+
+    x_bg1_shift = tile_pan_x + 1;
+    x_bg1_last_w = pan_x & 7;
+    x_bg1_first_w = 8 - x_bg1_last_w;
+    x_bg1_first_addr = (pan_x << 2) & 0x1C;
+
+    /*
+     * XXX: To find the initial value of y_bg1_map, we have to scan
+     * for '1' bits in the bitmap.
+     *
+     * We need to set both y_bg1_map and DPTR1, since we don't know
+     * whether the first line will end up loading DPTR1 or not. If
+     * the first line has no BG1 tiles, we still need to have the
+     * right pointer resident in DPTR1, since vm_bg1_next() will
+     * still try to save it.
+     */
+
+    y_bg1_map = _SYS_VA_BG1_TILES;
+    DPH1 = _SYS_VA_BG1_TILES >> 8;
+    DPL1 = _SYS_VA_BG1_TILES;
+}
+
+static void vm_bg1_next(void)
+{
+    /*
+     * Advance BG1 state to the next line
+     */
+
+    y_bg1_addr_l += 32;
+    if (!y_bg1_addr_l) {
+	y_bg1_word += 2;
+
+	/*
+	 * If we're advancing, save the DPTR1 advancement that we performed
+	 * during this line. Otherwise, it gets discarded at the next line.
+	 */
+	__asm
+	    mov	  _y_bg1_map, _DPL1
+	    mov	  (_y_bg1_map+1), _DPH1
+        __endasm ;
+    }
 }
 
 void vm_bg0_bg1(void)
@@ -1117,10 +1277,13 @@ void vm_bg0_bg1(void)
 
     lcd_begin_frame();
     vm_bg0_setup();
-
+    vm_bg1_setup();
+    
     do {
 	vm_bg0_bg1_line();
+
 	vm_bg0_next();
+	vm_bg1_next();
 	flash_handle_fifo();
     } while (--y);    
 
