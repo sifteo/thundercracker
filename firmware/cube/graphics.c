@@ -398,7 +398,7 @@ static uint16_t y_bg0_map;		// Map address for the first tile on this line
 // Called once per tile, to check for horizontal map wrapping
 #define BG0_WRAP_CHECK() {			  	\
 	if (!--bg0_wrap)				\
-	    DPTR -= RF_VRAM_STRIDE *2;			\
+	    DPTR -= _SYS_VRAM_BG0_WIDTH *2;		\
     }
 
 static void vm_bg0_line(void)
@@ -558,6 +558,35 @@ static void vm_bg0(void)
 extern __code uint8_t rom_palettes[];
 extern __code uint8_t rom_tiles[];
 
+#define ASM_X_WRAP_CHECK(lbl)					__endasm; \
+    __asm djnz	r1, lbl						__endasm; \
+    __asm lcall _vm_bg0_x_wrap_adjust				__endasm; \
+    __asm lbl:							__endasm; \
+    __asm
+
+static void vm_bg0_x_wrap_adjust(void) __naked
+{
+    /*
+     * Common routine to adjust DPTR for BG0 horizontal wrap. This doesn't need to be
+     * fast, since it happens at most once per scanline.
+     */
+
+    __asm
+	push	_DPS
+	mov	_DPS, #0
+
+	mov	a, dpl
+	add	a, #(-_SYS_VRAM_BG0_WIDTH*2)
+	mov	dpl, a
+	mov	a, dph
+	addc	a, #((-_SYS_VRAM_BG0_WIDTH*2) >> 8)
+	mov	dph, a
+
+	pop	_DPS
+	ret
+    __endasm ;
+}
+
 static void vm_bg0_rom_next_tile(void) __naked __using(GFX_BANK)
 {
     /*
@@ -586,14 +615,7 @@ static void vm_bg0_rom_next_tile(void) __naked __using(GFX_BANK)
 	anl	7, #0xF9		; Combine with line-index and base address
 	orl	7, a
 
-	djnz	r1, 2$			; X wrap check
-	mov	a, dpl
-	add	a, #(-RF_VRAM_STRIDE*2)
-	mov	dpl, a
-	mov	a, dph
-	addc	a, #((-RF_VRAM_STRIDE*2) >> 8)
-	mov	dph, a
-2$:
+	ASM_X_WRAP_CHECK(2$)
 
 	mov	_DPS, #1		; Switch to DPTR1. (DPTR is used only for the tile map)
 
@@ -1019,6 +1041,7 @@ static void vm_bg0_rom(void)
 /*
  *   c: Current BG1 tile bit
  *  r0: Scratch
+ *  r1: X wrap counter
  *  r3: BG0 addr low-byte
  *  r4: BG1 addr low-byte
  *  r5: Tile count
@@ -1103,19 +1126,21 @@ static uint16_t y_bg1_map;		// Map address for the first tile on this line
     __asm
 
 // Next BG0 tile (while in BG0 state)
-#define ASM_BG0_NEXT()						__endasm; \
+#define ASM_BG0_NEXT(lbl)					__endasm; \
     __asm inc	dptr						__endasm; \
     __asm inc	dptr						__endasm; \
     __asm ADDR_FROM_DPTR(_DPL)					__endasm; \
     __asm mov	ADDR_PORT, r3					__endasm; \
+    __asm ASM_X_WRAP_CHECK(lbl)					__endasm; \
     __asm
 
 // Next BG0 tile (while in BG1 state)
-#define ASM_BG0_NEXT_FROM_BG1()					__endasm; \
+#define ASM_BG0_NEXT_FROM_BG1(lbl)				__endasm; \
     __asm dec	_DPS						__endasm; \
     __asm inc	dptr						__endasm; \
     __asm inc	dptr						__endasm; \
     __asm inc	_DPS						__endasm; \
+    __asm ASM_X_WRAP_CHECK(lbl)					__endasm; \
     __asm
 
 // State transition, BG0 pixel to BG1 pixel
@@ -1161,6 +1186,9 @@ static void vm_bg0_bg1_tiles_fast_pre(void) __naked
 
 	BG0_BG1_LOAD_MAPS()			; Set up DPTR and DPTR1
 
+	inc	dptr				; Skip first partial BG0 tile
+	inc	dptr
+
 	ADDR_FROM_DPTR(_DPL)			; Start out in BG0 state, at pixel 0
 	mov	ADDR_PORT, r3
 
@@ -1184,7 +1212,7 @@ static void vm_bg0_bg1_tiles_fast_p0(void) __naked
 	ASM_ADDR_INC4()				; BG0 Pixel 6
 	ASM_ADDR_INC4()				; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT()
+11$:	ASM_BG0_NEXT(9$)
 	djnz	r5, 10$
 	ret
 
@@ -1220,7 +1248,7 @@ static void vm_bg0_bg1_tiles_fast_p1(void) __naked
 	ASM_ADDR_INC4()				; BG0 Pixel 6
 	ASM_ADDR_INC4()				; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT()
+11$:	ASM_BG0_NEXT(9$)
 	djnz	r5, 10$
 	ret
 
@@ -1232,7 +1260,7 @@ static void vm_bg0_bg1_tiles_fast_p1(void) __naked
 	CHROMA_BG1_BG0(34$, 44$, 5,4)		; Keyed BG1 pixel 4
 	CHROMA_BG1_BG0(35$, 45$, 6,5)		; Keyed BG1 pixel 5
 	CHROMA_BG1_BG0(36$, 46$, 7,6)		; Keyed BG1 pixel 6
-	ASM_BG0_NEXT_FROM_BG1()			; Next BG0 tile
+	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
 	CHROMA_BG1_BG0(37$, 47$, 0,7)		; Keyed BG1 pixel 7
 	ASM_DPTR_INC2()				; Next BG1 Tile
 	djnz	r5, 13$
@@ -1260,7 +1288,7 @@ static void vm_bg0_bg1_tiles_fast_p2(void) __naked
 	ASM_ADDR_INC4()				; BG0 Pixel 6
 	ASM_ADDR_INC4()				; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT()
+11$:	ASM_BG0_NEXT(9$)
 	djnz	r5, 10$
 	ret
 
@@ -1271,7 +1299,7 @@ static void vm_bg0_bg1_tiles_fast_p2(void) __naked
 	CHROMA_BG1_BG0(33$, 43$, 5,3)		; Keyed BG1 pixel 3
 	CHROMA_BG1_BG0(34$, 44$, 6,4)		; Keyed BG1 pixel 4
 	CHROMA_BG1_BG0(35$, 45$, 7,5)		; Keyed BG1 pixel 5
-	ASM_BG0_NEXT_FROM_BG1()			; Next BG0 tile
+	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
 	CHROMA_BG1_BG0(36$, 46$, 0,6)		; Keyed BG1 pixel 6
 	CHROMA_BG1_BG0(37$, 47$, 1,7)		; Keyed BG1 pixel 7
 	ASM_DPTR_INC2()				; Next BG1 Tile
@@ -1300,7 +1328,7 @@ static void vm_bg0_bg1_tiles_fast_p3(void) __naked
 	ASM_ADDR_INC4()				; BG0 Pixel 6
 	ASM_ADDR_INC4()				; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT()
+11$:	ASM_BG0_NEXT(9$)
 	djnz	r5, 10$
 	ret
 
@@ -1310,7 +1338,7 @@ static void vm_bg0_bg1_tiles_fast_p3(void) __naked
 	CHROMA_BG1_BG0(32$, 42$, 5,2)		; Keyed BG1 pixel 2
 	CHROMA_BG1_BG0(33$, 43$, 6,3)		; Keyed BG1 pixel 3
 	CHROMA_BG1_BG0(34$, 44$, 7,4)		; Keyed BG1 pixel 4
-	ASM_BG0_NEXT_FROM_BG1()			; Next BG0 tile
+	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
 	CHROMA_BG1_BG0(35$, 45$, 0,5)		; Keyed BG1 pixel 5
 	CHROMA_BG1_BG0(36$, 46$, 1,6)		; Keyed BG1 pixel 6
 	CHROMA_BG1_BG0(37$, 47$, 2,7)		; Keyed BG1 pixel 7
@@ -1340,7 +1368,7 @@ static void vm_bg0_bg1_tiles_fast_p4(void) __naked
 	ASM_ADDR_INC4()				; BG0 Pixel 6
 	ASM_ADDR_INC4()				; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT()
+11$:	ASM_BG0_NEXT(9$)
 	djnz	r5, 10$
 	ret
 
@@ -1349,7 +1377,7 @@ static void vm_bg0_bg1_tiles_fast_p4(void) __naked
 	CHROMA_BG1_BG0(31$, 41$, 5,1)		; Keyed BG1 pixel 1
 	CHROMA_BG1_BG0(32$, 42$, 6,2)		; Keyed BG1 pixel 2
 	CHROMA_BG1_BG0(33$, 43$, 7,3)		; Keyed BG1 pixel 3
-	ASM_BG0_NEXT_FROM_BG1()			; Next BG0 tile
+	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
 	CHROMA_BG1_BG0(34$, 44$, 0,4)		; Keyed BG1 pixel 4
 	CHROMA_BG1_BG0(35$, 45$, 1,5)		; Keyed BG1 pixel 5
 	CHROMA_BG1_BG0(36$, 46$, 2,6)		; Keyed BG1 pixel 6
@@ -1380,7 +1408,7 @@ static void vm_bg0_bg1_tiles_fast_p5(void) __naked
 	ASM_ADDR_INC4()				; BG0 Pixel 6
 	ASM_ADDR_INC4()				; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT()
+11$:	ASM_BG0_NEXT(9$)
 	djnz	r5, 10$
 	ret
 
@@ -1388,7 +1416,7 @@ static void vm_bg0_bg1_tiles_fast_p5(void) __naked
 	CHROMA_BG1_BG0(30$, 40$, 5,0)		; Keyed BG1 pixel 0
 	CHROMA_BG1_BG0(31$, 41$, 6,1)		; Keyed BG1 pixel 1
 	CHROMA_BG1_BG0(32$, 42$, 7,2)		; Keyed BG1 pixel 2
-	ASM_BG0_NEXT_FROM_BG1()			; Next BG0 tile
+	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
 	CHROMA_BG1_BG0(33$, 43$, 0,3)		; Keyed BG1 pixel 3
 	CHROMA_BG1_BG0(34$, 44$, 1,4)		; Keyed BG1 pixel 4
 	CHROMA_BG1_BG0(35$, 45$, 2,5)		; Keyed BG1 pixel 5
@@ -1420,14 +1448,14 @@ static void vm_bg0_bg1_tiles_fast_p6(void) __naked
 	ASM_ADDR_INC4()				; BG0 Pixel 6
 	ASM_ADDR_INC4()				; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT()
+11$:	ASM_BG0_NEXT(9$)
 	djnz	r5, 10$
 	ret
 
 1$:	STATE_BG0_TO_BG1(0)			; Entry BG0->BG1
 	CHROMA_BG1_BG0(30$, 40$, 6,0)		; Keyed BG1 pixel 0
 	CHROMA_BG1_BG0(31$, 41$, 7,1)		; Keyed BG1 pixel 1
-	ASM_BG0_NEXT_FROM_BG1()			; Next BG0 tile
+	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
 	CHROMA_BG1_BG0(32$, 42$, 0,2)		; Keyed BG1 pixel 2
 	CHROMA_BG1_BG0(33$, 43$, 1,3)		; Keyed BG1 pixel 3
 	CHROMA_BG1_BG0(34$, 44$, 2,4)		; Keyed BG1 pixel 4
@@ -1460,13 +1488,13 @@ static void vm_bg0_bg1_tiles_fast_p7(void) __naked
 12$:	BG1_NEXT_BIT(1$)
 	ASM_ADDR_INC4()				; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT()
+11$:	ASM_BG0_NEXT(9$)
 	djnz	r5, 10$
 	ret
 
 1$:	STATE_BG0_TO_BG1(0)			; Entry BG0->BG1
 	CHROMA_BG1_BG0(30$, 40$, 7,0)		; Keyed BG1 pixel 0
-	ASM_BG0_NEXT_FROM_BG1()			; Next BG0 tile
+	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
 	CHROMA_BG1_BG0(31$, 41$, 0,1)		; Keyed BG1 pixel 1
 	CHROMA_BG1_BG0(32$, 42$, 1,2)		; Keyed BG1 pixel 2
 	CHROMA_BG1_BG0(33$, 43$, 2,3)		; Keyed BG1 pixel 3
@@ -1520,22 +1548,64 @@ static void vm_bg0_bg1_line(void)
      * Scanline renderer: BG0 and BG1 visible.
      */
 
-    __asm
 
+     /*
+      * Load BG1 bitmap for this line. If no BG1 tiles are visible, we can
+      * tail-call to the BG0-only scanline renderer.
+      */
+
+    __asm
 	BG1_LOAD_BITS()
 	jnz	1$
 	ljmp	_vm_bg0_line		; No BG1 bits on this line
-1$:					    
+1$:	
+    __endasm ;
 
+    /*
+     * We keep the wrap counter stored in a register, for fast x-wrap checks.
+     */
+
+    __asm
+        mov	r1, _x_bg0_wrap
+    __endasm ;
+
+    /*
+     * Segment the line into a fast full-tile burst, and up to two slower partial tiles.
+     */
+
+    __asm
+
+	; First tile, may be skipping up to 7 pixels from the beginning
+
+	mov	r5, _x_bg0_first_w
+2$:	inc	ADDR_PORT
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+	djnz	r5, 2$
+
+	; Always have a run of 15 full tiles
 
 	mov	r3, _y_bg0_addr_l
 	mov	r4, _y_bg1_addr_l
-	mov	r5, #16
+	mov	r5, #15
 	lcall	_vm_bg0_bg1_tiles_fast
 
-	mov	CTRL_PORT, #CTRL_IDLE
+	; May have a final partial tile
+
+	mov	a, _x_bg0_last_w
+	jz	3$
+	mov	r5, a
+4$:	inc	ADDR_PORT
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+	inc	ADDR_PORT
+	djnz	r5, 4$
+3$:
 
     __endasm ;
+
+    CTRL_PORT = CTRL_IDLE;
 }
 
 static void vm_bg1_setup(void)
