@@ -1099,9 +1099,8 @@ static uint16_t y_bg1_map;		// Map address for the first tile on this line
     __asm cjne	a, BUS_PORT, lbl				__endasm; \
     __asm
 
-// Next BG0 tile
+// Next BG0 tile (while in BG0 state)
 #define ASM_BG0_NEXT()						__endasm; \
-    __asm BG1_NEXT_BIT()					__endasm; \
     __asm inc	dptr						__endasm; \
     __asm inc	dptr						__endasm; \
     __asm ASM_ADDR_FROM_DPTR0()					__endasm; \
@@ -1156,70 +1155,81 @@ static void vm_bg0_bg1_tiles_fast_p0(void) __naked
      */
 
     __asm
-        sjmp 1$
 
 	; BG0 ladder
 
-1$:	jnc	20$
-	STATE_BG0_TO_BG1_0()	ljmp 40$
-20$:	ASM_ADDR_INC4()				; BG0 Pixel 0
-	jnc	21$
-	STATE_BG0_TO_BG1(1)	ljmp 41$
-21$:	ASM_ADDR_INC4()				; BG0 Pixel 1
-	jnc	22$
-	STATE_BG0_TO_BG1(2)	ljmp 42$
-22$:	ASM_ADDR_INC4()				; BG0 Pixel 2
-	jnc	23$
-	STATE_BG0_TO_BG1(3)	ljmp 43$
-23$:	ASM_ADDR_INC4()				; BG0 Pixel 3
-	jnc	24$
-	STATE_BG0_TO_BG1(4)	ljmp 44$
-24$:	ASM_ADDR_INC4()				; BG0 Pixel 4
-	jnc	25$
-	STATE_BG0_TO_BG1(5)	ljmp 45$
-25$:	ASM_ADDR_INC4()				; BG0 Pixel 5
-	jnc	26$
-	STATE_BG0_TO_BG1(6)	ljmp 46$
-26$:	ASM_ADDR_INC4()				; BG0 Pixel 6
-	jnc	27$
-	STATE_BG0_TO_BG1(7)	ljmp 47$
-27$:	ASM_ADDR_INC4()				; BG0 Pixel 7
-28$:	ASM_BG0_NEXT()				; Next BG0 tile
+10$:	jc	1$
+	ASM_ADDR_INC4()				; BG0 Pixel 0
+	ASM_ADDR_INC4()				; BG0 Pixel 1
+	ASM_ADDR_INC4()				; BG0 Pixel 2
+	ASM_ADDR_INC4()				; BG0 Pixel 3
+	ASM_ADDR_INC4()				; BG0 Pixel 4
+	ASM_ADDR_INC4()				; BG0 Pixel 5
+	ASM_ADDR_INC4()				; BG0 Pixel 6
+	ASM_ADDR_INC4()				; BG0 Pixel 7
 
-	djnz	r5, 2$
+11$:	ASM_BG0_NEXT()
+	BG1_NEXT_BIT()
+	djnz	r5, 10$
 	ret
-
-2$:	ljmp	1$
 
 	; BG1 ladder
 
+1$:	STATE_BG0_TO_BG1_0()			; Entry BG0->BG1
+
 40$:	CHROMA_J_OPAQUE(30$)			; Key BG1 Pixel 0
-	STATE_BG1_TO_BG0_0()	ljmp 20$	;   Fall through
+	STATE_BG1_TO_BG0_0()			;   BG1 -> BG0
+	ASM_ADDR_INC4()				;   Write BG0
+	STATE_BG0_TO_BG1_0()			;   BG0 -> BG1
+	sjmp	41$
 30$:	ASM_ADDR_INC4()				;   Write BG1
-41$:	CHROMA_J_OPAQUE(31$)			; Key BG1 Pixel 0
-	STATE_BG1_TO_BG0(1)	ljmp 21$	;   Fall through
+41$:	CHROMA_J_OPAQUE(31$)			; Key BG1 Pixel 1
+	STATE_BG1_TO_BG0(1)			;   BG1 -> BG0
+	ASM_ADDR_INC4()				;   Write BG0
+	STATE_BG0_TO_BG1(1)			;   BG0 -> BG1
+	sjmp	42$
 31$:	ASM_ADDR_INC4()				;   Write BG1
-42$:	CHROMA_J_OPAQUE(32$)			; Key BG1 Pixel 0
-	STATE_BG1_TO_BG0(2)	ljmp 22$	;   Fall through
+42$:	CHROMA_J_OPAQUE(32$)			; Key BG1 Pixel 2
+	STATE_BG1_TO_BG0(2)			;   BG1 -> BG0
+	ASM_ADDR_INC4()				;   Write BG0
+	STATE_BG0_TO_BG1(2)			;   BG0 -> BG1
+	sjmp	43$
 32$:	ASM_ADDR_INC4()				;   Write BG1
-43$:	CHROMA_J_OPAQUE(33$)			; Key BG1 Pixel 0
-	STATE_BG1_TO_BG0(3)	ljmp 23$	;   Fall through
+43$:	CHROMA_J_OPAQUE(33$)			; Key BG1 Pixel 3
+	STATE_BG1_TO_BG0(3)			;   BG1 -> BG0
+	ASM_ADDR_INC4()				;   Write BG0
+	STATE_BG0_TO_BG1(3)			;   BG0 -> BG1
+	sjmp	44$
 33$:	ASM_ADDR_INC4()				;   Write BG1
-44$:	CHROMA_J_OPAQUE(34$)			; Key BG1 Pixel 0
-	STATE_BG1_TO_BG0(4)	ljmp 24$	;   Fall through
+44$:	CHROMA_J_OPAQUE(34$)			; Key BG1 Pixel 4
+	STATE_BG1_TO_BG0(4)			;   BG1 -> BG0
+	ASM_ADDR_INC4()				;   Write BG0
+	STATE_BG0_TO_BG1(4)			;   BG0 -> BG1
+	sjmp	45$
 34$:	ASM_ADDR_INC4()				;   Write BG1
-45$:	CHROMA_J_OPAQUE(35$)			; Key BG1 Pixel 0
-	STATE_BG1_TO_BG0(5)	ljmp 25$	;   Fall through
+45$:	CHROMA_J_OPAQUE(35$)			; Key BG1 Pixel 5
+	STATE_BG1_TO_BG0(5)			;   BG1 -> BG0
+	ASM_ADDR_INC4()				;   Write BG0
+	STATE_BG0_TO_BG1(5)			;   BG0 -> BG1
+	sjmp	46$
 35$:	ASM_ADDR_INC4()				;   Write BG1
-46$:	CHROMA_J_OPAQUE(36$)			; Key BG1 Pixel 0
-	STATE_BG1_TO_BG0(6)	ljmp 26$	;   Fall through
+46$:	CHROMA_J_OPAQUE(36$)			; Key BG1 Pixel 6
+	STATE_BG1_TO_BG0(6)			;   BG1 -> BG0
+	ASM_ADDR_INC4()				;   Write BG0
+	STATE_BG0_TO_BG1(6)			;   BG0 -> BG1
+	sjmp	47$
 36$:	ASM_ADDR_INC4()				;   Write BG1
-47$:	CHROMA_J_OPAQUE(37$)			; Key BG1 Pixel 0
-	STATE_BG1_TO_BG0(7)	ljmp 27$	;   Fall through
-37$:	ASM_ADDR_INC4()				;   Write BG1
-	ASM_DPTR_INC2()				; Next BG1 tile
+47$:	CHROMA_J_OPAQUE(37$)			; Key BG1 Pixel 7
+	STATE_BG1_TO_BG0(7)			;   BG1 -> BG0
+	ASM_ADDR_INC4()				;   Write BG0
+	STATE_BG0_TO_BG1(7)			;   BG0 -> BG1
+	ASM_DPTR_INC2()				; Next BG1 Tile
 	dec	_DPS				;   BG1 -> BG0
-	ljmp	28$				;   continue with ASM_BG0_NEXT
+	ljmp	11$				;   Return to BG0 ladder
+37$:	ASM_ADDR_INC4()				; Write BG1
+	ASM_DPTR_INC2()				; Next BG1 Tile
+	dec	_DPS				;   BG1 -> BG0
+	ljmp	11$				;   Return to BG0 ladder
 
     __endasm ;
 }
@@ -1240,7 +1250,7 @@ static void vm_bg0_bg1_line(void)
 	BG0_BG1_LOAD_MAPS()
 	ASM_ADDR_FROM_DPTR0()
 	mov	ADDR_PORT, _y_bg0_addr_l
-
+	BG1_NEXT_BIT()
 	mov	r5, #16
 	lcall	_vm_bg0_bg1_tiles_fast_p0
 
