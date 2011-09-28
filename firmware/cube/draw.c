@@ -195,6 +195,7 @@ void draw_hex(uint8_t value)
 
 	anl	a, #0xF
 	clr 	ac
+	clr	c
 	da	a		; If > 9, add 6. This almost covers the gap between '9' and 'A'
 	jnb	acc.4, 1$	;   ... at least we can test efficiently whether the nybble was >9 now
 	inc	a		;   and add one more. This closes the total gap (7 characters)

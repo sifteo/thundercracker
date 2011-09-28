@@ -10,6 +10,7 @@ OBJS = \
 	main.rel \
 	draw.rel \
 	tilerom.rel \
+	demo.rel \
 
 FIRMWARE_INC = ../include
 SDK_DIR = ../../sdk
