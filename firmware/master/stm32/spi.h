@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include "hardware.h"
+#include "gpio.h"
 
 
 class SPIMaster {
@@ -22,37 +23,13 @@ class SPIMaster {
 	      GPIOPin _mosi)
 	: hw(_hw), csn(_csn), sck(_sck), miso(_miso), mosi(_mosi) {}
 
-    void init() {
-	csn.setHigh();
-	csn.setControl(GPIOPin::OUT_10MHZ);
-	sck.setControl(GPIOPin::OUT_ALT_10MHZ);
-	miso.setControl(GPIOPin::IN_FLOAT);    
-	mosi.setControl(GPIOPin::OUT_ALT_10MHZ);
+    void init();
+    void begin();
+    void end();
 
-	hw->CR1 = 0x0004;	// Master mode
-	hw->CR2 = 0x0004;	// SS output enable
-	hw->CR1 |= 0x0040;	// Peripheral enable
-    }
-
-    void begin() {
-	csn.setLow();
-    }
-
-    void end() {
-	csn.setHigh();
-    }
-
-    uint8_t transfer(uint8_t b) {
-	/*
-	 * XXX: This is slow, ugly, and power hungry. We should be
-	 *      doing DMA, and keeping the FIFOs full! And NOT
-	 *      busy-looping ever!
-	 */
-	hw->DR = b;
-	while (!(hw->SR & 1));	// Wait for RX-not-empty
-	return hw->DR;
-    }
-    
+    uint8_t transfer(uint8_t b);
+    void transferTable(const uint8_t *table);
+  
  private:
     volatile SPI_t *hw;
     GPIOPin csn;
