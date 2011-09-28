@@ -26,7 +26,6 @@ void NRF24L01::init() {
     irq.setControl(GPIOPin::IN_FLOAT);
     irq.irqInit();
     irq.irqSetFallingEdge();
-    irq.irqEnable();
 
     static const uint8_t radio_setup[]  = {
 	/* Enable nRF24L01 features */
@@ -59,6 +58,9 @@ void NRF24L01::init() {
 	0
     };
     spi.transferTable(radio_setup);
+
+    // Everything is ready. Unleash our IRQ handler!
+    irq.irqEnable();
 }
 
 void NRF24L01::ptxMode()

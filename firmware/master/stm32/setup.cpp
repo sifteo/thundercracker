@@ -60,7 +60,7 @@ extern "C" void _start()
 
     // Enable peripheral clocks
     RCC.APB1ENR = 0x00004000;	// SPI2
-    RCC.APB2ENR = 0x0000003c;	// GPIOs
+    RCC.APB2ENR = 0x0000003d;	// GPIO/AFIO
 
     /*
      * Initialize data segments (In parallel with oscillator startup)
@@ -92,6 +92,17 @@ extern "C" void _start()
 
     NVIC.irqEnable(IVT.EXTI15_10);
     
+    /*
+     * Wait for clock to stabilize.
+     *
+     * Before starting to talk to external hardware, we should have a
+     * stable clock source. If the PLL hasn't locked yet, wait for it
+     * to do so.
+     */
+
+    const uint32_t clkReady = (1 << 25) | (1 << 17);   // PLLRDY, HSERDY
+    while ((RCC.CR & clkReady) != clkReady);
+
     /*
      * High-level hardware initialization
      */
