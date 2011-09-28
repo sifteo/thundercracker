@@ -10,10 +10,10 @@ ASSETS = assets
 BINS += $(BIN_SIM) $(BIN_STM32)
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 
-# The -O2 flag is important, we use a lot of C++ code that's written
-# assuming it will be inlined. The inlined code should end up being smaller
-# due to constant folding.
-#CCFLAGS += -O2 
+# Only disable this for debugging! The -O2 flag is important, we use
+# a lot of C++ code that's written assuming it will be inlined. The
+# inlined code should end up being smaller due to constant folding.
+CCFLAGS += -O2
 
 # Also important: No C++ exception handling support!
 CCFLAGS += -fno-exceptions
