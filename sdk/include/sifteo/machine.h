@@ -23,19 +23,25 @@ namespace Sifteo {
 namespace Atomic {
 
     static inline void Barrier() {
-	__asm__ __volatile__ ("" : : : "memory");
+#ifdef __GNUC__
+	__sync_synchronize();
+#endif
     }
     
     static inline void Or(uint32_t &dest, uint32_t src) {
-	Barrier();
+#ifdef __GNUC__
+	__sync_or_and_fetch(&dest, src);
+#else
 	dest |= src;
-	Barrier();
+#endif
     }
 
     static inline void And(uint32_t &dest, uint32_t src) {
-	Barrier();
+#ifdef __GNUC__
+	__sync_and_and_fetch(&dest, src);
+#else
 	dest &= src;
-	Barrier();
+#endif
     }
 
     static inline void Store(uint32_t &dest, uint32_t src) {
@@ -66,7 +72,6 @@ namespace Intrinsic {
 
     static inline uint32_t CLZ(uint32_t r) {
 	// Count leading zeroes. One instruction on ARM.
-
 #ifdef __GNUC__
 	return __builtin_clz(r);
 #else	
