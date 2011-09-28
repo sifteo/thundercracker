@@ -23,6 +23,10 @@ void main(void)
     flash_init();
     sti();
 
+    // XXX: LCD backlight
+    P1DIR &= ~(1 << 7);
+    P1 |= 1 << 7;
+
     demo();  // XXX
 
     while (1) {
