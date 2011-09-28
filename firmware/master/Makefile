@@ -17,6 +17,7 @@ OBJS_STM32 = \
 	common/radio.stm32.o \
 	common/cube.stm32.o \
 	common/cubecodec.stm32.o \
+	stm32/vectors.stm32.o \
 	stm32/setup.stm32.o \
 	stm32/radio.stm32.o \
 	stm32/gpio.stm32.o \
@@ -50,6 +51,9 @@ $(BIN_STM32): $(OBJS_STM32)
 	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
 
 %.stm32.o: %.cpp $(CDEPS)
+	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
+
+%.stm32.o: %.c $(CDEPS)
 	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
 
 .PHONY: all clean

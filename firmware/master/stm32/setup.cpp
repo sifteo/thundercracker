@@ -14,12 +14,12 @@
 #include "radio.h"
 #include "runtime.h"
 #include "hardware.h"
+#include "vectors.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
 
 /* Addresses defined by our linker script */
-extern "C" unsigned _stack;
 extern "C" unsigned __bss_start;
 extern "C" unsigned __bss_end;
 extern "C" unsigned __data_start;
@@ -106,14 +106,3 @@ extern "C" void *_sbrk(intptr_t increment)
      */
     return NULL;
 }
-
-__attribute__ ((section (".vectors"))) uintptr_t vector_table[] = {
-    /*
-     * Hardware vector table for reset, interrupts, stack, and
-     * exceptions. We place this in the .vectors section, at
-     * address zero.
-     */
-    (uintptr_t) &_stack,
-    (uintptr_t) &_start,
-};
-
