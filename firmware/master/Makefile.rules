@@ -21,8 +21,8 @@ program: $(BIN_STM32)
 $(BIN_SIM): $(OBJS_SIM) $(LIBS_SIM)
 	$(CC_SIM) -o $@ $^ $(LDFLAGS_SIM)
 
-$(BIN_STM32): $(OBJS_STM32) $(LIBS_STM32)
-	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
+$(BIN_STM32): $(OBJS_STM32) $(LIBS_STM32) $(LDSCRIPT_STM32)
+	$(CC_STM32) -o $@ $(OBJS_STM32) $(LIBS_STM32) $(LDFLAGS_STM32)
 
 $(ASSETS).gen.cpp: $(ASSETDEPS)
 	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html

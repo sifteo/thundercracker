@@ -10,11 +10,15 @@ BINS += $(BIN_SIM) $(BIN_STM32)
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 
 CCFLAGS += -Os -g -Wall -Werror -fno-exceptions -I$(SDK_DIR)/include
+
 CCFLAGS_SIM := $(CCFLAGS)
-CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3
-
-LDFLAGS_SIM :=
-LDFLAGS_STM32 := -Wl,--gc-sections,-u,vector_table -T $(MASTER_DIR)/stm32/target.ld
-
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
+LDFLAGS_SIM :=
+
+CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
+LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
+LDFLAGS_STM32 := -mcpu=cortex-m3 -mthumb \
+	      -Wl,--gc-sections,-u,vector_table \
+	      -T $(LDSCRIPT_STM32)
+

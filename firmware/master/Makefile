@@ -27,7 +27,11 @@ CCFLAGS += -I$(FIRMWARE_INC) -Icommon
 include Makefile.defs
 
 # Override default CDEPS
-CDEPS := common/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
+CDEPS := \
+	common/*.h \
+	stm32/*.h \
+	$(FIRMWARE_INC)/*.h \
+	$(SDK_DIR)/include/sifteo/*.h
 
 all: $(BINS)
 

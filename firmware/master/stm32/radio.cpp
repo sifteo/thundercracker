@@ -7,6 +7,7 @@
  */
 
 #include "radio.h"
+#include "hardware.h"
 
 void Radio::open()
 {
@@ -14,4 +15,5 @@ void Radio::open()
 
 void Radio::halt()
 {
+    GPIOA.ODR ^= (1 << 4);
 }
