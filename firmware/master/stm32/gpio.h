@@ -46,9 +46,36 @@ class GPIOPin {
     }
 
     void setControl(Control c) const;
+    void irqInit() const;
+
+    void irqSetRisingEdge() const {
+	EXTI.RTSR |= bit();
+    }
+
+    void irqSetFallingEdge() const {
+	EXTI.FTSR |= bit();
+    }
+
+    void irqEnable() const {
+	EXTI.IMR |= bit();
+    }
+
+    void irqDisable() const {
+	EXTI.IMR &= ~bit();
+    }	
+
+    void irqAcknowledge() const {
+	// Write 1 to clear
+	EXTI.PR = bit();
+    }
 
     volatile GPIO_t *port() const {
 	return (volatile GPIO_t*)(0xFFFFFF00 & value);
+    }
+
+    unsigned portIndex() const {
+	// PA=0, PB=1, ...
+	return (value - (uintptr_t)&GPIOA) >> 10;
     }
 
     unsigned pin() const {

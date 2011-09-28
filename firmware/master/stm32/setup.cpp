@@ -28,7 +28,6 @@ extern "C" unsigned __data_src;
 extern "C" initFunc_t __init_array_start;
 extern "C" initFunc_t __init_array_end;
 
-
 extern "C" void _start()
 {
     /*
@@ -83,6 +82,15 @@ extern "C" void _start()
     
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
 	p[0]();
+
+    /*
+     * Nested Vectored Interrupt Controller setup.
+     *
+     * This won't actually enable any peripheral interrupts yet, since
+     * those need to be unmasked by the peripheral's driver code.
+     */
+
+    NVIC.irqEnable(IVT.EXTI15_10);
     
     /*
      * High-level hardware initialization

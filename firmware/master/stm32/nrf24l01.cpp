@@ -18,9 +18,15 @@ void NRF24L01::init() {
      * Common hardware initialization, regardless of radio usage mode.
      */
 
+    spi.init();
+
     ce.setLow();
     ce.setControl(GPIOPin::OUT_10MHZ);
-    spi.init();
+
+    irq.setControl(GPIOPin::IN_FLOAT);
+    irq.irqInit();
+    irq.irqSetFallingEdge();
+    irq.irqEnable();
 
     static const uint8_t radio_setup[]  = {
 	/* Enable nRF24L01 features */
@@ -73,4 +79,11 @@ void NRF24L01::ptxMode()
     spi.transferTable(ptx_setup); 
 
     ce.setHigh();
+    while (1);
+
+}
+
+void NRF24L01::isr()
+{
+    irq.irqAcknowledge();
 }

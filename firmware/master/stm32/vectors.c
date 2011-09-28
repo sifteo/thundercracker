@@ -15,10 +15,10 @@
 
 extern unsigned _stack;
 
-__attribute__ ((section (".vectors"))) struct IVT_t vector_table =
+__attribute__ ((section (".vectors"))) const struct IVT_t IVT =
 {
     .stack = &_stack,
     .Reset = _start,
-    .EXTI0 = _start,
+    .EXTI15_10 = ISR_NordicRadio,
 };
 

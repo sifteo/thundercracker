@@ -22,7 +22,7 @@ extern "C" {
  */
 
 extern void _start();
-
+extern void ISR_NordicRadio();
 
 /*
  * Interrupt vector layout
@@ -105,6 +105,8 @@ struct IVT_t {
     ISR_t DMA2_Channel3;
     ISR_t DMA2_Channel4_5;
 };
+
+extern const struct IVT_t IVT;
 
 
 #ifdef __cplusplus

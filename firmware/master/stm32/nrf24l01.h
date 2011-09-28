@@ -20,11 +20,14 @@
 class NRF24L01 {
  public:
      NRF24L01(GPIOPin _ce,
+	      GPIOPin _irq,
 	      SPIMaster _spi)
-	 : ce(_ce), spi(_spi) {}
+	 : ce(_ce), irq(_irq), spi(_spi) {}
 
     void init();
     void ptxMode();
+
+    void isr();
 
  private:
     enum Command {
@@ -71,6 +74,7 @@ class NRF24L01 {
     };
 
     GPIOPin ce;
+    GPIOPin irq;
     SPIMaster spi;
 };
 

@@ -13,7 +13,7 @@ CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 # The -O2 flag is important, we use a lot of C++ code that's written
 # assuming it will be inlined. The inlined code should end up being smaller
 # due to constant folding.
-CCFLAGS += -O2 
+#CCFLAGS += -O2 
 
 # Also important: No C++ exception handling support!
 CCFLAGS += -fno-exceptions
@@ -28,6 +28,6 @@ CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
 LDFLAGS_STM32 := $(LDFLAGS) -mcpu=cortex-m3 -mthumb \
-	      -Wl,--gc-sections,-u,vector_table \
+	      -Wl,--gc-sections,-u,IVT \
 	      -T $(LDSCRIPT_STM32) -nostartfiles
 
