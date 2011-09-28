@@ -19,6 +19,7 @@ OBJS_STM32 = \
 	common/cubecodec.stm32.o \
 	stm32/setup.stm32.o \
 	stm32/radio.stm32.o \
+	stm32/gpio.stm32.o \
 
 TC_DIR = ../..
 FIRMWARE_INC := ../include

@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+
 /*
  * Reset / Clock Control
  */
@@ -34,7 +35,7 @@ extern volatile RCC_t RCC;
 
 
 /*
- * GPIO
+ * GPIOs.
  */
 
 struct GPIO_t {
@@ -54,5 +55,26 @@ extern volatile GPIO_t GPIOD;
 extern volatile GPIO_t GPIOE;
 extern volatile GPIO_t GPIOF;
 extern volatile GPIO_t GPIOG;
+
+/*
+ * SPI / I2S
+ */
+
+struct SPI_t {
+    uint32_t CR1;
+    uint32_t CR2;
+    uint32_t SR;
+    uint32_t DR;
+    uint32_t CRCPR;
+    uint32_t RXCRCR;
+    uint32_t TXCRCR;
+    uint32_t I2SCFGR;
+    uint32_t I2SPR;
+};
+
+extern volatile SPI_t SPI1;
+extern volatile SPI_t SPI2;
+extern volatile SPI_t SPI3;
+
 
 #endif

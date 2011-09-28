@@ -1,5 +1,6 @@
 CC_SIM = gcc
 CC_STM32 = arm-none-eabi-gcc
+GDB_STM32 = arm-none-eabi-gdb
 
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
@@ -9,16 +10,24 @@ ASSETS = assets
 BINS += $(BIN_SIM) $(BIN_STM32)
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 
-CCFLAGS += -Os -g -Wall -Werror -fno-exceptions -I$(SDK_DIR)/include
+# The -O2 flag is important, we use a lot of C++ code that's written
+# assuming it will be inlined. The inlined code should end up being smaller
+# due to constant folding.
+CCFLAGS += -O2 
+
+# Also important: No C++ exception handling support!
+CCFLAGS += -fno-exceptions
+
+CCFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include
 
 CCFLAGS_SIM := $(CCFLAGS)
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
-LDFLAGS_SIM :=
+LDFLAGS_SIM := $(LDFLAGS)
 
 CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
-LDFLAGS_STM32 := -mcpu=cortex-m3 -mthumb \
+LDFLAGS_STM32 := $(LDFLAGS) -mcpu=cortex-m3 -mthumb \
 	      -Wl,--gc-sections,-u,vector_table \
-	      -T $(LDSCRIPT_STM32)
+	      -T $(LDSCRIPT_STM32) -nostartfiles
 

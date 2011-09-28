@@ -37,10 +37,25 @@ SECTIONS
         . = ALIGN(4);
         *(.rodata .rodata.*);
 
+        /*
+         * Array of global C++ constructor pointers.
+         *
+         * Note: This should only have _our_ constructors in it. If you see
+         *       junk like _frame_dummy in here, something's wrong with the
+         *       linker configuration. We are supposed to be linking with the
+         *       standard library (newlib) but NOT with the standard crt0.
+         */	    
+
+        . = ALIGN(4);
+	__init_array_start = .;
+	KEEP (*(.init_array));
+	__init_array_end = .;
+
 	/*
 	 * This is our marker for where the initialized data is stored in flash below.
 	 * It's also used by the startup code to locate this data.
 	 */
+
 	__data_src = .;
 
     } >FLASH
