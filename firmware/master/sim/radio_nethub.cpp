@@ -268,7 +268,7 @@ static void SifteoRadio_consume()
 
 static void SifteoRadio_recv()
 {
-    int len = recv(self.fd, self.rxBuffer + self.rxTail,
+    int len = recv(self.fd, (char*)self.rxBuffer + self.rxTail,
                    sizeof self.rxBuffer - self.rxTail, 0);
     if (len > 0)
         self.rxTail += len;
@@ -278,7 +278,7 @@ static void SifteoRadio_recv()
 
 static void SifteoRadio_send()
 {
-    int ret = send(self.fd, self.txBuffer + self.txHead,
+    int ret = send(self.fd, (const char*)self.txBuffer + self.txHead,
                    self.txTail - self.txHead, 0);
     if (ret > 0)
         self.txHead += ret;
