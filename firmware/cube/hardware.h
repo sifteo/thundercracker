@@ -51,28 +51,6 @@ __sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
 #define LCD_PIXELS	(LCD_WIDTH * LCD_HEIGHT)
 #define LCD_ROW_SHIFT	8
 
-#define LCD_CMD_NOP      0x00
-#define LCD_CMD_SWRESET  0x01
-#define LCD_CMD_SLPIN    0x10
-#define LCD_CMD_SLPOUT   0x11
-#define LCD_CMD_DISPOFF  0x28
-#define LCD_CMD_DISPON   0x29
-#define LCD_CMD_CASET    0x2A
-#define LCD_CMD_RASET    0x2B
-#define LCD_CMD_RAMWR    0x2C
-#define LCD_CMD_TEOFF    0x34
-#define LCD_CMD_TEON     0x35
-#define LCD_CMD_MADCTR   0x36
-#define LCD_CMD_COLMOD   0x3A
-
-#define LCD_COLMOD_12    3
-#define LCD_COLMOD_16    5
-#define LCD_COLMOD_18    6
-
-#define LCD_MADCTR_MY    0x80
-#define LCD_MADCTR_MX    0x40
-#define LCD_MADCTR_MV    0x20
-
 /*
  * nRF24L01 Radio
  */

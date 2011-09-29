@@ -37,10 +37,10 @@
 
 // Output one pixel with static colors from two registers
 #define PIXEL_FROM_REGS(l, h)					__endasm; \
-    __asm mov	BUS_PORT, l					__endasm; \
-    __asm inc	ADDR_PORT					__endasm; \
-    __asm inc	ADDR_PORT					__endasm; \
     __asm mov	BUS_PORT, h					__endasm; \
+    __asm inc	ADDR_PORT					__endasm; \
+    __asm inc	ADDR_PORT					__endasm; \
+    __asm mov	BUS_PORT, l					__endasm; \
     __asm inc	ADDR_PORT					__endasm; \
     __asm inc	ADDR_PORT					__endasm; \
     __asm

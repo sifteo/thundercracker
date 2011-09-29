@@ -11,79 +11,9 @@
 #include "lcd.h"
 #include "flash.h"
 #include "time.h"
+#include "lcd_model.h"
 
 static bit lcd_is_awake;
-
-/*
- * Initial poweron or wake-time setup for the LCD controller.
- *
- * XXX: This is mostly copied from the gen1 cube firmware
- *      ILI9163C_Initialize. Some of it may not be
- *      applicable/correct, or may be wasteful.
- */
-static const __code uint8_t lcd_setup_table[] =
-{
-    // Reset
-    1, 0x01, 0x00,
-
-    // Short delay
-    0x80,
-
-    1, 0xec, 0x1b,
-
-    // sleep out
-    1, 0x11, 0x00,
-
-    // Short delay
-    0x80,
-
-    1, 0x26, 0x01,
-
-    4, 0x2a, 0x00, 0x00, 0x00, 0x7f,
-    4, 0x2b, 0x00, 0x00, 0x00, 0x7f,
-
-    // TE On
-    1, 0x35, 0x00,
-
-    1, 0x36, 0x08,
-
-    // Frame rate control
-    2, 0xb1, 0x0c, 0x03,
-
-    // Display Function set,
-    // NO[5:4], SDT[3:2], EQ[1:0]
-    // PTG[3:2], PT[1:0]
-    2, 0xb6, 0x07, 0x02,
-
-    // GVDD
-    2, 0xc0, 0x08, 0x00,
-
-    // AVDD VGL VGL VCL
-    1, 0xc1, 0x03,
-
-    2, 0xc2, 0x03, 0x03,
-
-    // SET VCOMH & VCOML
-    2, 0xc5, 0x4a, 0x3e,
-
-    // VCOM Offset control
-    1, 0xc7, 0x40,
-
-    // Gamma set E0.E1 enable control
-    1, 0xf2, 0x01,
-
-    // Gamma
-    15, 0xe0, 0x3f, 0x2a, 0x27, 0x2d, 0x26, 0x0c, 0x53, 0xf4, 0x3f, 0x16, 0x1d, 0x15, 0x0f, 0x06, 0x00,
-    15, 0xe1, 0x00, 0x15, 0x18, 0x11, 0x19, 0x13, 0x2b, 0x63, 0x40, 0x09, 0x22, 0x2a, 0x30, 0x39, 0x3f,
-
-    1, 0x29, 0x00,
-
-    // delay 120msec
-    0xFF,
-
-    0,
-};
-
 
 void lcd_init()
 {
@@ -137,6 +67,34 @@ static void lcd_cmd_table(const __code uint8_t *ptr)
     LCD_WRITE_END();
 }
 
+static void lcd_lut_init()
+{
+    /*
+     * Initialize the LCD's color lookup tables, for converting RGB565 to RGB666.
+     */
+
+    uint8_t i;
+
+    LCD_WRITE_BEGIN();
+    LCD_CMD_MODE();
+    LCD_BYTE(LCD_CMD_COLOR_LUT);
+    LCD_DATA_MODE();
+    
+    // Red (5->6)
+    for (i = 0; i < 32; i++)
+	LCD_BYTE(i << 1);
+
+    // Green (Identity)
+    for (i = 0; i < 64; i++)
+	LCD_BYTE(i);
+
+    // Blue (5->6)
+    for (i = 0; i < 32; i++)
+	LCD_BYTE(i << 1);
+
+    LCD_WRITE_END();
+}
+
 void lcd_sleep()
 {
     /*
@@ -153,6 +111,7 @@ void lcd_sleep()
 
 	lcd_is_awake = 0;
 	lcd_cmd_table(table);
+	lcd_lut_init();
     }	
 }
     
@@ -173,16 +132,10 @@ void lcd_begin_frame()
     LCD_WRITE_BEGIN();
     LCD_CMD_MODE();
 
-    // Use 16-bit color mode
-    LCD_BYTE(LCD_CMD_COLMOD);
-    LCD_DATA_MODE();
-    LCD_BYTE(LCD_COLMOD_16);
-    LCD_CMD_MODE();
-
     // Set addressing mode
     LCD_BYTE(LCD_CMD_MADCTR);
     LCD_DATA_MODE();
-    LCD_BYTE(flags & (LCD_MADCTR_MY | LCD_MADCTR_MX | LCD_MADCTR_MV));
+    LCD_BYTE(LCD_MADCTR_NORMAL | (flags & LCD_MADCTR_VRAM));
     LCD_CMD_MODE();
 
     // Set the row address to first_line

@@ -142,7 +142,7 @@ void flash_program_word(uint16_t dat) __naked
 {
     /*
      * Program two bytes, at any aligned address. Increment the
-     * address.
+     * address. We use Big Endian here, to match the LCD's byte order.
      *
      * The run length must be at least 1.
      * The bytes MUST have been erased first.
@@ -182,7 +182,7 @@ void flash_program_word(uint16_t dat) __naked
 	mov	ADDR_PORT, _flash_addr_lat1
 	mov	CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
 	mov	ADDR_PORT, _flash_addr_low
-	mov	BUS_PORT, DPL
+	mov	BUS_PORT, DPH
 	mov	CTRL_PORT, #CTRL_FLASH_CMD
     __endasm ;
     CTRL_PORT = CTRL_FLASH_CMD;
@@ -198,7 +198,7 @@ void flash_program_word(uint16_t dat) __naked
 
     // Calculate the next flash_poll_data flag.
     __asm
-	mov	a, DPH
+	mov	a, DPL
 	rlc	a
 	mov	_flash_poll_data, c
     __endasm ; 
@@ -209,7 +209,7 @@ void flash_program_word(uint16_t dat) __naked
 
    // Wait for the low byte to finish
     __asm
-	mov	a, DPL
+	mov	a, DPH
 	rlc	a
 	jnc	5$
 
@@ -233,7 +233,7 @@ void flash_program_word(uint16_t dat) __naked
 	mov	ADDR_PORT, _flash_addr_lat1
 	mov	CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
 	mov	ADDR_PORT, _flash_addr_low
-	mov	BUS_PORT, DPH
+	mov	BUS_PORT, DPL
     __endasm ;
     CTRL_PORT = CTRL_FLASH_CMD;
     BUS_DIR = 0xFF;

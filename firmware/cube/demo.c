@@ -47,8 +47,6 @@ int8_t sin8(uint8_t angle)
 
 void demo(void)
 {
-    static uint16_t frame;
-    
     draw_clear();
     draw_xy = XY(1,1);
     draw_attr = ATTR_RED;
@@ -71,23 +69,33 @@ void demo(void)
     draw_xy = XY(6,12);
     draw_string("red");
 
-    while (1) {
-	int8_t x = sin8(frame << 1) >> 3;
-	int8_t y = sin8(frame << 3) >> 5;
-	if (x < 0) x += _SYS_VRAM_BG0_WIDTH * 8;
-	if (y < 0) y += _SYS_VRAM_BG0_WIDTH * 8;
+    /*
+     * Animation.. fun for testing, but it interferes with drawing
+     * that the master is trying to do over the radio.
+     */
+#if 1
+    {
+	static uint16_t frame;
+    
+	while (1) {
+	    int8_t x = sin8(frame << 1) >> 3;
+	    int8_t y = sin8(frame << 3) >> 5;
+	    if (x < 0) x += _SYS_VRAM_BG0_WIDTH * 8;
+	    if (y < 0) y += _SYS_VRAM_BG0_WIDTH * 8;
 
-	vram.bg0_x = x;
-	vram.bg0_y = y;
+	    vram.bg0_x = x;
+	    vram.bg0_y = y;
 
-	draw_xy = XY(11,14);
-	draw_attr = ATTR_GRAY;
-	draw_hex(frame >> 8);
-	draw_hex(frame & 0xFF);
+	    draw_xy = XY(11,14);
+	    draw_attr = ATTR_GRAY;
+	    draw_hex(frame >> 8);
+	    draw_hex(frame & 0xFF);
 
-	flash_handle_fifo();
-	graphics_render();
+	    flash_handle_fifo();
+	    graphics_render();
 
-	frame++;
+	    frame++;
+	}
     }
+#endif
 }

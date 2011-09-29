@@ -15,9 +15,9 @@ void msleep(uint8_t msec)
      *      in interrupts. This should be rewritten to use the timer peripherals.
      */
 
-    register uint8_t c = msec;
+    register uint8_t c = 0;
     register uint8_t b;
-    register uint8_t a = 0;
+    register uint8_t a = msec;
 
     do {
 	b = 20;

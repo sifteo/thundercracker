@@ -107,7 +107,7 @@ static void lcd_write_pixel(uint16_t pixel)
 	? (vRow + (vCol << FB_ROW_SHIFT))
 	: (vCol + (vRow << FB_ROW_SHIFT));
     
-    lcd.fb_mem[addr & FB_MASK] = (pixel >> 8) | (pixel << 8);
+    lcd.fb_mem[addr & FB_MASK] = pixel;
     
     if (++lcd.col > lcd.xe) {
 	lcd.col = lcd.xs;
