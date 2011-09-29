@@ -8,6 +8,7 @@ OBJS = \
 	flash_hal.rel \
 	flash_decoder.rel \
 	main.rel \
+	time.rel \
 	draw.rel \
 	tilerom.rel \
 	demo.rel \

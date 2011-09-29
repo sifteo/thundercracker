@@ -25,6 +25,7 @@ void graphics_render() __naked;
 
 #define LCD_WRITE_BEGIN() {			\
 	BUS_DIR = 0;				\
+	ADDR_PORT = 1;				\
     }
 
 #define LCD_WRITE_END() {			\
