@@ -31,18 +31,18 @@ void RadioManager::produce(PacketTransmission &tx)
      */
 
     for (;;) {
-	// No more enabled slots? Loop back to zero.
-	if (!(_SYSCubeIDVector)(CubeSlot::vecEnabled << schedNext))
-	    schedNext = 0;
+        // No more enabled slots? Loop back to zero.
+        if (!(_SYSCubeIDVector)(CubeSlot::vecEnabled << schedNext))
+            schedNext = 0;
 
-	_SYSCubeID id = schedNext++;
-	CubeSlot &slot = CubeSlot::instances[id];
+        _SYSCubeID id = schedNext++;
+        CubeSlot &slot = CubeSlot::instances[id];
 
-	if (slot.enabled() && slot.radioProduce(tx)) {
-	    // Remember this slot in our queue.
-	    fifoPush(id);
-	    break;
-	}
+        if (slot.enabled() && slot.radioProduce(tx)) {
+            // Remember this slot in our queue.
+            fifoPush(id);
+            break;
+        }
     }
 }
 
@@ -51,7 +51,7 @@ void RadioManager::acknowledge(const PacketBuffer &packet)
     CubeSlot &slot = CubeSlot::instances[fifoPop()];
 
     if (slot.enabled())
-	slot.radioAcknowledge(packet);
+        slot.radioAcknowledge(packet);
 }
 
 void RadioManager::timeout()
@@ -59,5 +59,5 @@ void RadioManager::timeout()
     CubeSlot &slot = CubeSlot::instances[fifoPop()];
 
     if (slot.enabled())
-	slot.radioTimeout();
+        slot.radioTimeout();
 }

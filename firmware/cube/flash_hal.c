@@ -38,12 +38,12 @@ uint8_t flash_addr_lat2;
 static __bit flash_poll_data;  // What data bit are we expecting?
 
 
-#define FLASH_CMD_PREFIX(_addr, _dat)		\
-    ADDR_PORT = ((_addr) >> 6) & 0xFE;		\
-    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;	\
-    ADDR_PORT = (_addr) << 1;			\
-    BUS_PORT = (_dat);				\
-    CTRL_PORT = CTRL_FLASH_CMD;			\
+#define FLASH_CMD_PREFIX(_addr, _dat)           \
+    ADDR_PORT = ((_addr) >> 6) & 0xFE;          \
+    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;    \
+    ADDR_PORT = (_addr) << 1;                   \
+    BUS_PORT = (_dat);                          \
+    CTRL_PORT = CTRL_FLASH_CMD;                 \
 
 
 void flash_erase(uint8_t blockCount)
@@ -66,52 +66,52 @@ void flash_erase(uint8_t blockCount)
      */
 
     if (flash_addr_low)
-	return;
+        return;
     if (flash_addr_lat1)
-	return;
+        return;
     if (flash_addr_lat2 & 3)
-	return;
+        return;
 
     CTRL_PORT = CTRL_IDLE;
 
     for (;;) {
-	BUS_DIR = 0;
+        BUS_DIR = 0;
 
-	// Common unlock prefix for all erase ops
-	FLASH_CMD_PREFIX(0xAAA, 0xAA);
-	FLASH_CMD_PREFIX(0x555, 0x55);
-	FLASH_CMD_PREFIX(0xAAA, 0x80);
-	FLASH_CMD_PREFIX(0xAAA, 0xAA);
-	FLASH_CMD_PREFIX(0x555, 0x55);
+        // Common unlock prefix for all erase ops
+        FLASH_CMD_PREFIX(0xAAA, 0xAA);
+        FLASH_CMD_PREFIX(0x555, 0x55);
+        FLASH_CMD_PREFIX(0xAAA, 0x80);
+        FLASH_CMD_PREFIX(0xAAA, 0xAA);
+        FLASH_CMD_PREFIX(0x555, 0x55);
 
-	if (blockCount >= (FLASH_NUM_BLOCKS - 1) && flash_addr_lat2 == 0) {
+        if (blockCount >= (FLASH_NUM_BLOCKS - 1) && flash_addr_lat2 == 0) {
 
-	    // Whole-chip erase
-	    FLASH_CMD_PREFIX(0xAAA, 0x10);
-	    BUS_DIR = 0xFF;
-	    CTRL_PORT = CTRL_FLASH_OUT;
+            // Whole-chip erase
+            FLASH_CMD_PREFIX(0xAAA, 0x10);
+            BUS_DIR = 0xFF;
+            CTRL_PORT = CTRL_FLASH_OUT;
 
-	    // Data# polling: Wait for a '1' bit
-	    __asm  1$:	jnb	BUS_PORT.7, 1$  __endasm;
+            // Data# polling: Wait for a '1' bit
+            __asm  1$:  jnb     BUS_PORT.7, 1$  __endasm;
 
-	} else {
-	    // Single block
-	    ADDR_PORT = flash_addr_lat2;
-	    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
-	    ADDR_PORT = 0;
-	    BUS_PORT = 0x30;
-	    CTRL_PORT = CTRL_FLASH_CMD;
-	    BUS_DIR = 0xFF;
-	    CTRL_PORT = CTRL_FLASH_OUT;
+        } else {
+            // Single block
+            ADDR_PORT = flash_addr_lat2;
+            CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+            ADDR_PORT = 0;
+            BUS_PORT = 0x30;
+            CTRL_PORT = CTRL_FLASH_CMD;
+            BUS_DIR = 0xFF;
+            CTRL_PORT = CTRL_FLASH_OUT;
 
-	    __asm  2$:	jnb	BUS_PORT.7, 2$  __endasm;
+            __asm  2$:  jnb     BUS_PORT.7, 2$  __endasm;
 
-	    if (!blockCount)
-		break;
-	    
-	    blockCount--;
-	    flash_addr_lat2 += 4;
-	}
+            if (!blockCount)
+                break;
+            
+            blockCount--;
+            flash_addr_lat2 += 4;
+        }
     }
 
     flash_program_start();
@@ -133,8 +133,8 @@ void flash_program_start(void)
     // so we don't have to special-case the first program operation.
 
     __asm
-	mov	c, BUS_PORT.7
-	mov	_flash_poll_data, c
+        mov     c, BUS_PORT.7
+        mov     _flash_poll_data, c
     __endasm ;
 }    
 
@@ -162,11 +162,11 @@ void flash_program_word(uint16_t dat) __naked
 
     // Wait on the previous word-write
     __asm
-	jnb	_flash_poll_data, 2$
-3$:	jnb	BUS_PORT.7, 3$
-        sjmp	1$
-2$:	jb	BUS_PORT.7, 2$
-1$:			   
+        jnb     _flash_poll_data, 2$
+3$:     jnb     BUS_PORT.7, 3$
+        sjmp    1$
+2$:     jb      BUS_PORT.7, 2$
+1$:                        
     __endasm ;
 
     CTRL_PORT = CTRL_IDLE;
@@ -179,11 +179,11 @@ void flash_program_word(uint16_t dat) __naked
 
     // Write byte
     __asm
-	mov	ADDR_PORT, _flash_addr_lat1
-	mov	CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
-	mov	ADDR_PORT, _flash_addr_low
-	mov	BUS_PORT, DPH
-	mov	CTRL_PORT, #CTRL_FLASH_CMD
+        mov     ADDR_PORT, _flash_addr_lat1
+        mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
+        mov     ADDR_PORT, _flash_addr_low
+        mov     BUS_PORT, DPH
+        mov     CTRL_PORT, #CTRL_FLASH_CMD
     __endasm ;
     CTRL_PORT = CTRL_FLASH_CMD;
     BUS_DIR = 0xFF;
@@ -198,9 +198,9 @@ void flash_program_word(uint16_t dat) __naked
 
     // Calculate the next flash_poll_data flag.
     __asm
-	mov	a, DPL
-	rlc	a
-	mov	_flash_poll_data, c
+        mov     a, DPL
+        rlc     a
+        mov     _flash_poll_data, c
     __endasm ; 
 
     /*
@@ -209,15 +209,15 @@ void flash_program_word(uint16_t dat) __naked
 
    // Wait for the low byte to finish
     __asm
-	mov	a, DPH
-	rlc	a
-	jnc	5$
+        mov     a, DPH
+        rlc     a
+        jnc     5$
 
-6$:	jnb	BUS_PORT.7, 6$
-        sjmp	7$
+6$:     jnb     BUS_PORT.7, 6$
+        sjmp    7$
 
-5$:	jb	BUS_PORT.7, 5$
-7$:			   
+5$:     jb      BUS_PORT.7, 5$
+7$:                        
     __endasm ;
 
     CTRL_PORT = CTRL_IDLE;
@@ -230,10 +230,10 @@ void flash_program_word(uint16_t dat) __naked
 
     // Write data byte, without any temporary registers
     __asm
-	mov	ADDR_PORT, _flash_addr_lat1
-	mov	CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
-	mov	ADDR_PORT, _flash_addr_low
-	mov	BUS_PORT, DPL
+        mov     ADDR_PORT, _flash_addr_lat1
+        mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
+        mov     ADDR_PORT, _flash_addr_low
+        mov     BUS_PORT, DPL
     __endasm ;
     CTRL_PORT = CTRL_FLASH_CMD;
     BUS_DIR = 0xFF;
@@ -241,45 +241,45 @@ void flash_program_word(uint16_t dat) __naked
 
     // Increment flash_addr on our way out, without any temporaries
     __asm
-	; Common case, no overflow
-	mov	a, _flash_addr_low
-	add	a, #2
-	mov	_flash_addr_low, a
-	jz	11$
-	ret
+        ; Common case, no overflow
+        mov     a, _flash_addr_low
+        add     a, #2
+        mov     _flash_addr_low, a
+        jz      11$
+        ret
 
-	; Low byte overflow 
+        ; Low byte overflow 
 11$:
-	mov	a, _flash_addr_lat1
-	add	a, #2
-	mov	_flash_addr_lat1, a
-	jz	12$
-	ret
+        mov     a, _flash_addr_lat1
+        add     a, #2
+        mov     _flash_addr_lat1, a
+        jz      12$
+        ret
 
         ; Lat1 overflow
 12$:
-	mov	a, _flash_addr_lat2
-	add	a, #2
-	mov     _flash_addr_lat2, a
+        mov     a, _flash_addr_lat2
+        add     a, #2
+        mov     _flash_addr_lat2, a
 
         ; Since we keep lat2 loaded into the latch, we need to at some point
         ; reload the latch before the next write. But we must not touch the
-	; latch while the flash is busy! In the interest of keeping the common
-	; case fast, just wait for the current write to finish then update lat2.
+        ; latch while the flash is busy! In the interest of keeping the common
+        ; case fast, just wait for the current write to finish then update lat2.
 
-	jnb	_flash_poll_data, 10$
-8$:	jnb	BUS_PORT.7, 8$
-        sjmp	9$
-10$:	jb	BUS_PORT.7, 10$
-9$:			   
+        jnb     _flash_poll_data, 10$
+8$:     jnb     BUS_PORT.7, 8$
+        sjmp    9$
+10$:    jb      BUS_PORT.7, 10$
+9$:                        
 
-	mov	ADDR_PORT, a
-	mov	CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT2)
+        mov     ADDR_PORT, a
+        mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT2)
 
-	mov	c, BUS_PORT.7
-	mov	_flash_poll_data, c
+        mov     c, BUS_PORT.7
+        mov     _flash_poll_data, c
 
-	ret
+        ret
 
     __endasm ;
 }

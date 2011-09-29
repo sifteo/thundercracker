@@ -69,50 +69,50 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
     txBits.flush(buf);
 
     if (vb) {
-	do {
-	    /*
-	     * This AND is important, it prevents out-of-bounds indexing
-	     * or infinite looping if userspace gives us a bogus cm32
-	     * value! This is equivalent to bounds-checking idx32 and addr
-	     * below, as well as checking for infinite looping. Much more
-	     * efficient to do it here though :)
-	     */
-	    uint32_t cm32 = vb->cm32 & 0xFFFF0000;
+        do {
+            /*
+             * This AND is important, it prevents out-of-bounds indexing
+             * or infinite looping if userspace gives us a bogus cm32
+             * value! This is equivalent to bounds-checking idx32 and addr
+             * below, as well as checking for infinite looping. Much more
+             * efficient to do it here though :)
+             */
+            uint32_t cm32 = vb->cm32 & 0xFFFF0000;
 
-	    if (!cm32)
-		break;
+            if (!cm32)
+                break;
 
-	    uint32_t idx32 = CLZ(cm32);
-	    uint32_t cm1 = vb->cm1[idx32];
+            uint32_t idx32 = CLZ(cm32);
+            uint32_t cm1 = vb->cm1[idx32];
 
-	    if (cm1) {
-		uint32_t idx1 = CLZ(cm1);
-		uint16_t addr = (idx32 << 5) | idx1;
+            if (cm1) {
+                uint32_t idx1 = CLZ(cm1);
+                uint16_t addr = (idx32 << 5) | idx1;
 
-		DBG(("-encode addr %04x, data %04x\n", addr, vb->vram.words[addr]));
+                DBG(("-encode addr %04x, data %04x\n", addr, vb->vram.words[addr]));
 
-		if (!encodeVRAMAddr(buf, addr) ||
-		    !encodeVRAMData(buf, vb, vb->vram.words[addr])) {
+                if (!encodeVRAMAddr(buf, addr) ||
+                    !encodeVRAMData(buf, vb, vb->vram.words[addr])) {
 
-		    /*
-		     * We ran out of room to encode. This should be rare,
-		     * happening only when we're near the end of the
-		     * packet buffer AND we're encoding a very large code,
-		     * like a literal 16-bit write plus a literal address
-		     * change.
-		     */
-		    break;
-		}
+                    /*
+                     * We ran out of room to encode. This should be rare,
+                     * happening only when we're near the end of the
+                     * packet buffer AND we're encoding a very large code,
+                     * like a literal 16-bit write plus a literal address
+                     * change.
+                     */
+                    break;
+                }
 
-		cm1 &= ROR(0x7FFFFFFF, idx1);
-		vb->cm1[idx32] = cm1;
-	    }
+                cm1 &= ROR(0x7FFFFFFF, idx1);
+                vb->cm1[idx32] = cm1;
+            }
 
-	    if (!cm1) {
-		cm32 &= ROR(0x7FFFFFFF, idx32);
-		vb->cm32 = cm32;
-	    }
-	} while (!buf.isFull());
+            if (!cm1) {
+                cm32 &= ROR(0x7FFFFFFF, idx32);
+                vb->cm32 = cm32;
+            }
+        } while (!buf.isFull());
     }
 
     /*
@@ -126,16 +126,16 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 
     // Flush out an RLE run, if one is buffered
     if (!buf.isFull()) {
-	flushDSRuns(true);
-	txBits.flush(buf);
+        flushDSRuns(true);
+        txBits.flush(buf);
     }
 
 #ifdef DEBUG
     if (buf.len) {
-	DBG(("---- Packet: [%2d] ", buf.len));
-	for (unsigned i = 0; i < buf.len; i++)
-	    DBG(("%02x", buf.bytes[i]));
-	DBG(("\n"));
+        DBG(("---- Packet: [%2d] ", buf.len));
+        for (unsigned i = 0; i < buf.len; i++)
+            DBG(("%02x", buf.bytes[i]));
+        DBG(("\n"));
     }
 #endif
 }
@@ -143,34 +143,34 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
 bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
 {
     if (addr != codePtr) {
-	uint16_t delta = (addr - codePtr) & PTR_MASK;
+        uint16_t delta = (addr - codePtr) & PTR_MASK;
 
-	flushDSRuns(true);
-	txBits.flush(buf);
-	if (buf.isFull())
-	    return false;
+        flushDSRuns(true);
+        txBits.flush(buf);
+        if (buf.isFull())
+            return false;
 
-	if (delta <= 8) {
-	    // We can use a short skip code
+        if (delta <= 8) {
+            // We can use a short skip code
 
-	    DBG((" addr delta %d\n", delta));
+            DBG((" addr delta %d\n", delta));
 
-	    delta--;
-	    txBits.append((delta & 1) | ((delta << 3) & 0x30), 8);
-	    DBG_BITS(txBits);
-	    txBits.flush(buf);
+            delta--;
+            txBits.append((delta & 1) | ((delta << 3) & 0x30), 8);
+            DBG_BITS(txBits);
+            txBits.flush(buf);
 
-	} else {
-	    // Too large a delta, use a longer literal code
+        } else {
+            // Too large a delta, use a longer literal code
 
-	    DBG((" addr literal %04x\n", addr));
+            DBG((" addr literal %04x\n", addr));
 
-	    txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
-	    DBG_BITS(txBits);
-	    txBits.flush(buf);
-	}
+            txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
+            DBG_BITS(txBits);
+            txBits.flush(buf);
+        }
 
-	codePtr = addr;
+        codePtr = addr;
     }
 
     return true;
@@ -179,7 +179,7 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
 bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t data)
 {
     if (buf.isFull())
-	return false;
+        return false;
 
     /*
      * See if we can encode this word as a delta or copy from one of
@@ -190,51 +190,51 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
 
     unsigned s0 = deltaSample(vb, data, RF_VRAM_SAMPLE_0);
     if (s0 == RF_VRAM_DIFF_BASE) {
-	encodeDS(s0, 0);
-	txBits.flush(buf); 
-	return true;
+        encodeDS(s0, 0);
+        txBits.flush(buf); 
+        return true;
     }
     
     unsigned s1 = deltaSample(vb, data, RF_VRAM_SAMPLE_1);
     if (s1 == RF_VRAM_DIFF_BASE) {
-	encodeDS(s1, 1);
-	txBits.flush(buf); 
-	return true;
+        encodeDS(s1, 1);
+        txBits.flush(buf); 
+        return true;
     }
 
     unsigned s2 = deltaSample(vb, data, RF_VRAM_SAMPLE_2);
     if (s2 == RF_VRAM_DIFF_BASE) {
-	encodeDS(s2, 2);
-	txBits.flush(buf); 
-	return true;
+        encodeDS(s2, 2);
+        txBits.flush(buf); 
+        return true;
     }
 
     unsigned s3 = deltaSample(vb, data, RF_VRAM_SAMPLE_3);
     if (s3 == RF_VRAM_DIFF_BASE) {
-	encodeDS(s3, 3);
-	txBits.flush(buf); 
-	return true;
+        encodeDS(s3, 3);
+        txBits.flush(buf); 
+        return true;
     }
 
     if (s0 < 0x10) {
-	encodeDS(s0, 0);
-	txBits.flush(buf); 
-	return true;
+        encodeDS(s0, 0);
+        txBits.flush(buf); 
+        return true;
     }
     if (s1 < 0x10) {
-	encodeDS(s1, 1);
-	txBits.flush(buf); 
-	return true;
+        encodeDS(s1, 1);
+        txBits.flush(buf); 
+        return true;
     }
     if (s2 < 0x10) {
-	encodeDS(s2, 2);
-	txBits.flush(buf); 
-	return true;
+        encodeDS(s2, 2);
+        txBits.flush(buf); 
+        return true;
     }
     if (s3 < 0x10) {
-	encodeDS(s3, 3);
-	txBits.flush(buf); 
-	return true;
+        encodeDS(s3, 3);
+        txBits.flush(buf); 
+        return true;
     }
 
     /*
@@ -242,38 +242,38 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
      */
 
     if (data & 0x0101) {
-	// 16-bit literal
+        // 16-bit literal
 
-	flushDSRuns(true);
-	txBits.flush(buf);
-	if (buf.isFull())
-	    return false;
+        flushDSRuns(true);
+        txBits.flush(buf);
+        if (buf.isFull())
+            return false;
 
-	DBG((" data literal-16 %04x\n", data));
+        DBG((" data literal-16 %04x\n", data));
 
-	txBits.append(0x23 | (data << 8), 24);
-	DBG_BITS(txBits);	    
-	txBits.flush(buf);
+        txBits.append(0x23 | (data << 8), 24);
+        DBG_BITS(txBits);           
+        txBits.flush(buf);
 
-	codePtrAdd(1);
-	codeS = 0;
-	codeD = RF_VRAM_DIFF_BASE;
+        codePtrAdd(1);
+        codeS = 0;
+        codeD = RF_VRAM_DIFF_BASE;
 
     } else {
-	// 14-bit literal
+        // 14-bit literal
 
-	flushDSRuns(false);
+        flushDSRuns(false);
 
-	uint16_t index = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
-	DBG((" data literal-14 %04x\n", index));
+        uint16_t index = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
+        DBG((" data literal-14 %04x\n", index));
 
-	txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
-	DBG_BITS(txBits);
-	txBits.flush(buf);
+        txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
+        DBG_BITS(txBits);
+        txBits.flush(buf);
 
-	codePtrAdd(1);
-	codeS = 0;
-	codeD = RF_VRAM_DIFF_BASE;
+        codePtrAdd(1);
+        codeS = 0;
+        codeD = RF_VRAM_DIFF_BASE;
     }
 
     return true;
@@ -282,16 +282,16 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
 void CubeCodec::encodeDS(uint8_t d, uint8_t s)
 {
     if (d == codeD && s == codeS && codeRuns != RF_VRAM_MAX_RUN) {
-	// Extend an existing run
-	codeRuns++;
+        // Extend an existing run
+        codeRuns++;
 
     } else {
-	flushDSRuns(false);
+        flushDSRuns(false);
 
-	DBG((" ds %d %d\n", d, s));
-	appendDS(d, s);
-	codeD = d;
-	codeS = s;
+        DBG((" ds %d %d\n", d, s));
+        appendDS(d, s);
+        codeD = d;
+        codeS = s;
     }
 
     codePtrAdd(1);
@@ -314,34 +314,34 @@ void CubeCodec::flushDSRuns(bool rleSafe)
      */
 
     if (codeRuns) {
-	DBG((" flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
+        DBG((" flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
 
-	// Save room for the trailing non-RLE code
-	if (rleSafe)
-	    codeRuns--;
+        // Save room for the trailing non-RLE code
+        if (rleSafe)
+            codeRuns--;
 
-	if (codeRuns) {
-	    uint8_t r = codeRuns - 1;
-	    codeRuns = 0;
-	    
-	    if (r < 4) {
-		// Short run
-		txBits.append(r, 4);
-		DBG_BITS(txBits);
-	    } else {
-		// Longer run
-		r -= 4;
-		txBits.append(0x2 | ((r << 8) & 0xF00) | (r & 0x30), 12);
-		DBG_BITS(txBits);
-	    }
-	}
+        if (codeRuns) {
+            uint8_t r = codeRuns - 1;
+            codeRuns = 0;
+            
+            if (r < 4) {
+                // Short run
+                txBits.append(r, 4);
+                DBG_BITS(txBits);
+            } else {
+                // Longer run
+                r -= 4;
+                txBits.append(0x2 | ((r << 8) & 0xF00) | (r & 0x30), 12);
+                DBG_BITS(txBits);
+            }
+        }
 
-	// Trailing non-RLE code
-	if (rleSafe)
-	    appendDS(codeD, codeS);
+        // Trailing non-RLE code
+        if (rleSafe)
+            appendDS(codeD, codeS);
 
-	// Can't emit another run immediately after a flush
-	codeD = -1;
+        // Can't emit another run immediately after a flush
+        codeD = -1;
     }
 }
 
@@ -349,7 +349,7 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
 {
     // No room in output buffer
     if (!txBits.hasRoomForFlush(buf, 12))
-	return false;
+        return false;
 
     loadBufferAvail = FLS_FIFO_SIZE - 1;
 
@@ -366,7 +366,7 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
 }
 
 bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
-			  _SYSAssetGroupCube *ac, bool &done)
+                          _SYSAssetGroupCube *ac, bool &done)
 {
     /*
      * Since we're dealing with asset group pointers as well as
@@ -385,26 +385,26 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
 
     // Cube has no room in its buffer
     if (!loadBufferAvail)
-	return false;
+        return false;
 
     // No room in output buffer
     if (!txBits.hasRoomForFlush(buf, 12 + 8))
-	return false;
+        return false;
 
     // Per-cube asset state pointer is invalid
     if (!ac)
-	return false;
+        return false;
 
     // Group data header pointer is invalid
     const _SYSAssetGroupHeader *ghdr = group->hdr;
     if (!Runtime::checkUserPointer(ghdr, sizeof *ghdr))
-	return false;
+        return false;
 
     // Inconsistent sizes
     uint32_t dataSize = ghdr->dataSize;
     uint32_t progress = ac->progress;
     if (progress > dataSize)
-	return false;
+        return false;
     
     uint8_t *src = (uint8_t *)ghdr + ghdr->hdrSize + progress;
     uint32_t count;
@@ -425,7 +425,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     ac->progress = progress;
 
     if (progress >= dataSize)
-	done = true;
+        done = true;
 
     return true;
 }

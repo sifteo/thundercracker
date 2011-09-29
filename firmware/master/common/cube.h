@@ -39,69 +39,69 @@ class CubeSlot {
     /*
      * One-bit flags for each cube are packed into global vectors
      */
-    static _SYSCubeIDVector vecEnabled;		/// Cube enabled
-    static _SYSCubeIDVector flashResetWait;	/// We need to reset flash before writing to it
-    static _SYSCubeIDVector flashResetSent;	/// We've sent an unacknowledged flash reset	
-    static _SYSCubeIDVector flashACKValid;	/// 'flashPrevACK' is valid
+    static _SYSCubeIDVector vecEnabled;         /// Cube enabled
+    static _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
+    static _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
+    static _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid
 
     _SYSCubeID id() const {
-	return this - &instances[0];
+        return this - &instances[0];
     }
 
     _SYSCubeIDVector bit() const {
-	return Sifteo::Intrinsic::LZ(id());
+        return Sifteo::Intrinsic::LZ(id());
     }
 
     bool enabled() const {
-	return !!(bit() & vecEnabled);
+        return !!(bit() & vecEnabled);
     }
 
     void setVideoBuffer(_SYSVideoBuffer *v) {
-	vbuf = v;
+        vbuf = v;
     }
 
     bool isAssetGroupLoaded(_SYSAssetGroup *a) {
-	return !!(bit() & a->doneCubes);
+        return !!(bit() & a->doneCubes);
     }
 
     _SYSAssetGroup *getLastAssetGroup(void) const {
-	return loadGroup;
+        return loadGroup;
     }
 
     void getAccelState(struct _SYSAccelState *state) {
-	*state = accelState;
+        *state = accelState;
     }
 
     _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
-	/*
-	 * Safely return this cube's per-cube data on a particular
-	 * asset group.  If the user-pointer check fails, returns
-	 * NULL.
-	 */
-	_SYSCubeID i = id();
-	if (Runtime::checkUserPointer(group->cubes, (sizeof group->cubes[0]) * (i + 1)))
-	    return &group->cubes[i];
-	return 0;
+        /*
+         * Safely return this cube's per-cube data on a particular
+         * asset group.  If the user-pointer check fails, returns
+         * NULL.
+         */
+        _SYSCubeID i = id();
+        if (Runtime::checkUserPointer(group->cubes, (sizeof group->cubes[0]) * (i + 1)))
+            return &group->cubes[i];
+        return 0;
     }
 
     void loadAssets(_SYSAssetGroup *a);
 
     static bool validID(_SYSCubeID id) {
-	// For security/reliability, all cube IDs from game code must be checked
-	return id < _SYS_NUM_CUBE_SLOTS;
+        // For security/reliability, all cube IDs from game code must be checked
+        return id < _SYS_NUM_CUBE_SLOTS;
     }
     
     static _SYSCubeIDVector truncateVector(_SYSCubeIDVector cv) {
-	// For security/reliability, all cube vectors from game code must be checked
-	return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
+        // For security/reliability, all cube vectors from game code must be checked
+        return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
     }
 
     static void enableCubes(_SYSCubeIDVector cv) {
-	Sifteo::Atomic::Or(vecEnabled, cv);
+        Sifteo::Atomic::Or(vecEnabled, cv);
     }
 
     static void disableCubes(_SYSCubeIDVector cv) {
-	Sifteo::Atomic::And(vecEnabled, ~cv);
+        Sifteo::Atomic::And(vecEnabled, ~cv);
     }
 
  private:

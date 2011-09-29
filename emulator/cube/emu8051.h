@@ -99,14 +99,14 @@ struct em8051
     uint64_t profilerTotal;
     FILE *traceFile;
 
-    uint8_t irq_count;		// Number of currently active IRQ handlers
+    uint8_t irq_count;          // Number of currently active IRQ handlers
 
     struct {
-	// Stored register values for sanity-checking ISRs
-	uint8_t a, psw, sp;
+        // Stored register values for sanity-checking ISRs
+        uint8_t a, psw, sp;
 
-	// Priority of *this* interrupt handler
-	uint8_t priority;
+        // Priority of *this* interrupt handler
+        uint8_t priority;
     } irql[NUM_IRQ_LEVELS];
 };
 
@@ -274,33 +274,33 @@ enum PSW_MASKS
 
 enum IRQ_MASKS
 {
-    IRQM0_IFP	= (1 << 0),
-    IRQM0_TF0	= (1 << 1),
-    IRQM0_PFAIL	= (1 << 2),
-    IRQM0_TF1	= (1 << 3),
-    IRQM0_SER	= (1 << 4),
-    IRQM0_TF2	= (1 << 5),
-    IRQM0_EN	= (1 << 7),
+    IRQM0_IFP   = (1 << 0),
+    IRQM0_TF0   = (1 << 1),
+    IRQM0_PFAIL = (1 << 2),
+    IRQM0_TF1   = (1 << 3),
+    IRQM0_SER   = (1 << 4),
+    IRQM0_TF2   = (1 << 5),
+    IRQM0_EN    = (1 << 7),
 
-    IRQM1_RFSPI	= (1 << 0),
-    IRQM1_RF	= (1 << 1),
-    IRQM1_SPI	= (1 << 2),
-    IRQM1_WUOP	= (1 << 3),
-    IRQM1_MISC	= (1 << 4),
-    IRQM1_TICK	= (1 << 5),
+    IRQM1_RFSPI = (1 << 0),
+    IRQM1_RF    = (1 << 1),
+    IRQM1_SPI   = (1 << 2),
+    IRQM1_WUOP  = (1 << 3),
+    IRQM1_MISC  = (1 << 4),
+    IRQM1_TICK  = (1 << 5),
     IRQM1_TMR2EX = (1 << 7),
 };
 
 enum IRCON_MASKS
 {
-    IRCON_RFSPI	= (1 << 0),
-    IRCON_RF	= (1 << 1),
-    IRCON_SPI	= (1 << 2),
-    IRCON_WUOP	= (1 << 3),
-    IRCON_MISC	= (1 << 4),
-    IRCON_TICK	= (1 << 5),
-    IRCON_TF2	= (1 << 6),
-    IRCON_EXF2	= (1 << 7),
+    IRCON_RFSPI = (1 << 0),
+    IRCON_RF    = (1 << 1),
+    IRCON_SPI   = (1 << 2),
+    IRCON_WUOP  = (1 << 3),
+    IRCON_MISC  = (1 << 4),
+    IRCON_TICK  = (1 << 5),
+    IRCON_TF2   = (1 << 6),
+    IRCON_EXF2  = (1 << 7),
 };
 
 enum PT_MASKS
@@ -358,8 +358,8 @@ enum EM8051_EXCEPTION
     EXCEPTION_IRET_ACC_MISMATCH, // acc not preserved over interrupt call
     EXCEPTION_ILLEGAL_OPCODE,    // for the single 'reserved' opcode in the architecture
     EXCEPTION_BUS_CONTENTION,    // Hardware bus contention
-    EXCEPTION_SPI_XRUN,		 // SPI FIFO overrun/underrun
-    EXCEPTION_RADIO_XRUN,	 // Radio FIFO overrun/underrun
+    EXCEPTION_SPI_XRUN,          // SPI FIFO overrun/underrun
+    EXCEPTION_RADIO_XRUN,        // Radio FIFO overrun/underrun
 };
 
 // The active DPTR registers depend on the value of DPS.
@@ -368,7 +368,7 @@ enum EM8051_EXCEPTION
 #define SEL_DPH(dps)   (((dps) & 1) ? REG_DPH1 : REG_DPH)
 
 // The active DPTR registers depend on the value of DPS.
-#define CUR_DPL	       SEL_DPL(aCPU->mSFR[REG_DPS])
+#define CUR_DPL        SEL_DPL(aCPU->mSFR[REG_DPS])
 #define CUR_DPH        SEL_DPH(aCPU->mSFR[REG_DPS])
 
 

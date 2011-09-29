@@ -17,11 +17,11 @@
 class SPIMaster {
  public:
     SPIMaster(volatile SPI_t *_hw,
-	      GPIOPin _csn,
-	      GPIOPin _sck,
-	      GPIOPin _miso,
-	      GPIOPin _mosi)
-	: hw(_hw), csn(_csn), sck(_sck), miso(_miso), mosi(_mosi) {}
+              GPIOPin _csn,
+              GPIOPin _sck,
+              GPIOPin _miso,
+              GPIOPin _mosi)
+        : hw(_hw), csn(_csn), sck(_sck), miso(_miso), mosi(_mosi) {}
 
     void init();
     void begin();

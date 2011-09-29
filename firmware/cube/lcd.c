@@ -46,22 +46,22 @@ static void lcd_cmd_table(const __code uint8_t *ptr)
     LCD_WRITE_BEGIN();
 
     while ((len = *ptr)) {
-	ptr++;
+        ptr++;
 
-	if (len & 0x80) {
-	    msleep(len - 0x7F);
+        if (len & 0x80) {
+            msleep(len - 0x7F);
 
-	} else {
-	    LCD_CMD_MODE();
-	    LCD_BYTE(*ptr);
-	    LCD_DATA_MODE();
-	    ptr++;
+        } else {
+            LCD_CMD_MODE();
+            LCD_BYTE(*ptr);
+            LCD_DATA_MODE();
+            ptr++;
 
-	    do {
-		LCD_BYTE(*ptr);
-		ptr++;
-	    } while (--len);
-	}
+            do {
+                LCD_BYTE(*ptr);
+                ptr++;
+            } while (--len);
+        }
     }
 
     LCD_WRITE_END();
@@ -82,15 +82,15 @@ static void lcd_lut_init()
     
     // Red (5->6)
     for (i = 0; i < 32; i++)
-	LCD_BYTE(i << 1);
+        LCD_BYTE(i << 1);
 
     // Green (Identity)
     for (i = 0; i < 64; i++)
-	LCD_BYTE(i);
+        LCD_BYTE(i);
 
     // Blue (5->6)
     for (i = 0; i < 32; i++)
-	LCD_BYTE(i << 1);
+        LCD_BYTE(i << 1);
 
     LCD_WRITE_END();
 }
@@ -103,16 +103,16 @@ void lcd_sleep()
 
     if (lcd_is_awake) {
 
-	static const __code uint8_t table[] = {
-	    1, LCD_CMD_SLPIN, 0x00,
-	    1, LCD_CMD_DISPOFF, 0x00,
-	    0,
-	};
+        static const __code uint8_t table[] = {
+            1, LCD_CMD_SLPIN, 0x00,
+            1, LCD_CMD_DISPOFF, 0x00,
+            0,
+        };
 
-	lcd_is_awake = 0;
-	lcd_cmd_table(table);
-	lcd_lut_init();
-    }	
+        lcd_is_awake = 0;
+        lcd_cmd_table(table);
+        lcd_lut_init();
+    }   
 }
     
 void lcd_begin_frame()
@@ -125,8 +125,8 @@ void lcd_begin_frame()
      * Wake up the LCD controller, if necessary.
      */
     if (!lcd_is_awake) {
-	lcd_is_awake = 1;
-	lcd_cmd_table(lcd_setup_table);
+        lcd_is_awake = 1;
+        lcd_cmd_table(lcd_setup_table);
     }
 
     LCD_WRITE_BEGIN();
@@ -155,7 +155,7 @@ void lcd_begin_frame()
 
     // Vertical sync
     if (flags & _SYS_VF_SYNC)
-	while (!CTRL_LCD_TE);
+        while (!CTRL_LCD_TE);
 }    
 
 
@@ -169,7 +169,7 @@ void lcd_end_frame()
      */
 
     static const __code uint8_t table[] = {
-	1, LCD_CMD_DISPON, 0x00,
+        1, LCD_CMD_DISPON, 0x00,
     };
 
     lcd_cmd_table(table);

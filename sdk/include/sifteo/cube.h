@@ -26,23 +26,23 @@ class Cube {
     typedef _SYSCubeID ID;
 
     Cube(ID id)
-	: mID(id) {}
+        : mID(id) {}
 
     void enable() {
-	_SYS_setVideoBuffer(mID, &vbuf.sys);
-	_SYS_enableCubes(Intrinsic::LZ(mID));
+        _SYS_setVideoBuffer(mID, &vbuf.sys);
+        _SYS_enableCubes(Intrinsic::LZ(mID));
     }
 
     void disable() {
-	_SYS_disableCubes(Intrinsic::LZ(mID));
+        _SYS_disableCubes(Intrinsic::LZ(mID));
     }
 
     void loadAssets(AssetGroup &group) {
-	_SYS_loadAssets(mID, &group.sys);
+        _SYS_loadAssets(mID, &group.sys);
     }
 
     ID id() const {
-	return mID;
+        return mID;
     }
 
     VideoBuffer vbuf;

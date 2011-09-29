@@ -20,9 +20,9 @@ void msleep(uint8_t msec)
     register uint8_t a = msec;
 
     do {
-	b = 20;
-	do {
-	    do {} while (--c);
-	} while (--b);
+        b = 20;
+        do {
+            do {} while (--c);
+        } while (--b);
     } while (--a);
 }

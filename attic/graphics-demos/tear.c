@@ -15,16 +15,16 @@ static void lcd_addr_burst(uint8_t pixels)
     uint8_t low = pixels & 0x7;
 
     if (hi)
-	// Fast DJNZ loop, 8-pixel bursts
-	do {
-	    ADDR_INC32();
-	} while (--hi);
+        // Fast DJNZ loop, 8-pixel bursts
+        do {
+            ADDR_INC32();
+        } while (--hi);
 
     if (low)
-	// Fast DJNZ loop, single pixels
-	do {
-	    ADDR_INC4();
-	} while (--low);
+        // Fast DJNZ loop, single pixels
+        do {
+            ADDR_INC4();
+        } while (--low);
 }
 
 void lcd_cmd_byte(uint8_t b)
@@ -65,20 +65,20 @@ void main(void)
     lcd_data_byte(LCD_COLMOD_16);
 
     while (1) {
-	color ^= 0xFF;
+        color ^= 0xFF;
 
-	// Sync with LCD
-	while (!CTRL_LCD_TE);
+        // Sync with LCD
+        while (!CTRL_LCD_TE);
 
-	// Fill screen
+        // Fill screen
 
-	lcd_cmd_byte(LCD_CMD_RAMWR);
-	BUS_DIR = 0;
-	BUS_PORT = color;
-	y = LCD_HEIGHT;
-	do {
-	    lcd_addr_burst(LCD_WIDTH);
-	} while (--y);
-	BUS_DIR = 0xFF;
+        lcd_cmd_byte(LCD_CMD_RAMWR);
+        BUS_DIR = 0;
+        BUS_PORT = color;
+        y = LCD_HEIGHT;
+        do {
+            lcd_addr_burst(LCD_WIDTH);
+        } while (--y);
+        BUS_DIR = 0xFF;
     }
 }

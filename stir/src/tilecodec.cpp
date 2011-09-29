@@ -17,7 +17,7 @@ namespace Stir {
 TileCodecLUT::TileCodecLUT()
 {
     for (unsigned i = 0; i < LUT_MAX; i++)
-	mru[i] = i;
+        mru[i] = i;
 }
 
 unsigned TileCodecLUT::encode(const TilePalette &pal)
@@ -44,68 +44,68 @@ unsigned TileCodecLUT::encode(const TilePalette &pal, uint16_t &newColors)
 
     // Account for each color in this tile
     if (pal.hasLUT()) {
-	unsigned numMissing = 0;
-	RGB565 missing[LUT_MAX];
+        unsigned numMissing = 0;
+        RGB565 missing[LUT_MAX];
 
-	/*
-	 * Reverse-iterate over the tile's colors, so that the most
-	 * popular colors (at the beginning of the palette) will end
-	 * up at the beginning of the MRU list afterwards.
-	 */
+        /*
+         * Reverse-iterate over the tile's colors, so that the most
+         * popular colors (at the beginning of the palette) will end
+         * up at the beginning of the MRU list afterwards.
+         */
 
-	for (int c = pal.numColors - 1; c >= 0; c--) {
-	    RGB565 color = pal.colors[c];
-	    int index = findColor(color, maxLUTIndex);
+        for (int c = pal.numColors - 1; c >= 0; c--) {
+            RGB565 color = pal.colors[c];
+            int index = findColor(color, maxLUTIndex);
 
-	    if (index < 0) {
-		// Don't have this color yet, or it isn't reachable.
-		// Add it to a temporary list of colors that we need
-		missing[numMissing++] = color;
+            if (index < 0) {
+                // Don't have this color yet, or it isn't reachable.
+                // Add it to a temporary list of colors that we need
+                missing[numMissing++] = color;
 
-	    } else {
-		// We already have this color in the LUT! Bump it to the head of the MRU list.
+            } else {
+                // We already have this color in the LUT! Bump it to the head of the MRU list.
 
-		for (unsigned i = 0; i < LUT_MAX - 1; i++)
-		    if (mru[i] == index) {
-			bumpMRU(i, index);
-			break;
-		    }
-	    }
-	}
+                for (unsigned i = 0; i < LUT_MAX - 1; i++)
+                    if (mru[i] == index) {
+                        bumpMRU(i, index);
+                        break;
+                    }
+            }
+        }
 
-	/*
-	 * After bumping any colors that we do need, add colors we
-	 * don't yet have. We replace starting with the least recently
-	 * used LUT entries and the least popular missing colors. The
-	 * most popular missing colors will end up at the front of the
-	 * MRU list.
-	 *
-	 * Because of the reversal above, the most popular missing
-	 * colors are at the end of the vector. So, we iterate in
-	 * reverse once more.
-	 */
+        /*
+         * After bumping any colors that we do need, add colors we
+         * don't yet have. We replace starting with the least recently
+         * used LUT entries and the least popular missing colors. The
+         * most popular missing colors will end up at the front of the
+         * MRU list.
+         *
+         * Because of the reversal above, the most popular missing
+         * colors are at the end of the vector. So, we iterate in
+         * reverse once more.
+         */
 
-	while (numMissing) {
+        while (numMissing) {
 
-	    // Find the oldest index that is reachable by this tile's LUT
-	    unsigned index;
-	    for (unsigned i = 0; i < LUT_MAX; i++) {
-		index = mru[i];
-		if (index <= maxLUTIndex) {
-		    bumpMRU(i, index);
-		    break;
-		}
-	    }
+            // Find the oldest index that is reachable by this tile's LUT
+            unsigned index;
+            for (unsigned i = 0; i < LUT_MAX; i++) {
+                index = mru[i];
+                if (index <= maxLUTIndex) {
+                    bumpMRU(i, index);
+                    break;
+                }
+            }
 
-	    colors[index] = missing[--numMissing];
-	    newColors |= 1 << index;
-	    cost += lutLoadCost;
-	}
+            colors[index] = missing[--numMissing];
+            newColors |= 1 << index;
+            cost += lutLoadCost;
+        }
     }
 
     // We have to break a run if we're switching modes OR reloading a LUT entry.
     if (mode != lastMode || cost != 0)
-	cost += runBreakCost;
+        cost += runBreakCost;
     lastMode = mode;
 
     return cost;
@@ -118,7 +118,7 @@ RLECodec4::RLECodec4()
 void RLECodec4::encode(uint8_t nybble, std::vector<uint8_t>& out)
 {
     if (nybble != runNybble || runCount == MAX_RUN)
-	encodeRun(out);
+        encodeRun(out);
 
     runNybble = nybble;
     runCount++;   
@@ -128,35 +128,35 @@ void RLECodec4::flush(std::vector<uint8_t>& out)
 {
     encodeRun(out, true);
     if (isNybbleBuffered)
-	encodeNybble(0, out);
+        encodeNybble(0, out);
 }
 
 void RLECodec4::encodeNybble(uint8_t value, std::vector<uint8_t>& out)
 {
     if (isNybbleBuffered) {
-	out.push_back(bufferedNybble | (value << 4));
-	isNybbleBuffered = false;
+        out.push_back(bufferedNybble | (value << 4));
+        isNybbleBuffered = false;
     } else {
-	bufferedNybble = value;
-	isNybbleBuffered = true;
+        bufferedNybble = value;
+        isNybbleBuffered = true;
     }
 }
 
 void RLECodec4::encodeRun(std::vector<uint8_t>& out, bool terminal)
 {
     if (runCount > 0) {
-	encodeNybble(runNybble, out);
+        encodeNybble(runNybble, out);
 
-	if (runCount > 1) {
-	    encodeNybble(runNybble, out);
+        if (runCount > 1) {
+            encodeNybble(runNybble, out);
 
-	    if (runCount == 2 && !terminal)
-		// Null runs can be omitted at the end of an encoding block
-		encodeNybble(0, out);
+            if (runCount == 2 && !terminal)
+                // Null runs can be omitted at the end of an encoding block
+                encodeNybble(0, out);
 
-	    else if (runCount > 2)
-		encodeNybble(runCount - 2, out);
-	}
+            else if (runCount > 2)
+                encodeNybble(runCount - 2, out);
+        }
     }
 
     runCount = 0;
@@ -177,7 +177,7 @@ void TileCodec::encode(const TileRef tile, bool autoErase)
      * write, erasing each block right before we start programming it.
      */
     if (autoErase && !(currentAddress.linear % FlashAddress::BLOCK_SIZE))
-	erase(1);
+        erase(1);
 
     currentAddress.linear += FlashAddress::TILE_SIZE;
 
@@ -189,7 +189,7 @@ void TileCodec::encode(const TileRef tile, bool autoErase)
     uint16_t newColors;
     lut.encode(pal, newColors);
     if (newColors)
-	encodeLUT(newColors);
+        encodeLUT(newColors);
 
     /*
      * Now encode the tile bitmap data. We do this in a
@@ -202,17 +202,17 @@ void TileCodec::encode(const TileRef tile, bool autoErase)
 
     switch (colorMode) {
 
-	/* Trivial one-color tile. Just emit a bare FLS_OP_TILE_P0 opcode. */
+        /* Trivial one-color tile. Just emit a bare FLS_OP_TILE_P0 opcode. */
     case TilePalette::CM_LUT1:
-	encodeOp(FLS_OP_TILE_P0 | lut.findColor(pal.colors[0]));
-	newStatsTile(colorMode);
-	return;
+        encodeOp(FLS_OP_TILE_P0 | lut.findColor(pal.colors[0]));
+        newStatsTile(colorMode);
+        return;
 
-	/* Repeatable tile types */
-    case TilePalette::CM_LUT2:	tileOpcode = FLS_OP_TILE_P1_R4;	break;
-    case TilePalette::CM_LUT4:	tileOpcode = FLS_OP_TILE_P2_R4;	break;
-    case TilePalette::CM_LUT16:	tileOpcode = FLS_OP_TILE_P4_R4;	break;
-    default:			tileOpcode = FLS_OP_TILE_P16;	break;
+        /* Repeatable tile types */
+    case TilePalette::CM_LUT2:  tileOpcode = FLS_OP_TILE_P1_R4; break;
+    case TilePalette::CM_LUT4:  tileOpcode = FLS_OP_TILE_P2_R4; break;
+    case TilePalette::CM_LUT16: tileOpcode = FLS_OP_TILE_P4_R4; break;
+    default:                    tileOpcode = FLS_OP_TILE_P16;   break;
     }
 
     /*
@@ -221,11 +221,11 @@ void TileCodec::encode(const TileRef tile, bool autoErase)
      */
 
     if (!opIsBuffered
-	|| tileOpcode != (opcodeBuf & FLS_OP_MASK)
-	|| (opcodeBuf & FLS_ARG_MASK) == FLS_ARG_MASK)
-	encodeOp(tileOpcode);
+        || tileOpcode != (opcodeBuf & FLS_OP_MASK)
+        || (opcodeBuf & FLS_ARG_MASK) == FLS_ARG_MASK)
+        encodeOp(tileOpcode);
     else
-	opcodeBuf++;
+        opcodeBuf++;
 
     /*
      * Format-specific tile encoders
@@ -234,10 +234,10 @@ void TileCodec::encode(const TileRef tile, bool autoErase)
     newStatsTile(colorMode);
 
     switch (tileOpcode) {
-    case FLS_OP_TILE_P1_R4:	encodeTileRLE4(tile, 1);	break;
-    case FLS_OP_TILE_P2_R4:	encodeTileRLE4(tile, 2);	break;
-    case FLS_OP_TILE_P4_R4:	encodeTileRLE4(tile, 4);	break;
-    case FLS_OP_TILE_P16:	encodeTileMasked16(tile);	break;
+    case FLS_OP_TILE_P1_R4:     encodeTileRLE4(tile, 1);        break;
+    case FLS_OP_TILE_P2_R4:     encodeTileRLE4(tile, 2);        break;
+    case FLS_OP_TILE_P4_R4:     encodeTileRLE4(tile, 4);        break;
+    case FLS_OP_TILE_P16:       encodeTileMasked16(tile);       break;
     }
 }
 
@@ -251,19 +251,19 @@ void TileCodec::newStatsTile(unsigned bucket)
 void TileCodec::flush()
 {
     if (opIsBuffered) {
-	if (statBucket != TilePalette::CM_INVALID) {
-	    stats[statBucket].opcodes++;
-	    stats[statBucket].dataBytes += dataBuf.size();
-	    stats[statBucket].tiles += tileCount;
-	    tileCount = 0;
-	}
+        if (statBucket != TilePalette::CM_INVALID) {
+            stats[statBucket].opcodes++;
+            stats[statBucket].dataBytes += dataBuf.size();
+            stats[statBucket].tiles += tileCount;
+            tileCount = 0;
+        }
 
-	rle.flush(dataBuf);
+        rle.flush(dataBuf);
 
-	out.push_back(opcodeBuf);
-	out.insert(out.end(), dataBuf.begin(), dataBuf.end());
-	dataBuf.clear();
-	opIsBuffered = false;
+        out.push_back(opcodeBuf);
+        out.insert(out.end(), dataBuf.begin(), dataBuf.end());
+        dataBuf.clear();
+        opIsBuffered = false;
     }
 }
 
@@ -278,28 +278,28 @@ void TileCodec::encodeOp(uint8_t op)
 void TileCodec::encodeLUT(uint16_t newColors)
 {
     if (newColors & (newColors - 1)) {
-	/*
-	 * More than one new color. Emit FLS_OP_LUT16.
-	 */
+        /*
+         * More than one new color. Emit FLS_OP_LUT16.
+         */
 
-	encodeOp(FLS_OP_LUT16);
-	encodeWord(newColors);
+        encodeOp(FLS_OP_LUT16);
+        encodeWord(newColors);
 
-	for (unsigned index = 0; index < 16; index++)
-	    if (newColors & (1 << index))
-		encodeWord(lut.colors[index].value);
+        for (unsigned index = 0; index < 16; index++)
+            if (newColors & (1 << index))
+                encodeWord(lut.colors[index].value);
 
     } else {
-	/*
-	 * Exactly one new color. Use FLS_OP_LUT1.
-	 */
+        /*
+         * Exactly one new color. Use FLS_OP_LUT1.
+         */
 
-	for (unsigned index = 0; index < 16; index++)
-	    if (newColors & (1 << index)) {
-		encodeOp(FLS_OP_LUT1 | index);
-		encodeWord(lut.colors[index].value);
-		break;
-	    }
+        for (unsigned index = 0; index < 16; index++)
+            if (newColors & (1 << index)) {
+                encodeOp(FLS_OP_LUT1 | index);
+                encodeWord(lut.colors[index].value);
+                break;
+            }
     }
 }
 
@@ -320,18 +320,18 @@ void TileCodec::encodeTileRLE4(const TileRef tile, unsigned bits)
     unsigned bitIndex = 0;
  
     while (pixelIndex < Tile::PIXELS) {
-	uint8_t color = lut.findColor(tile->pixel(pixelIndex));
-	assert(color < (1 << bits));
-	nybble |= color << bitIndex;
+        uint8_t color = lut.findColor(tile->pixel(pixelIndex));
+        assert(color < (1 << bits));
+        nybble |= color << bitIndex;
 
-	pixelIndex++;
-	bitIndex += bits;
+        pixelIndex++;
+        bitIndex += bits;
 
-	if (bitIndex == 4) {
-	    rle.encode(nybble, dataBuf);
-	    nybble = 0;
-	    bitIndex = 0;
-	}
+        if (bitIndex == 4) {
+            rle.encode(nybble, dataBuf);
+            nybble = 0;
+            bitIndex = 0;
+        }
     }
 }
 
@@ -349,19 +349,19 @@ void TileCodec::encodeTileMasked16(const TileRef tile)
      */
 
     for (unsigned y = 0; y < Tile::SIZE; y++) {
-	uint8_t mask = 0;
+        uint8_t mask = 0;
 
-	for (unsigned x = 0; x < Tile::SIZE; x++)
-	    if (tile->pixel(x, y).value != p16run) {
-		mask |= 1 << x;
-		p16run = tile->pixel(x, y).value;
-	    }
+        for (unsigned x = 0; x < Tile::SIZE; x++)
+            if (tile->pixel(x, y).value != p16run) {
+                mask |= 1 << x;
+                p16run = tile->pixel(x, y).value;
+            }
 
-	dataBuf.push_back(mask);
+        dataBuf.push_back(mask);
 
-	for (unsigned x = 0; x < Tile::SIZE; x++)
-	    if (mask & (1 << x))
-		encodeWord(tile->pixel(x, y).value);
+        for (unsigned x = 0; x < Tile::SIZE; x++)
+            if (mask & (1 << x))
+                encodeWord(tile->pixel(x, y).value);
     }
 }
 
@@ -370,16 +370,16 @@ void TileCodec::dumpStatistics(Logger &log)
     log.infoBegin("Tile encoder statistics");
 
     for (int m = 0; m < TilePalette::CM_COUNT; m++) {
-	unsigned compressedSize = stats[m].dataBytes + stats[m].opcodes;
-	unsigned uncompressedSize = stats[m].tiles * (Tile::PIXELS * 2);
-	double ratio = uncompressedSize ? 100.0 - compressedSize * 100.0 / uncompressedSize : 0;
+        unsigned compressedSize = stats[m].dataBytes + stats[m].opcodes;
+        unsigned uncompressedSize = stats[m].tiles * (Tile::PIXELS * 2);
+        double ratio = uncompressedSize ? 100.0 - compressedSize * 100.0 / uncompressedSize : 0;
 
-	log.infoLine("%10s: % 4u ops, % 4u tiles, % 5u bytes, % 5.01f%% compression",
-		     TilePalette::colorModeName((TilePalette::ColorMode) m),
-		     stats[m].opcodes,
-		     stats[m].tiles,
-		     stats[m].dataBytes,
-		     ratio);
+        log.infoLine("%10s: % 4u ops, % 4u tiles, % 5u bytes, % 5.01f%% compression",
+                     TilePalette::colorModeName((TilePalette::ColorMode) m),
+                     stats[m].opcodes,
+                     stats[m].tiles,
+                     stats[m].dataBytes,
+                     ratio);
     }
 
     log.infoEnd();
@@ -398,13 +398,13 @@ void TileCodec::address(FlashAddress addr)
 void TileCodec::erase(unsigned numBlocks)
 {
     if (numBlocks) {
-	uint8_t count = numBlocks - 1;
-	uint8_t check = -count -currentAddress.lat1() - currentAddress.lat2();
-	check ^= 0xFF;
+        uint8_t count = numBlocks - 1;
+        uint8_t check = -count -currentAddress.lat1() - currentAddress.lat2();
+        check ^= 0xFF;
 
-	encodeOp(FLS_OP_ERASE);
-	dataBuf.push_back(count);
-	dataBuf.push_back(check);
+        encodeOp(FLS_OP_ERASE);
+        dataBuf.push_back(count);
+        dataBuf.push_back(check);
     }
     flush();
 }

@@ -44,19 +44,19 @@ SECTIONS
          *       junk like _frame_dummy in here, something's wrong with the
          *       linker configuration. We are supposed to be linking with the
          *       standard library (newlib) but NOT with the standard crt0.
-         */	    
+         */         
 
         . = ALIGN(4);
-	__init_array_start = .;
-	KEEP (*(.init_array));
-	__init_array_end = .;
+        __init_array_start = .;
+        KEEP (*(.init_array));
+        __init_array_end = .;
 
-	/*
-	 * This is our marker for where the initialized data is stored in flash below.
-	 * It's also used by the startup code to locate this data.
-	 */
+        /*
+         * This is our marker for where the initialized data is stored in flash below.
+         * It's also used by the startup code to locate this data.
+         */
 
-	__data_src = .;
+        __data_src = .;
 
     } >FLASH
 
@@ -67,9 +67,9 @@ SECTIONS
 
     .data : AT (__data_src) {
         . = ALIGN(4);
-	__data_start = .;
+        __data_start = .;
         *(.data .data.*)
-	__data_end = .;
+        __data_end = .;
     } >RAM
 
     /*
@@ -80,7 +80,7 @@ SECTIONS
         . = ALIGN(4);
         __bss_start = .;
         *(.bss .bss.*);
-	__bss_end = .;
+        __bss_end = .;
     } >RAM   
 
     /*
@@ -89,7 +89,7 @@ SECTIONS
 
     /DISCARD/ : {
         *(.note .note.* .comment .comment.*);
-	*(.ARM.*);	/* ARM EABI junk, especially exception handling tables */
+        *(.ARM.*);      /* ARM EABI junk, especially exception handling tables */
     }
 }
 

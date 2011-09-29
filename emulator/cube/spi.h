@@ -36,7 +36,7 @@
 #define SPI_REG_STATUS  2       // FIFO status
 #define SPI_REG_DATA    3       // FIFO Data I/O
 
-#define SPI_ENABLE	0x01
+#define SPI_ENABLE      0x01
 #define SPI_CLOCK_MASK  0x70    // Clock bits in CON0
 #define SPI_CLOCK_SHIFT 4
 
@@ -46,18 +46,18 @@
 #define SPI_TX_EMPTY    0x02
 #define SPI_TX_READY    0x01
 
-#define SPI_FIFO_SIZE	2
+#define SPI_FIFO_SIZE   2
 
 struct spi_master {
-    struct em8051 *cpu;	// Only for exception reporting!
+    struct em8051 *cpu; // Only for exception reporting!
 
     uint8_t (*callback)(uint8_t mosi);
     
     uint8_t tx_fifo[SPI_FIFO_SIZE]; // Writes pushed -> into [0]
     uint8_t rx_fifo[SPI_FIFO_SIZE]; // Reads pulled <- from [0]
-    uint8_t tx_count;	// Number of bytes in tx_fifo
-    uint8_t rx_count;	// Number of bytes in rx_fifo
-    uint8_t tx_mosi;	// Transmit shift register
+    uint8_t tx_count;   // Number of bytes in tx_fifo
+    uint8_t rx_count;   // Number of bytes in rx_fifo
+    uint8_t tx_mosi;    // Transmit shift register
     uint32_t timer;     // Cycle count remaining on current byte
 
     uint8_t irq_state;

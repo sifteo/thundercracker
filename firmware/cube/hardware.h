@@ -13,104 +13,104 @@
  * Graphics I/O Ports
  */
 
-#define ADDR_PORT	P0
-#define ADDR_DIR	P0DIR
-#define BUS_PORT	P2
-#define BUS_DIR 	P2DIR
-#define CTRL_PORT	P3
-#define CTRL_DIR 	P3DIR
+#define ADDR_PORT       P0
+#define ADDR_DIR        P0DIR
+#define BUS_PORT        P2
+#define BUS_DIR         P2DIR
+#define CTRL_PORT       P3
+#define CTRL_DIR        P3DIR
 
 __sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
 
-#define CTRL_LCD_DCX	(1 << 0)
-#define CTRL_FLASH_LAT1	(1 << 1)
-#define CTRL_FLASH_LAT2	(1 << 2)
+#define CTRL_LCD_DCX    (1 << 0)
+#define CTRL_FLASH_LAT1 (1 << 1)
+#define CTRL_FLASH_LAT2 (1 << 2)
 #define CTRL_BACKLIGHT  (1 << 4)
-#define CTRL_FLASH_WE	(1 << 5)
-#define CTRL_FLASH_OE	(1 << 6)
+#define CTRL_FLASH_WE   (1 << 5)
+#define CTRL_FLASH_OE   (1 << 6)
 
 #define CTRL_DIR_VALUE  (~(CTRL_LCD_DCX | CTRL_FLASH_LAT1 | CTRL_FLASH_LAT2 | \
-			   CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT))
+                           CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT))
 
-#define CTRL_IDLE	(CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_LCD_DCX)
-#define CTRL_FLASH_CMD	(CTRL_BACKLIGHT | CTRL_FLASH_OE | CTRL_LCD_DCX)
-#define CTRL_LCD_CMD	(CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE)
-#define CTRL_FLASH_OUT	(CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_LCD_DCX)
+#define CTRL_IDLE       (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_LCD_DCX)
+#define CTRL_FLASH_CMD  (CTRL_BACKLIGHT | CTRL_FLASH_OE | CTRL_LCD_DCX)
+#define CTRL_LCD_CMD    (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE)
+#define CTRL_FLASH_OUT  (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_LCD_DCX)
 
-#define ADDR_INC2()	{ ADDR_PORT++; ADDR_PORT++; }
-#define ADDR_INC4()	{ ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; }
-#define ADDR_INC32()	{ ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); \
-			  ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
+#define ADDR_INC2()     { ADDR_PORT++; ADDR_PORT++; }
+#define ADDR_INC4()     { ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; }
+#define ADDR_INC32()    { ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); \
+                          ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
 
 /*
  * LCD Controller
  */
 
-#define LCD_WIDTH 	128
-#define LCD_HEIGHT	128
-#define LCD_PIXELS	(LCD_WIDTH * LCD_HEIGHT)
-#define LCD_ROW_SHIFT	8
+#define LCD_WIDTH       128
+#define LCD_HEIGHT      128
+#define LCD_PIXELS      (LCD_WIDTH * LCD_HEIGHT)
+#define LCD_ROW_SHIFT   8
 
 /*
  * nRF24L01 Radio
  */
 
-#define RF_PAYLOAD_MAX		32
+#define RF_PAYLOAD_MAX          32
 
 /* SPI Commands */
-#define RF_CMD_R_REGISTER	0x00
-#define RF_CMD_W_REGISTER	0x20
-#define RF_CMD_R_RX_PAYLOAD    	0x61
-#define RF_CMD_W_TX_PAYLOAD	0xA0
-#define RF_CMD_FLUSH_TX		0xE1
-#define RF_CMD_FLUSH_RX		0xE2
-#define RF_CMD_REUSE_TX_PL	0xE3
-#define RF_CMD_R_RX_PL_WID	0x60
-#define RF_CMD_W_ACK_PAYLD	0xA8
-#define RF_CMD_W_TX_PAYLD_NOACK	0xB0
-#define RF_CMD_NOP		0xFF
+#define RF_CMD_R_REGISTER       0x00
+#define RF_CMD_W_REGISTER       0x20
+#define RF_CMD_R_RX_PAYLOAD     0x61
+#define RF_CMD_W_TX_PAYLOAD     0xA0
+#define RF_CMD_FLUSH_TX         0xE1
+#define RF_CMD_FLUSH_RX         0xE2
+#define RF_CMD_REUSE_TX_PL      0xE3
+#define RF_CMD_R_RX_PL_WID      0x60
+#define RF_CMD_W_ACK_PAYLD      0xA8
+#define RF_CMD_W_TX_PAYLD_NOACK 0xB0
+#define RF_CMD_NOP              0xFF
 
 /* Registers */
-#define RF_REG_CONFIG		0x00
-#define RF_REG_EN_AA		0x01
-#define RF_REG_EN_RXADDR	0x02
-#define RF_REG_SETUP_AW		0x03
-#define RF_REG_SETUP_RETR	0x04
-#define RF_REG_RF_CH		0x05
-#define RF_REG_RF_SETUP		0x06
-#define RF_REG_STATUS		0x07
-#define RF_REG_OBSERVE_TX	0x08
-#define RF_REG_RPD		0x09
-#define RF_REG_RX_ADDR_P0	0x0A
-#define RF_REG_RX_ADDR_P1	0x0B
-#define RF_REG_RX_ADDR_P2	0x0C
-#define RF_REG_RX_ADDR_P3	0x0D
-#define RF_REG_RX_ADDR_P4	0x0E
-#define RF_REG_RX_ADDR_P5	0x0F
-#define RF_REG_TX_ADDR		0x10
-#define RF_REG_RX_PW_P0		0x11
-#define RF_REG_RX_PW_P1		0x12
-#define RF_REG_RX_PW_P2		0x13
-#define RF_REG_RX_PW_P3		0x14
-#define RF_REG_RX_PW_P4		0x15
-#define RF_REG_RX_PW_P5		0x16
-#define RF_REG_FIFO_STATUS	0x17
-#define RF_REG_DYNPD		0x1C
-#define RF_REG_FEATURE		0x1D
+#define RF_REG_CONFIG           0x00
+#define RF_REG_EN_AA            0x01
+#define RF_REG_EN_RXADDR        0x02
+#define RF_REG_SETUP_AW         0x03
+#define RF_REG_SETUP_RETR       0x04
+#define RF_REG_RF_CH            0x05
+#define RF_REG_RF_SETUP         0x06
+#define RF_REG_STATUS           0x07
+#define RF_REG_OBSERVE_TX       0x08
+#define RF_REG_RPD              0x09
+#define RF_REG_RX_ADDR_P0       0x0A
+#define RF_REG_RX_ADDR_P1       0x0B
+#define RF_REG_RX_ADDR_P2       0x0C
+#define RF_REG_RX_ADDR_P3       0x0D
+#define RF_REG_RX_ADDR_P4       0x0E
+#define RF_REG_RX_ADDR_P5       0x0F
+#define RF_REG_TX_ADDR          0x10
+#define RF_REG_RX_PW_P0         0x11
+#define RF_REG_RX_PW_P1         0x12
+#define RF_REG_RX_PW_P2         0x13
+#define RF_REG_RX_PW_P3         0x14
+#define RF_REG_RX_PW_P4         0x15
+#define RF_REG_RX_PW_P5         0x16
+#define RF_REG_FIFO_STATUS      0x17
+#define RF_REG_DYNPD            0x1C
+#define RF_REG_FEATURE          0x1D
 
 /* STATUS bits */
-#define RF_STATUS_TX_FULL	0x01
-#define RF_STATUS_RX_P_MASK	0X0E
-#define RF_STATUS_MAX_RT	0x10
-#define RF_STATUS_TX_DS		0x20
-#define RF_STATUS_RX_DR		0x40
+#define RF_STATUS_TX_FULL       0x01
+#define RF_STATUS_RX_P_MASK     0X0E
+#define RF_STATUS_MAX_RT        0x10
+#define RF_STATUS_TX_DS         0x20
+#define RF_STATUS_RX_DR         0x40
 
 /* FIFO_STATUS bits */
-#define RF_FIFO_RX_EMPTY     	0x01
-#define RF_FIFO_RX_FULL		0x02
-#define RF_FIFO_TX_EMPTY	0x10
-#define RF_FIFO_TX_FULL		0x20
-#define RF_FIFO_TX_REUSE	0x40
+#define RF_FIFO_RX_EMPTY        0x01
+#define RF_FIFO_RX_FULL         0x02
+#define RF_FIFO_TX_EMPTY        0x10
+#define RF_FIFO_TX_FULL         0x20
+#define RF_FIFO_TX_REUSE        0x40
 
 /*
  * CPU instruction macros
@@ -273,18 +273,18 @@ __sbit __at 0xE9 RF_CSN;
 __sbit __at 0xEA RF_CKEN;
 
 // Interrupt vector numbers
-#define VECTOR_IFP	0
-#define VECTOR_TF0	1
-#define VECTOR_PFAIL	2
-#define VECTOR_TF1	3
-#define VECTOR_SER	4
-#define VECTOR_TF2	5
-#define VECTOR_RFSPI	8
-#define VECTOR_RF	9
-#define VECTOR_SPI	10
-#define VECTOR_WUOP	11
-#define VECTOR_MISC	12
-#define VECTOR_TICK	13
+#define VECTOR_IFP      0
+#define VECTOR_TF0      1
+#define VECTOR_PFAIL    2
+#define VECTOR_TF1      3
+#define VECTOR_SER      4
+#define VECTOR_TF2      5
+#define VECTOR_RFSPI    8
+#define VECTOR_RF       9
+#define VECTOR_SPI      10
+#define VECTOR_WUOP     11
+#define VECTOR_MISC     12
+#define VECTOR_TICK     13
 
 // SPI Master status bits, used in CON1 and STATUS
 #define SPI_RX_FULL     0x08

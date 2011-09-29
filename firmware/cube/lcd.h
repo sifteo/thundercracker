@@ -23,25 +23,25 @@ void lcd_end_frame();
 void graphics_render() __naked;
 
 
-#define LCD_WRITE_BEGIN() {			\
-	BUS_DIR = 0;				\
+#define LCD_WRITE_BEGIN() {                     \
+        BUS_DIR = 0;                            \
     }
 
-#define LCD_WRITE_END() {			\
-	BUS_DIR = 0xFF;				\
+#define LCD_WRITE_END() {                       \
+        BUS_DIR = 0xFF;                         \
     }
 
-#define LCD_CMD_MODE() {			\
-	CTRL_PORT = CTRL_LCD_CMD;		\
+#define LCD_CMD_MODE() {                        \
+        CTRL_PORT = CTRL_LCD_CMD;               \
     }
 
-#define LCD_DATA_MODE() {			\
-	CTRL_PORT = CTRL_IDLE;			\
+#define LCD_DATA_MODE() {                       \
+        CTRL_PORT = CTRL_IDLE;                  \
     }
 
-#define LCD_BYTE(b)	{			\
-	BUS_PORT = (b);				\
-	ADDR_INC2();				\
+#define LCD_BYTE(b)     {                       \
+        BUS_PORT = (b);                         \
+        ADDR_INC2();                            \
     }
 
 #endif

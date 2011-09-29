@@ -123,22 +123,22 @@ void setSpeed(int speed, int runmode)
         nocbreak();
         cbreak();
 
-	/*
-	 * GRR. This will block the whole main loop, which blocks the
-	 * SDL event loop on Mac/Win hosts.  But this blocking
-	 * behaviour is expected by all the popup code.
-	 *
-	 * I should really try and get the ncurses UI separated out
-	 * onto a separate thread...  --beth
-	 */
-	nodelay(stdscr, FALSE); 
+        /*
+         * GRR. This will block the whole main loop, which blocks the
+         * SDL event loop on Mac/Win hosts.  But this blocking
+         * behaviour is expected by all the popup code.
+         *
+         * I should really try and get the ncurses UI separated out
+         * onto a separate thread...  --beth
+         */
+        nodelay(stdscr, FALSE); 
         return;
     }
     else
     {
         slk_set(4, "r)unning", 0);
         slk_refresh();        
-	nodelay(stdscr, TRUE);
+        nodelay(stdscr, TRUE);
     }
 
     if (speed < 4)
@@ -150,7 +150,7 @@ void setSpeed(int speed, int runmode)
     {
         switch(speed)
         {
-	case 7:
+        case 7:
             halfdelay(20);
             break;
         case 6:
@@ -188,12 +188,12 @@ void change_view(struct em8051 *aCPU, int changeto)
     view = changeto;
 
     if (COLS < 80 || LINES < 24) {
-	werase(stdscr);
-	waddstr(stdscr, "Screen is too small for the debugger!\n"
-		"Please resize your terminal window.");
-	view = NO_VIEW;
+        werase(stdscr);
+        waddstr(stdscr, "Screen is too small for the debugger!\n"
+                "Please resize your terminal window.");
+        view = NO_VIEW;
     } else if (view == NO_VIEW)
-	view = MAIN_VIEW;
+        view = MAIN_VIEW;
 
     switch (view)
     {
@@ -218,72 +218,72 @@ void run_cycle_batch(struct em8051 *aCPU)
      */
     
     if (speed == 2 && runmode)
-	{
-	    target_time += 1;
-	    target_clocks += opt_clock_hz / 16000;
-	}
+        {
+            target_time += 1;
+            target_clocks += opt_clock_hz / 16000;
+        }
 
     if (speed < 2 && runmode)
-	{
-	    // Run for at least 30ms between display refreshes
-	    const int quanta = 30;
+        {
+            // Run for at least 30ms between display refreshes
+            const int quanta = 30;
 
-	    target_time += quanta;
-	    target_clocks += opt_clock_hz / 1000 * quanta;
-	}
+            target_time += quanta;
+            target_clocks += opt_clock_hz / 1000 * quanta;
+        }
 
     do
-	{
+        {
             int old_pc = aCPU->mPC;
-	    int ticked;
+            int ticked;
 
-	    if (speed == 0) {
-		/*
-		 * Fastest speed. Run ticks in large batches, so we don't spend
-		 * all this CPU time in silly places like SDL_GetTicks() or ncurses.
-		 */
+            if (speed == 0) {
+                /*
+                 * Fastest speed. Run ticks in large batches, so we don't spend
+                 * all this CPU time in silly places like SDL_GetTicks() or ncurses.
+                 */
 
-		while (target_clocks > clocks) {
-		    clocks++;
-		    tick(aCPU);
-		}
-		ticked = 0;
-	    }
-	    else if (opt_step_instruction) {
-		/* Keep running until we actually execute an instruction */
+                while (target_clocks > clocks) {
+                    clocks++;
+                    tick(aCPU);
+                }
+                ticked = 0;
+            }
+            else if (opt_step_instruction) {
+                /* Keep running until we actually execute an instruction */
 
-		ticked = 0;
-		while (!ticked) {
-		    clocks++;
-		    ticked = tick(aCPU);
-		}
+                ticked = 0;
+                while (!ticked) {
+                    clocks++;
+                    ticked = tick(aCPU);
+                }
 
-		if (aCPU->mPC == breakpoint)
-		    emu_exception(aCPU, -1);
-	    }
-	    else {
-		/*
-		 * Generic, run one clock cycle.
-		 */
+                if (aCPU->mPC == breakpoint)
+                    emu_exception(aCPU, -1);
+            }
+            else {
+                /*
+                 * Generic, run one clock cycle.
+                 */
 
-		clocks++;
-		ticked = tick(aCPU);
-	    }
+                clocks++;
+                ticked = tick(aCPU);
+            }
 
-	    // Update history in all speeds but the fastest, if we ran an actual instruction
-	    if (ticked) {
-		icount++;
+            // Update history in all speeds but the fastest, if we ran an actual instruction
+            if (ticked) {
+                icount++;
 
-		historyline = (historyline + 1) % HISTORY_LINES;
+                historyline = (historyline + 1) % HISTORY_LINES;
 
-		memcpy(history + (historyline * (128 + 64 + sizeof(int))), aCPU->mSFR, 128);
-		memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128, aCPU->mLowerData, 64);
-		memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128 + 64, &old_pc, sizeof(int));
-	    }
-	}
+                memcpy(history + (historyline * (128 + 64 + sizeof(int))), aCPU->mSFR, 128);
+                memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128, aCPU->mLowerData, 64);
+                memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128 + 64, &old_pc, sizeof(int));
+            }
+        }
     while ((int32_t)(target_time - SDL_GetTicks()) > 0
-	   && target_clocks > clocks);
-	    
+           && target_clocks > clocks);
+            
     // Running too fast? Slow down a bit!
 
     while ((int32_t)(target_time - SDL_GetTicks()) > 0)
@@ -298,8 +298,8 @@ int debug_main(void *arg)
 
     slk_init(1);
     if ( (initscr()) == NULL ) {
-	    fprintf(stderr, "Error initialising ncurses.\n");
-	    exit(EXIT_FAILURE);
+            fprintf(stderr, "Error initialising ncurses.\n");
+            exit(EXIT_FAILURE);
     }
 
     cbreak(); // no buffering
@@ -417,7 +417,7 @@ int debug_main(void *arg)
         }
 
         if (ch == 32 || runmode)
-	    run_cycle_batch(aCPU);
+            run_cycle_batch(aCPU);
 
         switch (view)
         {
@@ -447,7 +447,7 @@ int nodebug_main(void *arg)
     speed = 0;
 
     while (emu_thread_running)
-	run_cycle_batch(aCPU);
+        run_cycle_batch(aCPU);
 
     frontend_async_quit();
     return 0;
@@ -460,25 +460,25 @@ void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
     FILE *f = fopen(filename, "w");
 
     if (!f) {
-	perror("Error opening profiler output file");
-	return;
+        perror("Error opening profiler output file");
+        return;
     }
 
     fprintf(f, "total_cycles  %%_cycles  fl_idle  loop_len  loop_count    addr   disassembly\n");
 
     for (addr = 0; addr < aCPU->mCodeMemSize; addr++, pd++) {
-	if (pd->total_cycles) {
-	    char assembly[128];
+        if (pd->total_cycles) {
+            char assembly[128];
 
             decode(aCPU, addr, assembly);
-	    fprintf(f, "%12lld %8.4f%% %8lld [%8lld x %9lld ]  %04x:  %s\n",
-		    (long long int)pd->total_cycles,
-		    (pd->total_cycles * 100) / (float)aCPU->profilerTotal,
-		    (long long int)pd->flash_idle,
-		    (long long int)(pd->loop_hits ? pd->loop_cycles / pd->loop_hits : 0),
-		    (long long int)pd->loop_hits,
-		    addr, assembly);
-	}
+            fprintf(f, "%12lld %8.4f%% %8lld [%8lld x %9lld ]  %04x:  %s\n",
+                    (long long int)pd->total_cycles,
+                    (pd->total_cycles * 100) / (float)aCPU->profilerTotal,
+                    (long long int)pd->flash_idle,
+                    (long long int)(pd->loop_hits ? pd->loop_cycles / pd->loop_hits : 0),
+                    (long long int)pd->loop_hits,
+                    addr, assembly);
+        }
     }    
 
     fclose(f);
@@ -515,36 +515,36 @@ int main(int argc, char ** argv)
             if (argv[i][0] == '-') {
                 if (strcmp("d",argv[i]+1) == 0)
                     opt_debug = 1;
-		else if (strncmp("clock=",argv[i]+1,6) == 0) {
+                else if (strncmp("clock=",argv[i]+1,6) == 0) {
                     opt_clock_select = 12;
                     opt_clock_hz = atoi(argv[i]+7);
                     if (opt_clock_hz <= 0)
                         opt_clock_hz = 1;
                 } 
-		else if (strncmp("flash=",argv[i]+1,6) == 0)
-		    opt_flash_filename = argv[i]+7;
-		else if (strncmp("profile=",argv[i]+1,8) == 0)
-		    opt_profile_filename = argv[i]+9;
-		else if (strncmp("trace=",argv[i]+1,6) == 0)
-		    opt_trace_filename = argv[i]+7;
+                else if (strncmp("flash=",argv[i]+1,6) == 0)
+                    opt_flash_filename = argv[i]+7;
+                else if (strncmp("profile=",argv[i]+1,8) == 0)
+                    opt_profile_filename = argv[i]+9;
+                else if (strncmp("trace=",argv[i]+1,6) == 0)
+                    opt_trace_filename = argv[i]+7;
                 else if (strncmp("host=",argv[i]+1,5) == 0)
-		    opt_net_host = argv[i]+6;
+                    opt_net_host = argv[i]+6;
                 else if (strncmp("port=",argv[i]+1,5) == 0)
-		    opt_net_port = argv[i]+6;
+                    opt_net_port = argv[i]+6;
                 else {
                     printf("Help:\n\n"
-			   "%s [options] [firmware.ihx]\n\n"
-			   "Both the filename and options are optional. Available options:\n"
-			   "\n"
-			   "-d          Enable ncurses debug UI\n"
-			   "\n"
-			   "-profile=out.txt  Profile performance, and write annotated disassembly\n"
-			   "-trace=out.txt    Write a full execution trace to disk\n"
-			   "-clock=value      Set clock speed, in Hz\n"
-			   "-flash=file.bin   Set path for file-backed Flash memory (default: not file-backed)\n"
-			   "-host=hostname    Hostname for nethub connection\n"
-			   "-port=port        Port number for nethub connection\n",
-			   argv[0]);
+                           "%s [options] [firmware.ihx]\n\n"
+                           "Both the filename and options are optional. Available options:\n"
+                           "\n"
+                           "-d          Enable ncurses debug UI\n"
+                           "\n"
+                           "-profile=out.txt  Profile performance, and write annotated disassembly\n"
+                           "-trace=out.txt    Write a full execution trace to disk\n"
+                           "-clock=value      Set clock speed, in Hz\n"
+                           "-flash=file.bin   Set path for file-backed Flash memory (default: not file-backed)\n"
+                           "-host=hostname    Hostname for nethub connection\n"
+                           "-port=port        Port number for nethub connection\n",
+                           argv[0]);
                     return -1;
                 }
             } else {
@@ -552,13 +552,13 @@ int main(int argc, char ** argv)
                     printf("File '%s' load failure\n\n",argv[i]);
                     return -1;
                 } else {
-		    /*
-		     * Loaded firmware successfully. Remember the
-		     * file, and start running it full-speed!
-		     */
-		    
-		    runmode = 1;
-		    speed = 1;
+                    /*
+                     * Loaded firmware successfully. Remember the
+                     * file, and start running it full-speed!
+                     */
+                    
+                    runmode = 1;
+                    speed = 1;
                     strcpy(filename, argv[i]);
                 }
             }
@@ -566,11 +566,11 @@ int main(int argc, char ** argv)
     }
    
     if (opt_trace_filename) {
-	emu.traceFile = fopen(opt_trace_filename, "w");
-	if (!emu.traceFile) {
-	    perror("Error opening trace file");
-	    return 1;
-	}
+        emu.traceFile = fopen(opt_trace_filename, "w");
+        if (!emu.traceFile) {
+            perror("Error opening trace file");
+            return 1;
+        }
     }
 
     hardware_init(&emu);
@@ -590,10 +590,10 @@ int main(int argc, char ** argv)
     hardware_exit();
 
     if (opt_profile_filename)
-	profiler_write_disassembly(&emu, opt_profile_filename);
+        profiler_write_disassembly(&emu, opt_profile_filename);
 
     if (emu.traceFile)
-	fclose(emu.traceFile);
+        fclose(emu.traceFile);
 
     return 0;
 }

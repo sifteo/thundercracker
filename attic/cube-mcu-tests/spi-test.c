@@ -25,9 +25,9 @@ void main()
     // Keep FIFO full
     SPIMDAT = ++i;
     while (1) {
-	P0 ^= 1;
-	SPIMDAT = ++i;
-	while (!(SPIMSTAT & SPI_RX_READY));
-	SPIMDAT;
+        P0 ^= 1;
+        SPIMDAT = ++i;
+        while (!(SPIMSTAT & SPI_RX_READY));
+        SPIMDAT;
     }
 }

@@ -19,57 +19,57 @@ uint8_t __near ack_len;
  * Assembly macros.
  */
 
-#define SPI_WAIT					__endasm; \
-	__asm	mov	a, _SPIRSTAT			__endasm; \
-	__asm	jnb	acc.2, (.-2)			__endasm; \
-	__asm
+#define SPI_WAIT                                        __endasm; \
+        __asm   mov     a, _SPIRSTAT                    __endasm; \
+        __asm   jnb     acc.2, (.-2)                    __endasm; \
+        __asm
 
-#define RX_NEXT_NYBBLE					__endasm; \
-	__asm	djnz	R_NYBBLE_COUNT, rx_loop		__endasm; \
-	__asm	ljmp	rx_complete			__endasm; \
-	__asm
+#define RX_NEXT_NYBBLE                                  __endasm; \
+        __asm   djnz    R_NYBBLE_COUNT, rx_loop         __endasm; \
+        __asm   ljmp    rx_complete                     __endasm; \
+        __asm
 
 #pragma sdcc_hash +
-#define DPTR_DELTA(v)					__endasm; \
-	__asm	mov	a, _DPL1			__endasm; \
-	__asm	add	a, #((v) & 0xFF)		__endasm; \
-	__asm	mov	_DPL, a				__endasm; \
-	__asm	mov	a, _DPH1			__endasm; \
-	__asm	addc	a, #((v) >> 8)			__endasm; \
-	__asm	mov	_DPH, a				__endasm; \
-	__asm
+#define DPTR_DELTA(v)                                   __endasm; \
+        __asm   mov     a, _DPL1                        __endasm; \
+        __asm   add     a, #((v) & 0xFF)                __endasm; \
+        __asm   mov     _DPL, a                         __endasm; \
+        __asm   mov     a, _DPH1                        __endasm; \
+        __asm   addc    a, #((v) >> 8)                  __endasm; \
+        __asm   mov     _DPH, a                         __endasm; \
+        __asm
 
 
 /*
  * Register usage in RF_BANK.
  */
 
-#define R_TMP			r0
-#define AR_TMP			(RF_BANK*8 + 0)
+#define R_TMP                   r0
+#define AR_TMP                  (RF_BANK*8 + 0)
 
-#define R_LOW			r1		// Low part of 16-bit substate info / run count
-#define AR_LOW			(RF_BANK*8 + 1)
+#define R_LOW                   r1              // Low part of 16-bit substate info / run count
+#define AR_LOW                  (RF_BANK*8 + 1)
 
-#define R_HIGH			r2		// High part of 16-bit substate info
-#define AR_HIGH			(RF_BANK*8 + 2)
+#define R_HIGH                  r2              // High part of 16-bit substate info
+#define AR_HIGH                 (RF_BANK*8 + 2)
 
-#define R_SAMPLE		r3		// Low two bits, sample index. Other bits undefined.
-#define AR_SAMPLE		(RF_BANK*8 + 3)
+#define R_SAMPLE                r3              // Low two bits, sample index. Other bits undefined.
+#define AR_SAMPLE               (RF_BANK*8 + 3)
 
-#define R_DIFF			r4		// 4-bit raw diff in low nybble
-#define AR_DIFF			(RF_BANK*8 + 4)
+#define R_DIFF                  r4              // 4-bit raw diff in low nybble
+#define AR_DIFF                 (RF_BANK*8 + 4)
 
-#define R_STATE			r5		// 8-bit pointer to next state
-#define AR_STATE		(RF_BANK*8 + 5)
+#define R_STATE                 r5              // 8-bit pointer to next state
+#define AR_STATE                (RF_BANK*8 + 5)
 
-#define R_INPUT			r6		// Current byte (current nybble in low half)
-#define AR_INPUT		(RF_BANK*8 + 6)
+#define R_INPUT                 r6              // Current byte (current nybble in low half)
+#define AR_INPUT                (RF_BANK*8 + 6)
 
-#define R_NYBBLE_COUNT		r7
-#define AR_NYBBLE_COUNT		(RF_BANK*8 + 7)
+#define R_NYBBLE_COUNT          r7
+#define AR_NYBBLE_COUNT         (RF_BANK*8 + 7)
 
-static uint16_t vram_dptr;			// Current VRAM write pointer
-static __bit radio_state_reset_not_pending;	// Next packet should start with a clean slate
+static uint16_t vram_dptr;                      // Current VRAM write pointer
+static __bit radio_state_reset_not_pending;     // Next packet should start with a clean slate
 
 
 /*
@@ -91,89 +91,89 @@ static void rx_write_deltas(void) __naked __using(RF_BANK)
 {
     __asm
 
-	; Jump DPL/DPH backwards by the sample distance
+        ; Jump DPL/DPH backwards by the sample distance
 
-	mov	a, R_SAMPLE
-	anl	a, #3
-	jz	bs0
-	dec	a
-	jz	bs1
-	dec	a
-	jz	bs2
-bs3:	DPTR_DELTA(-RF_VRAM_SAMPLE_3 * 2)
-	sjmp	bsE
-bs2:	DPTR_DELTA(-RF_VRAM_SAMPLE_2 * 2)
-	sjmp	bsE
-bs1:	DPTR_DELTA(-RF_VRAM_SAMPLE_1 * 2)
-	sjmp	bsE
-bs0:	DPTR_DELTA(-RF_VRAM_SAMPLE_0 * 2)
+        mov     a, R_SAMPLE
+        anl     a, #3
+        jz      bs0
+        dec     a
+        jz      bs1
+        dec     a
+        jz      bs2
+bs3:    DPTR_DELTA(-RF_VRAM_SAMPLE_3 * 2)
+        sjmp    bsE
+bs2:    DPTR_DELTA(-RF_VRAM_SAMPLE_2 * 2)
+        sjmp    bsE
+bs1:    DPTR_DELTA(-RF_VRAM_SAMPLE_1 * 2)
+        sjmp    bsE
+bs0:    DPTR_DELTA(-RF_VRAM_SAMPLE_0 * 2)
 bsE:
 
-	; We loop R_LOW+1 times total
+        ; We loop R_LOW+1 times total
 
-	inc	R_LOW
+        inc     R_LOW
 
-	; Convert raw Diff to 8-bit signed diff, stow in R_STATE
+        ; Convert raw Diff to 8-bit signed diff, stow in R_STATE
 
-	mov	a, R_DIFF
-	anl	a, #0xF
-	add	a, #-7
-	clr	c
-	rlc	a
-	mov	R_STATE, a
-	jb	acc.7, 3$	; Negative diff
+        mov     a, R_DIFF
+        anl     a, #0xF
+        add     a, #-7
+        clr     c
+        rlc     a
+        mov     R_STATE, a
+        jb      acc.7, 3$       ; Negative diff
 
-	; ---- Loop for positive diffs
+        ; ---- Loop for positive diffs
 
 2$:
-	movx	a, @dptr	; Add and copy low byte
-	inc	dptr
-	add	a, R_STATE
-	mov	_DPS, #1
-	movx	@dptr, a
-	inc	dptr
-	mov	_DPS, #0
+        movx    a, @dptr        ; Add and copy low byte
+        inc     dptr
+        add     a, R_STATE
+        mov     _DPS, #1
+        movx    @dptr, a
+        inc     dptr
+        mov     _DPS, #0
 
-	movx	a, @dptr	; Add and copy high byte
-	inc	dptr
-	jnc	1$
-	add	a, #2		; Add Carry to bit 1
-1$:	mov	_DPS, #1
-	movx	@dptr, a
-	inc	dptr
-	mov	_DPS, #0
-	djnz	R_LOW, 2$	; Loop
+        movx    a, @dptr        ; Add and copy high byte
+        inc     dptr
+        jnc     1$
+        add     a, #2           ; Add Carry to bit 1
+1$:     mov     _DPS, #1
+        movx    @dptr, a
+        inc     dptr
+        mov     _DPS, #0
+        djnz    R_LOW, 2$       ; Loop
 
-	; Restore registers and exit
-	mov	R_STATE, #0
-	mov	dptr, #rxs_default
-	ret
+        ; Restore registers and exit
+        mov     R_STATE, #0
+        mov     dptr, #rxs_default
+        ret
 
-	; ---- Loop for negative diffs
+        ; ---- Loop for negative diffs
 
 3$:
-	movx	a, @dptr	; Add and copy low byte
-	inc	dptr
-	add	a, R_STATE
-	mov	_DPS, #1
-	movx	@dptr, a
-	inc	dptr
-	mov	_DPS, #0
+        movx    a, @dptr        ; Add and copy low byte
+        inc     dptr
+        add     a, R_STATE
+        mov     _DPS, #1
+        movx    @dptr, a
+        inc     dptr
+        mov     _DPS, #0
 
-	movx	a, @dptr	; Add and copy high byte
-	inc	dptr
-	jc	4$
-	add	a, #0xFE	; Subtract borrow from bit 1
-4$:	mov	_DPS, #1
-	movx	@dptr, a
-	inc	dptr
-	mov	_DPS, #0
-	djnz	R_LOW, 3$	; Loop
+        movx    a, @dptr        ; Add and copy high byte
+        inc     dptr
+        jc      4$
+        add     a, #0xFE        ; Subtract borrow from bit 1
+4$:     mov     _DPS, #1
+        movx    @dptr, a
+        inc     dptr
+        mov     _DPS, #0
+        djnz    R_LOW, 3$       ; Loop
 
-	; Restore registers and exit
-	mov	R_STATE, #0
-	mov	dptr, #rxs_default
-	ret
+        ; Restore registers and exit
+        mov     R_STATE, #0
+        mov     dptr, #rxs_default
+        ret
 
     __endasm ;
 }
@@ -195,532 +195,532 @@ bsE:
 void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK)
 {
     __asm
-	push	acc
-	push	dpl
-	push	dph
-	push	_DPS
-	push	_DPL1
-	push	_DPH1
-	push	psw
-	mov	psw, #(RF_BANK << 3)
-	mov	_DPL1, _vram_dptr
-	mov	_DPH1, _vram_dptr+1
+        push    acc
+        push    dpl
+        push    dph
+        push    _DPS
+        push    _DPL1
+        push    _DPH1
+        push    psw
+        mov     psw, #(RF_BANK << 3)
+        mov     _DPL1, _vram_dptr
+        mov     _DPH1, _vram_dptr+1
 
-	;--------------------------------------------------------------------
-	; State machine reset
-	;--------------------------------------------------------------------
+        ;--------------------------------------------------------------------
+        ; State machine reset
+        ;--------------------------------------------------------------------
 
-	; If the last radio packet was not maximum length, reset state now.
+        ; If the last radio packet was not maximum length, reset state now.
 
-	jb	_radio_state_reset_not_pending, no_state_reset
-	setb	_radio_state_reset_not_pending
+        jb      _radio_state_reset_not_pending, no_state_reset
+        setb    _radio_state_reset_not_pending
 
-	mov	R_STATE, #0	   
-	mov	_DPL1, #0
-	mov	_DPH1, #0
+        mov     R_STATE, #0        
+        mov     _DPL1, #0
+        mov     _DPH1, #0
 
 no_state_reset:
 
-	;--------------------------------------------------------------------
-	; Packet receive setup
-	;--------------------------------------------------------------------
+        ;--------------------------------------------------------------------
+        ; Packet receive setup
+        ;--------------------------------------------------------------------
 
-	; Read the length of this received packet
+        ; Read the length of this received packet
 
-	clr	_RF_CSN				; Begin SPI transaction
-	mov	_SPIRDAT, #RF_CMD_R_RX_PL_WID	; Read RX Payload Width command
-	mov	_SPIRDAT, #0			; First dummy byte, keep the TX FIFO full
-	SPI_WAIT	  			; Wait for Command/STATUS byte
-	mov	a, _SPIRDAT			; Ignore STATUS byte
-	SPI_WAIT   				; Wait for width byte
-	mov	a, _SPIRDAT			; Total packet length
-	setb	_RF_CSN				; End SPI transaction
+        clr     _RF_CSN                         ; Begin SPI transaction
+        mov     _SPIRDAT, #RF_CMD_R_RX_PL_WID   ; Read RX Payload Width command
+        mov     _SPIRDAT, #0                    ; First dummy byte, keep the TX FIFO full
+        SPI_WAIT                                ; Wait for Command/STATUS byte
+        mov     a, _SPIRDAT                     ; Ignore STATUS byte
+        SPI_WAIT                                ; Wait for width byte
+        mov     a, _SPIRDAT                     ; Total packet length
+        setb    _RF_CSN                         ; End SPI transaction
 
-	; If the packet is greater than RF_PAYLOAD_MAX, it is an error. We need
-	; to discard it. This should be really rare, and honestly we only
-	; do this because the data sheet claims it is SUPER IMPORTANT.
-	; 
-	; Since we have some code here to do an RX_FLUSH anyway, we also
-	; send zero-length packets through this path. A zero-length packet
-	; only has the effects of (1) causing an ACK transmission, and (2)
-	; resetting the RX state machine, both of which are things we can do
-	; cheaply through this path. And as we can see below, throwing out
-	; zero-length packets early means much less special-casing in the
-	; RX loop!
+        ; If the packet is greater than RF_PAYLOAD_MAX, it is an error. We need
+        ; to discard it. This should be really rare, and honestly we only
+        ; do this because the data sheet claims it is SUPER IMPORTANT.
+        ; 
+        ; Since we have some code here to do an RX_FLUSH anyway, we also
+        ; send zero-length packets through this path. A zero-length packet
+        ; only has the effects of (1) causing an ACK transmission, and (2)
+        ; resetting the RX state machine, both of which are things we can do
+        ; cheaply through this path. And as we can see below, throwing out
+        ; zero-length packets early means much less special-casing in the
+        ; RX loop!
 
-	jz	rx_flush			; Skip right to RX_FLUSH if zero-length
+        jz      rx_flush                        ; Skip right to RX_FLUSH if zero-length
 
-	rl	a				; nybbles = 2 * length
-	mov	R_NYBBLE_COUNT, a
-	add	a, #(0xFF - (2 * RF_PAYLOAD_MAX))
-	jnc	no_rx_flush			; Jump if byte length <= RF_PAYLOAD_MAX
+        rl      a                               ; nybbles = 2 * length
+        mov     R_NYBBLE_COUNT, a
+        add     a, #(0xFF - (2 * RF_PAYLOAD_MAX))
+        jnc     no_rx_flush                     ; Jump if byte length <= RF_PAYLOAD_MAX
 
 rx_flush:
-	clr	_radio_state_reset_not_pending	; Error/empty packets also cause a state reset
-	clr	_RF_CSN				; Begin SPI transaction
-	mov	_SPIRDAT, #RF_CMD_FLUSH_RX	; RX_FLUSH command
-	SPI_WAIT				; Wait for command byte
-	mov	a, _SPIRDAT			; Ignore dummy STATUS byte
-	ljmp	#rx_complete_0			; Skip the RX loop (and end SPI transaction)
+        clr     _radio_state_reset_not_pending  ; Error/empty packets also cause a state reset
+        clr     _RF_CSN                         ; Begin SPI transaction
+        mov     _SPIRDAT, #RF_CMD_FLUSH_RX      ; RX_FLUSH command
+        SPI_WAIT                                ; Wait for command byte
+        mov     a, _SPIRDAT                     ; Ignore dummy STATUS byte
+        ljmp    #rx_complete_0                  ; Skip the RX loop (and end SPI transaction)
 
 no_rx_flush:
-	inc	a				; Is packet not max-length?
-	jz	#9$
-	clr	_radio_state_reset_not_pending	;   reset state before the next packet
+        inc     a                               ; Is packet not max-length?
+        jz      #9$
+        clr     _radio_state_reset_not_pending  ;   reset state before the next packet
 9$:
 
-	; Start reading the incoming packet, then loop over all bytes.
-	; We try to keep the SPI FIFOs full here, and we expect the
-	; byte processing loop to be at least 16 clock cycles long, so
-	; we do not explicitly check the SPI status after each byte.
+        ; Start reading the incoming packet, then loop over all bytes.
+        ; We try to keep the SPI FIFOs full here, and we expect the
+        ; byte processing loop to be at least 16 clock cycles long, so
+        ; we do not explicitly check the SPI status after each byte.
 
-	clr	_RF_CSN				; Begin SPI transaction
-	mov	_SPIRDAT, #RF_CMD_R_RX_PAYLOAD	; Start reading RX packet
-	mov	_SPIRDAT, #0			; First dummy byte, keep the TX FIFO full
-	SPI_WAIT	  			; Wait for Command/STATUS byte
-	mov	a, _SPIRDAT			; Ignore status
-	SPI_WAIT	  			; Wait for first data byte
+        clr     _RF_CSN                         ; Begin SPI transaction
+        mov     _SPIRDAT, #RF_CMD_R_RX_PAYLOAD  ; Start reading RX packet
+        mov     _SPIRDAT, #0                    ; First dummy byte, keep the TX FIFO full
+        SPI_WAIT                                ; Wait for Command/STATUS byte
+        mov     a, _SPIRDAT                     ; Ignore status
+        SPI_WAIT                                ; Wait for first data byte
 
-	;--------------------------------------------------------------------
-	; State Machine
-	;--------------------------------------------------------------------
+        ;--------------------------------------------------------------------
+        ; State Machine
+        ;--------------------------------------------------------------------
 
-	mov	_DPS, #0
-	mov	dptr, #rxs_default
+        mov     _DPS, #0
+        mov     dptr, #rxs_default
 
-rx_loop:					; Fetch the next byte or nybble
-	mov	a, R_NYBBLE_COUNT
-	jnb 	acc.0, 1$
-	mov	a, R_INPUT			; ... Next nybble
-	swap	a
-	sjmp	2$
+rx_loop:                                        ; Fetch the next byte or nybble
+        mov     a, R_NYBBLE_COUNT
+        jnb     acc.0, 1$
+        mov     a, R_INPUT                      ; ... Next nybble
+        swap    a
+        sjmp    2$
 
-1$:	mov	a, _SPIRDAT			; ... Next byte
-	mov	_SPIRDAT, #0
-2$:	mov	R_INPUT, a
+1$:     mov     a, _SPIRDAT                     ; ... Next byte
+        mov     _SPIRDAT, #0
+2$:     mov     R_INPUT, a
 
-	; Branch to state handler.
+        ; Branch to state handler.
 
-	; All state handlers must be within a 255-byte delta of
-	; rxs_default! If you add code to the state machine,
-	; check radio.rst to make sure you have not crossed
-	; this barrier.
-	;
-	; This code is currently VERY close to the limit.
-	; If you are exceeding it, first try to optimize the
-	; other state machine code to squeeze out a few bytes.
-	; If that is not enough, you can put less frequently
-	; used sections of code elsewhere, and ljmp to them.
+        ; All state handlers must be within a 255-byte delta of
+        ; rxs_default! If you add code to the state machine,
+        ; check radio.rst to make sure you have not crossed
+        ; this barrier.
+        ;
+        ; This code is currently VERY close to the limit.
+        ; If you are exceeding it, first try to optimize the
+        ; other state machine code to squeeze out a few bytes.
+        ; If that is not enough, you can put less frequently
+        ; used sections of code elsewhere, and ljmp to them.
 
-	mov	a, R_STATE
-	jmp	@a+dptr	
+        mov     a, R_STATE
+        jmp     @a+dptr 
 
-	;-------------------------------------------
-	; Default state (initial nybble)
-	;-------------------------------------------
+        ;-------------------------------------------
+        ; Default state (initial nybble)
+        ;-------------------------------------------
 
 rxs_default:
-	mov	a, R_INPUT
-	anl	a, #0xc
+        mov     a, R_INPUT
+        anl     a, #0xc
 
-	; ------------ Nybble 00nn -- RLE
+        ; ------------ Nybble 00nn -- RLE
 
-	jnz	27$
-	mov	AR_LOW, R_INPUT
-	mov	R_STATE, #(rxs_rle - rxs_default)
-	RX_NEXT_NYBBLE
+        jnz     27$
+        mov     AR_LOW, R_INPUT
+        mov     R_STATE, #(rxs_rle - rxs_default)
+        RX_NEXT_NYBBLE
 
-	; ------------ Nybble 01ss -- Copy
+        ; ------------ Nybble 01ss -- Copy
 
 27$:
-	cjne	a, #0x4, 11$
-	mov	AR_SAMPLE, R_INPUT
-	mov	R_DIFF, #RF_VRAM_DIFF_BASE
-	mov	R_LOW, #0
-	lcall	#_rx_write_deltas
-	RX_NEXT_NYBBLE
+        cjne    a, #0x4, 11$
+        mov     AR_SAMPLE, R_INPUT
+        mov     R_DIFF, #RF_VRAM_DIFF_BASE
+        mov     R_LOW, #0
+        lcall   #_rx_write_deltas
+        RX_NEXT_NYBBLE
 11$:
 
-	; ------------ Nybble 10ss -- Diff
+        ; ------------ Nybble 10ss -- Diff
 
-	cjne	a, #0x8, 12$
-	mov	AR_SAMPLE, R_INPUT
-	mov	R_STATE, #(rxs_diff_1 - rxs_default)
-	RX_NEXT_NYBBLE
+        cjne    a, #0x8, 12$
+        mov     AR_SAMPLE, R_INPUT
+        mov     R_STATE, #(rxs_diff_1 - rxs_default)
+        RX_NEXT_NYBBLE
 12$:
 
-	; ------------ Nybble 11xx -- Literal Index
+        ; ------------ Nybble 11xx -- Literal Index
 
-	mov	a, R_INPUT
-	rr	a
-	rr	a
-	anl	a, #0xC0
-	mov	R_HIGH, a	; Store into R_HIGH, as xx000000
+        mov     a, R_INPUT
+        rr      a
+        rr      a
+        anl     a, #0xC0
+        mov     R_HIGH, a       ; Store into R_HIGH, as xx000000
 
-	mov	R_SAMPLE, #0	; Any subsequent runs will copy this word (S=0 D=0)
-	mov	R_DIFF, #RF_VRAM_DIFF_BASE
+        mov     R_SAMPLE, #0    ; Any subsequent runs will copy this word (S=0 D=0)
+        mov     R_DIFF, #RF_VRAM_DIFF_BASE
 
-	mov	R_STATE, #(rxs_literal - rxs_default)
+        mov     R_STATE, #(rxs_literal - rxs_default)
 
 rx_next_sjmp:
-	RX_NEXT_NYBBLE
+        RX_NEXT_NYBBLE
 
-	;-------------------------------------------
-	; 4-bit diff
-	;-------------------------------------------
+        ;-------------------------------------------
+        ; 4-bit diff
+        ;-------------------------------------------
 
 rxs_diff_1:
-	mov	AR_DIFF, R_INPUT
-	mov	R_LOW, #0
-	lcall	#_rx_write_deltas
-	sjmp	#rx_next_sjmp
+        mov     AR_DIFF, R_INPUT
+        mov     R_LOW, #0
+        lcall   #_rx_write_deltas
+        sjmp    #rx_next_sjmp
 
-	;-------------------------------------------
-	; Literal 14-bit index
-	;-------------------------------------------
+        ;-------------------------------------------
+        ; Literal 14-bit index
+        ;-------------------------------------------
 
 rxs_literal:
-	mov	a, R_INPUT
-	anl	a, #0xF
-	mov	R_LOW, a	; Store into R_LOW, as 0000xxxx
+        mov     a, R_INPUT
+        anl     a, #0xF
+        mov     R_LOW, a        ; Store into R_LOW, as 0000xxxx
 
-	mov	R_STATE, #(19$ - rxs_default)
-	sjmp	rx_next_sjmp
+        mov     R_STATE, #(19$ - rxs_default)
+        sjmp    rx_next_sjmp
 
 19$:
-	mov	a, R_INPUT
-	swap	a
-	anl	a, #0xF0
-	orl	AR_LOW, a	; Add to R_LOW, as xxxx0000
+        mov     a, R_INPUT
+        swap    a
+        anl     a, #0xF0
+        orl     AR_LOW, a       ; Add to R_LOW, as xxxx0000
 
-	mov	R_STATE, #(20$ - rxs_default)
-	sjmp	rx_next_sjmp
+        mov     R_STATE, #(20$ - rxs_default)
+        sjmp    rx_next_sjmp
 
 20$:
-	mov	_DPS, #1	; Switch to VRAM DPTR
+        mov     _DPS, #1        ; Switch to VRAM DPTR
 
-	clr	c		; Shift a zero into R_LOW, and MSB into C
-	mov	a, R_LOW
-	rlc	a
-	movx	@dptr, a	; Store low byte
-	inc	dptr
+        clr     c               ; Shift a zero into R_LOW, and MSB into C
+        mov     a, R_LOW
+        rlc     a
+        movx    @dptr, a        ; Store low byte
+        inc     dptr
 
-	mov	a, R_INPUT
-	rlc	a		; Shift R_LOW MSB into R_HIGH LSB
-	rlc	a		; And again (dummy bit)
-	anl	a, #0x3E	; Mask covers input nybble plus shifted MSB
-	orl	a, R_HIGH	; Combine with saved two MSBs
-	movx	@dptr, a	; Store high byte
-	inc	dptr
+        mov     a, R_INPUT
+        rlc     a               ; Shift R_LOW MSB into R_HIGH LSB
+        rlc     a               ; And again (dummy bit)
+        anl     a, #0x3E        ; Mask covers input nybble plus shifted MSB
+        orl     a, R_HIGH       ; Combine with saved two MSBs
+        movx    @dptr, a        ; Store high byte
+        inc     dptr
 
-	mov	_DPS, #0
+        mov     _DPS, #0
 
-	mov	R_STATE, #0	; Back to default state
-	sjmp	rx_next_sjmp
+        mov     R_STATE, #0     ; Back to default state
+        sjmp    rx_next_sjmp
 
-	;-------------------------------------------
-	; RLE codes
-	;-------------------------------------------
+        ;-------------------------------------------
+        ; RLE codes
+        ;-------------------------------------------
 
-	; We just saw a single RLE code. If it is followed by another
-	; RLE code, that needs special treatment. Otherwise, handle it
-	; as a normal nybble after processing the runs from our first
-	; RLE nybble.
+        ; We just saw a single RLE code. If it is followed by another
+        ; RLE code, that needs special treatment. Otherwise, handle it
+        ; as a normal nybble after processing the runs from our first
+        ; RLE nybble.
 
 rxs_rle:
 
-	mov	a, R_INPUT
-	anl	a, #0xc
+        mov     a, R_INPUT
+        anl     a, #0xc
 
-	; -------- 00nn -- Plain RLE code
+        ; -------- 00nn -- Plain RLE code
 
-	jz	13$
+        jz      13$
 
-	anl	AR_LOW, #0xF		; Only the low nybble is part of the valid run length
-	lcall	#_rx_write_deltas
-	sjmp	rxs_default		; Re-process this nybble starting from the default state
+        anl     AR_LOW, #0xF            ; Only the low nybble is part of the valid run length
+        lcall   #_rx_write_deltas
+        sjmp    rxs_default             ; Re-process this nybble starting from the default state
 
 13$:
-	mov	a, R_LOW	; Check low two bits of the _first_ RLE nybble
+        mov     a, R_LOW        ; Check low two bits of the _first_ RLE nybble
 
-	; -------- 000n 00nn -- Skip n+1 output words
+        ; -------- 000n 00nn -- Skip n+1 output words
 
-	jb	acc.1, 14$	; Jump if not a 000n nybble
+        jb      acc.1, 14$      ; Jump if not a 000n nybble
 
-	rrc	a      		; Rotate low bit of skip count into C
-	mov	a, R_INPUT
-	rlc	a		; Rotate into next nybble
-	anl	a, #7		; Mask to 3 bits
-	inc	a		; Skip n+1 words
-	rl	a  		; Words to bytes
-	mov	R_LOW, a	; Stow temporarily
+        rrc     a               ; Rotate low bit of skip count into C
+        mov     a, R_INPUT
+        rlc     a               ; Rotate into next nybble
+        anl     a, #7           ; Mask to 3 bits
+        inc     a               ; Skip n+1 words
+        rl      a               ; Words to bytes
+        mov     R_LOW, a        ; Stow temporarily
 
-	mov	_DPS, #1	; Switch to VRAM DPTR
-	mov	a, _DPL1	; 16-bit add, dptr += R_LOW
-	add	a, R_LOW
-	mov	_DPL1, a
-	mov	a, _DPH1
-	addc	a, #0
-	anl	a, #3		; Wrap DPH1 at 1 kB
-	mov	_DPH1, a
-	mov	_DPS, #0
+        mov     _DPS, #1        ; Switch to VRAM DPTR
+        mov     a, _DPL1        ; 16-bit add, dptr += R_LOW
+        add     a, R_LOW
+        mov     _DPL1, a
+        mov     a, _DPH1
+        addc    a, #0
+        anl     a, #3           ; Wrap DPH1 at 1 kB
+        mov     _DPH1, a
+        mov     _DPS, #0
 
-	mov	R_STATE, #0
-	sjmp	rx_next_sjmp
+        mov     R_STATE, #0
+        sjmp    rx_next_sjmp
 
 14$:
 
-	; -------- 0010 00nn nnnn -- Write n+5 delta-words
+        ; -------- 0010 00nn nnnn -- Write n+5 delta-words
 
-	jb	acc.0, not_wrdelta
+        jb      acc.0, not_wrdelta
 
-	mov	a, R_INPUT
-	swap	a
-	anl	a, #0x30	; Mask to 00nn0000
-	mov	R_LOW, a
+        mov     a, R_INPUT
+        swap    a
+        anl     a, #0x30        ; Mask to 00nn0000
+        mov     R_LOW, a
 
-	mov	R_STATE, #(rxs_wrdelta_1 - rxs_default)
+        mov     R_STATE, #(rxs_wrdelta_1 - rxs_default)
 
 rx_next_sjmp2:
-	sjmp	rx_next_sjmp
+        sjmp    rx_next_sjmp
 
 rxs_wrdelta_1:
-	sjmp	rxs_wrdelta_1_fragment
+        sjmp    rxs_wrdelta_1_fragment
 
 not_wrdelta:
 
-	; -------- 0011 000x xxxx xxxx -- Set literal 9-bit word address
+        ; -------- 0011 000x xxxx xxxx -- Set literal 9-bit word address
 
-	mov	a, R_INPUT	; Done checking the first nybble at this point
-	jb	acc.1, rx_not_word9
+        mov     a, R_INPUT      ; Done checking the first nybble at this point
+        jb      acc.1, rx_not_word9
 
-	mov	a, R_INPUT
-	anl	a, #1		; Store bit 9
-	mov	R_HIGH, a
+        mov     a, R_INPUT
+        anl     a, #1           ; Store bit 9
+        mov     R_HIGH, a
 
-	mov	R_STATE, #(rxs_word9 - rxs_default)
-	sjmp	rx_next_sjmp2
+        mov     R_STATE, #(rxs_word9 - rxs_default)
+        sjmp    rx_next_sjmp2
 
 rxs_word9:
-	mov	a, R_INPUT
-	anl	a, #0xF		; Store bits 4321
-	mov	R_LOW, a
+        mov     a, R_INPUT
+        anl     a, #0xF         ; Store bits 4321
+        mov     R_LOW, a
 
-	mov	R_STATE, #(21$ - rxs_default)
-	sjmp	rx_next_sjmp2
+        mov     R_STATE, #(21$ - rxs_default)
+        sjmp    rx_next_sjmp2
 
 21$:
-	mov	a, R_INPUT
-	swap	a		; Store bits 8765
-	anl	a, #0xF0
-	orl	a, R_LOW	; Full low byte (87654321) assembled
+        mov     a, R_INPUT
+        swap    a               ; Store bits 8765
+        anl     a, #0xF0
+        orl     a, R_LOW        ; Full low byte (87654321) assembled
 
-	mov	_DPS, #1	; Switch to VRAM DPTR
-	clr	c  		; Words -> Bytes, carry bit 8 over into DPH.
-	rlc	a
-	mov	_DPL1, a
-	mov	a, R_HIGH
-	rlc	a
-	mov	_DPH1, a	; Max value 00000011
-	mov	_DPS, #0
+        mov     _DPS, #1        ; Switch to VRAM DPTR
+        clr     c               ; Words -> Bytes, carry bit 8 over into DPH.
+        rlc     a
+        mov     _DPL1, a
+        mov     a, R_HIGH
+        rlc     a
+        mov     _DPH1, a        ; Max value 00000011
+        mov     _DPS, #0
 
-	mov	R_STATE, #0
-	sjmp	rx_next_sjmp2
+        mov     R_STATE, #0
+        sjmp    rx_next_sjmp2
 
 rx_not_word9:
 
-	; -------- 0011 0010 xxxx xxxx xxxx xxxx -- Write literal 16-bit word
+        ; -------- 0011 0010 xxxx xxxx xxxx xxxx -- Write literal 16-bit word
 
-	jb	acc.0, 22$
+        jb      acc.0, 22$
 
-	mov	R_STATE, #(23$ - rxs_default)
-	sjmp	rx_next_sjmp2
+        mov     R_STATE, #(23$ - rxs_default)
+        sjmp    rx_next_sjmp2
 
 23$:
-	mov	a, R_INPUT
-	anl	a, #0xF
-	mov	R_LOW, a	; Store bits 3210
+        mov     a, R_INPUT
+        anl     a, #0xF
+        mov     R_LOW, a        ; Store bits 3210
 
-	mov	R_STATE, #(24$ - rxs_default)
-	sjmp	rx_next_sjmp2
+        mov     R_STATE, #(24$ - rxs_default)
+        sjmp    rx_next_sjmp2
 
 24$:
-	mov	a, R_INPUT
-	anl	a, #0xF
-	swap	a
-	orl	AR_LOW, a	; Store bits 7654
+        mov     a, R_INPUT
+        anl     a, #0xF
+        swap    a
+        orl     AR_LOW, a       ; Store bits 7654
 
-	mov	R_STATE, #(25$ - rxs_default)
-	sjmp	rx_next_sjmp2
+        mov     R_STATE, #(25$ - rxs_default)
+        sjmp    rx_next_sjmp2
 
 25$:
-	mov	a, R_INPUT
-	anl	a, #0xF
-	mov	R_HIGH, a	; Store bits ba98
+        mov     a, R_INPUT
+        anl     a, #0xF
+        mov     R_HIGH, a       ; Store bits ba98
 
-	mov	R_STATE, #(26$ - rxs_default)
-	sjmp	rx_next_sjmp2
+        mov     R_STATE, #(26$ - rxs_default)
+        sjmp    rx_next_sjmp2
 
 26$:
-	mov	a, R_INPUT
-	anl	a, #0xF
-	swap	a
-	orl	AR_HIGH, a	; Store bits fedc
+        mov     a, R_INPUT
+        anl     a, #0xF
+        swap    a
+        orl     AR_HIGH, a      ; Store bits fedc
 
-	mov	_DPS, #1	; Switch to VRAM DPTR
-	mov	a, R_LOW
-	movx	@dptr,a		; Store low byte
-	inc	dptr
-	mov	a, R_HIGH
-	movx	@dptr,a		; Store high byte
-	inc	dptr
-	mov	_DPS, #0
+        mov     _DPS, #1        ; Switch to VRAM DPTR
+        mov     a, R_LOW
+        movx    @dptr,a         ; Store low byte
+        inc     dptr
+        mov     a, R_HIGH
+        movx    @dptr,a         ; Store high byte
+        inc     dptr
+        mov     _DPS, #0
 
-	mov	R_SAMPLE, #0	; Any subsequent runs will copy this word (S=0 D=0)
-	mov	R_DIFF, #RF_VRAM_DIFF_BASE
+        mov     R_SAMPLE, #0    ; Any subsequent runs will copy this word (S=0 D=0)
+        mov     R_DIFF, #RF_VRAM_DIFF_BASE
 
-	mov	R_STATE, #0	; Back to default state
-	sjmp	rx_next_sjmp2
+        mov     R_STATE, #0     ; Back to default state
+        sjmp    rx_next_sjmp2
 
 22$:
 
-	; -------- 0011 0011 -- Escape to flash mode
+        ; -------- 0011 0011 -- Escape to flash mode
 
-	; This will consume the entire remainder of the packet,
-	; stowing it in the flash FIFO. If there are no full bytes
-	; left in the packet, it acts as a flash reset.
+        ; This will consume the entire remainder of the packet,
+        ; stowing it in the flash FIFO. If there are no full bytes
+        ; left in the packet, it acts as a flash reset.
 
-	mov	R_STATE, #0	; Back to default state
-	sjmp	rx_flash
+        mov     R_STATE, #0     ; Back to default state
+        sjmp    rx_flash
 
 
-	; -------- 0010 00nn nnnn -- Write n+5 delta-words
-	; (Continued from above, due to jump length limits)
+        ; -------- 0010 00nn nnnn -- Write n+5 delta-words
+        ; (Continued from above, due to jump length limits)
 
 rxs_wrdelta_1_fragment:
 
-	mov	a, R_INPUT
-	anl	a, #0xF
-	orl	a, R_LOW	; Complete word 00nnnnnn
-	add	a, #4		; n+5  (rx_write_deltas already adds 1)
-	mov	R_LOW, a
+        mov     a, R_INPUT
+        anl     a, #0xF
+        orl     a, R_LOW        ; Complete word 00nnnnnn
+        add     a, #4           ; n+5  (rx_write_deltas already adds 1)
+        mov     R_LOW, a
 
-	lcall	#_rx_write_deltas
-	sjmp	#rx_next_sjmp2
+        lcall   #_rx_write_deltas
+        sjmp    #rx_next_sjmp2
 
-	;--------------------------------------------------------------------
-	; Flash FIFO Write
-	;--------------------------------------------------------------------
+        ;--------------------------------------------------------------------
+        ; Flash FIFO Write
+        ;--------------------------------------------------------------------
 
-	; Check whether we should do a flash reset, and calculate how
-	; many bytes of flash data we are writing. These are all based
-	; off of R_NYBBLE_COUNT:
-	;
-	;   R_NYBBLE_COUNT = 0       Illegal value
-	;   R_NYBBLE_COUNT = 1       This is the last nybble in the packet (reset)
-	;   R_NYBBLE_COUNT = 2       One dummy nybble left in packet (reset)
-	;   R_NYBBLE_COUNT = 3       One byte
-	;   R_NYBBLE_COUNT = 4       One byte followed by a dummy nybble
-	;   R_NYBBLE_COUNT = 5       Two bytes
-	;   R_NYBBLE_COUNT = 6       Two bytes followed by a dummy nybble
-	;   etc.
-	;
-	; We can calculate the number of complete bytes here as (nybble_count - 1) / 2.
-	; If that byte count is zero, we reset. Ignoring the dummy nybbles requries
-	; no special effort, since we pull bytes directly from SPI now.
-	;
-	; This is a pretty tight loop- we need to take at least 16 clock cycles
-	; between SPI reads, and the timing here is kind of close. So, the loop
-	; is annotated with cycle counts.
+        ; Check whether we should do a flash reset, and calculate how
+        ; many bytes of flash data we are writing. These are all based
+        ; off of R_NYBBLE_COUNT:
+        ;
+        ;   R_NYBBLE_COUNT = 0       Illegal value
+        ;   R_NYBBLE_COUNT = 1       This is the last nybble in the packet (reset)
+        ;   R_NYBBLE_COUNT = 2       One dummy nybble left in packet (reset)
+        ;   R_NYBBLE_COUNT = 3       One byte
+        ;   R_NYBBLE_COUNT = 4       One byte followed by a dummy nybble
+        ;   R_NYBBLE_COUNT = 5       Two bytes
+        ;   R_NYBBLE_COUNT = 6       Two bytes followed by a dummy nybble
+        ;   etc.
+        ;
+        ; We can calculate the number of complete bytes here as (nybble_count - 1) / 2.
+        ; If that byte count is zero, we reset. Ignoring the dummy nybbles requries
+        ; no special effort, since we pull bytes directly from SPI now.
+        ;
+        ; This is a pretty tight loop- we need to take at least 16 clock cycles
+        ; between SPI reads, and the timing here is kind of close. So, the loop
+        ; is annotated with cycle counts.
 
 rx_flash:
 
-	mov	a, R_NYBBLE_COUNT
-	dec	a
-	clr	c
-	rrc	a				; Byte count
-	jz	rx_flash_reset			;    Zero bytes, do a flash reset
-	mov	R_NYBBLE_COUNT, a		;    Otherwise, this is the new loop iterator	
+        mov     a, R_NYBBLE_COUNT
+        dec     a
+        clr     c
+        rrc     a                               ; Byte count
+        jz      rx_flash_reset                  ;    Zero bytes, do a flash reset
+        mov     R_NYBBLE_COUNT, a               ;    Otherwise, this is the new loop iterator   
 
 rx_flash_loop:
-	mov     a, _flash_fifo_head		; 2  Load the flash write pointer
-	add	a, #_flash_fifo			; 2  Address relative to flash_fifo[]
-	mov	R_TMP, a			; 2
+        mov     a, _flash_fifo_head             ; 2  Load the flash write pointer
+        add     a, #_flash_fifo                 ; 2  Address relative to flash_fifo[]
+        mov     R_TMP, a                        ; 2
 
-	mov	a, _SPIRDAT			; 2  Load next SPI byte
-	mov	_SPIRDAT, #0			; 3
-	mov	@R_TMP, a			; 3  Store it in the FIFO
+        mov     a, _SPIRDAT                     ; 2  Load next SPI byte
+        mov     _SPIRDAT, #0                    ; 3
+        mov     @R_TMP, a                       ; 3  Store it in the FIFO
 
-	mov	a, _flash_fifo_head		; 2  Advance head pointer
-	inc	a				; 1
-	anl	a, #(FLS_FIFO_SIZE - 1)		; 2
-	mov	_flash_fifo_head, a		; 3
+        mov     a, _flash_fifo_head             ; 2  Advance head pointer
+        inc     a                               ; 1
+        anl     a, #(FLS_FIFO_SIZE - 1)         ; 2
+        mov     _flash_fifo_head, a             ; 3
 
-	djnz	R_NYBBLE_COUNT, rx_flash_loop	; 3
-	sjmp	rx_complete			; 3
+        djnz    R_NYBBLE_COUNT, rx_flash_loop   ; 3
+        sjmp    rx_complete                     ; 3
 
 
 rx_flash_reset:
-	mov	_flash_fifo_head, #FLS_FIFO_RESET
+        mov     _flash_fifo_head, #FLS_FIFO_RESET
 
-	; ... fall through to rx_complete
+        ; ... fall through to rx_complete
 
 
-	;--------------------------------------------------------------------
-	; Packet receive completion
-	;--------------------------------------------------------------------
+        ;--------------------------------------------------------------------
+        ; Packet receive completion
+        ;--------------------------------------------------------------------
 
 rx_complete:
-	mov	a, _SPIRDAT	; Throw away one extra dummy byte
+        mov     a, _SPIRDAT     ; Throw away one extra dummy byte
 rx_complete_0:
-	setb	_RF_CSN		; End SPI transaction
+        setb    _RF_CSN         ; End SPI transaction
 
-	; nRF Interrupt acknowledge
+        ; nRF Interrupt acknowledge
 
-	clr	_RF_CSN						; Begin SPI transaction
-	mov	_SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_STATUS)	; Start writing to STATUS
-	mov	_SPIRDAT, #RF_STATUS_RX_DR			; Clear interrupt flag
-	SPI_WAIT						; RX dummy byte 0
-	mov	a, _SPIRDAT
-	SPI_WAIT						; RX dummy byte 1
-	mov	a, _SPIRDAT
-	setb	_RF_CSN						; End SPI transaction
+        clr     _RF_CSN                                         ; Begin SPI transaction
+        mov     _SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_STATUS)  ; Start writing to STATUS
+        mov     _SPIRDAT, #RF_STATUS_RX_DR                      ; Clear interrupt flag
+        SPI_WAIT                                                ; RX dummy byte 0
+        mov     a, _SPIRDAT
+        SPI_WAIT                                                ; RX dummy byte 1
+        mov     a, _SPIRDAT
+        setb    _RF_CSN                                         ; End SPI transaction
 
-	;--------------------------------------------------------------------
-	; ACK packet write
-	;--------------------------------------------------------------------
+        ;--------------------------------------------------------------------
+        ; ACK packet write
+        ;--------------------------------------------------------------------
 
-	mov	a, _ack_len
-	jz	no_ack					; Skip the ACK entirely if empty
-	mov	_ack_len, #RF_ACK_LEN_EMPTY
+        mov     a, _ack_len
+        jz      no_ack                                  ; Skip the ACK entirely if empty
+        mov     _ack_len, #RF_ACK_LEN_EMPTY
 
-	clr	_RF_CSN					; Begin SPI transaction
-	mov	_SPIRDAT, #RF_CMD_W_ACK_PAYLD		; Start sending ACK packet
-	mov	R_TMP, #_ack_data
-	mov	R_INPUT, a				; Packet length
+        clr     _RF_CSN                                 ; Begin SPI transaction
+        mov     _SPIRDAT, #RF_CMD_W_ACK_PAYLD           ; Start sending ACK packet
+        mov     R_TMP, #_ack_data
+        mov     R_INPUT, a                              ; Packet length
 
-3$:	mov	_SPIRDAT, @R_TMP
-	inc	R_TMP
-	SPI_WAIT					; RX dummy byte
-	mov	a, _SPIRDAT
-	djnz	R_INPUT, 3$
+3$:     mov     _SPIRDAT, @R_TMP
+        inc     R_TMP
+        SPI_WAIT                                        ; RX dummy byte
+        mov     a, _SPIRDAT
+        djnz    R_INPUT, 3$
 
-	SPI_WAIT					; RX last dummy byte
-	mov	a, _SPIRDAT
-	setb	_RF_CSN					; End SPI transaction
+        SPI_WAIT                                        ; RX last dummy byte
+        mov     a, _SPIRDAT
+        setb    _RF_CSN                                 ; End SPI transaction
 no_ack:
 
-	mov	_vram_dptr, _DPL1
-	mov	_vram_dptr+1, _DPH1
-	pop	psw
-	pop	_DPH1
-	pop	_DPL1
-	pop	_DPS
-	pop	dph
-	pop	dpl
-	pop	acc
-	reti
-	
+        mov     _vram_dptr, _DPL1
+        mov     _vram_dptr+1, _DPH1
+        pop     psw
+        pop     _DPH1
+        pop     _DPL1
+        pop     _DPS
+        pop     dph
+        pop     dpl
+        pop     acc
+        reti
+        
     __endasm ;
 }
 

@@ -37,21 +37,21 @@
 #include "network.h"
 #include "adc.h"
 
-#define ADDR_PORT	REG_P0
-#define BUS_PORT	REG_P2
-#define CTRL_PORT	REG_P3
+#define ADDR_PORT       REG_P0
+#define BUS_PORT        REG_P2
+#define CTRL_PORT       REG_P3
 
-#define ADDR_PORT_DIR	REG_P0DIR
-#define BUS_PORT_DIR	REG_P2DIR
-#define CTRL_PORT_DIR	REG_P3DIR
+#define ADDR_PORT_DIR   REG_P0DIR
+#define BUS_PORT_DIR    REG_P2DIR
+#define CTRL_PORT_DIR   REG_P3DIR
 
-#define CTRL_LCD_DCX	(1 << 0)
-#define CTRL_FLASH_LAT1	(1 << 1)
-#define CTRL_FLASH_LAT2	(1 << 2)
-#define CTRL_FLASH_WE	(1 << 5)
-#define CTRL_FLASH_OE	(1 << 6)
+#define CTRL_LCD_DCX    (1 << 0)
+#define CTRL_FLASH_LAT1 (1 << 1)
+#define CTRL_FLASH_LAT2 (1 << 2)
+#define CTRL_FLASH_WE   (1 << 5)
+#define CTRL_FLASH_OE   (1 << 6)
 
-#define CTRL_LCD_TE	0	// XXX: TE pin not available in our hardware
+#define CTRL_LCD_TE     0       // XXX: TE pin not available in our hardware
 
 static struct {
     uint8_t lat1;
@@ -65,9 +65,9 @@ static struct {
 } hw;
 
 // RFCON bits
-#define RFCON_RFCKEN	0x04
-#define RFCON_RFCSN	0x02
-#define RFCON_RFCE	0x01
+#define RFCON_RFCKEN    0x04
+#define RFCON_RFCSN     0x02
+#define RFCON_RFCE      0x01
 
 
 void hardware_init(struct em8051 *cpu)
@@ -120,19 +120,19 @@ void hardware_gfx_tick(struct em8051 *cpu)
     uint8_t mcu_data_drv = cpu->mSFR[BUS_PORT_DIR] != 0xFF;
 
     struct flash_pins flashp = {
-	/* addr    */ addr7 | ((uint32_t)hw.lat1 << 7) | ((uint32_t)hw.lat2 << 14),
-	/* oe      */ ctrl_port & CTRL_FLASH_OE,
-	/* ce      */ 0,
-	/* we      */ ctrl_port & CTRL_FLASH_WE,
-	/* data_in */ hw.bus,
+        /* addr    */ addr7 | ((uint32_t)hw.lat1 << 7) | ((uint32_t)hw.lat2 << 14),
+        /* oe      */ ctrl_port & CTRL_FLASH_OE,
+        /* ce      */ 0,
+        /* we      */ ctrl_port & CTRL_FLASH_WE,
+        /* data_in */ hw.bus,
     };
 
     struct lcd_pins lcdp = {
-	/* csx     */ 0,
-	/* dcx     */ ctrl_port & CTRL_LCD_DCX,
-	/* wrx     */ addr_port & 1,
-	/* rdx     */ 0,
-	/* data_in */ hw.bus,
+        /* csx     */ 0,
+        /* dcx     */ ctrl_port & CTRL_LCD_DCX,
+        /* wrx     */ addr_port & 1,
+        /* rdx     */ 0,
+        /* data_in */ hw.bus,
     };
 
     flash_cycle(&flashp);
@@ -155,8 +155,8 @@ void hardware_gfx_tick(struct em8051 *cpu)
     case 1:     hw.bus = flash_data_out(); break;
     case 2:     hw.bus = bus_port; break;
     default:
-	/* Bus contention! */
-	cpu->except(cpu, EXCEPTION_BUS_CONTENTION);
+        /* Bus contention! */
+        cpu->except(cpu, EXCEPTION_BUS_CONTENTION);
     }
     
     hw.flash_drv = flashp.data_drv;  
@@ -174,27 +174,27 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
     case BUS_PORT_DIR:
     case ADDR_PORT_DIR:
     case CTRL_PORT_DIR:
-	// Usually we only need to simulate the graphics subsystem when a relevant SFR write occurs
+        // Usually we only need to simulate the graphics subsystem when a relevant SFR write occurs
         hardware_gfx_tick(cpu);
         break;
  
     case REG_ADCCON1:
-	adc_start();
-	break;
+        adc_start();
+        break;
             
     case REG_SPIRDAT:
         spi_write_data(&hw.radio_spi, cpu->mSFR[reg]);
         break;
 
     case REG_RFCON:
-	hw.rfcken = !!(cpu->mSFR[reg] & RFCON_RFCKEN);
-	radio_ctrl(!(cpu->mSFR[reg] & RFCON_RFCSN),   // Active low
-		   !!(cpu->mSFR[reg] & RFCON_RFCE));  // Active high
-	break;
+        hw.rfcken = !!(cpu->mSFR[reg] & RFCON_RFCKEN);
+        radio_ctrl(!(cpu->mSFR[reg] & RFCON_RFCSN),   // Active low
+                   !!(cpu->mSFR[reg] & RFCON_RFCE));  // Active high
+        break;
 
     case REG_DEBUG:
-	fprintf(stderr, "Debug: %02x\n", cpu->mSFR[reg]);
-	break;
+        fprintf(stderr, "Debug: %02x\n", cpu->mSFR[reg]);
+        break;
 
     }
 }
@@ -218,22 +218,22 @@ void hardware_tick(struct em8051 *cpu)
 
     cpu->mSFR[CTRL_PORT] &= ~CTRL_LCD_TE;
     if (lcd_te_tick())
-	cpu->mSFR[CTRL_PORT] |= CTRL_LCD_TE;
+        cpu->mSFR[CTRL_PORT] |= CTRL_LCD_TE;
 
     /* Simulate interrupts */
 
     if (adc_tick(cpu->mSFR))
-	cpu->mSFR[REG_IRCON] |= IRCON_MISC;
+        cpu->mSFR[REG_IRCON] |= IRCON_MISC;
 
     if (spi_tick(&hw.radio_spi, &cpu->mSFR[REG_SPIRCON0]))
-	cpu->mSFR[REG_IRCON] |= IRCON_RFSPI;
+        cpu->mSFR[REG_IRCON] |= IRCON_RFSPI;
 
     if (hw.rfcken && radio_tick())
-	cpu->mSFR[REG_IRCON] |= IRCON_RF;
+        cpu->mSFR[REG_IRCON] |= IRCON_RF;
 
     /* Other hardware with timers to update */
 
     flash_tick(cpu);
     if (hw.flash_drv)
-	cpu->mSFR[BUS_PORT] = flash_data_out();
+        cpu->mSFR[BUS_PORT] = flash_data_out();
 }

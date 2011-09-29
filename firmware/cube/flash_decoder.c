@@ -45,7 +45,7 @@ volatile uint8_t flash_fifo_head;
 union word16 {
     uint16_t word;
     struct {
-	uint8_t low, high;
+        uint8_t low, high;
     };
 };
 
@@ -60,8 +60,8 @@ static union {
     union word16 lutvec;
 
     struct {
-	uint8_t rle1;
-	uint8_t rle2;
+        uint8_t rle1;
+        uint8_t rle2;
     };
 } ovl;
 
@@ -108,7 +108,7 @@ void flash_init(void)
     uint8_t i = sizeof lut;
 
     do {
-	*(l++) = 0;
+        *(l++) = 0;
     } while (--i);
 
     fifo_tail = flash_fifo_head;
@@ -119,7 +119,7 @@ void flash_handle_fifo(void)
 {
     // Nothing to do? Exit early.
     if (flash_fifo_head == fifo_tail)
-	return;
+        return;
 
     /*
      * Out-of-band cue to reset the state machine.
@@ -129,15 +129,15 @@ void flash_handle_fifo(void)
      */
     
     if (flash_fifo_head == FLS_FIFO_RESET) {
-	flash_fifo_head = 0;
-	flash_init();
+        flash_fifo_head = 0;
+        flash_init();
 
-	__asm
-	    inc	(_ack_data + RF_ACK_FLASH_FIFO)
-	    mov	_ack_len, #RF_ACK_LEN_MAX
-	__endasm ;
+        __asm
+            inc (_ack_data + RF_ACK_FLASH_FIFO)
+            mov _ack_len, #RF_ACK_LEN_MAX
+        __endasm ;
 
-	return;
+        return;
     }
 
     // Prep the flash hardware to start writing
@@ -145,13 +145,13 @@ void flash_handle_fifo(void)
 
     // This is where STATE_RETURN() drops us after each state finishes.
     __asm
-	state_return:
+        state_return:
     __endasm ;
 
     if (flash_fifo_head == fifo_tail) {
-	// No more data? Release the bus and get out.
-	CTRL_PORT = CTRL_IDLE;
-	return;
+        // No more data? Release the bus and get out.
+        CTRL_PORT = CTRL_IDLE;
+        return;
     }
 
     /*
@@ -161,19 +161,19 @@ void flash_handle_fifo(void)
      * overwrite the location we just freed up in the FIFO buffer.
      */
 
-    byte = flash_fifo[fifo_tail];	
+    byte = flash_fifo[fifo_tail];       
     fifo_tail = (fifo_tail + 1) & (FLS_FIFO_SIZE - 1);
 
     __asm
-	inc	(_ack_data + RF_ACK_FLASH_FIFO)
-	mov	_ack_len, #RF_ACK_LEN_MAX
+        inc     (_ack_data + RF_ACK_FLASH_FIFO)
+        mov     _ack_len, #RF_ACK_LEN_MAX
     __endasm ;
 
     __asm
-	clr   a
-	mov   dpl, _state
-	mov   dph, (_state+1)
-	jmp   @a+dptr
+        clr   a
+        mov   dpl, _state
+        mov   dph, (_state+1)
+        jmp   @a+dptr
     __endasm ;
 }
 
@@ -191,73 +191,73 @@ static void state_OPCODE(void) __naked
     switch (opcode & FLS_OP_MASK) {
 
     case FLS_OP_LUT1:
-	state = state_LUT1_COLOR1;
-	STATE_RETURN();
+        state = state_LUT1_COLOR1;
+        STATE_RETURN();
 
     case FLS_OP_LUT16:
-	state = state_LUT16_VEC1;
-	STATE_RETURN();
+        state = state_LUT16_VEC1;
+        STATE_RETURN();
 
     case FLS_OP_TILE_P0:
-	// Trivial solid-color tile, no repeats
-	__asm
-	    mov   a, _byte
-	    anl   a, #0xF
-	    rl    a 
-	    add   a, #_lut
-	    mov   r0, a
-	    mov   DPL, @r0
-	    inc   r0
-	    mov   DPH, @r0
+        // Trivial solid-color tile, no repeats
+        __asm
+            mov   a, _byte
+            anl   a, #0xF
+            rl    a 
+            add   a, #_lut
+            mov   r0, a
+            mov   DPL, @r0
+            inc   r0
+            mov   DPH, @r0
 
-	    mov   r0, #64
-	    1$:
-	    lcall _flash_program_word
-	    djnz  r0, 1$
-	__endasm ;
-	STATE_RETURN();
-	
+            mov   r0, #64
+            1$:
+            lcall _flash_program_word
+            djnz  r0, 1$
+        __endasm ;
+        STATE_RETURN();
+        
     case FLS_OP_TILE_P1_R4:
-	counter = 64;
-	ovl.rle1 = 0xFF;
-	state = state_TILE_P1_R4;
-	STATE_RETURN();
+        counter = 64;
+        ovl.rle1 = 0xFF;
+        state = state_TILE_P1_R4;
+        STATE_RETURN();
 
     case FLS_OP_TILE_P2_R4:
-	counter = 64;
-	ovl.rle1 = 0xFF;
-	state = state_TILE_P2_R4;
-	STATE_RETURN();
+        counter = 64;
+        ovl.rle1 = 0xFF;
+        state = state_TILE_P2_R4;
+        STATE_RETURN();
 
     case FLS_OP_TILE_P4_R4:
-	counter = 64;
-	ovl.rle1 = 0xFF;
-	state = state_TILE_P4_R4;
-	STATE_RETURN();
-	
+        counter = 64;
+        ovl.rle1 = 0xFF;
+        state = state_TILE_P4_R4;
+        STATE_RETURN();
+        
     case FLS_OP_TILE_P16:
-	counter = 8;
-	state = state_TILE_P16_MASK;
-	STATE_RETURN();
+        counter = 8;
+        state = state_TILE_P16_MASK;
+        STATE_RETURN();
 
     case FLS_OP_SPECIAL:
-	switch (opcode) {
-	    
-	case FLS_OP_ADDRESS:
-	    state = state_ADDR_LOW;
-	    STATE_RETURN();
+        switch (opcode) {
+            
+        case FLS_OP_ADDRESS:
+            state = state_ADDR_LOW;
+            STATE_RETURN();
 
-	case FLS_OP_ERASE:
-	    state = state_ERASE_COUNT;
-	    STATE_RETURN();
-	    
-	default:
-	    STATE_RETURN();
-	}
-	
+        case FLS_OP_ERASE:
+            state = state_ERASE_COUNT;
+            STATE_RETURN();
+            
+        default:
+            STATE_RETURN();
+        }
+        
     default:
-	// Undefined opcode
-	STATE_RETURN();
+        // Undefined opcode
+        STATE_RETURN();
     }
 }
 
@@ -287,7 +287,7 @@ static void state_ERASE_CHECK(void) __naked
 {
     uint8_t check = 0xFF ^ (-counter -flash_addr_lat1 -flash_addr_lat2);
     if (check == byte)
-	flash_erase(counter);
+        flash_erase(counter);
     state = state_OPCODE;
     STATE_RETURN();
 }
@@ -324,9 +324,9 @@ static void state_LUT16_VEC2(void) __naked
 static void state_LUT16_COLOR1(void) __naked
 {
     while (!(ovl.lutvec.low & 1)) {
-	// Skipped LUT entry
-	ovl.lutvec.word >>= 1;
-	counter++;
+        // Skipped LUT entry
+        ovl.lutvec.word >>= 1;
+        counter++;
     }
     lut.colors[counter].low = byte;
     state = state_LUT16_COLOR2;
@@ -339,7 +339,7 @@ static void state_LUT16_COLOR2(void) __naked
     ovl.lutvec.word >>= 1;
     state = ovl.lutvec.word ? state_LUT16_COLOR1 : state_OPCODE;
     STATE_RETURN();
-}	
+}       
 
 static void state_TILE_P1_R4(void) __naked
 {
@@ -348,47 +348,47 @@ static void state_TILE_P1_R4(void) __naked
     nibIndex = 1;
 
     for (;;) {
-	if (ovl.rle1 == ovl.rle2) {
-	    runLength = nybble;
-	    nybble = ovl.rle1 | swap(ovl.rle1);
-	    ovl.rle1 = 0xF0;
-	    
-	    if (!runLength)
-		goto no_runs;
-	    
-	    runLength = rl(runLength);
-	    runLength = rl(runLength);
-	    counter -= runLength;
-	    
-	} else {
-	    runLength = 4;
-	    counter -= 4;
-	    ovl.rle2 = ovl.rle1;
-	    ovl.rle1 = nybble;
-	}
+        if (ovl.rle1 == ovl.rle2) {
+            runLength = nybble;
+            nybble = ovl.rle1 | swap(ovl.rle1);
+            ovl.rle1 = 0xF0;
+            
+            if (!runLength)
+                goto no_runs;
+            
+            runLength = rl(runLength);
+            runLength = rl(runLength);
+            counter -= runLength;
+            
+        } else {
+            runLength = 4;
+            counter -= 4;
+            ovl.rle2 = ovl.rle1;
+            ovl.rle1 = nybble;
+        }
 
-	do {
-	    uint8_t idx = nybble & 1;
-	    flash_program_word(lut.colors[idx].word);
-	    nybble = rr(nybble);
-	} while (--runLength);
+        do {
+            uint8_t idx = nybble & 1;
+            flash_program_word(lut.colors[idx].word);
+            nybble = rr(nybble);
+        } while (--runLength);
 
     no_runs:
-	if (!counter || (counter & 0x80))
-	    if (opcode & FLS_ARG_MASK) {
-		opcode--;
-		counter += 64;
-	    } else {
-		state = state_OPCODE;
-		STATE_RETURN();
-	    }
-	if (!nibIndex)
-	    STATE_RETURN();
-	nibIndex = 0;
-	nybble = byte >> 4;
+        if (!counter || (counter & 0x80))
+            if (opcode & FLS_ARG_MASK) {
+                opcode--;
+                counter += 64;
+            } else {
+                state = state_OPCODE;
+                STATE_RETURN();
+            }
+        if (!nibIndex)
+            STATE_RETURN();
+        nibIndex = 0;
+        nybble = byte >> 4;
     }
 }
-		
+                
 static void state_TILE_P2_R4(void) __naked
 {
     uint8_t nybble = byte & 0x0F;
@@ -396,44 +396,44 @@ static void state_TILE_P2_R4(void) __naked
     nibIndex = 1;
     
     for (;;) {
-	if (ovl.rle1 == ovl.rle2) {
-	    runLength = nybble;
-	    nybble = ovl.rle1 | swap(ovl.rle1);
-	    ovl.rle1 = 0xF0;
-	    
-	    if (!runLength)
-		goto no_runs;
-	    
-	    runLength = rl(runLength);
-	    counter -= runLength;
-	    
-	} else {
-	    runLength = 2;
-	    counter -= 2;
-	    ovl.rle2 = ovl.rle1;
-	    ovl.rle1 = nybble;
-	}
-	
-	do {
-	    uint8_t idx = nybble & 3;
-	    flash_program_word(lut.colors[idx].word);
-	    nybble = rr(nybble);
-	    nybble = rr(nybble);
-	} while (--runLength);
+        if (ovl.rle1 == ovl.rle2) {
+            runLength = nybble;
+            nybble = ovl.rle1 | swap(ovl.rle1);
+            ovl.rle1 = 0xF0;
+            
+            if (!runLength)
+                goto no_runs;
+            
+            runLength = rl(runLength);
+            counter -= runLength;
+            
+        } else {
+            runLength = 2;
+            counter -= 2;
+            ovl.rle2 = ovl.rle1;
+            ovl.rle1 = nybble;
+        }
+        
+        do {
+            uint8_t idx = nybble & 3;
+            flash_program_word(lut.colors[idx].word);
+            nybble = rr(nybble);
+            nybble = rr(nybble);
+        } while (--runLength);
 
     no_runs:
-	if (!counter || (counter & 0x80))
-	    if (opcode & FLS_ARG_MASK) {
-		opcode--;
-		counter += 64;
-	    } else {
-		state = state_OPCODE;
-		STATE_RETURN();
-	    }
-	if (!nibIndex)
-	    STATE_RETURN();
-	nibIndex = 0;
-	nybble = byte >> 4;
+        if (!counter || (counter & 0x80))
+            if (opcode & FLS_ARG_MASK) {
+                opcode--;
+                counter += 64;
+            } else {
+                state = state_OPCODE;
+                STATE_RETURN();
+            }
+        if (!nibIndex)
+            STATE_RETURN();
+        nibIndex = 0;
+        nybble = byte >> 4;
     }
 }
 
@@ -448,7 +448,7 @@ static void state_TILE_P4_R4(void) __naked
            counter -= (runLength = nybble);
            nybble = ovl.rle1;
            ovl.rle1 = 0xF0;
-	   
+           
            if (!runLength)
                goto no_runs;
 
@@ -460,10 +460,10 @@ static void state_TILE_P4_R4(void) __naked
        }
 
        {
-	   register uint16_t color = lut.colors[nybble].word;
-	   do {
-	       flash_program_word(color);
-	   } while (--runLength);
+           register uint16_t color = lut.colors[nybble].word;
+           do {
+               flash_program_word(color);
+           } while (--runLength);
        }
     
     no_runs:
@@ -476,33 +476,33 @@ static void state_TILE_P4_R4(void) __naked
                STATE_RETURN();
            }
        if (!nibIndex)
-	   STATE_RETURN();
+           STATE_RETURN();
        nibIndex = 0;
        nybble = byte >> 4;
     }
 }
 
-#define P16_EMIT_RUNS() {			\
-	do {					\
-	    if (ovl.rle1 & 1) {			\
-		state = state_TILE_P16_LOW;	\
-		STATE_RETURN();			\
-	    }					\
-	    flash_program_word(lut.p16.word);	\
-	    ovl.rle1 = rr(ovl.rle1);		\
-	} while (--ovl.rle2);			\
+#define P16_EMIT_RUNS() {                       \
+        do {                                    \
+            if (ovl.rle1 & 1) {                 \
+                state = state_TILE_P16_LOW;     \
+                STATE_RETURN();                 \
+            }                                   \
+            flash_program_word(lut.p16.word);   \
+            ovl.rle1 = rr(ovl.rle1);            \
+        } while (--ovl.rle2);                   \
     }
 
-#define P16_NEXT_MASK() {			\
-        if (--counter) {			\
-	    state = state_TILE_P16_MASK;	\
-	} else if (opcode & FLS_ARG_MASK) {	\
-	    opcode--;				\
-	    counter = 8;			\
-	    state = state_TILE_P16_MASK;	\
-	} else {				\
-	    state = state_OPCODE;		\
-	}					\
+#define P16_NEXT_MASK() {                       \
+        if (--counter) {                        \
+            state = state_TILE_P16_MASK;        \
+        } else if (opcode & FLS_ARG_MASK) {     \
+            opcode--;                           \
+            counter = 8;                        \
+            state = state_TILE_P16_MASK;        \
+        } else {                                \
+            state = state_OPCODE;               \
+        }                                       \
     }
 
 static void state_TILE_P16_MASK(void) __naked
@@ -528,10 +528,10 @@ static void state_TILE_P16_HIGH(void) __naked
     flash_program_word(lut.p16.word);
 
     if (--ovl.rle2) {
-	// Still more pixels in this mask.
-	ovl.rle1 = rr(ovl.rle1);
+        // Still more pixels in this mask.
+        ovl.rle1 = rr(ovl.rle1);
 
-	P16_EMIT_RUNS();
+        P16_EMIT_RUNS();
     }
 
     P16_NEXT_MASK();

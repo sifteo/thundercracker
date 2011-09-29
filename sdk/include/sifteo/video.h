@@ -38,9 +38,9 @@ class VideoBuffer {
      * unlock().
      */
     void lock(uint16_t addr) {
-	sys.lock |= maskLock(addr);
-	nextCM32 |= maskCM32(addr);
-	Atomic::Barrier();
+        sys.lock |= maskLock(addr);
+        nextCM32 |= maskCM32(addr);
+        Atomic::Barrier();
     }
 
     /**
@@ -48,10 +48,10 @@ class VideoBuffer {
      * already busy flushing updates to the cube, this allows it to begin.
      */
     void unlock() {
-	Atomic::Barrier();
-	Atomic::Or(sys.cm32, nextCM32);
-	sys.lock = 0;
-	nextCM32 = 0;
+        Atomic::Barrier();
+        Atomic::Or(sys.cm32, nextCM32);
+        sys.lock = 0;
+        nextCM32 = 0;
     }
 
     /**
@@ -61,11 +61,11 @@ class VideoBuffer {
      * one unlock().
      */
     void poke(uint16_t addr, uint16_t word) {
-	if (sys.vram.words[addr] != word) {
-	    lock(addr);
-	    sys.vram.words[addr] = word;
-	    Atomic::Or(selectCM1(addr), maskCM1(addr));
-	}
+        if (sys.vram.words[addr] != word) {
+            lock(addr);
+            sys.vram.words[addr] = word;
+            Atomic::Or(selectCM1(addr), maskCM1(addr));
+        }
     }
 
     /**
@@ -73,26 +73,26 @@ class VideoBuffer {
      * sometimes you really do just want to modify one byte.
      */
     void pokeb(uint16_t addr, uint8_t byte) {
-	if (sys.vram.bytes[addr] != byte) {
-	    uint16_t addrw = addr >> 1;
-	    lock(addrw);
-	    sys.vram.bytes[addr] = byte;
-	    Atomic::Or(selectCM1(addrw), maskCM1(addrw));
-	}
+        if (sys.vram.bytes[addr] != byte) {
+            uint16_t addrw = addr >> 1;
+            lock(addrw);
+            sys.vram.bytes[addr] = byte;
+            Atomic::Or(selectCM1(addrw), maskCM1(addrw));
+        }
     }
 
     /**
      * Read one word of VRAM
      */
     uint16_t peek(uint16_t addr) const {
-	return sys.vram.words[addr];
+        return sys.vram.words[addr];
     }
 
     /**
      * Read one byte of VRAM
      */
     uint8_t peekb(uint16_t addr) const {
-	return sys.vram.bytes[addr];
+        return sys.vram.bytes[addr];
     }
 
     /**
@@ -101,29 +101,29 @@ class VideoBuffer {
      * so that on the next unlock() we'll send the entire buffer.
      */
     void init() {
-	sys.lock = 0xFFFFFFFF;
-	nextCM32 = 0xFFFFFFFF;
-	for (unsigned i = 0; i < arraysize(sys.cm1); i++)
-	    sys.cm1[i] = 0xFFFFFFFF;
+        sys.lock = 0xFFFFFFFF;
+        nextCM32 = 0xFFFFFFFF;
+        for (unsigned i = 0; i < arraysize(sys.cm1); i++)
+            sys.cm1[i] = 0xFFFFFFFF;
     }
 
     _SYSVideoBuffer sys;    
     
  private:
     uint32_t &selectCM1(uint16_t addr) {
-	return sys.cm1[addr >> 5];
+        return sys.cm1[addr >> 5];
     }
 
     uint32_t maskCM1(uint16_t addr) {
-	return Intrinsic::LZ(addr & 31);
+        return Intrinsic::LZ(addr & 31);
     }
 
     uint32_t maskCM32(uint16_t addr) {
-	return Intrinsic::LZ(addr >> 5);
+        return Intrinsic::LZ(addr >> 5);
     }
 
     uint32_t maskLock(uint16_t addr) {
-	return Intrinsic::LZ(addr >> 4);
+        return Intrinsic::LZ(addr >> 4);
     }
 
     uint32_t nextCM32;

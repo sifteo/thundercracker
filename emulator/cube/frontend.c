@@ -79,7 +79,7 @@ static void frontend_update_profiler(uint16_t *dest)
     // First pass, look for the maximum count
     for (shadow_p = shadow, profiler = frontend.cpu->mProfilerMem;
          shadow_p < shadow + PROFILER_BYTES; shadow_p++, profiler++) {
-    	uint64_t count = profiler->total_cycles - *shadow_p;
+        uint64_t count = profiler->total_cycles - *shadow_p;
         if (count > max_count)
             max_count = count;
     }
@@ -87,7 +87,7 @@ static void frontend_update_profiler(uint16_t *dest)
     // Second pass, draw the map
     for (shadow_p = shadow, profiler = frontend.cpu->mProfilerMem;
          shadow_p < shadow + PROFILER_BYTES; shadow_p++, profiler++) {
-	uint64_t count = profiler->total_cycles - *shadow_p;
+        uint64_t count = profiler->total_cycles - *shadow_p;
         uint16_t pixel;
 
         if (count)
@@ -95,69 +95,69 @@ static void frontend_update_profiler(uint16_t *dest)
         else
             pixel = 0;
 
-	*shadow_p = profiler->total_cycles; 
-	*(dest++) = pixel;		    
+        *shadow_p = profiler->total_cycles; 
+        *(dest++) = pixel;                  
     }
 }
 
 static void frontend_update_texture(void)
 {
     if (frontend.enable_flash) {
-	unsigned tx, ty;
-	unsigned remaining = flash_size();
-	uint8_t *ptr = flash_buffer();
+        unsigned tx, ty;
+        unsigned remaining = flash_size();
+        uint8_t *ptr = flash_buffer();
 
-	glEnable(GL_TEXTURE_2D);
+        glEnable(GL_TEXTURE_2D);
 
-	for (ty = 0; ty < FLASH_TILE_HEIGHT; ty++)
-	    for (tx = 0; tx < FLASH_TILE_WIDTH; tx++) {
+        for (ty = 0; ty < FLASH_TILE_HEIGHT; ty++)
+            for (tx = 0; tx < FLASH_TILE_WIDTH; tx++) {
 
-		glTexSubImage2D(GL_TEXTURE_2D, 0,
-				tx * FLASH_TILE_SIZE, ty * FLASH_TILE_SIZE,
-				FLASH_TILE_SIZE, FLASH_TILE_SIZE,
-				GL_RGB, GL_UNSIGNED_SHORT_5_6_5, ptr);
+                glTexSubImage2D(GL_TEXTURE_2D, 0,
+                                tx * FLASH_TILE_SIZE, ty * FLASH_TILE_SIZE,
+                                FLASH_TILE_SIZE, FLASH_TILE_SIZE,
+                                GL_RGB, GL_UNSIGNED_SHORT_5_6_5, ptr);
 
-		remaining -= FLASH_TILE_BYTES;
-		ptr += FLASH_TILE_BYTES;
+                remaining -= FLASH_TILE_BYTES;
+                ptr += FLASH_TILE_BYTES;
 
-		if (remaining < FLASH_TILE_BYTES)
-		    return;
-	    }
+                if (remaining < FLASH_TILE_BYTES)
+                    return;
+            }
 
     } else {
-	uint16_t *fb = lcd_framebuffer();
-	GLsizei width = LCD_WIDTH;
-	GLsizei height = LCD_HEIGHT;
+        uint16_t *fb = lcd_framebuffer();
+        GLsizei width = LCD_WIDTH;
+        GLsizei height = LCD_HEIGHT;
 
-	if (fb) {
-	    glEnable(GL_TEXTURE_2D);
-	} else {
-	    glDisable(GL_TEXTURE_2D);
-	    return;
-	}
+        if (fb) {
+            glEnable(GL_TEXTURE_2D);
+        } else {
+            glDisable(GL_TEXTURE_2D);
+            return;
+        }
 
-	if (frontend.enable_profiler) {
-	    // Update the profiler only every N frames
-	    if (++frontend.profiler_div_timer >= 3) {
-		frontend.profiler_div_timer = 0;
-		frontend_update_profiler(fb + (LCD_WIDTH * LCD_HEIGHT));
-	    }
+        if (frontend.enable_profiler) {
+            // Update the profiler only every N frames
+            if (++frontend.profiler_div_timer >= 3) {
+                frontend.profiler_div_timer = 0;
+                frontend_update_profiler(fb + (LCD_WIDTH * LCD_HEIGHT));
+            }
 
-	    height += PROFILER_LINES;
-	}
+            height += PROFILER_LINES;
+        }
 
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
-			GL_RGB, GL_UNSIGNED_SHORT_5_6_5, fb);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
+                        GL_RGB, GL_UNSIGNED_SHORT_5_6_5, fb);
     }
 }
 
 static void frontend_draw_frame(void)
 {
     static const GLfloat vertexArray[] = {
-	0, 1,  -1,-1, 0,
-	1, 1,   1,-1, 0,
-	0, 0,  -1, 1, 0,
-	1, 0,   1, 1, 0,
+        0, 1,  -1,-1, 0,
+        1, 1,   1,-1, 0,
+        0, 0,  -1, 1, 0,
+        1, 0,   1, 1, 0,
     };
 
     glInterleavedArrays(GL_T2F_V3F, 0, vertexArray);
@@ -173,27 +173,27 @@ static void frontend_resize_window(void)
 
     if (frontend.enable_flash) {
 
-	texWidth = FLASH_TILE_SIZE * FLASH_TILE_WIDTH;
-	texHeight = FLASH_TILE_SIZE * FLASH_TILE_HEIGHT;
+        texWidth = FLASH_TILE_SIZE * FLASH_TILE_WIDTH;
+        texHeight = FLASH_TILE_SIZE * FLASH_TILE_HEIGHT;
 
-	winWidth = texWidth;
-	winHeight = texHeight;
+        winWidth = texWidth;
+        winHeight = texHeight;
 
     } else {
-	texWidth = LCD_WIDTH;
-	texHeight = LCD_HEIGHT;
+        texWidth = LCD_WIDTH;
+        texHeight = LCD_HEIGHT;
 
-	if (frontend.enable_profiler)
-	    texHeight += PROFILER_LINES;
+        if (frontend.enable_profiler)
+            texHeight += PROFILER_LINES;
 
-	winWidth = texWidth * frontend.scale;
-	winHeight = texHeight * frontend.scale;
+        winWidth = texWidth * frontend.scale;
+        winHeight = texHeight * frontend.scale;
     }
        
     frontend.surface = SDL_SetVideoMode(winWidth, winHeight, 16, SDL_OPENGL);
     if (frontend.surface == NULL) {
-	printf("Error creating SDL surface!\n");
-	exit(1);
+        printf("Error creating SDL surface!\n");
+        exit(1);
     }
 
     SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
@@ -214,7 +214,7 @@ static void frontend_resize_window(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     glTexImage2D(GL_TEXTURE_2D, 0, 3, texWidth, texHeight, 0, GL_RGB,
-		 GL_UNSIGNED_SHORT_5_6_5, NULL);
+                 GL_UNSIGNED_SHORT_5_6_5, NULL);
 
     frontend_update_texture();
     frontend_draw_frame();
@@ -240,9 +240,9 @@ static void frontend_mouse_update(uint16_t x, uint16_t y, uint8_t buttons)
     uint16_t accel_y = 0x8000;
 
     if (buttons & SDL_BUTTON_LEFT) {
-	// Mouse drag: Simulate a tilt
-	accel_x = scaled_x;
-	accel_y = scaled_y;
+        // Mouse drag: Simulate a tilt
+        accel_x = scaled_x;
+        accel_y = scaled_y;
     }
 
     adc_set_input(0, accel_x);
@@ -273,24 +273,24 @@ static void frontend_keydown(SDL_KeyboardEvent *evt)
 {
     switch (evt->keysym.sym) {
 
-	// Change scale
+        // Change scale
     case 's':
-	if (++frontend.scale == 6)
-	    frontend.scale = 1;
-	frontend_resize_window();
-	break;
+        if (++frontend.scale == 6)
+            frontend.scale = 1;
+        frontend_resize_window();
+        break;
 
-	// Toggle profiler
+        // Toggle profiler
     case 'p':
-	frontend.enable_profiler = !frontend.enable_profiler;
-	frontend_resize_window();
-	break;
+        frontend.enable_profiler = !frontend.enable_profiler;
+        frontend_resize_window();
+        break;
 
-	// Toggle flash
+        // Toggle flash
     case 'f':
-	frontend.enable_flash = !frontend.enable_flash;
-	frontend_resize_window();
-	break;
+        frontend.enable_flash = !frontend.enable_flash;
+        frontend_resize_window();
+        break;
 
     }
 }
@@ -298,46 +298,46 @@ static void frontend_keydown(SDL_KeyboardEvent *evt)
 void frontend_loop(void)
 {
     while (frontend.running) {
-	SDL_Event event;
+        SDL_Event event;
     
-	// Drain the GUI event queue
-	while (SDL_PollEvent(&event)) {
-	    switch (event.type) {
-		
-	    case SDL_QUIT:
-		frontend_async_quit();
-		break;
+        // Drain the GUI event queue
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                
+            case SDL_QUIT:
+                frontend_async_quit();
+                break;
 
-	    case SDL_KEYDOWN:
-		frontend_keydown(&event.key);
-		break;
+            case SDL_KEYDOWN:
+                frontend_keydown(&event.key);
+                break;
 
-	    case SDL_MOUSEMOTION:
-		frontend_mouse_update(event.motion.x, event.motion.y, event.motion.state);
-		break;
+            case SDL_MOUSEMOTION:
+                frontend_mouse_update(event.motion.x, event.motion.y, event.motion.state);
+                break;
 
-	    case SDL_MOUSEBUTTONDOWN:
-	    case SDL_MOUSEBUTTONUP:
-		frontend_mouse_update(event.button.x, event.button.y, event.button.state);
-		break;
-	    
-	    }
-	}
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP:
+                frontend_mouse_update(event.button.x, event.button.y, event.button.state);
+                break;
+            
+            }
+        }
 
-	if (!runmode) {
-	    // Paused
-	    SDL_Delay(50);
-	}
+        if (!runmode) {
+            // Paused
+            SDL_Delay(50);
+        }
 
-	if (frontend.running) {
+        if (frontend.running) {
             int i;
             
             frontend_update_texture();
-	    lcd_te_pulse();
+            lcd_te_pulse();
             
             for (i = 0; i < frontend.frame_hz_divisor; i++)
-	        frontend_draw_frame();
-	}
+                frontend_draw_frame();
+        }
     }
 }
 

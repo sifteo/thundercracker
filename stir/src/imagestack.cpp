@@ -20,31 +20,31 @@ ImageStack::ImageStack()
 ImageStack::~ImageStack()
 {
     for (std::vector<source*>::iterator i = sources.begin(); i != sources.end(); i++)
-	delete *i;
+        delete *i;
 }
 
 void ImageStack::setWidth(int width)
 {
     if (width > 0 && (mWidth == 0 || mWidth == (unsigned)width))
-	mWidth = (unsigned)width;
+        mWidth = (unsigned)width;
     else
-	mConsistent = false;
+        mConsistent = false;
 }
 
 void ImageStack::setHeight(int height)
 {
     if (height > 0 && (mHeight == 0 || mHeight == (unsigned)height))
-	mHeight = (unsigned)height;
+        mHeight = (unsigned)height;
     else
-	mConsistent = false;
+        mConsistent = false;
 }
 
 void ImageStack::setFrames(int frames)
 {
     if (frames > 0 && (mFrames == 0 || mFrames == (unsigned)frames))
-	mFrames = (unsigned)frames;
+        mFrames = (unsigned)frames;
     else
-	mConsistent = false;
+        mConsistent = false;
 }
 
 bool ImageStack::load(const char *filename)
@@ -91,25 +91,25 @@ void ImageStack::finishLoading()
     int frames = 0;
 
     if (sources.size() < 1)
-	return;
+        return;
 
     if (!mWidth)
-	setWidth(sources[0]->decoder.getWidth());
+        setWidth(sources[0]->decoder.getWidth());
     if (!mHeight)
-	setHeight(sources[0]->decoder.getHeight());
+        setHeight(sources[0]->decoder.getHeight());
 
     for (std::vector<source*>::iterator i = sources.begin(); i != sources.end(); i++) {
-	unsigned width = (*i)->decoder.getWidth();
-	unsigned height = (*i)->decoder.getHeight();
+        unsigned width = (*i)->decoder.getWidth();
+        unsigned height = (*i)->decoder.getHeight();
 
-	if ((width % mWidth) || (height % mHeight)) {
-	    mConsistent = false;
-	    continue;
-	}
+        if ((width % mWidth) || (height % mHeight)) {
+            mConsistent = false;
+            continue;
+        }
 
-	(*i)->firstFrame = frames;
-	(*i)->numFrames = (width / mWidth) * (height / mHeight);
-	frames += (*i)->numFrames;
+        (*i)->firstFrame = frames;
+        (*i)->numFrames = (width / mWidth) * (height / mHeight);
+        frames += (*i)->numFrames;
     }
     
     setFrames(frames);
@@ -118,10 +118,10 @@ void ImageStack::finishLoading()
  ImageStack::source *ImageStack::getSourceForFrame(unsigned frame)
 {
     for (std::vector<source*>::iterator i = sources.begin(); i != sources.end(); i++) {
-	source *s = *i;
+        source *s = *i;
 
-	if (frame < (s->firstFrame + s->numFrames))
-	    return s;
+        if (frame < (s->firstFrame + s->numFrames))
+            return s;
     }
 
     return NULL;
@@ -131,7 +131,7 @@ void ImageStack::storeFrame(unsigned frame, TileGrid &tg, const TileOptions &opt
 {
     source *s = getSourceForFrame(frame);
     if (!s)
-	return;
+        return;
 
     unsigned index = frame - s->firstFrame;
     unsigned gridW = s->decoder.getWidth() / mWidth;

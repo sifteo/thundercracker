@@ -21,63 +21,63 @@
  **********************************************************************/
 
 #pragma sdcc_hash +
-#define MODE_RETURN() {						\
-		__asm	inc	(_ack_data + RF_ACK_FRAME)	__endasm ; \
-		__asm	orl	_ack_len, #RF_ACK_LEN_FRAME	__endasm ; \
-		return;						\
-	}
+#define MODE_RETURN() {                                         \
+                __asm   inc     (_ack_data + RF_ACK_FRAME)      __endasm ; \
+                __asm   orl     _ack_len, #RF_ACK_LEN_FRAME     __endasm ; \
+                return;                                         \
+        }
 
 // Output a nonzero number of of pixels, not known at compile-time
-#define PIXEL_BURST(_count) {				\
-	register uint8_t _i = (_count);			\
-	do {						\
-	    ADDR_INC4();				\
-	} while (--_i);					\
+#define PIXEL_BURST(_count) {                           \
+        register uint8_t _i = (_count);                 \
+        do {                                            \
+            ADDR_INC4();                                \
+        } while (--_i);                                 \
     }
 
 // Output one pixel with static colors from two registers
-#define PIXEL_FROM_REGS(l, h)					__endasm; \
-    __asm mov	BUS_PORT, h					__endasm; \
-    __asm inc	ADDR_PORT					__endasm; \
-    __asm inc	ADDR_PORT					__endasm; \
-    __asm mov	BUS_PORT, l					__endasm; \
-    __asm inc	ADDR_PORT					__endasm; \
-    __asm inc	ADDR_PORT					__endasm; \
+#define PIXEL_FROM_REGS(l, h)                                   __endasm; \
+    __asm mov   BUS_PORT, h                                     __endasm; \
+    __asm inc   ADDR_PORT                                       __endasm; \
+    __asm inc   ADDR_PORT                                       __endasm; \
+    __asm mov   BUS_PORT, l                                     __endasm; \
+    __asm inc   ADDR_PORT                                       __endasm; \
+    __asm inc   ADDR_PORT                                       __endasm; \
     __asm
 
 // Repeat the same register value for both color bytes
-#define PIXEL_FROM_REG(l)					__endasm; \
-    __asm mov	BUS_PORT, l					__endasm; \
-    __asm inc	ADDR_PORT					__endasm; \
-    __asm inc	ADDR_PORT					__endasm; \
-    __asm inc	ADDR_PORT					__endasm; \
-    __asm inc	ADDR_PORT					__endasm; \
+#define PIXEL_FROM_REG(l)                                       __endasm; \
+    __asm mov   BUS_PORT, l                                     __endasm; \
+    __asm inc   ADDR_PORT                                       __endasm; \
+    __asm inc   ADDR_PORT                                       __endasm; \
+    __asm inc   ADDR_PORT                                       __endasm; \
+    __asm inc   ADDR_PORT                                       __endasm; \
     __asm
 
 // Load a 16-bit tile address from DPTR, and auto-increment
 #pragma sdcc_hash +
-#define ADDR_FROM_DPTR_INC() {					\
-    __asm movx	a, @dptr					__endasm; \
-    __asm mov	ADDR_PORT, a					__endasm; \
-    __asm inc	dptr						__endasm; \
-    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	__endasm; \
-    __asm movx	a, @dptr					__endasm; \
-    __asm mov	ADDR_PORT, a					__endasm; \
-    __asm inc	dptr						__endasm; \
-    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	__endasm; \
+#define ADDR_FROM_DPTR_INC() {                                  \
+    __asm movx  a, @dptr                                        __endasm; \
+    __asm mov   ADDR_PORT, a                                    __endasm; \
+    __asm inc   dptr                                            __endasm; \
+    __asm mov   CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1    __endasm; \
+    __asm movx  a, @dptr                                        __endasm; \
+    __asm mov   ADDR_PORT, a                                    __endasm; \
+    __asm inc   dptr                                            __endasm; \
+    __asm mov   CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2    __endasm; \
     }
 
 // Add 2 to DPTR. (Can do this in 2 clocks with inline assembly)
-#define DPTR_INC2() {						\
-    __asm inc	dptr						__endasm; \
-    __asm inc	dptr						__endasm; \
+#define DPTR_INC2() {                                           \
+    __asm inc   dptr                                            __endasm; \
+    __asm inc   dptr                                            __endasm; \
     }
 
 // Assembly macro wrappers
-#define ASM_ADDR_INC4()			__endasm; ADDR_INC4(); __asm
-#define ASM_ADDR_INC32()		__endasm; ADDR_INC32(); __asm
-#define ASM_DPTR_INC2()			__endasm; DPTR_INC2(); __asm
-#define ASM_ADDR_FROM_DPTR_INC()	__endasm; ADDR_FROM_DPTR_INC(); __asm
+#define ASM_ADDR_INC4()                 __endasm; ADDR_INC4(); __asm
+#define ASM_ADDR_INC32()                __endasm; ADDR_INC32(); __asm
+#define ASM_DPTR_INC2()                 __endasm; DPTR_INC2(); __asm
+#define ASM_ADDR_FROM_DPTR_INC()        __endasm; ADDR_FROM_DPTR_INC(); __asm
 
 
 /***********************************************************************
@@ -105,23 +105,23 @@ static void vm_solid(void)
     LCD_WRITE_BEGIN();
 
     __asm
-	mov	dptr, #_SYS_VA_NUM_LINES
-	movx	a, @dptr
-	mov	r1, a
+        mov     dptr, #_SYS_VA_NUM_LINES
+        movx    a, @dptr
+        mov     r1, a
 
-	mov	dptr, #_SYS_VA_COLORMAP
-	movx	a, @dptr
-	mov	r0, a
-	inc	dptr
-	movx	a, @dptr
+        mov     dptr, #_SYS_VA_COLORMAP
+        movx    a, @dptr
+        mov     r0, a
+        inc     dptr
+        movx    a, @dptr
 
-1$:	mov	r2, #LCD_WIDTH
+1$:     mov     r2, #LCD_WIDTH
 2$:
 
         PIXEL_FROM_REGS(r0, a)
 
-	djnz	r2, 2$
-	djnz	r1, 1$
+        djnz    r2, 2$
+        djnz    r1, 1$
     __endasm ;
 
     LCD_WRITE_END();
@@ -147,50 +147,50 @@ void vm_fb32_line(uint16_t src)
 {
     src = src;
     __asm
-	mov	_DPH1, #(_SYS_VA_COLORMAP >> 8)
-	
-	mov	r4, #16		; Loop over 16 horizontal bytes per line
+        mov     _DPH1, #(_SYS_VA_COLORMAP >> 8)
+        
+        mov     r4, #16         ; Loop over 16 horizontal bytes per line
 4$:
 
-	movx	a, @dptr
-	inc	dptr
-	mov	r5, a
-	mov	_DPS, #1
+        movx    a, @dptr
+        inc     dptr
+        mov     r5, a
+        mov     _DPS, #1
 
-	; Low nybble
+        ; Low nybble
 
-	anl	a, #0xF
-	rl	a
-	mov	_DPL1, a
-	movx	a, @dptr
-	mov	r0, a
-	inc	dptr
-	movx	a, @dptr
+        anl     a, #0xF
+        rl      a
+        mov     _DPL1, a
+        movx    a, @dptr
+        mov     r0, a
+        inc     dptr
+        movx    a, @dptr
 
-    	PIXEL_FROM_REGS(r0, a)
-	PIXEL_FROM_REGS(r0, a)
-	PIXEL_FROM_REGS(r0, a)
-	PIXEL_FROM_REGS(r0, a)
+        PIXEL_FROM_REGS(r0, a)
+        PIXEL_FROM_REGS(r0, a)
+        PIXEL_FROM_REGS(r0, a)
+        PIXEL_FROM_REGS(r0, a)
 
-	; High nybble
+        ; High nybble
 
-	mov	a, r5
-	anl	a, #0xF0
-	swap	a
-	rl	a
-	mov	_DPL1, a
-	movx	a, @dptr
-	mov	r0, a
-	inc	dptr
-	movx	a, @dptr
+        mov     a, r5
+        anl     a, #0xF0
+        swap    a
+        rl      a
+        mov     _DPL1, a
+        movx    a, @dptr
+        mov     r0, a
+        inc     dptr
+        movx    a, @dptr
 
-    	PIXEL_FROM_REGS(r0, a)
-	PIXEL_FROM_REGS(r0, a)
-	PIXEL_FROM_REGS(r0, a)
-	PIXEL_FROM_REGS(r0, a)
+        PIXEL_FROM_REGS(r0, a)
+        PIXEL_FROM_REGS(r0, a)
+        PIXEL_FROM_REGS(r0, a)
+        PIXEL_FROM_REGS(r0, a)
 
-	mov	_DPS, #0
-	djnz	r4, 4$		; Next byte
+        mov     _DPS, #0
+        djnz    r4, 4$          ; Next byte
 
     __endasm ;
 
@@ -204,15 +204,15 @@ static void vm_fb32(void)
     lcd_begin_frame();
 
     do {
-	LCD_WRITE_BEGIN();
-	vm_fb32_line(src);
-	vm_fb32_line(src);
-	vm_fb32_line(src);
-	vm_fb32_line(src);
-	src += 16;
-	LCD_WRITE_END();
+        LCD_WRITE_BEGIN();
+        vm_fb32_line(src);
+        vm_fb32_line(src);
+        vm_fb32_line(src);
+        vm_fb32_line(src);
+        src += 16;
+        LCD_WRITE_END();
 
-	flash_handle_fifo();
+        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -235,40 +235,40 @@ void vm_fb64_line(uint16_t ptr)
     ptr = ptr;
     __asm
 
-	; Copy colormap[0] and colormap[1] to r4-7
+        ; Copy colormap[0] and colormap[1] to r4-7
 
-	mov	_DPS, #1
-	mov	dptr, #_SYS_VA_COLORMAP
-	movx	a, @dptr
-	mov	r4, a
-	inc	dptr
-	movx	a, @dptr
-	mov	r5, a
-	inc	dptr
-	movx	a, @dptr
-	mov	r6, a
-	inc	dptr
-	movx	a, @dptr
-	mov	r7, a
-	mov	_DPS, #0
+        mov     _DPS, #1
+        mov     dptr, #_SYS_VA_COLORMAP
+        movx    a, @dptr
+        mov     r4, a
+        inc     dptr
+        movx    a, @dptr
+        mov     r5, a
+        inc     dptr
+        movx    a, @dptr
+        mov     r6, a
+        inc     dptr
+        movx    a, @dptr
+        mov     r7, a
+        mov     _DPS, #0
 
-	mov	r2, #8		; Loop over 8 horizontal bytes per line
-4$:	movx	a, @dptr
-	inc	dptr
-	mov	r3, #8		; Loop over 8 pixels per byte
-5$:	rrc	a		; Shift out one pixel
-	jc	6$
+        mov     r2, #8          ; Loop over 8 horizontal bytes per line
+4$:     movx    a, @dptr
+        inc     dptr
+        mov     r3, #8          ; Loop over 8 pixels per byte
+5$:     rrc     a               ; Shift out one pixel
+        jc      6$
 
-        PIXEL_FROM_REGS(r4, r5)	; colormap[0]
-	PIXEL_FROM_REGS(r4, r5)
-	djnz	r3, 5$		; Next pixel
-	djnz	r2, 4$		; Next byte
-	sjmp	7$
+        PIXEL_FROM_REGS(r4, r5) ; colormap[0]
+        PIXEL_FROM_REGS(r4, r5)
+        djnz    r3, 5$          ; Next pixel
+        djnz    r2, 4$          ; Next byte
+        sjmp    7$
 
-6$:	PIXEL_FROM_REGS(r6, r7)	; colormap[1]
-	PIXEL_FROM_REGS(r6, r7)
-	djnz	r3, 5$		; Next pixel
-	djnz	r2, 4$		; Next byte
+6$:     PIXEL_FROM_REGS(r6, r7) ; colormap[1]
+        PIXEL_FROM_REGS(r6, r7)
+        djnz    r3, 5$          ; Next pixel
+        djnz    r2, 4$          ; Next byte
 
 7$:
 
@@ -285,12 +285,12 @@ static void vm_fb64(void)
 
     do {
         LCD_WRITE_BEGIN();
-	vm_fb64_line(src);
-	vm_fb64_line(src);
-	src += 8;
+        vm_fb64_line(src);
+        vm_fb64_line(src);
+        src += 8;
         LCD_WRITE_END();
 
-	flash_handle_fifo();
+        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -320,38 +320,38 @@ void vm_fb128_line(uint16_t ptr)
     ptr = ptr;
     __asm
 
-	; Copy colormap[0] and colormap[1] to r4-7
+        ; Copy colormap[0] and colormap[1] to r4-7
 
-	mov	_DPS, #1
-	mov	dptr, #_SYS_VA_COLORMAP
-	movx	a, @dptr
-	mov	r4, a
-	inc	dptr
-	movx	a, @dptr
-	mov	r5, a
-	inc	dptr
-	movx	a, @dptr
-	mov	r6, a
-	inc	dptr
-	movx	a, @dptr
-	mov	r7, a
-	mov	_DPS, #0
+        mov     _DPS, #1
+        mov     dptr, #_SYS_VA_COLORMAP
+        movx    a, @dptr
+        mov     r4, a
+        inc     dptr
+        movx    a, @dptr
+        mov     r5, a
+        inc     dptr
+        movx    a, @dptr
+        mov     r6, a
+        inc     dptr
+        movx    a, @dptr
+        mov     r7, a
+        mov     _DPS, #0
 
-	mov	r2, #16		; Loop over 16 horizontal bytes per line
-4$:	movx	a, @dptr
-	inc	dptr
-	mov	r3, #8		; Loop over 8 pixels per byte
-5$:	rrc	a		; Shift out one pixel
-	jc	6$
+        mov     r2, #16         ; Loop over 16 horizontal bytes per line
+4$:     movx    a, @dptr
+        inc     dptr
+        mov     r3, #8          ; Loop over 8 pixels per byte
+5$:     rrc     a               ; Shift out one pixel
+        jc      6$
 
-        PIXEL_FROM_REGS(r4, r5)	; colormap[0]
-	djnz	r3, 5$		; Next pixel
-	djnz	r2, 4$		; Next byte
-	sjmp	7$
+        PIXEL_FROM_REGS(r4, r5) ; colormap[0]
+        djnz    r3, 5$          ; Next pixel
+        djnz    r2, 4$          ; Next byte
+        sjmp    7$
 
-6$:	PIXEL_FROM_REGS(r6, r7)	; colormap[1]
-	djnz	r3, 5$		; Next pixel
-	djnz	r2, 4$		; Next byte
+6$:     PIXEL_FROM_REGS(r6, r7) ; colormap[1]
+        djnz    r3, 5$          ; Next pixel
+        djnz    r2, 4$          ; Next byte
 
 7$:
 
@@ -368,14 +368,14 @@ static void vm_fb128(void)
 
     do {
         LCD_WRITE_BEGIN();
-	vm_fb128_line(src);
+        vm_fb128_line(src);
         LCD_WRITE_END();
 
-	src += 16;
-	if ((src >> 8) == (_SYS_VA_COLORMAP >> 8))
-	   src = 0;
+        src += 16;
+        if ((src >> 8) == (_SYS_VA_COLORMAP >> 8))
+           src = 0;
 
-	flash_handle_fifo();
+        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -387,18 +387,18 @@ static void vm_fb128(void)
  * _SYS_VM_BG0
  **********************************************************************/
 
-static uint8_t x_bg0_first_w;		// Width of first displayed background tile, [1, 8]
-static uint8_t x_bg0_last_w;		// Width of first displayed background tile, [0, 7]
-static uint8_t x_bg0_first_addr;	// Low address offset for first displayed tile
-static uint8_t x_bg0_wrap;		// Load value for a dec counter to the next X map wraparound
+static uint8_t x_bg0_first_w;           // Width of first displayed background tile, [1, 8]
+static uint8_t x_bg0_last_w;            // Width of first displayed background tile, [0, 7]
+static uint8_t x_bg0_first_addr;        // Low address offset for first displayed tile
+static uint8_t x_bg0_wrap;              // Load value for a dec counter to the next X map wraparound
 
-static uint8_t y_bg0_addr_l;		// Low part of tile addresses, inc by 32 each line
-static uint16_t y_bg0_map;		// Map address for the first tile on this line
+static uint8_t y_bg0_addr_l;            // Low part of tile addresses, inc by 32 each line
+static uint16_t y_bg0_map;              // Map address for the first tile on this line
 
 // Called once per tile, to check for horizontal map wrapping
-#define BG0_WRAP_CHECK() {			  	\
-	if (!--bg0_wrap)				\
-	    DPTR -= _SYS_VRAM_BG0_WIDTH *2;		\
+#define BG0_WRAP_CHECK() {                              \
+        if (!--bg0_wrap)                                \
+            DPTR -= _SYS_VRAM_BG0_WIDTH *2;             \
     }
 
 static void vm_bg0_line(void)
@@ -420,18 +420,18 @@ static void vm_bg0_line(void)
 
     // There are always 15 full tiles on-screen
     do {
-	ADDR_FROM_DPTR_INC();
-	BG0_WRAP_CHECK();
-	ADDR_PORT = y_bg0_addr_l;
-	ADDR_INC32();
+        ADDR_FROM_DPTR_INC();
+        BG0_WRAP_CHECK();
+        ADDR_PORT = y_bg0_addr_l;
+        ADDR_INC32();
     } while (--x);
 
     // Might be one more partial tile
     if (x_bg0_last_w) {
-	ADDR_FROM_DPTR_INC();
-	BG0_WRAP_CHECK();
-	ADDR_PORT = y_bg0_addr_l;
-	PIXEL_BURST(x_bg0_last_w);
+        ADDR_FROM_DPTR_INC();
+        BG0_WRAP_CHECK();
+        ADDR_PORT = y_bg0_addr_l;
+        PIXEL_BURST(x_bg0_last_w);
     }
 
     // Release the bus
@@ -456,9 +456,9 @@ static void vm_bg0_setup(void)
     tile_pan_y = pan_y >> 3;
 
     y_bg0_addr_l = pan_y << 5;
-    y_bg0_map = tile_pan_y << 2;		// Y tile * 2
-    y_bg0_map += tile_pan_y << 5;		// Y tile * 16
-    y_bg0_map += tile_pan_x << 1;		// X tile * 2;
+    y_bg0_map = tile_pan_y << 2;                // Y tile * 2
+    y_bg0_map += tile_pan_y << 5;               // Y tile * 16
+    y_bg0_map += tile_pan_x << 1;               // X tile * 2;
 
     x_bg0_last_w = pan_x & 7;
     x_bg0_first_w = 8 - x_bg0_last_w;
@@ -474,10 +474,10 @@ static void vm_bg0_next(void)
 
     y_bg0_addr_l += 32;
     if (!y_bg0_addr_l) {
-	// Next tile, with vertical wrap
-	y_bg0_map += _SYS_VRAM_BG0_WIDTH * 2;
-	if (y_bg0_map >= _SYS_VRAM_BG0_WIDTH * _SYS_VRAM_BG0_WIDTH * 2)
-	    y_bg0_map -= _SYS_VRAM_BG0_WIDTH * _SYS_VRAM_BG0_WIDTH * 2;
+        // Next tile, with vertical wrap
+        y_bg0_map += _SYS_VRAM_BG0_WIDTH * 2;
+        if (y_bg0_map >= _SYS_VRAM_BG0_WIDTH * _SYS_VRAM_BG0_WIDTH * 2)
+            y_bg0_map -= _SYS_VRAM_BG0_WIDTH * _SYS_VRAM_BG0_WIDTH * 2;
     }
 }
 
@@ -489,9 +489,9 @@ static void vm_bg0(void)
     vm_bg0_setup();
 
     do {
-	vm_bg0_line();
-	vm_bg0_next();
-	flash_handle_fifo();
+        vm_bg0_line();
+        vm_bg0_next();
+        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -527,7 +527,7 @@ static void vm_bg0(void)
  *   Map:      76543210 fedcba98
  *   DPL:      7654321i             <- one bit of line-index
  *   DPH:                   i21i    <- two bits of line-index
- *   Palette:           7654....	<- one replicated palette-select nybble
+ *   Palette:           7654....        <- one replicated palette-select nybble
  *   Mode:                  0       <- selects 1 or 2 planes
  *
  * Registers, main bank:
@@ -558,10 +558,10 @@ static void vm_bg0(void)
 extern __code uint8_t rom_palettes[];
 extern __code uint8_t rom_tiles[];
 
-#define ASM_X_WRAP_CHECK(lbl)					__endasm; \
-    __asm djnz	r1, lbl						__endasm; \
-    __asm lcall _vm_bg0_x_wrap_adjust				__endasm; \
-    __asm lbl:							__endasm; \
+#define ASM_X_WRAP_CHECK(lbl)                                   __endasm; \
+    __asm djnz  r1, lbl                                         __endasm; \
+    __asm lcall _vm_bg0_x_wrap_adjust                           __endasm; \
+    __asm lbl:                                                  __endasm; \
     __asm
 
 static void vm_bg0_x_wrap_adjust(void) __naked
@@ -572,18 +572,18 @@ static void vm_bg0_x_wrap_adjust(void) __naked
      */
 
     __asm
-	push	_DPS
-	mov	_DPS, #0
+        push    _DPS
+        mov     _DPS, #0
 
-	mov	a, dpl
-	add	a, #(-_SYS_VRAM_BG0_WIDTH*2)
-	mov	dpl, a
-	mov	a, dph
-	addc	a, #((-_SYS_VRAM_BG0_WIDTH*2) >> 8)
-	mov	dph, a
+        mov     a, dpl
+        add     a, #(-_SYS_VRAM_BG0_WIDTH*2)
+        mov     dpl, a
+        mov     a, dph
+        addc    a, #((-_SYS_VRAM_BG0_WIDTH*2) >> 8)
+        mov     dph, a
 
-	pop	_DPS
-	ret
+        pop     _DPS
+        ret
     __endasm ;
 }
 
@@ -603,41 +603,41 @@ static void vm_bg0_rom_next_tile(void) __naked __using(GFX_BANK)
 
     __asm
 
-	movx	a, @dptr		; Tile map, low byte
-	inc	dptr
-	anl     6, #1			; Combine with LSB from r6
-	orl	6, a
+        movx    a, @dptr                ; Tile map, low byte
+        inc     dptr
+        anl     6, #1                   ; Combine with LSB from r6
+        orl     6, a
 
-	movx	a, @dptr		; Tile map, high byte
-	inc	dptr
-	mov	r0, a			; Save raw copy
-	anl	a, #0x06
-	anl	7, #0xF9		; Combine with line-index and base address
-	orl	7, a
+        movx    a, @dptr                ; Tile map, high byte
+        inc     dptr
+        mov     r0, a                   ; Save raw copy
+        anl     a, #0x06
+        anl     7, #0xF9                ; Combine with line-index and base address
+        orl     7, a
 
-	ASM_X_WRAP_CHECK(2$)
+        ASM_X_WRAP_CHECK(2$)
 
-	mov	_DPS, #1		; Switch to DPTR1. (DPTR is used only for the tile map)
+        mov     _DPS, #1                ; Switch to DPTR1. (DPTR is used only for the tile map)
 
-	; Load the palette, only if it has changed since the last tile.
-	; We bank on having relatively few palette changes, so that we
-	; can amortize the relatively high cost of reading palette data
-	; from code memory. It is very slow to do this on each pixel,
-	; even just for the single palette index we need.
+        ; Load the palette, only if it has changed since the last tile.
+        ; We bank on having relatively few palette changes, so that we
+        ; can amortize the relatively high cost of reading palette data
+        ; from code memory. It is very slow to do this on each pixel,
+        ; even just for the single palette index we need.
 
-	mov	a, r0
-	anl	a, #0xf0		; Mask off four palette-select bits
-	xrl	a, r3			;    Compare with r3
-	jz	1$			;    Palette has not changed
-	xrl	a, r3			;    Make this the new current palette
-	mov	r3, a
+        mov     a, r0
+        anl     a, #0xf0                ; Mask off four palette-select bits
+        xrl     a, r3                   ;    Compare with r3
+        jz      1$                      ;    Palette has not changed
+        xrl     a, r3                   ;    Make this the new current palette
+        mov     r3, a
 
-	mov	psw, #(GFX_BANK << 3)
-	mov	dptr, #_rom_palettes
+        mov     psw, #(GFX_BANK << 3)
+        mov     dptr, #_rom_palettes
 
-	jmp	@a+dptr			; Tail call to generated code, loads r0-r7.
-	
-1$:	ret				; No palette change
+        jmp     @a+dptr                 ; Tail call to generated code, loads r0-r7.
+        
+1$:     ret                             ; No palette change
 
     __endasm ; 
 }
@@ -654,151 +654,151 @@ static void vm_bg0_rom_tiles_fast(void) __naked __using(GFX_BANK)
 
     __asm
 
-	; Tile loop
+        ; Tile loop
 2$:
 
-	lcall	_vm_bg0_rom_next_tile
-	mov	psw, #0
-	mov	_DPL1, r6
-	mov	_DPH1, r7
+        lcall   _vm_bg0_rom_next_tile
+        mov     psw, #0
+        mov     _DPL1, r6
+        mov     _DPH1, r7
 
-	; Fetch Plane 0 byte. This is necessary for both the 2-color and 4-color paths.
+        ; Fetch Plane 0 byte. This is necessary for both the 2-color and 4-color paths.
 
-	clr 	a			; Grab tile bitmap byte
-	movc	a, @a+dptr
-	mov	(GFX_BANK*8+1), a	;    Store in Plane 0 register
+        clr     a                       ; Grab tile bitmap byte
+        movc    a, @a+dptr
+        mov     (GFX_BANK*8+1), a       ;    Store in Plane 0 register
 
-	; Bit unpacking loop
+        ; Bit unpacking loop
 
-	mov	a, r0			; Mode bit:
-	jnb	acc.3, 13$		;    Are we using 2-color mode?
-	sjmp	3$			;    4-color mode
-	
+        mov     a, r0                   ; Mode bit:
+        jnb     acc.3, 13$              ;    Are we using 2-color mode?
+        sjmp    3$                      ;    4-color mode
+        
 8$:
-	mov	psw, #0			; Restore bank
-	mov	_DPS, #0		; Must restore DPTR
-	djnz	r5, 2$			; Next tile
-	ret
+        mov     psw, #0                 ; Restore bank
+        mov     _DPS, #0                ; Must restore DPTR
+        djnz    r5, 2$                  ; Next tile
+        ret
 
-	; ---- 4-color mode
+        ; ---- 4-color mode
 
 3$:
-	mov	a, #2			; Offset by one tile (Undefined across 128-tile boundaries)
-	movc	a, @a+dptr		; Grab second bitmap byte
-	mov	r2, a			;    Store in Plane 1 register
-	mov	r4, #8			; Loop over 8 bytes
-	mov	psw, #(GFX_BANK << 3)
+        mov     a, #2                   ; Offset by one tile (Undefined across 128-tile boundaries)
+        movc    a, @a+dptr              ; Grab second bitmap byte
+        mov     r2, a                   ;    Store in Plane 1 register
+        mov     r4, #8                  ; Loop over 8 bytes
+        mov     psw, #(GFX_BANK << 3)
 
 4$:
-	mov	a, ar2			; Shift out LSB on Plane 1
-	rrc	a
-	mov	ar2, a
-	jc	9$
+        mov     a, ar2                  ; Shift out LSB on Plane 1
+        rrc     a
+        mov     ar2, a
+        jc      9$
 
-	mov	a, r1			; Plane 1 = 0, test Plane 0
-	rrc	a
-	mov	r1, a
-	jc	10$
-	PIXEL_FROM_REG(r0)
-	djnz	ar4, 4$
-	sjmp	8$
-10$:	PIXEL_FROM_REGS(r2,r3)
-	djnz	ar4, 4$
-	sjmp	8$
+        mov     a, r1                   ; Plane 1 = 0, test Plane 0
+        rrc     a
+        mov     r1, a
+        jc      10$
+        PIXEL_FROM_REG(r0)
+        djnz    ar4, 4$
+        sjmp    8$
+10$:    PIXEL_FROM_REGS(r2,r3)
+        djnz    ar4, 4$
+        sjmp    8$
 
 9$:
-	mov	a, r1			; Plane 1 = 1, test Plane 0
-	rrc	a
-	mov	r1, a
-	jc	12$
-	PIXEL_FROM_REGS(r4,r5)
-	djnz	ar4, 4$
-	sjmp	8$
-12$:	PIXEL_FROM_REGS(r6,r7)
-	djnz	ar4, 4$
-	sjmp	8$
+        mov     a, r1                   ; Plane 1 = 1, test Plane 0
+        rrc     a
+        mov     r1, a
+        jc      12$
+        PIXEL_FROM_REGS(r4,r5)
+        djnz    ar4, 4$
+        sjmp    8$
+12$:    PIXEL_FROM_REGS(r6,r7)
+        djnz    ar4, 4$
+        sjmp    8$
 
-	; ---- 2-color loop (unrolled)
+        ; ---- 2-color loop (unrolled)
 
-	; This is optimized for runs of index 0.  Since we require index 0
-	; to have identical MSB and LSB, we can use this to avoid reloading
-	; BUS_PORT at all, unless we hit a '1' bit.
+        ; This is optimized for runs of index 0.  Since we require index 0
+        ; to have identical MSB and LSB, we can use this to avoid reloading
+        ; BUS_PORT at all, unless we hit a '1' bit.
 
 13$:
-	mov	psw, #(GFX_BANK << 3)
-	mov	a, r1
-	mov	BUS_PORT, r0		; Default to index 0
-	jz	14$			; Blank-tile loop
+        mov     psw, #(GFX_BANK << 3)
+        mov     a, r1
+        mov     BUS_PORT, r0            ; Default to index 0
+        jz      14$                     ; Blank-tile loop
 
-	rrc	a			; Index 0 ladder
-	jc	30$
-	ASM_ADDR_INC4()
-	rrc	a
-	jc	31$
-21$:	ASM_ADDR_INC4()
-	rrc	a
-	jc	32$
-22$:	ASM_ADDR_INC4()
-	rrc	a
-	jc	33$
-23$:	ASM_ADDR_INC4()
-	rrc	a
-	jc	34$
-24$:	ASM_ADDR_INC4()
-	rrc	a
-	jc	35$
-25$:	ASM_ADDR_INC4()
-	rrc	a
-	jc	36$
-26$:	ASM_ADDR_INC4()
-	rrc	a
-	jc	37$
-27$:	ASM_ADDR_INC4()
-	ljmp	8$
+        rrc     a                       ; Index 0 ladder
+        jc      30$
+        ASM_ADDR_INC4()
+        rrc     a
+        jc      31$
+21$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      32$
+22$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      33$
+23$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      34$
+24$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      35$
+25$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      36$
+26$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      37$
+27$:    ASM_ADDR_INC4()
+        ljmp    8$
 
-14$:	ljmp	15$			; Longer jump to blank-tile loop
+14$:    ljmp    15$                     ; Longer jump to blank-tile loop
 
-30$:	PIXEL_FROM_REGS(r2,r3)		; Index 1 ladder
-	rrc	a
-	jnc	41$
-31$:	PIXEL_FROM_REGS(r2,r3)
-	rrc	a
-	jnc	42$
-32$:	PIXEL_FROM_REGS(r2,r3)
-	rrc	a
-	jnc	43$
-33$:	PIXEL_FROM_REGS(r2,r3)
-	rrc	a
-	jnc	44$
-34$:	PIXEL_FROM_REGS(r2,r3)
-	rrc	a
-	jnc	45$
-35$:	PIXEL_FROM_REGS(r2,r3)
-	rrc	a
-	jnc	46$
-36$:	PIXEL_FROM_REGS(r2,r3)
-	rrc	a
-	jnc	47$
-37$:	PIXEL_FROM_REGS(r2,r3)
-	ljmp	8$
+30$:    PIXEL_FROM_REGS(r2,r3)          ; Index 1 ladder
+        rrc     a
+        jnc     41$
+31$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     42$
+32$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     43$
+33$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     44$
+34$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     45$
+35$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     46$
+36$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     47$
+37$:    PIXEL_FROM_REGS(r2,r3)
+        ljmp    8$
 
-41$:	mov	BUS_PORT, r0		; Transition 1 -> 0 ladder
-	ljmp	21$
-42$:	mov	BUS_PORT, r0
-	ljmp	22$
-43$:	mov	BUS_PORT, r0
-	ljmp	23$
-44$:	mov	BUS_PORT, r0
-	ljmp	24$
-45$:	mov	BUS_PORT, r0
-	ljmp	25$
-46$:	mov	BUS_PORT, r0
-	ljmp	26$
-47$:	mov	BUS_PORT, r0
-	ljmp	27$
+41$:    mov     BUS_PORT, r0            ; Transition 1 -> 0 ladder
+        ljmp    21$
+42$:    mov     BUS_PORT, r0
+        ljmp    22$
+43$:    mov     BUS_PORT, r0
+        ljmp    23$
+44$:    mov     BUS_PORT, r0
+        ljmp    24$
+45$:    mov     BUS_PORT, r0
+        ljmp    25$
+46$:    mov     BUS_PORT, r0
+        ljmp    26$
+47$:    mov     BUS_PORT, r0
+        ljmp    27$
 
-15$:	ASM_ADDR_INC32()		; Blank byte, no comparisons
-	ljmp	8$
+15$:    ASM_ADDR_INC32()                ; Blank byte, no comparisons
+        ljmp    8$
 
     __endasm ;
 }
@@ -814,89 +814,89 @@ static void vm_bg0_rom_tile_partial(void) __naked __using(GFX_BANK)
 
     __asm
 
-	lcall	_vm_bg0_rom_next_tile
-	mov	psw, #0
-	mov	_DPL1, r6
-	mov	_DPH1, r7
+        lcall   _vm_bg0_rom_next_tile
+        mov     psw, #0
+        mov     _DPL1, r6
+        mov     _DPH1, r7
 
-	clr 	a			; Grab tile bitmap byte
-	movc	a, @a+dptr
-	mov	(GFX_BANK*8+1), a	;    Store in Plane 0 register
+        clr     a                       ; Grab tile bitmap byte
+        movc    a, @a+dptr
+        mov     (GFX_BANK*8+1), a       ;    Store in Plane 0 register
 
-	mov	a, #2			; Offset by one tile (Undefined across 128-tile boundaries)
-	movc	a, @a+dptr		; Grab second bitmap byte
-	mov	r2, a			;    Store in Plane 1 register
+        mov     a, #2                   ; Offset by one tile (Undefined across 128-tile boundaries)
+        movc    a, @a+dptr              ; Grab second bitmap byte
+        mov     r2, a                   ;    Store in Plane 1 register
 
-11$:	cjne	r5, #0, 10$		; Bit skip loop
+11$:    cjne    r5, #0, 10$             ; Bit skip loop
 
-	mov	a, r0			; Mode bit:
-	mov	psw, #(GFX_BANK << 3)	;    Switch to GFX_BANK on our way out...
-	jb	acc.3, 4$		;    Are we using 4-color mode?
-	
-	; ---- 2-color mode
+        mov     a, r0                   ; Mode bit:
+        mov     psw, #(GFX_BANK << 3)   ;    Switch to GFX_BANK on our way out...
+        jb      acc.3, 4$               ;    Are we using 4-color mode?
+        
+        ; ---- 2-color mode
 
 7$:
-	mov	a, r1			; Plane 1 = 0, test Plane 0
-	rrc	a
-	mov	r1, a
-	jc	8$
-	PIXEL_FROM_REG(r0)
-	djnz	ar4, 7$
-	sjmp	5$
-8$:	PIXEL_FROM_REGS(r2,r3)
-	djnz	ar4, 7$
+        mov     a, r1                   ; Plane 1 = 0, test Plane 0
+        rrc     a
+        mov     r1, a
+        jc      8$
+        PIXEL_FROM_REG(r0)
+        djnz    ar4, 7$
+        sjmp    5$
+8$:     PIXEL_FROM_REGS(r2,r3)
+        djnz    ar4, 7$
 
-	; ---- Cleanup
+        ; ---- Cleanup
 
 5$:
-	mov	psw, #0			; Restore bank
-	mov	_DPS, #0		; Must restore DPTR
-	ret
+        mov     psw, #0                 ; Restore bank
+        mov     _DPS, #0                ; Must restore DPTR
+        ret
 
-	; ---- Bottom half of bit skip loop
+        ; ---- Bottom half of bit skip loop
 
-10$:	dec    r5
+10$:    dec    r5
 
-	mov    a, (GFX_BANK*8+1)	; Plane 0
-	rr     a
-	mov    (GFX_BANK*8+1), a
+        mov    a, (GFX_BANK*8+1)        ; Plane 0
+        rr     a
+        mov    (GFX_BANK*8+1), a
 
-	mov    a, r2			; Plane 1
-	rr     a
-	mov    r2, a
+        mov    a, r2                    ; Plane 1
+        rr     a
+        mov    r2, a
 
-	sjmp   11$
+        sjmp   11$
 
-	; ---- 4-color mode
+        ; ---- 4-color mode
 
 4$:
-	mov	a, ar2			; Shift out LSB on Plane 1
-	rrc	a
-	mov	ar2, a
-	jc	2$
+        mov     a, ar2                  ; Shift out LSB on Plane 1
+        rrc     a
+        mov     ar2, a
+        jc      2$
 
-	mov	a, r1			; Plane 1 = 0, test Plane 0
-	rrc	a
-	mov	r1, a
-	jc	3$
-	PIXEL_FROM_REG(r0)
-	djnz	ar4, 4$
-	sjmp	5$
-3$:	PIXEL_FROM_REGS(r2,r3)
-	djnz	ar4, 4$
-	sjmp	5$
+        mov     a, r1                   ; Plane 1 = 0, test Plane 0
+        rrc     a
+        mov     r1, a
+        jc      3$
+        PIXEL_FROM_REG(r0)
+        djnz    ar4, 4$
+        sjmp    5$
+3$:     PIXEL_FROM_REGS(r2,r3)
+        djnz    ar4, 4$
+        sjmp    5$
 
 2$:
-	mov	a, r1			; Plane 1 = 1, test Plane 0
-	rrc	a
-	mov	r1, a
-	jc	6$
-	PIXEL_FROM_REGS(r4,r5)
-	djnz	ar4, 4$
-	sjmp	5$
-6$:	PIXEL_FROM_REGS(r6,r7)
-	djnz	ar4, 4$
-	sjmp	5$
+        mov     a, r1                   ; Plane 1 = 1, test Plane 0
+        rrc     a
+        mov     r1, a
+        jc      6$
+        PIXEL_FROM_REGS(r4,r5)
+        djnz    ar4, 4$
+        sjmp    5$
+6$:     PIXEL_FROM_REGS(r6,r7)
+        djnz    ar4, 4$
+        sjmp    5$
 
     __endasm ;
 }
@@ -920,7 +920,7 @@ static void vm_bg0_rom_line(void)
      */
 
     __asm
-	mov	r3, #0xFF
+        mov     r3, #0xFF
     __endasm ;
 
     /*
@@ -928,7 +928,7 @@ static void vm_bg0_rom_line(void)
      */
 
     __asm
-        mov	r1, _x_bg0_wrap
+        mov     r1, _x_bg0_wrap
     __endasm ;
 
     /*
@@ -949,20 +949,20 @@ static void vm_bg0_rom_line(void)
      */
 
     __asm
-	mov	a, _y_bg0_addr_l	; 765xxxxx
-	swap	a			; xxxx765x
-	rr	a			; xxxxx765
-	mov	r6, a
-	anl	ar6, #1
-	clr	c
-	rrc	a			; xxxxxx76 5
-	clr	c
-	rrc	a			; xxxxxxx7 6
-	rl	a			; xxxxxx7x 6
-	rl	a			; xxxxx7xx 6
-	rlc	a			; xxxx7xx6 x
-	orl	a, #(_rom_tiles >> 8)	; Add base address
-	mov	r7, a
+        mov     a, _y_bg0_addr_l        ; 765xxxxx
+        swap    a                       ; xxxx765x
+        rr      a                       ; xxxxx765
+        mov     r6, a
+        anl     ar6, #1
+        clr     c
+        rrc     a                       ; xxxxxx76 5
+        clr     c
+        rrc     a                       ; xxxxxxx7 6
+        rl      a                       ; xxxxxx7x 6
+        rl      a                       ; xxxxx7xx 6
+        rlc     a                       ; xxxx7xx6 x
+        orl     a, #(_rom_tiles >> 8)   ; Add base address
+        mov     r7, a
     __endasm ;
 
     /*
@@ -971,25 +971,25 @@ static void vm_bg0_rom_line(void)
 
     __asm
 
-	; First tile, may be skipping up to 7 pixels from the beginning
+        ; First tile, may be skipping up to 7 pixels from the beginning
 
-	mov	r4, _x_bg0_first_w
-	mov	r5, _x_bg0_last_w
-	lcall	_vm_bg0_rom_tile_partial
+        mov     r4, _x_bg0_first_w
+        mov     r5, _x_bg0_last_w
+        lcall   _vm_bg0_rom_tile_partial
 
-	; Always have a run of 15 full tiles
+        ; Always have a run of 15 full tiles
 
-	mov	r5, #15
-	lcall	_vm_bg0_rom_tiles_fast
+        mov     r5, #15
+        lcall   _vm_bg0_rom_tiles_fast
 
-	; May have a final partial tile
+        ; May have a final partial tile
 
-	mov	a, _x_bg0_last_w
-	jz	1$
-	inc	r1		; Negate the x-wrap check for this tile
-	mov	r4, a		; Width computed earlier
-	mov	r5, #0		; No skipped bits
-	lcall	_vm_bg0_rom_tile_partial
+        mov     a, _x_bg0_last_w
+        jz      1$
+        inc     r1              ; Negate the x-wrap check for this tile
+        mov     r4, a           ; Width computed earlier
+        mov     r5, #0          ; No skipped bits
+        lcall   _vm_bg0_rom_tile_partial
 1$:
 
     __endasm ;
@@ -1006,9 +1006,9 @@ static void vm_bg0_rom(void)
     vm_bg0_setup();
 
     do {
-	vm_bg0_rom_line();
-	vm_bg0_next();
-	flash_handle_fifo();
+        vm_bg0_rom_line();
+        vm_bg0_next();
+        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -1066,112 +1066,112 @@ static void vm_bg0_rom(void)
  * we must already be set up for the first pixel of BG0.
  */
 
-static uint8_t x_bg1_offset;		// Panning offset from BG0, multiplied by 4.
-static uint8_t x_bg1_first_addr;	// Low address offset for first displayed tile
-static uint8_t x_bg1_shift;		// Amount to shift bitmap by at the start of the line, plus one
+static uint8_t x_bg1_offset;            // Panning offset from BG0, multiplied by 4.
+static uint8_t x_bg1_first_addr;        // Low address offset for first displayed tile
+static uint8_t x_bg1_shift;             // Amount to shift bitmap by at the start of the line, plus one
 
-static uint8_t y_bg1_addr_l;		// Low part of tile addresses, inc by 32 each line
-static uint8_t y_bg1_word;		// Low part of bitmap address for this line
-static uint16_t y_bg1_map;		// Map address for the first tile on this line
+static uint8_t y_bg1_addr_l;            // Low part of tile addresses, inc by 32 each line
+static uint8_t y_bg1_word;              // Low part of bitmap address for this line
+static uint16_t y_bg1_map;              // Map address for the first tile on this line
 
 // Shift the next tile bit into C
-#define BG1_NEXT_BIT(lbl)					__endasm; \
-    __asm mov	a, r6						__endasm; \
-    __asm clr	c						__endasm; \
-    __asm rrc   a						__endasm; \
-    __asm mov	r6, a						__endasm; \
-    __asm mov	a, r7						__endasm; \
-    __asm rrc	a						__endasm; \
-    __asm mov	r7, a						__endasm; \
-    __asm jc	lbl						__endasm; \
+#define BG1_NEXT_BIT(lbl)                                       __endasm; \
+    __asm mov   a, r6                                           __endasm; \
+    __asm clr   c                                               __endasm; \
+    __asm rrc   a                                               __endasm; \
+    __asm mov   r6, a                                           __endasm; \
+    __asm mov   a, r7                                           __endasm; \
+    __asm rrc   a                                               __endasm; \
+    __asm mov   r7, a                                           __endasm; \
+    __asm jc    lbl                                             __endasm; \
     __asm
 
 // Load bitmap from globals. If 'a' is zero on exit, no bits are set.
-#define BG1_LOAD_BITS()						__endasm; \
-    __asm mov	_DPL, _y_bg1_word				__endasm; \
-    __asm mov	_DPH, #(_SYS_VA_BG1_BITMAP >> 8)		__endasm; \
-    __asm movx	a, @dptr					__endasm; \
-    __asm mov	r7, a						__endasm; \
-    __asm inc	dptr						__endasm; \
-    __asm movx	a, @dptr					__endasm; \
-    __asm mov	r6, a						__endasm; \
-    __asm orl	a, r7						__endasm; \
+#define BG1_LOAD_BITS()                                         __endasm; \
+    __asm mov   _DPL, _y_bg1_word                               __endasm; \
+    __asm mov   _DPH, #(_SYS_VA_BG1_BITMAP >> 8)                __endasm; \
+    __asm movx  a, @dptr                                        __endasm; \
+    __asm mov   r7, a                                           __endasm; \
+    __asm inc   dptr                                            __endasm; \
+    __asm movx  a, @dptr                                        __endasm; \
+    __asm mov   r6, a                                           __endasm; \
+    __asm orl   a, r7                                           __endasm; \
     __asm
 
-#define BG0_BG1_LOAD_MAPS()					__endasm; \
-    __asm mov	_DPL, _y_bg0_map				__endasm; \
-    __asm mov	_DPH, (_y_bg0_map+1)				__endasm; \
-    __asm mov	_DPL1, _y_bg1_map				__endasm; \
-    __asm mov	_DPH1, (_y_bg1_map+1)				__endasm; \
+#define BG0_BG1_LOAD_MAPS()                                     __endasm; \
+    __asm mov   _DPL, _y_bg0_map                                __endasm; \
+    __asm mov   _DPH, (_y_bg0_map+1)                            __endasm; \
+    __asm mov   _DPL1, _y_bg1_map                               __endasm; \
+    __asm mov   _DPH1, (_y_bg1_map+1)                           __endasm; \
     __asm
 
-#define CHROMA_PREP()						__endasm; \
-    __asm mov	a, #_SYS_CHROMA_KEY				__endasm; \
+#define CHROMA_PREP()                                           __endasm; \
+    __asm mov   a, #_SYS_CHROMA_KEY                             __endasm; \
     __asm
 
-#define CHROMA_J_OPAQUE(lbl)					__endasm; \
-    __asm cjne	a, BUS_PORT, lbl				__endasm; \
+#define CHROMA_J_OPAQUE(lbl)                                    __endasm; \
+    __asm cjne  a, BUS_PORT, lbl                                __endasm; \
     __asm
 
 // Load a 16-bit tile address from DPTR without incrementing
-#define ADDR_FROM_DPTR(dpl)					__endasm; \
-    __asm movx	a, @dptr					__endasm; \
-    __asm mov	ADDR_PORT, a					__endasm; \
-    __asm inc	dptr						__endasm; \
-    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	__endasm; \
-    __asm movx	a, @dptr					__endasm; \
-    __asm mov	ADDR_PORT, a					__endasm; \
-    __asm dec	dpl						__endasm; \
-    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	__endasm; \
+#define ADDR_FROM_DPTR(dpl)                                     __endasm; \
+    __asm movx  a, @dptr                                        __endasm; \
+    __asm mov   ADDR_PORT, a                                    __endasm; \
+    __asm inc   dptr                                            __endasm; \
+    __asm mov   CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1    __endasm; \
+    __asm movx  a, @dptr                                        __endasm; \
+    __asm mov   ADDR_PORT, a                                    __endasm; \
+    __asm dec   dpl                                             __endasm; \
+    __asm mov   CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2    __endasm; \
     __asm
 
 // Next BG0 tile (while in BG0 state)
-#define ASM_BG0_NEXT(lbl)					__endasm; \
-    __asm inc	dptr						__endasm; \
-    __asm inc	dptr						__endasm; \
-    __asm ADDR_FROM_DPTR(_DPL)					__endasm; \
-    __asm mov	ADDR_PORT, r3					__endasm; \
-    __asm ASM_X_WRAP_CHECK(lbl)					__endasm; \
+#define ASM_BG0_NEXT(lbl)                                       __endasm; \
+    __asm inc   dptr                                            __endasm; \
+    __asm inc   dptr                                            __endasm; \
+    __asm ADDR_FROM_DPTR(_DPL)                                  __endasm; \
+    __asm mov   ADDR_PORT, r3                                   __endasm; \
+    __asm ASM_X_WRAP_CHECK(lbl)                                 __endasm; \
     __asm
 
 // Next BG0 tile (while in BG1 state)
-#define ASM_BG0_NEXT_FROM_BG1(lbl)				__endasm; \
-    __asm dec	_DPS						__endasm; \
-    __asm inc	dptr						__endasm; \
-    __asm inc	dptr						__endasm; \
-    __asm inc	_DPS						__endasm; \
-    __asm ASM_X_WRAP_CHECK(lbl)					__endasm; \
+#define ASM_BG0_NEXT_FROM_BG1(lbl)                              __endasm; \
+    __asm dec   _DPS                                            __endasm; \
+    __asm inc   dptr                                            __endasm; \
+    __asm inc   dptr                                            __endasm; \
+    __asm inc   _DPS                                            __endasm; \
+    __asm ASM_X_WRAP_CHECK(lbl)                                 __endasm; \
     __asm
 
 // State transition, BG0 pixel to BG1 pixel
-#define STATE_BG0_TO_BG1(x)					__endasm; \
-    __asm inc	_DPS						__endasm; \
-    __asm ADDR_FROM_DPTR(_DPL1)					__endasm; \
-    __asm mov	a, r4						__endasm; \
-    __asm add	a, #((x) * 4)					__endasm; \
-    __asm mov	ADDR_PORT, a					__endasm; \
-    __asm CHROMA_PREP()						__endasm; \
+#define STATE_BG0_TO_BG1(x)                                     __endasm; \
+    __asm inc   _DPS                                            __endasm; \
+    __asm ADDR_FROM_DPTR(_DPL1)                                 __endasm; \
+    __asm mov   a, r4                                           __endasm; \
+    __asm add   a, #((x) * 4)                                   __endasm; \
+    __asm mov   ADDR_PORT, a                                    __endasm; \
+    __asm CHROMA_PREP()                                         __endasm; \
     __asm
 
 // State transition, BG1 pixel to BG0 pixel, at nonzero X offset
-#define STATE_BG1_TO_BG0(x)					__endasm; \
-    __asm dec	_DPS						__endasm; \
-    __asm ADDR_FROM_DPTR(_DPL)					__endasm; \
-    __asm mov	a, r3						__endasm; \
-    __asm add	a, #((x) * 4)					__endasm; \
-    __asm mov	ADDR_PORT, a					__endasm; \
+#define STATE_BG1_TO_BG0(x)                                     __endasm; \
+    __asm dec   _DPS                                            __endasm; \
+    __asm ADDR_FROM_DPTR(_DPL)                                  __endasm; \
+    __asm mov   a, r3                                           __endasm; \
+    __asm add   a, #((x) * 4)                                   __endasm; \
+    __asm mov   ADDR_PORT, a                                    __endasm; \
     __asm
 
 // Overlaid pixel, BG1 over BG0
-#define CHROMA_BG1_BG0(l1,l2,x0,x1)				__endasm; \
-    __asm CHROMA_J_OPAQUE(l1)					__endasm; \
-    __asm   STATE_BG1_TO_BG0(x0)				__endasm; \
-    __asm   ASM_ADDR_INC4()					__endasm; \
-    __asm   STATE_BG0_TO_BG1(x1)				__endasm; \
-    __asm   sjmp l2						__endasm; \
-    __asm l1:							__endasm; \
-    __asm   ASM_ADDR_INC4()					__endasm; \
-    __asm l2:							__endasm; \
+#define CHROMA_BG1_BG0(l1,l2,x0,x1)                             __endasm; \
+    __asm CHROMA_J_OPAQUE(l1)                                   __endasm; \
+    __asm   STATE_BG1_TO_BG0(x0)                                __endasm; \
+    __asm   ASM_ADDR_INC4()                                     __endasm; \
+    __asm   STATE_BG0_TO_BG1(x1)                                __endasm; \
+    __asm   sjmp l2                                             __endasm; \
+    __asm l1:                                                   __endasm; \
+    __asm   ASM_ADDR_INC4()                                     __endasm; \
+    __asm l2:                                                   __endasm; \
     __asm
 
 static void vm_bg0_bg1_tiles_fast_pre(void) __naked
@@ -1184,13 +1184,13 @@ static void vm_bg0_bg1_tiles_fast_pre(void) __naked
 
     __asm
 
-	BG0_BG1_LOAD_MAPS()			; Set up DPTR and DPTR1
+        BG0_BG1_LOAD_MAPS()                     ; Set up DPTR and DPTR1
 
-	inc	dptr				; Skip first partial BG0 tile
-	inc	dptr
+        inc     dptr                            ; Skip first partial BG0 tile
+        inc     dptr
 
-	ADDR_FROM_DPTR(_DPL)			; Start out in BG0 state, at pixel 0
-	mov	ADDR_PORT, r3
+        ADDR_FROM_DPTR(_DPL)                    ; Start out in BG0 state, at pixel 0
+        mov     ADDR_PORT, r3
 
         ret
     __endasm ;
@@ -1199,35 +1199,35 @@ static void vm_bg0_bg1_tiles_fast_pre(void) __naked
 static void vm_bg0_bg1_tiles_fast_p0(void) __naked
 {
     __asm
-	lcall	_vm_bg0_bg1_tiles_fast_pre
+        lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-	BG1_NEXT_BIT(1$)
-	ASM_ADDR_INC4()				; BG0 Pixel 0
-	ASM_ADDR_INC4()				; BG0 Pixel 1
-	ASM_ADDR_INC4()				; BG0 Pixel 2
-	ASM_ADDR_INC4()				; BG0 Pixel 3
-	ASM_ADDR_INC4()				; BG0 Pixel 4
-	ASM_ADDR_INC4()				; BG0 Pixel 5
-	ASM_ADDR_INC4()				; BG0 Pixel 6
-	ASM_ADDR_INC4()				; BG0 Pixel 7
+        BG1_NEXT_BIT(1$)
+        ASM_ADDR_INC4()                         ; BG0 Pixel 0
+        ASM_ADDR_INC4()                         ; BG0 Pixel 1
+        ASM_ADDR_INC4()                         ; BG0 Pixel 2
+        ASM_ADDR_INC4()                         ; BG0 Pixel 3
+        ASM_ADDR_INC4()                         ; BG0 Pixel 4
+        ASM_ADDR_INC4()                         ; BG0 Pixel 5
+        ASM_ADDR_INC4()                         ; BG0 Pixel 6
+        ASM_ADDR_INC4()                         ; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT(9$)
-	djnz	r5, 10$
-	ret
+11$:    ASM_BG0_NEXT(9$)
+        djnz    r5, 10$
+        ret
 
-1$:	STATE_BG0_TO_BG1(0)			; Entry BG0->BG1
-	CHROMA_BG1_BG0(30$, 40$, 0,0)		; Keyed BG1 pixel 0
-	CHROMA_BG1_BG0(31$, 41$, 1,1)		; Keyed BG1 pixel 1
-	CHROMA_BG1_BG0(32$, 42$, 2,2)		; Keyed BG1 pixel 2
-	CHROMA_BG1_BG0(33$, 43$, 3,3)		; Keyed BG1 pixel 3
-	CHROMA_BG1_BG0(34$, 44$, 4,4)		; Keyed BG1 pixel 4
-	CHROMA_BG1_BG0(35$, 45$, 5,5)		; Keyed BG1 pixel 5
-	CHROMA_BG1_BG0(36$, 46$, 6,6)		; Keyed BG1 pixel 6
-	CHROMA_BG1_BG0(37$, 47$, 7,7)		; Keyed BG1 pixel 7
-	ASM_DPTR_INC2()				; Next BG1 Tile
-	dec	_DPS				;   BG1 -> BG0
-	ljmp	11$				;   Return to BG0 ladder
+1$:     STATE_BG0_TO_BG1(0)                     ; Entry BG0->BG1
+        CHROMA_BG1_BG0(30$, 40$, 0,0)           ; Keyed BG1 pixel 0
+        CHROMA_BG1_BG0(31$, 41$, 1,1)           ; Keyed BG1 pixel 1
+        CHROMA_BG1_BG0(32$, 42$, 2,2)           ; Keyed BG1 pixel 2
+        CHROMA_BG1_BG0(33$, 43$, 3,3)           ; Keyed BG1 pixel 3
+        CHROMA_BG1_BG0(34$, 44$, 4,4)           ; Keyed BG1 pixel 4
+        CHROMA_BG1_BG0(35$, 45$, 5,5)           ; Keyed BG1 pixel 5
+        CHROMA_BG1_BG0(36$, 46$, 6,6)           ; Keyed BG1 pixel 6
+        CHROMA_BG1_BG0(37$, 47$, 7,7)           ; Keyed BG1 pixel 7
+        ASM_DPTR_INC2()                         ; Next BG1 Tile
+        dec     _DPS                            ;   BG1 -> BG0
+        ljmp    11$                             ;   Return to BG0 ladder
 
     __endasm ;
 }
@@ -1235,39 +1235,39 @@ static void vm_bg0_bg1_tiles_fast_p0(void) __naked
 static void vm_bg0_bg1_tiles_fast_p1(void) __naked
 {
     __asm
-	lcall	_vm_bg0_bg1_tiles_fast_pre
+        lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-	ASM_ADDR_INC4()				; BG0 Pixel 0
-12$:	BG1_NEXT_BIT(1$)
-	ASM_ADDR_INC4()				; BG0 Pixel 1
-	ASM_ADDR_INC4()				; BG0 Pixel 2
-	ASM_ADDR_INC4()				; BG0 Pixel 3
-	ASM_ADDR_INC4()				; BG0 Pixel 4
-	ASM_ADDR_INC4()				; BG0 Pixel 5
-	ASM_ADDR_INC4()				; BG0 Pixel 6
-	ASM_ADDR_INC4()				; BG0 Pixel 7
+        ASM_ADDR_INC4()                         ; BG0 Pixel 0
+12$:    BG1_NEXT_BIT(1$)
+        ASM_ADDR_INC4()                         ; BG0 Pixel 1
+        ASM_ADDR_INC4()                         ; BG0 Pixel 2
+        ASM_ADDR_INC4()                         ; BG0 Pixel 3
+        ASM_ADDR_INC4()                         ; BG0 Pixel 4
+        ASM_ADDR_INC4()                         ; BG0 Pixel 5
+        ASM_ADDR_INC4()                         ; BG0 Pixel 6
+        ASM_ADDR_INC4()                         ; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT(9$)
-	djnz	r5, 10$
-	ret
+11$:    ASM_BG0_NEXT(9$)
+        djnz    r5, 10$
+        ret
 
-1$:	STATE_BG0_TO_BG1(0)			; Entry BG0->BG1
-	CHROMA_BG1_BG0(30$, 40$, 1,0)		; Keyed BG1 pixel 0
-	CHROMA_BG1_BG0(31$, 41$, 2,1)		; Keyed BG1 pixel 1
-	CHROMA_BG1_BG0(32$, 42$, 3,2)		; Keyed BG1 pixel 2
-	CHROMA_BG1_BG0(33$, 43$, 4,3)		; Keyed BG1 pixel 3
-	CHROMA_BG1_BG0(34$, 44$, 5,4)		; Keyed BG1 pixel 4
-	CHROMA_BG1_BG0(35$, 45$, 6,5)		; Keyed BG1 pixel 5
-	CHROMA_BG1_BG0(36$, 46$, 7,6)		; Keyed BG1 pixel 6
-	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
-	CHROMA_BG1_BG0(37$, 47$, 0,7)		; Keyed BG1 pixel 7
-	ASM_DPTR_INC2()				; Next BG1 Tile
-	djnz	r5, 13$
-	ret
+1$:     STATE_BG0_TO_BG1(0)                     ; Entry BG0->BG1
+        CHROMA_BG1_BG0(30$, 40$, 1,0)           ; Keyed BG1 pixel 0
+        CHROMA_BG1_BG0(31$, 41$, 2,1)           ; Keyed BG1 pixel 1
+        CHROMA_BG1_BG0(32$, 42$, 3,2)           ; Keyed BG1 pixel 2
+        CHROMA_BG1_BG0(33$, 43$, 4,3)           ; Keyed BG1 pixel 3
+        CHROMA_BG1_BG0(34$, 44$, 5,4)           ; Keyed BG1 pixel 4
+        CHROMA_BG1_BG0(35$, 45$, 6,5)           ; Keyed BG1 pixel 5
+        CHROMA_BG1_BG0(36$, 46$, 7,6)           ; Keyed BG1 pixel 6
+        ASM_BG0_NEXT_FROM_BG1(8$)               ; Next BG0 tile
+        CHROMA_BG1_BG0(37$, 47$, 0,7)           ; Keyed BG1 pixel 7
+        ASM_DPTR_INC2()                         ; Next BG1 Tile
+        djnz    r5, 13$
+        ret
 
-13$:	STATE_BG1_TO_BG0(1)			; Return to BG0
-	ljmp	12$
+13$:    STATE_BG1_TO_BG0(1)                     ; Return to BG0
+        ljmp    12$
 
     __endasm ;
 }
@@ -1275,39 +1275,39 @@ static void vm_bg0_bg1_tiles_fast_p1(void) __naked
 static void vm_bg0_bg1_tiles_fast_p2(void) __naked
 {
     __asm
-	lcall	_vm_bg0_bg1_tiles_fast_pre
+        lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-	ASM_ADDR_INC4()				; BG0 Pixel 0
-	ASM_ADDR_INC4()				; BG0 Pixel 1
-12$:	BG1_NEXT_BIT(1$)
-	ASM_ADDR_INC4()				; BG0 Pixel 2
-	ASM_ADDR_INC4()				; BG0 Pixel 3
-	ASM_ADDR_INC4()				; BG0 Pixel 4
-	ASM_ADDR_INC4()				; BG0 Pixel 5
-	ASM_ADDR_INC4()				; BG0 Pixel 6
-	ASM_ADDR_INC4()				; BG0 Pixel 7
+        ASM_ADDR_INC4()                         ; BG0 Pixel 0
+        ASM_ADDR_INC4()                         ; BG0 Pixel 1
+12$:    BG1_NEXT_BIT(1$)
+        ASM_ADDR_INC4()                         ; BG0 Pixel 2
+        ASM_ADDR_INC4()                         ; BG0 Pixel 3
+        ASM_ADDR_INC4()                         ; BG0 Pixel 4
+        ASM_ADDR_INC4()                         ; BG0 Pixel 5
+        ASM_ADDR_INC4()                         ; BG0 Pixel 6
+        ASM_ADDR_INC4()                         ; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT(9$)
-	djnz	r5, 10$
-	ret
+11$:    ASM_BG0_NEXT(9$)
+        djnz    r5, 10$
+        ret
 
-1$:	STATE_BG0_TO_BG1(0)			; Entry BG0->BG1
-	CHROMA_BG1_BG0(30$, 40$, 2,0)		; Keyed BG1 pixel 0
-	CHROMA_BG1_BG0(31$, 41$, 3,1)		; Keyed BG1 pixel 1
-	CHROMA_BG1_BG0(32$, 42$, 4,2)		; Keyed BG1 pixel 2
-	CHROMA_BG1_BG0(33$, 43$, 5,3)		; Keyed BG1 pixel 3
-	CHROMA_BG1_BG0(34$, 44$, 6,4)		; Keyed BG1 pixel 4
-	CHROMA_BG1_BG0(35$, 45$, 7,5)		; Keyed BG1 pixel 5
-	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
-	CHROMA_BG1_BG0(36$, 46$, 0,6)		; Keyed BG1 pixel 6
-	CHROMA_BG1_BG0(37$, 47$, 1,7)		; Keyed BG1 pixel 7
-	ASM_DPTR_INC2()				; Next BG1 Tile
-	djnz	r5, 13$
-	ret
+1$:     STATE_BG0_TO_BG1(0)                     ; Entry BG0->BG1
+        CHROMA_BG1_BG0(30$, 40$, 2,0)           ; Keyed BG1 pixel 0
+        CHROMA_BG1_BG0(31$, 41$, 3,1)           ; Keyed BG1 pixel 1
+        CHROMA_BG1_BG0(32$, 42$, 4,2)           ; Keyed BG1 pixel 2
+        CHROMA_BG1_BG0(33$, 43$, 5,3)           ; Keyed BG1 pixel 3
+        CHROMA_BG1_BG0(34$, 44$, 6,4)           ; Keyed BG1 pixel 4
+        CHROMA_BG1_BG0(35$, 45$, 7,5)           ; Keyed BG1 pixel 5
+        ASM_BG0_NEXT_FROM_BG1(8$)               ; Next BG0 tile
+        CHROMA_BG1_BG0(36$, 46$, 0,6)           ; Keyed BG1 pixel 6
+        CHROMA_BG1_BG0(37$, 47$, 1,7)           ; Keyed BG1 pixel 7
+        ASM_DPTR_INC2()                         ; Next BG1 Tile
+        djnz    r5, 13$
+        ret
 
-13$:	STATE_BG1_TO_BG0(2)			; Return to BG0
-	ljmp	12$
+13$:    STATE_BG1_TO_BG0(2)                     ; Return to BG0
+        ljmp    12$
 
     __endasm ;
 }
@@ -1315,39 +1315,39 @@ static void vm_bg0_bg1_tiles_fast_p2(void) __naked
 static void vm_bg0_bg1_tiles_fast_p3(void) __naked
 {
     __asm
-	lcall	_vm_bg0_bg1_tiles_fast_pre
+        lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-	ASM_ADDR_INC4()				; BG0 Pixel 0
-	ASM_ADDR_INC4()				; BG0 Pixel 1
-	ASM_ADDR_INC4()				; BG0 Pixel 2
-12$:	BG1_NEXT_BIT(1$)
-	ASM_ADDR_INC4()				; BG0 Pixel 3
-	ASM_ADDR_INC4()				; BG0 Pixel 4
-	ASM_ADDR_INC4()				; BG0 Pixel 5
-	ASM_ADDR_INC4()				; BG0 Pixel 6
-	ASM_ADDR_INC4()				; BG0 Pixel 7
+        ASM_ADDR_INC4()                         ; BG0 Pixel 0
+        ASM_ADDR_INC4()                         ; BG0 Pixel 1
+        ASM_ADDR_INC4()                         ; BG0 Pixel 2
+12$:    BG1_NEXT_BIT(1$)
+        ASM_ADDR_INC4()                         ; BG0 Pixel 3
+        ASM_ADDR_INC4()                         ; BG0 Pixel 4
+        ASM_ADDR_INC4()                         ; BG0 Pixel 5
+        ASM_ADDR_INC4()                         ; BG0 Pixel 6
+        ASM_ADDR_INC4()                         ; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT(9$)
-	djnz	r5, 10$
-	ret
+11$:    ASM_BG0_NEXT(9$)
+        djnz    r5, 10$
+        ret
 
-1$:	STATE_BG0_TO_BG1(0)			; Entry BG0->BG1
-	CHROMA_BG1_BG0(30$, 40$, 3,0)		; Keyed BG1 pixel 0
-	CHROMA_BG1_BG0(31$, 41$, 4,1)		; Keyed BG1 pixel 1
-	CHROMA_BG1_BG0(32$, 42$, 5,2)		; Keyed BG1 pixel 2
-	CHROMA_BG1_BG0(33$, 43$, 6,3)		; Keyed BG1 pixel 3
-	CHROMA_BG1_BG0(34$, 44$, 7,4)		; Keyed BG1 pixel 4
-	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
-	CHROMA_BG1_BG0(35$, 45$, 0,5)		; Keyed BG1 pixel 5
-	CHROMA_BG1_BG0(36$, 46$, 1,6)		; Keyed BG1 pixel 6
-	CHROMA_BG1_BG0(37$, 47$, 2,7)		; Keyed BG1 pixel 7
-	ASM_DPTR_INC2()				; Next BG1 Tile
-	djnz	r5, 13$
-	ret
+1$:     STATE_BG0_TO_BG1(0)                     ; Entry BG0->BG1
+        CHROMA_BG1_BG0(30$, 40$, 3,0)           ; Keyed BG1 pixel 0
+        CHROMA_BG1_BG0(31$, 41$, 4,1)           ; Keyed BG1 pixel 1
+        CHROMA_BG1_BG0(32$, 42$, 5,2)           ; Keyed BG1 pixel 2
+        CHROMA_BG1_BG0(33$, 43$, 6,3)           ; Keyed BG1 pixel 3
+        CHROMA_BG1_BG0(34$, 44$, 7,4)           ; Keyed BG1 pixel 4
+        ASM_BG0_NEXT_FROM_BG1(8$)               ; Next BG0 tile
+        CHROMA_BG1_BG0(35$, 45$, 0,5)           ; Keyed BG1 pixel 5
+        CHROMA_BG1_BG0(36$, 46$, 1,6)           ; Keyed BG1 pixel 6
+        CHROMA_BG1_BG0(37$, 47$, 2,7)           ; Keyed BG1 pixel 7
+        ASM_DPTR_INC2()                         ; Next BG1 Tile
+        djnz    r5, 13$
+        ret
 
-13$:	STATE_BG1_TO_BG0(3)			; Return to BG0
-	ljmp	12$
+13$:    STATE_BG1_TO_BG0(3)                     ; Return to BG0
+        ljmp    12$
 
     __endasm ;
 }
@@ -1355,39 +1355,39 @@ static void vm_bg0_bg1_tiles_fast_p3(void) __naked
 static void vm_bg0_bg1_tiles_fast_p4(void) __naked
 {
     __asm
-	lcall	_vm_bg0_bg1_tiles_fast_pre
+        lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-	ASM_ADDR_INC4()				; BG0 Pixel 0
-	ASM_ADDR_INC4()				; BG0 Pixel 1
-	ASM_ADDR_INC4()				; BG0 Pixel 2
-	ASM_ADDR_INC4()				; BG0 Pixel 3
-12$:	BG1_NEXT_BIT(1$)
-	ASM_ADDR_INC4()				; BG0 Pixel 4
-	ASM_ADDR_INC4()				; BG0 Pixel 5
-	ASM_ADDR_INC4()				; BG0 Pixel 6
-	ASM_ADDR_INC4()				; BG0 Pixel 7
+        ASM_ADDR_INC4()                         ; BG0 Pixel 0
+        ASM_ADDR_INC4()                         ; BG0 Pixel 1
+        ASM_ADDR_INC4()                         ; BG0 Pixel 2
+        ASM_ADDR_INC4()                         ; BG0 Pixel 3
+12$:    BG1_NEXT_BIT(1$)
+        ASM_ADDR_INC4()                         ; BG0 Pixel 4
+        ASM_ADDR_INC4()                         ; BG0 Pixel 5
+        ASM_ADDR_INC4()                         ; BG0 Pixel 6
+        ASM_ADDR_INC4()                         ; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT(9$)
-	djnz	r5, 10$
-	ret
+11$:    ASM_BG0_NEXT(9$)
+        djnz    r5, 10$
+        ret
 
-1$:	STATE_BG0_TO_BG1(0)			; Entry BG0->BG1
-	CHROMA_BG1_BG0(30$, 40$, 4,0)		; Keyed BG1 pixel 0
-	CHROMA_BG1_BG0(31$, 41$, 5,1)		; Keyed BG1 pixel 1
-	CHROMA_BG1_BG0(32$, 42$, 6,2)		; Keyed BG1 pixel 2
-	CHROMA_BG1_BG0(33$, 43$, 7,3)		; Keyed BG1 pixel 3
-	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
-	CHROMA_BG1_BG0(34$, 44$, 0,4)		; Keyed BG1 pixel 4
-	CHROMA_BG1_BG0(35$, 45$, 1,5)		; Keyed BG1 pixel 5
-	CHROMA_BG1_BG0(36$, 46$, 2,6)		; Keyed BG1 pixel 6
-	CHROMA_BG1_BG0(37$, 47$, 3,7)		; Keyed BG1 pixel 7
-	ASM_DPTR_INC2()				; Next BG1 Tile
-	djnz	r5, 13$
-	ret
+1$:     STATE_BG0_TO_BG1(0)                     ; Entry BG0->BG1
+        CHROMA_BG1_BG0(30$, 40$, 4,0)           ; Keyed BG1 pixel 0
+        CHROMA_BG1_BG0(31$, 41$, 5,1)           ; Keyed BG1 pixel 1
+        CHROMA_BG1_BG0(32$, 42$, 6,2)           ; Keyed BG1 pixel 2
+        CHROMA_BG1_BG0(33$, 43$, 7,3)           ; Keyed BG1 pixel 3
+        ASM_BG0_NEXT_FROM_BG1(8$)               ; Next BG0 tile
+        CHROMA_BG1_BG0(34$, 44$, 0,4)           ; Keyed BG1 pixel 4
+        CHROMA_BG1_BG0(35$, 45$, 1,5)           ; Keyed BG1 pixel 5
+        CHROMA_BG1_BG0(36$, 46$, 2,6)           ; Keyed BG1 pixel 6
+        CHROMA_BG1_BG0(37$, 47$, 3,7)           ; Keyed BG1 pixel 7
+        ASM_DPTR_INC2()                         ; Next BG1 Tile
+        djnz    r5, 13$
+        ret
 
-13$:	STATE_BG1_TO_BG0(4)			; Return to BG0
-	ljmp	12$
+13$:    STATE_BG1_TO_BG0(4)                     ; Return to BG0
+        ljmp    12$
 
     __endasm ;
 }
@@ -1395,39 +1395,39 @@ static void vm_bg0_bg1_tiles_fast_p4(void) __naked
 static void vm_bg0_bg1_tiles_fast_p5(void) __naked
 {
     __asm
-	lcall	_vm_bg0_bg1_tiles_fast_pre
+        lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-	ASM_ADDR_INC4()				; BG0 Pixel 0
-	ASM_ADDR_INC4()				; BG0 Pixel 1
-	ASM_ADDR_INC4()				; BG0 Pixel 2
-	ASM_ADDR_INC4()				; BG0 Pixel 3
-	ASM_ADDR_INC4()				; BG0 Pixel 4
-12$:	BG1_NEXT_BIT(1$)
-	ASM_ADDR_INC4()				; BG0 Pixel 5
-	ASM_ADDR_INC4()				; BG0 Pixel 6
-	ASM_ADDR_INC4()				; BG0 Pixel 7
+        ASM_ADDR_INC4()                         ; BG0 Pixel 0
+        ASM_ADDR_INC4()                         ; BG0 Pixel 1
+        ASM_ADDR_INC4()                         ; BG0 Pixel 2
+        ASM_ADDR_INC4()                         ; BG0 Pixel 3
+        ASM_ADDR_INC4()                         ; BG0 Pixel 4
+12$:    BG1_NEXT_BIT(1$)
+        ASM_ADDR_INC4()                         ; BG0 Pixel 5
+        ASM_ADDR_INC4()                         ; BG0 Pixel 6
+        ASM_ADDR_INC4()                         ; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT(9$)
-	djnz	r5, 10$
-	ret
+11$:    ASM_BG0_NEXT(9$)
+        djnz    r5, 10$
+        ret
 
-1$:	STATE_BG0_TO_BG1(0)			; Entry BG0->BG1
-	CHROMA_BG1_BG0(30$, 40$, 5,0)		; Keyed BG1 pixel 0
-	CHROMA_BG1_BG0(31$, 41$, 6,1)		; Keyed BG1 pixel 1
-	CHROMA_BG1_BG0(32$, 42$, 7,2)		; Keyed BG1 pixel 2
-	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
-	CHROMA_BG1_BG0(33$, 43$, 0,3)		; Keyed BG1 pixel 3
-	CHROMA_BG1_BG0(34$, 44$, 1,4)		; Keyed BG1 pixel 4
-	CHROMA_BG1_BG0(35$, 45$, 2,5)		; Keyed BG1 pixel 5
-	CHROMA_BG1_BG0(36$, 46$, 3,6)		; Keyed BG1 pixel 6
-	CHROMA_BG1_BG0(37$, 47$, 4,7)		; Keyed BG1 pixel 7
-	ASM_DPTR_INC2()				; Next BG1 Tile
-	djnz	r5, 13$
-	ret
+1$:     STATE_BG0_TO_BG1(0)                     ; Entry BG0->BG1
+        CHROMA_BG1_BG0(30$, 40$, 5,0)           ; Keyed BG1 pixel 0
+        CHROMA_BG1_BG0(31$, 41$, 6,1)           ; Keyed BG1 pixel 1
+        CHROMA_BG1_BG0(32$, 42$, 7,2)           ; Keyed BG1 pixel 2
+        ASM_BG0_NEXT_FROM_BG1(8$)               ; Next BG0 tile
+        CHROMA_BG1_BG0(33$, 43$, 0,3)           ; Keyed BG1 pixel 3
+        CHROMA_BG1_BG0(34$, 44$, 1,4)           ; Keyed BG1 pixel 4
+        CHROMA_BG1_BG0(35$, 45$, 2,5)           ; Keyed BG1 pixel 5
+        CHROMA_BG1_BG0(36$, 46$, 3,6)           ; Keyed BG1 pixel 6
+        CHROMA_BG1_BG0(37$, 47$, 4,7)           ; Keyed BG1 pixel 7
+        ASM_DPTR_INC2()                         ; Next BG1 Tile
+        djnz    r5, 13$
+        ret
 
-13$:	STATE_BG1_TO_BG0(5)			; Return to BG0
-	ljmp	12$
+13$:    STATE_BG1_TO_BG0(5)                     ; Return to BG0
+        ljmp    12$
 
     __endasm ;
 }
@@ -1435,39 +1435,39 @@ static void vm_bg0_bg1_tiles_fast_p5(void) __naked
 static void vm_bg0_bg1_tiles_fast_p6(void) __naked
 {
     __asm
-	lcall	_vm_bg0_bg1_tiles_fast_pre
+        lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-	ASM_ADDR_INC4()				; BG0 Pixel 0
-	ASM_ADDR_INC4()				; BG0 Pixel 1
-	ASM_ADDR_INC4()				; BG0 Pixel 2
-	ASM_ADDR_INC4()				; BG0 Pixel 3
-	ASM_ADDR_INC4()				; BG0 Pixel 4
-	ASM_ADDR_INC4()				; BG0 Pixel 5
-12$:	BG1_NEXT_BIT(1$)
-	ASM_ADDR_INC4()				; BG0 Pixel 6
-	ASM_ADDR_INC4()				; BG0 Pixel 7
+        ASM_ADDR_INC4()                         ; BG0 Pixel 0
+        ASM_ADDR_INC4()                         ; BG0 Pixel 1
+        ASM_ADDR_INC4()                         ; BG0 Pixel 2
+        ASM_ADDR_INC4()                         ; BG0 Pixel 3
+        ASM_ADDR_INC4()                         ; BG0 Pixel 4
+        ASM_ADDR_INC4()                         ; BG0 Pixel 5
+12$:    BG1_NEXT_BIT(1$)
+        ASM_ADDR_INC4()                         ; BG0 Pixel 6
+        ASM_ADDR_INC4()                         ; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT(9$)
-	djnz	r5, 10$
-	ret
+11$:    ASM_BG0_NEXT(9$)
+        djnz    r5, 10$
+        ret
 
-1$:	STATE_BG0_TO_BG1(0)			; Entry BG0->BG1
-	CHROMA_BG1_BG0(30$, 40$, 6,0)		; Keyed BG1 pixel 0
-	CHROMA_BG1_BG0(31$, 41$, 7,1)		; Keyed BG1 pixel 1
-	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
-	CHROMA_BG1_BG0(32$, 42$, 0,2)		; Keyed BG1 pixel 2
-	CHROMA_BG1_BG0(33$, 43$, 1,3)		; Keyed BG1 pixel 3
-	CHROMA_BG1_BG0(34$, 44$, 2,4)		; Keyed BG1 pixel 4
-	CHROMA_BG1_BG0(35$, 45$, 3,5)		; Keyed BG1 pixel 5
-	CHROMA_BG1_BG0(36$, 46$, 4,6)		; Keyed BG1 pixel 6
-	CHROMA_BG1_BG0(37$, 47$, 5,7)		; Keyed BG1 pixel 7
-	ASM_DPTR_INC2()				; Next BG1 Tile
-	djnz	r5, 13$
-	ret
+1$:     STATE_BG0_TO_BG1(0)                     ; Entry BG0->BG1
+        CHROMA_BG1_BG0(30$, 40$, 6,0)           ; Keyed BG1 pixel 0
+        CHROMA_BG1_BG0(31$, 41$, 7,1)           ; Keyed BG1 pixel 1
+        ASM_BG0_NEXT_FROM_BG1(8$)               ; Next BG0 tile
+        CHROMA_BG1_BG0(32$, 42$, 0,2)           ; Keyed BG1 pixel 2
+        CHROMA_BG1_BG0(33$, 43$, 1,3)           ; Keyed BG1 pixel 3
+        CHROMA_BG1_BG0(34$, 44$, 2,4)           ; Keyed BG1 pixel 4
+        CHROMA_BG1_BG0(35$, 45$, 3,5)           ; Keyed BG1 pixel 5
+        CHROMA_BG1_BG0(36$, 46$, 4,6)           ; Keyed BG1 pixel 6
+        CHROMA_BG1_BG0(37$, 47$, 5,7)           ; Keyed BG1 pixel 7
+        ASM_DPTR_INC2()                         ; Next BG1 Tile
+        djnz    r5, 13$
+        ret
 
-13$:	STATE_BG1_TO_BG0(6)			; Return to BG0
-	ljmp	12$
+13$:    STATE_BG1_TO_BG0(6)                     ; Return to BG0
+        ljmp    12$
 
     __endasm ;
 }
@@ -1475,39 +1475,39 @@ static void vm_bg0_bg1_tiles_fast_p6(void) __naked
 static void vm_bg0_bg1_tiles_fast_p7(void) __naked
 {
     __asm
-	lcall	_vm_bg0_bg1_tiles_fast_pre
+        lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-	ASM_ADDR_INC4()				; BG0 Pixel 0
-	ASM_ADDR_INC4()				; BG0 Pixel 1
-	ASM_ADDR_INC4()				; BG0 Pixel 2
-	ASM_ADDR_INC4()				; BG0 Pixel 3
-	ASM_ADDR_INC4()				; BG0 Pixel 4
-	ASM_ADDR_INC4()				; BG0 Pixel 5
-	ASM_ADDR_INC4()				; BG0 Pixel 6
-12$:	BG1_NEXT_BIT(1$)
-	ASM_ADDR_INC4()				; BG0 Pixel 7
+        ASM_ADDR_INC4()                         ; BG0 Pixel 0
+        ASM_ADDR_INC4()                         ; BG0 Pixel 1
+        ASM_ADDR_INC4()                         ; BG0 Pixel 2
+        ASM_ADDR_INC4()                         ; BG0 Pixel 3
+        ASM_ADDR_INC4()                         ; BG0 Pixel 4
+        ASM_ADDR_INC4()                         ; BG0 Pixel 5
+        ASM_ADDR_INC4()                         ; BG0 Pixel 6
+12$:    BG1_NEXT_BIT(1$)
+        ASM_ADDR_INC4()                         ; BG0 Pixel 7
 
-11$:	ASM_BG0_NEXT(9$)
-	djnz	r5, 10$
-	ret
+11$:    ASM_BG0_NEXT(9$)
+        djnz    r5, 10$
+        ret
 
-1$:	STATE_BG0_TO_BG1(0)			; Entry BG0->BG1
-	CHROMA_BG1_BG0(30$, 40$, 7,0)		; Keyed BG1 pixel 0
-	ASM_BG0_NEXT_FROM_BG1(8$)		; Next BG0 tile
-	CHROMA_BG1_BG0(31$, 41$, 0,1)		; Keyed BG1 pixel 1
-	CHROMA_BG1_BG0(32$, 42$, 1,2)		; Keyed BG1 pixel 2
-	CHROMA_BG1_BG0(33$, 43$, 2,3)		; Keyed BG1 pixel 3
-	CHROMA_BG1_BG0(34$, 44$, 3,4)		; Keyed BG1 pixel 4
-	CHROMA_BG1_BG0(35$, 45$, 4,5)		; Keyed BG1 pixel 5
-	CHROMA_BG1_BG0(36$, 46$, 5,6)		; Keyed BG1 pixel 6
-	CHROMA_BG1_BG0(37$, 47$, 6,7)		; Keyed BG1 pixel 7
-	ASM_DPTR_INC2()				; Next BG1 Tile
-	djnz	r5, 13$
-	ret
+1$:     STATE_BG0_TO_BG1(0)                     ; Entry BG0->BG1
+        CHROMA_BG1_BG0(30$, 40$, 7,0)           ; Keyed BG1 pixel 0
+        ASM_BG0_NEXT_FROM_BG1(8$)               ; Next BG0 tile
+        CHROMA_BG1_BG0(31$, 41$, 0,1)           ; Keyed BG1 pixel 1
+        CHROMA_BG1_BG0(32$, 42$, 1,2)           ; Keyed BG1 pixel 2
+        CHROMA_BG1_BG0(33$, 43$, 2,3)           ; Keyed BG1 pixel 3
+        CHROMA_BG1_BG0(34$, 44$, 3,4)           ; Keyed BG1 pixel 4
+        CHROMA_BG1_BG0(35$, 45$, 4,5)           ; Keyed BG1 pixel 5
+        CHROMA_BG1_BG0(36$, 46$, 5,6)           ; Keyed BG1 pixel 6
+        CHROMA_BG1_BG0(37$, 47$, 6,7)           ; Keyed BG1 pixel 7
+        ASM_DPTR_INC2()                         ; Next BG1 Tile
+        djnz    r5, 13$
+        ret
 
-13$:	STATE_BG1_TO_BG0(7)			; Return to BG0
-	ljmp	12$
+13$:    STATE_BG1_TO_BG0(7)                     ; Return to BG0
+        ljmp    12$
 
     __endasm ;
 }
@@ -1520,25 +1520,25 @@ static void vm_bg0_bg1_tiles_fast(void) __naked
      */
 
     __asm
-	mov	a, _x_bg1_offset
-	mov	dptr, #1$
-	jmp	@a+dptr
+        mov     a, _x_bg1_offset
+        mov     dptr, #1$
+        jmp     @a+dptr
 1$:
-	ljmp	_vm_bg0_bg1_tiles_fast_p0
-	nop
-	ljmp	_vm_bg0_bg1_tiles_fast_p1
-	nop
-	ljmp	_vm_bg0_bg1_tiles_fast_p2
-	nop
-	ljmp	_vm_bg0_bg1_tiles_fast_p3
-	nop
-	ljmp	_vm_bg0_bg1_tiles_fast_p4
-	nop
-	ljmp	_vm_bg0_bg1_tiles_fast_p5
-	nop
-	ljmp	_vm_bg0_bg1_tiles_fast_p6
-	nop
-	ljmp	_vm_bg0_bg1_tiles_fast_p7
+        ljmp    _vm_bg0_bg1_tiles_fast_p0
+        nop
+        ljmp    _vm_bg0_bg1_tiles_fast_p1
+        nop
+        ljmp    _vm_bg0_bg1_tiles_fast_p2
+        nop
+        ljmp    _vm_bg0_bg1_tiles_fast_p3
+        nop
+        ljmp    _vm_bg0_bg1_tiles_fast_p4
+        nop
+        ljmp    _vm_bg0_bg1_tiles_fast_p5
+        nop
+        ljmp    _vm_bg0_bg1_tiles_fast_p6
+        nop
+        ljmp    _vm_bg0_bg1_tiles_fast_p7
     __endasm ;
 }
 
@@ -1555,10 +1555,10 @@ static void vm_bg0_bg1_line(void)
       */
 
     __asm
-	BG1_LOAD_BITS()
-	jnz	1$
-	ljmp	_vm_bg0_line		; No BG1 bits on this line
-1$:	
+        BG1_LOAD_BITS()
+        jnz     1$
+        ljmp    _vm_bg0_line            ; No BG1 bits on this line
+1$:     
     __endasm ;
 
     /*
@@ -1566,7 +1566,7 @@ static void vm_bg0_bg1_line(void)
      */
 
     __asm
-        mov	r1, _x_bg0_wrap
+        mov     r1, _x_bg0_wrap
     __endasm ;
 
     /*
@@ -1575,32 +1575,32 @@ static void vm_bg0_bg1_line(void)
 
     __asm
 
-	; First tile, may be skipping up to 7 pixels from the beginning
+        ; First tile, may be skipping up to 7 pixels from the beginning
 
-	mov	r5, _x_bg0_first_w
-2$:	inc	ADDR_PORT
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-	djnz	r5, 2$
+        mov     r5, _x_bg0_first_w
+2$:     inc     ADDR_PORT
+        inc     ADDR_PORT
+        inc     ADDR_PORT
+        inc     ADDR_PORT
+        djnz    r5, 2$
 
-	; Always have a run of 15 full tiles
+        ; Always have a run of 15 full tiles
 
-	mov	r3, _y_bg0_addr_l
-	mov	r4, _y_bg1_addr_l
-	mov	r5, #15
-	lcall	_vm_bg0_bg1_tiles_fast
+        mov     r3, _y_bg0_addr_l
+        mov     r4, _y_bg1_addr_l
+        mov     r5, #15
+        lcall   _vm_bg0_bg1_tiles_fast
 
-	; May have a final partial tile
+        ; May have a final partial tile
 
-	mov	a, _x_bg0_last_w
-	jz	3$
-	mov	r5, a
-4$:	inc	ADDR_PORT
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-	inc	ADDR_PORT
-	djnz	r5, 4$
+        mov     a, _x_bg0_last_w
+        jz      3$
+        mov     r5, a
+4$:     inc     ADDR_PORT
+        inc     ADDR_PORT
+        inc     ADDR_PORT
+        inc     ADDR_PORT
+        djnz    r5, 4$
 3$:
 
     __endasm ;
@@ -1657,15 +1657,15 @@ static void vm_bg1_next(void)
 
     y_bg1_addr_l += 32;
     if (!y_bg1_addr_l) {
-	y_bg1_word += 2;
+        y_bg1_word += 2;
 
-	/*
-	 * If we're advancing, save the DPTR1 advancement that we performed
-	 * during this line. Otherwise, it gets discarded at the next line.
-	 */
-	__asm
-	    mov	  _y_bg1_map, _DPL1
-	    mov	  (_y_bg1_map+1), _DPH1
+        /*
+         * If we're advancing, save the DPTR1 advancement that we performed
+         * during this line. Otherwise, it gets discarded at the next line.
+         */
+        __asm
+            mov   _y_bg1_map, _DPL1
+            mov   (_y_bg1_map+1), _DPH1
         __endasm ;
     }
 }
@@ -1679,11 +1679,11 @@ void vm_bg0_bg1(void)
     vm_bg1_setup();
     
     do {
-	vm_bg0_bg1_line();
+        vm_bg0_bg1_line();
 
-	vm_bg0_next();
-	vm_bg1_next();
-	flash_handle_fifo();
+        vm_bg0_next();
+        vm_bg1_next();
+        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -1727,111 +1727,111 @@ static void line_bg_spr0(void)
 
     // There are always 15 full tiles on-screen
     do {
-	if ((spr0_x & spr0_mask) && ((spr0_x + 7) & spr0_mask)) {
-	    // All 8 pixels are non-sprite
+        if ((spr0_x & spr0_mask) && ((spr0_x + 7) & spr0_mask)) {
+            // All 8 pixels are non-sprite
 
-	    ADDR_FROM_DPTR_INC();
-	    MAP_WRAP_CHECK();
-	    ADDR_PORT = y_bg_addr_l;
-	    ADDR_INC32();
-	    spr0_x += 8;
-	    spr0_pixel_addr += 32;
+            ADDR_FROM_DPTR_INC();
+            MAP_WRAP_CHECK();
+            ADDR_PORT = y_bg_addr_l;
+            ADDR_INC32();
+            spr0_x += 8;
+            spr0_pixel_addr += 32;
 
-	} else {
-	    // A mixture of sprite and tile pixels.
+        } else {
+            // A mixture of sprite and tile pixels.
 
-#define SPR0_OPAQUE(i)				\
-	test_##i:				\
-	    if (BUS_PORT == CHROMA_KEY)		\
-		goto transparent_##i;		\
-	    ADDR_INC4();			\
+#define SPR0_OPAQUE(i)                          \
+        test_##i:                               \
+            if (BUS_PORT == CHROMA_KEY)         \
+                goto transparent_##i;           \
+            ADDR_INC4();                        \
 
-#define SPR0_TRANSPARENT_TAIL(i)		\
-	transparent_##i:			\
-	    ADDR_FROM_DPTR();			\
-	    ADDR_PORT = y_bg_addr_l + (i*4);	\
-	    ADDR_INC4();			\
+#define SPR0_TRANSPARENT_TAIL(i)                \
+        transparent_##i:                        \
+            ADDR_FROM_DPTR();                   \
+            ADDR_PORT = y_bg_addr_l + (i*4);    \
+            ADDR_INC4();                        \
 
-#define SPR0_TRANSPARENT(i, j)			\
-	    SPR0_TRANSPARENT_TAIL(i);		\
-	    ADDR_FROM_SPRITE(0);		\
-	    ADDR_PORT = spr0_pixel_addr + (j*4);\
-	    goto test_##j;			\
+#define SPR0_TRANSPARENT(i, j)                  \
+            SPR0_TRANSPARENT_TAIL(i);           \
+            ADDR_FROM_SPRITE(0);                \
+            ADDR_PORT = spr0_pixel_addr + (j*4);\
+            goto test_##j;                      \
 
-#define SPR0_END()				\
-	    spr0_x += 8;			\
-	    spr0_pixel_addr += 32;		\
-	    DPTR_INC2();			\
-	    MAP_WRAP_CHECK();			\
-	    continue;				\
+#define SPR0_END()                              \
+            spr0_x += 8;                        \
+            spr0_pixel_addr += 32;              \
+            DPTR_INC2();                        \
+            MAP_WRAP_CHECK();                   \
+            continue;                           \
 
-	    // Fast path: All opaque pixels in a row.
+            // Fast path: All opaque pixels in a row.
 
-	    // XXX: The assembly generated by sdcc for this loop is okayish, but
-	    //      still rather bad. There are still a lot of gains left to be had
-	    //      by using inline assembly here.
+            // XXX: The assembly generated by sdcc for this loop is okayish, but
+            //      still rather bad. There are still a lot of gains left to be had
+            //      by using inline assembly here.
 
-	    ADDR_FROM_SPRITE(0);
-	    ADDR_PORT = spr0_pixel_addr;
-	    SPR0_OPAQUE(0);
-	    SPR0_OPAQUE(1);
-	    SPR0_OPAQUE(2);
-	    SPR0_OPAQUE(3);
-	    SPR0_OPAQUE(4);
-	    SPR0_OPAQUE(5);
-	    SPR0_OPAQUE(6);
-	    SPR0_OPAQUE(7);
-	    SPR0_END();
+            ADDR_FROM_SPRITE(0);
+            ADDR_PORT = spr0_pixel_addr;
+            SPR0_OPAQUE(0);
+            SPR0_OPAQUE(1);
+            SPR0_OPAQUE(2);
+            SPR0_OPAQUE(3);
+            SPR0_OPAQUE(4);
+            SPR0_OPAQUE(5);
+            SPR0_OPAQUE(6);
+            SPR0_OPAQUE(7);
+            SPR0_END();
 
-	    // Transparent pixel jump targets
+            // Transparent pixel jump targets
 
-	    SPR0_TRANSPARENT(0, 1);
-	    SPR0_TRANSPARENT(1, 2);
-	    SPR0_TRANSPARENT(2, 3);
-	    SPR0_TRANSPARENT(3, 4);
-	    SPR0_TRANSPARENT(4, 5);
-	    SPR0_TRANSPARENT(5, 6);
-	    SPR0_TRANSPARENT(6, 7);
-	    SPR0_TRANSPARENT_TAIL(7);
-	    SPR0_END();
-	}
+            SPR0_TRANSPARENT(0, 1);
+            SPR0_TRANSPARENT(1, 2);
+            SPR0_TRANSPARENT(2, 3);
+            SPR0_TRANSPARENT(3, 4);
+            SPR0_TRANSPARENT(4, 5);
+            SPR0_TRANSPARENT(5, 6);
+            SPR0_TRANSPARENT(6, 7);
+            SPR0_TRANSPARENT_TAIL(7);
+            SPR0_END();
+        }
 
     } while (--x);
 
     // Might be one more partial tile
     if (x_bg_last_w) {
-	ADDR_FROM_DPTR_INC();
-	MAP_WRAP_CHECK();
-	ADDR_PORT = y_bg_addr_l;
-	PIXEL_BURST(x_bg_last_w);
+        ADDR_FROM_DPTR_INC();
+        MAP_WRAP_CHECK();
+        ADDR_PORT = y_bg_addr_l;
+        PIXEL_BURST(x_bg_last_w);
     }
 
     do {
-	uint8_t active_sprites = 0;
+        uint8_t active_sprites = 0;
 
-	/*
-	 * Per-line sprite accounting. Update all Y coordinates, and
-	 * see which sprites are active. (Unrolled loop here, to allow
-	 * calculating masks and array addresses at compile-time.)
-	 */
+        /*
+         * Per-line sprite accounting. Update all Y coordinates, and
+         * see which sprites are active. (Unrolled loop here, to allow
+         * calculating masks and array addresses at compile-time.)
+         */
 
-#define SPRITE_Y_ACCT(i)						\
-	if (!(++lvram.sprites[i].y & lvram.sprites[i].mask_y)) {	\
-	    active_sprites |= 1 << i;					\
-	    lvram.sprites[i].addr_l += 2;				\
-	}							   	\
+#define SPRITE_Y_ACCT(i)                                                \
+        if (!(++lvram.sprites[i].y & lvram.sprites[i].mask_y)) {        \
+            active_sprites |= 1 << i;                                   \
+            lvram.sprites[i].addr_l += 2;                               \
+        }                                                               \
 
-	SPRITE_Y_ACCT(0);
-	SPRITE_Y_ACCT(1);
+        SPRITE_Y_ACCT(0);
+        SPRITE_Y_ACCT(1);
 
-	/*
-	 * Choose a scanline renderer
-	 */
+        /*
+         * Choose a scanline renderer
+         */
 
-	switch (active_sprites) {
-	case 0x00:	line_bg(); break;
-	case 0x01:	line_bg_spr0(); break;
-	}
+        switch (active_sprites) {
+        case 0x00:      line_bg(); break;
+        case 0x01:      line_bg_spr0(); break;
+        }
 #endif
 
 
@@ -1848,13 +1848,13 @@ void graphics_render(void) __naked
      */
 
     __asm
-	mov	dptr, #_SYS_VA_FLAGS
-	movx	a, @dptr
-	jb	acc.3, 1$			; Handle _SYS_VF_CONTINUOUS
-	rr	a
-	xrl	a, (_ack_data + RF_ACK_FRAME)	; Compare _SYS_VF_TOGGLE with frame_count LSB
-	rrc	a
-	jnc	3$				; Return if no toggle
+        mov     dptr, #_SYS_VA_FLAGS
+        movx    a, @dptr
+        jb      acc.3, 1$                       ; Handle _SYS_VF_CONTINUOUS
+        rr      a
+        xrl     a, (_ack_data + RF_ACK_FRAME)   ; Compare _SYS_VF_TOGGLE with frame_count LSB
+        rrc     a
+        jnc     3$                              ; Return if no toggle
 1$:
     __endasm ;
 
@@ -1866,45 +1866,45 @@ void graphics_render(void) __naked
      */
 
     __asm
-	mov	dptr, #_SYS_VA_MODE
-	movx	a, @dptr
-	anl	a, #_SYS_VM_MASK
-	mov	dptr, #2$
-	jmp	@a+dptr
+        mov     dptr, #_SYS_VA_MODE
+        movx    a, @dptr
+        anl     a, #_SYS_VM_MASK
+        mov     dptr, #2$
+        jmp     @a+dptr
 2$:
-	ljmp	_vm_powerdown	; 0x00
-	nop
-        ljmp	_vm_bg0_rom	; 0x04
-	nop
-	ljmp	_vm_solid	; 0x08
-	nop
-	ljmp	_vm_fb32	; 0x0c
-	nop
-	ljmp	_vm_fb64	; 0x10
-	nop
-	ljmp	_vm_fb128	; 0x14
-	nop
-	ljmp	_vm_bg0		; 0x18
-	nop
-	ljmp	_vm_bg0_bg1	; 0x1c
-	nop
-	ljmp	_vm_bg0_spr_bg1	; 0x20
-	nop
-	ljmp	_vm_powerdown	; 0x24 (unused)
-	nop
-	ljmp	_vm_powerdown	; 0x28 (unused)
-	nop
-	ljmp	_vm_powerdown	; 0x2c (unused)
-	nop
-	ljmp	_vm_powerdown	; 0x30 (unused)
-	nop
-	ljmp	_vm_powerdown	; 0x34 (unused)
-	nop
-	ljmp	_vm_powerdown	; 0x38 (unused)
-	nop
-	ljmp	_vm_powerdown	; 0x3c (unused)
+        ljmp    _vm_powerdown   ; 0x00
+        nop
+        ljmp    _vm_bg0_rom     ; 0x04
+        nop
+        ljmp    _vm_solid       ; 0x08
+        nop
+        ljmp    _vm_fb32        ; 0x0c
+        nop
+        ljmp    _vm_fb64        ; 0x10
+        nop
+        ljmp    _vm_fb128       ; 0x14
+        nop
+        ljmp    _vm_bg0         ; 0x18
+        nop
+        ljmp    _vm_bg0_bg1     ; 0x1c
+        nop
+        ljmp    _vm_bg0_spr_bg1 ; 0x20
+        nop
+        ljmp    _vm_powerdown   ; 0x24 (unused)
+        nop
+        ljmp    _vm_powerdown   ; 0x28 (unused)
+        nop
+        ljmp    _vm_powerdown   ; 0x2c (unused)
+        nop
+        ljmp    _vm_powerdown   ; 0x30 (unused)
+        nop
+        ljmp    _vm_powerdown   ; 0x34 (unused)
+        nop
+        ljmp    _vm_powerdown   ; 0x38 (unused)
+        nop
+        ljmp    _vm_powerdown   ; 0x3c (unused)
 
-3$:	ret
+3$:     ret
 
     __endasm ;
 }

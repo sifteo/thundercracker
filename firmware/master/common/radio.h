@@ -39,26 +39,26 @@ struct PacketBuffer {
     unsigned len;
 
     bool isFull() {
-	return len == MAX_LEN;
+        return len == MAX_LEN;
     }
 
     unsigned bytesFree() {
-	return MAX_LEN - len;
+        return MAX_LEN - len;
     }
 
     void append(uint8_t b) {
-	bytes[len++] = b;
+        bytes[len++] = b;
     }
 
     void append(uint8_t *src, unsigned count) {
-	memcpy(bytes + len, src, count);
-	len += count;
+        memcpy(bytes + len, src, count);
+        len += count;
     }
 
     void appendUser(uint8_t *src, unsigned count) {
-	if (Runtime::checkUserPointer(src, count))
-	    memcpy(bytes + len, src, count);
-	len += count;
+        if (Runtime::checkUserPointer(src, count))
+            memcpy(bytes + len, src, count);
+        len += count;
     }
 };
 
@@ -149,19 +149,19 @@ class RadioManager {
     static const unsigned FIFO_SIZE = 8;
 
     static _SYSCubeID epFifo[FIFO_SIZE];
-    static uint8_t epHead;		// Oldest ACK slot ID
-    static uint8_t epTail;		// Location for next packet's slot ID
-    static _SYSCubeID schedNext;	// Next cube in the schedule rotation
+    static uint8_t epHead;              // Oldest ACK slot ID
+    static uint8_t epTail;              // Location for next packet's slot ID
+    static _SYSCubeID schedNext;        // Next cube in the schedule rotation
 
     static void fifoPush(_SYSCubeID id) {
-	epFifo[epTail] = id;
-	epTail = (epTail + 1) & (FIFO_SIZE - 1);
+        epFifo[epTail] = id;
+        epTail = (epTail + 1) & (FIFO_SIZE - 1);
     }
 
     static _SYSCubeID fifoPop() {
-	_SYSCubeID id = epFifo[epHead];
-	epHead = (epHead + 1) & (FIFO_SIZE - 1);
-	return id;
+        _SYSCubeID id = epFifo[epHead];
+        epHead = (epHead + 1) & (FIFO_SIZE - 1);
+        return id;
     }
 };
 

@@ -14,12 +14,12 @@
 /*
  * Channel swap and return
  */
-#define ADC_ISR_RET				__endasm ; \
-	__asm	xrl	_ADCCON1, #0x04		__endasm ; \
-	__asm	pop	psw			__endasm ; \
-	__asm	pop	acc			__endasm ; \
-	__asm	reti				__endasm ; \
-	__asm
+#define ADC_ISR_RET                             __endasm ; \
+        __asm   xrl     _ADCCON1, #0x04         __endasm ; \
+        __asm   pop     psw                     __endasm ; \
+        __asm   pop     acc                     __endasm ; \
+        __asm   reti                            __endasm ; \
+        __asm
 
 /*
  * A/D Converter ISR --
@@ -34,31 +34,31 @@
 void adc_isr(void) __interrupt(VECTOR_MISC) __naked
 {
     __asm
-	push	acc
-	push	psw
+        push    acc
+        push    psw
 
-	mov	a,_ADCCON1		; What channel are we on? We only have two.
-	jb	acc.2, 1$
+        mov     a,_ADCCON1              ; What channel are we on? We only have two.
+        jb      acc.2, 1$
 
-	; Sample channel 0
-	mov	a, _ADCDATH
-	cjne	a, (_ack_data + RF_ACK_ACCEL + 0), 2$
-	ADC_ISR_RET
+        ; Sample channel 0
+        mov     a, _ADCDATH
+        cjne    a, (_ack_data + RF_ACK_ACCEL + 0), 2$
+        ADC_ISR_RET
 
-	; Channel 0 has changed
-2$:	mov	(_ack_data + RF_ACK_ACCEL + 0), a
-	orl	_ack_len, #RF_ACK_LEN_ACCEL
-	ADC_ISR_RET
+        ; Channel 0 has changed
+2$:     mov     (_ack_data + RF_ACK_ACCEL + 0), a
+        orl     _ack_len, #RF_ACK_LEN_ACCEL
+        ADC_ISR_RET
 
-	; Sample channel 1
-1$:	mov	a, _ADCDATH
-	cjne	a, (_ack_data + RF_ACK_ACCEL + 1), 3$
-	ADC_ISR_RET
+        ; Sample channel 1
+1$:     mov     a, _ADCDATH
+        cjne    a, (_ack_data + RF_ACK_ACCEL + 1), 3$
+        ADC_ISR_RET
 
-	; Channel 1 has changed
-3$:	mov	(_ack_data + RF_ACK_ACCEL + 1), a
-	orl	_ack_len, #RF_ACK_LEN_ACCEL
-	ADC_ISR_RET
+        ; Channel 1 has changed
+3$:     mov     (_ack_data + RF_ACK_ACCEL + 1), a
+        orl     _ack_len, #RF_ACK_LEN_ACCEL
+        ADC_ISR_RET
 
     __endasm ;
 }

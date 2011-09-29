@@ -36,8 +36,8 @@ extern "C" {
 #endif
 
 /* Make sure you define these types for your architecture: */
-typedef unsigned int sha1_quadbyte;	/* 4 byte type */
-typedef unsigned char sha1_byte;	/* single byte type */
+typedef unsigned int sha1_quadbyte;     /* 4 byte type */
+typedef unsigned char sha1_byte;        /* single byte type */
 
 /*
  * Be sure to get the above definitions right.  For instance, on my
@@ -47,14 +47,14 @@ typedef unsigned char sha1_byte;	/* single byte type */
  * as "unsigned int" instead.
  */
 
-#define SHA1_BLOCK_LENGTH	64
-#define SHA1_DIGEST_LENGTH	20
+#define SHA1_BLOCK_LENGTH       64
+#define SHA1_DIGEST_LENGTH      20
 
 /* The SHA1 structure: */
 typedef struct _SHA_CTX {
-	sha1_quadbyte	state[5];
-	sha1_quadbyte	count[2];
-	sha1_byte	buffer[SHA1_BLOCK_LENGTH];
+        sha1_quadbyte   state[5];
+        sha1_quadbyte   count[2];
+        sha1_byte       buffer[SHA1_BLOCK_LENGTH];
 } SHA_CTX;
 
 #ifndef NOPROTO
@@ -67,7 +67,7 @@ void SHA1_Update();
 void SHA1_Final();
 #endif
 
-#ifdef	__cplusplus
+#ifdef  __cplusplus
 }
 #endif
 

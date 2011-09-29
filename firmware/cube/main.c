@@ -26,7 +26,7 @@ void main(void)
     demo();  // XXX
 
     while (1) {
-	flash_handle_fifo();
-	graphics_render();
+        flash_handle_fifo();
+        graphics_render();
     }
 }

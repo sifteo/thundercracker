@@ -22,7 +22,7 @@ uint32_t Event::accelChangeCubes;
 void Runtime::run()
 {
     if (setjmp(jmpExit))
-	return;
+        return;
 
     siftmain();
 }
@@ -39,7 +39,7 @@ void Event::dispatch()
      */
 
     if (dispatchInProgress)
-	return;
+        return;
     dispatchInProgress = true;
 
     /*
@@ -47,27 +47,27 @@ void Event::dispatch()
      */
 
     while (pending) {
-	uint32_t event = Intrinsic::CLZ(pending);
-	switch (event) {
+        uint32_t event = Intrinsic::CLZ(pending);
+        switch (event) {
 
-	case ASSET_DONE:
-	    while (assetDoneCubes) {
-		uint32_t slot = Intrinsic::CLZ(assetDoneCubes);
-		assetDone(slot);
-		Atomic::And(assetDoneCubes, ~Intrinsic::LZ(slot));
-	    }
-	    break;
+        case ASSET_DONE:
+            while (assetDoneCubes) {
+                uint32_t slot = Intrinsic::CLZ(assetDoneCubes);
+                assetDone(slot);
+                Atomic::And(assetDoneCubes, ~Intrinsic::LZ(slot));
+            }
+            break;
 
-	case ACCEL_CHANGE:
-	    while (accelChangeCubes) {
-		uint32_t slot = Intrinsic::CLZ(accelChangeCubes);
-		accelChange(slot);
-		Atomic::And(accelChangeCubes, ~Intrinsic::LZ(slot));
-	    }
-	    break;
+        case ACCEL_CHANGE:
+            while (accelChangeCubes) {
+                uint32_t slot = Intrinsic::CLZ(accelChangeCubes);
+                accelChange(slot);
+                Atomic::And(accelChangeCubes, ~Intrinsic::LZ(slot));
+            }
+            break;
 
-	}
-	Atomic::And(pending, ~Intrinsic::LZ(event));
+        }
+        Atomic::And(pending, ~Intrinsic::LZ(event));
     }
 
     dispatchInProgress = false;

@@ -17,10 +17,10 @@ static void showMonster(const MonsterData *m)
 {
     // XXX: Waiting for a real compare-and-copy syscall
     for (unsigned i = 0; i < 256; i++)
-	cube.vbuf.poke(i, ((uint16_t *)m->fb)[i]);
+        cube.vbuf.poke(i, ((uint16_t *)m->fb)[i]);
 
     for (unsigned i = 0; i < 16; i++)
-	cube.vbuf.poke(i + 384, ((uint16_t *)m->fb)[i + 256]);
+        cube.vbuf.poke(i + 384, ((uint16_t *)m->fb)[i + 256]);
 
     cube.vbuf.unlock();
 }
@@ -39,21 +39,21 @@ void siftmain()
     cube.enable();
 
     while (1) {
-	_SYSAccelState state;
-	_SYS_getAccel(cube.id(), &state);
+        _SYSAccelState state;
+        _SYS_getAccel(cube.id(), &state);
 
-	fpMonster += state.x;
+        fpMonster += state.x;
 
-	while (fpMonster < 0) fpMonster += fpMax;
-	while (fpMonster > fpMax) fpMonster -= fpMax;
+        while (fpMonster < 0) fpMonster += fpMax;
+        while (fpMonster > fpMax) fpMonster -= fpMax;
 
-	const MonsterData *m = monsters[fpMonster >> shift];
+        const MonsterData *m = monsters[fpMonster >> shift];
 
-	if (m != currentMonster) {
-	    showMonster(m);
-	    currentMonster = m;
-	}
+        if (m != currentMonster) {
+            showMonster(m);
+            currentMonster = m;
+        }
 
-	System::paint();
+        System::paint();
     }
 }

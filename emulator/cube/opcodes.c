@@ -399,7 +399,7 @@ static int add_a_mem(struct em8051 *aCPU)
     int value = read_mem(aCPU, OPERAND1);
     add_solve_flags(aCPU, ACC, value, 0);
     ACC += value;
-	PC += 2;
+        PC += 2;
     return 2;
 }
 
@@ -472,15 +472,15 @@ static int reti(struct em8051 *aCPU)
 {
     if (aCPU->irq_count)
     {
-	int i = --aCPU->irq_count;
+        int i = --aCPU->irq_count;
 
-	/*
-	 * If we have an exception handler, do extra sanity-checking
-	 * to make sure an interrupt handler restores its state
-	 * properly.
-	 */
+        /*
+         * If we have an exception handler, do extra sanity-checking
+         * to make sure an interrupt handler restores its state
+         * properly.
+         */
         if (aCPU->except) {
-	    int psw_bits = PSWMASK_OV | PSWMASK_RS0 | PSWMASK_RS1 | PSWMASK_AC | PSWMASK_C;
+            int psw_bits = PSWMASK_OV | PSWMASK_RS0 | PSWMASK_RS1 | PSWMASK_AC | PSWMASK_C;
 
             if (aCPU->irql[i].a != aCPU->mSFR[REG_ACC])
                 aCPU->except(aCPU, EXCEPTION_IRET_ACC_MISMATCH);
@@ -2449,136 +2449,136 @@ void timings_check(struct em8051 *aCPU)
 {
     int i;
     static const uint8_t timings[] = {
-	0x28, 1,
-	0x25, 2,
-	0x26, 2,
-	0x24, 2,
-	0x38, 1,
-	0x35, 2,
-	0x36, 2,
-	0x34, 2,
-	0x98, 1,
-	0x95, 2,
-	0x96, 2,
-	0x94, 2,
-	0x04, 1,
+        0x28, 1,
+        0x25, 2,
+        0x26, 2,
+        0x24, 2,
+        0x38, 1,
+        0x35, 2,
+        0x36, 2,
+        0x34, 2,
+        0x98, 1,
+        0x95, 2,
+        0x96, 2,
+        0x94, 2,
+        0x04, 1,
 
-	0x08, 2,
-	0x05, 3,
-	0x06, 3,
-	0xa3, 1,
-	0x14, 1,
-	0x18, 2,
-	0x15, 3,
-	0x16, 3,
-	0xa4, 5,
-	0x84, 5,
-	0xd4, 1,
+        0x08, 2,
+        0x05, 3,
+        0x06, 3,
+        0xa3, 1,
+        0x14, 1,
+        0x18, 2,
+        0x15, 3,
+        0x16, 3,
+        0xa4, 5,
+        0x84, 5,
+        0xd4, 1,
 
-	0x58, 1,
-	0x55, 2,
-	0x56, 2,
-	0x54, 2,
-	0x52, 3,
-	0x53, 4,
-	0x48, 1,
-	0x45, 2,
-	0x46, 2,
-	0x44, 2,
-	0x42, 3,
-	0x43, 4,
-	0x68, 1,
-	0x66, 2,
-	0x67, 2,
-	0x64, 2,
-	0x62, 3,
-	0x63, 4,
-	0xe4, 1,
-	0xf4, 1,
-	0x23, 1,
-	0x33, 1,
-	0x03, 1,
-	0x13, 1,
-	0xc4, 1,
+        0x58, 1,
+        0x55, 2,
+        0x56, 2,
+        0x54, 2,
+        0x52, 3,
+        0x53, 4,
+        0x48, 1,
+        0x45, 2,
+        0x46, 2,
+        0x44, 2,
+        0x42, 3,
+        0x43, 4,
+        0x68, 1,
+        0x66, 2,
+        0x67, 2,
+        0x64, 2,
+        0x62, 3,
+        0x63, 4,
+        0xe4, 1,
+        0xf4, 1,
+        0x23, 1,
+        0x33, 1,
+        0x03, 1,
+        0x13, 1,
+        0xc4, 1,
 
-	0xe8, 1,
-	0xe5, 2,
-	0xe6, 2,
-	0x74, 2,
-	0xf8, 2,
-	0xa8, 4,
-	0x78, 2,
-	0xf5, 3,
-	0x88, 3,
-	0x85, 4,
-	0x86, 4,
-	0x75, 3,
-	0xf6, 3,
-	0xa6, 5,
-	0x76, 3,
-	0x90, 3,
-	0x93, 3,
-	0x83, 3,
-	0xe2, 4,
-	0xe0, 4,
-	0xf2, 5,
-	0xf0, 5,
-	0xc0, 4,
-	0xd0, 3,
-	0xc8, 2,
-	0xc5, 3,
-	0xc6, 3,
-	0xd6, 3,
-	
-	0x11, 6,
-	0x12, 6,
-	0x22, 4,
-	0x32, 4,
-	0x01, 3,
-	0x02, 4,
-	0x80, 3,
-	0x73, 2,
-	0x60, 3,
-	0x70, 3,
-	0x40, 3,
-	0x50, 3,
-	0x20, 4,
-	0x30, 4,
-	0x10, 4,
-	0xb5, 4,
-	0xb4, 4,
-	0xb8, 4,
-	0xb6, 4,
-	0xd8, 3,
-	0xd5, 4,
-	0x00, 1,
+        0xe8, 1,
+        0xe5, 2,
+        0xe6, 2,
+        0x74, 2,
+        0xf8, 2,
+        0xa8, 4,
+        0x78, 2,
+        0xf5, 3,
+        0x88, 3,
+        0x85, 4,
+        0x86, 4,
+        0x75, 3,
+        0xf6, 3,
+        0xa6, 5,
+        0x76, 3,
+        0x90, 3,
+        0x93, 3,
+        0x83, 3,
+        0xe2, 4,
+        0xe0, 4,
+        0xf2, 5,
+        0xf0, 5,
+        0xc0, 4,
+        0xd0, 3,
+        0xc8, 2,
+        0xc5, 3,
+        0xc6, 3,
+        0xd6, 3,
+        
+        0x11, 6,
+        0x12, 6,
+        0x22, 4,
+        0x32, 4,
+        0x01, 3,
+        0x02, 4,
+        0x80, 3,
+        0x73, 2,
+        0x60, 3,
+        0x70, 3,
+        0x40, 3,
+        0x50, 3,
+        0x20, 4,
+        0x30, 4,
+        0x10, 4,
+        0xb5, 4,
+        0xb4, 4,
+        0xb8, 4,
+        0xb6, 4,
+        0xd8, 3,
+        0xd5, 4,
+        0x00, 1,
 
-	0xc3, 1,
-	0xc2, 3,
-	0xd3, 1,
-	0xd2, 3,
-	0xb3, 1,
-	0xb2, 3,
-	0x82, 2,
-	0xb0, 2,
-	0x72, 2,
-	0xa0, 2,
-	0xa2, 2,
-	0x92, 3,
+        0xc3, 1,
+        0xc2, 3,
+        0xd3, 1,
+        0xd2, 3,
+        0xb3, 1,
+        0xb2, 3,
+        0x82, 2,
+        0xb0, 2,
+        0x72, 2,
+        0xa0, 2,
+        0xa2, 2,
+        0x92, 3,
     };
 
     for (i = 0; i < sizeof timings / sizeof timings[0]; i+=2) {
-	int opcode = timings[i];
-	int table_cycles = timings[i+1];
-	int actual_cycles;
+        int opcode = timings[i];
+        int table_cycles = timings[i+1];
+        int actual_cycles;
 
-	OPCODE = opcode;
-	aCPU->except = NULL;
-	actual_cycles = do_op(aCPU);
+        OPCODE = opcode;
+        aCPU->except = NULL;
+        actual_cycles = do_op(aCPU);
 
-	if (actual_cycles != table_cycles)
-	    printf("CPU TIMING MISMATCH, opcode %02x: %d, should be %d\n",
-		   opcode, actual_cycles, table_cycles);
+        if (actual_cycles != table_cycles)
+            printf("CPU TIMING MISMATCH, opcode %02x: %d, should be %d\n",
+                   opcode, actual_cycles, table_cycles);
     }
 }
 #endif

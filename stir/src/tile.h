@@ -48,37 +48,37 @@ struct TilePalette {
     RGB565 colors[LUT_MAX];
 
     enum ColorMode {
-	CM_INVALID = -1,
+        CM_INVALID = -1,
 
-	CM_LUT1,
-	CM_LUT2,
-	CM_LUT4,
-	CM_LUT16,
-	CM_TRUE,
+        CM_LUT1,
+        CM_LUT2,
+        CM_LUT4,
+        CM_LUT16,
+        CM_TRUE,
 
-	CM_COUNT,
+        CM_COUNT,
     };
 
     static const char *colorModeName(ColorMode m);
 
     ColorMode colorMode() const {
-	if (numColors <= 1)  return CM_LUT1;
-	if (numColors <= 2)  return CM_LUT2;
-	if (numColors <= 4)  return CM_LUT4;
-	if (numColors <= 16) return CM_LUT16;
-	return CM_TRUE;
+        if (numColors <= 1)  return CM_LUT1;
+        if (numColors <= 2)  return CM_LUT2;
+        if (numColors <= 4)  return CM_LUT4;
+        if (numColors <= 16) return CM_LUT16;
+        return CM_TRUE;
     }
 
     unsigned maxLUTIndex() const {
-	if (numColors <= 1)  return 15;  // Solid-color opcode can reach any LUT entry
-	if (numColors <= 2)  return 1;
-	if (numColors <= 4)  return 3;
-	return 15;
+        if (numColors <= 1)  return 15;  // Solid-color opcode can reach any LUT entry
+        if (numColors <= 2)  return 1;
+        if (numColors <= 4)  return 3;
+        return 15;
     }
 
     bool hasLUT() const {
-	// Do we have a color LUT at all?
-	return numColors <= LUT_MAX;
+        // Do we have a color LUT at all?
+        return numColors <= LUT_MAX;
     }
 };
 
@@ -120,26 +120,26 @@ class Tile {
     static const uint16_t CHROMA_KEY = 0x4FF5;
 
     RGB565 pixel(unsigned i) const {
-	return mPixels[i];
+        return mPixels[i];
     }
 
     RGB565 pixel(unsigned x, unsigned y) const {
-	return mPixels[x + y * SIZE];
+        return mPixels[x + y * SIZE];
     }
 
     RGB565 pixelWrap(unsigned x, unsigned y) const {
-	return pixel(x & 7, y & 7);
+        return pixel(x & 7, y & 7);
     }
 
     const TilePalette &palette() {
-	// Lazily build the palette info
-	if (!mPalette.numColors)
-	    constructPalette();
-	return mPalette;
-    }	
+        // Lazily build the palette info
+        if (!mPalette.numColors)
+            constructPalette();
+        return mPalette;
+    }   
 
     const TileOptions &options() const {
-	return mOptions;
+        return mOptions;
     }
 
     double errorMetric(Tile &other, double limit=DBL_MAX);
@@ -193,7 +193,7 @@ class TileStack {
     TileRef median();
 
     bool isPinned() const {
-	return mPinned;
+        return mPinned;
     }
 
  private:
@@ -224,24 +224,24 @@ class TilePool {
     void encode(std::vector<uint8_t>& out, Logger *log = NULL);
 
     Serial add(TileRef t) {
-	Serial s = (Serial)tiles.size();
-	tiles.push_back(t);
-	return s;
+        Serial s = (Serial)tiles.size();
+        tiles.push_back(t);
+        return s;
     }
 
     Index index(Serial s) const {
-	// Get the index of an optimized tile image, by serial number
-	return stackIndex[s]->index;
+        // Get the index of an optimized tile image, by serial number
+        return stackIndex[s]->index;
     }
 
     TileRef tile(Index s) const {
-	// Get a tile image, from the zero-based index
-	return stackArray[s]->median();
+        // Get a tile image, from the zero-based index
+        return stackArray[s]->median();
     }
 
     unsigned size() const {
-	// Size of the optimized tile pool
-	return stackList.size();
+        // Size of the optimized tile pool
+        return stackList.size();
     }
 
  private:
@@ -254,7 +254,7 @@ class TilePool {
     void optimizeOrder(Logger &log);
     void optimizeTiles(Logger &log);
     void optimizeTilesPass(Logger &log, std::set<TileStack *> &activeStacks,
-			   bool gather, bool pinned);
+                           bool gather, bool pinned);
 
     TileStack *closest(TileRef t, double &mse);
 };
@@ -271,22 +271,22 @@ class TileGrid {
     TileGrid(TilePool *pool);
 
     void load(const TileOptions &opt, uint8_t *rgba,
-	      size_t stride, unsigned width, unsigned height);
+              size_t stride, unsigned width, unsigned height);
 
     unsigned width() const {
-	return mWidth;
+        return mWidth;
     }
 
     unsigned height() const {
-	return mHeight;
+        return mHeight;
     }
 
     TilePool::Serial tile(unsigned x, unsigned y) const {
-	return tiles[x + y * mWidth];
+        return tiles[x + y * mWidth];
     }
 
     const TilePool &getPool() const {
-	return *mPool;
+        return *mPool;
     }
 
  private:

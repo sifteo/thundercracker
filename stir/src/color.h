@@ -30,70 +30,70 @@ struct RGB565 {
     uint16_t value;
 
     RGB565() {
-	value = 0;
+        value = 0;
     }
 
     RGB565(uint16_t _value) {
-	value = _value;
+        value = _value;
     }
 
     RGB565(uint32_t rgb) {
-	RGB565 v((uint8_t)rgb, (uint8_t)(rgb >> 8), (uint8_t)(rgb >> 16));
-	value = v.value;
+        RGB565 v((uint8_t)rgb, (uint8_t)(rgb >> 8), (uint8_t)(rgb >> 16));
+        value = v.value;
     }
 
     RGB565(uint8_t *rgb) {
-	RGB565 v(rgb[0], rgb[1], rgb[2]);
-	value = v.value;
-    }	
+        RGB565 v(rgb[0], rgb[1], rgb[2]);
+        value = v.value;
+    }   
     
     RGB565(uint8_t r, uint8_t g, uint8_t b) {
-	/*
-	 * Round to the nearest 5/6 bit color. Note that simple
-	 * bit truncation does NOT produce the best result!
-	 */
-	uint16_t r5 = ((uint16_t)r * 31 + 128) / 255;
-	uint16_t g6 = ((uint16_t)g * 63 + 128) / 255;
-	uint16_t b5 = ((uint16_t)b * 31 + 128) / 255;
-	value = (r5 << 11) | (g6 << 5) | b5;
+        /*
+         * Round to the nearest 5/6 bit color. Note that simple
+         * bit truncation does NOT produce the best result!
+         */
+        uint16_t r5 = ((uint16_t)r * 31 + 128) / 255;
+        uint16_t g6 = ((uint16_t)g * 63 + 128) / 255;
+        uint16_t b5 = ((uint16_t)b * 31 + 128) / 255;
+        value = (r5 << 11) | (g6 << 5) | b5;
     }
 
     // Make a slight (1 LSB) modification to the low byte
     RGB565 wiggle() const;
 
     uint8_t red() const {
-	/*
-	 * A good approximation is (r5 << 3) | (r5 >> 2), but this
-	 * is still not quite as accurate as the implementation here.
-	 */
-	uint16_t r5 = (value >> 11) & 0x1F;
-	return r5 * 255 / 31;
+        /*
+         * A good approximation is (r5 << 3) | (r5 >> 2), but this
+         * is still not quite as accurate as the implementation here.
+         */
+        uint16_t r5 = (value >> 11) & 0x1F;
+        return r5 * 255 / 31;
     }
 
     uint8_t green() const {
-	uint16_t g6 = (value >> 5) & 0x3F;
-	return g6 * 255 / 63;
+        uint16_t g6 = (value >> 5) & 0x3F;
+        return g6 * 255 / 63;
     }
     
     uint8_t blue() const {
-	uint16_t b5 = value & 0x1F;
-	return b5 * 255 / 31;
+        uint16_t b5 = value & 0x1F;
+        return b5 * 255 / 31;
     }
 
     uint32_t rgb() const {
-	return red() | (green() << 8) | (blue() << 16);
+        return red() | (green() << 8) | (blue() << 16);
     }
 
     bool operator== (const RGB565 &other) const {
-	return value == other.value;
+        return value == other.value;
     }
 
     bool operator!= (const RGB565 &other) const {
-	return value != other.value;
+        return value != other.value;
     }
 
     bool operator< (const RGB565 &other) const {
-	return value < other.value;
+        return value < other.value;
     }
 };
 
@@ -120,22 +120,22 @@ struct RGB565 {
 struct CIELab {
 
     union {
-	struct {
-	    double L, a, b;
-	};
-	double axis[3];
+        struct {
+            double L, a, b;
+        };
+        double axis[3];
     };
 
     static const double gamma = 2.2;
 
     CIELab() {
-	L = a = b = 0;
+        L = a = b = 0;
     }
     
     CIELab(double _L, double _a, double _b) {
-	L = _L;
-	a = _a;
-	b = _b;
+        L = _L;
+        a = _a;
+        b = _b;
     }
   
     CIELab(uint32_t rgb);
@@ -143,21 +143,21 @@ struct CIELab {
     double meanSquaredError(CIELab other);
 
     CIELab(RGB565 rgb) {
-	*this = lut565[rgb.value];
+        *this = lut565[rgb.value];
     }
     
     CIELab& operator+= (const CIELab &other) {
-	L += other.L;
-	a += other.a;
-	b += other.b;
-	return *this;
+        L += other.L;
+        a += other.a;
+        b += other.b;
+        return *this;
     }
     
     CIELab& operator/= (const double &other) {
-	L /= other;
-	a /= other;
-	b /= other;
-	return *this;
+        L /= other;
+        a /= other;
+        b /= other;
+        return *this;
     }
 
     static void initialize(void);
@@ -167,10 +167,10 @@ struct CIELab {
 
     struct sortAxis : public std::binary_function<RGB565 &, RGB565 &, bool> {
         sortAxis(int _axis) : axis(_axis) {}
-	int axis;
-	bool operator()(const RGB565 &a, const RGB565 &b) {
-	    return CIELab(a).axis[axis] < CIELab(b).axis[axis];
-	}
+        int axis;
+        bool operator()(const RGB565 &a, const RGB565 &b) {
+            return CIELab(a).axis[axis] < CIELab(b).axis[axis];
+        }
     };
     
 private:
@@ -209,25 +209,25 @@ class ColorReducer {
     void reduce(Logger &log);
 
     void add(RGB565 color, double maxMSE) {
-	colors.push_back(color.value);
-	colorMSE[color.value] = std::min(maxMSE, colorMSE[color.value]);
+        colors.push_back(color.value);
+        colorMSE[color.value] = std::min(maxMSE, colorMSE[color.value]);
     }
 
     RGB565 nearest(RGB565 color) {
-	if (inverseLUTStamps[color.value] != newestLUTStamp)
-	    updateInverseLUT(color);
-	return boxMedian(boxes[inverseLUT[color.value]]);
+        if (inverseLUTStamps[color.value] != newestLUTStamp)
+            updateInverseLUT(color);
+        return boxMedian(boxes[inverseLUT[color.value]]);
     }
 
     unsigned numColors() {
-	return boxes.size();
+        return boxes.size();
     }
 
  private:
     // One median-cut box. Holds a (cached) average color for the box,
     // as well as indices for the box's boundaries within the 'colors' vector.
     struct box {
-	unsigned begin, end;
+        unsigned begin, end;
     };
 
     static const unsigned LUT_SIZE = 0x10000;
@@ -245,7 +245,7 @@ class ColorReducer {
     void updateInverseLUT(RGB565 color);
 
     RGB565 boxMedian(box &b) {
-	return colors[(b.begin + b.end) >> 1];
+        return colors[(b.begin + b.end) >> 1];
     }
 };
 

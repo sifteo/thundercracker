@@ -280,23 +280,23 @@ static void traceExecution(struct em8051 *mCPU)
     decode(mCPU, mCPU->mPC, assembly);
 
     fprintf(mCPU->traceFile,
-	    "%10llu  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] DP=[%d %04x %04x] DBG=%02x\n",
-	    (long long unsigned) mCPU->profilerTotal,
-	    mCPU->mPC, assembly,
-	    mCPU->mSFR[REG_ACC],
-	    bank,
-	    mCPU->mLowerData[bank*8 + 0],
-	    mCPU->mLowerData[bank*8 + 1],
-	    mCPU->mLowerData[bank*8 + 2],
-	    mCPU->mLowerData[bank*8 + 3],
-	    mCPU->mLowerData[bank*8 + 4],
-	    mCPU->mLowerData[bank*8 + 5],
-	    mCPU->mLowerData[bank*8 + 6],
-	    mCPU->mLowerData[bank*8 + 7],
-	    mCPU->mSFR[REG_DPS] & 1,
-	    (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
-	    (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
-	    mCPU->mSFR[REG_DEBUG]);
+            "%10llu  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] DP=[%d %04x %04x] DBG=%02x\n",
+            (long long unsigned) mCPU->profilerTotal,
+            mCPU->mPC, assembly,
+            mCPU->mSFR[REG_ACC],
+            bank,
+            mCPU->mLowerData[bank*8 + 0],
+            mCPU->mLowerData[bank*8 + 1],
+            mCPU->mLowerData[bank*8 + 2],
+            mCPU->mLowerData[bank*8 + 3],
+            mCPU->mLowerData[bank*8 + 4],
+            mCPU->mLowerData[bank*8 + 5],
+            mCPU->mLowerData[bank*8 + 6],
+            mCPU->mLowerData[bank*8 + 7],
+            mCPU->mSFR[REG_DPS] & 1,
+            (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
+            (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
+            mCPU->mSFR[REG_DEBUG]);
 }
 
 int tick(struct em8051 *aCPU)
@@ -320,25 +320,25 @@ int tick(struct em8051 *aCPU)
 
     if (aCPU->mTickDelay == 0)
     {
-	unsigned pc = aCPU->mPC & (aCPU->mCodeMemSize - 1);
-	struct profile_data *pd;
+        unsigned pc = aCPU->mPC & (aCPU->mCodeMemSize - 1);
+        struct profile_data *pd;
 
         aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU);
         ticked = 1;
 
-	/*
-	 * Update profiler stats for this byte
-	 */
+        /*
+         * Update profiler stats for this byte
+         */
 
-	pd = &aCPU->mProfilerMem[pc];
-	aCPU->profilerTotal += aCPU->mTickDelay;
+        pd = &aCPU->mProfilerMem[pc];
+        aCPU->profilerTotal += aCPU->mTickDelay;
 
-	pd->total_cycles += aCPU->mTickDelay;
-	if (pd->loop_prev) {
-	    pd->loop_cycles += aCPU->profilerTotal - pd->loop_prev;
-	    pd->loop_hits++;
-	}
-	pd->loop_prev = aCPU->profilerTotal;
+        pd->total_cycles += aCPU->mTickDelay;
+        if (pd->loop_prev) {
+            pd->loop_cycles += aCPU->profilerTotal - pd->loop_prev;
+            pd->loop_hits++;
+        }
+        pd->loop_prev = aCPU->profilerTotal;
 
         // update parity bit
         v = aCPU->mSFR[REG_ACC];
@@ -347,12 +347,12 @@ int tick(struct em8051 *aCPU)
         v = (0x6996 >> v) & 1;
         aCPU->mSFR[REG_PSW] = (aCPU->mSFR[REG_PSW] & ~PSWMASK_P) | (v * PSWMASK_P);
 
-	/*
-	 * Write execution trace
-	 */
+        /*
+         * Write execution trace
+         */
 
-	if (aCPU->traceFile)
-	    traceExecution(aCPU);
+        if (aCPU->traceFile)
+            traceExecution(aCPU);
     }
 
     timer_tick(aCPU);

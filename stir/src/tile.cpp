@@ -39,39 +39,39 @@ Tile::Tile(const TileOptions &opt, uint8_t *rgba, size_t stride)
 
     // First pass.. are there any transparent pixels?
     for (row = rgba, y = SIZE; y; --y, row += stride)
-	for (pixel = row, x = SIZE; x; --x, pixel += 4)
-	    if (pixel[3] < alphaThreshold)
-		mOptions.chromaKey = true;
+        for (pixel = row, x = SIZE; x; --x, pixel += 4)
+            if (pixel[3] < alphaThreshold)
+                mOptions.chromaKey = true;
 
     // Second pass.. convert to RGB565, possibly with colorkey.
     RGB565 *dest = mPixels;
     for (row = rgba, y = SIZE; y; --y, row += stride)
-	for (pixel = row, x = SIZE; x; --x, pixel += 4) {
-	    RGB565 color = RGB565(pixel);
+        for (pixel = row, x = SIZE; x; --x, pixel += 4) {
+            RGB565 color = RGB565(pixel);
 
-	    if (!mOptions.chromaKey) {
-		// No transparency in the image, we're allowed to use any color.
-		*dest = color;
-	    }
-	    else if (pixel[3] < alphaThreshold) {
-		// Pixel is actually transparent
-		*dest = CHROMA_KEY;
-	    }
-	    else if ((color.value & 0xFF) == (CHROMA_KEY & 0xFF)) {
-		/*
-		 * Pixel isn't transparent, but it would look like
-		 * the chromakey to our firmware's 8-bit comparison.
-		 * Modify the color slightly.
-		 */
-		*dest = color.wiggle();
-	    }
-	    else {
-		// Opaque pixel
-		*dest = color;
-	    }
+            if (!mOptions.chromaKey) {
+                // No transparency in the image, we're allowed to use any color.
+                *dest = color;
+            }
+            else if (pixel[3] < alphaThreshold) {
+                // Pixel is actually transparent
+                *dest = CHROMA_KEY;
+            }
+            else if ((color.value & 0xFF) == (CHROMA_KEY & 0xFF)) {
+                /*
+                 * Pixel isn't transparent, but it would look like
+                 * the chromakey to our firmware's 8-bit comparison.
+                 * Modify the color slightly.
+                 */
+                *dest = color.wiggle();
+            }
+            else {
+                // Opaque pixel
+                *dest = color;
+            }
 
-	    dest++;
-	}	    
+            dest++;
+        }           
 }
 
 double TileOptions::getMaxMSE() const
@@ -101,21 +101,21 @@ void Tile::constructPalette(void)
     std::map<RGB565, unsigned> colors;
 
     for (unsigned i = 0; i < PIXELS; i++)
-	colors[mPixels[i]] = colors[mPixels[i]] + 1;
+        colors[mPixels[i]] = colors[mPixels[i]] + 1;
 
     mPalette.numColors = colors.size();
 
     if (mPalette.hasLUT()) {
-	// Sort the colors using an inverse mapping.
+        // Sort the colors using an inverse mapping.
 
-	std::multimap<unsigned, RGB565> lutSorter;
-	for (std::map<RGB565, unsigned>::iterator i = colors.begin(); i != colors.end(); i++)
-	    lutSorter.insert(std::pair<unsigned, RGB565>(i->second, i->first));
+        std::multimap<unsigned, RGB565> lutSorter;
+        for (std::map<RGB565, unsigned>::iterator i = colors.begin(); i != colors.end(); i++)
+            lutSorter.insert(std::pair<unsigned, RGB565>(i->second, i->first));
 
-	unsigned index = 0;
-	for (std::multimap<unsigned, RGB565>::reverse_iterator i = lutSorter.rbegin();
-	     i != lutSorter.rend(); i++)
-	    mPalette.colors[index++] = i->second;
+        unsigned index = 0;
+        for (std::multimap<unsigned, RGB565>::reverse_iterator i = lutSorter.rbegin();
+             i != lutSorter.rend(); i++)
+            mPalette.colors[index++] = i->second;
     }
 }
 
@@ -132,30 +132,30 @@ void Tile::constructSobel()
 
     unsigned i = 0;
     for (unsigned y = 0; y < SIZE; y++)
-	for (unsigned x = 0; x < SIZE; x++, i++) {
+        for (unsigned x = 0; x < SIZE; x++, i++) {
 
-	    // Luminance of eight neighbor pixels
-	    float l00 = CIELab(pixelWrap(x-1, y-1)).L;
-	    float l10 = CIELab(pixelWrap(x  , y-1)).L;
-	    float l20 = CIELab(pixelWrap(x+1, y-1)).L;
-	    float l01 = CIELab(pixelWrap(x-1, y  )).L;
-	    float l21 = CIELab(pixelWrap(x+1, y  )).L;
-	    float l02 = CIELab(pixelWrap(x-1, y+1)).L;
-	    float l12 = CIELab(pixelWrap(x  , y+1)).L;
-	    float l22 = CIELab(pixelWrap(x+1, y+1)).L;
+            // Luminance of eight neighbor pixels
+            float l00 = CIELab(pixelWrap(x-1, y-1)).L;
+            float l10 = CIELab(pixelWrap(x  , y-1)).L;
+            float l20 = CIELab(pixelWrap(x+1, y-1)).L;
+            float l01 = CIELab(pixelWrap(x-1, y  )).L;
+            float l21 = CIELab(pixelWrap(x+1, y  )).L;
+            float l02 = CIELab(pixelWrap(x-1, y+1)).L;
+            float l12 = CIELab(pixelWrap(x  , y+1)).L;
+            float l22 = CIELab(pixelWrap(x+1, y+1)).L;
 
-	    mSobelGx[i] = -l00 +l20 -l01 -l01 +l21 +l21 -l02 +l22;
-	    mSobelGy[i] = -l00 +l02 -l10 -l10 +l12 +l12 -l20 +l22;
+            mSobelGx[i] = -l00 +l20 -l01 -l01 +l21 +l21 -l02 +l22;
+            mSobelGy[i] = -l00 +l02 -l10 -l10 +l12 +l12 -l20 +l22;
 
-	    mSobelTotal += mSobelGx[i] * mSobelGx[i];
-	    mSobelTotal += mSobelGy[i] * mSobelGy[i];
-	}
+            mSobelTotal += mSobelGx[i] * mSobelGx[i];
+            mSobelTotal += mSobelGy[i] * mSobelGy[i];
+        }
 
 #ifdef DEBUG_SOBEL
     for (i = 0; i < PIXELS; i++) {
-	int x = std::max(0, std::min(255, (int)(128 + mSobelGx[i])));
-	int y = std::max(0, std::min(255, (int)(128 + mSobelGy[i])));
-	mPixels[i] = RGB565(x, y, (x+y)/2);
+        int x = std::max(0, std::min(255, (int)(128 + mSobelGx[i])));
+        int y = std::max(0, std::min(255, (int)(128 + mSobelGy[i])));
+        mPixels[i] = RGB565(x, y, (x+y)/2);
     }
 #endif
 }    
@@ -173,22 +173,22 @@ void Tile::constructDec4()
     mHasDec4 = true;
 
     for (unsigned y1 = 0; y1 < SIZE; y1 += scale)
-	for (unsigned x1 = 0; x1 < SIZE; x1 += scale) {
-	    CIELab acc;
+        for (unsigned x1 = 0; x1 < SIZE; x1 += scale) {
+            CIELab acc;
 
-	    // Y/X pixels
-	    for (unsigned y2 = y1; y2 < y1 + scale; y2++)
-		for (unsigned x2 = x1; x2 < x1 + scale; x2++)
-		    acc += pixel(x2, y2);
-	    
-	    acc /= scale * scale;
-	    mDec4[i++] = acc;
-	}
+            // Y/X pixels
+            for (unsigned y2 = y1; y2 < y1 + scale; y2++)
+                for (unsigned x2 = x1; x2 < x1 + scale; x2++)
+                    acc += pixel(x2, y2);
+            
+            acc /= scale * scale;
+            mDec4[i++] = acc;
+        }
 
 #ifdef DEBUG_DEC4
     for (unsigned y = 0; y < SIZE; y++)
-	for (unsigned x = 0; x < SIZE; x++)
-	    mPixels[x + (y * SIZE)] = mDec4[x/scale + y/scale * 2].rgb();
+        for (unsigned x = 0; x < SIZE; x++)
+            mPixels[x + (y * SIZE)] = mDec4[x/scale + y/scale * 2].rgb();
 #endif
 }
 
@@ -209,11 +209,11 @@ double Tile::errorMetric(Tile &other, double limit)
 
     error += 0.450 * coarseMSE(other);
     if (error > limit)
-	return DBL_MAX;
+        return DBL_MAX;
 
     error += 0.025 * fineMSE(other);
     if (error > limit)
-	return DBL_MAX;
+        return DBL_MAX;
 
     error += 5.00 * sobelError(other);
 
@@ -229,7 +229,7 @@ double Tile::fineMSE(Tile &other)
     double error = 0;
 
     for (unsigned i = 0; i < PIXELS; i++)
-	error += CIELab(mPixels[i]).meanSquaredError(CIELab(other.mPixels[i]));
+        error += CIELab(mPixels[i]).meanSquaredError(CIELab(other.mPixels[i]));
 
     return error / PIXELS;
 }
@@ -243,12 +243,12 @@ double Tile::coarseMSE(Tile &other)
     double error = 0;
 
     if (!mHasDec4)
-	constructDec4();
+        constructDec4();
     if (!other.mHasDec4)
-	other.constructDec4();
+        other.constructDec4();
 
     for (unsigned i = 0; i < 4; i++)
-	error += mDec4[i].meanSquaredError(other.mDec4[i]);
+        error += mDec4[i].meanSquaredError(other.mDec4[i]);
 
     return error / 4;
 }
@@ -263,15 +263,15 @@ double Tile::sobelError(Tile &other)
     double error = 0;
 
     if (!mHasSobel)
-	constructSobel();
+        constructSobel();
     if (!other.mHasSobel)
-	other.constructSobel();
+        other.constructSobel();
 
     for (unsigned i = 0; i < PIXELS; i++) {
-	double gx = mSobelGx[i] - other.mSobelGx[i];
-	double gy = mSobelGy[i] - other.mSobelGy[i];
+        double gx = mSobelGx[i] - other.mSobelGx[i];
+        double gy = mSobelGy[i] - other.mSobelGy[i];
 
-	error += gx * gx + gy * gy;
+        error += gx * gx + gy * gy;
     }
     
     // Contrast difference over total contrast
@@ -293,11 +293,11 @@ TileRef Tile::reduce(ColorReducer &reducer) const
     double limit = mOptions.getMaxMSE() * 0.05;
     
     for (unsigned i = 0; i < PIXELS; i++) {
-	RGB565 color = reducer.nearest(mPixels[i]);
-	double error = CIELab(color).meanSquaredError(CIELab(run));
-	if (error > limit)
-	    run = color;
-	result->mPixels[i] = run;
+        RGB565 color = reducer.nearest(mPixels[i]);
+        double error = CIELab(color).meanSquaredError(CIELab(run));
+        if (error > limit)
+            run = color;
+        result->mPixels[i] = run;
     }
 
     return result;
@@ -310,12 +310,12 @@ TilePalette::TilePalette()
 const char *TilePalette::colorModeName(ColorMode m)
 {
     switch (m) {
-    case CM_LUT1:	return "CM_LUT1";
-    case CM_LUT2:	return "CM_LUT2";
-    case CM_LUT4:	return "CM_LUT4";
-    case CM_LUT16:	return "CM_LUT16";
-    case CM_TRUE:	return "CM_TRUE";
-    default:		return "<invalid>";
+    case CM_LUT1:       return "CM_LUT1";
+    case CM_LUT2:       return "CM_LUT2";
+    case CM_LUT4:       return "CM_LUT4";
+    case CM_LUT16:      return "CM_LUT16";
+    case CM_TRUE:       return "CM_TRUE";
+    default:            return "<invalid>";
     }
 }
 
@@ -330,7 +330,7 @@ void TileStack::add(TileRef t)
 
     // A stack with any pinned tiles in it is itself pinned.
     if (t->options().pinned)
-	mPinned = true;
+        mPinned = true;
 }
 
 TileRef TileStack::median()
@@ -340,7 +340,7 @@ TileRef TileStack::median()
      */
 
     if (cache)
-	return cache;
+        return cache;
 
     Tile *t = new Tile();
     std::vector<RGB565> colors(tiles.size());
@@ -348,17 +348,17 @@ TileRef TileStack::median()
     // The median algorithm repeats independently for every pixel in the tile.
     for (unsigned i = 0; i < Tile::PIXELS; i++) {
 
-	// Collect possible colors for this pixel
-	for (unsigned j = 0; j < tiles.size(); j++)
-	    colors[j] = tiles[j]->pixel(i);
+        // Collect possible colors for this pixel
+        for (unsigned j = 0; j < tiles.size(); j++)
+            colors[j] = tiles[j]->pixel(i);
 
-	// Sort along the major axis
-	int major = CIELab::findMajorAxis(&colors[0], colors.size());
-	std::sort(colors.begin(), colors.end(),
-		  CIELab::sortAxis(major));
+        // Sort along the major axis
+        int major = CIELab::findMajorAxis(&colors[0], colors.size());
+        std::sort(colors.begin(), colors.end(),
+                  CIELab::sortAxis(major));
 
-	// Pick the median color
-	t->mPixels[i] = colors[colors.size() >> 1];
+        // Pick the median color
+        t->mPixels[i] = colors[colors.size() >> 1];
     }
 
     cache = TileRef(t);
@@ -379,7 +379,7 @@ TileRef TileStack::median()
      */
 
     if (tiles.size() > MAX_SIZE) {
-	tiles = std::vector<TileRef>(MAX_SIZE / 2, cache);
+        tiles = std::vector<TileRef>(MAX_SIZE / 2, cache);
     }
 
     return cache;
@@ -397,11 +397,11 @@ TileStack* TilePool::closest(TileRef t, double &mse)
     TileStack *closest = NULL;
 
     for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
-	double err = i->median()->errorMetric(*t, distance);
-	if (err < distance) {
-	    distance = err;
-	    closest = &*i;
-	}
+        double err = i->median()->errorMetric(*t, distance);
+        if (err < distance) {
+            distance = err;
+            closest = &*i;
+        }
     }
 
     mse = distance;
@@ -413,20 +413,20 @@ TileGrid::TileGrid(TilePool *pool)
     {}
 
 void TileGrid::load(const TileOptions &opt, uint8_t *rgba,
-		    size_t stride, unsigned width, unsigned height)
+                    size_t stride, unsigned width, unsigned height)
 {
     mWidth = width / Tile::SIZE;
     mHeight = height / Tile::SIZE;
     tiles.resize(mWidth * mHeight);
 
     for (unsigned y = 0; y < mHeight; y++)
-	for (unsigned x = 0; x < mWidth; x++) {
-	    TileRef t = TileRef(new Tile(opt,
-					 rgba + (x * Tile::SIZE * 4) +
-					 (y * Tile::SIZE * stride),
-					 stride));
-	    tiles[x + y * mWidth] = mPool->add(t);
-	}
+        for (unsigned x = 0; x < mWidth; x++) {
+            TileRef t = TileRef(new Tile(opt,
+                                         rgba + (x * Tile::SIZE * 4) +
+                                         (y * Tile::SIZE * stride),
+                                         stride));
+            tiles[x + y * mWidth] = mPool->add(t);
+        }
 }
 
 void TilePool::optimize(Logger &log)
@@ -454,15 +454,15 @@ void TilePool::optimizePalette(Logger &log)
 
     // First, add ALL tile data to the reducer's pool    
     for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
-	for (unsigned j = 0; j < Tile::PIXELS; j++)
-	    reducer.add((*i)->pixel(j), (*i)->options().getMaxMSE());
+        for (unsigned j = 0; j < Tile::PIXELS; j++)
+            reducer.add((*i)->pixel(j), (*i)->options().getMaxMSE());
 
     // Ask the reducer to do its own (slow!) global optimization
     reducer.reduce(log);
 
     // Now reduce each tile, using the agreed-upon color palette
     for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
-	*i = (*i)->reduce(reducer);
+        *i = (*i)->reduce(reducer);
 }
 
 void TilePool::optimizeTiles(Logger &log)
@@ -504,54 +504,54 @@ void TilePool::optimizeTiles(Logger &log)
 }
     
 void TilePool::optimizeTilesPass(Logger &log, std::set<TileStack *> &activeStacks,
-				 bool gather, bool pinned)
+                                 bool gather, bool pinned)
 {
     // A single pass from the multi-pass optimizeTiles() algorithm
 
     for (Serial serial = 0; serial < tiles.size(); serial++) {
-	TileRef tr = tiles[serial];
+        TileRef tr = tiles[serial];
 
-	if (tr->options().pinned == pinned) {
-	    double mse;
-	    TileStack *c = pinned ? NULL : closest(tr, mse);
-	
-	    if (gather) {
-		// Create or augment a TileStack
+        if (tr->options().pinned == pinned) {
+            double mse;
+            TileStack *c = pinned ? NULL : closest(tr, mse);
+        
+            if (gather) {
+                // Create or augment a TileStack
 
-		if (!c || mse > tr->options().getMaxMSE()) {
-		    stackList.push_back(TileStack());
-		    c = &stackList.back();
-		}
-		c->add(tr);
-	    }
+                if (!c || mse > tr->options().getMaxMSE()) {
+                    stackList.push_back(TileStack());
+                    c = &stackList.back();
+                }
+                c->add(tr);
+            }
 
-	    if (!gather || pinned) {
-		// Remember this stack, we've selected it for good.
-		
-		stackIndex[serial] = c;	
-		activeStacks.insert(c);
-	    }
-	}
+            if (!gather || pinned) {
+                // Remember this stack, we've selected it for good.
+                
+                stackIndex[serial] = c; 
+                activeStacks.insert(c);
+            }
+        }
 
-	if (serial == tiles.size() - 1 || !(serial % 128)) {
-	    unsigned stacks = gather ? stackList.size() : activeStacks.size();
-	    log.taskProgress("%u stacks (%.03f%% of total)", stacks,
-			     stacks * 100.0 / tiles.size());
-	}
+        if (serial == tiles.size() - 1 || !(serial % 128)) {
+            unsigned stacks = gather ? stackList.size() : activeStacks.size();
+            log.taskProgress("%u stacks (%.03f%% of total)", stacks,
+                             stacks * 100.0 / tiles.size());
+        }
     }
 
     if (!gather) {
-	// Permanently delete unused stacks
+        // Permanently delete unused stacks
 
-	std::list<TileStack>::iterator i = stackList.begin();
+        std::list<TileStack>::iterator i = stackList.begin();
 
-	while (i != stackList.end()) {
-	    std::list<TileStack>::iterator j = i;
-	    i++;
+        while (i != stackList.end()) {
+            std::list<TileStack>::iterator j = i;
+            i++;
 
-	    if (!activeStacks.count(&*j))
-		stackList.erase(j);
-	}
+            if (!activeStacks.count(&*j))
+                stackList.erase(j);
+        }
     }
 }
 
@@ -581,47 +581,47 @@ void TilePool::optimizeOrder(Logger &log)
     stackArray.clear();
 
     while (!stackList.empty()) {
-	std::list<TileStack>::iterator chosen;
+        std::list<TileStack>::iterator chosen;
 
-	if (pinned && stackList.front().isPinned()) {
-	    /*
-	     * We found a consecutive pair of pinned tiles. We're obligated to maintain
-	     * the ordering of these tiles, so there's no opportunity for optimization.
-	     */
-	    
-	    chosen = stackList.begin();
+        if (pinned && stackList.front().isPinned()) {
+            /*
+             * We found a consecutive pair of pinned tiles. We're obligated to maintain
+             * the ordering of these tiles, so there's no opportunity for optimization.
+             */
+            
+            chosen = stackList.begin();
 
-	} else {
-	    /*
-	     * Pick the lowest-cost tile next. Use a forked copy of
-	     * the codec to ask what the cost would be for each
-	     * possible choice.
-	     */
+        } else {
+            /*
+             * Pick the lowest-cost tile next. Use a forked copy of
+             * the codec to ask what the cost would be for each
+             * possible choice.
+             */
 
-	    unsigned bestCost = (unsigned) -1;
+            unsigned bestCost = (unsigned) -1;
 
-	    for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
-		TileCodecLUT codecFork = codec;
-		unsigned cost = codecFork.encode(i->median()->palette());
-		if (cost < bestCost) {
-		    bestCost = cost;
-		    chosen = i;
-		}
-	    }
-	}
+            for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
+                TileCodecLUT codecFork = codec;
+                unsigned cost = codecFork.encode(i->median()->palette());
+                if (cost < bestCost) {
+                    bestCost = cost;
+                    chosen = i;
+                }
+            }
+        }
 
-	// Apply the new codec state permanently
-	totalCost += codec.encode(chosen->median()->palette());
+        // Apply the new codec state permanently
+        totalCost += codec.encode(chosen->median()->palette());
 
-	// Pick the best tile, and assign it a permanent index
-	pinned = chosen->isPinned();
-	chosen->index = stackArray.size();
-	stackArray.push_back(&*chosen);
-	newOrder.splice(newOrder.end(), stackList, chosen);
+        // Pick the best tile, and assign it a permanent index
+        pinned = chosen->isPinned();
+        chosen->index = stackArray.size();
+        stackArray.push_back(&*chosen);
+        newOrder.splice(newOrder.end(), stackList, chosen);
 
-	if (!(stackList.size() % 128))
-	    log.taskProgress("%d tiles (cost %d)",
-			     (int) newOrder.size(), totalCost);
+        if (!(stackList.size() % 128))
+            log.taskProgress("%d tiles (cost %d)",
+                             (int) newOrder.size(), totalCost);
     }
 
     stackList.swap(newOrder);
@@ -638,19 +638,19 @@ void TilePool::encode(std::vector<uint8_t>& out, Logger *log)
     unsigned blocks = FlashAddress::tilesToBlocks(stackList.size());
 
     if (log) {
-	log->taskBegin("Encoding tiles");
-	log->taskProgress("Starting at 0x%06x, erasing %d blocks",
-			  addr.linear, blocks);
+        log->taskBegin("Encoding tiles");
+        log->taskProgress("Starting at 0x%06x, erasing %d blocks",
+                          addr.linear, blocks);
     }
 
     codec.address(addr);
     for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++)
-	codec.encode(i->median(), true);
+        codec.encode(i->median(), true);
     codec.flush();
 
     if (log) {
-	log->taskEnd();
-	codec.dumpStatistics(*log);
+        log->taskEnd();
+        codec.dumpStatistics(*log);
     }
 }
 

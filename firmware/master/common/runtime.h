@@ -24,20 +24,20 @@ class Runtime {
     static void exit();
 
     static bool checkUserPointer(const void *ptr, intptr_t size, bool allowNULL=false) {
-	/*
-	 * XXX: Validate a memory address that was provided to us by the game,
-	 *      make sure it isn't outside the game's sandbox region. This code
-	 *      MUST use overflow-safe arithmetic!
-	 *
-	 * Also checks for NULL pointers, assuming allowNULL isn't true.
-	 *
-	 * May be called anywhere, at any time, including from interrupt context.
-	 */
+        /*
+         * XXX: Validate a memory address that was provided to us by the game,
+         *      make sure it isn't outside the game's sandbox region. This code
+         *      MUST use overflow-safe arithmetic!
+         *
+         * Also checks for NULL pointers, assuming allowNULL isn't true.
+         *
+         * May be called anywhere, at any time, including from interrupt context.
+         */
 
-	if (!ptr && !allowNULL)
-	    return false;
+        if (!ptr && !allowNULL)
+            return false;
 
-	return true;
+        return true;
     }
  
  private:
@@ -59,18 +59,18 @@ class Event {
     static void dispatch();
 
     enum Type {
-	ASSET_DONE = 0,
-	ACCEL_CHANGE,
+        ASSET_DONE = 0,
+        ACCEL_CHANGE,
     };
     
     static void setPending(Type t) {
-	Sifteo::Atomic::Or(pending, Sifteo::Intrinsic::LZ(t));
+        Sifteo::Atomic::Or(pending, Sifteo::Intrinsic::LZ(t));
     }
 
-    static bool dispatchInProgress;	/// Reentrancy detector
-    static uint32_t pending;		/// CLZ map of all pending events
-    static uint32_t assetDoneCubes;	/// CLZ map, by cube slot, of asset download completion
-    static uint32_t accelChangeCubes;	/// CLZ map, by cube slot, of accelerometer changes
+    static bool dispatchInProgress;     /// Reentrancy detector
+    static uint32_t pending;            /// CLZ map of all pending events
+    static uint32_t assetDoneCubes;     /// CLZ map, by cube slot, of asset download completion
+    static uint32_t accelChangeCubes;   /// CLZ map, by cube slot, of accelerometer changes
 
  private:
     /*
@@ -82,23 +82,23 @@ class Event {
      */
 
     static void cubeFound(_SYSCubeID cid) {
-	if (_SYS_vectors.cubeFound)
-	    _SYS_vectors.cubeFound(cid);
+        if (_SYS_vectors.cubeFound)
+            _SYS_vectors.cubeFound(cid);
     }
 
     static void cubeLost(_SYSCubeID cid) {
-	if (_SYS_vectors.cubeLost)
-	    _SYS_vectors.cubeLost(cid);
+        if (_SYS_vectors.cubeLost)
+            _SYS_vectors.cubeLost(cid);
     }
 
     static void assetDone(_SYSCubeID cid) {
-	if (_SYS_vectors.assetDone)
-	    _SYS_vectors.assetDone(cid);
+        if (_SYS_vectors.assetDone)
+            _SYS_vectors.assetDone(cid);
     }
 
     static void accelChange(_SYSCubeID cid) {
-	if (_SYS_vectors.accelChange)
-	    _SYS_vectors.accelChange(cid);
+        if (_SYS_vectors.accelChange)
+            _SYS_vectors.accelChange(cid);
     }
 };
 

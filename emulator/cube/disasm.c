@@ -76,7 +76,7 @@ static const char *sfr_names[128] = {
 void mem_mnemonic(int aValue, char *aBuffer)
 {
     if (aValue > 0x7f)
-	strcpy(aBuffer, sfr_names[aValue - 0x80]);
+        strcpy(aBuffer, sfr_names[aValue - 0x80]);
     else
         sprintf(aBuffer, "%02Xh", aValue);
 }
@@ -86,7 +86,7 @@ void bitaddr_mnemonic(int aValue, char *aBuffer)
     char regname[32];
 
     if (aValue > 0x7f)
-	mem_mnemonic(aValue & 0xf8, regname);
+        mem_mnemonic(aValue & 0xf8, regname);
     else
         sprintf(regname, "%02Xh", aValue >> 3);
 

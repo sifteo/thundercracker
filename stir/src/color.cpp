@@ -26,9 +26,9 @@ RGB565 RGB565::wiggle() const
     uint16_t b = value & 0x1F;
 
     if (b == 0x1F)
-	b--;
+        b--;
     else
-	b++;
+        b++;
 
     return (uint16_t)(rg | b);
 }
@@ -41,19 +41,19 @@ CIELab::CIELab(uint32_t rgb)
 
     double xyz[3] = { 0, 0, 0 };
     static const double m[3][3] = {
-	{0.79767484649999998, 0.13519170820000001, 0.031353408800000003},
-	{0.28804020250000001, 0.71187413249999998, 8.5665099999999994e-05},
-	{0, 0, 0.82521143890000004}
+        {0.79767484649999998, 0.13519170820000001, 0.031353408800000003},
+        {0.28804020250000001, 0.71187413249999998, 8.5665099999999994e-05},
+        {0, 0, 0.82521143890000004}
     };
     for (int i = 0; i < 3; i++) {
-	xyz[i] += m[i][0] * red;
-	xyz[i] += m[i][1] * green;
-	xyz[i] += m[i][2] * blue;
+        xyz[i] += m[i][0] * red;
+        xyz[i] += m[i][1] * green;
+        xyz[i] += m[i][2] * blue;
     }
 
     static const double d50_white[3] = {0.964220, 1, 0.825211}; 
     for (int i = 0; i < 3; i++) {
-	xyz[i] = f_cbrt(xyz[i] / d50_white[i]);
+        xyz[i] = f_cbrt(xyz[i] / d50_white[i]);
     }
 
     L = 116.0 * xyz[1] - 16.0;
@@ -80,19 +80,19 @@ uint32_t CIELab::rgb() const
     // Convert XYZ to RGB  
     double rgb[3] = { 0, 0, 0 };
     static const double m[3][3] = {
-	{1.3459434662015495, -0.54459884249024337, -6.9388939039072284e-18},
-	{-0.25560754075639425, 1.5081672430343562, 3.9573379295720912e-18},
-	{-0.05111177218797338, 0.020535140503506362, 1.2118106376869808}
+        {1.3459434662015495, -0.54459884249024337, -6.9388939039072284e-18},
+        {-0.25560754075639425, 1.5081672430343562, 3.9573379295720912e-18},
+        {-0.05111177218797338, 0.020535140503506362, 1.2118106376869808}
     };
     for (int i = 0; i < 3; i++) {
-	rgb[0] += xyz[i] * m[i][0];  
-	rgb[1] += xyz[i] * m[i][1];  
-	rgb[2] += xyz[i] * m[i][2];  
+        rgb[0] += xyz[i] * m[i][0];  
+        rgb[1] += xyz[i] * m[i][1];  
+        rgb[2] += xyz[i] * m[i][2];  
     }  
 
     uint32_t rgb32 = 0;
     for (int i = 0; i < 3; i++) {
-	rgb32 |= encodeGamma(rgb[i]) << (i*8);
+        rgb32 |= encodeGamma(rgb[i]) << (i*8);
     }  
 
     return rgb32;
@@ -133,15 +133,15 @@ void CIELab::initialize(void)
     // Initialize the global lookup table from RGB565 to CIE L*a*b*
     
     for (unsigned v = 0; v < LUT_SIZE; v++)
-	lut565[v] = CIELab(RGB565((uint16_t)v).rgb());
+        lut565[v] = CIELab(RGB565((uint16_t)v).rgb());
 }
 
 ColorReducer::ColorReducer()
     : newestLUTStamp(1)
 {
     for (unsigned v = 0; v < LUT_SIZE; v++) {
-	colorMSE[v] = DBL_MAX;
-	inverseLUTStamps[v] = 0;
+        colorMSE[v] = DBL_MAX;
+        inverseLUTStamps[v] = 0;
     }
 }
 
@@ -185,50 +185,50 @@ void ColorReducer::reduce(Logger &log)
     std::vector<uint16_t> errorStack;
 
     for (unsigned i = 0; i < LUT_SIZE; i++)
-	errorStack.push_back(i);
+        errorStack.push_back(i);
 
     while (!boxQueue.empty()) {
-	/*
-	 * Try to reduce the size of the error stack. Any colors that
-	 * are now within range can be popped off of it permanently.
-	 */
+        /*
+         * Try to reduce the size of the error stack. Any colors that
+         * are now within range can be popped off of it permanently.
+         */
 
-	while (errorStack.size()) {
-	    unsigned v = errorStack.back();
-	    RGB565 color((uint16_t)v);
-	    double maxMSE = colorMSE[v];
-	    double mse = CIELab(nearest(color)).meanSquaredError(CIELab(color));
+        while (errorStack.size()) {
+            unsigned v = errorStack.back();
+            RGB565 color((uint16_t)v);
+            double maxMSE = colorMSE[v];
+            double mse = CIELab(nearest(color)).meanSquaredError(CIELab(color));
 
-	    if (mse <= maxMSE)
-		errorStack.pop_back();
-	    else
-		break;
-	}
+            if (mse <= maxMSE)
+                errorStack.pop_back();
+            else
+                break;
+        }
 
-	if (boxes.size() % 64 == 0 || !errorStack.size())
-	    log.taskProgress("%d colors in palette", (int)boxes.size());
+        if (boxes.size() % 64 == 0 || !errorStack.size())
+            log.taskProgress("%d colors in palette", (int)boxes.size());
 
-	if (!errorStack.size())
-	    break;
+        if (!errorStack.size())
+            break;
 
-	/*
-	 * Perform the next split
-	 */
-	
-	unsigned boxIndex = *boxQueue.begin();
-	struct box& b = boxes[boxIndex];
-	boxQueue.pop_front();
+        /*
+         * Perform the next split
+         */
+        
+        unsigned boxIndex = *boxQueue.begin();
+        struct box& b = boxes[boxIndex];
+        boxQueue.pop_front();
 
-	int major = CIELab::findMajorAxis(&colors[b.begin], b.end - b.begin);
+        int major = CIELab::findMajorAxis(&colors[b.begin], b.end - b.begin);
 
-	std::sort(colors.begin() + b.begin,
-		  colors.begin() + b.end,
-		  CIELab::sortAxis(major));
-	
-	splitBox(b);
+        std::sort(colors.begin() + b.begin,
+                  colors.begin() + b.end,
+                  CIELab::sortAxis(major));
+        
+        splitBox(b);
 
-	// Invalidate all inverseLUT entries
-	newestLUTStamp++;
+        // Invalidate all inverseLUT entries
+        newestLUTStamp++;
     }
 
     log.taskEnd();
@@ -246,11 +246,11 @@ void ColorReducer::updateInverseLUT(RGB565 color)
     CIELab reference(color);
 
     for (std::vector<box>::iterator i = boxes.begin(); i != boxes.end(); i++) {
-	double err = reference.meanSquaredError(CIELab(boxMedian(*i)));
-	if (err < distance) {
-	    distance = err;
-	    b = &*i;
-	}
+        double err = reference.meanSquaredError(CIELab(boxMedian(*i)));
+        if (err < distance) {
+            distance = err;
+            b = &*i;
+        }
     }
 
     inverseLUT[color.value] = b - &boxes[0];
@@ -268,25 +268,25 @@ int CIELab::findMajorAxis(RGB565 *colors, size_t count)
     double labMin[3] = { DBL_MAX, DBL_MAX, DBL_MAX };
     double labMax[3] = { DBL_MIN, DBL_MIN, DBL_MIN };
     for (unsigned i = 0; i < count; i++) {
-	CIELab c = CIELab(colors[i]);
+        CIELab c = CIELab(colors[i]);
 
-	for (int a = 0; a < 3; a++) {
-	    labMin[a] = std::min(labMin[a], c.axis[a]);
-	    labMax[a] = std::max(labMax[a], c.axis[a]);
-	}
+        for (int a = 0; a < 3; a++) {
+            labMin[a] = std::min(labMin[a], c.axis[a]);
+            labMax[a] = std::max(labMax[a], c.axis[a]);
+        }
     }
 
     double diffs[3];
     for (int a = 0; a < 3; a++)
-	diffs[a] = labMax[a] - labMin[a];
+        diffs[a] = labMax[a] - labMin[a];
 
     double major = 0;
     double maxDiff = DBL_MIN;
     for (int a = 0; a < 3; a++) {
-	if (diffs[a] > maxDiff) {
-	    maxDiff = diffs[a];
-	    major = a;
-	}
+        if (diffs[a] > maxDiff) {
+            maxDiff = diffs[a];
+            major = a;
+        }
     }
 
     return major;
@@ -313,16 +313,16 @@ bool ColorReducer::splitBox(box &b)
     unsigned middle = (b.end + b.begin) >> 1;
 
     for (unsigned step = 0; step < maxSteps; step++) {
-	unsigned split = middle + step;
-	if (split >= b.begin && split+1 < b.end && colors[split] != colors[split+1]) {
-	    splitBox(b, split);
-	    return true;
-	}
-	split = middle - step;
-	if (split >= b.begin && split+1 < b.end && colors[split] != colors[split+1]) {
-	    splitBox(b, split);
-	    return true;
-	}
+        unsigned split = middle + step;
+        if (split >= b.begin && split+1 < b.end && colors[split] != colors[split+1]) {
+            splitBox(b, split);
+            return true;
+        }
+        split = middle - step;
+        if (split >= b.begin && split+1 < b.end && colors[split] != colors[split+1]) {
+            splitBox(b, split);
+            return true;
+        }
     }
 
     return false;

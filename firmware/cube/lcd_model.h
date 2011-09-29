@@ -20,69 +20,69 @@
  * ILI9163C Display Controller
  */
 
-#define LCD_CMD_NOP		0x00
-#define LCD_CMD_SWRESET		0x01
-#define LCD_CMD_SLPIN		0x10
-#define LCD_CMD_SLPOUT		0x11
-#define LCD_CMD_PARTIAL		0x12
-#define LCD_CMD_NORMAL		0x13
-#define LCD_CMD_INVOFF		0x20
-#define LCD_CMD_INVON		0x21
-#define LCD_CMD_GAMMA_SET	0x26
-#define LCD_CMD_DISPOFF		0x28
-#define LCD_CMD_DISPON		0x29
-#define LCD_CMD_CASET		0x2A
-#define LCD_CMD_RASET		0x2B
-#define LCD_CMD_RAMWR		0x2C
-#define LCD_CMD_COLOR_LUT	0x2D
-#define LCD_CMD_PARTIAL_AREA	0x30
-#define LCD_CMD_VSCROLL		0x33
-#define LCD_CMD_TEOFF		0x34
-#define LCD_CMD_TEON		0x35
-#define LCD_CMD_MADCTR		0x36
-#define LCD_CMD_VSCROLL_ADDR	0x37
-#define LCD_CMD_IDLEOFF		0x38
-#define LCD_CMD_IDLEON		0x39
-#define LCD_CMD_COLMOD		0x3A
-#define LCD_CMD_FRCONTROL	0xB1
-#define LCD_CMD_FRCONTROL_IDLE	0xB2
-#define LCD_CMD_FRCONTROL_PAR	0xB3
-#define LCD_CMD_INVCTRL		0xB4
-#define LCD_CMD_PORCH		0xB5
-#define LCD_CMD_FNSET		0xB6
-#define LCD_CMD_SRCDRV		0xB7
-#define LCD_CMD_GATEDRV		0xB8
-#define LCD_CMD_POWER_CTRL1	0xC0
-#define LCD_CMD_POWER_CTRL2	0xC1
-#define LCD_CMD_POWER_CTRL3	0xC2
-#define LCD_CMD_POWER_CTRL4	0xC3
-#define LCD_CMD_POWER_CTRL5	0xC4
-#define LCD_CMD_VCOM_CTRL1	0xC5
-#define LCD_CMD_VCOM_CTRL2	0xC6
-#define LCD_CMD_VCOM_OFFSET	0xC7
-#define LCD_CMD_POS_GAMMA	0xE0
-#define LCD_CMD_NEG_GAMMA	0xE1
-#define LCD_CMD_GAM_R_SEL	0xF2
+#define LCD_CMD_NOP             0x00
+#define LCD_CMD_SWRESET         0x01
+#define LCD_CMD_SLPIN           0x10
+#define LCD_CMD_SLPOUT          0x11
+#define LCD_CMD_PARTIAL         0x12
+#define LCD_CMD_NORMAL          0x13
+#define LCD_CMD_INVOFF          0x20
+#define LCD_CMD_INVON           0x21
+#define LCD_CMD_GAMMA_SET       0x26
+#define LCD_CMD_DISPOFF         0x28
+#define LCD_CMD_DISPON          0x29
+#define LCD_CMD_CASET           0x2A
+#define LCD_CMD_RASET           0x2B
+#define LCD_CMD_RAMWR           0x2C
+#define LCD_CMD_COLOR_LUT       0x2D
+#define LCD_CMD_PARTIAL_AREA    0x30
+#define LCD_CMD_VSCROLL         0x33
+#define LCD_CMD_TEOFF           0x34
+#define LCD_CMD_TEON            0x35
+#define LCD_CMD_MADCTR          0x36
+#define LCD_CMD_VSCROLL_ADDR    0x37
+#define LCD_CMD_IDLEOFF         0x38
+#define LCD_CMD_IDLEON          0x39
+#define LCD_CMD_COLMOD          0x3A
+#define LCD_CMD_FRCONTROL       0xB1
+#define LCD_CMD_FRCONTROL_IDLE  0xB2
+#define LCD_CMD_FRCONTROL_PAR   0xB3
+#define LCD_CMD_INVCTRL         0xB4
+#define LCD_CMD_PORCH           0xB5
+#define LCD_CMD_FNSET           0xB6
+#define LCD_CMD_SRCDRV          0xB7
+#define LCD_CMD_GATEDRV         0xB8
+#define LCD_CMD_POWER_CTRL1     0xC0
+#define LCD_CMD_POWER_CTRL2     0xC1
+#define LCD_CMD_POWER_CTRL3     0xC2
+#define LCD_CMD_POWER_CTRL4     0xC3
+#define LCD_CMD_POWER_CTRL5     0xC4
+#define LCD_CMD_VCOM_CTRL1      0xC5
+#define LCD_CMD_VCOM_CTRL2      0xC6
+#define LCD_CMD_VCOM_OFFSET     0xC7
+#define LCD_CMD_POS_GAMMA       0xE0
+#define LCD_CMD_NEG_GAMMA       0xE1
+#define LCD_CMD_GAM_R_SEL       0xF2
 
-#define LCD_COLMOD_12		3
-#define LCD_COLMOD_16		5
-#define LCD_COLMOD_18		6
+#define LCD_COLMOD_12           3
+#define LCD_COLMOD_16           5
+#define LCD_COLMOD_18           6
 
-#define LCD_MADCTR_MY		0x80
-#define LCD_MADCTR_MX		0x40
-#define LCD_MADCTR_MV		0x20
-#define LCD_MADCTR_ML		0x10
-#define LCD_MADCTR_RGB		0x08
-#define LCD_MADCTR_MH		0x04
+#define LCD_MADCTR_MY           0x80
+#define LCD_MADCTR_MX           0x40
+#define LCD_MADCTR_MV           0x20
+#define LCD_MADCTR_ML           0x10
+#define LCD_MADCTR_RGB          0x08
+#define LCD_MADCTR_MH           0x04
 
 // MADCTR flags that we always set
-#define LCD_MADCTR_NORMAL	(LCD_MADCTR_RGB)
+#define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB)
 
 // MADCTR flags that correspond with VRAM flags (for rotation)
-#define LCD_MADCTR_VRAM		(LCD_MADCTR_MY | LCD_MADCTR_MX | LCD_MADCTR_MV)
+#define LCD_MADCTR_VRAM         (LCD_MADCTR_MY | LCD_MADCTR_MX | LCD_MADCTR_MV)
 
-#define SHORT_DELAY		0x80	// 1ms
-#define LONG_DELAY		0xFF	// 128ms
+#define SHORT_DELAY             0x80    // 1ms
+#define LONG_DELAY              0xFF    // 128ms
 
 
 static const __code uint8_t lcd_setup_table[] =

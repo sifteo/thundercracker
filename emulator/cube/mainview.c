@@ -555,8 +555,8 @@ void mainview_update(struct em8051 *aCPU)
                 history[hoffs + 128 + 6 + rx],
                 history[hoffs + 128 + 7 + rx],
                 history[hoffs + REG_B],
-		    (history[hoffs + SEL_DPH(history[hoffs + REG_DPS])]<<8) |
-		     history[hoffs + SEL_DPL(history[hoffs + REG_DPS])]);
+                    (history[hoffs + SEL_DPH(history[hoffs + REG_DPS])]<<8) |
+                     history[hoffs + SEL_DPL(history[hoffs + REG_DPS])]);
             if (focus == 1)
                 refresh_regoutput(aCPU, 0);
             wprintw(regoutput,"%s",temp);
@@ -573,13 +573,13 @@ void mainview_update(struct em8051 *aCPU)
             wprintw(pswoutput,"%s",temp);
 
             sprintf(temp, "\n%02X %02X %02X %02X %02X-%02X %02X",
-		    history[hoffs + REG_P0],
-		    history[hoffs + REG_P1],
-		    history[hoffs + REG_P2],
-		    history[hoffs + REG_P3],
-		    history[hoffs + REG_IEN0],
-		    history[hoffs + REG_IEN1],
-		    history[hoffs + REG_IRCON]);
+                    history[hoffs + REG_P0],
+                    history[hoffs + REG_P1],
+                    history[hoffs + REG_P2],
+                    history[hoffs + REG_P3],
+                    history[hoffs + REG_IEN0],
+                    history[hoffs + REG_IEN1],
+                    history[hoffs + REG_IRCON]);
             wprintw(ioregoutput,"%s",temp);
 
             sprintf(temp, "\n%02X   %02X    %02X  %02X   %02X  %02X   %02X   %02X",
@@ -598,65 +598,65 @@ void mainview_update(struct em8051 *aCPU)
     }
 
     {
-	// Some displays periodically update
-	unsigned int update_interval = opt_clock_hz;
-	static uint64_t update_prev_clocks = 0;
-	static uint32_t update_prev_time = 0;
+        // Some displays periodically update
+        unsigned int update_interval = opt_clock_hz;
+        static uint64_t update_prev_clocks = 0;
+        static uint32_t update_prev_time = 0;
 
-	static float lcd_wrs = 0;
-	static float clock_ratio = 0;
-	static float radio_b = 0;
-	static float radio_rx = 0;
-	static float flash_hz = 0;
-	static unsigned flash_percent = 0;
+        static float lcd_wrs = 0;
+        static float clock_ratio = 0;
+        static float radio_b = 0;
+        static float radio_rx = 0;
+        static float flash_hz = 0;
+        static unsigned flash_percent = 0;
 
-	enum busy_flag flash_busy = flash_busy_flag();
+        enum busy_flag flash_busy = flash_busy_flag();
 
-	float cycles_to_sec = 1.0f / opt_clock_hz;
-	float msec = 1000.0f * clocks * cycles_to_sec;
-	float clock_mhz = opt_clock_hz / (1000*1000.0f);
+        float cycles_to_sec = 1.0f / opt_clock_hz;
+        float msec = 1000.0f * clocks * cycles_to_sec;
+        float clock_mhz = opt_clock_hz / (1000*1000.0f);
 
-	/* Periodically update most of the stats */
-	if (clocks < update_prev_clocks || (clocks - update_prev_clocks) > update_interval) {
-	    uint32_t now = SDL_GetTicks();
+        /* Periodically update most of the stats */
+        if (clocks < update_prev_clocks || (clocks - update_prev_clocks) > update_interval) {
+            uint32_t now = SDL_GetTicks();
 
-	    if (clocks > update_prev_clocks && now > update_prev_time) {		
-		float virtual_elapsed = (clocks - update_prev_clocks) * cycles_to_sec;
-		float real_elapsed = (uint32_t)(now - update_prev_time) * (1.0f/1000);
+            if (clocks > update_prev_clocks && now > update_prev_time) {                
+                float virtual_elapsed = (clocks - update_prev_clocks) * cycles_to_sec;
+                float real_elapsed = (uint32_t)(now - update_prev_time) * (1.0f/1000);
 
-		lcd_wrs = lcd_write_count() / virtual_elapsed;
-		radio_b = radio_byte_count() / virtual_elapsed;
-		radio_rx = radio_rx_count() / virtual_elapsed;
-		flash_hz = flash_cycle_count() / virtual_elapsed;
-		clock_ratio = virtual_elapsed / real_elapsed;
-		flash_percent = flash_busy_percent();
-	    } else {
+                lcd_wrs = lcd_write_count() / virtual_elapsed;
+                radio_b = radio_byte_count() / virtual_elapsed;
+                radio_rx = radio_rx_count() / virtual_elapsed;
+                flash_hz = flash_cycle_count() / virtual_elapsed;
+                clock_ratio = virtual_elapsed / real_elapsed;
+                flash_percent = flash_busy_percent();
+            } else {
                 lcd_wrs = 0;
-		radio_b = 0;
-		radio_rx = 0;
+                radio_b = 0;
+                radio_rx = 0;
                 clock_ratio = 0;
-		flash_hz = 0;
-		flash_percent = 0;
+                flash_hz = 0;
+                flash_percent = 0;
             }
 
-	    update_prev_time = now;
-	    update_prev_clocks = clocks;
-	}
+            update_prev_time = now;
+            update_prev_clocks = clocks;
+        }
 
-	werase(miscview);
-	wprintw(miscview, "LCD    : ");
+        werase(miscview);
+        wprintw(miscview, "LCD    : ");
         wattron(miscview, A_REVERSE);
-	wprintw(miscview, "% 8.3f FPS \n", lcd_wrs);
+        wprintw(miscview, "% 8.3f FPS \n", lcd_wrs);
         wattroff(miscview, A_REVERSE);
 
-	wprintw(miscview, "Flash  :% 7.3f MHz %c%c % 3u%%\n", flash_hz / 1000000.0,
-		flash_busy & BF_PROGRAM ? 'W' : '-',
-		flash_busy & BF_ERASE   ? 'E' : '-',
-		flash_percent);
+        wprintw(miscview, "Flash  :% 7.3f MHz %c%c % 3u%%\n", flash_hz / 1000000.0,
+                flash_busy & BF_PROGRAM ? 'W' : '-',
+                flash_busy & BF_ERASE   ? 'E' : '-',
+                flash_percent);
 
-	wprintw(miscview, "Radio  :% 5d RX% 6.2f kB/s\n", (int)radio_rx, radio_b / 1000);
-	wprintw(miscview, "Time   : %07.2f ms %04llu ck\n", fmod(msec, 10000.0), clocks % 10000);
-	wprintw(miscview, "Speed  :% 6.1f%% %0.1f MHz\n", clock_ratio * 100, clock_mhz);
+        wprintw(miscview, "Radio  :% 5d RX% 6.2f kB/s\n", (int)radio_rx, radio_b / 1000);
+        wprintw(miscview, "Time   : %07.2f ms %04llu ck\n", fmod(msec, 10000.0), clocks % 10000);
+        wprintw(miscview, "Speed  :% 6.1f%% %0.1f MHz\n", clock_ratio * 100, clock_mhz);
     }
 
     werase(ramview);
@@ -681,11 +681,11 @@ void mainview_update(struct em8051 *aCPU)
 
     for (i = 0; i < 15; i++)
     {
-		int offset = (i + aCPU->mSFR[REG_SP]-7)&0xff;
-		if (offset < 0x80)
-			wprintw(stackview," %02X\n", aCPU->mLowerData[offset]);
-		else
-			wprintw(stackview," %02X\n", aCPU->mUpperData[offset - 0x80]);
+                int offset = (i + aCPU->mSFR[REG_SP]-7)&0xff;
+                if (offset < 0x80)
+                        wprintw(stackview," %02X\n", aCPU->mLowerData[offset]);
+                else
+                        wprintw(stackview," %02X\n", aCPU->mUpperData[offset - 0x80]);
     }
 
     if (speed != 0 || runmode == 0)

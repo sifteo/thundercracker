@@ -190,7 +190,7 @@
 #define RF_VRAM_MAX_RUN    (0x3F + 5)
 #define RF_VRAM_DIFF_BASE  7
 
-#define RF_VRAM_STRIDE	   18
+#define RF_VRAM_STRIDE     18
 
 #define RF_VRAM_SAMPLE_0   1
 #define RF_VRAM_SAMPLE_1   2
@@ -217,50 +217,50 @@
  * length 0, 1, 3, 7, and 8.
  */
 
-#define RF_ACK_LEN_EMPTY	0
-#define RF_ACK_LEN_FRAME	1
-#define RF_ACK_LEN_ACCEL	3
-#define RF_ACK_LEN_NEIGHBOR	7
-#define RF_ACK_LEN_MAX 		8
+#define RF_ACK_LEN_EMPTY        0
+#define RF_ACK_LEN_FRAME        1
+#define RF_ACK_LEN_ACCEL        3
+#define RF_ACK_LEN_NEIGHBOR     7
+#define RF_ACK_LEN_MAX          8
 
-#define RF_ACK_FRAME		0
-#define RF_ACK_ACCEL		1
-#define RF_ACK_NEIGHBOR		3
-#define RF_ACK_FLASH_FIFO	7
+#define RF_ACK_FRAME            0
+#define RF_ACK_ACCEL            1
+#define RF_ACK_NEIGHBOR         3
+#define RF_ACK_FLASH_FIFO       7
 
 
 typedef union {
     uint8_t bytes[RF_ACK_LEN_MAX];
     struct {
-	/*
-	 * For synchronizing LCD refreshes, the master can keep track
-	 * of how many repaints the cube has performed. Ideally these
-	 * repaints would be in turn sync'ed with the LCDC's hardware
-	 * refresh timer. If we're tight on space, we don't need a
-	 * full byte for this. Even a one-bit toggle woudl work,
-	 * though we might want two bits to allow deeper queues.
-	 */
-	uint8_t frame_count;
+        /*
+         * For synchronizing LCD refreshes, the master can keep track
+         * of how many repaints the cube has performed. Ideally these
+         * repaints would be in turn sync'ed with the LCDC's hardware
+         * refresh timer. If we're tight on space, we don't need a
+         * full byte for this. Even a one-bit toggle woudl work,
+         * though we might want two bits to allow deeper queues.
+         */
+        uint8_t frame_count;
 
         // 8-bit analog accelerometer data
-	uint8_t accel[2];
+        uint8_t accel[2];
 
-	/*
-	 * Need ~5 bits per sensor (5 other cubes * 4 sides + 1 idle =
-	 * 21 states) So, there are plenty of bits free in here to
-	 * encode things like button state.
-	 */
-	uint8_t neighbor[4];
+        /*
+         * Need ~5 bits per sensor (5 other cubes * 4 sides + 1 idle =
+         * 21 states) So, there are plenty of bits free in here to
+         * encode things like button state.
+         */
+        uint8_t neighbor[4];
 
-	/*
-	 * Number of bytes processed by the flash decoder so
-	 * far. Increments and wraps around, never decrements or
-	 * resets. Also increments once on a flash reset completion.
-	 *
-	 * We should probably keep this always as the last item in the
-	 * ACK packet format.
-	 */
-	uint8_t flash_fifo_bytes;
+        /*
+         * Number of bytes processed by the flash decoder so
+         * far. Increments and wraps around, never decrements or
+         * resets. Also increments once on a flash reset completion.
+         *
+         * We should probably keep this always as the last item in the
+         * ACK packet format.
+         */
+        uint8_t flash_fifo_bytes;
     };
 } RF_ACKType;
 
@@ -287,26 +287,26 @@ typedef union {
  * expansion to the protocol if necessary.
  */
 
-#define FLS_FIFO_SIZE           64	// Size of buffer between radio and flash decoder
-#define FLS_FIFO_RESET          0xFF	// Reserved FIFO index used to signal RF_OP_FLASH_RESET
+#define FLS_FIFO_SIZE           64      // Size of buffer between radio and flash decoder
+#define FLS_FIFO_RESET          0xFF    // Reserved FIFO index used to signal RF_OP_FLASH_RESET
 
-#define FLS_LUT_SIZE		16	// Size of persistent color LUT used by RLE encodings
+#define FLS_LUT_SIZE            16      // Size of persistent color LUT used by RLE encodings
 
-#define FLS_OP_MASK	 	0xe0	// Upper 3 bits are an opcode
-#define FLS_ARG_MASK		0x1f	// Lower 5 bits are an argument (usually a repeat count)
+#define FLS_OP_MASK             0xe0    // Upper 3 bits are an opcode
+#define FLS_ARG_MASK            0x1f    // Lower 5 bits are an argument (usually a repeat count)
 
-#define FLS_OP_LUT1		0x00	// Single color 16-bit LUT entry (argument is index)
-#define FLS_OP_LUT16		0x20	// Up to 16 LUT entries follow a 16-bit vector of indices
-#define FLS_OP_TILE_P0		0x40	// One trivial solid-color tile (arg = color index)
-#define FLS_OP_TILE_P1_R4	0x60	// Tiles with 1-bit pixels and 4-bit RLE encoding (arg = count-1)
-#define FLS_OP_TILE_P2_R4	0x80	// Tiles with 2-bit pixels and 4-bit RLE encoding (arg = count-1)
-#define FLS_OP_TILE_P4_R4	0xa0	// Tiles with 4-bit pixels and 4-bit RLE encoding (arg = count-1)
-#define FLS_OP_TILE_P16		0xc0	// Tile with 16-bit pixels and 8-bit repetition mask (arg = count-1)
-#define FLS_OP_SPECIAL		0xe0	// Special symbols (below)
+#define FLS_OP_LUT1             0x00    // Single color 16-bit LUT entry (argument is index)
+#define FLS_OP_LUT16            0x20    // Up to 16 LUT entries follow a 16-bit vector of indices
+#define FLS_OP_TILE_P0          0x40    // One trivial solid-color tile (arg = color index)
+#define FLS_OP_TILE_P1_R4       0x60    // Tiles with 1-bit pixels and 4-bit RLE encoding (arg = count-1)
+#define FLS_OP_TILE_P2_R4       0x80    // Tiles with 2-bit pixels and 4-bit RLE encoding (arg = count-1)
+#define FLS_OP_TILE_P4_R4       0xa0    // Tiles with 4-bit pixels and 4-bit RLE encoding (arg = count-1)
+#define FLS_OP_TILE_P16         0xc0    // Tile with 16-bit pixels and 8-bit repetition mask (arg = count-1)
+#define FLS_OP_SPECIAL          0xe0    // Special symbols (below)
 
-#define FLS_OP_ADDRESS		0xe1	// Followed by a 2-byte (lat1:lat2) tile address
-#define FLS_OP_ERASE		0xe2	// Followed by count-1 of 64K blocks, and a 1-byte checksum
+#define FLS_OP_ADDRESS          0xe1    // Followed by a 2-byte (lat1:lat2) tile address
+#define FLS_OP_ERASE            0xe2    // Followed by count-1 of 64K blocks, and a 1-byte checksum
 
-#define FLS_OP_RESERVED_0	0xe3	// From here until 0xFF are all reserved codes currently
+#define FLS_OP_RESERVED_0       0xe3    // From here until 0xFF are all reserved codes currently
 
 #endif

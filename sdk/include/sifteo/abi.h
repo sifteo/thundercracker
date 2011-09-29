@@ -36,8 +36,8 @@ extern "C" {
 
 #define _SYS_NUM_CUBE_SLOTS   32
 
-typedef uint8_t _SYSCubeID;		/// Cube slot index
-typedef uint32_t _SYSCubeIDVector;	/// One bit for each cube slot, MSB-first
+typedef uint8_t _SYSCubeID;             /// Cube slot index
+typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-first
 
 /*
  * XXX: It would be nice to further compress the loadstream when storing
@@ -51,23 +51,23 @@ typedef uint32_t _SYSCubeIDVector;	/// One bit for each cube slot, MSB-first
  */
 
 struct _SYSAssetGroupHeader {
-    uint8_t hdrSize;		/// OUT    Size of header / offset to compressed data
-    uint8_t reserved;		/// OUT    Reserved, must be zero
-    uint16_t numTiles;		/// OUT    Uncompressed size, in tiles
-    uint32_t dataSize;		/// OUT    Size of compressed data, in bytes
-    uint64_t signature;		/// OUT    Unique identity for this group
+    uint8_t hdrSize;            /// OUT    Size of header / offset to compressed data
+    uint8_t reserved;           /// OUT    Reserved, must be zero
+    uint16_t numTiles;          /// OUT    Uncompressed size, in tiles
+    uint32_t dataSize;          /// OUT    Size of compressed data, in bytes
+    uint64_t signature;         /// OUT    Unique identity for this group
 };
 
 struct _SYSAssetGroupCube {
-    uint32_t baseAddr;		/// IN     Base address where this group is installed
-    uint32_t progress;		/// IN     Loading progress, in bytes
+    uint32_t baseAddr;          /// IN     Base address where this group is installed
+    uint32_t progress;          /// IN     Loading progress, in bytes
 };
 
 struct _SYSAssetGroup {
-    const struct _SYSAssetGroupHeader *hdr;	/// OUT    Static data for this asset group
-    struct _SYSAssetGroupCube *cubes;		/// OUT    Array of per-cube state buffers
-    _SYSCubeIDVector reqCubes;			/// IN     Which cubes have requested to load this group?
-    _SYSCubeIDVector doneCubes;			/// IN     Which cubes have finished installing this group?
+    const struct _SYSAssetGroupHeader *hdr;     /// OUT    Static data for this asset group
+    struct _SYSAssetGroupCube *cubes;           /// OUT    Array of per-cube state buffers
+    _SYSCubeIDVector reqCubes;                  /// IN     Which cubes have requested to load this group?
+    _SYSCubeIDVector doneCubes;                 /// IN     Which cubes have finished installing this group?
 };
 
 /*
@@ -83,55 +83,55 @@ struct _SYSAssetGroup {
  * the VRAM.
  */
 
-#define _SYS_VRAM_SIZE		1024	// Total size of VRAM, in bytes
-#define _SYS_VRAM_BG0_WIDTH	18	// Width/height of BG0 tile grid
-#define _SYS_VRAM_BG1_WIDTH	16	// Width/height of BG1 bitmap
-#define _SYS_VRAM_BG1_TILES	144	// Total number of opaque tiles in BG1
-#define _SYS_VRAM_SPRITES	8	// Maximum number of linear sprites
-#define _SYS_CHROMA_KEY		0xF5	// Chroma key byte
+#define _SYS_VRAM_SIZE          1024    // Total size of VRAM, in bytes
+#define _SYS_VRAM_BG0_WIDTH     18      // Width/height of BG0 tile grid
+#define _SYS_VRAM_BG1_WIDTH     16      // Width/height of BG1 bitmap
+#define _SYS_VRAM_BG1_TILES     144     // Total number of opaque tiles in BG1
+#define _SYS_VRAM_SPRITES       8       // Maximum number of linear sprites
+#define _SYS_CHROMA_KEY         0xF5    // Chroma key byte
 
 // Bits for 'flags'
 
-#define _SYS_VF_TOGGLE		0x02	// Toggle bit, to trigger a new frame render
-#define _SYS_VF_SYNC		0x04	// Sync with LCD vertical refresh
-#define _SYS_VF_CONTINUOUS	0x08	// Render continuously, without waiting for toggle
-#define _SYS_VF_RESERVED	0x10
-#define _SYS_VF_XY_SWAP		0x20	// Swap X and Y axes during render
-#define _SYS_VF_X_FLIP		0x40	// Flip X axis during render
-#define _SYS_VF_Y_FLIP		0x80	// Flip Y axis during render
+#define _SYS_VF_TOGGLE          0x02    // Toggle bit, to trigger a new frame render
+#define _SYS_VF_SYNC            0x04    // Sync with LCD vertical refresh
+#define _SYS_VF_CONTINUOUS      0x08    // Render continuously, without waiting for toggle
+#define _SYS_VF_RESERVED        0x10
+#define _SYS_VF_XY_SWAP         0x20    // Swap X and Y axes during render
+#define _SYS_VF_X_FLIP          0x40    // Flip X axis during render
+#define _SYS_VF_Y_FLIP          0x80    // Flip Y axis during render
 
 // Values for 'mode'
 
-#define _SYS_VM_MASK		0x3c	// Mask of valid bits in VM_MASK
+#define _SYS_VM_MASK            0x3c    // Mask of valid bits in VM_MASK
 
-#define _SYS_VM_POWERDOWN	0x00	// Power saving mode, LCD is off
-#define _SYS_VM_BG0_ROM		0x04	// BG0, with tile data from internal ROM
-#define _SYS_VM_SOLID		0x08	// Solid color, from colormap[0]
-#define _SYS_VM_FB32		0x0c	// 32x32 pixel 16-color framebuffer
-#define _SYS_VM_FB64		0x10	// 64x64 pixel 2-color framebuffer
-#define _SYS_VM_FB128		0x14	// 128x48 pixel 2-color framebuffer
-#define _SYS_VM_BG0		0x18	// Background BG0: 18x18 grid
-#define _SYS_VM_BG0_BG1		0x1c    // BG0, plus overlay BG1: 16x16 bitmap + 144 indices
-#define _SYS_VM_BG0_SPR_BG1	0x20	// BG0, multiple linear sprites, then BG1
+#define _SYS_VM_POWERDOWN       0x00    // Power saving mode, LCD is off
+#define _SYS_VM_BG0_ROM         0x04    // BG0, with tile data from internal ROM
+#define _SYS_VM_SOLID           0x08    // Solid color, from colormap[0]
+#define _SYS_VM_FB32            0x0c    // 32x32 pixel 16-color framebuffer
+#define _SYS_VM_FB64            0x10    // 64x64 pixel 2-color framebuffer
+#define _SYS_VM_FB128           0x14    // 128x48 pixel 2-color framebuffer
+#define _SYS_VM_BG0             0x18    // Background BG0: 18x18 grid
+#define _SYS_VM_BG0_BG1         0x1c    // BG0, plus overlay BG1: 16x16 bitmap + 144 indices
+#define _SYS_VM_BG0_SPR_BG1     0x20    // BG0, multiple linear sprites, then BG1
 
 // Important VRAM addresses
 
-#define _SYS_VA_BG0_TILES	0x000
-#define _SYS_VA_BG1_TILES	0x288
-#define _SYS_VA_COLORMAP	0x300
-#define _SYS_VA_BG1_BITMAP	0x3a8
-#define _SYS_VA_SPR		0x3c8
-#define _SYS_VA_FIRST_LINE     	0x3fc
-#define _SYS_VA_NUM_LINES      	0x3fd
-#define _SYS_VA_MODE		0x3fe
-#define _SYS_VA_FLAGS		0x3ff
+#define _SYS_VA_BG0_TILES       0x000
+#define _SYS_VA_BG1_TILES       0x288
+#define _SYS_VA_COLORMAP        0x300
+#define _SYS_VA_BG1_BITMAP      0x3a8
+#define _SYS_VA_SPR             0x3c8
+#define _SYS_VA_FIRST_LINE      0x3fc
+#define _SYS_VA_NUM_LINES       0x3fd
+#define _SYS_VA_MODE            0x3fe
+#define _SYS_VA_FLAGS           0x3ff
 
 struct _SYSSpriteInfo {
-    uint16_t tile;			// 0x00
-    uint8_t mask_x;			// 0x02
-    uint8_t mask_y;			// 0x03
-    uint8_t pos_x;			// 0x04
-    uint8_t pos_y;			// 0x05
+    uint16_t tile;                      // 0x00
+    uint8_t mask_x;                     // 0x02
+    uint8_t mask_y;                     // 0x03
+    uint8_t pos_x;                      // 0x04
+    uint8_t pos_y;                      // 0x05
 };
 
 union _SYSVideoRAM {
@@ -139,23 +139,23 @@ union _SYSVideoRAM {
     uint16_t words[512];
 
     struct {
-	uint16_t bg0_tiles[324];	// 0x000 - 0x287
-	uint16_t bg1_tiles[144];	// 0x288 - 0x3a7
-	uint16_t bg1_bitmap[16];	// 0x3a8 - 0x3c7
-	struct _SYSSpriteInfo spr[8];	// 0x3c8 - 0x3f7
-	uint8_t bg1_x;			// 0x3f8
-	uint8_t bg1_y;			// 0x3f9
-	uint8_t bg0_x;			// 0x3fa
-	uint8_t bg0_y;			// 0x3fb
-	uint8_t first_line;		// 0x3fc   0 <= x <= 127
-	uint8_t num_lines;	       	// 0x3fd   1 <= x <= 128
-	uint8_t mode;			// 0x3fe
-	uint8_t flags;			// 0x3ff
+        uint16_t bg0_tiles[324];        // 0x000 - 0x287
+        uint16_t bg1_tiles[144];        // 0x288 - 0x3a7
+        uint16_t bg1_bitmap[16];        // 0x3a8 - 0x3c7
+        struct _SYSSpriteInfo spr[8];   // 0x3c8 - 0x3f7
+        uint8_t bg1_x;                  // 0x3f8
+        uint8_t bg1_y;                  // 0x3f9
+        uint8_t bg0_x;                  // 0x3fa
+        uint8_t bg0_y;                  // 0x3fb
+        uint8_t first_line;             // 0x3fc   0 <= x <= 127
+        uint8_t num_lines;              // 0x3fd   1 <= x <= 128
+        uint8_t mode;                   // 0x3fe
+        uint8_t flags;                  // 0x3ff
     };
 
     struct {
-	uint8_t fb[768];		// 0x000 - 0x2ff
-	uint16_t colormap[16];		// 0x300 - 0x31f
+        uint8_t fb[768];                // 0x000 - 0x2ff
+        uint16_t colormap[16];          // 0x300 - 0x31f
     };
 };
 
@@ -218,9 +218,9 @@ union _SYSVideoRAM {
 
 struct _SYSVideoBuffer {
     union _SYSVideoRAM vram;
-    uint32_t cm1[16];		/// INOUT  Change map, at a resolution of 1 bit per word
-    uint32_t cm32;		/// INOUT  Change map, at a resolution of 1 bit per 32 words
-    uint32_t lock;		/// OUT    Lock map, at a resolution of 1 bit per 16 words
+    uint32_t cm1[16];           /// INOUT  Change map, at a resolution of 1 bit per word
+    uint32_t cm32;              /// INOUT  Change map, at a resolution of 1 bit per 32 words
+    uint32_t lock;              /// OUT    Lock map, at a resolution of 1 bit per 16 words
 };
 
 /**
@@ -239,7 +239,7 @@ struct _SYSAccelState {
  * game-accessable RAM.
  */
 
-#define _SYS_MAX_VECTORS	32
+#define _SYS_MAX_VECTORS        32
 
 struct _SYSEventVectors {
     void (*cubeFound)(_SYSCubeID cid);
@@ -264,11 +264,11 @@ void siftmain(void);
  * Low-level system call interface.
  */
     
-void _SYS_exit(void);				/// Equivalent to return from siftmain()
-void _SYS_yield(void);				/// Temporarily cede control to the firmware
-void _SYS_paint(void);				/// Enqueue a new rendering frame
+void _SYS_exit(void);                           /// Equivalent to return from siftmain()
+void _SYS_yield(void);                          /// Temporarily cede control to the firmware
+void _SYS_paint(void);                          /// Enqueue a new rendering frame
 
-void _SYS_enableCubes(_SYSCubeIDVector cv);	/// Which cubes will be trying to connect?
+void _SYS_enableCubes(_SYSCubeIDVector cv);     /// Which cubes will be trying to connect?
 void _SYS_disableCubes(_SYSCubeIDVector cv);
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf);

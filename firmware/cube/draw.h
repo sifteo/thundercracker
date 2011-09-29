@@ -32,21 +32,21 @@ extern uint16_t draw_xy;
 extern uint8_t draw_attr;
 
 // Pre-compute address of an XY coordinate. (tiles -> bytes)
-#define XY(_x, _y)	(((_x)<<1) + (_y) * (_SYS_VRAM_BG0_WIDTH * 2))
+#define XY(_x, _y)      (((_x)<<1) + (_y) * (_SYS_VRAM_BG0_WIDTH * 2))
 
 /*
  * Attribute flags. These bytes are XOR'ed with the most significant byte of
  * an image or character index. They can be used to shift the color palette.
  */
-#define ATTR_NONE	0x00
-#define ATTR_BLUE	0x10
-#define ATTR_ORANGE	0x20
-#define ATTR_INVORANGE	0x30
-#define ATTR_RED	0x40
-#define ATTR_GRAY	0x50
-#define ATTR_INV	0x60
-#define ATTR_INVGRAY	0x70
-#define ATTR_LTBLUE	0x80
-#define ATTR_LTORANGE	0x90
+#define ATTR_NONE       0x00
+#define ATTR_BLUE       0x10
+#define ATTR_ORANGE     0x20
+#define ATTR_INVORANGE  0x30
+#define ATTR_RED        0x40
+#define ATTR_GRAY       0x50
+#define ATTR_INV        0x60
+#define ATTR_INVGRAY    0x70
+#define ATTR_LTBLUE     0x80
+#define ATTR_LTORANGE   0x90
 
 #endif

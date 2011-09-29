@@ -12,15 +12,15 @@
 #include "adc.h"
 #include "emulator.h"
 
-#define ADCCON1_PWRUP		0x80
-#define ADCCON1_BUSY		0x40
-#define ADCCON1_CHSEL_MASK	0x3C
-#define ADCCON1_CHSEL_SHIFT	2
-#define ADCCON2_CONT		0x20
-#define ADCCON2_RATE_MASK	0x1C
-#define ADCCON2_TACQ_MASK	0x03
-#define ADCCON3_RESOL_MASK	0xC0
-#define ADCCON3_RLJUST		0x20
+#define ADCCON1_PWRUP           0x80
+#define ADCCON1_BUSY            0x40
+#define ADCCON1_CHSEL_MASK      0x3C
+#define ADCCON1_CHSEL_SHIFT     2
+#define ADCCON2_CONT            0x20
+#define ADCCON2_RATE_MASK       0x1C
+#define ADCCON2_TACQ_MASK       0x03
+#define ADCCON3_RESOL_MASK      0xC0
+#define ADCCON3_RLJUST          0x20
 
 struct {
     uint16_t inputs[16];
@@ -39,7 +39,7 @@ void adc_init(void)
 void adc_start(void)
 {
     if (!adc.period_timer)
-	adc.triggered = 1;
+        adc.triggered = 1;
 }
 
 void adc_set_input(int index, uint16_t value16)
@@ -55,7 +55,7 @@ static int adc_conversion_nsec(uint8_t *regs)
      */
 
     switch ((regs[REG_ADCCON2] & ADCCON2_TACQ_MASK) |
-	    (regs[REG_ADCCON3] & ADCCON3_RESOL_MASK)) {
+            (regs[REG_ADCCON3] & ADCCON3_RESOL_MASK)) {
 
     // tAcq = 0.75us
     default:
@@ -101,51 +101,51 @@ static void adc_store_result(uint8_t *regs, uint16_t result16)
 
     // Left justified, 6-bit
     case 0x00:
-	regs[REG_ADCDATH] = (result16 >> 8) & 0xFC;
-	regs[REG_ADCDATL] = 0;
-	break;
+        regs[REG_ADCDATH] = (result16 >> 8) & 0xFC;
+        regs[REG_ADCDATL] = 0;
+        break;
 
     // Left justified, 8-bit
     case 0x40:
-	regs[REG_ADCDATH] = result16 >> 8;
-	regs[REG_ADCDATL] = 0;
-	break;
+        regs[REG_ADCDATH] = result16 >> 8;
+        regs[REG_ADCDATL] = 0;
+        break;
 
     // Left justified, 10-bit
     case 0x80:
-	regs[REG_ADCDATH] = result16 >> 8;
-	regs[REG_ADCDATL] = result16 & 0xC0;
-	break;
+        regs[REG_ADCDATH] = result16 >> 8;
+        regs[REG_ADCDATL] = result16 & 0xC0;
+        break;
 
     // Left justified, 12-bit
     case 0xC0:
-	regs[REG_ADCDATH] = result16 >> 8;
-	regs[REG_ADCDATL] = result16 & 0xF0;
-	break;
+        regs[REG_ADCDATH] = result16 >> 8;
+        regs[REG_ADCDATL] = result16 & 0xF0;
+        break;
 
     // Right justified, 6-bit
     case 0x20:
-	regs[REG_ADCDATH] = 0;
-	regs[REG_ADCDATL] = result16 >> 10;
-	break;
+        regs[REG_ADCDATH] = 0;
+        regs[REG_ADCDATL] = result16 >> 10;
+        break;
 
     // Right justified, 8-bit
     case 0x60:
-	regs[REG_ADCDATH] = 0;
-	regs[REG_ADCDATL] = result16 >> 8;
-	break;
+        regs[REG_ADCDATH] = 0;
+        regs[REG_ADCDATL] = result16 >> 8;
+        break;
 
     // Right justified, 10-bit
     case 0xA0:
-	regs[REG_ADCDATH] = result16 >> 14;
-	regs[REG_ADCDATL] = result16 >> 6;
-	break;
+        regs[REG_ADCDATH] = result16 >> 14;
+        regs[REG_ADCDATL] = result16 >> 6;
+        break;
 
     // Right justified, 12-bit
     case 0xE0:
-	regs[REG_ADCDATH] = result16 >> 12;
-	regs[REG_ADCDATL] = result16 >> 4;
-	break;
+        regs[REG_ADCDATH] = result16 >> 12;
+        regs[REG_ADCDATL] = result16 >> 4;
+        break;
     }
 }
 
@@ -155,45 +155,45 @@ int adc_tick(uint8_t *regs)
 
     // Powered down?
     if (!(regs[REG_ADCCON1] & ADCCON1_PWRUP))
-	return 0;
+        return 0;
 
     if (adc.period_timer) {
-	if (!--adc.period_timer)
-	    adc.triggered = 1;
-    }	    
+        if (!--adc.period_timer)
+            adc.triggered = 1;
+    }       
 
     if (adc.triggered && !adc.conversion_timer) {
-	// Start conversion
-	adc.triggered = 0;
-	adc.conversion_timer = NSEC_TO_CYCLES(adc_conversion_nsec(regs));
-	adc.conversion_channel = (regs[REG_ADCCON1] & ADCCON1_CHSEL_MASK) >> ADCCON1_CHSEL_SHIFT;
+        // Start conversion
+        adc.triggered = 0;
+        adc.conversion_timer = NSEC_TO_CYCLES(adc_conversion_nsec(regs));
+        adc.conversion_channel = (regs[REG_ADCCON1] & ADCCON1_CHSEL_MASK) >> ADCCON1_CHSEL_SHIFT;
     }
 
     if (adc.conversion_timer) {
-	// Busy in a conversion
+        // Busy in a conversion
 
-	adc.conversion_timer--;
-	if (adc.conversion_timer) {
-	    regs[REG_ADCCON1] |= ADCCON1_BUSY;
-	} else {
-	    /*
-	     * Just finished the conversion.
-	     *
-	     * We need to clear BUSY, raise an IRQ, scheudle another
-	     * periodic timer if we're in continuous mode, and
-	     * store/convert the result.
-	     */
+        adc.conversion_timer--;
+        if (adc.conversion_timer) {
+            regs[REG_ADCCON1] |= ADCCON1_BUSY;
+        } else {
+            /*
+             * Just finished the conversion.
+             *
+             * We need to clear BUSY, raise an IRQ, scheudle another
+             * periodic timer if we're in continuous mode, and
+             * store/convert the result.
+             */
 
-	    regs[REG_ADCCON1] &= ~ADCCON1_BUSY;
-	    irq = 1;
+            regs[REG_ADCCON1] &= ~ADCCON1_BUSY;
+            irq = 1;
 
-	    if (regs[REG_ADCCON2] & ADCCON2_CONT) {
-		adc.period_timer = HZ_TO_CYCLES(adc_rate_hz(regs));
-		adc.period_timer -= NSEC_TO_CYCLES(adc_conversion_nsec(regs));
-	    }
+            if (regs[REG_ADCCON2] & ADCCON2_CONT) {
+                adc.period_timer = HZ_TO_CYCLES(adc_rate_hz(regs));
+                adc.period_timer -= NSEC_TO_CYCLES(adc_conversion_nsec(regs));
+            }
 
-	    adc_store_result(regs, adc.inputs[adc.conversion_channel]);
-	}
+            adc_store_result(regs, adc.inputs[adc.conversion_channel]);
+        }
     }
 
     return irq;

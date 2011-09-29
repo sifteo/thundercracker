@@ -41,7 +41,7 @@ static void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
     vsnprintf(buf, sizeof buf - 1, fmt, ap);
     buf[sizeof buf - 1] = 0;
     while (*p)
-	font_putc(x++, y, *(p++));
+        font_putc(x++, y, *(p++));
     va_end(ap);
 }
 
@@ -75,8 +75,8 @@ static void onAssetDone(_SYSCubeID cid)
 
     // XXX: Drawing the logo manually, since there is no blit primitive yet
     for (unsigned y = 0; y < Logo.height; y++)
-	for (unsigned x = 0; x < Logo.width; x++)
-	    poke_index(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
+        for (unsigned x = 0; x < Logo.width; x++)
+            poke_index(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
 
     cube.vbuf.unlock();
 
@@ -104,6 +104,6 @@ void siftmain()
     cube.loadAssets(GameAssets);
 
     while (1) {
-	System::paint();
+        System::paint();
     }
 }

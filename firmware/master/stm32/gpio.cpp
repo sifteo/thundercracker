@@ -17,8 +17,8 @@ void GPIOPin::setControl(Control c) const {
     volatile uint32_t *ptr = &port()->CRL;
     
     if (p >= 8) {
-	p -= 8;
-	ptr++;
+        p -= 8;
+        ptr++;
     }
 
     unsigned shift = p << 2;

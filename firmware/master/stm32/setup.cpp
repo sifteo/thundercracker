@@ -48,19 +48,19 @@ extern "C" void _start()
      *   - USB clock at 48 MHz (PLL /1)
      */
 
-    RCC.CFGR = ( (1 << 22) |	// USBPRE (/1)
-		 (4 << 18) |	// PLLMUL (x6)
-		 (1 << 16) |	// PLLSRC (HSE)
-		 (8 << 11) |    // PPRE2  (/2)
-		 (5 << 8) |	// PPRE1  (/4)
-		 (2 << 0) );	// SW (PLL)
+    RCC.CFGR = ( (1 << 22) |    // USBPRE (/1)
+                 (4 << 18) |    // PLLMUL (x6)
+                 (1 << 16) |    // PLLSRC (HSE)
+                 (8 << 11) |    // PPRE2  (/2)
+                 (5 << 8) |     // PPRE1  (/4)
+                 (2 << 0) );    // SW (PLL)
 
-    RCC.CR |= ( (1 << 16) |	// HSE ON
-		(1 << 24) );	// PLL ON
+    RCC.CR |= ( (1 << 16) |     // HSE ON
+                (1 << 24) );    // PLL ON
 
     // Enable peripheral clocks
-    RCC.APB1ENR = 0x00004000;	// SPI2
-    RCC.APB2ENR = 0x0000003d;	// GPIO/AFIO
+    RCC.APB1ENR = 0x00004000;   // SPI2
+    RCC.APB2ENR = 0x0000003d;   // GPIO/AFIO
 
     /*
      * Initialize data segments (In parallel with oscillator startup)
@@ -68,7 +68,7 @@ extern "C" void _start()
 
     memset(&__bss_start, 0, (uintptr_t)&__bss_end - (uintptr_t)&__bss_start);
     memcpy(&__data_start, &__data_src,
-	   (uintptr_t)&__data_end - (uintptr_t)&__data_start);
+           (uintptr_t)&__data_end - (uintptr_t)&__data_start);
 
     /*
      * Run C++ global constructors.
@@ -81,7 +81,7 @@ extern "C" void _start()
      */
     
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
-	p[0]();
+        p[0]();
 
     /*
      * Nested Vectored Interrupt Controller setup.

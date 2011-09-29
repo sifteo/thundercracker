@@ -24,37 +24,37 @@ namespace Atomic {
 
     static inline void Barrier() {
 #ifdef __GNUC__
-	__sync_synchronize();
+        __sync_synchronize();
 #endif
     }
     
     static inline void Or(uint32_t &dest, uint32_t src) {
 #ifdef __GNUC__
-	__sync_or_and_fetch(&dest, src);
+        __sync_or_and_fetch(&dest, src);
 #else
-	dest |= src;
+        dest |= src;
 #endif
     }
 
     static inline void And(uint32_t &dest, uint32_t src) {
 #ifdef __GNUC__
-	__sync_and_and_fetch(&dest, src);
+        __sync_and_and_fetch(&dest, src);
 #else
-	dest &= src;
+        dest &= src;
 #endif
     }
 
     static inline void Store(uint32_t &dest, uint32_t src) {
-	Barrier();
-	dest = src;
-	Barrier();
+        Barrier();
+        dest = src;
+        Barrier();
     }
 
     static inline uint32_t Load(uint32_t &src) {
-	Barrier();
-	uint32_t dest = src;
-	Barrier();
-	return dest;
+        Barrier();
+        uint32_t dest = src;
+        Barrier();
+        return dest;
     }
 };
 
@@ -71,37 +71,37 @@ namespace Atomic {
 namespace Intrinsic {
 
     static inline uint32_t CLZ(uint32_t r) {
-	// Count leading zeroes. One instruction on ARM.
+        // Count leading zeroes. One instruction on ARM.
 #ifdef __GNUC__
-	return __builtin_clz(r);
-#else	
-	uint32_t c;
-	for (c = 0; c < 32; c++) {
-	    if (r & 0x80000000)
-		break;
-	    else
-		r <<= 1;
-	}
-	return c;
+        return __builtin_clz(r);
+#else   
+        uint32_t c;
+        for (c = 0; c < 32; c++) {
+            if (r & 0x80000000)
+                break;
+            else
+                r <<= 1;
+        }
+        return c;
 #endif
     }
 
     static inline uint32_t LZ(uint32_t l) {
-	// Generate number with 'l' leading zeroes. Inverse of CLZ.
-	return 0x80000000 >> l;
+        // Generate number with 'l' leading zeroes. Inverse of CLZ.
+        return 0x80000000 >> l;
     }
 
     static inline uint32_t ROR(uint32_t a, uint32_t b) {
-	// Rotate right. One instruction on ARM
+        // Rotate right. One instruction on ARM
 
-	if (b < 32)
-	    return (a >> b) | (a << (32 - b));
-	else
-	    return 0;
+        if (b < 32)
+            return (a >> b) | (a << (32 - b));
+        else
+            return 0;
     }
 
     static inline uint32_t ROL(uint32_t a, uint32_t b) {
-	return ROR(a, 32 - b);
+        return ROR(a, 32 - b);
     }
 
 };

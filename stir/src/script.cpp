@@ -17,8 +17,8 @@
 namespace Stir {
 
 // Important global variables
-#define GLOBAL_DEFGROUP		"_defaultGroup"
-#define GLOBAL_QUALITY		"quality"
+#define GLOBAL_DEFGROUP         "_defaultGroup"
+#define GLOBAL_QUALITY          "quality"
 
 const char Group::className[] = "group";
 const char Image::className[] = "image";
@@ -60,10 +60,10 @@ Script::~Script()
 bool Script::run(const char *filename)
 {
     if (!anyOutputs)
-	log.error("Warning, no output files given!");
+        log.error("Warning, no output files given!");
 
     if (!luaRunFile(filename))
-	return false;
+        return false;
 
     collect();
 
@@ -72,17 +72,17 @@ bool Script::run(const char *filename)
     CPPSourceWriter source(log, outputSource);
     
     for (std::set<Group*>::iterator i = groups.begin(); i != groups.end(); i++) {
-	Group *group = *i;
-	TilePool &pool = group->getPool();
+        Group *group = *i;
+        TilePool &pool = group->getPool();
 
-	log.heading(group->getName().c_str());
+        log.heading(group->getName().c_str());
 
-	pool.optimize(log);
-	pool.encode(group->getLoadstream(), &log);
+        pool.optimize(log);
+        pool.encode(group->getLoadstream(), &log);
 
-	proof.writeGroup(*group);
-	header.writeGroup(*group);
-	source.writeGroup(*group);
+        proof.writeGroup(*group);
+        header.writeGroup(*group);
+        source.writeGroup(*group);
     }
 
     proof.close();
@@ -97,13 +97,13 @@ bool Script::luaRunFile(const char *filename)
     int s = luaL_loadfile(L, filename);
 
     if (!s) {
-	s = lua_pcall(L, 0, LUA_MULTRET, 0);
+        s = lua_pcall(L, 0, LUA_MULTRET, 0);
     }
 
     if (s) {
-	log.error("Script error: %s", lua_tostring(L, -1));
-	lua_pop(L, 1);
-	return false;
+        log.error("Script error: %s", lua_tostring(L, -1));
+        lua_pop(L, 1);
+        return false;
     }
 
     return true;
@@ -112,24 +112,24 @@ bool Script::luaRunFile(const char *filename)
 bool Script::addOutput(const char *filename)
 {
     if (outputHeader == NULL && (matchExtension(filename, "h") ||
-				 matchExtension(filename, "hpp"))) {
-	outputHeader = filename;
-	anyOutputs = true;
-	return true;
+                                 matchExtension(filename, "hpp"))) {
+        outputHeader = filename;
+        anyOutputs = true;
+        return true;
     }
 
     if (outputSource == NULL && (matchExtension(filename, "cpp") ||
-				 matchExtension(filename, "cc"))) {
-	outputSource = filename;
-	anyOutputs = true;
-	return true;
+                                 matchExtension(filename, "cc"))) {
+        outputSource = filename;
+        anyOutputs = true;
+        return true;
     }
 
     if (outputProof == NULL && (matchExtension(filename, "html") ||
-				matchExtension(filename, "htm"))) {
-	outputProof = filename;
-	anyOutputs = true;
-	return true;
+                                matchExtension(filename, "htm"))) {
+        outputProof = filename;
+        anyOutputs = true;
+        return true;
     }
 
     return false;
@@ -146,15 +146,15 @@ bool Script::matchExtension(const char *filename, const char *ext)
     const char *p = strrchr(filename, '.');
 
     if (!p)
-	return false;
+        return false;
 
     for (;;) {
-	p++;
-	if (tolower(*p) != tolower(*ext))
-	    return false;
-	if (!*ext)
-	    return true;
-	ext++;
+        p++;
+        if (tolower(*p) != tolower(*ext))
+            return false;
+        if (!*ext)
+            return true;
+        ext++;
     }
 }
 
@@ -165,9 +165,9 @@ bool Script::argBegin(lua_State *L, const char *className)
      */
 
     if (!lua_istable(L, 1)) {
-	luaL_error(L, "%s{} argument is not a table. Did you use () instead of {}?",
-		   className);
-	return false;
+        luaL_error(L, "%s{} argument is not a table. Did you use () instead of {}?",
+                   className);
+        return false;
     }
 
     return true;
@@ -185,8 +185,8 @@ bool Script::argMatch(lua_State *L, const char *arg)
     lua_gettable(L, 1);
 
     if (lua_isnil(L, -1)) {
-	lua_pop(L, 1);
-	return false;
+        lua_pop(L, 1);
+        return false;
     }
 
     lua_pushstring(L, arg);
@@ -202,8 +202,8 @@ bool Script::argMatch(lua_State *L, lua_Integer arg)
     lua_gettable(L, 1);
 
     if (lua_isnil(L, -1)) {
-	lua_pop(L, 1);
-	return false;
+        lua_pop(L, 1);
+        return false;
     }
 
     lua_pushinteger(L, arg);
@@ -224,10 +224,10 @@ bool Script::argEnd(lua_State *L)
 
     lua_pushnil(L);
     while (lua_next(L, 1)) {
-	lua_pushvalue(L, -2);   // Make a copy of the key object
-	luaL_error(L, "Unrecognized parameter (%s)", lua_tostring(L, -1));
-	lua_pop(L, 2);		// Pop value and key-copy.
-	success = false;
+        lua_pushvalue(L, -2);   // Make a copy of the key object
+        luaL_error(L, "Unrecognized parameter (%s)", lua_tostring(L, -1));
+        lua_pop(L, 2);          // Pop value and key-copy.
+        success = false;
     }
 
     return success;
@@ -246,23 +246,23 @@ void Script::collect()
 
     lua_pushnil(L);
     while (lua_next(L, LUA_GLOBALSINDEX)) {
-	lua_pushvalue(L, -2);   // Make a copy of the key object
-	const char *name = lua_tostring(L, -1);
-	Group *group = Lunar<Group>::cast(L, -2);
-	Image *image = Lunar<Image>::cast(L, -2);
+        lua_pushvalue(L, -2);   // Make a copy of the key object
+        const char *name = lua_tostring(L, -1);
+        Group *group = Lunar<Group>::cast(L, -2);
+        Image *image = Lunar<Image>::cast(L, -2);
 
-	if (name && name[0] != '_') {
-	    if (group) {
-		group->setName(name);
-		groups.insert(group);
-	    }
-	    if (image) {
-		image->setName(name);
-		image->getGroup()->addImage(image);
-	    }
-	}
+        if (name && name[0] != '_') {
+            if (group) {
+                group->setName(name);
+                groups.insert(group);
+            }
+            if (image) {
+                image->setName(name);
+                image->getGroup()->addImage(image);
+            }
+        }
 
-	lua_pop(L, 2);
+        lua_pop(L, 2);
     };
     lua_pop(L, 1);
 }
@@ -271,17 +271,17 @@ void Script::collect()
 Group::Group(lua_State *L)
 {
     if (!Script::argBegin(L, className))
-	return;
+        return;
 
     if (Script::argMatch(L, "quality")) {
-	quality = lua_tonumber(L, -1);
+        quality = lua_tonumber(L, -1);
     } else {
-	lua_getglobal(L, GLOBAL_QUALITY);
-	quality = lua_tonumber(L, -1);
+        lua_getglobal(L, GLOBAL_QUALITY);
+        quality = lua_tonumber(L, -1);
     }
 
     if (!Script::argEnd(L))
-	return;
+        return;
 
     setDefault(L);
 }
@@ -323,8 +323,8 @@ uint64_t Group::getSignature() const
 
     uint64_t sig = 0;
     for (unsigned i = 0; i < sizeof sig; i++) {
-	sig <<= 8;
-	sig |= digest[i];
+        sig <<= 8;
+        sig |= digest[i];
     }
 
     return sig;
@@ -333,84 +333,84 @@ uint64_t Group::getSignature() const
 Image::Image(lua_State *L)
 {
     if (!Script::argBegin(L, className))
-	return;
+        return;
 
     if (Script::argMatch(L, "group")) {
-	mGroup = Lunar<Group>::cast(L, -1);
-	if (!mGroup) {
-	    luaL_error(L, "Invalid asset group. Groups must be defined using group{}.");
-	    return;
-	}
+        mGroup = Lunar<Group>::cast(L, -1);
+        if (!mGroup) {
+            luaL_error(L, "Invalid asset group. Groups must be defined using group{}.");
+            return;
+        }
     } else {
-	mGroup = Group::getDefault(L);
-	if (!mGroup) {
-	    luaL_error(L, "Image asset defined with no group. Define a group first: MyGroup = group{}");
-	    return;
-	}
+        mGroup = Group::getDefault(L);
+        if (!mGroup) {
+            luaL_error(L, "Image asset defined with no group. Define a group first: MyGroup = group{}");
+            return;
+        }
     }
 
     if (Script::argMatch(L, "quality")) {
-	mTileOpt.quality = lua_tonumber(L, -1);
+        mTileOpt.quality = lua_tonumber(L, -1);
     } else {
-	mTileOpt.quality = mGroup->getQuality();
+        mTileOpt.quality = mGroup->getQuality();
     }
 
     if (Script::argMatch(L, "frames"))
-	mImages.setFrames(lua_tointeger(L, -1));
+        mImages.setFrames(lua_tointeger(L, -1));
     if (Script::argMatch(L, "width"))
-	mImages.setWidth(lua_tointeger(L, -1));
+        mImages.setWidth(lua_tointeger(L, -1));
     if (Script::argMatch(L, "height"))
-	mImages.setHeight(lua_tointeger(L, -1));
+        mImages.setHeight(lua_tointeger(L, -1));
     if (Script::argMatch(L, "pinned"))
-	mTileOpt.pinned = lua_toboolean(L, -1);
+        mTileOpt.pinned = lua_toboolean(L, -1);
 
     if (Script::argMatch(L, 1)) {
-	/*
-	 * The positional argument can be a single string, or a
-	 * table which is interpreted as an array of strings.
-	 *
-	 * To handle these cases uniformly, we just trivially wrap a
-	 * single string in a table if needbe.
-	 */
+        /*
+         * The positional argument can be a single string, or a
+         * table which is interpreted as an array of strings.
+         *
+         * To handle these cases uniformly, we just trivially wrap a
+         * single string in a table if needbe.
+         */
 
-	if (!lua_istable(L, -1)) {
-	    lua_newtable(L);		// New wrapper table
-	    lua_pushinteger(L, 1);	// Index for sole element (1)
-	    lua_pushvalue(L, -3);	// argMatch() result
-	    lua_settable(L, -3);
-	}
+        if (!lua_istable(L, -1)) {
+            lua_newtable(L);            // New wrapper table
+            lua_pushinteger(L, 1);      // Index for sole element (1)
+            lua_pushvalue(L, -3);       // argMatch() result
+            lua_settable(L, -3);
+        }
 
-	unsigned len = lua_objlen(L, -1);
-	for (unsigned i = 1; i <= len; i++) {
-	    lua_rawgeti(L, -1, i);
-	    const char *filename = lua_tostring(L, -1);
-	    if (!mImages.load(filename)) {	
-		luaL_error(L, "Not a valid PNG image file: '%s'", filename);
-		return;
-	    }
-	    lua_pop(L, 1);
-	}
+        unsigned len = lua_objlen(L, -1);
+        for (unsigned i = 1; i <= len; i++) {
+            lua_rawgeti(L, -1, i);
+            const char *filename = lua_tostring(L, -1);
+            if (!mImages.load(filename)) {      
+                luaL_error(L, "Not a valid PNG image file: '%s'", filename);
+                return;
+            }
+            lua_pop(L, 1);
+        }
 
     } else {
-	luaL_error(L, "%s{} requires either a single filename or a table of filenames",
-		   className);
-	return;
+        luaL_error(L, "%s{} requires either a single filename or a table of filenames",
+                   className);
+        return;
     }
 
     if (!Script::argEnd(L))
-	return;
+        return;
 
     mImages.finishLoading();
 
     if (!mImages.isConsistent()) {
-	luaL_error(L, "Image dimensions are inconsistent");
-	return;
+        luaL_error(L, "Image dimensions are inconsistent");
+        return;
     }
 
     if (!mImages.divisibleBy(Tile::SIZE)) {
-	luaL_error(L, "Image size %dx%d is not divisible by %d-pixel tile size",
-		   mImages.getWidth(), mImages.getHeight(), Tile::SIZE);
-	return;
+        luaL_error(L, "Image size %dx%d is not divisible by %d-pixel tile size",
+                   mImages.getWidth(), mImages.getHeight(), Tile::SIZE);
+        return;
     }
 
     createGrids();
@@ -451,8 +451,8 @@ void Image::createGrids()
     mGrids.clear();
 
     for (unsigned frame = 0; frame < mImages.getFrames(); frame++) {
-	mGrids.push_back(TileGrid(&mGroup->getPool()));
-	mImages.storeFrame(frame, mGrids.back(), mTileOpt);
+        mGrids.push_back(TileGrid(&mGroup->getPool()));
+        mImages.storeFrame(frame, mGrids.back(), mTileOpt);
     }
 }
 

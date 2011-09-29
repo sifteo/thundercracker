@@ -29,13 +29,13 @@ void ConsoleLogger::setVerbose(bool verbose)
 void ConsoleLogger::heading(const char *name)
 {
     if (mVerbose)
-	fprintf(stderr, "======== %s ========\n", name);
+        fprintf(stderr, "======== %s ========\n", name);
 }
 
 void ConsoleLogger::taskBegin(const char *name)
 {
     if (mVerbose)
-	fprintf(stderr, "%s...\n", name);
+        fprintf(stderr, "%s...\n", name);
 }
 
 void ConsoleLogger::taskProgress(const char *fmt, ...)
@@ -45,10 +45,10 @@ void ConsoleLogger::taskProgress(const char *fmt, ...)
     va_start(ap, fmt);
 
     if (mVerbose) {
-	fprintf(stderr, "\r\t");
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "    ");
-	mNeedNewline = true;
+        fprintf(stderr, "\r\t");
+        vfprintf(stderr, fmt, ap);
+        fprintf(stderr, "    ");
+        mNeedNewline = true;
     }
 
     va_end(ap);
@@ -57,15 +57,15 @@ void ConsoleLogger::taskProgress(const char *fmt, ...)
 void ConsoleLogger::taskEnd()
 {
     if (mNeedNewline) {
-	fprintf(stderr, "\n");
-	mNeedNewline = false;
+        fprintf(stderr, "\n");
+        mNeedNewline = false;
     }
 }
 
 void ConsoleLogger::infoBegin(const char *name)
 {
     if (mVerbose)
-	fprintf(stderr, "%s:\n", name);
+        fprintf(stderr, "%s:\n", name);
 }
 
 void ConsoleLogger::infoLine(const char *fmt, ...)
@@ -75,9 +75,9 @@ void ConsoleLogger::infoLine(const char *fmt, ...)
     va_start(ap, fmt);
 
     if (mVerbose) {
-	fprintf(stderr, "  ");
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
+        fprintf(stderr, "  ");
+        vfprintf(stderr, fmt, ap);
+        fprintf(stderr, "\n");
     }
 
     va_end(ap);
@@ -91,8 +91,8 @@ void ConsoleLogger::error(const char *fmt, ...)
     va_list ap;
 
     if (mNeedNewline) {
-	fprintf(stderr, "\n");
-	mNeedNewline = false;
+        fprintf(stderr, "\n");
+        mNeedNewline = false;
     }
 
     va_start(ap, fmt);

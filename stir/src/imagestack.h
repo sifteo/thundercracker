@@ -42,31 +42,31 @@ class ImageStack {
     void storeFrame(unsigned frame, TileGrid &tg, const TileOptions &opt);
 
     unsigned getWidth() const {
-	return mWidth;
+        return mWidth;
     }
 
     unsigned getHeight() const {
-	return mHeight;
+        return mHeight;
     }
 
     unsigned getFrames() const {
-	return mFrames;
+        return mFrames;
     }
 
     bool isConsistent() const {
-	return mConsistent;
+        return mConsistent;
     }
 
     bool divisibleBy(unsigned size) const {
-	return !(getWidth() % size) && !(getHeight() % size);
+        return !(getWidth() % size) && !(getHeight() % size);
     }
 
  private:
     struct source {
-	LodePNG::Decoder decoder;
-	std::vector<uint8_t> rgba;
-	unsigned firstFrame;
-	unsigned numFrames;
+        LodePNG::Decoder decoder;
+        std::vector<uint8_t> rgba;
+        unsigned firstFrame;
+        unsigned numFrames;
     };
 
     bool mConsistent;

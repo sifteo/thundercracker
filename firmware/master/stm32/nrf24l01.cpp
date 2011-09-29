@@ -28,34 +28,34 @@ void NRF24L01::init() {
     irq.irqSetFallingEdge();
 
     static const uint8_t radio_setup[]  = {
-	/* Enable nRF24L01 features */
-	2, CMD_W_REGISTER | REG_FEATURE,	0x07,
-	
-	/* Enable receive pipe 0, to support auto-ack */
-	2, CMD_W_REGISTER | REG_DYNPD, 		0x01,
-	2, CMD_W_REGISTER | REG_EN_RXADDR,	0x01,
-	2, CMD_W_REGISTER | REG_EN_AA,		0x01,
+        /* Enable nRF24L01 features */
+        2, CMD_W_REGISTER | REG_FEATURE,        0x07,
+        
+        /* Enable receive pipe 0, to support auto-ack */
+        2, CMD_W_REGISTER | REG_DYNPD,          0x01,
+        2, CMD_W_REGISTER | REG_EN_RXADDR,      0x01,
+        2, CMD_W_REGISTER | REG_EN_AA,          0x01,
 
-	/* Max ACK payload size */
-	2, CMD_W_REGISTER | REG_RX_PW_P0,	32,
-	
-	/* Discard any packets queued in hardware */
-	1, CMD_FLUSH_RX,
-	1, CMD_FLUSH_TX,
-			
-	/* Auto retry delay, 500us, 15 retransmits */
-	1, CMD_W_REGISTER | REG_SETUP_RETR,     0x1f,
+        /* Max ACK payload size */
+        2, CMD_W_REGISTER | REG_RX_PW_P0,       32,
+        
+        /* Discard any packets queued in hardware */
+        1, CMD_FLUSH_RX,
+        1, CMD_FLUSH_TX,
+                        
+        /* Auto retry delay, 500us, 15 retransmits */
+        1, CMD_W_REGISTER | REG_SETUP_RETR,     0x1f,
 
-	/* 5-byte address width */
-	1, CMD_W_REGISTER | REG_SETUP_AW,	0x03,
+        /* 5-byte address width */
+        1, CMD_W_REGISTER | REG_SETUP_AW,       0x03,
 
-	/* 2 Mbit, max transmit power */
-	1, CMD_W_REGISTER | REG_RF_SETUP,       0x0e,
-	
-	/* Clear write-once-to-clear bits */
-	2, CMD_W_REGISTER | REG_STATUS,		0x70,
+        /* 2 Mbit, max transmit power */
+        1, CMD_W_REGISTER | REG_RF_SETUP,       0x0e,
+        
+        /* Clear write-once-to-clear bits */
+        2, CMD_W_REGISTER | REG_STATUS,         0x70,
 
-	0
+        0
     };
     spi.transferTable(radio_setup);
 
@@ -70,13 +70,13 @@ void NRF24L01::ptxMode()
      */
 
     static const uint8_t ptx_setup[]  = {
-	/* 16-bit CRC, radio enabled, IRQs enabled */
-	2, CMD_W_REGISTER | REG_CONFIG,		0x0e,
+        /* 16-bit CRC, radio enabled, IRQs enabled */
+        2, CMD_W_REGISTER | REG_CONFIG,         0x0e,
 
-	/* XXX: Send packet */
-	2, CMD_W_TX_PAYLOAD, 0x55,
+        /* XXX: Send packet */
+        2, CMD_W_TX_PAYLOAD, 0x55,
 
-	0
+        0
     };
     spi.transferTable(ptx_setup); 
 

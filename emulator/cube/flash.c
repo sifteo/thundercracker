@@ -63,49 +63,49 @@ struct {
 void flash_init(const char *filename)
 {
     if (filename) {
-	size_t result;
+        size_t result;
 
-	fl.file = fopen(filename, "rb+");
-	if (!fl.file) {
-	    fl.file = fopen(filename, "wb+");
-	}
-	if (!fl.file) {
-	    perror("Error opening flash");
-	    exit(1);
-	}
+        fl.file = fopen(filename, "rb+");
+        if (!fl.file) {
+            fl.file = fopen(filename, "wb+");
+        }
+        if (!fl.file) {
+            perror("Error opening flash");
+            exit(1);
+        }
 
-	result = fread(fl.data, 1, FLASH_SIZE, fl.file);
-	if (result < 0) {
-	    perror("Error reading flash");
-	    exit(1);
-	}	
+        result = fread(fl.data, 1, FLASH_SIZE, fl.file);
+        if (result < 0) {
+            perror("Error reading flash");
+            exit(1);
+        }       
  
     } else {
-	fl.file = NULL;
+        fl.file = NULL;
     }
 }
 
 static void flash_write(void)
 {
     if (fl.file) {
-	size_t result;
-	
-	fseek(fl.file, 0, SEEK_SET);
+        size_t result;
+        
+        fseek(fl.file, 0, SEEK_SET);
 
-	result = fwrite(fl.data, FLASH_SIZE, 1, fl.file);
-	if (result != 1)
-	    perror("Error writing flash");
+        result = fwrite(fl.data, FLASH_SIZE, 1, fl.file);
+        if (result != 1)
+            perror("Error writing flash");
 
-	fflush(fl.file);
+        fflush(fl.file);
     }
 }
 
 void flash_exit(void)
 {
     if (fl.write_timer)
-	flash_write();
+        flash_write();
     if (fl.file)
-	fclose(fl.file);
+        fclose(fl.file);
 }
 
 uint32_t flash_cycle_count(void)
@@ -138,11 +138,11 @@ static int flash_match_command(struct command_sequence *seq)
     uint8_t fifo_index = fl.cmd_fifo_head - CMD_LENGTH + 1;
    
     for (i = 0; i < CMD_LENGTH; i++, fifo_index++) {
-	fifo_index &= CMD_FIFO_MASK;
+        fifo_index &= CMD_FIFO_MASK;
 
-	if ( (fl.cmd_fifo[fifo_index].addr & seq[i].addr_mask) != seq[i].addr ||
-	     (fl.cmd_fifo[fifo_index].data & seq[i].data_mask) != seq[i].data )
-	    return 0;
+        if ( (fl.cmd_fifo[fifo_index].addr & seq[i].addr_mask) != seq[i].addr ||
+             (fl.cmd_fifo[fifo_index].data & seq[i].data_mask) != seq[i].data )
+            return 0;
     }
 
     return 1;
@@ -153,35 +153,35 @@ static void flash_match_commands(void)
     struct cmd_state *st = &fl.cmd_fifo[fl.cmd_fifo_head];
 
     if (fl.busy != BF_IDLE)
-	return;
+        return;
 
     if (flash_match_command(cmd_byte_program)) {
-	fl.data[st->addr] &= st->data;
-	fl.status_byte = STATUS_DATA_INV & ~st->data;
-	fl.busy = BF_PROGRAM;
-	fl.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-	fl.busy_timer = USEC_TO_CYCLES(PROGRAM_TIME_US);
-	
+        fl.data[st->addr] &= st->data;
+        fl.status_byte = STATUS_DATA_INV & ~st->data;
+        fl.busy = BF_PROGRAM;
+        fl.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
+        fl.busy_timer = USEC_TO_CYCLES(PROGRAM_TIME_US);
+        
     } else if (flash_match_command(cmd_sector_erase)) {
-	memset(fl.data + (st->addr & ~(SECTOR_SIZE - 1)), 0xFF, SECTOR_SIZE);
-	fl.status_byte = 0;
-	fl.busy = BF_ERASE;
-	fl.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-	fl.busy_timer = USEC_TO_CYCLES(ERASE_SECTOR_TIME_US);
-	
+        memset(fl.data + (st->addr & ~(SECTOR_SIZE - 1)), 0xFF, SECTOR_SIZE);
+        fl.status_byte = 0;
+        fl.busy = BF_ERASE;
+        fl.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
+        fl.busy_timer = USEC_TO_CYCLES(ERASE_SECTOR_TIME_US);
+        
     } else if (flash_match_command(cmd_block_erase)) {
-	memset(fl.data + (st->addr & ~(BLOCK_SIZE - 1)), 0xFF, BLOCK_SIZE);
-	fl.status_byte = 0;
-	fl.busy = BF_ERASE;
-	fl.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-	fl.busy_timer = USEC_TO_CYCLES(ERASE_BLOCK_TIME_US);
+        memset(fl.data + (st->addr & ~(BLOCK_SIZE - 1)), 0xFF, BLOCK_SIZE);
+        fl.status_byte = 0;
+        fl.busy = BF_ERASE;
+        fl.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
+        fl.busy_timer = USEC_TO_CYCLES(ERASE_BLOCK_TIME_US);
 
     } else if (flash_match_command(cmd_chip_erase)) {
-	memset(fl.data, 0xFF, FLASH_SIZE);
-	fl.status_byte = 0;
-	fl.busy = BF_ERASE;
-	fl.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-	fl.busy_timer = USEC_TO_CYCLES(ERASE_CHIP_TIME_US);
+        memset(fl.data, 0xFF, FLASH_SIZE);
+        fl.status_byte = 0;
+        fl.busy = BF_ERASE;
+        fl.write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
+        fl.busy_timer = USEC_TO_CYCLES(ERASE_CHIP_TIME_US);
     }
 }
 
@@ -190,7 +190,7 @@ static void flash_update_status_byte(void)
     fl.status_byte ^= STATUS_TOGGLE;
 
     if (fl.busy == BF_ERASE)
-	fl.status_byte ^= STATUS_ERASE_TOGGLE;
+        fl.status_byte ^= STATUS_ERASE_TOGGLE;
 }
 
 void flash_tick(struct em8051 *cpu)
@@ -200,29 +200,29 @@ void flash_tick(struct em8051 *cpu)
      */
 
     if (fl.busy) {
-	if (!--fl.busy_timer) {
-	    fl.busy = BF_IDLE;
+        if (!--fl.busy_timer) {
+            fl.busy = BF_IDLE;
 
-	    /*
-	     * For performance tuning, it's useful to know where the
-	     * flash first became idle.  If it was while we were
-	     * waiting, great. If it was during flash decoding, we're
-	     * wasting time!
-	     */
-	    {
-		unsigned pc = cpu->mPC & (cpu->mCodeMemSize - 1);
-		struct profile_data *pd = &cpu->mProfilerMem[pc];
-		pd->flash_idle++;
-	    }
-	}
-	fl.busy_ticks++;
+            /*
+             * For performance tuning, it's useful to know where the
+             * flash first became idle.  If it was while we were
+             * waiting, great. If it was during flash decoding, we're
+             * wasting time!
+             */
+            {
+                unsigned pc = cpu->mPC & (cpu->mCodeMemSize - 1);
+                struct profile_data *pd = &cpu->mProfilerMem[pc];
+                pd->flash_idle++;
+            }
+        }
+        fl.busy_ticks++;
     } else {
-	fl.idle_ticks++;
+        fl.idle_ticks++;
     }
 
     if (fl.write_timer) {
-	if (!--fl.write_timer)
-	    flash_write();
+        if (!--fl.write_timer)
+            flash_write();
     }
 
     // Latch any busy flags long enough for the UI to see them.
@@ -232,56 +232,56 @@ void flash_tick(struct em8051 *cpu)
 void flash_cycle(struct flash_pins *pins)
 {
     if (pins->ce) {
-	// Chip disabled
-	pins->data_drv = 0;
-	fl.prev_we = 1;
-	fl.prev_oe = 1;
+        // Chip disabled
+        pins->data_drv = 0;
+        fl.prev_we = 1;
+        fl.prev_oe = 1;
 
     } else {
-	uint32_t addr = (FLASH_SIZE - 1) & pins->addr;
+        uint32_t addr = (FLASH_SIZE - 1) & pins->addr;
 
-	/*
-	 * Command writes are triggered on a falling WE edge.
-	 */
+        /*
+         * Command writes are triggered on a falling WE edge.
+         */
 
-	if (!pins->we && fl.prev_we) {
-	    fl.cycle_count++;
-	    fl.latched_addr = addr;
+        if (!pins->we && fl.prev_we) {
+            fl.cycle_count++;
+            fl.latched_addr = addr;
 
-	    fl.cmd_fifo[fl.cmd_fifo_head].addr = addr;
-	    fl.cmd_fifo[fl.cmd_fifo_head].data = pins->data_in;
-	    flash_match_commands();
-	    fl.cmd_fifo_head = CMD_FIFO_MASK & (fl.cmd_fifo_head + 1);
-	}
+            fl.cmd_fifo[fl.cmd_fifo_head].addr = addr;
+            fl.cmd_fifo[fl.cmd_fifo_head].data = pins->data_in;
+            flash_match_commands();
+            fl.cmd_fifo_head = CMD_FIFO_MASK & (fl.cmd_fifo_head + 1);
+        }
 
-	/*
-	 * Reads can occur on any cycle with OE asserted.
-	 *
-	 * If we're busy, the read will return a status
-	 * byte. Otherwise, it returns data from the memory array.
-	 *
-	 * For power consumption accounting purposes, this counts as a
-	 * read cycle if OE/CE were just now asserted, OR if the
-	 * address changed.
-	 */
+        /*
+         * Reads can occur on any cycle with OE asserted.
+         *
+         * If we're busy, the read will return a status
+         * byte. Otherwise, it returns data from the memory array.
+         *
+         * For power consumption accounting purposes, this counts as a
+         * read cycle if OE/CE were just now asserted, OR if the
+         * address changed.
+         */
 
-	if (pins->oe) {
-	    pins->data_drv = 0;
-	} else {
+        if (pins->oe) {
+            pins->data_drv = 0;
+        } else {
 
-	    // Toggle bits only change on an OE edge.
-	    if (fl.prev_oe)
-		flash_update_status_byte();
+            // Toggle bits only change on an OE edge.
+            if (fl.prev_oe)
+                flash_update_status_byte();
 
-	    pins->data_drv = 1;
-	    if (addr != fl.latched_addr || fl.prev_oe) {
-		fl.cycle_count++;
-		fl.latched_addr = addr;
-	    }
-	}
+            pins->data_drv = 1;
+            if (addr != fl.latched_addr || fl.prev_oe) {
+                fl.cycle_count++;
+                fl.latched_addr = addr;
+            }
+        }
 
-	fl.prev_we = pins->we;
-	fl.prev_oe = pins->oe;
+        fl.prev_we = pins->we;
+        fl.prev_oe = pins->oe;
     }
 }
 
@@ -295,7 +295,7 @@ uint8_t flash_data_out(void)
      * update the flash data when data_drv is asserted.
      */
     return fl.busy ? fl.status_byte :
-	fl.data[fl.latched_addr];
+        fl.data[fl.latched_addr];
 }
 
 uint32_t flash_size(void)

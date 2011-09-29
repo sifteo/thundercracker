@@ -37,18 +37,18 @@ struct TileCodecLUT {
     unsigned encode(const TilePalette &pal);
 
     int findColor(RGB565 c, unsigned maxIndex = LUT_MAX - 1) const {
-	// Is a particular color in the LUT? Return the index.
-	for (unsigned i = 0; i <= maxIndex; i++)
-	    if (colors[i] == c)
-		return i;
-	return -1;
+        // Is a particular color in the LUT? Return the index.
+        for (unsigned i = 0; i <= maxIndex; i++)
+            if (colors[i] == c)
+                return i;
+        return -1;
     }
 
 private:
     void bumpMRU(unsigned mruIndex, unsigned lutIndex) {
-	for (;mruIndex < LUT_MAX - 1; mruIndex++)
-	    mru[mruIndex] = mru[mruIndex + 1];
-	mru[mruIndex] = lutIndex;
+        for (;mruIndex < LUT_MAX - 1; mruIndex++)
+            mru[mruIndex] = mru[mruIndex + 1];
+        mru[mruIndex] = lutIndex;
     }
 
     TilePalette::ColorMode lastMode;
@@ -115,23 +115,23 @@ struct FlashAddress {
 
     FlashAddress(uint8_t lat2, uint8_t lat1, uint8_t low = 0)
         : linear( ((lat2 >> 1) << 14) |
-		  ((lat1 >> 1) << 7 ) |
-		  ((low  >> 1)      ) ) {} 
+                  ((lat1 >> 1) << 7 ) |
+                  ((low  >> 1)      ) ) {} 
 
     uint8_t low() const {
-	return linear << 1;
+        return linear << 1;
     }
 
     uint8_t lat1() const {
-	return (linear >> 7) << 1;
+        return (linear >> 7) << 1;
     }
 
     uint8_t lat2() const {
-	return (linear >> 14) << 1;
+        return (linear >> 14) << 1;
     }
 
     static unsigned tilesToBlocks(unsigned tiles) {
-	return (tiles + TILES_PER_BLOCK - 1) / TILES_PER_BLOCK;
+        return (tiles + TILES_PER_BLOCK - 1) / TILES_PER_BLOCK;
     }
 };
 
@@ -170,9 +170,9 @@ class TileCodec {
 
     // Stats
     struct {
-	unsigned opcodes;
-	unsigned tiles;
-	unsigned dataBytes;
+        unsigned opcodes;
+        unsigned tiles;
+        unsigned dataBytes;
     } stats[TilePalette::CM_COUNT];
     int statBucket;
     

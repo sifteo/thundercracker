@@ -14,13 +14,13 @@
 #include "radio.h"
 #include "nrf24l01.h"
 
-static NRF24L01 NordicRadio(GPIOPin(&GPIOB, 10),		// CE
-			    GPIOPin(&GPIOB, 11),		// IRQ
-			    SPIMaster(&SPI2,			// SPI:
-				      GPIOPin(&GPIOB, 12),	//   CSN
-				      GPIOPin(&GPIOB, 13),	//   SCK
-				      GPIOPin(&GPIOB, 14),	//   MISO
-				      GPIOPin(&GPIOB, 15)));	//   MOSI
+static NRF24L01 NordicRadio(GPIOPin(&GPIOB, 10),                // CE
+                            GPIOPin(&GPIOB, 11),                // IRQ
+                            SPIMaster(&SPI2,                    // SPI:
+                                      GPIOPin(&GPIOB, 12),      //   CSN
+                                      GPIOPin(&GPIOB, 13),      //   SCK
+                                      GPIOPin(&GPIOB, 14),      //   MISO
+                                      GPIOPin(&GPIOB, 15)));    //   MOSI
 
 void ISR_NordicRadio()
 {

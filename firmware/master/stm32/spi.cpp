@@ -17,9 +17,9 @@ void SPIMaster::init()
     miso.setControl(GPIOPin::IN_FLOAT);    
     mosi.setControl(GPIOPin::OUT_ALT_10MHZ);
 
-    hw->CR1 = 0x0004;	// Master mode
-    hw->CR2 = 0x0004;	// SS output enable
-    hw->CR1 |= 0x0040;	// Peripheral enable
+    hw->CR1 = 0x0004;   // Master mode
+    hw->CR2 = 0x0004;   // SS output enable
+    hw->CR1 |= 0x0040;  // Peripheral enable
 }
 
 void SPIMaster::begin()
@@ -40,7 +40,7 @@ uint8_t SPIMaster::transfer(uint8_t b)
      *      busy-looping ever!
      */
     hw->DR = b;
-    while (!(hw->SR & 1));	// Wait for RX-not-empty
+    while (!(hw->SR & 1));      // Wait for RX-not-empty
     return hw->DR;
 }
     
@@ -53,13 +53,13 @@ void SPIMaster::transferTable(const uint8_t *table)
 
     uint8_t len;
     while ((len = *table)) {
-	table++;
+        table++;
 
-	begin();
-	do {
-	    transfer(*table);
-	    table++;
-	} while (--len);
-	end();
+        begin();
+        do {
+            transfer(*table);
+            table++;
+        } while (--len);
+        end();
     }
 }

@@ -163,13 +163,13 @@ struct NVIC_t {
     uint32_t CID3;
 
     void irqEnable(const ISR_t &vector) volatile {
-	unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.WWDG) >> 2;
-	irqSetEnable[id >> 5] = 1 << (id & 31);
+        unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.WWDG) >> 2;
+        irqSetEnable[id >> 5] = 1 << (id & 31);
     }
 
     void irqDisable(const ISR_t &vector) volatile {
-	unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.WWDG) >> 2;
-	irqClearEnable[id >> 5] = 1 << (id & 31);
+        unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.WWDG) >> 2;
+        irqClearEnable[id >> 5] = 1 << (id & 31);
     }
 };
 

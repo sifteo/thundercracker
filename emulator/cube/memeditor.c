@@ -131,8 +131,8 @@ void build_memeditor_view(struct em8051 *aCPU)
     // but don't mess them up otherwise
 
     for (i = 0; i < NUM_EDITORS; i++) {
-	eds[i].cursorpos = 0;
-	eds[i].memoffset = 0;
+        eds[i].cursorpos = 0;
+        eds[i].memoffset = 0;
     }
 
     refresh();
@@ -259,23 +259,23 @@ void memeditor_update(struct em8051 *aCPU)
             for (j = 0; j < eds[i].lines - 2; j++)
             {
                 wprintw(eds[i].view,"%04X %02X %02X %02X %02X %02X %02X %02X %02X %c%c%c%c%c%c%c%c\n", 
-			(unsigned short) (j*8+eds[i].memoffset+eds[i].memviewoffset), 
-			eds[i].memarea[j*8+0+eds[i].memoffset], 
-			eds[i].memarea[j*8+1+eds[i].memoffset], 
-			eds[i].memarea[j*8+2+eds[i].memoffset], 
-			eds[i].memarea[j*8+3+eds[i].memoffset],
-			eds[i].memarea[j*8+4+eds[i].memoffset], 
-			eds[i].memarea[j*8+5+eds[i].memoffset], 
-			eds[i].memarea[j*8+6+eds[i].memoffset], 
-			eds[i].memarea[j*8+7+eds[i].memoffset],
-			MASK_PRINTABLES(eds[i].memarea[j*8+0+eds[i].memoffset]), 
-			MASK_PRINTABLES(eds[i].memarea[j*8+1+eds[i].memoffset]), 
-			MASK_PRINTABLES(eds[i].memarea[j*8+2+eds[i].memoffset]), 
-			MASK_PRINTABLES(eds[i].memarea[j*8+3+eds[i].memoffset]),
-			MASK_PRINTABLES(eds[i].memarea[j*8+4+eds[i].memoffset]), 
-			MASK_PRINTABLES(eds[i].memarea[j*8+5+eds[i].memoffset]), 
-			MASK_PRINTABLES(eds[i].memarea[j*8+6+eds[i].memoffset]), 
-			MASK_PRINTABLES(eds[i].memarea[j*8+7+eds[i].memoffset]));
+                        (unsigned short) (j*8+eds[i].memoffset+eds[i].memviewoffset), 
+                        eds[i].memarea[j*8+0+eds[i].memoffset], 
+                        eds[i].memarea[j*8+1+eds[i].memoffset], 
+                        eds[i].memarea[j*8+2+eds[i].memoffset], 
+                        eds[i].memarea[j*8+3+eds[i].memoffset],
+                        eds[i].memarea[j*8+4+eds[i].memoffset], 
+                        eds[i].memarea[j*8+5+eds[i].memoffset], 
+                        eds[i].memarea[j*8+6+eds[i].memoffset], 
+                        eds[i].memarea[j*8+7+eds[i].memoffset],
+                        MASK_PRINTABLES(eds[i].memarea[j*8+0+eds[i].memoffset]), 
+                        MASK_PRINTABLES(eds[i].memarea[j*8+1+eds[i].memoffset]), 
+                        MASK_PRINTABLES(eds[i].memarea[j*8+2+eds[i].memoffset]), 
+                        MASK_PRINTABLES(eds[i].memarea[j*8+3+eds[i].memoffset]),
+                        MASK_PRINTABLES(eds[i].memarea[j*8+4+eds[i].memoffset]), 
+                        MASK_PRINTABLES(eds[i].memarea[j*8+5+eds[i].memoffset]), 
+                        MASK_PRINTABLES(eds[i].memarea[j*8+6+eds[i].memoffset]), 
+                        MASK_PRINTABLES(eds[i].memarea[j*8+7+eds[i].memoffset]));
             }
         }
     }

@@ -39,12 +39,12 @@ void spi_init(struct spi_master *self)
 void spi_write_data(struct spi_master *self, uint8_t mosi)
 {
     if (self->tx_count < SPI_FIFO_SIZE) {
-	memmove(self->tx_fifo + 1, self->tx_fifo, SPI_FIFO_SIZE - 1);
-	self->tx_fifo[0] = mosi;
-	self->tx_count++;
-	self->status_dirty = 1;
+        memmove(self->tx_fifo + 1, self->tx_fifo, SPI_FIFO_SIZE - 1);
+        self->tx_fifo[0] = mosi;
+        self->tx_count++;
+        self->status_dirty = 1;
     } else
-	self->cpu->except(self->cpu, EXCEPTION_SPI_XRUN);
+        self->cpu->except(self->cpu, EXCEPTION_SPI_XRUN);
 }
 
 uint8_t spi_read_data(struct spi_master *self)
@@ -52,11 +52,11 @@ uint8_t spi_read_data(struct spi_master *self)
     uint8_t miso = self->rx_fifo[0];
 
     if (self->rx_count > 0)  {
-	memmove(self->rx_fifo, self->rx_fifo + 1, SPI_FIFO_SIZE - 1);
-	self->rx_count--;
-	self->status_dirty = 1;
+        memmove(self->rx_fifo, self->rx_fifo + 1, SPI_FIFO_SIZE - 1);
+        self->rx_count--;
+        self->status_dirty = 1;
     } else
-	self->cpu->except(self->cpu, EXCEPTION_SPI_XRUN);
+        self->cpu->except(self->cpu, EXCEPTION_SPI_XRUN);
 
     return miso;
 }
@@ -85,52 +85,52 @@ int spi_tick(struct spi_master *self, uint8_t *regs)
     uint8_t con0 = regs[SPI_REG_CON0];
 
     if (!(con0 & SPI_ENABLE))
-	return 0;
+        return 0;
 
     if (self->timer) {
-	/*
-	 * We're already transmitting/receiving one byte.
-	 * Count down the clock until it's done...
-	 */
-	if (!--self->timer) {
-	    /*
-	     * The byte just finished! Emulate the bus traffic, and
-	     * enqueue the resulting MISO byte.
-	     */
-	    uint8_t miso = self->callback(self->tx_mosi);
-	    if (self->rx_count < SPI_FIFO_SIZE)
-		self->rx_fifo[self->rx_count++] = miso;
-	    else
-		self->cpu->except(self->cpu, EXCEPTION_SPI_XRUN);
-	}
-	self->status_dirty = 1;
+        /*
+         * We're already transmitting/receiving one byte.
+         * Count down the clock until it's done...
+         */
+        if (!--self->timer) {
+            /*
+             * The byte just finished! Emulate the bus traffic, and
+             * enqueue the resulting MISO byte.
+             */
+            uint8_t miso = self->callback(self->tx_mosi);
+            if (self->rx_count < SPI_FIFO_SIZE)
+                self->rx_fifo[self->rx_count++] = miso;
+            else
+                self->cpu->except(self->cpu, EXCEPTION_SPI_XRUN);
+        }
+        self->status_dirty = 1;
     }
 
     if (self->tx_count && !self->timer) {
-	/*
-	 * We aren't transmitting/receiving a byte yet, but we can start now.
-	 *
-	 * Move the byte from our FIFO to another register that
-	 * simulates the SPI output shift-register. We'll hold it
-	 * there until the proper amount of time has elapsed, which
-	 * we'll also calculate now.
-	 */
+        /*
+         * We aren't transmitting/receiving a byte yet, but we can start now.
+         *
+         * Move the byte from our FIFO to another register that
+         * simulates the SPI output shift-register. We'll hold it
+         * there until the proper amount of time has elapsed, which
+         * we'll also calculate now.
+         */
 
-	self->tx_mosi = self->tx_fifo[--self->tx_count];
-	self->timer = spi_ticks_per_byte(con0);
-	self->status_dirty = 1;
-    }	
+        self->tx_mosi = self->tx_fifo[--self->tx_count];
+        self->timer = spi_ticks_per_byte(con0);
+        self->status_dirty = 1;
+    }   
 
     if (self->status_dirty) {
-	// Update status register
-	regs[SPI_REG_STATUS] = 
-	    (self->rx_count == SPI_FIFO_SIZE ? SPI_RX_FULL : 0) |
-	    (self->rx_count != 0 ? SPI_RX_READY : 0) |
-	    (self->tx_count == 0 ? SPI_TX_EMPTY : 0) |
-	    (self->tx_count != SPI_FIFO_SIZE ? SPI_TX_READY : 0);
-	
-	self->irq_state = !!(regs[SPI_REG_STATUS] & ~regs[SPI_REG_CON1]);
-	self->status_dirty = 0;
+        // Update status register
+        regs[SPI_REG_STATUS] = 
+            (self->rx_count == SPI_FIFO_SIZE ? SPI_RX_FULL : 0) |
+            (self->rx_count != 0 ? SPI_RX_READY : 0) |
+            (self->tx_count == 0 ? SPI_TX_EMPTY : 0) |
+            (self->tx_count != SPI_FIFO_SIZE ? SPI_TX_READY : 0);
+        
+        self->irq_state = !!(regs[SPI_REG_STATUS] & ~regs[SPI_REG_CON1]);
+        self->status_dirty = 0;
     }
 
     return self->irq_state;

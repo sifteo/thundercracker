@@ -29,39 +29,39 @@
 class BitBuffer {
  public:
     void init() {
-	bits = 0;
-	count = 0;
+        bits = 0;
+        count = 0;
     }
 
     unsigned flush(PacketBuffer &buf) {
-	unsigned byteWidth = MIN(buf.bytesFree(), count >> 3);
-	buf.append((uint8_t *) &bits, byteWidth);
+        unsigned byteWidth = MIN(buf.bytesFree(), count >> 3);
+        buf.append((uint8_t *) &bits, byteWidth);
 
-	unsigned bitWidth = byteWidth << 3;
-	count -= bitWidth;
+        unsigned bitWidth = byteWidth << 3;
+        count -= bitWidth;
 
-	/*
-	 * This ?: is important if the buffer is totally
-	 * full. Shifting a uint32_t by 32 would be undefined in C,
-	 * and compilers will in fact give us very nonzero results.
-	 */
-	bits = count ? (bits >> bitWidth) : 0;
+        /*
+         * This ?: is important if the buffer is totally
+         * full. Shifting a uint32_t by 32 would be undefined in C,
+         * and compilers will in fact give us very nonzero results.
+         */
+        bits = count ? (bits >> bitWidth) : 0;
 
-	return byteWidth;
+        return byteWidth;
     }
 
     bool hasRoomForFlush(PacketBuffer &buf, unsigned additionalBits=0) {
-	// Does the buffer have room for every complete byte in the buffer, plus additionalBits?
-	return buf.bytesFree() >= ((count + additionalBits) >> 3);
+        // Does the buffer have room for every complete byte in the buffer, plus additionalBits?
+        return buf.bytesFree() >= ((count + additionalBits) >> 3);
     }
 
     void append(uint32_t value, unsigned width) {
-	bits |= value << count;
-	count += width;
+        bits |= value << count;
+        count += width;
     }
 
     void appendMasked(uint32_t value, unsigned width) {
-	append(value & ((1 << width) - 1), width);
+        append(value & ((1 << width) - 1), width);
     }
 
     void debug();
@@ -79,9 +79,9 @@ class BitBuffer {
 
 class CubeCodec {
  public:
-    void stateReset() {	
-	codePtr = 0;
-	codeS = -1;
+    void stateReset() { 
+        codePtr = 0;
+        codeS = -1;
     }
 
     void encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb);
@@ -92,72 +92,72 @@ class CubeCodec {
     bool flashSend(PacketBuffer &buf, _SYSAssetGroup *group, _SYSAssetGroupCube *ac, bool &done);
 
     void flashAckBytes(uint8_t count) {
-	loadBufferAvail += count;
+        loadBufferAvail += count;
     }
 
     void endPacket(PacketBuffer &buf) {
-	/*
-	 * If we didn't emit a full packet, that implies an encoder state reset.
-	 *
-	 * If we have any partial codes buffered, they'll be lost forever. So,
-	 * flush them out by adding a nybble which doesn't mean anything on its own.
-	 */
-	
-	if (!buf.isFull()) {
-	    stateReset();
-	    txBits.append(3, 4);
-	    txBits.flush(buf);
-	    txBits.init();
-	}
+        /*
+         * If we didn't emit a full packet, that implies an encoder state reset.
+         *
+         * If we have any partial codes buffered, they'll be lost forever. So,
+         * flush them out by adding a nybble which doesn't mean anything on its own.
+         */
+        
+        if (!buf.isFull()) {
+            stateReset();
+            txBits.append(3, 4);
+            txBits.flush(buf);
+            txBits.init();
+        }
     }
     
  private:
     // Try to keep these ordered to minimize padding...
 
-    BitBuffer txBits;		/// Buffer of transmittable codes
-    uint8_t loadBufferAvail;	/// Amount of flash buffer space available
-    uint8_t codeS;		/// Codec "S" state (sample #)
-    uint8_t codeD;		/// Codec "D" state (coded delta)
-    uint8_t codeRuns;		/// Codec run count
-    uint16_t codePtr;		/// Codec's VRAM write pointer state (word address)
+    BitBuffer txBits;           /// Buffer of transmittable codes
+    uint8_t loadBufferAvail;    /// Amount of flash buffer space available
+    uint8_t codeS;              /// Codec "S" state (sample #)
+    uint8_t codeD;              /// Codec "D" state (coded delta)
+    uint8_t codeRuns;           /// Codec run count
+    uint16_t codePtr;           /// Codec's VRAM write pointer state (word address)
 
     void codePtrAdd(uint16_t words) {
-	codePtr = (codePtr + words) & PTR_MASK;
+        codePtr = (codePtr + words) & PTR_MASK;
     }
 
     unsigned deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t offset) {
-	uint16_t ptr = codePtr - offset;
+        uint16_t ptr = codePtr - offset;
 
-	ptr &= PTR_MASK;
+        ptr &= PTR_MASK;
 
-	if ((vb->lock & Sifteo::Intrinsic::LZ(ptr >> 4)) ||
-	    (vb->cm1[ptr >> 5] & Sifteo::Intrinsic::LZ(ptr & 31))) {
+        if ((vb->lock & Sifteo::Intrinsic::LZ(ptr >> 4)) ||
+            (vb->cm1[ptr >> 5] & Sifteo::Intrinsic::LZ(ptr & 31))) {
 
-	    // Can't match a locked or modified word
-	    return (unsigned) -1;
-	}
+            // Can't match a locked or modified word
+            return (unsigned) -1;
+        }
  
-	uint16_t sample = vb->vram.words[ptr];
+        uint16_t sample = vb->vram.words[ptr];
 
-	if ((sample & 0x0101) != (data & 0x0101)) {
-	    // Different LSBs, can't possibly reach it via a delta
-	    return (unsigned) -1;
-	}
+        if ((sample & 0x0101) != (data & 0x0101)) {
+            // Different LSBs, can't possibly reach it via a delta
+            return (unsigned) -1;
+        }
 
-	int16_t dI = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
-	int16_t sI = ((sample & 0xFF) >> 1) | ((sample & 0xFF00) >> 2);
+        int16_t dI = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
+        int16_t sI = ((sample & 0xFF) >> 1) | ((sample & 0xFF00) >> 2);
 
-	return dI - sI + RF_VRAM_DIFF_BASE;
+        return dI - sI + RF_VRAM_DIFF_BASE;
     }
 
     void appendDS(uint8_t d, uint8_t s) {
-	if (d == RF_VRAM_DIFF_BASE) {
-	    // Copy code
-	    txBits.append(0x4 | s, 4);
-	} else {
-	    // Diff code
-	    txBits.append(0x8 | s | (d << 4), 8);
-	}
+        if (d == RF_VRAM_DIFF_BASE) {
+            // Copy code
+            txBits.append(0x4 | s, 4);
+        } else {
+            // Diff code
+            txBits.append(0x8 | s | (d << 4), 8);
+        }
     }
 
     void encodeDS(uint8_t d, uint8_t s);

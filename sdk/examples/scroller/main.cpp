@@ -28,18 +28,18 @@ void siftmain()
     cube.vbuf.sys.vram.num_lines = 128;
 
     for (unsigned y = 0; y < Background.height; y++)
-	for (unsigned x = 0; x < 18; x++)
-	    poke_index(offsetof(_SYSVideoRAM, bg0_tiles)/2 +
-		       x + y*18, Background.tiles[x + y*Background.width]);
+        for (unsigned x = 0; x < 18; x++)
+            poke_index(offsetof(_SYSVideoRAM, bg0_tiles)/2 +
+                       x + y*18, Background.tiles[x + y*Background.width]);
 
     for (unsigned y = 0; y < Overlay.height; y++)
-	for (unsigned x = 0; x < Overlay.width; x++)
-	    poke_index(offsetof(_SYSVideoRAM, bg1_tiles)/2 +
-		       x + y*Overlay.width,
-		       Overlay.tiles[x + y*Overlay.width]);
+        for (unsigned x = 0; x < Overlay.width; x++)
+            poke_index(offsetof(_SYSVideoRAM, bg1_tiles)/2 +
+                       x + y*Overlay.width,
+                       Overlay.tiles[x + y*Overlay.width]);
 
     for (unsigned y = 0; y < Overlay.height; y++)
-	cube.vbuf.sys.vram.bg1_bitmap[y+2] = ((1 << Overlay.width) - 1) << 4; 
+        cube.vbuf.sys.vram.bg1_bitmap[y+2] = ((1 << Overlay.width) - 1) << 4; 
 
     cube.enable();
     cube.loadAssets(GameAssets);
@@ -48,13 +48,13 @@ void siftmain()
     const unsigned sh = 6;
 
     while (1) {
-	t++;
-	if (t == (18*8) << sh)
-	    t = 0;
+        t++;
+        if (t == (18*8) << sh)
+            t = 0;
 
-	cube.vbuf.pokeb(offsetof(_SYSVideoRAM, bg0_x), t >> sh);
-	cube.vbuf.unlock();
+        cube.vbuf.pokeb(offsetof(_SYSVideoRAM, bg0_x), t >> sh);
+        cube.vbuf.unlock();
 
-	System::paint();
+        System::paint();
     }
 }

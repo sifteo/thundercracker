@@ -45,18 +45,18 @@
 /*
  * Network protocol constants
  */
-#define NETHUB_SET_ADDR 	0x00
-#define NETHUB_MSG    		0x01
-#define NETHUB_ACK		0x02
-#define NETHUB_NACK		0x03
+#define NETHUB_SET_ADDR         0x00
+#define NETHUB_MSG              0x01
+#define NETHUB_ACK              0x02
+#define NETHUB_NACK             0x03
 
-#define NETHUB_HDR_LEN		2
-#define NETHUB_ADDR_LEN		8
+#define NETHUB_HDR_LEN          2
+#define NETHUB_ADDR_LEN         8
 
 #define TX_ACK_RESERVATION      (2 * 5)       // Room for five ACK packets
-#define TX_MSG_RESERVATION	(32 + 8 + 2)  // Worst-case radio message
+#define TX_MSG_RESERVATION      (32 + 8 + 2)  // Worst-case radio message
 
-#define TX_PENDING_LIMIT	1	// Unacknowledged packet limit
+#define TX_PENDING_LIMIT        1       // Unacknowledged packet limit
 
 
 /*
@@ -111,7 +111,7 @@ static void SifteoRadio_disconnect()
 #ifdef _WIN32
         closesocket(self.fd);
 #else
-	close(self.fd);
+        close(self.fd);
 #endif
     }
 
@@ -124,41 +124,41 @@ static void SifteoRadio_disconnect()
 static void SifteoRadio_tryConnect()
 {
     if (self.fd < 0) {
-	FD_ZERO(&self.rfds);
-	FD_ZERO(&self.wfds);
-	FD_ZERO(&self.efds);
+        FD_ZERO(&self.rfds);
+        FD_ZERO(&self.wfds);
+        FD_ZERO(&self.efds);
 
-	self.txPending = 0;
-	self.rxHead = self.rxTail = 0;
-	self.txHead = self.txTail = 0;
+        self.txPending = 0;
+        self.rxHead = self.rxTail = 0;
+        self.txHead = self.txTail = 0;
 
-	self.fd = socket(self.addr->ai_family, self.addr->ai_socktype,
-			 self.addr->ai_protocol);
-	if (self.fd < 0)
-	    return;
+        self.fd = socket(self.addr->ai_family, self.addr->ai_socktype,
+                         self.addr->ai_protocol);
+        if (self.fd < 0)
+            return;
     }
 
     if (connect(self.fd, self.addr->ai_addr, self.addr->ai_addrlen)) {
-	SifteoRadio_disconnect();
+        SifteoRadio_disconnect();
     } else {
-	unsigned long arg;
+        unsigned long arg;
 
-	self.isConnected = true;
+        self.isConnected = true;
 
 #ifdef _WIN32
-	arg = 1;
-	ioctlsocket(self.fd, FIONBIO, &arg);
+        arg = 1;
+        ioctlsocket(self.fd, FIONBIO, &arg);
 #else
-	fcntl(self.fd, F_SETFL, O_NONBLOCK | fcntl(self.fd, F_GETFL));
+        fcntl(self.fd, F_SETFL, O_NONBLOCK | fcntl(self.fd, F_GETFL));
 #endif
 
 #ifdef SO_NOSIGPIPE
-	arg = 1;
-	setsockopt(self.fd, SOL_SOCKET, SO_NOSIGPIPE, &arg, sizeof arg);
+        arg = 1;
+        setsockopt(self.fd, SOL_SOCKET, SO_NOSIGPIPE, &arg, sizeof arg);
 #endif
 
-	arg = 1;
-	setsockopt(self.fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
+        arg = 1;
+        setsockopt(self.fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
     }
 }
 
@@ -169,14 +169,14 @@ static void SifteoRadio_ack()
      */
 
     struct AckPacket {
-	uint8_t len;
-	uint8_t msg;
+        uint8_t len;
+        uint8_t msg;
     } *packet = (AckPacket *) &self.txBuffer[self.txTail];
 
     if (self.txTail + sizeof *packet <= sizeof self.txBuffer) {
-	packet->len = 0;
-	packet->msg = NETHUB_ACK;
-	self.txTail += sizeof *packet;
+        packet->len = 0;
+        packet->msg = NETHUB_ACK;
+        self.txTail += sizeof *packet;
     }
 }
 
@@ -187,12 +187,12 @@ static void SifteoRadio_produce()
      */
 
     struct MsgPacket {
-	uint8_t len;
-	uint8_t msg;
-	uint8_t addr[5];       // Low bytes of 64-bit address
-	uint8_t reserved[2];   // Unused address bytes
-	uint8_t channel;       // High byte of 64-bit address
-	uint8_t payload[1];
+        uint8_t len;
+        uint8_t msg;
+        uint8_t addr[5];       // Low bytes of 64-bit address
+        uint8_t reserved[2];   // Unused address bytes
+        uint8_t channel;       // High byte of 64-bit address
+        uint8_t payload[1];
     } *packet = (MsgPacket *) &self.txBuffer[self.txTail];
 
     PacketTransmission tx;
@@ -216,40 +216,40 @@ static void SifteoRadio_consume()
      */
 
     for (;;) {
-	uint8_t queueLen = self.rxTail - self.rxHead;
-	if (queueLen < NETHUB_HDR_LEN)
-	    break;
+        uint8_t queueLen = self.rxTail - self.rxHead;
+        if (queueLen < NETHUB_HDR_LEN)
+            break;
 
-	uint8_t *packet = &self.rxBuffer[self.rxHead];
-	uint8_t packetLen = packet[0] + NETHUB_HDR_LEN;
+        uint8_t *packet = &self.rxBuffer[self.rxHead];
+        uint8_t packetLen = packet[0] + NETHUB_HDR_LEN;
 
-	if (packetLen > queueLen)
-	    break;
+        if (packetLen > queueLen)
+            break;
 
-	switch (packet[1]) {
+        switch (packet[1]) {
 
-	case NETHUB_ACK:
-	    self.txPending--;
-	    break;
+        case NETHUB_ACK:
+            self.txPending--;
+            break;
 
-	case NETHUB_NACK:
-	    self.txPending--;
-	    RadioManager::timeout();
-	    break;
+        case NETHUB_NACK:
+            self.txPending--;
+            RadioManager::timeout();
+            break;
 
-	case NETHUB_MSG: {
-	    SifteoRadio_ack();
-	    if (packet[0] >= NETHUB_ADDR_LEN) {
-		PacketBuffer pb;
-		pb.bytes = &packet[NETHUB_ADDR_LEN + NETHUB_HDR_LEN];
-		pb.len = packet[0] - NETHUB_ADDR_LEN;
-		RadioManager::acknowledge(pb);
-	    }
-	    break;
-	}
-	}
-	 
-	self.rxHead += packetLen;
+        case NETHUB_MSG: {
+            SifteoRadio_ack();
+            if (packet[0] >= NETHUB_ADDR_LEN) {
+                PacketBuffer pb;
+                pb.bytes = &packet[NETHUB_ADDR_LEN + NETHUB_HDR_LEN];
+                pb.len = packet[0] - NETHUB_ADDR_LEN;
+                RadioManager::acknowledge(pb);
+            }
+            break;
+        }
+        }
+         
+        self.rxHead += packetLen;
     }
 
     /*
@@ -258,35 +258,35 @@ static void SifteoRadio_consume()
      */
 
     if (self.rxHead == self.rxTail) {
-	self.rxHead = self.rxTail = 0;
+        self.rxHead = self.rxTail = 0;
     } else if (self.rxHead > sizeof self.rxBuffer / 2) {
-	self.rxTail -= self.rxHead;
-	memmove(self.rxBuffer, self.rxBuffer + self.rxHead, self.rxTail);
-	self.rxHead = 0;
+        self.rxTail -= self.rxHead;
+        memmove(self.rxBuffer, self.rxBuffer + self.rxHead, self.rxTail);
+        self.rxHead = 0;
     }
 }
 
 static void SifteoRadio_recv()
 {
     int len = recv(self.fd, self.rxBuffer + self.rxTail,
-		   sizeof self.rxBuffer - self.rxTail, 0);
+                   sizeof self.rxBuffer - self.rxTail, 0);
     if (len > 0)
-	self.rxTail += len;
+        self.rxTail += len;
     else if (errno != EAGAIN)
-	SifteoRadio_disconnect();
+        SifteoRadio_disconnect();
 }
 
 static void SifteoRadio_send()
 {
     int ret = send(self.fd, self.txBuffer + self.txHead,
-		   self.txTail - self.txHead, 0);
+                   self.txTail - self.txHead, 0);
     if (ret > 0)
-	self.txHead += ret;
+        self.txHead += ret;
     else if (errno != EAGAIN)
-	SifteoRadio_disconnect();
+        SifteoRadio_disconnect();
 
     if (self.txHead == self.txTail)
-	self.txHead = self.txTail = 0;
+        self.txHead = self.txTail = 0;
 }
 
 void Radio::halt()
@@ -297,44 +297,44 @@ void Radio::halt()
      */
 
     if (!self.isConnected) {
-	SifteoRadio_tryConnect();
-	if (!self.isConnected) {
-	    // Can't do anything until we get our nethub back. Sleep a bit and try again.
-	    usleep(100000);
-	    return;
-	}
+        SifteoRadio_tryConnect();
+        if (!self.isConnected) {
+            // Can't do anything until we get our nethub back. Sleep a bit and try again.
+            usleep(100000);
+            return;
+        }
     }
 
     FD_SET(self.fd, &self.rfds);
     FD_SET(self.fd, &self.efds);
 
     if (self.txPending < TX_PENDING_LIMIT)
-	FD_SET(self.fd, &self.wfds);
+        FD_SET(self.fd, &self.wfds);
     else
-	FD_CLR(self.fd, &self.wfds);
+        FD_CLR(self.fd, &self.wfds);
 
     int nfds = select(self.fd + 1, &self.rfds, &self.wfds, &self.efds, NULL);
     if (nfds <= 0)
-	return;
+        return;
 
     // Handle socket exceptions
     if (self.isConnected && FD_ISSET(self.fd, &self.efds))
-	SifteoRadio_disconnect();
+        SifteoRadio_disconnect();
 
     // recv() -> rxBuffer
     if (self.isConnected && FD_ISSET(self.fd, &self.rfds) && self.rxTail < sizeof self.rxBuffer)
-	SifteoRadio_recv();
+        SifteoRadio_recv();
 
     // Consume packets from rxBuffer, but only if we have room for ACKs
     if (self.isConnected && sizeof self.txBuffer - self.txTail >= TX_ACK_RESERVATION)
-	SifteoRadio_consume();
+        SifteoRadio_consume();
 
     // Produce one packet at a time, if we have buffer space
     if (self.isConnected && self.txPending < TX_PENDING_LIMIT &&
-	sizeof self.txBuffer - self.txTail >= TX_MSG_RESERVATION)
-	SifteoRadio_produce();
+        sizeof self.txBuffer - self.txTail >= TX_MSG_RESERVATION)
+        SifteoRadio_produce();
 
     // txBuffer -> send()
     if (self.isConnected && self.txTail > self.txHead)
-	SifteoRadio_send();
+        SifteoRadio_send();
 }

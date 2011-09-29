@@ -24,7 +24,7 @@ class System {
      */
 
     static void exit() {
-	_SYS_exit();
+        _SYS_exit();
     }
 
     /**
@@ -39,7 +39,7 @@ class System {
      */
 
     static void yield() {
-	_SYS_yield();
+        _SYS_yield();
     }
 
     /**
@@ -56,7 +56,7 @@ class System {
      */
 
     static void paint() {
-	_SYS_paint();
+        _SYS_paint();
     }
 
 };

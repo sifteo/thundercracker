@@ -54,19 +54,19 @@ void _SYS_disableCubes(_SYSCubeIDVector cv)
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
 {
     if (Runtime::checkUserPointer(vbuf, sizeof *vbuf) && CubeSlot::validID(cid))
-	CubeSlot::instances[cid].setVideoBuffer(vbuf);
+        CubeSlot::instances[cid].setVideoBuffer(vbuf);
 }
 
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group)
 {
     if (Runtime::checkUserPointer(group, sizeof *group) && CubeSlot::validID(cid))
-	CubeSlot::instances[cid].loadAssets(group);
+        CubeSlot::instances[cid].loadAssets(group);
 }
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state)
 {
     if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid))
-	CubeSlot::instances[cid].getAccelState(state);
+        CubeSlot::instances[cid].getAccelState(state);
 }
 
 

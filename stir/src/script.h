@@ -90,39 +90,39 @@ public:
     Group(lua_State *L);
 
     lua_Number getQuality() const {
-	return quality;
+        return quality;
     }
 
     const TilePool &getPool() const {
-	return pool;
+        return pool;
     }
 
     TilePool &getPool() {
-	return pool;
+        return pool;
     }
 
     void setName(const char *s) {
-	mName = s;
+        mName = s;
     }
 
     const std::string &getName() const {
-	return mName;
+        return mName;
     }
 
     void addImage(Image *i) {
-	mImages.insert(i);
+        mImages.insert(i);
     }
 
     const std::set<Image*> &getImages() const {
-	return mImages;
+        return mImages;
     }
 
     std::vector<uint8_t> &getLoadstream() {
-	return mLoadstream;
+        return mLoadstream;
     }
 
     const std::vector<uint8_t> &getLoadstream() const {
-	return mLoadstream;
+        return mLoadstream;
     }
 
     void setDefault(lua_State *L);
@@ -155,23 +155,23 @@ public:
     Image(lua_State *L);
 
     void setName(const char *s) {
-	mName = s;
+        mName = s;
     }
 
     const std::string &getName() const {
-	return mName;
+        return mName;
     }
 
     Group *getGroup() {
-	return mGroup;
+        return mGroup;
     }
 
     const std::vector<TileGrid> &getGrids() const {
-	return mGrids;
+        return mGrids;
     }
 
     bool isPinned() const {
-	return mTileOpt.pinned;
+        return mTileOpt.pinned;
     }
 
  private:
