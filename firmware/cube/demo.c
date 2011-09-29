@@ -15,6 +15,10 @@
 extern const __code uint8_t img_logo[];
 extern const __code uint8_t img_battery[];
 extern const __code uint8_t img_power[];
+extern const __code uint8_t img_radio_0[];
+extern const __code uint8_t img_radio_1[];
+extern const __code uint8_t img_radio_2[];
+extern const __code uint8_t img_radio_3[];
 
 
 // Signed 8-bit sin()
@@ -48,7 +52,7 @@ int8_t sin8(uint8_t angle)
 void demo(void)
 {
     draw_clear();
-    draw_xy = XY(1,1);
+    draw_xy = XY(1,12);
     draw_attr = ATTR_RED;
     draw_string("Thunder");
     draw_attr = ATTR_ORANGE;
@@ -58,22 +62,21 @@ void demo(void)
     draw_attr = ATTR_NONE;
     draw_image(img_logo);
 
-    draw_xy = XY(0,11);
+    draw_xy = XY(0,0);
     draw_image(img_battery);
-    draw_xy = XY(1,12);
+    draw_xy = XY(1,1);
     draw_image(img_power);
 
-    draw_xy = XY(5,11);
-    draw_attr = ATTR_RED;
-    draw_image(img_battery);
-    draw_xy = XY(6,12);
-    draw_string("red");
+    draw_xy = XY(12,0);
+    draw_image(img_radio_0);
+    draw_xy = XY(12,0);
+    draw_image(img_radio_3);
 
     /*
      * Animation.. fun for testing, but it interferes with drawing
      * that the master is trying to do over the radio.
      */
-#if 1
+#if 0
     {
         static uint16_t frame;
     
