@@ -35,6 +35,14 @@ void Radio::open()
 
 void Radio::halt()
 {
-    // Wait for any interrupt
+    /*
+     * Wait for any interrupt
+     *
+     * XXX: Disabled for now, this makes JTAG debugging suck,
+     *      since JTAG ceases to respond while we're in a WFI.
+     */
+
+#if 0
     __asm__ __volatile__ ("wfi");
+#endif
 }

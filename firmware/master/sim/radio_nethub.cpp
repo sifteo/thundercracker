@@ -243,9 +243,8 @@ static void SifteoRadio_consume()
         case NETHUB_MSG: {
             SifteoRadio_ack();
             if (packet[0] >= NETHUB_ADDR_LEN) {
-                PacketBuffer pb;
-                pb.bytes = &packet[NETHUB_ADDR_LEN + NETHUB_HDR_LEN];
-                pb.len = packet[0] - NETHUB_ADDR_LEN;
+                PacketBuffer pb(&packet[NETHUB_ADDR_LEN + NETHUB_HDR_LEN],
+                                packet[0] - NETHUB_ADDR_LEN);
                 RadioManager::acknowledge(pb);
             }
             break;

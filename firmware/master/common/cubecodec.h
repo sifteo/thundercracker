@@ -108,6 +108,19 @@ class CubeCodec {
             txBits.append(3, 4);
             txBits.flush(buf);
             txBits.init();
+
+            if (!buf.len) {
+                /*
+                 * If we have nothing to send, make it an empty 'ping' packet.
+                 * But the nRF24L01 can't actually send a zero-byte packet, so
+                 * we have to pad it with a no-op. We don't have any explicit
+                 * no-op in our protocol, but we can send only the first byte
+                 * from a multi-byte code.
+                 *
+                 * This is the first byte of a 14-bit literal.
+                 */
+                buf.append(0xFF);
+            }
         }
     }
     

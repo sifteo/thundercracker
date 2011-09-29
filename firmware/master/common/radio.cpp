@@ -32,8 +32,29 @@ void RadioManager::produce(PacketTransmission &tx)
 
     for (;;) {
         // No more enabled slots? Loop back to zero.
-        if (!(_SYSCubeIDVector)(CubeSlot::vecEnabled << schedNext))
+        if (!(_SYSCubeIDVector)(CubeSlot::vecEnabled << schedNext)) {
             schedNext = 0;
+
+            if (!CubeSlot::vecEnabled) {
+                /*
+                 * Oh, no enabled slots period.
+                 *
+                 * XXX: Once we have pairing and transmit throttling, this
+                 *      shouldn't happen, since we'd be sending pairing packets,
+                 *      and at a lower rate. But for now, this is the state we
+                 *      find ourselves in before any cube slots are enabled.
+                 *
+                 *      So, for now, send a minimal junk packet to.. anywhere.
+                 */
+
+                static const RadioAddress addr = {};
+                tx.dest = &addr;
+                tx.packet.len = 1;
+                fifoPush(_SYS_NUM_CUBE_SLOTS - 1);
+
+                return;
+            }
+        }
 
         _SYSCubeID id = schedNext++;
         CubeSlot &slot = CubeSlot::instances[id];

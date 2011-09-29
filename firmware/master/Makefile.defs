@@ -28,6 +28,6 @@ CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
 LDFLAGS_STM32 := $(LDFLAGS) -mcpu=cortex-m3 -mthumb \
-	      -Wl,--gc-sections,-u,IVT \
-	      -T $(LDSCRIPT_STM32) -nostartfiles
+              -Wl,--gc-sections,-u,IVT \
+              -T $(LDSCRIPT_STM32) -nostartfiles
 

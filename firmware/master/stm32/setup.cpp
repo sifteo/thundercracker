@@ -125,3 +125,14 @@ extern "C" void *_sbrk(intptr_t increment)
      */
     return NULL;
 }
+
+void ISR_Fault(void)
+{
+    /*
+     * XXX: We don't have anything useful to do in the event of a
+     *      fault yet, but this ISR is simply defined as a useful
+     *      breakpoint target during debugging.
+     */
+
+    while (1);
+}

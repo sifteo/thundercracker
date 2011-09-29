@@ -39,10 +39,6 @@ void NRF24L01::init() {
         /* Max ACK payload size */
         2, CMD_W_REGISTER | REG_RX_PW_P0,       32,
         
-        /* Discard any packets queued in hardware */
-        1, CMD_FLUSH_RX,
-        1, CMD_FLUSH_TX,
-                        
         /* Auto retry delay, 500us, 15 retransmits */
         2, CMD_W_REGISTER | REG_SETUP_RETR,     0x1f,
 
@@ -51,6 +47,10 @@ void NRF24L01::init() {
 
         /* 2 Mbit, max transmit power */
         2, CMD_W_REGISTER | REG_RF_SETUP,       0x0e,
+
+        /* Discard any packets queued in hardware */
+        1, CMD_FLUSH_RX,
+        1, CMD_FLUSH_TX,
         
         /* Clear write-once-to-clear bits */
         2, CMD_W_REGISTER | REG_STATUS,         0x70,
@@ -59,7 +59,12 @@ void NRF24L01::init() {
     };
     spi.transferTable(radio_setup);
 
-    // Everything is ready. Unleash our IRQ handler!
+    /*
+     * Enable the IRQ _after_ clearing the interrupt status and FIFOs
+     * above, but before sending the first transmit packet. We don't
+     * want to miss the first legit edge, but we also don't want to
+     * trigger spuriously during init.
+     */
     irq.irqEnable();
 }
 
@@ -70,40 +75,169 @@ void NRF24L01::ptxMode()
      */
 
     static const uint8_t ptx_setup[]  = {
+        /* Discard any packets queued in hardware */
+        1, CMD_FLUSH_RX,
+        1, CMD_FLUSH_TX,
+        
+        /* Clear write-once-to-clear bits */
+        2, CMD_W_REGISTER | REG_STATUS,         0x70,
+
         /* 16-bit CRC, radio enabled, IRQs enabled */
         2, CMD_W_REGISTER | REG_CONFIG,         0x0e,
-
-        /* XXX: Send packet */
-        2, CMD_W_TX_PAYLOAD, 0x55,
 
         0
     };
     spi.transferTable(ptx_setup); 
 
-    ce.setHigh();
-    while (1);
+    /*
+     * Transmit the first packet. Subsequent packets will be sent from
+     * within the isr().
+     */
 
+    transmitPacket();
 }
 
 void NRF24L01::isr()
 {
-    // Acknowledge the IRQ controller
+    // Acknowledge to the IRQ controller
     irq.irqAcknowledge();
 
     /*
-     * Read the NRF STATUS register, then write to clear.
-     * This tells us which IRQ(s) occurred.
+     * Read the NRF STATUS register, then write to clear. This tells
+     * us which IRQ(s) occurred, and acknowledges them to the nRF
+     * chip.
      */
     spi.begin();
     uint8_t status = spi.transfer(CMD_W_REGISTER | REG_STATUS);
     spi.transfer(status);
     spi.end();
 
-    /* XXX: Send packet */
+    if (status & RX_DR) {
+        receivePacket();
+    }
+    
+    if (status & MAX_RT) {
+        handleTimeout();
+        transmitPacket();
+    }
 
-    static const uint8_t blah[]  = {
-        2, CMD_W_TX_PAYLOAD, 0x55,
-        0
-    };
-    spi.transferTable(blah);
+    if (status & TX_DS) {
+        transmitPacket();
+    }
+}
+
+void NRF24L01::handleTimeout()
+{
+    /*
+     * Timeout occurred. Discard the not-transmitted packet,
+     * and pass this response on to RadioManager.
+     *
+     * Called from interrupt context.
+     *
+     * XXX: Software retry support
+     */
+
+    spi.begin();
+    spi.transfer(CMD_FLUSH_TX);
+    spi.end();
+
+    RadioManager::timeout();
+}
+
+void NRF24L01::receivePacket()
+{
+    /*
+     * A packet has been received. Dequeue it from the hardware
+     * buffer, and pass it on to RadioManager.
+     *
+     * Called from interrupt context.
+     */
+
+    spi.begin();
+    spi.transfer(CMD_R_RX_PL_WID);
+    rxBuffer.len = spi.transfer(0);
+    spi.end();
+
+    if (rxBuffer.len > rxBuffer.MAX_LEN) {
+        /*
+         * Receive error. The data sheet requires that we flush the RX
+         * FIFO.  We'll count this as a timeout.
+         */
+
+        spi.begin();
+        spi.transfer(CMD_FLUSH_RX);
+        spi.end();
+
+        RadioManager::timeout();
+        return;
+    }
+
+    spi.begin();
+    spi.transfer(CMD_R_RX_PAYLOAD);
+    for (unsigned i = 0; i < rxBuffer.len; i++)
+        rxBuffer.bytes[i] = spi.transfer(0);
+    spi.end();
+
+    RadioManager::acknowledge(rxBuffer);
+}
+ 
+void NRF24L01::transmitPacket()
+{
+    /*
+     * This is an opportunity to transmit. Ask RadioManager to produce
+     * a packet, then send it to the radio.
+     *
+     * Called from interrupt OR non-interrupt context. It's possible
+     * for this function to be re-entered, but only in limited
+     * ways. We assume that re-entry only occurs after ce.setHigh().
+     */
+
+    RadioManager::produce(txBuffer);
+
+    /*
+     * Set the tx/rx address and channel
+     */
+
+    spi.begin();
+    spi.transfer(CMD_W_REGISTER | REG_RF_CH);
+    spi.transfer(txBuffer.dest->channel);
+    spi.end();
+
+    spi.begin();
+    spi.transfer(CMD_W_REGISTER | REG_TX_ADDR);
+    for (unsigned i = 0; i < sizeof txBuffer.dest->id; i++)
+        spi.transfer(txBuffer.dest->id[i]);
+    spi.end();
+
+    spi.begin();
+    spi.transfer(CMD_W_REGISTER | REG_RX_ADDR_P0);
+    for (unsigned i = 0; i < sizeof txBuffer.dest->id; i++)
+        spi.transfer(txBuffer.dest->id[i]);
+    spi.end();
+
+    /*
+     * Enqueue the packet
+     */
+
+    spi.begin();
+    spi.transfer(CMD_W_TX_PAYLOAD);
+    for (unsigned i = 0; i < txBuffer.packet.len; i++)
+        spi.transfer(txBuffer.packet.bytes[i]);
+    spi.end();
+
+    /*
+     * Pulse CE for at least 10us to start transmitting.
+     *
+     * XXX: Big hack. This should be asynchronous, and the timing
+     *      should be based on the system clock. Right now I'm just
+     *      using a dummy SPI transaction for timing purposes. Gross!
+     *      Okay, well, maybe using SPI transactions for timing isn't
+     *      the worst idea ever. But doing this all synchronously
+     *      in the ISR is pretty bad!
+     */
+
+    ce.setHigh();
+    for (unsigned i = 0; i < 10; i++)
+        spi.transfer(0);
+    ce.setLow();
 }

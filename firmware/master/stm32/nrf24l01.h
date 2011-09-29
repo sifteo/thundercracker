@@ -15,14 +15,17 @@
 
 #include "spi.h"
 #include "gpio.h"
+#include "radio.h"
 
 
 class NRF24L01 {
  public:
-     NRF24L01(GPIOPin _ce,
-              GPIOPin _irq,
-              SPIMaster _spi)
-         : ce(_ce), irq(_irq), spi(_spi) {}
+    NRF24L01(GPIOPin _ce,
+             GPIOPin _irq,
+             SPIMaster _spi)
+        : ce(_ce), irq(_irq), spi(_spi),
+          txBuffer(NULL, txData), rxBuffer(rxData)
+          {}
 
     void init();
     void ptxMode();
@@ -73,9 +76,26 @@ class NRF24L01 {
         REG_FEATURE             = 0x1D,
     };
 
+    enum Status {
+        RX_DR                   = 1 << 6,
+        TX_DS                   = 1 << 5,
+        MAX_RT                  = 1 << 4,
+    };
+
     GPIOPin ce;
     GPIOPin irq;
     SPIMaster spi;
+
+    PacketTransmission txBuffer;
+    PacketBuffer rxBuffer;
+
+    /* XXX: Make these DMA-able */
+    uint8_t txData[PacketBuffer::MAX_LEN];
+    uint8_t rxData[PacketBuffer::MAX_LEN];   
+
+    void handleTimeout();
+    void receivePacket();
+    void transmitPacket();
 };
 
 #endif

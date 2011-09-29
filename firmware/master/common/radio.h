@@ -38,6 +38,11 @@ struct PacketBuffer {
     uint8_t *bytes;
     unsigned len;
 
+    PacketBuffer() {}
+
+    PacketBuffer(uint8_t *_bytes, unsigned _len=0)
+        : bytes(_bytes), len(_len) {}
+
     bool isFull() {
         return len == MAX_LEN;
     }
@@ -72,6 +77,11 @@ struct PacketBuffer {
 struct PacketTransmission {
     PacketBuffer packet;
     const RadioAddress *dest;
+
+    PacketTransmission() {}
+
+    PacketTransmission(const RadioAddress *_dest, uint8_t *_bytes, unsigned _len=0)
+        : packet(PacketBuffer(_bytes, _len)), dest(_dest) {}
 };
 
 /**
