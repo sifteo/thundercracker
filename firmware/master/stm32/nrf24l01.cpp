@@ -44,13 +44,13 @@ void NRF24L01::init() {
         1, CMD_FLUSH_TX,
                         
         /* Auto retry delay, 500us, 15 retransmits */
-        1, CMD_W_REGISTER | REG_SETUP_RETR,     0x1f,
+        2, CMD_W_REGISTER | REG_SETUP_RETR,     0x1f,
 
         /* 5-byte address width */
-        1, CMD_W_REGISTER | REG_SETUP_AW,       0x03,
+        2, CMD_W_REGISTER | REG_SETUP_AW,       0x03,
 
         /* 2 Mbit, max transmit power */
-        1, CMD_W_REGISTER | REG_RF_SETUP,       0x0e,
+        2, CMD_W_REGISTER | REG_RF_SETUP,       0x0e,
         
         /* Clear write-once-to-clear bits */
         2, CMD_W_REGISTER | REG_STATUS,         0x70,
