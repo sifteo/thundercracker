@@ -112,36 +112,44 @@ void NRF24L01::isr()
     spi.transfer(status);
     spi.end();
 
-    if (status & RX_DR) {
+    if (status & RX_DR)
         receivePacket();
-    }
     
-    if (status & MAX_RT) {
+    if (status & MAX_RT)
         handleTimeout();
-        transmitPacket();
-    }
 
-    if (status & TX_DS) {
+    if (status & TX_DS)
         transmitPacket();
-    }
 }
 
 void NRF24L01::handleTimeout()
 {
     /*
-     * Timeout occurred. Discard the not-transmitted packet,
-     * and pass this response on to RadioManager.
+     * Hardware timeout occurred.
      *
-     * Called from interrupt context.
-     *
-     * XXX: Software retry support
+     * We support software retries, up to a point. Past that, pass the
+     * timeout on to RadioManager so it can take more permanent action.
      */
 
-    spi.begin();
-    spi.transfer(CMD_FLUSH_TX);
-    spi.end();
+    if (--softRetriesLeft) {
+        /*
+         * Retry.. again. The packet is still in our buffer.
+         */
 
-    RadioManager::timeout();
+        pulseCE();
+
+    } else {
+        /*
+         * Out of luck. Discard the packet, and pass on the error. Then transmit a new packet.
+         */
+
+        spi.begin();
+        spi.transfer(CMD_FLUSH_TX);
+        spi.end();
+        
+        RadioManager::timeout();
+        transmitPacket();
+    }
 }
 
 void NRF24L01::receivePacket()
@@ -193,7 +201,8 @@ void NRF24L01::transmitPacket()
      */
 
     RadioManager::produce(txBuffer);
-
+    softRetriesLeft = SOFT_RETRY_MAX;
+    
     /*
      * Set the tx/rx address and channel
      */
@@ -225,6 +234,12 @@ void NRF24L01::transmitPacket()
         spi.transfer(txBuffer.packet.bytes[i]);
     spi.end();
 
+    // Start the transmitter!
+    pulseCE();
+}
+
+void NRF24L01::pulseCE()
+{
     /*
      * Pulse CE for at least 10us to start transmitting.
      *

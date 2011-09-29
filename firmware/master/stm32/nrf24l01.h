@@ -82,12 +82,15 @@ class NRF24L01 {
         MAX_RT                  = 1 << 4,
     };
 
+    static const unsigned SOFT_RETRY_MAX = 1000;
+
     GPIOPin ce;
     GPIOPin irq;
     SPIMaster spi;
 
     PacketTransmission txBuffer;
     PacketBuffer rxBuffer;
+    unsigned softRetriesLeft;
 
     /* XXX: Make these DMA-able */
     uint8_t txData[PacketBuffer::MAX_LEN];
@@ -96,6 +99,7 @@ class NRF24L01 {
     void handleTimeout();
     void receivePacket();
     void transmitPacket();
+    void pulseCE();
 };
 
 #endif
