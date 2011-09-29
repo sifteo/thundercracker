@@ -27,8 +27,11 @@
 #   define WIN32_LEAN_AND_MEAN
 #   include <windows.h>
 #   include <winsock2.h>
+#   ifdef __MINGW32__
+#       undef _WIN32_WINNT
+#       define _WIN32_WINNT 0x0501 // redefine as WinXP so we have access to getaddrinfo
+#   endif
 #   include <ws2tcpip.h>
-#   pragma comment(lib, "ws2_32.lib")
 #else
 #   include <sys/types.h>
 #   include <sys/socket.h>
@@ -268,7 +271,7 @@ static void SifteoRadio_consume()
 
 static void SifteoRadio_recv()
 {
-    int len = recv(self.fd, self.rxBuffer + self.rxTail,
+    int len = recv(self.fd, (char*)self.rxBuffer + self.rxTail,
                    sizeof self.rxBuffer - self.rxTail, 0);
     if (len > 0)
         self.rxTail += len;
@@ -278,7 +281,7 @@ static void SifteoRadio_recv()
 
 static void SifteoRadio_send()
 {
-    int ret = send(self.fd, self.txBuffer + self.txHead,
+    int ret = send(self.fd, (const char*)self.txBuffer + self.txHead,
                    self.txTail - self.txHead, 0);
     if (ret > 0)
         self.txHead += ret;
@@ -300,7 +303,11 @@ void Radio::halt()
         SifteoRadio_tryConnect();
         if (!self.isConnected) {
             // Can't do anything until we get our nethub back. Sleep a bit and try again.
+            #ifdef _WIN32
+            Sleep(100);
+            #else
             usleep(100000);
+            #endif
             return;
         }
     }
