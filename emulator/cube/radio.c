@@ -175,10 +175,9 @@ uint32_t radio_byte_count(void)
 static void radio_update_irq(void)
 {
     uint8_t irq_prev = radio.irq_state;
+    uint8_t mask = (STATUS_RX_DR | STATUS_TX_DS | STATUS_MAX_RT) & ~radio.regs[REG_CONFIG];
 
-    radio.irq_state = radio.regs[REG_CONFIG] & radio.regs[REG_STATUS] &
-        (STATUS_RX_DR | STATUS_TX_DS | STATUS_MAX_RT);
-
+    radio.irq_state = radio.regs[REG_STATUS] & mask;
     radio.irq_edge |= radio.irq_state && !irq_prev;
 }
 

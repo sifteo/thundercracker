@@ -170,6 +170,7 @@ void lcd_end_frame()
 
     static const __code uint8_t table[] = {
         1, LCD_CMD_DISPON, 0x00,
+        0,
     };
 
     lcd_cmd_table(table);

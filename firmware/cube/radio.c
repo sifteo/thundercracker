@@ -724,33 +724,68 @@ no_ack:
     __endasm ;
 }
 
-static void radio_reg_write(uint8_t reg, uint8_t value)
+static void radio_transfer_table(const __code uint8_t *ptr)
 {
-    RF_CSN = 0;
+    /*
+     * Execute a table of SPI transfers (Zero-terminated,
+     * length-prefixed). Intended for initialization only, i.e. this
+     * isn't intended to be efficient.
+     */
 
-    SPIRDAT = RF_CMD_W_REGISTER | reg;
-    SPIRDAT = value;
-    while (!(SPIRSTAT & SPI_RX_READY));
-    SPIRDAT;
-    while (!(SPIRSTAT & SPI_RX_READY));
-    SPIRDAT;
+    uint8_t len;
 
-    RF_CSN = 1;
+    while ((len = *ptr)) {
+        ptr++;
+
+        RF_CSN = 0;
+
+        do {
+            SPIRDAT = *ptr;
+            ptr++;
+            while (!(SPIRSTAT & SPI_RX_READY));
+            SPIRDAT;
+        } while (--len);
+
+        RF_CSN = 1;
+    }
 }
 
 void radio_init(void)
 {
-    // Radio clock running
-    RF_CKEN = 1;
+    static const __code uint8_t table[] = {
 
-    // Use dynamic payload lengths
-    radio_reg_write(RF_REG_FEATURE, 0x07);
-    radio_reg_write(RF_REG_DYNPD, 0x01);
+        /* Enable nRF24L01 features */
+        2, RF_CMD_W_REGISTER | RF_REG_FEATURE,        0x07,
+        
+        /* Enable receive pipe 0 */
+        2, RF_CMD_W_REGISTER | RF_REG_DYNPD,          0x01,
+        2, RF_CMD_W_REGISTER | RF_REG_EN_RXADDR,      0x01,
+        2, RF_CMD_W_REGISTER | RF_REG_EN_AA,          0x01,
 
-    // Enable RX interrupt
-    radio_reg_write(RF_REG_CONFIG, RF_STATUS_RX_DR);
-    IEN_RF = 1;
+        /* Max payload size */
+        2, RF_CMD_W_REGISTER | RF_REG_RX_PW_P0,       32,
+        
+        /* Discard any packets queued in hardware */
+        1, RF_CMD_FLUSH_RX,
+        1, RF_CMD_FLUSH_TX,
+                        
+        /* 5-byte address width */
+        2, RF_CMD_W_REGISTER | RF_REG_SETUP_AW,       0x03,
 
-    // Start receiving
-    RF_CE = 1;
+        /* 2 Mbit, max transmit power */
+        2, RF_CMD_W_REGISTER | RF_REG_RF_SETUP,       0x0e,
+        
+        /* Clear write-once-to-clear bits */
+        2, RF_CMD_W_REGISTER | RF_REG_STATUS,         0x70,
+
+        /* 16-bit CRC, radio enabled, PRX mode, RX_DR IRQ enabled */
+        2, RF_CMD_W_REGISTER | RF_REG_CONFIG,         0x3f,
+
+        0,
+    };
+
+    RF_CKEN = 1;                        // Radio clock running
+    radio_transfer_table(table);        // Send initialization commands
+    IEN_RF = 1;                         // Interrupt enabled
+    RF_CE = 1;                          // Receiver enabled
 }

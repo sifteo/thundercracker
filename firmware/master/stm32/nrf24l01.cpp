@@ -87,5 +87,23 @@ void NRF24L01::ptxMode()
 
 void NRF24L01::isr()
 {
+    // Acknowledge the IRQ controller
     irq.irqAcknowledge();
+
+    /*
+     * Read the NRF STATUS register, then write to clear.
+     * This tells us which IRQ(s) occurred.
+     */
+    spi.begin();
+    uint8_t status = spi.transfer(CMD_W_REGISTER | REG_STATUS);
+    spi.transfer(status);
+    spi.end();
+
+    /* XXX: Send packet */
+
+    static const uint8_t blah[]  = {
+        2, CMD_W_TX_PAYLOAD, 0x55,
+        0
+    };
+    spi.transferTable(blah);
 }
