@@ -82,7 +82,7 @@ class NRF24L01 {
         MAX_RT                  = 1 << 4,
     };
 
-    static const unsigned SOFT_RETRY_MAX = 1000;
+    static const unsigned SOFT_RETRY_MAX = 100;
 
     GPIOPin ce;
     GPIOPin irq;
