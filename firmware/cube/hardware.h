@@ -10,17 +10,24 @@
 #define _HARDWARE_H
 
 /*
- * Graphics I/O Ports
+ * GPIO Ports
  */
 
 #define ADDR_PORT       P0
 #define ADDR_DIR        P0DIR
+#define ADDR_CON        P0CON
+
 #define MISC_PORT       P1
 #define MISC_DIR        P1DIR
+#define MISC_CON        P1CON
+
 #define BUS_PORT        P2
 #define BUS_DIR         P2DIR
+#define BUS_CON         P2CON
+
 #define CTRL_PORT       P3
 #define CTRL_DIR        P3DIR
+#define CTRL_CON        P3CON
 
 __sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
 
@@ -151,18 +158,18 @@ __sfr __at 0x8A TL0;
 __sfr __at 0x8B TL1;
 __sfr __at 0x8C TH0;
 __sfr __at 0x8D TH1;
-__sfr __at 0x8F P3CON;
+__sfr __at 0x8F volatile P3CON;
 __sfr __at 0x90 P1;
 __sfr __at 0x92 DPS;
 __sfr __at 0x93 P0DIR;
 __sfr __at 0x94 P1DIR;
 __sfr __at 0x95 P2DIR;
 __sfr __at 0x96 P3DIR;
-__sfr __at 0x97 P2CON;
+__sfr __at 0x97 volatile P2CON;
 __sfr __at 0x98 S0CON;
 __sfr __at 0x99 S0BUF;
-__sfr __at 0x9E P0CON;
-__sfr __at 0x9F P1CON;
+__sfr __at 0x9E volatile P0CON;
+__sfr __at 0x9F volatile P1CON;
 __sfr __at 0xA0 P2;
 __sfr __at 0xA1 PWMDC0;
 __sfr __at 0xA2 PWMDC1;

@@ -13,6 +13,7 @@
 #include "time.h"
 
 uint8_t accel_state;
+uint8_t accel_addr;
 
 
 /*

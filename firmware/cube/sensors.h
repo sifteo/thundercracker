@@ -15,6 +15,7 @@ void sensors_init();
 void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked;
 
 extern uint8_t accel_state;
+extern uint8_t accel_addr;
 
 #define ACCEL_I2C_ADDR  0x20
 
@@ -29,7 +30,9 @@ extern uint8_t accel_state;
         __asm   mov     a, _accel_state                 __endasm ; \
         __asm   jnz     lbl                             __endasm ; \
         __asm   mov     _accel_state, #0                __endasm ; \
-        __asm   mov     _W2DAT, #ACCEL_I2C_ADDR         __endasm ; \
+        __asm   inc     _accel_addr                     __endasm ; \
+        __asm   inc     _accel_addr                     __endasm ; \
+        __asm   mov     _W2DAT, _accel_addr             __endasm ; \
         __asm   lbl:                                    __endasm ; \
         __asm
 
