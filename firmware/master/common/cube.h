@@ -6,14 +6,15 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _SIFTEO_CUBE_H
-#define _SIFTEO_CUBE_H
+#ifndef _CUBE_H
+#define _CUBE_H
 
 #include <sifteo/abi.h>
 #include <sifteo/machine.h>
 #include "radio.h"
 #include "runtime.h"
 #include "cubecodec.h"
+#include "systime.h"
 
 
 /**
@@ -43,6 +44,17 @@ class CubeSlot {
     static _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
     static _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
     static _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid
+
+    static void enableCubes(_SYSCubeIDVector cv) {
+        Sifteo::Atomic::Or(vecEnabled, cv);
+    }
+
+    static void disableCubes(_SYSCubeIDVector cv) {
+        Sifteo::Atomic::And(vecEnabled, ~cv);
+        Sifteo::Atomic::And(flashResetWait, ~cv);
+        Sifteo::Atomic::And(flashResetSent, ~cv);
+        Sifteo::Atomic::And(flashACKValid, ~cv);
+    }
 
     _SYSCubeID id() const {
         return this - &instances[0];
@@ -85,6 +97,8 @@ class CubeSlot {
     }
 
     void loadAssets(_SYSAssetGroup *a);
+    void waitBeforePaint();
+    void triggerPaint();
 
     static bool validID(_SYSCubeID id) {
         // For security/reliability, all cube IDs from game code must be checked
@@ -96,13 +110,7 @@ class CubeSlot {
         return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
     }
 
-    static void enableCubes(_SYSCubeIDVector cv) {
-        Sifteo::Atomic::Or(vecEnabled, cv);
-    }
-
-    static void disableCubes(_SYSCubeIDVector cv) {
-        Sifteo::Atomic::And(vecEnabled, ~cv);
-    }
+    static void paintCubes(_SYSCubeIDVector cv);
 
  private:
     /*
@@ -124,11 +132,15 @@ class CubeSlot {
     _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
 
+    // Timestamp of the last repaint trigger
+    SysTime::Ticks paintTimestamp;
+
     // Packet encoder state
     CubeCodec codec;
 
     // ACK tracking
     uint8_t flashPrevACK;
+    uint8_t framePrevACK;
 
     // Sensors
     _SYSAccelState accelState;

@@ -10,6 +10,7 @@
 #include <sifteo/machine.h>
 
 #include "cube.h"
+#include "vram.h"
 
 using namespace Sifteo;
 
@@ -110,6 +111,11 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
 
+    if (packet.len >= offsetof(RF_ACKType, frame_count) + sizeof ack->frame_count) {
+        // This ACK includes a valid frame_count counter
+        framePrevACK = ack->frame_count;
+    }
+
     if (packet.len >= offsetof(RF_ACKType, flash_fifo_bytes) + sizeof ack->flash_fifo_bytes) {
         // This ACK includes a valid flash_fifo_bytes counter
 
@@ -155,4 +161,101 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 void CubeSlot::radioTimeout()
 {
     /* XXX: Disconnect this cube */
+}
+
+void CubeSlot::paintCubes(_SYSCubeIDVector cv)
+{
+    /*
+     * If a previous repaint is still in progress, wait for it to
+     * finish. Then trigger a repaint on all cubes that need one.
+     *
+     * Since we always send VRAM data to the radio in order of
+     * increasing address, having the repaint trigger (vram.flags) at
+     * the end of memory guarantees that the remainder of VRAM will
+     * have already been sent by the time the cube gets the trigger.
+     *
+     * Why does this operate on a cube vector? Because we want to
+     * trigger all cubes at close to the same time. So, we first wait
+     * for all cubes to finish their last paint, then we trigger all
+     * cubes.
+     */
+
+    _SYSCubeIDVector waitVec = cv;
+    while (waitVec) {
+        _SYSCubeID id = Intrinsic::CLZ(waitVec);
+        instances[id].waitBeforePaint();
+        waitVec ^= Intrinsic::LZ(id);
+    }
+
+    _SYSCubeIDVector paintVec = cv;
+    while (paintVec) {
+        _SYSCubeID id = Intrinsic::CLZ(paintVec);
+        instances[id].triggerPaint();
+        paintVec ^= Intrinsic::LZ(id);
+    }
+}
+
+void CubeSlot::waitBeforePaint()
+{
+    /*
+     * Minimum and maximum frame rates.
+     *
+     * The minimum rate is used as a watchdog timer for waiting, while
+     * the maximum frame rate is used if we're in continuous mode.
+     */
+
+    const SysTime::Ticks slowPeriod = SysTime::hzTicks(10);
+    const SysTime::Ticks fastPeriod = SysTime::hzTicks(60);
+
+    while (vbuf) {
+        uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
+
+        if (flags & _SYS_VF_CONTINUOUS) {
+            /*
+             * For continuous rendering, we always wait until at least
+             * 'fastPeriod' has elapsed since the last frame.
+             */
+
+            while (SysTime::ticks() < (paintTimestamp + fastPeriod))
+                Radio::halt();
+            return;
+        }
+
+        /*
+         * By definition, the cube is idle if the LSB of frame_count
+         * matches the current _SYS_VF_TOGGLE bit.
+         */
+ 
+        if (!(flags ^ framePrevACK) & _SYS_VF_TOGGLE)
+            break;
+
+        /*
+         * Abort waiting if ti's been longer than 'slowPeriod' since
+         * the last frame. This protects us from getting hung if our
+         * toggle bit is out of sync with the cube's.
+         */
+
+        if (SysTime::ticks() > (paintTimestamp + slowPeriod))
+            break;
+
+        Radio::halt();
+        Atomic::Barrier();
+    }
+}
+
+void CubeSlot::triggerPaint()
+{
+    /*
+     * We need to repaint if we have pending repaints (unlock()'ed but
+     * not drawn by the hardware) or if we have CM32 updates that
+     * haven't been committed by unlock() yet. This is equivalent to
+     * doing a second unlock() before testing needPaint, but it's a
+     * little more efficient.
+     */
+    if (vbuf && (vbuf->needPaint || vbuf->cm32next)) {
+        VRAM::xorb(*vbuf, offsetof(_SYSVideoRAM, flags), _SYS_VF_TOGGLE);
+        VRAM::unlock(*vbuf);
+        vbuf->needPaint = 0;
+        paintTimestamp = SysTime::ticks();
+    }
 }

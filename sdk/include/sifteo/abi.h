@@ -214,6 +214,18 @@ union _SYSVideoRAM {
  * certain the values of words that have already been transmitted. So
  * it is recommended that userspace clear the 'lock' bits as soon as
  * possible after cm32 is set.
+ *
+ * The 'cm32next' member is special: It is not used at all by the
+ * system when updating cubes, but it's used as bidirectional storage
+ * for some of the system calls that manipulate video buffers. These
+ * system calls will update cm32next instead of cm32, leaving it up to
+ * the user to choose when to make those changes visible to the system
+ * by OR'ing cm32next into cm32.
+ *
+ * 'needPaint' OR'ed with cm32 at every unlock, and cleared only after
+ * we schedule a hardware repaint operation on the cubes. Userspace
+ * code doesn't need to worry about this value at all, assuming you
+ * use the system-provided unlock primitive.
  */
 
 struct _SYSVideoBuffer {
@@ -221,6 +233,8 @@ struct _SYSVideoBuffer {
     uint32_t cm1[16];           /// INOUT  Change map, at a resolution of 1 bit per word
     uint32_t cm32;              /// INOUT  Change map, at a resolution of 1 bit per 32 words
     uint32_t lock;              /// OUT    Lock map, at a resolution of 1 bit per 16 words
+    uint32_t cm32next;          /// INOUT  Next CM32 change map.
+    uint32_t needPaint;         /// INOUT  Repaint trigger
 };
 
 /**
@@ -276,6 +290,13 @@ void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
 
+void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf);
+void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr);
+void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf);
+void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word);
+void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte);
+void _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word);
+void _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte);
 
 #ifdef __cplusplus
 }  // extern "C"

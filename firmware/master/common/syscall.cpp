@@ -19,6 +19,7 @@
 #include "radio.h"
 #include "cube.h"
 #include "runtime.h"
+#include "vram.h"
 
 extern "C" {
 
@@ -38,7 +39,8 @@ void _SYS_yield(void)
 
 void _SYS_paint(void)
 {
-    _SYS_yield();
+    CubeSlot::paintCubes(CubeSlot::vecEnabled);
+    Event::dispatch();
 }
 
 void _SYS_enableCubes(_SYSCubeIDVector cv)
@@ -67,6 +69,60 @@ void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state)
 {
     if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid))
         CubeSlot::instances[cid].getAccelState(state);
+}
+
+void _SYS_vbuf_init(_SYSVideoBuffer *vbuf)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {
+        VRAM::init(*vbuf);
+    }
+}
+
+void _SYS_vbuf_lock(_SYSVideoBuffer *vbuf, uint16_t addr)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {
+        VRAM::truncateWordAddr(addr);
+        VRAM::lock(*vbuf, addr);
+    }
+}
+
+void _SYS_vbuf_unlock(_SYSVideoBuffer *vbuf)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {
+        VRAM::unlock(*vbuf);
+    }
+}
+
+void _SYS_vbuf_poke(_SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {
+        VRAM::truncateWordAddr(addr);
+        VRAM::poke(*vbuf, addr, word);
+    }
+}
+
+void _SYS_vbuf_pokeb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {
+        VRAM::truncateByteAddr(addr);
+        VRAM::pokeb(*vbuf, addr, byte);
+    }
+}
+
+void _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {
+        VRAM::truncateWordAddr(addr);
+        *word = VRAM::peek(*vbuf, addr);
+    }
+}
+
+void _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {
+        VRAM::truncateByteAddr(addr);
+        *byte = VRAM::peekb(*vbuf, addr);
+    }
 }
 
 

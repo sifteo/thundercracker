@@ -9,6 +9,7 @@ OBJS_SIM = \
 	common/cube.sim.o \
 	common/cubecodec.sim.o \
 	sim/radio_nethub.sim.o \
+	sim/systime.sim.o \
 	sim/main.sim.o \
 
 OBJS_STM32 = \
@@ -17,6 +18,7 @@ OBJS_STM32 = \
 	common/radio.stm32.o \
 	common/cube.stm32.o \
 	common/cubecodec.stm32.o \
+	stm32/systime.stm32.o \
 	stm32/vectors.stm32.o \
 	stm32/setup.stm32.o \
 	stm32/radio.stm32.o \

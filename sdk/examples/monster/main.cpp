@@ -21,20 +21,17 @@ static void showMonster(const MonsterData *m)
 
     for (unsigned i = 0; i < 16; i++)
         cube.vbuf.poke(i + 384, ((uint16_t *)m->fb)[i + 256]);
-
-    cube.vbuf.unlock();
 }
 
 void siftmain()
 {
     int fpMonster = 0;
-    const int shift = 14;
+    const int shift = 8;
     const int fpMax = arraysize(monsters) << shift;
     const MonsterData *currentMonster = NULL;
 
     cube.vbuf.init();
     cube.vbuf.sys.vram.mode = _SYS_VM_FB32;
-    cube.vbuf.sys.vram.flags = _SYS_VF_CONTINUOUS;
     cube.vbuf.sys.vram.num_lines = 128;
     cube.enable();
 
