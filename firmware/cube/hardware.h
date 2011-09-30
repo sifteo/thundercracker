@@ -15,12 +15,21 @@
 
 #define ADDR_PORT       P0
 #define ADDR_DIR        P0DIR
+#define MISC_PORT       P1
+#define MISC_DIR        P1DIR
 #define BUS_PORT        P2
 #define BUS_DIR         P2DIR
 #define CTRL_PORT       P3
 #define CTRL_DIR        P3DIR
 
 __sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
+
+#define MISC_I2C_SCL    (1 << 2)
+#define MISC_I2C_SDA    (1 << 3)
+#define MISC_BOOST      (1 << 7)
+
+#define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_BOOST))
+#define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)
 
 #define CTRL_LCD_DCX    (1 << 0)
 #define CTRL_FLASH_LAT1 (1 << 1)
@@ -209,7 +218,7 @@ __sfr __at 0xD6 RNGCTL;
 __sfr __at 0xD7 RNGDAT;
 __sfr __at 0xD8 ADCON;
 __sfr __at 0xD9 W2SADR;
-__sfr __at 0xDA W2DAT;
+__sfr __at 0xDA volatile W2DAT;
 __sfr __at 0xDB COMPCON;
 __sfr __at 0xDC POFCON;
 __sfr __at 0xDD CCPDATIA;
@@ -217,7 +226,7 @@ __sfr __at 0xDE CCPDATIB;
 __sfr __at 0xDF CCPDATO;
 __sfr __at 0xE0 ACC;
 __sfr __at 0xE1 W2CON1;
-__sfr __at 0xE2 W2CON0;
+__sfr __at 0xE2 volatile W2CON0;
 __sfr __at 0xE4 SPIRCON0;
 __sfr __at 0xE5 SPIRCON1;
 __sfr __at 0xE6 SPIRSTAT;
@@ -251,7 +260,7 @@ __sbit __at 0xAF IEN_EN;
 // IEN1 bits
 __sbit __at 0xB8 IEN_RFSPI;
 __sbit __at 0xB9 IEN_RF;
-__sbit __at 0xBA IEN_SPI;
+__sbit __at 0xBA IEN_SPI_I2C;
 __sbit __at 0xBB IEN_WUOP;
 __sbit __at 0xBC IEN_MISC;
 __sbit __at 0xBD IEN_TICK;
@@ -281,7 +290,7 @@ __sbit __at 0xEA RF_CKEN;
 #define VECTOR_TF2      5
 #define VECTOR_RFSPI    8
 #define VECTOR_RF       9
-#define VECTOR_SPI      10
+#define VECTOR_SPI_I2C  10
 #define VECTOR_WUOP     11
 #define VECTOR_MISC     12
 #define VECTOR_TICK     13
@@ -291,6 +300,14 @@ __sbit __at 0xEA RF_CKEN;
 #define SPI_RX_READY    0x04
 #define SPI_TX_EMPTY    0x02
 #define SPI_TX_READY    0x01
+
+// W2CON0 bits
+#define W2CON0_START    0x10
+#define W2CON0_STOP     0x20
+
+// W2CON1 bits
+#define W2CON1_ACK      0x02
+#define W2CON1_READY    0x01
 
 
 #endif // __HARDWARE_H

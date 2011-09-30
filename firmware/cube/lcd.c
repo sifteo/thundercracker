@@ -15,18 +15,6 @@
 
 static bit lcd_is_awake;
 
-void lcd_init()
-{
-    /*
-     * I/O port init
-     */
-
-    BUS_DIR = 0xFF;
-    ADDR_PORT = 0;
-    ADDR_DIR = 0;
-    CTRL_PORT = CTRL_IDLE;
-    CTRL_DIR = CTRL_DIR_VALUE;
-}
 
 static void lcd_cmd_table(const __code uint8_t *ptr)
 {

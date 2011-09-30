@@ -40,7 +40,7 @@ void siftmain()
         _SYSAccelState state;
         _SYS_getAccel(cube.id(), &state);
 
-        fpMonster += state.x;
+        fpMonster += 0x40; //state.x;
 
         while (fpMonster < 0) fpMonster += fpMax;
         while (fpMonster > fpMax) fpMonster -= fpMax;

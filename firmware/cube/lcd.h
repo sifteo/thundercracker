@@ -14,9 +14,7 @@ typedef unsigned long long uint64_t;
 #include <sifteo/abi.h>
 static __xdata __at 0x0000 union _SYSVideoRAM vram;
 
-void lcd_init();
 void lcd_sleep();
-
 void lcd_begin_frame();
 void lcd_end_frame();
 

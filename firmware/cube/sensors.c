@@ -10,65 +10,116 @@
 #include "sensors.h"
 #include "hardware.h"
 #include "radio.h"
+#include "time.h"
+
+uint8_t accel_state;
+
 
 /*
- * Channel swap and return
- */
-#define ADC_ISR_RET                             __endasm ; \
-        __asm   xrl     _ADCCON1, #0x04         __endasm ; \
-        __asm   pop     psw                     __endasm ; \
-        __asm   pop     acc                     __endasm ; \
-        __asm   reti                            __endasm ; \
-        __asm
-
-/*
- * A/D Converter ISR --
+ * I2C ISR --
  *
- *    Stores this sample in the ack_data buffer, and swaps channels.
+ *    This is where we handle accelerometer reads. Since I2C is a
+ *    pretty slow bus, and the hardware has no real buffering to speak
+ *    of, we use this IRQ to implement a state machine that executes
+ *    our I2C read byte-by-byte.
  *
- *    This ISR does not switch register banks, because it does not
- *    use registers. Only the accumulator needs to be saved. Performance
- *    here is really important, since the ISR is invoked so frequently.
+ *    These reads get kicked off during the Radio ISR, so that we'll
+ *    start taking a new accel reading any time the previous reading,
+ *    if any, had a chance to be retrieved.
+ *
+ *    The kick-off (writing the first byte) is handled by some inlined
+ *    code in sensors.h, which we include in the radio ISR.
  */
 
-void adc_isr(void) __interrupt(VECTOR_MISC) __naked
+void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
 {
     __asm
         push    acc
         push    psw
+        push    dpl
+        push    dph
+        push    _DPS
+        mov     _DPS, #0
 
-        mov     a,_ADCCON1              ; What channel are we on? We only have two.
-        jb      acc.2, 1$
+        ;--------------------------------------------------------------------
+        ; Accelerometer State Machine
+        ;--------------------------------------------------------------------
 
-        ; Sample channel 0
-        mov     a, _ADCDATH
-        cjne    a, (_ack_data + RF_ACK_ACCEL + 0), 2$
-        ADC_ISR_RET
+        ; Check status of I2C engine.
 
-        ; Channel 0 has changed
-2$:     mov     (_ack_data + RF_ACK_ACCEL + 0), a
+        mov     a, _W2CON1
+        jnb     acc.0, as_ret           ; Wasn't a real I2C interrupt. Ignore it.
+        jb      acc.1, as_nack          ; Was not acknowledged!
+
+        mov     dptr, #as_1
+        mov     a, _accel_state
+        jmp     @a+dptr
+
+        ; 1. Address/Write finished, Send register address next
+
+as_1:
+        mov     _W2DAT, #0              
+        mov     _accel_state, #(as_2 - as_1)
+        sjmp    as_ret
+
+        ; 2. Register address finished. Send repeated start, and address/read
+
+as_2:
+        orl     _W2CON0, #W2CON0_START  
+        mov     _W2DAT, #(ACCEL_I2C_ADDR | 1)
+        mov     _accel_state, #(as_3 - as_1)
+        sjmp    as_ret
+
+        ; 3. Address/read finished. Subsequent bytes will be reads.
+
+as_3:
+        mov     _accel_state, #(as_4 - as_1)
+        sjmp    as_ret
+
+        ; 4. Read X axis (Don't set change flag yet)
+        ;    Also set a stop condition, since this is the second-to-last byte.
+
+as_4:
+        mov     (_ack_data + RF_ACK_ACCEL + 0), _W2DAT
+        mov     _accel_state, #(as_5 - as_1)
+        orl     _W2CON0, #W2CON0_STOP  
+        sjmp    as_ret
+
+        ; 5. Read Y axis, and set change flag
+
+as_5:
+        mov     (_ack_data + RF_ACK_ACCEL + 1), _W2DAT
         orl     _ack_len, #RF_ACK_LEN_ACCEL
-        ADC_ISR_RET
+        mov     _accel_state, #0
+        sjmp    as_ret
 
-        ; Sample channel 1
-1$:     mov     a, _ADCDATH
-        cjne    a, (_ack_data + RF_ACK_ACCEL + 1), 3$
-        ADC_ISR_RET
+        ; NACK handler. Stop, go back to the default state, try again.
 
-        ; Channel 1 has changed
-3$:     mov     (_ack_data + RF_ACK_ACCEL + 1), a
-        orl     _ack_len, #RF_ACK_LEN_ACCEL
-        ADC_ISR_RET
+as_nack:
+        orl     _W2CON0, #W2CON0_STOP  
+        mov     _accel_state, #0
+        sjmp    as_ret
 
+        ;--------------------------------------------------------------------
+
+as_ret:
+        pop     _DPS
+        pop     dph
+        pop     dpl
+        pop     psw
+        pop     acc
+        reti
     __endasm ;
 }
 
 
 void sensors_init()
 {
-    // Set up continuous 8-bit, 2 ksps A/D conversion with interrupt
-    ADCCON3 = 0x40;
-    ADCCON2 = 0x20;
-    ADCCON1 = 0x80;
-    IEN_MISC = 1;
+    W2CON0 |= 1;                // Enable I2C / 2Wire controller
+    W2CON0 = 0x07;              // 100 kHz, Master mode
+    W2CON1 = 0x00;              // Unmask interrupt
+    INTEXP |= 0x04;             // Enable 2Wire IRQ -> iex3
+    T2CON |= 0x40;              // iex3 rising edge
+    IRCON = 0;                  // Clear any spurious IRQs from initialization
+    IEN_SPI_I2C = 1;            // Global enable for SPI interrupts
 }

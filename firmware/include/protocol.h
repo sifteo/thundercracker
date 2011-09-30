@@ -242,8 +242,8 @@ typedef union {
          */
         uint8_t frame_count;
 
-        // 8-bit analog accelerometer data
-        uint8_t accel[2];
+        // Signed 8-bit analog accelerometer data
+        int8_t accel[2];
 
         /*
          * Need ~5 bits per sensor (5 other cubes * 4 sides + 1 idle =

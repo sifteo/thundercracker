@@ -146,8 +146,8 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, accel) + sizeof ack->accel) {
         // Has valid accelerometer data. Is it different from our previous state?
 
-        int8_t x = ack->accel[0] - 0x80;
-        int8_t y = ack->accel[1] - 0x80;
+        int8_t x = ack->accel[0];
+        int8_t y = ack->accel[1];
 
         if (x != accelState.x || y != accelState.y) {
             accelState.x = x;
