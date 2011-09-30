@@ -43,6 +43,12 @@ void _SYS_paint(void)
     Event::dispatch();
 }
 
+void _SYS_finish(void)
+{
+    CubeSlot::finishCubes(CubeSlot::vecEnabled);
+    Event::dispatch();
+}
+
 void _SYS_enableCubes(_SYSCubeIDVector cv)
 {
     CubeSlot::enableCubes(CubeSlot::truncateVector(cv));

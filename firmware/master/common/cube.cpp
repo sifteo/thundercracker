@@ -180,46 +180,63 @@ void CubeSlot::paintCubes(_SYSCubeIDVector cv)
      * cubes.
      */
 
-    _SYSCubeIDVector waitVec = cv;
-    while (waitVec) {
-        _SYSCubeID id = Intrinsic::CLZ(waitVec);
-        instances[id].waitBeforePaint();
-        waitVec ^= Intrinsic::LZ(id);
-    }
+    finishCubes(cv);
+
+    SysTime::Ticks timestamp = SysTime::ticks();
 
     _SYSCubeIDVector paintVec = cv;
     while (paintVec) {
         _SYSCubeID id = Intrinsic::CLZ(paintVec);
-        instances[id].triggerPaint();
+        instances[id].triggerPaint(timestamp);
         paintVec ^= Intrinsic::LZ(id);
     }
 }
 
-void CubeSlot::waitBeforePaint()
+void CubeSlot::finishCubes(_SYSCubeIDVector cv)
+{
+    /*
+     * A subset of paintCubes(): Just wait for the previous paint to finish.
+     */
+
+    _SYSCubeIDVector waitVec = cv;
+    while (waitVec) {
+        _SYSCubeID id = Intrinsic::CLZ(waitVec);
+        instances[id].waitForPaint();
+        waitVec ^= Intrinsic::LZ(id);
+    }
+}
+
+void CubeSlot::waitForPaint()
 {
     /*
      * Minimum and maximum frame rates.
      *
      * The minimum rate is used as a watchdog timer for waiting, while
-     * the maximum frame rate is used if we're in continuous mode.
+     * the maximum frame rate is used if we're in continuous mode, or if
+     * we omitted a paint() call because no drawing was necessary.
      */
 
     const SysTime::Ticks slowPeriod = SysTime::hzTicks(10);
     const SysTime::Ticks fastPeriod = SysTime::hzTicks(60);
 
+    /*
+     * We always, regardless of rendering mode, must wait for the
+     * fastPeriod to elapse since the last paint().
+     */
+
+    while (SysTime::ticks() < (paintTimestamp + fastPeriod)) {
+        Radio::halt();
+    }
+
     while (vbuf) {
         uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
 
-        if (flags & _SYS_VF_CONTINUOUS) {
-            /*
-             * For continuous rendering, we always wait until at least
-             * 'fastPeriod' has elapsed since the last frame.
-             */
+        /*
+         * In continuous rendering, never wait longer than fastPeriod.
+         */
 
-            while (SysTime::ticks() < (paintTimestamp + fastPeriod))
-                Radio::halt();
-            return;
-        }
+        if (flags & _SYS_VF_CONTINUOUS)
+            break;
 
         /*
          * By definition, the cube is idle if the LSB of frame_count
@@ -230,7 +247,7 @@ void CubeSlot::waitBeforePaint()
             break;
 
         /*
-         * Abort waiting if ti's been longer than 'slowPeriod' since
+         * Abort waiting if it's been longer than 'slowPeriod' since
          * the last frame. This protects us from getting hung if our
          * toggle bit is out of sync with the cube's.
          */
@@ -243,7 +260,7 @@ void CubeSlot::waitBeforePaint()
     }
 }
 
-void CubeSlot::triggerPaint()
+void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
 {
     /*
      * We need to repaint if we have pending repaints (unlock()'ed but
@@ -251,11 +268,18 @@ void CubeSlot::triggerPaint()
      * haven't been committed by unlock() yet. This is equivalent to
      * doing a second unlock() before testing needPaint, but it's a
      * little more efficient.
+     *
+     * We must always update paintTimestamp, even if this turned out
+     * to be a no-op. An application which makes no changes to VRAM
+     * but just calls paint() in a tight loop should iterate at the
+     * 'fastPeriod' defined above.
      */
+
     if (vbuf && (vbuf->needPaint || vbuf->cm32next)) {
         VRAM::xorb(*vbuf, offsetof(_SYSVideoRAM, flags), _SYS_VF_TOGGLE);
         VRAM::unlock(*vbuf);
         vbuf->needPaint = 0;
-        paintTimestamp = SysTime::ticks();
     }
+
+    paintTimestamp = timestamp;
 }

@@ -45,14 +45,13 @@ void siftmain()
     cube.loadAssets(GameAssets);
 
     unsigned t = 0;
-    const unsigned sh = 6;
 
     while (1) {
         t++;
-        if (t == (18*8) << sh)
+        if (t == (18*8))
             t = 0;
 
-        cube.vbuf.pokeb(offsetof(_SYSVideoRAM, bg0_x), t >> sh);
+        cube.vbuf.pokeb(offsetof(_SYSVideoRAM, bg0_x), t);
         cube.vbuf.unlock();
 
         System::paint();

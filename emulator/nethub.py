@@ -134,7 +134,7 @@ class PacketDispatcher(asyncore.dispatcher_with_send):
                 self.recv_buffer = self.recv_buffer[packetLen:]
             else:
                 # Waiting
-            	return
+                return
 
     def handle_packet(self, packet):
         ptype = packet[1]
@@ -364,9 +364,11 @@ class NethubClient(PacketDispatcher):
                 # Keep waiting on this client
                 still_busy.append(dest)
             else:
-                # Send it, and expect an ACK
-                if (log.verbose >= 1 and self.current_msg) or log.verbose >= 2:
+                if ( (log.verbose >= 1 and self.current_msg not in ('', '\xff'))
+                     or log.verbose >= 2 ):
                     log(self, "send to %s -- %s" % (dest, log.b2a(self.current_msg)))
+
+                # Send it, and expect an ACK
                 dest.tx_depth += 1
                 dest.send(struct.pack("<BBQ", 8+len(self.current_msg), 1,
                                       self.address) + self.current_msg)

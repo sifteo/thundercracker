@@ -97,8 +97,8 @@ class CubeSlot {
     }
 
     void loadAssets(_SYSAssetGroup *a);
-    void waitBeforePaint();
-    void triggerPaint();
+    void waitForPaint();
+    void triggerPaint(SysTime::Ticks timestamp);
 
     static bool validID(_SYSCubeID id) {
         // For security/reliability, all cube IDs from game code must be checked
@@ -111,6 +111,7 @@ class CubeSlot {
     }
 
     static void paintCubes(_SYSCubeIDVector cv);
+    static void finishCubes(_SYSCubeIDVector cv);
 
  private:
     /*

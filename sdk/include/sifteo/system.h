@@ -59,6 +59,29 @@ class System {
         _SYS_paint();
     }
 
+    /**
+     * Wait for any previous paint() to finish.
+     *
+     * This is analogous to glFinish() in OpenGL. It doesn't enqueue
+     * any new rendering, but the caller has a strong guarantee that
+     * all existing rendering has completed by the time this function
+     * returns.
+     *
+     * This function must be used if you're changing VRAM after
+     * rendering a frame, and you must make absolutely sure that this
+     * change doesn't affect the current frame. For example, if you're
+     * making a sharp transition from one video mode to a totally
+     * different one.
+     *
+     * Don't overuse finish(), especially not if you're concerned with
+     * frame rate. Normally it's desirable to be working on building
+     * the next frame while the cubes are still busy rendering the
+     * previous one.
+     */
+
+    static void finish() {
+        _SYS_finish();
+    }
 };
 
 

@@ -83,17 +83,6 @@ static void erase()
         cube.vbuf.poke(i, 0);
 }
 
-static void flush_frame()
-{
-    // XXX: cheesy frame trigger
-    cube.vbuf.poke(511, cube.vbuf.sys.vram.words[511] ^ (_SYS_VF_TOGGLE << 8));
-    cube.vbuf.unlock();
-    
-    // XXX: This isn't in the API yet, currently we totally fake it.
-    for (unsigned i = 0; i < 10; i++)
-        System::paint();
-}       
-
 static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
     /*
      * Round to the nearest 5/6 bit color. Note that simple
@@ -127,21 +116,21 @@ static uint16_t color_lerp(uint8_t alpha) {
                    
 static void fade_in_and_out() {
     const unsigned speed = 4;
-    const unsigned hold = 500;
+    const unsigned hold = 20;
     
     for (unsigned i = 0; i < 0x100; i += speed) {
         cube.vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1,
                        color_lerp(i));
-        flush_frame();
+        System::paint();
     }
 
     for (unsigned i = 0; i < hold; i++)
-        flush_frame();
+        System::paint();
 
     for (unsigned i = 0; i < 0x100; i += speed) {
         cube.vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1,
                        color_lerp(0xFF - i));
-        flush_frame();
+        System::paint();
     }
 }
 
@@ -159,11 +148,14 @@ void siftmain()
     cube.vbuf.sys.vram.num_lines = 128;
     cube.vbuf.sys.vram.colormap[0] = color_lerp(0);
     cube.vbuf.sys.vram.colormap[1] = color_lerp(0);
-    cube.vbuf.unlock();
 
-    // XXX: cheesy delay
-    for (unsigned i = 0; i < 100; i++)
-        flush_frame();
+    /*
+     * Must fully finish rendering the background before we change
+     * video modes.
+     */
+
+    System::paint();
+    System::finish();
 
     /*
      * Now set up a letterboxed 128x48 mode
