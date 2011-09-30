@@ -32,6 +32,7 @@ void siftmain()
 
     cube.vbuf.init();
     cube.vbuf.sys.vram.mode = _SYS_VM_FB32;
+    cube.vbuf.sys.vram.flags = _SYS_VF_CONTINUOUS;
     cube.vbuf.sys.vram.num_lines = 128;
     cube.enable();
 

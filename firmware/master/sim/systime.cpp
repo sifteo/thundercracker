@@ -10,6 +10,11 @@
 #include "systime.h"
 
 
+void SysTime::init()
+{
+    /* Nothing to do yet */
+}
+
 SysTime::Ticks SysTime::ticks()
 {
     /*

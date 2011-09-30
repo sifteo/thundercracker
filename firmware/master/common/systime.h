@@ -16,20 +16,27 @@
 #include <sifteo/abi.h>
 
 struct SysTime {
+
+    /*
+     * Hardware timer initialization
+     */
+
+    static void init();
     
     /*
-     * Get the current system timer.  Guaranteed to be
-     * monotonic. Units are undefined, they may be platform-specific.
+     * Get the current system timer, a monotonically increasing
+     * nanosecond clock.
+     *
+     * (The "Ticks" type is intentionally vague on units, to limit the
+     * amount of code that makes assumptions about our time units, in
+     * the event we need to change it in the future).
      */
 
     typedef int64_t Ticks;
     static Ticks ticks();
 
     /*
-     * Convert common things to Ticks.
-     *
-     * XXX: Needs porting love. Currently assumes Ticks == nanoseconds,
-     *      which we may not want to do on hardware.
+     * Convert common things to and from Ticks.
      */
 
     static Ticks sTicks(unsigned seconds) {
@@ -51,7 +58,6 @@ struct SysTime {
     static Ticks hzTicks(unsigned hz) {
         return 1000000000ULL / hz;
     }
-
 };
 
 #endif

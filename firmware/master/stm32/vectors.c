@@ -22,6 +22,7 @@ __attribute__ ((section (".vectors"))) const struct IVT_t IVT =
     .HardFault = ISR_Fault,
     .BusFault = ISR_Fault,
     .UsageFault = ISR_Fault,
+    .SysTick = ISR_SysTick,
     .EXTI15_10 = ISR_NordicRadio,
 };
 

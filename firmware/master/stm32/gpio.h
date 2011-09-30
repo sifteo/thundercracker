@@ -45,6 +45,10 @@ class GPIOPin {
         port()->ODR &= ~bit();
     }
 
+    void toggle() const {
+        port()->ODR ^= bit();
+    }
+
     void setControl(Control c) const;
     void irqInit() const;
 

@@ -15,6 +15,7 @@
 #include "runtime.h"
 #include "hardware.h"
 #include "vectors.h"
+#include "systime.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
@@ -46,6 +47,14 @@ extern "C" void _start()
      *   - APB2 at 24 MHz (/2)
      *       - GPIOs
      *   - USB clock at 48 MHz (PLL /1)
+     *
+     * Other things that depend on our clock setup:
+     *
+     *   - SPI configuration. Keep nRF SPI as close to 10 MHz as we
+     *     can without going over.
+     *
+     *   - SysTick frequency, in systime.cpp. The Cortex-M3's
+     *     system clock is 1/8th the AHB clock.
      */
 
     RCC.CFGR = ( (1 << 22) |    // USBPRE (/1)
@@ -107,6 +116,7 @@ extern "C" void _start()
      * High-level hardware initialization
      */
 
+    SysTime::init();
     Radio::open();
 
     /*

@@ -23,6 +23,7 @@ extern "C" {
 
 extern void _start();
 extern void ISR_Fault();
+extern void ISR_SysTick();
 extern void ISR_NordicRadio();
 
 /*
