@@ -19,7 +19,7 @@
 #include "network.h"
 #include "emulator.h"
 
-#define RX_INTERVAL_US  750
+#define RX_INTERVAL_US  440
 
 /* SPI Commands */
 #define CMD_R_REGISTER          0x00
