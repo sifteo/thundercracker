@@ -67,34 +67,6 @@ static void lcd_cmd_table(const __code uint8_t *ptr)
     LCD_WRITE_END();
 }
 
-static void lcd_lut_init()
-{
-    /*
-     * Initialize the LCD's color lookup tables, for converting RGB565 to RGB666.
-     */
-
-    uint8_t i;
-
-    LCD_WRITE_BEGIN();
-    LCD_CMD_MODE();
-    LCD_BYTE(LCD_CMD_COLOR_LUT);
-    LCD_DATA_MODE();
-    
-    // Red (5->6)
-    for (i = 0; i < 32; i++)
-        LCD_BYTE(i << 1);
-
-    // Green (Identity)
-    for (i = 0; i < 64; i++)
-        LCD_BYTE(i);
-
-    // Blue (5->6)
-    for (i = 0; i < 32; i++)
-        LCD_BYTE(i << 1);
-
-    LCD_WRITE_END();
-}
-
 void lcd_sleep()
 {
     /*
@@ -111,7 +83,6 @@ void lcd_sleep()
 
         lcd_is_awake = 0;
         lcd_cmd_table(table);
-        lcd_lut_init();
     }   
 }
     
