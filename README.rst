@@ -42,6 +42,7 @@ Various dependencies are required:
 3. ncurses or pdcurses, for the debug console in simcube
 4. SDCC, a microcontroller cross-compiler used to build the cube firmware
 5. gcc for ARM (arm-none-eabi-gcc), used to build master-cube firmware
+6. Python 2.7, for nethub.py
 
 Optional dependencies:
 
