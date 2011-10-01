@@ -44,4 +44,7 @@ static void gpio_init(void)
     ADDR_DIR = 0;
     MISC_DIR = MISC_DIR_VALUE;
     CTRL_DIR = CTRL_DIR_VALUE;
+
+    MISC_CON = 0x52;    // Pull-up on I2C SCL
+    MISC_CON = 0x53;    // Pull-up on I2C SDA
 }

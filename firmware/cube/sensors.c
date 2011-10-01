@@ -13,7 +13,6 @@
 #include "time.h"
 
 uint8_t accel_state;
-uint8_t accel_addr;
 
 
 /*
@@ -79,9 +78,10 @@ as_3:
 
         ; 4. Read X axis (Don't set change flag yet)
         ;    Also set a stop condition, since this is the second-to-last byte.
+        ;    XXX: Axis swap
 
 as_4:
-        mov     (_ack_data + RF_ACK_ACCEL + 0), _W2DAT
+        mov     (_ack_data + RF_ACK_ACCEL + 1), _W2DAT
         mov     _accel_state, #(as_5 - as_1)
         orl     _W2CON0, #W2CON0_STOP  
         sjmp    as_ret
@@ -89,7 +89,7 @@ as_4:
         ; 5. Read Y axis, and set change flag
 
 as_5:
-        mov     (_ack_data + RF_ACK_ACCEL + 1), _W2DAT
+        mov     (_ack_data + RF_ACK_ACCEL + 0), _W2DAT
         orl     _ack_len, #RF_ACK_LEN_ACCEL
         mov     _accel_state, #0
         sjmp    as_ret

@@ -26,7 +26,7 @@ static void showMonster(const MonsterData *m)
 void siftmain()
 {
     int fpMonster = 0;
-    const int shift = 8;
+    const int shift = 7;
     const int fpMax = arraysize(monsters) << shift;
     const MonsterData *currentMonster = NULL;
 
@@ -40,7 +40,7 @@ void siftmain()
         _SYSAccelState state;
         _SYS_getAccel(cube.id(), &state);
 
-        fpMonster += 0x40; //state.x;
+        fpMonster += state.x;
 
         while (fpMonster < 0) fpMonster += fpMax;
         while (fpMonster > fpMax) fpMonster -= fpMax;
