@@ -44,10 +44,12 @@ all: $(BINS)
 $(BIN_SIM): $(OBJS_SIM)
 	rm -f $@
 	$(AR) r $@ $^
+	$(RANLIB_SIM) $@
 
 $(BIN_STM32): $(OBJS_STM32)
 	rm -f $@
 	$(AR) r $@ $^
+	$(RANLIB_STM32) $@
 
 %.sim.o: %.cpp $(CDEPS)
 	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
