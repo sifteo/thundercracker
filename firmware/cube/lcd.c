@@ -13,7 +13,7 @@
 #include "time.h"
 #include "lcd_model.h"
 
-static bit lcd_is_awake;
+static __bit lcd_is_awake;
 
 
 static void lcd_cmd_table(const __code uint8_t *ptr)
