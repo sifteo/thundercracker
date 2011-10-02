@@ -14,6 +14,115 @@ using namespace Sifteo;
 
 static Cube cube(0);
 
+struct AffineMatrix {
+    /**
+     * An augmented 3x2 matrix, for doing 2D affine transforms.
+     *
+     *  [ xx  yx  cx ]
+     *  [ xy  yy  cy ]
+     *  [  0   0   1 ]
+     *
+     * The way we use affine transforms for background scaling are
+     * very similiar to the mechanism used by the GameBoy Advance
+     * PPU. There's a great tutorial on this at:
+     *
+     * http://www.coranac.com/tonc/text/affine.htm
+     */
+
+    float cx, cy;
+    float xx, xy;
+    float yx, yy;
+    
+    static AffineMatrix identity() {
+        AffineMatrix m;
+
+        m.cx = 0;
+        m.cy = 0;
+        m.xx = 1;
+        m.xy = 0;
+        m.yx = 0;
+        m.yy = 1;
+
+        return m;
+    }
+
+    static AffineMatrix scaling(float s) {
+        AffineMatrix m;
+        float inv_s = 1.0f / s;
+
+        m.cx = 0;
+        m.cy = 0;
+        m.xx = inv_s;
+        m.xy = 0;
+        m.yx = 0;
+        m.yy = inv_s;
+
+        return m;
+    }
+
+    static AffineMatrix translation(float x, float y) {
+        AffineMatrix m;
+
+        m.cx = x;
+        m.cy = y;
+        m.xx = 1;
+        m.xy = 0;
+        m.yx = 0;
+        m.yy = 1;
+
+        return m;
+    }
+
+    static AffineMatrix rotation(float angle) {
+        AffineMatrix m;
+        float s = sinf(angle);
+        float c = cosf(angle);
+
+        m.cx = 0;
+        m.cy = 0;
+        m.xx = c;
+        m.xy = s;
+        m.yx = -s;
+        m.yy = c;
+
+        return m;
+    }
+
+    void operator*= (float scale) {
+        cx *= scale;
+        cy *= scale;
+        xx *= scale;
+        xy *= scale;
+        yx *= scale;
+        yy *= scale;
+    }
+
+    void operator*= (const AffineMatrix &m) {
+        AffineMatrix n;
+
+        n.cx = xx*m.cx + yx*m.cy + cx;
+        n.cy = xy*m.cx + yy*m.cy + cy;
+        n.xx = xx*m.xx + yx*m.xy;
+        n.xy = xy*m.xx + yy*m.xy;
+        n.yx = xx*m.yx + yx*m.yy;
+        n.yy = xy*m.yx + yy*m.yy;
+
+        *this = n;
+    }
+
+    void translate(float x, float y) {
+        *this *= translation(x, y);
+    }
+
+    void rotate(float angle) {
+        *this *= rotation(angle);
+    }
+    
+    void scale(float s) {
+        *this *= scaling(s);
+    }
+};
+
 static void poke_index(uint16_t addr, uint16_t tile)
 {
     cube.vbuf.poke(addr, ((tile << 1) & 0xFE) | ((tile << 2) & 0xFE00));
@@ -42,29 +151,21 @@ void siftmain()
         frame++;
 
         float angle = frame * 0.01;
-        float zoom = 0.5 + sinf(frame * 0.001) * 0.2;
 
-        float s = sinf(angle) * zoom;
-        float c = cosf(angle) * zoom;
+        AffineMatrix m = AffineMatrix::identity();
+        
+        m.translate(Background.width * 8 / 2,
+                    Background.height * 8 / 2);
+        m.scale(1.5);
+        m.rotate(angle);
+        m.translate(-64, -64);
 
-        float x = 0.5; // - c*64/zoom + s*64/zoom;
-        float y = 0.5; // - s*64/zoom - c*64/zoom;
-
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.cx)/2, 0x100 * x);
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.cx)/2, 0x100 * y);
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.xx)/2, 0x100 * c);
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.xy)/2, 0x100 * s);
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yx)/2, 0x100 * -s);
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yy)/2, 0x100 * c);
-
-        /*
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.cx)/2, 0x100 * 0);
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.cx)/2, 0x100 * 0);
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.xx)/2, 0x100 * 1);
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.xy)/2, 0x100 * 0);
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yx)/2, 0x100 * 0);
-        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yy)/2, 0x100 * 1);
-        */
+        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.cx)/2, 0x100 * m.cx);
+        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.cy)/2, 0x100 * m.cy);
+        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.xx)/2, 0x100 * m.xx);
+        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.xy)/2, 0x100 * m.xy);
+        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yx)/2, 0x100 * m.yx);
+        cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yy)/2, 0x100 * m.yy);
 
         System::paint();
     }
