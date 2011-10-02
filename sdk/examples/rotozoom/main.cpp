@@ -156,7 +156,7 @@ void siftmain()
         
         m.translate(Background.width * 8 / 2,
                     Background.height * 8 / 2);
-        m.scale(2);
+        m.scale(1.5);
         m.rotate(angle);
         m.translate(-64, -64);
 

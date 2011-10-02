@@ -1840,23 +1840,26 @@ static void line_bg_spr0(void)
  **********************************************************************/
 
 /*
- * We keep the accumulator state that needs to be used
- * every pixel in GFX_BANK, for quick access:
+ * BG2: Single 16x16 tiled background, with affine transform.
+ *
+ * This mode is certainly pushing the limits of the CPU power we have
+ * available, and there's no good way to combine it with other modes
+ * on the same rendering pass- so this implementation is a bit more
+ * monolithic than other modes. No separate scanline renderer, no
+ * support for polling for flash updates while we're rendering. More
+ * CPU power leftover for BG2. Also this might let us overlay the vars
+ * used by BG2 in-between scanlines. We use quite a lot of them.
+ *
+ * Registers in GFX_BANK:
  *
  *   r0: X accumulator low
  *   r1: X accumulator high
  *   r2: Y accumulator low
  *   r3: Y accumulator high
- *   r4: X delta, low
- *   r5: X delta, high
- *   r6: Y delta, low
- *   r7: Y delta, high
- *
- * Back in the main bank, we have:
- *
- *   r0: Pixel iterator
- *   r6: Border color low
- *   r7: Border color high
+ *   r4: Tile address scratch
+ *   r5: Pixel / border scratch
+ *   r6: Cached tile address
+ *   r7: Pixel iterator
  *
  * Since this is 8.8 fixed-point, we use r1/r3 as our current pixel
  * location after this accumulator updating is all done with. We
@@ -1865,6 +1868,8 @@ static void line_bg_spr0(void)
  *      r1: .xxxxsss
  *      r3: .yyyyttt
  *
+ *   r4/r6: yyyyxxxx
+ *      
  *     dph: .......y
  *     dpl: yyyxxxx.
  *
@@ -1876,60 +1881,34 @@ static void line_bg_spr0(void)
  * we're displaying the border color instead.
  */
 
-static uint16_t x_bg2_cx;
-static uint16_t x_bg2_cy;
-static uint16_t x_bg2_xx;
-static uint16_t x_bg2_xy;
-static uint16_t x_bg2_yx;
-static uint16_t x_bg2_yy;
-static uint16_t x_bg2_border;
-
 // Update the X accumulator, leaving the high byte in 'a'
-#define BG2_ACCUM_X()						__endasm; \
-    __asm mov	a, r0						__endasm; \
-    __asm add   a, r4						__endasm; \
-    __asm mov   r0, a						__endasm; \
-    __asm mov   a, r1						__endasm; \
-    __asm addc  a, r5						__endasm; \
-    __asm mov   r1, a						__endasm; \
+#define BG2_ACCUM_X()                                          __endasm; \
+    __asm mov  a, r0                                           __endasm; \
+    __asm add   a, _vm_bg2_xx_1_1                              __endasm; \
+    __asm mov   r0, a                                          __endasm; \
+    __asm mov   a, r1                                          __endasm; \
+    __asm addc  a, (_vm_bg2_xx_1_1 + 1)                        __endasm; \
+    __asm mov   r1, a                                          __endasm; \
     __asm
 
 // Update the Y accumulator, leaving the high byte in 'a'
-#define BG2_ACCUM_Y()						__endasm; \
-    __asm mov	a, r2						__endasm; \
-    __asm add   a, r6						__endasm; \
-    __asm mov   r2, a						__endasm; \
-    __asm mov   a, r3						__endasm; \
-    __asm addc  a, r7						__endasm; \
-    __asm mov   r3, a						__endasm; \
+#define BG2_ACCUM_Y()                                          __endasm; \
+    __asm mov  a, r2                                           __endasm; \
+    __asm add   a, _vm_bg2_xy_1_1                              __endasm; \
+    __asm mov   r2, a                                          __endasm; \
+    __asm mov   a, r3                                          __endasm; \
+    __asm addc  a, (_vm_bg2_xy_1_1 + 1)                        __endasm; \
+    __asm mov   r3, a                                          __endasm; \
     __asm
 
-// Border test. With a high byte in 'a', branch if it's part of the border
-#define BG2_BORDER_TEST(lbl)					__endasm; \
-    __asm jb    acc.7, lbl					__endasm; \
-    __asm
-
-// Prepare X bits in DPL, with X accumulator high byte in 'a'
-#define BG2_DPTR_X()						__endasm; \
-    __asm rr	a						__endasm; \
-    __asm rr	a						__endasm; \
-    __asm anl	a, #0x1E					__endasm; \
-    __asm mov	_DPL, a						__endasm; \
-    __asm
-
-// Prepare Y bits in DPL/DPH, with X accumulator high byte in 'a'
-#define BG2_DPTR_Y()						__endasm; \
-    __asm rl	a						__endasm; \
-    __asm rlc	a						__endasm; \
-    __asm anl	a, #0xE0					__endasm; \
-    __asm orl	_DPL, a						__endasm; \
-    __asm clr	a						__endasm; \
-    __asm rlc	a					        __endasm; \
-    __asm mov	_DPH, a						__endasm; \
-    __asm
-
-// Address a tile (LAT1/LAT2) from DPTR
+// Address a tile (LAT1/LAT2) from 8-bit address in 'a'
 #define BG2_ADDR_TILE()						__endasm; \
+    __asm clr	c						__endasm; \
+    __asm rlc	a						__endasm; \
+    __asm mov	dpl, a						__endasm; \
+    __asm clr	a						__endasm; \
+    __asm rlc	a						__endasm; \
+    __asm mov	dph, a						__endasm; \
     __asm movx	a, @dptr					__endasm; \
     __asm mov	ADDR_PORT, a					__endasm; \
     __asm inc	dptr						__endasm; \
@@ -1945,61 +1924,114 @@ static uint16_t x_bg2_border;
     __asm swap	a						__endasm; \
     __asm rl	a						__endasm; \
     __asm anl	a, #0xE0					__endasm; \
-    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm mov	r4, a						__endasm; \
     __asm mov	a, r1						__endasm; \
     __asm rl	a						__endasm; \
     __asm rl	a						__endasm; \
     __asm anl	a, #0x1c					__endasm; \
-    __asm orl	ADDR_PORT, a					__endasm; \
+    __asm orl	a, r4						__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
     __asm
 
 #define ASM_LCD_WRITE_BEGIN()	__endasm; LCD_WRITE_BEGIN(); __asm
 #define ASM_LCD_WRITE_END()	__endasm; LCD_WRITE_END(); __asm
 
 
-static void vm_bg2_line(void) __naked __using(GFX_BANK)
+static void vm_bg2(void)
 {
+    uint16_t cx;
+    uint16_t cy;
+    static uint16_t xx;
+    static uint16_t xy;
+    uint16_t yx;
+    uint16_t yy;
+    static uint16_t border;
+
+    uint8_t y = vram.num_lines;
+
+    lcd_begin_frame();
+
+    /*
+     * Latch all BG2 parameters atomically, at the start of the frame.
+     * The 'wiggle' we get when we get a partial matrix update or it's updated
+     * partway through a frame is very annoying :)
+     */
+
+    cli();
+    cx = vram.bg2_affine.cx;
+    cy = vram.bg2_affine.cy;
+    xx = vram.bg2_affine.xx;
+    xy = vram.bg2_affine.xy;
+    yx = vram.bg2_affine.yx;
+    yy = vram.bg2_affine.yy;
+    border = vram.bg2_border;
+    sti();
+
+    /*
+     * Initialize tile cache. This stays valid as long as we don't use the
+     * flash latches, or r6 in the GFX_BANK. It's unlikely we'll get a hit
+     * with this initial value, but there's no way to indicate that the cache
+     * is invalid- so it must start out matching our latched address.
+     */
+
     __asm
+	mov	a, (GFX_BANK*8 + 6)
+	BG2_ADDR_TILE()
+    __endasm ;
 
-	; Populate default bank
+    /*
+     * Loop over scanlines
+     */
 
-	mov	r0, #128
-	mov	r6, _x_bg2_border
-	mov	r7, (_x_bg2_border + 1)
+    do {
 
-        ; Populate GFX_BANK
+        uint16_t __at (GFX_BANK*8 + 0) gfxbank_cx;
+        uint16_t __at (GFX_BANK*8 + 2) gfxbank_cy;
+        uint8_t __at (GFX_BANK*8 + 7) gfxbank_loops;
 
-        mov     psw, #(GFX_BANK << 3)
+	gfxbank_cx = cx;
+	gfxbank_cy = cy;
+	gfxbank_loops = 128;
 
-        mov     r0, _x_bg2_cx
-        mov     r1, (_x_bg2_cx + 1)
-        mov     r2, _x_bg2_cy
-        mov     r3, (_x_bg2_cy + 1)
-        mov     r4, _x_bg2_xx
-        mov     r5, (_x_bg2_xx + 1)
-        mov     r6, _x_bg2_xy
-        mov     r7, (_x_bg2_xy + 1)
+        __asm
+
+	mov	psw, #(GFX_BANK << 3)
 
 	; ---- Main pixel loop
-
 1$:
+
 	BG2_ACCUM_X()
-	BG2_BORDER_TEST(2$)
-	BG2_DPTR_X()
+
+	rlc	a			; Place X border bit into C, align other bits
+	jc	2$			;   X border test
+	swap	a			; X tile into low nybble
+	anl	a, #0x0F		; Mask off just the X tile
+	mov	r4, a			; Save partial tile address
+
 	BG2_ACCUM_Y()
 6$:
-	BG2_BORDER_TEST(3$)
-	BG2_DPTR_Y()
-	BG2_ADDR_TILE()
+
+	rlc	a			; Place Y border bit into C, align other bits
+	jc	3$			;   Y border test
+	anl	a, #0xF0		; Mask off Y tile bits
+	orl	a, r4			; Build full tile address
+	xrl	a, r6			; Compare with cached tile
+	jz	9$			; Matches, no need to update our tile
+
+	xrl	a, r6			; Cache a new tile
+	mov	r6, a
+	BG2_ADDR_TILE()	
+9$:
+
 	BG2_ADDR_PIXEL()
 	ASM_ADDR_INC4()
 
-	djnz	0, 1$
-20$:	mov	CTRL_PORT, #CTRL_IDLE
-        mov     psw, #0
-        ret
+	djnz	r7, 1$
+	sjmp	20$
 
-	; ---- State transition, main -> border
+	; ---- Border pixel rendering
+
+	; Transition, main -> border
 
 2$:
 	BG2_ACCUM_Y()
@@ -2008,71 +2040,45 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
 	ASM_LCD_WRITE_BEGIN()
 	sjmp	8$
 
-	; ---- State transition, border -> main
+	; Transition, border -> main
 
 4$:
 	ASM_LCD_WRITE_END()
+	mov	CTRL_PORT, #CTRL_FLASH_OUT
+
 	mov	a, r1
-	BG2_DPTR_X()
+	rlc	a
+	swap	a			; X tile into low nybble
+	anl	a, #0x0F		; Mask off just the X tile
+	mov	r4, a			; Save partial tile address
+
 	mov	a, r3
 	sjmp	6$
 
-	; ---- Border pixel loop
-
+	; Loop 
 7$:
-	mov     psw, #(GFX_BANK << 3)
 	BG2_ACCUM_X()
 	BG2_ACCUM_Y()
 	orl	a, r1		; Are we out of the border yet?
 	jnb	acc.7, 4$
 8$:
-	mov     psw, #0
-	PIXEL_FROM_REGS(r6, r7)
-	djnz	r0, 7$
+	PIXEL_FROM_REGS(_vm_bg2_border_1_1, (_vm_bg2_border_1_1 + 1))
+	djnz	r7, 7$
+	sjmp	20$
+
+	; ---- Cleanup
+
+20$:
 	ASM_LCD_WRITE_END()
-        ret
+	mov	psw, #0
+        __endasm ;
 
-    __endasm ;
-}
+        cx += yx;
+        cy += yy;
 
-static void vm_bg2_setup(void)
-{
-    /*
-     * Latch all BG2 parameters atomically, at the start of the frame.
-     * The 'wiggle' we get when we get a partial matrix update or it's updated
-     * partway through a frame is very annoying :)
-     */
-
-    cli();
-    x_bg2_cx = vram.bg2_affine.cx;
-    x_bg2_cy = vram.bg2_affine.cy;
-    x_bg2_xx = vram.bg2_affine.xx;
-    x_bg2_xy = vram.bg2_affine.xy;
-    x_bg2_yx = vram.bg2_affine.yx;
-    x_bg2_yy = vram.bg2_affine.yy;
-    x_bg2_border = vram.bg2_border;
-    sti();
-}
-
-static void vm_bg2_next(void)
-{
-    x_bg2_cx += x_bg2_yx;
-    x_bg2_cy += x_bg2_yy;
-}
-
-static void vm_bg2(void)
-{
-    uint8_t y = vram.num_lines;
-
-    lcd_begin_frame();
-    vm_bg2_setup();
-
-    do {
-        vm_bg2_line();
-        vm_bg2_next();
-        flash_handle_fifo();
     } while (--y);    
 
+    CTRL_PORT = CTRL_IDLE;
     lcd_end_frame();
     MODE_RETURN();
 }
