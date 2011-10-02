@@ -32,69 +32,35 @@ struct AffineMatrix {
     float cx, cy;
     float xx, xy;
     float yx, yy;
+
+    AffineMatrix() {}
+
+    AffineMatrix(float _xx, float _yx, float _cx,
+                 float _xy, float _yy, float _cy)
+        : cx(_cx), cy(_cy), xx(_xx),
+          xy(_xy), yx(_yx), yy(_yy) {}
     
     static AffineMatrix identity() {
-        AffineMatrix m;
-
-        m.cx = 0;
-        m.cy = 0;
-        m.xx = 1;
-        m.xy = 0;
-        m.yx = 0;
-        m.yy = 1;
-
-        return m;
+        return AffineMatrix(1, 0, 0,
+                            0, 1, 0);
     }
 
     static AffineMatrix scaling(float s) {
-        AffineMatrix m;
         float inv_s = 1.0f / s;
-
-        m.cx = 0;
-        m.cy = 0;
-        m.xx = inv_s;
-        m.xy = 0;
-        m.yx = 0;
-        m.yy = inv_s;
-
-        return m;
+        return AffineMatrix(inv_s, 0, 0,
+                            0, inv_s, 0);
     }
 
     static AffineMatrix translation(float x, float y) {
-        AffineMatrix m;
-
-        m.cx = x;
-        m.cy = y;
-        m.xx = 1;
-        m.xy = 0;
-        m.yx = 0;
-        m.yy = 1;
-
-        return m;
+        return AffineMatrix(1, 0, x,
+                            0, 1, y);
     }
 
     static AffineMatrix rotation(float angle) {
-        AffineMatrix m;
         float s = sinf(angle);
         float c = cosf(angle);
-
-        m.cx = 0;
-        m.cy = 0;
-        m.xx = c;
-        m.xy = s;
-        m.yx = -s;
-        m.yy = c;
-
-        return m;
-    }
-
-    void operator*= (float scale) {
-        cx *= scale;
-        cy *= scale;
-        xx *= scale;
-        xy *= scale;
-        yx *= scale;
-        yy *= scale;
+        return AffineMatrix(c, -s, 0,
+                            s, c, 0);
     }
 
     void operator*= (const AffineMatrix &m) {
@@ -134,7 +100,6 @@ void siftmain()
 
     memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
     cube.vbuf.sys.vram.mode = _SYS_VM_BG2;
-    cube.vbuf.sys.vram.flags = _SYS_VF_CONTINUOUS;
     cube.vbuf.sys.vram.num_lines = 128;
 
     for (unsigned y = 0; y < Background.height; y++)
@@ -149,7 +114,12 @@ void siftmain()
 
     while (1) {
         AffineMatrix m = AffineMatrix::identity();
+        uint8_t flags = _SYS_VF_CONTINUOUS;
         
+        /*
+         * Build an affine transformation for this frame
+         */
+
         m.translate(Background.width * 8 / 2,
                     Background.height * 8 / 2);
 
@@ -158,12 +128,27 @@ void siftmain()
 
         m.translate(-64, -64);
 
+        /*
+         * Orient the screen such that the X axis is major.
+         */
+
+        if (fabs(m.xy) > fabs(m.xx)) {
+            flags ^= _SYS_VF_XY_SWAP;
+            m *= AffineMatrix(0, 1, 0,
+                              1, 0, 0);
+        }
+
+        /*
+         * Convert the matrix to fixed-point
+         */
+
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.cx)/2, 0x100 * m.cx);
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.cy)/2, 0x100 * m.cy);
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.xx)/2, 0x100 * m.xx);
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.xy)/2, 0x100 * m.xy);
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yx)/2, 0x100 * m.yx);
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yy)/2, 0x100 * m.yy);
+        cube.vbuf.pokeb(offsetof(_SYSVideoRAM, flags), flags);
 
         System::paint();
         frame++;

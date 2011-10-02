@@ -1857,7 +1857,7 @@ static void line_bg_spr0(void)
  *   r2: Y accumulator low
  *   r3: Y accumulator high
  *   r4: scratch
- *   r5: unused
+ *   r5: Cached pixel address
  *   r6: Cached tile address
  *   r7: Pixel iterator
  *
@@ -1875,7 +1875,7 @@ static void line_bg_spr0(void)
  *
  * Then we calculate a low address byte, to select a pixel from the tile:
  *
- *    addr: tttsss..
+ * addr/r5: tttsss..
  *
  * If the high bit of r1 or r3 are set, we're past the edge of the map, and
  * we're displaying the border color instead.
@@ -1891,9 +1891,22 @@ static void line_bg_spr0(void)
     __asm mov   r1, a                                          __endasm; \
     __asm
 
+// Update the X accumulator, leaving the high byte in 'a'. Branch if it didn't change.
+#define BG2_ACCUM_X_JE(lbl)                                    __endasm; \
+    __asm mov  a, r0                                           __endasm; \
+    __asm add   a, _vm_bg2_xx_1_1                              __endasm; \
+    __asm mov   r0, a                                          __endasm; \
+    __asm mov   a, r1                                          __endasm; \
+    __asm addc  a, (_vm_bg2_xx_1_1 + 1)                        __endasm; \
+    __asm xrl   a, r1                                          __endasm; \
+    __asm jz	lbl					       __endasm; \
+    __asm xrl	a, r1					       __endasm; \
+    __asm mov	r1, a					       __endasm; \
+    __asm
+
 // Update the Y accumulator, leaving the high byte in 'a'
 #define BG2_ACCUM_Y()                                          __endasm; \
-    __asm mov  a, r2                                           __endasm; \
+    __asm mov   a, r2                                          __endasm; \
     __asm add   a, _vm_bg2_xy_1_1                              __endasm; \
     __asm mov   r2, a                                          __endasm; \
     __asm mov   a, r3                                          __endasm; \
@@ -1918,19 +1931,56 @@ static void line_bg_spr0(void)
     __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	__endasm; \
     __asm
 
-// Address a pixel, from the current accumulator values
+// Address a pixel (r5/ADDR) from the current accumulator state
 #define BG2_ADDR_PIXEL()					__endasm; \
-    __asm mov	a, r3						__endasm; \
-    __asm swap	a						__endasm; \
+    __asm mov	a, r3   					__endasm; \
+    __asm swap	a    						__endasm; \
     __asm rl	a						__endasm; \
     __asm anl	a, #0xE0					__endasm; \
-    __asm mov	r4, a						__endasm; \
+    __asm mov	r5, a						__endasm; \
     __asm mov	a, r1						__endasm; \
     __asm rl	a						__endasm; \
     __asm rl	a						__endasm; \
     __asm anl	a, #0x1c					__endasm; \
+    __asm orl	a, r5						__endasm; \
+    __asm mov	r5, a						__endasm; \
+    __asm mov   ADDR_PORT, a					__endasm; \
+    __asm
+
+// Address the same pixel we addressed last time
+#define BG2_ADDR_RLE_PIXEL()					__endasm; \
+    __asm mov	ADDR_PORT, r5					__endasm; \
+    __asm
+
+// Update X tile address, and do X border test
+#define BG2_X_UPDATE(lbl)					__endasm; \
+    __asm rlc	a						__endasm; \
+    __asm jc	lbl						__endasm; \
+    __asm swap	a						__endasm; \
+    __asm anl	a, #0x0F					__endasm; \
+    __asm mov	r4, a						__endasm; \
+    __asm
+
+// Update X tile address, without border test
+#define BG2_X_UPDATE_NB()					__endasm; \
+    __asm rlc	a						__endasm; \
+    __asm swap	a						__endasm; \
+    __asm anl	a, #0x0F					__endasm; \
+    __asm mov	r4, a						__endasm; \
+    __asm
+
+// Update Y tile address, do Y border test, and update tile via cache
+#define BG2_Y_UPDATE(borderLbl, cacheHitLbl)			__endasm; \
+    __asm rlc	a						__endasm; \
+    __asm jc	borderLbl					__endasm; \
+    __asm anl	a, #0xF0					__endasm; \
     __asm orl	a, r4						__endasm; \
-    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm xrl	a, r6						__endasm; \
+    __asm jz	cacheHitLbl					__endasm; \
+    __asm xrl	a, r6						__endasm; \
+    __asm mov	r6, a						__endasm; \
+    __asm BG2_ADDR_TILE()					__endasm; \
+    __asm cacheHitLbl:						__endasm; \
     __asm
 
 #define ASM_LCD_WRITE_BEGIN()	__endasm; LCD_WRITE_BEGIN(); __asm
@@ -1997,35 +2047,37 @@ static void vm_bg2(void)
 
 	mov	psw, #(GFX_BANK << 3)
 
-	; ---- Main pixel loop
-1$:
+	; ---- First pixel (RLE disabled)
 
 	BG2_ACCUM_X()
-
-	rlc	a			; Place X border bit into C, align other bits
-	jc	2$			;   X border test
-	swap	a			; X tile into low nybble
-	anl	a, #0x0F		; Mask off just the X tile
-	mov	r4, a			; Save partial tile address
-
+	BG2_X_UPDATE(12$)
 	BG2_ACCUM_Y()
-6$:
-
-	rlc	a			; Place Y border bit into C, align other bits
-	jc	3$			;   Y border test
-	anl	a, #0xF0		; Mask off Y tile bits
-	orl	a, r4			; Build full tile address
-	xrl	a, r6			; Compare with cached tile
-	jz	9$			; Matches, no need to update our tile
-
-	xrl	a, r6			; Cache a new tile
-	mov	r6, a
-	BG2_ADDR_TILE()	
-9$:
-
+14$:	BG2_Y_UPDATE(13$, 6$)
 	BG2_ADDR_PIXEL()
 	ASM_ADDR_INC4()
+	djnz	r7, 1$
+	ljmp 	20$
 
+12$:	ljmp	2$
+13$:	ljmp	3$
+
+	; ---- Main pixel loop
+1$:
+	BG2_ACCUM_X_JE(10$)
+	BG2_X_UPDATE(2$)
+	BG2_ACCUM_Y()
+	BG2_Y_UPDATE(3$, 9$)
+	BG2_ADDR_PIXEL()
+	ASM_ADDR_INC4()
+	djnz	r7, 1$
+	sjmp	20$
+
+	; ---- RLE optimization
+
+10$:
+	BG2_ACCUM_Y()
+	BG2_ADDR_RLE_PIXEL()
+	ASM_ADDR_INC4()
 	djnz	r7, 1$
 	sjmp	20$
 
@@ -2047,13 +2099,9 @@ static void vm_bg2(void)
 	mov	CTRL_PORT, #CTRL_FLASH_OUT
 
 	mov	a, r1
-	rlc	a
-	swap	a			; X tile into low nybble
-	anl	a, #0x0F		; Mask off just the X tile
-	mov	r4, a			; Save partial tile address
-
+	BG2_X_UPDATE_NB()
 	mov	a, r3
-	sjmp	6$
+	ljmp	14$
 
 	; Loop 
 7$:
