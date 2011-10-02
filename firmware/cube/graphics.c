@@ -1878,6 +1878,84 @@ static void line_bg_spr0(void)
 
 static uint16_t x_bg2_cx;
 static uint16_t x_bg2_cy;
+static uint16_t x_bg2_xx;
+static uint16_t x_bg2_xy;
+static uint16_t x_bg2_yx;
+static uint16_t x_bg2_yy;
+static uint16_t x_bg2_border;
+
+// Update the X accumulator, leaving the high byte in 'a'
+#define BG2_ACCUM_X()						__endasm; \
+    __asm mov	a, r0						__endasm; \
+    __asm add   a, r4						__endasm; \
+    __asm mov   r0, a						__endasm; \
+    __asm mov   a, r1						__endasm; \
+    __asm addc  a, r5						__endasm; \
+    __asm mov   r1, a						__endasm; \
+    __asm
+
+// Update the Y accumulator, leaving the high byte in 'a'
+#define BG2_ACCUM_Y()						__endasm; \
+    __asm mov	a, r2						__endasm; \
+    __asm add   a, r6						__endasm; \
+    __asm mov   r2, a						__endasm; \
+    __asm mov   a, r3						__endasm; \
+    __asm addc  a, r7						__endasm; \
+    __asm mov   r3, a						__endasm; \
+    __asm
+
+// Border test. With a high byte in 'a', branch if it's part of the border
+#define BG2_BORDER_TEST(lbl)					__endasm; \
+    __asm jb    acc.7, lbl					__endasm; \
+    __asm
+
+// Prepare X bits in DPL, with X accumulator high byte in 'a'
+#define BG2_DPTR_X()						__endasm; \
+    __asm rr	a						__endasm; \
+    __asm rr	a						__endasm; \
+    __asm anl	a, #0x1E					__endasm; \
+    __asm mov	_DPL, a						__endasm; \
+    __asm
+
+// Prepare Y bits in DPL/DPH, with X accumulator high byte in 'a'
+#define BG2_DPTR_Y()						__endasm; \
+    __asm rl	a						__endasm; \
+    __asm rlc	a						__endasm; \
+    __asm anl	a, #0xE0					__endasm; \
+    __asm orl	_DPL, a						__endasm; \
+    __asm clr	a						__endasm; \
+    __asm rlc	a					        __endasm; \
+    __asm mov	_DPH, a						__endasm; \
+    __asm
+
+// Address a tile (LAT1/LAT2) from DPTR
+#define BG2_ADDR_TILE()						__endasm; \
+    __asm movx	a, @dptr					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm inc	dptr						__endasm; \
+    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	__endasm; \
+    __asm movx	a, @dptr					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	__endasm; \
+    __asm
+
+// Address a pixel, from the current accumulator values
+#define BG2_ADDR_PIXEL()					__endasm; \
+    __asm mov	a, r3						__endasm; \
+    __asm swap	a						__endasm; \
+    __asm rl	a						__endasm; \
+    __asm anl	a, #0xE0					__endasm; \
+    __asm mov	ADDR_PORT, a					__endasm; \
+    __asm mov	a, r1						__endasm; \
+    __asm rl	a						__endasm; \
+    __asm rl	a						__endasm; \
+    __asm anl	a, #0x1c					__endasm; \
+    __asm orl	ADDR_PORT, a					__endasm; \
+    __asm
+
+#define ASM_LCD_WRITE_BEGIN()	__endasm; LCD_WRITE_BEGIN(); __asm
+#define ASM_LCD_WRITE_END()	__endasm; LCD_WRITE_END(); __asm
+
 
 static void vm_bg2_line(void) __naked __using(GFX_BANK)
 {
@@ -1886,13 +1964,8 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
 	; Populate default bank
 
 	mov	r0, #128
-
-	mov	dptr, #_SYS_VA_BG2_BORDER
-	movx	a, @dptr
-	mov	r6, a
-	inc	dptr
-	movx	a, @dptr
-	mov	r7, a
+	mov	r6, _x_bg2_border
+	mov	r7, (_x_bg2_border + 1)
 
         ; Populate GFX_BANK
 
@@ -1902,110 +1975,45 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
         mov     r1, (_x_bg2_cx + 1)
         mov     r2, _x_bg2_cy
         mov     r3, (_x_bg2_cy + 1)
+        mov     r4, _x_bg2_xx
+        mov     r5, (_x_bg2_xx + 1)
+        mov     r6, _x_bg2_xy
+        mov     r7, (_x_bg2_xy + 1)
 
-        mov     dptr, #(_SYS_VA_BG2_AFFINE + 4)
-        movx    a, @dptr
-        mov     r4, a
-        inc     dptr
-        movx    a, @dptr
-        mov     r5, a
-        inc     dptr
-        movx    a, @dptr
-        mov     r6, a
-        inc     dptr
-        movx    a, @dptr
-        mov     r7, a
-
-	; ---- Main Pixel loop
+	; ---- Main pixel loop
 
 1$:
-        mov     a, r0		; X accumulator low
-        add     a, r4
-        mov     r0, a
-        mov     a, r1		; X accumulator high
-        addc    a, r5
-        mov     r1, a
-
-	jb	acc.7, 2$	; X border
-
-	rr	a		; Prepare X bits in DPL
-	rr	a
-	anl	a, #0x1E
-	mov	_DPL, a
-
-        mov     a, r2		; Y accumulator low
-        add     a, r6
-        mov     r2, a
-        mov     a, r3		; Y accumulator high
-        addc    a, r7
-        mov     r3, a
-
-	jb	acc.7, 3$	; Y border
-
+	BG2_ACCUM_X()
+	BG2_BORDER_TEST(2$)
+	BG2_DPTR_X()
+	BG2_ACCUM_Y()
 6$:
-	rl	a
-	rlc	a
-	anl	a, #0xE0	; Prepare Y bits in DPL
-	orl	_DPL, a
-	clr	a
-	rlc	a		; Carry bit into DPH
-	mov	_DPH, a
-
-	movx	a, @dptr	; Address tile from DPTR
-	mov	ADDR_PORT, a
-	inc	dptr
-	mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1
-	movx	a, @dptr
-	mov	ADDR_PORT, a
-	mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2
-
-	mov	a, r3		; Create pixel address
-	swap	a
-	rl	a
-	anl	a, #0xE0
-	mov	ADDR_PORT, a
-	mov	a, r1
-	rl	a
-	rl	a
-	anl	a, #0x1c
-	orl	ADDR_PORT, a
-
+	BG2_BORDER_TEST(3$)
+	BG2_DPTR_Y()
+	BG2_ADDR_TILE()
+	BG2_ADDR_PIXEL()
 	ASM_ADDR_INC4()
 
 	djnz	0, 1$
-	mov	CTRL_PORT, #CTRL_IDLE
+20$:	mov	CTRL_PORT, #CTRL_IDLE
         mov     psw, #0
         ret
 
 	; ---- State transition, main -> border
 
-2$:	; Entry before Y accumulator bump
-
-	mov     a, r2		; Y accumulator low
-        add     a, r6
-        mov     r2, a
-        mov     a, r3		; Y accumulator high
-        addc    a, r7
-        mov     r3, a
-
-3$:	; Entry after Y accumulator bump
-
+2$:
+	BG2_ACCUM_Y()
+3$:
 	mov	CTRL_PORT, #CTRL_IDLE
-	__endasm; LCD_WRITE_BEGIN(); __asm
-
+	ASM_LCD_WRITE_BEGIN()
 	sjmp	8$
 
 	; ---- State transition, border -> main
 
 4$:
-	__endasm; LCD_WRITE_END(); __asm
-
+	ASM_LCD_WRITE_END()
 	mov	a, r1
-	rr	a		; Prepare X bits in DPL
-	rr	a
-	anl	a, #0x1E
-	mov	_DPL, a
-
+	BG2_DPTR_X()
 	mov	a, r3
 	sjmp	6$
 
@@ -2013,29 +2021,15 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
 
 7$:
 	mov     psw, #(GFX_BANK << 3)
-
-        mov     a, r0		; X accumulator low
-        add     a, r4
-        mov     r0, a
-        mov     a, r1		; X accumulator high
-        addc    a, r5
-        mov     r1, a
-
-        mov     a, r2		; Y accumulator low
-        add     a, r6
-        mov     r2, a
-        mov     a, r3		; Y accumulator high
-        addc    a, r7
-        mov     r3, a
-
+	BG2_ACCUM_X()
+	BG2_ACCUM_Y()
 	orl	a, r1		; Are we out of the border yet?
 	jnb	acc.7, 4$
-
 8$:
 	mov     psw, #0
 	PIXEL_FROM_REGS(r6, r7)
 	djnz	r0, 7$
-	__endasm; LCD_WRITE_END(); __asm
+	ASM_LCD_WRITE_END()
         ret
 
     __endasm ;
@@ -2043,14 +2037,27 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
 
 static void vm_bg2_setup(void)
 {
+    /*
+     * Latch all BG2 parameters atomically, at the start of the frame.
+     * The 'wiggle' we get when we get a partial matrix update or it's updated
+     * partway through a frame is very annoying :)
+     */
+
+    cli();
     x_bg2_cx = vram.bg2_affine.cx;
     x_bg2_cy = vram.bg2_affine.cy;
+    x_bg2_xx = vram.bg2_affine.xx;
+    x_bg2_xy = vram.bg2_affine.xy;
+    x_bg2_yx = vram.bg2_affine.yx;
+    x_bg2_yy = vram.bg2_affine.yy;
+    x_bg2_border = vram.bg2_border;
+    sti();
 }
 
 static void vm_bg2_next(void)
 {
-    x_bg2_cx += vram.bg2_affine.yx;
-    x_bg2_cy += vram.bg2_affine.yy;
+    x_bg2_cx += x_bg2_yx;
+    x_bg2_cy += x_bg2_yy;
 }
 
 static void vm_bg2(void)
