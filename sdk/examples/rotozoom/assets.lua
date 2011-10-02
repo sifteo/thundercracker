@@ -1,2 +1,2 @@
 GameAssets = group{}
-Background = image{"terrain64.png"}
+Background = image{"globe128.png"}

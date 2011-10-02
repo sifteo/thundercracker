@@ -148,16 +148,14 @@ void siftmain()
     unsigned frame = 0;
 
     while (1) {
-        frame++;
-
-        float angle = frame * 0.01;
-
         AffineMatrix m = AffineMatrix::identity();
         
         m.translate(Background.width * 8 / 2,
                     Background.height * 8 / 2);
-        m.scale(1.5);
-        m.rotate(angle);
+
+        m.scale(fabs(sinf(frame * 0.004) * 2));
+        m.rotate(frame * 0.01);
+
         m.translate(-64, -64);
 
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.cx)/2, 0x100 * m.cx);
@@ -168,5 +166,6 @@ void siftmain()
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yy)/2, 0x100 * m.yy);
 
         System::paint();
+        frame++;
     }
 }

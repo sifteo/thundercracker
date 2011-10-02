@@ -1856,8 +1856,8 @@ static void line_bg_spr0(void)
  *   r1: X accumulator high
  *   r2: Y accumulator low
  *   r3: Y accumulator high
- *   r4: Tile address scratch
- *   r5: Pixel / border scratch
+ *   r4: scratch
+ *   r5: unused
  *   r6: Cached tile address
  *   r7: Pixel iterator
  *
