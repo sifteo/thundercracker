@@ -87,6 +87,7 @@ struct _SYSAssetGroup {
 #define _SYS_VRAM_BG0_WIDTH     18      // Width/height of BG0 tile grid
 #define _SYS_VRAM_BG1_WIDTH     16      // Width/height of BG1 bitmap
 #define _SYS_VRAM_BG1_TILES     144     // Total number of opaque tiles in BG1
+#define _SYS_VRAM_BG2_WIDTH     16      // Width/height of BG2 tile grid
 #define _SYS_VRAM_SPRITES       8       // Maximum number of linear sprites
 #define _SYS_CHROMA_KEY         0xF5    // Chroma key byte
 
@@ -113,12 +114,15 @@ struct _SYSAssetGroup {
 #define _SYS_VM_BG0             0x18    // Background BG0: 18x18 grid
 #define _SYS_VM_BG0_BG1         0x1c    // BG0, plus overlay BG1: 16x16 bitmap + 144 indices
 #define _SYS_VM_BG0_SPR_BG1     0x20    // BG0, multiple linear sprites, then BG1
+#define _SYS_VM_BG2             0x24    // Background BG2: 16x16 grid with affine transform
 
 // Important VRAM addresses
 
 #define _SYS_VA_BG0_TILES       0x000
+#define _SYS_VA_BG2_TILES       0x000
 #define _SYS_VA_BG1_TILES       0x288
 #define _SYS_VA_COLORMAP        0x300
+#define _SYS_VA_BG2_AFFINE      0x3a8
 #define _SYS_VA_BG1_BITMAP      0x3a8
 #define _SYS_VA_SPR             0x3c8
 #define _SYS_VA_FIRST_LINE      0x3fc
@@ -132,6 +136,16 @@ struct _SYSSpriteInfo {
     uint8_t mask_y;                     // 0x03
     uint8_t pos_x;                      // 0x04
     uint8_t pos_y;                      // 0x05
+};
+
+// Equivalent to an augmented matrix (3x2), in 8:8 fixed-point
+struct _SYSAffine {
+    uint16_t cx;   // X initial value
+    uint16_t cy;   // Y initial value
+    uint16_t xx;   // X delta, for every horizontal pixel
+    uint16_t xy;   // Y delta, for every horizontal pixel
+    uint16_t yx;   // X delta, for every vertical pixel
+    uint16_t yy;   // Y delta, for every vertical pixel
 };
 
 union _SYSVideoRAM {
@@ -156,6 +170,12 @@ union _SYSVideoRAM {
     struct {
         uint8_t fb[768];                // 0x000 - 0x2ff
         uint16_t colormap[16];          // 0x300 - 0x31f
+    };
+
+    struct {
+        uint16_t bg2_tiles[256];        // 0x000 - 0x1ff
+        uint16_t _res0[212];            // 0x200 - 0x3a7
+        struct _SYSAffine bg2_affine;   // 0x3a8 - 0x3b3
     };
 };
 

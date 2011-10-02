@@ -1836,6 +1836,158 @@ static void line_bg_spr0(void)
 
 
 /***********************************************************************
+ * _SYS_VM_BG2
+ **********************************************************************/
+
+/*
+ * We keep the accumulator state that needs to be used
+ * every pixel in GFX_BANK, for quick access:
+ *
+ *   r0: X accumulator low
+ *   r1: X accumulator high
+ *   r2: Y accumulator low
+ *   r3: Y accumulator high
+ *   r4: X delta, low
+ *   r5: X delta, high
+ *   r6: Y delta, low
+ *   r7: Y delta, high
+ *
+ * Since this is 8.8 fixed-point, we use r1/r3 as our current pixel
+ * location after this accumulator updating is all done with. We
+ * calculate a dptr address first, to select a tile from our map:
+ *
+ *      r1: xxxxsss.
+ *      r3: yyyyttt.
+ *
+ *     dph: .......y
+ *     dpl: yyyxxxx.
+ *
+ * Then we calculate a low address byte, to select a pixel from the tile:
+ *
+ *    addr: tttsss..
+ */
+
+static uint16_t x_bg2_cx;
+static uint16_t x_bg2_cy;
+
+static void vm_bg2_line(void) __naked __using(GFX_BANK)
+{
+    __asm
+
+        mov     psw, #(GFX_BANK << 3)
+
+        ; Scanline setup, populate our GFX_BANK registers
+
+        mov     r0, _x_bg2_cx
+        mov     r1, (_x_bg2_cx + 1)
+        mov     r2, _x_bg2_cy
+        mov     r3, (_x_bg2_cy + 1)
+
+        mov     dptr, #(_SYS_VA_BG2_AFFINE + 4)
+        movx    a, @dptr
+        mov     r4, a
+        inc     dptr
+        movx    a, @dptr
+        mov     r5, a
+        inc     dptr
+        movx    a, @dptr
+        mov     r6, a
+        inc     dptr
+        movx    a, @dptr
+        mov     r7, a
+
+	; Loop over pixels
+
+	mov	0, #128
+1$:
+
+        mov     a, r0		; X accumulator low
+        add     a, r4
+        mov     r0, a
+        mov     a, r1		; X accumulator high
+        addc    a, r5
+        mov     r1, a
+
+	swap	a		; Prepare X bits in DPL
+	rl	a
+	anl	a, #0x1E
+	mov	_DPL, a
+
+        mov     a, r2		; Y accumulator low
+        add     a, r6
+        mov     r2, a
+        mov     a, r3		; Y accumulator high
+        addc    a, r7
+        mov     r3, a
+
+	rlc	a
+	anl	a, #0xE0	; Prepare Y bits in DPL
+	orl	_DPL, a
+	clr	a
+	rlc	a		; Carry bit into DPH
+	mov	_DPH, a
+
+	movx	a, @dptr	; Address tile from DPTR
+	mov	ADDR_PORT, a
+	inc	dptr
+	mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1
+	movx	a, @dptr
+	mov	ADDR_PORT, a
+	mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2
+
+	mov	a, r3
+	swap	a
+	anl	a, #0xE0
+	mov	ADDR_PORT, a
+	mov	a, r1
+	rl	a
+	anl	a, #0x1c
+	orl	ADDR_PORT, a
+
+	ASM_ADDR_INC4()
+
+	djnz	0, 1$
+
+	; Clean up, release the bus
+
+	mov	CTRL_PORT, #CTRL_IDLE
+        mov     psw, #0
+        ret
+
+    __endasm ;
+}
+
+static void vm_bg2_setup(void)
+{
+    x_bg2_cx = vram.bg2_affine.cx;
+    x_bg2_cy = vram.bg2_affine.cy;
+}
+
+static void vm_bg2_next(void)
+{
+    x_bg2_cx += vram.bg2_affine.yx;
+    x_bg2_cy += vram.bg2_affine.yy;
+}
+
+static void vm_bg2(void)
+{
+    uint8_t y = vram.num_lines;
+
+    lcd_begin_frame();
+    vm_bg2_setup();
+
+    do {
+        vm_bg2_line();
+        vm_bg2_next();
+        flash_handle_fifo();
+    } while (--y);    
+
+    lcd_end_frame();
+    MODE_RETURN();
+}
+
+
+/***********************************************************************
  * Graphics mode dispatch
  **********************************************************************/
 
@@ -1890,7 +2042,7 @@ void graphics_render(void) __naked
         nop
         ljmp    _vm_bg0_spr_bg1 ; 0x20
         nop
-        ljmp    _vm_powerdown   ; 0x24 (unused)
+        ljmp    _vm_bg2         ; 0x24
         nop
         ljmp    _vm_powerdown   ; 0x28 (unused)
         nop
