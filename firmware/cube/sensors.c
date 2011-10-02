@@ -48,7 +48,7 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
         ; Check status of I2C engine.
 
         mov     a, _W2CON1
-        jnb     acc.0, as_ret           ; Wasn't a real I2C interrupt. Ignore it.
+        jnb     acc.0, as_ret           ; Wasnt a real I2C interrupt. Ignore it.
         jb      acc.1, as_nack          ; Was not acknowledged!
 
         mov     dptr, #as_1
@@ -76,7 +76,7 @@ as_3:
         mov     _accel_state, #(as_4 - as_1)
         sjmp    as_ret
 
-        ; 4. Read X axis (Don't set change flag yet)
+        ; 4. Read X axis (Do not set change flag yet)
         ;    Also set a stop condition, since this is the second-to-last byte.
         ;    XXX: Axis swap
 

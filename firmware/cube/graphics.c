@@ -1852,12 +1852,18 @@ static void line_bg_spr0(void)
  *   r6: Y delta, low
  *   r7: Y delta, high
  *
+ * Back in the main bank, we have:
+ *
+ *   r0: Pixel iterator
+ *   r6: Border color low
+ *   r7: Border color high
+ *
  * Since this is 8.8 fixed-point, we use r1/r3 as our current pixel
  * location after this accumulator updating is all done with. We
  * calculate a dptr address first, to select a tile from our map:
  *
- *      r1: xxxxsss.
- *      r3: yyyyttt.
+ *      r1: .xxxxsss
+ *      r3: .yyyyttt
  *
  *     dph: .......y
  *     dpl: yyyxxxx.
@@ -1865,6 +1871,9 @@ static void line_bg_spr0(void)
  * Then we calculate a low address byte, to select a pixel from the tile:
  *
  *    addr: tttsss..
+ *
+ * If the high bit of r1 or r3 are set, we're past the edge of the map, and
+ * we're displaying the border color instead.
  */
 
 static uint16_t x_bg2_cx;
@@ -1874,9 +1883,20 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
 {
     __asm
 
-        mov     psw, #(GFX_BANK << 3)
+	; Populate default bank
 
-        ; Scanline setup, populate our GFX_BANK registers
+	mov	r0, #128
+
+	mov	dptr, #_SYS_VA_BG2_BORDER
+	movx	a, @dptr
+	mov	r6, a
+	inc	dptr
+	movx	a, @dptr
+	mov	r7, a
+
+        ; Populate GFX_BANK
+
+        mov     psw, #(GFX_BANK << 3)
 
         mov     r0, _x_bg2_cx
         mov     r1, (_x_bg2_cx + 1)
@@ -1896,11 +1916,9 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
         movx    a, @dptr
         mov     r7, a
 
-	; Loop over pixels
+	; ---- Main Pixel loop
 
-	mov	0, #128
 1$:
-
         mov     a, r0		; X accumulator low
         add     a, r4
         mov     r0, a
@@ -1908,8 +1926,10 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
         addc    a, r5
         mov     r1, a
 
-	swap	a		; Prepare X bits in DPL
-	rl	a
+	jb	acc.7, 2$	; X border
+
+	rr	a		; Prepare X bits in DPL
+	rr	a
 	anl	a, #0x1E
 	mov	_DPL, a
 
@@ -1920,6 +1940,10 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
         addc    a, r7
         mov     r3, a
 
+	jb	acc.7, 3$	; Y border
+
+6$:
+	rl	a
 	rlc	a
 	anl	a, #0xE0	; Prepare Y bits in DPL
 	orl	_DPL, a
@@ -1935,11 +1959,13 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
 	mov	ADDR_PORT, a
 	mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2
 
-	mov	a, r3
+	mov	a, r3		; Create pixel address
 	swap	a
+	rl	a
 	anl	a, #0xE0
 	mov	ADDR_PORT, a
 	mov	a, r1
+	rl	a
 	rl	a
 	anl	a, #0x1c
 	orl	ADDR_PORT, a
@@ -1947,11 +1973,69 @@ static void vm_bg2_line(void) __naked __using(GFX_BANK)
 	ASM_ADDR_INC4()
 
 	djnz	0, 1$
-
-	; Clean up, release the bus
-
 	mov	CTRL_PORT, #CTRL_IDLE
         mov     psw, #0
+        ret
+
+	; ---- State transition, main -> border
+
+2$:	; Entry before Y accumulator bump
+
+	mov     a, r2		; Y accumulator low
+        add     a, r6
+        mov     r2, a
+        mov     a, r3		; Y accumulator high
+        addc    a, r7
+        mov     r3, a
+
+3$:	; Entry after Y accumulator bump
+
+	mov	CTRL_PORT, #CTRL_IDLE
+	__endasm; LCD_WRITE_BEGIN(); __asm
+
+	sjmp	8$
+
+	; ---- State transition, border -> main
+
+4$:
+	__endasm; LCD_WRITE_END(); __asm
+
+	mov	a, r1
+	rr	a		; Prepare X bits in DPL
+	rr	a
+	anl	a, #0x1E
+	mov	_DPL, a
+
+	mov	a, r3
+	sjmp	6$
+
+	; ---- Border pixel loop
+
+7$:
+	mov     psw, #(GFX_BANK << 3)
+
+        mov     a, r0		; X accumulator low
+        add     a, r4
+        mov     r0, a
+        mov     a, r1		; X accumulator high
+        addc    a, r5
+        mov     r1, a
+
+        mov     a, r2		; Y accumulator low
+        add     a, r6
+        mov     r2, a
+        mov     a, r3		; Y accumulator high
+        addc    a, r7
+        mov     r3, a
+
+	orl	a, r1		; Are we out of the border yet?
+	jnb	acc.7, 4$
+
+8$:
+	mov     psw, #0
+	PIXEL_FROM_REGS(r6, r7)
+	djnz	r0, 7$
+	__endasm; LCD_WRITE_END(); __asm
         ret
 
     __endasm ;

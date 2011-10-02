@@ -120,9 +120,10 @@ struct _SYSAssetGroup {
 
 #define _SYS_VA_BG0_TILES       0x000
 #define _SYS_VA_BG2_TILES       0x000
+#define _SYS_VA_BG2_AFFINE      0x200
+#define _SYS_VA_BG2_BORDER      0x20c
 #define _SYS_VA_BG1_TILES       0x288
 #define _SYS_VA_COLORMAP        0x300
-#define _SYS_VA_BG2_AFFINE      0x3a8
 #define _SYS_VA_BG1_BITMAP      0x3a8
 #define _SYS_VA_SPR             0x3c8
 #define _SYS_VA_FIRST_LINE      0x3fc
@@ -138,7 +139,7 @@ struct _SYSSpriteInfo {
     uint8_t pos_y;                      // 0x05
 };
 
-// Equivalent to an augmented matrix (3x2), in 8:8 fixed-point
+// Equivalent to an augmented matrix (3x2), in 8.8 fixed-point
 struct _SYSAffine {
     uint16_t cx;   // X initial value
     uint16_t cy;   // Y initial value
@@ -174,8 +175,8 @@ union _SYSVideoRAM {
 
     struct {
         uint16_t bg2_tiles[256];        // 0x000 - 0x1ff
-        uint16_t _res0[212];            // 0x200 - 0x3a7
-        struct _SYSAffine bg2_affine;   // 0x3a8 - 0x3b3
+        struct _SYSAffine bg2_affine;   // 0x200 - 0x20b
+        uint16_t bg2_border;            // 0x20c - 0x20d
     };
 };
 

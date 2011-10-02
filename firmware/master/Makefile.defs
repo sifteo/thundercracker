@@ -22,6 +22,7 @@ CCFLAGS += -O2
 CCFLAGS += -fno-exceptions
 
 CCFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include
+LDFLAGS += -lm
 
 CCFLAGS_SIM := $(CCFLAGS)
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
