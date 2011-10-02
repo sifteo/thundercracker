@@ -44,6 +44,7 @@ class CubeSlot {
     static _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
     static _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
     static _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid
+    static _SYSCubeIDVector frameACKValid;      /// 'framePrevACK' is valid
 
     static void enableCubes(_SYSCubeIDVector cv) {
         Sifteo::Atomic::Or(vecEnabled, cv);
@@ -54,6 +55,7 @@ class CubeSlot {
         Sifteo::Atomic::And(flashResetWait, ~cv);
         Sifteo::Atomic::And(flashResetSent, ~cv);
         Sifteo::Atomic::And(flashACKValid, ~cv);
+        Sifteo::Atomic::And(frameACKValid, ~cv);
     }
 
     _SYSCubeID id() const {
@@ -98,6 +100,7 @@ class CubeSlot {
 
     void loadAssets(_SYSAssetGroup *a);
     void waitForPaint();
+    void waitForFinish();
     void triggerPaint(SysTime::Ticks timestamp);
 
     static bool validID(_SYSCubeID id) {
@@ -133,13 +136,13 @@ class CubeSlot {
     _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
 
-    // Timestamp of the last repaint trigger
     SysTime::Ticks paintTimestamp;
+    int32_t pendingFrames;
 
     // Packet encoder state
     CubeCodec codec;
 
-    // ACK tracking
+    // Byte variables
     uint8_t flashPrevACK;
     uint8_t framePrevACK;
 

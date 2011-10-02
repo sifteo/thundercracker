@@ -116,7 +116,7 @@ static uint16_t color_lerp(uint8_t alpha) {
                    
 static void fade_in_and_out() {
     const unsigned speed = 4;
-    const unsigned hold = 20;
+    const unsigned hold = 100;
     
     for (unsigned i = 0; i < 0x100; i += speed) {
         cube.vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1,

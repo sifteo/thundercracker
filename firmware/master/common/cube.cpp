@@ -6,6 +6,10 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#ifdef SIFTEO_SIMULATOR
+#include <stdio.h>
+#endif
+
 #include <protocol.h>
 #include <sifteo/machine.h>
 
@@ -14,11 +18,54 @@
 
 using namespace Sifteo;
 
+/*
+ * Frame rate control parameters
+ *
+ * fpsLow --
+ *    "Minimum" frame rate. If we're waiting more than this long
+ *    for a frame to render, give up. Prevents us from getting wedged
+ *    if a cube stops responding.
+ *
+ * fpsHigh --
+ *    Maximum frame rate. Paint will always block until at least this
+ *    long since the previous frame, in order to provide a global rate
+ *    limit for the whole app.
+ *
+ * fpContinuous --
+ *    When at least this many frames are pending acknowledgment, we
+ *    switch to continuous rendering mode. Instead of waiting for a
+ *    signal from us, the cubes will just render continuously.
+ *
+ * fpSingle --
+ *    The inverse of fpContinuous. When at least this few frames are
+ *    pending, we switch back to one-shot triggered rendering.
+ *
+ * fpMax --
+ *    Maximum number of pending frames to track. If we hit this limit,
+ *    Paint() calls will block.
+ *
+ * fpMin --
+ *    Minimum number of pending frames to track. If we go below this
+ *    limit, we'll start ignoring acknowledgments.
+ */
+
+static const SysTime::Ticks fpsLow = SysTime::hzTicks(10);
+static const SysTime::Ticks fpsHigh = SysTime::hzTicks(60);
+static const int8_t fpContinuous = 2;
+static const int8_t fpSingle = -4;
+static const int8_t fpMax = 5;
+static const int8_t fpMin = -10;
+
+/*
+ * Slot instances
+ */
+
 CubeSlot CubeSlot::instances[_SYS_NUM_CUBE_SLOTS];
 _SYSCubeIDVector CubeSlot::vecEnabled;
 _SYSCubeIDVector CubeSlot::flashResetWait;
 _SYSCubeIDVector CubeSlot::flashResetSent;
 _SYSCubeIDVector CubeSlot::flashACKValid;
+_SYSCubeIDVector CubeSlot::frameACKValid;
 
 
 void CubeSlot::loadAssets(_SYSAssetGroup *a) {
@@ -113,6 +160,14 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
     if (packet.len >= offsetof(RF_ACKType, frame_count) + sizeof ack->frame_count) {
         // This ACK includes a valid frame_count counter
+
+        if (frameACKValid & bit()) {
+            uint8_t frameACK = ack->frame_count - framePrevACK;
+            Atomic::Add(pendingFrames, -(int32_t)frameACK);
+        } else {
+            Atomic::Or(frameACKValid, bit());
+        }
+
         framePrevACK = ack->frame_count;
     }
 
@@ -180,7 +235,12 @@ void CubeSlot::paintCubes(_SYSCubeIDVector cv)
      * cubes.
      */
 
-    finishCubes(cv);
+    _SYSCubeIDVector waitVec = cv;
+    while (waitVec) {
+        _SYSCubeID id = Intrinsic::CLZ(waitVec);
+        instances[id].waitForPaint();
+        waitVec ^= Intrinsic::LZ(id);
+    }
 
     SysTime::Ticks timestamp = SysTime::ticks();
 
@@ -194,92 +254,133 @@ void CubeSlot::paintCubes(_SYSCubeIDVector cv)
 
 void CubeSlot::finishCubes(_SYSCubeIDVector cv)
 {
-    /*
-     * A subset of paintCubes(): Just wait for the previous paint to finish.
-     */
-
-    _SYSCubeIDVector waitVec = cv;
-    while (waitVec) {
-        _SYSCubeID id = Intrinsic::CLZ(waitVec);
-        instances[id].waitForPaint();
-        waitVec ^= Intrinsic::LZ(id);
+    while (cv) {
+        _SYSCubeID id = Intrinsic::CLZ(cv);
+        instances[id].waitForFinish();
+        cv ^= Intrinsic::LZ(id);
     }
 }
 
 void CubeSlot::waitForPaint()
 {
     /*
-     * Minimum and maximum frame rates.
-     *
-     * The minimum rate is used as a watchdog timer for waiting, while
-     * the maximum frame rate is used if we're in continuous mode, or if
-     * we omitted a paint() call because no drawing was necessary.
+     * Wait until we're allowed to do another paint. Since our
+     * rendering is usually not fully synchronous, this is not nearly
+     * as strict as waitForFinish()!
      */
 
-    const SysTime::Ticks slowPeriod = SysTime::hzTicks(10);
-    const SysTime::Ticks fastPeriod = SysTime::hzTicks(60);
+    for (;;) {
+        Atomic::Barrier();
+        SysTime::Ticks now = SysTime::ticks();
 
-    /*
-     * We always, regardless of rendering mode, must wait for the
-     * fastPeriod to elapse since the last paint().
-     */
+        if (now > (paintTimestamp + fpsLow)) {
+            // Watchdog expired. Give up waiting.
+            break;
+        }
 
-    while (SysTime::ticks() < (paintTimestamp + fastPeriod)) {
+        if (now > (paintTimestamp + fpsHigh) && pendingFrames <= fpMax) {
+            // Wait for minimum frame rate AND for pending renders
+            break;
+        }
+
         Radio::halt();
     }
+}
 
-    while (vbuf) {
-        uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
+void CubeSlot::waitForFinish()
+{
+    /*
+     * Wait until all previous rendering has finished. Does *not* wait
+     * for any minimum frame rate. If no rendering is pending, we
+     * return immediately.
+     */
 
-        /*
-         * In continuous rendering, never wait longer than fastPeriod.
-         */
+    for (;;) {
+        Atomic::Barrier();
+        SysTime::Ticks now = SysTime::ticks();
 
-        if (flags & _SYS_VF_CONTINUOUS)
+        if (now > (paintTimestamp + fpsLow)) {
+            // Watchdog expired. Give up waiting.
             break;
+        }
 
-        /*
-         * By definition, the cube is idle if the LSB of frame_count
-         * matches the current _SYS_VF_TOGGLE bit.
-         */
- 
-        if (!(flags ^ framePrevACK) & _SYS_VF_TOGGLE)
+        if (pendingFrames <= 0) {
+            // No pending renders
             break;
-
-        /*
-         * Abort waiting if it's been longer than 'slowPeriod' since
-         * the last frame. This protects us from getting hung if our
-         * toggle bit is out of sync with the cube's.
-         */
-
-        if (SysTime::ticks() > (paintTimestamp + slowPeriod))
-            break;
+        }
 
         Radio::halt();
-        Atomic::Barrier();
     }
 }
 
 void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
 {
+    if (vbuf) {
+        uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
+        int32_t pending = Atomic::Load(pendingFrames);
+        int32_t newPending = pending;
+
+        /*
+         * Keep pendingFrames above the lower limit. We make this
+         * adjustment lazily, rather than doing it from inside the
+         * ISR.
+         */
+        if (pending < fpMin)
+            newPending = fpMin;
+
+        /*
+         * Count all requested paint operations, so that we can
+         * loosely match them with acknowledged frames. This isn't a
+         * strict 1:1 mapping, but it's used to close the loop on
+         * repaint speed.
+         *
+         * We don't want to unlock() until we're actually ready to
+         * start transmitting data over the radio, so we'll detect new
+         * frames by either checking for bits that are already
+         * unlocked (in needPaint) or bits that are pending unlock.
+         */
+        uint32_t needPaint = vbuf->needPaint | vbuf->cm32next;
+        if (needPaint)
+            newPending++;
+
+        /*
+         * We turn on continuous rendering only when we're doing a
+         * good job at keeping the cube busy continuously, as measured
+         * using our pendingFrames counter. We have some hysteresis,
+         * so that continuous rendering is only turned off once the
+         * cube is clearly pulling ahead of our ability to provide it
+         * with frames.
+         */
+        if (newPending >= fpContinuous)
+            flags |= _SYS_VF_CONTINUOUS;
+        if (newPending <= fpSingle)
+            flags &= ~_SYS_VF_CONTINUOUS;
+
+        /*
+         * If we're not using continuous mode, each frame is triggered
+         * explicitly by toggling a bit in the flags register.
+         */
+        if (!(flags & _SYS_VF_CONTINUOUS) && needPaint)
+            flags ^= _SYS_VF_TOGGLE;
+
+        /*
+         * Atomically apply our changes to pendingFrames.
+         */
+        Atomic::Add(pendingFrames, newPending - pending);
+    
+        /*
+         * Now we're ready to set the ISR loose on transmitting this frame over the radio.
+         */
+        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags);
+        VRAM::unlock(*vbuf);
+        vbuf->needPaint = 0;
+    }
+
     /*
-     * We need to repaint if we have pending repaints (unlock()'ed but
-     * not drawn by the hardware) or if we have CM32 updates that
-     * haven't been committed by unlock() yet. This is equivalent to
-     * doing a second unlock() before testing needPaint, but it's a
-     * little more efficient.
-     *
      * We must always update paintTimestamp, even if this turned out
      * to be a no-op. An application which makes no changes to VRAM
      * but just calls paint() in a tight loop should iterate at the
      * 'fastPeriod' defined above.
      */
-
-    if (vbuf && (vbuf->needPaint || vbuf->cm32next)) {
-        VRAM::xorb(*vbuf, offsetof(_SYSVideoRAM, flags), _SYS_VF_TOGGLE);
-        VRAM::unlock(*vbuf);
-        vbuf->needPaint = 0;
-    }
-
     paintTimestamp = timestamp;
 }

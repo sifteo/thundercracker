@@ -24,7 +24,7 @@ CCFLAGS += -fno-exceptions
 CCFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include
 LDFLAGS += -lm
 
-CCFLAGS_SIM := $(CCFLAGS)
+CCFLAGS_SIM := $(CCFLAGS) -DSIFTEO_SIMULATOR
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 LDFLAGS_SIM := $(LDFLAGS)
 

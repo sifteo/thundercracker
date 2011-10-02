@@ -102,7 +102,6 @@ struct VRAM {
         for (unsigned i = 0; i < arraysize(vbuf.cm1); i++)
             vbuf.cm1[i] = 0xFFFFFFFF;
     }
-
 };
 
 #endif

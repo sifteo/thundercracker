@@ -28,6 +28,22 @@ namespace Atomic {
 #endif
     }
     
+    static inline void Add(uint32_t &dest, uint32_t src) {
+#ifdef __GNUC__
+        __sync_add_and_fetch(&dest, src);
+#else
+        dest += src;
+#endif
+    }
+
+    static inline void Add(int32_t &dest, int32_t src) {
+#ifdef __GNUC__
+        __sync_add_and_fetch(&dest, src);
+#else
+        dest += src;
+#endif
+    }
+    
     static inline void Or(uint32_t &dest, uint32_t src) {
 #ifdef __GNUC__
         __sync_or_and_fetch(&dest, src);
@@ -50,9 +66,22 @@ namespace Atomic {
         Barrier();
     }
 
+    static inline void Store(int32_t &dest, int32_t src) {
+        Barrier();
+        dest = src;
+        Barrier();
+    }
+
     static inline uint32_t Load(uint32_t &src) {
         Barrier();
         uint32_t dest = src;
+        Barrier();
+        return dest;
+    }
+
+    static inline int32_t Load(int32_t &src) {
+        Barrier();
+        int32_t dest = src;
         Barrier();
         return dest;
     }
