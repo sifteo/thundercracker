@@ -72,9 +72,8 @@ void flash_erase(uint8_t blockCount)
     if (flash_addr_lat2 & 3)
         return;
 
-    CTRL_PORT = CTRL_IDLE;
-
     for (;;) {
+        CTRL_PORT = CTRL_IDLE;
         BUS_DIR = 0;
 
         // Common unlock prefix for all erase ops
