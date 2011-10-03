@@ -6,10 +6,6 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifdef SIFTEO_SIMULATOR
-#include <stdio.h>
-#endif
-
 #include <protocol.h>
 #include <sifteo/machine.h>
 
@@ -290,9 +286,10 @@ void CubeSlot::waitForPaint()
 void CubeSlot::waitForFinish()
 {
     /*
-     * Wait until all previous rendering has finished. Does *not* wait
-     * for any minimum frame rate. If no rendering is pending, we
-     * return immediately.
+     * Wait until all previous rendering has finished, and all of VRAM
+     * has been updated over the radio.  Does *not* wait for any
+     * minimum frame rate. If no rendering is pending, we return
+     * immediately.
      */
 
     for (;;) {
@@ -304,8 +301,8 @@ void CubeSlot::waitForFinish()
             break;
         }
 
-        if (pendingFrames <= 0) {
-            // No pending renders
+        if (pendingFrames <= 0 && (vbuf == 0 || vbuf->cm32 == 0)) {
+            // No pending renders or VRAM updates
             break;
         }
 

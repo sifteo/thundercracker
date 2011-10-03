@@ -150,8 +150,14 @@ void siftmain()
     cube.vbuf.sys.vram.colormap[1] = color_lerp(0);
 
     /*
-     * Must fully finish rendering the background before we change
-     * video modes.
+     * Make sure the initial state of VRAM is fully up to date on the cube
+     */
+
+    cube.vbuf.unlock();
+    System::finish();
+
+    /*
+     * Now repaint the background, and wait for it to finish.
      */
 
     System::paint();

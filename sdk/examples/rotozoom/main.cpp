@@ -114,7 +114,6 @@ void siftmain()
 
     while (1) {
         AffineMatrix m = AffineMatrix::identity();
-        uint8_t flags = _SYS_VF_CONTINUOUS;
         
         /*
          * Build an affine transformation for this frame
@@ -133,9 +132,15 @@ void siftmain()
          */
 
         if (fabs(m.xy) > fabs(m.xx)) {
-            flags ^= _SYS_VF_XY_SWAP;
+            cube.vbuf.pokeb(offsetof(_SYSVideoRAM, flags),
+                            cube.vbuf.peekb(offsetof(_SYSVideoRAM, flags))
+                            | _SYS_VF_XY_SWAP);
             m *= AffineMatrix(0, 1, 0,
                               1, 0, 0);
+        } else {
+            cube.vbuf.pokeb(offsetof(_SYSVideoRAM, flags),
+                            cube.vbuf.peekb(offsetof(_SYSVideoRAM, flags))
+                            & ~_SYS_VF_XY_SWAP);
         }
 
         /*
@@ -148,7 +153,6 @@ void siftmain()
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.xy)/2, 0x100 * m.xy);
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yx)/2, 0x100 * m.yx);
         cube.vbuf.poke(offsetof(_SYSVideoRAM, bg2_affine.yy)/2, 0x100 * m.yy);
-        cube.vbuf.pokeb(offsetof(_SYSVideoRAM, flags), flags);
 
         System::paint();
         frame++;

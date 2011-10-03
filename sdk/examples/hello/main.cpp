@@ -45,12 +45,6 @@ static void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
     va_end(ap);
 }
 
-static void nextFrame()
-{
-    // XXX: cheesy frame trigger
-    cube.vbuf.poke(511, cube.vbuf.sys.vram.words[511] ^ (_SYS_VF_TOGGLE << 8));
-}
-
 static void onAccelChange(_SYSCubeID cid)
 {
     _SYSAccelState state;
@@ -64,9 +58,6 @@ static void onAccelChange(_SYSCubeID cid)
     if (px < 0) px += 18*8;
     if (py < 0) py += 18*8;
     cube.vbuf.poke(0x3fa/2, ((uint8_t)py << 8) | (uint8_t)px);
-
-    nextFrame();
-    cube.vbuf.unlock();
 }
 
 static void onAssetDone(_SYSCubeID cid)
@@ -92,12 +83,7 @@ void siftmain()
     memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
     cube.vbuf.sys.vram.mode = _SYS_VM_BG0;
     cube.vbuf.sys.vram.num_lines = 128;
-    nextFrame();
-    cube.vbuf.unlock();
-
     cube.enable();
-
-    // XXX: Wait for cube to connect here...
 
     // Download assets, and continue when they're done.
     _SYS_vectors.assetDone = onAssetDone;
