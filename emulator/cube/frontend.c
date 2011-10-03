@@ -112,10 +112,12 @@ static void frontend_update_texture(void)
         for (ty = 0; ty < FLASH_TILE_HEIGHT; ty++)
             for (tx = 0; tx < FLASH_TILE_WIDTH; tx++) {
 
+                glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
                 glTexSubImage2D(GL_TEXTURE_2D, 0,
                                 tx * FLASH_TILE_SIZE, ty * FLASH_TILE_SIZE,
                                 FLASH_TILE_SIZE, FLASH_TILE_SIZE,
                                 GL_RGB, GL_UNSIGNED_SHORT_5_6_5, ptr);
+                glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
 
                 remaining -= FLASH_TILE_BYTES;
                 ptr += FLASH_TILE_BYTES;
