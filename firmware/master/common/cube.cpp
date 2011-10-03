@@ -45,12 +45,12 @@ using namespace Sifteo;
  *    limit, we'll start ignoring acknowledgments.
  */
 
-static const SysTime::Ticks fpsLow = SysTime::hzTicks(10);
+static const SysTime::Ticks fpsLow = SysTime::hzTicks(4);
 static const SysTime::Ticks fpsHigh = SysTime::hzTicks(60);
-static const int8_t fpContinuous = 2;
+static const int8_t fpContinuous = 3;
 static const int8_t fpSingle = -4;
 static const int8_t fpMax = 5;
-static const int8_t fpMin = -10;
+static const int8_t fpMin = -8;
 
 /*
  * Slot instances
@@ -158,8 +158,11 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // This ACK includes a valid frame_count counter
 
         if (frameACKValid & bit()) {
+            // Some frame(s) finished rendering.
+
             uint8_t frameACK = ack->frame_count - framePrevACK;
             Atomic::Add(pendingFrames, -(int32_t)frameACK);
+
         } else {
             Atomic::Or(frameACKValid, bit());
         }
@@ -269,15 +272,14 @@ void CubeSlot::waitForPaint()
         Atomic::Barrier();
         SysTime::Ticks now = SysTime::ticks();
 
-        if (now > (paintTimestamp + fpsLow)) {
-            // Watchdog expired. Give up waiting.
+        // Watchdog expired? Give up waiting.
+        if (now > (paintTimestamp + fpsLow))
             break;
-        }
 
-        if (now > (paintTimestamp + fpsHigh) && pendingFrames <= fpMax) {
-            // Wait for minimum frame rate AND for pending renders
+        // Wait for minimum frame rate AND for pending renders
+        if (now > (paintTimestamp + fpsHigh)
+            && pendingFrames <= fpMax)
             break;
-        }
 
         Radio::halt();
     }
@@ -356,15 +358,27 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
         /*
          * If we're not using continuous mode, each frame is triggered
          * explicitly by toggling a bit in the flags register.
+         *
+         * We can always trigger a render by setting the TOGGLE bit to
+         * the inverse of framePrevACK's LSB. If we don't know the ACK data
+         * yet, we have to punt and set continuous mode for now.
          */
-        if (!(flags & _SYS_VF_CONTINUOUS) && needPaint)
-            flags ^= _SYS_VF_TOGGLE;
+        if (!(flags & _SYS_VF_CONTINUOUS) && needPaint) {
+            if (frameACKValid & bit()) {
+                flags &= ~_SYS_VF_TOGGLE;
+                if (!(framePrevACK & 1))
+                    flags |= _SYS_VF_TOGGLE;
+            } else {
+                flags |= _SYS_VF_CONTINUOUS;
+            }
+        }
+
 
         /*
          * Atomically apply our changes to pendingFrames.
          */
         Atomic::Add(pendingFrames, newPending - pending);
-    
+
         /*
          * Now we're ready to set the ISR loose on transmitting this frame over the radio.
          */

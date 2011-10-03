@@ -7,6 +7,16 @@
 #ifndef _SIFTEO_MACROS_H
 #define _SIFTEO_MACROS_H
 
+#ifdef SIFTEO_SIMULATOR
+#include <stdio.h>
+#endif
+
+#ifdef SIFTEO_SIMULATOR
+#define LOG(_x)    printf _x
+#else
+#define LOG(_x)
+#endif
+
 #ifndef MIN
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))

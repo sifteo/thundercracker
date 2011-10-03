@@ -50,6 +50,15 @@ class VideoBuffer {
     }
 
     /**
+     * Mark the VideoBuffer as having changed, without actually modifying
+     * any memory. This will force the next System::paint() to actually
+     * redraw this cube, even if it seems like nothing has changed.
+     */
+    void touch() {
+        Sifteo::Atomic::Or(sys.needPaint, 1);
+    }
+
+    /**
      * Modify a word of VRAM, automatically locking it and marking the
      * change only if that word has actually been modified. After a
      * sequence of poke() calls, the caller is responsible for issuing

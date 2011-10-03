@@ -149,19 +149,8 @@ void siftmain()
     cube.vbuf.sys.vram.colormap[0] = color_lerp(0);
     cube.vbuf.sys.vram.colormap[1] = color_lerp(0);
 
-    /*
-     * Make sure the initial state of VRAM is fully up to date on the cube
-     */
-
-    cube.vbuf.unlock();
-    System::finish();
-
-    /*
-     * Now repaint the background, and wait for it to finish.
-     */
-
-    System::paint();
-    System::finish();
+    // And wait for it to fully draw
+    System::paintSync();
 
     /*
      * Now set up a letterboxed 128x48 mode

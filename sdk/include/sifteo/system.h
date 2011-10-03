@@ -82,6 +82,18 @@ class System {
     static void finish() {
         _SYS_finish();
     }
+
+    /**
+     * Fully synchronous repaint. This is just a shorthand for a
+     * paint() followed by finish(). All of the performance caveats
+     * that come with finish() are applicable here too.
+     */
+
+    static void paintSync() {
+        _SYS_paint();
+        _SYS_finish();
+    }
+
 };
 
 
