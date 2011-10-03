@@ -84,6 +84,7 @@ void emu_exception(struct em8051 *aCPU, int aCode)
         "Hardware bus contention occurred",
         "SPI FIFO overrun/underrun",
         "Radio FIFO overrun/underrun",
+        "I2C error",
     };
 
     if (aCode == -1)

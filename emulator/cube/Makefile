@@ -15,6 +15,8 @@ SRC = \
 	flash.c \
 	spi.c \
 	adc.c \
+	i2c.c \
+	accel.c \
 	irq.c \
 	radio.c \
 	network.c \

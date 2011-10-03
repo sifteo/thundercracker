@@ -360,6 +360,7 @@ enum EM8051_EXCEPTION
     EXCEPTION_BUS_CONTENTION,    // Hardware bus contention
     EXCEPTION_SPI_XRUN,          // SPI FIFO overrun/underrun
     EXCEPTION_RADIO_XRUN,        // Radio FIFO overrun/underrun
+    EXCEPTION_I2C,              // I2C error
 };
 
 // The active DPTR registers depend on the value of DPS.

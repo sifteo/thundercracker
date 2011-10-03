@@ -220,33 +220,29 @@ static void frontend_resize_window(void)
     frontend_draw_frame();
 }
 
-static uint16_t frontend_scale_coord(uint32_t coord, uint16_t width)
+static uint8_t frontend_scale_coord(uint32_t coord, uint16_t width)
 {
     /*
      * Convert a pixel coordinate to a normalized value in the range
-     * [0, 0xFFFF], with proper rounding and boundary condition
+     * [0, 0xFF], with proper rounding and boundary condition
      * handling.
      */
     uint32_t max_coord = width - 1;
-    return clamp32(0, 0xFFFF, (coord * 0xFFFF + max_coord / 2) / max_coord);
+    return clamp32(0, 0xFF, (coord * 0xFF + max_coord / 2) / max_coord);
 }
 
 static void frontend_mouse_update(uint16_t x, uint16_t y, uint8_t buttons)
 {
-    uint16_t scaled_x = frontend_scale_coord(x, frontend.scale * LCD_WIDTH);
-    uint16_t scaled_y = frontend_scale_coord(y, frontend.scale * LCD_HEIGHT);
-
-    uint16_t accel_x = 0x8000;
-    uint16_t accel_y = 0x8000;
+    int8_t scaled_x = frontend_scale_coord(x, frontend.scale * LCD_WIDTH) - 0x80;
+    int8_t scaled_y = frontend_scale_coord(y, frontend.scale * LCD_HEIGHT) - 0x80;
 
     if (buttons & SDL_BUTTON_LEFT) {
         // Mouse drag: Simulate a tilt
-        accel_x = scaled_x;
-        accel_y = scaled_y;
+        accel_set_vector(scaled_x, scaled_y);
+    } else {
+        // Idle: Centered
+        accel_set_vector(0, 0);
     }
-
-    adc_set_input(0, accel_x);
-    adc_set_input(1, accel_y);
 }
 
 void frontend_init(struct em8051 *cpu)

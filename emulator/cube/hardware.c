@@ -60,6 +60,8 @@ static struct {
     uint8_t prev_ctrl_port;
     uint8_t flash_drv;
 
+    uint8_t iex3;
+
     int rfcken;
     struct spi_master radio_spi;
 } hw;
@@ -96,6 +98,7 @@ void hardware_init(struct em8051 *cpu)
     flash_init(opt_flash_filename);
     radio_init(cpu);
     lcd_init();
+    i2c_init();
     adc_init();
 }
 
@@ -192,6 +195,10 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
                    !!(cpu->mSFR[reg] & RFCON_RFCE));  // Active high
         break;
 
+    case REG_W2DAT:
+        i2c_write_data(cpu, cpu->mSFR[REG_W2DAT]);
+        break;
+
     case REG_DEBUG:
         fprintf(stderr, "Debug: %02x\n", cpu->mSFR[reg]);
         break;
@@ -207,6 +214,12 @@ int hardware_sfrread(struct em8051 *cpu, int reg)
     case REG_SPIRDAT:
         return spi_read_data(&hw.radio_spi);
             
+    case REG_W2DAT:
+        return i2c_read_data(cpu);
+
+    case REG_W2CON1:
+        return i2c_read_con1(cpu);
+
     default:    
         return cpu->mSFR[reg];
     }
@@ -214,13 +227,17 @@ int hardware_sfrread(struct em8051 *cpu, int reg)
 
 void hardware_tick(struct em8051 *cpu)
 {
-    /* Update the LCD Tearing Effect line */
+    /*
+     * Update the LCD Tearing Effect line
+     */
 
     cpu->mSFR[CTRL_PORT] &= ~CTRL_LCD_TE;
     if (lcd_te_tick())
         cpu->mSFR[CTRL_PORT] |= CTRL_LCD_TE;
 
-    /* Simulate interrupts */
+    /*
+     * Simulate peripheral interrupts
+     */
 
     if (adc_tick(cpu->mSFR))
         cpu->mSFR[REG_IRCON] |= IRCON_MISC;
@@ -231,7 +248,27 @@ void hardware_tick(struct em8051 *cpu)
     if (hw.rfcken && radio_tick())
         cpu->mSFR[REG_IRCON] |= IRCON_RF;
 
-    /* Other hardware with timers to update */
+    // I2C can be routed to iex3 using INTEXP
+    uint8_t iex3 = i2c_tick(cpu) && (cpu->mSFR[REG_INTEXP] & 0x04);    
+
+    /*
+     * External interrupts: iex3
+     */
+
+    if (cpu->mSFR[REG_T2CON] & 0x40) {
+        // Rising edge
+        if (iex3 && !hw.iex3)
+            cpu->mSFR[REG_IRCON] |= IRCON_SPI;
+    } else {
+        // Falling edge
+        if (!iex3 && hw.iex3)
+            cpu->mSFR[REG_IRCON] |= IRCON_SPI;
+    }
+    hw.iex3 = iex3;
+        
+    /*
+     * Other hardware with timers to update
+     */
 
     flash_tick(cpu);
     if (hw.flash_drv)
