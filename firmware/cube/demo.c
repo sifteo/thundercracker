@@ -98,6 +98,12 @@ void demo(void)
             graphics_render();
 
             frame++;
+
+            ADDR_PORT = x;
+            CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;
+
+            ADDR_PORT = y;
+            CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
         }
     }
 #endif

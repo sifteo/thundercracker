@@ -19,9 +19,10 @@ SDK_DIR = ../../sdk
 SDCC = sdcc
 CDEPS = *.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
 CFLAGS = -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
+LDFLAGS = --xram-size 1024 --code-size 16384
 
 $(BIN): $(OBJS)
-	$(SDCC) -o $@ $(OBJS)
+	$(SDCC) -o $@ $(LDFLAGS) $(OBJS)
 
 %.rel: %.c $(CDEPS)
 	$(SDCC) -c -o $@ $< $(CFLAGS)

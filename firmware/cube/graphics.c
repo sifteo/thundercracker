@@ -75,9 +75,24 @@
 
 // Assembly macro wrappers
 #define ASM_ADDR_INC4()                 __endasm; ADDR_INC4(); __asm
-#define ASM_ADDR_INC32()                __endasm; ADDR_INC32(); __asm
 #define ASM_DPTR_INC2()                 __endasm; DPTR_INC2(); __asm
 #define ASM_ADDR_FROM_DPTR_INC()        __endasm; ADDR_FROM_DPTR_INC(); __asm
+
+// Common jump table for address increments
+static void addr_inc32() __naked {
+    __asm
+             ASM_ADDR_INC4()
+_addr_inc28: ASM_ADDR_INC4()
+_addr_inc24: ASM_ADDR_INC4()
+_addr_inc20: ASM_ADDR_INC4()
+_addr_inc16: ASM_ADDR_INC4()
+_addr_inc12: ASM_ADDR_INC4()
+_addr_inc8:  ASM_ADDR_INC4()
+_addr_inc4:  ASM_ADDR_INC4()
+             ret
+
+    __endasm ;
+}
 
 
 /***********************************************************************
@@ -423,7 +438,7 @@ static void vm_bg0_line(void)
         ADDR_FROM_DPTR_INC();
         BG0_WRAP_CHECK();
         ADDR_PORT = y_bg0_addr_l;
-        ADDR_INC32();
+        addr_inc32();
     } while (--x);
 
     // Might be one more partial tile
@@ -797,7 +812,7 @@ static void vm_bg0_rom_tiles_fast(void) __naked __using(GFX_BANK)
 47$:    mov     BUS_PORT, r0
         ljmp    27$
 
-15$:    ASM_ADDR_INC32()                ; Blank byte, no comparisons
+15$:    lcall   _addr_inc32     ; Blank byte, no comparisons
         ljmp    8$
 
     __endasm ;
@@ -1203,14 +1218,7 @@ static void vm_bg0_bg1_tiles_fast_p0(void) __naked
 
 10$:
         BG1_NEXT_BIT(1$)
-        ASM_ADDR_INC4()                         ; BG0 Pixel 0
-        ASM_ADDR_INC4()                         ; BG0 Pixel 1
-        ASM_ADDR_INC4()                         ; BG0 Pixel 2
-        ASM_ADDR_INC4()                         ; BG0 Pixel 3
-        ASM_ADDR_INC4()                         ; BG0 Pixel 4
-        ASM_ADDR_INC4()                         ; BG0 Pixel 5
-        ASM_ADDR_INC4()                         ; BG0 Pixel 6
-        ASM_ADDR_INC4()                         ; BG0 Pixel 7
+        lcall   _addr_inc32
 
 11$:    ASM_BG0_NEXT(9$)
         djnz    r5, 10$
@@ -1240,13 +1248,7 @@ static void vm_bg0_bg1_tiles_fast_p1(void) __naked
 10$:
         ASM_ADDR_INC4()                         ; BG0 Pixel 0
 12$:    BG1_NEXT_BIT(1$)
-        ASM_ADDR_INC4()                         ; BG0 Pixel 1
-        ASM_ADDR_INC4()                         ; BG0 Pixel 2
-        ASM_ADDR_INC4()                         ; BG0 Pixel 3
-        ASM_ADDR_INC4()                         ; BG0 Pixel 4
-        ASM_ADDR_INC4()                         ; BG0 Pixel 5
-        ASM_ADDR_INC4()                         ; BG0 Pixel 6
-        ASM_ADDR_INC4()                         ; BG0 Pixel 7
+        lcall   _addr_inc28                     ; BG0 Pixel 1-7
 
 11$:    ASM_BG0_NEXT(9$)
         djnz    r5, 10$
@@ -1278,15 +1280,9 @@ static void vm_bg0_bg1_tiles_fast_p2(void) __naked
         lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-        ASM_ADDR_INC4()                         ; BG0 Pixel 0
-        ASM_ADDR_INC4()                         ; BG0 Pixel 1
+        lcall   _addr_inc8                      ; BG0 Pixel 0-1
 12$:    BG1_NEXT_BIT(1$)
-        ASM_ADDR_INC4()                         ; BG0 Pixel 2
-        ASM_ADDR_INC4()                         ; BG0 Pixel 3
-        ASM_ADDR_INC4()                         ; BG0 Pixel 4
-        ASM_ADDR_INC4()                         ; BG0 Pixel 5
-        ASM_ADDR_INC4()                         ; BG0 Pixel 6
-        ASM_ADDR_INC4()                         ; BG0 Pixel 7
+        lcall   _addr_inc24                     ; BG0 Pixel 2-7
 
 11$:    ASM_BG0_NEXT(9$)
         djnz    r5, 10$
@@ -1318,15 +1314,9 @@ static void vm_bg0_bg1_tiles_fast_p3(void) __naked
         lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-        ASM_ADDR_INC4()                         ; BG0 Pixel 0
-        ASM_ADDR_INC4()                         ; BG0 Pixel 1
-        ASM_ADDR_INC4()                         ; BG0 Pixel 2
+        lcall   _addr_inc12                     ; BG0 Pixel 0-2
 12$:    BG1_NEXT_BIT(1$)
-        ASM_ADDR_INC4()                         ; BG0 Pixel 3
-        ASM_ADDR_INC4()                         ; BG0 Pixel 4
-        ASM_ADDR_INC4()                         ; BG0 Pixel 5
-        ASM_ADDR_INC4()                         ; BG0 Pixel 6
-        ASM_ADDR_INC4()                         ; BG0 Pixel 7
+        lcall   _addr_inc20                     ; BG0 Pixel 3-7
 
 11$:    ASM_BG0_NEXT(9$)
         djnz    r5, 10$
@@ -1358,15 +1348,9 @@ static void vm_bg0_bg1_tiles_fast_p4(void) __naked
         lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-        ASM_ADDR_INC4()                         ; BG0 Pixel 0
-        ASM_ADDR_INC4()                         ; BG0 Pixel 1
-        ASM_ADDR_INC4()                         ; BG0 Pixel 2
-        ASM_ADDR_INC4()                         ; BG0 Pixel 3
+        lcall   _addr_inc16                     ; BG0 Pixel 0-3
 12$:    BG1_NEXT_BIT(1$)
-        ASM_ADDR_INC4()                         ; BG0 Pixel 4
-        ASM_ADDR_INC4()                         ; BG0 Pixel 5
-        ASM_ADDR_INC4()                         ; BG0 Pixel 6
-        ASM_ADDR_INC4()                         ; BG0 Pixel 7
+        lcall   _addr_inc16                     ; BG0 Pixel 4-7
 
 11$:    ASM_BG0_NEXT(9$)
         djnz    r5, 10$
@@ -1398,15 +1382,9 @@ static void vm_bg0_bg1_tiles_fast_p5(void) __naked
         lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-        ASM_ADDR_INC4()                         ; BG0 Pixel 0
-        ASM_ADDR_INC4()                         ; BG0 Pixel 1
-        ASM_ADDR_INC4()                         ; BG0 Pixel 2
-        ASM_ADDR_INC4()                         ; BG0 Pixel 3
-        ASM_ADDR_INC4()                         ; BG0 Pixel 4
+        lcall   _addr_inc20                     ; BG0 Pixel 0-4
 12$:    BG1_NEXT_BIT(1$)
-        ASM_ADDR_INC4()                         ; BG0 Pixel 5
-        ASM_ADDR_INC4()                         ; BG0 Pixel 6
-        ASM_ADDR_INC4()                         ; BG0 Pixel 7
+        lcall   _addr_inc12                     ; BG0 Pixel 5-7
 
 11$:    ASM_BG0_NEXT(9$)
         djnz    r5, 10$
@@ -1438,15 +1416,9 @@ static void vm_bg0_bg1_tiles_fast_p6(void) __naked
         lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-        ASM_ADDR_INC4()                         ; BG0 Pixel 0
-        ASM_ADDR_INC4()                         ; BG0 Pixel 1
-        ASM_ADDR_INC4()                         ; BG0 Pixel 2
-        ASM_ADDR_INC4()                         ; BG0 Pixel 3
-        ASM_ADDR_INC4()                         ; BG0 Pixel 4
-        ASM_ADDR_INC4()                         ; BG0 Pixel 5
+        lcall   _addr_inc24                     ; BG0 Pixel 0-5
 12$:    BG1_NEXT_BIT(1$)
-        ASM_ADDR_INC4()                         ; BG0 Pixel 6
-        ASM_ADDR_INC4()                         ; BG0 Pixel 7
+        lcall   _addr_inc8                      ; BG0 Pixel 6-7
 
 11$:    ASM_BG0_NEXT(9$)
         djnz    r5, 10$
@@ -1478,13 +1450,7 @@ static void vm_bg0_bg1_tiles_fast_p7(void) __naked
         lcall   _vm_bg0_bg1_tiles_fast_pre
 
 10$:
-        ASM_ADDR_INC4()                         ; BG0 Pixel 0
-        ASM_ADDR_INC4()                         ; BG0 Pixel 1
-        ASM_ADDR_INC4()                         ; BG0 Pixel 2
-        ASM_ADDR_INC4()                         ; BG0 Pixel 3
-        ASM_ADDR_INC4()                         ; BG0 Pixel 4
-        ASM_ADDR_INC4()                         ; BG0 Pixel 5
-        ASM_ADDR_INC4()                         ; BG0 Pixel 6
+        lcall   _addr_inc28                     ; BG0 Pixel 0-6
 12$:    BG1_NEXT_BIT(1$)
         ASM_ADDR_INC4()                         ; BG0 Pixel 7
 
@@ -1733,7 +1699,7 @@ static void line_bg_spr0(void)
             ADDR_FROM_DPTR_INC();
             MAP_WRAP_CHECK();
             ADDR_PORT = y_bg_addr_l;
-            ADDR_INC32();
+            addr_inc32();
             spr0_x += 8;
             spr0_pixel_addr += 32;
 
@@ -1899,9 +1865,9 @@ static void line_bg_spr0(void)
     __asm mov   a, r1                                          __endasm; \
     __asm addc  a, (_vm_bg2_xx_1_1 + 1)                        __endasm; \
     __asm xrl   a, r1                                          __endasm; \
-    __asm jz	lbl					       __endasm; \
-    __asm xrl	a, r1					       __endasm; \
-    __asm mov	r1, a					       __endasm; \
+    __asm jz    lbl                                            __endasm; \
+    __asm xrl   a, r1                                          __endasm; \
+    __asm mov   r1, a                                          __endasm; \
     __asm
 
 // Update the Y accumulator, leaving the high byte in 'a'
@@ -1915,76 +1881,76 @@ static void line_bg_spr0(void)
     __asm
 
 // Address a tile (LAT1/LAT2) from 8-bit address in 'a'
-#define BG2_ADDR_TILE()						__endasm; \
-    __asm clr	c						__endasm; \
-    __asm rlc	a						__endasm; \
-    __asm mov	dpl, a						__endasm; \
-    __asm clr	a						__endasm; \
-    __asm rlc	a						__endasm; \
-    __asm mov	dph, a						__endasm; \
-    __asm movx	a, @dptr					__endasm; \
-    __asm mov	ADDR_PORT, a					__endasm; \
-    __asm inc	dptr						__endasm; \
-    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1	__endasm; \
-    __asm movx	a, @dptr					__endasm; \
-    __asm mov	ADDR_PORT, a					__endasm; \
-    __asm mov	CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2	__endasm; \
+#define BG2_ADDR_TILE()                                         __endasm; \
+    __asm clr   c                                               __endasm; \
+    __asm rlc   a                                               __endasm; \
+    __asm mov   dpl, a                                          __endasm; \
+    __asm clr   a                                               __endasm; \
+    __asm rlc   a                                               __endasm; \
+    __asm mov   dph, a                                          __endasm; \
+    __asm movx  a, @dptr                                        __endasm; \
+    __asm mov   ADDR_PORT, a                                    __endasm; \
+    __asm inc   dptr                                            __endasm; \
+    __asm mov   CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1    __endasm; \
+    __asm movx  a, @dptr                                        __endasm; \
+    __asm mov   ADDR_PORT, a                                    __endasm; \
+    __asm mov   CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2    __endasm; \
     __asm
 
 // Address a pixel (r5/ADDR) from the current accumulator state
-#define BG2_ADDR_PIXEL()					__endasm; \
-    __asm mov	a, r3   					__endasm; \
-    __asm swap	a    						__endasm; \
-    __asm rl	a						__endasm; \
-    __asm anl	a, #0xE0					__endasm; \
-    __asm mov	r5, a						__endasm; \
-    __asm mov	a, r1						__endasm; \
-    __asm rl	a						__endasm; \
-    __asm rl	a						__endasm; \
-    __asm anl	a, #0x1c					__endasm; \
-    __asm orl	a, r5						__endasm; \
-    __asm mov	r5, a						__endasm; \
-    __asm mov   ADDR_PORT, a					__endasm; \
+#define BG2_ADDR_PIXEL()                                        __endasm; \
+    __asm mov   a, r3                                           __endasm; \
+    __asm swap  a                                               __endasm; \
+    __asm rl    a                                               __endasm; \
+    __asm anl   a, #0xE0                                        __endasm; \
+    __asm mov   r5, a                                           __endasm; \
+    __asm mov   a, r1                                           __endasm; \
+    __asm rl    a                                               __endasm; \
+    __asm rl    a                                               __endasm; \
+    __asm anl   a, #0x1c                                        __endasm; \
+    __asm orl   a, r5                                           __endasm; \
+    __asm mov   r5, a                                           __endasm; \
+    __asm mov   ADDR_PORT, a                                    __endasm; \
     __asm
 
 // Address the same pixel we addressed last time
-#define BG2_ADDR_RLE_PIXEL()					__endasm; \
-    __asm mov	ADDR_PORT, r5					__endasm; \
+#define BG2_ADDR_RLE_PIXEL()                                    __endasm; \
+    __asm mov   ADDR_PORT, r5                                   __endasm; \
     __asm
 
 // Update X tile address, and do X border test
-#define BG2_X_UPDATE(lbl)					__endasm; \
-    __asm rlc	a						__endasm; \
-    __asm jc	lbl						__endasm; \
-    __asm swap	a						__endasm; \
-    __asm anl	a, #0x0F					__endasm; \
-    __asm mov	r4, a						__endasm; \
+#define BG2_X_UPDATE(lbl)                                       __endasm; \
+    __asm rlc   a                                               __endasm; \
+    __asm jc    lbl                                             __endasm; \
+    __asm swap  a                                               __endasm; \
+    __asm anl   a, #0x0F                                        __endasm; \
+    __asm mov   r4, a                                           __endasm; \
     __asm
 
 // Update X tile address, without border test
-#define BG2_X_UPDATE_NB()					__endasm; \
-    __asm rlc	a						__endasm; \
-    __asm swap	a						__endasm; \
-    __asm anl	a, #0x0F					__endasm; \
-    __asm mov	r4, a						__endasm; \
+#define BG2_X_UPDATE_NB()                                       __endasm; \
+    __asm rlc   a                                               __endasm; \
+    __asm swap  a                                               __endasm; \
+    __asm anl   a, #0x0F                                        __endasm; \
+    __asm mov   r4, a                                           __endasm; \
     __asm
 
 // Update Y tile address, do Y border test, and update tile via cache
-#define BG2_Y_UPDATE(borderLbl, cacheHitLbl)			__endasm; \
-    __asm rlc	a						__endasm; \
-    __asm jc	borderLbl					__endasm; \
-    __asm anl	a, #0xF0					__endasm; \
-    __asm orl	a, r4						__endasm; \
-    __asm xrl	a, r6						__endasm; \
-    __asm jz	cacheHitLbl					__endasm; \
-    __asm xrl	a, r6						__endasm; \
-    __asm mov	r6, a						__endasm; \
-    __asm BG2_ADDR_TILE()					__endasm; \
-    __asm cacheHitLbl:						__endasm; \
+#define BG2_Y_UPDATE(borderLbl, cacheHitLbl)                    __endasm; \
+    __asm rlc   a                                               __endasm; \
+    __asm jc    borderLbl                                       __endasm; \
+    __asm anl   a, #0xF0                                        __endasm; \
+    __asm orl   a, r4                                           __endasm; \
+    __asm xrl   a, r6                                           __endasm; \
+    __asm jz    cacheHitLbl                                     __endasm; \
+    __asm xrl   a, r6                                           __endasm; \
+    __asm mov   r6, a                                           __endasm; \
+    __asm BG2_ADDR_TILE()                                       __endasm; \
+    __asm cacheHitLbl:                                          __endasm; \
     __asm
 
-#define ASM_LCD_WRITE_BEGIN()	__endasm; LCD_WRITE_BEGIN(); __asm
-#define ASM_LCD_WRITE_END()	__endasm; LCD_WRITE_END(); __asm
+#define ASM_LCD_WRITE_BEGIN()   __endasm; LCD_WRITE_BEGIN(); __asm
+#define ASM_LCD_WRITE_END()     __endasm; LCD_WRITE_END(); __asm
 
 
 static void vm_bg2(void)
@@ -2025,8 +1991,8 @@ static void vm_bg2(void)
      */
 
     __asm
-	mov	a, (GFX_BANK*8 + 6)
-	BG2_ADDR_TILE()
+        mov     a, (GFX_BANK*8 + 6)
+        BG2_ADDR_TILE()
     __endasm ;
 
     /*
@@ -2039,86 +2005,86 @@ static void vm_bg2(void)
         uint16_t __at (GFX_BANK*8 + 2) gfxbank_cy;
         uint8_t __at (GFX_BANK*8 + 7) gfxbank_loops;
 
-	gfxbank_cx = cx;
-	gfxbank_cy = cy;
-	gfxbank_loops = 128;
+        gfxbank_cx = cx;
+        gfxbank_cy = cy;
+        gfxbank_loops = 128;
 
         __asm
 
-	mov	psw, #(GFX_BANK << 3)
+        mov     psw, #(GFX_BANK << 3)
 
-	; ---- First pixel (RLE disabled)
+        ; ---- First pixel (RLE disabled)
 
-	BG2_ACCUM_X()
-	BG2_X_UPDATE(12$)
-	BG2_ACCUM_Y()
-14$:	BG2_Y_UPDATE(13$, 6$)
-	BG2_ADDR_PIXEL()
-	ASM_ADDR_INC4()
-	djnz	r7, 1$
-	ljmp 	20$
+        BG2_ACCUM_X()
+        BG2_X_UPDATE(12$)
+        BG2_ACCUM_Y()
+14$:    BG2_Y_UPDATE(13$, 6$)
+        BG2_ADDR_PIXEL()
+        ASM_ADDR_INC4()
+        djnz    r7, 1$
+        ljmp    20$
 
-12$:	ljmp	2$
-13$:	ljmp	3$
+12$:    ljmp    2$
+13$:    ljmp    3$
 
-	; ---- Main pixel loop
+        ; ---- Main pixel loop
 1$:
-	BG2_ACCUM_X_JE(10$)
-	BG2_X_UPDATE(2$)
-	BG2_ACCUM_Y()
-	BG2_Y_UPDATE(3$, 9$)
-	BG2_ADDR_PIXEL()
-	ASM_ADDR_INC4()
-	djnz	r7, 1$
-	sjmp	20$
+        BG2_ACCUM_X_JE(10$)
+        BG2_X_UPDATE(2$)
+        BG2_ACCUM_Y()
+        BG2_Y_UPDATE(3$, 9$)
+        BG2_ADDR_PIXEL()
+        ASM_ADDR_INC4()
+        djnz    r7, 1$
+        sjmp    20$
 
-	; ---- RLE optimization
+        ; ---- RLE optimization
 
 10$:
-	BG2_ACCUM_Y()
-	BG2_ADDR_RLE_PIXEL()
-	ASM_ADDR_INC4()
-	djnz	r7, 1$
-	sjmp	20$
+        BG2_ACCUM_Y()
+        BG2_ADDR_RLE_PIXEL()
+        ASM_ADDR_INC4()
+        djnz    r7, 1$
+        sjmp    20$
 
-	; ---- Border pixel rendering
+        ; ---- Border pixel rendering
 
-	; Transition, main -> border
+        ; Transition, main -> border
 
 2$:
-	BG2_ACCUM_Y()
+        BG2_ACCUM_Y()
 3$:
-	mov	CTRL_PORT, #CTRL_IDLE
-	ASM_LCD_WRITE_BEGIN()
-	sjmp	8$
+        mov     CTRL_PORT, #CTRL_IDLE
+        ASM_LCD_WRITE_BEGIN()
+        sjmp    8$
 
-	; Transition, border -> main
+        ; Transition, border -> main
 
 4$:
-	ASM_LCD_WRITE_END()
-	mov	CTRL_PORT, #CTRL_FLASH_OUT
+        ASM_LCD_WRITE_END()
+        mov     CTRL_PORT, #CTRL_FLASH_OUT
 
-	mov	a, r1
-	BG2_X_UPDATE_NB()
-	mov	a, r3
-	ljmp	14$
+        mov     a, r1
+        BG2_X_UPDATE_NB()
+        mov     a, r3
+        ljmp    14$
 
-	; Loop 
+        ; Loop 
 7$:
-	BG2_ACCUM_X()
-	BG2_ACCUM_Y()
-	orl	a, r1		; Are we out of the border yet?
-	jnb	acc.7, 4$
+        BG2_ACCUM_X()
+        BG2_ACCUM_Y()
+        orl     a, r1           ; Are we out of the border yet?
+        jnb     acc.7, 4$
 8$:
-	PIXEL_FROM_REGS(_vm_bg2_border_1_1, (_vm_bg2_border_1_1 + 1))
-	djnz	r7, 7$
-	sjmp	20$
+        PIXEL_FROM_REGS(_vm_bg2_border_1_1, (_vm_bg2_border_1_1 + 1))
+        djnz    r7, 7$
+        sjmp    20$
 
-	; ---- Cleanup
+        ; ---- Cleanup
 
 20$:
-	ASM_LCD_WRITE_END()
-	mov	psw, #0
+        ASM_LCD_WRITE_END()
+        mov     psw, #0
         __endasm ;
 
         cx += yx;
