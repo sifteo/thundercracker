@@ -15,10 +15,20 @@ using namespace Sifteo;
 
 static Cube cube(0);
 
-// XXX: Should be part of VRAM-mode-specific object
-static void poke_index(uint16_t addr, uint16_t tile)
+// XXX: Should be part of SDK
+static void progress_bar(uint16_t addr, int pixelWidth)
 {
-    cube.vbuf.poke(addr, ((tile << 1) & 0xFE) | ((tile << 2) & 0xFE00));
+    while (pixelWidth > 0) {
+        if (pixelWidth < 8)  {
+            cube.vbuf.pokei(addr, 0x085f + pixelWidth);
+            break;
+
+        } else {
+            cube.vbuf.pokei(addr, 0x09ff);
+            addr++;
+            pixelWidth -= 8;
+        }
+    }
 }
 
 // XXX: Should have a higher level font object, supported by STIR.
@@ -27,8 +37,8 @@ static void font_putc(uint8_t x, uint8_t y, char c)
     const uint8_t pitch = 18;
     uint16_t index = (c - ' ') << 1;
 
-    poke_index(x + pitch*y, index);
-    poke_index(x + pitch*(y+1), index+1);
+    cube.vbuf.pokei(x + pitch*y, index);
+    cube.vbuf.pokei(x + pitch*(y+1), index+1);
 }
 
 static void font_printf(uint8_t x, uint8_t y, const char *fmt, ...)
@@ -60,34 +70,42 @@ static void onAccelChange(_SYSCubeID cid)
     cube.vbuf.poke(0x3fa/2, ((uint8_t)py << 8) | (uint8_t)px);
 }
 
-static void onAssetDone(_SYSCubeID cid)
+void siftmain()
 {
+    cube.vbuf.init();
+    memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
+    cube.vbuf.sys.vram.mode = _SYS_VM_BG0_ROM;
+    cube.vbuf.sys.vram.num_lines = 128;
+    cube.enable();
+
+    cube.loadAssets(GameAssets);
+
+    for (;;) {
+        unsigned progress = GameAssets.sys.cubes[0].progress;
+        unsigned length = GameAssets.sys.hdr->dataSize;
+
+        progress_bar(0, progress * 128 / length);
+        System::paint();
+
+        if (progress == length)
+            break;
+    }
+
+    cube.vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
+
+    for (unsigned i = 0; i < 18*18; i++)
+        cube.vbuf.pokei(i, 0);
+
     font_printf(2, 2, "Hello World!");
 
     // XXX: Drawing the logo manually, since there is no blit primitive yet
     for (unsigned y = 0; y < Logo.height; y++)
         for (unsigned x = 0; x < Logo.width; x++)
-            poke_index(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
-
-    cube.vbuf.unlock();
+            cube.vbuf.pokei(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
 
     // Draw our accelerometer data now, plus on every change.
     _SYS_vectors.accelChange = onAccelChange;
-    onAccelChange(cid);
-}
-
-void siftmain()
-{
-    // XXX: Mode-specific VRAM initialization
-    cube.vbuf.init();
-    memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
-    cube.vbuf.sys.vram.mode = _SYS_VM_BG0;
-    cube.vbuf.sys.vram.num_lines = 128;
-    cube.enable();
-
-    // Download assets, and continue when they're done.
-    _SYS_vectors.assetDone = onAssetDone;
-    cube.loadAssets(GameAssets);
+    onAccelChange(cube.id());
 
     while (1) {
         System::paint();

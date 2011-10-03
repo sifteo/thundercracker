@@ -77,6 +77,13 @@ class VideoBuffer {
     }
 
     /**
+     * Poke a 14-bit tile index into a particular VRAM word.
+     */
+    void pokei(uint16_t addr, uint16_t index) {
+        _SYS_vbuf_poke(&sys, addr, ((index << 2) & 0xFE00) | ((index << 1) & 0x00FE));
+    }
+
+    /**
      * Read one word of VRAM
      */
     uint16_t peek(uint16_t addr) const {

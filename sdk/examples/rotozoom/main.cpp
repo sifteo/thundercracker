@@ -89,9 +89,19 @@ struct AffineMatrix {
     }
 };
 
-static void poke_index(uint16_t addr, uint16_t tile)
+static void progress_bar(uint16_t addr, int pixelWidth)
 {
-    cube.vbuf.poke(addr, ((tile << 1) & 0xFE) | ((tile << 2) & 0xFE00));
+    while (pixelWidth > 0) {
+        if (pixelWidth < 8)  {
+            cube.vbuf.pokei(addr, 0x085f + pixelWidth);
+            break;
+
+        } else {
+            cube.vbuf.pokei(addr, 0x09ff);
+            addr++;
+            pixelWidth -= 8;
+        }
+    }
 }
 
 void siftmain()
@@ -99,16 +109,29 @@ void siftmain()
     cube.vbuf.init();
 
     memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
-    cube.vbuf.sys.vram.mode = _SYS_VM_BG2;
+    cube.vbuf.sys.vram.mode = _SYS_VM_BG0_ROM;
     cube.vbuf.sys.vram.num_lines = 128;
+    cube.enable();
+
+    cube.loadAssets(GameAssets);
+
+    for (;;) {
+        unsigned progress = GameAssets.sys.cubes[0].progress;
+        unsigned length = GameAssets.sys.hdr->dataSize;
+
+        progress_bar(0, progress * 128 / length);
+        System::paint();
+
+        if (progress == length)
+            break;
+    }
+
+    cube.vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_BG2);
 
     for (unsigned y = 0; y < Background.height; y++)
         for (unsigned x = 0; x < Background.width; x++)
-            poke_index(offsetof(_SYSVideoRAM, bg2_tiles)/2 +
-                       x + y*16, Background.tiles[x + y * Background.width]);
-
-    cube.enable();
-    cube.loadAssets(GameAssets);
+            cube.vbuf.pokei(offsetof(_SYSVideoRAM, bg2_tiles)/2 +
+                            x + y*16, Background.tiles[x + y * Background.width]);
 
     unsigned frame = 0;
 
@@ -122,8 +145,8 @@ void siftmain()
         m.translate(Background.width * 8 / 2,
                     Background.height * 8 / 2);
 
-        m.scale(fabs(sinf(frame * 0.004) * 2));
-        m.rotate(frame * 0.01);
+        m.scale(fabs(sinf(frame * 0.008) * 2));
+        m.rotate(frame * 0.03);
 
         m.translate(-64, -64);
 
@@ -131,16 +154,19 @@ void siftmain()
          * Orient the screen such that the X axis is major.
          */
 
+        uint8_t flags = cube.vbuf.peekb(offsetof(_SYSVideoRAM, flags));
+
         if (fabs(m.xy) > fabs(m.xx)) {
-            cube.vbuf.pokeb(offsetof(_SYSVideoRAM, flags),
-                            cube.vbuf.peekb(offsetof(_SYSVideoRAM, flags))
-                            | _SYS_VF_XY_SWAP);
+            flags |= _SYS_VF_XY_SWAP;
             m *= AffineMatrix(0, 1, 0,
                               1, 0, 0);
         } else {
-            cube.vbuf.pokeb(offsetof(_SYSVideoRAM, flags),
-                            cube.vbuf.peekb(offsetof(_SYSVideoRAM, flags))
-                            & ~_SYS_VF_XY_SWAP);
+            flags &= ~_SYS_VF_XY_SWAP;
+        }
+
+        if (flags != cube.vbuf.peekb(offsetof(_SYSVideoRAM, flags))) {
+            System::finish();
+            cube.vbuf.pokeb(offsetof(_SYSVideoRAM, flags), flags);
         }
 
         /*
