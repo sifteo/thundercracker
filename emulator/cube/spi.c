@@ -7,10 +7,10 @@
  */
 
  /*
-  * XXX: This makes a few big assumptions about the SPI hardware, based on my
-  *      reading of the data sheet and my best guess as to how the hardare is
-  *      implemented. But all of these need to be verified on the actual hardware!
-  *      These can all be checked pretty easily with some test programs and an oscope.
+  * This makes a few big assumptions about the SPI hardware, based on
+  * my reading of the data sheet and my best guess as to how the
+  * hardware is implemented. So far, these seem to match what we've
+  * seen on real hardware.
   *
   * 1. There are no hidden wait states between register writes and starting a transfer.
   *
