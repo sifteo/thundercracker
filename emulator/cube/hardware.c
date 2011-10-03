@@ -200,7 +200,7 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
         break;
 
     case REG_DEBUG:
-        fprintf(stderr, "Debug: %02x\n", cpu->mSFR[reg]);
+        printf("Debug: %02x\n", cpu->mSFR[reg]);
         break;
 
     }

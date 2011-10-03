@@ -237,8 +237,11 @@ static void frontend_mouse_update(uint16_t x, uint16_t y, uint8_t buttons)
     int8_t scaled_y = frontend_scale_coord(y, frontend.scale * LCD_HEIGHT) - 0x80;
 
     if (buttons & SDL_BUTTON_LEFT) {
-        // Mouse drag: Simulate a tilt
-        accel_set_vector(scaled_x, scaled_y);
+        /*
+         * Mouse drag: Simulate a tilt
+         * XXX: Axes swapped to match the prototype hardware.
+         */
+        accel_set_vector(scaled_y, scaled_x);
     } else {
         // Idle: Centered
         accel_set_vector(0, 0);

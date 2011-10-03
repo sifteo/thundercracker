@@ -33,6 +33,7 @@
 #include <string.h>
 #include "emu8051.h"
 #include "hardware.h"
+#include "i2c.h"
 
 void disasm_setptrs(struct em8051 *aCPU);
 void op_setptrs(struct em8051 *aCPU);
@@ -280,7 +281,7 @@ static void traceExecution(struct em8051 *mCPU)
     decode(mCPU, mCPU->mPC, assembly);
 
     fprintf(mCPU->traceFile,
-            "%10llu  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] DP=[%d %04x %04x] DBG=%02x\n",
+            "%10llu  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] DP=[%d %04x %04x] I2C=%02x DBG=%02x\n",
             (long long unsigned) mCPU->profilerTotal,
             mCPU->mPC, assembly,
             mCPU->mSFR[REG_ACC],
@@ -296,6 +297,7 @@ static void traceExecution(struct em8051 *mCPU)
             mCPU->mSFR[REG_DPS] & 1,
             (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
             (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
+            i2c_trace(),
             mCPU->mSFR[REG_DEBUG]);
 }
 

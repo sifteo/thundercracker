@@ -27,6 +27,7 @@ int i2c_tick(struct em8051 *cpu);
 void i2c_write_data(struct em8051 *cpu, uint8_t data);
 uint8_t i2c_read_data(struct em8051 *cpu);
 uint8_t i2c_read_con1(struct em8051 *cpu);
+uint8_t i2c_trace();
 
 void i2cbus_start();
 void i2cbus_stop();

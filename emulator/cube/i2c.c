@@ -26,8 +26,8 @@
 enum i2c_state {
     I2C_IDLE = 0,       // Not in a transfer yet
     I2C_WRITING,        // TX mode
+    I2C_WR_READ_ADDR,   // Writing an address for RX
     I2C_READING,        // RX mode
-    I2C_READ_NAK,       // Last byte of a read, which we'll fail to ACK
 };
 
 struct {
@@ -44,6 +44,11 @@ struct {
 void i2c_init()
 {
     i2c.timer = 0;
+}
+
+uint8_t i2c_trace()
+{
+    return (i2c.tx_buffer_full << 4) | i2c.rx_buffer_full;
 }
 
 static void i2c_timer_set(struct em8051 *cpu, int bits)
@@ -68,13 +73,40 @@ int i2c_tick(struct em8051 *cpu)
     if (i2c.timer) {
         // Still busy
 
-        if (!--i2c.timer)
+        if (!--i2c.timer) {
+            /*
+             * Write/read finished. Emulate reads at the end of their
+             * time window, so that the CPU has time to set a stop
+             * condition if necessary.
+             */
+
+            if (i2c.state == I2C_READING) {
+                uint8_t stop = w2con0 & W2CON0_STOP;
+
+                if (i2c.rx_buffer_full)
+                    cpu->except(cpu, EXCEPTION_I2C);
+ 
+                i2c.rx_buffer = i2cbus_read(!stop);
+                i2c.rx_buffer_full = 1;
+            
+                if (stop) {
+                    i2cbus_stop();
+                    i2c.state = I2C_IDLE;
+                    cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_STOP;
+                } else {
+                    i2c_timer_set(cpu, 9);  // Data byte, ACK
+                }
+            }
+
             cpu->mSFR[REG_W2CON1] = w2con1 |= W2CON1_READY;
+        }
 
     } else {
         // I2C state machine can run
 
-        if (i2c.state == I2C_IDLE || (w2con0 & W2CON0_START)) {
+        if ((i2c.state == I2C_IDLE && i2c.tx_buffer_full)
+            || (w2con0 & W2CON0_START)) {
+
             /*
              * Explicit or implied start condition, and address byte
              */
@@ -82,13 +114,16 @@ int i2c_tick(struct em8051 *cpu)
             if (i2c.tx_buffer_full) {
                 i2cbus_start();
                 i2cbus_write(i2c.tx_buffer);
-                i2c.state = (i2c.tx_buffer & 1) ? I2C_READING : I2C_WRITING;
+                i2c.state = (i2c.tx_buffer & 1) ? I2C_WR_READ_ADDR : I2C_WRITING;
                 cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_START;
                 i2c.tx_buffer_full = 0;
                 i2c_timer_set(cpu, 10);      // Start, data byte, ACK
             }
 
         } else if (i2c.state == I2C_WRITING) {
+            /*
+             * Emulate writes at the beginning of their time window
+             */
             
             if (i2c.tx_buffer_full) {
                 i2cbus_write(i2c.tx_buffer);
@@ -101,32 +136,9 @@ int i2c_tick(struct em8051 *cpu)
                 cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_STOP;
             }
 
-        } else {
-            /*
-             * Reading (with/without ACK)
-             */
-
-            if (i2c.rx_buffer_full)
-                cpu->except(cpu, EXCEPTION_I2C);
- 
-            i2c.rx_buffer = i2cbus_read(i2c.state == I2C_READING);
-            i2c.rx_buffer_full = 1;
-            
-            if (i2c.state == I2C_READ_NAK) {
-                // This was the last byte.
-                i2cbus_stop();
-                i2c.state = I2C_IDLE;
-
-                i2c_timer_set(cpu, 10);  // Data byte, ACK, stop
-            } else {
-                i2c_timer_set(cpu, 9);  // Data byte, ACK
-            }
-
-            if (w2con0 & W2CON0_STOP) {
-                // The next byte is the last
-                i2c.state = I2C_READ_NAK;
-                cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_STOP;
-            }
+        } else if (i2c.state == I2C_WR_READ_ADDR) {
+            i2c.state = I2C_READING;
+            i2c_timer_set(cpu, 9);       // Data byte, ACK
         }
     }
     
