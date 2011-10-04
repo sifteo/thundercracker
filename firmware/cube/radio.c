@@ -642,6 +642,8 @@ rx_flash:
         jz      rx_flash_reset                  ;    Zero bytes, do a flash reset
         mov     R_NYBBLE_COUNT, a               ;    Otherwise, this is the new loop iterator   
 
+        SPI_WAIT
+
 rx_flash_loop:
         mov     a, _flash_fifo_head             ; 2  Load the flash write pointer
         add     a, #_flash_fifo                 ; 2  Address relative to flash_fifo[]
