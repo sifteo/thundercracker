@@ -60,7 +60,7 @@ static void onAccelChange(_SYSCubeID cid)
     _SYSAccelState state;
 
     _SYS_getAccel(cid, &state);
-    font_printf(2, 5, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
+    font_printf(2, 4, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
 
     int8_t px = -(state.x >> 1);
     int8_t py = -(state.y >> 1);
@@ -68,6 +68,18 @@ static void onAccelChange(_SYSCubeID cid)
     if (py < 0) py += 18*8;
     cube.vbuf.pokeb(offsetof(_SYSVideoRAM, bg0_x), px);
     cube.vbuf.pokeb(offsetof(_SYSVideoRAM, bg0_y), py);
+}
+
+static void draw_asset(const Sifteo::AssetImage &asset, unsigned destX, unsigned destY, unsigned frame = 0)
+{
+    uint16_t addr = destX + destY * _SYS_VRAM_BG0_WIDTH;
+    const uint16_t *src = asset.tiles + asset.width * asset.height * frame;
+
+    for (unsigned y = 0; y < asset.height; y++) {
+        _SYS_vbuf_writei(&cube.vbuf.sys, addr, src, 0, asset.width);
+        addr += _SYS_VRAM_BG0_WIDTH;
+        src += asset.width;
+    }
 }
 
 void siftmain()
@@ -84,7 +96,8 @@ void siftmain()
         unsigned progress = GameAssets.sys.cubes[0].progress;
         unsigned length = GameAssets.sys.hdr->dataSize;
 
-        progress_bar(0, progress * 128 / length);
+        progress_bar(18*7, progress * 128 / length);
+        progress_bar(18*8, progress * 128 / length);
         System::paint();
 
         if (progress == length)
@@ -95,19 +108,25 @@ void siftmain()
     for (unsigned i = 0; i < 18*18; i++)
         cube.vbuf.pokei(i, 0);
 
-    font_printf(2, 2, "Hello World!");
+    font_printf(2, 1, "Hello World!");
 
-    // XXX: Drawing the logo manually, since there is no blit primitive yet
-    for (unsigned y = 0; y < Logo.height; y++)
-        _SYS_vbuf_writei(&cube.vbuf.sys, (10+y)*18 + 1, &Logo.tiles[y*Logo.width], 0, Logo.width);
+    draw_asset(Logo, 1, 10);
 
     // Draw our accelerometer data now, plus on every change.
     _SYS_vectors.accelChange = onAccelChange;
     onAccelChange(cube.id());
 
+    unsigned frame = 0;
+    const unsigned rate = 2;
+
     while (1) {
         float t = System::clock();
-        font_printf(2, 7, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
+        font_printf(2, 6, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
+        
+        draw_asset(Kirby, 11, 9, frame >> rate);
+        if (++frame == Kirby.frames << rate)
+            frame = 0;
+
         System::paint();
     }
 }
