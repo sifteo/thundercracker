@@ -12,8 +12,11 @@
 #include "radio.h"
 #include "time.h"
 
-#define ACCEL_I2C_ADDR  0x2A
+#define ADDR_SEARCH_START       0x20    // Start here...
+#define ADDR_SEARCH_INC         0x02    // Add this
+#define ADDR_SEARCH_MASK        0x2F    // And mask to this (Keep the 0x20 bit always)
 
+uint8_t accel_addr = ADDR_SEARCH_START;
 uint8_t accel_state;
 uint8_t accel_x;
 
@@ -69,7 +72,9 @@ as_1:
 
 as_2:
         orl     _W2CON0, #W2CON0_START  
-        mov     _W2DAT, #(ACCEL_I2C_ADDR | 1)
+        mov     a, _accel_addr
+        orl     a, #1
+        mov     _W2DAT, a
         mov     _accel_state, #(as_3 - as_1)
         sjmp    as_ret
 
@@ -112,8 +117,16 @@ as_5:
         sjmp    as_ret
 
         ; NACK handler. Stop, go back to the default state, try again.
+        ;
+        ; Also try a different I2C address... some of these accelerometer
+        ; chips are shipping with different addresses!
 
 as_nack:
+        mov     a, _accel_addr
+        add     a, #ADDR_SEARCH_INC
+        anl     a, #ADDR_SEARCH_MASK
+        mov     _accel_addr, a
+
         orl     _W2CON0, #W2CON0_STOP  
         mov     _accel_state, #0
         sjmp    as_ret
@@ -146,7 +159,7 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
     __asm
 
         mov     _accel_state, #0
-        mov     _W2DAT, #ACCEL_I2C_ADDR
+        mov     _W2DAT, _accel_addr
 
         reti
     __endasm;
