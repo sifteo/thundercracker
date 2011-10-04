@@ -8,6 +8,12 @@
 
 //#define DEBUG
 
+/*
+ * XXX: The delta encoder is running well in simulation, but
+ *      unreliably on real hardware. Need to fix this!!
+ */
+#define DISABLE_DELTAS
+
 #ifdef DEBUG
 #include <stdio.h>
 #include <assert.h>
@@ -181,6 +187,8 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
     if (buf.isFull())
         return false;
 
+#ifndef DISABLE_DELTAS
+
     /*
      * See if we can encode this word as a delta or copy from one of
      * our four sample points.  If we find a copy, that always wins
@@ -236,6 +244,8 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
         txBits.flush(buf); 
         return true;
     }
+
+#endif // !DISABLE_DELTAS
 
     /*
      * No delta found. Encode as a literal.

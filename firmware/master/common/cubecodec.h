@@ -176,12 +176,11 @@ class CubeCodec {
     void flashEscape(PacketBuffer &buf) {
         /*
          * Escape to flash mode (two-nybble code 33) plus one extra
-         * dummy nybble to force a byte flush.
+         * dummy nybble to force a byte flush if necessary.
          */
-        txBits.append(0x333, 12);
+        txBits.append(0xF33, 12);
         txBits.flush(buf);
         txBits.init();
-        stateReset();
     }
 
     void encodeDS(uint8_t d, uint8_t s);
