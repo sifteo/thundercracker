@@ -47,7 +47,7 @@ void SysTime::init()
     NVIC.SysTick_CS = 3;
 }
 
-void IRQ_HANDLER ISR_SysTick()
+IRQ_HANDLER ISR_SysTick()
 {
     tickBase += SysTime::hzTicks(SYSTICK_IRQ_HZ);
 }

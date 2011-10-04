@@ -22,7 +22,7 @@ static NRF24L01 NordicRadio(GPIOPin(&GPIOB, 10),                // CE
                                       GPIOPin(&GPIOB, 14),      //   MISO
                                       GPIOPin(&GPIOB, 15)));    //   MOSI
 
-void IRQ_HANDLER ISR_NordicRadio()
+IRQ_HANDLER ISR_EXTI15_10()
 {
     NordicRadio.isr();
 }
