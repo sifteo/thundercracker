@@ -37,6 +37,12 @@ void Radio::halt()
 {
     /*
      * Wait for any interrupt
+     *
+     * XXX: Disabled for now, this makes JTAG debugging
+     *      very annoying, since the JTAG clock is also
+     *      turned off during wfi.
      */
+#if 0
     __asm__ __volatile__ ("wfi");
+#endif
 }
