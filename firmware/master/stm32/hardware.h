@@ -121,7 +121,7 @@ struct NVIC_t {
     uint32_t irqSetPending[32];
     uint32_t irqClearPending[32];
     uint32_t irqActive[64];
-    uint8_t irqPriority[256];
+    uint32_t irqPriority[64];
     uint32_t _res3[512];
 
     uint32_t CPUID;
@@ -170,6 +170,16 @@ struct NVIC_t {
     void irqDisable(const ISR_t &vector) volatile {
         unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.WWDG) >> 2;
         irqClearEnable[id >> 5] = 1 << (id & 31);
+    }
+
+    void irqPrioritize(const ISR_t &vector, uint8_t prio) volatile {
+        unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.WWDG) >> 2;
+        irqPriority[id >> 2] |= prio << ((id & 3) << 3);
+    }
+    
+    void sysHandlerPrioritize(const ISR_t &vector, uint8_t prio) volatile {
+        unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.MemManage) >> 2;
+        sysHandlerPriority[id >> 2] |= prio << ((id & 3) << 3);
     }
 };
 

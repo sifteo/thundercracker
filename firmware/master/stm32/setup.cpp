@@ -99,7 +99,8 @@ extern "C" void _start()
      * those need to be unmasked by the peripheral's driver code.
      */
 
-    NVIC.irqEnable(IVT.EXTI15_10);
+    NVIC.irqEnable(IVT.EXTI15_10);              // Radio interrupt
+    NVIC.irqPrioritize(IVT.EXTI15_10, 0x80);    //   Reduced priority
     
     /*
      * Wait for clock to stabilize.
