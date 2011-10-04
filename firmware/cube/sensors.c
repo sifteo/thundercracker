@@ -142,6 +142,14 @@ void sensors_init()
 {
     /*
      * I2C, for the accelerometer
+     *
+     * This MUST be a high priority interrupt. Specifically, it
+     * must be higher priority than the RFIRQ. The RFIRQ can take
+     * a while to run, and it'll cause an underrun on I2C. Since
+     * there's only a one-byte buffer for I2C reads, this is fairly
+     * time critical.
+     *
+     * Currently we're using priority level 2.
      */
 
     W2CON0 |= 1;                // Enable I2C / 2Wire controller
@@ -150,6 +158,7 @@ void sensors_init()
     INTEXP |= 0x04;             // Enable 2Wire IRQ -> iex3
     T2CON |= 0x40;              // iex3 rising edge
     IRCON = 0;                  // Clear any spurious IRQs from initialization
+    IP1 |= 0x04;                // Interrupt priority level 2.
     IEN_SPI_I2C = 1;            // Global enable for SPI interrupts
 
     /*
