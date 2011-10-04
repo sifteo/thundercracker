@@ -184,7 +184,7 @@ void flash_program_word(uint16_t dat) __naked
         mov     BUS_PORT, DPH
         mov     CTRL_PORT, #CTRL_FLASH_CMD
     __endasm ;
-    CTRL_PORT = CTRL_FLASH_CMD;
+    CTRL_PORT = CTRL_IDLE;      // Data hold, after WE# high
     BUS_DIR = 0xFF;
     CTRL_PORT = CTRL_FLASH_OUT;
 
