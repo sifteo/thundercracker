@@ -2,6 +2,9 @@ BIN_SIM = master-sim.a
 BIN_STM32 = master-stm32.a
 BINS = $(BIN_SIM) $(BIN_STM32)
 
+SPEEX_DIR = speex
+include $(SPEEX_DIR)/speex.mk
+
 OBJS_SIM = \
 	common/syscall.sim.o \
 	common/runtime.sim.o \
@@ -26,10 +29,11 @@ OBJS_STM32 = \
 	stm32/spi.stm32.o \
 	stm32/nrf24l01.stm32.o \
 	stm32/debug.stm32.o \
+    $(SPEEX_OBJS_STM32) \
 
 TC_DIR = ../..
 FIRMWARE_INC := ../include
-CCFLAGS += -I$(FIRMWARE_INC) -Icommon
+CCFLAGS += -I$(FIRMWARE_INC) -Icommon $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX
 
 include Makefile.defs
 
@@ -38,7 +42,8 @@ CDEPS := \
 	common/*.h \
 	stm32/*.h \
 	$(FIRMWARE_INC)/*.h \
-	$(SDK_DIR)/include/sifteo/*.h
+	$(SDK_DIR)/include/sifteo/*.h \
+    $(SPEEX_DEPS) \
 
 all: $(BINS)
 
@@ -60,6 +65,9 @@ $(BIN_STM32): $(OBJS_STM32)
 
 %.stm32.o: %.c $(CDEPS)
 	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
+
+%.stm32.o: %.s $(CDEPS)
+	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CCFLAGS_STM32)
 
 .PHONY: all clean
 
