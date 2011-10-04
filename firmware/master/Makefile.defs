@@ -21,17 +21,24 @@ CCFLAGS += -O2
 # Also important: No C++ exception handling support!
 CCFLAGS += -fno-exceptions
 
-CCFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include
+CCFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include \
+	   -ffunction-sections -fdata-sections \
+	   -ffast-math
 LDFLAGS += -lm
 
-CCFLAGS_SIM := $(CCFLAGS) -DSIFTEO_SIMULATOR
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
+CCFLAGS_SIM := $(CCFLAGS) -DSIFTEO_SIMULATOR
 LDFLAGS_SIM := $(LDFLAGS)
 
-CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3 -msoft-float
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
-LDFLAGS_STM32 := $(LDFLAGS) -mcpu=cortex-m3 -mthumb \
+
+ARCH_STM32 := -mthumb -march=armv7-m \
+	      -mtune=cortex-m3 -mfix-cortex-m3-ldrd \
+	      -msoft-float
+
+CCFLAGS_STM32 := $(CCFLAGS) $(ARCH_STM32)
+LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
               -Wl,--gc-sections,-u,IVT \
               -T $(LDSCRIPT_STM32) -nostartfiles
 
