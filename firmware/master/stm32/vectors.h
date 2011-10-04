@@ -21,10 +21,13 @@ extern "C" {
  * These all have C linkage.
  */
 
+#define IRQ_HANDLER __attribute__ ((interrupt ("IRQ")))
+
 extern void _start();
-extern void ISR_Fault();
-extern void ISR_SysTick();
-extern void ISR_NordicRadio();
+
+extern void IRQ_HANDLER ISR_Fault();
+extern void IRQ_HANDLER ISR_SysTick();
+extern void IRQ_HANDLER ISR_NordicRadio();
 
 /*
  * Interrupt vector layout

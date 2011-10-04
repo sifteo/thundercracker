@@ -137,7 +137,7 @@ extern "C" void *_sbrk(intptr_t increment)
     return NULL;
 }
 
-void ISR_Fault(void)
+void IRQ_HANDLER ISR_Fault(void)
 {
     /*
      * XXX: We don't have anything useful to do in the event of a
