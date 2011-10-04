@@ -131,5 +131,46 @@ void _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte)
     }
 }
 
+void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr,
+                    uint16_t word, uint16_t count)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {
+        while (count) {
+            VRAM::truncateWordAddr(addr);
+            VRAM::poke(*vbuf, addr, word);
+            count--;
+            addr++;
+        }
+    }
+}
+
+void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *src, uint16_t count)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf) && Runtime::checkUserPointer(src, count << 1)) {
+        while (count) {
+            VRAM::truncateWordAddr(addr);
+            VRAM::poke(*vbuf, addr, *src);
+            count--;
+            addr++;
+            src++;
+        }
+    }
+}
+
+void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *src,
+                      uint16_t offset, uint16_t count)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf) && Runtime::checkUserPointer(src, count << 1)) {
+        while (count) {
+            uint16_t index = offset + *src;
+            VRAM::truncateWordAddr(addr);
+            VRAM::poke(*vbuf, addr, ((index << 2) & 0xFE00) | ((index << 1) & 0x00FE));
+            count--;
+            addr++;
+            src++;
+        }
+    }
+}
+
 
 }  // extern "C"
