@@ -28,8 +28,12 @@ FIRMWARE_INC = ../firmware/include
 CDEPS = src/*.h $(FIRMWARE_INC)/*.h
 
 PYTHON := python
+UNAME  := $(shell uname)
 
-CFLAGS += -O3 -g -ffast-math -Werror -Wall -DLUA_USE_MKSTEMP -I$(FIRMWARE_INC)
+CFLAGS += -O3 -g -ffast-math -Werror -Wall -I$(FIRMWARE_INC)
+ifneq ($(UNAME), windows32)
+    CFLAGS += -DLUA_USE_MKSTEMP
+endif
 LDFLAGS += -g -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 
