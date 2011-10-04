@@ -353,14 +353,8 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
 
     loadBufferAvail = FLS_FIFO_SIZE - 1;
 
-    /*
-     * Escape to flash mode (two-nybble code 33) plus one extra
-     * dummy nybble to force a byte flush. Must be the last full
-     * byte in the packet to trigger a reset.
-     */
-    txBits.append(0x333, 12);
-    txBits.flush(buf);
-    txBits.init();
+    // Must be the last full byte in the packet to trigger a reset.
+    flashEscape(buf);
     
     return true;
 }
@@ -409,10 +403,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     uint8_t *src = (uint8_t *)ghdr + ghdr->hdrSize + progress;
     uint32_t count;
 
-    // Flash escape code
-    txBits.append(0x333, 12);
-    txBits.flush(buf);
-    txBits.init();
+    flashEscape(buf);
 
     // We're limited by the size of the packet, the asset, and the cube's FIFO
     count = MIN(buf.bytesFree(), dataSize - progress);

@@ -105,7 +105,7 @@ class CubeCodec {
         
         if (!buf.isFull()) {
             stateReset();
-            txBits.append(3, 4);
+            txBits.append(0xF, 4);
             txBits.flush(buf);
             txBits.init();
 
@@ -171,6 +171,17 @@ class CubeCodec {
             // Diff code
             txBits.append(0x8 | s | (d << 4), 8);
         }
+    }
+
+    void flashEscape(PacketBuffer &buf) {
+        /*
+         * Escape to flash mode (two-nybble code 33) plus one extra
+         * dummy nybble to force a byte flush.
+         */
+        txBits.append(0x333, 12);
+        txBits.flush(buf);
+        txBits.init();
+        stateReset();
     }
 
     void encodeDS(uint8_t d, uint8_t s);
