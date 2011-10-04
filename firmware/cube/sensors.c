@@ -15,6 +15,7 @@
 #define ACCEL_I2C_ADDR  0x2A
 
 uint8_t accel_state;
+uint8_t accel_x;
 
 
 /*
@@ -78,21 +79,35 @@ as_3:
         mov     _accel_state, #(as_4 - as_1)
         sjmp    as_ret
 
-        ; 4. Read X axis (Do not set change flag yet)
-        ;    Also set a stop condition, since this is the second-to-last byte.
-        ;    XXX: Axis swap
+        ; 4. Read X axis. This is the second-to-last byte, so we queue a Stop condition.
 
 as_4:
-        mov     (_ack_data + RF_ACK_ACCEL + 1), _W2DAT
-        mov     _accel_state, #(as_5 - as_1)
+        mov     _accel_x, _W2DAT
         orl     _W2CON0, #W2CON0_STOP  
+        mov     _accel_state, #(as_5 - as_1)
         sjmp    as_ret
 
-        ; 5. Read Y axis, and set change flag
+        ; 5. Read Y axis. In rapid succession, store both axes and set the change flag
+        ;    if necessary. This minimizes the chances of ever sending one old axis and
+        ;    one new axis. In fact, since this interrupt is higher priority than the
+        ;    RF interrupt, we're guaranteed to send synchronized updates of both axes.
 
 as_5:
-        mov     (_ack_data + RF_ACK_ACCEL + 0), _W2DAT
+
+        mov     a, _W2DAT
+        xrl     a, (_ack_data + RF_ACK_ACCEL + 0)
+        jz      1$
+        xrl     (_ack_data + RF_ACK_ACCEL + 0), a
         orl     _ack_len, #RF_ACK_LEN_ACCEL
+1$:
+
+        mov     a, _accel_x
+        xrl     a, (_ack_data + RF_ACK_ACCEL + 1)
+        jz      2$
+        xrl     (_ack_data + RF_ACK_ACCEL + 1), a
+        orl     _ack_len, #RF_ACK_LEN_ACCEL
+2$:
+
         mov     _accel_state, #0
         sjmp    as_ret
 
