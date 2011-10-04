@@ -37,13 +37,26 @@ uint8_t flash_addr_lat2;
 
 static __bit flash_poll_data;  // What data bit are we expecting?
 
+/*
+ * Output a constant unlock prefix. Only the low 12 bits of address
+ * matter, so we don't have to set LAT2. We *must* keep the address
+ * and data stable for the entire time that WE is asserted.
+ */
+
+#define FLASH_CMD_STROBE()                      \
+    CTRL_PORT = CTRL_FLASH_CMD;                 \
+    CTRL_PORT = CTRL_IDLE;
 
 #define FLASH_CMD_PREFIX(_addr, _dat)           \
     ADDR_PORT = ((_addr) >> 6) & 0xFE;          \
     CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;    \
     ADDR_PORT = (_addr) << 1;                   \
     BUS_PORT = (_dat);                          \
-    CTRL_PORT = CTRL_FLASH_CMD;                 \
+    FLASH_CMD_STROBE()
+
+#define FLASH_OUT()                             \
+    BUS_DIR = 0xFF;                             \
+    CTRL_PORT = CTRL_FLASH_OUT;
 
 
 void flash_erase(uint8_t blockCount)
@@ -87,10 +100,9 @@ void flash_erase(uint8_t blockCount)
 
             // Whole-chip erase
             FLASH_CMD_PREFIX(0xAAA, 0x10);
-            BUS_DIR = 0xFF;
-            CTRL_PORT = CTRL_FLASH_OUT;
 
             // Data# polling: Wait for a '1' bit
+            FLASH_OUT();
             __asm  1$:  jnb     BUS_PORT.7, 1$  __endasm;
 
         } else {
@@ -99,10 +111,9 @@ void flash_erase(uint8_t blockCount)
             CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
             ADDR_PORT = 0;
             BUS_PORT = 0x30;
-            CTRL_PORT = CTRL_FLASH_CMD;
-            BUS_DIR = 0xFF;
-            CTRL_PORT = CTRL_FLASH_OUT;
+            FLASH_CMD_STROBE();
 
+            FLASH_OUT();
             __asm  2$:  jnb     BUS_PORT.7, 2$  __endasm;
 
             if (!blockCount)
@@ -182,11 +193,9 @@ void flash_program_word(uint16_t dat) __naked
         mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
         mov     ADDR_PORT, _flash_addr_low
         mov     BUS_PORT, DPH
-        mov     CTRL_PORT, #CTRL_FLASH_CMD
     __endasm ;
-    CTRL_PORT = CTRL_IDLE;      // Data hold, after WE# high
-    BUS_DIR = 0xFF;
-    CTRL_PORT = CTRL_FLASH_OUT;
+    FLASH_CMD_STROBE();
+    FLASH_OUT();
 
     /*
      * We can do other useful work in-between bytes. This is
@@ -234,9 +243,8 @@ void flash_program_word(uint16_t dat) __naked
         mov     ADDR_PORT, _flash_addr_low
         mov     BUS_PORT, DPL
     __endasm ;
-    CTRL_PORT = CTRL_FLASH_CMD;
-    BUS_DIR = 0xFF;
-    CTRL_PORT = CTRL_FLASH_OUT;
+    FLASH_CMD_STROBE();
+    FLASH_OUT();
 
     // Increment flash_addr on our way out, without any temporaries
     __asm
