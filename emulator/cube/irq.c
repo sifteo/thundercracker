@@ -65,13 +65,13 @@ void handle_interrupts(struct em8051 *cpu)
         uint8_t req_mask;
         uint8_t autoclear;
     } irq_lut[] = {
-        { 0,  REG_IEN0, IRQM0_IFP,   REG_TCON,  TCONMASK_IE0, 0 },
+        { 0,  REG_IEN0, IRQM0_IFP,   REG_TCON,  TCONMASK_IE0, TCONMASK_IE0 },
         { 8,  REG_IEN1, IRQM1_RFSPI, REG_IRCON, IRCON_RFSPI, 0 },
-        { 1,  REG_IEN0, IRQM0_TF0,   REG_TCON,  TCONMASK_TF0, 0 },
+        { 1,  REG_IEN0, IRQM0_TF0,   REG_TCON,  TCONMASK_TF0, TCONMASK_TF0 },
         { 9,  REG_IEN1, IRQM1_RF,    REG_IRCON, IRCON_RF, IRCON_RF },
-        { 2,  REG_IEN0, IRQM0_PFAIL, REG_TCON,  TCONMASK_IE1, 0 },
+        { 2,  REG_IEN0, IRQM0_PFAIL, REG_TCON,  TCONMASK_IE1, TCONMASK_IE1 },
         { 10, REG_IEN1, IRQM1_SPI,   REG_IRCON, IRCON_SPI, IRCON_SPI },
-        { 3,  REG_IEN0, IRQM0_TF1,   REG_TCON,  TCONMASK_TF1, 0 },
+        { 3,  REG_IEN0, IRQM0_TF1,   REG_TCON,  TCONMASK_TF1, TCONMASK_TF1 },
         { 11, REG_IEN1, IRQM1_WUOP,  REG_IRCON, IRCON_WUOP, IRCON_WUOP },
         { 4,  REG_IEN0, IRQM0_SER,   REG_S0CON, 0x03, 0 },
         { 12, REG_IEN1, IRQM1_MISC,  REG_IRCON, IRCON_MISC, IRCON_MISC },

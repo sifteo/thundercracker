@@ -9,7 +9,6 @@
 #include "hardware.h"
 #include "radio.h"
 #include "flash.h"
-#include "sensors.h"
 #include <protocol.h>
 
 RF_ACKType __near ack_data;
@@ -712,11 +711,8 @@ rx_complete_0:
 no_ack:
 
         ;--------------------------------------------------------------------
-        ; Sensor Triggers
+        ; Cleanup
         ;--------------------------------------------------------------------
-
-        ; Start a new accelerometer polling cycle
-        ACCEL_BEGIN_POLL(accel_poll)
 
         mov     _vram_dptr, _DPL1
         mov     _vram_dptr+1, _DPH1

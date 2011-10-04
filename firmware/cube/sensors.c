@@ -12,6 +12,8 @@
 #include "radio.h"
 #include "time.h"
 
+#define ACCEL_I2C_ADDR  0x2A
+
 uint8_t accel_state;
 
 
@@ -114,8 +116,34 @@ as_ret:
 }
 
 
+/*
+ * Timer 0 ISR --
+ *
+ *    XXX: Right now, this is a relatively low frequency ISR that we
+ *         to kick off new accelerometer reads. In the future, this
+ *         should be merged with sensor code for reading neighbor and
+ *         touch sensors, so we can minimize interrupt overhead and
+ *         timer resource usage.
+ */
+
+void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
+{
+    __asm
+
+        mov     _accel_state, #0
+        mov     _W2DAT, #ACCEL_I2C_ADDR
+
+        reti
+    __endasm;
+}
+
+
 void sensors_init()
 {
+    /*
+     * I2C, for the accelerometer
+     */
+
     W2CON0 |= 1;                // Enable I2C / 2Wire controller
     W2CON0 = 0x07;              // 100 kHz, Master mode
     W2CON1 = 0x00;              // Unmask interrupt
@@ -123,4 +151,15 @@ void sensors_init()
     T2CON |= 0x40;              // iex3 rising edge
     IRCON = 0;                  // Clear any spurious IRQs from initialization
     IEN_SPI_I2C = 1;            // Global enable for SPI interrupts
+
+    /*
+     * Timer0, for triggering sensor reads.
+     *
+     * This is set up as a 13-bit counter, fed by Cclk/12.
+     * It overflows at 16000000 / 12 / (1<<13) = 162.76 Hz
+     */
+
+    TMOD = 0x00;                // 13-bit counter mode
+    TCON |= 0x10;               // Timer 0 running
+    IEN_TF0 = 1;                // Enable Timer 0 interrupt
 }

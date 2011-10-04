@@ -357,7 +357,19 @@ int tick(struct em8051 *aCPU)
             traceExecution(aCPU);
     }
 
-    timer_tick(aCPU);
+    /*
+     * Timers run at 1/12th the core clock frequency
+     */
+    if (aCPU->mTimerTickDelay) {
+        aCPU->mTimerTickDelay--;
+    } else {
+        aCPU->mTimerTickDelay = 11;
+        timer_tick(aCPU);
+    }
+
+    /*
+     * Other hardware: executed every tick
+     */
     hardware_tick(aCPU);
 
     return ticked;

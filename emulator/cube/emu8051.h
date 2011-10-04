@@ -86,6 +86,7 @@ struct em8051
     unsigned char *mSFR; // 128 bytes; (special function registers)
     int mPC; // Program Counter; outside memory area
     int mTickDelay; // How many ticks should we delay before continuing
+    int mTimerTickDelay;
     em8051operation op[256]; // function pointers to opcode handlers
     em8051decoder dec[256]; // opcode-to-string decoder handlers    
     em8051exception except; // callback: exceptional situation occurred
