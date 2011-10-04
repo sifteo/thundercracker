@@ -73,6 +73,23 @@ void demo(void)
     draw_image(img_radio_3);
 
     /*
+     * Draw contents of flash
+     */
+#if 0
+    {
+        uint8_t x, y;
+
+        vram.mode = _SYS_VM_BG0;
+
+        for (y = 0; y < 16; y++)
+            for (x = 0; x < 16; x++) {
+                uint16_t index = (y << 4) | x;
+                vram.bg0_tiles[x + (y*18)] = ((index << 2) & 0xFE00) | ((index << 1) & 0x00FE);
+            }
+    }
+#endif
+
+    /*
      * Animation.. fun for testing, but it interferes with drawing
      * that the master is trying to do over the radio.
      */
