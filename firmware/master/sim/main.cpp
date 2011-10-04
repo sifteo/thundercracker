@@ -14,10 +14,12 @@
 #include <sifteo/abi.h>
 #include "radio.h"
 #include "runtime.h"
+#include "systime.h"
 
 
 int main(int argc, char **argv)
 {
+    SysTime::init();
     Radio::open();
 
     Runtime::run();

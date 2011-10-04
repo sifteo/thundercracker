@@ -130,9 +130,14 @@ extern "C" void _start()
 extern "C" void *_sbrk(intptr_t increment)
 {
     /*
-     * The C standard library expects the OS to provide this function
-     * for allocating more memory. We don't support this, always
-     * return NULL.
+     * We intentionally don't want to support dynamic allocation yet.
+     * If anyone tries a malloc(), we'll just trap here infinitely.
+     *
+     * XXX: Either implement this for reals (after figuring out what
+     *      limitations to put in place) or direct it at a proper fault
+     *      handler once we have those.
      */
+
+    while (1);
     return NULL;
 }

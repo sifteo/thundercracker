@@ -49,6 +49,12 @@ void _SYS_finish(void)
     Event::dispatch();
 }
 
+void _SYS_ticks_ns(int64_t *nanosec)
+{
+    if (Runtime::checkUserPointer(nanosec, sizeof *nanosec))
+        *nanosec = SysTime::ticks();
+}
+
 void _SYS_enableCubes(_SYSCubeIDVector cv)
 {
     CubeSlot::enableCubes(CubeSlot::truncateVector(cv));
@@ -144,7 +150,7 @@ void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr,
     }
 }
 
-void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *src, uint16_t count)
+void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count)
 {
     if (Runtime::checkUserPointer(vbuf, sizeof *vbuf) && Runtime::checkUserPointer(src, count << 1)) {
         while (count) {
@@ -157,7 +163,7 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *src,
     }
 }
 
-void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *src,
+void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src,
                       uint16_t offset, uint16_t count)
 {
     if (Runtime::checkUserPointer(vbuf, sizeof *vbuf) && Runtime::checkUserPointer(src, count << 1)) {

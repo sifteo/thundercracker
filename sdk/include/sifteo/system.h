@@ -94,6 +94,16 @@ class System {
         _SYS_finish();
     }
 
+    /**
+     * Return the elapsed system time, in seconds. Guaranteed to be
+     * monotonically increasing.
+     */
+
+    static float clock() {
+        int64_t nanosec;
+        _SYS_ticks_ns(&nanosec);
+        return nanosec * 1e-9;
+    }
 };
 
 

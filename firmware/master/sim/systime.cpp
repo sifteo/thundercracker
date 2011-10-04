@@ -9,10 +9,12 @@
 #include <sys/time.h>
 #include "systime.h"
 
+static SysTime::Ticks epoch;
+
 
 void SysTime::init()
 {
-    /* Nothing to do yet */
+    epoch += ticks();
 }
 
 SysTime::Ticks SysTime::ticks()
@@ -25,5 +27,5 @@ SysTime::Ticks SysTime::ticks()
 
     struct timeval tv;
     gettimeofday(&tv, 0);
-    return sTicks(tv.tv_sec) + usTicks(tv.tv_usec);
+    return sTicks(tv.tv_sec) + usTicks(tv.tv_usec) - epoch;
 }

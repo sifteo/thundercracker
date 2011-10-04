@@ -60,14 +60,14 @@ static void onAccelChange(_SYSCubeID cid)
     _SYSAccelState state;
 
     _SYS_getAccel(cid, &state);
-    font_printf(2, 6, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
+    font_printf(2, 5, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
 
-    // XXX: Cheesy panning hack
     int8_t px = -(state.x >> 1);
     int8_t py = -(state.y >> 1);
     if (px < 0) px += 18*8;
     if (py < 0) py += 18*8;
-    cube.vbuf.poke(0x3fa/2, ((uint8_t)py << 8) | (uint8_t)px);
+    cube.vbuf.pokeb(offsetof(_SYSVideoRAM, bg0_x), px);
+    cube.vbuf.pokeb(offsetof(_SYSVideoRAM, bg0_y), py);
 }
 
 void siftmain()
@@ -92,7 +92,6 @@ void siftmain()
     }
 
     cube.vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
-
     for (unsigned i = 0; i < 18*18; i++)
         cube.vbuf.pokei(i, 0);
 
@@ -100,14 +99,15 @@ void siftmain()
 
     // XXX: Drawing the logo manually, since there is no blit primitive yet
     for (unsigned y = 0; y < Logo.height; y++)
-        for (unsigned x = 0; x < Logo.width; x++)
-            cube.vbuf.pokei(1+x + (10+y)*18, Logo.tiles[x + y*Logo.width]);
+        _SYS_vbuf_writei(&cube.vbuf.sys, (10+y)*18 + 1, &Logo.tiles[y*Logo.width], 0, Logo.width);
 
     // Draw our accelerometer data now, plus on every change.
     _SYS_vectors.accelChange = onAccelChange;
     onAccelChange(cube.id());
 
     while (1) {
+        float t = System::clock();
+        font_printf(2, 7, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
         System::paint();
     }
 }

@@ -303,6 +303,7 @@ void _SYS_exit(void);                           /// Equivalent to return from si
 void _SYS_yield(void);                          /// Temporarily cede control to the firmware
 void _SYS_paint(void);                          /// Enqueue a new rendering frame
 void _SYS_finish(void);                         /// Wait for enqueued frames to finish
+void _SYS_ticks_ns(int64_t *nanosec);           /// Return the monotonic system timer, in nanoseconds
 
 void _SYS_enableCubes(_SYSCubeIDVector cv);     /// Which cubes will be trying to connect?
 void _SYS_disableCubes(_SYSCubeIDVector cv);
@@ -320,8 +321,8 @@ void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte);
 void _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word);
 void _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte);
 void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count);
-void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *src, uint16_t count);
-void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *src, uint16_t offset, uint16_t count);
+void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count);
+void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count);
 
 #ifdef __cplusplus
 }  // extern "C"

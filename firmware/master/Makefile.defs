@@ -28,7 +28,7 @@ CCFLAGS_SIM := $(CCFLAGS) -DSIFTEO_SIMULATOR
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 LDFLAGS_SIM := $(LDFLAGS)
 
-CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3
+CCFLAGS_STM32 := $(CCFLAGS) -mthumb -mcpu=cortex-m3 -msoft-float
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
 LDFLAGS_STM32 := $(LDFLAGS) -mcpu=cortex-m3 -mthumb \
