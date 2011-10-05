@@ -34,8 +34,6 @@
 #include "radio.h"
 #include <protocol.h>
 
-#define DEBUG_LOADSTREAM
-
 volatile uint8_t __idata flash_fifo[FLS_FIFO_SIZE];
 volatile uint8_t flash_fifo_head;
 
