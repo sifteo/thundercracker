@@ -28,7 +28,13 @@ class Cube {
     Cube(ID id)
         : mID(id) {}
 
+    /**
+     * Prepare this cube for use. Tell the system to start trying to
+     * connect to a cube, and initialize the VideoBUffer.
+     */
+
     void enable() {
+        vbuf.init();
         _SYS_setVideoBuffer(mID, &vbuf.sys);
         _SYS_enableCubes(Intrinsic::LZ(mID));
     }
@@ -40,6 +46,19 @@ class Cube {
     void loadAssets(AssetGroup &group) {
         _SYS_loadAssets(mID, &group.sys);
     }
+
+    /**
+     * Get the asset loading progress, on this cube, scaled between 0 and 'max'.
+     * By default, this returns percent complete.
+     */
+
+    int assetProgress(AssetGroup &group, int max=100) {
+        return group.sys.cubes[id()].progress * max / group.sys.hdr->dataSize;
+    }
+
+    bool assetDone(AssetGroup &group) {
+        return !!(group.sys.doneCubes & Sifteo::Intrinsic::LZ(id()));
+    }   
 
     ID id() const {
         return mID;

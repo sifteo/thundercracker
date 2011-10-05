@@ -13,6 +13,42 @@ namespace Sifteo {
 
 
 /**
+ * 2-element integer vector
+ */
+
+struct Vec2 {
+    Vec2(int _x, int _y)
+        : x(_x), y(_y) {}
+
+    int x, y;
+};
+
+
+/**
+ * Integer rectangle, stored as Left Top Right Bottom (LTRB).
+ */
+
+struct Rect {
+    Rect(int _left, int _top, int _right, int _bottom)
+        : left(_left), top(_top), right(_right), bottom(_bottom) {}
+
+    int left, top, right, bottom;
+};
+
+
+/**
+ * Integer rectangle, stored as an origin point and width/height.
+ */
+
+struct RectWH {
+    RectWH(int _x, int _y, int _width, int _height)
+        : x(_x), y(_y), width(_width), height(_height) {}
+
+    int x, y, width, height;
+};
+
+
+/**
  * An augmented 3x2 matrix, for doing 2D affine transforms.
  *
  *  [ xx  yx  cx ]

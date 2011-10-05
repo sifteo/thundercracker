@@ -170,10 +170,23 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
         while (count) {
             uint16_t index = offset + *src;
             VRAM::truncateWordAddr(addr);
-            VRAM::poke(*vbuf, addr, ((index << 2) & 0xFE00) | ((index << 1) & 0x00FE));
+            VRAM::poke(*vbuf, addr, VRAM::index14(index));
             count--;
             addr++;
             src++;
+        }
+    }
+}
+
+void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count)
+{
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {
+        while (count) {
+            VRAM::truncateWordAddr(addr);
+            VRAM::poke(*vbuf, addr, VRAM::index14(index));
+            count--;
+            addr++;
+            index++;
         }
     }
 }
