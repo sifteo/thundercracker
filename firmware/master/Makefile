@@ -25,6 +25,7 @@ OBJS_STM32 = \
 	stm32/gpio.stm32.o \
 	stm32/spi.stm32.o \
 	stm32/nrf24l01.stm32.o \
+	stm32/debug.stm32.o \
 
 TC_DIR = ../..
 FIRMWARE_INC := ../include

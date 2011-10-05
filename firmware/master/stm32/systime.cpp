@@ -54,16 +54,33 @@ IRQ_HANDLER ISR_SysTick()
 
 SysTime::Ticks SysTime::ticks()
 {
-    Ticks t = tickBase + ((SYSTICK_RELOAD - NVIC.SysTick) * hzTicks(SYSTICK_IRQ_HZ)) / SYSTICK_RELOAD;
+    /*
+     * Fractional part of our timebase (between IRQs)
+     */
+    uint32_t fractional = SYSTICK_RELOAD - NVIC.SysTick;
+    Ticks t = tickBase;
+
+    /*
+     * We need to multiply 'fractional' by (hzTicks(SYSTICK_IRQ_HZ)) /
+     * SYSTICK_RELOAD), in order to convert it from SysTick units to
+     * Ticks (nanoseconds). Any integer approximation of this number
+     * would give unacceptable error, and even any 32-bit fixed point
+     * approximation.  So, we'll do a 32x64 fixed-point multiply. This
+     * avoids a costly division, and keeps us on operations that the
+     * Cortex-M3 implements in hardware.
+     */
+
+    t += (fractional * (uint64_t)(hzTicks(SYSTICK_IRQ_HZ) * 0x100000000ULL / SYSTICK_RELOAD)) >> 32;
+
+    /*
+     * Not monotonic? The timer must have rolled over, but we haven't
+     * processed the rollover IRQ yet.
+     */
 
     if (t < lastTick) {
-        /*
-         * Not monotonic. The timer must have rolled over, but we
-         * haven't processed the rollover IRQ yet.
-         */
         t += hzTicks(SYSTICK_IRQ_HZ);
     }
-
     lastTick = t;
+
     return t;
 }

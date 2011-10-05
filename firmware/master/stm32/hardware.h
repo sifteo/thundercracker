@@ -144,10 +144,13 @@ struct NVIC_t {
     uint32_t AFR0;
     uint32_t MMFR[4];
     uint32_t ISAR[5];
-    uint32_t _res4[99];
+    uint32_t _res4[33];
+    uint16_t DCRDR_l;
+    uint16_t DCRDR_h;
+    uint32_t _res5[65];
 
     uint32_t softIrqTrigger;
-    uint32_t _res5[51];
+    uint32_t _res6[51];
 
     uint32_t PID4;
     uint32_t PID5;

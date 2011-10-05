@@ -13,6 +13,7 @@
 
 #include "radio.h"
 #include "nrf24l01.h"
+#include "debug.h"
 
 static NRF24L01 NordicRadio(GPIOPin(&GPIOB, 10),                // CE
                             GPIOPin(&GPIOB, 11),                // IRQ
@@ -38,11 +39,12 @@ void Radio::halt()
     /*
      * Wait for any interrupt
      *
-     * XXX: Disabled for now, this makes JTAG debugging
-     *      very annoying, since the JTAG clock is also
-     *      turned off during wfi.
+     * Disabled during debug builds. WFI loops make JTAG debugging
+     * very annoying, since the JTAG clock is also turned off while
+     * we're waiting.
      */
-#if 0
+
+#ifndef DEBUG
     __asm__ __volatile__ ("wfi");
 #endif
 }

@@ -6,22 +6,15 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-//#define DEBUG
-
-/*
- * XXX: The delta encoder is running well in simulation, but
- *      unreliably on real hardware. Need to fix this!!
- */
-#define DISABLE_DELTAS
-
-#ifdef DEBUG
-#include <stdio.h>
-#include <assert.h>
-#define DBG(x)        printf x
-#define DBG_BITS(b)   b.debug()
+#if defined(DEBUG) && defined(SIFTEO_SIMULATOR)
+#   include <stdio.h>
+#   include <assert.h>
+#   define DEBUG_BITBUFFER
+#   define DBG(x)        printf x
+#   define DBG_BITS(b)   b.debug()
 #else
-#define DBG(x)
-#define DBG_BITS(b)
+#   define DBG(x)
+#   define DBG_BITS(b)
 #endif
 
 #include <protocol.h>
@@ -35,7 +28,7 @@ using namespace Sifteo::Intrinsic;
 
 void BitBuffer::debug()
 {
-#ifdef DEBUG
+#ifdef DEBUG_BITBUFFER
     DBG(("  bits %08x (%d)\n", bits, count));
     assert(count <= 32);
 #endif   
@@ -187,6 +180,12 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
     if (buf.isFull())
         return false;
 
+    /*
+     * For debugging, the delta encoder can be disabled, forcing us to
+     * use only literal codes. This makes the compression code a lot
+     * simpler, but the resulting radio traffic will be extremely
+     * inefficient.
+     */
 #ifndef DISABLE_DELTAS
 
     /*

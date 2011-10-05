@@ -11,7 +11,7 @@
  */
 
 #include "nrf24l01.h"
-
+#include "debug.h"
 
 void NRF24L01::init() {
     /*
@@ -202,7 +202,9 @@ void NRF24L01::transmitPacket()
 
     RadioManager::produce(txBuffer);
     softRetriesLeft = SOFT_RETRY_MAX;
-    
+
+    Debug::logToBuffer(txBuffer.packet.bytes, txBuffer.packet.len);
+
     /*
      * Set the tx/rx address and channel
      */
