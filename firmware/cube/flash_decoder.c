@@ -34,6 +34,8 @@
 #include "radio.h"
 #include <protocol.h>
 
+#define DEBUG_LOADSTREAM
+
 volatile uint8_t __idata flash_fifo[FLS_FIFO_SIZE];
 volatile uint8_t flash_fifo_head;
 
@@ -143,6 +145,10 @@ void flash_handle_fifo(void)
     // Prep the flash hardware to start writing
     flash_program_start();
 
+#ifdef DEBUG_LOADSTREAM
+    DEBUG_UART_INIT();
+#endif
+
     // This is where STATE_RETURN() drops us after each state finishes.
     __asm
         state_return:
@@ -163,6 +169,10 @@ void flash_handle_fifo(void)
 
     byte = flash_fifo[fifo_tail];       
     fifo_tail = (fifo_tail + 1) & (FLS_FIFO_SIZE - 1);
+
+#ifdef DEBUG_LOADSTREAM
+    DEBUG_UART(byte);
+#endif
 
     __asm
         inc     (_ack_data + RF_ACK_FLASH_FIFO)

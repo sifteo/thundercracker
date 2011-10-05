@@ -59,6 +59,29 @@ __sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
                           ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
 
 /*
+ * Debug UART (P1.0, 38400 baud)
+ */
+
+#define DEBUG_UART_INIT() {                     \
+        IEN_RI0_TI0 = 0;                        \
+        P1 |= 1;                                \
+        P1DIR &= 0xFE;                          \
+        S0CON_TI0 = 1;                          \
+        S0CON_SM0 = 0;                          \
+        S0CON_SM1 = 1;                          \
+        PCON |= 0x80;                           \
+        ADCON |= 0x80;                          \
+        S0RELL = 0xf3;                          \
+        S0RELH = 0x03;                          \
+    }
+
+#define DEBUG_UART(_b) {                        \
+        while (!S0CON_TI0);                     \
+        S0CON_TI0 = 0;                          \
+        S0BUF = (_b);                           \
+    }
+
+/*
  * LCD Controller
  */
 
@@ -152,6 +175,7 @@ __sfr __at 0x83 DPH;
 __sfr __at 0x84 DPL1;
 __sfr __at 0x85 DPH1;
 __sfr __at 0x86 DEBUG;   // Simulator only
+__sfr __at 0x87 PCON;
 __sfr __at 0x88 TCON;
 __sfr __at 0x89 TMOD;
 __sfr __at 0x8A TL0;
@@ -254,6 +278,16 @@ __sfr __at 0xFC SPIMCON0;
 __sfr __at 0xFD SPIMCON1;
 __sfr __at 0xFE SPIMSTAT;
 __sfr __at 0xFF SPIMDAT;
+
+// S0CON bits
+__sbit __at 0x98 S0CON_RI0;
+__sbit __at 0x99 S0CON_TI0;
+__sbit __at 0x9a S0CON_RB80;
+__sbit __at 0x9b S0CON_TB80;
+__sbit __at 0x9c S0CON_REN0;
+__sbit __at 0x9d S0CON_SM20;
+__sbit __at 0x9e S0CON_SM1;
+__sbit __at 0x9f S0CON_SM0;
 
 // IEN0 bits
 __sbit __at 0xA8 IEN_IFP;
