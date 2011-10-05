@@ -34,6 +34,7 @@ struct {
     uint32_t timer;     // Cycles until we're not busy
     enum i2c_state state;
 
+    uint8_t next_ack_status;
     uint8_t tx_buffer;
     uint8_t tx_buffer_full;
     uint8_t rx_buffer;
@@ -98,7 +99,13 @@ int i2c_tick(struct em8051 *cpu)
                 }
             }
 
-            cpu->mSFR[REG_W2CON1] = w2con1 |= W2CON1_READY;
+            if (i2c.next_ack_status)
+                w2con1 &= ~W2CON1_ACKN;
+            else
+                w2con1 |= W2CON1_ACKN;
+
+            w2con1 |= W2CON1_READY;
+            cpu->mSFR[REG_W2CON1] = w2con1;
         }
 
     } else {
@@ -113,7 +120,7 @@ int i2c_tick(struct em8051 *cpu)
 
             if (i2c.tx_buffer_full) {
                 i2cbus_start();
-                i2cbus_write(i2c.tx_buffer);
+                i2c.next_ack_status = i2cbus_write(i2c.tx_buffer);
                 i2c.state = (i2c.tx_buffer & 1) ? I2C_WR_READ_ADDR : I2C_WRITING;
                 cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_START;
                 i2c.tx_buffer_full = 0;
@@ -126,7 +133,7 @@ int i2c_tick(struct em8051 *cpu)
              */
             
             if (i2c.tx_buffer_full) {
-                i2cbus_write(i2c.tx_buffer);
+                i2c.next_ack_status = i2cbus_write(i2c.tx_buffer);
                 i2c.tx_buffer_full = 0;
                 i2c_timer_set(cpu, 9);       // Data byte, ACK
 

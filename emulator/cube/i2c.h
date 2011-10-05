@@ -31,7 +31,7 @@ uint8_t i2c_trace();
 
 void i2cbus_start();
 void i2cbus_stop();
-void i2cbus_write(uint8_t byte);
+uint8_t i2cbus_write(uint8_t byte);
 uint8_t i2cbus_read(uint8_t ack);
  
 #endif
