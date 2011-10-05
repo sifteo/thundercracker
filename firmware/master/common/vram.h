@@ -53,6 +53,10 @@ struct VRAM {
         addr &= _SYS_VRAM_SIZE/2 - 1;
     }
 
+    static uint16_t index14(uint16_t i) {
+        return ((i << 2) & 0xFE00) | ((i << 1) & 0x00FE);
+    }
+
     static void lock(_SYSVideoBuffer &vbuf, uint16_t addr) {
         vbuf.lock |= maskLock(addr);
         vbuf.cm32next |= maskCM32(addr);

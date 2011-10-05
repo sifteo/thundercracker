@@ -15,8 +15,6 @@
 #include "emu8051.h"
 #include "emulator.h"
 
-//#define DEBUG
-
 #ifdef DEBUG
 #define I2C_DEBUG(_x)   printf _x
 #else
@@ -69,7 +67,7 @@ void i2cbus_stop()
     accel.state = S_IDLE;
 }
 
-void i2cbus_write(uint8_t byte)
+uint8_t i2cbus_write(uint8_t byte)
 {
     switch (accel.state) {
 
@@ -96,6 +94,8 @@ void i2cbus_write(uint8_t byte)
     }        
 
     I2C_DEBUG(("I2C Write 0x%02x, state=%d\n", byte, accel.state));
+
+    return accel.state != S_IDLE;
 }
 
 uint8_t i2cbus_read(uint8_t ack)

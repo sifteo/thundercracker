@@ -36,6 +36,7 @@
 #include "radio.h"
 #include "network.h"
 #include "adc.h"
+#include "i2c.h"
 
 #define ADDR_PORT       REG_P0
 #define BUS_PORT        REG_P2

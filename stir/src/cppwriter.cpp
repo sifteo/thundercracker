@@ -72,7 +72,11 @@ void CPPSourceWriter::writeGroup(const Group &group)
 {
     char buf[32];
 
+    #ifdef __MINGW32__
+    sprintf(buf, "0x%016I64x", (long long unsigned int) group.getSignature());
+    #else
     sprintf(buf, "0x%016llx", (long long unsigned int) group.getSignature());
+    #endif
 
     mStream <<
         "\n"

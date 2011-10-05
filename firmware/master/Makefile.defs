@@ -5,9 +5,16 @@ CC_STM32 = arm-none-eabi-gcc
 GDB_STM32 = arm-none-eabi-gdb
 RANLIB_STM32 = arm-none-eabi-ranlib
 
+UNAME := $(shell uname)
+
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
-STIR = $(TC_DIR)/stir/stir
+ifeq ($(UNAME), windows32)
+    STIR = $(TC_DIR)/stir/stir.exe
+else
+    STIR = $(TC_DIR)/stir/stir
+endif
+
 
 ASSETS = assets
 BINS += $(BIN_SIM) $(BIN_STM32)
@@ -16,7 +23,7 @@ CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 # Only disable this for debugging! The -O2 flag is important, we use
 # a lot of C++ code that's written assuming it will be inlined. The
 # inlined code should end up being smaller due to constant folding.
-CCFLAGS += -O2
+#CCFLAGS += -O2
 
 # Also important: No C++ exception handling support!
 CCFLAGS += -fno-exceptions
@@ -29,6 +36,10 @@ LDFLAGS += -lm
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CCFLAGS_SIM := $(CCFLAGS) -DSIFTEO_SIMULATOR
 LDFLAGS_SIM := $(LDFLAGS)
+
+ifeq ($(UNAME), windows32)
+    LDFLAGS_SIM += -lws2_32
+endif
 
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld

@@ -25,6 +25,19 @@ namespace Sifteo {
 
 class AssetGroup {
  public:
+
+    /**
+     * Wait until this asset group is available on all cubes that it
+     * was requested on via Cube::loadAssets(). Assets load
+     * asynchronously, but it's sometimes necessary to block until
+     * loading is done.
+     */
+
+    void wait() {
+        while (sys.reqCubes & ~sys.doneCubes)
+            _SYS_yield();
+    }
+
     _SYSAssetGroup sys;
     _SYSAssetGroupCube cubes[CUBE_ALLOCATION];
 };

@@ -25,7 +25,7 @@
 #include "emulator.h"
 #include "frontend.h"
 #include "lcd.h"
-#include "adc.h"
+#include "accel.h"
 #include "flash.h"
 #include "heatpalette.h"
 
