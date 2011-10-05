@@ -22,8 +22,8 @@ CCFLAGS += -O2
 CCFLAGS += -fno-exceptions
 
 CCFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include \
-	   -ffunction-sections -fdata-sections \
-	   -ffast-math
+           -ffunction-sections -fdata-sections \
+           -ffast-math
 LDFLAGS += -lm
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
@@ -34,8 +34,8 @@ LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
 
 ARCH_STM32 := -mthumb -march=armv7-m \
-	      -mtune=cortex-m3 -mfix-cortex-m3-ldrd \
-	      -msoft-float
+              -mtune=cortex-m3 -mfix-cortex-m3-ldrd \
+              -msoft-float -mno-thumb-interwork
 
 CCFLAGS_STM32 := $(CCFLAGS) $(ARCH_STM32)
 LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
