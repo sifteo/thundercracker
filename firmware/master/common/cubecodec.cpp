@@ -360,7 +360,7 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
     if (!txBits.hasRoomForFlush(buf, 12))
         return false;
 
-    loadBufferAvail = FLS_FIFO_SIZE - 1;
+    loadBufferAvail = FLS_FIFO_USABLE;
 
     // Must be the last full byte in the packet to trigger a reset.
     flashEscape(buf);
