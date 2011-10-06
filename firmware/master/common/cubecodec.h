@@ -35,7 +35,7 @@ class BitBuffer {
     }
 
     unsigned flush(PacketBuffer &buf) {
-        ASSERT(count < 32);
+        ASSERT(count <= 32);
 
         unsigned byteWidth = MIN(buf.bytesFree(), count >> 3);
         buf.append((uint8_t *) &bits, byteWidth);
@@ -59,13 +59,15 @@ class BitBuffer {
     }
 
     void append(uint32_t value, unsigned width) {
+        DEBUG_LOG(("\tbits: %08x/%d <- %08x/%d\n", bits, count, value, width));
+
         // Overflow-safe asserts
-        ASSERT(count < 32);
-        ASSERT(width < 32);
+        ASSERT(count <= 32);
+        ASSERT(width <= 32);
 
         bits |= value << count;
         count += width;
-        ASSERT(count < 32);
+        ASSERT(count <= 32);
     }
 
     void appendMasked(uint32_t value, unsigned width) {

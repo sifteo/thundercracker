@@ -245,6 +245,12 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
     } else {
         // 14-bit literal
 
+        /*
+         * We're guaranteeing that this flushDSRuns will be
+         * immediately followed by the literal code. We can't return
+         * false between the two, since that gives up our ability to
+         * keep this sequence of codes atomic.
+         */
         flushDSRuns(false);
 
         uint16_t index = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
@@ -291,10 +297,15 @@ void CubeCodec::flushDSRuns(bool rleSafe)
      * a flushDSRuns(). It is ONLY safe to emit an RLE code if the next
      * code we emit is a copy, a diff, or a literal index code.
      *
-     * If 'rleSafe' is false, the caller is guaranteeing taht the next
+     * If 'rleSafe' is false, the caller is guaranteeing that the next
      * code is already safe. If not, we will perform a simple transformation
      * on the run code. The last run will be converted back to a non-RLE
      * copy or diff code.
+     *
+     * It is NOT acceptable to call flushDSRuns with rleSafe==FALSE then
+     * to return due to an end-of-packet. We can't guarantee that the next
+     * packet will resume with the same kind of code, so the caller isn't
+     * upholding its side of this contract.
      */
 
     ASSERT(codeRuns <= RF_VRAM_MAX_RUN);
