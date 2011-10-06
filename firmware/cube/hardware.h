@@ -84,6 +84,12 @@ __sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
         S0BUF = (_b);                           \
     }
 
+#define ASM_DEBUG_UART(_b)                      __endasm; \
+    __asm jnb   _S0CON_TI0, (.)                 __endasm; \
+    __asm clr   _S0CON_TI0                      __endasm; \
+    __asm mov   _S0BUF, _b                      __endasm; \
+    __asm
+
 /*
  * LCD Controller
  */
