@@ -77,7 +77,7 @@ class VideoBuffer {
      * redraw this cube, even if it seems like nothing has changed.
      */
     void touch() {
-        Sifteo::Atomic::Or(sys.needPaint, 1);
+        Sifteo::Atomic::SetLZ(sys.needPaint, 0);
     }
 
     /**

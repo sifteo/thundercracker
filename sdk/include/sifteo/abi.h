@@ -83,7 +83,14 @@ struct _SYSAssetGroup {
  * the VRAM.
  */
 
-#define _SYS_VRAM_SIZE          1024    // Total size of VRAM, in bytes
+// Total size of VRAM, in bytes
+#define _SYS_VRAM_BYTES         1024
+#define _SYS_VRAM_BYTE_MASK     (_SYS_VRAM_BYTES - 1)
+
+// Total size of VRAM, in words
+#define _SYS_VRAM_WORDS         (_SYS_VRAM_BYTES / 2)
+#define _SYS_VRAM_WORD_MASK     (_SYS_VRAM_WORDS - 1)
+
 #define _SYS_VRAM_BG0_WIDTH     18      // Width/height of BG0 tile grid
 #define _SYS_VRAM_BG1_WIDTH     16      // Width/height of BG1 bitmap
 #define _SYS_VRAM_BG1_TILES     144     // Total number of opaque tiles in BG1
@@ -150,8 +157,8 @@ struct _SYSAffine {
 };
 
 union _SYSVideoRAM {
-    uint8_t bytes[1024];
-    uint16_t words[512];
+    uint8_t bytes[_SYS_VRAM_BYTES];
+    uint16_t words[_SYS_VRAM_WORDS];
 
     struct {
         uint16_t bg0_tiles[324];        // 0x000 - 0x287

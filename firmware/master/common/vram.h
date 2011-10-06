@@ -30,27 +30,38 @@
 struct VRAM {
 
     static uint32_t &selectCM1(_SYSVideoBuffer &vbuf, uint16_t addr) {
+        ASSERT(addr < _SYS_VRAM_WORDS);
+        STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 5) < arraysize(vbuf.cm1));
         return vbuf.cm1[addr >> 5];
     }
 
+    static uint32_t indexCM1(uint16_t addr) {
+        ASSERT(addr < _SYS_VRAM_WORDS);
+        return addr & 31;
+    }
+
     static uint32_t maskCM1(uint16_t addr) {
-        return Sifteo::Intrinsic::LZ(addr & 31);
+        return Sifteo::Intrinsic::LZ(indexCM1(addr));
     }
 
     static uint32_t maskCM32(uint16_t addr) {
+        ASSERT(addr < _SYS_VRAM_WORDS);
+        STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 5) < 32);
         return Sifteo::Intrinsic::LZ(addr >> 5);
     }
 
     static uint32_t maskLock(uint16_t addr) {
+        ASSERT(addr < _SYS_VRAM_WORDS);
+        STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 4) < 32);
         return Sifteo::Intrinsic::LZ(addr >> 4);
     }
 
     static void truncateByteAddr(uint16_t &addr) {
-        addr &= _SYS_VRAM_SIZE - 1;
+        addr &= _SYS_VRAM_BYTE_MASK;
     }
 
     static void truncateWordAddr(uint16_t &addr) {
-        addr &= _SYS_VRAM_SIZE/2 - 1;
+        addr &= _SYS_VRAM_WORD_MASK;
     }
 
     static uint16_t index14(uint16_t i) {
@@ -58,6 +69,8 @@ struct VRAM {
     }
 
     static void lock(_SYSVideoBuffer &vbuf, uint16_t addr) {
+        ASSERT(addr < _SYS_VRAM_WORDS);
+
         vbuf.lock |= maskLock(addr);
         vbuf.cm32next |= maskCM32(addr);
         Sifteo::Atomic::Barrier();
@@ -72,31 +85,38 @@ struct VRAM {
     }
 
     static void poke(_SYSVideoBuffer &vbuf, uint16_t addr, uint16_t word) {
+        ASSERT(addr < _SYS_VRAM_WORDS);
+
         if (vbuf.vram.words[addr] != word) {
             lock(vbuf, addr);
             vbuf.vram.words[addr] = word;
-            Sifteo::Atomic::Or(selectCM1(vbuf, addr), maskCM1(addr));
+            Sifteo::Atomic::SetLZ(selectCM1(vbuf, addr), indexCM1(addr));
         }
     }
 
     static void pokeb(_SYSVideoBuffer &vbuf, uint16_t addr, uint8_t byte) {
+        ASSERT(addr < _SYS_VRAM_BYTES);
+
         if (vbuf.vram.bytes[addr] != byte) {
             uint16_t addrw = addr >> 1;
             lock(vbuf, addrw);
             vbuf.vram.bytes[addr] = byte;
-            Sifteo::Atomic::Or(selectCM1(vbuf, addrw), maskCM1(addrw));
+            Sifteo::Atomic::SetLZ(selectCM1(vbuf, addrw), indexCM1(addrw));
         }
     }
 
     static uint16_t peek(const _SYSVideoBuffer &vbuf, uint16_t addr) {
+        ASSERT(addr < _SYS_VRAM_WORDS);
         return vbuf.vram.words[addr];
     }
 
     static uint8_t peekb(const _SYSVideoBuffer &vbuf, uint16_t addr) {
+        ASSERT(addr < _SYS_VRAM_BYTES);
         return vbuf.vram.bytes[addr];
     }
 
     static void xorb(_SYSVideoBuffer &vbuf, uint16_t addr, uint8_t byte) {
+        ASSERT(addr < _SYS_VRAM_BYTES);
         pokeb(vbuf, addr, peekb(vbuf, addr) ^ byte);
     }
 

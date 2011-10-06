@@ -104,6 +104,17 @@ class System {
         _SYS_ticks_ns(&nanosec);
         return nanosec * 1e-9;
     }
+
+    /**
+     * Return the elapsed system time, in nanoseconds. Guaranteed to be
+     * monotonically increasing.
+     */
+
+    static int64_t clockNS() {
+        int64_t nanosec;
+        _SYS_ticks_ns(&nanosec);
+        return nanosec;
+    }
 };
 
 

@@ -8,6 +8,7 @@
 #define _SIFTEO_MACHINE_H
 
 #include <stdint.h>
+#include <sifteo/macros.h>
 
 namespace Sifteo {
 
@@ -85,6 +86,31 @@ namespace Atomic {
         Barrier();
         return dest;
     }
+
+    /*
+     * XXX: Bit operations should be implemented using the Bit Band on Cortex-M3.
+     */
+
+    static inline void SetBit(uint32_t &dest, unsigned bit) {
+        ASSERT(bit < 32);
+        Or(dest, 1 << bit);
+    }
+
+    static inline void ClearBit(uint32_t &dest, unsigned bit) {
+        ASSERT(bit < 32);
+        And(dest, ~(1 << bit));
+    }
+
+    static inline void SetLZ(uint32_t &dest, unsigned bit) {
+        ASSERT(bit < 32);
+        Or(dest, 0x80000000 >> bit);
+    }
+
+    static inline void ClearLZ(uint32_t &dest, unsigned bit) {
+        ASSERT(bit < 32);
+        And(dest, ~(0x80000000 >> bit));
+    }
+
 };
 
 
@@ -117,6 +143,7 @@ namespace Intrinsic {
 
     static inline uint32_t LZ(uint32_t l) {
         // Generate number with 'l' leading zeroes. Inverse of CLZ.
+        ASSERT(l < 32);
         return 0x80000000 >> l;
     }
 

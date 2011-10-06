@@ -59,10 +59,19 @@ class CubeSlot {
     }
 
     _SYSCubeID id() const {
-        return this - &instances[0];
+        _SYSCubeID i = this - &instances[0];
+        ASSERT(i >= 0 && i < _SYS_NUM_CUBE_SLOTS);
+        STATIC_ASSERT(arraysize(instances) == _SYS_NUM_CUBE_SLOTS);
+        return i;
+    }
+
+    static CubeSlot &getInstance(_SYSCubeID id) {
+        ASSERT(id < _SYS_NUM_CUBE_SLOTS);
+        return instances[id];
     }
 
     _SYSCubeIDVector bit() const {
+        STATIC_ASSERT(_SYS_NUM_CUBE_SLOTS <= 32);
         return Sifteo::Intrinsic::LZ(id());
     }
 
