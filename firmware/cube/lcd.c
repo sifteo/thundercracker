@@ -96,16 +96,16 @@ void lcd_begin_frame()
     // Set addressing mode
     LCD_BYTE(LCD_CMD_MADCTR);
     LCD_DATA_MODE();
-    LCD_BYTE(LCD_MADCTR_NORMAL | (flags & LCD_MADCTR_VRAM));
+    LCD_BYTE(LCD_MADCTR_NORMAL ^ (flags & LCD_MADCTR_VRAM));
     LCD_CMD_MODE();
 
     // Set the row address to first_line
     LCD_BYTE(LCD_CMD_RASET);
     LCD_DATA_MODE();
     LCD_BYTE(0);
-    LCD_BYTE(first_line);
+    LCD_BYTE(LCD_ROW_ADDR(first_line));
     LCD_BYTE(0);
-    LCD_BYTE(LCD_HEIGHT - 1);
+    LCD_BYTE(LCD_ROW_ADDR(LCD_HEIGHT - 1));
     LCD_CMD_MODE();
 
     // Start writing
