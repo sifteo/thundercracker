@@ -23,7 +23,7 @@ static void lcd_cmd_table(const __code uint8_t *ptr)
      * space. The table consists of a zero-terminated list of
      * commands:
      *
-     *   <data length> <command> <data bytes...>
+     *   <total length> <command> <data bytes...>
      *
      * If the length has bit 7 set, it's actually a delay in
      * milliseconds, from 1 to 128 ms.
@@ -41,12 +41,9 @@ static void lcd_cmd_table(const __code uint8_t *ptr)
 
         } else {
             LCD_CMD_MODE();
-            LCD_BYTE(*ptr);
-            LCD_DATA_MODE();
-            ptr++;
-
             do {
                 LCD_BYTE(*ptr);
+                LCD_DATA_MODE();
                 ptr++;
             } while (--len);
         }
@@ -82,8 +79,13 @@ void lcd_begin_frame()
 
     /*
      * Wake up the LCD controller, if necessary.
+     *
+     * We also must turn on the backlight, and we must do this
+     * before running the initialization sequence. See the
+     * comments on the ST7735 controller, in lcd_model.h.
      */
     if (!lcd_is_awake) {
+        CTRL_PORT = CTRL_IDLE;  // Backlight on
         lcd_is_awake = 1;
         lcd_cmd_table(lcd_setup_table);
     }
