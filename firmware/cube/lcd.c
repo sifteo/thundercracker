@@ -108,9 +108,21 @@ void lcd_begin_frame()
     LCD_BYTE(LCD_ROW_ADDR(LCD_HEIGHT - 1));
     LCD_CMD_MODE();
 
-    // Start writing
-    LCD_BYTE(LCD_CMD_RAMWR);
+    /*
+     * Start writing (RAMWR command).
+     *
+     * We have to do this particular command -> data transition
+     * somewhat gingerly, since the Truly LCD is really picky. If we
+     * transition from command to data while the write strobe is low,
+     * it will falsely detect that as an additional byte-write that we
+     * didn't intend.
+     *
+     * This paranoia is unnecessary but harmless on the Giantplus LCD.
+     */
 
+    LCD_BYTE(LCD_CMD_NOP);
+    ADDR_PORT = 1;
+    LCD_BYTE(LCD_CMD_RAMWR);
     LCD_DATA_MODE();
     LCD_WRITE_END();
 
