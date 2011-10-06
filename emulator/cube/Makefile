@@ -27,9 +27,17 @@ CFLAGS += -O3 -g -Werror
 LDFLAGS += -g
 
 CFLAGS += $(shell sdl-config --cflags)
-LDFLAGS += -lncurses $(shell sdl-config --libs)
 
 OS := $(shell uname)
+
+ifneq ( $(findstr MINGW32_NT, $(OS)) , "" )  
+      OS := windows32
+endif
+
+ifneq ($(OS),windows32)
+	LDFLAGS += -lncurses $(shell sdl-config --libs)
+endif
+
 ifeq ($(OS),Darwin)
         LDFLAGS += -framework OpenGL
 
@@ -45,6 +53,8 @@ ifeq ($(OS),Darwin)
         #
 	CFLAGS += -combine -fwhole-program
 
+else ifeq ($(OS),windows32)
+	LDFLAGS += ../../deps/win32/pdcurses/pdcurses.lib -lGL -lws2_32 $(shell sdl-config --libs)
 else
 	LDFLAGS += -lGL
 endif
@@ -52,9 +62,19 @@ endif
 all: $(BIN)
 
 $(BIN): $(SRC) $(CDEPS)
+
+	#on Windows I seem to need to move all this to the end.
+	#perhaps that would work on all platforms?
+ifeq ($(OS),windows32)
+	$(CC) -o $@ $(CFLAGS) $(SRC) $(LDFLAGS) 
+else
 	$(CC) -o $@ $(LDFLAGS) $(CFLAGS) $(SRC)
+endif
+
+
 
 .PHONY: clean
 
 clean:
-	rm -f $(BIN)
+	rm -f $(BIN).*
+	rm -rf *.o

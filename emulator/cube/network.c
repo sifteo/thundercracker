@@ -26,6 +26,8 @@
 
 #ifdef _WIN32
 #   define WIN32_LEAN_AND_MEAN
+#define WINVER WindowsXP
+#define _WIN32_WINNT 0x502
 #   include <windows.h>
 #   include <winsock2.h>
 #   include <ws2tcpip.h>

@@ -7,6 +7,10 @@ RANLIB_STM32 = arm-none-eabi-ranlib
 
 UNAME := $(shell uname)
 
+ifneq ( $(findstr MINGW32_NT, $(UNAME)) , "" )  
+      UNAME := windows32
+endif
+
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
 ifeq ($(UNAME), windows32)
