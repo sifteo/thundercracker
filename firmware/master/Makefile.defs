@@ -11,14 +11,15 @@ ifneq ( $(findstr MINGW32_NT, $(UNAME)) , "" )
       UNAME := windows32
 endif
 
-SDK_DIR = $(TC_DIR)/sdk
-MASTER_DIR = $(TC_DIR)/firmware/master
 ifeq ($(UNAME), windows32)
-    STIR = $(TC_DIR)/stir/stir.exe
+	BIN_EXT = .exe
 else
-    STIR = $(TC_DIR)/stir/stir
+	BIN_EXT = 
 endif
 
+SDK_DIR = $(TC_DIR)/sdk
+MASTER_DIR = $(TC_DIR)/firmware/master
+STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
 
 ASSETS = assets
 BINS += $(BIN_SIM) $(BIN_STM32)
