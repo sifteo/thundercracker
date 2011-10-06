@@ -163,7 +163,7 @@ class RadioManager {
      * Must be a power of two.
      */
 
-    static const unsigned FIFO_SIZE = 8;
+    static const unsigned FIFO_SIZE = 16;
 
     static _SYSCubeID epFifo[FIFO_SIZE];
     static uint8_t epHead;              // Oldest ACK slot ID
