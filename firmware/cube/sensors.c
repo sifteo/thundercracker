@@ -170,18 +170,18 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
         ; Trigger the next accelerometer read, and reset the I2C bus. We do
         ; this each time, to avoid a lockup condition that can persist
-        ; for multiple packets.
+        ; for multiple packets. We include a brief GPIO frob first, to try
+        ; and clear the lockup on the accelerometer end.
 
-        orl     MISC_PORT, #MISC_I2C    ; Pulse I2C lines high, to try and clear deadlocks
-        anl     _MISC_DIR, #~MISC_I2C
-        orl     _MISC_DIR, #MISC_I2C
-
-        mov     _accel_state, #0        ; Reset accelerometer state machine
-        mov     _W2CON0, #0             ; Reset I2C master
-        mov     _W2CON0, #1             ; Turn on I2C controller
-        mov     _W2CON0, #7             ; Master mode, 100 kHz.
-        mov     _W2CON1, #0             ; Unmask interrupt
-        mov     _W2DAT, _accel_addr     ; Trigger the next I2C transaction
+        orl     MISC_PORT, #MISC_I2C      ; Drive the I2C lines high
+        anl     _MISC_DIR, #~MISC_I2C     ;   Output drivers enabled
+        xrl     MISC_PORT, #MISC_I2C_SCL  ;   Now pulse SCL low
+        mov     _accel_state, #0          ; Reset accelerometer state machine
+        mov     _W2CON0, #0               ; Reset I2C master
+        mov     _W2CON0, #1               ;   Turn on I2C controller
+        mov     _W2CON0, #7               ;   Master mode, 100 kHz.
+        mov     _W2CON1, #0               ;   Unmask interrupt
+        mov     _W2DAT, _accel_addr       ; Trigger the next I2C transaction
 
         reti
     __endasm;
