@@ -53,7 +53,7 @@ void System::tick() {
     for (unsigned i = 0; i < opt_numCubes; i++)
         cubes[i].tick();
 
-    if (opt_cube0Debug) {
+    if (opt_cube0Debug && opt_numCubes) {
         Cube::Debug::recordHistory();
         Cube::Debug::updateUI();
     }   
@@ -61,5 +61,14 @@ void System::tick() {
 
 int System::threadFn(void *param)
 {
+    System *self = (System *) param;
+
+    if (self->opt_cube0Debug && self->opt_numCubes)
+        Cube::Debug::init(&self->cubes[0]);
+
+    while (self->threadRunning) {
+        self->tick();
+    }
+
     return 0;
 }

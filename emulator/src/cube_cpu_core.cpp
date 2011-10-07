@@ -419,7 +419,7 @@ static int readbyte(FILE * f)
     return strtol(data, NULL, 16);
 }
 
-int em8051_load(em8051 *aCPU, char *aFilename)
+int em8051_load(em8051 *aCPU, const char *aFilename)
 {
     FILE *f;    
     if (aFilename == 0 || aFilename[0] == 0)

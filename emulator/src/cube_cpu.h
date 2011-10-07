@@ -130,7 +130,7 @@ int em8051_tick(struct em8051 *aCPU);
 int em8051_decode(struct em8051 *aCPU, int aPosition, char *aBuffer);
 
 // Load an intel hex format object file. Returns negative for errors.
-int em8051_load(struct em8051 *aCPU, char *aFilename);
+int em8051_load(struct em8051 *aCPU, const char *aFilename);
 
 // Internal: Pushes a value into stack
 void em8051_push(struct em8051 *aCPU, int aValue);
