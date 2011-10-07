@@ -47,6 +47,7 @@
 #define RFCON_RFCE      0x01
 
 #include "cube_hardware.h"
+#include "cube_debug.h"
 
 namespace Cube {
 
@@ -214,20 +215,24 @@ void Hardware::hardwareTick()
 
 void Hardware::except(CPU::em8051 *cpu, int exc)
 {
-    //Hardware *self = (Hardware*) cpu->callbackData;
+    Hardware *self = (Hardware*) cpu->callbackData;
     const char *name = CPU::em8051_exc_name(exc);
 
     if (cpu->traceFile)
         fprintf(cpu->traceFile, "EXCEPTION at 0x%04x: %s\n", cpu->mPC, name);
 
-    fprintf(stderr, "EXCEPTION at 0x%04x: %s\n", cpu->mPC, name);
+    if (self == Cube::Debug::cube) {
+        Cube::Debug::emu_exception(cpu, exc);
+    } else {
+        fprintf(stderr, "EXCEPTION at 0x%04x: %s\n", cpu->mPC, name);
+    }
 }
 
 void Hardware::sfrWrite(CPU::em8051 *cpu, int reg)
 {
     Hardware *self = (Hardware*) cpu->callbackData;
-    uint8_t value = cpu->mSFR[reg];
     reg -= 0x80;
+    uint8_t value = cpu->mSFR[reg];
     switch (reg) {
 
     case BUS_PORT:

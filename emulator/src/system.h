@@ -23,7 +23,9 @@ class System {
  public:
     VirtualTime time;
 
+    static const unsigned DEFAULT_CUBES = 1;
     static const unsigned MAX_CUBES = 32;
+
     Cube::Hardware cubes[MAX_CUBES];
 
     // Options; can be set prior to init
@@ -39,7 +41,7 @@ class System {
     const char *opt_cube0Profile;
 
     System()
-        : opt_numCubes(3), opt_cubeFirmware(NULL),
+        : opt_numCubes(DEFAULT_CUBES), opt_cubeFirmware(NULL),
         opt_netHost("localhost"), opt_netPort("2405"),
         opt_cube0Debug(false), opt_cube0Flash(NULL),
         opt_cube0Trace(NULL), opt_cube0Profile(NULL)
@@ -50,7 +52,6 @@ class System {
     void exit();
 
  private:
-    void tick();
     static int threadFn(void *param);
 
     SDL_Thread *thread;

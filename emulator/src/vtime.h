@@ -17,6 +17,9 @@ class VirtualTime {
     // Master clock rate. Must be equal to the cube's system clock.
     static const unsigned HZ = 16000000;
 
+    // Timestep size for simulation, in real milliseconds
+    static const unsigned TIMESTEP = 10;
+
     uint64_t clocks;
 
     static unsigned usec(uint64_t u) {       
@@ -37,6 +40,16 @@ class VirtualTime {
 
     static float clockMHZ() {
         return HZ / 1e6;
+    }
+    
+    void init() {
+        clocks = 0;
+        singleStep = false;
+        run();
+    }
+        
+    void tick() {
+        clocks++;
     }
 
     float elapsedSeconds() {
@@ -65,6 +78,10 @@ class VirtualTime {
 
     bool isPaused() {
         return targetRate == 0;
+    }
+
+    unsigned timestepTicks() {
+        return singleStep ? 1 : (TIMESTEP * targetRate / 1000);
     }
 
 private:

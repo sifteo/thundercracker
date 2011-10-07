@@ -76,6 +76,10 @@ extern int speed;
 // currently active view
 extern int view;
 
+// Cube that the debugger is currently attached to
+extern Cube::Hardware *cube;
+
+
 // main
 void init(Cube::Hardware *cube);
 void exit();

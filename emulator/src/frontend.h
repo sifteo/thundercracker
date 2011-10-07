@@ -46,7 +46,7 @@ class FrontendCube {
     void draw();
 
     Point center;
-    static const float SIZE = 0.2;
+    static const float SIZE = 0.4;
 
  private:
     Cube::Hardware *hw;

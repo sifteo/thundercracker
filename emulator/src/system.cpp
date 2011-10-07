@@ -49,26 +49,41 @@ void System::exit() {
         fclose(cubes[0].cpu.traceFile);
 }
 
-void System::tick() {
-    for (unsigned i = 0; i < opt_numCubes; i++)
-        cubes[i].tick();
-
-    if (opt_cube0Debug && opt_numCubes) {
-        Cube::Debug::recordHistory();
-        Cube::Debug::updateUI();
-    }   
-}
-
 int System::threadFn(void *param)
 {
-    System *self = (System *) param;
+    /*
+     * Maintain our virtual time clock, and update all parts of the
+     * simulation. Also give the debugger a chance to run every so
+     * often.
+     */
 
-    if (self->opt_cube0Debug && self->opt_numCubes)
+    System *self = (System *) param;
+    unsigned nCubes = self->opt_numCubes;
+    bool debug = self->opt_cube0Debug && nCubes;
+
+    self->time.init();
+    if (debug)
         Cube::Debug::init(&self->cubes[0]);
 
     while (self->threadRunning) {
-        self->tick();
+        unsigned batch = self->time.timestepTicks();
+
+        while (batch--) {
+            for (unsigned i = 0; i < nCubes; i++)
+                self->cubes[i].tick();
+
+            self->time.tick();
+
+            if (debug)
+                Cube::Debug::recordHistory();
+        }
+
+        if (debug)
+            Cube::Debug::updateUI();
     }
+
+    if (debug)
+        Cube::Debug::exit();
 
     return 0;
 }

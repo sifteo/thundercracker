@@ -178,15 +178,17 @@ void refreshView()
 
 void recordHistory()
 {
-    CPU::em8051 *aCPU = &cube->cpu;
+    if (speed > 0) {
+        CPU::em8051 *aCPU = &cube->cpu;
 
-    icount++;
+        icount++;
 
-    historyline = (historyline + 1) % HISTORY_LINES;
+        historyline = (historyline + 1) % HISTORY_LINES;
 
-    memcpy(history + (historyline * (128 + 64 + sizeof(int))), aCPU->mSFR, 128);
-    memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128, aCPU->mData, 64);
-    memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128 + 64, &aCPU->mPreviousPC, sizeof(int));
+        memcpy(history + (historyline * (128 + 64 + sizeof(int))), aCPU->mSFR, 128);
+        memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128, aCPU->mData, 64);
+        memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128 + 64, &aCPU->mPreviousPC, sizeof(int));
+    }
 }
 
 void init(Cube::Hardware *_cube)
@@ -216,7 +218,7 @@ void init(Cube::Hardware *_cube)
 void updateUI()
 {
     CPU::em8051 *aCPU = &cube->cpu;
-    static int ch = 0;
+    int ch = getch();
 
     if (LINES != oldrows || COLS != oldcols)
         refreshView();

@@ -29,7 +29,7 @@ class Radio {
     NetworkClient network;
 
     void init(CPU::em8051 *cpu) {
-        memset(debug, 0, sizeof debug);
+        memset(debug, 0, DEBUG_REG_SIZE);
         cpu = cpu;
 
         regs[REG_CONFIG] = 0x08;
@@ -87,19 +87,19 @@ class Radio {
         return spiCmdData(spi_cmd, spi_index++, mosi);
     }
 
-    void radioCtrl(int csn, int ce) {
-        if (csn && !csn) {
+    void radioCtrl(int nextCSN, int nextCE) {
+        if (csn && !nextCSN) {
             // Begin new SPI command
             spi_index = -1;
         }
         
-        if (!csn && csn) {
+        if (!csn && nextCSN) {
             // End an SPI command
             spiCmdEnd(spi_cmd);
         }
         
-        csn = csn;
-        ce = ce;
+        csn = nextCSN;
+        ce = nextCE;
     }
     
     int tick() {
@@ -108,6 +108,7 @@ class Radio {
          * over the air, by giving ourselves a receive opportunity at
          * fixed clock cycle intervals.
          */
+
         if (ce && --rx_timer <= 0) {
             rx_timer = VirtualTime::usec(RX_INTERVAL_US);
             rxOpportunity();
