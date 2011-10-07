@@ -85,6 +85,38 @@ extern volatile SPI_t SPI1;
 extern volatile SPI_t SPI2;
 extern volatile SPI_t SPI3;
 
+/*
+ * Timers 2-5
+ */
+
+struct TIM2_5_t {
+    uint32_t CR1;
+    uint32_t CR2;
+    uint32_t SMCR;
+    uint32_t DIER;
+    uint32_t SR;
+    uint32_t EGR;
+    uint32_t CCMR1;
+    uint32_t CCMR2;
+    uint32_t CCER;
+    uint32_t CNT;
+    uint32_t PSC;
+    uint32_t ARR;
+    uint32_t _res1;
+    uint32_t CCR[4];
+    uint32_t _res2;
+    uint32_t DCR;
+    uint32_t DMAR;
+};
+
+
+// NOTE - using this style def now (as opposed to referencing the symbol in the
+//          linker script, so they can be used in conditionals
+#define TIM2 ((volatile TIM2_5_t*)0x40000000)
+#define TIM3 ((volatile TIM2_5_t*)0x40000400)
+#define TIM4 ((volatile TIM2_5_t*)0x40000800)
+#define TIM5 ((volatile TIM2_5_t*)0x40000c00)
+
 
 /*
  * External interrupt controller
