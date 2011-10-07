@@ -65,41 +65,41 @@ void setSpeed(int speed, int runmode)
     {
     case 7:
         slk_set(5, "+/-|1Hz", 0);
-        cube->time.setTargetRate(1);
+        cube->time->setTargetRate(1);
         break;
     case 6:
         slk_set(5, "+/-|5Hz", 0);
-        cube->time.setTargetRate(5);
+        cube->time->setTargetRate(5);
         break;
     case 5:
         slk_set(5, "+/-|30Hz", 0);
-        cube->time.setTargetRate(30);
+        cube->time->setTargetRate(30);
         break;
     case 4:
         slk_set(5, "+/-|1M", 0);
-        cube->time.setTargetRate(1000000);
+        cube->time->setTargetRate(1000000);
         break;
     case 3:
         slk_set(5, "+/-|2M", 0);
-        cube->time.setTargetRate(2000000);
+        cube->time->setTargetRate(2000000);
         break;
     case 2:
         slk_set(5, "+/-|5M", 0);
-        cube->time.setTargetRate(5000000);
+        cube->time->setTargetRate(5000000);
         break;
     case 1:
         slk_set(5, "+/-|f+", 0);
-        cube->time.run();
+        cube->time->run();
         break;
     case 0:
         slk_set(5, "+/-|f*", 0);
-        cube->time.run();
+        cube->time->run();
         break;
     }
 
     if (runmode == 0)
     {
-        cube->time.stop();
+        cube->time->stop();
         slk_set(4, "r)un", 0);
         slk_refresh();        
         nocbreak();
@@ -252,7 +252,7 @@ void updateUI()
     case ' ':
         runmode = 0;
         setSpeed(speed, runmode);
-        cube->time.takeStep();
+        cube->time->takeStep();
         break;
     case 'r':
         if (runmode) {

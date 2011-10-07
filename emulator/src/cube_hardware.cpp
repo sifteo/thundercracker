@@ -51,9 +51,12 @@
 namespace Cube {
 
 
-bool Hardware::init(const char *firmwareFile, const char *flashFile,
-                        const char *netHost, const char *netPort)
+bool Hardware::init(VirtualTime *masterTimer,
+                    const char *firmwareFile, const char *flashFile,
+                    const char *netHost, const char *netPort)
 {
+    time = masterTimer;
+
     lat1 = 0;
     lat2 = 0;
     bus = 0;
@@ -63,6 +66,8 @@ bool Hardware::init(const char *firmwareFile, const char *flashFile,
     cpu.sfrread = sfrRead;
     cpu.sfrwrite = sfrWrite;
     cpu.callbackData = this;
+
+    CPU::em8051_reset(&cpu, true);
 
     cpu.mSFR[REG_P0DIR] = 0xFF;
     cpu.mSFR[REG_P1DIR] = 0xFF;

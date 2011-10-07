@@ -609,16 +609,16 @@ void mainview_update(Cube::Hardware *cube)
 
         enum Flash::busy_flag flash_busy = cube->flash.getBusyFlag();
 
-        float msec = 1000.0f * cube->time.elapsedSeconds();
-        float clock_mhz =  cube->time.clockMHZ();
+        float msec = 1000.0f * cube->time->elapsedSeconds();
+        float clock_mhz =  cube->time->clockMHZ();
 
         /* Periodically update most of the stats */
-        if (cube->time.clocks < update_prev_clocks ||
-            (cube->time.clocks - update_prev_clocks) > update_interval) {
+        if (cube->time->clocks < update_prev_clocks ||
+            (cube->time->clocks - update_prev_clocks) > update_interval) {
             uint32_t now = SDL_GetTicks();
 
-            if (cube->time.clocks > update_prev_clocks && now > update_prev_time) {                
-                float virtual_elapsed = VirtualTime::toSeconds(cube->time.clocks - update_prev_clocks);
+            if (cube->time->clocks > update_prev_clocks && now > update_prev_time) {                
+                float virtual_elapsed = VirtualTime::toSeconds(cube->time->clocks - update_prev_clocks);
                 float real_elapsed = (uint32_t)(now - update_prev_time) * (1.0f/1000);
 
                 lcd_wrs = cube->lcd.getWriteCount() / virtual_elapsed;
@@ -637,7 +637,7 @@ void mainview_update(Cube::Hardware *cube)
             }
 
             update_prev_time = now;
-            update_prev_clocks = cube->time.clocks;
+            update_prev_clocks = cube->time->clocks;
         }
 
         werase(miscview);
@@ -652,7 +652,7 @@ void mainview_update(Cube::Hardware *cube)
                 flash_percent);
 
         wprintw(miscview, "Radio  :% 5d RX% 6.2f kB/s\n", (int)radio_rx, radio_b / 1000);
-        wprintw(miscview, "Time   : %07.2f ms %04llu ck\n", fmod(msec, 10000.0), cube->time.clocks % 10000);
+        wprintw(miscview, "Time   : %07.2f ms %04llu ck\n", fmod(msec, 10000.0), cube->time->clocks % 10000);
         wprintw(miscview, "Speed  :% 6.1f%% %0.1f MHz\n", clock_ratio * 100, clock_mhz);
     }
 

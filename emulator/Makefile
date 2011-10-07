@@ -13,11 +13,11 @@ OBJS = \
 	src/cube_flash_model.o \
 	src/cube_hardware.o \
 	src/cube_network.o \
+	src/system.o \
+	src/frontend.o \
+	src/main.o \
 
-#	src/frontend.o \
-#	src/main.o \
-
-CDEPS = *.h
+CDEPS = src/*.h
 
 CFLAGS += $(shell sdl-config --cflags)
 LDFLAGS += -lncurses $(shell sdl-config --libs)
@@ -30,7 +30,7 @@ else
 endif
 
 CFLAGS += -O3 -g -Werror -Wall
-LDFLAGS += -g
+LDFLAGS += -g -lstdc++
 CCFLAGS := $(CFLAGS)
 
 all: $(BIN)
@@ -38,12 +38,11 @@ all: $(BIN)
 $(BIN): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
 
 %.o: %.c $(CDEPS)
-	$(CC) -c -o $@ $< $(CCFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 .PHONY: clean
 

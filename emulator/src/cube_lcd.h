@@ -19,11 +19,11 @@ namespace Cube {
 
 class LCD {
  public:
-    static const unsigned LCD_WIDTH  = 128;
-    static const unsigned LCD_HEIGHT = 128;
+    static const unsigned WIDTH  = 128;
+    static const unsigned HEIGHT = 128;
 
-    static const unsigned FB_SIZE = 0x8000;
-    static const unsigned FB_MASK = 0x3FFF;
+    static const unsigned FB_SIZE = WIDTH * HEIGHT;
+    static const unsigned FB_MASK = FB_SIZE - 1;
     static const unsigned FB_ROW_SHIFT = 7;
 
     struct Pins {
@@ -40,16 +40,27 @@ class LCD {
     uint16_t fb_mem[FB_SIZE];
 
     void init() {
-        memset(this, 0, sizeof *this);
-
         // Framebuffer contents undefined. Simulate that...
         uint32_t i;
         for (i = 0; i < FB_SIZE; i++)
             fb_mem[i] = 31337 * (1+i);
+
+        current_cmd = 0;
+        cmd_bytecount = 0;
+
+        xs = 0;
+        xe = WIDTH - 1;
+        ys = 0;
+        ye = HEIGHT - 1;
+        row = 0;
+        col = 0;
         
-        xe = LCD_WIDTH - 1;
-        ye = LCD_HEIGHT - 1;
+        madctr = 0;
         colmod = COLMOD_18;
+
+        mode_awake = 0;
+        mode_display_on = 0;
+        mode_te = 0;
     }
 
     void cycle(Pins *pins) {
@@ -118,8 +129,8 @@ class LCD {
         uint8_t madctr = madctr ^ model.madctr_xor;
 
         // Logical to physical address translation
-        vRow = (madctr & MADCTR_MY) ? (LCD_HEIGHT - 1 - row) : row;
-        vCol = (madctr & MADCTR_MX) ? (LCD_WIDTH - 1 - col) : col;
+        vRow = (madctr & MADCTR_MY) ? (HEIGHT - 1 - row) : row;
+        vCol = (madctr & MADCTR_MX) ? (WIDTH - 1 - col) : col;
         vRow += model.row_adj;
         vCol += model.col_adj;
 

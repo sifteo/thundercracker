@@ -21,7 +21,11 @@ class ADC {
  public:
 
     void init() {
-        memset(this, 0, sizeof *this);
+        memset(inputs, 0, sizeof inputs);
+        triggered = 0;
+        conversion_timer = 0;
+        conversion_channel = 0;
+        period_timer = 0;
     }
 
     void start() {

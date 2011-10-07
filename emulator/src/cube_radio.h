@@ -29,7 +29,7 @@ class Radio {
     NetworkClient network;
 
     void init(CPU::em8051 *cpu) {
-        memset(this, 0, sizeof *this);
+        memset(debug, 0, sizeof debug);
         cpu = cpu;
 
         regs[REG_CONFIG] = 0x08;
@@ -382,7 +382,7 @@ class Radio {
      * It can currently view/edit 0x38 bytes, starting at regs[0].
      */
     union {
-        uint8_t debug[0x38];
+        uint8_t debug[DEBUG_REG_SIZE];
         struct {
             uint8_t regs[0x20];         // 00 - 1F
             uint8_t addr_tx_high[4];    // 20 - 23

@@ -227,10 +227,14 @@ void NetworkClient::init(const char *host, const char *port)
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
     
-    memset(this, 0, sizeof *this);
+    rf_addr = 0;
     fd = -1;
+    is_connected = 0;
     is_running = 1;
     rx_packet_len = -1;
+    rx_count = 0;
+    rx_packet_len = 0;
+    rx_addr = 0;
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -241,16 +245,18 @@ void NetworkClient::init(const char *host, const char *port)
     // Buffer is initially available
     rx_sem = SDL_CreateSemaphore(1);
 
-    thread = SDL_CreateThread(threadFn, NULL);
+    thread = SDL_CreateThread(threadFn, this);
 }
 
 void NetworkClient::exit(void)
 {
     disconnect();
-    freeaddrinfo(addr);
 
     is_running = 0;
     SDL_SemPost(rx_sem);
+    SDL_WaitThread(thread, NULL);
+
+    freeaddrinfo(addr);
 }
 
 void NetworkClient::tx(uint64_t addr, void *payload, int len)

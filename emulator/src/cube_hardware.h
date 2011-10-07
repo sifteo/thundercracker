@@ -25,15 +25,12 @@ namespace Cube {
 class Hardware {
  public:
     CPU::em8051 cpu;
-    VirtualTime &time;
+    VirtualTime *time;
     LCD lcd;
     SPIBus spi;
     I2CBus i2c;
     ADC adc;
     Flash flash;
-    
-    Hardware(VirtualTime &_time)
-        : time(_time) {}
     
     /*
      * XXX: Currently requires a firmware image to be useful.
@@ -87,9 +84,15 @@ class Hardware {
      *      resulting simulation should function in the same way.
      */
 
-    bool init(const char *firmwareFile, const char *flashFile,
+    bool init(VirtualTime *masterTimer,
+              const char *firmwareFile, const char *flashFile,
               const char *netHost, const char *netPort);
     void exit();
+
+    void tick() {
+        CPU::em8051_tick(&cpu);
+        hardwareTick();
+    }
 
  private:
     void hardwareTick();
