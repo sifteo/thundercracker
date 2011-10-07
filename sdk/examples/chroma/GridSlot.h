@@ -23,11 +23,17 @@ public:
 		STATE_LIVING,
 		STATE_BEINGDESTROYED,
 		STATE_SHOWINGSCORE,
+		STATE_GONE,
 	} SLOT_STATE;
 
 	GridSlot();
 
 	const AssetImage &GetTexture() const;
+	//draw self on given vid at given vec
+	void Draw( VidMode_BG0 &vid, const Vec2 &vec );
+	bool isAlive() const { return m_state == STATE_LIVING; }
+	bool isEmpty() const { return m_state == STATE_GONE; }
+	void setEmpty() { m_state = STATE_GONE; }
 private:
 	
 	SLOT_STATE m_state;

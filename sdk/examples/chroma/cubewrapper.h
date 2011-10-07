@@ -26,7 +26,12 @@ public:
 	bool DrawProgress( AssetGroup &assets );
 	void Draw();
 	void vidInit();
+	void Tilt( int dir );
 private:
+	//try moving a gem from row1/col1 to row2/col2
+	//return if successful
+	bool TryMove( int row1, int col1, int row2, int col2 );
+
 	Cube m_cube;
 	VidMode_BG0 m_vid;
 	VidMode_BG0_ROM m_rom;
