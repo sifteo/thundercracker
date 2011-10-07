@@ -15,11 +15,6 @@ namespace Cube {
 #define IDATA_SIZE      256
 #define CODE_SIZE       16384
 
-#define CLOCK_HZ            16000000
-#define USEC_TO_CYCLES(_x)  ((int)(CLOCK_HZ * (uint64_t)(_x) / 1000000ULL))
-#define NSEC_TO_CYCLES(_x)  ((int)(CLOCK_HZ * (uint64_t)(_x) / 1000000000ULL))
-#define HZ_TO_CYCLES(_x)    ((int)(CLOCK_HZ / (_x)))
-
 enum SFR_REGS
 {
     REG_P0           = 0x80 - 0x80,

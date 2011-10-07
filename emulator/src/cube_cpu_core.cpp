@@ -327,6 +327,7 @@ int em8051_tick(em8051 *aCPU)
         unsigned pc = aCPU->mPC & (CODE_SIZE - 1);
         struct profile_data *pd;
 
+        aCPU->mPreviousPC = aCPU->mPC;
         aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU);
         ticked = 1;
 
@@ -368,6 +369,9 @@ int em8051_tick(em8051 *aCPU)
         aCPU->mTimerTickDelay = 11;
         timer_tick(aCPU);
     }
+
+    if (aCPU->mBreakpoint && aCPU->mBreakpoint == aCPU->mPC)
+        aCPU->except(aCPU, EXCEPTION_BREAKPOINT);
 
     return ticked;
 }
@@ -460,6 +464,7 @@ int em8051_load(em8051 *aCPU, char *aFilename)
 const char *em8051_exc_name(int aCode)
 {
     static const char *exc_names[] = {
+        "Breakpoint reached",
         "SP exception: stack address > 127",
         "Invalid operation: acc-to-a move",
         "PSW not preserved over interrupt call",
@@ -472,9 +477,7 @@ const char *em8051_exc_name(int aCode)
         "I2C error",
     };
 
-    if (aCode == -1)
-        return "Breakpoint reached";
-    else if (aCode < (int)(sizeof exc_names / sizeof exc_names[0]))
+    if (aCode < (int)(sizeof exc_names / sizeof exc_names[0]))
         return exc_names[aCode];
     else
         return "Unknown exception";

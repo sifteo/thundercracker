@@ -16,6 +16,7 @@
 #ifndef _CUBE_RADIO_H
 #define _CUBE_RADIO_H
 
+#include "vtime.h"
 #include "cube_cpu.h"
 #include "cube_radio.h"
 #include "cube_network.h"
@@ -108,7 +109,7 @@ class Radio {
          * fixed clock cycle intervals.
          */
         if (ce && --rx_timer <= 0) {
-            rx_timer = USEC_TO_CYCLES(RX_INTERVAL_US);
+            rx_timer = VirtualTime::usec(RX_INTERVAL_US);
             rxOpportunity();
         }
 

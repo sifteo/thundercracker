@@ -16,6 +16,7 @@
 #ifndef _CUBE_I2C_H
 #define _CUBE_I2C_H
 
+#include "vtime.h"
 #include "cube_cpu.h"
 #include "cube_accel.h"
 
@@ -156,8 +157,8 @@ class I2CBus {
         
         uint8_t w2con0 = cpu->mSFR[REG_W2CON0];
         switch (w2con0 & W2CON0_SPEED) {
-        case W2CON0_400KHZ: timer = HZ_TO_CYCLES(400000) * bits; break;
-        case W2CON0_100KHZ: timer = HZ_TO_CYCLES(100000) * bits; break;
+        case W2CON0_400KHZ: timer = VirtualTime::hz(400000) * bits; break;
+        case W2CON0_100KHZ: timer = VirtualTime::hz(100000) * bits; break;
         default: cpu->except(cpu, CPU::EXCEPTION_I2C);
         }
     }

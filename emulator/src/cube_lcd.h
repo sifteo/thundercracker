@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "vtime.h"
+
 namespace Cube {
 
 
@@ -86,7 +88,7 @@ class LCD {
     void pulseTE() {
         if (mode_te) {
             // This runs on the GUI thread, use a lock-free timer.
-            te_timer_head += USEC_TO_CYCLES(TE_WIDTH_US);
+            te_timer_head += VirtualTime::usec(TE_WIDTH_US);
         }
     }
 

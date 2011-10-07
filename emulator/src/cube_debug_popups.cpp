@@ -74,7 +74,7 @@ void emu_popup(CPU::em8051 *aCPU, const char *aTitle, const char *aMessage)
 
     getch();
     delwin(exc);
-    refreshview(aCPU);
+    refreshView();
 }
 
 void emu_exception(CPU::em8051 *aCPU, int aCode)
@@ -106,7 +106,7 @@ void emu_exception(CPU::em8051 *aCPU, int aCode)
 
     getch();
     delwin(exc);
-    change_view(aCPU, MAIN_VIEW);
+    refreshView();
 }
 
 void emu_load(CPU::em8051 *aCPU)
@@ -162,7 +162,7 @@ void emu_load(CPU::em8051 *aCPU)
 
     result = em8051_load(aCPU, filename);
     delwin(exc);
-    refreshview(aCPU);
+    refreshView();
 
     switch (result)
     {
@@ -274,7 +274,7 @@ int emu_readvalue(CPU::em8051 *aCPU, const char *aPrompt, int aOldvalue, int aVa
     while (ch != '\n');
 
     delwin(exc);
-    refreshview(aCPU);
+    refreshView();
     return strtol(temp, NULL, 16);
 }
 
@@ -330,7 +330,7 @@ int emu_readhz(CPU::em8051 *aCPU, const char *aPrompt, int aOldvalue)
     while (ch != '\n');
 
     delwin(exc);
-    refreshview(aCPU);
+    refreshView();
     return strtol(temp, NULL, 10);
 }
 
@@ -381,7 +381,7 @@ int emu_reset(CPU::em8051 *aCPU)
         break;
     }
     delwin(exc);
-    refreshview(aCPU);
+    refreshView();
     return result;
 }
 
@@ -439,7 +439,7 @@ void emu_help(CPU::em8051 *aCPU)
     ch = getch();
 
     delwin(exc);
-    refreshview(aCPU);
+    refreshView();
 }
 
 

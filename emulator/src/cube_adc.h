@@ -10,6 +10,8 @@
 #define _CUBE_ADC_H
 
 #include <stdint.h>
+
+#include "vtime.h"
 #include "cube_cpu_reg.h"
 
 namespace Cube {
@@ -46,7 +48,7 @@ class ADC {
         if (triggered && !conversion_timer) {
             // Start conversion
             triggered = 0;
-            conversion_timer = NSEC_TO_CYCLES(conversionNSec(regs));
+            conversion_timer = VirtualTime::nsec(conversionNSec(regs));
             conversion_channel = (regs[REG_ADCCON1] & ADCCON1_CHSEL_MASK) >> ADCCON1_CHSEL_SHIFT;
         }
 
@@ -69,8 +71,8 @@ class ADC {
                 irq = 1;
 
                 if (regs[REG_ADCCON2] & ADCCON2_CONT) {
-                    period_timer = HZ_TO_CYCLES(rateHZ(regs));
-                    period_timer -= NSEC_TO_CYCLES(conversionNSec(regs));
+                    period_timer = VirtualTime::hz(rateHZ(regs));
+                    period_timer -= VirtualTime::nsec(conversionNSec(regs));
                 }
 
                 storeResult(regs, inputs[conversion_channel]);

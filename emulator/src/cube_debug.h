@@ -33,6 +33,7 @@
 
 #include <stdint.h>
 
+#include "vtime.h"
 #include "cube_cpu.h"
 #include "cube_hardware.h"
 
@@ -47,7 +48,8 @@ enum EMU_VIEWS
 {
     NO_VIEW = -1,
     MAIN_VIEW = 0,
-    MEMEDITOR_VIEW = 1,
+    MEMEDITOR_VIEW,
+    NUM_VIEWS,
 };
 
 // binary history buffer
@@ -75,9 +77,13 @@ extern int speed;
 extern int view;
 
 // main
+void init(Cube::Hardware *cube);
+void exit();
+void writeProfile(CPU::em8051 *aCPU, const char *filename);
+void updateUI();
+void recordHistory();
+void refreshView();
 void setSpeed(int speed, int runmode);
-void refreshview(CPU::em8051 *aCPU);
-void change_view(CPU::em8051 *aCPU, int changeto);
 
 // popups
 void emu_help(CPU::em8051 *aCPU);
@@ -86,7 +92,7 @@ int emu_readvalue(CPU::em8051 *aCPU, const char *aPrompt, int aOldvalue, int aVa
 int emu_readhz(CPU::em8051 *aCPU, const char *aPrompt, int aOldvalue);
 void emu_load(CPU::em8051 *aCPU);
 void emu_exception(CPU::em8051 *aCPU, int aCode);
-void emu_popup(CPU::em8051 *aCPU, char *aTitle, char *aMessage);
+void emu_popup(CPU::em8051 *aCPU, const char *aTitle, const char *aMessage);
 
 // mainview
 void mainview_editor_keys(CPU::em8051 *aCPU, int ch);

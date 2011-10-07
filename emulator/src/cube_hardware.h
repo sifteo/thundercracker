@@ -17,6 +17,7 @@
 #include "cube_i2c.h"
 #include "cube_lcd.h"
 #include "cube_flash.h"
+#include "vtime.h"
 
 namespace Cube {
 
@@ -24,13 +25,15 @@ namespace Cube {
 class Hardware {
  public:
     CPU::em8051 cpu;
+    VirtualTime &time;
     LCD lcd;
     SPIBus spi;
     I2CBus i2c;
     ADC adc;
     Flash flash;
-
-    uint64_t clocks;
+    
+    Hardware(VirtualTime &_time)
+        : time(_time) {}
     
     /*
      * XXX: Currently requires a firmware image to be useful.

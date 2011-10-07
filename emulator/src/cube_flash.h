@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include "vtime.h"
 #include "cube_cpu.h"
 #include "cube_flash_model.h"
 
@@ -239,29 +240,29 @@ class Flash {
             data[st->addr] &= st->data;
             status_byte = FlashModel::STATUS_DATA_INV & ~st->data;
             busy = BF_PROGRAM;
-            write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-            busy_timer = USEC_TO_CYCLES(FlashModel::PROGRAM_TIME_US);
+            write_timer = VirtualTime::usec(FLUSH_TIME_US);
+            busy_timer = VirtualTime::usec(FlashModel::PROGRAM_TIME_US);
         
         } else if (matchCommand(FlashModel::cmd_sector_erase)) {
             erase(st->addr, FlashModel::SECTOR_SIZE);
             status_byte = 0;
             busy = BF_ERASE;
-            write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-            busy_timer = USEC_TO_CYCLES(FlashModel::ERASE_SECTOR_TIME_US);
+            write_timer = VirtualTime::usec(FLUSH_TIME_US);
+            busy_timer = VirtualTime::usec(FlashModel::ERASE_SECTOR_TIME_US);
             
         } else if (matchCommand(FlashModel::cmd_block_erase)) {
             erase(st->addr, FlashModel::BLOCK_SIZE);
             status_byte = 0;
             busy = BF_ERASE;
-            write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-            busy_timer = USEC_TO_CYCLES(FlashModel::ERASE_BLOCK_TIME_US);
+            write_timer = VirtualTime::usec(FLUSH_TIME_US);
+            busy_timer = VirtualTime::usec(FlashModel::ERASE_BLOCK_TIME_US);
             
         } else if (matchCommand(FlashModel::cmd_chip_erase)) {
             erase(st->addr, FlashModel::SIZE);
             status_byte = 0;
             busy = BF_ERASE;
-            write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-            busy_timer = USEC_TO_CYCLES(FlashModel::ERASE_CHIP_TIME_US);
+            write_timer = VirtualTime::usec(FLUSH_TIME_US);
+            busy_timer = VirtualTime::usec(FlashModel::ERASE_CHIP_TIME_US);
         }
     }
 
