@@ -29,6 +29,7 @@ OBJS_STM32 = \
 	stm32/spi.stm32.o \
 	stm32/nrf24l01.stm32.o \
 	stm32/debug.stm32.o \
+    stm32/pwm.stm32.o \
     $(SPEEX_OBJS_STM32) \
 
 TC_DIR = ../..
