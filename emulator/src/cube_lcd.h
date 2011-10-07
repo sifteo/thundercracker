@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -11,6 +11,9 @@
 
 #include <stdint.h>
 #include <string.h>
+
+namespace Cube {
+
 
 class LCD {
  public:
@@ -339,5 +342,8 @@ class LCD {
         int8_t col_adj;
     } model;
 };
+
+
+};  // namespace Cube
 
 #endif

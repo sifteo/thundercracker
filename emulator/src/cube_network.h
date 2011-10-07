@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -16,7 +16,12 @@
 #define _NETWORK_H
 
 #include <stdint.h>
-#include <SDL.h>
+#include <SDL/SDL_thread.h>
+
+struct addrinfo;
+
+namespace Cube {
+
 
 class NetworkClient {
  public:
@@ -60,5 +65,6 @@ class NetworkClient {
     uint8_t rx_packet[256];
 };
 
+};  // namespace Cube
 
 #endif

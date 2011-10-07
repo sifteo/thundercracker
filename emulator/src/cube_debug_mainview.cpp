@@ -28,14 +28,19 @@
  * Main view-related stuff for the curses-based emulator front-end
  */
 
-#include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
-#include "curses.h"
-#include "debugger.h"
+#include <curses.h>
+#include <SDL/SDL.h>
+
+#include "cube_debug.h"
+
+namespace Cube {
+namespace Debug {
+
 
 /*
     The history-based display assumes that there's no
@@ -125,7 +130,7 @@ void wipe_main_view()
     delwin(miscview);
 }
 
-void build_main_view(struct em8051 *aCPU)
+void build_main_view(CPU::em8051 *aCPU)
 {
     erase();
 
@@ -204,7 +209,7 @@ void build_main_view(struct em8051 *aCPU)
 
 }
 
-int getregoutput(struct em8051 *aCPU, int pos)
+int getregoutput(CPU::em8051 *aCPU, int pos)
 {
     int rx = 8 * ((aCPU->mSFR[REG_PSW] & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0);
     switch (pos)
@@ -235,7 +240,7 @@ int getregoutput(struct em8051 *aCPU, int pos)
     return 0;
 }
 
-void setregoutput(struct em8051 *aCPU, int pos, int val)
+void setregoutput(CPU::em8051 *aCPU, int pos, int val)
 {
     int rx = 8 * ((aCPU->mSFR[REG_PSW] & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0);
     switch (pos)
@@ -278,7 +283,7 @@ void setregoutput(struct em8051 *aCPU, int pos, int val)
 }
 
 
-void mainview_editor_keys(struct em8051 *aCPU, int ch)
+void mainview_editor_keys(CPU::em8051 *aCPU, int ch)
 {
     int insert_value = -1;
     int maxmem;
@@ -457,7 +462,7 @@ void mainview_editor_keys(struct em8051 *aCPU, int ch)
 }
 
 
-void refresh_regoutput(struct em8051 *aCPU, int cursor)
+void refresh_regoutput(CPU::em8051 *aCPU, int cursor)
 {
     int rx = 8 * ((aCPU->mSFR[REG_PSW] & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0);
     
@@ -488,9 +493,9 @@ void refresh_regoutput(struct em8051 *aCPU, int cursor)
     }
 }
 
-void mainview_update(CubeHardware *cube)
+void mainview_update(Cube::Hardware *cube)
 {
-    em8051 *aCPU = &cube->cpu;
+    CPU::em8051 *aCPU = &cube->cpu;
     int bytevalue;
     int i;
 
@@ -520,7 +525,7 @@ void mainview_update(CubeHardware *cube)
             hoffs = (hline * (128 + 64 + sizeof(int)));
 
             memcpy(&old_pc, history + hoffs + 128 + 64, sizeof(int));
-            opcode_bytes = em8051_decode(aCPU, old_pc, assembly);
+            opcode_bytes = CPU::em8051_decode(aCPU, old_pc, assembly);
             stringpos = 0;
             stringpos += sprintf(temp + stringpos,"\n%04X  ", old_pc & 0xffff);
             
@@ -693,3 +698,7 @@ void mainview_update(CubeHardware *cube)
         wrefresh(pswoutput);
     }
 }
+
+
+};  // namespace Debug
+};  // namespace Cube

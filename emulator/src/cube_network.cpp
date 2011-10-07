@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -21,8 +21,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <SDL.h>
-#include "network.h"
+#include <SDL/SDL.h>
+#include "cube_network.h"
 
 #ifdef _WIN32
 #   define WIN32_LEAN_AND_MEAN
@@ -39,6 +39,9 @@
 #   include <netdb.h>
 #   include <unistd.h>
 #endif
+
+namespace Cube {
+
 
 void NetworkClient::disconnect()
 {
@@ -286,3 +289,5 @@ int NetworkClient::rx(uint64_t *addr, uint8_t payload[256])
     return len;
 }
 
+
+};  // namespace Cube

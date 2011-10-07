@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -10,7 +10,10 @@
  * Static data for flash_model.h
  */
 
-#include "flash_model.h"
+#include "cube_flash_model.h"
+
+namespace Cube {
+
 
 const FlashModel::command_sequence FlashModel::cmd_byte_program[FlashModel::CMD_LENGTH] = {
     { 0x000, 0x000, 0x00, 0x00 },
@@ -48,3 +51,5 @@ const FlashModel::command_sequence FlashModel::cmd_chip_erase[FlashModel::CMD_LE
     { 0xFFF, 0xAAA, 0xFF, 0x10 },
 };
 
+
+};  // namespace Cube

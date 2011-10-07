@@ -1,21 +1,22 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _ACCEL_H
-#define _ACCEL_H
-
-#include <stdint.h>
-
 /*
  * Simulated I2C accelerometer: MEMSIC DTOS v005
  */
 
+#ifndef _CUBE_ACCEL_H
+#define _CUBE_ACCEL_H
+
 #include <stdint.h>
+
+namespace Cube {
+
 
 class I2CAccelerometer {
  public:
@@ -107,5 +108,8 @@ class I2CAccelerometer {
     } state;
 
 };
+
+
+};  // namespace Cube
 
 #endif

@@ -1,9 +1,51 @@
-all: cube-sim
 
-.PHONY: all clean
+BIN = tc-siftulator
 
-cube-sim:
-	make -C cube
+OBJS = \
+	src/cube_cpu_core.o \
+	src/cube_cpu_disasm.o \
+	src/cube_cpu_irq.o \
+	src/cube_cpu_opcodes.o \
+	src/cube_debug_mainview.o \
+	src/cube_debug_memeditor.o \
+	src/cube_debug_popups.o \
+	src/cube_debug.o \
+	src/cube_flash_model.o \
+	src/cube_hardware.o \
+	src/cube_network.o \
+
+#	src/frontend.o \
+#	src/main.o \
+
+CDEPS = *.h
+
+CFLAGS += $(shell sdl-config --cflags)
+LDFLAGS += -lncurses $(shell sdl-config --libs)
+
+OS := $(shell uname)
+ifeq ($(OS),Darwin)
+        LDFLAGS += -framework OpenGL
+else
+	LDFLAGS += -lGL
+endif
+
+CFLAGS += -O3 -g -Werror -Wall
+LDFLAGS += -g
+CCFLAGS := $(CFLAGS)
+
+all: $(BIN)
+
+$(BIN): $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+
+%.o: %.cpp $(CDEPS)
+	$(CC) -c -o $@ $< $(CCFLAGS)
+
+%.o: %.c $(CDEPS)
+	$(CC) -c -o $@ $< $(CCFLAGS)
+
+.PHONY: clean
 
 clean:
-	make -C cube clean
+	rm -f $(BIN) $(OBJS)

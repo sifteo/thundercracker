@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -35,8 +35,11 @@
 
 #include <stdint.h>
 
-#ifndef _FLASH_MODEL_H
-#define _FLASH_MODEL_H
+#ifndef _CUBE_FLASH_MODEL_H
+#define _CUBE_FLASH_MODEL_H
+
+namespace Cube {
+
 
 struct FlashModel {
     /*
@@ -88,6 +91,9 @@ struct FlashModel {
     static const command_sequence cmd_block_erase[CMD_LENGTH];
     static const command_sequence cmd_chip_erase[CMD_LENGTH];
 };
+
+
+};  // namespace Cube
 
 #endif
 

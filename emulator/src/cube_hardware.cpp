@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -25,7 +25,6 @@
  *  P0.0     LCD WRX
  */
 
-
 #define ADDR_PORT       REG_P0
 #define BUS_PORT        REG_P2
 #define CTRL_PORT       REG_P3
@@ -47,11 +46,12 @@
 #define RFCON_RFCSN     0x02
 #define RFCON_RFCE      0x01
 
-
 #include "cube_hardware.h"
 
+namespace Cube {
 
-bool CubeHardware::init(const char *firmwareFile, const char *flashFile,
+
+bool Hardware::init(const char *firmwareFile, const char *flashFile,
                         const char *netHost, const char *netPort)
 {
     lat1 = 0;
@@ -87,13 +87,13 @@ bool CubeHardware::init(const char *firmwareFile, const char *flashFile,
     return true;
 }
 
-void CubeHardware::exit()
+void Hardware::exit()
 {
     flash.exit();
     spi.radio.network.exit();
 }
 
-void CubeHardware::graphicsTick()
+void Hardware::graphicsTick()
 {
     /*
      * Update the graphics (LCD and Flash) bus. Only happens in
@@ -148,14 +148,14 @@ void CubeHardware::graphicsTick()
     case 2:     bus = bus_port; break;
     default:
         /* Bus contention! */
-        cpu.except(&cpu, EXCEPTION_BUS_CONTENTION);
+        cpu.except(&cpu, CPU::EXCEPTION_BUS_CONTENTION);
     }
     
     flash_drv = flashp.data_drv;  
     cpu.mSFR[BUS_PORT] = bus;
 }
 
-void CubeHardware::hardwareTick()
+void Hardware::hardwareTick()
 {
     /*
      * Update the LCD Tearing Effect line
@@ -205,10 +205,10 @@ void CubeHardware::hardwareTick()
         cpu.mSFR[BUS_PORT] = flash.dataOut();
 }
 
-void CubeHardware::except(em8051 *cpu, int exc)
+void Hardware::except(CPU::em8051 *cpu, int exc)
 {
-    //CubeHardware *self = (CubeHardware*) cpu->callbackData;
-    const char *name = em8051_exc_name(exc);
+    //Hardware *self = (Hardware*) cpu->callbackData;
+    const char *name = CPU::em8051_exc_name(exc);
 
     if (cpu->traceFile)
         fprintf(cpu->traceFile, "EXCEPTION at 0x%04x: %s\n", cpu->mPC, name);
@@ -216,9 +216,9 @@ void CubeHardware::except(em8051 *cpu, int exc)
     fprintf(stderr, "EXCEPTION at 0x%04x: %s\n", cpu->mPC, name);
 }
 
-void CubeHardware::sfrWrite(em8051 *cpu, int reg)
+void Hardware::sfrWrite(CPU::em8051 *cpu, int reg)
 {
-    CubeHardware *self = (CubeHardware*) cpu->callbackData;
+    Hardware *self = (Hardware*) cpu->callbackData;
     uint8_t value = cpu->mSFR[reg];
     reg -= 0x80;
     switch (reg) {
@@ -257,9 +257,9 @@ void CubeHardware::sfrWrite(em8051 *cpu, int reg)
     }
 }
 
-int CubeHardware::sfrRead(em8051 *cpu, int reg)
+int Hardware::sfrRead(CPU::em8051 *cpu, int reg)
 {
-    CubeHardware *self = (CubeHardware*) cpu->callbackData;
+    Hardware *self = (Hardware*) cpu->callbackData;
     reg -= 0x80;
     switch (reg) {
      
@@ -278,3 +278,4 @@ int CubeHardware::sfrRead(em8051 *cpu, int reg)
 }
 
 
+};  // namespace Cube

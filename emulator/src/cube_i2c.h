@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -13,11 +13,14 @@
  * individual bytes, start/stop conditions, and fire interrupts.
  */
 
-#ifndef _I2C_H
-#define _I2C_H
+#ifndef _CUBE_I2C_H
+#define _CUBE_I2C_H
 
-#include "emu8051.h"
-#include "accel.h"
+#include "cube_cpu.h"
+#include "cube_accel.h"
+
+namespace Cube {
+
 
 class I2CBus {
  public:
@@ -29,7 +32,7 @@ class I2CBus {
         timer = 0;
     }
 
-    int tick(struct em8051 *cpu) {
+    int tick(CPU::em8051 *cpu) {
         uint8_t w2con0 = cpu->mSFR[REG_W2CON0];
         uint8_t w2con1 = cpu->mSFR[REG_W2CON1];
     
@@ -47,7 +50,7 @@ class I2CBus {
                     uint8_t stop = w2con0 & W2CON0_STOP;
 
                     if (rx_buffer_full)
-                        cpu->except(cpu, EXCEPTION_I2C);
+                        cpu->except(cpu, CPU::EXCEPTION_I2C);
  
                     rx_buffer = accel.i2cRead(!stop);
                     rx_buffer_full = 1;
@@ -119,24 +122,24 @@ class I2CBus {
         return (w2con0 & W2CON0_ENABLE) && (w2con1 & W2CON1_READY) && !(w2con1 & W2CON1_MASKIRQ);
     }
     
-    void writeData(struct em8051 *cpu, uint8_t data) {
+    void writeData(CPU::em8051 *cpu, uint8_t data) {
         if (tx_buffer_full) {
-            cpu->except(cpu, EXCEPTION_I2C);
+            cpu->except(cpu, CPU::EXCEPTION_I2C);
         } else {
             tx_buffer = data;
             tx_buffer_full = 1;
         }
     }
 
-    uint8_t readData(struct em8051 *cpu) {
+    uint8_t readData(CPU::em8051 *cpu) {
         if (!rx_buffer_full)
-            cpu->except(cpu, EXCEPTION_I2C);
+            cpu->except(cpu, CPU::EXCEPTION_I2C);
         
         rx_buffer_full = 0;
         return rx_buffer;
     }
 
-    uint8_t readCON1(struct em8051 *cpu) {
+    uint8_t readCON1(CPU::em8051 *cpu) {
         uint8_t value = cpu->mSFR[REG_W2CON1];
         
         // Reset READY bit after each read
@@ -146,7 +149,7 @@ class I2CBus {
     }
 
  private:
-    void timerSet(struct em8051 *cpu, int bits) {
+    void timerSet(CPU::em8051 *cpu, int bits) {
         /*
          * Wake after 'bits' bit periods, and set READY.
          */
@@ -155,7 +158,7 @@ class I2CBus {
         switch (w2con0 & W2CON0_SPEED) {
         case W2CON0_400KHZ: timer = HZ_TO_CYCLES(400000) * bits; break;
         case W2CON0_100KHZ: timer = HZ_TO_CYCLES(100000) * bits; break;
-        default: cpu->except(cpu, EXCEPTION_I2C);
+        default: cpu->except(cpu, CPU::EXCEPTION_I2C);
         }
     }
 
@@ -187,5 +190,8 @@ class I2CBus {
     uint8_t rx_buffer;
     uint8_t rx_buffer_full;
 };
+
+
+};  // namespace Cube
  
 #endif

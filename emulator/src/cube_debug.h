@@ -28,15 +28,20 @@
  * Curses-based emulator front-end
  */
 
-#ifndef _DEBUGGER_H
-#define _DEBUGGER_H
+#ifndef _CUBE_DEBUG_H
+#define _CUBE_DEBUG_H
 
 #include <stdint.h>
-#include "emu8051.h"
+
+#include "cube_cpu.h"
 #include "cube_hardware.h"
 
-// how many lines of history to remember
-#define HISTORY_LINES 20
+namespace Cube {
+namespace Debug {
+
+#define HISTORY_LINES  20
+#define HISTORY_SIZE   (HISTORY_LINES * (128 + 64 + sizeof(int)))
+#define FILENAME_SIZE  256
 
 enum EMU_VIEWS
 {
@@ -46,50 +51,57 @@ enum EMU_VIEWS
 };
 
 // binary history buffer
-extern unsigned char history[];
+extern unsigned char history[HISTORY_SIZE];
 
 // last used filename
-extern char filename[];
+extern char filename[FILENAME_SIZE];
 
 // instruction count; needed to replay history correctly
 extern unsigned int icount;
 
 // current line in the history cyclic buffers
 extern int historyline;
+
 // last known columns and rows; for screen resize detection
 extern int oldcols, oldrows;
+
 // are we in single-step or run mode
 extern int runmode;
+
 // current run speed, lower is faster
 extern int speed;
 
 // currently active view
 extern int view;
 
-// emu.c
-extern void setSpeed(int speed, int runmode);
-extern void refreshview(struct em8051 *aCPU);
-extern void change_view(struct em8051 *aCPU, int changeto);
+// main
+void setSpeed(int speed, int runmode);
+void refreshview(CPU::em8051 *aCPU);
+void change_view(CPU::em8051 *aCPU, int changeto);
 
-// popups.c
-extern void emu_help(struct em8051 *aCPU);
-extern int emu_reset(struct em8051 *aCPU);
-extern int emu_readvalue(struct em8051 *aCPU, const char *aPrompt, int aOldvalue, int aValueSize);
-extern int emu_readhz(struct em8051 *aCPU, const char *aPrompt, int aOldvalue);
-extern void emu_load(struct em8051 *aCPU);
-extern void emu_exception(struct em8051 *aCPU, int aCode);
-extern void emu_popup(struct em8051 *aCPU, char *aTitle, char *aMessage);
+// popups
+void emu_help(CPU::em8051 *aCPU);
+int emu_reset(CPU::em8051 *aCPU);
+int emu_readvalue(CPU::em8051 *aCPU, const char *aPrompt, int aOldvalue, int aValueSize);
+int emu_readhz(CPU::em8051 *aCPU, const char *aPrompt, int aOldvalue);
+void emu_load(CPU::em8051 *aCPU);
+void emu_exception(CPU::em8051 *aCPU, int aCode);
+void emu_popup(CPU::em8051 *aCPU, char *aTitle, char *aMessage);
 
-// mainview.c
-extern void mainview_editor_keys(struct em8051 *aCPU, int ch);
-extern void build_main_view(struct em8051 *aCPU);
-extern void wipe_main_view();
-extern void mainview_update(CubeHardware *cube);
+// mainview
+void mainview_editor_keys(CPU::em8051 *aCPU, int ch);
+void build_main_view(CPU::em8051 *aCPU);
+void wipe_main_view();
+void mainview_update(Cube::Hardware *cube);
 
 // memeditor.c
-extern void wipe_memeditor_view();
-extern void build_memeditor_view(CubeHardware *cube);
-extern void memeditor_editor_keys(struct em8051 *aCPU, int ch);
-extern void memeditor_update(struct em8051 *aCPU);
+void wipe_memeditor_view();
+void build_memeditor_view(Cube::Hardware *cube);
+void memeditor_editor_keys(CPU::em8051 *aCPU, int ch);
+void memeditor_update(CPU::em8051 *aCPU);
+
+
+};  // namespace Debug
+};  // namespace Cube
 
 #endif

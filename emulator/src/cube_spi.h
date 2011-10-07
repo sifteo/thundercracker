@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -48,8 +48,13 @@
  *    third byte that is partially transmitted.
  */
 
-#ifndef _SPI_H
-#define _SPI_H
+#ifndef _CUBE_SPI_H
+#define _CUBE_SPI_H
+
+#include "cube_cpu.h"
+
+namespace Cube {
+
 
 class SPIBus {
  public:
@@ -57,7 +62,7 @@ class SPIBus {
     // Peripheral devices
     Radio radio;
 
-    void init(struct em8051 *_cpu) {
+    void init(CPU::em8051 *_cpu) {
         cpu = _cpu;
         tx_count = 0;
         rx_count = 0;
@@ -73,7 +78,7 @@ class SPIBus {
             tx_count++;
             status_dirty = 1;
         } else {
-            cpu->except(cpu, EXCEPTION_SPI_XRUN);
+            cpu->except(cpu, CPU::EXCEPTION_SPI_XRUN);
         }
     }
 
@@ -85,7 +90,7 @@ class SPIBus {
             rx_count--;
             status_dirty = 1;
         } else
-            cpu->except(cpu, EXCEPTION_SPI_XRUN);
+            cpu->except(cpu, CPU::EXCEPTION_SPI_XRUN);
 
         return miso;
     }
@@ -117,7 +122,7 @@ class SPIBus {
                 if (rx_count < SPI_FIFO_SIZE)
                     rx_fifo[rx_count++] = miso;
                 else
-                    cpu->except(cpu, EXCEPTION_SPI_XRUN);
+                    cpu->except(cpu, CPU::EXCEPTION_SPI_XRUN);
             }
             status_dirty = 1;
         }
@@ -188,7 +193,7 @@ class SPIBus {
 
     static const uint8_t SPI_FIFO_SIZE   = 2;
 
-    struct em8051 *cpu; // Only for exception reporting!
+    CPU::em8051 *cpu; // Only for exception reporting!
     
     uint8_t tx_fifo[SPI_FIFO_SIZE]; // Writes pushed -> into [0]
     uint8_t rx_fifo[SPI_FIFO_SIZE]; // Reads pulled <- from [0]
@@ -201,4 +206,6 @@ class SPIBus {
     uint8_t status_dirty;
 };
  
+};  // namespace Cube
+
 #endif

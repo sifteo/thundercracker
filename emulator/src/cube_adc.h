@@ -1,16 +1,19 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _ADC_H
-#define _ADC_H
+#ifndef _CUBE_ADC_H
+#define _CUBE_ADC_H
 
 #include <stdint.h>
-#include "reg8051.h"
+#include "cube_cpu_reg.h"
+
+namespace Cube {
+
 
 class ADC {
  public:
@@ -196,4 +199,7 @@ class ADC {
     static const uint8_t ADCCON3_RLJUST        = 0x20;
 };
  
+
+};  // namespace Cube
+
 #endif

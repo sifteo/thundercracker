@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -13,18 +13,21 @@
  * receive pipe (P0).
  */
 
-#ifndef _RADIO_H
-#define _RADIO_H
+#ifndef _CUBE_RADIO_H
+#define _CUBE_RADIO_H
 
-#include "radio.h"
-#include "network.h"
+#include "cube_cpu.h"
+#include "cube_radio.h"
+#include "cube_network.h"
+
+namespace Cube {
 
 class Radio {
  public:
     // Network backing this radio
     NetworkClient network;
 
-    void init(struct em8051 *cpu) {
+    void init(CPU::em8051 *cpu) {
         memset(this, 0, sizeof *this);
         cpu = cpu;
 
@@ -180,7 +183,7 @@ class Radio {
                 network.tx(src_addr, NULL, 0);
             }
         } else
-            cpu->except(cpu, EXCEPTION_RADIO_XRUN);
+            cpu->except(cpu, CPU::EXCEPTION_RADIO_XRUN);
 
         updateStatus();
     }
@@ -255,7 +258,7 @@ class Radio {
                 tx_fifo_count++;
                 tx_fifo_head = (tx_fifo_head + 1) % FIFO_SIZE;
             } else
-                cpu->except(cpu, EXCEPTION_RADIO_XRUN);
+                cpu->except(cpu, CPU::EXCEPTION_RADIO_XRUN);
             break;
             
         case CMD_R_RX_PAYLOAD:
@@ -263,7 +266,7 @@ class Radio {
                 rx_fifo_count--;
                 rx_fifo_tail = (rx_fifo_tail + 1) % FIFO_SIZE;
             } else
-                cpu->except(cpu, EXCEPTION_RADIO_XRUN);
+                cpu->except(cpu, CPU::EXCEPTION_RADIO_XRUN);
             break;
         }
     }
@@ -400,7 +403,9 @@ class Radio {
     radio_packet rx_fifo[FIFO_SIZE];
     radio_packet tx_fifo[FIFO_SIZE];
 
-    struct em8051 *cpu; // Only for exception reporting!
+    CPU::em8051 *cpu; // Only for exception reporting!
 };
+
+};  // namespace Cube
 
 #endif

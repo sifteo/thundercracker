@@ -31,9 +31,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "curses.h"
-#include "emu8051.h"
-#include "debugger.h"
+#include <curses.h>
+
+#include "cube_cpu.h"
+#include "cube_debug.h"
+
+namespace Cube {
+namespace Debug {
 
 
 struct memeditor
@@ -62,9 +66,9 @@ void wipe_memeditor_view()
     }
 }
 
-void build_memeditor_view(CubeHardware *cube)
+void build_memeditor_view(Cube::Hardware *cube)
 {
-    em8051 *aCPU = &cube->cpu;
+    CPU::em8051 *aCPU = &cube->cpu;
     int i, y;
     erase();
     
@@ -127,7 +131,7 @@ void build_memeditor_view(CubeHardware *cube)
     refresh();
 }
 
-void memeditor_editor_keys(struct em8051 *aCPU, int ch)
+void memeditor_editor_keys(CPU::em8051 *aCPU, int ch)
 {
     int insert_value = -1;
     switch(ch)
@@ -233,7 +237,7 @@ void memeditor_editor_keys(struct em8051 *aCPU, int ch)
 
 #define MASK_PRINTABLES(x) (((x) > 31)?(((x) < 127)?(x):'.'):'.')
 
-void memeditor_update(struct em8051 *aCPU)
+void memeditor_update(CPU::em8051 *aCPU)
 {
     int i, j, bytevalue;
     for (i = 0; i < NUM_EDITORS; i++)
@@ -276,3 +280,8 @@ void memeditor_update(struct em8051 *aCPU)
 
     refresh();
 }
+
+
+};  // namespace Debug
+};  // namespace Cube
+

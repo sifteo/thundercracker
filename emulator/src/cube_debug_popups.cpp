@@ -32,13 +32,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include "curses.h"
-#include "emu8051.h"
-#include "debugger.h"
+
+#include "cube_cpu.h"
+#include "cube_debug.h"
+
+namespace Cube {
+namespace Debug {
+
 
 // store the object filename (Accessed through command line as well)
-char filename[256];
+char filename[FILENAME_SIZE];
 
-void emu_popup(struct em8051 *aCPU, const char *aTitle, const char *aMessage)
+
+void emu_popup(CPU::em8051 *aCPU, const char *aTitle, const char *aMessage)
 {
     WINDOW * exc;
     nocbreak();
@@ -71,9 +77,9 @@ void emu_popup(struct em8051 *aCPU, const char *aTitle, const char *aMessage)
     refreshview(aCPU);
 }
 
-void emu_exception(struct em8051 *aCPU, int aCode)
+void emu_exception(CPU::em8051 *aCPU, int aCode)
 {
-    const char *name = em8051_exc_name(aCode);
+    const char *name = CPU::em8051_exc_name(aCode);
     WINDOW * exc;
     
     nocbreak();
@@ -103,7 +109,7 @@ void emu_exception(struct em8051 *aCPU, int aCode)
     change_view(aCPU, MAIN_VIEW);
 }
 
-void emu_load(struct em8051 *aCPU)
+void emu_load(CPU::em8051 *aCPU)
 {
     WINDOW * exc;
     int pos = 0;
@@ -178,7 +184,7 @@ void emu_load(struct em8051 *aCPU)
     }
 }
 
-int emu_readvalue(struct em8051 *aCPU, const char *aPrompt, int aOldvalue, int aValueSize)
+int emu_readvalue(CPU::em8051 *aCPU, const char *aPrompt, int aOldvalue, int aValueSize)
 {
     WINDOW * exc;
     int pos = 0;
@@ -272,7 +278,7 @@ int emu_readvalue(struct em8051 *aCPU, const char *aPrompt, int aOldvalue, int a
     return strtol(temp, NULL, 16);
 }
 
-int emu_readhz(struct em8051 *aCPU, const char *aPrompt, int aOldvalue)
+int emu_readhz(CPU::em8051 *aCPU, const char *aPrompt, int aOldvalue)
 {
     WINDOW * exc;
     int pos = 0;
@@ -328,7 +334,7 @@ int emu_readhz(struct em8051 *aCPU, const char *aPrompt, int aOldvalue)
     return strtol(temp, NULL, 10);
 }
 
-int emu_reset(struct em8051 *aCPU)
+int emu_reset(CPU::em8051 *aCPU)
 {
     WINDOW * exc;
     char temp[256];
@@ -379,7 +385,7 @@ int emu_reset(struct em8051 *aCPU)
     return result;
 }
 
-void emu_help(struct em8051 *aCPU)
+void emu_help(CPU::em8051 *aCPU)
 {
     WINDOW * exc;
     char temp[256];
@@ -397,7 +403,7 @@ void emu_help(struct em8051 *aCPU)
     wrefresh(exc);
 
     wmove(exc, 2, 2);
-    waddstr(exc, "Sifteo prototype simulator - M. Elizabeth Scott <beth@sifteo.com>");
+    waddstr(exc, "Sifteo Thundercracker simulator - M. Elizabeth Scott <beth@sifteo.com>");
     wmove(exc, 3, 2);
     waddstr(exc, "Copyright (c) 2011 Sifteo, Inc.");
 
@@ -435,3 +441,8 @@ void emu_help(struct em8051 *aCPU)
     delwin(exc);
     refreshview(aCPU);
 }
+
+
+};  // namespace Debug
+};  // namespace Cube
+

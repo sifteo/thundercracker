@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
@@ -9,19 +9,21 @@
 #ifndef _CUBE_HARDWARE_H
 #define _CUBE_HARDWARE_H
 
-#include "emu8051.h"
-#include "radio.h"
-#include "adc.h"
-#include "accel.h"
-#include "spi.h"
-#include "i2c.h"
-#include "lcd.h"
-#include "flash.h"
+#include "cube_cpu.h"
+#include "cube_radio.h"
+#include "cube_adc.h"
+#include "cube_accel.h"
+#include "cube_spi.h"
+#include "cube_i2c.h"
+#include "cube_lcd.h"
+#include "cube_flash.h"
+
+namespace Cube {
 
 
-class CubeHardware {
+class Hardware {
  public:
-    em8051 cpu;
+    CPU::em8051 cpu;
     LCD lcd;
     SPIBus spi;
     I2CBus i2c;
@@ -90,9 +92,9 @@ class CubeHardware {
     void hardwareTick();
     void graphicsTick();
 
-    static void except(em8051 *cpu, int exc);
-    static void sfrWrite(em8051 *cpu, int reg);
-    static int sfrRead(em8051 *cpu, int reg);
+    static void except(CPU::em8051 *cpu, int exc);
+    static void sfrWrite(CPU::em8051 *cpu, int reg);
+    static int sfrRead(CPU::em8051 *cpu, int reg);
 
     uint8_t lat1;
     uint8_t lat2;
@@ -102,5 +104,7 @@ class CubeHardware {
     uint8_t iex3;
     uint8_t rfcken;
 };
+
+};  // namespace Cube
 
 #endif

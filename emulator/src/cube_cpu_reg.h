@@ -1,13 +1,15 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _REG8051_H
-#define _REG8051_H
+#ifndef _CUBE_CPU_REG_H
+#define _CUBE_CPU_REG_H
+
+namespace Cube {
 
 #define XDATA_SIZE      1024
 #define IDATA_SIZE      256
@@ -237,5 +239,8 @@ enum IP_MASKS
 #define SEL_DPH(dps)   (((dps) & 1) ? REG_DPH1 : REG_DPH)
 #define CUR_DPL        SEL_DPL(aCPU->mSFR[REG_DPS])
 #define CUR_DPH        SEL_DPH(aCPU->mSFR[REG_DPS])
+
+
+};  // namespace Cube
 
 #endif

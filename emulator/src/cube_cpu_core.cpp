@@ -31,14 +31,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "emu8051.h"
 
-void disasm_setptrs(struct em8051 *aCPU);
-void op_setptrs(struct em8051 *aCPU);
-void handle_interrupts(struct em8051 *aCPU);
+#include "cube_cpu.h"
+
+namespace Cube {
+namespace CPU {
 
 
-static void timer_tick(struct em8051 *aCPU)
+void disasm_setptrs(em8051 *aCPU);
+void op_setptrs(em8051 *aCPU);
+void handle_interrupts(em8051 *aCPU);
+
+
+static void timer_tick(em8051 *aCPU)
 {
     int increment;
     int v;
@@ -271,7 +276,7 @@ static void timer_tick(struct em8051 *aCPU)
     }
 }
 
-static void traceExecution(struct em8051 *mCPU)
+static void traceExecution(em8051 *mCPU)
 {
     char assembly[128];
     uint8_t bank = (mCPU->mSFR[REG_PSW] & (PSWMASK_RS0|PSWMASK_RS1)) >> PSW_RS0;
@@ -298,7 +303,7 @@ static void traceExecution(struct em8051 *mCPU)
             mCPU->mSFR[REG_DEBUG]);
 }
 
-int em8051_tick(struct em8051 *aCPU)
+int em8051_tick(em8051 *aCPU)
 {
     int v;
     int ticked = 0;
@@ -367,12 +372,12 @@ int em8051_tick(struct em8051 *aCPU)
     return ticked;
 }
 
-int em8051_decode(struct em8051 *aCPU, int aPosition, char *aBuffer)
+int em8051_decode(em8051 *aCPU, int aPosition, char *aBuffer)
 {
     return aCPU->dec[aCPU->mCodeMem[aPosition & (CODE_SIZE - 1)]](aCPU, aPosition, aBuffer);
 }
 
-void em8051_reset(struct em8051 *aCPU, int aWipe)
+void em8051_reset(em8051 *aCPU, int aWipe)
 {
     // clear memory, set registers to bootup values, etc    
     if (aWipe)
@@ -410,7 +415,7 @@ static int readbyte(FILE * f)
     return strtol(data, NULL, 16);
 }
 
-int em8051_load(struct em8051 *aCPU, char *aFilename)
+int em8051_load(em8051 *aCPU, char *aFilename)
 {
     FILE *f;    
     if (aFilename == 0 || aFilename[0] == 0)
@@ -474,3 +479,8 @@ const char *em8051_exc_name(int aCode)
     else
         return "Unknown exception";
 }
+
+
+};  // namespace CPU
+};  // namespace Cube
+

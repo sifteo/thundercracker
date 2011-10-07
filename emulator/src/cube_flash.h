@@ -1,16 +1,21 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _FLASH_H
-#define _FLASH_H
+#ifndef _CUBE_FLASH_H
+#define _CUBE_FLASH_H
 
 #include <stdint.h>
-#include "flash_model.h"
+
+#include "cube_cpu.h"
+#include "cube_flash_model.h"
+
+namespace Cube {
+
 
 class Flash {
  public:
@@ -88,7 +93,7 @@ class Flash {
         return sizeof data;
     }
     
-    void tick(struct em8051 *cpu) {
+    void tick(CPU::em8051 *cpu) {
         /*
          * March time forward on the current operation, if any.
          */
@@ -105,7 +110,7 @@ class Flash {
                  */
                 {
                     unsigned pc = cpu->mPC & (CODE_SIZE - 1);
-                    struct profile_data *pd = &cpu->mProfilerMem[pc];
+                    CPU::profile_data *pd = &cpu->mProfilerMem[pc];
                     pd->flash_idle++;
                 }
             }
@@ -309,5 +314,8 @@ class Flash {
     // Memory array
     uint8_t data[FlashModel::SIZE];
 };
+
+
+};  // namespace Cube
 
 #endif

@@ -28,12 +28,15 @@
  * Emulator core header file
  */
 
-#ifndef __EMU8051_H
-#define __EMU8051_H
+#ifndef _CUBE_CPU_H
+#define _CUBE_CPU_H
 
 #include <stdio.h>
 #include <stdint.h>
-#include "reg8051.h"
+#include "cube_cpu_reg.h"
+
+namespace Cube {
+namespace CPU {
 
 struct em8051;
 
@@ -147,5 +150,9 @@ enum EM8051_EXCEPTION
     EXCEPTION_I2C,               // I2C error
     EXCEPTION_XDATA_ERROR,       // Access to unmapped portion of xdata 
 };
+
+
+};  // namespace CPU
+};  // namespace Cube
 
 #endif

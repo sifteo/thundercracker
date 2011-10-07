@@ -1,12 +1,16 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * Sifteo prototype simulator
+ * Sifteo Thundercracker simulator
  * M. Elizabeth Scott <beth@sifteo.com>
  *
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include "emu8051.h"
+#include "cube_cpu.h"
+
+namespace Cube {
+namespace CPU {
+
 
 /*
  * Try to invoke an interrupt, of a specified level, with the given
@@ -107,3 +111,8 @@ void handle_interrupts(struct em8051 *cpu)
             cpu->mSFR[irq_lut[found_i].req_sfr] &= ~irq_lut[found_i].autoclear;
         }
 }
+
+
+};  // namespace CPU
+};  // namespace Cube
+
