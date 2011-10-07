@@ -4,7 +4,11 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#ifndef _CUBEWRAPPER_H
+#define _CUBEWRAPPER_H
+
 #include <sifteo.h>
+#include "GridSlot.h"
 
 using namespace Sifteo;
 
@@ -12,6 +16,9 @@ using namespace Sifteo;
 class CubeWrapper
 {
 public:
+	static const int NUM_ROWS = 4;
+	static const int NUM_COLS = 4;
+
 	CubeWrapper( _SYSCubeID id );
 
 	void Init( AssetGroup &assets );
@@ -20,7 +27,10 @@ public:
 	void Draw();
 	void vidInit();
 private:
-	Cube cube;
-	VidMode_BG0 vid;
-	VidMode_BG0_ROM rom;
+	Cube m_cube;
+	VidMode_BG0 m_vid;
+	VidMode_BG0_ROM m_rom;
+	GridSlot m_grid[NUM_ROWS][NUM_COLS];
 };
+
+#endif

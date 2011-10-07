@@ -11,13 +11,7 @@
 #include <sifteo.h>
 #include "assets.gen.h"
 #include "cubewrapper.h"
-
-#define PRINTS_ON 0
-#if PRINTS_ON
-#define PRINT(...) printf (__VA_ARGS__)
-#else
-#define PRINT(...) 
-#endif
+#include "utils.h"
 
 using namespace Sifteo;
 
