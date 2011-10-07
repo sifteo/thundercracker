@@ -17,6 +17,7 @@
 #include <protocol.h>
 #include "radio.h"
 #include "runtime.h"
+#include "vram.h"
 
 
 /**
@@ -34,6 +35,8 @@ class BitBuffer {
     }
 
     unsigned flush(PacketBuffer &buf) {
+        ASSERT(count <= 32);
+
         unsigned byteWidth = MIN(buf.bytesFree(), count >> 3);
         buf.append((uint8_t *) &bits, byteWidth);
 
@@ -56,15 +59,20 @@ class BitBuffer {
     }
 
     void append(uint32_t value, unsigned width) {
+        DEBUG_LOG(("\tbits: %08x/%d <- %08x/%d\n", bits, count, value, width));
+
+        // Overflow-safe asserts
+        ASSERT(count <= 32);
+        ASSERT(width <= 32);
+
         bits |= value << count;
         count += width;
+        ASSERT(count <= 32);
     }
 
     void appendMasked(uint32_t value, unsigned width) {
         append(value & ((1 << width) - 1), width);
     }
-
-    void debug();
 
  private:
     uint32_t bits;
@@ -93,6 +101,7 @@ class CubeCodec {
 
     void flashAckBytes(uint8_t count) {
         loadBufferAvail += count;
+        ASSERT(loadBufferAvail <= FLS_FIFO_USABLE);
     }
 
     void endPacket(PacketBuffer &buf) {
@@ -135,22 +144,22 @@ class CubeCodec {
     uint16_t codePtr;           /// Codec's VRAM write pointer state (word address)
 
     void codePtrAdd(uint16_t words) {
-        codePtr = (codePtr + words) & PTR_MASK;
+        ASSERT(codePtr < _SYS_VRAM_WORDS);
+        codePtr = (codePtr + words) & _SYS_VRAM_WORD_MASK;
     }
 
     unsigned deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t offset) {
         uint16_t ptr = codePtr - offset;
+        ptr &= _SYS_VRAM_WORD_MASK;
 
-        ptr &= PTR_MASK;
-
-        if ((vb->lock & Sifteo::Intrinsic::LZ(ptr >> 4)) ||
-            (vb->cm1[ptr >> 5] & Sifteo::Intrinsic::LZ(ptr & 31))) {
+        if ((vb->lock & VRAM::maskLock(ptr)) ||
+            (VRAM::selectCM1(*vb, ptr) & VRAM::maskCM1(ptr))) {
 
             // Can't match a locked or modified word
             return (unsigned) -1;
         }
- 
-        uint16_t sample = vb->vram.words[ptr];
+
+        uint16_t sample = VRAM::peek(*vb, ptr);
 
         if ((sample & 0x0101) != (data & 0x0101)) {
             // Different LSBs, can't possibly reach it via a delta
@@ -185,8 +194,6 @@ class CubeCodec {
 
     void encodeDS(uint8_t d, uint8_t s);
     void flushDSRuns(bool rleSafe);
-
-    static const unsigned PTR_MASK = 511;
 };
 
 #endif

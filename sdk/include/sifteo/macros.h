@@ -9,13 +9,32 @@
 
 #ifdef SIFTEO_SIMULATOR
 #include <stdio.h>
+#include <assert.h>
 #endif
 
+/*
+ * ASSERT is not an error handling mechanism! They are only present in
+ * simulator builds. Use ASSERTs to catch errors that shouldn't be
+ * possible; cases where without the ASSERT, you'd be crashing or
+ * corrupting memory. Use ASSERT to catch errors, not to fix them!
+ */
+
 #ifdef SIFTEO_SIMULATOR
-#define LOG(_x)    printf _x
+#   ifdef DEBUG
+#      define DEBUG_LOG(_x)   printf _x
+#   else
+#      define DEBUG_LOG(_x)
+#   endif
+#   define LOG(_x)            printf _x
+#   define ASSERT(_x)         assert(_x)
 #else
-#define LOG(_x)
+#   define DEBUG_LOG(_x)
+#   define LOG(_x)
+#   define ASSERT(_x)
 #endif
+
+// Produces a 'size of array is negative' compile error when the assert fails
+#define STATIC_ASSERT(_x)  ((void)sizeof(char[1 - 2*!(_x)]))
 
 #ifndef MIN
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))

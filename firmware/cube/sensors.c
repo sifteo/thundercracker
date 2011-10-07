@@ -12,6 +12,14 @@
 #include "radio.h"
 #include "time.h"
 
+/*
+ * These MEMSIC accelerometers are flaky little buggers! We're seeing
+ * different chips ship with different addresses, so we have to do a
+ * quick search if we don't get a response. Additionally, we're seeing
+ * them deadlock the I2C bus occasionally. So, we try to work around
+ * that by unjamming the bus manually before every poll.
+ */
+
 #define ADDR_SEARCH_START       0x20    // Start here...
 #define ADDR_SEARCH_INC         0x02    // Add this
 #define ADDR_SEARCH_MASK        0x2F    // And mask to this (Keep the 0x20 bit always)
@@ -157,9 +165,23 @@ as_ret:
 void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 {
     __asm
+        ; Currently we dont use any registers or affect processor flags, so no
+        ; need to save any state yet.
 
-        mov     _accel_state, #0
-        mov     _W2DAT, _accel_addr
+        ; Trigger the next accelerometer read, and reset the I2C bus. We do
+        ; this each time, to avoid a lockup condition that can persist
+        ; for multiple packets. We include a brief GPIO frob first, to try
+        ; and clear the lockup on the accelerometer end.
+
+        orl     MISC_PORT, #MISC_I2C      ; Drive the I2C lines high
+        anl     _MISC_DIR, #~MISC_I2C     ;   Output drivers enabled
+        xrl     MISC_PORT, #MISC_I2C_SCL  ;   Now pulse SCL low
+        mov     _accel_state, #0          ; Reset accelerometer state machine
+        mov     _W2CON0, #0               ; Reset I2C master
+        mov     _W2CON0, #1               ;   Turn on I2C controller
+        mov     _W2CON0, #7               ;   Master mode, 100 kHz.
+        mov     _W2CON1, #0               ;   Unmask interrupt
+        mov     _W2DAT, _accel_addr       ; Trigger the next I2C transaction
 
         reti
     __endasm;
@@ -180,9 +202,6 @@ void sensors_init()
      * Currently we're using priority level 2.
      */
 
-    W2CON0 |= 1;                // Enable I2C / 2Wire controller
-    W2CON0 = 0x07;              // 100 kHz, Master mode
-    W2CON1 = 0x00;              // Unmask interrupt
     INTEXP |= 0x04;             // Enable 2Wire IRQ -> iex3
     T2CON |= 0x40;              // iex3 rising edge
     IRCON = 0;                  // Clear any spurious IRQs from initialization

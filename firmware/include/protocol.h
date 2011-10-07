@@ -288,6 +288,7 @@ typedef union {
  */
 
 #define FLS_FIFO_SIZE           64      // Size of buffer between radio and flash decoder
+#define FLS_FIFO_USABLE         63      // Usable size of FIFO (One byte for full/empty disambiguation)
 #define FLS_FIFO_RESET          0xFF    // Reserved FIFO index used to signal RF_OP_FLASH_RESET
 
 #define FLS_LUT_SIZE            16      // Size of persistent color LUT used by RLE encodings

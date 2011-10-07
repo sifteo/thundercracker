@@ -29,6 +29,14 @@ class Runtime {
          *      make sure it isn't outside the game's sandbox region. This code
          *      MUST use overflow-safe arithmetic!
          *
+         * XXX: We should probably split this into two variants for
+         *      two different kinds of user pointers: RAM pointers
+         *      (read/write) and virtual flash addresses (read-only).
+         *      The variant for virtual flash addresses will also need
+         *      to map those addresses (via our cache) into local SRAM
+         *      temporarily. Yes, it's yet another software virtual
+         *      memory subsystem. VMware deja vu.
+         *
          * Also checks for NULL pointers, assuming allowNULL isn't true.
          *
          * May be called anywhere, at any time, including from interrupt context.
@@ -64,7 +72,7 @@ class Event {
     };
     
     static void setPending(Type t) {
-        Sifteo::Atomic::Or(pending, Sifteo::Intrinsic::LZ(t));
+        Sifteo::Atomic::SetLZ(pending, t);
     }
 
     static bool dispatchInProgress;     /// Reentrancy detector
@@ -82,21 +90,25 @@ class Event {
      */
 
     static void cubeFound(_SYSCubeID cid) {
+        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
         if (_SYS_vectors.cubeFound)
             _SYS_vectors.cubeFound(cid);
     }
 
     static void cubeLost(_SYSCubeID cid) {
+        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
         if (_SYS_vectors.cubeLost)
             _SYS_vectors.cubeLost(cid);
     }
 
     static void assetDone(_SYSCubeID cid) {
+        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
         if (_SYS_vectors.assetDone)
             _SYS_vectors.assetDone(cid);
     }
 
     static void accelChange(_SYSCubeID cid) {
+        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
         if (_SYS_vectors.accelChange)
             _SYS_vectors.accelChange(cid);
     }

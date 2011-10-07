@@ -118,7 +118,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
         if (!(flashResetSent & bit()) && codec.flashReset(tx.packet)) {
             // Remember that we're waiting for a reset ACK
-            Atomic::Or(flashResetSent, bit());
+            Atomic::SetLZ(flashResetSent, id());
         }
 
     } else {
@@ -132,8 +132,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
             if (done) {
                 /* Finished asset loading */
-                Atomic::Or(group->doneCubes, bit());
-                Atomic::Or(Event::assetDoneCubes, bit());
+                Atomic::SetLZ(group->doneCubes, id());
+                Atomic::SetLZ(Event::assetDoneCubes, id());
                 Event::setPending(Event::ASSET_DONE);
             }
         }
@@ -164,7 +164,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             Atomic::Add(pendingFrames, -(int32_t)frameACK);
 
         } else {
-            Atomic::Or(frameACKValid, bit());
+            Atomic::SetLZ(frameACKValid, id());
         }
 
         framePrevACK = ack->frame_count;
@@ -181,7 +181,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             if (flashResetWait & bit()) {
                 // We're waiting on a reset
                 if (loadACK)
-                    Atomic::And(flashResetWait, ~bit());
+                    Atomic::ClearLZ(flashResetWait, id());
             } else {
                 // Acknowledge FIFO bytes
                 codec.flashAckBytes(loadACK);
@@ -190,9 +190,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         } else {
             // Now we've seen one ACK. If we're doing a reset, send the token again.
            
-            Atomic::Or(flashACKValid, bit());
-            Atomic::And(flashResetSent, ~bit());            
-        }       
+            Atomic::SetLZ(flashACKValid, id());
+            Atomic::ClearLZ(flashResetSent, id());            
+        }
 
         flashPrevACK = ack->flash_fifo_bytes;
     }
@@ -206,7 +206,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         if (x != accelState.x || y != accelState.y) {
             accelState.x = x;
             accelState.y = y;
-            Atomic::Or(Event::accelChangeCubes, bit());
+            Atomic::SetLZ(Event::accelChangeCubes, id());
             Event::setPending(Event::ACCEL_CHANGE);
         }
     }

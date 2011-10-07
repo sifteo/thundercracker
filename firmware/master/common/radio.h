@@ -44,26 +44,33 @@ struct PacketBuffer {
         : bytes(_bytes), len(_len) {}
 
     bool isFull() {
+        ASSERT(len <= MAX_LEN);
         return len == MAX_LEN;
     }
 
     unsigned bytesFree() {
+        ASSERT(len <= MAX_LEN);
         return MAX_LEN - len;
     }
 
     void append(uint8_t b) {
+        ASSERT(len < MAX_LEN);
         bytes[len++] = b;
     }
 
     void append(uint8_t *src, unsigned count) {
+        // Overflow-safe assertions
+        ASSERT(len <= MAX_LEN);
+        ASSERT(count <= MAX_LEN);
+        ASSERT((len + count) <= MAX_LEN);
+
         memcpy(bytes + len, src, count);
         len += count;
     }
 
     void appendUser(uint8_t *src, unsigned count) {
         if (Runtime::checkUserPointer(src, count))
-            memcpy(bytes + len, src, count);
-        len += count;
+            append(src, count);
     }
 };
 
@@ -156,7 +163,7 @@ class RadioManager {
      * Must be a power of two.
      */
 
-    static const unsigned FIFO_SIZE = 8;
+    static const unsigned FIFO_SIZE = 16;
 
     static _SYSCubeID epFifo[FIFO_SIZE];
     static uint8_t epHead;              // Oldest ACK slot ID
@@ -164,11 +171,15 @@ class RadioManager {
     static _SYSCubeID schedNext;        // Next cube in the schedule rotation
 
     static void fifoPush(_SYSCubeID id) {
+        ASSERT(epTail < FIFO_SIZE);
         epFifo[epTail] = id;
         epTail = (epTail + 1) & (FIFO_SIZE - 1);
+        ASSERT(epTail != epHead);
     }
 
     static _SYSCubeID fifoPop() {
+        ASSERT(epTail != epHead);
+        ASSERT(epHead < FIFO_SIZE);
         _SYSCubeID id = epFifo[epHead];
         epHead = (epHead + 1) & (FIFO_SIZE - 1);
         return id;

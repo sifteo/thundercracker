@@ -20,6 +20,7 @@
 #define MISC_PORT       P1
 #define MISC_DIR        P1DIR
 #define MISC_CON        P1CON
+#define _MISC_DIR       _P1DIR
 
 #define BUS_PORT        P2
 #define BUS_DIR         P2DIR
@@ -34,6 +35,8 @@ __sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
 #define MISC_I2C_SCL    (1 << 2)
 #define MISC_I2C_SDA    (1 << 3)
 #define MISC_BOOST      (1 << 7)
+
+#define MISC_I2C        (MISC_I2C_SCL | MISC_I2C_SDA)
 
 #define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_BOOST))
 #define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)

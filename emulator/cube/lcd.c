@@ -36,6 +36,10 @@
 #define MADCTR_ML    0x10   // Not implemented
 #define MADCTR_RGB   0x08   // Not implemented
 
+// Vendor-specific commands that we use to detect an LCD model
+#define CMD_MAGIC_TRULY   0xC4
+
+// Width of emulated TE pulses
 #define TE_WIDTH_US  1000
 
 
@@ -66,6 +70,21 @@ static struct {
     uint8_t mode_awake;
     uint8_t mode_display_on;
     uint8_t mode_te;
+
+    /*
+     * Model-specific emulation characteristics.
+     *
+     * These really just undo some of the model-specific tweaks
+     * that the firmware performs. The emulation isn't particularly
+     * accurate, but it's close enough for our purposes right now.
+     */
+
+    struct {
+        uint8_t madctr_xor;
+        int8_t row_adj;
+        int8_t col_adj;
+    } model;
+
 } lcd;
 
 static uint8_t clamp(uint8_t val, uint8_t min, uint8_t max)
@@ -99,11 +118,15 @@ static void lcd_first_pixel(void)
 static void lcd_write_pixel(uint16_t pixel)
 {
     unsigned vRow, vCol, addr;
+    uint8_t madctr = lcd.madctr ^ lcd.model.madctr_xor;
 
     // Logical to physical address translation
-    vRow = (lcd.madctr & MADCTR_MY) ? (LCD_HEIGHT - 1 - lcd.row) : lcd.row;
-    vCol = (lcd.madctr & MADCTR_MX) ? (LCD_WIDTH - 1 - lcd.col) : lcd.col;
-    addr = (lcd.madctr & MADCTR_MV) 
+    vRow = (madctr & MADCTR_MY) ? (LCD_HEIGHT - 1 - lcd.row) : lcd.row;
+    vCol = (madctr & MADCTR_MX) ? (LCD_WIDTH - 1 - lcd.col) : lcd.col;
+    vRow += lcd.model.row_adj;
+    vCol += lcd.model.col_adj;
+
+    addr = (madctr & MADCTR_MV) 
         ? (vRow + (vCol << FB_ROW_SHIFT))
         : (vCol + (vRow << FB_ROW_SHIFT));
     
@@ -207,6 +230,15 @@ static void lcd_cmd(uint8_t op)
 
     case CMD_TEON:
         lcd.mode_te = 1;
+        break;
+
+        /*
+         * Assume this firmware is expecting a Truly LCD. Undo its model-specific tweaks.
+         */
+    case CMD_MAGIC_TRULY:
+        lcd.model.madctr_xor = MADCTR_MX | MADCTR_MY;
+        lcd.model.row_adj = -32;
+        lcd.model.col_adj = 0;
         break;
 
     }
