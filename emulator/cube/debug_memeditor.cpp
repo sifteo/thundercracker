@@ -33,8 +33,8 @@
 #include <string.h>
 #include "curses.h"
 #include "emu8051.h"
-#include "emulator.h"
-#include "radio.h"
+#include "debugger.h"
+
 
 struct memeditor
 {
@@ -47,7 +47,7 @@ struct memeditor
     int memviewoffset;
 };
 
-#define NUM_EDITORS 6
+#define NUM_EDITORS 5
 
 static struct memeditor eds[NUM_EDITORS];
 static int focus = 0;
@@ -62,31 +62,29 @@ void wipe_memeditor_view()
     }
 }
 
-void build_memeditor_view(struct em8051 *aCPU)
+void build_memeditor_view(CubeHardware *cube)
 {
+    em8051 *aCPU = &cube->cpu;
     int i, y;
     erase();
     
     eds[0].lines = (LINES / 3);
     eds[0].box = subwin(stdscr, eds[0].lines, 40, 0, 0);
     box(eds[0].box,ACS_VLINE,ACS_HLINE);
-    mvwaddstr(eds[0].box, 0, 2, "Lower");
+    mvwaddstr(eds[0].box, 0, 2, "IDATA");
     eds[0].view = subwin(eds[0].box, eds[0].lines - 2, 38, 1, 1);
-    eds[0].maxmem = 128;
-    eds[0].memarea = aCPU->mLowerData;
+    eds[0].maxmem = 256;
+    eds[0].memarea = aCPU->mData;
     eds[0].memviewoffset = 0;
 
     eds[1].lines = (LINES / 3);
     eds[1].box = subwin(stdscr, eds[1].lines, 40, eds[0].lines, 0);
     box(eds[1].box,ACS_VLINE,ACS_HLINE);
-    mvwaddstr(eds[1].box, 0, 2, "Upper");
+    mvwaddstr(eds[1].box, 0, 2, "Radio");
     eds[1].view = subwin(eds[1].box, eds[1].lines - 2, 38, eds[0].lines + 1, 1);
-    if (aCPU->mUpperData)
-        eds[1].maxmem = 128;
-    else
-        eds[1].maxmem = 0;
-    eds[1].memarea = aCPU->mUpperData;
-    eds[1].memviewoffset = 128;
+    eds[1].maxmem = Radio::DEBUG_REG_SIZE;
+    eds[1].memarea = cube->spi.radio.getRegs();
+    eds[1].memviewoffset = 0;
 
     eds[2].lines = LINES - (eds[0].lines + eds[1].lines);
     eds[2].box = subwin(stdscr, eds[2].lines, 40, eds[0].lines + eds[1].lines, 0);
@@ -101,31 +99,22 @@ void build_memeditor_view(struct em8051 *aCPU)
     eds[3].lines = LINES / 2;
     eds[3].box = subwin(stdscr, eds[3].lines, 40, y, 40);
     box(eds[3].box,ACS_VLINE,ACS_HLINE);
-    mvwaddstr(eds[3].box, 0, 2, "External");
+    mvwaddstr(eds[3].box, 0, 2, "XDATA");
     eds[3].view = subwin(eds[3].box, eds[3].lines - 2, 38, 1, 41);    
-    eds[3].maxmem = aCPU->mExtDataSize;
+    eds[3].maxmem = XDATA_SIZE;
     eds[3].memarea = aCPU->mExtData;
     eds[3].memviewoffset = 0;
     y += eds[3].lines;
 
-    eds[4].lines = LINES / 2 - 9;
+    eds[4].lines = LINES / 2;
     eds[4].box = subwin(stdscr, eds[4].lines, 40, y, 40);
     box(eds[4].box,ACS_VLINE,ACS_HLINE);
     mvwaddstr(eds[4].box, 0, 2, "ROM");
     eds[4].view = subwin(eds[4].box, eds[4].lines - 2, 38, y + 1, 41);
-    eds[4].maxmem = aCPU->mCodeMemSize;
+    eds[4].maxmem = CODE_SIZE;
     eds[4].memarea = aCPU->mCodeMem;     
     eds[4].memviewoffset = 0;
     y += eds[4].lines;
-
-    eds[5].lines = 9;
-    eds[5].box = subwin(stdscr, eds[5].lines, 40, y, 40);
-    box(eds[5].box,ACS_VLINE,ACS_HLINE);
-    mvwaddstr(eds[5].box, 0, 2, "Radio");
-    eds[5].view = subwin(eds[5].box, eds[5].lines - 2, 38, y + 1, 41);
-    eds[5].maxmem = 0x38;
-    eds[5].memarea = radio_regs();
-    eds[5].memviewoffset = 0;
 
     // TODO: make sure cursorpos / memoffset are within legal values,
     // but don't mess them up otherwise
@@ -146,10 +135,6 @@ void memeditor_editor_keys(struct em8051 *aCPU, int ch)
     case KEY_NEXT:
     case '\t':
         focus++;
-        if (focus == 1 && aCPU->mUpperData == NULL) 
-            focus++;
-        if (focus == 3 && aCPU->mExtDataSize == 0)
-            focus++;
         if (focus == NUM_EDITORS)
             focus = 0;
         break;

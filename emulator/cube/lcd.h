@@ -21,7 +21,7 @@ class LCD {
     static const unsigned FB_MASK = 0x3FFF;
     static const unsigned FB_ROW_SHIFT = 7;
 
-    struct lcd_pins {
+    struct Pins {
         /* Configured for an 8-bit parallel bus, in 80-system mode */
         
         uint8_t   csx;        // IN, active-low
@@ -47,7 +47,7 @@ class LCD {
         colmod = COLMOD_18;
     }
 
-    void cycle(struct lcd_pins *pins) {
+    void cycle(Pins *pins) {
         /*
          * Make lots of assumptions...
          *

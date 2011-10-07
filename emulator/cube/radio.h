@@ -18,7 +18,6 @@
 
 #include "radio.h"
 #include "network.h"
-#include "emulator.h"
 
 class Radio {
  public:
@@ -50,6 +49,8 @@ class Radio {
         memset(addr_rx0_high, 0xE7, 4);
         memset(addr_rx1_high, 0xC2, 4);
     }
+
+    static const unsigned DEBUG_REG_SIZE = 0x38;
 
     uint8_t *getRegs() {
         return regs;

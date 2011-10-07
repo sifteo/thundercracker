@@ -33,12 +33,12 @@
 #include <string.h>
 #include "curses.h"
 #include "emu8051.h"
-#include "emulator.h"
+#include "debugger.h"
 
 // store the object filename (Accessed through command line as well)
 char filename[256];
 
-void emu_popup(struct em8051 *aCPU, char *aTitle, char *aMessage)
+void emu_popup(struct em8051 *aCPU, const char *aTitle, const char *aMessage)
 {
     WINDOW * exc;
     nocbreak();
@@ -73,70 +73,34 @@ void emu_popup(struct em8051 *aCPU, char *aTitle, char *aMessage)
 
 void emu_exception(struct em8051 *aCPU, int aCode)
 {
-    const char *name;
-    static const char *exc_names[] = {
-        "SP exception: stack address > 127",
-        "Invalid operation: acc-to-a move",
-        "PSW not preserved over interrupt call",
-        "SP not preserved over interrupt call",
-        "ACC not preserved over interrupt call",
-        "Invalid opcode: 0xA5 encountered",
-        "Hardware bus contention occurred",
-        "SPI FIFO overrun/underrun",
-        "Radio FIFO overrun/underrun",
-        "I2C error",
-    };
+    const char *name = em8051_exc_name(aCode);
+    WINDOW * exc;
+    
+    nocbreak();
+    cbreak();
+    nodelay(stdscr, FALSE);
+    halfdelay(1);
+    while (getch() > 0) {}
 
-    if (aCode == -1)
-        name = "Breakpoint reached";
-    else if (aCode < sizeof exc_names / sizeof exc_names[0])
-        name = exc_names[aCode];
-    else
-        name = "Unknown exception";
+    runmode = 0;
+    setSpeed(speed, runmode);
+    exc = subwin(stdscr, 7, 50, (LINES-6)/2, (COLS-50)/2);
+    wattron(exc,A_REVERSE);
+    werase(exc);
+    box(exc,ACS_VLINE,ACS_HLINE);
+    mvwaddstr(exc, 0, 2, "Exception");
+    wattroff(exc,A_REVERSE);
+    wmove(exc, 2, 2);
+    waddstr(exc, name);
+    wmove(exc, 6, 12);
+    wattron(exc,A_REVERSE);
+    waddstr(exc, "Press any key to continue");
+    wattroff(exc,A_REVERSE);
+    wrefresh(exc);
 
-    if (aCPU->traceFile)
-        fprintf(aCPU->traceFile, "EXCEPTION at 0x%04x: %s\n", aCPU->mPC, name);
-
-    if (opt_debug) {
-        /*
-         * ncurses popup window
-         */
-
-        WINDOW * exc;
-
-        nocbreak();
-        cbreak();
-        nodelay(stdscr, FALSE);
-        halfdelay(1);
-        while (getch() > 0) {}
-
-        runmode = 0;
-        setSpeed(speed, runmode);
-        exc = subwin(stdscr, 7, 50, (LINES-6)/2, (COLS-50)/2);
-        wattron(exc,A_REVERSE);
-        werase(exc);
-        box(exc,ACS_VLINE,ACS_HLINE);
-        mvwaddstr(exc, 0, 2, "Exception");
-        wattroff(exc,A_REVERSE);
-        wmove(exc, 2, 2);
-        waddstr(exc, name);
-        wmove(exc, 6, 12);
-        wattron(exc,A_REVERSE);
-        waddstr(exc, "Press any key to continue");
-        wattroff(exc,A_REVERSE);
-        wrefresh(exc);
-
-        getch();
-        delwin(exc);
-        change_view(aCPU, MAIN_VIEW);
-
-    } else {
-        /*
-         * Complain to stderr
-         */
-
-        fprintf(stderr, "EXCEPTION at 0x%04x: %s\n", aCPU->mPC, name);
-    }
+    getch();
+    delwin(exc);
+    change_view(aCPU, MAIN_VIEW);
 }
 
 void emu_load(struct em8051 *aCPU)
@@ -190,7 +154,7 @@ void emu_load(struct em8051 *aCPU)
         }
     }
 
-    result = load_obj(aCPU, filename);
+    result = em8051_load(aCPU, filename);
     delwin(exc);
     refreshview(aCPU);
 
@@ -269,7 +233,7 @@ int emu_readvalue(struct em8051 *aCPU, const char *aPrompt, int aOldvalue, int a
         {
             int currvalue = strtol(temp, NULL, 16);
             char assembly[64];
-            decode(aCPU, currvalue, assembly);
+            em8051_decode(aCPU, currvalue, assembly);
             wmove(exc,2,5 + aValueSize);
             waddstr(exc, "                                        ");
             wmove(exc,2,5 + aValueSize);
@@ -401,12 +365,12 @@ int emu_reset(struct em8051 *aCPU)
         break;
     case 'r':
     case 'R':
-        reset(aCPU, 0);
+        em8051_reset(aCPU, 0);
         result = 1;
         break;
     case 'w':
     case 'W':
-        reset(aCPU, 1);
+        em8051_reset(aCPU, 1);
         result = 1;
         break;
     }

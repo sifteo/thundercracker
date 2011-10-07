@@ -51,13 +51,14 @@
 #ifndef _SPI_H
 #define _SPI_H
 
-class SPIMaster {
+class SPIBus {
  public:
-    typedef uint8_t (*callback_t)(uint8_t);
 
-    void init(struct em8051 *_cpu, callback_t _callback) {
+    // Peripheral devices
+    Radio radio;
+
+    void init(struct em8051 *_cpu) {
         cpu = _cpu;
-        callback = _callback;
         tx_count = 0;
         rx_count = 0;
         timer = 0;
@@ -112,7 +113,7 @@ class SPIMaster {
                  * The byte just finished! Emulate the bus traffic, and
                  * enqueue the resulting MISO byte.
                  */
-                uint8_t miso = callback(tx_mosi);
+                uint8_t miso = radio.spiByte(tx_mosi);
                 if (rx_count < SPI_FIFO_SIZE)
                     rx_fifo[rx_count++] = miso;
                 else
@@ -188,8 +189,6 @@ class SPIMaster {
     static const uint8_t SPI_FIFO_SIZE   = 2;
 
     struct em8051 *cpu; // Only for exception reporting!
-
-    uint8_t (*callback)(uint8_t mosi);
     
     uint8_t tx_fifo[SPI_FIFO_SIZE]; // Writes pushed -> into [0]
     uint8_t rx_fifo[SPI_FIFO_SIZE]; // Reads pulled <- from [0]

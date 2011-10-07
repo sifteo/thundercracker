@@ -35,11 +35,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "curses.h"
-#include "emu8051.h"
-#include "emulator.h"
-#include "lcd.h"
-#include "radio.h"
-#include "flash.h"
+#include "debugger.h"
 
 /*
     The history-based display assumes that there's no
@@ -95,19 +91,20 @@ WINDOW *spregbox = NULL, *spregoutput = NULL;
 WINDOW *miscbox = NULL, *miscview = NULL;
 
 
-char *memtypes[]={"Lower","Upper","SFR","External","ROM"};
-char *regtypes[]={"     A ",
-                  "    R0 ",
-                  "    R1 ",
-                  "    R2 ",
-                  "    R3 ",
-                  "    R4 ",
-                  "    R5 ",
-                  "    R6 ",
-                  "    R7 ",
-                  "     B ",
-                  "   DPH ",
-                  "   DPL "};
+const char *memtypes[]={"IDATA","SFR","XDATA","ROM"};
+const char *regtypes[]={"     A ",
+                        "    R0 ",
+                        "    R1 ",
+                        "    R2 ",
+                        "    R3 ",
+                        "    R4 ",
+                        "    R5 ",
+                        "    R6 ",
+                        "    R7 ",
+                        "     B ",
+                        "   DPH ",
+                        "   DPL "};
+
 void wipe_main_view()
 {
     delwin(codebox);
@@ -203,7 +200,7 @@ void build_main_view(struct em8051 *aCPU)
 
     lastclock = icount - 8;
 
-    memarea = aCPU->mLowerData;
+    memarea = aCPU->mData;
 
 }
 
@@ -215,21 +212,21 @@ int getregoutput(struct em8051 *aCPU, int pos)
     case 0:
         return aCPU->mSFR[REG_ACC];
     case 1:
-        return aCPU->mLowerData[rx + 0];
+        return aCPU->mData[rx + 0];
     case 2:
-        return aCPU->mLowerData[rx + 1];
+        return aCPU->mData[rx + 1];
     case 3:
-        return aCPU->mLowerData[rx + 2];
+        return aCPU->mData[rx + 2];
     case 4:
-        return aCPU->mLowerData[rx + 3];
+        return aCPU->mData[rx + 3];
     case 5:
-        return aCPU->mLowerData[rx + 4];
+        return aCPU->mData[rx + 4];
     case 6:
-        return aCPU->mLowerData[rx + 5];
+        return aCPU->mData[rx + 5];
     case 7:
-        return aCPU->mLowerData[rx + 6];
+        return aCPU->mData[rx + 6];
     case 8:
-        return aCPU->mLowerData[rx + 7];
+        return aCPU->mData[rx + 7];
     case 9:
         return aCPU->mSFR[REG_B];
     case 10:
@@ -247,28 +244,28 @@ void setregoutput(struct em8051 *aCPU, int pos, int val)
         aCPU->mSFR[REG_ACC] = val;
         break;
     case 1:
-        aCPU->mLowerData[rx + 0] = val;
+        aCPU->mData[rx + 0] = val;
         break;
     case 2:
-        aCPU->mLowerData[rx + 1] = val;
+        aCPU->mData[rx + 1] = val;
         break;
     case 3:
-        aCPU->mLowerData[rx + 2] = val;
+        aCPU->mData[rx + 2] = val;
         break;
     case 4:
-        aCPU->mLowerData[rx + 3] = val;
+        aCPU->mData[rx + 3] = val;
         break;
     case 5:
-        aCPU->mLowerData[rx + 4] = val;
+        aCPU->mData[rx + 4] = val;
         break;
     case 6:
-        aCPU->mLowerData[rx + 5] = val;
+        aCPU->mData[rx + 5] = val;
         break;
     case 7:
-        aCPU->mLowerData[rx + 6] = val;
+        aCPU->mData[rx + 6] = val;
         break;
     case 8:
-        aCPU->mLowerData[rx + 7] = val;
+        aCPU->mData[rx + 7] = val;
         break;
     case 9:
         aCPU->mSFR[REG_B] = val;
@@ -299,27 +296,20 @@ void mainview_editor_keys(struct em8051 *aCPU, int ch)
         memcursorpos = 0;
         memoffset = 0;
         memmode++;
-        if (memmode == 1 && aCPU->mUpperData == NULL) 
-            memmode++;
-        if (memmode == 3 && aCPU->mExtDataSize == 0)
-            memmode++;
-        if (memmode == 5)
+        if (memmode == 4)
             memmode = 0;
         switch (memmode)
         {
         case 0:
-            memarea = aCPU->mLowerData;
+            memarea = aCPU->mData;
             break;
         case 1:
-            memarea = aCPU->mUpperData;
-            break;
-        case 2:
             memarea = aCPU->mSFR;
             break;
-        case 3:
+        case 2:
             memarea = aCPU->mExtData;
             break;
-        case 4:
+        case 3:
             memarea = aCPU->mCodeMem;
             break;
         }
@@ -395,15 +385,16 @@ void mainview_editor_keys(struct em8051 *aCPU, int ch)
     switch (memmode)
     {
     case 0:
+        maxmem = 256;
+        break;
     case 1:
-    case 2:
         maxmem = 128;
         break;
-    case 3:
-        maxmem = aCPU->mExtDataSize;
+    case 2:
+        maxmem = XDATA_SIZE;
         break;
-    case 4:
-        maxmem = aCPU->mCodeMemSize;
+    case 3:
+        maxmem = CODE_SIZE;
         break;
     }
 
@@ -472,14 +463,14 @@ void refresh_regoutput(struct em8051 *aCPU, int cursor)
     
     mvwprintw(regoutput, LINES-19, 0, "%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %04X",
         aCPU->mSFR[REG_ACC],
-        aCPU->mLowerData[0 + rx],
-        aCPU->mLowerData[1 + rx],
-        aCPU->mLowerData[2 + rx],
-        aCPU->mLowerData[3 + rx],
-        aCPU->mLowerData[4 + rx],
-        aCPU->mLowerData[5 + rx],
-        aCPU->mLowerData[6 + rx],
-        aCPU->mLowerData[7 + rx],
+        aCPU->mData[0 + rx],
+        aCPU->mData[1 + rx],
+        aCPU->mData[2 + rx],
+        aCPU->mData[3 + rx],
+        aCPU->mData[4 + rx],
+        aCPU->mData[5 + rx],
+        aCPU->mData[6 + rx],
+        aCPU->mData[7 + rx],
         aCPU->mSFR[REG_B],
         (aCPU->mSFR[CUR_DPH]<<8)|aCPU->mSFR[CUR_DPL]);
 
@@ -497,8 +488,9 @@ void refresh_regoutput(struct em8051 *aCPU, int cursor)
     }
 }
 
-void mainview_update(struct em8051 *aCPU)
+void mainview_update(CubeHardware *cube)
 {
+    em8051 *aCPU = &cube->cpu;
     int bytevalue;
     int i;
 
@@ -528,12 +520,12 @@ void mainview_update(struct em8051 *aCPU)
             hoffs = (hline * (128 + 64 + sizeof(int)));
 
             memcpy(&old_pc, history + hoffs + 128 + 64, sizeof(int));
-            opcode_bytes = decode(aCPU, old_pc, assembly);
+            opcode_bytes = em8051_decode(aCPU, old_pc, assembly);
             stringpos = 0;
             stringpos += sprintf(temp + stringpos,"\n%04X  ", old_pc & 0xffff);
             
             for (i = 0; i < opcode_bytes; i++)
-                stringpos += sprintf(temp + stringpos,"%02X ", aCPU->mCodeMem[(old_pc + i) & (aCPU->mCodeMemSize - 1)]);
+                stringpos += sprintf(temp + stringpos,"%02X ", aCPU->mCodeMem[(old_pc + i) & (CODE_SIZE - 1)]);
             
             for (i = opcode_bytes; i < 3; i++)
                 stringpos += sprintf(temp + stringpos,"   ");
@@ -599,7 +591,7 @@ void mainview_update(struct em8051 *aCPU)
 
     {
         // Some displays periodically update
-        unsigned int update_interval = opt_clock_hz;
+        unsigned int update_interval = CLOCK_HZ;
         static uint64_t update_prev_clocks = 0;
         static uint32_t update_prev_time = 0;
 
@@ -610,26 +602,26 @@ void mainview_update(struct em8051 *aCPU)
         static float flash_hz = 0;
         static unsigned flash_percent = 0;
 
-        enum busy_flag flash_busy = flash_busy_flag();
+        enum Flash::busy_flag flash_busy = cube->flash.getBusyFlag();
 
-        float cycles_to_sec = 1.0f / opt_clock_hz;
-        float msec = 1000.0f * clocks * cycles_to_sec;
-        float clock_mhz = opt_clock_hz / (1000*1000.0f);
+        const float cycles_to_sec = 1.0f / CLOCK_HZ;
+        float msec = 1000.0f * cube->clocks * cycles_to_sec;
+        float clock_mhz = CLOCK_HZ / (1000*1000.0f);
 
         /* Periodically update most of the stats */
-        if (clocks < update_prev_clocks || (clocks - update_prev_clocks) > update_interval) {
+        if (cube->clocks < update_prev_clocks || (cube->clocks - update_prev_clocks) > update_interval) {
             uint32_t now = SDL_GetTicks();
 
-            if (clocks > update_prev_clocks && now > update_prev_time) {                
-                float virtual_elapsed = (clocks - update_prev_clocks) * cycles_to_sec;
+            if (cube->clocks > update_prev_clocks && now > update_prev_time) {                
+                float virtual_elapsed = (cube->clocks - update_prev_clocks) * cycles_to_sec;
                 float real_elapsed = (uint32_t)(now - update_prev_time) * (1.0f/1000);
 
-                lcd_wrs = lcd_write_count() / virtual_elapsed;
-                radio_b = radio_byte_count() / virtual_elapsed;
-                radio_rx = radio_rx_count() / virtual_elapsed;
-                flash_hz = flash_cycle_count() / virtual_elapsed;
+                lcd_wrs = cube->lcd.getWriteCount() / virtual_elapsed;
+                radio_b = cube->spi.radio.getByteCount() / virtual_elapsed;
+                radio_rx = cube->spi.radio.getRXCount() / virtual_elapsed;
+                flash_hz = cube->flash.getCycleCount() / virtual_elapsed;
                 clock_ratio = virtual_elapsed / real_elapsed;
-                flash_percent = flash_busy_percent();
+                flash_percent = cube->flash.getBusyPercent();
             } else {
                 lcd_wrs = 0;
                 radio_b = 0;
@@ -640,7 +632,7 @@ void mainview_update(struct em8051 *aCPU)
             }
 
             update_prev_time = now;
-            update_prev_clocks = clocks;
+            update_prev_clocks = cube->clocks;
         }
 
         werase(miscview);
@@ -650,12 +642,12 @@ void mainview_update(struct em8051 *aCPU)
         wattroff(miscview, A_REVERSE);
 
         wprintw(miscview, "Flash  :% 7.3f MHz %c%c % 3u%%\n", flash_hz / 1000000.0,
-                flash_busy & BF_PROGRAM ? 'W' : '-',
-                flash_busy & BF_ERASE   ? 'E' : '-',
+                flash_busy & Flash::BF_PROGRAM ? 'W' : '-',
+                flash_busy & Flash::BF_ERASE   ? 'E' : '-',
                 flash_percent);
 
         wprintw(miscview, "Radio  :% 5d RX% 6.2f kB/s\n", (int)radio_rx, radio_b / 1000);
-        wprintw(miscview, "Time   : %07.2f ms %04llu ck\n", fmod(msec, 10000.0), clocks % 10000);
+        wprintw(miscview, "Time   : %07.2f ms %04llu ck\n", fmod(msec, 10000.0), cube->clocks % 10000);
         wprintw(miscview, "Speed  :% 6.1f%% %0.1f MHz\n", clock_ratio * 100, clock_mhz);
     }
 
@@ -681,11 +673,8 @@ void mainview_update(struct em8051 *aCPU)
 
     for (i = 0; i < 15; i++)
     {
-                int offset = (i + aCPU->mSFR[REG_SP]-7)&0xff;
-                if (offset < 0x80)
-                        wprintw(stackview," %02X\n", aCPU->mLowerData[offset]);
-                else
-                        wprintw(stackview," %02X\n", aCPU->mUpperData[offset - 0x80]);
+        int offset = (i + aCPU->mSFR[REG_SP]-7)&0xff;
+        wprintw(stackview," %02X\n", aCPU->mData[offset]);
     }
 
     if (speed != 0 || runmode == 0)

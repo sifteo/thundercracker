@@ -92,6 +92,7 @@ struct em8051
     em8051exception except;
     em8051sfrread sfrread;
     em8051sfrwrite sfrwrite;
+    void *callbackData;
 
     uint8_t irq_count;          // Number of currently active IRQ handlers
 
@@ -129,6 +130,8 @@ int em8051_load(struct em8051 *aCPU, char *aFilename);
 // Internal: Pushes a value into stack
 void em8051_push(struct em8051 *aCPU, int aValue);
 
+// Get a human-readable name for an exception code
+const char *em8051_exc_name(int aCode);
 
 enum EM8051_EXCEPTION
 {

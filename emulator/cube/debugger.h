@@ -28,11 +28,12 @@
  * Curses-based emulator front-end
  */
 
-#ifndef _EMULATOR_H
-#define _EMULATOR_H
+#ifndef _DEBUGGER_H
+#define _DEBUGGER_H
 
 #include <stdint.h>
 #include "emu8051.h"
+#include "cube_hardware.h"
 
 // how many lines of history to remember
 #define HISTORY_LINES 20
@@ -42,9 +43,7 @@ enum EMU_VIEWS
     NO_VIEW = -1,
     MAIN_VIEW = 0,
     MEMEDITOR_VIEW = 1,
-    OPTIONS_VIEW = 2
 };
-
 
 // binary history buffer
 extern unsigned char history[];
@@ -67,20 +66,6 @@ extern int speed;
 // currently active view
 extern int view;
 
-// current clock count
-extern uint64_t clocks;
-
-extern int opt_clock_select;
-extern int opt_clock_hz;
-extern int opt_step_instruction;
-extern int opt_debug;
-
-extern const char *opt_flash_filename;
-extern const char *opt_profile_filename;
-extern const char *opt_trace_filename;
-extern const char *opt_net_host;
-extern const char *opt_net_port;
-
 // emu.c
 extern void setSpeed(int speed, int runmode);
 extern void refreshview(struct em8051 *aCPU);
@@ -99,18 +84,12 @@ extern void emu_popup(struct em8051 *aCPU, char *aTitle, char *aMessage);
 extern void mainview_editor_keys(struct em8051 *aCPU, int ch);
 extern void build_main_view(struct em8051 *aCPU);
 extern void wipe_main_view();
-extern void mainview_update(struct em8051 *aCPU);
+extern void mainview_update(CubeHardware *cube);
 
 // memeditor.c
 extern void wipe_memeditor_view();
-extern void build_memeditor_view(struct em8051 *aCPU);
+extern void build_memeditor_view(CubeHardware *cube);
 extern void memeditor_editor_keys(struct em8051 *aCPU, int ch);
 extern void memeditor_update(struct em8051 *aCPU);
-
-// options.c
-extern void wipe_options_view();
-extern void build_options_view(struct em8051 *aCPU);
-extern void options_editor_keys(struct em8051 *aCPU, int ch);
-extern void options_update(struct em8051 *aCPU);
 
 #endif

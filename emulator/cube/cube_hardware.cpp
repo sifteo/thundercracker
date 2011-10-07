@@ -25,18 +25,6 @@
  *  P0.0     LCD WRX
  */
 
-#include <stdio.h>
-#include <stdint.h>
-#include "emu8051.h"
-#include "hardware.h"
-#include "emulator.h"
-#include "lcd.h"
-#include "flash.h"
-#include "spi.h"
-#include "radio.h"
-#include "network.h"
-#include "adc.h"
-#include "i2c.h"
 
 #define ADDR_PORT       REG_P0
 #define BUS_PORT        REG_P2
@@ -54,89 +42,99 @@
 
 #define CTRL_LCD_TE     0       // XXX: TE pin not available in our hardware
 
-static struct {
-} hw;
-
 // RFCON bits
 #define RFCON_RFCKEN    0x04
 #define RFCON_RFCSN     0x02
 #define RFCON_RFCE      0x01
 
 
-void hardware_init(struct em8051 *cpu)
-{
-    hw.lat1 = 0;
-    hw.lat2 = 0;
-    hw.bus = 0;
-    hw.prev_ctrl_port = 0;
+#include "cube_hardware.h"
 
-    cpu->mSFR[REG_P0DIR] = 0xFF;
-    cpu->mSFR[REG_P1DIR] = 0xFF;
-    cpu->mSFR[REG_P2DIR] = 0xFF;
-    cpu->mSFR[REG_P3DIR] = 0xFF;
+
+bool CubeHardware::init(const char *firmwareFile, const char *flashFile,
+                        const char *netHost, const char *netPort)
+{
+    lat1 = 0;
+    lat2 = 0;
+    bus = 0;
+    prev_ctrl_port = 0;
+
+    cpu.except = except;
+    cpu.sfrread = sfrRead;
+    cpu.sfrwrite = sfrWrite;
+    cpu.callbackData = this;
+
+    cpu.mSFR[REG_P0DIR] = 0xFF;
+    cpu.mSFR[REG_P1DIR] = 0xFF;
+    cpu.mSFR[REG_P2DIR] = 0xFF;
+    cpu.mSFR[REG_P3DIR] = 0xFF;
     
-    cpu->mSFR[REG_SPIRCON0] = 0x01;
-    cpu->mSFR[REG_SPIRCON1] = 0x0F;
-    cpu->mSFR[REG_SPIRSTAT] = 0x03;
-    cpu->mSFR[REG_SPIRDAT] = 0x00;
-    cpu->mSFR[REG_RFCON] = RFCON_RFCSN;
+    cpu.mSFR[REG_SPIRCON0] = 0x01;
+    cpu.mSFR[REG_SPIRCON1] = 0x0F;
+    cpu.mSFR[REG_SPIRSTAT] = 0x03;
+    cpu.mSFR[REG_SPIRDAT] = 0x00;
+    cpu.mSFR[REG_RFCON] = RFCON_RFCSN;
  
-    hw.radio_spi.callback = radio_spi_byte;
-    hw.radio_spi.cpu = cpu;
-    spi_init(&hw.radio_spi);
+    if (!flash.init(flashFile))
+        return false;    
+    spi.radio.network.init(netHost, netPort);
+    spi.radio.init(&cpu);
+    spi.init(&cpu);
+    adc.init();
+    i2c.init();
+    lcd.init();
 
-    network_init(opt_net_host, opt_net_port);
-    flash_init(opt_flash_filename);
-    radio_init(cpu);
-    lcd_init();
-    i2c_init();
-    adc_init();
+    return true;
 }
 
-void hardware_exit(void)
+void CubeHardware::exit()
 {
-    flash_exit();
-    radio_exit();
-    network_exit();
+    flash.exit();
+    spi.radio.network.exit();
 }
 
-void hardware_gfx_tick(struct em8051 *cpu)
+void CubeHardware::graphicsTick()
 {
+    /*
+     * Update the graphics (LCD and Flash) bus. Only happens in
+     * response to relevant I/O port changes, not on every clock tick.
+     */
+
     // Port output values, pull-up when floating
-    uint8_t bus_port = cpu->mSFR[BUS_PORT] | cpu->mSFR[BUS_PORT_DIR];
-    uint8_t addr_port = cpu->mSFR[ADDR_PORT] | cpu->mSFR[ADDR_PORT_DIR];
-    uint8_t ctrl_port = cpu->mSFR[CTRL_PORT] | cpu->mSFR[CTRL_PORT_DIR];
+    uint8_t bus_port = cpu.mSFR[BUS_PORT] | cpu.mSFR[BUS_PORT_DIR];
+    uint8_t addr_port = cpu.mSFR[ADDR_PORT] | cpu.mSFR[ADDR_PORT_DIR];
+    uint8_t ctrl_port = cpu.mSFR[CTRL_PORT] | cpu.mSFR[CTRL_PORT_DIR];
 
     // 7-bit address in high bits of p1
     uint8_t addr7 = addr_port >> 1;
 
     // Is the MCU driving any bit of the shared bus?
-    uint8_t mcu_data_drv = cpu->mSFR[BUS_PORT_DIR] != 0xFF;
+    uint8_t mcu_data_drv = cpu.mSFR[BUS_PORT_DIR] != 0xFF;
 
-    struct flash_pins flashp = {
-        /* addr    */ addr7 | ((uint32_t)hw.lat1 << 7) | ((uint32_t)hw.lat2 << 14),
+    Flash::Pins flashp = {
+        /* addr    */ addr7 | ((uint32_t)lat1 << 7) | ((uint32_t)lat2 << 14),
         /* oe      */ ctrl_port & CTRL_FLASH_OE,
         /* ce      */ 0,
         /* we      */ ctrl_port & CTRL_FLASH_WE,
-        /* data_in */ hw.bus,
+        /* data_in */ bus,
     };
 
-    struct lcd_pins lcdp = {
+    LCD::Pins lcdp = {
         /* csx     */ 0,
         /* dcx     */ ctrl_port & CTRL_LCD_DCX,
         /* wrx     */ addr_port & 1,
         /* rdx     */ 0,
-        /* data_in */ hw.bus,
+        /* data_in */ bus,
     };
 
-    flash_cycle(&flashp);
-    lcd_cycle(&lcdp);
+    flash.cycle(&flashp);
+    lcd.cycle(&lcdp);
 
     /* Address latch write cycles, triggered by rising edge */
 
-    if ((ctrl_port & CTRL_FLASH_LAT1) && !(hw.prev_ctrl_port & CTRL_FLASH_LAT1)) hw.lat1 = addr7;
-    if ((ctrl_port & CTRL_FLASH_LAT2) && !(hw.prev_ctrl_port & CTRL_FLASH_LAT2)) hw.lat2 = addr7;
-    hw.prev_ctrl_port = ctrl_port;
+    if ((ctrl_port & CTRL_FLASH_LAT1) && !(prev_ctrl_port & CTRL_FLASH_LAT1)) lat1 = addr7;
+    if ((ctrl_port & CTRL_FLASH_LAT2) && !(prev_ctrl_port & CTRL_FLASH_LAT2)) lat2 = addr7;
+    prev_ctrl_port = ctrl_port;
 
     /*
      * After every simulation cycle, resolve the new state of the
@@ -146,19 +144,82 @@ void hardware_gfx_tick(struct em8051 *cpu)
  
     switch ((mcu_data_drv << 1) | flashp.data_drv) {
     case 0:     /* Floating... */ break;
-    case 1:     hw.bus = flash_data_out(); break;
-    case 2:     hw.bus = bus_port; break;
+    case 1:     bus = flash.dataOut(); break;
+    case 2:     bus = bus_port; break;
     default:
         /* Bus contention! */
-        cpu->except(cpu, EXCEPTION_BUS_CONTENTION);
+        cpu.except(&cpu, EXCEPTION_BUS_CONTENTION);
     }
     
-    hw.flash_drv = flashp.data_drv;  
-    cpu->mSFR[BUS_PORT] = hw.bus;
+    flash_drv = flashp.data_drv;  
+    cpu.mSFR[BUS_PORT] = bus;
 }
 
-void hardware_sfrwrite(struct em8051 *cpu, int reg)
+void CubeHardware::hardwareTick()
 {
+    /*
+     * Update the LCD Tearing Effect line
+     */
+
+    cpu.mSFR[CTRL_PORT] &= ~CTRL_LCD_TE;
+    if (lcd.tick())
+        cpu.mSFR[CTRL_PORT] |= CTRL_LCD_TE;
+
+    /*
+     * Simulate peripheral interrupts
+     */
+
+    if (adc.tick(cpu.mSFR))
+        cpu.mSFR[REG_IRCON] |= IRCON_MISC;
+
+    if (spi.tick(&cpu.mSFR[REG_SPIRCON0]))
+        cpu.mSFR[REG_IRCON] |= IRCON_RFSPI;
+
+    if (rfcken && spi.radio.tick())
+        cpu.mSFR[REG_IRCON] |= IRCON_RF;
+
+    // I2C can be routed to iex3 using INTEXP
+    uint8_t iex3 = i2c.tick(&cpu) && (cpu.mSFR[REG_INTEXP] & 0x04);    
+
+    /*
+     * External interrupts: iex3
+     */
+
+    if (cpu.mSFR[REG_T2CON] & 0x40) {
+        // Rising edge
+        if (iex3 && !iex3)
+            cpu.mSFR[REG_IRCON] |= IRCON_SPI;
+    } else {
+        // Falling edge
+        if (!iex3 && iex3)
+            cpu.mSFR[REG_IRCON] |= IRCON_SPI;
+    }
+    iex3 = iex3;
+        
+    /*
+     * Other hardware with timers to update
+     */
+
+    flash.tick(&cpu);
+    if (flash_drv)
+        cpu.mSFR[BUS_PORT] = flash.dataOut();
+}
+
+void CubeHardware::except(em8051 *cpu, int exc)
+{
+    //CubeHardware *self = (CubeHardware*) cpu->callbackData;
+    const char *name = em8051_exc_name(exc);
+
+    if (cpu->traceFile)
+        fprintf(cpu->traceFile, "EXCEPTION at 0x%04x: %s\n", cpu->mPC, name);
+
+    fprintf(stderr, "EXCEPTION at 0x%04x: %s\n", cpu->mPC, name);
+}
+
+void CubeHardware::sfrWrite(em8051 *cpu, int reg)
+{
+    CubeHardware *self = (CubeHardware*) cpu->callbackData;
+    uint8_t value = cpu->mSFR[reg];
     reg -= 0x80;
     switch (reg) {
 
@@ -168,100 +229,52 @@ void hardware_sfrwrite(struct em8051 *cpu, int reg)
     case BUS_PORT_DIR:
     case ADDR_PORT_DIR:
     case CTRL_PORT_DIR:
-        // Usually we only need to simulate the graphics subsystem when a relevant SFR write occurs
-        hardware_gfx_tick(cpu);
+        self->graphicsTick();
         break;
  
     case REG_ADCCON1:
-        adc_start();
+        self->adc.start();
         break;
             
     case REG_SPIRDAT:
-        spi_write_data(&hw.radio_spi, cpu->mSFR[reg]);
+        self->spi.writeData(value);
         break;
 
     case REG_RFCON:
-        hw.rfcken = !!(cpu->mSFR[reg] & RFCON_RFCKEN);
-        radio_ctrl(!(cpu->mSFR[reg] & RFCON_RFCSN),   // Active low
-                   !!(cpu->mSFR[reg] & RFCON_RFCE));  // Active high
+        self->rfcken = !!(value & RFCON_RFCKEN);
+        self->spi.radio.radioCtrl(!(value & RFCON_RFCSN),   // Active low
+                                  !!(value & RFCON_RFCE));  // Active high
         break;
 
     case REG_W2DAT:
-        i2c_write_data(cpu, cpu->mSFR[REG_W2DAT]);
+        self->i2c.writeData(cpu, value);
         break;
 
     case REG_DEBUG:
-        printf("Debug: %02x\n", cpu->mSFR[reg]);
+        printf("Debug: %02x\n", value);
         break;
 
     }
 }
 
-int hardware_sfrread(struct em8051 *cpu, int reg)
+int CubeHardware::sfrRead(em8051 *cpu, int reg)
 {
+    CubeHardware *self = (CubeHardware*) cpu->callbackData;
     reg -= 0x80;
     switch (reg) {
      
     case REG_SPIRDAT:
-        return spi_read_data(&hw.radio_spi);
-            
+        return self->spi.readData();
+          
     case REG_W2DAT:
-        return i2c_read_data(cpu);
+        return self->i2c.readData(cpu);
 
     case REG_W2CON1:
-        return i2c_read_con1(cpu);
+        return self->i2c.readCON1(cpu);
 
     default:    
         return cpu->mSFR[reg];
     }
 }
 
-void hardware_tick(struct em8051 *cpu)
-{
-    /*
-     * Update the LCD Tearing Effect line
-     */
 
-    cpu->mSFR[CTRL_PORT] &= ~CTRL_LCD_TE;
-    if (lcd_te_tick())
-        cpu->mSFR[CTRL_PORT] |= CTRL_LCD_TE;
-
-    /*
-     * Simulate peripheral interrupts
-     */
-
-    if (adc_tick(cpu->mSFR))
-        cpu->mSFR[REG_IRCON] |= IRCON_MISC;
-
-    if (spi_tick(&hw.radio_spi, &cpu->mSFR[REG_SPIRCON0]))
-        cpu->mSFR[REG_IRCON] |= IRCON_RFSPI;
-
-    if (hw.rfcken && radio_tick())
-        cpu->mSFR[REG_IRCON] |= IRCON_RF;
-
-    // I2C can be routed to iex3 using INTEXP
-    uint8_t iex3 = i2c_tick(cpu) && (cpu->mSFR[REG_INTEXP] & 0x04);    
-
-    /*
-     * External interrupts: iex3
-     */
-
-    if (cpu->mSFR[REG_T2CON] & 0x40) {
-        // Rising edge
-        if (iex3 && !hw.iex3)
-            cpu->mSFR[REG_IRCON] |= IRCON_SPI;
-    } else {
-        // Falling edge
-        if (!iex3 && hw.iex3)
-            cpu->mSFR[REG_IRCON] |= IRCON_SPI;
-    }
-    hw.iex3 = iex3;
-        
-    /*
-     * Other hardware with timers to update
-     */
-
-    flash_tick(cpu);
-    if (hw.flash_drv)
-        cpu->mSFR[BUS_PORT] = flash_data_out();
-}

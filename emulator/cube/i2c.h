@@ -19,7 +19,7 @@
 #include "emu8051.h"
 #include "accel.h"
 
-class I2CMaster {
+class I2CBus {
  public:
 
     // Peripherals on this bus

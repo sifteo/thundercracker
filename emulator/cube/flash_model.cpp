@@ -12,7 +12,7 @@
 
 #include "flash_model.h"
 
-const command_sequence FlashModel::cmd_byte_program[FlashModel::CMD_LENGTH] = {
+const FlashModel::command_sequence FlashModel::cmd_byte_program[FlashModel::CMD_LENGTH] = {
     { 0x000, 0x000, 0x00, 0x00 },
     { 0x000, 0x000, 0x00, 0x00 },
     { 0xFFF, 0xAAA, 0xFF, 0xAA },
@@ -21,7 +21,7 @@ const command_sequence FlashModel::cmd_byte_program[FlashModel::CMD_LENGTH] = {
     { 0x000, 0x000, 0x00, 0x00 },
 };
 
-const command_sequence FlashModel::cmd_sector_erase[FlashModel::CMD_LENGTH] = {
+const FlashModel::command_sequence FlashModel::cmd_sector_erase[FlashModel::CMD_LENGTH] = {
     { 0xFFF, 0xAAA, 0xFF, 0xAA },
     { 0xFFF, 0x555, 0xFF, 0x55 },
     { 0xFFF, 0xAAA, 0xFF, 0x80 },
@@ -30,7 +30,7 @@ const command_sequence FlashModel::cmd_sector_erase[FlashModel::CMD_LENGTH] = {
     { 0x000, 0x000, 0xFF, 0x50 },
 };
 
-const command_sequence FlashModel::cmd_block_erase[FlashModel::CMD_LENGTH] = {
+const FlashModel::command_sequence FlashModel::cmd_block_erase[FlashModel::CMD_LENGTH] = {
     { 0xFFF, 0xAAA, 0xFF, 0xAA },
     { 0xFFF, 0x555, 0xFF, 0x55 },
     { 0xFFF, 0xAAA, 0xFF, 0x80 },
@@ -39,7 +39,7 @@ const command_sequence FlashModel::cmd_block_erase[FlashModel::CMD_LENGTH] = {
     { 0x000, 0x000, 0xFF, 0x30 },
 };
 
-const command_sequence FlashModel::cmd_chip_erase[FlashModel::CMD_LENGTH] = {
+const FlashModel::command_sequence FlashModel::cmd_chip_erase[FlashModel::CMD_LENGTH] = {
     { 0xFFF, 0xAAA, 0xFF, 0xAA },
     { 0xFFF, 0x555, 0xFF, 0x55 },
     { 0xFFF, 0xAAA, 0xFF, 0x80 },

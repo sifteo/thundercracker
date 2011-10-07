@@ -66,7 +66,7 @@ void NetworkClient::txBytes(uint8_t *data, int len)
             len -= ret;
             data += ret;
         } else {
-            network_disconnect();
+            disconnect();
             break;
         }
     }
@@ -95,11 +95,11 @@ uint64_t NetworkClient::addrFromBytes(uint8_t *bytes)
 void NetworkClient::setAddrInternal(uint64_t addr)
 {
     uint8_t packet[10] = { 8, NETHUB_SET_ADDR };
-    network_addr_to_bytes(addr, &packet[2]);
-    network_tx_bytes(packet, sizeof packet);
+    addrToBytes(addr, &packet[2]);
+    txBytes(packet, sizeof packet);
 }
 
-void NetworkClient:tryConnect()
+void NetworkClient::tryConnect()
 {
     if (fd < 0) {
         rx_count = 0;
@@ -132,11 +132,11 @@ void NetworkClient:tryConnect()
 #endif
 
         if (rf_addr)
-            network_set_addr_internal(rf_addr);
+            setAddrInternal(rf_addr);
     } else {
         // Connection error, don't retry immediately
         SDL_Delay(300);
-        network_disconnect();
+        disconnect();
     }
 }
 
@@ -160,12 +160,12 @@ void NetworkClient::rxIntoBuffer()
             
             if (packet_type == NETHUB_MSG) {
                 static uint8_t ack[] = { 0, NETHUB_ACK };
-                network_tx_bytes(ack, sizeof ack);
+                txBytes(ack, sizeof ack);
 
                 // Make sure the packet buffer is available
                 SDL_SemWait(rx_sem);
 
-                rx_addr = network_addr_from_bytes(rx_buffer + 2);
+                rx_addr = addrFromBytes(rx_buffer + 2);
                 memcpy(rx_packet, rx_buffer + 10,
                        packet_len - 10);
 
@@ -193,7 +193,7 @@ void NetworkClient::rxIntoBuffer()
                             sizeof rx_buffer - rx_count, 0);
             if (recv_len <= 0) {
                 if (recv_len == 0 || errno != EAGAIN)
-                    network_disconnect();
+                    disconnect();
                 break;
             }
 
@@ -204,7 +204,7 @@ void NetworkClient::rxIntoBuffer()
 
 int NetworkClient::threadFn(void *param)
 {
-    NetworkClient *self = param;
+    NetworkClient *self = (NetworkClient *) param;
 
     while (self->is_running) {
         if (self->is_connected)
@@ -233,11 +233,7 @@ void NetworkClient::init(const char *host, const char *port)
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
-    
-    if (getaddrinfo(host, port, &hints, &addr)) {
-        perror("getaddrinfo");
-        exit(1);
-    }
+    getaddrinfo(host, port, &hints, &addr);
 
     // Buffer is initially available
     rx_sem = SDL_CreateSemaphore(1);
@@ -261,10 +257,10 @@ void NetworkClient::tx(uint64_t addr, void *payload, int len)
     if (len <= 255 - 8) {
         buffer[0] = len + 8;
         buffer[1] = NETHUB_MSG;
-        network_addr_to_bytes(addr, buffer + 2);
+        addrToBytes(addr, buffer + 2);
         memcpy(buffer + 10, payload, len);
 
-        network_tx_bytes(buffer, len + 10);
+        txBytes(buffer, len + 10);
     }
 }
 
@@ -272,7 +268,7 @@ void NetworkClient::setAddr(uint64_t addr)
 {
     if (rf_addr != addr) {
         rf_addr = addr;
-        network_set_addr_internal(addr);
+        setAddrInternal(addr);
     }
 }
 

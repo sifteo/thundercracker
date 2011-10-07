@@ -451,3 +451,26 @@ int em8051_load(struct em8051 *aCPU, char *aFilename)
     }
     return -5;
 }
+
+const char *em8051_exc_name(int aCode)
+{
+    static const char *exc_names[] = {
+        "SP exception: stack address > 127",
+        "Invalid operation: acc-to-a move",
+        "PSW not preserved over interrupt call",
+        "SP not preserved over interrupt call",
+        "ACC not preserved over interrupt call",
+        "Invalid opcode: 0xA5 encountered",
+        "Hardware bus contention occurred",
+        "SPI FIFO overrun/underrun",
+        "Radio FIFO overrun/underrun",
+        "I2C error",
+    };
+
+    if (aCode == -1)
+        return "Breakpoint reached";
+    else if (aCode < (int)(sizeof exc_names / sizeof exc_names[0]))
+        return exc_names[aCode];
+    else
+        return "Unknown exception";
+}

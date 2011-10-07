@@ -15,11 +15,11 @@
 class ADC {
  public:
 
-    void init(void) {
+    void init() {
         memset(this, 0, sizeof *this);
     }
 
-    void start(void) {
+    void start() {
         if (!period_timer)
             triggered = 1;
     }

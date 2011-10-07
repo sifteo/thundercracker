@@ -21,7 +21,7 @@ class Flash {
         BF_ERASE    = (1 << 1),
     };
 
-    struct flash_pins {
+    struct Pins {
         uint32_t  addr;       // IN
         uint8_t   oe;         // IN, active-low
         uint8_t   ce;         // IN, active-low
@@ -123,7 +123,7 @@ class Flash {
         busy_status = (enum busy_flag) (busy_status | busy);
     }
 
-    void cycle(struct flash_pins *pins) {
+    void cycle(Pins *pins) {
         if (pins->ce) {
             // Chip disabled
             pins->data_drv = 0;
