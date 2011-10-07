@@ -38,84 +38,86 @@
 #ifndef _FLASH_MODEL_H
 #define _FLASH_MODEL_H
 
-/*
- * Flash geometry
- */
+struct FlashModel {
+    /*
+     * Flash geometry
+     */
 
-#define FLASH_SIZE      (2 * 1024 * 1024)
-#define BLOCK_SIZE      (64 * 1024)
-#define SECTOR_SIZE     (4 * 1024)
+    static const unsigned SIZE         = 2 * 1024 * 1024;
+    static const unsigned BLOCK_SIZE   = 64 * 1024;
+    static const unsigned SECTOR_SIZE  = 4 * 1024;
 
-/*
- * Structure of the status byte, returned while the flash is busy.
- */
+    /*
+     * Structure of the status byte, returned while the flash is busy.
+     */
+    
+    static const uint8_t STATUS_DATA_INV      = 0x80;    // Inverted bit of the written data
+    static const uint8_t STATUS_TOGGLE        = 0x40;    // Toggles during any busy state
+    static const uint8_t STATUS_ERASE_TOGGLE  = 0x04;    // Toggles only during erase
+    
+    /*
+     * Program/erase timing.
+     *
+     * Currently these are based on "typical" datasheet values. We may
+     * want to test with maximum allowed values too.
+     */
 
-#define STATUS_DATA_INV      0x80    // Inverted bit of the written data
-#define STATUS_TOGGLE        0x40    // Toggles during any busy state
-#define STATUS_ERASE_TOGGLE  0x04    // Toggles only during erase
+    static const unsigned PROGRAM_TIME_US       = 7;
+    static const unsigned ERASE_SECTOR_TIME_US  = 18000;
+    static const unsigned ERASE_BLOCK_TIME_US   = 18000;
+    static const unsigned ERASE_CHIP_TIME_US    = 40000;
+    
+    /*
+     * The subset of commands we emulate.
+     *
+     * Each command is expressed as a pattern which matches against a
+     * buffer of the last CMD_LENGTH write cycles.
+     */
 
-/*
- * Program/erase timing.
- *
- * Currently these are based on "typical" datasheet values. We may
- * want to test with maximum allowed values too.
- */
+    static const unsigned CMD_LENGTH = 6;
 
-#define PROGRAM_TIME_US        7
-#define ERASE_SECTOR_TIME_US   18000
-#define ERASE_BLOCK_TIME_US    18000
-#define ERASE_CHIP_TIME_US     40000
+    struct command_sequence {
+        uint16_t addr_mask;
+        uint16_t addr;
+        uint8_t data_mask;
+        uint8_t data;
+    };
+    
+    static const struct command_sequence cmd_byte_program[] = {
+        { 0x000, 0x000, 0x00, 0x00 },
+        { 0x000, 0x000, 0x00, 0x00 },
+        { 0xFFF, 0xAAA, 0xFF, 0xAA },
+        { 0xFFF, 0x555, 0xFF, 0x55 },
+        { 0xFFF, 0xAAA, 0xFF, 0xA0 },
+        { 0x000, 0x000, 0x00, 0x00 },
+    };
 
-/*
- * The subset of commands we emulate.
- *
- * Each command is expressed as a pattern which matches against a
- * buffer of the last CMD_LENGTH write cycles.
- */
+    static const struct command_sequence cmd_sector_erase[] = {
+        { 0xFFF, 0xAAA, 0xFF, 0xAA },
+        { 0xFFF, 0x555, 0xFF, 0x55 },
+        { 0xFFF, 0xAAA, 0xFF, 0x80 },
+        { 0xFFF, 0xAAA, 0xFF, 0xAA },
+        { 0xFFF, 0x555, 0xFF, 0x55 },
+        { 0x000, 0x000, 0xFF, 0x50 },
+    };
 
-#define CMD_LENGTH  6
+    static const struct command_sequence cmd_block_erase[] = {
+        { 0xFFF, 0xAAA, 0xFF, 0xAA },
+        { 0xFFF, 0x555, 0xFF, 0x55 },
+        { 0xFFF, 0xAAA, 0xFF, 0x80 },
+        { 0xFFF, 0xAAA, 0xFF, 0xAA },
+        { 0xFFF, 0x555, 0xFF, 0x55 },
+        { 0x000, 0x000, 0xFF, 0x30 },
+    };
 
-struct command_sequence {
-  uint16_t addr_mask;
-  uint16_t addr;
-  uint8_t data_mask;
-  uint8_t data;
-};
-
-struct command_sequence cmd_byte_program[] = {
-  { 0x000, 0x000, 0x00, 0x00 },
-  { 0x000, 0x000, 0x00, 0x00 },
-  { 0xFFF, 0xAAA, 0xFF, 0xAA },
-  { 0xFFF, 0x555, 0xFF, 0x55 },
-  { 0xFFF, 0xAAA, 0xFF, 0xA0 },
-  { 0x000, 0x000, 0x00, 0x00 },
-};
-
-struct command_sequence cmd_sector_erase[] = {
-  { 0xFFF, 0xAAA, 0xFF, 0xAA },
-  { 0xFFF, 0x555, 0xFF, 0x55 },
-  { 0xFFF, 0xAAA, 0xFF, 0x80 },
-  { 0xFFF, 0xAAA, 0xFF, 0xAA },
-  { 0xFFF, 0x555, 0xFF, 0x55 },
-  { 0x000, 0x000, 0xFF, 0x50 },
-};
-
-struct command_sequence cmd_block_erase[] = {
-  { 0xFFF, 0xAAA, 0xFF, 0xAA },
-  { 0xFFF, 0x555, 0xFF, 0x55 },
-  { 0xFFF, 0xAAA, 0xFF, 0x80 },
-  { 0xFFF, 0xAAA, 0xFF, 0xAA },
-  { 0xFFF, 0x555, 0xFF, 0x55 },
-  { 0x000, 0x000, 0xFF, 0x30 },
-};
-
-struct command_sequence cmd_chip_erase[] = {
-  { 0xFFF, 0xAAA, 0xFF, 0xAA },
-  { 0xFFF, 0x555, 0xFF, 0x55 },
-  { 0xFFF, 0xAAA, 0xFF, 0x80 },
-  { 0xFFF, 0xAAA, 0xFF, 0xAA },
-  { 0xFFF, 0x555, 0xFF, 0x55 },
-  { 0xFFF, 0xAAA, 0xFF, 0x10 },
+    static const struct command_sequence cmd_chip_erase[] = {
+        { 0xFFF, 0xAAA, 0xFF, 0xAA },
+        { 0xFFF, 0x555, 0xFF, 0x55 },
+        { 0xFFF, 0xAAA, 0xFF, 0x80 },
+        { 0xFFF, 0xAAA, 0xFF, 0xAA },
+        { 0xFFF, 0x555, 0xFF, 0x55 },
+        { 0xFFF, 0xAAA, 0xFF, 0x10 },
+    };
 };
 
 #endif

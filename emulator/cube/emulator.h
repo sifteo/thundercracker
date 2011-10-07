@@ -81,10 +81,6 @@ extern const char *opt_trace_filename;
 extern const char *opt_net_host;
 extern const char *opt_net_port;
 
-#define USEC_TO_CYCLES(_x)  ((int)(opt_clock_hz * (uint64_t)(_x) / 1000000ULL))
-#define NSEC_TO_CYCLES(_x)  ((int)(opt_clock_hz * (uint64_t)(_x) / 1000000000ULL))
-#define HZ_TO_CYCLES(_x)    ((int)(opt_clock_hz / (_x)))
-
 // emu.c
 extern void setSpeed(int speed, int runmode);
 extern void refreshview(struct em8051 *aCPU);
