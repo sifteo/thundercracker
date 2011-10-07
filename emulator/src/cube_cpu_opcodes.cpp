@@ -833,7 +833,14 @@ static int mov_mem_indir_rx(em8051 *aCPU)
 {
     int address1 = OPERAND1;
     int address2 = INDIR_RX_ADDRESS;
-    aCPU->mData[address1] = aCPU->mData[address2];
+
+    if (address1 > 0x7f) {
+        aCPU->mSFR[address1 - 0x80] = aCPU->mData[address2];
+        aCPU->sfrwrite(aCPU, address1);
+    } else {
+        aCPU->mData[address1] = aCPU->mData[address2];
+    }
+
     PC += 2;
     return 4;
 }

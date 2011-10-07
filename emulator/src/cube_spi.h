@@ -119,12 +119,18 @@ class SPIBus {
                  * enqueue the resulting MISO byte.
                  */
                 uint8_t miso = radio.spiByte(tx_mosi);
+
+                if (cpu->traceFile) {
+                    fprintf(cpu->traceFile, "SPI: MOSI=%02x MISO=%02x\n",
+                            tx_mosi, miso);
+                }
+
                 if (rx_count < SPI_FIFO_SIZE)
                     rx_fifo[rx_count++] = miso;
                 else
                     cpu->except(cpu, CPU::EXCEPTION_SPI_XRUN);
+                status_dirty = 1;
             }
-            status_dirty = 1;
         }
 
         if (tx_count && !timer) {
@@ -143,6 +149,16 @@ class SPIBus {
         }   
 
         if (status_dirty) {
+            if (cpu->traceFile) {
+                fprintf(cpu->traceFile, "SPI: rx [ ");
+                for (int i = 0; i < rx_count; i++)
+                    fprintf(cpu->traceFile, "%02x ", rx_fifo[i]);
+                fprintf(cpu->traceFile, "] tx [ ");
+                for (int i = 0; i < tx_count; i++)
+                    fprintf(cpu->traceFile, "%02x ", tx_fifo[i]);
+                fprintf(cpu->traceFile, "]\n");
+            }
+
             // Update status register
             regs[SPI_REG_STATUS] = 
                 (rx_count == SPI_FIFO_SIZE ? SPI_RX_FULL : 0) |

@@ -28,9 +28,9 @@ class Radio {
     // Network backing this radio
     NetworkClient network;
 
-    void init(CPU::em8051 *cpu) {
+    void init(CPU::em8051 *_cpu) {
         memset(debug, 0, DEBUG_REG_SIZE);
-        cpu = cpu;
+        cpu = _cpu;
 
         regs[REG_CONFIG] = 0x08;
         regs[REG_EN_AA] = 0x3F;
@@ -54,7 +54,7 @@ class Radio {
         memset(addr_rx1_high, 0xC2, 4);
     }
 
-    static const unsigned DEBUG_REG_SIZE = 0x38;
+    static const unsigned DEBUG_REG_SIZE = 0x80;
 
     uint8_t *getRegs() {
         return regs;
@@ -160,6 +160,13 @@ class Radio {
         len = network.rx(&src_addr, payload);
         if (len < 0 || len > (int) sizeof rx_head->payload)
             return;
+
+        if (cpu->traceFile) {
+            fprintf(cpu->traceFile, "RADIO: rx [%2d] ", len);
+            for (int i = 0; i < len; i++)
+                fprintf(cpu->traceFile, "%02x", payload[i]);
+            fprintf(cpu->traceFile, "\n");
+        }
 
         if (rx_fifo_count < FIFO_SIZE) {
             rx_head->len = len;

@@ -38,6 +38,22 @@ class Flash {
     };
 
     bool init(const char *filename=NULL) {
+        write_timer = 0;
+        file = 0;
+        cycle_count = 0;
+        write_count = 0;
+        erase_count = 0;
+        busy_ticks = 0;
+        idle_ticks = 0;
+        busy_status = BF_IDLE;
+        latched_addr = 0;
+        busy_timer = 0;
+        busy = BF_IDLE;
+        cmd_fifo_head = 0;
+        prev_we = 0;
+        prev_oe = 0;
+        status_byte = 0;
+
         if (filename) {
             size_t result;
             
@@ -51,8 +67,6 @@ class Flash {
             if (result < 0)
                 return false;
  
-        } else {
-            file = NULL;
         }
 
         return true;

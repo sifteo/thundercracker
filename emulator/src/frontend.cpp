@@ -146,8 +146,14 @@ void FrontendCube::initGL()
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(GL_TEXTURE_2D, 0, 3, Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
                  0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
+
+    /*
+     * XXX: This looks fuzzy when magnified, but then Nearest looks worse
+     *      when we're not at an exact multiple of the LCD resolution. We
+     *      should use a shader to simulate the (sub)pixels in our LCD :)
+     */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void FrontendCube::draw()
