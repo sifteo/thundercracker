@@ -9,6 +9,8 @@
 #ifndef _HARDWARE_H
 #define _HARDWARE_H
 
+#include "emu8051.h"
+
 void hardware_init(struct em8051 *cpu);
 void hardware_exit(void);
 

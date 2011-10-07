@@ -9,6 +9,8 @@
 #ifndef _FRONTEND_H
 #define _FRONTEND_H
 
+#include "emu8051.h"
+
 void frontend_init(struct em8051 *cpu);
 void frontend_exit(void);
 

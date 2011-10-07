@@ -91,6 +91,8 @@ uint8_t i2cbus_write(uint8_t byte)
         accel.state = S_DATA;
         break;
 
+    default:
+        break;
     }        
 
     I2C_DEBUG(("I2C Write 0x%02x, state=%d\n", byte, accel.state));
@@ -107,6 +109,9 @@ uint8_t i2cbus_read(uint8_t ack)
     case S_DATA:
         if (accel.address < sizeof accel.regs)
             result = accel.regs.bytes[accel.address++];
+        break;
+
+    default:
         break;
 
     }

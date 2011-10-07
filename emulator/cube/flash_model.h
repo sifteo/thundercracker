@@ -33,6 +33,8 @@
  *    take half a second or longer to erase.
  */
 
+#include <stdint.h>
+
 #ifndef _FLASH_MODEL_H
 #define _FLASH_MODEL_H
 

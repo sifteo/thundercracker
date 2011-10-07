@@ -427,9 +427,9 @@ void mainview_editor_keys(struct em8051 *aCPU, int ch)
             else
             {
                 if (cursorpos & 1)
-                    setregoutput(aCPU, cursorpos / 2, getregoutput(aCPU, cursorpos / 2) & 0xf0 | insert_value);
+                    setregoutput(aCPU, cursorpos / 2, (getregoutput(aCPU, cursorpos / 2) & 0xf0) | insert_value);
                 else
-                    setregoutput(aCPU, cursorpos / 2, getregoutput(aCPU, cursorpos / 2) & 0x0f | (insert_value << 4));
+                    setregoutput(aCPU, cursorpos / 2, (getregoutput(aCPU, cursorpos / 2) & 0x0f) | (insert_value << 4));
             }
             cursorpos++;
             if (cursorpos > 23)

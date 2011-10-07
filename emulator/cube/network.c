@@ -37,6 +37,7 @@
 #   include <netinet/in.h>
 #   include <fcntl.h>
 #   include <netdb.h>
+#   include <unistd.h>
 #endif
 
 #define NETHUB_SET_ADDR         0x00

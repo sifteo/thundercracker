@@ -54,14 +54,6 @@ static struct {
     int enable_flash;
 } frontend;
 
-
-static uint64_t clamp64(uint64_t val, uint64_t min, uint64_t max)
-{
-    if (val < min) val = min;
-    if (val > max) val = max;
-    return val;
-}
-
 static uint32_t clamp32(uint32_t val, uint32_t min, uint32_t max)
 {
     if (val < min) val = min;
@@ -291,6 +283,9 @@ static void frontend_keydown(SDL_KeyboardEvent *evt)
     case 'f':
         frontend.enable_flash = !frontend.enable_flash;
         frontend_resize_window();
+        break;
+
+    default:
         break;
 
     }

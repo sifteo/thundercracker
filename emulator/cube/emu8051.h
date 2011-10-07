@@ -123,7 +123,7 @@ int tick(struct em8051 *aCPU);
 // decode the next operation as character string.
 // buffer must be big enough (64 bytes is very safe). 
 // Returns length of opcode.
-int decode(struct em8051 *aCPU, int aPosition, unsigned char *aBuffer);
+int decode(struct em8051 *aCPU, int aPosition, char *aBuffer);
 
 // Load an intel hex format object file. Returns negative for errors.
 int load_obj(struct em8051 *aCPU, char *aFilename);

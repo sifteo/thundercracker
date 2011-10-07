@@ -9,6 +9,9 @@
 #ifndef _FLASH_H
 #define _FLASH_H
 
+#include <stdint.h>
+#include "emu8051.h"
+
 enum busy_flag {
     BF_IDLE     = 0,
     BF_PROGRAM  = (1 << 0),

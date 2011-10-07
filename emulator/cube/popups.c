@@ -165,7 +165,7 @@ void emu_load(struct em8051 *aCPU)
     while (ch != '\n')
     {
         ch = getch();
-        if (ch > 31 && ch < 127 || ch > 127 && ch < 255)
+        if ((ch > 31 && ch < 127) || (ch > 127 && ch < 255))
         {
             if (pos < 44)
             {
@@ -279,7 +279,7 @@ int emu_readvalue(struct em8051 *aCPU, const char *aPrompt, int aOldvalue, int a
         wrefresh(exc);
         ch = getch();
 
-        if (ch >= '0' && ch <= '9' || ch >= 'a' && ch <= 'f' || ch >= 'A' && ch <= 'F')
+        if ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'))
         {
             if (pos < aValueSize)
             {
@@ -368,7 +368,6 @@ int emu_reset(struct em8051 *aCPU)
 {
     WINDOW * exc;
     char temp[256];
-    int pos = 0;
     int ch = 0;
     int result;
     temp[0] = 0;
@@ -420,7 +419,6 @@ void emu_help(struct em8051 *aCPU)
 {
     WINDOW * exc;
     char temp[256];
-    int pos = 0;
     int ch = 0;
     temp[0] = 0;
 

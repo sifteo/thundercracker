@@ -375,7 +375,7 @@ int tick(struct em8051 *aCPU)
     return ticked;
 }
 
-int decode(struct em8051 *aCPU, int aPosition, unsigned char *aBuffer)
+int decode(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
     return aCPU->dec[aCPU->mCodeMem[aPosition & (aCPU->mCodeMemSize - 1)]](aCPU, aPosition, aBuffer);
 }

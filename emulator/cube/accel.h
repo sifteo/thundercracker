@@ -9,6 +9,8 @@
 #ifndef _ACCEL_H
 #define _ACCEL_H
 
+#include <stdint.h>
+
 void accel_set_vector(int8_t x, int8_t y);
  
 #endif
