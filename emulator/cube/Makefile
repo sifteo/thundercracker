@@ -52,4 +52,4 @@ $(BIN): $(OBJS)
 .PHONY: clean
 
 clean:
-	rm -f $(BIN)
+	rm -f $(BIN) $(OBJS)
