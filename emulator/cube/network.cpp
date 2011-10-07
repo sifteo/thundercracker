@@ -40,52 +40,27 @@
 #   include <unistd.h>
 #endif
 
-#define NETHUB_SET_ADDR         0x00
-#define NETHUB_MSG              0x01
-#define NETHUB_ACK              0x02
-#define NETHUB_NACK             0x03
-
-struct {
-    struct addrinfo *addr;
-    SDL_Thread *thread;
-    SDL_sem *rx_sem;
-    uint64_t rf_addr;
-    int fd;
-    int is_connected;
-    int is_running;
-
-    // Raw receive buffer
-    int rx_count;
-    uint8_t rx_buffer[1024];
-
-    // Received packet buffer
-    int rx_packet_len;
-    uint64_t rx_addr;
-    uint8_t rx_packet[256];
-} net;
-
-
-static void network_disconnect(void)
+void NetworkClient::disconnect()
 {
-    if (net.fd >= 0) {
+    if (fd >= 0) {
 #ifdef _WIN32
-        closesocket(net.fd);
+        closesocket(fd);
 #else
-        close(net.fd);
+        close(fd);
 #endif
     }
 
-    net.fd = -1;
-    net.is_connected = 0;
+    fd = -1;
+    is_connected = 0;
 }   
 
-static void network_tx_bytes(uint8_t *data, int len)
+void NetworkClient::txBytes(uint8_t *data, int len)
 {
-    if (net.fd < 0 || !net.is_connected)
+    if (fd < 0 || !is_connected)
         return;
 
     while (len > 0) {
-        int ret = send(net.fd, data, len, 0);
+        int ret = send(fd, data, len, 0);
 
         if (ret > 0) {
             len -= ret;
@@ -97,7 +72,7 @@ static void network_tx_bytes(uint8_t *data, int len)
     }
 }
 
-static void network_addr_to_bytes(uint64_t addr, uint8_t *bytes)
+void NetworkClient::addrToBytes(uint64_t addr, uint8_t *bytes)
 {
     int i;
     for (i = 0; i < 8; i++) {
@@ -106,7 +81,7 @@ static void network_addr_to_bytes(uint64_t addr, uint8_t *bytes)
     }
 }
 
-static uint64_t network_addr_from_bytes(uint8_t *bytes)
+uint64_t NetworkClient::addrFromBytes(uint8_t *bytes)
 {
     uint64_t addr = 0;
     int i;
@@ -117,47 +92,47 @@ static uint64_t network_addr_from_bytes(uint8_t *bytes)
     return addr;
 }
 
-static void network_set_addr_internal(uint64_t addr)
+void NetworkClient::setAddrInternal(uint64_t addr)
 {
     uint8_t packet[10] = { 8, NETHUB_SET_ADDR };
     network_addr_to_bytes(addr, &packet[2]);
     network_tx_bytes(packet, sizeof packet);
 }
 
-static void network_try_connect(void)
+void NetworkClient:tryConnect()
 {
-    if (net.fd < 0) {
-        net.rx_count = 0;
+    if (fd < 0) {
+        rx_count = 0;
 
-        net.fd = socket(net.addr->ai_family, net.addr->ai_socktype, net.addr->ai_protocol);
-        if (net.fd < 0)
+        fd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+        if (fd < 0)
             return;
     }
 
-    if (!connect(net.fd, net.addr->ai_addr, net.addr->ai_addrlen)) {
+    if (!connect(fd, addr->ai_addr, addr->ai_addrlen)) {
         unsigned long arg;
 
-        net.is_connected = 1;
+        is_connected = 1;
 
 #ifdef _WIN32
         arg = 1;
-        ioctlsocket(net.fd, FIONBIO, &arg);
+        ioctlsocket(fd, FIONBIO, &arg);
 #else
-        fcntl(net.fd, F_SETFL, O_NONBLOCK | fcntl(net.fd, F_GETFL));
+        fcntl(fd, F_SETFL, O_NONBLOCK | fcntl(fd, F_GETFL));
 #endif
 
 #ifdef SO_NOSIGPIPE
         arg = 1;
-        setsockopt(net.fd, SOL_SOCKET, SO_NOSIGPIPE, &arg, sizeof arg);
+        setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &arg, sizeof arg);
 #endif
 
 #ifdef TCP_NODELAY
         arg = 1;
-        setsockopt(net.fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
+        setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
 #endif
 
-        if (net.rf_addr)
-            network_set_addr_internal(net.rf_addr);
+        if (rf_addr)
+            network_set_addr_internal(rf_addr);
     } else {
         // Connection error, don't retry immediately
         SDL_Delay(300);
@@ -165,18 +140,18 @@ static void network_try_connect(void)
     }
 }
 
-static void network_rx_into_buffer(void)
+void NetworkClient::rxIntoBuffer()
 {
     int recv_len = 1;
     fd_set rfds;
 
     FD_ZERO(&rfds);
         
-    while (net.is_running && net.is_connected) {
-        int packet_len = 2 + (int)net.rx_buffer[0];
-        uint8_t packet_type = net.rx_buffer[1];
+    while (is_running && is_connected) {
+        int packet_len = 2 + (int)rx_buffer[0];
+        uint8_t packet_type = rx_buffer[1];
 
-        if (net.rx_count >= packet_len) {
+        if (rx_count >= packet_len) {
             /*
              * We have a packet! Is it a message? We currently ignore
              * remote ACKs. (We're providing unidirectional flow
@@ -188,19 +163,19 @@ static void network_rx_into_buffer(void)
                 network_tx_bytes(ack, sizeof ack);
 
                 // Make sure the packet buffer is available
-                SDL_SemWait(net.rx_sem);
+                SDL_SemWait(rx_sem);
 
-                net.rx_addr = network_addr_from_bytes(net.rx_buffer + 2);
-                memcpy(net.rx_packet, net.rx_buffer + 10,
+                rx_addr = network_addr_from_bytes(rx_buffer + 2);
+                memcpy(rx_packet, rx_buffer + 10,
                        packet_len - 10);
 
                 // This assignment transfers buffer ownership to the main thread
-                net.rx_packet_len = packet_len - 10;
+                rx_packet_len = packet_len - 10;
             }
 
             // Remove packet from buffer
-            memmove(net.rx_buffer, net.rx_buffer + packet_len, net.rx_count - packet_len);
-            net.rx_count -= packet_len;
+            memmove(rx_buffer, rx_buffer + packet_len, rx_count - packet_len);
+            rx_count -= packet_len;
 
         } else {
             /*
@@ -211,34 +186,37 @@ static void network_rx_into_buffer(void)
              * read.
              */
 
-            FD_SET(net.fd, &rfds);
-            select(net.fd + 1, &rfds, NULL, NULL, NULL);
+            FD_SET(fd, &rfds);
+            select(fd + 1, &rfds, NULL, NULL, NULL);
             
-            recv_len = recv(net.fd, net.rx_buffer + net.rx_count,
-                            sizeof net.rx_buffer - net.rx_count, 0);
+            recv_len = recv(fd, rx_buffer + rx_count,
+                            sizeof rx_buffer - rx_count, 0);
             if (recv_len <= 0) {
                 if (recv_len == 0 || errno != EAGAIN)
                     network_disconnect();
                 break;
             }
 
-            net.rx_count += recv_len;
+            rx_count += recv_len;
         }
     }
 }
 
-static int network_thread(void *param)
+int NetworkClient::threadFn(void *param)
 {
-    while (net.is_running) {
-        if (net.is_connected)
-            network_rx_into_buffer();
+    NetworkClient *self = param;
+
+    while (self->is_running) {
+        if (self->is_connected)
+            self->rxIntoBuffer();
         else
-            network_try_connect();
+            self->tryConnect();
     }
+
     return 0;
 }
 
-void network_init(const char *host, const char *port)
+void NetworkClient::init(const char *host, const char *port)
 {
     struct addrinfo hints;
 #ifdef _WIN32
@@ -246,37 +224,37 @@ void network_init(const char *host, const char *port)
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
     
-    memset(&net, 0, sizeof net);
-    net.fd = -1;
-    net.is_running = 1;
-    net.rx_packet_len = -1;
+    memset(this, 0, sizeof *this);
+    fd = -1;
+    is_running = 1;
+    rx_packet_len = -1;
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
     
-    if (getaddrinfo(host, port, &hints, &net.addr)) {
+    if (getaddrinfo(host, port, &hints, &addr)) {
         perror("getaddrinfo");
         exit(1);
     }
 
     // Buffer is initially available
-    net.rx_sem = SDL_CreateSemaphore(1);
+    rx_sem = SDL_CreateSemaphore(1);
 
-    net.thread = SDL_CreateThread(network_thread, NULL);
+    thread = SDL_CreateThread(threadFn, NULL);
 }
 
-void network_exit(void)
+void NetworkClient::exit(void)
 {
-    network_disconnect();
-    freeaddrinfo(net.addr);
+    disconnect();
+    freeaddrinfo(addr);
 
-    net.is_running = 0;
-    SDL_SemPost(net.rx_sem);
+    is_running = 0;
+    SDL_SemPost(rx_sem);
 }
 
-void network_tx(uint64_t addr, void *payload, int len)
+void NetworkClient::tx(uint64_t addr, void *payload, int len)
 {
     uint8_t buffer[512];
 
@@ -290,23 +268,23 @@ void network_tx(uint64_t addr, void *payload, int len)
     }
 }
 
-void network_set_addr(uint64_t addr)
+void NetworkClient::setAddr(uint64_t addr)
 {
-    if (net.rf_addr != addr) {
-        net.rf_addr = addr;
+    if (rf_addr != addr) {
+        rf_addr = addr;
         network_set_addr_internal(addr);
     }
 }
 
-int network_rx(uint64_t *addr, uint8_t payload[256])
+int NetworkClient::rx(uint64_t *addr, uint8_t payload[256])
 {
-    int len = net.rx_packet_len;
+    int len = rx_packet_len;
 
     if (len >= 0) {
-        *addr = net.rx_addr;
-        memcpy(payload, net.rx_packet, len);
-        net.rx_packet_len = -1;
-        SDL_SemPost(net.rx_sem);
+        *addr = rx_addr;
+        memcpy(payload, rx_packet, len);
+        rx_packet_len = -1;
+        SDL_SemPost(rx_sem);
     }
  
     return len;

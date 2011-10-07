@@ -69,7 +69,7 @@ class I2CAccelerometer {
         switch (state) {
 
         case S_DATA:
-            if (address < sizeof regs)
+            if (regAddress < sizeof regs)
                 result = regs.bytes[regAddress++];
             break;
 

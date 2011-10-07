@@ -32,8 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "emu8051.h"
-#include "hardware.h"
-#include "i2c.h"
 
 void disasm_setptrs(struct em8051 *aCPU);
 void op_setptrs(struct em8051 *aCPU);
@@ -278,30 +276,29 @@ static void traceExecution(struct em8051 *mCPU)
     char assembly[128];
     uint8_t bank = (mCPU->mSFR[REG_PSW] & (PSWMASK_RS0|PSWMASK_RS1)) >> PSW_RS0;
 
-    decode(mCPU, mCPU->mPC, assembly);
+    em8051_decode(mCPU, mCPU->mPC, assembly);
 
     fprintf(mCPU->traceFile,
-            "%10llu  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] DP=[%d %04x %04x] I2C=%02x DBG=%02x\n",
+            "%10llu  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] DP=[%d %04x %04x] DBG=%02x\n",
             (long long unsigned) mCPU->profilerTotal,
             mCPU->mPC, assembly,
             mCPU->mSFR[REG_ACC],
             bank,
-            mCPU->mLowerData[bank*8 + 0],
-            mCPU->mLowerData[bank*8 + 1],
-            mCPU->mLowerData[bank*8 + 2],
-            mCPU->mLowerData[bank*8 + 3],
-            mCPU->mLowerData[bank*8 + 4],
-            mCPU->mLowerData[bank*8 + 5],
-            mCPU->mLowerData[bank*8 + 6],
-            mCPU->mLowerData[bank*8 + 7],
+            mCPU->mData[bank*8 + 0],
+            mCPU->mData[bank*8 + 1],
+            mCPU->mData[bank*8 + 2],
+            mCPU->mData[bank*8 + 3],
+            mCPU->mData[bank*8 + 4],
+            mCPU->mData[bank*8 + 5],
+            mCPU->mData[bank*8 + 6],
+            mCPU->mData[bank*8 + 7],
             mCPU->mSFR[REG_DPS] & 1,
             (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
             (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
-            i2c_trace(),
             mCPU->mSFR[REG_DEBUG]);
 }
 
-int tick(struct em8051 *aCPU)
+int em8051_tick(struct em8051 *aCPU)
 {
     int v;
     int ticked = 0;
@@ -322,7 +319,7 @@ int tick(struct em8051 *aCPU)
 
     if (aCPU->mTickDelay == 0)
     {
-        unsigned pc = aCPU->mPC & (aCPU->mCodeMemSize - 1);
+        unsigned pc = aCPU->mPC & (CODE_SIZE - 1);
         struct profile_data *pd;
 
         aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU);
@@ -367,29 +364,22 @@ int tick(struct em8051 *aCPU)
         timer_tick(aCPU);
     }
 
-    /*
-     * Other hardware: executed every tick
-     */
-    hardware_tick(aCPU);
-
     return ticked;
 }
 
-int decode(struct em8051 *aCPU, int aPosition, char *aBuffer)
+int em8051_decode(struct em8051 *aCPU, int aPosition, char *aBuffer)
 {
-    return aCPU->dec[aCPU->mCodeMem[aPosition & (aCPU->mCodeMemSize - 1)]](aCPU, aPosition, aBuffer);
+    return aCPU->dec[aCPU->mCodeMem[aPosition & (CODE_SIZE - 1)]](aCPU, aPosition, aBuffer);
 }
 
-void reset(struct em8051 *aCPU, int aWipe)
+void em8051_reset(struct em8051 *aCPU, int aWipe)
 {
     // clear memory, set registers to bootup values, etc    
     if (aWipe)
     {
-        memset(aCPU->mCodeMem, 0, aCPU->mCodeMemSize);
-        memset(aCPU->mExtData, 0, aCPU->mExtDataSize);
-        memset(aCPU->mLowerData, 0, 128);
-        if (aCPU->mUpperData) 
-            memset(aCPU->mUpperData, 0, 128);
+        memset(aCPU->mCodeMem, 0, sizeof aCPU->mCodeMem);
+        memset(aCPU->mExtData, 0, sizeof aCPU->mExtData);
+        memset(aCPU->mData, 0, sizeof aCPU->mData);
     }
 
     memset(aCPU->mSFR, 0, 128);
@@ -411,8 +401,7 @@ void reset(struct em8051 *aCPU, int aWipe)
     aCPU->irq_count = 0;
 }
 
-
-int readbyte(FILE * f)
+static int readbyte(FILE * f)
 {
     char data[3];
     data[0] = fgetc(f);
@@ -421,7 +410,7 @@ int readbyte(FILE * f)
     return strtol(data, NULL, 16);
 }
 
-int load_obj(struct em8051 *aCPU, char *aFilename)
+int em8051_load(struct em8051 *aCPU, char *aFilename)
 {
     FILE *f;    
     if (aFilename == 0 || aFilename[0] == 0)

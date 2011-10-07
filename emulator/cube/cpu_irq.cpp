@@ -25,8 +25,8 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
     /*
      * Far CALL to the interrupt vector
      */
-    push_to_stack(cpu, cpu->mPC & 0xff);
-    push_to_stack(cpu, cpu->mPC >> 8);
+    em8051_push(cpu, cpu->mPC & 0xff);
+    em8051_push(cpu, cpu->mPC >> 8);
     cpu->mPC = vector;
     cpu->mTickDelay += 6;  // Kind of a guess...
 
@@ -79,7 +79,7 @@ void handle_interrupts(struct em8051 *cpu)
         { 13, REG_IEN1, IRQM1_TICK,  REG_IRCON, IRCON_TICK, IRCON_TICK },
     };
 
-    int i;
+    unsigned i;
     int found_i = -1;
     int found_prio = -1;
 

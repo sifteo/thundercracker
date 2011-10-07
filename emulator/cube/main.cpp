@@ -466,7 +466,7 @@ void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
 
     fprintf(f, "total_cycles  %%_cycles  fl_idle  loop_len  loop_count    addr   disassembly\n");
 
-    for (addr = 0; addr < aCPU->mCodeMemSize; addr++, pd++) {
+    for (addr = 0; addr < CODE_SIZE; addr++, pd++) {
         if (pd->total_cycles) {
             char assembly[128];
 
@@ -485,29 +485,12 @@ void profiler_write_disassembly(struct em8051 *aCPU, const char *filename)
     fprintf(stderr, "Profiler output written to '%s'\n", filename);
 }
 
-#ifdef __MACOSX__
-// Necessary if we're using -fwhole-program, so that the real main() can see our SDL_main.
-__attribute ((externally_visible))
-#endif
 int main(int argc, char ** argv) 
 {
     struct em8051 emu;
     int i;
  
     memset(&emu, 0, sizeof(emu));
-    emu.mExtDataSize = 1024;
-    emu.mCodeMemSize = 16*1024;
-    emu.mCodeMem     = calloc(1, emu.mCodeMemSize);
-    emu.mProfilerMem = calloc(sizeof emu.mProfilerMem[0], emu.mCodeMemSize);
-    emu.mExtData     = calloc(1, emu.mExtDataSize);
-    emu.mLowerData   = calloc(1, 128);
-    emu.mUpperData   = calloc(1, 128);
-    emu.mSFR         = calloc(1, 128);
-    emu.except       = &emu_exception;
-    emu.sfrwrite     = &hardware_sfrwrite;
-    emu.sfrread      = &hardware_sfrread;
-    emu.xread = NULL;
-    emu.xwrite = NULL;
     reset(&emu, 1);    
  
     if (argc > 1) {

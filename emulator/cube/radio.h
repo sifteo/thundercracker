@@ -22,6 +22,8 @@
 
 class Radio {
  public:
+    // Network backing this radio
+    NetworkClient network;
 
     void init(struct em8051 *cpu) {
         memset(this, 0, sizeof *this);
@@ -148,9 +150,9 @@ class Radio {
         uint8_t payload[256];    
 
         /* Network receive opportunity */
-        network_set_addr(radio_pack_addr(REG_RX_ADDR_P0));
-        len = network_rx(&src_addr, payload);
-        if (len < 0 || len > sizeof rx_head->payload)
+        network.setAddr(packAddr(REG_RX_ADDR_P0));
+        len = network.rx(&src_addr, payload);
+        if (len < 0 || len > (int) sizeof rx_head->payload)
             return;
 
         if (rx_fifo_count < FIFO_SIZE) {
@@ -168,13 +170,13 @@ class Radio {
             if (tx_fifo_count) {
                 // ACK with payload
                 byte_count += tx_tail->len;
-                network_tx(src_addr, tx_tail->payload, tx_tail->len);
+                network.tx(src_addr, tx_tail->payload, tx_tail->len);
                 tx_fifo_tail = (tx_fifo_tail + 1) % FIFO_SIZE;
                 tx_fifo_count--;
                 regs[REG_STATUS] |= STATUS_TX_DS;
             } else {
                 // ACK without payload (empty TX fifo)
-                network_tx(src_addr, NULL, 0);
+                network.tx(src_addr, NULL, 0);
             }
         } else
             cpu->except(cpu, EXCEPTION_RADIO_XRUN);
@@ -197,8 +199,8 @@ class Radio {
         case CMD_W_REGISTER | REG_STATUS:
             // Status has write-1-to-clear bits
             mosi &= STATUS_RX_DR | STATUS_TX_DS | STATUS_MAX_RT;
-            *radio_reg_ptr(cmd, index) &= ~mosi;
-            radio_update_irq();
+            regRef(cmd, index) &= ~mosi;
+            updateIRQ();
             return 0xFF;
 
         case CMD_R_RX_PL_WID:
@@ -206,9 +208,9 @@ class Radio {
 
         default:
             if (cmd < CMD_R_REGISTER + sizeof regs)
-                return *radio_reg_ptr(cmd, index);
+                return regRef(cmd, index);
             if (cmd < CMD_W_REGISTER + sizeof regs) {
-                *radio_reg_ptr(cmd, index) = mosi;
+                regRef(cmd, index) = mosi;
                 return 0xFF;
             }
         }
@@ -226,14 +228,14 @@ class Radio {
             tx_fifo_head = 0;
             tx_fifo_tail = 0;
             tx_fifo_count = 0;
-            radio_update_status();
+            updateStatus();
             break;
 
         case CMD_FLUSH_RX:
             rx_fifo_head = 0;
             rx_fifo_tail = 0;
             rx_fifo_count = 0;
-            radio_update_status();
+            updateStatus();
             break;
         }
     }

@@ -11,27 +11,22 @@
  * master, since our I2C peripheral only runs at 100 kHz. There is no
  * multi-level transmit/receive FIFO, we just know how to write
  * individual bytes, start/stop conditions, and fire interrupts.
- *
- * Our interface to the I2C peripheral device is via global functions
- * i2cbus_*, currently defined directly by our accelerometer
- * emulation, since we have no other devices on the bus.
  */
 
 #ifndef _I2C_H
 #define _I2C_H
 
 #include "emu8051.h"
+#include "accel.h"
 
 class I2CMaster {
  public:
 
+    // Peripherals on this bus
+    I2CAccelerometer accel;
+
     void init() {
         timer = 0;
-    }
-
-    uint8_t trace() {
-        /* For trace debug mode */
-        return (tx_buffer_full << 4) | rx_buffer_full;
     }
 
     int tick(struct em8051 *cpu) {
@@ -54,15 +49,15 @@ class I2CMaster {
                     if (rx_buffer_full)
                         cpu->except(cpu, EXCEPTION_I2C);
  
-                    rx_buffer = i2cbus_read(!stop);
+                    rx_buffer = accel.i2cRead(!stop);
                     rx_buffer_full = 1;
             
                     if (stop) {
-                        i2cbus_stop();
+                        accel.i2cStop();
                         state = I2C_IDLE;
                         cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_STOP;
                     } else {
-                        i2c_timer_set(cpu, 9);  // Data byte, ACK
+                        timerSet(cpu, 9);  // Data byte, ACK
                     }
                 }
                 
@@ -86,12 +81,12 @@ class I2CMaster {
                  */
                 
                 if (tx_buffer_full) {
-                    i2cbus_start();
-                    next_ack_status = i2cbus_write(tx_buffer);
+                    accel.i2cStart();
+                    next_ack_status = accel.i2cWrite(tx_buffer);
                     state = (tx_buffer & 1) ? I2C_WR_READ_ADDR : I2C_WRITING;
                     cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_START;
                     tx_buffer_full = 0;
-                    i2c_timer_set(cpu, 10);      // Start, data byte, ACK
+                    timerSet(cpu, 10);      // Start, data byte, ACK
                 }
                 
             } else if (state == I2C_WRITING) {
@@ -100,19 +95,19 @@ class I2CMaster {
                  */
                 
                 if (tx_buffer_full) {
-                    next_ack_status = i2cbus_write(tx_buffer);
+                    next_ack_status = accel.i2cWrite(tx_buffer);
                     tx_buffer_full = 0;
-                    i2c_timer_set(cpu, 9);       // Data byte, ACK
+                    timerSet(cpu, 9);       // Data byte, ACK
                     
                 } else if (w2con0 & W2CON0_STOP) {
-                    i2cbus_stop();
+                    accel.i2cStop();
                     state = I2C_IDLE;
                     cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_STOP;
                 }
                 
             } else if (state == I2C_WR_READ_ADDR) {
                 state = I2C_READING;
-                i2c_timer_set(cpu, 9);       // Data byte, ACK
+                timerSet(cpu, 9);       // Data byte, ACK
             }
         }
         

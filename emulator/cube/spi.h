@@ -170,20 +170,6 @@ class SPIMaster {
         }
     }
 
-    struct em8051 *cpu; // Only for exception reporting!
-
-    uint8_t (*callback)(uint8_t mosi);
-    
-    uint8_t tx_fifo[SPI_FIFO_SIZE]; // Writes pushed -> into [0]
-    uint8_t rx_fifo[SPI_FIFO_SIZE]; // Reads pulled <- from [0]
-    uint8_t tx_count;   // Number of bytes in tx_fifo
-    uint8_t rx_count;   // Number of bytes in rx_fifo
-    uint8_t tx_mosi;    // Transmit shift register
-    uint32_t timer;     // Cycle count remaining on current byte
-
-    uint8_t irq_state;
-    uint8_t status_dirty;
-
     static const uint8_t SPI_REG_CON0    = 0;       // Bus speed, clock mode
     static const uint8_t SPI_REG_CON1    = 1;       // FIFO IRQ masking
     static const uint8_t SPI_REG_STATUS  = 2;       // FIFO status
@@ -200,6 +186,20 @@ class SPIMaster {
     static const uint8_t SPI_TX_READY    = 0x01;
 
     static const uint8_t SPI_FIFO_SIZE   = 2;
+
+    struct em8051 *cpu; // Only for exception reporting!
+
+    uint8_t (*callback)(uint8_t mosi);
+    
+    uint8_t tx_fifo[SPI_FIFO_SIZE]; // Writes pushed -> into [0]
+    uint8_t rx_fifo[SPI_FIFO_SIZE]; // Reads pulled <- from [0]
+    uint8_t tx_count;   // Number of bytes in tx_fifo
+    uint8_t rx_count;   // Number of bytes in rx_fifo
+    uint8_t tx_mosi;    // Transmit shift register
+    uint32_t timer;     // Cycle count remaining on current byte
+
+    uint8_t irq_state;
+    uint8_t status_dirty;
 };
  
 #endif

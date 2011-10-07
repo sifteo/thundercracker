@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include "reg8051.h"
 
 struct em8051;
 
@@ -77,28 +78,20 @@ struct profile_data
 
 struct em8051
 {
-    unsigned char *mCodeMem;      // 1k - 64k, must be power of 2
-    int mCodeMemSize; 
-    unsigned char *mExtData; // 0 - 64k, must be power of 2
-    int mExtDataSize;
-    unsigned char *mLowerData; // 128 bytes
-    unsigned char *mUpperData; // 0 or 128 bytes; leave to NULL if none
-    unsigned char *mSFR; // 128 bytes; (special function registers)
+    uint8_t mCodeMem[CODE_SIZE];
+    uint8_t mExtData[XDATA_SIZE];
+    uint8_t mData[256];
+    uint8_t mSFR[128];
+
     int mPC; // Program Counter; outside memory area
     int mTickDelay; // How many ticks should we delay before continuing
     int mTimerTickDelay;
-    em8051operation op[256]; // function pointers to opcode handlers
-    em8051decoder dec[256]; // opcode-to-string decoder handlers    
-    em8051exception except; // callback: exceptional situation occurred
-    em8051sfrread sfrread; // callback: SFR register being read
-    em8051sfrwrite sfrwrite; // callback: SFR register written
-    em8051xread xread; // callback: external memory being read
-    em8051xwrite xwrite; // callback: external memory being written
 
-    // Profiler state
-    struct profile_data *mProfilerMem;
-    uint64_t profilerTotal;
-    FILE *traceFile;
+    em8051operation op[256]; // function pointers to opcode handlers
+    em8051decoder dec[256];  // opcode-to-string decoder handlers    
+    em8051exception except;
+    em8051sfrread sfrread;
+    em8051sfrwrite sfrwrite;
 
     uint8_t irq_count;          // Number of currently active IRQ handlers
 
@@ -109,30 +102,32 @@ struct em8051
         // Priority of *this* interrupt handler
         uint8_t priority;
     } irql[NUM_IRQ_LEVELS];
+
+    // Profiler state
+    uint64_t profilerTotal;
+    FILE *traceFile;
+    struct profile_data mProfilerMem[CODE_SIZE];
 };
 
 // set the emulator into reset state. Must be called before tick(), as
 // it also initializes the function pointers. aWipe tells whether to reset
 // all memory to zero.
-void reset(struct em8051 *aCPU, int aWipe);
+void em8051_reset(struct em8051 *aCPU, int aWipe);
 
 // run one emulator tick, or 12 hardware clock cycles.
 // returns 1 if a new operation was executed.
-int tick(struct em8051 *aCPU);
+int em8051_tick(struct em8051 *aCPU);
 
 // decode the next operation as character string.
 // buffer must be big enough (64 bytes is very safe). 
 // Returns length of opcode.
-int decode(struct em8051 *aCPU, int aPosition, char *aBuffer);
+int em8051_decode(struct em8051 *aCPU, int aPosition, char *aBuffer);
 
 // Load an intel hex format object file. Returns negative for errors.
-int load_obj(struct em8051 *aCPU, char *aFilename);
-
-// Alternate way to execute an opcode (switch-structure instead of function pointers)
-int do_op(struct em8051 *aCPU);
+int em8051_load(struct em8051 *aCPU, char *aFilename);
 
 // Internal: Pushes a value into stack
-void push_to_stack(struct em8051 *aCPU, int aValue);
+void em8051_push(struct em8051 *aCPU, int aValue);
 
 
 enum EM8051_EXCEPTION
@@ -146,7 +141,8 @@ enum EM8051_EXCEPTION
     EXCEPTION_BUS_CONTENTION,    // Hardware bus contention
     EXCEPTION_SPI_XRUN,          // SPI FIFO overrun/underrun
     EXCEPTION_RADIO_XRUN,        // Radio FIFO overrun/underrun
-    EXCEPTION_I2C,              // I2C error
+    EXCEPTION_I2C,               // I2C error
+    EXCEPTION_XDATA_ERROR,       // Access to unmapped portion of xdata 
 };
 
 #endif

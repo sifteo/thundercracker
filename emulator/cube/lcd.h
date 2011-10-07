@@ -9,6 +9,9 @@
 #ifndef _LCD_H
 #define _LCD_H
 
+#include <stdint.h>
+#include <string.h>
+
 class LCD {
  public:
     static const unsigned LCD_WIDTH  = 128;
@@ -57,10 +60,10 @@ class LCD {
         if (!pins->csx && pins->wrx && !prev_wrx) {
             if (pins->dcx) {
                 /* Data write strobe */
-                lcd_data(pins->data_in);
+                data(pins->data_in);
             } else {
                 /* Command write strobe */
-                lcd_cmd(pins->data_in);
+                command(pins->data_in);
             }
         }
 
@@ -257,7 +260,7 @@ class LCD {
             break;
             
         case CMD_RAMWR:
-            lcd_write_byte(byte);
+            writeByte(byte);
             break;
         }
     }

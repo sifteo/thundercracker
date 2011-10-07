@@ -55,16 +55,6 @@
 #define CTRL_LCD_TE     0       // XXX: TE pin not available in our hardware
 
 static struct {
-    uint8_t lat1;
-    uint8_t lat2;
-    uint8_t bus;
-    uint8_t prev_ctrl_port;
-    uint8_t flash_drv;
-
-    uint8_t iex3;
-
-    int rfcken;
-    struct spi_master radio_spi;
 } hw;
 
 // RFCON bits

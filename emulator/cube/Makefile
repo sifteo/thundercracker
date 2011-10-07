@@ -1,25 +1,18 @@
 BIN = ../simcube
 
 OBJS = \
-	emu.o \
-	core.o \
-	disasm.o \
-	mainview.o \
-	memeditor.o \
-	opcodes.o \
-	options.o \
-	popups.o \
-	hardware.o \
-	frontend.o \
-	lcd.o \
-	flash.o \
-	spi.o \
-	adc.o \
-	i2c.o \
-	accel.o \
-	irq.o \
-	radio.o \
+	cpu_core.o \
+	cpu_disasm.o \
+	cpu_irq.o \
+	cpu_opcodes.o \
+	cube_hardware.o \
+	flash_model.o \
+	debug_mainview.o \
+	debug_memeditor.o \
+	debug_popups.o \
 	network.o \
+	main.o \
+	frontend.o \
 
 CDEPS = *.h
 

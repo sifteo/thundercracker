@@ -31,28 +31,25 @@ class Flash {
         uint8_t   data_drv;   // OUT, active-high
     };
 
-    void init(const char *filename) {
+    bool init(const char *filename=NULL) {
         if (filename) {
             size_t result;
             
             file = fopen(filename, "rb+");
-            if (!file) {
+            if (!file)
                 file = fopen(filename, "wb+");
-            }
-            if (!file) {
-                perror("Error opening flash");
-                exit(1);
-            }
+            if (!file)
+                return false;
 
-            result = fread(data, 1, FLASH_SIZE, file);
-            if (result < 0) {
-                perror("Error reading flash");
-                exit(1);
-            }       
+            result = fread(data, 1, FlashModel::SIZE, file);
+            if (result < 0)
+                return false;
  
         } else {
             file = NULL;
         }
+
+        return true;
     }
 
     void exit() {
@@ -71,7 +68,7 @@ class Flash {
     enum busy_flag getBusyFlag() {
         // These busy flags are only reset after they're read.
         enum busy_flag f = busy_status;
-        busy_status = 0;
+        busy_status = BF_IDLE;
         return f;
     }
 
@@ -107,7 +104,7 @@ class Flash {
                  * wasting time!
                  */
                 {
-                    unsigned pc = cpu->mPC & (cpu->mCodeMemSize - 1);
+                    unsigned pc = cpu->mPC & (CODE_SIZE - 1);
                     struct profile_data *pd = &cpu->mProfilerMem[pc];
                     pd->flash_idle++;
                 }
@@ -119,11 +116,11 @@ class Flash {
 
         if (write_timer) {
             if (!--write_timer)
-                flash_write();
+                write();
         }
 
         // Latch any busy flags long enough for the UI to see them.
-        busy_status |= busy;
+        busy_status = (enum busy_flag) (busy_status | busy);
     }
 
     void cycle(struct flash_pins *pins) {
@@ -134,7 +131,7 @@ class Flash {
             prev_oe = 1;
             
         } else {
-            uint32_t addr = (FLASH_SIZE - 1) & pins->addr;
+            uint32_t addr = (FlashModel::SIZE - 1) & pins->addr;
             
             /*
              * Command writes are triggered on a falling WE edge.
@@ -167,7 +164,7 @@ class Flash {
 
                 // Toggle bits only change on an OE edge.
                 if (prev_oe)
-                    flash_update_status_byte();
+                    updateStatusByte();
 
                 pins->data_drv = 1;
                 if (addr != latched_addr || prev_oe) {
@@ -200,7 +197,7 @@ class Flash {
             
             fseek(file, 0, SEEK_SET);
             
-            result = fwrite(data, FLASH_SIZE, 1, file);
+            result = fwrite(data, FlashModel::SIZE, 1, file);
             if (result != 1)
                 perror("Error writing flash");
             
@@ -208,11 +205,11 @@ class Flash {
         }
     }
     
-    bool matchCommand(FlashModel::command_sequence *seq) {
+    bool matchCommand(const FlashModel::command_sequence *seq) {
         unsigned i;
-        uint8_t fifo_index = cmd_fifo_head - CMD_LENGTH + 1;
+        uint8_t fifo_index = cmd_fifo_head - FlashModel::CMD_LENGTH + 1;
    
-        for (i = 0; i < CMD_LENGTH; i++, fifo_index++) {
+        for (i = 0; i < FlashModel::CMD_LENGTH; i++, fifo_index++) {
             fifo_index &= CMD_FIFO_MASK;
 
             if ( (cmd_fifo[fifo_index].addr & seq[i].addr_mask) != seq[i].addr ||
@@ -223,48 +220,69 @@ class Flash {
         return true;
     }
 
+    void erase(unsigned addr, unsigned size) {
+        memset(data + (addr & ~(size - 1)), 0xFF, size);
+    }
+
     void matchCommands() {
         struct cmd_state *st = &cmd_fifo[cmd_fifo_head];
 
         if (busy != BF_IDLE)
             return;
 
-        if (matchCommand(cmd_byte_program)) {
+        if (matchCommand(FlashModel::cmd_byte_program)) {
             data[st->addr] &= st->data;
-            status_byte = STATUS_DATA_INV & ~st->data;
+            status_byte = FlashModel::STATUS_DATA_INV & ~st->data;
             busy = BF_PROGRAM;
             write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-            busy_timer = USEC_TO_CYCLES(PROGRAM_TIME_US);
+            busy_timer = USEC_TO_CYCLES(FlashModel::PROGRAM_TIME_US);
         
-        } else if (matchCommand(cmd_sector_erase)) {
-            memset(data + (st->addr & ~(SECTOR_SIZE - 1)), 0xFF, SECTOR_SIZE);
+        } else if (matchCommand(FlashModel::cmd_sector_erase)) {
+            erase(st->addr, FlashModel::SECTOR_SIZE);
             status_byte = 0;
             busy = BF_ERASE;
             write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-            busy_timer = USEC_TO_CYCLES(ERASE_SECTOR_TIME_US);
+            busy_timer = USEC_TO_CYCLES(FlashModel::ERASE_SECTOR_TIME_US);
             
-        } else if (matchCommand(cmd_block_erase)) {
-            memset(data + (st->addr & ~(BLOCK_SIZE - 1)), 0xFF, BLOCK_SIZE);
+        } else if (matchCommand(FlashModel::cmd_block_erase)) {
+            erase(st->addr, FlashModel::BLOCK_SIZE);
             status_byte = 0;
             busy = BF_ERASE;
             write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-            busy_timer = USEC_TO_CYCLES(ERASE_BLOCK_TIME_US);
+            busy_timer = USEC_TO_CYCLES(FlashModel::ERASE_BLOCK_TIME_US);
             
-        } else if (matchCommand(cmd_chip_erase)) {
-            memset(data, 0xFF, FLASH_SIZE);
+        } else if (matchCommand(FlashModel::cmd_chip_erase)) {
+            erase(st->addr, FlashModel::SIZE);
             status_byte = 0;
             busy = BF_ERASE;
             write_timer = USEC_TO_CYCLES(FLUSH_TIME_US);
-            busy_timer = USEC_TO_CYCLES(ERASE_CHIP_TIME_US);
+            busy_timer = USEC_TO_CYCLES(FlashModel::ERASE_CHIP_TIME_US);
         }
     }
 
     void updateStatusByte() {
-        status_byte ^= STATUS_TOGGLE;
+        status_byte ^= FlashModel::STATUS_TOGGLE;
 
         if (busy == BF_ERASE)
-            status_byte ^= STATUS_ERASE_TOGGLE;
+            status_byte ^= FlashModel::STATUS_ERASE_TOGGLE;
     }
+
+    static const uint8_t CMD_FIFO_MASK = 0xF;
+ 
+    /*
+     * How long (in microseconds of virtual time) to wait for
+     * writes/erases to cease before we rewrite the flash file on disk.
+     *
+     * This is a simple way for us to write the flash to disk in a
+     * non-error-prone way while also avoiding a lot of unnecessary
+     * write() calls, or platform-specific memory mapping.
+     */
+    static const unsigned FLUSH_TIME_US = 100000;
+
+    struct cmd_state {
+        uint32_t addr;
+        uint8_t data;
+    };
 
     // Disk I/O
     uint32_t write_timer;
@@ -289,24 +307,7 @@ class Flash {
     struct cmd_state cmd_fifo[CMD_FIFO_MASK + 1];
 
     // Memory array
-    uint8_t data[FLASH_SIZE];
-
-    static const uint8_t CMD_FIFO_MASK = 0xF;
- 
-    /*
-     * How long (in microseconds of virtual time) to wait for
-     * writes/erases to cease before we rewrite the flash file on disk.
-     *
-     * This is a simple way for us to write the flash to disk in a
-     * non-error-prone way while also avoiding a lot of unnecessary
-     * write() calls, or platform-specific memory mapping.
-     */
-    static const unsigned FLUSH_TIME_US = 100000;
-
-    struct cmd_state {
-        uint32_t addr;
-        uint8_t data;
-    };
+    uint8_t data[FlashModel::SIZE];
 };
 
 #endif
