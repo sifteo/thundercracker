@@ -60,7 +60,7 @@ class CubeSlot {
 
     _SYSCubeID id() const {
         _SYSCubeID i = this - &instances[0];
-        ASSERT(i >= 0 && i < _SYS_NUM_CUBE_SLOTS);
+        ASSERT(i < _SYS_NUM_CUBE_SLOTS);
         STATIC_ASSERT(arraysize(instances) == _SYS_NUM_CUBE_SLOTS);
         return i;
     }
