@@ -8,7 +8,9 @@
 #include "assets.gen.h"
 #include "utils.h"
 
-CubeWrapper::CubeWrapper( _SYSCubeID id ) : m_cube(id), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf)
+static _SYSCubeID s_id = 0;
+
+CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf)
 {
 }
 

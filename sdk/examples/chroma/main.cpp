@@ -12,6 +12,7 @@
 #include <sifteo.h>
 #include "assets.gen.h"
 #include "cubewrapper.h"
+#include "game.h"
 #include "utils.h"
 
 using namespace Sifteo;
@@ -23,15 +24,6 @@ enum
 	DOWN,
 	RIGHT
 };
-
-/*static const int NUM_CUBES = 2;
-
-static CubeWrapper cubes[NUM_CUBES] = 
-{
-	CubeWrapper((_SYSCubeID)0),
-	CubeWrapper((_SYSCubeID)1),
-};*/
-static const int NUM_CUBES = 1;
 
 //stupid way to ensure seeding the randomizer before static inits
 class RandInit
@@ -45,11 +37,7 @@ public:
 
 static RandInit randInit;
 
-static CubeWrapper cubes[NUM_CUBES] = 
-{
-	CubeWrapper((_SYSCubeID)0),
-};
-
+static Game &game = Game::Inst();
 
 static void onAccelChange(_SYSCubeID cid)
 {
@@ -58,39 +46,18 @@ static void onAccelChange(_SYSCubeID cid)
 
 	//for now , just tilt cube 0
 	if( state.x > 105 )
-		cubes[0].Tilt( RIGHT );
+		game.cubes[0].Tilt( RIGHT );
 	else if( state.x < -105 )
-		cubes[0].Tilt( LEFT );
+		game.cubes[0].Tilt( LEFT );
 	else if( state.y > 105 )
-		cubes[0].Tilt( DOWN );
+		game.cubes[0].Tilt( DOWN );
 	else if( state.y < -105 )
-		cubes[0].Tilt( UP);
+		game.cubes[0].Tilt( UP);
 }
 
 static void init()
 {
-	for( int i = 0; i < NUM_CUBES; i++ )
-		cubes[i].Init(GameAssets);
-
-	bool done = false;
-
-	PRINT( "getting ready to load" );
-
-	while( !done )
-	{
-		done = true;
-		for( int i = 0; i < NUM_CUBES; i++ )
-		{
-			if( !cubes[i].DrawProgress(GameAssets) )
-				done = false;
-
-			PRINT( "in load loop" );
-		}
-		System::paint();
-	}
-	PRINT( "done loading" );
-	for( int i = 0; i < NUM_CUBES; i++ )
-		cubes[i].vidInit();
+	game.Init();
 }
 
 void siftmain()
@@ -102,15 +69,10 @@ void siftmain()
  */
     _SYS_vectors.accelChange = onAccelChange;
 
-	for( int i = 0; i < NUM_CUBES; i++ )
+	for( int i = 0; i < Game::NUM_CUBES; i++ )
 		onAccelChange(i);
 
     while (1) {
-        //float t = System::clock();
-        
-        for( int i = 0; i < NUM_CUBES; i++ )
-			cubes[i].Draw();
-            
-        System::paint();
+        game.Update();        
     }
 }
