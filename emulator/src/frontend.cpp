@@ -14,10 +14,12 @@ void Frontend::init(System *_sys)
     sys = _sys;
     frameCount = 0;
 
-    for (unsigned i = 0; i < sys->opt_numCubes; i++)
-        cubes[i].init(&sys->cubes[i],
-                      Point( (sys->opt_numCubes * -0.5 + i) 
-                             * FrontendCube::SIZE * 1.5, 0 ));
+    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
+        // Put all the cubes in a line
+        float x =  ((sys->opt_numCubes - 1) * -0.5 + i) * FrontendCube::SIZE * 3.0;
+
+        cubes[i].init(&sys->cubes[i], Point(x, 0));
+    }
 
     SDL_Init(SDL_INIT_VIDEO);
     SDL_WM_SetCaption("Thundercracker", NULL);
@@ -79,7 +81,10 @@ void Frontend::exit()
 
 bool Frontend::onResize(int width, int height)
 {
-    surface = SDL_SetVideoMode(width, height, 0, SDL_OPENGL);
+    if (!(width && height))
+        return true;
+
+    surface = SDL_SetVideoMode(width, height, 0, SDL_OPENGL | SDL_RESIZABLE);
     if (surface == NULL) {
         fprintf(stderr, "Error creating SDL surface!\n");
         return false;
@@ -88,9 +93,11 @@ bool Frontend::onResize(int width, int height)
     SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
 
     glViewport(0, 0, width, height);
-
+    
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    glScalef(1, width / (float)height, 1);
+    
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -98,6 +105,9 @@ bool Frontend::onResize(int width, int height)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
+
+    for (unsigned i = 0; i < sys->opt_numCubes; i++)
+        cubes[i].initGL();
 
     return true;
 }
@@ -113,7 +123,7 @@ void Frontend::onMouseUpdate(int x, int y, int buttons)
 void Frontend::draw()
 {
     // Background
-    glClearColor(0, 0, 0.2, 1);
+    glClearColor(0.2, 0.2, 0.4, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
     // All cubes
@@ -127,21 +137,21 @@ void FrontendCube::init(Cube::Hardware *_hw, Point _center)
 {
     hw = _hw;
     center = _center;
-    texture = -1;
+    texture = 0;
+}
+
+void FrontendCube::initGL()
+{
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
+                 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
 void FrontendCube::draw()
 {
-    if (texture < 0) {
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, 3, Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
-                     0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
-    }
-
     if (hw->lcd.isVisible()) {
         // LCD on, update texture
 
@@ -163,11 +173,12 @@ void FrontendCube::draw()
         1, 0,   1, 1, 0,
     };
 
-    glInterleavedArrays(GL_T2F_V3F, 0, vertexArray);
-
     glPushMatrix();
     glTranslatef(center.x, center.y, 0);
     glScalef(SIZE, SIZE, SIZE);
+
+    glInterleavedArrays(GL_T2F_V3F, 0, vertexArray);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
     glPopMatrix();
 }

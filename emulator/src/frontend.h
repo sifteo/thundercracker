@@ -41,10 +41,12 @@ struct Point {
 class FrontendCube {
  public:
     void init(Cube::Hardware *hw, Point center);
+    void initGL();
+
     void draw();
 
     Point center;
-    static const float SIZE = 1;
+    static const float SIZE = 0.2;
 
  private:
     Cube::Hardware *hw;

@@ -254,9 +254,6 @@ void NetworkClient::exit(void)
 
     is_running = 0;
     SDL_SemPost(rx_sem);
-    SDL_WaitThread(thread, NULL);
-
-    freeaddrinfo(addr);
 }
 
 void NetworkClient::tx(uint64_t addr, void *payload, int len)
