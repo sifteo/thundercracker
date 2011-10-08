@@ -121,7 +121,7 @@ class SPIBus {
                 uint8_t miso = radio.spiByte(tx_mosi);
 
                 if (cpu->traceFile) {
-                    fprintf(cpu->traceFile, "SPI: MOSI=%02x MISO=%02x\n",
+                    fprintf(cpu->traceFile, "SPI: %02x -> %02x\n",
                             tx_mosi, miso);
                 }
 

@@ -254,8 +254,8 @@ void Hardware::sfrWrite(CPU::em8051 *cpu, int reg)
 
     case REG_RFCON:
         self->rfcken = !!(value & RFCON_RFCKEN);
-        self->spi.radio.radioCtrl(!(value & RFCON_RFCSN),   // Active low
-                                  !!(value & RFCON_RFCE));  // Active high
+        self->spi.radio.radioCtrl(!!(value & RFCON_RFCSN),
+                                  !!(value & RFCON_RFCE));
         break;
 
     case REG_W2DAT:

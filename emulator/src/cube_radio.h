@@ -32,6 +32,9 @@ class Radio {
         memset(debug, 0, DEBUG_REG_SIZE);
         cpu = _cpu;
 
+        // Active low
+        csn = 1;
+
         regs[REG_CONFIG] = 0x08;
         regs[REG_EN_AA] = 0x3F;
         regs[REG_EN_RXADDR] = 0x03;
@@ -74,7 +77,7 @@ class Radio {
 
     uint8_t spiByte(uint8_t mosi) {
         // Chip not selected?
-        if (!csn)
+        if (csn)
             return 0xFF;
 
         if (spi_index < 0) {
@@ -91,11 +94,17 @@ class Radio {
         if (csn && !nextCSN) {
             // Begin new SPI command
             spi_index = -1;
+
+            if (cpu->traceFile)
+                fprintf(cpu->traceFile, "SPI: rf begin\n");
         }
         
         if (!csn && nextCSN) {
             // End an SPI command
             spiCmdEnd(spi_cmd);
+
+            if (cpu->traceFile)
+                fprintf(cpu->traceFile, "SPI: rf end\n");
         }
         
         csn = nextCSN;
@@ -165,7 +174,8 @@ class Radio {
             fprintf(cpu->traceFile, "RADIO: rx [%2d] ", len);
             for (int i = 0; i < len; i++)
                 fprintf(cpu->traceFile, "%02x", payload[i]);
-            fprintf(cpu->traceFile, "\n");
+            fprintf(cpu->traceFile, " (rxc=%d txc=%d)\n",
+                    rx_fifo_count, tx_fifo_count);
         }
 
         if (rx_fifo_count < FIFO_SIZE) {
@@ -182,6 +192,14 @@ class Radio {
 
             if (tx_fifo_count) {
                 // ACK with payload
+
+                if (cpu->traceFile) {
+                    fprintf(cpu->traceFile, "RADIO: ack [%2d] ", tx_tail->len);
+                    for (int i = 0; i < tx_tail->len; i++)
+                        fprintf(cpu->traceFile, "%02x", tx_tail->payload[i]);
+                    fprintf(cpu->traceFile, "\n");
+                }
+
                 byte_count += tx_tail->len;
                 network.tx(src_addr, tx_tail->payload, tx_tail->len);
                 tx_fifo_tail = (tx_fifo_tail + 1) % FIFO_SIZE;
@@ -263,7 +281,12 @@ class Radio {
         case CMD_W_TX_PAYLOAD_NO_ACK:
         case CMD_W_ACK_PAYLOAD:
             tx_fifo[tx_fifo_head].len = spi_index;
-            if (tx_fifo_count < FIFO_SIZE) {
+ 
+            if (cpu->traceFile) {
+                fprintf(cpu->traceFile, "RADIO: ack enq %d [%2d]\n", tx_fifo_head, spi_index);
+            }
+
+           if (tx_fifo_count < FIFO_SIZE) {
                 tx_fifo_count++;
                 tx_fifo_head = (tx_fifo_head + 1) % FIFO_SIZE;
             } else
