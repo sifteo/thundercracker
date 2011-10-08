@@ -45,6 +45,9 @@ const GLchar *FrontendCube::srcLcdFP[] = {
     "}"
 };
 
+const float FrontendCube::SIZE;
+
+
 void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
 {
     hw = _hw;
@@ -166,8 +169,28 @@ void FrontendCube::initGL()
     glLoadIdentity();
     glTranslatef(position.x, position.y, 0);
     glRotatef(angle, 0,0,1);      
-    glRotatef(tiltVector.x, 0,1,0);
-    glRotatef(tiltVector.y, -1,0,0);
+
+    if (tiltVector.x > 0) {
+        glTranslatef(SIZE, 0, height * SIZE);
+        glRotatef(tiltVector.x, 0,1,0);
+        glTranslatef(-SIZE, 0, -height * SIZE);
+    }
+    if (tiltVector.x < 0) {
+        glTranslatef(-SIZE, 0, height * SIZE);
+        glRotatef(tiltVector.x, 0,1,0);
+        glTranslatef(SIZE, 0, -height * SIZE);
+    }
+
+    if (tiltVector.y > 0) {
+        glTranslatef(0, SIZE, height * SIZE);
+        glRotatef(-tiltVector.y, 1,0,0);
+        glTranslatef(0, -SIZE, -height * SIZE);
+    }
+    if (tiltVector.y < 0) {
+        glTranslatef(0, -SIZE, height * SIZE);
+        glRotatef(-tiltVector.y, 1,0,0);
+        glTranslatef(0, SIZE, -height * SIZE);
+    }
 
     glScalef(SIZE, SIZE, SIZE);
 
