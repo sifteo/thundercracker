@@ -31,21 +31,20 @@
 #include "system.h"
 
 
-struct Point {
-    Point(float _x, float _y) : x(_x), y(_y) {}
-    Point() : x(0), y(0) {}
-    float x, y;
-};
-
-
 class FrontendCube {
  public:
-    void init(Cube::Hardware *hw, Point center);
+    void init(Cube::Hardware *hw, b2World &world, float x, float y);
     void initGL();
 
     void draw();
 
-    Point center;
+    b2Body *body;
+
+    /*
+     * Size of the cube, in Box2D "meters". Our rendering parameters
+     * are scaled relative to this size, so its affect is really
+     * mostly about the units we use for the physics sim.
+     */
     static const float SIZE = 0.5;
 
  private:
@@ -80,26 +79,19 @@ class Frontend {
 
     void animate();
     void draw();
-
     bool onResize(int width, int height);
     void onKeyDown(SDL_KeyboardEvent &evt);
-    void onMouseUpdate(int x, int y, int buttons);
+    void onMouseMove();
+    void onMouseDown(int buttons);
+    void onMouseUp(int buttons);
 
-    float zoomedViewExtent() {
-        return FrontendCube::SIZE * 1.25;
-    }
+    void newStaticBox(float x, float y, float hw, float hh);
 
-    float normalViewExtent() {
-        return FrontendCube::SIZE * (sys->opt_numCubes * 1.75);
-    }
-
-    float targetViewExtent() {
-        return toggleZoom ? zoomedViewExtent() : normalViewExtent();
-    }    
-
-    b2Vec2 targetViewCenter() {
-        return toggleZoom ? mouseVec : b2Vec2(0.0, 0.0);
-    }
+    float zoomedViewExtent();
+    float normalViewExtent();
+    float targetViewExtent();
+    b2Vec2 targetViewCenter();
+    b2Vec2 mouseVec(float viewExtent);
 
     System *sys;
     SDL_Surface *surface;
@@ -108,14 +100,15 @@ class Frontend {
 
     bool toggleZoom;
 
-    int viewportWidth;
-    int viewportHeight;
+    int viewportWidth, viewportHeight;
+    int mouseX, mouseY;
 
     float viewExtent;
     b2Vec2 viewCenter;
-    b2Vec2 mouseVec;
 
     b2World world;
+    b2MouseJoint *mouseJoint;
+    b2Body *ground;
 };
 
 

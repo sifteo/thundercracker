@@ -45,11 +45,26 @@ const GLchar *FrontendCube::srcLcdFP[] = {
     "}"
 };
 
-void FrontendCube::init(Cube::Hardware *_hw, Point _center)
+void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
 {
     hw = _hw;
-    center = _center;
     texture = 0;
+
+    b2BodyDef bodyDef;
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.linearDamping = 10.0f;
+    bodyDef.position.Set(x, y);
+    body = world.CreateBody(&bodyDef);
+
+    b2PolygonShape box;
+    const float boxSize = SIZE * 0.95;    // Compensate for polygon 'skin'
+    box.SetAsBox(boxSize, boxSize);
+    
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &box;
+    fixtureDef.density = 1.0f;
+    fixtureDef.friction = 2.5f;
+    body->CreateFixture(&fixtureDef);
 }
 
 void FrontendCube::initGL()
@@ -82,8 +97,9 @@ void FrontendCube::draw()
     const float LCD_SIZE = 0.8;
 
     /*
-     * Crappy rounded body corners on a flat black polygon. Replace
-     * this with a more realistic texture or 3D model later.
+     * XXX: Crappy rounded body corners on a flat black
+     *      polygon. Replace this with something beautiful later, like
+     *      a real-time glossy reflection shader :)
      */
     const float ROUND = 0.05;
 
@@ -109,9 +125,13 @@ void FrontendCube::draw()
      * Transforms
      */
 
+    b2Vec2 position = body->GetPosition();
+    float32 angle = body->GetAngle();
+
     glPushMatrix();
-    glTranslatef(center.x, center.y, 0);
+    glTranslatef(position.x, position.y, 0);
     glScalef(SIZE, SIZE, SIZE);
+    glRotatef(0, 0, 1, angle);
 
     /*
      * Draw body

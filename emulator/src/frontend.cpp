@@ -9,6 +9,27 @@
 #include "frontend.h"
 
 
+class QueryCallback : public b2QueryCallback {
+ public:
+    QueryCallback(const b2Vec2& point)
+        : mPoint(point), mFixture(NULL) {}
+
+    bool ReportFixture(b2Fixture *fixture) {
+        b2Body *body = fixture->GetBody();
+
+        if (body->GetType() == b2_dynamicBody &&
+            fixture->TestPoint(mPoint)) {
+            mFixture = fixture;
+            return false;
+        }
+        return true;
+    }
+            
+    b2Vec2 mPoint;
+    b2Fixture *mFixture;
+};
+
+
 void Frontend::init(System *_sys)
 {
     sys = _sys;
@@ -16,16 +37,49 @@ void Frontend::init(System *_sys)
     toggleZoom = false;
     viewExtent = targetViewExtent() * 3.0;
 
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_WM_SetCaption("Thundercracker", NULL);
+
+    /*
+     * Create cubes
+     */
+
     for (unsigned i = 0; i < sys->opt_numCubes; i++) {
         // Put all the cubes in a line
         float x =  ((sys->opt_numCubes - 1) * -0.5 + i) * FrontendCube::SIZE * 2.7;
 
-        cubes[i].init(&sys->cubes[i], Point(x, 0));
+        cubes[i].init(&sys->cubes[i], world, x, 0);
     }
 
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_WM_SetCaption("Thundercracker", NULL);
+    /*
+     * Create the rest of the world
+     */
 
+    b2BodyDef groundDef;
+    ground = world.CreateBody(&groundDef);
+
+    float extent = normalViewExtent();
+    float extent2 = extent * 2.0f;
+
+    // Thick walls
+    newStaticBox(extent2, 0, extent, extent2);   // X+
+    newStaticBox(-extent2, 0, extent, extent2);  // X-
+    newStaticBox(0, extent2, extent2, extent);   // Y+
+    newStaticBox(0, -extent2, extent2, extent);  // Y-
+}
+
+void Frontend::newStaticBox(float x, float y, float hw, float hh)
+{
+    b2BodyDef bodyDef;
+    bodyDef.position.Set(x, y);
+    b2Body *body = world.CreateBody(&bodyDef);
+
+    b2PolygonShape box;
+    box.SetAsBox(hw, hh);
+
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &box;
+    body->CreateFixture(&fixtureDef);
 }
 
 void Frontend::exit()
@@ -58,12 +112,21 @@ void Frontend::run()
                 break;
 
             case SDL_MOUSEMOTION:
-                onMouseUpdate(event.motion.x, event.motion.y, event.motion.state);
+                mouseX = event.motion.x;
+                mouseY = event.motion.y;
+                onMouseMove();
                 break;
 
             case SDL_MOUSEBUTTONDOWN:
+                mouseX = event.button.x;
+                mouseY = event.button.y;
+                onMouseDown(event.button.state);
+                break;
+
             case SDL_MOUSEBUTTONUP:
-                onMouseUpdate(event.button.x, event.button.y, event.button.state);
+                mouseX = event.button.x;
+                mouseY = event.button.y;
+                onMouseUp(event.button.state);
                 break;
 
             }
@@ -128,19 +191,62 @@ void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
     }
 }
 
-void Frontend::onMouseUpdate(int x, int y, int buttons)
+void Frontend::onMouseMove()
 {
-    int halfWidth = viewportWidth / 2;
-    int halfHeight = viewportHeight / 2;
-    float mouseScale = normalViewExtent() / (float)halfWidth;
+    if (mouseJoint)
+        mouseJoint->SetTarget(mouseVec(normalViewExtent()));
+}
 
-    mouseVec = b2Vec2((x - halfWidth) * mouseScale,
-                      (y - halfHeight) * mouseScale);
+void Frontend::onMouseDown(int buttons)
+{
+    if (!mouseJoint) {
+        // Test a small bounding box at the mouse hotspot
+
+        b2AABB aabb;
+        b2Vec2 mouse = mouseVec(normalViewExtent());
+        b2Vec2 size(0.001f, 0.001f);
+        aabb.lowerBound = mouse - size;
+        aabb.upperBound = mouse + size;
+
+        QueryCallback callback(mouse);
+        world.QueryAABB(&callback, aabb);
+
+        if (callback.mFixture) {
+            // Create a mouse joint (a spring)
+
+            b2Body *body = callback.mFixture->GetBody();
+            b2MouseJointDef md;
+
+            md.bodyA = ground;
+            md.bodyB = body;
+            md.target = mouse;
+            md.maxForce = 1000.0f;
+            mouseJoint = (b2MouseJoint*) world.CreateJoint(&md);
+            body->SetAwake(true);
+        }
+    }
+}
+
+void Frontend::onMouseUp(int buttons)
+{
+    if (mouseJoint) {
+        world.DestroyJoint(mouseJoint);
+        mouseJoint = NULL;
+    }
 }
 
 void Frontend::animate()
 {
+    /*
+     * All of our animation is fixed timestep.
+     */
+
     const float easeSpeed = 0.1;
+    const float timeStep = 1.0f / 60.0f;
+    const int velocityIterations = 6;
+    const int positionIterations = 2;
+
+    world.Step(timeStep, velocityIterations, positionIterations);
 
     viewExtent += easeSpeed * (targetViewExtent() - viewExtent);
     viewCenter += easeSpeed * (targetViewCenter() - viewCenter);
@@ -164,4 +270,30 @@ void Frontend::draw()
         cubes[i].draw();
 
     SDL_GL_SwapBuffers();
+}
+
+float Frontend::zoomedViewExtent() {
+    return FrontendCube::SIZE * 1.25;
+}
+
+float Frontend::normalViewExtent() {
+    return FrontendCube::SIZE * (sys->opt_numCubes * 1.75);
+}
+
+float Frontend::targetViewExtent() {
+    return toggleZoom ? zoomedViewExtent() : normalViewExtent();
+}    
+
+b2Vec2 Frontend::targetViewCenter() {
+    // When zooming in/out, the pixel under the cursor stays the same.
+    return toggleZoom ? (mouseVec(normalViewExtent()) - mouseVec(targetViewExtent()))
+        : b2Vec2(0.0, 0.0);
+}
+
+b2Vec2 Frontend::mouseVec(float viewExtent) {
+    int halfWidth = viewportWidth / 2;
+    int halfHeight = viewportHeight / 2;
+    float mouseScale = viewExtent / (float)halfWidth;
+    return  b2Vec2((mouseX - halfWidth) * mouseScale,
+                   (mouseY - halfHeight) * mouseScale);
 }
