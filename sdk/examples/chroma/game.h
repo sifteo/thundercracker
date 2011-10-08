@@ -21,13 +21,8 @@ public:
 	
 	Game();
 
-	/*static const int NUM_CUBES = 2;
+	//static const int NUM_CUBES = 2;
 
-static CubeWrapper cubes[NUM_CUBES] = 
-{
-	CubeWrapper((_SYSCubeID)0),
-	CubeWrapper((_SYSCubeID)1),
-};*/
 	static const int NUM_CUBES = 1;
 
 	CubeWrapper cubes[NUM_CUBES]; 
@@ -35,8 +30,12 @@ static CubeWrapper cubes[NUM_CUBES] =
 	void Init();
 	void Update();
 	
+	//flag self to test matches
+	void setTestMatchFlag() { m_bTestMatches = true; }
+
 private:
-	
+	void TestMatches();
+	bool m_bTestMatches;
 };
 
 #endif

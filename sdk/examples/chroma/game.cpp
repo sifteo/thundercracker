@@ -16,7 +16,7 @@ Game &Game::Inst()
 	return game; 
 }
 
-Game::Game()
+Game::Game() : m_bTestMatches( false )
 {
 }
 
@@ -50,8 +50,27 @@ void Game::Init()
 
 void Game::Update()
 {
+	if( m_bTestMatches )
+	{
+		TestMatches();
+		m_bTestMatches = false;
+	}
+
 	for( int i = 0; i < NUM_CUBES; i++ )
-			cubes[i].Draw();
+		cubes[i].Update();
+
+	for( int i = 0; i < NUM_CUBES; i++ )
+		cubes[i].Draw();
             
     System::paint();
+}
+
+
+void Game::TestMatches()
+{
+	//for every cube test matches with every other cube
+	for( int i = 0; i < NUM_CUBES; i++ )
+	{
+		cubes[i].testMatches();
+	}
 }

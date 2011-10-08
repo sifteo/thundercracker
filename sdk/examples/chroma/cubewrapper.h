@@ -25,8 +25,11 @@ public:
 	//draw loading progress.  return true if done
 	bool DrawProgress( AssetGroup &assets );
 	void Draw();
+	void Update(float t);
 	void vidInit();
 	void Tilt( int dir );
+
+	void testMatches();
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful

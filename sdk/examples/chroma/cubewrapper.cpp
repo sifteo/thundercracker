@@ -45,6 +45,20 @@ void CubeWrapper::Draw()
 }
 
 
+void CubeWrapper::Update(float t)
+{
+	//update all dots
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			GridSlot &slot = m_grid[i][j];
+			slot.Update( dt );
+		}
+	}
+}
+
+
 void CubeWrapper::vidInit()
 {
 	m_vid.init();
@@ -133,6 +147,9 @@ void CubeWrapper::Tilt( int dir )
 			break;
 		}
 	}        
+
+	if( bChanged )
+		Game::Inst().setTestMatchFlag();
 }
 
 //try moving a gem from row1/col1 to row2/col2
@@ -154,4 +171,95 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 	}
 
 	return false;
+}
+
+
+//only test matches with neighbors with id less than ours.  This prevents double testing
+void CubeWrapper::testMatches()
+{
+	for( int i = 0; i < NUM_SIDES; i++ )
+	{
+		if( m_cube.neighbors[i] && m_cube.neighbors[i].id() < m_cube.id() )
+		{
+			//as long we we test one block going clockwise, and the other going counter-clockwise, we'll match up
+			int side = GetSideNeighboredOn( m_cube.neighbors[i], m_cube );
+
+			//fill two 4 element pointer arrays of grid slots representing what we need to match up
+			GridSlot **ourGems[4];
+			GridSlot **theirGems[4];
+
+			FillSlotArray( ourGems, i, true );
+			otherCube.FillSlotArray( theirGems, side, false );
+
+			//compare the two
+			for( int j = 0; j < NUM_ROWS; j++ )
+			{
+				if( ourGems[j]->isAlive() && theirGems[j]->isAlive() && ourGems[j]->getValue() == theirGems[j]->getValue() )
+				{
+					ourGems[j]->mark();
+					theirGems[j]->mark();
+				}
+			}
+		}
+	}
+}
+
+
+void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
+{
+	switch( side )
+	{
+		case 0:
+		{
+			if( clockwise )
+			{
+				for( int i = 0; i < NUM_COLS; i++ )
+					gems[i] = m_grid[0][i];
+			}
+			else
+			{
+				for( int i = 0; i < NUM_COLS; i++ )
+					gems[NUM_COLS - i - 1] = m_grid[0][i];
+			}
+		}
+		case 1:
+		{
+			if( clockwise )
+			{
+				for( int i = 0; i < NUM_ROWS; i++ )
+					gems[NUM_ROWS - i - 1] = m_grid[i][0];
+			}
+			else
+			{
+				for( int i = 0; i < NUM_ROWS; i++ )
+					gems[i] = m_grid[i][0];
+			}
+		}
+		case 2:
+		{
+			if( clockwise )
+			{
+				for( int i = 0; i < NUM_COLS; i++ )
+					gems[NUM_COLS - i - 1] = m_grid[NUM_ROWS - 1][i];
+			}
+			else
+			{
+				for( int i = 0; i < NUM_COLS; i++ )
+					gems[i] = m_grid[NUM_ROWS - 1][i];
+			}
+		}
+		case 3:
+		{
+			if( clockwise )
+			{
+				for( int i = 0; i < NUM_ROWS; i++ )
+					gems[i] = m_grid[i][NUM_COLS - 1];
+			}
+			else
+			{
+				for( int i = 0; i < NUM_ROWS; i++ )
+					gems[NUM_ROWS - i - 1] = m_grid[i][NUM_COLS - 1];
+			}
+		}
+	}
 }
