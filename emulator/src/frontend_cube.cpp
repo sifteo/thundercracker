@@ -67,7 +67,7 @@ void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
     body = world.CreateBody(&bodyDef);
 
     b2PolygonShape box;
-    const float boxSize = SIZE * 0.95;    // Compensate for polygon 'skin'
+    const float boxSize = SIZE * 0.97;    // Compensate for polygon 'skin'
     box.SetAsBox(boxSize, boxSize);
     
     b2FixtureDef fixtureDef;
