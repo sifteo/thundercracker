@@ -78,6 +78,55 @@ void FrontendCube::initGL()
 
 void FrontendCube::draw()
 {
+    // Proportion of the body size which the LCD occupies
+    const float LCD_SIZE = 0.8;
+
+    /*
+     * Crappy rounded body corners on a flat black polygon. Replace
+     * this with a more realistic texture or 3D model later.
+     */
+    const float ROUND = 0.05;
+
+    static const GLfloat bodyVertexArray[] = {
+        -1+ROUND, -1,       0,
+         1-ROUND, -1,       0,
+         1,       -1+ROUND, 0,
+         1,        1-ROUND, 0,
+         1-ROUND,  1,       0,
+        -1+ROUND,  1,       0,
+        -1,        1-ROUND, 0,
+        -1,       -1+ROUND, 0,
+    };
+
+    static const GLfloat lcdVertexArray[] = {
+        0, 1,  -LCD_SIZE,  LCD_SIZE, 0,
+        1, 1,   LCD_SIZE,  LCD_SIZE, 0,
+        0, 0,  -LCD_SIZE, -LCD_SIZE, 0,
+        1, 0,   LCD_SIZE, -LCD_SIZE, 0,
+    };
+
+    /*
+     * Transforms
+     */
+
+    glPushMatrix();
+    glTranslatef(center.x, center.y, 0);
+    glScalef(SIZE, SIZE, SIZE);
+
+    /*
+     * Draw body
+     */
+
+    glUseProgram(0);
+    glColor3f(0.0, 0.0, 0.0);
+    
+    glInterleavedArrays(GL_V3F, 0, bodyVertexArray);
+    glDrawArrays(GL_POLYGON, 0, 8);
+
+    /*
+     * Draw LCD image
+     */
+
     if (hw->lcd.isVisible()) {
         // LCD on, update texture
 
@@ -92,21 +141,11 @@ void FrontendCube::draw()
         glDisable(GL_TEXTURE_2D);
     }
 
-    static const GLfloat vertexArray[] = {
-        0, 1,  -1,-1, 0,
-        1, 1,   1,-1, 0,
-        0, 0,  -1, 1, 0,
-        1, 0,   1, 1, 0,
-    };
-
     glUseProgram(lcdProgram);
+    glColor3f(1.0, 1.0, 1.0);
     glUniform1i(glGetUniformLocation(lcdProgram, "image"), 0);
 
-    glPushMatrix();
-    glTranslatef(center.x, center.y, 0);
-    glScalef(SIZE, SIZE, SIZE);
-
-    glInterleavedArrays(GL_T2F_V3F, 0, vertexArray);
+    glInterleavedArrays(GL_T2F_V3F, 0, lcdVertexArray);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     glPopMatrix();

@@ -26,7 +26,7 @@
 #   define GL_UNSIGNED_SHORT_5_6_5 0x8363
 #endif
 
-#include <SDL.h>
+#include <Box2D/Box2D.h>
 
 #include "system.h"
 
@@ -62,6 +62,9 @@ class FrontendCube {
 
 class Frontend {
  public:
+    Frontend()
+        : world(b2Vec2(0.0f, 0.0f)) {}
+
     void init(System *sys);
     void run();
     void exit();
@@ -75,16 +78,44 @@ class Frontend {
      */
     static const unsigned FRAME_HZ_DIVISOR = 2;
 
+    void animate();
     void draw();
 
     bool onResize(int width, int height);
     void onKeyDown(SDL_KeyboardEvent &evt);
     void onMouseUpdate(int x, int y, int buttons);
 
+    float zoomedViewExtent() {
+        return FrontendCube::SIZE * 1.25;
+    }
+
+    float normalViewExtent() {
+        return FrontendCube::SIZE * (sys->opt_numCubes * 1.75);
+    }
+
+    float targetViewExtent() {
+        return toggleZoom ? zoomedViewExtent() : normalViewExtent();
+    }    
+
+    b2Vec2 targetViewCenter() {
+        return toggleZoom ? mouseVec : b2Vec2(0.0, 0.0);
+    }
+
     System *sys;
     SDL_Surface *surface;
     unsigned frameCount;
     FrontendCube cubes[System::MAX_CUBES];
+
+    bool toggleZoom;
+
+    int viewportWidth;
+    int viewportHeight;
+
+    float viewExtent;
+    b2Vec2 viewCenter;
+    b2Vec2 mouseVec;
+
+    b2World world;
 };
 
 

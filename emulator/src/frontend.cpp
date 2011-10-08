@@ -13,21 +13,29 @@ void Frontend::init(System *_sys)
 {
     sys = _sys;
     frameCount = 0;
+    toggleZoom = false;
+    viewExtent = targetViewExtent() * 3.0;
 
     for (unsigned i = 0; i < sys->opt_numCubes; i++) {
         // Put all the cubes in a line
-        float x =  ((sys->opt_numCubes - 1) * -0.5 + i) * FrontendCube::SIZE * 3.0;
+        float x =  ((sys->opt_numCubes - 1) * -0.5 + i) * FrontendCube::SIZE * 2.7;
 
         cubes[i].init(&sys->cubes[i], Point(x, 0));
     }
 
     SDL_Init(SDL_INIT_VIDEO);
     SDL_WM_SetCaption("Thundercracker", NULL);
+
+}
+
+void Frontend::exit()
+{             
+    SDL_Quit();
 }
 
 void Frontend::run()
 {
-    if (!onResize(600, 400))
+    if (!onResize(800, 600))
         return;
 
     while (1) {
@@ -57,7 +65,7 @@ void Frontend::run()
             case SDL_MOUSEBUTTONUP:
                 onMouseUpdate(event.button.x, event.button.y, event.button.state);
                 break;
-            
+
             }
         }
 
@@ -69,14 +77,10 @@ void Frontend::run()
                 sys->cubes[i].lcd.pulseTE();
         }
 
+        animate();
         draw();
         frameCount++;
     }
-}
-
-void Frontend::exit()
-{             
-    SDL_Quit();
 }
 
 bool Frontend::onResize(int width, int height)
@@ -92,14 +96,13 @@ bool Frontend::onResize(int width, int height)
 
     SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
 
+    viewportWidth = width;
+    viewportHeight = height;
     glViewport(0, 0, width, height);
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glScalef(1, width / (float)height, 1);
-    
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
@@ -114,10 +117,33 @@ bool Frontend::onResize(int width, int height)
 
 void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
 {
+    switch (evt.keysym.sym) {
+        
+    case 'z':
+        toggleZoom = !toggleZoom;
+        break;
+
+    default:
+        break;
+    }
 }
 
 void Frontend::onMouseUpdate(int x, int y, int buttons)
 {
+    int halfWidth = viewportWidth / 2;
+    int halfHeight = viewportHeight / 2;
+    float mouseScale = normalViewExtent() / (float)halfWidth;
+
+    mouseVec = b2Vec2((x - halfWidth) * mouseScale,
+                      (y - halfHeight) * mouseScale);
+}
+
+void Frontend::animate()
+{
+    const float easeSpeed = 0.1;
+
+    viewExtent += easeSpeed * (targetViewExtent() - viewExtent);
+    viewCenter += easeSpeed * (targetViewCenter() - viewCenter);
 }
 
 void Frontend::draw()
@@ -125,6 +151,13 @@ void Frontend::draw()
     // Background
     glClearColor(0.2, 0.2, 0.4, 1);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    // Orthogonal camera
+    glLoadIdentity();
+    glScalef(1.0f / viewExtent,
+             -viewportWidth / (float)viewportHeight / viewExtent,
+             1.0f / viewExtent);
+    glTranslatef(-viewCenter.x, -viewCenter.y, 0);
 
     // All cubes
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
