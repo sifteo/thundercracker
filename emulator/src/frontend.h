@@ -18,8 +18,10 @@
 #include <SDL.h>
 #ifdef __MACH__
 #   include <OpenGL/gl.h>
+#   include <OpenGL/glu.h>
 #else
 #   include <GL/gl.h>
+#   include <GL/glu.h>
 #endif
 
 #ifndef GL_UNSIGNED_SHORT_5_6_5
@@ -58,12 +60,12 @@ class FrontendCube {
      *
      * This is in cube-sized units (will be multiplied with SIZE to get world coordinates).
      */
-    static const float CENTER_SIZE = 0.75;
+    static const float CENTER_SIZE = 0.6;
 
     /*
      * Size of the LCD, relative to the size of the whole cube.
      */
-    static const float LCD_SIZE = 0.8;
+    static const float LCD_SIZE = 0.75;
 
  private:
     static const GLchar *srcLcdVP[];

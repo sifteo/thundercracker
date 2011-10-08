@@ -155,21 +155,23 @@ bool Frontend::onResize(int width, int height)
     if (!(width && height))
         return true;
 
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4); 
+    SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
+
     surface = SDL_SetVideoMode(width, height, 0, SDL_OPENGL | SDL_RESIZABLE);
     if (surface == NULL) {
         fprintf(stderr, "Error creating SDL surface!\n");
         return false;
     }
 
-    SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
-
     viewportWidth = width;
     viewportHeight = height;
     glViewport(0, 0, width, height);
     
     glDisable(GL_LIGHTING);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
 
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
@@ -362,21 +364,41 @@ void Frontend::animate()
 
 void Frontend::draw()
 {
-    // Background
-    glClearColor(0.2, 0.2, 0.4, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+    float aspect = viewportWidth / (float)viewportHeight;
+    float rExtent = 1.0f / viewExtent;
+    float rExtentN = 1.0f / normalViewExtent();
 
-    // Orthogonal camera
+    /*
+     * Camera.
+     *
+     * Our simulation (and our mouse input!) is really 2D, but we use
+     * perspective in order to make the whole scene feel a bit more
+     * real, and especially to make tilting believable.
+     *
+     * We scale this so that the X axis is from -viewExtent to
+     * +viewExtent at the level of the cube face.
+     */
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glScalef(1.0f / viewExtent,
-             -viewportWidth / (float)viewportHeight / viewExtent,
-             1.0f / viewExtent);
-    glTranslatef(-viewCenter.x, -viewCenter.y, 0);
+
+    gluPerspective(60.0f, aspect, 0.1f, 100.0f);
+    glScalef(rExtent, -rExtent, rExtentN);
+    glTranslatef(-viewCenter.x, -viewCenter.y, -3.1f);
+
     glMatrixMode(GL_MODELVIEW);
 
-    // All cubes
+    /*
+     * Background
+     */
+
+    glClearColor(0.2, 0.2, 0.4, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    /*
+     * Cubes
+     */
+
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
         cubes[i].draw();
 

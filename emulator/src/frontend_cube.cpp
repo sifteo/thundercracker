@@ -72,7 +72,7 @@ void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
     body = world.CreateBody(&bodyDef);
 
     b2PolygonShape box;
-    const float boxSize = SIZE * 0.97;    // Compensate for polygon 'skin'
+    const float boxSize = SIZE * 0.96;    // Compensate for polygon 'skin'
     box.SetAsBox(boxSize, boxSize);
     
     b2FixtureDef fixtureDef;
@@ -106,31 +106,54 @@ void FrontendCube::initGL()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void FrontendCube::draw()
+ void FrontendCube::draw()
 {
     /*
      * XXX: Crappy rounded body corners on a flat black
      *      polygon. Replace this with something beautiful later, like
      *      a real-time glossy reflection shader :)
      */
-    const float ROUND = 0.05;
+    const float round = 0.05;
+    const float height = 0.4;
+    const float epsilon = 0.01;
 
-    static const GLfloat bodyVertexArray[] = {
-        -1+ROUND, -1,       0,
-         1-ROUND, -1,       0,
-         1,       -1+ROUND, 0,
-         1,        1-ROUND, 0,
-         1-ROUND,  1,       0,
-        -1+ROUND,  1,       0,
-        -1,        1-ROUND, 0,
-        -1,       -1+ROUND, 0,
+    static const GLfloat vaSides[] = {
+        -1+round, -1,       0,
+        -1+round, -1,       height,
+         1-round, -1,       0,
+         1-round, -1,       height,
+         1,       -1+round, 0,
+         1,       -1+round, height,
+         1,        1-round, 0,
+         1,        1-round, height,
+         1-round,  1,       0,
+         1-round,  1,       height,
+        -1+round,  1,       0,
+        -1+round,  1,       height,
+        -1,        1-round, 0,
+        -1,        1-round, height,
+        -1,       -1+round, 0,
+        -1,       -1+round, height,
+        -1+round, -1,       0,
+        -1+round, -1,       height,
     };
 
-    static const GLfloat lcdVertexArray[] = {
-        0, 1,  -1,  1, 0,
-        1, 1,   1,  1, 0,
-        0, 0,  -1, -1, 0,
-        1, 0,   1, -1, 0,
+    static const GLfloat vaTop[] = {
+        -1,       -1+round, height,
+        -1,        1-round, height,
+        -1+round,  1,       height,
+         1-round,  1,       height,
+         1,        1-round, height,
+         1,       -1+round, height,
+         1-round, -1,       height,
+        -1+round, -1,       height,
+    };
+
+    static const GLfloat vaLcd[] = {
+        0, 1,  -1,  1, height + epsilon,
+        1, 1,   1,  1, height + epsilon,
+        0, 0,  -1, -1, height + epsilon,
+        1, 0,   1, -1, height + epsilon,
     };
 
     /*
@@ -142,20 +165,25 @@ void FrontendCube::draw()
 
     glLoadIdentity();
     glTranslatef(position.x, position.y, 0);
-    glScalef(SIZE, SIZE, SIZE);
     glRotatef(angle, 0,0,1);      
     glRotatef(tiltVector.x, 0,1,0);
     glRotatef(tiltVector.y, -1,0,0);
+
+    glScalef(SIZE, SIZE, SIZE);
 
     /*
      * Draw body
      */
 
     glUseProgram(0);
+    glColor3f(0.9, 0.9, 0.9);
+    glInterleavedArrays(GL_V3F, 0, vaSides);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 18);
+
     glColor3f(0.0, 0.0, 0.0);
-    
-    glInterleavedArrays(GL_V3F, 0, bodyVertexArray);
+    glInterleavedArrays(GL_V3F, 0, vaTop);
     glDrawArrays(GL_POLYGON, 0, 8);
+
 
     /*
      * Draw LCD image
@@ -182,7 +210,7 @@ void FrontendCube::draw()
     }
 
     glScalef(LCD_SIZE, LCD_SIZE, 1.0f);
-    glInterleavedArrays(GL_T2F_V3F, 0, lcdVertexArray);
+    glInterleavedArrays(GL_T2F_V3F, 0, vaLcd);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
