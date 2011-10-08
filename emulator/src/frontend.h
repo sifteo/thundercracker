@@ -36,9 +36,13 @@ class FrontendCube {
     void init(Cube::Hardware *hw, b2World &world, float x, float y);
     void initGL();
 
+    void animate();
     void draw();
+    void setPhysicalAcceleration(b2Vec2 g);
+    void setTiltTarget(b2Vec2 angles);
 
     b2Body *body;
+    static FrontendCube *fromBody(b2Body *body);
 
     /*
      * Size of the cube, in Box2D "meters". Our rendering parameters
@@ -64,6 +68,13 @@ class FrontendCube {
  private:
     static const GLchar *srcLcdVP[];
     static const GLchar *srcLcdFP[]; 
+
+    void updateAccelerometer();
+
+    b2Vec2 physicalAcceleration;
+    b2Vec2 tiltTarget;
+    b2Vec2 tiltVector;
+    b2Mat33 modelMatrix;
 
     Cube::Hardware *hw;
     GLuint texture;
@@ -94,7 +105,6 @@ class Frontend {
     void draw();
     bool onResize(int width, int height);
     void onKeyDown(SDL_KeyboardEvent &evt);
-    void onMouseMove();
     void onMouseDown(int buttons);
     void onMouseUp(int buttons);
 
@@ -120,10 +130,13 @@ class Frontend {
     b2Vec2 viewCenter;
 
     b2World world;
+
     b2Body *mouseBody;
+    b2Body *mousePickedBody;
     b2RevoluteJoint *mouseJoint;
     bool mouseIsAligning;
     bool mouseIsPulling;
+    bool mouseIsTilting;
 };
 
 

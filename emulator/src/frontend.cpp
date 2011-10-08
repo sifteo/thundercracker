@@ -167,10 +167,6 @@ bool Frontend::onResize(int width, int height)
     viewportHeight = height;
     glViewport(0, 0, width, height);
     
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -210,43 +206,57 @@ void Frontend::onMouseDown(int buttons)
         world.QueryAABB(&callback, aabb);
 
         if (callback.mFixture) {
-            b2Body *pickedBody = callback.mFixture->GetBody();
-
-            /*
-             * Create a kinematic body at the mouse. This lets us
-             * pull/push a body, and by grabbing it at an edge or
-             * corner, rotate it in a physically intuitive way.
-             */
-
+            // This is the body underneath the mouse
+            mousePickedBody = callback.mFixture->GetBody();
+            
+            // This body represents the mouse itself now as a physical object
             b2BodyDef mouseDef;
             mouseDef.type = b2_kinematicBody;
             mouseDef.position = mouse;
             mouseDef.allowSleep = false;
             mouseBody = world.CreateBody(&mouseDef);
-            mouseIsPulling = true;
 
-            /*
-             * Pick an attachment point. If we're close to the center,
-             * snap our attachment point to the center of mass, and
-             * turn on a servo that tries to orient the cube to a
-             * multiple of 90 degrees.
-             */
+            if ((buttons & 2) || (SDL_GetModState() & KMOD_SHIFT)) {
+                /*
+                 * If this was a right-click or shift-click, go into tilting mode
+                 */
+                
+                mouseIsTilting = true;
 
-            b2Vec2 anchor = mouse;
-            b2Vec2 center = pickedBody->GetWorldCenter();
-            if (b2Distance(anchor, center) < FrontendCube::SIZE * FrontendCube::CENTER_SIZE) {
-                anchor = center;
-                mouseIsAligning = true;
+            } else {
+                /*
+                 * Otherwise, the mouse is pulling.
+                 *
+                 * We represent our mouse as a kinematic body. This
+                 * lets us pull/push a cube, or by grabbing it at an
+                 * edge or corner, rotate it intuitively.
+                 */
+                
+                mouseIsPulling = true;
+
+                /*
+                 * Pick an attachment point. If we're close to the center,
+                 * snap our attachment point to the center of mass, and
+                 * turn on a servo that tries to orient the cube to a
+                 * multiple of 90 degrees.
+                 */
+                
+                b2Vec2 anchor = mouse;
+                b2Vec2 center = mousePickedBody->GetWorldCenter();
+                if (b2Distance(anchor, center) < FrontendCube::SIZE * FrontendCube::CENTER_SIZE) {
+                    anchor = center;
+                    mouseIsAligning = true;
+                }
+
+                // Glue it to the point we picked, with a revolute joint
+
+                b2RevoluteJointDef jointDef;
+                jointDef.Initialize(mousePickedBody, mouseBody, anchor);
+                jointDef.motorSpeed = 0.0f;
+                jointDef.maxMotorTorque = 10.0f;
+                jointDef.enableMotor = true;
+                mouseJoint = (b2RevoluteJoint*) world.CreateJoint(&jointDef);
             }
-
-            // Glue it to the point we picked, with a revolute joint
-
-            b2RevoluteJointDef jointDef;
-            jointDef.Initialize(pickedBody, mouseBody, anchor);
-            jointDef.motorSpeed = 0.0f;
-            jointDef.maxMotorTorque = 10.0f;
-            jointDef.enableMotor = true;
-            mouseJoint = (b2RevoluteJoint*) world.CreateJoint(&jointDef);
         }
     }
 }
@@ -254,12 +264,23 @@ void Frontend::onMouseDown(int buttons)
 void Frontend::onMouseUp(int buttons)
 {
     if (mouseBody) {
-        world.DestroyJoint(mouseJoint);
+        FrontendCube *cube = FrontendCube::fromBody(mousePickedBody);
+        if (cube) {
+            // Reset tilt
+            cube->setTiltTarget(b2Vec2(0.0f, 0.0f));
+        }
+
+        /* Mouse state reset */
+
+        if (mouseJoint)
+            world.DestroyJoint(mouseJoint);
         world.DestroyBody(mouseBody);
         mouseJoint = NULL;
         mouseBody = NULL;
+        mousePickedBody = NULL;
         mouseIsAligning = false;
         mouseIsPulling = false;
+        mouseIsTilting = false;
     }
 }
 
@@ -269,7 +290,6 @@ void Frontend::animate()
      * All of our animation is fixed timestep.
      */
 
-    const float easeSpeed = 0.1;
     const float timeStep = 1.0f / 60.0f;
     const int velocityIterations = 10;
     const int positionIterations = 8;
@@ -287,8 +307,9 @@ void Frontend::animate()
          * oscillate.
          */
 
-        b2Vec2 mouse = mouseVec(normalViewExtent());
         const float gain = 50.0f;
+
+        b2Vec2 mouse = mouseVec(normalViewExtent());
         mouseBody->SetLinearVelocity(gain * (mouse - mouseBody->GetWorldCenter()));
     }
 
@@ -298,18 +319,45 @@ void Frontend::animate()
          * closest multiple of 90 degrees.
          */
         
+        const float gain = 20.0f;
+
         float cubeAngle = mouseJoint->GetBodyA()->GetAngle();
         float fractional = fmod(cubeAngle + M_PI/4, M_PI/2);
         if (fractional < 0) fractional += M_PI/2;
         float error = fractional - M_PI/4;
-        const float gain = 20.0f;
         mouseJoint->SetMotorSpeed(gain * error);
     }
 
-    world.Step(timeStep, velocityIterations, positionIterations);
+    if (mouseIsTilting) {
+        /*
+         * Animate the tilt, using a pair of Euler angles based on the distance
+         * between the mouse's current position and its initial grab point.
+         */
 
-    viewExtent += easeSpeed * (targetViewExtent() - viewExtent);
-    viewCenter += easeSpeed * (targetViewCenter() - viewCenter);
+        FrontendCube *cube = FrontendCube::fromBody(mousePickedBody);
+        if (cube) {
+            const float maxTilt = 80.0f;
+            b2Vec2 mouseDiff = mouseVec(normalViewExtent()) - mouseBody->GetWorldCenter();
+            b2Vec2 tiltTarget = (maxTilt / FrontendCube::SIZE) * mouseDiff; 
+            tiltTarget.x = b2Clamp(tiltTarget.x, -maxTilt, maxTilt);
+            tiltTarget.y = b2Clamp(tiltTarget.y, -maxTilt, maxTilt);
+            cube->setTiltTarget(tiltTarget);
+        }
+    }
+        
+    /* Local per-cube animations */
+    for (unsigned i = 0; i < sys->opt_numCubes; i++)
+        cubes[i].animate();
+
+    /* Animated viewport centering/zooming */
+    {
+        const float gain = 0.1;
+
+        viewExtent += gain * (targetViewExtent() - viewExtent);
+        viewCenter += gain * (targetViewCenter() - viewCenter);
+    }
+
+    world.Step(timeStep, velocityIterations, positionIterations);
 }
 
 void Frontend::draw()
@@ -319,11 +367,14 @@ void Frontend::draw()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Orthogonal camera
+
+    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glScalef(1.0f / viewExtent,
              -viewportWidth / (float)viewportHeight / viewExtent,
              1.0f / viewExtent);
     glTranslatef(-viewCenter.x, -viewCenter.y, 0);
+    glMatrixMode(GL_MODELVIEW);
 
     // All cubes
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
