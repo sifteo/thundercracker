@@ -46,11 +46,17 @@ class FrontendCube {
     void draw();
 
     Point center;
-    static const float SIZE = 0.4;
+    static const float SIZE = 0.5;
 
  private:
+    static const GLchar *srcLcdVP[];
+    static const GLchar *srcLcdFP[]; 
+
     Cube::Hardware *hw;
     GLuint texture;
+    GLuint lcdProgram;
+    GLuint lcdFP;
+    GLuint lcdVP;
 };
 
 

@@ -15,6 +15,7 @@ OBJS = \
 	src/cube_network.o \
 	src/system.o \
 	src/frontend.o \
+	src/frontend_cube.o \
 	src/main.o \
 
 CDEPS = src/*.h
