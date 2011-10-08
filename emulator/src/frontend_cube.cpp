@@ -160,35 +160,42 @@ void FrontendCube::initGL()
     };
 
     /*
-     * Transforms
+     * Transforms.
+     *
+     * The whole modelview matrix is ours to set up as a cube->world
+     * transform. We use this for rendering, and we also stow it for
+     * use in converting acceleration data back to cube coordinates.
      */
 
-    b2Vec2 position = body->GetPosition();
-    float32 angle = body->GetAngle() * (180 / M_PI);
-
     glLoadIdentity();
+
+    b2Vec2 position = body->GetPosition();
     glTranslatef(position.x, position.y, 0);
+
+    float32 angle = body->GetAngle() * (180 / M_PI);
     glRotatef(angle, 0,0,1);      
 
-    if (tiltVector.x > 0) {
+    const float tiltDeadzone = 5.0f;
+
+    if (tiltVector.x > tiltDeadzone) {
         glTranslatef(SIZE, 0, height * SIZE);
-        glRotatef(tiltVector.x, 0,1,0);
+        glRotatef(tiltVector.x - tiltDeadzone, 0,1,0);
         glTranslatef(-SIZE, 0, -height * SIZE);
     }
-    if (tiltVector.x < 0) {
+    if (tiltVector.x < -tiltDeadzone) {
         glTranslatef(-SIZE, 0, height * SIZE);
-        glRotatef(tiltVector.x, 0,1,0);
+        glRotatef(tiltVector.x + tiltDeadzone, 0,1,0);
         glTranslatef(SIZE, 0, -height * SIZE);
     }
 
-    if (tiltVector.y > 0) {
+    if (tiltVector.y > tiltDeadzone) {
         glTranslatef(0, SIZE, height * SIZE);
-        glRotatef(-tiltVector.y, 1,0,0);
+        glRotatef(-tiltVector.y + tiltDeadzone, 1,0,0);
         glTranslatef(0, -SIZE, -height * SIZE);
     }
-    if (tiltVector.y < 0) {
+    if (tiltVector.y < -tiltDeadzone) {
         glTranslatef(0, -SIZE, height * SIZE);
-        glRotatef(-tiltVector.y, 1,0,0);
+        glRotatef(-tiltVector.y - tiltDeadzone, 1,0,0);
         glTranslatef(0, SIZE, -height * SIZE);
     }
 
@@ -278,6 +285,6 @@ void FrontendCube::setTiltTarget(b2Vec2 angles)
 void FrontendCube::animate()
 {
     /* Animated tilt */
-    const float tiltGain = 0.5f;
+    const float tiltGain = 0.25f;
     tiltVector += tiltGain * (tiltTarget - tiltVector);
 }
