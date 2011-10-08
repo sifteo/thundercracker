@@ -47,6 +47,20 @@ class FrontendCube {
      */
     static const float SIZE = 0.5;
 
+    /*
+     * Size of the portion of the cube we're calling the "center". Has
+     * some UI implications, like dragging on the center vs. a corner.
+     * This is the radius of a circle, at the cube's center of mass.
+     *
+     * This is in cube-sized units (will be multiplied with SIZE to get world coordinates).
+     */
+    static const float CENTER_SIZE = 0.75;
+
+    /*
+     * Size of the LCD, relative to the size of the whole cube.
+     */
+    static const float LCD_SIZE = 0.8;
+
  private:
     static const GLchar *srcLcdVP[];
     static const GLchar *srcLcdFP[]; 
@@ -61,8 +75,7 @@ class FrontendCube {
 
 class Frontend {
  public:
-    Frontend()
-        : world(b2Vec2(0.0f, 0.0f)) {}
+    Frontend();
 
     void init(System *sys);
     void run();
@@ -107,8 +120,10 @@ class Frontend {
     b2Vec2 viewCenter;
 
     b2World world;
-    b2MouseJoint *mouseJoint;
-    b2Body *ground;
+    b2Body *mouseBody;
+    b2RevoluteJoint *mouseJoint;
+    bool mouseIsAligning;
+    bool mouseIsPulling;
 };
 
 

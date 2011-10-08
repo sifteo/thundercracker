@@ -30,6 +30,14 @@ class QueryCallback : public b2QueryCallback {
 };
 
 
+Frontend::Frontend() 
+  : world(b2Vec2(0.0f, 0.0f)),
+    mouseBody(NULL),
+    mouseJoint(NULL),
+    mouseIsAligning(false)
+{}
+
+
 void Frontend::init(System *_sys)
 {
     sys = _sys;
@@ -54,9 +62,6 @@ void Frontend::init(System *_sys)
     /*
      * Create the rest of the world
      */
-
-    b2BodyDef groundDef;
-    ground = world.CreateBody(&groundDef);
 
     float extent = normalViewExtent();
     float extent2 = extent * 2.0f;
@@ -114,7 +119,6 @@ void Frontend::run()
             case SDL_MOUSEMOTION:
                 mouseX = event.motion.x;
                 mouseY = event.motion.y;
-                onMouseMove();
                 break;
 
             case SDL_MOUSEBUTTONDOWN:
@@ -191,15 +195,9 @@ void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
     }
 }
 
-void Frontend::onMouseMove()
-{
-    if (mouseJoint)
-        mouseJoint->SetTarget(mouseVec(normalViewExtent()));
-}
-
 void Frontend::onMouseDown(int buttons)
 {
-    if (!mouseJoint) {
+    if (!mouseBody) {
         // Test a small bounding box at the mouse hotspot
 
         b2AABB aabb;
@@ -212,26 +210,56 @@ void Frontend::onMouseDown(int buttons)
         world.QueryAABB(&callback, aabb);
 
         if (callback.mFixture) {
-            // Create a mouse joint (a spring)
+            b2Body *pickedBody = callback.mFixture->GetBody();
 
-            b2Body *body = callback.mFixture->GetBody();
-            b2MouseJointDef md;
+            /*
+             * Create a kinematic body at the mouse. This lets us
+             * pull/push a body, and by grabbing it at an edge or
+             * corner, rotate it in a physically intuitive way.
+             */
 
-            md.bodyA = ground;
-            md.bodyB = body;
-            md.target = mouse;
-            md.maxForce = 1000.0f;
-            mouseJoint = (b2MouseJoint*) world.CreateJoint(&md);
-            body->SetAwake(true);
+            b2BodyDef mouseDef;
+            mouseDef.type = b2_kinematicBody;
+            mouseDef.position = mouse;
+            mouseDef.allowSleep = false;
+            mouseBody = world.CreateBody(&mouseDef);
+            mouseIsPulling = true;
+
+            /*
+             * Pick an attachment point. If we're close to the center,
+             * snap our attachment point to the center of mass, and
+             * turn on a servo that tries to orient the cube to a
+             * multiple of 90 degrees.
+             */
+
+            b2Vec2 anchor = mouse;
+            b2Vec2 center = pickedBody->GetWorldCenter();
+            if (b2Distance(anchor, center) < FrontendCube::SIZE * FrontendCube::CENTER_SIZE) {
+                anchor = center;
+                mouseIsAligning = true;
+            }
+
+            // Glue it to the point we picked, with a revolute joint
+
+            b2RevoluteJointDef jointDef;
+            jointDef.Initialize(pickedBody, mouseBody, anchor);
+            jointDef.motorSpeed = 0.0f;
+            jointDef.maxMotorTorque = 10.0f;
+            jointDef.enableMotor = true;
+            mouseJoint = (b2RevoluteJoint*) world.CreateJoint(&jointDef);
         }
     }
 }
 
 void Frontend::onMouseUp(int buttons)
 {
-    if (mouseJoint) {
+    if (mouseBody) {
         world.DestroyJoint(mouseJoint);
+        world.DestroyBody(mouseBody);
         mouseJoint = NULL;
+        mouseBody = NULL;
+        mouseIsAligning = false;
+        mouseIsPulling = false;
     }
 }
 
@@ -243,8 +271,40 @@ void Frontend::animate()
 
     const float easeSpeed = 0.1;
     const float timeStep = 1.0f / 60.0f;
-    const int velocityIterations = 6;
-    const int positionIterations = 2;
+    const int velocityIterations = 10;
+    const int positionIterations = 8;
+
+    if (mouseIsPulling) {
+        /*
+         * We've attached a mouse body to the object we're
+         * dragging. Move the mouse body to the current mouse
+         * position. We don't want to just set the mouse position,
+         * since that will cause any resulting collisions to simulate
+         * incorrectly.
+         *
+         * The mouse velocity needs to be relatively high so that we
+         * can shake the cubes vigorously, but too high and it'll
+         * oscillate.
+         */
+
+        b2Vec2 mouse = mouseVec(normalViewExtent());
+        const float gain = 50.0f;
+        mouseBody->SetLinearVelocity(gain * (mouse - mouseBody->GetWorldCenter()));
+    }
+
+    if (mouseIsAligning) {
+        /*
+         * Turn on a joint motor, to try and push the cube toward its
+         * closest multiple of 90 degrees.
+         */
+        
+        float cubeAngle = mouseJoint->GetBodyA()->GetAngle();
+        float fractional = fmod(cubeAngle + M_PI/4, M_PI/2);
+        if (fractional < 0) fractional += M_PI/2;
+        float error = fractional - M_PI/4;
+        const float gain = 20.0f;
+        mouseJoint->SetMotorSpeed(gain * error);
+    }
 
     world.Step(timeStep, velocityIterations, positionIterations);
 
@@ -273,11 +333,11 @@ void Frontend::draw()
 }
 
 float Frontend::zoomedViewExtent() {
-    return FrontendCube::SIZE * 1.25;
+    return FrontendCube::SIZE * 1.1;
 }
 
 float Frontend::normalViewExtent() {
-    return FrontendCube::SIZE * (sys->opt_numCubes * 1.75);
+    return FrontendCube::SIZE * (sys->opt_numCubes * 1.5);
 }
 
 float Frontend::targetViewExtent() {

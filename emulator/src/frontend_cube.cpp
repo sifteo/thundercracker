@@ -50,9 +50,19 @@ void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
     hw = _hw;
     texture = 0;
 
+    /*
+     * Pick our physical properties carefully: We want the cubes to
+     * stop when you let go of them, but a little bit of realistic
+     * physical jostling is nice.  Most importantly, we need a
+     * corner-drag to actually rotate the cubes effortlessly. This
+     * means relatively high linear damping, and perhaps lower angular
+     * damping.
+     */ 
+
     b2BodyDef bodyDef;
     bodyDef.type = b2_dynamicBody;
-    bodyDef.linearDamping = 10.0f;
+    bodyDef.linearDamping = 30.0f;
+    bodyDef.angularDamping = 5.0f;
     bodyDef.position.Set(x, y);
     body = world.CreateBody(&bodyDef);
 
@@ -63,7 +73,7 @@ void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &box;
     fixtureDef.density = 1.0f;
-    fixtureDef.friction = 2.5f;
+    fixtureDef.friction = 0.8f;
     body->CreateFixture(&fixtureDef);
 }
 
@@ -93,9 +103,6 @@ void FrontendCube::initGL()
 
 void FrontendCube::draw()
 {
-    // Proportion of the body size which the LCD occupies
-    const float LCD_SIZE = 0.8;
-
     /*
      * XXX: Crappy rounded body corners on a flat black
      *      polygon. Replace this with something beautiful later, like
@@ -115,10 +122,10 @@ void FrontendCube::draw()
     };
 
     static const GLfloat lcdVertexArray[] = {
-        0, 1,  -LCD_SIZE,  LCD_SIZE, 0,
-        1, 1,   LCD_SIZE,  LCD_SIZE, 0,
-        0, 0,  -LCD_SIZE, -LCD_SIZE, 0,
-        1, 0,   LCD_SIZE, -LCD_SIZE, 0,
+        0, 1,  -1,  1, 0,
+        1, 1,   1,  1, 0,
+        0, 0,  -1, -1, 0,
+        1, 0,   1, -1, 0,
     };
 
     /*
@@ -126,12 +133,12 @@ void FrontendCube::draw()
      */
 
     b2Vec2 position = body->GetPosition();
-    float32 angle = body->GetAngle();
+    float32 angle = body->GetAngle() * (180 / M_PI);
 
     glPushMatrix();
     glTranslatef(position.x, position.y, 0);
     glScalef(SIZE, SIZE, SIZE);
-    glRotatef(0, 0, 1, angle);
+    glRotatef(angle, 0,0,1);
 
     /*
      * Draw body
@@ -165,6 +172,7 @@ void FrontendCube::draw()
     glColor3f(1.0, 1.0, 1.0);
     glUniform1i(glGetUniformLocation(lcdProgram, "image"), 0);
 
+    glScalef(LCD_SIZE, LCD_SIZE, 1.0f);
     glInterleavedArrays(GL_T2F_V3F, 0, lcdVertexArray);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
