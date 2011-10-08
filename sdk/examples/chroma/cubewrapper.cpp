@@ -5,10 +5,12 @@
  */
 
 #include "cubewrapper.h"
+#include "game.h"
 #include "assets.gen.h"
 #include "utils.h"
 
 static _SYSCubeID s_id = 0;
+static const int NUM_SIDES = 4;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf)
 {
@@ -53,7 +55,7 @@ void CubeWrapper::Update(float t)
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
 			GridSlot &slot = m_grid[i][j];
-			slot.Update( dt );
+			slot.Update( t );
 		}
 	}
 }
@@ -185,8 +187,8 @@ void CubeWrapper::testMatches()
 			int side = GetSideNeighboredOn( m_cube.neighbors[i], m_cube );
 
 			//fill two 4 element pointer arrays of grid slots representing what we need to match up
-			GridSlot **ourGems[4];
-			GridSlot **theirGems[4];
+			GridSlot *ourGems[4];
+			GridSlot *theirGems[4];
 
 			FillSlotArray( ourGems, i, true );
 			otherCube.FillSlotArray( theirGems, side, false );
@@ -214,12 +216,12 @@ void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
 			if( clockwise )
 			{
 				for( int i = 0; i < NUM_COLS; i++ )
-					gems[i] = m_grid[0][i];
+					gems[i] = &m_grid[0][i];
 			}
 			else
 			{
 				for( int i = 0; i < NUM_COLS; i++ )
-					gems[NUM_COLS - i - 1] = m_grid[0][i];
+					gems[NUM_COLS - i - 1] = &m_grid[0][i];
 			}
 		}
 		case 1:
@@ -227,12 +229,12 @@ void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
 			if( clockwise )
 			{
 				for( int i = 0; i < NUM_ROWS; i++ )
-					gems[NUM_ROWS - i - 1] = m_grid[i][0];
+					gems[NUM_ROWS - i - 1] = &m_grid[i][0];
 			}
 			else
 			{
 				for( int i = 0; i < NUM_ROWS; i++ )
-					gems[i] = m_grid[i][0];
+					gems[i] = &m_grid[i][0];
 			}
 		}
 		case 2:
@@ -240,12 +242,12 @@ void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
 			if( clockwise )
 			{
 				for( int i = 0; i < NUM_COLS; i++ )
-					gems[NUM_COLS - i - 1] = m_grid[NUM_ROWS - 1][i];
+					gems[NUM_COLS - i - 1] = &m_grid[NUM_ROWS - 1][i];
 			}
 			else
 			{
 				for( int i = 0; i < NUM_COLS; i++ )
-					gems[i] = m_grid[NUM_ROWS - 1][i];
+					gems[i] = &m_grid[NUM_ROWS - 1][i];
 			}
 		}
 		case 3:
@@ -253,12 +255,12 @@ void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
 			if( clockwise )
 			{
 				for( int i = 0; i < NUM_ROWS; i++ )
-					gems[i] = m_grid[i][NUM_COLS - 1];
+					gems[i] = &m_grid[i][NUM_COLS - 1];
 			}
 			else
 			{
 				for( int i = 0; i < NUM_ROWS; i++ )
-					gems[NUM_ROWS - i - 1] = m_grid[i][NUM_COLS - 1];
+					gems[NUM_ROWS - i - 1] = &m_grid[i][NUM_COLS - 1];
 			}
 		}
 	}

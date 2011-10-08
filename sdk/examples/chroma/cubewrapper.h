@@ -30,6 +30,7 @@ public:
 	void Tilt( int dir );
 
 	void testMatches();
+	void FillSlotArray( GridSlot **gems, int side, bool clockwise );
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
