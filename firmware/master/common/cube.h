@@ -126,6 +126,9 @@ class CubeSlot {
     static void finishCubes(_SYSCubeIDVector cv);
 
  private:
+    // Limit on round-trip time
+    static const unsigned RTT_DEADLINE_MS = 250;
+    
     /*
      * Data buffers, provided by game code.
      *
@@ -145,7 +148,8 @@ class CubeSlot {
     _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
 
-    SysTime::Ticks paintTimestamp;
+    SysTime::Ticks paintTimestamp;      // Used only by thread
+    SysTime::Ticks flashDeadline;       // Used only by ISR
     int32_t pendingFrames;
 
     // Packet encoder state
