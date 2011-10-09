@@ -18,8 +18,10 @@
 #include <SDL.h>
 #ifdef __MACH__
 #   include <OpenGL/gl.h>
+#   include <OpenGL/glext.h>
 #else
 #   include <GL/gl.h>
+#   include <GL/glext.h>
 #endif
 
 #ifndef GL_UNSIGNED_SHORT_5_6_5
@@ -27,7 +29,6 @@
 #endif
 
 #include <Box2D/Box2D.h>
-
 #include "system.h"
 
 
@@ -93,9 +94,9 @@ class FrontendCube {
 
     Cube::Hardware *hw;
     GLuint texture;
-    GLuint lcdProgram;
-    GLuint lcdFP;
-    GLuint lcdVP;
+    void *lcdProgram;
+    void *lcdFP;
+    void *lcdVP;
 };
 
 
