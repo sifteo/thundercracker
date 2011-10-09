@@ -18,7 +18,7 @@ class VirtualTime {
     static const unsigned HZ = 16000000;
 
     // Timestep size for simulation, in real milliseconds
-    static const unsigned TIMESTEP = 10;
+    static const unsigned TIMESTEP = 50;
 
     uint64_t clocks;
 
