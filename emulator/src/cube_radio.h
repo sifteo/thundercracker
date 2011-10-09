@@ -98,6 +98,8 @@ class Radio {
             spi_cmd = mosi;
             spiCmdBegin(mosi);
             spi_index++;
+
+            updateStatus();
             return regs[REG_STATUS];
         }
 
@@ -247,7 +249,7 @@ class Radio {
         regs[REG_STATUS] &= STATUS_RX_DR | STATUS_TX_DS | STATUS_MAX_RT;
 
         if (tx_fifo_count == FIFO_SIZE)
-            regs[REG_STATUS] &= STATUS_TX_FULL;
+            regs[REG_STATUS] |= STATUS_TX_FULL;
 
         if (rx_fifo_count == 0)
             regs[REG_STATUS] |= STATUS_RX_P_MASK;
