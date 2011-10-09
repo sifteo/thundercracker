@@ -12,7 +12,9 @@
 #include "hardware.h"
 
 void sensors_init();
+
 void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked;
 void tf0_isr(void) __interrupt(VECTOR_TF0) __naked;
+void tf1_isr(void) __interrupt(VECTOR_TF1) __naked;
 
 #endif

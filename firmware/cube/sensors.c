@@ -28,6 +28,8 @@ uint8_t accel_addr = ADDR_SEARCH_START;
 uint8_t accel_state;
 uint8_t accel_x;
 
+uint8_t neighbor_capture;
+
 
 /*
  * I2C ISR --
@@ -62,7 +64,7 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
         ; Check status of I2C engine.
 
         mov     a, _W2CON1
-        jnb     acc.0, as_ret           ; Wasnt a real I2C interrupt. Ignore it.
+        jnb     acc.0, as_ret           ; Not a real I2C interrupt. Ignore it.
         jb      acc.1, as_nack          ; Was not acknowledged!
 
         mov     dptr, #as_1
@@ -103,7 +105,7 @@ as_4:
         ; 5. Read Y axis. In rapid succession, store both axes and set the change flag
         ;    if necessary. This minimizes the chances of ever sending one old axis and
         ;    one new axis. In fact, since this interrupt is higher priority than the
-        ;    RF interrupt, we're guaranteed to send synchronized updates of both axes.
+        ;    RF interrupt, we are guaranteed to send synchronized updates of both axes.
 
 as_5:
 
@@ -183,9 +185,48 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         mov     _W2CON1, #0               ;   Unmask interrupt
         mov     _W2DAT, _accel_addr       ; Trigger the next I2C transaction
 
+        ; XXX DEBUG, transmit some neighbor pulses
+        orl     MISC_PORT, #MISC_NB_OUT
+        anl     _MISC_DIR, #~MISC_NB_OUT
+        nop
+        nop
+        nop
+        nop
+        orl     _MISC_DIR, #MISC_NB_OUT
+
+
         reti
     __endasm;
 }
+
+
+/*
+ * Timer 1 ISR --
+ *
+ *    We use Timer 1 in counter mode, to count incoming neighbor pulses.
+ *    We use it both to detect the start pulse, and to detect subsequent
+ *    pulses in our serial stream.
+ *
+ *    We only use the Timer 1 ISR to detect the start pulse. We keep the
+ *    counter loaded with 0xFFFF when the receiver is idle. At other times,
+ *    the counter value is small and won't overflow.
+ *
+ *    This interrupt is at the highest priority level! It's very important
+ *    that we detect the start pulse with predictable latency, so we can
+ *    time the subsequent pulses accurately.
+ */
+
+void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
+{
+    __asm
+        inc     _neighbor_capture
+        mov     TH1, #0xFF
+        mov     TL1, #0xFF
+        1$: sjmp 1$
+        reti
+    __endasm;
+}
+
 
 
 void sensors_init()
@@ -215,7 +256,24 @@ void sensors_init()
      * It overflows at 16000000 / 12 / (1<<13) = 162.76 Hz
      */
 
-    TMOD = 0x00;                // 13-bit counter mode
     TCON |= 0x10;               // Timer 0 running
     IEN_TF0 = 1;                // Enable Timer 0 interrupt
+
+    /*
+     * Neighbor pulse counter.
+     *
+     * We use Timer 1 as a pulse counter in the neighbor receiver.
+     * When we're idle, waiting for a new neighbor packet, we set the
+     * counter to 0xFFFF and get an interrupt when it overflows.
+     * Subsequently, we check it on every bit-period to see if we
+     * received any pulses during that bit's time window.
+     */     
+
+    TMOD = 0x50;                // Timer 1 is a 16-bit counter
+    TL1 = 0xff;                 // Overflow on the next pulse
+    TH1 = 0xff;
+    IP0 |= 0x08;                // Highest priority for TF1 interrupt
+    IP1 |= 0x08;
+    TCON |= 0x40;               // Timer 1 running
+    IEN_TF1 = 1;                // Enable IFP
 }

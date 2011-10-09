@@ -100,6 +100,10 @@ struct em8051
     void *callbackData;
 
     uint8_t irq_count;          // Number of currently active IRQ handlers
+    uint8_t ifp;                // Last IFP state
+    uint8_t t0;                 // Last T0 state
+    uint8_t t1;                 // Last T1 state
+    uint8_t prescaler12;        // 1/12 prescaler
 
     struct {
         // Stored register values for sanity-checking ISRs

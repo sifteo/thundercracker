@@ -30,26 +30,34 @@
 #define CTRL_DIR        P3DIR
 #define CTRL_CON        P3CON
 
-__sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
+__sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 
+#define MISC_NB_OUT1    (1 << 0)
+#define MISC_NB_OUT2    (1 << 1)
 #define MISC_I2C_SCL    (1 << 2)
 #define MISC_I2C_SDA    (1 << 3)
-#define MISC_BOOST      (1 << 7)
+#define MISC_TOUCH      (1 << 4)   // AIN12 and GPINT2
+#define MISC_NB_OUT3    (1 << 5)
+#define MISC_NB_IN      (1 << 6)   // T1 input
+#define MISC_NB_OUT4    (1 << 7)
 
 #define MISC_I2C        (MISC_I2C_SCL | MISC_I2C_SDA)
+#define MISC_NB_OUT     (MISC_NB_OUT1 | MISC_NB_OUT2 | MISC_NB_OUT3 | MISC_NB_OUT4)
 
-#define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_BOOST))
+#define MISC_DIR_VALUE  (~MISC_I2C_SCL)
 #define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)
 
 #define CTRL_LCD_DCX    (1 << 0)
 #define CTRL_FLASH_LAT1 (1 << 1)
 #define CTRL_FLASH_LAT2 (1 << 2)
+#define CTRL_3V3_EN     (1 << 3)
 #define CTRL_BACKLIGHT  (1 << 4)
 #define CTRL_FLASH_WE   (1 << 5)
 #define CTRL_FLASH_OE   (1 << 6)
 
 #define CTRL_DIR_VALUE  (~(CTRL_LCD_DCX | CTRL_FLASH_LAT1 | CTRL_FLASH_LAT2 | \
-                           CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT))
+                           CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT | \
+                           CTRL_3V3_EN ))
 
 #define CTRL_IDLE       (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_LCD_DCX)
 #define CTRL_FLASH_CMD  (CTRL_BACKLIGHT | CTRL_FLASH_OE | CTRL_LCD_DCX)

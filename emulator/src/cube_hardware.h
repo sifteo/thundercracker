@@ -112,7 +112,6 @@ class Hardware {
     uint8_t bus;
     uint8_t prev_ctrl_port;
     uint8_t flash_drv;
-    uint8_t ifp;
     uint8_t iex3;
     uint8_t rfcken;
 };

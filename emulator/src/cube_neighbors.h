@@ -88,10 +88,10 @@ class Neighbors {
 
     static const unsigned PORT     = REG_P1;
     static const unsigned DIR      = REG_P1DIR;
-    static const unsigned PIN_IN   = (1 << 4);
-    static const unsigned PIN_OUT1 = (1 << 1);
-    static const unsigned PIN_OUT2 = (1 << 5);
-    static const unsigned PIN_OUT3 = (1 << 6);
+    static const unsigned PIN_IN   = (1 << 6);
+    static const unsigned PIN_OUT1 = (1 << 0);
+    static const unsigned PIN_OUT2 = (1 << 1);
+    static const unsigned PIN_OUT3 = (1 << 5);
     static const unsigned PIN_OUT4 = (1 << 7);
     
     uint8_t inputs;

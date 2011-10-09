@@ -47,7 +47,11 @@ void handle_interrupts(em8051 *aCPU);
 static void timer_tick(em8051 *aCPU)
 {
     int increment;
+    bool tick12;
     int v;
+
+    if ((tick12 = (++aCPU->prescaler12 == 12)))
+        aCPU->prescaler12 = 0;
 
     if ((aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0)) == (TMODMASK_M0_0 | TMODMASK_M1_0))
     {
@@ -63,13 +67,14 @@ static void timer_tick(em8051 *aCPU)
             // check timer / counter mode
             if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_0)
             {
-                // counter op;
-                // counter works if T0 pin was 1 and is now 0 (P3.4 on AT89C2051)
-                increment = 0; // TODO
+                /* Count falling edges on T0 */
+                uint8_t nextT0 = aCPU->mSFR[PORT_T0] & PIN_T0;
+                increment = aCPU->t0 && !nextT0;
+                aCPU->t0 = nextT0;
             }
             else
             {
-                increment = 1;
+                increment = tick12;
             }
         }
         if (increment)
@@ -94,13 +99,14 @@ static void timer_tick(em8051 *aCPU)
             // check timer / counter mode
             if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_1)
             {
-                // counter op;
-                // counter works if T1 pin was 1 and is now 0
-                increment = 0; // TODO
+                /* Count falling edges on T1 */
+                uint8_t nextT1 = aCPU->mSFR[PORT_T1] & PIN_T1;
+                increment = aCPU->t1 && !nextT1;
+                aCPU->t1 = nextT1;
             }
             else
             {
-                increment = 1;
+                increment = tick12;
             }
         }
 
@@ -130,13 +136,14 @@ static void timer_tick(em8051 *aCPU)
             // check timer / counter mode
             if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_0)
             {
-                // counter op;
-                // counter works if T0 pin was 1 and is now 0 (P3.4 on AT89C2051)
-                increment = 0; // TODO
+                /* Count falling edges on T0 */
+                uint8_t nextT0 = aCPU->mSFR[PORT_T0] & PIN_T0;
+                increment = aCPU->t0 && !nextT0;
+                aCPU->t0 = nextT0;
             }
             else
             {
-                increment = 1;
+                increment = tick12;
             }
         }
         
@@ -205,13 +212,14 @@ static void timer_tick(em8051 *aCPU)
         {
             if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_1)
             {
-                // counter op;
-                // counter works if T1 pin was 1 and is now 0
-                increment = 0; // TODO
+                /* Count falling edges on T1 */
+                uint8_t nextT1 = aCPU->mSFR[PORT_T1] & PIN_T1;
+                increment = aCPU->t1 && !nextT1;
+                aCPU->t1 = nextT1;
             }
             else
             {
-                increment = 1;
+                increment = tick12;
             }
         }
 
@@ -385,17 +393,9 @@ int em8051_tick(em8051 *aCPU)
             traceExecution(aCPU);
     }
 
-    /*
-     * Timers run at 1/12th the core clock frequency
-     */
-    if (aCPU->mTimerTickDelay) {
-        aCPU->mTimerTickDelay--;
-    } else {
-        aCPU->mTimerTickDelay = 11;
-        timer_tick(aCPU);
-    }
+    timer_tick(aCPU);
 
-    if (aCPU->mBreakpoint && aCPU->mBreakpoint == aCPU->mPC)
+    if (ticked && aCPU->mBreakpoint && aCPU->mBreakpoint == aCPU->mPC)
         aCPU->except(aCPU, EXCEPTION_BREAKPOINT);
 
     return ticked;

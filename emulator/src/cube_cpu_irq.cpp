@@ -58,9 +58,35 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
 void handle_interrupts(struct em8051 *cpu)
 {
     /*
+     * External interrupts: GPIOs. Only one pin can be selected
+     * for use as an Interrupt From Pin (IFP) source at a time.
+     */
+
+    uint8_t nextIFP;
+
+    switch (cpu->mSFR[REG_INTEXP] & 0x38) {
+    case 0x08:  nextIFP = cpu->mSFR[REG_P1] & (1 << 2);  break;   // GPINT0
+    case 0x10:  nextIFP = cpu->mSFR[REG_P1] & (1 << 3);  break;   // GPINT1
+    case 0x20:  nextIFP = cpu->mSFR[REG_P1] & (1 << 4);  break;   // GPINT2
+    default:    nextIFP = 0;
+    };
+
+    if (cpu->mSFR[REG_TCON] & TCONMASK_IT0) {
+        // Falling edge
+        if (!nextIFP && cpu->ifp)
+            cpu->mSFR[REG_TCON] |= TCONMASK_IE0;
+    } else {
+        // Low level
+        if (!nextIFP)
+            cpu->mSFR[REG_TCON] |= TCONMASK_IE0;
+    }
+    cpu->ifp = nextIFP;
+
+    /*
      * Table-driven implementation of the nRF24LE1's IRQ logic.
      * See Figure 46 in section 9.2 of the nRF24LE1 Product Specification.
      */
+
     static const struct {
         uint16_t irqn;
         uint8_t ien_sfr;

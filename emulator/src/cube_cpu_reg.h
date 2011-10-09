@@ -15,6 +15,12 @@ namespace Cube {
 #define IDATA_SIZE      256
 #define CODE_SIZE       16384
 
+// Special pins
+#define PIN_T0          (1 << 5)
+#define PORT_T0         REG_P1
+#define PIN_T1          (1 << 6)
+#define PORT_T1         REG_P1
+
 enum SFR_REGS
 {
     REG_P0           = 0x80 - 0x80,
