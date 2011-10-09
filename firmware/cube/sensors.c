@@ -157,18 +157,45 @@ as_ret:
 /*
  * Timer 0 ISR --
  *
- *    XXX: Right now, this is a relatively low frequency ISR that we
- *         to kick off new accelerometer reads. In the future, this
- *         should be merged with sensor code for reading neighbor and
- *         touch sensors, so we can minimize interrupt overhead and
- *         timer resource usage.
+ *    This is a relatively low-frequency ISR that we use to kick off
+ *    reading most of our sensors. Currently it handles neighbor TX,
+ *    and it initiates I2C reads.
+ *
+ *    This timer runs at 162.76 Hz. It's a convenient frequency for us
+ *    to get from the 16 MHz oscillator, but it also works out nicely
+ *    for other reasons:
+ * 
+ *      1. It's similar to our accelerometer's analog bandwidth
+ *      2. It works out well as a neighbor transmit period (32x 192us slots)
+ *      3. It's good for human-timescale interactivity
+ *
+ *    Because neighbor transmits must be interleaved, we allow the
+ *    master to adjust the phase of Timer 0. This does not affect the
+ *    period. To keep the latencies predictable, we perform our
+ *    neighbor transmit first-thing in this ISR.
  */
 
 void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 {
     __asm
-        ; Currently we dont use any registers or affect processor flags, so no
-        ; need to save any state yet.
+
+        ;--------------------------------------------------------------------
+        ; Neighbor TX
+        ;--------------------------------------------------------------------
+
+        ; XXX fake
+
+        orl     MISC_PORT, #MISC_NB_OUT
+        anl     _MISC_DIR, #~MISC_NB_OUT
+        nop
+        nop
+        nop
+        nop
+        orl     _MISC_DIR, #MISC_NB_OUT
+
+        ;--------------------------------------------------------------------
+        ; Accelerometer Sampling
+        ;--------------------------------------------------------------------
 
         ; Trigger the next accelerometer read, and reset the I2C bus. We do
         ; this each time, to avoid a lockup condition that can persist
@@ -184,16 +211,6 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         mov     _W2CON0, #7               ;   Master mode, 100 kHz.
         mov     _W2CON1, #0               ;   Unmask interrupt
         mov     _W2DAT, _accel_addr       ; Trigger the next I2C transaction
-
-        ; XXX DEBUG, transmit some neighbor pulses
-        orl     MISC_PORT, #MISC_NB_OUT
-        anl     _MISC_DIR, #~MISC_NB_OUT
-        nop
-        nop
-        nop
-        nop
-        orl     _MISC_DIR, #MISC_NB_OUT
-
 
         reti
     __endasm;
@@ -227,6 +244,20 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
     __endasm;
 }
 
+
+/*
+ * Timer 2 ISR --
+ *
+ *    We use Timer 2 to measure out individual bit-periods, during
+ *    active transmit/receive of a neighbor packet.
+ */
+
+void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
+{
+    __asm
+        reti
+    __endasm;
+}
 
 
 void sensors_init()
