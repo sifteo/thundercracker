@@ -289,5 +289,32 @@ int Hardware::sfrRead(CPU::em8051 *cpu, int reg)
     }
 }
 
+void Hardware::setAcceleration(float xG, float yG)
+{
+    /*
+     * Set the cube's current acceleration, in G's. Scale it
+     * according to the accelerometer's maximum range (ours is rated
+     * at +/- 2G).
+     */
+
+    const float deviceAccelScale = 128.0 / 2.0;
+
+    int x = xG * deviceAccelScale;
+    int y = yG * deviceAccelScale;
+
+    if (x < -128) x = -128;
+    if (x > 127) x = 127;
+
+    if (y < -128) y = -128;
+    if (y > 127) y = 127;
+
+    i2c.accel.setVector(x, y);
+}
+
+bool Hardware::isDebugging()
+{
+    return this == Cube::Debug::cube;
+}
+
 
 };  // namespace Cube

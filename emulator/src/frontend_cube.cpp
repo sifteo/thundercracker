@@ -225,10 +225,15 @@ void FrontendCube::initGL()
     glInterleavedArrays(GL_V3F, 0, vaSides);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 18);
 
-    glColor3f(0.0, 0.0, 0.0);
+    if (hw->isDebugging()) {
+        // In the debugger? Red border shows you which cube you're in.
+        glColor3f(0.3, 0.0, 0.0);
+    } else {
+        // Elegant flat black border
+        glColor3f(0.0, 0.0, 0.0);
+    }
     glInterleavedArrays(GL_V3F, 0, vaTop);
     glDrawArrays(GL_POLYGON, 0, 8);
-
 
     /*
      * Draw LCD image
@@ -299,22 +304,7 @@ void FrontendCube::animate()
      */
 
     b2Vec3 accelLocal = modelMatrix.Solve33(accelG);
-
-    /*
-     * Now we have acceleration, in G's, in the same coordinate system
-     * used by the accelerometer. Scale it according to the
-     * accelerometer's maximum range (ours is rated at +/- 2G) and
-     * send it to the hardware emulation.
-     */
-
-    const float deviceAccelScale = 128.0 / 2.0;
-
-    b2Vec2 deviceAccel(accelLocal.x * deviceAccelScale,
-                       accelLocal.y * deviceAccelScale);
-    int8_t accelX = b2Clamp((int)deviceAccel.x, -128, 127); 
-    int8_t accelY = b2Clamp((int)deviceAccel.y, -128, 127); 
-
-    hw->i2c.accel.setVector(accelX, accelY);
+    hw->setAcceleration(accelLocal.x, accelLocal.y);
 }
 
 AccelerationProbe::AccelerationProbe()

@@ -95,6 +95,9 @@ class Hardware {
         return cpuTicked;
     }
 
+    void setAcceleration(float xG, float yG);
+    bool isDebugging();
+
  private:
     void hardwareTick();
     void graphicsTick();
