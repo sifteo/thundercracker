@@ -73,7 +73,7 @@ LDFLAGS += $(shell sdl-config --libs)
 
 # OS detection
 OS := $(shell uname)
-ifneq ( $(findstr MINGW32_NT, $(OS)) , "" )  
+ifneq ($(findstr MINGW32_NT,$(OS)),)  
       OS := windows32
 endif
 
