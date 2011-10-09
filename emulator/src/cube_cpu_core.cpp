@@ -490,6 +490,7 @@ const char *em8051_exc_name(int aCode)
         "SPI FIFO overrun/underrun",
         "Radio FIFO overrun/underrun",
         "I2C error",
+        "XDATA error",
     };
 
     if (aCode < (int)(sizeof exc_names / sizeof exc_names[0]))
