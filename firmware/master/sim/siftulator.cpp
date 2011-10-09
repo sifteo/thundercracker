@@ -61,6 +61,7 @@ static const char *PORT = "2404";
 static const uint8_t PAYLOAD_MAX = 32;
 static const uint32_t TICK_HZ = 16000000;
 static const uint32_t TICKS_PER_PACKET = 7200;   // 450us, minimum packet period
+static const uint32_t MAX_RETRIES = 150;         // Simulates (hardware * software) retries
 
 struct RadioData {
     uint8_t len;
@@ -93,6 +94,7 @@ static struct Siftulator {
     bool ackPending;
 
     uint64_t simTicks;
+    uint32_t retriesLeft;
 } self;
 
 
@@ -195,21 +197,31 @@ static void Siftulator_tryConnect()
 
 static void Siftulator_send()
 {
-    TXPacket packet;
-    PacketTransmission ptx;
+    /*
+     * Send either a new packet or a retry of an old packet.
+     */
 
-    memset(&packet, 0, sizeof packet);
-    ptx.packet.bytes = packet.p.payload;
+    static TXPacket packet;
+
+    if (!self.retriesLeft) {
+        // Produce a new packet
+
+        PacketTransmission ptx;
+
+        memset(&packet, 0, sizeof packet);
+        ptx.packet.bytes = packet.p.payload;
+        RadioManager::produce(ptx);
+
+        packet.channel = ptx.dest->channel;
+        packet.p.len = ptx.packet.len;
+        memcpy(packet.addr, ptx.dest->id, sizeof packet.addr);
+
+        self.retriesLeft = MAX_RETRIES;
+    }
 
     // XXX: Okay to hardcode only because we're sending packets continuously now.
     packet.tickDelta = TICKS_PER_PACKET; 
     self.simTicks += TICKS_PER_PACKET;
-
-    RadioManager::produce(ptx);
-
-    packet.channel = ptx.dest->channel;
-    packet.p.len = ptx.packet.len;
-    memcpy(packet.addr, ptx.dest->id, sizeof packet.addr);
 
     int ret = send(self.fd, &packet, sizeof packet, 0);
 
@@ -242,12 +254,17 @@ static void Siftulator_recv()
         fprintf(stderr, "Error: Siftulator packet size %d unexpected\n", ret);
         Siftulator_disconnect();
     } else {
+
         if (packet.ack) {
+            self.retriesLeft = 0;
             buf.len = packet.p.len;
             buf.bytes = packet.p.payload;
             RadioManager::acknowledge(buf);
         } else {
-            RadioManager::timeout();
+            if (self.retriesLeft)
+                self.retriesLeft--;
+            else
+                RadioManager::timeout();
         }
 
         self.ackPending = false;

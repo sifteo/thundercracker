@@ -215,8 +215,7 @@ void SystemNetwork::deliverPacket(System &sys, RXPacket &packet)
         Cube::Radio &radio = sys.cubes[i].spi.radio;
 
         if (radio.getPackedRXAddr() == packet.address) {
-            reply.ack = true;
-            radio.handlePacket(packet.p, reply.p);
+            reply.ack = radio.handlePacket(packet.p, reply.p);
             break;
         }
     }

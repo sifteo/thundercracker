@@ -145,20 +145,19 @@ class Radio {
         return addr | ((uint64_t)regs[REG_RF_CH] << 56);
     }
 
-    void handlePacket(Packet &incoming, Packet &ack) {
+    bool handlePacket(Packet &incoming, Packet &ack) {
         /*
          * Handle an incoming radio packet with ACK. In our simulation
          * (which isn't at all far from reality, actually) the ACK
          * packet is sent from our buffer at the exact same instant
          * that the next TX packet is received.
          *
-         * We only get this far if the caller has decided that the
-         * packet successfully reached us as a destination. So, we
-         * unconditionally return an ACK.
+         * true if the packet is acknowedged, false for no-acknowledge.
          */
 
         Packet *rx_head = &rx_fifo[rx_fifo_head];
         Packet *tx_tail = &tx_fifo[tx_fifo_tail];
+        bool hasACK = false;
 
         if (cpu->traceFile) {
             fprintf(cpu->traceFile, "RADIO: rx [%2d] ", incoming.len);
@@ -190,6 +189,7 @@ class Radio {
 
                 byte_count += tx_tail->len;
                 ack = *tx_tail;
+                hasACK = true;
                 tx_fifo_tail = (tx_fifo_tail + 1) % FIFO_SIZE;
                 tx_fifo_count--;
                 regs[REG_STATUS] |= STATUS_TX_DS;
@@ -197,11 +197,29 @@ class Radio {
             } else {
                 // ACK without payload (empty TX fifo)
                 ack.len = 0;
+                hasACK = true;
             }
-        } else
-            cpu->except(cpu, CPU::EXCEPTION_RADIO_XRUN);
+        } else {
+            /*
+             * IF the RX FIFO is full, the nRF24LE1 will drop the incoming
+             * packet and will NOT send an ACK. It's up to the sender to retry.
+             *
+             * This shouldn't be a common occurrance, but there are
+             * some cases where a radio packet will take a long time
+             * (several milliseconds) to decode.. and that's
+             * alright. One example is a heavily RLE-encoded packet
+             * that clears the screen with a repetetive pattern. Just
+             * the clock cycles required to clear VRAM are relatively
+             * long compared to our shortest inter-packet period.
+             */
+
+            if (cpu->traceFile)
+                fprintf(cpu->traceFile, "RADIO: rx full, NAK\n");
+        }
 
         updateStatus();
+
+        return hasACK;
     }
 
  private:
