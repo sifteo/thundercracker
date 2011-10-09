@@ -86,18 +86,18 @@ void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
 
 void FrontendCube::initGL()
 {
-    lcdVP = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(lcdVP, 1, &srcLcdVP[0], NULL);
-    glCompileShader(lcdVP);
+    lcdVP = glCreateShaderObjectARB(GL_VERTEX_SHADER);
+    glShaderSourceARB(lcdVP, 1, &srcLcdVP[0], NULL);
+    glCompileShaderARB(lcdVP);
 
-    lcdFP = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(lcdFP, 1, &srcLcdFP[0], NULL);
-    glCompileShader(lcdFP);
+    lcdFP = glCreateShaderObjectARB(GL_FRAGMENT_SHADER);
+    glShaderSourceARB(lcdFP, 1, &srcLcdFP[0], NULL);
+    glCompileShaderARB(lcdFP);
 
-    lcdProgram = glCreateProgram();
-    glAttachShader(lcdProgram, lcdVP);
-    glAttachShader(lcdProgram, lcdFP);
-    glLinkProgram(lcdProgram);
+    lcdProgram = glCreateProgramObjectARB();
+    glAttachObjectARB(lcdProgram, lcdVP);
+    glAttachObjectARB(lcdProgram, lcdFP);
+    glLinkProgramARB(lcdProgram);
 
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -218,7 +218,7 @@ void FrontendCube::initGL()
      * Draw body
      */
 
-    glUseProgram(0);
+    glUseProgramObjectARB(0);
     glDisable(GL_TEXTURE_2D);
 
     glColor3f(0.9, 0.9, 0.9);
@@ -238,9 +238,9 @@ void FrontendCube::initGL()
         // LCD on, draw the image with a shader
 
         glColor3f(1.0, 1.0, 1.0);
-        glUseProgram(lcdProgram);
+        glUseProgramObjectARB(lcdProgram);
         glEnable(GL_TEXTURE_2D);
-        glUniform1i(glGetUniformLocation(lcdProgram, "image"), 0);
+        glUniform1iARB(glGetUniformLocationARB(lcdProgram, "image"), 0);
 
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
@@ -250,7 +250,7 @@ void FrontendCube::initGL()
         // LCD off, show a blank dark screen
 
         glColor3f(0.1, 0.1, 0.1);
-        glUseProgram(0);
+        glUseProgramObjectARB(0);
         glDisable(GL_TEXTURE_2D);
     }
 
