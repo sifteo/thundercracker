@@ -11,8 +11,7 @@ OBJS_SIM = \
 	common/radio.sim.o \
 	common/cube.sim.o \
 	common/cubecodec.sim.o \
-	sim/radio_nethub.sim.o \
-	sim/systime.sim.o \
+	sim/siftulator.sim.o \
 	sim/main.sim.o \
 
 OBJS_STM32 = \

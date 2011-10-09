@@ -85,8 +85,7 @@ class Hardware {
      */
 
     bool init(VirtualTime *masterTimer,
-              const char *firmwareFile, const char *flashFile,
-              const char *netHost, const char *netPort);
+              const char *firmwareFile, const char *flashFile);
     void exit();
 
     bool tick() {

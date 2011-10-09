@@ -17,6 +17,7 @@
 #include <SDL/SDL_thread.h>
 #include "vtime.h"
 #include "cube_hardware.h"
+#include "system_network.h"
 
 
 class System {
@@ -31,8 +32,6 @@ class System {
     // Options; can be set prior to init
     unsigned opt_numCubes;
     const char *opt_cubeFirmware;
-    const char *opt_netHost;
-    const char *opt_netPort;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
@@ -42,9 +41,9 @@ class System {
 
     System()
         : opt_numCubes(DEFAULT_CUBES), opt_cubeFirmware(NULL),
-        opt_netHost("localhost"), opt_netPort("2405"),
         opt_cube0Debug(false), opt_cube0Flash(NULL),
-        opt_cube0Trace(NULL), opt_cube0Profile(NULL)
+        opt_cube0Trace(NULL), opt_cube0Profile(NULL),
+        threadRunning(false)
         {}
 
     bool init();
@@ -57,9 +56,12 @@ class System {
 
  private:
     static int threadFn(void *param);
+    void tick();
 
     SDL_Thread *thread;
     bool threadRunning;
+
+    SystemNetwork network;
 };
 
 #endif

@@ -18,15 +18,17 @@
 
 #include "vtime.h"
 #include "cube_cpu.h"
-#include "cube_radio.h"
-#include "cube_network.h"
 
 namespace Cube {
 
 class Radio {
  public:
-    // Network backing this radio
-    NetworkClient network;
+    static const uint8_t PAYLOAD_MAX = 32;
+
+    struct Packet {
+        uint8_t len;
+        uint8_t payload[PAYLOAD_MAX];
+    };
 
     void init(CPU::em8051 *_cpu) {
         memset(debug, 0, DEBUG_REG_SIZE);
@@ -123,20 +125,83 @@ class Radio {
     }
     
     int tick() {
-        /*
-         * Simulate the rate at which we can actually receive RX packets
-         * over the air, by giving ourselves a receive opportunity at
-         * fixed clock cycle intervals.
-         */
-
-        if (ce && --rx_timer <= 0) {
-            rx_timer = VirtualTime::usec(RX_INTERVAL_US);
-            rxOpportunity();
-        }
-
         uint8_t irq = irq_edge;
         irq_edge = 0;
         return irq;
+    }
+
+    uint64_t getPackedRXAddr() {
+        /*
+         * Encode the nRF24L01 packet address plus channel in a
+         * 64-bit address word.
+         */
+
+        uint64_t addr = 0;
+        int i;
+
+        for (i = 4; i >= 0; i--)
+            addr = (addr << 8) | regRef(REG_RX_ADDR_P0, i);
+
+        return addr | ((uint64_t)regs[REG_RF_CH] << 56);
+    }
+
+    void handlePacket(Packet &incoming, Packet &ack) {
+        /*
+         * Handle an incoming radio packet with ACK. In our simulation
+         * (which isn't at all far from reality, actually) the ACK
+         * packet is sent from our buffer at the exact same instant
+         * that the next TX packet is received.
+         *
+         * We only get this far if the caller has decided that the
+         * packet successfully reached us as a destination. So, we
+         * unconditionally return an ACK.
+         */
+
+        Packet *rx_head = &rx_fifo[rx_fifo_head];
+        Packet *tx_tail = &tx_fifo[tx_fifo_tail];
+
+        if (cpu->traceFile) {
+            fprintf(cpu->traceFile, "RADIO: rx [%2d] ", incoming.len);
+            for (int i = 0; i < incoming.len; i++)
+                fprintf(cpu->traceFile, "%02x", incoming.payload[i]);
+            fprintf(cpu->traceFile, " (rxc=%d txc=%d)\n",
+                    rx_fifo_count, tx_fifo_count);
+        }
+
+        if (rx_fifo_count < FIFO_SIZE) {
+            *rx_head = incoming;
+            rx_fifo_head = (rx_fifo_head + 1) % FIFO_SIZE;
+            rx_fifo_count++;
+            regs[REG_STATUS] |= STATUS_RX_DR;
+
+            // Statistics for the debugger
+            rx_count++;
+            byte_count += incoming.len;
+
+            if (tx_fifo_count) {
+                // ACK with payload
+
+                if (cpu->traceFile) {
+                    fprintf(cpu->traceFile, "RADIO: ack [%2d] ", tx_tail->len);
+                    for (int i = 0; i < tx_tail->len; i++)
+                        fprintf(cpu->traceFile, "%02x", tx_tail->payload[i]);
+                    fprintf(cpu->traceFile, "\n");
+                }
+
+                byte_count += tx_tail->len;
+                ack = *tx_tail;
+                tx_fifo_tail = (tx_fifo_tail + 1) % FIFO_SIZE;
+                tx_fifo_count--;
+                regs[REG_STATUS] |= STATUS_TX_DS;
+
+            } else {
+                // ACK without payload (empty TX fifo)
+                ack.len = 0;
+            }
+        } else
+            cpu->except(cpu, CPU::EXCEPTION_RADIO_XRUN);
+
+        updateStatus();
     }
 
  private:
@@ -166,64 +231,6 @@ class Radio {
         regs[REG_RX_PW_P0] = rx_fifo[rx_fifo_tail].len;
 
         updateIRQ();
-    }
-
-    void rxOpportunity() {
-        struct radio_packet *rx_head = &rx_fifo[rx_fifo_head];
-        struct radio_packet *tx_tail = &tx_fifo[tx_fifo_tail];
-        uint64_t src_addr;
-        int len;
-        uint8_t payload[256];    
-
-        /* Network receive opportunity */
-        network.setAddr(packAddr(REG_RX_ADDR_P0));
-        len = network.rx(&src_addr, payload);
-        if (len < 0 || len > (int) sizeof rx_head->payload)
-            return;
-
-        if (cpu->traceFile) {
-            fprintf(cpu->traceFile, "RADIO: rx [%2d] ", len);
-            for (int i = 0; i < len; i++)
-                fprintf(cpu->traceFile, "%02x", payload[i]);
-            fprintf(cpu->traceFile, " (rxc=%d txc=%d)\n",
-                    rx_fifo_count, tx_fifo_count);
-        }
-
-        if (rx_fifo_count < FIFO_SIZE) {
-            rx_head->len = len;
-            memcpy(rx_head->payload, payload, len);
-
-            rx_fifo_head = (rx_fifo_head + 1) % FIFO_SIZE;
-            rx_fifo_count++;
-            regs[REG_STATUS] |= STATUS_RX_DR;
-
-            // Statistics for the debugger
-            rx_count++;
-            byte_count += len;
-
-            if (tx_fifo_count) {
-                // ACK with payload
-
-                if (cpu->traceFile) {
-                    fprintf(cpu->traceFile, "RADIO: ack [%2d] ", tx_tail->len);
-                    for (int i = 0; i < tx_tail->len; i++)
-                        fprintf(cpu->traceFile, "%02x", tx_tail->payload[i]);
-                    fprintf(cpu->traceFile, "\n");
-                }
-
-                byte_count += tx_tail->len;
-                network.tx(src_addr, tx_tail->payload, tx_tail->len);
-                tx_fifo_tail = (tx_fifo_tail + 1) % FIFO_SIZE;
-                tx_fifo_count--;
-                regs[REG_STATUS] |= STATUS_TX_DS;
-            } else {
-                // ACK without payload (empty TX fifo)
-                network.tx(src_addr, NULL, 0);
-            }
-        } else
-            cpu->except(cpu, CPU::EXCEPTION_RADIO_XRUN);
-
-        updateStatus();
     }
     
     uint8_t spiCmdData(uint8_t cmd, unsigned index, uint8_t mosi) {
@@ -333,23 +340,6 @@ class Radio {
         return regs[reg];
     }
 
-    uint64_t packAddr(uint8_t reg) {
-        /*
-         * Encode the nRF24L01 packet address plus channel in the
-         * 64-bit address word used by our network message hub.
-         */
-
-        uint64_t addr = 0;
-        int i;
-
-        for (i = 4; i >= 0; i--)
-            addr = (addr << 8) | regRef(reg, i);
-
-        return addr | ((uint64_t)regs[REG_RF_CH] << 56);
-    }
-
-    static const unsigned RX_INTERVAL_US = 440;
-
     /* SPI Commands */
     static const uint8_t CMD_R_REGISTER          = 0x00;
     static const uint8_t CMD_W_REGISTER          = 0x20;
@@ -406,14 +396,7 @@ class Radio {
     static const uint8_t FIFO_TX_REUSE           = 0x40;
 
     static const uint8_t FIFO_SIZE   = 3;
-    static const uint8_t PAYLOAD_MAX = 32;
     
-    struct radio_packet {
-        uint8_t len;
-        uint8_t payload[PAYLOAD_MAX];
-    };
-
-    int rx_timer;
     uint32_t byte_count;
     uint32_t rx_count;
     uint8_t irq_state;
@@ -443,8 +426,8 @@ class Radio {
         };
     };
 
-    radio_packet rx_fifo[FIFO_SIZE];
-    radio_packet tx_fifo[FIFO_SIZE];
+    Packet rx_fifo[FIFO_SIZE];
+    Packet tx_fifo[FIFO_SIZE];
 
     CPU::em8051 *cpu; // Only for exception reporting!
 };

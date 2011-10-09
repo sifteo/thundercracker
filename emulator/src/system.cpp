@@ -14,8 +14,7 @@ bool System::init() {
     for (unsigned i = 0; i < opt_numCubes; i++) {
         if (!cubes[i].init(&time,
                            opt_cubeFirmware,
-                           i ? NULL : opt_cube0Flash,
-                           opt_netHost, opt_netPort))
+                           i ? NULL : opt_cube0Flash))
             return false;
 
         /*
@@ -41,6 +40,8 @@ bool System::init() {
             return false;
         }
     }
+
+    network.init();
     
     return true;
 }
@@ -51,6 +52,8 @@ void System::start() {
 }
 
 void System::exit() {
+    network.exit();
+
     threadRunning = false;
     SDL_WaitThread(thread, NULL);
 
@@ -90,7 +93,7 @@ int System::threadFn(void *param)
                 tick0 |= self->cubes[0].tick();
                 for (unsigned i = 1; i < nCubes; i++)
                     self->cubes[i].tick();
-                self->time.tick();
+                self->tick();
             }
 
             if (tick0 && Cube::Debug::updateUI()) {
@@ -102,7 +105,7 @@ int System::threadFn(void *param)
             while (batch--) {
                 for (unsigned i = 0; i < nCubes; i++)
                     self->cubes[i].tick();
-                self->time.tick();
+                self->tick();
             }
         }
     }
@@ -111,4 +114,11 @@ int System::threadFn(void *param)
         Cube::Debug::exit();
 
     return 0;
+}
+
+void System::tick()
+{
+    // Everything but the cubes
+    time.tick();
+    network.tick(*this);
 }

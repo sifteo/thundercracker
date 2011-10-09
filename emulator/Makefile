@@ -2,21 +2,21 @@
 BIN = tc-siftulator
 
 OBJS = \
-	src/frontend.o \
-	src/frontend_cube.o \
-	src/main.o \
-	src/system.o \
-	src/cube_cpu_core.o \
-	src/cube_cpu_disasm.o \
-	src/cube_cpu_irq.o \
-	src/cube_cpu_opcodes.o \
-	src/cube_debug_mainview.o \
-	src/cube_debug_memeditor.o \
-	src/cube_debug_popups.o \
-	src/cube_debug.o \
-	src/cube_flash_model.o \
-	src/cube_hardware.o \
-	src/cube_network.o \
+        src/frontend.o \
+        src/frontend_cube.o \
+        src/main.o \
+        src/system.o \
+        src/system_network.o \
+        src/cube_cpu_core.o \
+        src/cube_cpu_disasm.o \
+        src/cube_cpu_irq.o \
+        src/cube_cpu_opcodes.o \
+        src/cube_debug_mainview.o \
+        src/cube_debug_memeditor.o \
+        src/cube_debug_popups.o \
+        src/cube_debug.o \
+        src/cube_flash_model.o \
+        src/cube_hardware.o \
 
 # Box2D physics library
 OBJS += \
@@ -81,14 +81,14 @@ endif
 ifeq ($(OS),Darwin)
         LDFLAGS += -framework OpenGL
 else
-	LDFLAGS += -lGL
+        LDFLAGS += -lGL
 endif
 
 # Curses
 ifeq ($(OS),windows32)
-	LDFLAGS += ../../deps/win32/pdcurses/pdcurses.lib -lws2_32
+        LDFLAGS += ../../deps/win32/pdcurses/pdcurses.lib -lws2_32
 else
-	LDFLAGS += -lncurses
+        LDFLAGS += -lncurses
 endif
 
 CFLAGS += -O3 -g -Werror -Wall -Isrc
@@ -110,3 +110,4 @@ $(BIN): $(OBJS)
 
 clean:
 	rm -f $(BIN) $(OBJS)
+

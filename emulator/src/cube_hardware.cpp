@@ -53,8 +53,7 @@ namespace Cube {
 
 
 bool Hardware::init(VirtualTime *masterTimer,
-                    const char *firmwareFile, const char *flashFile,
-                    const char *netHost, const char *netPort)
+                    const char *firmwareFile, const char *flashFile)
 {
     time = masterTimer;
 
@@ -85,7 +84,6 @@ bool Hardware::init(VirtualTime *masterTimer,
  
     if (!flash.init(flashFile))
         return false;    
-    spi.radio.network.init(netHost, netPort);
     spi.radio.init(&cpu);
     spi.init(&cpu);
     adc.init();
@@ -98,7 +96,6 @@ bool Hardware::init(VirtualTime *masterTimer,
 void Hardware::exit()
 {
     flash.exit();
-    spi.radio.network.exit();
 }
 
 void Hardware::graphicsTick()
