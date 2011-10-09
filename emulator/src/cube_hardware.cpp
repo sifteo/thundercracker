@@ -177,6 +177,8 @@ void Hardware::graphicsTick()
 
 void Hardware::hardwareTick()
 {
+    uint8_t intexp = cpu.mSFR[REG_INTEXP];
+
     /*
      * Update the LCD Tearing Effect line
      */
@@ -199,7 +201,34 @@ void Hardware::hardwareTick()
         cpu.mSFR[REG_IRCON] |= IRCON_RF;
 
     // I2C can be routed to iex3 using INTEXP
-    uint8_t nextIEX3 = i2c.tick(&cpu) && (cpu.mSFR[REG_INTEXP] & 0x04);    
+    uint8_t nextIEX3 = i2c.tick(&cpu) && (intexp & 0x04);    
+
+    // Neighbor sensors generate an IRQ indirectly via GPINT2
+    neighbors.tick(cpu.mSFR);
+
+    /*
+     * External interrupts: GPIOs. Only one pin can be selected
+     * for use as an Interrupt From Pin (IFP) source at a time.
+     */
+
+    uint8_t nextIFP;
+    switch (intexp & 0x38) {
+    case 0x08:  nextIFP = cpu.mSFR[REG_P1] & (1 << 2);  break;   // GPINT0
+    case 0x10:  nextIFP = cpu.mSFR[REG_P1] & (1 << 3);  break;   // GPINT1
+    case 0x20:  nextIFP = cpu.mSFR[REG_P1] & (1 << 4);  break;   // GPINT2
+    default:    nextIFP = 0;
+    };
+
+    if (cpu.mSFR[REG_TCON] & TCONMASK_IT0) {
+        // Falling edge
+        if (!nextIFP && ifp)
+            cpu.mSFR[REG_TCON] |= TCONMASK_IE0;
+    } else {
+        // Low level
+        if (!nextIFP)
+            cpu.mSFR[REG_TCON] |= TCONMASK_IE0;
+    }
+    ifp = nextIFP;
 
     /*
      * External interrupts: iex3

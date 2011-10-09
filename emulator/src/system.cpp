@@ -18,6 +18,11 @@ bool System::init() {
             return false;
 
         /*
+         * Link the neighbor sensors into a network
+         */
+        cubes[i].neighbors.attachCubes(cubes);
+
+        /*
          * We cheat a little, for the sake of debugging ease, and give
          * each cube's radio a different hardwired default address. The
          * cube firmware is free to override this just as it normally

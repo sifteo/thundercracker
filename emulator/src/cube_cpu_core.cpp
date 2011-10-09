@@ -285,7 +285,9 @@ static void traceExecution(em8051 *mCPU)
     em8051_decode(mCPU, mCPU->mPC, assembly);
 
     fprintf(mCPU->traceFile,
-            "%10llu  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] DP=[%d %04x %04x] DBG=%02x\n",
+            "%10llu  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] "
+            "DP=[%d %04x %04x] P=[%02x.%02x %02x.%02x %02x.%02x %02x.%02x] DBG=%02x\n",
+
             (long long unsigned) mCPU->profilerTotal,
             mCPU->mPC, assembly,
             mCPU->mSFR[REG_ACC],
@@ -301,6 +303,14 @@ static void traceExecution(em8051 *mCPU)
             mCPU->mSFR[REG_DPS] & 1,
             (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
             (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
+            mCPU->mSFR[REG_P0],
+            mCPU->mSFR[REG_P0DIR],
+            mCPU->mSFR[REG_P1],
+            mCPU->mSFR[REG_P1DIR],
+            mCPU->mSFR[REG_P2],
+            mCPU->mSFR[REG_P2DIR],
+            mCPU->mSFR[REG_P3],
+            mCPU->mSFR[REG_P3DIR],
             mCPU->mSFR[REG_DEBUG]);
 }
 

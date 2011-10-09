@@ -17,6 +17,7 @@ OBJS = \
         src/cube_debug.o \
         src/cube_flash_model.o \
         src/cube_hardware.o \
+	src/cube_neighbors.o \
 
 # Box2D physics library
 OBJS += \
