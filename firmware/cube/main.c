@@ -21,8 +21,8 @@ void main(void)
 {
     gpio_init();
     sensors_init();
-    radio_init();
     flash_init();
+    radio_init();       // Put radio_init() last, for minimal time between RX_FLUSH and sti()
     sti();
 
     demo();  // XXX

@@ -75,6 +75,8 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a) {
     // XXX: Pick a base address too!
     ac->progress = 0;
 
+    DEBUG_LOG(("FLASH[%d]: Beginning asset download, group %p\n", id(), a));
+
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
     Atomic::And(flashResetSent, ~bit());
     Atomic::Or(flashResetWait, bit());
@@ -116,9 +118,20 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
          * valid flash ACK from this cube.
          */
 
-        if (!(flashResetSent & bit()) && codec.flashReset(tx.packet)) {
-            // Remember that we're waiting for a reset ACK
+        if (flashResetSent & bit()) {
+            // Already sent the reset. Has it timed out?
+
+            if (SysTime::ticks() > flashDeadline) {
+                DEBUG_LOG(("FLASH[%d]: Reset timeout\n", id()));
+                Atomic::ClearLZ(flashResetSent, id());
+            }
+
+        } else if (codec.flashReset(tx.packet)) {
+            // Okay, we sent a reset. Remember to wait for the ACK.
+
+            DEBUG_LOG(("FLASH[%d]: Sending reset token\n", id()));
             Atomic::SetLZ(flashResetSent, id());
+            flashDeadline = SysTime::ticks() + SysTime::msTicks(RTT_DEADLINE_MS);
         }
 
     } else {
