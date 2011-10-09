@@ -143,9 +143,6 @@ void Frontend::run()
             }
         }
 
-        if (sys->time.isPaused())
-            SDL_Delay(50);
-        
         if (!(frameCount % FRAME_HZ_DIVISOR)) {
             for (unsigned i = 0; i < sys->opt_numCubes; i++)
                 sys->cubes[i].lcd.pulseTE();
