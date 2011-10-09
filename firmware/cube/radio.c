@@ -691,11 +691,11 @@ rx_complete_0:
         setb    _RF_CSN                                         ; End SPI transaction
 
         ; We may have had multiple packets queued. Typically we can handle incoming
-        ; packets at line rate, but if there's a particularly long VRAM write that
-        ; still compresses into one packet, it could take us longer. We don't have
+        ; packets at line rate, but if there is a particularly long VRAM write that
+        ; still compresses into one packet, it could take us longer. We do not have
         ; to worry about flow control here, since the nRF ShockBurst protocol handles
         ; that implicitly via retries. But we DO need to account for the fact that we
-        ; may have fewer total IRQs than we have packets, and we need to 'catch up'
+        ; may have fewer total IRQs than we have packets, and we need to "catch up"
         ; after a long packet comes in.
         ;
         ; Luckily, handling this is simple. We already know the STATUS register
@@ -706,7 +706,7 @@ rx_complete_0:
         ; Check this with as little overhead as we can manage.
 
         mov     a, R_TMP
-        orl     a, #0xF1        ; Set all bits that don't interest us now
+        orl     a, #0xF1        ; Set all bits that we have no interest in
         inc     a               ; Increment. If that was really 111, we just overflowed
         jz      rx_ack
         ljmp    rx_begin_packet
