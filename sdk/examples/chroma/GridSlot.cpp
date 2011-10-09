@@ -19,7 +19,8 @@ const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 
 GridSlot::GridSlot() : m_state( STATE_LIVING )
 {
-	m_color = rand()%NUM_COLORS;
+	static unsigned int seed;
+	m_color = rand_r(&seed)%NUM_COLORS;
 	m_value = 0;
 }
 
