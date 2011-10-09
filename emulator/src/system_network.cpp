@@ -57,6 +57,9 @@ void SystemNetwork::init()
 
     listenFD = socket(AF_INET, SOCK_STREAM, 0);
 
+    arg = 1;
+    setsockopt(listenFD, SOL_SOCKET, SO_REUSEADDR, &arg, sizeof arg);
+
     if (bind(listenFD, (struct sockaddr *)&addr, sizeof addr) < 0) {
         fprintf(stderr, "Error: Can't bind to simulator port!\n");
     }
@@ -71,9 +74,6 @@ void SystemNetwork::init()
 #else
     fcntl(listenFD, F_SETFL, O_NONBLOCK | fcntl(listenFD, F_GETFL));
 #endif
-
-    arg = 1;
-    setsockopt(listenFD, SOL_SOCKET, SO_REUSEADDR, &arg, sizeof arg);
 
     if (listen(listenFD, 1) < 0) {
         fprintf(stderr, "Error: Can't listen on simulator socket!\n");
