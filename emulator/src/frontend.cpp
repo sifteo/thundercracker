@@ -448,7 +448,7 @@ void Frontend::draw()
 }
 
 float Frontend::zoomedViewExtent() {
-    if (sys->opt_numCubes > 2) {
+    if (sys->opt_numCubes > 1) {
         // Zoom in one one cube
         return FrontendCube::SIZE * 1.1;
     } else {
