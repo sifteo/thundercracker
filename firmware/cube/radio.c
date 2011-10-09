@@ -208,6 +208,8 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK)
         mov     _DPL1, _vram_dptr
         mov     _DPH1, _vram_dptr+1
 
+rx_begin_packet:
+
         ;--------------------------------------------------------------------
         ; State machine reset
         ;--------------------------------------------------------------------
@@ -254,6 +256,7 @@ no_state_reset:
 
         rl      a                               ; nybbles = 2 * length
         mov     R_NYBBLE_COUNT, a
+
         add     a, #(0xFF - (2 * RF_PAYLOAD_MAX))
         jnc     no_rx_flush                     ; Jump if byte length <= RF_PAYLOAD_MAX
 
@@ -644,8 +647,6 @@ rx_flash:
         jz      rx_flash_reset                  ;    Zero bytes, do a flash reset
         mov     R_NYBBLE_COUNT, a               ;    Otherwise, this is the new loop iterator   
 
-        SPI_WAIT
-
 rx_flash_loop:
         mov     a, _flash_fifo_head             ; 2  Load the flash write pointer
         add     a, #_flash_fifo                 ; 2  Address relative to flash_fifo[]
@@ -683,16 +684,38 @@ rx_complete_0:
         clr     _RF_CSN                                         ; Begin SPI transaction
         mov     _SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_STATUS)  ; Start writing to STATUS
         mov     _SPIRDAT, #RF_STATUS_RX_DR                      ; Clear interrupt flag
-        SPI_WAIT                                                ; RX dummy byte 0
-        mov     a, _SPIRDAT
+        SPI_WAIT                                                ; RX STATUS byte
+        mov     R_TMP, _SPIRDAT
         SPI_WAIT                                                ; RX dummy byte 1
         mov     a, _SPIRDAT
         setb    _RF_CSN                                         ; End SPI transaction
+
+        ; We may have had multiple packets queued. Typically we can handle incoming
+        ; packets at line rate, but if there's a particularly long VRAM write that
+        ; still compresses into one packet, it could take us longer. We don't have
+        ; to worry about flow control here, since the nRF ShockBurst protocol handles
+        ; that implicitly via retries. But we DO need to account for the fact that we
+        ; may have fewer total IRQs than we have packets, and we need to 'catch up'
+        ; after a long packet comes in.
+        ;
+        ; Luckily, handling this is simple. We already know the STATUS register
+        ; as of the moment we acknowledged this IRQ. If a packet is still ready,
+        ; go back to the top of the IRQ handler and do this all again.
+        ;
+        ; The RX FIFO status is in bits 3:1. '111' means the FIFO is empty.
+        ; Check this with as little overhead as we can manage.
+
+        mov     a, R_TMP
+        orl     a, #0xF1        ; Set all bits that don't interest us now
+        inc     a               ; Increment. If that was really 111, we just overflowed
+        jz      rx_ack
+        ljmp    rx_begin_packet
 
         ;--------------------------------------------------------------------
         ; ACK packet write
         ;--------------------------------------------------------------------
 
+rx_ack:
         mov     a, _ack_len
         jz      no_ack                                  ; Skip the ACK entirely if empty
         mov     _ack_len, #RF_ACK_LEN_EMPTY
