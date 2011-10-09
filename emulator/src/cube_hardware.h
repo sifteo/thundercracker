@@ -89,9 +89,10 @@ class Hardware {
               const char *netHost, const char *netPort);
     void exit();
 
-    void tick() {
-        CPU::em8051_tick(&cpu);
+    bool tick() {
+        bool cpuTicked = CPU::em8051_tick(&cpu);
         hardwareTick();
+        return cpuTicked;
     }
 
  private:

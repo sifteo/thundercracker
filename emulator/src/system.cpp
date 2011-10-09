@@ -19,7 +19,12 @@ bool System::init() {
             return false;
     }
 
-    if (opt_cube0Trace) {
+    if (opt_cube0Profile && opt_numCubes) {
+        cubes[0].cpu.mProfileData = (Cube::CPU::profile_data *)
+            calloc(CODE_SIZE, sizeof cubes[0].cpu.mProfileData[0]);
+    }
+
+    if (opt_cube0Trace && opt_numCubes) {
         cubes[0].cpu.traceFile = fopen(opt_cube0Trace, "w");
         if (!cubes[0].cpu.traceFile) {
             perror("Error opening trace file");
@@ -68,18 +73,28 @@ int System::threadFn(void *param)
     while (self->threadRunning) {
         unsigned batch = self->time.timestepTicks();
 
-        while (batch--) {
-            for (unsigned i = 0; i < nCubes; i++)
-                self->cubes[i].tick();
+        if (debug) {
+            bool tick0 = false;
 
-            self->time.tick();
+            while (batch--) {
+                tick0 |= self->cubes[0].tick();
+                for (unsigned i = 1; i < nCubes; i++)
+                    self->cubes[i].tick();
+                self->time.tick();
+            }
 
-            if (debug)
-                Cube::Debug::recordHistory();
+            if (tick0 && Cube::Debug::updateUI()) {
+                // Debugger requested that we quit
+                self->threadRunning = false;
+            }
+
+        } else {
+            while (batch--) {
+                for (unsigned i = 0; i < nCubes; i++)
+                    self->cubes[i].tick();
+                self->time.tick();
+            }
         }
-
-        if (debug)
-            Cube::Debug::updateUI();
     }
 
     if (debug)

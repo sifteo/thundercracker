@@ -94,10 +94,17 @@ void Frontend::exit()
 
 void Frontend::run()
 {
-    if (!onResize(800, 600))
-        return;
+    if (sys->opt_numCubes > 1) {
+        // 2 or more cubes: Large window
+        if (!onResize(800, 600))
+            return;
+    } else {    
+        // Zero or one cube: Small window
+        if (!onResize(300, 300))
+            return;
+    }
 
-    while (1) {
+    while (sys->isRunning()) {
         SDL_Event event;
     
         // Drain the GUI event queue
@@ -432,7 +439,13 @@ void Frontend::draw()
 }
 
 float Frontend::zoomedViewExtent() {
-    return FrontendCube::SIZE * 1.1;
+    if (sys->opt_numCubes > 2) {
+        // Zoom in one one cube
+        return FrontendCube::SIZE * 1.1;
+    } else {
+        // High zoom on our one and only cube
+        return FrontendCube::SIZE * 0.2;
+    }
 }
 
 float Frontend::normalViewExtent() {

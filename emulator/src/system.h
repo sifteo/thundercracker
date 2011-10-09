@@ -51,6 +51,10 @@ class System {
     void start();
     void exit();
 
+    bool isRunning() {
+        return threadRunning;
+    }
+
  private:
     static int threadFn(void *param);
 

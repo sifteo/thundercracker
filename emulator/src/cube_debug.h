@@ -84,7 +84,7 @@ extern Cube::Hardware *cube;
 void init(Cube::Hardware *cube);
 void exit();
 void writeProfile(CPU::em8051 *aCPU, const char *filename);
-void updateUI();
+bool updateUI();
 void recordHistory();
 void refreshView();
 void setSpeed(int speed, int runmode);

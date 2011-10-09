@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cube_debug.h"
 #include "cube_cpu.h"
 
 namespace Cube {
@@ -332,18 +333,27 @@ int em8051_tick(em8051 *aCPU)
         ticked = 1;
 
         /*
+         * Update debugger history
+         */
+
+        if (Cube::Debug::cube && &Cube::Debug::cube->cpu == aCPU)
+            Cube::Debug::recordHistory();
+
+        /*
          * Update profiler stats for this byte
          */
 
-        pd = &aCPU->mProfilerMem[pc];
-        aCPU->profilerTotal += aCPU->mTickDelay;
+        if (aCPU->mProfileData) {
+            pd = &aCPU->mProfileData[pc];
+            aCPU->profilerTotal += aCPU->mTickDelay;
 
-        pd->total_cycles += aCPU->mTickDelay;
-        if (pd->loop_prev) {
-            pd->loop_cycles += aCPU->profilerTotal - pd->loop_prev;
-            pd->loop_hits++;
+            pd->total_cycles += aCPU->mTickDelay;
+            if (pd->loop_prev) {
+                pd->loop_cycles += aCPU->profilerTotal - pd->loop_prev;
+                pd->loop_hits++;
+            }
+            pd->loop_prev = aCPU->profilerTotal;
         }
-        pd->loop_prev = aCPU->profilerTotal;
 
         // update parity bit
         v = aCPU->mSFR[REG_ACC];

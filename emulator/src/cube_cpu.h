@@ -110,9 +110,9 @@ struct em8051
     } irql[NUM_IRQ_LEVELS];
 
     // Profiler state
-    uint64_t profilerTotal;
     FILE *traceFile;
-    struct profile_data mProfilerMem[CODE_SIZE];
+    uint64_t profilerTotal;
+    struct profile_data *mProfileData;
 };
 
 // set the emulator into reset state. Must be called before tick(), as

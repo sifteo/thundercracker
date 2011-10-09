@@ -44,7 +44,6 @@ class VirtualTime {
     
     void init() {
         clocks = 0;
-        singleStep = false;
         run();
     }
         
@@ -68,25 +67,17 @@ class VirtualTime {
         setTargetRate(0);
     }
 
-    void takeStep() {
-        singleStep = true;
-    }
-
-    void finishStep() {
-        singleStep = false;
-    }
-
     bool isPaused() {
         return targetRate == 0;
     }
 
     unsigned timestepTicks() {
-        return singleStep ? 1 : (TIMESTEP * targetRate / 1000);
+        unsigned t = TIMESTEP * targetRate / 1000;
+        return t ? t : 1;
     }
 
 private:
     unsigned targetRate;
-    bool singleStep;
 };
 
 #endif

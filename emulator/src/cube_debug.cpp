@@ -215,105 +215,119 @@ void init(Cube::Hardware *_cube)
     setSpeed(speed, runmode);
 }
 
-void updateUI()
+bool updateUI()
 {
     CPU::em8051 *aCPU = &cube->cpu;
-    int ch = getch();
+    bool step = false;
 
-    if (LINES != oldrows || COLS != oldcols)
-        refreshView();
+    while (!step) {
+        int ch = getch();
 
-    switch (ch) {
+        if (LINES != oldrows || COLS != oldcols)
+            refreshView();
 
-    case KEY_F(1):
-        change_view(aCPU, 0);
-        break;
-    case KEY_F(2):
-        change_view(aCPU, 1);
-        break;
-    case 'v':
-        change_view(aCPU, (view + 1) % NUM_VIEWS);
-        break;
-    case 'k':
-        if (aCPU->mBreakpoint) {
-            aCPU->mBreakpoint = 0;
-            emu_popup(aCPU, "Breakpoint", "Breakpoint cleared.");
-        } else {
-            aCPU->mBreakpoint = emu_readvalue(aCPU, "Set Breakpoint", aCPU->mPC, 4);
-        }
-        break;
-    case 'g':
-        aCPU->mPC = emu_readvalue(aCPU, "Set Program Counter", aCPU->mPC, 4);
-        break;
-    case 'h':
-        emu_help(aCPU);
-        break;
-    case 'l':
-        emu_load(aCPU);
-        break;
-    case ' ':
-        runmode = 0;
-        setSpeed(speed, runmode);
-        cube->time->takeStep();
-        break;
-    case 'r':
-        if (runmode) {
+        if (runmode != 0)
+            step = true;
+
+        switch (ch) {
+            
+        case 'q':
+        case 'Q':
+            // Request quit
+            return true;
+
+        case KEY_F(1):
+            change_view(aCPU, 0);
+            break;
+        case KEY_F(2):
+            change_view(aCPU, 1);
+            break;
+        case 'v':
+            change_view(aCPU, (view + 1) % NUM_VIEWS);
+            break;
+        case 'k':
+            if (aCPU->mBreakpoint) {
+                aCPU->mBreakpoint = 0;
+                emu_popup(aCPU, "Breakpoint", "Breakpoint cleared.");
+            } else {
+                aCPU->mBreakpoint = emu_readvalue(aCPU, "Set Breakpoint", aCPU->mPC, 4);
+            }
+            break;
+        case 'g':
+            aCPU->mPC = emu_readvalue(aCPU, "Set Program Counter", aCPU->mPC, 4);
+            break;
+        case 'h':
+            emu_help(aCPU);
+            break;
+        case 'l':
+            emu_load(aCPU);
+            break;
+        case ' ':
             runmode = 0;
             setSpeed(speed, runmode);
-        } else {
-            runmode = 1;
+            step = true;
+            break;
+        case 'r':
+            if (runmode) {
+                runmode = 0;
+                setSpeed(speed, runmode);
+            } else {
+                runmode = 1;
+                setSpeed(speed, runmode);
+            }
+            break;
+#ifdef __PDCURSES__
+        case PADPLUS:
+#endif
+        case '+':
+        case '=':   // + without shift :)
+            speed--;
+            if (speed < 0)
+                speed = 0;
             setSpeed(speed, runmode);
+            break;
+#ifdef __PDCURSES__
+        case PADMINUS:
+#endif
+        case '-':
+            speed++;
+            if (speed > 7)
+                speed = 7;
+            setSpeed(speed, runmode);
+            break;
+
+        case KEY_HOME:
+            emu_reset(aCPU);
+            break;
+
+        default:
+            // by default, send keys to the current view
+            switch (view) {
+            case MAIN_VIEW:
+                mainview_editor_keys(aCPU, ch);
+                break;
+            case MEMEDITOR_VIEW:
+                memeditor_editor_keys(aCPU, ch);
+                break;
+            default:
+                break;
+            }
+            break;
         }
-        break;
-#ifdef __PDCURSES__
-    case PADPLUS:
-#endif
-    case '+':
-    case '=':   // + without shift :)
-        speed--;
-        if (speed < 0)
-            speed = 0;
-        setSpeed(speed, runmode);
-        break;
-#ifdef __PDCURSES__
-    case PADMINUS:
-#endif
-    case '-':
-        speed++;
-        if (speed > 7)
-            speed = 7;
-        setSpeed(speed, runmode);
-        break;
-
-    case KEY_HOME:
-        emu_reset(aCPU);
-        break;
-
-    default:
-        // by default, send keys to the current view
+    
         switch (view) {
         case MAIN_VIEW:
-            mainview_editor_keys(aCPU, ch);
+            mainview_update(cube);
             break;
         case MEMEDITOR_VIEW:
-            memeditor_editor_keys(aCPU, ch);
+            memeditor_update(aCPU);
             break;
         default:
             break;
         }
-        break;
     }
-    
-    switch (view) {
-    case MAIN_VIEW:
-        mainview_update(cube);
-        break;
-    case MEMEDITOR_VIEW:
-        memeditor_update(aCPU);
-        break;
-    default:
-        break;
-    }
+
+    return false;
 }
 
 void exit()
@@ -323,10 +337,11 @@ void exit()
 
 void writeProfile(CPU::em8051 *aCPU, const char *filename)
 {
-    int addr;
-    CPU::profile_data *pd = aCPU->mProfilerMem;
-    FILE *f = fopen(filename, "w");
+    CPU::profile_data *pd = aCPU->mProfileData;
+    if (!pd)
+        return;
 
+    FILE *f = fopen(filename, "w");
     if (!f) {
         perror("Error opening profiler output file");
         return;
@@ -334,7 +349,7 @@ void writeProfile(CPU::em8051 *aCPU, const char *filename)
 
     fprintf(f, "total_cycles  %%_cycles  fl_idle  loop_len  loop_count    addr   disassembly\n");
 
-    for (addr = 0; addr < CODE_SIZE; addr++, pd++) {
+    for (int addr = 0; addr < CODE_SIZE; addr++, pd++) {
         if (pd->total_cycles) {
             char assembly[128];
 

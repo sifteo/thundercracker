@@ -123,9 +123,9 @@ class Flash {
                  * waiting, great. If it was during flash decoding, we're
                  * wasting time!
                  */
-                {
+                if (cpu->mProfileData) {
                     unsigned pc = cpu->mPC & (CODE_SIZE - 1);
-                    CPU::profile_data *pd = &cpu->mProfilerMem[pc];
+                    CPU::profile_data *pd = &cpu->mProfileData[pc];
                     pd->flash_idle++;
                 }
             }
