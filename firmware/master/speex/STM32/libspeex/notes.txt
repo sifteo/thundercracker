@@ -1,0 +1,4 @@
+
+The source files in STM32/libspeex appear to be patched versions of the source files in libspeex from the actual speex distro.
+
+I'm updating some of these to match the latest sources from speex git, but in some cases this is different than the speex snapshot that the STM32 app note shipped with. Double check against those in case of any craziness.

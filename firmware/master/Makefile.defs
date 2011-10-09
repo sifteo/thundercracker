@@ -7,14 +7,19 @@ RANLIB_STM32 = arm-none-eabi-ranlib
 
 UNAME := $(shell uname)
 
-SDK_DIR = $(TC_DIR)/sdk
-MASTER_DIR = $(TC_DIR)/firmware/master
-ifeq ($(UNAME), windows32)
-    STIR = $(TC_DIR)/stir/stir.exe
-else
-    STIR = $(TC_DIR)/stir/stir
+ifneq ( $(findstr MINGW32_NT, $(UNAME)) , "" )  
+      UNAME := windows32
 endif
 
+ifeq ($(UNAME), windows32)
+	BIN_EXT = .exe
+else
+	BIN_EXT = 
+endif
+
+SDK_DIR = $(TC_DIR)/sdk
+MASTER_DIR = $(TC_DIR)/firmware/master
+STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
 
 ASSETS = assets
 BINS += $(BIN_SIM) $(BIN_STM32)

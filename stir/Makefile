@@ -30,6 +30,10 @@ CDEPS = src/*.h $(FIRMWARE_INC)/*.h
 PYTHON := python
 UNAME  := $(shell uname)
 
+ifneq ( $(findstr MINGW32_NT, $(UNAME)) , "" )  
+      UNAME := windows32
+endif
+
 CFLAGS += -O3 -g -ffast-math -Werror -Wall -I$(FIRMWARE_INC)
 ifneq ($(UNAME), windows32)
     CFLAGS += -DLUA_USE_MKSTEMP

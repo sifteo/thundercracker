@@ -69,13 +69,26 @@ OBJS += \
 CDEPS = src/*.h
 
 CFLAGS += $(shell sdl-config --cflags)
-LDFLAGS += -lncurses $(shell sdl-config --libs)
+LDFLAGS += $(shell sdl-config --libs)
 
+# OS detection
 OS := $(shell uname)
+ifneq ( $(findstr MINGW32_NT, $(OS)) , "" )  
+      OS := windows32
+endif
+
+# OpenGL
 ifeq ($(OS),Darwin)
         LDFLAGS += -framework OpenGL
 else
 	LDFLAGS += -lGL
+endif
+
+# Curses
+ifeq ($(OS),windows32)
+	LDFLAGS += ../../deps/win32/pdcurses/pdcurses.lib -lws2_32
+else
+	LDFLAGS += -lncurses
 endif
 
 CFLAGS += -O3 -g -Werror -Wall -Isrc
