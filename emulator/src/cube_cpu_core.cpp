@@ -340,12 +340,17 @@ int em8051_tick(em8051 *aCPU)
             Cube::Debug::recordHistory();
 
         /*
+         * XXX: The CPU can't access VirtualTime, but the profiler and tracer
+         *      need a cycle count. This is what we currently use...
+         */
+        aCPU->profilerTotal += aCPU->mTickDelay;
+
+        /*
          * Update profiler stats for this byte
          */
 
         if (aCPU->mProfileData) {
             pd = &aCPU->mProfileData[pc];
-            aCPU->profilerTotal += aCPU->mTickDelay;
 
             pd->total_cycles += aCPU->mTickDelay;
             if (pd->loop_prev) {

@@ -64,20 +64,20 @@ void SystemNetwork::init()
         fprintf(stderr, "Error: Can't bind to simulator port!\n");
     }
 
-    /*
-     * We use blocking I/O for the client socket, but non-blocking for
-     * the listener socket.
-     */
-#ifdef _WIN32
-    arg = 1;
-    ioctlsocket(listenFD, FIONBIO, &arg);
-#else
-    fcntl(listenFD, F_SETFL, O_NONBLOCK | fcntl(listenFD, F_GETFL));
-#endif
-
+    setNonBlock(listenFD);
     if (listen(listenFD, 1) < 0) {
         fprintf(stderr, "Error: Can't listen on simulator socket!\n");
     }
+}
+
+void SystemNetwork::setNonBlock(int fd)
+{
+#ifdef _WIN32
+    unsigned long arg = 1;
+    ioctlsocket(listenFD, FIONBIO, &arg);
+#else
+    fcntl(listenFD, F_SETFL, fcntl(listenFD, F_GETFL) | O_NONBLOCK);
+#endif
 }
 
 void SystemNetwork::disconnect(int &fd)
@@ -116,25 +116,44 @@ bool SystemNetwork::rx(RXPacket &packet)
      * Try to read a response. If we have no client, or we lose a
      * client, returns false. If we do have a client, blocks until a
      * packet is available, then returns true.
+     *
+     * We want to make this blocking, but on some platforms (Mac OS,
+     * *cough*) we can't reliably make an accepted socket blocking
+     * again if the listener was nonblocking. So, select() first.
      */
+
+    static fd_set efds, rfds;
 
     if (clientFD < 0) {
         struct sockaddr_in addr;
         socklen_t addrSize = sizeof addr;
-        unsigned long arg;
         
         clientFD = accept(listenFD, (struct sockaddr *) &addr, &addrSize);
 
+        if (clientFD >= 0) {
+            unsigned long arg;
+
+            FD_ZERO(&efds);
+            FD_ZERO(&rfds);
+
+            setNonBlock(clientFD);
+
 #ifdef SO_NOSIGPIPE
-        arg = 1;
-        setsockopt(clientFD, SOL_SOCKET, SO_NOSIGPIPE, &arg, sizeof arg);
+            arg = 1;
+            setsockopt(clientFD, SOL_SOCKET, SO_NOSIGPIPE, &arg, sizeof arg);
 #endif
 
-        arg = 1;
-        setsockopt(clientFD, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
+            arg = 1;
+            setsockopt(clientFD, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
+        }
     }
 
     if (clientFD >= 0) {
+
+        FD_SET(clientFD, &rfds);
+        FD_SET(clientFD, &efds);
+        select(clientFD + 1, &rfds, NULL, &efds, NULL);
+
         int ret = read(clientFD, &packet, sizeof packet);
 
         if (ret < 0) {

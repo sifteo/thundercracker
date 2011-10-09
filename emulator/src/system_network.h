@@ -56,6 +56,7 @@ class SystemNetwork {
     bool packetIsWaiting;
     SystemNetwork::RXPacket nextPacket;
 
+    void setNonBlock(int fd);
     void tx(TXPacket &packet);
     bool rx(RXPacket &packet);
     void disconnect(int &fd);

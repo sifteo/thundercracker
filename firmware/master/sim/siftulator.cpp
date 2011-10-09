@@ -198,13 +198,15 @@ static void Siftulator_send()
     TXPacket packet;
     PacketTransmission ptx;
 
+    memset(&packet, 0, sizeof packet);
+    ptx.packet.bytes = packet.p.payload;
+
     // XXX: Okay to hardcode only because we're sending packets continuously now.
     packet.tickDelta = TICKS_PER_PACKET; 
     self.simTicks += TICKS_PER_PACKET;
 
-    memset(&packet, 0, sizeof packet);
-    ptx.packet.bytes = packet.p.payload;
     RadioManager::produce(ptx);
+
     packet.channel = ptx.dest->channel;
     packet.p.len = ptx.packet.len;
     memcpy(packet.addr, ptx.dest->id, sizeof packet.addr);
