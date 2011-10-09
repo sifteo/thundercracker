@@ -89,12 +89,19 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a) {
 bool CubeSlot::radioProduce(PacketTransmission &tx)
 {
     /*
-     * XXX: Try to connect, if we aren't connected. And use a real address.
+     * XXX: Pairing. Try to connect, if we aren't connected. And use a real address.
      *      For now I'm hardcoding the default address, since that's what
      *      the emulator will come up with.
      */
-    static const RadioAddress addr = { 0x02, { 0xe7, 0xe7, 0xe7, 0xe7, 0xe7 }};
-    tx.dest = &addr;
+
+    address.channel = 0x02;
+    address.id[0] = id();
+    address.id[1] = 0xe7;
+    address.id[2] = 0xe7;
+    address.id[3] = 0xe7;
+    address.id[4] = 0xe7;
+
+    tx.dest = &address;
     tx.packet.len = 0;
 
     // First priority: Send video buffer updates.

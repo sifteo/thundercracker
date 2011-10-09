@@ -147,6 +147,7 @@ class CubeSlot {
 
     _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
+    RadioAddress address;
 
     SysTime::Ticks paintTimestamp;      // Used only by thread
     SysTime::Ticks flashDeadline;       // Used only by ISR

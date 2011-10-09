@@ -17,6 +17,16 @@ bool System::init() {
                            i ? NULL : opt_cube0Flash,
                            opt_netHost, opt_netPort))
             return false;
+
+        /*
+         * We cheat a little, for the sake of debugging ease, and give
+         * each cube's radio a different hardwired default address. The
+         * cube firmware is free to override this just as it normally
+         * would, but this lets us get unique radio addresses for free
+         * when running firmware that doesn't have a real address
+         * assignment scheme implemented.
+         */
+        cubes[i].spi.radio.setAddressLSB(i);
     }
 
     if (opt_cube0Profile && opt_numCubes) {

@@ -59,6 +59,17 @@ class Radio {
 
     static const unsigned DEBUG_REG_SIZE = 0x80;
 
+    void setAddressLSB(uint8_t lsb) {
+        /*
+         * Override the least significant byte of this cube's TX/RX
+         * addresses.  Typically only useful for debugging. We can
+         * assign each cube a different default address, which isn't
+         * at all the case for real silicon.
+         */
+        regs[REG_RX_ADDR_P0] = lsb;
+        regs[REG_TX_ADDR] = lsb;
+    }
+
     uint8_t *getRegs() {
         return regs;
     }
