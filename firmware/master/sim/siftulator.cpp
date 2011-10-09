@@ -140,6 +140,8 @@ void Radio::open()
 
 static void Siftulator_disconnect()
 {
+    fprintf(stderr, "Warning: Siftulator disconnected\n");
+    
     if (self.fd >= 0) {
 #ifdef _WIN32
         closesocket(self.fd);
@@ -200,6 +202,7 @@ static void Siftulator_send()
     packet.tickDelta = TICKS_PER_PACKET; 
     self.simTicks += TICKS_PER_PACKET;
 
+    memset(&packet, 0, sizeof packet);
     ptx.packet.bytes = packet.p.payload;
     RadioManager::produce(ptx);
     packet.channel = ptx.dest->channel;
@@ -207,10 +210,18 @@ static void Siftulator_send()
     memcpy(packet.addr, ptx.dest->id, sizeof packet.addr);
 
     int ret = send(self.fd, &packet, sizeof packet, 0);
-    if (ret != sizeof packet && errno != EAGAIN)
-        Siftulator_disconnect();
 
-    self.ackPending = true;
+    if (ret < 0) {
+        if (errno != EAGAIN) {
+            fprintf(stderr, "Error: Siftulator write error (%d)\n", errno);
+            Siftulator_disconnect();
+        }
+    } else if (ret != sizeof packet) {
+        fprintf(stderr, "Error: Unhandled partial write to Siftulator (%d bytes)\n", ret);
+        Siftulator_disconnect();
+    } else {
+        self.ackPending = true;
+    }
 }
 
 static void Siftulator_recv()
@@ -219,18 +230,26 @@ static void Siftulator_recv()
     PacketBuffer buf;
 
     int ret = recv(self.fd, &packet, sizeof packet, 0);
-    if (ret != sizeof packet && errno != EAGAIN)
+
+    if (ret < 0) {
+        if (errno != EAGAIN) {
+            fprintf(stderr, "Error: Siftulator read error (%d)\n", errno);
+            Siftulator_disconnect();
+        }
+    } else if (ret != sizeof packet) {
+        fprintf(stderr, "Error: Siftulator packet size %d unexpected\n", ret);
         Siftulator_disconnect();
-
-    if (packet.ack) {
-        buf.len = packet.p.len;
-        buf.bytes = packet.p.payload;
-        RadioManager::acknowledge(buf);
     } else {
-        RadioManager::timeout();
-    }
+        if (packet.ack) {
+            buf.len = packet.p.len;
+            buf.bytes = packet.p.payload;
+            RadioManager::acknowledge(buf);
+        } else {
+            RadioManager::timeout();
+        }
 
-    self.ackPending = false;
+        self.ackPending = false;
+    }
 }
 
 

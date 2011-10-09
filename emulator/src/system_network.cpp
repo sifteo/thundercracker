@@ -82,6 +82,8 @@ void SystemNetwork::init()
 
 void SystemNetwork::disconnect(int &fd)
 {
+    fprintf(stderr, "NET: Client disconnected\n");
+
     if (fd >= 0) {
 #ifdef _WIN32
         closesocket(fd);
@@ -132,10 +134,24 @@ bool SystemNetwork::rx(RXPacket &packet)
         setsockopt(clientFD, IPPROTO_TCP, TCP_NODELAY, (const char *)&arg, sizeof arg);
     }
 
-    if (clientFD >= 0 && read(clientFD, &packet, sizeof packet) == sizeof packet)
-        return true;
+    if (clientFD >= 0) {
+        int ret = read(clientFD, &packet, sizeof packet);
 
-    disconnect(clientFD);
+        if (ret < 0) {
+            if (errno != EAGAIN) {
+                fprintf(stderr, "NET: Read error (%d)\n", errno);
+                disconnect(clientFD);
+            }
+        } else if (ret != sizeof packet) {
+            if (ret > 0) {
+                fprintf(stderr, "NET: Unexpected packet size, %d bytes\n", ret);
+            }
+            disconnect(clientFD);
+        } else {
+            return true;
+        }
+    }
+
     return false;
 }
 
