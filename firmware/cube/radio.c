@@ -29,6 +29,7 @@ uint8_t __near ack_len;
         __asm   ljmp    rx_complete                     __endasm; \
         __asm
 
+// Negative sampling delta. MUST wrap at 1kB (both for correctness and security)
 #pragma sdcc_hash +
 #define DPTR_DELTA(v)                                   __endasm; \
         __asm   mov     a, _DPL1                        __endasm; \
@@ -36,6 +37,7 @@ uint8_t __near ack_len;
         __asm   mov     _DPL, a                         __endasm; \
         __asm   mov     a, _DPH1                        __endasm; \
         __asm   addc    a, #((v) >> 8)                  __endasm; \
+        __asm   anl     a, #3                           __endasm; \
         __asm   mov     _DPH, a                         __endasm; \
         __asm
 
