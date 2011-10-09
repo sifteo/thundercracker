@@ -200,7 +200,7 @@ void FrontendCube::initGL()
 
     /* Save a copy of the transformation, before scaling it by our size. */
     GLfloat mat[16];
-    glGetFloatv(GL_MODELVIEW, mat);
+    glGetFloatv(GL_MODELVIEW_MATRIX, mat);
     modelMatrix.ex.x = mat[0];
     modelMatrix.ex.y = mat[1];
     modelMatrix.ex.z = mat[2];
