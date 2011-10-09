@@ -33,6 +33,9 @@
 #include "system.h"
 
 
+class FrontendCube;
+
+
 class AccelerationProbe {
  public:
     AccelerationProbe();
@@ -40,9 +43,21 @@ class AccelerationProbe {
     b2Vec3 measure(b2Body *body, float unitsToGs);
 
  private:
-    static const unsigned filterWidth = 4;
+    static const unsigned filterWidth = 8;
     unsigned head;
     b2Vec2 velocitySamples[filterWidth];
+};
+
+
+struct FixtureData {
+    enum Type {
+        T_CUBE = 0,
+        T_NEIGHBOR,
+    };
+
+    Type type;
+    FrontendCube *cube;
+    Cube::Neighbors::Side side;
 };
 
 
@@ -53,10 +68,12 @@ class FrontendCube {
 
     void animate();
     void draw();
+
     void setTiltTarget(b2Vec2 angles);
+    void updateNeighbor(bool touching, unsigned mySide,
+                        unsigned otherSide, unsigned otherCube);
 
     b2Body *body;
-    static FrontendCube *fromBody(b2Body *body);
 
     /*
      * Size of the cube, in Box2D "meters". Our rendering parameters
@@ -84,7 +101,26 @@ class FrontendCube {
      */
     static const float HEIGHT = 0.4;
 
+    /*
+     * The sensitive region for this cube's neighbor transceivers.
+     *
+     * Both relative to SIZE. These regions are modeled as circles,
+     * and whenever two circles *touch* the sensor is active. This is
+     * in contrast to the usual definition of sensor range, in which
+     * the center point of one sensor must be within the range of the
+     * other sensor. To compensate, this radius should be 1/2 the
+     * sensor's actual range.
+     */
+    static const float NEIGHBOR_CENTER = 0.9;
+    static const float NEIGHBOR_RADIUS = 0.15;
+
  private:
+    void initBody(b2World &world, float x, float y);
+    void initNeighbor(Cube::Neighbors::Side side, float x, float y);
+
+    FixtureData bodyFixtureData;
+    FixtureData neighborFixtureData[Cube::Neighbors::NUM_SIDES];
+
     static const GLchar *srcLcdVP[];
     static const GLchar *srcLcdFP[]; 
     
@@ -118,14 +154,34 @@ class Frontend {
      */
     static const unsigned FRAME_HZ_DIVISOR = 2;
 
+    class MousePicker : public b2QueryCallback {
+    public:
+        void test(b2World &world, b2Vec2 point);
+        bool ReportFixture(b2Fixture *fixture);
+        b2Vec2 mPoint;
+        FrontendCube *mCube;
+    };
+
+    class ContactListener : public b2ContactListener {
+    public:
+        ContactListener(Frontend &fe) : frontend(fe) {};
+        void BeginContact(b2Contact *contact);
+        void EndContact(b2Contact *contact);
+    private:
+        Frontend &frontend;
+        void updateSensors(b2Contact *contact);
+    };
+
     void animate();
     void draw();
+
     bool onResize(int width, int height);
     void onKeyDown(SDL_KeyboardEvent &evt);
     void onMouseDown(int button);
     void onMouseUp(int button);
 
     void newStaticBox(float x, float y, float hw, float hh);
+    unsigned cubeID(FrontendCube *cube);
 
     float zoomedViewExtent();
     float normalViewExtent();
@@ -149,12 +205,13 @@ class Frontend {
     b2World world;
 
     b2Body *mouseBody;
-    b2Body *mousePickedBody;
     b2RevoluteJoint *mouseJoint;
     bool mouseIsAligning;
     bool mouseIsPulling;
     bool mouseIsTilting;
-};
 
+    MousePicker mousePicker;
+    ContactListener contactListener;
+};
 
 #endif

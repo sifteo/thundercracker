@@ -9,32 +9,12 @@
 #include "frontend.h"
 
 
-class QueryCallback : public b2QueryCallback {
- public:
-    QueryCallback(const b2Vec2& point)
-        : mPoint(point), mFixture(NULL) {}
-
-    bool ReportFixture(b2Fixture *fixture) {
-        b2Body *body = fixture->GetBody();
-
-        if (body->GetType() == b2_dynamicBody &&
-            fixture->TestPoint(mPoint)) {
-            mFixture = fixture;
-            return false;
-        }
-        return true;
-    }
-            
-    b2Vec2 mPoint;
-    b2Fixture *mFixture;
-};
-
-
 Frontend::Frontend() 
   : world(b2Vec2(0.0f, 0.0f)),
     mouseBody(NULL),
     mouseJoint(NULL),
-    mouseIsAligning(false)
+    mouseIsAligning(false),
+    contactListener(ContactListener(*this))
 {}
 
 
@@ -71,6 +51,12 @@ void Frontend::init(System *_sys)
     newStaticBox(-extent2, 0, extent, extent2);  // X-
     newStaticBox(0, extent2, extent2, extent);   // Y+
     newStaticBox(0, -extent2, extent2, extent);  // Y-
+
+    /*
+     * Listen for collisions. This is how we update our neighbor matrix.
+     */
+
+    world.SetContactListener(&contactListener);
 }
 
 void Frontend::newStaticBox(float x, float y, float hw, float hh)
@@ -85,6 +71,11 @@ void Frontend::newStaticBox(float x, float y, float hw, float hh)
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &box;
     body->CreateFixture(&fixtureDef);
+}
+
+unsigned Frontend::cubeID(FrontendCube *cube)
+{
+    return (unsigned)(cube - &cubes[0]);
 }
 
 void Frontend::exit()
@@ -212,25 +203,13 @@ void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
 void Frontend::onMouseDown(int button)
 {
     if (!mouseBody) {
-        // Test a small bounding box at the mouse hotspot
+        mousePicker.test(world, mouseVec(normalViewExtent()));
 
-        b2AABB aabb;
-        b2Vec2 mouse = mouseVec(normalViewExtent());
-        b2Vec2 size(0.001f, 0.001f);
-        aabb.lowerBound = mouse - size;
-        aabb.upperBound = mouse + size;
-
-        QueryCallback callback(mouse);
-        world.QueryAABB(&callback, aabb);
-
-        if (callback.mFixture) {
-            // This is the body underneath the mouse
-            mousePickedBody = callback.mFixture->GetBody();
-            
+        if (mousePicker.mCube) {
             // This body represents the mouse itself now as a physical object
             b2BodyDef mouseDef;
             mouseDef.type = b2_kinematicBody;
-            mouseDef.position = mouse;
+            mouseDef.position = mousePicker.mPoint;
             mouseDef.allowSleep = false;
             mouseBody = world.CreateBody(&mouseDef);
 
@@ -259,8 +238,8 @@ void Frontend::onMouseDown(int button)
                  * multiple of 90 degrees.
                  */
                 
-                b2Vec2 anchor = mouse;
-                b2Vec2 center = mousePickedBody->GetWorldCenter();
+                b2Vec2 anchor = mousePicker.mPoint;
+                b2Vec2 center = mousePicker.mCube->body->GetWorldCenter();
                 if (b2Distance(anchor, center) < FrontendCube::SIZE * FrontendCube::CENTER_SIZE) {
                     anchor = center;
                     mouseIsAligning = true;
@@ -269,7 +248,7 @@ void Frontend::onMouseDown(int button)
                 // Glue it to the point we picked, with a revolute joint
 
                 b2RevoluteJointDef jointDef;
-                jointDef.Initialize(mousePickedBody, mouseBody, anchor);
+                jointDef.Initialize(mousePicker.mCube->body, mouseBody, anchor);
                 jointDef.motorSpeed = 0.0f;
                 jointDef.maxMotorTorque = 10.0f;
                 jointDef.enableMotor = true;
@@ -282,10 +261,9 @@ void Frontend::onMouseDown(int button)
 void Frontend::onMouseUp(int button)
 {
     if (mouseBody) {
-        FrontendCube *cube = FrontendCube::fromBody(mousePickedBody);
-        if (cube) {
+        if (mousePicker.mCube) {
             // Reset tilt
-            cube->setTiltTarget(b2Vec2(0.0f, 0.0f));
+            mousePicker.mCube->setTiltTarget(b2Vec2(0.0f, 0.0f));
         }
 
         /* Mouse state reset */
@@ -295,7 +273,7 @@ void Frontend::onMouseUp(int button)
         world.DestroyBody(mouseBody);
         mouseJoint = NULL;
         mouseBody = NULL;
-        mousePickedBody = NULL;
+        mousePicker.mCube = NULL;
         mouseIsAligning = false;
         mouseIsPulling = false;
         mouseIsTilting = false;
@@ -352,8 +330,7 @@ void Frontend::animate()
          * between the mouse's current position and its initial grab point.
          */
 
-        FrontendCube *cube = FrontendCube::fromBody(mousePickedBody);
-        if (cube) {
+        if (mousePicker.mCube) {
             const float maxTilt = 80.0f;
             b2Vec2 mouseDiff = mouseVec(normalViewExtent()) - mouseBody->GetWorldCenter();
             b2Vec2 tiltTarget = (maxTilt / FrontendCube::SIZE) * mouseDiff; 
@@ -361,8 +338,9 @@ void Frontend::animate()
             tiltTarget.y = b2Clamp(tiltTarget.y, -maxTilt, maxTilt);        
 
             // Rotate it into the cube's coordinates
-            cube->setTiltTarget(b2Mul(b2Rot(-mousePickedBody->GetAngle()),
-                                      tiltTarget));
+            b2Vec2 local = b2Mul(b2Rot(-mousePicker.mCube->body->GetAngle()), tiltTarget);
+
+            mousePicker.mCube->setTiltTarget(local);
         }
     }
         
@@ -477,4 +455,62 @@ b2Vec2 Frontend::mouseVec(float viewExtent) {
     float mouseScale = viewExtent / (float)halfWidth;
     return  b2Vec2((mouseX - halfWidth) * mouseScale,
                    (mouseY - halfHeight) * mouseScale);
+}
+
+void Frontend::MousePicker::test(b2World &world, b2Vec2 point)
+{
+    // Test overlap of a very small AABB
+    b2AABB aabb;
+    b2Vec2 size(0.001f, 0.001f);
+    aabb.lowerBound = point - size;
+    aabb.upperBound = point + size;
+
+    mPoint = point;
+    mCube = NULL;
+
+    world.QueryAABB(this, aabb);
+}
+
+bool Frontend::MousePicker::ReportFixture(b2Fixture *fixture)
+{
+    FixtureData *fdat = (FixtureData *) fixture->GetUserData();
+
+    if (fdat && fdat->type == fdat->T_CUBE && fixture->TestPoint(mPoint)) {
+        mCube = fdat->cube;
+        return false;
+    }
+
+    return true;
+}
+        
+void Frontend::ContactListener::BeginContact(b2Contact *contact)
+{
+    updateSensors(contact);
+}
+
+void Frontend::ContactListener::EndContact(b2Contact *contact)
+{
+    updateSensors(contact);
+}
+
+void Frontend::ContactListener::updateSensors(b2Contact *contact)
+{
+    FixtureData *fdatA = (FixtureData *) contact->GetFixtureA()->GetUserData();
+    FixtureData *fdatB = (FixtureData *) contact->GetFixtureB()->GetUserData();
+
+    if (fdatA && fdatB
+        && fdatA->type == fdatA->T_NEIGHBOR
+        && fdatB->type == fdatB->T_NEIGHBOR) {
+        bool touching = contact->IsTouching();
+
+        /*
+         * Update interaction between two neighbor sensors
+         */
+
+        unsigned cubeA = frontend.cubeID(fdatA->cube);
+        unsigned cubeB = frontend.cubeID(fdatB->cube);
+
+        fdatA->cube->updateNeighbor(touching, fdatA->side, fdatB->side, cubeB);
+        fdatB->cube->updateNeighbor(touching, fdatB->side, fdatA->side, cubeA);
+    }
 }

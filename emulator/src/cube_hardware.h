@@ -17,6 +17,7 @@
 #include "cube_i2c.h"
 #include "cube_lcd.h"
 #include "cube_flash.h"
+#include "cube_neighbors.h"
 #include "vtime.h"
 
 namespace Cube {
@@ -31,6 +32,7 @@ class Hardware {
     I2CBus i2c;
     ADC adc;
     Flash flash;
+    Neighbors neighbors;
     
     /*
      * XXX: Currently requires a firmware image to be useful.

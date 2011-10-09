@@ -13,14 +13,27 @@
  *  - NOR Flash (Design supports up to 16 megabits, 21-bit addressing)
  *  - LCD Controller
  *
- * We're using three 8-bit I/O ports:
+ * We have four 8-bit I/O ports:
  *
  *  P3.6     Flash OE
  *  P3.5     Flash WE
+ *  P3.4     LCD Backlight / Reset
+ *  P3.3     3.3v Enable
  *  P3.2     Latch A20-A14 from P1.7-1 on rising edge
  *  P3.1     Latch A13-A7 from P1.7-1 on rising edge
  *  P3.0     LCD DCX
+ *
  *  P2.7-0   Shared data bus, Flash + LCD
+ *
+ *  P1.7     Neighbor Out 4
+ *  P1.6     Neighbor Out 3
+ *  P1.5     Neighbor Out 2
+ *  P1.4     Neighbor In  (INT2)
+ *  P1.3     Accelerometer SDA
+ *  P1.2     Accelerometer SCL
+ *  P1.1     Neighbor Out 1
+ *  P1.0     Touch sense in (AIN8)
+ *
  *  P0.7-1   Flash A6-A0
  *  P0.0     LCD WRX
  */
@@ -39,7 +52,8 @@
 #define CTRL_FLASH_WE   (1 << 5)
 #define CTRL_FLASH_OE   (1 << 6)
 
-#define CTRL_LCD_TE     0       // XXX: TE pin not available in our hardware
+// XXX: We have support in software for TE, but the IO pin isn't wired up currently
+#define CTRL_LCD_TE     0
 
 // RFCON bits
 #define RFCON_RFCKEN    0x04
@@ -89,6 +103,7 @@ bool Hardware::init(VirtualTime *masterTimer,
     adc.init();
     i2c.init();
     lcd.init();
+    neighbors.init();
 
     return true;
 }

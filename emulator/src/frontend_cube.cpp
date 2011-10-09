@@ -56,6 +56,17 @@ void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
     tiltTarget.Set(0,0);
     tiltVector.Set(0,0);
 
+    initBody(world, x, y);
+
+    initNeighbor(Cube::Neighbors::TOP, 0, -NEIGHBOR_CENTER);
+    initNeighbor(Cube::Neighbors::BOTTOM, 0, NEIGHBOR_CENTER);
+
+    initNeighbor(Cube::Neighbors::LEFT, -NEIGHBOR_CENTER, 0);
+    initNeighbor(Cube::Neighbors::RIGHT, NEIGHBOR_CENTER, 0);
+}
+
+void FrontendCube::initBody(b2World &world, float x, float y)
+{
     /*
      * Pick our physical properties carefully: We want the cubes to
      * stop when you let go of them, but a little bit of realistic
@@ -70,17 +81,42 @@ void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
     bodyDef.linearDamping = 30.0f;
     bodyDef.angularDamping = 5.0f;
     bodyDef.position.Set(x, y);
-    bodyDef.userData = this;
     body = world.CreateBody(&bodyDef);
 
     b2PolygonShape box;
     const float boxSize = SIZE * 0.96;    // Compensate for polygon 'skin'
     box.SetAsBox(boxSize, boxSize);
     
+    bodyFixtureData.type = FixtureData::T_CUBE;
+    bodyFixtureData.cube = this;
+
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &box;
     fixtureDef.density = 1.0f;
     fixtureDef.friction = 0.8f;
+    fixtureDef.userData = &bodyFixtureData;
+    body->CreateFixture(&fixtureDef);
+}
+
+void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
+{
+    /*
+     * Neighbor sensors are implemented using Box2D sensors. These are
+     * four additional fixtures attached to the same body.
+     */
+
+    b2CircleShape circle;
+    circle.m_p.Set(x * SIZE, y * SIZE);
+    circle.m_radius = NEIGHBOR_RADIUS * SIZE;
+
+    neighborFixtureData[side].type = FixtureData::T_NEIGHBOR;
+    neighborFixtureData[side].cube = this;
+    neighborFixtureData[side].side = side;
+
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &circle;
+    fixtureDef.isSensor = true;
+    fixtureDef.userData = &neighborFixtureData[side];
     body->CreateFixture(&fixtureDef);
 }
 
@@ -266,19 +302,19 @@ void FrontendCube::initGL()
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
-FrontendCube *FrontendCube::fromBody(b2Body *body)
-{
-    /*
-     * Currently we don't have to do any type checking, since FrontendCubes
-     * are the only kind of userdata we have in our scene.
-     */
-    return static_cast<FrontendCube *>(body->GetUserData());
-}
-
 void FrontendCube::setTiltTarget(b2Vec2 angles)
 {
     /* Target tilt angles that we're animating toward, as YX Euler angles in degrees */
     tiltTarget = angles;
+}
+
+void FrontendCube::updateNeighbor(bool touching, unsigned mySide,
+                                  unsigned otherSide, unsigned otherCube)
+{
+    if (touching)
+        hw->neighbors.setContact(mySide, otherSide, otherCube);
+    else
+        hw->neighbors.clearContact(mySide, otherSide, otherCube);
 }
 
 void FrontendCube::animate()
@@ -297,7 +333,7 @@ void FrontendCube::animate()
      * down, into the table.
      */
 
-    b2Vec3 accelG = accel.measure(body, 0.1f);
+    b2Vec3 accelG = accel.measure(body, 0.06f);
 
     /*
      * Now use the same matrix we computed while rendering the last frame, and
