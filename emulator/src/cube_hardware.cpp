@@ -187,7 +187,7 @@ void Hardware::hardwareTick()
         cpu.mSFR[REG_IRCON] |= IRCON_RF;
 
     // I2C can be routed to iex3 using INTEXP
-    uint8_t iex3 = i2c.tick(&cpu) && (cpu.mSFR[REG_INTEXP] & 0x04);    
+    uint8_t nextIEX3 = i2c.tick(&cpu) && (cpu.mSFR[REG_INTEXP] & 0x04);    
 
     /*
      * External interrupts: iex3
@@ -195,14 +195,14 @@ void Hardware::hardwareTick()
 
     if (cpu.mSFR[REG_T2CON] & 0x40) {
         // Rising edge
-        if (iex3 && !iex3)
+        if (nextIEX3 && !iex3)
             cpu.mSFR[REG_IRCON] |= IRCON_SPI;
     } else {
         // Falling edge
-        if (!iex3 && iex3)
+        if (!nextIEX3 && iex3)
             cpu.mSFR[REG_IRCON] |= IRCON_SPI;
     }
-    iex3 = iex3;
+    iex3 = nextIEX3;
         
     /*
      * Other hardware with timers to update

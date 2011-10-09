@@ -53,7 +53,6 @@ void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
     hw = _hw;
     texture = 0;
 
-    lastVelocity.Set(0,0);
     tiltTarget.Set(0,0);
     tiltVector.Set(0,0);
 
@@ -220,6 +219,8 @@ void FrontendCube::initGL()
      */
 
     glUseProgram(0);
+    glDisable(GL_TEXTURE_2D);
+
     glColor3f(0.9, 0.9, 0.9);
     glInterleavedArrays(GL_V3F, 0, vaSides);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 18);
@@ -280,28 +281,16 @@ void FrontendCube::animate()
     tiltVector += tiltGain * (tiltTarget - tiltVector);
 
     /*
-     * Measure our acceleration. This uses linear velocity at our
-     * center of mass.  If we wanted to compensate for the effects of
-     * an accelerometer that isn't perfectly centered, we could pick a
-     * different point to sample the velocity at.
-     */
-
-    b2Vec2 currentVelocity = body->GetLinearVelocity();
-    b2Vec2 worldAccel = currentVelocity - lastVelocity;
-    lastVelocity = currentVelocity;
-
-    /*
-     * Now make a 3-dimensional acceleration vector which also
-     * accounts for gravity. We're now measuring it in G's, so we
-     * apply an arbitrary conversion from our simulated units (Box2D
-     * "meters" per timestep) to something realistic.
+     * Make a 3-dimensional acceleration vector which also accounts
+     * for gravity. We're now measuring it in G's, so we apply an
+     * arbitrary conversion from our simulated units (Box2D "meters"
+     * per timestep) to something realistic.
      *
      * In our coordinate system, +Z is toward the camera, and -Z is
      * down, into the table.
      */
 
-    const float accelScaling = 5.0f;
-    b2Vec3 accelG(worldAccel.x * accelScaling, worldAccel.y * accelScaling, -1.0f);
+    b2Vec3 accelG = accel.measure(body, 0.1f);
 
     /*
      * Now use the same matrix we computed while rendering the last frame, and
@@ -319,10 +308,31 @@ void FrontendCube::animate()
      */
 
     const float deviceAccelScale = 128.0 / 2.0;
+
     b2Vec2 deviceAccel(accelLocal.x * deviceAccelScale,
                        accelLocal.y * deviceAccelScale);
     int8_t accelX = b2Clamp((int)deviceAccel.x, -128, 127); 
     int8_t accelY = b2Clamp((int)deviceAccel.y, -128, 127); 
 
     hw->i2c.accel.setVector(accelX, accelY);
+}
+
+AccelerationProbe::AccelerationProbe()
+{
+    for (unsigned i = 0; i < filterWidth; i++)
+        velocitySamples[i].Set(0,0);
+    head = 0;
+}
+
+b2Vec3 AccelerationProbe::measure(b2Body *body, float unitsToGs)
+{
+    b2Vec2 prevV = velocitySamples[head];
+    b2Vec2 currentV = body->GetLinearVelocity();
+    velocitySamples[head] = currentV;
+    head = (head + 1) % filterWidth;
+
+    // Take a finite derivative over the width of our filter window
+    b2Vec2 accel2D = currentV - prevV;
+
+    return b2Vec3(accel2D.x * unitsToGs, accel2D.y * unitsToGs, -1.0f);
 }

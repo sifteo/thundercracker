@@ -31,6 +31,19 @@
 #include "system.h"
 
 
+class AccelerationProbe {
+ public:
+    AccelerationProbe();
+
+    b2Vec3 measure(b2Body *body, float unitsToGs);
+
+ private:
+    static const unsigned filterWidth = 4;
+    unsigned head;
+    b2Vec2 velocitySamples[filterWidth];
+};
+
+
 class FrontendCube {
  public:
     void init(Cube::Hardware *hw, b2World &world, float x, float y);
@@ -72,8 +85,8 @@ class FrontendCube {
  private:
     static const GLchar *srcLcdVP[];
     static const GLchar *srcLcdFP[]; 
-
-    b2Vec2 lastVelocity;
+    
+    AccelerationProbe accel;
     b2Vec2 tiltTarget;
     b2Vec2 tiltVector;
     b2Mat33 modelMatrix;

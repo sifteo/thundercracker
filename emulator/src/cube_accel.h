@@ -22,8 +22,9 @@ class I2CAccelerometer {
  public:
 
     void setVector(int8_t x, int8_t y) {
-        regs.x = x;
-        regs.y = y;
+        /* XXX: Axes swapped on our prototype hardware */
+        regs.x = y;
+        regs.y = x;
     }
 
     void i2cStart() {
