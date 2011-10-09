@@ -107,7 +107,7 @@ class Neighbors {
                      */
 
                     while (sideMask) {
-                        int otherCube = __builtin_ffs(sideMask);
+                        int otherCube = __builtin_ffs(sideMask) - 1;
                         in |= checkNeighbor(otherCube, otherSideBit);
                         sideMask ^= 1 << otherCube;
                     }
