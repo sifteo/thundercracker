@@ -58,11 +58,11 @@ void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
 
     initBody(world, x, y);
 
-    initNeighbor(Cube::Neighbors::TOP, 0, -NEIGHBOR_CENTER);
-    initNeighbor(Cube::Neighbors::BOTTOM, 0, NEIGHBOR_CENTER);
+    initNeighbor(Cube::Neighbors::TOP, 0, -1);
+    initNeighbor(Cube::Neighbors::BOTTOM, 0, 1);
 
-    initNeighbor(Cube::Neighbors::LEFT, -NEIGHBOR_CENTER, 0);
-    initNeighbor(Cube::Neighbors::RIGHT, NEIGHBOR_CENTER, 0);
+    initNeighbor(Cube::Neighbors::LEFT, -1, 0);
+    initNeighbor(Cube::Neighbors::RIGHT, 1, 0);
 }
 
 void FrontendCube::initBody(b2World &world, float x, float y)
@@ -106,7 +106,7 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
      */
 
     b2CircleShape circle;
-    circle.m_p.Set(x * SIZE, y * SIZE);
+    circle.m_p.Set(x * NEIGHBOR_CENTER * SIZE, y * NEIGHBOR_CENTER * SIZE);
     circle.m_radius = NEIGHBOR_RADIUS * SIZE;
 
     neighborFixtureData[side].type = FixtureData::T_NEIGHBOR;
