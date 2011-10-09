@@ -13,7 +13,10 @@
 
 using namespace Sifteo;
 
-#define NUM_CUBES 2
+#ifndef NUM_CUBES
+#  define NUM_CUBES 1
+#endif
+
 static Cube cubes[] = { Cube(0), Cube(1) };
 static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf), VidMode_BG0(cubes[1].vbuf) };
 
