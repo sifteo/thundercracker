@@ -661,7 +661,6 @@ rx_flash_loop:
         djnz    R_NYBBLE_COUNT, rx_flash_loop   ; 3
         sjmp    rx_complete                     ; 3
 
-
 rx_flash_reset:
         mov     _flash_fifo_head, #FLS_FIFO_RESET
 
