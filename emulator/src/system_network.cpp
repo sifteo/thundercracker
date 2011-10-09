@@ -42,6 +42,8 @@
 
 void SystemNetwork::init()
 {
+    unsigned long arg;
+
 #ifdef _WIN32
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -54,20 +56,28 @@ void SystemNetwork::init()
     addr.sin_port = htons(PORT);
 
     listenFD = socket(AF_INET, SOCK_STREAM, 0);
-    bind(listenFD, (struct sockaddr *)&addr, sizeof addr);
+
+    if (bind(listenFD, (struct sockaddr *)&addr, sizeof addr) < 0) {
+        fprintf(stderr, "Error: Can't bind to simulator port!\n");
+    }
 
     /*
      * We use blocking I/O for the client socket, but non-blocking for
      * the listener socket.
      */
 #ifdef _WIN32
-    unsigned long arg = 1;
+    arg = 1;
     ioctlsocket(listenFD, FIONBIO, &arg);
 #else
     fcntl(listenFD, F_SETFL, O_NONBLOCK | fcntl(listenFD, F_GETFL));
 #endif
 
-    listen(listenFD, 1);    
+    arg = 1;
+    setsockopt(listenFD, SOL_SOCKET, SO_REUSEADDR, &arg, sizeof arg);
+
+    if (listen(listenFD, 1) < 0) {
+        fprintf(stderr, "Error: Can't listen on simulator socket!\n");
+    }
 }
 
 void SystemNetwork::disconnect(int &fd)
