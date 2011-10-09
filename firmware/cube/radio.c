@@ -235,8 +235,29 @@ no_state_reset:
         mov     _SPIRDAT, #RF_CMD_R_RX_PL_WID   ; Read RX Payload Width command
         mov     _SPIRDAT, #0                    ; First dummy byte, keep the TX FIFO full
         SPI_WAIT                                ; Wait for Command/STATUS byte
-        mov     a, _SPIRDAT                     ; Ignore STATUS byte
-        SPI_WAIT                                ; Wait for width byte
+        mov     a, _SPIRDAT                     ; Keep the STATUS byte
+
+        ; If we notice in STATUS that there is in fact no packet pending
+        ; this was a spurious interrupt and we need to get out now. This can
+        ; happen if a packet arrived at just the wrong spot in a previous ISR,
+        ; after the IRQ flag has already been cleared by hardware but before
+        ; we've removed the packet.
+        ;
+        ; This is similar but not identical to the STATUS check at the bottom
+        ; of this loop. In that one, we still want to send an ACK, since we know
+        ; that at least one packet was processed. Here we're detecting spurious
+        ; IRQs, and we do NOT want to send an ACK if we get one.
+
+        orl     a, #0xF1                        ; Set all bits that we have no interest in
+        inc     a                               ; Increment. If that was really 111, we just overflowed
+        jnz     1$                              ; Jump if RX non-empty
+
+        SPI_WAIT                                ; End SPI transaction, then go to no_ack (end the ISR)
+        mov     a, _SPIRDAT
+        setb    _RF_CSN
+        ljmp    no_ack
+
+1$:     SPI_WAIT                                ; Wait for width byte
         mov     a, _SPIRDAT                     ; Total packet length
         setb    _RF_CSN                         ; End SPI transaction
 
@@ -685,10 +706,7 @@ rx_complete_0:
         mov     _SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_STATUS)  ; Start writing to STATUS
         mov     _SPIRDAT, #RF_STATUS_RX_DR                      ; Clear interrupt flag
         SPI_WAIT                                                ; RX STATUS byte
-        mov     R_TMP, _SPIRDAT
-        SPI_WAIT                                                ; RX dummy byte 1
         mov     a, _SPIRDAT
-        setb    _RF_CSN                                         ; End SPI transaction
 
         ; We may have had multiple packets queued. Typically we can handle incoming
         ; packets at line rate, but if there is a particularly long VRAM write that
@@ -705,11 +723,17 @@ rx_complete_0:
         ; The RX FIFO status is in bits 3:1. '111' means the FIFO is empty.
         ; Check this with as little overhead as we can manage.
 
-        mov     a, R_TMP
         orl     a, #0xF1        ; Set all bits that we have no interest in
         inc     a               ; Increment. If that was really 111, we just overflowed
-        jz      rx_ack
+        jz      1$              ; Jump if RX Empty
+
+        SPI_WAIT                ; End SPI transaction, then go to rx_begin_packet
+        mov     a, _SPIRDAT
+        setb    _RF_CSN
         ljmp    rx_begin_packet
+1$:     SPI_WAIT                ; End SPI transaction, then send ACK
+        mov     a, _SPIRDAT
+        setb    _RF_CSN
 
         ;--------------------------------------------------------------------
         ; ACK packet write
