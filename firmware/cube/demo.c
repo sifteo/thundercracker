@@ -72,6 +72,12 @@ void demo(void)
     draw_xy = XY(12,0);
     draw_image(img_radio_3);
 
+#ifdef CUBE_ADDR
+    draw_xy = XY(14,15);
+    draw_attr = ATTR_GRAY;
+    draw_hex(CUBE_ADDR);
+#endif
+
     /*
      * Draw contents of flash
      */
