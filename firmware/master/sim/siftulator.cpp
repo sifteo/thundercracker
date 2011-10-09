@@ -64,6 +64,7 @@ static const uint32_t TICKS_PER_PACKET = 7200;   // 450us, minimum packet period
 static const uint32_t MAX_RETRIES = 150;         // Simulates (hardware * software) retries
 
 struct RadioData {
+    uint8_t pid;
     uint8_t len;
     uint8_t payload[PAYLOAD_MAX];
 };
@@ -204,7 +205,7 @@ static void Siftulator_send()
     static TXPacket packet;
 
     if (!self.retriesLeft) {
-        // Produce a new packet
+        // Produce a new packet, with a new PID.
 
         PacketTransmission ptx;
 
@@ -216,6 +217,7 @@ static void Siftulator_send()
         packet.p.len = ptx.packet.len;
         memcpy(packet.addr, ptx.dest->id, sizeof packet.addr);
 
+        packet.p.pid++;
         self.retriesLeft = MAX_RETRIES;
     }
 

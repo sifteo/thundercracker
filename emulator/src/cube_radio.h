@@ -26,6 +26,7 @@ class Radio {
     static const uint8_t PAYLOAD_MAX = 32;
 
     struct Packet {
+        uint8_t pid;
         uint8_t len;
         uint8_t payload[PAYLOAD_MAX];
     };
@@ -153,6 +154,11 @@ class Radio {
          * that the next TX packet is received.
          *
          * true if the packet is acknowedged, false for no-acknowledge.
+         */
+
+        /*
+         * XXX: To do, check incoming packet's PID and CRC to see if
+         *      we would be dropping it as a false duplicate.
          */
 
         Packet *rx_head = &rx_fifo[rx_fifo_head];
