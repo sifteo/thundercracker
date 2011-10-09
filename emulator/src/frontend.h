@@ -18,10 +18,8 @@
 #include <SDL.h>
 #ifdef __MACH__
 #   include <OpenGL/gl.h>
-#   include <OpenGL/glu.h>
 #else
 #   include <GL/gl.h>
-#   include <GL/glu.h>
 #endif
 
 #ifndef GL_UNSIGNED_SHORT_5_6_5
@@ -40,7 +38,6 @@ class FrontendCube {
 
     void animate();
     void draw();
-    void setPhysicalAcceleration(b2Vec2 g);
     void setTiltTarget(b2Vec2 angles);
 
     b2Body *body;
@@ -67,13 +64,16 @@ class FrontendCube {
      */
     static const float LCD_SIZE = 0.75;
 
+    /*
+     * Height of the cube, relative to SIZE
+     */
+    static const float HEIGHT = 0.4;
+
  private:
     static const GLchar *srcLcdVP[];
     static const GLchar *srcLcdFP[]; 
 
-    void updateAccelerometer();
-
-    b2Vec2 physicalAcceleration;
+    b2Vec2 lastVelocity;
     b2Vec2 tiltTarget;
     b2Vec2 tiltVector;
     b2Mat33 modelMatrix;

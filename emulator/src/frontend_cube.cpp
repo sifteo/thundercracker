@@ -53,7 +53,7 @@ void FrontendCube::init(Cube::Hardware *_hw, b2World &world, float x, float y)
     hw = _hw;
     texture = 0;
 
-    physicalAcceleration.Set(0,0);
+    lastVelocity.Set(0,0);
     tiltTarget.Set(0,0);
     tiltVector.Set(0,0);
 
@@ -116,8 +116,8 @@ void FrontendCube::initGL()
      *      polygon. Replace this with something beautiful later, like
      *      a real-time glossy reflection shader :)
      */
+    const float height = HEIGHT;
     const float round = 0.05;
-    const float height = 0.4;
     const float epsilon = 0.01;
 
     static const GLfloat vaSides[] = {
@@ -199,6 +199,20 @@ void FrontendCube::initGL()
         glTranslatef(0, SIZE, -height * SIZE);
     }
 
+    /* Save a copy of the transformation, before scaling it by our size. */
+    GLfloat mat[16];
+    glGetFloatv(GL_MODELVIEW, mat);
+    modelMatrix.ex.x = mat[0];
+    modelMatrix.ex.y = mat[1];
+    modelMatrix.ex.z = mat[2];
+    modelMatrix.ey.x = mat[4];
+    modelMatrix.ey.y = mat[5];
+    modelMatrix.ey.z = mat[6];
+    modelMatrix.ez.x = mat[8];
+    modelMatrix.ez.y = mat[9];
+    modelMatrix.ez.z = mat[10];
+
+    /* Now scale it */
     glScalef(SIZE, SIZE, SIZE);
 
     /*
@@ -253,29 +267,6 @@ FrontendCube *FrontendCube::fromBody(b2Body *body)
     return static_cast<FrontendCube *>(body->GetUserData());
 }
 
-void FrontendCube::updateAccelerometer()
-{
-    /*
-     * The accelerometer, naturally, measures acceleration. It
-     * measures acceleration in the XY plane, with a max reading of
-     * +/- 2G.
-     *
-     * Here we compute our acceleration in the cube's local XY plane,
-     * in G's.  The physics simulation gives us the acceleration in
-     * the world XY plane. We assume a constant 1 G in the Z axis.
-     * This gives us a 3D vector, which we rotate to place it in the
-     * cube's local coordinate system.
-     */
-
-    //    b2Vec3 worldAccel(physicalAcceleration.x, physicalAcceleration.y, 1.0f);
-}
-
-void FrontendCube::setPhysicalAcceleration(b2Vec2 g)
-{
-    /* Acceleration due to world physics. In units of G's, in the world XY plane. */
-    physicalAcceleration = g;
-}
-
 void FrontendCube::setTiltTarget(b2Vec2 angles)
 {
     /* Target tilt angles that we're animating toward, as YX Euler angles in degrees */
@@ -287,4 +278,51 @@ void FrontendCube::animate()
     /* Animated tilt */
     const float tiltGain = 0.25f;
     tiltVector += tiltGain * (tiltTarget - tiltVector);
+
+    /*
+     * Measure our acceleration. This uses linear velocity at our
+     * center of mass.  If we wanted to compensate for the effects of
+     * an accelerometer that isn't perfectly centered, we could pick a
+     * different point to sample the velocity at.
+     */
+
+    b2Vec2 currentVelocity = body->GetLinearVelocity();
+    b2Vec2 worldAccel = currentVelocity - lastVelocity;
+    lastVelocity = currentVelocity;
+
+    /*
+     * Now make a 3-dimensional acceleration vector which also
+     * accounts for gravity. We're now measuring it in G's, so we
+     * apply an arbitrary conversion from our simulated units (Box2D
+     * "meters" per timestep) to something realistic.
+     *
+     * In our coordinate system, +Z is toward the camera, and -Z is
+     * down, into the table.
+     */
+
+    const float accelScaling = 5.0f;
+    b2Vec3 accelG(worldAccel.x * accelScaling, worldAccel.y * accelScaling, -1.0f);
+
+    /*
+     * Now use the same matrix we computed while rendering the last frame, and
+     * convert this acceleration into device-local coordinates. This will take into
+     * account tilting, as well as the cube's angular orientation.
+     */
+
+    b2Vec3 accelLocal = modelMatrix.Solve33(accelG);
+
+    /*
+     * Now we have acceleration, in G's, in the same coordinate system
+     * used by the accelerometer. Scale it according to the
+     * accelerometer's maximum range (ours is rated at +/- 2G) and
+     * send it to the hardware emulation.
+     */
+
+    const float deviceAccelScale = 128.0 / 2.0;
+    b2Vec2 deviceAccel(accelLocal.x * deviceAccelScale,
+                       accelLocal.y * deviceAccelScale);
+    int8_t accelX = b2Clamp((int)deviceAccel.x, -128, 127); 
+    int8_t accelY = b2Clamp((int)deviceAccel.y, -128, 127); 
+
+    hw->i2c.accel.setVector(accelX, accelY);
 }

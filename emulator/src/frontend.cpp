@@ -342,8 +342,11 @@ void Frontend::animate()
             b2Vec2 mouseDiff = mouseVec(normalViewExtent()) - mouseBody->GetWorldCenter();
             b2Vec2 tiltTarget = (maxTilt / FrontendCube::SIZE) * mouseDiff; 
             tiltTarget.x = b2Clamp(tiltTarget.x, -maxTilt, maxTilt);
-            tiltTarget.y = b2Clamp(tiltTarget.y, -maxTilt, maxTilt);
-            cube->setTiltTarget(tiltTarget);
+            tiltTarget.y = b2Clamp(tiltTarget.y, -maxTilt, maxTilt);        
+
+            // Rotate it into the cube's coordinates
+            cube->setTiltTarget(b2Mul(b2Rot(-mousePickedBody->GetAngle()),
+                                      tiltTarget));
         }
     }
         
@@ -364,10 +367,6 @@ void Frontend::animate()
 
 void Frontend::draw()
 {
-    float aspect = viewportWidth / (float)viewportHeight;
-    float rExtent = 1.0f / viewExtent;
-    float rExtentN = 1.0f / normalViewExtent();
-
     /*
      * Camera.
      *
@@ -379,13 +378,40 @@ void Frontend::draw()
      * +viewExtent at the level of the cube face.
      */
 
+    float aspect = viewportHeight / (float)viewportWidth;
+    float yExtent = aspect * viewExtent;
+
+    float zPlane = FrontendCube::SIZE * FrontendCube::HEIGHT;
+    float zCamera = 5.0f;
+    float zNear = 0.1f;
+    float zFar = 100.0f;
+    float zDepth = zFar - zNear;
+    
+    GLfloat proj[16] = {
+        zCamera / viewExtent,
+        0,
+        0,
+        0,
+
+        0,
+        -zCamera / yExtent,
+        0,
+        0,
+
+        0,
+        0,
+        -(zFar + zNear) / zDepth,
+        -1.0f,
+
+        0,
+        0,
+        -2.0f * (zFar * zNear) / zDepth,
+        0,
+    };
+
     glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    gluPerspective(60.0f, aspect, 0.1f, 100.0f);
-    glScalef(rExtent, -rExtent, rExtentN);
-    glTranslatef(-viewCenter.x, -viewCenter.y, -3.1f);
-
+    glLoadMatrixf(proj);
+    glTranslatef(-viewCenter.x, -viewCenter.y, -zCamera-zPlane);
     glMatrixMode(GL_MODELVIEW);
 
     /*
