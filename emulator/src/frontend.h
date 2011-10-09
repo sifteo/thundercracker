@@ -20,6 +20,7 @@
 #   include <OpenGL/gl.h>
 #   include <OpenGL/glext.h>
 #else
+#   define GL_GLEXT_PROTOTYPES
 #   include <GL/gl.h>
 #   include <GL/glext.h>
 #endif
@@ -94,9 +95,9 @@ class FrontendCube {
 
     Cube::Hardware *hw;
     GLuint texture;
-    void *lcdProgram;
-    void *lcdFP;
-    void *lcdVP;
+    GLhandleARB lcdProgram;
+    GLhandleARB lcdFP;
+    GLhandleARB lcdVP;
 };
 
 
@@ -121,8 +122,8 @@ class Frontend {
     void draw();
     bool onResize(int width, int height);
     void onKeyDown(SDL_KeyboardEvent &evt);
-    void onMouseDown(int buttons);
-    void onMouseUp(int buttons);
+    void onMouseDown(int button);
+    void onMouseUp(int button);
 
     void newStaticBox(float x, float y, float hw, float hh);
 

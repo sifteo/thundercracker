@@ -126,15 +126,15 @@ class LCD {
 
     void writePixel(uint16_t pixel) {
         unsigned vRow, vCol, addr;
-        uint8_t madctr = madctr ^ model.madctr_xor;
+        uint8_t m = madctr ^ model.madctr_xor;
 
         // Logical to physical address translation
-        vRow = (madctr & MADCTR_MY) ? (HEIGHT - 1 - row) : row;
-        vCol = (madctr & MADCTR_MX) ? (WIDTH - 1 - col) : col;
+        vRow = (m & MADCTR_MY) ? (HEIGHT - 1 - row) : row;
+        vCol = (m & MADCTR_MX) ? (WIDTH - 1 - col) : col;
         vRow += model.row_adj;
         vCol += model.col_adj;
 
-        addr = (madctr & MADCTR_MV) 
+        addr = (m & MADCTR_MV) 
             ? (vRow + (vCol << FB_ROW_SHIFT))
             : (vCol + (vRow << FB_ROW_SHIFT));
     

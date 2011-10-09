@@ -286,7 +286,8 @@ void setregoutput(CPU::em8051 *aCPU, int pos, int val)
 void mainview_editor_keys(CPU::em8051 *aCPU, int ch)
 {
     int insert_value = -1;
-    int maxmem;
+    int maxmem = 0;
+
     switch(ch)
     {
     case KEY_NEXT:

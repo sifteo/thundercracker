@@ -131,13 +131,13 @@ void Frontend::run()
             case SDL_MOUSEBUTTONDOWN:
                 mouseX = event.button.x;
                 mouseY = event.button.y;
-                onMouseDown(event.button.state);
+                onMouseDown(event.button.button);
                 break;
 
             case SDL_MOUSEBUTTONUP:
                 mouseX = event.button.x;
                 mouseY = event.button.y;
-                onMouseUp(event.button.state);
+                onMouseUp(event.button.button);
                 break;
 
             }
@@ -167,6 +167,18 @@ bool Frontend::onResize(int width, int height)
     SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
 
     surface = SDL_SetVideoMode(width, height, 0, SDL_OPENGL | SDL_RESIZABLE);
+
+    if (surface == NULL) {
+        // First failure? Try without FSAA.
+
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0); 
+        surface = SDL_SetVideoMode(width, height, 0, SDL_OPENGL | SDL_RESIZABLE);
+        if (surface) {
+            fprintf(stderr, "Warning: FSAA not available. Your cubes will have crunchy edges :(\n");
+        }
+    }
+
     if (surface == NULL) {
         fprintf(stderr, "Error creating SDL surface!\n");
         return false;
@@ -200,7 +212,7 @@ void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
     }
 }
 
-void Frontend::onMouseDown(int buttons)
+void Frontend::onMouseDown(int button)
 {
     if (!mouseBody) {
         // Test a small bounding box at the mouse hotspot
@@ -225,7 +237,7 @@ void Frontend::onMouseDown(int buttons)
             mouseDef.allowSleep = false;
             mouseBody = world.CreateBody(&mouseDef);
 
-            if ((buttons & 2) || (SDL_GetModState() & KMOD_SHIFT)) {
+            if ((button & 2) || (SDL_GetModState() & KMOD_SHIFT)) {
                 /*
                  * If this was a right-click or shift-click, go into tilting mode
                  */
@@ -270,7 +282,7 @@ void Frontend::onMouseDown(int buttons)
     }
 }
 
-void Frontend::onMouseUp(int buttons)
+void Frontend::onMouseUp(int button)
 {
     if (mouseBody) {
         FrontendCube *cube = FrontendCube::fromBody(mousePickedBody);
