@@ -203,7 +203,9 @@ void NRF24L01::transmitPacket()
     RadioManager::produce(txBuffer);
     softRetriesLeft = SOFT_RETRY_MAX;
 
+#ifdef DEBUG_MASTER_TX
     Debug::logToBuffer(txBuffer.packet.bytes, txBuffer.packet.len);
+#endif
 
     /*
      * Set the tx/rx address and channel
