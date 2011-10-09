@@ -39,10 +39,12 @@
  */
 
 #define ADDR_PORT       REG_P0
+#define MISC_PORT       REG_P1
 #define BUS_PORT        REG_P2
 #define CTRL_PORT       REG_P3
 
 #define ADDR_PORT_DIR   REG_P0DIR
+#define MISC_PORT_DIR   REG_P1DIR
 #define BUS_PORT_DIR    REG_P2DIR
 #define CTRL_PORT_DIR   REG_P3DIR
 
@@ -204,7 +206,7 @@ void Hardware::hardwareTick()
     uint8_t nextIEX3 = i2c.tick(&cpu) && (intexp & 0x04);    
 
     // Neighbor sensors generate an IRQ indirectly via GPINT2
-    neighbors.tick(cpu.mSFR);
+    neighbors.tick(cpu);
 
     /*
      * External interrupts: GPIOs. Only one pin can be selected
@@ -283,6 +285,11 @@ void Hardware::sfrWrite(CPU::em8051 *cpu, int reg)
     case ADDR_PORT_DIR:
     case CTRL_PORT_DIR:
         self->graphicsTick();
+        break;
+
+    case MISC_PORT:
+    case MISC_PORT_DIR:
+        self->neighbors.ioTick(self->cpu);
         break;
  
     case REG_ADCCON1:

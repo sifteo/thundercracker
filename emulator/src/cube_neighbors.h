@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include "cube_cpu.h"
 #include "cube_cpu_reg.h"
 #include "vtime.h"
 
@@ -68,59 +69,22 @@ class Neighbors {
         mySides[mySide].otherSides[otherSide] &= ~(1 << otherCube);
     }
 
-    void tick(uint8_t *regs) {
-        static const uint8_t outPinLUT[] = { PIN_OUT1, PIN_OUT2, PIN_OUT3, PIN_OUT4 };
+    void tick(CPU::em8051 &cpu) {
+        if (inputs) {
+            if (cpu.traceFile)
+                fprintf(cpu.traceFile, "NEIGHBOR: Received pulse (sides %02x)\n", inputs);
 
-        if (!otherCubes) {
-            // So lonely...
-            return;
+            cpu.mSFR[PORT] |= PIN_IN;
+            inputs = 0;
+        } else {
+            cpu.mSFR[PORT] &= ~PIN_IN;
         }
-
-        uint8_t drive = ~regs[DIR];               // Pins we're driving at all
-        uint8_t driveHigh = drive & regs[PORT];   // Pins we're driving high
-        uint8_t in = 0;
-
-        // Rising driven-edge detector. This is our pulse transmit state.
-        driveEdge = driveHigh & ~prevDriveHigh;
-        prevDriveHigh = driveHigh;
-
-        if (drive & PIN_IN) {
-            // Input pin is being driven. No use detecting its input state...
-            return;
-        }
-
-        // OR together every non-masked RX sensor
-        for (unsigned mySide = 0; mySide < NUM_SIDES; mySide++) {
-
-            // Is this receiver non-masked?
-            if (!(drive & outPinLUT[mySide])) {
-
-                // Look at each other-side bitmask...
-                for (unsigned otherSide = 0; otherSide < NUM_SIDES; otherSide++) {
-                    uint32_t sideMask = mySides[mySide].otherSides[otherSide];
-                    uint8_t otherSideBit = outPinLUT[otherSide];
-
-                    /*
-                     * Loop over all neighbored cubes on this
-                     * side. Should just be zero or one cubes, but
-                     * it's easy to stay generic here.
-                     */
-
-                    while (sideMask) {
-                        int otherCube = __builtin_ffs(sideMask) - 1;
-                        in |= checkNeighbor(otherCube, otherSideBit);
-                        sideMask ^= 1 << otherCube;
-                    }
-                }
-            }
-        }
-
-        // Update state of input pin
-        regs[PORT] = (regs[PORT] & ~PIN_IN) | in;
     }
 
+    void ioTick(CPU::em8051 &cpu);
+
  private:
-    uint8_t checkNeighbor(unsigned otherCube, uint8_t otherSideBit);
+    void transmitPulse(CPU::em8051 &cpu, unsigned otherCube, uint8_t otherSide);
 
     static const unsigned PORT     = REG_P1;
     static const unsigned DIR      = REG_P1DIR;
@@ -130,7 +94,8 @@ class Neighbors {
     static const unsigned PIN_OUT3 = (1 << 6);
     static const unsigned PIN_OUT4 = (1 << 7);
     
-    uint8_t driveEdge;
+    uint8_t inputs;
+    uint8_t inputMask;
     uint8_t prevDriveHigh;
 
     struct {
