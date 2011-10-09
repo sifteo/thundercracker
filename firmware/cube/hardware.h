@@ -183,7 +183,7 @@ __sfr __at 0x82 DPL;
 __sfr __at 0x83 DPH;
 __sfr __at 0x84 DPL1;
 __sfr __at 0x85 DPH1;
-__sfr __at 0x86 DEBUG;   // Simulator only
+__sfr __at 0x86 DEBUG_REG;   // Simulator only
 __sfr __at 0x87 PCON;
 __sfr __at 0x88 TCON;
 __sfr __at 0x89 TMOD;
