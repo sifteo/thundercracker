@@ -788,6 +788,15 @@ void radio_init(void)
         /* 16-bit CRC, radio enabled, PRX mode, RX_DR IRQ enabled */
         2, RF_CMD_W_REGISTER | RF_REG_CONFIG,         0x3f,
 
+        /*
+         * XXX: Hardcoded cube addresses, for testing only
+         */
+#ifdef CUBE_ADDR
+        2, RF_CMD_W_REGISTER | RF_REG_RF_CH,          0x02,
+        6, RF_CMD_W_REGISTER | RF_REG_TX_ADDR,        CUBE_ADDR, 0xe7, 0xe7, 0xe7, 0xe7,
+        6, RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0,     CUBE_ADDR, 0xe7, 0xe7, 0xe7, 0xe7,
+#endif
+
         0,
     };
 
