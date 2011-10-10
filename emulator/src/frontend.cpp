@@ -46,11 +46,18 @@ void Frontend::init(System *_sys)
     float extent = normalViewExtent();
     float extent2 = extent * 2.0f;
 
-    // Thick walls
-    newStaticBox(extent2, 0, extent, extent2);   // X+
-    newStaticBox(-extent2, 0, extent, extent2);  // X-
-    newStaticBox(0, extent2, extent2, extent);   // Y+
-    newStaticBox(0, -extent2, extent2, extent);  // Y-
+    /*
+     * Very thick walls, so objects can't tunnel through them and
+     * escape the world.  Also, we want to be able to move the Y walls
+     * when we change aspect ratios...  and that may be a little less
+     * ugly if we have a strongish way to prevent objects from
+     * tunneling.
+     */
+
+    newStaticBox(extent2, 0, extent, extent2);               // X+
+    newStaticBox(-extent2, 0, extent, extent2);              // X-
+    yWalls[0] = newStaticBox(0, extent2, extent2, extent);   // Y+
+    yWalls[1] = newStaticBox(0, -extent2, extent2, extent);  // Y-
 
     /*
      * Listen for collisions. This is how we update our neighbor matrix.
@@ -59,7 +66,7 @@ void Frontend::init(System *_sys)
     world.SetContactListener(&contactListener);
 }
 
-void Frontend::newStaticBox(float x, float y, float hw, float hh)
+b2Body *Frontend::newStaticBox(float x, float y, float hw, float hh)
 {
     b2BodyDef bodyDef;
     bodyDef.position.Set(x, y);
@@ -71,6 +78,8 @@ void Frontend::newStaticBox(float x, float y, float hw, float hh)
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &box;
     body->CreateFixture(&fixtureDef);
+
+    return body;
 }
 
 unsigned Frontend::cubeID(FrontendCube *cube)
@@ -175,6 +184,25 @@ bool Frontend::onResize(int width, int height)
     viewportWidth = width;
     viewportHeight = height;
     glViewport(0, 0, width, height);
+
+    /*
+     * Our world is scaled such that the horizontal size is constant,
+     * but the vertical size changes depending on the window aspect
+     * radio. We'll try to move the walls accordingly.
+     */
+
+    float yRatio = height / (float)width;
+    if (yRatio > 0.1) {
+        float yExtent2 = normalViewExtent() * (1.0f + yRatio);
+        yWalls[0]->SetTransform(b2Vec2(0, yExtent2), 0);
+        yWalls[1]->SetTransform(b2Vec2(0, -yExtent2), 0);
+    }
+
+    /*
+     * Assume we totally lost the OpenGL context, and reallocate things.
+     *
+     * XXX: This is not always necessary. It's platform-specific.
+     */
     
     glDisable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);

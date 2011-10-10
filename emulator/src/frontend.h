@@ -184,7 +184,7 @@ class Frontend {
     void onMouseDown(int button);
     void onMouseUp(int button);
 
-    void newStaticBox(float x, float y, float hw, float hh);
+    b2Body *newStaticBox(float x, float y, float hw, float hh);
     unsigned cubeID(FrontendCube *cube);
 
     float zoomedViewExtent();
@@ -207,6 +207,7 @@ class Frontend {
     b2Vec2 viewCenter;
 
     b2World world;
+    b2Body *yWalls[2];
 
     b2Body *mouseBody;
     b2RevoluteJoint *mouseJoint;
