@@ -307,24 +307,24 @@ __sbit __at 0x9e S0CON_SM1;
 __sbit __at 0x9f S0CON_SM0;
 
 // T2CON bits
-__bit __at 0xc8 T2CON_T2I0;
-__bit __at 0xc9 T2CON_T2I1;
-__bit __at 0xca T2CON_T2CM;
-__bit __at 0xcb T2CON_T2R0;
-__bit __at 0xcc T2CON_T2R1;
-__bit __at 0xcd T2CON_I2FR;
-__bit __at 0xce T2CON_I3FR;
-__bit __at 0xcf T2CON_T2PS;
+__sbit __at 0xc8 T2CON_T2I0;
+__sbit __at 0xc9 T2CON_T2I1;
+__sbit __at 0xca T2CON_T2CM;
+__sbit __at 0xcb T2CON_T2R0;
+__sbit __at 0xcc T2CON_T2R1;
+__sbit __at 0xcd T2CON_I2FR;
+__sbit __at 0xce T2CON_I3FR;
+__sbit __at 0xcf T2CON_T2PS;
 
 // TCON bits
-__bit __at 0x88 TCON_IT0;
-__bit __at 0x89 TCON_IE0;
-__bit __at 0x8a TCON_IT1;
-__bit __at 0x8b TCON_IE1;
-__bit __at 0x8c TCON_TR0;
-__bit __at 0x8d TCON_TF0;
-__bit __at 0x8e TCON_TR1;
-__bit __at 0x8f TCON_TF1;
+__sbit __at 0x88 TCON_IT0;
+__sbit __at 0x89 TCON_IE0;
+__sbit __at 0x8a TCON_IT1;
+__sbit __at 0x8b TCON_IE1;
+__sbit __at 0x8c TCON_TR0;
+__sbit __at 0x8d TCON_TF0;
+__sbit __at 0x8e TCON_TR1;
+__sbit __at 0x8f TCON_TF1;
 
 // IEN0 bits
 __sbit __at 0xA8 IEN_IFP;

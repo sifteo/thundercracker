@@ -60,14 +60,14 @@ void Neighbors::ioTick(CPU::em8051 &cpu)
      */
 
     if (driveEdge) {
-        // We can also hear ourself talk
-        inputs |= 1;
-
         for (unsigned mySide = 0; mySide < NUM_SIDES; mySide++) {
             uint8_t mySideBit = outPinLUT[mySide];
 
             if (mySideBit & driveEdge) {
                 // We're transmitting on this side
+
+                // If we're listening, we'll hear an echo
+                inputs |= 0x80;
 
                 // Look at each other-side bitmask...
                 for (unsigned otherSide = 0; otherSide < NUM_SIDES; otherSide++) {

@@ -55,15 +55,16 @@ uint8_t accel_x;
  * shorter still, so that we preserve our margin for radio latency.
  */
 
-#define NB_BIT_COUNT     16
-#define NB_BIT_TICKS     12      // 9.0 us, in 0.75 us ticks
-#define NB_DEADLINE      20      // 15 us (Max 48 us)
-#define NB_DAMPING_BITS  4       // Number of bits to keep driving TX for after a packet
+#define NB_BIT_COUNT        16
+#define NB_BIT_TICKS        12      // 9.0 us, in 0.75 us ticks
+#define NB_BIT_TICK_FIRST   1       // Tweak for sampling halfway between pulses
+#define NB_DEADLINE         20      // 15 us (Max 48 us)
+#define NB_DAMPING_BITS     4       // Number of bits to keep driving TX for after a packet
 
-uint8_t nb_bits_remaining;       // Bit counter for transmit or receive
-uint16_t nb_buffer;              // Packet shift register for TX/RX
-uint16_t nb_tx_packet;           // The packet we're broadcasting
-__bit nb_tx_mode;                // We're in the middle of an active transmission
+uint8_t nb_bits_remaining;          // Bit counter for transmit or receive
+uint16_t nb_buffer;                 // Packet shift register for TX/RX
+uint16_t nb_tx_packet;              // The packet we're broadcasting
+__bit nb_tx_mode;                   // We're in the middle of an active transmission
 
 
 /*
@@ -238,6 +239,7 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         ; Okay, there is still time! Start the TX IRQ.
         
         setb    _nb_tx_mode
+
         mov     _nb_buffer, _nb_tx_packet
         mov     (_nb_buffer + 1), (_nb_tx_packet + 1)
         mov     _nb_bits_remaining, #(NB_BIT_COUNT + NB_DAMPING_BITS)
@@ -293,6 +295,24 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
 {
     __asm
+
+        ; Begin RX mode. Carefully line up our Timer 2 phase!
+        ; Phase is determined by:
+        ;
+        ;   - The NB_BIT_TICK_FIRST constant
+        ;
+        ;   - Interrupt and timer latency
+        ;
+        ;   - The length of this ISR
+        ;
+        ;   - The lenght of the instructions in tf2_isr prior to
+        ;     capturing TL1.
+        ;
+
+        mov     _TL2, #(0x100 - NB_BIT_TICK_FIRST)
+        setb    _T2CON_T2I0
+        mov     _nb_bits_remaining, #NB_BIT_COUNT
+
         reti
     __endasm;
 }
@@ -317,6 +337,16 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Neighbor Bit Receive
         ;--------------------------------------------------------------------
 
+        mov     a, TL1          ; Capture count from Timer 1
+        mov     TL1, #0
+        add     a, #0xFF        ; Nonzero -> C
+
+        mov     a, (_nb_buffer + 1)
+        rlc     a
+        mov     (_nb_buffer + 1), a
+        mov     a, _nb_buffer
+        rlc     a
+        mov     _nb_buffer, a
 
         sjmp    nb_done
 
@@ -335,8 +365,12 @@ nb_tx:
         ; according to the resonant frequency of our LC tank. Cycle counts are
         ; included below, for reference. The "LOW" line can go anywhere after
         ; "HIGH" here.
+        ;
+        ; XXX: Tune me!
 
-        mov     a, _nb_buffer                   ;   Just grab the MSB and test it
+        clr     _TCON_TR1                       ; Prevent echo, disable receiver
+
+        mov     a, _nb_buffer                   ; ust grab the MSB and test it
         rlc     a
         jnc     2$
 
@@ -352,8 +386,6 @@ nb_tx:
         rlc     a                               ; 1
         mov     _nb_buffer, a                   ; 3
 
-        ; XXX: Tune me!
-
         mul     ab                              ; 5  (Long nop)
         nop                                     ; 1
 
@@ -364,10 +396,22 @@ nb_tx:
 nb_done:
 
         djnz    _nb_bits_remaining, 1$          ; More bits left?
+
         clr     _T2CON_T2I0                     ; Nope. Disable the IRQ
         orl     _MISC_DIR, #MISC_NB_OUT         ; Let the LC tanks float
-1$:
 
+        jb      _nb_tx_mode, 3$                 ; Store RX result
+
+        ; XXX: Do something with neighbor result
+
+3$:
+
+        mov     TL1, #0xFF                      ; RX mode: Interrupt on the next incoming edge
+        mov     TH1, #0xFF
+        clr     _nb_tx_mode
+        setb    _TCON_TR1
+
+1$:
         clr     _IR_TF2                         ; Must ack IRQ (TF2 is not auto-clear)
 
         pop     psw
@@ -452,7 +496,7 @@ void sensors_init()
      * It overflows at 16000000 / 12 / (1<<13) = 162.76 Hz
      */
 
-    TCON |= 0x10;               // Timer 0 running
+    TCON_TR0 = 1;               // Timer 0 running
     IEN_TF0 = 1;                // Enable Timer 0 interrupt
 
     /*
@@ -463,14 +507,15 @@ void sensors_init()
      * counter to 0xFFFF and get an interrupt when it overflows.
      * Subsequently, we check it on every bit-period to see if we
      * received any pulses during that bit's time window.
+     *
+     * By default, the timer will be stopped. We start it after
+     * exiting transmit mode for the first time. (We only wait
+     * for RX packets when we aren't transmitting)
      */     
 
     TMOD |= 0x50;               // Timer 1 is a 16-bit counter
-    TL1 = 0xff;                 // Overflow on the next pulse
-    TH1 = 0xff;
     IP0 |= 0x08;                // Highest priority for TF1 interrupt
     IP1 |= 0x08;
-    TCON |= 0x40;               // Timer 1 running
     IEN_TF1 = 1;                // Enable TF1 interrupt
 
     /*
