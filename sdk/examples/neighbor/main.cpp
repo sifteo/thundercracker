@@ -12,12 +12,17 @@ using namespace Sifteo;
 static Cube cubes[] = { Cube(0), Cube(1) };
 static VidMode_BG0_ROM vid[] = { VidMode_BG0_ROM(cubes[0].vbuf), VidMode_BG0_ROM(cubes[1].vbuf) };
 
-void paintSide(int cube, bool fill, int x, int y, int dx, int dy)
+void fillSide(int cube, int x, int y, int dx, int dy)
 {
-    for (unsigned i = 0; i < 14; i++) {
-        vid[cube].BG0_putTile(Vec2(x,y), fill ? 0x5ff : 0x000);
+    static const uint16_t pattern[] = { 0x1145, 0x1148, 0x1144 };
+    int patternIndex = 0;
+
+    for (unsigned i = 0; i < 16; i++) {
+        vid[cube].BG0_putTile(Vec2(x,y), pattern[patternIndex]);
         x += dx;
         y += dy;
+        if (++patternIndex == arraysize(pattern))
+            patternIndex = 0;
     }
 }
 
@@ -31,19 +36,34 @@ void siftmain()
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
             uint8_t buf[4];
+            _SYSAccelState accel;
 
+            /*
+             * Ugly in all sorts of ways...
+             */
+
+            _SYS_getAccel(i, &accel);
             _SYS_getRawNeighbors(i, buf);
 
+            vid[i].init();
             vid[i].BG0_textf(Vec2(1,2),
                              "Neighbor Test!\n"
                              "\n"
-                             "%02x %02x %02x %02x",
-                             buf[0], buf[1], buf[2], buf[3]);
+                             "I am cube #%d\n"
+                             "\n"
+                             "Raw data:\n"
+                             " %02x %02x %02x %02x\n"
+                             "\n"
+                             "Accel:\n"
+                             " %02x %02x\n",
+                             i, buf[0], buf[1], buf[2], buf[3],
+                             accel.x + 0x80,
+                             accel.y + 0x80);
 
-            paintSide(i, buf[0] >> 7, 1, 0, 1, 0);   // Top
-            paintSide(i, buf[1] >> 7, 15, 1, 0, 1);  // Right
-            paintSide(i, buf[2] >> 7, 1, 15, 1, 0);  // Bottom
-            paintSide(i, buf[3] >> 7, 0, 1, 0, 1);   // Left
+            if (buf[0] & 0x80) fillSide(i, 0,  0,  1, 0);  // Top
+            if (buf[1] & 0x80) fillSide(i, 15, 0,  0, 1);  // Right
+            if (buf[2] & 0x80) fillSide(i, 0,  15, 1, 0);  // Bottom
+            if (buf[3] & 0x80) fillSide(i, 0,  0,  0, 1);  // Left
         }
 
         System::paint();
