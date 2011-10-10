@@ -89,8 +89,8 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "-n") && argv[c+1]) {
             sys.opt_numCubes = atoi(argv[c+1]);
-            if (sys.opt_numCubes < 1 || sys.opt_numCubes > sys.MAX_CUBES) {
-                fprintf(stderr, "Error: Unsupported number of cubes (Minimum 1, maximum %d)\n",
+            if (sys.opt_numCubes > sys.MAX_CUBES) {
+                fprintf(stderr, "Error: Unsupported number of cubes (Minimum 0, maximum %d)\n",
                         sys.MAX_CUBES);
                 return 1;
             }

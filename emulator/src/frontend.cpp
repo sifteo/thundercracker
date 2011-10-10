@@ -34,15 +34,20 @@ void Frontend::init(System *_sys)
      * a horizontal line layout. For larger layout, it gives us a square.
      */
 
-    gridH = sqrtf(sys->opt_numCubes);
-    gridW = (sys->opt_numCubes + gridH - 1) / gridH;
-    for (unsigned y = 0, cubeID = 0; y < gridH && cubeID < sys->opt_numCubes; y++)
-        for (unsigned x = 0; x < gridW && cubeID < sys->opt_numCubes; x++, cubeID++) {
-            const float spacing = FrontendCube::SIZE * 2.7;
-            cubes[cubeID].init(&sys->cubes[cubeID], world,
-                               ((gridW - 1) * -0.5 + x) * spacing,
-                               ((gridH - 1) * -0.5 + y) * spacing);
-        }
+    if (sys->opt_numCubes) {
+        gridH = sqrtf(sys->opt_numCubes);
+        gridW = (sys->opt_numCubes + gridH - 1) / gridH;
+        for (unsigned y = 0, cubeID = 0; y < gridH && cubeID < sys->opt_numCubes; y++)
+            for (unsigned x = 0; x < gridW && cubeID < sys->opt_numCubes; x++, cubeID++) {
+                const float spacing = FrontendCube::SIZE * 2.7;
+                cubes[cubeID].init(&sys->cubes[cubeID], world,
+                                   ((gridW - 1) * -0.5 + x) * spacing,
+                                   ((gridH - 1) * -0.5 + y) * spacing);
+            }
+    } else {
+        gridW = 0;
+        gridH = 0;
+    }
 
     /*
      * The view area should scale with number of cubes. So, scale the
