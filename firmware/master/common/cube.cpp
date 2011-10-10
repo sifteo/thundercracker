@@ -175,18 +175,14 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
      *      these packets, so that we always have the best possible
      *      control over our latency.
      *
-     *      But for now, we have few enough cubes that this doesn't
-     *      really matter.  We just want the cubes to not all transmit
-     *      at once. So, just reset their clocks every N radio
-     *      packets. The normal round-robin scheduling we do on the
-     *      radio will do a reasonable job of keeping them in separate
-     *      timeslots.
+     *      This is totally fake for now. We just rely on getting
+     *      lucky, and having few enough cubes that it's likely we do.
      */
 
     if (timeSyncState)  {
         timeSyncState--;
     } else if (tx.packet.len == 0) {
-        timeSyncState = 100;
+        timeSyncState = 10000;
         codec.timeSync(tx.packet, 0x0000);
         return true;
     }

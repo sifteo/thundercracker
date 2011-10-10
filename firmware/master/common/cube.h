@@ -160,6 +160,7 @@ class CubeSlot {
     SysTime::Ticks paintTimestamp;      // Used only by thread
     SysTime::Ticks flashDeadline;       // Used only by ISR
     int32_t pendingFrames;
+    uint32_t timeSyncState;     // XXX: For the current time-sync hack
 
     // Packet encoder state
     CubeCodec codec;
@@ -167,7 +168,6 @@ class CubeSlot {
     // Byte variables
     uint8_t flashPrevACK;
     uint8_t framePrevACK;
-    uint8_t timeSyncState;      // XXX: For the current time-sync hack
     uint8_t neighbors[4];       // XXX: Raw neighbor data for testing/demoing only
 
     // Sensors
