@@ -18,21 +18,6 @@ namespace Stir {
 
 CIELab CIELab::lut565[CIELab::LUT_SIZE];
 
-RGB565 RGB565::wiggle() const
-{
-    // Make a slight (1 LSB) modification to the low byte
-
-    uint16_t rg = value & 0xFFE0;
-    uint16_t b = value & 0x1F;
-
-    if (b == 0x1F)
-        b--;
-    else
-        b++;
-
-    return (uint16_t)(rg | b);
-}
-
 CIELab::CIELab(uint32_t rgb)
 {
     double red = decodeGamma((uint8_t)rgb);

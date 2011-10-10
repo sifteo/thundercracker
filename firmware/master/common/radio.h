@@ -72,6 +72,15 @@ struct PacketBuffer {
         if (Runtime::checkUserPointer(src, count))
             append(src, count);
     }
+
+    void log() const {
+        #if defined(SIFTEO_SIMULATOR) && defined(DEBUG)
+        LOG(("[%2d] ", len));
+        for  (unsigned i = 0; i < len; i++)
+            LOG(("%02x", bytes[i]));
+        LOG(("\n"));
+        #endif
+    }
 };
 
 /**
@@ -89,6 +98,15 @@ struct PacketTransmission {
 
     PacketTransmission(const RadioAddress *_dest, uint8_t *_bytes, unsigned _len=0)
         : packet(PacketBuffer(_bytes, _len)), dest(_dest) {}
+
+    void log() const {
+        #if defined(SIFTEO_SIMULATOR) && defined(DEBUG)
+        LOG(("%2d/%02x%02x%02x%02x%02x ",
+             dest->channel,
+             dest->id[0], dest->id[1], dest->id[2], dest->id[3], dest->id[4]));
+        packet.log();
+        #endif
+    }
 };
 
 /**
@@ -146,7 +164,8 @@ class RadioManager {
      */
 
     static void produce(PacketTransmission &tx);
-    static void acknowledge(const PacketBuffer &packet);
+    static void ackWithPacket(const PacketBuffer &packet);
+    static void ackEmpty();
     static void timeout();
 
  private:
@@ -163,7 +182,7 @@ class RadioManager {
      * Must be a power of two.
      */
 
-    static const unsigned FIFO_SIZE = 16;
+    static const unsigned FIFO_SIZE = 8;
 
     static _SYSCubeID epFifo[FIFO_SIZE];
     static uint8_t epHead;              // Oldest ACK slot ID

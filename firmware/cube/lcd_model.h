@@ -18,10 +18,16 @@
 
 /********************************************************************
  * Pick one LCD model to build for...
+ *
+ *  -DLCD_MODEL_GIANTPLUS_ILI9163C
+ *  -DLCD_MODEL_TRULY_ST7735
+ *
+ * ... or accept the current default.
  */
 
-//#define LCD_MODEL_GIANTPLUS_ILI9163C
-#define LCD_MODEL_TRULY_ST7735
+#if !(defined(LCD_MODEL_GIANTPLUS_ILI9163C) || defined(LCD_MODEL_TRULY_ST7735))
+#   define LCD_MODEL_TRULY_ST7735
+#endif
 
 /********************************************************************/
 

@@ -29,6 +29,7 @@ uint8_t __near ack_len;
         __asm   ljmp    rx_complete                     __endasm; \
         __asm
 
+// Negative sampling delta. MUST wrap at 1kB (both for correctness and security)
 #pragma sdcc_hash +
 #define DPTR_DELTA(v)                                   __endasm; \
         __asm   mov     a, _DPL1                        __endasm; \
@@ -36,6 +37,7 @@ uint8_t __near ack_len;
         __asm   mov     _DPL, a                         __endasm; \
         __asm   mov     a, _DPH1                        __endasm; \
         __asm   addc    a, #((v) >> 8)                  __endasm; \
+        __asm   anl     a, #3                           __endasm; \
         __asm   mov     _DPH, a                         __endasm; \
         __asm
 
@@ -206,6 +208,8 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK)
         mov     _DPL1, _vram_dptr
         mov     _DPH1, _vram_dptr+1
 
+rx_begin_packet:
+
         ;--------------------------------------------------------------------
         ; State machine reset
         ;--------------------------------------------------------------------
@@ -231,8 +235,29 @@ no_state_reset:
         mov     _SPIRDAT, #RF_CMD_R_RX_PL_WID   ; Read RX Payload Width command
         mov     _SPIRDAT, #0                    ; First dummy byte, keep the TX FIFO full
         SPI_WAIT                                ; Wait for Command/STATUS byte
-        mov     a, _SPIRDAT                     ; Ignore STATUS byte
-        SPI_WAIT                                ; Wait for width byte
+        mov     a, _SPIRDAT                     ; Keep the STATUS byte
+
+        ; If we notice in STATUS that there is in fact no packet pending
+        ; this was a spurious interrupt and we need to get out now. This can
+        ; happen if a packet arrived at just the wrong spot in a previous ISR,
+        ; after the IRQ flag has already been cleared by hardware but before
+        ; we have removed the packet.
+        ;
+        ; This is similar but not identical to the STATUS check at the bottom
+        ; of this loop. In that one, we still want to send an ACK, since we know
+        ; that at least one packet was processed. Here we are detecting spurious
+        ; IRQs, and we do NOT want to send an ACK if we get one.
+
+        orl     a, #0xF1                        ; Set all bits that we have no interest in
+        inc     a                               ; Increment. If that was really 111, we just overflowed
+        jnz     1$                              ; Jump if RX non-empty
+
+        SPI_WAIT                                ; End SPI transaction, then go to no_ack (end the ISR)
+        mov     a, _SPIRDAT
+        setb    _RF_CSN
+        ljmp    no_ack
+
+1$:     SPI_WAIT                                ; Wait for width byte
         mov     a, _SPIRDAT                     ; Total packet length
         setb    _RF_CSN                         ; End SPI transaction
 
@@ -252,6 +277,7 @@ no_state_reset:
 
         rl      a                               ; nybbles = 2 * length
         mov     R_NYBBLE_COUNT, a
+
         add     a, #(0xFF - (2 * RF_PAYLOAD_MAX))
         jnc     no_rx_flush                     ; Jump if byte length <= RF_PAYLOAD_MAX
 
@@ -316,6 +342,17 @@ rx_loop:                                        ; Fetch the next byte or nybble
         jmp     @a+dptr 
 
         ;-------------------------------------------
+        ; 4-bit diff (continued from below)
+        ;-------------------------------------------
+
+rxs_diff_2:
+        mov     R_DIFF, a
+        mov     R_LOW, #0
+        lcall   #_rx_write_deltas
+        sjmp    #rx_next_sjmp
+
+
+        ;-------------------------------------------
         ; Default state (initial nybble)
         ;-------------------------------------------
 
@@ -370,10 +407,10 @@ rx_next_sjmp:
         ;-------------------------------------------
 
 rxs_diff_1:
-        mov     AR_DIFF, R_INPUT
-        mov     R_LOW, #0
-        lcall   #_rx_write_deltas
-        sjmp    #rx_next_sjmp
+        mov     a, R_INPUT
+        anl     a, #0xF
+        cjne    a, #7, rxs_diff_2
+        ljmp    rx_special              ; Redundant copy encoding, special meaning
 
         ;-------------------------------------------
         ; Literal 14-bit index
@@ -438,7 +475,7 @@ rxs_rle:
 
         anl     AR_LOW, #0xF            ; Only the low nybble is part of the valid run length
         lcall   #_rx_write_deltas
-        sjmp    rxs_default             ; Re-process this nybble starting from the default state
+        ljmp    rxs_default             ; Re-process this nybble starting from the default state
 
 13$:
         mov     a, R_LOW        ; Check low two bits of the _first_ RLE nybble
@@ -608,6 +645,31 @@ rxs_wrdelta_1_fragment:
         lcall   #_rx_write_deltas
         sjmp    #rx_next_sjmp2
 
+
+        ;--------------------------------------------------------------------
+        ; Special codes (8-bit copy encoding)
+        ;--------------------------------------------------------------------
+
+rx_special:
+
+        ; -------- 1000 0111 <LOW> <HIGH> -- Sensor timer sync escape
+
+        anl     AR_SAMPLE, #3
+        cjne    R_SAMPLE, #0, 1$
+
+        clr     _TCON_TR0                       ; Stop timer
+        mov     TL0, _SPIRDAT                   ; Low byte
+        mov     _SPIRDAT, #0
+        SPI_WAIT
+        mov     TH0, _SPIRDAT                   ; High byte
+        mov     _SPIRDAT, #0
+        setb    _TCON_TR0                       ; Restart timer
+1$:
+
+        ; -------- 
+
+        sjmp    rx_complete
+
         ;--------------------------------------------------------------------
         ; Flash FIFO Write
         ;--------------------------------------------------------------------
@@ -642,8 +704,6 @@ rx_flash:
         jz      rx_flash_reset                  ;    Zero bytes, do a flash reset
         mov     R_NYBBLE_COUNT, a               ;    Otherwise, this is the new loop iterator   
 
-        SPI_WAIT
-
 rx_flash_loop:
         mov     a, _flash_fifo_head             ; 2  Load the flash write pointer
         add     a, #_flash_fifo                 ; 2  Address relative to flash_fifo[]
@@ -661,7 +721,6 @@ rx_flash_loop:
         djnz    R_NYBBLE_COUNT, rx_flash_loop   ; 3
         sjmp    rx_complete                     ; 3
 
-
 rx_flash_reset:
         mov     _flash_fifo_head, #FLS_FIFO_RESET
 
@@ -673,6 +732,7 @@ rx_flash_reset:
         ;--------------------------------------------------------------------
 
 rx_complete:
+        SPI_WAIT
         mov     a, _SPIRDAT     ; Throw away one extra dummy byte
 rx_complete_0:
         setb    _RF_CSN         ; End SPI transaction
@@ -682,16 +742,41 @@ rx_complete_0:
         clr     _RF_CSN                                         ; Begin SPI transaction
         mov     _SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_STATUS)  ; Start writing to STATUS
         mov     _SPIRDAT, #RF_STATUS_RX_DR                      ; Clear interrupt flag
-        SPI_WAIT                                                ; RX dummy byte 0
+        SPI_WAIT                                                ; RX STATUS byte
         mov     a, _SPIRDAT
-        SPI_WAIT                                                ; RX dummy byte 1
+
+        ; We may have had multiple packets queued. Typically we can handle incoming
+        ; packets at line rate, but if there is a particularly long VRAM write that
+        ; still compresses into one packet, it could take us longer. We do not have
+        ; to worry about flow control here, since the nRF ShockBurst protocol handles
+        ; that implicitly via retries. But we DO need to account for the fact that we
+        ; may have fewer total IRQs than we have packets, and we need to "catch up"
+        ; after a long packet comes in.
+        ;
+        ; Luckily, handling this is simple. We already know the STATUS register
+        ; as of the moment we acknowledged this IRQ. If a packet is still ready,
+        ; go back to the top of the IRQ handler and do this all again.
+        ;
+        ; The RX FIFO status is in bits 3:1. '111' means the FIFO is empty.
+        ; Check this with as little overhead as we can manage.
+
+        orl     a, #0xF1        ; Set all bits that we have no interest in
+        inc     a               ; Increment. If that was really 111, we just overflowed
+        jz      1$              ; Jump if RX Empty
+
+        SPI_WAIT                ; End SPI transaction, then go to rx_begin_packet
         mov     a, _SPIRDAT
-        setb    _RF_CSN                                         ; End SPI transaction
+        setb    _RF_CSN
+        ljmp    rx_begin_packet
+1$:     SPI_WAIT                ; End SPI transaction, then send ACK
+        mov     a, _SPIRDAT
+        setb    _RF_CSN
 
         ;--------------------------------------------------------------------
         ; ACK packet write
         ;--------------------------------------------------------------------
 
+rx_ack:
         mov     a, _ack_len
         jz      no_ack                                  ; Skip the ACK entirely if empty
         mov     _ack_len, #RF_ACK_LEN_EMPTY
@@ -787,6 +872,15 @@ void radio_init(void)
         /* 16-bit CRC, radio enabled, PRX mode, RX_DR IRQ enabled */
         2, RF_CMD_W_REGISTER | RF_REG_CONFIG,         0x3f,
 
+        /*
+         * XXX: Hardcoded cube addresses, for testing only
+         */
+#ifdef CUBE_ADDR
+        2, RF_CMD_W_REGISTER | RF_REG_RF_CH,          0x02,
+        6, RF_CMD_W_REGISTER | RF_REG_TX_ADDR,        CUBE_ADDR, 0xe7, 0xe7, 0xe7, 0xe7,
+        6, RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0,     CUBE_ADDR, 0xe7, 0xe7, 0xe7, 0xe7,
+#endif
+
         0,
     };
 
@@ -794,4 +888,32 @@ void radio_init(void)
     radio_transfer_table(table);        // Send initialization commands
     IEN_RF = 1;                         // Interrupt enabled
     RF_CE = 1;                          // Receiver enabled
+}
+
+
+uint8_t radio_get_cube_id(void)
+{
+    /*
+     * XXX: This is temporary, until we have a real pairing mechanism.
+     *      Our cube will be identified by radio address and channel, but
+     *      also by an ID between 0 and 31. This will eventually come from
+     *      the master cube, but for now we take it from the LSB of the
+     *      radio address. That can be set at compile time with CUBE_ADDR,
+     *      or it could be provided as a hardware default by the simulator.
+     */
+
+    uint8_t id;
+
+    RF_CSN = 0;
+
+    SPIRDAT = RF_CMD_R_REGISTER | RF_REG_TX_ADDR;
+    SPIRDAT = 0;
+    while (!(SPIRSTAT & SPI_RX_READY));
+    SPIRDAT;
+    while (!(SPIRSTAT & SPI_RX_READY));
+    id = SPIRDAT;
+
+    RF_CSN = 1;
+
+    return id;
 }

@@ -108,18 +108,40 @@ void NRF24L01::isr()
      * chip.
      */
     spi.begin();
-    uint8_t status = spi.transfer(CMD_W_REGISTER | REG_STATUS);
+    uint8_t status = spi.transfer(CMD_W_REGISTER | REG_STATUS) & (MAX_RT | RX_DR | TX_DS);
     spi.transfer(status);
     spi.end();
 
-    if (status & RX_DR)
-        receivePacket();
-    
-    if (status & MAX_RT)
-        handleTimeout();
+    switch (status) {
 
-    if (status & TX_DS)
+    case 0:
+        // Shouldn't happen, but.. electrical noise maybe?
+        Debug::log("Spurious nRF IRQ!");
+        break;
+
+    case MAX_RT:
+        // Unsuccessful transmit
+        handleTimeout();
+        break;
+
+    case TX_DS:
+        // Successful transmit, no ACK data
+        RadioManager::ackEmpty();
         transmitPacket();
+        break;
+
+    case TX_DS | RX_DR:
+        // Successful transmit, with an ACK
+        receivePacket();
+        transmitPacket();
+        break;
+
+    default:
+        // Other cases are not allowed. Do something non-fatal...
+        Debug::log("Unhandled nRF IRQ status");
+        transmitPacket();
+        break;
+    }
 }
 
 void NRF24L01::handleTimeout()
@@ -186,7 +208,7 @@ void NRF24L01::receivePacket()
         rxBuffer.bytes[i] = spi.transfer(0);
     spi.end();
 
-    RadioManager::acknowledge(rxBuffer);
+    RadioManager::ackWithPacket(rxBuffer);
 }
  
 void NRF24L01::transmitPacket()
@@ -203,7 +225,9 @@ void NRF24L01::transmitPacket()
     RadioManager::produce(txBuffer);
     softRetriesLeft = SOFT_RETRY_MAX;
 
+#ifdef DEBUG_MASTER_TX
     Debug::logToBuffer(txBuffer.packet.bytes, txBuffer.packet.len);
+#endif
 
     /*
      * Set the tx/rx address and channel

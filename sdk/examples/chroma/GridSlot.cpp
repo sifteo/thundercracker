@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include "utils.h"
 
+static unsigned int color = 0;
+
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
 {
 	&Gem0,
@@ -26,7 +28,10 @@ GridSlot::GridSlot() :
 		m_state = STATE_LIVING;
 	else
 		m_state = STATE_GONE;
-	m_color = rand()%NUM_COLORS;
+	//static unsigned int seed;
+	//m_color = rand_r(&seed)%NUM_COLORS;
+	//non-random for now
+	m_color = color++%NUM_COLORS;
 	m_value = 0;
 }
 
@@ -36,7 +41,6 @@ const AssetImage &GridSlot::GetTexture() const
 	PRINT("color is %d\n", m_color );
 	return *TEXTURES[ m_color ];
 }
-
 
 //draw self on given vid at given vec
 void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )

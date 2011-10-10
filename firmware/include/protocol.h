@@ -142,11 +142,13 @@
  *
  * These codes are encoded in a slightly more complex way. First of
  * all, we have a reserved region of the diff codes, which are
- * redundant encodings for the 4-bit 'copy' code. Currently the decoder
- * doesn't treat these any differently from a copy, but the encoder should
- * never produce them:
+ * redundant encodings for the 4-bit 'copy' code:
  *
- *   10xx 0111             Reserved for future use
+ *   1000 0111             Sensor timer sync escape
+ *
+ *   1001 0111             Reserved for future use
+ *   1010 0111             Reserved for future use
+ *   1011 0111             Reserved for future use
  *
  * Next, the RLE codes. These begin with a 4-bit code that repeats the
  * last primary code. However, consecutive copies of this repeat code
@@ -185,6 +187,15 @@
  * Resets happen asynchronously, and are acknowledged by a one-byte
  * increment in the flash decoder's progress counter. No data should
  * be written to the decoder until the reset has been acknowledged.
+ *
+ *  IV. Sensor timer sync escape
+ *
+ * Like the Flash Escape, this switches from nybble mode to byte mode,
+ * and consumes the remainder of the packet. In this case, only two
+ * bytes are read, and the rest of the packet, if any, is discarded.
+ *
+ * These two bytes are used as a reload value for the master sensor
+ * clock, which is momentarily stopped and restarted.
  */
 
 #define RF_VRAM_MAX_RUN    (0x3F + 5)
@@ -228,6 +239,9 @@
 #define RF_ACK_NEIGHBOR         3
 #define RF_ACK_FLASH_FIFO       7
 
+#define NB_ID_MASK              0x1F    // ID portion of neighbor bytes
+#define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
+#define NB0_FLAG_TOUCH          0x40    // In neighbors[0], indicates touch detection
 
 typedef union {
     uint8_t bytes[RF_ACK_LEN_MAX];
@@ -245,12 +259,8 @@ typedef union {
         // Signed 8-bit analog accelerometer data
         int8_t accel[2];
 
-        /*
-         * Need ~5 bits per sensor (5 other cubes * 4 sides + 1 idle =
-         * 21 states) So, there are plenty of bits free in here to
-         * encode things like button state.
-         */
-        uint8_t neighbor[4];
+        // Neighbor cube IDs in low bits, flags in upper bits
+        uint8_t neighbors[4];
 
         /*
          * Number of bytes processed by the flash decoder so

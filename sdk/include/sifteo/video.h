@@ -333,6 +333,17 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         }
     }
 
+    void BG0_textf(const Vec2 &point, const char *fmt, ...) {
+        char buf[128];
+        va_list ap;
+
+        va_start(ap, fmt);
+        vsnprintf(buf, sizeof buf - 1, fmt, ap);
+        buf[sizeof buf - 1] = 0;
+        BG0_text(point, buf);
+        va_end(ap);
+    }
+
     void BG0_progressBar(const Vec2 &point, int pixelWidth, int tileHeight=1) {
         /*
          * XXX: This is kind of the hugest hack.. we should have some good way

@@ -20,9 +20,9 @@ static void gpio_init(void);
 void main(void)
 {
     gpio_init();
-    sensors_init();
     radio_init();
     flash_init();
+    sensors_init();
     sti();
 
     demo();  // XXX

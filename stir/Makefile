@@ -30,7 +30,7 @@ CDEPS = src/*.h $(FIRMWARE_INC)/*.h
 PYTHON := python
 UNAME  := $(shell uname)
 
-ifneq ( $(findstr MINGW32_NT, $(UNAME)) , "" )  
+ifeq ($(findstring MINGW32_NT,$(UNAME)),MINGW32_NT)  
       UNAME := windows32
 endif
 

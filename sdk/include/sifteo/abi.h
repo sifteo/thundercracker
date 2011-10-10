@@ -96,7 +96,7 @@ struct _SYSAssetGroup {
 #define _SYS_VRAM_BG1_TILES     144     // Total number of opaque tiles in BG1
 #define _SYS_VRAM_BG2_WIDTH     16      // Width/height of BG2 tile grid
 #define _SYS_VRAM_SPRITES       8       // Maximum number of linear sprites
-#define _SYS_CHROMA_KEY         0xF5    // Chroma key byte
+#define _SYS_CHROMA_KEY         0x4f    // Chroma key MSB
 
 // Bits for 'flags'
 
@@ -319,6 +319,9 @@ void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf);
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
+
+// XXX: Temporary for testing/demoing
+void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);
 
 void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf);
 void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr);

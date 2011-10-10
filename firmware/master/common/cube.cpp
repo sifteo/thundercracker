@@ -75,6 +75,8 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a) {
     // XXX: Pick a base address too!
     ac->progress = 0;
 
+    DEBUG_LOG(("FLASH[%d]: Beginning asset download, group %p\n", id(), a));
+
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
     Atomic::And(flashResetSent, ~bit());
     Atomic::Or(flashResetWait, bit());
@@ -87,15 +89,22 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a) {
 bool CubeSlot::radioProduce(PacketTransmission &tx)
 {
     /*
-     * XXX: Try to connect, if we aren't connected. And use a real address.
+     * XXX: Pairing. Try to connect, if we aren't connected. And use a real address.
      *      For now I'm hardcoding the default address, since that's what
      *      the emulator will come up with.
      */
-    static const RadioAddress addr = { 0x02, { 0xe7, 0xe7, 0xe7, 0xe7, 0xe7 }};
-    tx.dest = &addr;
+
+    address.channel = 0x02;
+    address.id[0] = id();
+    address.id[1] = 0xe7;
+    address.id[2] = 0xe7;
+    address.id[3] = 0xe7;
+    address.id[4] = 0xe7;
+
+    tx.dest = &address;
     tx.packet.len = 0;
 
-    // First priority: Send video buffer updates.
+    // First priority: Send video buffer updates
 
     codec.encodeVRAM(tx.packet, vbuf);
 
@@ -116,9 +125,20 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
          * valid flash ACK from this cube.
          */
 
-        if (!(flashResetSent & bit()) && codec.flashReset(tx.packet)) {
-            // Remember that we're waiting for a reset ACK
+        if (flashResetSent & bit()) {
+            // Already sent the reset. Has it timed out?
+
+            if (SysTime::ticks() > flashDeadline) {
+                DEBUG_LOG(("FLASH[%d]: Reset timeout\n", id()));
+                Atomic::ClearLZ(flashResetSent, id());
+            }
+
+        } else if (codec.flashReset(tx.packet)) {
+            // Okay, we sent a reset. Remember to wait for the ACK.
+
+            DEBUG_LOG(("FLASH[%d]: Sending reset token\n", id()));
             Atomic::SetLZ(flashResetSent, id());
+            flashDeadline = SysTime::ticks() + SysTime::msTicks(RTT_DEADLINE_MS);
         }
 
     } else {
@@ -137,6 +157,34 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                 Event::setPending(Event::ASSET_DONE);
             }
         }
+    }
+
+    /*
+     * Third priority: Sensor time synchronization
+     *
+     * XXX: Time syncs are kind of special.  We use them to assign
+     *      each cube to a different timeslice of our sensor polling
+     *      period, allowing the neighbor sensors to cooperate via
+     *      time division multiplexing. The packet itself is a short
+     *      (3 byte) and simple packet which simply adjusts the phase
+     *      of the cube's sensor timer.
+     *
+     *      We'll need to do some work on the master to calculate this
+     *      phase by using the current time plus an estimate of radio
+     *      latency. We'll also want to disable hardware retries on
+     *      these packets, so that we always have the best possible
+     *      control over our latency.
+     *
+     *      This is totally fake for now. We just rely on getting
+     *      lucky, and having few enough cubes that it's likely we do.
+     */
+
+    if (timeSyncState)  {
+        timeSyncState--;
+    } else if (tx.packet.len == 0) {
+        timeSyncState = 10000;
+        codec.timeSync(tx.packet, 0x0000);
+        return true;
     }
 
     // Finalize this packet. Must be last.
@@ -184,6 +232,25 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
                     Atomic::ClearLZ(flashResetWait, id());
             } else {
                 // Acknowledge FIFO bytes
+
+                /*
+                 * XXX: Since we can always lose ACK packets without
+                 *      warning, we could theoretically deadlock here,
+                 *      where we perpetually wait on an ACK that the
+                 *      cube has already sent. Since flash writes are
+                 *      somewhat pipelined, in practice we'd actually
+                 *      have to lose several ACKs in a row. But it
+                 *      could indeed happen. We should have a watchdog
+                 *      here, to assume FIFO has been drained (or
+                 *      explicitly request another flash ACK) if we've
+                 *      been waiting for more than some safe amount of
+                 *      time.
+                 *
+                 *      Alternatively, we could solve this on the cube
+                 *      end by having it send a longer-than-strictly-
+                 *      necessary ACK packet every so often.
+                 */
+
                 codec.flashAckBytes(loadACK);
             }
 
@@ -209,6 +276,14 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             Atomic::SetLZ(Event::accelChangeCubes, id());
             Event::setPending(Event::ACCEL_CHANGE);
         }
+    }
+
+    if (packet.len >= offsetof(RF_ACKType, neighbors) + sizeof ack->neighbors) {
+        // XXX: Temporary for testing/demoing
+        neighbors[0] = ack->neighbors[0];
+        neighbors[1] = ack->neighbors[1];
+        neighbors[2] = ack->neighbors[2];
+        neighbors[3] = ack->neighbors[3];
     }
 }
 

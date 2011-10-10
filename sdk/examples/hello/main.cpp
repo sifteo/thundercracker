@@ -13,53 +13,76 @@
 
 using namespace Sifteo;
 
-static Cube cube(0);
-static VidMode_BG0 vid(cube.vbuf);
+#ifndef NUM_CUBES
+#  define NUM_CUBES 1
+#endif
 
+static Cube cubes[] = { Cube(0), Cube(1) };
+static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf), VidMode_BG0(cubes[1].vbuf) };
 
 static void onAccelChange(_SYSCubeID cid)
 {
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
-    vid.BG0_textf(Vec2(2,4), Font, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
-    vid.BG0_setPanning(Vec2(-state.x/2, -state.y/2));
+    vid[cid].BG0_textf(Vec2(2,4), Font, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
+    vid[cid].BG0_setPanning(Vec2(-state.x/2, -state.y/2));
 }
 
 static void init()
 {
-    cube.enable();
-    cube.loadAssets(GameAssets);
+    for (unsigned i = 0; i < NUM_CUBES; i++) {
+        cubes[i].enable();
+        cubes[i].loadAssets(GameAssets);
 
-    VidMode_BG0_ROM rom(cube.vbuf);
-    rom.init();
-    rom.BG0_text(Vec2(1,1), "Loading...");
+        VidMode_BG0_ROM rom(cubes[i].vbuf);
+        rom.init();
+        rom.BG0_text(Vec2(1,1), "Loading...");
+    }
 
-    do {
-        rom.BG0_progressBar(Vec2(0,7), cube.assetProgress(GameAssets, vid.LCD_width), 2);
+    for (;;) {
+        bool done = true;
+
+        for (unsigned i = 0; i < NUM_CUBES; i++) {
+            VidMode_BG0_ROM rom(cubes[i].vbuf);
+            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+            if (!cubes[i].assetDone(GameAssets))
+                done = false;
+        }
+
         System::paint();
-    } while (!cube.assetDone(GameAssets));
 
-    vid.init();
+        if (done)
+            break;
+    }
+
+    for (unsigned i = 0; i < NUM_CUBES; i++) {
+        vid[i].init();
+    }
 }
 
 void siftmain()
 {
     init();
 
-    vid.BG0_text(Vec2(2,1), Font, "Hello World!");
-    vid.BG0_drawAsset(Vec2(1,10), Logo);
- 
     _SYS_vectors.accelChange = onAccelChange;
-    onAccelChange(cube.id());
+
+    for (unsigned i = 0; i < NUM_CUBES; i++) {
+        vid[i].BG0_text(Vec2(2,1), Font, "Hello World!");
+        vid[i].BG0_drawAsset(Vec2(1,10), Logo);
+        onAccelChange(cubes[i].id());
+    } 
 
     unsigned frame = 0;
     const unsigned rate = 2;
 
     while (1) {
         float t = System::clock();
-        vid.BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
-        
-        vid.BG0_drawAsset(Vec2(11,9), Kirby, frame >> rate);
+
+        for (unsigned i = 0; i < NUM_CUBES; i++) {
+            vid[i].BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
+            vid[i].BG0_drawAsset(Vec2(11,9), Kirby, frame >> rate);
+        }
+
         if (++frame == Kirby.frames << rate)
             frame = 0;
             

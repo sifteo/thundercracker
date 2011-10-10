@@ -1,25 +1,25 @@
 BIN = cube.ihx
 
 OBJS = \
-	graphics.rel \
-	lcd.rel \
-	radio.rel \
-	sensors.rel \
-	flash_hal.rel \
-	flash_decoder.rel \
-	main.rel \
-	time.rel \
-	draw.rel \
-	tilerom.rel \
-	demo.rel \
+        graphics.rel \
+        lcd.rel \
+        radio.rel \
+        sensors.rel \
+        flash_hal.rel \
+        flash_decoder.rel \
+        main.rel \
+        time.rel \
+        draw.rel \
+        tilerom.rel \
+        demo.rel \
 
 FIRMWARE_INC = ../include
 SDK_DIR = ../../sdk
 
 SDCC = sdcc
 CDEPS = *.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
-CFLAGS = -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
-LDFLAGS = --xram-size 1024 --code-size 16384
+CFLAGS += -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
+LDFLAGS += --xram-size 1024 --code-size 16384
 
 $(BIN): $(OBJS)
 	$(SDCC) -o $@ $(LDFLAGS) $(OBJS)
@@ -34,3 +34,4 @@ tilerom.c: tilerom/src-palettes.png tilerom/src-tiles.png tilerom/romgen.py
 
 clean:
 	rm -f *.mem *.rel *.rst *.sym *.lnk *.lst *.map *.asm
+

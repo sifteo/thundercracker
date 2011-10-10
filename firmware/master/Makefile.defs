@@ -7,14 +7,14 @@ RANLIB_STM32 = arm-none-eabi-ranlib
 
 UNAME := $(shell uname)
 
-ifneq ( $(findstr MINGW32_NT, $(UNAME)) , "" )  
+ifeq ($(findstring MINGW32_NT,$(UNAME)),MINGW32_NT)  
       UNAME := windows32
 endif
 
 ifeq ($(UNAME), windows32)
-	BIN_EXT = .exe
+        BIN_EXT = .exe
 else
-	BIN_EXT = 
+        BIN_EXT = 
 endif
 
 SDK_DIR = $(TC_DIR)/sdk
@@ -28,7 +28,7 @@ CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 # Only disable this for debugging! The -O2 flag is important, we use
 # a lot of C++ code that's written assuming it will be inlined. The
 # inlined code should end up being smaller due to constant folding.
-#CCFLAGS += -O2
+CCFLAGS += -O2
 
 # Also important: No C++ exception handling support!
 CCFLAGS += -fno-exceptions

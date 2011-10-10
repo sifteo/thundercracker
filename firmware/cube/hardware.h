@@ -30,26 +30,37 @@
 #define CTRL_DIR        P3DIR
 #define CTRL_CON        P3CON
 
-__sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
+__sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 
+#define MISC_NB_OUT1    (1 << 0)
+#define MISC_NB_OUT2    (1 << 1)
 #define MISC_I2C_SCL    (1 << 2)
 #define MISC_I2C_SDA    (1 << 3)
-#define MISC_BOOST      (1 << 7)
+#define MISC_TOUCH      (1 << 4)   // AIN12 and GPINT2
+#define MISC_NB_OUT3    (1 << 5)
+#define MISC_NB_IN      (1 << 6)   // T1 input
+#define MISC_NB_OUT4    (1 << 7)
 
 #define MISC_I2C        (MISC_I2C_SCL | MISC_I2C_SDA)
+#define MISC_NB_OUT     (MISC_NB_OUT1 | MISC_NB_OUT2 | MISC_NB_OUT3 | MISC_NB_OUT4)
 
-#define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_BOOST))
+#define MISC_NB_MASK0   (MISC_NB_OUT1 | MISC_NB_OUT2)
+#define MISC_NB_MASK1   (MISC_NB_OUT1 | MISC_NB_OUT3)
+
+#define MISC_DIR_VALUE  (~MISC_I2C_SCL)
 #define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)
 
 #define CTRL_LCD_DCX    (1 << 0)
 #define CTRL_FLASH_LAT1 (1 << 1)
 #define CTRL_FLASH_LAT2 (1 << 2)
+#define CTRL_3V3_EN     (1 << 3)
 #define CTRL_BACKLIGHT  (1 << 4)
 #define CTRL_FLASH_WE   (1 << 5)
 #define CTRL_FLASH_OE   (1 << 6)
 
 #define CTRL_DIR_VALUE  (~(CTRL_LCD_DCX | CTRL_FLASH_LAT1 | CTRL_FLASH_LAT2 | \
-                           CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT))
+                           CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT | \
+                           CTRL_3V3_EN ))
 
 #define CTRL_IDLE       (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_LCD_DCX)
 #define CTRL_FLASH_CMD  (CTRL_BACKLIGHT | CTRL_FLASH_OE | CTRL_LCD_DCX)
@@ -83,6 +94,12 @@ __sbit __at 0xA0 CTRL_LCD_TE;   // XXX: Hardware not ready for TE yet
         S0CON_TI0 = 0;                          \
         S0BUF = (_b);                           \
     }
+
+#define ASM_DEBUG_UART(_b)                      __endasm; \
+    __asm jnb   _S0CON_TI0, (.)                 __endasm; \
+    __asm clr   _S0CON_TI0                      __endasm; \
+    __asm mov   _S0BUF, _b                      __endasm; \
+    __asm
 
 /*
  * LCD Controller
@@ -177,7 +194,7 @@ __sfr __at 0x82 DPL;
 __sfr __at 0x83 DPH;
 __sfr __at 0x84 DPL1;
 __sfr __at 0x85 DPH1;
-__sfr __at 0x86 DEBUG;   // Simulator only
+__sfr __at 0x86 DEBUG_REG;   // Simulator only
 __sfr __at 0x87 PCON;
 __sfr __at 0x88 TCON;
 __sfr __at 0x89 TMOD;
@@ -291,6 +308,26 @@ __sbit __at 0x9c S0CON_REN0;
 __sbit __at 0x9d S0CON_SM20;
 __sbit __at 0x9e S0CON_SM1;
 __sbit __at 0x9f S0CON_SM0;
+
+// T2CON bits
+__sbit __at 0xc8 T2CON_T2I0;
+__sbit __at 0xc9 T2CON_T2I1;
+__sbit __at 0xca T2CON_T2CM;
+__sbit __at 0xcb T2CON_T2R0;
+__sbit __at 0xcc T2CON_T2R1;
+__sbit __at 0xcd T2CON_I2FR;
+__sbit __at 0xce T2CON_I3FR;
+__sbit __at 0xcf T2CON_T2PS;
+
+// TCON bits
+__sbit __at 0x88 TCON_IT0;
+__sbit __at 0x89 TCON_IE0;
+__sbit __at 0x8a TCON_IT1;
+__sbit __at 0x8b TCON_IE1;
+__sbit __at 0x8c TCON_TR0;
+__sbit __at 0x8d TCON_TF0;
+__sbit __at 0x8e TCON_TR1;
+__sbit __at 0x8f TCON_TF1;
 
 // IEN0 bits
 __sbit __at 0xA8 IEN_IFP;

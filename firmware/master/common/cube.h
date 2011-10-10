@@ -60,7 +60,7 @@ class CubeSlot {
 
     _SYSCubeID id() const {
         _SYSCubeID i = this - &instances[0];
-        ASSERT(i >= 0 && i < _SYS_NUM_CUBE_SLOTS);
+        ASSERT(i < _SYS_NUM_CUBE_SLOTS);
         STATIC_ASSERT(arraysize(instances) == _SYS_NUM_CUBE_SLOTS);
         return i;
     }
@@ -95,6 +95,14 @@ class CubeSlot {
         *state = accelState;
     }
 
+    void getRawNeighbors(uint8_t buf[4]) {
+        // XXX: Raw neighbor data for testing/demoing only
+        buf[0] = neighbors[0];
+        buf[1] = neighbors[1];
+        buf[2] = neighbors[2];
+        buf[3] = neighbors[3];
+    }
+
     _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
         /*
          * Safely return this cube's per-cube data on a particular
@@ -126,6 +134,9 @@ class CubeSlot {
     static void finishCubes(_SYSCubeIDVector cv);
 
  private:
+    // Limit on round-trip time
+    static const unsigned RTT_DEADLINE_MS = 250;
+    
     /*
      * Data buffers, provided by game code.
      *
@@ -144,9 +155,12 @@ class CubeSlot {
 
     _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
+    RadioAddress address;
 
-    SysTime::Ticks paintTimestamp;
+    SysTime::Ticks paintTimestamp;      // Used only by thread
+    SysTime::Ticks flashDeadline;       // Used only by ISR
     int32_t pendingFrames;
+    uint32_t timeSyncState;     // XXX: For the current time-sync hack
 
     // Packet encoder state
     CubeCodec codec;
@@ -154,6 +168,7 @@ class CubeSlot {
     // Byte variables
     uint8_t flashPrevACK;
     uint8_t framePrevACK;
+    uint8_t neighbors[4];       // XXX: Raw neighbor data for testing/demoing only
 
     // Sensors
     _SYSAccelState accelState;
