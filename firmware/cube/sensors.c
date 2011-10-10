@@ -24,11 +24,34 @@
 #define ADDR_SEARCH_INC         0x02    // Add this
 #define ADDR_SEARCH_MASK        0x2F    // And mask to this (Keep the 0x20 bit always)
 
+/*
+ * Parameters that affect the neighboring protocol. Some of these are
+ * baked in to some extent, and not easily changeable with
+ * #defines. But they're documented here anyway.
+ *
+ *  Timer period:    162.76 Hz   Overflow rate of 13-bit Timer 0 at clk/12)
+ *  Packet length:   16 bits     Long enough for one data byte and one check byte
+ *  # of timeslots:  32          Maximum number of supported cubes in master
+ *  Timeslot size:   192 us      Period is split evenly into 32 slots
+ *
+ * These parameters on their own would give us a maximum bit period of
+ * 12 us.  But that assumes that we can perfectly synchronize all
+ * cubes. The more margin we can give ourselves for timer drift and
+ * communication latency, the better. Our electronics seem to be able
+ * to handle pulses down to ~4 us, but it's also better not to push these
+ * limits.
+ *
+ * The other constraint on bit rate is that we need it to divide evenly
+ * into our clk/12 timebase (0.75 us).
+ */
+
+#define NB_BIT_COUNT    16
+#define NB_BIT_TICKS    12    // 9.0 us, in 0.75 us ticks
+
+
 uint8_t accel_addr = ADDR_SEARCH_START;
 uint8_t accel_state;
 uint8_t accel_x;
-
-uint8_t neighbor_capture;
 
 
 /*
@@ -236,10 +259,6 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
 {
     __asm
-        inc     _neighbor_capture
-        mov     TH1, #0xFF
-        mov     TL1, #0xFF
-        1$: sjmp 1$
         reti
     __endasm;
 }
@@ -255,6 +274,8 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
 void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
 {
     __asm
+ 
+        clr     _IR_TF2
         reti
     __endasm;
 }
@@ -263,25 +284,67 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
 void sensors_init()
 {
     /*
-     * I2C, for the accelerometer
+     * This is a maze of IRQs, all with very specific priority
+     * assignments.  Here's a quick summary:
      *
-     * This MUST be a high priority interrupt. Specifically, it
-     * must be higher priority than the RFIRQ. The RFIRQ can take
-     * a while to run, and it'll cause an underrun on I2C. Since
-     * there's only a one-byte buffer for I2C reads, this is fairly
-     * time critical.
+     *  - Prio 0 (lowest)
      *
-     * Currently we're using priority level 2.
+     *    Radio
+     *
+     *       This is a very long-running ISR. It really needs to be
+     *       just above the main thread in priority, but no higher.
+     *
+     *  - Prio 1 
+     *
+     *    Accelerometer (I2C)
+     *
+     *       I2C is somewhat time-sensitive, since we do need to
+     *       service it within a byte-period. But this is a fairly
+     *       long-timescale operation compared to our other IRQs, and
+     *       there's no requirement for predictable latency.
+     *
+     *  - Prio 2
+     *
+     *    Master clock (Timer 0)
+     *
+     *       We need to try our best to service Timer 0 with
+     *       predictable latency, within several microseconds, so that
+     *       we can reliably begin our neighbor transmit on-time. This
+     *       is what keeps us inside the timeslot that we were
+     *       assigned.
+     *
+     *       XXX: This isn't possible with Timer 0, since it shares a
+     *       priority level with the radio!
+     *
+     *  - Prio 3 (highest)
+     *
+     *    Neighbor pulse counter (Timer 1)
+     *
+     *       Absolutely must have low and predictable latency. We use
+     *       this timer to line up our bit clock with the received
+     *       bit, an operation that needs to be accurate down to just
+     *       a couple dozen clock cycles.
+     *
+     *    Neighbor bit TX/RX (Timer 2)
+     *
+     *       This is the timer we use to actually sample/generate bits.
+     *       It's our baud clock. Timing is critical for the same reasons
+     *       as above. (Luckily we should never have these two high-prio
+     *       interrupts competing. They're mutually exclusive)
+     */
+
+    /*
+     * I2C / 2Wire, for the accelerometer
      */
 
     INTEXP |= 0x04;             // Enable 2Wire IRQ -> iex3
     T2CON |= 0x40;              // iex3 rising edge
     IRCON = 0;                  // Clear any spurious IRQs from initialization
-    IP1 |= 0x04;                // Interrupt priority level 2.
+    IP0 |= 0x04;                // Interrupt priority level 1.
     IEN_SPI_I2C = 1;            // Global enable for SPI interrupts
 
     /*
-     * Timer0, for triggering sensor reads.
+     * Timer 0: master sensor period
      *
      * This is set up as a 13-bit counter, fed by Cclk/12.
      * It overflows at 16000000 / 12 / (1<<13) = 162.76 Hz
@@ -291,7 +354,7 @@ void sensors_init()
     IEN_TF0 = 1;                // Enable Timer 0 interrupt
 
     /*
-     * Neighbor pulse counter.
+     * Timer 1: neighbor pulse counter
      *
      * We use Timer 1 as a pulse counter in the neighbor receiver.
      * When we're idle, waiting for a new neighbor packet, we set the
@@ -300,11 +363,34 @@ void sensors_init()
      * received any pulses during that bit's time window.
      */     
 
-    TMOD = 0x50;                // Timer 1 is a 16-bit counter
+    TMOD |= 0x50;               // Timer 1 is a 16-bit counter
     TL1 = 0xff;                 // Overflow on the next pulse
     TH1 = 0xff;
     IP0 |= 0x08;                // Highest priority for TF1 interrupt
     IP1 |= 0x08;
     TCON |= 0x40;               // Timer 1 running
-    IEN_TF1 = 1;                // Enable IFP
+    IEN_TF1 = 1;                // Enable TF1 interrupt
+
+    /*
+     * Timer 2: neighbor bit period timer
+     *
+     * This is a very fast timer that we use during active reception
+     * or transmission of a neighbor packet. It accurately times out
+     * bit periods that we use for generating pulses or for sampling
+     * Timer 1.
+     *
+     * We need this to be on Timer 2, since at such a short period we
+     * really get a lot of benefit from having automatic reload.
+     *
+     * This timer begins stopped. We start it on-demand when we need
+     * to do a transmit or receive.
+     */     
+
+    CRCH = 0xff;                // Constant reload value
+    CRCL = 0x100 - NB_BIT_TICKS;
+    T2CON |= 0x10;              // Reload enabled
+    TH2 = 0xff;                 // TL2 is set as needed, but TH2 is constant
+    IP0 |= 0x20;                // Highest priority for TF2 interrupt
+    IP1 |= 0x20;
+    IEN_TF2_EXF2 = 1;           // Enable TF2 interrupt
 }
