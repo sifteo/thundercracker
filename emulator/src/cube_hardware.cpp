@@ -286,7 +286,7 @@ void Hardware::sfrWrite(CPU::em8051 *cpu, int reg)
         break;
 
     case REG_DEBUG:
-        printf("Debug: %02x\n", value);
+        printf("DEBUG<%p>: %02x\n", self, value);
         break;
 
     }
