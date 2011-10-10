@@ -12,17 +12,13 @@ using namespace Sifteo;
 static Cube cubes[] = { Cube(0), Cube(1) };
 static VidMode_BG0_ROM vid[] = { VidMode_BG0_ROM(cubes[0].vbuf), VidMode_BG0_ROM(cubes[1].vbuf) };
 
-void fillSide(int cube, int x, int y, int dx, int dy)
-{
-    static const uint16_t pattern[] = { 0x1145, 0x1148, 0x1144 };
-    int patternIndex = 0;
 
-    for (unsigned i = 0; i < 16; i++) {
-        vid[cube].BG0_putTile(Vec2(x,y), pattern[patternIndex]);
+void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
+{
+    for (unsigned i = 0; i < 14; i++) {
+        vid[cube].BG0_putTile(Vec2(x,y), filled ? 0x5ff : 0);
         x += dx;
         y += dy;
-        if (++patternIndex == arraysize(pattern))
-            patternIndex = 0;
     }
 }
 
@@ -60,10 +56,10 @@ void siftmain()
                              accel.x + 0x80,
                              accel.y + 0x80);
 
-            if (buf[0] & 0x80) fillSide(i, 0,  0,  1, 0);  // Top
-            if (buf[1] & 0x80) fillSide(i, 15, 0,  0, 1);  // Right
-            if (buf[2] & 0x80) fillSide(i, 0,  15, 1, 0);  // Bottom
-            if (buf[3] & 0x80) fillSide(i, 0,  0,  0, 1);  // Left
+            drawSide(i, buf[0] >> 7, 1,  0,  1, 0);  // Top
+            drawSide(i, buf[1] >> 7, 15, 1,  0, 1);  // Right
+            drawSide(i, buf[2] >> 7, 1,  15, 1, 0);  // Bottom
+            drawSide(i, buf[3] >> 7, 0,  1,  0, 1);  // Left
         }
 
         System::paint();
