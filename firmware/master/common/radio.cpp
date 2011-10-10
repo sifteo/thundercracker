@@ -73,7 +73,7 @@ void RadioManager::produce(PacketTransmission &tx)
     tx.log();
 }
 
-void RadioManager::acknowledge(const PacketBuffer &packet)
+void RadioManager::ackWithPacket(const PacketBuffer &packet)
 {
     CubeSlot &slot = CubeSlot::getInstance(fifoPop());
 
@@ -82,6 +82,12 @@ void RadioManager::acknowledge(const PacketBuffer &packet)
 
     if (slot.enabled())
         slot.radioAcknowledge(packet);
+}
+
+void RadioManager::ackEmpty()
+{
+    // The transmit succeeded, but there was no data in the ACK.
+    fifoPop();
 }
 
 void RadioManager::timeout()
