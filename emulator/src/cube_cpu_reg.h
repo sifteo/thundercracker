@@ -20,6 +20,8 @@ namespace Cube {
 #define PORT_T0         REG_P1
 #define PIN_T1          (1 << 6)
 #define PORT_T1         REG_P1
+#define PIN_T2          (1 << 7)
+#define PORT_T2         REG_P1
 
 enum SFR_REGS
 {

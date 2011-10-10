@@ -47,11 +47,18 @@ void handle_interrupts(em8051 *aCPU);
 static void timer_tick(em8051 *aCPU)
 {
     int increment;
-    bool tick12;
+    bool tick12, tick24;
     int v;
 
     if ((tick12 = (++aCPU->prescaler12 == 12)))
         aCPU->prescaler12 = 0;
+
+    if ((tick24 = (++aCPU->prescaler24 == 24)))
+        aCPU->prescaler24 = 0;
+
+    /*
+     * Timer 0 / Timer 1
+     */
 
     if ((aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0)) == (TMODMASK_M0_0 | TMODMASK_M1_0))
     {
@@ -124,8 +131,11 @@ static void timer_tick(em8051 *aCPU)
 
     }
 
-    {   // Timer/counter 0
-        
+    /*
+     * Timer 0
+     */
+
+    {        
         increment = 0;
         
         // Check if we're run enabled
@@ -203,8 +213,11 @@ static void timer_tick(em8051 *aCPU)
         }
     }
 
-    {   // Timer/counter 1 
-        
+    /*
+     * Timer 1
+     */
+
+    {        
         increment = 0;
 
         if (!(aCPU->mSFR[REG_TMOD] & TMODMASK_GATE_1) && 
@@ -280,6 +293,64 @@ static void timer_tick(em8051 *aCPU)
                 break;
             default: // disabled
                 break;
+            }
+        }
+    }
+
+    /*
+     * Timer 2
+     *
+     * XXX: Capture not implemented
+     * XXX: Reload from t2ex not implemented
+     */
+
+    {        
+        uint8_t t2con = aCPU->mSFR[REG_T2CON];
+
+        uint8_t nextT2 = aCPU->mSFR[PORT_T2] & PIN_T2;
+        bool t2Edge = aCPU->t2 && !nextT2;
+        aCPU->t2 = nextT2;
+
+        bool t2Clk = (t2con & 0x80) ? tick24 : tick12;
+
+        // Timer mode
+        switch (t2con & 0x03) {
+        case 0: increment = 0; break;
+        case 1: increment = t2Clk; break;
+        case 2: increment = t2Edge; break;
+        case 3: increment = t2Clk && nextT2; break;
+        }
+         
+        if (increment) {
+            v = aCPU->mSFR[REG_TL2];
+            v++;
+            aCPU->mSFR[REG_TL2] = v & 0xff;
+
+            if (v > 0xff) {
+                // TL2 overflowed
+                v = aCPU->mSFR[REG_TH2];
+                v++;
+                aCPU->mSFR[REG_TH2] = v & 0xff;
+
+                if (v > 0xff) {
+                    // TH2 overflowed, reload and set interrupt
+                    
+                    switch (t2con & 0x18) {
+
+                    case 0x10:  
+                        // Reload Mode 0
+                        aCPU->mSFR[REG_TL2] = aCPU->mSFR[REG_CRCL];
+                        aCPU->mSFR[REG_TH2] = aCPU->mSFR[REG_CRCH];
+                        break;                 
+
+                    case 0x18:
+                        // Reload Mode 1
+                        // XXX: Not implemented
+                        break;
+                    }
+                    
+                    aCPU->mSFR[REG_IRCON] |= IRCON_TF2;
+                }
             }
         }
     }

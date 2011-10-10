@@ -186,7 +186,7 @@ void build_main_view(CPU::em8051 *aCPU)
 
     spregbox = subwin(stdscr, 9, 43, 8, 37);
     box(spregbox,0,0);
-    mvwaddstr(spregbox, 0, 2, "TMOD-TCON--TH0-TL0--TH1-TL1--S0CON-P0CON");
+    mvwaddstr(spregbox, 0, 2, "TMOD-TCON--TMR0--TMR1--TMR2--S0CON-P0CON");
     mvwaddstr(spregbox, 7, 0, ">");
     mvwaddstr(spregbox, 7, 42, "<");
     spregoutput = subwin(spregbox, 7, 40, 9, 39);
@@ -580,13 +580,15 @@ void mainview_update(Cube::Hardware *cube)
                     history[hoffs + REG_IRCON]);
             wprintw(ioregoutput,"%s",temp);
 
-            sprintf(temp, "\n%02X   %02X    %02X  %02X   %02X  %02X   %02X   %02X",
+            sprintf(temp, "\n%02X   %02X    %02X%02X  %02X%02X  %02X%02X   %02X   %02X",
                 history[hoffs + REG_TMOD],
                 history[hoffs + REG_TCON],
                 history[hoffs + REG_TH0],
                 history[hoffs + REG_TL0],
                 history[hoffs + REG_TH1],
                 history[hoffs + REG_TL1],
+                history[hoffs + REG_TH2],
+                history[hoffs + REG_TL2],
                 history[hoffs + REG_S0CON],
                 history[hoffs + REG_P0CON]);
             wprintw(spregoutput, "%s", temp);

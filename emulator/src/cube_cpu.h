@@ -103,7 +103,9 @@ struct em8051
     uint8_t ifp;                // Last IFP state
     uint8_t t0;                 // Last T0 state
     uint8_t t1;                 // Last T1 state
+    uint8_t t2;                 // Last T2 state
     uint8_t prescaler12;        // 1/12 prescaler
+    uint8_t prescaler24;        // 1/24 prescaler
 
     struct {
         // Stored register values for sanity-checking ISRs
