@@ -428,7 +428,9 @@ void Frontend::draw()
 
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(proj);
-    glTranslatef(-viewCenter.x, -viewCenter.y, -zCamera-zPlane);
+    glTranslatef(-viewCenter.x, -viewCenter.y, -zCamera);
+    glScalef(1, 1, 1.0 / viewExtent);
+    glTranslatef(0, 0, -zPlane);
     glMatrixMode(GL_MODELVIEW);
 
     /*

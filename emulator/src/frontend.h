@@ -103,7 +103,7 @@ class FrontendCube {
     /*
      * Height of the cube, relative to SIZE
      */
-    static const float HEIGHT = 0.4;
+    static const float HEIGHT = 0.6;
 
     /*
      * The sensitive region for this cube's neighbor transceivers.
