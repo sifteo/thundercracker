@@ -60,6 +60,9 @@ void Neighbors::ioTick(CPU::em8051 &cpu)
      */
 
     if (driveEdge) {
+        // We can also hear ourself talk
+        inputs |= 1;
+
         for (unsigned mySide = 0; mySide < NUM_SIDES; mySide++) {
             uint8_t mySideBit = outPinLUT[mySide];
 
