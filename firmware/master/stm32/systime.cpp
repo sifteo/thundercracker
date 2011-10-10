@@ -10,7 +10,7 @@
 #include "hardware.h"
 #include "gpio.h"
 
-static const unsigned SYSTICK_HZ = (48000000 / 8);
+static const unsigned SYSTICK_HZ = (72000000 / 8);
 static const unsigned SYSTICK_IRQ_HZ = 10;
 static const uint32_t SYSTICK_RELOAD = (SYSTICK_HZ / SYSTICK_IRQ_HZ) - 1;
 

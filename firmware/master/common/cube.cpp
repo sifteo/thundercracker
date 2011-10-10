@@ -232,6 +232,25 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
                     Atomic::ClearLZ(flashResetWait, id());
             } else {
                 // Acknowledge FIFO bytes
+
+                /*
+                 * XXX: Since we can always lose ACK packets without
+                 *      warning, we could theoretically deadlock here,
+                 *      where we perpetually wait on an ACK that the
+                 *      cube has already sent. Since flash writes are
+                 *      somewhat pipelined, in practice we'd actually
+                 *      have to lose several ACKs in a row. But it
+                 *      could indeed happen. We should have a watchdog
+                 *      here, to assume FIFO has been drained (or
+                 *      explicitly request another flash ACK) if we've
+                 *      been waiting for more than some safe amount of
+                 *      time.
+                 *
+                 *      Alternatively, we could solve this on the cube
+                 *      end by having it send a longer-than-strictly-
+                 *      necessary ACK packet every so often.
+                 */
+
                 codec.flashAckBytes(loadACK);
             }
 

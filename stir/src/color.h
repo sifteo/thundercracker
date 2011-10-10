@@ -58,9 +58,6 @@ struct RGB565 {
         value = (r5 << 11) | (g6 << 5) | b5;
     }
 
-    // Make a slight (1 LSB) modification to the low byte
-    RGB565 wiggle() const;
-
     uint8_t red() const {
         /*
          * A good approximation is (r5 << 3) | (r5 >> 2), but this

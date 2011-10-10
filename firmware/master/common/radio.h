@@ -164,7 +164,8 @@ class RadioManager {
      */
 
     static void produce(PacketTransmission &tx);
-    static void acknowledge(const PacketBuffer &packet);
+    static void ackWithPacket(const PacketBuffer &packet);
+    static void ackEmpty();
     static void timeout();
 
  private:

@@ -259,9 +259,22 @@ static void Siftulator_recv()
 
         if (packet.ack) {
             self.retriesLeft = 0;
-            buf.len = packet.p.len;
-            buf.bytes = packet.p.payload;
-            RadioManager::acknowledge(buf);
+
+            /*
+             * We're allowed to send an empty ackWithPacket(), but our
+             * real radio driver makes a distinction between these
+             * cases, for a small efficiency boost. So mimic the
+             * hardware.
+             */
+
+            if (packet.p.len) {
+                buf.len = packet.p.len;
+                buf.bytes = packet.p.payload;
+                RadioManager::ackWithPacket(buf);
+            } else {
+                RadioManager::ackEmpty();
+            }
+
         } else {
             if (self.retriesLeft)
                 self.retriesLeft--;
