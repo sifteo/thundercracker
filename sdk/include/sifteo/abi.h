@@ -320,6 +320,9 @@ void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
 
+// XXX: Temporary for testing/demoing
+void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);
+
 void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf);
 void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr);
 void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf);

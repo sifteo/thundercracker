@@ -95,6 +95,14 @@ class CubeSlot {
         *state = accelState;
     }
 
+    void getRawNeighbors(uint8_t buf[4]) {
+        // XXX: Raw neighbor data for testing/demoing only
+        buf[0] = neighbors[0];
+        buf[1] = neighbors[1];
+        buf[2] = neighbors[2];
+        buf[3] = neighbors[3];
+    }
+
     _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
         /*
          * Safely return this cube's per-cube data on a particular
@@ -160,6 +168,7 @@ class CubeSlot {
     uint8_t flashPrevACK;
     uint8_t framePrevACK;
     uint8_t timeSyncState;      // XXX: For the current time-sync hack
+    uint8_t neighbors[4];       // XXX: Raw neighbor data for testing/demoing only
 
     // Sensors
     _SYSAccelState accelState;

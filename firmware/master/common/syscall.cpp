@@ -83,6 +83,13 @@ void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state)
         CubeSlot::instances[cid].getAccelState(state);
 }
 
+void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
+{
+    // XXX: Temporary for testing/demoing
+    if (Runtime::checkUserPointer(buf, sizeof buf) && CubeSlot::validID(cid))
+        CubeSlot::instances[cid].getRawNeighbors(buf);
+}
+
 void _SYS_vbuf_init(_SYSVideoBuffer *vbuf)
 {
     if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {

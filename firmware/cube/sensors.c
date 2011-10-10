@@ -33,7 +33,7 @@ uint8_t accel_x;
  * baked in to some extent, and not easily changeable with
  * #defines. But they're documented here anyway.
  *
- *  Timer period:    162.76 Hz   Overflow rate of 13-bit Timer 0 at clk/12)
+ *  Timer period:    162.76 Hz   Overflow rate of 13-bit Timer 0 at clk/12
  *  Packet length:   16 bits     Long enough for one data byte and one check byte
  *  # of timeslots:  32          Maximum number of supported cubes in master
  *  Timeslot size:   192 us      Period is split evenly into 32 slots
@@ -103,6 +103,9 @@ __bit nb_rx_mask_pending;           // We still need to do another RX mask bit
 
 // Neighbor state for the current Timer 0 period
 uint8_t __idata nb_instant_state[4];
+
+// State that we'd like to promote to the ACK packet, if we can verify it.
+uint8_t __idata nb_prev_state[4];
 
 
 /*
@@ -254,6 +257,9 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
     __asm
         push    acc
         push    psw
+        mov     psw, #0         ; Register bank 0
+        push    ar0
+        push    ar1
 
         ;--------------------------------------------------------------------
         ; Neighbor TX
@@ -287,6 +293,78 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 1$:
 
         ;--------------------------------------------------------------------
+        ; Neighbor Filtering
+        ;--------------------------------------------------------------------
+
+        ; Any valid neighbor packets we receive in this period are latched into
+        ; nb_instant_state by the RX code. Ideally we would get one packet from
+        ; each active neighbor per period. If we see any change from the current
+        ; ACK packet contents, make sure the new data stays stable before
+        ; propagating it into the ACK packet.
+        ;
+        ; This serves several purposes- debouncing the inputs, acting as a more
+        ; forgiving timeout for detecting de-neighboring, and smoothing over
+        ; any instantaneous radio glitches.
+
+        mov     r0, #_nb_instant_state
+2$:
+
+        mov     a, @r0          ; Read instant state...
+        mov     @r0, #0         ;   .. and clear quickly, in case we get preempted.
+        mov     r1, a
+
+        mov     a, r0           ; Now the previous state
+        add     a, #(_nb_prev_state - _nb_instant_state)
+        mov     r0, a
+
+        mov     a, @r0          ; Read previous state...
+        mov     @r0, ar1        ;   .. and overwrite it with its new value
+
+        xrl     a, r1           ; Does it match?
+        jz      3$
+
+        ; State does not match. Go back to instant_state and loop over the next side.
+
+        mov     a, r0
+        add     a, #(_nb_instant_state + 1 - _nb_prev_state)
+        mov     r0, a
+        cjne    a, #(_nb_instant_state + 4), 2$
+        sjmp    4$
+
+3$:     
+        ; State matches. Is it different than the ACK packet?
+
+        mov     a, r0
+        clr     c
+        add     a, #(_ack_data + RF_ACK_NEIGHBOR)
+        subb    a, #_nb_prev_state
+        mov     r0, a
+
+        mov     a, @r0          ; Only compare the actual neighbor-related bits
+        xrl     a, r1
+        anl     a, #(NB_ID_MASK | NB_FLAG_SIDE_ACTIVE)
+        jz      5$
+
+        ; Okay! We are actually making a difference here. Update the neighbor
+        ; bits in the ACK packet (leaving the other bits alone) and mark
+        ; the ack_len flags.
+
+        xrl     a, @r0
+        mov     @r0, a
+        orl     _ack_len, #RF_ACK_LEN_NEIGHBOR
+
+5$:     ; Loop to the next side
+
+        mov     a, r0
+        clr     c
+        add     a, #(_nb_instant_state + 1 - RF_ACK_NEIGHBOR)
+        subb    a, #_ack_data
+        mov     r0, a
+        cjne    a, #(_nb_instant_state + 4), 2$
+
+4$:
+
+        ;--------------------------------------------------------------------
         ; Accelerometer Sampling
         ;--------------------------------------------------------------------
 
@@ -307,6 +385,8 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
         ;--------------------------------------------------------------------
 
+        pop     ar1
+        pop     ar0
         pop     psw
         pop     acc
         reti

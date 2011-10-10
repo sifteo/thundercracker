@@ -262,6 +262,14 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             Event::setPending(Event::ACCEL_CHANGE);
         }
     }
+
+    if (packet.len >= offsetof(RF_ACKType, neighbors) + sizeof ack->neighbors) {
+        // XXX: Temporary for testing/demoing
+        neighbors[0] = ack->neighbors[0];
+        neighbors[1] = ack->neighbors[1];
+        neighbors[2] = ack->neighbors[2];
+        neighbors[3] = ack->neighbors[3];
+    }
 }
 
 void CubeSlot::radioTimeout()
