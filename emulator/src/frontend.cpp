@@ -29,35 +29,47 @@ void Frontend::init(System *_sys)
     SDL_WM_SetCaption("Thundercracker", NULL);
 
     /*
-     * Create cubes
+     * Create cubes in a grid. Height is the square root of the number
+     * of cubes, rounding down. For sizes up to 3 cubes, this produces
+     * a horizontal line layout. For larger layout, it gives us a square.
      */
 
-    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
-        // Put all the cubes in a line
-        float x =  ((sys->opt_numCubes - 1) * -0.5 + i) * FrontendCube::SIZE * 2.7;
+    gridH = sqrtf(sys->opt_numCubes);
+    gridW = (sys->opt_numCubes + gridH - 1) / gridH;
+    for (unsigned y = 0, cubeID = 0; y < gridH && cubeID < sys->opt_numCubes; y++)
+        for (unsigned x = 0; x < gridW && cubeID < sys->opt_numCubes; x++, cubeID++) {
+            const float spacing = FrontendCube::SIZE * 2.7;
+            cubes[cubeID].init(&sys->cubes[cubeID], world,
+                               ((gridW - 1) * -0.5 + x) * spacing,
+                               ((gridH - 1) * -0.5 + y) * spacing);
+        }
 
-        cubes[i].init(&sys->cubes[i], world, x, 0);
-    }
+    /*
+     * The view area should scale with number of cubes. So, scale the
+     * linear size of our view with the square root of the number of
+     * cubes. We don't just want to make sure they initially fit, but
+     * we want there to be a good amount of working space for
+     * manipulating the cubes.
+     *
+     * Special-case one cube, since you don't really need space to
+     * work with a single cube.
+     *
+     * In any case, these are resizable dynamically. It's just nice
+     * in everyone's best interest to pick sane defaults :)
+     */
+
+    if (sys->opt_numCubes > 1)
+        normalViewExtent = FrontendCube::SIZE * 2.5 * sqrtf(sys->opt_numCubes);
+    else
+        normalViewExtent = FrontendCube::SIZE * 1.4;
+
+    maxViewExtent = normalViewExtent * 10.0f;
 
     /*
      * Create the rest of the world
      */
 
-    float extent = normalViewExtent();
-    float extent2 = extent * 2.0f;
-
-    /*
-     * Very thick walls, so objects can't tunnel through them and
-     * escape the world.  Also, we want to be able to move the Y walls
-     * when we change aspect ratios...  and that may be a little less
-     * ugly if we have a strongish way to prevent objects from
-     * tunneling.
-     */
-
-    newStaticBox(extent2, 0, extent, extent2);               // X+
-    newStaticBox(-extent2, 0, extent, extent2);              // X-
-    yWalls[0] = newStaticBox(0, extent2, extent2, extent);   // Y+
-    yWalls[1] = newStaticBox(0, -extent2, extent2, extent);  // Y-
+    createWalls();
 
     /*
      * Listen for collisions. This is how we update our neighbor matrix.
@@ -66,10 +78,68 @@ void Frontend::init(System *_sys)
     world.SetContactListener(&contactListener);
 }
 
-b2Body *Frontend::newStaticBox(float x, float y, float hw, float hh)
+void Frontend::createWalls()
+{
+    /*
+     * Very thick walls, so objects can't tunnel through them and
+     * escape the world. The initial locations aren't important,
+     * we set those in moveWalls().
+     *
+     * Use kinematic boxes so that we can move them with velocity.
+     * This looks a lot nicer than SetTransform when the simulation is
+     * running!
+     */
+
+    float e = maxViewExtent;
+    float e2 = e * 2;
+
+    walls[0] = newKBox(0, 0, e, e2);  // X+
+    walls[1] = newKBox(0, 0, e, e2);  // X-
+    walls[2] = newKBox(0, 0, e2, e);  // Y+
+    walls[3] = newKBox(0, 0, e2, e);  // Y-
+}
+
+void Frontend::moveWalls(bool immediate)
+{
+    /*
+     * Our world is scaled such that the horizontal size is constant
+     * (unless changed by the user) but the vertical size changes
+     * depending on the window aspect ratio. We'll try to move the
+     * walls accordingly.
+     */
+
+    float yRatio = viewportHeight / (float)viewportWidth;
+    if (yRatio < 0.1)
+        yRatio = 0.1;
+
+    float x = maxViewExtent + normalViewExtent;
+    float y = maxViewExtent + normalViewExtent * yRatio;
+
+    if (immediate) {
+        walls[0]->SetTransform(b2Vec2( x,  0), 0);
+        walls[1]->SetTransform(b2Vec2(-x,  0), 0);
+        walls[2]->SetTransform(b2Vec2( 0,  y), 0);
+        walls[3]->SetTransform(b2Vec2( 0, -y), 0);
+    } else {
+        const float g = 4.0f;
+        pushBodyTowards(walls[0], b2Vec2( x,  0), g);
+        pushBodyTowards(walls[1], b2Vec2(-x,  0), g);
+        pushBodyTowards(walls[2], b2Vec2( 0,  y), g);
+        pushBodyTowards(walls[3], b2Vec2( 0, -y), g);
+    }
+}
+             
+void Frontend::pushBodyTowards(b2Body *b, b2Vec2 target, float gain)
+{
+    b->SetLinearVelocity(gain * (target - b->GetPosition()));
+}
+
+b2Body *Frontend::newKBox(float x, float y, float hw, float hh)
 {
     b2BodyDef bodyDef;
     bodyDef.position.Set(x, y);
+    bodyDef.type = b2_kinematicBody;
+    bodyDef.allowSleep = false;
     b2Body *body = world.CreateBody(&bodyDef);
 
     b2PolygonShape box;
@@ -184,19 +254,7 @@ bool Frontend::onResize(int width, int height)
     viewportWidth = width;
     viewportHeight = height;
     glViewport(0, 0, width, height);
-
-    /*
-     * Our world is scaled such that the horizontal size is constant,
-     * but the vertical size changes depending on the window aspect
-     * radio. We'll try to move the walls accordingly.
-     */
-
-    float yRatio = height / (float)width;
-    if (yRatio > 0.1) {
-        float yExtent2 = normalViewExtent() * (1.0f + yRatio);
-        yWalls[0]->SetTransform(b2Vec2(0, yExtent2), 0);
-        yWalls[1]->SetTransform(b2Vec2(0, -yExtent2), 0);
-    }
+    moveWalls(true);
 
     /*
      * Assume we totally lost the OpenGL context, and reallocate things.
@@ -231,8 +289,20 @@ void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
 
 void Frontend::onMouseDown(int button)
 {
+    if (button == 4) {
+        // Scroll up / zoom in
+        scaleViewExtent(0.9f);
+        return;
+    }
+
+    if (button == 5) {
+        // Scroll down / zoom out
+        scaleViewExtent(1.1f);
+        return;
+    }
+
     if (!mouseBody) {
-        mousePicker.test(world, mouseVec(normalViewExtent()));
+        mousePicker.test(world, mouseVec(normalViewExtent));
 
         if (mousePicker.mCube) {
             // This body represents the mouse itself now as a physical object
@@ -242,7 +312,7 @@ void Frontend::onMouseDown(int button)
             mouseDef.allowSleep = false;
             mouseBody = world.CreateBody(&mouseDef);
 
-            if ((button & 2) || (SDL_GetModState() & KMOD_SHIFT)) {
+            if (button == 3 || (SDL_GetModState() & KMOD_SHIFT)) {
                 /*
                  * If this was a right-click or shift-click, go into tilting mode
                  */
@@ -343,22 +413,7 @@ void Frontend::animate()
     const int positionIterations = 8;
 
     if (mouseIsPulling) {
-        /*
-         * We've attached a mouse body to the object we're
-         * dragging. Move the mouse body to the current mouse
-         * position. We don't want to just set the mouse position,
-         * since that will cause any resulting collisions to simulate
-         * incorrectly.
-         *
-         * The mouse velocity needs to be relatively high so that we
-         * can shake the cubes vigorously, but too high and it'll
-         * oscillate.
-         */
-
-        const float gain = 50.0f;
-
-        b2Vec2 mouse = mouseVec(normalViewExtent());
-        mouseBody->SetLinearVelocity(gain * (mouse - mouseBody->GetWorldCenter()));
+        pushBodyTowards(mouseBody, mouseVec(normalViewExtent), 50.0f);
     }
 
     if (mouseIsAligning) {
@@ -384,7 +439,7 @@ void Frontend::animate()
 
         if (mousePicker.mCube) {
             const float maxTilt = 80.0f;
-            b2Vec2 mouseDiff = mouseVec(normalViewExtent()) - mouseBody->GetWorldCenter();
+            b2Vec2 mouseDiff = mouseVec(normalViewExtent) - mouseBody->GetWorldCenter();
             b2Vec2 tiltTarget = (maxTilt / FrontendCube::SIZE) * mouseDiff; 
             tiltTarget.x = b2Clamp(tiltTarget.x, -maxTilt, maxTilt);
             tiltTarget.y = b2Clamp(tiltTarget.y, -maxTilt, maxTilt);        
@@ -406,9 +461,17 @@ void Frontend::animate()
 
         viewExtent += gain * (targetViewExtent() - viewExtent);
         viewCenter += gain * (targetViewCenter() - viewCenter);
+
+        moveWalls();
     }
 
     world.Step(timeStep, velocityIterations, positionIterations);
+}
+
+void Frontend::scaleViewExtent(float ratio)
+{
+    normalViewExtent = b2Clamp<float>(normalViewExtent * ratio,
+                                      FrontendCube::SIZE * 0.1, maxViewExtent);
 }
 
 void Frontend::draw()
@@ -498,17 +561,13 @@ float Frontend::zoomedViewExtent() {
     }
 }
 
-float Frontend::normalViewExtent() {
-    return FrontendCube::SIZE * (sys->opt_numCubes * 1.5);
-}
-
 float Frontend::targetViewExtent() {
-    return toggleZoom ? zoomedViewExtent() : normalViewExtent();
+    return toggleZoom ? zoomedViewExtent() : normalViewExtent;
 }    
 
 b2Vec2 Frontend::targetViewCenter() {
     // When zooming in/out, the pixel under the cursor stays the same.
-    return toggleZoom ? (mouseVec(normalViewExtent()) - mouseVec(targetViewExtent()))
+    return toggleZoom ? (mouseVec(normalViewExtent) - mouseVec(targetViewExtent()))
         : b2Vec2(0.0, 0.0);
 }
 

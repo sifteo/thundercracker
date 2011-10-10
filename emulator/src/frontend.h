@@ -184,11 +184,15 @@ class Frontend {
     void onMouseDown(int button);
     void onMouseUp(int button);
 
-    b2Body *newStaticBox(float x, float y, float hw, float hh);
+    void scaleViewExtent(float ratio);
+    void createWalls();
+    void moveWalls(bool immediate=false);
+    void pushBodyTowards(b2Body *b, b2Vec2 target, float gain);
+
+    b2Body *newKBox(float x, float y, float hw, float hh);
     unsigned cubeID(FrontendCube *cube);
 
     float zoomedViewExtent();
-    float normalViewExtent();
     float targetViewExtent();
     b2Vec2 targetViewCenter();
     b2Vec2 mouseVec(float viewExtent);
@@ -202,12 +206,15 @@ class Frontend {
 
     int viewportWidth, viewportHeight;
     int mouseX, mouseY;
+    unsigned gridW, gridH;
 
     float viewExtent;
+    float normalViewExtent;
+    float maxViewExtent;
     b2Vec2 viewCenter;
 
     b2World world;
-    b2Body *yWalls[2];
+    b2Body *walls[4];
 
     b2Body *mouseBody;
     b2RevoluteJoint *mouseJoint;
