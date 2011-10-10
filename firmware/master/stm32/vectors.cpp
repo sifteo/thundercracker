@@ -12,11 +12,12 @@
  */
 
 #include "vectors.h"
+#include "debug.h"
 
 extern unsigned _stack;
 
 IRQ_HANDLER ISR_Default() {
-    /* Do nothing */
+    Debug::log("Unexpected IRQ");
 }
 
 IRQ_HANDLER ISR_DefaultTrap() {
@@ -24,13 +25,13 @@ IRQ_HANDLER ISR_DefaultTrap() {
     while (1);
 }
 
-#pragma weak ISR_NMI = ISR_Default
+#pragma weak ISR_NMI = ISR_DefaultTrap
 #pragma weak ISR_HardFault = ISR_DefaultTrap
-#pragma weak ISR_MemManage = ISR_Default
+#pragma weak ISR_MemManage = ISR_DefaultTrap
 #pragma weak ISR_BusFault = ISR_DefaultTrap
 #pragma weak ISR_UsageFault = ISR_DefaultTrap
-#pragma weak ISR_SVCall = ISR_Default
-#pragma weak ISR_Debug = ISR_Default
+#pragma weak ISR_SVCall = ISR_DefaultTrap
+#pragma weak ISR_Debug = ISR_DefaultTrap
 #pragma weak ISR_PendSV = ISR_Default
 #pragma weak ISR_SysTick = ISR_Default
 #pragma weak ISR_WWDG = ISR_Default
