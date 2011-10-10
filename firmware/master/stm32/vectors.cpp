@@ -16,22 +16,35 @@
 
 extern unsigned _stack;
 
-IRQ_HANDLER ISR_Default() {
-    Debug::log("Unexpected IRQ");
-}
+#define HANDLER_LOG(name)                                  \
+    IRQ_HANDLER name() {                                   \
+        Debug::log("Unexpected IRQ (" #name ")");          \
+    }
 
-IRQ_HANDLER ISR_DefaultTrap() {
-    /* XXX: Do something less power-hungry, like rebooting or halting. */
-    while (1);
-}
+// XXX: Do something less bad on non-debug builds
+#define HANDLER_LOG_HALT(name)                              \
+    IRQ_HANDLER name() {                                    \
+        Debug::log("Unexpected IRQ (" #name "), halting");  \
+        while (1);                                          \
+    }
 
-#pragma weak ISR_NMI = ISR_DefaultTrap
-#pragma weak ISR_HardFault = ISR_DefaultTrap
-#pragma weak ISR_MemManage = ISR_DefaultTrap
-#pragma weak ISR_BusFault = ISR_DefaultTrap
-#pragma weak ISR_UsageFault = ISR_DefaultTrap
-#pragma weak ISR_SVCall = ISR_DefaultTrap
-#pragma weak ISR_Debug = ISR_DefaultTrap
+HANDLER_LOG(ISR_Default);
+
+HANDLER_LOG_HALT(ISR_DefaultNMI);
+HANDLER_LOG_HALT(ISR_DefaultHardFault);
+HANDLER_LOG_HALT(ISR_DefaultMemManage);
+HANDLER_LOG_HALT(ISR_DefaultBusFault);
+HANDLER_LOG_HALT(ISR_DefaultUsageFault);
+HANDLER_LOG_HALT(ISR_DefaultSVCall);
+HANDLER_LOG_HALT(ISR_DefaultDebug);
+
+#pragma weak ISR_NMI = ISR_DefaultNMI
+#pragma weak ISR_HardFault = ISR_DefaultHardFault
+#pragma weak ISR_MemManage = ISR_DefaultMemManage
+#pragma weak ISR_BusFault = ISR_DefaultBusFault
+#pragma weak ISR_UsageFault = ISR_DefaultUsageFault
+#pragma weak ISR_SVCall = ISR_DefaultSVCall
+#pragma weak ISR_Debug = ISR_DefaultDebug
 #pragma weak ISR_PendSV = ISR_Default
 #pragma weak ISR_SysTick = ISR_Default
 #pragma weak ISR_WWDG = ISR_Default
