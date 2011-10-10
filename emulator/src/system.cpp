@@ -89,13 +89,17 @@ int System::threadFn(void *param)
         Cube::Debug::init(&self->cubes[0]);
 
     while (self->threadRunning) {
-        unsigned batch = self->time.timestepTicks();
-
         if (debug) {
-            bool tick0 = false;
+            /*
+             * Debug loop. Handle breakpoints, exceptions, debug UI updates.
+             * When debugging, the timestep may change dynamically.
+             */
 
-            while (batch--) {
-                tick0 |= self->cubes[0].tick();
+            bool tick0 = false;
+            Cube::Hardware &debugCube = self->cubes[0];
+
+            for (unsigned t = 0; t < self->time.timestepTicks(); t++) {
+                tick0 |= debugCube.tick();
                 for (unsigned i = 1; i < nCubes; i++)
                     self->cubes[i].tick();
                 self->tick();
@@ -107,6 +111,9 @@ int System::threadFn(void *param)
             }
 
         } else {
+            // Faster loop for the non-debug case
+                     
+            unsigned batch = self->time.timestepTicks();
             while (batch--) {
                 for (unsigned i = 0; i < nCubes; i++)
                     self->cubes[i].tick();
