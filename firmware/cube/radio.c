@@ -241,11 +241,11 @@ no_state_reset:
         ; this was a spurious interrupt and we need to get out now. This can
         ; happen if a packet arrived at just the wrong spot in a previous ISR,
         ; after the IRQ flag has already been cleared by hardware but before
-        ; we've removed the packet.
+        ; we have removed the packet.
         ;
         ; This is similar but not identical to the STATUS check at the bottom
         ; of this loop. In that one, we still want to send an ACK, since we know
-        ; that at least one packet was processed. Here we're detecting spurious
+        ; that at least one packet was processed. Here we are detecting spurious
         ; IRQs, and we do NOT want to send an ACK if we get one.
 
         orl     a, #0xF1                        ; Set all bits that we have no interest in
@@ -342,6 +342,17 @@ rx_loop:                                        ; Fetch the next byte or nybble
         jmp     @a+dptr 
 
         ;-------------------------------------------
+        ; 4-bit diff (continued from below)
+        ;-------------------------------------------
+
+rxs_diff_2:
+        mov     R_DIFF, a
+        mov     R_LOW, #0
+        lcall   #_rx_write_deltas
+        sjmp    #rx_next_sjmp
+
+
+        ;-------------------------------------------
         ; Default state (initial nybble)
         ;-------------------------------------------
 
@@ -396,10 +407,10 @@ rx_next_sjmp:
         ;-------------------------------------------
 
 rxs_diff_1:
-        mov     AR_DIFF, R_INPUT
-        mov     R_LOW, #0
-        lcall   #_rx_write_deltas
-        sjmp    #rx_next_sjmp
+        mov     a, R_INPUT
+        anl     a, #0xF
+        cjne    a, #7, rxs_diff_2
+        ljmp    rx_special              ; Redundant copy encoding, special meaning
 
         ;-------------------------------------------
         ; Literal 14-bit index
@@ -464,7 +475,7 @@ rxs_rle:
 
         anl     AR_LOW, #0xF            ; Only the low nybble is part of the valid run length
         lcall   #_rx_write_deltas
-        sjmp    rxs_default             ; Re-process this nybble starting from the default state
+        ljmp    rxs_default             ; Re-process this nybble starting from the default state
 
 13$:
         mov     a, R_LOW        ; Check low two bits of the _first_ RLE nybble
@@ -634,6 +645,31 @@ rxs_wrdelta_1_fragment:
         lcall   #_rx_write_deltas
         sjmp    #rx_next_sjmp2
 
+
+        ;--------------------------------------------------------------------
+        ; Special codes (8-bit copy encoding)
+        ;--------------------------------------------------------------------
+
+rx_special:
+
+        ; -------- 1000 0111 <LOW> <HIGH> -- Sensor timer sync escape
+
+        anl     AR_SAMPLE, #3
+        cjne    R_SAMPLE, #0, 1$
+
+        clr     _TCON_TR0                       ; Stop timer
+        mov     TL0, _SPIRDAT                   ; Low byte
+        mov     _SPIRDAT, #0
+        SPI_WAIT
+        mov     TH0, _SPIRDAT                   ; High byte
+        mov     _SPIRDAT, #0
+        setb    _TCON_TR0                       ; Restart timer
+1$:
+
+        ; -------- 
+
+        sjmp    rx_complete
+
         ;--------------------------------------------------------------------
         ; Flash FIFO Write
         ;--------------------------------------------------------------------
@@ -696,6 +732,7 @@ rx_flash_reset:
         ;--------------------------------------------------------------------
 
 rx_complete:
+        SPI_WAIT
         mov     a, _SPIRDAT     ; Throw away one extra dummy byte
 rx_complete_0:
         setb    _RF_CSN         ; End SPI transaction

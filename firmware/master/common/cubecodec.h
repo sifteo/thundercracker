@@ -132,6 +132,21 @@ class CubeCodec {
             }
         }
     }
+
+    void timeSync(PacketBuffer &buf, uint16_t rawTimer) {
+        /*
+         * Timer synchronization escape. This sends the sync escape,
+         * plus a dummy nybble to force a flush if necessary. We then
+         * send the new raw 13-bit time synchronization value. This
+         * must be the last code in the packet.
+         */
+
+        txBits.append(0xF78, 12);
+        txBits.flush(buf);
+        txBits.init();
+        buf.append(rawTimer & 0x1F);    // Low 5 bits
+        buf.append(rawTimer >> 5);      // High 8 bits
+    }
     
  private:
     // Try to keep these ordered to minimize padding...

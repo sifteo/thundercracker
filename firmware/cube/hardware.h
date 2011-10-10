@@ -316,6 +316,16 @@ __bit __at 0xcd T2CON_I2FR;
 __bit __at 0xce T2CON_I3FR;
 __bit __at 0xcf T2CON_T2PS;
 
+// TCON bits
+__bit __at 0x88 TCON_IT0;
+__bit __at 0x89 TCON_IE0;
+__bit __at 0x8a TCON_IT1;
+__bit __at 0x8b TCON_IE1;
+__bit __at 0x8c TCON_TR0;
+__bit __at 0x8d TCON_TF0;
+__bit __at 0x8e TCON_TR1;
+__bit __at 0x8f TCON_TF1;
+
 // IEN0 bits
 __sbit __at 0xA8 IEN_IFP;
 __sbit __at 0xA9 IEN_TF0;

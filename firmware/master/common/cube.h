@@ -159,6 +159,7 @@ class CubeSlot {
     // Byte variables
     uint8_t flashPrevACK;
     uint8_t framePrevACK;
+    uint8_t timeSyncState;      // XXX: For the current time-sync hack
 
     // Sensors
     _SYSAccelState accelState;

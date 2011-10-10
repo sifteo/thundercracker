@@ -104,7 +104,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     tx.dest = &address;
     tx.packet.len = 0;
 
-    // First priority: Send video buffer updates.
+    // First priority: Send video buffer updates
 
     codec.encodeVRAM(tx.packet, vbuf);
 
@@ -157,6 +157,38 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                 Event::setPending(Event::ASSET_DONE);
             }
         }
+    }
+
+    /*
+     * Third priority: Sensor time synchronization
+     *
+     * XXX: Time syncs are kind of special.  We use them to assign
+     *      each cube to a different timeslice of our sensor polling
+     *      period, allowing the neighbor sensors to cooperate via
+     *      time division multiplexing. The packet itself is a short
+     *      (3 byte) and simple packet which simply adjusts the phase
+     *      of the cube's sensor timer.
+     *
+     *      We'll need to do some work on the master to calculate this
+     *      phase by using the current time plus an estimate of radio
+     *      latency. We'll also want to disable hardware retries on
+     *      these packets, so that we always have the best possible
+     *      control over our latency.
+     *
+     *      But for now, we have few enough cubes that this doesn't
+     *      really matter.  We just want the cubes to not all transmit
+     *      at once. So, just reset their clocks every N radio
+     *      packets. The normal round-robin scheduling we do on the
+     *      radio will do a reasonable job of keeping them in separate
+     *      timeslots.
+     */
+
+    if (timeSyncState)  {
+        timeSyncState--;
+    } else if (tx.packet.len == 0) {
+        timeSyncState = 100;
+        codec.timeSync(tx.packet, 0x0000);
+        return true;
     }
 
     // Finalize this packet. Must be last.

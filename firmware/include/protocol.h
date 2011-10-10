@@ -142,11 +142,13 @@
  *
  * These codes are encoded in a slightly more complex way. First of
  * all, we have a reserved region of the diff codes, which are
- * redundant encodings for the 4-bit 'copy' code. Currently the decoder
- * doesn't treat these any differently from a copy, but the encoder should
- * never produce them:
+ * redundant encodings for the 4-bit 'copy' code:
  *
- *   10xx 0111             Reserved for future use
+ *   1000 0111             Sensor timer sync escape
+ *
+ *   1001 0111             Reserved for future use
+ *   1010 0111             Reserved for future use
+ *   1011 0111             Reserved for future use
  *
  * Next, the RLE codes. These begin with a 4-bit code that repeats the
  * last primary code. However, consecutive copies of this repeat code
@@ -185,6 +187,15 @@
  * Resets happen asynchronously, and are acknowledged by a one-byte
  * increment in the flash decoder's progress counter. No data should
  * be written to the decoder until the reset has been acknowledged.
+ *
+ *  IV. Sensor timer sync escape
+ *
+ * Like the Flash Escape, this switches from nybble mode to byte mode,
+ * and consumes the remainder of the packet. In this case, only two
+ * bytes are read, and the rest of the packet, if any, is discarded.
+ *
+ * These two bytes are used as a reload value for the master sensor
+ * clock, which is momentarily stopped and restarted.
  */
 
 #define RF_VRAM_MAX_RUN    (0x3F + 5)
