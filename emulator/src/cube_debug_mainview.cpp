@@ -34,7 +34,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <curses.h>
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #include "cube_debug.h"
 

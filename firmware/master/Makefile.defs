@@ -7,7 +7,7 @@ RANLIB_STM32 = arm-none-eabi-ranlib
 
 UNAME := $(shell uname)
 
-ifneq ($(findstr MINGW32_NT,$(UNAME)),)  
+ifeq ($(findstring MINGW32_NT,$(UNAME)),MINGW32_NT)  
       UNAME := windows32
 endif
 

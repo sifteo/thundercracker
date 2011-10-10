@@ -146,7 +146,8 @@ const char *em8051_exc_name(int aCode);
 
 enum EM8051_EXCEPTION
 {
-    EXCEPTION_BREAKPOINT = 0,
+    //EXCEPTION_BREAKPOINT = 0,  //eric - changing this to avoid collision with a windows #define
+	EXCEPTION_BREAK = 0,  //eric - changing the name to avoid collision with a windows #define
     EXCEPTION_STACK,  // stack address > 127 with no upper memory, or roll over
     EXCEPTION_ACC_TO_A, // acc-to-a move operation; illegal (acc-to-acc is ok, a-to-acc is ok..)
     EXCEPTION_IRET_PSW_MISMATCH, // psw not preserved over interrupt call (doesn't care about P, F0 or UNUSED)

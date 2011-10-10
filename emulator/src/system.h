@@ -14,7 +14,7 @@
 #ifndef _SYSTEM_H
 #define _SYSTEM_H
 
-#include <SDL/SDL_thread.h>
+#include <SDL_thread.h>
 #include "vtime.h"
 #include "cube_hardware.h"
 #include "system_network.h"
