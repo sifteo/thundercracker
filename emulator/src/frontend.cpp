@@ -208,6 +208,7 @@ bool Frontend::onResize(int width, int height)
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
+    glPolygonOffset(0, -1);
 
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
         cubes[i].initGL();
@@ -429,7 +430,7 @@ void Frontend::draw()
     float zPlane = FrontendCube::SIZE * FrontendCube::HEIGHT;
     float zCamera = 5.0f;
     float zNear = 0.1f;
-    float zFar = 100.0f;
+    float zFar = 10.0f;
     float zDepth = zFar - zNear;
     
     GLfloat proj[16] = {
@@ -479,12 +480,21 @@ void Frontend::draw()
 }
 
 float Frontend::zoomedViewExtent() {
+    /*
+     * Default scaling uses the X axis, but here we want to make sure
+     * the whole of a cube is visible, as applicable. So, scale using
+     * whichever axis is smaller.
+     */
+
+    float scale = (viewportHeight < viewportWidth)
+        ? viewportWidth / (float) viewportHeight : 1.0f;
+        
     if (sys->opt_numCubes > 1) {
         // Zoom in one one cube
-        return FrontendCube::SIZE * 1.1;
+        return scale * FrontendCube::SIZE * 1.1;
     } else {
         // High zoom on our one and only cube
-        return FrontendCube::SIZE * 0.2;
+        return scale * FrontendCube::SIZE * 0.2;
     }
 }
 

@@ -155,7 +155,6 @@ void FrontendCube::initGL()
      */
     const float height = HEIGHT;
     const float round = 0.05;
-    const float epsilon = 0.01;
 
     static const GLfloat vaSides[] = {
         -1+round, -1,       0,
@@ -190,10 +189,10 @@ void FrontendCube::initGL()
     };
 
     static const GLfloat vaLcd[] = {
-        0, 1,  -1,  1, height + epsilon,
-        1, 1,   1,  1, height + epsilon,
-        0, 0,  -1, -1, height + epsilon,
-        1, 0,   1, -1, height + epsilon,
+        0, 1,  -1,  1, height,
+        1, 1,   1,  1, height,
+        0, 0,  -1, -1, height,
+        1, 0,   1, -1, height,
     };
 
     /*
@@ -297,9 +296,11 @@ void FrontendCube::initGL()
         glDisable(GL_TEXTURE_2D);
     }
 
+    glEnable(GL_POLYGON_OFFSET_FILL);
     glScalef(LCD_SIZE, LCD_SIZE, 1.0f);
     glInterleavedArrays(GL_T2F_V3F, 0, vaLcd);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
 void FrontendCube::setTiltTarget(b2Vec2 angles)
