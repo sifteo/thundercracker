@@ -24,6 +24,10 @@
 #define ADDR_SEARCH_INC         0x02    // Add this
 #define ADDR_SEARCH_MASK        0x2F    // And mask to this (Keep the 0x20 bit always)
 
+uint8_t accel_addr = ADDR_SEARCH_START;
+uint8_t accel_state;
+uint8_t accel_x;
+
 /*
  * Parameters that affect the neighboring protocol. Some of these are
  * baked in to some extent, and not easily changeable with
@@ -43,15 +47,22 @@
  *
  * The other constraint on bit rate is that we need it to divide evenly
  * into our clk/12 timebase (0.75 us).
+ *
+ * To ensure that we stay within our timeslot even if we can't begin
+ * transmitting immediately, we have a deadline, measured in Timer 0
+ * ticks (clk/12). The maximum value of this deadline is our timeslot
+ * size minus the packet length. But we'll make it a little bit
+ * shorter still, so that we preserve our margin for radio latency.
  */
 
 #define NB_BIT_COUNT    16
-#define NB_BIT_TICKS    12    // 9.0 us, in 0.75 us ticks
+#define NB_BIT_TICKS    12	// 9.0 us, in 0.75 us ticks
+#define NB_DEADLINE     42	// 31.5 us (Max 48 us)
 
-
-uint8_t accel_addr = ADDR_SEARCH_START;
-uint8_t accel_state;
-uint8_t accel_x;
+uint8_t nb_bits_remaining;	// Bit counter for transmit or receive
+uint16_t nb_buffer;		// Packet shift register for TX/RX
+uint16_t nb_tx_packet;		// The packet we're broadcasting
+__bit nb_tx_mode;		// We're in the middle of an active transmission
 
 
 /*
@@ -201,20 +212,36 @@ as_ret:
 void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 {
     __asm
+	push	acc
+	push	psw
 
         ;--------------------------------------------------------------------
         ; Neighbor TX
         ;--------------------------------------------------------------------
 
-        ; XXX fake
+	; Start transmitting the next neighbor packet, assuming we
+	; have not already missed our chance due to interrupt latency.
+	;
+	; XXX: This is mostly only necessary because we currently run at
+	;      the same prio as RFIRQ. Suck. See the priority discussion
+	;      below, there may be a way to work around this by using a
+	;      different time source.
 
-        orl     MISC_PORT, #MISC_NB_OUT
-        anl     _MISC_DIR, #~MISC_NB_OUT
-        nop
-        nop
-        nop
-        nop
-        orl     _MISC_DIR, #MISC_NB_OUT
+	mov    a, TH0
+	jnz    1$
+	mov    a, TL0
+	addc   a, #(0x100 - NB_DEADLINE)
+	jc     1$
+
+	; Okay, there is still time! Start the TX IRQ.
+	
+	mov	_nb_buffer, _nb_tx_packet
+	mov	(_nb_buffer + 1), (_nb_tx_packet + 1)
+	mov	_nb_bits_remaining, #NB_BIT_COUNT
+	mov	_TL2, #(0x100 - NB_BIT_TICKS)
+	setb	_T2CON_T2I0
+
+1$:
 
         ;--------------------------------------------------------------------
         ; Accelerometer Sampling
@@ -235,6 +262,10 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         mov     _W2CON1, #0               ;   Unmask interrupt
         mov     _W2DAT, _accel_addr       ; Trigger the next I2C transaction
 
+        ;--------------------------------------------------------------------
+
+	pop	psw
+	pop	acc
         reti
     __endasm;
 }
@@ -274,9 +305,60 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
 void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
 {
     __asm
+	push	acc
+	push	psw
+	
+   	jb	_nb_tx_mode, nb_tx
  
-        clr     _IR_TF2
+        ;--------------------------------------------------------------------
+        ; Neighbor Bit Receive
+        ;--------------------------------------------------------------------
+
+
+	sjmp	nb_done
+
+        ;--------------------------------------------------------------------
+        ; Neighbor Bit Transmit
+        ;--------------------------------------------------------------------
+
+nb_tx:
+
+	; We are shifting one bit out of a 16-bit register, then transmitting
+	; a timed pulse if it's a 1. Since we'll be busy-waiting on the pulse
+	; anyway, we organize this code so that we can start the pulse ASAP,
+	; and perform the rest of our shift while we're waiting.
+
+	mov	a, _nb_buffer			; Just grab the MSB and test it
+	rlc	a
+	jnc	2$
+
+	orl	MISC_PORT, #MISC_NB_OUT		; Port state to High
+	anl	_MISC_DIR, #~MISC_NB_OUT	; Drive the LC tank
+2$:
+
+	mov	a, (_nb_buffer + 1)		; Now do a proper 16-bit shift
+	rlc	a
+	mov	(_nb_buffer + 1), a
+	mov	a, _nb_buffer
+	rlc	a
+	mov	_nb_buffer, a
+
+	orl	_MISC_DIR, #MISC_NB_OUT		; Let the tank float
+
+        ;--------------------------------------------------------------------
+
+nb_done:
+
+	djnz	_nb_bits_remaining, 1$		; More bits left?
+	clr	_T2CON_T2I0			; Nope. Disable the IRQ
+1$:
+
+	clr     _IR_TF2				; Must ack IRQ (TF2 is not auto-clear)
+
+	pop	psw
+	pop	acc
         reti
+
     __endasm;
 }
 
@@ -393,4 +475,10 @@ void sensors_init()
     IP0 |= 0x20;                // Highest priority for TF2 interrupt
     IP1 |= 0x20;
     IEN_TF2_EXF2 = 1;           // Enable TF2 interrupt
+
+    /*
+     * XXX: Build a neighbor packet
+     */
+
+    nb_tx_packet = 0xF055;
 }

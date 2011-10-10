@@ -306,6 +306,16 @@ __sbit __at 0x9d S0CON_SM20;
 __sbit __at 0x9e S0CON_SM1;
 __sbit __at 0x9f S0CON_SM0;
 
+// T2CON bits
+__bit __at 0xc8 T2CON_T2I0;
+__bit __at 0xc9 T2CON_T2I1;
+__bit __at 0xca T2CON_T2CM;
+__bit __at 0xcb T2CON_T2R0;
+__bit __at 0xcc T2CON_T2R1;
+__bit __at 0xcd T2CON_I2FR;
+__bit __at 0xce T2CON_I3FR;
+__bit __at 0xcf T2CON_T2PS;
+
 // IEN0 bits
 __sbit __at 0xA8 IEN_IFP;
 __sbit __at 0xA9 IEN_TF0;
