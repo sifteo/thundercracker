@@ -57,13 +57,14 @@ Tile::Tile(const TileOptions &opt, uint8_t *rgba, size_t stride)
                 // Pixel is actually transparent
                 *dest = CHROMA_KEY;
             }
-            else if ((color.value & 0xFF) == (CHROMA_KEY & 0xFF)) {
+            else if ((color.value & 0xFF00) == (CHROMA_KEY & 0xFF00)) {
                 /*
                  * Pixel isn't transparent, but it would look like
                  * the chromakey to our firmware's 8-bit comparison.
-                 * Modify the color slightly.
+                 * Modify the color slightly (toggle the red LSB).
                  */
-                *dest = color.wiggle();
+
+                *dest = (uint16_t)(color.value ^ (1 << 11));
             }
             else {
                 // Opaque pixel
