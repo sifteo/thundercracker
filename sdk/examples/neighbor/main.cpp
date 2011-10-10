@@ -16,7 +16,7 @@ static VidMode_BG0_ROM vid[] = { VidMode_BG0_ROM(cubes[0].vbuf), VidMode_BG0_ROM
 void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
 {
     for (unsigned i = 0; i < 14; i++) {
-        vid[cube].BG0_putTile(Vec2(x,y), filled ? 0x5ff : 0);
+        vid[cube].BG0_putTile(Vec2(x,y), filled ? 0x9ff : 0);
         x += dx;
         y += dy;
     }
