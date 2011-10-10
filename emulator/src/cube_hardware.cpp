@@ -334,6 +334,11 @@ void Hardware::setAcceleration(float xG, float yG)
     i2c.accel.setVector(x, y);
 }
 
+void Hardware::setTouch(float amount)
+{
+    /* XXX: Model this as a capacitance applied to the ADC */
+}
+
 bool Hardware::isDebugging()
 {
     return this == Cube::Debug::cube;

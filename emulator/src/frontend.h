@@ -73,6 +73,10 @@ class FrontendCube {
     void updateNeighbor(bool touching, unsigned mySide,
                         unsigned otherSide, unsigned otherCube);
 
+    void setTouch(float amount) {
+        hw->setTouch(amount);
+    }
+
     b2Body *body;
 
     /*

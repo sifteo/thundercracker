@@ -240,9 +240,29 @@ void Frontend::onMouseDown(int button)
                 
                 b2Vec2 anchor = mousePicker.mPoint;
                 b2Vec2 center = mousePicker.mCube->body->GetWorldCenter();
-                if (b2Distance(anchor, center) < FrontendCube::SIZE * FrontendCube::CENTER_SIZE) {
+                float centerDist = b2Distance(anchor, center);
+                const float centerSize = FrontendCube::SIZE * FrontendCube::CENTER_SIZE;
+
+                if (centerDist < centerSize) {
                     anchor = center;
                     mouseIsAligning = true;
+                    
+                    /*
+                     * This notion of center distance is also used to
+                     * simulate touch. The closer to the exact center,
+                     * the stronger the touch signal will be. This is
+                     * a bit of a hack, but I'm hoping it mimicks what
+                     * happens with actual hardware- you get a lot of
+                     * false 'touch' signals when users manipulate the
+                     * cubes, since you'd like to be able to fling
+                     * cubes around by their faces without worrying
+                     * about whether you're 'touching' them or
+                     * not. So, the cube firmware will be responsible
+                     * for doing various kinds of filtering to
+                     * determine what counts as a touch.
+                     */
+
+                    mousePicker.mCube->setTouch(1.0f - centerDist / centerSize);
                 }
 
                 // Glue it to the point we picked, with a revolute joint
@@ -264,6 +284,9 @@ void Frontend::onMouseUp(int button)
         if (mousePicker.mCube) {
             // Reset tilt
             mousePicker.mCube->setTiltTarget(b2Vec2(0.0f, 0.0f));
+
+            // Reset touch
+            mousePicker.mCube->setTouch(0.0f);
         }
 
         /* Mouse state reset */

@@ -97,6 +97,8 @@ class Hardware {
     }
 
     void setAcceleration(float xG, float yG);
+    void setTouch(float amount);
+
     bool isDebugging();
 
  private:
