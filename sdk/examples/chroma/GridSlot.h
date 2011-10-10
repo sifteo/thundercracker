@@ -25,6 +25,7 @@ public:
 	typedef enum 
 	{
 		STATE_LIVING,
+		STATE_MARKED,
 		STATE_EXPLODING,
 		STATE_SHOWINGSCORE,
 		STATE_GONE,

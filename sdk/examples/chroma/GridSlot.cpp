@@ -5,11 +5,9 @@
  */
 
 #include "GridSlot.h"
+#include "game.h"
 #include "assets.gen.h"
-#include <stdlib.h>
 #include "utils.h"
-
-static unsigned int color = 0;
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
 {
@@ -21,17 +19,14 @@ const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 
 GridSlot::GridSlot() : 
 	//m_state( STATE_LIVING ),
-	m_eventTime( 0.0f ),
+	m_eventTime( 0.0f )
 {
 	//TEST randomly make some empty ones
-	if( rand()%100 > 50 )
+	if( Game::Rand(100) > 50 )
 		m_state = STATE_LIVING;
 	else
 		m_state = STATE_GONE;
-	//static unsigned int seed;
-	//m_color = rand_r(&seed)%NUM_COLORS;
-	//non-random for now
-	m_color = color++%NUM_COLORS;
+	m_color = Game::Rand(NUM_COLORS);
 	m_value = 0;
 }
 

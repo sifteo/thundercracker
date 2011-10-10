@@ -16,14 +16,11 @@ using namespace Sifteo;
 class Game
 {
 public:
-	//compiler seems to barf on this, so I'll skip it for now
 	static Game &Inst();
 	
 	Game();
 
-	//static const int NUM_CUBES = 2;
-
-	static const int NUM_CUBES = 1;
+	static const int NUM_CUBES = 2;
 
 	CubeWrapper cubes[NUM_CUBES]; 
 
@@ -32,6 +29,9 @@ public:
 	
 	//flag self to test matches
 	void setTestMatchFlag() { m_bTestMatches = true; }
+
+	//get random value from 0 to max
+	static unsigned int Rand( unsigned int max );
 
 private:
 	void TestMatches();

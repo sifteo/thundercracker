@@ -26,6 +26,7 @@ enum
 };
 
 //stupid way to ensure seeding the randomizer before static inits
+#ifdef _WIN32
 class RandInit
 {
 public:
@@ -36,6 +37,7 @@ public:
 };
 
 static RandInit randInit;
+#endif
 
 static Game &game = Game::Inst();
 
@@ -44,15 +46,17 @@ static void onAccelChange(_SYSCubeID cid)
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
 
+	static const int TILT_THRESHOLD = 60;
+
 	//for now , just tilt cube 0
-	if( state.x > 105 )
-		game.cubes[0].Tilt( RIGHT );
-	else if( state.x < -105 )
-		game.cubes[0].Tilt( LEFT );
-	else if( state.y > 105 )
-		game.cubes[0].Tilt( DOWN );
-	else if( state.y < -105 )
-		game.cubes[0].Tilt( UP);
+	if( state.x > TILT_THRESHOLD )
+		game.cubes[cid].Tilt( RIGHT );
+	else if( state.x < -TILT_THRESHOLD )
+		game.cubes[cid].Tilt( LEFT );
+	else if( state.y > TILT_THRESHOLD )
+		game.cubes[cid].Tilt( DOWN );
+	else if( state.y < -TILT_THRESHOLD )
+		game.cubes[cid].Tilt( UP);
 }
 
 static void init()

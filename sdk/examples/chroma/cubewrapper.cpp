@@ -179,7 +179,7 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 //only test matches with neighbors with id less than ours.  This prevents double testing
 void CubeWrapper::testMatches()
 {
-	for( int i = 0; i < NUM_SIDES; i++ )
+	/*for( int i = 0; i < NUM_SIDES; i++ )
 	{
 		if( m_cube.neighbors[i] && m_cube.neighbors[i].id() < m_cube.id() )
 		{
@@ -203,7 +203,7 @@ void CubeWrapper::testMatches()
 				}
 			}
 		}
-	}
+	}*/
 }
 
 

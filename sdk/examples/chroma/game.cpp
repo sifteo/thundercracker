@@ -8,7 +8,7 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
-
+#include <stdlib.h>
 
 Game &Game::Inst()
 {
@@ -57,7 +57,7 @@ void Game::Update()
 	}
 
 	for( int i = 0; i < NUM_CUBES; i++ )
-		cubes[i].Update();
+		cubes[i].Update( System::clock() );
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].Draw();
@@ -73,4 +73,17 @@ void Game::TestMatches()
 	{
 		cubes[i].testMatches();
 	}
+}
+
+
+
+//get random value from 0 to max
+unsigned int Game::Rand( unsigned int max )
+{
+#ifdef _WIN32
+	return rand()%max;
+#else
+	static unsigned int seed = (int)System::clock;
+	return rand_r(&seed)%max;
+#endif
 }
