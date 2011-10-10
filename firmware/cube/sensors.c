@@ -53,18 +53,56 @@ uint8_t accel_x;
  * ticks (clk/12). The maximum value of this deadline is our timeslot
  * size minus the packet length. But we'll make it a little bit
  * shorter still, so that we preserve our margin for radio latency.
+ *
+ * Our current packet format is based on a 16-bit frame, so that we can
+ * quickly store it using a 16-bit shift register. Currently, for packet
+ * validation, we simply define the second 8 bits to be the complement
+ * of the first 8 bits. So, we really have only an 8-bit frame. From
+ * MSB to LSB, it is defined as:
+ *
+ *    [7  ] -- Always one. In the first byte, this serves as a start bit,
+ *             and the receiver does not store it explicitly. In the second
+ *             byte, it just serves as an additional check.
+ *
+ *    [6:5] -- Mask bits. Transmitted as ones, but by applying different
+ *             side masks for each bit, we can discern which side the packet
+ *             was received from.
+ *
+ *    [4:0] -- ID for the transmitting cube.
  */
 
-#define NB_BIT_COUNT        16
+#define NB_TX_BITS          20      // 1 header, 2 mask, 13 payload, 4 damping
+#define NB_RX_BITS          15      // 2 mask, 13 payload
+
 #define NB_BIT_TICKS        12      // 9.0 us, in 0.75 us ticks
-#define NB_BIT_TICK_FIRST   1       // Tweak for sampling halfway between pulses
+#define NB_BIT_TICK_FIRST   13      // Tweak for sampling halfway between pulses
 #define NB_DEADLINE         20      // 15 us (Max 48 us)
-#define NB_DAMPING_BITS     4       // Number of bits to keep driving TX for after a packet
 
 uint8_t nb_bits_remaining;          // Bit counter for transmit or receive
-uint16_t nb_buffer;                 // Packet shift register for TX/RX
-uint16_t nb_tx_packet;              // The packet we're broadcasting
+uint8_t nb_buffer[2];               // Packet shift register for TX/RX
+uint8_t nb_tx_packet[2];            // The packet we're broadcasting
 __bit nb_tx_mode;                   // We're in the middle of an active transmission
+__bit nb_rx_mask_pending;           // We still need to do another RX mask bit
+
+/*
+ * We do a little bit of signal conditioning on neighbors before
+ * passing them on to the ACK packet. There are really two things we
+ * need to do:
+ *
+ *   1. Detect when a neighbor has disappeared
+ *   2. Smooth over momentary glitches
+ *
+ * For (1), we use the master sensor clock as a sort of watchdog for
+ * the neighbors. If our communication were always perfect, we would
+ * get one packet per active neighbor per master sensor period. So,
+ * we'll start with that as a baseline. That leads into part (2)... if
+ * any state change occurs (neighboring or de-neighboring) we need it
+ * to stay stable for at least a couple consecutive frames before we
+ * report that over the radio.
+ */
+
+// Neighbor state for the current Timer 0 period
+uint8_t __idata nb_instant_state[4];
 
 
 /*
@@ -242,7 +280,7 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
         mov     _nb_buffer, _nb_tx_packet
         mov     (_nb_buffer + 1), (_nb_tx_packet + 1)
-        mov     _nb_bits_remaining, #(NB_BIT_COUNT + NB_DAMPING_BITS)
+        mov     _nb_bits_remaining, #NB_TX_BITS
         mov     _TL2, #(0x100 - NB_BIT_TICKS)
         setb    _T2CON_T2I0
 
@@ -309,9 +347,21 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
         ;     capturing TL1.
         ;
 
+        ; We also begin our masking sequence, so that we can detect
+        ; which side we are receiving on. Set up mask bit 0.  This must
+        ; happen well before the next bit arrives!
+
+        anl     _MISC_DIR, #~MISC_NB_MASK0
+
+        ; Trigger Timer 2
+
         mov     _TL2, #(0x100 - NB_BIT_TICK_FIRST)
         setb    _T2CON_T2I0
-        mov     _nb_bits_remaining, #NB_BIT_COUNT
+
+        ; In the mean time, set up RX state
+
+        mov     _nb_bits_remaining, #NB_RX_BITS
+        setb    _nb_rx_mask_pending
 
         reti
     __endasm;
@@ -341,6 +391,16 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         mov     TL1, #0
         add     a, #0xFF        ; Nonzero -> C
 
+        ; Set up the next mask bit, or clear the mask if we are done masking.
+
+        orl     _MISC_DIR, #MISC_NB_OUT
+        jnb     _nb_rx_mask_pending, 1$
+        anl     _MISC_DIR, #~MISC_NB_MASK1
+        clr     _nb_rx_mask_pending
+1$:
+
+        ; Shift in this bit, MSB-first, to our 16-bit packet
+
         mov     a, (_nb_buffer + 1)
         rlc     a
         mov     (_nb_buffer + 1), a
@@ -348,7 +408,7 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         rlc     a
         mov     _nb_buffer, a
 
-        sjmp    nb_done
+        sjmp    nb_bit_done
 
         ;--------------------------------------------------------------------
         ; Neighbor Bit Transmit
@@ -359,7 +419,7 @@ nb_tx:
         ; We are shifting one bit out of a 16-bit register, then transmitting
         ; a timed pulse if it's a 1. Since we'll be busy-waiting on the pulse
         ; anyway, we organize this code so that we can start the pulse ASAP,
-        ; and perform the rest of our shift while we're waiting.
+        ; and perform the rest of our shift while we wait.
         ;
         ; The time between driving the tanks high vs. low should be calibrated
         ; according to the resonant frequency of our LC tank. Cycle counts are
@@ -370,7 +430,7 @@ nb_tx:
 
         clr     _TCON_TR1                       ; Prevent echo, disable receiver
 
-        mov     a, _nb_buffer                   ; ust grab the MSB and test it
+        mov     a, _nb_buffer                   ; Just grab the MSB and test it
         rlc     a
         jnc     2$
 
@@ -386,32 +446,66 @@ nb_tx:
         rlc     a                               ; 1
         mov     _nb_buffer, a                   ; 3
 
-        mul     ab                              ; 5  (Long nop)
+        nop                                     ; 1
+        nop                                     ; 1
+        nop                                     ; 1
+        nop                                     ; 1
         nop                                     ; 1
 
         anl     MISC_PORT, #~MISC_NB_OUT        ; 3  LOW
 
         ;--------------------------------------------------------------------
 
-nb_done:
+nb_bit_done:
 
-        djnz    _nb_bits_remaining, 1$          ; More bits left?
+        djnz    _nb_bits_remaining, nb_irq_ret  ; More bits left?
 
         clr     _T2CON_T2I0                     ; Nope. Disable the IRQ
         orl     _MISC_DIR, #MISC_NB_OUT         ; Let the LC tanks float
 
-        jb      _nb_tx_mode, 3$                 ; Store RX result
+        jb      _nb_tx_mode, nb_packet_done     ; TX mode? Nothing to store.
 
-        ; XXX: Do something with neighbor result
+        ;--------------------------------------------------------------------
+        ; RX Packet Completion
+        ;--------------------------------------------------------------------
 
-3$:
+        mov     a, _nb_buffer
+        orl     a, #0xE0                        ; Put the implied bits back in
+        cpl     a                               ; Complement
+        xrl     a, (_nb_buffer+1)               ; Check byte
+        jnz     nb_packet_done                  ;   Invalid, ignore the packet.
+
+        ; We store good packets in nb_instant_state here. The Timer 0 ISR
+        ; will do the rest of our filtering before passing on neighbor data
+        ; to the radio ACK packet.
+
+        mov     a, _nb_buffer                   ; Get side bits
+        swap    a
+        rr      a
+        anl     a, #3
+        add     a, #_nb_instant_state           ; Array pointer
+
+        mov     psw, #0                         ; Default register bank
+        push    ar0                             ; Need to use r0 for indirect addressing
+        mov     r0, a
+
+        mov     a, _nb_buffer                   ; Store in ACK-compatible format
+        anl     a, #NB_ID_MASK
+        orl     a, #NB_FLAG_SIDE_ACTIVE
+        mov     @r0, a
+
+        pop     ar0
+
+        ;--------------------------------------------------------------------
+
+nb_packet_done:
 
         mov     TL1, #0xFF                      ; RX mode: Interrupt on the next incoming edge
         mov     TH1, #0xFF
         clr     _nb_tx_mode
         setb    _TCON_TR1
 
-1$:
+nb_irq_ret:
         clr     _IR_TF2                         ; Must ack IRQ (TF2 is not auto-clear)
 
         pop     psw
@@ -542,8 +636,9 @@ void sensors_init()
     IEN_TF2_EXF2 = 1;           // Enable TF2 interrupt
 
     /*
-     * XXX: Build a real neighbor packet
+     * XXX: Build a trivial neighbor packet based on our trivial cube ID.
      */
 
-    nb_tx_packet = 0x55F0;
+    nb_tx_packet[0] = 0xE0 | radio_get_cube_id();
+    nb_tx_packet[1] = ~nb_tx_packet[0];
 }

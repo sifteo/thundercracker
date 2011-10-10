@@ -239,6 +239,9 @@
 #define RF_ACK_NEIGHBOR         3
 #define RF_ACK_FLASH_FIFO       7
 
+#define NB_ID_MASK              0x1F    // ID portion of neighbor bytes
+#define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
+#define NB0_FLAG_TOUCH          0x40    // In neighbors[0], indicates touch detection
 
 typedef union {
     uint8_t bytes[RF_ACK_LEN_MAX];
@@ -256,12 +259,8 @@ typedef union {
         // Signed 8-bit analog accelerometer data
         int8_t accel[2];
 
-        /*
-         * Need ~5 bits per sensor (5 other cubes * 4 sides + 1 idle =
-         * 21 states) So, there are plenty of bits free in here to
-         * encode things like button state.
-         */
-        uint8_t neighbor[4];
+        // Neighbor cube IDs in low bits, flags in upper bits
+        uint8_t neighbors[4];
 
         /*
          * Number of bytes processed by the flash decoder so

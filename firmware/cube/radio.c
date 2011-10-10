@@ -889,3 +889,31 @@ void radio_init(void)
     IEN_RF = 1;                         // Interrupt enabled
     RF_CE = 1;                          // Receiver enabled
 }
+
+
+uint8_t radio_get_cube_id(void)
+{
+    /*
+     * XXX: This is temporary, until we have a real pairing mechanism.
+     *      Our cube will be identified by radio address and channel, but
+     *      also by an ID between 0 and 31. This will eventually come from
+     *      the master cube, but for now we take it from the LSB of the
+     *      radio address. That can be set at compile time with CUBE_ADDR,
+     *      or it could be provided as a hardware default by the simulator.
+     */
+
+    uint8_t id;
+
+    RF_CSN = 0;
+
+    SPIRDAT = RF_CMD_R_REGISTER | RF_REG_TX_ADDR;
+    SPIRDAT = 0;
+    while (!(SPIRSTAT & SPI_RX_READY));
+    SPIRDAT;
+    while (!(SPIRSTAT & SPI_RX_READY));
+    id = SPIRDAT;
+
+    RF_CSN = 1;
+
+    return id;
+}
