@@ -208,7 +208,7 @@ bool Frontend::onResize(int width, int height)
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
-    glPolygonOffset(0, -1);
+    glPolygonOffset(-1.0f, -2.0f);
 
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
         cubes[i].initGL();
