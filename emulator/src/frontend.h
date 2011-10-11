@@ -12,13 +12,16 @@
 #ifdef _WIN32
 #   define WIN32_LEAN_AND_MEAN
 #   include <windows.h>
-#   pragma comment(lib, "opengl32.lib")
+//#   pragma comment(lib, "opengl32.lib")
 #endif
 
 #include <SDL.h>
 #ifdef __MACH__
 #   include <OpenGL/gl.h>
 #   include <OpenGL/glext.h>
+#elif defined (_WIN32)
+#define GLEW_STATIC
+#   include <GL/glew.h>
 #else
 #   define GL_GLEXT_PROTOTYPES
 #   include <GL/gl.h>

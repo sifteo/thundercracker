@@ -27,7 +27,7 @@
 #   include <windows.h>
 #   include <winsock2.h>
 #   include <ws2tcpip.h>
-#   pragma comment(lib, "ws2_32.lib")
+//#   pragma comment(lib, "ws2_32.lib")
 #else
 #   include <sys/types.h>
 #   include <sys/socket.h>
@@ -58,7 +58,7 @@ void SystemNetwork::init()
     listenFD = socket(AF_INET, SOCK_STREAM, 0);
 
     arg = 1;
-    setsockopt(listenFD, SOL_SOCKET, SO_REUSEADDR, &arg, sizeof arg);
+    setsockopt(listenFD, SOL_SOCKET, SO_REUSEADDR, (const char *)&arg, sizeof arg);
 
     if (bind(listenFD, (struct sockaddr *)&addr, sizeof addr) < 0) {
         fprintf(stderr, "Error: Can't bind to simulator port!\n");
@@ -105,7 +105,7 @@ void SystemNetwork::tx(TXPacket &packet)
     /* Send back a response. No-op if we have no client. */
 
     if (clientFD >= 0) {
-        if (write(clientFD, &packet, sizeof packet) != sizeof packet)
+        if (send(clientFD, (const char *)&packet, sizeof packet, 0) != sizeof packet)
             disconnect(clientFD);
     }
 }
@@ -154,7 +154,7 @@ bool SystemNetwork::rx(RXPacket &packet)
         FD_SET(clientFD, &efds);
         select(clientFD + 1, &rfds, NULL, &efds, NULL);
 
-        int ret = read(clientFD, &packet, sizeof packet);
+        int ret = recv(clientFD, (char *)&packet, sizeof packet, 0);
 
         if (ret < 0) {
             if (errno != EAGAIN) {

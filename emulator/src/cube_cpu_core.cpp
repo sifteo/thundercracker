@@ -364,11 +364,11 @@ static void traceExecution(em8051 *mCPU)
     em8051_decode(mCPU, mCPU->mPC, assembly);
 
     fprintf(mCPU->traceFile,
-            "%10llu  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] "
+            "%10u  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] "
             "DP=[%d %04x %04x] P=[%02x.%02x %02x.%02x %02x.%02x %02x.%02x] "
             "TMR=[%02x%02x %02x%02x %02x%02x] DBG=%02x\n",
 
-            (long long unsigned) mCPU->profilerTotal,
+            (unsigned) mCPU->profilerTotal,
             mCPU->mPC, assembly,
             mCPU->mSFR[REG_ACC],
             bank,
@@ -474,7 +474,7 @@ int em8051_tick(em8051 *aCPU)
     timer_tick(aCPU);
 
     if (ticked && aCPU->mBreakpoint && aCPU->mBreakpoint == aCPU->mPC)
-        aCPU->except(aCPU, EXCEPTION_BREAKPOINT);
+        aCPU->except(aCPU, EXCEPTION_BREAK);
 
     return ticked;
 }

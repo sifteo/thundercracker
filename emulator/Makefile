@@ -69,25 +69,33 @@ OBJS += \
 
 CDEPS = src/*.h
 
-CFLAGS += $(shell sdl-config --cflags)
-LDFLAGS += $(shell sdl-config --libs)
-
 # OS detection
 OS := $(shell uname)
-ifneq ($(findstr MINGW32_NT,$(OS)),)  
+ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
       OS := windows32
+endif
+
+ifeq ($(OS),windows32)
+OBJS += src/glew/glew.o
+CFLAGS += -I../deps/win32/sdl/include -I../deps/win32/glew-1.7.0/include
+LDFLAGS += $(shell sdl-config --libs)
+else
+CFLAGS += $(shell sdl-config --cflags)
+LDFLAGS += $(shell sdl-config --libs)
 endif
 
 # OpenGL
 ifeq ($(OS),Darwin)
         LDFLAGS += -framework OpenGL
+else ifeq ($(OS),windows32)
+		LDFLAGS += ../deps/win32/glew-1.7.0/lib/glew32mxs.lib ../deps/win32/glew-1.7.0/lib/glew32s.lib -lOpenGL32 
 else
         LDFLAGS += -lGL
 endif
 
 # Curses
 ifeq ($(OS),windows32)
-        LDFLAGS += ../../deps/win32/pdcurses/pdcurses.lib -lws2_32
+        LDFLAGS += ../deps/win32/pdcurses/pdcurses.lib -lws2_32
 else
         LDFLAGS += -lncurses
 endif

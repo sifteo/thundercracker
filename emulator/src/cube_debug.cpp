@@ -354,12 +354,12 @@ void writeProfile(CPU::em8051 *aCPU, const char *filename)
             char assembly[128];
 
             CPU::em8051_decode(aCPU, addr, assembly);
-            fprintf(f, "%12lld %8.4f%% %8lld [%8lld x %9lld ]  %04x:  %s\n",
-                    (long long int)pd->total_cycles,
+            fprintf(f, "%12d %8.4f%% %8d [%8d x %9d ]  %04x:  %s\n",
+                    (int)pd->total_cycles,
                     (pd->total_cycles * 100) / (float)aCPU->profilerTotal,
-                    (long long int)pd->flash_idle,
-                    (long long int)(pd->loop_hits ? pd->loop_cycles / pd->loop_hits : 0),
-                    (long long int)pd->loop_hits,
+                    (int)pd->flash_idle,
+                    (int)(pd->loop_hits ? pd->loop_cycles / pd->loop_hits : 0),
+                    (int)pd->loop_hits,
                     addr, assembly);
         }
     }    

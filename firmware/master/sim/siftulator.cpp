@@ -225,7 +225,7 @@ static void Siftulator_send()
     packet.tickDelta = TICKS_PER_PACKET; 
     self.simTicks += TICKS_PER_PACKET;
 
-    int ret = send(self.fd, &packet, sizeof packet, 0);
+    int ret = send(self.fd, (const char *)&packet, sizeof packet, 0);
 
     if (ret < 0) {
         if (errno != EAGAIN) {
@@ -245,7 +245,7 @@ static void Siftulator_recv()
     RXPacket packet;
     PacketBuffer buf;
 
-    int ret = recv(self.fd, &packet, sizeof packet, 0);
+    int ret = recv(self.fd, (char *)&packet, sizeof packet, 0);
 
     if (ret < 0) {
         if (errno != EAGAIN) {

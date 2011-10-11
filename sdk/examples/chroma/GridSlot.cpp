@@ -6,8 +6,10 @@
 
 #include "GridSlot.h"
 #include "assets.gen.h"
-#include <stdlib.h>
+//#include <stdlib.h>
 #include "utils.h"
+
+static unsigned int color = 0;
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
 {
@@ -19,8 +21,10 @@ const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 
 GridSlot::GridSlot() : m_state( STATE_LIVING )
 {
-	static unsigned int seed;
-	m_color = rand_r(&seed)%NUM_COLORS;
+	//static unsigned int seed;
+	//m_color = rand_r(&seed)%NUM_COLORS;
+	//non-random for now
+	m_color = color++%NUM_COLORS;
 	m_value = 0;
 }
 
