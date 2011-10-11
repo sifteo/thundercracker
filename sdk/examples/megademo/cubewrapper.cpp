@@ -578,8 +578,15 @@ void randomGems()
 
 void CubeWrapper::HelloInit()
 {
-	m_vid.clear(GemEmpty.tiles[0]);
-	m_vid.BG0_text(Vec2(2,1), Font, "Hello World!");
+	for( int i = 0; i < 16; i++ )
+	{
+		for( int j = 0; j < 16; j++ )
+		{
+			m_vid.BG0_drawAsset( Vec2(i,j), White );
+		}
+	}
+	//m_vid.clear(White.tiles[0]);
+	m_vid.BG0_text(Vec2(2,1), WhiteFont, "Hello World!");
     m_vid.BG0_drawAsset(Vec2(1,10), Logo);
 }
 
@@ -590,7 +597,7 @@ void CubeWrapper::Hello()
 
     float t = System::clock();
 
-    m_vid.BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
+    m_vid.BG0_textf(Vec2(2,6), WhiteFont, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
     m_vid.BG0_drawAsset(Vec2(11,9), Kirby, m_frame >> rate);
 
     if (++m_frame == Kirby.frames << rate)
@@ -609,7 +616,7 @@ void CubeWrapper::Hello()
 
 void CubeWrapper::HelloTilt(_SYSAccelState &state)
 {
-	m_vid.BG0_textf(Vec2(2,4), Font, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
+	m_vid.BG0_textf(Vec2(2,4), WhiteFont, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
 	m_vid.BG0_setPanning(Vec2(-state.x/2, -state.y/2));
 }
 
