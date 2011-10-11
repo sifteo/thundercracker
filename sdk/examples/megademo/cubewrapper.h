@@ -34,6 +34,10 @@ public:
 	void testMatches();
 	void FillSlotArray( GridSlot **gems, int side, bool clockwise );
 
+	//run hello world
+	void HelloInit();
+	void Hello();
+	void HelloTilt(_SYSAccelState &state);
 	//run Beth's gfxdemo
 	void Demo();
 
@@ -52,6 +56,7 @@ private:
 	VidMode_BG0 m_vid;
 	VidMode_BG0_ROM m_rom;
 	GridSlot m_grid[NUM_ROWS][NUM_COLS];
+	unsigned int m_frame;
 
 	//neighbor info
 	//right now doesn't know what cubes are on what sides

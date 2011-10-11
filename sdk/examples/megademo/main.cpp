@@ -48,15 +48,22 @@ static void onAccelChange(_SYSCubeID cid)
 
 	static const int TILT_THRESHOLD = 50;
 
-	//for now , just tilt cube 0
-	if( state.x > TILT_THRESHOLD )
-		game.cubes[cid].Tilt( RIGHT );
-	else if( state.x < -TILT_THRESHOLD )
-		game.cubes[cid].Tilt( LEFT );
-	else if( state.y > TILT_THRESHOLD )
-		game.cubes[cid].Tilt( DOWN );
-	else if( state.y < -TILT_THRESHOLD )
-		game.cubes[cid].Tilt( UP);
+	if( game.getState() == Game::STATE_PLAYING )
+	{
+		//for now , just tilt cube 0
+		if( state.x > TILT_THRESHOLD )
+			game.cubes[cid].Tilt( RIGHT );
+		else if( state.x < -TILT_THRESHOLD )
+			game.cubes[cid].Tilt( LEFT );
+		else if( state.y > TILT_THRESHOLD )
+			game.cubes[cid].Tilt( DOWN );
+		else if( state.y < -TILT_THRESHOLD )
+			game.cubes[cid].Tilt( UP);
+	}
+	else if( game.getState() == Game::STATE_HELLODEMO )
+	{
+		game.cubes[cid].HelloTilt( state );
+	}
 }
 
 static void init()

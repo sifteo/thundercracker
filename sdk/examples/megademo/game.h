@@ -21,6 +21,7 @@ public:
 		STATE_SPLASH,
 		STATE_MENU,
 		STATE_PLAYING,
+		STATE_HELLODEMO,
 		STATE_GFXDEMO,
 	} GameState;
 
@@ -39,6 +40,8 @@ public:
 	void setTestMatchFlag() { m_bTestMatches = true; }
 
 	unsigned int getIncrementScore() { return ++m_iGemScore; }
+	void setState(GameState state) { m_state = state; }
+	GameState getState() const { return m_state; }
 
 	//get random value from 0 to max
 	static unsigned int Rand( unsigned int max );

@@ -19,4 +19,5 @@ Owlbear = image{"owlbear.png", width=128, height=128}
 Gems = image{"gems.png", width=16, height=16}
 Brick144 = image{"brick144.png"}
 Cat = image{"cat.png"}
-
+Logo = image{"logo.png"}
+Kirby = image{"kirby-running.png", height=24}
