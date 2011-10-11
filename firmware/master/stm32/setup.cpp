@@ -80,7 +80,7 @@ extern "C" void _start()
     while (!(RCC.CR & (1 << 25)));  // wait for PLL to be ready
 
     // configure all the other buses
-    RCC.CFGR =  (7 << 24)       |   // MCO - mcu clock output
+    RCC.CFGR =  (0 << 24)       |   // MCO - mcu clock output
                 (1 << 22)       |   // USBPRE - divide by 1
                 (7 << 18)       |   // PLLMUL - x9
                 (0 << 17)       |   // PLLXTPRE - no divider
