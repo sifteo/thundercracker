@@ -181,6 +181,20 @@ struct EXTI_t {
 extern volatile EXTI_t EXTI;
 
 
+struct FLASH_t {
+    uint32_t ACR;
+    uint32_t KEYR;
+    uint32_t OPTKEYR;
+    uint32_t SR;
+    uint32_t CR;
+    uint32_t AR;
+    uint32_t _reserved1;
+    uint32_t OBR;
+    uint32_t WRPR;
+};
+
+extern volatile FLASH_t FLASH;
+
 /*
  * Cortex-M3 Nested Vectored Interrupt Controller
  */
