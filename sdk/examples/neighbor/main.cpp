@@ -57,9 +57,9 @@ void siftmain()
                              accel.y + 0x80);
 
             drawSide(i, buf[0] >> 7, 1,  0,  1, 0);  // Top
-            drawSide(i, buf[1] >> 7, 15, 1,  0, 1);  // Right
+            drawSide(i, buf[1] >> 7, 0,  1,  0, 1);  // Left
             drawSide(i, buf[2] >> 7, 1,  15, 1, 0);  // Bottom
-            drawSide(i, buf[3] >> 7, 0,  1,  0, 1);  // Left
+            drawSide(i, buf[3] >> 7, 15, 1,  0, 1);  // Right
         }
 
         System::paint();
