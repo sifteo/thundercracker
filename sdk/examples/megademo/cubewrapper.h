@@ -34,6 +34,9 @@ public:
 	void testMatches();
 	void FillSlotArray( GridSlot **gems, int side, bool clockwise );
 
+	//run Beth's gfxdemo
+	void Demo();
+
 	int GetSideNeighboredOn( _SYSCubeID id, Cube &cube );
 
 	//if all gems are living or gone, nothing is happening

@@ -16,7 +16,7 @@ Game &Game::Inst()
 	return game; 
 }
 
-Game::Game() : m_bTestMatches( false ), m_iGemScore ( 0 ), m_state( STATE_SPLASH ), m_splashTime( 0.0f )
+Game::Game() : m_bTestMatches( false ), m_iGemScore ( 0 ), m_state( STATE_SPLASH ), m_splashTime( 0.0f ), m_quietCount(0)
 {
 }
 
@@ -75,8 +75,19 @@ void Game::Update()
 			cubes[i].Draw();
 
 		if( IsAllQuiet() )
-			m_iGemScore = 0;
+		{
+			if( m_iGemScore > 0 )
+			{
+				m_iGemScore = 0;
+				m_quietCount++;
+
+				if( m_quietCount >= 3 )
+					m_state = STATE_GFXDEMO;
+			}
+		}
 	}
+	else if( m_state == STATE_GFXDEMO )
+		cubes[0].Demo();
             
     System::paint();
 }

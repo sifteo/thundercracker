@@ -21,6 +21,7 @@ public:
 		STATE_SPLASH,
 		STATE_MENU,
 		STATE_PLAYING,
+		STATE_GFXDEMO,
 	} GameState;
 
 	static Game &Inst();
@@ -49,6 +50,7 @@ private:
 	unsigned int m_iGemScore;
 	GameState m_state;
 	float m_splashTime;
+	int m_quietCount;
 };
 
 #endif

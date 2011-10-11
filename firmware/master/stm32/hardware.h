@@ -109,57 +109,27 @@ struct TIM2_5_t {
     uint32_t DMAR;
 };
 
-
-// NOTE - using this style def now (as opposed to referencing the symbol in the
-//          linker script, so they can be used in conditionals
-#define TIM2 ((volatile TIM2_5_t*)0x40000000)
-#define TIM3 ((volatile TIM2_5_t*)0x40000400)
-#define TIM4 ((volatile TIM2_5_t*)0x40000800)
-#define TIM5 ((volatile TIM2_5_t*)0x40000c00)
-
+extern volatile TIM2_5_t TIM2;
+extern volatile TIM2_5_t TIM3;
+extern volatile TIM2_5_t TIM4;
+extern volatile TIM2_5_t TIM5;
 
 /*
  * Direct memory access
  */
 
+struct DMAChannel_t {
+    uint32_t CCR;
+    uint32_t CNDTR;
+    uint32_t CPAR;
+    uint32_t CMAR;
+    uint32_t _reserved;
+};
+
 struct DMA_t {
     uint32_t ISR;
     uint32_t IFCR;
-    uint32_t CCR1;
-    uint32_t CNDTR1;
-    uint32_t CPAR1;
-    uint32_t CMAR1;
-    uint32_t _reserved1;
-    uint32_t CCR2;
-    uint32_t CNDTR2;
-    uint32_t CPAR2;
-    uint32_t CMAR2;
-    uint32_t _reserved2;
-    uint32_t CCR3;
-    uint32_t CNDTR3;
-    uint32_t CPAR3;
-    uint32_t CMAR3;
-    uint32_t _reserved3;
-    uint32_t CCR4;
-    uint32_t CNDTR4;
-    uint32_t CPAR4;
-    uint32_t CMAR4;
-    uint32_t _reserved4;
-    uint32_t CCR5;
-    uint32_t CNDTR5;
-    uint32_t CPAR5;
-    uint32_t CMAR5;
-    uint32_t _reserved5;
-    uint32_t CCR6;
-    uint32_t CNDTR6;
-    uint32_t CPAR6;
-    uint32_t CMAR6;
-    uint32_t _reserved6;
-    uint32_t CCR7;
-    uint32_t CNDTR7;
-    uint32_t CPAR7;
-    uint32_t CMAR7;
-//    uint32_t _reserved7;
+    struct DMAChannel_t channels[7]; // 7 for DMA1, 5 for DMA2
 };
 
 extern volatile DMA_t DMA1;
