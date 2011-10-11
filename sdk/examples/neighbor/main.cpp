@@ -41,7 +41,6 @@ void siftmain()
             _SYS_getAccel(i, &accel);
             _SYS_getRawNeighbors(i, buf);
 
-            vid[i].init();
             vid[i].BG0_textf(Vec2(1,2),
                              "Neighbor Test!\n"
                              "\n"
