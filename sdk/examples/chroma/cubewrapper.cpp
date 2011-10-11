@@ -17,6 +17,15 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 	{
 		m_neighbors[i] = false;
 	}
+
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			GridSlot &slot = m_grid[i][j];
+			slot.Init( this, i, j );
+		}
+	}
 }
 
 
@@ -352,4 +361,15 @@ bool CubeWrapper::IsQuiet() const
 	}
 
 	return true;
+}
+
+GridSlot *CubeWrapper::GetSlot( int row, int col )
+{
+	//PRINT( "trying to retrieve %d, %d", row, col );
+	if( row >= 0 && row < NUM_ROWS && col >= 0 && col < NUM_COLS )
+	{
+		return &(m_grid[row][col]);
+	}
+
+	return NULL;
 }

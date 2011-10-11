@@ -10,6 +10,7 @@
 #include <sifteo.h>
 
 using namespace Sifteo;
+class CubeWrapper;
 
 //space for a gem
 class GridSlot
@@ -34,6 +35,7 @@ public:
 
 	GridSlot();
 
+	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	const AssetImage &GetTexture() const;
 	//draw self on given vid at given vec
 	void Draw( VidMode_BG0 &vid, const Vec2 &vec );
@@ -48,9 +50,15 @@ public:
 	void explode();
 	void die();
 private:
+	void markNeighbor( int row, int col );
+
 	SLOT_STATE m_state;
 	unsigned int m_color;
 	float m_eventTime;
+	CubeWrapper *m_pWrapper;
+	unsigned int m_row;
+	unsigned int m_col;
+	unsigned int m_score;
 };
 
 

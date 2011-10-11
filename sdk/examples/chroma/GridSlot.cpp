@@ -19,7 +19,8 @@ const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 
 GridSlot::GridSlot() : 
 	m_state( STATE_LIVING ),
-	m_eventTime( 0.0f )
+	m_eventTime( 0.0f ),
+	m_score( 0 )
 {
 	//TEST randomly make some empty ones
 	/*if( Game::Rand(100) > 50 )
@@ -27,6 +28,14 @@ GridSlot::GridSlot() :
 	else
 		m_state = STATE_GONE;*/
 	m_color = Game::Rand(NUM_COLORS);
+}
+
+
+void GridSlot::Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col )
+{
+	m_pWrapper = pWrapper;
+	m_row = row;
+	m_col = col;
 }
 
 
@@ -60,7 +69,9 @@ void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
 		}
 		case STATE_SHOWINGSCORE:
 		{
-			vid.BG0_text(vec, Font, "0");
+			char aStr[2];
+			sprintf( aStr, "%d", m_score );
+			vid.BG0_text(vec, Font, aStr);
 			break;
 		}
 		case STATE_GONE:
@@ -89,6 +100,7 @@ void GridSlot::Update(float t)
 		}
 		case STATE_EXPLODING:
 		{
+			spread_mark();
 			if( t - m_eventTime > MARK_EXPLODE_DELAY )
                 die();
 			break;
@@ -114,6 +126,13 @@ void GridSlot::mark()
 
 void GridSlot::spread_mark()
 {
+	if( m_state == STATE_MARKED || m_state == STATE_EXPLODING )
+	{
+		markNeighbor( m_row - 1, m_col );
+		markNeighbor( m_row, m_col - 1 );
+		markNeighbor( m_row + 1, m_col );
+		markNeighbor( m_row, m_col + 1 );
+	}
 }
 
 void GridSlot::explode()
@@ -125,5 +144,18 @@ void GridSlot::explode()
 void GridSlot::die()
 {
 	m_state = STATE_SHOWINGSCORE;
+	m_score = Game::Inst().getIncrementScore();
 	m_eventTime = System::clock();
+}
+
+
+void GridSlot::markNeighbor( int row, int col )
+{
+	//find my neighbor and see if we match
+	GridSlot *pNeighbor = m_pWrapper->GetSlot( row, col );
+
+	//PRINT( "pneighbor = %p", pNeighbor );
+	//PRINT( "color = %d", pNeighbor->getColor() );
+	if( pNeighbor && pNeighbor->isAlive() && pNeighbor->getColor() == m_color )
+		pNeighbor->mark();
 }
