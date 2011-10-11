@@ -7,59 +7,61 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <sifteo.h>
 #include "assets.gen.h"
 #include "cubewrapper.h"
+#include "game.h"
 #include "utils.h"
 
 using namespace Sifteo;
 
-/*static const int NUM_CUBES = 2;
-
-static CubeWrapper cubes[NUM_CUBES] = 
+enum
 {
-	CubeWrapper((_SYSCubeID)0),
-	CubeWrapper((_SYSCubeID)1),
-};*/
-static const int NUM_CUBES = 1;
-
-static CubeWrapper cubes[NUM_CUBES] = 
-{
-	CubeWrapper((_SYSCubeID)0),
+	UP,
+	LEFT, 
+	DOWN,
+	RIGHT
 };
 
+//stupid way to ensure seeding the randomizer before static inits
+#ifdef _WIN32
+class RandInit
+{
+public:
+	RandInit()
+	{
+		srand((int)System::clock());
+	}
+};
+
+static RandInit randInit;
+#endif
+
+static Game &game = Game::Inst();
 
 static void onAccelChange(_SYSCubeID cid)
 {
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
+
+	static const int TILT_THRESHOLD = 50;
+
+	//for now , just tilt cube 0
+	if( state.x > TILT_THRESHOLD )
+		game.cubes[cid].Tilt( RIGHT );
+	else if( state.x < -TILT_THRESHOLD )
+		game.cubes[cid].Tilt( LEFT );
+	else if( state.y > TILT_THRESHOLD )
+		game.cubes[cid].Tilt( DOWN );
+	else if( state.y < -TILT_THRESHOLD )
+		game.cubes[cid].Tilt( UP);
 }
 
 static void init()
 {
-	for( int i = 0; i < NUM_CUBES; i++ )
-		cubes[i].Init(GameAssets);
-
-	bool done = false;
-
-	PRINT( "getting ready to load" );
-
-	while( !done )
-	{
-		done = true;
-		for( int i = 0; i < NUM_CUBES; i++ )
-		{
-			if( !cubes[i].DrawProgress(GameAssets) )
-				done = false;
-
-			PRINT( "in load loop" );
-		}
-		System::paint();
-	}
-	PRINT( "done loading" );
-	for( int i = 0; i < NUM_CUBES; i++ )
-		cubes[i].vidInit();
+	game.Init();
 }
 
 void siftmain()
@@ -68,19 +70,13 @@ void siftmain()
 
     /*vid.BG0_text(Vec2(2,1), Font, "Hello World!");
 	vid.BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
-    vid.BG0_drawAsset(Vec2(1,10), Logo);
  */
     _SYS_vectors.accelChange = onAccelChange;
 
-	for( int i = 0; i < NUM_CUBES; i++ )
+	for( int i = 0; i < Game::NUM_CUBES; i++ )
 		onAccelChange(i);
 
     while (1) {
-        //float t = System::clock();
-        
-        for( int i = 0; i < NUM_CUBES; i++ )
-			cubes[i].Draw();
-            
-        System::paint();
+        game.Update();        
     }
 }
