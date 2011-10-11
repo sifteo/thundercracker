@@ -71,7 +71,7 @@ uint8_t accel_x;
  *    [4:0] -- ID for the transmitting cube.
  */
 
-#define NB_TX_BITS          20      // 1 header, 2 mask, 13 payload, 4 damping
+#define NB_TX_BITS          18      // 1 header, 2 mask, 13 payload, 2 damping
 #define NB_RX_BITS          15      // 2 mask, 13 payload
 
 #define NB_BIT_TICKS        12      // 9.0 us, in 0.75 us ticks
@@ -505,8 +505,6 @@ nb_tx:
         ; according to the resonant frequency of our LC tank. Cycle counts are
         ; included below, for reference. The "LOW" line can go anywhere after
         ; "HIGH" here.
-        ;
-        ; XXX: Tune me!
 
         clr     _TCON_TR1                       ; Prevent echo, disable receiver
 
@@ -526,13 +524,12 @@ nb_tx:
         rlc     a                               ; 1
         mov     _nb_buffer, a                   ; 3
 
-        nop                                     ; 1
-        nop                                     ; 1
-        nop                                     ; 1
-        nop                                     ; 1
-        nop                                     ; 1
+        ; XXX: Only sorta tuned, and only on prototype...
 
-        anl     MISC_PORT, #~MISC_NB_OUT        ; 3  LOW
+        mov     a, #0x3                         ; 2
+        djnz    ACC, .                          ; 20 (5 iters, 4 cycles each)
+
+        anl     MISC_PORT, #~MISC_NB_OUT        ; LOW
 
         ;--------------------------------------------------------------------
 
