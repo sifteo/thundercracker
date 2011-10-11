@@ -78,10 +78,10 @@ endif
 ifeq ($(OS),windows32)
 OBJS += src/glew/glew.o
 CFLAGS += -I../deps/win32/sdl/include -I../deps/win32/glew-1.7.0/include
-LDFLAGS += $(shell sdl-config --libs)
+LDFLAGS += $(shell sdl-config --static-libs)
 else
 CFLAGS += $(shell sdl-config --cflags)
-LDFLAGS += $(shell sdl-config --libs)
+LDFLAGS += $(shell sdl-config --static-libs)
 endif
 
 # OpenGL
