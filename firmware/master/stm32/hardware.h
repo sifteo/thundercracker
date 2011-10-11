@@ -109,14 +109,10 @@ struct TIM2_5_t {
     uint32_t DMAR;
 };
 
-
-// NOTE - using this style def now (as opposed to referencing the symbol in the
-//          linker script, so they can be used in conditionals
-#define TIM2 ((volatile TIM2_5_t*)0x40000000)
-#define TIM3 ((volatile TIM2_5_t*)0x40000400)
-#define TIM4 ((volatile TIM2_5_t*)0x40000800)
-#define TIM5 ((volatile TIM2_5_t*)0x40000c00)
-
+extern volatile TIM2_5_t TIM2;
+extern volatile TIM2_5_t TIM3;
+extern volatile TIM2_5_t TIM4;
+extern volatile TIM2_5_t TIM5;
 
 /*
  * Direct memory access
