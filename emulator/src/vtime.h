@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <SDL.h>
 
 class VirtualTime {
  public:
@@ -78,6 +79,47 @@ class VirtualTime {
 
 private:
     unsigned targetRate;
+};
+
+
+class ElapsedTime {
+ public:
+    ElapsedTime(VirtualTime &vtime) : vtime(vtime) {}
+
+    void capture() {
+        currentRealMS = SDL_GetTicks();
+    }
+
+    void start() {
+        virtualT = vtime.clocks;
+        realMS = currentRealMS;
+    }
+
+    uint64_t virtualTicks() {
+        return vtime.clocks - virtualT;
+    }
+
+    uint64_t realMsec() {
+        return currentRealMS - realMS;
+    }
+
+    float virtualSeconds() {
+        return virtualTicks() / (float)vtime.HZ;
+    }
+
+    float realSeconds() {
+        return realMsec() * 1e-3;
+    }
+
+    float virtualRatio() {
+        return realMsec() ? virtualSeconds() / realSeconds() : 0;
+    }
+
+ private:
+    VirtualTime &vtime;
+    uint64_t virtualT;
+    uint32_t realMS;
+    uint32_t currentRealMS;
 };
 
 #endif
