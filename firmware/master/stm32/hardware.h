@@ -133,6 +133,7 @@ struct DMAChannel_t {
 struct DMA_t {
     uint32_t ISR;
     uint32_t IFCR;
+    struct DMAChannel_t channels[7]; // 7 for DMA1, 5 for DMA2
 };
 
 extern volatile DMA_t DMA1;
