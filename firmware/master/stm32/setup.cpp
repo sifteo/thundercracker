@@ -105,6 +105,12 @@ extern "C" void _start()
     RCC.APB1ENR = 0x00004000;   // SPI2
     RCC.APB2ENR = 0x0000003d;   // GPIO/AFIO
 
+#if 0
+    // debug the clock output - MCO
+    GPIOPin mco(&GPIOA, 8); // PA8 on the keil MCBSTM32E board - change as appropriate
+    mco.setControl(GPIOPin::OUT_ALT_50MHZ);
+#endif
+
     /*
      * Initialize data segments (In parallel with oscillator startup)
      */
@@ -135,17 +141,6 @@ extern "C" void _start()
 
     NVIC.irqEnable(IVT.EXTI15_10);              // Radio interrupt
     NVIC.irqPrioritize(IVT.EXTI15_10, 0x80);    //   Reduced priority
-    
-    /*
-     * Wait for clock to stabilize.
-     *
-     * Before starting to talk to external hardware, we should have a
-     * stable clock source. If the PLL hasn't locked yet, wait for it
-     * to do so.
-     */
-
-    const uint32_t clkReady = (1 << 25) | (1 << 17);   // PLLRDY, HSERDY
-    while ((RCC.CR & clkReady) != clkReady);
 
     /*
      * High-level hardware initialization
