@@ -222,6 +222,13 @@ void CubeWrapper::testMatches()
 			//TODO fix this so it actually knows which cube it's looking at
 			int side = Game::Inst().cubes[0].GetSideNeighboredOn( 0, m_cube );
 
+			//no good, just set our flag again and return
+			if( side < 0 )
+			{
+				Game::Inst().setTestMatchFlag();
+				return;
+			}
+
 			//fill two 4 element pointer arrays of grid slots representing what we need to match up
 			GridSlot *ourGems[4];
 			GridSlot *theirGems[4];
@@ -265,7 +272,7 @@ void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
 			}
 			break;
 		}
-		case 3:
+		case 1:
 		{
 			if( clockwise )
 			{
@@ -293,7 +300,7 @@ void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
 			}
 			break;
 		}
-		case 1:
+		case 3:
 		{
 			if( clockwise )
 			{
@@ -307,6 +314,8 @@ void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
 			}
 			break;
 		}
+		default:
+			return;
 	}
 
 	//debug
