@@ -33,11 +33,6 @@ extern "C" void _start()
 {
     /*
      * Set up clocks:
-     *
-     * XXX: No luck in running at 72 MHz at the moment.
-     *      Is it the supply voltage/current? Running
-     *      at 48 MHz for now.
-     *
      *   - 8 MHz HSE (xtal) osc
      *   - PLL x9 => 72 MHz
      *   - SYSCLK at 72 MHz
@@ -89,7 +84,8 @@ extern "C" void _start()
                 (5 << 8)        |   // PPRE1 - APB1 prescaler, divide by 4
                 (0 << 4);           // HPRE - AHB prescaler, no divisor
 
-    FLASH.ACR = (1 << 1);
+    FLASH.ACR = (1 << 4) |  // prefetch buffer enable
+                (1 << 1);   // two wait states since we're @ 72MHz
 
     // switch to PLL as system clock
     RCC.CFGR |= (2 << 0);
