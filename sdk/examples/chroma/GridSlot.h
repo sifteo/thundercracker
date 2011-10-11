@@ -21,6 +21,7 @@ public:
 	static const float MARK_SPREAD_DELAY = 0.33f;
 	static const float MARK_BREAK_DELAY = 0.67f;
 	static const float MARK_EXPLODE_DELAY = 0.16f;
+	static const float SCORE_FADE_DELAY = 2.0;
 
 	typedef enum 
 	{
@@ -40,7 +41,7 @@ public:
 	bool isAlive() const { return m_state == STATE_LIVING; }
 	bool isEmpty() const { return m_state == STATE_GONE; }
 	void setEmpty() { m_state = STATE_GONE; }
-	float getValue() const { return m_value; }
+	unsigned int getColor() const { return m_color; }
 
 	void mark();
 	void spread_mark();
@@ -49,7 +50,6 @@ public:
 private:
 	SLOT_STATE m_state;
 	unsigned int m_color;
-	unsigned int m_value;
 	float m_eventTime;
 };
 

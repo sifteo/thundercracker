@@ -30,12 +30,16 @@ public:
 	//flag self to test matches
 	void setTestMatchFlag() { m_bTestMatches = true; }
 
+	unsigned int getIncrementScore() { return ++m_iGemScore; }
+
 	//get random value from 0 to max
 	static unsigned int Rand( unsigned int max );
 
 private:
 	void TestMatches();
+	bool IsAllQuiet();
 	bool m_bTestMatches;
+	unsigned int m_iGemScore;
 };
 
 #endif

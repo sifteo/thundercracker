@@ -16,7 +16,7 @@ Game &Game::Inst()
 	return game; 
 }
 
-Game::Game() : m_bTestMatches( false )
+Game::Game() : m_bTestMatches( false ), m_iGemScore ( 0 )
 {
 }
 
@@ -61,6 +61,9 @@ void Game::Update()
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].Draw();
+
+	if( IsAllQuiet() )
+		m_iGemScore = 0;
             
     System::paint();
 }
@@ -86,4 +89,16 @@ unsigned int Game::Rand( unsigned int max )
 	static unsigned int seed = (int)System::clock;
 	return rand_r(&seed)%max;
 #endif
+}
+
+
+bool Game::IsAllQuiet()
+{
+	for( int i = 0; i < NUM_CUBES; i++ )
+	{
+		if( !cubes[i].IsQuiet() )
+			return false;
+	}
+
+	return true;
 }

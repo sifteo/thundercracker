@@ -16,6 +16,7 @@ using namespace Sifteo;
 class CubeWrapper
 {
 public:
+	static const int NUM_SIDES = 4;
 	static const int NUM_ROWS = 4;
 	static const int NUM_COLS = 4;
 
@@ -31,6 +32,11 @@ public:
 
 	void testMatches();
 	void FillSlotArray( GridSlot **gems, int side, bool clockwise );
+
+	int GetSideNeighboredOn( _SYSCubeID id, Cube &cube );
+
+	//if all gems are living or gone, nothing is happening
+	bool IsQuiet() const;
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
@@ -40,6 +46,10 @@ private:
 	VidMode_BG0 m_vid;
 	VidMode_BG0_ROM m_rom;
 	GridSlot m_grid[NUM_ROWS][NUM_COLS];
+
+	//neighbor info
+	//right now doesn't know what cubes are on what sides
+	bool m_neighbors[NUM_SIDES];
 };
 
 #endif

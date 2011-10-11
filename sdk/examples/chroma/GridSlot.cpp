@@ -18,22 +18,20 @@ const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 };
 
 GridSlot::GridSlot() : 
-	//m_state( STATE_LIVING ),
+	m_state( STATE_LIVING ),
 	m_eventTime( 0.0f )
 {
 	//TEST randomly make some empty ones
-	if( Game::Rand(100) > 50 )
+	/*if( Game::Rand(100) > 50 )
 		m_state = STATE_LIVING;
 	else
-		m_state = STATE_GONE;
+		m_state = STATE_GONE;*/
 	m_color = Game::Rand(NUM_COLORS);
-	m_value = 0;
 }
 
 
 const AssetImage &GridSlot::GetTexture() const
 {
-	PRINT("color is %d\n", m_color );
 	return *TEXTURES[ m_color ];
 }
 
@@ -93,6 +91,12 @@ void GridSlot::Update(float t)
 		{
 			if( t - m_eventTime > MARK_EXPLODE_DELAY )
                 die();
+			break;
+		}
+		case STATE_SHOWINGSCORE:
+		{
+			if( t - m_eventTime > SCORE_FADE_DELAY )
+                m_state = STATE_GONE;
 			break;
 		}
 		default:
