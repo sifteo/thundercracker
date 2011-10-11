@@ -86,7 +86,7 @@ unsigned int Game::Rand( unsigned int max )
 #ifdef _WIN32
 	return rand()%max;
 #else
-	static unsigned int seed = (int)System::clock;
+	static unsigned int seed = (int)System::clock();
 	return rand_r(&seed)%max;
 #endif
 }
