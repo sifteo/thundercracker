@@ -1,4 +1,4 @@
-SUBDIRS = hello monster text gfxdemo chroma neighbor
+SUBDIRS = hello monster text gfxdemo chroma neighbor megademo scroller
 
 .PHONY: clean subdirs $(SUBDIRS)
 
