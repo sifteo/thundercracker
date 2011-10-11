@@ -148,12 +148,12 @@ struct _SYSSpriteInfo {
 
 // Equivalent to an augmented matrix (3x2), in 8.8 fixed-point
 struct _SYSAffine {
-    uint16_t cx;   // X initial value
-    uint16_t cy;   // Y initial value
-    uint16_t xx;   // X delta, for every horizontal pixel
-    uint16_t xy;   // Y delta, for every horizontal pixel
-    uint16_t yx;   // X delta, for every vertical pixel
-    uint16_t yy;   // Y delta, for every vertical pixel
+    int16_t cx;   // X initial value
+    int16_t cy;   // Y initial value
+    int16_t xx;   // X delta, for every horizontal pixel
+    int16_t xy;   // Y delta, for every horizontal pixel
+    int16_t yx;   // X delta, for every vertical pixel
+    int16_t yy;   // Y delta, for every vertical pixel
 };
 
 union _SYSVideoRAM {

@@ -28,7 +28,7 @@ CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 # Only disable this for debugging! The -O2 flag is important, we use
 # a lot of C++ code that's written assuming it will be inlined. The
 # inlined code should end up being smaller due to constant folding.
-CCFLAGS += -O2
+#CCFLAGS += -O2
 
 # Also important: No C++ exception handling support!
 CCFLAGS += -fno-exceptions
@@ -49,8 +49,7 @@ endif
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
 
-ARCH_STM32 := -mthumb -march=armv7-m \
-              -mtune=cortex-m3 -mfix-cortex-m3-ldrd \
+ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
               -msoft-float -mno-thumb-interwork
 
 CCFLAGS_STM32 := $(CCFLAGS) $(ARCH_STM32)

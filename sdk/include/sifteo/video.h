@@ -186,10 +186,18 @@ class VidMode_BG0 : public VidMode {
         : VidMode(vbuf) {}
     
     void init() {
-        _SYS_vbuf_fill(&buf.sys, 0, 0, BG0_width * BG0_height);
-        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
+        clear();
+        set();
         BG0_setPanning(Vec2(0,0));
         setWindow(0, LCD_height);
+    }
+
+    void set() {
+        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
+    }
+
+    void clear(uint16_t tile=0) {
+        _SYS_vbuf_fill(&buf.sys, 0, tile, BG0_width * BG0_height);
     }
 
     static const unsigned BG0_width = _SYS_VRAM_BG0_WIDTH;
@@ -307,11 +315,20 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         : VidMode_BG0(vbuf) {}
     
     void init() {
-        _SYS_vbuf_fill(&buf.sys, 0, 0, BG0_width * BG0_height);
-        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_ROM);
+        clear();
+        set();
         BG0_setPanning(Vec2(0,0));
         setWindow(0, LCD_height);
     }
+
+    void set() {
+        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_ROM);
+    }
+
+    void clear() {
+        _SYS_vbuf_fill(&buf.sys, 0, 0, BG0_width * BG0_height);
+    }
+
 
     void BG0_text(const Vec2 &point, char c) {
         BG0_putTile(point, c - ' ');
@@ -363,8 +380,109 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
             addr += BG0_width;
         }
     }
-
 };
+
+
+/**
+ * A special-purpose video mode for affine transform effects.
+ *
+ * This mode uses a 16x16 grid of tiles, which form a 128x128
+ * pixel active area within a repeating 256x256 image. The three
+ * inactive quadrants of the 256x256 image are filled with a
+ * solid border color.
+ */
+
+class VidMode_BG2 : public VidMode {
+ public:
+    VidMode_BG2(VideoBuffer &vbuf)
+        : VidMode(vbuf) {}
+    
+    void init() {
+        clear();
+        set();
+        setWindow(0, LCD_height);
+    }
+
+    void set() {
+        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG2);
+    }
+
+    void clear(uint16_t tile=0) {
+        _SYS_vbuf_fill(&buf.sys, 0, tile, BG2_width * BG2_height);
+    }
+
+    static const unsigned BG2_width = _SYS_VRAM_BG2_WIDTH;
+    static const unsigned BG2_height = _SYS_VRAM_BG2_WIDTH;
+
+    void BG2_setBorder(uint16_t color) {
+        buf.poke(offsetof(_SYSVideoRAM, bg2_border) / 2, color);
+    }
+ 
+    void BG2_setMatrix(const AffineMatrix &m) {
+        _SYSAffine a = {
+            256.0f * m.cx + 0.5f,
+            256.0f * m.cy + 0.5f,
+            256.0f * m.xx + 0.5f,
+            256.0f * m.xy + 0.5f,
+            256.0f * m.yx + 0.5f,
+            256.0f * m.yy + 0.5f,
+        };
+        _SYS_vbuf_write(&buf.sys, offsetof(_SYSVideoRAM, bg2_affine)/2,
+                        (const uint16_t *)&a, 6);
+    }
+
+    uint16_t BG2_addr(const Vec2 &point) {
+        return point.x + (point.y * BG2_width);
+    }
+
+    void BG2_putTile(const Vec2 &point, unsigned index) {
+        buf.pokei(BG2_addr(point), index);
+    }
+
+    /*
+     * XXX: Same code as BG0_drawAsset for now, same problems. Needs a
+     *      big hit with the refactoring stick.
+     */
+
+    void BG2_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
+        uint16_t addr = BG2_addr(point);
+        unsigned offset = asset.width * asset.height * frame;
+        const unsigned base = 0;
+
+        for (unsigned y = 0; y < asset.height; y++) {
+            if (asset.tiles)
+                _SYS_vbuf_writei(&buf.sys, addr, asset.tiles + offset, base, asset.width);
+            else
+                _SYS_vbuf_seqi(&buf.sys, addr, offset + base, asset.width);
+
+            addr += BG2_width;
+            offset += asset.width;
+        }
+    }
+};    
+
+
+/**
+ * A special-purpose video mode that just draws a solid color.
+ */
+
+class VidMode_Solid : public VidMode {
+ public:
+    VidMode_Solid(VideoBuffer &vbuf)
+        : VidMode(vbuf) {}
+    
+    void init() {
+        set();
+    }
+
+    void set() {
+        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_SOLID);
+    }
+
+    void setColor(uint16_t color) {
+        _SYS_vbuf_poke(&buf.sys, offsetof(_SYSVideoRAM, colormap[0]) / 2, color);
+    }
+};    
 
 
 };  // namespace Sifteo
