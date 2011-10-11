@@ -194,9 +194,20 @@ void brickScroll()
     }
 }
 
+
+//get random value from 0 to max
+unsigned int Rand( unsigned int max )
+{
+#ifdef _WIN32
+	return rand()%max;
+#else
+	unsigned int seed = (unsigned int)System::clock();
+	return rand_r(&seed)%max;
+#endif
+}
+
 void randomGems()
 {
-    unsigned seed = 0;
     VidMode_BG0 vid(cube.vbuf);
 
     vid.setWindow(0, 128);
@@ -205,7 +216,7 @@ void randomGems()
     for (unsigned frames = 0; frames < 260; frames++) {
         for (unsigned x = 0; x < 16; x += 2)
             for (unsigned y = 0; y < 16; y += 2)
-                vid.BG0_drawAsset(Vec2(x,y), Gems, rand_r(&seed) % Gems.frames);
+                vid.BG0_drawAsset(Vec2(x,y), Gems, Rand(Gems.frames));
 
         vid.set();
         System::paint();
