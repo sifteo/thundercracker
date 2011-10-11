@@ -39,12 +39,12 @@ extern "C" void _start()
      *      at 48 MHz for now.
      *
      *   - 8 MHz HSE (xtal) osc
-     *   - PLL x6 => 48 MHz
-     *   - SYSCLK at 48 MHz
-     *   - HCLK at 48 MHz
-     *   - APB1 at 12 MHz (/4)
-     *       - SPI2 at 6 MHz
-     *   - APB2 at 24 MHz (/2)
+     *   - PLL x9 => 72 MHz
+     *   - SYSCLK at 72 MHz
+     *   - HCLK at 72 MHz
+     *   - APB1 at 18 MHz (/4)
+     *       - SPI2 at 9 MHz
+     *   - APB2 at 36 MHz (/2)
      *       - GPIOs
      *   - USB clock at 48 MHz (PLL /1)
      *
@@ -57,15 +57,49 @@ extern "C" void _start()
      *     system clock is 1/8th the AHB clock.
      */
 
-    RCC.CFGR = ( (1 << 22) |    // USBPRE (/1)
-                 (4 << 18) |    // PLLMUL (x6)
-                 (1 << 16) |    // PLLSRC (HSE)
-                 (8 << 11) |    // PPRE2  (/2)
-                 (5 << 8) |     // PPRE1  (/4)
-                 (2 << 0) );    // SW (PLL)
+    // system runs from HSI on reset - make sure this is on and stable
+    // before we switch away from it
+    RCC.CR |= (1 << 0); // HSION
+    while (!(RCC.CR & (1 << 1))); // wait for HSI ready
 
-    RCC.CR |= ( (1 << 16) |     // HSE ON
-                (1 << 24) );    // PLL ON
+    RCC.CR &=  (0x1F << 3)  |   // HSITRIM reset value
+               (1 << 0);        // HSION
+    RCC.CFGR = 0;       // reset
+    // Wait until HSI is the source.
+    while ((RCC.CFGR & (3 << 2)) != 0x0);
+
+    // fire up HSE
+    RCC.CR |= (1 << 16); // HSEON
+    while (!(RCC.CR & (1 << 17))); // wait for HSE to be stable
+
+    // fire up the PLL
+    RCC.CFGR |= (7 << 18) |         // PLLMUL (x9)
+                (0 << 17) |         // PLL XTPRE - no divider
+                (1 << 16);          // PLLSRC - HSE
+    RCC.CR   |= (1 << 24);          // turn PLL on
+    while (!(RCC.CR & (1 << 25)));  // wait for PLL to be ready
+
+    // configure all the other buses
+    RCC.CFGR =  (7 << 24)       |   // MCO - mcu clock output
+                (1 << 22)       |   // USBPRE - divide by 1
+                (7 << 18)       |   // PLLMUL - x9
+                (0 << 17)       |   // PLLXTPRE - no divider
+                (1 << 16)       |   // PLLSRC - HSE
+                (4 << 11)       |   // PPRE2 - APB2 prescaler, divide by 2
+                (5 << 8)        |   // PPRE1 - APB1 prescaler, divide by 4
+                (0 << 4);           // HPRE - AHB prescaler, no divisor
+
+    FLASH.ACR = (1 << 1);
+
+    // switch to PLL as system clock
+    RCC.CFGR |= (2 << 0);
+    while ((RCC.CFGR & (3 << 2)) != (2 << 2));   // wait till we're running from PLL
+
+    // reset all peripherals
+    RCC.APB1RSTR = 0xFFFFFFFF;
+    RCC.APB1RSTR = 0;
+    RCC.APB2RSTR = 0xFFFFFFFF;
+    RCC.APB2RSTR = 0;
 
     // Enable peripheral clocks
     RCC.APB1ENR = 0x00004000;   // SPI2
