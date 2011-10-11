@@ -122,12 +122,13 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
 
 void FrontendCube::initGL()
 {
-	GLenum err = glewInit();
-	if (GLEW_OK != err)
-	{
-	  /* Problem: glewInit failed, something is seriously wrong. */
-	  fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
-	}
+#ifdef GLEW_STATIC
+    GLenum err = glewInit();
+    if (GLEW_OK != err) {
+        /* Problem: glewInit failed, something is seriously wrong. */
+        fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+    }
+#endif
 
     lcdVP = glCreateShaderObjectARB(GL_VERTEX_SHADER);
     glShaderSourceARB(lcdVP, 1, &srcLcdVP[0], NULL);
