@@ -35,6 +35,10 @@ void main(void)
 
 static void gpio_init(void)
 {
+    /*
+     * Basics
+     */
+
     BUS_DIR = 0xFF;
 
     ADDR_PORT = 0;
@@ -45,6 +49,21 @@ static void gpio_init(void)
     MISC_DIR = MISC_DIR_VALUE;
     CTRL_DIR = CTRL_DIR_VALUE;
 
+    /*
+     * Pull-ups on I2C. These don't seem to have much effect, but it's
+     * the thought that counts...
+     */
+
     MISC_CON = 0x52;    // Pull-up on I2C SCL
     MISC_CON = 0x53;    // Pull-up on I2C SDA
+
+    /*
+     * Neighbor TX pins, high drive strength
+     */
+
+    MISC_CON = 0x60;
+    MISC_CON = 0x61;
+    MISC_CON = 0x65;
+    MISC_CON = 0x67;
 }
+
