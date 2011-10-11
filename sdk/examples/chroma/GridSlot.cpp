@@ -71,7 +71,8 @@ void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
 		{
 			char aStr[2];
 			sprintf( aStr, "%d", m_score );
-			vid.BG0_text(vec, Font, aStr);
+			vid.BG0_drawAsset(vec, GemEmpty, 0);
+			vid.BG0_text(Vec2( vec.x + 1, vec.y + 1 ), Font, aStr);
 			break;
 		}
 		case STATE_GONE:
