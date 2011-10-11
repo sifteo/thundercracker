@@ -28,7 +28,6 @@ void siftmain()
     int fpMonster = 0;
     const int shift = 7;
     const int fpMax = arraysize(monsters) << shift;
-    const MonsterData *currentMonster = NULL;
 
     cube.vbuf.init();
     cube.vbuf.sys.vram.mode = _SYS_VM_FB32;
@@ -44,13 +43,7 @@ void siftmain()
         while (fpMonster < 0) fpMonster += fpMax;
         while (fpMonster > fpMax) fpMonster -= fpMax;
 
-        const MonsterData *m = monsters[fpMonster >> shift];
-
-        if (m != currentMonster) {
-            showMonster(m);
-            currentMonster = m;
-        }
-
+        showMonster(monsters[fpMonster >> shift]);
         System::paint();
     }
 }
