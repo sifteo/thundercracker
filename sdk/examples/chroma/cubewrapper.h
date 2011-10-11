@@ -26,6 +26,7 @@ public:
 	//draw loading progress.  return true if done
 	bool DrawProgress( AssetGroup &assets );
 	void Draw();
+	void DrawSplash();
 	void Update(float t);
 	void vidInit();
 	void Tilt( int dir );

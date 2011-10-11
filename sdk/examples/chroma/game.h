@@ -16,6 +16,13 @@ using namespace Sifteo;
 class Game
 {
 public:
+	typedef enum
+	{
+		STATE_SPLASH,
+		STATE_MENU,
+		STATE_PLAYING,
+	} GameState;
+
 	static Game &Inst();
 	
 	Game();
@@ -40,6 +47,8 @@ private:
 	bool IsAllQuiet();
 	bool m_bTestMatches;
 	unsigned int m_iGemScore;
+	GameState m_state;
+	float m_splashTime;
 };
 
 #endif

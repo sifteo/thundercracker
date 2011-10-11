@@ -59,6 +59,12 @@ void CubeWrapper::Draw()
 }
 
 
+void CubeWrapper::DrawSplash()
+{
+	m_vid.BG0_drawAsset(Vec2(0,0), Cover, 0);
+}
+
+
 void CubeWrapper::Update(float t)
 {
 	uint8_t buf[4];

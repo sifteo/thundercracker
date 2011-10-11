@@ -16,7 +16,7 @@ Game &Game::Inst()
 	return game; 
 }
 
-Game::Game() : m_bTestMatches( false ), m_iGemScore ( 0 )
+Game::Game() : m_bTestMatches( false ), m_iGemScore ( 0 ), m_state( STATE_SPLASH ), m_splashTime( 0.0f )
 {
 }
 
@@ -45,25 +45,38 @@ void Game::Init()
 	PRINT( "done loading" );
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].vidInit();
+
+	m_splashTime = System::clock();
 }
 
 
 void Game::Update()
 {
-	if( m_bTestMatches )
+	if( m_state == STATE_SPLASH )
 	{
-		TestMatches();
-		m_bTestMatches = false;
+		for( int i = 0; i < NUM_CUBES; i++ )
+			cubes[i].DrawSplash();
+
+		if( System::clock() - m_splashTime > 3.0f )
+			m_state = STATE_PLAYING;
 	}
+	else if( m_state == STATE_PLAYING )
+	{
+		if( m_bTestMatches )
+		{
+			TestMatches();
+			m_bTestMatches = false;
+		}
 
-	for( int i = 0; i < NUM_CUBES; i++ )
-		cubes[i].Update( System::clock() );
+		for( int i = 0; i < NUM_CUBES; i++ )
+			cubes[i].Update( System::clock() );
 
-	for( int i = 0; i < NUM_CUBES; i++ )
-		cubes[i].Draw();
+		for( int i = 0; i < NUM_CUBES; i++ )
+			cubes[i].Draw();
 
-	if( IsAllQuiet() )
-		m_iGemScore = 0;
+		if( IsAllQuiet() )
+			m_iGemScore = 0;
+	}
             
     System::paint();
 }
