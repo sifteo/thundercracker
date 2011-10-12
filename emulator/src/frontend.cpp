@@ -281,7 +281,7 @@ bool Frontend::onResize(int width, int height)
     glShadeModel(GL_SMOOTH);
     glPolygonOffset(-1.0f, -2.0f);
     
-    if (!glCreateShaderObjectARB)
+    if (!HAS_GL_ENTRY(glCreateShaderObjectARB))
         fprintf(stderr, "Warning: Shader support not available. Rendering quality will suck :(\n");
     
     for (unsigned i = 0; i < sys->opt_numCubes; i++)

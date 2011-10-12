@@ -17,13 +17,16 @@
 
 #include <SDL.h>
 #ifdef __MACH__
+#   define HAS_GL_ENTRY(x)   (true)
 #   include <OpenGL/gl.h>
 #   include <OpenGL/glext.h>
 #elif defined (_WIN32)
-#define GLEW_STATIC
+#   define GLEW_STATIC
+#   define HAS_GL_ENTRY(x)   ((x) != NULL)
 #   include <GL/glew.h>
 #else
 #   define GL_GLEXT_PROTOTYPES
+#   define HAS_GL_ENTRY(x)   (true)
 #   include <GL/gl.h>
 #   include <GL/glext.h>
 #endif

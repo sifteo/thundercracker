@@ -122,7 +122,7 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
 
 void FrontendCube::initGL()
 {
-    if (glCreateShaderObjectARB) {
+    if (HAS_GL_ENTRY(glCreateShaderObjectARB)) {
         lcdVP = glCreateShaderObjectARB(GL_VERTEX_SHADER);
         glShaderSourceARB(lcdVP, 1, &srcLcdVP[0], NULL);
         glCompileShaderARB(lcdVP);
@@ -257,10 +257,7 @@ void FrontendCube::initGL()
      * Draw body
      */
 
-    if (glUseProgramObjectARB)
-        glUseProgramObjectARB(0);
     glDisable(GL_TEXTURE_2D);
-
     glColor3f(0.9, 0.9, 0.9);
     glInterleavedArrays(GL_V3F, 0, vaSides);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 18);
@@ -283,7 +280,7 @@ void FrontendCube::initGL()
         // LCD on, draw the image with a shader
 
         glColor3f(1.0, 1.0, 1.0);
-        if (glUseProgramObjectARB) {
+        if (HAS_GL_ENTRY(glUseProgramObjectARB)) {
             glUseProgramObjectARB(lcdProgram);
             glUniform1iARB(glGetUniformLocationARB(lcdProgram, "image"), 0);
         }
@@ -298,8 +295,6 @@ void FrontendCube::initGL()
 
         glColor3f(0.1, 0.1, 0.1);
         glDisable(GL_TEXTURE_2D);
-        if (glUseProgramObjectARB)
-            glUseProgramObjectARB(0);
     }
 
     glEnable(GL_POLYGON_OFFSET_FILL);
@@ -307,6 +302,9 @@ void FrontendCube::initGL()
     glInterleavedArrays(GL_T2F_V3F, 0, vaLcd);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glDisable(GL_POLYGON_OFFSET_FILL);
+
+    if (HAS_GL_ENTRY(glUseProgramObjectARB))
+        glUseProgramObjectARB(0);
 }
 
 void FrontendCube::setTiltTarget(b2Vec2 angles)
