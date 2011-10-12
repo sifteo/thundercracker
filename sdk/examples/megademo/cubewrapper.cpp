@@ -583,14 +583,7 @@ void randomGems()
 
 void CubeWrapper::HelloInit()
 {
-	for( int i = 0; i < 16; i++ )
-	{
-		for( int j = 0; j < 16; j++ )
-		{
-			m_vid.BG0_drawAsset( Vec2(i,j), White );
-		}
-	}
-	//m_vid.clear(White.tiles[0]);
+	m_vid.clear(White.tiles[0]);
 	m_vid.BG0_text(Vec2(2,1), WhiteFont, "Hello World!");
     m_vid.BG0_drawAsset(Vec2(1,10), Logo);
 }
