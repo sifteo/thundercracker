@@ -102,7 +102,7 @@ class VideoBuffer {
      * Poke a 14-bit tile index into a particular VRAM word.
      */
     void pokei(uint16_t addr, uint16_t index) {
-        _SYS_vbuf_poke(&sys, addr, ((index << 2) & 0xFE00) | ((index << 1) & 0x00FE));
+        _SYS_vbuf_poke(&sys, addr, indexWord(index));
     }
 
     /**
@@ -121,6 +121,13 @@ class VideoBuffer {
         uint8_t byte;
         _SYS_vbuf_peekb(&sys, addr, &byte);
         return byte;
+    }
+
+    /**
+     * Convert a 14-bit tile index to a 16-bit word
+     */
+    static uint16_t indexWord(uint16_t index) {
+        return ((index << 2) & 0xFE00) | ((index << 1) & 0x00FE);
     }
 
     _SYSVideoBuffer sys;    
@@ -197,7 +204,7 @@ class VidMode_BG0 : public VidMode {
     }
 
     void clear(uint16_t tile=0) {
-        _SYS_vbuf_fill(&buf.sys, 0, tile, BG0_width * BG0_height);
+        _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
     }
 
     static const unsigned BG0_width = _SYS_VRAM_BG0_WIDTH;
