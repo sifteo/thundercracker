@@ -124,10 +124,6 @@ struct em8051
 // all memory to zero.
 void em8051_reset(struct em8051 *aCPU, int aWipe);
 
-// run one emulator tick, or 12 hardware clock cycles.
-// returns 1 if a new operation was executed.
-int em8051_tick(struct em8051 *aCPU);
-
 // decode the next operation as character string.
 // buffer must be big enough (64 bytes is very safe). 
 // Returns length of opcode.
@@ -141,6 +137,12 @@ void em8051_push(struct em8051 *aCPU, int aValue);
 
 // Get a human-readable name for an exception code
 const char *em8051_exc_name(int aCode);
+
+// Private functions
+void disasm_setptrs(em8051 *aCPU);
+void op_setptrs(em8051 *aCPU);
+void handle_interrupts(em8051 *aCPU);
+
 
 enum EM8051_EXCEPTION
 {

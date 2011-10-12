@@ -104,7 +104,10 @@ int System::threadFn(void *param)
             Cube::Hardware &debugCube = self->cubes[0];
 
             for (unsigned t = 0; t < self->time.timestepTicks(); t++) {
-                tick0 |= debugCube.tick();
+                if (debugCube.tick()) {
+                    tick0 = true;
+                    Cube::Debug::recordHistory();
+                }
                 for (unsigned i = 1; i < nCubes; i++)
                     self->cubes[i].tick();
                 self->tick();

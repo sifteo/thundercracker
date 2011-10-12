@@ -18,6 +18,8 @@
 #include "cube_lcd.h"
 #include "cube_flash.h"
 #include "cube_neighbors.h"
+#include "cube_cpu_core.h"
+#include "cube_debug.h"
 #include "vtime.h"
 
 namespace Cube {
