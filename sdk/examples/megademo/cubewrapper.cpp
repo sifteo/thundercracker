@@ -13,7 +13,7 @@ static _SYSCubeID s_id = 0;
 
 static Cube *s_pCube = NULL;
 
-CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf)
+CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_frame(0)
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -575,6 +575,50 @@ void randomGems()
     }
 }
 
+
+void CubeWrapper::HelloInit()
+{
+	for( int i = 0; i < 16; i++ )
+	{
+		for( int j = 0; j < 16; j++ )
+		{
+			m_vid.BG0_drawAsset( Vec2(i,j), White );
+		}
+	}
+	//m_vid.clear(White.tiles[0]);
+	m_vid.BG0_text(Vec2(2,1), WhiteFont, "Hello World!");
+    m_vid.BG0_drawAsset(Vec2(1,10), Logo);
+}
+
+
+void CubeWrapper::Hello()
+{
+    const unsigned rate = 2;
+
+    float t = System::clock();
+
+    m_vid.BG0_textf(Vec2(2,6), WhiteFont, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
+    m_vid.BG0_drawAsset(Vec2(11,9), Kirby, m_frame >> rate);
+
+    if (++m_frame == Kirby.frames << rate)
+        m_frame = 0;
+
+	uint8_t buf[4];
+	_SYS_getRawNeighbors(m_cube.id(), buf);
+
+	for( int i = 0; i < NUM_SIDES; i++ )
+	{
+		if( ( buf[i] >> 7 ) > 0 )
+			Game::Inst().setState( Game::STATE_GFXDEMO );
+	}
+}
+
+
+void CubeWrapper::HelloTilt(_SYSAccelState &state)
+{
+	m_vid.BG0_textf(Vec2(2,4), WhiteFont, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
+	m_vid.BG0_setPanning(Vec2(-state.x/2, -state.y/2));
+}
 
 void CubeWrapper::Demo()
 {

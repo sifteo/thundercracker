@@ -82,9 +82,18 @@ void Game::Update()
 				m_quietCount++;
 
 				if( m_quietCount >= 3 )
-					m_state = STATE_GFXDEMO;
+				{
+					m_state = STATE_HELLODEMO;
+					for( int i = 0; i < NUM_CUBES; i++ )
+						cubes[i].HelloInit();
+				}
 			}
 		}
+	}
+	else if( m_state == STATE_HELLODEMO )
+	{
+		for( int i = 0; i < NUM_CUBES; i++ )
+			cubes[i].Hello();
 	}
 	else if( m_state == STATE_GFXDEMO )
 		cubes[0].Demo();

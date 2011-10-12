@@ -85,8 +85,13 @@ int System::threadFn(void *param)
     bool debug = self->opt_cube0Debug && nCubes;
 
     self->time.init();
+    ElapsedTime et(self->time);
+
     if (debug)
         Cube::Debug::init(&self->cubes[0]);
+
+    et.capture();
+    et.start();
 
     while (self->threadRunning) {
         if (debug) {
@@ -118,6 +123,24 @@ int System::threadFn(void *param)
                 for (unsigned i = 0; i < nCubes; i++)
                     self->cubes[i].tick();
                 self->tick();
+            }
+
+            /*
+             * Do some periodic stats to stdout.
+             *
+             * XXX: The frontend should be doing this, not us. And it
+             * should be part of the graphical output.
+             */
+
+            et.capture();
+            if (et.realSeconds() > 1.0f) {
+            
+                printf("Simulator at %.2f %% actual speed -- [", et.virtualRatio() * 100.0f);
+                for (unsigned i = 0; i < nCubes; i++)
+                    printf("%8.2f", self->cubes[i].lcd.getWriteCount()  / et.virtualSeconds());
+                printf(" ] FPS\n");
+
+                et.start();
             }
         }
     }

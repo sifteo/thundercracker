@@ -1,5 +1,6 @@
 GameAssets = group{quality=10}
 Font = image{"font-8x16.png", width=8, height=16, pinned=true}
+WhiteFont = image{"font-8x16white.png", width=8, height=16}
 Gem0 = image{"01_gem00.png", height=32}
 Gem1 = image{"01_gem01.png", height=32}
 Gem2 = image{"01_gem02.png", height=32}
@@ -11,6 +12,7 @@ Gem7 = image{"01_gem07.png", height=32}
 GemEmpty = image{"gem_Empty.png"}
 Cover = image{"cover.png"}
 Black = image{"black8.png"}
+White = image{"white.png"}
 Globe64 = image{"globe64.png"}
 Globe128 = image{"globe128.png"}
 Flower = image{"flower.png"}
@@ -19,4 +21,5 @@ Owlbear = image{"owlbear.png", width=128, height=128}
 Gems = image{"gems.png", width=16, height=16}
 Brick144 = image{"brick144.png"}
 Cat = image{"cat.png"}
-
+Logo = image{"logo.png"}
+Kirby = image{"kirby-running.png", height=24}
