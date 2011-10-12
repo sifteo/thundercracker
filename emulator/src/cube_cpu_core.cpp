@@ -46,15 +46,27 @@ void handle_interrupts(em8051 *aCPU);
 
 static void timer_tick(em8051 *aCPU)
 {
-    int increment;
-    bool tick12, tick24;
-    int v;
+    /*
+     * Examine all of the possible counter/timer clock sources
+     */
 
-    if ((tick12 = (++aCPU->prescaler12 == 12)))
+    bool tick12 = false;
+    if (++aCPU->prescaler12 == 12) { 
+        tick12 = true;
         aCPU->prescaler12 = 0;
+    }
 
-    if ((tick24 = (++aCPU->prescaler24 == 24)))
-        aCPU->prescaler24 = 0;
+    uint8_t nextT012 = aCPU->mSFR[PORT_T012] & (PIN_T0 | PIN_T1 | PIN_T2);
+    uint8_t fallingEdges = aCPU->t012 & ~nextT012;
+    aCPU->t012 = nextT012;
+
+    /*
+     * If no clock sources are active, exit early.
+     * The timer code is slow, and we'd really rather not run it every tick.
+     */
+
+    if (tick12 == false && fallingEdges == 0)
+        return;
 
     /*
      * Timer 0 / Timer 1
@@ -64,7 +76,7 @@ static void timer_tick(em8051 *aCPU)
     {
         // timer/counter 0 in mode 3
 
-        increment = 0;
+        bool increment = 0;
         
         // Check if we're run enabled
         // TODO: also run if GATE is one and INT is one (external interrupt)
@@ -73,30 +85,22 @@ static void timer_tick(em8051 *aCPU)
         {
             // check timer / counter mode
             if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_0)
-            {
-                /* Count falling edges on T0 */
-                uint8_t nextT0 = aCPU->mSFR[PORT_T0] & PIN_T0;
-                increment = aCPU->t0 && !nextT0;
-                aCPU->t0 = nextT0;
-            }
+                increment = fallingEdges & PIN_T0;
             else
-            {
                 increment = tick12;
-            }
         }
         if (increment)
         {
-            v = aCPU->mSFR[REG_TL0];
+            int v = aCPU->mSFR[REG_TL0];
             v++;
             aCPU->mSFR[REG_TL0] = v & 0xff;
+
+            // TL0 overflowed
             if (v > 0xff)
-            {
-                // TL0 overflowed
                 aCPU->mSFR[REG_TCON] |= TCONMASK_TF0;
-            }
         }
 
-        increment = 0;
+        increment = false;
         
         // Check if we're run enabled
         // TODO: also run if GATE is one and INT is one (external interrupt)
@@ -105,28 +109,20 @@ static void timer_tick(em8051 *aCPU)
         {
             // check timer / counter mode
             if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_1)
-            {
-                /* Count falling edges on T1 */
-                uint8_t nextT1 = aCPU->mSFR[PORT_T1] & PIN_T1;
-                increment = aCPU->t1 && !nextT1;
-                aCPU->t1 = nextT1;
-            }
+                increment = fallingEdges & PIN_T1;
             else
-            {
                 increment = tick12;
-            }
         }
 
         if (increment)
         {
-            v = aCPU->mSFR[REG_TH0];
+            int v = aCPU->mSFR[REG_TH0];
             v++;
             aCPU->mSFR[REG_TH0] = v & 0xff;
+
+            // TH0 overflowed
             if (v > 0xff)
-            {
-                // TH0 overflowed
                 aCPU->mSFR[REG_TCON] |= TCONMASK_TF1;
-            }
         }
 
     }
@@ -136,7 +132,7 @@ static void timer_tick(em8051 *aCPU)
      */
 
     {        
-        increment = 0;
+        bool increment = 0;
         
         // Check if we're run enabled
         // TODO: also run if GATE is one and INT is one (external interrupt)
@@ -145,20 +141,15 @@ static void timer_tick(em8051 *aCPU)
         {
             // check timer / counter mode
             if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_0)
-            {
-                /* Count falling edges on T0 */
-                uint8_t nextT0 = aCPU->mSFR[PORT_T0] & PIN_T0;
-                increment = aCPU->t0 && !nextT0;
-                aCPU->t0 = nextT0;
-            }
+                increment = fallingEdges & PIN_T0;
             else
-            {
                 increment = tick12;
-            }
         }
         
         if (increment)
         {
+            int v;
+
             switch (aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0))
             {
             case 0: // 13-bit timer
@@ -218,26 +209,21 @@ static void timer_tick(em8051 *aCPU)
      */
 
     {        
-        increment = 0;
+        bool increment = 0;
 
         if (!(aCPU->mSFR[REG_TMOD] & TMODMASK_GATE_1) && 
             (aCPU->mSFR[REG_TCON] & TCONMASK_TR1))
         {
             if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_1)
-            {
-                /* Count falling edges on T1 */
-                uint8_t nextT1 = aCPU->mSFR[PORT_T1] & PIN_T1;
-                increment = aCPU->t1 && !nextT1;
-                aCPU->t1 = nextT1;
-            }
+                increment = fallingEdges & PIN_T1;
             else
-            {
                 increment = tick12;
-            }
         }
 
         if (increment)
         {
+            int v;
+
             switch (aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_1 | TMODMASK_M1_1))
             {
             case 0: // 13-bit timer
@@ -305,24 +291,28 @@ static void timer_tick(em8051 *aCPU)
      */
 
     {        
+        bool tick24 = false;
+
+        if (tick12 && ++aCPU->prescaler24 == 2) {
+            tick24 = true;
+            aCPU->prescaler24 = 0;
+        }
+
         uint8_t t2con = aCPU->mSFR[REG_T2CON];
-
-        uint8_t nextT2 = aCPU->mSFR[PORT_T2] & PIN_T2;
-        bool t2Edge = aCPU->t2 && !nextT2;
-        aCPU->t2 = nextT2;
-
         bool t2Clk = (t2con & 0x80) ? tick24 : tick12;
 
         // Timer mode
+
+        bool increment = false;
         switch (t2con & 0x03) {
         case 0: increment = 0; break;
         case 1: increment = t2Clk; break;
-        case 2: increment = t2Edge; break;
-        case 3: increment = t2Clk && nextT2; break;
+        case 2: increment = fallingEdges & PIN_T2; break;
+        case 3: increment = t2Clk && (nextT012 & PIN_T2); break;
         }
          
         if (increment) {
-            v = aCPU->mSFR[REG_TL2];
+            int v = aCPU->mSFR[REG_TL2];
             v++;
             aCPU->mSFR[REG_TL2] = v & 0xff;
 
@@ -406,24 +396,24 @@ int em8051_tick(em8051 *aCPU)
     int ticked = 0;
 
     if (aCPU->mTickDelay)
-    {
         aCPU->mTickDelay--;
-    }
 
-    // Interrupts are sent if the following cases are not true:
-    // 1. interrupt of equal or higher priority is in progress (tested inside function)
-    // 2. current cycle is not the final cycle of instruction (tickdelay = 0)
-    // 3. the instruction in progress is RETI or any write to the IE or IP regs (TODO)
-    if (aCPU->mTickDelay == 0)
-    {
+    if (aCPU->mTickDelay == 0) {
+
+        /*
+         * Interrupts are sent if the following cases are not true:
+         *   1. interrupt of equal or higher priority is in progress (tested inside function)
+         *   2. current cycle is not the final cycle of instruction (tickdelay = 0)
+         *   3. the instruction in progress is RETI or any write to the IE or IP regs (TODO)
+         */
+
         handle_interrupts(aCPU);
-    }
 
-    if (aCPU->mTickDelay == 0)
-    {
+        /*
+         * Run one instruction!
+         */
+
         unsigned pc = aCPU->mPC & (CODE_SIZE - 1);
-        struct profile_data *pd;
-
         aCPU->mPreviousPC = aCPU->mPC;
         aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU);
         ticked = 1;
@@ -446,8 +436,7 @@ int em8051_tick(em8051 *aCPU)
          */
 
         if (aCPU->mProfileData) {
-            pd = &aCPU->mProfileData[pc];
-
+            struct profile_data *pd = &aCPU->mProfileData[pc];
             pd->total_cycles += aCPU->mTickDelay;
             if (pd->loop_prev) {
                 pd->loop_cycles += aCPU->profilerTotal - pd->loop_prev;
@@ -456,7 +445,10 @@ int em8051_tick(em8051 *aCPU)
             pd->loop_prev = aCPU->profilerTotal;
         }
 
-        // update parity bit
+        /*
+         * Update parity bit
+         */
+
         v = aCPU->mSFR[REG_ACC];
         v ^= v >> 4;
         v &= 0xf;
@@ -469,12 +461,16 @@ int em8051_tick(em8051 *aCPU)
 
         if (aCPU->traceFile)
             traceExecution(aCPU);
+
+        /*
+         * Fire breakpoints
+         */
+        
+        if (aCPU->mBreakpoint && aCPU->mBreakpoint == aCPU->mPC)
+            aCPU->except(aCPU, EXCEPTION_BREAK);
     }
 
     timer_tick(aCPU);
-
-    if (ticked && aCPU->mBreakpoint && aCPU->mBreakpoint == aCPU->mPC)
-        aCPU->except(aCPU, EXCEPTION_BREAK);
 
     return ticked;
 }

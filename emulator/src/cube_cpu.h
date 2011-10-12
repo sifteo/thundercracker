@@ -101,9 +101,7 @@ struct em8051
 
     uint8_t irq_count;          // Number of currently active IRQ handlers
     uint8_t ifp;                // Last IFP state
-    uint8_t t0;                 // Last T0 state
-    uint8_t t1;                 // Last T1 state
-    uint8_t t2;                 // Last T2 state
+    uint8_t t012;               // Last T0/1/2 state
     uint8_t prescaler12;        // 1/12 prescaler
     uint8_t prescaler24;        // 1/24 prescaler
 
@@ -146,10 +144,9 @@ const char *em8051_exc_name(int aCode);
 
 enum EM8051_EXCEPTION
 {
-    //EXCEPTION_BREAKPOINT = 0,  //eric - changing this to avoid collision with a windows #define
-	EXCEPTION_BREAK = 0,  //eric - changing the name to avoid collision with a windows #define
-    EXCEPTION_STACK,  // stack address > 127 with no upper memory, or roll over
-    EXCEPTION_ACC_TO_A, // acc-to-a move operation; illegal (acc-to-acc is ok, a-to-acc is ok..)
+    EXCEPTION_BREAK = 0,         // user-defined breakpoint (mBreakpoint) reached
+    EXCEPTION_STACK,             // stack address > 127 with no upper memory, or roll over
+    EXCEPTION_ACC_TO_A,          // acc-to-a move operation; illegal (acc-to-acc is ok, a-to-acc is ok..)
     EXCEPTION_IRET_PSW_MISMATCH, // psw not preserved over interrupt call (doesn't care about P, F0 or UNUSED)
     EXCEPTION_IRET_SP_MISMATCH,  // sp not preserved over interrupt call
     EXCEPTION_IRET_ACC_MISMATCH, // acc not preserved over interrupt call
