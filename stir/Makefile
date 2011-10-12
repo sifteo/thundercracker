@@ -32,6 +32,7 @@ UNAME  := $(shell uname)
 
 ifeq ($(findstring MINGW32_NT,$(UNAME)),MINGW32_NT)  
       UNAME := windows32
+      CC := mingw32-gcc
 endif
 
 CFLAGS += -O3 -g -ffast-math -Werror -Wall -I$(FIRMWARE_INC)
