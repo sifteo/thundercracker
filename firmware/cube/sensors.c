@@ -505,6 +505,8 @@ nb_tx:
         ; according to the resonant frequency of our LC tank. Cycle counts are
         ; included below, for reference. The "LOW" line can go anywhere after
         ; "HIGH" here.
+        ;
+        ; Currently we're tuning this for 2 us (32 clocks)
 
         clr     _TCON_TR1                       ; Prevent echo, disable receiver
 
@@ -513,9 +515,8 @@ nb_tx:
         jnc     2$
 
         orl     MISC_PORT, #MISC_NB_OUT
-        anl     _MISC_DIR, #~MISC_NB_OUT        ; 3  HIGH
+        anl     _MISC_DIR, #~MISC_NB_OUT        ; 4  HIGH
 2$:
-
         mov     a, (_nb_buffer + 1)             ; 2  Now do a proper 16-bit shift.
         clr     c                               ; 1  Make sure to shift in a zero,
         rlc     a                               ; 1    so our suffix bit is a zero too.
@@ -524,10 +525,9 @@ nb_tx:
         rlc     a                               ; 1
         mov     _nb_buffer, a                   ; 3
 
-        ; XXX: Only sorta tuned, and only on prototype...
-
-        mov     a, #0x3                         ; 2
-        djnz    ACC, .                          ; 20 (5 iters, 4 cycles each)
+        mov     a, #0x2                         ; 2
+        djnz    ACC, .                          ; 12 (3 iters, 4 cycles each)
+        nop                                     ; 1
 
         anl     MISC_PORT, #~MISC_NB_OUT        ; LOW
 

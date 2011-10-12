@@ -58,12 +58,19 @@ static void gpio_init(void)
     MISC_CON = 0x53;    // Pull-up on I2C SDA
 
     /*
-     * Neighbor TX pins, high drive strength
+     * Neighbor TX pins
      */
 
+    // High drive strength
     MISC_CON = 0x60;
     MISC_CON = 0x61;
     MISC_CON = 0x65;
     MISC_CON = 0x67;
+
+    // Pull-downs, for channel isolation in RX mode
+    MISC_CON = 0x30;
+    MISC_CON = 0x31;
+    MISC_CON = 0x35;
+    MISC_CON = 0x37;
 }
 
