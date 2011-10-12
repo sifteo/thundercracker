@@ -1,7 +1,11 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*- */
 
 /* 8051 emulator core
+ *
  * Copyright (c) 2006 Jari Komppa
+ * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ *
+ * License for this file only:
  *
  * Permission is hereby granted, free of charge, to any person obtaining 
  * a copy of this software and associated documentation files (the 
