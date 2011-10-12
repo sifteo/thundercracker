@@ -199,10 +199,12 @@ void brickScroll()
 unsigned int Rand( unsigned int max )
 {
 #ifdef _WIN32
-	return rand()%max;
+        return rand()%max;
 #else
-	unsigned int seed = (unsigned int)System::clock();
-	return rand_r(&seed)%max;
+        static unsigned int seed;
+        if (!seed)
+            seed = (unsigned int)System::clock();
+        return rand_r(&seed)%max;
 #endif
 }
 
