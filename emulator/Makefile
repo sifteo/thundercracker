@@ -72,36 +72,72 @@ CDEPS = src/*.h
 # OS detection
 OS := $(shell uname)
 ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
-      OS := windows32
+	OS := windows32
+	CC := mingw32-gcc
+endif
+ifeq ($(OS),windows32)
+	DEPS := ../deps/win32
+        LDFLAGS += -lws2_32
 endif
 
+# SDL (Linked statically, for convenience)
 ifeq ($(OS),windows32)
-OBJS += src/glew/glew.o
-CFLAGS += -I../deps/win32/sdl/include -I../deps/win32/glew-1.7.0/include
-LDFLAGS += $(shell sdl-config --static-libs)
+	CFLAGS += -I$(DEPS)/sdl/include 
+	LDFLAGS += -lmingw32
+	LDFLAGS += $(DEPS)/sdl/lib/libSDL.dll.a
+	LDFLAGS += -lwinmm -lgdi32 -lm -mconsole
 else
-CFLAGS += $(shell sdl-config --cflags)
-LDFLAGS += $(shell sdl-config --static-libs)
+	CFLAGS += $(shell sdl-config --cflags)
+	LDFLAGS += $(shell sdl-config --static-libs)
 endif
 
 # OpenGL
 ifeq ($(OS),Darwin)
         LDFLAGS += -framework OpenGL
 else ifeq ($(OS),windows32)
-		LDFLAGS += ../deps/win32/glew-1.7.0/lib/glew32mxs.lib ../deps/win32/glew-1.7.0/lib/glew32s.lib -lOpenGL32 
+	OBJS += src/glew/glew.o
+	CFLAGS += -I$(DEPS)/glew-1.7.0/include
+	LDFLAGS += $(DEPS)/glew-1.7.0/lib/glew32mxs.lib $(DEPS)/glew-1.7.0/lib/glew32s.lib -lOpenGL32 
 else
         LDFLAGS += -lGL
 endif
 
 # Curses
 ifeq ($(OS),windows32)
-        LDFLAGS += ../deps/win32/pdcurses/pdcurses.lib -lws2_32
+	# Use our own copy of pdcurses on Win32
+	CFLAGS += -Isrc/pdcurses
+	OBJS += src/pdcurses/pdcurses/addch.o     src/pdcurses/pdcurses/mouse.o 	\
+		src/pdcurses/pdcurses/addchstr.o  src/pdcurses/pdcurses/move.o		\
+		src/pdcurses/pdcurses/addstr.o    src/pdcurses/pdcurses/outopts.o	\
+		src/pdcurses/pdcurses/attr.o      src/pdcurses/pdcurses/overlay.o	\
+		src/pdcurses/pdcurses/beep.o      src/pdcurses/pdcurses/pad.o		\
+		src/pdcurses/pdcurses/bkgd.o      src/pdcurses/pdcurses/panel.o		\
+		src/pdcurses/pdcurses/border.o    src/pdcurses/pdcurses/printw.o	\
+		src/pdcurses/pdcurses/clear.o     src/pdcurses/pdcurses/refresh.o	\
+		src/pdcurses/pdcurses/color.o     src/pdcurses/pdcurses/scanw.o		\
+		src/pdcurses/pdcurses/debug.o     src/pdcurses/pdcurses/scr_dump.o	\
+		src/pdcurses/pdcurses/delch.o     src/pdcurses/pdcurses/scroll.o	\
+		src/pdcurses/pdcurses/deleteln.o  src/pdcurses/pdcurses/slk.o		\
+		src/pdcurses/pdcurses/deprec.o    src/pdcurses/pdcurses/termattr.o	\
+		src/pdcurses/pdcurses/getch.o     src/pdcurses/pdcurses/terminfo.o	\
+		src/pdcurses/pdcurses/getstr.o    src/pdcurses/pdcurses/touch.o		\
+		src/pdcurses/pdcurses/getyx.o     src/pdcurses/pdcurses/util.o		\
+		src/pdcurses/pdcurses/inch.o      src/pdcurses/pdcurses/window.o	\
+		src/pdcurses/pdcurses/inchstr.o   src/pdcurses/win32/pdcclip.o		\
+		src/pdcurses/pdcurses/initscr.o   src/pdcurses/win32/pdcdisp.o		\
+		src/pdcurses/pdcurses/inopts.o    src/pdcurses/win32/pdcgetsc.o		\
+		src/pdcurses/pdcurses/insch.o     src/pdcurses/win32/pdckbd.o		\
+		src/pdcurses/pdcurses/insstr.o    src/pdcurses/win32/pdcscrn.o		\
+		src/pdcurses/pdcurses/instr.o     src/pdcurses/win32/pdcsetsc.o		\
+		src/pdcurses/pdcurses/kernel.o    src/pdcurses/win32/pdcutil.o		\
+		src/pdcurses/pdcurses/keyname.o
 else
+	# On Linux and Mac OS, curses should already be available
         LDFLAGS += -lncurses
 endif
 
 CFLAGS += -O3 -g -Werror -Wall -Isrc
-LDFLAGS += -g -lstdc++
+LDFLAGS += -g -static -lstdc++
 CCFLAGS := $(CFLAGS)
 
 all: $(BIN)

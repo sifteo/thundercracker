@@ -256,6 +256,14 @@ bool Frontend::onResize(int width, int height)
         return false;
     }
 
+#ifdef GLEW_STATIC
+    GLenum err = glewInit();
+    if (GLEW_OK != err) {
+        /* Problem: glewInit failed, something is seriously wrong. */
+        fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+    }
+#endif
+
     viewportWidth = width;
     viewportHeight = height;
     glViewport(0, 0, width, height);
@@ -272,7 +280,10 @@ bool Frontend::onResize(int width, int height)
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
     glPolygonOffset(-1.0f, -2.0f);
-
+    
+    if (!glCreateShaderObjectARB)
+        fprintf(stderr, "Warning: Shader support not available. Rendering quality will suck :(\n");
+    
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
         cubes[i].initGL();
 

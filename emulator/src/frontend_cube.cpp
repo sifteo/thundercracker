@@ -122,26 +122,20 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
 
 void FrontendCube::initGL()
 {
-#ifdef GLEW_STATIC
-    GLenum err = glewInit();
-    if (GLEW_OK != err) {
-        /* Problem: glewInit failed, something is seriously wrong. */
-        fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+    if (glCreateShaderObjectARB) {
+        lcdVP = glCreateShaderObjectARB(GL_VERTEX_SHADER);
+        glShaderSourceARB(lcdVP, 1, &srcLcdVP[0], NULL);
+        glCompileShaderARB(lcdVP);
+
+        lcdFP = glCreateShaderObjectARB(GL_FRAGMENT_SHADER);
+        glShaderSourceARB(lcdFP, 1, &srcLcdFP[0], NULL);
+        glCompileShaderARB(lcdFP);
+
+        lcdProgram = glCreateProgramObjectARB();
+        glAttachObjectARB(lcdProgram, lcdVP);
+        glAttachObjectARB(lcdProgram, lcdFP);
+        glLinkProgramARB(lcdProgram);
     }
-#endif
-
-    lcdVP = glCreateShaderObjectARB(GL_VERTEX_SHADER);
-    glShaderSourceARB(lcdVP, 1, &srcLcdVP[0], NULL);
-    glCompileShaderARB(lcdVP);
-
-    lcdFP = glCreateShaderObjectARB(GL_FRAGMENT_SHADER);
-    glShaderSourceARB(lcdFP, 1, &srcLcdFP[0], NULL);
-    glCompileShaderARB(lcdFP);
-
-    lcdProgram = glCreateProgramObjectARB();
-    glAttachObjectARB(lcdProgram, lcdVP);
-    glAttachObjectARB(lcdProgram, lcdFP);
-    glLinkProgramARB(lcdProgram);
 
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -263,7 +257,8 @@ void FrontendCube::initGL()
      * Draw body
      */
 
-    glUseProgramObjectARB(0);
+    if (glUseProgramObjectARB)
+        glUseProgramObjectARB(0);
     glDisable(GL_TEXTURE_2D);
 
     glColor3f(0.9, 0.9, 0.9);
@@ -288,10 +283,12 @@ void FrontendCube::initGL()
         // LCD on, draw the image with a shader
 
         glColor3f(1.0, 1.0, 1.0);
-        glUseProgramObjectARB(lcdProgram);
+        if (glUseProgramObjectARB) {
+            glUseProgramObjectARB(lcdProgram);
+            glUniform1iARB(glGetUniformLocationARB(lcdProgram, "image"), 0);
+        }
+        
         glEnable(GL_TEXTURE_2D);
-        glUniform1iARB(glGetUniformLocationARB(lcdProgram, "image"), 0);
-
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
                         Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
@@ -300,8 +297,9 @@ void FrontendCube::initGL()
         // LCD off, show a blank dark screen
 
         glColor3f(0.1, 0.1, 0.1);
-        glUseProgramObjectARB(0);
         glDisable(GL_TEXTURE_2D);
+        if (glUseProgramObjectARB)
+            glUseProgramObjectARB(0);
     }
 
     glEnable(GL_POLYGON_OFFSET_FILL);

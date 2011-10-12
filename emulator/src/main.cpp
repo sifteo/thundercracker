@@ -17,6 +17,11 @@
 #include "system.h"
 #include "frontend.h"
 
+// We run in console mode on Windows
+#ifdef _WIN32
+#undef main
+#endif
+
 
 static void usage(const char *argv0)
 {
