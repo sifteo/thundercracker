@@ -183,7 +183,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         timeSyncState--;
     } else if (tx.packet.len == 0) {
         timeSyncState = 10000;
-        codec.timeSync(tx.packet, 0x0000);
+        codec.timeSync(tx.packet, id() << 12);
         return true;
     }
 

@@ -62,10 +62,13 @@ static void gpio_init(void)
      */
 
     // High drive strength
+    // XXX: Does NOT seem to help!
+#if 0
     MISC_CON = 0x60;
     MISC_CON = 0x61;
     MISC_CON = 0x65;
     MISC_CON = 0x67;
+#endif
 
     // Pull-downs, for channel isolation in RX mode
     MISC_CON = 0x30;

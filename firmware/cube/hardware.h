@@ -21,6 +21,7 @@
 #define MISC_DIR        P1DIR
 #define MISC_CON        P1CON
 #define _MISC_DIR       _P1DIR
+#define _MISC_CON       _P1CON
 
 #define BUS_PORT        P2
 #define BUS_DIR         P2DIR

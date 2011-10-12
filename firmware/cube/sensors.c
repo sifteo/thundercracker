@@ -71,12 +71,27 @@ uint8_t accel_x;
  *    [4:0] -- ID for the transmitting cube.
  */
 
+/*
+ * XXX: Eek! These damping bits are extending into the next timeslot!
+ *      They are necessary for quenching our TX inductor, but we need
+ *      to figure out how to do this without blowing our time budget.
+ *
+ * XXX: Timing needs tweaking... using grotesquely long bit periods for a while.
+ */
+
 #define NB_TX_BITS          18      // 1 header, 2 mask, 13 payload, 2 damping
 #define NB_RX_BITS          15      // 2 mask, 13 payload
 
-#define NB_BIT_TICKS        12      // 9.0 us, in 0.75 us ticks
-#define NB_BIT_TICK_FIRST   13      // Tweak for sampling halfway between pulses
+// Original 9us timing
+//#define NB_BIT_TICKS        12      // In 0.75 us ticks
+//#define NB_BIT_TICK_FIRST   13      // Tweak for sampling halfway between pulses
+ 
+// Longer 15us bits
+#define NB_BIT_TICKS        18      // In 0.75 us ticks
+#define NB_BIT_TICK_FIRST   17      // Tweak for sampling halfway between pulses
+
 #define NB_DEADLINE         20      // 15 us (Max 48 us)
+
 
 uint8_t nb_bits_remaining;          // Bit counter for transmit or receive
 uint8_t nb_buffer[2];               // Packet shift register for TX/RX
@@ -365,25 +380,6 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 4$:
 
         ;--------------------------------------------------------------------
-        ; Accelerometer Sampling
-        ;--------------------------------------------------------------------
-
-        ; Trigger the next accelerometer read, and reset the I2C bus. We do
-        ; this each time, to avoid a lockup condition that can persist
-        ; for multiple packets. We include a brief GPIO frob first, to try
-        ; and clear the lockup on the accelerometer end.
-
-        orl     MISC_PORT, #MISC_I2C      ; Drive the I2C lines high
-        anl     _MISC_DIR, #~MISC_I2C     ;   Output drivers enabled
-        xrl     MISC_PORT, #MISC_I2C_SCL  ;   Now pulse SCL low
-        mov     _accel_state, #0          ; Reset accelerometer state machine
-        mov     _W2CON0, #0               ; Reset I2C master
-        mov     _W2CON0, #1               ;   Turn on I2C controller
-        mov     _W2CON0, #7               ;   Master mode, 100 kHz.
-        mov     _W2CON1, #0               ;   Unmask interrupt
-        mov     _W2DAT, _accel_addr       ; Trigger the next I2C transaction
-
-        ;--------------------------------------------------------------------
 
         pop     ar1
         pop     ar0
@@ -540,7 +536,7 @@ nb_bit_done:
         clr     _T2CON_T2I0                     ; Nope. Disable the IRQ
         orl     _MISC_DIR, #MISC_NB_OUT         ; Let the LC tanks float
 
-        jb      _nb_tx_mode, nb_packet_done     ; TX mode? Nothing to store.
+        jb      _nb_tx_mode, nb_tx_handoff      ; TX mode? Nothing to store.
 
         ;--------------------------------------------------------------------
         ; RX Packet Completion
@@ -572,6 +568,35 @@ nb_bit_done:
         mov     @r0, a
 
         pop     ar0
+
+        ;--------------------------------------------------------------------
+        ; TX -> Accelerometer handoff
+        ;--------------------------------------------------------------------
+
+nb_tx_handoff:
+
+        ; Somewhat unintuitively, we start accelerometer sampling right after
+        ; the neighbor transmit finishes. In a perfect world, it really wouldnt
+        ; matter when we start I2C. But in our hardware, the I2C bus has a
+        ; frequency very close to our neighbor resonance. So, this keeps the
+        ; signals cleaner.
+
+        ; Trigger the next accelerometer read, and reset the I2C bus. We do
+        ; this each time, to avoid a lockup condition that can persist
+        ; for multiple packets. We include a brief GPIO frob first, to try
+        ; and clear the lockup on the accelerometer end.
+
+        orl     MISC_PORT, #MISC_I2C      ; Drive the I2C lines high
+        anl     _MISC_DIR, #~MISC_I2C     ;   Output drivers enabled
+        xrl     MISC_PORT, #MISC_I2C_SCL  ;   Now pulse SCL low
+        mov     _accel_state, #0          ; Reset accelerometer state machine
+        mov     _W2CON0, #0               ; Reset I2C master
+        mov     _W2CON0, #1               ;   Turn on I2C controller
+        mov     _W2CON0, #7               ;   Master mode, 100 kHz.
+        mov     _W2CON1, #0               ;   Unmask interrupt
+        mov     _W2DAT, _accel_addr       ; Trigger the next I2C transaction
+
+        ; Fall through to nb_packet_done
 
         ;--------------------------------------------------------------------
 
