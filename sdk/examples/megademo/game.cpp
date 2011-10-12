@@ -95,8 +95,10 @@ void Game::Update()
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Hello();
 	}
-	else if( m_state == STATE_GFXDEMO )
+	else if( m_state == STATE_GFXDEMO ) {
+		cubes[1].Disable();
 		cubes[0].Demo();
+	}
             
     System::paint();
 }

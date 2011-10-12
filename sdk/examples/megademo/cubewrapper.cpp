@@ -45,6 +45,11 @@ void CubeWrapper::Init( AssetGroup &assets )
     m_rom.BG0_text(Vec2(1,1), "Loading...");
 }
 
+void CubeWrapper::Disable()
+{
+	m_cube.disable();
+}
+
 bool CubeWrapper::DrawProgress( AssetGroup &assets )
 {
 	m_rom.BG0_progressBar(Vec2(0,7), m_cube.assetProgress(GameAssets, m_vid.LCD_width), 2);

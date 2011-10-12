@@ -21,6 +21,7 @@ public:
 	static const int NUM_COLS = 4;
 
 	CubeWrapper();
+	void Disable();
 
 	void Init( AssetGroup &assets );
 	//draw loading progress.  return true if done
