@@ -70,7 +70,6 @@ bool GLRenderer::init()
 
     glUseProgramObjectARB(backgroundProgram);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "texture"), 0);
-    backgroundIndexScale = glGetUniformLocationARB(backgroundProgram, "scale");
 
     /*
      * Load textures
@@ -226,18 +225,16 @@ void GLRenderer::endFrame()
  
 void GLRenderer::drawBackground(float extent, float scale)
 {
-    static const Vertex bg[] = {
-        { 0.0f, 1.0f,   0.0f, 0.0f, 1.0f,   -1.0f,  1.0f, 0.0f },
-        { 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,    1.0f,  1.0f, 0.0f },
-        { 0.0f, 0.0f,   0.0f, 0.0f, 1.0f,   -1.0f, -1.0f, 0.0f },
-        { 1.0f, 0.0f,   0.0f, 0.0f, 1.0f,    1.0f, -1.0f, 0.0f },
+    float tc = scale * extent;
+    Vertex bg[] = {
+        {-tc,  tc,   0.0f, 0.0f, 1.0f,   -extent,  extent, 0.0f },
+        { tc,  tc,   0.0f, 0.0f, 1.0f,    extent,  extent, 0.0f },
+        {-tc, -tc,   0.0f, 0.0f, 1.0f,   -extent, -extent, 0.0f },
+        { tc, -tc,   0.0f, 0.0f, 1.0f,    extent, -extent, 0.0f },
     };
 
     glLoadIdentity();
-    glScalef(extent, extent, 1.0f);
-
     glUseProgramObjectARB(backgroundProgram);
-    glUniform1f(backgroundIndexScale, scale);
 
     glActiveTexture(GL_TEXTURE0);
     glEnable(GL_TEXTURE_2D);

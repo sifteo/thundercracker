@@ -83,7 +83,6 @@ class GLRenderer {
 
     GLhandleARB backgroundProgram;
     GLuint backgroundTexture;
-    GLuint backgroundIndexScale;
 
     std::vector<Vertex> faceVA;
     std::vector<Vertex> sidesVA;
