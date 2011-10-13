@@ -19,7 +19,7 @@ class VirtualTime {
     static const unsigned HZ = 16000000;
 
     // Timestep size for simulation, in real milliseconds
-    static const unsigned TIMESTEP = 50;
+    static const unsigned TIMESTEP = 10;
 
     uint64_t clocks;
 
@@ -121,5 +121,50 @@ class ElapsedTime {
     uint32_t realMS;
     uint32_t currentRealMS;
 };
+
+
+class TimeGovernor {
+ public:
+    TimeGovernor(VirtualTime &vtime)
+        : et(vtime) {}
+
+    void start() {
+        et.capture();
+        et.start();
+        secondsAhead = 0.0f;
+    }
+
+    void step() {
+        /*
+         * How fast are we running, on average? Keep an error value,
+         * indicating how far ahead or behind real-time we're
+         * running. If we need to slow down, we can insert a delay
+         * here.
+         *
+         * If we're really far behind, give up on running full
+         * speed. But if we're only a little bit behind, try to catch
+         * up.
+         */
+
+        et.capture();
+
+        secondsAhead += et.virtualSeconds() - et.realSeconds();
+
+        if (secondsAhead > 0)
+            SDL_Delay(secondsAhead * 1000.0f);
+
+        if (secondsAhead < -maxSecondsBehind)
+            secondsAhead = -maxSecondsBehind;
+        
+        et.start();
+    }
+
+ private:
+    static const float maxSecondsBehind = 5.0f;
+
+    ElapsedTime et;
+    float secondsAhead;
+};
+
 
 #endif

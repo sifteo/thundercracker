@@ -32,6 +32,7 @@ class System {
     // Options; can be set prior to init
     unsigned opt_numCubes;
     const char *opt_cubeFirmware;
+    bool opt_noThrottle;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
@@ -41,9 +42,9 @@ class System {
 
     System()
         : opt_numCubes(DEFAULT_CUBES), opt_cubeFirmware(NULL),
-        opt_cube0Debug(false), opt_cube0Flash(NULL),
-        opt_cube0Trace(NULL), opt_cube0Profile(NULL),
-        threadRunning(false)
+        opt_noThrottle(false), opt_cube0Debug(false),
+        opt_cube0Flash(NULL), opt_cube0Trace(NULL),
+        opt_cube0Profile(NULL), threadRunning(false)
         {}
 
     bool init();

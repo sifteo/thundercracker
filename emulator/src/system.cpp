@@ -86,12 +86,14 @@ int System::threadFn(void *param)
 
     self->time.init();
     ElapsedTime et(self->time);
+    TimeGovernor gov(self->time);
 
     if (debug)
         Cube::Debug::init(&self->cubes[0]);
 
     et.capture();
     et.start();
+    gov.start();
 
     while (self->threadRunning) {
         if (debug) {
@@ -127,22 +129,31 @@ int System::threadFn(void *param)
                     self->cubes[i].tick();
                 self->tick();
             }
+        }
 
-            /*
-             * Do some periodic stats to stdout.
-             *
-             * XXX: The frontend should be doing this, not us. And it
-             * should be part of the graphical output.
-             */
+        /*
+         * Use TimeGovernor to keep us running no faster than real-time.
+         * It keeps a running total of how far ahead or behind we are,
+         * so that on average we can track real-time accurately assuming
+         * we have the CPU power to do so.
+         */
 
+        gov.step();
+
+        /*
+         * Do some periodic stats to stdout.
+         *
+         * XXX: The frontend should be doing this, not us. And it
+         *      should be part of the graphical output.
+         */
+
+        if (!debug) {
             et.capture();
-            if (et.realSeconds() > 1.0f) {
-            
+            if (et.realSeconds() > 0.5f) {
                 printf("Simulator at %.2f %% actual speed -- [", et.virtualRatio() * 100.0f);
                 for (unsigned i = 0; i < nCubes; i++)
                     printf("%8.2f", self->cubes[i].lcd.getWriteCount()  / et.virtualSeconds());
                 printf(" ] FPS\n");
-
                 et.start();
             }
         }

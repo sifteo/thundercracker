@@ -38,6 +38,7 @@ static void usage(const char *argv0)
             "  -t TRACE.txt      Trace firmware execution (first cube only) to a text file\n"
             "  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file\n"
             "  -d                Launch firmware debugger (first cube only)\n"
+            "  -T                No throttle; run faster than real-time if we can\n"
             "  -n NUM            Set number of cubes\n"
             "\n"
             "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n"
@@ -65,6 +66,11 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "-d")) {
             sys.opt_cube0Debug = true;
+            continue;
+        }
+
+        if (!strcmp(arg, "-N")) {
+            sys.opt_noThrottle = true;
             continue;
         }
          
