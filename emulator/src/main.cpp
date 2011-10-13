@@ -69,7 +69,7 @@ int main(int argc, char **argv)
             continue;
         }
 
-        if (!strcmp(arg, "-N")) {
+        if (!strcmp(arg, "-T")) {
             sys.opt_noThrottle = true;
             continue;
         }

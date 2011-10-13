@@ -138,7 +138,8 @@ int System::threadFn(void *param)
          * we have the CPU power to do so.
          */
 
-        gov.step();
+        if (!self->opt_noThrottle)
+            gov.step();
 
         /*
          * Do some periodic stats to stdout.
