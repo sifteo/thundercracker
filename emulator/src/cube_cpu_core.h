@@ -34,7 +34,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include "cube_cpu_core.h"
+#include "cube_cpu_irq.h"
 
 namespace Cube {
 namespace CPU {

@@ -145,8 +145,6 @@ const char *em8051_exc_name(int aCode);
 // Private functions
 void disasm_setptrs(em8051 *aCPU);
 void op_setptrs(em8051 *aCPU);
-void handle_interrupts(em8051 *aCPU);
-
 
 enum EM8051_EXCEPTION
 {
