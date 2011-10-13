@@ -146,6 +146,8 @@ class TimeGovernor {
          * up.
          */
 
+        static const float maxSecondsBehind = 5.0f;
+
         et.capture();
 
         secondsAhead += et.virtualSeconds() - et.realSeconds();
@@ -155,13 +157,11 @@ class TimeGovernor {
 
         if (secondsAhead < -maxSecondsBehind)
             secondsAhead = -maxSecondsBehind;
-        
+       
         et.start();
     }
 
  private:
-    static const float maxSecondsBehind = 5.0f;
-
     ElapsedTime et;
     float secondsAhead;
 };

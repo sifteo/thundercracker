@@ -40,7 +40,7 @@ void Frontend::init(System *_sys)
         for (unsigned y = 0, cubeID = 0; y < gridH && cubeID < sys->opt_numCubes; y++)
             for (unsigned x = 0; x < gridW && cubeID < sys->opt_numCubes; x++, cubeID++) {
                 const float spacing = FrontendCube::SIZE * 2.7;
-                cubes[cubeID].init(&sys->cubes[cubeID], world,
+                cubes[cubeID].init(cubeID, &sys->cubes[cubeID], world,
                                    ((gridW - 1) * -0.5 + x) * spacing,
                                    ((gridH - 1) * -0.5 + y) * spacing);
             }
@@ -256,36 +256,19 @@ bool Frontend::onResize(int width, int height)
         return false;
     }
 
-#ifdef GLEW_STATIC
-    GLenum err = glewInit();
-    if (GLEW_OK != err) {
-        /* Problem: glewInit failed, something is seriously wrong. */
-        fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
-    }
-#endif
-
     viewportWidth = width;
     viewportHeight = height;
-    glViewport(0, 0, width, height);
     moveWalls(true);
 
     /*
      * Assume we totally lost the OpenGL context, and reallocate things.
-     *
      * XXX: This is not always necessary. It's platform-specific.
      */
-    
-    glDisable(GL_LIGHTING);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glShadeModel(GL_SMOOTH);
-    glPolygonOffset(-1.0f, -2.0f);
-    
-    if (!HAS_GL_ENTRY(glCreateShaderObjectARB))
-        fprintf(stderr, "Warning: Shader support not available. Rendering quality will suck :(\n");
-    
-    for (unsigned i = 0; i < sys->opt_numCubes; i++)
-        cubes[i].initGL();
+
+    if (!renderer.init())
+        return false;
+
+    renderer.setViewport(width, height);
 
     return true;
 }
@@ -492,70 +475,15 @@ void Frontend::scaleViewExtent(float ratio)
 
 void Frontend::draw()
 {
-    /*
-     * Camera.
-     *
-     * Our simulation (and our mouse input!) is really 2D, but we use
-     * perspective in order to make the whole scene feel a bit more
-     * real, and especially to make tilting believable.
-     *
-     * We scale this so that the X axis is from -viewExtent to
-     * +viewExtent at the level of the cube face.
-     */
+    renderer.beginFrame(viewExtent, viewCenter);
 
-    float aspect = viewportHeight / (float)viewportWidth;
-    float yExtent = aspect * viewExtent;
-
-    float zPlane = FrontendCube::SIZE * FrontendCube::HEIGHT;
-    float zCamera = 5.0f;
-    float zNear = 0.1f;
-    float zFar = 10.0f;
-    float zDepth = zFar - zNear;
-    
-    GLfloat proj[16] = {
-        zCamera / viewExtent,
-        0,
-        0,
-        0,
-
-        0,
-        -zCamera / yExtent,
-        0,
-        0,
-
-        0,
-        0,
-        -(zFar + zNear) / zDepth,
-        -1.0f,
-
-        0,
-        0,
-        -2.0f * (zFar * zNear) / zDepth,
-        0,
-    };
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(proj);
-    glTranslatef(-viewCenter.x, -viewCenter.y, -zCamera);
-    glScalef(1, 1, 1.0 / viewExtent);
-    glTranslatef(0, 0, -zPlane);
-    glMatrixMode(GL_MODELVIEW);
-
-    /*
-     * Background
-     */
-
-    glClearColor(0.2, 0.2, 0.4, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    /*
-     * Cubes
-     */
+    float ratio = std::max(1.0f, viewportHeight / (float)viewportWidth);
+    renderer.drawBackground(viewExtent * ratio * 1.25f, viewExtent);
 
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
-        cubes[i].draw();
+        cubes[i].draw(renderer);
 
-    SDL_GL_SwapBuffers();
+    renderer.endFrame();
 }
 
 float Frontend::zoomedViewExtent() {

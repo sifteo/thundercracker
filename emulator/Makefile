@@ -4,6 +4,7 @@ BIN = tc-siftulator
 OBJS = \
         src/frontend.o \
         src/frontend_cube.o \
+	src/gl_renderer.o \
         src/main.o \
         src/system.o \
         src/system_network.o \
@@ -17,6 +18,8 @@ OBJS = \
         src/cube_flash_model.o \
         src/cube_hardware.o \
         src/cube_neighbors.o \
+	src/lodepng.o \
+	scripts/data.o \
 
 # Box2D physics library
 OBJS += \
@@ -67,6 +70,10 @@ OBJS += \
         src/Box2D/Rope/b2Rope.o \
 
 CDEPS = src/*.h
+
+DATADEPS = \
+	scripts/*.glsl \
+	scripts/*.png \
 
 # OS detection
 OS := $(shell uname)
@@ -160,6 +167,9 @@ $(BIN): $(OBJS)
 
 %.o: %.c $(CDEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
+
+scripts/data.cpp: $(DATADEPS)
+	python scripts/bin2c.py
 
 .PHONY: clean
 

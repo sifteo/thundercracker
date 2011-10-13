@@ -9,34 +9,10 @@
 #ifndef _FRONTEND_H
 #define _FRONTEND_H
 
-#ifdef _WIN32
-#   define WIN32_LEAN_AND_MEAN
-#   include <windows.h>
-//#   pragma comment(lib, "opengl32.lib")
-#endif
-
 #include <SDL.h>
-#ifdef __MACH__
-#   define HAS_GL_ENTRY(x)   (true)
-#   include <OpenGL/gl.h>
-#   include <OpenGL/glext.h>
-#elif defined (_WIN32)
-#   define GLEW_STATIC
-#   define HAS_GL_ENTRY(x)   ((x) != NULL)
-#   include <GL/glew.h>
-#else
-#   define GL_GLEXT_PROTOTYPES
-#   define HAS_GL_ENTRY(x)   (true)
-#   include <GL/gl.h>
-#   include <GL/glext.h>
-#endif
-
-#ifndef GL_UNSIGNED_SHORT_5_6_5
-#   define GL_UNSIGNED_SHORT_5_6_5 0x8363
-#endif
-
 #include <Box2D/Box2D.h>
 #include "system.h"
+#include "gl_renderer.h"
 
 
 class FrontendCube;
@@ -69,11 +45,10 @@ struct FixtureData {
 
 class FrontendCube {
  public:
-    void init(Cube::Hardware *hw, b2World &world, float x, float y);
-    void initGL();
+    void init(unsigned id, Cube::Hardware *hw, b2World &world, float x, float y);
 
     void animate();
-    void draw();
+    void draw(GLRenderer &r);
 
     void setTiltTarget(b2Vec2 angles);
     void updateNeighbor(bool touching, unsigned mySide,
@@ -93,6 +68,11 @@ class FrontendCube {
     static const float SIZE = 0.5;
 
     /*
+     * Height of the cube, relative to its half-width
+     */
+    static const float HEIGHT = 0.6;
+
+    /*
      * Size of the portion of the cube we're calling the "center". Has
      * some UI implications, like dragging on the center vs. a corner.
      * This is the radius of a circle, at the cube's center of mass.
@@ -100,16 +80,6 @@ class FrontendCube {
      * This is in cube-sized units (will be multiplied with SIZE to get world coordinates).
      */
     static const float CENTER_SIZE = 0.6;
-
-    /*
-     * Size of the LCD, relative to the size of the whole cube.
-     */
-    static const float LCD_SIZE = 0.75;
-
-    /*
-     * Height of the cube, relative to SIZE
-     */
-    static const float HEIGHT = 0.6;
 
     /*
      * The sensitive region for this cube's neighbor transceivers.
@@ -131,19 +101,13 @@ class FrontendCube {
     FixtureData bodyFixtureData;
     FixtureData neighborFixtureData[Cube::Neighbors::NUM_SIDES];
 
-    static const GLchar *srcLcdVP[];
-    static const GLchar *srcLcdFP[]; 
-    
     AccelerationProbe accel;
     b2Vec2 tiltTarget;
     b2Vec2 tiltVector;
     b2Mat33 modelMatrix;
 
+    unsigned id;
     Cube::Hardware *hw;
-    GLuint texture;
-    GLhandleARB lcdProgram;
-    GLhandleARB lcdFP;
-    GLhandleARB lcdVP;
 };
 
 
@@ -157,7 +121,7 @@ class Frontend {
     
  private:
     /*
-     * Number of real OpenGL frames per virtual LCD frame (Assume 60Hz
+     * Number of real frames per virtual LCD frame (Assume 60Hz
      * real, 30 Hz virtual). This doesn't have any bearing on the
      * rendering frame rate of the cubes, it's just used for
      * generating vertical sync signals.
@@ -230,6 +194,8 @@ class Frontend {
 
     MousePicker mousePicker;
     ContactListener contactListener;
+
+    GLRenderer renderer;
 };
 
 #endif
