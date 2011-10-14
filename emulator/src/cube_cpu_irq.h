@@ -59,7 +59,7 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
  * priority IRQs.
  */
 
-static void handle_interrupts(struct em8051 *cpu)
+static ALWAYS_INLINE void handle_interrupts(struct em8051 *cpu)
 {
     /*
      * External interrupts: GPIOs. Only one pin can be selected
@@ -97,7 +97,8 @@ static void handle_interrupts(struct em8051 *cpu)
 
 #define IRQ_LUT_ENTRY(irqn, ien_sfr, ien_mask, req_sfr, req_mask, autoclear)            \
     {                                                                                   \
-        if ((cpu->mSFR[ien_sfr] & (ien_mask)) && (cpu->mSFR[req_sfr] & (req_mask))) {   \
+        if (UNLIKELY( (cpu->mSFR[req_sfr] & (req_mask)) &&                              \
+                      (cpu->mSFR[ien_sfr] & (ien_mask)) )) {                            \
             int prio = ( (!!(cpu->mSFR[REG_IP1] & (ien_mask)) << 1) |                   \
                          (!!(cpu->mSFR[REG_IP0] & (ien_mask)) << 0) );                  \
             if (prio > found_prio) {                                                    \
@@ -110,7 +111,7 @@ static void handle_interrupts(struct em8051 *cpu)
     }
 
     // Global IRQ enable
-    if (cpu->mSFR[REG_IEN0] & IRQM0_EN) {
+    if (LIKELY(cpu->mSFR[REG_IEN0] & IRQM0_EN)) {
 
         int found_prio = -1;
         unsigned found_vector;
@@ -130,7 +131,7 @@ static void handle_interrupts(struct em8051 *cpu)
         IRQ_LUT_ENTRY( 5,  REG_IEN0, IRQM0_TF2,   REG_IRCON, IRCON_TF2 | IRCON_EXF2, 0 );
         IRQ_LUT_ENTRY( 13, REG_IEN1, IRQM1_TICK,  REG_IRCON, IRCON_TICK, IRCON_TICK );
 
-        if (found_prio >= 0)
+        if (UNLIKELY(found_prio >= 0))
             if (irq_invoke(cpu, found_prio, found_vector)) {
                 // Auto-clear if needed
                 cpu->mSFR[found_req_sfr] &= found_clear_mask;
