@@ -25,6 +25,17 @@
 
 static void usage(const char *argv0)
 {
+    /*
+     * There are additionally several undocumented options that are
+     * only useful for internal development:
+     *
+     *  -f FIRMWARE.hex   Specify firmware image for cubes
+     *  -F FLASH.bin      Load/save flash memory (first cube only) to a binary file
+     *  -t TRACE.txt      Trace firmware execution (first cube only) to a text file
+     *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
+     *  -d                Launch firmware debugger (first cube only)
+     */
+
     fprintf(stderr,
             "\n"
             "usage: %s [OPTIONS]\n"
@@ -33,16 +44,10 @@ static void usage(const char *argv0)
             "\n"
             "Options:\n"
             "  -h                Show this help message, and exit\n"
-            "  -f FIRMWARE.hex   Specify firmware image for cubes\n"
-            "  -F FLASH.bin      Load/save flash memory (first cube only) to a binary file\n"
-            "  -t TRACE.txt      Trace firmware execution (first cube only) to a text file\n"
-            "  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file\n"
-            "  -d                Launch firmware debugger (first cube only)\n"
             "  -T                No throttle; run faster than real-time if we can\n"
             "  -n NUM            Set number of cubes\n"
             "\n"
             "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n"
-            "Confidential, not for redistribution.\n"
             "\n",
             argv0);
 }
@@ -122,12 +127,20 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (!sys.opt_cubeFirmware) {
-        /*
-         * XXX: We should have a built in binary-translated firmware to run
-         *      when no image was specified.
-         */
-        fprintf(stderr, "Warning: No cube firmware image! Did you forget '-f path/to/cube.hex'?\n");
+    /*
+     * We want to disable our debugging features when using the
+     * built-in binary translated firmware. The debugger won't really
+     * work properly in SBT mode anyway, but we additionally want to
+     * disable it in order to make it harder to reverse engineer our
+     * firmware. Of course, any dedicated reverse engineer could just
+     * disable this test easily :)
+     */
+
+    if (!sys.opt_cubeFirmware && (sys.opt_cube0Profile ||
+                                  sys.opt_cube0Trace ||
+                                  sys.opt_cube0Debug)) {
+        fprintf(stderr, "Debug features only available if a firmware image is provided.\n");
+        //return 1;
     }
 
     /*

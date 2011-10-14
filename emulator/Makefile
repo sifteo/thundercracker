@@ -20,6 +20,7 @@ OBJS = \
         src/cube_neighbors.o \
 	src/lodepng.o \
 	scripts/data.o \
+	scripts/firmware-sbt.o \
 
 # Box2D physics library
 OBJS += \
@@ -153,7 +154,13 @@ else
 endif
 
 # Debug / optimization
-CFLAGS += -O3 -g -Werror -Wall -Isrc
+#
+# Unsurprisingly, compiler optimization produces a very dramatic
+# difference in performance. You probably want to leave -O3 on at
+# all times unless you have a great reason not to.
+
+CFLAGS += -O3
+CFLAGS += -g -Werror -Wall -Isrc
 LDFLAGS += -g
 CCFLAGS := $(CFLAGS)
 
@@ -168,10 +175,25 @@ $(BIN): $(OBJS)
 %.o: %.c $(CDEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+# Data dependencies don't need to be rebuilt by everyone,
+# the resulting generated code is checked into git. The
+# firmware target is somewhat inconvenient, since it relies
+# on the temporary files left over after compiling the cube
+# firmware.
+#
+# Only run the firmware build if you really intend to upgrade
+# the simulator to a new stable build of the firmware! Testing
+# and debugging of the firmware is much more easily accomplished
+# using interpreted mode, and specifying a firmware image on
+# the command line.
+
 scripts/data.cpp: $(DATADEPS)
 	python scripts/bin2c.py
 
-.PHONY: clean
+firmware:
+	python scripts/firmware-sbt.py ../firmware/cube/*.rst
+
+.PHONY: clean firmware
 
 clean:
 	rm -f $(BIN) $(OBJS)

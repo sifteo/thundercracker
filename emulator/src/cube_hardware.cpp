@@ -11,7 +11,6 @@
 
 namespace Cube {
 
-
 bool Hardware::init(VirtualTime *masterTimer,
                     const char *firmwareFile, const char *flashFile)
 {
@@ -29,8 +28,11 @@ bool Hardware::init(VirtualTime *masterTimer,
     cpu.callbackData = this;
 
     CPU::em8051_reset(&cpu, true);
+
     if (firmwareFile)
         CPU::em8051_load(&cpu, firmwareFile);
+    else
+        CPU::em8051_init_sbt(&cpu);
 
     cpu.mSFR[REG_P0DIR] = 0xFF;
     cpu.mSFR[REG_P1DIR] = 0xFF;

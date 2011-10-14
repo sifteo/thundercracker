@@ -46,7 +46,7 @@ namespace CPU {
 struct em8051;
 
 // Operation: returns number of ticks the operation should take
-typedef int (*em8051operation)(struct em8051 *aCPU); 
+typedef int (*em8051operation)(struct em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2);
 
 // Decodes opcode at position, and fills the buffer with the assembler code. 
 // Returns how many bytes the opcode takes.
@@ -91,8 +91,9 @@ struct em8051
     uint8_t mData[256];
     uint8_t mSFR[128];
 
-    int mPC; // Program Counter; outside memory area
-    int mTickDelay; // How many ticks should we delay before continuing
+    bool sbt;           // In static binary translation mode
+    int mPC;            // Program Counter; outside memory area
+    int mTickDelay;     // How many ticks should we delay before continuing
     int mTimerTickDelay;
     int mBreakpoint;
     int mPreviousPC;
@@ -137,6 +138,9 @@ int em8051_decode(struct em8051 *aCPU, int aPosition, char *aBuffer);
 // Load an intel hex format object file. Returns negative for errors.
 int em8051_load(struct em8051 *aCPU, const char *aFilename);
 
+// Switch to static binary translation mode
+void em8051_init_sbt(struct em8051 *aCPU);
+
 // Internal: Pushes a value into stack
 void em8051_push(struct em8051 *aCPU, int aValue);
 
@@ -161,6 +165,7 @@ enum EM8051_EXCEPTION
     EXCEPTION_RADIO_XRUN,        // Radio FIFO overrun/underrun
     EXCEPTION_I2C,               // I2C error
     EXCEPTION_XDATA_ERROR,       // Access to unmapped portion of xdata 
+    EXCEPTION_SBT,               // Binary translator error (executing untranslated code)
 };
 
 

@@ -86,6 +86,18 @@ static int readbyte(FILE * f)
     return strtol(data, NULL, 16);
 }
 
+void em8051_init_sbt(struct em8051 *aCPU)
+{
+    /*
+     * No firmware? Use our built in statically binary-translated
+     * firmware.  We have a ROM image containing only the data
+     * portions of the firmware, and we have a replacement opcode
+     * exec function which executes translated basic-blocks.
+     */
+    memcpy(aCPU->mCodeMem, sbt_rom_data, sizeof aCPU->mCodeMem);
+    aCPU->sbt = true;
+}
+
 int em8051_load(em8051 *aCPU, const char *aFilename)
 {
     FILE *f;    
@@ -143,6 +155,7 @@ const char *em8051_exc_name(int aCode)
         "Radio FIFO overrun/underrun",
         "I2C error",
         "XDATA error",
+        "Binary translator error",
     };
 
     if (aCode < (int)(sizeof exc_names / sizeof exc_names[0]))

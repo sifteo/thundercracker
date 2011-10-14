@@ -10,6 +10,7 @@
 #define _CUBE_CPU_IRQ_H
 
 #include "cube_cpu.h"
+#include "cube_cpu_opcodes.h"
 
 namespace Cube {
 namespace CPU {
@@ -32,8 +33,8 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
     /*
      * Far CALL to the interrupt vector
      */
-    em8051_push(cpu, cpu->mPC & 0xff);
-    em8051_push(cpu, cpu->mPC >> 8);
+    Opcodes::push_to_stack(cpu, cpu->mPC & 0xff);
+    Opcodes::push_to_stack(cpu, cpu->mPC >> 8);
     cpu->mPC = vector;
     cpu->mTickDelay += 6;  // Kind of a guess...
 

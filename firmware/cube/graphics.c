@@ -1489,22 +1489,24 @@ static void vm_bg0_bg1_tiles_fast(void) __naked
         mov     a, _x_bg1_offset
         mov     dptr, #1$
         jmp     @a+dptr
-1$:
-        ljmp    _vm_bg0_bg1_tiles_fast_p0
+
+	; These redundant labels are required by the binary translator!
+
+1$:     ljmp    _vm_bg0_bg1_tiles_fast_p0
         nop
-        ljmp    _vm_bg0_bg1_tiles_fast_p1
+2$:     ljmp    _vm_bg0_bg1_tiles_fast_p1
         nop
-        ljmp    _vm_bg0_bg1_tiles_fast_p2
+3$:     ljmp    _vm_bg0_bg1_tiles_fast_p2
         nop
-        ljmp    _vm_bg0_bg1_tiles_fast_p3
+4$:     ljmp    _vm_bg0_bg1_tiles_fast_p3
         nop
-        ljmp    _vm_bg0_bg1_tiles_fast_p4
+5$:     ljmp    _vm_bg0_bg1_tiles_fast_p4
         nop
-        ljmp    _vm_bg0_bg1_tiles_fast_p5
+6$:     ljmp    _vm_bg0_bg1_tiles_fast_p5
         nop
-        ljmp    _vm_bg0_bg1_tiles_fast_p6
+7$:     ljmp    _vm_bg0_bg1_tiles_fast_p6
         nop
-        ljmp    _vm_bg0_bg1_tiles_fast_p7
+8$:     ljmp    _vm_bg0_bg1_tiles_fast_p7
     __endasm ;
 }
 
@@ -2132,40 +2134,42 @@ void graphics_render(void) __naked
         mov     dptr, #_SYS_VA_MODE
         movx    a, @dptr
         anl     a, #_SYS_VM_MASK
-        mov     dptr, #2$
+        mov     dptr, #10$
         jmp     @a+dptr
-2$:
-        ljmp    _vm_powerdown   ; 0x00
+
+	; These redundant labels are required by the binary translator!
+
+10$:    ljmp    _vm_powerdown   ; 0x00
         nop
-        ljmp    _vm_bg0_rom     ; 0x04
+11$:    ljmp    _vm_bg0_rom     ; 0x04
         nop
-        ljmp    _vm_solid       ; 0x08
+12$:    ljmp    _vm_solid       ; 0x08
         nop
-        ljmp    _vm_fb32        ; 0x0c
+13$:    ljmp    _vm_fb32        ; 0x0c
         nop
-        ljmp    _vm_fb64        ; 0x10
+14$:    ljmp    _vm_fb64        ; 0x10
         nop
-        ljmp    _vm_fb128       ; 0x14
+15$:    ljmp    _vm_fb128       ; 0x14
         nop
-        ljmp    _vm_bg0         ; 0x18
+16$:    ljmp    _vm_bg0         ; 0x18
         nop
-        ljmp    _vm_bg0_bg1     ; 0x1c
+17$:    ljmp    _vm_bg0_bg1     ; 0x1c
         nop
-        ljmp    _vm_bg0_spr_bg1 ; 0x20
+18$:    ljmp    _vm_bg0_spr_bg1 ; 0x20
         nop
-        ljmp    _vm_bg2         ; 0x24
+19$:    ljmp    _vm_bg2         ; 0x24
         nop
-        ljmp    _vm_powerdown   ; 0x28 (unused)
+20$:    ljmp    _vm_powerdown   ; 0x28 (unused)
         nop
-        ljmp    _vm_powerdown   ; 0x2c (unused)
+21$:    ljmp    _vm_powerdown   ; 0x2c (unused)
         nop
-        ljmp    _vm_powerdown   ; 0x30 (unused)
+22$:    ljmp    _vm_powerdown   ; 0x30 (unused)
         nop
-        ljmp    _vm_powerdown   ; 0x34 (unused)
+23$:    ljmp    _vm_powerdown   ; 0x34 (unused)
         nop
-        ljmp    _vm_powerdown   ; 0x38 (unused)
+24$:    ljmp    _vm_powerdown   ; 0x38 (unused)
         nop
-        ljmp    _vm_powerdown   ; 0x3c (unused)
+25$:    ljmp    _vm_powerdown   ; 0x3c (unused)
 
 3$:     ret
 
