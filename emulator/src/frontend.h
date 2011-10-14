@@ -149,7 +149,7 @@ class Frontend {
     void animate();
     void draw();
 
-    bool onResize(int width, int height);
+    bool onResize(int width, int height, bool fullscreen=false);
     void onKeyDown(SDL_KeyboardEvent &evt);
     void onMouseDown(int button);
     void onMouseUp(int button);
@@ -173,6 +173,7 @@ class Frontend {
     FrontendCube cubes[System::MAX_CUBES];
 
     bool toggleZoom;
+    bool isFullscreen;
 
     int viewportWidth, viewportHeight;
     int mouseX, mouseY;

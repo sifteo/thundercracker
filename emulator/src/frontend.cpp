@@ -229,23 +229,24 @@ void Frontend::run()
     }
 }
 
-bool Frontend::onResize(int width, int height)
+bool Frontend::onResize(int width, int height, bool fullscreen)
 {
     if (!(width && height))
         return true;
 
+    unsigned flags = SDL_OPENGL | (fullscreen ? SDL_FULLSCREEN : SDL_RESIZABLE);
+
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4); 
     SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
-
-    surface = SDL_SetVideoMode(width, height, 0, SDL_OPENGL | SDL_RESIZABLE);
-
+    surface = SDL_SetVideoMode(width, height, 0, flags);
+                     
     if (surface == NULL) {
         // First failure? Try without FSAA.
 
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0); 
-        surface = SDL_SetVideoMode(width, height, 0, SDL_OPENGL | SDL_RESIZABLE);
+        surface = SDL_SetVideoMode(width, height, 0, flags);
         if (surface) {
             fprintf(stderr, "Warning: FSAA not available. Your cubes will have crunchy edges :(\n");
         }
@@ -256,8 +257,9 @@ bool Frontend::onResize(int width, int height)
         return false;
     }
 
-    viewportWidth = width;
-    viewportHeight = height;
+    viewportWidth = surface->w;
+    viewportHeight = surface->h;
+    isFullscreen = fullscreen;
     moveWalls(true);
 
     /*
@@ -268,7 +270,7 @@ bool Frontend::onResize(int width, int height)
     if (!renderer.init())
         return false;
 
-    renderer.setViewport(width, height);
+    renderer.setViewport(viewportWidth, viewportHeight);
 
     return true;
 }
@@ -279,6 +281,10 @@ void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
         
     case 'z':
         toggleZoom = !toggleZoom;
+        break;
+
+    case 'f':
+        onResize(1024, 640, !isFullscreen);
         break;
 
     default:
