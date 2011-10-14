@@ -96,9 +96,9 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
      */
 
     bool tick12 = false;
-    if (UNLIKELY(++aCPU->prescaler12 == 12)) { 
+    if (UNLIKELY(!--aCPU->prescaler12)) { 
         tick12 = true;
-        aCPU->prescaler12 = 0;
+        aCPU->prescaler12 = 12;
     }
 
     uint8_t nextT012 = aCPU->mSFR[PORT_T012] & (PIN_T0 | PIN_T1 | PIN_T2);
