@@ -70,15 +70,18 @@ class Neighbors {
     }
 
     ALWAYS_INLINE void tick(CPU::em8051 &cpu) {
-        if (UNLIKELY(inputs)) {
-            if (cpu.traceFile)
-                fprintf(cpu.traceFile, "NEIGHBOR: Received pulse (sides %02x)\n", inputs);
-
-            cpu.mSFR[PORT] |= PIN_IN;
-            inputs = 0;
-        } else {
+        if (UNLIKELY(inputs))
+            inputWork(cpu);
+        else
             cpu.mSFR[PORT] &= ~PIN_IN;
-        }
+    }
+    
+    NEVER_INLINE void inputWork(CPU::em8051 &cpu) {
+        if (cpu.traceFile)
+            fprintf(cpu.traceFile, "NEIGHBOR: Received pulse (sides %02x)\n", inputs);
+
+        cpu.mSFR[PORT] |= PIN_IN;
+        inputs = 0;
     }
 
     void ioTick(CPU::em8051 &cpu);

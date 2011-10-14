@@ -67,7 +67,9 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     aCPU->mSFR[REG_P1] = 0xff;
     aCPU->mSFR[REG_P2] = 0xff;
     aCPU->mSFR[REG_P3] = 0xff;
-
+    
+    aCPU->prescaler12 = 12;
+    
     // build function pointer lists
 
     disasm_setptrs(aCPU);

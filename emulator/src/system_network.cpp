@@ -177,7 +177,7 @@ bool SystemNetwork::rx(RXPacket &packet)
 }
 
 
-void SystemNetwork::deadlineWork(System &sys)
+NEVER_INLINE void SystemNetwork::deadlineWork(System &sys)
 {
     /*
      * Support co-simulation with an external master-cube process.
