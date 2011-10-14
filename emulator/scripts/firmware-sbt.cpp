@@ -17,6 +17,7 @@ int sbt_rom_code(em8051 *aCPU)
 	switch (PC) {
 	case 0x0000: {
 		unsigned clk = 0;
+		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x18,0x20);
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x81,0xbc);
 		clk += Opcodes::ljmp_address        (aCPU, 0x02,0x2a,0xfa);
 		return clk;
@@ -7704,6 +7705,10 @@ int sbt_rom_code(em8051 *aCPU)
 	case 0x233c: {
 		unsigned clk = 0;
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xda,0x00);
+		return clk;
+	}
+	case 0x233f: {
+		unsigned clk = 0;
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x19,0x08);
 		clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x49,0x00);
 		return clk;
@@ -7714,6 +7719,10 @@ int sbt_rom_code(em8051 *aCPU)
 		clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x18,0x00);
 		clk += Opcodes::orl_a_imm           (aCPU, 0x44,0x01,0x00);
 		clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0xda,0x00);
+		return clk;
+	}
+	case 0x234d: {
+		unsigned clk = 0;
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x19,0x16);
 		clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x3b,0x00);
 		return clk;
@@ -7727,6 +7736,10 @@ int sbt_rom_code(em8051 *aCPU)
 	case 0x2357: {
 		unsigned clk = 0;
 		clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0xda,0x1a);
+		return clk;
+	}
+	case 0x235a: {
+		unsigned clk = 0;
 		clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0xe2,0x20);
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x19,0x26);
 		clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x2b,0x00);
@@ -8009,9 +8022,25 @@ int sbt_rom_code(em8051 *aCPU)
 		clk += Opcodes::xrl_mem_imm         (aCPU, 0x63,0x90,0x04);
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x19,0x00);
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xe2,0x00);
+		return clk;
+	}
+	case 0x2489: {
+		unsigned clk = 0;
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xe2,0x01);
+		return clk;
+	}
+	case 0x248c: {
+		unsigned clk = 0;
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xe2,0x07);
+		return clk;
+	}
+	case 0x248f: {
+		unsigned clk = 0;
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xe1,0x00);
+		return clk;
+	}
+	case 0x2492: {
+		unsigned clk = 0;
 		clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x18,0xda);
 		return clk;
 	}
@@ -9497,9 +9526,17 @@ int sbt_rom_code(em8051 *aCPU)
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0xff);
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x80,0x00);
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x90,0x0c);
+		return clk;
+	}
+	case 0x2b1c: {
+		unsigned clk = 0;
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x93,0x00);
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x94,0xfb);
+		return clk;
+	}
+	case 0x2b25: {
+		unsigned clk = 0;
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x96,0x80);
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x9f,0x52);
 		clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x9f,0x53);

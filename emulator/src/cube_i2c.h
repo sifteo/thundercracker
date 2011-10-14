@@ -47,6 +47,9 @@ class I2CBus {
                  * condition if necessary.
                  */
 
+                if (cpu->traceFile)
+                    fprintf(cpu->traceFile, "I2C: timer fired\n");
+
                 timer = 0;
 
                 if (state == I2C_READING) {
@@ -54,12 +57,12 @@ class I2CBus {
 
                     if (rx_buffer_full)
                         cpu->except(cpu, CPU::EXCEPTION_I2C);
- 
-                    rx_buffer = accel.i2cRead(!stop);
+
+                    rx_buffer = busRead(cpu, !stop);
                     rx_buffer_full = 1;
             
                     if (stop) {
-                        accel.i2cStop();
+                        busStop(cpu);
                         state = I2C_IDLE;
                         cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_STOP;
                     } else {
@@ -91,8 +94,8 @@ class I2CBus {
                  */
                 
                 if (tx_buffer_full) {
-                    accel.i2cStart();
-                    next_ack_status = accel.i2cWrite(tx_buffer);
+                    busStart(cpu);
+                    next_ack_status = busWrite(cpu, tx_buffer);
                     state = (tx_buffer & 1) ? I2C_WR_READ_ADDR : I2C_WRITING;
                     cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_START;
                     tx_buffer_full = 0;
@@ -105,12 +108,12 @@ class I2CBus {
                  */
                 
                 if (tx_buffer_full) {
-                    next_ack_status = accel.i2cWrite(tx_buffer);
+                    next_ack_status = busWrite(cpu, tx_buffer);
                     tx_buffer_full = 0;
                     timerSet(deadline, cpu, 9);       // Data byte, ACK
                     
                 } else if (w2con0 & W2CON0_STOP) {
-                    accel.i2cStop();
+                    busStop(cpu);
                     state = I2C_IDLE;
                     cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_STOP;
                 }
@@ -146,6 +149,9 @@ class I2CBus {
     }
     
     void writeData(CPU::em8051 *cpu, uint8_t data) {
+        if (cpu->traceFile)
+            fprintf(cpu->traceFile, "I2C: write %02x\n", data);
+
         if (tx_buffer_full) {
             cpu->except(cpu, CPU::EXCEPTION_I2C);
         } else {
@@ -157,6 +163,9 @@ class I2CBus {
     uint8_t readData(CPU::em8051 *cpu) {
         if (!rx_buffer_full)
             cpu->except(cpu, CPU::EXCEPTION_I2C);
+
+        if (cpu->traceFile)
+            fprintf(cpu->traceFile, "I2C: read %02x\n", rx_buffer);
         
         rx_buffer_full = 0;
         return rx_buffer;
@@ -167,6 +176,9 @@ class I2CBus {
         
         // Reset READY bit after each read
         cpu->mSFR[REG_W2CON1] = value & ~W2CON1_READY;
+
+        if (cpu->traceFile)
+            fprintf(cpu->traceFile, "I2C: con1 -> %02x\n", value);
         
         return value;
     }
@@ -176,6 +188,9 @@ class I2CBus {
         /*
          * Wake after 'bits' bit periods, and set READY.
          */
+
+        if (cpu->traceFile)
+            fprintf(cpu->traceFile, "I2C: timer started, %d bits\n", bits);
         
         uint8_t w2con0 = cpu->mSFR[REG_W2CON0];
         switch (w2con0 & W2CON0_SPEED) {
@@ -183,6 +198,36 @@ class I2CBus {
         case W2CON0_100KHZ: timer = deadline.setRelative(VirtualTime::hz(100000) * bits); break;
         default: cpu->except(cpu, CPU::EXCEPTION_I2C);
         }
+    }
+
+    void busStart(CPU::em8051 *cpu) {
+        if (cpu->traceFile)
+            fprintf(cpu->traceFile, "I2C: BUS start\n"); 
+
+        accel.i2cStart();
+    }
+
+    void busStop(CPU::em8051 *cpu) {
+        if (cpu->traceFile)
+            fprintf(cpu->traceFile, "I2C: BUS stop\n"); 
+
+        accel.i2cStop();
+    }
+    
+    uint8_t busWrite(CPU::em8051 *cpu, uint8_t byte) {
+        if (cpu->traceFile)
+            fprintf(cpu->traceFile, "I2C: BUS write %02x\n", byte); 
+
+        return accel.i2cWrite(byte);
+    }
+
+    uint8_t busRead(CPU::em8051 *cpu, uint8_t ack) {
+        uint8_t result = accel.i2cRead(ack);
+
+        if (cpu->traceFile)
+            fprintf(cpu->traceFile, "I2C: BUS read(%d) %02x\n", ack, result);
+
+        return result;
     }
 
     static const uint8_t W2CON0_STOP    = 0x20;

@@ -20,6 +20,9 @@ import sys
 import binascii
 import bin2c
 
+PATCHED_ADDRS = [
+    0x0000,             # Reset vector
+    ]
 
 def fixupImage(p):
     """This contains all the special-case code we apply to the compiled
@@ -31,10 +34,10 @@ def fixupImage(p):
     # this means we need to stick a jump to main() in there
     # after setting up the stack.
 
-    p.instructions[0x0000] = (
-        (0x75, 0x81) + p.getSym8('__start__stack'),
-        (0x02,) + p.getSym16('_main'),
-        )
+    p.instructions[0x0000].extend([
+            (0x75, 0x81) + p.getSym8('__start__stack'),
+            (0x02,) + p.getSym16('_main'),
+            ])
         
     # Our ROM palettes are actually generated machine code that
     # is jumped to when we set each palette. These never existed
@@ -50,7 +53,7 @@ def fixupImage(p):
         p.branchTargets[addr] = True
         for instr in range(8):
             instrBase = addr + instr * 2
-            p.instructions[instrBase] = (p.dataMemory[instrBase : instrBase+2],)
+            p.instructions[instrBase] = [p.dataMemory[instrBase : instrBase+2]]
 
 
 class RSTParser:
@@ -114,7 +117,21 @@ class RSTParser:
                 self.contDataAddr = a + len(b)
                 
             elif bytes and address and self.area in ('CSEG', 'HOME'):
-                self.storeCode(int(address, 16), binascii.a2b_hex(bytes), tokens[-1].split(',')[-1])
+                # Assuming this isn't one of the special addresses
+                # that we patch into, store the instruction.
+
+                a = int(address, 16)
+                if a not in PATCHED_ADDRS:
+                    self.storeCode(a, binascii.a2b_hex(bytes), tokens[-1].split(',')[-1])
+                    
+            elif bytes and address and self.area == 'GSINIT':
+                # This is generated code to do static initialization.
+                # To save some time (and to introduce yet another
+                # difference between this binary and one that will run
+                # on real hardware) we just translate these at address
+                # zero.
+
+                self.storeCode(0, binascii.a2b_hex(bytes), tokens[-1].split(',')[-1])
 
             elif tokens[0][-1] == ':':
                 self.storeLabel(int(address, 16), tokens[0][:-1])
@@ -129,7 +146,7 @@ class RSTParser:
             address += 1
 
     def storeCode(self, address, data, source):
-        self.instructions[address] = (map(ord, data),)
+        self.instructions.setdefault(address, []).append(map(ord, data))
 
         # Sometimes instead of using a label, targets are computed
         # relative to the current instruction's address. This is not
@@ -187,10 +204,39 @@ class CodeGenerator:
         f.write("\t\tclk += Opcodes::%-20s(aCPU, 0x%02x,0x%02x,0x%02x);\n" % (
                 self.opTable[bytes[0]], bytes[0], bytes[1], bytes[2]))
 
-    def isBranch(self, bytes):
-        # Really silly way to detect branches, but it works...
+    def endsBlock(self, bytes):
+        """Does this instruction need to end a translation block?"""
         mnemonic = self.opTable[bytes[0]]
-        return ('j' in mnemonic or 'call' in mnemonic or 'ret' in mnemonic)
+
+        # If it changes control flow, we exit.
+        # (Cheesy jump detector!)
+
+        if 'j' in mnemonic or 'call' in mnemonic or 'ret' in mnemonic:
+            return True
+
+        # Normally SFR writes won't trigger an end-of-block, but there are
+        # some operations that really need to come back to earth after each
+        # SFR write. One of these is neighbors, since we need the pulses to
+        # propagate instantly across all cubes. We also do this for I2C, since
+        # the I2C state machine is driven exclusively by the tick timer.
+
+        if 'mov_mem' in mnemonic:
+            dest = bytes[1]
+            if dest in (
+
+                # Neighbors
+                0x90,  # P1
+                0x94,  # P1DIR
+
+                # I2C
+                0xDA,  # W2DAT
+                0xE1,  # W2CON1
+                0xE2,  # W2CON0
+
+                ):
+                return True
+
+        return False
 
     def writeCode(self, f):
         addrs = self.p.instructions.keys()
@@ -215,10 +261,9 @@ class CodeGenerator:
             # as many instructions as they like at the same place.
             for bytes in self.p.instructions[addr]:
                 self.writeInstruction(f, bytes)
-                branch = self.isBranch(bytes)
+                endsBlock = self.endsBlock(bytes)
 
-            # Branches always end a basic block
-            if branch and inBlock:
+            if endsBlock and inBlock:
                 self.endBlock(f)
                 inBlock = False
 
