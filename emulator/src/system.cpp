@@ -151,9 +151,9 @@ int System::threadFn(void *param)
         if (!debug) {
             et.capture();
             if (et.realSeconds() > 0.5f) {
-                printf("Simulator at %.2f %% actual speed -- [", et.virtualRatio() * 100.0f);
+                printf("Running at %6.2f%% actual speed -- [", et.virtualRatio() * 100.0f);
                 for (unsigned i = 0; i < nCubes; i++)
-                    printf("%8.2f", self->cubes[i].lcd.getWriteCount()  / et.virtualSeconds());
+                    printf("%5.1f", self->cubes[i].lcd.getWriteCount()  / et.virtualSeconds());
                 printf(" ] FPS\n");
                 et.start();
             }
