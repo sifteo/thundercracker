@@ -27,7 +27,6 @@
 #   include <windows.h>
 #   include <winsock2.h>
 #   include <ws2tcpip.h>
-//#   pragma comment(lib, "ws2_32.lib")
 #else
 #   include <sys/types.h>
 #   include <sys/socket.h>
@@ -40,7 +39,7 @@
 #endif
 
 
-void SystemNetwork::init()
+void SystemNetwork::init(const VirtualTime *vtime)
 {
     unsigned long arg;
 
@@ -68,6 +67,9 @@ void SystemNetwork::init()
     if (listen(listenFD, 1) < 0) {
         fprintf(stderr, "Error: Can't listen on simulator socket!\n");
     }
+
+    deadline.init(vtime);
+    deadline.setRelative(0);
 }
 
 void SystemNetwork::setNonBlock(int fd)
@@ -175,7 +177,7 @@ bool SystemNetwork::rx(RXPacket &packet)
 }
 
 
-uint64_t SystemNetwork::timerNext(System &sys)
+void SystemNetwork::deadlineWork(System &sys)
 {
     /*
      * Support co-simulation with an external master-cube process.
@@ -185,6 +187,8 @@ uint64_t SystemNetwork::timerNext(System &sys)
      * particular simulation timesteps.
      */
 
+    deadline.reset();
+
     do {
         if (packetIsWaiting) {
             // The last packet we received is now ready to send.
@@ -192,14 +196,17 @@ uint64_t SystemNetwork::timerNext(System &sys)
             deliverPacket(sys, nextPacket);
         }
 
-        if (!rx(nextPacket))
-            return VirtualTime::usec(POLL_MS);
+        if (!rx(nextPacket)) {
+            // Poll for a connection to be established
+            deadline.setRelative(VirtualTime::msec(POLL_MS));
+            return;
+        }
 
         packetIsWaiting = true;
 
     } while (nextPacket.tickDelta == 0);
 
-    return nextPacket.tickDelta;
+    deadline.setRelative(nextPacket.tickDelta);
 }
 
 void SystemNetwork::deliverPacket(System &sys, RXPacket &packet)

@@ -46,8 +46,9 @@ bool System::init() {
         }
     }
 
-    network.init();
-    
+    time.init();
+    network.init(&time);
+
     return true;
 }
 
@@ -84,7 +85,6 @@ int System::threadFn(void *param)
     unsigned nCubes = self->opt_numCubes;
     bool debug = self->opt_cube0Debug && nCubes;
 
-    self->time.init();
     ElapsedTime et(self->time);
     TimeGovernor gov(self->time);
 
@@ -166,7 +166,7 @@ int System::threadFn(void *param)
     return 0;
 }
 
-void System::tick()
+ALWAYS_INLINE void System::tick()
 {
     // Everything but the cubes
     time.tick();

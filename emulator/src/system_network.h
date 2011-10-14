@@ -23,15 +23,15 @@ class System;
 class SystemNetwork {
  public:
     SystemNetwork()
-        : listenFD(-1), clientFD(-1), timerTicks(1),
+        : listenFD(-1), clientFD(-1),
           packetIsWaiting(false) {}
 
-    void init();
+    void init(const VirtualTime *vtime);
     void exit();
 
     ALWAYS_INLINE void tick(System &sys) {
-        if (UNLIKELY(!--timerTicks))
-            timerTicks = timerNext(sys);
+        if (deadline.hasPassed())
+            deadlineWork(sys);
     }
             
  private:
@@ -52,7 +52,7 @@ class SystemNetwork {
     int listenFD;
     int clientFD;
 
-    uint64_t timerTicks;
+    TickDeadline deadline;
     bool packetIsWaiting;
     SystemNetwork::RXPacket nextPacket;
 
@@ -60,7 +60,7 @@ class SystemNetwork {
     void tx(TXPacket &packet);
     bool rx(RXPacket &packet);
     void disconnect(int &fd);
-    uint64_t timerNext(System &sys);
+    void deadlineWork(System &sys);
     void deliverPacket(System &sys, RXPacket &rx);
 };
 
