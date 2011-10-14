@@ -127,7 +127,7 @@ class Radio {
         ce = nextCE;
     }
     
-    int tick() {
+    ALWAYS_INLINE int tick() {
         uint8_t irq = irq_edge;
         irq_edge = 0;
         return irq;

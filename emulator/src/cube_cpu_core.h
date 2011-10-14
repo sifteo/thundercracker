@@ -36,6 +36,7 @@
 #include <stdint.h>
 #include "cube_cpu_irq.h"
 
+
 namespace Cube {
 namespace CPU {
 
@@ -85,14 +86,14 @@ static void traceExecution(em8051 *mCPU)
 }
 
 
-static void timer_tick(em8051 *aCPU)
+static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
 {
     /*
      * Examine all of the possible counter/timer clock sources
      */
 
     bool tick12 = false;
-    if (++aCPU->prescaler12 == 12) { 
+    if (UNLIKELY(++aCPU->prescaler12 == 12)) { 
         tick12 = true;
         aCPU->prescaler12 = 0;
     }
@@ -106,7 +107,7 @@ static void timer_tick(em8051 *aCPU)
      * The timer code is slow, and we'd really rather not run it every tick.
      */
 
-    if (tick12 == false && fallingEdges == 0)
+    if (LIKELY(tick12 == false && fallingEdges == 0))
         return;
 
     /*
@@ -388,15 +389,12 @@ static void timer_tick(em8051 *aCPU)
 }
 
 
-static int em8051_tick(em8051 *aCPU)
+static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
 {
     int v;
     int ticked = 0;
 
-    if (aCPU->mTickDelay)
-        aCPU->mTickDelay--;
-
-    if (aCPU->mTickDelay == 0) {
+    if (LIKELY(--aCPU->mTickDelay <= 0)) {
 
         /*
          * Interrupts are sent if the following cases are not true:

@@ -37,7 +37,7 @@ class ADC {
         inputs[index] = value16;
     }
 
-    int tick(uint8_t *regs) {
+    ALWAYS_INLINE int tick(uint8_t *regs) {
         int irq = 0;
 
         // Powered down?

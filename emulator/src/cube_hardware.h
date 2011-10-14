@@ -148,7 +148,7 @@ class Hardware {
               const char *firmwareFile, const char *flashFile);
     void exit();
 
-    bool tick() {
+    ALWAYS_INLINE bool tick() {
         bool cpuTicked = CPU::em8051_tick(&cpu);
         hardwareTick();
         return cpuTicked;
@@ -160,7 +160,7 @@ class Hardware {
     bool isDebugging();
 
  private:
-    void hardwareTick()
+    ALWAYS_INLINE void hardwareTick()
     {
         uint8_t intexp = cpu.mSFR[REG_INTEXP];
 
@@ -168,21 +168,22 @@ class Hardware {
          * Update the LCD Tearing Effect line
          */
 
-        cpu.mSFR[CTRL_PORT] &= ~CTRL_LCD_TE;
-        if (lcd.tick())
+        if (UNLIKELY(lcd.tick()))
             cpu.mSFR[CTRL_PORT] |= CTRL_LCD_TE;
+        else
+            cpu.mSFR[CTRL_PORT] &= ~CTRL_LCD_TE;
 
         /*
          * Simulate peripheral interrupts
          */
 
-        if (adc.tick(cpu.mSFR))
+        if (UNLIKELY(adc.tick(cpu.mSFR)))
             cpu.mSFR[REG_IRCON] |= IRCON_MISC;
 
-        if (spi.tick(&cpu.mSFR[REG_SPIRCON0]))
+        if (UNLIKELY(spi.tick(&cpu.mSFR[REG_SPIRCON0])))
             cpu.mSFR[REG_IRCON] |= IRCON_RFSPI;
 
-        if (rfcken && spi.radio.tick())
+        if (UNLIKELY(rfcken && spi.radio.tick()))
             cpu.mSFR[REG_IRCON] |= IRCON_RF;
 
         // I2C can be routed to iex3 using INTEXP
@@ -192,17 +193,19 @@ class Hardware {
          * External interrupts: iex3
          */
 
-        if (cpu.mSFR[REG_T2CON] & 0x40) {
-            // Rising edge
-            if (nextIEX3 && !iex3)
-                cpu.mSFR[REG_IRCON] |= IRCON_SPI;
-        } else {
-            // Falling edge
-            if (!nextIEX3 && iex3)
-                cpu.mSFR[REG_IRCON] |= IRCON_SPI;
-        }
-        iex3 = nextIEX3;
-        
+        if (UNLIKELY(nextIEX3 != iex3)) {
+            if (cpu.mSFR[REG_T2CON] & 0x40) {
+                // Rising edge
+                if (nextIEX3 && !iex3)
+                    cpu.mSFR[REG_IRCON] |= IRCON_SPI;
+            } else {
+                // Falling edge
+                if (!nextIEX3 && iex3)
+                    cpu.mSFR[REG_IRCON] |= IRCON_SPI;
+            }
+            iex3 = nextIEX3;
+        }        
+
         /*
          * Other hardware with timers to update
          */
@@ -210,11 +213,11 @@ class Hardware {
         neighbors.tick(cpu);
 
         flash.tick(&cpu);
-        if (flash_drv)
+        if (LIKELY(flash_drv))
             cpu.mSFR[BUS_PORT] = flash.dataOut();
     }
 
-    void graphicsTick()
+    ALWAYS_INLINE void graphicsTick()
     {
         /*
          * Update the graphics (LCD and Flash) bus. Only happens in

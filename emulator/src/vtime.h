@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <SDL.h>
+#include "macros.h"
 
 class VirtualTime {
  public:
@@ -48,7 +49,7 @@ class VirtualTime {
         run();
     }
         
-    void tick() {
+    ALWAYS_INLINE void tick() {
         clocks++;
     }
 

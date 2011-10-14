@@ -63,7 +63,7 @@ class LCD {
         mode_te = 0;
     }
 
-    void cycle(Pins *pins) {
+    ALWAYS_INLINE void cycle(Pins *pins) {
         /*
          * Make lots of assumptions...
          *
@@ -103,14 +103,14 @@ class LCD {
         }
     }
 
-    int tick() {
+    ALWAYS_INLINE int tick() {
         /*
          * We have a separate entry point for ticking the TE timer,
          * since it really does need to happen every tick rather than
          * just when there's a graphics pin state change.
          */
         
-        if (te_timer_head != te_timer_tail) {
+        if (UNLIKELY(te_timer_head != te_timer_tail)) {
             te_timer_tail++;
             return 1;
         }
@@ -147,7 +147,7 @@ class LCD {
         }
     }
 
-    void writeByte(uint8_t b) {
+    ALWAYS_INLINE void writeByte(uint8_t b) {
         pixel_bytes[cmd_bytecount++] = b;
 
         switch (colmod) {
@@ -199,7 +199,7 @@ class LCD {
         }
     }
 
-    void command(uint8_t op) {
+    ALWAYS_INLINE void command(uint8_t op) {
         current_cmd = op;
         cmd_bytecount = 0;
 
@@ -250,7 +250,7 @@ class LCD {
         }
     }
 
-    void data(uint8_t byte) {
+    ALWAYS_INLINE void data(uint8_t byte) {
         switch (current_cmd) {
 
         case CMD_CASET:

@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "cube_cpu_reg.h"
+#include "macros.h"
 
 namespace Cube {
 namespace CPU {

@@ -69,8 +69,8 @@ class Neighbors {
         mySides[mySide].otherSides[otherSide] &= ~(1 << otherCube);
     }
 
-    void tick(CPU::em8051 &cpu) {
-        if (inputs) {
+    ALWAYS_INLINE void tick(CPU::em8051 &cpu) {
+        if (UNLIKELY(inputs)) {
             if (cpu.traceFile)
                 fprintf(cpu.traceFile, "NEIGHBOR: Received pulse (sides %02x)\n", inputs);
 

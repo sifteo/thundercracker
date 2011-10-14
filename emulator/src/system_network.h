@@ -29,8 +29,8 @@ class SystemNetwork {
     void init();
     void exit();
 
-    void tick(System &sys) {
-        if (!--timerTicks)
+    ALWAYS_INLINE void tick(System &sys) {
+        if (UNLIKELY(!--timerTicks))
             timerTicks = timerNext(sys);
     }
             

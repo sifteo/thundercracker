@@ -108,12 +108,15 @@ class Flash {
         return sizeof data;
     }
     
-    void tick(CPU::em8051 *cpu) {
+    ALWAYS_INLINE void tick(CPU::em8051 *cpu) {
         /*
          * March time forward on the current operation, if any.
          */
 
-        if (busy) {
+        if (UNLIKELY(busy)) {
+            // Latch any busy flags long enough for the UI to see them.
+            busy_status = (enum busy_flag) (busy_status | busy);
+
             if (!--busy_timer) {
                 busy = BF_IDLE;
                 
@@ -134,16 +137,13 @@ class Flash {
             idle_ticks++;
         }
 
-        if (write_timer) {
+        if (UNLIKELY(write_timer)) {
             if (!--write_timer)
                 write();
         }
-
-        // Latch any busy flags long enough for the UI to see them.
-        busy_status = (enum busy_flag) (busy_status | busy);
     }
 
-    void cycle(Pins *pins) {
+    ALWAYS_INLINE void cycle(Pins *pins) {
         if (pins->ce) {
             // Chip disabled
             pins->data_drv = 0;

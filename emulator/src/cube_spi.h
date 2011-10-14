@@ -102,18 +102,18 @@ class SPIBus {
      *
      * Returns 1 if we're raising an IRQ, 0 if not.
      */
-    int tick(uint8_t *regs) {
+    ALWAYS_INLINE int tick(uint8_t *regs) {
         uint8_t con0 = regs[SPI_REG_CON0];
 
-        if (!(con0 & SPI_ENABLE))
+        if (UNLIKELY(!(con0 & SPI_ENABLE)))
             return 0;
 
-        if (timer) {
+        if (UNLIKELY(timer)) {
             /*
              * We're already transmitting/receiving one byte.
              * Count down the clock until it's done...
              */
-            if (!--timer) {
+            if (UNLIKELY(!--timer)) {
                 /*
                  * The byte just finished! Emulate the bus traffic, and
                  * enqueue the resulting MISO byte.

@@ -33,14 +33,14 @@ class I2CBus {
         timer = 0;
     }
 
-    int tick(CPU::em8051 *cpu) {
+    ALWAYS_INLINE int tick(CPU::em8051 *cpu) {
         uint8_t w2con0 = cpu->mSFR[REG_W2CON0];
         uint8_t w2con1 = cpu->mSFR[REG_W2CON1];
     
-        if (timer) {
+        if (LIKELY(timer)) {
             // Still busy
 
-            if (!--timer) {
+            if (UNLIKELY(!--timer)) {
                 /*
                  * Write/read finished. Emulate reads at the end of their
                  * time window, so that the CPU has time to set a stop
