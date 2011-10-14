@@ -478,7 +478,7 @@ void Frontend::draw()
     renderer.beginFrame(viewExtent, viewCenter);
 
     float ratio = std::max(1.0f, viewportHeight / (float)viewportWidth);
-    renderer.drawBackground(viewExtent * ratio * 4.0f, 0.2f);
+    renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
 
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
         cubes[i].draw(renderer);
