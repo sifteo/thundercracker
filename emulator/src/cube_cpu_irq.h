@@ -61,6 +61,10 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
 
 static ALWAYS_INLINE void handle_interrupts(struct em8051 *cpu)
 {
+
+    // IFP is currently disabled, we don't use it.
+#ifdef EM8051_SUPPORT_IFP
+
     /*
      * External interrupts: GPIOs. Only one pin can be selected
      * for use as an Interrupt From Pin (IFP) source at a time.
@@ -85,6 +89,8 @@ static ALWAYS_INLINE void handle_interrupts(struct em8051 *cpu)
             cpu->mSFR[REG_TCON] |= TCONMASK_IE0;
     }
     cpu->ifp = nextIFP;
+
+#endif  // EM8051_SUPPORT_IFP
 
     /*
      * Table-driven implementation of the nRF24LE1's IRQ logic. See

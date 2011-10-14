@@ -391,7 +391,6 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
 
 static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
 {
-    int v;
     int ticked = 0;
 
     if (LIKELY(--aCPU->mTickDelay <= 0)) {
@@ -434,15 +433,21 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
             pd->loop_prev = aCPU->profilerTotal;
         }
 
+
         /*
          * Update parity bit
+         * (Currently disabled, we don't use it)
          */
 
-        v = aCPU->mSFR[REG_ACC];
-        v ^= v >> 4;
-        v &= 0xf;
-        v = (0x6996 >> v) & 1;
-        aCPU->mSFR[REG_PSW] = (aCPU->mSFR[REG_PSW] & ~PSWMASK_P) | (v * PSWMASK_P);
+#ifdef EM8051_SUPPORT_PARITY
+        {
+            int v = aCPU->mSFR[REG_ACC];
+            v ^= v >> 4;
+            v &= 0xf;
+            v = (0x6996 >> v) & 1;
+            aCPU->mSFR[REG_PSW] = (aCPU->mSFR[REG_PSW] & ~PSWMASK_P) | (v * PSWMASK_P);
+        }
+#endif
 
         /*
          * Write execution trace

@@ -162,8 +162,6 @@ class Hardware {
  private:
     ALWAYS_INLINE void hardwareTick()
     {
-        uint8_t intexp = cpu.mSFR[REG_INTEXP];
-
         /*
          * Update the LCD Tearing Effect line
          */
@@ -187,7 +185,7 @@ class Hardware {
             cpu.mSFR[REG_IRCON] |= IRCON_RF;
 
         // I2C can be routed to iex3 using INTEXP
-        uint8_t nextIEX3 = i2c.tick(&cpu) && (intexp & 0x04);    
+        uint8_t nextIEX3 = i2c.tick(&cpu) && (cpu.mSFR[REG_INTEXP] & 0x04);    
 
         /*
          * External interrupts: iex3
