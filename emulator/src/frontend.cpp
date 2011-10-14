@@ -169,6 +169,8 @@ void Frontend::exit()
 
 void Frontend::run()
 {
+    isRunning = true;
+
     if (sys->opt_numCubes > 1) {
         // 2 or more cubes: Large window
         if (!onResize(800, 600))
@@ -179,7 +181,7 @@ void Frontend::run()
             return;
     }
 
-    while (sys->isRunning()) {
+    while (isRunning && sys->isRunning()) {
         SDL_Event event;
     
         // Drain the GUI event queue
@@ -187,7 +189,8 @@ void Frontend::run()
             switch (event.type) {
                 
             case SDL_QUIT:
-                return;
+                isRunning = false;
+                break;
 
             case SDL_VIDEORESIZE:
                 if (!onResize(event.resize.w, event.resize.h))
@@ -279,12 +282,22 @@ void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
 {
     switch (evt.keysym.sym) {
         
+    case 'q':
+    case SDLK_ESCAPE:
+        isRunning = false;
+        break;
+        
     case 'z':
         toggleZoom = !toggleZoom;
         break;
 
     case 'f':
-        onResize(1024, 640, !isFullscreen);
+        /*
+         * XXX: Pick the resolution automatically or configurably.
+         *      This is just a common 16:9 resolution that isn't too big
+         *      for my integrated GPU to render smoothly :)
+         */
+        onResize(1280, 720, !isFullscreen);
         break;
 
     default:

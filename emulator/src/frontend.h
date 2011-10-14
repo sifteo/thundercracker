@@ -174,6 +174,7 @@ class Frontend {
 
     bool toggleZoom;
     bool isFullscreen;
+    bool isRunning;
 
     int viewportWidth, viewportHeight;
     int mouseX, mouseY;
