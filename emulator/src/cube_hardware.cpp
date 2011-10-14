@@ -16,6 +16,7 @@ bool Hardware::init(VirtualTime *masterTimer,
                     const char *firmwareFile, const char *flashFile)
 {
     time = masterTimer;
+    hwDeadline.init(time);
 
     lat1 = 0;
     lat2 = 0;
@@ -79,6 +80,9 @@ void Hardware::sfrWrite(CPU::em8051 *cpu, int reg)
     Hardware *self = (Hardware*) cpu->callbackData;
     reg -= 0x80;
     uint8_t value = cpu->mSFR[reg];
+
+    self->hwDeadline.setRelative(0);
+
     switch (reg) {
 
     case BUS_PORT:
@@ -124,6 +128,9 @@ int Hardware::sfrRead(CPU::em8051 *cpu, int reg)
 {
     Hardware *self = (Hardware*) cpu->callbackData;
     reg -= 0x80;
+
+    self->hwDeadline.setRelative(0);
+
     switch (reg) {
      
     case REG_SPIRDAT:
@@ -160,6 +167,18 @@ void Hardware::setAcceleration(float xG, float yG)
     if (y > 127) y = 127;
 
     i2c.accel.setVector(x, y);
+}
+
+NEVER_INLINE void Hardware::hwDeadlineWork() 
+{
+    hwDeadline.reset();
+
+    lcd.tick(hwDeadline, cpu.mSFR);
+    adc.tick(hwDeadline, cpu.mSFR);
+    spi.tick(hwDeadline, cpu.mSFR + REG_SPIRCON0, cpu.mSFR);
+    i2c.tick(hwDeadline, &cpu);
+    flash.tick(hwDeadline, &cpu);
+    spi.radio.tick(rfcken, cpu.mSFR);
 }
 
 void Hardware::setTouch(float amount)

@@ -72,9 +72,6 @@ static const uint8_t CTRL_FLASH_LAT2 = (1 << 2);
 static const uint8_t CTRL_FLASH_WE   = (1 << 5);
 static const uint8_t CTRL_FLASH_OE   = (1 << 6);
 
-// XXX: We have support in software for TE, but the IO pin isn't wired up currently
-static const uint8_t CTRL_LCD_TE     = 0;
-
 // RFCON bits
 static const uint8_t RFCON_RFCKEN    = 0x04;
 static const uint8_t RFCON_RFCSN     = 0x02;
@@ -154,66 +151,37 @@ class Hardware {
         return cpuTicked;
     }
 
+    void lcdPulseTE() {
+        lcd.pulseTE(hwDeadline);
+    }
+
     void setAcceleration(float xG, float yG);
     void setTouch(float amount);
 
     bool isDebugging();
 
  private:
+
     ALWAYS_INLINE void hardwareTick()
     {
         /*
-         * Update the LCD Tearing Effect line
+         * A big chunk of our work can happen less often than every
+         * clock cycle, as determined by a simple deadline tracker.
          */
 
-        if (UNLIKELY(lcd.tick()))
-            cpu.mSFR[CTRL_PORT] |= CTRL_LCD_TE;
-        else
-            cpu.mSFR[CTRL_PORT] &= ~CTRL_LCD_TE;
+        if (hwDeadline.hasPassed())
+            hwDeadlineWork();
 
         /*
-         * Simulate peripheral interrupts
-         */
-
-        if (UNLIKELY(adc.tick(cpu.mSFR)))
-            cpu.mSFR[REG_IRCON] |= IRCON_MISC;
-
-        if (UNLIKELY(spi.tick(&cpu.mSFR[REG_SPIRCON0])))
-            cpu.mSFR[REG_IRCON] |= IRCON_RFSPI;
-
-        if (UNLIKELY(rfcken && spi.radio.tick()))
-            cpu.mSFR[REG_IRCON] |= IRCON_RF;
-
-        // I2C can be routed to iex3 using INTEXP
-        uint8_t nextIEX3 = i2c.tick(&cpu) && (cpu.mSFR[REG_INTEXP] & 0x04);    
-
-        /*
-         * External interrupts: iex3
-         */
-
-        if (UNLIKELY(nextIEX3 != iex3)) {
-            if (cpu.mSFR[REG_T2CON] & 0x40) {
-                // Rising edge
-                if (nextIEX3 && !iex3)
-                    cpu.mSFR[REG_IRCON] |= IRCON_SPI;
-            } else {
-                // Falling edge
-                if (!nextIEX3 && iex3)
-                    cpu.mSFR[REG_IRCON] |= IRCON_SPI;
-            }
-            iex3 = nextIEX3;
-        }        
-
-        /*
-         * Other hardware with timers to update
+         * A few small things currently have to happen per-tick
          */
 
         neighbors.tick(cpu);
-
-        flash.tick(&cpu);
         if (LIKELY(flash_drv))
             cpu.mSFR[BUS_PORT] = flash.dataOut();
     }
+
+    void hwDeadlineWork();
 
     ALWAYS_INLINE void graphicsTick()
     {
@@ -281,12 +249,13 @@ class Hardware {
     static void sfrWrite(CPU::em8051 *cpu, int reg);
     static int sfrRead(CPU::em8051 *cpu, int reg);
 
+    TickDeadline hwDeadline;
+
     uint8_t lat1;
     uint8_t lat2;
     uint8_t bus;
     uint8_t prev_ctrl_port;
     uint8_t flash_drv;
-    uint8_t iex3;
     uint8_t rfcken;
 };
 

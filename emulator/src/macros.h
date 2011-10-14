@@ -16,8 +16,14 @@
  */
 
 #define ALWAYS_INLINE   __attribute__ ((always_inline))
+#define NEVER_INLINE   __attribute__ ((noinline))
+
 #define LIKELY(x)       __builtin_expect((x), 1)
 #define UNLIKELY(x)     __builtin_expect((x), 0)
 
+#ifndef MIN
+#define MIN(a,b)        ((a)<(b)?(a):(b))
+#define MAX(a,b)        ((a)<(b)?(a):(b))
+#endif
 
 #endif

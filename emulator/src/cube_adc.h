@@ -37,31 +37,34 @@ class ADC {
         inputs[index] = value16;
     }
 
-    ALWAYS_INLINE int tick(uint8_t *regs) {
-        int irq = 0;
-
+    ALWAYS_INLINE void tick(TickDeadline &deadline, uint8_t *regs) {
         // Powered down?
         if (UNLIKELY(!(regs[REG_ADCCON1] & ADCCON1_PWRUP)))
-            return 0;
+            return;
 
         if (LIKELY(period_timer)) {
-            if (UNLIKELY(!--period_timer))
+            if (deadline.hasPassed(period_timer)) {
+                period_timer = 0;
                 triggered = 1;
+            } else {
+                deadline.set(period_timer);
+            }
         }
 
         if (UNLIKELY(triggered && !conversion_timer)) {
             // Start conversion
             triggered = 0;
-            conversion_timer = VirtualTime::nsec(conversionNSec(regs));
+            conversion_timer = deadline.setRelative(VirtualTime::nsec(conversionNSec(regs)));
             conversion_channel = (regs[REG_ADCCON1] & ADCCON1_CHSEL_MASK) >> ADCCON1_CHSEL_SHIFT;
         }
 
         if (LIKELY(conversion_timer)) {
             // Busy in a conversion
 
-            conversion_timer--;
-            if (LIKELY(conversion_timer)) {
+            if (!deadline.hasPassed(conversion_timer)) {
                 regs[REG_ADCCON1] |= ADCCON1_BUSY;
+                deadline.set(conversion_timer);
+
             } else {
                 /*
                  * Just finished the conversion.
@@ -71,19 +74,19 @@ class ADC {
                  * store/convert the result.
                  */
 
+                conversion_timer = 0;
+
                 regs[REG_ADCCON1] &= ~ADCCON1_BUSY;
-                irq = 1;
+                regs[REG_IRCON] |= IRCON_MISC;
 
                 if (regs[REG_ADCCON2] & ADCCON2_CONT) {
-                    period_timer = VirtualTime::hz(rateHZ(regs));
-                    period_timer -= VirtualTime::nsec(conversionNSec(regs));
+                    period_timer = deadline.setRelative(VirtualTime::hz(rateHZ(regs))
+                                                        - VirtualTime::nsec(conversionNSec(regs)));
                 }
 
                 storeResult(regs, inputs[conversion_channel]);
             }
         }
-        
-        return irq;
     }
     
  private:
@@ -190,9 +193,10 @@ class ADC {
 
     uint16_t inputs[16];
     int triggered;
-    int conversion_timer;
     int conversion_channel;
-    int period_timer;
+
+    uint64_t conversion_timer;
+    uint64_t period_timer;
 
     static const uint8_t ADCCON1_PWRUP         = 0x80;
     static const uint8_t ADCCON1_BUSY          = 0x40;

@@ -22,9 +22,12 @@ class Flash {
  public:
 
     enum busy_flag {
-        BF_IDLE     = 0,
-        BF_PROGRAM  = (1 << 0),
-        BF_ERASE    = (1 << 1),
+        BF_IDLE          = 0,
+        BF_PROGRAM       = (1 << 0),
+        BF_ERASE_BLOCK   = (1 << 1),
+        BF_ERASE_SECTOR  = (1 << 2),
+        BF_ERASE_CHIP    = (1 << 3),
+        BF_ERASE         = (BF_ERASE_BLOCK | BF_ERASE_SECTOR | BF_ERASE_CHIP),
     };
 
     struct Pins {
@@ -53,6 +56,7 @@ class Flash {
         prev_we = 0;
         prev_oe = 0;
         status_byte = 0;
+        previous_clocks = 0;
 
         if (filename) {
             size_t result;
@@ -108,16 +112,47 @@ class Flash {
         return sizeof data;
     }
     
-    ALWAYS_INLINE void tick(CPU::em8051 *cpu) {
+    ALWAYS_INLINE void tick(TickDeadline &deadline, CPU::em8051 *cpu) {
         /*
          * March time forward on the current operation, if any.
          */
+
+        uint64_t elapsed = deadline.clock() - previous_clocks;
+        previous_clocks = deadline.clock();
 
         if (UNLIKELY(busy)) {
             // Latch any busy flags long enough for the UI to see them.
             busy_status = (enum busy_flag) (busy_status | busy);
 
-            if (!--busy_timer) {
+            if (busy_timer == 0) {
+                /*
+                 * We just became busy, and haven't set the timer yet.
+                 */
+
+                write_timer = deadline.setRelative(VirtualTime::usec(FLUSH_TIME_US));
+
+                switch (busy) {
+                case BF_PROGRAM:
+                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::PROGRAM_TIME_US));
+                    break;
+                case BF_ERASE_SECTOR:
+                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::ERASE_SECTOR_TIME_US));
+                    break;
+                case BF_ERASE_BLOCK:
+                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::ERASE_BLOCK_TIME_US));
+                    break;
+                case BF_ERASE_CHIP:
+                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::ERASE_CHIP_TIME_US));
+                    break;
+                default:
+                    break;
+                }
+
+            } else if (deadline.hasPassed(busy_timer)) {
+                /*
+                 * Just finished our operation
+                 */
+
                 busy = BF_IDLE;
                 
                 /*
@@ -131,15 +166,26 @@ class Flash {
                     CPU::profile_data *pd = &cpu->mProfileData[pc];
                     pd->flash_idle++;
                 }
+
+            } else {
+                /*
+                 * Still busy...
+                 */
+
+                deadline.set(busy_timer);
             }
-            busy_ticks++;
+
+            busy_ticks += elapsed;
+
         } else {
-            idle_ticks++;
+            idle_ticks += elapsed;
         }
 
         if (UNLIKELY(write_timer)) {
-            if (!--write_timer)
+            if (deadline.hasPassed(write_timer))
                 write();
+            else
+                deadline.set(write_timer);
         }
     }
 
@@ -254,29 +300,18 @@ class Flash {
             data[st->addr] &= st->data;
             status_byte = FlashModel::STATUS_DATA_INV & ~st->data;
             busy = BF_PROGRAM;
-            write_timer = VirtualTime::usec(FLUSH_TIME_US);
-            busy_timer = VirtualTime::usec(FlashModel::PROGRAM_TIME_US);
-        
         } else if (matchCommand(FlashModel::cmd_sector_erase)) {
             erase(st->addr, FlashModel::SECTOR_SIZE);
             status_byte = 0;
-            busy = BF_ERASE;
-            write_timer = VirtualTime::usec(FLUSH_TIME_US);
-            busy_timer = VirtualTime::usec(FlashModel::ERASE_SECTOR_TIME_US);
-            
+            busy = BF_ERASE_SECTOR;
         } else if (matchCommand(FlashModel::cmd_block_erase)) {
             erase(st->addr, FlashModel::BLOCK_SIZE);
             status_byte = 0;
-            busy = BF_ERASE;
-            write_timer = VirtualTime::usec(FLUSH_TIME_US);
-            busy_timer = VirtualTime::usec(FlashModel::ERASE_BLOCK_TIME_US);
-            
+            busy = BF_ERASE_BLOCK;
         } else if (matchCommand(FlashModel::cmd_chip_erase)) {
             erase(st->addr, FlashModel::SIZE);
             status_byte = 0;
-            busy = BF_ERASE;
-            write_timer = VirtualTime::usec(FLUSH_TIME_US);
-            busy_timer = VirtualTime::usec(FlashModel::ERASE_CHIP_TIME_US);
+            busy = BF_ERASE_CHIP;
         }
     }
 
@@ -305,7 +340,7 @@ class Flash {
     };
 
     // Disk I/O
-    uint32_t write_timer;
+    uint64_t write_timer;
     FILE *file;
 
     // For clock speed / power metrics
@@ -315,10 +350,11 @@ class Flash {
     uint32_t busy_ticks;
     uint32_t idle_ticks;
     enum busy_flag busy_status;
+    uint64_t previous_clocks;
 
     // Command state
     uint32_t latched_addr;
-    uint32_t busy_timer;
+    uint64_t busy_timer;
     enum busy_flag busy;
     uint8_t cmd_fifo_head;
     uint8_t prev_we;

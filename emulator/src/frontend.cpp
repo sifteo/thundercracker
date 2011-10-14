@@ -220,7 +220,7 @@ void Frontend::run()
 
         if (!(frameCount % FRAME_HZ_DIVISOR)) {
             for (unsigned i = 0; i < sys->opt_numCubes; i++)
-                sys->cubes[i].lcd.pulseTE();
+                sys->cubes[i].lcdPulseTE();
         }
 
         animate();

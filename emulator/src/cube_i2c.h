@@ -33,20 +33,22 @@ class I2CBus {
         timer = 0;
     }
 
-    ALWAYS_INLINE int tick(CPU::em8051 *cpu) {
+    ALWAYS_INLINE void tick(TickDeadline &deadline, CPU::em8051 *cpu) {
         uint8_t w2con0 = cpu->mSFR[REG_W2CON0];
         uint8_t w2con1 = cpu->mSFR[REG_W2CON1];
     
         if (LIKELY(timer)) {
             // Still busy
 
-            if (UNLIKELY(!--timer)) {
+            if (deadline.hasPassed(timer)) {
                 /*
                  * Write/read finished. Emulate reads at the end of their
                  * time window, so that the CPU has time to set a stop
                  * condition if necessary.
                  */
-                
+
+                timer = 0;
+
                 if (state == I2C_READING) {
                     uint8_t stop = w2con0 & W2CON0_STOP;
 
@@ -61,7 +63,7 @@ class I2CBus {
                         state = I2C_IDLE;
                         cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_STOP;
                     } else {
-                        timerSet(cpu, 9);  // Data byte, ACK
+                        timerSet(deadline, cpu, 9);  // Data byte, ACK
                     }
                 }
                 
@@ -72,6 +74,10 @@ class I2CBus {
                 
                 w2con1 |= W2CON1_READY;
                 cpu->mSFR[REG_W2CON1] = w2con1;
+
+            } else {
+                // Still waiting
+                deadline.set(timer);
             }
             
         } else {
@@ -90,7 +96,7 @@ class I2CBus {
                     state = (tx_buffer & 1) ? I2C_WR_READ_ADDR : I2C_WRITING;
                     cpu->mSFR[REG_W2CON0] = w2con0 &= ~W2CON0_START;
                     tx_buffer_full = 0;
-                    timerSet(cpu, 10);      // Start, data byte, ACK
+                    timerSet(deadline, cpu, 10);      // Start, data byte, ACK
                 }
                 
             } else if (state == I2C_WRITING) {
@@ -101,7 +107,7 @@ class I2CBus {
                 if (tx_buffer_full) {
                     next_ack_status = accel.i2cWrite(tx_buffer);
                     tx_buffer_full = 0;
-                    timerSet(cpu, 9);       // Data byte, ACK
+                    timerSet(deadline, cpu, 9);       // Data byte, ACK
                     
                 } else if (w2con0 & W2CON0_STOP) {
                     accel.i2cStop();
@@ -111,16 +117,32 @@ class I2CBus {
                 
             } else if (state == I2C_WR_READ_ADDR) {
                 state = I2C_READING;
-                timerSet(cpu, 9);       // Data byte, ACK
+                timerSet(deadline, cpu, 9);       // Data byte, ACK
             }
         }
         
         /*
-         * We return a level-triggered interrupt (Edge triggering is
-         * handled externally, by the core's IEX3 interrupt input)
+         * We return a level-triggered interrupt, which is then fed
+         * into the core's IEX3 line which has edge-triggering.
          */
-        
-        return (w2con0 & W2CON0_ENABLE) && (w2con1 & W2CON1_READY) && !(w2con1 & W2CON1_MASKIRQ);
+ 
+        bool nextIEX3 = ( (w2con0 & W2CON0_ENABLE) &&
+                          (w2con1 & W2CON1_READY) &&
+                          !(w2con1 & W2CON1_MASKIRQ) &&
+                          (cpu->mSFR[REG_INTEXP] & 0x04) );
+       
+        if (UNLIKELY(nextIEX3 != iex3)) {
+            if (cpu->mSFR[REG_T2CON] & 0x40) {
+                // Rising edge
+                if (nextIEX3 && !iex3)
+                    cpu->mSFR[REG_IRCON] |= IRCON_SPI;
+            } else {
+                // Falling edge
+                if (!nextIEX3 && iex3)
+                    cpu->mSFR[REG_IRCON] |= IRCON_SPI;
+            }
+            iex3 = nextIEX3;
+        }        
     }
     
     void writeData(CPU::em8051 *cpu, uint8_t data) {
@@ -150,15 +172,15 @@ class I2CBus {
     }
 
  private:
-    void timerSet(CPU::em8051 *cpu, int bits) {
+    void timerSet(TickDeadline &deadline, CPU::em8051 *cpu, int bits) {
         /*
          * Wake after 'bits' bit periods, and set READY.
          */
         
         uint8_t w2con0 = cpu->mSFR[REG_W2CON0];
         switch (w2con0 & W2CON0_SPEED) {
-        case W2CON0_400KHZ: timer = VirtualTime::hz(400000) * bits; break;
-        case W2CON0_100KHZ: timer = VirtualTime::hz(100000) * bits; break;
+        case W2CON0_400KHZ: timer = deadline.setRelative(VirtualTime::hz(400000) * bits); break;
+        case W2CON0_100KHZ: timer = deadline.setRelative(VirtualTime::hz(100000) * bits); break;
         default: cpu->except(cpu, CPU::EXCEPTION_I2C);
         }
     }
@@ -182,9 +204,10 @@ class I2CBus {
         I2C_READING,        // RX mode
     };
 
-    uint32_t timer;     // Cycles until we're not busy
+    uint64_t timer;         // Cycle count at which we're not busy
     enum i2c_state state;
 
+    bool iex3;
     uint8_t next_ack_status;
     uint8_t tx_buffer;
     uint8_t tx_buffer_full;

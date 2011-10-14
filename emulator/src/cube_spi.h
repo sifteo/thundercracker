@@ -99,25 +99,27 @@ class SPIBus {
      * Emulate one CPU-clock cycle of SPI activity. This
      * is where we update SFRs, invoke callbacks,
      * and generate IRQs.
-     *
-     * Returns 1 if we're raising an IRQ, 0 if not.
      */
-    ALWAYS_INLINE int tick(uint8_t *regs) {
-        uint8_t con0 = regs[SPI_REG_CON0];
+    ALWAYS_INLINE void tick(TickDeadline &deadline, uint8_t *spiRegs, uint8_t *cpuRegs) {
+        uint8_t con0 = spiRegs[SPI_REG_CON0];
 
         if (UNLIKELY(!(con0 & SPI_ENABLE)))
-            return 0;
+            return;
 
         if (UNLIKELY(timer)) {
             /*
              * We're already transmitting/receiving one byte.
              * Count down the clock until it's done...
              */
-            if (UNLIKELY(!--timer)) {
+
+            if (deadline.hasPassed(timer)) {
                 /*
                  * The byte just finished! Emulate the bus traffic, and
                  * enqueue the resulting MISO byte.
                  */
+
+                timer = 0;
+
                 uint8_t miso = radio.spiByte(tx_mosi);
 
                 if (cpu->traceFile) {
@@ -130,6 +132,10 @@ class SPIBus {
                 else
                     cpu->except(cpu, CPU::EXCEPTION_SPI_XRUN);
                 status_dirty = 1;
+
+            } else {
+                // Still waiting
+                deadline.set(timer);
             }
         }
 
@@ -144,7 +150,7 @@ class SPIBus {
              */
             
             tx_mosi = tx_fifo[--tx_count];
-            timer = ticksPerByte(con0);
+            timer = deadline.setRelative(ticksPerByte(con0));
             status_dirty = 1;
         }   
 
@@ -160,17 +166,18 @@ class SPIBus {
             }
 
             // Update status register
-            regs[SPI_REG_STATUS] = 
+            spiRegs[SPI_REG_STATUS] = 
                 (rx_count == SPI_FIFO_SIZE ? SPI_RX_FULL : 0) |
                 (rx_count != 0 ? SPI_RX_READY : 0) |
                 (tx_count == 0 ? SPI_TX_EMPTY : 0) |
                 (tx_count != SPI_FIFO_SIZE ? SPI_TX_READY : 0);
         
-            irq_state = !!(regs[SPI_REG_STATUS] & ~regs[SPI_REG_CON1]);
+            irq_state = !!(spiRegs[SPI_REG_STATUS] & ~spiRegs[SPI_REG_CON1]);
             status_dirty = 0;
         }
 
-        return irq_state;
+        if (irq_state)
+            cpuRegs[REG_IRCON] |= IRCON_RFSPI;
     }
 
  private:
@@ -216,7 +223,7 @@ class SPIBus {
     uint8_t tx_count;   // Number of bytes in tx_fifo
     uint8_t rx_count;   // Number of bytes in rx_fifo
     uint8_t tx_mosi;    // Transmit shift register
-    uint32_t timer;     // Cycle count remaining on current byte
+    uint64_t timer;     // Cycle count at which the current byte finishes
 
     uint8_t irq_state;
     uint8_t status_dirty;

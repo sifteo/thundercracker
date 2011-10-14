@@ -96,28 +96,33 @@ class LCD {
         return mode_awake && mode_display_on;
     }
 
-    void pulseTE() {
+    void pulseTE(TickDeadline &deadline) {
         if (mode_te) {
             // This runs on the GUI thread, use a lock-free timer.
-            te_timer_head += VirtualTime::usec(TE_WIDTH_US);
+            te_timestamp = deadline.setRelative(VirtualTime::usec(TE_WIDTH_US));
         }
     }
 
-    ALWAYS_INLINE int tick() {
+    ALWAYS_INLINE void tick(TickDeadline &deadline, uint8_t *regs) {
         /*
          * We have a separate entry point for ticking the TE timer,
          * since it really does need to happen every tick rather than
          * just when there's a graphics pin state change.
          */
-        
-        if (UNLIKELY(te_timer_head != te_timer_tail)) {
-            te_timer_tail++;
-            return 1;
+    
+        if (deadline.hasPassed(te_timestamp)) {
+            regs[CTRL_PORT] &= ~CTRL_LCD_TE;
+        } else {
+            regs[CTRL_PORT] |= CTRL_LCD_TE;
+            deadline.set(te_timestamp);
         }
-        return 0;
     }
 
  private:
+    // XXX: We have support in software for TE, but the IO pin isn't wired up currently
+    static const uint8_t CTRL_LCD_TE     = 0;
+    static const uint8_t CTRL_PORT       = REG_P3;
+
     void firstPixel() {
         // Return to start row/column
         row = ys;
@@ -318,8 +323,7 @@ class LCD {
     static const unsigned TE_WIDTH_US = 1000;
 
     uint32_t write_count;
-    uint32_t te_timer_head;
-    uint32_t te_timer_tail;
+    uint64_t te_timestamp;
 
     /* Hardware interface */
     uint8_t prev_wrx;

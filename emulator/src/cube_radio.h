@@ -127,10 +127,11 @@ class Radio {
         ce = nextCE;
     }
     
-    ALWAYS_INLINE int tick() {
-        uint8_t irq = irq_edge;
-        irq_edge = 0;
-        return irq;
+    ALWAYS_INLINE void tick(bool rfcken, uint8_t *regs) {
+        if (rfcken && irq_edge) {
+            regs[REG_IRCON] |= IRCON_RF;
+            irq_edge = 0;
+        }
     }
 
     uint64_t getPackedRXAddr() {

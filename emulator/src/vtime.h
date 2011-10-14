@@ -14,7 +14,12 @@
 #include <SDL.h>
 #include "macros.h"
 
+
 class VirtualTime {
+    /*
+     * Tracks a virtual clock, measured in clock ticks.
+     */
+
  public:
     // Master clock rate. Must be equal to the cube's system clock.
     static const unsigned HZ = 16000000;
@@ -53,7 +58,7 @@ class VirtualTime {
         clocks++;
     }
 
-    float elapsedSeconds() {
+    float elapsedSeconds() const {
         return toSeconds(clocks);
     }
 
@@ -69,11 +74,11 @@ class VirtualTime {
         setTargetRate(0);
     }
 
-    bool isPaused() {
+    bool isPaused() const {
         return targetRate == 0;
     }
 
-    unsigned timestepTicks() {
+    unsigned timestepTicks() const {
         unsigned t = TIMESTEP * targetRate / 1000;
         return t ? t : 1;
     }
@@ -84,6 +89,11 @@ private:
 
 
 class ElapsedTime {
+    /*
+     * A timer which measures elapsed virtual and real time, from a
+     * common reference point.
+     */
+
  public:
     ElapsedTime(VirtualTime &vtime) : vtime(vtime) {}
 
@@ -125,6 +135,12 @@ class ElapsedTime {
 
 
 class TimeGovernor {
+    /*
+     * The time governor slows us down if we're running faster than
+     * real-time, by keeping a long-term average of how many seconds
+     * ahead or behind we are.
+     */
+
  public:
     TimeGovernor(VirtualTime &vtime)
         : et(vtime) {}
@@ -167,5 +183,58 @@ class TimeGovernor {
     float secondsAhead;
 };
 
+
+class TickDeadline {
+    /*
+     * For efficient hardware simulation, we want to run as little
+     * code as possible per-tick. Deadlines are used to schedule
+     * future events. If a peripheral knows it needs to be called no
+     * later than a particular clock tick, it can move the deadline
+     * forward.
+     */
+
+ public:
+    void init(const VirtualTime *_vtime) {
+        vtime = _vtime;
+        reset();
+    }
+
+    void reset() {
+        ticks = 0xFFFFFFFFFFFFFFFFULL;
+    }
+
+    void set(uint64_t latest) {
+        ticks = MIN(latest, ticks);
+    }
+
+    uint64_t setRelative(uint64_t diff) {
+        uint64_t absolute = vtime->clocks + diff;
+        set(absolute);
+        return absolute;
+    }
+
+    uint64_t remaining() const {
+        if (ticks <= vtime->clocks)
+            return 0;
+        else
+            return ticks - vtime->clocks;
+    }
+
+    bool hasPassed() const {
+        return ticks <= vtime->clocks;
+    }
+
+    bool hasPassed(uint64_t ref) const {
+        return ref <= vtime->clocks;
+    }
+
+    uint64_t clock() const {
+        return vtime->clocks;
+    }
+        
+ private:
+    uint64_t ticks;
+    const VirtualTime *vtime;
+};
 
 #endif
