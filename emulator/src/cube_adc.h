@@ -41,26 +41,26 @@ class ADC {
         int irq = 0;
 
         // Powered down?
-        if (!(regs[REG_ADCCON1] & ADCCON1_PWRUP))
+        if (UNLIKELY(!(regs[REG_ADCCON1] & ADCCON1_PWRUP)))
             return 0;
 
-        if (period_timer) {
-            if (!--period_timer)
+        if (LIKELY(period_timer)) {
+            if (UNLIKELY(!--period_timer))
                 triggered = 1;
         }
 
-        if (triggered && !conversion_timer) {
+        if (UNLIKELY(triggered && !conversion_timer)) {
             // Start conversion
             triggered = 0;
             conversion_timer = VirtualTime::nsec(conversionNSec(regs));
             conversion_channel = (regs[REG_ADCCON1] & ADCCON1_CHSEL_MASK) >> ADCCON1_CHSEL_SHIFT;
         }
 
-        if (conversion_timer) {
+        if (LIKELY(conversion_timer)) {
             // Busy in a conversion
 
             conversion_timer--;
-            if (conversion_timer) {
+            if (LIKELY(conversion_timer)) {
                 regs[REG_ADCCON1] |= ADCCON1_BUSY;
             } else {
                 /*
