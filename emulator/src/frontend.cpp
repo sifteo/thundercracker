@@ -505,7 +505,8 @@ void Frontend::draw()
     renderer.endFrame();
 }
 
-float Frontend::zoomedViewExtent() {
+float Frontend::zoomedViewExtent()
+{
     /*
      * Default scaling uses the X axis, but here we want to make sure
      * the whole of a cube is visible, as applicable. So, scale using
@@ -524,17 +525,20 @@ float Frontend::zoomedViewExtent() {
     }
 }
 
-float Frontend::targetViewExtent() {
+float Frontend::targetViewExtent()
+{
     return toggleZoom ? zoomedViewExtent() : normalViewExtent;
 }    
 
-b2Vec2 Frontend::targetViewCenter() {
+b2Vec2 Frontend::targetViewCenter()
+{
     // When zooming in/out, the pixel under the cursor stays the same.
     return toggleZoom ? (mouseVec(normalViewExtent) - mouseVec(targetViewExtent()))
         : b2Vec2(0.0, 0.0);
 }
 
-b2Vec2 Frontend::mouseVec(float viewExtent) {
+b2Vec2 Frontend::mouseVec(float viewExtent)
+{
     int halfWidth = viewportWidth / 2;
     int halfHeight = viewportHeight / 2;
     float mouseScale = viewExtent / (float)halfWidth;
