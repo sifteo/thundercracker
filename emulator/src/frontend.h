@@ -11,6 +11,7 @@
 
 #include <SDL.h>
 #include <Box2D/Box2D.h>
+#include <string>
 #include "system.h"
 #include "gl_renderer.h"
 
@@ -166,7 +167,9 @@ class Frontend {
     float targetViewExtent();
     b2Vec2 targetViewCenter();
     b2Vec2 mouseVec(float viewExtent);
-
+	
+	std::string createScreenshotName();
+	
     System *sys;
     SDL_Surface *surface;
     unsigned frameCount;

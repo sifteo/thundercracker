@@ -220,6 +220,12 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter)
 
 void GLRenderer::endFrame()
 {
+	if (!pendingScreenshotName.empty()) {
+		// Save the full screenshot, and complete the pending screenshot operation
+		saveColorBufferPNG(pendingScreenshotName + ".png");
+		pendingScreenshotName.clear();
+	}	
+
     SDL_GL_SwapBuffers();
 }
  
@@ -375,7 +381,15 @@ void GLRenderer::drawCubeFace(unsigned id, uint16_t *framebuffer)
                     Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
                     GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
                     framebuffer ? framebuffer : blackness);
-    
+
+	if (!pendingScreenshotName.empty()) {
+		// Opportunistically grab this texture for a screenshot
+        char suffix[32];
+        snprintf(suffix, sizeof suffix, "-cube%02d.png", id);
+        saveTexturePNG(pendingScreenshotName + std::string(suffix),
+                       Cube::LCD::WIDTH, Cube::LCD::HEIGHT);
+	}
+
     /*
      * Just one draw. Our shader handles the rest. Drawing the LCD and
      * face with one shader gives us a chance to do some nice
@@ -492,4 +506,41 @@ void GLRenderer::extrudePolygon(const std::vector<GLRenderer::Vertex> &inPolygon
         outTristrip.push_back(b);
         prev = current;
     }
+}
+
+void GLRenderer::saveTexturePNG(std::string name, unsigned width, unsigned height)
+{
+    std::vector<uint8_t> pixels(width * height * 4, 0);
+    std::vector<uint8_t> png;
+    LodePNG::Encoder encoder;
+    
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
+
+    encoder.getInfoPng().color.colorType = LCT_RGB;
+    encoder.encode(png, pixels, width, height);
+    
+    LodePNG::saveFile(png, name);
+}
+
+void GLRenderer::saveColorBufferPNG(std::string name)
+{
+    unsigned width = viewportWidth;
+    unsigned height = viewportHeight;
+    unsigned stride = width * 4;
+    std::vector<uint8_t> pixels(stride * height, 0);
+    std::vector<uint8_t> swappedPixels(stride * height, 0);
+    std::vector<uint8_t> png;
+    LodePNG::Encoder encoder;
+    
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
+    
+    // Swap lines, bottom-up to top-down       
+    for (unsigned i = 0; i < height; i++)
+        memcpy(&swappedPixels[stride * (height - i - 1)],
+               &pixels[stride * i], stride);
+    
+    encoder.getInfoPng().color.colorType = LCT_RGB;
+    encoder.encode(png, swappedPixels, width, height);
+    
+    LodePNG::saveFile(png, name);
 }

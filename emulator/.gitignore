@@ -3,5 +3,6 @@
 *.pyc
 *.vcxproj.user
 *.dSYM
+siftulator-*.png
 tc-siftulator
 

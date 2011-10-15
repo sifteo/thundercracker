@@ -35,6 +35,7 @@
 
 #include <Box2D/Box2D.h>
 #include <vector>
+#include <string>
 #include "system.h"
 
 
@@ -42,7 +43,7 @@ class GLRenderer {
  public:
     bool init();
     void setViewport(int width, int height);
-    
+
     void beginFrame(float viewExtent, b2Vec2 viewCenter);
     void endFrame();
 
@@ -50,6 +51,11 @@ class GLRenderer {
     void drawCube(unsigned id, b2Vec2 center, float angle,
                   b2Vec2 tilt, uint16_t *framebuffer,
                   b2Mat33 &modelMatrix);
+
+  	void takeScreenshot(std::string name) {
+		// Screenshots are asynchronous
+		pendingScreenshotName = name;
+	}
 
  private:
     struct Vertex {
@@ -72,6 +78,9 @@ class GLRenderer {
     void createRoundedRect(std::vector<Vertex> &outPolygon, float size, float height, float relRadius);
     void extrudePolygon(const std::vector<Vertex> &inPolygon, std::vector<Vertex> &outTristrip);
 
+    void saveTexturePNG(std::string name, unsigned width, unsigned height);
+	void saveColorBufferPNG(std::string name);
+	
     int viewportWidth, viewportHeight;
     
     GLhandleARB cubeFaceProgram;
@@ -91,6 +100,8 @@ class GLRenderer {
         bool initialized;
         GLuint lcdTexture;
     } cubes[System::MAX_CUBES];
+	
+	std::string pendingScreenshotName;
 };
 
 #endif

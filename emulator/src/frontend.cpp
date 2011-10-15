@@ -6,6 +6,7 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <time.h>
 #include "frontend.h"
 
 
@@ -299,6 +300,13 @@ void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
          */
         onResize(1280, 720, !isFullscreen);
         break;
+		
+	case 's': {
+		std::string name = createScreenshotName();
+		printf("Taking screenshot \"%s\"\n", name.c_str());
+		renderer.takeScreenshot(name);
+		break;
+	}
 
     default:
         break;
@@ -544,6 +552,15 @@ b2Vec2 Frontend::mouseVec(float viewExtent)
     float mouseScale = viewExtent / (float)halfWidth;
     return  b2Vec2((mouseX - halfWidth) * mouseScale,
                    (mouseY - halfHeight) * mouseScale);
+}
+
+std::string Frontend::createScreenshotName()
+{
+	char buffer[128];
+    time_t t = time(NULL);
+	const struct tm *now = localtime(&t);
+	strftime(buffer, sizeof buffer, "siftulator-%Y%m%d-%H%M%S", now);
+	return std::string(buffer);
 }
 
 void Frontend::MousePicker::test(b2World &world, b2Vec2 point)
