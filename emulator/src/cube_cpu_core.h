@@ -40,9 +40,6 @@
 namespace Cube {
 namespace CPU {
 
-extern const uint8_t sbt_rom_data[];
-extern int sbt_rom_code(em8051 *aCPU);
-
 
 static void traceExecution(em8051 *mCPU)
 {
@@ -416,9 +413,9 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
         unsigned pc = aCPU->mPC & (CODE_SIZE - 1);
         aCPU->mPreviousPC = pc;
 
-        if (aCPU->sbt)
-            aCPU->mTickDelay = sbt_rom_code(aCPU);
-        else {
+        if (aCPU->sbt) {
+            aCPU->mTickDelay = sbt_rom_code[pc](aCPU);
+        } else {
             uint8_t opcode = aCPU->mCodeMem[pc];
             uint8_t operand1 = aCPU->mCodeMem[(pc + 1) & (CODE_SIZE - 1)];
             uint8_t operand2 = aCPU->mCodeMem[(pc + 2) & (CODE_SIZE - 1)];

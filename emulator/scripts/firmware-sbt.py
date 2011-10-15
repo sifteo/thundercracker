@@ -20,6 +20,8 @@ import sys
 import binascii
 import bin2c
 
+ROM_SIZE = 1024 * 16
+
 PATCHED_ADDRS = [
     0x0000,             # Reset vector
     ]
@@ -60,12 +62,9 @@ class RSTParser:
     """Read one or more .rst files, and separate their contents out into
        code, data, and labels. Store this for further translation.
        """
-
-    ROM_SIZE = 1024 * 16
-
     def __init__(self):
         self.area = None
-        self.dataMemory = [0] * self.ROM_SIZE
+        self.dataMemory = [0] * ROM_SIZE
         self.instructions = {}
         self.branchTargets = {}
         self.symbols = {}
@@ -182,7 +181,12 @@ class CodeGenerator:
         f.write("#include <cube_cpu_opcodes.h>\n"
                 "\n"
                 "namespace Cube {\n"
-                "namespace CPU {\n")
+                "namespace CPU {\n"
+                "\n"
+                "static int sbt_exception(em8051 *aCPU) {\n"
+                "\taCPU->except(aCPU, EXCEPTION_SBT);\n"
+                "\treturn 1;\n"
+                "}\n")
 
         self.writeCode(f)
         bin2c.writeArray(f, 'sbt_rom_data', self.p.dataMemory)
@@ -191,17 +195,18 @@ class CodeGenerator:
                 "};  // namespace Cube\n")
 
     def beginBlock(self, f, addr):
-        f.write("\tcase 0x%04x: {\n"
-                "\t\tunsigned clk = 0;\n"
+        f.write("\nstatic int sbt_block_%04x(em8051 *aCPU)\n"
+                "{\n"
+                "\tunsigned clk = 0;\n"
                 % addr)
 
     def endBlock(self, f):
-        f.write("\t\treturn clk;\n"
-                "\t}\n")
+        f.write("\treturn clk;\n"
+                "}\n")
         
     def writeInstruction(self, f, bytes):
         bytes += (0, 0)
-        f.write("\t\tclk += Opcodes::%-20s(aCPU, 0x%02x,0x%02x,0x%02x);\n" % (
+        f.write("\tclk += Opcodes::%-20s(aCPU, 0x%02x,0x%02x,0x%02x);\n" % (
                 self.opTable[bytes[0]], bytes[0], bytes[1], bytes[2]))
 
     def endsBlock(self, bytes):
@@ -242,10 +247,9 @@ class CodeGenerator:
         addrs = self.p.instructions.keys()
         addrs.sort()
         inBlock = False
+        blockMap = {}
 
-        f.write("\nint sbt_rom_code(em8051 *aCPU)\n"
-                "{\n"
-                "\tswitch (PC) {\n")
+        # Walk our instruction table, and emit translation blocks as functions
 
         for addr in addrs:
             # Branch targets end a basic block before emitting the instruction
@@ -255,6 +259,7 @@ class CodeGenerator:
 
             if not inBlock:
                 self.beginBlock(f, addr)
+                blockMap[addr] = True
                 inBlock = True
 
             # Normally there's one instruction per address, but patches can put
@@ -270,10 +275,17 @@ class CodeGenerator:
         if inBlock:
             self.endBlock(f)
 
-        f.write("\t}\n"
-                "  aCPU->except(aCPU, EXCEPTION_SBT);\n"
-                "  return 1;\n"
-                "}\n")
+        # Write a table of translated block functions
+
+        f.write("const sbt_block_t sbt_rom_code[] = {\n")
+
+        for addr in range(ROM_SIZE):
+            if addr in blockMap:
+                f.write("\t&sbt_block_%04x,\n" % addr)
+            else:
+                f.write("\t&sbt_exception,\n")
+
+        f.write("};\n")
 
 
 def opcodeTable():

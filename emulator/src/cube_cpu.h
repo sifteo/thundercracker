@@ -84,32 +84,46 @@ struct profile_data
 
 #define NUM_IRQ_LEVELS  4
 
+
+/*
+ * Warning! The order of members in this structure is actually quite
+ * important for performance.  We want to keep things that are
+ * accessed frequently near each other, and near the beginning of the
+ * structure. This means that things like the opcode table, code
+ * memory, and the profiler are banished to the outerlands, while we
+ * keep the register file and SFRs very close at hand.
+ */
+
 struct em8051
 {
-    uint8_t mCodeMem[CODE_SIZE];
-    uint8_t mExtData[XDATA_SIZE];
     uint8_t mData[256];
     uint8_t mSFR[128];
 
-    bool sbt;           // In static binary translation mode
-    int mPC;            // Program Counter; outside memory area
+    int mPC;
+    int mPreviousPC;
     int mTickDelay;     // How many ticks should we delay before continuing
     int mTimerTickDelay;
     int mBreakpoint;
-    int mPreviousPC;
+    bool sbt;           // In static binary translation mode
 
-    em8051operation op[256]; // function pointers to opcode handlers
-    em8051decoder dec[256];  // opcode-to-string decoder handlers    
-    em8051exception except;
-    em8051sfrread sfrread;
-    em8051sfrwrite sfrwrite;
-    void *callbackData;
+    uint64_t profilerTotal;
 
     uint8_t irq_count;          // Number of currently active IRQ handlers
     uint8_t ifp;                // Last IFP state
     uint8_t t012;               // Last T0/1/2 state
     uint8_t prescaler12;        // 1/12 prescaler
     uint8_t prescaler24;        // 1/24 prescaler
+
+    em8051exception except;
+    em8051sfrread sfrread;
+    em8051sfrwrite sfrwrite;
+    void *callbackData;
+
+    em8051operation op[256]; // function pointers to opcode handlers
+    em8051decoder dec[256];  // opcode-to-string decoder handlers    
+
+    uint8_t mExtData[XDATA_SIZE];
+    uint8_t mCodeMem[CODE_SIZE];
 
     struct {
         // Stored register values for sanity-checking ISRs
@@ -121,7 +135,6 @@ struct em8051
 
     // Profiler state
     FILE *traceFile;
-    uint64_t profilerTotal;
     struct profile_data *mProfileData;
 };
 

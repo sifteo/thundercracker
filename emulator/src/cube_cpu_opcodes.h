@@ -43,6 +43,11 @@
 
 namespace Cube {
 namespace CPU {
+
+typedef int (*sbt_block_t)(em8051 *);
+extern const uint8_t sbt_rom_data[];
+extern const sbt_block_t sbt_rom_code[];
+
 struct Opcodes {
 
 #define PSW aCPU->mSFR[REG_PSW]
