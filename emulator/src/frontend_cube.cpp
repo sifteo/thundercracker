@@ -16,11 +16,14 @@ void FrontendCube::init(unsigned _id, Cube::Hardware *_hw, b2World &world, float
     id = _id;
     hw = _hw;
 
+    initBody(world, x, y);
+
     tiltTarget.Set(0,0);
     tiltVector.Set(0,0);
 
-    initBody(world, x, y);
-
+    setHoverTarget(HOVER_NONE);
+    hover = hoverTarget;
+    
     initNeighbor(Cube::Neighbors::TOP, 0, -1);
     initNeighbor(Cube::Neighbors::BOTTOM, 0, 1);
 
@@ -58,7 +61,7 @@ void FrontendCube::initBody(b2World &world, float x, float y)
     fixtureDef.density = 1.0f;
     fixtureDef.friction = 0.8f;
     fixtureDef.userData = &bodyFixtureData;
-    body->CreateFixture(&fixtureDef);
+    bodyFixture = body->CreateFixture(&fixtureDef);
 }
 
 void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
@@ -85,7 +88,8 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
 
 void FrontendCube::draw(GLRenderer &r)
 {
-    r.drawCube(id, body->GetPosition(), body->GetAngle(), tiltVector,
+    r.drawCube(id, body->GetPosition(), body->GetAngle(),
+               hover, tiltVector,
                hw->lcd.isVisible() ? hw->lcd.fb_mem : NULL,
                modelMatrix);
 }
@@ -94,6 +98,17 @@ void FrontendCube::setTiltTarget(b2Vec2 angles)
 {
     /* Target tilt angles that we're animating toward, as YX Euler angles in degrees */
     tiltTarget = angles;
+}
+
+void FrontendCube::setHoverTarget(float h)
+{
+    hoverTarget = h;
+
+    // When a cube is high enough to clear non-hovering cubes, it won't collide with them.
+    b2Filter filter;    
+    filter.categoryBits = 1 << isHovering();
+    filter.maskBits = filter.categoryBits;
+    bodyFixture->SetFilterData(filter);
 }
 
 void FrontendCube::updateNeighbor(bool touching, unsigned mySide,
@@ -111,6 +126,10 @@ void FrontendCube::animate()
     const float tiltGain = 0.25f;
     tiltVector += tiltGain * (tiltTarget - tiltVector);
 
+    /* Animated hover */
+    const float hoverGain = 0.5f;
+    hover += hoverGain * (hoverTarget - hover);
+    
     /*
      * Make a 3-dimensional acceleration vector which also accounts
      * for gravity. We're now measuring it in G's, so we apply an

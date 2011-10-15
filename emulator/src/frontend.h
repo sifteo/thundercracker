@@ -55,8 +55,14 @@ class FrontendCube {
     void updateNeighbor(bool touching, unsigned mySide,
                         unsigned otherSide, unsigned otherCube);
 
+    void setHoverTarget(float h);
+    
     void setTouch(float amount) {
         hw->setTouch(amount);
+    }
+    
+    bool isHovering() {
+        return hoverTarget > HEIGHT;
     }
 
     b2Body *body;
@@ -94,17 +100,29 @@ class FrontendCube {
      */
     static const float NEIGHBOR_CENTER = 0.9;
     static const float NEIGHBOR_RADIUS = 0.15;
+    
+    /*
+     * We use different hover heights to signify various UI actions.
+     * A very slight hover means the cube is being manipulated. A more
+     * extreme hover means it's actually being picked up high enough
+     * to not touch non-hovering cubes.
+     */
+    static const float HOVER_NONE = 0.0;
+    static const float HOVER_SLIGHT = 0.3;
+    static const float HOVER_FULL = 2.0;
 
  private:
     void initBody(b2World &world, float x, float y);
     void initNeighbor(Cube::Neighbors::Side side, float x, float y);
 
+    b2Fixture *bodyFixture;
     FixtureData bodyFixtureData;
     FixtureData neighborFixtureData[Cube::Neighbors::NUM_SIDES];
 
     AccelerationProbe accel;
     b2Vec2 tiltTarget;
     b2Vec2 tiltVector;
+    float hover, hoverTarget;
     b2Mat33 modelMatrix;
 
     unsigned id;
@@ -154,6 +172,7 @@ class Frontend {
     void onKeyDown(SDL_KeyboardEvent &evt);
     void onMouseDown(int button);
     void onMouseUp(int button);
+    void hoverOrRotate();
 
     void scaleViewExtent(float ratio);
     void createWalls();
@@ -193,10 +212,12 @@ class Frontend {
 
     b2Body *mouseBody;
     b2RevoluteJoint *mouseJoint;
+    float spinTarget;
     bool mouseIsAligning;
+    bool mouseIsSpinning;
     bool mouseIsPulling;
     bool mouseIsTilting;
-
+    
     MousePicker mousePicker;
     ContactListener contactListener;
 

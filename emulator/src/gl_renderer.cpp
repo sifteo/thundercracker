@@ -276,7 +276,7 @@ void GLRenderer::initCube(unsigned id)
     glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 }
 
-void GLRenderer::cubeTransform(b2Vec2 center, float angle,
+void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
                                b2Vec2 tilt, b2Mat33 &modelMatrix)
 {
     /*
@@ -329,17 +329,19 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle,
 
     /* Now scale it */
     glScalef(FrontendCube::SIZE, FrontendCube::SIZE, FrontendCube::SIZE);
+    
+    /* Hover is relative to cube size, so apply that now. */
+    glTranslatef(0.0f, 0.0f, hover);
 }
 
 
-void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle,
-                          b2Vec2 tilt, uint16_t *framebuffer,
-                          b2Mat33 &modelMatrix)
+void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
+                          b2Vec2 tilt, uint16_t *framebuffer, b2Mat33 &modelMatrix)
 {
     if (!cubes[id].initialized)
         initCube(id);
 
-    cubeTransform(center, angle, tilt, modelMatrix);
+    cubeTransform(center, angle, hover, tilt, modelMatrix);
 
     drawCubeBody();
     drawCubeFace(id, framebuffer);

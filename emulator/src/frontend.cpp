@@ -15,6 +15,7 @@ Frontend::Frontend()
     mouseBody(NULL),
     mouseJoint(NULL),
     mouseIsAligning(false),
+    mouseIsSpinning(false),
     contactListener(ContactListener(*this))
 {}
 
@@ -308,6 +309,11 @@ void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
 		break;
 	}
 
+    case ' ':
+        if (mouseIsPulling)
+            hoverOrRotate();
+        break;
+    
     default:
         break;
     }
@@ -327,6 +333,9 @@ void Frontend::onMouseDown(int button)
         return;
     }
 
+    if (button == 3 && mouseIsPulling)
+        hoverOrRotate();
+    
     if (!mouseBody) {
         mousePicker.test(world, mouseVec(normalViewExtent));
 
@@ -355,7 +364,8 @@ void Frontend::onMouseDown(int button)
                  */
                 
                 mouseIsPulling = true;
-
+                mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_SLIGHT);
+                
                 /*
                  * Pick an attachment point. If we're close to the center,
                  * snap our attachment point to the center of mass, and
@@ -395,23 +405,48 @@ void Frontend::onMouseDown(int button)
                 b2RevoluteJointDef jointDef;
                 jointDef.Initialize(mousePicker.mCube->body, mouseBody, anchor);
                 jointDef.motorSpeed = 0.0f;
-                jointDef.maxMotorTorque = 10.0f;
-                jointDef.enableMotor = true;
+                jointDef.maxMotorTorque = 100.0f;
+                jointDef.enableMotor = false;
                 mouseJoint = (b2RevoluteJoint*) world.CreateJoint(&jointDef);
             }
         }
     }
 }
 
+void Frontend::hoverOrRotate()
+{
+    /*
+     * While a cube is grabbed, the spacebar or right mouse button can
+     * be used to convert the grab into a hover. The cube will lift farther
+     * off the ground, and it will be able to pass over other cubes.
+     * You can use this to easily pick up a cube and drop it on the other side
+     * of another cube, or to place it between two other cubes.
+     *
+     * If you perform this action again while the cube is already hovering,
+     * it will do a quick rotate in-place.
+     */
+
+    if (mousePicker.mCube->isHovering()) {
+        if (!mouseIsSpinning) {
+            spinTarget = mousePicker.mCube->body->GetAngle();
+            mouseIsSpinning = true;
+        }
+        spinTarget += M_PI/2;
+    } else {
+        mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_FULL);
+    }
+}
+
+
 void Frontend::onMouseUp(int button)
 {
-    if (mouseBody) {
+    if (mouseBody && !SDL_GetMouseState(NULL, NULL)) {
+        // All buttons released
+    
         if (mousePicker.mCube) {
-            // Reset tilt
             mousePicker.mCube->setTiltTarget(b2Vec2(0.0f, 0.0f));
-
-            // Reset touch
-            mousePicker.mCube->setTouch(0.0f);
+            mousePicker.mCube->setTouch(0.0f);            
+            mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_NONE);                
         }
 
         /* Mouse state reset */
@@ -423,6 +458,7 @@ void Frontend::onMouseUp(int button)
         mouseBody = NULL;
         mousePicker.mCube = NULL;
         mouseIsAligning = false;
+        mouseIsSpinning = false;
         mouseIsPulling = false;
         mouseIsTilting = false;
     }
@@ -442,19 +478,36 @@ void Frontend::animate()
         pushBodyTowards(mouseBody, mouseVec(normalViewExtent), 50.0f);
     }
 
-    if (mouseIsAligning) {
+    if (mouseIsAligning || mouseIsSpinning) {
         /*
-         * Turn on a joint motor, to try and push the cube toward its
-         * closest multiple of 90 degrees.
+         * Spinning and aligning cubes. Both are implemented using a joint motor.
          */
         
         const float gain = 20.0f;
-
         float cubeAngle = mouseJoint->GetBodyA()->GetAngle();
-        float fractional = fmod(cubeAngle + M_PI/4, M_PI/2);
-        if (fractional < 0) fractional += M_PI/2;
-        float error = fractional - M_PI/4;
+        float error;
+        
+        if (mouseIsSpinning) {
+            /*
+             * Rotate the cube toward 'spinTarget'. When we get there, we disable spin mode.
+             */
+            error = cubeAngle - spinTarget;
+            if (fabs(error) < 0.001f)
+                mouseIsSpinning = false; 
+        
+        } else if (mouseIsAligning) {
+            /*
+             * Continuously apply a force toward the nearest 90-degree multiple.
+             */
+            float fractional = fmod(cubeAngle + M_PI/4, M_PI/2);
+            if (fractional < 0) fractional += M_PI/2;
+            error = fractional - M_PI/4;
+        }
+        
+        mouseJoint->EnableMotor(true);
         mouseJoint->SetMotorSpeed(gain * error);
+    } else if (mouseJoint) {
+        mouseJoint->EnableMotor(false);
     }
 
     if (mouseIsTilting) {

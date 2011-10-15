@@ -48,9 +48,8 @@ class GLRenderer {
     void endFrame();
 
     void drawBackground(float extent, float scale);
-    void drawCube(unsigned id, b2Vec2 center, float angle,
-                  b2Vec2 tilt, uint16_t *framebuffer,
-                  b2Mat33 &modelMatrix);
+    void drawCube(unsigned id, b2Vec2 center, float angle, float hover,
+                  b2Vec2 tilt, uint16_t *framebuffer, b2Mat33 &modelMatrix);
 
   	void takeScreenshot(std::string name) {
 		// Screenshots are asynchronous
@@ -65,7 +64,7 @@ class GLRenderer {
     };
 
     void initCube(unsigned id);
-    void cubeTransform(b2Vec2 center, float angle,
+    void cubeTransform(b2Vec2 center, float angle, float hover,
                        b2Vec2 tilt, b2Mat33 &modelMatrix);
 
     void drawCubeBody();
