@@ -140,7 +140,7 @@ int main(int argc, char **argv)
                                   sys.opt_cube0Trace ||
                                   sys.opt_cube0Debug)) {
         fprintf(stderr, "Debug features only available if a firmware image is provided.\n");
-        //return 1;
+        return 1;
     }
 
     /*
