@@ -23,7 +23,7 @@
 #endif
 
 
-static void usage(const char *argv0)
+static void usage()
 {
     /*
      * There are additionally several undocumented options that are
@@ -35,21 +35,32 @@ static void usage(const char *argv0)
      *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
      *  -d                Launch firmware debugger (first cube only)
      */
-
+     
     fprintf(stderr,
             "\n"
-            "usage: %s [OPTIONS]\n"
+            "usage: tc-siftulator [OPTIONS]\n"
             "\n"
             "Sifteo Thundercracker simulator\n"
             "\n"
             "Options:\n"
             "  -h                Show this help message, and exit\n"
-            "  -T                No throttle; run faster than real-time if we can\n"
             "  -n NUM            Set number of cubes\n"
+            "  -T                No throttle; run faster than real-time if we can\n"
+            "\n"
+            "Interactions:\n"
+            "  Drag center       Pull and align a cube\n"
+            "  Drag edge         Pull and rotate a cube\n"
+            "  Click center      Touch a cube\n"
+            "  Shift-drag        Tilt a cube\n"
+            "  Right-drag        Tilt a cube\n"
+            "  Wheel             Change size of play surface\n"
+            "  F key             Toggle full-screen mode\n"
+            "  Z key             Toggle zoom mode\n"
+            "  Q key             Quit\n"
+            "  Escape key        Quit\n"
             "\n"
             "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n"
-            "\n",
-            argv0);
+            "\n");
 }
 
 int main(int argc, char **argv)
@@ -65,7 +76,7 @@ int main(int argc, char **argv)
         char *arg = argv[c];
 
         if (!strcmp(arg, "-h")) {
-            usage(argv[0]);
+            usage();
             return 0;
         }
 
@@ -116,6 +127,7 @@ int main(int argc, char **argv)
 
         if (arg[0] == '-') {
             fprintf(stderr, "Unrecognized option: '%s'\n", arg);
+            usage();
             return 1;
         }
 
@@ -124,6 +136,7 @@ int main(int argc, char **argv)
          * may be a game binary to run on the master block.
          */
         fprintf(stderr, "Unrecognized argument: '%s'\n", arg);
+        usage();
         return 1;
     }
 
