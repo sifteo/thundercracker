@@ -194,13 +194,23 @@ FLAGS += -MMD
 CFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 MFLAGS := $(FLAGS) $(INCLUDES)
-LDFLAGS := $(FLAGS) $(LIBS)
+LDFLAGS := $(FLAGS) $(LIBS) -Wl,--gc-sections
 
 all: $(BIN)
 
+ifeq ($(OS),windows32)
+# We like having stripped binaries plus a separate file with
+# debug info. Do that on Win32 too.
 $(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
-
+	objcopy --only-keep-debug $(BIN).exe $(BIN).dSYM
+	strip -s $(BIN).exe
+else
+# Default link
+$(BIN): $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+endif	
+	
 %.o: %.cpp
 	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o
 
@@ -231,6 +241,6 @@ firmware:
 .PHONY: clean firmware
 
 clean:
-	rm -f $(BIN) $(OBJS) $(DEPFILES)
+	rm -Rf $(BIN) $(OBJS) $(DEPFILES) $(BIN).exe $(BIN).dSYM
 
 -include $(DEPFILES)
