@@ -33,7 +33,7 @@ void FrontendOverlay::draw()
      * Time stats, updated periodically
      */
     
-    const float statsInterval = 1.0f;
+    const float statsInterval = 0.5f;
     
     timer.capture();
     if (timer.realSeconds() > statsInterval) {
@@ -41,7 +41,7 @@ void FrontendOverlay::draw()
 
         // Percent of real-time
         snprintf(realTimeMessage, sizeof realTimeMessage,
-                 "%.2f%% real-time", rtPercent);
+                 "%.1f%% real-time", rtPercent);
                  
         // Color-coded time percentage
         if (rtPercent > 90.0f)
@@ -62,9 +62,11 @@ void FrontendOverlay::draw()
 
         timer.start();
     }
-    
-    text(realTimeColor, realTimeMessage);
-    
+
+    x += 152;
+    text(realTimeColor, realTimeMessage, 1.0f);
+    x -= 152;
+
     /*
      * Transient informational messages
      */
