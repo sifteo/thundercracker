@@ -13,7 +13,7 @@ namespace Cube {
 namespace CPU {
 
 static int sbt_exception(em8051 *aCPU) {
-	aCPU->except(aCPU, EXCEPTION_SBT);
+	except(aCPU, EXCEPTION_SBT);
 	return 1;
 }
 

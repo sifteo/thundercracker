@@ -72,7 +72,7 @@ class I2CBus {
                     uint8_t stop = w2con0 & W2CON0_STOP;
 
                     if (rx_buffer_full)
-                        cpu->except(cpu, CPU::EXCEPTION_I2C);
+                        CPU::except(cpu, CPU::EXCEPTION_I2C);
 
                     rx_buffer = busRead(cpu, !stop);
                     rx_buffer_full = 1;
@@ -173,7 +173,7 @@ class I2CBus {
             fprintf(cpu->traceFile, "[%2d] I2C: write %02x\n", cpu->id, data);
 
         if (tx_buffer_full) {
-            cpu->except(cpu, CPU::EXCEPTION_I2C);
+            CPU::except(cpu, CPU::EXCEPTION_I2C);
         } else {
             tx_buffer = data;
             tx_buffer_full = 1;
@@ -182,7 +182,7 @@ class I2CBus {
 
     uint8_t readData(CPU::em8051 *cpu) {
         if (!rx_buffer_full)
-            cpu->except(cpu, CPU::EXCEPTION_I2C);
+            CPU::except(cpu, CPU::EXCEPTION_I2C);
 
         if (cpu->traceFile)
             fprintf(cpu->traceFile, "[%2d] I2C: read %02x\n", cpu->id, rx_buffer);
@@ -216,7 +216,7 @@ class I2CBus {
         switch (w2con0 & W2CON0_SPEED) {
         case W2CON0_400KHZ: timer = deadline.setRelative(VirtualTime::hz(400000) * bits); break;
         case W2CON0_100KHZ: timer = deadline.setRelative(VirtualTime::hz(100000) * bits); break;
-        default: cpu->except(cpu, CPU::EXCEPTION_I2C);
+        default: CPU::except(cpu, CPU::EXCEPTION_I2C);
         }
     }
 

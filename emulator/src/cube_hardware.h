@@ -108,6 +108,16 @@ class Hardware {
 
     bool isDebugging();
 
+    // SFR side-effects
+    void sfrWrite(int reg);
+    int sfrRead(int reg);
+    void debugByte();
+    void graphicsTick();
+    
+    ALWAYS_INLINE void setRadioClockEnable(bool e) {
+        rfcken = e;
+    }
+    
  private:
 
     ALWAYS_INLINE void hardwareTick()
@@ -115,9 +125,14 @@ class Hardware {
         /*
          * A big chunk of our work can happen less often than every
          * clock cycle, as determined by a simple deadline tracker.
+         *
+         * We also trigger hardware writes via a simpler (and shorter
+         * to inline) method, just by writing to a byte in the CPU
+         * struct. This is used by the inline SFR callbacks
+         * in cube_cpu_callbacks.h.
          */
 
-        if (hwDeadline.hasPassed())
+        if (hwDeadline.hasPassed() || cpu.needHardwareTick)
             hwDeadlineWork();
 
         /*
@@ -130,73 +145,6 @@ class Hardware {
     }
 
     void hwDeadlineWork();
-
-    ALWAYS_INLINE void graphicsTick()
-    {
-        /*
-         * Update the graphics (LCD and Flash) bus. Only happens in
-         * response to relevant I/O port changes, not on every clock tick.
-         */
-        
-        // Port output values, pull-up when floating
-        uint8_t bus_port = cpu.mSFR[BUS_PORT] | cpu.mSFR[BUS_PORT_DIR];
-        uint8_t addr_port = cpu.mSFR[ADDR_PORT] | cpu.mSFR[ADDR_PORT_DIR];
-        uint8_t ctrl_port = cpu.mSFR[CTRL_PORT] | cpu.mSFR[CTRL_PORT_DIR];
-
-        // 7-bit address in high bits of p1
-        uint8_t addr7 = addr_port >> 1;
-
-        // Is the MCU driving any bit of the shared bus?
-        uint8_t mcu_data_drv = cpu.mSFR[BUS_PORT_DIR] != 0xFF;
-
-        Flash::Pins flashp = {
-            /* addr    */ addr7 | ((uint32_t)lat1 << 7) | ((uint32_t)lat2 << 14),
-            /* oe      */ ctrl_port & CTRL_FLASH_OE,
-            /* ce      */ 0,
-            /* we      */ ctrl_port & CTRL_FLASH_WE,
-            /* data_in */ bus,
-        };
-
-        LCD::Pins lcdp = {
-            /* csx     */ 0,
-            /* dcx     */ ctrl_port & CTRL_LCD_DCX,
-            /* wrx     */ addr_port & 1,
-            /* rdx     */ 0,
-            /* data_in */ bus,
-        };
-
-        flash.cycle(&flashp);
-        lcd.cycle(&lcdp);
-    
-        /* Address latch write cycles, triggered by rising edge */
-
-        if ((ctrl_port & CTRL_FLASH_LAT1) && !(prev_ctrl_port & CTRL_FLASH_LAT1)) lat1 = addr7;
-        if ((ctrl_port & CTRL_FLASH_LAT2) && !(prev_ctrl_port & CTRL_FLASH_LAT2)) lat2 = addr7;
-        prev_ctrl_port = ctrl_port;
-
-        /*
-         * After every simulation cycle, resolve the new state of the
-         * shared bus.  We update the bus once now, but flash memory may
-         * additionally update more often (every tick).
-         */
-        
-        switch ((mcu_data_drv << 1) | flashp.data_drv) {
-        case 0:     /* Floating... */ break;
-        case 1:     bus = flash.dataOut(); break;
-        case 2:     bus = bus_port; break;
-        default:
-            /* Bus contention! */
-            cpu.except(&cpu, CPU::EXCEPTION_BUS_CONTENTION);
-        }
-        
-        flash_drv = flashp.data_drv;  
-        cpu.mSFR[BUS_PORT] = bus;
-    }
-
-    static void except(CPU::em8051 *cpu, int exc);
-    static void sfrWrite(CPU::em8051 *cpu, int reg);
-    static int sfrRead(CPU::em8051 *cpu, int reg);
-
     TickDeadline hwDeadline;
 
     uint8_t lat1;

@@ -502,7 +502,7 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
          */
         
         if (aCPU->mBreakpoint && aCPU->mBreakpoint == aCPU->mPC)
-            aCPU->except(aCPU, EXCEPTION_BREAK);
+            except(aCPU, EXCEPTION_BREAK);
     }
 
     timer_tick(aCPU);

@@ -8,6 +8,7 @@
 
 #include "cube_hardware.h"
 #include "cube_debug.h"
+#include "cube_cpu_callbacks.h"
 
 namespace Cube {
 
@@ -22,9 +23,6 @@ bool Hardware::init(VirtualTime *masterTimer,
     bus = 0;
     prev_ctrl_port = 0;
 
-    cpu.except = except;
-    cpu.sfrread = sfrRead;
-    cpu.sfrwrite = sfrWrite;
     cpu.callbackData = this;
     cpu.vtime = masterTimer;
     
@@ -63,7 +61,8 @@ void Hardware::exit()
     flash.exit();
 }
 
-void Hardware::except(CPU::em8051 *cpu, int exc)
+// cube_cpu_callbacks.h
+void CPU::except(CPU::em8051 *cpu, int exc)
 {
     Hardware *self = (Hardware*) cpu->callbackData;
     const char *name = CPU::em8051_exc_name(exc);
@@ -78,84 +77,81 @@ void Hardware::except(CPU::em8051 *cpu, int exc)
         fprintf(stderr, fmt, cpu->id, cpu->mPC, name);
 }
 
-void Hardware::sfrWrite(CPU::em8051 *cpu, int reg)
+void Hardware::sfrWrite(int reg)
 {
-    Hardware *self = (Hardware*) cpu->callbackData;
-    reg -= 0x80;
-    uint8_t value = cpu->mSFR[reg];
-
-    self->hwDeadline.setRelative(0);
-
-    switch (reg) {
-
-    case REG_IEN0:
-    case REG_IEN1:
-    case REG_TCON:
-    case REG_IRCON:
-    case REG_S0CON:
-        cpu->needInterruptDispatch = true;
-        break;
-    
-    case BUS_PORT:
-    case ADDR_PORT:
-    case CTRL_PORT:
-    case BUS_PORT_DIR:
-    case ADDR_PORT_DIR:
-    case CTRL_PORT_DIR:
-        self->graphicsTick();
-        break;
-
-    case MISC_PORT:
-    case MISC_PORT_DIR:
-        self->neighbors.ioTick(self->cpu);
-        break;
- 
-    case REG_ADCCON1:
-        self->adc.start();
-        break;
-            
-    case REG_SPIRDAT:
-        self->spi.writeData(value);
-        break;
-
-    case REG_RFCON:
-        self->rfcken = !!(value & RFCON_RFCKEN);
-        self->spi.radio.radioCtrl(!!(value & RFCON_RFCSN),
-                                  !!(value & RFCON_RFCE));
-        break;
-
-    case REG_W2DAT:
-        self->i2c.writeData(cpu, value);
-        break;
-
-    case REG_DEBUG:
-        printf("DEBUG[%d]: %02x\n", self->cpu.id, value);
-        break;
-
-    }
+    CPU::SFR::writeInline(this, &cpu, reg);
 }
 
-int Hardware::sfrRead(CPU::em8051 *cpu, int reg)
+int Hardware::sfrRead(int reg)
 {
-    Hardware *self = (Hardware*) cpu->callbackData;
-    reg -= 0x80;
+    return CPU::SFR::readInline(this, &cpu, reg);
+}
 
-    self->hwDeadline.setRelative(0);
+void Hardware::debugByte()
+{
+     printf("DEBUG[%d]: %02x\n", cpu.id, cpu.mSFR[REG_DEBUG]);
+}
 
-    switch (reg) {
-     
-    case REG_SPIRDAT:
-        return self->spi.readData();
-          
-    case REG_W2DAT:
-        return self->i2c.readData(cpu);
+void Hardware::graphicsTick()
+{
+    /*
+     * Update the graphics (LCD and Flash) bus. Only happens in
+     * response to relevant I/O port changes, not on every clock tick.
+     */
+    
+    // Port output values, pull-up when floating
+    uint8_t bus_port = cpu.mSFR[BUS_PORT] | cpu.mSFR[BUS_PORT_DIR];
+    uint8_t addr_port = cpu.mSFR[ADDR_PORT] | cpu.mSFR[ADDR_PORT_DIR];
+    uint8_t ctrl_port = cpu.mSFR[CTRL_PORT] | cpu.mSFR[CTRL_PORT_DIR];
 
-    case REG_W2CON1:
-        return self->i2c.readCON1(cpu);
+    // 7-bit address in high bits of p1
+    uint8_t addr7 = addr_port >> 1;
 
-    default:    
-        return cpu->mSFR[reg];
+    // Is the MCU driving any bit of the shared bus?
+    uint8_t mcu_data_drv = cpu.mSFR[BUS_PORT_DIR] != 0xFF;
+
+    Flash::Pins flashp = {
+        /* addr    */ addr7 | ((uint32_t)lat1 << 7) | ((uint32_t)lat2 << 14),
+        /* oe      */ ctrl_port & CTRL_FLASH_OE,
+        /* ce      */ 0,
+        /* we      */ ctrl_port & CTRL_FLASH_WE,
+        /* data_in */ bus,
+    };
+
+    LCD::Pins lcdp = {
+        /* csx     */ 0,
+        /* dcx     */ ctrl_port & CTRL_LCD_DCX,
+        /* wrx     */ addr_port & 1,
+        /* rdx     */ 0,
+        /* data_in */ bus,
+    };
+
+    flash.cycle(&flashp);
+    lcd.cycle(&lcdp);
+
+    /* Address latch write cycles, triggered by rising edge */
+
+    if ((ctrl_port & CTRL_FLASH_LAT1) && !(prev_ctrl_port & CTRL_FLASH_LAT1)) lat1 = addr7;
+    if ((ctrl_port & CTRL_FLASH_LAT2) && !(prev_ctrl_port & CTRL_FLASH_LAT2)) lat2 = addr7;
+    prev_ctrl_port = ctrl_port;
+
+    /*
+     * After every simulation cycle, resolve the new state of the
+     * shared bus.  We update the bus once now, but flash memory may
+     * additionally update more often (every tick).
+     */
+    
+    switch ((mcu_data_drv << 1) | flashp.data_drv) {
+    case 0:     /* Floating... */ break;
+    case 1:     bus = flash.dataOut(); break;
+    case 2:     bus = bus_port; break;
+    default:
+        /* Bus contention! */
+        CPU::except(&cpu, CPU::EXCEPTION_BUS_CONTENTION);
     }
+    
+    flash_drv = flashp.data_drv;  
+    cpu.mSFR[BUS_PORT] = bus;
 }
 
 void Hardware::setAcceleration(float xG, float yG)
@@ -182,6 +178,7 @@ void Hardware::setAcceleration(float xG, float yG)
 
 NEVER_INLINE void Hardware::hwDeadlineWork() 
 {
+    cpu.needHardwareTick = false;
     hwDeadline.reset();
 
     lcd.tick(hwDeadline, &cpu);

@@ -40,13 +40,10 @@
 #include <string.h>
 
 #include "cube_cpu.h"
+#include "cube_cpu_callbacks.h"
 
 namespace Cube {
 namespace CPU {
-
-typedef int (*sbt_block_t)(em8051 *);
-extern const uint8_t sbt_rom_data[];
-extern const sbt_block_t sbt_rom_code[];
 
 struct Opcodes {
 
@@ -60,7 +57,7 @@ struct Opcodes {
 static ALWAYS_INLINE int read_mem(em8051 *aCPU, int aAddress)
 {
     if (aAddress > 0x7f)
-        return aCPU->sfrread(aCPU, aAddress);
+        return SFR::read(aCPU, aAddress);
     else
         return aCPU->mData[aAddress];
 }
@@ -70,7 +67,7 @@ static ALWAYS_INLINE void push_to_stack(em8051 *aCPU, int aValue)
     aCPU->mSFR[REG_SP]++;
     aCPU->mData[aCPU->mSFR[REG_SP]] = aValue;
     if (aCPU->mSFR[REG_SP] == 0)
-        aCPU->except(aCPU, EXCEPTION_STACK);
+        except(aCPU, EXCEPTION_STACK);
 }
 
 static ALWAYS_INLINE int pop_from_stack(em8051 *aCPU)
@@ -79,7 +76,7 @@ static ALWAYS_INLINE int pop_from_stack(em8051 *aCPU)
     aCPU->mSFR[REG_SP]--;
 
     if (aCPU->mSFR[REG_SP] == 0xff)
-        aCPU->except(aCPU, EXCEPTION_STACK);
+        except(aCPU, EXCEPTION_STACK);
     return value;
 }
 
@@ -149,7 +146,7 @@ static ALWAYS_INLINE int inc_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1,
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80]++;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -184,7 +181,7 @@ static ALWAYS_INLINE int jbc_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_
         {
             aCPU->mSFR[address - 0x80] &= ~bitmask;
             PC += (signed char)operand2 + 3;
-            aCPU->sfrwrite(aCPU, address);
+            SFR::write(aCPU, address);
         }
         else
         {
@@ -250,7 +247,7 @@ static ALWAYS_INLINE int dec_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1,
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80]--;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -278,7 +275,7 @@ static ALWAYS_INLINE int jb_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_t
         int bitmask = (1 << bit);
         int value;
         address &= 0xf8;  
-        value = aCPU->sfrread(aCPU, address);
+        value = SFR::read(aCPU, address);
 
         if (value & bitmask)
         {
@@ -356,7 +353,7 @@ static ALWAYS_INLINE int jnb_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_
         int bitmask = (1 << bit);
         int value;
         address &= 0xf8;        
-        value = aCPU->sfrread(aCPU, address);
+        value = SFR::read(aCPU, address);
         
         if (!(value & bitmask))
         {
@@ -400,14 +397,14 @@ static ALWAYS_INLINE int reti(em8051 *aCPU, uint8_t opcode, uint8_t operand1, ui
 
         int psw_bits = PSWMASK_OV | PSWMASK_RS0 | PSWMASK_RS1 | PSWMASK_AC | PSWMASK_C;
 
-        if (aCPU->irql[i].a != aCPU->mSFR[REG_ACC])
-            aCPU->except(aCPU, EXCEPTION_IRET_ACC_MISMATCH);
+        if (UNLIKELY(aCPU->irql[i].a != aCPU->mSFR[REG_ACC]))
+            except(aCPU, EXCEPTION_IRET_ACC_MISMATCH);
 
-        if (aCPU->irql[i].sp != aCPU->mSFR[REG_SP])
-            aCPU->except(aCPU, EXCEPTION_IRET_SP_MISMATCH);    
+        if (UNLIKELY(aCPU->irql[i].sp != aCPU->mSFR[REG_SP]))
+            except(aCPU, EXCEPTION_IRET_SP_MISMATCH);    
 
-        if ((aCPU->irql[i].psw & psw_bits) != (aCPU->mSFR[REG_PSW] & psw_bits))
-            aCPU->except(aCPU, EXCEPTION_IRET_PSW_MISMATCH);
+        if (UNLIKELY((aCPU->irql[i].psw & psw_bits) != (aCPU->mSFR[REG_PSW] & psw_bits)))
+            except(aCPU, EXCEPTION_IRET_PSW_MISMATCH);
             
         // Resume the basic block we preempted
         cycles += aCPU->irql[i].tickDelay;
@@ -481,7 +478,7 @@ static ALWAYS_INLINE int orl_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80] |= ACC;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -497,7 +494,7 @@ static ALWAYS_INLINE int orl_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t opera
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80] |= operand2;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -551,7 +548,7 @@ static ALWAYS_INLINE int anl_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80] &= ACC;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -567,7 +564,7 @@ static ALWAYS_INLINE int anl_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t opera
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80] &= operand2;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -620,7 +617,7 @@ static ALWAYS_INLINE int xrl_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80] ^= ACC;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -636,7 +633,7 @@ static ALWAYS_INLINE int xrl_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t opera
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80] ^= operand2;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -693,7 +690,7 @@ static ALWAYS_INLINE int orl_c_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t ope
         int bitmask = (1 << bit);
         int value;
         address &= 0xf8;        
-        value = aCPU->sfrread(aCPU, address);
+        value = SFR::read(aCPU, address);
         value = (value & bitmask) ? 1 : carry;
         PSW = (PSW & ~PSWMASK_C) | (PSWMASK_C * value);
     }
@@ -730,7 +727,7 @@ static ALWAYS_INLINE int mov_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t opera
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80] = operand2;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -767,7 +764,7 @@ static ALWAYS_INLINE int anl_c_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t ope
         int bitmask = (1 << bit);
         int value;
         address &= 0xf8;        
-        value = aCPU->sfrread(aCPU, address);
+        value = SFR::read(aCPU, address);
         value = (value & bitmask) ? carry : 0;
         PSW = (PSW & ~PSWMASK_C) | (PSWMASK_C * value);
     }
@@ -829,7 +826,7 @@ static ALWAYS_INLINE int mov_mem_mem(em8051 *aCPU, uint8_t opcode, uint8_t opera
     if (address1 > 0x7f)
     {
         aCPU->mSFR[address1 - 0x80] = value;
-        aCPU->sfrwrite(aCPU, address1);
+        SFR::write(aCPU, address1);
     }
     else
     {
@@ -847,7 +844,7 @@ static ALWAYS_INLINE int mov_mem_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t 
 
     if (address1 > 0x7f) {
         aCPU->mSFR[address1 - 0x80] = aCPU->mData[address2];
-        aCPU->sfrwrite(aCPU, address1);
+        SFR::write(aCPU, address1);
     } else {
         aCPU->mData[address1] = aCPU->mData[address2];
     }
@@ -877,7 +874,7 @@ static ALWAYS_INLINE int mov_bitaddr_c(em8051 *aCPU, uint8_t opcode, uint8_t ope
         int bitmask = (1 << bit);
         address &= 0xf8;        
         aCPU->mSFR[address - 0x80] = (aCPU->mSFR[address - 0x80] & ~bitmask) | (carry << bit);
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -945,7 +942,7 @@ static ALWAYS_INLINE int orl_c_compl_bitaddr(em8051 *aCPU, uint8_t opcode, uint8
         int bitmask = (1 << bit);
         int value;
         address &= 0xf8;        
-        value = aCPU->sfrread(aCPU, address);
+        value = SFR::read(aCPU, address);
         value = (value & bitmask) ? carry : 1;
         PSW = (PSW & ~PSWMASK_C) | (PSWMASK_C * value);
     }
@@ -972,7 +969,7 @@ static ALWAYS_INLINE int mov_c_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t ope
         int bitmask = (1 << bit);
         int value;
         address &= 0xf8;        
-        value = aCPU->sfrread(aCPU, address);
+        value = SFR::read(aCPU, address);
         value = (value & bitmask) ? 1 : 0;
         PSW = (PSW & ~PSWMASK_C) | (PSWMASK_C * value);
     }
@@ -1034,7 +1031,7 @@ static ALWAYS_INLINE int anl_c_compl_bitaddr(em8051 *aCPU, uint8_t opcode, uint8
         int bitmask = (1 << bit);
         int value;
         address &= 0xf8;        
-        value = aCPU->sfrread(aCPU, address);
+        value = SFR::read(aCPU, address);
         value = (value & bitmask) ? 0 : carry;
         PSW = (PSW & ~PSWMASK_C) | (PSWMASK_C * value);
     }
@@ -1064,7 +1061,7 @@ static ALWAYS_INLINE int cpl_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t opera
         int bitmask = (1 << bit);
         address &= 0xf8;        
         aCPU->mSFR[address - 0x80] ^= bitmask;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -1115,7 +1112,7 @@ static ALWAYS_INLINE int cjne_a_mem_offset(em8051 *aCPU, uint8_t opcode, uint8_t
     int value;
     if (address > 0x7f)
     {
-        value = aCPU->sfrread(aCPU, address);
+        value = SFR::read(aCPU, address);
     }
     else
     {
@@ -1180,7 +1177,7 @@ static ALWAYS_INLINE int clr_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t opera
         int bitmask = (1 << bit);
         address &= 0xf8;        
         aCPU->mSFR[address - 0x80] &= ~bitmask;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -1216,7 +1213,7 @@ static ALWAYS_INLINE int xch_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand
     {
         aCPU->mSFR[address - 0x80] = ACC;
         ACC = value;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -1244,7 +1241,7 @@ static ALWAYS_INLINE int pop_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1,
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80] = pop_from_stack(aCPU);
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -1266,7 +1263,7 @@ static ALWAYS_INLINE int setb_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t oper
         int bitmask = (1 << bit);
         address &= 0xf8;        
         aCPU->mSFR[address - 0x80] |= bitmask;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -1326,7 +1323,7 @@ static ALWAYS_INLINE int djnz_mem_offset(em8051 *aCPU, uint8_t opcode, uint8_t o
     {
         aCPU->mSFR[address - 0x80]--;
         value = aCPU->mSFR[address - 0x80];
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -1359,8 +1356,8 @@ static ALWAYS_INLINE int movx_a_indir_dptr(em8051 *aCPU, uint8_t opcode, uint8_t
 {
     int dptr = (aCPU->mSFR[CUR_DPH] << 8) | aCPU->mSFR[CUR_DPL];
 
-    if (dptr >= XDATA_SIZE)
-        aCPU->except(aCPU, EXCEPTION_XDATA_ERROR);
+    if (UNLIKELY(dptr >= XDATA_SIZE))
+        except(aCPU, EXCEPTION_XDATA_ERROR);
     else
         ACC = aCPU->mExtData[dptr];
 
@@ -1370,12 +1367,12 @@ static ALWAYS_INLINE int movx_a_indir_dptr(em8051 *aCPU, uint8_t opcode, uint8_t
 
 static ALWAYS_INLINE int movx_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
-    int address = INDIR_RX_ADDRESS;
+    int dptr = INDIR_RX_ADDRESS;
 
-    if (address >= XDATA_SIZE)
-        aCPU->except(aCPU, EXCEPTION_XDATA_ERROR);
+    if (UNLIKELY(dptr >= XDATA_SIZE))
+        except(aCPU, EXCEPTION_XDATA_ERROR);
     else
-        ACC = aCPU->mExtData[address];
+        ACC = aCPU->mExtData[dptr];
 
     PC++;
     return 4;
@@ -1393,8 +1390,8 @@ static ALWAYS_INLINE int mov_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand
     // mov a,acc is not a valid instruction
     int address = operand1;
     int value = read_mem(aCPU, address);
-    if (REG_ACC == address - 0x80)
-        aCPU->except(aCPU, EXCEPTION_ACC_TO_A);
+    if (UNLIKELY(REG_ACC == address - 0x80))
+        except(aCPU, EXCEPTION_ACC_TO_A);
     ACC = value;
 
     PC += 2;
@@ -1414,8 +1411,8 @@ static ALWAYS_INLINE int movx_indir_dptr_a(em8051 *aCPU, uint8_t opcode, uint8_t
 {
     int dptr = (aCPU->mSFR[CUR_DPH] << 8) | aCPU->mSFR[CUR_DPL];
 
-    if (dptr >= XDATA_SIZE)
-        aCPU->except(aCPU, EXCEPTION_XDATA_ERROR);
+    if (UNLIKELY(dptr >= XDATA_SIZE))
+        except(aCPU, EXCEPTION_XDATA_ERROR);
     else
         aCPU->mExtData[dptr] = ACC;
 
@@ -1425,12 +1422,12 @@ static ALWAYS_INLINE int movx_indir_dptr_a(em8051 *aCPU, uint8_t opcode, uint8_t
 
 static ALWAYS_INLINE int movx_indir_rx_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
-    int address = INDIR_RX_ADDRESS;
+    int dptr = INDIR_RX_ADDRESS;
 
-    if (address >= XDATA_SIZE)
-        aCPU->except(aCPU, EXCEPTION_XDATA_ERROR);
+    if (UNLIKELY(dptr >= XDATA_SIZE))
+        except(aCPU, EXCEPTION_XDATA_ERROR);
     else
-        aCPU->mExtData[address] = ACC;
+        aCPU->mExtData[dptr] = ACC;
 
     PC++;
     return 5;
@@ -1449,7 +1446,7 @@ static ALWAYS_INLINE int mov_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80] = ACC;
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {
@@ -1475,7 +1472,7 @@ static ALWAYS_INLINE int nop(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uin
 
 static ALWAYS_INLINE int illegal(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
-    aCPU->except(aCPU, EXCEPTION_ILLEGAL_OPCODE);
+    except(aCPU, EXCEPTION_ILLEGAL_OPCODE);
     PC++;
     return 1;
 }
@@ -1555,7 +1552,7 @@ static ALWAYS_INLINE int mov_mem_rx(em8051 *aCPU, uint8_t opcode, uint8_t operan
     if (address > 0x7f)
     {
         aCPU->mSFR[address - 0x80] = aCPU->mData[rx];
-        aCPU->sfrwrite(aCPU, address);
+        SFR::write(aCPU, address);
     }
     else
     {

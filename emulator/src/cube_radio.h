@@ -336,7 +336,7 @@ class Radio {
                 tx_fifo_count++;
                 tx_fifo_head = (tx_fifo_head + 1) % FIFO_SIZE;
             } else
-                cpu->except(cpu, CPU::EXCEPTION_RADIO_XRUN);
+                CPU::except(cpu, CPU::EXCEPTION_RADIO_XRUN);
             break;
             
         case CMD_R_RX_PAYLOAD:
@@ -344,7 +344,7 @@ class Radio {
                 rx_fifo_count--;
                 rx_fifo_tail = (rx_fifo_tail + 1) % FIFO_SIZE;
             } else
-                cpu->except(cpu, CPU::EXCEPTION_RADIO_XRUN);
+                CPU::except(cpu, CPU::EXCEPTION_RADIO_XRUN);
             break;
         }
     }

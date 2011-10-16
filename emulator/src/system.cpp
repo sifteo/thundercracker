@@ -6,6 +6,7 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <malloc.h>
 #include "system.h"
 #include "cube_debug.h"
 

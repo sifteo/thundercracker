@@ -10,7 +10,6 @@
 #define _CUBE_CPU_IRQ_H
 
 #include "cube_cpu.h"
-#include "cube_cpu_opcodes.h"
 
 namespace Cube {
 namespace CPU {
@@ -48,8 +47,10 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
     /*
      * Far CALL to the interrupt vector
      */
-    Opcodes::push_to_stack(cpu, cpu->mPC & 0xff);
-    Opcodes::push_to_stack(cpu, cpu->mPC >> 8);
+    cpu->mData[++cpu->mSFR[REG_SP]] = cpu->mPC & 0xff;
+    if (cpu->mSFR[REG_SP] == 0) except(cpu, EXCEPTION_STACK);
+    cpu->mData[++cpu->mSFR[REG_SP]] = cpu->mPC >> 8;
+    if (cpu->mSFR[REG_SP] == 0) except(cpu, EXCEPTION_STACK);
     cpu->mPC = vector;
 
     /*

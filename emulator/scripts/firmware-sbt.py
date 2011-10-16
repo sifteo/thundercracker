@@ -184,7 +184,7 @@ class CodeGenerator:
                 "namespace CPU {\n"
                 "\n"
                 "static int sbt_exception(em8051 *aCPU) {\n"
-                "\taCPU->except(aCPU, EXCEPTION_SBT);\n"
+                "\texcept(aCPU, EXCEPTION_SBT);\n"
                 "\treturn 1;\n"
                 "}\n")
 

@@ -54,27 +54,6 @@ typedef int (*em8051operation)(struct em8051 *aCPU, uint8_t opcode, uint8_t oper
 // Returns how many bytes the opcode takes.
 typedef int (*em8051decoder)(struct em8051 *aCPU, int aPosition, char *aBuffer);
 
-// Callback: some exceptional situation occurred. See EM8051_EXCEPTION enum, below
-typedef void (*em8051exception)(struct em8051 *aCPU, int aCode);
-
-// Callback: an SFR register is about to be read (not called for 'a' ops nor psw changes)
-// Default is to return the value in the SFR register. Ports may act differently.
-typedef int (*em8051sfrread)(struct em8051 *aCPU, int aRegister);
-
-// Callback: an SFR register has changed (not called for 'a' ops)
-// Default is to do nothing
-typedef void (*em8051sfrwrite)(struct em8051 *aCPU, int aRegister);
-
-// Callback: writing to external memory
-// Default is to update external memory
-// (can be used to control some peripherals)
-typedef void (*em8051xwrite)(struct em8051 *aCPU, int aAddress, int aValue);
-
-// Callback: reading from external memory
-// Default is to return the value in external memory 
-// (can be used to control some peripherals)
-typedef int (*em8051xread)(struct em8051 *aCPU, int aAddress);
-
 struct profile_data
 {
     uint64_t total_cycles;
@@ -109,6 +88,7 @@ struct em8051
     
     bool sbt;                   // In static binary translation mode
     bool needInterruptDispatch;
+    bool needHardwareTick;
     
     uint8_t irq_count;          // Number of currently active IRQ handlers
     uint8_t ifp;                // Last IFP state
@@ -116,9 +96,6 @@ struct em8051
     uint8_t prescaler12;        // 1/12 prescaler
     uint8_t prescaler24;        // 1/24 prescaler
 
-    em8051exception except;
-    em8051sfrread sfrread;
-    em8051sfrwrite sfrwrite;
     void *callbackData;
 
     em8051operation op[256]; // function pointers to opcode handlers
@@ -170,9 +147,18 @@ void em8051_push(struct em8051 *aCPU, int aValue);
 // Get a human-readable name for an exception code
 const char *em8051_exc_name(int aCode);
 
+// Exception callback
+// (Would be part of cube_cpu_callbacks.h, if it didn't introduce circular dependencies)
+void except(em8051 *cpu, int exc);
+
 // Private functions
 void disasm_setptrs(em8051 *aCPU);
 void op_setptrs(em8051 *aCPU);
+
+// Static binary translated firmware
+typedef int (*sbt_block_t)(em8051 *);
+extern const uint8_t sbt_rom_data[];
+extern const sbt_block_t sbt_rom_code[];
 
 enum EM8051_EXCEPTION
 {

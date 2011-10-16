@@ -78,7 +78,7 @@ class SPIBus {
             tx_count++;
             status_dirty = 1;
         } else {
-            cpu->except(cpu, CPU::EXCEPTION_SPI_XRUN);
+            CPU::except(cpu, CPU::EXCEPTION_SPI_XRUN);
         }
     }
 
@@ -90,7 +90,7 @@ class SPIBus {
             rx_count--;
             status_dirty = 1;
         } else
-            cpu->except(cpu, CPU::EXCEPTION_SPI_XRUN);
+            CPU::except(cpu, CPU::EXCEPTION_SPI_XRUN);
 
         return miso;
     }
@@ -130,7 +130,7 @@ class SPIBus {
                 if (rx_count < SPI_FIFO_SIZE)
                     rx_fifo[rx_count++] = miso;
                 else
-                    cpu->except(cpu, CPU::EXCEPTION_SPI_XRUN);
+                    CPU::except(cpu, CPU::EXCEPTION_SPI_XRUN);
                 status_dirty = 1;
 
             } else {
