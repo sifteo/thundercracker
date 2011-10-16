@@ -103,7 +103,7 @@ class LCD {
         }
     }
 
-    ALWAYS_INLINE void tick(TickDeadline &deadline, uint8_t *regs) {
+    ALWAYS_INLINE void tick(TickDeadline &deadline, CPU::em8051 *cpu) {
         /*
          * We have a separate entry point for ticking the TE timer,
          * since it really does need to happen every tick rather than
@@ -111,9 +111,9 @@ class LCD {
          */
     
         if (deadline.hasPassed(te_timestamp)) {
-            regs[CTRL_PORT] &= ~CTRL_LCD_TE;
+            cpu->mSFR[CTRL_PORT] &= ~CTRL_LCD_TE;
         } else {
-            regs[CTRL_PORT] |= CTRL_LCD_TE;
+            cpu->mSFR[CTRL_PORT] |= CTRL_LCD_TE;
             deadline.set(te_timestamp);
         }
     }

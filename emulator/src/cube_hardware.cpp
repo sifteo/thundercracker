@@ -87,6 +87,14 @@ void Hardware::sfrWrite(CPU::em8051 *cpu, int reg)
 
     switch (reg) {
 
+    case REG_IEN0:
+    case REG_IEN1:
+    case REG_TCON:
+    case REG_IRCON:
+    case REG_S0CON:
+        cpu->needInterruptDispatch = true;
+        break;
+    
     case BUS_PORT:
     case ADDR_PORT:
     case CTRL_PORT:
@@ -175,12 +183,12 @@ NEVER_INLINE void Hardware::hwDeadlineWork()
 {
     hwDeadline.reset();
 
-    lcd.tick(hwDeadline, cpu.mSFR);
-    adc.tick(hwDeadline, cpu.mSFR);
-    spi.tick(hwDeadline, cpu.mSFR + REG_SPIRCON0, cpu.mSFR);
+    lcd.tick(hwDeadline, &cpu);
+    adc.tick(hwDeadline, &cpu);
+    spi.tick(hwDeadline, cpu.mSFR + REG_SPIRCON0, &cpu);
     i2c.tick(hwDeadline, &cpu);
     flash.tick(hwDeadline, &cpu);
-    spi.radio.tick(rfcken, cpu.mSFR);
+    spi.radio.tick(rfcken, &cpu);
 }
 
 void Hardware::setTouch(float amount)

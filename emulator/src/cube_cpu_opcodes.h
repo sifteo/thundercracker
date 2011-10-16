@@ -387,6 +387,9 @@ static ALWAYS_INLINE int jnb_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_
 
 static ALWAYS_INLINE int reti(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
+    // Time to execute the RETI instruction itself
+    int cycles = 4;
+
     if (aCPU->irq_count)
     {
         int i = --aCPU->irq_count;
@@ -405,11 +408,18 @@ static ALWAYS_INLINE int reti(em8051 *aCPU, uint8_t opcode, uint8_t operand1, ui
 
         if ((aCPU->irql[i].psw & psw_bits) != (aCPU->mSFR[REG_PSW] & psw_bits))
             aCPU->except(aCPU, EXCEPTION_IRET_PSW_MISMATCH);
+            
+        // Resume the basic block we preempted
+        cycles += aCPU->irql[i].tickDelay;
     }
+    
+    // We may need to fire a higher-priority pending interrupt that was delayed
+    aCPU->needInterruptDispatch = true;
 
     PC = pop_from_stack(aCPU) << 8;
     PC |= pop_from_stack(aCPU);
-    return 4;
+    
+    return cycles;
 }
 
 static ALWAYS_INLINE int rlc_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)

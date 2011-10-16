@@ -37,9 +37,9 @@ class ADC {
         inputs[index] = value16;
     }
 
-    ALWAYS_INLINE void tick(TickDeadline &deadline, uint8_t *regs) {
+    ALWAYS_INLINE void tick(TickDeadline &deadline, CPU::em8051 *cpu) {
         // Powered down?
-        if (UNLIKELY(!(regs[REG_ADCCON1] & ADCCON1_PWRUP)))
+        if (UNLIKELY(!(cpu->mSFR[REG_ADCCON1] & ADCCON1_PWRUP)))
             return;
 
         if (LIKELY(period_timer)) {
@@ -54,15 +54,15 @@ class ADC {
         if (UNLIKELY(triggered && !conversion_timer)) {
             // Start conversion
             triggered = 0;
-            conversion_timer = deadline.setRelative(VirtualTime::nsec(conversionNSec(regs)));
-            conversion_channel = (regs[REG_ADCCON1] & ADCCON1_CHSEL_MASK) >> ADCCON1_CHSEL_SHIFT;
+            conversion_timer = deadline.setRelative(VirtualTime::nsec(conversionNSec(cpu->mSFR)));
+            conversion_channel = (cpu->mSFR[REG_ADCCON1] & ADCCON1_CHSEL_MASK) >> ADCCON1_CHSEL_SHIFT;
         }
 
         if (LIKELY(conversion_timer)) {
             // Busy in a conversion
 
             if (!deadline.hasPassed(conversion_timer)) {
-                regs[REG_ADCCON1] |= ADCCON1_BUSY;
+                cpu->mSFR[REG_ADCCON1] |= ADCCON1_BUSY;
                 deadline.set(conversion_timer);
 
             } else {
@@ -76,15 +76,16 @@ class ADC {
 
                 conversion_timer = 0;
 
-                regs[REG_ADCCON1] &= ~ADCCON1_BUSY;
-                regs[REG_IRCON] |= IRCON_MISC;
+                cpu->mSFR[REG_ADCCON1] &= ~ADCCON1_BUSY;
+                cpu->mSFR[REG_IRCON] |= IRCON_MISC;
+                cpu->needInterruptDispatch = true;
 
-                if (regs[REG_ADCCON2] & ADCCON2_CONT) {
-                    period_timer = deadline.setRelative(VirtualTime::hz(rateHZ(regs))
-                                                        - VirtualTime::nsec(conversionNSec(regs)));
+                if (cpu->mSFR[REG_ADCCON2] & ADCCON2_CONT) {
+                    period_timer = deadline.setRelative(VirtualTime::hz(rateHZ(cpu->mSFR))
+                                                        - VirtualTime::nsec(conversionNSec(cpu->mSFR)));
                 }
 
-                storeResult(regs, inputs[conversion_channel]);
+                storeResult(cpu->mSFR, inputs[conversion_channel]);
             }
         }
     }

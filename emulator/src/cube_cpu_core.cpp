@@ -77,6 +77,7 @@ void em8051_reset(em8051 *aCPU, int aWipe)
 
     // Clean internal variables
     aCPU->irq_count = 0;
+    aCPU->needInterruptDispatch = false;
 }
 
 static int readbyte(FILE * f)

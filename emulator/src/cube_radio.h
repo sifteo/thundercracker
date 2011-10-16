@@ -127,9 +127,10 @@ class Radio {
         ce = nextCE;
     }
     
-    ALWAYS_INLINE void tick(bool rfcken, uint8_t *regs) {
+    ALWAYS_INLINE void tick(bool rfcken, CPU::em8051 *cpu) {
         if (rfcken && irq_edge) {
-            regs[REG_IRCON] |= IRCON_RF;
+            cpu->mSFR[REG_IRCON] |= IRCON_RF;
+            cpu->needInterruptDispatch = true;
             irq_edge = 0;
         }
     }

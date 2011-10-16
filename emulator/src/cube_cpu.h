@@ -101,11 +101,13 @@ struct em8051
 
     int mPC;
     int mPreviousPC;
-    int mTickDelay;     // How many ticks should we delay before continuing
+    int mTickDelay;             // How many ticks we should delay before continuing
     int mTimerTickDelay;
     int mBreakpoint;
-    bool sbt;           // In static binary translation mode
-
+    
+    bool sbt;                   // In static binary translation mode
+    bool needInterruptDispatch;
+    
     uint64_t profilerTotal;
 
     uint8_t irq_count;          // Number of currently active IRQ handlers
@@ -131,6 +133,11 @@ struct em8051
 
         // Priority of *this* interrupt handler
         uint8_t priority;
+        
+        // Remaining number of clock ticks to delay after return
+        // (Used when preempting a binary translated basic block)
+        unsigned tickDelay;
+
     } irql[NUM_IRQ_LEVELS];
 
     // Profiler state

@@ -22,13 +22,27 @@ namespace CPU {
  */
 static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
 {
+    if (cpu->traceFile)
+        fprintf(cpu->traceFile, "IRQ: Interrupt arrived, prio=%d vector=0x%04x\n", priority, vector);
+
     if (cpu->irq_count) {
         // Another IRQ is in progress. Are we higher priority?
 
-        if (priority <= cpu->irql[cpu->irq_count - 1].priority)
+        if (priority <= cpu->irql[cpu->irq_count - 1].priority) {
             // Nope. Can't interrupt the last handler.
+     
+            if (cpu->traceFile)
+                fprintf(cpu->traceFile, "IRQ: Higher priority interrupt in progress\n");
+
             return 0;
+        }
     }
+    
+    // Preempt any cycles left on the current SBT block
+    cpu->irql[cpu->irq_count].tickDelay = cpu->mTickDelay;
+    
+    // XXX: A guess at the interrupt latency (LCALL duration)
+    cpu->mTickDelay = 6;
 
     /*
      * Far CALL to the interrupt vector
@@ -36,7 +50,6 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
     Opcodes::push_to_stack(cpu, cpu->mPC & 0xff);
     Opcodes::push_to_stack(cpu, cpu->mPC >> 8);
     cpu->mPC = vector;
-    cpu->mTickDelay += 6;  // Kind of a guess...
 
     /*
      * Remember the priority of this nested handler
@@ -62,6 +75,8 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
 
 static ALWAYS_INLINE void handle_interrupts(struct em8051 *cpu)
 {
+    if (cpu->traceFile)
+        fprintf(cpu->traceFile, "IRQ: Checking for interrupts\n");
 
     // IFP is currently disabled, we don't use it.
 #ifdef EM8051_SUPPORT_IFP

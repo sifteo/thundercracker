@@ -100,7 +100,7 @@ class SPIBus {
      * is where we update SFRs, invoke callbacks,
      * and generate IRQs.
      */
-    ALWAYS_INLINE void tick(TickDeadline &deadline, uint8_t *spiRegs, uint8_t *cpuRegs) {
+    ALWAYS_INLINE void tick(TickDeadline &deadline, uint8_t *spiRegs, CPU::em8051 *cpu) {
         uint8_t con0 = spiRegs[SPI_REG_CON0];
 
         if (UNLIKELY(!(con0 & SPI_ENABLE)))
@@ -176,8 +176,10 @@ class SPIBus {
             status_dirty = 0;
         }
 
-        if (irq_state)
-            cpuRegs[REG_IRCON] |= IRCON_RFSPI;
+        if (irq_state) {
+            cpu->mSFR[REG_IRCON] |= IRCON_RFSPI;
+            cpu->needInterruptDispatch = true;
+        }
     }
 
  private:

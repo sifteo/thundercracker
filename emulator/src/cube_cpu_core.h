@@ -138,8 +138,10 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
             aCPU->mSFR[REG_TL0] = v & 0xff;
 
             // TL0 overflowed
-            if (v > 0xff)
+            if (v > 0xff) {
                 aCPU->mSFR[REG_TCON] |= TCONMASK_TF0;
+                aCPU->needInterruptDispatch = true;
+            }
         }
 
         increment = false;
@@ -163,8 +165,10 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
             aCPU->mSFR[REG_TH0] = v & 0xff;
 
             // TH0 overflowed
-            if (v > 0xff)
+            if (v > 0xff) {
                 aCPU->mSFR[REG_TCON] |= TCONMASK_TF1;
+                aCPU->needInterruptDispatch = true;
+            }
         }
 
     }
@@ -208,6 +212,7 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
                     {
                         // TH0 overflowed; set bit
                         aCPU->mSFR[REG_TCON] |= TCONMASK_TF0;
+                        aCPU->needInterruptDispatch = true;
                     }
                 }
                 break;
@@ -225,6 +230,7 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
                     {
                         // TH0 overflowed; set bit
                         aCPU->mSFR[REG_TCON] |= TCONMASK_TF0;
+                        aCPU->needInterruptDispatch = true;
                     }
                 }
                 break;
@@ -237,6 +243,7 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
                     // TL0 overflowed; reload
                     aCPU->mSFR[REG_TL0] = aCPU->mSFR[REG_TH0];
                     aCPU->mSFR[REG_TCON] |= TCONMASK_TF0;
+                    aCPU->needInterruptDispatch = true;
                 }
                 break;
             default: // two 8-bit timers
@@ -282,8 +289,10 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
                     {
                         // TH1 overflowed; set bit
                         // Only update TF1 if timer 0 is not in "mode 3"
-                        if (!(aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0)))
+                        if (!(aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0))) {
                             aCPU->mSFR[REG_TCON] |= TCONMASK_TF1;
+                            aCPU->needInterruptDispatch = true;
+                        }
                     }
                 }
                 break;
@@ -301,8 +310,10 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
                     {
                         // TH1 overflowed; set bit
                         // Only update TF1 if timer 0 is not in "mode 3"
-                        if (!(aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0)))
+                        if (!(aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0))) {
                             aCPU->mSFR[REG_TCON] |= TCONMASK_TF1;
+                            aCPU->needInterruptDispatch = true;
+                        }
                     }
                 }
                 break;
@@ -315,8 +326,10 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
                     // TL0 overflowed; reload
                     aCPU->mSFR[REG_TL1] = aCPU->mSFR[REG_TH1];
                     // Only update TF1 if timer 0 is not in "mode 3"
-                    if (!(aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0)))
+                    if (!(aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0))) {
                         aCPU->mSFR[REG_TCON] |= TCONMASK_TF1;
+                        aCPU->needInterruptDispatch = true;
+                    }
                 }
                 break;
             default: // disabled
@@ -382,6 +395,7 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
                     }
                     
                     aCPU->mSFR[REG_IRCON] |= IRCON_TF2;
+                    aCPU->needInterruptDispatch = true;
                 }
             }
         }
@@ -393,16 +407,36 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
 {
     int ticked = 0;
 
-    if (LIKELY(--aCPU->mTickDelay <= 0)) {
+    aCPU->mTickDelay--;
+    
+    /*
+     * Interrupts are sent if the following cases are not true:
+     *   1. interrupt of equal or higher priority is in progress (tested inside function)
+     *   2. current cycle is not the final cycle of instruction (tickdelay = 0)
+     *   3. the instruction in progress is RETI or any write to the IE or IP regs (TODO)
+     *
+     * We only check for interrupt dispatch if the corresponding flag in aCPU has been
+     * set, in order to save time checking the many interrupt sources and priorities.
+     *
+     * If we're in interpreter mode, we dispatch interrupts between any two CPU
+     * instructions, like real hardware would.
+     *
+     * In binary translation mode, we have to cheat a bit. If we allowed dispatch only
+     * between basic block boundaries, the resulting latency variability would be far
+     * too much for some of our timing-sensitive code, like the neighbor sensors. So,
+     * we'll instead do better than real hardware, and dispatch interrupts on every clock
+     * cycle. Since basic blocks are indivisible in the binary translated firmware, the
+     * side-effects from a single basic block always happen before the interrupt is
+     * delivered. But we can "virtually preempt" the basic block by storing its remaining
+     * mTickDelay, and coming back to it later after return.
+     */
 
-        /*
-         * Interrupts are sent if the following cases are not true:
-         *   1. interrupt of equal or higher priority is in progress (tested inside function)
-         *   2. current cycle is not the final cycle of instruction (tickdelay = 0)
-         *   3. the instruction in progress is RETI or any write to the IE or IP regs (TODO)
-         */
-
+    if (UNLIKELY(aCPU->needInterruptDispatch) && (aCPU->sbt || aCPU->mTickDelay <= 0)) {
+        aCPU->needInterruptDispatch = false;
         handle_interrupts(aCPU);
+    }
+    
+    if (aCPU->mTickDelay <= 0) {
 
         /*
          * Run one instruction!

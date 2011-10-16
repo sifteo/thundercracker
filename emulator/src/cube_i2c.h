@@ -137,12 +137,16 @@ class I2CBus {
         if (UNLIKELY(nextIEX3 != iex3)) {
             if (cpu->mSFR[REG_T2CON] & 0x40) {
                 // Rising edge
-                if (nextIEX3 && !iex3)
+                if (nextIEX3 && !iex3) {
                     cpu->mSFR[REG_IRCON] |= IRCON_SPI;
+                    cpu->needInterruptDispatch = true;
+                }
             } else {
                 // Falling edge
-                if (!nextIEX3 && iex3)
+                if (!nextIEX3 && iex3) {
                     cpu->mSFR[REG_IRCON] |= IRCON_SPI;
+                    cpu->needInterruptDispatch = true;
+                }
             }
             iex3 = nextIEX3;
         }        
