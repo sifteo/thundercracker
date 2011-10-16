@@ -1,5 +1,6 @@
 *~
 *.o
+*.d
 *.pyc
 *.vcxproj.user
 *.dSYM

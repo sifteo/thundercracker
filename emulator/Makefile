@@ -2,7 +2,7 @@
 BIN = tc-siftulator
 
 INCLUDES += -Isrc
-OBJS = \
+LOCAL_OBJS = \
         src/frontend.o \
         src/frontend_cube.o \
         src/gl_renderer.o \
@@ -19,9 +19,15 @@ OBJS = \
         src/cube_flash_model.o \
         src/cube_hardware.o \
         src/cube_neighbors.o \
-	src/lodepng.o \
 	scripts/data.o \
 	scripts/firmware-sbt.o \
+	
+# For faster 'make' invocation, track dependencies only for our own sources.
+OBJS := $(LOCAL_OBJS)
+DEPFILES := $(LOCAL_OBJS:.o=.d)
+
+# LodePNG, self-contained PNG encoder/decoder
+OBJS += src/lodepng.o
 
 # Box2D physics library
 OBJS += \
@@ -70,8 +76,6 @@ OBJS += \
         src/Box2D/Dynamics/Joints/b2WeldJoint.o \
         src/Box2D/Dynamics/Joints/b2WheelJoint.o \
         src/Box2D/Rope/b2Rope.o \
-
-CDEPS = src/*.h
 
 DATADEPS = \
 	scripts/*.glsl \
@@ -179,27 +183,30 @@ endif
 # difference in performance. You probably want to leave -O3 on at
 # all times unless you have a great reason not to.
 
-OPTFLAGS += -O3 -g
+FLAGS += -O3 -g
 WARNFLAGS := -Werror -Wall
 
-CFLAGS := $(OPTFLAGS) $(WARNFLAGS) $(INCLUDES)
-CCFLAGS := $(OPTFLAGS) $(WARNFLAGS) $(INCLUDES)
-MFLAGS := $(OPTFLAGS) $(INCLUDES)
-LDFLAGS := $(OPTFLAGS) $(LIBS)
+# Automatic dependency generation (*.d files)
+FLAGS += -MMD
+
+CFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
+CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
+MFLAGS := $(FLAGS) $(INCLUDES)
+LDFLAGS := $(FLAGS) $(LIBS)
 
 all: $(BIN)
 
 $(BIN): $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
-%.o: %.cpp $(CDEPS)
-	$(CC) -c -o $@ $< $(CCFLAGS)
+%.o: %.cpp
+	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o
 
-%.o: %.c $(CDEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+%.o: %.c
+	$(CC) -c $(CFLAGS) $*.c -o $*.o
 
-%.o: %.m $(CDEPS)
-	$(CC) -c -o $@ $< $(MFLAGS)
+%.o: %.m
+	$(CC) -c $(MFLAGS) $*.m -o $*.o
 
 # Data dependencies don't need to be rebuilt by everyone,
 # the resulting generated code is checked into git. The
@@ -222,5 +229,6 @@ firmware:
 .PHONY: clean firmware
 
 clean:
-	rm -f $(BIN) $(OBJS)
+	rm -f $(BIN) $(OBJS) $(DEPFILES)
 
+-include $(DEPFILES)
