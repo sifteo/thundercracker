@@ -1,6 +1,7 @@
 
 BIN = tc-siftulator
 
+INCLUDES += -Isrc
 OBJS = \
         src/frontend.o \
         src/frontend_cube.o \
