@@ -9,6 +9,8 @@
 #ifndef _MACROS_H
 #define _MACROS_H
 
+#define APP_TITLE   "Thundercracker"
+
 /*
  * Tick functions should always be inlined, otherwise the function
  * call cost ends up being many times the cost of actually checking

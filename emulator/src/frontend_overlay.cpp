@@ -80,7 +80,8 @@ void FrontendOverlay::drawCube(FrontendCube *fe, unsigned x, unsigned y)
 
     moveTo(x, y);
 
-    if (sys->cubes[id].isDebugging()) {
+    // Do we need to disambiguate which cube is being debugged?
+    if (sys->cubes[id].isDebugging() && sys->opt_numCubes > 1) {
         static const Color debugColor(1,0.5,0.5,1);
         text(debugColor, "Debugging", 0.5);
     }

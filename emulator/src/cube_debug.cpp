@@ -205,6 +205,10 @@ void init(Cube::Hardware *_cube)
         return;
     }
 
+#ifdef PDCURSES
+    resize_term(41, 80);
+#endif
+
     cbreak(); // no buffering
     noecho(); // no echoing
     keypad(stdscr, TRUE); // cursors entered as single characters

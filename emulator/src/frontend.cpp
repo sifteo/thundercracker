@@ -218,7 +218,7 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
     
     glfwSwapInterval(1);
     glfwEnable(GLFW_MOUSE_CURSOR);
-    glfwSetWindowTitle("Thundercracker");
+    glfwSetWindowTitle(APP_TITLE);
 
     int w, h;
     glfwGetWindowSize(&w, &h);
