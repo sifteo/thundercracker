@@ -51,7 +51,7 @@ void SystemNetwork::init(const VirtualTime *vtime)
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof addr);
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_addr.s_addr = 0x0100007f;
     addr.sin_port = htons(PORT);
 
     listenFD = socket(AF_INET, SOCK_STREAM, 0);
