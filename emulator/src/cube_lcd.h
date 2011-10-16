@@ -87,9 +87,7 @@ class LCD {
     }
 
     uint32_t getWriteCount() {
-        uint32_t cnt = write_count;
-        write_count = 0;
-        return cnt;
+        return write_count;
     }
 
     bool isVisible() {  

@@ -243,4 +243,27 @@ class TickDeadline {
     const VirtualTime *vtime;
 };
 
+
+class EventRateProbe {
+public:
+    EventRateProbe(uint32_t counter=0)
+        : counter(counter), hz(0) {}
+        
+    void update(ElapsedTime &et, uint32_t newValue) {
+        uint32_t oldValue = counter;
+        double s = et.virtualSeconds();
+        counter = newValue;
+        hz = s > 0 ? (newValue - oldValue) / s : 0;
+    }
+    
+    float getHZ() {
+        return hz;
+    }
+
+private:
+    uint32_t counter;
+    float hz;
+};
+   
+
 #endif

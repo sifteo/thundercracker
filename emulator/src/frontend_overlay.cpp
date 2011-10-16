@@ -51,11 +51,14 @@ void FrontendOverlay::draw()
         else
             realTimeColor.set(1, 0.5, 0.5);
 
-        // Calculate cube frame rates
-        for (unsigned i = 0; i < sys->opt_numCubes; i++)
+        // Calculate cube hardware rates
+        
+        for (unsigned i = 0; i < sys->opt_numCubes; i++) {
+            // FPS (LCD writes per second)
+            cubes[i].lcd_wr.update(timer, sys->cubes[i].lcd.getWriteCount());
             snprintf(cubes[i].fps, sizeof cubes[i].fps,
-                     "#%d - %.1f FPS", i,
-                     sys->cubes[i].lcd.getWriteCount() / timer.virtualSeconds());
+                     "#%d - %.1f FPS", i, cubes[i].lcd_wr.getHZ());
+        }
 
         timer.start();
     }

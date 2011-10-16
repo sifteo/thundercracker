@@ -602,11 +602,16 @@ void mainview_update(Cube::Hardware *cube)
     }
 
     {
-        // Some displays periodically update
+        /*
+         * XXX: Needs some refactoring bigtime! There are a lot of utilities
+         *      in vtime.h now which abstract the bulk of this work.
+         */
+         
         unsigned int update_interval = VirtualTime::HZ;
         static uint64_t update_prev_clocks = 0;
         static double update_prev_time = 0;
-
+        static uint32_t prev_lcd_wr;
+        
         static float lcd_wrs = 0;
         static float clock_ratio = 0;
         static float radio_b = 0;
@@ -628,7 +633,10 @@ void mainview_update(Cube::Hardware *cube)
                 float virtual_elapsed = VirtualTime::toSeconds(cube->time->clocks - update_prev_clocks);
                 float real_elapsed = now - update_prev_time;
 
-                lcd_wrs = cube->lcd.getWriteCount() / virtual_elapsed;
+                uint32_t lcd_wr = cube->lcd.getWriteCount();
+                lcd_wrs = (lcd_wr - prev_lcd_wr) / virtual_elapsed;
+                prev_lcd_wr = lcd_wr;
+                
                 radio_b = cube->spi.radio.getByteCount() / virtual_elapsed;
                 radio_rx = cube->spi.radio.getRXCount() / virtual_elapsed;
                 flash_hz = cube->flash.getCycleCount() / virtual_elapsed;

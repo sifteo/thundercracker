@@ -70,6 +70,7 @@ private:
     
     struct {
         char fps[16];
+        EventRateProbe lcd_wr;
     } cubes[System::MAX_CUBES];
 };
 
