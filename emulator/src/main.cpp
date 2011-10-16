@@ -14,6 +14,7 @@
 #define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+static bool hasConsole = true;
 #endif
  
 #include <stdio.h>
@@ -22,8 +23,6 @@
 
 #include "frontend.h"
 #include "system.h"
-
-static bool hasConsole = true;
 
 
 static void getConsole()
@@ -62,7 +61,7 @@ static void message(const char *fmt, ...)
     }
 #endif
 
-    fprintf(stderr, buf);
+    fprintf(stderr, "%s", buf);
 }
     
 
