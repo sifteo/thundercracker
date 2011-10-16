@@ -84,46 +84,45 @@ ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)
 endif
 ifeq ($(OS),windows32)
         DEPS := ../deps/win32
-        LDFLAGS += -lws2_32
+        LIBS += -lws2_32
 endif
 
 # OpenGL
 ifeq ($(OS),Darwin)
-        LDFLAGS += -framework OpenGL
+        LIBS += -framework OpenGL
 else ifeq ($(OS),windows32)
         OBJS += src/glew/glew.o
-        CFLAGS += -I$(DEPS)/glew-1.7.0/include
-        LDFLAGS += $(DEPS)/glew-1.7.0/lib/glew32mxs.lib $(DEPS)/glew-1.7.0/lib/glew32s.lib -lOpenGL32 
+        INCLUDES += -I$(DEPS)/glew-1.7.0/include
+        LIBS += $(DEPS)/glew-1.7.0/lib/glew32mxs.lib $(DEPS)/glew-1.7.0/lib/glew32s.lib -lOpenGL32 
 else
-        LDFLAGS += -lGL
+        LIBS += -lGL
 endif
 
 # GLFW, a cross-platform window system layer
-CFLAGS += -Isrc/glfw
+INCLUDES += -Isrc/glfw
 OBJS += \
     src/glfw/enable.o      src/glfw/window.o src/glfw/joystick.o  src/glfw/thread.o \
     src/glfw/fullscreen.o  src/glfw/init.o   src/glfw/stream.o    src/glfw/time.o   \
     src/glfw/glext.o       src/glfw/input.o
 ifeq ($(OS),Darwin)
-        LDFLAGS += -framework Cocoa
-        CFLAGS += -Isrc/glfw/cocoa
+        LIBS += -framework Cocoa
+        INCLUDES += -Isrc/glfw/cocoa
         OBJS += \
             src/glfw/cocoa/cocoa_enable.o      src/glfw/cocoa/cocoa_thread.o    \
             src/glfw/cocoa/cocoa_fullscreen.o  src/glfw/cocoa/cocoa_time.o      \
             src/glfw/cocoa/cocoa_glext.o       src/glfw/cocoa/cocoa_window.o    \
-            src/glfw/cocoa/cocoa_init.o        src/glfw/cocoa/platform.h        \
-            src/glfw/cocoa/cocoa_joystick.o
+            src/glfw/cocoa/cocoa_init.o        src/glfw/cocoa/cocoa_joystick.o
 else ifeq ($(OS),windows32)
-        LDFLAGS += -lmingw32 -lwinmm -lgdi32 -lm -mconsole
-        CFLAGS += -Isrc/glfw/win32
+        LIBS += -lmingw32 -lwinmm -lgdi32 -lm -mconsole
+        INCLUDES += -Isrc/glfw/win32
         OBJS += \
             src/glfw/win32/win32_init.o        src/glfw/win32/win32_joystick.o  \
             src/glfw/win32/win32_enable.o      src/glfw/win32/win32_thread.o    \
             src/glfw/win32/win32_fullscreen.o  src/glfw/win32/win32_time.o      \
             src/glfw/win32/win32_glext.o       src/glfw/win32/win32_window.o
 else
-        LDFLAGS += -lX11 -lpthread
-        CFLAGS += -Isrc/glfw/x11
+        LIBS += -lX11 -lpthread
+        INCLUDES += -Isrc/glfw/x11
         OBJS += \
             src/glfw/x11/x11_enable.o      src/glfw/x11/x11_keysym2unicode.o    \
             src/glfw/x11/x11_fullscreen.o  src/glfw/x11/x11_thread.o            \
@@ -135,7 +134,7 @@ endif
 # Curses
 ifeq ($(OS),windows32)
         # Use our own copy of pdcurses on Win32
-        CFLAGS += -Isrc/pdcurses
+        INCLUDES += -Isrc/pdcurses
         OBJS += src/pdcurses/pdcurses/addch.o     src/pdcurses/pdcurses/mouse.o         \
                 src/pdcurses/pdcurses/addchstr.o  src/pdcurses/pdcurses/move.o          \
                 src/pdcurses/pdcurses/addstr.o    src/pdcurses/pdcurses/outopts.o       \
@@ -163,14 +162,14 @@ ifeq ($(OS),windows32)
                 src/pdcurses/pdcurses/keyname.o
 else
         # On Linux and Mac OS, curses should already be available
-        LDFLAGS += -lncurses
+        LIBS += -lncurses
 endif
 
 # C++ Libary
 ifeq ($(OS),windows32)
-        LDFLAGS += -static -lstdc++
+        LIBS += -static -lstdc++
 else
-	LDFLAGS += -lstdc++
+	LIBS += -lstdc++
 endif
 
 # Debug / optimization
@@ -179,10 +178,13 @@ endif
 # difference in performance. You probably want to leave -O3 on at
 # all times unless you have a great reason not to.
 
-CFLAGS += -O3
-CFLAGS += -g -Werror -Wall -Isrc
-LDFLAGS += -g
-CCFLAGS := $(CFLAGS)
+OPTFLAGS += -O3 -g
+WARNFLAGS := -Werror -Wall
+
+CFLAGS := $(OPTFLAGS) $(WARNFLAGS) $(INCLUDES)
+CCFLAGS := $(OPTFLAGS) $(WARNFLAGS) $(INCLUDES)
+MFLAGS := $(OPTFLAGS) $(INCLUDES)
+LDFLAGS := $(OPTFLAGS) $(LIBS)
 
 all: $(BIN)
 
@@ -196,7 +198,7 @@ $(BIN): $(OBJS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 %.o: %.m $(CDEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(MFLAGS)
 
 # Data dependencies don't need to be rebuilt by everyone,
 # the resulting generated code is checked into git. The
