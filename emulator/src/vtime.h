@@ -9,10 +9,11 @@
 #ifndef _VTIME_H
 #define _VTIME_H
 
+#include "macros.h"
+
 #include <stdint.h>
 #include <string.h>
-#include <SDL.h>
-#include "macros.h"
+#include <glfw.h>
 
 
 class VirtualTime {
@@ -62,7 +63,7 @@ class VirtualTime {
         clocks++;
     }
 
-    float elapsedSeconds() const {
+    double elapsedSeconds() const {
         return toSeconds(clocks);
     }
 
@@ -102,12 +103,12 @@ class ElapsedTime {
     ElapsedTime(VirtualTime &vtime) : vtime(vtime) {}
 
     void capture() {
-        currentRealMS = SDL_GetTicks();
+        currentRealS = glfwGetTime();
     }
 
     void start() {
         virtualT = vtime.clocks;
-        realMS = currentRealMS;
+        realS = currentRealS;
     }
 
     uint64_t virtualTicks() {
@@ -115,26 +116,27 @@ class ElapsedTime {
     }
 
     uint64_t realMsec() {
-        return currentRealMS - realMS;
+        return realSeconds() * 1e3;
     }
 
-    float virtualSeconds() {
-        return virtualTicks() / (float)vtime.HZ;
+    double virtualSeconds() {
+        return virtualTicks() / (double)vtime.HZ;
     }
 
-    float realSeconds() {
-        return realMsec() * 1e-3;
+    double realSeconds() {
+        return currentRealS - realS;
     }
 
-    float virtualRatio() {
-        return realMsec() ? virtualSeconds() / realSeconds() : 0;
+    double virtualRatio() {
+        double rs = realSeconds();
+        return rs ? virtualSeconds() / rs : 0;
     }
 
  private:
     VirtualTime &vtime;
     uint64_t virtualT;
-    uint32_t realMS;
-    uint32_t currentRealMS;
+    double realS;
+    double currentRealS;
 };
 
 
@@ -152,7 +154,7 @@ class TimeGovernor {
     void start() {
         et.capture();
         et.start();
-        secondsAhead = 0.0f;
+        secondsAhead = 0.0;
     }
 
     void step() {
@@ -167,14 +169,14 @@ class TimeGovernor {
          * up.
          */
 
-        static const float maxSecondsBehind = 5.0f;
+        static const double maxSecondsBehind = 5.0;
 
         et.capture();
 
         secondsAhead += et.virtualSeconds() - et.realSeconds();
 
         if (secondsAhead > 0)
-            SDL_Delay(secondsAhead * 1000.0f);
+            glfwSleep(secondsAhead);
 
         if (secondsAhead < -maxSecondsBehind)
             secondsAhead = -maxSecondsBehind;
@@ -184,7 +186,7 @@ class TimeGovernor {
 
  private:
     ElapsedTime et;
-    float secondsAhead;
+    double secondsAhead;
 };
 
 

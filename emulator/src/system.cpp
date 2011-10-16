@@ -54,14 +54,14 @@ bool System::init() {
 
 void System::start() {
     threadRunning = true;
-    thread = SDL_CreateThread(threadFn, this);
+    thread = glfwCreateThread(threadFn, this);
 }
 
 void System::exit() {
     network.exit();
 
     threadRunning = false;
-    SDL_WaitThread(thread, NULL);
+    glfwWaitThread(thread, GLFW_WAIT);
 
     for (unsigned i = 0; i < opt_numCubes; i++)
         cubes[i].exit();
@@ -73,7 +73,7 @@ void System::exit() {
         fclose(cubes[0].cpu.traceFile);
 }
 
-int System::threadFn(void *param)
+void System::threadFn(void *param)
 {
     /*
      * Maintain our virtual time clock, and update all parts of the
@@ -162,8 +162,6 @@ int System::threadFn(void *param)
 
     if (debug)
         Cube::Debug::exit();
-
-    return 0;
 }
 
 ALWAYS_INLINE void System::tick()

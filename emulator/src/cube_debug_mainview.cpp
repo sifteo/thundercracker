@@ -38,7 +38,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <curses.h>
-#include <SDL.h>
+#include <glfw.h>
 
 #include "cube_debug.h"
 
@@ -605,7 +605,7 @@ void mainview_update(Cube::Hardware *cube)
         // Some displays periodically update
         unsigned int update_interval = VirtualTime::HZ;
         static uint64_t update_prev_clocks = 0;
-        static uint32_t update_prev_time = 0;
+        static double update_prev_time = 0;
 
         static float lcd_wrs = 0;
         static float clock_ratio = 0;
@@ -622,11 +622,11 @@ void mainview_update(Cube::Hardware *cube)
         /* Periodically update most of the stats */
         if (cube->time->clocks < update_prev_clocks ||
             (cube->time->clocks - update_prev_clocks) > update_interval) {
-            uint32_t now = SDL_GetTicks();
+            double now = glfwGetTime();
 
             if (cube->time->clocks > update_prev_clocks && now > update_prev_time) {                
                 float virtual_elapsed = VirtualTime::toSeconds(cube->time->clocks - update_prev_clocks);
-                float real_elapsed = (uint32_t)(now - update_prev_time) * (1.0f/1000);
+                float real_elapsed = now - update_prev_time;
 
                 lcd_wrs = cube->lcd.getWriteCount() / virtual_elapsed;
                 radio_b = cube->spi.radio.getByteCount() / virtual_elapsed;

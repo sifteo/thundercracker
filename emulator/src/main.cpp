@@ -10,17 +10,11 @@
  * Command line front-end.
  */
 
-#include <SDL.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "system.h"
 #include "frontend.h"
-
-// We run in console mode on Windows
-#ifdef _WIN32
-#undef main
-#endif
+#include "system.h"
 
 
 static void usage()

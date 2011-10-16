@@ -6,9 +6,10 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include <time.h>
 #include "frontend.h"
+#include <time.h>
 
+Frontend *Frontend::instance = NULL;
 
 Frontend::Frontend() 
   : world(b2Vec2(0.0f, 0.0f)),
@@ -22,13 +23,13 @@ Frontend::Frontend()
 
 void Frontend::init(System *_sys)
 {
+    instance = this;
     sys = _sys;
     frameCount = 0;
     toggleZoom = false;
     viewExtent = targetViewExtent() * 3.0;
 
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_WM_SetCaption("Thundercracker", NULL);
+    glfwInit();
 
     /*
      * Create cubes in a grid. Height is the square root of the number
@@ -166,67 +167,28 @@ unsigned Frontend::cubeID(FrontendCube *cube)
 
 void Frontend::exit()
 {             
-    SDL_Quit();
+    glfwTerminate();
 }
 
 void Frontend::run()
 {
-    isRunning = true;
-
     if (sys->opt_numCubes > 1) {
         // 2 or more cubes: Large window
-        if (!onResize(800, 600))
+        if (!openWindow(800, 600))
             return;
     } else {    
         // Zero or one cube: Small window
-        if (!onResize(300, 300))
+        if (!openWindow(300, 300))
             return;
     }
 
+    isRunning = true;
     while (isRunning && sys->isRunning()) {
-        SDL_Event event;
-    
-        // Drain the GUI event queue
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-                
-            case SDL_QUIT:
-                isRunning = false;
-                break;
 
-            case SDL_VIDEORESIZE:
-                if (!onResize(event.resize.w, event.resize.h))
-                    return;
-                break;
-
-            case SDL_KEYDOWN:
-                onKeyDown(event.key);
-                break;
-
-            case SDL_MOUSEMOTION:
-                mouseX = event.motion.x;
-                mouseY = event.motion.y;
-                break;
-
-            case SDL_MOUSEBUTTONDOWN:
-                mouseX = event.button.x;
-                mouseY = event.button.y;
-                onMouseDown(event.button.button);
-                break;
-
-            case SDL_MOUSEBUTTONUP:
-                mouseX = event.button.x;
-                mouseY = event.button.y;
-                onMouseUp(event.button.button);
-                break;
-
-            }
-        }
-
-        if (!(frameCount % FRAME_HZ_DIVISOR)) {
+    // Simulated hardware VSync
+        if (!(frameCount % FRAME_HZ_DIVISOR))
             for (unsigned i = 0; i < sys->opt_numCubes; i++)
                 sys->cubes[i].lcdPulseTE();
-        }
 
         animate();
         draw();
@@ -234,106 +196,117 @@ void Frontend::run()
     }
 }
 
-bool Frontend::onResize(int width, int height, bool fullscreen)
+bool Frontend::openWindow(int width, int height, bool fullscreen)
 {
-    if (!(width && height))
-        return true;
+    glfwOpenWindowHint(GLFW_FSAA_SAMPLES, 4);
 
-    unsigned flags = SDL_OPENGL | (fullscreen ? SDL_FULLSCREEN : SDL_RESIZABLE);
-
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4); 
-    SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
-    surface = SDL_SetVideoMode(width, height, 0, flags);
-                     
-    if (surface == NULL) {
-        // First failure? Try without FSAA.
-
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0); 
-        surface = SDL_SetVideoMode(width, height, 0, flags);
-        if (surface) {
-            fprintf(stderr, "Warning: FSAA not available. Your cubes will have crunchy edges :(\n");
-        }
-    }
-
-    if (surface == NULL) {
-        fprintf(stderr, "Error creating SDL surface!\n");
+    if (!glfwOpenWindow(width, height, 0,0,0,0,0,0,
+                        fullscreen ? GLFW_FULLSCREEN : GLFW_WINDOW)) {
+        fprintf(stderr, "Error creating OpenGL window\n");
         return false;
     }
-
-    viewportWidth = surface->w;
-    viewportHeight = surface->h;
-    isFullscreen = fullscreen;
-    moveWalls(true);
-
-    /*
-     * Assume we totally lost the OpenGL context, and reallocate things.
-     * XXX: This is not always necessary. It's platform-specific.
-     */
 
     if (!renderer.init())
         return false;
+    
+    glfwSwapInterval(1);
+    glfwEnable(GLFW_MOUSE_CURSOR);
+    glfwSetWindowTitle("Thundercracker");
 
-    renderer.setViewport(viewportWidth, viewportHeight);
-
+    glfwGetWindowSize(&viewportWidth, &viewportHeight);
+    onResize(viewportWidth, viewportHeight);
+    
+    isFullscreen = fullscreen;
+    mouseWheelPos = 0;
+    moveWalls(true);
+    
+    glfwSetWindowSizeCallback(onResize);
+    glfwSetKeyCallback(onKey);
+    glfwSetMousePosCallback(onMouseMove);
+    glfwSetMouseButtonCallback(onMouseButton);
+    glfwSetMouseWheelCallback(onMouseWheel);
+   
     return true;
 }
 
-void Frontend::onKeyDown(SDL_KeyboardEvent &evt)
+void GLFWCALL Frontend::onResize(int width, int height)
 {
-    switch (evt.keysym.sym) {
-        
-    case 'q':
-    case SDLK_ESCAPE:
-        isRunning = false;
-        break;
-        
-    case 'z':
-        toggleZoom = !toggleZoom;
-        break;
-
-    case 'f':
-        /*
-         * XXX: Pick the resolution automatically or configurably.
-         *      This is just a common 16:9 resolution that isn't too big
-         *      for my integrated GPU to render smoothly :)
-         */
-        onResize(1280, 720, !isFullscreen);
-        break;
-		
-	case 's': {
-		std::string name = createScreenshotName();
-		printf("Taking screenshot \"%s\"\n", name.c_str());
-		renderer.takeScreenshot(name);
-		break;
-	}
-
-    case ' ':
-        if (mouseIsPulling)
-            hoverOrRotate();
-        break;
-    
-    default:
-        break;
+    if (width && height) {
+        instance->viewportWidth = width;
+        instance->viewportHeight = height;
+        instance->renderer.setViewport(width, height);
     }
+}
+
+void GLFWCALL Frontend::onKey(int key, int state)
+{
+    if (state == GLFW_PRESS)
+        switch (key) {
+        
+        case 'Q':
+        case GLFW_KEY_ESC:
+            instance->isRunning = false;
+            break;
+        
+        case 'Z':
+            instance->toggleZoom ^= true;
+            break;
+
+        case 'F':
+            /*
+            * XXX: Pick the resolution automatically or configurably.
+            *      This is just a common 16:9 resolution that isn't too big
+            *      for my integrated GPU to render smoothly :)
+            */         
+            glfwCloseWindow();
+            instance->openWindow(1280, 720, !instance->isFullscreen);
+            break;
+		
+        case 'S': {
+            std::string name = instance->createScreenshotName();
+            printf("Taking screenshot \"%s\"\n", name.c_str());
+            instance->renderer.takeScreenshot(name);
+            break;
+        }
+
+        case GLFW_KEY_SPACE:
+            if (instance->mouseIsPulling)
+                instance->hoverOrRotate();
+            break;
+        }
+}
+
+void GLFWCALL Frontend::onMouseMove(int x, int y)
+{
+    instance->mouseX = x;
+    instance->mouseY = y;
+}
+
+void GLFWCALL Frontend::onMouseButton(int button, int state)
+{
+    if (state == GLFW_PRESS)
+        instance->onMouseDown(button);
+    else if (state == GLFW_RELEASE)
+        instance->onMouseUp(button);
+}
+
+void GLFWCALL Frontend::onMouseWheel(int pos)
+{
+    float scale;
+    int delta = pos - instance->mouseWheelPos;
+    instance->mouseWheelPos = pos;
+    
+    if (delta > 0)
+        scale = powf(0.9f, delta);
+    else
+        scale = powf(1.1f, -delta);
+        
+    instance->scaleViewExtent(scale);
 }
 
 void Frontend::onMouseDown(int button)
 {
-    if (button == 4) {
-        // Scroll up / zoom in
-        scaleViewExtent(0.9f);
-        return;
-    }
-
-    if (button == 5) {
-        // Scroll down / zoom out
-        scaleViewExtent(1.1f);
-        return;
-    }
-
-    if (button == 3 && mouseIsPulling)
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && mouseIsPulling)
         hoverOrRotate();
     
     if (!mouseBody) {
@@ -347,7 +320,8 @@ void Frontend::onMouseDown(int button)
             mouseDef.allowSleep = false;
             mouseBody = world.CreateBody(&mouseDef);
 
-            if (button == 3 || (SDL_GetModState() & KMOD_SHIFT)) {
+            bool shift = glfwGetKey(GLFW_KEY_LSHIFT) || glfwGetKey(GLFW_KEY_RSHIFT);
+            if (button == GLFW_MOUSE_BUTTON_RIGHT || shift) {
                 /*
                  * If this was a right-click or shift-click, go into tilting mode
                  */
@@ -437,10 +411,12 @@ void Frontend::hoverOrRotate()
     }
 }
 
-
 void Frontend::onMouseUp(int button)
 {
-    if (mouseBody && !SDL_GetMouseState(NULL, NULL)) {
+    bool eitherButton = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) ||
+                        glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT);
+                        
+    if (mouseBody && !eitherButton) {
         // All buttons released
     
         if (mousePicker.mCube) {

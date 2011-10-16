@@ -226,7 +226,7 @@ void GLRenderer::endFrame()
 		pendingScreenshotName.clear();
 	}	
 
-    SDL_GL_SwapBuffers();
+    glfwSwapBuffers();
 }
  
 void GLRenderer::drawBackground(float extent, float scale)

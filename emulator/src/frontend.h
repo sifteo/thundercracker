@@ -9,11 +9,12 @@
 #ifndef _FRONTEND_H
 #define _FRONTEND_H
 
-#include <SDL.h>
+#include "gl_renderer.h"
+#include "system.h"
+
 #include <Box2D/Box2D.h>
 #include <string>
-#include "system.h"
-#include "gl_renderer.h"
+#include <glfw.h>
 
 
 class FrontendCube;
@@ -168,8 +169,14 @@ class Frontend {
     void animate();
     void draw();
 
-    bool onResize(int width, int height, bool fullscreen=false);
-    void onKeyDown(SDL_KeyboardEvent &evt);
+    bool openWindow(int width, int height, bool fullscreen=false);
+    
+    static void GLFWCALL onResize(int width, int height);
+    static void GLFWCALL onKey(int key, int state);
+    static void GLFWCALL onMouseMove(int x, int y);
+    static void GLFWCALL onMouseButton(int button, int state);
+    static void GLFWCALL onMouseWheel(int pos);
+    
     void onMouseDown(int button);
     void onMouseUp(int button);
     void hoverOrRotate();
@@ -190,7 +197,6 @@ class Frontend {
 	std::string createScreenshotName();
 	
     System *sys;
-    SDL_Surface *surface;
     unsigned frameCount;
     FrontendCube cubes[System::MAX_CUBES];
 
@@ -200,6 +206,7 @@ class Frontend {
 
     int viewportWidth, viewportHeight;
     int mouseX, mouseY;
+    int mouseWheelPos;
     unsigned gridW, gridH;
 
     float viewExtent;
@@ -222,6 +229,8 @@ class Frontend {
     ContactListener contactListener;
 
     GLRenderer renderer;
+    
+    static Frontend *instance;
 };
 
 #endif

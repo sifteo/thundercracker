@@ -14,7 +14,7 @@
 #ifndef _SYSTEM_H
 #define _SYSTEM_H
 
-#include <SDL_thread.h>
+#include <glfw.h>
 #include "vtime.h"
 #include "cube_hardware.h"
 #include "system_network.h"
@@ -56,10 +56,10 @@ class System {
     }
 
  private:
-    static int threadFn(void *param);
+    static void threadFn(void *param);
     void tick();
 
-    SDL_Thread *thread;
+    GLFWthread thread;
     bool threadRunning;
 
     SystemNetwork network;
