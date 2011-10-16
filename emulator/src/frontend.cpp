@@ -117,7 +117,7 @@ void Frontend::numCubesChanged()
 
     for (;i < sys->MAX_CUBES; i++)
         if (cubes[i].isInitialized())
-            cubes[i].exit(world);
+            cubes[i].exit();
 }
 
 void Frontend::addCube()
@@ -707,15 +707,15 @@ bool Frontend::MousePicker::ReportFixture(b2Fixture *fixture)
         
 void Frontend::ContactListener::BeginContact(b2Contact *contact)
 {
-    updateSensors(contact);
+    updateSensors(contact, true);
 }
 
 void Frontend::ContactListener::EndContact(b2Contact *contact)
 {
-    updateSensors(contact);
+    updateSensors(contact, false);
 }
 
-void Frontend::ContactListener::updateSensors(b2Contact *contact)
+void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
 {
     FixtureData *fdatA = (FixtureData *) contact->GetFixtureA()->GetUserData();
     FixtureData *fdatB = (FixtureData *) contact->GetFixtureB()->GetUserData();
@@ -723,7 +723,6 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact)
     if (fdatA && fdatB
         && fdatA->type == fdatA->T_NEIGHBOR
         && fdatB->type == fdatB->T_NEIGHBOR) {
-        bool touching = contact->IsTouching();
 
         /*
          * Update interaction between two neighbor sensors

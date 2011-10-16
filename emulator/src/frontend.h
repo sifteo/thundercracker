@@ -53,7 +53,7 @@ class Frontend {
         void EndContact(b2Contact *contact);
     private:
         Frontend &frontend;
-        void updateSensors(b2Contact *contact);
+        void updateSensors(b2Contact *contact, bool touching);
     };
 
     void animate();

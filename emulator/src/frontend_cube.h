@@ -45,7 +45,7 @@ class FrontendCube {
     FrontendCube();
 
     void init(unsigned id, Cube::Hardware *hw, b2World &world, float x, float y);
-    void exit(b2World &world);
+    void exit();
 
     void animate();
     void draw(GLRenderer &r);

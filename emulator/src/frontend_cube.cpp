@@ -34,10 +34,12 @@ void FrontendCube::init(unsigned _id, Cube::Hardware *_hw, b2World &world, float
     hover = hoverTarget;    
 }
 
-void FrontendCube::exit(b2World &world)
+void FrontendCube::exit()
 {
-    world.DestroyBody(body);
-    body = NULL;
+    if (body) {
+        body->GetWorld()->DestroyBody(body);
+        body = NULL;
+    }
 }
 
 void FrontendCube::initBody(b2World &world, float x, float y)
@@ -113,11 +115,18 @@ void FrontendCube::setHoverTarget(float h)
 {
     hoverTarget = h;
 
-    // When a cube is high enough to clear non-hovering cubes, it won't collide with them.
+    /*
+     * When a cube is high enough to clear non-hovering cubes,
+     * it won't collide with them. This goes for all fixtures- the
+     * cube body, plus the neighbor sensors.
+     */
+     
     b2Filter filter;    
     filter.categoryBits = 1 << isHovering();
     filter.maskBits = filter.categoryBits;
-    bodyFixture->SetFilterData(filter);
+
+    for (b2Fixture *f = body->GetFixtureList(); f; f = f->GetNext())
+        f->SetFilterData(filter);
 }
 
 void FrontendCube::updateNeighbor(bool touching, unsigned mySide,
