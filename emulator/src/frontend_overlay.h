@@ -42,6 +42,7 @@ public:
 
     void draw();
     void drawCube(FrontendCube *fe, unsigned x, unsigned y);
+    void toggleHelp();
     
     void postMessage(std::string msg);
     
@@ -55,12 +56,14 @@ private:
     }
     
     void text(const Color &c, const char *msg, float align=0.0f);
+    void drawHelp();
     
     GLRenderer *renderer;
     System *sys;
     
     std::string message;
     unsigned messageTimer;
+    bool helpVisible;
     
     ElapsedTime timer;
     char realTimeMessage[64];

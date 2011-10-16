@@ -8,9 +8,14 @@
 
 #include "frontend.h"
 
+static const Color msgColor(1, 1, 0.2);
+static const Color helpTextColor(1, 1, 1);
+static const Color helpHintColor(1, 1, 1, 0.5);
+static const Color ghostColor(1,1,1,0.3);
+
 
 FrontendOverlay::FrontendOverlay()
-    : messageTimer(0) {}
+    : messageTimer(0), helpVisible(false) {}
 
 void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 {
@@ -27,12 +32,7 @@ void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 
 void FrontendOverlay::draw()
 {    
-    moveTo(margin, margin);
-    
-    /*
-     * Time stats, updated periodically
-     */
-    
+    // Time stats, updated periodically
     const float statsInterval = 0.5f;
     
     timer.capture();
@@ -63,16 +63,23 @@ void FrontendOverlay::draw()
         timer.start();
     }
 
+    /*
+     * Drawing
+     */
+    
+    moveTo(renderer->getWidth() - margin, margin);
+    text(helpHintColor, "Press 'H' for help", 1.0f);
+    
+    moveTo(margin, margin);
     x += 152;
     text(realTimeColor, realTimeMessage, 1.0f);
     x -= 152;
 
-    /*
-     * Transient informational messages
-     */
+    if (helpVisible) {
+        drawHelp();
+    }
 
     if (messageTimer) {
-        static const Color msgColor(1,1,0);
         text(msgColor, message.c_str());
         messageTimer--;
     }
@@ -80,7 +87,6 @@ void FrontendOverlay::draw()
 
 void FrontendOverlay::drawCube(FrontendCube *fe, unsigned x, unsigned y)
 {
-    static const Color ghostColor(1,1,1,0.3);
     unsigned id = fe->getId();
 
     moveTo(x, y);
@@ -105,3 +111,28 @@ void FrontendOverlay::text(const Color &c, const char *msg, float align)
     renderer->overlayText(x - renderer->measureText(msg) * align, y, c.v, msg);
     y += lineSpacing;
 }
+
+void FrontendOverlay::toggleHelp()
+{
+    helpVisible ^= true;
+}
+
+void FrontendOverlay::drawHelp()
+{
+    static const char *lines[] = {
+        "Drag a cube by its center to pull and align it",
+        "Drag by an edge or corner to pull and rotate it",
+        "While pulling, Right-click or Space to hover, again to rotate",
+        "Shift-drag or Right-drag to tilt a cube",
+        "Mouse wheel resizes the play surface\n",
+        "'S' - Screenshot, 'F' - Fullscreen, 'Z' - Zoom, +/- Adds/removes cubes",
+    };
+    
+    const unsigned numLines = sizeof lines / sizeof lines[0];
+    for (unsigned i = 0; i < numLines; i++)
+        renderer->overlayText(margin, renderer->getHeight() -
+                              margin - (numLines - i) * lineSpacing,
+                              helpTextColor.v, lines[i]);
+}
+
+    

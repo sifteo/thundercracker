@@ -291,6 +291,12 @@ void GLFWCALL Frontend::onKey(int key, int state)
     if (state == GLFW_PRESS)
         switch (key) {
         
+        case 'H':
+        case '/':
+        case GLFW_KEY_F1:
+            instance->overlay.toggleHelp();
+            break;
+        
         case 'Q':
         case GLFW_KEY_ESC:
             instance->isRunning = false;
