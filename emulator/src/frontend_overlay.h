@@ -57,6 +57,7 @@ private:
     
     void text(const Color &c, const char *msg, float align=0.0f);
     void drawHelp();
+    void drawRealTimeInfo();
     
     GLRenderer *renderer;
     System *sys;
@@ -65,9 +66,11 @@ private:
     unsigned messageTimer;
     bool helpVisible;
     
-    ElapsedTime timer;
+    ElapsedTime slowTimer;
+    ElapsedTime fastTimer;
     char realTimeMessage[64];
     Color realTimeColor;
+    float filteredTimeRatio;
     
     unsigned x, y;
     

@@ -54,6 +54,7 @@ class GLRenderer {
     void beginOverlay();
     void overlayText(unsigned x, unsigned y, const float color[4], const char *str);
     unsigned measureText(const char *str);
+    void overlayRect(unsigned x, unsigned y, unsigned w, unsigned h, const float color[4]);
 
   	void takeScreenshot(std::string name) {
 		// Screenshots are asynchronous
@@ -129,7 +130,7 @@ class GLRenderer {
 
     std::vector<VertexTN> faceVA;
     std::vector<VertexTN> sidesVA;
-    std::vector<VertexT> textVA;
+    std::vector<VertexT> overlayVA;
 
     struct {
         bool initialized;

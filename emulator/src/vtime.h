@@ -109,6 +109,14 @@ class ElapsedTime {
         currentRealS = glfwGetTime();
     }
 
+    void capture(const ElapsedTime &source) {
+        /*
+         * Allows optimization to reduce the number of system calls
+         * when many timers are captured at the same time.
+         */
+        currentRealS = source.currentRealS;
+    }
+
     void start() {
         virtualT = vtime->clocks;
         realS = currentRealS;

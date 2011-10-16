@@ -605,10 +605,7 @@ void Frontend::draw()
         cubes[i].draw(renderer);
 
     renderer.beginOverlay();
-    
-    // Fixed portion of the overlay
-    overlay.draw();
-    
+        
     // Per-cube overlays (Only when sufficiently zoomed-in)
     if (viewExtent < FrontendCube::SIZE * 4.0f)
         for (unsigned i = 0; i < sys->opt_numCubes;  i++) {
@@ -622,7 +619,10 @@ void Frontend::draw()
                                    
             overlay.drawCube(&c, pos.x, pos.y);
         }
-    
+
+    // Fixed portion of the overlay, should be topmost.
+    overlay.draw();
+        
     renderer.endFrame();
 }
 

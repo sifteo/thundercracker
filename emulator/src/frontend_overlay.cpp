@@ -10,8 +10,10 @@
 
 static const Color msgColor(1, 1, 0.2);
 static const Color helpTextColor(1, 1, 1);
+static const Color helpBgColor(0, 0, 0, 0.5);
 static const Color helpHintColor(1, 1, 1, 0.5);
 static const Color ghostColor(1,1,1,0.3);
+static const Color debugColor(1,0.5,0.5,1);
 
 
 FrontendOverlay::FrontendOverlay()
@@ -22,8 +24,10 @@ void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
     renderer = _renderer;
     sys = _sys;
 
-    timer.init(&sys->time);
+    slowTimer.init(&sys->time);
+    fastTimer.init(&sys->time);
 
+    filteredTimeRatio = 0.0f;
     realTimeMessage[0] = '\0';
     
     for (unsigned i = 0; i < System::MAX_CUBES; i++)
@@ -34,10 +38,12 @@ void FrontendOverlay::draw()
 {    
     // Time stats, updated periodically
     const float statsInterval = 0.5f;
+        
+    slowTimer.capture();
+    fastTimer.capture(slowTimer);
     
-    timer.capture();
-    if (timer.realSeconds() > statsInterval) {
-        float rtPercent = timer.virtualRatio() * 100.0f;
+    if (slowTimer.realSeconds() > statsInterval) {
+        float rtPercent = slowTimer.virtualRatio() * 100.0f;
 
         // Percent of real-time
         snprintf(realTimeMessage, sizeof realTimeMessage,
@@ -55,12 +61,12 @@ void FrontendOverlay::draw()
         
         for (unsigned i = 0; i < sys->opt_numCubes; i++) {
             // FPS (LCD writes per second)
-            cubes[i].lcd_wr.update(timer, sys->cubes[i].lcd.getWriteCount());
+            cubes[i].lcd_wr.update(slowTimer, sys->cubes[i].lcd.getWriteCount());
             snprintf(cubes[i].fps, sizeof cubes[i].fps,
                      "#%d - %.1f FPS", i, cubes[i].lcd_wr.getHZ());
         }
 
-        timer.start();
+        slowTimer.start();
     }
 
     /*
@@ -69,20 +75,20 @@ void FrontendOverlay::draw()
     
     moveTo(renderer->getWidth() - margin, margin);
     text(helpHintColor, "Press 'H' for help", 1.0f);
-    
-    moveTo(margin, margin);
-    x += 152;
-    text(realTimeColor, realTimeMessage, 1.0f);
-    x -= 152;
 
     if (helpVisible) {
         drawHelp();
     }
-
+    
+    moveTo(margin, margin);
+    drawRealTimeInfo();
+    
     if (messageTimer) {
         text(msgColor, message.c_str());
         messageTimer--;
     }
+    
+    fastTimer.start();
 }       
 
 void FrontendOverlay::drawCube(FrontendCube *fe, unsigned x, unsigned y)
@@ -92,10 +98,8 @@ void FrontendOverlay::drawCube(FrontendCube *fe, unsigned x, unsigned y)
     moveTo(x, y);
 
     // Do we need to disambiguate which cube is being debugged?
-    if (sys->cubes[id].isDebugging() && sys->opt_numCubes > 1) {
-        static const Color debugColor(1,0.5,0.5,1);
+    if (sys->cubes[id].isDebugging() && sys->opt_numCubes > 1)
         text(debugColor, "Debugging", 0.5);
-    }
 
     text(ghostColor, cubes[id].fps, 0.5);
 }
@@ -120,19 +124,42 @@ void FrontendOverlay::toggleHelp()
 void FrontendOverlay::drawHelp()
 {
     static const char *lines[] = {
-        "Drag a cube by its center to pull and align it",
-        "Drag by an edge or corner to pull and rotate it",
-        "While pulling, Right-click or Space to hover, again to rotate",
-        "Shift-drag or Right-drag to tilt a cube",
-        "Mouse wheel resizes the play surface\n",
-        "'S' - Screenshot, 'F' - Fullscreen, 'Z' - Zoom, +/- Adds/removes cubes",
+        "Drag a cube by its center to pull and align it.",
+        "Drag by an edge or corner to pull and rotate it.",
+        "While pulling, Right-click or Space to hover, again to rotate.",
+        "Shift-drag or Right-drag to tilt a cube.",
+        "Mouse wheel resizes the play surface.\n",
+        "'S' - Screenshot, 'F' - Fullscreen, 'Z' - Zoom. +/- Adds/removes cubes.",
     };
     
     const unsigned numLines = sizeof lines / sizeof lines[0];
+    const unsigned w = renderer->getWidth();
+    const unsigned h = renderer->getHeight();
+    const unsigned top = h - margin * 2 - numLines * lineSpacing;
+
+    renderer->overlayRect(0, top, w, h, helpBgColor.v);
+    moveTo(margin, top + margin);
+    
     for (unsigned i = 0; i < numLines; i++)
-        renderer->overlayText(margin, renderer->getHeight() -
-                              margin - (numLines - i) * lineSpacing,
-                              helpTextColor.v, lines[i]);
+        text(helpTextColor, lines[i]);
 }
 
+void FrontendOverlay::drawRealTimeInfo()
+{
+    const unsigned width = 152;
+    const unsigned barH = 3;
     
+    // Right-justify the text so it doesn't bounce so much
+    x += width;
+    text(realTimeColor, realTimeMessage, 1.0f);
+    x -= width;
+    
+    // Filter the time ratio a bit. The fastTimer is really jumpy
+    float ratio = fastTimer.virtualRatio();
+    filteredTimeRatio += 0.1f * (ratio - filteredTimeRatio);
+    
+    // Include a tiny bargraph, to show the rate visually
+    unsigned barW = width * MIN(1.0f, filteredTimeRatio);
+    renderer->overlayRect(x, y, barW, barH, realTimeColor.v);
+    y += barH + margin;
+}

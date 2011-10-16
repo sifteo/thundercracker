@@ -272,7 +272,7 @@ void GLRenderer::overlayText(unsigned x, unsigned y, const float color[4], const
     const float TEXTURE_WIDTH = 128.0f;
     const float TEXTURE_HEIGHT = 256.0f;
    
-    textVA.clear();
+    overlayVA.clear();
 
     uint32_t id;
     while ((id = *(str++))) {
@@ -298,13 +298,13 @@ void GLRenderer::overlayText(unsigned x, unsigned y, const float color[4], const
             c.ty = d.ty;
             c.vy = d.vy;
             
-            textVA.push_back(a);
-            textVA.push_back(b);
-            textVA.push_back(c);
+            overlayVA.push_back(a);
+            overlayVA.push_back(b);
+            overlayVA.push_back(c);
             
-            textVA.push_back(a);
-            textVA.push_back(c);
-            textVA.push_back(d);
+            overlayVA.push_back(a);
+            overlayVA.push_back(c);
+            overlayVA.push_back(d);
         
             x += g->xAdvance;
         }
@@ -315,11 +315,46 @@ void GLRenderer::overlayText(unsigned x, unsigned y, const float color[4], const
     glActiveTexture(GL_TEXTURE0);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, fontTexture);
-    glInterleavedArrays(GL_T2F_V3F, 0, &textVA[0]);
-    glDrawArrays(GL_TRIANGLES, 0, (GLsizei) textVA.size());
+    glInterleavedArrays(GL_T2F_V3F, 0, &overlayVA[0]);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei) overlayVA.size());
     glDisable(GL_TEXTURE_2D);
-}                            
- 
+}         
+
+void GLRenderer::overlayRect(unsigned x, unsigned y,
+                             unsigned w, unsigned h, const float color[4])
+{
+    overlayVA.clear();
+    VertexT a, b, c, d;
+           
+    a.tx = 0;
+    a.ty = 0;
+    a.vx = x;
+    a.vy = y;
+    a.vz = 0;
+            
+    b = a;
+    b.vx += w;
+    
+    d = a;
+    d.vy += h;
+    
+    c = b;
+    c.vy = d.vy;
+            
+    overlayVA.push_back(a);
+    overlayVA.push_back(b);
+    overlayVA.push_back(c);
+         
+    overlayVA.push_back(a);
+    overlayVA.push_back(c);
+    overlayVA.push_back(d);
+        
+    glUseProgramObjectARB(0);
+    glColor4fv(color);
+    glInterleavedArrays(GL_T2F_V3F, 0, &overlayVA[0]);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei) overlayVA.size());
+}
+                    
 void GLRenderer::drawBackground(float extent, float scale)
 {
     float tc = scale * extent;
