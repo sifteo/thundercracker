@@ -24,7 +24,7 @@ class System {
  public:
     VirtualTime time;
 
-    static const unsigned DEFAULT_CUBES = 1;
+    static const unsigned DEFAULT_CUBES = 2;
     static const unsigned MAX_CUBES = 32;
 
     Cube::Hardware cubes[MAX_CUBES];
@@ -50,6 +50,7 @@ class System {
     bool init();
     void start();
     void exit();
+    void setNumCubes(unsigned n);
 
     bool isRunning() {
         return threadRunning;
@@ -57,6 +58,8 @@ class System {
 
  private:
     static void threadFn(void *param);
+    bool initCube(unsigned id);
+    void exitCube(unsigned id);
     void tick();
 
     GLFWthread thread;

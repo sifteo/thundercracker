@@ -11,24 +11,33 @@
 const float FrontendCube::SIZE;
 
 
+FrontendCube::FrontendCube()
+    : body(0) {}
+
 void FrontendCube::init(unsigned _id, Cube::Hardware *_hw, b2World &world, float x, float y)
 {
     id = _id;
     hw = _hw;
 
     initBody(world, x, y);
-
-    tiltTarget.Set(0,0);
-    tiltVector.Set(0,0);
-
-    setHoverTarget(HOVER_NONE);
-    hover = hoverTarget;
     
     initNeighbor(Cube::Neighbors::TOP, 0, -1);
     initNeighbor(Cube::Neighbors::BOTTOM, 0, 1);
 
     initNeighbor(Cube::Neighbors::LEFT, -1, 0);
     initNeighbor(Cube::Neighbors::RIGHT, 1, 0);
+
+    tiltTarget.Set(0,0);
+    tiltVector.Set(0,0);
+
+    setHoverTarget(HOVER_NONE);
+    hover = hoverTarget;    
+}
+
+void FrontendCube::exit(b2World &world)
+{
+    world.DestroyBody(body);
+    body = NULL;
 }
 
 void FrontendCube::initBody(b2World &world, float x, float y)

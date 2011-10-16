@@ -97,6 +97,7 @@ static void usage()
             "  Mouse wheel               Change size of play surface\n"
             "  'F' key                   Toggle full-screen mode\n"
             "  'Z' key                   Toggle zoom mode\n"
+            "  '+' / '-' keys            Add / remove a cube\n"
             "  'Q' / Escape key          Quit\n"
             "\n"
             "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n"

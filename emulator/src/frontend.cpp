@@ -104,6 +104,38 @@ bool Frontend::init(System *_sys)
     return true;
 }
 
+void Frontend::numCubesChanged()
+{
+    unsigned i;
+
+    for (i = 0; i < sys->opt_numCubes; i++)
+        if (!cubes[i].isInitialized()) {
+            // Create new cubes at the mouse cursor for now
+            b2Vec2 v = mouseVec(normalViewExtent);
+            cubes[i].init(i, &sys->cubes[i], world, v.x, v.y);
+        }
+
+    for (;i < sys->MAX_CUBES; i++)
+        if (cubes[i].isInitialized())
+            cubes[i].exit(world);
+}
+
+void Frontend::addCube()
+{
+    if (sys->opt_numCubes < sys->MAX_CUBES) {
+        sys->setNumCubes(sys->opt_numCubes + 1);
+        numCubesChanged();
+    }
+}
+
+void Frontend::removeCube()
+{
+    if (sys->opt_numCubes > 0) {
+        sys->setNumCubes(sys->opt_numCubes - 1);
+        numCubesChanged();
+    }
+}
+
 void Frontend::createWalls()
 {
     /*
@@ -282,6 +314,17 @@ void GLFWCALL Frontend::onKey(int key, int state)
             if (instance->mouseIsPulling)
                 instance->hoverOrRotate();
             break;
+
+
+        case '-':
+            instance->removeCube();
+            break;
+
+        case '+':
+        case '=':
+            instance->addCube();
+            break;
+
         }
 }
 

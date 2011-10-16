@@ -26,7 +26,9 @@ class Frontend {
     bool init(System *sys);
     void run();
     void exit();
-    
+
+    void numCubesChanged();
+
  private:
     /*
      * Number of real frames per virtual LCD frame (Assume 60Hz
@@ -81,12 +83,15 @@ class Frontend {
     float targetViewExtent();
     b2Vec2 targetViewCenter();
     b2Vec2 mouseVec(float viewExtent);
-	
-	std::string createScreenshotName();
-	void showMessage(std::string message);
-    void drawOverlay();
     b2Vec2 worldToScreen(b2Vec2 world);
-    
+
+    void addCube();
+    void removeCube();
+
+    std::string createScreenshotName();
+    void showMessage(std::string message);
+    void drawOverlay();
+
     System *sys;
     unsigned frameCount;
     FrontendCube cubes[System::MAX_CUBES];

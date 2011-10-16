@@ -42,7 +42,10 @@ struct FixtureData {
 
 class FrontendCube {
  public:
+    FrontendCube();
+
     void init(unsigned id, Cube::Hardware *hw, b2World &world, float x, float y);
+    void exit(b2World &world);
 
     void animate();
     void draw(GLRenderer &r);
@@ -65,6 +68,10 @@ class FrontendCube {
         return id;
     }
     
+    bool isInitialized() const {
+        return body != 0;
+    }
+
     void computeAABB(b2AABB &aabb);
     
     b2Body *body;

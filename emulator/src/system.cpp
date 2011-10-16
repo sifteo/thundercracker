@@ -11,45 +11,86 @@
 
 
 bool System::init() {
-    for (unsigned i = 0; i < opt_numCubes; i++) {
-        if (!cubes[i].init(&time,
-                           opt_cubeFirmware,
-                           i ? NULL : opt_cube0Flash))
+    for (unsigned i = 0; i < opt_numCubes; i++)
+        if (!initCube(i))
             return false;
-
-        /*
-         * Link the neighbor sensors into a network
-         */
-        cubes[i].neighbors.attachCubes(cubes);
-
-        /*
-         * We cheat a little, for the sake of debugging ease, and give
-         * each cube's radio a different hardwired default address. The
-         * cube firmware is free to override this just as it normally
-         * would, but this lets us get unique radio addresses for free
-         * when running firmware that doesn't have a real address
-         * assignment scheme implemented.
-         */
-        cubes[i].spi.radio.setAddressLSB(i);
-    }
-
-    if (opt_cube0Profile && opt_numCubes) {
-        cubes[0].cpu.mProfileData = (Cube::CPU::profile_data *)
-            calloc(CODE_SIZE, sizeof cubes[0].cpu.mProfileData[0]);
-    }
-
-    if (opt_cube0Trace && opt_numCubes) {
-        cubes[0].cpu.traceFile = fopen(opt_cube0Trace, "w");
-        if (!cubes[0].cpu.traceFile) {
-            perror("Error opening trace file");
-            return false;
-        }
-    }
-
+    
     time.init();
     network.init(&time);
 
     return true;
+}
+
+void System::setNumCubes(unsigned n)
+{
+    if (n == opt_numCubes)
+        return;
+
+    // Must change opt_numCubes only while our thread is stopped!
+    threadRunning = false;
+    glfwWaitThread(thread, GLFW_WAIT);
+
+    while (opt_numCubes > n)
+        exitCube(--opt_numCubes);
+
+    while (opt_numCubes < n)
+        if (initCube(opt_numCubes))
+            opt_numCubes++;
+        else
+            break;
+
+    threadRunning = true;
+    thread = glfwCreateThread(threadFn, this);
+}
+
+bool System::initCube(unsigned id)
+{
+    if (!cubes[id].init(&time,
+                        opt_cubeFirmware,
+                        id ? NULL : opt_cube0Flash))
+        return false;
+
+    /*
+     * Link the neighbor sensors into a network
+     */
+
+    cubes[id].neighbors.attachCubes(cubes);
+
+    /*
+     * We cheat a little, for the sake of debugging ease, and give
+     * each cube's radio a different hardwired default address. The
+     * cube firmware is free to override this just as it normally
+     * would, but this lets us get unique radio addresses for free
+     * when running firmware that doesn't have a real address
+     * assignment scheme implemented.
+     */
+
+    cubes[id].spi.radio.setAddressLSB(id);
+
+    if (id == 0) {
+        // Special debug options for cube 0 only
+        
+        if (opt_cube0Profile) {
+            cubes[0].cpu.mProfileData = (Cube::CPU::profile_data *)
+                calloc(CODE_SIZE, sizeof cubes[0].cpu.mProfileData[0]);
+        }
+
+        if (opt_cube0Trace) {
+            printf("Opening trace\n");
+            cubes[0].cpu.traceFile = fopen(opt_cube0Trace, "w");
+            if (!cubes[0].cpu.traceFile) {
+                perror("Error opening trace file");
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+void System::exitCube(unsigned id)
+{
+    cubes[id].exit();
 }
 
 void System::start() {
@@ -64,7 +105,7 @@ void System::exit() {
     glfwWaitThread(thread, GLFW_WAIT);
 
     for (unsigned i = 0; i < opt_numCubes; i++)
-        cubes[i].exit();
+        exitCube(i);
 
     if (opt_cube0Profile)
         Cube::Debug::writeProfile(&cubes[0].cpu, opt_cube0Profile);
@@ -79,6 +120,8 @@ void System::threadFn(void *param)
      * Maintain our virtual time clock, and update all parts of the
      * simulation. Also give the debugger a chance to run every so
      * often.
+     *
+     * The number of cubes can't change while this thread is executing.
      */
 
     System *self = (System *) param;
