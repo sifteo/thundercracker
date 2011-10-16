@@ -269,7 +269,8 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
     glfwSetMousePosCallback(onMouseMove);
     glfwSetMouseButtonCallback(onMouseButton);
     glfwSetMouseWheelCallback(onMouseWheel);
-   
+    glfwSetWindowCloseCallback(onWindowClose);
+
     return true;
 }
 
@@ -277,6 +278,12 @@ void GLFWCALL Frontend::onResize(int width, int height)
 {
     if (width && height)
         instance->renderer.setViewport(width, height);
+}
+
+int GLFWCALL Frontend::onWindowClose()
+{
+    instance->isRunning = false;
+    return GL_TRUE;
 }
 
 void GLFWCALL Frontend::onKey(int key, int state)

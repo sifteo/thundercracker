@@ -66,7 +66,8 @@ class Frontend {
     static void GLFWCALL onMouseMove(int x, int y);
     static void GLFWCALL onMouseButton(int button, int state);
     static void GLFWCALL onMouseWheel(int pos);
-    
+    static int GLFWCALL onWindowClose();
+
     void onMouseDown(int button);
     void onMouseUp(int button);
     void hoverOrRotate();
