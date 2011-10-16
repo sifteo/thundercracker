@@ -87,10 +87,10 @@ ifeq ($(OS),windows32)
         LDFLAGS += -lws2_32
 endif
 
-# SDL
+# SDL (LGPL licensed, so we can't legally statically link to it)
 ifeq ($(OS),Darwin)
         CFLAGS += $(shell sdl-config --cflags)
-        LDFLAGS += $(shell sdl-config --static-libs)
+        LDFLAGS += $(shell sdl-config --libs)
 else ifeq ($(OS),windows32)
         CFLAGS += -I$(DEPS)/sdl/include 
         LDFLAGS += -lmingw32
