@@ -172,6 +172,11 @@ else
         LIBS += -lncurses
 endif
 
+# Resources
+ifeq ($(OS),windows32)
+	OBJS += scripts/winres.o
+endif
+
 # C++ Libary
 ifeq ($(OS),windows32)
         LIBS += -static -lstdc++
@@ -220,6 +225,9 @@ endif
 %.o: %.m
 	$(CC) -c $(MFLAGS) $*.m -o $*.o
 
+%.o: %.rc
+	windres -i $< -o $@
+	
 # Data dependencies don't need to be rebuilt by everyone,
 # the resulting generated code is checked into git. The
 # firmware target is somewhat inconvenient, since it relies
