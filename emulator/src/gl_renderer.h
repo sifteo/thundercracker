@@ -50,6 +50,10 @@ class GLRenderer {
     void drawBackground(float extent, float scale);
     void drawCube(unsigned id, b2Vec2 center, float angle, float hover,
                   b2Vec2 tilt, uint16_t *framebuffer, b2Mat33 &modelMatrix);
+                  
+    void beginOverlay();
+    void overlayText(unsigned x, unsigned y, b2Vec3 color, const char *str);
+    unsigned measureText(const char *str);
 
   	void takeScreenshot(std::string name) {
 		// Screenshots are asynchronous
@@ -57,25 +61,46 @@ class GLRenderer {
 	}
 
  private:
-    struct Vertex {
+    struct VertexTN {
         GLfloat tx, ty;
         GLfloat nx, ny, nz;
         GLfloat vx, vy, vz;
     };
 
+    struct VertexT {
+        GLfloat tx, ty;
+        GLfloat vx, vy, vz;
+    };
+    
+    struct Glyph {
+        // From the BMFont file format
+        uint32_t id;
+        uint16_t x;
+        uint16_t y;
+        uint16_t width;
+        uint16_t height;
+        int16_t xOffset;
+        int16_t yOffset;
+        int16_t xAdvance;
+        uint8_t page;
+        uint8_t channel;
+    };
+
+    const Glyph *findGlyph(uint32_t id);
+    
     void initCube(unsigned id);
     void cubeTransform(b2Vec2 center, float angle, float hover,
                        b2Vec2 tilt, b2Mat33 &modelMatrix);
 
     void drawCubeBody();
     void drawCubeFace(unsigned id, uint16_t *framebuffer);
-
-    GLuint loadTexture(const uint8_t *pngData, GLenum wrap);
+    
+    GLuint loadTexture(const uint8_t *pngData, GLenum wrap=GL_CLAMP, GLenum filter=GL_LINEAR);
     GLhandleARB loadShader(GLenum type, const uint8_t *source);
     GLhandleARB linkProgram(GLhandleARB fp, GLhandleARB vp);
 
-    void createRoundedRect(std::vector<Vertex> &outPolygon, float size, float height, float relRadius);
-    void extrudePolygon(const std::vector<Vertex> &inPolygon, std::vector<Vertex> &outTristrip);
+    void createRoundedRect(std::vector<VertexTN> &outPolygon, float size, float height, float relRadius);
+    void extrudePolygon(const std::vector<VertexTN> &inPolygon, std::vector<VertexTN> &outTristrip);
 
     void saveTexturePNG(std::string name, unsigned width, unsigned height);
 	void saveColorBufferPNG(std::string name);
@@ -91,9 +116,12 @@ class GLRenderer {
 
     GLhandleARB backgroundProgram;
     GLuint backgroundTexture;
+    
+    GLuint fontTexture;
 
-    std::vector<Vertex> faceVA;
-    std::vector<Vertex> sidesVA;
+    std::vector<VertexTN> faceVA;
+    std::vector<VertexTN> sidesVA;
+    std::vector<VertexT> textVA;
 
     struct {
         bool initialized;

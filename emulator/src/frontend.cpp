@@ -539,6 +539,10 @@ void Frontend::draw()
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
         cubes[i].draw(renderer);
 
+    renderer.beginOverlay();
+    
+    renderer.overlayText(100, 100, b2Vec3(1,1,1), "Hello World");
+        
     renderer.endFrame();
 }
 

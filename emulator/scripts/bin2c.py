@@ -21,6 +21,8 @@ INPUTS = [
     "scripts/cube_side_vp.glsl",
     "scripts/background_fp.glsl",
     "scripts/background_vp.glsl",
+    "scripts/ui_font_data.fnt",
+    "scripts/ui_font_data_0.png",
     ]
 
 OUTPUT = "scripts/data.cpp"

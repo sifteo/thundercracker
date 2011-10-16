@@ -79,20 +79,13 @@ bool GLRenderer::init()
     extern const uint8_t img_cube_face_hilight[];
     extern const uint8_t img_cube_face_hilight_mask[];
     extern const uint8_t img_wood[];
+    extern const uint8_t ui_font_data_0[];
 
-    cubeFaceTexture = loadTexture(img_cube_face, GL_CLAMP);
-    cubeFaceHilightTexture = loadTexture(img_cube_face_hilight, GL_CLAMP);
-    cubeFaceHilightMaskTexture = loadTexture(img_cube_face_hilight_mask, GL_CLAMP);
+    cubeFaceTexture = loadTexture(img_cube_face);
+    cubeFaceHilightTexture = loadTexture(img_cube_face_hilight);
+    cubeFaceHilightMaskTexture = loadTexture(img_cube_face_hilight_mask);
     backgroundTexture = loadTexture(img_wood, GL_REPEAT);
-
-    /*
-     * Other OpenGL setup
-     */
-
-    glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glShadeModel(GL_SMOOTH);
+    fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
     
     /*
      * Procedural models
@@ -215,24 +208,122 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter)
     glTranslatef(0, 0, -zPlane);
     glMatrixMode(GL_MODELVIEW);
 
+    glDisable(GL_BLEND);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glShadeModel(GL_SMOOTH);
+
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 void GLRenderer::endFrame()
 {
-	if (!pendingScreenshotName.empty()) {
-		// Save the full screenshot, and complete the pending screenshot operation
+    glfwSwapBuffers();
+}
+
+void GLRenderer::beginOverlay()
+{
+    /*
+     * Handle screenshots here, since we don't want
+     * the screenshot to include overlay text. Save the
+     * full screenshot, and end our pending screenshot request.
+     */
+    if (!pendingScreenshotName.empty()) {
 		saveColorBufferPNG(pendingScreenshotName + ".png");
 		pendingScreenshotName.clear();
 	}	
 
-    glfwSwapBuffers();
+    // Do our text rendering in pixel coordinates
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glScalef(1, -1, 1);
+    glTranslatef(-1, -1, 0);
+    glScalef(2.0f / viewportWidth, 2.0f / viewportHeight, 1);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glShadeModel(GL_FLAT);    
 }
+
+unsigned GLRenderer::measureText(const char *str)
+{
+    unsigned x = 0, w = 0;
+    uint32_t id;
+    
+    while ((id = *(str++))) {
+        const Glyph *g = findGlyph(id);
+        if (g) {
+            w = MAX(w, x + g->xOffset + g->width);
+            x += g->xAdvance;
+        }
+    }
+    
+    return w;
+}
+
+void GLRenderer::overlayText(unsigned x, unsigned y, b2Vec3 color, const char *str)
+{
+    const float TEXTURE_WIDTH = 256.0f;
+    const float TEXTURE_HEIGHT = 256.0f;
+   
+    textVA.clear();
+
+    uint32_t id;
+    while ((id = *(str++))) {
+        const Glyph *g = findGlyph(id);
+        if (g) {
+            VertexT a, b, c, d;
+            
+            a.tx = g->x / TEXTURE_WIDTH;
+            a.ty = g->y / TEXTURE_HEIGHT;
+            a.vx = x + g->xOffset;
+            a.vy = y + g->yOffset;
+            a.vz = 0;
+            
+            b = a;
+            b.tx += g->width / TEXTURE_WIDTH;
+            b.vx += g->width;
+            
+            d = a;
+            d.ty += g->height / TEXTURE_HEIGHT;
+            d.vy += g->height;
+            
+            c = b;
+            c.ty = d.ty;
+            c.vy = d.vy;
+            
+            textVA.push_back(a);
+            textVA.push_back(b);
+            textVA.push_back(c);
+            
+            textVA.push_back(a);
+            textVA.push_back(c);
+            textVA.push_back(d);
+        
+            x += g->xAdvance;
+        }
+    }
+
+    glUseProgramObjectARB(0);
+    glColor3f(color.x, color.y, color.z);
+    glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, fontTexture);
+    glInterleavedArrays(GL_T2F_V3F, 0, &textVA[0]);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei) textVA.size());
+    glDisable(GL_TEXTURE_2D);
+}                            
  
 void GLRenderer::drawBackground(float extent, float scale)
 {
     float tc = scale * extent;
-    Vertex bg[] = {
+    VertexTN bg[] = {
         {-tc,  tc,   0.0f, 0.0f, 1.0f,   -extent,  extent, 0.0f },
         { tc,  tc,   0.0f, 0.0f, 1.0f,    extent,  extent, 0.0f },
         {-tc, -tc,   0.0f, 0.0f, 1.0f,   -extent, -extent, 0.0f },
@@ -415,7 +506,7 @@ void GLRenderer::drawCubeFace(unsigned id, uint16_t *framebuffer)
     glDisable(GL_TEXTURE_2D);
 }
 
-GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap)
+GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filter)
 {
     LodePNG::Decoder decoder;
     std::vector<unsigned char> pixels;
@@ -434,22 +525,22 @@ GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap)
                  &pixels[0]);
 
     // Sane defaults
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
     
     return texture;
 }
 
-void GLRenderer::createRoundedRect(std::vector<GLRenderer::Vertex> &outPolygon,
+void GLRenderer::createRoundedRect(std::vector<GLRenderer::VertexTN> &outPolygon,
                                    float size, float height, float relRadius)
 {
     const float step = M_PI / 32.0f;
     float side = 1.0 - relRadius;
 
     for (float angle = M_PI*2; angle > 0.0f; angle -= step) {
-        Vertex v;
+        VertexTN v;
 
         float x = cosf(angle) * relRadius;
         float y = sinf(angle) * relRadius;
@@ -479,15 +570,15 @@ void GLRenderer::createRoundedRect(std::vector<GLRenderer::Vertex> &outPolygon,
     }
 }
 
-void GLRenderer::extrudePolygon(const std::vector<GLRenderer::Vertex> &inPolygon,
-                                std::vector<GLRenderer::Vertex> &outTristrip)
+void GLRenderer::extrudePolygon(const std::vector<GLRenderer::VertexTN> &inPolygon,
+                                std::vector<GLRenderer::VertexTN> &outTristrip)
 {
-    const Vertex *prev = &inPolygon[inPolygon.size() - 1];
+    const VertexTN *prev = &inPolygon[inPolygon.size() - 1];
 
-    for (std::vector<Vertex>::const_iterator i = inPolygon.begin();
+    for (std::vector<VertexTN>::const_iterator i = inPolygon.begin();
          i != inPolygon.end(); i++) {
-        const Vertex *current = &*i;
-        Vertex a, b;
+        const VertexTN *current = &*i;
+        VertexTN a, b;
         
         a = *current;
 
@@ -545,4 +636,41 @@ void GLRenderer::saveColorBufferPNG(std::string name)
     encoder.encode(png, swappedPixels, width, height);
     
     LodePNG::saveFile(png, name);
+}
+
+const GLRenderer::Glyph *GLRenderer::findGlyph(uint32_t id)
+{
+    /*
+     * Very simplistic- linear search, one font, one texture page.
+     * Nothing fancy going on. The BMFont format is pretty simple to
+     * begin with, and here we're ignoring most of it.
+     *
+     * This is also assuming we're on a little-endian CPU that's fine
+     * with unaligned accesses.
+     */
+     
+    struct __attribute__ ((packed)) Header {
+        uint8_t type;
+        uint32_t size;
+    };
+
+    extern const uint8_t ui_font_data[];
+    const uint8_t *p = ui_font_data + 4;
+    const Header *hdr;
+    
+    // Find the 'chars' block (type 4)
+    do {
+        hdr = (const Header *)p;
+        p += sizeof *hdr + hdr->size;
+    } while (hdr->type != 4);
+    
+    // Find the character we're looking for (linear scan)
+    const Glyph *chars = (const Glyph *) (hdr + 1);
+    while (chars < (const Glyph *) p) {
+        if (chars->id == id)
+            return chars;
+        chars++;
+    }
+
+    return NULL;
 }
