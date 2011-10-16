@@ -412,7 +412,7 @@ void emu_help(CPU::em8051 *aCPU)
     waddstr(exc, "Copyright (c) 2011 Sifteo, Inc.");
 
     wmove(exc, 5, 2);
-    waddstr(exc, "8051 Emulator v. 0.72 - http://iki.fi/sol/");
+    waddstr(exc, "Based on 8051 Emulator v. 0.72 - http://iki.fi/sol/");
     wmove(exc, 6, 2);
     waddstr(exc, "Copyright (c) 2006 Jari Komppa");
 
