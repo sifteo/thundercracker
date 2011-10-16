@@ -239,6 +239,7 @@ class Radio {
 
         irq_state = regs[REG_STATUS] & mask;
         irq_edge |= irq_state && !irq_prev;
+        cpu->needHardwareTick = true;
     }
     
     void updateStatus() {
@@ -457,7 +458,7 @@ class Radio {
     Packet rx_fifo[FIFO_SIZE];
     Packet tx_fifo[FIFO_SIZE];
 
-    CPU::em8051 *cpu; // Only for exception reporting!
+    CPU::em8051 *cpu;
 };
 
 };  // namespace Cube

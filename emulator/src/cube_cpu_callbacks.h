@@ -62,7 +62,6 @@ static ALWAYS_INLINE void writeInline(Cube::Hardware *self, CPU::em8051 *cpu, in
     case BUS_PORT_DIR:
     case ADDR_PORT_DIR:
     case CTRL_PORT_DIR:
-        cpu->needHardwareTick = true;
         self->graphicsTick();
         break;
 
@@ -106,13 +105,8 @@ static ALWAYS_INLINE int readInline(Cube::Hardware *self, CPU::em8051 *cpu, int 
     switch (reg) {
 
     // Use some register reads as hints to wake up the hardware emulation clock.
-    case REG_SPIRSTAT:
-    case BUS_PORT:
-    case ADDR_PORT:
-    case CTRL_PORT:
-    case BUS_PORT_DIR:
-    case ADDR_PORT_DIR:
-    case CTRL_PORT_DIR:
+    case REG_SPIRSTAT:      // SPI rx polling
+    case BUS_PORT:          // Flash memory erase/program polling
         cpu->needHardwareTick = true;
         break;
     

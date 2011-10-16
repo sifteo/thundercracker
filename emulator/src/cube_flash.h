@@ -129,6 +129,7 @@ class Flash {
                  * We just became busy, and haven't set the timer yet.
                  */
 
+                cpu->needHardwareTick = true;
                 write_timer = deadline.setRelative(VirtualTime::usec(FLUSH_TIME_US));
 
                 switch (busy) {
