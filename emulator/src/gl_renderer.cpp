@@ -230,9 +230,9 @@ void GLRenderer::beginOverlay()
      * full screenshot, and end our pending screenshot request.
      */
     if (!pendingScreenshotName.empty()) {
-		saveColorBufferPNG(pendingScreenshotName + ".png");
-		pendingScreenshotName.clear();
-	}	
+                saveColorBufferPNG(pendingScreenshotName + ".png");
+                pendingScreenshotName.clear();
+        }       
 
     // Do our text rendering in pixel coordinates
     glMatrixMode(GL_PROJECTION);
@@ -475,13 +475,13 @@ void GLRenderer::drawCubeFace(unsigned id, uint16_t *framebuffer)
                     GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
                     framebuffer ? framebuffer : blackness);
 
-	if (!pendingScreenshotName.empty()) {
-		// Opportunistically grab this texture for a screenshot
+        if (!pendingScreenshotName.empty()) {
+                // Opportunistically grab this texture for a screenshot
         char suffix[32];
         snprintf(suffix, sizeof suffix, "-cube%02d.png", id);
         saveTexturePNG(pendingScreenshotName + std::string(suffix),
                        Cube::LCD::WIDTH, Cube::LCD::HEIGHT);
-	}
+        }
 
     /*
      * Just one draw. Our shader handles the rest. Drawing the LCD and

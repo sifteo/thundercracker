@@ -208,7 +208,11 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
 {
     glfwOpenWindowHint(GLFW_FSAA_SAMPLES, 4);
 
-    if (!glfwOpenWindow(width, height, 0,0,0,0,0,0,
+    if (!glfwOpenWindow(width, height,   // Pixels
+                        8, 8, 8,         // RGB bits
+                        0,               // Alpha bits
+                        24,              // Depth bits
+                        0,               // Stencil bits
                         fullscreen ? GLFW_FULLSCREEN : GLFW_WINDOW)) {
         return false;
     }
@@ -266,7 +270,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             glfwCloseWindow();
             instance->openWindow(1280, 720, !instance->isFullscreen);
             break;
-		
+                
         case 'S': {
             std::string name = instance->createScreenshotName();
             instance->overlay.postMessage("Taking screenshot \"" + name + "\"");
@@ -618,11 +622,11 @@ b2Vec2 Frontend::mouseVec(float viewExtent)
 
 std::string Frontend::createScreenshotName()
 {
-	char buffer[128];
+        char buffer[128];
     time_t t = time(NULL);
-	const struct tm *now = localtime(&t);
-	strftime(buffer, sizeof buffer, "siftulator-%Y%m%d-%H%M%S", now);
-	return std::string(buffer);
+        const struct tm *now = localtime(&t);
+        strftime(buffer, sizeof buffer, "siftulator-%Y%m%d-%H%M%S", now);
+        return std::string(buffer);
 }
 
 void Frontend::MousePicker::test(b2World &world, b2Vec2 point)
