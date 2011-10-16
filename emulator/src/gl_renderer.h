@@ -52,13 +52,21 @@ class GLRenderer {
                   b2Vec2 tilt, uint16_t *framebuffer, b2Mat33 &modelMatrix);
                   
     void beginOverlay();
-    void overlayText(unsigned x, unsigned y, b2Vec3 color, const char *str);
+    void overlayText(unsigned x, unsigned y, const float color[4], const char *str);
     unsigned measureText(const char *str);
 
   	void takeScreenshot(std::string name) {
 		// Screenshots are asynchronous
 		pendingScreenshotName = name;
 	}
+    
+    unsigned getWidth() const {
+        return viewportWidth;
+    }
+    
+    unsigned getHeight() const {
+        return viewportHeight;
+    }
 
  private:
     struct VertexTN {

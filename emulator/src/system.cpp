@@ -85,15 +85,11 @@ void System::threadFn(void *param)
     unsigned nCubes = self->opt_numCubes;
     bool debug = self->opt_cube0Debug && nCubes;
 
-    ElapsedTime et(self->time);
-    TimeGovernor gov(self->time);
-
     if (debug)
         Cube::Debug::init(&self->cubes[0]);
 
-    et.capture();
-    et.start();
-    gov.start();
+    TimeGovernor gov;
+    gov.start(&self->time);
 
     while (self->threadRunning) {
         if (debug) {
@@ -140,24 +136,6 @@ void System::threadFn(void *param)
 
         if (!self->opt_noThrottle)
             gov.step();
-
-        /*
-         * Do some periodic stats to stdout.
-         *
-         * XXX: The frontend should be doing this, not us. And it
-         *      should be part of the graphical output.
-         */
-
-        if (!debug) {
-            et.capture();
-            if (et.realSeconds() > 0.5f) {
-                printf("Running at %6.2f%% actual speed -- [", et.virtualRatio() * 100.0f);
-                for (unsigned i = 0; i < nCubes; i++)
-                    printf("%5.1f", self->cubes[i].lcd.getWriteCount()  / et.virtualSeconds());
-                printf(" ] FPS\n");
-                et.start();
-            }
-        }
     }
 
     if (debug)

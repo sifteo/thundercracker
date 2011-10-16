@@ -152,6 +152,11 @@ void FrontendCube::animate()
     hw->setAcceleration(accelLocal.x, accelLocal.y);
 }
 
+void FrontendCube::computeAABB(b2AABB &aabb)
+{
+    bodyFixture->GetShape()->ComputeAABB(&aabb, body->GetTransform(), 0);
+}
+
 AccelerationProbe::AccelerationProbe()
 {
     for (unsigned i = 0; i < filterWidth; i++)

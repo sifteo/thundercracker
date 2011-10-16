@@ -5,6 +5,7 @@ INCLUDES += -Isrc
 LOCAL_OBJS = \
         src/frontend.o \
         src/frontend_cube.o \
+        src/frontend_overlay.o \
         src/gl_renderer.o \
         src/main.o \
         src/system.o \

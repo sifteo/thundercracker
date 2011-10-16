@@ -100,19 +100,22 @@ class ElapsedTime {
      */
 
  public:
-    ElapsedTime(VirtualTime &vtime) : vtime(vtime) {}
-
+    void init(const VirtualTime *_vtime) {
+        vtime = _vtime;
+        capture();
+    }
+    
     void capture() {
         currentRealS = glfwGetTime();
     }
 
     void start() {
-        virtualT = vtime.clocks;
+        virtualT = vtime->clocks;
         realS = currentRealS;
     }
 
     uint64_t virtualTicks() {
-        return vtime.clocks - virtualT;
+        return vtime->clocks - virtualT;
     }
 
     uint64_t realMsec() {
@@ -120,7 +123,7 @@ class ElapsedTime {
     }
 
     double virtualSeconds() {
-        return virtualTicks() / (double)vtime.HZ;
+        return virtualTicks() / (double)vtime->HZ;
     }
 
     double realSeconds() {
@@ -133,7 +136,7 @@ class ElapsedTime {
     }
 
  private:
-    VirtualTime &vtime;
+    const VirtualTime *vtime;
     uint64_t virtualT;
     double realS;
     double currentRealS;
@@ -148,11 +151,8 @@ class TimeGovernor {
      */
 
  public:
-    TimeGovernor(VirtualTime &vtime)
-        : et(vtime) {}
-
-    void start() {
-        et.capture();
+    void start(const VirtualTime *vtime) {
+        et.init(vtime);
         et.start();
         secondsAhead = 0.0;
     }

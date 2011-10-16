@@ -12,10 +12,20 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "frontend.h"
 #include "system.h"
 
+
+static void message(const char *fmt, ...)
+{
+    va_list a;
+    va_start(a, fmt);
+    vfprintf(stderr, fmt, a);
+    va_end(a);
+}
+    
 
 static void usage()
 {
@@ -30,8 +40,7 @@ static void usage()
      *  -d                Launch firmware debugger (first cube only)
      */
      
-    fprintf(stderr,
-            "\n"
+    message("\n"
             "usage: tc-siftulator [OPTIONS]\n"
             "\n"
             "Sifteo Thundercracker simulator\n"
@@ -110,7 +119,7 @@ int main(int argc, char **argv)
         if (!strcmp(arg, "-n") && argv[c+1]) {
             sys.opt_numCubes = atoi(argv[c+1]);
             if (sys.opt_numCubes > sys.MAX_CUBES) {
-                fprintf(stderr, "Error: Unsupported number of cubes (Minimum 0, maximum %d)\n",
+                message("Error: Unsupported number of cubes (Minimum 0, maximum %d)\n",
                         sys.MAX_CUBES);
                 return 1;
             }
@@ -119,7 +128,7 @@ int main(int argc, char **argv)
         }
 
         if (arg[0] == '-') {
-            fprintf(stderr, "Unrecognized option: '%s'\n", arg);
+            message("Unrecognized option: '%s'\n", arg);
             usage();
             return 1;
         }
@@ -128,7 +137,7 @@ int main(int argc, char **argv)
          * No positional command line options yet. In the future this
          * may be a game binary to run on the master block.
          */
-        fprintf(stderr, "Unrecognized argument: '%s'\n", arg);
+        message("Unrecognized argument: '%s'\n", arg);
         usage();
         return 1;
     }
@@ -145,7 +154,7 @@ int main(int argc, char **argv)
     if (!sys.opt_cubeFirmware && (sys.opt_cube0Profile ||
                                   sys.opt_cube0Trace ||
                                   sys.opt_cube0Debug)) {
-        fprintf(stderr, "Debug features only available if a firmware image is provided.\n");
+        message("Debug features only available if a firmware image is provided.\n");
         return 1;
     }
 
@@ -154,7 +163,10 @@ int main(int argc, char **argv)
      */
 
     sys.init();
-    fe.init(&sys);
+    if (!fe.init(&sys)) {
+        message("Graphical frontend failed to initialize.\n");
+        return 1;
+    }    
 
     sys.start();
     fe.run();

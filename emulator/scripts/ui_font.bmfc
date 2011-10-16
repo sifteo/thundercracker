@@ -2,9 +2,9 @@
 fileVersion=1
 
 # font settings
-fontName=Calibri
+fontName=Bitstream Vera Sans
 charSet=0
-fontSize=24
+fontSize=-16
 aa=1
 scaleH=100
 useSmoothing=1
@@ -23,7 +23,7 @@ spacingHoriz=1
 spacingVert=1
 
 # output file
-outWidth=256
+outWidth=128
 outHeight=256
 outBitDepth=32
 fontDescFormat=2
@@ -43,6 +43,6 @@ invB=0
 outlineThickness=1
 
 # selected chars
-chars=0-0,13,32-126,160-255,8592-8601,8616
+chars=32-85,87-126,160-255
 
 # imported icon images

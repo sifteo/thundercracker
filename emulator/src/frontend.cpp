@@ -21,7 +21,7 @@ Frontend::Frontend()
 {}
 
 
-void Frontend::init(System *_sys)
+bool Frontend::init(System *_sys)
 {
     instance = this;
     sys = _sys;
@@ -84,6 +84,24 @@ void Frontend::init(System *_sys)
      */
 
     world.SetContactListener(&contactListener);
+    
+    /*
+     * Open our GUI window
+     */
+     
+    if (sys->opt_numCubes > 1) {
+        // 2 or more cubes: Large window
+        if (!openWindow(800, 600))
+            return false;
+    } else {    
+        // Zero or one cube: Small window
+        if (!openWindow(300, 300))
+            return false;
+    }
+    
+    overlay.init(&renderer, sys);
+    
+    return true;
 }
 
 void Frontend::createWalls()
@@ -116,7 +134,7 @@ void Frontend::moveWalls(bool immediate)
      * walls accordingly.
      */
 
-    float yRatio = viewportHeight / (float)viewportWidth;
+    float yRatio = renderer.getHeight() / (float)renderer.getWidth();
     if (yRatio < 0.1)
         yRatio = 0.1;
 
@@ -172,16 +190,6 @@ void Frontend::exit()
 
 void Frontend::run()
 {
-    if (sys->opt_numCubes > 1) {
-        // 2 or more cubes: Large window
-        if (!openWindow(800, 600))
-            return;
-    } else {    
-        // Zero or one cube: Small window
-        if (!openWindow(300, 300))
-            return;
-    }
-
     isRunning = true;
     while (isRunning && sys->isRunning()) {
 
@@ -202,7 +210,6 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
 
     if (!glfwOpenWindow(width, height, 0,0,0,0,0,0,
                         fullscreen ? GLFW_FULLSCREEN : GLFW_WINDOW)) {
-        fprintf(stderr, "Error creating OpenGL window\n");
         return false;
     }
 
@@ -213,8 +220,9 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
     glfwEnable(GLFW_MOUSE_CURSOR);
     glfwSetWindowTitle("Thundercracker");
 
-    glfwGetWindowSize(&viewportWidth, &viewportHeight);
-    onResize(viewportWidth, viewportHeight);
+    int w, h;
+    glfwGetWindowSize(&w, &h);
+    onResize(w, h);
     
     isFullscreen = fullscreen;
     mouseWheelPos = 0;
@@ -231,11 +239,8 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
 
 void GLFWCALL Frontend::onResize(int width, int height)
 {
-    if (width && height) {
-        instance->viewportWidth = width;
-        instance->viewportHeight = height;
+    if (width && height)
         instance->renderer.setViewport(width, height);
-    }
 }
 
 void GLFWCALL Frontend::onKey(int key, int state)
@@ -264,7 +269,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
 		
         case 'S': {
             std::string name = instance->createScreenshotName();
-            printf("Taking screenshot \"%s\"\n", name.c_str());
+            instance->overlay.postMessage("Taking screenshot \"" + name + "\"");
             instance->renderer.takeScreenshot(name);
             break;
         }
@@ -533,7 +538,7 @@ void Frontend::draw()
 {
     renderer.beginFrame(viewExtent, viewCenter);
 
-    float ratio = std::max(1.0f, viewportHeight / (float)viewportWidth);
+    float ratio = std::max(1.0f, renderer.getHeight() / (float)renderer.getWidth());
     renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
 
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
@@ -541,9 +546,33 @@ void Frontend::draw()
 
     renderer.beginOverlay();
     
-    renderer.overlayText(100, 100, b2Vec3(1,1,1), "Hello World");
+    // Fixed portion of the overlay
+    overlay.draw();
+    
+    // Per-cube overlays (Only when sufficiently zoomed-in)
+    if (viewExtent < FrontendCube::SIZE * 4.0f)
+        for (unsigned i = 0; i < sys->opt_numCubes;  i++) {
+            FrontendCube &c = cubes[i]; 
+            b2AABB aabb;    
         
+            // The overlay sits just below the cube's extents
+            c.computeAABB(aabb);
+            b2Vec2 pos = worldToScreen(c.body->GetPosition() +
+                                       b2Vec2(0, 1.1f * aabb.GetExtents().y));
+                                   
+            overlay.drawCube(&c, pos.x, pos.y);
+        }
+    
     renderer.endFrame();
+}
+
+b2Vec2 Frontend::worldToScreen(b2Vec2 world)
+{
+    // Convert world coordinates to screen coordinates
+    
+    world -= viewCenter;
+    return b2Vec2(renderer.getWidth() / 2, renderer.getHeight() / 2)
+                  + renderer.getWidth() * ((0.5f / viewExtent) * world);
 }
 
 float Frontend::zoomedViewExtent()
@@ -554,8 +583,8 @@ float Frontend::zoomedViewExtent()
      * whichever axis is smaller.
      */
 
-    float scale = (viewportHeight < viewportWidth)
-        ? viewportWidth / (float) viewportHeight : 1.0f;
+    float scale = (renderer.getHeight() < renderer.getWidth())
+        ? renderer.getWidth() / (float) renderer.getHeight() : 1.0f;
         
     if (sys->opt_numCubes > 1) {
         // Zoom in one one cube
@@ -580,8 +609,8 @@ b2Vec2 Frontend::targetViewCenter()
 
 b2Vec2 Frontend::mouseVec(float viewExtent)
 {
-    int halfWidth = viewportWidth / 2;
-    int halfHeight = viewportHeight / 2;
+    int halfWidth = renderer.getWidth() / 2;
+    int halfHeight = renderer.getHeight() / 2;
     float mouseScale = viewExtent / (float)halfWidth;
     return  b2Vec2((mouseX - halfWidth) * mouseScale,
                    (mouseY - halfHeight) * mouseScale);

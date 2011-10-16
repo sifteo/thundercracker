@@ -267,9 +267,9 @@ unsigned GLRenderer::measureText(const char *str)
     return w;
 }
 
-void GLRenderer::overlayText(unsigned x, unsigned y, b2Vec3 color, const char *str)
+void GLRenderer::overlayText(unsigned x, unsigned y, const float color[4], const char *str)
 {
-    const float TEXTURE_WIDTH = 256.0f;
+    const float TEXTURE_WIDTH = 128.0f;
     const float TEXTURE_HEIGHT = 256.0f;
    
     textVA.clear();
@@ -311,7 +311,7 @@ void GLRenderer::overlayText(unsigned x, unsigned y, b2Vec3 color, const char *s
     }
 
     glUseProgramObjectARB(0);
-    glColor3f(color.x, color.y, color.z);
+    glColor4fv(color);
     glActiveTexture(GL_TEXTURE0);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, fontTexture);
