@@ -26,7 +26,8 @@ bool Hardware::init(VirtualTime *masterTimer,
     cpu.sfrread = sfrRead;
     cpu.sfrwrite = sfrWrite;
     cpu.callbackData = this;
-
+    cpu.vtime = masterTimer;
+    
     CPU::em8051_reset(&cpu, true);
 
     if (firmwareFile)

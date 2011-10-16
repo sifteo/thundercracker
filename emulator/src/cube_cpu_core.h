@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "cube_cpu_irq.h"
+#include "vtime.h"
 
 
 namespace Cube {
@@ -53,7 +54,7 @@ static void traceExecution(em8051 *mCPU)
             "DP=[%d %04x %04x] P=[%02x.%02x %02x.%02x %02x.%02x %02x.%02x] "
             "TMR=[%02x%02x %02x%02x %02x%02x] DBG=%02x\n",
 
-            (unsigned) mCPU->profilerTotal,
+            (unsigned) mCPU->vtime->clocks,
             mCPU->mPC, assembly,
             mCPU->mSFR[REG_ACC],
             bank,
@@ -459,12 +460,6 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
         ticked = 1;
 
         /*
-         * XXX: The CPU can't access VirtualTime, but the profiler and tracer
-         *      need a cycle count. This is what we currently use...
-         */
-        aCPU->profilerTotal += aCPU->mTickDelay;
-
-        /*
          * Update profiler stats for this byte
          */
 
@@ -472,12 +467,11 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
             struct profile_data *pd = &aCPU->mProfileData[pc];
             pd->total_cycles += aCPU->mTickDelay;
             if (pd->loop_prev) {
-                pd->loop_cycles += aCPU->profilerTotal - pd->loop_prev;
+                pd->loop_cycles += aCPU->vtime->clocks - pd->loop_prev;
                 pd->loop_hits++;
             }
-            pd->loop_prev = aCPU->profilerTotal;
+            pd->loop_prev = aCPU->vtime->clocks;
         }
-
 
         /*
          * Update parity bit

@@ -40,6 +40,8 @@
 #include "cube_cpu_reg.h"
 #include "macros.h"
 
+class VirtualTime;
+
 namespace Cube {
 namespace CPU {
 
@@ -108,8 +110,6 @@ struct em8051
     bool sbt;                   // In static binary translation mode
     bool needInterruptDispatch;
     
-    uint64_t profilerTotal;
-
     uint8_t irq_count;          // Number of currently active IRQ handlers
     uint8_t ifp;                // Last IFP state
     uint8_t t012;               // Last T0/1/2 state
@@ -143,6 +143,7 @@ struct em8051
     // Profiler state
     FILE *traceFile;
     struct profile_data *mProfileData;
+    VirtualTime *vtime;
 };
 
 // set the emulator into reset state. Must be called before tick(), as

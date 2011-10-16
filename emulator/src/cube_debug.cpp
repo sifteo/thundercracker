@@ -360,7 +360,7 @@ void writeProfile(CPU::em8051 *aCPU, const char *filename)
             CPU::em8051_decode(aCPU, addr, assembly);
             fprintf(f, "%12d %8.4f%% %8d [%8d x %9d ]  %04x:  %s\n",
                     (int)pd->total_cycles,
-                    (pd->total_cycles * 100) / (float)aCPU->profilerTotal,
+                    (pd->total_cycles * 100) / (float)aCPU->vtime->clocks,
                     (int)pd->flash_idle,
                     (int)(pd->loop_hits ? pd->loop_cycles / pd->loop_hits : 0),
                     (int)pd->loop_hits,
