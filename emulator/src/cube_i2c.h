@@ -42,7 +42,18 @@ class I2CBus {
         uint8_t w2con0 = cpu->mSFR[REG_W2CON0];
         uint8_t w2con1 = cpu->mSFR[REG_W2CON1];
     
-        if (LIKELY(timer)) {
+        if (!(w2con0 & W2CON0_ENABLE)) {
+            // Hardware disabled, reset state
+            
+            if (state != I2C_IDLE && cpu->traceFile)
+                fprintf(cpu->traceFile, "[%2d] I2C: State reset\n", cpu->id);
+            
+            timer = 0;
+            state = I2C_IDLE;
+            tx_buffer_full = false;
+            rx_buffer_full = false;
+        
+        } else if (LIKELY(timer)) {
             // Still busy
 
             if (deadline.hasPassed(timer)) {
