@@ -34,16 +34,18 @@ class System {
     const char *opt_cubeFirmware;
     bool opt_noThrottle;
 
+    // Global debug options
+    const char *opt_cubeTrace;
+
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
     const char *opt_cube0Flash;
-    const char *opt_cube0Trace;
     const char *opt_cube0Profile;
 
     System()
         : opt_numCubes(DEFAULT_CUBES), opt_cubeFirmware(NULL),
-        opt_noThrottle(false), opt_cube0Debug(false),
-        opt_cube0Flash(NULL), opt_cube0Trace(NULL),
+        opt_noThrottle(false), opt_cubeTrace(false),
+        opt_cube0Debug(NULL), opt_cube0Flash(NULL),
         opt_cube0Profile(NULL), threadRunning(false)
         {}
 
@@ -65,6 +67,8 @@ class System {
     GLFWthread thread;
     bool threadRunning;
 
+    FILE *traceFile;
+    
     SystemNetwork network;
 };
 

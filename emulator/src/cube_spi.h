@@ -123,8 +123,8 @@ class SPIBus {
                 uint8_t miso = radio.spiByte(tx_mosi);
 
                 if (cpu->traceFile) {
-                    fprintf(cpu->traceFile, "SPI: %02x -> %02x\n",
-                            tx_mosi, miso);
+                    fprintf(cpu->traceFile, "[%2d] SPI: %02x -> %02x\n",
+                            cpu->id, tx_mosi, miso);
                 }
 
                 if (rx_count < SPI_FIFO_SIZE)
@@ -156,7 +156,7 @@ class SPIBus {
 
         if (status_dirty) {
             if (cpu->traceFile) {
-                fprintf(cpu->traceFile, "SPI: rx [ ");
+                fprintf(cpu->traceFile, "[%2d] SPI: rx [ ", cpu->id);
                 for (int i = 0; i < rx_count; i++)
                     fprintf(cpu->traceFile, "%02x ", rx_fifo[i]);
                 fprintf(cpu->traceFile, "] tx [ ");

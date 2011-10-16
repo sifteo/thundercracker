@@ -78,7 +78,7 @@ class Neighbors {
     
     NEVER_INLINE void inputWork(CPU::em8051 &cpu) {
         if (cpu.traceFile)
-            fprintf(cpu.traceFile, "NEIGHBOR: Received pulse (sides %02x)\n", inputs);
+            fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Received pulse (sides %02x)\n", cpu.id, inputs);
 
         cpu.mSFR[PORT] |= PIN_IN;
         inputs = 0;

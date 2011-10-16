@@ -23,7 +23,8 @@ namespace CPU {
 static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
 {
     if (cpu->traceFile)
-        fprintf(cpu->traceFile, "IRQ: Interrupt arrived, prio=%d vector=0x%04x\n", priority, vector);
+        fprintf(cpu->traceFile, "[%2d] IRQ: Interrupt arrived, prio=%d vector=0x%04x\n",
+                cpu->id, priority, vector);
 
     if (cpu->irq_count) {
         // Another IRQ is in progress. Are we higher priority?
@@ -32,7 +33,7 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
             // Nope. Can't interrupt the last handler.
      
             if (cpu->traceFile)
-                fprintf(cpu->traceFile, "IRQ: Higher priority interrupt in progress\n");
+                fprintf(cpu->traceFile, "[%2d] IRQ: Higher priority interrupt in progress\n", cpu->id);
 
             return 0;
         }
@@ -76,7 +77,7 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
 static ALWAYS_INLINE void handle_interrupts(struct em8051 *cpu)
 {
     if (cpu->traceFile)
-        fprintf(cpu->traceFile, "IRQ: Checking for interrupts\n");
+        fprintf(cpu->traceFile, "[%2d] IRQ: Checking for interrupts\n", cpu->id);
 
     // IFP is currently disabled, we don't use it.
 #ifdef EM8051_SUPPORT_IFP

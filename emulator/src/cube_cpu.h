@@ -140,8 +140,10 @@ struct em8051
 
     } irql[NUM_IRQ_LEVELS];
 
-    // Profiler state
     FILE *traceFile;
+    unsigned id;
+
+    // Profiler state
     struct profile_data *mProfileData;
     VirtualTime *vtime;
 };

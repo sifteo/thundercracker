@@ -112,7 +112,7 @@ class Radio {
             spi_index = -1;
 
             if (cpu->traceFile)
-                fprintf(cpu->traceFile, "SPI: rf begin\n");
+                fprintf(cpu->traceFile, "[%2d] SPI: rf begin\n", cpu->id);
         }
         
         if (!csn && nextCSN) {
@@ -120,7 +120,7 @@ class Radio {
             spiCmdEnd(spi_cmd);
 
             if (cpu->traceFile)
-                fprintf(cpu->traceFile, "SPI: rf end\n");
+                fprintf(cpu->traceFile, "[%2d] SPI: rf end\n", cpu->id);
         }
         
         csn = nextCSN;
@@ -170,7 +170,7 @@ class Radio {
         bool hasACK = false;
 
         if (cpu->traceFile) {
-            fprintf(cpu->traceFile, "RADIO: rx [%2d] ", incoming.len);
+            fprintf(cpu->traceFile, "[%2d] RADIO: rx [%2d] ", cpu->id, incoming.len);
             for (int i = 0; i < incoming.len; i++)
                 fprintf(cpu->traceFile, "%02x", incoming.payload[i]);
             fprintf(cpu->traceFile, " (rxc=%d txc=%d)\n",
@@ -191,7 +191,7 @@ class Radio {
                 // ACK with payload
 
                 if (cpu->traceFile) {
-                    fprintf(cpu->traceFile, "RADIO: ack [%2d] ", tx_tail->len);
+                    fprintf(cpu->traceFile, "[%2d] RADIO: ack [%2d] ", cpu->id, tx_tail->len);
                     for (int i = 0; i < tx_tail->len; i++)
                         fprintf(cpu->traceFile, "%02x", tx_tail->payload[i]);
                     fprintf(cpu->traceFile, "\n");
@@ -224,7 +224,7 @@ class Radio {
              */
 
             if (cpu->traceFile)
-                fprintf(cpu->traceFile, "RADIO: rx full, NAK\n");
+                fprintf(cpu->traceFile, "[%2d] RADIO: rx full, NAK\n", cpu->id);
         }
 
         updateStatus();
@@ -329,7 +329,7 @@ class Radio {
             tx_fifo[tx_fifo_head].len = spi_index;
  
             if (cpu->traceFile) {
-                fprintf(cpu->traceFile, "RADIO: ack enq %d [%2d]\n", tx_fifo_head, spi_index);
+                fprintf(cpu->traceFile, "[%2d] RADIO: ack enq %d [%2d]\n", cpu->id, tx_fifo_head, spi_index);
             }
 
            if (tx_fifo_count < FIFO_SIZE) {

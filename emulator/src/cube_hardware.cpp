@@ -67,15 +67,18 @@ void Hardware::except(CPU::em8051 *cpu, int exc)
 {
     Hardware *self = (Hardware*) cpu->callbackData;
     const char *name = CPU::em8051_exc_name(exc);
+    FILE *f;
 
-    if (cpu->traceFile)
-        fprintf(cpu->traceFile, "EXCEPTION at 0x%04x: %s\n", cpu->mPC, name);
-
-    if (self == Cube::Debug::cube) {
+    if (cpu->traceFile) {
+        f = cpu->traceFile;
+    } else if (self == Cube::Debug::cube) {
         Cube::Debug::emu_exception(cpu, exc);
+        return;
     } else {
-        fprintf(stderr, "EXCEPTION at 0x%04x: %s\n", cpu->mPC, name);
+        f = stderr;
     }
+
+    fprintf(f, "[%2d] EXCEPTION at 0x%04x: %s\n", cpu->id, cpu->mPC, name);
 }
 
 void Hardware::sfrWrite(CPU::em8051 *cpu, int reg)
@@ -129,7 +132,7 @@ void Hardware::sfrWrite(CPU::em8051 *cpu, int reg)
         break;
 
     case REG_DEBUG:
-        printf("DEBUG<%p>: %02x\n", self, value);
+        printf("DEBUG[%d]: %02x\n", self->cpu.id, value);
         break;
 
     }

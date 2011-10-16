@@ -31,6 +31,11 @@ class I2CBus {
 
     void init() {
         timer = 0;
+        state = I2C_IDLE;
+        iex3 = false;
+        next_ack_status = false;
+        tx_buffer_full = false;
+        rx_buffer_full = false;
     }
 
     ALWAYS_INLINE void tick(TickDeadline &deadline, CPU::em8051 *cpu) {
@@ -48,7 +53,7 @@ class I2CBus {
                  */
 
                 if (cpu->traceFile)
-                    fprintf(cpu->traceFile, "I2C: timer fired\n");
+                    fprintf(cpu->traceFile, "[%2d] I2C: timer fired\n", cpu->id);
 
                 timer = 0;
 
@@ -154,7 +159,7 @@ class I2CBus {
     
     void writeData(CPU::em8051 *cpu, uint8_t data) {
         if (cpu->traceFile)
-            fprintf(cpu->traceFile, "I2C: write %02x\n", data);
+            fprintf(cpu->traceFile, "[%2d] I2C: write %02x\n", cpu->id, data);
 
         if (tx_buffer_full) {
             cpu->except(cpu, CPU::EXCEPTION_I2C);
@@ -169,7 +174,7 @@ class I2CBus {
             cpu->except(cpu, CPU::EXCEPTION_I2C);
 
         if (cpu->traceFile)
-            fprintf(cpu->traceFile, "I2C: read %02x\n", rx_buffer);
+            fprintf(cpu->traceFile, "[%2d] I2C: read %02x\n", cpu->id, rx_buffer);
         
         rx_buffer_full = 0;
         return rx_buffer;
@@ -182,7 +187,7 @@ class I2CBus {
         cpu->mSFR[REG_W2CON1] = value & ~W2CON1_READY;
 
         if (cpu->traceFile)
-            fprintf(cpu->traceFile, "I2C: con1 -> %02x\n", value);
+            fprintf(cpu->traceFile, "[%2d] I2C: con1 -> %02x\n", cpu->id, value);
         
         return value;
     }
@@ -194,7 +199,7 @@ class I2CBus {
          */
 
         if (cpu->traceFile)
-            fprintf(cpu->traceFile, "I2C: timer started, %d bits\n", bits);
+            fprintf(cpu->traceFile, "[%2d] I2C: timer started, %d bits\n", cpu->id, bits);
         
         uint8_t w2con0 = cpu->mSFR[REG_W2CON0];
         switch (w2con0 & W2CON0_SPEED) {
@@ -206,21 +211,21 @@ class I2CBus {
 
     void busStart(CPU::em8051 *cpu) {
         if (cpu->traceFile)
-            fprintf(cpu->traceFile, "I2C: BUS start\n"); 
+            fprintf(cpu->traceFile, "[%2d] I2C: BUS start\n", cpu->id); 
 
         accel.i2cStart();
     }
 
     void busStop(CPU::em8051 *cpu) {
         if (cpu->traceFile)
-            fprintf(cpu->traceFile, "I2C: BUS stop\n"); 
+            fprintf(cpu->traceFile, "[%2d] I2C: BUS stop\n", cpu->id); 
 
         accel.i2cStop();
     }
     
     uint8_t busWrite(CPU::em8051 *cpu, uint8_t byte) {
         if (cpu->traceFile)
-            fprintf(cpu->traceFile, "I2C: BUS write %02x\n", byte); 
+            fprintf(cpu->traceFile, "[%2d] I2C: BUS write %02x\n", cpu->id, byte); 
 
         return accel.i2cWrite(byte);
     }
@@ -229,7 +234,7 @@ class I2CBus {
         uint8_t result = accel.i2cRead(ack);
 
         if (cpu->traceFile)
-            fprintf(cpu->traceFile, "I2C: BUS read(%d) %02x\n", ack, result);
+            fprintf(cpu->traceFile, "[%2d] I2C: BUS read(%d) %02x\n", cpu->id, ack, result);
 
         return result;
     }

@@ -72,8 +72,8 @@ static void usage()
      * only useful for internal development:
      *
      *  -f FIRMWARE.hex   Specify firmware image for cubes
+     *  -t TRACE.txt      Trace firmware execution to a text file
      *  -F FLASH.bin      Load/save flash memory (first cube only) to a binary file
-     *  -t TRACE.txt      Trace firmware execution (first cube only) to a text file
      *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
      *  -d                Launch firmware debugger (first cube only)
      */
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
         }
 
         if (!strcmp(arg, "-t") && argv[c+1]) {
-            sys.opt_cube0Trace = argv[c+1];
+            sys.opt_cubeTrace = argv[c+1];
             c++;
             continue;
         }
@@ -194,7 +194,7 @@ int main(int argc, char **argv)
      */
 
     if (!sys.opt_cubeFirmware && (sys.opt_cube0Profile ||
-                                  sys.opt_cube0Trace ||
+                                  sys.opt_cubeTrace ||
                                   sys.opt_cube0Debug)) {
         message("Debug features only available if a firmware image is provided.\n");
         return 1;

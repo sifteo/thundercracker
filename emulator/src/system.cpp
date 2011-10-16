@@ -11,6 +11,16 @@
 
 
 bool System::init() {
+    if (opt_cubeTrace) {
+        traceFile = fopen(opt_cubeTrace, "w");
+        if (!traceFile) {
+            perror("Error opening trace file");
+            return false;
+        }
+    } else {
+        traceFile = NULL;
+    }
+
     for (unsigned i = 0; i < opt_numCubes; i++)
         if (!initCube(i))
             return false;
@@ -45,14 +55,15 @@ void System::setNumCubes(unsigned n)
 
 bool System::initCube(unsigned id)
 {
-    if (!cubes[id].init(&time,
-                        opt_cubeFirmware,
-                        id ? NULL : opt_cube0Flash))
+    if (!cubes[id].init(&time, opt_cubeFirmware, id ? NULL : opt_cube0Flash))
         return false;
 
-    /*
-     * Link the neighbor sensors into a network
-     */
+    cubes[id].cpu.id = id;
+    cubes[id].cpu.traceFile = traceFile;
+
+    if (id == 0 && opt_cube0Profile)
+        cubes[0].cpu.mProfileData = (Cube::CPU::profile_data *)
+            calloc(CODE_SIZE, sizeof cubes[0].cpu.mProfileData[0]);
 
     cubes[id].neighbors.attachCubes(cubes);
 
@@ -64,26 +75,7 @@ bool System::initCube(unsigned id)
      * when running firmware that doesn't have a real address
      * assignment scheme implemented.
      */
-
-    cubes[id].spi.radio.setAddressLSB(id);
-
-    if (id == 0) {
-        // Special debug options for cube 0 only
-        
-        if (opt_cube0Profile) {
-            cubes[0].cpu.mProfileData = (Cube::CPU::profile_data *)
-                calloc(CODE_SIZE, sizeof cubes[0].cpu.mProfileData[0]);
-        }
-
-        if (opt_cube0Trace) {
-            printf("Opening trace\n");
-            cubes[0].cpu.traceFile = fopen(opt_cube0Trace, "w");
-            if (!cubes[0].cpu.traceFile) {
-                perror("Error opening trace file");
-                return false;
-            }
-        }
-    }
+    cubes[id].spi.radio.setAddressLSB(id);        
 
     return true;
 }
@@ -110,8 +102,10 @@ void System::exit() {
     if (opt_cube0Profile)
         Cube::Debug::writeProfile(&cubes[0].cpu, opt_cube0Profile);
 
-    if (opt_cube0Trace)
-        fclose(cubes[0].cpu.traceFile);
+    if (traceFile) {
+        fclose(traceFile);
+        traceFile = NULL;
+    }
 }
 
 void System::threadFn(void *param)

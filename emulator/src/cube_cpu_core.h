@@ -42,6 +42,7 @@ namespace Cube {
 namespace CPU {
 
 
+
 static void traceExecution(em8051 *mCPU)
 {
     char assembly[128];
@@ -50,10 +51,11 @@ static void traceExecution(em8051 *mCPU)
     em8051_decode(mCPU, mCPU->mPC, assembly);
 
     fprintf(mCPU->traceFile,
-            "%10u  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] "
+            "[%2d] %10u  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] "
             "DP=[%d %04x %04x] P=[%02x.%02x %02x.%02x %02x.%02x %02x.%02x] "
             "TMR=[%02x%02x %02x%02x %02x%02x] DBG=%02x\n",
 
+            mCPU->id,
             (unsigned) mCPU->vtime->clocks,
             mCPU->mPC, assembly,
             mCPU->mSFR[REG_ACC],
