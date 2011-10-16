@@ -36,8 +36,8 @@ RCSID("$Id: window.c,v 1.62 2008/07/13 16:08:18 wmcbrine Exp $")
         LINES - begy; ncols to COLS - begx. Create a new full-screen
         window by calling newwin(0, 0, 0, 0).
 
-        delwin() deletes the named window, freeing all associated 
-        memory. In the case of overlapping windows, subwindows should be 
+        delwin() deletes the named window, freeing all associated
+        memory. In the case of overlapping windows, subwindows should be
         deleted before the main window.
 
         mvwin() moves the window so that the upper left-hand corner is
@@ -78,12 +78,12 @@ RCSID("$Id: window.c,v 1.62 2008/07/13 16:08:18 wmcbrine Exp $")
         wsyncdown() causes a touchwin() of the current window if any of
         its parent's windows have been touched.
 
-        resize_window() allows the user to resize an existing window. It 
+        resize_window() allows the user to resize an existing window. It
         returns the pointer to the new window, or NULL on failure.
 
         wresize() is an ncurses-compatible wrapper for resize_window().
         Note that, unlike ncurses, it will NOT process any subwindows of
-        the window. (However, you still can call it _on_ subwindows.) It 
+        the window. (However, you still can call it _on_ subwindows.) It
         returns OK or ERR.
 
         PDC_makenew() allocates all data for a new WINDOW * except the
@@ -91,7 +91,7 @@ RCSID("$Id: window.c,v 1.62 2008/07/13 16:08:18 wmcbrine Exp $")
         the window structure, it will free all allocated memory and
         return a NULL pointer.
 
-        PDC_makelines() allocates the memory for the lines.
+:       PDC_makelines() allocates the memory for the lines.
 
         PDC_sync() handles wrefresh() and wsyncup() calls when a window
         is changed.
@@ -191,7 +191,9 @@ WINDOW *PDC_makelines(WINDOW *win)
 {
     int i, j, nlines, ncols;
 
-    PDC_LOG(("PDC_makelines() - called: lines %d cols %d\n", nlines, ncols));
+    PDC_LOG(("PDC_makelines() - called: lines %d cols %d\n",
+               (win ? win->_maxy : -99),
+               (win ? win->_maxx : -99)));
 
     if (!win)
         return (WINDOW *)NULL;

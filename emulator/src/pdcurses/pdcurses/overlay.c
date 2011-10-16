@@ -43,7 +43,7 @@ RCSID("$Id: overlay.c,v 1.36 2008/07/14 12:35:23 wmcbrine Exp $")
 
 **man-end****************************************************************/
 
-/* Thanks to Andreas Otte <venn@@uni-paderborn.de> for the 
+/* Thanks to Andreas Otte <venn@@uni-paderborn.de> for the
    corrected overlay()/overwrite() behavior. */
 
 static int _copy_win(const WINDOW *src_w, WINDOW *dst_w, int src_tr,
@@ -85,7 +85,7 @@ static int _copy_win(const WINDOW *src_w, WINDOW *dst_w, int src_tr,
 
                 if (fc == _NO_CHANGE)
                     fc = col + dst_tc;
-            
+
                 lc = col + dst_tc;
             }
 
@@ -130,7 +130,7 @@ int overlay(const WINDOW *src_w, WINDOW *dst_w)
     last_col = min(src_w->_begx + src_w->_maxx, dst_w->_begx + dst_w->_maxx);
     last_line = min(src_w->_begy + src_w->_maxy, dst_w->_begy + dst_w->_maxy);
 
-    /* determine the overlapping region of the two windows in real 
+    /* determine the overlapping region of the two windows in real
        coordinates */
 
     /* if no overlapping region, do nothing */
@@ -187,7 +187,7 @@ int overwrite(const WINDOW *src_w, WINDOW *dst_w)
     last_col = min(src_w->_begx + src_w->_maxx, dst_w->_begx + dst_w->_maxx);
     last_line = min(src_w->_begy + src_w->_maxy, dst_w->_begy + dst_w->_maxy);
 
-    /* determine the overlapping region of the two windows in real 
+    /* determine the overlapping region of the two windows in real
        coordinates */
 
     /* if no overlapping region, do nothing */
@@ -252,5 +252,5 @@ int copywin(const WINDOW *src_w, WINDOW *dst_w, int src_tr, int src_tc,
     src_end_x = src_tc + min_cols;
 
     return _copy_win(src_w, dst_w, src_tr, src_tc, src_end_y, src_end_x,
-                     dst_tr, dst_tc, overlay);
+                     dst_tr, dst_tc, (bool)overlay);   /* BJG */
 }

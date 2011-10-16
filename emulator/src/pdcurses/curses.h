@@ -36,7 +36,7 @@ PDCurses portable platform definitions list:
 #define XOPEN           1      /* X/Open Curses routines */
 #define SYSVcurses      1      /* System V Curses routines */
 #define BSDcurses       1      /* BSD Curses routines */
-#define CHTYPE_LONG     1      /* size of chtype; long */
+#define CHTYPE_LONG     2      /* size of chtype; 1= long (32-bit), 2=int64 */
 
 /*----------------------------------------------------------------------*/
 
@@ -85,11 +85,19 @@ extern "C"
 typedef unsigned char bool;    /* PDCurses Boolean type */
 
 #ifdef CHTYPE_LONG
-# if _LP64
-typedef unsigned int chtype;
-# else
-typedef unsigned long chtype;  /* 16-bit attr + 16-bit char */
-# endif
+    # if(CHTYPE_LONG >= 2)       /* "non-standard" 64-bit chtypes     */
+        # ifdef _MSC_VER         /* (currently useful only in Win32a) */
+            typedef unsigned __int64 chtype;  /* 64 bits,  MS style */
+        # else
+            typedef unsigned long long chtype;  /* 64-bit, standard style */
+        # endif
+    #else                        /* "Standard" CHTYPE_LONG case,  32-bit: */
+        # if _LP64
+            typedef unsigned int chtype;
+        # else
+            typedef unsigned long chtype;  /* 16-bit attr + 16-bit char */
+        # endif
+    # endif
 #else
 typedef unsigned short chtype; /* 8-bit attr + 8-bit char */
 #endif
@@ -106,12 +114,23 @@ typedef chtype attr_t;
  *
  */
 
+/* Most flavors of PDCurses support three buttons.  Win32a supports    */
+/* these plus two "extended" buttons.  But we'll set this macro to     */
+/* six,  allowing future versions to support up to nine total buttons. */
+/* (The button states are broken up into two arrays to allow for the   */
+/* possibility of backward compatibility to DLLs compiled with only    */
+/* three mouse buttons.)                                               */
+
+#define PDC_MAX_MOUSE_BUTTONS          9
+#define PDC_N_EXTENDED_MOUSE_BUTTONS   6
+
 typedef struct
 {
     int x;           /* absolute column, 0 based, measured in characters */
-    int y;           /* absolute row, 0 based, measured in characters */
-    short button[3]; /* state of each button */
+    int y;           /* absolute row, 0 based, measured in characters    */
+    short button[3]; /* state of three "normal" buttons                  */
     int changes;     /* flags indicating what has changed with the mouse */
+    short xbutton[PDC_N_EXTENDED_MOUSE_BUTTONS]; /* state of ext buttons */
 } MOUSE_STATUS;
 
 #define BUTTON_RELEASED         0x0000
@@ -142,20 +161,32 @@ typedef struct
  *                             10000 <- mouse position report
  *                            100000 <- mouse wheel up
  *                           1000000 <- mouse wheel down
+ *                          10000000 <- mouse wheel left
+ *                         100000000 <- mouse wheel right
+ *                        1000000000 <- button 4 has changed
+ * (NOTE: buttons 6 to   10000000000 <- button 5 has changed
+ * 9 aren't implemented 100000000000 <- button 6 has changed
+ * in any flavor of    1000000000000 <- button 7 has changed
+ * PDCurses yet!)     10000000000000 <- button 8 has changed
+ *                   100000000000000 <- button 9 has changed
  */
 
 #define PDC_MOUSE_MOVED         0x0008
 #define PDC_MOUSE_POSITION      0x0010
 #define PDC_MOUSE_WHEEL_UP      0x0020
 #define PDC_MOUSE_WHEEL_DOWN    0x0040
+#define PDC_MOUSE_WHEEL_LEFT    0x0080
+#define PDC_MOUSE_WHEEL_RIGHT   0x0100
 
 #define A_BUTTON_CHANGED        (Mouse_status.changes & 7)
 #define MOUSE_MOVED             (Mouse_status.changes & PDC_MOUSE_MOVED)
 #define MOUSE_POS_REPORT        (Mouse_status.changes & PDC_MOUSE_POSITION)
-#define BUTTON_CHANGED(x)       (Mouse_status.changes & (1 << ((x) - 1)))
+#define BUTTON_CHANGED(x)       (Mouse_status.changes & (1 << ((x) - ((x)<4 ? 1 : -5))))
 #define BUTTON_STATUS(x)        (Mouse_status.button[(x) - 1])
 #define MOUSE_WHEEL_UP          (Mouse_status.changes & PDC_MOUSE_WHEEL_UP)
 #define MOUSE_WHEEL_DOWN        (Mouse_status.changes & PDC_MOUSE_WHEEL_DOWN)
+#define MOUSE_WHEEL_LEFT        (Mouse_status.changes & PDC_MOUSE_WHEEL_LEFT)
+#define MOUSE_WHEEL_RIGHT       (Mouse_status.changes & PDC_MOUSE_WHEEL_RIGHT)
 
 /* mouse bit-masks */
 
@@ -180,9 +211,10 @@ typedef struct
 #define BUTTON3_TRIPLE_CLICKED  0x00004000L
 #define BUTTON3_MOVED           0x00004000L /* PDCurses */
 
-/* For the ncurses-compatible functions only, BUTTON4_PRESSED and 
-   BUTTON5_PRESSED are returned for mouse scroll wheel up and down; 
-   otherwise PDCurses doesn't support buttons 4 and 5 */
+/* For the ncurses-compatible functions only, BUTTON4_PRESSED and
+   BUTTON5_PRESSED are returned for mouse scroll wheel up and down;
+   otherwise PDCurses doesn't support buttons 4 and 5... except
+   as described above for Win32a     */
 
 #define BUTTON4_RELEASED        0x00008000L
 #define BUTTON4_PRESSED         0x00010000L
@@ -261,7 +293,7 @@ typedef struct _win       /* definition of a window */
     struct _win *_parent; /* subwin's pointer to parent win */
 } WINDOW;
 
-/* Avoid using the SCREEN struct directly -- use the corresponding 
+/* Avoid using the SCREEN struct directly -- use the corresponding
    functions if possible. This struct may eventually be made private. */
 
 typedef struct
@@ -287,12 +319,12 @@ typedef struct
     unsigned long _trap_mbe;       /* trap these mouse button events */
     unsigned long _map_mbe_to_key; /* map mouse buttons to slk */
     int   mouse_wait;              /* time to wait (in ms) for a
-                                      button release after a press, in 
+                                      button release after a press, in
                                       order to count it as a click */
     int   slklines;                /* lines in use by slk_init() */
     WINDOW *slk_winptr;            /* window for slk */
     int   linesrippedoff;          /* lines ripped off via ripoffline() */
-    int   linesrippedoffontop;     /* lines ripped off on 
+    int   linesrippedoffontop;     /* lines ripped off on
                                       top via ripoffline() */
     int   delaytenths;             /* 1/10ths second to wait block
                                       getch() for */
@@ -352,13 +384,13 @@ PDCEX  char         ttytype[];    /* terminal name/description */
 PDCurses Text Attributes
 ========================
 
-Originally, PDCurses used a short (16 bits) for its chtype. To include 
-color, a number of things had to be sacrificed from the strict Unix and 
-System V support. The main problem was fitting all character attributes 
+Originally, PDCurses used a short (16 bits) for its chtype. To include
+color, a number of things had to be sacrificed from the strict Unix and
+System V support. The main problem was fitting all character attributes
 and color into an unsigned char (all 8 bits!).
 
-Today, PDCurses by default uses a long (32 bits) for its chtype, as in 
-System V. The short chtype is still available, by undefining CHTYPE_LONG 
+Today, PDCurses by default uses a long (32 bits) for its chtype, as in
+System V. The short chtype is still available, by undefining CHTYPE_LONG
 and rebuilding the library.
 
 The following is the structure of a win->_attrs chtype:
@@ -370,9 +402,9 @@ short form:
 -------------------------------------------------
   color number |  attrs |   character eg 'a'
 
-The available non-color attributes are bold, reverse and blink. Others 
-have no effect. The high order char is an index into an array of 
-physical colors (defined in color.c) -- 32 foreground/background color 
+The available non-color attributes are bold, reverse and blink. Others
+have no effect. The high order char is an index into an array of
+physical colors (defined in color.c) -- 32 foreground/background color
 pairs (5 bits) plus 3 bits for other attributes.
 
 long form:
@@ -382,9 +414,20 @@ long form:
 ----------------------------------------------------------------------------
       color number      |     modifiers         |      character eg 'a'
 
-The available non-color attributes are bold, underline, invisible, 
-right-line, left-line, protect, reverse and blink. 256 color pairs (8 
+The available non-color attributes are bold, underline, invisible,
+right-line, left-line, protect, reverse and blink. 256 color pairs (8
 bits), 8 bits for other attributes, and 16 bits for character data.
+
+   Note that there is now a "super-long" 64-bit form,  available by
+defining CHTYPE_LONG to be 2.  In this version,  bit 32 is A_OVERLINE and
+bit 33 is A_STRIKEOUT.  Bits 34-63 aren't used yet,  but at some point,
+the fact that one can have many more colors and attributes with 64 bits
+could be taken advantage of.  (At the very least,  the ability to have
+full color would be useful;  bit 34 set might indicate "actual color is
+stored to 15-bit depth,  5 bits each of red,  green,  and blue;  the
+foreground split between bits 24-31 and 35-41;  background in bits 42-56."
+With the remaining fourteen bits used for some other nifty purpose we've
+yet to think of.)
 
 **man-end****************************************************************/
 
@@ -402,7 +445,22 @@ bits), 8 bits for other attributes, and 16 bits for character data.
 # define A_BLINK      (chtype)0x00400000
 # define A_BOLD       (chtype)0x00800000
 
-# define A_ATTRIBUTES (chtype)0xffff0000
+# if(CHTYPE_LONG >= 2)
+    #ifdef _MSC_VER
+        # define A_OVERLINE   (chtype)0x100000000
+        # define A_STRIKEOUT  (chtype)0x200000000
+        # define A_ATTRIBUTES (chtype)0x3ffff0000
+    #else
+        # define A_OVERLINE   (chtype)0x100000000ULL
+        # define A_STRIKEOUT  (chtype)0x200000000ULL
+        # define A_ATTRIBUTES (chtype)0x3ffff0000ULL
+    #endif
+# else
+    # define A_OVERLINE   A_NORMAL
+    # define A_STRIKEOUT  A_NORMAL
+    # define A_ATTRIBUTES (chtype)0xffff0000
+#endif
+
 # define A_CHARTEXT   (chtype)0x0000ffff
 # define A_COLOR      (chtype)0xff000000
 
@@ -440,8 +498,10 @@ bits), 8 bits for other attributes, and 16 bits for character data.
 #define ATR_MSK       A_ATTRIBUTES         /* Obsolete */
 #define ATR_NRM       A_NORMAL             /* Obsolete */
 
-/* For use with attr_t -- X/Open says, "these shall be distinct", so 
+/* For use with attr_t -- X/Open says, "these shall be distinct", so
    this is a non-conforming implementation. */
+
+#define WA_NORMAL     A_NORMAL
 
 #define WA_ALTCHARSET A_ALTCHARSET
 #define WA_BLINK      A_BLINK
@@ -460,10 +520,12 @@ bits), 8 bits for other attributes, and 16 bits for character data.
 #define WA_TOP        A_NORMAL
 #define WA_VERTICAL   A_NORMAL
 
+#define WA_ATTRIBUTES A_ATTRIBUTES
+
 /*** Alternate character set macros ***/
 
 /* 'w' = 32-bit chtype; acs_map[] index | A_ALTCHARSET
-   'n' = 16-bit chtype; it gets the fallback set because no bit is 
+   'n' = 16-bit chtype; it gets the fallback set because no bit is
          available for A_ALTCHARSET */
 
 #ifdef CHTYPE_LONG
@@ -858,6 +920,7 @@ bits), 8 bits for other attributes, and 16 bits for character data.
 
 #define KEY_MIN       KEY_BREAK      /* Minimum curses key value */
 #define KEY_MAX       KEY_SDOWN      /* Maximum curses key */
+// #define KEY_MAX       0x240        /* Maximum curses key: redeffed for Win32a */
 
 #define KEY_F(n)      (KEY_F0 + (n))
 
@@ -888,7 +951,7 @@ void    bkgdset(chtype);
 int     border(chtype, chtype, chtype, chtype, chtype, chtype, chtype, chtype);
 int     box(WINDOW *, chtype, chtype);
 bool    can_change_color(void);
-int     cbreak(void); 
+int     cbreak(void);
 int     chgat(int, attr_t, short, const void *);
 int     clearok(WINDOW *, bool);
 int     clear(void);
@@ -903,7 +966,7 @@ int     def_shell_mode(void);
 int     delay_output(int);
 int     delch(void);
 int     deleteln(void);
-void    delscreen(SCREEN *); 
+void    delscreen(SCREEN *);
 int     delwin(WINDOW *);
 WINDOW *derwin(WINDOW *, int, int, int, int);
 int     doupdate(void);
@@ -1141,8 +1204,8 @@ int     addwstr(const wchar_t *);
 int     add_wch(const cchar_t *);
 int     add_wchnstr(const cchar_t *, int);
 int     add_wchstr(const cchar_t *);
-int     border_set(const cchar_t *, const cchar_t *, const cchar_t *, 
-                   const cchar_t *, const cchar_t *, const cchar_t *, 
+int     border_set(const cchar_t *, const cchar_t *, const cchar_t *,
+                   const cchar_t *, const cchar_t *, const cchar_t *,
                    const cchar_t *, const cchar_t *);
 int     box_set(WINDOW *, const cchar_t *, const cchar_t *);
 int     echo_wchar(const cchar_t *);
@@ -1212,7 +1275,7 @@ int     wadd_wchstr(WINDOW *, const cchar_t *);
 int     wbkgrnd(WINDOW *, const cchar_t *);
 void    wbkgrndset(WINDOW *, const cchar_t *);
 int     wborder_set(WINDOW *, const cchar_t *, const cchar_t *,
-                    const cchar_t *, const cchar_t *, const cchar_t *, 
+                    const cchar_t *, const cchar_t *, const cchar_t *,
                     const cchar_t *, const cchar_t *, const cchar_t *);
 int     wecho_wchar(WINDOW *, const cchar_t *);
 int     wgetbkgrnd(WINDOW *, cchar_t *);

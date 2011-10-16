@@ -119,7 +119,7 @@ ifeq ($(OS),Darwin)
             src/glfw/cocoa/cocoa_glext.o       src/glfw/cocoa/cocoa_window.o    \
             src/glfw/cocoa/cocoa_init.o        src/glfw/cocoa/cocoa_joystick.o
 else ifeq ($(OS),windows32)
-        LIBS += -lmingw32 -lwinmm -lgdi32 -lm -mconsole
+        LIBS += -lmingw32 -lwinmm -lgdi32 -lm -mwindows
         INCLUDES += -Isrc/glfw/win32
         OBJS += \
             src/glfw/win32/win32_init.o        src/glfw/win32/win32_joystick.o  \
@@ -140,6 +140,7 @@ endif
 # Curses
 ifeq ($(OS),windows32)
         # Use our own copy of pdcurses on Win32
+	# This is the "Win32a" variant, from http://www.projectpluto.com/win32a.htm
         INCLUDES += -Isrc/pdcurses
         OBJS += src/pdcurses/pdcurses/addch.o     src/pdcurses/pdcurses/mouse.o         \
                 src/pdcurses/pdcurses/addchstr.o  src/pdcurses/pdcurses/move.o          \
@@ -158,13 +159,13 @@ ifeq ($(OS),windows32)
                 src/pdcurses/pdcurses/getstr.o    src/pdcurses/pdcurses/touch.o         \
                 src/pdcurses/pdcurses/getyx.o     src/pdcurses/pdcurses/util.o          \
                 src/pdcurses/pdcurses/inch.o      src/pdcurses/pdcurses/window.o        \
-                src/pdcurses/pdcurses/inchstr.o   src/pdcurses/win32/pdcclip.o          \
-                src/pdcurses/pdcurses/initscr.o   src/pdcurses/win32/pdcdisp.o          \
-                src/pdcurses/pdcurses/inopts.o    src/pdcurses/win32/pdcgetsc.o         \
-                src/pdcurses/pdcurses/insch.o     src/pdcurses/win32/pdckbd.o           \
-                src/pdcurses/pdcurses/insstr.o    src/pdcurses/win32/pdcscrn.o          \
-                src/pdcurses/pdcurses/instr.o     src/pdcurses/win32/pdcsetsc.o         \
-                src/pdcurses/pdcurses/kernel.o    src/pdcurses/win32/pdcutil.o          \
+                src/pdcurses/pdcurses/inchstr.o   src/pdcurses/win32a/pdcclip.o          \
+                src/pdcurses/pdcurses/initscr.o   src/pdcurses/win32a/pdcdisp.o          \
+                src/pdcurses/pdcurses/inopts.o    src/pdcurses/win32a/pdcgetsc.o         \
+                src/pdcurses/pdcurses/insch.o     src/pdcurses/win32a/pdckbd.o           \
+                src/pdcurses/pdcurses/insstr.o    src/pdcurses/win32a/pdcscrn.o          \
+                src/pdcurses/pdcurses/instr.o     src/pdcurses/win32a/pdcsetsc.o         \
+                src/pdcurses/pdcurses/kernel.o    src/pdcurses/win32a/pdcutil.o          \
                 src/pdcurses/pdcurses/keyname.o
 else
         # On Linux and Mac OS, curses should already be available

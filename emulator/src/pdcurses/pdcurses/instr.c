@@ -28,16 +28,16 @@ RCSID("$Id: instr.c,v 1.44 2008/07/13 16:08:18 wmcbrine Exp $")
         int mvwinnwstr(WINDOW *win, int y, int x, wchar_t *wstr, int n);
 
   Description:
-        These functions take characters (or wide characters) from the 
-        current or specified position in the window, and return them as 
-        a string in str (or wstr). Attributes are ignored. The functions 
-        with n as the last argument return a string at most n characters 
+        These functions take characters (or wide characters) from the
+        current or specified position in the window, and return them as
+        a string in str (or wstr). Attributes are ignored. The functions
+        with n as the last argument return a string at most n characters
         long.
 
   Return Value:
-        Upon successful completion, innstr(), mvinnstr(), mvwinnstr() 
+        Upon successful completion, innstr(), mvinnstr(), mvwinnstr()
         and winnstr() return the number of characters actually read into
-        the string; instr(), mvinstr(), mvwinstr() and winstr() return 
+        the string; instr(), mvinstr(), mvwinstr() and winstr() return
         OK. Otherwise, all these functions return ERR.
 
   Portability                                X/Open    BSD    SYS V
@@ -87,7 +87,7 @@ int winnstr(WINDOW *win, char *str, int n)
     src = win->_y[win->_cury] + win->_curx;
 
     for (i = 0; i < n; i++)
-        str[i] = src[i] & A_CHARTEXT;
+        str[i] = (char)( src[i] & A_CHARTEXT);     /* BJG */
 
     str[i] = '\0';
 
@@ -173,7 +173,7 @@ int winnwstr(WINDOW *win, wchar_t *wstr, int n)
     src = win->_y[win->_cury] + win->_curx;
 
     for (i = 0; i < n; i++)
-        wstr[i] = src[i] & A_CHARTEXT;
+        wstr[i] = (wchar_t)( src[i] & A_CHARTEXT);
 
     wstr[i] = L'\0';
 

@@ -16,13 +16,13 @@ RCSID("$Id: keyname.c,v 1.8 2008/07/13 16:08:18 wmcbrine Exp $")
         bool has_key(int key);
 
   Description:
-        keyname() returns a string corresponding to the argument key. 
+        keyname() returns a string corresponding to the argument key.
         key may be any key returned by wgetch().
 
-        key_name() is the wide-character version. It takes a wchar_t 
+        key_name() is the wide-character version. It takes a wchar_t
         parameter, but still returns a char *.
 
-        has_key() returns TRUE for recognized keys, FALSE otherwise. 
+        has_key() returns TRUE for recognized keys, FALSE otherwise.
         This function is an ncurses extension.
 
   Portability                                X/Open    BSD    SYS V
@@ -97,8 +97,16 @@ char *keyname(int key)
         "SHF_PADMINUS", "SHF_UP", "SHF_DOWN", "SHF_IC", "SHF_DC",
         "KEY_MOUSE", "KEY_SHIFT_L", "KEY_SHIFT_R", "KEY_CONTROL_L",
         "KEY_CONTROL_R", "KEY_ALT_L", "KEY_ALT_R", "KEY_RESIZE",
-        "KEY_SUP", "KEY_SDOWN"
-    };
+        "KEY_SUP", "KEY_SDOWN",
+                  /* Win32a extras: */
+              "CTL_SEMICOLON", "CTL_EQUAL", "CTL_COMMA",
+              "CTL_MINUS", "CTL_STOP", "CTL_FSLASH",
+              "CTL_BQUOTE", "KEY_APPS", "KEY_SAPPS", "CTL_APPS",
+              "ALT_APPS", "KEY_PAUSE", "KEY_SPAUSE",
+              "CTL_PAUSE", "KEY_PRINTSCREEN", "ALT_PRINTSCREEN",
+              "KEY_SCROLLLOCK", "ALT_SCROLLLOCK",
+              "CTL_0", "CTL_1", "CTL_2", "CTL_3", "CTL_4",
+              "CTL_5", "CTL_6", "CTL_7", "CTL_8", "CTL_9"     };
 
     PDC_LOG(("keyname() - called: key %d\n", key));
 
