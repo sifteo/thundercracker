@@ -207,9 +207,10 @@ ifeq ($(OS),windows32)
 # We like having stripped binaries plus a separate file with
 # debug info. Do that on Win32 too.
 $(BIN): $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS)
-	objcopy --only-keep-debug $(BIN).exe $(BIN).dSYM
-	strip -s $(BIN).exe
+	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
+	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
+	strip -s src/$(BIN)-d.exe -o $(BIN).exe
+	rm -f src/$(BIN)-d.exe
 else
 # Default link
 $(BIN): $(OBJS)
