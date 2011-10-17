@@ -19,6 +19,19 @@
 #include <glfw.h>
 
 
+class FrameRateController {
+public:
+    FrameRateController();
+    void endFrame();
+    
+    static const double targetFPS = 75.0;
+
+private:
+    double lastTimestamp;
+    double accumulator;
+};
+
+
 class Frontend {
  public:
     Frontend();
@@ -123,6 +136,7 @@ class Frontend {
     
     MousePicker mousePicker;
     ContactListener contactListener;
+    FrameRateController frControl;
 
     GLRenderer renderer;
     FrontendOverlay overlay;

@@ -624,6 +624,7 @@ void Frontend::draw()
     overlay.draw();
         
     renderer.endFrame();
+    frControl.endFrame();
 }
 
 b2Vec2 Frontend::worldToScreen(b2Vec2 world)
@@ -739,5 +740,43 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
 
         fdatA->cube->updateNeighbor(touching, fdatA->side, fdatB->side, cubeB);
         fdatB->cube->updateNeighbor(touching, fdatB->side, fdatA->side, cubeA);
+    }
+}
+
+FrameRateController::FrameRateController()
+    : lastTimestamp(0), accumulator(0) {}
+    
+void FrameRateController::endFrame()
+{
+    /*
+     * We try to synchronize to the host's vertical sync.
+     * If the video drivers don't support that, this governor
+     * prevents us from running way too fast.
+     */
+
+    /*
+     * How far ahead we need to be on average, in seconds,
+     * before we start inserting delays
+     */
+    const double slack = 0.25;
+    
+    /*
+     * How far ahead or behind are we allowed to get?
+     */
+    const double limit = 1.0;
+
+    double now = glfwGetTime();
+    const double minPeriod = 1.0 / targetFPS;
+    double thisPeriod = now - lastTimestamp;
+    lastTimestamp = now;
+    
+    accumulator += minPeriod - thisPeriod;
+    
+    if (accumulator < -limit)
+        accumulator = -limit;        
+    else if (accumulator > slack) {
+        if (accumulator > limit)
+            accumulator = limit;
+        glfwSleep(accumulator - slack);
     }
 }
