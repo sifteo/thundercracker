@@ -330,8 +330,6 @@ if __name__ == "__main__":
         "tilerom/img-radio-2.png",
         "tilerom/img-radio-3.png",
         "tilerom/img-power.png",
-        "tilerom/img-happy-cube.png",
-        "tilerom/img-barberpole.png",
         ):
         t.loadImage(img)
 
