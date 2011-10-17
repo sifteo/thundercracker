@@ -318,7 +318,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
                 
         case 'S': {
             std::string name = instance->createScreenshotName();
-            instance->overlay.postMessage("Taking screenshot \"" + name + "\"");
+            instance->overlay.postMessage("Saved screenshot \"" + name + "\"");
             instance->renderer.takeScreenshot(name);
             break;
         }
