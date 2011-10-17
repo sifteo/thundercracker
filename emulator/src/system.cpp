@@ -6,7 +6,8 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include <malloc.h>
+#include <string.h>
+#include <stdlib.h>
 #include "system.h"
 #include "cube_debug.h"
 
@@ -62,9 +63,13 @@ bool System::initCube(unsigned id)
     cubes[id].cpu.id = id;
     cubes[id].cpu.traceFile = traceFile;
 
-    if (id == 0 && opt_cube0Profile)
-        cubes[0].cpu.mProfileData = (Cube::CPU::profile_data *)
-            calloc(CODE_SIZE, sizeof cubes[0].cpu.mProfileData[0]);
+    if (id == 0 && opt_cube0Profile) {
+        Cube::CPU::profile_data *pd;
+        size_t s = CODE_SIZE * sizeof pd[0];
+        pd = (Cube::CPU::profile_data *) malloc(s);
+        memset(pd, 0, s);
+        cubes[0].cpu.mProfileData = pd;
+    }
 
     cubes[id].neighbors.attachCubes(cubes);
 

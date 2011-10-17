@@ -184,6 +184,12 @@ else
 	LIBS += -lstdc++
 endif
 
+# Linker flags
+ifneq ($(OS),Darwin)
+	# Not supported on Apple's LLVM GCC frontend
+	LIBS += -Wl,--gc-sections
+endif
+
 # Debug / optimization
 #
 # Unsurprisingly, compiler optimization produces a very dramatic
@@ -199,7 +205,7 @@ FLAGS += -MMD
 CFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 MFLAGS := $(FLAGS) $(INCLUDES)
-LDFLAGS := $(FLAGS) $(LIBS) -Wl,--gc-sections
+LDFLAGS := $(FLAGS) $(LIBS)
 
 all: $(BIN)
 
