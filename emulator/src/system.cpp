@@ -92,6 +92,9 @@ void System::exitCube(unsigned id)
 }
 
 void System::start() {
+    if (opt_cube0Debug)
+        Cube::Debug::init();
+
     threadRunning = true;
     thread = glfwCreateThread(threadFn, this);
 }
@@ -102,6 +105,9 @@ void System::exit() {
     threadRunning = false;
     glfwWaitThread(thread, GLFW_WAIT);
 
+    if (opt_cube0Debug)
+        Cube::Debug::exit();
+    
     for (unsigned i = 0; i < opt_numCubes; i++)
         exitCube(i);
 
@@ -128,11 +134,11 @@ void System::threadFn(void *param)
     unsigned nCubes = self->opt_numCubes;
     bool debug = self->opt_cube0Debug && nCubes;
 
-    if (debug)
-        Cube::Debug::init(&self->cubes[0]);
-
     TimeGovernor gov;
     gov.start(&self->time);
+    
+    if (debug)
+        Cube::Debug::attach(&self->cubes[0]);
 
     while (self->threadRunning) {
         if (debug) {
@@ -180,9 +186,6 @@ void System::threadFn(void *param)
         if (!self->opt_noThrottle)
             gov.step();
     }
-
-    if (debug)
-        Cube::Debug::exit();
 }
 
 ALWAYS_INLINE void System::tick()

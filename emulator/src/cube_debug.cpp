@@ -195,10 +195,8 @@ void recordHistory()
     }
 }
 
-void init(Cube::Hardware *_cube)
+void init()
 {
-    cube = _cube;
-
     slk_init(1);
     if ( (initscr()) == NULL ) {
         fprintf(stderr, "Error initialising ncurses.\n");
@@ -220,6 +218,11 @@ void init(Cube::Hardware *_cube)
     slk_set(6, "v)iew", 0);
     slk_set(7, "home=rst", 0);
     slk_set(8, "s-Q)quit", 0);
+}
+
+void attach(Cube::Hardware *_cube)
+{
+    cube = _cube;
     setSpeed(speed, runmode);
 }
 

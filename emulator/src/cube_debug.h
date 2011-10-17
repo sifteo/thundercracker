@@ -85,7 +85,8 @@ extern Cube::Hardware *cube;
 
 
 // main
-void init(Cube::Hardware *cube);
+void init();
+void attach(Cube::Hardware *cube);
 void exit();
 void writeProfile(CPU::em8051 *aCPU, const char *filename);
 bool updateUI();
