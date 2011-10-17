@@ -136,6 +136,8 @@ class FrontendCube {
 
     unsigned id;
     Cube::Hardware *hw;
+    
+    uint32_t lastLcdCookie;
 };
 
 #endif

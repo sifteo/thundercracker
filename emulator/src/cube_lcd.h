@@ -61,6 +61,9 @@ class LCD {
         mode_awake = 0;
         mode_display_on = 0;
         mode_te = 0;
+        
+        write_count = 0;
+        pixel_count = 0;
     }
 
     ALWAYS_INLINE void cycle(Pins *pins) {
@@ -87,7 +90,13 @@ class LCD {
     }
 
     uint32_t getWriteCount() {
+        // Number of write operations (usually frames)
         return write_count;
+    }
+    
+    uint32_t getPixelCount() {
+        // Number of pixels written
+        return pixel_count;
     }
 
     bool isVisible() {  
@@ -148,6 +157,8 @@ class LCD {
             if (++row > ye)
                 row = ys;
         }
+        
+        pixel_count++;
     }
 
     ALWAYS_INLINE void writeByte(uint8_t b) {
@@ -321,6 +332,7 @@ class LCD {
     static const unsigned TE_WIDTH_US = 1000;
 
     uint32_t write_count;
+    uint32_t pixel_count;
     uint64_t te_timestamp;
 
     /* Hardware interface */

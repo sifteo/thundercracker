@@ -49,7 +49,7 @@ class GLRenderer {
 
     void drawBackground(float extent, float scale);
     void drawCube(unsigned id, b2Vec2 center, float angle, float hover,
-                  b2Vec2 tilt, uint16_t *framebuffer, b2Mat33 &modelMatrix);
+                  b2Vec2 tilt, const uint16_t *framebuffer, b2Mat33 &modelMatrix);
                   
     void beginOverlay();
     void overlayText(unsigned x, unsigned y, const float color[4], const char *str);
@@ -102,7 +102,7 @@ class GLRenderer {
                        b2Vec2 tilt, b2Mat33 &modelMatrix);
 
     void drawCubeBody();
-    void drawCubeFace(unsigned id, uint16_t *framebuffer);
+    void drawCubeFace(unsigned id, const uint16_t *framebuffer);
     
     GLuint loadTexture(const uint8_t *pngData, GLenum wrap=GL_CLAMP, GLenum filter=GL_LINEAR);
     GLhandleARB loadShader(GLenum type, const uint8_t *source);
@@ -132,9 +132,13 @@ class GLRenderer {
     std::vector<VertexTN> sidesVA;
     std::vector<VertexT> overlayVA;
 
-    struct {
+    // To reduce graphics pipeline stalls, we have a small round-robin buffer of textures.
+    static const unsigned NUM_LCD_TEXTURES = 4;
+    
+    struct GLCube {
         bool initialized;
-        GLuint lcdTexture;
+        uint8_t currentLcdTexture;
+        GLuint lcdTextures[NUM_LCD_TEXTURES];
     } cubes[System::MAX_CUBES];
 	
 	std::string pendingScreenshotName;

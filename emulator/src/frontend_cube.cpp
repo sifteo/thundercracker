@@ -18,7 +18,8 @@ void FrontendCube::init(unsigned _id, Cube::Hardware *_hw, b2World &world, float
 {
     id = _id;
     hw = _hw;
-
+    lastLcdCookie = 0;
+    
     initBody(world, x, y);
     
     initNeighbor(Cube::Neighbors::TOP, 0, -1);
@@ -99,10 +100,34 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
 
 void FrontendCube::draw(GLRenderer &r)
 {
+    const uint16_t *framebuffer;
+
+    /*
+     * We only want to upload a new framebuffer image to the GPU if the LCD
+     * has actually been written to. Use the LCD hardware's pixel counter as
+     * a cookie to quickly do this test.
+     *
+     * Note that we must use the pixel count instead of the write count- the
+     * pixel count tells us when *any* pixel has been touched, whereas the write
+     * count usually only tells us enough to know when a frame has begun.
+     *
+     * Additionally, if the LCD is invisible, send the renderer a blank black
+     * texture. To capture all of this state, we build a single 32-bit cookie
+     * that combines a 31-bit pixel count and a blanking bit.
+     */
+     
+    uint32_t cookie = hw->lcd.isVisible() ? (hw->lcd.getPixelCount() & 0x7FFFFFFF) : ((uint32_t)-1);
+    
+    if (cookie != lastLcdCookie) {
+        lastLcdCookie = cookie;
+        static const uint16_t blackness[hw->lcd.WIDTH * hw->lcd.HEIGHT] = { 0 };
+        framebuffer = hw->lcd.isVisible() ? hw->lcd.fb_mem : blackness;
+    } else {
+        framebuffer = NULL;
+    }
+
     r.drawCube(id, body->GetPosition(), body->GetAngle(),
-               hover, tiltVector,
-               hw->lcd.isVisible() ? hw->lcd.fb_mem : NULL,
-               modelMatrix);
+               hover, tiltVector, framebuffer, modelMatrix);
 }
 
 void FrontendCube::setTiltTarget(b2Vec2 angles)

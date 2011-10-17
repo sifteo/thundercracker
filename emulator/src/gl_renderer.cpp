@@ -380,26 +380,32 @@ void GLRenderer::drawBackground(float extent, float scale)
 
 void GLRenderer::initCube(unsigned id)
 {
-    cubes[id].initialized = true;
+    GLCube &cube = cubes[id];
+    
+    cube.initialized = true;
 
-    glGenTextures(1, &cubes[id].lcdTexture);
-    glBindTexture(GL_TEXTURE_2D, cubes[id].lcdTexture);
-        
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
-                 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
-        
-    /*
-     * We rely on mipmaps (with autogeneration) for good-looking
-     * minification, and our nonlinear texture sampling (in the
-     * fragment program) for good-looking rotation and magnification.
-     */
+    glGenTextures(NUM_LCD_TEXTURES, &cube.lcdTextures[0]);
+    cube.currentLcdTexture = 0;
+    
+    for (unsigned i = 0; i < NUM_LCD_TEXTURES; i++) {
+        glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[i]);
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 5.0f);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+        glTexImage2D(GL_TEXTURE_2D, 0, 3, Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
+                     0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
+        
+        /*
+         * We rely on mipmaps (with autogeneration) for good-looking
+         * minification, and our nonlinear texture sampling (in the
+         * fragment program) for good-looking rotation and magnification.
+         */
+
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 5.0f);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    }
 }
 
 void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
@@ -462,9 +468,14 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
 
 
 void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
-                          b2Vec2 tilt, uint16_t *framebuffer, b2Mat33 &modelMatrix)
+                          b2Vec2 tilt, const uint16_t *framebuffer, b2Mat33 &modelMatrix)
 {
-    if (!cubes[id].initialized)
+    /*
+     * Draw one cube, and place its modelview matrix in 'modelmatrix'.
+     * If framebuffer==NULL, don't reupload the framebuffer, it hasn't changed.
+     */
+
+     if (!cubes[id].initialized)
         initCube(id);
 
     cubeTransform(center, angle, hover, tilt, modelMatrix);
@@ -480,9 +491,9 @@ void GLRenderer::drawCubeBody()
     glDrawArrays(GL_TRIANGLE_STRIP, 0, (GLsizei) sidesVA.size());
 }
 
-void GLRenderer::drawCubeFace(unsigned id, uint16_t *framebuffer)
+void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
 {
-    static const uint16_t blackness[Cube::LCD::WIDTH * Cube::LCD::HEIGHT] = { 0 };
+    GLCube &cube = cubes[id];
 
     glUseProgramObjectARB(cubeFaceProgram);
 
@@ -504,19 +515,31 @@ void GLRenderer::drawCubeFace(unsigned id, uint16_t *framebuffer)
     
     glActiveTexture(GL_TEXTURE3);
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, cubes[id].lcdTexture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-                    Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
-                    GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
-                    framebuffer ? framebuffer : blackness);
+    if (framebuffer) {
+        /*
+         * Next LCD texture in the ring.
+         *
+         * By avoiding reuploading a texture every frame, we can keep our
+         * graphics pipeline stalls down to a minimum. GPU drivers hate it
+         * when we touch a resource that the GPU might still be using :)
+         */
+         cube.currentLcdTexture = (cube.currentLcdTexture + 1) % NUM_LCD_TEXTURES;
+        glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[cube.currentLcdTexture]);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                        Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
+                        GL_RGB, GL_UNSIGNED_SHORT_5_6_5, framebuffer);
+    } else {
+        // Recycle the old image
+        glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[cube.currentLcdTexture]);
+    }
 
-        if (!pendingScreenshotName.empty()) {
-                // Opportunistically grab this texture for a screenshot
+    if (!pendingScreenshotName.empty()) {
+        // Opportunistically grab this texture for a screenshot
         char suffix[32];
         snprintf(suffix, sizeof suffix, "-cube%02d.png", id);
         saveTexturePNG(pendingScreenshotName + std::string(suffix),
                        Cube::LCD::WIDTH, Cube::LCD::HEIGHT);
-        }
+    }
 
     /*
      * Just one draw. Our shader handles the rest. Drawing the LCD and
