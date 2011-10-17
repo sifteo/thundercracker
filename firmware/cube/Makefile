@@ -35,3 +35,8 @@ tilerom.c: tilerom/src-palettes.png tilerom/src-tiles.png tilerom/romgen.py
 clean:
 	rm -f *.mem *.rel *.rst *.sym *.lnk *.lst *.map *.asm
 
+# Simple size profiler, based on the .rst parser used by our emulator's SBT
+sizeprof: $(BIN)
+	python ../../emulator/scripts/firmware-sizeprof.py *.rst
+    
+.PHONY: clean sizeprof
