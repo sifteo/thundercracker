@@ -18,6 +18,9 @@
 // Initialize VRAM
 void draw_clear();
 
+// Done with ROM drawing, get ready to take commands from the master
+void draw_exit();
+
 // Draw a ROM image at the current position
 void draw_image(const __code uint8_t *image);
 

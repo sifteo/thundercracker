@@ -50,6 +50,15 @@ void draw_clear()
     draw_attr = ATTR_NONE;
 }
 
+void draw_exit(void)
+{
+    /*
+     * We're about to enter our main loop for taking orders from the master.
+     * Turn off continuous rendering until the master gives us something to do.
+     */
+    vram.flags = 0;
+}
+
 void draw_image(const __code uint8_t *image)
 {
     image = image;
