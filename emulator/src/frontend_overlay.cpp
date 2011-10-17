@@ -130,6 +130,8 @@ void FrontendOverlay::drawHelp()
         "Shift-drag or Right-drag to tilt a cube.",
         "Mouse wheel resizes the play surface.\n",
         "'S' - Screenshot, 'F' - Fullscreen, 'Z' - Zoom. +/- Adds/removes cubes.",
+        "",
+        "Copyright (c) 2011 Sifteo, Inc. All rights reserved.",
     };
     
     const unsigned numLines = sizeof lines / sizeof lines[0];
