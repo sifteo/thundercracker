@@ -158,7 +158,7 @@ static void vm_solid(void)
  * internal memory, we use both DPTRs here.
  */
 
-void vm_fb32_line(uint16_t src)
+static void vm_fb32_line(uint16_t src)
 {
     src = src;
     __asm
@@ -245,7 +245,7 @@ static void vm_fb32(void)
  * Two-entry colormap, 8 bytes per line.
  */
 
-void vm_fb64_line(uint16_t ptr)
+static void vm_fb64_line(uint16_t ptr)
 {
     ptr = ptr;
     __asm
@@ -330,7 +330,7 @@ static void vm_fb64(void)
  * Two-entry colormap, 16 bytes per line.
  */
 
-void vm_fb128_line(uint16_t ptr)
+static void vm_fb128_line(uint16_t ptr)
 {
     ptr = ptr;
     __asm
@@ -1638,7 +1638,7 @@ static void vm_bg1_next(void)
     }
 }
 
-void vm_bg0_bg1(void)
+static void vm_bg0_bg1(void)
 {
     uint8_t y = vram.num_lines;
 
@@ -1667,7 +1667,7 @@ void vm_bg0_bg1(void)
  * Backgrounds BG0 and BG1, with linear sprites in-between.
  */
 
-void vm_bg0_spr_bg1(void)
+static void vm_bg0_spr_bg1(void)
 {
     MODE_RETURN();
 }
