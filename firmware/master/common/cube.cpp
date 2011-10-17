@@ -72,10 +72,19 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a) {
     if (isAssetGroupLoaded(a))
         return;
 
+    const _SYSAssetGroupHeader *hdr = a->hdr;
+    if (!Runtime::checkUserPointer(hdr, sizeof *hdr))
+        return;
+    
     // XXX: Pick a base address too!
     ac->progress = 0;
 
-    DEBUG_LOG(("FLASH[%d]: Beginning asset download, group %p\n", id(), a));
+    LOG(("FLASH[%d]: Sending asset group %p, %d bytes\n", id(), a, hdr->dataSize));
+
+    DEBUG_ONLY({
+        // In debug builds, we log the asset download time
+        assetLoadTimestamp = SysTime::ticks();
+    });
 
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
     Atomic::And(flashResetSent, ~bit());
@@ -155,6 +164,13 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                 Atomic::SetLZ(group->doneCubes, id());
                 Atomic::SetLZ(Event::assetDoneCubes, id());
                 Event::setPending(Event::ASSET_DONE);
+
+                DEBUG_ONLY({
+                    // In debug builds only, we log the asset download time
+                    float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
+                    LOG(("FLASH[%d]: Finished loading group %p in %.3f seconds\n",
+                         id(), group, seconds));
+                })
             }
         }
     }
