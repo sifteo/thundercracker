@@ -405,6 +405,8 @@ void CubeSlot::waitForFinish()
 
 void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
 {
+    _SYSAssetGroup *group = loadGroup;
+        
     if (vbuf) {
         uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
         int32_t pending = Atomic::Load(pendingFrames);
@@ -440,12 +442,23 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
          * so that continuous rendering is only turned off once the
          * cube is clearly pulling ahead of our ability to provide it
          * with frames.
+         *
+         * We only allow continuous rendering when we aren't downloading
+         * assets to this cube. Continuous rendering makes flash downloading
+         * extremely slow- flash is strictly lower priority than graphics
+         * on the cube, but continuous rendering asks the cube to render
+         * graphics as fast as possible.
          */
-        if (newPending >= fpContinuous)
-            flags |= _SYS_VF_CONTINUOUS;
-        if (newPending <= fpSingle)
-            flags &= ~_SYS_VF_CONTINUOUS;
 
+        if (group && !(group->doneCubes & bit())) {
+            flags &= ~_SYS_VF_CONTINUOUS;
+        } else {
+            if (newPending >= fpContinuous)
+                flags |= _SYS_VF_CONTINUOUS;
+            if (newPending <= fpSingle)
+                flags &= ~_SYS_VF_CONTINUOUS;
+        }
+                
         /*
          * If we're not using continuous mode, each frame is triggered
          * explicitly by toggling a bit in the flags register.
