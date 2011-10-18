@@ -83,6 +83,9 @@ extern int view;
 // Cube that the debugger is currently attached to
 extern Cube::Hardware *cube;
 
+// Debugger options
+extern bool stopOnException;
+
 
 // main
 void init();

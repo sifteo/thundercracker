@@ -36,6 +36,7 @@ class System {
 
     // Global debug options
     const char *opt_cubeTrace;
+    bool opt_continueOnException;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;

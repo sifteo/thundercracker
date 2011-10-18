@@ -71,7 +71,7 @@ void CPU::except(CPU::em8051 *cpu, int exc)
     if (cpu->isTracing)
         fprintf(cpu->traceFile, fmt, cpu->id, cpu->mPC, name);
 
-    if (self == Cube::Debug::cube)
+    if (self == Cube::Debug::cube && Cube::Debug::stopOnException)
         Cube::Debug::emu_exception(cpu, exc);
     else
         fprintf(stderr, fmt, cpu->id, cpu->mPC, name);

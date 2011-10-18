@@ -62,6 +62,8 @@ int breakpoint = -1;
 // Cube that the debugger is currently attached to
 Cube::Hardware *cube;
 
+bool stopOnException = false;
+
 
 void setSpeed(int speed, int runmode)
 {  

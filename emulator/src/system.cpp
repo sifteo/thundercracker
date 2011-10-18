@@ -12,11 +12,17 @@
 #include "cube_debug.h"
 
 System::System()
-        : opt_numCubes(DEFAULT_CUBES), opt_cubeFirmware(NULL),
-        opt_noThrottle(false), opt_cubeTrace(false),
-        opt_cube0Debug(NULL), opt_cube0Flash(NULL),
-        opt_cube0Profile(NULL), threadRunning(false),
-        traceFile(NULL), mIsTracing(false)
+        : opt_numCubes(DEFAULT_CUBES),
+        opt_cubeFirmware(NULL),
+        opt_noThrottle(false),
+        opt_cubeTrace(false),
+        opt_continueOnException(false),
+        opt_cube0Debug(NULL),
+        opt_cube0Flash(NULL),
+        opt_cube0Profile(NULL),
+        threadRunning(false),
+        traceFile(NULL),
+        mIsTracing(false)
         {}
 
 
@@ -115,8 +121,10 @@ void System::exitCube(unsigned id)
 }
 
 void System::start() {
-    if (opt_cube0Debug)
+    if (opt_cube0Debug) {
         Cube::Debug::init();
+        Cube::Debug::stopOnException = !opt_continueOnException;
+    }
 
     startThread();
 }

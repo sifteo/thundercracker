@@ -76,6 +76,7 @@ static void usage()
      *  -F FLASH.bin      Load/save flash memory (first cube only) to a binary file
      *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
      *  -d                Launch firmware debugger (first cube only)
+     *  -c                Continue executing on exception, rather than stopping the debugger.
      */
 
     message("\n"
@@ -114,6 +115,11 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "-d")) {
             sys.opt_cube0Debug = true;
+            continue;
+        }
+
+        if (!strcmp(arg, "-c")) {
+            sys.opt_continueOnException = true;
             continue;
         }
 
