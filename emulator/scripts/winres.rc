@@ -1,3 +1,29 @@
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 // XXX: Using the siftrunner icon for now
 GLFW_ICON ICON DISCARDABLE "siftrunner_icon.ico"
 
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1,0,0,0
+FILEOS          VOS__WINDOWS32
+FILETYPE        VFT_APP
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",      "Sifteo, Inc."
+            VALUE "FileDescription",  "Thundercracker Hardware Emulator"
+            VALUE "FileVersion",      "1.0.0.0"
+            VALUE "ProductName",      "Thundercracker" 
+            VALUE "ProductVersion",   "1.0"
+            VALUE "LegalCopyright",   "Copyright \251 2011 Sifteo, Inc. All rights reserved."
+        END
+    END
+    
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
