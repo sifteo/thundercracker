@@ -171,11 +171,9 @@ void flash_handle_fifo(void)
         state_return:
     __endasm ;
 
-    // No more data? Timeslice is over? Release the bus and get out.
-    // XXX: Timeslices not working yet
-    //if (tick_deadline == sensor_tick_counter || flash_fifo_head == fifo_tail) {
-    if (flash_fifo_head == fifo_tail) {
-        CTRL_PORT = CTRL_IDLE;
+    // No more data? Timeslice is over? Clean up and get out.
+    if (tick_deadline == sensor_tick_counter || flash_fifo_head == fifo_tail) {
+        flash_program_end();
         return;
     }
     
