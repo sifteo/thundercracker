@@ -42,23 +42,26 @@ class System {
     const char *opt_cube0Flash;
     const char *opt_cube0Profile;
 
-    System()
-        : opt_numCubes(DEFAULT_CUBES), opt_cubeFirmware(NULL),
-        opt_noThrottle(false), opt_cubeTrace(false),
-        opt_cube0Debug(NULL), opt_cube0Flash(NULL),
-        opt_cube0Profile(NULL), threadRunning(false)
-        {}
-
+    System();
+    
     bool init();
     void start();
     void exit();
     void setNumCubes(unsigned n);
-
+    void setTraceMode(bool t);
+    
     bool isRunning() {
         return threadRunning;
     }
+    
+    bool isTracing() {
+        return mIsTracing;
+    }
 
  private:
+    void startThread();
+    void stopThread();
+ 
     static void threadFn(void *param);
     bool initCube(unsigned id);
     void exitCube(unsigned id);
@@ -68,6 +71,7 @@ class System {
     bool threadRunning;
 
     FILE *traceFile;
+    bool mIsTracing;
     
     SystemNetwork network;
 };

@@ -11,6 +11,14 @@
 #include "system.h"
 #include "cube_debug.h"
 
+System::System()
+        : opt_numCubes(DEFAULT_CUBES), opt_cubeFirmware(NULL),
+        opt_noThrottle(false), opt_cubeTrace(false),
+        opt_cube0Debug(NULL), opt_cube0Flash(NULL),
+        opt_cube0Profile(NULL), threadRunning(false),
+        traceFile(NULL), mIsTracing(false)
+        {}
+
 
 bool System::init() {
     if (opt_cubeTrace) {
@@ -33,15 +41,30 @@ bool System::init() {
     return true;
 }
 
+void System::startThread()
+{
+    threadRunning = true;
+    __asm__ __volatile__ ("" : : : "memory");
+    thread = glfwCreateThread(threadFn, this);
+    __asm__ __volatile__ ("" : : : "memory");
+}
+
+void System::stopThread()
+{
+    threadRunning = false;
+    __asm__ __volatile__ ("" : : : "memory");
+    glfwWaitThread(thread, GLFW_WAIT);
+    __asm__ __volatile__ ("" : : : "memory");
+}
+
 void System::setNumCubes(unsigned n)
 {
     if (n == opt_numCubes)
         return;
 
     // Must change opt_numCubes only while our thread is stopped!
-    threadRunning = false;
-    glfwWaitThread(thread, GLFW_WAIT);
-
+    stopThread();
+    
     while (opt_numCubes > n)
         exitCube(--opt_numCubes);
 
@@ -51,8 +74,7 @@ void System::setNumCubes(unsigned n)
         else
             break;
 
-    threadRunning = true;
-    thread = glfwCreateThread(threadFn, this);
+    startThread();
 }
 
 bool System::initCube(unsigned id)
@@ -62,7 +84,8 @@ bool System::initCube(unsigned id)
 
     cubes[id].cpu.id = id;
     cubes[id].cpu.traceFile = traceFile;
-
+    cubes[id].cpu.isTracing = mIsTracing;
+    
     if (id == 0 && opt_cube0Profile) {
         Cube::CPU::profile_data *pd;
         size_t s = CODE_SIZE * sizeof pd[0];
@@ -95,15 +118,13 @@ void System::start() {
     if (opt_cube0Debug)
         Cube::Debug::init();
 
-    threadRunning = true;
-    thread = glfwCreateThread(threadFn, this);
+    startThread();
 }
 
 void System::exit() {
     network.exit();
 
-    threadRunning = false;
-    glfwWaitThread(thread, GLFW_WAIT);
+    stopThread();
 
     if (opt_cube0Debug)
         Cube::Debug::exit();
@@ -193,4 +214,16 @@ ALWAYS_INLINE void System::tick()
     // Everything but the cubes
     time.tick();
     network.tick(*this);
+}
+
+void System::setTraceMode(bool t)
+{
+    mIsTracing = opt_cubeTrace && traceFile && t;
+
+    if (opt_numCubes){
+        stopThread();
+        for (unsigned i = 0; i < opt_numCubes; i++)
+            cubes[i].cpu.isTracing = t;
+        startThread();
+    }
 }

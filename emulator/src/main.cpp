@@ -72,7 +72,7 @@ static void usage()
      * only useful for internal development:
      *
      *  -f FIRMWARE.hex   Specify firmware image for cubes
-     *  -t TRACE.txt      Trace firmware execution to a text file
+     *  -t TRACE.txt      Trace firmware execution to a text file (Toggle with 'T' key)
      *  -F FLASH.bin      Load/save flash memory (first cube only) to a binary file
      *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
      *  -d                Launch firmware debugger (first cube only)

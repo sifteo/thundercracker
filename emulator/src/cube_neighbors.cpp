@@ -96,14 +96,14 @@ void Neighbors::transmitPulse(CPU::em8051 &cpu, unsigned otherCube, uint8_t othe
     Neighbors &dest = otherCubes[otherCube].neighbors;
 
     if (dest.inputMask & bit) {
-        if (cpu.traceFile)
+        if (cpu.isTracing)
             fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Sending pulse to %d.%d\n",
                     cpu.id, otherCube, otherSide);
 
         dest.inputs |= bit;
 
     } else {
-        if (cpu.traceFile)
+        if (cpu.isTracing)
             fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Pulse to %d.%d was masked\n", 
                     cpu.id, otherCube, otherSide);
     }

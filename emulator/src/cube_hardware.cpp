@@ -68,7 +68,7 @@ void CPU::except(CPU::em8051 *cpu, int exc)
     const char *name = CPU::em8051_exc_name(exc);
     const char *fmt = "[%2d] EXCEPTION at 0x%04x: %s\n";
     
-    if (cpu->traceFile)
+    if (cpu->isTracing)
         fprintf(cpu->traceFile, fmt, cpu->id, cpu->mPC, name);
 
     if (self == Cube::Debug::cube)

@@ -111,7 +111,7 @@ class Radio {
             // Begin new SPI command
             spi_index = -1;
 
-            if (cpu->traceFile)
+            if (cpu->isTracing)
                 fprintf(cpu->traceFile, "[%2d] SPI: rf begin\n", cpu->id);
         }
         
@@ -119,7 +119,7 @@ class Radio {
             // End an SPI command
             spiCmdEnd(spi_cmd);
 
-            if (cpu->traceFile)
+            if (cpu->isTracing)
                 fprintf(cpu->traceFile, "[%2d] SPI: rf end\n", cpu->id);
         }
         
@@ -169,7 +169,7 @@ class Radio {
         Packet *tx_tail = &tx_fifo[tx_fifo_tail];
         bool hasACK = false;
 
-        if (cpu->traceFile) {
+        if (cpu->isTracing) {
             fprintf(cpu->traceFile, "[%2d] RADIO: rx [%2d] ", cpu->id, incoming.len);
             for (int i = 0; i < incoming.len; i++)
                 fprintf(cpu->traceFile, "%02x", incoming.payload[i]);
@@ -190,7 +190,7 @@ class Radio {
             if (tx_fifo_count) {
                 // ACK with payload
 
-                if (cpu->traceFile) {
+                if (cpu->isTracing) {
                     fprintf(cpu->traceFile, "[%2d] RADIO: ack [%2d] ", cpu->id, tx_tail->len);
                     for (int i = 0; i < tx_tail->len; i++)
                         fprintf(cpu->traceFile, "%02x", tx_tail->payload[i]);
@@ -223,7 +223,7 @@ class Radio {
              * long compared to our shortest inter-packet period.
              */
 
-            if (cpu->traceFile)
+            if (cpu->isTracing)
                 fprintf(cpu->traceFile, "[%2d] RADIO: rx full, NAK\n", cpu->id);
         }
 
@@ -329,7 +329,7 @@ class Radio {
         case CMD_W_ACK_PAYLOAD:
             tx_fifo[tx_fifo_head].len = spi_index;
  
-            if (cpu->traceFile) {
+            if (cpu->isTracing) {
                 fprintf(cpu->traceFile, "[%2d] RADIO: ack enq %d [%2d]\n", cpu->id, tx_fifo_head, spi_index);
             }
 

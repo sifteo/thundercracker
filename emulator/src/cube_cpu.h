@@ -89,6 +89,7 @@ struct em8051
     bool sbt;                   // In static binary translation mode
     bool needInterruptDispatch;
     bool needHardwareTick;
+    bool isTracing;
     
     uint8_t irq_count;          // Number of currently active IRQ handlers
     uint8_t ifp;                // Last IFP state

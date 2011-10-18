@@ -494,7 +494,7 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
          * Write execution trace
          */
 
-        if (aCPU->traceFile)
+        if (aCPU->isTracing)
             traceExecution(aCPU);
 
         /*

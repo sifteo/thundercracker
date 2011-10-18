@@ -323,6 +323,17 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
         }
 
+        case 'T': {
+            /*
+             * Intentionally undocumented: Toggle trace mode.
+             * Requires that a trace file was specified on the command line.
+             */
+            bool t = !instance->sys->isTracing();
+            instance->overlay.postMessage((t ? "Enabling" : "Disabling") + std::string(" trace mode"));
+            instance->sys->setTraceMode(t);
+            break;
+        }
+        
         case GLFW_KEY_SPACE:
             if (instance->mouseIsPulling)
                 instance->hoverOrRotate();
