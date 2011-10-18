@@ -217,6 +217,7 @@ $(BIN): $(OBJS)
 	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
 	strip -s src/$(BIN)-d.exe -o $(BIN).exe
 	rm -f src/$(BIN)-d.exe
+	$(DEPS)/upx307w/upx.exe $(BIN).exe
 else
 # Default link
 $(BIN): $(OBJS)
