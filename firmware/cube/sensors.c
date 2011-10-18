@@ -13,6 +13,12 @@
 #include "time.h"
 
 /*
+ * We export a global tick counter, which can be used by other modules
+ * who need a low-frequency timebase.
+ */
+volatile uint8_t sensor_tick_counter;
+
+/*
  * These MEMSIC accelerometers are flaky little buggers! We're seeing
  * different chips ship with different addresses, so we have to do a
  * quick search if we don't get a response. Additionally, we're seeing
@@ -381,6 +387,9 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
         ;--------------------------------------------------------------------
 
+        ; Tick tock.. this is not latency-critical at all, it goes last.
+        inc     _sensor_tick_counter
+        
         pop     ar1
         pop     ar0
         pop     psw
@@ -502,7 +511,7 @@ nb_tx:
         ; included below, for reference. The "LOW" line can go anywhere after
         ; "HIGH" here.
         ;
-        ; Currently we're tuning this for 2 us (32 clocks)
+        ; Currently we are tuning this for 2 us (32 clocks)
 
         clr     _TCON_TR1                       ; Prevent echo, disable receiver
 

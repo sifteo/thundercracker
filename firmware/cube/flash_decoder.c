@@ -32,11 +32,28 @@
 #include "flash.h"
 #include "hardware.h"
 #include "radio.h"
+#include "sensors.h"
 #include <protocol.h>
 
+/*
+ * To preserve interactivity even if our FIFO is staying full, we limit
+ * the total amount of time we can spend on flash programming without
+ * coming up for air. To measure this in a low-overhead way, we use
+ * the existing low-frequency timer that we run for sensor polling.
+ *
+ * The actual max duration of a timeslice varies between this many ticks
+ * and this many ticks minus one, since we don't align ourselves to the
+ * tick clock when starting.
+ */
+ 
+#define FLASH_TIMESLICE_TICKS  3
+
+/*
+ * FIFO buffer, written by the radio ISR
+ */
+ 
 volatile uint8_t __idata flash_fifo[FLS_FIFO_SIZE];
 volatile uint8_t flash_fifo_head;
-
 
 /*
  * Loadstream codec state
@@ -69,6 +86,7 @@ static uint8_t fifo_tail;
 static uint8_t opcode;
 static uint8_t counter;
 static uint8_t byte;
+static uint8_t tick_deadline;
 static void (*state)(void);
 
 // Shared temporaries, within a state
@@ -141,8 +159,9 @@ void flash_handle_fifo(void)
     }
 
     // Prep the flash hardware to start writing
+    tick_deadline = sensor_tick_counter + FLASH_TIMESLICE_TICKS;
     flash_program_start();
-
+    
 #ifdef DEBUG_LOADSTREAM
     DEBUG_UART_INIT();
 #endif
@@ -152,12 +171,14 @@ void flash_handle_fifo(void)
         state_return:
     __endasm ;
 
+    // No more data? Timeslice is over? Release the bus and get out.
+    // XXX: Timeslices not working yet
+    //if (tick_deadline == sensor_tick_counter || flash_fifo_head == fifo_tail) {
     if (flash_fifo_head == fifo_tail) {
-        // No more data? Release the bus and get out.
         CTRL_PORT = CTRL_IDLE;
         return;
     }
-
+    
     /*
      * Dequeue one byte from the FIFO.
      *
