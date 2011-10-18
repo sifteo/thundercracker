@@ -24,21 +24,50 @@ void load()
     } while (!cube.assetDone(GameAssets));
 }
 
+void draw_bg_column(unsigned x)
+{
+    uint16_t addr = (x % 18);
+    const uint16_t *src = Background.tiles + (x % Background.width);
+    
+    for (unsigned i = 0; i < Background.height; i++) {
+        _SYS_vbuf_writei(&cube.vbuf.sys, addr, src, 0, 1);
+        addr += 18;
+        src += Background.width;
+    }
+}
+
 void siftmain()
 {
     load();
     
     VidMode_BG0 vid(cube.vbuf);
     vid.init();
-    vid.BG0_drawAsset(Vec2(0,0), Background);
 
+    // Enter BG0+BG1 mode
     _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_BG1);
-    _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + 3, 0x0FF0, 9);
-    _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, Overlay.tiles, 0, 8*9);
+    
+    // Allocate tiles for the sprite 
+    _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2 + 4,
+                   ((1 << Sprite.width) - 1) << 1, Sprite.height);
 
+    // Allocate tiles for the static gauge, and draw it.
+    _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2,
+                   ((1 << Gauge.width) - 1), Gauge.height);
+    _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
+                     Gauge.tiles, 0, Gauge.width * Gauge.height);
+                   
     unsigned frame = 0;
     while (1) {
+        // Fill in new tiles, just past the right edge of the screen
+        draw_bg_column(frame/8 + 17);
+    
+        // Animate our sprite on the BG1 layer
+        _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2 + Gauge.width * Gauge.height,
+                         Sprite.tiles + (frame/2 % Sprite.frames) * (Sprite.width * Sprite.height),
+                         0, Sprite.width * Sprite.height);
+
         vid.BG0_setPanning(Vec2(frame, 0));
+        
         System::paint();
         frame++;
     }
