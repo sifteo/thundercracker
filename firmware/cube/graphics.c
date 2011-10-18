@@ -9,7 +9,6 @@
 #include <string.h>
 #include "hardware.h"
 #include "lcd.h"
-#include "flash.h"
 #include "radio.h"
 
 // Temporary bank used by some graphics modes
@@ -226,8 +225,6 @@ static void vm_fb32(void)
         vm_fb32_line(src);
         src += 16;
         LCD_WRITE_END();
-
-        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -304,8 +301,6 @@ static void vm_fb64(void)
         vm_fb64_line(src);
         src += 8;
         LCD_WRITE_END();
-
-        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -389,8 +384,6 @@ static void vm_fb128(void)
         src += 16;
         if ((src >> 8) == (_SYS_VA_COLORMAP >> 8))
            src = 0;
-
-        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -506,7 +499,6 @@ static void vm_bg0(void)
     do {
         vm_bg0_line();
         vm_bg0_next();
-        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -1023,7 +1015,6 @@ static void vm_bg0_rom(void)
     do {
         vm_bg0_rom_line();
         vm_bg0_next();
-        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
@@ -1651,7 +1642,6 @@ static void vm_bg0_bg1(void)
 
         vm_bg0_next();
         vm_bg1_next();
-        flash_handle_fifo();
     } while (--y);    
 
     lcd_end_frame();
