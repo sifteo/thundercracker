@@ -56,17 +56,22 @@ void siftmain()
     _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
                      Gauge.tiles, 0, Gauge.width * Gauge.height);
                    
+    for (unsigned x = 0; x < 17; x++)
+        draw_bg_column(x);
+                   
     unsigned frame = 0;
     while (1) {
+        unsigned pan_x = frame*3;
+        
         // Fill in new tiles, just past the right edge of the screen
-        draw_bg_column(frame/8 + 17);
+        draw_bg_column(pan_x/8 + 17);
     
         // Animate our sprite on the BG1 layer
         _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2 + Gauge.width * Gauge.height,
                          Sprite.tiles + (frame/2 % Sprite.frames) * (Sprite.width * Sprite.height),
                          0, Sprite.width * Sprite.height);
 
-        vid.BG0_setPanning(Vec2(frame, 0));
+        vid.BG0_setPanning(Vec2(pan_x, 0));
         
         System::paint();
         frame++;

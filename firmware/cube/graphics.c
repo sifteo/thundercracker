@@ -1151,22 +1151,36 @@ static uint16_t y_bg1_map;              // Map address for the first tile on thi
 
 // State transition, BG0 pixel to BG1 pixel
 #define STATE_BG0_TO_BG1(x)                                     __endasm; \
-    __asm inc   _DPS                                            __endasm; \
-    __asm ADDR_FROM_DPTR(_DPL1)                                 __endasm; \
-    __asm mov   a, r4                                           __endasm; \
+    __asm lcall _state_bg0_to_bg1_func                          __endasm; \
     __asm add   a, #((x) * 4)                                   __endasm; \
     __asm mov   ADDR_PORT, a                                    __endasm; \
     __asm CHROMA_PREP()                                         __endasm; \
     __asm
+    
+static void state_bg0_to_bg1_func(void) __naked {
+    __asm
+        inc    _DPS
+        ADDR_FROM_DPTR(_DPL1)
+        mov    a, r4
+        ret
+    __endasm ;
+}       
 
 // State transition, BG1 pixel to BG0 pixel, at nonzero X offset
 #define STATE_BG1_TO_BG0(x)                                     __endasm; \
-    __asm dec   _DPS                                            __endasm; \
-    __asm ADDR_FROM_DPTR(_DPL)                                  __endasm; \
-    __asm mov   a, r3                                           __endasm; \
+    __asm lcall _state_bg1_to_bg0_func                          __endasm; \
     __asm add   a, #((x) * 4)                                   __endasm; \
     __asm mov   ADDR_PORT, a                                    __endasm; \
     __asm
+    
+static void state_bg1_to_bg0_func(void) __naked {
+    __asm
+        dec    _DPS
+        ADDR_FROM_DPTR(_DPL)
+        mov    a, r3
+        ret
+    __endasm ;
+}
 
 // Overlaid pixel, BG1 over BG0
 #define CHROMA_BG1_BG0(l1,l2,x0,x1)                             __endasm; \
