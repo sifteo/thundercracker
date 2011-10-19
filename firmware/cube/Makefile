@@ -1,13 +1,23 @@
 BIN = cube.ihx
 
 OBJS = \
-        graphics.rel \
+        main.rel \
+        graphics_dispatch.rel \
+        graphics_bg0.rel \
+        graphics_bg0_bg1.rel \
+        graphics_bg0_spr_bg1.rel \
+        graphics_bg0_rom.rel \
+        graphics_bg2.rel \
+        graphics_fb32.rel \
+        graphics_fb64.rel \
+        graphics_fb128.rel \
+        graphics_powerdown.rel \
+        graphics_solid.rel \
         lcd.rel \
         radio.rel \
         sensors.rel \
         flash_hal.rel \
         flash_decoder.rel \
-        main.rel \
         time.rel \
         draw.rel \
         tilerom.rel \

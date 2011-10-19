@@ -7,7 +7,7 @@
  */
 
 #include <stdint.h>
-#include "lcd.h"
+#include "graphics.h"
 #include "hardware.h"
 #include "flash.h"
 #include "draw.h"

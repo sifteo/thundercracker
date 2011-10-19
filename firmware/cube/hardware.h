@@ -68,11 +68,6 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define CTRL_LCD_CMD    (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE)
 #define CTRL_FLASH_OUT  (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_LCD_DCX)
 
-#define ADDR_INC2()     { ADDR_PORT++; ADDR_PORT++; }
-#define ADDR_INC4()     { ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; }
-#define ADDR_INC32()    { ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); \
-                          ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
-
 /*
  * Debug UART (P1.0, 38400 baud)
  */

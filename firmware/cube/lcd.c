@@ -148,3 +148,32 @@ void lcd_end_frame()
 
     lcd_cmd_table(table);
 }
+
+
+void addr_inc32() __naked {
+    /*
+     * Common jump table for address increments.
+     * (Yes, this is a C function with entry points in the middle...)
+     */
+
+    __asm
+            .globl _addr_inc28
+            .globl _addr_inc24
+            .globl _addr_inc20
+            .globl _addr_inc16
+            .globl _addr_inc12
+            .globl _addr_inc8
+            .globl _addr_inc4
+    
+             ASM_ADDR_INC4()
+_addr_inc28: ASM_ADDR_INC4()
+_addr_inc24: ASM_ADDR_INC4()
+_addr_inc20: ASM_ADDR_INC4()
+_addr_inc16: ASM_ADDR_INC4()
+_addr_inc12: ASM_ADDR_INC4()
+_addr_inc8:  ASM_ADDR_INC4()
+_addr_inc4:  ASM_ADDR_INC4()
+             ret
+
+    __endasm ;
+}

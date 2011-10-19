@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include "radio.h"
 #include "sensors.h"
-#include "lcd.h"
+#include "graphics.h"
 #include "hardware.h"
 #include "flash.h"
 #include "demo.h"
