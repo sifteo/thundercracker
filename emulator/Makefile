@@ -20,8 +20,8 @@ LOCAL_OBJS = \
         src/cube_flash_model.o \
         src/cube_hardware.o \
         src/cube_neighbors.o \
-	scripts/data.o \
-	scripts/firmware-sbt.o \
+	resources/data.o \
+	resources/firmware-sbt.o \
 	
 # For faster 'make' invocation, track dependencies only for our own sources.
 OBJS := $(LOCAL_OBJS)
@@ -78,9 +78,19 @@ OBJS += \
         src/Box2D/Dynamics/Joints/b2WheelJoint.o \
         src/Box2D/Rope/b2Rope.o \
 
+# Lua scripting (used for our test suite)
+OBJS += \
+	src/lua/lapi.o src/lua/lcode.o src/lua/ldebug.o src/lua/ldo.o src/lua/ldump.o \
+	src/lua/lfunc.o src/lua/lgc.o src/lua/llex.o src/lua/lmem.o src/lua/lobject.o \
+	src/lua/lopcodes.o src/lua/lparser.o src/lua/lstate.o src/lua/lstring.o \
+	src/lua/ltable.o src/lua/ltm.o src/lua/lundump.o src/lua/lvm.o src/lua/lzio.o \
+	src/lua/lauxlib.o src/lua/lbaselib.o src/lua/ldblib.o src/lua/liolib.o \
+	src/lua/lmathlib.o src/lua/loslib.o src/lua/ltablib.o src/lua/lstrlib.o \
+	src/lua/loadlib.o src/lua/linit.o \
+
 DATADEPS = \
-	scripts/*.glsl \
-	scripts/*.png \
+	resources/*.glsl \
+	resources/*.png \
 
 # OS detection
 OS := $(shell uname)
@@ -174,7 +184,7 @@ endif
 
 # Resources
 ifeq ($(OS),windows32)
-	OBJS += scripts/winres.o
+	OBJS += resources/winres.o
 endif
 
 # C++ Libary
@@ -216,7 +226,6 @@ $(BIN): $(OBJS)
 	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
 	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
 	strip -s src/$(BIN)-d.exe -o $(BIN).exe
-	rm -f src/$(BIN)-d.exe
 	$(DEPS)/upx307w/upx.exe $(BIN).exe
 else
 # Default link
@@ -248,11 +257,11 @@ endif
 # using interpreted mode, and specifying a firmware image on
 # the command line.
 
-scripts/data.cpp: $(DATADEPS)
-	python scripts/bin2c.py
+resources/data.cpp: $(DATADEPS)
+	python resources/bin2c.py
 
 firmware:
-	python scripts/firmware-sbt.py ../firmware/cube/*.rst
+	python resources/firmware-sbt.py ../firmware/cube/*.rst
 
 .PHONY: clean firmware
 

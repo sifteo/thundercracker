@@ -11,21 +11,21 @@
 #
 
 INPUTS = [
-    "scripts/img_cube_face.png",
-    "scripts/img_cube_face_hilight.png",
-    "scripts/img_cube_face_hilight_mask.png",
-    "scripts/img_wood.png",
-    "scripts/cube_face_fp.glsl",
-    "scripts/cube_face_vp.glsl",
-    "scripts/cube_side_fp.glsl",
-    "scripts/cube_side_vp.glsl",
-    "scripts/background_fp.glsl",
-    "scripts/background_vp.glsl",
-    "scripts/ui_font_data.fnt",
-    "scripts/ui_font_data_0.png",
+    "resources/img_cube_face.png",
+    "resources/img_cube_face_hilight.png",
+    "resources/img_cube_face_hilight_mask.png",
+    "resources/img_wood.png",
+    "resources/cube_face_fp.glsl",
+    "resources/cube_face_vp.glsl",
+    "resources/cube_side_fp.glsl",
+    "resources/cube_side_vp.glsl",
+    "resources/background_fp.glsl",
+    "resources/background_vp.glsl",
+    "resources/ui_font_data.fnt",
+    "resources/ui_font_data_0.png",
     ]
 
-OUTPUT = "scripts/data.cpp"
+OUTPUT = "resources/data.cpp"
 
 ###############
 

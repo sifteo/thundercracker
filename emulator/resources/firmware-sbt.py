@@ -181,4 +181,4 @@ if __name__ == '__main__':
 
     fixupImage(p)
     gen = CodeGenerator(p)
-    gen.write(open('scripts/firmware-sbt.cpp', 'w'))
+    gen.write(open('resources/firmware-sbt.cpp', 'w'))
