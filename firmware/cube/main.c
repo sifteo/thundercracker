@@ -59,18 +59,14 @@ static void gpio_init(void)
 
     /*
      * Neighbor TX pins
+     *
+     * We enable pull-downs for input mode, when we're receiving pulses from
+     * our neighbors. This improves the isolation between each side's input.
+     *
+     * We do NOT use high-drive mode, as it seems to actually make things a
+     * lot worse!
      */
 
-    // High drive strength
-    // XXX: Does NOT seem to help!
-#if 0
-    MISC_CON = 0x60;
-    MISC_CON = 0x61;
-    MISC_CON = 0x65;
-    MISC_CON = 0x67;
-#endif
-
-    // Pull-downs, for channel isolation in RX mode
     MISC_CON = 0x30;
     MISC_CON = 0x31;
     MISC_CON = 0x35;
