@@ -208,7 +208,7 @@ endif
 # all times unless you have a great reason not to.
 
 FLAGS += -O3 -g
-WARNFLAGS := -Werror -Wall
+WARNFLAGS := -Werror -Wall -Wno-uninitialized
 
 # Automatic dependency generation (*.d files)
 FLAGS += -MMD
