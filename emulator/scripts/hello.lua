@@ -12,10 +12,12 @@ sys:init()
 fe:init()
 sys:start()
 
+counter = 0
+
 repeat
-    fe:postMessage("Hello from Lua!")
+    fe:postMessage("Hello from Lua! Frame #" .. counter)
+    counter = counter + 1
 until not fe:runFrame()
 
 sys:exit()
 fe:exit()
-
