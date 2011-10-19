@@ -23,7 +23,37 @@ static bool hasConsole = true;
 
 #include "frontend.h"
 #include "system.h"
+#include "lua_script.h"
 
+static void message(const char *fmt, ...);
+
+static void usage()
+{
+    /*
+     * There are additionally several undocumented options that are
+     * only useful for internal development:
+     *
+     *  -f FIRMWARE.hex   Specify firmware image for cubes
+     *  -e SCRIPT.lua     Execute a Lua script, instead of running the GUI
+     *  -t TRACE.txt      Trace firmware execution to a text file (Toggle with 'T' key)
+     *  -F FLASH.bin      Load/save flash memory (first cube only) to a binary file
+     *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
+     *  -d                Launch firmware debugger (first cube only)
+     *  -c                Continue executing on exception, rather than stopping the debugger.
+     */
+
+    message("\n"
+            "usage: tc-siftulator [OPTIONS]\n"
+            "\n"
+            "Sifteo Thundercracker simulator\n"
+            "\n"
+            "Options:\n"
+            "  -h            Show this help message, and exit\n"
+            "  -n NUM        Set initial number of cubes\n"
+            "  -T            No throttle; run faster than real-time if we can\n"
+            "\n"
+            "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n");
+}
 
 static void getConsole()
 {
@@ -43,7 +73,6 @@ static void getConsole()
 #endif
 }
 
-
 static void message(const char *fmt, ...)
 {
     char buf[1024];
@@ -61,42 +90,41 @@ static void message(const char *fmt, ...)
     }
 #endif
 
-    fprintf(stderr, "%s", buf);
+    fprintf(stderr, "%s\n", buf);
 }
-    
 
-static void usage()
+static int runFrontend(System &sys)
 {
-    /*
-     * There are additionally several undocumented options that are
-     * only useful for internal development:
-     *
-     *  -f FIRMWARE.hex   Specify firmware image for cubes
-     *  -t TRACE.txt      Trace firmware execution to a text file (Toggle with 'T' key)
-     *  -F FLASH.bin      Load/save flash memory (first cube only) to a binary file
-     *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
-     *  -d                Launch firmware debugger (first cube only)
-     *  -c                Continue executing on exception, rather than stopping the debugger.
-     */
+    static Frontend fe;
+        
+    if (!sys.init()) {
+        message("Emulator failed to initialize");
+        return 1;
+    }
+    if (!fe.init(&sys)) {
+        message("Graphical frontend failed to initialize");
+        return 1;
+    }    
+    sys.start();
+    while (fe.runFrame());
+    fe.exit();
+    sys.exit();
 
-    message("\n"
-            "usage: tc-siftulator [OPTIONS]\n"
-            "\n"
-            "Sifteo Thundercracker simulator\n"
-            "\n"
-            "Options:\n"
-            "  -h            Show this help message, and exit\n"
-            "  -n NUM        Set initial number of cubes\n"
-            "  -T            No throttle; run faster than real-time if we can\n"
-            "\n"
-            "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n"
-            "\n");
+    return 0;
+}
+
+static int runScript(System &sys, const char *file)
+{
+    LuaScript lua(sys);
+    int result = lua.run(file);
+    sys.exit();
+    return result;
 }
 
 int main(int argc, char **argv)
 {
+    const char *scriptFile = NULL;
     static System sys;
-    static Frontend fe;
 
     // Attach an existing console, if it's already handy
     getConsole();
@@ -134,6 +162,12 @@ int main(int argc, char **argv)
             continue;
         }
 
+        if (!strcmp(arg, "-e") && argv[c+1]) {
+            scriptFile = argv[c+1];
+            c++;
+            continue;
+        }
+
         if (!strcmp(arg, "-F") && argv[c+1]) {
             sys.opt_cube0Flash = argv[c+1];
             c++;
@@ -155,8 +189,7 @@ int main(int argc, char **argv)
         if (!strcmp(arg, "-n") && argv[c+1]) {
             sys.opt_numCubes = atoi(argv[c+1]);
             if (sys.opt_numCubes > sys.MAX_CUBES) {
-                message("Error: Unsupported number of cubes (Minimum 0, maximum %d)\n",
-                        sys.MAX_CUBES);
+                message("Error: Unsupported number of cubes (Minimum 0, maximum %d)", sys.MAX_CUBES);
                 return 1;
             }
             c++;
@@ -164,7 +197,7 @@ int main(int argc, char **argv)
         }
 
         if (arg[0] == '-') {
-            message("Unrecognized option: '%s'\n", arg);
+            message("Unrecognized option: '%s'", arg);
             usage();
             return 1;
         }
@@ -173,42 +206,10 @@ int main(int argc, char **argv)
          * No positional command line options yet. In the future this
          * may be a game binary to run on the master block.
          */
-        message("Unrecognized argument: '%s'\n", arg);
+        message("Unrecognized argument: '%s'", arg);
         usage();
         return 1;
     }
 
-    /*
-     * We want to disable our debugging features when using the
-     * built-in binary translated firmware. The debugger won't really
-     * work properly in SBT mode anyway, but we additionally want to
-     * disable it in order to make it harder to reverse engineer our
-     * firmware. Of course, any dedicated reverse engineer could just
-     * disable this test easily :)
-     */
-
-    if (!sys.opt_cubeFirmware && (sys.opt_cube0Profile ||
-                                  sys.opt_cubeTrace ||
-                                  sys.opt_cube0Debug)) {
-        message("Debug features only available if a firmware image is provided.\n");
-        return 1;
-    }
-
-    /*
-     * Run stuff!
-     */
-
-    sys.init();
-    if (!fe.init(&sys)) {
-        message("Graphical frontend failed to initialize.\n");
-        return 1;
-    }    
-
-    sys.start();
-    fe.run();
-
-    fe.exit();
-    sys.exit();
-
-    return 0;
+    return scriptFile ? runScript(sys, scriptFile) : runFrontend(sys);
 }

@@ -2,7 +2,7 @@
  * Lunar, C++ to Lua bindings
  * http://lua-users.org/wiki/CppBindingWithLunar
  *
- * Local modifications for STIR:
+ * Local modifications:
  *
  *   - Added a cast() method, which is like check() but doesn't generate an
  *     error message on failure. This can be used in cases where the value

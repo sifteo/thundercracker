@@ -28,10 +28,14 @@ bool Hardware::init(VirtualTime *masterTimer,
     
     CPU::em8051_reset(&cpu, true);
 
-    if (firmwareFile)
-        CPU::em8051_load(&cpu, firmwareFile);
-    else
+    if (firmwareFile) {
+        if (CPU::em8051_load(&cpu, firmwareFile)) {
+            fprintf(stderr, "Error: Failed to load firmware '%s'\n", firmwareFile);
+            return false;
+        }
+    } else {
         CPU::em8051_init_sbt(&cpu);
+    }
 
     cpu.mSFR[REG_P0DIR] = 0xFF;
     cpu.mSFR[REG_P1DIR] = 0xFF;
@@ -44,8 +48,11 @@ bool Hardware::init(VirtualTime *masterTimer,
     cpu.mSFR[REG_SPIRDAT] = 0x00;
     cpu.mSFR[REG_RFCON] = RFCON_RFCSN;
  
-    if (!flash.init(flashFile))
-        return false;    
+    if (!flash.init(flashFile)) {
+        fprintf(stderr, "Error: Failed to initialize flash memory\n");
+        return false;
+    }
+    
     spi.radio.init(&cpu);
     spi.init(&cpu);
     adc.init();

@@ -14,6 +14,7 @@
 #ifndef _SYSTEM_H
 #define _SYSTEM_H
 
+#include <string>
 #include <glfw.h>
 #include "vtime.h"
 #include "cube_hardware.h"
@@ -31,17 +32,17 @@ class System {
 
     // Options; can be set prior to init
     unsigned opt_numCubes;
-    const char *opt_cubeFirmware;
+    std::string opt_cubeFirmware;
     bool opt_noThrottle;
 
     // Global debug options
-    const char *opt_cubeTrace;
+    std::string opt_cubeTrace;
     bool opt_continueOnException;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
-    const char *opt_cube0Flash;
-    const char *opt_cube0Profile;
+    std::string opt_cube0Flash;
+    std::string opt_cube0Profile;
 
     System();
     
@@ -73,6 +74,8 @@ class System {
 
     FILE *traceFile;
     bool mIsTracing;
+    bool mIsInitialized;
+    bool mIsStarted;
     
     SystemNetwork network;
 };

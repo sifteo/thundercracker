@@ -28,6 +28,7 @@ bool Frontend::init(System *_sys)
     frameCount = 0;
     toggleZoom = false;
     viewExtent = targetViewExtent() * 3.0;
+    isRunning = true;
 
     glfwInit();
 
@@ -220,20 +221,21 @@ void Frontend::exit()
     glfwTerminate();
 }
 
-void Frontend::run()
+bool Frontend::runFrame()
 {
-    isRunning = true;
-    while (isRunning && sys->isRunning()) {
-
+    if (!isRunning || !sys->isRunning())
+        return false;
+        
     // Simulated hardware VSync
-        if (!(frameCount % FRAME_HZ_DIVISOR))
-            for (unsigned i = 0; i < sys->opt_numCubes; i++)
-                sys->cubes[i].lcdPulseTE();
+    if (!(frameCount % FRAME_HZ_DIVISOR))
+        for (unsigned i = 0; i < sys->opt_numCubes; i++)
+            sys->cubes[i].lcdPulseTE();
 
-        animate();
-        draw();
-        frameCount++;
-    }
+    animate();
+    draw();
+    frameCount++;
+
+    return true;
 }
 
 bool Frontend::openWindow(int width, int height, bool fullscreen)

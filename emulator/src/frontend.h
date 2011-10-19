@@ -37,11 +37,15 @@ class Frontend {
     Frontend();
 
     bool init(System *sys);
-    void run();
+    bool runFrame();
     void exit();
 
     void numCubesChanged();
 
+    void postMessage(std::string msg) {
+        overlay.postMessage(msg);
+    }
+    
  private:
     /*
      * Number of real frames per virtual LCD frame (Assume 60Hz
@@ -103,7 +107,6 @@ class Frontend {
     void removeCube();
 
     std::string createScreenshotName();
-    void showMessage(std::string message);
     void drawOverlay();
 
     System *sys;
