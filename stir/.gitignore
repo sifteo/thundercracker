@@ -1,3 +1,5 @@
+*.dSYM
+*.d
 *.o
 *~
 stir

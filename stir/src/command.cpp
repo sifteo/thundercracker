@@ -17,11 +17,11 @@
 #include "script.h"
 
 
-static void usage(const char *argv0)
+static void usage()
 {
     fprintf(stderr,
             "\n"
-            "usage: %s [OPTIONS] FILE.lua\n"
+            "usage: stir [OPTIONS] FILE.lua\n"
             "\n"
             "Sifteo Tiled Image Reducer, a compile-time game asset preparation\n"
             "tool. Reads a configuration file which describes your game's assets,\n"
@@ -37,8 +37,7 @@ static void usage(const char *argv0)
             "  VAR=VALUE     Define a script variable, prior to parsing the script\n"
             "\n"
             "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n"
-            "\n",
-            argv0);
+            "\n");
 }
 
 int main(int argc, char **argv)
@@ -55,7 +54,7 @@ int main(int argc, char **argv)
         char *arg = argv[c];
 
         if (!strcmp(arg, "-h")) {
-            usage(argv[0]);
+            usage();
             return 0;
         }
 
@@ -95,7 +94,7 @@ int main(int argc, char **argv)
     }
 
     if (!scriptFile) {
-        usage(argv[0]);
+        usage();
         return 1;
     }
 
