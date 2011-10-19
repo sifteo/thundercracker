@@ -419,8 +419,12 @@ int LuaCube::testScreenshot(lua_State *L)
         RGB565 refColor = &pixels[i*4];
         
         if (fbColor.value != refColor.value) {
-            lua_pushfstring(L, "image mismatch at pixel %d,%d", i % lcd.WIDTH, i / lcd.WIDTH);
-            lua_error(L);
+            // Image mismatch. Return (x, y, lcdPixel, refPixel)
+            lua_pushinteger(L, i % lcd.WIDTH);
+            lua_pushinteger(L, i / lcd.WIDTH);
+            lua_pushinteger(L, fbColor.value);
+            lua_pushinteger(L, refColor.value);
+            return 4;
         }
     }
     

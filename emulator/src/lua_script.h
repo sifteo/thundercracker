@@ -95,8 +95,9 @@ private:
      * LCD screenshots
      *
      * We can save a screenshot to PNG, or compare a PNG with the
-     * current LCD contents. Requires an exact match, throws an
-     * exception if unsuccessful.
+     * current LCD contents. Requires an exact match. On success,
+     * returns nil. On error, returns (x, y, lcdColor, refColor)
+     * to describe the mismatch.
      */
      
     int saveScreenshot(lua_State *L);
