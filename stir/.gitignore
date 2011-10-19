@@ -1,6 +1,7 @@
 *.o
 *~
 stir
+stir.exe
 tilemap.bin
 loadstream.bin
 out.png
