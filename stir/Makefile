@@ -1,4 +1,4 @@
-BINS = stir
+BIN = stir
 
 OBJS_lua = \
 	src/lua/lapi.o src/lua/lcode.o src/lua/ldebug.o src/lua/ldo.o src/lua/ldump.o \
@@ -9,7 +9,7 @@ OBJS_lua = \
 	src/lua/lmathlib.o src/lua/loslib.o src/lua/ltablib.o src/lua/lstrlib.o \
 	src/lua/loadlib.o src/lua/linit.o
 
-OBJS_stir = \
+OBJS = \
 	src/script.o \
 	src/proof.o \
 	src/proof_html.o \
@@ -25,33 +25,52 @@ OBJS_stir = \
 	$(OBJS_lua) \
 
 FIRMWARE_INC = ../firmware/include
-CDEPS = src/*.h $(FIRMWARE_INC)/*.h
+DEPFILES := $(OBJS:.o=.d)
 
 PYTHON := python
-UNAME  := $(shell uname)
+OS  := $(shell uname)
 
-ifeq ($(findstring MINGW32_NT,$(UNAME)),MINGW32_NT)  
-      UNAME := windows32
-      CC := mingw32-gcc
+ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
+	OS := windows32
+	CC := mingw32-gcc
+endif
+ifeq ($(OS),windows32)
+	DEPS := ../deps/win32
+	OBJS += src/winres.o
 endif
 
-CFLAGS += -O3 -g -ffast-math -Werror -Wall -I$(FIRMWARE_INC)
-ifneq ($(UNAME), windows32)
-    CFLAGS += -DLUA_USE_MKSTEMP
+CFLAGS += -O3 -g -ffast-math -Werror -Wall -I$(FIRMWARE_INC) -MMD
+ifneq ($(OS), windows32)
+	CFLAGS += -DLUA_USE_MKSTEMP
 endif
 LDFLAGS += -g -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 
-all: $(BINS)
+all: $(BIN)
 
-stir: $(OBJS_stir)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
+ifeq ($(OS),windows32)
+# We like having stripped binaries plus a separate file with
+# debug info. Do that on Win32 too.
+$(BIN): $(OBJS)
+	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
+	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
+	strip -s src/$(BIN)-d.exe -o $(BIN).exe
+	rm -f src/$(BIN)-d.exe
+	$(DEPS)/upx307w/upx.exe $(BIN).exe
+else
+# Default link
+$(BIN): $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+endif	
+	
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
 
 %.o: %.c $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
+
+%.o: %.rc
+	windres -i $< -o $@
 
 src/proof_html.cpp: src/proof_html.py
 	$(PYTHON) $< $@
@@ -59,4 +78,6 @@ src/proof_html.cpp: src/proof_html.py
 .PHONY: clean
 
 clean:
-	rm -f $(BINS) $(OBJS_stir) $(OBJS_lsdec)
+	rm -f $(BIN) $(BIN).exe $(BIN).dSYM src/$(BIN)-d.exe $(OBJS) $(DEPFILES)
+
+-include $(DEPFILES)
