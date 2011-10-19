@@ -92,6 +92,8 @@ class Hardware {
     bool init(VirtualTime *masterTimer,
               const char *firmwareFile, const char *flashFile);
     void exit();
+    
+    void reset();
 
     ALWAYS_INLINE bool tick() {
         bool cpuTicked = CPU::em8051_tick(&cpu);

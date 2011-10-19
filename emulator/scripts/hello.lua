@@ -3,8 +3,9 @@
 
 print "Hello"
 
-sys = system()
-fe = frontend()
+sys = System()
+fe = Frontend()
+c = Cube(0)
 
 sys:setOptions{numCubes=1}
 
@@ -12,11 +13,9 @@ sys:init()
 fe:init()
 sys:start()
 
-counter = 0
-
 repeat
-    fe:postMessage("Hello from Lua! Frame #" .. counter)
-    counter = counter + 1
+    fe:postMessage(string.format("Hello from Lua! (%.2f sec)", sys:vclock()))
+    print(string.format("LCD: %10d pixels, %10d writes", c:lcdPixelCount(), c:lcdWriteCount()))
 until not fe:runFrame()
 
 sys:exit()

@@ -20,6 +20,8 @@ namespace Cube {
 
 class Flash {
  public:
+    // Memory array
+    uint8_t data[FlashModel::SIZE];
 
     enum busy_flag {
         BF_IDLE          = 0,
@@ -102,14 +104,6 @@ class Flash {
         busy_ticks = 0;
         idle_ticks = 0;
         return percent;
-    }
-
-    const uint8_t *getData() {
-        return data;
-    }
-    
-    unsigned getSize() {
-        return sizeof data;
     }
     
     ALWAYS_INLINE void tick(TickDeadline &deadline, CPU::em8051 *cpu) {
@@ -362,9 +356,6 @@ class Flash {
     uint8_t prev_oe;
     uint8_t status_byte;
     struct cmd_state cmd_fifo[CMD_FIFO_MASK + 1];
-
-    // Memory array
-    uint8_t data[FlashModel::SIZE];
 };
 
 

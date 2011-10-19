@@ -30,8 +30,6 @@ bool Frontend::init(System *_sys)
     viewExtent = targetViewExtent() * 3.0;
     isRunning = true;
 
-    glfwInit();
-
     /*
      * Create cubes in a grid. Height is the square root of the number
      * of cubes, rounding down. For sizes up to 3 cubes, this produces

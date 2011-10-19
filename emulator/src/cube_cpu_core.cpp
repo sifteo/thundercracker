@@ -68,6 +68,17 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     aCPU->mSFR[REG_P2] = 0xff;
     aCPU->mSFR[REG_P3] = 0xff;
     
+    aCPU->mSFR[REG_P0DIR] = 0xFF;
+    aCPU->mSFR[REG_P1DIR] = 0xFF;
+    aCPU->mSFR[REG_P2DIR] = 0xFF;
+    aCPU->mSFR[REG_P3DIR] = 0xFF;
+    
+    aCPU->mSFR[REG_SPIRCON0] = 0x01;
+    aCPU->mSFR[REG_SPIRCON1] = 0x0F;
+    aCPU->mSFR[REG_SPIRSTAT] = 0x03;
+    aCPU->mSFR[REG_SPIRDAT] = 0x00;
+    aCPU->mSFR[REG_RFCON] = RFCON_RFCSN;
+
     aCPU->prescaler12 = 12;
     
     // build function pointer lists
@@ -78,7 +89,6 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     // Clean internal variables
     aCPU->irq_count = 0;
     aCPU->needInterruptDispatch = false;
-    aCPU->mProfileData = NULL;
 }
 
 static int readbyte(FILE * f)

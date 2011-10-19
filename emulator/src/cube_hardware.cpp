@@ -25,6 +25,7 @@ bool Hardware::init(VirtualTime *masterTimer,
 
     cpu.callbackData = this;
     cpu.vtime = masterTimer;
+    cpu.mProfileData = NULL;
     
     CPU::em8051_reset(&cpu, true);
 
@@ -37,16 +38,6 @@ bool Hardware::init(VirtualTime *masterTimer,
         CPU::em8051_init_sbt(&cpu);
     }
 
-    cpu.mSFR[REG_P0DIR] = 0xFF;
-    cpu.mSFR[REG_P1DIR] = 0xFF;
-    cpu.mSFR[REG_P2DIR] = 0xFF;
-    cpu.mSFR[REG_P3DIR] = 0xFF;
-    
-    cpu.mSFR[REG_SPIRCON0] = 0x01;
-    cpu.mSFR[REG_SPIRCON1] = 0x0F;
-    cpu.mSFR[REG_SPIRSTAT] = 0x03;
-    cpu.mSFR[REG_SPIRDAT] = 0x00;
-    cpu.mSFR[REG_RFCON] = RFCON_RFCSN;
  
     if (!flash.init(flashFile)) {
         fprintf(stderr, "Error: Failed to initialize flash memory\n");
@@ -61,6 +52,11 @@ bool Hardware::init(VirtualTime *masterTimer,
     neighbors.init();
 
     return true;
+}
+
+void Hardware::reset()
+{
+    CPU::em8051_reset(&cpu, false);
 }
 
 void Hardware::exit()

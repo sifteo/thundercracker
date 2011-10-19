@@ -211,5 +211,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    // Necessary even when running windowless, since we use GLFW for threading
+    glfwInit();
+
     return scriptFile ? runScript(sys, scriptFile) : runFrontend(sys);
 }

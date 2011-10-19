@@ -60,10 +60,11 @@ class System {
         return mIsTracing;
     }
 
- private:
+    // Use with care... They must remain exactly paired.
     void startThread();
     void stopThread();
- 
+
+ private: 
     static void threadFn(void *param);
     bool initCube(unsigned id);
     void exitCube(unsigned id);
