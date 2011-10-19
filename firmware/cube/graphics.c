@@ -1050,7 +1050,7 @@ static void vm_bg0_rom(void)
  *  r1: X wrap counter
  *  r3: BG0 addr low-byte
  *  r4: BG1 addr low-byte
- *  r5: Tile count
+ *  r5: Tiles / pixels remaining in draw loop
  *  r6: BG1 tile bitmap (next)
  *  r7: BG1 tile bitmap (current)
  */
@@ -2141,7 +2141,7 @@ void graphics_render(void) __naked
         mov     dptr, #10$
         jmp     @a+dptr
 
-	; These redundant labels are required by the binary translator!
+        ; These redundant labels are required by the binary translator!
 
 10$:    ljmp    _vm_powerdown   ; 0x00
         nop
