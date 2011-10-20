@@ -1,0 +1,204 @@
+--[[
+    VRAM utilities for the Sifteo Thundercracker simulator's scripting environment
+
+    M. Elizabeth Scott <beth@sifteo.com> 
+    Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+]]--
+
+LCD_WIDTH  = 128
+LCD_HEIGHT = 128
+LCD_PIXELS = 128*128
+
+VRAM_BYTES = 1024
+VRAM_WORDS = 512
+
+VRAM_BG0_WIDTH     = 18      -- Width/height of BG0 tile grid
+VRAM_BG1_WIDTH     = 16      -- Width/height of BG1 bitmap
+VRAM_BG1_TILES     = 144     -- Total number of opaque tiles in BG1
+VRAM_BG2_WIDTH     = 16      -- Width/height of BG2 tile grid
+VRAM_SPRITES       = 8       -- Maximum number of linear sprites
+CHROMA_KEY         = 0x4f    -- Chroma key MSB
+
+-- Bits for 'flags'
+
+VF_TOGGLE          = 0x02    -- Toggle bit, to trigger a new frame render
+VF_SYNC            = 0x04    -- Sync with LCD vertical refresh
+VF_CONTINUOUS      = 0x08    -- Render continuously, without waiting for toggle
+VF_RESERVED        = 0x10
+VF_XY_SWAP         = 0x20    -- Swap X and Y axes during render
+VF_X_FLIP          = 0x40    -- Flip X axis during render
+VF_Y_FLIP          = 0x80    -- Flip Y axis during render
+
+-- Values for 'mode'
+
+VM_MASK            = 0x3c    -- Mask of valid bits in VM_MASK
+
+VM_POWERDOWN       = 0x00    -- Power saving mode, LCD is off
+VM_BG0_ROM         = 0x04    -- BG0, with tile data from internal ROM
+VM_SOLID           = 0x08    -- Solid color, from colormap[0]
+VM_FB32            = 0x0c    -- 32x32 pixel 16-color framebuffer
+VM_FB64            = 0x10    -- 64x64 pixel 2-color framebuffer
+VM_FB128           = 0x14    -- 128x48 pixel 2-color framebuffer
+VM_BG0             = 0x18    -- Background BG0: 18x18 grid
+VM_BG0_BG1         = 0x1c    -- BG0, plus overlay BG1: 16x16 bitmap + 144 indices
+VM_BG0_SPR_BG1     = 0x20    -- BG0, multiple linear sprites, then BG1
+VM_BG2             = 0x24    -- Background BG2: 16x16 grid with affine transform
+
+-- Important VRAM addresses
+
+VA_BG0_TILES       = 0x000
+VA_BG2_TILES       = 0x000
+VA_BG2_AFFINE      = 0x200
+VA_BG2_BORDER      = 0x20c
+VA_BG1_TILES       = 0x288
+VA_COLORMAP        = 0x300
+VA_BG1_BITMAP      = 0x3a8
+VA_SPR             = 0x3c8
+VA_BG1_X           = 0x3f8
+VA_BG1_Y           = 0x3f9
+VA_BG0_X           = 0x3fa
+VA_BG1_Y           = 0x3fb
+VA_FIRST_LINE      = 0x3fc
+VA_NUM_LINES       = 0x3fd
+VA_MODE            = 0x3fe
+VA_FLAGS           = 0x3ff
+
+-- Graphics Utilities
+
+local bit = require("bit")
+
+gx = {}
+
+    function gx:init()
+        -- Use one cube, and let the firmware boot.
+        
+        gx.sys = System()
+        gx.cube = Cube(0)        
+        
+        gx.sys:setOptions{numCubes=1, noThrottle=true}
+        gx.sys:init()
+        gx.sys:start()
+        
+        -- Must be enough time for the cube to boot, worst-case
+        gx.sys:vsleep(0.3)
+        
+        -- Make sure the cube has rendered its idle frame
+        pixelCount = gx.cube:lcdPixelCount()
+        assertEquals(pixelCount >= LCD_PIXELS, true)
+        
+        -- Make sure the cube has stopped drawing
+        gx.sys:vsleep(0.1)
+        assertEquals(gx.cube:lcdPixelCount(), pixelCount)
+
+        -- Seed the PRNG, and wipe VRAM
+        math.randomseed(0)
+        gx:wipe()
+        gx:setWindow(0, LCD_HEIGHT)
+    end
+    
+    function gx:exit()
+        gx.sys:exit()
+    end
+    
+    function gx:wipe()
+        -- Put pseudorandom junk in all of mode-specific VRAM.
+        -- So, everything except windowing, mode, and flags.
+        
+        for i = 0, VRAM_WORDS - 3, 1 do
+            gx.cube:xwPoke(i, math.random(0, 0xFFFF))
+        end
+    end
+    
+    function gx:setMode(m)
+        gx.cube:xbPoke(VA_MODE, m)
+    end
+    
+    function gx:setWindow(first, num)
+        gx.cube:xbPoke(VA_FIRST_LINE, first)
+        gx.cube:xbPoke(VA_NUM_LINES, num)
+    end
+    
+    function gx:setColor(index, value)
+        gx.cube:xwPoke(VA_COLORMAP/2 + index, value)
+    end
+    
+    function gx:panBG0(x, y)
+        gx.cube:xbPoke(VA_BG0_X, x)
+        gx.cube:xbPoke(VA_BG0_Y, y)
+    end
+    
+    function gx:panBG1(x, y)
+        gx.cube:xbPoke(VA_BG1_X, x)
+        gx.cube:xbPoke(VA_BG1_Y, y)
+    end
+    
+    function gx:drawFrame()
+        -- Draw a single frame
+        
+        -- Make sure we are not in continuous rendering mode
+        assertEquals(bit.band(gx.cube:xbPeek(VA_FLAGS), VF_CONTINUOUS), 0)
+        
+        -- Trigger this next frame
+        pixelCount = gx.cube:lcdPixelCount()
+        gx.cube:xbPoke(VA_FLAGS, bit.bxor(gx.cube:xbPeek(VA_FLAGS), VF_TOGGLE))
+
+        -- Wait for it to fully complete, or we time out
+        
+        timestamp = gx.sys:vclock()
+        repeat
+            gx.sys:vsleep(0.01)   
+            pixelsWritten = bit.band(gx.cube:lcdPixelCount() - pixelCount, 0xFFFFFFFF)
+            
+            if pixelsWritten > LCD_PIXELS then
+                error("Cube wrote too many pixels")
+            end
+            if gx.sys:vclock() - timestamp > 10.0 then
+                error("Timed out waiting for a frame to render")
+            end
+        until pixelsWritten == LCD_PIXELS
+    end
+    
+    function gx:assertScreenshot(name)
+        -- Assert that a screenshot matches the current LCD contents.
+        -- If not, we save a copy of the actual LCD screen, and error() out.
+        
+        local fullPath = string.format("scripts/screenshots/%s.png", name)
+        local x, y, lcdColor, refColor;
+        
+        local status, err = pcall(function()
+            x, y, lcdColor, refColor = gx.cube:testScreenshot(fullPath)
+        end)
+
+        if not status then
+            -- We failed to load the reference screenshot! Odds are, this means
+            -- the developer just added a new test and hasn't made a reference
+            -- image yet. We'll still want to error out here, but after loudly
+            -- explaining what we're doing, and creating a reference image.
+            
+            gx.cube:saveScreenshot(fullPath)
+            error(string.format("%s\n\n" ..
+                                "** Since we failed to open the reference image, assuming that\n" ..
+                                "** this is a brand new test. The current output was just saved to:\n" ..
+                                "**\n" ..
+                                "**    %s\n" ..
+                                "**\n" ..
+                                "** If this was not what you intended, please delete that file!\n",
+                                err, fullPath))
+        end
+                                
+        if x then
+            local failedPath = string.format("failed-%s.png", name)
+            gx.cube:saveScreenshot(failedPath)
+            error(string.format("Screenshot mismatch\n\n" ..
+                                "-- At location (%d,%d)\n" ..
+                                "-- Actual pixel 0x%04x, expected 0x%04x\n" ..
+                                "-- Wrote failed image to \"%s\"\n", 
+                                x, y, lcdColor, refColor, failedPath))
+        end
+    end
+    
+    function gx:drawAndAssert(name)
+        gx:drawFrame()
+        gx:assertScreenshot(name)
+    end
+
