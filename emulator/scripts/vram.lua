@@ -109,6 +109,7 @@ gx = {}
         math.randomseed(0)
         gx:wipe()
         gx:setWindow(0, LCD_HEIGHT)
+        gx:setRotation(0)
         gx.lastExceptionCount = 0
     end
     
@@ -277,6 +278,10 @@ gx = {}
                      0x8274, 0x9264, 0xa157, 0xb147,
                      0xc137, 0xd127, 0xe117, 0xf107}
     end
+    
+    function gx:setRotation(f)
+        gx:xbReplace(VA_FLAGS, 5, 3, f)
+    end    
     
     function gx:panBG0(x, y)
         gx.cube:xbPoke(VA_BG0_X, x)

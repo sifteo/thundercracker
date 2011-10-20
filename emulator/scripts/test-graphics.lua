@@ -120,6 +120,25 @@ TestGraphics = {}
         gx:drawROMPattern()
         gx:drawAndAssertWithBG0Pan("rom")
     end
+    
+    function TestGraphics:test_rotation()
+        -- Uses ROM mode, since that gives us an interesting high-res pattern to test with
+        
+        gx:setColors{0x1234}
+        gx:panBG0(0,0)
+        gx:drawROMPattern()
+        
+        for flags = 0, 7, 1 do        
+            gx:setMode(VM_SOLID)
+            gx:setWindow(0, 128)
+            gx:drawFrame()
+            gx:setMode(VM_BG0_ROM)
+            gx:setWindow(15, 48)
+            
+            gx:xbReplace(VA_FLAGS, 5, 3, flags)
+            gx:drawAndAssert(string.format("rotate-%d", flags))
+        end
+    end
 
 gx:init()
 LuaUnit:run()

@@ -26,7 +26,7 @@
  */
 
 #if !(defined(LCD_MODEL_GIANTPLUS_ILI9163C) || defined(LCD_MODEL_TRULY_ST7735))
-#   define LCD_MODEL_TRULY_ST7735
+#   define LCD_MODEL_GIANTPLUS_ILI9163C
 #endif
 
 /********************************************************************/
