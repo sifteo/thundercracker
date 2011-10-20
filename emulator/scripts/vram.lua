@@ -57,7 +57,7 @@ VA_SPR             = 0x3c8
 VA_BG1_X           = 0x3f8
 VA_BG1_Y           = 0x3f9
 VA_BG0_X           = 0x3fa
-VA_BG1_Y           = 0x3fb
+VA_BG0_Y           = 0x3fb
 VA_FIRST_LINE      = 0x3fc
 VA_NUM_LINES       = 0x3fd
 VA_MODE            = 0x3fe
@@ -174,6 +174,60 @@ gx = {}
         
     end
     
+    function gx:assertScreenshot(name)
+        -- Assert that a screenshot matches the current LCD contents.
+        -- If not, we save a copy of the actual LCD screen, and error() out.
+        
+        local fullPath = string.format("scripts/screenshots/%s.png", name)
+        local x, y, lcdColor, refColor;
+        
+        local status, err = pcall(function()
+            x, y, lcdColor, refColor = gx.cube:testScreenshot(fullPath)
+        end)
+
+        if not status then
+            -- We failed to load the reference screenshot! Odds are, this means
+            -- the developer just added a new test and hasn't made a reference
+            -- image yet. We'll still want to error out here, but after loudly
+            -- explaining what we're doing, and creating a reference image.
+            
+            gx.cube:saveScreenshot(fullPath)
+            error(string.format("%s\n\n" ..
+                                "** Since we failed to open the reference image, assuming that\n" ..
+                                "** this is a brand new test. The current output was just saved to:\n" ..
+                                "**\n" ..
+                                "**    %s\n" ..
+                                "**\n" ..
+                                "** If this was not what you intended, please delete that file!\n",
+                                err, fullPath))
+        end
+                                
+        if x then
+            local failedPath = string.format("failed-%s.png", name)
+            gx.cube:saveScreenshot(failedPath)
+            error(string.format("Screenshot mismatch\n\n" ..
+                                "-- At location (%d,%d)\n" ..
+                                "-- Actual pixel 0x%04x, expected 0x%04x\n" ..
+                                "-- Wrote failed image to \"%s\"\n", 
+                                x, y, lcdColor, refColor, failedPath))
+        end
+    end
+    
+    function gx:drawAndAssert(name)
+        gx:drawFrame()
+        gx:assertScreenshot(name)
+    end
+    
+    function gx:hexDumpVRAM()
+        for addr = 0, 0x3F0, 0x10 do
+            line = string.format("VRAM %04x:", addr)
+            for i = addr, addr + 0xF, 1 do
+                line = line .. string.format(" %02x", gx.cube:xbPeek(i))
+            end
+            print(line)
+        end
+    end
+   
     function gx:setMode(m)
         gx.cube:xbPoke(VA_MODE, m)
     end
@@ -252,51 +306,85 @@ gx = {}
         end
     end
     
+    function gx:tileIndex(i)
+        return bit.bor( bit.band(bit.lshift(i, 2), 0xFE00), bit.band(bit.lshift(i, 1), 0x00FE) )
+    end
+    
     function gx:putPixelFB32(x, y, color)
         gx:xbReplace(bit.rshift(x, 1) + y*16, bit.band(x,1) * 4, 4, color)
     end
-        
-    function gx:assertScreenshot(name)
-        -- Assert that a screenshot matches the current LCD contents.
-        -- If not, we save a copy of the actual LCD screen, and error() out.
-        
-        local fullPath = string.format("scripts/screenshots/%s.png", name)
-        local x, y, lcdColor, refColor;
-        
-        local status, err = pcall(function()
-            x, y, lcdColor, refColor = gx.cube:testScreenshot(fullPath)
-        end)
+    
+    function gx:putPixelFB64(x, y, color)
+        gx:xbReplace(bit.rshift(x, 3) + y*8, bit.band(x,7), 1, color)
+    end
 
-        if not status then
-            -- We failed to load the reference screenshot! Odds are, this means
-            -- the developer just added a new test and hasn't made a reference
-            -- image yet. We'll still want to error out here, but after loudly
-            -- explaining what we're doing, and creating a reference image.
-            
-            gx.cube:saveScreenshot(fullPath)
-            error(string.format("%s\n\n" ..
-                                "** Since we failed to open the reference image, assuming that\n" ..
-                                "** this is a brand new test. The current output was just saved to:\n" ..
-                                "**\n" ..
-                                "**    %s\n" ..
-                                "**\n" ..
-                                "** If this was not what you intended, please delete that file!\n",
-                                err, fullPath))
-        end
-                                
-        if x then
-            local failedPath = string.format("failed-%s.png", name)
-            gx.cube:saveScreenshot(failedPath)
-            error(string.format("Screenshot mismatch\n\n" ..
-                                "-- At location (%d,%d)\n" ..
-                                "-- Actual pixel 0x%04x, expected 0x%04x\n" ..
-                                "-- Wrote failed image to \"%s\"\n", 
-                                x, y, lcdColor, refColor, failedPath))
+    function gx:putPixelFB128(x, y, color)
+        gx:xbReplace(bit.rshift(x, 3) + y*16, bit.band(x,7), 1, color)
+    end
+    
+    function gx:putTileBG0(x, y, index)
+        gx.cube:xwPoke(x + y*18, gx:tileIndex(index))
+    end
+
+    function gx:putTileBG0ROM(x, y, tile, palette, mode)
+        gx:putTileBG0(x, y, bit.bor( tile, bit.bor( bit.lshift(palette, 10), bit.lshift(mode, 9) )))
+    end
+
+    function gx:drawROMPattern()
+        -- Create a test pattern that uses both modes, and a variety
+        -- of characters and palettes, while trying to keep to things
+        -- at the beginning of the ROM, which aren't likely to change
+        -- as we modify the ROM graphics set.
+
+        for y = 0, 17, 1 do
+            for x = 0, 17, 1 do
+                local ascii_a = 97 - 32
+                local tile = bit.band(x+y, 0xF) + ascii_a
+                local palette = bit.band(y, 0x3)
+                local mode = bit.band(y, 1)
+                gx:putTileBG0ROM(x, y, tile, palette, mode)
+            end
         end
     end
     
-    function gx:drawAndAssert(name)
-        gx:drawFrame()
-        gx:assertScreenshot(name)
+    function gx:drawAndAssertWithWindow(mode, name, sizes)
+        -- Run a test at a variety of different window sizes
+        
+        for i, width in pairs(sizes) do
+            gx:setMode(VM_SOLID)
+            gx:setWindow(0, 128)
+            gx:drawFrame()
+            gx:setMode(mode)
+            gx:setWindow(33, width)
+            gx:drawAndAssert(string.format("%s-win-%d", name, width))
+        end    
+    end
+
+    function gx:drawAndAssertWithBG0Pan(name)
+        -- Run a test at a variety of BG0 pixel/tile panning offsets.
+        -- Tests pixel-panning plus tile-panning and map wrap-around
+
+        local function tryPan(x, y)
+            gx:panBG0(x, y)
+            gx:drawAndAssert(string.format("%s-pan0-%d-%d", name, x, y))
+        end   
+         
+        -- Pixel panning, near the origin
+        for i = 0, 20, 1 do
+            tryPan(i, bit.rshift(i, 1))
+        end
+        
+        -- Horizontal wrap
+        for i = 0, 17, 1 do
+            tryPan(i*8, 0)
+        end
+        
+        -- Vertical wrap
+        for i = 0, 17, 1 do
+            tryPan(0, i*8)
+        end
+        
+        -- Edge of valid range
+        tryPan(143, 143)
     end
 

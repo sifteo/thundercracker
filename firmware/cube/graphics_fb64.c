@@ -55,13 +55,13 @@ void vm_fb64_line(uint16_t ptr)
         djnz    r2, 4$          ; Next byte
 
 7$:
-
+ 
     __endasm ;
 }
 
 void vm_fb64(void)
 {
-    uint8_t y = vram.num_lines >> 1;
+    uint8_t y = vram.num_lines;
     uint16_t src = 0;
 
     lcd_begin_frame();
@@ -69,8 +69,10 @@ void vm_fb64(void)
 
     do {
         vm_fb64_line(src);
+        if (!--y) break;
         vm_fb64_line(src);
         src += 8;
+        src &= 0x1F8;
     } while (--y);    
 
     LCD_WRITE_END();

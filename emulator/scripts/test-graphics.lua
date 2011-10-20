@@ -14,7 +14,7 @@ TestGraphics = {}
         gx:setUp()
     end
 
-    function TestGraphics:test0_solid()
+    function TestGraphics:test_solid()
         local colors = { 0x0000, 0xffff, 0x8000, 0x000f, 0x1234 }
         
         -- Plain solid colors
@@ -32,7 +32,7 @@ TestGraphics = {}
         end
     end
     
-    function TestGraphics:test1_fb32()
+    function TestGraphics:test_fb32()
         gx:setMode(VM_FB32)
 
         -- Horizontal gradient with a black outline, in a unique palette
@@ -62,18 +62,65 @@ TestGraphics = {}
         gx:drawAndAssert("fb32-gradient")
         
         -- Windowed rendering
-        
         gx:setColors{ 0x0F00 }
-        for i, width in pairs{ 1, 4, 16, 17, 92, 255, 0 } do
-            gx:setMode(VM_SOLID)
-            gx:setWindow(0, 128)
-            gx:drawFrame()
-            gx:setMode(VM_FB32)
-            gx:setWindow(33, width)
-            gx:drawAndAssert(string.format("fb32-win-%d", width))
-        end        
+        gx:drawAndAssertWithWindow(VM_FB32, "fb32", {1, 4, 16, 17, 92, 255, 0})
     end
 
-gx:init(true)
+    function TestGraphics:test_fb64()
+        gx:setMode(VM_FB64)
+
+        -- Checkerboard, with a dark outline
+        gx:xbFill(0, 512, 0)
+        gx:setColors{gx:RGB565(0.5,0.5,0.5), gx:RGB565(1,1,0)}
+        for y = 1, 62, 1 do
+            for x = 1, 62, 1 do
+                gx:putPixelFB64(x, y, bit.band(x+y, 1))
+            end
+        end
+        gx:drawAndAssert("fb64-outlined")
+        
+        -- Binary counting pattern, reflected down the middle
+        for i = 0, 255, 1 do
+            gx.cube:xbPoke(i, i)
+        end
+        for i = 256, 511, 1 do
+            gx.cube:xbPoke(i, 511-i)
+        end
+        gx:drawAndAssert("fb64-binary")
+
+        -- Windowed rendering
+        gx:drawAndAssertWithWindow(VM_FB64, "fb64", {1, 4, 16, 17, 92, 255, 0})       
+    end
+    
+    function TestGraphics:test_fb128()
+        gx:setMode(VM_FB128)
+
+        -- Checkerboard, with a dark outline
+        gx:xbFill(0, 0x300, 0)
+        gx:setColors{gx:RGB565(0.5,0.5,0.5), gx:RGB565(0,1,0)}
+        for x = 1, 126, 1 do
+            for y = 1, 46, 1 do
+                gx:putPixelFB128(x, y, bit.band(x+y, 1))
+            end
+        end
+        gx:drawAndAssert("fb128-outlined")
+
+        -- Binary counting pattern
+        for i = 0, 0x2ff, 1 do
+            gx.cube:xbPoke(i, bit.bxor(i, bit.rshift(i, 8)))
+        end
+        gx:drawAndAssert("fb128-binary")
+
+        -- Windowed rendering
+        gx:drawAndAssertWithWindow(VM_FB128, "fb128", {1, 2, 20, 48, 48*2, 255, 0})
+    end
+    
+    function TestGraphics:test_rom()
+        gx:setMode(VM_BG0_ROM)
+        gx:drawROMPattern()
+        gx:drawAndAssertWithBG0Pan("rom")
+    end
+
+gx:init()
 LuaUnit:run()
 gx:exit()
