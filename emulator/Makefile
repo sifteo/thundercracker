@@ -23,10 +23,21 @@ LOCAL_OBJS = \
         src/cube_neighbors.o \
 	resources/data.o \
 	resources/firmware-sbt.o \
-	
+
 # For faster 'make' invocation, track dependencies only for our own sources.
 OBJS := $(LOCAL_OBJS)
 DEPFILES := $(LOCAL_OBJS:.o=.d)
+
+# OS detection
+OS := $(shell uname)
+ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
+        OS := windows32
+        CC := mingw32-gcc
+endif
+ifeq ($(OS),windows32)
+        DEPS := ../deps/win32
+        LIBS += -lws2_32
+endif
 
 # LodePNG, self-contained PNG encoder/decoder
 OBJS += src/lodepng.o
@@ -89,19 +100,8 @@ OBJS += \
 	src/lua/lmathlib.o src/lua/loslib.o src/lua/ltablib.o src/lua/lstrlib.o \
 	src/lua/loadlib.o src/lua/linit.o src/lua/bit.o \
 
-DATADEPS = \
-	resources/*.glsl \
-	resources/*.png \
-
-# OS detection
-OS := $(shell uname)
-ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
-        OS := windows32
-        CC := mingw32-gcc
-endif
-ifeq ($(OS),windows32)
-        DEPS := ../deps/win32
-        LIBS += -lws2_32
+ifneq ($(OS), windows32)
+	FLAGS += -DLUA_USE_MKSTEMP
 endif
 
 # OpenGL
@@ -140,6 +140,7 @@ else ifeq ($(OS),windows32)
 else
         LIBS += -lX11 -lpthread
         INCLUDES += -Isrc/glfw/x11
+	FLAGS += -D_GLFW_HAS_PTHREAD
         OBJS += \
             src/glfw/x11/x11_enable.o      src/glfw/x11/x11_keysym2unicode.o    \
             src/glfw/x11/x11_fullscreen.o  src/glfw/x11/x11_thread.o            \
@@ -151,7 +152,7 @@ endif
 # Curses
 ifeq ($(OS),windows32)
         # Use our own copy of pdcurses on Win32
-	# This is the "Win32a" variant, from http://www.projectpluto.com/win32a.htm
+        # This is the "Win32a" variant, from http://www.projectpluto.com/win32a.htm
         INCLUDES += -Isrc/pdcurses
         OBJS += src/pdcurses/pdcurses/addch.o     src/pdcurses/pdcurses/mouse.o         \
                 src/pdcurses/pdcurses/addchstr.o  src/pdcurses/pdcurses/move.o          \
@@ -197,7 +198,7 @@ endif
 
 # Linker flags
 ifneq ($(OS),Darwin)
-	# Not supported on Apple's LLVM GCC frontend
+        # Not supported on Apple's LLVM GCC frontend
 	LIBS += -Wl,--gc-sections
 endif
 
@@ -233,7 +234,7 @@ else
 $(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 endif	
-	
+
 %.o: %.cpp
 	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o
 
@@ -245,7 +246,7 @@ endif
 
 %.o: %.rc
 	windres -i $< -o $@
-	
+
 # Data dependencies don't need to be rebuilt by everyone,
 # the resulting generated code is checked into git. The
 # firmware target is somewhat inconvenient, since it relies
