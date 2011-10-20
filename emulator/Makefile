@@ -87,7 +87,7 @@ OBJS += \
 	src/lua/ltable.o src/lua/ltm.o src/lua/lundump.o src/lua/lvm.o src/lua/lzio.o \
 	src/lua/lauxlib.o src/lua/lbaselib.o src/lua/ldblib.o src/lua/liolib.o \
 	src/lua/lmathlib.o src/lua/loslib.o src/lua/ltablib.o src/lua/lstrlib.o \
-	src/lua/loadlib.o src/lua/linit.o \
+	src/lua/loadlib.o src/lua/linit.o src/lua/bit.o \
 
 DATADEPS = \
 	resources/*.glsl \
