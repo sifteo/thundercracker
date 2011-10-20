@@ -11,18 +11,18 @@
 #
 
 INPUTS = [
-    "resources/img_cube_face.png",
-    "resources/img_cube_face_hilight.png",
-    "resources/img_cube_face_hilight_mask.png",
-    "resources/img_wood.png",
-    "resources/cube_face_fp.glsl",
-    "resources/cube_face_vp.glsl",
-    "resources/cube_side_fp.glsl",
-    "resources/cube_side_vp.glsl",
-    "resources/background_fp.glsl",
-    "resources/background_vp.glsl",
-    "resources/ui_font_data.fnt",
-    "resources/ui_font_data_0.png",
+    ('rb', "resources/img_cube_face.png"),
+    ('rb', "resources/img_cube_face_hilight.png"),
+    ('rb', "resources/img_cube_face_hilight_mask.png"),
+    ('rb', "resources/img_wood.png"),
+    ('r',  "resources/cube_face_fp.glsl"),
+    ('r',  "resources/cube_face_vp.glsl"),
+    ('r',  "resources/cube_side_fp.glsl"),
+    ('r',  "resources/cube_side_vp.glsl"),
+    ('r',  "resources/background_fp.glsl"),
+    ('r',  "resources/background_vp.glsl"),
+    ('rb', "resources/ui_font_data.fnt"),
+    ('rb', "resources/ui_font_data_0.png"),
     ]
 
 OUTPUT = "resources/data.cpp"
@@ -70,9 +70,9 @@ def cByteArray(bytes, width=16, indent="    "):
 if __name__ == "__main__":
     arrays = []
 
-    for filename in INPUTS:
+    for mode, filename in INPUTS:
         name = os.path.splitext(os.path.split(filename)[-1])[0]
-        data = map(ord, open(filename, 'rb').read())
+        data = map(ord, open(filename, mode).read())
 
         # NUL-terminate strings. (Harmless on images)
         data.append(0)
