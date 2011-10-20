@@ -261,10 +261,14 @@ void System::setTraceMode(bool t)
 {
     mIsTracing = !opt_cubeTrace.empty() && traceFile && t;
 
-    if (opt_numCubes){
-        stopThread();
+    if (opt_numCubes) {
+        bool startStop = mIsStarted;
+    
+        if (startStop)
+            stopThread();
         for (unsigned i = 0; i < opt_numCubes; i++)
-            cubes[i].cpu.isTracing = t;
-        startThread();
+            cubes[i].cpu.isTracing = mIsTracing;
+        if (startStop)
+            startThread();
     }
 }

@@ -51,10 +51,12 @@ public:
     static System *sys;
     
 private:
-    int setOptions(lua_State *L);
     int init(lua_State *L);
     int start(lua_State *L);
     int exit(lua_State *L);
+    
+    int setOptions(lua_State *L);
+    int setTraceMode(lua_State *L);
     
     int vclock(lua_State *L);
     int vsleep(lua_State *L);
