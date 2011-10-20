@@ -119,6 +119,7 @@ TestGraphics = {}
         gx:setMode(VM_BG0_ROM)
         gx:drawROMPattern()
         gx:drawAndAssertWithBG0Pan("rom")
+        gx:drawAndAssertWithWindow(VM_BG0_ROM, "rom", {1, 4, 16, 17, 92, 255, 0})       
     end
     
     function TestGraphics:test_rotation()
@@ -139,7 +140,18 @@ TestGraphics = {}
             gx:drawAndAssert(string.format("rotate-%d", flags))
         end
     end
+    
+    function TestGraphics:test_bg0()
+        gx:setMode(VM_BG0)
+        gx:drawBG0Pattern()
+        gx:drawAndAssertWithBG0Pan("bg0")
+        gx:drawAndAssertWithWindow(VM_BG0, "bg0", {1, 4, 16, 17, 92, 255, 0})       
+    end
 
-gx:init()
-LuaUnit:run()
+    
+-- You can use environment vars to pass in other options.
+-- By default, we run all tests with no GUI.
+
+gx:init(os.getenv("USE_FRONTEND"))
+LuaUnit:run(os.getenv("TEST"))
 gx:exit()

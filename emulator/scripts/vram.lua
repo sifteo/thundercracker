@@ -193,14 +193,19 @@ gx = {}
             -- explaining what we're doing, and creating a reference image.
             
             gx.cube:saveScreenshot(fullPath)
-            error(string.format("%s\n\n" ..
-                                "** Since we failed to open the reference image, assuming that\n" ..
-                                "** this is a brand new test. The current output was just saved to:\n" ..
-                                "**\n" ..
-                                "**    %s\n" ..
-                                "**\n" ..
-                                "** If this was not what you intended, please delete that file!\n",
-                                err, fullPath))
+            if not os.getenv("GENERATE_REFERENCES") then
+                error(string.format("%s\n\n" ..
+                                    "** Since we failed to open the reference image, assuming that\n" ..
+                                    "** this is a brand new test. The current output was just saved to:\n" ..
+                                    "**\n" ..
+                                    "**    %s\n" ..
+                                    "**\n" ..
+                                    "** If this was not what you intended, please delete that file!\n" ..
+                                    "** If you want to do this automatically for all tests with missing\n" ..
+                                    "** reference images, set GENERATE_REFERENCES environment variable.\n",
+                                    err, fullPath))
+            end
+            return
         end
                                 
         if x then
@@ -327,6 +332,15 @@ gx = {}
         gx:xbReplace(bit.rshift(x, 3) + y*16, bit.band(x,7), 1, color)
     end
     
+    function gx:putPixelFlash(index, x, y, r, g, b)
+        -- Draw a colored pixel to a tile in flash
+        local addr = index * 64 + y * 8 + x
+        local rgb = gx:RGB565(r,g,b)
+        
+        -- Endian swap
+        gx.cube:fwPoke(addr, bit.bor(bit.rshift(rgb, 8), bit.lshift(rgb, 8)))
+    end
+    
     function gx:putTileBG0(x, y, index)
         gx.cube:xwPoke(x + y*18, gx:tileIndex(index))
     end
@@ -352,6 +366,51 @@ gx = {}
         end
     end
     
+    function gx:drawBG0Pattern()
+        -- Create a test pattern for BG0 modes. Picks arbitrary unique tile
+        -- indices for the map, and draws unique tile data to flash. Each tile
+        -- has added uniqueness in its colors, plus it has a distinctive border
+        -- and labelling to aid in debugging.
+        
+       for y = 0, 17, 1 do
+            for x = 0, 17, 1 do
+                -- Pick arbitrary nonsequential indices
+                local index = bit.bxor((x + y*18) * 31, 0x3FFF)
+                gx:putTileBG0(x, y, index)
+
+                -- Draw a tile into flash
+                for ty = 0,7,1 do
+                    for tx = 0,7,1 do
+                        
+                        -- Gradient background
+                        local r = tx / 16
+                        local g = ty / 16
+                        local b = 0
+                        
+                        -- Brighter border
+                        if tx == 0 or tx == 7 or ty == 0 or ty == 7 then
+                            r = r + 0.5
+                            g = g + 0.5
+                            b = b + 0.5
+                        end
+                        
+                        -- Encode the tile's index in binary, as a 4x4 square of bits
+                        if tx >= 2 and tx <= 5 and ty >= 2 and ty <= 5 then
+                            local bitIndex = (tx - 2) + (ty - 2)*4
+                            if bit.band(bit.rshift(index, bitIndex), 1) > 0 then
+                                b = 1
+                            end
+                        end
+                        
+                        gx:putPixelFlash(index, tx, ty, r,g,b)
+                    end
+                end
+            end
+        end        
+        
+        
+    end
+    
     function gx:drawAndAssertWithWindow(mode, name, sizes)
         -- Run a test at a variety of different window sizes
         
@@ -364,7 +423,7 @@ gx = {}
             gx:drawAndAssert(string.format("%s-win-%d", name, width))
         end    
     end
-
+    
     function gx:drawAndAssertWithBG0Pan(name)
         -- Run a test at a variety of BG0 pixel/tile panning offsets.
         -- Tests pixel-panning plus tile-panning and map wrap-around
