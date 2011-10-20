@@ -71,7 +71,7 @@ static void vm_fb32_line(uint16_t src)
 
 void vm_fb32(void)
 {
-    uint8_t y = vram.num_lines >> 2;
+    uint8_t y = vram.num_lines;
     uint16_t src = 0;
 
     lcd_begin_frame();
@@ -79,10 +79,14 @@ void vm_fb32(void)
 
     do {
         vm_fb32_line(src);
+        if (!--y) break;
         vm_fb32_line(src);
+        if (!--y) break;
         vm_fb32_line(src);
+        if (!--y) break;
         vm_fb32_line(src);
         src += 16;
+        src &= 0x1F0;
     } while (--y);    
 
     LCD_WRITE_END();

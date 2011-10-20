@@ -90,6 +90,7 @@ private:
     int reset(lua_State *L);
     int lcdWriteCount(lua_State *L);
     int lcdPixelCount(lua_State *L);
+    int exceptionCount(lua_State *L);
       
     /*
      * LCD screenshots

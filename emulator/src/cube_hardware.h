@@ -120,6 +120,9 @@ class Hardware {
         rfcken = e;
     }
     
+    uint32_t getExceptionCount();
+    void incExceptionCount();
+    
  private:
 
     ALWAYS_INLINE void hardwareTick()
@@ -155,6 +158,8 @@ class Hardware {
     uint8_t prev_ctrl_port;
     uint8_t flash_drv;
     uint8_t rfcken;
+    
+    uint32_t exceptionCount;
 };
 
 };  // namespace Cube

@@ -39,6 +39,7 @@ Lunar<LuaCube>::RegType LuaCube::methods[] = {
     LUNAR_DECLARE_METHOD(LuaCube, reset),
     LUNAR_DECLARE_METHOD(LuaCube, lcdWriteCount),
     LUNAR_DECLARE_METHOD(LuaCube, lcdPixelCount),
+    LUNAR_DECLARE_METHOD(LuaCube, exceptionCount),
     LUNAR_DECLARE_METHOD(LuaCube, saveScreenshot),
     LUNAR_DECLARE_METHOD(LuaCube, testScreenshot),
     LUNAR_DECLARE_METHOD(LuaCube, xbPoke),
@@ -315,6 +316,12 @@ int LuaCube::lcdWriteCount(lua_State *L)
 int LuaCube::lcdPixelCount(lua_State *L)
 {
     lua_pushinteger(L, LuaSystem::sys->cubes[id].lcd.getPixelCount());
+    return 1;
+}
+
+int LuaCube::exceptionCount(lua_State *L)
+{
+    lua_pushinteger(L, LuaSystem::sys->cubes[id].getExceptionCount());
     return 1;
 }
 

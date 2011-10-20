@@ -22,7 +22,8 @@ bool Hardware::init(VirtualTime *masterTimer,
     lat2 = 0;
     bus = 0;
     prev_ctrl_port = 0;
-
+    exceptionCount = 0;
+    
     cpu.callbackData = this;
     cpu.vtime = masterTimer;
     cpu.mProfileData = NULL;
@@ -70,6 +71,8 @@ void CPU::except(CPU::em8051 *cpu, int exc)
     Hardware *self = (Hardware*) cpu->callbackData;
     const char *name = CPU::em8051_exc_name(exc);
     const char *fmt = "[%2d] EXCEPTION at 0x%04x: %s\n";
+    
+    self->incExceptionCount();
     
     if (cpu->isTracing)
         fprintf(cpu->traceFile, fmt, cpu->id, cpu->mPC, name);
@@ -202,5 +205,14 @@ bool Hardware::isDebugging()
     return this == Cube::Debug::cube;
 }
 
+uint32_t Hardware::getExceptionCount()
+{
+    return exceptionCount;
+}
+
+void Hardware::incExceptionCount()
+{
+    exceptionCount++;
+}
 
 };  // namespace Cube
