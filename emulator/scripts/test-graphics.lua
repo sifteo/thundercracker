@@ -26,7 +26,7 @@ TestGraphics = {}
         
         -- Windowed rendering
         gx:setColors{0xF000}
-        for k, win in pairs{ 1, 33, 128, 255 } do
+        for k, win in pairs{ 1, 33, 128, 255, 0 } do
             gx:setWindow(71, win)
             gx:drawAndAssert(string.format("solid-win-%d", win, color))
         end
@@ -64,7 +64,7 @@ TestGraphics = {}
         -- Windowed rendering
         
         gx:setColors{ 0x0F00 }
-        for i, width in pairs{ 1, 4, 16, 17, 92, 255 } do
+        for i, width in pairs{ 1, 4, 16, 17, 92, 255, 0 } do
             gx:setMode(VM_SOLID)
             gx:setWindow(0, 128)
             gx:drawFrame()

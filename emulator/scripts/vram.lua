@@ -181,6 +181,11 @@ gx = {}
     function gx:setWindow(first, num)
         gx.cube:xbPoke(VA_FIRST_LINE, first)
         gx.cube:xbPoke(VA_NUM_LINES, num)
+        
+        -- Zero lines will cause a wraparound and be treated as 256 lines
+        if num == 0 then
+            num = 256
+        end
         gx.expectedPixelCount = num * LCD_WIDTH
     end
     
