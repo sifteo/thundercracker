@@ -117,9 +117,24 @@ gx = {}
         gx.cube:xbPoke(VA_FIRST_LINE, first)
         gx.cube:xbPoke(VA_NUM_LINES, num)
     end
-    
+
     function gx:setColor(index, value)
         gx.cube:xwPoke(VA_COLORMAP/2 + index, value)
+    end
+    
+    function gx:setColors(t)
+        for k, v in pairs(t) do
+            -- Note that we're converting from Lua's one-based indices to zero-based
+            gx:setColor(k-1, v)
+        end
+    end
+    
+    function gx:setUniquePalette(t)
+        -- Set a palette for testing purposes, in which every byte of every color is unique
+        gx:setColors{0x00ff, 0x10ef, 0x20df, 0x30cf,
+                     0x40bf, 0x52a4, 0x6294, 0x7284,
+                     0x8274, 0x9264, 0xa157, 0xb147,
+                     0xc137, 0xd127, 0xe117, 0xf107}
     end
     
     function gx:panBG0(x, y)
