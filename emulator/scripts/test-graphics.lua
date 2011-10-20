@@ -147,6 +147,44 @@ TestGraphics = {}
         gx:drawAndAssertWithBG0Pan("bg0")
         gx:drawAndAssertWithWindow(VM_BG0, "bg0", {1, 4, 16, 17, 92, 255, 0})       
     end
+    
+    function TestGraphics:test_bg2()
+        -- Borrow the BG0 test pattern. It'll be reinterpreted as a 16x16 grid
+        gx:setMode(VM_BG2)
+        gx:drawBG0Pattern()
+        
+        -- Identity matrix for now
+        gx:pokeWords(VA_BG2_BORDER, {0x1234})
+        gx:setMatrixBG2(matrix:new(3, 'I'))
+        gx:drawAndAssert("bg2-identity")
+        
+        -- With this matrix, do a windowing test.
+        -- Note that the wrap tests (255, 0) will end up wrapping to the
+        -- border color, not back to the tile array.
+        gx:drawAndAssertWithWindow(VM_BG2, "bg2", {1, 4, 16, 17, 92, 255, 0})       
+        gx:setWindow(0, 128)
+       
+        -- Integer scaling, without rotation or shearing
+        local iScales = {0, 0.25, 0.5, 1, 2, 4, 8};
+        for i, sx in pairs(iScales) do
+            for i, sy in pairs(iScales) do
+                gx:setMatrixBG2(gx:scaling(sx, sy))
+                gx:drawAndAssert(string.format("bg2-scale-%04x-%04x", sx * 256, sy * 256))
+            end
+        end
+        
+        -- Panning
+        for i = 1, 16 do
+            gx:setMatrixBG2(gx:scaling(0.25, 0.25) * gx:translation(i, 2*i))
+            gx:drawAndAssert(string.format("bg2-pan-%d", i))
+        end
+
+        -- Rotation about the center of the screen
+        for i = 0, 360, 5 do
+            gx:setMatrixBG2(gx:translation(64,64) * gx:rotation(i) * gx:translation(-64,-64))
+            gx:drawAndAssert(string.format("bg2-rotate-%d", i))
+        end
+    end
 
     
 -- You can use environment vars to pass in other options.

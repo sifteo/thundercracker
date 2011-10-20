@@ -65,7 +65,8 @@ VA_FLAGS           = 0x3ff
 
 -- General Utilities
 
-local bit = require("bit")
+bit = require("bit")
+matrix = require("scripts/matrix")
 
 function clamp(x, lower, upper)
     return math.min(math.max(x, lower), upper)
@@ -288,6 +289,12 @@ gx = {}
         gx:xbReplace(VA_FLAGS, 5, 3, f)
     end    
     
+    function gx:pokeWords(byteAddr, tab)
+        for k, v in pairs(tab) do
+            gx.cube:xwPoke(byteAddr/2 + k - 1, v)
+        end
+    end
+    
     function gx:panBG0(x, y)
         gx.cube:xbPoke(VA_BG0_X, x)
         gx.cube:xbPoke(VA_BG0_Y, y)
@@ -348,6 +355,33 @@ gx = {}
     function gx:putTileBG0ROM(x, y, tile, palette, mode)
         gx:putTileBG0(x, y, bit.bor( tile, bit.bor( bit.lshift(palette, 10), bit.lshift(mode, 9) )))
     end
+    
+    function gx:setMatrixBG2(m)
+        gx:pokeWords(VA_BG2_AFFINE, { m[1][3] * 256, m[2][3] * 256,
+                                      m[1][1] * 256, m[2][1] * 256,
+                                      m[1][2] * 256, m[2][2] * 256 })
+    end   
+  
+    function gx:translation(x, y)
+        return matrix:new{{1, 0, x},
+                          {0, 1, y},
+                          {0, 0, 1}}
+    end
+    
+    function gx:scaling(x, y)
+        return matrix:new{{x, 0, 0},
+                          {0, y, 0},
+                          {0, 0, 1}}
+    end
+
+    function gx:rotation(degrees)
+        local a = degrees / 180 * math.pi
+        local s = math.sin(a)
+        local c = math.cos(a)
+        return matrix:new{{c, -s, 0},
+                          {s,  c, 0},
+                          {0,  0, 1}}
+    end
 
     function gx:drawROMPattern()
         -- Create a test pattern that uses both modes, and a variety
@@ -385,7 +419,7 @@ gx = {}
                         -- Gradient background
                         local r = tx / 16
                         local g = ty / 16
-                        local b = 0
+                        local b = index / 0x8000
                         
                         -- Brighter border
                         if tx == 0 or tx == 7 or ty == 0 or ty == 7 then

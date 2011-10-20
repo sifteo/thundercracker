@@ -182,6 +182,10 @@ void vm_bg2(void)
     yy = vram.bg2_affine.yy;
     border = vram.bg2_border;
     sti();
+    
+    // We pre-increment in the loop below. Compensate by decrementing first.
+    cx -= xx;
+    cy -= xy;
 
     /*
      * Initialize tile cache. This stays valid as long as we don't use the
