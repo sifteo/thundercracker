@@ -36,7 +36,7 @@ static int sbt_block_0003(em8051 *aCPU)
 static int sbt_block_000b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1b,0xba);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x10,0xf7);
 	return clk;
 }
 
@@ -50,7 +50,7 @@ static int sbt_block_0013(em8051 *aCPU)
 static int sbt_block_001b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1c,0x1f);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x11,0x5c);
 	return clk;
 }
 
@@ -64,7 +64,7 @@ static int sbt_block_0023(em8051 *aCPU)
 static int sbt_block_002b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1c,0x2d);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x11,0x6a);
 	return clk;
 }
 
@@ -92,14 +92,14 @@ static int sbt_block_0043(em8051 *aCPU)
 static int sbt_block_004b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x18,0x75);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0d,0xb2);
 	return clk;
 }
 
 static int sbt_block_0053(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1b,0x43);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x10,0x80);
 	return clk;
 }
 
@@ -127,21 +127,21 @@ static int sbt_block_00ba(em8051 *aCPU)
 static int sbt_block_00bd(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1b,0x1c);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x10,0x59);
 	return clk;
 }
 
 static int sbt_block_00c0(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1e,0xe9);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x14,0x26);
 	return clk;
 }
 
 static int sbt_block_00c3(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1c,0xca);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x12,0x07);
 	return clk;
 }
 
@@ -149,14 +149,14 @@ static int sbt_block_00c6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0xaf,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x24,0x27);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x19,0x64);
 	return clk;
 }
 
 static int sbt_block_00cb(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1f,0x04);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x14,0x41);
 	return clk;
 }
 
@@ -239,7 +239,7 @@ static int sbt_block_0108(em8051 *aCPU)
 static int sbt_block_0112(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0x78);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xb2);
 	return clk;
 }
 
@@ -253,7 +253,7 @@ static int sbt_block_0115(em8051 *aCPU)
 static int sbt_block_0116(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x12,0x41);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x07,0x7e);
 	return clk;
 }
 
@@ -267,7 +267,7 @@ static int sbt_block_0119(em8051 *aCPU)
 static int sbt_block_011a(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0x81);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xbb);
 	return clk;
 }
 
@@ -281,7 +281,7 @@ static int sbt_block_011d(em8051 *aCPU)
 static int sbt_block_011e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0xa2);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x09,0xdc);
 	return clk;
 }
 
@@ -295,7 +295,7 @@ static int sbt_block_0121(em8051 *aCPU)
 static int sbt_block_0122(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x15,0x88);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0a,0xc2);
 	return clk;
 }
 
@@ -309,7 +309,7 @@ static int sbt_block_0125(em8051 *aCPU)
 static int sbt_block_0126(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0x28);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0x62);
 	return clk;
 }
 
@@ -323,7 +323,7 @@ static int sbt_block_0129(em8051 *aCPU)
 static int sbt_block_012a(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x02,0xa5);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x02,0xa2);
 	return clk;
 }
 
@@ -337,7 +337,7 @@ static int sbt_block_012d(em8051 *aCPU)
 static int sbt_block_012e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0x87);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x02,0xc6);
 	return clk;
 }
 
@@ -351,7 +351,7 @@ static int sbt_block_0131(em8051 *aCPU)
 static int sbt_block_0132(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0xb1);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0xf1);
 	return clk;
 }
 
@@ -365,7 +365,7 @@ static int sbt_block_0135(em8051 *aCPU)
 static int sbt_block_0136(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x12,0x65);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x07,0xa2);
 	return clk;
 }
 
@@ -379,7 +379,7 @@ static int sbt_block_0139(em8051 *aCPU)
 static int sbt_block_013a(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0x78);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xb2);
 	return clk;
 }
 
@@ -393,7 +393,7 @@ static int sbt_block_013d(em8051 *aCPU)
 static int sbt_block_013e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0x78);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xb2);
 	return clk;
 }
 
@@ -407,7 +407,7 @@ static int sbt_block_0141(em8051 *aCPU)
 static int sbt_block_0142(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0x78);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xb2);
 	return clk;
 }
 
@@ -421,7 +421,7 @@ static int sbt_block_0145(em8051 *aCPU)
 static int sbt_block_0146(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0x78);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xb2);
 	return clk;
 }
 
@@ -435,7 +435,7 @@ static int sbt_block_0149(em8051 *aCPU)
 static int sbt_block_014a(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0x78);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xb2);
 	return clk;
 }
 
@@ -449,7 +449,7 @@ static int sbt_block_014d(em8051 *aCPU)
 static int sbt_block_014e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0x78);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xb2);
 	return clk;
 }
 
@@ -566,7 +566,7 @@ static int sbt_block_01bc(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x1c,0x80);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x9d);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0xda);
 	return clk;
 }
 
@@ -637,12 +637,11 @@ static int sbt_block_01ec(em8051 *aCPU)
 static int sbt_block_01f6(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_01fa(em8051 *aCPU)
+static int sbt_block_01f7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0xaf,0x00);
@@ -735,7 +734,7 @@ static int sbt_block_01fa(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_027a(em8051 *aCPU)
+static int sbt_block_0277(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x20,0x00);
@@ -745,7 +744,7 @@ static int sbt_block_027a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_0282(em8051 *aCPU)
+static int sbt_block_027f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x24,0x00);
@@ -763,7 +762,7 @@ static int sbt_block_0282(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_0298(em8051 *aCPU)
+static int sbt_block_0295(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x1d,0x00);
@@ -775,39 +774,39 @@ static int sbt_block_0298(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_02a4(em8051 *aCPU)
+static int sbt_block_02a1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_02a5(em8051 *aCPU)
+static int sbt_block_02a2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xfd);
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x0e);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0x48);
+	return clk;
+}
+
+static int sbt_block_02ac(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0xf7);
 	return clk;
 }
 
 static int sbt_block_02af(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0xfa);
-	return clk;
-}
-
-static int sbt_block_02b2(em8051 *aCPU)
-{
-	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
 	return clk;
 }
 
-static int sbt_block_02b4(em8051 *aCPU)
+static int sbt_block_02b1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
@@ -815,14 +814,14 @@ static int sbt_block_02b4(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_02b9(em8051 *aCPU)
+static int sbt_block_02b6(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0x7a);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0x77);
 	return clk;
 }
 
-static int sbt_block_02bc(em8051 *aCPU)
+static int sbt_block_02b9(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
@@ -830,14 +829,14 @@ static int sbt_block_02bc(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_02c0(em8051 *aCPU)
+static int sbt_block_02bd(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x97);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0xd1);
 	return clk;
 }
 
-static int sbt_block_02c3(em8051 *aCPU)
+static int sbt_block_02c0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
@@ -846,4301 +845,269 @@ static int sbt_block_02c3(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_02c9(em8051 *aCPU)
+static int sbt_block_02c6(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xfd);
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x84,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xec,0x00,0x00);
+	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
+	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0x48);
+	return clk;
+}
+
+static int sbt_block_02d0(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0xf7);
+	return clk;
+}
+
+static int sbt_block_02d3(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x03,0x7b);
+	return clk;
+}
+
+static int sbt_block_02d6(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
+	return clk;
+}
+
+static int sbt_block_02d8(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x02,0x09);
+	return clk;
+}
+
+static int sbt_block_02db(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x66);
+	return clk;
+}
+
+static int sbt_block_02e0(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
+	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x07,0x00);
+	return clk;
+}
+
+static int sbt_block_02e4(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x04,0x33);
+	return clk;
+}
+
+static int sbt_block_02e9(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
+	return clk;
+}
+
+static int sbt_block_02eb(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0x77);
+	return clk;
+}
+
+static int sbt_block_02f0(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x04,0x06);
+	return clk;
+}
+
+static int sbt_block_02f3(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
+	clk += Opcodes::djnz_rx_offset      (aCPU, 0xda,0xe1,0x00);
+	return clk;
+}
+
+static int sbt_block_02f7(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0xd1);
+	return clk;
+}
+
+static int sbt_block_02fa(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
+	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0x39,0x01);
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_02dc(em8051 *aCPU)
+static int sbt_block_0300(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
+	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x25,0x00);
+	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0xf0,0x00);
+	clk += Opcodes::jnz_offset          (aCPU, 0x70,0x43,0x00);
 	return clk;
 }
 
-static int sbt_block_02ef(em8051 *aCPU)
+static int sbt_block_0306(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x1d,0x82);
-	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x1e,0x83);
+	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x25,0x00);
+	clk += Opcodes::rl_a                (aCPU, 0x23,0x00,0x00);
+	clk += Opcodes::add_a_imm           (aCPU, 0x24,0xa8,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x82,0x00);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x83,0x03);
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0xe9,0x00);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
+	clk += Opcodes::jnz_offset          (aCPU, 0x70,0x03,0x00);
+	return clk;
+}
+
+static int sbt_block_0316(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::jz_offset           (aCPU, 0x60,0x30,0x00);
+	return clk;
+}
+
+static int sbt_block_0319(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0xea,0x00);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xeb,0x00);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xec,0x00);
+	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x02,0x00);
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x26,0x84);
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x27,0x85);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x80,0x00);
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
+	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x00,0x15);
 	return clk;
 }
 
-static int sbt_block_030f(em8051 *aCPU)
+static int sbt_block_032d(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xef);
+	clk += Opcodes::mov_rx_mem          (aCPU, 0xa8,0x23,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
 	return clk;
 }
 
-static int sbt_block_0312(em8051 *aCPU)
+static int sbt_block_0331(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
-	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xef,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
-	clk += Opcodes::jc_offset           (aCPU, 0x40,0x1e,0x00);
-	return clk;
-}
-
-static int sbt_block_031b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x9d);
-	return clk;
-}
-
-static int sbt_block_031e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x80,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_0333(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
+	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe9,0x00);
+	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0xe0,0x02);
 	return clk;
 }
 
 static int sbt_block_0336(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xda,0x00);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
 	return clk;
 }
 
 static int sbt_block_0338(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xef,0x21);
+	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd8,0xf4,0x00);
 	return clk;
 }
 
-static int sbt_block_0339(em8051 *aCPU)
+static int sbt_block_033d(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
+	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
+	clk += Opcodes::anl_mem_imm         (aCPU, 0x53,0x85,0x03);
 	return clk;
 }
 
-static int sbt_block_033c(em8051 *aCPU)
+static int sbt_block_0342(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
+	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x01,0x03);
 	return clk;
 }
 
 static int sbt_block_0345(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
+	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x23,0xef);
 	return clk;
 }
 
 static int sbt_block_0348(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0357(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_035f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0367(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_036a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_036d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_037c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0384(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_038c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_038f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0392(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_03a1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_03a9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_03b1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_03b4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_03b7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_03c6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_03ce(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_03d6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_03d9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_03dc(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_03eb(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_03f3(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_03fb(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_03fe(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0401(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0410(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0418(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0420(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0423(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0426(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0435(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_043d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0445(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0448(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_044b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_045a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0462(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_046a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x03,0x1e);
-	return clk;
-}
-
-static int sbt_block_0471(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xef);
-	return clk;
-}
-
-static int sbt_block_0474(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_047c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
-	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xef,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
-	clk += Opcodes::jc_offset           (aCPU, 0x40,0x1e,0x00);
-	return clk;
-}
-
-static int sbt_block_0485(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xa5);
-	return clk;
-}
-
-static int sbt_block_0488(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x80,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_049d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_04a0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xd2,0x00);
-	return clk;
-}
-
-static int sbt_block_04a2(em8051 *aCPU)
-{
-	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_04a3(em8051 *aCPU)
+static int sbt_block_0349(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_04a6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_04af(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_04b2(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_04c1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_04c9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_04d1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_04d4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_04d7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_04e6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_04ee(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_04f6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_04f9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_04fc(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_050b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0513(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_051b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_051e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0521(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0530(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0538(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0540(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0543(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0546(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0555(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_055d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0565(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0568(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_056b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_057a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0582(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_058a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_058d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0590(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_059f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_05a7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_05af(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_05b7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_05ba(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_05bd(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_05c0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_05cf(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_05d7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_05df(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0x01,0x00);
-	return clk;
-}
-
-static int sbt_block_05e3(em8051 *aCPU)
-{
-	unsigned clk = 0;
+	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x02,0x00);
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_05e4(em8051 *aCPU)
+static int sbt_block_034c(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_05e7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0x7c);
-	return clk;
-}
-
-static int sbt_block_05ee(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xef);
-	return clk;
-}
-
-static int sbt_block_05f1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xcd);
-	return clk;
-}
-
-static int sbt_block_05f4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
-	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xef,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
-	clk += Opcodes::jc_offset           (aCPU, 0x40,0x1e,0x00);
-	return clk;
-}
-
-static int sbt_block_05fd(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xad);
-	return clk;
-}
-
-static int sbt_block_0600(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x80,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_0615(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_0618(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xd7,0x00);
-	return clk;
-}
-
-static int sbt_block_061a(em8051 *aCPU)
-{
-	unsigned clk = 0;
+	clk += Opcodes::push_mem            (aCPU, 0xc0,0x00,0x00);
+	clk += Opcodes::push_mem            (aCPU, 0xc0,0x01,0x00);
+	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
+	clk += Opcodes::mov_rx_mem          (aCPU, 0xa8,0x82,0x00);
+	clk += Opcodes::mov_rx_mem          (aCPU, 0xa9,0x83,0x00);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x19,0xd6);
+	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x0f,0x00);
+	clk += Opcodes::anl_a_rx            (aCPU, 0x58,0x00,0x00);
+	clk += Opcodes::movc_a_indir_a_dptr (aCPU, 0x93,0x00,0x00);
+	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
+	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0xf0,0x00);
+	clk += Opcodes::anl_a_rx            (aCPU, 0x58,0x00,0x00);
+	clk += Opcodes::swap_a              (aCPU, 0xc4,0x00,0x00);
+	clk += Opcodes::movc_a_indir_a_dptr (aCPU, 0x93,0x00,0x00);
+	clk += Opcodes::add_a_rx            (aCPU, 0x2a,0x00,0x00);
+	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
+	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x0f,0x00);
+	clk += Opcodes::anl_a_rx            (aCPU, 0x59,0x00,0x00);
+	clk += Opcodes::movc_a_indir_a_dptr (aCPU, 0x93,0x00,0x00);
+	clk += Opcodes::add_a_rx            (aCPU, 0x2a,0x00,0x00);
+	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
+	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0xf0,0x00);
+	clk += Opcodes::anl_a_rx            (aCPU, 0x59,0x00,0x00);
+	clk += Opcodes::swap_a              (aCPU, 0xc4,0x00,0x00);
+	clk += Opcodes::movc_a_indir_a_dptr (aCPU, 0x93,0x00,0x00);
+	clk += Opcodes::add_a_rx            (aCPU, 0x2a,0x00,0x00);
+	clk += Opcodes::rl_a                (aCPU, 0x23,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x82,0x00);
+	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
+	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x01,0x00);
+	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x00,0x00);
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_061b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_061e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0627(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_062a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0639(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0641(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0649(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_064c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_064f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_065e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0666(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_066e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0671(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0674(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0683(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_068b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0693(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0696(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0699(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_06a8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_06b0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_06b8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_06bb(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_06be(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_06cd(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_06d5(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_06dd(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_06e0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_06e3(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_06f2(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_06fa(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0702(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_070a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_070d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0710(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0713(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0722(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_072a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0732(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0735(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0738(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0747(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_074f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0757(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0x01,0x00);
-	return clk;
-}
-
-static int sbt_block_075b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_075c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_075f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0xf4);
-	return clk;
-}
-
-static int sbt_block_0766(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xef);
-	return clk;
-}
-
-static int sbt_block_0769(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xc5);
-	return clk;
-}
-
-static int sbt_block_076c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
-	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xef,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
-	clk += Opcodes::jc_offset           (aCPU, 0x40,0x1e,0x00);
-	return clk;
-}
-
-static int sbt_block_0775(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xb5);
-	return clk;
-}
-
-static int sbt_block_0778(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x80,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_078d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_0790(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xd7,0x00);
-	return clk;
-}
-
-static int sbt_block_0792(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0793(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0796(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_079f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_07a2(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_07b1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_07b9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_07c1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_07c4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_07c7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_07d6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_07de(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_07e6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_07e9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_07ec(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_07fb(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0803(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_080b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_080e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0811(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0820(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0828(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0830(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0833(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0836(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0845(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_084d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0855(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_085d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_0860(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0863(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0866(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0875(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_087d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0885(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0888(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_088b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_089a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_08a2(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_08aa(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_08ad(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_08b0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_08bf(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_08c7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_08cf(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0x01,0x00);
-	return clk;
-}
-
-static int sbt_block_08d3(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_08d4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_08d7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x07,0x6c);
-	return clk;
-}
-
-static int sbt_block_08de(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xef);
-	return clk;
-}
-
-static int sbt_block_08e1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xbd);
-	return clk;
-}
-
-static int sbt_block_08e4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
-	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xef,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
-	clk += Opcodes::jc_offset           (aCPU, 0x40,0x1e,0x00);
-	return clk;
-}
-
-static int sbt_block_08ed(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xbd);
-	return clk;
-}
-
-static int sbt_block_08f0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x80,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_0905(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_0908(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xd7,0x00);
-	return clk;
-}
-
-static int sbt_block_090a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_090b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_090e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0917(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_091a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0929(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0931(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0939(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_093c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_093f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_094e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0956(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_095e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0961(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0964(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0973(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_097b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0983(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0986(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0989(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0998(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_09a0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_09a8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_09b0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_09b3(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_09b6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_09b9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_09c8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_09d0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_09d8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_09db(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_09de(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_09ed(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_09f5(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_09fd(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0a00(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0a03(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0a12(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0a1a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0a22(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0a25(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0a28(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0a37(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0a3f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0a47(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0x01,0x00);
-	return clk;
-}
-
-static int sbt_block_0a4b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0a4c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0a4f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x08,0xe4);
-	return clk;
-}
-
-static int sbt_block_0a56(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xef);
-	return clk;
-}
-
-static int sbt_block_0a59(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xb5);
-	return clk;
-}
-
-static int sbt_block_0a5c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
-	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xef,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
-	clk += Opcodes::jc_offset           (aCPU, 0x40,0x1e,0x00);
-	return clk;
-}
-
-static int sbt_block_0a65(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xc5);
-	return clk;
-}
-
-static int sbt_block_0a68(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x80,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_0a7d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_0a80(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xd7,0x00);
-	return clk;
-}
-
-static int sbt_block_0a82(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0a83(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0a86(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0a8f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0a92(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0aa1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0aa9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0ab1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0ab4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0ab7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0ac6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0ace(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0ad6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0ad9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0adc(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0aeb(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0af3(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0afb(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_0b03(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_0b06(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0b09(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0b0c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0b1b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0b23(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0b2b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0b2e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0b31(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0b40(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0b48(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0b50(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0b53(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0b56(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0b65(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0b6d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0b75(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0b78(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0b7b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0b8a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0b92(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0b9a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0b9d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0ba0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0baf(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0bb7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0bbf(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0x01,0x00);
-	return clk;
-}
-
-static int sbt_block_0bc3(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0bc4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0bc7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0a,0x5c);
-	return clk;
-}
-
-static int sbt_block_0bce(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xef);
-	return clk;
-}
-
-static int sbt_block_0bd1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xad);
-	return clk;
-}
-
-static int sbt_block_0bd4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
-	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xef,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
-	clk += Opcodes::jc_offset           (aCPU, 0x40,0x1e,0x00);
-	return clk;
-}
-
-static int sbt_block_0bdd(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xcd);
-	return clk;
-}
-
-static int sbt_block_0be0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x80,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_0bf5(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_0bf8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xd7,0x00);
-	return clk;
-}
-
-static int sbt_block_0bfa(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0bfb(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0bfe(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0c07(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0c0a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0c19(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0c21(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0c29(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0c2c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0c2f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0c3e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0c46(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0c4e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_0c56(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_0c59(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0c5c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0c5f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0c6e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0c76(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0c7e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0c81(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0c84(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0c93(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0c9b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0ca3(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0ca6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0ca9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0cb8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0cc0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0cc8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0ccb(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0cce(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0cdd(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0ce5(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0ced(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0cf0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0cf3(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0d02(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0d0a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0d12(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0d15(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0d18(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0d27(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0d2f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0d37(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0x01,0x00);
-	return clk;
-}
-
-static int sbt_block_0d3b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0d3c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0d3f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xd4);
-	return clk;
-}
-
-static int sbt_block_0d46(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xef);
-	return clk;
-}
-
-static int sbt_block_0d49(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xa5);
-	return clk;
-}
-
-static int sbt_block_0d4c(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
-	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xef,0x00,0x00);
-	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
-	clk += Opcodes::jc_offset           (aCPU, 0x40,0x23,0x00);
-	return clk;
-}
-
-static int sbt_block_0d55(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0d5d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
-	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x80,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_0d72(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_0d75(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xd2,0x00);
-	return clk;
-}
-
-static int sbt_block_0d77(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0d78(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0d7b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0d84(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0d87(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0d96(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0d9e(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0da6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_0dae(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
-	return clk;
-}
-
-static int sbt_block_0db1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0db4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0db7(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0dc6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0dce(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0dd6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0dd9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0ddc(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0deb(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0df3(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0dfb(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0dfe(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0e01(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x08,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0e10(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0e18(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0e20(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0e23(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0e26(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x0c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0e35(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0e3d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0e45(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0e48(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0e4b(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0e5a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0e62(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0e6a(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0e6d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0e70(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x14,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0e7f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0e87(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0e8f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x1a);
-	return clk;
-}
-
-static int sbt_block_0e92(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0e95(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x18,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xc9);
-	return clk;
-}
-
-static int sbt_block_0ea4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
-	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x08,0x00);
-	return clk;
-}
-
-static int sbt_block_0eac(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_0eb4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0x01,0x00);
-	return clk;
-}
-
-static int sbt_block_0eb8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0eb9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0xdc);
-	return clk;
-}
-
-static int sbt_block_0ebc(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x1c,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0d,0x4c);
-	return clk;
-}
-
-static int sbt_block_0ec3(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x21,0x00);
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x0e,0xc9);
-	clk += Opcodes::jmp_indir_a_dptr    (aCPU, 0x73,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0ec9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x03,0x0f);
-	return clk;
-}
-
-static int sbt_block_0ecc(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::nop                 (aCPU, 0x00,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0ecd(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0x71);
-	return clk;
-}
-
-static int sbt_block_0ed0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::nop                 (aCPU, 0x00,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0ed1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0xee);
-	return clk;
-}
-
-static int sbt_block_0ed4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::nop                 (aCPU, 0x00,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0ed5(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x07,0x66);
-	return clk;
-}
-
-static int sbt_block_0ed8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::nop                 (aCPU, 0x00,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0ed9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x08,0xde);
-	return clk;
-}
-
-static int sbt_block_0edc(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::nop                 (aCPU, 0x00,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0edd(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0a,0x56);
-	return clk;
-}
-
-static int sbt_block_0ee0(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::nop                 (aCPU, 0x00,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0ee1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xce);
-	return clk;
-}
-
-static int sbt_block_0ee4(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::nop                 (aCPU, 0x00,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0ee5(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0d,0x46);
-	return clk;
-}
-
-static int sbt_block_0ee8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x25,0x82);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x83,0x03);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
-	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
-	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
-	clk += Opcodes::orl_a_rx            (aCPU, 0x4f,0x00,0x00);
-	clk += Opcodes::jnz_offset          (aCPU, 0x70,0x03,0x00);
-	return clk;
-}
-
-static int sbt_block_0ef6(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x01,0x66);
-	return clk;
-}
-
-static int sbt_block_0ef9(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_rx_mem          (aCPU, 0xa9,0x1b,0x00);
-	clk += Opcodes::mov_rx_mem          (aCPU, 0xad,0x18,0x00);
-	return clk;
-}
-
-static int sbt_block_0efd(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xf6,0x00);
-	return clk;
-}
-
-static int sbt_block_0f07(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_rx_mem          (aCPU, 0xab,0x1c,0x00);
-	clk += Opcodes::mov_rx_mem          (aCPU, 0xac,0x24,0x00);
-	clk += Opcodes::mov_rx_imm          (aCPU, 0x7d,0x0f,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0e,0xc3);
-	return clk;
-}
-
-static int sbt_block_0f10(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x19,0x00);
-	clk += Opcodes::jz_offset           (aCPU, 0x60,0x0b,0x00);
-	return clk;
-}
-
-static int sbt_block_0f14(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfd,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0f15(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xf6,0x00);
-	return clk;
-}
-
-static int sbt_block_0f1f(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0f23(em8051 *aCPU)
+static int sbt_block_037b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0xaf,0x00);
@@ -5160,141 +1127,432 @@ static int sbt_block_0f23(em8051 *aCPU)
 	clk += Opcodes::swap_a              (aCPU, 0xc4,0x00,0x00);
 	clk += Opcodes::rl_a                (aCPU, 0x23,0x00,0x00);
 	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0x1f,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfd,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x25,0x00);
 	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
 	clk += Opcodes::swap_a              (aCPU, 0xc4,0x00,0x00);
 	clk += Opcodes::rl_a                (aCPU, 0x23,0x00,0x00);
 	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0xe0,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x24,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xed,0x00,0x00);
-	clk += Opcodes::add_a_rx            (aCPU, 0x2d,0x00,0x00);
-	clk += Opcodes::mov_rx_a            (aCPU, 0xfd,0x00,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0xa8,0x00);
-	clk += Opcodes::add_a_rx            (aCPU, 0x2d,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x25,0x00);
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x19,0x00);
 	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
 	clk += Opcodes::subb_a_rx           (aCPU, 0x9a,0x00,0x00);
 	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0x07,0x00);
-	clk += Opcodes::add_a_mem           (aCPU, 0x25,0xe0,0x00);
-	clk += Opcodes::add_a_mem           (aCPU, 0x25,0xe0,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x21,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xec,0x00,0x00);
-	clk += Opcodes::inc_a               (aCPU, 0x04,0x00,0x00);
-	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x23,0x00);
-	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
-	clk += Opcodes::add_a_rx            (aCPU, 0x2a,0x00,0x00);
-	clk += Opcodes::add_a_mem           (aCPU, 0x25,0xe0,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
-	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x1c,0x00);
-	clk += Opcodes::anl_a_rx            (aCPU, 0x5a,0x00,0x00);
+	clk += Opcodes::add_a_mem           (aCPU, 0x25,0xe0,0x00);
+	clk += Opcodes::add_a_mem           (aCPU, 0x25,0xe0,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x22,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x26,0x88);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x27,0x02);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x85,0x02);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x84,0x88);
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
+	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x01,0x00);
+	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x00,0x00);
+	clk += Opcodes::mov_a_rx            (aCPU, 0xec,0x00,0x00);
+	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0xf0,0x00);
+	clk += Opcodes::jz_offset           (aCPU, 0x60,0x0a,0x00);
 	return clk;
 }
 
-static int sbt_block_0f73(em8051 *aCPU)
+static int sbt_block_03b3(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x20,0x00);
+	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
+	clk += Opcodes::subb_a_rx           (aCPU, 0x9c,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x23,0x00);
+	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x01,0x00);
+	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x07,0x00);
+	return clk;
+}
+
+static int sbt_block_03bd(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_a_rx            (aCPU, 0xec,0x00,0x00);
+	clk += Opcodes::jz_offset           (aCPU, 0x60,0x04,0x00);
+	return clk;
+}
+
+static int sbt_block_03c0(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_mem_rx          (aCPU, 0x8c,0x23,0x00);
+	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x00,0x00);
+	return clk;
+}
+
+static int sbt_block_03c4(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x26,0x88);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x27,0x02);
+	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0xf0,0x00);
+	clk += Opcodes::add_a_mem           (aCPU, 0x25,0x25,0x00);
+	clk += Opcodes::jc_offset           (aCPU, 0x40,0x33,0x00);
+	return clk;
+}
+
+static int sbt_block_03d0(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_rx_imm          (aCPU, 0x7a,0x00,0x00);
+	return clk;
+}
+
+static int sbt_block_03d2(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
+	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0x25,0x02);
+	return clk;
+}
+
+static int sbt_block_03d6(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x28,0x00);
+	return clk;
+}
+
+static int sbt_block_03d8(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
+	clk += Opcodes::add_a_rx            (aCPU, 0x2a,0x00,0x00);
+	clk += Opcodes::add_a_imm           (aCPU, 0x24,0xa8,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x82,0x00);
+	clk += Opcodes::clr_a               (aCPU, 0xe4,0x00,0x00);
+	clk += Opcodes::addc_a_imm          (aCPU, 0x34,0x03,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x83,0x00);
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::mov_rx_a            (aCPU, 0xfb,0x00,0x00);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::mov_rx_a            (aCPU, 0xfc,0x00,0x00);
+	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x82,0x00);
+	clk += Opcodes::mov_mem_rx          (aCPU, 0x8c,0x83,0x00);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x03,0x4c);
+	return clk;
+}
+
+static int sbt_block_03ef(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_rx_mem          (aCPU, 0xab,0x82,0x00);
+	clk += Opcodes::mov_rx_imm          (aCPU, 0x7c,0x00,0x00);
+	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
+	clk += Opcodes::add_a_mem           (aCPU, 0x25,0x26,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x26,0x00);
+	clk += Opcodes::mov_a_rx            (aCPU, 0xec,0x00,0x00);
+	clk += Opcodes::addc_a_mem          (aCPU, 0x35,0x27,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x27,0x00);
+	clk += Opcodes::inc_rx              (aCPU, 0x0a,0x00,0x00);
+	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0xd2,0x00);
+	return clk;
+}
+
+static int sbt_block_0400(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::anl_mem_imm         (aCPU, 0x53,0x27,0x03);
+	return clk;
+}
+
+static int sbt_block_0403(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x03,0x00);
+	return clk;
+}
+
+static int sbt_block_0406(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x20,0x00);
 	clk += Opcodes::add_a_mem           (aCPU, 0x25,0x24,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x24,0x00);
-	clk += Opcodes::jz_offset           (aCPU, 0x60,0x01,0x00);
+	clk += Opcodes::jz_offset           (aCPU, 0x60,0x03,0x00);
 	return clk;
 }
 
-static int sbt_block_0f7b(em8051 *aCPU)
+static int sbt_block_040e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0x30);
 	return clk;
 }
 
-static int sbt_block_0f7c(em8051 *aCPU)
+static int sbt_block_0411(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x25,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x25,0x00);
-	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x84,0x26);
-	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x85,0x27);
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
+	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x25,0x00);
+	clk += Opcodes::inc_a               (aCPU, 0x04,0x00,0x00);
+	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0x1f,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x25,0x00);
+	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x02,0x03);
 	return clk;
 }
 
-static int sbt_block_0f87(em8051 *aCPU)
+static int sbt_block_041b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xfd);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0x30);
+	return clk;
+}
+
+static int sbt_block_041e(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0xe9,0x82);
+	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0xea,0x83);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x03,0x4c);
+	return clk;
+}
+
+static int sbt_block_0427(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::add_a_mem           (aCPU, 0x25,0x84,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x26,0x00);
+	clk += Opcodes::clr_a               (aCPU, 0xe4,0x00,0x00);
+	clk += Opcodes::addc_a_mem          (aCPU, 0x35,0x85,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x27,0x00);
+	return clk;
+}
+
+static int sbt_block_0430(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x03,0x00);
+	return clk;
+}
+
+static int sbt_block_0433(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_rx_mem          (aCPU, 0xaa,0x1a,0x00);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xf8);
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::add_a_mem           (aCPU, 0x25,0xe0,0x00);
+	clk += Opcodes::add_a_mem           (aCPU, 0x25,0xe0,0x00);
+	clk += Opcodes::mov_rx_a            (aCPU, 0xfb,0x00,0x00);
+	clk += Opcodes::anl_mem_imm         (aCPU, 0x53,0x03,0x1f);
+	clk += Opcodes::mov_rx_mem          (aCPU, 0xac,0x1b,0x00);
+	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x1d,0x82);
+	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x1e,0x83);
+	clk += Opcodes::mov_rx_imm          (aCPU, 0x7d,0x80,0x00);
+	return clk;
+}
+
+static int sbt_block_044b(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe9,0x00);
+	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0xe0,0x03);
+	return clk;
+}
+
+static int sbt_block_0450(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0x94);
+	return clk;
+}
+
+static int sbt_block_0453(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
+	clk += Opcodes::dec_mem             (aCPU, 0x15,0x84,0x00);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
+	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
+	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
+	clk += Opcodes::add_a_mem           (aCPU, 0x25,0x24,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
+	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x4f,0x00);
+	clk += Opcodes::cjne_a_mem_offset   (aCPU, 0xb5,0xa0,0x02);
+	return clk;
+}
+
+static int sbt_block_0470(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x03,0x00);
+	return clk;
+}
+
+static int sbt_block_0472(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0x89);
+	return clk;
+}
+
+static int sbt_block_0475(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
+	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
+	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
+	clk += Opcodes::add_a_mem           (aCPU, 0x25,0x1c,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
+	return clk;
+}
+
+static int sbt_block_0489(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0xb0);
+	return clk;
+}
+
+static int sbt_block_0494(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x33);
+	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
+	clk += Opcodes::dec_mem             (aCPU, 0x15,0x82,0x00);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
+	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
+	clk += Opcodes::add_a_mem           (aCPU, 0x25,0x1c,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	return clk;
+}
+
+static int sbt_block_04b0(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x04,0x00);
+	clk += Opcodes::add_a_rx            (aCPU, 0x2a,0x00,0x00);
+	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0x1f,0x00);
+	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
-	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x0e);
+	clk += Opcodes::jnz_offset          (aCPU, 0x70,0x10,0x00);
 	return clk;
 }
 
-static int sbt_block_0f91(em8051 *aCPU)
+static int sbt_block_04b9(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0xfa);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
+	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdc,0x0c,0x00);
 	return clk;
 }
 
-static int sbt_block_0f94(em8051 *aCPU)
+static int sbt_block_04bd(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0f,0x23);
+	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x82,0x00);
+	clk += Opcodes::add_a_imm           (aCPU, 0x24,0xdc,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x82,0x00);
+	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x83,0x00);
+	clk += Opcodes::addc_a_imm          (aCPU, 0x34,0xff,0x00);
+	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x83,0x00);
 	return clk;
 }
 
-static int sbt_block_0f97(em8051 *aCPU)
+static int sbt_block_04c9(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
+	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x04,0x00);
+	clk += Opcodes::add_a_rx            (aCPU, 0x2b,0x00,0x00);
+	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0x1f,0x00);
+	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
+	clk += Opcodes::mov_rx_a            (aCPU, 0xfb,0x00,0x00);
+	clk += Opcodes::jz_offset           (aCPU, 0x60,0x03,0x00);
 	return clk;
 }
 
-static int sbt_block_0f99(em8051 *aCPU)
+static int sbt_block_04d2(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0e,0xe8);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0xe9);
 	return clk;
 }
 
-static int sbt_block_0f9e(em8051 *aCPU)
+static int sbt_block_04d5(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0x7a);
+	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe9,0x00);
+	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0xe0,0x03);
 	return clk;
 }
 
-static int sbt_block_0fa1(em8051 *aCPU)
+static int sbt_block_04da(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0f,0x73);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0xe6);
 	return clk;
 }
 
-static int sbt_block_0fa4(em8051 *aCPU)
+static int sbt_block_04dd(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
-	clk += Opcodes::djnz_rx_offset      (aCPU, 0xda,0xf1,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x92,0x00);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
+	clk += Opcodes::inc_dptr            (aCPU, 0xa3,0x00,0x00);
+	clk += Opcodes::dec_mem             (aCPU, 0x15,0x92,0x00);
+	clk += Opcodes::anl_mem_imm         (aCPU, 0x53,0x85,0x03);
 	return clk;
 }
 
-static int sbt_block_0fa8(em8051 *aCPU)
+static int sbt_block_04e6(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x97);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xef,0x21);
 	return clk;
 }
 
-static int sbt_block_0fab(em8051 *aCPU)
+static int sbt_block_04e9(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0x02,0x00);
+	return clk;
+}
+
+static int sbt_block_04eb(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x03,0x00);
+	return clk;
+}
+
+static int sbt_block_04ed(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x04,0x4b);
+	return clk;
+}
+
+static int sbt_block_04f0(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
+	return clk;
+}
+
+static int sbt_block_04f1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
@@ -5303,16 +1561,7 @@ static int sbt_block_0fab(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_0fb1(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
-	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0x39,0x01);
-	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
-	return clk;
-}
-
-static int sbt_block_0fb7(em8051 *aCPU)
+static int sbt_block_04f7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
@@ -5329,14 +1578,14 @@ static int sbt_block_0fb7(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_0fca(em8051 *aCPU)
+static int sbt_block_050a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0x52);
 	return clk;
 }
 
-static int sbt_block_0fcd(em8051 *aCPU)
+static int sbt_block_050d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x92,0x01);
@@ -5347,7 +1596,7 @@ static int sbt_block_0fcd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_0fd6(em8051 *aCPU)
+static int sbt_block_0516(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::xrl_a_rx            (aCPU, 0x6b,0x00,0x00);
@@ -5358,21 +1607,21 @@ static int sbt_block_0fd6(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_0fdf(em8051 *aCPU)
+static int sbt_block_051f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_0fe0(em8051 *aCPU)
+static int sbt_block_0520(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0f,0xb7);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x04,0xf7);
 	return clk;
 }
 
-static int sbt_block_0fe3(em8051 *aCPU)
+static int sbt_block_0523(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xd0,0x00);
@@ -5386,14 +1635,14 @@ static int sbt_block_0fe3(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_0ff2(em8051 *aCPU)
+static int sbt_block_0532(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x09,0x00);
 	return clk;
 }
 
-static int sbt_block_0ff4(em8051 *aCPU)
+static int sbt_block_0534(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xd0,0x00);
@@ -5402,14 +1651,14 @@ static int sbt_block_0ff4(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_0ffc(em8051 *aCPU)
+static int sbt_block_053c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_0ffd(em8051 *aCPU)
+static int sbt_block_053d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x02,0x00);
@@ -5420,7 +1669,7 @@ static int sbt_block_0ffd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1006(em8051 *aCPU)
+static int sbt_block_0546(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x02,0x00);
@@ -5430,7 +1679,7 @@ static int sbt_block_1006(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_100d(em8051 *aCPU)
+static int sbt_block_054d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe9,0x00,0x00);
@@ -5440,7 +1689,7 @@ static int sbt_block_100d(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1012(em8051 *aCPU)
+static int sbt_block_0552(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x88,0xa0,0x00);
@@ -5452,14 +1701,14 @@ static int sbt_block_1012(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_101f(em8051 *aCPU)
+static int sbt_block_055f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0xd3,0x00);
 	return clk;
 }
 
-static int sbt_block_1021(em8051 *aCPU)
+static int sbt_block_0561(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5472,14 +1721,14 @@ static int sbt_block_1021(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1030(em8051 *aCPU)
+static int sbt_block_0570(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0xc2,0x00);
 	return clk;
 }
 
-static int sbt_block_1032(em8051 *aCPU)
+static int sbt_block_0572(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe9,0x00,0x00);
@@ -5489,7 +1738,7 @@ static int sbt_block_1032(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1037(em8051 *aCPU)
+static int sbt_block_0577(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8d,0xa0,0x00);
@@ -5502,14 +1751,14 @@ static int sbt_block_1037(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1046(em8051 *aCPU)
+static int sbt_block_0586(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0xac,0x00);
 	return clk;
 }
 
-static int sbt_block_1048(em8051 *aCPU)
+static int sbt_block_0588(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8f,0xa0,0x00);
@@ -5522,14 +1771,14 @@ static int sbt_block_1048(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1057(em8051 *aCPU)
+static int sbt_block_0597(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x9b,0x00);
 	return clk;
 }
 
-static int sbt_block_1059(em8051 *aCPU)
+static int sbt_block_0599(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xd0,0x10);
@@ -5539,7 +1788,7 @@ static int sbt_block_1059(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1061(em8051 *aCPU)
+static int sbt_block_05a1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
@@ -5547,7 +1796,7 @@ static int sbt_block_1061(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1064(em8051 *aCPU)
+static int sbt_block_05a4(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -5559,7 +1808,7 @@ static int sbt_block_1064(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_106f(em8051 *aCPU)
+static int sbt_block_05af(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -5571,7 +1820,7 @@ static int sbt_block_106f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_107a(em8051 *aCPU)
+static int sbt_block_05ba(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -5583,7 +1832,7 @@ static int sbt_block_107a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1085(em8051 *aCPU)
+static int sbt_block_05c5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -5595,7 +1844,7 @@ static int sbt_block_1085(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1090(em8051 *aCPU)
+static int sbt_block_05d0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -5607,7 +1856,7 @@ static int sbt_block_1090(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_109b(em8051 *aCPU)
+static int sbt_block_05db(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -5619,7 +1868,7 @@ static int sbt_block_109b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_10a6(em8051 *aCPU)
+static int sbt_block_05e6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -5631,25 +1880,25 @@ static int sbt_block_10a6(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_10b1(em8051 *aCPU)
+static int sbt_block_05f1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0xf4);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0x34);
 	return clk;
 }
 
-static int sbt_block_10bc(em8051 *aCPU)
+static int sbt_block_05fc(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x11,0x5a);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x06,0x9a);
 	return clk;
 }
 
-static int sbt_block_10bf(em8051 *aCPU)
+static int sbt_block_05ff(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5663,7 +1912,7 @@ static int sbt_block_10bf(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_10ce(em8051 *aCPU)
+static int sbt_block_060e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5677,7 +1926,7 @@ static int sbt_block_10ce(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_10dd(em8051 *aCPU)
+static int sbt_block_061d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5691,7 +1940,7 @@ static int sbt_block_10dd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_10ec(em8051 *aCPU)
+static int sbt_block_062c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5705,7 +1954,7 @@ static int sbt_block_10ec(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_10fb(em8051 *aCPU)
+static int sbt_block_063b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5719,7 +1968,7 @@ static int sbt_block_10fb(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_110a(em8051 *aCPU)
+static int sbt_block_064a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5733,7 +1982,7 @@ static int sbt_block_110a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1119(em8051 *aCPU)
+static int sbt_block_0659(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5747,7 +1996,7 @@ static int sbt_block_1119(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1128(em8051 *aCPU)
+static int sbt_block_0668(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5756,88 +2005,88 @@ static int sbt_block_1128(em8051 *aCPU)
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8a,0xa0,0x00);
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0xf4);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0x34);
 	return clk;
 }
 
-static int sbt_block_1137(em8051 *aCPU)
+static int sbt_block_0677(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x88,0xa0,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x10,0x6f);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0xaf);
 	return clk;
 }
 
-static int sbt_block_113c(em8051 *aCPU)
+static int sbt_block_067c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x88,0xa0,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x10,0x7a);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0xba);
 	return clk;
 }
 
-static int sbt_block_1141(em8051 *aCPU)
+static int sbt_block_0681(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x88,0xa0,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x10,0x85);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0xc5);
 	return clk;
 }
 
-static int sbt_block_1146(em8051 *aCPU)
+static int sbt_block_0686(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x88,0xa0,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x10,0x90);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0xd0);
 	return clk;
 }
 
-static int sbt_block_114b(em8051 *aCPU)
+static int sbt_block_068b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x88,0xa0,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x10,0x9b);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0xdb);
 	return clk;
 }
 
-static int sbt_block_1150(em8051 *aCPU)
+static int sbt_block_0690(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x88,0xa0,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x10,0xa6);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0xe6);
 	return clk;
 }
 
-static int sbt_block_1155(em8051 *aCPU)
+static int sbt_block_0695(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x88,0xa0,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x10,0xb1);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0xf1);
 	return clk;
 }
 
-static int sbt_block_115a(em8051 *aCPU)
+static int sbt_block_069a(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x9d);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0xda);
 	return clk;
 }
 
-static int sbt_block_115d(em8051 *aCPU)
+static int sbt_block_069d(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0xf4);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x05,0x34);
 	return clk;
 }
 
-static int sbt_block_1160(em8051 *aCPU)
+static int sbt_block_06a0(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0f,0xb7);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x04,0xf7);
 	return clk;
 }
 
-static int sbt_block_1163(em8051 *aCPU)
+static int sbt_block_06a3(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xd0,0x00);
@@ -5852,14 +2101,14 @@ static int sbt_block_1163(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1172(em8051 *aCPU)
+static int sbt_block_06b2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_rx_imm_offset  (aCPU, 0xbd,0x00,0x31);
 	return clk;
 }
 
-static int sbt_block_1175(em8051 *aCPU)
+static int sbt_block_06b5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe8,0x00,0x00);
@@ -5868,7 +2117,7 @@ static int sbt_block_1175(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_117c(em8051 *aCPU)
+static int sbt_block_06bc(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe9,0x00,0x00);
@@ -5878,7 +2127,7 @@ static int sbt_block_117c(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1181(em8051 *aCPU)
+static int sbt_block_06c1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x88,0xa0,0x00);
@@ -5890,14 +2139,14 @@ static int sbt_block_1181(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_118e(em8051 *aCPU)
+static int sbt_block_06ce(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x0f,0x00);
 	return clk;
 }
 
-static int sbt_block_1190(em8051 *aCPU)
+static int sbt_block_06d0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5910,7 +2159,7 @@ static int sbt_block_1190(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_119f(em8051 *aCPU)
+static int sbt_block_06df(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xd0,0x00);
@@ -5919,7 +2168,7 @@ static int sbt_block_119f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_11a6(em8051 *aCPU)
+static int sbt_block_06e6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_rx              (aCPU, 0x1d,0x00,0x00);
@@ -5933,7 +2182,7 @@ static int sbt_block_11a6(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_11b1(em8051 *aCPU)
+static int sbt_block_06f1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x02,0x00);
@@ -5943,7 +2192,7 @@ static int sbt_block_11b1(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_11b8(em8051 *aCPU)
+static int sbt_block_06f8(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe9,0x00,0x00);
@@ -5953,7 +2202,7 @@ static int sbt_block_11b8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_11bd(em8051 *aCPU)
+static int sbt_block_06fd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x88,0xa0,0x00);
@@ -5965,14 +2214,14 @@ static int sbt_block_11bd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_11ca(em8051 *aCPU)
+static int sbt_block_070a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0xd3,0x00);
 	return clk;
 }
 
-static int sbt_block_11cc(em8051 *aCPU)
+static int sbt_block_070c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0xa0,0x00);
@@ -5985,14 +2234,14 @@ static int sbt_block_11cc(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_11db(em8051 *aCPU)
+static int sbt_block_071b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0xc2,0x00);
 	return clk;
 }
 
-static int sbt_block_11dd(em8051 *aCPU)
+static int sbt_block_071d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe9,0x00,0x00);
@@ -6002,7 +2251,7 @@ static int sbt_block_11dd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_11e2(em8051 *aCPU)
+static int sbt_block_0722(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8d,0xa0,0x00);
@@ -6015,14 +2264,14 @@ static int sbt_block_11e2(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_11f1(em8051 *aCPU)
+static int sbt_block_0731(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0xac,0x00);
 	return clk;
 }
 
-static int sbt_block_11f3(em8051 *aCPU)
+static int sbt_block_0733(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8f,0xa0,0x00);
@@ -6035,14 +2284,14 @@ static int sbt_block_11f3(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1202(em8051 *aCPU)
+static int sbt_block_0742(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x9b,0x00);
 	return clk;
 }
 
-static int sbt_block_1204(em8051 *aCPU)
+static int sbt_block_0744(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0x00);
@@ -6066,19 +2315,19 @@ static int sbt_block_1204(em8051 *aCPU)
 	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
 	clk += Opcodes::mov_rx_mem          (aCPU, 0xac,0x18,0x00);
 	clk += Opcodes::mov_rx_mem          (aCPU, 0xad,0x19,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x11,0x60);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x06,0xa0);
 	return clk;
 }
 
-static int sbt_block_122a(em8051 *aCPU)
+static int sbt_block_076a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7d,0x0f,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0f,0xe0);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x05,0x20);
 	return clk;
 }
 
-static int sbt_block_122f(em8051 *aCPU)
+static int sbt_block_076f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x19,0x00);
@@ -6086,66 +2335,65 @@ static int sbt_block_122f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1233(em8051 *aCPU)
+static int sbt_block_0773(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_rx              (aCPU, 0x09,0x00,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfc,0x00,0x00);
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7d,0x00,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x11,0x60);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x06,0xa0);
 	return clk;
 }
 
-static int sbt_block_123a(em8051 *aCPU)
+static int sbt_block_077a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0xff);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1241(em8051 *aCPU)
+static int sbt_block_077e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xfd);
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x0e);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0x48);
 	return clk;
 }
 
-static int sbt_block_124b(em8051 *aCPU)
+static int sbt_block_0788(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0xfa);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x01,0xf7);
 	return clk;
 }
 
-static int sbt_block_124e(em8051 *aCPU)
+static int sbt_block_078b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
 	return clk;
 }
 
-static int sbt_block_1250(em8051 *aCPU)
+static int sbt_block_078d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x12,0x04);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x07,0x44);
 	return clk;
 }
 
-static int sbt_block_1255(em8051 *aCPU)
+static int sbt_block_0792(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0x7a);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x02,0x77);
 	return clk;
 }
 
-static int sbt_block_1258(em8051 *aCPU)
+static int sbt_block_0795(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
@@ -6153,14 +2401,14 @@ static int sbt_block_1258(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_125c(em8051 *aCPU)
+static int sbt_block_0799(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x97);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0xd1);
 	return clk;
 }
 
-static int sbt_block_125f(em8051 *aCPU)
+static int sbt_block_079c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
@@ -6169,17 +2417,17 @@ static int sbt_block_125f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1265(em8051 *aCPU)
+static int sbt_block_07a2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xfd);
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x30,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x0e);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0x48);
 	return clk;
 }
 
-static int sbt_block_126e(em8051 *aCPU)
+static int sbt_block_07ab(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0xaf,0x00);
@@ -6258,7 +2506,7 @@ static int sbt_block_126e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_12dd(em8051 *aCPU)
+static int sbt_block_081a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x10,0x00);
@@ -6278,7 +2526,7 @@ static int sbt_block_12dd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_12f6(em8051 *aCPU)
+static int sbt_block_0833(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::swap_a              (aCPU, 0xc4,0x00,0x00);
@@ -6293,7 +2541,7 @@ static int sbt_block_12f6(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1302(em8051 *aCPU)
+static int sbt_block_083f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::rlc_a               (aCPU, 0x33,0x00,0x00);
@@ -6301,7 +2549,7 @@ static int sbt_block_1302(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1305(em8051 *aCPU)
+static int sbt_block_0842(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0xf0,0x00);
@@ -6311,7 +2559,7 @@ static int sbt_block_1305(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_130b(em8051 *aCPU)
+static int sbt_block_0848(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::xrl_a_rx            (aCPU, 0x6e,0x00,0x00);
@@ -6332,7 +2580,7 @@ static int sbt_block_130b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1322(em8051 *aCPU)
+static int sbt_block_085f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
@@ -6355,28 +2603,28 @@ static int sbt_block_1322(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_133b(em8051 *aCPU)
+static int sbt_block_0878(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x13,0xf6);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x09,0x33);
 	return clk;
 }
 
-static int sbt_block_133e(em8051 *aCPU)
+static int sbt_block_087b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x13,0xb0);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x08,0xed);
 	return clk;
 }
 
-static int sbt_block_1341(em8051 *aCPU)
+static int sbt_block_087e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x13,0xb8);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x08,0xf5);
 	return clk;
 }
 
-static int sbt_block_1344(em8051 *aCPU)
+static int sbt_block_0881(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe8,0x00,0x00);
@@ -6389,7 +2637,7 @@ static int sbt_block_1344(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_134e(em8051 *aCPU)
+static int sbt_block_088b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::xrl_a_rx            (aCPU, 0x69,0x00,0x00);
@@ -6399,7 +2647,7 @@ static int sbt_block_134e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1353(em8051 *aCPU)
+static int sbt_block_0890(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::swap_a              (aCPU, 0xc4,0x00,0x00);
@@ -6416,7 +2664,7 @@ static int sbt_block_1353(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1362(em8051 *aCPU)
+static int sbt_block_089f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0xf0,0x00);
@@ -6426,7 +2674,7 @@ static int sbt_block_1362(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1368(em8051 *aCPU)
+static int sbt_block_08a5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::xrl_a_rx            (aCPU, 0x6e,0x00,0x00);
@@ -6447,7 +2695,7 @@ static int sbt_block_1368(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_137f(em8051 *aCPU)
+static int sbt_block_08bc(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
@@ -6470,14 +2718,14 @@ static int sbt_block_137f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1398(em8051 *aCPU)
+static int sbt_block_08d5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x5c,0x00);
 	return clk;
 }
 
-static int sbt_block_139a(em8051 *aCPU)
+static int sbt_block_08d7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
@@ -6495,14 +2743,14 @@ static int sbt_block_139a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_13ae(em8051 *aCPU)
+static int sbt_block_08eb(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x46,0x00);
 	return clk;
 }
 
-static int sbt_block_13b0(em8051 *aCPU)
+static int sbt_block_08ed(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
@@ -6514,7 +2762,7 @@ static int sbt_block_13b0(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_13b8(em8051 *aCPU)
+static int sbt_block_08f5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
@@ -6523,7 +2771,7 @@ static int sbt_block_13b8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_13c0(em8051 *aCPU)
+static int sbt_block_08fd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0xff);
@@ -6534,11 +2782,11 @@ static int sbt_block_13c0(em8051 *aCPU)
 	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0x0f,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfc,0x00,0x00);
 	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x13,0x02);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x08,0x3f);
 	return clk;
 }
 
-static int sbt_block_13d0(em8051 *aCPU)
+static int sbt_block_090d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe8,0x00,0x00);
@@ -6558,7 +2806,7 @@ static int sbt_block_13d0(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_13e4(em8051 *aCPU)
+static int sbt_block_0921(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x2d,0xa0);
@@ -6571,14 +2819,14 @@ static int sbt_block_13e4(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_13f4(em8051 *aCPU)
+static int sbt_block_0931(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_13f6(em8051 *aCPU)
+static int sbt_block_0933(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0xff);
@@ -6599,29 +2847,28 @@ static int sbt_block_13f6(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_140c(em8051 *aCPU)
+static int sbt_block_0949(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x03,0x00);
 	return clk;
 }
 
-static int sbt_block_140e(em8051 *aCPU)
+static int sbt_block_094b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x12,0xdd);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x08,0x1a);
 	return clk;
 }
 
-static int sbt_block_1411(em8051 *aCPU)
+static int sbt_block_094e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x97);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0xd1);
 	return clk;
 }
 
-static int sbt_block_1417(em8051 *aCPU)
+static int sbt_block_0951(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
@@ -6630,7 +2877,7 @@ static int sbt_block_1417(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_141d(em8051 *aCPU)
+static int sbt_block_0957(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x85,0x03);
@@ -6638,7 +2885,7 @@ static int sbt_block_141d(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1422(em8051 *aCPU)
+static int sbt_block_095c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
@@ -6714,14 +2961,14 @@ static int sbt_block_1422(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_14a1(em8051 *aCPU)
+static int sbt_block_09db(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_14a2(em8051 *aCPU)
+static int sbt_block_09dc(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xfd);
@@ -6732,11 +2979,11 @@ static int sbt_block_14a2(em8051 *aCPU)
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x04,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x0e);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0x48);
 	return clk;
 }
 
-static int sbt_block_14b4(em8051 *aCPU)
+static int sbt_block_09ee(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x04,0x00);
@@ -6746,7 +2993,7 @@ static int sbt_block_14b4(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_14bd(em8051 *aCPU)
+static int sbt_block_09f7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x82,0x00);
@@ -6754,11 +3001,11 @@ static int sbt_block_14bd(em8051 *aCPU)
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x04,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x14,0x1d);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x09,0x57);
 	return clk;
 }
 
-static int sbt_block_14ca(em8051 *aCPU)
+static int sbt_block_0a04(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x04,0x00);
@@ -6770,7 +3017,7 @@ static int sbt_block_14ca(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_14d4(em8051 *aCPU)
+static int sbt_block_0a0e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x82,0x00);
@@ -6778,11 +3025,11 @@ static int sbt_block_14d4(em8051 *aCPU)
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x04,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x14,0x1d);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x09,0x57);
 	return clk;
 }
 
-static int sbt_block_14e1(em8051 *aCPU)
+static int sbt_block_0a1b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x04,0x00);
@@ -6794,7 +3041,7 @@ static int sbt_block_14e1(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_14eb(em8051 *aCPU)
+static int sbt_block_0a25(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x82,0x00);
@@ -6802,11 +3049,11 @@ static int sbt_block_14eb(em8051 *aCPU)
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x04,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x14,0x1d);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x09,0x57);
 	return clk;
 }
 
-static int sbt_block_14f8(em8051 *aCPU)
+static int sbt_block_0a32(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x04,0x00);
@@ -6818,7 +3065,7 @@ static int sbt_block_14f8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1502(em8051 *aCPU)
+static int sbt_block_0a3c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x82,0x00);
@@ -6826,11 +3073,11 @@ static int sbt_block_1502(em8051 *aCPU)
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x04,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x14,0x1d);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x09,0x57);
 	return clk;
 }
 
-static int sbt_block_150f(em8051 *aCPU)
+static int sbt_block_0a49(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x04,0x00);
@@ -6848,15 +3095,15 @@ static int sbt_block_150f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1524(em8051 *aCPU)
+static int sbt_block_0a5e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0xff);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x97);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0xd1);
 	return clk;
 }
 
-static int sbt_block_152a(em8051 *aCPU)
+static int sbt_block_0a64(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
@@ -6865,7 +3112,7 @@ static int sbt_block_152a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1530(em8051 *aCPU)
+static int sbt_block_0a6a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x92,0x01);
@@ -6886,7 +3133,7 @@ static int sbt_block_1530(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1546(em8051 *aCPU)
+static int sbt_block_0a80(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
@@ -6895,7 +3142,7 @@ static int sbt_block_1546(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_154a(em8051 *aCPU)
+static int sbt_block_0a84(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
@@ -6903,7 +3150,7 @@ static int sbt_block_154a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_154d(em8051 *aCPU)
+static int sbt_block_0a87(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8d,0xa0,0x00);
@@ -6922,21 +3169,21 @@ static int sbt_block_154d(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1567(em8051 *aCPU)
+static int sbt_block_0aa1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xda,0xdd,0x00);
 	return clk;
 }
 
-static int sbt_block_1569(em8051 *aCPU)
+static int sbt_block_0aa3(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x1c,0x00);
 	return clk;
 }
 
-static int sbt_block_156b(em8051 *aCPU)
+static int sbt_block_0aa5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8f,0xa0,0x00);
@@ -6955,21 +3202,21 @@ static int sbt_block_156b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1585(em8051 *aCPU)
+static int sbt_block_0abf(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xda,0xbf,0x00);
 	return clk;
 }
 
-static int sbt_block_1587(em8051 *aCPU)
+static int sbt_block_0ac1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1588(em8051 *aCPU)
+static int sbt_block_0ac2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xfd);
@@ -6980,11 +3227,11 @@ static int sbt_block_1588(em8051 *aCPU)
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x04,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x0e);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0x48);
 	return clk;
 }
 
-static int sbt_block_159a(em8051 *aCPU)
+static int sbt_block_0ad4(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x04,0x00);
@@ -6994,7 +3241,7 @@ static int sbt_block_159a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_15a3(em8051 *aCPU)
+static int sbt_block_0add(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x82,0x00);
@@ -7002,11 +3249,11 @@ static int sbt_block_15a3(em8051 *aCPU)
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x04,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x15,0x30);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0a,0x6a);
 	return clk;
 }
 
-static int sbt_block_15b0(em8051 *aCPU)
+static int sbt_block_0aea(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x04,0x00);
@@ -7018,7 +3265,7 @@ static int sbt_block_15b0(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_15ba(em8051 *aCPU)
+static int sbt_block_0af4(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x82,0x00);
@@ -7026,11 +3273,11 @@ static int sbt_block_15ba(em8051 *aCPU)
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x04,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x15,0x30);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0a,0x6a);
 	return clk;
 }
 
-static int sbt_block_15c7(em8051 *aCPU)
+static int sbt_block_0b01(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x04,0x00);
@@ -7048,15 +3295,15 @@ static int sbt_block_15c7(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_15dc(em8051 *aCPU)
+static int sbt_block_0b16(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0xff);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x97);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0xd1);
 	return clk;
 }
 
-static int sbt_block_15e2(em8051 *aCPU)
+static int sbt_block_0b1c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
@@ -7065,7 +3312,7 @@ static int sbt_block_15e2(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_15e8(em8051 *aCPU)
+static int sbt_block_0b22(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x92,0x01);
@@ -7086,7 +3333,7 @@ static int sbt_block_15e8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_15fe(em8051 *aCPU)
+static int sbt_block_0b38(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
@@ -7095,7 +3342,7 @@ static int sbt_block_15fe(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1602(em8051 *aCPU)
+static int sbt_block_0b3c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
@@ -7103,7 +3350,7 @@ static int sbt_block_1602(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1605(em8051 *aCPU)
+static int sbt_block_0b3f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8d,0xa0,0x00);
@@ -7116,21 +3363,21 @@ static int sbt_block_1605(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1613(em8051 *aCPU)
+static int sbt_block_0b4d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xda,0xe9,0x00);
 	return clk;
 }
 
-static int sbt_block_1615(em8051 *aCPU)
+static int sbt_block_0b4f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x10,0x00);
 	return clk;
 }
 
-static int sbt_block_1617(em8051 *aCPU)
+static int sbt_block_0b51(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8f,0xa0,0x00);
@@ -7143,21 +3390,21 @@ static int sbt_block_1617(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1625(em8051 *aCPU)
+static int sbt_block_0b5f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xda,0xd7,0x00);
 	return clk;
 }
 
-static int sbt_block_1627(em8051 *aCPU)
+static int sbt_block_0b61(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1628(em8051 *aCPU)
+static int sbt_block_0b62(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xfd);
@@ -7168,11 +3415,11 @@ static int sbt_block_1628(em8051 *aCPU)
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x04,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x0e);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0x48);
 	return clk;
 }
 
-static int sbt_block_163a(em8051 *aCPU)
+static int sbt_block_0b74(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x04,0x00);
@@ -7182,7 +3429,7 @@ static int sbt_block_163a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1643(em8051 *aCPU)
+static int sbt_block_0b7d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x82,0x00);
@@ -7190,11 +3437,11 @@ static int sbt_block_1643(em8051 *aCPU)
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x04,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x15,0xe8);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0b,0x22);
 	return clk;
 }
 
-static int sbt_block_1650(em8051 *aCPU)
+static int sbt_block_0b8a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x04,0x00);
@@ -7212,14 +3459,14 @@ static int sbt_block_1650(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1663(em8051 *aCPU)
+static int sbt_block_0b9d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_rx_imm_offset  (aCPU, 0xbe,0x00,0x04);
 	return clk;
 }
 
-static int sbt_block_1666(em8051 *aCPU)
+static int sbt_block_0ba0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7b,0x00,0x00);
@@ -7227,22 +3474,22 @@ static int sbt_block_1666(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_166a(em8051 *aCPU)
+static int sbt_block_0ba4(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xda,0xd7,0x00);
 	return clk;
 }
 
-static int sbt_block_166c(em8051 *aCPU)
+static int sbt_block_0ba6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0xff);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x97);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0xd1);
 	return clk;
 }
 
-static int sbt_block_1672(em8051 *aCPU)
+static int sbt_block_0bac(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
@@ -7251,14 +3498,14 @@ static int sbt_block_1672(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1678(em8051 *aCPU)
+static int sbt_block_0bb2(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x04);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0x3e);
 	return clk;
 }
 
-static int sbt_block_167b(em8051 *aCPU)
+static int sbt_block_0bb5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
@@ -7267,14 +3514,14 @@ static int sbt_block_167b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1681(em8051 *aCPU)
+static int sbt_block_0bbb(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x0e);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0x48);
 	return clk;
 }
 
-static int sbt_block_1684(em8051 *aCPU)
+static int sbt_block_0bbe(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0x00);
@@ -7289,14 +3536,14 @@ static int sbt_block_1684(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1693(em8051 *aCPU)
+static int sbt_block_0bcd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7a,0x80,0x00);
 	return clk;
 }
 
-static int sbt_block_1695(em8051 *aCPU)
+static int sbt_block_0bcf(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0xa0,0x00);
@@ -7309,22 +3556,22 @@ static int sbt_block_1695(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_16a3(em8051 *aCPU)
+static int sbt_block_0bdd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd9,0xee,0x00);
 	return clk;
 }
 
-static int sbt_block_16a5(em8051 *aCPU)
+static int sbt_block_0bdf(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0xff);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0x97);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0c,0xd1);
 	return clk;
 }
 
-static int sbt_block_16ab(em8051 *aCPU)
+static int sbt_block_0be5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x31,0x00);
@@ -7333,7 +3580,7 @@ static int sbt_block_16ab(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_16b1(em8051 *aCPU)
+static int sbt_block_0beb(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_mem          (aCPU, 0xaa,0x82,0x00);
@@ -7342,7 +3589,7 @@ static int sbt_block_16b1(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_16b8(em8051 *aCPU)
+static int sbt_block_0bf2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8a,0x82,0x00);
@@ -7355,7 +3602,7 @@ static int sbt_block_16b8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_16c2(em8051 *aCPU)
+static int sbt_block_0bfc(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_rx              (aCPU, 0x0a,0x00,0x00);
@@ -7363,14 +3610,14 @@ static int sbt_block_16c2(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_16c6(em8051 *aCPU)
+static int sbt_block_0c00(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_rx              (aCPU, 0x0b,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_16c7(em8051 *aCPU)
+static int sbt_block_0c01(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xed,0x00,0x00);
@@ -7378,7 +3625,7 @@ static int sbt_block_16c7(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_16cb(em8051 *aCPU)
+static int sbt_block_0c05(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xed,0x00,0x00);
@@ -7386,11 +3633,11 @@ static int sbt_block_16cb(em8051 *aCPU)
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x82,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x23,0x39);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x18,0x76);
 	return clk;
 }
 
-static int sbt_block_16d7(em8051 *aCPU)
+static int sbt_block_0c11(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x03,0x00);
@@ -7399,7 +3646,7 @@ static int sbt_block_16d7(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_16dd(em8051 *aCPU)
+static int sbt_block_0c17(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x70);
@@ -7408,7 +3655,7 @@ static int sbt_block_16dd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_16e4(em8051 *aCPU)
+static int sbt_block_0c1e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8c,0x82,0x00);
@@ -7426,7 +3673,7 @@ static int sbt_block_16e4(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_16fa(em8051 *aCPU)
+static int sbt_block_0c34(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8c,0x02,0x00);
@@ -7435,7 +3682,7 @@ static int sbt_block_16fa(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1700(em8051 *aCPU)
+static int sbt_block_0c3a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0xff);
@@ -7443,29 +3690,29 @@ static int sbt_block_1700(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1704(em8051 *aCPU)
+static int sbt_block_0c3e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::jbc_bitaddr_offset  (aCPU, 0x10,0x00,0x01);
+	clk += Opcodes::jbc_bitaddr_offset  (aCPU, 0x10,0x03,0x01);
 	return clk;
 }
 
-static int sbt_block_1707(em8051 *aCPU)
+static int sbt_block_0c41(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1708(em8051 *aCPU)
+static int sbt_block_0c42(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x24,0xf6);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0xb1);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x1a,0x43);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xeb);
 	return clk;
 }
 
-static int sbt_block_170e(em8051 *aCPU)
+static int sbt_block_0c48(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xff);
@@ -7476,23 +3723,23 @@ static int sbt_block_170e(em8051 *aCPU)
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xfc);
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfb,0x00,0x00);
-	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x00,0x13);
+	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x03,0x13);
 	return clk;
 }
 
-static int sbt_block_171f(em8051 *aCPU)
+static int sbt_block_0c59(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
-	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x00,0x00);
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x24,0x99);
+	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x03,0x00);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x19,0xe6);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x03,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x16,0xb1);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0b,0xeb);
 	return clk;
 }
 
-static int sbt_block_172e(em8051 *aCPU)
+static int sbt_block_0c68(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x03,0x00);
@@ -7500,7 +3747,7 @@ static int sbt_block_172e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1732(em8051 *aCPU)
+static int sbt_block_0c6c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x95,0x00);
@@ -7547,39 +3794,30 @@ static int sbt_block_1732(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1793(em8051 *aCPU)
+static int sbt_block_0ccd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0xa0,0xfd);
 	return clk;
 }
 
-static int sbt_block_1796(em8051 *aCPU)
+static int sbt_block_0cd0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1797(em8051 *aCPU)
+static int sbt_block_0cd1(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x24,0xfd);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0xb1);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x1a,0x4a);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0b,0xeb);
 	return clk;
 }
 
-static int sbt_block_179d(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
-	return clk;
-}
-
-static int sbt_block_17a5(em8051 *aCPU)
+static int sbt_block_0cda(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -7589,7 +3827,7 @@ static int sbt_block_17a5(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17ad(em8051 *aCPU)
+static int sbt_block_0ce2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -7599,7 +3837,7 @@ static int sbt_block_17ad(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17b5(em8051 *aCPU)
+static int sbt_block_0cea(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -7609,7 +3847,7 @@ static int sbt_block_17b5(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17bd(em8051 *aCPU)
+static int sbt_block_0cf2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -7619,7 +3857,7 @@ static int sbt_block_17bd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17c5(em8051 *aCPU)
+static int sbt_block_0cfa(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -7629,7 +3867,7 @@ static int sbt_block_17c5(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17cd(em8051 *aCPU)
+static int sbt_block_0d02(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -7639,7 +3877,17 @@ static int sbt_block_17cd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17d5(em8051 *aCPU)
+static int sbt_block_0d0a(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
+	return clk;
+}
+
+static int sbt_block_0d12(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x80,0x00);
@@ -7650,7 +3898,7 @@ static int sbt_block_17d5(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17de(em8051 *aCPU)
+static int sbt_block_0d1b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
@@ -7659,7 +3907,7 @@ static int sbt_block_17de(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17e3(em8051 *aCPU)
+static int sbt_block_0d20(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_a               (aCPU, 0x14,0x00,0x00);
@@ -7667,7 +3915,7 @@ static int sbt_block_17e3(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17e6(em8051 *aCPU)
+static int sbt_block_0d23(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_a               (aCPU, 0x14,0x00,0x00);
@@ -7675,7 +3923,7 @@ static int sbt_block_17e6(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17e9(em8051 *aCPU)
+static int sbt_block_0d26(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x84,0x00);
@@ -7689,7 +3937,7 @@ static int sbt_block_17e9(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_17f9(em8051 *aCPU)
+static int sbt_block_0d36(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x84,0x00);
@@ -7703,7 +3951,7 @@ static int sbt_block_17f9(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1809(em8051 *aCPU)
+static int sbt_block_0d46(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x84,0x00);
@@ -7717,7 +3965,7 @@ static int sbt_block_1809(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1819(em8051 *aCPU)
+static int sbt_block_0d56(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x84,0x00);
@@ -7730,7 +3978,7 @@ static int sbt_block_1819(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1827(em8051 *aCPU)
+static int sbt_block_0d64(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_rx              (aCPU, 0x09,0x00,0x00);
@@ -7744,7 +3992,7 @@ static int sbt_block_1827(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1833(em8051 *aCPU)
+static int sbt_block_0d70(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
@@ -7760,14 +4008,14 @@ static int sbt_block_1833(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1842(em8051 *aCPU)
+static int sbt_block_0d7f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x02,0x00);
 	return clk;
 }
 
-static int sbt_block_1844(em8051 *aCPU)
+static int sbt_block_0d81(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x92,0x01);
@@ -7778,16 +4026,16 @@ static int sbt_block_1844(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_184e(em8051 *aCPU)
+static int sbt_block_0d8b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7d,0x00,0x00);
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x19,0x12);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x0e,0x4f);
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1854(em8051 *aCPU)
+static int sbt_block_0d91(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::movx_a_indir_dptr   (aCPU, 0xe0,0x00,0x00);
@@ -7803,14 +4051,14 @@ static int sbt_block_1854(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1863(em8051 *aCPU)
+static int sbt_block_0da0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::add_a_imm           (aCPU, 0x24,0xfe,0x00);
 	return clk;
 }
 
-static int sbt_block_1865(em8051 *aCPU)
+static int sbt_block_0da2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x92,0x01);
@@ -7821,16 +4069,16 @@ static int sbt_block_1865(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_186f(em8051 *aCPU)
+static int sbt_block_0dac(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7d,0x00,0x00);
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x19,0x12);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x0e,0x4f);
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1875(em8051 *aCPU)
+static int sbt_block_0db2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0xe0,0x00);
@@ -7846,24 +4094,24 @@ static int sbt_block_1875(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_188c(em8051 *aCPU)
+static int sbt_block_0dc9(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x01,0x0a);
+	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x04,0x0a);
 	return clk;
 }
 
-static int sbt_block_188f(em8051 *aCPU)
+static int sbt_block_0dcc(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x01,0x00);
+	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x04,0x00);
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7d,0x00,0x00);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x84,0x00);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x85,0x00);
 	return clk;
 }
 
-static int sbt_block_1899(em8051 *aCPU)
+static int sbt_block_0dd6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0xe9,0x00);
@@ -7872,7 +4120,7 @@ static int sbt_block_1899(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18a1(em8051 *aCPU)
+static int sbt_block_0dde(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -7880,7 +4128,7 @@ static int sbt_block_18a1(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18a6(em8051 *aCPU)
+static int sbt_block_0de3(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
@@ -7890,7 +4138,7 @@ static int sbt_block_18a6(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18ad(em8051 *aCPU)
+static int sbt_block_0dea(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -7898,16 +4146,16 @@ static int sbt_block_18ad(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18b2(em8051 *aCPU)
+static int sbt_block_0def(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
 	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0xe9,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1a,0xcd);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x10,0x0a);
 	return clk;
 }
 
-static int sbt_block_18b9(em8051 *aCPU)
+static int sbt_block_0df6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -7915,7 +4163,7 @@ static int sbt_block_18b9(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18be(em8051 *aCPU)
+static int sbt_block_0dfb(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
@@ -7924,7 +4172,7 @@ static int sbt_block_18be(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18c4(em8051 *aCPU)
+static int sbt_block_0e01(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::rl_a                (aCPU, 0x23,0x00,0x00);
@@ -7934,16 +4182,16 @@ static int sbt_block_18c4(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18ca(em8051 *aCPU)
+static int sbt_block_0e07(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x01,0x00);
+	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x04,0x00);
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0xe9,0x00);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xe7,0xe2);
 	return clk;
 }
 
-static int sbt_block_18d1(em8051 *aCPU)
+static int sbt_block_0e0e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -7951,15 +4199,15 @@ static int sbt_block_18d1(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18d6(em8051 *aCPU)
+static int sbt_block_0e13(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1a,0x7e);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0xbb);
 	return clk;
 }
 
-static int sbt_block_18db(em8051 *aCPU)
+static int sbt_block_0e18(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_a               (aCPU, 0x04,0x00,0x00);
@@ -7967,14 +4215,14 @@ static int sbt_block_18db(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18de(em8051 *aCPU)
+static int sbt_block_0e1b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x01,0x00);
+	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x04,0x00);
 	return clk;
 }
 
-static int sbt_block_18e0(em8051 *aCPU)
+static int sbt_block_0e1d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0xe9,0x00);
@@ -7983,7 +4231,7 @@ static int sbt_block_18e0(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18e8(em8051 *aCPU)
+static int sbt_block_0e25(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -7991,14 +4239,14 @@ static int sbt_block_18e8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18ed(em8051 *aCPU)
+static int sbt_block_0e2a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
 	return clk;
 }
 
-static int sbt_block_18ef(em8051 *aCPU)
+static int sbt_block_0e2c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8006,15 +4254,15 @@ static int sbt_block_18ef(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18f4(em8051 *aCPU)
+static int sbt_block_0e31(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x92,0x00);
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x19,0x12);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x0e,0x4f);
 	return clk;
 }
 
-static int sbt_block_18fa(em8051 *aCPU)
+static int sbt_block_0e37(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xef,0x00,0x00);
@@ -8022,7 +4270,7 @@ static int sbt_block_18fa(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_18fe(em8051 *aCPU)
+static int sbt_block_0e3b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8031,7 +4279,7 @@ static int sbt_block_18fe(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1902(em8051 *aCPU)
+static int sbt_block_0e3f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
@@ -8039,7 +4287,7 @@ static int sbt_block_1902(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1907(em8051 *aCPU)
+static int sbt_block_0e44(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfe,0x00,0x00);
@@ -8048,23 +4296,23 @@ static int sbt_block_1907(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_190a(em8051 *aCPU)
+static int sbt_block_0e47(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfc,0x00,0x00);
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x79,0x00,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xde);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0d,0x1b);
 	return clk;
 }
 
-static int sbt_block_1910(em8051 *aCPU)
+static int sbt_block_0e4d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x37,0x00);
 	return clk;
 }
 
-static int sbt_block_1912(em8051 *aCPU)
+static int sbt_block_0e4f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8073,7 +4321,7 @@ static int sbt_block_1912(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1917(em8051 *aCPU)
+static int sbt_block_0e54(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8e,0x09,0x00);
@@ -8082,52 +4330,52 @@ static int sbt_block_1917(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_191d(em8051 *aCPU)
+static int sbt_block_0e5a(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1a,0x77);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0xb4);
 	return clk;
 }
 
-static int sbt_block_1920(em8051 *aCPU)
+static int sbt_block_0e5d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_a_imm_offset   (aCPU, 0xb4,0x04,0x0e);
 	return clk;
 }
 
-static int sbt_block_1923(em8051 *aCPU)
+static int sbt_block_0e60(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8e,0x0b,0x00);
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7c,0x07,0x00);
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x79,0x00,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xde);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0d,0x1b);
 	return clk;
 }
 
-static int sbt_block_192c(em8051 *aCPU)
+static int sbt_block_0e69(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdf,0xcc,0x00);
 	return clk;
 }
 
-static int sbt_block_192e(em8051 *aCPU)
+static int sbt_block_0e6b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1a,0x77);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0xb4);
 	return clk;
 }
 
-static int sbt_block_1931(em8051 *aCPU)
+static int sbt_block_0e6e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_a_imm_offset   (aCPU, 0xb4,0x08,0x09);
 	return clk;
 }
 
-static int sbt_block_1934(em8051 *aCPU)
+static int sbt_block_0e71(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8e,0x0b,0x00);
@@ -8136,14 +4384,14 @@ static int sbt_block_1934(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_193a(em8051 *aCPU)
+static int sbt_block_0e77(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1a,0x77);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0xb4);
 	return clk;
 }
 
-static int sbt_block_193d(em8051 *aCPU)
+static int sbt_block_0e7a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8157,21 +4405,21 @@ static int sbt_block_193d(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1949(em8051 *aCPU)
+static int sbt_block_0e86(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdf,0xaf,0x00);
 	return clk;
 }
 
-static int sbt_block_194b(em8051 *aCPU)
+static int sbt_block_0e88(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1a,0x77);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0xb4);
 	return clk;
 }
 
-static int sbt_block_194e(em8051 *aCPU)
+static int sbt_block_0e8b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8180,14 +4428,14 @@ static int sbt_block_194e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1954(em8051 *aCPU)
+static int sbt_block_0e91(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1a,0x35);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0f,0x72);
 	return clk;
 }
 
-static int sbt_block_1957(em8051 *aCPU)
+static int sbt_block_0e94(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8198,7 +4446,7 @@ static int sbt_block_1957(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_195f(em8051 *aCPU)
+static int sbt_block_0e9c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8210,7 +4458,7 @@ static int sbt_block_195f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1969(em8051 *aCPU)
+static int sbt_block_0ea6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x92,0x01);
@@ -8232,7 +4480,7 @@ static int sbt_block_1969(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1980(em8051 *aCPU)
+static int sbt_block_0ebd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8241,22 +4489,22 @@ static int sbt_block_1980(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1985(em8051 *aCPU)
+static int sbt_block_0ec2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::anl_mem_imm         (aCPU, 0x53,0x09,0x0f);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xde);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0d,0x1b);
 	return clk;
 }
 
-static int sbt_block_198b(em8051 *aCPU)
+static int sbt_block_0ec8(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x19,0x12);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0e,0x4f);
 	return clk;
 }
 
-static int sbt_block_198e(em8051 *aCPU)
+static int sbt_block_0ecb(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe9,0x00,0x00);
@@ -8264,7 +4512,7 @@ static int sbt_block_198e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1992(em8051 *aCPU)
+static int sbt_block_0ecf(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::rrc_a               (aCPU, 0x13,0x00,0x00);
@@ -8288,14 +4536,14 @@ static int sbt_block_1992(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_19b1(em8051 *aCPU)
+static int sbt_block_0eee(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0xe0,0x0b);
 	return clk;
 }
 
-static int sbt_block_19b4(em8051 *aCPU)
+static int sbt_block_0ef1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8306,21 +4554,21 @@ static int sbt_block_19b4(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_19bb(em8051 *aCPU)
+static int sbt_block_0ef8(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x8c,0x00);
 	return clk;
 }
 
-static int sbt_block_19bd(em8051 *aCPU)
+static int sbt_block_0efa(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x6a,0x00);
 	return clk;
 }
 
-static int sbt_block_19bf(em8051 *aCPU)
+static int sbt_block_0efc(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8328,7 +4576,7 @@ static int sbt_block_19bf(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_19c3(em8051 *aCPU)
+static int sbt_block_0f00(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8339,7 +4587,7 @@ static int sbt_block_19c3(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_19cb(em8051 *aCPU)
+static int sbt_block_0f08(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8350,7 +4598,7 @@ static int sbt_block_19cb(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_19d3(em8051 *aCPU)
+static int sbt_block_0f10(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8370,14 +4618,14 @@ static int sbt_block_19d3(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_19ea(em8051 *aCPU)
+static int sbt_block_0f27(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0xe0,0x38);
 	return clk;
 }
 
-static int sbt_block_19ed(em8051 *aCPU)
+static int sbt_block_0f2a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7d,0xdf,0x00);
@@ -8385,7 +4633,7 @@ static int sbt_block_19ed(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_19f1(em8051 *aCPU)
+static int sbt_block_0f2e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8396,7 +4644,7 @@ static int sbt_block_19f1(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_19f9(em8051 *aCPU)
+static int sbt_block_0f36(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8408,7 +4656,7 @@ static int sbt_block_19f9(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a03(em8051 *aCPU)
+static int sbt_block_0f40(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8419,7 +4667,7 @@ static int sbt_block_1a03(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a0b(em8051 *aCPU)
+static int sbt_block_0f48(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8441,7 +4689,7 @@ static int sbt_block_1a0b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a25(em8051 *aCPU)
+static int sbt_block_0f62(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7d,0x00,0x00);
@@ -8449,7 +4697,7 @@ static int sbt_block_1a25(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a29(em8051 *aCPU)
+static int sbt_block_0f66(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xee,0x00,0x00);
@@ -8457,18 +4705,18 @@ static int sbt_block_1a29(em8051 *aCPU)
 	clk += Opcodes::orl_a_rx            (aCPU, 0x49,0x00,0x00);
 	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xf9,0x00,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x17,0xde);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x0d,0x1b);
 	return clk;
 }
 
-static int sbt_block_1a33(em8051 *aCPU)
+static int sbt_block_0f70(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x86,0x00);
 	return clk;
 }
 
-static int sbt_block_1a35(em8051 *aCPU)
+static int sbt_block_0f72(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::anl_mem_imm         (aCPU, 0x53,0x0b,0x03);
@@ -8476,7 +4724,7 @@ static int sbt_block_1a35(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a3b(em8051 *aCPU)
+static int sbt_block_0f78(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x8c,0x00);
@@ -8485,7 +4733,7 @@ static int sbt_block_1a3b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a43(em8051 *aCPU)
+static int sbt_block_0f80(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8493,7 +4741,7 @@ static int sbt_block_1a43(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a48(em8051 *aCPU)
+static int sbt_block_0f85(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0xe7,0x8c);
@@ -8502,14 +4750,14 @@ static int sbt_block_1a48(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a50(em8051 *aCPU)
+static int sbt_block_0f8d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x25,0x00);
 	return clk;
 }
 
-static int sbt_block_1a52(em8051 *aCPU)
+static int sbt_block_0f8f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xef,0x00,0x00);
@@ -8520,14 +4768,14 @@ static int sbt_block_1a52(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a58(em8051 *aCPU)
+static int sbt_block_0f95(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_a            (aCPU, 0xff,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1a59(em8051 *aCPU)
+static int sbt_block_0f96(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8535,7 +4783,7 @@ static int sbt_block_1a59(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a5e(em8051 *aCPU)
+static int sbt_block_0f9b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x48,0x00);
@@ -8552,21 +4800,21 @@ static int sbt_block_1a5e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a72(em8051 *aCPU)
+static int sbt_block_0faf(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x03,0x00);
 	return clk;
 }
 
-static int sbt_block_1a74(em8051 *aCPU)
+static int sbt_block_0fb1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x48,0xff);
 	return clk;
 }
 
-static int sbt_block_1a77(em8051 *aCPU)
+static int sbt_block_0fb4(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8574,14 +4822,14 @@ static int sbt_block_1a77(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a7c(em8051 *aCPU)
+static int sbt_block_0fb9(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
 	return clk;
 }
 
-static int sbt_block_1a7e(em8051 *aCPU)
+static int sbt_block_0fbb(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0xe9,0x00);
@@ -8591,7 +4839,7 @@ static int sbt_block_1a7e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a88(em8051 *aCPU)
+static int sbt_block_0fc5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8599,7 +4847,7 @@ static int sbt_block_1a88(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a8d(em8051 *aCPU)
+static int sbt_block_0fca(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
@@ -8609,7 +4857,7 @@ static int sbt_block_1a8d(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a94(em8051 *aCPU)
+static int sbt_block_0fd1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8617,16 +4865,16 @@ static int sbt_block_1a94(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1a99(em8051 *aCPU)
+static int sbt_block_0fd6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
 	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0xe9,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x18,0x8c);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x0d,0xc9);
 	return clk;
 }
 
-static int sbt_block_1aa0(em8051 *aCPU)
+static int sbt_block_0fdd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8634,7 +4882,7 @@ static int sbt_block_1aa0(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1aa5(em8051 *aCPU)
+static int sbt_block_0fe2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
@@ -8642,7 +4890,7 @@ static int sbt_block_1aa5(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1aa9(em8051 *aCPU)
+static int sbt_block_0fe6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x39,0x00);
@@ -8650,7 +4898,7 @@ static int sbt_block_1aa9(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1aad(em8051 *aCPU)
+static int sbt_block_0fea(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x39,0x00);
@@ -8661,7 +4909,7 @@ static int sbt_block_1aad(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ab8(em8051 *aCPU)
+static int sbt_block_0ff5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_indir_rx    (aCPU, 0x86,0xe7,0x00);
@@ -8669,7 +4917,7 @@ static int sbt_block_1ab8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1abb(em8051 *aCPU)
+static int sbt_block_0ff8(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8677,7 +4925,7 @@ static int sbt_block_1abb(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ac0(em8051 *aCPU)
+static int sbt_block_0ffd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
@@ -8685,7 +4933,7 @@ static int sbt_block_1ac0(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ac4(em8051 *aCPU)
+static int sbt_block_1001(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8693,7 +4941,7 @@ static int sbt_block_1ac4(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ac9(em8051 *aCPU)
+static int sbt_block_1006(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
@@ -8701,7 +4949,7 @@ static int sbt_block_1ac9(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1acd(em8051 *aCPU)
+static int sbt_block_100a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x84,0x3a);
@@ -8717,7 +4965,7 @@ static int sbt_block_1acd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ae2(em8051 *aCPU)
+static int sbt_block_101f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_mem          (aCPU, 0xaa,0x82,0x00);
@@ -8725,7 +4973,7 @@ static int sbt_block_1ae2(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ae6(em8051 *aCPU)
+static int sbt_block_1023(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8a,0x82,0x00);
@@ -8738,7 +4986,7 @@ static int sbt_block_1ae6(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1af0(em8051 *aCPU)
+static int sbt_block_102d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_rx              (aCPU, 0x0a,0x00,0x00);
@@ -8746,14 +4994,14 @@ static int sbt_block_1af0(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1af4(em8051 *aCPU)
+static int sbt_block_1031(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_rx              (aCPU, 0x0b,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1af5(em8051 *aCPU)
+static int sbt_block_1032(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0xe9,0x00);
@@ -8763,7 +5011,7 @@ static int sbt_block_1af5(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1afd(em8051 *aCPU)
+static int sbt_block_103a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8d,0x82,0x00);
@@ -8777,7 +5025,7 @@ static int sbt_block_1afd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b0a(em8051 *aCPU)
+static int sbt_block_1047(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8785,7 +5033,7 @@ static int sbt_block_1b0a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b0f(em8051 *aCPU)
+static int sbt_block_104c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
@@ -8793,7 +5041,7 @@ static int sbt_block_1b0f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b13(em8051 *aCPU)
+static int sbt_block_1050(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8d,0x02,0x00);
@@ -8803,23 +5051,23 @@ static int sbt_block_1b13(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b1b(em8051 *aCPU)
+static int sbt_block_1058(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1b1c(em8051 *aCPU)
+static int sbt_block_1059(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0xea,0x00);
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x25,0x01);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1a,0xe2);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x1a,0x4e);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x10,0x1f);
 	return clk;
 }
 
-static int sbt_block_1b24(em8051 *aCPU)
+static int sbt_block_1061(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0xb9,0x00);
@@ -8828,7 +5076,7 @@ static int sbt_block_1b24(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b29(em8051 *aCPU)
+static int sbt_block_1066(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0xe9,0x00);
@@ -8837,7 +5085,7 @@ static int sbt_block_1b29(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b31(em8051 *aCPU)
+static int sbt_block_106e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8845,14 +5093,14 @@ static int sbt_block_1b31(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b36(em8051 *aCPU)
+static int sbt_block_1073(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe7,0x00);
 	return clk;
 }
 
-static int sbt_block_1b38(em8051 *aCPU)
+static int sbt_block_1075(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xe6,0x00);
@@ -8860,7 +5108,7 @@ static int sbt_block_1b38(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b3d(em8051 *aCPU)
+static int sbt_block_107a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0xe7,0x82);
@@ -8869,7 +5117,7 @@ static int sbt_block_1b3d(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b43(em8051 *aCPU)
+static int sbt_block_1080(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0xe0,0x00);
@@ -8883,30 +5131,30 @@ static int sbt_block_1b43(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b55(em8051 *aCPU)
+static int sbt_block_1092(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0xe1,0x47);
 	return clk;
 }
 
-static int sbt_block_1b58(em8051 *aCPU)
+static int sbt_block_1095(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x1b,0x5e);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x10,0x9b);
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x3e,0x00);
 	clk += Opcodes::jmp_indir_a_dptr    (aCPU, 0x73,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1b5e(em8051 *aCPU)
+static int sbt_block_109b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xda,0x00);
 	return clk;
 }
 
-static int sbt_block_1b61(em8051 *aCPU)
+static int sbt_block_109e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x3e,0x08);
@@ -8914,7 +5162,7 @@ static int sbt_block_1b61(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b66(em8051 *aCPU)
+static int sbt_block_10a3(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0xe2,0x10);
@@ -8924,7 +5172,7 @@ static int sbt_block_1b66(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b6f(em8051 *aCPU)
+static int sbt_block_10ac(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x3e,0x16);
@@ -8932,7 +5180,7 @@ static int sbt_block_1b6f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b74(em8051 *aCPU)
+static int sbt_block_10b1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x3e,0x1b);
@@ -8940,14 +5188,14 @@ static int sbt_block_1b74(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b79(em8051 *aCPU)
+static int sbt_block_10b6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0xda,0x3f);
 	return clk;
 }
 
-static int sbt_block_1b7c(em8051 *aCPU)
+static int sbt_block_10b9(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0xe2,0x20);
@@ -8956,7 +5204,7 @@ static int sbt_block_1b7c(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b84(em8051 *aCPU)
+static int sbt_block_10c1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0xda,0x00);
@@ -8965,7 +5213,7 @@ static int sbt_block_1b84(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b8a(em8051 *aCPU)
+static int sbt_block_10c7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::xrl_mem_a           (aCPU, 0x62,0x32,0x00);
@@ -8973,7 +5221,7 @@ static int sbt_block_1b8a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b8f(em8051 *aCPU)
+static int sbt_block_10cc(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x3f,0x00);
@@ -8982,7 +5230,7 @@ static int sbt_block_1b8f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b95(em8051 *aCPU)
+static int sbt_block_10d2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::xrl_mem_a           (aCPU, 0x62,0x33,0x00);
@@ -8990,7 +5238,7 @@ static int sbt_block_1b95(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b9a(em8051 *aCPU)
+static int sbt_block_10d7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x3e,0x00);
@@ -8998,7 +5246,7 @@ static int sbt_block_1b9a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1b9f(em8051 *aCPU)
+static int sbt_block_10dc(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x3d,0x00);
@@ -9011,7 +5259,7 @@ static int sbt_block_1b9f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1baf(em8051 *aCPU)
+static int sbt_block_10ec(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x92,0x00);
@@ -9023,7 +5271,7 @@ static int sbt_block_1baf(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1bba(em8051 *aCPU)
+static int sbt_block_10f7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0xe0,0x00);
@@ -9036,7 +5284,7 @@ static int sbt_block_1bba(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1bc9(em8051 *aCPU)
+static int sbt_block_1106(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x8a,0x00);
@@ -9045,10 +5293,10 @@ static int sbt_block_1bc9(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1bcf(em8051 *aCPU)
+static int sbt_block_110c(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x02,0x00);
+	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x05,0x00);
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x43,0x41);
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x44,0x42);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x40,0x12);
@@ -9057,14 +5305,14 @@ static int sbt_block_1bcf(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1bdf(em8051 *aCPU)
+static int sbt_block_111c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x78,0x55,0x00);
 	return clk;
 }
 
-static int sbt_block_1be1(em8051 *aCPU)
+static int sbt_block_111e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_indir_rx      (aCPU, 0xe6,0x00,0x00);
@@ -9080,7 +5328,7 @@ static int sbt_block_1be1(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1bef(em8051 *aCPU)
+static int sbt_block_112c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe8,0x00,0x00);
@@ -9090,14 +5338,14 @@ static int sbt_block_1bef(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1bf6(em8051 *aCPU)
+static int sbt_block_1133(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x1c,0x00);
 	return clk;
 }
 
-static int sbt_block_1bf8(em8051 *aCPU)
+static int sbt_block_1135(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe8,0x00,0x00);
@@ -9112,7 +5360,7 @@ static int sbt_block_1bf8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c05(em8051 *aCPU)
+static int sbt_block_1142(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::xrl_a_indir_rx      (aCPU, 0x66,0x00,0x00);
@@ -9121,7 +5369,7 @@ static int sbt_block_1c05(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c0a(em8051 *aCPU)
+static int sbt_block_1147(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xe8,0x00,0x00);
@@ -9133,7 +5381,7 @@ static int sbt_block_1c0a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c14(em8051 *aCPU)
+static int sbt_block_1151(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x3c,0x00);
@@ -9145,47 +5393,47 @@ static int sbt_block_1c14(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c1f(em8051 *aCPU)
+static int sbt_block_115c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::anl_mem_imm         (aCPU, 0x53,0x94,0xfc);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xcc,0xef);
 	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0xc8,0x00);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x40,0x0f);
-	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x03,0x00);
+	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x06,0x00);
 	clk += Opcodes::reti                (aCPU, 0x32,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1c2d(em8051 *aCPU)
+static int sbt_block_116a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0xe0,0x00);
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0xd0,0x00);
-	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x02,0x1e);
+	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x05,0x1e);
 	return clk;
 }
 
-static int sbt_block_1c34(em8051 *aCPU)
+static int sbt_block_1171(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x8b,0x00);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x8b,0x00);
 	clk += Opcodes::add_a_imm           (aCPU, 0x24,0xff,0x00);
 	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0x94,0xa3);
-	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x03,0x05);
+	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x06,0x05);
 	return clk;
 }
 
-static int sbt_block_1c41(em8051 *aCPU)
+static int sbt_block_117e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::anl_mem_imm         (aCPU, 0x53,0x94,0xde);
-	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x03,0x00);
+	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x06,0x00);
 	return clk;
 }
 
-static int sbt_block_1c46(em8051 *aCPU)
+static int sbt_block_1183(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x42,0x00);
@@ -9198,7 +5446,7 @@ static int sbt_block_1c46(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c52(em8051 *aCPU)
+static int sbt_block_118f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x8e,0x00);
@@ -9208,7 +5456,7 @@ static int sbt_block_1c52(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c59(em8051 *aCPU)
+static int sbt_block_1196(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0x90,0xa3);
@@ -9216,7 +5464,7 @@ static int sbt_block_1c59(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c5f(em8051 *aCPU)
+static int sbt_block_119c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x42,0x00);
@@ -9230,14 +5478,14 @@ static int sbt_block_1c5f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c6c(em8051 *aCPU)
+static int sbt_block_11a9(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_mem_offset     (aCPU, 0xd5,0xe0,0xfd);
 	return clk;
 }
 
-static int sbt_block_1c6f(em8051 *aCPU)
+static int sbt_block_11ac(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::nop                 (aCPU, 0x00,0x00,0x00);
@@ -9245,23 +5493,23 @@ static int sbt_block_1c6f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c73(em8051 *aCPU)
+static int sbt_block_11b0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_mem_offset     (aCPU, 0xd5,0x40,0x4d);
 	return clk;
 }
 
-static int sbt_block_1c76(em8051 *aCPU)
+static int sbt_block_11b3(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0xc8,0x00);
 	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0x94,0xa3);
-	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x02,0x20);
+	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x05,0x20);
 	return clk;
 }
 
-static int sbt_block_1c7e(em8051 *aCPU)
+static int sbt_block_11bb(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x41,0x00);
@@ -9272,7 +5520,7 @@ static int sbt_block_1c7e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c87(em8051 *aCPU)
+static int sbt_block_11c4(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x41,0x00);
@@ -9291,7 +5539,7 @@ static int sbt_block_1c87(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1c9e(em8051 *aCPU)
+static int sbt_block_11db(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0x90,0x0c);
@@ -9302,45 +5550,45 @@ static int sbt_block_1c9e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1cad(em8051 *aCPU)
+static int sbt_block_11ea(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xe2,0x01);
 	return clk;
 }
 
-static int sbt_block_1cb0(em8051 *aCPU)
+static int sbt_block_11ed(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xe2,0x07);
 	return clk;
 }
 
-static int sbt_block_1cb3(em8051 *aCPU)
+static int sbt_block_11f0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xe1,0x00);
 	return clk;
 }
 
-static int sbt_block_1cb6(em8051 *aCPU)
+static int sbt_block_11f3(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x3d,0xda);
 	return clk;
 }
 
-static int sbt_block_1cb9(em8051 *aCPU)
+static int sbt_block_11f6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x8b,0xff);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x8d,0xff);
-	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x02,0x00);
+	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x05,0x00);
 	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x8e,0x00);
 	return clk;
 }
 
-static int sbt_block_1cc3(em8051 *aCPU)
+static int sbt_block_1200(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0xc6,0x00);
@@ -9350,7 +5598,7 @@ static int sbt_block_1cc3(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1cca(em8051 *aCPU)
+static int sbt_block_1207(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0xa6,0x04);
@@ -9371,11 +5619,11 @@ static int sbt_block_1cca(em8051 *aCPU)
 	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0xa9,0x20);
 	clk += Opcodes::orl_mem_imm         (aCPU, 0x43,0xb9,0x20);
 	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0xad,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1b,0x29);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x10,0x66);
 	return clk;
 }
 
-static int sbt_block_1cfe(em8051 *aCPU)
+static int sbt_block_123b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x82,0x00);
@@ -9388,7 +5636,7 @@ static int sbt_block_1cfe(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1d09(em8051 *aCPU)
+static int sbt_block_1246(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
@@ -9398,14 +5646,14 @@ static int sbt_block_1d09(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1d11(em8051 *aCPU)
+static int sbt_block_124e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1d,0xd6);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x13,0x13);
 	return clk;
 }
 
-static int sbt_block_1d14(em8051 *aCPU)
+static int sbt_block_1251(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x46,0x00);
@@ -9413,14 +5661,14 @@ static int sbt_block_1d14(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1d18(em8051 *aCPU)
+static int sbt_block_1255(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1d,0xd6);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x13,0x13);
 	return clk;
 }
 
-static int sbt_block_1d1b(em8051 *aCPU)
+static int sbt_block_1258(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x47,0x00);
@@ -9429,14 +5677,14 @@ static int sbt_block_1d1b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1d21(em8051 *aCPU)
+static int sbt_block_125e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1d,0xd6);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x13,0x13);
 	return clk;
 }
 
-static int sbt_block_1d24(em8051 *aCPU)
+static int sbt_block_1261(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
@@ -9475,14 +5723,14 @@ static int sbt_block_1d24(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1d87(em8051 *aCPU)
+static int sbt_block_12c4(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jc_offset           (aCPU, 0x40,0x22,0x00);
 	return clk;
 }
 
-static int sbt_block_1d89(em8051 *aCPU)
+static int sbt_block_12c6(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x47,0x00);
@@ -9490,7 +5738,7 @@ static int sbt_block_1d89(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1d8d(em8051 *aCPU)
+static int sbt_block_12ca(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x80,0x2a);
@@ -9504,21 +5752,21 @@ static int sbt_block_1d8d(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1da5(em8051 *aCPU)
+static int sbt_block_12e2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0xa7,0xfd);
 	return clk;
 }
 
-static int sbt_block_1da8(em8051 *aCPU)
+static int sbt_block_12e5(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1d,0x24);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x12,0x61);
 	return clk;
 }
 
-static int sbt_block_1dab(em8051 *aCPU)
+static int sbt_block_12e8(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x47,0x80);
@@ -9532,14 +5780,14 @@ static int sbt_block_1dab(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1dc3(em8051 *aCPU)
+static int sbt_block_1300(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0xa7,0xfd);
 	return clk;
 }
 
-static int sbt_block_1dc6(em8051 *aCPU)
+static int sbt_block_1303(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
@@ -9547,25 +5795,25 @@ static int sbt_block_1dc6(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1dc9(em8051 *aCPU)
+static int sbt_block_1306(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_rx              (aCPU, 0x1a,0x00,0x00);
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x47,0x00);
 	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x04,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x47,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1d,0x24);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x12,0x61);
 	return clk;
 }
 
-static int sbt_block_1dd3(em8051 *aCPU)
+static int sbt_block_1310(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1d,0xd9);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x13,0x16);
 	return clk;
 }
 
-static int sbt_block_1dd6(em8051 *aCPU)
+static int sbt_block_1313(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
@@ -9573,46 +5821,46 @@ static int sbt_block_1dd6(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1dd9(em8051 *aCPU)
+static int sbt_block_1316(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x47,0x80);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x35);
 	clk += Opcodes::mov_c_bitaddr       (aCPU, 0xa2,0xa7,0x00);
-	clk += Opcodes::mov_bitaddr_c       (aCPU, 0x92,0x04,0x00);
+	clk += Opcodes::mov_bitaddr_c       (aCPU, 0x92,0x07,0x00);
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1de4(em8051 *aCPU)
+static int sbt_block_1321(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x04,0x05);
+	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x07,0x05);
 	return clk;
 }
 
-static int sbt_block_1de7(em8051 *aCPU)
+static int sbt_block_1324(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0xa7,0xfd);
 	return clk;
 }
 
-static int sbt_block_1dea(em8051 *aCPU)
+static int sbt_block_1327(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x03,0x00);
 	return clk;
 }
 
-static int sbt_block_1dec(em8051 *aCPU)
+static int sbt_block_1329(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0xa7,0xfd);
 	return clk;
 }
 
-static int sbt_block_1def(em8051 *aCPU)
+static int sbt_block_132c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
@@ -9620,35 +5868,35 @@ static int sbt_block_1def(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1df3(em8051 *aCPU)
+static int sbt_block_1330(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x04,0x05);
+	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x07,0x05);
 	return clk;
 }
 
-static int sbt_block_1df6(em8051 *aCPU)
+static int sbt_block_1333(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0xa7,0xfd);
 	return clk;
 }
 
-static int sbt_block_1df9(em8051 *aCPU)
+static int sbt_block_1336(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x03,0x00);
 	return clk;
 }
 
-static int sbt_block_1dfb(em8051 *aCPU)
+static int sbt_block_1338(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0xa7,0xfd);
 	return clk;
 }
 
-static int sbt_block_1dfe(em8051 *aCPU)
+static int sbt_block_133b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
@@ -9683,35 +5931,35 @@ static int sbt_block_1dfe(em8051 *aCPU)
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x45,0x00);
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x82,0x00);
 	clk += Opcodes::rlc_a               (aCPU, 0x33,0x00,0x00);
-	clk += Opcodes::mov_bitaddr_c       (aCPU, 0x92,0x04,0x00);
+	clk += Opcodes::mov_bitaddr_c       (aCPU, 0x92,0x07,0x00);
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x83,0x00);
 	clk += Opcodes::rlc_a               (aCPU, 0x33,0x00,0x00);
 	clk += Opcodes::jnc_offset          (aCPU, 0x50,0x05,0x00);
 	return clk;
 }
 
-static int sbt_block_1e60(em8051 *aCPU)
+static int sbt_block_139d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0xa7,0xfd);
 	return clk;
 }
 
-static int sbt_block_1e63(em8051 *aCPU)
+static int sbt_block_13a0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x03,0x00);
 	return clk;
 }
 
-static int sbt_block_1e65(em8051 *aCPU)
+static int sbt_block_13a2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0xa7,0xfd);
 	return clk;
 }
 
-static int sbt_block_1e68(em8051 *aCPU)
+static int sbt_block_13a5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x71);
@@ -9749,14 +5997,14 @@ static int sbt_block_1e68(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ec4(em8051 *aCPU)
+static int sbt_block_1401(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1ec5(em8051 *aCPU)
+static int sbt_block_1402(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x46,0x00);
@@ -9766,56 +6014,56 @@ static int sbt_block_1ec5(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ecd(em8051 *aCPU)
+static int sbt_block_140a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1ece(em8051 *aCPU)
+static int sbt_block_140b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x47,0x00);
 	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x02,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x47,0x00);
-	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x04,0x05);
+	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0x07,0x05);
 	return clk;
 }
 
-static int sbt_block_1ed7(em8051 *aCPU)
+static int sbt_block_1414(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jnb_bitaddr_offset  (aCPU, 0x30,0xa7,0xfd);
 	return clk;
 }
 
-static int sbt_block_1eda(em8051 *aCPU)
+static int sbt_block_1417(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x03,0x00);
 	return clk;
 }
 
-static int sbt_block_1edc(em8051 *aCPU)
+static int sbt_block_1419(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0xa7,0xfd);
 	return clk;
 }
 
-static int sbt_block_1edf(em8051 *aCPU)
+static int sbt_block_141c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x80,0x00);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0xb0,0x75);
 	clk += Opcodes::mov_c_bitaddr       (aCPU, 0xa2,0xa7,0x00);
-	clk += Opcodes::mov_bitaddr_c       (aCPU, 0x92,0x04,0x00);
+	clk += Opcodes::mov_bitaddr_c       (aCPU, 0x92,0x07,0x00);
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1ee9(em8051 *aCPU)
+static int sbt_block_1426(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::push_mem            (aCPU, 0xc0,0x02,0x00);
@@ -9825,7 +6073,7 @@ static int sbt_block_1ee9(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ef1(em8051 *aCPU)
+static int sbt_block_142e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_indir_rx_imm    (aCPU, 0x76,0x00,0x00);
@@ -9834,19 +6082,19 @@ static int sbt_block_1ef1(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ef6(em8051 *aCPU)
+static int sbt_block_1433(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x48,0x4b);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x54);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x1f);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x91);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x14);
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x00,0x00);
 	clk += Opcodes::pop_mem             (aCPU, 0xd0,0x02,0x00);
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1f04(em8051 *aCPU)
+static int sbt_block_1441(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4b,0x00);
@@ -9854,14 +6102,14 @@ static int sbt_block_1f04(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1f09(em8051 *aCPU)
+static int sbt_block_1446(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1f0a(em8051 *aCPU)
+static int sbt_block_1447(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0xff,0x00);
@@ -9869,29 +6117,29 @@ static int sbt_block_1f0a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1f0f(em8051 *aCPU)
+static int sbt_block_144c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x03,0x00);
 	return clk;
 }
 
-static int sbt_block_1f11(em8051 *aCPU)
+static int sbt_block_144e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x20);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x5d);
 	return clk;
 }
 
-static int sbt_block_1f14(em8051 *aCPU)
+static int sbt_block_1451(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x48,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1e,0xe9);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x14,0x26);
 	return clk;
 }
 
-static int sbt_block_1f1a(em8051 *aCPU)
+static int sbt_block_1457(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_mem             (aCPU, 0x05,0x38,0x00);
@@ -9900,17 +6148,17 @@ static int sbt_block_1f1a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1f20(em8051 *aCPU)
+static int sbt_block_145d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x03,0x00);
 	clk += Opcodes::add_a_mem           (aCPU, 0x25,0x3c,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x4f,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1d,0xd9);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x13,0x16);
 	return clk;
 }
 
-static int sbt_block_1f29(em8051 *aCPU)
+static int sbt_block_1466(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x3c,0x00);
@@ -9918,14 +6166,14 @@ static int sbt_block_1f29(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1f2e(em8051 *aCPU)
+static int sbt_block_146b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x05,0x00);
 	return clk;
 }
 
-static int sbt_block_1f30(em8051 *aCPU)
+static int sbt_block_146d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4b,0x00);
@@ -9933,14 +6181,14 @@ static int sbt_block_1f30(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1f35(em8051 *aCPU)
+static int sbt_block_1472(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1d,0xe4);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x13,0x21);
 	return clk;
 }
 
-static int sbt_block_1f38(em8051 *aCPU)
+static int sbt_block_1475(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4b,0x00);
@@ -9960,14 +6208,14 @@ static int sbt_block_1f38(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1f53(em8051 *aCPU)
+static int sbt_block_1490(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_1f54(em8051 *aCPU)
+static int sbt_block_1491(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x4e,0x4c);
@@ -9978,130 +6226,130 @@ static int sbt_block_1f54(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1f5e(em8051 *aCPU)
+static int sbt_block_149b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_rx_imm_offset  (aCPU, 0xba,0x20,0x02);
 	return clk;
 }
 
-static int sbt_block_1f61(em8051 *aCPU)
+static int sbt_block_149e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x2f,0x00);
 	return clk;
 }
 
-static int sbt_block_1f63(em8051 *aCPU)
+static int sbt_block_14a0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_rx_imm_offset  (aCPU, 0xba,0x40,0x02);
 	return clk;
 }
 
-static int sbt_block_1f66(em8051 *aCPU)
+static int sbt_block_14a3(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x33,0x00);
 	return clk;
 }
 
-static int sbt_block_1f68(em8051 *aCPU)
+static int sbt_block_14a5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_rx_imm_offset  (aCPU, 0xba,0x60,0x03);
 	return clk;
 }
 
-static int sbt_block_1f6b(em8051 *aCPU)
+static int sbt_block_14a8(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0xb2);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0xef);
 	return clk;
 }
 
-static int sbt_block_1f6e(em8051 *aCPU)
+static int sbt_block_14ab(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_rx_imm_offset  (aCPU, 0xba,0x80,0x03);
 	return clk;
 }
 
-static int sbt_block_1f71(em8051 *aCPU)
+static int sbt_block_14ae(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0xc1);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0xfe);
 	return clk;
 }
 
-static int sbt_block_1f74(em8051 *aCPU)
+static int sbt_block_14b1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_rx_imm_offset  (aCPU, 0xba,0xa0,0x03);
 	return clk;
 }
 
-static int sbt_block_1f77(em8051 *aCPU)
+static int sbt_block_14b4(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0xd0);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x15,0x0d);
 	return clk;
 }
 
-static int sbt_block_1f7a(em8051 *aCPU)
+static int sbt_block_14b7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_rx_imm_offset  (aCPU, 0xba,0xc0,0x03);
 	return clk;
 }
 
-static int sbt_block_1f7d(em8051 *aCPU)
+static int sbt_block_14ba(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0xdf);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x15,0x1c);
 	return clk;
 }
 
-static int sbt_block_1f80(em8051 *aCPU)
+static int sbt_block_14bd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::cjne_rx_imm_offset  (aCPU, 0xba,0xe0,0x03);
 	return clk;
 }
 
-static int sbt_block_1f83(em8051 *aCPU)
+static int sbt_block_14c0(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0xeb);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x15,0x28);
 	return clk;
 }
 
-static int sbt_block_1f86(em8051 *aCPU)
+static int sbt_block_14c3(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x20,0x0e);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x15,0x4b);
 	return clk;
 }
 
-static int sbt_block_1f89(em8051 *aCPU)
+static int sbt_block_14c6(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x5d);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x9a);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x15);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_1f92(em8051 *aCPU)
+static int sbt_block_14cf(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x88);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xc5);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x15);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_1f9b(em8051 *aCPU)
+static int sbt_block_14d8(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4e,0x00);
@@ -10116,71 +6364,71 @@ static int sbt_block_1f9b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1faa(em8051 *aCPU)
+static int sbt_block_14e7(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1d,0xf3);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x13,0x30);
 	return clk;
 }
 
-static int sbt_block_1fad(em8051 *aCPU)
+static int sbt_block_14ea(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xd8,0xfb,0x00);
 	return clk;
 }
 
-static int sbt_block_1faf(em8051 *aCPU)
+static int sbt_block_14ec(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_1fb2(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x4d,0x40);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x49,0xff);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xfe);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
-	return clk;
-}
-
-static int sbt_block_1fc1(em8051 *aCPU)
+static int sbt_block_14ef(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x4d,0x40);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x49,0xff);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x7f);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x21);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x3b);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x16);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_1fd0(em8051 *aCPU)
+static int sbt_block_14fe(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x4d,0x40);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x49,0xff);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xfc);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x21);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xbc);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x16);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_1fdf(em8051 *aCPU)
+static int sbt_block_150d(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x4d,0x40);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x49,0xff);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x39);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x17);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
+	return clk;
+}
+
+static int sbt_block_151c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x4d,0x08);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x6a);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x22);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xa7);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x17);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_1feb(em8051 *aCPU)
+static int sbt_block_1528(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0xe1,0x00);
@@ -10188,14 +6436,14 @@ static int sbt_block_1feb(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ff0(em8051 *aCPU)
+static int sbt_block_152d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x07,0x00);
 	return clk;
 }
 
-static int sbt_block_1ff2(em8051 *aCPU)
+static int sbt_block_152f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0xe2,0x00);
@@ -10203,81 +6451,81 @@ static int sbt_block_1ff2(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_1ff7(em8051 *aCPU)
+static int sbt_block_1534(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x09,0x00);
 	return clk;
 }
 
-static int sbt_block_1ff9(em8051 *aCPU)
+static int sbt_block_1536(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x11);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x4e);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x15);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_2002(em8051 *aCPU)
+static int sbt_block_153f(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x32);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x6f);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x15);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_200b(em8051 *aCPU)
+static int sbt_block_1548(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_200e(em8051 *aCPU)
+static int sbt_block_154b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_2011(em8051 *aCPU)
+static int sbt_block_154e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x45,0x00);
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0xfe,0x00);
 	clk += Opcodes::anl_a_mem           (aCPU, 0x55,0x4e,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x46,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x23);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x60);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x15);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_2023(em8051 *aCPU)
+static int sbt_block_1560(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0xfe,0x00);
 	clk += Opcodes::anl_a_mem           (aCPU, 0x55,0x4e,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x47,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x54);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x1f);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x91);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x14);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_2032(em8051 *aCPU)
+static int sbt_block_156f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x4e,0x4d);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x3e);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x7b);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x15);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_203e(em8051 *aCPU)
+static int sbt_block_157b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
@@ -10293,24 +6541,24 @@ static int sbt_block_203e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_204e(em8051 *aCPU)
+static int sbt_block_158b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x4d,0x82);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1d,0x09);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x12,0x46);
 	return clk;
 }
 
-static int sbt_block_2054(em8051 *aCPU)
+static int sbt_block_1591(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x54);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x1f);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x91);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x14);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_205d(em8051 *aCPU)
+static int sbt_block_159a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x0f,0x00);
@@ -10320,13 +6568,13 @@ static int sbt_block_205d(em8051 *aCPU)
 	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x9d,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xf8,0x00,0x00);
 	clk += Opcodes::mov_indir_rx_mem    (aCPU, 0xa6,0x4e,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x72);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xaf);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x15);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_2072(em8051 *aCPU)
+static int sbt_block_15af(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x0f,0x00);
@@ -10337,34 +6585,34 @@ static int sbt_block_2072(em8051 *aCPU)
 	clk += Opcodes::inc_a               (aCPU, 0x04,0x00,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xf8,0x00,0x00);
 	clk += Opcodes::mov_indir_rx_mem    (aCPU, 0xa6,0x4e,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x54);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x1f);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x91);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x14);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_2088(em8051 *aCPU)
+static int sbt_block_15c5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x4e,0x49);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x94);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xd1);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x15);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_2094(em8051 *aCPU)
+static int sbt_block_15d1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x4e,0x4a);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x4d,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xa3);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xe0);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x15);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_20a3(em8051 *aCPU)
+static int sbt_block_15e0(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x49,0x00);
@@ -10372,7 +6620,7 @@ static int sbt_block_20a3(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_20a8(em8051 *aCPU)
+static int sbt_block_15e5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_mem          (aCPU, 0xaa,0x49,0x00);
@@ -10390,7 +6638,7 @@ static int sbt_block_20a8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_20ba(em8051 *aCPU)
+static int sbt_block_15f7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4d,0x00);
@@ -10399,13 +6647,13 @@ static int sbt_block_20ba(em8051 *aCPU)
 	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x9d,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xf8,0x00,0x00);
 	clk += Opcodes::mov_indir_rx_mem    (aCPU, 0xa6,0x4e,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xcd);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x20);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x0a);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x16);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_20cd(em8051 *aCPU)
+static int sbt_block_160a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_mem          (aCPU, 0xaa,0x4d,0x00);
@@ -10432,43 +6680,43 @@ static int sbt_block_20cd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_20ed(em8051 *aCPU)
+static int sbt_block_162a(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_rx_imm          (aCPU, 0x7a,0xa3,0x00);
-	clk += Opcodes::mov_rx_imm          (aCPU, 0x7b,0x20,0x00);
+	clk += Opcodes::mov_rx_imm          (aCPU, 0x7a,0xe0,0x00);
+	clk += Opcodes::mov_rx_imm          (aCPU, 0x7b,0x15,0x00);
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x04,0x00);
 	return clk;
 }
 
-static int sbt_block_20f3(em8051 *aCPU)
+static int sbt_block_1630(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_rx_imm          (aCPU, 0x7a,0x54,0x00);
-	clk += Opcodes::mov_rx_imm          (aCPU, 0x7b,0x1f,0x00);
+	clk += Opcodes::mov_rx_imm          (aCPU, 0x7a,0x91,0x00);
+	clk += Opcodes::mov_rx_imm          (aCPU, 0x7b,0x14,0x00);
 	return clk;
 }
 
-static int sbt_block_20f7(em8051 *aCPU)
+static int sbt_block_1634(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8a,0x50,0x00);
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x51,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_20fe(em8051 *aCPU)
+static int sbt_block_163b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x0f,0x00);
 	clk += Opcodes::anl_a_mem           (aCPU, 0x55,0x4e,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
-	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x05,0x00);
+	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x08,0x00);
 	return clk;
 }
 
-static int sbt_block_2105(em8051 *aCPU)
+static int sbt_block_1642(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4a,0x00);
@@ -10476,7 +6724,7 @@ static int sbt_block_2105(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_210a(em8051 *aCPU)
+static int sbt_block_1647(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8a,0x03,0x00);
@@ -10491,7 +6739,7 @@ static int sbt_block_210a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2119(em8051 *aCPU)
+static int sbt_block_1656(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
@@ -10506,7 +6754,7 @@ static int sbt_block_2119(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2125(em8051 *aCPU)
+static int sbt_block_1662(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7b,0x04,0x00);
@@ -10520,7 +6768,7 @@ static int sbt_block_2125(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2135(em8051 *aCPU)
+static int sbt_block_1672(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x01,0x00);
@@ -10533,11 +6781,11 @@ static int sbt_block_2135(em8051 *aCPU)
 	clk += Opcodes::inc_rx              (aCPU, 0x08,0x00,0x00);
 	clk += Opcodes::mov_mem_indir_rx    (aCPU, 0x86,0x83,0x00);
 	clk += Opcodes::dec_rx              (aCPU, 0x18,0x00,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1d,0xf3);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x13,0x30);
 	return clk;
 }
 
-static int sbt_block_2147(em8051 *aCPU)
+static int sbt_block_1684(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
@@ -10547,7 +6795,7 @@ static int sbt_block_2147(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_214c(em8051 *aCPU)
+static int sbt_block_1689(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4d,0x00);
@@ -10555,7 +6803,7 @@ static int sbt_block_214c(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2150(em8051 *aCPU)
+static int sbt_block_168d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4d,0x00);
@@ -10563,7 +6811,7 @@ static int sbt_block_2150(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2155(em8051 *aCPU)
+static int sbt_block_1692(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4c,0x00);
@@ -10572,7 +6820,7 @@ static int sbt_block_2155(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_215b(em8051 *aCPU)
+static int sbt_block_1698(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_mem             (aCPU, 0x15,0x4c,0x00);
@@ -10583,52 +6831,52 @@ static int sbt_block_215b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2165(em8051 *aCPU)
+static int sbt_block_16a2(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x54);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x1f);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x91);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x14);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_216e(em8051 *aCPU)
+static int sbt_block_16ab(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x05,0x03);
+	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x08,0x03);
 	return clk;
 }
 
-static int sbt_block_2171(em8051 *aCPU)
+static int sbt_block_16ae(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_2174(em8051 *aCPU)
+static int sbt_block_16b1(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x05,0x00);
+	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x08,0x00);
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4e,0x00);
 	clk += Opcodes::swap_a              (aCPU, 0xc4,0x00,0x00);
 	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0x0f,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x21,0x05);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0x42);
 	return clk;
 }
 
-static int sbt_block_217f(em8051 *aCPU)
+static int sbt_block_16bc(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x0f,0x00);
 	clk += Opcodes::anl_a_mem           (aCPU, 0x55,0x4e,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
-	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x05,0x00);
+	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x08,0x00);
 	return clk;
 }
 
-static int sbt_block_2186(em8051 *aCPU)
+static int sbt_block_16c3(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4a,0x00);
@@ -10636,7 +6884,7 @@ static int sbt_block_2186(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_218b(em8051 *aCPU)
+static int sbt_block_16c8(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8a,0x03,0x00);
@@ -10651,7 +6899,7 @@ static int sbt_block_218b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_219a(em8051 *aCPU)
+static int sbt_block_16d7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
@@ -10665,7 +6913,7 @@ static int sbt_block_219a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_21a5(em8051 *aCPU)
+static int sbt_block_16e2(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7b,0x02,0x00);
@@ -10677,7 +6925,7 @@ static int sbt_block_21a5(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_21b1(em8051 *aCPU)
+static int sbt_block_16ee(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x03,0x00);
@@ -10690,11 +6938,11 @@ static int sbt_block_21b1(em8051 *aCPU)
 	clk += Opcodes::inc_rx              (aCPU, 0x08,0x00,0x00);
 	clk += Opcodes::mov_mem_indir_rx    (aCPU, 0x86,0x83,0x00);
 	clk += Opcodes::dec_rx              (aCPU, 0x18,0x00,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1d,0xf3);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x13,0x30);
 	return clk;
 }
 
-static int sbt_block_21c3(em8051 *aCPU)
+static int sbt_block_1700(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
@@ -10705,7 +6953,7 @@ static int sbt_block_21c3(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_21c9(em8051 *aCPU)
+static int sbt_block_1706(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4d,0x00);
@@ -10713,7 +6961,7 @@ static int sbt_block_21c9(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_21cd(em8051 *aCPU)
+static int sbt_block_170a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4d,0x00);
@@ -10721,7 +6969,7 @@ static int sbt_block_21cd(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_21d2(em8051 *aCPU)
+static int sbt_block_170f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4c,0x00);
@@ -10730,7 +6978,7 @@ static int sbt_block_21d2(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_21d8(em8051 *aCPU)
+static int sbt_block_1715(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_mem             (aCPU, 0x15,0x4c,0x00);
@@ -10741,52 +6989,52 @@ static int sbt_block_21d8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_21e2(em8051 *aCPU)
+static int sbt_block_171f(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x54);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x1f);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x91);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x14);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_21eb(em8051 *aCPU)
+static int sbt_block_1728(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x05,0x03);
+	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x08,0x03);
 	return clk;
 }
 
-static int sbt_block_21ee(em8051 *aCPU)
+static int sbt_block_172b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_21f1(em8051 *aCPU)
+static int sbt_block_172e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x05,0x00);
+	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x08,0x00);
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4e,0x00);
 	clk += Opcodes::swap_a              (aCPU, 0xc4,0x00,0x00);
 	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0x0f,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x21,0x86);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x16,0xc3);
 	return clk;
 }
 
-static int sbt_block_21fc(em8051 *aCPU)
+static int sbt_block_1739(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_imm           (aCPU, 0x74,0x0f,0x00);
 	clk += Opcodes::anl_a_mem           (aCPU, 0x55,0x4e,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, 0xfa,0x00,0x00);
-	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x05,0x00);
+	clk += Opcodes::setb_bitaddr        (aCPU, 0xd2,0x08,0x00);
 	return clk;
 }
 
-static int sbt_block_2203(em8051 *aCPU)
+static int sbt_block_1740(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4a,0x00);
@@ -10794,7 +7042,7 @@ static int sbt_block_2203(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2208(em8051 *aCPU)
+static int sbt_block_1745(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8a,0x03,0x00);
@@ -10809,14 +7057,14 @@ static int sbt_block_2208(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2218(em8051 *aCPU)
+static int sbt_block_1755(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x1e,0x00);
 	return clk;
 }
 
-static int sbt_block_221a(em8051 *aCPU)
+static int sbt_block_1757(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x7b,0x01,0x00);
@@ -10827,7 +7075,7 @@ static int sbt_block_221a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2224(em8051 *aCPU)
+static int sbt_block_1761(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xea,0x00,0x00);
@@ -10841,23 +7089,23 @@ static int sbt_block_2224(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_222f(em8051 *aCPU)
+static int sbt_block_176c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8c,0x82,0x00);
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8d,0x83,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1d,0xf3);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x13,0x30);
 	return clk;
 }
 
-static int sbt_block_2236(em8051 *aCPU)
+static int sbt_block_1773(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdb,0xf7,0x00);
 	return clk;
 }
 
-static int sbt_block_2238(em8051 *aCPU)
+static int sbt_block_1775(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4d,0x00);
@@ -10865,7 +7113,7 @@ static int sbt_block_2238(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_223c(em8051 *aCPU)
+static int sbt_block_1779(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4d,0x00);
@@ -10873,7 +7121,7 @@ static int sbt_block_223c(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2241(em8051 *aCPU)
+static int sbt_block_177e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4c,0x00);
@@ -10882,7 +7130,7 @@ static int sbt_block_2241(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2247(em8051 *aCPU)
+static int sbt_block_1784(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_mem             (aCPU, 0x15,0x4c,0x00);
@@ -10893,33 +7141,33 @@ static int sbt_block_2247(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2251(em8051 *aCPU)
+static int sbt_block_178e(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x54);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x1f);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x91);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x14);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_225a(em8051 *aCPU)
+static int sbt_block_1797(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x05,0x03);
+	clk += Opcodes::jb_bitaddr_offset   (aCPU, 0x20,0x08,0x03);
 	return clk;
 }
 
-static int sbt_block_225d(em8051 *aCPU)
+static int sbt_block_179a(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_2260(em8051 *aCPU)
+static int sbt_block_179d(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x05,0x00);
+	clk += Opcodes::clr_bitaddr         (aCPU, 0xc2,0x08,0x00);
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4e,0x00);
 	clk += Opcodes::swap_a              (aCPU, 0xc4,0x00,0x00);
 	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0x0f,0x00);
@@ -10928,7 +7176,7 @@ static int sbt_block_2260(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_226a(em8051 *aCPU)
+static int sbt_block_17a7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x4e,0x49);
@@ -10936,7 +7184,7 @@ static int sbt_block_226a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2270(em8051 *aCPU)
+static int sbt_block_17ad(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x49,0x00);
@@ -10944,27 +7192,27 @@ static int sbt_block_2270(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2275(em8051 *aCPU)
+static int sbt_block_17b2(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xc0);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x22);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xfd);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x17);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_227e(em8051 *aCPU)
+static int sbt_block_17bb(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x78,0xbd,0x00);
 	clk += Opcodes::mov_mem_indir_rx    (aCPU, 0x86,0x82,0x00);
 	clk += Opcodes::inc_rx              (aCPU, 0x08,0x00,0x00);
 	clk += Opcodes::mov_mem_indir_rx    (aCPU, 0x86,0x83,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1d,0xf3);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x13,0x30);
 	return clk;
 }
 
-static int sbt_block_2288(em8051 *aCPU)
+static int sbt_block_17c5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x49,0x00);
@@ -10979,7 +7227,7 @@ static int sbt_block_2288(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2296(em8051 *aCPU)
+static int sbt_block_17d3(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_mem             (aCPU, 0x15,0x4d,0x00);
@@ -10988,16 +7236,16 @@ static int sbt_block_2296(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_229c(em8051 *aCPU)
+static int sbt_block_17d9(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x6a);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x22);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xa7);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x17);
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x19,0x00);
 	return clk;
 }
 
-static int sbt_block_22a4(em8051 *aCPU)
+static int sbt_block_17e1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4c,0x00);
@@ -11006,44 +7254,44 @@ static int sbt_block_22a4(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_22aa(em8051 *aCPU)
+static int sbt_block_17e7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_mem             (aCPU, 0x15,0x4c,0x00);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x4d,0x08);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x6a);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x22);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xa7);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x17);
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x06,0x00);
 	return clk;
 }
 
-static int sbt_block_22b7(em8051 *aCPU)
+static int sbt_block_17f4(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x54);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x1f);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x91);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x14);
 	return clk;
 }
 
-static int sbt_block_22bd(em8051 *aCPU)
+static int sbt_block_17fa(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_22c0(em8051 *aCPU)
+static int sbt_block_17fd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x78,0xbd,0x00);
 	clk += Opcodes::mov_indir_rx_mem    (aCPU, 0xa6,0x4e,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xcd);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x22);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x0a);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x18);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_22cd(em8051 *aCPU)
+static int sbt_block_180a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x78,0xbe,0x00);
@@ -11052,11 +7300,11 @@ static int sbt_block_22cd(em8051 *aCPU)
 	clk += Opcodes::mov_mem_indir_rx    (aCPU, 0x86,0x82,0x00);
 	clk += Opcodes::inc_rx              (aCPU, 0x08,0x00,0x00);
 	clk += Opcodes::mov_mem_indir_rx    (aCPU, 0x86,0x83,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1d,0xf3);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x13,0x30);
 	return clk;
 }
 
-static int sbt_block_22db(em8051 *aCPU)
+static int sbt_block_1818(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4a,0x00);
@@ -11067,7 +7315,7 @@ static int sbt_block_22db(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_22e3(em8051 *aCPU)
+static int sbt_block_1820(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x49,0x00);
@@ -11077,7 +7325,7 @@ static int sbt_block_22e3(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_22e9(em8051 *aCPU)
+static int sbt_block_1826(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x49,0x00);
@@ -11085,27 +7333,27 @@ static int sbt_block_22e9(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_22ee(em8051 *aCPU)
+static int sbt_block_182b(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xc0);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x22);
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xfd);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x17);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_22f7(em8051 *aCPU)
+static int sbt_block_1834(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_imm          (aCPU, 0x78,0xbd,0x00);
 	clk += Opcodes::mov_mem_indir_rx    (aCPU, 0x86,0x82,0x00);
 	clk += Opcodes::inc_rx              (aCPU, 0x08,0x00,0x00);
 	clk += Opcodes::mov_mem_indir_rx    (aCPU, 0x86,0x83,0x00);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1d,0xf3);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x13,0x30);
 	return clk;
 }
 
-static int sbt_block_2301(em8051 *aCPU)
+static int sbt_block_183e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x49,0x00);
@@ -11120,7 +7368,7 @@ static int sbt_block_2301(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_230f(em8051 *aCPU)
+static int sbt_block_184c(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_mem             (aCPU, 0x15,0x4d,0x00);
@@ -11129,16 +7377,16 @@ static int sbt_block_230f(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2315(em8051 *aCPU)
+static int sbt_block_1852(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x6a);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x22);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xa7);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x17);
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x19,0x00);
 	return clk;
 }
 
-static int sbt_block_231d(em8051 *aCPU)
+static int sbt_block_185a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x4c,0x00);
@@ -11147,33 +7395,33 @@ static int sbt_block_231d(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2323(em8051 *aCPU)
+static int sbt_block_1860(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::dec_mem             (aCPU, 0x15,0x4c,0x00);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x4d,0x08);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x6a);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x22);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0xa7);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x17);
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x06,0x00);
 	return clk;
 }
 
-static int sbt_block_2330(em8051 *aCPU)
+static int sbt_block_186d(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x54);
-	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x1f);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x50,0x91);
+	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x51,0x14);
 	return clk;
 }
 
-static int sbt_block_2336(em8051 *aCPU)
+static int sbt_block_1873(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x1f,0x29);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x14,0x66);
 	return clk;
 }
 
-static int sbt_block_2339(em8051 *aCPU)
+static int sbt_block_1876(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_rx_mem          (aCPU, 0xaa,0x82,0x00);
@@ -11181,7 +7429,7 @@ static int sbt_block_2339(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_233d(em8051 *aCPU)
+static int sbt_block_187a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8b,0x04,0x00);
@@ -11189,21 +7437,21 @@ static int sbt_block_233d(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2341(em8051 *aCPU)
+static int sbt_block_187e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdc,0xfe,0x00);
 	return clk;
 }
 
-static int sbt_block_2343(em8051 *aCPU)
+static int sbt_block_1880(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::djnz_rx_offset      (aCPU, 0xdd,0xfc,0x00);
 	return clk;
 }
 
-static int sbt_block_2345(em8051 *aCPU)
+static int sbt_block_1882(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x8c,0x03,0x00);
@@ -11211,21 +7459,21 @@ static int sbt_block_2345(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2349(em8051 *aCPU)
+static int sbt_block_1886(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::ret                 (aCPU, 0x22,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_234a(em8051 *aCPU)
+static int sbt_block_1887(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_234d(em8051 *aCPU)
+static int sbt_block_188a(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_a               (aCPU, 0xe4,0x00,0x00);
@@ -11242,7 +7490,7 @@ static int sbt_block_234d(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_235b(em8051 *aCPU)
+static int sbt_block_1898(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xfd);
@@ -11262,7 +7510,7 @@ static int sbt_block_235b(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2376(em8051 *aCPU)
+static int sbt_block_18b3(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x03,0xff);
@@ -11272,7 +7520,7 @@ static int sbt_block_2376(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_237c(em8051 *aCPU)
+static int sbt_block_18b9(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x52,0x84);
@@ -11292,14 +7540,14 @@ static int sbt_block_237c(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_238e(em8051 *aCPU)
+static int sbt_block_18cb(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_rx          (aCPU, 0x89,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_2390(em8051 *aCPU)
+static int sbt_block_18cd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_a               (aCPU, 0xe4,0x00,0x00);
@@ -11316,7 +7564,7 @@ static int sbt_block_2390(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_239e(em8051 *aCPU)
+static int sbt_block_18db(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_rx            (aCPU, 0xeb,0x00,0x00);
@@ -11330,14 +7578,14 @@ static int sbt_block_239e(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_23aa(em8051 *aCPU)
+static int sbt_block_18e7(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::sjmp_offset         (aCPU, 0x80,0x14,0x00);
 	return clk;
 }
 
-static int sbt_block_23ac(em8051 *aCPU)
+static int sbt_block_18e9(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x92,0x00);
@@ -11355,7 +7603,7 @@ static int sbt_block_23ac(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_23c0(em8051 *aCPU)
+static int sbt_block_18fd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_c               (aCPU, 0xc3,0x00,0x00);
@@ -11371,7 +7619,7 @@ static int sbt_block_23c0(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_23d1(em8051 *aCPU)
+static int sbt_block_190e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x84,0x52);
@@ -11380,7 +7628,7 @@ static int sbt_block_23d1(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_23d8(em8051 *aCPU)
+static int sbt_block_1915(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x52,0x84);
@@ -11388,7 +7636,7 @@ static int sbt_block_23d8(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_23de(em8051 *aCPU)
+static int sbt_block_191b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_a               (aCPU, 0xe4,0x00,0x00);
@@ -11397,7 +7645,7 @@ static int sbt_block_23de(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_23e2(em8051 *aCPU)
+static int sbt_block_191f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::add_a_imm           (aCPU, 0x24,0xe0,0x00);
@@ -11416,7 +7664,7 @@ static int sbt_block_23e2(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_23f7(em8051 *aCPU)
+static int sbt_block_1934(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x84,0x52);
@@ -11425,7 +7673,7 @@ static int sbt_block_23f7(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_23fe(em8051 *aCPU)
+static int sbt_block_193b(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_a_mem           (aCPU, 0xe5,0x82,0x00);
@@ -11437,7 +7685,7 @@ static int sbt_block_23fe(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_240a(em8051 *aCPU)
+static int sbt_block_1947(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::anl_a_imm           (aCPU, 0x54,0x0f,0x00);
@@ -11448,14 +7696,14 @@ static int sbt_block_240a(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2413(em8051 *aCPU)
+static int sbt_block_1950(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::inc_a               (aCPU, 0x04,0x00,0x00);
 	return clk;
 }
 
-static int sbt_block_2414(em8051 *aCPU)
+static int sbt_block_1951(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::add_a_imm           (aCPU, 0x24,0x10,0x00);
@@ -11470,7 +7718,7 @@ static int sbt_block_2414(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2420(em8051 *aCPU)
+static int sbt_block_195d(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_mem         (aCPU, 0x85,0x82,0x52);
@@ -11479,113 +7727,113 @@ static int sbt_block_2420(em8051 *aCPU)
 	return clk;
 }
 
-static int sbt_block_2427(em8051 *aCPU)
+static int sbt_block_1964(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x23,0x4a);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x18,0x87);
 	return clk;
 }
 
-static int sbt_block_242a(em8051 *aCPU)
+static int sbt_block_1967(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x52,0xb2);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x53,0x01);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x54,0x40);
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x25,0x21);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x23,0xd8);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x1a,0x6e);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x19,0x15);
 	return clk;
 }
 
-static int sbt_block_2439(em8051 *aCPU)
+static int sbt_block_1976(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x54,0x20);
-	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x25,0x29);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x23,0xd8);
+	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x1a,0x76);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x19,0x15);
 	return clk;
 }
 
-static int sbt_block_2442(em8051 *aCPU)
+static int sbt_block_197f(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x52,0xb6);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x53,0x00);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x54,0x00);
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x2e,0x67);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x23,0x7c);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x18,0xb9);
 	return clk;
 }
 
-static int sbt_block_2451(em8051 *aCPU)
+static int sbt_block_198e(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::clr_a               (aCPU, 0xe4,0x00,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x52,0x00);
 	clk += Opcodes::mov_mem_a           (aCPU, 0xf5,0x53,0x00);
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x2e,0x55);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x23,0x7c);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x18,0xb9);
 	return clk;
 }
 
-static int sbt_block_245c(em8051 *aCPU)
+static int sbt_block_1999(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x52,0x26);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x53,0x00);
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x2e,0x19);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x23,0x7c);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x18,0xb9);
 	return clk;
 }
 
-static int sbt_block_2468(em8051 *aCPU)
+static int sbt_block_19a5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x52,0x18);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x53,0x00);
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x2e,0x46);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x23,0x7c);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x18,0xb9);
 	return clk;
 }
 
-static int sbt_block_2474(em8051 *aCPU)
+static int sbt_block_19b1(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x52,0x18);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x53,0x00);
 	clk += Opcodes::mov_dptr_imm        (aCPU, 0x90,0x2e,0x1f);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x23,0x7c);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x18,0xb9);
 	return clk;
 }
 
-static int sbt_block_2480(em8051 *aCPU)
+static int sbt_block_19bd(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x52,0x38);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x53,0x02);
 	clk += Opcodes::mov_mem_imm         (aCPU, 0x75,0x54,0x50);
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x1b,0x29);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x10,0x66);
 	return clk;
 }
 
-static int sbt_block_248c(em8051 *aCPU)
+static int sbt_block_19c9(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::lcall_address       (aCPU, 0x12,0x23,0xfe);
+	clk += Opcodes::lcall_address       (aCPU, 0x12,0x19,0x3b);
 	return clk;
 }
 
-static int sbt_block_248f(em8051 *aCPU)
+static int sbt_block_19cc(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	clk += Opcodes::lcall_address       (aCPU, 0x12,0x00,0xfb);
 	return clk;
 }
 
-static int sbt_block_2492(em8051 *aCPU)
+static int sbt_block_19cf(em8051 *aCPU)
 {
 	unsigned clk = 0;
-	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x23,0x76);
+	clk += Opcodes::ljmp_address        (aCPU, 0x02,0x18,0xb3);
 	return clk;
 }
 
@@ -12316,10 +8564,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_01f6,
+	&sbt_block_01f7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_01fa,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12444,18 +8692,18 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0277,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_027a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_027f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0282,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12474,10 +8722,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0295,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0298,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12486,47 +8734,46 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02a1,
+	&sbt_block_02a2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_02a4,
-	&sbt_block_02a5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_02ac,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_02af,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_02b2,
-	&sbt_exception,
-	&sbt_block_02b4,
+	&sbt_block_02b1,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_02b6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_02b9,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_02bc,
 	&sbt_exception,
+	&sbt_block_02bd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_02c0,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_02c3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02c6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_02c9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12534,48 +8781,61 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02d0,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02d3,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02d6,
 	&sbt_exception,
+	&sbt_block_02d8,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02db,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_02dc,
+	&sbt_block_02e0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02e4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02e9,
 	&sbt_exception,
+	&sbt_block_02eb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02f0,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02f3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_02f7,
 	&sbt_exception,
-	&sbt_block_02ef,
 	&sbt_exception,
+	&sbt_block_02fa,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0300,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0306,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12591,15 +8851,15 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0316,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0319,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_030f,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0312,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12608,54 +8868,44 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_031b,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_031e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_032d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0331,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0333,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0336,
 	&sbt_exception,
 	&sbt_block_0338,
-	&sbt_block_0339,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_033c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_033d,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0342,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0345,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0348,
+	&sbt_block_0349,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_034c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12668,7 +8918,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0357,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12676,7 +8925,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_035f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12684,13 +8932,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0367,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_036a,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_036d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12705,15 +8950,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_037c,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_037b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0384,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12721,13 +8965,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_038c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_038f,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0392,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12742,7 +8983,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03a1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12750,7 +8990,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03a9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12758,13 +8997,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03b1,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03b4,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03b7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12772,6 +9008,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_03b3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12779,29 +9016,39 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03c6,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_03bd,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_03c0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03ce,
+	&sbt_block_03c4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_03d0,
+	&sbt_exception,
+	&sbt_block_03d2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_03d6,
 	&sbt_exception,
+	&sbt_block_03d8,
 	&sbt_exception,
-	&sbt_block_03d9,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03dc,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12816,15 +9063,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03eb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_03ef,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03f3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12832,20 +9078,20 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03fb,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_03fe,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0401,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0400,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0403,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0406,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12853,32 +9099,32 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0410,
+	&sbt_block_040e,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0411,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0418,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_041b,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_041e,
 	&sbt_exception,
-	&sbt_block_0420,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0423,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0426,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0427,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12887,10 +9133,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0430,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0433,
 	&sbt_exception,
-	&sbt_block_0435,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12898,7 +9145,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_043d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12906,10 +9152,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0445,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0448,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_044b,
@@ -12917,8 +9165,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0450,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0453,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12927,7 +9177,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_045a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12935,7 +9184,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0462,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12943,25 +9191,24 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_046a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0471,
+	&sbt_block_0470,
 	&sbt_exception,
+	&sbt_block_0472,
 	&sbt_exception,
-	&sbt_block_0474,
 	&sbt_exception,
+	&sbt_block_0475,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_047c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12970,13 +9217,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0485,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0488,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0489,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12987,6 +9233,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0494,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -12994,16 +9241,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_049d,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_04a0,
 	&sbt_exception,
-	&sbt_block_04a2,
-	&sbt_block_04a3,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_04a6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13012,15 +9254,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_04af,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_04b2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_04b0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13029,8 +9270,15 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_04b9,
 	&sbt_exception,
-	&sbt_block_04c1,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_04bd,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13046,19 +9294,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_04d1,
+	&sbt_exception,
+	&sbt_block_04d2,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_04d4,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_04d7,
-	&sbt_exception,
+	&sbt_block_04d5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_04da,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_04dd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13070,26 +9318,28 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_04e6,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_04e9,
 	&sbt_exception,
+	&sbt_block_04eb,
 	&sbt_exception,
+	&sbt_block_04ed,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_04f0,
+	&sbt_block_04f1,
 	&sbt_exception,
-	&sbt_block_04ee,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_04f7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_04f6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_04f9,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_04fc,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13101,10 +9351,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_050a,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_050d,
 	&sbt_exception,
-	&sbt_block_050b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13112,7 +9363,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0513,
+	&sbt_block_0516,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13120,13 +9371,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_051b,
 	&sbt_exception,
+	&sbt_block_051f,
+	&sbt_block_0520,
 	&sbt_exception,
-	&sbt_block_051e,
 	&sbt_exception,
+	&sbt_block_0523,
 	&sbt_exception,
-	&sbt_block_0521,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13140,8 +9391,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0532,
 	&sbt_exception,
-	&sbt_block_0530,
+	&sbt_block_0534,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13149,18 +9401,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0538,
+	&sbt_block_053c,
+	&sbt_block_053d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0540,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0543,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0546,
@@ -13170,15 +9418,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_054d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0552,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0555,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13186,36 +9435,36 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_055d,
 	&sbt_exception,
+	&sbt_block_055f,
 	&sbt_exception,
+	&sbt_block_0561,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0565,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0568,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_056b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0570,
 	&sbt_exception,
+	&sbt_block_0572,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0577,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_057a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13223,21 +9472,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0582,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0586,
 	&sbt_exception,
+	&sbt_block_0588,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_058a,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_058d,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0590,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13245,22 +9492,23 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0597,
 	&sbt_exception,
+	&sbt_block_0599,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_059f,
 	&sbt_exception,
+	&sbt_block_05a1,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_05a4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_05a7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13276,16 +9524,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_05b7,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_05ba,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_05bd,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_05c0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13294,21 +9538,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_05cf,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_05d7,
+	&sbt_block_05c5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13316,28 +9546,45 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_05df,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_05e3,
-	&sbt_block_05e4,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_05e7,
+	&sbt_block_05d0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_05ee,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_05db,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_05e6,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_05f1,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_05f4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13346,10 +9593,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_05fd,
+	&sbt_block_05fc,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0600,
+	&sbt_block_05ff,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13364,34 +9611,29 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_060e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0615,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0618,
 	&sbt_exception,
-	&sbt_block_061a,
-	&sbt_block_061b,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_061e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_061d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0627,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_062a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13399,6 +9641,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_062c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13406,7 +9649,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0639,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13414,7 +9656,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0641,
+	&sbt_block_063b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13422,16 +9664,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0649,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_064c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_064f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_064a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13443,15 +9683,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_065e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0659,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0666,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13459,13 +9698,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_066e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0671,
 	&sbt_exception,
+	&sbt_block_0668,
 	&sbt_exception,
-	&sbt_block_0674,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13479,11 +9716,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0677,
 	&sbt_exception,
-	&sbt_block_0683,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_067c,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0681,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0686,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13493,23 +9741,26 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0690,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0693,
 	&sbt_exception,
+	&sbt_block_0695,
 	&sbt_exception,
-	&sbt_block_0696,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0699,
 	&sbt_exception,
+	&sbt_block_069a,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_069d,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_06a0,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_06a3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13517,7 +9768,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_06a8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13525,22 +9775,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_06b0,
+	&sbt_block_06b2,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_06b5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_06b8,
 	&sbt_exception,
+	&sbt_block_06bc,
 	&sbt_exception,
-	&sbt_block_06bb,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_06be,
 	&sbt_exception,
+	&sbt_block_06c1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13553,8 +9803,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_06ce,
 	&sbt_exception,
-	&sbt_block_06cd,
+	&sbt_block_06d0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13562,7 +9813,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_06d5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13570,15 +9820,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_06dd,
+	&sbt_block_06df,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_06e0,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_06e3,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_06e6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13589,25 +9838,24 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_06f1,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_06f2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_06f8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_06fa,
 	&sbt_exception,
+	&sbt_block_06fd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0702,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13617,14 +9865,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_block_070a,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_070d,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0710,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0713,
+	&sbt_block_070c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13635,6 +9876,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_071b,
+	&sbt_exception,
+	&sbt_block_071d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13647,7 +9895,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_072a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13655,13 +9902,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0732,
+	&sbt_block_0731,
 	&sbt_exception,
+	&sbt_block_0733,
 	&sbt_exception,
-	&sbt_block_0735,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0738,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13673,10 +9919,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0742,
 	&sbt_exception,
+	&sbt_block_0744,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0747,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13684,7 +9931,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_074f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13692,52 +9938,48 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0757,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_075b,
-	&sbt_block_075c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_075f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0766,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0769,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_076c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_076a,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0775,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0778,
+	&sbt_block_076f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0773,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_077a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_077e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13745,26 +9987,32 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0788,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_078b,
 	&sbt_exception,
 	&sbt_block_078d,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0790,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0792,
-	&sbt_block_0793,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0796,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_0795,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0799,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_079c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_079f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_07a2,
@@ -13776,13 +10024,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_07ab,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07b1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13790,7 +10038,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07b9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13798,13 +10045,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07c1,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07c4,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07c7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13819,7 +10063,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07d6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13827,7 +10070,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07de,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13835,13 +10077,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07e6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07e9,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07ec,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13856,7 +10095,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_07fb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13864,7 +10102,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0803,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13872,13 +10109,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_080b,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_080e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0811,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13893,7 +10127,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0820,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13901,21 +10134,35 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0828,
 	&sbt_exception,
+	&sbt_block_081a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0830,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0833,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0836,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13925,20 +10172,21 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_083f,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0842,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0845,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0848,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_084d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13946,7 +10194,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0855,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13954,16 +10201,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_085d,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0860,
 	&sbt_exception,
+	&sbt_block_085f,
 	&sbt_exception,
-	&sbt_block_0863,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0866,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13978,7 +10222,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0875,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -13986,18 +10229,23 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_087d,
+	&sbt_block_0878,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_087b,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_087e,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0881,
 	&sbt_exception,
-	&sbt_block_0885,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0888,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_088b,
@@ -14005,39 +10253,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_089a,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_08a2,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_08aa,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_08ad,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_08b0,
+	&sbt_block_0890,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14052,7 +10268,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_08bf,
+	&sbt_block_089f,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_08a5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14060,7 +10282,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_08c7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14068,13 +10289,40 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_08cf,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_08d3,
-	&sbt_block_08d4,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_08bc,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_08d5,
 	&sbt_exception,
 	&sbt_block_08d7,
 	&sbt_exception,
@@ -14083,13 +10331,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_08de,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_08e1,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_08e4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14097,11 +10338,47 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_08eb,
 	&sbt_exception,
 	&sbt_block_08ed,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_08f0,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_08f5,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_08fd,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_090d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14121,17 +10398,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0905,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0908,
-	&sbt_exception,
-	&sbt_block_090a,
-	&sbt_block_090b,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_090e,
+	&sbt_block_0921,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14140,25 +10407,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0917,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_091a,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0929,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14168,19 +10416,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_block_0931,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0939,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_093c,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_093f,
+	&sbt_block_0933,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14193,31 +10429,42 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0949,
+	&sbt_exception,
+	&sbt_block_094b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_094e,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0951,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0956,
+	&sbt_block_0957,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_095c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_095e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0961,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0964,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14232,7 +10479,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0973,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14240,7 +10486,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_097b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14248,13 +10493,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0983,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0986,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0989,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14269,7 +10511,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0998,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14277,7 +10518,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_09a0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14285,7 +10525,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_09a8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14293,16 +10532,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_09b0,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_09b3,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_09b6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_09b9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14317,7 +10552,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_09c8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14325,7 +10559,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_09d0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14333,50 +10566,26 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_09d8,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_09db,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_09de,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_09ed,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_09f5,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_09fd,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0a00,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0a03,
+	&sbt_block_09dc,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14391,7 +10600,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a12,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_09ee,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14399,7 +10611,8 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a1a,
+	&sbt_exception,
+	&sbt_block_09f7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14407,13 +10620,47 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a22,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0a04,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0a0e,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0a1b,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0a25,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a28,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14424,19 +10671,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0a32,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a37,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0a3c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a3f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14444,28 +10691,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a47,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a4b,
-	&sbt_block_0a4c,
+	&sbt_block_0a49,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a4f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a56,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a59,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a5c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14474,18 +10715,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a65,
+	&sbt_block_0a5e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a68,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0a64,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0a6a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14498,28 +10740,34 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a7d,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0a80,
 	&sbt_exception,
-	&sbt_block_0a82,
-	&sbt_block_0a83,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a86,
+	&sbt_block_0a84,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_0a87,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a8f,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0a92,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14536,13 +10784,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_block_0aa1,
 	&sbt_exception,
+	&sbt_block_0aa3,
 	&sbt_exception,
+	&sbt_block_0aa5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0aa9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14550,13 +10799,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ab1,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ab4,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ab7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14566,12 +10812,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0abf,
 	&sbt_exception,
+	&sbt_block_0ac1,
+	&sbt_block_0ac2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ac6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14579,24 +10827,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ace,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0ad4,
 	&sbt_exception,
-	&sbt_block_0ad6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ad9,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0adc,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0add,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14608,23 +10854,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0aeb,
 	&sbt_exception,
+	&sbt_block_0aea,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0af3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0af4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0afb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14632,16 +10877,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b03,
 	&sbt_exception,
+	&sbt_block_0b01,
 	&sbt_exception,
-	&sbt_block_0b06,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b09,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b0c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14656,29 +10898,27 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b1b,
 	&sbt_exception,
+	&sbt_block_0b16,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0b1c,
 	&sbt_exception,
-	&sbt_block_0b23,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0b22,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b2b,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b2e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b31,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14693,15 +10933,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b40,
+	&sbt_block_0b38,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0b3c,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0b3f,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b48,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14709,15 +10950,15 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b50,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b53,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b56,
+	&sbt_block_0b4d,
 	&sbt_exception,
+	&sbt_block_0b4f,
 	&sbt_exception,
+	&sbt_block_0b51,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14730,15 +10971,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b65,
 	&sbt_exception,
+	&sbt_block_0b5f,
 	&sbt_exception,
+	&sbt_block_0b61,
+	&sbt_block_0b62,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b6d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14746,15 +10988,21 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b75,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b78,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b7b,
 	&sbt_exception,
+	&sbt_block_0b74,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0b7d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14775,7 +11023,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b92,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14783,7 +11030,8 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0b9a,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0b9d,
@@ -14793,6 +11041,33 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0ba4,
+	&sbt_exception,
+	&sbt_block_0ba6,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0bac,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0bb2,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0bb5,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0bbb,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0bbe,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14804,44 +11079,17 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0baf,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0bcd,
+	&sbt_exception,
+	&sbt_block_0bcf,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0bb7,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0bbf,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0bc3,
-	&sbt_block_0bc4,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0bc7,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0bce,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0bd1,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0bd4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14852,73 +11100,74 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_block_0bdd,
 	&sbt_exception,
+	&sbt_block_0bdf,
 	&sbt_exception,
-	&sbt_block_0be0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0be5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0beb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0bf2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0bf5,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0bf8,
 	&sbt_exception,
-	&sbt_block_0bfa,
-	&sbt_block_0bfb,
 	&sbt_exception,
+	&sbt_block_0bfc,
 	&sbt_exception,
-	&sbt_block_0bfe,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0c00,
+	&sbt_block_0c01,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0c05,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c07,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c0a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0c11,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0c17,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c19,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0c1e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c21,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14926,44 +11175,37 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c29,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c2c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c2f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0c34,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0c3a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0c3e,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0c41,
+	&sbt_block_0c42,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c46,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0c4e,
+	&sbt_block_0c48,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14971,16 +11213,20 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c56,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0c59,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c5c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c5f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -14991,11 +11237,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0c68,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0c6c,
 	&sbt_exception,
-	&sbt_block_0c6e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15003,7 +11250,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c76,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15011,13 +11257,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c7e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c81,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c84,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15032,7 +11275,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c93,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15040,7 +11282,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0c9b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15048,13 +11289,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ca3,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ca6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ca9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15069,7 +11307,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0cb8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15077,7 +11314,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0cc0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15085,13 +11321,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0cc8,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ccb,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0cce,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15105,37 +11338,52 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0ccd,
 	&sbt_exception,
-	&sbt_block_0cdd,
 	&sbt_exception,
+	&sbt_block_0cd0,
+	&sbt_block_0cd1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ce5,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0cda,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ced,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0cf0,
+	&sbt_block_0ce2,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0cf3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0cea,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0cf2,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0cfa,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15162,33 +11410,24 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_0d12,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d15,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0d18,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0d1b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0d20,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0d23,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d27,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0d2f,
+	&sbt_block_0d26,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15196,15 +11435,24 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d37,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d3b,
-	&sbt_block_0d3c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d3f,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0d36,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15214,10 +11462,8 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_0d46,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d49,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d4c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15226,15 +11472,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d55,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0d56,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d5d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15244,6 +11489,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0d64,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15255,16 +11501,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d72,
+	&sbt_block_0d70,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d75,
 	&sbt_exception,
-	&sbt_block_0d77,
-	&sbt_block_0d78,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d7b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15273,10 +11515,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d84,
 	&sbt_exception,
+	&sbt_block_0d7f,
 	&sbt_exception,
-	&sbt_block_0d87,
+	&sbt_block_0d81,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15286,12 +11528,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0d8b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d96,
+	&sbt_block_0d91,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15299,7 +11542,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0d9e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15307,26 +11549,25 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0da6,
+	&sbt_block_0da0,
 	&sbt_exception,
+	&sbt_block_0da2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0dae,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0db1,
 	&sbt_exception,
+	&sbt_block_0dac,
 	&sbt_exception,
-	&sbt_block_0db4,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0db7,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0db2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15339,7 +11580,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0dc6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15347,7 +11587,15 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0dce,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0dc9,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0dcc,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15358,36 +11606,36 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_0dd6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0dd9,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0ddc,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0dde,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0deb,
+	&sbt_block_0de3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0df3,
-	&sbt_exception,
+	&sbt_block_0dea,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0def,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0df6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15395,7 +11643,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_0dfb,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0dfe,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_0e01,
@@ -15404,19 +11652,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e07,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e0e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0e10,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_0e13,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15424,18 +11672,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_0e18,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e1b,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0e20,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0e23,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0e26,
+	&sbt_block_0e1d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15443,45 +11682,54 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e25,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0e2a,
+	&sbt_exception,
+	&sbt_block_0e2c,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0e31,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0e35,
-	&sbt_exception,
+	&sbt_block_0e37,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e3b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0e3d,
-	&sbt_exception,
+	&sbt_block_0e3f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e44,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0e45,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0e48,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0e4b,
+	&sbt_block_0e47,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e4d,
+	&sbt_exception,
+	&sbt_block_0e4f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e54,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15490,32 +11738,36 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_0e5a,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e5d,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e60,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0e62,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e69,
 	&sbt_exception,
+	&sbt_block_0e6b,
 	&sbt_exception,
-	&sbt_block_0e6a,
 	&sbt_exception,
+	&sbt_block_0e6e,
 	&sbt_exception,
-	&sbt_block_0e6d,
 	&sbt_exception,
+	&sbt_block_0e71,
 	&sbt_exception,
-	&sbt_block_0e70,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e77,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e7a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15524,31 +11776,32 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0e7f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e86,
 	&sbt_exception,
+	&sbt_block_0e88,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e8b,
 	&sbt_exception,
-	&sbt_block_0e87,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e91,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e94,
 	&sbt_exception,
-	&sbt_block_0e8f,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0e92,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0e95,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0e9c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15558,10 +11811,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0ea6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ea4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15569,7 +11822,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0eac,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15577,59 +11829,43 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0eb4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0eb8,
-	&sbt_block_0eb9,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ebc,
+	&sbt_block_0ebd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0ec2,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ec3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0ec8,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ec9,
+	&sbt_block_0ecb,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ecc,
-	&sbt_block_0ecd,
 	&sbt_exception,
+	&sbt_block_0ecf,
 	&sbt_exception,
-	&sbt_block_0ed0,
-	&sbt_block_0ed1,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ed4,
-	&sbt_block_0ed5,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ed8,
-	&sbt_block_0ed9,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0edc,
-	&sbt_block_0edd,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ee0,
-	&sbt_block_0ee1,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ee4,
-	&sbt_block_0ee5,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ee8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15643,25 +11879,37 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ef6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ef9,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0eee,
 	&sbt_exception,
-	&sbt_block_0efd,
 	&sbt_exception,
+	&sbt_block_0ef1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0ef8,
 	&sbt_exception,
+	&sbt_block_0efa,
 	&sbt_exception,
-	&sbt_block_0f07,
+	&sbt_block_0efc,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0f00,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0f08,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15673,8 +11921,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0f14,
-	&sbt_block_0f15,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15684,11 +11930,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0f1f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0f23,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15696,11 +11940,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f27,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f2a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f2e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15708,6 +11955,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f36,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15717,6 +11965,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f40,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15724,6 +11973,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f48,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15749,9 +11999,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f62,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f66,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15761,26 +12013,28 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f70,
 	&sbt_exception,
+	&sbt_block_0f72,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f78,
 	&sbt_exception,
-	&sbt_block_0f73,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f80,
 	&sbt_exception,
-	&sbt_block_0f7b,
-	&sbt_block_0f7c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f85,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15788,69 +12042,63 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0f87,
+	&sbt_block_0f8d,
 	&sbt_exception,
+	&sbt_block_0f8f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0f95,
+	&sbt_block_0f96,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0f91,
 	&sbt_exception,
+	&sbt_block_0f9b,
 	&sbt_exception,
-	&sbt_block_0f94,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0f97,
 	&sbt_exception,
-	&sbt_block_0f99,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0f9e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0fa1,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0fa4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0fa8,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0fab,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_0faf,
 	&sbt_exception,
 	&sbt_block_0fb1,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0fb7,
-	&sbt_exception,
+	&sbt_block_0fb4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0fb9,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_0fbb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0fc5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15858,11 +12106,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_0fca,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0fcd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0fd1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15874,30 +12122,20 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0fdf,
-	&sbt_block_0fe0,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0fe3,
+	&sbt_block_0fdd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0fe2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_0fe6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_0ff2,
-	&sbt_exception,
-	&sbt_block_0ff4,
+	&sbt_block_0fea,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15905,12 +12143,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_0ffc,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0ff5,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_0ff8,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_block_0ffd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_1001,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15919,15 +12167,15 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_100a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_100d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1012,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15942,7 +12190,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_block_101f,
 	&sbt_exception,
-	&sbt_block_1021,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_1023,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15952,19 +12202,20 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_102d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_1030,
-	&sbt_exception,
+	&sbt_block_1031,
 	&sbt_block_1032,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1037,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_103a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15977,18 +12228,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_1046,
-	&sbt_exception,
-	&sbt_block_1048,
+	&sbt_block_1047,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_104c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1050,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -15996,8 +12245,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1057,
-	&sbt_exception,
+	&sbt_block_1058,
 	&sbt_block_1059,
 	&sbt_exception,
 	&sbt_exception,
@@ -16009,7 +12257,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_1061,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1064,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_1066,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16017,16 +12267,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_106f,
-	&sbt_exception,
+	&sbt_block_106e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1073,
 	&sbt_exception,
+	&sbt_block_1075,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16037,13 +12285,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_1085,
-	&sbt_exception,
+	&sbt_block_1080,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16053,12 +12295,18 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1090,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_1092,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_1095,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16067,6 +12315,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_109b,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_109e,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_10a3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16075,13 +12329,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_10a6,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_10ac,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16091,17 +12339,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_10b6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_10bc,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_10bf,
-	&sbt_exception,
+	&sbt_block_10b9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16109,28 +12350,35 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_10c1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_10ce,
-	&sbt_exception,
+	&sbt_block_10c7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_10cc,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_10d2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_10dd,
+	&sbt_exception,
+	&sbt_block_10d7,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_10dc,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16156,11 +12404,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_10f7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_10fb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16171,12 +12419,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1106,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_110a,
 	&sbt_exception,
+	&sbt_block_110c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16190,10 +12439,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1119,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_111c,
 	&sbt_exception,
+	&sbt_block_111e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16205,66 +12455,61 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1128,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_112c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1133,
 	&sbt_exception,
+	&sbt_block_1135,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1137,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_113c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1142,
 	&sbt_exception,
-	&sbt_block_1141,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1147,
 	&sbt_exception,
-	&sbt_block_1146,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_114b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1150,
+	&sbt_block_1151,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1155,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_115a,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_115d,
+	&sbt_block_115c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1160,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1163,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16274,32 +12519,32 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_116a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1172,
 	&sbt_exception,
+	&sbt_block_1171,
 	&sbt_exception,
-	&sbt_block_1175,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_117c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1181,
 	&sbt_exception,
+	&sbt_block_117e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1183,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16307,54 +12552,55 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_118e,
 	&sbt_exception,
-	&sbt_block_1190,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_118f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1196,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_119f,
+	&sbt_block_119c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_11a6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_11a9,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_11ac,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_11b1,
 	&sbt_exception,
+	&sbt_block_11b0,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_11b3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_11b8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_11bd,
+	&sbt_block_11bb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16363,13 +12609,15 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_11c4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_11ca,
 	&sbt_exception,
-	&sbt_block_11cc,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16386,12 +12634,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_block_11db,
 	&sbt_exception,
-	&sbt_block_11dd,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_11e2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16405,12 +12647,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_11ea,
 	&sbt_exception,
-	&sbt_block_11f1,
+	&sbt_exception,
+	&sbt_block_11ed,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_11f0,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_11f3,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_11f6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16420,14 +12669,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1200,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1202,
 	&sbt_exception,
-	&sbt_block_1204,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1207,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16463,30 +12712,26 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_122a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_122f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1233,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_123a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_123b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1241,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16494,15 +12739,18 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1246,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_124b,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_124e,
 	&sbt_exception,
-	&sbt_block_1250,
 	&sbt_exception,
+	&sbt_block_1251,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16513,16 +12761,15 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_125c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_125f,
+	&sbt_block_125e,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1261,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1265,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16531,7 +12778,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_126e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16619,10 +12865,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_12c4,
 	&sbt_exception,
+	&sbt_block_12c6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_12ca,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16642,15 +12891,17 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_12dd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_12e2,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_12e5,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_12e8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16667,7 +12918,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_12f6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16675,26 +12925,29 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1300,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1303,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1302,
+	&sbt_block_1306,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1305,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_130b,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1310,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1313,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1316,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16705,47 +12958,39 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1321,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1324,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1327,
 	&sbt_exception,
+	&sbt_block_1329,
 	&sbt_exception,
-	&sbt_block_1322,
 	&sbt_exception,
+	&sbt_block_132c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1330,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1333,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1336,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_1338,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_133b,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_133e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1341,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1344,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16755,12 +13000,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_134e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1353,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16775,13 +13018,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1362,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1368,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16804,7 +13045,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_137f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16829,9 +13069,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1398,
 	&sbt_exception,
-	&sbt_block_139a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16844,16 +13082,18 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_139d,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_13a0,
 	&sbt_exception,
+	&sbt_block_13a2,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_13a5,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_13ae,
 	&sbt_exception,
-	&sbt_block_13b0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16861,7 +13101,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_13b8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16869,7 +13108,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_13c0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16885,7 +13123,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_13d0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16905,7 +13142,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_13e4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16921,9 +13157,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_13f4,
 	&sbt_exception,
-	&sbt_block_13f6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16945,32 +13179,47 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_140c,
 	&sbt_exception,
-	&sbt_block_140e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1411,
+	&sbt_block_1401,
+	&sbt_block_1402,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_140a,
+	&sbt_block_140b,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_1414,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_1417,
 	&sbt_exception,
+	&sbt_block_1419,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_141c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_141d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1422,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1426,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16978,10 +13227,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_142e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1433,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -16995,27 +13246,35 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1441,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1446,
+	&sbt_block_1447,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_144c,
 	&sbt_exception,
+	&sbt_block_144e,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1451,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1457,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_145d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17024,17 +13283,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1466,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_146b,
 	&sbt_exception,
+	&sbt_block_146d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1472,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1475,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17061,6 +13325,8 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1490,
+	&sbt_block_1491,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17070,74 +13336,59 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_149b,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_149e,
 	&sbt_exception,
+	&sbt_block_14a0,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14a3,
 	&sbt_exception,
+	&sbt_block_14a5,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14a8,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14ab,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14ae,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_14a1,
-	&sbt_block_14a2,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_14b1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_14b4,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14b7,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_14ba,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_14bd,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14c0,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14c3,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14c6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_14ca,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14cf,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17145,8 +13396,8 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_14d4,
 	&sbt_exception,
+	&sbt_block_14d8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17158,17 +13409,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_14e1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14e7,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14ea,
 	&sbt_exception,
+	&sbt_block_14ec,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_14ef,
 	&sbt_exception,
-	&sbt_block_14eb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17181,8 +13434,8 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_14f8,
 	&sbt_exception,
+	&sbt_block_14fe,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17191,20 +13444,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1502,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_150d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_150f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17213,6 +13465,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_151c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17224,20 +13477,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1528,
 	&sbt_exception,
-	&sbt_block_1524,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_152d,
 	&sbt_exception,
+	&sbt_block_152f,
 	&sbt_exception,
-	&sbt_block_152a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1534,
 	&sbt_exception,
+	&sbt_block_1536,
 	&sbt_exception,
-	&sbt_block_1530,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17245,6 +13500,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_153f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17253,20 +13509,20 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1548,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_154b,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_154e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1546,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_154a,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_154d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17277,6 +13533,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1560,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17291,12 +13548,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_156f,
 	&sbt_exception,
-	&sbt_block_1567,
 	&sbt_exception,
-	&sbt_block_1569,
 	&sbt_exception,
-	&sbt_block_156b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17305,6 +13560,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_157b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17320,21 +13576,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_158b,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1585,
 	&sbt_exception,
-	&sbt_block_1587,
-	&sbt_block_1588,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_1591,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17352,7 +13600,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_15a3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17365,7 +13612,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_15b0,
+	&sbt_block_15af,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17375,7 +13622,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_15ba,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17388,7 +13634,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_15c7,
+	&sbt_block_15c5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17400,6 +13646,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_15d1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17409,19 +13656,18 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_15dc,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_15e2,
+	&sbt_block_15e0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_15e5,
 	&sbt_exception,
-	&sbt_block_15e8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17438,19 +13684,17 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_15f7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_15fe,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1602,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1605,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17459,16 +13703,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_160a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1613,
 	&sbt_exception,
-	&sbt_block_1615,
 	&sbt_exception,
-	&sbt_block_1617,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17482,10 +13724,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1625,
 	&sbt_exception,
-	&sbt_block_1627,
-	&sbt_block_1628,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17496,36 +13735,39 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_162a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1630,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_163a,
 	&sbt_exception,
+	&sbt_block_1634,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_163b,
 	&sbt_exception,
-	&sbt_block_1643,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1642,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1647,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1650,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17537,6 +13779,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1656,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17544,16 +13787,21 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1663,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1666,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1662,
 	&sbt_exception,
-	&sbt_block_166a,
 	&sbt_exception,
-	&sbt_block_166c,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17565,16 +13813,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1678,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_167b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1681,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_1684,
@@ -17582,6 +13830,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1689,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_168d,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_1692,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_1698,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17591,26 +13855,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_1693,
-	&sbt_exception,
-	&sbt_block_1695,
+	&sbt_block_16a2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_16a3,
-	&sbt_exception,
-	&sbt_block_16a5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17619,7 +13867,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_16ab,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_16ae,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_16b1,
@@ -17629,26 +13877,26 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_16b8,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_16bc,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_16c3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_16c2,
+	&sbt_exception,
+	&sbt_block_16c8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_16c6,
-	&sbt_block_16c7,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_16cb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17666,19 +13914,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_16dd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_16e4,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_16e2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17690,12 +13931,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_16ee,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_16fa,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17705,24 +13953,24 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1704,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1707,
-	&sbt_block_1708,
-	&sbt_exception,
+	&sbt_block_1706,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_170e,
+	&sbt_block_170a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_170f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_1715,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17741,17 +13989,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1728,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_172b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_172e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1732,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17759,16 +14006,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1739,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1740,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1745,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17784,7 +14034,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1755,
 	&sbt_exception,
+	&sbt_block_1757,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17794,6 +14046,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1761,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17804,25 +14057,31 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_176c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1773,
 	&sbt_exception,
+	&sbt_block_1775,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1779,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_177e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1784,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17832,6 +14091,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_178e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17840,22 +14100,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_1793,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_1796,
 	&sbt_block_1797,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_179a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_179d,
@@ -17866,9 +14114,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_17a5,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_17a7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17879,10 +14127,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_17b5,
+	&sbt_block_17b2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17890,7 +14135,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_17bd,
+	&sbt_exception,
+	&sbt_block_17bb,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17906,35 +14154,33 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_17cd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_17d3,
 	&sbt_exception,
-	&sbt_block_17d5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_17d9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_17de,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_17e1,
 	&sbt_exception,
-	&sbt_block_17e3,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_17e6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_17e9,
+	&sbt_block_17e7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17947,14 +14193,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_17f4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_17f9,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_17fa,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_17fd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17966,8 +14214,8 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1809,
 	&sbt_exception,
+	&sbt_block_180a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -17981,24 +14229,26 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1818,
 	&sbt_exception,
-	&sbt_block_1819,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1820,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1826,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1827,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_182b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18007,8 +14257,8 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1834,
 	&sbt_exception,
-	&sbt_block_1833,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18017,76 +14267,83 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_183e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1842,
 	&sbt_exception,
-	&sbt_block_1844,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_184c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_184e,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1852,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1854,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_185a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1860,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1863,
 	&sbt_exception,
-	&sbt_block_1865,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_186d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_186f,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1873,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1876,
 	&sbt_exception,
-	&sbt_block_1875,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_187a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_187e,
 	&sbt_exception,
+	&sbt_block_1880,
 	&sbt_exception,
+	&sbt_block_1882,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1886,
+	&sbt_block_1887,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_188a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18097,11 +14354,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_188c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_188f,
 	&sbt_exception,
+	&sbt_block_1898,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18110,7 +14366,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1899,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18118,25 +14373,18 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18a1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18a6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18ad,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_18b2,
-	&sbt_exception,
+	&sbt_block_18b3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18147,31 +14395,31 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18be,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_18c4,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_18ca,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18d1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18d6,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_18cb,
+	&sbt_exception,
+	&sbt_block_18cd,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18179,9 +14427,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_18db,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18de,
 	&sbt_exception,
-	&sbt_block_18e0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18189,80 +14435,82 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18e8,
 	&sbt_exception,
+	&sbt_block_18e7,
 	&sbt_exception,
+	&sbt_block_18e9,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18ed,
 	&sbt_exception,
-	&sbt_block_18ef,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18f4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18fa,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_18fe,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1902,
 	&sbt_exception,
+	&sbt_block_18fd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1907,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_190a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1910,
 	&sbt_exception,
-	&sbt_block_1912,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1917,
 	&sbt_exception,
+	&sbt_block_190e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_191d,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1920,
+	&sbt_block_1915,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1923,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_191b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_191f,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_192c,
 	&sbt_exception,
-	&sbt_block_192e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1931,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_1934,
@@ -18271,10 +14519,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_193a,
 	&sbt_exception,
+	&sbt_block_193b,
 	&sbt_exception,
-	&sbt_block_193d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18285,22 +14532,20 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1947,
 	&sbt_exception,
-	&sbt_block_1949,
 	&sbt_exception,
-	&sbt_block_194b,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_194e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1950,
+	&sbt_block_1951,
 	&sbt_exception,
-	&sbt_block_1954,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1957,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18308,17 +14553,18 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_195f,
 	&sbt_exception,
+	&sbt_block_195d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1964,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1969,
+	&sbt_block_1967,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18333,6 +14579,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_1976,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18341,25 +14588,33 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1980,
+	&sbt_block_197f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1985,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_198b,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_198e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1992,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_1999,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18371,14 +14626,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_exception,
+	&sbt_block_19a5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18393,22 +14641,20 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_19b1,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_19b4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_19bb,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_19bd,
 	&sbt_exception,
-	&sbt_block_19bf,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_19c3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18416,15 +14662,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_19cb,
+	&sbt_block_19c9,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_19cc,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_19cf,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_19d3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18447,14 +14694,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_19ea,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_19ed,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_19f1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18462,7 +14706,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_19f9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18472,7 +14715,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a03,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18480,7 +14722,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a0b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18506,11 +14747,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a25,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a29,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18520,15 +14759,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a33,
 	&sbt_exception,
-	&sbt_block_1a35,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a3b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18536,12 +14772,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a43,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a48,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18549,21 +14783,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a50,
 	&sbt_exception,
-	&sbt_block_1a52,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a58,
-	&sbt_block_1a59,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a5e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18583,19 +14812,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a72,
 	&sbt_exception,
-	&sbt_block_1a74,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a77,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a7c,
 	&sbt_exception,
-	&sbt_block_1a7e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18605,44 +14829,36 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a88,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a8d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a94,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1a99,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1aa0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1aa5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1aa9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1aad,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18653,28 +14869,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ab8,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1abb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ac0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ac4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ac9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1acd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18695,11 +14905,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ae2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ae6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18709,12 +14917,9 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1af0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1af4,
-	&sbt_block_1af5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18722,7 +14927,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1afd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18735,16 +14939,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b0a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b0f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b13,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18752,8 +14953,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b1b,
-	&sbt_block_1b1c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18761,12 +14960,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b24,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b29,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18774,25 +14971,20 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b31,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b36,
 	&sbt_exception,
-	&sbt_block_1b38,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b3d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b43,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18810,24 +15002,19 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b55,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b58,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b5e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b61,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b66,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18836,20 +15023,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b6f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b74,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b79,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b7c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18857,34 +15040,28 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b84,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b8a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b8f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b95,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b9a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1b9f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18900,7 +15077,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1baf,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18911,7 +15087,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1bba,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18926,13 +15101,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1bc9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1bcf,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18948,9 +15121,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1bdf,
 	&sbt_exception,
-	&sbt_block_1be1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18964,16 +15135,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1bef,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1bf6,
 	&sbt_exception,
-	&sbt_block_1bf8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -18986,12 +15154,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c05,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c0a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19001,7 +15167,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c14,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19012,7 +15177,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c1f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19026,14 +15190,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c2d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c34,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19046,12 +15208,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c41,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c46,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19063,20 +15223,17 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c52,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c59,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c5f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19089,17 +15246,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c6c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c6f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c73,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c76,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19107,7 +15260,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c7e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19116,7 +15268,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c87,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19139,7 +15290,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1c9e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19154,19 +15304,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1cad,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1cb0,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1cb3,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1cb6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1cb9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19176,14 +15321,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1cc3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1cca,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19235,7 +15378,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1cfe,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19246,7 +15388,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1d09,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19254,26 +15395,20 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1d11,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1d14,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1d18,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1d1b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1d21,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1d24,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19372,13 +15507,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1d87,
 	&sbt_exception,
-	&sbt_block_1d89,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1d8d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19402,13 +15534,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1da5,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1da8,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1dab,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19432,13 +15561,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1dc3,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1dc6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1dc9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19448,13 +15574,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1dd3,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1dd6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1dd9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19465,33 +15588,23 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1de4,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1de7,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1dea,
 	&sbt_exception,
-	&sbt_block_1dec,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1def,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1df3,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1df6,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1df9,
 	&sbt_exception,
-	&sbt_block_1dfb,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1dfe,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19589,15 +15702,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1e60,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1e63,
 	&sbt_exception,
-	&sbt_block_1e65,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1e68,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19689,8 +15798,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ec4,
-	&sbt_block_1ec5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19698,8 +15805,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ecd,
-	&sbt_block_1ece,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19708,15 +15813,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ed7,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1eda,
 	&sbt_exception,
-	&sbt_block_1edc,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1edf,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19726,7 +15827,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ee9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19734,12 +15834,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ef1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ef6,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19753,35 +15851,27 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f04,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f09,
-	&sbt_block_1f0a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f0f,
 	&sbt_exception,
-	&sbt_block_1f11,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f14,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f1a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f20,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19790,22 +15880,17 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f29,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f2e,
 	&sbt_exception,
-	&sbt_block_1f30,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f35,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f38,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19832,8 +15917,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f53,
-	&sbt_block_1f54,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19843,50 +15926,34 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f5e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f61,
 	&sbt_exception,
-	&sbt_block_1f63,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f66,
 	&sbt_exception,
-	&sbt_block_1f68,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f6b,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f6e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f71,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f74,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f77,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f7a,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f7d,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f80,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f83,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f86,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f89,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19895,7 +15962,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f92,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19904,7 +15970,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1f9b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19919,15 +15984,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1faa,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1fad,
 	&sbt_exception,
-	&sbt_block_1faf,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1fb2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19942,7 +16003,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1fc1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19957,7 +16017,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1fd0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19972,7 +16031,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1fdf,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -19984,21 +16042,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1feb,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ff0,
 	&sbt_exception,
-	&sbt_block_1ff2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_1ff7,
 	&sbt_exception,
-	&sbt_block_1ff9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20007,7 +16060,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2002,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20016,13 +16068,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_200b,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_200e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2011,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20040,7 +16089,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2023,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20055,7 +16103,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2032,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20067,7 +16114,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_203e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20083,13 +16129,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_204e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2054,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20098,7 +16142,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_205d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20119,7 +16162,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2072,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20141,7 +16183,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2088,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20153,7 +16194,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2094,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20168,12 +16208,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_20a3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_20a8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20191,7 +16229,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_20ba,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20210,7 +16247,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_20cd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20242,36 +16278,30 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_20ed,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_20f3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_20f7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_20fe,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2105,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_210a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20286,7 +16316,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2119,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20298,7 +16327,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2125,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20314,7 +16342,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2135,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20332,27 +16359,22 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2147,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_214c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2150,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2155,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_215b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20362,7 +16384,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2165,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20371,13 +16392,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_216e,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2171,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2174,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20388,19 +16406,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_217f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2186,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_218b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20415,7 +16430,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_219a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20426,7 +16440,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21a5,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20438,7 +16451,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21b1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20456,28 +16468,23 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21c3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21c9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21cd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21d2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21d8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20487,7 +16494,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21e2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20496,13 +16502,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21eb,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21ee,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21f1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20513,19 +16516,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_21fc,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2203,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2208,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20541,9 +16541,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2218,
 	&sbt_exception,
-	&sbt_block_221a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20553,7 +16551,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2224,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20564,31 +16561,25 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_222f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2236,
 	&sbt_exception,
-	&sbt_block_2238,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_223c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2241,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2247,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20598,7 +16589,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2251,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20607,13 +16597,10 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_225a,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_225d,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2260,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20623,18 +16610,15 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_226a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2270,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2275,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20643,7 +16627,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_227e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20653,7 +16636,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2288,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20667,13 +16649,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2296,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_229c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20681,13 +16661,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22a4,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22aa,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20700,16 +16678,13 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22b7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22bd,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22c0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20722,7 +16697,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22cd,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20736,7 +16710,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22db,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20744,18 +16717,15 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22e3,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22e9,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22ee,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20764,7 +16734,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_22f7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20774,7 +16743,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2301,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20788,13 +16756,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_230f,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2315,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20802,13 +16768,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_231d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2323,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20821,36 +16785,26 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2330,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2336,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2339,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_233d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2341,
 	&sbt_exception,
-	&sbt_block_2343,
 	&sbt_exception,
-	&sbt_block_2345,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2349,
-	&sbt_block_234a,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_234d,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20864,7 +16818,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_235b,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20891,13 +16844,11 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2376,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_237c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20915,9 +16866,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_238e,
 	&sbt_exception,
-	&sbt_block_2390,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20931,7 +16880,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_239e,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20943,9 +16891,7 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_23aa,
 	&sbt_exception,
-	&sbt_block_23ac,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20965,7 +16911,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_23c0,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -20982,24 +16927,20 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_23d1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_23d8,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_23de,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_23e2,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21020,14 +16961,12 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_23f7,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_23fe,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21039,7 +16978,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_240a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21048,8 +16986,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2413,
-	&sbt_block_2414,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21061,17 +16997,14 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2420,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2427,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_242a,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21086,7 +17019,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2439,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21095,7 +17027,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2442,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21110,7 +17041,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2451,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21121,7 +17051,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_245c,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21133,7 +17062,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2468,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21145,7 +17073,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2474,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21157,7 +17084,6 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2480,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -21169,13 +17095,335 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_248c,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_248f,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_2492,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
@@ -28613,6 +24861,17 @@ extern const uint8_t sbt_rom_data[] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x01,0x02,0x01,0x02,0x02,0x03,0x01,0x02,
+    0x02,0x03,0x02,0x03,0x03,0x04,0x02,0x01,0x00,0x80,0x02,0xec,0x1b,0x02,0x11,0x00,
+    0x80,0x03,0xb1,0x0c,0x03,0x03,0xb6,0x07,0x02,0x03,0xc0,0x08,0x00,0x02,0xc1,0x03,
+    0x03,0xc2,0x03,0x03,0x03,0xc5,0x4a,0x3e,0x02,0xc7,0x40,0x02,0x26,0x01,0x02,0xf2,
+    0x01,0x10,0xe0,0x3f,0x2a,0x27,0x2d,0x26,0x0c,0x53,0xf4,0x3f,0x16,0x1d,0x15,0x0f,
+    0x06,0x00,0x10,0xe1,0x00,0x15,0x18,0x11,0x19,0x13,0x2b,0x63,0x40,0x09,0x22,0x2a,
+    0x30,0x39,0x3f,0x02,0x35,0x00,0x02,0x13,0x00,0x05,0x2a,0x00,0x00,0x00,0x7f,0x02,
+    0x3a,0x05,0x00,0x01,0x10,0x00,0x01,0x28,0x00,0x00,0x01,0x29,0x00,0x00,0x02,0x3d,
+    0x07,0x02,0x3c,0x01,0x02,0x22,0x01,0x02,0x21,0x01,0x02,0x31,0x20,0x01,0xe2,0x01,
+    0xe1,0x02,0x23,0x03,0x02,0x26,0x0e,0x02,0x27,0x70,0x02,0x20,0x3f,0x00,0x54,0x68,
+    0x75,0x6e,0x64,0x65,0x72,0x00,0x63,0x72,0x61,0x63,0x6b,0x65,0x72,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -28784,17 +25043,6 @@ extern const uint8_t sbt_rom_data[] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x01,0x00,0x80,0x02,0xec,0x1b,
-    0x02,0x11,0x00,0x80,0x03,0xb1,0x0c,0x03,0x03,0xb6,0x07,0x02,0x03,0xc0,0x08,0x00,
-    0x02,0xc1,0x03,0x03,0xc2,0x03,0x03,0x03,0xc5,0x4a,0x3e,0x02,0xc7,0x40,0x02,0x26,
-    0x01,0x02,0xf2,0x01,0x10,0xe0,0x3f,0x2a,0x27,0x2d,0x26,0x0c,0x53,0xf4,0x3f,0x16,
-    0x1d,0x15,0x0f,0x06,0x00,0x10,0xe1,0x00,0x15,0x18,0x11,0x19,0x13,0x2b,0x63,0x40,
-    0x09,0x22,0x2a,0x30,0x39,0x3f,0x02,0x35,0x00,0x02,0x13,0x00,0x05,0x2a,0x00,0x00,
-    0x00,0x7f,0x02,0x3a,0x05,0x00,0x01,0x10,0x00,0x01,0x28,0x00,0x00,0x01,0x29,0x00,
-    0x00,0x02,0x3d,0x07,0x02,0x3c,0x01,0x02,0x22,0x01,0x02,0x21,0x01,0x02,0x31,0x20,
-    0x01,0xe2,0x01,0xe1,0x02,0x23,0x03,0x02,0x26,0x0e,0x02,0x27,0x70,0x02,0x20,0x3f,
-    0x00,0x54,0x68,0x75,0x6e,0x64,0x65,0x72,0x00,0x63,0x72,0x61,0x63,0x6b,0x65,0x72,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
