@@ -8,6 +8,7 @@
 
 #include "graphics_bg1.h"
 #include "hardware.h"
+#include "radio.h"
 
 uint8_t x_bg1_offset_x4, x_bg1_shift;
 __bit x_bg1_rshift, x_bg1_lshift;
@@ -183,11 +184,11 @@ void vm_bg1_setup(void)
         uint8_t pan_x, pan_y;
         uint8_t tile_pan_x, tile_pan_y;
 
-        cli();
-        pan_x = vram.bg1_x;
-        pan_y = vram.bg1_y;
-        sti();
-
+        radio_critical_section({
+            pan_x = vram.bg1_x;
+            pan_y = vram.bg1_y;
+        });
+        
         tile_pan_x = pan_x >> 3;
         tile_pan_y = pan_y >> 3;
 

@@ -7,6 +7,7 @@
  */
 
 #include "graphics.h"
+#include "radio.h"
 
 /*
  * BG2: Single 16x16 tiled background, with affine transform.
@@ -173,15 +174,15 @@ void vm_bg2(void)
      * partway through a frame is very annoying :)
      */
 
-    cli();
-    cx = vram.bg2_affine.cx;
-    cy = vram.bg2_affine.cy;
-    xx = vram.bg2_affine.xx;
-    xy = vram.bg2_affine.xy;
-    yx = vram.bg2_affine.yx;
-    yy = vram.bg2_affine.yy;
-    border = vram.bg2_border;
-    sti();
+    radio_critical_section({
+        cx = vram.bg2_affine.cx;
+        cy = vram.bg2_affine.cy;
+        xx = vram.bg2_affine.xx;
+        xy = vram.bg2_affine.xy;
+        yx = vram.bg2_affine.yx;
+        yy = vram.bg2_affine.yy;
+        border = vram.bg2_border;
+    });
     
     // We pre-increment in the loop below. Compensate by decrementing first.
     cx -= xx;

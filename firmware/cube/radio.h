@@ -28,4 +28,16 @@ uint8_t radio_get_cube_id(void);
 extern RF_ACKType __near ack_data;
 extern uint8_t __near ack_len;
 
+/*
+ * IRQ control. We have some critical sections where we'd really like
+ * to prevent a radio packet from modifying VRAM in-between particular
+ * operations.
+ */
+ 
+#define radio_irq_enable()          { IEN_RF = 1; }
+#define radio_irq_disable()         { IEN_RF = 0; }
+#define radio_rx_enable()           { RF_CE = 1;  }
+#define radio_rx_disable()          { RF_CE = 0;  }
+#define radio_critical_section(_x)  { radio_irq_disable() _x radio_irq_enable() }
+
 #endif

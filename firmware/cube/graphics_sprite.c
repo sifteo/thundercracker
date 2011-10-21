@@ -6,20 +6,34 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include "graphics.h"
+#include "graphics_bg1.h"
 
-/*
- * Backgrounds BG0 and BG1, with linear sprites in-between.
- */
 
 void vm_bg0_spr_bg1(void)
 {
+    uint8_t y = vram.num_lines;
+
+    lcd_begin_frame();
+    vm_bg0_setup();
+    vm_bg1_setup();
+
+    do {
+        if (y_bg1_empty)
+            vm_bg0_line();
+        else
+            vm_bg0_bg1_line();
+
+        vm_bg0_next();
+        vm_bg1_next();
+    } while (--y);    
+
+    lcd_end_frame();
     MODE_RETURN();
 }
 
-/*
- * XXXX Junk that needs to be rewritten...
- */
+
+/*************************** TO REWORK ********************************************************/
+ 
 #if 0
 
 static void line_bg_spr0(void)

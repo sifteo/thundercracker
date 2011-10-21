@@ -7,6 +7,7 @@
  */
 
 #include "graphics_bg0.h"
+#include "radio.h"
 
 uint8_t x_bg0_first_w, x_bg0_last_w, x_bg0_first_addr, x_bg0_wrap;
 uint8_t y_bg0_addr_l;
@@ -78,10 +79,10 @@ void vm_bg0_setup(void)
     uint8_t pan_x, pan_y;
     uint8_t tile_pan_x, tile_pan_y;
 
-    cli();
-    pan_x = vram.bg0_x;
-    pan_y = vram.bg0_y;
-    sti();
+    radio_critical_section({
+        pan_x = vram.bg0_x;
+        pan_y = vram.bg0_y;
+    });
 
     tile_pan_x = pan_x >> 3;
     tile_pan_y = pan_y >> 3;

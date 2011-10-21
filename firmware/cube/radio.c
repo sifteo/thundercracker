@@ -888,8 +888,8 @@ void radio_init(void)
 
     RF_CKEN = 1;                        // Radio clock running
     radio_transfer_table(table);        // Send initialization commands
-    IEN_RF = 1;                         // Interrupt enabled
-    RF_CE = 1;                          // Receiver enabled
+    radio_irq_enable();
+    radio_rx_enable();
 }
 
 
