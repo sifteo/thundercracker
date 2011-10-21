@@ -70,13 +70,24 @@ private:
     void operation(const VirtualTime &vtime, CPU::em8051 &cpu)
     {
         // Still busy
-        if (vtime.clocks < busy_timer)
+        if (vtime.clocks < busy_timer) {
+            if (cpu.isTracing)
+                fprintf(cpu.traceFile, "[%2d] MDU: Still busy, %d cycles left\n",
+                        cpu.id, (int)(busy_timer - vtime.clocks));
+                        
             CPU::except(&cpu, CPU::EXCEPTION_MDU);
+        }    
     
+        if (cpu.isTracing)
+            fprintf(cpu.traceFile, "[%2d] MDU: seq %08x reg %02x:%02x:%02x:%02x:%02x:%02x ar %02x\n",
+                        cpu.id, write_sequence, cpu.mSFR[REG_MD5], cpu.mSFR[REG_MD4],
+                        cpu.mSFR[REG_MD3], cpu.mSFR[REG_MD2], cpu.mSFR[REG_MD1],
+                        cpu.mSFR[REG_MD0], cpu.mSFR[REG_ARCON]);
+          
         switch (write_sequence) {
         
         // 32/16 division
-        case 0x54321: {
+        case 0x12345: {
             uint32_t a = ((uint32_t)cpu.mSFR[REG_MD3] << 24) |
                          ((uint32_t)cpu.mSFR[REG_MD2] << 16) |
                          ((uint32_t)cpu.mSFR[REG_MD1] << 8 ) |
@@ -98,7 +109,7 @@ private:
         }
         
         // 16/16 division
-        case 0x541: {
+        case 0x145: {
             uint16_t a = ((uint16_t)cpu.mSFR[REG_MD1] << 8 ) |
                          ((uint16_t)cpu.mSFR[REG_MD0] << 0 );
             uint16_t b = ((uint16_t)cpu.mSFR[REG_MD5] << 8 ) |
@@ -116,7 +127,7 @@ private:
         }
         
         // 16x16 multiplication
-        case 0x514: {
+        case 0x415: {
             uint32_t a = ((uint16_t)cpu.mSFR[REG_MD1] << 8 ) |
                          ((uint16_t)cpu.mSFR[REG_MD0] << 0 );
             uint32_t b = ((uint16_t)cpu.mSFR[REG_MD5] << 8 ) |
@@ -137,7 +148,7 @@ private:
             // Fall through...
         
         // Normalize/shift
-        case 0x6321: {
+        case 0x1236: {
             uint32_t n = ((uint32_t)cpu.mSFR[REG_MD3] << 24) |
                          ((uint32_t)cpu.mSFR[REG_MD2] << 16) |
                          ((uint32_t)cpu.mSFR[REG_MD1] << 8 ) |
