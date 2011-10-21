@@ -97,6 +97,17 @@ static ALWAYS_INLINE void writeInline(Cube::Hardware *self, CPU::em8051 *cpu, in
     case REG_DEBUG:
         self->debugByte();
         break;
+        
+    case REG_MD0:
+    case REG_MD1:
+    case REG_MD2:
+    case REG_MD3:
+    case REG_MD4:
+    case REG_MD5:
+    case REG_ARCON:
+        self->mdu.write(*self->time, *cpu, reg - REG_MD0);
+        break;
+    
     }
 }
 
@@ -121,6 +132,15 @@ static ALWAYS_INLINE int readInline(Cube::Hardware *self, CPU::em8051 *cpu, int 
     case REG_W2CON1:
         cpu->needHardwareTick = true;
         return self->i2c.readCON1(cpu);
+        
+    case REG_MD0:
+    case REG_MD1:
+    case REG_MD2:
+    case REG_MD3:
+    case REG_MD4:
+    case REG_MD5:
+    case REG_ARCON:
+        return self->mdu.read(*self->time, *cpu, reg - REG_MD0);
 
     }
     

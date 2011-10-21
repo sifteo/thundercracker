@@ -176,6 +176,7 @@ enum EM8051_EXCEPTION
     EXCEPTION_I2C,               // I2C error
     EXCEPTION_XDATA_ERROR,       // Access to unmapped portion of xdata 
     EXCEPTION_SBT,               // Binary translator error (executing untranslated code)
+    EXCEPTION_MDU,               // Multiply Divide Unit error
 };
 
 

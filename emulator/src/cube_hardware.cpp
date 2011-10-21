@@ -48,6 +48,7 @@ bool Hardware::init(VirtualTime *masterTimer,
     spi.radio.init(&cpu);
     spi.init(&cpu);
     adc.init();
+    mdu.init();
     i2c.init();
     lcd.init();
     neighbors.init();
