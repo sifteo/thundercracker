@@ -139,11 +139,11 @@ struct _SYSAssetGroup {
 #define _SYS_VA_FLAGS           0x3ff
 
 struct _SYSSpriteInfo {
-    uint16_t tile;                      // 0x00
-    uint8_t mask_x;                     // 0x02
+    uint16_t tile;                      // 0x00    Address in 7:7 format
+    uint8_t mask_x;                     // 0x02    (size - 1) if enabled, 0 if disabled
     uint8_t mask_y;                     // 0x03
-    uint8_t pos_x;                      // 0x04
-    uint8_t pos_y;                      // 0x05
+    int8_t pos_x;                       // 0x04
+    int8_t pos_y;                       // 0x05
 };
 
 // Equivalent to an augmented matrix (3x2), in 8.8 fixed-point
@@ -165,10 +165,10 @@ union _SYSVideoRAM {
         uint16_t bg1_tiles[144];        // 0x288 - 0x3a7
         uint16_t bg1_bitmap[16];        // 0x3a8 - 0x3c7
         struct _SYSSpriteInfo spr[8];   // 0x3c8 - 0x3f7
-        uint8_t bg1_x;                  // 0x3f8
-        uint8_t bg1_y;                  // 0x3f9
-        uint8_t bg0_x;                  // 0x3fa
-        uint8_t bg0_y;                  // 0x3fb
+        int8_t bg1_x;                   // 0x3f8
+        int8_t bg1_y;                   // 0x3f9
+        uint8_t bg0_x;                  // 0x3fa   0 <= x <= 143
+        uint8_t bg0_y;                  // 0x3fb   0 <= y <= 143
         uint8_t first_line;             // 0x3fc   0 <= x <= 127
         uint8_t num_lines;              // 0x3fd   1 <= x <= 128
         uint8_t mode;                   // 0x3fe
