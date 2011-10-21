@@ -297,11 +297,3 @@ TestGraphics = {}
         end        
         gx:drawAndAssertWithBG1Pan("bg1-bits-diag")
     end
-   
-    
--- You can use environment vars to pass in other options.
--- By default, we run all tests with no GUI.
-
-gx:init(os.getenv("USE_FRONTEND"))
-LuaUnit:run(os.getenv("TEST"))
-gx:exit()
