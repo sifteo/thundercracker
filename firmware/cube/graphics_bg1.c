@@ -92,11 +92,11 @@ static void vm_bg1_begin_line(void) __naked
 5$:
         mov     a, _MD0                     ; Examine the LSB
         mov     _MD0, a                     ;    dummy write to reset the MDU state
+        mov     _ARCON, #0x21               ;    Begin right shift by one
         jnb     acc.0, 6$                   ;    continue if we are about to skip a zero
         inc     dptr                        ;    skip a tile if we are skipping a zero
         inc     dptr
-6$:     mov     _ARCON, #0x21               ; Right shift by one
-        djnz    r0, 5$                      ; Next bit...
+6$:     djnz    r0, 5$                      ; Next bit...
         dec     _DPS                        ; Back to original DPTR
         anl     _DPH1, #3                   ; Mask DPTR to keep it inside of xram
         
