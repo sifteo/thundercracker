@@ -146,6 +146,9 @@ void lcd_end_frame()
         0,
     };
 
+    // Release the bus
+    CTRL_PORT = CTRL_IDLE;
+    
     lcd_cmd_table(table);
 }
 

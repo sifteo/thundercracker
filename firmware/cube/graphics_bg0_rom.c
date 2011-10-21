@@ -472,7 +472,6 @@ static void vm_bg0_rom_line(void)
     __endasm ;
 
     LCD_WRITE_END();
-    CTRL_PORT = CTRL_IDLE;
 }
 
 void vm_bg0_rom(void)

@@ -6,27 +6,358 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include "graphics_bg0.h"
+#include "graphics_bg1.h"
+#include "hardware.h"
+
+uint8_t x_bg1_offset_x4, x_bg1_shift;
+__bit x_bg1_rshift, x_bg1_lshift;
+
+uint8_t y_bg1_addr_l, y_bg1_bit_index;
+uint16_t y_bg1_map;
+__bit y_bg1_empty;
+
+
+void vm_bg0_bg1(void)
+{
+    uint8_t y = vram.num_lines;
+
+    lcd_begin_frame();
+    vm_bg0_setup();
+    vm_bg1_setup();
+
+    do {
+        if (y_bg1_empty)
+            vm_bg0_line();
+        else
+            vm_bg0_bg1_line();
+
+        vm_bg0_next();
+        vm_bg1_next();
+    } while (--y);    
+
+    lcd_end_frame();
+    MODE_RETURN();
+}
+
+
+static void vm_bg1_begin_line(void) __naked
+{
+    /*
+     * Using the current values of y_bg1_bit_index and y_bg1_shift,
+     * set up the MDU with the 32-bit bitmap to use for this scanline.
+     *
+     * This needs to happen at least 18 clock cycles prior to the beginning
+     * of the next scanline, so that the MDU shift has time to happen.
+     *
+     * If we're shifting right, we need to do this one step at a time and
+     * update y_bg1_map as we go.
+     */
+    
+    __asm
+        ; Test whether we are past the edge of the bitmap in either direction
+        
+        mov     a, _y_bg1_bit_index
+        anl     a, #0xF0
+        jnz     1$
+                
+        ; Bitmap is not out-of-range. Load it,
+        ; check whether it is zero, and pad to 32 bits.
+        
+        mov     a, _y_bg1_bit_index
+        rl      a                           ; Index -> byte address
+        add     a, #(_SYS_VA_BG1_BITMAP & 0xFF)
+        mov     dpl, a
+        mov     dph, #(_SYS_VA_BG1_BITMAP >> 8)
+        
+        movx    a, @dptr
+        mov     _MD0, a
+        inc     dptr                        ; Low byte is zero.. see if the high byte is too.
+        jnz     2$                          ; Definitely not zero
+        movx    a, @dptr
+        jz      1$                          ; Yep. Exit via setting y_bg1_empty.
+2$:     movx    a, @dptr                    ; Nonzero. Finish storing to MD1.
+        mov     _MD1, a
+        mov     _MD2, #0
+        mov     _MD3, #0
+
+        clr     _y_bg1_empty                ; Remember that this line is non-empty.
+        mov     _DPL1, _y_bg1_map           ; Load BG1 tile address for this line
+        mov     _DPH1, (_y_bg1_map+1)
+        
+        ; Now perform the shift, if we need to.
+        
+        jnb     _x_bg1_rshift, 3$           ; Right shift, one step at a time
+        mov     r0, _x_bg1_shift            ; Loop iterator
+        inc     _DPS                        ; Select DPTR1, for fast increments
+5$:
+        mov     a, _MD0                     ; Examine the LSB
+        jnb     acc.0, 6$                   ;    continue if we are about to skip a zero
+        inc     dptr                        ;    skip a tile if we are skipping a zero
+        inc     dptr
+6$:     mov     _ARCON, #0x21               ; Right shift by one
+        djnz    r0, 5$                      ; Next bit...
+        dec     _DPS                        ; Back to original DPTR
+        anl     _DPH1, #3                   ; Mask DPTR to keep it inside of xram
+        
+3$:     jnb     _x_bg1_lshift, 4$           ; Left shift, asynchronously using ARCON
+        mov     _ARCON, _x_bg1_shift
+        
+4$:     ret                                 ; Normal exit
+        
+        ; No bits set? Instead of writing to the MDU, just set y_bg1_empty.
+
+1$:     setb    _y_bg1_empty
+        ret
+
+    __endasm ;
+}
+
+static uint8_t bitcount16_x2(uint16_t x) __naked
+{
+    /*
+     * Return 2x the number of '1' bits in x.
+     * Returns to both dpl (for C) and acc (for asm)
+     */
+
+    static const __code uint8_t lut[16] = {        
+        /* 0000 */ 0,  /* 0001 */ 1,  /* 0010 */ 1,  /* 0011 */ 2,
+        /* 0100 */ 1,  /* 0101 */ 2,  /* 0110 */ 2,  /* 0111 */ 3,
+        /* 1000 */ 1,  /* 1001 */ 2,  /* 1010 */ 2,  /* 1011 */ 3,
+        /* 1100 */ 2,  /* 1101 */ 3,  /* 1110 */ 3,  /* 1111 */ 4,
+    };
+
+    x = x;
+    
+    __asm
+        push    ar0
+        push    ar1
+        push    ar2
+        
+        mov     r0, dpl
+        mov	    r1, dph
+        mov     dptr, #_bitcount16_x2_lut_1_1
+
+        mov	    a, #0x0F
+        anl     a, r0
+        movc    a, @a+dptr
+        mov     r2, a
+
+        mov	    a, #0xF0
+        anl     a, r0
+        swap    a
+        movc    a, @a+dptr
+        add     a, r2
+        mov     r2, a
+
+        mov	    a, #0x0F
+        anl     a, r1
+        movc    a, @a+dptr
+        add     a, r2
+        mov     r2, a
+
+        mov	    a, #0xF0
+        anl     a, r1
+        swap    a
+        movc    a, @a+dptr
+        add     a, r2
+        
+        rl      a
+        mov     dpl, a
+
+        pop     ar2
+        pop     ar1
+        pop     ar0
+        ret
+    __endasm ;
+}   
+
+void vm_bg1_setup(void)
+{
+    /*
+     * Once-per-frame setup for BG1.
+     * BG0 must have already been set up for this frame.
+     */
+     
+    {
+        uint8_t pan_x, pan_y;
+        uint8_t tile_pan_x, tile_pan_y;
+
+        cli();
+        pan_x = vram.bg1_x;
+        pan_y = vram.bg1_y;
+        sti();
+
+        tile_pan_x = pan_x >> 3;
+        tile_pan_y = pan_y >> 3;
+
+        y_bg1_addr_l = pan_y << 5;
+        y_bg1_bit_index = tile_pan_y;
+        
+        x_bg1_offset_x4 = ((x_bg0_last_w - pan_x) & 7) << 2;
+            
+        x_bg1_lshift = 0;
+        x_bg1_rshift = 0;
+    
+        if (tile_pan_x & 0xF0) {
+            /*
+            * We're starting at a point outside the valid part of the BG1 bitmap.
+            * Set up x_bg1_shift to shift left, so that we'll eventually see the
+            * valid bits once we wrap around back to zero.
+            *
+            * Since we aren't skipping over any '1' bits, we don't need to do any
+            * corresponding adjustment of y_bg1_map at each scanline. So, we can
+            * do this shift quickly using the MDU.
+            */
+
+            x_bg1_shift = 0x20 - tile_pan_x;
+            x_bg1_lshift = 1;
+    
+        } else if (tile_pan_x) {
+            /*
+            * Starting inside the BG1 bitmap. Shift right, according to the number
+            * of tiles we've passed. Since we may be skipping '1' bits here, we need
+            * to do the shift one step at a time.
+            */
+
+            x_bg1_shift = tile_pan_x;
+            x_bg1_rshift = 1;
+        }
+    }
+    
+    /*
+     * Calculate the address of the first tile on the screen. This
+     * kind of sucks, since we have to iterate over all of those bitmap
+     * words we're skipping. We handle the horizontal portion in
+     * vm_bg1_begin_line(), but here we need to count the number of '1'
+     * bits in any word that we're skipping.
+     */
+     
+    y_bg1_map = _SYS_VA_BG1_TILES;
+    
+    if (y_bg1_bit_index < 0x10) {
+        uint8_t i = 0;
+        while (i != y_bg1_bit_index) {
+            y_bg1_map += bitcount16_x2(vram.bg1_bitmap[i]);
+            i++;
+        }
+        y_bg1_map &= 0x3FF;
+    }
+
+    // Tail call to prepare our state for the first scanline
+    vm_bg1_begin_line();
+}
+
+static void vm_bg1_next(void)
+{
+    /*
+     * Advance BG1 state to the next line
+     */
+
+    y_bg1_addr_l += 32;
+    if (!y_bg1_addr_l) {
+        /*
+         * Next bitmap word
+         */
+        y_bg1_bit_index = (y_bg1_bit_index + 1) & 0x1F;
+
+        /*
+         * If we're advancing, save the DPTR1 advancement that we performed
+         * during this line. Otherwise, it gets discarded at the next line.
+         *
+         * If we have any 1 bits remaining in the MDU, those are tiles we haven't
+         * advanced through yet. Adjust y_bg1_map accordingly. At this point we
+         * can be guaranteed that the only ones are in the low 16 bits.
+         */
+        if (!y_bg1_empty) {
+            __asm
+                mov     dpl, _MD0
+                mov     dph, _MD1
+                lcall   _bitcount16_x2
+
+                add     a, _DPL1
+                mov     _y_bg1_map, a
+                clr     a
+                addc    a, _DPH1
+                mov     (_y_bg1_map+1), a
+            __endasm ;
+        }
+    }
+    
+    // Tail call to prepare the next line's bitmap
+    vm_bg1_begin_line();
+}
+
+
+void vm_bg0_bg1_line(void)
+{
+    /*
+     * XXX: Very slow unoptimized implementation. Using this to develop tests...
+     */
+
+    uint8_t x_bg0_addr = x_bg0_first_addr;
+    uint8_t x_bg1_addr = (vram.bg1_x << 2) & 0x1F;
+    uint8_t bg0_wrap = x_bg0_wrap;
+    uint8_t x = 128;
+    
+    DPTR = y_bg0_map;
+    
+    do {
+        if (MD0 & 1) {
+            // BG1 chroma-keyed over BG0
+
+            __asm
+                inc     _DPS
+                ADDR_FROM_DPTR(_DPL1)
+                dec     _DPS
+            __endasm ;
+            ADDR_PORT = y_bg1_addr_l + x_bg1_addr;
+            
+            if (BUS_PORT == _SYS_CHROMA_KEY) {
+                // BG0 pixel
+                __asm ADDR_FROM_DPTR(_DPL) __endasm;
+                ADDR_PORT = y_bg0_addr_l + x_bg0_addr;
+            }
+
+            ADDR_INC4();
+
+        } else {
+            // BG0 pixel
+            __asm ADDR_FROM_DPTR(_DPL) __endasm;
+            ADDR_PORT = y_bg0_addr_l + x_bg0_addr;
+            ADDR_INC4();
+        }
+        
+        if (!(x_bg0_addr = (x_bg0_addr + 4) & 0x1F)) {
+            DPTR_INC2();
+            BG0_WRAP_CHECK();
+        }
+        
+        if (!(x_bg1_addr = (x_bg1_addr + 4) & 0x1F)) {
+            if (MD0 & 1) {
+                __asm
+                    inc     _DPS
+                    inc     dptr
+                    inc     dptr
+                    dec     _DPS
+                    anl     _DPH1, #3
+                __endasm ;
+            }
+            ARCON = 0x21;
+        }
+        
+    } while (--x);
+}
+
+
+
+/*************************** TO REWORK ********************************************************/
+ 
+#if 0
+
 
 /*
- * Background BG0, plus a BG1 "overlay" which is a smaller-than-screen-sized
- * tile grid that is allocated configurably using a separate bit vector.
+ * Register allocation, during our scanline renderer:
  *
- * BG1 has some important differences relative to BG0:
- * 
- *   - It is screen-sized (16x16) rather than 18x18. BG1 is not intended
- *     for 'endless' scrolling, like BG0 is.
- *
- *   - When panned, it does not wrap at the map edge. Pixels from 128
- *     to 255 are transparent in both axes, so the overlay can be smoothly
- *     scrolled into and out of frame.
- *
- *   - Tile addresses in BG1 cannot be computed using a simple multiply,
- *     they must be accumulated by counting '1' bits in the allocation
- *     bitmap.
- */
-
-/*
  *   c: Current BG1 tile bit
  *  r0: Scratch
  *  r1: X wrap counter
@@ -37,6 +368,7 @@
  *  r7: BG1 tile bitmap (current)
  */
 
+ 
 /*
  * The workhorse of this mode is a set of unrolled state machines
  * which render 'r5' full tiles, on lines with BG0 and BG1 visible:
@@ -59,7 +391,7 @@ static uint8_t x_bg1_first_addr;        // Low address offset for first displaye
 static uint8_t x_bg1_shift;             // Amount to shift bitmap by at the start of the line, plus one
 
 static uint8_t y_bg1_addr_l;            // Low part of tile addresses, inc by 32 each line
-static uint8_t y_bg1_word;              // Low part of bitmap address for this line
+static uint8_t y_bg1_bit_addr;          // Index into bitmap array
 static uint16_t y_bg1_map;              // Map address for the first tile on this line
 
 // Shift the next tile bit into C
@@ -72,18 +404,6 @@ static uint16_t y_bg1_map;              // Map address for the first tile on thi
     __asm rrc   a                                               __endasm; \
     __asm mov   r7, a                                           __endasm; \
     __asm jc    lbl                                             __endasm; \
-    __asm
-
-// Load bitmap from globals. If 'a' is zero on exit, no bits are set.
-#define BG1_LOAD_BITS()                                         __endasm; \
-    __asm mov   _DPL, _y_bg1_word                               __endasm; \
-    __asm mov   _DPH, #(_SYS_VA_BG1_BITMAP >> 8)                __endasm; \
-    __asm movx  a, @dptr                                        __endasm; \
-    __asm mov   r7, a                                           __endasm; \
-    __asm inc   dptr                                            __endasm; \
-    __asm movx  a, @dptr                                        __endasm; \
-    __asm mov   r6, a                                           __endasm; \
-    __asm orl   a, r7                                           __endasm; \
     __asm
 
 #define BG0_BG1_LOAD_MAPS()                                     __endasm; \
@@ -101,17 +421,6 @@ static uint16_t y_bg1_map;              // Map address for the first tile on thi
     __asm cjne  a, BUS_PORT, lbl                                __endasm; \
     __asm
 
-// Load a 16-bit tile address from DPTR without incrementing
-#define ADDR_FROM_DPTR(dpl)                                     __endasm; \
-    __asm movx  a, @dptr                                        __endasm; \
-    __asm mov   ADDR_PORT, a                                    __endasm; \
-    __asm inc   dptr                                            __endasm; \
-    __asm mov   CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT1    __endasm; \
-    __asm movx  a, @dptr                                        __endasm; \
-    __asm mov   ADDR_PORT, a                                    __endasm; \
-    __asm dec   dpl                                             __endasm; \
-    __asm mov   CTRL_PORT, #CTRL_FLASH_OUT | CTRL_FLASH_LAT2    __endasm; \
-    __asm
 
 // Next BG0 tile (while in BG0 state)
 #define ASM_BG0_NEXT(lbl)                                       __endasm; \
@@ -188,9 +497,6 @@ static void vm_bg0_bg1_tiles_fast_pre(void) __naked
     __asm
 
         BG0_BG1_LOAD_MAPS()                     ; Set up DPTR and DPTR1
-
-        inc     dptr                            ; Skip first partial BG0 tile
-        inc     dptr
 
         ADDR_FROM_DPTR(_DPL)                    ; Start out in BG0 state, at pixel 0
         mov     ADDR_PORT, r3
@@ -504,19 +810,6 @@ static void vm_bg0_bg1_line(void)
      * Scanline renderer: BG0 and BG1 visible.
      */
 
-
-     /*
-      * Load BG1 bitmap for this line. If no BG1 tiles are visible, we can
-      * tail-call to the BG0-only scanline renderer.
-      */
-
-    __asm
-        BG1_LOAD_BITS()
-        jnz     1$
-        ljmp    _vm_bg0_line            ; No BG1 bits on this line
-1$:     
-    __endasm ;
-
     /*
      * We keep the wrap counter stored in a register, for fast x-wrap checks.
      */
@@ -529,15 +822,31 @@ static void vm_bg0_bg1_line(void)
      * Segment the line into a fast full-tile burst, and up to two slower partial tiles.
      */
 
+
+        inc     dptr                            ; Skip first partial BG0 tile
+        inc     dptr
+
+        ADDR_FROM_DPTR(_DPL)                    ; Start out in BG0 state, at pixel 0
+        
+            // First partial or full tile
+    ADDR_FROM_DPTR_INC();
+    BG0_WRAP_CHECK();
+    ADDR_PORT = y_bg0_addr_l + x_bg0_first_addr;
+    PIXEL_BURST(x_bg0_first_w);
+
     __asm
 
         ; First tile, may be skipping up to 7 pixels from the beginning
 
+        BG0_BG1_LOAD_MAPS()
+        ASM_ADDR_FROM_DPTR_INC()
+        BG0_WRAP_CHECK
         mov     r5, _x_bg0_first_w
 2$:     inc     ADDR_PORT
         inc     ADDR_PORT
         inc     ADDR_PORT
-        inc     ADDR_PORT
+        inc     ADDR_PORT        
+    
         djnz    r5, 2$
 
         ; Always have a run of 15 full tiles
@@ -564,83 +873,7 @@ static void vm_bg0_bg1_line(void)
     CTRL_PORT = CTRL_IDLE;
 }
 
-static void vm_bg1_setup(void)
-{
-    /*
-     * Once-per-frame setup for BG1.
-     * BG0 must have already been set up for this frame.
-     */
-     
-    uint8_t pan_x, pan_y;
-    uint8_t tile_pan_x, tile_pan_y;
 
-    cli();
-    pan_x = vram.bg1_x;
-    pan_y = vram.bg1_y;
-    sti();
 
-    tile_pan_x = pan_x >> 3;
-    tile_pan_y = pan_y >> 3;
+#endif
 
-    y_bg1_addr_l = pan_y << 5;
-    y_bg1_word = (tile_pan_y << 1) + (_SYS_VA_BG1_BITMAP & 0xFF);
-
-    x_bg1_offset = ((x_bg0_last_w - pan_x) & 7) << 2;
-    x_bg1_shift = tile_pan_x + 1;
-    x_bg1_first_addr = (pan_x << 2) & 0x1C;
-
-    /*
-     * XXX: To find the initial value of y_bg1_map, we have to scan
-     * for '1' bits in the bitmap.
-     *
-     * We need to set both y_bg1_map and DPTR1, since we don't know
-     * whether the first line will end up loading DPTR1 or not. If
-     * the first line has no BG1 tiles, we still need to have the
-     * right pointer resident in DPTR1, since vm_bg1_next() will
-     * still try to save it.
-     */
-
-    y_bg1_map = _SYS_VA_BG1_TILES;
-    DPH1 = _SYS_VA_BG1_TILES >> 8;
-    DPL1 = _SYS_VA_BG1_TILES & 0xFF;
-}
-
-static void vm_bg1_next(void)
-{
-    /*
-     * Advance BG1 state to the next line
-     */
-
-    y_bg1_addr_l += 32;
-    if (!y_bg1_addr_l) {
-        y_bg1_word += 2;
-
-        /*
-         * If we're advancing, save the DPTR1 advancement that we performed
-         * during this line. Otherwise, it gets discarded at the next line.
-         */
-        __asm
-            mov   _y_bg1_map, _DPL1
-            mov   (_y_bg1_map+1), _DPH1
-        __endasm ;
-    }
-}
-
-void vm_bg0_bg1(void)
-{
-    uint8_t y = vram.num_lines;
-
-    lcd_begin_frame();
-    vm_bg0_setup();
-    vm_bg1_setup();
-    
-    do {
-        vm_bg0_bg1_line();
-
-        vm_bg0_next();
-        vm_bg1_next();
-    } while (--y);    
-
-    lcd_end_frame();
-    MODE_RETURN();
-}

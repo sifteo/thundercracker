@@ -20,7 +20,7 @@
  */
 
 extern uint8_t x_bg0_first_w;           // Width of first displayed background tile, [1, 8]
-extern uint8_t x_bg0_last_w;            // Width of first displayed background tile, [0, 7]
+extern uint8_t x_bg0_last_w;            // Width of last displayed background tile, [0, 7]
 extern uint8_t x_bg0_first_addr;        // Low address offset for first displayed tile
 extern uint8_t x_bg0_wrap;              // Load value for a dec counter to the next X map wraparound
 

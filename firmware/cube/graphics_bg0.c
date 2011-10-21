@@ -67,9 +67,6 @@ void vm_bg0_line(void)
         ADDR_PORT = y_bg0_addr_l;
         PIXEL_BURST(x_bg0_last_w);
     }
-
-    // Release the bus
-    CTRL_PORT = CTRL_IDLE;
 }
 
 void vm_bg0_setup(void)

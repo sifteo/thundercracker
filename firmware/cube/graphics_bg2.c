@@ -296,7 +296,6 @@ void vm_bg2(void)
 
     } while (--y);    
 
-    CTRL_PORT = CTRL_IDLE;
     lcd_end_frame();
     MODE_RETURN();
 }
