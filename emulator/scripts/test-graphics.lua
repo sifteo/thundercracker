@@ -230,6 +230,75 @@ TestGraphics = {}
         end
     end
 
+    function TestGraphics:test_bg1_bits()
+        -- Test the bitmap layout in BG0. This draws labelled BG1 tiles on top of
+        -- a blank bg0 background. The bitmap is set up in a unique test pattern.
+        -- Then, we pan BG1 throughout its range while BG0 holds still.
+        
+        gx:setMode(VM_BG0_BG1)
+        gx:setWindow(0, 128)
+        gx:panBG0(0, 0)
+        gx:panBG1(0, 0)
+        
+        -- BG0 is not chroma keyed, this just gives us a funny green tile.
+        local clear = gx:drawTransparentTile()
+        for x = 0, 17 do
+            for y = 0, 17 do
+                gx:putTileBG0(x, y, clear)
+            end
+        end
+
+        -- Fill BG1's tiles with unique images
+        for i = 0,143 do
+            gx:putTileBG1(i, gx:drawUniqueTile(i))
+        end
+        
+        -- Now plot some interesting un-scrolled patterns...
+        
+        gx:pokeWords(VA_BG1_BITMAP, {
+            0x0FF8, 0x0FF8, 0x0FF8, 0x0FF8, 
+            0x0FF8, 0x0FF8, 0x0FF8, 0x0FF8, 
+            0x0FF8, 0x0FF8, 0x0FF8, 0x0FF8, 
+            0x0FF8, 0x0FF8, 0x0FF8, 0x0FF8, 
+        })
+        gx:drawAndAssert("bg1-bits-9x16")
+        
+        -- Do a windowing test while we're here.. since this uses all
+        -- 144 tiles, we want to make sure there isn't an xram overflow
+        -- even if we have a big window.
+        gx:drawAndAssertWithWindow(VM_BG0_BG1, "bg1-bits-9x16", {1, 4, 16, 17, 92, 255, 0})    
+        gx:setWindow(0, 128)
+        
+        -- Back to our regularly scheduled bit patterns...
+        
+        gx:pokeWords(VA_BG1_BITMAP, {
+            0x0000, 0x7FFE, 0x4002, 0x4002,
+            0x4002, 0x4002, 0x4002, 0x4002,
+            0x4002, 0x4002, 0x4002, 0x4002,
+            0x4002, 0x4002, 0x7FFE, 0x0000,
+        })
+        gx:drawAndAssert("bg1-bits-border1")
+
+        gx:pokeWords(VA_BG1_BITMAP, {
+            0xFFFF, 0x8001, 0x8001, 0x8001,
+            0x8001, 0x8001, 0x8001, 0x8001,
+            0x8001, 0x8001, 0x8001, 0x8001,
+            0x8001, 0x8001, 0x8001, 0xFFFF,
+        })
+        gx:drawAndAssert("bg1-bits-border0")
+
+        -- Now do a panning test. We'll do this with a diagonal pattern,
+        -- since it's pretty interesting.
+
+        for y = 2, 13 do
+            for x = 2, y do
+                gx:putBitBG1(x, y, 1)
+            end
+        end        
+        gx:drawAndAssertWithBG1Pan("bg1-bits-diag")
+    end
+   
+    
 -- You can use environment vars to pass in other options.
 -- By default, we run all tests with no GUI.
 

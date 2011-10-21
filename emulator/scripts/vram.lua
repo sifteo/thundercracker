@@ -362,6 +362,11 @@ gx = {}
         gx.cube:xwPoke(VA_BG1_TILES/2 + addr, gx:tileIndex(index))
     end
 
+    function gx:putBitBG1(x, y, value)
+        gx:xbReplace(VA_BG1_BITMAP + y*2 + bit.rshift(x, 3),
+                     bit.band(x, 7), 1, value)
+    end
+    
     function gx:putTileBG0ROM(x, y, tile, palette, mode)
         gx:putTileBG0(x, y, bit.bor( tile, bit.bor( bit.lshift(palette, 10), bit.lshift(mode, 9) )))
     end
@@ -418,43 +423,49 @@ gx = {}
         
        for y = 0, 17, 1 do
             for x = 0, 17, 1 do
-                -- Pick arbitrary nonsequential indices
-                local index = bit.bxor((x + y*18) * 31, 0x3FFF)
-                gx:putTileBG0(x, y, index)
+                gx:putTileBG0(x, y, gx:drawUniqueTile(x + y*18))
 
-                -- Draw a tile into flash
-                for ty = 0,7,1 do
-                    for tx = 0,7,1 do
-                        
-                        -- Gradient background
-                        local r = tx / 16
-                        local g = ty / 16
-                        local b = index / 0x8000
-                        
-                        -- Brighter border
-                        if tx == 0 or tx == 7 or ty == 0 or ty == 7 then
-                            r = r + 0.5
-                            g = g + 0.5
-                            b = b + 0.5
-                        end
-                        
-                        -- Encode the tile's index in binary, as a 4x4 square of bits
-                        if tx >= 2 and tx <= 5 and ty >= 2 and ty <= 5 then
-                            local bitIndex = (tx - 2) + (ty - 2)*4
-                            if bit.band(bit.rshift(index, bitIndex), 1) > 0 then
-                                b = 1
-                            end
-                        end
-                        
-                        gx:putPixelFlash(index, tx, ty, r,g,b)
-                    end
-                end
             end
         end        
     end
     
+    function gx:drawUniqueTile(i)
+        -- Draw a uniquely marked tile to flash, using nonsequential flash addresses.
+        -- "i" should be between 0 and 18*18
+        
+        local index = bit.bxor(i * 31, 0x3FFF)
+        for ty = 0,7,1 do
+            for tx = 0,7,1 do
+                
+                -- Gradient background
+                local r = tx / 16
+                local g = ty / 16
+                local b = index / 0x8000
+                
+                -- Brighter border
+                if tx == 0 or tx == 7 or ty == 0 or ty == 7 then
+                    r = r + 0.5
+                    g = g + 0.5
+                    b = b + 0.5
+                end
+                
+                -- Encode the tile's index in binary, as a 4x4 square of bits
+                if tx >= 2 and tx <= 5 and ty >= 2 and ty <= 5 then
+                    local bitIndex = (tx - 2) + (ty - 2)*4
+                    if bit.band(bit.rshift(index, bitIndex), 1) > 0 then
+                        b = 1
+                    end
+                end
+                
+                gx:putPixelFlash(index, tx, ty, r,g,b)
+            end
+        end     
+        
+        return index
+    end
+    
     function gx:drawTransparentTile()
-        -- Draw a fully transparent tile to flash, using an index not used by the BG0 pattern above.
+        -- Draw a fully transparent tile to flash, using an index not used by drawUniqueTile.
         -- This uses many different pixel values that all happen to have the CHROMA_KEY byte as their MSB.
         
         local index = 1
@@ -506,3 +517,21 @@ gx = {}
         tryPan(143, 143)
     end
 
+    function gx:drawAndAssertWithBG1Pan(name)
+        -- Run a test at a variety of BG1 pixel/tile panning offsets.
+        -- This tests positive and negative offsets in both dimensions.
+        -- Remember, BG1 does not wrap. For all practical purposes, it
+        -- treats the panning offset as a signed 8-bit number.
+        
+        local function tryPan(x, y)
+            x = bit.band(x, 0xFF)
+            y = bit.band(y, 0xFF)
+            gx:panBG1(x, y)
+            gx:drawAndAssert(string.format("%s-pan1-%d-%d", name, x, y))
+        end   
+         
+        -- Pixel panning around the origin, in both directions
+        for i = -20, 20, 1 do
+            tryPan(i, i*3)
+        end
+    end
