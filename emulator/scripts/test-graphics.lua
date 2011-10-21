@@ -297,3 +297,33 @@ TestGraphics = {}
         end        
         gx:drawAndAssertWithBG1Pan("bg1-bits-diag")
     end
+    
+    function TestGraphics:test_bg1_chroma()
+        -- Test every combination of chroma keying patterns in BG1, while
+        -- panning BG0 underneath.
+
+        gx:setMode(VM_BG0_BG1)
+        gx:drawBG0Pattern()
+        
+        -- These 64 tiles contain every unique 8-bit pattern of
+        -- transparent vs. opaque bits.
+        for i = 0,63 do
+            gx:putTileBG1(i, gx:drawChromaKeyPatternTile(i))
+        end
+                
+        -- Splat these tiles all over. Sometimes consecutive,
+        -- sometimes not.
+        
+        gx:pokeWords(VA_BG1_BITMAP, {
+            0xaaaa, 0x5555, 0x0000, 0x0000, 
+            0x0000, 0x0ff0, 0x0ff0, 0xffff,
+            0x0000, 0x0000, 0x0000, 0x0000,
+            0x0000, 0x0000, 0xaaaa, 0x5555,
+        })
+        
+        gx:panBG1(0, 0)
+        gx:drawAndAssertWithBG0Pan("bg1-chroma")
+        
+        gx:panBG0(0, 0)
+        gx:drawAndAssertWithBG1Pan("bg1-chroma")
+    end

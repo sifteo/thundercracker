@@ -424,7 +424,6 @@ gx = {}
        for y = 0, 17, 1 do
             for x = 0, 17, 1 do
                 gx:putTileBG0(x, y, gx:drawUniqueTile(x + y*18))
-
             end
         end        
     end
@@ -476,6 +475,35 @@ gx = {}
         return index
     end
     
+    function gx:drawChromaKeyPatternTile(i)
+        -- Draw a tile to flash which has a distinctive pattern of opaque and transparent bits.
+        -- For values of i between 0 and 31, we produce every possible combination of opaque and
+        -- transparent pixels.
+        
+        local index = i * 31 + 2
+        
+        for ty = 0,7,1 do
+            for tx = 0,7,1 do
+            
+                -- Gradient background
+                local r = 1
+                local g = 0
+                local b = tx / 16
+                
+                -- Transparent pixels
+                if bit.band( bit.lshift(1,tx), i*8 + ty ) > 0 then
+                    r = 0.2902
+                    g = 0.8863
+                    b = 0.9020
+                end
+                
+                gx:putPixelFlash(index, tx, ty, r,g,b)
+            end
+        end
+        
+        return index
+    end
+        
     function gx:drawAndAssertWithWindow(mode, name, sizes)
         -- Run a test at a variety of different window sizes
         
