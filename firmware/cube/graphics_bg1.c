@@ -91,6 +91,7 @@ static void vm_bg1_begin_line(void) __naked
         inc     _DPS                        ; Select DPTR1, for fast increments
 5$:
         mov     a, _MD0                     ; Examine the LSB
+        mov     _MD0, a                     ;    dummy write to reset the MDU state
         jnb     acc.0, 6$                   ;    continue if we are about to skip a zero
         inc     dptr                        ;    skip a tile if we are skipping a zero
         inc     dptr
@@ -342,6 +343,7 @@ void vm_bg0_bg1_line(void)
                     anl     _DPH1, #3
                 __endasm ;
             }
+            MD0 = MD0;  // Dummy write to reset MDU
             ARCON = 0x21;
         }
         

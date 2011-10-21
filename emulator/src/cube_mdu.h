@@ -38,16 +38,12 @@ public:
             // MD0 is always the first write in a sequence
             write_sequence = 0;
          
-        } else if (reg == 6) {
-            // Assuming that an ARCON write can happen at any time...
-            normShift(vtime, cpu);
-
         } else {
             // Keep track of what order MD1 through MD5 were written in
             write_sequence = (write_sequence << 4) | reg;
         
-            if (reg == 5)
-                mulDiv(vtime, cpu);
+            if (reg >= 5)
+                operation(vtime, cpu);
         }
     }
     
@@ -70,51 +66,8 @@ public:
 private:
     uint64_t busy_timer;
     uint32_t write_sequence;
-    
-    void normShift(const VirtualTime &vtime, CPU::em8051 &cpu)
-    {
-        // Still busy
-        if (vtime.clocks < busy_timer)
-            CPU::except(&cpu, CPU::EXCEPTION_MDU);
-
-        uint32_t n = ((uint32_t)cpu.mSFR[REG_MD3] << 24) |
-                     ((uint32_t)cpu.mSFR[REG_MD2] << 16) |
-                     ((uint32_t)cpu.mSFR[REG_MD1] << 8 ) |
-                     ((uint32_t)cpu.mSFR[REG_MD0] << 0 );
-        uint8_t con = cpu.mSFR[REG_ARCON];
-
-        if ((con & 0x1F) == 0) {
-            // Normalize
             
-            if (n)
-                while ((n & 0x80000000) == 0) {
-                    n <<= 1;
-                    con++;
-                }
-                
-            busy_timer = vtime.clocks + 4 + (con & 0x1F)/2;
-
-        } else {            
-            
-            if (con & 0x20) {
-                // Right shift
-                n >>= con & 0x1F;
-            } else {
-                // Left shift
-                n <<= con & 0x1F;
-            }
-            
-            busy_timer = vtime.clocks + 3 + (con & 0x1F)/2;
-        }
-        
-        cpu.mSFR[REG_MD0] = n >> 0;
-        cpu.mSFR[REG_MD1] = n >> 8;
-        cpu.mSFR[REG_MD2] = n >> 16;
-        cpu.mSFR[REG_MD3] = n >> 24;        
-        cpu.mSFR[REG_ARCON] = con;
-    }
-            
-    void mulDiv(const VirtualTime &vtime, CPU::em8051 &cpu)
+    void operation(const VirtualTime &vtime, CPU::em8051 &cpu)
     {
         // Still busy
         if (vtime.clocks < busy_timer)
@@ -176,6 +129,50 @@ private:
             cpu.mSFR[REG_MD1] = c >> 8;
             cpu.mSFR[REG_MD2] = c >> 16;
             cpu.mSFR[REG_MD3] = c >> 24;                  
+            break;
+        }
+    
+        // Undocumented: Normalize/shift without rewriting all operands
+        case 0x6:
+            // Fall through...
+        
+        // Normalize/shift
+        case 0x6321: {
+            uint32_t n = ((uint32_t)cpu.mSFR[REG_MD3] << 24) |
+                         ((uint32_t)cpu.mSFR[REG_MD2] << 16) |
+                         ((uint32_t)cpu.mSFR[REG_MD1] << 8 ) |
+                         ((uint32_t)cpu.mSFR[REG_MD0] << 0 );
+            uint8_t con = cpu.mSFR[REG_ARCON];
+
+            if ((con & 0x1F) == 0) {
+                // Normalize
+                
+                if (n)
+                    while ((n & 0x80000000) == 0) {
+                        n <<= 1;
+                        con++;
+                    }
+                    
+                busy_timer = vtime.clocks + 4 + (con & 0x1F)/2;
+
+            } else {            
+                
+                if (con & 0x20) {
+                    // Right shift
+                    n >>= con & 0x1F;
+                } else {
+                    // Left shift
+                    n <<= con & 0x1F;
+                }
+                
+                busy_timer = vtime.clocks + 3 + (con & 0x1F)/2;
+            }
+            
+            cpu.mSFR[REG_MD0] = n >> 0;
+            cpu.mSFR[REG_MD1] = n >> 8;
+            cpu.mSFR[REG_MD2] = n >> 16;
+            cpu.mSFR[REG_MD3] = n >> 24;        
+            cpu.mSFR[REG_ARCON] = con;
             break;
         }
     
