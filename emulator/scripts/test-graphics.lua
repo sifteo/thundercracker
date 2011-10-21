@@ -185,8 +185,51 @@ TestGraphics = {}
             gx:drawAndAssert(string.format("bg2-rotate-%d", i))
         end
     end
-
     
+    function TestGraphics:test_bg1_no_bits()
+        -- Using BG0_BG1 mode, but only testing BG0 functionality and windowing.
+        -- The whole BG1 bitmap is zero.
+        -- This uses the same reference images as the bare BG0 test.
+
+        gx:setMode(VM_BG0_BG1)
+        gx:drawBG0Pattern()
+        gx:xbFill(VA_BG1_BITMAP, 32, 0)
+        
+        -- Try it with several different bg1 panning offsets.
+        -- Shouldn't make a difference. Definitely shouldn't crash.
+        for i = 0,7 do
+
+            -- This pattern tests the full 8-bit range, plus it tests all 8 pixel alignments
+            local pan = i * 255 / 7
+            gx:panBG1(pan, pan)
+
+            gx:setWindow(0, 128)
+            gx:drawAndAssertWithBG0Pan("bg0")
+            gx:drawAndAssertWithWindow(VM_BG0_BG1, "bg0", {1, 4, 16, 17, 92, 255, 0})       
+        end
+    end
+    
+    function TestGraphics:test_bg1_clear()
+        -- Another BG0_BG1 test which attempts to look exactly like BG1. This time,
+        -- we do it by drawing stripes of fully transparent tiles. This tests the slow
+        -- transparency path, and our mode changes back and forth to the fast path.
+        
+        gx:setMode(VM_BG0_BG1)
+        gx:drawBG0Pattern()
+        gx:xbFill(VA_BG1_BITMAP, 32, 0xA5)
+
+        local clear = gx:drawTransparentTile()
+        for i = 0,143 do
+            gx:putTileBG1(i, clear)
+        end 
+        
+        for i = 0,7 do
+            local pan = i * 255 / 7
+            gx:panBG1(pan, pan)
+            gx:drawAndAssertWithBG0Pan("bg0")
+        end
+    end
+
 -- You can use environment vars to pass in other options.
 -- By default, we run all tests with no GUI.
 

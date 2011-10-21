@@ -82,13 +82,18 @@ gx = {}
         gx.sys = System()
         gx.cube = Cube(0)               
         gx.sys:setOptions{numCubes=1, noThrottle=true}
+        gx.sys:init()
         
         if useFrontend then
             gx.fe = Frontend()
             gx.fe:init()
         end
         
-        gx.sys:init()
+        -- If we had a trace file (-t command line option), enable tracing
+        -- before we start the simulated CPU.
+        gx.sys:setTraceMode(true)
+
+        -- Starts the simulation thread
         gx.sys:start()
         
         -- Must be enough time for the cube to boot, worst-case
@@ -167,7 +172,8 @@ gx = {}
             -- Wait for the expected number of pixels, with a timeout
             pixelsWritten = bit.band(gx.cube:lcdPixelCount() - pixelCount, 0xFFFFFFFF)
             if pixelsWritten > gx.expectedPixelCount then
-                error("Cube wrote too many pixels")
+                error(string.format("Cube wrote too many pixels (wrote %d, expected %d due to %d-line window)",
+                                    pixelsWritten, gx.expectedPixelCount, gx.cube:xbPeek(VA_NUM_LINES)))
             end
             if gx.sys:vclock() - timestamp > 10.0 then
                 error("Timed out waiting for a frame to render")
@@ -352,6 +358,10 @@ gx = {}
         gx.cube:xwPoke(x + y*18, gx:tileIndex(index))
     end
 
+    function gx:putTileBG1(addr, index)
+        gx.cube:xwPoke(VA_BG1_TILES/2 + addr, gx:tileIndex(index))
+    end
+
     function gx:putTileBG0ROM(x, y, tile, palette, mode)
         gx:putTileBG0(x, y, bit.bor( tile, bit.bor( bit.lshift(palette, 10), bit.lshift(mode, 9) )))
     end
@@ -441,8 +451,18 @@ gx = {}
                 end
             end
         end        
+    end
+    
+    function gx:drawTransparentTile()
+        -- Draw a fully transparent tile to flash, using an index not used by the BG0 pattern above.
+        -- This uses many different pixel values that all happen to have the CHROMA_KEY byte as their MSB.
         
-        
+        local index = 1
+
+        for i = 0, 63 do
+            gx.cube:fwPoke(index*64 + i, CHROMA_KEY + bit.lshift(i, 9))
+        end
+        return index
     end
     
     function gx:drawAndAssertWithWindow(mode, name, sizes)
@@ -468,17 +488,17 @@ gx = {}
         end   
          
         -- Pixel panning, near the origin
-        for i = 0, 20, 1 do
+        for i = 0, 18, 1 do
             tryPan(i, bit.rshift(i, 1))
         end
         
         -- Horizontal wrap
-        for i = 0, 17, 1 do
+        for i = 0, 17, 4 do
             tryPan(i*8, 0)
         end
         
         -- Vertical wrap
-        for i = 0, 17, 1 do
+        for i = 0, 17, 4 do
             tryPan(0, i*8)
         end
         
