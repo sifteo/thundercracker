@@ -5,7 +5,11 @@
     Copyright <c> 2011 Sifteo, Inc. All rights reserved.
 ]]--
 
+-- Libraries
 require('scripts/luaunit')
+require('scripts/vram')
+
+-- Test code
 require('scripts/test-graphics')
     
 -- You can use environment vars to pass in other options.
