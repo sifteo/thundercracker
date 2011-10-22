@@ -31,6 +31,15 @@ attic
 hw
   Hardware schematics and layout
 
+  
+Operating System
+----------------
+  
+The code here should all run on Windows, Mac OS X, or Linux. Right now
+the Linux port is infrequently maintained, but in theory it should
+still work. In all cases, the build is Makefile based, and we compile
+with some flavor of GCC.
+
 
 Build
 -----
@@ -58,6 +67,7 @@ CodeSourcery C++ distribution is preferred. On Mac OS or Linux, the following
 script will automatically build a compatible toolchain for your machie:
 
    https://github.com/jsnyder/arm-eabi-toolchain
+
 
 Running Tests
 -------------
