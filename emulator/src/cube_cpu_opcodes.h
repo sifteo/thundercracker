@@ -50,9 +50,11 @@ struct Opcodes {
 #define PSW aCPU->mSFR[REG_PSW]
 #define ACC aCPU->mSFR[REG_ACC]
 #define PC aCPU->mPC
-#define INDIR_RX_ADDRESS (aCPU->mData[(opcode & 1) + 8 * ((PSW & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0)])
-#define RX_ADDRESS ((opcode & 7) + 8 * ((PSW & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0))
-#define CARRY ((PSW & PSWMASK_C) >> PSW_C)
+#define INDIR_RX_ADDRESS    (aCPU->mData[(opcode & 1) + 8 * ((PSW & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0)])
+#define RX_ADDRESS          ((opcode & 7) + 8 * ((PSW & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0))
+#define CARRY               ((PSW & PSWMASK_C) >> PSW_C)
+#define INDIR_RX_ADDRESS_X  (INDIR_RX_ADDRESS | (aCPU->mSFR[REG_MPAGE] << 8))
+
 
 static ALWAYS_INLINE int read_mem(em8051 *aCPU, int aAddress)
 {
@@ -1367,7 +1369,7 @@ static ALWAYS_INLINE int movx_a_indir_dptr(em8051 *aCPU, uint8_t opcode, uint8_t
 
 static ALWAYS_INLINE int movx_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
-    int dptr = INDIR_RX_ADDRESS;
+    int dptr = INDIR_RX_ADDRESS_X;
 
     if (UNLIKELY(dptr >= XDATA_SIZE))
         except(aCPU, EXCEPTION_XDATA_ERROR);
@@ -1422,7 +1424,7 @@ static ALWAYS_INLINE int movx_indir_dptr_a(em8051 *aCPU, uint8_t opcode, uint8_t
 
 static ALWAYS_INLINE int movx_indir_rx_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
-    int dptr = INDIR_RX_ADDRESS;
+    int dptr = INDIR_RX_ADDRESS_X;
 
     if (UNLIKELY(dptr >= XDATA_SIZE))
         except(aCPU, EXCEPTION_XDATA_ERROR);
