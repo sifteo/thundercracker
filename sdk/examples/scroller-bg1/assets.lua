@@ -1,5 +1,4 @@
-# Lossless compression, so we don't confuse compression artifacts with rendering bugs.
-GameAssets = group{quality=10}
+GameAssets = group{}
 
 Background = image{"yoshis-island-2-small.png"}
 Sprite = image{"slug-gunner-walk.png", height=64}
