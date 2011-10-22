@@ -21,12 +21,16 @@
  *
  *  -DLCD_MODEL_GIANTPLUS_ILI9163C
  *  -DLCD_MODEL_TRULY_ST7735
+ *  -DLCD_MODEL_TIANMA_ST7715
  *
  * ... or accept the current default.
  */
 
-#if !(defined(LCD_MODEL_GIANTPLUS_ILI9163C) || defined(LCD_MODEL_TRULY_ST7735))
-#   define LCD_MODEL_GIANTPLUS_ILI9163C
+#if !( defined(LCD_MODEL_GIANTPLUS_ILI9163C) || \
+       defined(LCD_MODEL_TRULY_ST7735)       || \
+       defined(LCD_MODEL_TIANMA_ST7715)      )
+
+#define LCD_MODEL_GIANTPLUS_ILI9163C
 #endif
 
 /********************************************************************/
@@ -111,9 +115,16 @@
 #define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB | LCD_MADCTR_MY | LCD_MADCTR_MX)
 #endif
 
+#ifdef LCD_MODEL_TIANMA_ST7715
+#define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB | LCD_MADCTR_MY | LCD_MADCTR_MX)
+#endif
+
 /*
  * Some LCDs have different addressing schemes, based on how the
  * controller and the panel are wired together.
+ *
+ * XXX: These non-default addressing schemes need some work when the LCD
+ *      is flipped/rotated. We'll need to handle this differently.
  */
 
 #ifdef LCD_MODEL_GIANTPLUS_ILI9163C
@@ -124,6 +135,11 @@
 #ifdef LCD_MODEL_TRULY_ST7735
 #define LCD_ROW_ADDR(x)         ((x) + 32)
 #define LCD_COL_ADDR(x)         (x)
+#endif
+
+#ifdef LCD_MODEL_TIANMA_ST7715
+#define LCD_ROW_ADDR(x)         ((x) + 3)
+#define LCD_COL_ADDR(x)         ((x) + 2)
 #endif
 
 /*
@@ -216,6 +232,46 @@ static const __code uint8_t lcd_setup_table[] =
     0x30, 0x30, 0x39, 0x3f, 0x00, 0x07, 0x03, 0x10,
 
 #endif // LCD_MODEL_TRULY_ST7735
+
+    /**************************************************************
+     * Tianma display, with ST7715R Controller.
+     *
+     * Based on the sample init sequence provided by Tianma.
+     */
+
+#ifdef LCD_MODEL_TIANMA_ST7715
+
+    1, LCD_CMD_SWRESET,
+    1, LCD_CMD_SLPOUT,
+    
+    LONG_DELAY,
+
+    4, LCD_CMD_FRCONTROL, 0x02, 0x23, 0x22,
+    4, LCD_CMD_FRCONTROL_IDLE, 0x02, 0x23, 0x22,
+    7, LCD_CMD_FRCONTROL_PAR, 0x02, 0x23, 0x22, 0x02, 0x23, 0x22,
+    
+    2, LCD_CMD_INVCTRL, 0x07,
+
+    4, LCD_CMD_POWER_CTRL1, 0xa3, 0x02, 0x84,
+    2, LCD_CMD_POWER_CTRL2, 0xc5,
+    3, LCD_CMD_POWER_CTRL3, 0x0a, 0x00,
+    3, LCD_CMD_POWER_CTRL4, 0x8a, 0x2a,
+    3, LCD_CMD_POWER_CTRL5, 0x8a, 0xee,
+    2, LCD_CMD_VCOM_CTRL1, 0x07,
+
+    // Undocumented...
+    2, 0xf0, 0x01,
+    2, 0xf6, 0x00,
+
+    17, LCD_CMD_POS_GAMMA,
+    0x0f, 0x2b, 0x00, 0x08, 0x1b, 0x21, 0x20, 0x22,
+    0x1f, 0x1b, 0x23, 0x37, 0x00, 0x07, 0x02, 0x10,
+
+    17, LCD_CMD_NEG_GAMMA,
+    0x0f, 0x1b, 0x0f, 0x17, 0x33, 0x2c, 0x29, 0x2e,
+    0x30, 0x30, 0x39, 0x3f, 0x00, 0x07, 0x03, 0x10,
+
+#endif // LCD_MODEL_TIANMA_ST7715
 
     /**************************************************************
      * Portable initialization
