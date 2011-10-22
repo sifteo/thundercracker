@@ -40,7 +40,6 @@ void vm_bg0_spr_bg1(void)
     } while (y_spr_line != y_spr_line_limit);
     
     lcd_end_frame();
-    MODE_RETURN();
 }
 
 

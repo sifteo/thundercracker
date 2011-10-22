@@ -44,7 +44,7 @@ void graphics_render(void) __naked
 
         ; These redundant labels are required by the binary translator!
 
-10$:    ljmp    _vm_powerdown   ; 0x00
+10$:    ljmp    _lcd_sleep      ; 0x00
         nop
 11$:    ljmp    _vm_bg0_rom     ; 0x04
         nop
@@ -64,17 +64,17 @@ void graphics_render(void) __naked
         nop
 19$:    ljmp    _vm_bg2         ; 0x24
         nop
-20$:    ljmp    _vm_powerdown   ; 0x28 (unused)
+20$:    ljmp    _lcd_sleep      ; 0x28 (unused)
         nop
-21$:    ljmp    _vm_powerdown   ; 0x2c (unused)
+21$:    ljmp    _lcd_sleep      ; 0x2c (unused)
         nop
-22$:    ljmp    _vm_powerdown   ; 0x30 (unused)
+22$:    ljmp    _lcd_sleep      ; 0x30 (unused)
         nop
-23$:    ljmp    _vm_powerdown   ; 0x34 (unused)
+23$:    ljmp    _lcd_sleep      ; 0x34 (unused)
         nop
-24$:    ljmp    _vm_powerdown   ; 0x38 (unused)
+24$:    ljmp    _lcd_sleep      ; 0x38 (unused)
         nop
-25$:    ljmp    _vm_powerdown   ; 0x3c (unused)
+25$:    ljmp    _lcd_sleep      ; 0x3c (unused)
 
 3$:     ret
 

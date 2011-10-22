@@ -40,5 +40,4 @@ void vm_solid(void)
 
     LCD_WRITE_END();
     lcd_end_frame();
-    MODE_RETURN();
 }

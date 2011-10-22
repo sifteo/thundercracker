@@ -40,14 +40,6 @@ void vm_bg2();
 // Temporary bank used by some graphics modes
 #define GFX_BANK  2
 
-// Code to run just prior to returning from a video mode
-#pragma sdcc_hash +
-#define MODE_RETURN() {                                         \
-                __asm   inc     (_ack_data + RF_ACK_FRAME)      __endasm ; \
-                __asm   orl     _ack_len, #RF_ACK_LEN_FRAME     __endasm ; \
-                return;                                         \
-        }
-
 // Output a nonzero number of of pixels, not known at compile-time
 #define PIXEL_BURST(_count) {                           \
         register uint8_t _i = (_count);                 \

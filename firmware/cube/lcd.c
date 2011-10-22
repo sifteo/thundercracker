@@ -150,6 +150,12 @@ void lcd_end_frame()
     CTRL_PORT = CTRL_IDLE;
     
     lcd_cmd_table(table);
+    
+    // Acknowledge this frame
+    __asm
+        inc     (_ack_data + RF_ACK_FRAME)
+        orl     _ack_len, #RF_ACK_LEN_FRAME
+    __endasm ;
 }
 
 

@@ -37,7 +37,6 @@ void vm_bg0_bg1(void)
     } while (--y);    
 
     lcd_end_frame();
-    MODE_RETURN();
 }
 
 

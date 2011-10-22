@@ -85,6 +85,7 @@
     __asm
 
 // Address a tile (LAT1/LAT2) from 8-bit address in 'a'
+#pragma sdcc_hash +
 #define BG2_ADDR_TILE()                                         __endasm; \
     __asm clr   c                                               __endasm; \
     __asm rlc   a                                               __endasm; \
@@ -298,5 +299,4 @@ void vm_bg2(void)
     } while (--y);    
 
     lcd_end_frame();
-    MODE_RETURN();
 }

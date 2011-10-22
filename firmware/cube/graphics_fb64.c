@@ -77,5 +77,4 @@ void vm_fb64(void)
 
     LCD_WRITE_END();
     lcd_end_frame();
-    MODE_RETURN();
 }

@@ -487,5 +487,4 @@ void vm_bg0_rom(void)
     } while (--y);    
 
     lcd_end_frame();
-    MODE_RETURN();
 }

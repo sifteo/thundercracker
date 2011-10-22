@@ -11,7 +11,6 @@ OBJS = \
         graphics_fb32.rel \
         graphics_fb64.rel \
         graphics_fb128.rel \
-        graphics_powerdown.rel \
         graphics_solid.rel \
         lcd.rel \
         radio.rel \
