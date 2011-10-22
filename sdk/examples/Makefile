@@ -1,6 +1,6 @@
 SUBDIRS = \
 	hello monster text gfxdemo chroma neighbor megademo \
-	scroller-bg0 scroller-bg1
+	scroller-bg0 scroller-bg1 sprites
 
 .PHONY: clean subdirs $(SUBDIRS)
 

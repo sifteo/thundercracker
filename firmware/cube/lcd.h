@@ -20,6 +20,15 @@ typedef signed long long int64_t;
 static __xdata __at 0x0000 union _SYSVideoRAM vram;
 
 /*
+ * LCD Controller
+ */
+
+#define LCD_WIDTH       128
+#define LCD_HEIGHT      128
+#define LCD_PIXELS      (LCD_WIDTH * LCD_HEIGHT)
+#define LCD_ROW_SHIFT   8
+
+/*
  * LCD Bus Operations
  */
 

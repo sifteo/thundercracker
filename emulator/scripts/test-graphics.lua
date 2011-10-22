@@ -338,10 +338,9 @@ TestGraphics = {}
         gx:drawBG0Pattern()
         gx:xbFill(VA_BG1_BITMAP, 32, 0)
         
-        -- Zero mask, junk in all other sprite params
+        -- Disable all sprites
         for i = 0,7 do
-            gx.cube:xbPoke(VA_SPR + i*6 + 2, 0)  -- mask_x
-            gx.cube:xbPoke(VA_SPR + i*6 + 3, 0)  -- mask_y
+            gx.cube:xbPoke(VA_SPR + i*6 + 0, 0)  -- mask_y
         end
         
         for i = 0,7 do
@@ -361,10 +360,9 @@ TestGraphics = {}
         gx:drawBG0Pattern()
         gx:xbFill(VA_BG1_BITMAP, 32, 0xA5)
 
-        -- Zero mask, junk in all other sprite params
+        -- Disable all sprites
         for i = 0,7 do
-            gx.cube:xbPoke(VA_SPR + i*6 + 2, 0)  -- mask_x
-            gx.cube:xbPoke(VA_SPR + i*6 + 3, 0)  -- mask_y
+            gx.cube:xbPoke(VA_SPR + i*6 + 0, 0)  -- mask_y
         end
         
         local clear = gx:drawTransparentTile()
@@ -387,10 +385,9 @@ TestGraphics = {}
         gx:setMode(VM_BG0_SPR_BG1)
         gx:drawBG0Pattern()
         
-        -- Zero mask, junk in all other sprite params
+        -- Disable all sprites
         for i = 0,7 do
-            gx.cube:xbPoke(VA_SPR + i*6 + 2, 0)  -- mask_x
-            gx.cube:xbPoke(VA_SPR + i*6 + 3, 0)  -- mask_y
+            gx.cube:xbPoke(VA_SPR + i*6 + 0, 0)  -- mask_y
         end
         
         for i = 0,63 do

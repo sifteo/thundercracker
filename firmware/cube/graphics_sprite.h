@@ -15,22 +15,26 @@
  * Shared state
  */
   
-#define XSPR_TILE       0
-#define XSPR_MASK       2
-#define XSPR_POS        3
+#define XSPR_MASK         0
+#define XSPR_POS          1
+#define XSPR_LAT1         2
+#define XSPR_LAT2         3
+#define XSPR_LINE_ADDR    4
 
 struct x_sprite_t {
-    uint16_t tile;
-    uint8_t mask;
+    int8_t mask;
     int8_t pos;
+    uint8_t lat1;
+    uint8_t lat2;
+    uint8_t line_addr;
 };
 
 // Horizontal state for each sprite
-extern struct x_sprite_t __idata x_spr[_SYS_VRAM_SPRITES];
+extern struct x_sprite_t x_spr[_SYS_SPRITES_PER_LINE];
 
 extern uint8_t   y_spr_line;            // Current rendering line, zero-based
 extern uint8_t   y_spr_line_limit;      // Rendering ends at this line
-extern uint8_t   y_spr_active;          // Bitmap of sprites that are active on this line
+extern uint8_t   y_spr_active;          // Number of sprites in x_spr[]
 
 /*
  * Shared code

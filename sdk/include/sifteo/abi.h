@@ -95,7 +95,8 @@ struct _SYSAssetGroup {
 #define _SYS_VRAM_BG1_WIDTH     16      // Width/height of BG1 bitmap
 #define _SYS_VRAM_BG1_TILES     144     // Total number of opaque tiles in BG1
 #define _SYS_VRAM_BG2_WIDTH     16      // Width/height of BG2 tile grid
-#define _SYS_VRAM_SPRITES       8       // Maximum number of linear sprites
+#define _SYS_VRAM_SPRITES       8       // Total number of linear sprites
+#define _SYS_SPRITES_PER_LINE   4       // Maximum visible sprites per scanline
 #define _SYS_CHROMA_KEY         0x4f    // Chroma key MSB
 
 // Bits for 'flags'
@@ -139,10 +140,18 @@ struct _SYSAssetGroup {
 #define _SYS_VA_FLAGS           0x3ff
 
 struct _SYSSpriteInfo {
-    int8_t    pos_y;      // 0x00  Signed Y coord, top edge
-    uint8_t   mask_y;     // 0x01  (height - 1) if enabled, 0 if disabled
-    int8_t    pos_x;      // 0x02  Signed X coord, left edge
-    uint8_t   mask_x;     // 0x03  (width - 1) if enabled, 0 if disabled
+    /*
+     * Sprite sizes must be powers of two, and the
+     * size/position must both be negated.
+     *
+     * Sprites can be disabled by setting height to zero.
+     * A zero width with nonzero height will give undefined
+     * results.
+     */
+    int8_t   mask_y;      // 0x00  (-height),  0 == disable
+    int8_t   mask_x;      // 0x01  (-width)
+    int8_t   pos_y;       // 0x02  (-top)
+    int8_t   pos_x;       // 0x03  (-left)
     uint16_t  tile;       // 0x04  Address in 7:7 format
 };
 

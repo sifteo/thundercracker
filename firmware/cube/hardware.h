@@ -98,15 +98,6 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
     __asm
 
 /*
- * LCD Controller
- */
-
-#define LCD_WIDTH       128
-#define LCD_HEIGHT      128
-#define LCD_PIXELS      (LCD_WIDTH * LCD_HEIGHT)
-#define LCD_ROW_SHIFT   8
-
-/*
  * nRF24L01 Radio
  */
 
