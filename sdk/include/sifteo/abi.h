@@ -139,11 +139,11 @@ struct _SYSAssetGroup {
 #define _SYS_VA_FLAGS           0x3ff
 
 struct _SYSSpriteInfo {
-    uint16_t tile;                      // 0x00    Address in 7:7 format
-    uint8_t mask_x;                     // 0x02    (size - 1) if enabled, 0 if disabled
-    uint8_t mask_y;                     // 0x03
-    int8_t pos_x;                       // 0x04
-    int8_t pos_y;                       // 0x05
+    int8_t    pos_y;      // 0x00  Signed Y coord, top edge
+    uint8_t   mask_y;     // 0x01  (height - 1) if enabled, 0 if disabled
+    int8_t    pos_x;      // 0x02  Signed X coord, left edge
+    uint8_t   mask_x;     // 0x03  (width - 1) if enabled, 0 if disabled
+    uint16_t  tile;       // 0x04  Address in 7:7 format
 };
 
 // Equivalent to an augmented matrix (3x2), in 8.8 fixed-point
