@@ -6,29 +6,59 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include "graphics_bg1.h"
+#include "graphics_sprite.h"
+
+struct x_sprite_t __idata x_spr[_SYS_VRAM_SPRITES];
+uint8_t y_spr_line, y_spr_line_limit, y_spr_active;
 
 
 void vm_bg0_spr_bg1(void)
 {
-    uint8_t y = vram.num_lines;
-
     lcd_begin_frame();
     vm_bg0_setup();
     vm_bg1_setup();
+    vm_spr_setup();
 
     do {
-        if (y_bg1_empty)
-            vm_bg0_line();
-        else
-            vm_bg0_bg1_line();
 
+        if (y_spr_active) {
+            if (y_bg1_empty)
+                vm_bg0_spr_line();
+            else
+                vm_bg0_spr_bg1_line();
+        } else {
+            if (y_bg1_empty)
+                vm_bg0_line();
+            else
+                vm_bg0_bg1_line();
+        }
+                
         vm_bg0_next();
         vm_bg1_next();
-    } while (--y);    
+        vm_spr_next();
 
+    } while (y_spr_line != y_spr_line_limit);
+    
     lcd_end_frame();
     MODE_RETURN();
+}
+
+
+void vm_spr_setup()
+{
+    y_spr_active = 0;
+}
+
+void vm_spr_next()
+{
+}
+
+void vm_bg0_spr_line()
+{
+}
+
+void vm_bg0_spr_bg1_line()
+{
 }
 
 
