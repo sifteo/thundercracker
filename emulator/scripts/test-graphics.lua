@@ -327,3 +327,86 @@ TestGraphics = {}
         gx:panBG0(0, 0)
         gx:drawAndAssertWithBG1Pan("bg1-chroma")
     end
+
+    function TestGraphics:test_bg1_spr_no_bits()
+        -- Like test_bg1_no_bits, but in a sprite-capable mode
+        -- that has all sprites disabled. The windowing test here
+        -- is especially important, since bg0_spr_bg1 uses a different
+        -- Y coordinate loop than the other modes.
+    
+        gx:setMode(VM_BG0_SPR_BG1)
+        gx:drawBG0Pattern()
+        gx:xbFill(VA_BG1_BITMAP, 32, 0)
+        
+        -- Zero mask, junk in all other sprite params
+        for i = 0,7 do
+            gx.cube:xbPoke(VA_SPR + i*6 + 2, 0)  -- mask_x
+            gx.cube:xbPoke(VA_SPR + i*6 + 3, 0)  -- mask_y
+        end
+        
+        for i = 0,7 do
+            local pan = i * 255 / 7
+            gx:panBG1(pan, pan)
+            gx:setWindow(0, 128)
+            gx:drawAndAssertWithBG0Pan("bg0")
+            gx:drawAndAssertWithWindow(VM_BG0_SPR_BG1, "bg0", {1, 4, 16, 17, 92, 255, 0})       
+        end
+    end
+    
+    function TestGraphics:test_bg1_spr_clear()
+        -- Like bg1_clear, but in a sprite-capable mode that
+        -- has all sprites disabled.
+    
+        gx:setMode(VM_BG0_SPR_BG1)
+        gx:drawBG0Pattern()
+        gx:xbFill(VA_BG1_BITMAP, 32, 0xA5)
+
+        -- Zero mask, junk in all other sprite params
+        for i = 0,7 do
+            gx.cube:xbPoke(VA_SPR + i*6 + 2, 0)  -- mask_x
+            gx.cube:xbPoke(VA_SPR + i*6 + 3, 0)  -- mask_y
+        end
+        
+        local clear = gx:drawTransparentTile()
+        for i = 0,143 do
+            gx:putTileBG1(i, clear)
+        end 
+        
+        for i = 0,7 do
+            local pan = i * 255 / 7
+            gx:panBG1(pan, pan)
+            gx:drawAndAssertWithBG0Pan("bg0")
+        end
+    end
+    
+    function TestGraphics:test_bg1_spr_chroma()
+        -- Like bg1_chroma, but in a sprite-capable mode that
+        -- has all sprites disabled. Should look identical to
+        -- bg1_chroma, so we use the same screenshots.
+        
+        gx:setMode(VM_BG0_SPR_BG1)
+        gx:drawBG0Pattern()
+        
+        -- Zero mask, junk in all other sprite params
+        for i = 0,7 do
+            gx.cube:xbPoke(VA_SPR + i*6 + 2, 0)  -- mask_x
+            gx.cube:xbPoke(VA_SPR + i*6 + 3, 0)  -- mask_y
+        end
+        
+        for i = 0,63 do
+            gx:putTileBG1(i, gx:drawChromaKeyPatternTile(i))
+        end
+        
+        gx:pokeWords(VA_BG1_BITMAP, {
+            0xaaaa, 0x5555, 0x0000, 0x0000, 
+            0x0000, 0x0ff0, 0x0ff0, 0xffff,
+            0x0000, 0x0000, 0x0000, 0x0000,
+            0x0000, 0x0000, 0xaaaa, 0x5555,
+        })
+        
+        gx:panBG1(0, 0)
+        gx:drawAndAssertWithBG0Pan("bg1-chroma")
+        
+        gx:panBG0(0, 0)
+        gx:drawAndAssertWithBG1Pan("bg1-chroma")
+    end
