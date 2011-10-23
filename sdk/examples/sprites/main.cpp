@@ -24,6 +24,40 @@ void load()
     } while (!cube.assetDone(GameAssets));
 }
 
+void moveSprite(int id, int x, int y)
+{
+    uint8_t xb = -x;
+    uint8_t yb = -y;
+
+    uint16_t word = ((uint16_t)xb << 8) | yb;
+    uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
+                      sizeof(_SYSSpriteInfo)/2 * id ); 
+
+    _SYS_vbuf_poke(&cube.vbuf.sys, addr, word);
+}
+
+void resizeSprite(int id, int w, int h)
+{
+    uint8_t xb = -w;
+    uint8_t yb = -h;
+
+    uint16_t word = ((uint16_t)xb << 8) | yb;
+    uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
+                      sizeof(_SYSSpriteInfo)/2 * id ); 
+
+    _SYS_vbuf_poke(&cube.vbuf.sys, addr, word);
+}
+
+void setSpriteImage(int id, int tile)
+{
+    uint16_t word = VideoBuffer::indexWord(tile);
+    uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
+                      sizeof(_SYSSpriteInfo)/2 * id ); 
+
+    _SYS_vbuf_poke(&cube.vbuf.sys, addr, word);
+}
+ 
+
 void siftmain()
 {
     load();
@@ -32,43 +66,50 @@ void siftmain()
     vid.init();
     vid.BG0_drawAsset(Vec2(0,0), Background);
  
+    // Init BG1/Sprite VRAM
     _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
     _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_SPR, 0, 8*5/2);
     
-    for (unsigned i = 0; i < _SYS_VRAM_SPRITES; i++) {
-        _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, spr[0].mask_x)
-                        + sizeof(_SYSSpriteInfo) * i, -16);
-        _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, spr[0].mask_y)
-                        + sizeof(_SYSSpriteInfo) * i, -16);
+    // 1UPs
+    for (unsigned i = 1; i < _SYS_VRAM_SPRITES; i++) {
+        resizeSprite(i, 16, 16);
+        setSpriteImage(i, 0);
     }
-    
+
+    // Bullet
+    resizeSprite(0, 64, 64);
+    setSpriteImage(0, 4);
+
+    // BG1 Overlay
     _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2
                    + 16 - Overlay.height,
                    ((1 << Overlay.width) - 1), Overlay.height);
     _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
                      Overlay.tiles, 0, Overlay.width * Overlay.height);
         
+    // Now enable BG0, Sprites, and BG1
     _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 
     unsigned frame = 0;
     while (1) {
         frame++;
 
-        for (unsigned i = 0; i < _SYS_VRAM_SPRITES; i++) {
+        // Circle of 1UPs
+        for (unsigned i = 1; i < _SYS_VRAM_SPRITES; i++) {
             
-            float angle = frame * 0.075f + i * (M_PI*2/_SYS_VRAM_SPRITES);
+            float angle = frame * 0.075f + (i-1) * (M_PI*2 / (_SYS_VRAM_SPRITES-1));
             const float r = 32;
-            int8_t x = (128 - 16)/2 + cosf(angle) * r + 0.5f;
-            int8_t y = (128 - 16)/2 + sinf(angle) * r + 0.5f;
-    
-            _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, spr[0].pos_x)
-                        + sizeof(_SYSSpriteInfo) * i, -x);
-            _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, spr[0].pos_y)
-                        + sizeof(_SYSSpriteInfo) * i, -y);
-                        
-            _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_x), -frame);
+
+            moveSprite(i, (128 - 16)/2 + cosf(angle) * r + 0.5f,
+                       (128 - 16)/2 + sinf(angle) * r + 0.5f); 
         }
+
+        // Scroll BG1
+        _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_x), -frame);
     
+        // Flying bullet
+        moveSprite(0, -frame*3, (128-64)/2 + sinf(frame * 0.2f) * 16);
+
         System::paint();
     }
 }
