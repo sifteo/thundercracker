@@ -112,7 +112,6 @@ gx = {}
         -- Setup to be done before each test.
         -- Seed the PRNG, and wipe VRAM. Reset the exception counter.
         
-        math.randomseed(0)
         gx:wipe()
         gx:setWindow(0, LCD_HEIGHT)
         gx:setRotation(0)
@@ -131,7 +130,7 @@ gx = {}
         -- So, everything except windowing, mode, and flags.
         
         for i = 0, VRAM_WORDS - 3, 1 do
-            gx.cube:xwPoke(i, math.random(0, 0xFFFF))
+            gx.cube:xwPoke(i, i * 31337)
         end
     end
     
