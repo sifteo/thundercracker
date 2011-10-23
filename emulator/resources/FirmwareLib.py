@@ -114,7 +114,7 @@ class RSTParser:
 
         if '.' in source:
 
-            if source[0] == 'P':
+            if len(source) > 2 and source[-2] == '.' and source[-1] in '0123456789':
                 # Bit addressing. False alarm
                 pass
 
@@ -127,7 +127,7 @@ class RSTParser:
                 self.branchTargets[address-2] = True
 
             else:
-                raise Exception("Unimplemented relative label")
+                raise Exception("Unimplemented relative label '%s'" % source)
 
         # Module size accounting, per-byte rather than per-instruction
         for byte in data:
