@@ -236,8 +236,8 @@ void vm_bg0_spr_bg1_line()
      * XXX: Very slow unoptimized implementation. Using this to develop tests...
      */
 
-    uint8_t x_bg0_addr = x_bg0_first_addr;
-    uint8_t x_bg1_addr = (vram.bg1_x << 2) & 0x1F;
+    uint8_t bg0_addr = x_bg0_first_addr;
+    uint8_t bg1_addr = x_bg1_first_addr;
     uint8_t bg0_wrap = x_bg0_wrap;
     uint8_t x = 128;
     
@@ -252,7 +252,7 @@ void vm_bg0_spr_bg1_line()
                 ADDR_FROM_DPTR(_DPL1)
                 dec     _DPS
             __endasm ;
-            ADDR_PORT = y_bg1_addr_l + x_bg1_addr;            
+            ADDR_PORT = y_bg1_addr_l + bg1_addr;            
             if (BUS_PORT != _SYS_CHROMA_KEY)
                 goto pixel_done;
         }
@@ -285,17 +285,17 @@ void vm_bg0_spr_bg1_line()
     
         // BG0
         __asm ADDR_FROM_DPTR(_DPL) __endasm;
-        ADDR_PORT = y_bg0_addr_l + x_bg0_addr;
+        ADDR_PORT = y_bg0_addr_l + bg0_addr;
         
         pixel_done:
         ADDR_INC4();
         
-        if (!(x_bg0_addr = (x_bg0_addr + 4) & 0x1F)) {
+        if (!(bg0_addr = (bg0_addr + 4) & 0x1F)) {
             DPTR_INC2();
             BG0_WRAP_CHECK();
         }
         
-        if (!(x_bg1_addr = (x_bg1_addr + 4) & 0x1F)) {
+        if (!(bg1_addr = (bg1_addr + 4) & 0x1F)) {
             if (MD0 & 1) {
                 __asm
                     inc     _DPS

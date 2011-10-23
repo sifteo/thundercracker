@@ -10,7 +10,7 @@
 #include "hardware.h"
 #include "radio.h"
 
-uint8_t x_bg1_offset_x4, x_bg1_shift;
+uint8_t x_bg1_offset_x4, x_bg1_shift, x_bg1_first_addr;
 __bit x_bg1_rshift, x_bg1_lshift;
 
 uint8_t y_bg1_addr_l, y_bg1_bit_index;
@@ -135,28 +135,28 @@ static uint8_t bitcount16_x2(uint16_t x) __naked
         push    ar2
         
         mov     r0, dpl
-        mov	    r1, dph
+        mov         r1, dph
         mov     dptr, #_bitcount16_x2_lut_1_1
 
-        mov	    a, #0x0F
+        mov         a, #0x0F
         anl     a, r0
         movc    a, @a+dptr
         mov     r2, a
 
-        mov	    a, #0xF0
+        mov         a, #0xF0
         anl     a, r0
         swap    a
         movc    a, @a+dptr
         add     a, r2
         mov     r2, a
 
-        mov	    a, #0x0F
+        mov         a, #0x0F
         anl     a, r1
         movc    a, @a+dptr
         add     a, r2
         mov     r2, a
 
-        mov	    a, #0xF0
+        mov         a, #0xF0
         anl     a, r1
         swap    a
         movc    a, @a+dptr
@@ -195,6 +195,7 @@ void vm_bg1_setup(void)
         y_bg1_bit_index = tile_pan_y;
         
         x_bg1_offset_x4 = ((x_bg0_last_w - pan_x) & 7) << 2;
+        x_bg1_first_addr = (pan_x << 2) & 0x1C;
             
         x_bg1_lshift = 0;
         x_bg1_rshift = 0;
@@ -295,45 +296,40 @@ void vm_bg0_bg1_line(void)
      * XXX: Very slow unoptimized implementation. Using this to develop tests...
      */
 
-    uint8_t x_bg0_addr = x_bg0_first_addr;
-    uint8_t x_bg1_addr = (vram.bg1_x << 2) & 0x1F;
+    uint8_t bg0_addr = x_bg0_first_addr;
+    uint8_t bg1_addr = x_bg1_first_addr;
     uint8_t bg0_wrap = x_bg0_wrap;
     uint8_t x = 128;
     
     DPTR = y_bg0_map;
     
     do {
-        if (MD0 & 1) {
-            // BG1 chroma-keyed over BG0
 
+        // BG1
+        if (MD0 & 1) {
             __asm
                 inc     _DPS
                 ADDR_FROM_DPTR(_DPL1)
                 dec     _DPS
             __endasm ;
-            ADDR_PORT = y_bg1_addr_l + x_bg1_addr;
-            
-            if (BUS_PORT == _SYS_CHROMA_KEY) {
-                // BG0 pixel
-                __asm ADDR_FROM_DPTR(_DPL) __endasm;
-                ADDR_PORT = y_bg0_addr_l + x_bg0_addr;
-            }
-
-            ADDR_INC4();
-
-        } else {
-            // BG0 pixel
-            __asm ADDR_FROM_DPTR(_DPL) __endasm;
-            ADDR_PORT = y_bg0_addr_l + x_bg0_addr;
-            ADDR_INC4();
+            ADDR_PORT = y_bg1_addr_l + bg1_addr;            
+            if (BUS_PORT != _SYS_CHROMA_KEY)
+                goto pixel_done;
         }
+    
+        // BG0
+        __asm ADDR_FROM_DPTR(_DPL) __endasm;
+        ADDR_PORT = y_bg0_addr_l + bg0_addr;
         
-        if (!(x_bg0_addr = (x_bg0_addr + 4) & 0x1F)) {
+        pixel_done:
+        ADDR_INC4();
+        
+        if (!(bg0_addr = (bg0_addr + 4) & 0x1F)) {
             DPTR_INC2();
             BG0_WRAP_CHECK();
         }
         
-        if (!(x_bg1_addr = (x_bg1_addr + 4) & 0x1F)) {
+        if (!(bg1_addr = (bg1_addr + 4) & 0x1F)) {
             if (MD0 & 1) {
                 __asm
                     inc     _DPS
@@ -786,7 +782,7 @@ static void vm_bg0_bg1_tiles_fast(void) __naked
         mov     dptr, #1$
         jmp     @a+dptr
 
-	; These redundant labels are required by the binary translator!
+        ; These redundant labels are required by the binary translator!
 
 1$:     ljmp    _vm_bg0_bg1_tiles_fast_p0
         nop
