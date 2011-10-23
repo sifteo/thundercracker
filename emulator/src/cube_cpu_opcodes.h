@@ -68,8 +68,10 @@ static ALWAYS_INLINE void push_word_to_stack(em8051 *aCPU, uint16_t aValue)
 {
     unsigned sp = aCPU->mSFR[REG_SP];
 
-    if (sp + 2 >= 0x100)
+    if (sp + 2 >= 0x100) {
         except(aCPU, EXCEPTION_STACK);
+        return;
+    }
 
     aCPU->mData[sp+1] = aValue;
     aCPU->mData[sp+2] = aValue >> 8;
@@ -81,8 +83,10 @@ static ALWAYS_INLINE void push_to_stack(em8051 *aCPU, int aValue)
 {
     unsigned sp = aCPU->mSFR[REG_SP];
 
-    if (sp + 1 >= 0x100)
+    if (sp + 1 >= 0x100) {
         except(aCPU, EXCEPTION_STACK);
+        return;
+    }
 
     aCPU->mData[sp+1] = aValue;
 
@@ -93,8 +97,10 @@ static ALWAYS_INLINE int pop_word_from_stack(em8051 *aCPU)
 {
     unsigned sp = aCPU->mSFR[REG_SP];
     
-    if (sp < 2)
+    if (sp < 2) {
         except(aCPU, EXCEPTION_STACK);
+        return 0;
+    }
 
     uint16_t value = aCPU->mData[sp];
     value = (value << 8) | aCPU->mData[sp-1];
@@ -108,8 +114,10 @@ static ALWAYS_INLINE int pop_from_stack(em8051 *aCPU)
 {
     unsigned sp = aCPU->mSFR[REG_SP];
     
-    if (sp < 1)
+    if (sp < 1) {
         except(aCPU, EXCEPTION_STACK);
+        return 0;
+    }
 
     uint8_t value = aCPU->mData[sp];
 
