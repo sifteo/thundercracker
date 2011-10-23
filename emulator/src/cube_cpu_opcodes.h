@@ -64,21 +64,57 @@ static ALWAYS_INLINE int read_mem(em8051 *aCPU, int aAddress)
         return aCPU->mData[aAddress];
 }
 
+static ALWAYS_INLINE void push_word_to_stack(em8051 *aCPU, uint16_t aValue)
+{
+    unsigned sp = aCPU->mSFR[REG_SP];
+
+    if (sp + 2 >= 0x100)
+        except(aCPU, EXCEPTION_STACK);
+
+    aCPU->mData[sp+1] = aValue;
+    aCPU->mData[sp+2] = aValue >> 8;
+
+    aCPU->mSFR[REG_SP] = sp + 2;
+}
+
 static ALWAYS_INLINE void push_to_stack(em8051 *aCPU, int aValue)
 {
-    aCPU->mSFR[REG_SP]++;
-    aCPU->mData[aCPU->mSFR[REG_SP]] = aValue;
-    if (aCPU->mSFR[REG_SP] == 0)
+    unsigned sp = aCPU->mSFR[REG_SP];
+
+    if (sp + 1 >= 0x100)
         except(aCPU, EXCEPTION_STACK);
+
+    aCPU->mData[sp+1] = aValue;
+
+    aCPU->mSFR[REG_SP] = sp + 1;
+}
+
+static ALWAYS_INLINE int pop_word_from_stack(em8051 *aCPU)
+{
+    unsigned sp = aCPU->mSFR[REG_SP];
+    
+    if (sp < 2)
+        except(aCPU, EXCEPTION_STACK);
+
+    uint16_t value = aCPU->mData[sp];
+    value = (value << 8) | aCPU->mData[sp-1];
+
+    aCPU->mSFR[REG_SP] = sp - 2;
+
+    return value;
 }
 
 static ALWAYS_INLINE int pop_from_stack(em8051 *aCPU)
 {
-    int value = aCPU->mData[aCPU->mSFR[REG_SP]];
-    aCPU->mSFR[REG_SP]--;
-
-    if (aCPU->mSFR[REG_SP] == 0xff)
+    unsigned sp = aCPU->mSFR[REG_SP];
+    
+    if (sp < 1)
         except(aCPU, EXCEPTION_STACK);
+
+    uint8_t value = aCPU->mData[sp];
+
+    aCPU->mSFR[REG_SP] = sp - 1;
+
     return value;
 }
 
@@ -212,16 +248,14 @@ static ALWAYS_INLINE int jbc_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_
 static ALWAYS_INLINE int acall_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = ((PC + 2) & 0xf800) | operand1 | ((opcode & 0xe0) << 3);
-    push_to_stack(aCPU, (PC + 2) & 0xff);
-    push_to_stack(aCPU, (PC + 2) >> 8);
+    push_word_to_stack(aCPU, PC + 2);
     PC = address;
     return 6;
 }
 
 static ALWAYS_INLINE int lcall_address(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
-    push_to_stack(aCPU, (PC + 3) & 0xff);
-    push_to_stack(aCPU, (PC + 3) >> 8);
+    push_word_to_stack(aCPU, PC + 3);
     PC = (operand1 << 8) | operand2;
     return 6;
 }
@@ -308,8 +342,7 @@ static ALWAYS_INLINE int jb_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_t
 
 static ALWAYS_INLINE int ret(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
-    PC = pop_from_stack(aCPU) << 8;
-    PC |= pop_from_stack(aCPU);
+    PC = pop_word_from_stack(aCPU);
     return 4;
 }
 
@@ -415,8 +448,7 @@ static ALWAYS_INLINE int reti(em8051 *aCPU, uint8_t opcode, uint8_t operand1, ui
     // We may need to fire a higher-priority pending interrupt that was delayed
     aCPU->needInterruptDispatch = true;
 
-    PC = pop_from_stack(aCPU) << 8;
-    PC |= pop_from_stack(aCPU);
+    PC = pop_word_from_stack(aCPU);
     
     return cycles;
 }
