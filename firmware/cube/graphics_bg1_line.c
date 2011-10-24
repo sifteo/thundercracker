@@ -91,9 +91,60 @@ void vm_bg0_bg1_pixels(void) __naked
 }
 
 
+static void vm_bg0_bg1_tiles_fast(void) __naked
+{
+    /*
+     * Render R_LOOP_COUNT tiles from bg0, quickly, with bg1 overlaid
+     * at the proper panning offset from x_bg1_offset.
+     */
+     
+    // Dummy implementation
+    __asm
+        mov     a, R_LOOP_COUNT
+        rl      a
+        rl      a
+        rl      a
+        mov     R_LOOP_COUNT, a
+        ljmp    _vm_bg0_bg1_pixels
+    __endasm ;        
+
+#if 0
+    __asm
+        mov     a, _x_bg1_offset_x4
+        mov     dptr, #1$
+        jmp     @a+dptr
+
+        ; These redundant labels are required by the binary translator!
+
+1$:     ljmp    _vm_bg0_bg1_tiles_fast_p0
+        nop
+2$:     ljmp    _vm_bg0_bg1_tiles_fast_p1
+        nop
+3$:     ljmp    _vm_bg0_bg1_tiles_fast_p2
+        nop
+4$:     ljmp    _vm_bg0_bg1_tiles_fast_p3
+        nop
+5$:     ljmp    _vm_bg0_bg1_tiles_fast_p4
+        nop
+6$:     ljmp    _vm_bg0_bg1_tiles_fast_p5
+        nop
+7$:     ljmp    _vm_bg0_bg1_tiles_fast_p6
+        nop
+8$:     ljmp    _vm_bg0_bg1_tiles_fast_p7
+    __endasm ;
+#endif
+}
+
+
 void vm_bg0_bg1_line(void)
 {
+    /*
+     * Top-level scanline renderer for BG0+BG1.
+     * Segment the line into a fast full-tile burst, and up to two slower partial tiles.
+     */
+     
     __asm
+        ; Load registers
      
         mov     dpl, _y_bg0_map
         mov     dph, (_y_bg0_map+1)
@@ -108,79 +159,34 @@ void vm_bg0_bg1_line(void)
         add     a, _x_bg1_first_addr
         mov     R_BG1_ADDR, a
         
-        mov     R_LOOP_COUNT, #128
+        ; Render a partial tile at the beginning of the line, if we have one
         
+        mov     a, _x_bg0_first_w
+        jb      acc.3, 1$
+        mov     R_LOOP_COUNT, a
         lcall   _vm_bg0_bg1_pixels
+        
+        ; We did render a partial tile; there are always 15 full tiles, then another partial.
+        
+        mov     R_LOOP_COUNT, #15
+        lcall   _vm_bg0_bg1_tiles_fast
+        
+        mov     R_LOOP_COUNT, _x_bg0_last_w
+        ljmp    _vm_bg0_bg1_pixels
+        
+        ; No partial tile? We are doing a fully aligned burst of 16 tiles.
+1$:
+        mov     R_LOOP_COUNT, #16
+        ljmp    _vm_bg0_bg1_tiles_fast     
 
     __endasm ;
 }
 
 
-
-
 /*************************** TO REWORK ********************************************************/
  
 #if 0
-
-
-/*
- * Register allocation, during our scanline renderer:
- *
- *   c: Current BG1 tile bit
- *  r0: Scratch
- *  r1: X wrap counter
- *  r3: BG0 addr low-byte
- *  r4: BG1 addr low-byte
- *  r5: Tiles / pixels remaining in draw loop
- *  r6: BG1 tile bitmap (next)
- *  r7: BG1 tile bitmap (current)
- */
-
  
-/*
- * The workhorse of this mode is a set of unrolled state machines
- * which render 'r5' full tiles, on lines with BG0 and BG1 visible:
- *
- *    vm_bg0_bg1_tiles_fast_pN()
- *
- * Where 'N' is the panning delta from BG0 to BG1.
- *
- * We have ladders of contiguous states, for BG0-only and BG1-only.
- * Inline with the BG1 ladder are interleaved cases for
- * falling-through to BG0 pixels, as implemented by the
- * CHROMA_BG1_BG0() macro.
- *
- * Our state vector consists of layer (BG0/BG1) and X pixel. On entry,
- * we must already be set up for the first pixel of BG0.
- */
-
-static uint8_t x_bg1_offset;            // Panning offset from BG0, multiplied by 4.
-static uint8_t x_bg1_first_addr;        // Low address offset for first displayed tile
-static uint8_t x_bg1_shift;             // Amount to shift bitmap by at the start of the line, plus one
-
-static uint8_t y_bg1_addr_l;            // Low part of tile addresses, inc by 32 each line
-static uint8_t y_bg1_bit_addr;          // Index into bitmap array
-static uint16_t y_bg1_map;              // Map address for the first tile on this line
-
-// Shift the next tile bit into C
-#define BG1_NEXT_BIT(lbl)                                       __endasm; \
-    __asm mov   a, r6                                           __endasm; \
-    __asm clr   c                                               __endasm; \
-    __asm rrc   a                                               __endasm; \
-    __asm mov   r6, a                                           __endasm; \
-    __asm mov   a, r7                                           __endasm; \
-    __asm rrc   a                                               __endasm; \
-    __asm mov   r7, a                                           __endasm; \
-    __asm jc    lbl                                             __endasm; \
-    __asm
-
-#define BG0_BG1_LOAD_MAPS()                                     __endasm; \
-    __asm mov   _DPL, _y_bg0_map                                __endasm; \
-    __asm mov   _DPH, (_y_bg0_map+1)                            __endasm; \
-    __asm mov   _DPL1, _y_bg1_map                               __endasm; \
-    __asm mov   _DPH1, (_y_bg1_map+1)                           __endasm; \
-    __asm
-
 #define CHROMA_PREP()                                           __endasm; \
     __asm mov   a, #_SYS_CHROMA_KEY                             __endasm; \
     __asm
@@ -540,37 +546,6 @@ static void vm_bg0_bg1_tiles_fast_p7(void) __naked
     __endasm ;
 }
 
-static void vm_bg0_bg1_tiles_fast(void) __naked
-{
-    /*
-     * Render 'r5' tiles from bg0, quickly, with bg1 overlaid
-     * at the proper panning offset from x_bg1_offset.
-     */
-
-    __asm
-        mov     a, _x_bg1_offset
-        mov     dptr, #1$
-        jmp     @a+dptr
-
-        ; These redundant labels are required by the binary translator!
-
-1$:     ljmp    _vm_bg0_bg1_tiles_fast_p0
-        nop
-2$:     ljmp    _vm_bg0_bg1_tiles_fast_p1
-        nop
-3$:     ljmp    _vm_bg0_bg1_tiles_fast_p2
-        nop
-4$:     ljmp    _vm_bg0_bg1_tiles_fast_p3
-        nop
-5$:     ljmp    _vm_bg0_bg1_tiles_fast_p4
-        nop
-6$:     ljmp    _vm_bg0_bg1_tiles_fast_p5
-        nop
-7$:     ljmp    _vm_bg0_bg1_tiles_fast_p6
-        nop
-8$:     ljmp    _vm_bg0_bg1_tiles_fast_p7
-    __endasm ;
-}
 
 static void vm_bg0_bg1_line(void)
 {
@@ -585,57 +560,6 @@ static void vm_bg0_bg1_line(void)
     __asm
         mov     r1, _x_bg0_wrap
     __endasm ;
-
-    /*
-     * Segment the line into a fast full-tile burst, and up to two slower partial tiles.
-     */
-
-
-        inc     dptr                            ; Skip first partial BG0 tile
-        inc     dptr
-
-        ADDR_FROM_DPTR(_DPL)                    ; Start out in BG0 state, at pixel 0
-        
-            // First partial or full tile
-    ADDR_FROM_DPTR_INC();
-    BG0_WRAP_CHECK();
-    ADDR_PORT = y_bg0_addr_l + x_bg0_first_addr;
-    PIXEL_BURST(x_bg0_first_w);
-
-    __asm
-
-        ; First tile, may be skipping up to 7 pixels from the beginning
-
-        BG0_BG1_LOAD_MAPS()
-        ASM_ADDR_FROM_DPTR_INC()
-        BG0_WRAP_CHECK
-        mov     r5, _x_bg0_first_w
-2$:     inc     ADDR_PORT
-        inc     ADDR_PORT
-        inc     ADDR_PORT
-        inc     ADDR_PORT        
-    
-        djnz    r5, 2$
-
-        ; Always have a run of 15 full tiles
-
-        mov     r3, _y_bg0_addr_l
-        mov     r4, _y_bg1_addr_l
-        mov     r5, #15
-        lcall   _vm_bg0_bg1_tiles_fast
-
-        ; May have a final partial tile
-
-        mov     a, _x_bg0_last_w
-        jz      3$
-        mov     r5, a
-4$:     inc     ADDR_PORT
-        inc     ADDR_PORT
-        inc     ADDR_PORT
-        inc     ADDR_PORT
-        djnz    r5, 4$
-3$:
-
     __endasm ;
 
     CTRL_PORT = CTRL_IDLE;
