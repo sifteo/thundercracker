@@ -38,6 +38,7 @@ Lunar<LuaFrontend>::RegType LuaFrontend::methods[] = {
 
 Lunar<LuaCube>::RegType LuaCube::methods[] = {
     LUNAR_DECLARE_METHOD(LuaCube, reset),
+    LUNAR_DECLARE_METHOD(LuaCube, isDebugging),
     LUNAR_DECLARE_METHOD(LuaCube, lcdWriteCount),
     LUNAR_DECLARE_METHOD(LuaCube, lcdPixelCount),
     LUNAR_DECLARE_METHOD(LuaCube, exceptionCount),
@@ -314,6 +315,12 @@ int LuaCube::reset(lua_State *L)
     LuaSystem::sys->startThread();
 
     return 0;
+}
+
+int LuaCube::isDebugging(lua_State *L)
+{
+    lua_pushboolean(L, LuaSystem::sys->cubes[id].isDebugging());
+    return 1;
 }
 
 int LuaCube::lcdWriteCount(lua_State *L)

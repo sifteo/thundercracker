@@ -86,6 +86,8 @@ gx = {}
         gx.cube = Cube(0)               
         gx.sys:setOptions{numCubes=1, noThrottle=true}
         gx.sys:init()
+
+        gx.lastExceptionCount = 0
         
         if useFrontend then
             gx.fe = Frontend()
@@ -118,10 +120,12 @@ gx = {}
         gx:wipe()
         gx:setWindow(0, LCD_HEIGHT)
         gx:setRotation(0)
-        gx.lastExceptionCount = 0
     end
     
     function gx:exit()
+        while gx.cube:isDebugging() do 
+            gx.sys:vsleep(0.1)
+        end
         if gx.fe then
             gx.fe:exit()
         end
