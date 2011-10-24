@@ -160,12 +160,12 @@ void vm_spr_next()
         rl      a           
         anl     a, #0x1F
 
-	mov	b, r5	    ; Use the mask to calculate a tile width, rounded up
-	jnb	b.6, 24$    ;   <= 128 px
-	jnb	b.5, 23$    ;   <= 64px
-	jnb	b.4, 22$    ;   <= 32px
-	jnb	b.3, 21$    ;   <= 16px
-	sjmp	20$         ;   <= 8px
+        mov	    b, r5	    ; Use the mask to calculate a tile width, rounded up
+        jnb	    b.6, 24$    ;   <= 128 px
+        jnb	    b.5, 23$    ;   <= 64px
+        jnb	    b.4, 22$    ;   <= 32px
+        jnb	    b.3, 21$    ;   <= 16px
+        sjmp	20$         ;   <= 8px
 
 24$:	rl	a
 23$:	rl	a
@@ -173,19 +173,19 @@ void vm_spr_next()
 21$:	rl	a
 20$:    mov     r1, a
 
-	; If the sprite overlaps the left side of the screen, we need to adjust
-	; r1 to account for the horizontal sprite position too.
+        ; If the sprite overlaps the left side of the screen, we need to adjust
+        ; r1 to account for the horizontal sprite position too.
 
-	mov  	a, r7	    ; X test
-	anl	a, r5
-	jnz	7$
+        mov  	a, r7	    ; X test
+        anl	a, r5
+        jnz	7$
 	
         mov     a, r7       ; X offset
         swap    a           ; Pixels to tiles (>> 3)
         rl      a           
         anl     a, #0x1F
-	add	a, r1       ; Add Y contribution from above
-	mov	r1, a
+        add	a, r1       ; Add Y contribution from above
+        mov	r1, a
 7$:
 
         ; Store lat2:lat1, as the original tile index plus our 8-bit adjustment.
@@ -275,7 +275,7 @@ void vm_bg0_spr_bg1_line()
         uint8_t ns = y_spr_active;
 
         // BG1
-        if (MD0 & 1) {
+        if (!y_bg1_empty && (MD0 & 1)) {
             __asm
                 inc     _DPS
                 ADDR_FROM_DPTR(_DPL1)

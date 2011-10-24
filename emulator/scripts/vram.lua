@@ -122,9 +122,22 @@ gx = {}
         gx:setRotation(0)
     end
     
+    function gx:yield()
+        if gx.fe then
+            -- Using a GUI; draw a new frame there
+            if not gx.fe:runFrame() then
+                gx.fe:exit()
+                gx.fe = nil
+            end
+        else
+            -- No frontend, just sleep
+            gx.sys:vsleep(0.01)   
+        end
+    end
+        
     function gx:exit()
         while gx.cube:isDebugging() do 
-            gx.sys:vsleep(0.1)
+            gx:yield()
         end
         if gx.fe then
             gx.fe:exit()
@@ -156,16 +169,7 @@ gx = {}
         local timestamp = gx.sys:vclock()
         local pixelsWritten
         repeat
-            if gx.fe then
-                -- Using a GUI; draw a new frame there
-                if not gx.fe:runFrame() then
-                    gx.fe:exit()
-                    gx.fe = nil
-                end
-            else
-                -- No frontend, just sleep
-                gx.sys:vsleep(0.01)   
-            end
+            gx:yield()
             
             -- Did the cube hit any exceptions?        
             local newExceptionCount = gx.cube:exceptionCount()
@@ -253,6 +257,11 @@ gx = {}
         for b in string.gfind(data, ".") do
             gx.cube:xbPoke(addr, string.byte(b))
             addr = addr + 1
+            
+            if addr == VA_FLAGS then
+                -- Quit now; we don't want to inadvertently trigger a render
+                return
+            end
         end
     end
 

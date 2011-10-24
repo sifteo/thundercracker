@@ -51,6 +51,9 @@ static void vm_bg1_begin_line(void) __naked
      *
      * If we're shifting right, we need to do this one step at a time and
      * update y_bg1_map as we go.
+     *
+     * This programs DPTR1 and the MDU with data that needs to stay valid
+     * by the time we reach the scanline renderer!
      */
     
     __asm
