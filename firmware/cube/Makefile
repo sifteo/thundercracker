@@ -4,7 +4,8 @@ OBJS = \
         main.rel \
         graphics_dispatch.rel \
         graphics_bg0.rel \
-        graphics_bg1.rel \
+        graphics_bg1_setup.rel \
+        graphics_bg1_line.rel \
         graphics_sprite.rel \
         graphics_bg0_rom.rel \
         graphics_bg2.rel \
