@@ -5,6 +5,9 @@
     Copyright <c> 2011 Sifteo, Inc. All rights reserved.
 ]]--
 
+SCREENSHOT_PATH_FMT = "scripts/screenshots/%s.png"
+BINARY_PATH_FMT = "scripts/testdata/%s.bin"
+
 LCD_WIDTH  = 128
 LCD_HEIGHT = 128
 LCD_PIXELS = 128*128
@@ -185,7 +188,7 @@ gx = {}
         -- Assert that a screenshot matches the current LCD contents.
         -- If not, we save a copy of the actual LCD screen, and error() out.
         
-        local fullPath = string.format("scripts/screenshots/%s.png", name)
+        local fullPath = string.format(SCREENSHOT_PATH_FMT, name)
         local x, y, lcdColor, refColor;
         
         local status, err = pcall(function()
@@ -237,6 +240,24 @@ gx = {}
                 line = line .. string.format(" %02x", gx.cube:xbPeek(i))
             end
             print(line)
+        end
+    end
+    
+    function gx:loadVRAM(name)
+        local data = io.open(string.format(BINARY_PATH_FMT, name), "rb"):read("*a")
+        local addr = 0
+        for b in string.gfind(data, ".") do
+            gx.cube:xbPoke(addr, string.byte(b))
+            addr = addr + 1
+        end
+    end
+
+    function gx:loadFlash(name)
+        local data = io.open(string.format(BINARY_PATH_FMT, name), "rb"):read("*a")
+        local addr = 0
+        for b in string.gfind(data, ".") do
+            gx.cube:fbPoke(addr, string.byte(b))
+            addr = addr + 1
         end
     end
    
@@ -369,7 +390,28 @@ gx = {}
     function gx:putTileBG0ROM(x, y, tile, palette, mode)
         gx:putTileBG0(x, y, bit.bor( tile, bit.bor( bit.lshift(palette, 10), bit.lshift(mode, 9) )))
     end
-    
+
+	function gx:moveSprite(id, x, y)
+		local xb = bit.band(0xFF, -x)
+		local yb = bit.band(0xFF, -y)
+		local word = bit.bor(bit.lshift(xb, 8), yb)
+		local addr = (VA_SPR + 2 + 6*id) / 2
+    	gx.cube:xwPoke(addr, word)
+	end
+
+	function gx:resizeSprite(id, w, h)
+		local xb = bit.band(0xFF, -w)
+		local yb = bit.band(0xFF, -h)
+		local word = bit.bor(bit.lshift(xb, 8), yb)
+		local addr = (VA_SPR + 0 + 6*id) / 2
+    	gx.cube:xwPoke(addr, word)
+	end
+	
+	function gx:setSpriteImage(id, tile)
+		local addr = (VA_SPR + 4 + 6*id) / 2
+		gx.cube:xwPoke(addr, gx:tileIndex(tile))
+	end
+
     function gx:setMatrixBG2(m)
         gx:pokeWords(VA_BG2_AFFINE, { m[1][3] * 256, m[2][3] * 256,
                                       m[1][1] * 256, m[2][1] * 256,

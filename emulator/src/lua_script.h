@@ -127,7 +127,9 @@ private:
     
     // flash
     int fwPoke(lua_State *L);
+    int fbPoke(lua_State *L);
     int fwPeek(lua_State *L);
+    int fbPeek(lua_State *L);
 };
 
 

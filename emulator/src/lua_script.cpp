@@ -50,7 +50,9 @@ Lunar<LuaCube>::RegType LuaCube::methods[] = {
     LUNAR_DECLARE_METHOD(LuaCube, ibPoke),
     LUNAR_DECLARE_METHOD(LuaCube, ibPeek),
     LUNAR_DECLARE_METHOD(LuaCube, fwPoke),
+    LUNAR_DECLARE_METHOD(LuaCube, fbPoke),
     LUNAR_DECLARE_METHOD(LuaCube, fwPeek),
+    LUNAR_DECLARE_METHOD(LuaCube, fbPeek),
     {0,0}
 };
 
@@ -381,10 +383,24 @@ int LuaCube::fwPoke(lua_State *L)
     return 0;
 }
 
+int LuaCube::fbPoke(lua_State *L)
+{
+    uint8_t *mem = (uint8_t*) &LuaSystem::sys->cubes[id].flash.data;
+    mem[(Cube::FlashModel::SIZE - 1) & luaL_checkinteger(L, 1)] = luaL_checkinteger(L, 2);
+    return 0;
+}
+
 int LuaCube::fwPeek(lua_State *L)
 {
     uint16_t *mem = (uint16_t*) &LuaSystem::sys->cubes[id].flash.data;
     lua_pushinteger(L, mem[(Cube::FlashModel::SIZE/2 - 1) & luaL_checkinteger(L, 1)]);
+    return 1;
+}
+
+int LuaCube::fbPeek(lua_State *L)
+{
+    uint8_t *mem = (uint8_t*) &LuaSystem::sys->cubes[id].flash.data;
+    lua_pushinteger(L, mem[(Cube::FlashModel::SIZE - 1) & luaL_checkinteger(L, 1)]);
     return 1;
 }
 

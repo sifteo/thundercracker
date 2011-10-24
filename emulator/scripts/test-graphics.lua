@@ -180,14 +180,14 @@ TestGraphics = {}
         end
 
         -- Rotation about the center of the screen.
-	--
-	-- This is a precalculated set of integer affine matrices, equivalent
-	-- to (gx:translation(64,64) * gx:rotation(i) * gx:translation(-64,-64))
-	-- for i from 0 to 360, in 5-degree increments. This is all because
-	-- different platforms were giving very slightly different results due
-	-- to the floating-point trig operations.
+    --
+    -- This is a precalculated set of integer affine matrices, equivalent
+    -- to (gx:translation(64,64) * gx:rotation(i) * gx:translation(-64,-64))
+    -- for i from 0 to 360, in 5-degree increments. This is all because
+    -- different platforms were giving very slightly different results due
+    -- to the floating-point trig operations.
 
-	for k, v in pairs{
+    for k, v in pairs{
             {    0, 0x0000, 0x0000, 0x0100, 0x0000, 0x0000, 0x0100 },
             {    5, 0x05d2, 0xfaaa, 0x00ff, 0x0016, 0xffea, 0x00ff },
             {   10, 0x0c16, 0xf5dc, 0x00fc, 0x002c, 0xffd4, 0x00fc },
@@ -261,10 +261,10 @@ TestGraphics = {}
             {  350, 0xf5dc, 0x0c16, 0x00fc, 0xffd4, 0x002c, 0x00fc },
             {  355, 0xfaaa, 0x05d2, 0x00ff, 0xffea, 0x0016, 0x00ff },
             {  360, 0x0000, 0x0000, 0x0100, 0x0000, 0x0000, 0x0100 },
-	    } do
-	    
-	    gx:pokeWords(VA_BG2_AFFINE, { v[2], v[3], v[4], v[5], v[6], v[7] })
-	    gx:drawAndAssert(string.format("bg2-rotate-%d", v[1]))
+        } do
+        
+        gx:pokeWords(VA_BG2_AFFINE, { v[2], v[3], v[4], v[5], v[6], v[7] })
+        gx:drawAndAssert(string.format("bg2-rotate-%d", v[1]))
         end
     end
     
@@ -489,3 +489,113 @@ TestGraphics = {}
         gx:panBG0(0, 0)
         gx:drawAndAssertWithBG1Pan("bg1-chroma")
     end
+
+    function TestGraphics:test_mrpink()
+        gx:loadVRAM("mrpink-vram")
+        gx:drawAndAssert("mrpink")
+    end
+
+    function TestGraphics:test_spr0()
+        -- This is a particular sprite test scenario based on canned flash/VRAM dumps
+        -- from an early sprite example program. It uses all 8 sprites, plus the BG0 
+        -- and BG0 tile layers, with some real sprite images.
+        
+        gx:loadFlash("spr0-flash")
+        gx:loadVRAM("spr0-vram")
+        gx:drawAndAssert("spr0")
+    end
+
+    function TestGraphics:test_spr0_size()
+        -- Move the large sprite to a fully visible position, and try various sizes.
+        -- Only power-of-two and multiple-of-8 sizes are legal, and zero is only
+        -- valid as a height, not a width. Also, we use a funny start tile here (1),
+        -- since the original sprite in the spr0 data has a fully transparent upper-left
+        -- corner, which makes the smaller sprites totally invisible.
+        
+        gx:loadFlash("spr0-flash")
+        gx:loadVRAM("spr0-vram")
+        gx:moveSprite(0, 3, 3)
+        gx:setSpriteImage(0, 1)
+
+        for k,u in pairs{8,16,32,64,128} do
+            for k,v in pairs{0,8,16,32,64,128} do
+                gx:resizeSprite(0, u, v)
+                gx:drawAndAssert(string.format("spr0-size-%dx%d", u, v))
+            end
+        end
+    end
+    
+    function TestGraphics:test_spr0_pos()
+        -- Move the big sprite around the screen, testing all edges
+
+        gx:loadFlash("spr0-flash")
+        gx:loadVRAM("spr0-vram")
+        
+        -- Disable distractions (and help our PNGs compress better)
+        gx:xwFill(VA_BG0_TILES/2, 18*18, 0x6FE)
+        gx:xbFill(VA_BG1_BITMAP, 32, 0)
+        for i = 1, 7 do
+            gx:resizeSprite(i, 0, 0)
+        end
+
+        for i = -128, 127, 3 do
+            gx:moveSprite(0, -13, i)
+            if i <= -64 or i >= 128 then
+                gx:drawAndAssert("solid-FFFF")
+            else
+                gx:drawAndAssert(string.format("spr0-pos-l%d", i))
+            end
+        end
+
+        for i = -128, 127, 7 do
+            gx:moveSprite(0, 100, i)
+            if i <= -64 or i >= 128 then
+                gx:drawAndAssert("solid-FFFF")
+            else
+                gx:drawAndAssert(string.format("spr0-pos-r%d", i))
+            end
+        end
+
+        for i = -128, 127, 3 do
+            gx:moveSprite(0, i, -13)
+            if i <= -64 or i >= 128 then
+                gx:drawAndAssert("solid-FFFF")
+            else
+                gx:drawAndAssert(string.format("spr0-pos-t%d", i))
+            end
+        end   
+
+        for i = -128, 127, 7 do
+            gx:moveSprite(0, i, 100)
+            if i <= -64 or i >= 128 then
+                gx:drawAndAssert("solid-FFFF")
+            else
+                gx:drawAndAssert(string.format("spr0-pos-b%d", i))
+            end
+        end   
+    end
+    
+    function TestGraphics:test_spr0_overlap()
+        -- Place all 8 sprites in various degrees of overlap
+
+        gx:loadFlash("spr0-flash")
+        gx:loadVRAM("spr0-vram")
+
+        for spacing = 0,18 do
+            for sprite = 0,7 do
+                gx:resizeSprite(sprite, 16, 16)
+                gx:setSpriteImage(sprite, 0)
+                gx:moveSprite(sprite, 15 + sprite*spacing, 7 + sprite*spacing/2)
+            end
+            gx:drawAndAssert(string.format("spr0-overlap-%d", spacing))
+        end
+
+        -- Reverse order
+        for spacing = 0,18 do
+            for sprite = 0,7 do
+                gx:moveSprite(7-sprite, 15 + sprite*spacing, 7 + sprite*spacing/2)
+            end
+            gx:drawAndAssert(string.format("spr0-overlap-r-%d", spacing))
+        end
+    end
+
