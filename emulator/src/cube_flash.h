@@ -69,6 +69,8 @@ class Flash {
             if (!file)
                 return false;
 
+            fprintf(stderr, "FLASH: Using file '%s'\n", filename);
+
             result = fread(data, 1, FlashModel::SIZE, file);
             if (result < 0)
                 return false;
@@ -124,7 +126,7 @@ class Flash {
                  */
 
                 cpu->needHardwareTick = true;
-                write_timer = deadline.setRelative(VirtualTime::usec(FLUSH_TIME_US));
+                write_timer = deadline.setRelative(VirtualTime::msec(FLUSH_TIME_MS));
 
                 switch (busy) {
                 case BF_PROGRAM:
@@ -149,6 +151,7 @@ class Flash {
                  */
 
                 busy = BF_IDLE;
+                busy_timer = 0;
                 
                 /*
                  * For performance tuning, it's useful to know where the
@@ -177,10 +180,12 @@ class Flash {
         }
 
         if (UNLIKELY(write_timer)) {
-            if (deadline.hasPassed(write_timer))
+            if (deadline.hasPassed(write_timer)) {
                 write();
-            else
+                write_timer = 0;
+            } else {
                 deadline.set(write_timer);
+            }
         }
     }
 
@@ -257,12 +262,14 @@ class Flash {
             size_t result;
             
             fseek(file, 0, SEEK_SET);
-            
             result = fwrite(data, FlashModel::SIZE, 1, file);
-            if (result != 1)
+         
+            if (result != 1) {
                 perror("Error writing flash");
-            
-            fflush(file);
+            } else {
+                fflush(file);
+                fprintf(stderr, "FLASH: Flushed to disk\n");
+            }
         }
     }
     
@@ -327,7 +334,7 @@ class Flash {
      * non-error-prone way while also avoiding a lot of unnecessary
      * write() calls, or platform-specific memory mapping.
      */
-    static const unsigned FLUSH_TIME_US = 100000;
+    static const unsigned FLUSH_TIME_MS = 500;
 
     struct cmd_state {
         uint32_t addr;

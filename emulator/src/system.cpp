@@ -105,7 +105,7 @@ void System::setNumCubes(unsigned n)
 bool System::initCube(unsigned id)
 {
     if (!cubes[id].init(&time, opt_cubeFirmware.empty() ? NULL : opt_cubeFirmware.c_str(),
-                        !id || opt_cube0Flash.empty() ? NULL : opt_cube0Flash.c_str()))
+                        (id != 0 || opt_cube0Flash.empty()) ? NULL : opt_cube0Flash.c_str()))
         return false;
 
     cubes[id].cpu.id = id;
