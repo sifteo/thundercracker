@@ -358,7 +358,7 @@ LuaUnit = {
 		print()
 	end
 
-	function LuaUnit:run(...)
+	function LuaUnit:run(args)
 		-- Run some specific test classes.
 		-- If no arguments are passed, run the class names specified on the
 		-- command line. If no class name is specified on the command line
@@ -366,7 +366,7 @@ LuaUnit = {
 		--
 		-- If arguments are passed, they must be strings of the class names 
 		-- that you want to run
-                args={...};
+
 		if #args > 0 then
 			table.foreachi( args, LuaUnit.runTestClassByName )
 		else 

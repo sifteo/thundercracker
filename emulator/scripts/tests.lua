@@ -36,9 +36,15 @@ require('scripts/test-graphics')
 
     In particular, you can set TEST to a string of the form
     "TestClass:test_name", just like the strings that luainit
-    will print as the tests run.
+    will print as the tests run. It can also be a space-separated
+    list of such strings.
 ]]--
-    
+
+tests = {}
+for k,v in string.gmatch(os.getenv("TEST") or "", "[^%s]+") do
+    tests[1+#tests] = k
+end
+
 gx:init(os.getenv("USE_FRONTEND"))
-LuaUnit:run(os.getenv("TEST"))
+LuaUnit:run(tests)
 gx:exit()
