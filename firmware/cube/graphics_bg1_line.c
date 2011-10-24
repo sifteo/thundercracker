@@ -8,63 +8,113 @@
 
 #include "graphics_bg1.h"
 #include "hardware.h"
+ 
+#define R_SCRATCH       r0
+#define R_X_WRAP        r1
+#define R_BG0_ADDR      r3
+#define R_BG1_ADDR      r4
+#define R_LOOP_COUNT    r5
+ 
+ 
+void vm_bg0_bg1_pixels(void) __naked
+{   
+    /*
+     * Basic pixel-by-pixel renderer for BG0 + BG1. This isn't particularly fast.
+     * It's capable of rendering whole scanlines, but we only use it for partial tiles.
+     *
+     * Must be set up on entry:
+     *   R_X_WRAP, R_BG0_ADDR, R_BG1_ADDR, R_LOOP_COUNT, DPTR, DPTR1, MDU
+     */
+
+    __asm
+    
+        mov     b, _MD0     ; Cache the value of MD0 in something we can bit-address
+1$:
+
+        ; Chroma-key BG1 Layer
+
+        jnb     b.0, 2$             ; Transparent if there is no bit for this tile
+
+        inc     _DPS
+        ADDR_FROM_DPTR(_DPL1)
+        dec     _DPS
+        mov     ADDR_PORT, R_BG1_ADDR
+        
+        mov     a, #_SYS_CHROMA_KEY
+        cjne    a, BUS_PORT, 3$     ; Also transparent if chroma-key test passes
+2$:
+
+        ; Draw BG0 Layer
+        ADDR_FROM_DPTR(_DPL)
+        mov     ADDR_PORT, R_BG0_ADDR
+3$:     ASM_ADDR_INC4()
+
+        ; Update BG0 accumulator
+        
+        mov     a, R_BG0_ADDR       ; Tentatively move ahead by 4
+        add     a, #4
+        mov     R_BG0_ADDR, a
+        anl     a, #0x1F            ; Check for overflow
+        jnz     4$
+        mov     a, R_BG0_ADDR       ; Yes, overflow occurred. Compensate.
+        add     a, #(0x100 - 0x20)
+        mov     R_BG0_ADDR, a
+        inc     dptr                ; Next BG0 tile
+        inc     dptr
+        ASM_X_WRAP_CHECK(5$)
+4$:
+
+        ; Update BG1 accumulator
+        
+        mov     a, R_BG1_ADDR       ; Tentatively move ahead by 4
+        add     a, #4
+        mov     R_BG1_ADDR, a
+        anl     a, #0x1F            ; Check for overflow
+        jnz     6$
+        mov     _MD0, b             ; Yes, we switched tiles. Start a right-shift
+        mov     _ARCON, #0x21
+        mov     a, R_BG1_ADDR       ; Overflow compensation
+        add     a, #(0x100 - 0x20)
+        mov     R_BG1_ADDR, a
+        jnb     b.0, 7$             ; Were we in a BG1 tile?
+        inc     _DPS                ; Yes. Advance to the next one.
+        inc     dptr
+        inc     dptr
+        dec     _DPS
+        anl     _DPH1, #3           ; XDATA wrap
+7$:     mov     b, _MD0             ; Update MD0 cache
+6$:
+
+        djnz    R_LOOP_COUNT, 1$
+        ret
+    __endasm ;
+}
 
 
 void vm_bg0_bg1_line(void)
 {
-    /*
-     * XXX: Very slow unoptimized implementation. Using this to develop tests...
-     */
+    __asm
+     
+        mov     dpl, _y_bg0_map
+        mov     dph, (_y_bg0_map+1)
+    
+        mov     R_X_WRAP, _x_bg0_wrap
+        
+        mov     a, _y_bg0_addr_l
+        add     a, _x_bg0_first_addr
+        mov     R_BG0_ADDR, a
+        
+        mov     a, _y_bg1_addr_l
+        add     a, _x_bg1_first_addr
+        mov     R_BG1_ADDR, a
+        
+        mov     R_LOOP_COUNT, #128
+        
+        lcall   _vm_bg0_bg1_pixels
 
-    uint8_t bg0_addr = x_bg0_first_addr;
-    uint8_t bg1_addr = x_bg1_first_addr;
-    uint8_t bg0_wrap = x_bg0_wrap;
-    uint8_t x = 128;
-    
-    DPTR = y_bg0_map;
-    
-    do {
-
-        // BG1
-        if (MD0 & 1) {
-            __asm
-                inc     _DPS
-                ADDR_FROM_DPTR(_DPL1)
-                dec     _DPS
-            __endasm ;
-            ADDR_PORT = y_bg1_addr_l + bg1_addr;            
-            if (BUS_PORT != _SYS_CHROMA_KEY)
-                goto pixel_done;
-        }
-    
-        // BG0
-        __asm ADDR_FROM_DPTR(_DPL) __endasm;
-        ADDR_PORT = y_bg0_addr_l + bg0_addr;
-        
-        pixel_done:
-        ADDR_INC4();
-        
-        if (!(bg0_addr = (bg0_addr + 4) & 0x1F)) {
-            DPTR_INC2();
-            BG0_WRAP_CHECK();
-        }
-        
-        if (!(bg1_addr = (bg1_addr + 4) & 0x1F)) {
-            if (MD0 & 1) {
-                __asm
-                    inc     _DPS
-                    inc     dptr
-                    inc     dptr
-                    dec     _DPS
-                    anl     _DPH1, #3
-                __endasm ;
-            }
-            MD0 = MD0;  // Dummy write to reset MDU
-            ARCON = 0x21;
-        }
-        
-    } while (--x);
+    __endasm ;
 }
+
 
 
 
