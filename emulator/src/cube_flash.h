@@ -11,6 +11,13 @@
 
 #include <stdint.h>
 
+#ifdef _WIN32
+#include <io.h>
+#define ftruncate _chsize
+#else
+#include <unistd.h>
+#endif
+
 #include "vtime.h"
 #include "cube_cpu.h"
 #include "cube_flash_model.h"
@@ -261,15 +268,28 @@ class Flash {
         if (file) {
             size_t result;
             
+            /*
+             * Rewrite the file without closing it.
+             */
+
             fseek(file, 0, SEEK_SET);
             result = fwrite(data, FlashModel::SIZE, 1, file);
-         
             if (result != 1) {
                 perror("Error writing flash");
-            } else {
-                fflush(file);
-                fprintf(stderr, "FLASH: Flushed to disk\n");
+                return;
             }
+            fflush(file);
+
+            /*
+             * Automatically trim out any zeroes from the end of the buffer.
+             */
+            
+            unsigned size = FlashModel::SIZE;
+            while (size && data[size-1] == 0)
+                size--;
+            ftruncate(fileno(file), size);
+
+            fprintf(stderr, "FLASH: Flushed to disk\n");
         }
     }
     
