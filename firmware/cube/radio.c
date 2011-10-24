@@ -305,7 +305,6 @@ no_rx_flush:
         mov     _SPIRDAT, #0                    ; First dummy byte, keep the TX FIFO full
         SPI_WAIT                                ; Wait for Command/STATUS byte
         mov     a, _SPIRDAT                     ; Ignore status
-        SPI_WAIT                                ; Wait for first data byte
 
         ;--------------------------------------------------------------------
         ; State Machine
@@ -321,7 +320,8 @@ rx_loop:                                        ; Fetch the next byte or nybble
         swap    a
         sjmp    2$
 
-1$:     mov     a, _SPIRDAT                     ; ... Next byte
+1$:     SPI_WAIT
+        mov     a, _SPIRDAT                     ; ... Next byte
         mov     _SPIRDAT, #0
 2$:     mov     R_INPUT, a
 
@@ -365,7 +365,6 @@ rxs_default:
         jnz     27$
         mov     AR_LOW, R_INPUT
         mov     R_STATE, #(rxs_rle - rxs_default)
-        SPI_WAIT
         RX_NEXT_NYBBLE
 
         ; ------------ Nybble 01ss -- Copy
