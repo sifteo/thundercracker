@@ -365,6 +365,7 @@ rxs_default:
         jnz     27$
         mov     AR_LOW, R_INPUT
         mov     R_STATE, #(rxs_rle - rxs_default)
+        SPI_WAIT
         RX_NEXT_NYBBLE
 
         ; ------------ Nybble 01ss -- Copy
