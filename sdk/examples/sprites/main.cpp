@@ -108,7 +108,7 @@ void siftmain()
         _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_x), -frame);
     
         // Flying bullet
-        moveSprite(0, -frame*3, (128-64)/2 + sinf(frame * 0.2f) * 16);
+        moveSprite(0, 130-frame*3, 190-frame);
 
         System::paint();
     }

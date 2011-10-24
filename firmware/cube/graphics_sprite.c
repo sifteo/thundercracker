@@ -159,7 +159,34 @@ void vm_spr_next()
         swap    a           ; Pixels to tiles (>> 3)
         rl      a           
         anl     a, #0x1F
-        mov     r1, a
+
+	mov	b, r5	    ; Use the mask to calculate a tile width, rounded up
+	jnb	b.6, 24$    ;   <= 128 px
+	jnb	b.5, 23$    ;   <= 64px
+	jnb	b.4, 22$    ;   <= 32px
+	jnb	b.3, 21$    ;   <= 16px
+	sjmp	20$         ;   <= 8px
+
+24$:	rl	a
+23$:	rl	a
+22$:	rl	a
+21$:	rl	a
+20$:    mov     r1, a
+
+	; If the sprite overlaps the left side of the screen, we need to adjust
+	; r1 to account for the horizontal sprite position too.
+
+	mov  	a, r7	    ; X test
+	anl	a, r5
+	jnz	7$
+	
+        mov     a, r7       ; X offset
+        swap    a           ; Pixels to tiles (>> 3)
+        rl      a           
+        anl     a, #0x1F
+	add	a, r1       ; Add Y contribution from above
+	mov	r1, a
+7$:
 
         ; Store lat2:lat1, as the original tile index plus our 8-bit adjustment.
         ; This is an annoying 8 + 7:7 addition. Similar to what we are doing in
@@ -244,6 +271,8 @@ void vm_bg0_spr_bg1_line()
     DPTR = y_bg0_map;
     
     do {
+        struct x_sprite_t __idata *s = x_spr;
+        uint8_t ns = y_spr_active;
 
         // BG1
         if (MD0 & 1) {
@@ -258,30 +287,34 @@ void vm_bg0_spr_bg1_line()
         }
        
         // Sprites
-        {
-            struct x_sprite_t __idata *s = x_spr;
-            uint8_t ns = y_spr_active;
-            do {
-                if (!(s->mask & s->pos)) {
-                    uint16_t l;
+
+        do {
+            if (!(s->mask & s->pos)) {
+                ADDR_PORT = s->lat1;
+                CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
                     
-                    l = s->lat1 + (uint16_t)(uint8_t)(0xFE & (s->pos >> 2)); 
-                    l += s->lat1;
-                    ADDR_PORT = l;
-                    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+                ADDR_PORT = s->lat2;
+                CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
                     
-                    ADDR_PORT = s->lat2 + ((l >> 8) << 1);
-                    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
-                    
-                    ADDR_PORT = s->line_addr + ((s->pos & 7) << 2);
+                ADDR_PORT = s->line_addr + ((s->pos & 7) << 2);
         
-                    if (BUS_PORT != _SYS_CHROMA_KEY)
-                        goto pixel_done;
+                if (BUS_PORT != _SYS_CHROMA_KEY)
+                    goto pixel_done;
+
+                s->pos++;
+
+                if (!(7 & s->pos)) {
+                    s->lat1 += 2;
+                    if (!s->lat1)       
+                        s->lat2 += 2;
                 }
-            
-                s++;
-            } while (--ns);
-        }
+
+            } else {
+                s->pos++;
+            }
+
+            s++;
+        } while (--ns);
     
         // BG0
         __asm ADDR_FROM_DPTR(_DPL) __endasm;
@@ -309,15 +342,23 @@ void vm_bg0_spr_bg1_line()
             ARCON = 0x21;
         }
 
-        {
-            struct x_sprite_t __idata *s = x_spr;
-            uint8_t ns = y_spr_active;
+        if (ns)
             do {
-                s->pos++;
+                if (!(s->mask & s->pos)) {
+                    s->pos++;
+
+                    if (!(7 & s->pos)) {
+                        s->lat1 += 2;
+                        if (!s->lat1)       
+                            s->lat2 += 2;
+                    }
+                } else {
+                    s->pos++;
+                }
+                
                 s++;
             } while (--ns);
-        }
-        
+
     } while (--x);
 }
 
