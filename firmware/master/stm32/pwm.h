@@ -13,7 +13,9 @@
 
 class Pwm {
 public:
-    Pwm(volatile TIM2_5_t *_hw, GPIOPin _output);
+    Pwm(volatile TIM_t *_hw, GPIOPin _output, GPIOPin _complementaryOutput) :
+        tim(_hw), output(_output), complementaryOutput(_complementaryOutput)
+    {}
 
     enum Polarity {
         ActiveHigh,
@@ -25,10 +27,15 @@ public:
         DmaEnabled
     };
 
-    void init(int freq, int period);
+    enum OutputMode {
+        SingleOutput,
+        ComplementaryOutput
+    };
+
+    void init(int period, int prescaler);
     void end();
 
-    void enableChannel(int ch, enum Polarity p, int duty, enum DmaMode dmamode = DmaDisabled);
+    void enableChannel(int ch, enum Polarity p, enum OutputMode outmode = SingleOutput, enum DmaMode dmamode = DmaDisabled);
     void disableChannel(int ch);
 
     int period() const;
@@ -38,8 +45,9 @@ public:
     void setDutyDma(int ch, const uint16_t *data, uint16_t len);
 
 private:
-    volatile TIM2_5_t *tim;
+    volatile TIM_t *tim;
     GPIOPin output;
+    GPIOPin complementaryOutput;
 
     static void staticDmaHandler(void *p, uint32_t flags);
     void dmaHandler(uint32_t flags);

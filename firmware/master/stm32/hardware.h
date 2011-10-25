@@ -85,11 +85,11 @@ extern volatile SPI_t SPI1;
 extern volatile SPI_t SPI2;
 extern volatile SPI_t SPI3;
 
-/*
- * Timers 2-5
- */
 
-struct TIM2_5_t {
+/*
+ * Timers 1-5 & 8
+ */
+struct TIM_t {
     uint32_t CR1;
     uint32_t CR2;
     uint32_t SMCR;
@@ -102,17 +102,19 @@ struct TIM2_5_t {
     uint32_t CNT;
     uint32_t PSC;
     uint32_t ARR;
-    uint32_t _res1;
+    uint32_t RCR;       // only valid for TIM1 & TIM8
     uint32_t CCR[4];
-    uint32_t _res2;
+    uint32_t BDTR;      // only valid for TIM1 & TIM8
     uint32_t DCR;
     uint32_t DMAR;
 };
 
-extern volatile TIM2_5_t TIM2;
-extern volatile TIM2_5_t TIM3;
-extern volatile TIM2_5_t TIM4;
-extern volatile TIM2_5_t TIM5;
+extern volatile TIM_t TIM1;
+extern volatile TIM_t TIM2;
+extern volatile TIM_t TIM3;
+extern volatile TIM_t TIM4;
+extern volatile TIM_t TIM5;
+extern volatile TIM_t TIM8;
 
 /*
  * Direct memory access
