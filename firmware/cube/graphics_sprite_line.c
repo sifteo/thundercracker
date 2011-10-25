@@ -17,6 +17,25 @@
     __asm   jz      lbl                                             __endasm; \
     __asm
     
+// Advance a sprite's position by an arbitrary amount
+#define SPR_ADVANCE(id, amount)                                     __endasm; \
+    __asm   mov     a, XSPR_POS(id)                                 __endasm; \
+    __asm   add     a, #(amount)                                    __endasm; \
+    __asm   mov     XSPR_POS(id), a                                 __endasm; \
+    __asm
+    
+// Can we safely perform a background burst behind this sprite?
+// The sprite must be inactive now and for the next 8 pixels.
+#define SPR_BG_BURST_TEST(id, lblNotOk)                             __endasm; \
+    __asm   mov     R_SCRATCH, XSPR_POS(id)                         __endasm; \
+    __asm   mov     a, XSPR_MASK(id)                                __endasm; \
+    __asm   anl     a, R_SCRATCH                                    __endasm; \
+    __asm   jz      lblNotOk                                        __endasm; \
+    __asm   mov     a, #8                                           __endasm; \
+    __asm   add     a, R_SCRATCH                                    __endasm; \
+    __asm   jc      lblNotOk                                        __endasm; \
+    __asm
+    
 // If we're done with the active sprites, jump ahead
 #define SPR_SKIP(id, l1, end)                                       __endasm; \
     __asm   cjne    R_SPR_ACTIVE, #(id), l1                         __endasm; \
@@ -86,7 +105,7 @@ static void spr_occluded_next_0() __naked { SPR_OCCLUDED_NEXT(0) }
 static void spr_occluded_next_1() __naked { SPR_OCCLUDED_NEXT(1) }
 static void spr_occluded_next_2() __naked { SPR_OCCLUDED_NEXT(2) }
 static void spr_occluded_next_3() __naked { SPR_OCCLUDED_NEXT(3) }
-    
+
 
 void vm_bg0_spr_pixels() __naked
 {
@@ -122,12 +141,58 @@ void vm_bg0_spr_pixels() __naked
         mov     ADDR_PORT, R_BG0_ADDR
 4$:     ASM_ADDR_INC4()
         
-        ; Update BG0 state
-        BG0_NEXT_PIXEL(50$, 51$)
+        ; Update BG0 state, and look for opportunities to burst
+        ; a whole BG0 tile at a time. This is based on BG0_NEXT_PIXEL.
         
+        mov     a, R_BG0_ADDR           ; Quick addition, move to the next pixel
+        add     a, #4
+        mov     R_BG0_ADDR, a
+        anl     a, #0x1F
+        jnz     5$
+        
+        mov     a, R_BG0_ADDR           ; Overflow compensation
+        add     a, #(0x100 - 0x20)
+        mov     R_BG0_ADDR, a
+        
+7$:     inc     dptr                    ; Next BG0 tile
+        inc     dptr
+        ASM_X_WRAP_CHECK(8$)
+
+        ; Make sure all sprites are out of the way of this potential burst
+        SPR_BG_BURST_TEST(0, 5$) SPR_SKIP(1, 30$, 36$)
+        SPR_BG_BURST_TEST(1, 5$) SPR_SKIP(2, 31$, 36$)
+        SPR_BG_BURST_TEST(2, 5$) SPR_SKIP(3, 32$, 36$)
+        SPR_BG_BURST_TEST(3, 5$)
+36$:
+        
+        ; Make sure we have enough pixel loops remaining
+        mov     a, R_LOOP_COUNT
+        add     a, #(0x100 - 8)
+        jc      6$
+
+5$:        
         djnz    R_LOOP_COUNT, 3$
-        ret
+37$:    ret
 3$:     ljmp    1$
+        
+        ; --- BG0 Tile Burst
+
+6$:        
+        mov     R_LOOP_COUNT, a
+      
+        ADDR_FROM_DPTR(_DPL)
+        mov     ADDR_PORT, R_BG0_ADDR
+        lcall    _addr_inc32
+
+        SPR_ADVANCE(0, 8) SPR_SKIP(1, 33$, 9$)
+        SPR_ADVANCE(1, 8) SPR_SKIP(2, 34$, 9$)
+        SPR_ADVANCE(2, 8) SPR_SKIP(3, 35$, 9$)
+        SPR_ADVANCE(3, 8)
+9$:
+        
+        mov     a, R_LOOP_COUNT
+        jz      37$
+        ljmp    7$
         
     __endasm ;
 }

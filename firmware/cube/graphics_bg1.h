@@ -60,6 +60,7 @@ extern __bit y_bg1_empty;               // Current line of the bitmap is empty. 
  * Scanline renderer registers
  */
 
+#define R_SCRATCH       r0
 #define R_X_WRAP        r1
 #define R_BG0_ADDR      r3
 #define R_BG1_ADDR      r4
