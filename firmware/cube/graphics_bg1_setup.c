@@ -233,7 +233,7 @@ void vm_bg1_setup(void)
         x_bg1_offset_bit2 = x_bg1_offset & 4;
         
         x_bg1_first_addr = (pan_x << 2) & 0x1C;
-        x_bg1_last_addr = (8 - x_bg1_offset) << 2;
+        x_bg1_last_addr = ((8 - x_bg1_offset) << 2) & (7 << 2);
             
         x_bg1_lshift = 0;
         x_bg1_rshift = 0;
