@@ -49,14 +49,13 @@ struct Opcodes {
 
 #define PSW aCPU->mSFR[REG_PSW]
 #define ACC aCPU->mSFR[REG_ACC]
-#define PC aCPU->mPC
 #define INDIR_RX_ADDRESS    (aCPU->mData[(opcode & 1) + 8 * ((PSW & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0)])
 #define RX_ADDRESS          ((opcode & 7) + 8 * ((PSW & (PSWMASK_RS0|PSWMASK_RS1))>>PSW_RS0))
 #define CARRY               ((PSW & PSWMASK_C) >> PSW_C)
 #define INDIR_RX_ADDRESS_X  (INDIR_RX_ADDRESS | (aCPU->mSFR[REG_MPAGE] << 8))
 
 
-static ALWAYS_INLINE int read_mem(em8051 *aCPU, int aAddress)
+static ALWAYS_INLINE FASTCALL int read_mem(em8051 *aCPU, int aAddress)
 {
     if (aAddress > 0x7f)
         return SFR::read(aCPU, aAddress);
@@ -93,7 +92,7 @@ static ALWAYS_INLINE void push_to_stack(em8051 *aCPU, int aValue)
     aCPU->mSFR[REG_SP] = sp + 1;
 }
 
-static ALWAYS_INLINE int pop_word_from_stack(em8051 *aCPU)
+static ALWAYS_INLINE FASTCALL int pop_word_from_stack(em8051 *aCPU)
 {
     unsigned sp = aCPU->mSFR[REG_SP];
     
@@ -110,7 +109,7 @@ static ALWAYS_INLINE int pop_word_from_stack(em8051 *aCPU)
     return value;
 }
 
-static ALWAYS_INLINE int pop_from_stack(em8051 *aCPU)
+static ALWAYS_INLINE FASTCALL int pop_from_stack(em8051 *aCPU)
 {
     unsigned sp = aCPU->mSFR[REG_SP];
     
@@ -152,7 +151,7 @@ static ALWAYS_INLINE void sub_solve_flags(em8051 * aCPU, int value1, int value2)
 }
 
 
-static ALWAYS_INLINE int ajmp_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int ajmp_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = ((PC + 2) & 0xf800) |
                   operand1 | 
@@ -163,7 +162,7 @@ static ALWAYS_INLINE int ajmp_offset(em8051 *aCPU, uint8_t opcode, uint8_t opera
     return 3;
 }
 
-static ALWAYS_INLINE int ljmp_address(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int ljmp_address(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = (operand1 << 8) | operand2;
     PC = address;
@@ -172,21 +171,21 @@ static ALWAYS_INLINE int ljmp_address(em8051 *aCPU, uint8_t opcode, uint8_t oper
 }
 
 
-static ALWAYS_INLINE int rr_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int rr_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC = (ACC >> 1) | (ACC << 7);
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int inc_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int inc_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC++;
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int inc_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int inc_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -202,7 +201,7 @@ static ALWAYS_INLINE int inc_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1,
     return 3;
 }
 
-static ALWAYS_INLINE int inc_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int inc_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {    
     int address = INDIR_RX_ADDRESS;
     aCPU->mData[address]++;
@@ -210,7 +209,7 @@ static ALWAYS_INLINE int inc_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t oper
     return 3;
 }
 
-static ALWAYS_INLINE int jbc_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int jbc_bitaddr_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     // "Note: when this instruction is used to test an output pin, the value used 
     // as the original data will be read from the output data latch, not the input pin"
@@ -253,7 +252,7 @@ static ALWAYS_INLINE int jbc_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_
     return 4;
 }
 
-static ALWAYS_INLINE int acall_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int acall_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = ((PC + 2) & 0xf800) | operand1 | ((opcode & 0xe0) << 3);
     push_word_to_stack(aCPU, PC + 2);
@@ -261,14 +260,14 @@ static ALWAYS_INLINE int acall_offset(em8051 *aCPU, uint8_t opcode, uint8_t oper
     return 6;
 }
 
-static ALWAYS_INLINE int lcall_address(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int lcall_address(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     push_word_to_stack(aCPU, PC + 3);
     PC = (operand1 << 8) | operand2;
     return 6;
 }
 
-static ALWAYS_INLINE int rrc_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int rrc_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int c = (PSW & PSWMASK_C) >> PSW_C;
     int newc = ACC & 1;
@@ -278,14 +277,14 @@ static ALWAYS_INLINE int rrc_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, u
     return 1;
 }
 
-static ALWAYS_INLINE int dec_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int dec_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC--;
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int dec_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int dec_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -301,7 +300,7 @@ static ALWAYS_INLINE int dec_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1,
     return 3;
 }
 
-static ALWAYS_INLINE int dec_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int dec_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     aCPU->mData[address]--;
@@ -310,7 +309,7 @@ static ALWAYS_INLINE int dec_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t oper
 }
 
 
-static ALWAYS_INLINE int jb_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int jb_bitaddr_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -348,20 +347,20 @@ static ALWAYS_INLINE int jb_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_t
     return 4;
 }
 
-static ALWAYS_INLINE int ret(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int ret(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     PC = pop_word_from_stack(aCPU);
     return 4;
 }
 
-static ALWAYS_INLINE int rl_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int rl_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC = (ACC << 1) | (ACC >> 7);
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int add_a_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int add_a_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     add_solve_flags(aCPU, ACC, operand1, 0);
     ACC += operand1;
@@ -369,7 +368,7 @@ static ALWAYS_INLINE int add_a_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 2;
 }
 
-static ALWAYS_INLINE int add_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int add_a_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int value = read_mem(aCPU, operand1);
     add_solve_flags(aCPU, ACC, value, 0);
@@ -378,7 +377,7 @@ static ALWAYS_INLINE int add_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 2;
 }
 
-static ALWAYS_INLINE int add_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int add_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     add_solve_flags(aCPU, ACC, aCPU->mData[address], 0);
@@ -387,7 +386,7 @@ static ALWAYS_INLINE int add_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t op
     return 2;
 }
 
-static ALWAYS_INLINE int jnb_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int jnb_bitaddr_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -425,7 +424,7 @@ static ALWAYS_INLINE int jnb_bitaddr_offset(em8051 *aCPU, uint8_t opcode, uint8_
     return 4;
 }
 
-static ALWAYS_INLINE int reti(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int reti(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     // Time to execute the RETI instruction itself
     int cycles = 4;
@@ -461,7 +460,7 @@ static ALWAYS_INLINE int reti(em8051 *aCPU, uint8_t opcode, uint8_t operand1, ui
     return cycles;
 }
 
-static ALWAYS_INLINE int rlc_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int rlc_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int c = CARRY;
     int newc = ACC >> 7;
@@ -471,7 +470,7 @@ static ALWAYS_INLINE int rlc_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, u
     return 1;
 }
 
-static ALWAYS_INLINE int addc_a_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int addc_a_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int carry = CARRY;
     add_solve_flags(aCPU, ACC, operand1, carry);
@@ -480,7 +479,7 @@ static ALWAYS_INLINE int addc_a_imm(em8051 *aCPU, uint8_t opcode, uint8_t operan
     return 2;
 }
 
-static ALWAYS_INLINE int addc_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int addc_a_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int carry = CARRY;
     int value = read_mem(aCPU, operand1);
@@ -490,7 +489,7 @@ static ALWAYS_INLINE int addc_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operan
     return 2;
 }
 
-static ALWAYS_INLINE int addc_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int addc_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int carry = CARRY;
     int address = INDIR_RX_ADDRESS;
@@ -501,7 +500,7 @@ static ALWAYS_INLINE int addc_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t o
 }
 
 
-static ALWAYS_INLINE int jc_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int jc_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     if (PSW & PSWMASK_C)
     {
@@ -514,7 +513,7 @@ static ALWAYS_INLINE int jc_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 3;
 }
 
-static ALWAYS_INLINE int orl_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int orl_mem_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -530,7 +529,7 @@ static ALWAYS_INLINE int orl_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 3;
 }
 
-static ALWAYS_INLINE int orl_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int orl_mem_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -547,14 +546,14 @@ static ALWAYS_INLINE int orl_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t opera
     return 4;
 }
 
-static ALWAYS_INLINE int orl_a_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int orl_a_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC |= operand1;
     PC += 2;
     return 2;
 }
 
-static ALWAYS_INLINE int orl_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int orl_a_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int value = read_mem(aCPU, operand1);
     ACC |= value;
@@ -562,7 +561,7 @@ static ALWAYS_INLINE int orl_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 2;
 }
 
-static ALWAYS_INLINE int orl_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int orl_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     ACC |= aCPU->mData[address];
@@ -571,7 +570,7 @@ static ALWAYS_INLINE int orl_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t op
 }
 
 
-static ALWAYS_INLINE int jnc_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int jnc_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     if (PSW & PSWMASK_C)
     {
@@ -584,7 +583,7 @@ static ALWAYS_INLINE int jnc_offset(em8051 *aCPU, uint8_t opcode, uint8_t operan
     return 3;
 }
 
-static ALWAYS_INLINE int anl_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int anl_mem_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -600,7 +599,7 @@ static ALWAYS_INLINE int anl_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 3;
 }
 
-static ALWAYS_INLINE int anl_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int anl_mem_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -616,14 +615,14 @@ static ALWAYS_INLINE int anl_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t opera
     return 4;
 }
 
-static ALWAYS_INLINE int anl_a_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int anl_a_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC &= operand1;
     PC += 2;
     return 2;
 }
 
-static ALWAYS_INLINE int anl_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int anl_a_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int value = read_mem(aCPU, operand1);
     ACC &= value;
@@ -631,7 +630,7 @@ static ALWAYS_INLINE int anl_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 2;
 }
 
-static ALWAYS_INLINE int anl_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int anl_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     ACC &= aCPU->mData[address];
@@ -640,7 +639,7 @@ static ALWAYS_INLINE int anl_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t op
 }
 
 
-static ALWAYS_INLINE int jz_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int jz_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     if (!ACC)
     {
@@ -653,7 +652,7 @@ static ALWAYS_INLINE int jz_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 3;
 }
 
-static ALWAYS_INLINE int xrl_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int xrl_mem_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -669,7 +668,7 @@ static ALWAYS_INLINE int xrl_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 3;
 }
 
-static ALWAYS_INLINE int xrl_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int xrl_mem_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -685,14 +684,14 @@ static ALWAYS_INLINE int xrl_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t opera
     return 4;
 }
 
-static ALWAYS_INLINE int xrl_a_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int xrl_a_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC ^= operand1;
     PC += 2;
     return 2;
 }
 
-static ALWAYS_INLINE int xrl_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int xrl_a_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int value = read_mem(aCPU, operand1);
     ACC ^= value;
@@ -700,7 +699,7 @@ static ALWAYS_INLINE int xrl_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 2;
 }
 
-static ALWAYS_INLINE int xrl_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int xrl_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     ACC ^= aCPU->mData[address];
@@ -709,7 +708,7 @@ static ALWAYS_INLINE int xrl_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t op
 }
 
 
-static ALWAYS_INLINE int jnz_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int jnz_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     if (ACC)
     {
@@ -722,7 +721,7 @@ static ALWAYS_INLINE int jnz_offset(em8051 *aCPU, uint8_t opcode, uint8_t operan
     return 3;
 }
 
-static ALWAYS_INLINE int orl_c_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int orl_c_bitaddr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     int carry = CARRY;
@@ -750,20 +749,20 @@ static ALWAYS_INLINE int orl_c_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t ope
     return 2;
 }
 
-static ALWAYS_INLINE int jmp_indir_a_dptr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int jmp_indir_a_dptr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     PC = ((aCPU->mSFR[CUR_DPH] << 8) | (aCPU->mSFR[CUR_DPL])) + ACC;
     return 2;
 }
 
-static ALWAYS_INLINE int mov_a_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_a_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC = operand1;
     PC += 2;
     return 2;
 }
 
-static ALWAYS_INLINE int mov_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_mem_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -780,7 +779,7 @@ static ALWAYS_INLINE int mov_mem_imm(em8051 *aCPU, uint8_t opcode, uint8_t opera
     return 3;
 }
 
-static ALWAYS_INLINE int mov_indir_rx_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_indir_rx_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     int value = operand1;
@@ -790,13 +789,13 @@ static ALWAYS_INLINE int mov_indir_rx_imm(em8051 *aCPU, uint8_t opcode, uint8_t 
 }
 
 
-static ALWAYS_INLINE int sjmp_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int sjmp_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     PC += (signed char)(operand1) + 2;
     return 3;
 }
 
-static ALWAYS_INLINE int anl_c_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int anl_c_bitaddr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     int carry = CARRY;
@@ -824,7 +823,7 @@ static ALWAYS_INLINE int anl_c_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t ope
     return 2;
 }
 
-static ALWAYS_INLINE int movc_a_indir_a_pc(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int movc_a_indir_a_pc(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = PC + 1 + ACC;
     address &= CODE_SIZE - 1;
@@ -838,7 +837,7 @@ static ALWAYS_INLINE int movc_a_indir_a_pc(em8051 *aCPU, uint8_t opcode, uint8_t
     return 3;
 }
 
-static ALWAYS_INLINE int div_ab(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int div_ab(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int a = ACC;
     int b = aCPU->mSFR[REG_B];
@@ -860,7 +859,7 @@ static ALWAYS_INLINE int div_ab(em8051 *aCPU, uint8_t opcode, uint8_t operand1, 
     return 5;
 }
 
-static ALWAYS_INLINE int mov_mem_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_mem_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address1 = operand2;
     int value = read_mem(aCPU, operand1);
@@ -879,7 +878,7 @@ static ALWAYS_INLINE int mov_mem_mem(em8051 *aCPU, uint8_t opcode, uint8_t opera
     return 4;
 }
 
-static ALWAYS_INLINE int mov_mem_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_mem_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address1 = operand1;
     int address2 = INDIR_RX_ADDRESS;
@@ -896,7 +895,7 @@ static ALWAYS_INLINE int mov_mem_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t 
 }
 
 
-static ALWAYS_INLINE int mov_dptr_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_dptr_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     aCPU->mSFR[CUR_DPH] = operand1;
     aCPU->mSFR[CUR_DPL] = operand2;
@@ -904,7 +903,7 @@ static ALWAYS_INLINE int mov_dptr_imm(em8051 *aCPU, uint8_t opcode, uint8_t oper
     return 3;
 }
 
-static ALWAYS_INLINE int mov_bitaddr_c(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2) 
+static ALWAYS_INLINE FASTCALL int mov_bitaddr_c(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2) 
 {
     int address = operand1;
     int carry = CARRY;
@@ -930,7 +929,7 @@ static ALWAYS_INLINE int mov_bitaddr_c(em8051 *aCPU, uint8_t opcode, uint8_t ope
     return 3;
 }
 
-static ALWAYS_INLINE int movc_a_indir_a_dptr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int movc_a_indir_a_dptr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = ((aCPU->mSFR[CUR_DPH] << 8) | (aCPU->mSFR[CUR_DPL] << 0)) + ACC;
     address &= CODE_SIZE - 1;
@@ -944,7 +943,7 @@ static ALWAYS_INLINE int movc_a_indir_a_dptr(em8051 *aCPU, uint8_t opcode, uint8
     return 3;
 }
 
-static ALWAYS_INLINE int subb_a_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int subb_a_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int carry = CARRY;
     sub_solve_flags(aCPU, ACC, operand1 + carry);
@@ -953,7 +952,7 @@ static ALWAYS_INLINE int subb_a_imm(em8051 *aCPU, uint8_t opcode, uint8_t operan
     return 2;
 }
 
-static ALWAYS_INLINE int subb_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2) 
+static ALWAYS_INLINE FASTCALL int subb_a_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2) 
 {
     int carry = CARRY;
     int value = read_mem(aCPU, operand1) + carry;
@@ -963,7 +962,7 @@ static ALWAYS_INLINE int subb_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operan
     PC += 2;
     return 2;
 }
-static ALWAYS_INLINE int subb_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int subb_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int carry = CARRY;
     int address = INDIR_RX_ADDRESS;
@@ -974,7 +973,7 @@ static ALWAYS_INLINE int subb_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t o
 }
 
 
-static ALWAYS_INLINE int orl_c_compl_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int orl_c_compl_bitaddr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     int carry = CARRY;
@@ -1002,7 +1001,7 @@ static ALWAYS_INLINE int orl_c_compl_bitaddr(em8051 *aCPU, uint8_t opcode, uint8
     return 2;
 }
 
-static ALWAYS_INLINE int mov_c_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2) 
+static ALWAYS_INLINE FASTCALL int mov_c_bitaddr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2) 
 {
     int address = operand1;
     if (address > 0x7f)
@@ -1030,7 +1029,7 @@ static ALWAYS_INLINE int mov_c_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t ope
     return 2;
 }
 
-static ALWAYS_INLINE int inc_dptr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int inc_dptr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     aCPU->mSFR[CUR_DPL]++;
     if (!aCPU->mSFR[CUR_DPL])
@@ -1039,7 +1038,7 @@ static ALWAYS_INLINE int inc_dptr(em8051 *aCPU, uint8_t opcode, uint8_t operand1
     return 1;
 }
 
-static ALWAYS_INLINE int mul_ab(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mul_ab(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int a = ACC;
     int b = aCPU->mSFR[REG_B];
@@ -1053,7 +1052,7 @@ static ALWAYS_INLINE int mul_ab(em8051 *aCPU, uint8_t opcode, uint8_t operand1, 
     return 5;
 }
 
-static ALWAYS_INLINE int mov_indir_rx_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_indir_rx_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address1 = INDIR_RX_ADDRESS;
     int value = read_mem(aCPU, operand1);
@@ -1063,7 +1062,7 @@ static ALWAYS_INLINE int mov_indir_rx_mem(em8051 *aCPU, uint8_t opcode, uint8_t 
 }
 
 
-static ALWAYS_INLINE int anl_c_compl_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int anl_c_compl_bitaddr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     int carry = CARRY;
@@ -1092,7 +1091,7 @@ static ALWAYS_INLINE int anl_c_compl_bitaddr(em8051 *aCPU, uint8_t opcode, uint8
 }
 
 
-static ALWAYS_INLINE int cpl_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int cpl_bitaddr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -1117,14 +1116,14 @@ static ALWAYS_INLINE int cpl_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t opera
     return 3;
 }
 
-static ALWAYS_INLINE int cpl_c(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int cpl_c(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     PSW ^= PSWMASK_C;
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int cjne_a_imm_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int cjne_a_imm_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int value = operand1;
 
@@ -1148,7 +1147,7 @@ static ALWAYS_INLINE int cjne_a_imm_offset(em8051 *aCPU, uint8_t opcode, uint8_t
     return 4;
 }
 
-static ALWAYS_INLINE int cjne_a_mem_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int cjne_a_mem_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     int value;
@@ -1180,7 +1179,7 @@ static ALWAYS_INLINE int cjne_a_mem_offset(em8051 *aCPU, uint8_t opcode, uint8_t
     }
     return 4;
 }
-static ALWAYS_INLINE int cjne_indir_rx_imm_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int cjne_indir_rx_imm_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     int value1 = aCPU->mData[address];
@@ -1199,7 +1198,7 @@ static ALWAYS_INLINE int cjne_indir_rx_imm_offset(em8051 *aCPU, uint8_t opcode, 
     return 4;
 }
 
-static ALWAYS_INLINE int push_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int push_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int value = read_mem(aCPU, operand1);
     push_to_stack(aCPU, value);   
@@ -1208,7 +1207,7 @@ static ALWAYS_INLINE int push_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1
 }
 
 
-static ALWAYS_INLINE int clr_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int clr_bitaddr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -1233,21 +1232,21 @@ static ALWAYS_INLINE int clr_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t opera
     return 3;
 }
 
-static ALWAYS_INLINE int clr_c(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int clr_c(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     PSW &= ~PSWMASK_C;
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int swap_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int swap_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC = (ACC << 4) | (ACC >> 4);
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int xch_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int xch_a_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     int value = read_mem(aCPU, operand1);
@@ -1266,7 +1265,7 @@ static ALWAYS_INLINE int xch_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 3;
 }
 
-static ALWAYS_INLINE int xch_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int xch_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     int value = aCPU->mData[address];
@@ -1277,7 +1276,7 @@ static ALWAYS_INLINE int xch_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t op
 }
 
 
-static ALWAYS_INLINE int pop_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int pop_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -1294,7 +1293,7 @@ static ALWAYS_INLINE int pop_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1,
     return 3;
 }
 
-static ALWAYS_INLINE int setb_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int setb_bitaddr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -1319,14 +1318,14 @@ static ALWAYS_INLINE int setb_bitaddr(em8051 *aCPU, uint8_t opcode, uint8_t oper
     return 3;
 }
 
-static ALWAYS_INLINE int setb_c(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int setb_c(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     PSW |= PSWMASK_C;
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int da_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int da_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     // data sheets for this operation are a bit unclear..
     // - should AC (or C) ever be cleared?
@@ -1357,7 +1356,7 @@ static ALWAYS_INLINE int da_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, ui
     return 1;
 }
 
-static ALWAYS_INLINE int djnz_mem_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int djnz_mem_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     int value;
@@ -1383,7 +1382,7 @@ static ALWAYS_INLINE int djnz_mem_offset(em8051 *aCPU, uint8_t opcode, uint8_t o
     return 4;
 }
 
-static ALWAYS_INLINE int xchd_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int xchd_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     int value = aCPU->mData[address];
@@ -1394,7 +1393,7 @@ static ALWAYS_INLINE int xchd_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t o
 }
 
 
-static ALWAYS_INLINE int movx_a_indir_dptr(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int movx_a_indir_dptr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int dptr = (aCPU->mSFR[CUR_DPH] << 8) | aCPU->mSFR[CUR_DPL];
 
@@ -1407,7 +1406,7 @@ static ALWAYS_INLINE int movx_a_indir_dptr(em8051 *aCPU, uint8_t opcode, uint8_t
     return 4;
 }
 
-static ALWAYS_INLINE int movx_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int movx_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int dptr = INDIR_RX_ADDRESS_X;
 
@@ -1420,14 +1419,14 @@ static ALWAYS_INLINE int movx_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t o
     return 4;
 }
 
-static ALWAYS_INLINE int clr_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int clr_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC = 0;
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int mov_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_a_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     // mov a,acc is not a valid instruction
     int address = operand1;
@@ -1440,7 +1439,7 @@ static ALWAYS_INLINE int mov_a_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 2;
 }
 
-static ALWAYS_INLINE int mov_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     ACC = aCPU->mData[address];
@@ -1449,7 +1448,7 @@ static ALWAYS_INLINE int mov_a_indir_rx(em8051 *aCPU, uint8_t opcode, uint8_t op
 }
 
 
-static ALWAYS_INLINE int movx_indir_dptr_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int movx_indir_dptr_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int dptr = (aCPU->mSFR[CUR_DPH] << 8) | aCPU->mSFR[CUR_DPL];
 
@@ -1462,7 +1461,7 @@ static ALWAYS_INLINE int movx_indir_dptr_a(em8051 *aCPU, uint8_t opcode, uint8_t
     return 5;
 }
 
-static ALWAYS_INLINE int movx_indir_rx_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int movx_indir_rx_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int dptr = INDIR_RX_ADDRESS_X;
 
@@ -1475,14 +1474,14 @@ static ALWAYS_INLINE int movx_indir_rx_a(em8051 *aCPU, uint8_t opcode, uint8_t o
     return 5;
 }
 
-static ALWAYS_INLINE int cpl_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int cpl_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     ACC = ~ACC;
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int mov_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_mem_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = operand1;
     if (address > 0x7f)
@@ -1498,7 +1497,7 @@ static ALWAYS_INLINE int mov_mem_a(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 3;
 }
 
-static ALWAYS_INLINE int mov_indir_rx_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_indir_rx_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = INDIR_RX_ADDRESS;
     aCPU->mData[address] = ACC;
@@ -1506,20 +1505,20 @@ static ALWAYS_INLINE int mov_indir_rx_a(em8051 *aCPU, uint8_t opcode, uint8_t op
     return 3;
 }
 
-static ALWAYS_INLINE int nop(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int nop(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int illegal(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int illegal(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     except(aCPU, EXCEPTION_ILLEGAL_OPCODE);
     PC++;
     return 1;
 }
 
-static ALWAYS_INLINE int inc_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int inc_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     aCPU->mData[rx]++;
@@ -1527,7 +1526,7 @@ static ALWAYS_INLINE int inc_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, 
     return 2;
 }
 
-static ALWAYS_INLINE int dec_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int dec_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     aCPU->mData[rx]--;
@@ -1535,7 +1534,7 @@ static ALWAYS_INLINE int dec_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, 
     return 2;
 }
 
-static ALWAYS_INLINE int add_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int add_a_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     add_solve_flags(aCPU, aCPU->mData[rx], ACC, 0);
@@ -1544,7 +1543,7 @@ static ALWAYS_INLINE int add_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1
     return 1;
 }
 
-static ALWAYS_INLINE int addc_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int addc_a_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     int carry = CARRY;
@@ -1554,7 +1553,7 @@ static ALWAYS_INLINE int addc_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 1;
 }
 
-static ALWAYS_INLINE int orl_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int orl_a_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     ACC |= aCPU->mData[rx];
@@ -1562,7 +1561,7 @@ static ALWAYS_INLINE int orl_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1
     return 1;
 }
 
-static ALWAYS_INLINE int anl_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int anl_a_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     ACC &= aCPU->mData[rx];
@@ -1570,7 +1569,7 @@ static ALWAYS_INLINE int anl_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1
     return 1;
 }
 
-static ALWAYS_INLINE int xrl_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int xrl_a_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     ACC ^= aCPU->mData[rx];    
@@ -1579,7 +1578,7 @@ static ALWAYS_INLINE int xrl_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1
 }
 
 
-static ALWAYS_INLINE int mov_rx_imm(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_rx_imm(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     aCPU->mData[rx] = operand1;
@@ -1587,7 +1586,7 @@ static ALWAYS_INLINE int mov_rx_imm(em8051 *aCPU, uint8_t opcode, uint8_t operan
     return 2;
 }
 
-static ALWAYS_INLINE int mov_mem_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_mem_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     int address = operand1;
@@ -1604,7 +1603,7 @@ static ALWAYS_INLINE int mov_mem_rx(em8051 *aCPU, uint8_t opcode, uint8_t operan
     return 3;
 }
 
-static ALWAYS_INLINE int subb_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int subb_a_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     int carry = CARRY;
@@ -1614,7 +1613,7 @@ static ALWAYS_INLINE int subb_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand
     return 1;
 }
 
-static ALWAYS_INLINE int mov_rx_mem(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_rx_mem(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     int value = read_mem(aCPU, operand1);
@@ -1624,7 +1623,7 @@ static ALWAYS_INLINE int mov_rx_mem(em8051 *aCPU, uint8_t opcode, uint8_t operan
     return 4;
 }
 
-static ALWAYS_INLINE int cjne_rx_imm_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int cjne_rx_imm_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     int value = operand1;
@@ -1649,7 +1648,7 @@ static ALWAYS_INLINE int cjne_rx_imm_offset(em8051 *aCPU, uint8_t opcode, uint8_
     return 4;
 }
 
-static ALWAYS_INLINE int xch_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int xch_a_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     int a = ACC;
@@ -1659,7 +1658,7 @@ static ALWAYS_INLINE int xch_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1
     return 2;
 }
 
-static ALWAYS_INLINE int djnz_rx_offset(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int djnz_rx_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     aCPU->mData[rx]--;
@@ -1674,7 +1673,7 @@ static ALWAYS_INLINE int djnz_rx_offset(em8051 *aCPU, uint8_t opcode, uint8_t op
     return 3;
 }
 
-static ALWAYS_INLINE int mov_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_a_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     ACC = aCPU->mData[rx];
@@ -1683,7 +1682,7 @@ static ALWAYS_INLINE int mov_a_rx(em8051 *aCPU, uint8_t opcode, uint8_t operand1
     return 1;
 }
 
-static ALWAYS_INLINE int mov_rx_a(em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2)
+static ALWAYS_INLINE FASTCALL int mov_rx_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int rx = RX_ADDRESS;
     aCPU->mData[rx] = ACC;

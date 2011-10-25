@@ -205,10 +205,17 @@ endif
 # Debug / optimization
 #
 # Unsurprisingly, compiler optimization produces a very dramatic
-# difference in performance. You probably want to leave -O3 on at
-# all times unless you have a great reason not to.
+# difference in performance. Leave these options on at all times
+# unless you have a very good reason to do otherwise.
+#
+# Do NOT publish unoptimized builds. Besides running several times
+# slower, they will reveal too much about how our firmware works. The
+# optimized builds are significantly harder to reverse engineer.
+#
+# -fomit-frame-pointer is actually really important here. It helps
+# a lot with our SBT code, since there are many tiny function calls. 
 
-FLAGS += -O3 -g
+FLAGS += -O3 -g -fomit-frame-pointer
 WARNFLAGS := -Werror -Wall -Wno-uninitialized
 
 # Automatic dependency generation (*.d files)

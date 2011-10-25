@@ -28,4 +28,12 @@
 #define MAX(a,b)        ((a)>(b)?(a):(b))
 #endif
 
+#ifndef FASTCALL
+#   ifdef __i386__
+#       define FASTCALL __attribute__ ((fastcall))
+#   else
+#       define FASTCALL
+#   endif
+#endif
+
 #endif

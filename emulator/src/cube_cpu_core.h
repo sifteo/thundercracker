@@ -456,7 +456,7 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
             uint8_t opcode = aCPU->mCodeMem[pc];
             uint8_t operand1 = aCPU->mCodeMem[(pc + 1) & (CODE_SIZE - 1)];
             uint8_t operand2 = aCPU->mCodeMem[(pc + 2) & (CODE_SIZE - 1)];
-            aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU, opcode, operand1, operand2);
+            aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU, aCPU->mPC, opcode, operand1, operand2);
         }
 
         ticked = 1;

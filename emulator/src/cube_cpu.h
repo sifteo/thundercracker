@@ -48,7 +48,8 @@ namespace CPU {
 struct em8051;
 
 // Operation: returns number of ticks the operation should take
-typedef int (*em8051operation)(struct em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2);
+typedef int FASTCALL (*em8051operation)(struct em8051 *aCPU, unsigned &PC, 
+                                        uint8_t opcode, uint8_t operand1, uint8_t operand2);
 
 // Decodes opcode at position, and fills the buffer with the assembler code. 
 // Returns how many bytes the opcode takes.
@@ -80,11 +81,11 @@ struct em8051
     uint8_t mData[256];
     uint8_t mSFR[128];
 
-    int mPC;
-    int mPreviousPC;
+    unsigned mPC;
+    unsigned mPreviousPC;
     int mTickDelay;             // How many ticks we should delay before continuing
     int mTimerTickDelay;
-    int mBreakpoint;
+    unsigned mBreakpoint;
     
     bool sbt;                   // In static binary translation mode
     bool needInterruptDispatch;
@@ -157,7 +158,7 @@ void disasm_setptrs(em8051 *aCPU);
 void op_setptrs(em8051 *aCPU);
 
 // Static binary translated firmware
-typedef int (*sbt_block_t)(em8051 *);
+typedef int FASTCALL (*sbt_block_t)(em8051 *);
 extern const uint8_t sbt_rom_data[];
 extern const sbt_block_t sbt_rom_code[];
 

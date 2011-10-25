@@ -68,7 +68,7 @@ class CodeGenerator:
                 "namespace Cube {\n"
                 "namespace CPU {\n"
                 "\n"
-                "static int sbt_exception(em8051 *aCPU) {\n"
+                "static int FASTCALL sbt_exception(em8051 *aCPU) {\n"
                 "\texcept(aCPU, EXCEPTION_SBT);\n"
                 "\treturn 1;\n"
                 "}\n")
@@ -80,18 +80,20 @@ class CodeGenerator:
                 "};  // namespace Cube\n")
 
     def beginBlock(self, f, addr):
-        f.write("\nstatic int sbt_block_%04x(em8051 *aCPU)\n"
+        f.write("\nstatic int FASTCALL sbt_block_%04x(em8051 *aCPU)\n"
                 "{\n"
                 "\tunsigned clk = 0;\n"
-                % addr)
+                "\tunsigned pc = 0x%04x;\n"
+                % (addr, addr))
 
     def endBlock(self, f):
-        f.write("\treturn clk;\n"
+        f.write("\taCPU->mPC = pc;\n"
+                "\treturn clk;\n"
                 "}\n")
         
     def writeInstruction(self, f, bytes):
         bytes += (0, 0)
-        f.write("\tclk += Opcodes::%-20s(aCPU, 0x%02x,0x%02x,0x%02x);\n" % (
+        f.write("\tclk += Opcodes::%-20s(aCPU, pc, 0x%02x,0x%02x,0x%02x);\n" % (
                 self.opTable[bytes[0]], bytes[0], bytes[1], bytes[2]))
 
     def endsBlock(self, bytes):
