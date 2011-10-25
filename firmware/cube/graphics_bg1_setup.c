@@ -47,9 +47,6 @@ static void vm_bg1_begin_line(void) __naked
      * Using the current values of y_bg1_bit_index and y_bg1_shift,
      * set up the MDU with the 32-bit bitmap to use for this scanline.
      *
-     * This needs to happen at least 18 clock cycles prior to the beginning
-     * of the next scanline, so that the MDU shift has time to happen.
-     *
      * If we're shifting right, we need to do this one step at a time and
      * update y_bg1_map as we go.
      *
@@ -83,14 +80,18 @@ static void vm_bg1_begin_line(void) __naked
         mov     _MD1, a
         mov     _MD2, #0
         mov     _MD3, #0
-
-        clr     _y_bg1_empty                ; Remember that this line is non-empty.
-        mov     _DPL1, _y_bg1_map           ; Load BG1 tile address for this line
-        mov     _DPH1, (_y_bg1_map+1)
         
         ; Now perform the shift, if we need to.
+        ;
+        ; This is a bit convoluted, since the timing requirements differ
+        ; depending on whether we are shifting right (using our loop) or left
+        ; (with the MDU), so e.g. we reorder our load of DPTR1.
         
         jnb     _x_bg1_rshift, 3$           ; Right shift, one step at a time
+        
+        mov     _DPL1, _y_bg1_map           ; Load BG1 tile address _before_ shifting
+        mov     _DPH1, (_y_bg1_map+1)
+        
         mov     r0, _x_bg1_shift            ; Loop iterator
         inc     _DPS                        ; Select DPTR1, for fast increments
 5$:
@@ -104,15 +105,42 @@ static void vm_bg1_begin_line(void) __naked
         dec     _DPS                        ; Back to original DPTR
         anl     _DPH1, #3                   ; Mask DPTR to keep it inside of xram
         
+        sjmp    8$
+        
 3$:     jnb     _x_bg1_lshift, 4$           ; Left shift, asynchronously using ARCON
-        mov     _ARCON, _x_bg1_shift
-        
-4$:     ret                                 ; Normal exit
-        
-        ; No bits set? Instead of writing to the MDU, just set y_bg1_empty.
+        mov     _ARCON, _x_bg1_shift  
 
-1$:     setb    _y_bg1_empty
-        ret
+        nop                                 ; Padding, see below.
+        nop     
+4$:       
+        mov     _DPL1, _y_bg1_map           ; Load BG1 tile address while we wait
+        mov     _DPH1, (_y_bg1_map+1)
+8$:
+
+        ; We need the results of the shift. Do some other work while we wait.
+        ; The maximum shift is 16 bits, or 11 clock cycles of MDU activity.
+        ; The code above has been padded so that this takes long enough in
+        ; the worst case.
+                
+        clr     _y_bg1_empty                ; For now, remember that this line has BG1 tiles
+        
+        ; It is to our benefit to be really sure that there are BG1 tiles visible
+        ; before exiting with y_bg1_empty cleared. If we can do a more thorough test
+        ; here and avoid using the BG1 scanline renderer, that is a big win. So,
+        ; we can look at the low 17 bits of the MDU. 17 is the maximum number of
+        ; whole or partial tiles that may be visible. If none of these bits are set,
+        ; we declare the line empty.
+        
+        mov     a, _MD0
+        jnz     7$
+        mov     a, _MD1
+        jnz     7$
+        mov     a, _MD2
+        anl     a, #1
+        jnz     7$
+        
+1$:     setb    _y_bg1_empty                ; No BG1 tiles on this scanline
+7$:     ret
 
     __endasm ;
 }
