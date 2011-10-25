@@ -54,10 +54,29 @@ Tile::Tile(const TileOptions &opt, uint8_t *rgba, size_t stride)
                 *dest = color;
             }
             else if (pixel[3] < alphaThreshold) {
-                // Pixel is actually transparent
-                *dest = CHROMA_KEY;
+                /*
+                 * Pixel is actually transparent.
+                 *
+                 * Use CHROMA_KEY as the MSB, and encode some information
+                 * in the LSB. Currently, the firmware wants to know if the
+                 * rest of this scanline on the current tile is entirely
+                 * transparent. If so, we set the End Of Line bit.
+                 */
+
+                dest->value = CHROMA_KEY << 8;
+                
+                bool eol = true;
+                for (unsigned xr = 0; xr < x; xr++) {
+                    if (pixel[3 + xr*4] >= alphaThreshold) {
+                        eol = false;
+                        break;
+                    }
+                }
+                
+                if (eol)
+                    dest->value |= CKEY_BIT_EOL;
             }
-            else if ((color.value & 0xFF00) == (CHROMA_KEY & 0xFF00)) {
+            else if ((color.value >> 8) == CHROMA_KEY) {
                 /*
                  * Pixel isn't transparent, but it would look like
                  * the chromakey to our firmware's 8-bit comparison.
@@ -294,11 +313,18 @@ TileRef Tile::reduce(ColorReducer &reducer) const
     double limit = mOptions.getMaxMSE() * 0.05;
     
     for (unsigned i = 0; i < PIXELS; i++) {
-        RGB565 color = reducer.nearest(mPixels[i]);
-        double error = CIELab(color).meanSquaredError(CIELab(run));
-        if (error > limit)
-            run = color;
-        result->mPixels[i] = run;
+        RGB565 original = mPixels[i];
+        
+        if ((original.value >> 8) == CHROMA_KEY) {
+            // Don't touch it if this is a special keyed color
+            result->mPixels[i] = original;
+        } else {
+            RGB565 color = reducer.nearest(original);
+            double error = CIELab(color).meanSquaredError(CIELab(run));
+            if (error > limit)
+                run = color;
+            result->mPixels[i] = run;
+        }
     }
 
     return result;
