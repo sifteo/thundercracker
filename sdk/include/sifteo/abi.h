@@ -98,6 +98,7 @@ struct _SYSAssetGroup {
 #define _SYS_VRAM_SPRITES       8       // Total number of linear sprites
 #define _SYS_SPRITES_PER_LINE   4       // Maximum visible sprites per scanline
 #define _SYS_CHROMA_KEY         0x4f    // Chroma key MSB
+#define _SYS_CKEY_BIT_EOL       0x40    // Chroma-key special bit, end-of-line
 
 // Bits for 'flags'
 
