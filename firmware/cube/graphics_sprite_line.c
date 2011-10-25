@@ -110,14 +110,21 @@ static void spr_occluded_next_3() __naked { SPR_OCCLUDED_NEXT(3) }
 void vm_bg0_spr_pixels() __naked
 {
     /*
-     * Basic pixel-by-pixel renderer for BG0 + SPR. Not especially
-     * fast, but it's thorough.
+     * Pixel-by-pixel renderer for BG0 + SPR. Supports any combination
+     * of sprites and BG0. Detects groups of 8 BG0 pixels, and forms bursts
      *
      * Must be set up on entry:
      *   R_SPR_ACTIVE, R_X_WRAP, R_BG0_ADDR, R_LOOP_COUNT, DPTR
      */
 
     __asm
+    
+        ; Can we start immediately into a burst?
+        
+        mov     a, R_BG0_ADDR
+        anl     a, #0x1F
+        jnz     1$               ; No
+        ljmp    38$              ; Yes
         
 1$:     ; Test all active sprites
         
@@ -140,6 +147,7 @@ void vm_bg0_spr_pixels() __naked
         ADDR_FROM_DPTR(_DPL)
         mov     ADDR_PORT, R_BG0_ADDR
 4$:     ASM_ADDR_INC4()
+        dec     R_LOOP_COUNT
         
         ; Update BG0 state, and look for opportunities to burst
         ; a whole BG0 tile at a time. This is based on BG0_NEXT_PIXEL.
@@ -159,7 +167,7 @@ void vm_bg0_spr_pixels() __naked
         ASM_X_WRAP_CHECK(8$)
 
         ; Make sure all sprites are out of the way of this potential burst
-        SPR_BG_BURST_TEST(0, 5$) SPR_SKIP(1, 30$, 36$)
+38$:    SPR_BG_BURST_TEST(0, 5$) SPR_SKIP(1, 30$, 36$)
         SPR_BG_BURST_TEST(1, 5$) SPR_SKIP(2, 31$, 36$)
         SPR_BG_BURST_TEST(2, 5$) SPR_SKIP(3, 32$, 36$)
         SPR_BG_BURST_TEST(3, 5$)
@@ -171,7 +179,7 @@ void vm_bg0_spr_pixels() __naked
         jc      6$
 
 5$:        
-        djnz    R_LOOP_COUNT, 3$
+        cjne    R_LOOP_COUNT, #0, 3$
 37$:    ret
 3$:     ljmp    1$
         
@@ -179,15 +187,97 @@ void vm_bg0_spr_pixels() __naked
 
 6$:        
         mov     R_LOOP_COUNT, a
-      
         ADDR_FROM_DPTR(_DPL)
         mov     ADDR_PORT, R_BG0_ADDR
-        lcall    _addr_inc32
+        lcall   _addr_inc32
 
         SPR_ADVANCE(0, 8) SPR_SKIP(1, 33$, 9$)
         SPR_ADVANCE(1, 8) SPR_SKIP(2, 34$, 9$)
         SPR_ADVANCE(2, 8) SPR_SKIP(3, 35$, 9$)
         SPR_ADVANCE(3, 8)
+9$:
+        
+        mov     a, R_LOOP_COUNT
+        jz      37$
+        ljmp    7$
+        
+    __endasm ;
+}
+
+void vm_bg0_spr1_pixels() __naked
+{
+    /*
+     * Pixel-by-pixel renderer for BG0 + SPR, with support for
+     * only exactly one sprite active on this scanline.
+     *
+     * XXX: with one sprite, we should be able to easily calculate
+     *      the line layout analytically instead.
+     *
+     * Must be set up on entry:
+     *   R_SPR_ACTIVE, R_X_WRAP, R_BG0_ADDR, R_LOOP_COUNT, DPTR
+     */
+
+    __asm
+    
+        ; Can we start immediately into a burst?
+        
+        mov     a, R_BG0_ADDR
+        anl     a, #0x1F
+        jnz     1$               ; No
+        ljmp    38$              ; Yes
+        
+1$:     ; Test all active sprites
+        
+        SPR_TEST(0, 10$) sjmp 2$
+
+10$:    lcall   _spr_address_next_0  CHROMA_LONG(26$, 4$, 2$)
+
+2$:     ; Background BG0        
+        ADDR_FROM_DPTR(_DPL)
+        mov     ADDR_PORT, R_BG0_ADDR
+4$:     ASM_ADDR_INC4()
+        dec     R_LOOP_COUNT
+        
+        ; Update BG0 state, and look for opportunities to burst
+        ; a whole BG0 tile at a time. This is based on BG0_NEXT_PIXEL.
+        
+        mov     a, R_BG0_ADDR           ; Quick addition, move to the next pixel
+        add     a, #4
+        mov     R_BG0_ADDR, a
+        anl     a, #0x1F
+        jnz     5$
+        
+        mov     a, R_BG0_ADDR           ; Overflow compensation
+        add     a, #(0x100 - 0x20)
+        mov     R_BG0_ADDR, a
+        
+7$:     inc     dptr                    ; Next BG0 tile
+        inc     dptr
+        ASM_X_WRAP_CHECK(8$)
+
+        ; Make sure all sprites are out of the way of this potential burst
+38$:    SPR_BG_BURST_TEST(0, 5$)
+36$:
+        
+        ; Make sure we have enough pixel loops remaining
+        mov     a, R_LOOP_COUNT
+        add     a, #(0x100 - 8)
+        jc      6$
+
+5$:        
+        cjne    R_LOOP_COUNT, #0, 3$
+37$:    ret
+3$:     ljmp    1$
+        
+        ; --- BG0 Tile Burst
+
+6$:        
+        mov     R_LOOP_COUNT, a
+        ADDR_FROM_DPTR(_DPL)
+        mov     ADDR_PORT, R_BG0_ADDR
+        lcall   _addr_inc32
+
+        SPR_ADVANCE(0, 8)
 9$:
         
         mov     a, R_LOOP_COUNT
@@ -264,7 +354,13 @@ void vm_bg0_spr_line()
         mov     R_LOOP_COUNT, #128        
     __endasm ;
     
-    vm_bg0_spr_pixels();
+    if (y_spr_active > 1) {
+        // More than one sprite
+        vm_bg0_spr_pixels();
+    } else {
+        // Only one sprite
+        vm_bg0_spr1_pixels();
+    }
 }
 
 void vm_bg0_spr_bg1_line()
