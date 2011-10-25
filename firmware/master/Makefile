@@ -1,6 +1,10 @@
 BIN_SIM = master-sim.a
 BIN_STM32 = master-stm32.a
-BINS = $(BIN_SIM) $(BIN_STM32)
+
+BINS = $(BIN_SIM)
+ifneq ($(BUILD_STM32),)
+	BINS += $(BIN_STM32)
+endif
 
 SPEEX_DIR = speex
 include $(SPEEX_DIR)/speex.mk

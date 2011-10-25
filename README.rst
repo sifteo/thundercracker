@@ -44,21 +44,24 @@ with some flavor of GCC.
 Build
 -----
 
-Running "make" in this top-level directory will build all Thundercracker
-software, including both native and ARM builds of the master firmware.
+Running "make" in this top-level directory will by default build all
+Thundercracker software that isn't cross-compiled.
+
+To build the optional cross-compiled firmwares, set the environment
+variables BUILD_8051 and/or BUILD_STM32.
 
 Various dependencies are required:
 
 1. A build environment; make, shell, etc. Use MSYS on Windows.
 2. GCC, for building native binaries. Should come with (1).
-3. SDCC, a microcontroller cross-compiler used to build the cube firmware
-4. gcc for ARM (arm-none-eabi-gcc), used to build master-cube firmware.
 
 Optional dependencies:
 
-1. OpenOCD, for installing and debugging master firmware
-2. Python, for some of the code generation tools
-3. The Python Imaging Library, used by other code generation tools
+1. SDCC, a microcontroller cross-compiler used to build the cube firmware
+2. gcc for ARM (arm-none-eabi-gcc), used to build master-cube firmware.
+3. OpenOCD, for installing and debugging master firmware
+4. Python, for some of the code generation tools
+5. The Python Imaging Library, used by other code generation tools
 
 Most of these dependencies are very easy to come by, and your favorite
 Linux distro or Mac OS package manager has them already. The ARM cross
