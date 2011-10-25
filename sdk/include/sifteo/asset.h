@@ -44,7 +44,7 @@ class AssetGroup {
 
 
 /**
- * An asset image.
+ * A plain, tile-mapped asset image.
  *
  * XXX: Find a better binary representation of these, probably with some
  *      random-access-friendly form of dictionary compression. Right now
@@ -61,6 +61,21 @@ class AssetImage {
 };
 
 
+/**
+ * An asset image in which all tiles are stored sequentially in memory.
+ * No map is necessary, just an index for the first tile in the sequence.
+ */
+ 
+class PinnedAssetImage {
+ public:
+    unsigned width;
+    unsigned height;
+    unsigned frames;
+
+    uint16_t index;
+};
+    
+    
 };  // namespace Sifteo
 
 #endif

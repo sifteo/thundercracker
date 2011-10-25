@@ -72,13 +72,13 @@ void siftmain()
     
     // 1UPs
     for (unsigned i = 1; i < _SYS_VRAM_SPRITES; i++) {
-        resizeSprite(i, 16, 16);
-        setSpriteImage(i, 0);
+        resizeSprite(i, Sprite.width*8, Sprite.height*8);
+        setSpriteImage(i, Sprite.index);
     }
 
     // Bullet
-    resizeSprite(0, 64, 64);
-    setSpriteImage(0, 4);
+    resizeSprite(0, Bullet.width*8, Bullet.height*8);
+    setSpriteImage(0, Bullet.index);
 
     // BG1 Overlay
     _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2

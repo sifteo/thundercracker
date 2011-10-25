@@ -27,8 +27,8 @@ $(BIN_SIM): $(OBJS_SIM) $(LIBS_SIM)
 $(BIN_STM32): $(OBJS_STM32) $(LIBS_STM32) $(LDSCRIPT_STM32)
 	$(CC_STM32) -o $@ $(OBJS_STM32) $(LIBS_STM32) $(LDFLAGS_STM32)
 
-$(ASSETS).gen.cpp: $(ASSETDEPS)
-	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html
+$(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
+	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html -v
 
 .PHONY: clean all ocd program gdb
 
