@@ -599,3 +599,14 @@ TestGraphics = {}
         end
     end
 
+    function TestGraphics:test_spr0_pan1()
+        -- Pan BG1 horizontally
+
+        gx:loadFlash("spr0-flash")
+        gx:loadVRAM("spr0-vram")
+        
+        for i = -128, 127, 3 do
+            gx:panBG1(i, 0)
+            gx:drawAndAssert(string.format("spr0-pan1-%d", i))
+        end
+    end
