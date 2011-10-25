@@ -8,316 +8,220 @@
 
 #include "graphics_sprite.h"
 
+   
+// Sprite mask test, with position update. Branches if inside the sprite.
+#define SPR_TEST(id, lbl)                                           __endasm; \
+    __asm   mov     a, XSPR_MASK(id)                                __endasm; \
+    __asm   anl     a, XSPR_POS(id)                                 __endasm; \
+    __asm   inc     XSPR_POS(id)                                    __endasm; \
+    __asm   jz      lbl                                             __endasm; \
+    __asm
+    
+// If we're done with the active sprites, jump ahead
+#define SPR_SKIP(id, l1, end)                                       __endasm; \
+    __asm   cjne    R_SPR_ACTIVE, #(id), l1                         __endasm; \
+    __asm   ljmp    end                                             __endasm; \
+    __asm   l1:                                                     __endasm; \
+    __asm
+
+// Load lat1/lat2 from x_spr[id]
+#define SPR_ADDRESS_LAT(id)                                         __endasm; \
+    __asm   mov     ADDR_PORT, XSPR_LAT1(id)                        __endasm; \
+    __asm   mov     CTRL_PORT, #(CTRL_FLASH_OUT | CTRL_FLASH_LAT1)  __endasm; \
+    __asm   mov     ADDR_PORT, XSPR_LAT2(id)                        __endasm; \
+    __asm   mov     CTRL_PORT, #(CTRL_FLASH_OUT | CTRL_FLASH_LAT2)  __endasm; \
+    __asm
+
+// Load a full sprite address, and update lat1/lat2
+#define SPR_ADDRESS_NEXT(id)                                        \
+    __asm   SPR_ADDRESS_LAT(id)                                     __endasm; \
+    __asm   mov    a, XSPR_POS(id)                                  __endasm; \
+    __asm   dec    a                                                __endasm; \
+    __asm   rl     a                                                __endasm; \
+    __asm   rl     a                                                __endasm; \
+    __asm   anl    a, #0x1C                                         __endasm; \
+    __asm   cjne   a, #0x1C, 1$                                     __endasm; \
+    __asm    add   a, XSPR_LINE_ADDR(id)                            __endasm; \
+    __asm    mov   ADDR_PORT, a                                     __endasm; \
+    __asm    mov   a, XSPR_LAT1(id)                                 __endasm; \
+    __asm    inc   a                                                __endasm; \
+    __asm    inc   a                                                __endasm; \
+    __asm    mov   XSPR_LAT1(id), a                                 __endasm; \
+    __asm    jnz   2$                                               __endasm; \
+    __asm      inc  XSPR_LAT2(id)                                   __endasm; \
+    __asm      inc  XSPR_LAT2(id)                                   __endasm; \
+    __asm    2$:                                                    __endasm; \
+    __asm    CHROMA_PREP()                                          __endasm; \
+    __asm    ret                                                    __endasm; \
+    __asm   1$:                                                     __endasm; \
+    __asm   add   a, XSPR_LINE_ADDR(id)                             __endasm; \
+    __asm   mov   ADDR_PORT, a                                      __endasm; \
+    __asm   CHROMA_PREP()                                           __endasm; \
+    __asm   ret                                                     __endasm; \
+    
+static void spr_address_next_0() __naked { SPR_ADDRESS_NEXT(0) }
+static void spr_address_next_1() __naked { SPR_ADDRESS_NEXT(1) }
+static void spr_address_next_2() __naked { SPR_ADDRESS_NEXT(2) }
+static void spr_address_next_3() __naked { SPR_ADDRESS_NEXT(3) }
+
+// Perform state updates on a sprite that we skipped. Updates its position,
+// and if applicable updates lat1/lat2.
+#define SPR_OCCLUDED_NEXT(id)                                       \
+    __asm   SPR_TEST(id, 1$)                                        __endasm; \
+    __asm   2$: ret                                                 __endasm; \
+    __asm   1$:                                                     __endasm; \
+    __asm   mov   a, XSPR_POS(id)                                   __endasm; \
+    __asm   anl   a, #7                                             __endasm; \
+    __asm   jnz   2$                                                __endasm; \
+    __asm   mov   a, XSPR_LAT1(id)                                  __endasm; \
+    __asm   inc   a                                                 __endasm; \
+    __asm   inc   a                                                 __endasm; \
+    __asm   mov   XSPR_LAT1(id), a                                  __endasm; \
+    __asm   jnz   2$                                                __endasm; \
+    __asm   inc  XSPR_LAT2(id)                                      __endasm; \
+    __asm   inc  XSPR_LAT2(id)                                      __endasm; \
+    __asm   ret                                                     __endasm; \
+
+static void spr_occluded_next_0() __naked { SPR_OCCLUDED_NEXT(0) }
+static void spr_occluded_next_1() __naked { SPR_OCCLUDED_NEXT(1) }
+static void spr_occluded_next_2() __naked { SPR_OCCLUDED_NEXT(2) }
+static void spr_occluded_next_3() __naked { SPR_OCCLUDED_NEXT(3) }
+    
+
+void vm_bg0_spr_pixels() __naked
+{
+    /*
+     * Basic pixel-by-pixel renderer for BG0 + SPR. Not especially
+     * fast, but it's thorough.
+     *
+     * Must be set up on entry:
+     *   R_SPR_ACTIVE, R_X_WRAP, R_BG0_ADDR, R_LOOP_COUNT, DPTR
+     */
+
+    __asm
+        
+1$:     ; Test all active sprites
+        
+        SPR_TEST(0, 10$) 14$: SPR_SKIP(1, 20$, 2$)
+        SPR_TEST(1, 11$) 15$: SPR_SKIP(2, 21$, 2$)
+        SPR_TEST(2, 12$) 16$: SPR_SKIP(3, 22$, 2$)
+        SPR_TEST(3, 13$) sjmp 2$
+
+10$:    lcall   _spr_address_next_0  CHROMA_LONG(23$, 40$, 14$)
+11$:    lcall   _spr_address_next_1  CHROMA_LONG(24$, 41$, 15$)
+12$:    lcall   _spr_address_next_2  CHROMA_LONG(25$, 42$, 16$)
+13$:    lcall   _spr_address_next_3  CHROMA_LONG(26$, 4$, 2$)
+
+40$:    SPR_SKIP(1, 27$, 4$)  lcall   _spr_occluded_next_1
+41$:    SPR_SKIP(2, 28$, 4$)  lcall   _spr_occluded_next_2
+42$:    SPR_SKIP(3, 29$, 4$)  lcall   _spr_occluded_next_3
+        sjmp 4$
+
+2$:     ; Background BG0        
+        ADDR_FROM_DPTR(_DPL)
+        mov     ADDR_PORT, R_BG0_ADDR
+4$:     ASM_ADDR_INC4()
+        
+        ; Update BG0 state
+        BG0_NEXT_PIXEL(50$, 51$)
+        
+        djnz    R_LOOP_COUNT, 3$
+        ret
+3$:     ljmp    1$
+        
+    __endasm ;
+}
+
+void vm_bg0_spr_bg1_pixels() __naked
+{
+    /*
+     * Basic pixel-by-pixel renderer for BG0 + SPR + BG1. Not especially
+     * fast, but it's thorough.
+     *
+     * Must be set up on entry:
+     *   R_SPR_ACTIVE, R_X_WRAP, R_BG0_ADDR, R_BG1_ADDR, R_LOOP_COUNT, DPTR, DPTR1, MDU, B
+     */
+
+    __asm
+        
+1$:
+        ; Overlay BG1        
+        BG1_JNB(5$)
+        lcall   _state_bg1_0
+        CHROMA_J_OPAQUE(40$)
+5$:
+
+        ; Test all active sprites   
+        SPR_TEST(0, 10$) 14$: SPR_SKIP(1, 20$, 2$)
+        SPR_TEST(1, 11$) 15$: SPR_SKIP(2, 21$, 2$)
+        SPR_TEST(2, 12$) 16$: SPR_SKIP(3, 22$, 2$)
+        SPR_TEST(3, 13$) ljmp 2$
+
+10$:    lcall   _spr_address_next_0  CHROMA_LONG(23$, 41$, 14$)
+11$:    lcall   _spr_address_next_1  CHROMA_LONG(24$, 42$, 15$)
+12$:    lcall   _spr_address_next_2  CHROMA_LONG(25$, 43$, 16$)
+13$:    lcall   _spr_address_next_3  CHROMA_LONG(26$, 4$, 2$)
+
+40$:    lcall   _spr_occluded_next_0
+41$:    SPR_SKIP(1, 27$, 4$)  lcall   _spr_occluded_next_1
+42$:    SPR_SKIP(2, 28$, 4$)  lcall   _spr_occluded_next_2
+43$:    SPR_SKIP(3, 29$, 4$)  lcall   _spr_occluded_next_3
+        sjmp 4$
+
+2$:     ; Background BG0        
+        lcall   _state_bg0_0
+4$:     ASM_ADDR_INC4()
+        
+        ; Update BG state
+        BG0_NEXT_PIXEL(50$, 51$)
+        BG1_NEXT_PIXEL(52$, 53$)
+        
+        djnz    R_LOOP_COUNT, 3$
+        mov     _DPS, #0
+        ret
+3$:     ljmp    1$
+        
+    __endasm ;
+}
 
 void vm_bg0_spr_line()
 {
-    /*
-     * XXX: Very slow unoptimized implementation. Using this to develop tests...
-     */
+    __asm
+        mov     dpl, _y_bg0_map
+        mov     dph, (_y_bg0_map+1)
 
-    uint8_t bg0_addr = x_bg0_first_addr;
-    uint8_t bg0_wrap = x_bg0_wrap;
-    uint8_t x = 128;
-    
-    DPTR = y_bg0_map;
-    
-    do {
-        struct x_sprite_t __idata *s = x_spr;
-        uint8_t ns = y_spr_active;
-
-        // Sprites
-
-        do {
-            if (!(s->mask & s->pos)) {
-                ADDR_PORT = s->lat1;
-                CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-                    
-                ADDR_PORT = s->lat2;
-                CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
-                    
-                ADDR_PORT = s->line_addr + ((s->pos & 7) << 2);
+        mov     a, _x_bg0_first_addr
+        add     a, _y_bg0_addr_l
+        mov     R_BG0_ADDR, a
         
-                if (BUS_PORT != _SYS_CHROMA_KEY)
-                    goto pixel_done;
-
-                s->pos++;
-
-                if (!(7 & s->pos)) {
-                    s->lat1 += 2;
-                    if (!s->lat1)       
-                        s->lat2 += 2;
-                }
-
-            } else {
-                s->pos++;
-            }
-
-            s++;
-        } while (--ns);
+        mov     R_X_WRAP, _x_bg0_wrap
+        mov     R_SPR_ACTIVE, _y_spr_active
+        mov     R_LOOP_COUNT, #128        
+    __endasm ;
     
-        // BG0
-        __asm ADDR_FROM_DPTR(_DPL) __endasm;
-        ADDR_PORT = y_bg0_addr_l + bg0_addr;
-        
-        pixel_done:
-        ADDR_INC4();
-        
-        if (!(bg0_addr = (bg0_addr + 4) & 0x1F)) {
-            DPTR_INC2();
-            BG0_WRAP_CHECK();
-        }
- 
-        if (ns)
-            do {
-                if (!(s->mask & s->pos)) {
-                    s->pos++;
-
-                    if (!(7 & s->pos)) {
-                        s->lat1 += 2;
-                        if (!s->lat1)       
-                            s->lat2 += 2;
-                    }
-                } else {
-                    s->pos++;
-                }
-                
-                s++;
-            } while (--ns);
-
-    } while (--x);
+    vm_bg0_spr_pixels();
 }
 
 void vm_bg0_spr_bg1_line()
 {
-    /*
-     * XXX: Very slow unoptimized implementation. Using this to develop tests...
-     */
+    __asm
+        mov     dpl, _y_bg0_map
+        mov     dph, (_y_bg0_map+1)
+            
+        mov     a, _y_bg0_addr_l
+        add     a, _x_bg0_first_addr
+        mov     R_BG0_ADDR, a
+        
+        mov     a, _y_bg1_addr_l
+        add     a, _x_bg1_first_addr
+        mov     R_BG1_ADDR, a
 
-    uint8_t bg0_addr = x_bg0_first_addr;
-    uint8_t bg1_addr = x_bg1_first_addr;
-    uint8_t bg0_wrap = x_bg0_wrap;
-    uint8_t x = 128;
+        BG1_UPDATE_BIT()
+
+        mov     R_X_WRAP, _x_bg0_wrap
+        mov     R_SPR_ACTIVE, _y_spr_active
+        mov     R_LOOP_COUNT, #128
+    __endasm ;
     
-    DPTR = y_bg0_map;
-    
-    do {
-        struct x_sprite_t __idata *s = x_spr;
-        uint8_t ns = y_spr_active;
-
-        // BG1
-        if (MD0 & 1) {
-            __asm
-                inc     _DPS
-                ADDR_FROM_DPTR(_DPL1)
-                dec     _DPS
-            __endasm ;
-            ADDR_PORT = y_bg1_addr_l + bg1_addr;            
-            if (BUS_PORT != _SYS_CHROMA_KEY)
-                goto pixel_done;
-        }
-       
-        // Sprites
-
-        do {
-            if (!(s->mask & s->pos)) {
-                ADDR_PORT = s->lat1;
-                CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
-                    
-                ADDR_PORT = s->lat2;
-                CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
-                    
-                ADDR_PORT = s->line_addr + ((s->pos & 7) << 2);
-        
-                if (BUS_PORT != _SYS_CHROMA_KEY)
-                    goto pixel_done;
-
-                s->pos++;
-
-                if (!(7 & s->pos)) {
-                    s->lat1 += 2;
-                    if (!s->lat1)       
-                        s->lat2 += 2;
-                }
-
-            } else {
-                s->pos++;
-            }
-
-            s++;
-        } while (--ns);
-    
-        // BG0
-        __asm ADDR_FROM_DPTR(_DPL) __endasm;
-        ADDR_PORT = y_bg0_addr_l + bg0_addr;
-        
-        pixel_done:
-        ADDR_INC4();
-        
-        if (!(bg0_addr = (bg0_addr + 4) & 0x1F)) {
-            DPTR_INC2();
-            BG0_WRAP_CHECK();
-        }
-        
-        if (!(bg1_addr = (bg1_addr + 4) & 0x1F)) {
-            if (MD0 & 1) {
-                __asm
-                    inc     _DPS
-                    inc     dptr
-                    inc     dptr
-                    dec     _DPS
-                    anl     _DPH1, #3
-                __endasm ;
-            }
-            MD0 = MD0;  // Dummy write to reset MDU
-            ARCON = 0x21;
-        }
-
-        if (ns)
-            do {
-                if (!(s->mask & s->pos)) {
-                    s->pos++;
-
-                    if (!(7 & s->pos)) {
-                        s->lat1 += 2;
-                        if (!s->lat1)       
-                            s->lat2 += 2;
-                    }
-                } else {
-                    s->pos++;
-                }
-                
-                s++;
-            } while (--ns);
-
-    } while (--x);
+    vm_bg0_spr_bg1_pixels();
 }
-
-
-/*************************** TO REWORK ********************************************************/
- 
-#if 0
-
-static void line_bg_spr0(void)
-{
-    uint8_t x = 15;
-    uint8_t bg_wrap = x_bg_wrap;
-    register uint8_t spr0_mask = lvram.sprites[0].mask_x;
-    register uint8_t spr0_x = lvram.sprites[0].x + x_bg_first_w;
-    uint8_t spr0_pixel_addr = (spr0_x - 1) << 2;
-
-    DPTR = y_bg_map;
-
-    // First partial or full tile
-    ADDR_FROM_DPTR_INC();
-    MAP_WRAP_CHECK();
-    ADDR_PORT = y_bg_addr_l + x_bg_first_addr;
-    PIXEL_BURST(x_bg_first_w);
-
-    // There are always 15 full tiles on-screen
-    do {
-        if ((spr0_x & spr0_mask) && ((spr0_x + 7) & spr0_mask)) {
-            // All 8 pixels are non-sprite
-
-            ADDR_FROM_DPTR_INC();
-            MAP_WRAP_CHECK();
-            ADDR_PORT = y_bg_addr_l;
-            addr_inc32();
-            spr0_x += 8;
-            spr0_pixel_addr += 32;
-
-        } else {
-            // A mixture of sprite and tile pixels.
-
-#define SPR0_OPAQUE(i)                          \
-        test_##i:                               \
-            if (BUS_PORT == CHROMA_KEY)         \
-                goto transparent_##i;           \
-            ADDR_INC4();                        \
-
-#define SPR0_TRANSPARENT_TAIL(i)                \
-        transparent_##i:                        \
-            ADDR_FROM_DPTR();                   \
-            ADDR_PORT = y_bg_addr_l + (i*4);    \
-            ADDR_INC4();                        \
-
-#define SPR0_TRANSPARENT(i, j)                  \
-            SPR0_TRANSPARENT_TAIL(i);           \
-            ADDR_FROM_SPRITE(0);                \
-            ADDR_PORT = spr0_pixel_addr + (j*4);\
-            goto test_##j;                      \
-
-#define SPR0_END()                              \
-            spr0_x += 8;                        \
-            spr0_pixel_addr += 32;              \
-            DPTR_INC2();                        \
-            MAP_WRAP_CHECK();                   \
-            continue;                           \
-
-            // Fast path: All opaque pixels in a row.
-
-            // XXX: The assembly generated by sdcc for this loop is okayish, but
-            //      still rather bad. There are still a lot of gains left to be had
-            //      by using inline assembly here.
-
-            ADDR_FROM_SPRITE(0);
-            ADDR_PORT = spr0_pixel_addr;
-            SPR0_OPAQUE(0);
-            SPR0_OPAQUE(1);
-            SPR0_OPAQUE(2);
-            SPR0_OPAQUE(3);
-            SPR0_OPAQUE(4);
-            SPR0_OPAQUE(5);
-            SPR0_OPAQUE(6);
-            SPR0_OPAQUE(7);
-            SPR0_END();
-
-            // Transparent pixel jump targets
-
-            SPR0_TRANSPARENT(0, 1);
-            SPR0_TRANSPARENT(1, 2);
-            SPR0_TRANSPARENT(2, 3);
-            SPR0_TRANSPARENT(3, 4);
-            SPR0_TRANSPARENT(4, 5);
-            SPR0_TRANSPARENT(5, 6);
-            SPR0_TRANSPARENT(6, 7);
-            SPR0_TRANSPARENT_TAIL(7);
-            SPR0_END();
-        }
-
-    } while (--x);
-
-    // Might be one more partial tile
-    if (x_bg_last_w) {
-        ADDR_FROM_DPTR_INC();
-        MAP_WRAP_CHECK();
-        ADDR_PORT = y_bg_addr_l;
-        PIXEL_BURST(x_bg_last_w);
-    }
-
-    do {
-        uint8_t active_sprites = 0;
-
-        /*
-         * Per-line sprite accounting. Update all Y coordinates, and
-         * see which sprites are active. (Unrolled loop here, to allow
-         * calculating masks and array addresses at compile-time.)
-         */
-
-#define SPRITE_Y_ACCT(i)                                                \
-        if (!(++lvram.sprites[i].y & lvram.sprites[i].mask_y)) {        \
-            active_sprites |= 1 << i;                                   \
-            lvram.sprites[i].addr_l += 2;                               \
-        }                                                               \
-
-        SPRITE_Y_ACCT(0);
-        SPRITE_Y_ACCT(1);
-
-        /*
-         * Choose a scanline renderer
-         */
-
-        switch (active_sprites) {
-        case 0x00:      line_bg(); break;
-        case 0x01:      line_bg_spr0(); break;
-        }
-#endif

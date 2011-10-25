@@ -15,11 +15,11 @@
  * Shared state
  */
   
-#define XSPR_MASK         0
-#define XSPR_POS          1
-#define XSPR_LAT1         2
-#define XSPR_LAT2         3
-#define XSPR_LINE_ADDR    4
+#define XSPR_MASK(id)       (_x_spr + (0 + (id) * 5))
+#define XSPR_POS(id)        (_x_spr + (1 + (id) * 5))
+#define XSPR_LAT1(id)       (_x_spr + (2 + (id) * 5))
+#define XSPR_LAT2(id)       (_x_spr + (3 + (id) * 5))
+#define XSPR_LINE_ADDR(id)  (_x_spr + (4 + (id) * 5))
 
 struct x_sprite_t {
     int8_t mask;
@@ -35,6 +35,12 @@ extern struct x_sprite_t x_spr[_SYS_SPRITES_PER_LINE];
 extern uint8_t   y_spr_line;            // Current rendering line, zero-based
 extern uint8_t   y_spr_line_limit;      // Rendering ends at this line
 extern uint8_t   y_spr_active;          // Number of sprites in x_spr[]
+
+/*
+ * Scanline renderer registers
+ */
+ 
+#define R_SPR_ACTIVE    r6
 
 /*
  * Shared code

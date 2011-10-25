@@ -18,51 +18,10 @@
 
 #include "graphics_bg1.h"
 #include "hardware.h"
- 
-#define R_SCRATCH       r0
-#define R_X_WRAP        r1
-#define R_BG0_ADDR      r3
-#define R_BG1_ADDR      r4
-#define R_LOOP_COUNT    r5
 
 #define BG1_LOOP(lbl)                                           __endasm; \
     __asm djnz    R_LOOP_COUNT, lbl                             __endasm; \
     __asm ret                                                   __endasm; \
-    __asm
-
-#define BG1_NEXT_BIT()                                          __endasm; \
-    __asm mov   _MD0, b                                         __endasm; \
-    __asm mov   _ARCON, #0x21                                   __endasm; \
-    __asm
-
-#define BG1_UPDATE_BIT()                                        __endasm; \
-    __asm mov   b, _MD0                                         __endasm; \
-    __asm
-    
-#define BG1_JB(lbl)                                             __endasm; \
-    __asm jb    b.0, lbl                                        __endasm; \
-    __asm
-
-#define BG1_JNB(lbl)                                            __endasm; \
-    __asm jnb    b.0, lbl                                       __endasm; \
-    __asm
-
-#define BG1_JB_L(lbl)                                           __endasm; \
-    __asm jnb    b.0, (.+6)                                     __endasm; \
-    __asm ljmp   lbl                                            __endasm; \
-    __asm
-
-#define BG1_JNB_L(lbl)                                          __endasm; \
-    __asm jb     b.0, (.+6)                                     __endasm; \
-    __asm ljmp   lbl                                            __endasm; \
-    __asm
-    
-#define CHROMA_PREP()                                           __endasm; \
-    __asm mov   a, #_SYS_CHROMA_KEY                             __endasm; \
-    __asm
-
-#define CHROMA_J_OPAQUE(lbl)                                    __endasm; \
-    __asm cjne  a, BUS_PORT, lbl                                __endasm; \
     __asm
     
 // Next BG0 tile (while in BG0 state)
@@ -89,13 +48,6 @@
     __asm l2:                                                   __endasm; \
     __asm
 
-// Next BG1 tile (while using DPTR1)
-#define ASM_BG1_NEXT()                                          __endasm; \
-    __asm inc   dptr                                            __endasm; \
-    __asm inc   dptr                                            __endasm; \
-    __asm anl   _DPH1, #3                                       __endasm; \
-    __asm    
-
 /*
  * State transition to BG1 pixel
  */
@@ -116,7 +68,7 @@ static void state_bg1_func(void) __naked {
     __endasm ;
 }       
 
-static void state_bg1_0(void) __naked {
+void state_bg1_0(void) __naked {
     __asm
         mov    _DPS, #1
         ADDR_FROM_DPTR(_DPL1)
@@ -153,7 +105,7 @@ static void state_bg0_func(void) __naked {
     __endasm ;
 }    
 
-static void state_bg0_0(void) __naked {
+void state_bg0_0(void) __naked {
     __asm
         mov    _DPS, #0
         ADDR_FROM_DPTR(_DPL)
@@ -520,7 +472,7 @@ static void vm_bg0_bg1_tiles_fast_p7(void) __naked
     __endasm ;
 }
 
-static void vm_bg0_bg1_tiles_fast(void)
+void vm_bg0_bg1_tiles_fast(void)
 {
     /*
      * Render R_LOOP_COUNT tiles from bg0, quickly, with bg1 overlaid
@@ -588,38 +540,8 @@ void vm_bg0_bg1_pixels(void) __naked
 2$:     lcall   _state_bg0_0        ; Draw BG0 layer
 3$:     ASM_ADDR_INC4()
 
-        ; Update BG0 accumulator
-        
-        mov     a, R_BG0_ADDR       ; Tentatively move ahead by 4
-        add     a, #4
-        mov     R_BG0_ADDR, a
-        anl     a, #0x1F            ; Check for overflow
-        jnz     4$
-        mov     a, R_BG0_ADDR       ; Yes, overflow occurred. Compensate.
-        add     a, #(0x100 - 0x20)
-        mov     R_BG0_ADDR, a
-        mov     _DPS, #0
-        inc     dptr                ; Next BG0 tile
-        inc     dptr
-        ASM_X_WRAP_CHECK(5$)
-4$:
-
-        ; Update BG1 accumulator
-        
-        mov     a, R_BG1_ADDR       ; Tentatively move ahead by 4
-        add     a, #4
-        mov     R_BG1_ADDR, a
-        anl     a, #0x1F            ; Check for overflow
-        jnz     6$
-        BG1_NEXT_BIT()              ; Yes, we switched tiles. Next bit.
-        mov     a, R_BG1_ADDR       ; Overflow compensation
-        add     a, #(0x100 - 0x20)
-        mov     R_BG1_ADDR, a
-        BG1_JNB(7$)                 ; Were we in a BG1 tile?
-        mov     _DPS, #1
-        ASM_BG1_NEXT()              ; Yes. Advance to the next one.
-7$:     BG1_UPDATE_BIT()            ; Update MD0 cache
-6$:
+        BG0_NEXT_PIXEL(4$, 5$)
+        BG1_NEXT_PIXEL(6$, 7$)
 
         djnz    R_LOOP_COUNT, 1$
         ret
