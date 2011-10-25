@@ -11,8 +11,80 @@
 
 void vm_bg0_spr_line()
 {
-    // XXX: Unoptimized
-    vm_bg0_spr_bg1_line();
+    /*
+     * XXX: Very slow unoptimized implementation. Using this to develop tests...
+     */
+
+    uint8_t bg0_addr = x_bg0_first_addr;
+    uint8_t bg0_wrap = x_bg0_wrap;
+    uint8_t x = 128;
+    
+    DPTR = y_bg0_map;
+    
+    do {
+        struct x_sprite_t __idata *s = x_spr;
+        uint8_t ns = y_spr_active;
+
+        // Sprites
+
+        do {
+            if (!(s->mask & s->pos)) {
+                ADDR_PORT = s->lat1;
+                CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT1;
+                    
+                ADDR_PORT = s->lat2;
+                CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
+                    
+                ADDR_PORT = s->line_addr + ((s->pos & 7) << 2);
+        
+                if (BUS_PORT != _SYS_CHROMA_KEY)
+                    goto pixel_done;
+
+                s->pos++;
+
+                if (!(7 & s->pos)) {
+                    s->lat1 += 2;
+                    if (!s->lat1)       
+                        s->lat2 += 2;
+                }
+
+            } else {
+                s->pos++;
+            }
+
+            s++;
+        } while (--ns);
+    
+        // BG0
+        __asm ADDR_FROM_DPTR(_DPL) __endasm;
+        ADDR_PORT = y_bg0_addr_l + bg0_addr;
+        
+        pixel_done:
+        ADDR_INC4();
+        
+        if (!(bg0_addr = (bg0_addr + 4) & 0x1F)) {
+            DPTR_INC2();
+            BG0_WRAP_CHECK();
+        }
+ 
+        if (ns)
+            do {
+                if (!(s->mask & s->pos)) {
+                    s->pos++;
+
+                    if (!(7 & s->pos)) {
+                        s->lat1 += 2;
+                        if (!s->lat1)       
+                            s->lat2 += 2;
+                    }
+                } else {
+                    s->pos++;
+                }
+                
+                s++;
+            } while (--ns);
+
+    } while (--x);
 }
 
 void vm_bg0_spr_bg1_line()
@@ -33,7 +105,7 @@ void vm_bg0_spr_bg1_line()
         uint8_t ns = y_spr_active;
 
         // BG1
-        if (!y_bg1_empty && (MD0 & 1)) {
+        if (MD0 & 1) {
             __asm
                 inc     _DPS
                 ADDR_FROM_DPTR(_DPL1)
