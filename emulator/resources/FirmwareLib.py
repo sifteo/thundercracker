@@ -126,6 +126,10 @@ class RSTParser:
                 # Used in SPI_WAIT
                 self.branchTargets[address-2] = True
 
+            elif source == '(.+6)':
+                # Used in BG1
+                self.branchTargets[address+6] = True
+
             else:
                 raise Exception("Unimplemented relative label '%s'" % source)
 
