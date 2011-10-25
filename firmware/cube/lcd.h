@@ -78,5 +78,6 @@ void addr_inc32() __naked;
 
 #define ASM_ADDR_INC2()   __endasm; ADDR_INC2(); __asm
 #define ASM_ADDR_INC4()   __endasm; ADDR_INC4(); __asm
-     
+
+
 #endif

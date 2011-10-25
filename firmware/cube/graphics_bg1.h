@@ -42,9 +42,12 @@
  * Shared state
  */
 
-extern uint8_t x_bg1_offset_x4;         // Panning offset from BG0, multiplied by 4 for jump-table indexing
+extern __bit x_bg1_offset_bit0;         // Panning offset from BG0, as three separate bits.
+extern __bit x_bg1_offset_bit1;
+extern __bit x_bg1_offset_bit2;
+
 extern uint8_t x_bg1_first_addr;        // X portion of address for first pixel
-extern uint8_t x_bg1_shift;             // Amount to shift (ARCON) bitmap words at the start of each line
+extern uint8_t x_bg1_last_addr;         // X portion of address for last tile
 
 extern uint8_t y_bg1_addr_l;            // Low part of tile addresses, inc by 32 each line
 extern uint8_t y_bg1_bit_index;         // Index into bitmap array, inc by 1 each line

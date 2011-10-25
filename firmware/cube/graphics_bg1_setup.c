@@ -10,8 +10,9 @@
 #include "hardware.h"
 #include "radio.h"
 
-uint8_t x_bg1_offset_x4, x_bg1_shift, x_bg1_first_addr;
+uint8_t x_bg1_shift, x_bg1_first_addr, x_bg1_last_addr;
 __bit x_bg1_rshift, x_bg1_lshift;
+__bit x_bg1_offset_bit0, x_bg1_offset_bit1, x_bg1_offset_bit2;
 
 uint8_t y_bg1_addr_l, y_bg1_bit_index;
 uint16_t y_bg1_map;
@@ -185,6 +186,7 @@ void vm_bg1_setup(void)
     {
         uint8_t pan_x, pan_y;
         uint8_t tile_pan_x, tile_pan_y;
+        uint8_t x_bg1_offset;
 
         radio_critical_section({
             pan_x = vram.bg1_x;
@@ -197,8 +199,13 @@ void vm_bg1_setup(void)
         y_bg1_addr_l = pan_y << 5;
         y_bg1_bit_index = tile_pan_y;
         
-        x_bg1_offset_x4 = ((x_bg0_last_w - pan_x) & 7) << 2;
+        x_bg1_offset = (x_bg0_last_w - pan_x) & 7;
+        x_bg1_offset_bit0 = x_bg1_offset & 1;
+        x_bg1_offset_bit1 = x_bg1_offset & 2;
+        x_bg1_offset_bit2 = x_bg1_offset & 4;
+        
         x_bg1_first_addr = (pan_x << 2) & 0x1C;
+        x_bg1_last_addr = (8 - x_bg1_offset) << 2;
             
         x_bg1_lshift = 0;
         x_bg1_rshift = 0;
