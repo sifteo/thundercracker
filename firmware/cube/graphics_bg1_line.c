@@ -96,19 +96,16 @@
     __asm anl   _DPH1, #3                                       __endasm; \
     __asm    
 
-// State transition to BG1 pixel
-#define STATE_BG1(x)                                            __endasm; \
+/*
+ * State transition to BG1 pixel
+ */
+
+#define DEF_STATE_BG1(x)                                        \
     __asm lcall _state_bg1_func                                 __endasm; \
     __asm add   a, #((x) * 4)                                   __endasm; \
     __asm mov   ADDR_PORT, a                                    __endasm; \
     __asm CHROMA_PREP()                                         __endasm; \
-    __asm
-
-#define STATE_BG1_0()                                           __endasm; \
-    __asm lcall _state_bg1_func                                 __endasm; \
-    __asm mov   ADDR_PORT, a                                    __endasm; \
-    __asm CHROMA_PREP()                                         __endasm; \
-    __asm
+    __asm ret                                                   __endasm;
 
 static void state_bg1_func(void) __naked {
     __asm
@@ -119,17 +116,33 @@ static void state_bg1_func(void) __naked {
     __endasm ;
 }       
 
-// State transition to BG0 pixel, at nonzero X offset
-#define STATE_BG0(x)                                            __endasm; \
+static void state_bg1_0(void) __naked {
+    __asm
+        mov    _DPS, #1
+        ADDR_FROM_DPTR(_DPL1)
+        mov    ADDR_PORT, R_BG1_ADDR
+        CHROMA_PREP()
+        ret
+    __endasm ;
+}
+
+static void state_bg1_1(void) __naked { DEF_STATE_BG1(1) }
+static void state_bg1_2(void) __naked { DEF_STATE_BG1(2) }
+static void state_bg1_3(void) __naked { DEF_STATE_BG1(3) }
+static void state_bg1_4(void) __naked { DEF_STATE_BG1(4) }
+static void state_bg1_5(void) __naked { DEF_STATE_BG1(5) }
+static void state_bg1_6(void) __naked { DEF_STATE_BG1(6) }
+static void state_bg1_7(void) __naked { DEF_STATE_BG1(7) }
+
+/*
+ * State transition to BG0 pixel
+ */
+ 
+#define DEF_STATE_BG0(x)                                        \
     __asm lcall _state_bg0_func                                 __endasm; \
     __asm add   a, #((x) * 4)                                   __endasm; \
     __asm mov   ADDR_PORT, a                                    __endasm; \
-    __asm
-
-#define STATE_BG0_0()                                           __endasm; \
-    __asm lcall _state_bg0_func                                 __endasm; \
-    __asm mov   ADDR_PORT, a                                    __endasm; \
-    __asm
+    __asm ret                                                   __endasm;
     
 static void state_bg0_func(void) __naked {
     __asm
@@ -138,7 +151,24 @@ static void state_bg0_func(void) __naked {
         mov    a, R_BG0_ADDR
         ret
     __endasm ;
+}    
+
+static void state_bg0_0(void) __naked {
+    __asm
+        mov    _DPS, #0
+        ADDR_FROM_DPTR(_DPL)
+        mov    ADDR_PORT, R_BG0_ADDR
+        ret
+    __endasm ;
 }
+
+static void state_bg0_1(void) __naked { DEF_STATE_BG0(1) }
+static void state_bg0_2(void) __naked { DEF_STATE_BG0(2) }
+static void state_bg0_3(void) __naked { DEF_STATE_BG0(3) }
+static void state_bg0_4(void) __naked { DEF_STATE_BG0(4) }
+static void state_bg0_5(void) __naked { DEF_STATE_BG0(5) }
+static void state_bg0_6(void) __naked { DEF_STATE_BG0(6) }
+static void state_bg0_7(void) __naked { DEF_STATE_BG0(7) }
 
 /*
  * Eek, this little macro does a lot of things.
@@ -161,9 +191,9 @@ static void state_bg0_func(void) __naked {
  
 #define CHROMA_BG1_BG0(l1,l2, x0,x1)                            __endasm; \
     __asm CHROMA_J_OPAQUE(l1)                                   __endasm; \
-    __asm   STATE_BG0(x0)                                       __endasm; \
+    __asm   lcall x0                                            __endasm; \
     __asm   lcall _addr_inc4                                    __endasm; \
-    __asm   STATE_BG1(x1)                                       __endasm; \
+    __asm   lcall x1                                            __endasm; \
     __asm   sjmp l2                                             __endasm; \
     __asm l1:                                                   __endasm; \
     __asm   ASM_ADDR_INC4()                                     __endasm; \
@@ -174,13 +204,13 @@ static void state_bg0_func(void) __naked {
     __asm CHROMA_J_OPAQUE(l1)                                   __endasm; \
     __asm   orl   ADDR_PORT, #2                                 __endasm; \
     __asm   jnb   BUS_PORT.6, l3                                __endasm; \
-    __asm   STATE_BG0(x0)                                       __endasm; \
+    __asm   lcall x0                                            __endasm; \
     __asm   lcall eolC                                          __endasm; \
     __asm   ljmp  eolJ                                          __endasm; \
     __asm l3:                                                   __endasm; \
-    __asm   STATE_BG0(x0)                                       __endasm; \
+    __asm   lcall x0                                            __endasm; \
     __asm   lcall _addr_inc4                                    __endasm; \
-    __asm   STATE_BG1(x1)                                       __endasm; \
+    __asm   lcall x1                                            __endasm; \
     __asm   sjmp l2                                             __endasm; \
     __asm l1:                                                   __endasm; \
     __asm   ASM_ADDR_INC4()                                     __endasm; \
@@ -201,18 +231,21 @@ static void vm_bg0_bg1_tiles_fast_p0(void) __naked
         lcall   _addr_inc32
 11$:    BG1_NEXT_BIT() ASM_BG0_NEXT(9$) BG1_UPDATE_BIT() BG1_LOOP(10$)
 
-1$:     STATE_BG1_0()
+1$:     lcall   _state_bg1_0
 
-        CHROMA_BG1_BG0_EOL(30$,40$,50$, 0,1, _addr_inc32, 13$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, 1,2, _addr_inc28, 13$)
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, 2,3, _addr_inc24, 13$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, 3,4, _addr_inc20, 13$)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, 4,5, _addr_inc16, 13$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, 5,6, _addr_inc12, 13$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, 6,7, _addr_inc8,  13$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, 7,0, _addr_inc4,  13$)
+        CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_0, _state_bg1_1, _addr_inc32, 13$)
+        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_1, _state_bg1_2, _addr_inc28, 13$)
+        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_2, _state_bg1_3, _addr_inc24, 13$)
+        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_3, _state_bg1_4, _addr_inc20, 13$)
+        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_4, _state_bg1_5, _addr_inc16, 13$)
+        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_5, _state_bg1_6, _addr_inc12, 13$)
+        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_6, _state_bg1_7, _addr_inc8,  13$)
+        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_7, _state_bg1_0, _addr_inc4,  13$)
         
-12$:    ASM_BG1_NEXT() STATE_BG0_0() ljmp 11$
+12$:    ASM_BG1_NEXT()
+        lcall _state_bg0_0
+        ljmp 11$
+
 13$:    CHROMA_BG1_TARGET(12$)
 
     __endasm ;
@@ -230,24 +263,27 @@ static void vm_bg0_bg1_tiles_fast_p1(void) __naked
 12$:    lcall   _addr_inc28
         ASM_BG0_NEXT(9$) BG1_LOOP(10$)
         
-14$:    STATE_BG1(7) ljmp 13$
-1$:     STATE_BG1_0()
+14$:    lcall   _state_bg1_7
+        ljmp    13$
+1$:     lcall   _state_bg1_0
         
-        CHROMA_BG1_BG0_EOL(30$,40$,50$, 1,1, _addr_inc28, 16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, 2,2, _addr_inc24, 16$)
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, 3,3, _addr_inc20, 16$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, 4,4, _addr_inc16, 16$)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, 5,5, _addr_inc12, 16$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, 6,6, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, 7,7, _addr_inc4,  16$)
+        CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_1, _state_bg1_1, _addr_inc28, 16$)
+        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_2, _state_bg1_2, _addr_inc24, 16$)
+        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_3, _state_bg1_3, _addr_inc20, 16$)
+        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_4, _state_bg1_4, _addr_inc16, 16$)
+        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_5, _state_bg1_5, _addr_inc12, 16$)
+        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_6, _state_bg1_6, _addr_inc8,  16$)
+        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_7, _state_bg1_7, _addr_inc4,  16$)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
-        CHROMA_BG1_BG0(37$,47$, 0,0)
+        CHROMA_BG1_BG0(37$,47$, _state_bg0_0, _state_bg1_0)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
-        STATE_BG0(1) ljmp 12$
-16$:    STATE_BG1(7) sjmp 17$
+        lcall   _state_bg0_1
+        ljmp    12$
+16$:    lcall   _state_bg1_7
+        sjmp    17$
 
     __endasm ;
 }
@@ -264,25 +300,29 @@ static void vm_bg0_bg1_tiles_fast_p2(void) __naked
 12$:    lcall   _addr_inc24
         ASM_BG0_NEXT(9$) BG1_LOOP(10$)
         
-14$:    STATE_BG1(6) ljmp 13$
-1$:     STATE_BG1_0()
+14$:    lcall   _state_bg1_6
+        ljmp    13$
+1$:     lcall   _state_bg1_0
         
-        CHROMA_BG1_BG0_EOL(30$,40$,50$, 2,1, _addr_inc24, 16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, 3,2, _addr_inc20, 16$)
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, 4,3, _addr_inc16, 16$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, 5,4, _addr_inc12, 16$)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, 6,5, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, 7,6, _addr_inc4,  16$)
+        CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_2, _state_bg1_1, _addr_inc24, 16$)
+        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_3, _state_bg1_2, _addr_inc20, 16$)
+        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_4, _state_bg1_3, _addr_inc16, 16$)
+        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_5, _state_bg1_4, _addr_inc12, 16$)
+        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_6, _state_bg1_5, _addr_inc8,  16$)
+        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_7, _state_bg1_6, _addr_inc4,  16$)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, 0,7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, 1,0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_0, _state_bg1_7, _addr_inc8,  6$)
+        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_1, _state_bg1_0, _addr_inc4,  6$)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
-        STATE_BG0(2) ljmp 12$
-16$:    STATE_BG1(6) ljmp 17$
-6$:     STATE_BG1_0() sjmp 18$
+        lcall   _state_bg0_2
+        ljmp    12$
+16$:    lcall   _state_bg1_6
+        ljmp    17$
+6$:     lcall   _state_bg1_0
+        sjmp    18$
 
     __endasm ;
 }
@@ -299,25 +339,29 @@ static void vm_bg0_bg1_tiles_fast_p3(void) __naked
 12$:    lcall   _addr_inc20
         ASM_BG0_NEXT(9$) BG1_LOOP(10$)
         
-14$:    STATE_BG1(5) ljmp 13$
-1$:     STATE_BG1_0()
+14$:    lcall   _state_bg1_5
+        ljmp    13$
+1$:     lcall   _state_bg1_0
         
-        CHROMA_BG1_BG0_EOL(30$,40$,50$, 3,1, _addr_inc20, 16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, 4,2, _addr_inc16, 16$)
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, 5,3, _addr_inc12, 16$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, 6,4, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, 7,5, _addr_inc4,  16$)
+        CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_3, _state_bg1_1, _addr_inc20, 16$)
+        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_4, _state_bg1_2, _addr_inc16, 16$)
+        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_5, _state_bg1_3, _addr_inc12, 16$)
+        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_6, _state_bg1_4, _addr_inc8,  16$)
+        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_7, _state_bg1_5, _addr_inc4,  16$)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, 0,6, _addr_inc12, 6$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, 1,7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, 2,0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_0, _state_bg1_6, _addr_inc12, 6$)
+        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_1, _state_bg1_7, _addr_inc8,  6$)
+        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_2, _state_bg1_0, _addr_inc4,  6$)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
-        STATE_BG0(3) ljmp 12$
-16$:    STATE_BG1(5) ljmp 17$
-6$:     STATE_BG1_0() sjmp 18$
+        lcall   _state_bg0_3
+        ljmp    12$
+16$:    lcall   _state_bg1_5
+        ljmp    17$
+6$:     lcall   _state_bg1_0
+        sjmp    18$
 
     __endasm ;
 }
@@ -334,25 +378,29 @@ static void vm_bg0_bg1_tiles_fast_p4(void) __naked
 12$:    lcall   _addr_inc16
         ASM_BG0_NEXT(9$) BG1_LOOP(10$)
         
-14$:    STATE_BG1(4) ljmp 13$
-1$:     STATE_BG1_0()
+14$:    lcall   _state_bg1_4
+        ljmp    13$
+1$:     lcall   _state_bg1_0
         
-        CHROMA_BG1_BG0_EOL(30$,40$,50$, 4,1, _addr_inc16, 16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, 5,2, _addr_inc12, 16$)
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, 6,3, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, 7,4, _addr_inc4,  16$)
+        CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_4, _state_bg1_1, _addr_inc16, 16$)
+        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_5, _state_bg1_2, _addr_inc12, 16$)
+        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_6, _state_bg1_3, _addr_inc8,  16$)
+        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_7, _state_bg1_4, _addr_inc4,  16$)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, 0,5, _addr_inc16, 6$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, 1,6, _addr_inc12, 6$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, 2,7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, 3,0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_0, _state_bg1_5, _addr_inc16, 6$)
+        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_1, _state_bg1_6, _addr_inc12, 6$)
+        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_2, _state_bg1_7, _addr_inc8,  6$)
+        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_3, _state_bg1_0, _addr_inc4,  6$)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
-        STATE_BG0(4) ljmp 12$
-16$:    STATE_BG1(4) ljmp 17$
-6$:     STATE_BG1_0() sjmp 18$
+        lcall   _state_bg0_4
+        ljmp    12$
+16$:    lcall   _state_bg1_4
+        ljmp    17$
+6$:     lcall   _state_bg1_0
+        sjmp    18$
 
     __endasm ;
 }
@@ -369,25 +417,29 @@ static void vm_bg0_bg1_tiles_fast_p5(void) __naked
 12$:    lcall   _addr_inc12
         ASM_BG0_NEXT(9$) BG1_LOOP(10$)
         
-14$:    STATE_BG1(3) ljmp 13$
-1$:     STATE_BG1_0()
+14$:    lcall   _state_bg1_3
+        ljmp    13$
+1$:     lcall   _state_bg1_0
         
-        CHROMA_BG1_BG0_EOL(30$,40$,50$, 5,1, _addr_inc12, 16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, 6,2, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, 7,3, _addr_inc4,  16$)
+        CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_5, _state_bg1_1, _addr_inc12, 16$)
+        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_6, _state_bg1_2, _addr_inc8,  16$)
+        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_7, _state_bg1_3, _addr_inc4,  16$)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, 0,4, _addr_inc20, 6$)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, 1,5, _addr_inc16, 6$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, 2,6, _addr_inc12, 6$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, 3,7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, 4,0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_0, _state_bg1_4, _addr_inc20, 6$)
+        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_1, _state_bg1_5, _addr_inc16, 6$)
+        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_2, _state_bg1_6, _addr_inc12, 6$)
+        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_3, _state_bg1_7, _addr_inc8,  6$)
+        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_4, _state_bg1_0, _addr_inc4,  6$)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
-        STATE_BG0(5) ljmp 12$
-16$:    STATE_BG1(3) ljmp 17$
-6$:     STATE_BG1_0() sjmp 18$
+        lcall   _state_bg0_5
+        ljmp    12$
+16$:    lcall   _state_bg1_3
+        ljmp    17$
+6$:     lcall   _state_bg1_0
+        sjmp 18$
 
     __endasm ;
 }
@@ -404,25 +456,29 @@ static void vm_bg0_bg1_tiles_fast_p6(void) __naked
 12$:    lcall   _addr_inc8
         ASM_BG0_NEXT(9$) BG1_LOOP(10$)
         
-14$:    STATE_BG1(2) ljmp 13$
-1$:     STATE_BG1_0()
+14$:    lcall   _state_bg1_2
+        ljmp 13$
+1$:     lcall   _state_bg1_0
         
-        CHROMA_BG1_BG0_EOL(30$,40$,50$, 6,1, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, 7,2, _addr_inc4,  16$)
+        CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_6, _state_bg1_1, _addr_inc8,  16$)
+        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_7, _state_bg1_2, _addr_inc4,  16$)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, 0,3, _addr_inc24, 6$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, 1,4, _addr_inc20, 6$)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, 2,5, _addr_inc16, 6$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, 3,6, _addr_inc12, 6$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, 4,7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, 5,0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_0, _state_bg1_3, _addr_inc24, 6$)
+        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_1, _state_bg1_4, _addr_inc20, 6$)
+        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_2, _state_bg1_5, _addr_inc16, 6$)
+        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_3, _state_bg1_6, _addr_inc12, 6$)
+        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_4, _state_bg1_7, _addr_inc8,  6$)
+        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_5, _state_bg1_0, _addr_inc4,  6$)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
-        STATE_BG0(6) ljmp 12$
-16$:    STATE_BG1(2) ljmp 17$
-6$:     STATE_BG1_0() sjmp 18$
+        lcall   _state_bg0_6
+        ljmp    12$
+16$:    lcall   _state_bg1_2
+        ljmp    17$
+6$:     lcall   _state_bg1_0
+        sjmp 18$
 
     __endasm ;
 }
@@ -439,24 +495,27 @@ static void vm_bg0_bg1_tiles_fast_p7(void) __naked
 12$:    ASM_ADDR_INC4()
         ASM_BG0_NEXT(9$) BG1_LOOP(10$)
         
-14$:    STATE_BG1(1) ljmp 13$
-1$:     STATE_BG1_0()
+14$:    lcall   _state_bg1_1
+        ljmp    13$
+1$:     lcall   _state_bg1_0
         
-        CHROMA_BG1_BG0(30$,40$, 7,1)
+        CHROMA_BG1_BG0(30$,40$,  _state_bg0_7, _state_bg1_1)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, 0,2, _addr_inc28, 6$)
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, 1,3, _addr_inc24, 6$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, 2,4, _addr_inc20, 6$)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, 3,5, _addr_inc16, 6$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, 4,6, _addr_inc12, 6$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, 5,7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, 6,0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_0, _state_bg1_2, _addr_inc28, 6$)
+        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_1, _state_bg1_3, _addr_inc24, 6$)
+        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_2, _state_bg1_4, _addr_inc20, 6$)
+        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_3, _state_bg1_5, _addr_inc16, 6$)
+        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_4, _state_bg1_6, _addr_inc12, 6$)
+        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_5, _state_bg1_7, _addr_inc8,  6$)
+        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_6, _state_bg1_0, _addr_inc4,  6$)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
-        STATE_BG0(7) ljmp 12$
-6$:     STATE_BG1_0() sjmp 18$
+        lcall   _state_bg0_7
+        ljmp    12$
+6$:     lcall   _state_bg1_0
+        sjmp 18$
 
     __endasm ;
 }
@@ -474,18 +533,13 @@ static void vm_bg0_bg1_tiles_fast(void)
 
     /*
      * Start out in BG0 state, at the beginning of the tile.
-     */
-
-    __asm
-        STATE_BG0_0()
-    __endasm ;
-
-    /*
+     *
      * Use only the line portion of the Y address.
      * The pixel (column) portion is baked into these unrolled loops.
      */
      
     __asm
+        lcall   _state_bg0_0
         mov     R_BG1_ADDR, _y_bg1_addr_l
     __endasm ;
     
@@ -529,9 +583,9 @@ void vm_bg0_bg1_pixels(void) __naked
     __asm
 1$:
         BG1_JNB(2$)                 ; Chroma-key BG1 layer
-        STATE_BG1_0()
+        lcall   _state_bg1_0
         CHROMA_J_OPAQUE(3$)
-2$:     STATE_BG0_0()               ; Draw BG0 layer
+2$:     lcall   _state_bg0_0        ; Draw BG0 layer
 3$:     ASM_ADDR_INC4()
 
         ; Update BG0 accumulator
