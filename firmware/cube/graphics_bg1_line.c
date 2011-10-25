@@ -220,12 +220,12 @@ static void vm_bg0_bg1_tiles_fast_p1(void) __naked
 1$:     lcall   _state_bg1_0
         
         CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_1, _state_bg1_1, _addr_inc28, 16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_2, _state_bg1_2, _addr_inc24, 16$)
+        CHROMA_BG1_BG0    (31$,41$,     _state_bg0_2, _state_bg1_2)
         CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_3, _state_bg1_3, _addr_inc20, 16$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_4, _state_bg1_4, _addr_inc16, 16$)
+        CHROMA_BG1_BG0    (33$,43$,     _state_bg0_4, _state_bg1_4)
         CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_5, _state_bg1_5, _addr_inc12, 16$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_6, _state_bg1_6, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_7, _state_bg1_7, _addr_inc4,  16$)
+        CHROMA_BG1_BG0    (35$,45$,     _state_bg0_6, _state_bg1_6)
+        CHROMA_BG1_BG0    (36$,46$,     _state_bg0_7, _state_bg1_7)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
@@ -257,16 +257,16 @@ static void vm_bg0_bg1_tiles_fast_p2(void) __naked
 1$:     lcall   _state_bg1_0
         
         CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_2, _state_bg1_1, _addr_inc24, 16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_3, _state_bg1_2, _addr_inc20, 16$)
+        CHROMA_BG1_BG0    (31$,41$,     _state_bg0_3, _state_bg1_2)
         CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_4, _state_bg1_3, _addr_inc16, 16$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_5, _state_bg1_4, _addr_inc12, 16$)
+        CHROMA_BG1_BG0    (33$,43$,     _state_bg0_5, _state_bg1_4)
         CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_6, _state_bg1_5, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_7, _state_bg1_6, _addr_inc4,  16$)
+        CHROMA_BG1_BG0    (35$,45$,     _state_bg0_7, _state_bg1_6)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
         CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_0, _state_bg1_7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_1, _state_bg1_0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0    (37$,47$,     _state_bg0_1, _state_bg1_0)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
         lcall   _state_bg0_2
@@ -296,16 +296,16 @@ static void vm_bg0_bg1_tiles_fast_p3(void) __naked
 1$:     lcall   _state_bg1_0
         
         CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_3, _state_bg1_1, _addr_inc20, 16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_4, _state_bg1_2, _addr_inc16, 16$)
+        CHROMA_BG1_BG0    (31$,41$,     _state_bg0_4, _state_bg1_2)
         CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_5, _state_bg1_3, _addr_inc12, 16$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_6, _state_bg1_4, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_7, _state_bg1_5, _addr_inc4,  16$)
+        CHROMA_BG1_BG0    (33$,43$,     _state_bg0_6, _state_bg1_4)
+        CHROMA_BG1_BG0    (34$,44$,     _state_bg0_7, _state_bg1_5)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
         CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_0, _state_bg1_6, _addr_inc12, 6$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_1, _state_bg1_7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_2, _state_bg1_0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0    (36$,46$,     _state_bg0_1, _state_bg1_7)
+        CHROMA_BG1_BG0    (37$,47$,     _state_bg0_2, _state_bg1_0)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
         lcall   _state_bg0_3
@@ -335,16 +335,16 @@ static void vm_bg0_bg1_tiles_fast_p4(void) __naked
 1$:     lcall   _state_bg1_0
         
         CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_4, _state_bg1_1, _addr_inc16, 16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_5, _state_bg1_2, _addr_inc12, 16$)
+        CHROMA_BG1_BG0    (31$,41$,     _state_bg0_5, _state_bg1_2)
         CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_6, _state_bg1_3, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_7, _state_bg1_4, _addr_inc4,  16$)
+        CHROMA_BG1_BG0    (33$,43$,     _state_bg0_7, _state_bg1_4)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
         CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_0, _state_bg1_5, _addr_inc16, 6$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_1, _state_bg1_6, _addr_inc12, 6$)
+        CHROMA_BG1_BG0    (35$,45$,     _state_bg0_1, _state_bg1_6)
         CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_2, _state_bg1_7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_3, _state_bg1_0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0    (37$,47$,     _state_bg0_3, _state_bg1_0)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
         lcall   _state_bg0_4
@@ -374,16 +374,16 @@ static void vm_bg0_bg1_tiles_fast_p5(void) __naked
 1$:     lcall   _state_bg1_0
         
         CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_5, _state_bg1_1, _addr_inc12, 16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_6, _state_bg1_2, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_7, _state_bg1_3, _addr_inc4,  16$)
+        CHROMA_BG1_BG0    (31$,41$,     _state_bg0_6, _state_bg1_2)
+        CHROMA_BG1_BG0    (32$,42$,     _state_bg0_7, _state_bg1_3)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
         CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_0, _state_bg1_4, _addr_inc20, 6$)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_1, _state_bg1_5, _addr_inc16, 6$)
+        CHROMA_BG1_BG0    (34$,44$,     _state_bg0_1, _state_bg1_5)
         CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_2, _state_bg1_6, _addr_inc12, 6$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_3, _state_bg1_7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_4, _state_bg1_0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0    (36$,46$,     _state_bg0_3, _state_bg1_7)
+        CHROMA_BG1_BG0    (37$,47$,     _state_bg0_4, _state_bg1_0)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
         lcall   _state_bg0_5
@@ -413,16 +413,16 @@ static void vm_bg0_bg1_tiles_fast_p6(void) __naked
 1$:     lcall   _state_bg1_0
         
         CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_6, _state_bg1_1, _addr_inc8,  16$)
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_7, _state_bg1_2, _addr_inc4,  16$)
+        CHROMA_BG1_BG0    (31$,41$,     _state_bg0_7, _state_bg1_2)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
         CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_0, _state_bg1_3, _addr_inc24, 6$)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_1, _state_bg1_4, _addr_inc20, 6$)
+        CHROMA_BG1_BG0    (33$,43$,     _state_bg0_1, _state_bg1_4)
         CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_2, _state_bg1_5, _addr_inc16, 6$)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_3, _state_bg1_6, _addr_inc12, 6$)
+        CHROMA_BG1_BG0    (35$,45$,     _state_bg0_3, _state_bg1_6)
         CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_4, _state_bg1_7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_5, _state_bg1_0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0    (37$,47$,     _state_bg0_5, _state_bg1_0)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
         lcall   _state_bg0_6
@@ -456,12 +456,12 @@ static void vm_bg0_bg1_tiles_fast_p7(void) __naked
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
         CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_0, _state_bg1_2, _addr_inc28, 6$)
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_1, _state_bg1_3, _addr_inc24, 6$)
+        CHROMA_BG1_BG0    (32$,42$,     _state_bg0_1, _state_bg1_3)
         CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_2, _state_bg1_4, _addr_inc20, 6$)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_3, _state_bg1_5, _addr_inc16, 6$)
+        CHROMA_BG1_BG0    (34$,44$,     _state_bg0_3, _state_bg1_5)
         CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_4, _state_bg1_6, _addr_inc12, 6$)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_5, _state_bg1_7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0_EOL(37$,47$,57$, _state_bg0_6, _state_bg1_0, _addr_inc4,  6$)
+        CHROMA_BG1_BG0    (36$,46$,     _state_bg0_5, _state_bg1_7)
+        CHROMA_BG1_BG0    (37$,47$,     _state_bg0_6, _state_bg1_0)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
         lcall   _state_bg0_7
