@@ -35,7 +35,7 @@ CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 #CCFLAGS += -O2
 
 # Disable unwanted C++ features
-CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+CPPFLAGS := -fno-exceptions -fno-threadsafe-statics -fno-rtti
 
 CCFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include \
            -ffunction-sections -fdata-sections \

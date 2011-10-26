@@ -63,10 +63,10 @@ $(BIN_STM32): $(OBJS_STM32)
 	$(RANLIB_STM32) $@
 
 %.sim.o: %.cpp $(CDEPS)
-	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
+	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM) $(CPPFLAGS)
 
 %.stm32.o: %.cpp $(CDEPS)
-	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
+	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32) $(CPPFLAGS)
 
 %.stm32.o: %.c $(CDEPS)
 	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
