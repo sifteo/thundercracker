@@ -271,10 +271,10 @@ private:
 
 void siftmain()
 {
-    static Cube cubes[] = { Cube(0), Cube(1), Cube(2) };
-    static StarDemo demos[] = { StarDemo(cubes[0]), StarDemo(cubes[1]), StarDemo(cubes[2]) };
+    static Cube cubes[] = { Cube(0), Cube(1) };
+    static StarDemo demos[] = { StarDemo(cubes[0]), StarDemo(cubes[1]) };
     
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
+    for (unsigned i = 0; i < arraysize(cubes); i++) {
         cubes[i].enable();
         cubes[i].loadAssets(GameAssets);
 
@@ -288,7 +288,7 @@ void siftmain()
     for (;;) {
         bool done = true;
 
-        for (unsigned i = 0; i < NUM_CUBES; i++) {
+        for (unsigned i = 0; i < arraysize(cubes); i++) {
             VidMode_BG0_ROM rom(cubes[i].vbuf);
             rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
             if (!cubes[i].assetDone(GameAssets))
@@ -301,7 +301,7 @@ void siftmain()
             break;
     }
 
-    for (unsigned i = 0; i < NUM_CUBES; i++)
+    for (unsigned i = 0; i < arraysize(demos); i++)
         demos[i].init();
     
     float lastTime = System::clock();
@@ -310,7 +310,7 @@ void siftmain()
         float dt = now - lastTime;
         lastTime = now;
 
-        for (unsigned i = 0; i < NUM_CUBES; i++)
+        for (unsigned i = 0; i < arraysize(demos); i++)
             demos[i].update(dt);
         
         System::paint();
