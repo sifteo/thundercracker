@@ -201,6 +201,15 @@ void memeditor_editor_keys(CPU::em8051 *aCPU, int ch)
         insert_value = 0xf;
         break;
 
+        /* Adjust values up/down with ",." keys */
+        
+    case ',':
+        eds[focus].memarea[eds[focus].memoffset + eds[focus].cursorpos / 2]--;
+        break;
+    case '.':
+        eds[focus].memarea[eds[focus].memoffset + eds[focus].cursorpos / 2]++;
+        break;    
+        
     case 's': {
         FILE *f = fopen("memory.bin", "wb");
         if (f) {
