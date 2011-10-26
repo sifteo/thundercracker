@@ -136,7 +136,7 @@ void vm_spr_next()
         anl     a, r5       ;   Apply mask; are we already in the sprite?
         jz      4$          ;   Yes. Skip the next test
         mov     a, r7       ;   Back to unmodified pos_x
-        add     a, #LCD_WIDTH
+        add     a, #(LCD_WIDTH - 1)
         jnc     13$         ;   Still nowhere on this line. Skip 3 bytes.
 4$:     inc     dptr
           
