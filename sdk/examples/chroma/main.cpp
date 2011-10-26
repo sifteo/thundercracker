@@ -46,7 +46,7 @@ static void onAccelChange(_SYSCubeID cid)
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
 
-	static const int TILT_THRESHOLD = 50;
+	static const int TILT_THRESHOLD = 30;
 
 	//for now , just tilt cube 0
 	if( state.x > TILT_THRESHOLD )
