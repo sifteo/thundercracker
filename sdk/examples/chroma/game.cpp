@@ -4,7 +4,6 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include "cppfix.h"
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
