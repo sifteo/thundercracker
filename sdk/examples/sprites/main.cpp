@@ -71,11 +71,22 @@ void siftmain()
     _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_SPR, 0, 8*5/2);
     
     // 1UPs
-    for (unsigned i = 0; i < 8; i++) {
+    for (unsigned i = 1; i < _SYS_VRAM_SPRITES; i++) {
         resizeSprite(i, Sprite.width*8, Sprite.height*8);
         setSpriteImage(i, Sprite.index);
     }
 
+    // Bullet
+    resizeSprite(0, Bullet.width*8, Bullet.height*8);
+    setSpriteImage(0, Bullet.index);
+
+    // BG1 Overlay
+    _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2
+                   + 16 - Overlay.height,
+                   ((1 << Overlay.width) - 1), Overlay.height);
+    _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
+                     Overlay.tiles, 0, Overlay.width * Overlay.height);
+        
     // Now enable BG0, Sprites, and BG1
     _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 
@@ -84,19 +95,20 @@ void siftmain()
         frame++;
 
         // Circle of 1UPs
-        for (unsigned i = 0; i < 8; i++) {
+        for (unsigned i = 1; i < _SYS_VRAM_SPRITES; i++) {
             
-            float angle = frame * 0.075f + i * 0.4f;
-            const float r = 50;
+            float angle = frame * 0.075f + (i-1) * (M_PI*2 / (_SYS_VRAM_SPRITES-1));
+            const float r = 32;
 
             moveSprite(i, (128 - 16)/2 + cosf(angle) * r + 0.5f,
                        (128 - 16)/2 + sinf(angle) * r + 0.5f); 
         }
 
-        vid.BG0_setPanning(Vec2(frame, frame));
-        
         // Scroll BG1
         _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_x), -frame);
+    
+        // Flying bullet
+        moveSprite(0, 130-frame*3, 190-frame);
 
         System::paint();
     }
