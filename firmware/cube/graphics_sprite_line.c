@@ -50,7 +50,19 @@
     __asm   mov     ADDR_PORT, XSPR_LAT2(id)                        __endasm; \
     __asm   mov     CTRL_PORT, #(CTRL_FLASH_OUT | CTRL_FLASH_LAT2)  __endasm; \
     __asm
-
+    
+// Increment a sprite's tile address (lat1/lat2)
+#define SPR_ADDRESS_LAT_INC(id, l1)                                 __endasm; \
+    __asm    mov   a, XSPR_LAT1(id)                                 __endasm; \
+    __asm    inc   a                                                __endasm; \
+    __asm    inc   a                                                __endasm; \
+    __asm    mov   XSPR_LAT1(id), a                                 __endasm; \
+    __asm    jnz   l1                                               __endasm; \
+    __asm      inc  XSPR_LAT2(id)                                   __endasm; \
+    __asm      inc  XSPR_LAT2(id)                                   __endasm; \
+    __asm    l1:                                                    __endasm; \
+    __asm
+    
 // Load a full sprite address, and update lat1/lat2
 #define SPR_ADDRESS_NEXT(id)                                        \
     __asm   SPR_ADDRESS_LAT(id)                                     __endasm; \
@@ -62,14 +74,7 @@
     __asm   cjne   a, #0x1C, 1$                                     __endasm; \
     __asm    add   a, XSPR_LINE_ADDR(id)                            __endasm; \
     __asm    mov   ADDR_PORT, a                                     __endasm; \
-    __asm    mov   a, XSPR_LAT1(id)                                 __endasm; \
-    __asm    inc   a                                                __endasm; \
-    __asm    inc   a                                                __endasm; \
-    __asm    mov   XSPR_LAT1(id), a                                 __endasm; \
-    __asm    jnz   2$                                               __endasm; \
-    __asm      inc  XSPR_LAT2(id)                                   __endasm; \
-    __asm      inc  XSPR_LAT2(id)                                   __endasm; \
-    __asm    2$:                                                    __endasm; \
+    __asm    SPR_ADDRESS_LAT_INC(id, 2$)                            __endasm; \
     __asm    CHROMA_PREP()                                          __endasm; \
     __asm    ret                                                    __endasm; \
     __asm   1$:                                                     __endasm; \
@@ -204,86 +209,223 @@ void vm_bg0_spr_pixels() __naked
     __endasm ;
 }
 
-void vm_bg0_spr1_pixels() __naked
+void vm_bg0_spr1_fast() __naked
 {
     /*
-     * Pixel-by-pixel renderer for BG0 + SPR, with support for
-     * only exactly one sprite active on this scanline.
-     *
-     * XXX: with one sprite, we should be able to easily calculate
-     *      the line layout analytically instead.
+     * Speedy single-purpose renderer; BG0 plus exactly one visible sprite.
      *
      * Must be set up on entry:
-     *   R_SPR_ACTIVE, R_X_WRAP, R_BG0_ADDR, R_LOOP_COUNT, DPTR
+     *   R_X_WRAP, R_BG0_ADDR, DPTR
      */
 
+#define  R_LEFT       r0
+#define  R_SPR_ADDR   r4
+#define  R_RIGHT      r7
+     
     __asm
+
+        ; -------- Setup
     
-        ; Can we start immediately into a burst?
+        ; Do we have any BG0 pixels to the left of our sprite?
+        ; Do a sprite mask test. If we are not inside the sprite
+        ; already, we can calculate how far away it is by negating
+        ; the position.
         
-        mov     a, R_BG0_ADDR
-        anl     a, #0x1F
-        jnz     1$               ; No
-        ljmp    38$              ; Yes
-        
-1$:     ; Test all active sprites
-        
-        SPR_TEST(0, 10$) sjmp 2$
+        mov     R_RIGHT, XSPR_POS(0)
+        mov     a, XSPR_MASK(0)
+        anl     a, R_RIGHT
+        jnz     1$
 
-10$:    lcall   _spr_address_next_0  CHROMA_LONG(26$, 4$, 2$)
+        ; Already in the sprite, adjust R_LEFT before jumping
+        ; into the middle of the sprite code.
+        
+        mov     a, XSPR_MASK(0)
+        add     a, R_RIGHT
+        mov     R_LEFT, a
 
-2$:     ; Background BG0        
-        ADDR_FROM_DPTR(_DPL)
+        mov     a, XSPR_POS(0)
+        rl      a
+        rl      a
+        anl     a, #0x1C
+        add     a, XSPR_LINE_ADDR(0)
+        mov     R_SPR_ADDR, a
+        
+        mov     R_RIGHT, #0x80
+        ljmp    12$
+        
+        ; Not already in the sprite. Calculate distance.
+        
+1$:     mov     a, R_RIGHT      
+        cpl     a               ; Twos complement negation
+        inc     a
+        mov     R_LEFT, a
+        
+        mov     a, #LCD_WIDTH
+        clr     c
+        subb    a, R_LEFT
+        mov     R_RIGHT, a
+        
+        ; -------- BG0, Left of the sprite
+
+        ; Render some of BG0 to the left of our sprite. This is
+        ; analogous to the partial tile that always exists at the
+        ; left side of a normal BG0 scanline, where the partial tile
+        ; is between 1 and 8 pixels wide. Its width here will be:
+        ;
+        ;   MIN(R_LEFT, x_bg0_first_w).
+            
+        ADDR_FROM_DPTR(_DPL);
         mov     ADDR_PORT, R_BG0_ADDR
-4$:     ASM_ADDR_INC4()
-        dec     R_LOOP_COUNT
         
-        ; Update BG0 state, and look for opportunities to burst
-        ; a whole BG0 tile at a time. This is based on BG0_NEXT_PIXEL.
+        mov     a, R_LEFT
+        clr     c
+        subb    a, _x_bg0_first_w
+        jnc      2$
+
+        ; Borrow; this is the entirety of R_LEFT.
+3$:     ASM_ADDR_INC4()             
+        djnz    R_LEFT, 3$
+        sjmp    6$
+
+        ; No borrow; draw only x_bg0_first_w pixels.
+2$:     mov     R_LEFT, a
+        mov     a, _x_bg0_first_w   ; Draw first partial tile
+5$:     ASM_ADDR_INC4()
+        djnz    acc, 5$
+
+        ; See if we can draw any full-tile bursts
+
+        mov     R_BG0_ADDR, _y_bg0_addr_l
+8$:     inc     dptr
+        inc     dptr
+        ASM_X_WRAP_CHECK(41$)
+        ADDR_FROM_DPTR(_DPL);
+        mov     ADDR_PORT, R_BG0_ADDR     
+        mov     a, R_LEFT
+        add     a, #(0x100 - 8)
+        jnc     7$
+        mov     R_LEFT, a
+        lcall   _addr_inc32
+        sjmp    8$
+7$:
         
-        mov     a, R_BG0_ADDR           ; Quick addition, move to the next pixel
+        ; Finish any partial tiles on the left side of the sprite
+        
+        mov     a, R_LEFT
+        jz      6$
+9$:     ASM_ADDR_INC4()
+        djnz    R_LEFT, 9$
+6$:     mov     R_BG0_ADDR, ADDR_PORT       ; Save the current X addr
+
+        ; We are now positioned at the beginning of the sprite
+        mov     XSPR_POS(0), #0
+
+        ; -------- Sprite with chroma key
+
+        mov     R_LEFT, XSPR_MASK(0)        ; R_LEFT tracks size of sprite
+        mov     R_SPR_ADDR, XSPR_LINE_ADDR(0)
+12$:    
+        SPR_ADDRESS_LAT(0)                  ; Load lat1/lat2
+        mov     ADDR_PORT, R_SPR_ADDR
+
+        ; Sprite Pixel loop
+
+14$:    
+        mov     ADDR_PORT, R_SPR_ADDR
+        CHROMA_PREP()
+        CHROMA_J_OPAQUE(24$)
+
+        ADDR_FROM_DPTR(_DPL)                ; Transparent path (BG0)
+        mov     ADDR_PORT, R_BG0_ADDR
+        ASM_ADDR_INC4()
+        SPR_ADDRESS_LAT(0)
+        mov     ADDR_PORT, R_SPR_ADDR
+
+        djnz    R_RIGHT, 15$                ; Test for edge of screen
+        ret        
+
+24$:    ASM_ADDR_INC4()
+
+        djnz    R_RIGHT, 15$                ; Test for edge of screen
+        ret        
+15$:    
+
+        mov     a, R_BG0_ADDR               ; Update X portion of BG0 address
         add     a, #4
         mov     R_BG0_ADDR, a
         anl     a, #0x1F
-        jnz     5$
-        
-        mov     a, R_BG0_ADDR           ; Overflow compensation
+        jnz     23$    
+        mov     a, R_BG0_ADDR               ; Compensate for BG0 overflow
         add     a, #(0x100 - 0x20)
         mov     R_BG0_ADDR, a
-        
-7$:     inc     dptr                    ; Next BG0 tile
+        inc     dptr                        ; Next BG0 tile
         inc     dptr
-        ASM_X_WRAP_CHECK(8$)
+        ASM_X_WRAP_CHECK(44$)
+23$:
 
-        ; Make sure all sprites are out of the way of this potential burst
-38$:    SPR_BG_BURST_TEST(0, 5$)
-36$:
+        mov     a, R_SPR_ADDR               ; Update X portion of sprite address
+        add     a, #4
+        mov     R_SPR_ADDR, a
+        anl     a, #0x1F
+        jnz     25$
+        mov     a, R_SPR_ADDR               ; Compensate for X overflow
+        add     a, #(0x100 - 0x20)
+        mov     R_SPR_ADDR, a
+        SPR_ADDRESS_LAT_INC(0, 45$)
+        SPR_ADDRESS_LAT(0)
+25$:
+
+        mov     a, R_LEFT                   ; Test for edge of sprite
+        inc     a
+        mov     R_LEFT, a
+        jnz     14$   
         
-        ; Make sure we have enough pixel loops remaining
-        mov     a, R_LOOP_COUNT
-        add     a, #(0x100 - 8)
-        jc      6$
+        ; -------- BG0, Right of the sprite
+                
+        ; See if we have a partial tile to draw, in order to get back
+        ; into alignment with BG0
+    
+        mov     a, R_BG0_ADDR
+        anl     a, #0x1F
+        jz      16$
 
-5$:        
-        cjne    R_LOOP_COUNT, #0, 3$
-37$:    ret
-3$:     ljmp    1$
-        
-        ; --- BG0 Tile Burst
-
-6$:        
-        mov     R_LOOP_COUNT, a
-        ADDR_FROM_DPTR(_DPL)
+        ; If there is a partial tile, we need to update DPTR
+        ASM_ADDR_FROM_DPTR_INC()
+        ASM_X_WRAP_CHECK(43$)
         mov     ADDR_PORT, R_BG0_ADDR
-        lcall   _addr_inc32
+        
+        mov     a, R_BG0_ADDR
+17$:    anl     a, #0x1F                    ; Look for X wrap
+        jz      16$
+        ASM_ADDR_INC4()
+        djnz     R_RIGHT, 18$               ; Test for edge of screen
+        ret        
+18$:    add     a, #4
+        sjmp    17$
+16$:
 
-        SPR_ADVANCE(0, 8)
-9$:
+        ; Now render as many tile bursts as possible
+
+        mov     R_BG0_ADDR, _y_bg0_addr_l
+19$:    ASM_ADDR_FROM_DPTR_INC();
+        ASM_X_WRAP_CHECK(42$)
+        mov     ADDR_PORT, R_BG0_ADDR     
+        mov     a, R_RIGHT
+        add     a, #(0x100 - 8)
+        jnc     20$
+        mov     R_RIGHT, a
+        lcall   _addr_inc32
+        sjmp    19$
+20$:
         
-        mov     a, R_LOOP_COUNT
-        jz      37$
-        ljmp    7$
+        ; Finish any partial tiles on the right edge of the screen
         
+        mov     a, R_RIGHT
+        jz      21$
+22$:    ASM_ADDR_INC4()
+        djnz    R_RIGHT, 22$
+21$:    ret
+
     __endasm ;
 }
 
@@ -339,6 +481,7 @@ void vm_bg0_spr_bg1_pixels() __naked
         
         ; Update BG1 state in the usual way
         BG1_NEXT_PIXEL(52$, 53$)
+
         ; Update BG0 state, and look for opportunities to burst
         ; a whole BG0 tile at a time. This is based on BG0_NEXT_PIXEL.
         
@@ -414,14 +557,28 @@ void vm_bg0_spr_line()
         mov     R_BG0_ADDR, a
         
         mov     R_X_WRAP, _x_bg0_wrap
-        mov     R_SPR_ACTIVE, _y_spr_active
-        mov     R_LOOP_COUNT, #128        
     __endasm ;
     
-    if (y_spr_active > 1)
+    if (y_spr_active > 1) {
+        /*
+         * Two or more sprites. Do a slower pixel-by-pixel render,
+         * so we can get all of the multi-layered chroma keying right.
+         */
+         
+        __asm
+            mov     R_SPR_ACTIVE, _y_spr_active
+            mov     R_LOOP_COUNT, #128        
+        __endasm ;
+        
         vm_bg0_spr_pixels();
-    else
-        vm_bg0_spr1_pixels();
+
+    } else {
+        /*
+         * Just BG0 and one sprite. Take the fast path.
+         */
+         
+        vm_bg0_spr1_fast();
+    }
 }
 
 void vm_bg0_spr_bg1_line()
