@@ -29,20 +29,29 @@ endif
 ASSETS = assets
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 
-# Only disable this for debugging! The -O2 flag is important, we use
-# a lot of C++ code that's written assuming it will be inlined. The
-# inlined code should end up being smaller due to constant folding.
-#CCFLAGS += -O2
+ifeq ($(DEBUG),)
+    # Only disable this for debugging! The -O2 flag is important, we use
+    # a lot of C++ code that's written assuming it will be inlined. The
+    # inlined code should end up being smaller due to constant folding.
+    CFLAGS += -O2
+else
+    CFLAGS += -DDEBUG
+endif
 
-# Disable unwanted C++ features
-CPPFLAGS := -fno-exceptions -fno-threadsafe-statics -fno-rtti
-
-CCFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include \
-           -ffunction-sections -fdata-sections \
-           -ffast-math
+CFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include \
+          -ffunction-sections -fdata-sections \
+          -ffast-math
 LDFLAGS += -lm
 
+# CC is C++, CPP is the C Preprocessor. C++ code inherits CFLAGS,
+# but it may have additional C++-specific flags set as well.
+CCFLAGS += $(CFLAGS)
+
+# Disable unwanted C++ features
+CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
+CFLAGS_SIM := $(CFLAGS) -DSIFTEO_SIMULATOR
 CCFLAGS_SIM := $(CCFLAGS) -DSIFTEO_SIMULATOR
 LDFLAGS_SIM := $(LDFLAGS)
 
@@ -56,6 +65,7 @@ LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
 ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
               -msoft-float -mno-thumb-interwork
 
+CFLAGS_STM32 := $(CFLAGS) $(ARCH_STM32)
 CCFLAGS_STM32 := $(CCFLAGS) $(ARCH_STM32)
 LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
               -Wl,--gc-sections,-u,IVT \

@@ -38,7 +38,7 @@ OBJS_STM32 = \
 
 TC_DIR = ../..
 FIRMWARE_INC := ../include
-CCFLAGS += -I$(FIRMWARE_INC) -Icommon $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX
+CFLAGS += -I$(FIRMWARE_INC) -Icommon $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX
 
 include Makefile.defs
 
@@ -63,16 +63,16 @@ $(BIN_STM32): $(OBJS_STM32)
 	$(RANLIB_STM32) $@
 
 %.sim.o: %.cpp $(CDEPS)
-	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM) $(CPPFLAGS)
+	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
 
 %.stm32.o: %.cpp $(CDEPS)
-	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32) $(CPPFLAGS)
-
-%.stm32.o: %.c $(CDEPS)
 	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
 
+%.stm32.o: %.c $(CDEPS)
+	$(CC_STM32) -c -o $@ $< $(CFLAGS_STM32)
+
 %.stm32.o: %.s $(CDEPS)
-	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CCFLAGS_STM32)
+	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CFLAGS_STM32)
 
 .PHONY: all clean
 
