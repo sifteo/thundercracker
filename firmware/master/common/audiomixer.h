@@ -10,11 +10,11 @@
 
 #include <stdint.h>
 #include "speexdecoder.h"
+#include <sifteo/audio.h>
 
 class AudioMixer
 {
 public:
-    typedef uint8_t module_t;       // ID for a particular asset
     typedef uint32_t handle_t;      // handle for a playback instance
 
     static const int NUM_CHANNELS = 8;
@@ -32,7 +32,7 @@ public:
 
     void setSoundBank(uintptr_t address);
 
-    bool play(module_t mod, handle_t *handle, enum LoopMode loopMode = LoopOnce);
+    bool play(const Sifteo::AudioModule &mod, handle_t *handle, enum LoopMode loopMode = LoopOnce);
     bool isPlaying(handle_t handle);
     void stop(handle_t mod);
 
@@ -50,6 +50,11 @@ public:
     void fetchData();
 
 private:
+    /*
+     * This is a super hack for now - it assumes the only kind of audio source
+     * is a speex encoded blob, but we'll likely want to support different kinds of
+     * audio data: synth tables, etc.
+     */
     typedef struct AudioChannel_t {
         SpeexDecoder decoder; // tbd how this actually gets represented...
 
@@ -77,7 +82,7 @@ private:
     handle_t nextHandle;
     AudioChannel channels[NUM_CHANNELS];
 
-    AudioChannel* channelForHandle(module_t mod);
+    AudioChannel* channelForHandle(handle_t handle);
     void stopChannel(AudioChannel *ch);
 };
 

@@ -6,8 +6,6 @@
 #include <string.h>
 #include <sifteo/machine.h>
 
-//#define TEMP_TESTING
-
 using namespace Sifteo;
 
 AudioMixer::AudioMixer() :
@@ -24,25 +22,27 @@ void AudioMixer::init()
     }
 }
 
-#ifdef TEMP_TESTING // super hack for testing
-#include "alert_test_data.h" // provides test_data[]
-AudioMixer mixer;
+#if 0 // super hack for testing
+
+#include "audio.gen.h" // provides blueshift
+
 void AudioMixer::test()
 {
+    AudioMixer mixer;
     mixer.init();
     AudioOutDevice::init(AudioOutDevice::kHz8000, &mixer);
     AudioOutDevice::start();
 
     handle_t handle;
-    module_t id = 0;
-    if (!mixer.play(id, &handle)) {
+    const Sifteo::AudioModule &mod = blueshift;
+    if (!mixer.play(mod, &handle)) {
         while (1); // error
     }
 
     for (;;) {
         mixer.fetchData(); // this would normally be interleaved into the runtime
         if (!mixer.isPlaying(handle)) {
-            if (!mixer.play(id, &handle)) {
+            if (!mixer.play(mod, &handle)) {
                 while (1); // error
             }
         }
@@ -75,7 +75,7 @@ int AudioMixer::pullAudio(char *buffer, int numsamples)
         }
 
         // if we have any decompressed bytes to mix, go for it
-        if (ch->bytesToMix() >= 0) {
+        if (ch->bytesToMix() > 0) {
             b = buffer;
             bufend = buffer + numsamples;
             while (b != bufend) {
@@ -122,7 +122,7 @@ void AudioMixer::setSoundBank(uintptr_t address)
 
 }
 
-bool AudioMixer::play(module_t mod, handle_t *handle, enum LoopMode loopMode)
+bool AudioMixer::play(const AudioModule &mod, handle_t *handle, enum LoopMode loopMode)
 {
     if (activeChannelMask == 0xFFFFFFFF) {
         return false; // no free channels
@@ -137,10 +137,7 @@ bool AudioMixer::play(module_t mod, handle_t *handle, enum LoopMode loopMode)
 
     AudioChannel *ch = &channels[channelIndex];
     ch->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
-    // TODO: read info from soundbank, set channel's data pointer
-#ifdef TEMP_TESTING // super hack for testing
-    ch->decoder.setData((char*)test_data, sizeof(test_data));
-#endif
+    ch->decoder.setData((char*)mod.data, mod.size);
     ch->ptr = ch->decompressBuf + sizeof(ch->decompressBuf); // mark it as empty
     ch->handle = nextHandle++;
     *handle = ch->handle;
@@ -197,7 +194,7 @@ uint32_t AudioMixer::pos(handle_t handle)
     return 0;
 }
 
-AudioMixer::AudioChannel* AudioMixer::channelForHandle(module_t handle)
+AudioMixer::AudioChannel* AudioMixer::channelForHandle(handle_t handle)
 {
     uint32_t mask = activeChannelMask;
     AudioChannel *ch = &channels[0];
