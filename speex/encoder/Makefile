@@ -1,26 +1,31 @@
 
 BIN = speexencoder
-OBJS = speexencoder.o
+OBJS = main.o \
+        encoder.o
+
+ifeq ($(OS),Windows_NT)
+    SPEEX_INSTALL = ../prebuilt/win32
+endif
+
+INCLUDES = -I$(SPEEX_INSTALL)/include
 
 CC = gcc
-CCFLAGS = -Wall
-LDFLAGS = -lspeex
-
+CCFLAGS = -Wall $(INCLUDES)
+CFLAGS = -Wall $(INCLUDES)
+LDFLAGS = -L$(SPEEX_INSTALL)/lib -static -lspeex -lstdc++
 
 all: $(BIN)
 
 $(BIN): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-%.o: %.cpp $(CDEPS)
+%.o: %.cpp
 	$(CC) -c -o $@ $< $(CCFLAGS)
 
-%.o: %.c $(CDEPS)
+%.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 .PHONY: clean
 
 clean:
 	rm -f $(BIN) $(OBJS)
-
-
