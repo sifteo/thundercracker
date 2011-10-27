@@ -51,8 +51,7 @@ private:
 	GridSlot m_grid[NUM_ROWS][NUM_COLS];
 
 	//neighbor info
-	//right now doesn't know what cubes are on what sides
-	bool m_neighbors[NUM_SIDES];
+	int m_neighbors[NUM_SIDES];
 };
 
 #endif

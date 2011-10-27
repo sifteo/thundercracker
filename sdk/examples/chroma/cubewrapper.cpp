@@ -15,7 +15,7 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
-		m_neighbors[i] = false;
+		m_neighbors[i] = -1;
 	}
 
 	for( int i = 0; i < NUM_ROWS; i++ )
@@ -75,11 +75,23 @@ void CubeWrapper::Update(float t)
 		//TODO, this should be pushed into sdk
 		//also, it doesn't check what cubes are its neighbors
 		bool newValue = ( buf[i] >> 7 ) > 0;
+		int id = buf[i] & 0x1f;
+
+		if( newValue )
+		{
+			PRINT( "we have a neighbor.  it is %d\n", id );
+		}
 
 		//newly neighbored
-		if( newValue && !m_neighbors[i])
+		if( newValue && id != m_neighbors[i])
+		{
 			Game::Inst().setTestMatchFlag();
-		m_neighbors[i] = newValue;
+			m_neighbors[i] = id;
+
+			PRINT( "neighbor on side %d is %d", i, id );
+		}
+		else
+			m_neighbors[i] = -1;
 	}
 
 	//update all dots
@@ -212,13 +224,9 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 //only test matches with neighbors with id less than ours.  This prevents double testing
 void CubeWrapper::testMatches()
 {
-	//TODO super hacky for the demo, since we don't know which cube is our neighbor
-	if( m_cube.id() < 1 )
-		return;
-
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
-		if( m_neighbors[i] /*&& m_cube.neighbors[i].id() < m_cube.id()*/ )
+		if( m_neighbors[i] >= 0 && m_neighbors[i] < m_cube.id() )
 		{
 			//TEMP try marking everything
 			/*for( int k = 0; k < NUM_ROWS; k++ )
@@ -233,9 +241,7 @@ void CubeWrapper::testMatches()
 			return;*/
 
 			//as long we we test one block going clockwise, and the other going counter-clockwise, we'll match up
-			//int side = GetSideNeighboredOn( m_cube.neighbors[i], m_cube );
-			//TODO fix this so it actually knows which cube it's looking at
-			int side = Game::Inst().cubes[0].GetSideNeighboredOn( 0, m_cube );
+			int side = Game::Inst().cubes[m_neighbors[i]].GetSideNeighboredOn( 0, m_cube );
 
 			//no good, just set our flag again and return
 			if( side < 0 )
@@ -250,8 +256,7 @@ void CubeWrapper::testMatches()
 
 			FillSlotArray( ourGems, i, true );
 
-			//TODO total hackery
-			CubeWrapper &otherCube = Game::Inst().cubes[0];
+			CubeWrapper &otherCube = Game::Inst().cubes[m_neighbors[i]];
 			otherCube.FillSlotArray( theirGems, side, false );
 
 			//compare the two
@@ -270,7 +275,6 @@ void CubeWrapper::testMatches()
 
 void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
 {
-	//TODO for now, go with the SDK's top right bottom left order.  fix later
 	switch( side )
 	{
 		case 0:
@@ -340,12 +344,11 @@ void CubeWrapper::FillSlotArray( GridSlot **gems, int side, bool clockwise )
 }
 
 
-//TODO, this is total fakery now.  Not sure what cube are our neighbors
 int CubeWrapper::GetSideNeighboredOn( _SYSCubeID id, Cube &cube )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
-		if( m_neighbors[i] )
+		if( m_neighbors[i] == cube.id() )
 			return i;
 	}
 
