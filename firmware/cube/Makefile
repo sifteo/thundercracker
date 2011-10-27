@@ -19,7 +19,6 @@ OBJS = \
         sensors.rel \
         flash_hal.rel \
         flash_decoder.rel \
-        time.rel \
         draw.rel \
         tilerom.rel \
         demo.rel \

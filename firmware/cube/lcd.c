@@ -12,11 +12,12 @@
 #include "flash.h"
 #include "time.h"
 #include "lcd_model.h"
+#include "sensors.h"
 
 static __bit lcd_is_awake;
 
 
-static void lcd_cmd_table(const __code uint8_t *ptr)
+static void lcd_cmd_table(const __code uint8_t *ptr) __naked
 {
     /*
      * Table-driven LCD init, so that we don't waste so much ROM
@@ -26,30 +27,52 @@ static void lcd_cmd_table(const __code uint8_t *ptr)
      *   <total length> <command> <data bytes...>
      *
      * If the length has bit 7 set, it's actually a delay in
-     * milliseconds, from 1 to 128 ms.
+     * sensor ticks (6.144 ms) of from 1 to 128 ticks.
+     *
+     * This is in assembly to save space. (It is not the least
+     * bit speed critical, but the compiled code was kind of big)
      */
-    
-    uint8_t len;
+     
+    ptr = ptr;
+    __asm
+ 
+        ASM_LCD_WRITE_BEGIN()
+     
+4$:     clr     a
+        movc    a, @a+dptr
+        jz      1$              ; Zero, end-of-list
+        inc     dptr
+        
+        jb      acc.7, 2$       ; Delay bit set?
+        mov     r0, a           ; No, save as byte count for command
+        
+        ASM_LCD_CMD_MODE()
+3$:     clr     a
+        movc    a, @a+dptr
+        mov     BUS_PORT, a
+        inc     dptr
+        lcall   _addr_inc2
+        ASM_LCD_DATA_MODE()
+        djnz    r0, 3$
+        sjmp    4$
+        
+1$:     ASM_LCD_WRITE_END()
+        ret
+        
+        ; Calculate a target clock tick. We need to subtract 0x80
+        ; and add 1 to get the number of ticks, and we need to add
+        ; another 1 to reference the _next_ tick instead of the current.
 
-    LCD_WRITE_BEGIN();
+2$:     add     a, #(0x100 - 0x80 + 2)
+        add     a, _sensor_tick_counter
+        mov     r0, a
 
-    while ((len = *ptr)) {
-        ptr++;
+5$:     mov     a, _sensor_tick_counter
+        xrl     a, r0
+        jnz     5$
+        sjmp    4$
 
-        if (len & 0x80) {
-            msleep(len - 0x7F);
-
-        } else {
-            LCD_CMD_MODE();
-            do {
-                LCD_BYTE(*ptr);
-                LCD_DATA_MODE();
-                ptr++;
-            } while (--len);
-        }
-    }
-
-    LCD_WRITE_END();
+    __endasm;
 }
 
 void lcd_sleep()
@@ -173,6 +196,9 @@ void addr_inc32() __naked {
             .globl _addr_inc12
             .globl _addr_inc8
             .globl _addr_inc4
+            .globl _addr_inc3
+            .globl _addr_inc2
+            .globl _addr_inc1
     
              ASM_ADDR_INC4()
 _addr_inc28: ASM_ADDR_INC4()
@@ -181,7 +207,10 @@ _addr_inc20: ASM_ADDR_INC4()
 _addr_inc16: ASM_ADDR_INC4()
 _addr_inc12: ASM_ADDR_INC4()
 _addr_inc8:  ASM_ADDR_INC4()
-_addr_inc4:  ASM_ADDR_INC4()
+_addr_inc4:  inc    ADDR_PORT
+_addr_inc3:  inc    ADDR_PORT
+_addr_inc2:  inc    ADDR_PORT
+_addr_inc1:  inc    ADDR_PORT
              ret
 
     __endasm ;

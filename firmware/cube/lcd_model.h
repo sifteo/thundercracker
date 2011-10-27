@@ -35,8 +35,8 @@
 
 /********************************************************************/
 
-#define SHORT_DELAY             0x80    // 1ms
-#define LONG_DELAY              0xFF    // 128ms
+#define SHORT_DELAY             (0x7F + 1)    // ~6 ms
+#define LONG_DELAY              (0x7F + 20)   // ~120 ms
 
 /*
  * This is a superset of commands defined by all the LCDs we support.

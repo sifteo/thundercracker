@@ -59,11 +59,16 @@ void lcd_end_frame();
 
 #define ASM_LCD_WRITE_BEGIN()   __endasm; LCD_WRITE_BEGIN(); __asm
 #define ASM_LCD_WRITE_END()     __endasm; LCD_WRITE_END(); __asm
+#define ASM_LCD_CMD_MODE()      __endasm; LCD_CMD_MODE(); __asm
+#define ASM_LCD_DATA_MODE()     __endasm; LCD_DATA_MODE(); __asm
     
 /*
  * Bus Clocking
  */
     
+void addr_inc1() __naked;
+void addr_inc2() __naked;
+void addr_inc3() __naked;
 void addr_inc4() __naked;
 void addr_inc8() __naked;
 void addr_inc12() __naked;
