@@ -32,4 +32,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/c/code/thundercracker/speex/prebuilt/win32//lib'
+libdir='/c/code/thundercracker/speex/prebuilt/win32/lib'

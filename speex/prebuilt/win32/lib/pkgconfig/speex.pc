@@ -1,6 +1,6 @@
 # libspeex pkg-config source file
 
-prefix=/c/code/thundercracker/speex/prebuilt/win32/
+prefix=/c/code/thundercracker/speex/prebuilt/win32
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
