@@ -6,6 +6,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <assert.h>
 
 using namespace std;
 
@@ -114,7 +115,7 @@ bool Encoder::encode(const char *configpath, int channels, int format)
         string path = dir + "/" + file;
         int sz = encodeFile(path, channels, format, headerStream, sourceStream);
         
-        sourceStream << "const Sifteo::AudioModule " << baseName(file) << " = {\n"
+        sourceStream << "Sifteo::AudioModule " << baseName(file) << " = {\n"
                         "    " << sz << ", // size\n"
                         "    " << baseName(file) << "_data\n"
                         "};\n\n";
@@ -144,8 +145,8 @@ int Encoder::encodeFile(const string &path, int channels, int format, ofstream &
     headerStream << "extern const Sifteo::AudioModule " << baseName(path) << ";\n";
     
     int bytecount = 0;
-    int inlen = instream.seekg(0, std::ios::end).tellg();
-    instream.seekg(0, std::ios::beg);
+    int inlen = instream.seekg(0, ios::end).tellg();
+    instream.seekg(0, ios::beg);
     
     while (instream.good()) {
         // note - must use DECODED_FRAME_SIZE here to fetch the appropriate amount of uncompressed data.
@@ -160,7 +161,9 @@ int Encoder::encodeFile(const string &path, int channels, int format, ofstream &
         int nbBytes = speex_bits_write(&bits, outbuf, sizeof(outbuf));
         speex_bits_reset(&bits);
         
-        // file format: int of frame size, followed by frame data
+        assert(nbBytes < 0xFF && "frame is too large for format :(\n");
+
+        // file format: uint8_t of frame size, followed by frame data
         if (!srcStream.is_open()) {
             continue;
         }
@@ -168,6 +171,7 @@ int Encoder::encodeFile(const string &path, int channels, int format, ofstream &
         sprintf(buf, "0x%02x,", (uint8_t)nbBytes);
         srcStream << "\n    " << buf << "  // frame of " << nbBytes << " bytes";
         bytecount++;
+
         for (int i = 0; i < nbBytes; i++, bytecount++) {
             if (i % 12 == 0) {
                 srcStream << "\n    ";
