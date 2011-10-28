@@ -383,8 +383,15 @@ void CubeSlot::waitForFinish()
      * has been updated over the radio.  Does *not* wait for any
      * minimum frame rate. If no rendering is pending, we return
      * immediately.
+     *
+     * Continuous rendering is turned off, if it was on.
      */
 
+    uint8_t flags = VRAM::peekb(&vbuf, offsetof(_SYSVideoRAM));
+    flags &= ~_SYS_VF_CONTINUOUS;
+    VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags);
+    VRAM::unlock(*vbuf);
+        
     for (;;) {
         Atomic::Barrier();
         SysTime::Ticks now = SysTime::ticks();
@@ -476,7 +483,6 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
                 flags |= _SYS_VF_CONTINUOUS;
             }
         }
-
 
         /*
          * Atomically apply our changes to pendingFrames.

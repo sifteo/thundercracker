@@ -85,11 +85,17 @@ class System {
 
     /**
      * Fully synchronous repaint. This is just a shorthand for a
-     * paint() followed by finish(). All of the performance caveats
-     * that come with finish() are applicable here too.
+     * finish() (to stop continuous rendering, and flush everything
+     * to the radio), then a paint() to synchronize any outstanding
+     * rendering with the cube, followed by a final finish() to let
+     * the paint fully complete.
+     *
+     * All of the performance caveats that come with finish()
+     * are applicable here too.
      */
 
     static void paintSync() {
+        _SYS_finish();
         _SYS_paint();
         _SYS_finish();
     }
