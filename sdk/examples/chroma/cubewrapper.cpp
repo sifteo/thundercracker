@@ -83,12 +83,15 @@ void CubeWrapper::Update(float t)
 		}
 
 		//newly neighbored
-		if( newValue && id != m_neighbors[i])
+		if( newValue )
 		{
-			Game::Inst().setTestMatchFlag();
-			m_neighbors[i] = id;
+			if( id != m_neighbors[i] )
+			{
+				Game::Inst().setTestMatchFlag();
+				m_neighbors[i] = id;
 
-			PRINT( "neighbor on side %d is %d", i, id );
+				PRINT( "neighbor on side %d is %d", i, id );
+			}
 		}
 		else
 			m_neighbors[i] = -1;
