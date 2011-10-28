@@ -27,7 +27,10 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
     }
 
     pwmTimer.init(500, 0); // TODO - tune the PWM freq we want
-    pwmTimer.configureChannel(this->pwmChan, HwTimer::ActiveHigh, HwTimer::Pwm1);
+    pwmTimer.configureChannel(this->pwmChan,
+                                HwTimer::ActiveHigh,
+                                HwTimer::Pwm1,
+                                HwTimer::ComplementaryOutput);
 }
 
 void PwmAudioOut::start()

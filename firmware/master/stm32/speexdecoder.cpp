@@ -1,6 +1,7 @@
 
 #include "speexdecoder.h"
 #include "flashlayer.h"
+#include "config.h"
 
 SpeexDecoder::SpeexDecoder() :
     decodeState(0),
@@ -71,9 +72,9 @@ int SpeexDecoder::decodeFrame(char *buf, int size)
     }
 
     // format: int of framesize, followed by framesize bytes of frame data
-    int sz = *(int*)localAddr;
-    localAddr += sizeof(int);
-    this->srcBytesRemaining -= sizeof(int);
+    uint8_t sz = *(uint8_t*)localAddr;
+    localAddr += sizeof(uint8_t);
+    this->srcBytesRemaining -= sizeof(uint8_t);
     if (this->srcBytesRemaining < sz) {
         status = EndOfStream;
         return 0;   // not enough data left
@@ -86,8 +87,27 @@ int SpeexDecoder::decodeFrame(char *buf, int size)
 
     // might be able to do this before the decode step
     FlashLayer::releaseRegion(this->srcaddr);
-    this->srcaddr += (sz + sizeof(int));
+    this->srcaddr += (sz + sizeof(uint8_t));
 
     return DECODED_FRAME_SIZE;
+}
+
+void _speex_fatal(const char *str, const char *file, int line)
+{
+    (void)str;
+    (void)file;
+    (void)line;
+    for (;;) {
+        ;
+    }
+}
+
+void _speex_putc(int ch, void *file)
+{
+    (void)ch;
+    (void)file;
+    for (;;) {
+        ;
+    }
 }
 
