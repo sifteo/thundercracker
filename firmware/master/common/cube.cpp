@@ -387,7 +387,7 @@ void CubeSlot::waitForFinish()
      * Continuous rendering is turned off, if it was on.
      */
 
-    uint8_t flags = VRAM::peekb(&vbuf, offsetof(_SYSVideoRAM));
+    uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM,flags));
     flags &= ~_SYS_VF_CONTINUOUS;
     VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags);
     VRAM::unlock(*vbuf);
