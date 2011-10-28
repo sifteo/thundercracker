@@ -388,16 +388,29 @@ void CubeSlot::waitForFinish()
      */
 
     uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM,flags));
-    flags &= ~_SYS_VF_CONTINUOUS;
-    VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags);
-    VRAM::unlock(*vbuf);
-        
+    if (flags & _SYS_VF_CONTINUOUS) {
+        /*
+         * If we were in continuous rendering mode, pendingFrames isn't
+         * exact; it's more of a running accumulator. In that case, we have
+         * to turn off continuous rendering mode, flush everything over the
+         * radio, then do one Paint(). This is what paintSync() does.
+         * So, at this point we just need to reset pendingFrames to zero
+         * and turn off continuous mode.
+         */
+         
+        pendingFrames = 0;
+
+        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags & ~_SYS_VF_CONTINUOUS);
+        VRAM::unlock(*vbuf);
+    }
+     
     for (;;) {
         Atomic::Barrier();
         SysTime::Ticks now = SysTime::ticks();
 
         if (now > (paintTimestamp + fpsLow)) {
-            // Watchdog expired. Give up waiting.
+            // Watchdog expired. Give up waiting, and forcibly reset pendingFrames.
+            pendingFrames = 0;
             break;
         }
 
