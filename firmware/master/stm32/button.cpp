@@ -2,12 +2,12 @@
 #include "button.h"
 #include "hardware.h"
 
-Button button(GPIOPin(&GPIOG, 8)); // MCBSTM32E eval board has USER button on PG8
+Button pushButton(GPIOPin(&GPIOG, 8)); // MCBSTM32E eval board has USER button on PG8
 
 void Button::enablePushButton()
 {
     NVIC.irqEnable(IVT.EXTI9_5);
-    button.init();
+    pushButton.init();
 }
 
 void Button::init()
@@ -26,5 +26,5 @@ void Button::isr()
 
 IRQ_HANDLER ISR_EXTI9_5()
 {
-    button.isr();
+    pushButton.isr();
 }
