@@ -32,10 +32,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef LTP_H
-#define LTP_H
-
-#include "../include/speex/speex_bits.h"
+#include <speex/speex_bits.h>
 #include "arch.h"
 
 /** LTP parameters. */
@@ -52,6 +49,7 @@ typedef struct {
 #endif
 
 spx_word32_t inner_prod(const spx_word16_t *x, const spx_word16_t *y, int len);
+void pitch_xcorr(const spx_word16_t *_x, const spx_word16_t *_y, spx_word32_t *corr, int len, int nb_pitch, char *stack);
 
 void open_loop_nbest_pitch(spx_word16_t *sw, int start, int end, int len, int *pitch, spx_word16_t *gain, int N, char *stack);
 
@@ -141,5 +139,3 @@ int subframe_offset,
 spx_word16_t last_pitch_gain,
 int cdbk_offset
 );
-
-#endif /* LTP_H */

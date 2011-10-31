@@ -39,14 +39,8 @@
  *  @{
  */
 
-#ifdef _BUILD_SPEEX
-# include "speex_types.h"
-# include "speex_bits.h"
-#else
-# include <speex/speex_types.h>
-# include <speex/speex_bits.h>
-#endif
-
+#include "speex/speex_types.h"
+#include "speex/speex_bits.h"
 
 #ifdef __cplusplus
 extern "C" {

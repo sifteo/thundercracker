@@ -49,8 +49,6 @@
 #include "cb_search_bfin.h"
 #endif
 
-#ifndef DISABLE_ENCODER
-
 #ifndef OVERRIDE_COMPUTE_WEIGHTED_CODEBOOK
 static void compute_weighted_codebook(const signed char *shape_cb, const spx_word16_t *r, spx_word16_t *resp, spx_word16_t *resp2, spx_word32_t *E, int shape_cb_size, int subvect_size, char *stack)
 {
@@ -158,11 +156,9 @@ int   update_target
    {
       spx_word16_t *x=t+subvect_size*i;
       /*Find new n-best based on previous n-best j*/
-#ifndef DISABLE_WIDEBAND
       if (have_sign)
          vq_nbest_sign(x, resp2, subvect_size, shape_cb_size, E, 1, &best_index, &best_dist, stack);
       else
-#endif /* DISABLE_WIDEBAND */
          vq_nbest(x, resp2, subvect_size, shape_cb_size, E, 1, &best_index, &best_dist, stack);
       
       speex_bits_pack(bits,best_index,params->shape_bits+have_sign);
@@ -381,11 +377,9 @@ int   update_target
          tener *= .5;
 #endif
          /*Find new n-best based on previous n-best j*/
-#ifndef DISABLE_WIDEBAND
          if (have_sign)
             vq_nbest_sign(x, resp2, subvect_size, shape_cb_size, E, N, best_index, best_dist, stack);
          else
-#endif /* DISABLE_WIDEBAND */
             vq_nbest(x, resp2, subvect_size, shape_cb_size, E, N, best_index, best_dist, stack);
 
          /*For all new n-bests*/
@@ -515,9 +509,8 @@ int   update_target
          target[j]=SUB16(target[j],PSHR16(r2[j],2));
    }
 }
-#endif /* DISABLE_ENCODER */
 
-#ifndef DISABLE_DECODER
+
 void split_cb_shape_sign_unquant(
 spx_sig_t *exc,
 const void *par,                      /* non-overlapping codebook */
@@ -575,9 +568,7 @@ spx_int32_t *seed
 #endif
    }
 }
-#endif /* DISABLE_DECODER */
 
-#ifndef DISABLE_ENCODER
 void noise_codebook_quant(
 spx_word16_t target[],			/* target vector */
 spx_coef_t ak[],			/* LPCs for this subframe */
@@ -603,9 +594,8 @@ int   update_target
       exc[i]+=SHL32(EXTEND32(tmp[i]),8);
    SPEEX_MEMSET(target, 0, nsf);
 }
-#endif /* DISABLE_ENCODER */
 
-#ifndef DISABLE_DECODER
+
 void noise_codebook_unquant(
 spx_sig_t *exc,
 const void *par,                      /* non-overlapping codebook */
@@ -620,4 +610,3 @@ spx_int32_t *seed
    for (i=0;i<nsf;i++)
       exc[i]=SHL32(EXTEND32(speex_rand(1, seed)),SIG_SHIFT);
 }
-#endif /* DISABLE_DECODER */

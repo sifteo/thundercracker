@@ -64,7 +64,14 @@
 #define NB_ENC_STACK SPEEXENC_SCRATCH_STACK_SIZE
 #define NB_DEC_STACK SPEEXDEC_SCRATCH_STACK_SIZE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void _speex_fatal(const char *str, const char *file, int line);
 extern void _speex_putc(int ch, void *file);
 
+#ifdef __cplusplus
+}
+#endif
 

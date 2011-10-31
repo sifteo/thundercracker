@@ -68,7 +68,6 @@
 
 #endif
 
-#ifndef DISABLE_ENCODER
 static void compute_quant_weights(spx_lsp_t *qlsp, spx_word16_t *quant_weight, int order)
 {
    int i;
@@ -210,9 +209,7 @@ void lsp_quant_nb(spx_lsp_t *lsp, spx_lsp_t *qlsp, int order, SpeexBits *bits)
    for (i=0;i<order;i++)
       qlsp[i]=lsp[i]-qlsp[i];
 }
-#endif /* DISABLE_ENCODER */
 
-#ifndef DISABLE_DECODER
 void lsp_unquant_nb(spx_lsp_t *lsp, int order, SpeexBits *bits)
 {
    int i, id;
@@ -240,9 +237,8 @@ void lsp_unquant_nb(spx_lsp_t *lsp, int order, SpeexBits *bits)
    for (i=0;i<5;i++)
       lsp[i+5] = ADD32(lsp[i+5], LSP_DIV_1024(cdbk_nb_high2[id*5+i]));
 }
-#endif /* DISABLE_DECODER */
 
-#ifndef DISABLE_ENCODER
+
 void lsp_quant_lbr(spx_lsp_t *lsp, spx_lsp_t *qlsp, int order, SpeexBits *bits)
 {
    int i;
@@ -283,9 +279,7 @@ void lsp_quant_lbr(spx_lsp_t *lsp, spx_lsp_t *qlsp, int order, SpeexBits *bits)
    for (i=0;i<order;i++)
       qlsp[i]=lsp[i]-qlsp[i];
 }
-#endif /* DISABLE_ENCODER */
 
-#ifndef DISABLE_DECODER
 void lsp_unquant_lbr(spx_lsp_t *lsp, int order, SpeexBits *bits)
 {
    int i, id;
@@ -306,13 +300,22 @@ void lsp_unquant_lbr(spx_lsp_t *lsp, int order, SpeexBits *bits)
       lsp[i+5] += LSP_DIV_512(cdbk_nb_high1[id*5+i]);
    
 }
-#endif /* DISABLE_DECODER */
 
-#ifndef DISABLE_WIDEBAND
+
+#ifdef DISABLE_WIDEBAND
+void lsp_quant_high(spx_lsp_t *lsp, spx_lsp_t *qlsp, int order, SpeexBits *bits)
+{
+   speex_fatal("Wideband and Ultra-wideband are disabled");
+}
+void lsp_unquant_high(spx_lsp_t *lsp, int order, SpeexBits *bits)
+{
+   speex_fatal("Wideband and Ultra-wideband are disabled");
+}
+#else
 extern const signed char high_lsp_cdbk[];
 extern const signed char high_lsp_cdbk2[];
 
-#ifndef DISABLE_ENCODER
+
 void lsp_quant_high(spx_lsp_t *lsp, spx_lsp_t *qlsp, int order, SpeexBits *bits)
 {
    int i;
@@ -359,10 +362,7 @@ void lsp_quant_high(spx_lsp_t *lsp, spx_lsp_t *qlsp, int order, SpeexBits *bits)
    for (i=0;i<order;i++)
       qlsp[i]=lsp[i]-qlsp[i];
 }
-#endif /* DISABLE_ENCODER */
 
-
-#ifndef DISABLE_DECODER
 void lsp_unquant_high(spx_lsp_t *lsp, int order, SpeexBits *bits)
 {
 
@@ -380,7 +380,6 @@ void lsp_unquant_high(spx_lsp_t *lsp, int order, SpeexBits *bits)
    for (i=0;i<order;i++)
       lsp[i] += LSP_DIV_512(high_lsp_cdbk2[id*order+i]);
 }
-#endif /* DISABLE_DECODER */
 
-#endif /* DISABLE_WIDEBAND */
+#endif
 

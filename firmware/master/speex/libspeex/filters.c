@@ -119,7 +119,6 @@ void signal_mul(const spx_sig_t *x, spx_sig_t *y, spx_word32_t scale, int len)
    }
 }
 
-#ifndef DISABLE_ENCODER
 void signal_div(const spx_word16_t *x, spx_word16_t *y, spx_word32_t scale, int len)
 {
    int i;
@@ -152,9 +151,8 @@ void signal_div(const spx_word16_t *x, spx_word16_t *y, spx_word32_t scale, int 
       }
    }
 }
-#endif /* DISABLE_ENCODER */
 
-#else /* FIXED_POINT */
+#else
 
 void signal_mul(const spx_sig_t *x, spx_sig_t *y, spx_word32_t scale, int len)
 {
@@ -163,7 +161,6 @@ void signal_mul(const spx_sig_t *x, spx_sig_t *y, spx_word32_t scale, int len)
       y[i] = scale*x[i];
 }
 
-#ifndef DISABLE_ENCODER
 void signal_div(const spx_sig_t *x, spx_sig_t *y, spx_word32_t scale, int len)
 {
    int i;
@@ -171,9 +168,7 @@ void signal_div(const spx_sig_t *x, spx_sig_t *y, spx_word32_t scale, int len)
    for (i=0;i<len;i++)
       y[i] = scale_1*x[i];
 }
-#endif /* DISABLE_ENCODER */
-
-#endif /* !FIXED_POINT */
+#endif
 
 
 
@@ -181,7 +176,6 @@ void signal_div(const spx_sig_t *x, spx_sig_t *y, spx_word32_t scale, int len)
 
 
 
-#if !defined (DISABLE_WIDEBAND) && !defined (DISABLE_ENCODER)
 spx_word16_t compute_rms(const spx_sig_t *x, int len)
 {
    int i;
@@ -222,7 +216,6 @@ spx_word16_t compute_rms(const spx_sig_t *x, int len)
    
    return EXTRACT16(PSHR32(SHL32(EXTEND32(spx_sqrt(DIV32(sum,len))),(sig_shift+3)),SIG_SHIFT));
 }
-#endif /* !defined (DISABLE_WIDEBAND) && !defined (DISABLE_ENCODER) */
 
 spx_word16_t compute_rms16(const spx_word16_t *x, int len)
 {
@@ -320,11 +313,9 @@ spx_word16_t compute_rms16(const spx_word16_t *x, int len)
 }
 #endif
 
-#ifdef MERGE_FILTERS
-const spx_word16_t zeros[10] = {0,0,0,0,0,0,0,0,0,0};
-#endif  /* MERGE_FILTERS */
 
-#if !defined(OVERRIDE_FILTER_MEM16) && !defined(DISABLE_ENCODER)
+
+#ifndef OVERRIDE_FILTER_MEM16
 void filter_mem16(const spx_word16_t *x, const spx_coef_t *num, const spx_coef_t *den, spx_word16_t *y, int N, int ord, spx_mem_t *mem, char *stack)
 {
    int i,j;
@@ -342,7 +333,7 @@ void filter_mem16(const spx_word16_t *x, const spx_coef_t *num, const spx_coef_t
       y[i] = yi;
    }
 }
-#endif /* !defined(OVERRIDE_FILTER_MEM16) && !defined(DISABLE_ENCODER) */
+#endif
 
 #ifndef OVERRIDE_IIR_MEM16
 void iir_mem16(const spx_word16_t *x, const spx_coef_t *den, spx_word16_t *y, int N, int ord, spx_mem_t *mem, char *stack)
@@ -364,7 +355,7 @@ void iir_mem16(const spx_word16_t *x, const spx_coef_t *den, spx_word16_t *y, in
 }
 #endif
 
-#if !defined(OVERRIDE_FIR_MEM16) && !defined(DISABLE_ENCODER)
+#ifndef OVERRIDE_FIR_MEM16
 void fir_mem16(const spx_word16_t *x, const spx_coef_t *num, spx_word16_t *y, int N, int ord, spx_mem_t *mem, char *stack)
 {
    int i,j;
@@ -382,9 +373,9 @@ void fir_mem16(const spx_word16_t *x, const spx_coef_t *num, spx_word16_t *y, in
       y[i] = yi;
    }
 }
-#endif /* !defined(OVERRIDE_FIR_MEM16) && !defined(DISABLE_ENCODER) */
+#endif
 
-#ifndef DISABLE_ENCODER
+
 void syn_percep_zero16(const spx_word16_t *xx, const spx_coef_t *ak, const spx_coef_t *awk1, const spx_coef_t *awk2, spx_word16_t *y, int N, int ord, char *stack)
 {
    int i;
@@ -409,9 +400,9 @@ void residue_percep_zero16(const spx_word16_t *xx, const spx_coef_t *ak, const s
       mem[i]=0;
    fir_mem16(y, awk2, y, N, ord, mem, stack);
 }
-#endif /* DISABLE_ENCODER */
 
-#if !defined(OVERRIDE_COMPUTE_IMPULSE_RESPONSE) && !defined(DISABLE_ENCODER)
+
+#ifndef OVERRIDE_COMPUTE_IMPULSE_RESPONSE
 void compute_impulse_response(const spx_coef_t *ak, const spx_coef_t *awk1, const spx_coef_t *awk2, spx_word16_t *y, int N, int ord, char *stack)
 {
    int i,j;
@@ -444,9 +435,8 @@ void compute_impulse_response(const spx_coef_t *ak, const spx_coef_t *awk1, cons
       mem2[ord-1] = MULT16_16(ak[ord-1],ny2i);
    }
 }
-#endif /* !defined(OVERRIDE_COMPUTE_IMPULSE_RESPONSE) && !defined(DISABLE_ENCODER) */
+#endif
 
-#ifndef DISABLE_WIDEBAND
 /* Decomposes a signal into low-band and high-band using a QMF */
 void qmf_decomp(const spx_word16_t *xx, const spx_word16_t *aa, spx_word16_t *y1, spx_word16_t *y2, int N, int M, spx_word16_t *mem, char *stack)
 {
@@ -574,10 +564,6 @@ void qmf_synth(const spx_word16_t *x1, const spx_word16_t *x2, const spx_word16_
    for (i = 0; i < M2; i++)
       mem2[2*i+1] = xx2[i];
 }
-#endif /* DISABLE_WIDEBAND */
-
-
-#ifndef DISABLE_DECODER
 
 #ifdef FIXED_POINT
 #if 0
@@ -601,7 +587,7 @@ const float shift_filt[3][7] = {{-0.011915f, 0.046995f, -0.152373f, 0.614108f, 0
 #endif
 #endif
 
-static int interp_pitch(
+int interp_pitch(
 spx_word16_t *exc,          /*decoded excitation*/
 spx_word16_t *interp,          /*decoded excitation*/
 int pitch,               /*pitch period*/
@@ -833,4 +819,3 @@ char *stack
 #endif
 }
 
-#endif /* DISABLE_DECODER */

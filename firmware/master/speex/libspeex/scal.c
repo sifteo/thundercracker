@@ -44,17 +44,13 @@ The algorithm implemented here is described in:
 #include "config.h"
 #endif
 
-#include "../include/speex/speex_echo.h"
+#include "speex/speex_echo.h"
 #include "vorbis_psy.h"
 #include "arch.h"
 #include "os_support.h"
 #include "smallft.h"
 #include <math.h>
 #include <stdlib.h>
-
-#ifndef M_PI
-#define M_PI           3.14159265358979323846  /* pi */
-#endif
 
 #define ALLPASS_ORDER 20
 

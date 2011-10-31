@@ -53,8 +53,6 @@
 #include "config.h"
 #endif
 
-#ifndef DISABLE_ENCODER
-
 #include "lpc.h"
 
 #ifdef BFIN_ASM
@@ -82,6 +80,13 @@ int          p
    spx_word16_t r;
    spx_word16_t error = ac[0];
 
+   if (ac[0] == 0)
+   {
+      for (i = 0; i < p; i++)
+         lpc[i] = 0;
+      return 0;
+   }
+
    for (i = 0; i < p; i++) {
 
       /* Sum up this iteration's reflection coefficient */
@@ -95,15 +100,14 @@ int          p
 #endif
       /*  Update LPC coefficients and total error */
       lpc[i] = r;
-      for (j = 0; j < (i+1)>>1; j++) 
+      for (j = 0; j < i>>1; j++) 
       {
-         spx_word16_t tmp1, tmp2;
-         /* It could be that j == i-1-j, in which case, we're updating the same value twice, which is OK */
-         tmp1 = lpc[j];
-         tmp2 = lpc[i-1-j];
-         lpc[j]     = MAC16_16_P13(tmp1,r,tmp2);
-         lpc[i-1-j] = MAC16_16_P13(tmp2,r,tmp1);
+         spx_word16_t tmp  = lpc[j];
+         lpc[j]     = MAC16_16_P13(lpc[j],r,lpc[i-1-j]);
+         lpc[i-1-j] = MAC16_16_P13(lpc[i-1-j],r,tmp);
       }
+      if (i & 1) 
+         lpc[j] = MAC16_16_P13(lpc[j],lpc[j],r);
 
       error = SUB16(error,MULT16_16_Q13(r,MULT16_16_Q13(error,r)));
    }
@@ -195,4 +199,3 @@ int          n
 #endif
 
 
-#endif /* DISABLE_ENCODER */

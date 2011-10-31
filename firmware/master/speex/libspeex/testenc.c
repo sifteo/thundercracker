@@ -2,10 +2,10 @@
 #include "config.h"
 #endif
 
-#include "../include/speex/speex.h"
+#include <speex/speex.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../include/speex/speex_callbacks.h"
+#include <speex/speex_callbacks.h>
 
 #ifdef FIXED_DEBUG
 extern long long spx_mips;

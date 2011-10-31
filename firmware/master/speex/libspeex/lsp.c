@@ -122,7 +122,6 @@ Heavily modified by Jean-Marc Valin (c) 2002-2006 (fixed-point,
 
 #endif
 
-#ifndef DISABLE_ENCODER
 
 /*---------------------------------------------------------------------------*\
 
@@ -211,7 +210,7 @@ static float cheb_poly_eva(spx_word32_t *coef, spx_word16_t x, int m, char *stac
 \*---------------------------------------------------------------------------*/
 
 #ifdef FIXED_POINT
-#define SIGN_CHANGE(a,b) ((((a)^(b))&0x80000000)||(b==0))
+#define SIGN_CHANGE(a,b) (((a)&0x70000000)^((b)&0x70000000)||(b==0))
 #else
 #define SIGN_CHANGE(a,b) (((a)*(b))<0.0)
 #endif
@@ -325,7 +324,7 @@ int lpc_to_lsp (spx_coef_t *a,int lpcrdr,spx_lsp_t *freq,int nb,spx_word16_t del
 
 	psuml = cheb_poly_eva(pt,xl,m,stack);	/* evals poly. at xl 	*/
 	flag = 1;
-	while(xr >= -FREQ_SCALE){
+	while(flag && (xr >= -FREQ_SCALE)){
            spx_word16_t dd;
            /* Modified by JMV to provide smaller steps around x=+-1 */
 #ifdef FIXED_POINT
@@ -377,7 +376,7 @@ int lpc_to_lsp (spx_coef_t *a,int lpcrdr,spx_lsp_t *freq,int nb,spx_word16_t del
 	       /* once zero is found, reset initial interval to xr 	*/
 	       freq[j] = X2ANGLE(xm);
 	       xl = xm;
-	       break;       		/* reset flag for next search 	*/
+	       flag = 0;       		/* reset flag for next search 	*/
 	    }
 	    else{
 		psuml=temp_psumr;
@@ -388,7 +387,6 @@ int lpc_to_lsp (spx_coef_t *a,int lpcrdr,spx_lsp_t *freq,int nb,spx_word16_t del
     return(roots);
 }
 
-#endif /* DISABLE_ENCODER */
 /*---------------------------------------------------------------------------*\
 
 	FUNCTION....: lsp_to_lpc()
@@ -402,7 +400,7 @@ int lpc_to_lsp (spx_coef_t *a,int lpcrdr,spx_lsp_t *freq,int nb,spx_word16_t del
 
 #ifdef FIXED_POINT
 
-void lsp_to_lpc(const spx_lsp_t *freq,spx_coef_t *ak,int lpcrdr, char *stack)
+void lsp_to_lpc(spx_lsp_t *freq,spx_coef_t *ak,int lpcrdr, char *stack)
 /*  float *freq 	array of LSP frequencies in the x domain	*/
 /*  float *ak 		array of LPC coefficients 			*/
 /*  int lpcrdr  	order of LPC coefficients 			*/
@@ -521,7 +519,7 @@ void lsp_to_lpc(const spx_lsp_t *freq,spx_coef_t *ak,int lpcrdr, char *stack)
 
 #else
 
-void lsp_to_lpc(const spx_lsp_t *freq,spx_coef_t *ak,int lpcrdr, char *stack)
+void lsp_to_lpc(spx_lsp_t *freq,spx_coef_t *ak,int lpcrdr, char *stack)
 /*  float *freq 	array of LSP frequencies in the x domain	*/
 /*  float *ak 		array of LPC coefficients 			*/
 /*  int lpcrdr  	order of LPC coefficients 			*/
@@ -591,17 +589,13 @@ void lsp_to_lpc(const spx_lsp_t *freq,spx_coef_t *ak,int lpcrdr, char *stack)
 
 #ifdef FIXED_POINT
 
-
-void lsp_interpolate(spx_lsp_t *old_lsp, spx_lsp_t *new_lsp, spx_lsp_t *lsp, int len, int subframe, int nb_subframes, spx_word16_t margin)
+/*Makes sure the LSPs are stable*/
+void lsp_enforce_margin(spx_lsp_t *lsp, int len, spx_word16_t margin)
 {
    int i;
    spx_word16_t m = margin;
    spx_word16_t m2 = 25736-margin;
-   spx_word16_t tmp = DIV32_16(SHL32(EXTEND32(1 + subframe),14),nb_subframes);
-   spx_word16_t tmp2 = 16384-tmp;
-   for (i=0;i<len;i++)
-      lsp[i] = MULT16_16_P14(tmp2,old_lsp[i]) + MULT16_16_P14(tmp,new_lsp[i]);
-   /* Enforce margin to sure the LSPs are stable*/
+  
    if (lsp[0]<m)
       lsp[0]=m;
    if (lsp[len-1]>m2)
@@ -616,16 +610,24 @@ void lsp_interpolate(spx_lsp_t *old_lsp, spx_lsp_t *new_lsp, spx_lsp_t *lsp, int
    }
 }
 
-#else
 
-
-void lsp_interpolate(spx_lsp_t *old_lsp, spx_lsp_t *new_lsp, spx_lsp_t *lsp, int len, int subframe, int nb_subframes, spx_word16_t margin)
+void lsp_interpolate(spx_lsp_t *old_lsp, spx_lsp_t *new_lsp, spx_lsp_t *interp_lsp, int len, int subframe, int nb_subframes)
 {
    int i;
-   float tmp = (1.0f + subframe)/nb_subframes;
+   spx_word16_t tmp = DIV32_16(SHL32(EXTEND32(1 + subframe),14),nb_subframes);
+   spx_word16_t tmp2 = 16384-tmp;
    for (i=0;i<len;i++)
-      lsp[i] = (1-tmp)*old_lsp[i] + tmp*new_lsp[i];
-   /* Enforce margin to sure the LSPs are stable*/
+   {
+      interp_lsp[i] = MULT16_16_P14(tmp2,old_lsp[i]) + MULT16_16_P14(tmp,new_lsp[i]);
+   }
+}
+
+#else
+
+/*Makes sure the LSPs are stable*/
+void lsp_enforce_margin(spx_lsp_t *lsp, int len, spx_word16_t margin)
+{
+   int i;
    if (lsp[0]<LSP_SCALING*margin)
       lsp[0]=LSP_SCALING*margin;
    if (lsp[len-1]>LSP_SCALING*(M_PI-margin))
@@ -637,6 +639,17 @@ void lsp_interpolate(spx_lsp_t *old_lsp, spx_lsp_t *new_lsp, spx_lsp_t *lsp, int
 
       if (lsp[i]>lsp[i+1]-LSP_SCALING*margin)
          lsp[i]= .5f* (lsp[i] + lsp[i+1]-LSP_SCALING*margin);
+   }
+}
+
+
+void lsp_interpolate(spx_lsp_t *old_lsp, spx_lsp_t *new_lsp, spx_lsp_t *interp_lsp, int len, int subframe, int nb_subframes)
+{
+   int i;
+   float tmp = (1.0f + subframe)/nb_subframes;
+   for (i=0;i<len;i++)
+   {
+      interp_lsp[i] = (1-tmp)*old_lsp[i] + tmp*new_lsp[i];
    }
 }
 

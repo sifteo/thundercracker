@@ -33,8 +33,6 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "bfin.h"
-
 #define OVERRIDE_VQ_NBEST
 void vq_nbest(spx_word16_t *in, const spx_word16_t *codebook, int len, int entries, spx_word32_t *E, int N, int *nbest, spx_word32_t *best_dist, char *stack)
 {
@@ -68,8 +66,7 @@ void vq_nbest(spx_word16_t *in, const spx_word16_t *codebook, int len, int entri
             "LOOP_END entries_loop%=;\n\t"
             : "=&D" (dist), "=&a" (codebook), "=&d" (best_dist[0]), "=&d" (nbest[0]), "=&a" (E)
             : "a" (len-1), "a" (in), "a" (2), "d" (entries), "d" (len<<1), "1" (codebook), "4" (E), "2" (best_dist[0]), "3" (nbest[0])
-            : "R0", "R1", "R2", "I0", "L0", "B0", "A0", "cc", "memory",
-              "ASTAT" BFIN_HWLOOP0_REGS BFIN_HWLOOP1_REGS
+            : "R0", "R1", "R2", "I0", "L0", "B0", "A0", "cc", "memory"
                );
       }
    } else {
@@ -92,7 +89,7 @@ void vq_nbest(spx_word16_t *in, const spx_word16_t *codebook, int len, int entri
             "%0 = (A0 -= R0.L*R1.L) (IS);\n\t"
          : "=D" (dist), "=a" (codebook)
          : "a" (len-1), "a" (in), "a" (2), "1" (codebook), "0" (E[i])
-         : "R0", "R1", "I0", "L0", "A0", "ASTAT" BFIN_HWLOOP0_REGS
+         : "R0", "R1", "I0", "L0", "A0"
             );
       if (i<N || dist<best_dist[N-1])
       {
