@@ -8,6 +8,9 @@
 
 #include "graphics_bg0.h"
 
+// Soak up the space between BG1 and the Tile ROM
+#pragma codeseg BG1LINE
+
 /*
  * This mode has a VRAM layout identical to _SYS_VM_BG0, but the tile
  * source data is coming from ROM rather than from Flash.  The tile
