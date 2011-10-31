@@ -30,6 +30,10 @@ IRQ_HANDLER ISR_TIM4()
 
 void AudioOutDevice::init(SampleRate samplerate, AudioMixer *mixer)
 {
+    AFIO.MAPR |= (1 << 6);                  // TIM1 partial remap for complementary channels
+    NVIC.irqEnable(IVT.TIM4);
+    NVIC.irqPrioritize(IVT.TIM4, 0x80);     //   Reduced priority
+
     pwmAudioOut.init(samplerate, mixer);
 }
 
