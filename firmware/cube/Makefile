@@ -29,7 +29,15 @@ SDK_DIR = ../../sdk
 SDCC = sdcc
 CDEPS = *.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
 CFLAGS += -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
+
+# Define our CPU's memory limits
 LDFLAGS += --xram-size 1024 --code-size 16384
+
+# All our fast code is in assmebly; we want the C code to be small.
+CFLAGS +=  --opt-code-size
+
+# Place the 2Kb ACALL segment for BG1
+LDFLAGS += -Wl-bBG1LINE=0x2000
 
 $(BIN): $(OBJS)
 	$(SDCC) -o $@ $(LDFLAGS) $(OBJS)
