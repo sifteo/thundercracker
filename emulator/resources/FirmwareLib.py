@@ -63,6 +63,7 @@ class RSTParser:
      
             if tokens[0] == '.area':
                 self.area = tokens[1]
+                self.areaType = tokens[2]
 
             elif bytes and address and self.area in ('CONST', 'CABS'):
                 a = int(address, 16)
@@ -72,14 +73,6 @@ class RSTParser:
                 # Data can be continued on the next line
                 self.contDataAddr = a + len(b)
                 
-            elif bytes and address and self.area in ('CSEG', 'HOME'):
-                # Assuming this isn't one of the special addresses
-                # that we patch into, store the instruction.
-
-                a = int(address, 16)
-                if a not in self.patchedAddrs:
-                    self.storeCode(a, binascii.a2b_hex(bytes), tokens[-1].split(',')[-1], module)
-                    
             elif bytes and address and self.area == 'GSINIT':
                 # This is generated code to do static initialization.
                 # To save some time (and to introduce yet another
@@ -89,6 +82,14 @@ class RSTParser:
 
                 self.storeCode(0, binascii.a2b_hex(bytes),
                                tokens[-1].split(',')[-1], module)
+
+            elif bytes and address and self.areaType == "(CODE)":
+                # Assuming this isn't one of the special addresses
+                # that we patch into, store the instruction.
+
+                a = int(address, 16)
+                if a not in self.patchedAddrs:
+                    self.storeCode(a, binascii.a2b_hex(bytes), tokens[-1].split(',')[-1], module)
 
             elif tokens[0][-1] == ':':
                 self.storeLabel(int(address, 16), tokens[0][:-1])
