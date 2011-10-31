@@ -85,6 +85,25 @@ extern volatile SPI_t SPI1;
 extern volatile SPI_t SPI2;
 extern volatile SPI_t SPI3;
 
+/*
+ * USART / UART
+ */
+
+struct USART_t {
+    uint32_t SR;
+    uint32_t DR;
+    uint32_t BRR;
+    uint32_t CR1;
+    uint32_t CR2;
+    uint32_t CR3;
+    uint32_t GTPR;
+};
+
+extern volatile USART_t USART1;
+extern volatile USART_t USART2;
+extern volatile USART_t USART3;
+extern volatile USART_t UART4;
+extern volatile USART_t UART5;
 
 /*
  * Timers 1-5 & 8
