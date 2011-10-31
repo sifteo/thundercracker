@@ -6,9 +6,8 @@
 SpeexDecoder::SpeexDecoder() :
     decodeState(0),
     srcBytesRemaining(0),
-    status(Ok)
+    status(EndOfStream)
 {
-    // TODO Auto-generated constructor stub
 }
 
 void SpeexDecoder::init()
@@ -23,14 +22,14 @@ void SpeexDecoder::init()
     if (this->decodeState == 0) {
         while (1); // TODO - handle error
     }
-    int enh = 0;
+    int enh = 1;
     speex_decoder_ctl(this->decodeState, SPEEX_SET_ENH, &enh); // enhancement off
 
-#if 1
+#if 0
     // verify framesize
     int framesize;
     speex_decoder_ctl(this->decodeState, SPEEX_GET_FRAME_SIZE, &framesize);
-    if (framesize != DECODED_FRAME_SIZE) {
+    if (framesize != (DECODED_FRAME_SIZE / sizeof(short))) {
         while (1); // better error handling
     }
 #endif
@@ -66,24 +65,25 @@ int SpeexDecoder::decodeFrame(char *buf, int size)
         return 0;
     }
 
-    char *localAddr = FlashLayer::getRegion(this->srcaddr, DECODED_FRAME_SIZE + sizeof(int));
+    char *localAddr = FlashLayer::getRegion(this->srcaddr, DECODED_FRAME_SIZE + sizeof(uint8_t));
     if (!localAddr) {
         return 0; // ruh roh, TODO error handling
     }
 
-    // format: int of framesize, followed by framesize bytes of frame data
-    uint8_t sz = *(uint8_t*)localAddr;
-    localAddr += sizeof(uint8_t);
-    this->srcBytesRemaining -= sizeof(uint8_t);
-    if (this->srcBytesRemaining < sz) {
+    // format: uint8_t of framesize, followed by framesize bytes of frame data
+    int sz = *localAddr++;
+    if (this->srcBytesRemaining < (sz + sizeof(uint8_t))) {
         status = EndOfStream;
         return 0;   // not enough data left
     }
 
     speex_bits_read_from(&this->bits, localAddr, sz);
-    this->srcBytesRemaining -= sz;
+    this->srcBytesRemaining -= (sz + sizeof(uint8_t));
 
     this->status = (DecodeStatus)speex_decode_int(this->decodeState, &this->bits, (spx_int16_t*)buf);
+    if (this->srcBytesRemaining <= 0) {
+        status = EndOfStream;
+    }
 
     // might be able to do this before the decode step
     FlashLayer::releaseRegion(this->srcaddr);
