@@ -241,7 +241,7 @@
 
 #define NB_ID_MASK              0x1F    // ID portion of neighbor bytes
 #define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
-#define NB0_FLAG_TOUCH          0x40    // In neighbors[0], indicates touch detection
+#define NB0_FLAG_TOUCH          0x40    // In neighbors[0], toggles when touch is detected
 
 typedef union {
     uint8_t bytes[RF_ACK_LEN_MAX];
