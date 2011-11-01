@@ -22,12 +22,19 @@ void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
     }
 }
 
+static void onTouch(_SYSCubeID cid)
+{
+    LOG(("Cube %d, touch detected\n", cid));
+}
+
 void siftmain()
 {
     for (unsigned i = 0; i < NUM_CUBES; i++) {
         cubes[i].enable();
         vid[i].init();
     }
+
+    _SYS_vectors.touch = onTouch;
 
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
