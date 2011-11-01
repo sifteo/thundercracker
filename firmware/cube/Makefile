@@ -16,6 +16,7 @@ OBJS = \
         lcd.rel \
         radio.rel \
         sensors.rel \
+	touch.rel \
         flash_hal.rel \
         flash_decoder.rel \
         draw.rel \

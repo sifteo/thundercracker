@@ -12,6 +12,7 @@
 #include "graphics.h"
 #include "hardware.h"
 #include "flash.h"
+#include "touch.h"
 #include "demo.h"
 
 static void gpio_init(void);
