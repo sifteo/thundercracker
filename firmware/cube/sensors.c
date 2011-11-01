@@ -633,7 +633,7 @@ nb_tx_handoff:
         anl     _MISC_DIR, #~MISC_TOUCH     ; 4
         
         ; Wait Twup (15us) + Tack (0.75 us) for Chold to charge. This needs to be 252
-        ; from ADCCON1 write to ADCCON1 write. The timing here needs to be very
+        ; cycles from ADCCON1 write to ADCCON1 write. The timing here needs to be very
         ; consistent for us to get consistent readings.
         ;
         ; Right now we busy-loop this, just for simplicity. This operation cannot be

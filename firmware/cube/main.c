@@ -59,6 +59,13 @@ static void gpio_init(void)
     MISC_CON = 0x53;    // Pull-up on I2C SDA
 
     /*
+     * It's really important that there's no pull-up/pull-down on our
+     * touch sensor input. Reset that, just in case.
+     */
+
+    MISC_CON = 0x04;
+
+    /*
      * Neighbor TX pins
      *
      * We enable pull-downs for input mode, when we're receiving pulses from

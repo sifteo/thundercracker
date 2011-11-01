@@ -13,4 +13,6 @@
 
 void adc_isr(void) __interrupt(VECTOR_MISC);
 
+extern volatile uint8_t debug_touch;
+
 #endif

@@ -10,6 +10,7 @@
 #include "touch.h"
 #include "radio.h"
 #include "sensors.h"
+#include "draw.h"
 
 /*
  * Macros for use in the filtering ISR code.
@@ -31,7 +32,14 @@
         __asm   xrl     (_ack_data + RF_ACK_NEIGHBOR + 0), #(NB0_FLAG_TOUCH)    __endasm ; \
         __asm   orl     _ack_len, #RF_ACK_LEN_NEIGHBOR                          __endasm ; \
     }
- 
+    
+/*
+ * If DEBUG_TOUCH is defined, we constantly display a variable on the LCD
+ * for monitoring the raw touch sensor output.
+ */
+#ifdef DEBUG_TOUCH
+volatile uint8_t debug_touch = 0;
+#endif
  
  /*
  * Touch sensor filtering.
@@ -47,8 +55,6 @@
  * any timing- or register-critical code, so it can be in C. 
  */
  
-
-
 void adc_isr(void) __interrupt(VECTOR_MISC)
 {
     static __bit state_pressed, state_timeout;
@@ -56,6 +62,10 @@ void adc_isr(void) __interrupt(VECTOR_MISC)
     
     // Ignore high byte; the signals we're interested in are small.
     uint8_t value = ADCDATL;
+    
+#ifdef DEBUG_TOUCH
+    debug_touch = value;
+#endif
     
     /*
      * Filter goes here :)
