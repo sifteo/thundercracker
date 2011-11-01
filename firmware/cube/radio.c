@@ -779,7 +779,7 @@ rx_complete_0:
         ;--------------------------------------------------------------------
 
         ; The packet length comes from _ack_len, and the first portion of the
-        ; data from _ack_data. Normally, to send data back to the master, we'll
+        ; data from _ack_data. Normally, to send data back to the master, we
         ; update bytes in _ack_len, then OR a mask into _ack_len which increases
         ; the packet length to a value which is always a power-of-two minus one.
         ;
@@ -802,7 +802,7 @@ rx_ack:
         mov     R_TMP, #_ack_data
         mov     R_INPUT, a                              ; Packet length
 
-        add     a, #(0x100 - RF_ACK_LEN_MAX)            ; Clamp to max (OR'ed bits may have been larger)
+        add     a, #(0x100 - RF_ACK_LEN_MAX)            ; Clamp to max (ORed bits may have been larger)
         jnc     3$
         mov     R_INPUT, #RF_ACK_LEN_MAX
         
