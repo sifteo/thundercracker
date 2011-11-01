@@ -11,7 +11,7 @@
 #include "flash.h"
 #include <protocol.h>
 
-RF_ACKType __near ack_data;
+RF_MemACKType __near ack_data;
 uint8_t __near ack_len;
 
 
@@ -778,6 +778,20 @@ rx_complete_0:
         ; ACK packet write
         ;--------------------------------------------------------------------
 
+        ; The packet length comes from _ack_len, and the first portion of the
+        ; data from _ack_data. Normally, to send data back to the master, we'll
+        ; update bytes in _ack_len, then OR a mask into _ack_len which increases
+        ; the packet length to a value which is always a power-of-two minus one.
+        ;
+        ; This works for packets of length 1, 3, and 7 bytes. That corresponds
+        ; to packets with only our frame count, with frame count and accelerometer
+        ; data, and with the above plus neighbor/flag bytes.
+        ;
+        ; In addition to the above cases, we have a special case for sending back
+        ; a "full" packet. This happens any time the ack length is larger than
+        ; the size of our in-memory buffer. We send back the entire in-memory
+        ; buffer, followed by HWID data from flash.
+        
 rx_ack:
         mov     a, _ack_len
         jz      no_ack                                  ; Skip the ACK entirely if empty
@@ -788,6 +802,10 @@ rx_ack:
         mov     R_TMP, #_ack_data
         mov     R_INPUT, a                              ; Packet length
 
+        add     a, #(0x100 - RF_ACK_LEN_MAX)            ; Clamp to max (OR'ed bits may have been larger)
+        jnc     3$
+        mov     R_INPUT, #RF_ACK_LEN_MAX
+        
 3$:     mov     _SPIRDAT, @R_TMP
         inc     R_TMP
         SPI_WAIT                                        ; RX dummy byte
