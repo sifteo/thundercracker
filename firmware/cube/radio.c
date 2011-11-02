@@ -9,6 +9,7 @@
 #include "hardware.h"
 #include "radio.h"
 #include "flash.h"
+#include "params.h"
 #include <protocol.h>
 
 RF_MemACKType __near ack_data;
@@ -802,15 +803,35 @@ rx_ack:
         mov     R_TMP, #_ack_data
         mov     R_INPUT, a                              ; Packet length
 
-        add     a, #(0x100 - RF_ACK_LEN_MAX)            ; Clamp to max (ORed bits may have been larger)
+        ; Are we just sending the normal ack_data from internal RAM, or is this a "full"
+        ; packet? Do this test now, and keep the result in the carry flag. If C=1, it is
+        ; a full packet. Clamp the first loop to the size of the memory packet.
+        
+        add     a, #(0xFF - RF_MEM_ACK_LEN)
         jnc     3$
-        mov     R_INPUT, #RF_ACK_LEN_MAX
+        mov     R_INPUT, #RF_MEM_ACK_LEN
         
 3$:     mov     _SPIRDAT, @R_TMP
         inc     R_TMP
-        SPI_WAIT                                        ; RX dummy byte
-        mov     a, _SPIRDAT
+        SPI_WAIT
+        mov     a, _SPIRDAT                             ; RX dummy byte
         djnz    R_INPUT, 3$
+        
+        ; If we still need to, send the hardware ID to complete our full packet.
+        
+        jnc     4$
+        mov     _DPS, #0
+        mov     dptr, #PARAMS_HWID
+        mov     R_INPUT, #HWID_LEN
+5$:     movx    a, @dptr
+        mov     _SPIRDAT, a
+        inc     dptr
+        SPI_WAIT
+        mov     a, _SPIRDAT                             ; RX dummy byte
+        djnz    R_INPUT, 5$
+4$:
+
+        ; End of ACK
 
         SPI_WAIT                                        ; RX last dummy byte
         mov     a, _SPIRDAT

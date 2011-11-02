@@ -241,6 +241,8 @@
 #define RF_ACK_BATTERY_V        8
 #define RF_ACK_HWID             10
 
+#define HWID_LEN                6
+
 #define NB_ID_MASK              0x1F    // ID portion of neighbor bytes
 #define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
 #define NB0_FLAG_TOUCH          0x40    // In neighbors[0], toggles when touch is detected
@@ -278,7 +280,7 @@ typedef union {
         uint16_t battery_v;
         
         // Unique hardware ID
-        uint8_t hwid[6];
+        uint8_t hwid[HWID_LEN];
     };
 } RF_ACKType;
 

@@ -12,7 +12,7 @@
 #include "graphics.h"
 #include "hardware.h"
 #include "flash.h"
-#include "touch.h"
+#include "params.h"
 #include "demo.h"
 
 static void gpio_init(void);
@@ -24,6 +24,7 @@ void main(void)
     radio_init();
     flash_init();
     sensors_init();
+    params_init();
     sti();
 
     demo();  // XXX
