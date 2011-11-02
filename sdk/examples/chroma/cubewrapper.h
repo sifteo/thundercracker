@@ -16,7 +16,6 @@ using namespace Sifteo;
 class CubeWrapper
 {
 public:
-	static const int NUM_SIDES = 4;
 	static const int NUM_ROWS = 4;
 	static const int NUM_COLS = 4;
 
