@@ -217,7 +217,9 @@ class Cube {
     }
     
 	Vec2 virtualAccel() const {
-	  return physicalAccel() * kSideToQ[orientation()];
+		Side rot = orientation();
+		ASSERT(rot != SIDE_UNDEFINED);
+	  	return physicalAccel() * kSideToQ[rot];
 	}
 
     VideoBuffer vbuf;
