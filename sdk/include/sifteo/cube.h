@@ -10,6 +10,8 @@
 #include <sifteo/asset.h>
 #include <sifteo/video.h>
 
+#define CUBE_ID_UNDEFINED ((_SYSCubeID)-1)
+
 namespace Sifteo {
 
 
@@ -24,7 +26,10 @@ namespace Sifteo {
 class Cube {
  public:
     typedef _SYSCubeID ID;
-
+	
+	Cube()
+		: mID(CUBE_ID_UNDEFINED) {}
+	
     Cube(ID id)
         : mID(id) {}
 
@@ -33,7 +38,10 @@ class Cube {
      * connect to a cube, and initialize the VideoBUffer.
      */
 
-    void enable() {
+    void enable(ID id=CUBE_ID_UNDEFINED) {
+		if (id != CUBE_ID_UNDEFINED) {
+			mID = id;
+		}
         vbuf.init();
         _SYS_setVideoBuffer(mID, &vbuf.sys);
         _SYS_enableCubes(Intrinsic::LZ(mID));
