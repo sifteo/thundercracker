@@ -108,7 +108,7 @@ struct em8051
 
     struct {
         // Stored register values for sanity-checking ISRs
-        uint8_t a, psw, sp;
+        uint8_t a, psw, sp, dpl, dph, dpl1, dph1, dps;
 
         // Priority of *this* interrupt handler
         uint8_t priority;
@@ -170,6 +170,7 @@ enum EM8051_EXCEPTION
     EXCEPTION_IRET_PSW_MISMATCH, // psw not preserved over interrupt call (doesn't care about P, F0 or UNUSED)
     EXCEPTION_IRET_SP_MISMATCH,  // sp not preserved over interrupt call
     EXCEPTION_IRET_ACC_MISMATCH, // acc not preserved over interrupt call
+    EXCEPTION_IRET_DP_MISMATCH,  // dptr/dptr1/dps not preserved over interrupt call    
     EXCEPTION_ILLEGAL_OPCODE,    // for the single 'reserved' opcode in the architecture
     EXCEPTION_BUS_CONTENTION,    // Hardware bus contention
     EXCEPTION_SPI_XRUN,          // SPI FIFO overrun/underrun

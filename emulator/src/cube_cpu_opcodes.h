@@ -447,6 +447,13 @@ static ALWAYS_INLINE FASTCALL int reti(em8051 *aCPU, unsigned &PC, uint8_t opcod
 
         if (UNLIKELY((aCPU->irql[i].psw & psw_bits) != (aCPU->mSFR[REG_PSW] & psw_bits)))
             except(aCPU, EXCEPTION_IRET_PSW_MISMATCH);
+
+        if (UNLIKELY(aCPU->irql[i].dpl != aCPU->mSFR[REG_DPL] ||
+                     aCPU->irql[i].dph != aCPU->mSFR[REG_DPH] ||
+                     aCPU->irql[i].dpl1 != aCPU->mSFR[REG_DPL1] ||
+                     aCPU->irql[i].dph1 != aCPU->mSFR[REG_DPH1] ||
+                     aCPU->irql[i].dps != aCPU->mSFR[REG_DPS]))
+            except(aCPU, EXCEPTION_IRET_DP_MISMATCH);    
             
         // Resume the basic block we preempted
         cycles += aCPU->irql[i].tickDelay;

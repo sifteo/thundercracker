@@ -64,6 +64,11 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
     cpu->irql[cpu->irq_count].a = cpu->mSFR[REG_ACC];
     cpu->irql[cpu->irq_count].psw = cpu->mSFR[REG_PSW];
     cpu->irql[cpu->irq_count].sp = cpu->mSFR[REG_SP];
+    cpu->irql[cpu->irq_count].dpl = cpu->mSFR[REG_DPL];
+    cpu->irql[cpu->irq_count].dph = cpu->mSFR[REG_DPH];
+    cpu->irql[cpu->irq_count].dpl1 = cpu->mSFR[REG_DPL1];
+    cpu->irql[cpu->irq_count].dph1 = cpu->mSFR[REG_DPH1];
+    cpu->irql[cpu->irq_count].dps = cpu->mSFR[REG_DPS];
 
     cpu->irq_count++;
     return 1;
