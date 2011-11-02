@@ -17,6 +17,7 @@
  * who need a low-frequency timebase.
  */
 volatile uint8_t sensor_tick_counter;
+volatile uint8_t sensor_tick_counter_high;
 
 /*
  * These MEMSIC accelerometers are flaky little buggers! We're seeing
@@ -388,7 +389,13 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         ;--------------------------------------------------------------------
 
         ; Tick tock.. this is not latency-critical at all, it goes last.
-        inc     _sensor_tick_counter
+        
+        mov     a, _sensor_tick_counter
+        add     a, #1
+        mov     _sensor_tick_counter, a
+        mov     a, _sensor_tick_counter_high
+        addc    a, #0
+        mov     _sensor_tick_counter_high, a
         
         pop     ar1
         pop     ar0
@@ -623,6 +630,10 @@ nb_tx_handoff:
         ; neighbor receive during this delay. So, this delay needs to count as
         ; part of our transmit timeslot duration.
        
+        jb      _battery_adc_lock, nb_packet_done
+
+        mov     _ADCCON2, #0x0c         ; Single-step, no auto-powerdown
+        mov     _ADCCON3, #0xe0         ; 12-bit, right justified
         mov     _ADCCON1, #0xbc         ; 1 0 1111 00, Chold to 2/3 VDD reference
         
         ; While we wait, ground the neighbor sensor, to fully discharge its
@@ -804,11 +815,4 @@ void sensors_init()
 
     nb_tx_packet[0] = 0xE0 | radio_get_cube_id();
     nb_tx_packet[1] = ~nb_tx_packet[0];
-    
-    /*
-     * A/D Converter (Touch / Battery level)
-     */
-     
-	ADCCON2 = 0x0c;	            // Single-step, no auto-powerdown
-	ADCCON3 = 0xe0;	            // 12-bit, right justified
 }

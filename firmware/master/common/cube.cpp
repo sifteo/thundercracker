@@ -316,6 +316,18 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         neighbors[2] = ack->neighbors[2];
         neighbors[3] = ack->neighbors[3];
     }
+    
+    if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {
+        // Has valid battery voltage
+        
+        rawBatteryV = ack->battery_v;
+    }
+    
+    if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {
+        // Has valid hardware ID
+        
+        memcpy(hwid.bytes, ack->hwid, sizeof ack->hwid);
+    }
 }
 
 void CubeSlot::radioTimeout()

@@ -14,6 +14,7 @@
 void sensors_init();
 
 extern volatile uint8_t sensor_tick_counter;
+extern volatile uint8_t sensor_tick_counter_high;
 
 void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked;
 void tf0_isr(void) __interrupt(VECTOR_TF0) __naked;
