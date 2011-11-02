@@ -433,27 +433,8 @@ static ALWAYS_INLINE FASTCALL int reti(em8051 *aCPU, unsigned &PC, uint8_t opcod
     {
         int i = --aCPU->irq_count;
 
-        /*
-         * State restore sanity-check
-         */
-
-        int psw_bits = PSWMASK_OV | PSWMASK_RS0 | PSWMASK_RS1 | PSWMASK_AC | PSWMASK_C;
-
-        if (UNLIKELY(aCPU->irql[i].a != aCPU->mSFR[REG_ACC]))
-            except(aCPU, EXCEPTION_IRET_ACC_MISMATCH);
-
-        if (UNLIKELY(aCPU->irql[i].sp != aCPU->mSFR[REG_SP]))
-            except(aCPU, EXCEPTION_IRET_SP_MISMATCH);    
-
-        if (UNLIKELY((aCPU->irql[i].psw & psw_bits) != (aCPU->mSFR[REG_PSW] & psw_bits)))
-            except(aCPU, EXCEPTION_IRET_PSW_MISMATCH);
-
-        if (UNLIKELY(aCPU->irql[i].dpl != aCPU->mSFR[REG_DPL] ||
-                     aCPU->irql[i].dph != aCPU->mSFR[REG_DPH] ||
-                     aCPU->irql[i].dpl1 != aCPU->mSFR[REG_DPL1] ||
-                     aCPU->irql[i].dph1 != aCPU->mSFR[REG_DPH1] ||
-                     aCPU->irql[i].dps != aCPU->mSFR[REG_DPS]))
-            except(aCPU, EXCEPTION_IRET_DP_MISMATCH);    
+        // Sanity check
+        irq_check(aCPU, i);
             
         // Resume the basic block we preempted
         cycles += aCPU->irql[i].tickDelay;

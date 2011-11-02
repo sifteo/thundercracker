@@ -164,6 +164,7 @@ const char *em8051_exc_name(int aCode)
         "SP not preserved over interrupt call",
         "ACC not preserved over interrupt call",
         "DP* not preserved over interrupt call",
+        "R0-R7 not preserved over interrupt call",
         "Invalid opcode: 0xA5 encountered",
         "Hardware bus contention occurred",
         "SPI FIFO overrun/underrun",

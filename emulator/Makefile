@@ -14,6 +14,7 @@ LOCAL_OBJS = \
         src/cube_cpu_core.o \
         src/cube_cpu_disasm.o \
         src/cube_cpu_opcodes.o \
+	src/cube_cpu_irq.o \
         src/cube_debug_mainview.o \
         src/cube_debug_memeditor.o \
         src/cube_debug_popups.o \
