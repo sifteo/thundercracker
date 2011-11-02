@@ -203,7 +203,7 @@ class Cube {
             } else {
               p = pairs->lookup(nCubes, nv->id(), id);
             }
-            if (p->FullyDisconnected()) {
+            if (p->fullyDisconnected()) {
               Side otherSide = nv->physicalSideOf(v);
               v->willRemoveNeighbor(nv, side, otherSide);
               nv->willRemoveNeighbor(v, otherSide, side);
@@ -216,7 +216,7 @@ class Cube {
       for(ID id=0; id<nCubes-1; ++id) {
         for(unsigned otherId=id+1; otherId<nCubes; ++otherId) {
           NeighborPair* p = pairs->lookup(nCubes, id, otherId);
-          if (p->FullyConnected()) {
+          if (p->fullyConnected()) {
             // fully connected
             Cube* v0 = (Cube*)(pCubeBuffer + stride * id);
             Cube* v1 = (Cube*)(pCubeBuffer + stride * otherId);
@@ -241,8 +241,8 @@ class Cube {
       Side side0;
       Side side1;
 
-      bool FullyConnected() const { return side0 != SIDE_UNDEFINED && side1 != SIDE_UNDEFINED; }
-      bool FullyDisconnected() const { return side1 == SIDE_UNDEFINED && side1 == SIDE_UNDEFINED; }
+      bool fullyConnected() const { return side0 != SIDE_UNDEFINED && side1 != SIDE_UNDEFINED; }
+      bool fullyDisconnected() const { return side1 == SIDE_UNDEFINED && side1 == SIDE_UNDEFINED; }
 
       NeighborPair* lookup(int nCubes, int cid0, int cid1) {
         // invariant cid0 < cid1
