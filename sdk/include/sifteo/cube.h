@@ -234,6 +234,8 @@ class Cube {
 
  private:
     ID mID;
+    // possibility -- replacing the Cube* with a Cube::ID, which would reduce this array
+    // to a single 32-bit word.  Overoptimized?
     Cube* mNeighbors[NUM_SIDES];
     
     // used by updateNeighbors()
