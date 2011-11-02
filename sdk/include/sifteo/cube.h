@@ -120,10 +120,10 @@ class Cube {
     }
     
     /**
-     * Retrieve the neighor on the given is, of NULL if it is open.
+     * Retrieve the neighor on the given is, of CUBE_ID_UNDEFINED if it is open.
      */
     
-    ID rawNeighborAt(Side side) const {
+    ID physicalNeighborAt(Side side) const {
 		uint8_t buf[NUM_SIDES];
 		_SYS_getRawNeighbors(mID, buf);
 		return buf[side]>>7 ? buf[side] & 0x1f : CUBE_ID_UNDEFINED;
@@ -134,7 +134,7 @@ class Cube {
      * the id of it's side, otherwise return SIDE_UNDEFINED.
      */
     
-    Side rawSideOf(ID cube) const {
+    Side physicalSideOf(ID cube) const {
 		uint8_t buf[NUM_SIDES];
 		_SYS_getRawNeighbors(mID, buf);
         for(Side side=0; side<NUM_SIDES; ++side) {
@@ -145,6 +145,12 @@ class Cube {
         return SIDE_UNDEFINED;
     }
     
+	Vec2 physicalAccel() const {
+	  _SYSAccelState state;
+	  _SYS_getAccel(mID, &state);
+	  return Vec2(state.x, state.y);
+	}
+
     /**
      * Retrieve the current LCD rotation from the video buffer.
      */
@@ -177,8 +183,8 @@ class Cube {
 	}
 	
 	void orientTo(Cube* src) {
-		int srcSide = src->rawSideOf(mID);
-		int dstSide = rawSideOf(src->mID);
+		int srcSide = src->physicalSideOf(mID);
+		int dstSide = physicalSideOf(src->mID);
 		ASSERT(srcSide != SIDE_UNDEFINED);
 		ASSERT(dstSide != SIDE_UNDEFINED);
 		srcSide = (srcSide - src->orientation()) % NUM_SIDES;
@@ -187,22 +193,22 @@ class Cube {
 	}
 	
     /**
-     * Like rawNeighborAt, but relative to the current LCD rotation.
+     * Like physicalNeighborAt, but relative to the current LCD rotation.
      */
     
     ID virtualNeighborAt(Side side) const {
         Side rot = orientation();
         ASSERT(rot != SIDE_UNDEFINED);
         side = (side + rot) % NUM_SIDES;
-        return rawNeighborAt(side);
+        return physicalNeighborAt(side);
     }
     
     /**
-     * Like rawSideOf, but relative to the current LCD rotation.
+     * Like physicalSideOf, but relative to the current LCD rotation.
      */
     
     Side virtualSideOf(ID cube) const {
-        int side = rawSideOf(cube);
+        int side = physicalSideOf(cube);
         if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
         Side rot = orientation();
         ASSERT(rot != SIDE_UNDEFINED);
@@ -210,6 +216,10 @@ class Cube {
         return side < 0 ? side + NUM_SIDES : side;
     }
     
+	Vec2 virtualAccel() const {
+	  return physicalAccel() * kSideToQ[orientation()];
+	}
+
     VideoBuffer vbuf;
 
  private:
