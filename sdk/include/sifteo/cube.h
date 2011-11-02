@@ -34,20 +34,20 @@ static Vec2 kSideToUnit[4] = {
   Vec2(1, 0)
 };
 
+// complex rotation vectors for directions
+static Vec2 kSideToQ[4] = { 
+  Vec2(1,0),
+  Vec2(0,1),
+  Vec2(-1,0),
+  Vec2(0,-1)
+};
+
 // internal -- used by setOrientation()
 static VidMode::Rotation kSideToRotation[4] = {
   VidMode::ROT_NORMAL,
   VidMode::ROT_LEFT_90,
   VidMode::ROT_180,
   VidMode::ROT_RIGHT_90
-};
-
-// complex rotation vectors
-static Vec2 kSideToQ[4] = { 
-  Vec2(1,0),
-  Vec2(0,1),
-  Vec2(-1,0),
-  Vec2(0,-1)
 };
 
 // internal -- used by orientTo()
