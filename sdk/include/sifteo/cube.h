@@ -88,9 +88,6 @@ class Cube {
 			mID = id;
 		}
         ASSERT(mID != CUBE_ID_UNDEFINED);
-        for(int i=0; i<NUM_SIDES; ++i) {
-            mNeighbors[i] = 0;
-        }
         vbuf.init();
         _SYS_setVideoBuffer(mID, &vbuf.sys);
         _SYS_enableCubes(Intrinsic::LZ(mID));
@@ -128,7 +125,7 @@ class Cube {
     
     ID rawNeighborAt(Side side) const {
 		uint8_t buf[NUM_SIDES];
-		_SYS_getRawNeighbors(id, buf);
+		_SYS_getRawNeighbors(mID, buf);
 		return buf[side]>>7 ? buf[side] & 0x1f : CUBE_ID_UNDEFINED;
     }
     
@@ -139,7 +136,7 @@ class Cube {
     
     Side rawSideOf(ID cube) const {
 		uint8_t buf[NUM_SIDES];
-		_SYS_getRawNeighbors(id, buf);
+		_SYS_getRawNeighbors(mID, buf);
         for(Side side=0; side<NUM_SIDES; ++side) {
 			if (buf[side]>>7 && buf[side] & 0x1f == cube) {
 				return side;
@@ -193,7 +190,7 @@ class Cube {
      * Like rawNeighborAt, but relative to the current LCD rotation.
      */
     
-    Cube* virtualNeighborAt(Side side) const {
+    ID virtualNeighborAt(Side side) const {
         Side rot = orientation();
         ASSERT(rot != SIDE_UNDEFINED);
         side = (side + rot) % NUM_SIDES;
@@ -204,7 +201,7 @@ class Cube {
      * Like rawSideOf, but relative to the current LCD rotation.
      */
     
-    Side virtualSideOf(Cube* cube) const {
+    Side virtualSideOf(ID cube) const {
         int side = rawSideOf(cube);
         if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
         Side rot = orientation();
