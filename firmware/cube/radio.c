@@ -945,6 +945,7 @@ uint8_t radio_get_cube_id(void)
 
     uint8_t id;
 
+    radio_irq_disable();
     RF_CSN = 0;
 
     SPIRDAT = RF_CMD_R_REGISTER | RF_REG_TX_ADDR;
@@ -955,6 +956,7 @@ uint8_t radio_get_cube_id(void)
     id = SPIRDAT;
 
     RF_CSN = 1;
+    radio_irq_enable();
 
     return id;
 }
