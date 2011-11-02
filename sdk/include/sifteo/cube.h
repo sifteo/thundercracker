@@ -138,7 +138,7 @@ class Cube {
     
     Cube* virtualNeighborAt(Side side) const {
         Side rot = orientation();
-        if (rot == SIDE_UNDEFINED) { return 0; }
+        ASSERT(rot != SIDE_UNDEFINED);
         side = (side + rot) % NUM_SIDES;
         return physicalNeighborAt(side);
     }
@@ -151,7 +151,7 @@ class Cube {
         int side = physicalSideOf(cube);
         if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
         Side rot = orientation();
-        if (rot == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
+        ASSERT(rot != SIDE_UNDEFINED);
         side = (side - rot) % NUM_SIDES;
         return side < 0 ? side + NUM_SIDES : side;
     }
