@@ -85,9 +85,18 @@ class Cube {
         return mID;
     }
     
+    /**
+     * Retrieve the neighor on the given is, of NULL if it is open.
+     */
+    
     Cube* physicalNeighborAt(Side side) const {
         return mNeighbors[side];
     }
+    
+    /**
+     * If the current cube is currently neighbored to this, retrieve
+     * the id of it's side, otherwise return SIDE_UNDEFINED.
+     */
     
     Side physicalSideOf(Cube* cube) const {
         for(Side side=0; side<NUM_SIDES; ++side) {
@@ -97,12 +106,21 @@ class Cube {
         }
         return SIDE_UNDEFINED;
     }
-
+    
+    /**
+     * Retrieve the current LCD rotation from the video buffer.
+     */
+    
     VidMode::Rotation rotation() const {
         const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
         uint8_t flags = vbuf.peekb(offsetof(_SYSVideoRAM, flags));
         return (VidMode::Rotation)(flags & mask);
     }
+    
+    /**
+     * Map the LCD rotation mask to screen orientation.  This is the side
+     * which maps to the physical "top" of the screen.
+     */
     
     Side orientation() const {
         switch(rotation()) {
@@ -114,12 +132,20 @@ class Cube {
         }
     }
     
+    /**
+     * Like physicalNeighborAt, but relative to the current LCD rotation.
+     */
+    
     Cube* virtualNeighborAt(Side side) const {
         Side rot = orientation();
         if (rot == SIDE_UNDEFINED) { return 0; }
         side = (side + rot) % NUM_SIDES;
         return physicalNeighborAt(side);
     }
+    
+    /**
+     * Like physicalSideOf, but relative to the current LCD rotation.
+     */
     
     Side virtualSideOf(Cube* cube) const {
         int side = physicalSideOf(cube);
@@ -130,11 +156,92 @@ class Cube {
         return side < 0 ? side + NUM_SIDES : side;
     }
     
+    /**
+     * Inspect the current neighbor state, and update everyone neighbors and
+     * enqueue the deltas.
+     * NOTE: This interface suuuuuucks, fixme!
+     */
+    
+    static void updateNeighbors(Cube* cubes, uint8_t nCubes) {
+      // coalesce pairs
+      NeighborPair pairs[(nCubes-1)*(nCubes-1)];
+      for(NeighborPair *p = pairs; p != pairs + (nCubes-1)*(nCubes-1); ++p) {
+        p->side0 = SIDE_UNDEFINED;
+        p->side1 = SIDE_UNDEFINED;
+      }
+      uint8_t buf[nCubes*NUM_SIDES];
+      for(ID id=0; id<nCubes; ++id) {
+        uint8_t* p = buf + id*NUM_SIDES;
+        _SYS_getRawNeighbors(id, p);
+        for(Side side=0; side<NUM_SIDES; ++side) {
+          if(p[side]>>7) {
+            uint8_t otherId = p[side] & 0x1f;
+            if (otherId < id) {
+              pairs->lookup(nCubes, otherId, id)->side1 = (int8_t)side;
+            } else {
+              pairs->lookup(nCubes, id, otherId)->side0 = (int8_t)side;
+            }
+          }
+        }
+      }
+      // look for removes
+      for(ID id=0; id<nCubes; ++id) {
+        Cube* v = cubes + id;
+        for(Side side=0; side<NUM_SIDES; ++side) {
+          Cube* nv = v->physicalNeighborAt(side);
+          if (nv) {
+            NeighborPair* p;
+            if (id < nv->id()) {
+              p = pairs->lookup(nCubes, id, nv->id());
+            } else {
+              p = pairs->lookup(nCubes, nv->id(), id);
+            }
+            if (p->FullyDisconnected()) {
+              Side otherSide = nv->physicalSideOf(v);
+              v->willRemoveNeighbor(nv, side, otherSide);
+              nv->willRemoveNeighbor(v, otherSide, side);
+              // enqueue event: OnNeighborRemove(v, side, nv, otherSide);
+            }
+          }
+        }
+      }
+      // look for adds
+      for(ID id=0; id<nCubes-1; ++id) {
+        for(unsigned otherId=id+1; otherId<nCubes; ++otherId) {
+          NeighborPair* p = pairs->lookup(nCubes, id, otherId);
+          if (p->FullyConnected()) {
+            // fully connected
+            Cube* v0 = cubes + id;
+            Cube* v1 = cubes + otherId;
+            if (!v0->physicalNeighborAt(p->side0)) {
+              v0->didAddNeighbor(v1, p->side0, p->side1);
+              v1->didAddNeighbor(v0, p->side1, p->side0);
+              // enqueue event: OnNeighborAdd(v0, p->side0, v1, p->side1);
+            }
+          }
+        }
+      } 
+    }
+    
     VideoBuffer vbuf;
 
  private:
     ID mID;
     Cube* mNeighbors[NUM_SIDES];
+    
+    // used by updateNeighbors()
+    struct NeighborPair {
+      Side side0;
+      Side side1;
+
+      bool FullyConnected() const { return side0 != SIDE_UNDEFINED && side1 != SIDE_UNDEFINED; }
+      bool FullyDisconnected() const { return side1 == SIDE_UNDEFINED && side1 == SIDE_UNDEFINED; }
+
+      NeighborPair* lookup(int nCubes, int cid0, int cid1) {
+        // invariant cid0 < cid1
+        return (this + cid0 * (nCubes-1) + (cid1-1));
+      }
+    };
     
     void didAddNeighbor(Cube* cube, Side mySide, Side theirSide) {
         ASSERT(mNeighbors[mySide] == 0);
