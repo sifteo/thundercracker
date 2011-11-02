@@ -244,7 +244,7 @@ class Cube {
       Side side1;
 
       bool fullyConnected() const { return side0 != SIDE_UNDEFINED && side1 != SIDE_UNDEFINED; }
-      bool fullyDisconnected() const { return side1 == SIDE_UNDEFINED && side1 == SIDE_UNDEFINED; }
+      bool fullyDisconnected() const { return side0 == SIDE_UNDEFINED && side1 == SIDE_UNDEFINED; }
 
       NeighborPair* lookup(int nCubes, int cid0, int cid1) {
         // invariant cid0 < cid1
