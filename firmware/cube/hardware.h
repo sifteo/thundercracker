@@ -42,6 +42,8 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define MISC_NB_IN      (1 << 6)   // T1 input
 #define MISC_NB_OUT4    (1 << 7)
 
+#define TOUCH_ADC_CH    12
+
 #define MISC_I2C        (MISC_I2C_SCL | MISC_I2C_SDA)
 #define MISC_NB_OUT     (MISC_NB_OUT1 | MISC_NB_OUT2 | MISC_NB_OUT3 | MISC_NB_OUT4)
 

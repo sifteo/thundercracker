@@ -125,6 +125,7 @@ void FrontendOverlay::drawHelp()
 {
     static const char *lines[] = {
         "Drag a cube by its center to pull and align it.",
+        "Click a cube near the center to tap it.",
         "Drag by an edge or corner to pull and rotate it.",
         "While pulling, Right-click or Space to hover, again to rotate.",
         "Shift-drag or Right-drag to tilt a cube.",

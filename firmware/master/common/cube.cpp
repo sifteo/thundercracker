@@ -62,6 +62,7 @@ _SYSCubeIDVector CubeSlot::flashResetWait;
 _SYSCubeIDVector CubeSlot::flashResetSent;
 _SYSCubeIDVector CubeSlot::flashACKValid;
 _SYSCubeIDVector CubeSlot::frameACKValid;
+_SYSCubeIDVector CubeSlot::neighborACKValid;
 
 
 void CubeSlot::loadAssets(_SYSAssetGroup *a) {
@@ -295,7 +296,21 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     }
 
     if (packet.len >= offsetof(RF_ACKType, neighbors) + sizeof ack->neighbors) {
-        // XXX: Temporary for testing/demoing
+        // Has valid neighbor/flag data
+
+        if (neighborACKValid & bit()) {
+            // Look for valid touches, signified by any edge on the touch toggle bit
+            
+            if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
+                Atomic::SetLZ(Event::touchCubes, id());
+                Event::setPending(Event::TOUCH);
+            }
+
+        } else {
+            Atomic::SetLZ(neighborACKValid, id());
+        }
+
+        // Store the raw state
         neighbors[0] = ack->neighbors[0];
         neighbors[1] = ack->neighbors[1];
         neighbors[2] = ack->neighbors[2];

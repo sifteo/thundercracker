@@ -12,6 +12,8 @@
 #include "graphics.h"
 #include "hardware.h"
 #include "flash.h"
+#include "params.h"
+#include "touch.h"
 #include "demo.h"
 
 static void gpio_init(void);
@@ -23,6 +25,7 @@ void main(void)
     radio_init();
     flash_init();
     sensors_init();
+    params_init();
     sti();
 
     demo();  // XXX
@@ -56,6 +59,13 @@ static void gpio_init(void)
 
     MISC_CON = 0x52;    // Pull-up on I2C SCL
     MISC_CON = 0x53;    // Pull-up on I2C SDA
+
+    /*
+     * It's really important that there's no pull-up/pull-down on our
+     * touch sensor input. Reset that, just in case.
+     */
+
+    MISC_CON = 0x04;
 
     /*
      * Neighbor TX pins

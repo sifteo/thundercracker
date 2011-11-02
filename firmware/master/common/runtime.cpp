@@ -17,6 +17,7 @@ bool Event::dispatchInProgress;
 uint32_t Event::pending;
 uint32_t Event::assetDoneCubes;
 uint32_t Event::accelChangeCubes;
+uint32_t Event::touchCubes;
 
 
 void Runtime::run()
@@ -63,6 +64,14 @@ void Event::dispatch()
                 uint32_t slot = Intrinsic::CLZ(accelChangeCubes);
                 accelChange(slot);
                 Atomic::And(accelChangeCubes, ~Intrinsic::LZ(slot));
+            }
+            break;
+            
+        case TOUCH:
+            while (touchCubes) {
+                uint32_t slot = Intrinsic::CLZ(touchCubes);
+                touch(slot);
+                Atomic::And(touchCubes, ~Intrinsic::LZ(slot));
             }
             break;
 

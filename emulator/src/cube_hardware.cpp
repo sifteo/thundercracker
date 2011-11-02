@@ -52,6 +52,8 @@ bool Hardware::init(VirtualTime *masterTimer,
     i2c.init();
     lcd.init();
     neighbors.init();
+    
+    setTouch(0.0f);
 
     return true;
 }
@@ -198,7 +200,17 @@ NEVER_INLINE void Hardware::hwDeadlineWork()
 
 void Hardware::setTouch(float amount)
 {
-    /* XXX: Model this as a capacitance applied to the ADC */
+    /*
+     * The A/D converter measures the remaining charge on Chold after some
+     * charge is transferred to the touch plate. So, lower values mean higher
+     * capacitance. The scaling here is a really rough estimate based on Hakim's
+     * bench tests so far.
+     *
+     * Note taht these are 16-bit full-scale values we're passing to the ADC
+     * module. It truncates them and justifies them according to the ADC configuration.
+     */
+
+    adc.setInput(12, 1600 - 320 * amount);
 }
 
 bool Hardware::isDebugging()

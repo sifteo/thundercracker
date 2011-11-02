@@ -298,6 +298,7 @@ struct _SYSEventVectors {
     void (*cubeLost)(_SYSCubeID cid);
     void (*assetDone)(_SYSCubeID cid);
     void (*accelChange)(_SYSCubeID cid);
+    void (*touch)(_SYSCubeID cid);
 
     void *reserved[_SYS_MAX_VECTORS - 4];
 };

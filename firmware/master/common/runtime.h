@@ -69,6 +69,7 @@ class Event {
     enum Type {
         ASSET_DONE = 0,
         ACCEL_CHANGE,
+        TOUCH
     };
     
     static void setPending(Type t) {
@@ -79,7 +80,8 @@ class Event {
     static uint32_t pending;            /// CLZ map of all pending events
     static uint32_t assetDoneCubes;     /// CLZ map, by cube slot, of asset download completion
     static uint32_t accelChangeCubes;   /// CLZ map, by cube slot, of accelerometer changes
-
+    static uint32_t touchCubes;         /// CLZ map, by cube slot, of touch events
+    
  private:
     /*
      * Vector entry points.
@@ -111,6 +113,12 @@ class Event {
         ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
         if (_SYS_vectors.accelChange)
             _SYS_vectors.accelChange(cid);
+    }
+
+    static void touch(_SYSCubeID cid) {
+        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
+        if (_SYS_vectors.touch)
+            _SYS_vectors.touch(cid);
     }
 };
 

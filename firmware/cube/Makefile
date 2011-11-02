@@ -1,14 +1,13 @@
 BIN = cube.ihx
 
+# Main segment
 OBJS = \
         main.rel \
         graphics_dispatch.rel \
         graphics_bg0.rel \
         graphics_bg1_setup.rel \
-        graphics_bg1_line.rel \
         graphics_sprite_setup.rel \
         graphics_sprite_line.rel \
-        graphics_bg0_rom.rel \
         graphics_bg2.rel \
         graphics_fb32.rel \
         graphics_fb64.rel \
@@ -17,12 +16,22 @@ OBJS = \
         lcd.rel \
         radio.rel \
         sensors.rel \
+	touch.rel \
         flash_hal.rel \
         flash_decoder.rel \
+	params.rel \
         draw.rel \
         tilerom.rel \
         demo.rel \
-
+	
+# Funny BG1 segment, to support ACALL alignment. Order matters.
+# bg1_line needs to be at the beginning of the segment; bg0_rom
+# is just the right size to pad the rest of the segment up until
+# the tilerom data begins.
+OBJS += \
+	graphics_bg1_line.rel \
+        graphics_bg0_rom.rel \
+        
 FIRMWARE_INC = ../include
 SDK_DIR = ../../sdk
 
