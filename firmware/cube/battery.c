@@ -61,9 +61,13 @@ void battery_poll()
     
     /*
      * Now we're committed to doing a battery measurement. The battery
-     * voltage sense pin is shared with the flash address bus, and it's
+     * voltage sense pin is shared with LCD write strobe pin, and it's
      * connected through a high series resistance- so we'll need a long
      * acquisition time.
+     *
+     * The code in lcd_end_frame is responsible for putting the LCD into
+     * a state where additional write strobes will be harmless. So here,
+     * we don't have to worry about clocking out extra pixels.
      *
      * We share the A/D converter with the touch sensor, which runs from
      * the timer and A/D ISRs. To claim access to the ISR, we need to set
