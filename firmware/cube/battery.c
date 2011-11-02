@@ -78,7 +78,9 @@ void battery_poll()
     battery_adc_lock = 1;
     adc_busy_wait();
     
+    ADDR_PORT = 0;      // Pre-discharge WR net capacitance
     ADDR_DIR = 1;       // Input mode
+    
     ADCCON2 = 0x03;     // Maximum 36us acquisition window
     ADCCON3 = 0xc0;     // Left-justified, 12-bit
     
