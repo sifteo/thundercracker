@@ -21,6 +21,43 @@
 
 namespace Sifteo {
 
+/**
+ * These lookup tables should be relocated to an external translation unit;
+ * their inclusion here is tomporary.
+ */
+
+// unit vectors for directions
+static Vec2 kSideToUnit[4] = {
+  Vec2(0, -1),
+  Vec2(-1, 0),
+  Vec2(0, 1),
+  Vec2(1, 0)
+};
+
+// internal -- used by setOrientation()
+static VidMode::Rotation kSideToRotation[4] = {
+  VidMode::ROT_NORMAL,
+  VidMode::ROT_LEFT_90,
+  VidMode::ROT_180,
+  VidMode::ROT_RIGHT_90
+};
+
+// complex rotation vectors
+static Vec2 kSideToQ[4] = { 
+  Vec2(1,0),
+  Vec2(0,1),
+  Vec2(-1,0),
+  Vec2(0,-1)
+};
+
+// internal -- used by orientTo()
+static int kOrientationTable[4][4] = {
+  {2,1,0,3},
+  {3,2,1,0},
+  {0,3,2,1},
+  {1,0,3,2}
+};
+
 
 /**
  * Represents one Sifteo cube. These Cube objects are statically
@@ -89,8 +126,10 @@ class Cube {
      * Retrieve the neighor on the given is, of NULL if it is open.
      */
     
-    Cube* physicalNeighborAt(Side side) const {
-        return mNeighbors[side];
+    ID rawNeighborAt(Side side) const {
+		uint8_t buf[NUM_SIDES];
+		_SYS_getRawNeighbors(id, buf);
+		return buf[side]>>7 ? buf[side] & 0x1f : CUBE_ID_UNDEFINED;
     }
     
     /**
@@ -98,11 +137,13 @@ class Cube {
      * the id of it's side, otherwise return SIDE_UNDEFINED.
      */
     
-    Side physicalSideOf(Cube* cube) const {
+    Side rawSideOf(ID cube) const {
+		uint8_t buf[NUM_SIDES];
+		_SYS_getRawNeighbors(id, buf);
         for(Side side=0; side<NUM_SIDES; ++side) {
-            if (mNeighbors[side] == cube) {
-                return side;
-            }
+			if (buf[side]>>7 && buf[side] & 0x1f == cube) {
+				return side;
+			}
         }
         return SIDE_UNDEFINED;
     }
@@ -132,23 +173,39 @@ class Cube {
         }
     }
     
+	void setOrientation(Side topSide) {
+		ASSERT(topSide != SIDE_UNDEFINED);
+	  	VidMode mode(vbuf);
+	  	mode.setRotation(kSideToRotation[topSide]);
+	}
+	
+	void orientTo(Cube* src) {
+		int srcSide = src->rawSideOf(mID);
+		int dstSide = rawSideOf(src->mID);
+		ASSERT(srcSide != SIDE_UNDEFINED);
+		ASSERT(dstSide != SIDE_UNDEFINED);
+		srcSide = (srcSide - src->orientation()) % NUM_SIDES;
+		if (srcSide < 0) { srcSide += NUM_SIDES; }
+		setOrientation(kOrientationTable[dstSide][srcSide]);
+	}
+	
     /**
-     * Like physicalNeighborAt, but relative to the current LCD rotation.
+     * Like rawNeighborAt, but relative to the current LCD rotation.
      */
     
     Cube* virtualNeighborAt(Side side) const {
         Side rot = orientation();
         ASSERT(rot != SIDE_UNDEFINED);
         side = (side + rot) % NUM_SIDES;
-        return physicalNeighborAt(side);
+        return rawNeighborAt(side);
     }
     
     /**
-     * Like physicalSideOf, but relative to the current LCD rotation.
+     * Like rawSideOf, but relative to the current LCD rotation.
      */
     
     Side virtualSideOf(Cube* cube) const {
-        int side = physicalSideOf(cube);
+        int side = rawSideOf(cube);
         if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
         Side rot = orientation();
         ASSERT(rot != SIDE_UNDEFINED);
@@ -156,112 +213,10 @@ class Cube {
         return side < 0 ? side + NUM_SIDES : side;
     }
     
-    /**
-     * Inspect the current neighbor state, and update everyone neighbors and
-     * enqueue the deltas.
-     * Stride represents the number of bytes between two cube instances.  The 
-     * default value, 0, indicates that the cubes are tightly packed (i.e.
-     * stride == sizeof(Cube)).
-     * NOTE: This interface suuuuuucks, fixme!
-     */
-    
-    static void updateNeighbors(uint8_t nCubes, Cube* cubes, size_t stride=0) {
-      if (stride == 0) {
-        stride = sizeof(Cube);
-      }
-      int8_t* pCubeBuffer = (int8_t*)cubes;
-      // coalesce pairs
-      NeighborPair pairs[(nCubes-1)*(nCubes-1)];
-      for(NeighborPair *p = pairs; p != pairs + (nCubes-1)*(nCubes-1); ++p) {
-        p->side0 = SIDE_UNDEFINED;
-        p->side1 = SIDE_UNDEFINED;
-      }
-      uint8_t buf[nCubes*NUM_SIDES];
-      for(ID id=0; id<nCubes; ++id) {
-        uint8_t* p = buf + id*NUM_SIDES;
-        _SYS_getRawNeighbors(id, p);
-        for(Side side=0; side<NUM_SIDES; ++side) {
-          if(p[side]>>7) {
-            uint8_t otherId = p[side] & 0x1f;
-            if (otherId < id) {
-              pairs->lookup(nCubes, otherId, id)->side1 = (int8_t)side;
-            } else {
-              pairs->lookup(nCubes, id, otherId)->side0 = (int8_t)side;
-            }
-          }
-        }
-      }
-      // look for removes
-      for(ID id=0; id<nCubes; ++id) {
-        Cube* v = (Cube*)(pCubeBuffer + stride*id);
-        for(Side side=0; side<NUM_SIDES; ++side) {
-          Cube* nv = v->physicalNeighborAt(side);
-          if (nv) {
-            NeighborPair* p;
-            if (id < nv->id()) {
-              p = pairs->lookup(nCubes, id, nv->id());
-            } else {
-              p = pairs->lookup(nCubes, nv->id(), id);
-            }
-            if (p->fullyDisconnected()) {
-              Side otherSide = nv->physicalSideOf(v);
-              v->willRemoveNeighbor(nv, side, otherSide);
-              nv->willRemoveNeighbor(v, otherSide, side);
-              // enqueue event: OnNeighborRemove(v, side, nv, otherSide);
-            }
-          }
-        }
-      }
-      // look for adds
-      for(ID id=0; id<nCubes-1; ++id) {
-        for(unsigned otherId=id+1; otherId<nCubes; ++otherId) {
-          NeighborPair* p = pairs->lookup(nCubes, id, otherId);
-          if (p->fullyConnected()) {
-            // fully connected
-            Cube* v0 = (Cube*)(pCubeBuffer + stride * id);
-            Cube* v1 = (Cube*)(pCubeBuffer + stride * otherId);
-            if (!v0->physicalNeighborAt(p->side0)) {
-              v0->didAddNeighbor(v1, p->side0, p->side1);
-              v1->didAddNeighbor(v0, p->side1, p->side0);
-              // enqueue event: OnNeighborAdd(v0, p->side0, v1, p->side1);
-            }
-          }
-        }
-      } 
-    }
-    
     VideoBuffer vbuf;
 
  private:
     ID mID;
-    // possibility -- replacing the Cube* with a Cube::ID, which would reduce this array
-    // to a single 32-bit word.  Overoptimized?
-    Cube* mNeighbors[NUM_SIDES];
-    
-    // used by updateNeighbors()
-    struct NeighborPair {
-      Side side0;
-      Side side1;
-
-      bool fullyConnected() const { return side0 != SIDE_UNDEFINED && side1 != SIDE_UNDEFINED; }
-      bool fullyDisconnected() const { return side0 == SIDE_UNDEFINED && side1 == SIDE_UNDEFINED; }
-
-      NeighborPair* lookup(int nCubes, int cid0, int cid1) {
-        // invariant cid0 < cid1
-        return (this + cid0 * (nCubes-1) + (cid1-1));
-      }
-    };
-    
-    void didAddNeighbor(Cube* cube, Side mySide, Side theirSide) {
-        ASSERT(mNeighbors[mySide] == 0);
-        mNeighbors[mySide] = cube;
-    }
-    
-    void willRemoveNeighbor(Cube* cube, Side mySide, Side theirSide) {
-        ASSERT(mNeighbors[mySide] == cube);
-        mNeighbors[mySide] = 0;
-    }
-    
 };
 
 
