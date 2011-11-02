@@ -159,10 +159,17 @@ class Cube {
     /**
      * Inspect the current neighbor state, and update everyone neighbors and
      * enqueue the deltas.
+     * Stride represents the number of bytes between two cube instances.  The 
+     * default value, 0, indicates that the cubes are tightly packed (i.e.
+     * stride == sizeof(Cube)).
      * NOTE: This interface suuuuuucks, fixme!
      */
     
-    static void updateNeighbors(Cube* cubes, uint8_t nCubes) {
+    static void updateNeighbors(uint8_t nCubes, Cube* cubes, size_t stride=0) {
+      if (stride == 0) {
+        stride = sizeof(Cube);
+      }
+      int8_t* pCubeBuffer = (int8_t*)cubes;
       // coalesce pairs
       NeighborPair pairs[(nCubes-1)*(nCubes-1)];
       for(NeighborPair *p = pairs; p != pairs + (nCubes-1)*(nCubes-1); ++p) {
@@ -186,7 +193,7 @@ class Cube {
       }
       // look for removes
       for(ID id=0; id<nCubes; ++id) {
-        Cube* v = cubes + id;
+        Cube* v = (Cube*)(pCubeBuffer + stride*id);
         for(Side side=0; side<NUM_SIDES; ++side) {
           Cube* nv = v->physicalNeighborAt(side);
           if (nv) {
@@ -211,8 +218,8 @@ class Cube {
           NeighborPair* p = pairs->lookup(nCubes, id, otherId);
           if (p->FullyConnected()) {
             // fully connected
-            Cube* v0 = cubes + id;
-            Cube* v1 = cubes + otherId;
+            Cube* v0 = (Cube*)(pCubeBuffer + stride * id);
+            Cube* v1 = (Cube*)(pCubeBuffer + stride * otherId);
             if (!v0->physicalNeighborAt(p->side0)) {
               v0->didAddNeighbor(v1, p->side0, p->side1);
               v1->didAddNeighbor(v0, p->side1, p->side0);
