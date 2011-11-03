@@ -47,7 +47,7 @@ class Runtime {
 
         return true;
     }
- 
+
  private:
     static jmp_buf jmpExit;
 };
@@ -68,14 +68,14 @@ class Event {
     
     static void setPending(_SYS_EventType t, _SYSCubeID id) {
         Sifteo::Atomic::SetLZ(pending, t);
-		Sifteo::Atomic::SetLZ(eventCubes[t], id);
+        Sifteo::Atomic::SetLZ(eventCubes[t], id);
     }
 
     static bool dispatchInProgress;     /// Reentrancy detector
     static uint32_t pending;            /// CLZ map of all pending events
 
-	//each event type has a map by cube slot
-	static uint32_t eventCubes[_SYS_EVENT_CNT];     
+    /// Each event type has a map by cube slot
+    static uint32_t eventCubes[_SYS_EVENT_CNT];     
     
  private:
     /*
@@ -85,10 +85,10 @@ class Event {
      *      probably-machine-specific and data-driven to enter the
      *      interpreter quickly and make an asynchronous procedure call.
      */
-	static void callEvent(_SYS_EventType event, _SYSCubeID cid) {
+    static void callEvent(_SYS_EventType event, _SYSCubeID cid) {
         ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-        if (_SYS_vectors.eventCallbacks[event])
-            _SYS_vectors.eventCallbacks[event](cid);
+        if (_SYS_vectors.table[event])
+            _SYS_vectors.table[event](cid);
     }
 };
 
