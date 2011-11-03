@@ -86,7 +86,7 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
         S0CON_SM1 = 1;                          \
         PCON |= 0x80;                           \
         ADCON |= 0x80;                          \
-        S0RELL = 0xf3;                          \
+        S0RELL = 0xF3;                          \
         S0RELH = 0x03;                          \
     }
 
@@ -362,6 +362,23 @@ __sbit __at 0xC7 IR_EXF2;
 __sbit __at 0xE8 RF_CE;
 __sbit __at 0xE9 RF_CSN;
 __sbit __at 0xEA RF_CKEN;
+
+#define BIT_0 0x01 /**< The value of bit 0 */
+#define BIT_1 0x02 /**< The value of bit 1 */
+#define BIT_2 0x04 /**< The value of bit 2 */
+#define BIT_3 0x08 /**< The value of bit 3 */
+#define BIT_4 0x10 /**< The value of bit 4 */
+#define BIT_5 0x20 /**< The value of bit 5 */
+#define BIT_6 0x40 /**< The value of bit 6 */
+#define BIT_7 0x80 /**< The value of bit 7 */
+#define BIT_8 0x0100 /**< The value of bit 8 */
+#define BIT_9 0x0200 /**< The value of bit 9 */
+#define BIT_10 0x0400 /**< The value of bit 10 */
+#define BIT_11 0x0800 /**< The value of bit 11 */
+#define BIT_12 0x1000 /**< The value of bit 12 */
+#define BIT_13 0x2000 /**< The value of bit 13 */
+#define BIT_14 0x4000 /**< The value of bit 14 */
+#define BIT_15 0x8000 /**< The value of bit 15 */
 
 // Interrupt vector numbers
 #define VECTOR_IFP      0
