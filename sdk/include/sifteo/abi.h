@@ -308,7 +308,7 @@ struct _SYSEventVectors {
     void (*accelChange)(_SYSCubeID cid);
     void (*touch)(_SYSCubeID cid);
 
-    void *reserved[_SYS_MAX_VECTORS - 4];
+    void *reserved[_SYS_MAX_VECTORS - 5];
 };
 
 extern struct _SYSEventVectors _SYS_vectors;
