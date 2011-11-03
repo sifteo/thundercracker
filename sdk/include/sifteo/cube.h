@@ -24,6 +24,9 @@ namespace Sifteo {
 /**
  * These lookup tables should be relocated to an external translation unit;
  * their inclusion here is tomporary.
+ * 
+ * Also todo: replace raw neighbors with coalesced neighbors onces that's up and
+ * working.
  */
 
 // unit vectors for directions
