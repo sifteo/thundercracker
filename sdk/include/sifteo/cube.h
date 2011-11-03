@@ -16,7 +16,7 @@
 #define SIDE_LEFT (1)
 #define SIDE_BOTTOM (2)
 #define SIDE_RIGHT (3)
-#define SIDE_UNDEFINED (0xff)
+#define SIDE_UNDEFINED (-1)
 
 
 namespace Sifteo {
@@ -70,7 +70,7 @@ static int kOrientationTable[4][4] = {
 class Cube {
  public:
     typedef _SYSCubeID ID;
-    typedef uint8_t Side;
+    typedef int8_t Side;
 	
 	Cube()
 		: mID(CUBE_ID_UNDEFINED) {}
@@ -183,8 +183,8 @@ class Cube {
 	}
 	
 	void orientTo(Cube* src) {
-		int srcSide = src->physicalSideOf(mID);
-		int dstSide = physicalSideOf(src->mID);
+		Side srcSide = src->physicalSideOf(mID);
+		Side dstSide = physicalSideOf(src->mID);
 		ASSERT(srcSide != SIDE_UNDEFINED);
 		ASSERT(dstSide != SIDE_UNDEFINED);
 		srcSide = (srcSide - src->orientation()) % NUM_SIDES;
@@ -208,7 +208,7 @@ class Cube {
      */
     
     Side virtualSideOf(ID cube) const {
-        int side = physicalSideOf(cube);
+        Side side = physicalSideOf(cube);
         if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
         Side rot = orientation();
         ASSERT(rot != SIDE_UNDEFINED);
