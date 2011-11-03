@@ -37,8 +37,10 @@ OBJS_STM32 = \
     $(SPEEX_OBJS_STM32) \
 
 TC_DIR = ../..
-FIRMWARE_INC := ../include
-CFLAGS += -I$(FIRMWARE_INC) -Icommon $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX
+# CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
+CFLAGS := -Icommon -I../include
+CFLAGS_STM32 := $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER
+CFLAGS_SIM =
 
 include Makefile.defs
 
@@ -46,9 +48,9 @@ include Makefile.defs
 CDEPS := \
 	common/*.h \
 	stm32/*.h \
-	$(FIRMWARE_INC)/*.h \
+	../include/*.h \
 	$(SDK_DIR)/include/sifteo/*.h \
-        $(SPEEX_DEPS) \
+    $(SPEEX_DEPS) \
 
 all: $(BINS)
 

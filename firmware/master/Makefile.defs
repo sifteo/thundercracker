@@ -53,14 +53,15 @@ CCFLAGS += $(CFLAGS)
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 
-LIBS_SIM := $(MASTER_DIR)/master-sim.a
-CFLAGS_SIM := $(CFLAGS) -DSIFTEO_SIMULATOR
-CCFLAGS_SIM := $(CCFLAGS) -DSIFTEO_SIMULATOR
-LDFLAGS_SIM := $(LDFLAGS)
-
 ifeq ($(UNAME), windows32)
-    LDFLAGS_SIM += -lws2_32
+    CFLAGS_SIM  += -I$(TC_DIR)/speex/prebuilt/win32/include
+    LDFLAGS_SIM += -L$(TC_DIR)/speex/prebuilt/win32/lib -lspeex -lws2_32
 endif
+
+LIBS_SIM := $(MASTER_DIR)/master-sim.a
+CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
+CCFLAGS_SIM := $(CFLAGS_SIM) $(CCFLAGS)
+LDFLAGS_SIM += $(LDFLAGS)
 
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
@@ -68,8 +69,8 @@ LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
 ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
               -msoft-float -mno-thumb-interwork
 
-CFLAGS_STM32 := $(CFLAGS) $(ARCH_STM32)
-CCFLAGS_STM32 := $(CCFLAGS) $(ARCH_STM32)
+CFLAGS_STM32 += $(CFLAGS) $(ARCH_STM32)
+CCFLAGS_STM32 := $(CFLAGS_STM32) $(CCFLAGS)
 LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
               -Wl,--gc-sections,-u,IVT \
               -T $(LDSCRIPT_STM32) -nostartfiles
