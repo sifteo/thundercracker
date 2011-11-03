@@ -2,7 +2,7 @@
  *
  * Sifteo SDK Example.
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
- */
+1 */
 
 #include <sifteo.h>
 
@@ -38,34 +38,45 @@ void siftmain()
 
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
-            uint8_t buf[4];
+            uint8_t nb[4];
+            _SYSCubeHWID hwid;
             _SYSAccelState accel;
+            uint16_t battery;
 
             /*
              * Ugly in all sorts of ways...
              */
 
             _SYS_getAccel(i, &accel);
-            _SYS_getRawNeighbors(i, buf);
+            _SYS_getRawNeighbors(i, nb);
+            _SYS_getRawBatteryV(i, &battery);
+            _SYS_getCubeHWID(i, &hwid);
 
             vid[i].BG0_textf(Vec2(1,2),
-                             "Neighbor Test!\n"
-                             "\n"
                              "I am cube #%d\n"
                              "\n"
-                             "Raw data:\n"
+                             "Hardware ID:\n"
+                             " %02x%02x%02x%02x%02x%02x\n"
+                             "\n"
+                             "Raw nb/touch:\n"
                              " %02x %02x %02x %02x\n"
                              "\n"
-                             "Accel:\n"
-                             " %02x %02x\n",
-                             i, buf[0], buf[1], buf[2], buf[3],
-                             accel.x + 0x80,
-                             accel.y + 0x80);
-
-            drawSide(i, buf[0] >> 7, 1,  0,  1, 0);  // Top
-            drawSide(i, buf[1] >> 7, 0,  1,  0, 1);  // Left
-            drawSide(i, buf[2] >> 7, 1,  15, 1, 0);  // Bottom
-            drawSide(i, buf[3] >> 7, 15, 1,  0, 1);  // Right
+                             "Raw accel:\n"
+                             " %4d %4d\n"
+                             "\n"
+                             "Raw battery:\n"
+                             " %04x\n",
+                             i,
+                             hwid.bytes[0], hwid.bytes[1], hwid.bytes[2],
+                             hwid.bytes[3], hwid.bytes[4], hwid.bytes[5],
+                             nb[0], nb[1], nb[2], nb[3],
+                             accel.x, accel.y,
+                             battery);
+                             
+            drawSide(i, nb[0] >> 7, 1,  0,  1, 0);  // Top
+            drawSide(i, nb[1] >> 7, 0,  1,  0, 1);  // Left
+            drawSide(i, nb[2] >> 7, 1,  15, 1, 0);  // Bottom
+            drawSide(i, nb[3] >> 7, 15, 1,  0, 1);  // Right
         }
 
         System::paint();

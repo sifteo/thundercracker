@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 
     // Attach an existing console, if it's already handy
     getConsole();
-    
+
     /*
      * Parse command line options
      */

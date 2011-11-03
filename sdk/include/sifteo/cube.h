@@ -138,7 +138,7 @@ class Cube {
 		uint8_t buf[NUM_SIDES];
 		_SYS_getRawNeighbors(mID, buf);
         for(Side side=0; side<NUM_SIDES; ++side) {
-			if (buf[side]>>7 && buf[side] & 0x1f == cube) {
+			if (buf[side]>>7 && (buf[side] & 0x1f) == cube) {
 				return side;
 			}
         }

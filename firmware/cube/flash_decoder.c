@@ -33,6 +33,7 @@
 #include "hardware.h"
 #include "radio.h"
 #include "sensors.h"
+#include "main.h"
 #include <protocol.h>
 
 /*
@@ -138,6 +139,8 @@ void flash_handle_fifo(void)
     // Nothing to do? Exit early.
     if (flash_fifo_head == fifo_tail)
         return;
+        
+    global_busy_flag = 1;
 
     /*
      * Out-of-band cue to reset the state machine.

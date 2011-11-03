@@ -14,7 +14,10 @@
 #include "flash.h"
 #include "params.h"
 #include "touch.h"
+#include "battery.h"
 #include "demo.h"
+
+__bit global_busy_flag;
 
 static void gpio_init(void);
 
@@ -29,10 +32,19 @@ void main(void)
     sti();
 
     demo();  // XXX
-
+    
     while (1) {
-        flash_handle_fifo();
+        global_busy_flag = 0;
+        
+        // Main tasks
         graphics_render();
+        flash_handle_fifo();
+        
+        if (global_busy_flag)
+            continue;
+        
+        // Idle-only tasks
+        battery_poll();
     }
 }
 

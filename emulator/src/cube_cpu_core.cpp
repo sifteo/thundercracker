@@ -173,6 +173,8 @@ const char *em8051_exc_name(int aCode)
         "XDATA error",
         "Binary translator error",
         "MDU error",
+        "RNG error",
+        "Nonvolatile memory write error",
     };
 
     if (aCode < (int)(sizeof exc_names / sizeof exc_names[0]))

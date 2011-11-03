@@ -20,6 +20,7 @@ LOCAL_OBJS = \
         src/cube_debug_popups.o \
         src/cube_debug.o \
         src/cube_flash_model.o \
+        src/cube_flash_storage.o \
         src/cube_hardware.o \
         src/cube_neighbors.o \
 	resources/data.o \

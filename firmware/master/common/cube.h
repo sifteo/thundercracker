@@ -130,6 +130,14 @@ class CubeSlot {
     void waitForFinish();
     void triggerPaint(SysTime::Ticks timestamp);
 
+    const _SYSCubeHWID & getHWID() const {
+        return hwid;
+    }
+    
+    uint16_t getRawBatteryV() const {
+        return rawBatteryV;
+    }
+    
     static bool validID(_SYSCubeID id) {
         // For security/reliability, all cube IDs from game code must be checked
         return id < _SYS_NUM_CUBE_SLOTS;
@@ -194,7 +202,9 @@ class CubeSlot {
 	// </max>
 
     // Sensors
+    uint16_t rawBatteryV;
     _SYSAccelState accelState;
+    _SYSCubeHWID hwid;
 };
 
 
