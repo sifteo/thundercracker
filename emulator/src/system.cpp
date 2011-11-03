@@ -202,6 +202,9 @@ void System::threadFn(void *param)
     if (debug)
         Cube::Debug::attach(&self->cubes[0]);
 
+    // Seed PRNG per-thread
+    srand(glfwGetTime() * 1e6);
+        
     while (self->threadRunning) {
         if (debug) {
             /*
