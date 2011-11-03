@@ -373,6 +373,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
  * 		be used by the application, rather than the raw neighbors.
  */
 
+/*
 struct NeighborPair {
 	int8_t side0;
 	int8_t side1;
@@ -408,7 +409,7 @@ static NeighborPair gCoalescedPairs[(_SYS_NUM_CUBE_SLOTS-1)*(_SYS_NUM_CUBE_SLOTS
 
 void CubeSlot::resetCoalescedNeighbors(_SYSCubeIDVector cv, bool andClearPairs) {
 	while(cv) {
-		uint8_t cubeId = Intrinsic::CLZ(cv);
+		_SYSCubeID cubeId = Intrinsic::CLZ(cv);
 		instances[cubeId].coalescedNeighbors[0] = 0xff;
 		instances[cubeId].coalescedNeighbors[1] = 0xff;
 		instances[cubeId].coalescedNeighbors[2] = 0xff;
@@ -421,7 +422,7 @@ void CubeSlot::resetCoalescedNeighbors(_SYSCubeIDVector cv, bool andClearPairs) 
 				gCoalescedPairs->lookup(i, cubeId)->clear();
 			}
 		}
-	    cv ^= Intrinsic::LZ(cv);
+	    cv ^= Intrinsic::LZ(cubeId);
 	}
 }
 
@@ -455,14 +456,14 @@ void CubeSlot::doClearSide(uint8_t side) {
 
 void CubeSlot::removeNeighborFromSide(_SYSCubeID neighborId, uint8_t side) {
 	NeighborPair* pair;
-	/*int8_t otherSide =*/ gCoalescedPairs->setSideAndGetOtherSide(id(), neighborId, side, &pair);
+	gCoalescedPairs->setSideAndGetOtherSide(id(), neighborId, side, &pair);
 	if (pair->fullyDisconnected() && coalescedNeighbors[side] == neighborId) {
 		doClearSide(side);
 	}
 }
 
 // </max>
-
+*/
 void CubeSlot::radioTimeout()
 {
     /* XXX: Disconnect this cube */

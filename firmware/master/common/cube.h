@@ -110,13 +110,6 @@ class CubeSlot {
         buf[3] = neighbors[3];
     }
 
-	void getCoalescedNeighbors(uint8_t buf[4]) {
-        buf[0] = coalescedNeighbors[0];
-        buf[1] = coalescedNeighbors[1];
-        buf[2] = coalescedNeighbors[2];
-        buf[3] = coalescedNeighbors[3];
-	}
-
     _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
         /*
          * Safely return this cube's per-cube data on a particular
@@ -156,13 +149,14 @@ class CubeSlot {
     static void finishCubes(_SYSCubeIDVector cv);
 
  private:
+	/*
 	// <max>
 	static void resetCoalescedNeighbors(_SYSCubeIDVector cv, bool andClearPairs);
 	void addNeighborToSide(_SYSCubeID id, uint8_t side);
 	void doClearSide(uint8_t side);
 	void removeNeighborFromSide(_SYSCubeID id, uint8_t side);
 	// </max>
-	
+	*/
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
     
@@ -202,7 +196,7 @@ class CubeSlot {
     uint8_t neighbors[4];
 
 	// <max>
-	uint8_t coalescedNeighbors[4];
+	//uint8_t coalescedNeighbors[4];
 	// </max>
 
     // Sensors
