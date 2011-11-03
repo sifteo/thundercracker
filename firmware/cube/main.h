@@ -6,13 +6,11 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _TOUCH_H
-#define _TOUCH_H
+#ifndef _MAIN_H
+#define _MAIN_H
 
-#include "hardware.h"
-
-void adc_isr(void) __interrupt(VECTOR_MISC);
-
-extern volatile uint8_t debug_touch;
+// Set by main-loop routines when they accomplished some actual work.
+extern __bit global_busy_flag;
 
 #endif
+

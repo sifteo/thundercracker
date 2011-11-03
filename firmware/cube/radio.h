@@ -25,7 +25,7 @@ void radio_init(void);
 
 uint8_t radio_get_cube_id(void);
 
-extern RF_ACKType __near ack_data;
+extern RF_MemACKType __near ack_data;
 extern uint8_t __near ack_len;
 
 /*

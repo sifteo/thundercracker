@@ -38,7 +38,10 @@ else
     CFLAGS += -DDEBUG -g3
 endif
 
-CFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include \
+# Disable unwanted warnings, but be generally pretty pedantic
+CFLAGS += -Wall -Werror -Wno-unused
+
+CFLAGS += -g -I$(SDK_DIR)/include \
           -ffunction-sections -fdata-sections \
           -ffast-math
 LDFLAGS += -lm

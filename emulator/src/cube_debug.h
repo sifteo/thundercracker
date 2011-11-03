@@ -77,6 +77,9 @@ extern int runmode;
 // current run speed, lower is faster
 extern int speed;
 
+// Highest SP we've seen
+extern uint8_t stackMax;
+
 // currently active view
 extern int view;
 

@@ -232,12 +232,16 @@
 #define RF_ACK_LEN_FRAME        1
 #define RF_ACK_LEN_ACCEL        3
 #define RF_ACK_LEN_NEIGHBOR     7
-#define RF_ACK_LEN_MAX          8
+#define RF_ACK_LEN_MAX          16
 
 #define RF_ACK_FRAME            0
 #define RF_ACK_ACCEL            1
 #define RF_ACK_NEIGHBOR         3
 #define RF_ACK_FLASH_FIFO       7
+#define RF_ACK_BATTERY_V        8
+#define RF_ACK_HWID             10
+
+#define HWID_LEN                6
 
 #define NB_ID_MASK              0x1F    // ID portion of neighbor bytes
 #define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
@@ -271,8 +275,28 @@ typedef union {
          * ACK packet format.
          */
         uint8_t flash_fifo_bytes;
+        
+        // Current raw battery voltage level
+        uint16_t battery_v;
+        
+        // Unique hardware ID
+        uint8_t hwid[HWID_LEN];
     };
 } RF_ACKType;
+
+/*
+ * Subset of the ACK packet that we keep in memory on the cubes
+ */
+
+#define RF_MEM_ACK_LEN  10
+
+typedef struct {
+    uint8_t frame_count;
+    int8_t accel[2];
+    uint8_t neighbors[4];
+    uint8_t flash_fifo_bytes;
+    uint16_t battery_v;
+} RF_MemACKType;
 
 
 /**************************************************************************

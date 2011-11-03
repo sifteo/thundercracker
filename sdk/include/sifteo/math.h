@@ -23,6 +23,16 @@ struct Vec2 {
     int x, y;
 };
 
+inline Vec2 operator+(const Vec2& u, const Vec2& v) { return Vec2(u.x+v.x, u.y+v.y); }
+inline Vec2 operator += (Vec2& u, const Vec2& v) { return Vec2(u.x+=v.x, u.y+=v.y); }
+inline Vec2 operator-(const Vec2& u, const Vec2& v) { return Vec2(u.x-v.x, u.y-v.y); }
+inline Vec2 operator -= (Vec2& u, const Vec2& v) { return Vec2(u.x-=v.x, u.y-=v.y); }
+inline Vec2 operator*(int k, const Vec2& v) { return Vec2(k*v.x, k*v.y); }
+inline Vec2 operator*(const Vec2& v, int k) { return Vec2(k*v.x, k*v.y); }
+inline Vec2 operator*(const Vec2& u, const Vec2& v) { return Vec2(u.x*v.x-u.y*v.y, u.y*v.x+u.x*v.y); } // complex multiplication
+inline bool operator==(const Vec2& u, const Vec2& v) { return u.x == v.x && u.y == v.y; }
+inline bool operator!=(const Vec2& u, const Vec2& v) { return u.x != v.x || u.y != v.y; }
+
 
 /**
  * Integer rectangle, stored as Left Top Right Bottom (LTRB).

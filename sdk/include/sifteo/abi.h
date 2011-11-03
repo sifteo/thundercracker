@@ -285,6 +285,14 @@ struct _SYSAccelState {
 };
 
 /**
+ * Every cube has an arbitrary unique hardware ID.
+ */
+
+struct _SYSCubeHWID {
+    uint8_t bytes[6];
+};
+
+/**
  * Event vectors. These can be changed at runtime in order to handle
  * events within the game binary. All vectors are NULL (no-op) by
  * default. The vector table lives at an agreed-upon address in
@@ -293,14 +301,23 @@ struct _SYSAccelState {
 
 #define _SYS_MAX_VECTORS        32
 
-struct _SYSEventVectors {
-    void (*cubeFound)(_SYSCubeID cid);
-    void (*cubeLost)(_SYSCubeID cid);
-    void (*assetDone)(_SYSCubeID cid);
-    void (*accelChange)(_SYSCubeID cid);
-    void (*touch)(_SYSCubeID cid);
+typedef enum
+	{
+		_SYS_EVENT_CUBEFOUND,
+		_SYS_EVENT_CUBELOST,
+		_SYS_EVENT_ASSETDONE,
+		_SYS_EVENT_ACCELCHANGE,
+		_SYS_EVENT_TOUCH,
+		_SYS_EVENT_TILT,
+		_SYS_EVENT_SHAKE,
+		_SYS_EVENT_CNT
+	} _SYS_EventType;
 
-    void *reserved[_SYS_MAX_VECTORS - 4];
+struct _SYSEventVectors {
+
+	typedef void (*eventCallback)(_SYSCubeID cid);
+
+	eventCallback eventCallbacks[_SYS_MAX_VECTORS];
 };
 
 extern struct _SYSEventVectors _SYS_vectors;
@@ -333,6 +350,8 @@ void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
 
 // XXX: Temporary for testing/demoing
 void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);
+void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v);
+void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid);
 
 void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf);
 void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr);

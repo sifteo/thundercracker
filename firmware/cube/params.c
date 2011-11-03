@@ -6,13 +6,10 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _TOUCH_H
-#define _TOUCH_H
+#include "params.h"
 
-#include "hardware.h"
 
-void adc_isr(void) __interrupt(VECTOR_MISC);
-
-extern volatile uint8_t debug_touch;
-
-#endif
+void params_init()
+{
+    // XXX: Generate hwid if necessary, using RNG
+}

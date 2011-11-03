@@ -65,22 +65,16 @@ class Runtime {
 class Event {
  public:
     static void dispatch();
-
-    enum Type {
-        ASSET_DONE = 0,
-        ACCEL_CHANGE,
-        TOUCH
-    };
     
-    static void setPending(Type t) {
+    static void setPending(_SYS_EventType t) {
         Sifteo::Atomic::SetLZ(pending, t);
     }
 
     static bool dispatchInProgress;     /// Reentrancy detector
     static uint32_t pending;            /// CLZ map of all pending events
-    static uint32_t assetDoneCubes;     /// CLZ map, by cube slot, of asset download completion
-    static uint32_t accelChangeCubes;   /// CLZ map, by cube slot, of accelerometer changes
-    static uint32_t touchCubes;         /// CLZ map, by cube slot, of touch events
+
+	//each event type has a map by cube slot
+	static uint32_t eventCubes[_SYS_EVENT_CNT];     
     
  private:
     /*
@@ -90,35 +84,10 @@ class Event {
      *      probably-machine-specific and data-driven to enter the
      *      interpreter quickly and make an asynchronous procedure call.
      */
-
-    static void cubeFound(_SYSCubeID cid) {
+	static void callEvent(_SYS_EventType event, _SYSCubeID cid) {
         ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-        if (_SYS_vectors.cubeFound)
-            _SYS_vectors.cubeFound(cid);
-    }
-
-    static void cubeLost(_SYSCubeID cid) {
-        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-        if (_SYS_vectors.cubeLost)
-            _SYS_vectors.cubeLost(cid);
-    }
-
-    static void assetDone(_SYSCubeID cid) {
-        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-        if (_SYS_vectors.assetDone)
-            _SYS_vectors.assetDone(cid);
-    }
-
-    static void accelChange(_SYSCubeID cid) {
-        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-        if (_SYS_vectors.accelChange)
-            _SYS_vectors.accelChange(cid);
-    }
-
-    static void touch(_SYSCubeID cid) {
-        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-        if (_SYS_vectors.touch)
-            _SYS_vectors.touch(cid);
+        if (_SYS_vectors.eventCallbacks[event])
+            _SYS_vectors.eventCallbacks[event](cid);
     }
 };
 

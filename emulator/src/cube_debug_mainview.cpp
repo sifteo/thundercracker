@@ -691,11 +691,12 @@ void mainview_update(Cube::Hardware *cube)
 
     refresh_regoutput(aCPU, 1);
 
-    for (i = 0; i < 15; i++)
+    for (i = 0; i < 13; i++)
     {
         int offset = (i + aCPU->mSFR[REG_SP]-7)&0xff;
         wprintw(stackview," %02X\n", aCPU->mData[offset]);
     }
+    wprintw(stackview,"Max\n %02X\n", stackMax);    
 
     if (speed != 0 || runmode == 0)
     {

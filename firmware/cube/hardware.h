@@ -43,6 +43,7 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define MISC_NB_OUT4    (1 << 7)
 
 #define TOUCH_ADC_CH    12
+#define BATTERY_ADC_CH  0
 
 #define MISC_I2C        (MISC_I2C_SCL | MISC_I2C_SDA)
 #define MISC_NB_OUT     (MISC_NB_OUT1 | MISC_NB_OUT2 | MISC_NB_OUT3 | MISC_NB_OUT4)
@@ -251,7 +252,7 @@ __sfr __at 0xCF WUOPC0;
 __sfr __at 0xD0 PSW;
 __sfr __at 0xD1 ADCCON3;
 __sfr __at 0xD2 ADCCON2;
-__sfr __at 0xD3 ADCCON1;
+__sfr __at 0xD3 volatile ADCCON1;
 __sfr __at 0xD4 ADCDATH;
 __sfr __at 0xD5 ADCDATL;
 __sfr __at 0xD6 RNGCTL;
