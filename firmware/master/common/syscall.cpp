@@ -20,11 +20,11 @@
 #include "cube.h"
 #include "runtime.h"
 #include "vram.h"
+#include "audiomixer.h"
 
 extern "C" {
 
 struct _SYSEventVectors _SYS_vectors;
-
 
 void _SYS_exit(void)
 {
@@ -198,5 +198,54 @@ void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index,
     }
 }
 
+void _SYS_audio_initChannel(struct _SYSAudioBuffer *buf)
+{
+    (void)buf;
+    // TODO - set this channel as enabled
+}
+
+bool _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, _SYSAudioLoopType loop)
+{
+    if (Runtime::checkUserPointer(mod, sizeof(*mod)) && Runtime::checkUserPointer(h, sizeof(*h))) {
+        return false;
+//        return AudioMixer::play();
+    }
+    return false;
+}
+
+bool _SYS_audio_isPlaying(_SYSAudioHandle h)
+{
+    return AudioMixer::instance.isPlaying(h);
+}
+
+void _SYS_audio_stop(_SYSAudioHandle h)
+{
+    AudioMixer::instance.stop(h);
+}
+
+void _SYS_audio_pause(_SYSAudioHandle h)
+{
+    AudioMixer::instance.pause(h);
+}
+
+void _SYS_audio_resume(_SYSAudioHandle h)
+{
+    AudioMixer::instance.resume(h);
+}
+
+int _SYS_audio_volume(_SYSAudioHandle h)
+{
+    return AudioMixer::instance.volume(h);
+}
+
+void _SYS_audio_setVolume(_SYSAudioHandle h, int volume)
+{
+    AudioMixer::instance.setVolume(h, volume);
+}
+
+uint32_t _SYS_audio_pos(_SYSAudioHandle h)
+{
+    return AudioMixer::instance.pos(h);
+}
 
 }  // extern "C"
