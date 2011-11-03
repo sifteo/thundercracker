@@ -15,9 +15,7 @@ jmp_buf Runtime::jmpExit;
 
 bool Event::dispatchInProgress;
 uint32_t Event::pending;
-uint32_t Event::assetDoneCubes;
-uint32_t Event::accelChangeCubes;
-uint32_t Event::touchCubes;
+uint32_t Event::eventCubes[_SYS_EVENT_CNT];
 
 
 void Runtime::run()
@@ -48,34 +46,13 @@ void Event::dispatch()
      */
 
     while (pending) {
-        uint32_t event = Intrinsic::CLZ(pending);
-        switch (event) {
+        _SYS_EventType event = (_SYS_EventType)Intrinsic::CLZ(pending);
 
-        case ASSET_DONE:
-            while (assetDoneCubes) {
-                uint32_t slot = Intrinsic::CLZ(assetDoneCubes);
-                assetDone(slot);
-                Atomic::And(assetDoneCubes, ~Intrinsic::LZ(slot));
+		while (eventCubes[event]) {
+                uint32_t slot = Intrinsic::CLZ(eventCubes[event]);
+                callEvent(event, slot);
+                Atomic::And(eventCubes[event], ~Intrinsic::LZ(slot));
             }
-            break;
-
-        case ACCEL_CHANGE:
-            while (accelChangeCubes) {
-                uint32_t slot = Intrinsic::CLZ(accelChangeCubes);
-                accelChange(slot);
-                Atomic::And(accelChangeCubes, ~Intrinsic::LZ(slot));
-            }
-            break;
-            
-        case TOUCH:
-            while (touchCubes) {
-                uint32_t slot = Intrinsic::CLZ(touchCubes);
-                touch(slot);
-                Atomic::And(touchCubes, ~Intrinsic::LZ(slot));
-            }
-            break;
-
-        }
         Atomic::And(pending, ~Intrinsic::LZ(event));
     }
 

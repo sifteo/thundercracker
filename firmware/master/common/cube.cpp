@@ -167,8 +167,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
             if (done) {
                 /* Finished asset loading */
                 Atomic::SetLZ(group->doneCubes, id());
-                Atomic::SetLZ(Event::assetDoneCubes, id());
-                Event::setPending(Event::ASSET_DONE);
+                Event::setPending(_SYS_EVENT_ASSETDONE, id());
 
                 DEBUG_ONLY({
                     // In debug builds only, we log the asset download time
@@ -294,8 +293,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         if (x != accelState.x || y != accelState.y) {
             accelState.x = x;
             accelState.y = y;
-            Atomic::SetLZ(Event::accelChangeCubes, id());
-            Event::setPending(Event::ACCEL_CHANGE);
+            Event::setPending(_SYS_EVENT_ACCELCHANGE, id());
         }
     }
 
@@ -306,8 +304,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             // Look for valid touches, signified by any edge on the touch toggle bit
             
             if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
-                Atomic::SetLZ(Event::touchCubes, id());
-                Event::setPending(Event::TOUCH);
+                Event::setPending(_SYS_EVENT_TOUCH, id());
             }
 
 			// <max>
