@@ -22,43 +22,55 @@ bool Hardware::init(VirtualTime *masterTimer,
     lat2 = 0;
     bus = 0;
     prev_ctrl_port = 0;
-
+    exceptionCount = 0;
+    
     cpu.callbackData = this;
     cpu.vtime = masterTimer;
+    cpu.mProfileData = NULL;
     
     CPU::em8051_reset(&cpu, true);
 
-    if (firmwareFile)
-        CPU::em8051_load(&cpu, firmwareFile);
-    else
+    if (firmwareFile) {
+        if (CPU::em8051_load(&cpu, firmwareFile)) {
+            fprintf(stderr, "Error: Failed to load firmware '%s'\n", firmwareFile);
+            return false;
+        }
+    } else {
         CPU::em8051_init_sbt(&cpu);
+    }
 
-    cpu.mSFR[REG_P0DIR] = 0xFF;
-    cpu.mSFR[REG_P1DIR] = 0xFF;
-    cpu.mSFR[REG_P2DIR] = 0xFF;
-    cpu.mSFR[REG_P3DIR] = 0xFF;
-    
-    cpu.mSFR[REG_SPIRCON0] = 0x01;
-    cpu.mSFR[REG_SPIRCON1] = 0x0F;
-    cpu.mSFR[REG_SPIRSTAT] = 0x03;
-    cpu.mSFR[REG_SPIRDAT] = 0x00;
-    cpu.mSFR[REG_RFCON] = RFCON_RFCSN;
  
-    if (!flash.init(flashFile))
-        return false;    
+    if (!flashStorage.init(flashFile)) {
+        fprintf(stderr, "Error: Failed to initialize flash memory\n");
+        return false;
+    }
+    
+    flash.init(&flashStorage);
     spi.radio.init(&cpu);
     spi.init(&cpu);
     adc.init();
+    mdu.init();
     i2c.init();
     lcd.init();
+    rng.init();
     neighbors.init();
-
+    
+    setTouch(0.0f);
+    
+    // XXX: Simulated battery level
+    adc.setInput(0, 0x8760);
+    
     return true;
+}
+
+void Hardware::reset()
+{
+    CPU::em8051_reset(&cpu, false);
 }
 
 void Hardware::exit()
 {
-    flash.exit();
+    flashStorage.exit();
 }
 
 // cube_cpu_callbacks.h
@@ -68,13 +80,41 @@ void CPU::except(CPU::em8051 *cpu, int exc)
     const char *name = CPU::em8051_exc_name(exc);
     const char *fmt = "[%2d] EXCEPTION at 0x%04x: %s\n";
     
-    if (cpu->traceFile)
+    self->incExceptionCount();
+    
+    if (cpu->isTracing)
         fprintf(cpu->traceFile, fmt, cpu->id, cpu->mPC, name);
 
-    if (self == Cube::Debug::cube)
+    if (self == Cube::Debug::cube && Cube::Debug::stopOnException)
         Cube::Debug::emu_exception(cpu, exc);
     else
         fprintf(stderr, fmt, cpu->id, cpu->mPC, name);
+}
+
+// cube_cpu_callbacks.h
+int CPU::NVM::write(CPU::em8051 *cpu, uint16_t addr, uint8_t data)
+{
+    Hardware *self = (Hardware*) cpu->callbackData;
+
+    if (!(cpu->mSFR[REG_FSR] & (1<<5))) {
+        // Write disabled
+        except(cpu, EXCEPTION_NVM);
+        return 0;
+    }
+            
+    // Program flash bits (1 -> 0)
+    self->flashStorage.data.nvm[addr] &= data;
+    self->flashStorage.asyncWrite(*self->time, &self->cpu);
+    
+    // Self-timed write cycles
+    return 12800;
+}
+
+// cube_cpu_callbacks.h
+uint8_t CPU::NVM::read(CPU::em8051 *cpu, uint16_t addr)
+{
+    Hardware *self = (Hardware*) cpu->callbackData;
+    return self->flashStorage.data.nvm[addr];
 }
 
 void Hardware::sfrWrite(int reg)
@@ -186,12 +226,23 @@ NEVER_INLINE void Hardware::hwDeadlineWork()
     spi.tick(hwDeadline, cpu.mSFR + REG_SPIRCON0, &cpu);
     i2c.tick(hwDeadline, &cpu);
     flash.tick(hwDeadline, &cpu);
+    flashStorage.tick(hwDeadline);
     spi.radio.tick(rfcken, &cpu);
 }
 
 void Hardware::setTouch(float amount)
 {
-    /* XXX: Model this as a capacitance applied to the ADC */
+    /*
+     * The A/D converter measures the remaining charge on Chold after some
+     * charge is transferred to the touch plate. So, lower values mean higher
+     * capacitance. The scaling here is a really rough estimate based on Hakim's
+     * bench tests so far.
+     *
+     * Note taht these are 16-bit full-scale values we're passing to the ADC
+     * module. It truncates them and justifies them according to the ADC configuration.
+     */
+
+    adc.setInput(12, 1600 - 320 * amount);
 }
 
 bool Hardware::isDebugging()
@@ -199,5 +250,14 @@ bool Hardware::isDebugging()
     return this == Cube::Debug::cube;
 }
 
+uint32_t Hardware::getExceptionCount()
+{
+    return exceptionCount;
+}
+
+void Hardware::incExceptionCount()
+{
+    exceptionCount++;
+}
 
 };  // namespace Cube

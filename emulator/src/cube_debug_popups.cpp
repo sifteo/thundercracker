@@ -437,6 +437,7 @@ void emu_help(CPU::em8051 *aCPU)
     mvwaddstr(exc, 12, 36, "end - Reset tick/time counter");
     mvwaddstr(exc, 13, 38, "k - Set or clear breakpoint");
     mvwaddstr(exc, 14, 38, "g - Go to address (adjust PC)");
+    mvwaddstr(exc, 15, 38, "s - Save current memory buffer");
 
     wrefresh(exc);
 

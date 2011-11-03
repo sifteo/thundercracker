@@ -19,16 +19,33 @@
 #include <glfw.h>
 
 
+class FrameRateController {
+public:
+    FrameRateController();
+    void endFrame();
+    
+    static const double targetFPS = 75.0;
+
+private:
+    double lastTimestamp;
+    double accumulator;
+};
+
+
 class Frontend {
  public:
     Frontend();
 
     bool init(System *sys);
-    void run();
+    bool runFrame();
     void exit();
 
     void numCubesChanged();
 
+    void postMessage(std::string msg) {
+        overlay.postMessage(msg);
+    }
+    
  private:
     /*
      * Number of real frames per virtual LCD frame (Assume 60Hz
@@ -90,7 +107,6 @@ class Frontend {
     void removeCube();
 
     std::string createScreenshotName();
-    void showMessage(std::string message);
     void drawOverlay();
 
     System *sys;
@@ -123,6 +139,7 @@ class Frontend {
     
     MousePicker mousePicker;
     ContactListener contactListener;
+    FrameRateController frControl;
 
     GLRenderer renderer;
     FrontendOverlay overlay;

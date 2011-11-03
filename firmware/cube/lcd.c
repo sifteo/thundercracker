@@ -12,11 +12,12 @@
 #include "flash.h"
 #include "time.h"
 #include "lcd_model.h"
+#include "sensors.h"
 
 static __bit lcd_is_awake;
 
 
-static void lcd_cmd_table(const __code uint8_t *ptr)
+static void lcd_cmd_table(const __code uint8_t *ptr) __naked
 {
     /*
      * Table-driven LCD init, so that we don't waste so much ROM
@@ -26,30 +27,52 @@ static void lcd_cmd_table(const __code uint8_t *ptr)
      *   <total length> <command> <data bytes...>
      *
      * If the length has bit 7 set, it's actually a delay in
-     * milliseconds, from 1 to 128 ms.
+     * sensor ticks (6.144 ms) of from 1 to 128 ticks.
+     *
+     * This is in assembly to save space. (It is not the least
+     * bit speed critical, but the compiled code was kind of big)
      */
-    
-    uint8_t len;
+     
+    ptr = ptr;
+    __asm
+ 
+        ASM_LCD_WRITE_BEGIN()
+     
+4$:     clr     a
+        movc    a, @a+dptr
+        jz      1$              ; Zero, end-of-list
+        inc     dptr
+        
+        jb      acc.7, 2$       ; Delay bit set?
+        mov     r0, a           ; No, save as byte count for command
+        
+        ASM_LCD_CMD_MODE()
+3$:     clr     a
+        movc    a, @a+dptr
+        mov     BUS_PORT, a
+        inc     dptr
+        lcall   _addr_inc2
+        ASM_LCD_DATA_MODE()
+        djnz    r0, 3$
+        sjmp    4$
+        
+1$:     ASM_LCD_WRITE_END()
+        ret
+        
+        ; Calculate a target clock tick. We need to subtract 0x80
+        ; and add 1 to get the number of ticks, and we need to add
+        ; another 1 to reference the _next_ tick instead of the current.
 
-    LCD_WRITE_BEGIN();
+2$:     add     a, #(0x100 - 0x80 + 2)
+        add     a, _sensor_tick_counter
+        mov     r0, a
 
-    while ((len = *ptr)) {
-        ptr++;
+5$:     mov     a, _sensor_tick_counter
+        xrl     a, r0
+        jnz     5$
+        sjmp    4$
 
-        if (len & 0x80) {
-            msleep(len - 0x7F);
-
-        } else {
-            LCD_CMD_MODE();
-            do {
-                LCD_BYTE(*ptr);
-                LCD_DATA_MODE();
-                ptr++;
-            } while (--len);
-        }
-    }
-
-    LCD_WRITE_END();
+    __endasm;
 }
 
 void lcd_sleep()
@@ -139,6 +162,10 @@ void lcd_end_frame()
      * frame. This has no effect if we aren't just now coming back
      * from display sleep, but if we are, this prevents showing one
      * garbage frame prior to showing the intended frame.
+     *
+     * It's important that we issue *some* kind of command here, to
+     * take us out of RAMWR mode. This way, any spurious Write strobes
+     * (e.g. from battery voltage sensing) won't generate pixels.
      */
 
     static const __code uint8_t table[] = {
@@ -146,5 +173,14 @@ void lcd_end_frame()
         0,
     };
 
+    // Release the bus
+    CTRL_PORT = CTRL_IDLE;
+    
     lcd_cmd_table(table);
+    
+    // Acknowledge this frame
+    __asm
+        inc     (_ack_data + RF_ACK_FRAME)
+        orl     _ack_len, #RF_ACK_LEN_FRAME
+    __endasm ;
 }

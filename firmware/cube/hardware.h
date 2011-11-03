@@ -42,6 +42,9 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define MISC_NB_IN      (1 << 6)   // T1 input
 #define MISC_NB_OUT4    (1 << 7)
 
+#define TOUCH_ADC_CH    12
+#define BATTERY_ADC_CH  0
+
 #define MISC_I2C        (MISC_I2C_SCL | MISC_I2C_SDA)
 #define MISC_NB_OUT     (MISC_NB_OUT1 | MISC_NB_OUT2 | MISC_NB_OUT3 | MISC_NB_OUT4)
 
@@ -67,11 +70,6 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define CTRL_FLASH_CMD  (CTRL_BACKLIGHT | CTRL_FLASH_OE | CTRL_LCD_DCX)
 #define CTRL_LCD_CMD    (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE)
 #define CTRL_FLASH_OUT  (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_LCD_DCX)
-
-#define ADDR_INC2()     { ADDR_PORT++; ADDR_PORT++; }
-#define ADDR_INC4()     { ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; ADDR_PORT++; }
-#define ADDR_INC32()    { ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); \
-                          ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); ADDR_INC4(); }
 
 /*
  * Debug UART (P1.0, 38400 baud)
@@ -101,15 +99,6 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
     __asm clr   _S0CON_TI0                      __endasm; \
     __asm mov   _S0BUF, _b                      __endasm; \
     __asm
-
-/*
- * LCD Controller
- */
-
-#define LCD_WIDTH       128
-#define LCD_HEIGHT      128
-#define LCD_PIXELS      (LCD_WIDTH * LCD_HEIGHT)
-#define LCD_ROW_SHIFT   8
 
 /*
  * nRF24L01 Radio
@@ -180,8 +169,8 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define rr(x)   (((x) >> 1) | ((x) << 7))
 #define swap(x) (((x) >> 4) | ((x) << 4))
 
+// Global interrupt enable. We never disable interrupts globally.
 #define sti()   { IEN_EN = 1; }
-#define cli()   { IEN_EN = 0; }
 
 /*
  * CPU Special Function Registers
@@ -263,11 +252,11 @@ __sfr __at 0xCF WUOPC0;
 __sfr __at 0xD0 PSW;
 __sfr __at 0xD1 ADCCON3;
 __sfr __at 0xD2 ADCCON2;
-__sfr __at 0xD3 ADCCON1;
+__sfr __at 0xD3 volatile ADCCON1;
 __sfr __at 0xD4 ADCDATH;
 __sfr __at 0xD5 ADCDATL;
-__sfr __at 0xD6 RNGCTL;
-__sfr __at 0xD7 RNGDAT;
+__sfr __at 0xD6 volatile RNGCTL;
+__sfr __at 0xD7 volatile RNGDAT;
 __sfr __at 0xD8 ADCON;
 __sfr __at 0xD9 W2SADR;
 __sfr __at 0xDA volatile W2DAT;
@@ -299,6 +288,12 @@ __sfr __at 0xFC SPIMCON0;
 __sfr __at 0xFD SPIMCON1;
 __sfr __at 0xFE SPIMSTAT;
 __sfr __at 0xFF SPIMDAT;
+
+// FSR bits
+__sbit __at 0xfd FSR_WEN;
+__sbit __at 0xfc FSR_RDYN;
+__sbit __at 0xfb FSR_INFEN;
+__sbit __at 0xfa FSR_RDISMB;
 
 // S0CON bits
 __sbit __at 0x98 S0CON_RI0;

@@ -15,6 +15,8 @@
 #include "cube_accel.h"
 #include "cube_spi.h"
 #include "cube_i2c.h"
+#include "cube_mdu.h"
+#include "cube_rng.h"
 #include "cube_lcd.h"
 #include "cube_flash.h"
 #include "cube_neighbors.h"
@@ -86,12 +88,17 @@ class Hardware {
     SPIBus spi;
     I2CBus i2c;
     ADC adc;
+    MDU mdu;
+    FlashStorage flashStorage;
     Flash flash;
     Neighbors neighbors;
+    RNG rng;
     
     bool init(VirtualTime *masterTimer,
               const char *firmwareFile, const char *flashFile);
     void exit();
+    
+    void reset();
 
     ALWAYS_INLINE bool tick() {
         bool cpuTicked = CPU::em8051_tick(&cpu);
@@ -117,6 +124,9 @@ class Hardware {
     ALWAYS_INLINE void setRadioClockEnable(bool e) {
         rfcken = e;
     }
+    
+    uint32_t getExceptionCount();
+    void incExceptionCount();
     
  private:
 
@@ -153,6 +163,8 @@ class Hardware {
     uint8_t prev_ctrl_port;
     uint8_t flash_drv;
     uint8_t rfcken;
+    
+    uint32_t exceptionCount;
 };
 
 };  // namespace Cube

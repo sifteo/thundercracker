@@ -6,6 +6,7 @@ LOCAL_OBJS = \
         src/frontend.o \
         src/frontend_cube.o \
         src/frontend_overlay.o \
+	src/lua_script.o \
         src/gl_renderer.o \
         src/main.o \
         src/system.o \
@@ -13,19 +14,32 @@ LOCAL_OBJS = \
         src/cube_cpu_core.o \
         src/cube_cpu_disasm.o \
         src/cube_cpu_opcodes.o \
+	src/cube_cpu_irq.o \
         src/cube_debug_mainview.o \
         src/cube_debug_memeditor.o \
         src/cube_debug_popups.o \
         src/cube_debug.o \
         src/cube_flash_model.o \
+        src/cube_flash_storage.o \
         src/cube_hardware.o \
         src/cube_neighbors.o \
-	scripts/data.o \
-	scripts/firmware-sbt.o \
-	
+	resources/data.o \
+	resources/firmware-sbt.o \
+
 # For faster 'make' invocation, track dependencies only for our own sources.
 OBJS := $(LOCAL_OBJS)
 DEPFILES := $(LOCAL_OBJS:.o=.d)
+
+# OS detection
+OS := $(shell uname)
+ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
+        OS := windows32
+        CC := mingw32-gcc
+endif
+ifeq ($(OS),windows32)
+        DEPS := ../deps/win32
+        LIBS += -lws2_32
+endif
 
 # LodePNG, self-contained PNG encoder/decoder
 OBJS += src/lodepng.o
@@ -78,19 +92,18 @@ OBJS += \
         src/Box2D/Dynamics/Joints/b2WheelJoint.o \
         src/Box2D/Rope/b2Rope.o \
 
-DATADEPS = \
-	scripts/*.glsl \
-	scripts/*.png \
+# Lua scripting (used for our test suite)
+OBJS += \
+	src/lua/lapi.o src/lua/lcode.o src/lua/ldebug.o src/lua/ldo.o src/lua/ldump.o \
+	src/lua/lfunc.o src/lua/lgc.o src/lua/llex.o src/lua/lmem.o src/lua/lobject.o \
+	src/lua/lopcodes.o src/lua/lparser.o src/lua/lstate.o src/lua/lstring.o \
+	src/lua/ltable.o src/lua/ltm.o src/lua/lundump.o src/lua/lvm.o src/lua/lzio.o \
+	src/lua/lauxlib.o src/lua/lbaselib.o src/lua/ldblib.o src/lua/liolib.o \
+	src/lua/lmathlib.o src/lua/loslib.o src/lua/ltablib.o src/lua/lstrlib.o \
+	src/lua/loadlib.o src/lua/linit.o src/lua/bit.o \
 
-# OS detection
-OS := $(shell uname)
-ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
-        OS := windows32
-        CC := mingw32-gcc
-endif
-ifeq ($(OS),windows32)
-        DEPS := ../deps/win32
-        LIBS += -lws2_32
+ifneq ($(OS), windows32)
+	FLAGS += -DLUA_USE_MKSTEMP
 endif
 
 # OpenGL
@@ -129,6 +142,7 @@ else ifeq ($(OS),windows32)
 else
         LIBS += -lX11 -lpthread
         INCLUDES += -Isrc/glfw/x11
+	FLAGS += -D_GLFW_HAS_PTHREAD
         OBJS += \
             src/glfw/x11/x11_enable.o      src/glfw/x11/x11_keysym2unicode.o    \
             src/glfw/x11/x11_fullscreen.o  src/glfw/x11/x11_thread.o            \
@@ -140,7 +154,7 @@ endif
 # Curses
 ifeq ($(OS),windows32)
         # Use our own copy of pdcurses on Win32
-	# This is the "Win32a" variant, from http://www.projectpluto.com/win32a.htm
+        # This is the "Win32a" variant, from http://www.projectpluto.com/win32a.htm
         INCLUDES += -Isrc/pdcurses
         OBJS += src/pdcurses/pdcurses/addch.o     src/pdcurses/pdcurses/mouse.o         \
                 src/pdcurses/pdcurses/addchstr.o  src/pdcurses/pdcurses/move.o          \
@@ -174,7 +188,7 @@ endif
 
 # Resources
 ifeq ($(OS),windows32)
-	OBJS += scripts/winres.o
+	OBJS += resources/winres.o
 endif
 
 # C++ Libary
@@ -186,18 +200,25 @@ endif
 
 # Linker flags
 ifneq ($(OS),Darwin)
-	# Not supported on Apple's LLVM GCC frontend
+        # Not supported on Apple's LLVM GCC frontend
 	LIBS += -Wl,--gc-sections
 endif
 
 # Debug / optimization
 #
 # Unsurprisingly, compiler optimization produces a very dramatic
-# difference in performance. You probably want to leave -O3 on at
-# all times unless you have a great reason not to.
+# difference in performance. Leave these options on at all times
+# unless you have a very good reason to do otherwise.
+#
+# Do NOT publish unoptimized builds. Besides running several times
+# slower, they will reveal too much about how our firmware works. The
+# optimized builds are significantly harder to reverse engineer.
+#
+# -fomit-frame-pointer is actually really important here. It helps
+# a lot with our SBT code, since there are many tiny function calls. 
 
-FLAGS += -O3 -g
-WARNFLAGS := -Werror -Wall
+FLAGS += -O3 -g -fomit-frame-pointer
+WARNFLAGS := -Werror -Wall -Wno-uninitialized
 
 # Automatic dependency generation (*.d files)
 FLAGS += -MMD
@@ -216,13 +237,13 @@ $(BIN): $(OBJS)
 	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
 	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
 	strip -s src/$(BIN)-d.exe -o $(BIN).exe
-	rm -f src/$(BIN)-d.exe
+	$(DEPS)/upx307w/upx.exe $(BIN).exe
 else
 # Default link
 $(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 endif	
-	
+
 %.o: %.cpp
 	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o
 
@@ -234,7 +255,7 @@ endif
 
 %.o: %.rc
 	windres -i $< -o $@
-	
+
 # Data dependencies don't need to be rebuilt by everyone,
 # the resulting generated code is checked into git. The
 # firmware target is somewhat inconvenient, since it relies
@@ -247,11 +268,11 @@ endif
 # using interpreted mode, and specifying a firmware image on
 # the command line.
 
-scripts/data.cpp: $(DATADEPS)
-	python scripts/bin2c.py
+resources/data.cpp: $(DATADEPS)
+	python resources/bin2c.py
 
 firmware:
-	python scripts/firmware-sbt.py ../firmware/cube/*.rst
+	python resources/firmware-sbt.py ../firmware/cube/*.rst
 
 .PHONY: clean firmware
 

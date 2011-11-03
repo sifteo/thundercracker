@@ -1,6 +1,10 @@
 BIN_SIM = master-sim.a
 BIN_STM32 = master-stm32.a
-BINS = $(BIN_SIM) $(BIN_STM32)
+
+BINS = $(BIN_SIM)
+ifneq ($(BUILD_STM32),)
+	BINS += $(BIN_STM32)
+endif
 
 SPEEX_DIR = speex
 include $(SPEEX_DIR)/speex.mk
@@ -34,7 +38,7 @@ OBJS_STM32 = \
 
 TC_DIR = ../..
 FIRMWARE_INC := ../include
-CCFLAGS += -I$(FIRMWARE_INC) -Icommon $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX
+CFLAGS += -I$(FIRMWARE_INC) -Icommon $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX
 
 include Makefile.defs
 
@@ -65,10 +69,10 @@ $(BIN_STM32): $(OBJS_STM32)
 	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
 
 %.stm32.o: %.c $(CDEPS)
-	$(CC_STM32) -c -o $@ $< $(CCFLAGS_STM32)
+	$(CC_STM32) -c -o $@ $< $(CFLAGS_STM32)
 
 %.stm32.o: %.s $(CDEPS)
-	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CCFLAGS_STM32)
+	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CFLAGS_STM32)
 
 .PHONY: all clean
 

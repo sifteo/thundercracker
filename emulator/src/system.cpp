@@ -11,10 +11,42 @@
 #include "system.h"
 #include "cube_debug.h"
 
+System::System()
+        : opt_numCubes(DEFAULT_CUBES),
+        opt_noThrottle(false),
+        opt_continueOnException(false),
+        opt_cube0Debug(NULL),
+        threadRunning(false),
+        traceFile(NULL),
+        mIsTracing(false),
+        mIsInitialized(false),
+        mIsStarted(false)
+        {}
 
-bool System::init() {
-    if (opt_cubeTrace) {
-        traceFile = fopen(opt_cubeTrace, "w");
+
+bool System::init()
+{
+    if (mIsInitialized)
+        return true;
+        
+    /*
+     * We want to disable our debugging features when using the
+     * built-in binary translated firmware. The debugger won't really
+     * work properly in SBT mode anyway, but we additionally want to
+     * disable it in order to make it harder to reverse engineer our
+     * firmware. Of course, any dedicated reverse engineer could just
+     * disable this test easily :)
+     */
+
+    if (opt_cubeFirmware.empty() && (!opt_cube0Profile.empty() || 
+                                     !opt_cubeTrace.empty() ||
+                                     opt_cube0Debug)) {
+        fprintf(stderr, "Debug features only available if a firmware image is provided.");
+        return false;
+    }
+
+    if (!opt_cubeTrace.empty()) {
+        traceFile = fopen(opt_cubeTrace.c_str(), "w");
         if (!traceFile) {
             perror("Error opening trace file");
             return false;
@@ -30,7 +62,24 @@ bool System::init() {
     time.init();
     network.init(&time);
 
+    mIsInitialized = true;
     return true;
+}
+
+void System::startThread()
+{
+    threadRunning = true;
+    __asm__ __volatile__ ("" : : : "memory");
+    thread = glfwCreateThread(threadFn, this);
+    __asm__ __volatile__ ("" : : : "memory");
+}
+
+void System::stopThread()
+{
+    threadRunning = false;
+    __asm__ __volatile__ ("" : : : "memory");
+    glfwWaitThread(thread, GLFW_WAIT);
+    __asm__ __volatile__ ("" : : : "memory");
 }
 
 void System::setNumCubes(unsigned n)
@@ -39,9 +88,8 @@ void System::setNumCubes(unsigned n)
         return;
 
     // Must change opt_numCubes only while our thread is stopped!
-    threadRunning = false;
-    glfwWaitThread(thread, GLFW_WAIT);
-
+    stopThread();
+    
     while (opt_numCubes > n)
         exitCube(--opt_numCubes);
 
@@ -51,19 +99,20 @@ void System::setNumCubes(unsigned n)
         else
             break;
 
-    threadRunning = true;
-    thread = glfwCreateThread(threadFn, this);
+    startThread();
 }
 
 bool System::initCube(unsigned id)
 {
-    if (!cubes[id].init(&time, opt_cubeFirmware, id ? NULL : opt_cube0Flash))
+    if (!cubes[id].init(&time, opt_cubeFirmware.empty() ? NULL : opt_cubeFirmware.c_str(),
+                        (id != 0 || opt_cube0Flash.empty()) ? NULL : opt_cube0Flash.c_str()))
         return false;
 
     cubes[id].cpu.id = id;
     cubes[id].cpu.traceFile = traceFile;
-
-    if (id == 0 && opt_cube0Profile) {
+    cubes[id].cpu.isTracing = mIsTracing;
+    
+    if (id == 0 && !opt_cube0Profile.empty()) {
         Cube::CPU::profile_data *pd;
         size_t s = CODE_SIZE * sizeof pd[0];
         pd = (Cube::CPU::profile_data *) malloc(s);
@@ -91,22 +140,41 @@ void System::exitCube(unsigned id)
     cubes[id].exit();
 }
 
-void System::start() {
-    threadRunning = true;
-    thread = glfwCreateThread(threadFn, this);
+void System::start()
+{
+    if (!mIsInitialized || mIsStarted)
+        return;
+    mIsStarted = true;
+        
+    if (opt_cube0Debug) {
+        Cube::Debug::init();
+        Cube::Debug::stopOnException = !opt_continueOnException;
+    }
+
+    startThread();
 }
 
-void System::exit() {
+void System::exit()
+{
+    if (!mIsInitialized)
+        return;
+    mIsInitialized = false;
+    mIsStarted = false;
+        
     network.exit();
 
-    threadRunning = false;
-    glfwWaitThread(thread, GLFW_WAIT);
+    if (mIsStarted) {
+        stopThread();
 
+        if (opt_cube0Debug)
+            Cube::Debug::exit();
+    }
+    
     for (unsigned i = 0; i < opt_numCubes; i++)
         exitCube(i);
 
-    if (opt_cube0Profile)
-        Cube::Debug::writeProfile(&cubes[0].cpu, opt_cube0Profile);
+    if (!opt_cube0Profile.empty())
+        Cube::Debug::writeProfile(&cubes[0].cpu, opt_cube0Profile.c_str());
 
     if (traceFile) {
         fclose(traceFile);
@@ -128,12 +196,15 @@ void System::threadFn(void *param)
     unsigned nCubes = self->opt_numCubes;
     bool debug = self->opt_cube0Debug && nCubes;
 
-    if (debug)
-        Cube::Debug::init(&self->cubes[0]);
-
     TimeGovernor gov;
     gov.start(&self->time);
+    
+    if (debug)
+        Cube::Debug::attach(&self->cubes[0]);
 
+    // Seed PRNG per-thread
+    srand(glfwGetTime() * 1e6);
+        
     while (self->threadRunning) {
         if (debug) {
             /*
@@ -180,9 +251,6 @@ void System::threadFn(void *param)
         if (!self->opt_noThrottle)
             gov.step();
     }
-
-    if (debug)
-        Cube::Debug::exit();
 }
 
 ALWAYS_INLINE void System::tick()
@@ -190,4 +258,20 @@ ALWAYS_INLINE void System::tick()
     // Everything but the cubes
     time.tick();
     network.tick(*this);
+}
+
+void System::setTraceMode(bool t)
+{
+    mIsTracing = !opt_cubeTrace.empty() && traceFile && t;
+
+    if (opt_numCubes) {
+        bool startStop = mIsStarted;
+    
+        if (startStop)
+            stopThread();
+        for (unsigned i = 0; i < opt_numCubes; i++)
+            cubes[i].cpu.isTracing = mIsTracing;
+        if (startStop)
+            startThread();
+    }
 }

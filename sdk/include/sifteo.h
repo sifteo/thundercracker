@@ -16,5 +16,6 @@
 #include <sifteo/limits.h>
 #include <sifteo/macros.h>
 #include <sifteo/video.h>
+#include <sifteo/neighborhood.h>
 
 #endif

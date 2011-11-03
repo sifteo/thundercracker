@@ -77,15 +77,22 @@ extern int runmode;
 // current run speed, lower is faster
 extern int speed;
 
+// Highest SP we've seen
+extern uint8_t stackMax;
+
 // currently active view
 extern int view;
 
 // Cube that the debugger is currently attached to
 extern Cube::Hardware *cube;
 
+// Debugger options
+extern bool stopOnException;
+
 
 // main
-void init(Cube::Hardware *cube);
+void init();
+void attach(Cube::Hardware *cube);
 void exit();
 void writeProfile(CPU::em8051 *aCPU, const char *filename);
 bool updateUI();

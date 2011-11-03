@@ -26,7 +26,16 @@ void load()
     vid.init();
 
     do {
-        vid.BG0_progressBar(Vec2(0,7), cube.assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+        /*
+         * XXX: Redrawing the progress bar smoothly, any time it would have changed by one pixel,
+         *      actually causes our assets to download substantially slower. The cube always treats
+         *      graphics as higher-priority than asset downloading, and we can't do both at the same
+         *      time. So, we need to be responsible for limiting our own frame rate if we want the
+         *      assets to download at top speed. Trying to do that here by quantizing the progress.
+         *      Even a small degree of quantization improves load times significantly!
+         */
+        vid.BG0_progressBar(Vec2(0,7), cube.assetProgress(GameAssets, VidMode_BG0::LCD_width) & ~3, 2);
+ 
         System::paint();
     } while (!cube.assetDone(GameAssets));
 }

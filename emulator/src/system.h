@@ -14,6 +14,7 @@
 #ifndef _SYSTEM_H
 #define _SYSTEM_H
 
+#include <string>
 #include <glfw.h>
 #include "vtime.h"
 #include "cube_hardware.h"
@@ -31,34 +32,39 @@ class System {
 
     // Options; can be set prior to init
     unsigned opt_numCubes;
-    const char *opt_cubeFirmware;
+    std::string opt_cubeFirmware;
     bool opt_noThrottle;
 
     // Global debug options
-    const char *opt_cubeTrace;
+    std::string opt_cubeTrace;
+    bool opt_continueOnException;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
-    const char *opt_cube0Flash;
-    const char *opt_cube0Profile;
+    std::string opt_cube0Flash;
+    std::string opt_cube0Profile;
 
-    System()
-        : opt_numCubes(DEFAULT_CUBES), opt_cubeFirmware(NULL),
-        opt_noThrottle(false), opt_cubeTrace(false),
-        opt_cube0Debug(NULL), opt_cube0Flash(NULL),
-        opt_cube0Profile(NULL), threadRunning(false)
-        {}
-
+    System();
+    
     bool init();
     void start();
     void exit();
     void setNumCubes(unsigned n);
-
+    void setTraceMode(bool t);
+    
     bool isRunning() {
         return threadRunning;
     }
+    
+    bool isTracing() {
+        return mIsTracing;
+    }
 
- private:
+    // Use with care... They must remain exactly paired.
+    void startThread();
+    void stopThread();
+
+ private: 
     static void threadFn(void *param);
     bool initCube(unsigned id);
     void exitCube(unsigned id);
@@ -68,6 +74,9 @@ class System {
     bool threadRunning;
 
     FILE *traceFile;
+    bool mIsTracing;
+    bool mIsInitialized;
+    bool mIsStarted;
     
     SystemNetwork network;
 };

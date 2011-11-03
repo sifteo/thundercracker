@@ -116,8 +116,9 @@ class Tile {
     static const unsigned SIZE = 8;       // Number of pixels on a side
     static const unsigned PIXELS = 64;    // Total pixels in a tile
 
-    // Firmware chroma-key color
-    static const uint16_t CHROMA_KEY = 0x4FF5;
+    // Chroma key constants, defined by our ABI.
+    static const uint8_t CHROMA_KEY    = 0x4F;
+    static const uint8_t CKEY_BIT_EOL  = 0x40;
 
     RGB565 pixel(unsigned i) const {
         return mPixels[i];

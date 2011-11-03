@@ -84,8 +84,6 @@ void SystemNetwork::setNonBlock(int fd)
 
 void SystemNetwork::disconnect(int &fd)
 {
-    fprintf(stderr, "NET: Client disconnected\n");
-
     if (fd >= 0) {
 #ifdef _WIN32
         closesocket(fd);

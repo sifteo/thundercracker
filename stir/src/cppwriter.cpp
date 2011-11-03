@@ -110,9 +110,28 @@ void CPPSourceWriter::writeImage(const Image &image)
     unsigned width = grids.empty() ? 0 : grids[0].width();
     unsigned height = grids.empty() ? 0 : grids[0].height();
 
-    if (!image.isPinned()) {
+    if (image.isPinned()) {
         /*
-         * Write out uncompressed tile grid.
+         * Sifteo::PinnedAssetImage
+         */
+        
+        const TileGrid &grid = grids[0];
+        const TilePool &pool = grid.getPool();
+
+        mStream <<
+            "\n"
+            "Sifteo::PinnedAssetImage " << image.getName() << " = {\n" <<
+            indent << "/* width   */ " << width << ",\n" <<
+            indent << "/* height  */ " << height << ",\n" <<
+            indent << "/* frames  */ " << grids.size() << ",\n" <<
+            indent << "/* index   */ " << pool.index(grid.tile(0, 0)) <<
+            ",\n};\n";
+            
+    } else {
+        /*
+         * Sifteo::AssetImage
+         *
+         * Write out an uncompressed tile grid.
          *
          * XXX: Compression!
          */
@@ -135,23 +154,15 @@ void CPPSourceWriter::writeImage(const Image &image)
             }
         }
         
-        mStream << "};\n";
+        mStream <<
+            "};\n\n"
+            "Sifteo::AssetImage " << image.getName() << " = {\n" <<
+            indent << "/* width   */ " << width << ",\n" <<
+            indent << "/* height  */ " << height << ",\n" <<
+            indent << "/* frames  */ " << grids.size() << ",\n" <<
+            indent << "/* tiles   */ " << image.getName() << "_tiles,\n" <<
+            "};\n";
     }
-
-    mStream <<
-        "\n"
-        "Sifteo::AssetImage " << image.getName() << " = {\n" <<
-        indent << "/* width   */ " << width << ",\n" <<
-        indent << "/* height  */ " << height << ",\n" <<
-        indent << "/* frames  */ " << grids.size() << ",\n" <<
-        indent << "/* tiles   */ ";
-
-    if (image.isPinned())
-        mStream << "0";
-    else
-        mStream << image.getName() << "_tiles";
-
-    mStream << ",\n};\n";
 }
 
 CPPHeaderWriter::CPPHeaderWriter(Logger &log, const char *filename)
@@ -214,8 +225,14 @@ void CPPHeaderWriter::writeGroup(const Group &group)
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++) {
         Image *image = *i;
-
-        mStream << "extern const Sifteo::AssetImage " << image->getName() << ";\n";
+        const char *cls;
+        
+        if (image->isPinned())
+            cls = "PinnedAssetImage";
+        else
+            cls = "AssetImage";
+            
+        mStream << "extern const Sifteo::" << cls << " " << image->getName() << ";\n";
     }
 }
 

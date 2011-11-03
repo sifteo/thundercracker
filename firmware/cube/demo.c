@@ -7,11 +7,12 @@
  */
 
 #include <stdint.h>
-#include "lcd.h"
+#include "graphics.h"
 #include "hardware.h"
 #include "flash.h"
 #include "draw.h"
 #include "radio.h"
+#include "touch.h"
 
 extern const __code uint8_t img_logo[];
 extern const __code uint8_t img_battery[];
@@ -20,7 +21,6 @@ extern const __code uint8_t img_radio_0[];
 extern const __code uint8_t img_radio_1[];
 extern const __code uint8_t img_radio_2[];
 extern const __code uint8_t img_radio_3[];
-
 
 void demo(void)
 {
@@ -35,6 +35,24 @@ void demo(void)
     draw_xy = XY(1,5);
     draw_attr = ATTR_NONE;
     draw_image(img_logo);
+
+#ifdef DEBUG_TOUCH
+    draw_xy = XY(1,14);
+    draw_string("DEBUG_TOUCH");
+
+    while (1) {
+        uint8_t i;
+        uint8_t d = debug_touch;
+
+        draw_xy = XY(1,2);
+        draw_hex(d);
+
+        for (i = 0; i < 18; i++)
+            vram.bg0_tiles[i] = d < (i * 3 + 60) ? 0 : 0x26fe;
+
+        graphics_render();
+    }
+#endif
 
     draw_xy = XY(0,0);
     draw_image(img_battery);

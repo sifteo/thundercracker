@@ -28,8 +28,7 @@ bool Frontend::init(System *_sys)
     frameCount = 0;
     toggleZoom = false;
     viewExtent = targetViewExtent() * 3.0;
-
-    glfwInit();
+    isRunning = true;
 
     /*
      * Create cubes in a grid. Height is the square root of the number
@@ -220,20 +219,21 @@ void Frontend::exit()
     glfwTerminate();
 }
 
-void Frontend::run()
+bool Frontend::runFrame()
 {
-    isRunning = true;
-    while (isRunning && sys->isRunning()) {
-
+    if (!isRunning || !sys->isRunning())
+        return false;
+        
     // Simulated hardware VSync
-        if (!(frameCount % FRAME_HZ_DIVISOR))
-            for (unsigned i = 0; i < sys->opt_numCubes; i++)
-                sys->cubes[i].lcdPulseTE();
+    if (!(frameCount % FRAME_HZ_DIVISOR))
+        for (unsigned i = 0; i < sys->opt_numCubes; i++)
+            sys->cubes[i].lcdPulseTE();
 
-        animate();
-        draw();
-        frameCount++;
-    }
+    animate();
+    draw();
+    frameCount++;
+
+    return true;
 }
 
 bool Frontend::openWindow(int width, int height, bool fullscreen)
@@ -323,6 +323,17 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
         }
 
+        case 'T': {
+            /*
+             * Intentionally undocumented: Toggle trace mode.
+             * Requires that a trace file was specified on the command line.
+             */
+            bool t = !instance->sys->isTracing();
+            instance->overlay.postMessage((t ? "Enabling" : "Disabling") + std::string(" trace mode"));
+            instance->sys->setTraceMode(t);
+            break;
+        }
+        
         case GLFW_KEY_SPACE:
             if (instance->mouseIsPulling)
                 instance->hoverOrRotate();
@@ -624,6 +635,7 @@ void Frontend::draw()
     overlay.draw();
         
     renderer.endFrame();
+    frControl.endFrame();
 }
 
 b2Vec2 Frontend::worldToScreen(b2Vec2 world)
@@ -739,5 +751,43 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
 
         fdatA->cube->updateNeighbor(touching, fdatA->side, fdatB->side, cubeB);
         fdatB->cube->updateNeighbor(touching, fdatB->side, fdatA->side, cubeA);
+    }
+}
+
+FrameRateController::FrameRateController()
+    : lastTimestamp(0), accumulator(0) {}
+    
+void FrameRateController::endFrame()
+{
+    /*
+     * We try to synchronize to the host's vertical sync.
+     * If the video drivers don't support that, this governor
+     * prevents us from running way too fast.
+     */
+
+    /*
+     * How far ahead we need to be on average, in seconds,
+     * before we start inserting delays
+     */
+    const double slack = 0.25;
+    
+    /*
+     * How far ahead or behind are we allowed to get?
+     */
+    const double limit = 1.0;
+
+    double now = glfwGetTime();
+    const double minPeriod = 1.0 / targetFPS;
+    double thisPeriod = now - lastTimestamp;
+    lastTimestamp = now;
+    
+    accumulator += minPeriod - thisPeriod;
+    
+    if (accumulator < -limit)
+        accumulator = -limit;        
+    else if (accumulator > slack) {
+        if (accumulator > limit)
+            accumulator = limit;
+        glfwSleep(accumulator - slack);
     }
 }

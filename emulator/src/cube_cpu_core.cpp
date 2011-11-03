@@ -68,6 +68,17 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     aCPU->mSFR[REG_P2] = 0xff;
     aCPU->mSFR[REG_P3] = 0xff;
     
+    aCPU->mSFR[REG_P0DIR] = 0xFF;
+    aCPU->mSFR[REG_P1DIR] = 0xFF;
+    aCPU->mSFR[REG_P2DIR] = 0xFF;
+    aCPU->mSFR[REG_P3DIR] = 0xFF;
+    
+    aCPU->mSFR[REG_SPIRCON0] = 0x01;
+    aCPU->mSFR[REG_SPIRCON1] = 0x0F;
+    aCPU->mSFR[REG_SPIRSTAT] = 0x03;
+    aCPU->mSFR[REG_SPIRDAT] = 0x00;
+    aCPU->mSFR[REG_RFCON] = RFCON_RFCSN;
+
     aCPU->prescaler12 = 12;
     
     // build function pointer lists
@@ -152,6 +163,8 @@ const char *em8051_exc_name(int aCode)
         "PSW not preserved over interrupt call",
         "SP not preserved over interrupt call",
         "ACC not preserved over interrupt call",
+        "DP* not preserved over interrupt call",
+        "R0-R7 not preserved over interrupt call",
         "Invalid opcode: 0xA5 encountered",
         "Hardware bus contention occurred",
         "SPI FIFO overrun/underrun",
@@ -159,6 +172,9 @@ const char *em8051_exc_name(int aCode)
         "I2C error",
         "XDATA error",
         "Binary translator error",
+        "MDU error",
+        "RNG error",
+        "Nonvolatile memory write error",
     };
 
     if (aCode < (int)(sizeof exc_names / sizeof exc_names[0]))

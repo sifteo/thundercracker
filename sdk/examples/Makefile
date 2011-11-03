@@ -1,4 +1,6 @@
-SUBDIRS = hello monster text gfxdemo chroma neighbor megademo scroller
+SUBDIRS = \
+	hello monster text gfxdemo chroma sensors megademo \
+	scroller-bg0 scroller-bg1 sprites stars
 
 .PHONY: clean subdirs $(SUBDIRS)
 

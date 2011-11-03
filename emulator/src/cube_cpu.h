@@ -48,7 +48,8 @@ namespace CPU {
 struct em8051;
 
 // Operation: returns number of ticks the operation should take
-typedef int (*em8051operation)(struct em8051 *aCPU, uint8_t opcode, uint8_t operand1, uint8_t operand2);
+typedef int FASTCALL (*em8051operation)(struct em8051 *aCPU, unsigned &PC, 
+                                        uint8_t opcode, uint8_t operand1, uint8_t operand2);
 
 // Decodes opcode at position, and fills the buffer with the assembler code. 
 // Returns how many bytes the opcode takes.
@@ -80,15 +81,16 @@ struct em8051
     uint8_t mData[256];
     uint8_t mSFR[128];
 
-    int mPC;
-    int mPreviousPC;
+    unsigned mPC;
+    unsigned mPreviousPC;
     int mTickDelay;             // How many ticks we should delay before continuing
     int mTimerTickDelay;
-    int mBreakpoint;
+    unsigned mBreakpoint;
     
     bool sbt;                   // In static binary translation mode
     bool needInterruptDispatch;
     bool needHardwareTick;
+    bool isTracing;
     
     uint8_t irq_count;          // Number of currently active IRQ handlers
     uint8_t ifp;                // Last IFP state
@@ -106,7 +108,7 @@ struct em8051
 
     struct {
         // Stored register values for sanity-checking ISRs
-        uint8_t a, psw, sp;
+        uint8_t a, psw, sp, dpl, dph, dpl1, dph1, dps, r[8];
 
         // Priority of *this* interrupt handler
         uint8_t priority;
@@ -156,7 +158,7 @@ void disasm_setptrs(em8051 *aCPU);
 void op_setptrs(em8051 *aCPU);
 
 // Static binary translated firmware
-typedef int (*sbt_block_t)(em8051 *);
+typedef int FASTCALL (*sbt_block_t)(em8051 *);
 extern const uint8_t sbt_rom_data[];
 extern const sbt_block_t sbt_rom_code[];
 
@@ -168,6 +170,8 @@ enum EM8051_EXCEPTION
     EXCEPTION_IRET_PSW_MISMATCH, // psw not preserved over interrupt call (doesn't care about P, F0 or UNUSED)
     EXCEPTION_IRET_SP_MISMATCH,  // sp not preserved over interrupt call
     EXCEPTION_IRET_ACC_MISMATCH, // acc not preserved over interrupt call
+    EXCEPTION_IRET_DP_MISMATCH,  // dptr/dptr1/dps not preserved over interrupt call    
+    EXCEPTION_IRET_R_MISMATCH,   // R0-R7 not preserved over interrupt call
     EXCEPTION_ILLEGAL_OPCODE,    // for the single 'reserved' opcode in the architecture
     EXCEPTION_BUS_CONTENTION,    // Hardware bus contention
     EXCEPTION_SPI_XRUN,          // SPI FIFO overrun/underrun
@@ -175,6 +179,9 @@ enum EM8051_EXCEPTION
     EXCEPTION_I2C,               // I2C error
     EXCEPTION_XDATA_ERROR,       // Access to unmapped portion of xdata 
     EXCEPTION_SBT,               // Binary translator error (executing untranslated code)
+    EXCEPTION_MDU,               // Multiply Divide Unit error
+    EXCEPTION_RNG,               // Random Number Generator error
+    EXCEPTION_NVM,               // NVM write error (Write while read-only)
 };
 
 

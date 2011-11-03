@@ -51,13 +51,13 @@ static void traceExecution(em8051 *mCPU)
     em8051_decode(mCPU, mCPU->mPC, assembly);
 
     fprintf(mCPU->traceFile,
-            "[%2d] %10u  PC=%04x   %-35s A=%02x R%d=[%02x %02x %02x %02x-%02x %02x %02x %02x] "
-            "DP=[%d %04x %04x] P=[%02x.%02x %02x.%02x %02x.%02x %02x.%02x] "
-            "TMR=[%02x%02x %02x%02x %02x%02x] DBG=%02x\n",
+            "[%2d] %u i%d @%04X a%02X r%d[%02X%02X%02X%02X-%02X%02X%02X%02X] "
+            "d%d[%04X%04X] p[%02X%02X%02X%02X-%02X%02X%02X%02X] "
+            "t[%02X%02X%02X%02X%02X%02X]  %s\n",
 
             mCPU->id,
             (unsigned) mCPU->vtime->clocks,
-            mCPU->mPC, assembly,
+            mCPU->irq_count, mCPU->mPC,
             mCPU->mSFR[REG_ACC],
             bank,
             mCPU->mData[bank*8 + 0],
@@ -72,12 +72,12 @@ static void traceExecution(em8051 *mCPU)
             (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
             (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
             mCPU->mSFR[REG_P0],
-            mCPU->mSFR[REG_P0DIR],
             mCPU->mSFR[REG_P1],
-            mCPU->mSFR[REG_P1DIR],
             mCPU->mSFR[REG_P2],
-            mCPU->mSFR[REG_P2DIR],
             mCPU->mSFR[REG_P3],
+            mCPU->mSFR[REG_P0DIR],
+            mCPU->mSFR[REG_P1DIR],
+            mCPU->mSFR[REG_P2DIR],
             mCPU->mSFR[REG_P3DIR],
             mCPU->mSFR[REG_TH0],
             mCPU->mSFR[REG_TL0],
@@ -85,7 +85,7 @@ static void traceExecution(em8051 *mCPU)
             mCPU->mSFR[REG_TL1],
             mCPU->mSFR[REG_TH2],
             mCPU->mSFR[REG_TL2],
-            mCPU->mSFR[REG_DEBUG]);
+            assembly);
 }
 
 
@@ -456,7 +456,7 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
             uint8_t opcode = aCPU->mCodeMem[pc];
             uint8_t operand1 = aCPU->mCodeMem[(pc + 1) & (CODE_SIZE - 1)];
             uint8_t operand2 = aCPU->mCodeMem[(pc + 2) & (CODE_SIZE - 1)];
-            aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU, opcode, operand1, operand2);
+            aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU, aCPU->mPC, opcode, operand1, operand2);
         }
 
         ticked = 1;
@@ -494,7 +494,7 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
          * Write execution trace
          */
 
-        if (aCPU->traceFile)
+        if (aCPU->isTracing)
             traceExecution(aCPU);
 
         /*

@@ -1,5 +1,5 @@
 GameAssets = group{quality=10}
-Font = image{"font-8x16.png", width=8, height=16, pinned=true}
+Font = image{"font-8x16.png", width=8, height=16}
 WhiteFont = image{"font-8x16white.png", width=8, height=16}
 Gem0 = image{"01_gem00.png", height=32}
 Gem1 = image{"01_gem01.png", height=32}

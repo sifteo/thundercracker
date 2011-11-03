@@ -95,8 +95,10 @@ struct _SYSAssetGroup {
 #define _SYS_VRAM_BG1_WIDTH     16      // Width/height of BG1 bitmap
 #define _SYS_VRAM_BG1_TILES     144     // Total number of opaque tiles in BG1
 #define _SYS_VRAM_BG2_WIDTH     16      // Width/height of BG2 tile grid
-#define _SYS_VRAM_SPRITES       8       // Maximum number of linear sprites
+#define _SYS_VRAM_SPRITES       8       // Total number of linear sprites
+#define _SYS_SPRITES_PER_LINE   4       // Maximum visible sprites per scanline
 #define _SYS_CHROMA_KEY         0x4f    // Chroma key MSB
+#define _SYS_CKEY_BIT_EOL       0x40    // Chroma-key special bit, end-of-line
 
 // Bits for 'flags'
 
@@ -139,11 +141,19 @@ struct _SYSAssetGroup {
 #define _SYS_VA_FLAGS           0x3ff
 
 struct _SYSSpriteInfo {
-    uint16_t tile;                      // 0x00
-    uint8_t mask_x;                     // 0x02
-    uint8_t mask_y;                     // 0x03
-    uint8_t pos_x;                      // 0x04
-    uint8_t pos_y;                      // 0x05
+    /*
+     * Sprite sizes must be powers of two, and the
+     * size/position must both be negated.
+     *
+     * Sprites can be disabled by setting height to zero.
+     * A zero width with nonzero height will give undefined
+     * results.
+     */
+    int8_t   mask_y;      // 0x00  (-height),  0 == disable
+    int8_t   mask_x;      // 0x01  (-width)
+    int8_t   pos_y;       // 0x02  (-top)
+    int8_t   pos_x;       // 0x03  (-left)
+    uint16_t  tile;       // 0x04  Address in 7:7 format
 };
 
 // Equivalent to an augmented matrix (3x2), in 8.8 fixed-point
@@ -165,10 +175,10 @@ union _SYSVideoRAM {
         uint16_t bg1_tiles[144];        // 0x288 - 0x3a7
         uint16_t bg1_bitmap[16];        // 0x3a8 - 0x3c7
         struct _SYSSpriteInfo spr[8];   // 0x3c8 - 0x3f7
-        uint8_t bg1_x;                  // 0x3f8
-        uint8_t bg1_y;                  // 0x3f9
-        uint8_t bg0_x;                  // 0x3fa
-        uint8_t bg0_y;                  // 0x3fb
+        int8_t bg1_x;                   // 0x3f8
+        int8_t bg1_y;                   // 0x3f9
+        uint8_t bg0_x;                  // 0x3fa   0 <= x <= 143
+        uint8_t bg0_y;                  // 0x3fb   0 <= y <= 143
         uint8_t first_line;             // 0x3fc   0 <= x <= 127
         uint8_t num_lines;              // 0x3fd   1 <= x <= 128
         uint8_t mode;                   // 0x3fe
@@ -275,6 +285,14 @@ struct _SYSAccelState {
 };
 
 /**
+ * Every cube has an arbitrary unique hardware ID.
+ */
+
+struct _SYSCubeHWID {
+    uint8_t bytes[6];
+};
+
+/**
  * Event vectors. These can be changed at runtime in order to handle
  * events within the game binary. All vectors are NULL (no-op) by
  * default. The vector table lives at an agreed-upon address in
@@ -288,8 +306,9 @@ struct _SYSEventVectors {
     void (*cubeLost)(_SYSCubeID cid);
     void (*assetDone)(_SYSCubeID cid);
     void (*accelChange)(_SYSCubeID cid);
+    void (*touch)(_SYSCubeID cid);
 
-    void *reserved[_SYS_MAX_VECTORS - 4];
+    void *reserved[_SYS_MAX_VECTORS - 5];
 };
 
 extern struct _SYSEventVectors _SYS_vectors;
@@ -322,6 +341,8 @@ void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
 
 // XXX: Temporary for testing/demoing
 void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);
+void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v);
+void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid);
 
 void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf);
 void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr);

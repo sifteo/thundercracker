@@ -54,6 +54,9 @@ unsigned int icount = 0;
 // current clock count
 uint64_t clocks = 0;
 
+// Highest SP we've seen
+uint8_t stackMax;
+
 // currently active view
 int view = NO_VIEW;
 
@@ -61,6 +64,8 @@ int breakpoint = -1;
 
 // Cube that the debugger is currently attached to
 Cube::Hardware *cube;
+
+bool stopOnException = false;
 
 
 void setSpeed(int speed, int runmode)
@@ -192,13 +197,15 @@ void recordHistory()
         memcpy(history + (historyline * (128 + 64 + sizeof(int))), aCPU->mSFR, 128);
         memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128, aCPU->mData, 64);
         memcpy(history + (historyline * (128 + 64 + sizeof(int))) + 128 + 64, &aCPU->mPreviousPC, sizeof(int));
+        
+        uint8_t sp = aCPU->mSFR[REG_SP];
+        if (sp > stackMax)
+            stackMax = sp;
     }
 }
 
-void init(Cube::Hardware *_cube)
+void init()
 {
-    cube = _cube;
-
     slk_init(1);
     if ( (initscr()) == NULL ) {
         fprintf(stderr, "Error initialising ncurses.\n");
@@ -220,6 +227,12 @@ void init(Cube::Hardware *_cube)
     slk_set(6, "v)iew", 0);
     slk_set(7, "home=rst", 0);
     slk_set(8, "s-Q)quit", 0);
+}
+
+void attach(Cube::Hardware *_cube)
+{
+    cube = _cube;
+    stackMax = 0;
     setSpeed(speed, runmode);
 }
 

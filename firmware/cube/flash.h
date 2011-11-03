@@ -40,6 +40,7 @@ extern uint8_t flash_addr_lat2;
 
 void flash_erase(uint8_t blockCount);
 void flash_program_start(void);
+void flash_program_end(void);
 void flash_program_word(uint16_t dat) __naked;
 
 

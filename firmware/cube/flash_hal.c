@@ -21,8 +21,8 @@ uint8_t flash_addr_lat1;
 uint8_t flash_addr_lat2;
 
 /*
- * We can poll in a much tigher loop (and therefore exit the polling
- * with lower latency if we use Data# polling as opposed to toggle
+ * We can poll in a much tighter loop (and therefore exit the polling
+ * with lower latency) if we use Data# polling as opposed to toggle
  * polling, since we don't need to pulse the OE pin. This is probably
  * also rather lower power consumption, since we aren't toggling an
  * external pin in a tight loop!
@@ -147,6 +147,24 @@ void flash_program_start(void)
         mov     _flash_poll_data, c
     __endasm ;
 }    
+
+void flash_program_end(void)
+{
+    /*
+     * The counterpart to flash_program_start(). Wait for the last
+     * write to finish, and release the bus.
+     */
+     
+    __asm
+        jnb     _flash_poll_data, 2$
+3$:     jnb     BUS_PORT.7, 3$
+        sjmp    1$
+2$:     jb      BUS_PORT.7, 2$
+1$:                        
+    __endasm ;
+    
+    CTRL_PORT = CTRL_IDLE;
+}
 
 void flash_program_word(uint16_t dat) __naked
 {

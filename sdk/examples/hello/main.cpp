@@ -57,6 +57,7 @@ static void init()
 
     for (unsigned i = 0; i < NUM_CUBES; i++) {
         vid[i].init();
+        vid[i].clear(Font.tiles[0]);
     }
 }
 

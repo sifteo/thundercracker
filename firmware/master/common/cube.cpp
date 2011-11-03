@@ -62,6 +62,11 @@ _SYSCubeIDVector CubeSlot::flashResetWait;
 _SYSCubeIDVector CubeSlot::flashResetSent;
 _SYSCubeIDVector CubeSlot::flashACKValid;
 _SYSCubeIDVector CubeSlot::frameACKValid;
+_SYSCubeIDVector CubeSlot::neighborACKValid;
+
+/*
+ * Neighbor coalescing data.  
+ */
 
 
 void CubeSlot::loadAssets(_SYSAssetGroup *a) {
@@ -72,10 +77,19 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a) {
     if (isAssetGroupLoaded(a))
         return;
 
+    const _SYSAssetGroupHeader *hdr = a->hdr;
+    if (!Runtime::checkUserPointer(hdr, sizeof *hdr))
+        return;
+    
     // XXX: Pick a base address too!
     ac->progress = 0;
 
-    DEBUG_LOG(("FLASH[%d]: Beginning asset download, group %p\n", id(), a));
+    LOG(("FLASH[%d]: Sending asset group %p, %d bytes\n", id(), a, hdr->dataSize));
+
+    DEBUG_ONLY({
+        // In debug builds, we log the asset download time
+        assetLoadTimestamp = SysTime::ticks();
+    });
 
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
     Atomic::And(flashResetSent, ~bit());
@@ -155,6 +169,13 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                 Atomic::SetLZ(group->doneCubes, id());
                 Atomic::SetLZ(Event::assetDoneCubes, id());
                 Event::setPending(Event::ASSET_DONE);
+
+                DEBUG_ONLY({
+                    // In debug builds only, we log the asset download time
+                    float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
+                    LOG(("FLASH[%d]: Finished loading group %p in %.3f seconds\n",
+                         id(), group, seconds));
+                })
             }
         }
     }
@@ -279,13 +300,168 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     }
 
     if (packet.len >= offsetof(RF_ACKType, neighbors) + sizeof ack->neighbors) {
-        // XXX: Temporary for testing/demoing
+        // Has valid neighbor/flag data
+
+        if (neighborACKValid & bit()) {
+            // Look for valid touches, signified by any edge on the touch toggle bit
+            
+            if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
+                Atomic::SetLZ(Event::touchCubes, id());
+                Event::setPending(Event::TOUCH);
+            }
+
+			// <max>
+			const uint8_t kCubeIdMask = 0x1f;
+			const uint8_t kHasNeighborMask = 0x80;
+			const uint8_t kNeighborMask = kCubeIdMask | kHasNeighborMask;
+			for(int8_t side=0; side<4; ++side) {
+				if (neighbors[side] & kNeighborMask != ack->neighbors[side] & kNeighborMask) {
+					if (neighbors[side] & kHasNeighborMask) {
+						if (ack->neighbors[side] & kHasNeighborMask) {
+							removeNeighborFromSide(neighbors[side] & kCubeIdMask, side);
+							addNeighborToSide(ack->neighbors[side] & kCubeIdMask, side);
+						} else {
+							removeNeighborFromSide(neighbors[side] & kCubeIdMask, side);
+						}
+					} else if (ack->neighbors[side] & kHasNeighborMask) {
+						addNeighborToSide(ack->neighbors[side] & kCubeIdMask, side);
+					}	
+				}
+			}
+			// </max>
+			
+        } else {
+            Atomic::SetLZ(neighborACKValid, id());
+        }
+
+        // Store the raw state
         neighbors[0] = ack->neighbors[0];
         neighbors[1] = ack->neighbors[1];
         neighbors[2] = ack->neighbors[2];
         neighbors[3] = ack->neighbors[3];
     }
+    
+    if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {
+        // Has valid battery voltage
+        
+        rawBatteryV = ack->battery_v;
+    }
+    
+    if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {
+        // Has valid hardware ID
+        
+        memcpy(hwid.bytes, ack->hwid, sizeof ack->hwid);
+    }
 }
+
+// <max>
+
+/* 
+ * Neighbor Coalescing
+ * 
+ * Neighbors are not created until both cubes report the pair
+ *		This way, application code can rely on all neighboring relationships
+ *		being symmetric.
+ * 
+ * Neighbors are not removed until both cubes report the unpairing
+ * 		This reduces the amount of neighboring event noise coming from the 
+ * 		firmware.
+ * 
+ * gCoalescedPairs stores a global (cube X cube) -> (side X side) maps
+ * 
+ * coalescedNeighbors stores the "corrected" neighboring state, which should
+ * 		be used by the application, rather than the raw neighbors.
+ */
+
+struct NeighborPair {
+	int8_t side0;
+	int8_t side1;
+
+	bool fullyConnected() const { return side0 >= 0 && side1 >= 0; }
+	bool fullyDisconnected() const { return side0 < 0 && side1 < 0; }
+	void clear() { side0=-1; side1=-1; }
+
+	NeighborPair() : side0(-1), side1(-1) {}
+
+	int8_t setSideAndGetOtherSide(int cid0, int cid1, int8_t side, NeighborPair** outPair) {
+		// abstract the order-of-arguments invariant of lookup()
+		if (cid0 < cid1) {
+			*outPair = lookup(cid0, cid1);
+			(*outPair)->side0 = side;
+			return (*outPair)->side1;
+		} else {
+			*outPair = lookup(cid1, cid0);
+			(*outPair)->side1 = side;
+			return (*outPair)->side0;
+		}
+	}
+
+	NeighborPair* lookup(int cid0, int cid1) {
+		// invariant this == pairs[0]
+    	// invariant cid0 < cid1
+    	return (this + cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
+  	}
+};
+
+static NeighborPair gCoalescedPairs[(_SYS_NUM_CUBE_SLOTS-1)*(_SYS_NUM_CUBE_SLOTS-1)];
+
+
+void CubeSlot::resetCoalescedNeighbors(_SYSCubeIDVector cv, bool andClearPairs) {
+	while(cv) {
+		uint8_t cubeId = Intrinsic::CLZ(cv);
+		instances[cubeId].coalescedNeighbors[0] = 0xff;
+		instances[cubeId].coalescedNeighbors[1] = 0xff;
+		instances[cubeId].coalescedNeighbors[2] = 0xff;
+		instances[cubeId].coalescedNeighbors[3] = 0xff;
+		if (andClearPairs) {
+			for(uint8_t i=0; i<cubeId; ++i) { 
+				gCoalescedPairs->lookup(i, cubeId)->clear();
+			}
+			for(uint8_t i=cubeId+1; i<_SYS_NUM_CUBE_SLOTS; ++i) {
+				gCoalescedPairs->lookup(i, cubeId)->clear();
+			}
+		}
+	    cv ^= Intrinsic::LZ(cv);
+	}
+}
+
+void CubeSlot::addNeighborToSide(_SYSCubeID neighborId, uint8_t side) {
+	// Update the neighbor pairs
+	NeighborPair* pair;
+	int8_t otherSide = gCoalescedPairs->setSideAndGetOtherSide(id(), neighborId, side, &pair);
+	if (pair->fullyConnected() && coalescedNeighbors[side] != neighborId) {
+		doClearSide(side);
+		instances[neighborId].doClearSide(otherSide);
+		coalescedNeighbors[side] = neighborId;
+		instances[neighborId].coalescedNeighbors[otherSide] = id();
+		// dispatch event: didAddNeighbor(id(), side, neighborId, otherSide)
+	}
+}
+
+void CubeSlot::doClearSide(uint8_t side) {
+	uint8_t otherId = coalescedNeighbors[side];
+	if (otherId != 0xff) {
+		int8_t otherSide;
+		for(otherSide=0; otherSide<4; ++otherSide) {
+			if (instances[otherId].coalescedNeighbors[otherSide] == id()) {
+				break;
+			}
+		}
+		// dispatch event: willRemoveNeighbor(id(), side, otherId, otherSide)
+		coalescedNeighbors[side] = 0xff;
+		instances[otherId].coalescedNeighbors[otherSide] = 0xff;
+	}
+}
+
+void CubeSlot::removeNeighborFromSide(_SYSCubeID neighborId, uint8_t side) {
+	NeighborPair* pair;
+	/*int8_t otherSide =*/ gCoalescedPairs->setSideAndGetOtherSide(id(), neighborId, side, &pair);
+	if (pair->fullyDisconnected() && coalescedNeighbors[side] == neighborId) {
+		doClearSide(side);
+	}
+}
+
+// </max>
 
 void CubeSlot::radioTimeout()
 {
@@ -367,14 +543,34 @@ void CubeSlot::waitForFinish()
      * has been updated over the radio.  Does *not* wait for any
      * minimum frame rate. If no rendering is pending, we return
      * immediately.
+     *
+     * Continuous rendering is turned off, if it was on.
      */
 
+    uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM,flags));
+    if (flags & _SYS_VF_CONTINUOUS) {
+        /*
+         * If we were in continuous rendering mode, pendingFrames isn't
+         * exact; it's more of a running accumulator. In that case, we have
+         * to turn off continuous rendering mode, flush everything over the
+         * radio, then do one Paint(). This is what paintSync() does.
+         * So, at this point we just need to reset pendingFrames to zero
+         * and turn off continuous mode.
+         */
+         
+        pendingFrames = 0;
+
+        VRAM::pokeb(*vbuf, offsetof(_SYSVideoRAM, flags), flags & ~_SYS_VF_CONTINUOUS);
+        VRAM::unlock(*vbuf);
+    }
+     
     for (;;) {
         Atomic::Barrier();
         SysTime::Ticks now = SysTime::ticks();
 
         if (now > (paintTimestamp + fpsLow)) {
-            // Watchdog expired. Give up waiting.
+            // Watchdog expired. Give up waiting, and forcibly reset pendingFrames.
+            pendingFrames = 0;
             break;
         }
 
@@ -389,6 +585,8 @@ void CubeSlot::waitForFinish()
 
 void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
 {
+    _SYSAssetGroup *group = loadGroup;
+        
     if (vbuf) {
         uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
         int32_t pending = Atomic::Load(pendingFrames);
@@ -424,12 +622,23 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
          * so that continuous rendering is only turned off once the
          * cube is clearly pulling ahead of our ability to provide it
          * with frames.
+         *
+         * We only allow continuous rendering when we aren't downloading
+         * assets to this cube. Continuous rendering makes flash downloading
+         * extremely slow- flash is strictly lower priority than graphics
+         * on the cube, but continuous rendering asks the cube to render
+         * graphics as fast as possible.
          */
-        if (newPending >= fpContinuous)
-            flags |= _SYS_VF_CONTINUOUS;
-        if (newPending <= fpSingle)
-            flags &= ~_SYS_VF_CONTINUOUS;
 
+        if (group && !(group->doneCubes & bit())) {
+            flags &= ~_SYS_VF_CONTINUOUS;
+        } else {
+            if (newPending >= fpContinuous)
+                flags |= _SYS_VF_CONTINUOUS;
+            if (newPending <= fpSingle)
+                flags &= ~_SYS_VF_CONTINUOUS;
+        }
+                
         /*
          * If we're not using continuous mode, each frame is triggered
          * explicitly by toggling a bit in the flags register.
@@ -447,7 +656,6 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
                 flags |= _SYS_VF_CONTINUOUS;
             }
         }
-
 
         /*
          * Atomically apply our changes to pendingFrames.

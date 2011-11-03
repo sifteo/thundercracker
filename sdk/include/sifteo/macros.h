@@ -27,10 +27,12 @@
 #   endif
 #   define LOG(_x)            printf _x
 #   define ASSERT(_x)         assert(_x)
+#   define DEBUG_ONLY(x)      x
 #else
 #   define DEBUG_LOG(_x)
 #   define LOG(_x)
 #   define ASSERT(_x)
+#   define DEBUG_ONLY(x)
 #endif
 
 // Produces a 'size of array is negative' compile error when the assert fails

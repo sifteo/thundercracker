@@ -13,6 +13,13 @@
 #include "time.h"
 
 /*
+ * We export a global tick counter, which can be used by other modules
+ * who need a low-frequency timebase.
+ */
+volatile uint8_t sensor_tick_counter;
+volatile uint8_t sensor_tick_counter_high;
+
+/*
  * These MEMSIC accelerometers are flaky little buggers! We're seeing
  * different chips ship with different addresses, so we have to do a
  * quick search if we don't get a response. Additionally, we're seeing
@@ -381,6 +388,15 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
         ;--------------------------------------------------------------------
 
+        ; Tick tock.. this is not latency-critical at all, it goes last.
+        
+        mov     a, _sensor_tick_counter
+        add     a, #1
+        mov     _sensor_tick_counter, a
+        mov     a, _sensor_tick_counter_high
+        addc    a, #0
+        mov     _sensor_tick_counter_high, a
+        
         pop     ar1
         pop     ar0
         pop     psw
@@ -502,7 +518,7 @@ nb_tx:
         ; included below, for reference. The "LOW" line can go anywhere after
         ; "HIGH" here.
         ;
-        ; Currently we're tuning this for 2 us (32 clocks)
+        ; Currently we are tuning this for 2 us (32 clocks)
 
         clr     _TCON_TR1                       ; Prevent echo, disable receiver
 
@@ -568,6 +584,7 @@ nb_bit_done:
         mov     @r0, a
 
         pop     ar0
+        sjmp    nb_packet_done                  ; Done receiving
 
         ;--------------------------------------------------------------------
         ; TX -> Accelerometer handoff
@@ -596,8 +613,58 @@ nb_tx_handoff:
         mov     _W2CON1, #0               ;   Unmask interrupt
         mov     _W2DAT, _accel_addr       ; Trigger the next I2C transaction
 
-        ; Fall through to nb_packet_done
+        ;--------------------------------------------------------------------
+        ; Touch sensing
+        ;--------------------------------------------------------------------
 
+        ; Start the touch sensing process. This method uses the A/D converter
+        ; as a capacitance meter, by first charging the hold capacitor to a
+        ; known level, then transferring a portion of that charge to the external
+        ; touch plate. By measuring the remaining charge on the hold cap, we can
+        ; measure the capacitance ratio between the touch plate and the internal
+        ; hold capacitor.
+        ;
+        ; This process involves some tight timing, so we want to do it here,
+        ; where we cannot be interrupted. We do a cycle-counted delay here
+        ; which interrupts everything else; most importantly, we are unable to do any
+        ; neighbor receive during this delay. So, this delay needs to count as
+        ; part of our transmit timeslot duration.
+       
+        jb      _battery_adc_lock, nb_packet_done
+
+        mov     _ADCCON2, #0x0c         ; Single-step, no auto-powerdown
+        mov     _ADCCON3, #0xe0         ; 12-bit, right justified
+        mov     _ADCCON1, #0xbc         ; 1 0 1111 00, Chold to 2/3 VDD reference
+        
+        ; While we wait, ground the neighbor sensor, to fully discharge its
+        ; capacitance and maximize the amount of charge we can transfer into
+        ; it later.
+        
+        anl     MISC_PORT, #~MISC_TOUCH     ; 4
+        anl     _MISC_DIR, #~MISC_TOUCH     ; 4
+        
+        ; Wait Twup (15us) + Tack (0.75 us) for Chold to charge. This needs to be 252
+        ; cycles from ADCCON1 write to ADCCON1 write. The timing here needs to be very
+        ; consistent for us to get consistent readings.
+        ;
+        ; Right now we busy-loop this, just for simplicity. This operation cannot be
+        ; concurrent with neighbor RX, so we really only impact graphics framerate.
+        ; This is only a small fraction of a percent of our total execution time.
+        
+        mov     a, #58                      ; 2
+        djnz    acc, .                      ; 4*N = 232
+        movc    a, @a+pc                    ; 3  (used as a 1-byte 3-cycle nop)
+        
+        ; Now, while the audience is distracted, swap input channels. This is where the
+        ; charge transfer happens.
+        
+        orl     _MISC_DIR, #MISC_TOUCH                          ; 4
+        mov     _ADCCON1, #(0x80 | (TOUCH_ADC_CH << 2))         ; 3
+        
+        ; Continue in the ADC interrupt, after conversion finishes.
+        
+        setb    _IEN_MISC
+        
         ;--------------------------------------------------------------------
 
 nb_packet_done:
@@ -630,6 +697,11 @@ void sensors_init()
      *
      *       This is a very long-running ISR. It really needs to be
      *       just above the main thread in priority, but no higher.
+     *
+     *    A/D Converter (MISC)
+     *
+     *       Not timing critical. Anything we do here could happen late
+     *       and we'd be okay.
      *
      *  - Prio 1 
      *
@@ -738,7 +810,7 @@ void sensors_init()
     IEN_TF2_EXF2 = 1;           // Enable TF2 interrupt
 
     /*
-     * XXX: Build a trivial neighbor packet based on our trivial cube ID.
+     * XXX: Build a trivial outgoing neighbor packet based on our trivial cube ID.
      */
 
     nb_tx_packet[0] = 0xE0 | radio_get_cube_id();

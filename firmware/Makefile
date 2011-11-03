@@ -1,4 +1,7 @@
-TARGETS := cube.hex master.a
+TARGETS := master.a
+ifneq ($(BUILD_8051),)
+	TARGETS += cube.hex
+endif
 
 all: $(TARGETS)
 

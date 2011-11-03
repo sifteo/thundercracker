@@ -45,8 +45,10 @@ class CubeSlot {
     static _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
     static _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid
     static _SYSCubeIDVector frameACKValid;      /// 'framePrevACK' is valid
-
+    static _SYSCubeIDVector neighborACKValid;   /// Neighbor/touch state is valid
+    
     static void enableCubes(_SYSCubeIDVector cv) {
+		resetCoalescedNeighbors(cv, false);
         Sifteo::Atomic::Or(vecEnabled, cv);
     }
 
@@ -55,7 +57,8 @@ class CubeSlot {
         Sifteo::Atomic::And(flashResetWait, ~cv);
         Sifteo::Atomic::And(flashResetSent, ~cv);
         Sifteo::Atomic::And(flashACKValid, ~cv);
-        Sifteo::Atomic::And(frameACKValid, ~cv);
+        Sifteo::Atomic::And(neighborACKValid, ~cv);
+		resetCoalescedNeighbors(cv, true);
     }
 
     _SYSCubeID id() const {
@@ -103,6 +106,13 @@ class CubeSlot {
         buf[3] = neighbors[3];
     }
 
+	void getCoalescedNeighbors(uint8_t buf[4]) {
+        buf[0] = coalescedNeighbors[0];
+        buf[1] = coalescedNeighbors[1];
+        buf[2] = coalescedNeighbors[2];
+        buf[3] = coalescedNeighbors[3];
+	}
+
     _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
         /*
          * Safely return this cube's per-cube data on a particular
@@ -120,6 +130,14 @@ class CubeSlot {
     void waitForFinish();
     void triggerPaint(SysTime::Ticks timestamp);
 
+    const _SYSCubeHWID & getHWID() const {
+        return hwid;
+    }
+    
+    uint16_t getRawBatteryV() const {
+        return rawBatteryV;
+    }
+    
     static bool validID(_SYSCubeID id) {
         // For security/reliability, all cube IDs from game code must be checked
         return id < _SYS_NUM_CUBE_SLOTS;
@@ -134,6 +152,13 @@ class CubeSlot {
     static void finishCubes(_SYSCubeIDVector cv);
 
  private:
+	// <max>
+	static void resetCoalescedNeighbors(_SYSCubeIDVector cv, bool andClearPairs);
+	void addNeighborToSide(_SYSCubeID id, uint8_t side);
+	void doClearSide(uint8_t side);
+	void removeNeighborFromSide(_SYSCubeID id, uint8_t side);
+	// </max>
+	
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
     
@@ -156,11 +181,13 @@ class CubeSlot {
     _SYSAssetGroup *loadGroup;
     _SYSVideoBuffer *vbuf;
     RadioAddress address;
-
+    
+    DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
+    
     SysTime::Ticks paintTimestamp;      // Used only by thread
     SysTime::Ticks flashDeadline;       // Used only by ISR
     int32_t pendingFrames;
-    uint32_t timeSyncState;     // XXX: For the current time-sync hack
+    uint32_t timeSyncState;             // XXX: For the current time-sync hack
 
     // Packet encoder state
     CubeCodec codec;
@@ -168,10 +195,16 @@ class CubeSlot {
     // Byte variables
     uint8_t flashPrevACK;
     uint8_t framePrevACK;
-    uint8_t neighbors[4];       // XXX: Raw neighbor data for testing/demoing only
+    uint8_t neighbors[4];
+
+	// <max>
+	uint8_t coalescedNeighbors[4];
+	// </max>
 
     // Sensors
+    uint16_t rawBatteryV;
     _SYSAccelState accelState;
+    _SYSCubeHWID hwid;
 };
 
 

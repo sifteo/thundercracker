@@ -14,61 +14,8 @@
 namespace Cube {
 namespace CPU {
 
-
-/*
- * Try to invoke an interrupt, of a specified level, with the given
- * IRQ vector. If we can begin the IRQ now, returns nonzero.
- */
-static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
-{
-    if (cpu->traceFile)
-        fprintf(cpu->traceFile, "[%2d] IRQ: Interrupt arrived, prio=%d vector=0x%04x\n",
-                cpu->id, priority, vector);
-
-    if (cpu->irq_count) {
-        // Another IRQ is in progress. Are we higher priority?
-
-        if (priority <= cpu->irql[cpu->irq_count - 1].priority) {
-            // Nope. Can't interrupt the last handler.
-     
-            if (cpu->traceFile)
-                fprintf(cpu->traceFile, "[%2d] IRQ: Higher priority interrupt in progress\n", cpu->id);
-
-            return 0;
-        }
-    }
-    
-    // Preempt any cycles left on the current SBT block
-    cpu->irql[cpu->irq_count].tickDelay = cpu->mTickDelay;
-    
-    // XXX: A guess at the interrupt latency (LCALL duration)
-    cpu->mTickDelay = 6;
-
-    /*
-     * Far CALL to the interrupt vector
-     */
-    cpu->mData[++cpu->mSFR[REG_SP]] = cpu->mPC & 0xff;
-    if (cpu->mSFR[REG_SP] == 0) except(cpu, EXCEPTION_STACK);
-    cpu->mData[++cpu->mSFR[REG_SP]] = cpu->mPC >> 8;
-    if (cpu->mSFR[REG_SP] == 0) except(cpu, EXCEPTION_STACK);
-    cpu->mPC = vector;
-
-    /*
-     * Remember the priority of this nested handler
-     */
-    cpu->irql[cpu->irq_count].priority = priority;
-
-    /*
-     * Save registers on entry, for optional debug checks.
-     */
-    cpu->irql[cpu->irq_count].a = cpu->mSFR[REG_ACC];
-    cpu->irql[cpu->irq_count].psw = cpu->mSFR[REG_PSW];
-    cpu->irql[cpu->irq_count].sp = cpu->mSFR[REG_SP];
-
-    cpu->irq_count++;
-    return 1;
-}
-
+int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector);
+void irq_check(em8051 *aCPU, int i);
 
 /*
  * Try to invoke at most one interrupt, starting with the highest
@@ -77,7 +24,7 @@ static int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
 
 static ALWAYS_INLINE void handle_interrupts(struct em8051 *cpu)
 {
-    if (cpu->traceFile)
+    if (cpu->isTracing)
         fprintf(cpu->traceFile, "[%2d] IRQ: Checking for interrupts\n", cpu->id);
 
     // IFP is currently disabled, we don't use it.

@@ -200,6 +200,25 @@ void memeditor_editor_keys(CPU::em8051 *aCPU, int ch)
     case 'F':
         insert_value = 0xf;
         break;
+
+        /* Adjust values up/down with ",." keys */
+        
+    case ',':
+        eds[focus].memarea[eds[focus].memoffset + eds[focus].cursorpos / 2]--;
+        break;
+    case '.':
+        eds[focus].memarea[eds[focus].memoffset + eds[focus].cursorpos / 2]++;
+        break;    
+        
+    case 's': {
+        FILE *f = fopen("memory.bin", "wb");
+        if (f) {
+            fwrite(eds[focus].memarea, 1, eds[focus].maxmem, f);
+            fclose(f);
+            emu_popup(aCPU, "Memory editor", "Saved memory snapshot");
+        }
+        break;
+    }
     }
 
     if (insert_value != -1)

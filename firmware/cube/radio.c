@@ -9,9 +9,10 @@
 #include "hardware.h"
 #include "radio.h"
 #include "flash.h"
+#include "params.h"
 #include <protocol.h>
 
-RF_ACKType __near ack_data;
+RF_MemACKType __near ack_data;
 uint8_t __near ack_len;
 
 
@@ -305,7 +306,6 @@ no_rx_flush:
         mov     _SPIRDAT, #0                    ; First dummy byte, keep the TX FIFO full
         SPI_WAIT                                ; Wait for Command/STATUS byte
         mov     a, _SPIRDAT                     ; Ignore status
-        SPI_WAIT                                ; Wait for first data byte
 
         ;--------------------------------------------------------------------
         ; State Machine
@@ -321,7 +321,8 @@ rx_loop:                                        ; Fetch the next byte or nybble
         swap    a
         sjmp    2$
 
-1$:     mov     a, _SPIRDAT                     ; ... Next byte
+1$:     SPI_WAIT
+        mov     a, _SPIRDAT                     ; ... Next byte
         mov     _SPIRDAT, #0
 2$:     mov     R_INPUT, a
 
@@ -703,6 +704,8 @@ rx_flash:
         rrc     a                               ; Byte count
         jz      rx_flash_reset                  ;    Zero bytes, do a flash reset
         mov     R_NYBBLE_COUNT, a               ;    Otherwise, this is the new loop iterator   
+        
+        SPI_WAIT
 
 rx_flash_loop:
         mov     a, _flash_fifo_head             ; 2  Load the flash write pointer
@@ -776,6 +779,20 @@ rx_complete_0:
         ; ACK packet write
         ;--------------------------------------------------------------------
 
+        ; The packet length comes from _ack_len, and the first portion of the
+        ; data from _ack_data. Normally, to send data back to the master, we
+        ; update bytes in _ack_len, then OR a mask into _ack_len which increases
+        ; the packet length to a value which is always a power-of-two minus one.
+        ;
+        ; This works for packets of length 1, 3, and 7 bytes. That corresponds
+        ; to packets with only our frame count, with frame count and accelerometer
+        ; data, and with the above plus neighbor/flag bytes.
+        ;
+        ; In addition to the above cases, we have a special case for sending back
+        ; a "full" packet. This happens any time the ack length is larger than
+        ; the size of our in-memory buffer. We send back the entire in-memory
+        ; buffer, followed by HWID data from flash.
+        
 rx_ack:
         mov     a, _ack_len
         jz      no_ack                                  ; Skip the ACK entirely if empty
@@ -786,11 +803,35 @@ rx_ack:
         mov     R_TMP, #_ack_data
         mov     R_INPUT, a                              ; Packet length
 
+        ; Are we just sending the normal ack_data from internal RAM, or is this a "full"
+        ; packet? Do this test now, and keep the result in the carry flag. If C=1, it is
+        ; a full packet. Clamp the first loop to the size of the memory packet.
+        
+        add     a, #(0xFF - RF_MEM_ACK_LEN)
+        jnc     3$
+        mov     R_INPUT, #RF_MEM_ACK_LEN
+        
 3$:     mov     _SPIRDAT, @R_TMP
         inc     R_TMP
-        SPI_WAIT                                        ; RX dummy byte
-        mov     a, _SPIRDAT
+        SPI_WAIT
+        mov     a, _SPIRDAT                             ; RX dummy byte
         djnz    R_INPUT, 3$
+        
+        ; If we still need to, send the hardware ID to complete our full packet.
+        
+        jnc     4$
+        mov     _DPS, #0
+        mov     dptr, #PARAMS_HWID
+        mov     R_INPUT, #HWID_LEN
+5$:     movx    a, @dptr
+        mov     _SPIRDAT, a
+        inc     dptr
+        SPI_WAIT
+        mov     a, _SPIRDAT                             ; RX dummy byte
+        djnz    R_INPUT, 5$
+4$:
+
+        ; End of ACK
 
         SPI_WAIT                                        ; RX last dummy byte
         mov     a, _SPIRDAT
@@ -886,8 +927,8 @@ void radio_init(void)
 
     RF_CKEN = 1;                        // Radio clock running
     radio_transfer_table(table);        // Send initialization commands
-    IEN_RF = 1;                         // Interrupt enabled
-    RF_CE = 1;                          // Receiver enabled
+    radio_irq_enable();
+    radio_rx_enable();
 }
 
 
@@ -904,6 +945,7 @@ uint8_t radio_get_cube_id(void)
 
     uint8_t id;
 
+    radio_irq_disable();
     RF_CSN = 0;
 
     SPIRDAT = RF_CMD_R_REGISTER | RF_REG_TX_ADDR;
@@ -914,6 +956,7 @@ uint8_t radio_get_cube_id(void)
     id = SPIRDAT;
 
     RF_CSN = 1;
+    radio_irq_enable();
 
     return id;
 }
