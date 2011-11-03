@@ -278,10 +278,8 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             }
 
         } else {
-            // Now we've seen one ACK. If we're doing a reset, send the token again.
-           
+            // Now we've seen one ACK
             Atomic::SetLZ(flashACKValid, id());
-            Atomic::ClearLZ(flashResetSent, id());            
         }
 
         flashPrevACK = ack->flash_fifo_bytes;
