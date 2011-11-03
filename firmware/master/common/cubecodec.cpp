@@ -71,7 +71,7 @@ void CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
                 uint16_t addr = (idx32 << 5) | idx1;
 
                 ASSERT(addr < _SYS_VRAM_WORDS);
-                DEBUG_LOG(("-encode addr %04x, data %04x\n", addr, vb->vram.words[addr]));
+                CODEC_DEBUG_LOG(("-encode addr %04x, data %04x\n", addr, vb->vram.words[addr]));
 
                 if (!encodeVRAMAddr(buf, addr) ||
                     !encodeVRAMData(buf, vb, VRAM::peek(*vb, addr))) {
@@ -129,7 +129,7 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
         if (delta <= 8) {
             // We can use a short skip code
 
-            DEBUG_LOG((" addr delta %d\n", delta));
+            CODEC_DEBUG_LOG((" addr delta %d\n", delta));
 
             delta--;
             txBits.append((delta & 1) | ((delta << 3) & 0x30), 8);
@@ -138,7 +138,7 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
         } else {
             // Too large a delta, use a longer literal code
 
-            DEBUG_LOG((" addr literal %04x\n", addr));
+            CODEC_DEBUG_LOG((" addr literal %04x\n", addr));
 
             txBits.append(3 | ((addr >> 4) & 0x10) | (addr & 0xFF) << 8, 16);
             txBits.flush(buf);
@@ -233,7 +233,7 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
         if (buf.isFull())
             return false;
 
-        DEBUG_LOG((" data literal-16 %04x\n", data));
+        CODEC_DEBUG_LOG((" data literal-16 %04x\n", data));
 
         txBits.append(0x23 | (data << 8), 24);
         txBits.flush(buf);
@@ -254,7 +254,7 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
         flushDSRuns(false);
 
         uint16_t index = ((data & 0xFF) >> 1) | ((data & 0xFF00) >> 2);
-        DEBUG_LOG((" data literal-14 %04x\n", index));
+        CODEC_DEBUG_LOG((" data literal-14 %04x\n", index));
 
         txBits.append(0xc | (index >> 12) | ((index & 0xFFF) << 4), 16);
         txBits.flush(buf);
@@ -278,7 +278,7 @@ void CubeCodec::encodeDS(uint8_t d, uint8_t s)
     } else {
         flushDSRuns(false);
 
-        DEBUG_LOG((" ds %d %d\n", d, s));
+        CODEC_DEBUG_LOG((" ds %d %d\n", d, s));
         appendDS(d, s);
         codeD = d;
         codeS = s;
@@ -311,7 +311,7 @@ void CubeCodec::flushDSRuns(bool rleSafe)
     ASSERT(codeRuns <= RF_VRAM_MAX_RUN);
 
     if (codeRuns) {
-        DEBUG_LOG((" flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
+        CODEC_DEBUG_LOG((" flush-ds d=%d s=%d x%d, rs=%d\n", codeD, codeS, codeRuns, rleSafe));
 
         // Save room for the trailing non-RLE code
         if (rleSafe)

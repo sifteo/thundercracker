@@ -245,6 +245,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             // Two valid ACKs in a row, we can count bytes.
 
             uint8_t loadACK = ack->flash_fifo_bytes - flashPrevACK;
+        
+            DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d)\n",
+                id(), loadACK, !!(flashResetWait & bit())));
 
             if (flashResetWait & bit()) {
                 // We're waiting on a reset
