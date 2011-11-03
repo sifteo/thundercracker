@@ -19,6 +19,12 @@
 #include "runtime.h"
 #include "vram.h"
 
+#ifdef CODEC_DEBUG
+#define CODEC_DEBUG_LOG(x)   DEBUG_LOG(x)
+#else
+#define CODEC_DEBUG_LOG(x)
+#endif
+
 
 /**
  * A utility class to buffer bit-streams as we transmit them to a cube.
@@ -59,7 +65,7 @@ class BitBuffer {
     }
 
     void append(uint32_t value, unsigned width) {
-        DEBUG_LOG(("\tbits: %08x/%d <- %08x/%d\n", bits, count, value, width));
+        CODEC_DEBUG_LOG(("\tbits: %08x/%d <- %08x/%d\n", bits, count, value, width));
 
         // Overflow-safe asserts
         ASSERT(count <= 32);

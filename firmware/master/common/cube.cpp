@@ -167,8 +167,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
             if (done) {
                 /* Finished asset loading */
                 Atomic::SetLZ(group->doneCubes, id());
-                Atomic::SetLZ(Event::assetDoneCubes, id());
-                Event::setPending(Event::ASSET_DONE);
+                Event::setPending(_SYS_EVENT_ASSETDONE, id());
 
                 DEBUG_ONLY({
                     // In debug builds only, we log the asset download time
@@ -246,6 +245,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             // Two valid ACKs in a row, we can count bytes.
 
             uint8_t loadACK = ack->flash_fifo_bytes - flashPrevACK;
+        
+            DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d)\n",
+                id(), loadACK, !!(flashResetWait & bit())));
 
             if (flashResetWait & bit()) {
                 // We're waiting on a reset
@@ -294,8 +296,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         if (x != accelState.x || y != accelState.y) {
             accelState.x = x;
             accelState.y = y;
-            Atomic::SetLZ(Event::accelChangeCubes, id());
-            Event::setPending(Event::ACCEL_CHANGE);
+            Event::setPending(_SYS_EVENT_ACCELCHANGE, id());
         }
     }
 
@@ -306,30 +307,29 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             // Look for valid touches, signified by any edge on the touch toggle bit
             
             if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
-                Atomic::SetLZ(Event::touchCubes, id());
-                Event::setPending(Event::TOUCH);
+                Event::setPending(_SYS_EVENT_TOUCH, id());
             }
 
-			// <max>
-			// const uint8_t kCubeIdMask = 0x1f;
-			// const uint8_t kHasNeighborMask = 0x80;
-			// const uint8_t kNeighborMask = kCubeIdMask | kHasNeighborMask;
-			// for(int8_t side=0; side<4; ++side) {
-			// 	if (neighbors[side] & kNeighborMask != ack->neighbors[side] & kNeighborMask) {
-			// 		if (neighbors[side] & kHasNeighborMask) {
-			// 			if (ack->neighbors[side] & kHasNeighborMask) {
-			// 				removeNeighborFromSide(neighbors[side] & kCubeIdMask, side);
-			// 				addNeighborToSide(ack->neighbors[side] & kCubeIdMask, side);
-			// 			} else {
-			// 				removeNeighborFromSide(neighbors[side] & kCubeIdMask, side);
-			// 			}
-			// 		} else if (ack->neighbors[side] & kHasNeighborMask) {
-			// 			addNeighborToSide(ack->neighbors[side] & kCubeIdMask, side);
-			// 		}	
-			// 	}
-			// }
-			// </max>
-			
+            // <max>
+            const uint8_t kCubeIdMask = 0x1f;
+            const uint8_t kHasNeighborMask = 0x80;
+            const uint8_t kNeighborMask = kCubeIdMask | kHasNeighborMask;
+            for(int8_t side=0; side<4; ++side) {
+                if ((neighbors[side] & kNeighborMask) != (ack->neighbors[side] & kNeighborMask)) {
+                    if (neighbors[side] & kHasNeighborMask) {
+                        if (ack->neighbors[side] & kHasNeighborMask) {
+                            removeNeighborFromSide(neighbors[side] & kCubeIdMask, side);
+                            addNeighborToSide(ack->neighbors[side] & kCubeIdMask, side);
+                        } else {
+                            removeNeighborFromSide(neighbors[side] & kCubeIdMask, side);
+                        }
+                    } else if (ack->neighbors[side] & kHasNeighborMask) {
+                        addNeighborToSide(ack->neighbors[side] & kCubeIdMask, side);
+                    }   
+                }
+            }
+            // </max>
+            
         } else {
             Atomic::SetLZ(neighborACKValid, id());
         }
@@ -360,110 +360,110 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
  * Neighbor Coalescing
  * 
  * Neighbors are not created until both cubes report the pair
- *		This way, application code can rely on all neighboring relationships
- *		being symmetric.
+ *      This way, application code can rely on all neighboring relationships
+ *      being symmetric.
  * 
  * Neighbors are not removed until both cubes report the unpairing
- * 		This reduces the amount of neighboring event noise coming from the 
- * 		firmware.
+ *      This reduces the amount of neighboring event noise coming from the 
+ *      firmware.
  * 
  * gCoalescedPairs stores a global (cube X cube) -> (side X side) maps
  * 
  * coalescedNeighbors stores the "corrected" neighboring state, which should
- * 		be used by the application, rather than the raw neighbors.
+ *      be used by the application, rather than the raw neighbors.
  */
 
-/*
+
 struct NeighborPair {
-	int8_t side0;
-	int8_t side1;
+    int8_t side0;
+    int8_t side1;
 
-	bool fullyConnected() const { return side0 >= 0 && side1 >= 0; }
-	bool fullyDisconnected() const { return side0 < 0 && side1 < 0; }
-	void clear() { side0=-1; side1=-1; }
+    bool fullyConnected() const { return side0 >= 0 && side1 >= 0; }
+    bool fullyDisconnected() const { return side0 < 0 && side1 < 0; }
+    void clear() { side0=-1; side1=-1; }
 
-	NeighborPair() : side0(-1), side1(-1) {}
+    NeighborPair() : side0(-1), side1(-1) {}
 
-	int8_t setSideAndGetOtherSide(int cid0, int cid1, int8_t side, NeighborPair** outPair) {
-		// abstract the order-of-arguments invariant of lookup()
-		if (cid0 < cid1) {
-			*outPair = lookup(cid0, cid1);
-			(*outPair)->side0 = side;
-			return (*outPair)->side1;
-		} else {
-			*outPair = lookup(cid1, cid0);
-			(*outPair)->side1 = side;
-			return (*outPair)->side0;
-		}
-	}
+    int8_t setSideAndGetOtherSide(int cid0, int cid1, int8_t side, NeighborPair** outPair) {
+        // abstract the order-of-arguments invariant of lookup()
+        if (cid0 < cid1) {
+            *outPair = lookup(cid0, cid1);
+            (*outPair)->side0 = side;
+            return (*outPair)->side1;
+        } else {
+            *outPair = lookup(cid1, cid0);
+            (*outPair)->side1 = side;
+            return (*outPair)->side0;
+        }
+    }
 
-	NeighborPair* lookup(int cid0, int cid1) {
-		// invariant this == pairs[0]
-    	// invariant cid0 < cid1
-    	return (this + cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
-  	}
+    NeighborPair* lookup(int cid0, int cid1) {
+        // invariant this == pairs[0]
+        // invariant cid0 < cid1
+        return (this + cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
+    }
 };
 
 static NeighborPair gCoalescedPairs[(_SYS_NUM_CUBE_SLOTS-1)*(_SYS_NUM_CUBE_SLOTS-1)];
 
 
 void CubeSlot::resetCoalescedNeighbors(_SYSCubeIDVector cv, bool andClearPairs) {
-	while(cv) {
-		_SYSCubeID cubeId = Intrinsic::CLZ(cv);
-		instances[cubeId].coalescedNeighbors[0] = 0xff;
-		instances[cubeId].coalescedNeighbors[1] = 0xff;
-		instances[cubeId].coalescedNeighbors[2] = 0xff;
-		instances[cubeId].coalescedNeighbors[3] = 0xff;
-		if (andClearPairs) {
-			for(uint8_t i=0; i<cubeId; ++i) { 
-				gCoalescedPairs->lookup(i, cubeId)->clear();
-			}
-			for(uint8_t i=cubeId+1; i<_SYS_NUM_CUBE_SLOTS; ++i) {
-				gCoalescedPairs->lookup(i, cubeId)->clear();
-			}
-		}
-	    cv ^= Intrinsic::LZ(cubeId);
-	}
+    while(cv) {
+        _SYSCubeID cubeId = Intrinsic::CLZ(cv);
+        instances[cubeId].coalescedNeighbors[0] = 0xff;
+        instances[cubeId].coalescedNeighbors[1] = 0xff;
+        instances[cubeId].coalescedNeighbors[2] = 0xff;
+        instances[cubeId].coalescedNeighbors[3] = 0xff;
+        if (andClearPairs) {
+            for(uint8_t i=0; i<cubeId; ++i) { 
+                gCoalescedPairs->lookup(i, cubeId)->clear();
+            }
+            for(uint8_t i=cubeId+1; i<_SYS_NUM_CUBE_SLOTS; ++i) {
+                gCoalescedPairs->lookup(i, cubeId)->clear();
+            }
+        }
+        cv ^= Intrinsic::LZ(cubeId);
+    }
 }
 
 void CubeSlot::addNeighborToSide(_SYSCubeID neighborId, uint8_t side) {
-	// Update the neighbor pairs
-	NeighborPair* pair;
-	int8_t otherSide = gCoalescedPairs->setSideAndGetOtherSide(id(), neighborId, side, &pair);
-	if (pair->fullyConnected() && coalescedNeighbors[side] != neighborId) {
-		doClearSide(side);
-		instances[neighborId].doClearSide(otherSide);
-		coalescedNeighbors[side] = neighborId;
-		instances[neighborId].coalescedNeighbors[otherSide] = id();
-		// dispatch event: didAddNeighbor(id(), side, neighborId, otherSide)
-	}
+    // Update the neighbor pairs
+    NeighborPair* pair;
+    int8_t otherSide = gCoalescedPairs->setSideAndGetOtherSide(id(), neighborId, side, &pair);
+    if (pair->fullyConnected() && coalescedNeighbors[side] != neighborId) {
+        doClearSide(side);
+        instances[neighborId].doClearSide(otherSide);
+        coalescedNeighbors[side] = neighborId;
+        instances[neighborId].coalescedNeighbors[otherSide] = id();
+        // dispatch event: didAddNeighbor(id(), side, neighborId, otherSide)
+    }
 }
 
 void CubeSlot::doClearSide(uint8_t side) {
-	uint8_t otherId = coalescedNeighbors[side];
-	if (otherId != 0xff) {
-		int8_t otherSide;
-		for(otherSide=0; otherSide<4; ++otherSide) {
-			if (instances[otherId].coalescedNeighbors[otherSide] == id()) {
-				break;
-			}
-		}
-		// dispatch event: willRemoveNeighbor(id(), side, otherId, otherSide)
-		coalescedNeighbors[side] = 0xff;
-		instances[otherId].coalescedNeighbors[otherSide] = 0xff;
-	}
+    uint8_t otherId = coalescedNeighbors[side];
+    if (otherId != 0xff) {
+        int8_t otherSide;
+        for(otherSide=0; otherSide<4; ++otherSide) {
+            if (instances[otherId].coalescedNeighbors[otherSide] == id()) {
+                break;
+            }
+        }
+        // dispatch event: willRemoveNeighbor(id(), side, otherId, otherSide)
+        coalescedNeighbors[side] = 0xff;
+        instances[otherId].coalescedNeighbors[otherSide] = 0xff;
+    }
 }
 
 void CubeSlot::removeNeighborFromSide(_SYSCubeID neighborId, uint8_t side) {
-	NeighborPair* pair;
-	gCoalescedPairs->setSideAndGetOtherSide(id(), neighborId, side, &pair);
-	if (pair->fullyDisconnected() && coalescedNeighbors[side] == neighborId) {
-		doClearSide(side);
-	}
+    NeighborPair* pair;
+    gCoalescedPairs->setSideAndGetOtherSide(id(), neighborId, side, &pair);
+    if (pair->fullyDisconnected() && coalescedNeighbors[side] == neighborId) {
+        doClearSide(side);
+    }
 }
 
 // </max>
-*/
+
 void CubeSlot::radioTimeout()
 {
     /* XXX: Disconnect this cube */

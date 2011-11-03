@@ -301,14 +301,22 @@ struct _SYSCubeHWID {
 
 #define _SYS_MAX_VECTORS        32
 
-struct _SYSEventVectors {
-    void (*cubeFound)(_SYSCubeID cid);
-    void (*cubeLost)(_SYSCubeID cid);
-    void (*assetDone)(_SYSCubeID cid);
-    void (*accelChange)(_SYSCubeID cid);
-    void (*touch)(_SYSCubeID cid);
+typedef enum {
+    _SYS_EVENT_CUBEFOUND,
+    _SYS_EVENT_CUBELOST,
+    _SYS_EVENT_ASSETDONE,
+    _SYS_EVENT_ACCELCHANGE,
+    _SYS_EVENT_TOUCH,
+    _SYS_EVENT_TILT,
+    _SYS_EVENT_SHAKE,
 
-    void *reserved[_SYS_MAX_VECTORS - 5];
+    _SYS_EVENT_CNT      // Must be last
+} _SYS_EventType;
+
+typedef void (*_SYSEventVector)(_SYSCubeID cid);
+
+struct _SYSEventVectors {
+    _SYSEventVector table[_SYS_MAX_VECTORS];
 };
 
 extern struct _SYSEventVectors _SYS_vectors;
