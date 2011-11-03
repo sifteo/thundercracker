@@ -35,7 +35,7 @@ ifeq ($(DEBUG),)
     # inlined code should end up being smaller due to constant folding.
     CFLAGS += -O2
 else
-    CFLAGS += -DDEBUG
+    CFLAGS += -DDEBUG -g3
 endif
 
 CFLAGS += -g -Wall -Werror -I$(SDK_DIR)/include \
