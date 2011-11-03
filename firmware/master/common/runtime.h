@@ -66,8 +66,9 @@ class Event {
  public:
     static void dispatch();
     
-    static void setPending(_SYS_EventType t) {
+    static void setPending(_SYS_EventType t, _SYSCubeID id) {
         Sifteo::Atomic::SetLZ(pending, t);
+		Sifteo::Atomic::SetLZ(eventCubes[t], id);
     }
 
     static bool dispatchInProgress;     /// Reentrancy detector
