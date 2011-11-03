@@ -16,6 +16,7 @@
 #include "cube_spi.h"
 #include "cube_i2c.h"
 #include "cube_mdu.h"
+#include "cube_rng.h"
 #include "cube_lcd.h"
 #include "cube_flash.h"
 #include "cube_neighbors.h"
@@ -88,8 +89,10 @@ class Hardware {
     I2CBus i2c;
     ADC adc;
     MDU mdu;
+    FlashStorage flashStorage;
     Flash flash;
     Neighbors neighbors;
+    RNG rng;
     
     bool init(VirtualTime *masterTimer,
               const char *firmwareFile, const char *flashFile);

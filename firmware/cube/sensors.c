@@ -15,8 +15,11 @@
 /*
  * We export a global tick counter, which can be used by other modules
  * who need a low-frequency timebase.
+ *
+ * This is currently used by battery voltage polling, and LCD delays.
  */
 volatile uint8_t sensor_tick_counter;
+volatile uint8_t sensor_tick_counter_high;
 
 /*
  * These MEMSIC accelerometers are flaky little buggers! We're seeing
@@ -77,27 +80,14 @@ uint8_t accel_x;
  *    [4:0] -- ID for the transmitting cube.
  */
 
-/*
- * XXX: Eek! These damping bits are extending into the next timeslot!
- *      They are necessary for quenching our TX inductor, but we need
- *      to figure out how to do this without blowing our time budget.
- *
- * XXX: Timing needs tweaking... using grotesquely long bit periods for a while.
- */
-
 #define NB_TX_BITS          18      // 1 header, 2 mask, 13 payload, 2 damping
 #define NB_RX_BITS          15      // 2 mask, 13 payload
 
-// Original 9us timing
-//#define NB_BIT_TICKS        12      // In 0.75 us ticks
-//#define NB_BIT_TICK_FIRST   13      // Tweak for sampling halfway between pulses
+// 2us pulses, 9us bit periods
+#define NB_BIT_TICKS        12      // In 0.75 us ticks
+#define NB_BIT_TICK_FIRST   13      // Tweak for sampling halfway between pulses
  
-// Longer 15us bits
-#define NB_BIT_TICKS        18      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   17      // Tweak for sampling halfway between pulses
-
 #define NB_DEADLINE         20      // 15 us (Max 48 us)
-
 
 uint8_t nb_bits_remaining;          // Bit counter for transmit or receive
 uint8_t nb_buffer[2];               // Packet shift register for TX/RX
@@ -388,7 +378,13 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         ;--------------------------------------------------------------------
 
         ; Tick tock.. this is not latency-critical at all, it goes last.
-        inc     _sensor_tick_counter
+        
+        mov     a, _sensor_tick_counter
+        add     a, #1
+        mov     _sensor_tick_counter, a
+        mov     a, _sensor_tick_counter_high
+        addc    a, #0
+        mov     _sensor_tick_counter_high, a
         
         pop     ar1
         pop     ar0
@@ -472,15 +468,17 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Neighbor Bit Receive
         ;--------------------------------------------------------------------
 
-        mov     a, TL1          ; Capture count from Timer 1
-        mov     TL1, #0
-        add     a, #0xFF        ; Nonzero -> C
+        ; Briefly squelch the receive LC tanks, and clear the mask.
+        ; Do this concurently with capturing and resetting Timer 1.
+        
+        anl     _MISC_DIR, #~MISC_NB_OUT        ; All outputs squelched
+        mov     a, TL1                          ; Capture count from Timer 1
+        mov     TL1, #0                         ; Reset Timer 1
+        add     a, #0xFF                        ; Nonzero -> C
+        orl     _MISC_DIR, #MISC_NB_OUT         ; Clear the squelch mask
 
-        ; Set up the next mask bit, or clear the mask if we are done masking.
-
-        orl     _MISC_DIR, #MISC_NB_OUT
-        jnb     _nb_rx_mask_pending, 1$
-        anl     _MISC_DIR, #~MISC_NB_MASK1
+        jnb     _nb_rx_mask_pending, 1$         ; Do we have the second mask bit pending?
+        anl     _MISC_DIR, #~MISC_NB_MASK1      ; Yes, set that mask.
         clr     _nb_rx_mask_pending
 1$:
 
@@ -623,6 +621,10 @@ nb_tx_handoff:
         ; neighbor receive during this delay. So, this delay needs to count as
         ; part of our transmit timeslot duration.
        
+        jb      _battery_adc_lock, nb_packet_done
+
+        mov     _ADCCON2, #0x0c         ; Single-step, no auto-powerdown
+        mov     _ADCCON3, #0xe0         ; 12-bit, right justified
         mov     _ADCCON1, #0xbc         ; 1 0 1111 00, Chold to 2/3 VDD reference
         
         ; While we wait, ground the neighbor sensor, to fully discharge its
@@ -804,11 +806,4 @@ void sensors_init()
 
     nb_tx_packet[0] = 0xE0 | radio_get_cube_id();
     nb_tx_packet[1] = ~nb_tx_packet[0];
-    
-    /*
-     * A/D Converter (Touch / Battery level)
-     */
-     
-	ADCCON2 = 0x0c;	            // Single-step, no auto-powerdown
-	ADCCON3 = 0xe0;	            // 12-bit, right justified
 }

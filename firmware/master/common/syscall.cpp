@@ -90,6 +90,24 @@ void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
         CubeSlot::instances[cid].getRawNeighbors(buf);
 }
 
+void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v)
+{
+    // XXX: Temporary for testing. Master firmware should give cooked battery percentage.
+    if (Runtime::checkUserPointer(v, sizeof v) && CubeSlot::validID(cid))
+        *v = CubeSlot::instances[cid].getRawBatteryV();
+}
+
+void _SYS_getCubeHWID(_SYSCubeID cid, _SYSCubeHWID *hwid)
+{
+    // XXX: Maybe temporary?
+    
+    // XXX: Right now this is only guaranteed to be known after asset downloading, since
+    //      there is no code yet to explicitly request it (via a flash reset)
+    
+    if (Runtime::checkUserPointer(hwid, sizeof hwid) && CubeSlot::validID(cid))
+        *hwid = CubeSlot::instances[cid].getHWID();
+}
+
 void _SYS_vbuf_init(_SYSVideoBuffer *vbuf)
 {
     if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {

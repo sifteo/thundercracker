@@ -7,6 +7,7 @@
  */
 
 #include "graphics.h"
+#include "main.h"
 
 
 void graphics_render(void) __naked
@@ -27,6 +28,8 @@ void graphics_render(void) __naked
         jnc     3$                              ; Return if no toggle
 1$:
     __endasm ;
+    
+    global_busy_flag = 1;
 
     /*
      * Video mode jump table.

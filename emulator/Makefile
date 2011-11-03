@@ -20,6 +20,7 @@ LOCAL_OBJS = \
         src/cube_debug_popups.o \
         src/cube_debug.o \
         src/cube_flash_model.o \
+        src/cube_flash_storage.o \
         src/cube_hardware.o \
         src/cube_neighbors.o \
 	resources/data.o \
@@ -33,9 +34,9 @@ DEPFILES := $(LOCAL_OBJS:.o=.d)
 OS := $(shell uname)
 ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
         OS := windows32
-        CC := mingw32-gcc
 endif
 ifeq ($(OS),windows32)
+        CC := mingw32-gcc
         DEPS := ../deps/win32
         LIBS += -lws2_32
 endif

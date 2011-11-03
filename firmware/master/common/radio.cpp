@@ -9,6 +9,7 @@
 #include <string.h>
 #include "radio.h"
 #include "cube.h"
+#include "systime.h"
 
 _SYSCubeID RadioManager::epFifo[RadioManager::FIFO_SIZE];
 uint8_t RadioManager::epHead;
@@ -69,7 +70,7 @@ void RadioManager::produce(PacketTransmission &tx)
         }
     }
 
-    DEBUG_LOG(("Radio TX: "));
+    DEBUG_LOG(("Radio TX: [%dms] ", (int)(SysTime::ticks() / SysTime::msTicks(1))));
     tx.log();
 }
 

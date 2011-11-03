@@ -16,7 +16,7 @@
 #define SIDE_LEFT (1)
 #define SIDE_BOTTOM (2)
 #define SIDE_RIGHT (3)
-#define SIDE_UNDEFINED (0xff)
+#define SIDE_UNDEFINED (-1)
 
 
 namespace Sifteo {
@@ -24,6 +24,9 @@ namespace Sifteo {
 /**
  * These lookup tables should be relocated to an external translation unit;
  * their inclusion here is tomporary.
+ * 
+ * Also todo: replace raw neighbors with coalesced neighbors onces that's up and
+ * working.
  */
 
 // unit vectors for directions
@@ -70,7 +73,7 @@ static int kOrientationTable[4][4] = {
 class Cube {
  public:
     typedef _SYSCubeID ID;
-    typedef uint8_t Side;
+    typedef int8_t Side;
 	
 	Cube()
 		: mID(CUBE_ID_UNDEFINED) {}
@@ -183,8 +186,8 @@ class Cube {
 	}
 	
 	void orientTo(Cube* src) {
-		int srcSide = src->physicalSideOf(mID);
-		int dstSide = physicalSideOf(src->mID);
+		Side srcSide = src->physicalSideOf(mID);
+		Side dstSide = physicalSideOf(src->mID);
 		ASSERT(srcSide != SIDE_UNDEFINED);
 		ASSERT(dstSide != SIDE_UNDEFINED);
 		srcSide = (srcSide - src->orientation()) % NUM_SIDES;
@@ -208,7 +211,7 @@ class Cube {
      */
     
     Side virtualSideOf(ID cube) const {
-        int side = physicalSideOf(cube);
+        Side side = physicalSideOf(cube);
         if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
         Side rot = orientation();
         ASSERT(rot != SIDE_UNDEFINED);
@@ -217,7 +220,9 @@ class Cube {
     }
     
 	Vec2 virtualAccel() const {
-	  return physicalAccel() * kSideToQ[orientation()];
+		Side rot = orientation();
+		ASSERT(rot != SIDE_UNDEFINED);
+	  	return physicalAccel() * kSideToQ[rot];
 	}
 
     VideoBuffer vbuf;

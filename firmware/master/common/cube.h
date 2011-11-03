@@ -48,6 +48,9 @@ class CubeSlot {
     static _SYSCubeIDVector neighborACKValid;   /// Neighbor/touch state is valid
     
     static void enableCubes(_SYSCubeIDVector cv) {
+		// <max>
+		resetCoalescedNeighbors(cv, false);
+		// </max>
         Sifteo::Atomic::Or(vecEnabled, cv);
     }
 
@@ -57,6 +60,9 @@ class CubeSlot {
         Sifteo::Atomic::And(flashResetSent, ~cv);
         Sifteo::Atomic::And(flashACKValid, ~cv);
         Sifteo::Atomic::And(neighborACKValid, ~cv);
+		// <max>
+		resetCoalescedNeighbors(cv, true);
+		// </max>
     }
 
     _SYSCubeID id() const {
@@ -121,6 +127,14 @@ class CubeSlot {
     void waitForFinish();
     void triggerPaint(SysTime::Ticks timestamp);
 
+    const _SYSCubeHWID & getHWID() const {
+        return hwid;
+    }
+    
+    uint16_t getRawBatteryV() const {
+        return rawBatteryV;
+    }
+    
     static bool validID(_SYSCubeID id) {
         // For security/reliability, all cube IDs from game code must be checked
         return id < _SYS_NUM_CUBE_SLOTS;
@@ -173,8 +187,18 @@ class CubeSlot {
     uint8_t framePrevACK;
     uint8_t neighbors[4];
 
+	// <max>
+	static void resetCoalescedNeighbors(_SYSCubeIDVector cv, bool andClearPairs);
+	void addNeighborToSide(_SYSCubeID id, uint8_t side);
+	void doClearSide(uint8_t side);
+	void removeNeighborFromSide(_SYSCubeID id, uint8_t side);
+	uint8_t coalescedNeighbors[4];
+	// </max>
+
     // Sensors
+    uint16_t rawBatteryV;
     _SYSAccelState accelState;
+    _SYSCubeHWID hwid;
 };
 
 

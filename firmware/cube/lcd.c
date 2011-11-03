@@ -162,6 +162,10 @@ void lcd_end_frame()
      * frame. This has no effect if we aren't just now coming back
      * from display sleep, but if we are, this prevents showing one
      * garbage frame prior to showing the intended frame.
+     *
+     * It's important that we issue *some* kind of command here, to
+     * take us out of RAMWR mode. This way, any spurious Write strobes
+     * (e.g. from battery voltage sensing) won't generate pixels.
      */
 
     static const __code uint8_t table[] = {

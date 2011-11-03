@@ -11,15 +11,9 @@
 
 #include <stdint.h>
 
-#ifdef _WIN32
-#include <io.h>
-#define ftruncate _chsize
-#else
-#include <unistd.h>
-#endif
-
 #include "vtime.h"
 #include "cube_cpu.h"
+#include "cube_flash_storage.h"
 #include "cube_flash_model.h"
 
 namespace Cube {
@@ -27,9 +21,6 @@ namespace Cube {
 
 class Flash {
  public:
-    // Memory array
-    uint8_t data[FlashModel::SIZE];
-
     enum busy_flag {
         BF_IDLE          = 0,
         BF_PROGRAM       = (1 << 0),
@@ -49,9 +40,9 @@ class Flash {
         uint8_t   data_drv;   // OUT, active-high
     };
 
-    bool init(const char *filename=NULL) {
-        write_timer = 0;
-        file = 0;
+    void init(FlashStorage *_storage) {
+        storage = _storage;
+        
         cycle_count = 0;
         write_count = 0;
         erase_count = 0;
@@ -66,32 +57,6 @@ class Flash {
         prev_oe = 0;
         status_byte = 0;
         previous_clocks = 0;
-
-        if (filename) {
-            size_t result;
-            
-            file = fopen(filename, "rb+");
-            if (!file)
-                file = fopen(filename, "wb+");
-            if (!file)
-                return false;
-
-            fprintf(stderr, "FLASH: Using file '%s'\n", filename);
-
-            result = fread(data, 1, FlashModel::SIZE, file);
-            if (result < 0)
-                return false;
- 
-        }
-
-        return true;
-    }
-
-    void exit() {
-        if (write_timer)
-            write();
-        if (file)
-            fclose(file);
     }
 
     uint32_t getCycleCount() {
@@ -133,8 +98,8 @@ class Flash {
                  */
 
                 cpu->needHardwareTick = true;
-                write_timer = deadline.setRelative(VirtualTime::msec(FLUSH_TIME_MS));
-
+                storage->asyncWrite(deadline);
+                
                 switch (busy) {
                 case BF_PROGRAM:
                     busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::PROGRAM_TIME_US));
@@ -184,15 +149,6 @@ class Flash {
 
         } else {
             idle_ticks += elapsed;
-        }
-
-        if (UNLIKELY(write_timer)) {
-            if (deadline.hasPassed(write_timer)) {
-                write();
-                write_timer = 0;
-            } else {
-                deadline.set(write_timer);
-            }
         }
     }
 
@@ -260,38 +216,10 @@ class Flash {
          * update the flash data when data_drv is asserted.
          */
         return busy ? status_byte :
-            data[latched_addr];
+            storage->data.ext[latched_addr];
     }
 
  private:
-    void write() {
-        if (file) {
-            size_t result;
-            
-            /*
-             * Rewrite the file without closing it.
-             */
-
-            fseek(file, 0, SEEK_SET);
-            result = fwrite(data, FlashModel::SIZE, 1, file);
-            if (result != 1) {
-                perror("Error writing flash");
-                return;
-            }
-            fflush(file);
-
-            /*
-             * Automatically trim out any zeroes from the end of the buffer.
-             */
-            
-            unsigned size = FlashModel::SIZE;
-            while (size && data[size-1] == 0)
-                size--;
-            ftruncate(fileno(file), size);
-
-            fprintf(stderr, "FLASH: Flushed to disk\n");
-        }
-    }
     
     bool matchCommand(const FlashModel::command_sequence *seq) {
         unsigned i;
@@ -309,7 +237,7 @@ class Flash {
     }
 
     void erase(unsigned addr, unsigned size) {
-        memset(data + (addr & ~(size - 1)), 0xFF, size);
+        memset(storage->data.ext + (addr & ~(size - 1)), 0xFF, size);
     }
 
     void matchCommands() {
@@ -319,7 +247,7 @@ class Flash {
             return;
 
         if (matchCommand(FlashModel::cmd_byte_program)) {
-            data[st->addr] &= st->data;
+            storage->data.ext[st->addr] &= st->data;
             status_byte = FlashModel::STATUS_DATA_INV & ~st->data;
             busy = BF_PROGRAM;
         } else if (matchCommand(FlashModel::cmd_sector_erase)) {
@@ -346,24 +274,12 @@ class Flash {
 
     static const uint8_t CMD_FIFO_MASK = 0xF;
  
-    /*
-     * How long (in microseconds of virtual time) to wait for
-     * writes/erases to cease before we rewrite the flash file on disk.
-     *
-     * This is a simple way for us to write the flash to disk in a
-     * non-error-prone way while also avoiding a lot of unnecessary
-     * write() calls, or platform-specific memory mapping.
-     */
-    static const unsigned FLUSH_TIME_MS = 500;
-
     struct cmd_state {
         uint32_t addr;
         uint8_t data;
     };
 
-    // Disk I/O
-    uint64_t write_timer;
-    FILE *file;
+    FlashStorage *storage;
 
     // For clock speed / power metrics
     uint32_t cycle_count;

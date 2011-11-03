@@ -15,6 +15,9 @@ namespace Cube {
 #define IDATA_SIZE      256
 #define CODE_SIZE       16384
 
+#define NVM_SIZE        1024
+#define NVM_BASE        0xFC00
+
 // Special pins
 #define PORT_T012       REG_P1
 #define PIN_T0          (1 << 5)

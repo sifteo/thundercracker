@@ -6,11 +6,14 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _TIME_H
-#define _TIME_H
+#ifndef _BATTERY_H
+#define _BATTERY_H
 
-#include <stdint.h>
+#include "hardware.h"
 
-void msleep(uint8_t msec);
+// Battery poller is trying to acquire exclusive access to the A/D converter
+extern volatile __bit battery_adc_lock;
+
+void battery_poll();
 
 #endif

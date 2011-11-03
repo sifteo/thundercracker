@@ -15,8 +15,10 @@
 
 
 /*
- * This structure specifies the layout of parameters in our OTP flash
- * space. Normally this area is write-protected.
+ * This structure specifies the layout of parameters in our OTP flash space.
+ * Normally this area is write-protected.
+ *
+ * Unprogrammed bytes are 0xFF. We use this fact to initialize things lazily.
  */
  
 #define     PARAMS_BASE     0xFC00
@@ -24,7 +26,6 @@
  
 static __xdata __at PARAMS_BASE struct {
     uint8_t hwid[HWID_LEN];
-    uint8_t hwid_flag;
 } params;
 
 
