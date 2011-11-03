@@ -26,8 +26,8 @@ public:
     void init();
     void deinit();
 
-    void setData(char *srcaddr, int size);
-    int decodeFrame(char *buf, int size);
+    void setData(const uint8_t *srcaddr, int size);
+    int decodeFrame(uint8_t *buf, int size);
     bool endOfStream() const {
         return (status == Ok) ? srcBytesRemaining <= 0 : true;
     }

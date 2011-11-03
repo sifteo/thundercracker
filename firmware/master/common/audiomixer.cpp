@@ -8,17 +8,20 @@
 
 using namespace Sifteo;
 
+//statics
+AudioMixer AudioMixer::instance;
+
 AudioMixer::AudioMixer() :
     activeChannelMask(0),
     nextHandle(0)
 {
 }
 
-
 void AudioMixer::init()
 {
-    for (int i = 0; i < NUM_CHANNELS; i++) {
-        channels[i].decoder.init();
+    memset(channels, 0, sizeof(channels));
+    for (int i = 0; i < _SYS_AUDIO_NUM_SAMPLE_CHANNELS; i++) {
+        decoders[i].init();
     }
 }
 
@@ -28,25 +31,19 @@ void AudioMixer::init()
 
 void AudioMixer::test()
 {
-    AudioMixer mixer;
-    mixer.init();
-    AudioOutDevice::init(AudioOutDevice::kHz8000, &mixer);
+    AudioMixer::instance.init();
+    AudioOutDevice::init(AudioOutDevice::kHz8000, &AudioMixer::instance);
     AudioOutDevice::start();
 
-    handle_t handle;
-    const Sifteo::AudioModule &mod = blueshift;
-    if (!mixer.play(mod, &handle)) {
-        while (1); // error
-    }
-
+//    handle_t handle;
+//    const Sifteo::AudioModule &mod = blueshift_8kHz;
     for (;;) {
-        mixer.fetchData(); // this would normally be interleaved into the runtime
-        if (!mixer.isPlaying(handle)) {
-            if (!mixer.play(mod, &handle)) {
-                while (1); // error
-            }
-        }
-//        ;
+//        if (!gMixer.isPlaying(handle)) {
+//            if (!gMixer.play(mod, &handle)) {
+//                while (1); // error
+//            }
+//        }
+        AudioMixer::instance.fetchData(); // this would normally be interleaved into the runtime
     }
 }
 #endif
@@ -65,33 +62,22 @@ int AudioMixer::pullAudio(char *buffer, int numsamples)
 
     memset(buffer, 0, numsamples);
 
-    char *b, *bufend;
+    char *b;
     AudioChannel *ch = &channels[0];
     uint32_t mask = activeChannelMask;
     int bytesMixed = 0;
     for (; mask != 0; mask >>= 1, ch++) {
-        if ((mask & 1) == 0 || (ch->state & STATE_PAUSED)) {
+        if ((mask & 1) == 0 || (ch->isPaused())) {
             continue;
         }
-
-        // if we have any decompressed bytes to mix, go for it
-        if (ch->bytesToMix() > 0) {
-            b = buffer;
-            bufend = buffer + numsamples;
-            while (b != bufend) {
-                *b++ += *ch->ptr++;
-            }
-            bytesMixed += numsamples;
+        int mixed = ch->pullAudio((uint8_t*)buffer, numsamples);
+        if (mixed > bytesMixed) {
+            bytesMixed = mixed;
         }
-
-        // is this channel done?
         if (ch->endOfStream()) {
-            if (!(ch->state & STATE_LOOP)) {
-                stopChannel(ch);
-            }
+//            activeChannelMask
         }
     }
-
     return bytesMixed;
 }
 
@@ -107,55 +93,40 @@ void AudioMixer::fetchData()
     uint32_t mask = activeChannelMask;
     AudioChannel *ch = &channels[0];
     for (; mask != 0; mask >>= 1, ch++) {
-        if ((mask & 1) && ch->bytesToMix() <= 0) {
-            // do we need to decompress more data?
-            ch->decompressedSize = ch->decoder.decodeFrame(ch->decompressBuf, sizeof(ch->decompressBuf));
-            if (ch->decompressedSize > 0) {
-                ch->ptr = ch->decompressBuf;
-            }
+        if (mask & 1) {
+            ch->fetchData();
         }
     }
 }
 
-void AudioMixer::setSoundBank(uintptr_t address)
-{
+//void AudioMixer::setSoundBank(uintptr_t address)
+//{
+//
+//}
 
-}
-
-bool AudioMixer::play(const AudioModule &mod, handle_t *handle, enum LoopMode loopMode)
+bool AudioMixer::play(const AudioModule &mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
 {
     if (activeChannelMask == 0xFFFFFFFF) {
         return false; // no free channels
     }
 
-    int channelIndex;
-    uint32_t mask = (activeChannelMask);
-    for (channelIndex = 0; mask & 1; channelIndex++) {
-        mask >>= 1;
-    }
-    // already checked for no free channels above
-
+    int channelIndex = Intrinsic::CLZ(activeChannelMask);
     AudioChannel *ch = &channels[channelIndex];
-    ch->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
-    ch->decoder.setData((char*)mod.data, mod.size);
-    ch->ptr = ch->decompressBuf + sizeof(ch->decompressBuf); // mark it as empty
+    ch->state = (loopMode == LoopOnce) ? 0 : AudioChannel::STATE_LOOP;
+//    ch->decoder.setData(mod.data, mod.size);
     ch->handle = nextHandle++;
     *handle = ch->handle;
 
-    mask = activeChannelMask;
     Atomic::SetBit(activeChannelMask, channelIndex);
-    if (mask == 0) {
-//        outdev.start();
-    }
     return true;
 }
 
-bool AudioMixer::isPlaying(handle_t handle)
+bool AudioMixer::isPlaying(_SYSAudioHandle handle)
 {
     return channelForHandle(handle) != 0;
 }
 
-void AudioMixer::stop(handle_t handle)
+void AudioMixer::stop(_SYSAudioHandle handle)
 {
     if (AudioChannel *ch = channelForHandle(handle)) {
         stopChannel(ch);
@@ -171,21 +142,33 @@ void AudioMixer::stopChannel(AudioChannel *ch)
     }
 }
 
-void AudioMixer::pause(handle_t handle)
+void AudioMixer::pause(_SYSAudioHandle handle)
 {
     if (AudioChannel *ch = channelForHandle(handle)) {
-        ch->state |= STATE_PAUSED;
+        ch->pause();
     }
 }
 
-void AudioMixer::resume(handle_t handle)
+void AudioMixer::resume(_SYSAudioHandle handle)
 {
     if (AudioChannel *ch = channelForHandle(handle)) {
-        ch->state &= ~STATE_PAUSED;
+        ch->resume();
     }
 }
 
-uint32_t AudioMixer::pos(handle_t handle)
+void AudioMixer::setVolume(_SYSAudioHandle handle, int volume)
+{
+    (void)handle;
+    (void)volume;
+}
+
+int AudioMixer::volume(_SYSAudioHandle handle)
+{
+    (void)handle; // TODO
+    return 0;
+}
+
+uint32_t AudioMixer::pos(_SYSAudioHandle handle)
 {
     if (AudioChannel *ch = channelForHandle(handle)) {
         ch = 0;
@@ -194,7 +177,7 @@ uint32_t AudioMixer::pos(handle_t handle)
     return 0;
 }
 
-AudioMixer::AudioChannel* AudioMixer::channelForHandle(handle_t handle)
+AudioChannel* AudioMixer::channelForHandle(_SYSAudioHandle handle)
 {
     uint32_t mask = activeChannelMask;
     AudioChannel *ch = &channels[0];

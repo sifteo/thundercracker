@@ -35,7 +35,7 @@ void SpeexDecoder::init()
 #endif
 }
 
-void SpeexDecoder::setData(char *srcaddr, int size)
+void SpeexDecoder::setData(const uint8_t *srcaddr, int size)
 {
     this->srcaddr = (uint32_t)srcaddr;
     this->srcBytesRemaining = size;
@@ -59,7 +59,7 @@ void SpeexDecoder::deinit()
 /*
  * Return the number of bytes decoded.
  */
-int SpeexDecoder::decodeFrame(char *buf, int size)
+int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
 {
     if (size < DECODED_FRAME_SIZE || status != Ok) {
         return 0;
