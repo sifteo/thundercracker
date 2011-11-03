@@ -48,7 +48,9 @@ class CubeSlot {
     static _SYSCubeIDVector neighborACKValid;   /// Neighbor/touch state is valid
     
     static void enableCubes(_SYSCubeIDVector cv) {
-		resetCoalescedNeighbors(cv, false);
+		// <max>
+		// resetCoalescedNeighbors(cv, false);
+		// </max>
         Sifteo::Atomic::Or(vecEnabled, cv);
     }
 
@@ -58,7 +60,9 @@ class CubeSlot {
         Sifteo::Atomic::And(flashResetSent, ~cv);
         Sifteo::Atomic::And(flashACKValid, ~cv);
         Sifteo::Atomic::And(neighborACKValid, ~cv);
-		resetCoalescedNeighbors(cv, true);
+		// <max>
+		// resetCoalescedNeighbors(cv, true);
+		// </max>
     }
 
     _SYSCubeID id() const {

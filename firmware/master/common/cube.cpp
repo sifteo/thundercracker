@@ -311,23 +311,23 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             }
 
 			// <max>
-			const uint8_t kCubeIdMask = 0x1f;
-			const uint8_t kHasNeighborMask = 0x80;
-			const uint8_t kNeighborMask = kCubeIdMask | kHasNeighborMask;
-			for(int8_t side=0; side<4; ++side) {
-				if (neighbors[side] & kNeighborMask != ack->neighbors[side] & kNeighborMask) {
-					if (neighbors[side] & kHasNeighborMask) {
-						if (ack->neighbors[side] & kHasNeighborMask) {
-							removeNeighborFromSide(neighbors[side] & kCubeIdMask, side);
-							addNeighborToSide(ack->neighbors[side] & kCubeIdMask, side);
-						} else {
-							removeNeighborFromSide(neighbors[side] & kCubeIdMask, side);
-						}
-					} else if (ack->neighbors[side] & kHasNeighborMask) {
-						addNeighborToSide(ack->neighbors[side] & kCubeIdMask, side);
-					}	
-				}
-			}
+			// const uint8_t kCubeIdMask = 0x1f;
+			// const uint8_t kHasNeighborMask = 0x80;
+			// const uint8_t kNeighborMask = kCubeIdMask | kHasNeighborMask;
+			// for(int8_t side=0; side<4; ++side) {
+			// 	if (neighbors[side] & kNeighborMask != ack->neighbors[side] & kNeighborMask) {
+			// 		if (neighbors[side] & kHasNeighborMask) {
+			// 			if (ack->neighbors[side] & kHasNeighborMask) {
+			// 				removeNeighborFromSide(neighbors[side] & kCubeIdMask, side);
+			// 				addNeighborToSide(ack->neighbors[side] & kCubeIdMask, side);
+			// 			} else {
+			// 				removeNeighborFromSide(neighbors[side] & kCubeIdMask, side);
+			// 			}
+			// 		} else if (ack->neighbors[side] & kHasNeighborMask) {
+			// 			addNeighborToSide(ack->neighbors[side] & kCubeIdMask, side);
+			// 		}	
+			// 	}
+			// }
 			// </max>
 			
         } else {
