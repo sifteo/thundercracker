@@ -275,6 +275,38 @@ struct _SYSVideoBuffer {
     uint32_t needPaint;         /// INOUT  Repaint trigger
 };
 
+
+typedef uint32_t _SYSAudioHandle;
+
+#define _SYS_AUDIO_BUF_SIZE             (160 * sizeof(int16_t))
+#define _SYS_AUDIO_NUM_CHANNELS         8
+#define _SYS_AUDIO_NUM_SAMPLE_CHANNELS  2
+
+/*
+ * Types of audio supported by the system - TBD if these make sense...
+ */
+enum _SYSAudioType {
+    Sample,
+    Synth
+};
+
+enum _SYSAudioLoopType {
+    LoopOnce,
+    LoopRepeat
+};
+
+struct _SYSAudioModule {
+    enum _SYSAudioType type;
+    uint32_t size;
+    const uint8_t *data;
+};
+
+struct _SYSAudioBuffer {
+    uint32_t len;
+    uint8_t *ptr;
+    uint8_t data[_SYS_AUDIO_BUF_SIZE];
+};
+
 /**
  * Accelerometer state
  */
@@ -345,6 +377,16 @@ void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, 
 void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count);
 void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count);
 void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count);
+
+void _SYS_audio_initChannel(struct _SYSAudioBuffer *buf);
+bool _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, _SYSAudioLoopType loop);
+bool _SYS_audio_isPlaying(_SYSAudioHandle h);
+void _SYS_audio_stop(_SYSAudioHandle h);
+void _SYS_audio_pause(_SYSAudioHandle h);
+void _SYS_audio_resume(_SYSAudioHandle h);
+int  _SYS_audio_volume(_SYSAudioHandle h);
+void _SYS_audio_setVolume(_SYSAudioHandle h, int volume);
+uint32_t _SYS_audio_pos(_SYSAudioHandle h);
 
 #ifdef __cplusplus
 }  // extern "C"
