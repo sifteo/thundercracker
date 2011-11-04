@@ -37,6 +37,12 @@ volatile uint8_t debug_touch;
  *
  * In sensors.c, we kick off touch sensing by starting an A/D reading of our
  * 2/3 Vdd reference voltage. Here we continue the touch sensing work.
+ *
+ * NOTE: Be careful with this routine, as it is an ISR. In particular, if you
+ *       do any operations which end up requiring DPTR (function calls, lookup
+ *       tables, any kind of xdata access) you'll need some assembly to save
+ *       and restore it in a way that's dual-dptr aware. So, save DPS as well,
+ *       and reset DPS to zero before using DPTR.
  */
  
 void adc_isr(void) __interrupt(VECTOR_MISC)
