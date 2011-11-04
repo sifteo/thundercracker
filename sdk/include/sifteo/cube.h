@@ -186,12 +186,14 @@ class Cube {
     }
     
 	void setOrientation(Side topSide) {
-		ASSERT(topSide != SIDE_UNDEFINED);
+		ASSERT(topSide >= 0);
+        ASSERT(topSide < 4);
 	  	VidMode mode(vbuf);
 	  	mode.setRotation(kSideToRotation[topSide]);
 	}
 	
 	void orientTo(Cube* src) {
+        ASSERT(src);
 		Side srcSide = src->physicalSideOf(mID);
 		Side dstSide = physicalSideOf(src->mID);
 		ASSERT(srcSide != SIDE_UNDEFINED);
@@ -201,15 +203,32 @@ class Cube {
 		setOrientation(kOrientationTable[dstSide][srcSide]);
 	}
 	
+	Side physicalToVirtual(Side side) const {
+        if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
+        ASSERT(side >= 0);
+        ASSERT(side < 4);
+        Side rot = orientation();
+        ASSERT(rot != SIDE_UNDEFINED);
+        side = (side - rot) % NUM_SIDES;
+        return side < 0 ? side + NUM_SIDES : side;
+        
+	}
+	
+	Side virtualToPhysical(Side side) const {
+        if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
+        ASSERT(side >= 0);
+        ASSERT(side < 4);
+        Side rot = orientation();
+        ASSERT(rot != SIDE_UNDEFINED);
+        return (side + rot) % NUM_SIDES;
+	}
+	
     /**
      * Like physicalNeighborAt, but relative to the current LCD rotation.
      */
     
     ID virtualNeighborAt(Side side) const {
-        Side rot = orientation();
-        ASSERT(rot != SIDE_UNDEFINED);
-        side = (side + rot) % NUM_SIDES;
-        return physicalNeighborAt(side);
+        return physicalNeighborAt(virtualToPhysical(side));
     }
     
     ID hasVirtualNeighborAt(Side side) const {
@@ -221,12 +240,7 @@ class Cube {
      */
     
     Side virtualSideOf(ID cube) const {
-        Side side = physicalSideOf(cube);
-        if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
-        Side rot = orientation();
-        ASSERT(rot != SIDE_UNDEFINED);
-        side = (side - rot) % NUM_SIDES;
-        return side < 0 ? side + NUM_SIDES : side;
+        return physicalToVirtual(physicalSideOf(cube));
     }
     
 	Vec2 virtualAccel() const {
