@@ -8,6 +8,7 @@
 
 #include "runtime.h"
 #include "cube.h"
+#include "neighbors.h"
 
 using namespace Sifteo;
 
@@ -49,11 +50,11 @@ void Event::dispatch()
         EventBits::ID event = (EventBits::ID)Intrinsic::CLZ(pending);
 
 		while (eventCubes[event]) {
-                uint32_t slot = Intrinsic::CLZ(eventCubes[event]);
+                _SYSCubeID slot = Intrinsic::CLZ(eventCubes[event]);
                 if (event <= EventBits::LAST_CUBE_EVENT) {
                     callCubeEvent(event, slot);
-                } else {
-                    // blech
+                } else if (event == EventBits::NEIGHBOR) {
+                    NeighborSlot::instances[slot].computeEvents();
                 }
                 
                 Atomic::And(eventCubes[event], ~Intrinsic::LZ(slot));

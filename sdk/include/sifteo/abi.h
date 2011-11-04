@@ -37,6 +37,7 @@ extern "C" {
 #define _SYS_NUM_CUBE_SLOTS   32
 
 typedef uint8_t _SYSCubeID;             /// Cube slot index
+typedef int8_t _SYSSideID;              /// Cube side index
 typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-first
 
 /*

@@ -112,6 +112,7 @@ class Event {
         STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::TOUCH == &(_SYS_vectors.cubeEvents.touch) );
         STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::TILT == &(_SYS_vectors.cubeEvents.tilt) );
         STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::SHAKE == &(_SYS_vectors.cubeEvents.shake) );
+        ASSERT(event <= EventBits::LAST_CUBE_EVENT);
         ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
         _SYSCubeEvent* eventArray = (_SYSCubeEvent*) &(_SYS_vectors.cubeEvents);
         if (eventArray[event])
