@@ -37,6 +37,7 @@ extern "C" {
 #define _SYS_NUM_CUBE_SLOTS   32
 
 typedef uint8_t _SYSCubeID;             /// Cube slot index
+typedef int8_t _SYSSideID;              /// Cube side index
 typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-first
 
 /*
@@ -284,6 +285,13 @@ struct _SYSAccelState {
     int8_t y;
 };
 
+struct _SYSNeighborState {
+	_SYSCubeID cube0;
+	_SYSCubeID cube1;
+	int8_t side0;
+	int8_t side1;
+};
+
 /**
  * Accelerometer tilt state, where each axis has three values ( -1, 0, 1)
  */
@@ -320,24 +328,23 @@ struct _SYSCubeHWID {
  * game-accessable RAM.
  */
 
-#define _SYS_MAX_VECTORS        32
-
-typedef enum {
-	_SYS_EVENT_CUBEFOUND,
-	_SYS_EVENT_CUBELOST,
-	_SYS_EVENT_ASSETDONE,
-	_SYS_EVENT_ACCELCHANGE,
-	_SYS_EVENT_TOUCH,
-	_SYS_EVENT_TILT,
-	_SYS_EVENT_SHAKE,
-	_SYS_EVENT_CNT
-} _SYS_EventType;
+typedef void (*_SYSCubeEvent)(_SYSCubeID cid);
+typedef void (*_SYSNeighborEvent)(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
 
 struct _SYSEventVectors {
-
-	typedef void (*eventCallback)(_SYSCubeID cid);
-
-	eventCallback eventCallbacks[_SYS_MAX_VECTORS];
+	struct {
+		_SYSNeighborEvent add;
+		_SYSNeighborEvent remove;
+	} neighborEvents;
+	struct {
+		_SYSCubeEvent found;
+		_SYSCubeEvent lost;
+		_SYSCubeEvent assetDone;
+		_SYSCubeEvent accelChange;
+		_SYSCubeEvent touch;
+		_SYSCubeEvent tilt;
+		_SYSCubeEvent shake;
+	} cubeEvents;
 };
 
 extern struct _SYSEventVectors _SYS_vectors;

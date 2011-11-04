@@ -48,7 +48,7 @@ void demo(void)
         draw_hex(d);
 
         for (i = 0; i < 18; i++)
-            vram.bg0_tiles[i] = d < (i * 3 + 60) ? 0 : 0x26fe;
+            vram.bg0_tiles[i] = d < (i << 4) ? 0 : 0x26fe;
 
         graphics_render();
     }

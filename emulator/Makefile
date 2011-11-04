@@ -34,9 +34,9 @@ DEPFILES := $(LOCAL_OBJS:.o=.d)
 OS := $(shell uname)
 ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
         OS := windows32
-        CC := mingw32-gcc
 endif
 ifeq ($(OS),windows32)
+        CC := mingw32-gcc
         DEPS := ../deps/win32
         LIBS += -lws2_32
 endif

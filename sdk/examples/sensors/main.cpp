@@ -34,7 +34,7 @@ void siftmain()
         vid[i].init();
     }
 
-    _SYS_vectors.eventCallbacks[_SYS_EVENT_TOUCH] = onTouch;
+    _SYS_vectors.cubeEvents.touch = onTouch;
 
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {

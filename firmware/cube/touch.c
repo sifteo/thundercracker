@@ -13,16 +13,6 @@
 #include "draw.h"
 
 /*
- * Macros for use in the filtering ISR code.
- */
- 
-// Power down ADC, and disable our interrupt until next time.
-#define ADC_ISR_DONE() {                \
-        ADCCON1 = TOUCH_ADC_CH << 2;    \
-        IEN_MISC = 0;                   \
-    }
-
-/*
  * Register a touch, and queue it for the radio.
  * This should happen only once per physical touch event!
  * This is in assembly so we can ensure atomic operations are used.
@@ -32,68 +22,103 @@
         __asm   xrl     (_ack_data + RF_ACK_NEIGHBOR + 0), #(NB0_FLAG_TOUCH)    __endasm ; \
         __asm   orl     _ack_len, #RF_ACK_LEN_NEIGHBOR                          __endasm ; \
     }
-    
+
 /*
  * If DEBUG_TOUCH is defined, we constantly display a variable on the LCD
  * for monitoring the raw touch sensor output.
  */
 #ifdef DEBUG_TOUCH
-volatile uint8_t debug_touch = 0;
+volatile uint8_t debug_touch;
 #endif
- 
- /*
- * Touch sensor filtering.
+
+
+/*
+ * A/D Converter ISR
  *
- * A lot of the touch setup is, by necessity, done in sensors.c. But here we
- * implement the A/D converter ISR which filters the raw capacitance data and
- * gives us a touch signal that can be sent back over the radio.
+ * In sensors.c, we kick off touch sensing by starting an A/D reading of our
+ * 2/3 Vdd reference voltage. Here we continue the touch sensing work.
  *
- * This ISR signals the end of a touch sensor sample. We only enable the ADC interrupt
- * when we're doing the meaningful portion of a touch capacitance measurement.
- *
- * This is less performance critical, and doesn't have to directly interoperate with
- * any timing- or register-critical code, so it can be in C. 
+ * NOTE: Be careful with this routine, as it is an ISR. In particular, if you
+ *       do any operations which end up requiring DPTR (function calls, lookup
+ *       tables, any kind of xdata access) you'll need some assembly to save
+ *       and restore it in a way that's dual-dptr aware. So, save DPS as well,
+ *       and reset DPS to zero before using DPTR.
  */
  
 void adc_isr(void) __interrupt(VECTOR_MISC)
 {
-    static __bit state_pressed, state_timeout;
-    static uint8_t touch_timestamp;
-    
-    // Ignore high byte; the signals we're interested in are small.
-    uint8_t value = ADCDATL;
-    
-#ifdef DEBUG_TOUCH
-    debug_touch = value;
-#endif
-    
-    /*
-     * Filter goes here :)
-     * This is a stub that is only intended to work with the simulator.
-     */
-    
-    if (state_pressed) {
-        // Touch has been detected; wait for idle, and check the duration
-        
-        if (sensor_tick_counter - touch_timestamp > 20) {
-            // Too long; not a valid touch
-            state_timeout = 1;
-        }        
-        
-        if (value > 95) {
-            state_pressed = 0;
-            if (!state_timeout)
-                TOUCH_DETECTED();
-        }
+    static __bit sample_step;
+    static __bit init_long_avg;
+    static uint16_t long_avg;
+    static int16_t fast_avg;
 
+    if (sample_step) {
+        /*
+         * Second sample (Capacitive voltage division)
+         */
+        
+        sample_step = 0;
+        
+        /*
+         * Take a very long-term average by doing a low-gain feedback loop
+         * which gradually moves touch_long_avg toward the current ADC reading.
+         *
+         * The ADC left-justifies our reading, which gives us a 16x boost in
+         * resolution for this long-term average without having to do any extra
+         * shifting. Neat.
+         */
+
+        if (init_long_avg) {
+            if (long_avg < ADCDAT)
+                long_avg++;
+            else
+                long_avg--;
+        } else {
+            // Don't lock-in initialization until some time has elapsed
+            long_avg = ADCDAT;
+            if (sensor_tick_counter & 0x10)
+                init_long_avg = 1;            
+        }
+        
+        /*
+         * Now examine the difference between our instantaneous value and the
+         * long-term average. This is where we'll see touches happening.
+         * 
+         * This data is still hella noisy, so we do another low-pass filtering
+         * stage, but less agressive this time.
+         *
+         * XXX: Needs some work. Define DEBUG_TOUCH to play with it.
+         */
+        
+        fast_avg += (int16_t)(long_avg - ADCDAT) - (fast_avg >> 8);
+        if (fast_avg < 0)
+            fast_avg = 0;
+        
+        #ifdef DEBUG_TOUCH
+        debug_touch = fast_avg >> 8;
+        #endif
+        
+        ADCCON1 = 0;        // Power down ADC
+        IEN_MISC = 0;       // Disable ADC IRQ
+        
     } else {
-        if (value < 85) {
-            // Finger on cube
-            state_pressed = 1;
-            state_timeout = 0;
-            touch_timestamp = sensor_tick_counter;
-        }
+        /*
+         * First Sample (Dummy sample, to wake up ADC)
+         *
+         * Charge Chold to reference again, wait for Tacq (0.75us = 12cycles).
+         * Then switch to the sensor channel, and wait for another IRQ.
+         * While we wait, discharge the sensor capacitance.        
+         */
+        
+        sample_step = 1;
+        
+        __asm
+            mov     _ADCCON1, #0xbc             ; 1 0 1111 00
+            anl     _MISC_DIR, #~MISC_TOUCH     ; 4    Plate driver on
+            anl     MISC_PORT, #~MISC_TOUCH     ; 3    Drive low
+            orl     _MISC_DIR, #MISC_TOUCH      ; 4    Driver off
+            nop			                        ; 1
+            mov     _ADCCON1, #(0x80 | (TOUCH_ADC_CH << 2))
+        __endasm ;
     }
-
-    ADC_ISR_DONE();
 }

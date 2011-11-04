@@ -15,6 +15,8 @@
 /*
  * We export a global tick counter, which can be used by other modules
  * who need a low-frequency timebase.
+ *
+ * This is currently used by battery voltage polling, and LCD delays.
  */
 volatile uint8_t sensor_tick_counter;
 volatile uint8_t sensor_tick_counter_high;
@@ -78,27 +80,14 @@ uint8_t accel_x;
  *    [4:0] -- ID for the transmitting cube.
  */
 
-/*
- * XXX: Eek! These damping bits are extending into the next timeslot!
- *      They are necessary for quenching our TX inductor, but we need
- *      to figure out how to do this without blowing our time budget.
- *
- * XXX: Timing needs tweaking... using grotesquely long bit periods for a while.
- */
-
 #define NB_TX_BITS          18      // 1 header, 2 mask, 13 payload, 2 damping
 #define NB_RX_BITS          15      // 2 mask, 13 payload
 
-// Original 9us timing
-//#define NB_BIT_TICKS        12      // In 0.75 us ticks
-//#define NB_BIT_TICK_FIRST   13      // Tweak for sampling halfway between pulses
+// 2us pulses, 9us bit periods
+#define NB_BIT_TICKS        12      // In 0.75 us ticks
+#define NB_BIT_TICK_FIRST   13      // Tweak for sampling halfway between pulses
  
-// Longer 15us bits
-#define NB_BIT_TICKS        18      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   17      // Tweak for sampling halfway between pulses
-
 #define NB_DEADLINE         20      // 15 us (Max 48 us)
-
 
 uint8_t nb_bits_remaining;          // Bit counter for transmit or receive
 uint8_t nb_buffer[2];               // Packet shift register for TX/RX
@@ -479,15 +468,17 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Neighbor Bit Receive
         ;--------------------------------------------------------------------
 
-        mov     a, TL1          ; Capture count from Timer 1
-        mov     TL1, #0
-        add     a, #0xFF        ; Nonzero -> C
+        ; Briefly squelch the receive LC tanks, and clear the mask.
+        ; Do this concurently with capturing and resetting Timer 1.
+        
+        anl     _MISC_DIR, #~MISC_NB_OUT        ; All outputs squelched
+        mov     a, TL1                          ; Capture count from Timer 1
+        mov     TL1, #0                         ; Reset Timer 1
+        add     a, #0xFF                        ; Nonzero -> C
+        orl     _MISC_DIR, #MISC_NB_OUT         ; Clear the squelch mask
 
-        ; Set up the next mask bit, or clear the mask if we are done masking.
-
-        orl     _MISC_DIR, #MISC_NB_OUT
-        jnb     _nb_rx_mask_pending, 1$
-        anl     _MISC_DIR, #~MISC_NB_MASK1
+        jnb     _nb_rx_mask_pending, 1$         ; Do we have the second mask bit pending?
+        anl     _MISC_DIR, #~MISC_NB_MASK1      ; Yes, set that mask.
         clr     _nb_rx_mask_pending
 1$:
 
@@ -623,43 +614,12 @@ nb_tx_handoff:
         ; touch plate. By measuring the remaining charge on the hold cap, we can
         ; measure the capacitance ratio between the touch plate and the internal
         ; hold capacitor.
-        ;
-        ; This process involves some tight timing, so we want to do it here,
-        ; where we cannot be interrupted. We do a cycle-counted delay here
-        ; which interrupts everything else; most importantly, we are unable to do any
-        ; neighbor receive during this delay. So, this delay needs to count as
-        ; part of our transmit timeslot duration.
        
         jb      _battery_adc_lock, nb_packet_done
 
         mov     _ADCCON2, #0x0c         ; Single-step, no auto-powerdown
-        mov     _ADCCON3, #0xe0         ; 12-bit, right justified
-        mov     _ADCCON1, #0xbc         ; 1 0 1111 00, Chold to 2/3 VDD reference
-        
-        ; While we wait, ground the neighbor sensor, to fully discharge its
-        ; capacitance and maximize the amount of charge we can transfer into
-        ; it later.
-        
-        anl     MISC_PORT, #~MISC_TOUCH     ; 4
-        anl     _MISC_DIR, #~MISC_TOUCH     ; 4
-        
-        ; Wait Twup (15us) + Tack (0.75 us) for Chold to charge. This needs to be 252
-        ; cycles from ADCCON1 write to ADCCON1 write. The timing here needs to be very
-        ; consistent for us to get consistent readings.
-        ;
-        ; Right now we busy-loop this, just for simplicity. This operation cannot be
-        ; concurrent with neighbor RX, so we really only impact graphics framerate.
-        ; This is only a small fraction of a percent of our total execution time.
-        
-        mov     a, #58                      ; 2
-        djnz    acc, .                      ; 4*N = 232
-        movc    a, @a+pc                    ; 3  (used as a 1-byte 3-cycle nop)
-        
-        ; Now, while the audience is distracted, swap input channels. This is where the
-        ; charge transfer happens.
-        
-        orl     _MISC_DIR, #MISC_TOUCH                          ; 4
-        mov     _ADCCON1, #(0x80 | (TOUCH_ADC_CH << 2))         ; 3
+        mov     _ADCCON3, #0xc0         ; 12-bit, left justified
+        mov     _ADCCON1, #0xbd         ; 1 0 1111 01, Measure 2/3 VDD reference
         
         ; Continue in the ADC interrupt, after conversion finishes.
         
@@ -698,11 +658,6 @@ void sensors_init()
      *       This is a very long-running ISR. It really needs to be
      *       just above the main thread in priority, but no higher.
      *
-     *    A/D Converter (MISC)
-     *
-     *       Not timing critical. Anything we do here could happen late
-     *       and we'd be okay.
-     *
      *  - Prio 1 
      *
      *    Accelerometer (I2C)
@@ -730,6 +685,13 @@ void sensors_init()
      *       see if this is even a problem. So far in practice it doesn't
      *       seem to be.
      *
+     *    Touch (A/D converter)
+     *
+     *       Predicatble latency here is important so that we don't introduce
+     *       a lot of extra noise into our touch measurements. But the
+     *       consequences of failure here are much lower than if we mess up
+     *       our neighbor timing...
+     *
      *  - Prio 3 (highest)
      *
      *    Neighbor pulse counter (Timer 1)
@@ -747,6 +709,12 @@ void sensors_init()
      *       interrupts competing. They're mutually exclusive)
      */
 
+    /*
+     * A/D converter (MISC irq) Priority
+     */
+    
+    IP1 |= 0x10;
+    
     /*
      * I2C / 2Wire, for the accelerometer
      */

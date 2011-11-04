@@ -43,7 +43,7 @@ bool AccelState::updateTiltState() {
 
   
   if (tiltChanged) {
-    Event::setPending(_SYS_EVENT_TILT, id());
+	Event::setPending(EventBits::TILT, id());
     return true;
   }
   return false;
@@ -85,7 +85,7 @@ void AccelState::updateShakeState() {
   
   if (shakeState != newGlobalShakeState) {
 	  shakeState = newGlobalShakeState;
-	  Event::setPending(_SYS_EVENT_SHAKE, id());
+	  Event::setPending(EventBits::SHAKE, id());
   }
 }
 
