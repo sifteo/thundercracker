@@ -114,7 +114,9 @@ void NeighborSlot::clearSide(_SYSSideID side) {
     if (otherId != 0xff) {
         _SYSSideID otherSide = 0;
         while(instances[otherId].neighbors[otherSide] != id()) { ++otherSide; }
-        _SYS_vectors.neighborEvents.remove(id(), side, otherId, otherSide);
+        if (_SYS_vectors.neighborEvents.remove) {
+            _SYS_vectors.neighborEvents.remove(id(), side, otherId, otherSide);
+        }
         neighbors[side] = 0xff;
         instances[otherId].neighbors[otherSide] = 0xff;
     }    
