@@ -9,6 +9,15 @@
 #ifndef _HARDWARE_H
 #define _HARDWARE_H
 
+#include <stdint.h>
+
+union word16 {
+    uint16_t word;
+    struct {
+        uint8_t low, high;
+    };
+};
+
 /*
  * GPIO Ports
  */
@@ -253,6 +262,7 @@ __sfr __at 0xD0 PSW;
 __sfr __at 0xD1 ADCCON3;
 __sfr __at 0xD2 ADCCON2;
 __sfr __at 0xD3 volatile ADCCON1;
+__sfr16 __at 0xD4D5 ADCDAT;
 __sfr __at 0xD4 ADCDATH;
 __sfr __at 0xD5 ADCDATL;
 __sfr __at 0xD6 volatile RNGCTL;

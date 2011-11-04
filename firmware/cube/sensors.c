@@ -614,43 +614,12 @@ nb_tx_handoff:
         ; touch plate. By measuring the remaining charge on the hold cap, we can
         ; measure the capacitance ratio between the touch plate and the internal
         ; hold capacitor.
-        ;
-        ; This process involves some tight timing, so we want to do it here,
-        ; where we cannot be interrupted. We do a cycle-counted delay here
-        ; which interrupts everything else; most importantly, we are unable to do any
-        ; neighbor receive during this delay. So, this delay needs to count as
-        ; part of our transmit timeslot duration.
        
         jb      _battery_adc_lock, nb_packet_done
 
         mov     _ADCCON2, #0x0c         ; Single-step, no auto-powerdown
-        mov     _ADCCON3, #0xe0         ; 12-bit, right justified
-        mov     _ADCCON1, #0xbc         ; 1 0 1111 00, Chold to 2/3 VDD reference
-        
-        ; While we wait, ground the neighbor sensor, to fully discharge its
-        ; capacitance and maximize the amount of charge we can transfer into
-        ; it later.
-        
-        anl     MISC_PORT, #~MISC_TOUCH     ; 4
-        anl     _MISC_DIR, #~MISC_TOUCH     ; 4
-        
-        ; Wait Twup (15us) + Tack (0.75 us) for Chold to charge. This needs to be 252
-        ; cycles from ADCCON1 write to ADCCON1 write. The timing here needs to be very
-        ; consistent for us to get consistent readings.
-        ;
-        ; Right now we busy-loop this, just for simplicity. This operation cannot be
-        ; concurrent with neighbor RX, so we really only impact graphics framerate.
-        ; This is only a small fraction of a percent of our total execution time.
-        
-        mov     a, #58                      ; 2
-        djnz    acc, .                      ; 4*N = 232
-        movc    a, @a+pc                    ; 3  (used as a 1-byte 3-cycle nop)
-        
-        ; Now, while the audience is distracted, swap input channels. This is where the
-        ; charge transfer happens.
-        
-        orl     _MISC_DIR, #MISC_TOUCH                          ; 4
-        mov     _ADCCON1, #(0x80 | (TOUCH_ADC_CH << 2))         ; 3
+        mov     _ADCCON3, #0xc0         ; 12-bit, left justified
+        mov     _ADCCON1, #0xbd         ; 1 0 1111 01, Measure 2/3 VDD reference
         
         ; Continue in the ADC interrupt, after conversion finishes.
         
@@ -689,11 +658,6 @@ void sensors_init()
      *       This is a very long-running ISR. It really needs to be
      *       just above the main thread in priority, but no higher.
      *
-     *    A/D Converter (MISC)
-     *
-     *       Not timing critical. Anything we do here could happen late
-     *       and we'd be okay.
-     *
      *  - Prio 1 
      *
      *    Accelerometer (I2C)
@@ -721,6 +685,13 @@ void sensors_init()
      *       see if this is even a problem. So far in practice it doesn't
      *       seem to be.
      *
+     *    Touch (A/D converter)
+     *
+     *       Predicatble latency here is important so that we don't introduce
+     *       a lot of extra noise into our touch measurements. But the
+     *       consequences of failure here are much lower than if we mess up
+     *       our neighbor timing...
+     *
      *  - Prio 3 (highest)
      *
      *    Neighbor pulse counter (Timer 1)
@@ -738,6 +709,12 @@ void sensors_init()
      *       interrupts competing. They're mutually exclusive)
      */
 
+    /*
+     * A/D converter (MISC irq) Priority
+     */
+    
+    IP1 |= 0x10;
+    
     /*
      * I2C / 2Wire, for the accelerometer
      */
