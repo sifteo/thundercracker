@@ -286,10 +286,7 @@ struct _SYSAccelState {
 };
 
 struct _SYSNeighborState {
-	_SYSCubeID cube0;
-	_SYSCubeID cube1;
-	int8_t side0;
-	int8_t side1;
+    _SYSCubeID sides[4];
 };
 
 /**
@@ -374,9 +371,10 @@ void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf);
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
+void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state);
 
 // XXX: Temporary for testing/demoing
-void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);
+//void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);
 void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v);
 void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid);
 
