@@ -192,13 +192,12 @@ class Cube {
 	  	mode.setRotation(kSideToRotation[topSide]);
 	}
 	
-	void orientTo(Cube* src) {
-        ASSERT(src);
-		Side srcSide = src->physicalSideOf(mID);
-		Side dstSide = physicalSideOf(src->mID);
+	void orientTo(const Cube& src) {
+		Side srcSide = src.physicalSideOf(mID);
+		Side dstSide = physicalSideOf(src.mID);
 		ASSERT(srcSide != SIDE_UNDEFINED);
 		ASSERT(dstSide != SIDE_UNDEFINED);
-		srcSide = (srcSide - src->orientation()) % NUM_SIDES;
+		srcSide = (srcSide - src.orientation()) % NUM_SIDES;
 		if (srcSide < 0) { srcSide += NUM_SIDES; }
 		setOrientation(kOrientationTable[dstSide][srcSide]);
 	}
