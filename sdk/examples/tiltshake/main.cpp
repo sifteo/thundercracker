@@ -38,7 +38,11 @@ static void onShake(_SYSCubeID cid)
 {
     _SYS_ShakeState state;
     _SYS_getShake(cid, &state);
-    vid[cid].BG0_textf(Vec2(2,7), Font, "Shaking: %d", state);
+	if( state == SHAKING )
+		vid[cid].BG0_drawAsset(Vec2(0,0), Shake);
+	else
+		vid[cid].clear(Font.tiles[0]);
+    //vid[cid].BG0_textf(Vec2(2,7), Font, "Shaking: %d", state);
 }
 
 static void init()

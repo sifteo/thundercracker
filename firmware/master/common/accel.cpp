@@ -58,7 +58,7 @@ bool AccelState::updateTiltState() {
 	}
 
 
-	DEBUG_LOG(("Updating tilt: x = %d, y = %d\n", tiltState.x, tiltState.y));
+	//DEBUG_LOG(("Updating tilt: x = %d, y = %d\n", tiltState.x, tiltState.y));
   
 	if (tiltChanged) {
 		Event::setPending(EventBits::TILT, id());
@@ -98,16 +98,16 @@ void AccelState::updateShakeState() {
 	for (i = 0; i < NUM_AXES; i++) {
 		_SYS_ShakeState ss;
 		ss = calculateShakeState(i);
-		if (ss == SHAKING && ss != shakeState)
+		//DEBUG_LOG(("axis %d, shaking = %d\n", i, ss));
+		if (ss == SHAKING)
 			newGlobalShakeState = SHAKING;
 	}
   
 	if (shakeState != newGlobalShakeState) {
 		shakeState = newGlobalShakeState;
+		//DEBUG_LOG(("shake state changing to %d\n", shakeState));
 		Event::setPending(EventBits::SHAKE, id());
 	}
-
-	//DEBUG_LOG(("Updating shake"));
 }
 
 _SYS_ShakeState AccelState::calculateShakeState(uint8_t axis) {
@@ -124,6 +124,8 @@ _SYS_ShakeState AccelState::calculateShakeState(uint8_t axis) {
 	for (i = 0; i < NUM_SAMPLES; i++)
 		variance += abs(data[axis][i] - mean); // add the difference between each data item and the mean
     
+	//DEBUG_LOG(("Calculating shake.  Variance = %d\n", variance));
+
 	if (variance > SHAKE_THRESHOLD)
 		return SHAKING;
 	//includes hysteresis.  If you are SHAKING, do not leave this state unless
