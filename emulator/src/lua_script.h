@@ -94,6 +94,13 @@ private:
     int lcdWriteCount(lua_State *L);
     int lcdPixelCount(lua_State *L);
     int exceptionCount(lua_State *L);
+    
+    /*
+     * Radio
+     */
+    
+    int getRadioAddress(lua_State *L);
+    int handleRadioPacket(lua_State *L);
       
     /*
      * LCD screenshots

@@ -42,6 +42,8 @@ Lunar<LuaCube>::RegType LuaCube::methods[] = {
     LUNAR_DECLARE_METHOD(LuaCube, lcdWriteCount),
     LUNAR_DECLARE_METHOD(LuaCube, lcdPixelCount),
     LUNAR_DECLARE_METHOD(LuaCube, exceptionCount),
+    LUNAR_DECLARE_METHOD(LuaCube, getRadioAddress),
+    LUNAR_DECLARE_METHOD(LuaCube, handleRadioPacket),
     LUNAR_DECLARE_METHOD(LuaCube, saveScreenshot),
     LUNAR_DECLARE_METHOD(LuaCube, testScreenshot),
     LUNAR_DECLARE_METHOD(LuaCube, xbPoke),
@@ -466,4 +468,63 @@ int LuaCube::testScreenshot(lua_State *L)
     }
     
     return 0;
+}
+
+int LuaCube::handleRadioPacket(lua_State *L)
+{
+    /*
+     * Argument is a radio packet, represented as a string.
+     * Returns a string ACK (which may be empty), or no argument
+     * if the packet failed to acknowledge.
+     */
+     
+    Cube::Radio &radio = LuaSystem::sys->cubes[id].spi.radio;    
+    
+    Cube::Radio::Packet packet, reply;
+    memset(&packet, 0, sizeof packet);
+    memset(&reply, 0, sizeof reply);
+
+    size_t packetStrLen = 0;
+    const char *packetStr = lua_tolstring(L, 1, &packetStrLen);
+    
+    if (packetStrLen > sizeof packet.payload) {
+        lua_pushfstring(L, "packet too long");
+        lua_error(L);
+        return 0;
+    }
+    
+    packet.len = packetStrLen;
+    memcpy(packet.payload, packetStr, packetStrLen);
+    
+    if (radio.handlePacket(packet, reply)) {
+        lua_pushlstring(L, (const char *) reply.payload, reply.len);
+        return 1;
+    }
+
+    return 0;
+}
+
+int LuaCube::getRadioAddress(lua_State *L)
+{
+    /*
+     * Takes no arguments, returns the radio's RX address formatted as a string.
+     * Our string format matches the debug logging in the master firmware:
+     *
+     *    <channel> / <byte0> <byte1> <byte2> <byte3> <byte4>
+     */
+
+    Cube::Radio &radio = LuaSystem::sys->cubes[id].spi.radio;   
+    char buf[20];
+    uint64_t addr = radio.getPackedRXAddr();
+
+    snprintf(buf, sizeof buf, "%02x/%02x%02x%02x%02x%02x",
+        (uint8_t)(addr >> 56),
+        (uint8_t)(addr >> 0),
+        (uint8_t)(addr >> 8),
+        (uint8_t)(addr >> 16),
+        (uint8_t)(addr >> 24),
+        (uint8_t)(addr >> 32));
+        
+    lua_pushstring(L, buf);
+    return 1;
 }
