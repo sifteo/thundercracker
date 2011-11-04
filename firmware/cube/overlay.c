@@ -20,7 +20,7 @@
  * declared in our separate bit-addressable segment.
  */
 
-static void graphics_state() __naked {
+static void overlay_memory() __naked {
     __asm
 
 	.area DSEG    (DATA)
