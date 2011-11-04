@@ -9,9 +9,6 @@
 #include "graphics_bg0.h"
 #include "radio.h"
 
-uint8_t x_bg0_first_w, x_bg0_last_w, x_bg0_first_addr, x_bg0_wrap;
-uint8_t y_bg0_addr_l;
-uint16_t y_bg0_map;
 
 void vm_bg0_x_wrap_adjust(void) __naked
 {

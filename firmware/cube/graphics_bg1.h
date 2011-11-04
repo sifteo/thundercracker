@@ -54,6 +54,9 @@ extern uint8_t y_bg1_bit_index;         // Index into bitmap array, inc by 1 eac
 extern uint16_t y_bg1_map;              // Map address for the first tile on this line
 extern __bit y_bg1_empty;               // Current line of the bitmap is empty. Set during setup/next.
 
+extern __bit x_bg1_rshift, x_bg1_lshift;
+extern uint8_t x_bg1_shift;
+
 // Scanline bitmap in MD3..MD0
 
 /*

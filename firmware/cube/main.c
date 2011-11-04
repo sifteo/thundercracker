@@ -65,14 +65,6 @@ static void gpio_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
 
     /*
-     * Pull-ups on I2C. These don't seem to have much effect, but it's
-     * the thought that counts...
-     */
-
-    MISC_CON = 0x52;    // Pull-up on I2C SCL
-    MISC_CON = 0x53;    // Pull-up on I2C SDA
-
-    /*
      * It's really important that there's no pull-up/pull-down on our
      * touch sensor input. Reset that, just in case.
      */
