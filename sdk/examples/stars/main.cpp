@@ -269,8 +269,25 @@ private:
 };
     
 
+void neighbor_add(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
+    LOG(("neighbor add\n"));
+}
+
+void neighbor_remove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
+    LOG(("neighbor remove\n"));
+}
+
+void accel(_SYSCubeID c) {
+    LOG(("accelerometer changed\n"));
+}
+
 void siftmain()
 {
+    LOG(("HELLO, WORLD"));
+    //_SYS_vectors.cubeEvents.accelChange = accel;
+    _SYS_vectors.neighborEvents.add = neighbor_add;
+    _SYS_vectors.neighborEvents.remove = neighbor_remove;
+    
     static Cube cubes[] = { Cube(0), Cube(1) };
     static StarDemo demos[] = { StarDemo(cubes[0]), StarDemo(cubes[1]) };
     
