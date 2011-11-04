@@ -38,7 +38,8 @@ void siftmain()
 
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
-            uint8_t nb[4];
+            //uint8_t nb[4];
+            _SYSNeighborState nb;
             _SYSCubeHWID hwid;
             _SYSAccelState accel;
             uint16_t battery;
@@ -48,7 +49,7 @@ void siftmain()
              */
 
             _SYS_getAccel(i, &accel);
-            _SYS_getRawNeighbors(i, nb);
+            _SYS_getNeighbors(i, &nb);
             _SYS_getRawBatteryV(i, &battery);
             _SYS_getCubeHWID(i, &hwid);
 
@@ -69,14 +70,14 @@ void siftmain()
                              i,
                              hwid.bytes[0], hwid.bytes[1], hwid.bytes[2],
                              hwid.bytes[3], hwid.bytes[4], hwid.bytes[5],
-                             nb[0], nb[1], nb[2], nb[3],
+                             nb.sides[0], nb.sides[1], nb.sides[2], nb.sides[3],
                              accel.x, accel.y,
                              battery);
                              
-            drawSide(i, nb[0] >> 7, 1,  0,  1, 0);  // Top
-            drawSide(i, nb[1] >> 7, 0,  1,  0, 1);  // Left
-            drawSide(i, nb[2] >> 7, 1,  15, 1, 0);  // Bottom
-            drawSide(i, nb[3] >> 7, 15, 1,  0, 1);  // Right
+            drawSide(i, nb.sides[0] != CUBE_ID_UNDEFINED, 1,  0,  1, 0);  // Top
+            drawSide(i, nb.sides[1] != CUBE_ID_UNDEFINED, 0,  1,  0, 1);  // Left
+            drawSide(i, nb.sides[2] != CUBE_ID_UNDEFINED, 1,  15, 1, 0);  // Bottom
+            drawSide(i, nb.sides[3] != CUBE_ID_UNDEFINED, 15, 1,  0, 1);  // Right
         }
 
         System::paint();

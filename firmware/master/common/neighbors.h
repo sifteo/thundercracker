@@ -43,11 +43,8 @@ public:
     static void resetSlots(_SYSCubeIDVector cv);
     static void resetPairs(_SYSCubeIDVector cv);
     
-    void getCoalescedNeighbors(_SYSCubeID buf[4]) {
-        buf[0] = neighbors[0];
-        buf[1] = neighbors[1];
-        buf[2] = neighbors[2];
-        buf[3] = neighbors[3];
+    void getNeighborState(_SYSNeighborState *state) {
+        *state = neighbors;
     }
     
 private:
@@ -55,8 +52,8 @@ private:
     void clearSide(_SYSSideID side);
     void removeNeighborFromSide(_SYSCubeID id, _SYSSideID side);
 
-    uint8_t prevNeighbors[4];
-    _SYSCubeID neighbors[4];
+    uint8_t prevNeighbors[4]; // this is in the format the raw neighbors -- it's more than just a cubeID
+    _SYSNeighborState neighbors; // these are just cubeIDs
 };
 
 

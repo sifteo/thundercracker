@@ -67,15 +67,15 @@ void CubeWrapper::DrawSplash()
 
 void CubeWrapper::Update(float t)
 {
-	uint8_t buf[4];
-    _SYS_getRawNeighbors(m_cube.id(), buf);
+	//uint8_t buf[4];
+    //_SYS_getRawNeighbors(m_cube.id(), buf);
 
-	for( int i = 0; i < NUM_SIDES; i++ )
+	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
 	{
 		//TODO, this should be pushed into sdk
 		//also, it doesn't check what cubes are its neighbors
-		bool newValue = ( buf[i] >> 7 ) > 0;
-		int id = buf[i] & 0x1f;
+        bool newValue = m_cube.hasPhysicalNeighborAt(i);
+		Cube::ID id = m_cube.physicalNeighborAt(i);
 
 		if( newValue )
 		{
