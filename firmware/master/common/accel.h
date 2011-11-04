@@ -23,7 +23,7 @@ class AccelState {
 
 	//bunch of constants from gen 1..  maybe they need to be revisited
 	static const int TILT_THRESHOLD   = 12;  // measured empirically (gen 1)
-	static const int DEFAULT_RESTVAL  = 128;
+	static const int DEFAULT_RESTVAL  = 0;
 	static const int TILT_HYSTERESIS  = 5;   // measured empirically (gen 1)
 
 	static const int NUM_SAMPLES      = 16; //how many samples we keep in the data buffer
@@ -50,11 +50,21 @@ class AccelState {
 
 	inline int16_t GetMean(int16_t sum)  { return (sum >> MEAN_SHIFT_BY); }
 
+	//for syscalls
+	void getTiltState(struct _SYSTiltState *state) {
+        *state = tiltState;
+    }
+	void getShakeState(_SYS_ShakeState *state) {
+        *state = (_SYS_ShakeState)shakeState;
+    }
+
+	void update(int8_t x, int8_t y);
+
 	//these functions are all based on gen 1's implementations
 	bool updateTiltState(void);
-	int8_t calculateTiltState(int8_t axis);
+	int8_t calculateTiltState(uint8_t axis);
 	void updateShakeState();
-	e_ShakeState calculateShakeState(uint8_t axis);
+	_SYS_ShakeState calculateShakeState(uint8_t axis);
 
  private:
 	//based on gen 1's AccelAxis
