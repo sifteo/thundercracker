@@ -269,8 +269,20 @@ private:
 };
     
 
+void neighbor_add(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
+    LOG(("neighbor add"));
+}
+
+void neighbor_remove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
+    LOG(("neighbor remove"));
+}
+
 void siftmain()
 {
+    LOG(("HELLO, WORLD"));
+    _SYS_vectors.neighborEvents.add = neighbor_add;
+    _SYS_vectors.neighborEvents.remove = neighbor_remove;
+    
     static Cube cubes[] = { Cube(0), Cube(1) };
     static StarDemo demos[] = { StarDemo(cubes[0]), StarDemo(cubes[1]) };
     

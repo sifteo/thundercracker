@@ -308,7 +308,7 @@ struct _SYSCubeHWID {
  */
 
 typedef void (*_SYSCubeEvent)(_SYSCubeID cid);
-typedef void (*_SYSNeighborEvent)(_SYSCubeID c0, uint8_t s0, _SYSCubeID c1, uint8_t s1);
+typedef void (*_SYSNeighborEvent)(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
 
 struct _SYSEventVectors {
 	struct {
