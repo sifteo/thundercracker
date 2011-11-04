@@ -180,6 +180,8 @@ enum EM8051_EXCEPTION
     EXCEPTION_XDATA_ERROR,       // Access to unmapped portion of xdata 
     EXCEPTION_SBT,               // Binary translator error (executing untranslated code)
     EXCEPTION_MDU,               // Multiply Divide Unit error
+    EXCEPTION_RNG,               // Random Number Generator error
+    EXCEPTION_NVM,               // NVM write error (Write while read-only)
 };
 
 

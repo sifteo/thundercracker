@@ -89,29 +89,17 @@ void battery_poll()
     adc_busy_wait();
 
     /*
-     * Diff the new battery reading against the old,
-     * and make sure that we atomically send back the entire
-     * 16-bit word in the same radio packet by placing this
-     * in a critical section.
+     * Atomically write the whole 16-bit value.
+     * We don't bother diff'ing it, since there's
+     * sure to be enough noise that the reading will
+     * jitter around a little.
      */
 
     radio_irq_disable(); {
         __asm
-
-            mov     a, _ADCDATL
-            xrl     a, (_ack_data + RF_ACK_BATTERY_V)
-            jz      1$
-            xrl     (_ack_data + RF_ACK_BATTERY_V), a
-            mov _ack_len, #RF_ACK_LEN_MAX
-        1$:       
-
-            mov     a, _ADCDATH
-            xrl     a, (_ack_data + RF_ACK_BATTERY_V + 1)
-            jz      2$
-            xrl     (_ack_data + RF_ACK_BATTERY_V + 1), a
-            mov _ack_len, #RF_ACK_LEN_MAX
-        2$:
-        
+            mov     (_ack_data + RF_ACK_BATTERY_V), _ADCDATL
+            mov     (_ack_data + RF_ACK_BATTERY_V + 1), _ADCDATH
+            mov     _ack_len, #RF_ACK_LEN_MAX
         __endasm ;
     } radio_irq_enable();
     

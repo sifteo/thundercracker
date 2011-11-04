@@ -385,28 +385,28 @@ int LuaCube::ibPeek(lua_State *L)
 
 int LuaCube::fwPoke(lua_State *L)
 {
-    uint16_t *mem = (uint16_t*) &LuaSystem::sys->cubes[id].flash.data;
+    uint16_t *mem = (uint16_t*) &LuaSystem::sys->cubes[id].flashStorage.data.ext;
     mem[(Cube::FlashModel::SIZE/2 - 1) & luaL_checkinteger(L, 1)] = luaL_checkinteger(L, 2);
     return 0;
 }
 
 int LuaCube::fbPoke(lua_State *L)
 {
-    uint8_t *mem = (uint8_t*) &LuaSystem::sys->cubes[id].flash.data;
+    uint8_t *mem = (uint8_t*) &LuaSystem::sys->cubes[id].flashStorage.data.ext;
     mem[(Cube::FlashModel::SIZE - 1) & luaL_checkinteger(L, 1)] = luaL_checkinteger(L, 2);
     return 0;
 }
 
 int LuaCube::fwPeek(lua_State *L)
 {
-    uint16_t *mem = (uint16_t*) &LuaSystem::sys->cubes[id].flash.data;
+    uint16_t *mem = (uint16_t*) &LuaSystem::sys->cubes[id].flashStorage.data.ext;
     lua_pushinteger(L, mem[(Cube::FlashModel::SIZE/2 - 1) & luaL_checkinteger(L, 1)]);
     return 1;
 }
 
 int LuaCube::fbPeek(lua_State *L)
 {
-    uint8_t *mem = (uint8_t*) &LuaSystem::sys->cubes[id].flash.data;
+    uint8_t *mem = (uint8_t*) &LuaSystem::sys->cubes[id].flashStorage.data.ext;
     lua_pushinteger(L, mem[(Cube::FlashModel::SIZE - 1) & luaL_checkinteger(L, 1)]);
     return 1;
 }

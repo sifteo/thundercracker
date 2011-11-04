@@ -40,21 +40,26 @@ bool Hardware::init(VirtualTime *masterTimer,
     }
 
  
-    if (!flash.init(flashFile)) {
+    if (!flashStorage.init(flashFile)) {
         fprintf(stderr, "Error: Failed to initialize flash memory\n");
         return false;
     }
     
+    flash.init(&flashStorage);
     spi.radio.init(&cpu);
     spi.init(&cpu);
     adc.init();
     mdu.init();
     i2c.init();
     lcd.init();
+    rng.init();
     neighbors.init();
     
     setTouch(0.0f);
-
+    
+    // XXX: Simulated battery level
+    adc.setInput(0, 0x8760);
+    
     return true;
 }
 
@@ -65,7 +70,7 @@ void Hardware::reset()
 
 void Hardware::exit()
 {
-    flash.exit();
+    flashStorage.exit();
 }
 
 // cube_cpu_callbacks.h
@@ -84,6 +89,32 @@ void CPU::except(CPU::em8051 *cpu, int exc)
         Cube::Debug::emu_exception(cpu, exc);
     else
         fprintf(stderr, fmt, cpu->id, cpu->mPC, name);
+}
+
+// cube_cpu_callbacks.h
+int CPU::NVM::write(CPU::em8051 *cpu, uint16_t addr, uint8_t data)
+{
+    Hardware *self = (Hardware*) cpu->callbackData;
+
+    if (!(cpu->mSFR[REG_FSR] & (1<<5))) {
+        // Write disabled
+        except(cpu, EXCEPTION_NVM);
+        return 0;
+    }
+            
+    // Program flash bits (1 -> 0)
+    self->flashStorage.data.nvm[addr] &= data;
+    self->flashStorage.asyncWrite(*self->time, &self->cpu);
+    
+    // Self-timed write cycles
+    return 12800;
+}
+
+// cube_cpu_callbacks.h
+uint8_t CPU::NVM::read(CPU::em8051 *cpu, uint16_t addr)
+{
+    Hardware *self = (Hardware*) cpu->callbackData;
+    return self->flashStorage.data.nvm[addr];
 }
 
 void Hardware::sfrWrite(int reg)
@@ -195,6 +226,7 @@ NEVER_INLINE void Hardware::hwDeadlineWork()
     spi.tick(hwDeadline, cpu.mSFR + REG_SPIRCON0, &cpu);
     i2c.tick(hwDeadline, &cpu);
     flash.tick(hwDeadline, &cpu);
+    flashStorage.tick(hwDeadline);
     spi.radio.tick(rfcken, &cpu);
 }
 

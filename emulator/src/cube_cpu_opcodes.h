@@ -150,6 +150,41 @@ static ALWAYS_INLINE void sub_solve_flags(em8051 * aCPU, int value1, int value2)
                           (carry << PSW_C) | (auxcarry << PSW_AC) | (overflow << PSW_OV);
 }
 
+static ALWAYS_INLINE uint8_t xdata_read(em8051 *aCPU, uint16_t dptr)
+{    
+    /*
+     * Read from XDATA (RAM or NVM), returns an 8-bit data byte
+     */
+
+    if (LIKELY(dptr < XDATA_SIZE))
+        return aCPU->mExtData[dptr];
+        
+    uint16_t nvm_addr = dptr - NVM_BASE;
+    if (LIKELY(nvm_addr < NVM_SIZE))
+        return NVM::read(aCPU, nvm_addr);
+        
+    except(aCPU, EXCEPTION_XDATA_ERROR);
+    return 0xFF;
+}
+
+static ALWAYS_INLINE int xdata_write(em8051 *aCPU, uint16_t dptr, uint8_t value)
+{    
+    /*
+     * Write a byte to XDATA (RAM or NVM). Returns the number of extra delay cycles.
+     */
+
+    if (LIKELY(dptr < XDATA_SIZE)) {
+        aCPU->mExtData[dptr] = value;
+        return 0;
+    }
+        
+    uint16_t nvm_addr = dptr - NVM_BASE;
+    if (LIKELY(nvm_addr < NVM_SIZE))
+        return NVM::write(aCPU, nvm_addr, value);
+        
+    except(aCPU, EXCEPTION_XDATA_ERROR);
+    return 0;
+}
 
 static ALWAYS_INLINE FASTCALL int ajmp_offset(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
@@ -1384,12 +1419,7 @@ static ALWAYS_INLINE FASTCALL int xchd_a_indir_rx(em8051 *aCPU, unsigned &PC, ui
 static ALWAYS_INLINE FASTCALL int movx_a_indir_dptr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int dptr = (aCPU->mSFR[CUR_DPH] << 8) | aCPU->mSFR[CUR_DPL];
-
-    if (UNLIKELY(dptr >= XDATA_SIZE))
-        except(aCPU, EXCEPTION_XDATA_ERROR);
-    else
-        ACC = aCPU->mExtData[dptr];
-
+    ACC = xdata_read(aCPU, dptr);
     PC++;
     return 4;
 }
@@ -1397,12 +1427,7 @@ static ALWAYS_INLINE FASTCALL int movx_a_indir_dptr(em8051 *aCPU, unsigned &PC, 
 static ALWAYS_INLINE FASTCALL int movx_a_indir_rx(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int dptr = INDIR_RX_ADDRESS_X;
-
-    if (UNLIKELY(dptr >= XDATA_SIZE))
-        except(aCPU, EXCEPTION_XDATA_ERROR);
-    else
-        ACC = aCPU->mExtData[dptr];
-
+    ACC = xdata_read(aCPU, dptr);
     PC++;
     return 4;
 }
@@ -1439,27 +1464,15 @@ static ALWAYS_INLINE FASTCALL int mov_a_indir_rx(em8051 *aCPU, unsigned &PC, uin
 static ALWAYS_INLINE FASTCALL int movx_indir_dptr_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int dptr = (aCPU->mSFR[CUR_DPH] << 8) | aCPU->mSFR[CUR_DPL];
-
-    if (UNLIKELY(dptr >= XDATA_SIZE))
-        except(aCPU, EXCEPTION_XDATA_ERROR);
-    else
-        aCPU->mExtData[dptr] = ACC;
-
     PC++;
-    return 5;
+    return 5 + xdata_write(aCPU, dptr, ACC);
 }
 
 static ALWAYS_INLINE FASTCALL int movx_indir_rx_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int dptr = INDIR_RX_ADDRESS_X;
-
-    if (UNLIKELY(dptr >= XDATA_SIZE))
-        except(aCPU, EXCEPTION_XDATA_ERROR);
-    else
-        aCPU->mExtData[dptr] = ACC;
-
     PC++;
-    return 5;
+    return 5 + xdata_write(aCPU, dptr, ACC);
 }
 
 static ALWAYS_INLINE FASTCALL int cpl_a(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
