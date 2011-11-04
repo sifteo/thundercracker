@@ -71,7 +71,7 @@ void siftmain()
     /*vid.BG0_text(Vec2(2,1), Font, "Hello World!");
 	vid.BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
  */
-    _SYS_vectors.table[_SYS_EVENT_ACCELCHANGE] = onAccelChange;
+    _SYS_vectors.cubeEvents.accelChange = onAccelChange;
 
 	for( int i = 0; i < Game::NUM_CUBES; i++ )
 		onAccelChange(i);

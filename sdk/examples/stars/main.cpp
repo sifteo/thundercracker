@@ -267,14 +267,18 @@ private:
     #endif
     }
 };
-    
+
+
+static const char* sideNames[] = {
+  "top", "left", "bottom", "right"  
+};
 
 void neighbor_add(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
-    LOG(("neighbor add\n"));
+    LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
 void neighbor_remove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
-    LOG(("neighbor remove\n"));
+    LOG(("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
 void accel(_SYSCubeID c) {
