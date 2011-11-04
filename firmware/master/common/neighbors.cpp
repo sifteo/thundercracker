@@ -45,7 +45,7 @@ struct NeighborPair {
     NeighborPair* lookup(_SYSCubeID cid0, _SYSCubeID cid1) {
         // invariant this == pairs[0]
         // invariant cid0 < cid1
-        return (this + cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
+        return this + (cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
     }
 };
 
@@ -59,6 +59,7 @@ void NeighborSlot::computeEvents() {
             if (rawNeighbors[side] & HAS_NEIGHBOR_MASK) {
                 if ((prevNeighbors[side] & CUBE_ID_MASK) != (rawNeighbors[side] & CUBE_ID_MASK)) {
                     // detected "switch" (addNeighborToSide will take care of removing the old one)
+                    removeNeighborFromSide(prevNeighbors[side] & CUBE_ID_MASK, side);
                     addNeighborToSide(rawNeighbors[side] & CUBE_ID_MASK, side);
                 }
             } else {
