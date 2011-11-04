@@ -14,7 +14,6 @@
 
 #define CUBE_ID_MASK (0x1F)
 #define HAS_NEIGHBOR_MASK (0x80)
-#define NEIGHBOR_MASK (0x1F|0x80)
 
 using namespace Sifteo;
 
@@ -56,15 +55,19 @@ void NeighborSlot::computeEvents() {
     uint8_t rawNeighbors[4];
     CubeSlot::instances[id()].getRawNeighbors(rawNeighbors);
     for(_SYSSideID side=0; side<4; ++side) {
-        if ((prevNeighbors[side] & NEIGHBOR_MASK) != (rawNeighbors[side] & NEIGHBOR_MASK)) {
-            if (prevNeighbors[side] & HAS_NEIGHBOR_MASK) {
-                removeNeighborFromSide(prevNeighbors[side] & CUBE_ID_MASK, side);
-                if (rawNeighbors[side] & HAS_NEIGHBOR_MASK) {
+        if (prevNeighbors[side] & HAS_NEIGHBOR_MASK) {
+            if (rawNeighbors[side] & HAS_NEIGHBOR_MASK) {
+                if (prevNeighbors[side] & CUBE_ID_MASK != rawNeighbors[side] & CUBE_ID_MASK) {
+                    // detected "switch" (addNeighborToSide will take care of removing the old one)
                     addNeighborToSide(rawNeighbors[side] & CUBE_ID_MASK, side);
                 }
-            } else if (rawNeighbors[side] & HAS_NEIGHBOR_MASK) {
-                addNeighborToSide(rawNeighbors[side] & CUBE_ID_MASK, side);
-            }   
+            } else {
+                // detected remove
+                removeNeighborFromSide(prevNeighbors[side] & CUBE_ID_MASK, side);
+            }
+        } else if (rawNeighbors[side] & HAS_NEIGHBOR_MASK) {
+            // detected add
+            addNeighborToSide(rawNeighbors[side] & CUBE_ID_MASK, side);
         }
     }    
     prevNeighbors[0] = rawNeighbors[0];
@@ -124,7 +127,7 @@ void NeighborSlot::clearSide(_SYSSideID side) {
 
 void NeighborSlot::removeNeighborFromSide(_SYSCubeID dstId, _SYSSideID side) {
     NeighborPair* pair;
-    gCubesToSides->setSideAndGetOtherSide(id(), dstId, side, &pair);
+    gCubesToSides->setSideAndGetOtherSide(id(), dstId, -1, &pair);
     if (pair->fullyDisconnected() && neighbors[side] == dstId) {
         clearSide(side);
     }
