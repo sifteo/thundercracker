@@ -65,7 +65,7 @@ void siftmain()
 {
     init();
 
-    _SYS_vectors.table[_SYS_EVENT_ACCELCHANGE] = onAccelChange;
+    _SYS_vectors.cubeEvents.accelChange = onAccelChange;
 
     for (unsigned i = 0; i < NUM_CUBES; i++) {
         vid[i].BG0_text(Vec2(2,1), Font, "Hello World!");
