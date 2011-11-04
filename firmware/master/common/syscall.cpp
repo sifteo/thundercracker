@@ -20,6 +20,7 @@
 #include "cube.h"
 #include "runtime.h"
 #include "vram.h"
+#include "neighbors.h"
 
 extern "C" {
 
@@ -83,12 +84,21 @@ void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state)
         CubeSlot::instances[cid].getAccelState(state);
 }
 
+void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) {
+    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid)) {
+        NeighborSlot::instances[cid].getNeighborState(state);
+    }
+}   
+
+
+/*
 void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
 {
     // XXX: Temporary for testing/demoing
     if (Runtime::checkUserPointer(buf, sizeof buf) && CubeSlot::validID(cid))
         CubeSlot::instances[cid].getRawNeighbors(buf);
 }
+*/
 
 void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v)
 {

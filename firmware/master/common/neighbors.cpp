@@ -29,7 +29,7 @@ struct NeighborPair {
 
     NeighborPair() : side0(-1), side1(-1) {}
 
-    _SYSSideID setSideAndGetOtherSide(int cid0, int cid1, int8_t side, NeighborPair** outPair) {
+    _SYSSideID setSideAndGetOtherSide(_SYSCubeID cid0, _SYSCubeID cid1, _SYSSideID side, NeighborPair** outPair) {
         // abstract the order-of-arguments invariant of lookup()
         if (cid0 < cid1) {
             *outPair = lookup(cid0, cid1);
@@ -42,7 +42,7 @@ struct NeighborPair {
         }
     }
 
-    NeighborPair* lookup(int cid0, int cid1) {
+    NeighborPair* lookup(_SYSCubeID cid0, _SYSCubeID cid1) {
         // invariant this == pairs[0]
         // invariant cid0 < cid1
         return (this + cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
@@ -79,7 +79,7 @@ void NeighborSlot::computeEvents() {
 void NeighborSlot::resetSlots(_SYSCubeIDVector cv) {
     while (cv) {
         _SYSCubeID cubeId = Intrinsic::CLZ(cv);
-        memset(instances[cubeId].neighbors, 0xff, sizeof instances[cubeId].neighbors);
+        memset(instances[cubeId].neighbors.sides, 0xff, sizeof instances[cubeId].neighbors);
         memset(instances[cubeId].prevNeighbors, 0x00, sizeof instances[cubeId].prevNeighbors);
         cv ^= Intrinsic::LZ(cubeId);
     }
@@ -101,11 +101,11 @@ void NeighborSlot::resetPairs(_SYSCubeIDVector cv) {
 void NeighborSlot::addNeighborToSide(_SYSCubeID dstId, _SYSSideID side) {
     NeighborPair* pair;
     _SYSSideID dstSide = gCubesToSides->setSideAndGetOtherSide(id(), dstId, side, &pair);
-    if (pair->fullyConnected() && neighbors[side] != dstId) {
+    if (pair->fullyConnected() && neighbors.sides[side] != dstId) {
         clearSide(side);
         instances[dstId].clearSide(dstSide);
-        neighbors[side] = dstId;
-        instances[dstId].neighbors[dstSide] = id();
+        neighbors.sides[side] = dstId;
+        instances[dstId].neighbors.sides[dstSide] = id();
         if (_SYS_vectors.neighborEvents.add) {
             _SYS_vectors.neighborEvents.add(id(), side, dstId, dstSide);
         }
@@ -113,22 +113,22 @@ void NeighborSlot::addNeighborToSide(_SYSCubeID dstId, _SYSSideID side) {
 }
 
 void NeighborSlot::clearSide(_SYSSideID side) {
-    _SYSCubeID otherId = neighbors[side];
+    _SYSCubeID otherId = neighbors.sides[side];
     if (otherId != 0xff) {
         _SYSSideID otherSide = 0;
-        while(instances[otherId].neighbors[otherSide] != id()) { ++otherSide; }
+        while(instances[otherId].neighbors.sides[otherSide] != id()) { ++otherSide; }
         if (_SYS_vectors.neighborEvents.remove) {
             _SYS_vectors.neighborEvents.remove(id(), side, otherId, otherSide);
         }
-        neighbors[side] = 0xff;
-        instances[otherId].neighbors[otherSide] = 0xff;
+        neighbors.sides[side] = 0xff;
+        instances[otherId].neighbors.sides[otherSide] = 0xff;
     }    
 }
 
 void NeighborSlot::removeNeighborFromSide(_SYSCubeID dstId, _SYSSideID side) {
     NeighborPair* pair;
     gCubesToSides->setSideAndGetOtherSide(id(), dstId, -1, &pair);
-    if (pair->fullyDisconnected() && neighbors[side] == dstId) {
+    if (pair->fullyDisconnected() && neighbors.sides[side] == dstId) {
         clearSide(side);
     }
 }
