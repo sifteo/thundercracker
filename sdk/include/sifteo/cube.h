@@ -75,6 +75,7 @@ class Cube {
     typedef _SYSCubeID ID;
     typedef _SYSSideID Side;
     typedef _SYSNeighborState Neighborhood;
+	typedef _SYSTiltState  TiltState;
 	
 	Cube()
 		: mID(CUBE_ID_UNDEFINED) {}
@@ -158,6 +159,13 @@ class Cube {
 	  _SYSAccelState state;
 	  _SYS_getAccel(mID, &state);
 	  return Vec2(state.x, state.y);
+	}
+
+	TiltState getTiltState() const {
+		TiltState state;
+		_SYS_getTilt(mID, &state);
+
+		return state;
 	}
 
     /**

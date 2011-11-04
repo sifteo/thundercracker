@@ -39,6 +39,7 @@ public:
 	bool IsQuiet() const;
 
 	GridSlot *GetSlot( int row, int col );
+	Cube &GetCube() { return m_cube; }
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
