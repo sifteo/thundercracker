@@ -21,6 +21,7 @@
 #include "runtime.h"
 #include "vram.h"
 #include "neighbors.h"
+#include "accel.h"
 
 extern "C" {
 
@@ -89,6 +90,18 @@ void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) {
         NeighborSlot::instances[cid].getNeighborState(state);
     }
 }   
+
+void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state)
+{
+    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid))
+        AccelState::instances[cid].getTiltState(state);
+}
+
+void _SYS_getShake(_SYSCubeID cid, _SYS_ShakeState *state)
+{
+    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid))
+        AccelState::instances[cid].getShakeState(state);
+}
 
 
 /*

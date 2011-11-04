@@ -15,6 +15,7 @@ OBJS_SIM = \
 	common/radio.sim.o \
 	common/cube.sim.o \
 	common/cubecodec.sim.o \
+	common/accel.sim.o \
 	common/neighbors.sim.o \
 	sim/siftulator.sim.o \
 	sim/main.sim.o \
@@ -25,6 +26,7 @@ OBJS_STM32 = \
 	common/radio.stm32.o \
 	common/cube.stm32.o \
 	common/cubecodec.stm32.o \
+	common/accel.stm32.o \
 	common/neighbors.stm32.o \
 	stm32/systime.stm32.o \
 	stm32/vectors.stm32.o \

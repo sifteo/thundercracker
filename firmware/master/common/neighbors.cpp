@@ -57,7 +57,7 @@ void NeighborSlot::computeEvents() {
     for(_SYSSideID side=0; side<4; ++side) {
         if (prevNeighbors[side] & HAS_NEIGHBOR_MASK) {
             if (rawNeighbors[side] & HAS_NEIGHBOR_MASK) {
-                if (prevNeighbors[side] & CUBE_ID_MASK != rawNeighbors[side] & CUBE_ID_MASK) {
+                if ((prevNeighbors[side] & CUBE_ID_MASK) != (rawNeighbors[side] & CUBE_ID_MASK)) {
                     // detected "switch" (addNeighborToSide will take care of removing the old one)
                     addNeighborToSide(rawNeighbors[side] & CUBE_ID_MASK, side);
                 }

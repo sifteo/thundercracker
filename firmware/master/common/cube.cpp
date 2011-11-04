@@ -11,6 +11,7 @@
 
 #include "cube.h"
 #include "vram.h"
+#include "accel.h"
 
 #include "neighbors.h"
 
@@ -307,10 +308,14 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         int8_t x = ack->accel[0];
         int8_t y = ack->accel[1];
 
+		//test for gestures
+		AccelState &accel = AccelState::getInstance( id() );
+		accel.update(x, y);
+
         if (x != accelState.x || y != accelState.y) {
             accelState.x = x;
             accelState.y = y;
-            Event::setPending(EventBits::ACCELCHANGE, id());
+            Event::setPending(EventBits::ACCELCHANGE, id());			
         }
     }
 
