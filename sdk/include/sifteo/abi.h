@@ -285,6 +285,27 @@ struct _SYSAccelState {
 };
 
 /**
+ * Accelerometer tilt state, where each axis has three values ( -1, 0, 1)
+ */
+
+typedef enum {
+	_SYS_TILT_NEGATIVE,
+	_SYS_TILT_NEUTRAL,
+	_SYS_TILT_POSITIVE,
+} _SYS_TiltType;
+
+struct _SYSTiltState {
+    unsigned x		: 4;
+    unsigned y		: 4;
+};
+
+
+typedef enum {
+  NOT_SHAKING,
+  SHAKING
+} e_ShakeState;
+
+/**
  * Every cube has an arbitrary unique hardware ID.
  */
 
@@ -301,17 +322,16 @@ struct _SYSCubeHWID {
 
 #define _SYS_MAX_VECTORS        32
 
-typedef enum
-	{
-		_SYS_EVENT_CUBEFOUND,
-		_SYS_EVENT_CUBELOST,
-		_SYS_EVENT_ASSETDONE,
-		_SYS_EVENT_ACCELCHANGE,
-		_SYS_EVENT_TOUCH,
-		_SYS_EVENT_TILT,
-		_SYS_EVENT_SHAKE,
-		_SYS_EVENT_CNT
-	} _SYS_EventType;
+typedef enum {
+	_SYS_EVENT_CUBEFOUND,
+	_SYS_EVENT_CUBELOST,
+	_SYS_EVENT_ASSETDONE,
+	_SYS_EVENT_ACCELCHANGE,
+	_SYS_EVENT_TOUCH,
+	_SYS_EVENT_TILT,
+	_SYS_EVENT_SHAKE,
+	_SYS_EVENT_CNT
+} _SYS_EventType;
 
 struct _SYSEventVectors {
 

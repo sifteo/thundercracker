@@ -11,6 +11,7 @@
 
 #include "cube.h"
 #include "vram.h"
+#include "accel.h"
 
 using namespace Sifteo;
 
@@ -290,6 +291,11 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             accelState.x = x;
             accelState.y = y;
             Event::setPending(_SYS_EVENT_ACCELCHANGE, id());
+
+			//test for gestures
+			AccelState &accel = AccelState::getInstance( id() );
+			accel.updateTiltState();
+			accel.updateShakeState();
         }
     }
 
