@@ -57,7 +57,8 @@ _y_bg1_addr_l::
 	.ds 1
 _y_bg1_bit_index::
 	.ds 1
-_x_spr::
+_x_spr::            ; 20 bytes
+_bg2_state::        ; 14 bytes
 	.ds 20
 
 	.area BSEG    (BIT)

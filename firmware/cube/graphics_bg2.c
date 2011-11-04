@@ -51,24 +51,46 @@
  * If the high bit of r1 or r3 are set, we're past the edge of the map, and
  * we're displaying the border color instead.
  */
+ 
+/*
+ * Saved parameters. Matches the parameter layout in VRAM.
+ */
+
+#define BG2_STATE_CX      (_bg2_state + 0)
+#define BG2_STATE_CY      (_bg2_state + 2)
+#define BG2_STATE_XX      (_bg2_state + 4)
+#define BG2_STATE_XY      (_bg2_state + 6)
+#define BG2_STATE_YX      (_bg2_state + 8)
+#define BG2_STATE_YY      (_bg2_state + 10)
+#define BG2_STATE_BORDER  (_bg2_state + 12)
+#define BG2_STATE_SIZE    14
+    
+extern struct {
+    struct _SYSAffine affine;
+    uint16_t border;
+} bg2_state;
+
+/*
+ * Macros
+ */
 
 // Update the X accumulator, leaving the high byte in 'a'
 #define BG2_ACCUM_X()                                          __endasm; \
     __asm mov  a, r0                                           __endasm; \
-    __asm add   a, _vm_bg2_xx_1_1                              __endasm; \
+    __asm add   a, BG2_STATE_XX                                __endasm; \
     __asm mov   r0, a                                          __endasm; \
     __asm mov   a, r1                                          __endasm; \
-    __asm addc  a, (_vm_bg2_xx_1_1 + 1)                        __endasm; \
+    __asm addc  a, (BG2_STATE_XX + 1)                          __endasm; \
     __asm mov   r1, a                                          __endasm; \
     __asm
 
 // Update the X accumulator, leaving the high byte in 'a'. Branch if it didn't change.
 #define BG2_ACCUM_X_JE(lbl)                                    __endasm; \
     __asm mov  a, r0                                           __endasm; \
-    __asm add   a, _vm_bg2_xx_1_1                              __endasm; \
+    __asm add   a, BG2_STATE_XX                                __endasm; \
     __asm mov   r0, a                                          __endasm; \
     __asm mov   a, r1                                          __endasm; \
-    __asm addc  a, (_vm_bg2_xx_1_1 + 1)                        __endasm; \
+    __asm addc  a, (BG2_STATE_XX + 1)                          __endasm; \
     __asm xrl   a, r1                                          __endasm; \
     __asm jz    lbl                                            __endasm; \
     __asm xrl   a, r1                                          __endasm; \
@@ -78,10 +100,10 @@
 // Update the Y accumulator, leaving the high byte in 'a'
 #define BG2_ACCUM_Y()                                          __endasm; \
     __asm mov   a, r2                                          __endasm; \
-    __asm add   a, _vm_bg2_xy_1_1                              __endasm; \
+    __asm add   a, BG2_STATE_XY                                __endasm; \
     __asm mov   r2, a                                          __endasm; \
     __asm mov   a, r3                                          __endasm; \
-    __asm addc  a, (_vm_bg2_xy_1_1 + 1)                        __endasm; \
+    __asm addc  a, (BG2_STATE_XY + 1)                          __endasm; \
     __asm mov   r3, a                                          __endasm; \
     __asm
 
@@ -154,41 +176,41 @@
     __asm BG2_ADDR_TILE()                                       __endasm; \
     __asm cacheHitLbl:                                          __endasm; \
     __asm
-
+    
 
 void vm_bg2(void)
 {
-    uint16_t cx;
-    uint16_t cy;
-    static uint16_t xx;
-    static uint16_t xy;
-    uint16_t yx;
-    uint16_t yy;
-    static uint16_t border;
-
-    uint8_t y = vram.num_lines;
-
-    lcd_begin_frame();
+    uint8_t y;
 
     /*
      * Latch all BG2 parameters atomically, at the start of the frame.
      * The 'wiggle' we get when we get a partial matrix update or it's updated
      * partway through a frame is very annoying :)
+     *
+     * We do this as a fast block copy, in assembly.
      */
 
-    radio_critical_section({
-        cx = vram.bg2_affine.cx;
-        cy = vram.bg2_affine.cy;
-        xx = vram.bg2_affine.xx;
-        xy = vram.bg2_affine.xy;
-        yx = vram.bg2_affine.yx;
-        yy = vram.bg2_affine.yy;
-        border = vram.bg2_border;
-    });
+    radio_irq_disable();
+    __asm
+        mov     dptr, #_SYS_VA_BG2_AFFINE
+        mov     r0, #_bg2_state
+        mov     r1, #BG2_STATE_SIZE
+5$:
+        movx    a, @dptr
+        mov     @r0, a
+        inc     dptr
+        inc     r0
+        djnz    r1, 5$
+    __endasm ;
+    radio_irq_disable();
     
     // We pre-increment in the loop below. Compensate by decrementing first.
-    cx -= xx;
-    cy -= xy;
+    bg2_state.affine.cx -= bg2_state.affine.xx;
+    bg2_state.affine.cy -= bg2_state.affine.xy;
+
+    // Prepare graphics loop
+    y = vram.num_lines;
+    lcd_begin_frame();
 
     /*
      * Initialize tile cache. This stays valid as long as we don't use the
@@ -212,8 +234,8 @@ void vm_bg2(void)
         uint16_t __at (GFX_BANK*8 + 2) gfxbank_cy;
         uint8_t __at (GFX_BANK*8 + 7) gfxbank_loops;
 
-        gfxbank_cx = cx;
-        gfxbank_cy = cy;
+        gfxbank_cx = bg2_state.affine.cx;
+        gfxbank_cy = bg2_state.affine.cy;
         gfxbank_loops = 128;
 
         __asm
@@ -283,7 +305,7 @@ void vm_bg2(void)
         orl     a, r1           ; Are we out of the border yet?
         jnb     acc.7, 4$
 8$:
-        PIXEL_FROM_REGS(_vm_bg2_border_1_1, (_vm_bg2_border_1_1 + 1))
+        PIXEL_FROM_REGS(BG2_STATE_BORDER, (BG2_STATE_BORDER + 1))
         djnz    r7, 7$
         sjmp    20$
 
@@ -294,8 +316,8 @@ void vm_bg2(void)
         mov     psw, #0
         __endasm ;
 
-        cx += yx;
-        cy += yy;
+        bg2_state.affine.cx += bg2_state.affine.yx;
+        bg2_state.affine.cy += bg2_state.affine.yy;
 
     } while (--y);    
 
