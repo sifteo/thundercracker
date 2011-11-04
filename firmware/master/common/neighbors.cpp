@@ -6,10 +6,10 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
- #include <protocol.h>
- #include <sifteo/machine.h>
+#include <protocol.h>
+#include <sifteo/machine.h>
 #include "neighbors.h"
- #include "vram.h"
+#include "vram.h"
 #include "runtime.h"
 
 #define CUBE_ID_MASK (0x1F)
@@ -74,10 +74,10 @@ void NeighborSlot::computeEvents() {
 }
 
 void NeighborSlot::resetSlots(_SYSCubeIDVector cv) {
-    while(cv) {
+    while (cv) {
         _SYSCubeID cubeId = Intrinsic::CLZ(cv);
-        *((uint32_t*)instances[cubeId].neighbors) = 0xffffffff;
-        *((uint32_t*)instances[cubeId].prevNeighbors) = 0x00000000;
+        memset(instances[cubeId].neighbors, 0xff, sizeof instances[cubeId].neighbors);
+        memset(instances[cubeId].prevNeighbors, 0x00, sizeof instances[cubeId].prevNeighbors);
         cv ^= Intrinsic::LZ(cubeId);
     }
 }
