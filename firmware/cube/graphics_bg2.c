@@ -202,7 +202,7 @@ void vm_bg2(void)
         inc     r0
         djnz    r1, 5$
     __endasm ;
-    radio_irq_disable();
+    radio_irq_enable();
     
     // We pre-increment in the loop below. Compensate by decrementing first.
     bg2_state.affine.cx -= bg2_state.affine.xx;
