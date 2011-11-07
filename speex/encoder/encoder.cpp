@@ -1,5 +1,6 @@
 
 #include "encoder.h"
+#include "filename_utils.h"
 
 #include <errno.h>
 #include <string.h>
@@ -10,19 +11,26 @@
 
 using namespace std;
 
+// #define SAMPLE_RATE 8000
+// #define SPEEX_MODE  SPEEX_MODEID_NB
+
+#define SAMPLE_RATE 16000
+#define SPEEX_MODE  SPEEX_MODEID_WB
+
+// #define SAMPLE_RATE 32000
+// #define SPEEX_MODE  SPEEX_MODEID_UWB
+
 Encoder::Encoder() :
     headerFile(0),
-    sourceFile(0)
+    sourceFile(0),
+    frameSize(0)
 {
-    encoderState = speex_encoder_init(&speex_nb_mode);
-
-    // int framesize;
-    // speex_decoder_ctl(encoderState, SPEEX_GET_FRAME_SIZE, &framesize); 
-
-    int quality = 8; // 8 is the default for speexenc
-    speex_encoder_ctl(encoderState, SPEEX_SET_QUALITY, &quality);
-    
+    encoderState = speex_encoder_init(speex_lib_get_mode(SPEEX_MODE));
     speex_bits_init(&bits);
+
+    int quality = 8; // 8 is the default for speexenc - need to accept this as a param
+    speex_encoder_ctl(encoderState, SPEEX_SET_QUALITY, &quality);
+    speex_encoder_ctl(encoderState,SPEEX_GET_FRAME_SIZE, &frameSize);
 }
 
 Encoder::~Encoder()
@@ -101,7 +109,7 @@ bool Encoder::encode(const char *configpath, int channels, int format)
                     "*/\n\n"
                     "#include <sifteo/audio.h>\n\n";
                     
-    string guard(guardName(headerFile));
+    string guard(FileNameUtils::guardName(headerFile));
     headerStream << "#ifndef " << guard << 
                     "\n#define " << guard << "\n\n"
                     "#include <sifteo/audio.h>\n\n";
@@ -109,15 +117,19 @@ bool Encoder::encode(const char *configpath, int channels, int format)
      * Get the path to each input in the config file relative
      * to the location of the config file itself.
      */
-    string dir(directoryPath(configpath));
+    string dir(FileNameUtils::directoryPath(configpath));
+    if (!dir.empty()) {
+        dir = dir + "/";
+    }
     for (vector<string>::iterator i = files.begin(); i != files.end(); i++) {
         string file = *i;
-        string path = dir + "/" + file;
-        int sz = encodeFile(path, channels, format, headerStream, sourceStream);
+        string path = dir + file;
+        int sz = encodeFile(dir, path, channels, format, headerStream, sourceStream);
         
-        sourceStream << "Sifteo::AudioModule " << baseName(file) << " = {\n"
+        sourceStream << "Sifteo::AudioModule " << FileNameUtils::baseName(file) << " = {\n"
+                        "    Sample, // type\n"
                         "    " << sz << ", // size\n"
-                        "    " << baseName(file) << "_data\n"
+                        "    " << FileNameUtils::baseName(file) << "_data\n"
                         "};\n\n";
     }
     
@@ -128,141 +140,112 @@ bool Encoder::encode(const char *configpath, int channels, int format)
     return true;
 }
 
-int Encoder::encodeFile(const string &path, int channels, int format, ofstream &headerStream, ofstream &srcStream)    
+int Encoder::encodeFile(const string & dir, const string &path, int channels, int format, ofstream &headerStream, ofstream &srcStream)
 {
-    ifstream instream;
-    instream.open(path.c_str(), ios::binary);
-    if (instream.fail()) {
+    FILE *fin = fopen(path.c_str(), "rb");
+    if (fin == 0) {
         fprintf(stderr, "error: couldn't open %s for reading (%s)\n", path.c_str(), strerror(errno));
         return 0;
     }
 
-    spx_int16_t inbuf[MAX_FRAME_SIZE];
+    string basename = FileNameUtils::baseName(path);
+
+    string encodedOutPath = dir + basename + "_enc.raw";
+    FILE *encodedOut = fopen(encodedOutPath.c_str(), "wb");
+    if (encodedOut == 0) {
+        fprintf(stderr, "error: couldn't open %s for writing (%s)\n", encodedOutPath.c_str(), strerror(errno));
+        return 0;
+    }
+
+    short inbuf[MAX_FRAME_SIZE];
     char outbuf[MAX_FRAME_BYTES];
     char buf[16];
     
-    srcStream << "static const uint8_t " << baseName(path) << "_data[] = {";
-    headerStream << "extern const Sifteo::AudioModule " << baseName(path) << ";\n";
+    srcStream << "static const uint8_t " << basename << "_data[] = {";
+    headerStream << "extern const Sifteo::AudioModule " << basename << ";\n";
     
     int bytecount = 0;
-    int inlen = instream.seekg(0, ios::end).tellg();
-    instream.seekg(0, ios::beg);
+    int frameCount = 0;
     
-    while (instream.good()) {
-        // note - must use DECODED_FRAME_SIZE here to fetch the appropriate amount of uncompressed data.
-        // using the encoder's 'framesize' will not fetch enough data and result in considerable sadness
-        int numsamples = readSamples(DECODED_FRAME_SIZE, format, channels, 0 /* lsb */, inbuf, instream);
-        if (numsamples == 0) {
-            fprintf(stderr, "warning: readSamples() returned 0...\n");
+    for (;;) {
+        int rx = fread(inbuf, sizeof(short), frameSize, fin);
+        if (feof(fin) || rx != frameSize) {
+            break;
         }
-        speex_encode_int(encoderState, inbuf, &bits);
-
-        speex_bits_insert_terminator(&bits); // TBD if we actually need this
-        int nbBytes = speex_bits_write(&bits, outbuf, sizeof(outbuf));
+        
+        // encode this frame and write it to our raw encoded file
         speex_bits_reset(&bits);
+        speex_encode_int(encoderState, inbuf, &bits);
         
+        int nbBytes = speex_bits_write(&bits, outbuf, sizeof(outbuf));
         assert(nbBytes < 0xFF && "frame is too large for format :(\n");
-
-        // file format: uint8_t of frame size, followed by frame data
-        if (!srcStream.is_open()) {
-            continue;
-        }
+        uint8_t num_bytes = nbBytes & 0xFF;
+        fwrite(&num_bytes, sizeof(uint8_t), 1, encodedOut);
+        fwrite(outbuf, sizeof(uint8_t), nbBytes, encodedOut);
+        bytecount += (nbBytes + 1);
         
-        sprintf(buf, "0x%02x,", (uint8_t)nbBytes);
-        srcStream << "\n    " << buf << "  // frame of " << nbBytes << " bytes";
-        bytecount++;
+        // write out data to a cpp source file for inclusion in a project
+        if (srcStream.is_open()) {
+            // file format: uint8_t of frame size, followed by frame data
+            snprintf(buf, sizeof(buf), "0x%02x,", nbBytes & 0xFF);
+            srcStream << "\n    " << buf << "  // frame " << frameCount++ << ", " << nbBytes << " bytes";
 
-        for (int i = 0; i < nbBytes; i++, bytecount++) {
-            if (i % 12 == 0) {
-                srcStream << "\n    ";
+            for (int i = 0; i < nbBytes; i++) {
+                if (i % 12 == 0) {
+                    srcStream << "\n    ";
+                }
+                snprintf(buf, sizeof(buf), "0x%02x,", (uint8_t)outbuf[i]);
+                srcStream << buf;
             }
-            sprintf(buf, "0x%02x,", (uint8_t)outbuf[i]);
-            srcStream << buf;
         }
     }
+
+    fseek(fin, 0, SEEK_END);
+    int inlen = ftell(fin);
+    srcStream << "\n};\n\n";
+    float percent = (float)bytecount / (float)inlen;
+    cout << basename << "\n    " << 1. - percent << "% compression (" << bytecount << " bytes)\n";
     
-    srcStream << "\n};\n\n";    
-    cout << baseName(path) << ": " << bytecount << " bytes, " << (float)bytecount / (float)inlen << "% of original.\n";
-    instream.close();
+    // cleanup
+    fclose(fin);
+    fclose(encodedOut);
     return bytecount;
 }
 
-// get the containing directory for a file
-string Encoder::directoryPath(const char *filepath)
+#if 0
+/*
+    Compare the original input with our encoded-then-decoded version of it.
+    Determine how much quality has been lost.
+*/
+void Encoder::calculateSNR(FILE *foriginal, FILE *froundtrip, float *snr, float *seg_snr)
 {
-    const char *p = strrchr(filepath, '/');
-    if (p == NULL) {
-        return "";
-    }
+    float sigpow = 0, errpow = 0;
+    int snr_frames = 0;
+    short in_short[MAX_FRAME_SIZE];
+    short out_short[MAX_FRAME_SIZE];
     
-    return string(filepath, p - filepath);
-}
-
-// base file name, with no path & no suffix
-string Encoder::baseName(const string &filepath)
-{
-    size_t d = filepath.find_last_of('/');
-    if (d == string::npos) { // if no slash, assume the beginning
-        d = 0;
-    }
-    else { // otherwise step past the slash
-        d++;
-    }
+    *seg_snr = 0;
     
-    size_t p = filepath.find_last_of('.');
-    if (p == string::npos) {
-        return "";
-    }
+    rewind(foriginal);
+    rewind(froundtrip);
     
-    return string(filepath, d, p - d);
-}
-
-// stolen from stir
-string Encoder::guardName(const char *filepath)
-{
-    char c;
-    char prev = '_';
-    string guard(1, prev);
-
-    while ((c = *filepath)) {
-        c = toupper(c);
-
-        if (isalpha(c)) {
-            prev = c;
-            guard += prev;
-        } else if (prev != '_') {
-            prev = '_';
-            guard += prev;
+    while (!feof(foriginal) && !feof(froundtrip)) {
+        unsigned origlen      = fread(in_short, sizeof(short), DECODED_FRAME_SIZE, foriginal);
+        unsigned roundtriplen = fread(out_short, sizeof(short), DECODED_FRAME_SIZE, froundtrip);
+        float s = 0, e = 0;
+        
+        unsigned comparelen = (origlen < roundtriplen) ? origlen : roundtriplen;
+        for (unsigned i = 0; i < comparelen; ++i) {
+            s += (float)in_short[i] * in_short[i];
+            e += ((float)in_short[i] - out_short[i]) * ((float)in_short[i] - out_short[i]);
         }
-
-        filepath++;
+        *seg_snr += 10 * log10((s + 1) / (e + 1));
+        sigpow += s;
+        errpow += e;
+        snr_frames++;
     }
-    return guard;
+    
+    *snr = 10 * log10(sigpow / errpow);
+    *seg_snr /= snr_frames;
 }
-
-int Encoder::readSamples(int framesize, int bits, int channels, int lsb, short *input, std::ifstream & ins)
-{
-  int rxed, i;
-  short *s;
-  char in[MAX_FRAME_BYTES * 2]; // account for possible stereo format
-  
-  rxed = ins.read(in, bits / 8 * channels * framesize).gcount();
-  rxed /= bits / 8 * channels;
-  if (rxed == 0) {
-    return 0;
-  }
-  
-  s = (short*)in;
-  
-  // TODO - endian conversion here if necessary
-  
-  // TODO - memcpy & memset these
-  for (i = 0; i < framesize * channels; i++) {
-    input[i] = s[i];
-  }
-
-  for (i = rxed * channels; i < framesize * channels; i++) {
-    input[i] = 0;
-  }
-  return rxed;
-}
+#endif
