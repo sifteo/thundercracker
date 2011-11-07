@@ -1,5 +1,6 @@
 
 #include "filename_utils.h"
+#include <string.h>
 
 using namespace std;
 
