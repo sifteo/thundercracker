@@ -16,23 +16,21 @@ public:
     
 private:
     // max sizes from speexenc
-    static const int MAX_FRAME_SIZE     = 2000;
-    static const int MAX_FRAME_BYTES    = 2000;
-    static const int DECODED_FRAME_SIZE = 160;
+    static const unsigned MAX_FRAME_SIZE     = 2000;
+    static const unsigned MAX_FRAME_BYTES    = 2000;
 
     const char* headerFile;
     const char* sourceFile;
     
     SpeexBits bits;
     void *encoderState;
-    
-    std::string directoryPath(const char *filepath);
-    std::string baseName(const std::string &filepath);
-    std::string guardName(const char *filepath);
+    int frameSize;
     
     void collectInputs(const char *path, std::vector<std::string> &inputs);
-    int encodeFile(const std::string &path, int channels, int format, std::ofstream & headerStream, std::ofstream & srcStream);
-    int readSamples(int framesize, int bits, int channels, int lsb, short *input, std::ifstream & ins);
+    int encodeFile(const std::string &dir, const std::string &file, int channels, int format, std::ofstream & headerStream, std::ofstream & srcStream);
+#if 0
+    void calculateSNR(FILE *foriginal, FILE *froundtrip, float *snr, float *seg_snr);
+#endif
 };
 
 #endif

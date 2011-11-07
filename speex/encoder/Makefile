@@ -1,7 +1,8 @@
 
 BIN = speexencoder
 OBJS = main.o \
-        encoder.o
+        encoder.o \
+        filename_utils.o
 
 ifeq ($(OS),Windows_NT)
     SPEEX_INSTALL = ../prebuilt/win32
