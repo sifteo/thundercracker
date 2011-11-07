@@ -34,3 +34,5 @@ $(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
 
 clean:
 	rm -f $(BINS) *.o $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
+
+-include $(OBJS_SIM:%.o=%.d)

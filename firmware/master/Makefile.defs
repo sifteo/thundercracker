@@ -53,6 +53,9 @@ CCFLAGS += $(CFLAGS)
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 
+# generate dependency files
+CCFLAGS += -MD -MP
+
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM := $(CFLAGS) -DSIFTEO_SIMULATOR
 CCFLAGS_SIM := $(CCFLAGS) -DSIFTEO_SIMULATOR
