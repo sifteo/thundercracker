@@ -36,6 +36,7 @@ void GridSlot::Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col )
 	m_pWrapper = pWrapper;
 	m_row = row;
 	m_col = col;
+	m_state = STATE_LIVING;
 }
 
 

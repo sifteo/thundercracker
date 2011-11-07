@@ -45,7 +45,6 @@ static void onTilt(_SYSCubeID cid)
 {
     Cube::TiltState state = game.cubes[cid].GetCube().getTiltState();
 
-	//for now , just tilt cube 0
 	if( state.x == _SYS_TILT_POSITIVE )
 		game.cubes[cid].Tilt( RIGHT );
 	else if( state.x == _SYS_TILT_NEGATIVE )
@@ -54,6 +53,13 @@ static void onTilt(_SYSCubeID cid)
 		game.cubes[cid].Tilt( DOWN );
 	else if( state.y == _SYS_TILT_NEGATIVE )
 		game.cubes[cid].Tilt( UP);
+}
+
+static void onShake(_SYSCubeID cid)
+{
+    _SYS_ShakeState state;
+    _SYS_getShake(cid, &state);
+	game.cubes[cid].Shake(state);
 }
 
 static void init()
@@ -69,6 +75,7 @@ void siftmain()
 	vid.BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
  */
     _SYS_vectors.cubeEvents.tilt = onTilt;
+	_SYS_vectors.cubeEvents.shake = onShake;
 
     while (1) {
         game.Update();        

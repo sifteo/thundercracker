@@ -19,6 +19,7 @@ public:
 	static const int NUM_ROWS = 4;
 	static const int NUM_COLS = 4;
 	static const int STARTING_FLIPS = 3;
+	static const float SHAKE_FILL_DELAY = 1.0f;
 
 	typedef enum
 	{
@@ -37,6 +38,7 @@ public:
 	void Update(float t);
 	void vidInit();
 	void Tilt( int dir );
+	void Shake( bool bShaking );
 
 	bool isFull();
 	bool isEmpty();
@@ -69,6 +71,8 @@ private:
 	//neighbor info
 	int m_neighbors[NUM_SIDES];
 	unsigned int m_flipsRemaining;
+	//what time did we start shaking?
+	float m_fShakeTime;
 };
 
 #endif

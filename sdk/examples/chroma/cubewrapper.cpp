@@ -11,7 +11,7 @@
 
 static _SYSCubeID s_id = 0;
 
-CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_flipsRemaining( STARTING_FLIPS )
+CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_flipsRemaining( STARTING_FLIPS ), m_fShakeTime( -1.0f )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -61,6 +61,16 @@ void CubeWrapper::DrawSplash()
 
 void CubeWrapper::Update(float t)
 {
+	//check for shaking
+	if( m_state != STATE_NOFLIPS )
+	{
+        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
+		{
+            m_fShakeTime = -1.0f;
+            checkRefill();
+		}
+	}
+
 	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
 	{
         bool newValue = m_cube.hasPhysicalNeighborAt(i);
@@ -109,6 +119,9 @@ void CubeWrapper::Tilt( int dir )
 	bool bChanged = false;
 
 	PRINT( "tilting" );
+
+	if( m_fShakeTime > 0.0f )
+		return;
 
 	//hastily ported from the python
 	switch( dir )
@@ -189,6 +202,15 @@ void CubeWrapper::Tilt( int dir )
 
 	if( bChanged )
 		Game::Inst().setTestMatchFlag();
+}
+
+
+void CubeWrapper::Shake( bool bShaking )
+{
+	if( bShaking )
+		m_fShakeTime = System::clock();
+	else
+		m_fShakeTime = -1.0f;
 }
 
 
