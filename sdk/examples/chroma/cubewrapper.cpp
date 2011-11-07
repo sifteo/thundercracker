@@ -11,21 +11,15 @@
 
 static _SYSCubeID s_id = 0;
 
-CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf)
+CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_flipsRemaining( STARTING_FLIPS )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
 		m_neighbors[i] = -1;
 	}
 
-	for( int i = 0; i < NUM_ROWS; i++ )
-	{
-		for( int j = 0; j < NUM_COLS; j++ )
-		{
-			GridSlot &slot = m_grid[i][j];
-			slot.Init( this, i, j );
-		}
-	}
+	m_state = STATE_PLAYING;
+	Refill();
 }
 
 
@@ -196,6 +190,7 @@ void CubeWrapper::Tilt( int dir )
 	if( bChanged )
 		Game::Inst().setTestMatchFlag();
 }
+
 
 //try moving a gem from row1/col1 to row2/col2
 //return if successful
@@ -379,4 +374,100 @@ GridSlot *CubeWrapper::GetSlot( int row, int col )
 	}
 
 	return NULL;
+}
+
+
+bool CubeWrapper::isFull()
+{
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			GridSlot &slot = m_grid[i][j];
+			if( slot.isEmpty() )
+				return false;
+		}
+	}
+
+	return true;
+}
+
+bool CubeWrapper::isEmpty()
+{
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			GridSlot &slot = m_grid[i][j];
+			if( !slot.isEmpty() )
+				return false;
+		}
+	}
+
+	return true;
+}
+
+
+void CubeWrapper::checkRefill()
+{
+	if( isFull() )
+            m_state = STATE_PLAYING;
+    else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
+	{
+        if( isEmpty() )
+            m_state = STATE_EMPTY;
+        else
+            m_state = STATE_PLAYING;
+	}
+	else if( isEmpty() )
+	{
+		m_state = STATE_PLAYING;
+		Refill();
+
+		if( Game::Inst().getMode() == Game::MODE_FLIPS && Game::Inst().getScore() > 0 )
+		{
+            /*fmsg = "FREE FLIP!"
+            self.message_sprites.append(MessageSprite(self, BORDERSIZE, 47, fmsg, area=(SCREENSIZE-BORDERSIZE*2,36), bg=True))
+            self.paint()*/
+		}
+	}
+	else
+	{
+		if( Game::Inst().getMode() != Game::MODE_FLIPS )
+		{
+			m_state = STATE_PLAYING;
+            Refill();
+		}
+		else if( m_flipsRemaining > 0 )
+		{
+			m_state = STATE_PLAYING;
+            Refill();
+            m_flipsRemaining--;
+
+            /*s = self.flips_remaining == 0 and "NO" or str(self.flips_remaining)
+            t = self.flips_remaining != 1 and "s" or ""
+            fmsg = "%s flip%s left"%(s, t)
+            self.message_sprites.append(MessageSprite(self, BORDERSIZE, 47, fmsg, area=(SCREENSIZE-BORDERSIZE*2,36), bg=True))
+            self.paint()*/
+		}
+		else
+		{
+			m_state = STATE_NOFLIPS;
+            /*self.state = STATE_NOFLIPS
+            self.need_repaint_empty = True*/
+		}
+	}
+}
+ 
+
+void CubeWrapper::Refill()
+{
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			GridSlot &slot = m_grid[i][j];
+			slot.Init( this, i, j );
+		}
+	}
 }

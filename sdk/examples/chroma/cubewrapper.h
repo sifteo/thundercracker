@@ -18,6 +18,14 @@ class CubeWrapper
 public:
 	static const int NUM_ROWS = 4;
 	static const int NUM_COLS = 4;
+	static const int STARTING_FLIPS = 3;
+
+	typedef enum
+	{
+		STATE_PLAYING,
+		STATE_EMPTY,
+		STATE_NOFLIPS,
+	} CubeState;
 
 	CubeWrapper();
 
@@ -29,6 +37,12 @@ public:
 	void Update(float t);
 	void vidInit();
 	void Tilt( int dir );
+
+	bool isFull();
+	bool isEmpty();
+
+	void checkRefill();
+	void Refill();
 
 	void testMatches();
 	void FillSlotArray( GridSlot **gems, int side, bool clockwise );
@@ -48,10 +62,13 @@ private:
 	Cube m_cube;
 	VidMode_BG0 m_vid;
 	VidMode_BG0_ROM m_rom;
+
+	CubeState m_state;
 	GridSlot m_grid[NUM_ROWS][NUM_COLS];
 
 	//neighbor info
 	int m_neighbors[NUM_SIDES];
+	unsigned int m_flipsRemaining;
 };
 
 #endif

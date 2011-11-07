@@ -23,6 +23,13 @@ public:
 		STATE_PLAYING,
 	} GameState;
 
+	typedef enum
+	{
+		MODE_FLIPS,
+		MODE_TIMED,
+		MODE_PUZZLE,
+	} GameMode;
+
 	static Game &Inst();
 	
 	Game();
@@ -42,12 +49,19 @@ public:
 	//get random value from 0 to max
 	static unsigned int Rand( unsigned int max );
 
+	inline GameState getState() const { return m_state; }
+	inline GameMode getMode() const { return m_mode; }
+
+	inline unsigned int getScore() const { return m_iScore; }
+
 private:
 	void TestMatches();
 	bool IsAllQuiet();
 	bool m_bTestMatches;
 	unsigned int m_iGemScore;
+	unsigned int m_iScore;
 	GameState m_state;
+	GameMode m_mode;
 	float m_splashTime;
 };
 
