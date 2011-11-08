@@ -41,6 +41,8 @@ public:
 	void Tilt( int dir );
 	void Shake( bool bShaking );
 
+	Banner &getBanner() { return m_banner; }
+
 	bool isFull();
 	bool isEmpty();
 
@@ -52,8 +54,8 @@ public:
 
 	int GetSideNeighboredOn( _SYSCubeID id, Cube &cube );
 
-	//if all gems are living or gone, nothing is happening
-	bool IsQuiet() const;
+	//get the number of dots that are marked or exploding
+	unsigned int getNumMarked() const;
 
 	GridSlot *GetSlot( int row, int col );
 	Cube &GetCube() { return m_cube; }

@@ -42,6 +42,7 @@ public:
 	void Update(float t);
 	bool isAlive() const { return m_state == STATE_LIVING; }
 	bool isEmpty() const { return m_state == STATE_GONE; }
+	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
 	void setEmpty() { m_state = STATE_GONE; }
 	unsigned int getColor() const { return m_color; }
 

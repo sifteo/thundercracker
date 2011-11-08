@@ -45,7 +45,7 @@ public:
 	//flag self to test matches
 	void setTestMatchFlag() { m_bTestMatches = true; }
 
-	unsigned int getIncrementScore() { return ++m_iGemScore; }
+	unsigned int getIncrementScore() { m_iDotScoreSum += ++m_iDotScore; return m_iDotScore; }
 
 	//get random value from 0 to max
 	static unsigned int Rand( unsigned int max );
@@ -55,12 +55,17 @@ public:
 
 	inline unsigned int getScore() const { return m_iScore; }
 
+	void CheckChain( CubeWrapper *pWrapper );
+
 private:
 	void TestMatches();
-	bool IsAllQuiet();
 	bool m_bTestMatches;
-	unsigned int m_iGemScore;
+	//how much our current dot is worth
+	unsigned int m_iDotScore;
+	//running total
+	unsigned int m_iDotScoreSum;
 	unsigned int m_iScore;
+	unsigned int m_iDotsCleared;
 	GameState m_state;
 	GameMode m_mode;
 	float m_splashTime;

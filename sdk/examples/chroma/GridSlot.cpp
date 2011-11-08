@@ -147,6 +147,7 @@ void GridSlot::die()
 {
 	m_state = STATE_SHOWINGSCORE;
 	m_score = Game::Inst().getIncrementScore();
+	Game::Inst().CheckChain( m_pWrapper );
 	m_eventTime = System::clock();
 }
 

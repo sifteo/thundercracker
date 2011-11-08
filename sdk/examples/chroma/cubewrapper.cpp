@@ -383,22 +383,6 @@ int CubeWrapper::GetSideNeighboredOn( _SYSCubeID id, Cube &cube )
 }
 
 
-//if all gems are living or gone, nothing is happening
-bool CubeWrapper::IsQuiet() const
-{
-	for( int i = 0; i < NUM_ROWS; i++ )
-	{
-		for( int j = 0; j < NUM_COLS; j++ )
-		{
-			const GridSlot &slot = m_grid[i][j];
-			if( !(slot.isAlive() || slot.isEmpty() ) )
-				return false;
-		}
-	}
-
-	return true;
-}
-
 GridSlot *CubeWrapper::GetSlot( int row, int col )
 {
 	//PRINT( "trying to retrieve %d, %d", row, col );
@@ -505,4 +489,24 @@ void CubeWrapper::Refill()
 			slot.Init( this, i, j );
 		}
 	}
+}
+
+
+
+//get the number of dots that are marked or exploding
+unsigned int CubeWrapper::getNumMarked() const
+{
+	unsigned int numMarked = 0;
+
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			const GridSlot &slot = m_grid[i][j];
+			if( slot.isMarked() )
+				numMarked++;
+		}
+	}
+
+	return numMarked;
 }

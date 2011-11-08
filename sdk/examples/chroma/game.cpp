@@ -15,7 +15,7 @@ Game &Game::Inst()
 	return game; 
 }
 
-Game::Game() : m_bTestMatches( false ), m_iGemScore ( 0 ), m_iScore( 0 ), m_state( STARTING_STATE ), m_mode( MODE_FLIPS ), m_splashTime( 0.0f )
+Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_FLIPS ), m_splashTime( 0.0f )
 {
 }
 
@@ -72,9 +72,6 @@ void Game::Update()
 
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
-
-		if( IsAllQuiet() )
-			m_iGemScore = 0;
 	}
             
     System::paint();
@@ -104,15 +101,51 @@ unsigned int Game::Rand( unsigned int max )
 }
 
 
-bool Game::IsAllQuiet()
+
+void Game::CheckChain( CubeWrapper *pWrapper )
 {
+	int total_marked = 0;
+
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
-		if( !cubes[i].IsQuiet() )
-			return false;
+		total_marked += cubes[i].getNumMarked();
 	}
 
-	return true;
+    if( total_marked == 0 )
+	{
+		m_iScore += m_iDotScoreSum;
+		m_iDotsCleared += m_iDotScore;
+
+		if( m_mode == MODE_PUZZLE )
+		{
+			//TODO puzzle mode
+			//check_puzzle();
+		}
+		else
+		{
+			//TODO sound
+			/*# play sound based on number of gems cleared in this combo.
+			dings = (
+					(10, "score5"),
+					(7, "score4"),
+					(4, "score3"),
+					(2, "score2"),
+					(0, None),
+					)
+			sound = reduce(lambda x,y: cleared >= x[0] and x or y, dings)[1]
+			if sound:
+				self.sound_manager.add(sound)*/
+
+			char aBuf[16];
+			sprintf( aBuf, "%d", m_iDotScoreSum );
+			pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_FADE_DELAY/2.0f );
+		}
+
+		//TODO timer mode
+		/*if( m_mode == MODE_TIME )
+			self.timekeeper.add_time(m_iDotsCleared * gems_timer.TIME_RETURN_PER_GEM)*/
+
+		m_iDotScore = 0;
+		m_iDotScoreSum = 0;
+	}
 }
-
-
