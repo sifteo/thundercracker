@@ -216,10 +216,11 @@ void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index,
     }
 }
 
-void _SYS_audio_initChannel(struct _SYSAudioBuffer *buf)
+void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
 {
-    (void)buf;
-    // TODO - set this channel as enabled
+    if (Runtime::checkUserPointer(buffer, sizeof(*buffer))) {
+        AudioMixer::instance.enableChannel(buffer);
+    }
 }
 
 bool _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, _SYSAudioLoopType loop)

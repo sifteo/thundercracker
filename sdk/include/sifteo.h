@@ -13,6 +13,7 @@
 #include <sifteo/math.h>
 #include <sifteo/system.h>
 #include <sifteo/asset.h>
+#include <sifteo/audio.h>
 #include <sifteo/limits.h>
 #include <sifteo/macros.h>
 #include <sifteo/video.h>

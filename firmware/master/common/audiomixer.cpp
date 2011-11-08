@@ -12,8 +12,10 @@ using namespace Sifteo;
 AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
+    enabledChannelMask(0),
     activeChannelMask(0),
-    nextHandle(0)
+    nextHandle(0),
+    availableDecodersMask(ALL_DECODERS_AVAILABLE)
 {
 }
 
@@ -25,21 +27,104 @@ void AudioMixer::init()
     }
 }
 
+/*
+ * Userspace must supply a buffer for each channel they want to enable.
+ * Once they do, the channel can be used in subsequent calls to play().
+ */
+void AudioMixer::enableChannel(struct _SYSAudioBuffer *buffer)
+{
+    if (enabledChannelMask >= ALL_CHANNELS_ENABLED) {
+        return;
+    }
+    // find the first disabled channel, init it and mark it as enabled
+    for (int i = 0; i < _SYS_AUDIO_NUM_CHANNELS; i++) {
+        if (!(enabledChannelMask & (1 << i))) {
+            Atomic::SetBit(enabledChannelMask, i);
+            channels[i].init(buffer);
+            return;
+        }
+    }
+}
+
 #if 0 // super hack for testing
 
 #include "audio.gen.h" // provides blueshift
+#include <speex/speex.h>
 
 void AudioMixer::test()
 {
     AudioMixer::instance.init();
-    AudioOutDevice::init(AudioOutDevice::kHz8000, &AudioMixer::instance);
+    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 
-//    handle_t handle;
-//    const Sifteo::AudioModule &mod = blueshift_8kHz;
+    _SYSAudioBuffer audio[2];
+    for (unsigned i = 0; i < arraysize(audio); i++) {
+        Audio::enableChannel(&audio[i]);
+    }
+
+    _SYSAudioHandle handle;
+    const Sifteo::AudioModule &mod = spaceshipearth_16khz;
+#if 0
+
+#include <stdio.h>
+
+    short decompressBuf[512];
+    SpeexBits bits;
+    void *decoderState;
+
+    speex_bits_init(&bits);
+    decoderState = speex_decoder_init(&speex_wb_mode);
+
+    int framesize;
+    speex_decoder_ctl(decoderState, SPEEX_GET_FRAME_SIZE, &framesize);
+
+    int enhancer = 1;
+    speex_decoder_ctl(decoderState, SPEEX_SET_ENH, &enhancer);
+
+    FILE *fout = fopen("C:/Users/Liam/Desktop/speextesting/test_dec.raw", "wb");
+    ASSERT(fout != 0);
+
+    const uint8_t *data = mod.sys.data;
+    int totalsize = mod.sys.size;
+    int state = 0;
+    int sz;
+
+#if 1
+    SpeexDecoder dec;
+    dec.init();
+
+    dec.setData(data, totalsize);
+
+    while (!dec.endOfStream()) {
+        sz = dec.decodeFrame((uint8_t*)decompressBuf, sizeof(decompressBuf));
+        fwrite(decompressBuf, sizeof(uint8_t), sz, fout);
+    }
+
+#else
+
+    while (state == 0) {
+        sz = *data++;
+        if (data - mod.sys.data >= totalsize) {
+            break;
+        }
+        speex_bits_read_from(&bits, (char*)data, sz);
+        state = speex_decode_int(decoderState, &bits, decompressBuf);
+        data += sz;
+        fwrite(decompressBuf, sizeof(short), framesize, fout);
+    }
+#endif
+
+    fclose(fout);
+
+    int t = state;
+
+#endif
+    if (!AudioMixer::instance.play(mod, &handle)) {
+        while (1); // error
+    }
     for (;;) {
-//        if (!gMixer.isPlaying(handle)) {
-//            if (!gMixer.play(mod, &handle)) {
+//        if (!AudioMixer::instance.isPlaying(handle)) {
+//            if (!AudioMixer::instance.play(mod, &handle)) {
 //                while (1); // error
 //            }
 //        }
@@ -54,7 +139,7 @@ void AudioMixer::test()
  * Called from the AudioOutDevice when it needs more data - not sure when this
  * will actually be happening yet.
  */
-int AudioMixer::pullAudio(char *buffer, int numsamples)
+int AudioMixer::pullAudio(uint8_t *buffer, int numsamples)
 {
     if (activeChannelMask == 0) {
         return 0;
@@ -70,12 +155,12 @@ int AudioMixer::pullAudio(char *buffer, int numsamples)
         if ((mask & 1) == 0 || (ch->isPaused())) {
             continue;
         }
-        int mixed = ch->pullAudio((uint8_t*)buffer, numsamples);
+        int mixed = ch->pullAudio(buffer, numsamples);
         if (mixed > bytesMixed) {
             bytesMixed = mixed;
         }
         if (ch->endOfStream()) {
-//            activeChannelMask
+            stopChannel(ch);
         }
     }
     return bytesMixed;
@@ -106,18 +191,39 @@ void AudioMixer::fetchData()
 
 bool AudioMixer::play(const AudioModule &mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
 {
-    if (activeChannelMask == 0xFFFFFFFF) {
+    if (enabledChannelMask == 0 || activeChannelMask == 0xFFFFFFFF) {
         return false; // no free channels
     }
 
-    int channelIndex = Intrinsic::CLZ(activeChannelMask);
-    AudioChannel *ch = &channels[channelIndex];
-    ch->state = (loopMode == LoopOnce) ? 0 : AudioChannel::STATE_LOOP;
-//    ch->decoder.setData(mod.data, mod.size);
+    // find the next channel that's both enabled and inactive
+    uint32_t activeMask = activeChannelMask;
+    uint32_t enabledMask = enabledChannelMask;
+    int idx;
+    for (idx = 0; idx < _SYS_AUDIO_NUM_CHANNELS; idx++) {
+        if ((enabledMask & (1 << idx)) &&
+           ((activeMask  & (1 << idx))) == 0) {
+            break;
+        }
+    }
+
+    // does this module require a decoder? if so, get one
+    SpeexDecoder *dec;
+    if (mod.sys.type == Sample) {
+        dec = getDecoder();
+        if (dec == NULL) {
+            return false; // no decoders available
+        }
+    }
+    else {
+        dec = 0;
+    }
+
+    AudioChannel *ch = &channels[idx];
     ch->handle = nextHandle++;
     *handle = ch->handle;
+    ch->play(mod, loopMode, dec);
 
-    Atomic::SetBit(activeChannelMask, channelIndex);
+    Atomic::SetBit(activeChannelMask, idx);
     return true;
 }
 
@@ -137,9 +243,7 @@ void AudioMixer::stopChannel(AudioChannel *ch)
 {
     int channelIndex = ch - channels;
     Atomic::ClearBit(activeChannelMask, channelIndex);
-    if (activeChannelMask == 0) {
-//        outdev.stop();
-    }
+    // TODO - release decoder
 }
 
 void AudioMixer::pause(_SYSAudioHandle handle)
@@ -188,4 +292,19 @@ AudioChannel* AudioMixer::channelForHandle(_SYSAudioHandle handle)
         }
     }
     return 0;
+}
+
+SpeexDecoder* AudioMixer::getDecoder()
+{
+    if (availableDecodersMask == 0) {
+        return NULL;
+    }
+
+    for (int i = 0; i < _SYS_AUDIO_NUM_SAMPLE_CHANNELS; i++) {
+        if (availableDecodersMask & (1 << i)) {
+            Atomic::ClearBit(availableDecodersMask, i);
+            return &decoders[i];
+        }
+    }
+    return NULL;
 }

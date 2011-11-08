@@ -278,7 +278,11 @@ struct _SYSVideoBuffer {
 
 typedef uint32_t _SYSAudioHandle;
 
-#define _SYS_AUDIO_BUF_SIZE             (160 * sizeof(int16_t))
+// NOTE - _SYS_AUDIO_BUF_SIZE must be power of 2 for our current FIFO implementation,
+// but must also accommodate a full frame's worth of speex data. If we go narrowband,
+// that's 160 shorts so we can get away with 512 bytes. Wideband is 320 shorts
+// so we need to kick up to 1024 bytes. kind of a lot :/
+#define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t))
 #define _SYS_AUDIO_NUM_CHANNELS         8
 #define _SYS_AUDIO_NUM_SAMPLE_CHANNELS  2
 
@@ -286,8 +290,7 @@ typedef uint32_t _SYSAudioHandle;
  * Types of audio supported by the system - TBD if these make sense...
  */
 enum _SYSAudioType {
-    Sample,
-    Synth
+    Sample // more tbd...
 };
 
 enum _SYSAudioLoopType {
@@ -302,9 +305,14 @@ struct _SYSAudioModule {
 };
 
 struct _SYSAudioBuffer {
-    uint32_t len;
-    uint8_t *ptr;
+    uint16_t head;
+    uint16_t tail;
+#ifdef SIFTEO_SIMULATOR
+    // host system is higher latency, needs more buffered data to not stutter
+    uint8_t data[(_SYS_AUDIO_BUF_SIZE * 4)];
+#else
     uint8_t data[_SYS_AUDIO_BUF_SIZE];
+#endif
 };
 
 /**
@@ -396,7 +404,7 @@ void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index,
 void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count);
 void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count);
 
-void _SYS_audio_initChannel(struct _SYSAudioBuffer *buf);
+void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer);
 bool _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, _SYSAudioLoopType loop);
 bool _SYS_audio_isPlaying(_SYSAudioHandle h);
 void _SYS_audio_stop(_SYSAudioHandle h);

@@ -1,7 +1,10 @@
 
 #include "speexdecoder.h"
 #include "flashlayer.h"
+#include <sifteo/macros.h>
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 SpeexDecoder::SpeexDecoder() :
     decodeState(0),
@@ -18,12 +21,12 @@ void SpeexDecoder::init()
     // TODO - speex_bits_init_buffer appears to result in different decoded data...
     // would be nicer to use it though...look into it
     speex_bits_init(&this->bits);
-    this->decodeState = speex_decoder_init(&speex_nb_mode); // narrowband mode
+    this->decodeState = speex_decoder_init(&speex_wb_mode); // wideband mode
     if (this->decodeState == 0) {
         while (1); // TODO - handle error
     }
     int enh = 1;
-    speex_decoder_ctl(this->decodeState, SPEEX_SET_ENH, &enh); // enhancement off
+    speex_decoder_ctl(this->decodeState, SPEEX_SET_ENH, &enh); // enhancement on
 
 #if 0
     // verify framesize

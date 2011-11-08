@@ -20,40 +20,10 @@ public:
     _SYSAudioModule sys;
 };
 
-class AudioBuffer {
+class Audio {
 public:
-    AudioBuffer() {
-        setDataLen(0);
-    }
-
-    void setDataLen(uint32_t len) {
-        sys.len = len;
-        sys.ptr = sys.data;
-    }
-
-    int bytesAvailable() const {
-        return MIN(sys.len - (sys.ptr - sys.data), 0);
-    }
-
-    uint8_t getU8() {
-        ASSERT(bytesAvailable() > 0);
-        return *sys.ptr++;
-    }
-
-    int16_t getS16() {
-        ASSERT(bytesAvailable() > 1);
-        int16_t v = *(int16_t*)sys.ptr;
-        sys.ptr += sizeof(int16_t);
-        return v;
-    }
-
-    _SYSAudioBuffer sys;
-};
-
-class AudioMixer2 {
-public:
-    static void initChannel(AudioBuffer &buf) {
-        _SYS_audio_initChannel(&buf.sys);
+    static void enableChannel(_SYSAudioBuffer *buffer) {
+        _SYS_audio_enableChannel(buffer);
     }
 
     static bool play(const Sifteo::AudioModule &mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode = LoopOnce) {
@@ -63,6 +33,7 @@ public:
     static bool isPlaying(_SYSAudioHandle handle) {
         return _SYS_audio_isPlaying(handle);
     }
+
     static void stop(_SYSAudioHandle handle) {
         _SYS_audio_stop(handle);
     }

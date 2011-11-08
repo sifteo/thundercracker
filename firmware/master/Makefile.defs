@@ -48,19 +48,22 @@ LDFLAGS += -lm
 
 # CC is C++, CPP is the C Preprocessor. C++ code inherits CFLAGS,
 # but it may have additional C++-specific flags set as well.
-CCFLAGS += $(CFLAGS)
 
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 
 ifeq ($(UNAME), windows32)
-    CFLAGS_SIM  += -I$(TC_DIR)/speex/prebuilt/win32/include
-    LDFLAGS_SIM += -L$(TC_DIR)/speex/prebuilt/win32/lib -lspeex -lws2_32
+    CFLAGS_SIM  +=  -I$(TC_DIR)/deps/win32/speex/include \
+                    -I$(TC_DIR)/deps/win32/portaudio/include
+    LDFLAGS_SIM +=  -L$(TC_DIR)/deps/win32/speex/lib \
+                    -L$(TC_DIR)/deps/win32/portaudio/lib \
+                    -lportaudio -lspeex \
+                    -lws2_32
 endif
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
-CCFLAGS_SIM := $(CFLAGS_SIM) $(CCFLAGS)
+CCFLAGS_SIM := $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
 LDFLAGS_SIM += $(LDFLAGS)
 
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
@@ -70,7 +73,7 @@ ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
               -msoft-float -mno-thumb-interwork
 
 CFLAGS_STM32 += $(CFLAGS) $(ARCH_STM32)
-CCFLAGS_STM32 := $(CFLAGS_STM32) $(CCFLAGS)
+CCFLAGS_STM32 := $(CFLAGS_STM32) $(CCFLAGS) # inherit all STM32 CFLAGS plus CCFLAGS
 LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
               -Wl,--gc-sections,-u,IVT \
               -T $(LDSCRIPT_STM32) -nostartfiles

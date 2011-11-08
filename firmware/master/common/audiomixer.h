@@ -10,81 +10,20 @@
 
 #include <stdint.h>
 #include "speexdecoder.h"
+#include "audiobuffer.h"
+#include "audiochannel.h"
 #include <sifteo/audio.h>
-
-/*
- * Base class for AudioChannels
- */
-class AudioChannel {
-public:
-    static const int STATE_PAUSED   = (1 << 0);
-    static const int STATE_LOOP     = (1 << 1);
-    static const int STATE_STOPPED  = (1 << 2);
-
-    AudioChannel() : buf(0), state(0)
-    {}
-    void init(Sifteo::AudioBuffer *b) {
-        buf = b;
-    }
-    int pullAudio(uint8_t *buffer, int len) {
-        ASSERT(!(state & STATE_STOPPED));
-        int bytesToMix = MIN(buf->bytesAvailable(), len);
-        if (bytesToMix > 0) {
-            for (int i = 0; i < bytesToMix; i++) {
-                *buffer += buf->getU8(); // TODO - volume, limiting, compression, etc
-                buffer++;
-            }
-            if (!buf->bytesAvailable()) {
-                state |= STATE_STOPPED;
-            }
-        }
-        return bytesToMix;
-    }
-    bool endOfStream() const {
-        return state & STATE_STOPPED;
-    }
-    void pause() {
-        state |= STATE_PAUSED;
-    }
-    bool isPaused() const {
-        return state & STATE_PAUSED;
-    }
-    void resume() {
-        state &= ~STATE_PAUSED;
-    }
-
-protected:
-    void fetchData() {
-        switch (audioType) {
-        case Sample: {
-                if (buf->bytesAvailable())
-                    return;
-                uint32_t sz = decoder->decodeFrame(buf->sys.data, sizeof(buf->sys.data));
-                buf->setDataLen(sz);
-            }
-            break;
-        default:
-            break;
-        }
-    }
-    Sifteo::AudioBuffer *buf;
-    int state;
-    enum _SYSAudioType audioType;
-    _SYSAudioHandle handle;
-    SpeexDecoder *decoder;
-    friend class AudioMixer;    // mixer can tell us to fetchData()
-};
+#include <stdio.h>
 
 class AudioMixer
 {
 public:
-    static const int NUM_CHANNELS = 2;
-
     AudioMixer();
 
     static AudioMixer instance;
 
     void init();
+    void enableChannel(struct _SYSAudioBuffer *buffer);
 
     static void test();
 
@@ -102,16 +41,25 @@ public:
 
     bool active() const { return activeChannelMask; }
 
-    int pullAudio(char *buffer, int numsamples);
+    int pullAudio(uint8_t *buffer, int numsamples);
     void fetchData();
 
 private:
-    uint32_t activeChannelMask;
+    uint32_t enabledChannelMask;    // channels userspace has provided buffers for
+    uint32_t activeChannelMask;     // channels that are actively playing
+
     _SYSAudioHandle nextHandle;
+
     AudioChannel channels[_SYS_AUDIO_NUM_CHANNELS];
+    static const uint32_t ALL_CHANNELS_ENABLED = 0xFF;
+
+    // decoders can be loaned to a channel for sample playback
     SpeexDecoder decoders[_SYS_AUDIO_NUM_SAMPLE_CHANNELS];
+    uint32_t availableDecodersMask;
+    static const int ALL_DECODERS_AVAILABLE = 0x3;
 
     AudioChannel* channelForHandle(_SYSAudioHandle handle);
+    SpeexDecoder* getDecoder();
     void stopChannel(AudioChannel *ch);
 };
 
