@@ -21,6 +21,7 @@ public:
 		STATE_SPLASH,
 		STATE_MENU,
 		STATE_PLAYING,
+		STARTING_STATE = STATE_PLAYING,
 	} GameState;
 
 	typedef enum

@@ -15,7 +15,7 @@ Game &Game::Inst()
 	return game; 
 }
 
-Game::Game() : m_bTestMatches( false ), m_iGemScore ( 0 ), m_iScore( 0 ), m_state( STATE_SPLASH ), m_mode( MODE_FLIPS ), m_splashTime( 0.0f )
+Game::Game() : m_bTestMatches( false ), m_iGemScore ( 0 ), m_iScore( 0 ), m_state( STARTING_STATE ), m_mode( MODE_FLIPS ), m_splashTime( 0.0f )
 {
 }
 
