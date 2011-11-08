@@ -142,12 +142,12 @@ void CubeWrapper::Tilt( int dir )
 		{
 			for( int i = 0; i < NUM_COLS; i++ )
 			{
-				for( int j = NUM_ROWS - 1; j >= 0; j-- )
+				for( int j = 0; j < NUM_ROWS; j++ )
 				{
 					//start shifting it over
 					for( int k = j - 1; k >= 0; k-- )
 					{
-						if( TryMove( j, i, k, i ) )
+						if( TryMove( k+1, i, k, i ) )
 							bChanged = true;
 						else
 							break;
@@ -160,12 +160,12 @@ void CubeWrapper::Tilt( int dir )
 		{
 			for( int i = 0; i < NUM_ROWS; i++ )
 			{
-				for( int j = NUM_COLS - 1; j >= 0; j-- )
+				for( int j = 0; j < NUM_COLS; j++ )					
 				{
 					//start shifting it over
 					for( int k = j - 1; k >= 0; k-- )
 					{
-						if( TryMove( i, j, i, k ) )
+						if( TryMove( i, k+1, i, k ) )
 							bChanged = true;
 						else
 							break;
@@ -178,12 +178,12 @@ void CubeWrapper::Tilt( int dir )
 		{
 			for( int i = 0; i < NUM_COLS; i++ )
 			{
-				for( int j = 0; j < NUM_ROWS; j++ )
+				for( int j = NUM_ROWS - 1; j >= 0; j-- )
 				{
 					//start shifting it over
 					for( int k = j + 1; k < NUM_ROWS; k++ )
 					{
-						if( TryMove( j, i, k, i ) )
+						if( TryMove( k-1, i, k, i ) )
 							bChanged = true;
 						else
 							break;
@@ -196,12 +196,12 @@ void CubeWrapper::Tilt( int dir )
 		{
 			for( int i = 0; i < NUM_ROWS; i++ )
 			{
-				for( int j = 0; j < NUM_COLS; j++ )	
+				for( int j = NUM_COLS - 1; j >= 0; j-- )
 				{
 					//start shifting it over
 					for( int k = j + 1; k < NUM_COLS; k++ )
 					{
-						if( TryMove( i, j, i, k ) )
+						if( TryMove( i, k-1, i, k ) )
 							bChanged = true;
 						else
 							break;
