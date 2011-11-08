@@ -9,6 +9,7 @@
 
 #include <sifteo.h>
 #include "GridSlot.h"
+#include "banner.h"
 
 using namespace Sifteo;
 
@@ -20,9 +21,6 @@ public:
 	static const int NUM_COLS = 4;
 	static const int STARTING_FLIPS = 3;
 	static const float SHAKE_FILL_DELAY = 1.0f;
-	static const int BANNER_WIDTH = 16;
-	static const int BANNER_ROWS = 4;
-	static const int MAX_BANNER_LENGTH = 16;
 
 	typedef enum
 	{
@@ -59,8 +57,6 @@ public:
 
 	GridSlot *GetSlot( int row, int col );
 	Cube &GetCube() { return m_cube; }
-
-	void DrawBanner();
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
@@ -72,7 +68,7 @@ private:
 
 	CubeState m_state;
 	GridSlot m_grid[NUM_ROWS][NUM_COLS];
-	char m_bannermsg[MAX_BANNER_LENGTH];
+	Banner m_banner;
 
 	//neighbor info
 	int m_neighbors[NUM_SIDES];
