@@ -116,7 +116,7 @@ void CubeWrapper::Update(float t)
 		}
 	}
 
-	m_banner.Update(t);
+	m_banner.Update(t, m_cube);
 }
 
 
@@ -460,9 +460,7 @@ void CubeWrapper::checkRefill()
 
 		if( Game::Inst().getMode() == Game::MODE_FLIPS && Game::Inst().getScore() > 0 )
 		{
-            /*fmsg = "FREE FLIP!"
-            self.message_sprites.append(MessageSprite(self, BORDERSIZE, 47, fmsg, area=(SCREENSIZE-BORDERSIZE*2,36), bg=True))
-            self.paint()*/
+			m_banner.SetMessage( "FREE FLIP!" );
 		}
 	}
 	else
@@ -478,17 +476,20 @@ void CubeWrapper::checkRefill()
             Refill();
             m_flipsRemaining--;
 
-            /*s = self.flips_remaining == 0 and "NO" or str(self.flips_remaining)
-            t = self.flips_remaining != 1 and "s" or ""
-            fmsg = "%s flip%s left"%(s, t)
-            self.message_sprites.append(MessageSprite(self, BORDERSIZE, 47, fmsg, area=(SCREENSIZE-BORDERSIZE*2,36), bg=True))
-            self.paint()*/
+			if( m_flipsRemaining == 0 )
+				m_banner.SetMessage( "NO FLIPS LEFT" );
+			else if( m_flipsRemaining == 1 )
+				m_banner.SetMessage( "1 FLIP LEFT" );
+			else
+			{
+				char aBuf[16];
+				sprintf( aBuf, "%d FLIPS LEFT", m_flipsRemaining );
+				m_banner.SetMessage( aBuf );
+			}
 		}
 		else
 		{
 			m_state = STATE_NOFLIPS;
-            /*self.state = STATE_NOFLIPS
-            self.need_repaint_empty = True*/
 		}
 	}
 }

@@ -14,17 +14,21 @@ using namespace Sifteo;
 class Banner
 {
 public:
-	static const int BANNER_WIDTH = 16;
+	static const unsigned int BANNER_WIDTH = 16;
 	static const int BANNER_ROWS = 4;
 	static const int MAX_BANNER_LENGTH = 16;
+	static const float SCORE_FADE_DELAY = 2.0f;
 
 	Banner();
 
 	void Draw( Cube &cube );
-	void Update(float t);
+	void Update(float t, Cube &cube);
+
+	void SetMessage( const char *pMsg, float duration = SCORE_FADE_DELAY );
+
 private:
 	char m_Msg[MAX_BANNER_LENGTH];
-	float m_fStartTime;
+	float m_fEndTime;
 };
 
 #endif

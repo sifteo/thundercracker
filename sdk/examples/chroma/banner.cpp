@@ -11,7 +11,7 @@
 Banner::Banner()
 {
 	m_Msg[0] = '\0';
-	m_fStartTime = -1.0f;
+	m_fEndTime = -1.0f;
 }
 
 
@@ -28,7 +28,7 @@ void Banner::Draw( Cube &cube )
     _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0xFFFF, BANNER_ROWS );
 
 	//clear banner
-	for( int i = 0; i < BANNER_WIDTH * BANNER_ROWS; i++ )
+	for( unsigned int i = 0; i < BANNER_WIDTH * BANNER_ROWS; i++ )
 	{
 		_SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2 + i,
                          Font.tiles,
@@ -49,12 +49,38 @@ void Banner::Draw( Cube &cube )
 							 0, 1);
 		}
 	}
+
+	_SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_y), -48);
+
 	/*_SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
                          Cover.tiles,
                          0, BANNER_WIDTH * BANNER_ROWS);*/
 }
 
 
-void Banner::Update(float t)
+void Banner::Update(float t, Cube &cube)
 {
+	int iLen = strlen( m_Msg );
+	if( iLen > 0 )
+	{
+		if( t > m_fEndTime )
+		{
+			m_Msg[0] = '\0';
+			m_fEndTime = -1.0f;
+			//clear out
+			_SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0x0000, BANNER_ROWS );
+		}
+	}
+}
+
+
+void Banner::SetMessage( const char *pMsg, float duration )
+{
+	ASSERT( strlen( pMsg ) < BANNER_WIDTH );
+
+	if( strlen( pMsg ) < BANNER_WIDTH )
+	{
+		strcpy( m_Msg, pMsg );
+		m_fEndTime = System::clock() + duration;
+	}
 }
