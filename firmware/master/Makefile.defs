@@ -27,6 +27,7 @@ ifneq ($(BUILD_STM32),)
 endif
 
 ASSETS = assets
+GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 
 ifeq ($(DEBUG),)
