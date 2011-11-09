@@ -8,6 +8,7 @@
 
 #include "runtime.h"
 #include "cube.h"
+#include "neighbors.h"
 
 using namespace Sifteo;
 
@@ -15,7 +16,7 @@ jmp_buf Runtime::jmpExit;
 
 bool Event::dispatchInProgress;
 uint32_t Event::pending;
-uint32_t Event::eventCubes[_SYS_EVENT_CNT];
+uint32_t Event::eventCubes[EventBits::COUNT];
 
 
 void Runtime::run()
@@ -46,11 +47,16 @@ void Event::dispatch()
      */
 
     while (pending) {
-        _SYS_EventType event = (_SYS_EventType)Intrinsic::CLZ(pending);
+        EventBits::ID event = (EventBits::ID)Intrinsic::CLZ(pending);
 
 		while (eventCubes[event]) {
-                uint32_t slot = Intrinsic::CLZ(eventCubes[event]);
-                callEvent(event, slot);
+                _SYSCubeID slot = Intrinsic::CLZ(eventCubes[event]);
+                if (event <= EventBits::LAST_CUBE_EVENT) {
+                    callCubeEvent(event, slot);
+                } else if (event == EventBits::NEIGHBOR) {
+                    NeighborSlot::instances[slot].computeEvents();
+                }
+                
                 Atomic::And(eventCubes[event], ~Intrinsic::LZ(slot));
             }
         Atomic::And(pending, ~Intrinsic::LZ(event));

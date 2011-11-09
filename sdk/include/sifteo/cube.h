@@ -73,7 +73,8 @@ static int kOrientationTable[4][4] = {
 class Cube {
  public:
     typedef _SYSCubeID ID;
-    typedef int8_t Side;
+    typedef _SYSSideID Side;
+    typedef _SYSNeighborState Neighborhood;
 	
 	Cube()
 		: mID(CUBE_ID_UNDEFINED) {}
@@ -127,9 +128,15 @@ class Cube {
      */
     
     ID physicalNeighborAt(Side side) const {
-		uint8_t buf[NUM_SIDES];
-		_SYS_getRawNeighbors(mID, buf);
-		return buf[side]>>7 ? buf[side] & 0x1f : CUBE_ID_UNDEFINED;
+        ASSERT(side >= 0);
+        ASSERT(side < NUM_SIDES);
+        _SYSNeighborState state;
+		_SYS_getNeighbors(mID, &state);
+        return state.sides[side];
+    }
+    
+    ID hasPhysicalNeighborAt(Side side) const {
+        return physicalNeighborAt(side) != CUBE_ID_UNDEFINED;
     }
     
     /**
@@ -138,12 +145,11 @@ class Cube {
      */
     
     Side physicalSideOf(ID cube) const {
-		uint8_t buf[NUM_SIDES];
-		_SYS_getRawNeighbors(mID, buf);
+        ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
+        _SYSNeighborState state;
+		_SYS_getNeighbors(mID, &state);
         for(Side side=0; side<NUM_SIDES; ++side) {
-			if (buf[side]>>7 && (buf[side] & 0x1f) == cube) {
-				return side;
-			}
+            if (state.sides[side] == cube) { return side; }
         }
         return SIDE_UNDEFINED;
     }
@@ -180,19 +186,40 @@ class Cube {
     }
     
 	void setOrientation(Side topSide) {
-		ASSERT(topSide != SIDE_UNDEFINED);
+		ASSERT(topSide >= 0);
+        ASSERT(topSide < 4);
 	  	VidMode mode(vbuf);
 	  	mode.setRotation(kSideToRotation[topSide]);
 	}
 	
-	void orientTo(Cube* src) {
-		Side srcSide = src->physicalSideOf(mID);
-		Side dstSide = physicalSideOf(src->mID);
+	void orientTo(const Cube& src) {
+		Side srcSide = src.physicalSideOf(mID);
+		Side dstSide = physicalSideOf(src.mID);
 		ASSERT(srcSide != SIDE_UNDEFINED);
 		ASSERT(dstSide != SIDE_UNDEFINED);
-		srcSide = (srcSide - src->orientation()) % NUM_SIDES;
+		srcSide = (srcSide - src.orientation()) % NUM_SIDES;
 		if (srcSide < 0) { srcSide += NUM_SIDES; }
 		setOrientation(kOrientationTable[dstSide][srcSide]);
+	}
+	
+	Side physicalToVirtual(Side side) const {
+        if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
+        ASSERT(side >= 0);
+        ASSERT(side < 4);
+        Side rot = orientation();
+        ASSERT(rot != SIDE_UNDEFINED);
+        side = (side - rot) % NUM_SIDES;
+        return side < 0 ? side + NUM_SIDES : side;
+        
+	}
+	
+	Side virtualToPhysical(Side side) const {
+        if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
+        ASSERT(side >= 0);
+        ASSERT(side < 4);
+        Side rot = orientation();
+        ASSERT(rot != SIDE_UNDEFINED);
+        return (side + rot) % NUM_SIDES;
 	}
 	
     /**
@@ -200,10 +227,11 @@ class Cube {
      */
     
     ID virtualNeighborAt(Side side) const {
-        Side rot = orientation();
-        ASSERT(rot != SIDE_UNDEFINED);
-        side = (side + rot) % NUM_SIDES;
-        return physicalNeighborAt(side);
+        return physicalNeighborAt(virtualToPhysical(side));
+    }
+    
+    ID hasVirtualNeighborAt(Side side) const {
+        return virtualNeighborAt(side) != CUBE_ID_UNDEFINED;
     }
     
     /**
@@ -211,12 +239,7 @@ class Cube {
      */
     
     Side virtualSideOf(ID cube) const {
-        Side side = physicalSideOf(cube);
-        if (side == SIDE_UNDEFINED) { return SIDE_UNDEFINED; }
-        Side rot = orientation();
-        ASSERT(rot != SIDE_UNDEFINED);
-        side = (side - rot) % NUM_SIDES;
-        return side < 0 ? side + NUM_SIDES : side;
+        return physicalToVirtual(physicalSideOf(cube));
     }
     
 	Vec2 virtualAccel() const {

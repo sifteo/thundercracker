@@ -13,6 +13,7 @@ OBJS = \
         graphics_fb64.rel \
         graphics_fb128.rel \
         graphics_solid.rel \
+	overlay.rel \
         lcd.rel \
         radio.rel \
         sensors.rel \

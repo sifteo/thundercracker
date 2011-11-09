@@ -10,14 +10,6 @@
 #include "hardware.h"
 #include "radio.h"
 
-uint8_t x_bg1_shift, x_bg1_first_addr, x_bg1_last_addr;
-__bit x_bg1_rshift, x_bg1_lshift;
-__bit x_bg1_offset_bit0, x_bg1_offset_bit1, x_bg1_offset_bit2;
-
-uint8_t y_bg1_addr_l, y_bg1_bit_index;
-uint16_t y_bg1_map;
-__bit y_bg1_empty;
-
 
 void vm_bg0_bg1(void)
 {

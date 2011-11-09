@@ -22,13 +22,15 @@
  *  -DLCD_MODEL_GIANTPLUS_ILI9163C
  *  -DLCD_MODEL_TRULY_ST7735
  *  -DLCD_MODEL_TIANMA_ST7715
+ *  -DLCD_MODEL_TIANMA_HX8353
  *
  * ... or accept the current default.
  */
 
 #if !( defined(LCD_MODEL_GIANTPLUS_ILI9163C) || \
        defined(LCD_MODEL_TRULY_ST7735)       || \
-       defined(LCD_MODEL_TIANMA_ST7715)      )
+       defined(LCD_MODEL_TIANMA_ST7715)      || \
+       defined(LCD_MODEL_TIANMA_HX8353)      )
 
 #define LCD_MODEL_GIANTPLUS_ILI9163C
 #endif
@@ -119,6 +121,10 @@
 #define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB | LCD_MADCTR_MY | LCD_MADCTR_MX)
 #endif
 
+#ifdef LCD_MODEL_TIANMA_HX8353
+#define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB | LCD_MADCTR_MY | LCD_MADCTR_MX)
+#endif
+
 /*
  * Some LCDs have different addressing schemes, based on how the
  * controller and the panel are wired together.
@@ -140,6 +146,11 @@
 #ifdef LCD_MODEL_TIANMA_ST7715
 #define LCD_ROW_ADDR(x)         ((x) + 3)
 #define LCD_COL_ADDR(x)         ((x) + 2)
+#endif
+
+#ifdef LCD_MODEL_TIANMA_HX8353
+#define LCD_ROW_ADDR(x)         (x)
+#define LCD_COL_ADDR(x)         (x)
 #endif
 
 /*
@@ -272,6 +283,35 @@ static const __code uint8_t lcd_setup_table[] =
     0x30, 0x30, 0x39, 0x3f, 0x00, 0x07, 0x03, 0x10,
 
 #endif // LCD_MODEL_TIANMA_ST7715
+
+    /**************************************************************
+     * Tianma display, with HX8353-D Controller.
+     *
+     * Based on the sample init sequence provided by Tianma.
+     */
+
+#ifdef LCD_MODEL_TIANMA_HX8353
+
+    1, LCD_CMD_SWRESET,
+    1, LCD_CMD_SLPOUT,
+
+    LONG_DELAY,
+
+    4, 0xb9, 0xff, 0x83, 0x53,          // SETEXC
+    2, 0xc6, 0x31,                      // UADJ   (60Hz frame rate)
+    3, 0xb1, 0x00, 0x00,                // SETPWCTR
+    3, 0xbf, 0x04, 0x38,                // SETPTBA
+    5, 0xc0, 0x50, 0x08, 0x0c, 0xca,    // SETSTBA
+    2, 0xcc, 0x00,                      // SETPANEL
+    5, 0xe3, 0x08, 0x00, 0x04, 0x10,    // EQ
+    4, 0xb6, 0x94, 0x78, 0x64,          // VCOM
+
+    20, 0xe0,                           // Gamma
+    0x00, 0x74, 0x71, 0x0a, 0xff, 0x01, 0x07, 0x0f,
+    0x06, 0x01, 0x60, 0x30, 0x77, 0x0d, 0xf0, 0x0e,
+    0x0a, 0x08, 0x0f,
+    
+#endif // LCD_MODEL_TIANMA_HX8353
 
     /**************************************************************
      * Portable initialization

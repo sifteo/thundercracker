@@ -24,8 +24,25 @@ static void onAccelChange(_SYSCubeID cid)
 {
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
-    vid[cid].BG0_textf(Vec2(2,4), Font, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
-    vid[cid].BG0_setPanning(Vec2(-state.x/2, -state.y/2));
+    vid[cid].BG0_textf(Vec2(2,2), Font, "Accel: %02x %02x", state.x + 0x80, state.y + 0x80);
+}
+
+static void onTilt(_SYSCubeID cid)
+{
+    _SYSTiltState state;
+    _SYS_getTilt(cid, &state);
+    vid[cid].BG0_textf(Vec2(2,4), Font, "Tilt: %d %d     ", state.x - 1, state.y - 1);
+}
+
+static void onShake(_SYSCubeID cid)
+{
+    _SYS_ShakeState state;
+    _SYS_getShake(cid, &state);
+	if( state == SHAKING )
+		vid[cid].BG0_drawAsset(Vec2(0,0), Shake);
+	else
+		vid[cid].clear(Font.tiles[0]);
+    //vid[cid].BG0_textf(Vec2(2,7), Font, "Shaking: %d", state);
 }
 
 static void init()
@@ -65,28 +82,19 @@ void siftmain()
 {
     init();
 
-    _SYS_vectors.cubeEvents.accelChange = onAccelChange;
-
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        vid[i].BG0_text(Vec2(2,1), Font, "Hello World!");
-        vid[i].BG0_drawAsset(Vec2(1,10), Logo);
-        onAccelChange(cubes[i].id());
-    } 
+	_SYS_vectors.cubeEvents.accelChange = onAccelChange;
+    _SYS_vectors.cubeEvents.tilt = onTilt;
+	_SYS_vectors.cubeEvents.shake = onShake;
 
     unsigned frame = 0;
     const unsigned rate = 2;
 
+	onTilt(0);
+	onShake(0);
+
     while (1) {
         float t = System::clock();
-
-        for (unsigned i = 0; i < NUM_CUBES; i++) {
-            vid[i].BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
-            vid[i].BG0_drawAsset(Vec2(11,9), Kirby, frame >> rate);
-        }
-
-        if (++frame == Kirby.frames << rate)
-            frame = 0;
-            
+           
         System::paint();
     }
 }

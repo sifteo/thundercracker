@@ -75,6 +75,46 @@ static void lcd_cmd_table(const __code uint8_t *ptr) __naked
     __endasm;
 }
 
+#ifdef LCD_MODEL_TIANMA_HX8353
+void lcd_lut_32()
+{
+    uint8_t i;
+    for (i = 0; i < 31; i++) {
+        LCD_BYTE(i << 1);
+    }
+    LCD_BYTE(63);
+}
+
+void lcd_lut_64()
+{
+    uint8_t i;
+    for (i = 0; i < 64; i++) {
+        LCD_BYTE(i);
+    }
+}
+
+void lcd_lut_init()
+{
+    /*
+     * The HX8353 seems to boot up with a totally bogus color LUT.
+     * So, we need to set it ourselves.
+     */
+     
+    uint8_t i;
+    
+    LCD_WRITE_BEGIN();
+    LCD_CMD_MODE();
+    LCD_BYTE(LCD_CMD_COLOR_LUT);
+    LCD_DATA_MODE();
+    
+    lcd_lut_32();   // Red
+    lcd_lut_64();   // Green
+    lcd_lut_32();   // Blue
+
+    // It's okay to return in write mode.
+}
+#endif
+
 void lcd_sleep()
 {
     /*
@@ -111,6 +151,10 @@ void lcd_begin_frame()
         CTRL_PORT = CTRL_IDLE;  // Backlight on
         lcd_is_awake = 1;
         lcd_cmd_table(lcd_setup_table);
+        
+#ifdef LCD_MODEL_TIANMA_HX8353
+        lcd_lut_init();
+#endif
     }
 
     LCD_WRITE_BEGIN();

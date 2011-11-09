@@ -58,7 +58,19 @@ static __bit flash_poll_data;  // What data bit are we expecting?
     BUS_DIR = 0xFF;                             \
     CTRL_PORT = CTRL_FLASH_OUT;
 
+static void flash_prefix_aa_55()
+{
+    FLASH_CMD_PREFIX(0xAAA, 0xAA);
+    FLASH_CMD_PREFIX(0x555, 0x55);
+}
 
+static void flash_write_unlock()
+{
+    // Write unlock prefix
+    flash_prefix_aa_55();
+    FLASH_CMD_PREFIX(0xAAA, 0xA0);
+}
+    
 void flash_erase(uint8_t blockCount)
 {
     /*
@@ -90,11 +102,9 @@ void flash_erase(uint8_t blockCount)
         BUS_DIR = 0;
 
         // Common unlock prefix for all erase ops
-        FLASH_CMD_PREFIX(0xAAA, 0xAA);
-        FLASH_CMD_PREFIX(0x555, 0x55);
+        flash_prefix_aa_55();
         FLASH_CMD_PREFIX(0xAAA, 0x80);
-        FLASH_CMD_PREFIX(0xAAA, 0xAA);
-        FLASH_CMD_PREFIX(0x555, 0x55);
+        flash_prefix_aa_55();
 
         if (blockCount >= (FLASH_NUM_BLOCKS - 1) && flash_addr_lat2 == 0) {
 
@@ -200,10 +210,7 @@ void flash_program_word(uint16_t dat) __naked
     CTRL_PORT = CTRL_IDLE;
     BUS_DIR = 0;
 
-    // Write unlock prefix
-    FLASH_CMD_PREFIX(0xAAA, 0xAA);
-    FLASH_CMD_PREFIX(0x555, 0x55);
-    FLASH_CMD_PREFIX(0xAAA, 0xA0);
+    flash_write_unlock();
 
     // Write byte
     __asm
@@ -249,10 +256,7 @@ void flash_program_word(uint16_t dat) __naked
     CTRL_PORT = CTRL_IDLE;
     BUS_DIR = 0;
 
-    // Write unlock prefix
-    FLASH_CMD_PREFIX(0xAAA, 0xAA);
-    FLASH_CMD_PREFIX(0x555, 0x55);
-    FLASH_CMD_PREFIX(0xAAA, 0xA0);
+    flash_write_unlock();
 
     // Write data byte, without any temporary registers
     __asm

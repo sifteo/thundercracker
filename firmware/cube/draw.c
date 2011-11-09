@@ -10,9 +10,6 @@
 #include "lcd.h"
 #include "draw.h"
 
-uint16_t draw_xy;
-uint8_t draw_attr;
-
 void draw_clear()
 {
     // Clear all of VRAM (1 kB)

@@ -30,7 +30,7 @@ void draw_string(const __code char *str);
 // Draw a hexadecimal byte
 void draw_hex(uint8_t value);
 
-// Current drawing state
+// Current drawing state. Not preserved across graphics_render().
 extern uint16_t draw_xy;
 extern uint8_t draw_attr;
 

@@ -13,6 +13,25 @@
 #include <sifteo/abi.h>
 #include <sifteo/machine.h>
 
+namespace EventBits {
+	enum ID {
+	    // cube event bits first (will be used in pointer maths)
+	    CUBEFOUND,
+	    CUBELOST,
+	    ASSETDONE,
+	    ACCELCHANGE,
+	    TOUCH,
+	    TILT,
+	    SHAKE,
+	    LAST_CUBE_EVENT = SHAKE,
+	    
+	    // other event bits
+		NEIGHBOR,
+		
+		// Must be last
+	    COUNT      
+	};
+}
 
 /**
  * Game code runtime environment
@@ -66,7 +85,7 @@ class Event {
  public:
     static void dispatch();
     
-    static void setPending(_SYS_EventType t, _SYSCubeID id) {
+    static void setPending(EventBits::ID t, _SYSCubeID id) {
         Sifteo::Atomic::SetLZ(pending, t);
         Sifteo::Atomic::SetLZ(eventCubes[t], id);
     }
@@ -75,7 +94,7 @@ class Event {
     static uint32_t pending;            /// CLZ map of all pending events
 
     /// Each event type has a map by cube slot
-    static uint32_t eventCubes[_SYS_EVENT_CNT];     
+    static uint32_t eventCubes[EventBits::COUNT];     
     
  private:
     /*
@@ -85,10 +104,19 @@ class Event {
      *      probably-machine-specific and data-driven to enter the
      *      interpreter quickly and make an asynchronous procedure call.
      */
-    static void callEvent(_SYS_EventType event, _SYSCubeID cid) {
+    static void callCubeEvent(EventBits::ID event, _SYSCubeID cid) {
+        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::CUBEFOUND == &(_SYS_vectors.cubeEvents.found) );
+        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::CUBELOST == &(_SYS_vectors.cubeEvents.lost) );
+        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::ASSETDONE == &(_SYS_vectors.cubeEvents.assetDone) );
+        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::ACCELCHANGE == &(_SYS_vectors.cubeEvents.accelChange) );
+        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::TOUCH == &(_SYS_vectors.cubeEvents.touch) );
+        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::TILT == &(_SYS_vectors.cubeEvents.tilt) );
+        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::SHAKE == &(_SYS_vectors.cubeEvents.shake) );
+        ASSERT(event <= EventBits::LAST_CUBE_EVENT);
         ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-        if (_SYS_vectors.table[event])
-            _SYS_vectors.table[event](cid);
+        _SYSCubeEvent* eventArray = (_SYSCubeEvent*) &(_SYS_vectors.cubeEvents);
+        if (eventArray[event])
+             eventArray[event](cid);
     }
 };
 

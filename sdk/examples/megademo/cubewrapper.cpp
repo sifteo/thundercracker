@@ -79,14 +79,15 @@ void CubeWrapper::DrawSplash()
 
 void CubeWrapper::Update(float t)
 {
-	uint8_t buf[4];
-    _SYS_getRawNeighbors(m_cube.id(), buf);
+	//uint8_t buf[4];
+    //_SYS_getRawNeighbors(m_cube.id(), buf);
 
-	for( int i = 0; i < NUM_SIDES; i++ )
+	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
 	{
 		//TODO, this should be pushed into sdk
 		//also, it doesn't check what cubes are its neighbors
-		bool newValue = ( buf[i] >> 7 ) > 0;
+		//bool newValue = ( buf[i] >> 7 ) > 0;
+        bool newValue = m_cube.hasPhysicalNeighborAt(i);
 
 		//newly neighbored
 		if( newValue && !m_neighbors[i])
@@ -601,12 +602,12 @@ void CubeWrapper::Hello()
     if (++m_frame == Kirby.frames << rate)
         m_frame = 0;
 
-	uint8_t buf[4];
-	_SYS_getRawNeighbors(m_cube.id(), buf);
+	//uint8_t buf[4];
+	//_SYS_getRawNeighbors(m_cube.id(), buf);
 
-	for( int i = 0; i < NUM_SIDES; i++ )
+	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
 	{
-		if( ( buf[i] >> 7 ) > 0 )
+	    if (m_cube.hasPhysicalNeighborAt(i))
 			Game::Inst().setState( Game::STATE_GFXDEMO );
 	}
 }

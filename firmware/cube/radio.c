@@ -450,6 +450,7 @@ rxs_literal:
         orl     a, R_HIGH       ; Combine with saved two MSBs
         movx    @dptr, a        ; Store high byte
         inc     dptr
+        anl     _DPH1, #3       ; Wrap DPH1 at 1 kB        
 
         mov     _DPS, #0
 
@@ -612,6 +613,7 @@ rx_not_word9:
         mov     a, R_HIGH
         movx    @dptr,a         ; Store high byte
         inc     dptr
+        anl     _DPH1, #3       ; Wrap DPH1 at 1 kB
         mov     _DPS, #0
 
         mov     R_SAMPLE, #0    ; Any subsequent runs will copy this word (S=0 D=0)

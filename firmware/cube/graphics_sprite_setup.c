@@ -8,9 +8,6 @@
 
 #include "graphics_sprite.h"
 
-struct x_sprite_t x_spr[_SYS_SPRITES_PER_LINE];
-uint8_t y_spr_line, y_spr_line_limit, y_spr_active;
-
 
 void vm_bg0_spr_bg1(void)
 {

@@ -37,6 +37,7 @@ extern "C" {
 #define _SYS_NUM_CUBE_SLOTS   32
 
 typedef uint8_t _SYSCubeID;             /// Cube slot index
+typedef int8_t _SYSSideID;              /// Cube side index
 typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-first
 
 /*
@@ -324,6 +325,31 @@ struct _SYSAccelState {
     int8_t y;
 };
 
+struct _SYSNeighborState {
+    _SYSCubeID sides[4];
+};
+
+/**
+ * Accelerometer tilt state, where each axis has three values ( -1, 0, 1)
+ */
+
+typedef enum {
+	_SYS_TILT_NEGATIVE,
+	_SYS_TILT_NEUTRAL,
+	_SYS_TILT_POSITIVE,
+} _SYS_TiltType;
+
+struct _SYSTiltState {
+    unsigned x		: 4;
+    unsigned y		: 4;
+};
+
+
+typedef enum {
+  NOT_SHAKING,
+  SHAKING
+} _SYS_ShakeState;
+
 /**
  * Every cube has an arbitrary unique hardware ID.
  */
@@ -339,24 +365,23 @@ struct _SYSCubeHWID {
  * game-accessable RAM.
  */
 
-#define _SYS_MAX_VECTORS        32
-
-typedef enum {
-    _SYS_EVENT_CUBEFOUND,
-    _SYS_EVENT_CUBELOST,
-    _SYS_EVENT_ASSETDONE,
-    _SYS_EVENT_ACCELCHANGE,
-    _SYS_EVENT_TOUCH,
-    _SYS_EVENT_TILT,
-    _SYS_EVENT_SHAKE,
-
-    _SYS_EVENT_CNT      // Must be last
-} _SYS_EventType;
-
-typedef void (*_SYSEventVector)(_SYSCubeID cid);
+typedef void (*_SYSCubeEvent)(_SYSCubeID cid);
+typedef void (*_SYSNeighborEvent)(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
 
 struct _SYSEventVectors {
-    _SYSEventVector table[_SYS_MAX_VECTORS];
+	struct {
+		_SYSNeighborEvent add;
+		_SYSNeighborEvent remove;
+	} neighborEvents;
+	struct {
+		_SYSCubeEvent found;
+		_SYSCubeEvent lost;
+		_SYSCubeEvent assetDone;
+		_SYSCubeEvent accelChange;
+		_SYSCubeEvent touch;
+		_SYSCubeEvent tilt;
+		_SYSCubeEvent shake;
+	} cubeEvents;
 };
 
 extern struct _SYSEventVectors _SYS_vectors;
@@ -386,9 +411,12 @@ void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf);
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
+void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state);
+void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state);
+void _SYS_getShake(_SYSCubeID cid, _SYS_ShakeState *state);
 
 // XXX: Temporary for testing/demoing
-void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);
+//void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);
 void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v);
 void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid);
 
