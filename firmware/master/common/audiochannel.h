@@ -11,7 +11,6 @@
 #include <sifteo/audio.h>
 #include <stdint.h>
 #include "audiobuffer.h"
-#include <stdio.h> // temp
 
 class SpeexDecoder;
 
@@ -48,7 +47,6 @@ protected:
 
     AudioBuffer buf;
     const Sifteo::AudioModule *mod;
-    FILE *fout;
     uint8_t state;
     _SYSAudioHandle handle;
     SpeexDecoder *decoder;
