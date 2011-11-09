@@ -14,7 +14,7 @@
 class SpeexDecoder
 {
 public:
-    static const int DECODED_FRAME_SIZE = 320 * sizeof(short);
+    static const unsigned DECODED_FRAME_SIZE = 160 * sizeof(short);
 
     enum DecodeStatus {
         Ok = 0,
