@@ -8,8 +8,15 @@
 #include "game.h"
 #include "assets.gen.h"
 #include "utils.h"
+#include <vector>
 
 static _SYSCubeID s_id = 0;
+
+// Order in which the number of colors in a grid increases as the grid is refilled.
+static unsigned int GEM_VALUE_PROGRESSION[] = { 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 };
+
+// Order in which the number of fixed gems in a grid increases as the grid is refilled.
+static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4 };
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_flipsRemaining( STARTING_FLIPS ), m_fShakeTime( -1.0f )
 {
@@ -481,14 +488,156 @@ void CubeWrapper::checkRefill()
 
 void CubeWrapper::Refill()
 {
-	for( int i = 0; i < NUM_ROWS; i++ )
+	unsigned int level = Game::Inst().getLevel();
+	unsigned int numValues = sizeof( GEM_VALUE_PROGRESSION ) / sizeof( GEM_VALUE_PROGRESSION[0];
+	unsigned int values = level < numValues ? GEM_VALUE_PROGRESSION[level] : GEM_VALUE_PROGRESSION[numValues - 1];
+	unsigned int numFixIndices = sizeof( GEM_FIX_PROGRESSION ) / sizeof( GEM_FIX_PROGRESSION[0];
+	unsigned int numFix = level < numFixIndices ? GEM_FIX_PROGRESSION[level] : GEM_FIX_PROGRESSION[numFixIndices - 1];
+	
+	Game::Inst().addLevel();
+
+	//TODO SOUND
+	//self.game.sound_manager.add("reload")
+
+	/*for( int i = 0; i < NUM_ROWS; i++ )
 	{
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
 			GridSlot &slot = m_grid[i][j];
 			slot.Init( this, i, j );
 		}
+	}*/
+
+	/*
+    Fill all empty spots in the grid with new gems.
+
+    A filled grid should have the following characteristics:
+    - Colors are distributed evenly.
+    - Gems of a color have some coherence.
+    - No fixed gems without a free gem of the same color.
+    */
+
+    //build a list of values to be added.
+	unsigned int aNumNeeded[GridSlot::NUM_COLORS];
+
+	memset( aNumNeeded, 0, GridSlot::NUM_COLORS * sizeof( int ) );
+
+	int numDots = NUM_ROWS * NUM_COLS;
+
+	for( int i = 0; i < values; i++ )
+	{
+		aNumNeeded[i] = numDots / values + numDots % values;
 	}
+
+	unsigned int numEmpties = 0;
+	Vec2 aEmptyLocs[NUM_ROWS * NUM_COLS];
+
+    //strip out existing gem values.
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			GridSlot &slot = m_grid[i][j];
+			if( slot.isAlive() )
+				aNumNeeded[slot.getColor()]--;
+			else
+				aEmptyLocs[numEmpties++] = Vec2( i, j );
+		}
+	}
+
+
+	//random order to get locations in 
+	int aLocIndices[NUM_ROWS * NUM_COLS];
+	
+	for( int i = 0; i < NUM_ROWS * NUM_COLS; i++ )
+	{
+		if( i < numEmpties )
+			aLocIndices[i] = Game::Inst().Rand( numEmpties );
+		else
+			aLocIndices[i] = -1;
+	}
+
+	int iCurColor = 0;
+
+	for( int i = 0; i < numEmpties; i++ )
+	{
+		GridSlot &slot = m_grid[aEmptyLocs[i].x][aEmptyLocs[i].y];
+
+		if( slot.isAlive() )
+			continue;
+
+		while( aNumNeeded[iCurColor] < 0 )
+			iCurColor++;
+
+		slot.Fill();
+	}
+
+    placed = set()
+
+    def fillin(r,c):
+        if not newgems:
+            return False
+        ng = newgems.pop()
+        if not grid._put_gem(r, c, ng):
+            newgems.append(ng)
+            return False
+        placed.add(ng)
+        # attempt to fill in similar colors in neighoring positions.
+        for i in range(cohesion-1):
+            gi = g2i(r,c)
+            opts = []
+            if c > 0: opts.append(gi-1)
+            if c < 3: opts.append(gi+1)
+            if r > 0: opts.append(gi-4)
+            if r < 3: opts.append(gi+4)
+            if opts:
+                j = random.choice(opts)
+                if j != None and i2g(j) in tofill and newgems:
+                    r,c = i2g(j)
+                    ng = newgems.pop()
+                    if not grid._put_gem(r, c, ng):
+                        newgems.append(ng)
+                    else:
+                        tofill.remove((r,c))
+                        placed.add(ng)
+        return True
+
+    # fill in each loc with a gem.
+    while tofill and newgems:
+        r,c = tofill.pop()
+        if not fillin(r,c):
+            break
+
+    def can_fix(gem):
+        if not gem:
+            return False
+        gem.value
+        a = [ g for g in grid.gems if g is not None and g.value == gem.value and not g.fixed ]
+        return (len(a) > 1)
+
+    # mark some new gems as fixed.
+    existing_fixed = [ g for g in grid.gems if g.fixed ]
+    if len(existing_fixed) < num_fixed:
+        fixable = list(placed)
+        tofix = range(len(fixable))
+        random.shuffle(tofix)
+        for i in range(num_fixed-len(existing_fixed)):
+            j = tofix.pop()
+            fg = fixable[j]
+            if can_fix(fg):
+                fixable[j].fixed = True
+
+    # double-check to make sure we don't have dangling fixed gems.
+    postfixed = [ g for g in grid.gems if g and g.fixed ]
+    for fg in postfixed:
+        postfree = [ g for g in grid.gems if g and g.value == fg.value and not g.fixed ]
+        if len(postfree) == 0:
+            print "WARNING (refill_grid): No free gems to go with fixed gem %s"%str(fg.value)
+
+    out = set()
+    for p in placed:
+        out.add((p.row,p.column))
+    return out
 }
 
 

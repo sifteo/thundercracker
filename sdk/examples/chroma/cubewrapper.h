@@ -21,6 +21,7 @@ public:
 	static const int NUM_COLS = 4;
 	static const int STARTING_FLIPS = 3;
 	static const float SHAKE_FILL_DELAY = 1.0f;
+	static const int DEFAULT_COHESION = 3;
 
 	typedef enum
 	{

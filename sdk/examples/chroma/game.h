@@ -41,6 +41,7 @@ public:
 
 	void Init();
 	void Update();
+	void Reset();
 	
 	//flag self to test matches
 	void setTestMatchFlag() { m_bTestMatches = true; }
@@ -54,6 +55,8 @@ public:
 	inline GameMode getMode() const { return m_mode; }
 
 	inline unsigned int getScore() const { return m_iScore; }
+	inline unsigned int getLevel() const { return m_iLevel; }
+	inline voide addLevel() { m_iLevel++; }
 
 	void CheckChain( CubeWrapper *pWrapper );
 
@@ -66,6 +69,8 @@ private:
 	unsigned int m_iDotScoreSum;
 	unsigned int m_iScore;
 	unsigned int m_iDotsCleared;
+	//for progression in flips mode
+	unsigned int m_iLevel;
 	GameState m_state;
 	GameMode m_mode;
 	float m_splashTime;

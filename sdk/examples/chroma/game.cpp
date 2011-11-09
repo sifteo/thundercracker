@@ -17,6 +17,7 @@ Game &Game::Inst()
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_FLIPS ), m_splashTime( 0.0f )
 {
+	Reset();
 }
 
 
@@ -77,6 +78,15 @@ void Game::Update()
     System::paint();
 }
 
+
+void Game::Reset()
+{
+	m_iDotScore = 0;
+	m_iDotScoreSum = 0;
+	m_iScore = 0;
+	m_iDotsCleared = 0;
+	m_iLevel = 0;
+}
 
 void Game::TestMatches()
 {
