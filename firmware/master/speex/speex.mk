@@ -30,6 +30,7 @@ SPEEX_OBJS_STM32 = \
 SPEEX_INC = \
     -I$(SPEEX_DIR) \
     -I$(SPEEX_DIR)/include \
+    -I$(SPEEX_DIR)/STM32 \
     -I$(SPEEX_DIR)/STM32/libspeex/gcc \
     -I$(SPEEX_DIR)/libspeex
 
