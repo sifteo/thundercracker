@@ -13,6 +13,7 @@
 #include "hwtimer.h"
 
 #include "audiooutdevice.h"
+#include "speexdecoder.h"
 class AudioMixer;
 
 class PwmAudioOut
@@ -41,14 +42,14 @@ private:
     GPIOPin outA;
     GPIOPin outB;
 
-    typedef struct AudioBuffer_t {
-        char data[256];
+    typedef struct AudioOutBuffer_t {
+        uint8_t data[SpeexDecoder::DECODED_FRAME_SIZE];
         int remaining;
         int index;
-    } AudioBuffer;
+    } AudioOutBuffer;
 
     AudioMixer *mixer;
-    AudioBuffer audioBufs[2];
+    AudioOutBuffer audioBufs[2];
 
     void dmaIsr(uint32_t flags);
 //    void tmrIsr();

@@ -58,7 +58,7 @@ void PwmAudioOut::resume()
 void PwmAudioOut::dmaIsr(uint32_t flags)
 {
     // figure out which of our buffers to pull into
-    AudioBuffer *b = &audioBufs[0]; // TODO: ping pong
+    AudioOutBuffer *b = &audioBufs[0]; // TODO: ping pong
     b->remaining = mixer->pullAudio(b->data, sizeof(b->data));
     // kick off next DMA transfer
     if (!b->remaining) {
@@ -72,19 +72,17 @@ void PwmAudioOut::dmaIsr(uint32_t flags)
  */
 void PwmAudioOut::tmrIsr()
 {
-    AudioBuffer *b = &audioBufs[0];
+    AudioOutBuffer *b = &audioBufs[0];
     if (b->remaining <= 0) {
-        b->remaining = mixer->pullAudio(b->data, sizeof(b->data));
         b->index = 0;
+        b->remaining = mixer->pullAudio(b->data, sizeof(b->data));
         if (!b->remaining) {
-//            suspend();
+            return;
         }
     }
-    else {
-        uint16_t duty = (*(uint16_t*)(b->data + b->index)) + 0x8000;
-        duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
-        pwmTimer.setDuty(this->pwmChan, duty);
-        b->index = (b->index + 2) % sizeof(b->data);
-        b-> remaining -= 2;
-    }
+    uint16_t duty = (*(uint16_t*)(b->data + b->index)) + 0x8000;
+    duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
+    pwmTimer.setDuty(this->pwmChan, duty);
+    b->index = (b->index + 2) % sizeof(b->data);
+    b->remaining -= 2;
 }
