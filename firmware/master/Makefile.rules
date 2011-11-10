@@ -33,4 +33,4 @@ $(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
 .PHONY: clean all ocd program gdb
 
 clean:
-	rm -f $(BINS) *.o $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
+	rm -f $(BINS) *.o $(GENERATED_FILES)
