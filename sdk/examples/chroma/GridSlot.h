@@ -54,6 +54,9 @@ public:
 
 	bool IsFixed() const { return m_bFixed; }
 	void MakeFixed() { m_bFixed = true; }
+
+	//copy color and some other attributes from target.  Used when tilting
+	void CopyFrom(GridSlot &target);
 private:
 	void markNeighbor( int row, int col );
 

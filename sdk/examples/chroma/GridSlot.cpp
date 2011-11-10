@@ -181,3 +181,13 @@ void GridSlot::markNeighbor( int row, int col )
 	if( pNeighbor && pNeighbor->isAlive() && pNeighbor->getColor() == m_color )
 		pNeighbor->mark();
 }
+
+
+
+//copy color and some other attributes from target.  Used when tilting
+void GridSlot::CopyFrom(GridSlot &target)
+{
+	m_state = target.m_state;
+	m_color = target.m_color;
+	m_eventTime = target.m_eventTime;
+}

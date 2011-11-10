@@ -257,7 +257,7 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 
 	if( slot.isAlive() && !slot.IsFixed() )
 	{
-		dest = slot;
+		dest.CopyFrom(slot);
 		slot.setEmpty();
 		return true;
 	}
