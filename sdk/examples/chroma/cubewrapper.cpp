@@ -255,7 +255,7 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 	if( !dest.isEmpty() )
 		return false;
 
-	if( slot.isAlive() )
+	if( slot.isAlive() && !slot.IsFixed() )
 	{
 		dest = slot;
 		slot.setEmpty();

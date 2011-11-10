@@ -66,13 +66,19 @@ void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
 		case STATE_LIVING:
 		{
 			const AssetImage &tex = GetTexture();
-			vid.BG0_drawAsset(vec, tex, 0);
+			if( IsFixed() )
+				vid.BG0_drawAsset(vec, tex, 2);
+			else
+				vid.BG0_drawAsset(vec, tex, 0);
 			break;
 		}
 		case STATE_MARKED:
 		{
 			const AssetImage &tex = GetTexture();
-			vid.BG0_drawAsset(vec, tex, 1);
+			if( IsFixed() )
+				vid.BG0_drawAsset(vec, tex, 3);
+			else
+				vid.BG0_drawAsset(vec, tex, 1);
 			break;
 		}
 		case STATE_EXPLODING:
