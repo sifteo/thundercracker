@@ -21,19 +21,19 @@ void SpeexDecoder::init()
     // TODO - speex_bits_init_buffer appears to result in different decoded data...
     // would be nicer to use it though...look into it
     speex_bits_init(&this->bits);
-    this->decodeState = speex_decoder_init(&speex_nb_mode); // wideband mode
+    this->decodeState = speex_decoder_init(speex_lib_get_mode(SIFT_SPEEX_MODE));
     if (this->decodeState == 0) {
         while (1); // TODO - handle error
     }
-    int enh = 0;
+    int enh = 1;
     speex_decoder_ctl(this->decodeState, SPEEX_SET_ENH, &enh); // enhancement on
 
-#if 0
+#ifdef DEBUG
     // verify framesize
     int framesize;
     speex_decoder_ctl(this->decodeState, SPEEX_GET_FRAME_SIZE, &framesize);
     if (framesize != (DECODED_FRAME_SIZE / sizeof(short))) {
-        while (1); // better error handling
+        while (1);
     }
 #endif
 }

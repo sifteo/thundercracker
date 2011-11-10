@@ -10,11 +10,24 @@
 
 #include <stdint.h>
 #include "speex/speex.h"
+#include <../speex/STM32/config.h>
+
+#ifndef SIFT_SPEEX_MODE
+#error "SIFT_SPEEX_MODE not defined"
+#endif
 
 class SpeexDecoder
 {
 public:
+#if SIFT_SPEEX_MODE == SPEEX_MODEID_NB
     static const unsigned DECODED_FRAME_SIZE = 160 * sizeof(short);
+#elif SIFT_SPEEX_MODE == SPEEX_MODEID_WB
+    static const unsigned DECODED_FRAME_SIZE = 320 * sizeof(short);
+#elif SIFT_SPEEX_MODE == SPEEX_MODEID_UWB
+    static const unsigned DECODED_FRAME_SIZE = 640 * sizeof(short);
+#else
+#error "Unknown SIFT_SPEEX_MODE defined"
+#endif
 
     enum DecodeStatus {
         Ok = 0,
