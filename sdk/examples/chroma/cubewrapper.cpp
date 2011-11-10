@@ -706,3 +706,166 @@ unsigned int CubeWrapper::getNumMarked() const
 
 	return numMarked;
 }
+
+
+//fill in which colors we're using
+void CubeWrapper::fillColorMap( bool *pMap ) const
+{
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			const GridSlot &slot = m_grid[i][j];
+			if( slot.isAlive() )
+				pMap[ slot.getColor() ] = true;
+		}
+	}
+}
+
+
+//do we have the given color anywhere?
+bool CubeWrapper::hasColor( unsigned int color ) const
+{
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			const GridSlot &slot = m_grid[i][j];
+			if( slot.isAlive() && slot.getColor() == color )
+				return true;
+		}
+	}
+
+	return false;
+}
+
+
+//do we have stranded fixed dots?
+bool CubeWrapper::hasStrandedFixedDots() const
+{
+	bool bHasFixed = false;
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			const GridSlot &slot = m_grid[i][j];
+			if( slot.isAlive() )
+			{
+				if( slot.IsFixed() )
+				{
+					if( i == 0 || i == NUM_ROWS - 1 || j == 0 || j == NUM_ROWS - 1 )
+						return false;
+
+					bHasFixed = true;
+				}
+				//we have floating dots
+				else
+					return false;
+			}
+		}
+	}
+
+	return bHasFixed;
+}
+
+
+
+bool CubeWrapper::allFixedDotsAreStrandedSide() const
+{
+	bool bHasFixed = false;
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			const GridSlot &slot = m_grid[i][j];
+			if( slot.isAlive() )
+			{
+				if( slot.IsFixed() )
+				{
+					//only works with 4 rows/cols
+					if( ( i == 1 || i == 2 ) && ( j == 0 || j == 3 ) )
+					{}
+					else if( ( j == 1 || j == 2 ) && ( i == 0 || i == 3 ) )
+					{}
+					else
+						return false;
+
+					bHasFixed = true;
+				}
+				//we have floating dots
+				else
+					return false;
+			}
+		}
+	}
+
+	return bHasFixed;
+}
+
+
+unsigned int CubeWrapper::getNumDots() const
+{
+	int count = 0;
+
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			const GridSlot &slot = m_grid[i][j];
+			if( slot.isAlive() )
+				count++;
+		}
+	}
+
+	return count;
+}
+
+
+unsigned int CubeWrapper::getNumCornerDots() const
+{
+	int count = 0;
+
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			const GridSlot &slot = m_grid[i][j];
+			if( slot.isAlive() )
+			{
+				if( ( i == 0 || i == 3 ) && ( j == 0 || j == 3 ) )
+					count++;
+			}
+		}
+	}
+
+	return count;
+}
+
+
+//returns if we have one and only one fixed dot (and zero floating dots)
+//fills in the position of that dot
+bool CubeWrapper::getFixedDot( Vec2 &pos ) const
+{
+	int count = 0;
+
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			const GridSlot &slot = m_grid[i][j];
+			if( slot.isAlive() )
+			{
+				if( slot.IsFixed() )
+				{
+					count++;
+					pos.x = i;
+					pos.y = j;
+				}
+				else
+					return false;
+			}
+		}
+	}
+
+	return count==1;
+}

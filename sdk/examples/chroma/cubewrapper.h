@@ -60,6 +60,20 @@ public:
 
 	GridSlot *GetSlot( int row, int col );
 	Cube &GetCube() { return m_cube; }
+
+	//fill in which colors we're using
+	void fillColorMap( bool *pMap ) const;
+	//do we have the given color anywhere?
+	bool hasColor( unsigned int color ) const;
+
+	//do we have stranded fixed dots?
+	bool hasStrandedFixedDots() const;
+	bool allFixedDotsAreStrandedSide() const;
+	unsigned int getNumDots() const;
+	unsigned int getNumCornerDots() const;
+	//returns if we have one and only one fixed dot (and zero floating dots)
+	//fills in the position of that dot
+	bool getFixedDot( Vec2 &pos ) const;
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful

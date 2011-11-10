@@ -7,6 +7,7 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
+#include "string.h"
 #include <stdlib.h>
 
 Game &Game::Inst()
@@ -158,4 +159,150 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 		m_iDotScore = 0;
 		m_iDotScoreSum = 0;
 	}
+}
+
+
+
+bool Game::NoMatches()
+{
+    //""" Return True if no matches are possible with the current gems. """
+    if( no_match_color_imbalance() )
+		return true;
+    if( numColors() == 1 )
+	{
+        if( no_match_stranded_interior() )
+            return true;
+        else if( no_match_stranded_side() )
+            return true;
+        else if( no_match_mismatch_side() )
+            return true;
+	}
+
+    return false;
+}
+
+
+unsigned int Game::numColors() const
+{
+	bool aColors[GridSlot::NUM_COLORS];
+
+	memset( aColors, 0, sizeof( bool ) * GridSlot::NUM_COLORS );
+
+	for( int i = 0; i < NUM_CUBES; i++ )
+	{
+		cubes[i].fillColorMap( aColors );
+	}
+    
+	int numColors = 0;
+
+	for( int i = 0; i < GridSlot::NUM_COLORS; i++ )
+	{
+		if( aColors[i] )
+			numColors++;
+	}
+    
+	return numColors;
+}
+
+bool Game::no_match_color_imbalance() const
+{
+    /*
+    Returns true if all the dots of a given color are stuck together on
+    one grid, meaning that they can never be matched.
+    */
+	for( int i = 0; i < GridSlot::NUM_COLORS; i++ )
+	{
+		int total = 0;
+
+		for( int i = 0; i < NUM_CUBES; i++ )
+		{
+			if( cubes[i].hasColor(i) )
+				total++;
+		}
+
+		if( total == 1 )
+			return true;
+	}
+
+	return false;
+}
+
+bool Game::no_match_stranded_interior() const
+{
+    /*
+    Returns true if the given grids can never match due to one of them having
+    only fixed dots stranded in the middle.
+    */
+	for( int i = 0; i < NUM_CUBES; i++ )
+	{
+		if( cubes[i].hasStrandedFixedDots() )
+			return true;
+	}
+
+	return false;
+}
+
+bool Game::no_match_stranded_side() const
+{
+    /*
+    Returns true if one of the given grids has only fixed dots on a
+    side-center (i.e., not a corner), but no floating dots can match it.
+    */
+
+	for( int i = 0; i < NUM_CUBES; i++ )
+	{
+		if( cubes[i].allFixedDotsAreStrandedSide() )
+		{
+			int numCorners = 0;
+
+			for( int j = 0; j < NUM_CUBES; j++ )
+			{
+				
+				if( i != j )
+				{
+					unsigned int thisCubeNumCorners = cubes[j].getNumCornerDots();
+					numCorners += thisCubeNumCorners;
+					if( numCorners > 1 || cubes[j].getNumDots() > thisCubeNumCorners )
+						break;
+				}
+			}
+
+			if( numCorners == 1 )
+				return true;
+		}
+	}
+
+	return false;   
+}
+
+
+bool Game::no_match_mismatch_side() const
+{
+    /*
+    Returns true if the given grids have one fixed gem on a
+    side, but the gems can never touch.
+    */
+
+	Vec2 aBuddies[3];
+	int iNumBuddies = 0;
+
+	for( int i = 0; i < NUM_CUBES; i++ )
+	{
+		if( cubes[i].getFixedDot( aBuddies[iNumBuddies] ) )
+		{
+			iNumBuddies++;
+			if( iNumBuddies > 2 )
+				return false;
+		}
+	}
+
+	int SIDE_MISMATCH_SET1[] =  { 2, 0, 3, 1 };
+	int SIDE_MISMATCH_SET2[] =  { 1, 3, 0, 2 };
+
+	if( SIDE_MISMATCH_SET1[aBuddies[0].x] == aBuddies[0].y && SIDE_MISMATCH_SET1[aBuddies[1].x] == aBuddies[1].y )
+		return true;
+	if( SIDE_MISMATCH_SET2[aBuddies[0].x] == aBuddies[0].y && SIDE_MISMATCH_SET2[aBuddies[1].x] == aBuddies[1].y )
+		return true;
+
+    return false;
 }

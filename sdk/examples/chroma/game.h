@@ -59,6 +59,12 @@ public:
 	inline void addLevel() { m_iLevel++; }
 
 	void CheckChain( CubeWrapper *pWrapper );
+	bool NoMatches();
+	unsigned int numColors() const;
+	bool no_match_color_imbalance() const;
+	bool no_match_stranded_interior() const;
+	bool no_match_stranded_side() const;
+	bool no_match_mismatch_side() const;
 
 private:
 	void TestMatches();
