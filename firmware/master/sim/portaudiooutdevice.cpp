@@ -65,7 +65,7 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
         LOG(("statusFlags: %ld\n", statusFlags));
     }
 
-    int mixed = dev->mixer->pullAudio(out, framesPerBuffer * sizeof(int16_t));
+    dev->mixer->pullAudio(out, framesPerBuffer * sizeof(int16_t));
 
     return paContinue;
 }
