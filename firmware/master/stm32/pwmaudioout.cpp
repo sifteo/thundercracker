@@ -4,6 +4,13 @@
 #include <stdio.h>
 #include <string.h>
 
+// uncomment to show sample rate on gpio pin
+//#define SAMPLE_RATE_GPIO
+
+#ifdef SAMPLE_RATE_GPIO
+static GPIOPin tim4TestPin(&GPIOC, 4);
+#endif
+
 PwmAudioOut::PwmAudioOut(HwTimer _pwmTimer, int pwmChannel, HwTimer _sampleTimer, GPIOPin outputA, GPIOPin outputB) :
     pwmTimer(_pwmTimer),
     pwmChan(pwmChannel),
@@ -15,6 +22,9 @@ PwmAudioOut::PwmAudioOut(HwTimer _pwmTimer, int pwmChannel, HwTimer _sampleTimer
 
 void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
 {
+#ifdef SAMPLE_RATE_GPIO
+    tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
+#endif
     this->mixer = mixer;
     memset(audioBufs, 0, sizeof(audioBufs));
     outA.setControl(GPIOPin::OUT_ALT_50MHZ);
@@ -72,6 +82,9 @@ void PwmAudioOut::dmaIsr(uint32_t flags)
  */
 void PwmAudioOut::tmrIsr()
 {
+#ifdef SAMPLE_RATE_GPIO
+    tim4TestPin.toggle();
+#endif
     AudioOutBuffer *b = &audioBufs[0];
     if (b->remaining <= 0) {
         b->index = 0;
