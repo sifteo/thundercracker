@@ -16,7 +16,7 @@ class CubeWrapper;
 class GridSlot
 {
 public:
-	static const int NUM_COLORS = 4;
+	static const int NUM_COLORS = 8;
 	static const AssetImage *TEXTURES[ NUM_COLORS ];
 
 	static const float MARK_SPREAD_DELAY = 0.33f;
@@ -45,11 +45,15 @@ public:
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
 	void setEmpty() { m_state = STATE_GONE; }
 	unsigned int getColor() const { return m_color; }
+	void FillColor(unsigned int color);
 
 	void mark();
 	void spread_mark();
 	void explode();
 	void die();
+
+	bool IsFixed() const { return m_bFixed; }
+	void MakeFixed() { m_bFixed = true; }
 private:
 	void markNeighbor( int row, int col );
 
@@ -60,6 +64,8 @@ private:
 	unsigned int m_row;
 	unsigned int m_col;
 	unsigned int m_score;
+	//fixed dot
+	bool		 m_bFixed;
 };
 
 

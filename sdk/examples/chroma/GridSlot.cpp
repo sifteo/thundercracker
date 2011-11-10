@@ -15,12 +15,17 @@ const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 	&Gem1,
 	&Gem2,
 	&Gem3,
+	&Gem4,
+	&Gem5,
+	&Gem6,
+	&Gem7,
 };
 
 GridSlot::GridSlot() : 
-	m_state( STATE_LIVING ),
+	m_state( STATE_GONE ),
 	m_eventTime( 0.0f ),
-	m_score( 0 )
+	m_score( 0 ),
+	m_bFixed( false )
 {
 	//TEST randomly make some empty ones
 	/*if( Game::Rand(100) > 50 )
@@ -36,7 +41,15 @@ void GridSlot::Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col )
 	m_pWrapper = pWrapper;
 	m_row = row;
 	m_col = col;
+	m_state = STATE_GONE;
+}
+
+
+void GridSlot::FillColor(unsigned int color)
+{
 	m_state = STATE_LIVING;
+	m_color = color;
+	m_bFixed = false;
 }
 
 

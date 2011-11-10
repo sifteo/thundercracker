@@ -56,7 +56,7 @@ public:
 
 	inline unsigned int getScore() const { return m_iScore; }
 	inline unsigned int getLevel() const { return m_iLevel; }
-	inline voide addLevel() { m_iLevel++; }
+	inline void addLevel() { m_iLevel++; }
 
 	void CheckChain( CubeWrapper *pWrapper );
 

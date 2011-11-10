@@ -48,7 +48,7 @@ public:
 	bool isEmpty();
 
 	void checkRefill();
-	void Refill();
+	void Refill( bool bAddLevel = false );
 
 	void testMatches();
 	void FillSlotArray( GridSlot **gems, int side, bool clockwise );
