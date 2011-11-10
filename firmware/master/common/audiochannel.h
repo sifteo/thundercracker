@@ -30,7 +30,10 @@ public:
 
     void play(const Sifteo::AudioModule &mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
     int pullAudio(uint8_t *buffer, int len);
-    bool endOfStream() const;
+
+    _SYSAudioType channelType() const {
+        return mod->sys.type;
+    }
 
     void pause() {
         state |= STATE_PAUSED;
@@ -44,6 +47,7 @@ public:
 
 protected:
     void fetchData();
+    void onPlaybackComplete();
 
     AudioBuffer buf;
     const Sifteo::AudioModule *mod;

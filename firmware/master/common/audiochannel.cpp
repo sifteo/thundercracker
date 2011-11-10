@@ -1,4 +1,5 @@
 
+#include <sifteo/macros.h>
 #include "audiochannel.h"
 #include "speexdecoder.h"
 
@@ -9,6 +10,7 @@ void AudioChannel::init(_SYSAudioBuffer *b)
 
 void AudioChannel::play(const Sifteo::AudioModule &mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
 {
+    ASSERT(!(dec == NULL && mod.sys.type == Sample));
     this->decoder = dec;
     this->mod = &mod;
     this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
@@ -26,38 +28,40 @@ int AudioChannel::pullAudio(uint8_t *buffer, int len)
             *buffer += buf.pop(); // TODO - volume, limiting, compression, etc
             buffer++;
         }
-        if (this->endOfStream()) {
-            this->decoder = 0;
-            this->mod = 0;
-            state |= STATE_STOPPED;
+        // if we have nothing buffered, and there's nothing else to read, we're done
+        if (decoder->endOfStream() && buf.readAvailable() == 0) {
+            return -1;
         }
     }
     return bytesToMix;
 }
 
-bool AudioChannel::endOfStream() const
-{
-    if (decoder) {
-        return decoder->endOfStream() && buf.readAvailable() == 0;
-    }
-    return state & STATE_STOPPED;
-}
-
 void AudioChannel::fetchData()
 {
+    if (!mod || (state & STATE_STOPPED)) {
+        return;
+    }
+
     switch (mod->sys.type) {
-    case Sample:
-        while (buf.writeAvailable() >= SpeexDecoder::DECODED_FRAME_SIZE) {
-            // TODO - better way to avoid copying data here?
-            uint8_t buffer[SpeexDecoder::DECODED_FRAME_SIZE];
-            uint32_t sz = decoder->decodeFrame(buffer, sizeof(buffer));
-            if (!sz) {
-                break; // TODO - we shouldn't be getting called here if decoder is empty
-            }
-            buf.write(buffer, sz);
+    case Sample: {
+        if (decoder->endOfStream() || buf.writeAvailable() < SpeexDecoder::DECODED_FRAME_SIZE) {
+            return;
         }
+        // TODO - better way to avoid copying data here?
+        uint8_t buffer[SpeexDecoder::DECODED_FRAME_SIZE];
+        uint32_t sz = decoder->decodeFrame(buffer, sizeof(buffer));
+        ASSERT(sz == SpeexDecoder::DECODED_FRAME_SIZE);
+        buf.write(buffer, sz);
+    }
         break;
     default:
         break;
     }
+}
+
+void AudioChannel::onPlaybackComplete()
+{
+    state |= STATE_STOPPED;
+    this->decoder = 0;
+    this->mod = 0;
 }

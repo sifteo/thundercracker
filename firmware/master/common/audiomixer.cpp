@@ -147,7 +147,6 @@ int AudioMixer::pullAudio(uint8_t *buffer, int numsamples)
 
     memset(buffer, 0, numsamples);
 
-    char *b;
     AudioChannel *ch = &channels[0];
     uint32_t mask = activeChannelMask;
     int bytesMixed = 0;
@@ -159,7 +158,7 @@ int AudioMixer::pullAudio(uint8_t *buffer, int numsamples)
         if (mixed > bytesMixed) {
             bytesMixed = mixed;
         }
-        if (ch->endOfStream()) {
+        else if (mixed < 0) {
             stopChannel(ch);
         }
     }
@@ -175,11 +174,9 @@ int AudioMixer::pullAudio(uint8_t *buffer, int numsamples)
  */
 void AudioMixer::fetchData()
 {
-    uint32_t mask = activeChannelMask;
-    AudioChannel *ch = &channels[0];
-    for (; mask != 0; mask >>= 1, ch++) {
-        if (mask & 1) {
-            ch->fetchData();
+    for (int i = 0; i < _SYS_AUDIO_NUM_CHANNELS; i++) {
+        if (activeChannelMask & (1 << i)) {
+            channels[i].fetchData();
         }
     }
 }
@@ -242,8 +239,14 @@ void AudioMixer::stop(_SYSAudioHandle handle)
 void AudioMixer::stopChannel(AudioChannel *ch)
 {
     int channelIndex = ch - channels;
+    ASSERT(channelIndex < _SYS_AUDIO_NUM_CHANNELS);
     Atomic::ClearBit(activeChannelMask, channelIndex);
-    // TODO - release decoder
+    if (ch->channelType() == Sample) {
+        int decoderIndex = ch->decoder - decoders;
+        ASSERT(decoderIndex < _SYS_AUDIO_NUM_SAMPLE_CHANNELS);
+        Atomic::SetBit(availableDecodersMask, decoderIndex);
+    }
+    ch->onPlaybackComplete();
 }
 
 void AudioMixer::pause(_SYSAudioHandle handle)
