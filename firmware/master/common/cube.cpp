@@ -237,6 +237,11 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
+    if (!connected) {
+        Event::setPending(EventBits::CUBEFOUND, id());    
+        connected = true;
+    }
+    
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
 
     if (packet.len >= offsetof(RF_ACKType, frame_count) + sizeof ack->frame_count) {
@@ -358,6 +363,11 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 void CubeSlot::radioTimeout()
 {
     /* XXX: Disconnect this cube */
+    
+    if (connected) {
+        Event::setPending(EventBits::CUBELOST, id());    
+        connected = false;
+    }
 }
 
 void CubeSlot::paintCubes(_SYSCubeIDVector cv)

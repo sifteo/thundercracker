@@ -276,10 +276,12 @@ static void Siftulator_recv()
             }
 
         } else {
-            if (self.retriesLeft)
+            if (self.retriesLeft > 1) {
                 self.retriesLeft--;
-            else
+            } else {
+                self.retriesLeft = 0;
                 RadioManager::timeout();
+            }
         }
 
         self.ackPending = false;

@@ -176,6 +176,10 @@ class CubeSlot {
     uint16_t rawBatteryV;
     _SYSAccelState accelState;
     _SYSCubeHWID hwid;
+    
+    // Pairing
+    // FIXME: connected state should be stored in a bitfield the same way enabled is, to save space
+    bool connected;
 };
 
 
