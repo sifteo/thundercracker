@@ -126,11 +126,11 @@ bool Encoder::encode(const char *configpath, int channels, int format)
         string path = dir + file;
         int sz = encodeFile(dir, path, channels, format, headerStream, sourceStream);
         
-        sourceStream << "Sifteo::AudioModule " << FileNameUtils::baseName(file) << " = {\n"
+        sourceStream << "Sifteo::AudioModule " << FileNameUtils::baseName(file) << " = {{\n"
                         "    Sample, // type\n"
                         "    " << sz << ", // size\n"
                         "    " << FileNameUtils::baseName(file) << "_data\n"
-                        "};\n\n";
+                        "}};\n\n";
     }
     
     headerStream << "\n#endif\n";
