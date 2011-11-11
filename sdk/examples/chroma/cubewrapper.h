@@ -46,6 +46,7 @@ public:
 
 	bool isFull();
 	bool isEmpty();
+	void checkEmpty();
 
 	void checkRefill();
 	void Refill( bool bAddLevel = false );
@@ -76,6 +77,7 @@ public:
 	bool getFixedDot( Vec2 &pos ) const;
 
 	bool isDead() const { return m_state == STATE_NOSHAKES; }
+	CubeState getState() const { return m_state; }
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful

@@ -129,7 +129,10 @@ void GridSlot::Update(float t)
 		case STATE_SHOWINGSCORE:
 		{
 			if( t - m_eventTime > SCORE_FADE_DELAY )
+			{
                 m_state = STATE_GONE;
+				m_pWrapper->checkEmpty();
+			}
 			break;
 		}
 		default:

@@ -85,30 +85,49 @@ void CubeWrapper::Draw()
 		}
 		case Game::STATE_PLAYING:
 		{
-			if( m_state == STATE_NOSHAKES )
+			switch( m_state )
 			{
-				m_vid.clear(Font.tiles[0]);
-				m_vid.BG0_text( Vec2( 4, 4 ), Font, "NO SHAKES" );
-				m_vid.BG0_text( Vec2( 4, 6 ), Font, "LEFT" );
-			}
-			else
-			{
-				//draw grid
-				for( int i = 0; i < NUM_ROWS; i++ )
+				case STATE_PLAYING:
 				{
-					for( int j = 0; j < NUM_COLS; j++ )
+					//draw grid
+					for( int i = 0; i < NUM_ROWS; i++ )
 					{
-						GridSlot &slot = m_grid[i][j];
-						slot.Draw( m_vid, Vec2(j * 4, i * 4) );
+						for( int j = 0; j < NUM_COLS; j++ )
+						{
+							GridSlot &slot = m_grid[i][j];
+							slot.Draw( m_vid, Vec2(j * 4, i * 4) );
+						}
 					}
+
+					if( m_banner.IsActive() )
+						m_banner.Draw( m_cube );
+					else if( Game::Inst().getMode() == Game::MODE_TIMED )
+						Game::Inst().getTimer().Draw( m_cube );
+
+					break;
 				}
+				case STATE_EMPTY:
+				{
+					_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
+					m_vid.clear(Font.tiles[0]);
+					m_vid.BG0_text( Vec2( 3, 3 ), Font, "SHAKE TO" );
+					m_vid.BG0_text( Vec2( 4, 5 ), Font, "REFILL" );
 
-				if( m_banner.IsActive() )
-					m_banner.Draw( m_cube );
-				else if( Game::Inst().getMode() == Game::MODE_TIMED )
-					Game::Inst().getTimer().Draw( m_cube );
-			}
+					char aBuf[16];
 
+					sprintf( aBuf, "%d PTS", Game::Inst().getScore() );
+
+					m_vid.BG0_text( Vec2( 4, 9 ), Font, aBuf );
+					break;
+				}
+				case STATE_NOSHAKES:
+				{
+					m_vid.clear(Font.tiles[0]);
+					m_vid.BG0_text( Vec2( 4, 4 ), Font, "NO SHAKES" );
+					m_vid.BG0_text( Vec2( 4, 6 ), Font, "LEFT" );
+					break;
+				}
+			}			
 			break;
 		}
 		case Game::STATE_POSTGAME:
@@ -923,4 +942,11 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 	}
 
 	return count==1;
+}
+
+
+void CubeWrapper::checkEmpty()
+{
+	if( m_state != STATE_NOSHAKES && isEmpty() )
+		m_state = STATE_EMPTY;
 }
