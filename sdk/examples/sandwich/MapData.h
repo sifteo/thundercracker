@@ -1,6 +1,5 @@
 #pragma once
-#include <sifteo/asset.h>
-#include <stdint.h>
+#include <sifteo.h>
 
 #define PORTAL_OPEN	0
 #define PORTAL_WALL	1
@@ -39,28 +38,42 @@ struct MapData {
     inline uint8_t GetPortalX(int x, int y) const {
         // note that the pitch here is one greater than the width because there's
         // an extra wall on the right side of the last tile in each row
+        ASSERT(0 <= x && x <= width);
+        ASSERT(0 <= y && y < height);
         return xportals[y * (width+1) + x];
     }
 
     inline uint8_t GetPortalY(int x, int y) const {
         // Like GetPortalX except we're in column-major order
+        ASSERT(0 <= x && x < width);
+        ASSERT(0 <= y && y <= height);
         return yportals[x * (height+1) + y];
     }
     
     inline void SetPortalX(int x, int y, uint8_t pid) {
+        ASSERT(0 <= x && x <= width);
+        ASSERT(0 <= y && y < height);
         xportals[y * (width+1) + x] = pid;
     }
 
     inline void SetPortalY(int x, int y, uint8_t pid) {
+        ASSERT(0 <= x && x < width);
+        ASSERT(0 <= y && y <= height);
         yportals[x * (height+1) + y] = pid;
     }
 
     inline uint8_t GetTileId(int roomx, int roomy, int x, int y) const {
         // this value indexes into tileset.frames
+        ASSERT(0 <= roomx && roomx < width);
+        ASSERT(0 <= roomy && roomy < height);
+        ASSERT(0 <= x && x < 8);
+        ASSERT(0 <= y && y < 8);
         return tiles[ 64 * (roomy * width + roomx) + y * 8 + x ];
     }
 
     inline uint8_t GetRoomId(int roomx, int roomy) const {
+        ASSERT(0 <= roomx && roomx < width);
+        ASSERT(0 <= roomy && roomy < height);
         return roomx + roomy * width;
     }
 };
