@@ -33,6 +33,7 @@ public:
 	CubeWrapper();
 
 	void Init( AssetGroup &assets );
+	void Reset();
 	//draw loading progress.  return true if done
 	bool DrawProgress( AssetGroup &assets );
 	void Draw();

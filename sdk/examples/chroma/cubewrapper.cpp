@@ -58,6 +58,15 @@ void CubeWrapper::Init( AssetGroup &assets )
 	Refill();
 }
 
+
+void CubeWrapper::Reset()
+{
+	m_flipsRemaining = STARTING_FLIPS;
+	m_fShakeTime = -1.0f;
+	m_state = STATE_PLAYING;
+	Refill();
+}
+
 bool CubeWrapper::DrawProgress( AssetGroup &assets )
 {
 	m_rom.BG0_progressBar(Vec2(0,7), m_cube.assetProgress(GameAssets, m_vid.LCD_width), 2);

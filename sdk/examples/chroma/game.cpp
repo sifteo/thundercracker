@@ -18,7 +18,7 @@ Game &Game::Inst()
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_FLIPS ), m_splashTime( 0.0f )
 {
-	Reset();
+	//Reset();
 }
 
 
@@ -92,6 +92,13 @@ void Game::Reset()
 	m_iScore = 0;
 	m_iDotsCleared = 0;
 	m_iLevel = 0;
+
+	m_state = STARTING_STATE;
+
+	for( int i = 0; i < NUM_CUBES; i++ )
+	{
+		cubes[i].Reset();
+	}
 }
 
 void Game::TestMatches()
