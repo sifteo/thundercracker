@@ -113,6 +113,7 @@ void CubeWrapper::Draw()
 		}
 		case Game::STATE_POSTGAME:
 		{
+			_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
 			m_vid.clear(Font.tiles[0]);
 			m_vid.BG0_text( Vec2( 3, 3 ), Font, "GAME OVER:" );
 
