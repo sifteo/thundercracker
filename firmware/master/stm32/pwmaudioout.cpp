@@ -65,6 +65,7 @@ void PwmAudioOut::resume()
     pwmTimer.enableChannel(this->pwmChan);
 }
 
+#if 0
 void PwmAudioOut::dmaIsr(uint32_t flags)
 {
     // figure out which of our buffers to pull into
@@ -75,6 +76,7 @@ void PwmAudioOut::dmaIsr(uint32_t flags)
         suspend();
     }
 }
+#endif
 
 /*
  * Called when our sample rate timer's update ISR has fired.
@@ -86,16 +88,14 @@ void PwmAudioOut::tmrIsr()
     tim4TestPin.toggle();
 #endif
     AudioOutBuffer *b = &audioBufs[0];
-    if (b->remaining <= 0) {
-        b->index = 0;
-        b->remaining = mixer->pullAudio(b->data, sizeof(b->data));
-        if (!b->remaining) {
+    if (b->offset >= b->count) {
+        b->offset = 0;
+        b->count = mixer->pullAudio(b->data, arraysize(b->data));
+        if (!b->count) {
             return;
         }
     }
-    uint16_t duty = (*(uint16_t*)(b->data + b->index)) + 0x8000;
+    uint16_t duty = b->data[b->offset++] + 0x8000;
     duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
     pwmTimer.setDuty(this->pwmChan, duty);
-    b->index = (b->index + 2) % sizeof(b->data);
-    b->remaining -= 2;
 }

@@ -43,9 +43,9 @@ private:
     GPIOPin outB;
 
     typedef struct AudioOutBuffer_t {
-        uint8_t data[SpeexDecoder::DECODED_FRAME_SIZE];
-        int remaining;
-        int index;
+        int16_t data[SpeexDecoder::DECODED_FRAME_SIZE];
+        int count;
+        int offset;
     } AudioOutBuffer;
 
     AudioMixer *mixer;
