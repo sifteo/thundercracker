@@ -22,6 +22,7 @@ public:
 		STATE_MENU,
 		STATE_PLAYING,
 		STARTING_STATE = STATE_PLAYING,
+		STATE_POSTGAME,
 	} GameState;
 
 	typedef enum
@@ -59,6 +60,7 @@ public:
 	inline void addLevel() { m_iLevel++; }
 
 	void CheckChain( CubeWrapper *pWrapper );
+	void checkGameOver();
 	bool NoMatches();
 	unsigned int numColors() const;
 	bool no_match_color_imbalance() const;

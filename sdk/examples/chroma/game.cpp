@@ -56,16 +56,21 @@ void Game::Update()
 	if( m_state == STATE_SPLASH )
 	{
 		for( int i = 0; i < NUM_CUBES; i++ )
-			cubes[i].DrawSplash();
+			cubes[i].Draw();
 
 		if( System::clock() - m_splashTime > 3.0f )
 			m_state = STATE_PLAYING;
 	}
-	else if( m_state == STATE_PLAYING )
+	else 
 	{
 		if( m_bTestMatches )
 		{
-			TestMatches();
+			if( m_state == STATE_PLAYING )
+				TestMatches();
+			else
+			{
+				Reset();
+			}
 			m_bTestMatches = false;
 		}
 
@@ -161,6 +166,24 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 	}
 }
 
+
+void Game::checkGameOver()
+{
+	if( m_mode == MODE_FLIPS )
+	{
+		//1 or fewer cubes not dead 
+		int numInPlay = 0;
+
+		for( int i = 0; i < NUM_CUBES; i++ )
+		{
+			if( !cubes[i].isDead() )
+				numInPlay++;
+		}
+
+		if( numInPlay <= 1 )
+			m_state = STATE_POSTGAME;
+	}
+}
 
 
 bool Game::NoMatches()

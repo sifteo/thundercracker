@@ -36,7 +36,6 @@ public:
 	//draw loading progress.  return true if done
 	bool DrawProgress( AssetGroup &assets );
 	void Draw();
-	void DrawSplash();
 	void Update(float t);
 	void vidInit();
 	void Tilt( int dir );
@@ -74,6 +73,8 @@ public:
 	//returns if we have one and only one fixed dot (and zero floating dots)
 	//fills in the position of that dot
 	bool getFixedDot( Vec2 &pos ) const;
+
+	bool isDead() const { return m_state == STATE_NOFLIPS; }
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful

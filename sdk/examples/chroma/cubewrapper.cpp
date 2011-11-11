@@ -67,23 +67,53 @@ bool CubeWrapper::DrawProgress( AssetGroup &assets )
 
 void CubeWrapper::Draw()
 {
-	//draw grid
-	for( int i = 0; i < NUM_ROWS; i++ )
+	switch( Game::Inst().getState() )
 	{
-		for( int j = 0; j < NUM_COLS; j++ )
+		case Game::STATE_SPLASH:
 		{
-			GridSlot &slot = m_grid[i][j];
-			slot.Draw( m_vid, Vec2(j * 4, i * 4) );
+			m_vid.BG0_drawAsset(Vec2(0,0), Cover, 0);
+			break;
 		}
+		case Game::STATE_PLAYING:
+		{
+			if( m_state == STATE_NOFLIPS )
+			{
+				m_vid.clear(Font.tiles[0]);
+				m_vid.BG0_text( Vec2( 4, 4 ), Font, "NO FLIPS" );
+				m_vid.BG0_text( Vec2( 4, 6 ), Font, "LEFT" );
+			}
+			else
+			{
+				//draw grid
+				for( int i = 0; i < NUM_ROWS; i++ )
+				{
+					for( int j = 0; j < NUM_COLS; j++ )
+					{
+						GridSlot &slot = m_grid[i][j];
+						slot.Draw( m_vid, Vec2(j * 4, i * 4) );
+					}
+				}
+
+				m_banner.Draw( m_cube );
+			}
+			break;
+		}
+		case Game::STATE_POSTGAME:
+		{
+			m_vid.clear(Font.tiles[0]);
+			m_vid.BG0_text( Vec2( 3, 3 ), Font, "GAME OVER:" );
+
+			char aBuf[16];
+
+			sprintf( aBuf, "%d PTS", Game::Inst().getScore() );
+
+			m_vid.BG0_text( Vec2( 4, 7 ), Font, aBuf );
+			break;
+		}
+		default:
+			break;
 	}
-
-	m_banner.Draw( m_cube );
-}
-
-
-void CubeWrapper::DrawSplash()
-{
-	m_vid.BG0_drawAsset(Vec2(0,0), Cover, 0);
+	
 }
 
 
@@ -97,11 +127,23 @@ void CubeWrapper::Update(float t)
             m_fShakeTime = -1.0f;
             checkRefill();
 		}
+
+		//update all dots
+		for( int i = 0; i < NUM_ROWS; i++ )
+		{
+			for( int j = 0; j < NUM_COLS; j++ )
+			{
+				GridSlot &slot = m_grid[i][j];
+				slot.Update( t );
+			}
+		}
+
+		m_banner.Update(t, m_cube);
 	}
 
 	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
 	{
-        bool newValue = m_cube.hasPhysicalNeighborAt(i);
+		bool newValue = m_cube.hasPhysicalNeighborAt(i);
 		Cube::ID id = m_cube.physicalNeighborAt(i);
 
 		if( newValue )
@@ -123,18 +165,6 @@ void CubeWrapper::Update(float t)
 		else
 			m_neighbors[i] = -1;
 	}
-
-	//update all dots
-	for( int i = 0; i < NUM_ROWS; i++ )
-	{
-		for( int j = 0; j < NUM_COLS; j++ )
-		{
-			GridSlot &slot = m_grid[i][j];
-			slot.Update( t );
-		}
-	}
-
-	m_banner.Update(t, m_cube);
 }
 
 
@@ -492,6 +522,17 @@ void CubeWrapper::checkRefill()
 		else
 		{
 			m_state = STATE_NOFLIPS;
+
+			for( int i = 0; i < NUM_ROWS; i++ )
+			{
+				for( int j = 0; j < NUM_COLS; j++ )
+				{
+					GridSlot &slot = m_grid[i][j];
+					slot.setEmpty();
+				}
+			}
+
+			Game::Inst().checkGameOver();
 		}
 	}
 }
