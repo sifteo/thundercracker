@@ -25,6 +25,7 @@ public:
 	void Update(float t, Cube &cube);
 
 	void SetMessage( const char *pMsg, float duration = SCORE_FADE_DELAY );
+	bool IsActive() const;
 
 private:
 	char m_Msg[MAX_BANNER_LENGTH];

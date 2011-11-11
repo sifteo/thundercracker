@@ -84,3 +84,9 @@ void Banner::SetMessage( const char *pMsg, float duration )
 		m_fEndTime = System::clock() + duration;
 	}
 }
+
+
+bool Banner::IsActive() const
+{
+	return m_Msg[0] != '\0';
+}

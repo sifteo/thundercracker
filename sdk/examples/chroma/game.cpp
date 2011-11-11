@@ -16,7 +16,7 @@ Game &Game::Inst()
 	return game; 
 }
 
-Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_splashTime( 0.0f )
+Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f )
 {
 	//Reset();
 }
@@ -59,7 +59,10 @@ void Game::Update()
 			cubes[i].Draw();
 
 		if( System::clock() - m_splashTime > 3.0f )
+		{
 			m_state = STATE_PLAYING;
+			m_timer.Init( System::clock() );
+		}
 	}
 	else 
 	{
@@ -72,6 +75,12 @@ void Game::Update()
 				Reset();
 			}
 			m_bTestMatches = false;
+		}
+
+		if( m_mode == MODE_TIMED )
+		{
+			m_timer.Update( System::clock() );
+			checkGameOver();
 		}
 
 		for( int i = 0; i < NUM_CUBES; i++ )
@@ -99,6 +108,8 @@ void Game::Reset()
 	{
 		cubes[i].Reset();
 	}
+
+	m_timer.Reset();
 }
 
 void Game::TestMatches()
@@ -165,8 +176,8 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 		}
 
 		//TODO timer mode
-		/*if( m_mode == MODE_TIME )
-			self.timekeeper.add_time(m_iDotsCleared * gems_timer.TIME_RETURN_PER_GEM)*/
+		if( m_mode == MODE_TIMED )
+			m_timer.AddTime(m_iDotScore);
 
 		m_iDotScore = 0;
 		m_iDotScoreSum = 0;
@@ -188,6 +199,11 @@ void Game::checkGameOver()
 		}
 
 		if( numInPlay <= 1 )
+			m_state = STATE_POSTGAME;
+	}
+	else if( m_mode == MODE_TIMED )
+	{
+		if( m_timer.getTime() <= 0.0f )
 			m_state = STATE_POSTGAME;
 	}
 }

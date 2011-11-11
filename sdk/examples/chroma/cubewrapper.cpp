@@ -103,8 +103,12 @@ void CubeWrapper::Draw()
 					}
 				}
 
-				m_banner.Draw( m_cube );
+				if( m_banner.IsActive() )
+					m_banner.Draw( m_cube );
+				else if( Game::Inst().getMode() == Game::MODE_TIMED )
+					Game::Inst().getTimer().Draw( m_cube );
 			}
+
 			break;
 		}
 		case Game::STATE_POSTGAME:

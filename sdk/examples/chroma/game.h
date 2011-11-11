@@ -9,6 +9,7 @@
 
 #include <sifteo.h>
 #include "cubewrapper.h"
+#include "TimeKeeper.h"
 
 using namespace Sifteo;
 
@@ -19,9 +20,10 @@ public:
 	typedef enum
 	{
 		STATE_SPLASH,
+		STARTING_STATE = STATE_SPLASH,
 		STATE_MENU,
 		STATE_PLAYING,
-		STARTING_STATE = STATE_PLAYING,
+		//STARTING_STATE = STATE_PLAYING,
 		STATE_POSTGAME,
 	} GameState;
 
@@ -59,6 +61,8 @@ public:
 	inline unsigned int getLevel() const { return m_iLevel; }
 	inline void addLevel() { m_iLevel++; }
 
+	TimeKeeper &getTimer() { return m_timer; }
+
 	void CheckChain( CubeWrapper *pWrapper );
 	void checkGameOver();
 	bool NoMatches();
@@ -82,6 +86,7 @@ private:
 	GameState m_state;
 	GameMode m_mode;
 	float m_splashTime;
+	TimeKeeper m_timer;
 };
 
 #endif
