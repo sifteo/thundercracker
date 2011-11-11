@@ -54,18 +54,16 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
                             unsigned long framesPerBuffer,
                             const PaStreamCallbackTimeInfo* timeInfo,
                             PaStreamCallbackFlags statusFlags,
-                            void *userData )
+                            void *userData)
 {
-    PortAudioOutDevice *dev = static_cast<PortAudioOutDevice*>(userData);
-    uint8_t *out = (uint8_t*)outputBuffer;
-
-    (void) timeInfo; /* Prevent unused variable warnings. */
+    (void) timeInfo; // Prevent unused variable warnings.
     (void) inputBuffer;
+
+    PortAudioOutDevice *dev = static_cast<PortAudioOutDevice*>(userData);
     if (statusFlags != paNoError) {
         LOG(("statusFlags: %ld\n", statusFlags));
     }
-
-    dev->mixer->pullAudio(out, framesPerBuffer * sizeof(int16_t));
+    dev->mixer->pullAudio((int16_t*)outputBuffer, framesPerBuffer);
 
     return paContinue;
 }
@@ -108,7 +106,7 @@ void PortAudioOutDevice::init(AudioOutDevice::SampleRate samplerate, AudioMixer 
         NULL                                // hostApiSpecificStreamInfo
     };
 
-    int rate;
+    int rate = 0;
     switch (samplerate) {
     case AudioOutDevice::kHz8000: rate = 8000; break;
     case AudioOutDevice::kHz16000: rate = 16000; break;

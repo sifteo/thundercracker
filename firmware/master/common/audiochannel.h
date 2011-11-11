@@ -29,7 +29,7 @@ public:
     }
 
     void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
-    int pullAudio(uint8_t *buffer, int len);
+    int pullAudio(int16_t *buffer, int len);
 
     _SYSAudioType channelType() const {
         ASSERT(mod != NULL);

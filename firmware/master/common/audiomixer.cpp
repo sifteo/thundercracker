@@ -139,7 +139,7 @@ void AudioMixer::test()
  * Called from the AudioOutDevice when it needs more data - not sure when this
  * will actually be happening yet.
  */
-int AudioMixer::pullAudio(uint8_t *buffer, int numsamples)
+int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
 {
     memset(buffer, 0, numsamples * sizeof(*buffer));
 

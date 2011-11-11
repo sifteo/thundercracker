@@ -10,7 +10,11 @@ void AudioChannel::init(_SYSAudioBuffer *b)
 
 void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
 {
-    ASSERT(!(dec == NULL && mod->type == Sample));
+    // if this is a sample & either the passed in decoder is null, or our
+    // internal decoder is not null, we've got problems
+    ASSERT(!(mod->type == Sample && dec == NULL));
+    ASSERT(!(mod->type == Sample && this->decoder != NULL));
+
     this->decoder = dec;
     this->mod = mod;
     this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
@@ -19,13 +23,14 @@ void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loo
     }
 }
 
-int AudioChannel::pullAudio(uint8_t *buffer, int len)
+int AudioChannel::pullAudio(int16_t *buffer, int len)
 {
     ASSERT(!(state & STATE_STOPPED));
-    int bytesToMix = MIN(buf.readAvailable(), len);
+    int bytesToMix = MIN(buf.readAvailable() / sizeof(*buffer), len);
     if (bytesToMix > 0) {
         for (int i = 0; i < bytesToMix; i++) {
-            *buffer += buf.pop(); // TODO - volume, limiting, compression, etc
+            int16_t sample = buf.pop() | (buf.pop() << 8);
+            *buffer += sample; //buf.pop(); // TODO - volume, limiting, compression, etc
             buffer++;
         }
         // if we have nothing buffered, and there's nothing else to read, we're done
@@ -38,10 +43,6 @@ int AudioChannel::pullAudio(uint8_t *buffer, int len)
 
 void AudioChannel::fetchData()
 {
-    if (!mod || (state & STATE_STOPPED)) {
-        return;
-    }
-
     switch (mod->type) {
     case Sample: {
         if (decoder->endOfStream() || buf.writeAvailable() < SpeexDecoder::DECODED_FRAME_SIZE) {

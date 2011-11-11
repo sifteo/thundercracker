@@ -41,7 +41,7 @@ public:
 
     bool active() const { return activeChannelMask; }
 
-    int pullAudio(uint8_t *buffer, int numsamples);
+    int pullAudio(int16_t *buffer, int numsamples);
     void fetchData();
 
 private:
