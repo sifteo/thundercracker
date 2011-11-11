@@ -35,7 +35,12 @@ int AudioChannel::pullAudio(int16_t *buffer, int len)
         }
         // if we have nothing buffered, and there's nothing else to read, we're done
         if (decoder->endOfStream() && buf.readAvailable() == 0) {
-            return -1;
+            if (this->state & STATE_LOOP) {
+                this->decoder->setData(mod->data, mod->size);
+            }
+            else {
+                return -1;
+            }
         }
     }
     return bytesToMix;
