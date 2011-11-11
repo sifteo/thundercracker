@@ -2,6 +2,11 @@
 #include "Game.h"
 #include "Enemy.h"
 
+#define ROOM_NONE (Vec2(-1,-1))
+#define PLAYER_SPRITE_ID 0
+#define ENEMY_SPRITE_ID 1
+#define ITEM_SPRITE_ID 2
+
 GameView::GameView() : 
 visited(0), mRoom(-2,-2) {
 }
@@ -9,10 +14,10 @@ visited(0), mRoom(-2,-2) {
 void GameView::Init() {
   EnterSpriteMode();
   if (gGame.player.CurrentView() == this) {
-    ShowRoom(gGame.player.Room());
+    ShowLocation(gGame.player.Location());
     ShowPlayer();
   } else {
-    ShowRoom(ROOM_NONE);
+    ShowLocation(ROOM_NONE);
   }
 }
 
@@ -27,12 +32,12 @@ bool GameView::IsShowingRoom() const {
     mRoom.y < gGame.map.Data()->height; 
 }
 
-MapRoom* GameView::GetMapRoom() const { 
+MapRoom* GameView::Room() const { 
   ASSERT(IsShowingRoom()); 
-  return gGame.map.GetRoom(mRoom.x, mRoom.y); 
+  return gGame.map.GetRoom(mRoom); 
 }
 
-void GameView::ShowRoom(Vec2 room) {
+void GameView::ShowLocation(Vec2 room) {
   if (mRoom == room) { return; }
   mRoom = room;
   // are we showing an enemy?
@@ -43,16 +48,28 @@ void GameView::ShowRoom(Vec2 room) {
       HideEnemy(p);
     }
   }
-  
+  // are we showing an items?
+  if (IsShowingRoom()) {
+    MapRoom* mr = Room();
+    if (mr->itemId) {
+      ShowItem(mr->itemId);
+    } else {
+      HideItem();
+    }
+  } else {
+    HideItem();
+  }
   DrawBackground();
 }
 
 void GameView::HideRoom() {
+  if (mRoom == ROOM_NONE) { return; }
   for(Enemy* p = gGame.EnemyBegin(); p!=gGame.EnemyEnd(); ++p) {
     if (p->view == this) {
       HideEnemy(p);
     }
   }
+  HideItem();
   mRoom = ROOM_NONE;
   DrawBackground();
 }
@@ -100,6 +117,27 @@ void GameView::HideEnemy(Enemy* pEnemy) {
     pEnemy->view = 0;
   }
 }
+
+  
+//----------------------------------------------------------------------
+// ITEM METHODS
+//----------------------------------------------------------------------
+
+void GameView::ShowItem(int itemId) {
+  SetSpriteImage(ITEM_SPRITE_ID, Items.index + itemId - 1);
+  ResizeSprite(ITEM_SPRITE_ID, 16, 16);
+  MoveSprite(ITEM_SPRITE_ID, 64-8, 64-8);
+}
+
+void GameView::SetItemPosition(Vec2 p) {
+  MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y-8);
+}
+
+void GameView::HideItem() {
+  ResizeSprite(ITEM_SPRITE_ID, 0, 0);
+}
+
+
 //----------------------------------------------------------------------
 // ACCELEROMETER SHTUFF
 //----------------------------------------------------------------------
@@ -188,7 +226,7 @@ void GameView::DrawBackground() {
         mode.BG0_drawAsset(
           Vec2(x<<1,y<<1),
           *(gGame.map.Data()->tileset),
-          gGame.map.Data()->GetTileId(mRoom.x, mRoom.y, x, y)
+          gGame.map.Data()->GetTileId(mRoom, x, y)
         );
       }
     }

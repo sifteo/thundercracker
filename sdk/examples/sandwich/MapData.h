@@ -1,6 +1,8 @@
 #pragma once
 #include <sifteo.h>
 
+using namespace Sifteo;
+
 #define PORTAL_OPEN	0
 #define PORTAL_WALL	1
 #define PORTAL_DOOR 2
@@ -24,7 +26,7 @@ struct ItemData {
 };
 
 struct MapData {
-    const Sifteo::AssetImage* tileset;
+    const AssetImage* tileset;
     uint8_t* tiles; // every 64 tiles represents an 8x8 room of 16px tiles
     uint8_t* xportals; // vertical portals between rooms (x,y) and (x+1,y)
     uint8_t* yportals; // horizontal portals between rooms (x,y) and (x,y+1)
@@ -62,18 +64,42 @@ struct MapData {
         yportals[x * (height+1) + y] = pid;
     }
 
-    inline uint8_t GetTileId(int roomx, int roomy, int x, int y) const {
+    inline uint8_t GetTileId(Vec2 location, int x, int y) const {
         // this value indexes into tileset.frames
-        ASSERT(0 <= roomx && roomx < width);
-        ASSERT(0 <= roomy && roomy < height);
+        ASSERT(0 <= location.x && location.x < width);
+        ASSERT(0 <= location.y && location.y < height);
         ASSERT(0 <= x && x < 8);
         ASSERT(0 <= y && y < 8);
-        return tiles[ 64 * (roomy * width + roomx) + y * 8 + x ];
+        return tiles[ 64 * (location.y * width + location.x) + y * 8 + x ];
     }
 
-    inline uint8_t GetRoomId(int roomx, int roomy) const {
-        ASSERT(0 <= roomx && roomx < width);
-        ASSERT(0 <= roomy && roomy < height);
-        return roomx + roomy * width;
+    inline void SetTileId(Vec2 location, int x, int y, uint8_t tileId) {
+        ASSERT(0 <= location.x && location.x < width);
+        ASSERT(0 <= location.y && location.y < height);
+        ASSERT(0 <= x && x < 8);
+        ASSERT(0 <= y && y < 8);
+        tiles[ 64 * (location.y * width + location.x) + y * 8 + x ] = tileId;
+    }
+
+    inline uint8_t GetRoomId(Vec2 location) const {
+        ASSERT(0 <= location.x && location.x < width);
+        ASSERT(0 <= location.y && location.y < height);
+        return location.x + location.y * width;
+    }
+
+    inline Vec2 GetLocation(uint8_t roomId) const {
+        ASSERT(roomId < width * height);
+        return Vec2(
+            roomId % width,
+            roomId / width
+        );
+    }
+
+    inline TriggerData* GetTriggerData(Vec2 loc) {
+        return triggers + GetRoomId(loc);
+    }
+
+    inline ItemData* GetItemData(Vec2 loc) {
+        return items + GetRoomId(loc);
     }
 };

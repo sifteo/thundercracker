@@ -21,5 +21,6 @@ public:
   bool IsShowing(const MapData& map) const { return mData == &map; }
   bool CanTraverse(Vec2 tile, Cube::Side direction) const;
   void SetData(const MapData& map);
-  MapRoom* GetRoom(int x, int y) const { return (MapRoom*)mRooms + x + mData->width * y; }
+  MapRoom* GetRoom(Vec2 room) const { return (MapRoom*)mRooms + room.x + mData->width * room.y; }
+  void SetRoomItem(Vec2 room, int itemId);
 };

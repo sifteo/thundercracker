@@ -1,7 +1,7 @@
 #include "Map.h"
 
 Map::Map() {
-  SetData(woods_data);
+  SetData(dungeon_data);
 }
 
 inline static bool PortalOpen(uint8_t pid) { 
@@ -40,4 +40,12 @@ bool Map::CanTraverse(Vec2 tile, Cube::Side direction) const {
         return tile.x < mData->width-1 && PortalOpen( mData->GetPortalX(tile.x+1, tile.y) );
   }
   return false;
+}
+
+void Map::SetRoomItem(Vec2 room, int itemId) {
+  MapRoom* p = GetRoom(room);
+  if (p->itemId != itemId) {
+    p->itemId = itemId;
+    mData->GetItemData(room)->itemId = itemId;
+  }
 }

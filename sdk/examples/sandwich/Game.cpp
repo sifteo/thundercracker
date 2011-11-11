@@ -129,7 +129,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(map.Data()->tileset),
-          map.Data()->GetTileId(view->Room().x, view->Room().y, x, y)
+          map.Data()->GetTileId(view->Location(), x, y)
         );
       }
     }
@@ -154,7 +154,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(map.Data()->tileset),
-          map.Data()->GetTileId(room.x, room.y, x, y)
+          map.Data()->GetTileId(room, x, y)
         );
       }
     }
@@ -170,35 +170,50 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 
     System::paintSync();
   }
-  // walk out of the in-gate
   
+  // walk out of the in-gate
   Vec2 target = 128*room + Vec2(64,64);
   player.SetLocation(position, InferDirection(target - position));
   view->Init();
-  //view->ShowRoom(Vec2(roomx,roomy));
-  //view->ShowPlayer();
   WalkTo(target);
   CheckMapNeighbors();
 }
 
-void Game::TakeBasicKey() {
-  //Vec2 roomLocation = player
-  LOG(("TAKE BASIC KEY\n"));
+void Game::TakeItem() {
+  int itemId = player.CurrentView()->Room()->itemId;
+  if (itemId) {
+    map.SetRoomItem(player.Location(), 0);
+    if (itemId == ITEM_BASIC_KEY) {
+      player.IncrementBasicKeyCount();
+      // do a crazy get-key transition
+      float kDegToRad = 3.14159f / 180.f;
+      for(int i=0; i<360; i += 18) {
+        float radius = (80.f * i)/360.f;
+        player.CurrentView()->SetItemPosition(Vec2(
+          64 + radius * cosf(i * kDegToRad), 
+          64 + radius * sinf(i * kDegToRad)
+        ));
+        System::paint();
+      }
+      player.CurrentView()->HideItem();
+    }
+  }
+  
 }
 
 //------------------------------------------------------------------
 // NEIGHBOR HANDLING
 //------------------------------------------------------------------
 
-static void VisitMapView(GameView* view, Vec2 tile, GameView* origin=0) {
+static void VisitMapView(GameView* view, Vec2 loc, GameView* origin=0) {
   if (!view || view->visited) { return; }
   view->visited = true;
-  view->ShowRoom(tile);
+  view->ShowLocation(loc);
   if (origin) {
     view->cube.orientTo(origin->cube);
   }
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    VisitMapView(view->VirtualNeighborAt(i), tile+kSideToUnit[i], view);
+    VisitMapView(view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
   }
 }
 
@@ -206,11 +221,9 @@ void Game::CheckMapNeighbors() {
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->visited = false;
   }
-  VisitMapView(player.KeyView(), player.KeyView()->Room());
+  VisitMapView(player.KeyView(), player.KeyView()->Location());
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    if (!v->visited) {
-      v->ShowRoom(ROOM_NONE);
-    }
+    if (!v->visited) { v->HideRoom(); }
   }
   sNeighborDirty = false;
 }

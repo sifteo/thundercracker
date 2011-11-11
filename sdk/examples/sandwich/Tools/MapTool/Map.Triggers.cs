@@ -51,7 +51,7 @@ namespace MapTool {
     }
 
     override public string GeneratedCode() {
-      return " if (type == TRIGGER_TYPE_PASSIVE) gGame.TakeBasicKey(); ";
+      return " if (type == TRIGGER_TYPE_PASSIVE) gGame.TakeItem(); ";
     }
   }
 

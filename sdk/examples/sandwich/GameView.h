@@ -4,11 +4,6 @@
 class Enemy;
 struct MapRoom;
 
-#define ROOM_NONE (Vec2(-1,-1))
-#define PLAYER_SPRITE_ID 0
-#define ENEMY_SPRITE_ID 1
-#define ITEM_SPRITE_ID 2
-
 class GameView {
 public:
   Cube cube;
@@ -23,15 +18,15 @@ public:
   // getters
   bool IsShowingRoom() const;
   bool InSpriteMode() const;
-  Vec2 Room() const { return mRoom; }
-  MapRoom* GetMapRoom() const;
+  Vec2 Location() const { return mRoom; }
+  MapRoom* Room() const;
   Cube::Side VirtualTiltDirection() const;
   GameView* VirtualNeighborAt(Cube::Side side) const;
   
   // methods
   void Init();
 
-  void ShowRoom(Vec2 room);
+  void ShowLocation(Vec2 room);
   void HideRoom();
   
   void ShowPlayer();
@@ -43,6 +38,7 @@ public:
   void HideEnemy(Enemy* pEnemy);
   
   void ShowItem(int itemId);
+  void SetItemPosition(Vec2 p);
   void HideItem();
 
 private:  

@@ -2,6 +2,7 @@
 
 #include "Base.h"
 class GameView;
+struct MapRoom;
 
 #define WALK_SPEED 4
 #define PLAYER_STATUS_IDLE 0
@@ -39,8 +40,12 @@ public:
   GameView* KeyView() { return pTarget==0?pCurrent:pTarget; }
   Cube::Side Direction() { return mDir; }
   Vec2 Position() const { return mPosition; }
-  Vec2 Room() const { return mPosition/128; }
+  Vec2 Location() const { return mPosition/128; }
   int Status() const { return mStatus; }
+
+  void IncrementBasicKeyCount() { mKeyCount++; }
+  void DecrementBasicKeyCount() { ASSERT(mKeyCount>0); mKeyCount--; }
+  bool HaveBasicKey() const { return mKeyCount > 0; }
 
   void SetLocation(Vec2 position, Cube::Side direction);
 

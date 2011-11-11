@@ -61,7 +61,7 @@ void Player::Update(float dt) {
     pCurrent->UpdatePlayer();
     mNextDir = pCurrent->VirtualTiltDirection();
     mPath.steps[0] = -1;
-    while(!gGame.map.CanTraverse(pCurrent->Room(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
+    while(!gGame.map.CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
       CORO_YIELD;
       mNextDir = pCurrent->VirtualTiltDirection();
       if (mNextDir != -1) {
@@ -94,7 +94,7 @@ void Player::Update(float dt) {
       pCurrent->UpdatePlayer();
 
       { // passive trigger?
-        MapRoom *mr = pCurrent->GetMapRoom();
+        MapRoom *mr = pCurrent->Room();
         if (mr->callback) {
           mr->callback(TRIGGER_TYPE_PASSIVE);
         }
@@ -103,7 +103,7 @@ void Player::Update(float dt) {
     } while(mPath.PopStep(pCurrent));
 
     { // active trigger?
-      MapRoom *mr = pCurrent->GetMapRoom();
+      MapRoom *mr = pCurrent->Room();
       if (mr->callback) {
         mr->callback(TRIGGER_TYPE_ACTIVE);
       }
@@ -145,7 +145,7 @@ bool Player::PathDetect() {
   pCurrent->visited = true;
   for(int side=0; side<NUM_SIDES; ++side) {
     mPath.steps[0] = side;
-    if (gGame.map.CanTraverse(pCurrent->Room(), side) && PathVisit(pCurrent->VirtualNeighborAt(side), 1)) {
+    if (gGame.map.CanTraverse(pCurrent->Location(), side) && PathVisit(pCurrent->VirtualNeighborAt(side), 1)) {
       return true;
     }
   }
@@ -162,7 +162,7 @@ bool Player::PathVisit(GameView* view, int depth) {
   } else {
     for(int side=0; side<NUM_SIDES; ++side) {
       mPath.steps[depth] = side;
-      if (gGame.map.CanTraverse(view->Room(), side) && PathVisit(view->VirtualNeighborAt(side), depth+1)) {
+      if (gGame.map.CanTraverse(view->Location(), side) && PathVisit(view->VirtualNeighborAt(side), depth+1)) {
         return true;
       } else {
         mPath.steps[depth] = -1;
