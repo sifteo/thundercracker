@@ -27,9 +27,9 @@ public:
     };
 
     enum DataFormat {
-        RightAlign12Bit = 0,
-        LeftAlign12Bit = 32,
-        RightAlign8Bit = 64
+        RightAlign12Bit,
+        LeftAlign12Bit,
+        RightAlign8Bit
     };
 
     enum Trigger {
