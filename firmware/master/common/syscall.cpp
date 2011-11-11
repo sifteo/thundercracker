@@ -249,8 +249,7 @@ void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
 bool _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, _SYSAudioLoopType loop)
 {
     if (Runtime::checkUserPointer(mod, sizeof(*mod)) && Runtime::checkUserPointer(h, sizeof(*h))) {
-        return false;
-//        return AudioMixer::play();
+        return AudioMixer::instance.play(mod, h, loop);
     }
     return false;
 }

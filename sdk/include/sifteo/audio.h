@@ -57,6 +57,6 @@ public:
     }
 };
 
-}; // namespace Sifteo
+} // namespace Sifteo
 
 #endif // AUDIO_H_

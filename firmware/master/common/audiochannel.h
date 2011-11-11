@@ -20,7 +20,7 @@ public:
     static const int STATE_LOOP     = (1 << 1);
     static const int STATE_STOPPED  = (1 << 2);
 
-    AudioChannel() : state(0), decoder(0)
+    AudioChannel() : mod(0), state(0), decoder(0)
     {}
     void init(_SYSAudioBuffer *b);
 
@@ -28,11 +28,12 @@ public:
         return buf.isValid();
     }
 
-    void play(const Sifteo::AudioModule &mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
+    void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
     int pullAudio(uint8_t *buffer, int len);
 
     _SYSAudioType channelType() const {
-        return mod->sys.type;
+        ASSERT(mod != NULL);
+        return mod->type;
     }
 
     void pause() {
@@ -50,7 +51,7 @@ protected:
     void onPlaybackComplete();
 
     AudioBuffer buf;
-    const Sifteo::AudioModule *mod;
+    const struct _SYSAudioModule *mod;
     uint8_t state;
     _SYSAudioHandle handle;
     SpeexDecoder *decoder;

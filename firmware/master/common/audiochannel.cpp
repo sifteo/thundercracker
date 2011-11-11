@@ -8,14 +8,14 @@ void AudioChannel::init(_SYSAudioBuffer *b)
     buf.init(b);
 }
 
-void AudioChannel::play(const Sifteo::AudioModule &mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
+void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
 {
-    ASSERT(!(dec == NULL && mod.sys.type == Sample));
+    ASSERT(!(dec == NULL && mod->type == Sample));
     this->decoder = dec;
-    this->mod = &mod;
+    this->mod = mod;
     this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
     if (this->decoder != 0) {
-        this->decoder->setData(mod.sys.data, mod.sys.size);
+        this->decoder->setData(mod->data, mod->size);
     }
 }
 
@@ -42,7 +42,7 @@ void AudioChannel::fetchData()
         return;
     }
 
-    switch (mod->sys.type) {
+    switch (mod->type) {
     case Sample: {
         if (decoder->endOfStream() || buf.writeAvailable() < SpeexDecoder::DECODED_FRAME_SIZE) {
             return;

@@ -186,7 +186,7 @@ void AudioMixer::fetchData()
 //
 //}
 
-bool AudioMixer::play(const AudioModule &mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
+bool AudioMixer::play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
 {
     if (enabledChannelMask == 0 || activeChannelMask == 0xFFFFFFFF) {
         return false; // no free channels
@@ -205,7 +205,7 @@ bool AudioMixer::play(const AudioModule &mod, _SYSAudioHandle *handle, _SYSAudio
 
     // does this module require a decoder? if so, get one
     SpeexDecoder *dec;
-    if (mod.sys.type == Sample) {
+    if (mod->type == Sample) {
         dec = getDecoder();
         if (dec == NULL) {
             return false; // no decoders available
