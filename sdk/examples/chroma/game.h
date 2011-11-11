@@ -27,7 +27,7 @@ public:
 
 	typedef enum
 	{
-		MODE_FLIPS,
+		MODE_SHAKES,
 		MODE_TIMED,
 		MODE_PUZZLE,
 	} GameMode;
@@ -77,7 +77,7 @@ private:
 	unsigned int m_iDotScoreSum;
 	unsigned int m_iScore;
 	unsigned int m_iDotsCleared;
-	//for progression in flips mode
+	//for progression in shakes mode
 	unsigned int m_iLevel;
 	GameState m_state;
 	GameMode m_mode;

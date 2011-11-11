@@ -16,7 +16,7 @@ Game &Game::Inst()
 	return game; 
 }
 
-Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_FLIPS ), m_splashTime( 0.0f )
+Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_splashTime( 0.0f )
 {
 	//Reset();
 }
@@ -176,7 +176,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 
 void Game::checkGameOver()
 {
-	if( m_mode == MODE_FLIPS )
+	if( m_mode == MODE_SHAKES )
 	{
 		//1 or fewer cubes not dead 
 		int numInPlay = 0;

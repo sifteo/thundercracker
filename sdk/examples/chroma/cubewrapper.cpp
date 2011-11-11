@@ -19,7 +19,7 @@ static unsigned int GEM_VALUE_PROGRESSION[] = { 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 };
 // Order in which the number of fixed gems in a grid increases as the grid is refilled.
 static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4 };
 
-CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_flipsRemaining( STARTING_FLIPS ), m_fShakeTime( -1.0f )
+CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_ShakesRemaining( STARTING_SHAKES ), m_fShakeTime( -1.0f )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -61,7 +61,7 @@ void CubeWrapper::Init( AssetGroup &assets )
 
 void CubeWrapper::Reset()
 {
-	m_flipsRemaining = STARTING_FLIPS;
+	m_ShakesRemaining = STARTING_SHAKES;
 	m_fShakeTime = -1.0f;
 	m_state = STATE_PLAYING;
 	Refill();
@@ -85,10 +85,10 @@ void CubeWrapper::Draw()
 		}
 		case Game::STATE_PLAYING:
 		{
-			if( m_state == STATE_NOFLIPS )
+			if( m_state == STATE_NOSHAKES )
 			{
 				m_vid.clear(Font.tiles[0]);
-				m_vid.BG0_text( Vec2( 4, 4 ), Font, "NO FLIPS" );
+				m_vid.BG0_text( Vec2( 4, 4 ), Font, "NO SHAKES" );
 				m_vid.BG0_text( Vec2( 4, 6 ), Font, "LEFT" );
 			}
 			else
@@ -129,7 +129,7 @@ void CubeWrapper::Draw()
 void CubeWrapper::Update(float t)
 {
 	//check for shaking
-	if( m_state != STATE_NOFLIPS )
+	if( m_state != STATE_NOSHAKES )
 	{
         if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
 		{
@@ -499,38 +499,38 @@ void CubeWrapper::checkRefill()
 		m_state = STATE_PLAYING;
 		Refill( true );
 
-		if( Game::Inst().getMode() == Game::MODE_FLIPS && Game::Inst().getScore() > 0 )
+		if( Game::Inst().getMode() == Game::MODE_SHAKES && Game::Inst().getScore() > 0 )
 		{
-			m_banner.SetMessage( "FREE FLIP!" );
+			m_banner.SetMessage( "FREE SHAKE!" );
 		}
 	}
 	else
 	{
-		if( Game::Inst().getMode() != Game::MODE_FLIPS )
+		if( Game::Inst().getMode() != Game::MODE_SHAKES )
 		{
 			m_state = STATE_PLAYING;
             Refill( true );
 		}
-		else if( m_flipsRemaining > 0 )
+		else if( m_ShakesRemaining > 0 )
 		{
 			m_state = STATE_PLAYING;
             Refill( true );
-            m_flipsRemaining--;
+            m_ShakesRemaining--;
 
-			if( m_flipsRemaining == 0 )
-				m_banner.SetMessage( "NO FLIPS LEFT" );
-			else if( m_flipsRemaining == 1 )
-				m_banner.SetMessage( "1 FLIP LEFT" );
+			if( m_ShakesRemaining == 0 )
+				m_banner.SetMessage( "NO SHAKES LEFT" );
+			else if( m_ShakesRemaining == 1 )
+				m_banner.SetMessage( "1 SHAKE LEFT" );
 			else
 			{
 				char aBuf[16];
-				sprintf( aBuf, "%d FLIPS LEFT", m_flipsRemaining );
+				sprintf( aBuf, "%d SHAKES LEFT", m_ShakesRemaining );
 				m_banner.SetMessage( aBuf );
 			}
 		}
 		else
 		{
-			m_state = STATE_NOFLIPS;
+			m_state = STATE_NOSHAKES;
 
 			for( int i = 0; i < NUM_ROWS; i++ )
 			{

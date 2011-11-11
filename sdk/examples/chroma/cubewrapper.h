@@ -19,7 +19,7 @@ class CubeWrapper
 public:
 	static const int NUM_ROWS = 4;
 	static const int NUM_COLS = 4;
-	static const int STARTING_FLIPS = 3;
+	static const int STARTING_SHAKES = 3;
 	static const float SHAKE_FILL_DELAY = 1.0f;
 	static const int DEFAULT_COHESION = 3;
 
@@ -27,7 +27,7 @@ public:
 	{
 		STATE_PLAYING,
 		STATE_EMPTY,
-		STATE_NOFLIPS,
+		STATE_NOSHAKES,
 	} CubeState;
 
 	CubeWrapper();
@@ -75,7 +75,7 @@ public:
 	//fills in the position of that dot
 	bool getFixedDot( Vec2 &pos ) const;
 
-	bool isDead() const { return m_state == STATE_NOFLIPS; }
+	bool isDead() const { return m_state == STATE_NOSHAKES; }
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
@@ -91,7 +91,7 @@ private:
 
 	//neighbor info
 	int m_neighbors[NUM_SIDES];
-	unsigned int m_flipsRemaining;
+	unsigned int m_ShakesRemaining;
 	//what time did we start shaking?
 	float m_fShakeTime;
 };
