@@ -135,6 +135,31 @@ extern volatile TIM_t TIM4;
 extern volatile TIM_t TIM5;
 extern volatile TIM_t TIM8;
 
+
+/*
+ * Digital to Analog Converter
+ */
+
+struct DACChannel_t {
+    uint32_t DHR12R;
+    uint32_t DHR12L;
+    uint32_t DHR8R1;
+};
+
+struct DAC_t {
+    uint32_t CR;
+    uint32_t SWTRIG;
+    struct DACChannel_t channels[2];
+    uint32_t DHR8R2;
+    uint32_t DHR12R;
+    uint32_t DHR12L;
+    uint32_t DHR8RD;
+    uint32_t DOR1;
+    uint32_t DOR2;
+};
+
+extern volatile DAC_t DAC;
+
 /*
  * Direct memory access
  */
