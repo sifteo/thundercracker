@@ -174,10 +174,15 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
  */
 void AudioMixer::fetchData()
 {
-    for (int i = 0; i < _SYS_AUDIO_NUM_CHANNELS; i++) {
-        if (activeChannelMask & (1 << i)) {
+    // note - refer to activeChannelMask on each iteration,
+    // as opposed to copying it to a local, in case it gets updated
+    // during a call to fetchData()
+    for (int i = 0; ; i++) {
+        int m = activeChannelMask >> i;
+        if (m == 0)
+            return;
+        if (m & 1)
             channels[i].fetchData();
-        }
     }
 }
 
