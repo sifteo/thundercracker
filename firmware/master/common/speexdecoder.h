@@ -48,7 +48,7 @@ public:
 private:
     void* decodeState;
     SpeexBits bits;
-    uint32_t srcaddr;
+    uintptr_t srcaddr;
     int srcBytesRemaining;
     DecodeStatus status;
 };

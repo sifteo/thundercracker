@@ -16,8 +16,8 @@ public:
     static const int NUM_BLOCKS = 2;
     static const int BLOCK_SIZE = 512; // XXX - HW dependent
 
-    static char* getRegion(uint32_t address, int len);
-    static void releaseRegion(uint32_t address);
+    static char* getRegion(uintptr_t address, int len);
+    static void releaseRegion(uintptr_t address);
 
 private:
     typedef struct CachedBlock_t {
@@ -33,7 +33,7 @@ private:
     static CachedBlock blocks[NUM_BLOCKS];
 //    static uint8_t freeBlocksMask = 0;      // bitmask indicating which blocks are in use
 
-    static CachedBlock* getCachedBlock(uint32_t address);
+    static CachedBlock* getCachedBlock(uintptr_t address);
 };
 
 #endif // FLASH_LAYER_H_
