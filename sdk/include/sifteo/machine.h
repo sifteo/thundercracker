@@ -111,7 +111,7 @@ namespace Atomic {
         And(dest, ~(0x80000000 >> bit));
     }
 
-};
+} // namespace Atomic
 
 
 /**
@@ -160,9 +160,9 @@ namespace Intrinsic {
         return ROR(a, 32 - b);
     }
 
-};
+} // namespace Intrinsic
 
 
-};  // namespace Sifteo
+}  // namespace Sifteo
 
 #endif
