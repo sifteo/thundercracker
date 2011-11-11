@@ -9,6 +9,7 @@
 #include "runtime.h"
 #include "cube.h"
 #include "neighbors.h"
+#include "audiomixer.h"
 
 using namespace Sifteo;
 
@@ -61,6 +62,14 @@ void Event::dispatch()
             }
         Atomic::And(pending, ~Intrinsic::LZ(event));
     }
+
+    /*
+      TODO - this is super temporary, but we don't currently have another
+      context in which to fetch & decode audio. Ultimately this is likely
+      to be interleaved with the runtime, or done periodically on a timer
+      interrupt (ie, separate thread in the simulator).
+    */
+    AudioMixer::instance.fetchData();
 
     dispatchInProgress = false;
 }
