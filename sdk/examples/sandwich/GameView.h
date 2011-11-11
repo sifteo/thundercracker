@@ -16,7 +16,6 @@ public:
 
 private:
   Vec2 mRoom;
-  int mSpriteCount; 
   
 public:  
   GameView();
@@ -31,10 +30,9 @@ public:
   
   // methods
   void Init();
-  void ShowRoom(Vec2 room);
-  void ClearRoom();
 
-  void RestoreSimpleCanvas();
+  void ShowRoom(Vec2 room);
+  void HideRoom();
   
   void ShowPlayer();
   void UpdatePlayer();
@@ -44,16 +42,17 @@ public:
   void UpdateEnemy(Enemy* pEnemy);
   void HideEnemy(Enemy* pEnemy);
   
-private:
-  bool EnterSpriteMode();
+  void ShowItem(int itemId);
+  void HideItem();
+
+private:  
+  // sprite manipulation methods
+  void EnterSpriteMode();
   void SetSpriteImage(int id, int tile);
   void HideSprite(int id);
   void ResizeSprite(int id, int px, int py);
   void MoveSprite(int id, int px, int py);
-  bool ExitSpriteMode();
   
   void DrawBackground();
-  void DoEnterSpriteMode();
-  void DoEnterSimpleMode();
 
 };

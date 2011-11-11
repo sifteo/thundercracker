@@ -90,11 +90,11 @@ namespace MapTool {
       }
       return string.Format(
         "\n    if (type == TRIGGER_TYPE_ACTIVE) {{" +
-        "\n        gGame.WalkTo({0}, {1});" +
-        "\n        gGame.TeleportTo({2}_data, {3}, {4}, {5}, {6});" +
+        "\n        gGame.WalkTo(Vec2({0}, {1}));" +
+        "\n        gGame.TeleportTo({2}_data, Vec2({3}, {4}));" +
         "\n    }}\n",
         PixelX, PixelY,
-        targetMap, tt.room.x, tt.room.y, tt.PixelX, tt.PixelY
+        targetMap, tt.PixelX, tt.PixelY
       );
     }
   }

@@ -27,8 +27,8 @@ public:
   void MainLoop();
   
   // Trigger Actions
-  void WalkTo(int x, int y);
-  void TeleportTo(const MapData& m, int roomx, int roomy, int pixelX, int pixelY);
+  void WalkTo(Vec2 position);
+  void TeleportTo(const MapData& m, Vec2 position);
   void TakeBasicKey();
 
   void OnNeighborAdd(GameView* v1, Cube::Side s1, GameView* v2, Cube::Side s2);

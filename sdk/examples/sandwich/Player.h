@@ -39,6 +39,7 @@ public:
   GameView* KeyView() { return pTarget==0?pCurrent:pTarget; }
   Cube::Side Direction() { return mDir; }
   Vec2 Position() const { return mPosition; }
+  Vec2 Room() const { return mPosition/128; }
   int Status() const { return mStatus; }
 
   void SetLocation(Vec2 position, Cube::Side direction);
