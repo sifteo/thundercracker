@@ -3,7 +3,7 @@
 
 FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
 
-char* FlashLayer::getRegion(uint32_t address, int len)
+char* FlashLayer::getRegion(uintptr_t address, int len)
 {
     (void)len;
     return (char*)address;
@@ -21,7 +21,7 @@ char* FlashLayer::getRegion(uint32_t address, int len)
 #endif
 }
 
-void FlashLayer::releaseRegion(uint32_t address)
+void FlashLayer::releaseRegion(uintptr_t address)
 {
     (void)address;
 }
@@ -29,7 +29,7 @@ void FlashLayer::releaseRegion(uint32_t address)
 /*
  * Try to find an existing cached block for the given address.
  */
-FlashLayer::CachedBlock* FlashLayer::getCachedBlock(uint32_t address)
+FlashLayer::CachedBlock* FlashLayer::getCachedBlock(uintptr_t address)
 {
     FlashLayer::CachedBlock *b;
     int i;

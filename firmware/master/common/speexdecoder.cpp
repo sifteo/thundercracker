@@ -40,7 +40,7 @@ void SpeexDecoder::init()
 
 void SpeexDecoder::setData(const uint8_t *srcaddr, int size)
 {
-    this->srcaddr = (uint32_t)srcaddr;
+    this->srcaddr = (uintptr_t)srcaddr;
     this->srcBytesRemaining = size;
     status = Ok;
 }
