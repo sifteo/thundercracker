@@ -41,22 +41,25 @@ static RandInit randInit;
 
 static Game &game = Game::Inst();
 
-static void onAccelChange(_SYSCubeID cid)
+static void onTilt(_SYSCubeID cid)
 {
-    _SYSAccelState state;
-    _SYS_getAccel(cid, &state);
+    Cube::TiltState state = game.cubes[cid].GetCube().getTiltState();
 
-	static const int TILT_THRESHOLD = 30;
-
-	//for now , just tilt cube 0
-	if( state.x > TILT_THRESHOLD )
+	if( state.x == _SYS_TILT_POSITIVE )
 		game.cubes[cid].Tilt( RIGHT );
-	else if( state.x < -TILT_THRESHOLD )
+	else if( state.x == _SYS_TILT_NEGATIVE )
 		game.cubes[cid].Tilt( LEFT );
-	else if( state.y > TILT_THRESHOLD )
+	if( state.y == _SYS_TILT_POSITIVE )
 		game.cubes[cid].Tilt( DOWN );
-	else if( state.y < -TILT_THRESHOLD )
+	else if( state.y == _SYS_TILT_NEGATIVE )
 		game.cubes[cid].Tilt( UP);
+}
+
+static void onShake(_SYSCubeID cid)
+{
+    _SYS_ShakeState state;
+    _SYS_getShake(cid, &state);
+	game.cubes[cid].Shake(state);
 }
 
 static void init()
@@ -71,10 +74,8 @@ void siftmain()
     /*vid.BG0_text(Vec2(2,1), Font, "Hello World!");
 	vid.BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
  */
-    _SYS_vectors.cubeEvents.accelChange = onAccelChange;
-
-	for( int i = 0; i < Game::NUM_CUBES; i++ )
-		onAccelChange(i);
+    _SYS_vectors.cubeEvents.tilt = onTilt;
+	_SYS_vectors.cubeEvents.shake = onShake;
 
     while (1) {
         game.Update();        
