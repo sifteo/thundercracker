@@ -41,6 +41,7 @@ public:
   void SetItemPosition(Vec2 p);
   void HideItem();
 
+  void DrawBackground();
 private:  
   // sprite manipulation methods
   void EnterSpriteMode();
@@ -48,7 +49,5 @@ private:
   void HideSprite(int id);
   void ResizeSprite(int id, int px, int py);
   void MoveSprite(int id, int px, int py);
-  
-  void DrawBackground();
 
 };

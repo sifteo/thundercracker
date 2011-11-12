@@ -1,7 +1,7 @@
 #include "Map.h"
 
 Map::Map() {
-  SetData(dungeon_data);
+  SetData(woods_data);
 }
 
 inline static bool PortalOpen(uint8_t pid) { 
@@ -68,3 +68,32 @@ void Map::SetPortal(Vec2 p, Cube::Side side, uint8_t pid) {
     case SIDE_RIGHT: mData->SetPortalX(p.x+1, p.y, pid); break;
   }
 }
+
+uint8_t Map::GetTile(Vec2 location, Vec2 position) {
+  return mData->GetTileId(location, position.x, position.y);
+}
+
+void Map::SetTile(Vec2 location, Vec2 position, uint8_t tid) {
+  mData->SetTileId(location, position.x, position.y, tid);
+}
+
+void Map::OpenDoor(Vec2 location, Cube::Side side) {
+  Vec2 p = Vec2(0,0);
+  switch(side) {
+    case SIDE_TOP: p = Vec2(3,0); break;
+    case SIDE_LEFT: p = Vec2(0, 3); break;
+    case SIDE_BOTTOM: p = Vec2(3, 6); break;
+    case SIDE_RIGHT: p = Vec2(6, 3); break;
+  }
+  for(int x=0; x<2; ++x) {
+    for(int y=0; y<2; ++y) {
+      SetTile(
+        location, 
+        Vec2(p.x+x, p.y+y), 
+        GetTile(location, Vec2(p.x+x, p.y+y))+2
+    );
+    }
+  }
+  
+}
+

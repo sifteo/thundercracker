@@ -16,4 +16,6 @@ gen_assets.lua
 gen_mapdata.h
 gen_mapdata.cpp
 
+_build
+
 *.xcodeproj

@@ -32,12 +32,14 @@ namespace MapTool {
             break;
         }
       } else {
-        var hWriter = new StringWriter();
-        var sWriter = new StringWriter();
-        WriteCxx(hWriter, sWriter);
-        Console.WriteLine("Source:\n{0}", sWriter.ToString());
+        //var hWriter = new StringWriter();
+        //var sWriter = new StringWriter();
+        //WriteCxx(hWriter, sWriter);
+        //Console.WriteLine("Source:\n{0}", sWriter.ToString());
 
         //SoWhenIAskedHerOutSheSaidIWasntHerType("woods.tmx");
+
+        RemapTileSet.Fix("_dungeon.tmx");
       }
     }
 

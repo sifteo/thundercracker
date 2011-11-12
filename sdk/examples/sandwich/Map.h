@@ -26,4 +26,8 @@ public:
 
   uint8_t GetPortal(Vec2 location, Cube::Side side);
   void SetPortal(Vec2 location, Cube::Side side, uint8_t pid);
+
+  uint8_t GetTile(Vec2 location, Vec2 position);
+  void SetTile(Vec2 location, Vec2 position, uint8_t tid);
+  void OpenDoor(Vec2 location, Cube::Side side);
 };

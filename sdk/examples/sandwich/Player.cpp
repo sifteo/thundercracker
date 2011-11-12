@@ -91,7 +91,10 @@ void Player::Update(float dt) {
           if (mApproachingLockedDoor && mProgress < 64-DOOR_PAD && mProgress+WALK_SPEED >= 64-DOOR_PAD) {
             DecrementBasicKeyCount();
             gGame.map.SetPortal(pCurrent->Location(), mDir, PORTAL_DOOR);
-            // animate door opening
+            gGame.map.OpenDoor(pCurrent->Location(), mDir);
+            gGame.map.OpenDoor(pTarget->Location(), (mDir+2)%4);
+            pCurrent->DrawBackground();
+            pTarget->DrawBackground();
           }
           CORO_YIELD;
           mPosition += WALK_SPEED * kSideToUnit[mDir];
@@ -111,7 +114,7 @@ void Player::Update(float dt) {
           }
         } //
       } else {
-        
+
         // walk up to the locked door, then bounce back
         mPath.Cancel();
         pTarget->HidePlayer();
