@@ -141,11 +141,11 @@ void AudioMixer::test()
  */
 int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
 {
-    memset(buffer, 0, numsamples * sizeof(*buffer));
-
     if (activeChannelMask == 0) {
         return 0;
     }
+
+    memset(buffer, 0, numsamples * sizeof(*buffer));
 
     AudioChannel *ch = &channels[0];
     uint32_t mask = activeChannelMask;

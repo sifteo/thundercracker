@@ -2,7 +2,7 @@
 #include "portaudiooutdevice.h"
 #include "audiomixer.h"
 #include <sifteo/macros.h>
-#include "math.h"
+#include <string.h>
 
 //#define SINE_TEST // uncomment for testing
 
@@ -12,6 +12,9 @@ PortAudioOutDevice::PortAudioOutDevice() :
 }
 
 #ifdef  SINE_TEST
+
+#include "math.h"
+
 #define TABLE_SIZE   (200)
 typedef struct {
     float sine[TABLE_SIZE];
@@ -63,7 +66,9 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
     if (statusFlags != paNoError) {
         LOG(("statusFlags: %ld\n", statusFlags));
     }
-    dev->mixer->pullAudio((int16_t*)outputBuffer, framesPerBuffer);
+    if (dev->mixer->pullAudio((int16_t*)outputBuffer, framesPerBuffer) <= 0) {
+        memset(outputBuffer, 0, framesPerBuffer * sizeof(int16_t));
+    }
 
     return paContinue;
 }
