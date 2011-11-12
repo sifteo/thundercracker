@@ -1,0 +1,5 @@
+#!/bin/bash
+make
+tc-siftulator -n 3 &
+sleep 1s
+./sandwichcraft.sim

@@ -120,6 +120,9 @@ gx = {}
         gx:wipe()
         gx:setWindow(0, LCD_HEIGHT)
         gx:setRotation(0)
+        
+        gx.cube:xbPoke(VA_FLAGS, 0)
+        gx.sys:vsleep(0.1)
     end
     
     function gx:yield()
