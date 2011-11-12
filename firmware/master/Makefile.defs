@@ -58,8 +58,10 @@ ifeq ($(UNAME), windows32)
                     -I$(TC_DIR)/deps/win32/portaudio/include
     LDFLAGS_SIM +=  -L$(TC_DIR)/deps/win32/speex/lib \
                     -L$(TC_DIR)/deps/win32/portaudio/lib \
-                    -lportaudio -lspeex \
-                    -lws2_32
+                    -static -lportaudio -lspeex \
+                    -lws2_32 -lwinmm -lole32
+    # note: winmm and ole32 are required because portaudio links to them
+    # but cannot link to a static version of them
 endif
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
