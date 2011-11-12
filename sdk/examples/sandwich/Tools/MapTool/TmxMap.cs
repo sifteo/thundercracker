@@ -115,6 +115,13 @@ namespace MapTool {
     public int pixelW;
     public int pixelH;
     public TmxTile tile;
+
+    public int TileX { get { return pixelX / 16; } }
+    public int TileY { get { return pixelY / 16; } }
+    public int TileWidth { get { return Math.Min(1, pixelW / 16); } }
+    public int TileHeight { get { return Math.Min(1, pixelH / 16); } }
+
+
   }
 
 

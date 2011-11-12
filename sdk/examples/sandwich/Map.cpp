@@ -5,7 +5,7 @@ Map::Map() {
 }
 
 inline static bool PortalOpen(uint8_t pid) { 
-    return pid == PORTAL_DOOR || pid == PORTAL_OPEN;
+    return pid != PORTAL_WALL;
 }
 
 void Map::SetData(const MapData& map) { 
@@ -47,5 +47,24 @@ void Map::SetRoomItem(Vec2 room, int itemId) {
   if (p->itemId != itemId) {
     p->itemId = itemId;
     mData->GetItemData(room)->itemId = itemId;
+  }
+}
+
+uint8_t Map::GetPortal(Vec2 p, Cube::Side side) {
+  switch(side) {
+    case SIDE_TOP: return mData->GetPortalY(p.x, p.y);
+    case SIDE_LEFT: return mData->GetPortalX(p.x, p.y);
+    case SIDE_BOTTOM: return mData->GetPortalY(p.x, p.y+1);
+    case SIDE_RIGHT: return mData->GetPortalX(p.x+1, p.y);
+  }
+  return 0;
+}
+
+void Map::SetPortal(Vec2 p, Cube::Side side, uint8_t pid) {
+  switch(side) {
+    case SIDE_TOP: mData->SetPortalY(p.x, p.y, pid); break;
+    case SIDE_LEFT: mData->SetPortalX(p.x, p.y, pid); break;
+    case SIDE_BOTTOM: mData->SetPortalY(p.x, p.y+1, pid); break;
+    case SIDE_RIGHT: mData->SetPortalX(p.x+1, p.y, pid); break;
   }
 }

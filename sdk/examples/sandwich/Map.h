@@ -23,4 +23,7 @@ public:
   void SetData(const MapData& map);
   MapRoom* GetRoom(Vec2 room) const { return (MapRoom*)mRooms + room.x + mData->width * room.y; }
   void SetRoomItem(Vec2 room, int itemId);
+
+  uint8_t GetPortal(Vec2 location, Cube::Side side);
+  void SetPortal(Vec2 location, Cube::Side side, uint8_t pid);
 };

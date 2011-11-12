@@ -13,6 +13,7 @@ struct Path {
   Path();
   bool IsDefined() const { return *steps >= 0; }
   bool PopStep(GameView* newRoot);
+  void Cancel();
 };
 
 class Player {
@@ -28,6 +29,7 @@ private:
   // stately variables
   int mProgress;
   int mNextDir;
+  bool mApproachingLockedDoor;
 
   Path mPath;
   
