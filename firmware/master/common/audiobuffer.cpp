@@ -8,7 +8,7 @@ void AudioBuffer::init(_SYSAudioBuffer *buf) {
     sys->head = sys->tail = 0;
 }
 
-void AudioBuffer::push(uint8_t c)
+void AudioBuffer::enqueue(uint8_t c)
 {
     ASSERT(isValid());
     ASSERT(!full());
@@ -17,7 +17,7 @@ void AudioBuffer::push(uint8_t c)
     ASSERT(sys->tail != sys->head);
 }
 
-uint8_t AudioBuffer::pop()
+uint8_t AudioBuffer::dequeue()
 {
     ASSERT(isValid());
     ASSERT(!empty());
@@ -31,7 +31,7 @@ void AudioBuffer::write(const uint8_t *buf, int len)
 {
     // for now. optimize later
     while (len--) {
-        push(*buf++);
+        enqueue(*buf++);
     }
 }
 
@@ -40,7 +40,7 @@ int AudioBuffer::read(uint8_t *buf, int len)
     // for now. optimize later
     int count = len;
     while (len--) {
-        *buf++ = pop();
+        *buf++ = dequeue();
     }
     return count;
 }

@@ -29,7 +29,7 @@ int AudioChannel::pullAudio(int16_t *buffer, int len)
     int bytesToMix = MIN(buf.readAvailable() / sizeof(*buffer), len);
     if (bytesToMix > 0) {
         for (int i = 0; i < bytesToMix; i++) {
-            int16_t sample = buf.pop() | (buf.pop() << 8);
+            int16_t sample = buf.dequeue() | (buf.dequeue() << 8);
             *buffer += sample; //buf.pop(); // TODO - volume, limiting, compression, etc
             buffer++;
         }

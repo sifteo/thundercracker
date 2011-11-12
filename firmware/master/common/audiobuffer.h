@@ -20,8 +20,8 @@ public:
         return sys != 0;
     }
 
-    void push(uint8_t c);
-    uint8_t pop();
+    void enqueue(uint8_t c);
+    uint8_t dequeue();
 
     void write(const uint8_t *buf, int len);
     int read(uint8_t *buf, int len);
