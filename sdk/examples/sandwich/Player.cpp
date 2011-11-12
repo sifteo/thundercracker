@@ -89,7 +89,6 @@ void Player::Update(float dt) {
       if (!mApproachingLockedDoor || HaveBasicKey()) {
         for(mProgress=0; mProgress<128; mProgress+=WALK_SPEED) {
           if (mApproachingLockedDoor && mProgress < 64-DOOR_PAD && mProgress+WALK_SPEED >= 64-DOOR_PAD) {
-            LOG(("UNLOCKED DOOR\n"));
             DecrementBasicKeyCount();
             gGame.map.SetPortal(pCurrent->Location(), mDir, PORTAL_DOOR);
             // animate door opening
@@ -112,17 +111,16 @@ void Player::Update(float dt) {
           }
         } //
       } else {
-        LOG(("APPROACHING LOCKED DOOR, DON'T HAVE KEY\n"));
+        
+        // walk up to the locked door, then bounce back
         mPath.Cancel();
         pTarget->HidePlayer();
         pTarget = 0;
         for(mProgress=0; mProgress<64-DOOR_PAD; mProgress+=WALK_SPEED) {
-          LOG(("PROGRESS = %d\n", mProgress));
           CORO_YIELD;
           mPosition += WALK_SPEED * kSideToUnit[mDir];
           pCurrent->UpdatePlayer();
         }
-        LOG(("LOCKED DOOR\n"));
         mDir = (mDir+2)%4;
         for(mProgress=0; mProgress<64-DOOR_PAD; mProgress+=WALK_SPEED) {
           CORO_YIELD;
