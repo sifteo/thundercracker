@@ -10,7 +10,7 @@
 #include <math.h>
 
 namespace Sifteo {
-
+namespace Math {
 
 /**
  * 2-element integer vector
@@ -137,7 +137,7 @@ struct AffineMatrix {
     }
 };
 
-
-};  // namespace Sifteo
+}   // namespace Math
+}   // namespace Sifteo
 
 #endif
