@@ -47,7 +47,11 @@ class CubeSlot {
     static _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid
     static _SYSCubeIDVector frameACKValid;      /// 'framePrevACK' is valid
     static _SYSCubeIDVector neighborACKValid;   /// Neighbor/touch state is valid
-    
+	
+    static _SYSCubeID minCubes;
+    static _SYSCubeID maxCubes;
+
+    static void solicitCubes(_SYSCubeID min, _SYSCubeID max);
     static void enableCubes(_SYSCubeIDVector cv); 
     static void disableCubes(_SYSCubeIDVector cv);
 	static void connectCubes(_SYSCubeIDVector cv);

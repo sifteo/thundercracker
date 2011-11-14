@@ -57,6 +57,11 @@ void _SYS_ticks_ns(int64_t *nanosec)
         *nanosec = SysTime::ticks();
 }
 
+void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max)
+{
+	CubeSlot::solicitCubes(min, max);
+}
+	
 void _SYS_enableCubes(_SYSCubeIDVector cv)
 {
     CubeSlot::enableCubes(CubeSlot::truncateVector(cv));

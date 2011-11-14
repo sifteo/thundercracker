@@ -68,6 +68,14 @@ _SYSCubeIDVector CubeSlot::flashACKValid;
 _SYSCubeIDVector CubeSlot::frameACKValid;
 _SYSCubeIDVector CubeSlot::neighborACKValid;
 
+_SYSCubeID CubeSlot::minCubes = 0;
+_SYSCubeID CubeSlot::maxCubes = _SYS_NUM_CUBE_SLOTS;
+
+void CubeSlot::solicitCubes(_SYSCubeID min, _SYSCubeID max) {
+	minCubes = min;
+	maxCubes = max;
+}
+
 void CubeSlot::enableCubes(_SYSCubeIDVector cv) {
     NeighborSlot::resetSlots(cv);
     Sifteo::Atomic::Or(vecEnabled, cv);
@@ -247,8 +255,14 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
     if (!connected()) {
-        Event::setPending(EventBits::CUBEFOUND, id());    
+        Event::setPending(EventBits::CUBEFOUND, id());
         setConnected();
+		
+        uint32_t count = Intrinsic::POPCOUNT(vecConnected);
+        LOG(("%u cubes connected\n", count));
+        if (count >= minCubes) {
+            Event::resume();
+        }
     }
     
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
@@ -374,8 +388,14 @@ void CubeSlot::radioTimeout()
     /* XXX: Disconnect this cube */
     
     if (connected()) {
-        Event::setPending(EventBits::CUBELOST, id());    
+        Event::setPending(EventBits::CUBELOST, id());
         setDisconnected();
+		
+        uint32_t count = Intrinsic::POPCOUNT(vecConnected);
+        LOG(("%u cubes connected\n", count));
+        if (count < minCubes) {
+            Event::pause();
+        }
     }
 }
 

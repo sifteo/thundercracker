@@ -45,6 +45,8 @@ void siftmain()
 {
     LOG(("siftmain\n"));
     
+    System::solicitCubes(3, 6);
+
     init();
     
     _SYS_vectors.cubeEvents.found = onCubeFound;

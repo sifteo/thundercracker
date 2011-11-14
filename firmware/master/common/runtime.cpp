@@ -17,6 +17,7 @@ jmp_buf Runtime::jmpExit;
 bool Event::dispatchInProgress;
 uint32_t Event::pending;
 uint32_t Event::eventCubes[EventBits::COUNT];
+bool Event::paused = false;
 
 
 void Runtime::run()
@@ -38,7 +39,7 @@ void Event::dispatch()
      * Skip event dispatch if we're already in an event handler
      */
 
-    if (dispatchInProgress)
+    if (dispatchInProgress || paused)
         return;
     dispatchInProgress = true;
 

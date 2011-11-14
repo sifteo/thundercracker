@@ -364,6 +364,7 @@ void _SYS_paint(void);                          /// Enqueue a new rendering fram
 void _SYS_finish(void);                         /// Wait for enqueued frames to finish
 void _SYS_ticks_ns(int64_t *nanosec);           /// Return the monotonic system timer, in nanoseconds
 
+void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max);
 void _SYS_enableCubes(_SYSCubeIDVector cv);     /// Which cubes will be trying to connect?
 void _SYS_disableCubes(_SYSCubeIDVector cv);
 

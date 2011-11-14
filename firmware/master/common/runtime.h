@@ -89,9 +89,22 @@ class Event {
         Sifteo::Atomic::SetLZ(pending, t);
         Sifteo::Atomic::SetLZ(eventCubes[t], id);
     }
+	
+	static void pause() {
+		LOG(("pausing game runtime...\n"));
+		paused = true;
+		
+		// TODO: display a standard "game paused" screen
+	}
+	
+	static void resume() {
+		LOG(("resuming game runtime...\n"));
+		paused = false;
+	}
 
     static bool dispatchInProgress;     /// Reentrancy detector
     static uint32_t pending;            /// CLZ map of all pending events
+    static bool paused;
 
     /// Each event type has a map by cube slot
     static uint32_t eventCubes[EventBits::COUNT];     
