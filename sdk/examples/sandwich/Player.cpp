@@ -2,10 +2,11 @@
 #include "GameView.h"
 #include "Game.h"
 
+#define DOOR_PAD (10)
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
 pCurrent(gGame.views), pTarget(0), mPosition(64,64),
-mDir(2), mKeyCount(0), mProgress(0), mNextDir(-1) {
+mDir(2), mKeyCount(0), mProgress(0), mNextDir(-1), mApproachingLockedDoor(false) {
   CORO_RESET;
 }
 
@@ -17,6 +18,7 @@ void Player::Reset() {
   mNextDir = -1;
   mPosition = Vec2(64,64);
   mStatus = PLAYER_STATUS_IDLE;
+  mApproachingLockedDoor = false;
 }
 
 void Player::SetLocation(Vec2 position, Cube::Side direction) {
@@ -27,6 +29,7 @@ void Player::SetLocation(Vec2 position, Cube::Side direction) {
   mNextDir = -1;
   mPosition = position;
   mStatus = PLAYER_STATUS_IDLE;
+  mApproachingLockedDoor = false;
 }
 
 void Player::Move(int dx, int dy) {
@@ -60,8 +63,8 @@ void Player::Update(float dt) {
     mStatus = PLAYER_STATUS_IDLE;
     pCurrent->UpdatePlayer();
     mNextDir = pCurrent->VirtualTiltDirection();
-    mPath.steps[0] = -1;
-    while(!gGame.map.CanTraverse(pCurrent->Room(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
+    mPath.Cancel();
+    while(!gGame.map.CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
       CORO_YIELD;
       mNextDir = pCurrent->VirtualTiltDirection();
       if (mNextDir != -1) {
@@ -81,29 +84,58 @@ void Player::Update(float dt) {
       }
       // animate walking to target
       pTarget->ShowPlayer();
-      for(mProgress=0; mProgress<128; mProgress+=WALK_SPEED) {
-        CORO_YIELD;
-        mPosition += WALK_SPEED * kSideToUnit[mDir];
-        pCurrent->UpdatePlayer();
-        pTarget->UpdatePlayer();
-      }
-      // swap the current view
-      pCurrent->HidePlayer();
-      pCurrent = pTarget;
-      pTarget = 0;  
-      pCurrent->UpdatePlayer();
 
-      { // passive trigger?
-        MapRoom *mr = pCurrent->GetMapRoom();
-        if (mr->callback) {
-          mr->callback(TRIGGER_TYPE_PASSIVE);
+      mApproachingLockedDoor = gGame.map.GetPortal(pCurrent->Location(), mDir) == PORTAL_LOCK;
+      if (!mApproachingLockedDoor || HaveBasicKey()) {
+        for(mProgress=0; mProgress<128; mProgress+=WALK_SPEED) {
+          if (mApproachingLockedDoor && mProgress < 64-DOOR_PAD && mProgress+WALK_SPEED >= 64-DOOR_PAD) {
+            DecrementBasicKeyCount();
+            gGame.map.SetPortal(pCurrent->Location(), mDir, PORTAL_DOOR);
+            gGame.map.OpenDoor(pCurrent->Location(), mDir);
+            gGame.map.OpenDoor(pTarget->Location(), (mDir+2)%4);
+            pCurrent->DrawBackground();
+            pTarget->DrawBackground();
+          }
+          CORO_YIELD;
+          mPosition += WALK_SPEED * kSideToUnit[mDir];
+          pCurrent->UpdatePlayer();
+          pTarget->UpdatePlayer();
         }
-      } //
+        // swap the current view
+        pCurrent->HidePlayer();
+        pCurrent = pTarget;
+        pTarget = 0;  
+        pCurrent->UpdatePlayer();
+
+        { // passive trigger?
+          MapRoom *mr = pCurrent->Room();
+          if (mr->callback) {
+            mr->callback(TRIGGER_TYPE_PASSIVE);
+          }
+        } //
+      } else {
+
+        // walk up to the locked door, then bounce back
+        mPath.Cancel();
+        pTarget->HidePlayer();
+        pTarget = 0;
+        for(mProgress=0; mProgress<64-DOOR_PAD; mProgress+=WALK_SPEED) {
+          CORO_YIELD;
+          mPosition += WALK_SPEED * kSideToUnit[mDir];
+          pCurrent->UpdatePlayer();
+        }
+        mDir = (mDir+2)%4;
+        for(mProgress=0; mProgress<64-DOOR_PAD; mProgress+=WALK_SPEED) {
+          CORO_YIELD;
+          mPosition += WALK_SPEED * kSideToUnit[mDir];
+          pCurrent->UpdatePlayer();
+        }
+      }
 
     } while(mPath.PopStep(pCurrent));
 
     { // active trigger?
-      MapRoom *mr = pCurrent->GetMapRoom();
+      MapRoom *mr = pCurrent->Room();
       if (mr->callback) {
         mr->callback(TRIGGER_TYPE_ACTIVE);
       }
@@ -139,13 +171,17 @@ bool Path::PopStep(GameView* newRoot) {
   return false;
 }
 
+void Path::Cancel() {
+  steps[0] = -1;
+}
+
 bool Player::PathDetect() {
   if (pTarget) { return false; }
   for(GameView *p = gGame.ViewBegin(); p!=gGame.ViewEnd(); ++p) { p->visited = false; }
   pCurrent->visited = true;
   for(int side=0; side<NUM_SIDES; ++side) {
     mPath.steps[0] = side;
-    if (gGame.map.CanTraverse(pCurrent->Room(), side) && PathVisit(pCurrent->VirtualNeighborAt(side), 1)) {
+    if (gGame.map.CanTraverse(pCurrent->Location(), side) && PathVisit(pCurrent->VirtualNeighborAt(side), 1)) {
       return true;
     }
   }
@@ -162,7 +198,7 @@ bool Player::PathVisit(GameView* view, int depth) {
   } else {
     for(int side=0; side<NUM_SIDES; ++side) {
       mPath.steps[depth] = side;
-      if (gGame.map.CanTraverse(view->Room(), side) && PathVisit(view->VirtualNeighborAt(side), depth+1)) {
+      if (gGame.map.CanTraverse(view->Location(), side) && PathVisit(view->VirtualNeighborAt(side), depth+1)) {
         return true;
       } else {
         mPath.steps[depth] = -1;

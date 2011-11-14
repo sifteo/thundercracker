@@ -2,18 +2,22 @@
 #include "Game.h"
 #include "Enemy.h"
 
+#define ROOM_NONE (Vec2(-1,-1))
+#define PLAYER_SPRITE_ID 0
+#define ENEMY_SPRITE_ID 1
+#define ITEM_SPRITE_ID 2
+
 GameView::GameView() : 
-visited(0), mRoom(-2,-2), mSpriteCount(0) {
+visited(0), mRoom(-2,-2) {
 }
 
 void GameView::Init() {
-  VidMode_BG0 mode(cube.vbuf);
-  mode.init();
+  EnterSpriteMode();
   if (gGame.player.CurrentView() == this) {
-    ShowRoom(Vec2(0,0));
+    ShowLocation(gGame.player.Location());
     ShowPlayer();
   } else {
-    ShowRoom(ROOM_NONE);
+    ShowLocation(ROOM_NONE);
   }
 }
 
@@ -28,12 +32,12 @@ bool GameView::IsShowingRoom() const {
     mRoom.y < gGame.map.Data()->height; 
 }
 
-MapRoom* GameView::GetMapRoom() const { 
+MapRoom* GameView::Room() const { 
   ASSERT(IsShowingRoom()); 
-  return gGame.map.GetRoom(mRoom.x, mRoom.y); 
+  return gGame.map.GetRoom(mRoom); 
 }
 
-void GameView::ShowRoom(Vec2 room) {
+void GameView::ShowLocation(Vec2 room) {
   if (mRoom == room) { return; }
   mRoom = room;
   // are we showing an enemy?
@@ -44,16 +48,28 @@ void GameView::ShowRoom(Vec2 room) {
       HideEnemy(p);
     }
   }
-  
+  // are we showing an items?
+  if (IsShowingRoom()) {
+    MapRoom* mr = Room();
+    if (mr->itemId) {
+      ShowItem(mr->itemId);
+    } else {
+      HideItem();
+    }
+  } else {
+    HideItem();
+  }
   DrawBackground();
 }
 
-void GameView::ClearRoom() {
+void GameView::HideRoom() {
+  if (mRoom == ROOM_NONE) { return; }
   for(Enemy* p = gGame.EnemyBegin(); p!=gGame.EnemyEnd(); ++p) {
     if (p->view == this) {
       HideEnemy(p);
     }
   }
+  HideItem();
   mRoom = ROOM_NONE;
   DrawBackground();
 }
@@ -64,7 +80,6 @@ void GameView::ClearRoom() {
 
 
 void GameView::ShowPlayer() {
-  EnterSpriteMode();
   ResizeSprite(PLAYER_SPRITE_ID, 32, 32);
   UpdatePlayer();
 }
@@ -77,7 +92,6 @@ void GameView::UpdatePlayer() {
 
 void GameView::HidePlayer() {
   ResizeSprite(PLAYER_SPRITE_ID, 0, 0);
-  ExitSpriteMode();
 }
 
 //----------------------------------------------------------------------
@@ -85,7 +99,6 @@ void GameView::HidePlayer() {
 //----------------------------------------------------------------------
 
 void GameView::ShowEnemy(Enemy* pEnemy) {
-  EnterSpriteMode();
   ResizeSprite(ENEMY_SPRITE_ID, 32, 32);
   pEnemy->view = this;
   UpdateEnemy(pEnemy);
@@ -101,10 +114,30 @@ void GameView::UpdateEnemy(Enemy* pEnemy) {
 void GameView::HideEnemy(Enemy* pEnemy) {
   if (pEnemy->view == this) {
     ResizeSprite(ENEMY_SPRITE_ID, 0, 0);
-    ExitSpriteMode();
     pEnemy->view = 0;
   }
 }
+
+  
+//----------------------------------------------------------------------
+// ITEM METHODS
+//----------------------------------------------------------------------
+
+void GameView::ShowItem(int itemId) {
+  SetSpriteImage(ITEM_SPRITE_ID, Items.index + itemId - 1);
+  ResizeSprite(ITEM_SPRITE_ID, 16, 16);
+  MoveSprite(ITEM_SPRITE_ID, 64-8, 64-8);
+}
+
+void GameView::SetItemPosition(Vec2 p) {
+  MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y-8);
+}
+
+void GameView::HideItem() {
+  ResizeSprite(ITEM_SPRITE_ID, 0, 0);
+}
+
+
 //----------------------------------------------------------------------
 // ACCELEROMETER SHTUFF
 //----------------------------------------------------------------------
@@ -136,13 +169,13 @@ bool GameView::InSpriteMode() const {
   return byte == _SYS_VM_BG0_SPR_BG1;
 }
 
-bool GameView::EnterSpriteMode() {
-  mSpriteCount++;
-  if (mSpriteCount == 1) {
-    DoEnterSpriteMode();
-    return true;
-  } 
-  return false;
+void GameView::EnterSpriteMode() {
+  // Clear BG1/SPR before switching modes
+  _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
+  _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_TILES/2, 0, 32);
+  _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_SPR, 0, 8*5/2);
+  // Switch modes
+  _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 }
 
 void GameView::SetSpriteImage(int id, int tile) {
@@ -174,19 +207,6 @@ void GameView::MoveSprite(int id, int px, int py) {
   _SYS_vbuf_poke(&cube.vbuf.sys, addr, word);
 }
 
-bool GameView::ExitSpriteMode() {
-  if (mSpriteCount > 0) {
-    mSpriteCount--;
-    if (mSpriteCount == 0) {
-      DoEnterSimpleMode();
-    } else {
-      DrawBackground();
-    }
-    return true;
-  }
-  return false;
-}
-
 //----------------------------------------------------------------------
 // HELPERS
 //----------------------------------------------------------------------
@@ -206,25 +226,9 @@ void GameView::DrawBackground() {
         mode.BG0_drawAsset(
           Vec2(x<<1,y<<1),
           *(gGame.map.Data()->tileset),
-          gGame.map.Data()->GetTileId(mRoom.x, mRoom.y, x, y)
+          gGame.map.Data()->GetTileId(mRoom, x, y)
         );
       }
     }
   }
-}
-
-
-void GameView::DoEnterSpriteMode() {
-  // Clear BG1/SPR before switching modes
-  _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
-  _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_TILES/2, 0, 32);
-  _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_SPR, 0, 8*5/2);
-  // Switch modes
-  _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
-}
-
-void GameView::DoEnterSimpleMode() {
-  VidMode_BG0 mode(cube.vbuf);
-  mode.init();
-  DrawBackground();
 }

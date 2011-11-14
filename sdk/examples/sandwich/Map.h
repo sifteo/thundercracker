@@ -21,5 +21,13 @@ public:
   bool IsShowing(const MapData& map) const { return mData == &map; }
   bool CanTraverse(Vec2 tile, Cube::Side direction) const;
   void SetData(const MapData& map);
-  MapRoom* GetRoom(int x, int y) const { return (MapRoom*)mRooms + x + mData->width * y; }
+  MapRoom* GetRoom(Vec2 room) const { return (MapRoom*)mRooms + room.x + mData->width * room.y; }
+  void SetRoomItem(Vec2 room, int itemId);
+
+  uint8_t GetPortal(Vec2 location, Cube::Side side);
+  void SetPortal(Vec2 location, Cube::Side side, uint8_t pid);
+
+  uint8_t GetTile(Vec2 location, Vec2 position);
+  void SetTile(Vec2 location, Vec2 position, uint8_t tid);
+  void OpenDoor(Vec2 location, Cube::Side side);
 };

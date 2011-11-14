@@ -85,8 +85,8 @@ void Game::MovePlayerAndRedraw(int dx, int dy) {
   System::paint();
 }
 
-void Game::WalkTo(int x, int y) {
-  Vec2 delta = Vec2(x,y) - player.Position();
+void Game::WalkTo(Vec2 position) {
+  Vec2 delta = position - player.Position();
   while(delta.x > WALK_SPEED) {
     MovePlayerAndRedraw(WALK_SPEED, 0);
     delta.x -= WALK_SPEED;
@@ -111,12 +111,13 @@ void Game::WalkTo(int x, int y) {
   }
 }
 
-void Game::TeleportTo(const MapData& m, int roomx, int roomy, int pixelX, int pixelY) {
+void Game::TeleportTo(const MapData& m, Vec2 position) {
+  Vec2 room = position/128;
   GameView* view = player.CurrentView();
   view->HidePlayer();
   // blank other cubes
   for(GameView* p = ViewBegin(); p != ViewEnd(); ++p) {
-    if (p != view) { p->ClearRoom(); }
+    if (p != view) { p->HideRoom(); }
   }
   // zoom in
   { 
@@ -128,7 +129,7 @@ void Game::TeleportTo(const MapData& m, int roomx, int roomy, int pixelX, int pi
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(map.Data()->tileset),
-          map.Data()->GetTileId(view->Room().x, view->Room().y, x, y)
+          map.Data()->GetTileId(view->Location(), x, y)
         );
       }
     }
@@ -153,7 +154,7 @@ void Game::TeleportTo(const MapData& m, int roomx, int roomy, int pixelX, int pi
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(map.Data()->tileset),
-          map.Data()->GetTileId(roomx, roomy, x, y)
+          map.Data()->GetTileId(room, x, y)
         );
       }
     }
@@ -169,33 +170,49 @@ void Game::TeleportTo(const MapData& m, int roomx, int roomy, int pixelX, int pi
 
     System::paintSync();
   }
+  
   // walk out of the in-gate
-  Vec2 target = Vec2(128*roomx+64, 128*roomy+64);
-  player.SetLocation(Vec2(pixelX, pixelY), InferDirection(target - Vec2(pixelX, pixelY)));
-  view->ShowRoom(Vec2(roomx,roomy));
-  view->ShowPlayer();
-  WalkTo(target.x, target.y);
+  Vec2 target = 128*room + Vec2(64,64);
+  player.SetLocation(position, InferDirection(target - position));
+  view->Init();
+  WalkTo(target);
   CheckMapNeighbors();
 }
 
-void Game::TakeBasicKey() {
-  //Vec2 roomLocation = player
-  LOG(("TAKE BASIC KEY\n"));
+void Game::TakeItem() {
+  int itemId = player.CurrentView()->Room()->itemId;
+  if (itemId) {
+    map.SetRoomItem(player.Location(), 0);
+    if (itemId == ITEM_BASIC_KEY) {
+      player.IncrementBasicKeyCount();
+      // do a crazy get-key transition
+      float kDegToRad = 3.14159f / 180.f;
+      for(int i=0; i<360; i += 18) {
+        float radius = (80.f * i)/360.f;
+        player.CurrentView()->SetItemPosition(Vec2(
+          64 + radius * cosf(i * kDegToRad), 
+          64 + radius * sinf(i * kDegToRad)
+        ));
+        System::paint();
+      }
+      player.CurrentView()->HideItem();
+    }
+  }
 }
 
 //------------------------------------------------------------------
 // NEIGHBOR HANDLING
 //------------------------------------------------------------------
 
-static void VisitMapView(GameView* view, Vec2 tile, GameView* origin=0) {
+static void VisitMapView(GameView* view, Vec2 loc, GameView* origin=0) {
   if (!view || view->visited) { return; }
   view->visited = true;
-  view->ShowRoom(tile);
+  view->ShowLocation(loc);
   if (origin) {
     view->cube.orientTo(origin->cube);
   }
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    VisitMapView(view->VirtualNeighborAt(i), tile+kSideToUnit[i], view);
+    VisitMapView(view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
   }
 }
 
@@ -203,11 +220,9 @@ void Game::CheckMapNeighbors() {
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->visited = false;
   }
-  VisitMapView(player.KeyView(), player.KeyView()->Room());
+  VisitMapView(player.KeyView(), player.KeyView()->Location());
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    if (!v->visited) {
-      v->ShowRoom(ROOM_NONE);
-    }
+    if (!v->visited) { v->HideRoom(); }
   }
   sNeighborDirty = false;
 }

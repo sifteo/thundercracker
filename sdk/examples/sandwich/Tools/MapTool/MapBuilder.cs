@@ -87,6 +87,33 @@ namespace MapTool {
         }
       }
 
+      // look through BasicLocks and convert those portals into locks
+      foreach(var obj in tmap.objects) {
+        if (obj.type == "BasicLock") {
+          if (obj.pixelW > obj.pixelH) {
+            // this is an X-Portal
+            var lroom = result.rooms[obj.pixelX/128, obj.pixelY/128];
+            var rroom = result.rooms[obj.pixelX/128+1, obj.pixelY/128];
+            if (lroom.portals[3] != Portal.UnlockedDoor || rroom.portals[1] != Portal.UnlockedDoor) {
+              Console.WriteLine("BUILD_MAP_ERROR: Non-Door annotated with a lock");
+              return null;
+            }
+            lroom.portals[3] = Portal.LockedDoor;
+            rroom.portals[1] = Portal.LockedDoor;
+          } else {
+            // this is a Y-Portal
+            var troom = result.rooms[obj.pixelX/128, obj.pixelY/128];
+            var broom = result.rooms[obj.pixelX/128, obj.pixelY/128+1];
+            if (troom.portals[2] != Portal.UnlockedDoor || broom.portals[0] != Portal.UnlockedDoor) {
+              Console.WriteLine("BUILD_MAP_ERROR: Non-Door annotated with a lock");
+              return null;
+            }
+            troom.portals[2] = Portal.LockedDoor;
+            broom.portals[0] = Portal.LockedDoor;
+          }
+        }
+      }
+
       // validate portals
       for(int ry=0; ry<result.Height; ++ry) {
         if (result.rooms[0, ry].portals[1] == Portal.Open || result.rooms[result.Width-1, ry].portals[3] == Portal.Open) {
