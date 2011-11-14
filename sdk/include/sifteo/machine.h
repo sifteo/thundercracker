@@ -124,6 +124,18 @@ namespace Atomic {
  */
 
 namespace Intrinsic {
+	
+	static inline uint32_t POPCOUNT(uint32_t i) {
+        // Returns the number of 1-bits in i.
+#ifdef __GNUC__
+        return __builtin_popcount(i);
+#else   
+		// CREDIT: http://stackoverflow.com/questions/109023/best-algorithm-to-count-the-number-of-set-bits-in-a-32-bit-integer
+        i = i - ((i >> 1) & 0x55555555);
+		i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
+		return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
+#endif
+    }
 
     static inline uint32_t CLZ(uint32_t r) {
         // Count leading zeroes. One instruction on ARM.
