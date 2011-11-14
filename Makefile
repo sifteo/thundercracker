@@ -1,4 +1,4 @@
-SUBDIRS = emulator firmware stir sdk
+SUBDIRS = emulator firmware stir sdk speex
 
 .PHONY: clean subdirs $(SUBDIRS)
 
