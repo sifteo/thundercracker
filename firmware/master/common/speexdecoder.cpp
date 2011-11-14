@@ -75,7 +75,7 @@ int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
 
     // format: uint8_t of framesize, followed by framesize bytes of frame data
     int sz = *localAddr++;
-    if (this->srcBytesRemaining < (sz + sizeof(uint8_t))) {
+    if ((unsigned)this->srcBytesRemaining < (sz + sizeof(uint8_t))) {
         status = EndOfStream;
         return 0;   // not enough data left
     }

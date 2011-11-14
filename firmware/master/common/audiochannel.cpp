@@ -26,7 +26,7 @@ void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loo
 int AudioChannel::pullAudio(int16_t *buffer, int len)
 {
     ASSERT(!(state & STATE_STOPPED));
-    int bytesToMix = MIN(buf.readAvailable() / sizeof(*buffer), len);
+    int bytesToMix = MIN(buf.readAvailable() / sizeof(*buffer), (unsigned)len);
     if (bytesToMix > 0) {
         for (int i = 0; i < bytesToMix; i++) {
             int16_t sample = buf.dequeue() | (buf.dequeue() << 8);

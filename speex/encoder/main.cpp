@@ -19,20 +19,25 @@ static void printEncoderConfig(void *encoder);
 
 int main(int argc, char **argv)
 {
-	int channels = 1;               // mono
-	int format = 16;                // 16 bit format
+    if (argc == 1) {
+        usage();
+        exit(1);
+    }
+
+    int channels = 1;               // mono
+    int format = 16;                // 16 bit format
     const char *infilepath = 0;
-    
+
     Encoder enc;
-    
-	for (int c = 1; c < argc; c++) {
+
+    for (int c = 1; c < argc; c++) {
         char *arg = argv[c];
-        
+
         if (!strcmp(arg, "-h")) {
             usage();
             return 0;
         }
-        
+
         if (!strcmp(arg, "-v")) {
             version();
             return 0;
