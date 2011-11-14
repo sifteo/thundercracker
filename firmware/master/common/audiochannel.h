@@ -9,6 +9,7 @@
 #define AUDIOCHANNEL_H_
 
 #include <sifteo/audio.h>
+#include <sifteo/machine.h>
 #include <stdint.h>
 #include "audiobuffer.h"
 
@@ -20,8 +21,7 @@ public:
     static const int STATE_LOOP     = (1 << 1);
     static const int STATE_STOPPED  = (1 << 2);
 
-    AudioChannel() : mod(0), state(0), decoder(0)
-    {}
+    AudioChannel();
     void init(_SYSAudioBuffer *b);
 
     bool isEnabled() const {
@@ -55,6 +55,7 @@ protected:
     uint8_t state;
     _SYSAudioHandle handle;
     SpeexDecoder *decoder;
+    int volume;
 
     friend class AudioMixer;    // mixer can tell us to fetchData()
 };

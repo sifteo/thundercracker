@@ -6,9 +6,7 @@
 #ifndef AUDIO_H_
 #define AUDIO_H_
 
-#include <stdint.h>
 #include <sifteo/abi.h>
-#include <sifteo/machine.h>
 
 namespace Sifteo {
 
@@ -22,6 +20,9 @@ public:
 
 class Audio {
 public:
+
+    static const int MAX_VOLUME = 256;
+
     static void enableChannel(_SYSAudioBuffer *buffer) {
         _SYS_audio_enableChannel(buffer);
     }
@@ -46,7 +47,7 @@ public:
     }
 
     static void setVolume(_SYSAudioHandle handle, int volume) {
-        _SYS_audio_stop(handle);
+        _SYS_audio_setVolume(handle, volume);
     }
     static int volume(_SYSAudioHandle handle) {
         return _SYS_audio_volume(handle);

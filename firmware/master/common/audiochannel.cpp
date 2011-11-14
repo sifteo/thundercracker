@@ -1,11 +1,22 @@
 
 #include <sifteo/macros.h>
+#include <sifteo/math.h>
+#include <sifteo/audio.h>
 #include "audiochannel.h"
 #include "speexdecoder.h"
+#include <limits.h>
+
+using namespace Sifteo;
+
+AudioChannel::AudioChannel() :
+    mod(0), state(0), decoder(0), volume(Audio::MAX_VOLUME)
+{
+}
 
 void AudioChannel::init(_SYSAudioBuffer *b)
 {
     buf.init(b);
+    volume = Audio::MAX_VOLUME / 6;
 }
 
 void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
@@ -26,11 +37,14 @@ void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loo
 int AudioChannel::pullAudio(int16_t *buffer, int len)
 {
     ASSERT(!(state & STATE_STOPPED));
-    int bytesToMix = MIN(buf.readAvailable() / sizeof(*buffer), (unsigned)len);
-    if (bytesToMix > 0) {
-        for (int i = 0; i < bytesToMix; i++) {
-            int16_t sample = buf.dequeue() | (buf.dequeue() << 8);
-            *buffer += sample; //buf.pop(); // TODO - volume, limiting, compression, etc
+
+    int mixable = MIN(buf.readAvailable() / sizeof(*buffer), (unsigned)len);
+    if (mixable > 0) {
+        for (int i = 0; i < mixable; i++) {
+            int16_t src = buf.dequeue() | (buf.dequeue() << 8);
+            int32_t sample = *buffer + ((src * this->volume) / Audio::MAX_VOLUME);
+            // TODO - more subtle compression instead of hard limiter
+            *buffer += Math::clamp(sample, SHRT_MIN, SHRT_MAX);
             buffer++;
         }
         // if we have nothing buffered, and there's nothing else to read, we're done
@@ -43,7 +57,7 @@ int AudioChannel::pullAudio(int16_t *buffer, int len)
             }
         }
     }
-    return bytesToMix;
+    return mixable;
 }
 
 void AudioChannel::fetchData()

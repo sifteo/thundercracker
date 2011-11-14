@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sifteo/machine.h>
+#include <sifteo/audio.h>
+#include <sifteo/math.h>
 
 using namespace Sifteo;
 
@@ -149,20 +151,20 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
 
     AudioChannel *ch = &channels[0];
     uint32_t mask = activeChannelMask;
-    int bytesMixed = 0;
+    int samplesMixed = 0;
     for (; mask != 0; mask >>= 1, ch++) {
         if ((mask & 1) == 0 || (ch->isPaused())) {
             continue;
         }
         int mixed = ch->pullAudio(buffer, numsamples);
-        if (mixed > bytesMixed) {
-            bytesMixed = mixed;
+        if (mixed > samplesMixed) {
+            samplesMixed = mixed;
         }
         else if (mixed < 0) {
             stopChannel(ch);
         }
     }
-    return bytesMixed;
+    return samplesMixed;
 }
 
 /*
@@ -270,13 +272,16 @@ void AudioMixer::resume(_SYSAudioHandle handle)
 
 void AudioMixer::setVolume(_SYSAudioHandle handle, int volume)
 {
-    (void)handle;
-    (void)volume;
+    if (AudioChannel *ch = channelForHandle(handle)) {
+        ch->volume = Math::clamp(volume, 0, (int)Audio::MAX_VOLUME);
+    }
 }
 
 int AudioMixer::volume(_SYSAudioHandle handle)
 {
-    (void)handle; // TODO
+    if (AudioChannel *ch = channelForHandle(handle)) {
+        return ch->volume;
+    }
     return 0;
 }
 
