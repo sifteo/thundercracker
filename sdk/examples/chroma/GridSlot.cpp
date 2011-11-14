@@ -15,12 +15,17 @@ const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 	&Gem1,
 	&Gem2,
 	&Gem3,
+	&Gem4,
+	&Gem5,
+	&Gem6,
+	&Gem7,
 };
 
 GridSlot::GridSlot() : 
-	m_state( STATE_LIVING ),
+	m_state( STATE_GONE ),
 	m_eventTime( 0.0f ),
-	m_score( 0 )
+	m_score( 0 ),
+	m_bFixed( false )
 {
 	//TEST randomly make some empty ones
 	/*if( Game::Rand(100) > 50 )
@@ -36,6 +41,15 @@ void GridSlot::Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col )
 	m_pWrapper = pWrapper;
 	m_row = row;
 	m_col = col;
+	m_state = STATE_GONE;
+}
+
+
+void GridSlot::FillColor(unsigned int color)
+{
+	m_state = STATE_LIVING;
+	m_color = color;
+	m_bFixed = false;
 }
 
 
@@ -52,13 +66,19 @@ void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
 		case STATE_LIVING:
 		{
 			const AssetImage &tex = GetTexture();
-			vid.BG0_drawAsset(vec, tex, 0);
+			if( IsFixed() )
+				vid.BG0_drawAsset(vec, tex, 2);
+			else
+				vid.BG0_drawAsset(vec, tex, 0);
 			break;
 		}
 		case STATE_MARKED:
 		{
 			const AssetImage &tex = GetTexture();
-			vid.BG0_drawAsset(vec, tex, 1);
+			if( IsFixed() )
+				vid.BG0_drawAsset(vec, tex, 3);
+			else
+				vid.BG0_drawAsset(vec, tex, 1);
 			break;
 		}
 		case STATE_EXPLODING:
@@ -109,7 +129,10 @@ void GridSlot::Update(float t)
 		case STATE_SHOWINGSCORE:
 		{
 			if( t - m_eventTime > SCORE_FADE_DELAY )
+			{
                 m_state = STATE_GONE;
+				m_pWrapper->checkEmpty();
+			}
 			break;
 		}
 		default:
@@ -146,6 +169,7 @@ void GridSlot::die()
 {
 	m_state = STATE_SHOWINGSCORE;
 	m_score = Game::Inst().getIncrementScore();
+	Game::Inst().CheckChain( m_pWrapper );
 	m_eventTime = System::clock();
 }
 
@@ -159,4 +183,14 @@ void GridSlot::markNeighbor( int row, int col )
 	//PRINT( "color = %d", pNeighbor->getColor() );
 	if( pNeighbor && pNeighbor->isAlive() && pNeighbor->getColor() == m_color )
 		pNeighbor->mark();
+}
+
+
+
+//copy color and some other attributes from target.  Used when tilting
+void GridSlot::CopyFrom(GridSlot &target)
+{
+	m_state = target.m_state;
+	m_color = target.m_color;
+	m_eventTime = target.m_eventTime;
 }

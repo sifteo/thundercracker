@@ -42,6 +42,9 @@ endif
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused
 
+# generate dependency files
+CFLAGS += -MD -MP
+
 CFLAGS += -g -I$(SDK_DIR)/include \
           -ffunction-sections -fdata-sections \
           -ffast-math

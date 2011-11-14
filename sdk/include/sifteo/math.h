@@ -10,13 +10,16 @@
 #include <math.h>
 
 namespace Sifteo {
-
+namespace Math {
 
 /**
  * 2-element integer vector
  */
 
 struct Vec2 {
+	Vec2()
+        : x(0), y(0) {}
+
     Vec2(int _x, int _y)
         : x(_x), y(_y) {}
 
@@ -30,6 +33,7 @@ inline Vec2 operator -= (Vec2& u, const Vec2& v) { return Vec2(u.x-=v.x, u.y-=v.
 inline Vec2 operator*(int k, const Vec2& v) { return Vec2(k*v.x, k*v.y); }
 inline Vec2 operator*(const Vec2& v, int k) { return Vec2(k*v.x, k*v.y); }
 inline Vec2 operator*(const Vec2& u, const Vec2& v) { return Vec2(u.x*v.x-u.y*v.y, u.y*v.x+u.x*v.y); } // complex multiplication
+inline Vec2 operator/(const Vec2& u, const int k) { return Vec2(u.x/k, u.y/k); }
 inline bool operator==(const Vec2& u, const Vec2& v) { return u.x == v.x && u.y == v.y; }
 inline bool operator!=(const Vec2& u, const Vec2& v) { return u.x != v.x || u.y != v.y; }
 
@@ -133,7 +137,21 @@ struct AffineMatrix {
     }
 };
 
+/* General helper routines */
 
-};  // namespace Sifteo
+template <typename T> inline T clamp(const T& value, const T& low, const T& high)
+{
+    if (value < low) {
+        return low;
+    }
+    if (value > high) {
+        return high;
+    }
+    return value;
+}
+
+
+}   // namespace Math
+}   // namespace Sifteo
 
 #endif

@@ -1,8 +1,11 @@
-SUBDIRS = emulator firmware stir sdk speex
+TOOLS = emulator firmware stir speex
+SUBDIRS = $(TOOLS) sdk
 
 .PHONY: clean subdirs $(SUBDIRS)
 
 subdirs: $(SUBDIRS)
+
+tools: $(TOOLS)
 
 $(SUBDIRS):
 	@$(MAKE) -C $@
