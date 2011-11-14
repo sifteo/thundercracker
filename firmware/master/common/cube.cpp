@@ -61,6 +61,7 @@ static const int8_t fpMin = -8;
 
 CubeSlot CubeSlot::instances[_SYS_NUM_CUBE_SLOTS];
 _SYSCubeIDVector CubeSlot::vecEnabled;
+_SYSCubeIDVector CubeSlot::vecConnected;
 _SYSCubeIDVector CubeSlot::flashResetWait;
 _SYSCubeIDVector CubeSlot::flashResetSent;
 _SYSCubeIDVector CubeSlot::flashACKValid;
@@ -83,6 +84,14 @@ void CubeSlot::disableCubes(_SYSCubeIDVector cv) {
     // TODO: if any of the cubes in cv are currently part of a
     // neighbor-pair with any cubes that are still active, those
     // active cubes neeed to remove their now-defunct neighbors
+}
+
+void CubeSlot::connectCubes(_SYSCubeIDVector cv) {
+    Sifteo::Atomic::Or(vecConnected, cv);
+}
+
+void CubeSlot::disconnectCubes(_SYSCubeIDVector cv) {
+    Sifteo::Atomic::And(vecConnected, ~cv);
 }
 
 
@@ -237,9 +246,9 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
-    if (!connected) {
+    if (!connected()) {
         Event::setPending(EventBits::CUBEFOUND, id());    
-        connected = true;
+        setConnected();
     }
     
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
@@ -364,9 +373,9 @@ void CubeSlot::radioTimeout()
 {
     /* XXX: Disconnect this cube */
     
-    if (connected) {
+    if (connected()) {
         Event::setPending(EventBits::CUBELOST, id());    
-        connected = false;
+        setDisconnected();
     }
 }
 

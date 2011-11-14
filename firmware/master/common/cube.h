@@ -41,6 +41,7 @@ class CubeSlot {
      * One-bit flags for each cube are packed into global vectors
      */
     static _SYSCubeIDVector vecEnabled;         /// Cube enabled
+	static _SYSCubeIDVector vecConnected;       /// Cube connected
     static _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
     static _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
     static _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid
@@ -49,6 +50,8 @@ class CubeSlot {
     
     static void enableCubes(_SYSCubeIDVector cv); 
     static void disableCubes(_SYSCubeIDVector cv);
+	static void connectCubes(_SYSCubeIDVector cv);
+	static void disconnectCubes(_SYSCubeIDVector cv);
 
     _SYSCubeID id() const {
         _SYSCubeID i = this - &instances[0];
@@ -70,6 +73,18 @@ class CubeSlot {
     bool enabled() const {
         return !!(bit() & vecEnabled);
     }
+	
+	bool connected() const {
+        return !!(bit() & vecConnected);
+    }
+	
+	void setConnected() {
+		CubeSlot::connectCubes(Sifteo::Intrinsic::LZ(id()));
+	}
+	
+	void setDisconnected() {
+		CubeSlot::disconnectCubes(Sifteo::Intrinsic::LZ(id()));
+	}
 
     void setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
@@ -176,10 +191,6 @@ class CubeSlot {
     uint16_t rawBatteryV;
     _SYSAccelState accelState;
     _SYSCubeHWID hwid;
-    
-    // Pairing
-    // FIXME: connected state should be stored in a bitfield the same way enabled is, to save space
-    bool connected;
 };
 
 
