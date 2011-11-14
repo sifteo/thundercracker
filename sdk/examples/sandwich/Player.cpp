@@ -95,6 +95,10 @@ void Player::Update(float dt) {
             gGame.map.OpenDoor(pTarget->Location(), (mDir+2)%4);
             pCurrent->DrawBackground();
             pTarget->DrawBackground();
+            mTimeout = System::clock();
+            do {
+              CORO_YIELD;
+            } while(System::clock() - mTimeout <  0.5f);
           }
           CORO_YIELD;
           mPosition += WALK_SPEED * kSideToUnit[mDir];

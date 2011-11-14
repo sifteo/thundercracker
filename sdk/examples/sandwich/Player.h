@@ -30,6 +30,7 @@ private:
   int mProgress;
   int mNextDir;
   bool mApproachingLockedDoor;
+  float mTimeout;
 
   Path mPath;
   
