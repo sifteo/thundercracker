@@ -68,7 +68,8 @@ int main(int argc, char **argv)
     }
     
     if (!infilepath) {
-        fprintf(stderr, "boo :(\n");
+        fprintf(stderr, "error: must st least specify an input file :(\n");
+        usage();
         exit(1);
     }
     

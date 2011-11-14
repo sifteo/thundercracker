@@ -1,19 +1,20 @@
 
 BIN = speexencoder
-OBJS = main.o \
+OBJS =  main.o \
         encoder.o \
         filename_utils.o
 
-ifeq ($(OS),Windows_NT)
-    SPEEX_INSTALL = ../prebuilt/win32
+ifeq ($(OS), Windows_NT)
+    SPEEX_INSTALL = ../../deps/win32/speex
+    INCLUDES = -I$(SPEEX_INSTALL)/include
+    LDFLAGS = -L$(SPEEX_INSTALL)/lib -static
 endif
 
-INCLUDES = -I$(SPEEX_INSTALL)/include
-
 CC = gcc
-CCFLAGS = -Wall $(INCLUDES)
-CFLAGS = -Wall $(INCLUDES)
-LDFLAGS = -L$(SPEEX_INSTALL)/lib -static -lspeex -lstdc++
+COMMON_FLAGS = -O3 -Werror -Wall $(INCLUDES)
+CCFLAGS = $(COMMON_FLAGS)
+CFLAGS = $(COMMON_FLAGS)
+LDFLAGS += -lspeex -lstdc++
 
 all: $(BIN)
 
