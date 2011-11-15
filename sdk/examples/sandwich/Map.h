@@ -31,4 +31,5 @@ public:
   void SetTile(Vec2 location, Vec2 position, uint8_t tid);
   void OpenDoor(Vec2 location, Cube::Side side);
   
+  void ClearTrigger(Vec2 location);
 };
