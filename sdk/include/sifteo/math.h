@@ -10,7 +10,7 @@
 #include <math.h>
 
 namespace Sifteo {
-
+namespace Math {
 
 /**
  * 2-element integer vector
@@ -137,7 +137,21 @@ struct AffineMatrix {
     }
 };
 
+/* General helper routines */
 
-};  // namespace Sifteo
+template <typename T> inline T clamp(const T& value, const T& low, const T& high)
+{
+    if (value < low) {
+        return low;
+    }
+    if (value > high) {
+        return high;
+    }
+    return value;
+}
+
+
+}   // namespace Math
+}   // namespace Sifteo
 
 #endif

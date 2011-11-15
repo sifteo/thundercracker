@@ -16,6 +16,7 @@
 
 namespace Sifteo {
 
+using namespace Sifteo::Math;
 
 /**
  * A memory buffer which holds graphics data. This is a mirror of the
@@ -154,7 +155,7 @@ class VidMode {
         ROT_180_MIRROR          = _SYS_VF_Y_FLIP,
         ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
         ROT_180                 = _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP,
-        ROT_RIGHT_90_MIRROR     = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP,
+        ROT_RIGHT_90_MIRROR     = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP
     };
 
     static const unsigned LCD_width = 128;
