@@ -8,6 +8,7 @@
 #include "game.h"
 #include "assets.gen.h"
 #include "utils.h"
+#include <stdlib.h>
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
 {
@@ -72,6 +73,17 @@ void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
 				vid.BG0_drawAsset(vec, tex, 0);
 			break;
 		}
+		case STATE_MOVING:
+		{
+			const AssetImage &tex = GetTexture();
+
+			Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
+
+			//PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
+
+			vid.BG0_drawAsset(curPos, tex, 0);
+			break;
+		}
 		case STATE_MARKED:
 		{
 			const AssetImage &tex = GetTexture();
@@ -95,11 +107,11 @@ void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
 			vid.BG0_text(Vec2( vec.x + 1, vec.y + 1 ), Font, aStr);
 			break;
 		}
-		case STATE_GONE:
+		/*case STATE_GONE:
 		{
 			vid.BG0_drawAsset(vec, GemEmpty, 0);
 			break;
-		}
+		}*/
 		default:
 			break;
 	}
@@ -111,6 +123,19 @@ void GridSlot::Update(float t)
 {
 	switch( m_state )
 	{
+		case STATE_MOVING:
+		{
+			Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
+
+			if( vDiff.x != 0 )
+				m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
+			else if( vDiff.y != 0 )
+				m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
+			else
+				m_state = STATE_LIVING;
+
+			break;
+		}
 		case STATE_MARKED:
 		{
 			if( t - m_eventTime > MARK_SPREAD_DELAY )
@@ -188,9 +213,21 @@ void GridSlot::markNeighbor( int row, int col )
 
 
 //copy color and some other attributes from target.  Used when tilting
-void GridSlot::CopyFrom(GridSlot &target)
+void GridSlot::TiltFrom(GridSlot &src)
 {
-	m_state = target.m_state;
-	m_color = target.m_color;
-	m_eventTime = target.m_eventTime;
+	m_state = STATE_PENDINGMOVE;
+	m_color = src.m_color;
+	m_eventTime = src.m_eventTime;
+	m_curMovePos.x = src.m_col * 4;
+	m_curMovePos.y = src.m_row * 4;
+}
+
+
+//if we have a move pending, start it
+void GridSlot::startPendingMove()
+{
+	if( m_state == STATE_PENDINGMOVE )
+	{
+		m_state = STATE_MOVING;
+	}
 }

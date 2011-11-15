@@ -89,6 +89,8 @@ void CubeWrapper::Draw()
 			{
 				case STATE_PLAYING:
 				{
+					//clear out grid first (somewhat wasteful, optimize if necessary)
+					m_vid.clear(Font.tiles[0]);
 					//draw grid
 					for( int i = 0; i < NUM_ROWS; i++ )
 					{
@@ -293,6 +295,16 @@ void CubeWrapper::Tilt( int dir )
 		}
 	}        
 
+	//change all pending movers to movers
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			GridSlot &slot = m_grid[i][j];
+			slot.startPendingMove();
+		}
+	}
+
 	if( bChanged )
 		Game::Inst().setTestMatchFlag();
 }
@@ -318,9 +330,9 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 	if( !dest.isEmpty() )
 		return false;
 
-	if( slot.isAlive() && !slot.IsFixed() )
+	if( slot.isTiltable() && !slot.IsFixed() )
 	{
-		dest.CopyFrom(slot);
+		dest.TiltFrom(slot);
 		slot.setEmpty();
 		return true;
 	}
@@ -336,18 +348,6 @@ void CubeWrapper::testMatches()
 	{
 		if( m_neighbors[i] >= 0 && m_neighbors[i] < m_cube.id() )
 		{
-			//TEMP try marking everything
-			/*for( int k = 0; k < NUM_ROWS; k++ )
-			{
-				for( int l = 0; l < NUM_ROWS; l++ )
-				{
-					if( m_grid[k][l].isAlive() )
-						m_grid[k][l].mark();
-				}
-			}
-
-			return;*/
-
 			//as long we we test one block going clockwise, and the other going counter-clockwise, we'll match up
 			int side = Game::Inst().cubes[m_neighbors[i]].GetSideNeighboredOn( 0, m_cube );
 

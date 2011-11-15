@@ -27,6 +27,8 @@ public:
 	typedef enum 
 	{
 		STATE_LIVING,
+		STATE_PENDINGMOVE,
+		STATE_MOVING,
 		STATE_MARKED,
 		STATE_EXPLODING,
 		STATE_SHOWINGSCORE,
@@ -43,6 +45,7 @@ public:
 	bool isAlive() const { return m_state == STATE_LIVING; }
 	bool isEmpty() const { return m_state == STATE_GONE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
+	bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE ); }
 	void setEmpty() { m_state = STATE_GONE; }
 	unsigned int getColor() const { return m_color; }
 	void FillColor(unsigned int color);
@@ -56,7 +59,9 @@ public:
 	void MakeFixed() { m_bFixed = true; }
 
 	//copy color and some other attributes from target.  Used when tilting
-	void CopyFrom(GridSlot &target);
+	void TiltFrom(GridSlot &src);
+	//if we have a move pending, start it
+	void startPendingMove();
 private:
 	void markNeighbor( int row, int col );
 
@@ -66,6 +71,10 @@ private:
 	CubeWrapper *m_pWrapper;
 	unsigned int m_row;
 	unsigned int m_col;
+
+	//current position in 16x16 grid for use when moving
+	Vec2 m_curMovePos;
+
 	unsigned int m_score;
 	//fixed dot
 	bool		 m_bFixed;
