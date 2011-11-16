@@ -101,11 +101,15 @@ namespace Atomic {
         And(dest, ~(1 << bit));
     }
 
+    // FIXME: This doesn't seem to set leading zeros.  Rather, it sets the bit at a position.
+    //        What's the intent here?
     static inline void SetLZ(uint32_t &dest, unsigned bit) {
         ASSERT(bit < 32);
         Or(dest, 0x80000000 >> bit);
     }
 
+    // FIXME: What's the difference between setting leading zeros and clearing leading zeros (0 bits are already clear)
+    //        What's the intent here?
     static inline void ClearLZ(uint32_t &dest, unsigned bit) {
         ASSERT(bit < 32);
         And(dest, ~(0x80000000 >> bit));

@@ -76,11 +76,14 @@ gtest_main.a : gtest-all.o gtest_main.o
 main.o : $(USER_DIR)/main.cpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/main.cpp
 
+atomic_test.o : $(USER_DIR)/atomic_test.cpp $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/atomic_test.cpp
+
 intrinsic_test.o : $(USER_DIR)/intrinsic_test.cpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/intrinsic_test.cpp
 
 math_test.o : $(USER_DIR)/math_test.cpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/math_test.cpp
 
-runtests : intrinsic_test.o math_test.o main.o gtest_main.a
+runtests : atomic_test.o intrinsic_test.o math_test.o main.o gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
