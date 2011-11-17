@@ -16,8 +16,10 @@ class CubeWrapper;
 class GridSlot
 {
 public:
-	static const int NUM_COLORS = 8;
+	static const unsigned int NUM_COLORS = 8;
 	static const AssetImage *TEXTURES[ NUM_COLORS ];
+	static const unsigned int NUM_ROLLING_COLORS = 2;
+	static const AssetImage *ROLLING_TEXTURES[ NUM_ROLLING_COLORS ];
 
 	static const float MARK_SPREAD_DELAY = 0.33f;
 	static const float MARK_BREAK_DELAY = 0.67f;
@@ -40,7 +42,7 @@ public:
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	const AssetImage &GetTexture() const;
 	//draw self on given vid at given vec
-	void Draw( VidMode_BG0 &vid, const Vec2 &vec );
+	void Draw( VidMode_BG0 &vid, unsigned int tiltMask );
 	void Update(float t);
 	bool isAlive() const { return m_state == STATE_LIVING; }
 	bool isEmpty() const { return m_state == STATE_GONE; }
@@ -64,6 +66,8 @@ public:
 	void startPendingMove();
 private:
 	void markNeighbor( int row, int col );
+	//given a tiltmask, calculate the roll frame we should be in
+	unsigned int CalculateRollFrame( unsigned int tiltMask ) const;
 
 	SLOT_STATE m_state;
 	unsigned int m_color;

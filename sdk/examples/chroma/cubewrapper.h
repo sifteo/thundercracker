@@ -78,6 +78,10 @@ public:
 
 	bool isDead() const { return m_state == STATE_NOSHAKES; }
 	CubeState getState() const { return m_state; }
+
+	void ClearTiltInfo() { m_TiltBitMask = 0; }
+	void AddTiltInfo( unsigned int dir );
+
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
@@ -96,6 +100,9 @@ private:
 	unsigned int m_ShakesRemaining;
 	//what time did we start shaking?
 	float m_fShakeTime;
+
+	//used for in-place tilt animations
+	unsigned int m_TiltBitMask;
 };
 
 #endif

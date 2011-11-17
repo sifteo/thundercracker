@@ -17,14 +17,6 @@
 
 using namespace Sifteo;
 
-enum
-{
-	UP,
-	LEFT, 
-	DOWN,
-	RIGHT
-};
-
 //stupid way to ensure seeding the randomizer before static inits
 #ifdef _WIN32
 class RandInit
@@ -40,6 +32,25 @@ static RandInit randInit;
 #endif
 
 static Game &game = Game::Inst();
+
+static void onAccelChange(_SYSCubeID cid)
+{
+    _SYSAccelState state;
+    _SYS_getAccel(cid, &state);
+
+	static const int TILT_THRESHOLD = 20;
+
+	game.cubes[cid].ClearTiltInfo();
+
+	if( state.x > TILT_THRESHOLD )
+		game.cubes[cid].AddTiltInfo( RIGHT );
+	else if( state.x < -TILT_THRESHOLD )
+		game.cubes[cid].AddTiltInfo( LEFT );
+	if( state.y > TILT_THRESHOLD )
+		game.cubes[cid].AddTiltInfo( DOWN );
+	else if( state.y < -TILT_THRESHOLD )
+		game.cubes[cid].AddTiltInfo( UP);
+}
 
 static void onTilt(_SYSCubeID cid)
 {
@@ -74,6 +85,7 @@ void siftmain()
     /*vid.BG0_text(Vec2(2,1), Font, "Hello World!");
 	vid.BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
  */
+	_SYS_vectors.cubeEvents.accelChange = onAccelChange;
     _SYS_vectors.cubeEvents.tilt = onTilt;
 	_SYS_vectors.cubeEvents.shake = onShake;
 

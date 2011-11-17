@@ -45,6 +45,7 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 
 	m_state = STATE_PLAYING;
 	//Refill();
+	m_TiltBitMask = 0;
 }
 
 
@@ -97,7 +98,7 @@ void CubeWrapper::Draw()
 						for( int j = 0; j < NUM_COLS; j++ )
 						{
 							GridSlot &slot = m_grid[i][j];
-							slot.Draw( m_vid, Vec2(j * 4, i * 4) );
+							slot.Draw( m_vid, m_TiltBitMask );
 						}
 					}
 
@@ -660,7 +661,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 		aLocIndices[i] = temp;
 	}
 
-	int iCurColor = 0;
+	unsigned int iCurColor = 0;
 
 	for( unsigned int i = 0; i < numEmpties; i++ )
 	{
@@ -949,4 +950,12 @@ void CubeWrapper::checkEmpty()
 {
 	if( m_state != STATE_NOSHAKES && isEmpty() )
 		m_state = STATE_EMPTY;
+}
+
+
+void CubeWrapper::AddTiltInfo( unsigned int dir ) 
+{
+	m_TiltBitMask |= ( 1 << dir );
+
+	//PRINT( "tilt bit mask is now %d\n", m_TiltBitMask );
 }

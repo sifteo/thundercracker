@@ -22,6 +22,12 @@ const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 	&Gem7,
 };
 
+const AssetImage *GridSlot::ROLLING_TEXTURES[ GridSlot::NUM_ROLLING_COLORS ] = 
+{
+	&RollingGem0,
+	&RollingGem1,
+};
+
 GridSlot::GridSlot() : 
 	m_state( STATE_GONE ),
 	m_eventTime( 0.0f ),
@@ -60,8 +66,9 @@ const AssetImage &GridSlot::GetTexture() const
 }
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
+void GridSlot::Draw( VidMode_BG0 &vid, unsigned int tiltMask )
 {
+	Vec2 vec( m_col * 4, m_row * 4 );
 	switch( m_state )
 	{
 		case STATE_LIVING:
@@ -70,7 +77,19 @@ void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
 			if( IsFixed() )
 				vid.BG0_drawAsset(vec, tex, 2);
 			else
-				vid.BG0_drawAsset(vec, tex, 0);
+			{
+				//only have some of these now
+				if( m_color < NUM_ROLLING_COLORS )
+				{
+					const AssetImage &rolltex = *ROLLING_TEXTURES[ m_color ];
+					unsigned int frame = CalculateRollFrame( tiltMask );
+					vid.BG0_drawAsset(vec, rolltex, frame);
+
+					//PRINT( "tilt bit mask %d, frame=%d\n", tiltMask, frame );
+				}
+				else
+					vid.BG0_drawAsset(vec, tex, 0);
+			}
 			break;
 		}
 		case STATE_MOVING:
@@ -230,4 +249,45 @@ void GridSlot::startPendingMove()
 	{
 		m_state = STATE_MOVING;
 	}
+}
+
+
+//given a tiltmask, calculate the roll frame we should be in
+unsigned int GridSlot::CalculateRollFrame( unsigned int tiltMask ) const
+{
+	//put these in the order of the frames
+	enum
+	{
+		FRAME_UPRIGHT,
+		FRAME_RIGHT,
+		FRAME_DOWNRIGHT,
+		FRAME_DOWN,
+		FRAME_DOWNLEFT,
+		FRAME_LEFT,
+		FRAME_UPLEFT,
+		FRAME_UP,
+		FRAME_NONE
+	};
+
+	//check diagonals
+
+	//actually want to return the reverse the direction
+	if( tiltMask & ( 1 << UP ) && tiltMask & ( 1 << LEFT ) )
+		return FRAME_DOWNRIGHT;
+	else if( tiltMask & ( 1 << UP ) && tiltMask & ( 1 << RIGHT ) )
+		return FRAME_DOWNLEFT;
+	else if( tiltMask & ( 1 << DOWN ) && tiltMask & ( 1 << LEFT ) )
+		return FRAME_UPRIGHT;
+	else if( tiltMask & ( 1 << DOWN ) && tiltMask & ( 1 << RIGHT ) )
+		return FRAME_UPLEFT;
+	else if( tiltMask & ( 1 << UP ) )
+		return FRAME_DOWN;
+	else if( tiltMask & ( 1 << RIGHT ) )
+		return FRAME_LEFT;
+	else if( tiltMask & ( 1 << LEFT ) )
+		return FRAME_RIGHT;
+	else if( tiltMask & ( 1 << DOWN ) )
+		return FRAME_UP;
+
+	return FRAME_NONE;
 }
