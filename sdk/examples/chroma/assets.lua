@@ -10,5 +10,7 @@ Gem6 = image{"01_gem06.png", height=32}
 Gem7 = image{"01_gem07.png", height=32}
 RollingGem0 = image{"RollingGem0.png", height=32}
 RollingGem1 = image{"RollingGem1.png", height=32}
+RollAnim0 = image{"red_triangle_strip.png", height=32}
+RollAnim1 = image{"green_pentagon_strip.png", height=32}
 GemEmpty = image{"gem_Empty.png"}
 Cover = image{"cover.png"}

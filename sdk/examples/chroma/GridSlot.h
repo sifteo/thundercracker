@@ -20,6 +20,7 @@ public:
 	static const AssetImage *TEXTURES[ NUM_COLORS ];
 	static const unsigned int NUM_ROLLING_COLORS = 2;
 	static const AssetImage *ROLLING_TEXTURES[ NUM_ROLLING_COLORS ];
+	static const AssetImage *ROLLING_ANIM[ NUM_ROLLING_COLORS ];
 
 	static const float MARK_SPREAD_DELAY = 0.33f;
 	static const float MARK_BREAK_DELAY = 0.67f;
@@ -31,6 +32,7 @@ public:
 		STATE_LIVING,
 		STATE_PENDINGMOVE,
 		STATE_MOVING,
+		STATE_FINISHINGMOVE,
 		STATE_MARKED,
 		STATE_EXPLODING,
 		STATE_SHOWINGSCORE,
@@ -82,6 +84,8 @@ private:
 	unsigned int m_score;
 	//fixed dot
 	bool		 m_bFixed;
+
+	unsigned int m_animFrame;
 };
 
 

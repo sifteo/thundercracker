@@ -28,11 +28,19 @@ const AssetImage *GridSlot::ROLLING_TEXTURES[ GridSlot::NUM_ROLLING_COLORS ] =
 	&RollingGem1,
 };
 
+
+const AssetImage *GridSlot::ROLLING_ANIM[ GridSlot::NUM_ROLLING_COLORS ] = 
+{
+	&RollAnim0,
+	&RollAnim1,
+};
+
 GridSlot::GridSlot() : 
 	m_state( STATE_GONE ),
 	m_eventTime( 0.0f ),
 	m_score( 0 ),
-	m_bFixed( false )
+	m_bFixed( false ),
+	m_animFrame( 0 )
 {
 	//TEST randomly make some empty ones
 	/*if( Game::Rand(100) > 50 )
@@ -99,8 +107,22 @@ void GridSlot::Draw( VidMode_BG0 &vid, unsigned int tiltMask )
 			Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
 
 			//PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
-
-			vid.BG0_drawAsset(curPos, tex, 0);
+			if( m_color < NUM_ROLLING_COLORS )
+			{
+				const AssetImage &tex = *ROLLING_ANIM[m_color];
+				vid.BG0_drawAsset(curPos, tex, m_animFrame);
+			}
+			else
+				vid.BG0_drawAsset(curPos, tex, 0);
+			break;
+		}
+		case STATE_FINISHINGMOVE:
+		{
+			if( m_color < NUM_ROLLING_COLORS )
+			{
+				const AssetImage &tex = *ROLLING_ANIM[m_color];
+				vid.BG0_drawAsset(vec, tex, m_animFrame);
+			}
 			break;
 		}
 		case STATE_MARKED:
@@ -150,7 +172,21 @@ void GridSlot::Update(float t)
 				m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
 			else if( vDiff.y != 0 )
 				m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
+			else if( m_color < NUM_ROLLING_COLORS )
+			{
+				m_animFrame++;
+				if( m_animFrame >= ROLLING_ANIM[ m_color ]->frames )
+					m_state = STATE_LIVING;
+			}
 			else
+				m_state = STATE_LIVING;
+
+			break;
+		}
+		case STATE_FINISHINGMOVE:
+		{
+			m_animFrame++;
+			if( m_animFrame >= ROLLING_ANIM[ m_color ]->frames )
 				m_state = STATE_LIVING;
 
 			break;
@@ -248,6 +284,7 @@ void GridSlot::startPendingMove()
 	if( m_state == STATE_PENDINGMOVE )
 	{
 		m_state = STATE_MOVING;
+		m_animFrame = 0;
 	}
 }
 
