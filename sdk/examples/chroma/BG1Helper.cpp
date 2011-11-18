@@ -23,9 +23,9 @@ void BG1Helper::Flush()
 {
 	_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 	//copy over our bitset
-	_SYS_vbuf_writei(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2,
+	_SYS_vbuf_write(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2,
                          m_bitset,
-                         0, BG1_ROWS);
+                         BG1_ROWS);
 
 	unsigned int tileOffset = 0;
 

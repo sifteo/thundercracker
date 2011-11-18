@@ -21,8 +21,7 @@ void TimeKeeper::Reset()
 
 void TimeKeeper::Draw( BG1Helper &bg1helper )
 {
-	//bg1helper.DrawAsset( Vec2(0,0), TimerUp, 0 );
-	bg1helper.DrawAsset( Vec2(0,0), Gem7, 0 );
+	bg1helper.DrawAsset( Vec2(0,0), TimerUp, 0 );
 
 /*
 	//for now, just draw in the corner
