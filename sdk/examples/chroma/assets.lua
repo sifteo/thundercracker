@@ -14,3 +14,7 @@ RollAnim0 = image{"red_triangle_strip.png", height=32}
 RollAnim1 = image{"green_pentagon_strip.png", height=32}
 GemEmpty = image{"gem_Empty.png"}
 Cover = image{"cover.png"}
+TimerUp = image{"TimerUp.png"}
+TimerLeft = image{"TimerLeft.png"}
+TimerDown = image{"TimerDown.png"}
+TimerRight = image{"TimerRight.png"}

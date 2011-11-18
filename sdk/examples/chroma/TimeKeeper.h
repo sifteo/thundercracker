@@ -8,6 +8,7 @@
 #define _TIMEKEEPER_H
 
 #include <sifteo.h>
+#include "BG1Helper.h"
 
 using namespace Sifteo;
 
@@ -20,7 +21,7 @@ public:
 	TimeKeeper();
 
 	void Reset();
-	void Draw( Cube &cube );
+	void Draw( BG1Helper &bg1helper );
 	void Update( float t );
 	void Init( float t );
 	

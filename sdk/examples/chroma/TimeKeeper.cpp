@@ -19,8 +19,12 @@ void TimeKeeper::Reset()
 	m_fTimer = TIME_INITIAL;
 }
 
-void TimeKeeper::Draw( Cube &cube )
+void TimeKeeper::Draw( BG1Helper &bg1helper )
 {
+	//bg1helper.DrawAsset( Vec2(0,0), TimerUp, 0 );
+	bg1helper.DrawAsset( Vec2(0,0), Gem7, 0 );
+
+/*
 	//for now, just draw in the corner
 	_SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 	// Allocate tiles for the timer
@@ -52,9 +56,6 @@ void TimeKeeper::Draw( Cube &cube )
 		//double tall
 		for( int j = 0; j < 2; j++ )
 		{
-			/*_SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2 + iDigits + ( iDigits * ( j + 1 ) ),
-							 Font.tiles + ( ( aBuf[i] - ' ' ) * 2 ) + j,
-							 0, 1);*/
 			_SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2 + i + ( iDigits * ( j ) ),
 							 Font.tiles + ( ( aBuf[i] - ' ' ) * 2 ) + j,
 							 0, 1);
@@ -62,6 +63,7 @@ void TimeKeeper::Draw( Cube &cube )
 	}
 
 	_SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_y), 0);
+	*/
 }
 
 

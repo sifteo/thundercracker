@@ -10,6 +10,7 @@
 #include <sifteo.h>
 #include "GridSlot.h"
 #include "banner.h"
+#include "BG1Helper.h"
 
 using namespace Sifteo;
 
@@ -90,6 +91,7 @@ private:
 	Cube m_cube;
 	VidMode_BG0 m_vid;
 	VidMode_BG0_ROM m_rom;
+	BG1Helper m_bg1helper;
 
 	CubeState m_state;
 	GridSlot m_grid[NUM_ROWS][NUM_COLS];

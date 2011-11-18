@@ -19,20 +19,12 @@ static unsigned int GEM_VALUE_PROGRESSION[] = { 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 };
 // Order in which the number of fixed gems in a grid increases as the grid is refilled.
 static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4 };
 
-CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_ShakesRemaining( STARTING_SHAKES ), m_fShakeTime( -1.0f )
+CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_bg1helper( m_cube ), m_ShakesRemaining( STARTING_SHAKES ), m_fShakeTime( -1.0f )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
 		m_neighbors[i] = -1;
 	}
-
-
-	/*// Now enable BG0, Sprites, and BG1
-    _SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
-	_SYS_vbuf_fill(&m_cube.vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
-
-	// Allocate tiles for the banner
-    _SYS_vbuf_fill(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0xFFFF, BANNER_ROWS );*/
 
 	for( int i = 0; i < NUM_ROWS; i++ )
 	{
@@ -102,10 +94,13 @@ void CubeWrapper::Draw()
 						}
 					}
 
-					if( m_banner.IsActive() )
+					/*if( m_banner.IsActive() )
 						m_banner.Draw( m_cube );
-					else if( Game::Inst().getMode() == Game::MODE_TIMED )
-						Game::Inst().getTimer().Draw( m_cube );
+					else if( Game::Inst().getMode() == Game::MODE_TIMED )*/
+					{
+						Game::Inst().getTimer().Draw( m_bg1helper );
+						m_bg1helper.Flush();
+					}
 
 					break;
 				}
