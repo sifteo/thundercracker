@@ -56,12 +56,14 @@ void BG1Helper::DrawAsset( const Vec2 &point, const Sifteo::AssetImage &asset, u
     for (unsigned y = 0; y < asset.height; y++)
     {
         unsigned yOff = y + point.y;
-        SetBitRange( yOff, point.x, point.x + asset.width );
+        SetBitRange( yOff, point.x, asset.width );
 
         memcpy( m_tileset[yOff] + point.x, asset.tiles + offset, asset.width * 2 );
 
         offset += asset.width;
     }
+
+	ASSERT( getBitSetCount() <= MAX_TILES );
 }
 
 
@@ -74,7 +76,23 @@ void BG1Helper::SetBitRange( unsigned int bitsetIndex, unsigned int xOffset, uns
     ASSERT( xOffset + number <= 16 );
     uint16_t setbits = ( 1 << number ) - 1;
     //how many bits from the end is this range?
-    setbits = setbits << ( 16 - number - xOffset );
+	//not quite sure why least significant bits appear on the right-most tiles
+    setbits = setbits << xOffset;
 
     m_bitset[bitsetIndex] |= setbits;
+}
+
+
+
+//count how many bits set we have total
+//only used for debug, so I don't care about optimizing it yet
+int BG1Helper::getBitSetCount() const
+{
+	int count = 0;
+	for (unsigned y = 0; y < BG1_ROWS; y++)
+	{
+		count += __builtin_popcount( m_bitset[y] );
+	}
+
+	return count;
 }
