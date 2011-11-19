@@ -97,6 +97,7 @@ $(BIN_SIM): $(OBJS_SIM)
 	rm -f $@
 	$(AR) rcs $@ $^ $(SIM_STATIC_OBJS)
 else
+$(BIN_SIM): $(OBJS_SIM)
 	rm -f $@
 	$(LIBTOOL_SIM) -static -o $@ $^ $(SIM_STATIC_LIBS)
 endif
