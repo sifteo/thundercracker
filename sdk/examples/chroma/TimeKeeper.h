@@ -8,6 +8,7 @@
 #define _TIMEKEEPER_H
 
 #include <sifteo.h>
+#include "BG1Helper.h"
 
 using namespace Sifteo;
 
@@ -16,11 +17,12 @@ class TimeKeeper
 public:
 	static const float TIME_INITIAL = 60.0f;
 	static const float TIME_RETURN_PER_GEM = 1.0f;
+	static const int TIMER_TILES = 8;
 
 	TimeKeeper();
 
 	void Reset();
-	void Draw( Cube &cube );
+	void Draw( BG1Helper &bg1helper );
 	void Update( float t );
 	void Init( float t );
 	

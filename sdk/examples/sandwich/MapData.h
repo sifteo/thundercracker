@@ -95,11 +95,21 @@ struct MapData {
         );
     }
 
-    inline TriggerData* GetTriggerData(Vec2 loc) {
-        return triggers + GetRoomId(loc);
+    inline TriggerData* FindTriggerData(uint8_t roomId) {
+        for(TriggerData* p = triggers; p && p->room >= 0; ++p) {
+            if (p->room == roomId) {
+                return p;
+            }
+        }
+        return 0;
     }
 
-    inline ItemData* GetItemData(Vec2 loc) {
-        return items + GetRoomId(loc);
+    inline ItemData* FindItemData(uint8_t roomId) {
+        for(ItemData* p = items; p && p->room >= 0; ++p) {
+            if (p->room == roomId) {
+                return p;
+            }
+        }
+        return 0;
     }
 };

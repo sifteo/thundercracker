@@ -241,7 +241,7 @@ unsigned int Game::numColors() const
     
 	int numColors = 0;
 
-	for( int i = 0; i < GridSlot::NUM_COLORS; i++ )
+	for( unsigned int i = 0; i < GridSlot::NUM_COLORS; i++ )
 	{
 		if( aColors[i] )
 			numColors++;
@@ -256,7 +256,7 @@ bool Game::no_match_color_imbalance() const
     Returns true if all the dots of a given color are stuck together on
     one grid, meaning that they can never be matched.
     */
-	for( int i = 0; i < GridSlot::NUM_COLORS; i++ )
+	for( unsigned int i = 0; i < GridSlot::NUM_COLORS; i++ )
 	{
 		int total = 0;
 

@@ -46,7 +46,8 @@ void Map::SetRoomItem(Vec2 room, int itemId) {
   MapRoom* p = GetRoom(room);
   if (p->itemId != itemId) {
     p->itemId = itemId;
-    mData->GetItemData(room)->itemId = itemId;
+    ItemData* id = mData->FindItemData(mData->GetRoomId(room));
+    if (id) { id->itemId = itemId; }
   }
 }
 
@@ -95,5 +96,14 @@ void Map::OpenDoor(Vec2 location, Cube::Side side) {
     }
   }
   
+}
+
+void Map::ClearTrigger(Vec2 location) {
+  MapRoom *p = GetRoom(location);
+  if (p->callback) {
+    p->callback = 0;
+    TriggerData* t = mData->FindTriggerData(mData->GetRoomId(location));
+    if (t) { t->callback = 0; }
+  }
 }
 
