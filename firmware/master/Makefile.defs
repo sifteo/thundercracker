@@ -47,7 +47,7 @@ CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 
 include $(MASTER_DIR)/Makefile.platform
 
-ifeq ($(UNAME), windows32)
+ifeq ($(BUILD_PLATFORM), windows32)
     # portaudio requirements
     LDFLAGS_SIM += -lws2_32 -lwinmm -lole32
 else
