@@ -1,21 +1,10 @@
 CC_SIM = gcc
 RANLIB_SIM = ranlib
+LIBTOOL_SIM = libtool
 
 CC_STM32 = arm-none-eabi-gcc
 GDB_STM32 = arm-none-eabi-gdb
 RANLIB_STM32 = arm-none-eabi-ranlib
-
-UNAME := $(shell uname)
-
-ifeq ($(findstring MINGW32_NT,$(UNAME)),MINGW32_NT)  
-      UNAME := windows32
-endif
-
-ifeq ($(UNAME), windows32)
-        BIN_EXT = .exe
-else
-        BIN_EXT = 
-endif
 
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
@@ -56,17 +45,15 @@ LDFLAGS += -lm
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 
+include $(MASTER_DIR)/Makefile.platform
+
 ifeq ($(UNAME), windows32)
-    CFLAGS_SIM  +=  -I$(TC_DIR)/deps/win32/speex/include \
-                    -I$(TC_DIR)/deps/win32/portaudio/include
-    LDFLAGS_SIM +=  -L$(TC_DIR)/deps/win32/speex/lib \
-                    -L$(TC_DIR)/deps/win32/portaudio/lib \
-                    -static -lportaudio -lspeex \
-                    -lws2_32 -lwinmm -lole32
-    # note: winmm and ole32 are required because portaudio links to them
-    # but cannot link to a static version of them
+    # portaudio requirements
+    LDFLAGS_SIM += -lws2_32 -lwinmm -lole32
 else
-    LDFLAGS_SIM += -lportaudio -lspeex
+    # these are all required by portaudio, believe it or not
+    LDFLAGS_SIM += -framework CoreAudio -framework AudioToolbox \
+                    -framework AudioUnit -framework CoreServices
 endif
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a

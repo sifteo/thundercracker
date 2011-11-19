@@ -58,11 +58,22 @@ OBJS_STM32 = \
     stm32/flashlayer.stm32.o \
     $(SPEEX_OBJS_STM32) \
 
+include Makefile.platform
+
 TC_DIR = ../..
+ifeq ($(BUILD_PLATFORM), windows32)
+    DEPS_DIR = $(TC_DIR)/deps/win32
+else
+    DEPS_DIR = $(TC_DIR)/deps/osx
+endif
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -Icommon -I../include
 CFLAGS_STM32 := $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER
-CFLAGS_SIM =
+CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include \
+             -I$(DEPS_DIR)/speex/include
+
+SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
+                    $(DEPS_DIR)/portaudio/lib/libportaudio.a
 
 include Makefile.defs
 
@@ -78,7 +89,7 @@ all: $(BINS)
 
 $(BIN_SIM): $(OBJS_SIM)
 	rm -f $@
-	$(AR) r $@ $^
+	$(LIBTOOL_SIM) -static -o $@ $^ $(SIM_STATIC_LIBS)
 	$(RANLIB_SIM) $@
 
 $(BIN_STM32): $(OBJS_STM32)
