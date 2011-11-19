@@ -24,7 +24,8 @@ public:
 	void Clear();
 	void Flush();
 	void DrawAsset( const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0 );
-
+	//draw a partial asset.  Pass in the position, xy min points, and width/height
+	void DrawPartialAsset( const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0 );
 
 private:
     //set a number of bits at xoffset of the current bitset

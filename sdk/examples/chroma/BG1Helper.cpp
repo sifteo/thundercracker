@@ -66,6 +66,24 @@ void BG1Helper::DrawAsset( const Vec2 &point, const Sifteo::AssetImage &asset, u
 	ASSERT( getBitSetCount() <= MAX_TILES );
 }
 
+//draw a partial asset.  Pass in the position, xy min points, and width/height
+void BG1Helper::DrawPartialAsset( const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame )
+{
+    unsigned tileOffset = asset.width * asset.height * frame + ( asset.width * offset.y ) + offset.x;
+
+    for (int y = 0; y < size.y; y++)
+    {
+        unsigned yOff = y + point.y;
+        SetBitRange( yOff, point.x, size.x );
+
+        memcpy( m_tileset[yOff] + point.x, asset.tiles + tileOffset, size.x * 2 );
+
+        tileOffset += asset.width;
+    }
+
+	ASSERT( getBitSetCount() <= MAX_TILES );
+}
+
 
 //set a number of bits at xoffset of the current bitset
 void BG1Helper::SetBitRange( unsigned int bitsetIndex, unsigned int xOffset, unsigned int number )

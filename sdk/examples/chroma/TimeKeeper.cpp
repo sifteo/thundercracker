@@ -21,10 +21,35 @@ void TimeKeeper::Reset()
 
 void TimeKeeper::Draw( BG1Helper &bg1helper )
 {
-	bg1helper.DrawAsset( Vec2(0,0), TimerUp, 0 );
-	bg1helper.DrawAsset( Vec2(0,0), TimerLeft, 0 );
-	bg1helper.DrawAsset( Vec2(0,15), TimerDown, 0 );
-	bg1helper.DrawAsset( Vec2(15,0), TimerRight, 0 );
+	//find out what proportion of our timer is left, then multiply by number of tiles
+	float fTimerProportion = m_fTimer / TIME_INITIAL;
+
+	if( fTimerProportion > 1.0f )
+		fTimerProportion = 1.0f;
+
+	int numTiles = TIMER_TILES * fTimerProportion;
+
+	//have one more
+	numTiles++;
+	if( numTiles > TIMER_TILES )
+		numTiles = TIMER_TILES;
+
+	int offset = TIMER_TILES - numTiles;
+
+	if( numTiles > 0 )
+	{
+		bg1helper.DrawPartialAsset( Vec2(offset,0), Vec2(offset,0), Vec2(numTiles * 2,TimerUp.height), TimerUp );
+		bg1helper.DrawPartialAsset( Vec2(0,offset), Vec2(0,offset), Vec2(TimerLeft.width,numTiles * 2), TimerLeft );
+		bg1helper.DrawPartialAsset( Vec2(offset,15), Vec2(offset,0), Vec2(numTiles * 2,TimerDown.height), TimerDown );
+		bg1helper.DrawPartialAsset( Vec2(15,offset), Vec2(0,offset), Vec2(TimerRight.width,numTiles * 2), TimerRight );
+	}
+
+	/*
+	bg1helper.DrawAsset( Vec2(0,0), TimerUp );
+	bg1helper.DrawAsset( Vec2(0,0), TimerLeft );
+	bg1helper.DrawAsset( Vec2(0,15), TimerDown );
+	bg1helper.DrawAsset( Vec2(15,0), TimerRight );
+	*/
 
 /*
 	//for now, just draw in the corner
