@@ -1,5 +1,6 @@
 
 #include "audiobuffer.h"
+#include <sifteo/macros.h>
 
 void AudioBuffer::init(_SYSAudioBuffer *buf) {
     STATIC_ASSERT((sizeof(buf->data) & (sizeof(buf->data) - 1)) == 0); // must be power of 2
