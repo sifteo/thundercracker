@@ -10,6 +10,11 @@
 #include "utils.h"
 #include <stdlib.h>
 
+
+
+const float GridSlot::EXPLODE_FRAME_LEN = GridSlot::MARK_BREAK_DELAY / 7.0f;
+
+
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
 {
 	&Gem0,
@@ -21,6 +26,13 @@ const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 	&Gem6,
 	&Gem7,
 };
+
+
+const AssetImage *GridSlot::EXPLODINGTEXTURES[ GridSlot::NUM_EXPLODING_COLORS ] =
+{
+    &ExplodeGem0,
+};
+
 
 const AssetImage *GridSlot::ROLLING_TEXTURES[ GridSlot::NUM_ROLLING_COLORS ] = 
 {
@@ -72,6 +84,13 @@ const AssetImage &GridSlot::GetTexture() const
 {
 	return *TEXTURES[ m_color ];
 }
+
+
+const AssetImage &GridSlot::GetExplodingTexture() const
+{
+    return *EXPLODINGTEXTURES[ m_color ];
+}
+
 
 //draw self on given vid at given vec
 void GridSlot::Draw( VidMode_BG0 &vid, unsigned int tiltMask )
@@ -131,7 +150,15 @@ void GridSlot::Draw( VidMode_BG0 &vid, unsigned int tiltMask )
 			if( IsFixed() )
 				vid.BG0_drawAsset(vec, tex, 3);
 			else
-				vid.BG0_drawAsset(vec, tex, 1);
+            {
+                if( m_color < NUM_EXPLODING_COLORS )
+                {
+                    const AssetImage &exTex = GetExplodingTexture();
+                    vid.BG0_drawAsset(vec, exTex, m_animFrame);
+                }
+                else
+                    vid.BG0_drawAsset(vec, tex, 1);
+            }
 			break;
 		}
 		case STATE_EXPLODING:
@@ -194,7 +221,13 @@ void GridSlot::Update(float t)
 		case STATE_MARKED:
 		{
 			if( t - m_eventTime > MARK_SPREAD_DELAY )
+            {
+                m_animFrame = 0;
                 spread_mark();
+            }
+            else
+                m_animFrame = ( t - m_eventTime ) / EXPLODE_FRAME_LEN;
+
             if( t - m_eventTime > MARK_BREAK_DELAY )
                 explode();
 			break;

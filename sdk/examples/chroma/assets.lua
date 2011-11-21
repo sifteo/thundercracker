@@ -20,3 +20,5 @@ TimerDown = image{"TimerDown.png"}
 TimerRight = image{"TimerRight.png"}
 TimerEdgeUpLeft = image{"TimerEdgeUpLeft.png", height=8}
 TimerEdgeUpRight = image{"TimerEdgeUpRight.png", height=8}
+--explosions
+ExplodeGem0 = image{"Gem0Explode.png", height=32}
