@@ -50,3 +50,15 @@ TEST_F(CubeTest, CubeStateWhenEnabledWorks) {
     EXPECT_EQ(0x40000000, cube.bit());
     EXPECT_TRUE(cube.enabled());
 }
+
+TEST_F(CubeTest, RadioProduceWorks) {
+    PacketTransmission ptx;
+    CubeSlot &cube = CubeSlot::getInstance(1);
+    cube.radioProduce(ptx);
+    
+    // TODO: test addressing/channel schemes correctly when support for them is more fully baked.
+    EXPECT_EQ(ptx.dest->channel, 0x02);
+    EXPECT_EQ(ptx.dest->id[0], 1);
+    
+    // TODO: Set various bits on the cube to fully test the radio codec.
+}

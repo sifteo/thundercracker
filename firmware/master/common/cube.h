@@ -16,6 +16,11 @@
 #include "cubecodec.h"
 #include "systime.h"
 
+#if defined (BUILD_UNIT_TEST) && defined (UNIT_TEST_CUBE)
+  #include "mockcubecodec.h"
+  #define CubeCodec MockCubeCodec
+#endif
+
 
 /**
  * One cube, or potential cube. The firmware is built with a fixed
