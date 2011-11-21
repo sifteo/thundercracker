@@ -57,6 +57,17 @@ void CubeWrapper::Reset()
 	m_ShakesRemaining = STARTING_SHAKES;
 	m_fShakeTime = -1.0f;
 	m_state = STATE_PLAYING;
+
+    //clear out dots
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+            slot.Init( this, i, j );
+        }
+    }
+
 	Refill();
 }
 
