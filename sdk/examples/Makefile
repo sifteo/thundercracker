@@ -1,12 +1,7 @@
 SUBDIRS = \
-<<<<<<< HEAD
-	hello monster text gfxdemo chroma sensors megademo \
+	hello monster text gfxdemo chroma sensors \
 	scroller-bg0 scroller-bg1 sprites stars tiltShake \
 	pairing
-=======
-	hello monster text gfxdemo chroma sensors \
-	scroller-bg0 scroller-bg1 sprites stars tiltShake
->>>>>>> master
 
 .PHONY: clean subdirs $(SUBDIRS)
 
