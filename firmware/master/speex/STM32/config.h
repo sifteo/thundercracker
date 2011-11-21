@@ -37,15 +37,18 @@
 #define inline __inline
 #endif
 
-// #include "main.h"
+// select which speex mode to use.
+// options: SPEEX_MODEID_NB, SPEEX_MODEID_WB, SPEEX_MODEID_UWB
+#define SIFT_SPEEX_MODE SPEEX_MODEID_WB
+
+//#if (SIFT_SPEEX_MODE == SPEEX_MODEID_NB)
+//#define DISABLE_WIDEBAND
+//#endif
 
 #define EXPORT 
-
 #define FIXED_POINT
 #define DISABLE_FLOAT_API
 #define DISABLE_VBR
-#define FRAME_SIZE 160
-#define DISABLE_WIDEBAND
 #define DISABLE_NOTIFICATIONS
 #define DISABLE_WARNINGS
 #define RELEASE
@@ -54,8 +57,8 @@
 
 #define MAX_CHARS_PER_FRAME (20/BYTES_PER_CHAR)
 
-#define SPEEXENC_PERSIST_STACK_SIZE 5000
-#define SPEEXENC_SCRATCH_STACK_SIZE 3000
+#define SPEEXENC_PERSIST_STACK_SIZE 0
+#define SPEEXENC_SCRATCH_STACK_SIZE 0
 #define SPEEXDEC_PERSIST_STACK_SIZE 2500
 #define SPEEXDEC_SCRATCH_STACK_SIZE 1000
 
@@ -64,7 +67,14 @@
 #define NB_ENC_STACK SPEEXENC_SCRATCH_STACK_SIZE
 #define NB_DEC_STACK SPEEXDEC_SCRATCH_STACK_SIZE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void _speex_fatal(const char *str, const char *file, int line);
 extern void _speex_putc(int ch, void *file);
 
+#ifdef __cplusplus
+}
+#endif
 

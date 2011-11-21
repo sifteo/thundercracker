@@ -22,11 +22,11 @@
 #include "vram.h"
 #include "neighbors.h"
 #include "accel.h"
+#include "audiomixer.h"
 
 extern "C" {
 
 struct _SYSEventVectors _SYS_vectors;
-
 
 void _SYS_exit(void)
 {
@@ -244,5 +244,54 @@ void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index,
     }
 }
 
+void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
+{
+    if (Runtime::checkUserPointer(buffer, sizeof(*buffer))) {
+        AudioMixer::instance.enableChannel(buffer);
+    }
+}
+
+uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
+{
+    if (Runtime::checkUserPointer(mod, sizeof(*mod)) && Runtime::checkUserPointer(h, sizeof(*h))) {
+        return AudioMixer::instance.play(mod, h, loop);
+    }
+    return false;
+}
+
+uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h)
+{
+    return AudioMixer::instance.isPlaying(h);
+}
+
+void _SYS_audio_stop(_SYSAudioHandle h)
+{
+    AudioMixer::instance.stop(h);
+}
+
+void _SYS_audio_pause(_SYSAudioHandle h)
+{
+    AudioMixer::instance.pause(h);
+}
+
+void _SYS_audio_resume(_SYSAudioHandle h)
+{
+    AudioMixer::instance.resume(h);
+}
+
+int _SYS_audio_volume(_SYSAudioHandle h)
+{
+    return AudioMixer::instance.volume(h);
+}
+
+void _SYS_audio_setVolume(_SYSAudioHandle h, int volume)
+{
+    AudioMixer::instance.setVolume(h, volume);
+}
+
+uint32_t _SYS_audio_pos(_SYSAudioHandle h)
+{
+    return AudioMixer::instance.pos(h);
+}
 
 }  // extern "C"

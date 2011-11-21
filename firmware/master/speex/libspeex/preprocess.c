@@ -60,13 +60,17 @@
 #endif
 
 #include <math.h>
-#include "../include/speex/speex_preprocess.h"
-#include "../include/speex/speex_echo.h"
+#include "speex/speex_preprocess.h"
+#include "speex/speex_echo.h"
 #include "arch.h"
 #include "fftwrap.h"
 #include "filterbank.h"
 #include "math_approx.h"
 #include "os_support.h"
+
+#ifndef M_PI
+#define M_PI 3.14159263
+#endif
 
 #define LOUDNESS_EXP 5.f
 #define AMP_SCALE .001f

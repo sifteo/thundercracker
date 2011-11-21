@@ -36,8 +36,6 @@
 #ifndef FIXED_BFIN_H
 #define FIXED_BFIN_H
 
-#include "bfin.h"
-
 #undef PDIV32_16
 static inline spx_word16_t PDIV32_16(spx_word32_t a, spx_word16_t b)
 {
@@ -59,7 +57,7 @@ static inline spx_word16_t PDIV32_16(spx_word32_t a, spx_word16_t b)
          "%0 = R0;\n\t"
    : "=m" (res)
    : "m" (a), "m" (bb)
-   : "P0", "R0", "R1", "ASTAT" BFIN_HWLOOP0_REGS);
+   : "P0", "R0", "R1", "cc");
    return res;
 }
 
@@ -86,7 +84,7 @@ static inline spx_word16_t DIV32_16(spx_word32_t a, spx_word16_t b)
          "%0 = R0;\n\t"
    : "=m" (res)
    : "m" (a), "m" (bb)
-   : "P0", "R0", "R1", "ASTAT" BFIN_HWLOOP0_REGS);
+   : "P0", "R0", "R1", "cc");
    return res;
 }
 
@@ -100,7 +98,6 @@ static inline spx_word16_t MAX16(spx_word16_t a, spx_word16_t b)
          "%0 = MAX(%1,%2);"
    : "=d" (res)
    : "%d" (a), "d" (b)
-   : "ASTAT"
    );
    return res;
 }
@@ -116,7 +113,7 @@ static inline spx_word32_t MULT16_32_Q15(spx_word16_t a, spx_word32_t b)
          "%0 = (A1 += %2.L*%1.H) ;\n\t"
    : "=&W" (res), "=&d" (b)
    : "d" (a), "1" (b)
-   : "A1", "ASTAT"
+   : "A1"
    );
    return res;
 }
@@ -133,7 +130,7 @@ static inline spx_word32_t MAC16_32_Q15(spx_word32_t c, spx_word16_t a, spx_word
          "%0 = %0 + %4;\n\t"
    : "=&W" (res), "=&d" (b)
    : "d" (a), "1" (b), "d" (c)
-   : "A1", "ASTAT"
+   : "A1"
          );
    return res;
 }
@@ -150,7 +147,7 @@ static inline spx_word32_t MULT16_32_Q14(spx_word16_t a, spx_word32_t b)
          "%0 = (A1 += %1.L*%2.H);\n\t"
    : "=W" (res), "=d" (a), "=d" (b)
    : "1" (a), "2" (b)
-   : "A1", "ASTAT"
+   : "A1"
          );
    return res;
 }
@@ -168,7 +165,7 @@ static inline spx_word32_t MAC16_32_Q14(spx_word32_t c, spx_word16_t a, spx_word
          "%0 = %0 + %4;\n\t"
    : "=&W" (res), "=&d" (b)
    : "d" (a), "1" (b), "d" (c)
-   : "A1", "ASTAT"
+   : "A1"
          );
    return res;
 }

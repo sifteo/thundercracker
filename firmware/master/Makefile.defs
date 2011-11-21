@@ -1,21 +1,10 @@
 CC_SIM = gcc
 RANLIB_SIM = ranlib
+LIBTOOL_SIM = libtool
 
 CC_STM32 = arm-none-eabi-gcc
 GDB_STM32 = arm-none-eabi-gdb
 RANLIB_STM32 = arm-none-eabi-ranlib
-
-UNAME := $(shell uname)
-
-ifeq ($(findstring MINGW32_NT,$(UNAME)),MINGW32_NT)  
-      UNAME := windows32
-endif
-
-ifeq ($(UNAME), windows32)
-        BIN_EXT = .exe
-else
-        BIN_EXT = 
-endif
 
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
@@ -42,6 +31,9 @@ endif
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused
 
+# generate dependency files
+CFLAGS += -MD -MP
+
 CFLAGS += -g -I$(SDK_DIR)/include \
           -ffunction-sections -fdata-sections \
           -ffast-math
@@ -49,22 +41,25 @@ LDFLAGS += -lm
 
 # CC is C++, CPP is the C Preprocessor. C++ code inherits CFLAGS,
 # but it may have additional C++-specific flags set as well.
-CCFLAGS += $(CFLAGS)
 
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 
-# generate dependency files
-CCFLAGS += -MD -MP
+include $(MASTER_DIR)/Makefile.platform
+
+ifeq ($(BUILD_PLATFORM), windows32)
+    # portaudio requirements
+    LDFLAGS_SIM += -lws2_32 -lwinmm -lole32
+else
+    # these are all required by portaudio, believe it or not
+    LDFLAGS_SIM += -framework CoreAudio -framework AudioToolbox \
+                    -framework AudioUnit -framework CoreServices
+endif
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
-CFLAGS_SIM := $(CFLAGS) -DSIFTEO_SIMULATOR
-CCFLAGS_SIM := $(CCFLAGS) -DSIFTEO_SIMULATOR
-LDFLAGS_SIM := $(LDFLAGS)
-
-ifeq ($(UNAME), windows32)
-    LDFLAGS_SIM += -lws2_32
-endif
+CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
+CCFLAGS_SIM := $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
+LDFLAGS_SIM += $(LDFLAGS)
 
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
 LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
@@ -72,8 +67,8 @@ LDSCRIPT_STM32 := $(MASTER_DIR)/stm32/target.ld
 ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
               -msoft-float -mno-thumb-interwork
 
-CFLAGS_STM32 := $(CFLAGS) $(ARCH_STM32)
-CCFLAGS_STM32 := $(CCFLAGS) $(ARCH_STM32)
+CFLAGS_STM32 += $(CFLAGS) $(ARCH_STM32)
+CCFLAGS_STM32 := $(CFLAGS_STM32) $(CCFLAGS) # inherit all STM32 CFLAGS plus CCFLAGS
 LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
               -Wl,--gc-sections,-u,IVT \
               -T $(LDSCRIPT_STM32) -nostartfiles

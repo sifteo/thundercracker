@@ -22,6 +22,9 @@ sdk
 stir
   Our asset preparation tool, the Sifteo Tiled Image Reducer.
 
+speex
+  Tools for encoding & compressing audio samples, using the speex codec. (possibly merge with stir...)
+
 deps
   Outside dependencies, included for convenience.
 
@@ -67,7 +70,7 @@ Most of these dependencies are very easy to come by, and your favorite
 Linux distro or Mac OS package manager has them already. The ARM cross
 compiler is usually more annoying to obtain. On Linux and Windows, the
 CodeSourcery C++ distribution is preferred. On Mac OS or Linux, the following
-script will automatically build a compatible toolchain for your machie:
+script will automatically build a compatible toolchain for your machine:
 
    https://github.com/jsnyder/arm-eabi-toolchain
 

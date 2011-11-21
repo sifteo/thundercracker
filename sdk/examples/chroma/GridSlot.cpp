@@ -8,6 +8,7 @@
 #include "game.h"
 #include "assets.gen.h"
 #include "utils.h"
+#include <stdlib.h>
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
 {
@@ -21,11 +22,25 @@ const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 	&Gem7,
 };
 
+const AssetImage *GridSlot::ROLLING_TEXTURES[ GridSlot::NUM_ROLLING_COLORS ] = 
+{
+	&RollingGem0,
+	&RollingGem1,
+};
+
+
+const AssetImage *GridSlot::ROLLING_ANIM[ GridSlot::NUM_ROLLING_COLORS ] = 
+{
+	&RollAnim0,
+	&RollAnim1,
+};
+
 GridSlot::GridSlot() : 
 	m_state( STATE_GONE ),
 	m_eventTime( 0.0f ),
 	m_score( 0 ),
-	m_bFixed( false )
+	m_bFixed( false ),
+	m_animFrame( 0 )
 {
 	//TEST randomly make some empty ones
 	/*if( Game::Rand(100) > 50 )
@@ -59,8 +74,9 @@ const AssetImage &GridSlot::GetTexture() const
 }
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
+void GridSlot::Draw( VidMode_BG0 &vid, unsigned int tiltMask )
 {
+	Vec2 vec( m_col * 4, m_row * 4 );
 	switch( m_state )
 	{
 		case STATE_LIVING:
@@ -69,7 +85,44 @@ void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
 			if( IsFixed() )
 				vid.BG0_drawAsset(vec, tex, 2);
 			else
-				vid.BG0_drawAsset(vec, tex, 0);
+			{
+				//only have some of these now
+				if( m_color < NUM_ROLLING_COLORS )
+				{
+					const AssetImage &rolltex = *ROLLING_TEXTURES[ m_color ];
+					unsigned int frame = CalculateRollFrame( tiltMask );
+					vid.BG0_drawAsset(vec, rolltex, frame);
+
+					//PRINT( "tilt bit mask %d, frame=%d\n", tiltMask, frame );
+				}
+				else
+					vid.BG0_drawAsset(vec, tex, 0);
+			}
+			break;
+		}
+		case STATE_MOVING:
+		{
+			const AssetImage &tex = GetTexture();
+
+			Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
+
+			//PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
+			if( m_color < NUM_ROLLING_COLORS )
+			{
+				const AssetImage &tex = *ROLLING_ANIM[m_color];
+				vid.BG0_drawAsset(curPos, tex, m_animFrame);
+			}
+			else
+				vid.BG0_drawAsset(curPos, tex, 0);
+			break;
+		}
+		case STATE_FINISHINGMOVE:
+		{
+			if( m_color < NUM_ROLLING_COLORS )
+			{
+				const AssetImage &tex = *ROLLING_ANIM[m_color];
+				vid.BG0_drawAsset(vec, tex, m_animFrame);
+			}
 			break;
 		}
 		case STATE_MARKED:
@@ -95,11 +148,11 @@ void GridSlot::Draw( VidMode_BG0 &vid, const Vec2 &vec )
 			vid.BG0_text(Vec2( vec.x + 1, vec.y + 1 ), Font, aStr);
 			break;
 		}
-		case STATE_GONE:
+		/*case STATE_GONE:
 		{
 			vid.BG0_drawAsset(vec, GemEmpty, 0);
 			break;
-		}
+		}*/
 		default:
 			break;
 	}
@@ -111,6 +164,33 @@ void GridSlot::Update(float t)
 {
 	switch( m_state )
 	{
+		case STATE_MOVING:
+		{
+			Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
+
+			if( vDiff.x != 0 )
+				m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
+			else if( vDiff.y != 0 )
+				m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
+			else if( m_color < NUM_ROLLING_COLORS )
+			{
+				m_animFrame++;
+				if( m_animFrame >= ROLLING_ANIM[ m_color ]->frames )
+					m_state = STATE_LIVING;
+			}
+			else
+				m_state = STATE_LIVING;
+
+			break;
+		}
+		case STATE_FINISHINGMOVE:
+		{
+			m_animFrame++;
+			if( m_animFrame >= ROLLING_ANIM[ m_color ]->frames )
+				m_state = STATE_LIVING;
+
+			break;
+		}
 		case STATE_MARKED:
 		{
 			if( t - m_eventTime > MARK_SPREAD_DELAY )
@@ -188,9 +268,63 @@ void GridSlot::markNeighbor( int row, int col )
 
 
 //copy color and some other attributes from target.  Used when tilting
-void GridSlot::CopyFrom(GridSlot &target)
+void GridSlot::TiltFrom(GridSlot &src)
 {
-	m_state = target.m_state;
-	m_color = target.m_color;
-	m_eventTime = target.m_eventTime;
+	m_state = STATE_PENDINGMOVE;
+	m_color = src.m_color;
+	m_eventTime = src.m_eventTime;
+	m_curMovePos.x = src.m_col * 4;
+	m_curMovePos.y = src.m_row * 4;
+}
+
+
+//if we have a move pending, start it
+void GridSlot::startPendingMove()
+{
+	if( m_state == STATE_PENDINGMOVE )
+	{
+		m_state = STATE_MOVING;
+		m_animFrame = 0;
+	}
+}
+
+
+//given a tiltmask, calculate the roll frame we should be in
+unsigned int GridSlot::CalculateRollFrame( unsigned int tiltMask ) const
+{
+	//put these in the order of the frames
+	enum
+	{
+		FRAME_UPRIGHT,
+		FRAME_RIGHT,
+		FRAME_DOWNRIGHT,
+		FRAME_DOWN,
+		FRAME_DOWNLEFT,
+		FRAME_LEFT,
+		FRAME_UPLEFT,
+		FRAME_UP,
+		FRAME_NONE
+	};
+
+	//check diagonals
+
+	//actually want to return the reverse the direction
+	if( tiltMask & ( 1 << UP ) && tiltMask & ( 1 << LEFT ) )
+		return FRAME_DOWNRIGHT;
+	else if( tiltMask & ( 1 << UP ) && tiltMask & ( 1 << RIGHT ) )
+		return FRAME_DOWNLEFT;
+	else if( tiltMask & ( 1 << DOWN ) && tiltMask & ( 1 << LEFT ) )
+		return FRAME_UPRIGHT;
+	else if( tiltMask & ( 1 << DOWN ) && tiltMask & ( 1 << RIGHT ) )
+		return FRAME_UPLEFT;
+	else if( tiltMask & ( 1 << UP ) )
+		return FRAME_DOWN;
+	else if( tiltMask & ( 1 << RIGHT ) )
+		return FRAME_LEFT;
+	else if( tiltMask & ( 1 << LEFT ) )
+		return FRAME_RIGHT;
+	else if( tiltMask & ( 1 << DOWN ) )
+		return FRAME_UP;
+
+	return FRAME_NONE;
 }

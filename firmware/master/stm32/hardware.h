@@ -86,10 +86,29 @@ extern volatile SPI_t SPI2;
 extern volatile SPI_t SPI3;
 
 /*
- * Timers 2-5
+ * USART / UART
  */
 
-struct TIM2_5_t {
+struct USART_t {
+    uint32_t SR;
+    uint32_t DR;
+    uint32_t BRR;
+    uint32_t CR1;
+    uint32_t CR2;
+    uint32_t CR3;
+    uint32_t GTPR;
+};
+
+extern volatile USART_t USART1;
+extern volatile USART_t USART2;
+extern volatile USART_t USART3;
+extern volatile USART_t UART4;
+extern volatile USART_t UART5;
+
+/*
+ * Timers 1-5 & 8
+ */
+struct TIM_t {
     uint32_t CR1;
     uint32_t CR2;
     uint32_t SMCR;
@@ -102,17 +121,76 @@ struct TIM2_5_t {
     uint32_t CNT;
     uint32_t PSC;
     uint32_t ARR;
-    uint32_t _res1;
+    uint32_t RCR;       // only valid for TIM1 & TIM8
     uint32_t CCR[4];
-    uint32_t _res2;
+    uint32_t BDTR;      // only valid for TIM1 & TIM8
     uint32_t DCR;
     uint32_t DMAR;
 };
 
-extern volatile TIM2_5_t TIM2;
-extern volatile TIM2_5_t TIM3;
-extern volatile TIM2_5_t TIM4;
-extern volatile TIM2_5_t TIM5;
+extern volatile TIM_t TIM1;
+extern volatile TIM_t TIM2;
+extern volatile TIM_t TIM3;
+extern volatile TIM_t TIM4;
+extern volatile TIM_t TIM5;
+extern volatile TIM_t TIM8;
+
+
+/*
+ * Digital to Analog Converter
+ */
+
+struct DACChannel_t {
+    uint32_t DHR12R;
+    uint32_t DHR12L;
+    uint32_t DHR8R1;
+};
+
+struct DAC_t {
+    uint32_t CR;
+    uint32_t SWTRIG;
+    struct DACChannel_t channels[2];
+    uint32_t DHR8R2;
+    uint32_t DHR12R;
+    uint32_t DHR12L;
+    uint32_t DHR8RD;
+    uint32_t DOR1;
+    uint32_t DOR2;
+};
+
+extern volatile DAC_t DAC;
+
+
+/*
+  Analog to Digial Converter
+*/
+
+struct ADC_t {
+    uint32_t SR;
+    uint32_t CR1;
+    uint32_t CR2;
+    uint32_t SMPR1;
+    uint32_t SMPR2;
+    uint32_t JOFR1;
+    uint32_t JOFR2;
+    uint32_t JOFR3;
+    uint32_t JOFR4;
+    uint32_t HTR;
+    uint32_t LTR;
+    uint32_t SQR1;
+    uint32_t SQR2;
+    uint32_t SQR3;
+    uint32_t JSQR;
+    uint32_t JDR1;
+    uint32_t JDR2;
+    uint32_t JDR3;
+    uint32_t JDR4;
+    uint32_t DR;
+};
+
+extern volatile ADC_t ADC1;
+extern volatile ADC_t ADC2;
+extern volatile ADC_t ADC3;
 
 /*
  * Direct memory access

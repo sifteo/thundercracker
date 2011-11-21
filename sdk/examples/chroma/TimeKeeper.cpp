@@ -19,8 +19,39 @@ void TimeKeeper::Reset()
 	m_fTimer = TIME_INITIAL;
 }
 
-void TimeKeeper::Draw( Cube &cube )
+void TimeKeeper::Draw( BG1Helper &bg1helper )
 {
+	//find out what proportion of our timer is left, then multiply by number of tiles
+	float fTimerProportion = m_fTimer / TIME_INITIAL;
+
+	if( fTimerProportion > 1.0f )
+		fTimerProportion = 1.0f;
+
+	int numTiles = TIMER_TILES * fTimerProportion;
+
+	//have one more
+	numTiles++;
+	if( numTiles > TIMER_TILES )
+		numTiles = TIMER_TILES;
+
+	int offset = TIMER_TILES - numTiles;
+
+	if( numTiles > 0 )
+	{
+		bg1helper.DrawPartialAsset( Vec2(offset,0), Vec2(offset,0), Vec2(numTiles * 2,TimerUp.height), TimerUp );
+		bg1helper.DrawPartialAsset( Vec2(0,offset), Vec2(0,offset), Vec2(TimerLeft.width,numTiles * 2), TimerLeft );
+		bg1helper.DrawPartialAsset( Vec2(offset,15), Vec2(offset,0), Vec2(numTiles * 2,TimerDown.height), TimerDown );
+		bg1helper.DrawPartialAsset( Vec2(15,offset), Vec2(0,offset), Vec2(TimerRight.width,numTiles * 2), TimerRight );
+	}
+
+	/*
+	bg1helper.DrawAsset( Vec2(0,0), TimerUp );
+	bg1helper.DrawAsset( Vec2(0,0), TimerLeft );
+	bg1helper.DrawAsset( Vec2(0,15), TimerDown );
+	bg1helper.DrawAsset( Vec2(15,0), TimerRight );
+	*/
+
+/*
 	//for now, just draw in the corner
 	_SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 	// Allocate tiles for the timer
@@ -52,9 +83,6 @@ void TimeKeeper::Draw( Cube &cube )
 		//double tall
 		for( int j = 0; j < 2; j++ )
 		{
-			/*_SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2 + iDigits + ( iDigits * ( j + 1 ) ),
-							 Font.tiles + ( ( aBuf[i] - ' ' ) * 2 ) + j,
-							 0, 1);*/
 			_SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2 + i + ( iDigits * ( j ) ),
 							 Font.tiles + ( ( aBuf[i] - ' ' ) * 2 ) + j,
 							 0, 1);
@@ -62,6 +90,7 @@ void TimeKeeper::Draw( Cube &cube )
 	}
 
 	_SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_y), 0);
+	*/
 }
 
 

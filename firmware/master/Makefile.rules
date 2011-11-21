@@ -1,4 +1,4 @@
-include $(TC_DIR)/firmware/master/Makefile.defs
+# we expect $(TC_DIR)/firmware/master/Makefile.defs has already been included
 
 all: $(BINS)
 

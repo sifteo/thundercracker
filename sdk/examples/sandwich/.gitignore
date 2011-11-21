@@ -7,9 +7,11 @@ assets.html
 
 *.mdb
 *.userprefs
+*.pidb
 
 **bin/Debug**
 **bin/Release**
+
 
 MapTool.exe
 gen_assets.lua

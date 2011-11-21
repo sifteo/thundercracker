@@ -15,11 +15,18 @@
 #include "radio.h"
 #include "runtime.h"
 #include "systime.h"
+#include "audiooutdevice.h"
+#include "audiomixer.h"
 
 
 int main(int argc, char **argv)
 {
     SysTime::init();
+
+    AudioMixer::instance.init();
+    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
+    AudioOutDevice::start();
+
     Radio::open();
 
     Runtime::run();

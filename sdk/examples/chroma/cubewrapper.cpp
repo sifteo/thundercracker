@@ -19,20 +19,12 @@ static unsigned int GEM_VALUE_PROGRESSION[] = { 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 };
 // Order in which the number of fixed gems in a grid increases as the grid is refilled.
 static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4 };
 
-CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_ShakesRemaining( STARTING_SHAKES ), m_fShakeTime( -1.0f )
+CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_bg1helper( m_cube ), m_ShakesRemaining( STARTING_SHAKES ), m_fShakeTime( -1.0f )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
 		m_neighbors[i] = -1;
 	}
-
-
-	/*// Now enable BG0, Sprites, and BG1
-    _SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
-	_SYS_vbuf_fill(&m_cube.vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
-
-	// Allocate tiles for the banner
-    _SYS_vbuf_fill(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0xFFFF, BANNER_ROWS );*/
 
 	for( int i = 0; i < NUM_ROWS; i++ )
 	{
@@ -45,6 +37,7 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 
 	m_state = STATE_PLAYING;
 	//Refill();
+	m_TiltBitMask = 0;
 }
 
 
@@ -89,20 +82,25 @@ void CubeWrapper::Draw()
 			{
 				case STATE_PLAYING:
 				{
+					//clear out grid first (somewhat wasteful, optimize if necessary)
+					m_vid.clear(Font.tiles[0]);
 					//draw grid
 					for( int i = 0; i < NUM_ROWS; i++ )
 					{
 						for( int j = 0; j < NUM_COLS; j++ )
 						{
 							GridSlot &slot = m_grid[i][j];
-							slot.Draw( m_vid, Vec2(j * 4, i * 4) );
+							slot.Draw( m_vid, m_TiltBitMask );
 						}
 					}
 
-					if( m_banner.IsActive() )
+					/*if( m_banner.IsActive() )
 						m_banner.Draw( m_cube );
-					else if( Game::Inst().getMode() == Game::MODE_TIMED )
-						Game::Inst().getTimer().Draw( m_cube );
+					else if( Game::Inst().getMode() == Game::MODE_TIMED )*/
+					{
+						Game::Inst().getTimer().Draw( m_bg1helper );
+						m_bg1helper.Flush();
+					}
 
 					break;
 				}
@@ -293,6 +291,16 @@ void CubeWrapper::Tilt( int dir )
 		}
 	}        
 
+	//change all pending movers to movers
+	for( int i = 0; i < NUM_ROWS; i++ )
+	{
+		for( int j = 0; j < NUM_COLS; j++ )
+		{
+			GridSlot &slot = m_grid[i][j];
+			slot.startPendingMove();
+		}
+	}
+
 	if( bChanged )
 		Game::Inst().setTestMatchFlag();
 }
@@ -318,9 +326,9 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 	if( !dest.isEmpty() )
 		return false;
 
-	if( slot.isAlive() && !slot.IsFixed() )
+	if( slot.isTiltable() && !slot.IsFixed() )
 	{
-		dest.CopyFrom(slot);
+		dest.TiltFrom(slot);
 		slot.setEmpty();
 		return true;
 	}
@@ -336,18 +344,6 @@ void CubeWrapper::testMatches()
 	{
 		if( m_neighbors[i] >= 0 && m_neighbors[i] < m_cube.id() )
 		{
-			//TEMP try marking everything
-			/*for( int k = 0; k < NUM_ROWS; k++ )
-			{
-				for( int l = 0; l < NUM_ROWS; l++ )
-				{
-					if( m_grid[k][l].isAlive() )
-						m_grid[k][l].mark();
-				}
-			}
-
-			return;*/
-
 			//as long we we test one block going clockwise, and the other going counter-clockwise, we'll match up
 			int side = Game::Inst().cubes[m_neighbors[i]].GetSideNeighboredOn( 0, m_cube );
 
@@ -660,7 +656,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 		aLocIndices[i] = temp;
 	}
 
-	int iCurColor = 0;
+	unsigned int iCurColor = 0;
 
 	for( unsigned int i = 0; i < numEmpties; i++ )
 	{
@@ -949,4 +945,12 @@ void CubeWrapper::checkEmpty()
 {
 	if( m_state != STATE_NOSHAKES && isEmpty() )
 		m_state = STATE_EMPTY;
+}
+
+
+void CubeWrapper::AddTiltInfo( unsigned int dir ) 
+{
+	m_TiltBitMask |= ( 1 << dir );
+
+	//PRINT( "tilt bit mask is now %d\n", m_TiltBitMask );
 }
