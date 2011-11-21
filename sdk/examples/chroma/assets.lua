@@ -18,3 +18,5 @@ TimerUp = image{"TimerUp.png"}
 TimerLeft = image{"TimerLeft.png"}
 TimerDown = image{"TimerDown.png"}
 TimerRight = image{"TimerRight.png"}
+TimerEdgeUpLeft = image{"TimerEdgeUpLeft.png", height=8}
+TimerEdgeUpRight = image{"TimerEdgeUpRight.png", height=8}

@@ -30,9 +30,9 @@ void TimeKeeper::Draw( BG1Helper &bg1helper )
 	int numTiles = TIMER_TILES * fTimerProportion;
 
 	//have one more
-	numTiles++;
+    /*numTiles++;
 	if( numTiles > TIMER_TILES )
-		numTiles = TIMER_TILES;
+        numTiles = TIMER_TILES;*/
 
 	int offset = TIMER_TILES - numTiles;
 
@@ -44,12 +44,14 @@ void TimeKeeper::Draw( BG1Helper &bg1helper )
 		bg1helper.DrawPartialAsset( Vec2(15,offset), Vec2(0,offset), Vec2(TimerRight.width,numTiles * 2), TimerRight );
 	}
 
-	/*
-	bg1helper.DrawAsset( Vec2(0,0), TimerUp );
-	bg1helper.DrawAsset( Vec2(0,0), TimerLeft );
-	bg1helper.DrawAsset( Vec2(0,15), TimerDown );
-	bg1helper.DrawAsset( Vec2(15,0), TimerRight );
-	*/
+    if( numTiles < TIMER_TILES )
+    {
+        //draw partial timer bits
+        int numSubTiles = ( ( TIMER_TILES * fTimerProportion ) - numTiles ) * TIMER_TILES;
+
+        bg1helper.DrawAsset( Vec2( offset - 1, 0 ), TimerEdgeUpLeft, numSubTiles );
+        bg1helper.DrawAsset( Vec2( ( TIMER_TILES * 2 ) - ( offset ), 0 ), TimerEdgeUpRight, numSubTiles );
+    }
 
 /*
 	//for now, just draw in the corner
