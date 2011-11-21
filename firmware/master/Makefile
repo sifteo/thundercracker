@@ -17,7 +17,6 @@ OBJS_SIM = \
 	common/cubecodec.sim.o \
 	common/audiomixer.sim.o \
 	common/speexdecoder.sim.o \
-	common/audio.gen.sim.o \
 	common/audiobuffer.sim.o \
 	common/audiochannel.sim.o \
 	common/accel.sim.o \
