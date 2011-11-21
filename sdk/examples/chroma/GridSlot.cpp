@@ -222,11 +222,11 @@ void GridSlot::Update(float t)
 		{
 			if( t - m_eventTime > MARK_SPREAD_DELAY )
             {
-                m_animFrame = 0;
+                m_animFrame = ( ( t - m_eventTime ) - MARK_SPREAD_DELAY ) / EXPLODE_FRAME_LEN;
                 spread_mark();
             }
             else
-                m_animFrame = ( t - m_eventTime ) / EXPLODE_FRAME_LEN;
+                m_animFrame = 0;
 
             if( t - m_eventTime > MARK_BREAK_DELAY )
                 explode();
