@@ -1,26 +1,20 @@
 #ifndef WORDGAME_H
 #define WORDGAME_H
 
-#ifndef _SIFTEO_CUBE_H
-class Cube;
-#endif
-
-const unsigned MAX_CUBES = 32;
-
+#include <sifteo.h>
 #include "GameStateMachine.h"
-
 using namespace Sifteo;
+
 
 class WordGame
 {
 public:
     WordGame(Cube cubes[]);
-    void Update(float dt) {}
-    void Paint() {}
+    void update(float dt) {}
+    void onEvent(int eventID);
 
 private:
-    GameStateMachine mStateMachine;
-    Cube* mCubes;
+    GameStateMachine mGameStateMachine;
 };
 
 #endif // WORDGAME_H

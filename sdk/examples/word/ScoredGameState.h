@@ -6,10 +6,6 @@
 class ScoredGameState : public State
 {
 public:
-    virtual void OnEnter() {}
-    virtual void OnExit() {}
-    virtual int Update(float dt, float stateTime) { return 0; }
-    virtual int OnEvent(int eventID) { return 0; }
 };
 
 #endif // SCOREDGAMESTATE_H

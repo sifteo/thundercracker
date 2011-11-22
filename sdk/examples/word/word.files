@@ -26,3 +26,11 @@ EventID.h
 assets.lua
 WordGame.h
 WordGame.cpp
+CubeStateMachine.h
+CubeStateMachine.cpp
+CubeSim.h
+CubeSim.cpp
+CubeState.h
+CubeState.cpp
+ScoredCubeState.h
+ScoredCubeState.cpp

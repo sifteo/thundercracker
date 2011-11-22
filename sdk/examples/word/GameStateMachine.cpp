@@ -1,20 +1,10 @@
 #include "GameStateMachine.h"
 
-GameStateMachine::GameStateMachine() :
+GameStateMachine::GameStateMachine(Cube cubes[]) :
     StateMachine(0)
 {
-}
-
-State* GameStateMachine::GetState(int index) const
-{
-    switch (index)
+    for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
-    default:
-        return 0;
+        mCubeStateMachines[i].setCube(&cubes[i]);
     }
-}
-
-void GameStateMachine::OnEvent(int eventID)
-{
-
 }

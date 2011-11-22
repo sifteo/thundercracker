@@ -3,19 +3,24 @@
 #include <sifteo.h>
 
 StateMachine::StateMachine(int startStateIndex) :
-    mStateIndex(startStateIndex), mStateTime(.0f)
+    mStateIndex(startStateIndex), mStateTime(.0f), mUnhandledOnEnter(true)
 {
 }
 
-void StateMachine::Update(float dt)
+void StateMachine::update(float dt)
 {
-    State* state = GetState(mStateIndex);
+    State* state = getState(mStateIndex);
     if (state != 0)
     {
-        int newStateIndex = state->Update(dt, mStateTime);
+        if (mUnhandledOnEnter)
+        {
+            state->onEnter();
+            mUnhandledOnEnter = false;
+        }
+        int newStateIndex = state->update(dt, mStateTime);
         if (newStateIndex != mStateIndex)
         {
-            SetState(newStateIndex, state);
+            setState(newStateIndex, state);
         }
         else
         {
@@ -24,25 +29,25 @@ void StateMachine::Update(float dt)
     }
 }
 
-void StateMachine::OnEvent(int eventID)
+void StateMachine::onEvent(int eventID)
 {
-    State* state = GetState(mStateIndex);
+    State* state = getState(mStateIndex);
     if (state != 0)
     {
-        int newStateIndex = state->OnEvent(eventID);
+        int newStateIndex = state->onEvent(eventID);
         if (newStateIndex != mStateIndex)
         {
-            SetState(newStateIndex, state);
+            setState(newStateIndex, state);
         }
     }
 }
 
-void StateMachine::SetState(int newStateIndex, State* oldState)
+void StateMachine::setState(unsigned newStateIndex, State* oldState)
 {
-    ASSERT(newStateIndex < GetNumStates());
-    oldState->OnExit();
+    ASSERT(newStateIndex < getNumStates());
+    oldState->onExit();
     mStateIndex = newStateIndex;
     mStateTime = .0f;
-    State* newState = GetState(mStateIndex);
-    newState->OnEnter();
+    State* newState = getState(mStateIndex);
+    newState->onEnter();
 }

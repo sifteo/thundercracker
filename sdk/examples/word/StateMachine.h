@@ -8,18 +8,20 @@ class StateMachine
 public:
     StateMachine(int startState);
 
-    void Update(float dt);
-    void OnEvent(int eventID);
+    void update(float dt);
+    void onEvent(int eventID);
 
 protected:
-    virtual State* GetState(int index) const { return 0; }
-    virtual int GetNumStates() const { return 0; }
+    State* getCurrentState() const { return getState(mStateIndex); }
+    virtual unsigned getNumStates() const { return 0; }
+    virtual State* getState(unsigned index) const { return 0; }
 
 private:
-    void SetState(int newStateIndex, State* oldState);
+    void setState(unsigned newStateIndex, State* oldState);
 
     int mStateIndex;
     float mStateTime;
+    bool mUnhandledOnEnter;
 };
 
 #endif // STATEMACHINE_H
