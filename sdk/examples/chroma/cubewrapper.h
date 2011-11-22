@@ -10,7 +10,7 @@
 #include <sifteo.h>
 #include "GridSlot.h"
 #include "banner.h"
-#include "BG1Helper.h"
+//#include "BG1Helper.h"
 
 using namespace Sifteo;
 
@@ -43,7 +43,7 @@ public:
 	void Tilt( int dir );
 	void Shake( bool bShaking );
 
-	Banner &getBanner() { return m_banner; }
+    Banner &getBanner() { return m_banner; }
 
 	bool isFull();
 	bool isEmpty();

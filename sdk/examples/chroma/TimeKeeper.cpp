@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * message banners that show up to display score or game info
+ * timer for the game
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 

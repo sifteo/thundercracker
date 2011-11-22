@@ -105,13 +105,14 @@ void CubeWrapper::Draw()
 						}
 					}
 
-					/*if( m_banner.IsActive() )
-						m_banner.Draw( m_cube );
-					else if( Game::Inst().getMode() == Game::MODE_TIMED )*/
-					{
-						Game::Inst().getTimer().Draw( m_bg1helper );
-						m_bg1helper.Flush();
-					}
+                    if( Game::Inst().getMode() == Game::MODE_TIMED )
+                    {
+                        Game::Inst().getTimer().Draw( m_bg1helper );
+                    }
+                    if( m_banner.IsActive() )
+                        m_banner.Draw( m_bg1helper );
+
+                    m_bg1helper.Flush();
 
 					break;
 				}

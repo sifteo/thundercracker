@@ -8,6 +8,7 @@
 #define _BANNER_H
 
 #include <sifteo.h>
+#include "BG1Helper.h"
 
 using namespace Sifteo;
 
@@ -21,7 +22,7 @@ public:
 
 	Banner();
 
-	void Draw( Cube &cube );
+    void Draw( BG1Helper &bg1helper );
 	void Update(float t, Cube &cube);
 
 	void SetMessage( const char *pMsg, float duration = SCORE_FADE_DELAY );
@@ -30,6 +31,8 @@ public:
 private:
 	char m_Msg[MAX_BANNER_LENGTH];
 	float m_fEndTime;
+    //how many tiles of the banner to show
+    int m_tiles;
 };
 
 #endif

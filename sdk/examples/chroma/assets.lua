@@ -1,5 +1,6 @@
 GameAssets = group{quality=10}
 Font = image{"font-8x16.png", width=8, height=16}
+BannerImg = image{"banner.png"}
 Gem0 = image{"01_gem00.png", height=32}
 Gem1 = image{"01_gem01.png", height=32}
 Gem2 = image{"01_gem02.png", height=32}
