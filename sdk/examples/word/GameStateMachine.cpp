@@ -1,7 +1,7 @@
 #include "GameStateMachine.h"
 
-GameStateMachine::GameStateMachine(int startStateIndex) :
-    StateMachine(startStateIndex)
+GameStateMachine::GameStateMachine() :
+    StateMachine(0)
 {
 }
 

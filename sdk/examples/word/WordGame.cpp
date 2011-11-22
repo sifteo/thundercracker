@@ -3,6 +3,6 @@
 
 using namespace Sifteo;
 
-WordGame::WordGame(Cube cubes[])
+WordGame::WordGame(Cube cubes[]) : mCubes(cubes)
 {
 }

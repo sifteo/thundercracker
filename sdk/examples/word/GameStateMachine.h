@@ -6,7 +6,7 @@
 class GameStateMachine : public StateMachine
 {
 public:
-    GameStateMachine(int startStateIndex);
+    GameStateMachine();
 
     virtual void OnEvent(int eventID);
 

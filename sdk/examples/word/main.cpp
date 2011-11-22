@@ -3,7 +3,7 @@
 #include "assets.gen.h"
 #include "WordGame.h"
 
-#define NUM_CUBES 6
+#define NUM_CUBES 3
 
 using namespace Sifteo;
 
