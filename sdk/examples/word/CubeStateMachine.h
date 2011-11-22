@@ -13,6 +13,10 @@ public:
     CubeStateMachine() : StateMachine(0), mCube(0) {}
     void setCube(Cube* cube);
 
+    virtual unsigned getNumStates() const { return 1; }
+    virtual State* getState(unsigned index) { ASSERT(index == 0); return &mScoredState; }
+
+
 private:
     Cube* mCube;
     ScoredCubeState mScoredState;

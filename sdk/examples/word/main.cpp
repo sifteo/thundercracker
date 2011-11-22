@@ -92,3 +92,10 @@ void siftmain()
         System::paint();
     }
 }
+
+/*  The __cxa_pure_virtual function is an error handler that is invoked when a
+    pure virtual function is called. If you are writing a C++ application that
+    has pure virtual functions you must supply your own __cxa_pure_virtual
+    error handler function. For example:
+*/
+extern "C" void __cxa_pure_virtual() { while (1); }

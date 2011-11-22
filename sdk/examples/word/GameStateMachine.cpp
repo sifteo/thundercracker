@@ -8,3 +8,21 @@ GameStateMachine::GameStateMachine(Cube cubes[]) :
         mCubeStateMachines[i].setCube(&cubes[i]);
     }
 }
+
+void GameStateMachine::update(float dt)
+{
+    StateMachine::update(dt);
+    for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
+    {
+        mCubeStateMachines[i].update(dt);
+    }
+}
+
+void GameStateMachine::onEvent(unsigned eventID)
+{
+    StateMachine::onEvent(eventID);
+    for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
+    {
+        mCubeStateMachines[i].onEvent(eventID);
+    }
+}

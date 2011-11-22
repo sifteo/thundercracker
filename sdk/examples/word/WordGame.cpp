@@ -7,7 +7,12 @@ WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes)
 {
 }
 
-void WordGame::onEvent(int eventID)
+void WordGame::update(float dt)
+{
+    mGameStateMachine.update(dt);
+}
+
+void WordGame::onEvent(unsigned eventID)
 {
     mGameStateMachine.onEvent(eventID);
 }

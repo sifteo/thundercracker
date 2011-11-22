@@ -15,8 +15,11 @@ class GameStateMachine : public StateMachine
 public:
     GameStateMachine(Cube cubes[]);
 
+    void update(float dt);
+    void onEvent(unsigned eventID);
+
 protected:
-    virtual State* getState(int index) { ASSERT(index = 0); return &mScoredState; }
+    virtual State* getState(unsigned index) { ASSERT(index == 0); return &mScoredState; }
     virtual unsigned getNumStates() const { return 1; }
 
 private:

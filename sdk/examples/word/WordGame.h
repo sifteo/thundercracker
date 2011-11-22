@@ -10,8 +10,8 @@ class WordGame
 {
 public:
     WordGame(Cube cubes[]);
-    void update(float dt) {}
-    void onEvent(int eventID);
+    void update(float dt);
+    void onEvent(unsigned eventID);
 
 private:
     GameStateMachine mGameStateMachine;

@@ -1,7 +1,4 @@
-font-8x16.png
 main.cpp
-star-8.png
-stars-bg.png
 StateMachine.h
 StateMachine.cpp
 Makefile

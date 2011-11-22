@@ -6,20 +6,20 @@ class State;
 class StateMachine
 {
 public:
-    StateMachine(int startState);
+    StateMachine(unsigned startState);
 
     void update(float dt);
-    void onEvent(int eventID);
+    void onEvent(unsigned eventID);
 
 protected:
-    State* getCurrentState() const { return getState(mStateIndex); }
-    virtual unsigned getNumStates() const { return 0; }
-    virtual State* getState(unsigned index) const { return 0; }
+    State* getCurrentState() { return getState(mStateIndex); }
+    virtual unsigned getNumStates() const = 0;
+    virtual State* getState(unsigned index) = 0;
 
 private:
     void setState(unsigned newStateIndex, State* oldState);
 
-    int mStateIndex;
+    unsigned mStateIndex;
     float mStateTime;
     bool mUnhandledOnEnter;
 };
