@@ -1,7 +1,7 @@
-C:/Users/Chris/Documents/dev/Sifteo/thundercracker/sdk/examples/word/font-8x16.png
-C:/Users/Chris/Documents/dev/Sifteo/thundercracker/sdk/examples/word/main.cpp
-C:/Users/Chris/Documents/dev/Sifteo/thundercracker/sdk/examples/word/star-8.png
-C:/Users/Chris/Documents/dev/Sifteo/thundercracker/sdk/examples/word/stars-bg.png
+font-8x16.png
+main.cpp
+star-8.png
+stars-bg.png
 StateMachine.h
 StateMachine.cpp
 Makefile
@@ -18,3 +18,11 @@ State.cpp
 ../../include/sifteo/cube.h
 ../../include/sifteo/asset.h
 ../../include/sifteo/abi.h
+GameStateMachine.h
+GameStateMachine.cpp
+ScoredGameState.h
+ScoredGameState.cpp
+EventID.h
+assets.lua
+WordGame.h
+WordGame.cpp

@@ -1,8 +1,6 @@
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
 
-const int MAX_STATES = 4;
-
 class State;
 
 class StateMachine
@@ -11,12 +9,15 @@ public:
     StateMachine(int startState);
 
     void Update(float dt);
+    void OnEvent(int eventID);
 
-    void AddState(State* s);
+protected:
+    virtual State* GetState(int index) const { return 0; }
+    virtual int GetNumStates() const { return 0; }
 
 private:
-    State* mStates[MAX_STATES];
-    int mNumStates;
+    void SetState(int newStateIndex, State* oldState);
+
     int mStateIndex;
     float mStateTime;
 };

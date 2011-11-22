@@ -1,14 +1,9 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * Sifteo SDK Example.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
- */
-
 #include <sifteo.h>
 #include <stdlib.h>
 #include "assets.gen.h"
+#include "WordGame.h"
 
-#define NUM_CUBES 3
+#define NUM_CUBES 6
 
 using namespace Sifteo;
 
@@ -16,7 +11,7 @@ struct Float2 {
     float x, y;
 };
 
-class WordGame {
+class CubeSim {
 public:
 
     static const unsigned numStars = 8;
@@ -27,7 +22,7 @@ public:
     static const float starEmitSpeed = 0.3f;
     static const float starTiltSpeed = 3.0f;
 
-    WordGame(Cube &cube)
+    CubeSim(Cube &cube)
         : cube(cube)
     {}
 
@@ -269,19 +264,23 @@ private:
 };
 
 
-static const char* sideNames[] = {
+static const char* sideNames[] =
+{
   "top", "left", "bottom", "right"  
 };
 
-void neighbor_add(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
+void neighbor_add(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+{
     LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
-void neighbor_remove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
+void neighbor_remove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+{
     LOG(("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
-void accel(_SYSCubeID c) {
+void accel(_SYSCubeID c)
+{
     LOG(("accelerometer changed\n"));
 }
 
@@ -293,9 +292,10 @@ void siftmain()
     _SYS_vectors.neighborEvents.remove = neighbor_remove;
     
     static Cube cubes[] = { Cube(0), Cube(1) };
-    static WordGame demos[] = { WordGame(cubes[0]), WordGame(cubes[1]) };
+    //static CubeSim demos[] = { CubeSim(cubes[0]), CubeSim(cubes[1]) };
     
-    for (unsigned i = 0; i < arraysize(cubes); i++) {
+    for (unsigned i = 0; i < arraysize(cubes); i++)
+    {
         cubes[i].enable();
         cubes[i].loadAssets(GameAssets);
 
@@ -305,7 +305,8 @@ void siftmain()
         rom.BG0_text(Vec2(1,1), "Loading...");
     }
 
-    for (;;) {
+    for (;;)
+    {
         bool done = true;
 
         for (unsigned i = 0; i < arraysize(cubes); i++) {
@@ -321,17 +322,20 @@ void siftmain()
             break;
     }
 
+    /*
     for (unsigned i = 0; i < arraysize(demos); i++)
         demos[i].init();
-    
+    */
+    WordGame game(cubes);
     float lastTime = System::clock();
-    while (1) {
+    while (1)
+    {
         float now = System::clock();
         float dt = now - lastTime;
         lastTime = now;
 
-        for (unsigned i = 0; i < arraysize(demos); i++)
-            demos[i].update(dt);
+        game.Update(dt);
+        game.Paint(); // TODO decouple
         
         System::paint();
     }

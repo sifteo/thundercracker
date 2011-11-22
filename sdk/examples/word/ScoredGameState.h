@@ -1,14 +1,15 @@
-#ifndef STATE_H
-#define STATE_H
+#ifndef SCOREDGAMESTATE_H
+#define SCOREDGAMESTATE_H
 
-class State
+#include "State.h"
+
+class ScoredGameState : public State
 {
 public:
-    State();
     virtual void OnEnter() {}
     virtual void OnExit() {}
     virtual int Update(float dt, float stateTime) { return 0; }
     virtual int OnEvent(int eventID) { return 0; }
 };
 
-#endif // STATE_H
+#endif // SCOREDGAMESTATE_H

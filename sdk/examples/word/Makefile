@@ -2,10 +2,12 @@ TC_DIR = ../../..
 include $(TC_DIR)/firmware/master/Makefile.defs
 
 BIN_SIM = word.sim$(BIN_EXT)
-OBJS_SIM = $(ASSETS).gen.sim.o main.sim.o StateMachine.sim.o State.sim.o
+OBJS_SIM = $(ASSETS).gen.sim.o main.sim.o StateMachine.sim.o \
+GameStateMachine.sim.o State.sim.o ScoredGameState.sim.o
 
 BIN_STM32 = word.stm32
-OBJS_STM32 = $(ASSETS).gen.stm32.o main.stm32.o StateMachine.stm32.o State.stm32.o
+OBJS_STM32 = $(ASSETS).gen.stm32.o main.stm32.o StateMachine.stm32.o \
+GameStateMachine.stm32.o State.stm32.o ScoredGameState.stm32.o
 
 ASSETDEPS += *.png $(ASSETS).lua
 

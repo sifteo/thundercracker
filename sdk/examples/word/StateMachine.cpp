@@ -3,26 +3,19 @@
 #include <sifteo.h>
 
 StateMachine::StateMachine(int startStateIndex) :
-    mNumStates(0), mStateIndex(startStateIndex), mStateTime(.0f)
+    mStateIndex(startStateIndex), mStateTime(.0f)
 {
-    for (int i = 0; i < MAX_STATES; ++i)
-    {
-        mStates[i] = 0;
-    }
 }
 
 void StateMachine::Update(float dt)
 {
-    State* state = mStates[mStateIndex];
+    State* state = GetState(mStateIndex);
     if (state != 0)
     {
         int newStateIndex = state->Update(dt, mStateTime);
         if (newStateIndex != mStateIndex)
         {
-            ASSERT(newStateIndex < MAX_STATES);
-            state->OnExit();
-            mStateIndex = newStateIndex;
-            mStates[mStateIndex]->OnEnter();
+            SetState(newStateIndex, state);
         }
         else
         {
@@ -31,8 +24,25 @@ void StateMachine::Update(float dt)
     }
 }
 
-void StateMachine::AddState(State *s)
+void StateMachine::OnEvent(int eventID)
 {
-    ASSERT(mNumStates < MAX_STATES);
-    mStates[mNumStates++] = s;
+    State* state = GetState(mStateIndex);
+    if (state != 0)
+    {
+        int newStateIndex = state->OnEvent(eventID);
+        if (newStateIndex != mStateIndex)
+        {
+            SetState(newStateIndex, state);
+        }
+    }
+}
+
+void StateMachine::SetState(int newStateIndex, State* oldState)
+{
+    ASSERT(newStateIndex < GetNumStates());
+    oldState->OnExit();
+    mStateIndex = newStateIndex;
+    mStateTime = .0f;
+    State* newState = GetState(mStateIndex);
+    newState->OnEnter();
 }
