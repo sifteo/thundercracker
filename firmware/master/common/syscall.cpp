@@ -75,19 +75,19 @@ void _SYS_disableCubes(_SYSCubeIDVector cv)
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
 {
     if (Runtime::checkUserPointer(vbuf, sizeof *vbuf) && CubeSlot::validID(cid))
-        CubeSlot::instances[cid].setVideoBuffer(vbuf);
+        CubeSlots::instances[cid].setVideoBuffer(vbuf);
 }
 
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group)
 {
     if (Runtime::checkUserPointer(group, sizeof *group) && CubeSlot::validID(cid))
-        CubeSlot::instances[cid].loadAssets(group);
+        CubeSlots::instances[cid].loadAssets(group);
 }
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state)
 {
     if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid))
-        CubeSlot::instances[cid].getAccelState(state);
+        CubeSlots::instances[cid].getAccelState(state);
 }
 
 void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) {
@@ -122,7 +122,7 @@ void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v)
 {
     // XXX: Temporary for testing. Master firmware should give cooked battery percentage.
     if (Runtime::checkUserPointer(v, sizeof v) && CubeSlot::validID(cid))
-        *v = CubeSlot::instances[cid].getRawBatteryV();
+        *v = CubeSlots::instances[cid].getRawBatteryV();
 }
 
 void _SYS_getCubeHWID(_SYSCubeID cid, _SYSCubeHWID *hwid)
@@ -133,7 +133,7 @@ void _SYS_getCubeHWID(_SYSCubeID cid, _SYSCubeHWID *hwid)
     //      there is no code yet to explicitly request it (via a flash reset)
     
     if (Runtime::checkUserPointer(hwid, sizeof hwid) && CubeSlot::validID(cid))
-        *hwid = CubeSlot::instances[cid].getHWID();
+        *hwid = CubeSlots::instances[cid].getHWID();
 }
 
 void _SYS_vbuf_init(_SYSVideoBuffer *vbuf)

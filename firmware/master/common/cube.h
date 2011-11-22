@@ -34,13 +34,19 @@
  * allocated and attached to the slot by application code.
  */
 
+ 
+class CubeSlot;
+
+namespace CubeSlots {
+    extern CubeSlot instances[_SYS_NUM_CUBE_SLOTS];
+}
+
+
 class CubeSlot {
  public:
     bool radioProduce(PacketTransmission &tx);
     void radioAcknowledge(const PacketBuffer &packet);
     void radioTimeout();
-
-    static CubeSlot instances[_SYS_NUM_CUBE_SLOTS];
 
     /*
      * One-bit flags for each cube are packed into global vectors
@@ -63,15 +69,15 @@ class CubeSlot {
 	static void disconnectCubes(_SYSCubeIDVector cv);
 
     _SYSCubeID id() const {
-        _SYSCubeID i = this - &instances[0];
+        _SYSCubeID i = this - &CubeSlots::instances[0];
         ASSERT(i < _SYS_NUM_CUBE_SLOTS);
-        STATIC_ASSERT(arraysize(instances) == _SYS_NUM_CUBE_SLOTS);
+        STATIC_ASSERT(arraysize(CubeSlots::instances) == _SYS_NUM_CUBE_SLOTS);
         return i;
     }
 
     static CubeSlot &getInstance(_SYSCubeID id) {
         ASSERT(id < _SYS_NUM_CUBE_SLOTS);
-        return instances[id];
+        return CubeSlots::instances[id];
     }
 
     _SYSCubeIDVector bit() const {
@@ -201,6 +207,5 @@ class CubeSlot {
     _SYSAccelState accelState;
     _SYSCubeHWID hwid;
 };
-
 
 #endif

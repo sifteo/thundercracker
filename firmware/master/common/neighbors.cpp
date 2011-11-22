@@ -53,7 +53,7 @@ static NeighborPair gCubesToSides[(_SYS_NUM_CUBE_SLOTS-1)*(_SYS_NUM_CUBE_SLOTS-1
 
 void NeighborSlot::computeEvents() {
     uint8_t rawNeighbors[4];
-    CubeSlot::instances[id()].getRawNeighbors(rawNeighbors);
+    CubeSlots::instances[id()].getRawNeighbors(rawNeighbors);
     for(_SYSSideID side=0; side<4; ++side) {
         if (prevNeighbors[side] & HAS_NEIGHBOR_MASK) {
             if (rawNeighbors[side] & HAS_NEIGHBOR_MASK) {

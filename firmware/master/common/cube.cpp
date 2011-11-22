@@ -55,11 +55,13 @@ static const int8_t fpSingle = -4;
 static const int8_t fpMax = 5;
 static const int8_t fpMin = -8;
 
+CubeSlot CubeSlots::instances[_SYS_NUM_CUBE_SLOTS];
+
+
 /*
  * Slot instances
  */
 
-CubeSlot CubeSlot::instances[_SYS_NUM_CUBE_SLOTS];
 _SYSCubeIDVector CubeSlot::vecEnabled;
 _SYSCubeIDVector CubeSlot::vecConnected;
 _SYSCubeIDVector CubeSlot::flashResetWait;
@@ -419,7 +421,7 @@ void CubeSlot::paintCubes(_SYSCubeIDVector cv)
     _SYSCubeIDVector waitVec = cv;
     while (waitVec) {
         _SYSCubeID id = Intrinsic::CLZ(waitVec);
-        instances[id].waitForPaint();
+        CubeSlots::instances[id].waitForPaint();
         waitVec ^= Intrinsic::LZ(id);
     }
 
@@ -428,7 +430,7 @@ void CubeSlot::paintCubes(_SYSCubeIDVector cv)
     _SYSCubeIDVector paintVec = cv;
     while (paintVec) {
         _SYSCubeID id = Intrinsic::CLZ(paintVec);
-        instances[id].triggerPaint(timestamp);
+        CubeSlots::instances[id].triggerPaint(timestamp);
         paintVec ^= Intrinsic::LZ(id);
     }
 }
@@ -437,7 +439,7 @@ void CubeSlot::finishCubes(_SYSCubeIDVector cv)
 {
     while (cv) {
         _SYSCubeID id = Intrinsic::CLZ(cv);
-        instances[id].waitForFinish();
+        CubeSlots::instances[id].waitForFinish();
         cv ^= Intrinsic::LZ(id);
     }
 }
