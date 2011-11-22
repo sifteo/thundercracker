@@ -326,7 +326,7 @@ void siftmain()
     for (unsigned i = 0; i < arraysize(demos); i++)
         demos[i].init();
     */
-    WordGame game(cubes);
+    WordGame game((Cube*)cubes);
     float lastTime = System::clock();
     while (1)
     {

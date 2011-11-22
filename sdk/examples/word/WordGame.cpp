@@ -1,6 +1,8 @@
 #include <sifteo.h>
 #include "WordGame.h"
 
-WordGame::WordGame(Cube* cubes)
+using namespace Sifteo;
+
+WordGame::WordGame(Cube cubes[])
 {
 }
