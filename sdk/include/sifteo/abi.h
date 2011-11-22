@@ -302,7 +302,7 @@ enum _SYSAudioLoopType {
 struct _SYSAudioModule {
     enum _SYSAudioType type;
     uint32_t size;
-    const uint8_t *data;
+    const uint8_t *buf;
 };
 
 struct _SYSAudioBuffer {
@@ -310,9 +310,9 @@ struct _SYSAudioBuffer {
     uint16_t tail;
 #ifdef SIFTEO_SIMULATOR
     // host system is higher latency, needs more buffered data to not stutter
-    uint8_t data[(_SYS_AUDIO_BUF_SIZE * 4)];
+    uint8_t buf[(_SYS_AUDIO_BUF_SIZE * 4)];
 #else
-    uint8_t data[_SYS_AUDIO_BUF_SIZE];
+    uint8_t buf[_SYS_AUDIO_BUF_SIZE];
 #endif
 };
 
@@ -336,7 +336,7 @@ struct _SYSNeighborState {
 typedef enum {
 	_SYS_TILT_NEGATIVE,
 	_SYS_TILT_NEUTRAL,
-	_SYS_TILT_POSITIVE,
+	_SYS_TILT_POSITIVE
 } _SYS_TiltType;
 
 struct _SYSTiltState {
@@ -433,8 +433,8 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count);
 
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer);
-bool _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, _SYSAudioLoopType loop);
-bool _SYS_audio_isPlaying(_SYSAudioHandle h);
+uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
+uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
 void _SYS_audio_stop(_SYSAudioHandle h);
 void _SYS_audio_pause(_SYSAudioHandle h);
 void _SYS_audio_resume(_SYSAudioHandle h);

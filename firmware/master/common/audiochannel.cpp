@@ -30,7 +30,7 @@ void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loo
     this->mod = mod;
     this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
     if (this->decoder != 0) {
-        this->decoder->setData(mod->data, mod->size);
+        this->decoder->setData(mod->buf, mod->size);
     }
 }
 
@@ -50,7 +50,7 @@ int AudioChannel::pullAudio(int16_t *buffer, int len)
         // if we have nothing buffered, and there's nothing else to read, we're done
         if (decoder->endOfStream() && buf.readAvailable() == 0) {
             if (this->state & STATE_LOOP) {
-                this->decoder->setData(mod->data, mod->size);
+                this->decoder->setData(mod->buf, mod->size);
             }
             else {
                 return -1;
