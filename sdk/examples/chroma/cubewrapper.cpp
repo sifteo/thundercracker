@@ -144,13 +144,31 @@ void CubeWrapper::Draw()
 		{
 			_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
 			m_vid.clear(Font.tiles[0]);
-			m_vid.BG0_text( Vec2( 3, 3 ), Font, "GAME OVER:" );
+            char aBuf[16];
 
-			char aBuf[16];
+            if( m_cube.id() == 0 )
+            {
+                m_vid.BG0_text( Vec2( 3, 3 ), Font, "GAME OVER" );
 
-			sprintf( aBuf, "%d PTS", Game::Inst().getScore() );
+                sprintf( aBuf, "%d PTS", Game::Inst().getScore() );
+                int xPos = ( Banner::BANNER_WIDTH - strlen( aBuf ) ) / 2;
 
-			m_vid.BG0_text( Vec2( 4, 7 ), Font, aBuf );
+                m_vid.BG0_text( Vec2( xPos, 7 ), Font, aBuf );
+            }
+            else if( m_cube.id() == 1 )
+            {
+                m_vid.BG0_text( Vec2( 2, 3 ), Font, "HIGH SCORES" );
+
+                for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
+                {
+                    sprintf( aBuf, "%d", Game::Inst().getHighScore(i) );
+                    int xPos = ( Banner::BANNER_WIDTH - strlen( aBuf ) ) / 2;
+
+                    m_vid.BG0_text( Vec2( xPos, 5+2*i ), Font, aBuf );
+                }
+            }
+
+
 			break;
 		}
 		default:
