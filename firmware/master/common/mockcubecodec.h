@@ -1,3 +1,6 @@
+#ifndef _MOCK_CUBECODEC_H
+#define _MOCK_CUBECODEC_H
+
 class MockCubeCodec {
  public:
      void encodeVRAM(PacketBuffer & /*buf*/, _SYSVideoBuffer * /*vb*/) { 
@@ -20,3 +23,5 @@ class MockCubeCodec {
      void flashAckBytes(uint8_t /* count */) {
      }
 };
+
+#endif _MOCK_CUBECODEC_H

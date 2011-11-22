@@ -13,6 +13,14 @@
 #include <sifteo/abi.h>
 #include "runtime.h"
 
+#if defined (BUILD_UNIT_TEST) && defined (UNIT_TEST_RADIO)
+  #include "mockcube.h"
+  
+  #define CubeSlot MockCubeSlot
+  #define DISABLE_CUBE
+#endif
+
+
 class RadioManager;
 
 
@@ -169,6 +177,9 @@ class RadioManager {
     static void timeout();
 
  private:
+     friend class RadioTest_ackWithPacketShouldCallRadioAcknowledgeOnEnabledCube_Test;
+     friend class RadioTest_ackWithPacketShouldNotCallRadioAcknowledgeOnDisabledCube_Test;
+     
     /*
      * FIFO buffer of slot numbers that have pending acknowledgments.
      * This lets us match up ACKs with endpoints. Accessed ONLY in

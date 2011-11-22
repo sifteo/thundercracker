@@ -13,6 +13,7 @@ OBJS_SIM = \
 	common/syscall.sim.o \
 	common/runtime.sim.o \
 	common/radio.sim.o \
+	common/cubeslots.sim.o \
 	common/cube.sim.o \
 	common/cubecodec.sim.o \
 	common/audiomixer.sim.o \
@@ -31,6 +32,7 @@ OBJS_STM32 = \
 	common/syscall.stm32.o \
 	common/runtime.stm32.o \
 	common/radio.stm32.o \
+	common/cubeslots.stm32.o \
 	common/cube.stm32.o \
 	common/cubecodec.stm32.o \
 	common/audiomixer.stm32.o \
