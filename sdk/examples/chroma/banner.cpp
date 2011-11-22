@@ -24,7 +24,8 @@ void Banner::Draw( BG1Helper &bg1helper )
 
 	ASSERT( iLen <= MAX_BANNER_LENGTH );
 
-    bg1helper.DrawAsset( Vec2( 0, 6 ), BannerImg );
+    //bg1helper.DrawAsset( Vec2( 0, 6 ), BannerImg );
+    bg1helper.DrawPartialAsset( Vec2( CENTER_PT - m_tiles, 6 ), Vec2( CENTER_PT - m_tiles, 0 ), Vec2( m_tiles * 2, BANNER_ROWS ), BannerImg );
 
     int iStartXTile = ( BANNER_WIDTH - iLen ) / 2;
 
@@ -80,6 +81,10 @@ void Banner::Update(float t, Cube &cube)
 			//clear out
 			_SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0x0000, BANNER_ROWS );
 		}
+        m_tiles++;
+
+        if( m_tiles > CENTER_PT )
+            m_tiles = CENTER_PT;
 	}
 }
 
