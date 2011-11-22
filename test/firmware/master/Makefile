@@ -11,8 +11,12 @@
 # To run firmware tests, first compile the firmware using:
 #  $ CCFLAGS="-DBUILD_UNIT_TEST -DUNIT_TEST_CUBE" make
 #  $ cd test/firmware/master
-#  $ CPPFLAGS=-DUNIT_TEST_CUBE make
+#  $ CPPFLAGS="-DUNIT_TEST_CUBE -DDISABLE_RADIO_TEST" make
 #  $ ./runtests
+
+#  $ CCFLAGS="-DBUILD_UNIT_TEST -DUNIT_TEST_RADIO" make
+#  $ cd test/firmware/master
+#  $ CPPFLAGS="-DUNIT_TEST_RADIO -DDISABLE_CUBE_TEST" make
 
 # Please tweak the following variable definitions as needed by your
 # project, except GTEST_HEADERS, which you can use in your own targets
@@ -88,5 +92,8 @@ main.o : $(USER_DIR)/main.cpp $(GTEST_HEADERS)
 cube_test.o : $(USER_DIR)/cube_test.cpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/cube_test.cpp
 
-runtests : cube_test.o main.o gtest_main.a ../../../firmware/master/master-sim.a
+radio_test.o : $(USER_DIR)/cube_test.cpp $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/radio_test.cpp
+
+runtests : cube_test.o radio_test.o main.o gtest_main.a ../../../firmware/master/master-sim.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
