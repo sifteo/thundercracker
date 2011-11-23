@@ -25,6 +25,8 @@ public:
 	static const int DEFAULT_COHESION = 3;
     static const float SPRING_K_CONSTANT;
     static const float SPRING_DAMPENING_CONSTANT;
+    static const float MOVEMENT_THRESHOLD;
+    static const float IDLE_TIME_THRESHOLD;
 
 	typedef enum
 	{
@@ -106,6 +108,8 @@ private:
     //use (-128, 128) range since that matches accelerometer
     Float2 m_curFluidDir;
     Float2 m_curFluidVel;
+    //how long have we been not tilting
+    float m_idleTimer;
 };
 
 #endif

@@ -22,6 +22,8 @@ static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4
 const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
 const float CubeWrapper::SPRING_K_CONSTANT = 0.7f;
 const float CubeWrapper::SPRING_DAMPENING_CONSTANT = 0.07f;
+const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
+const float CubeWrapper::IDLE_TIME_THRESHOLD = 1.0f;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
@@ -61,6 +63,7 @@ void CubeWrapper::Reset()
 	m_ShakesRemaining = STARTING_SHAKES;
 	m_fShakeTime = -1.0f;
 	m_state = STATE_PLAYING;
+    m_idleTimer = 0.0f;
 
     //clear out dots
     for( int i = 0; i < NUM_ROWS; i++ )
@@ -218,6 +221,21 @@ void CubeWrapper::Update(float t, float dt)
     //try spring to target
     Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
     Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
+
+    if( force.len2() < MOVEMENT_THRESHOLD )
+    {
+        m_idleTimer += dt;
+
+        if( m_idleTimer > IDLE_TIME_THRESHOLD )
+        {
+            m_idleTimer = 0.0f;
+            //kick off force in a random direction
+            //for now, just single direction
+            force = Float2( 100.0f, 0.0f );
+        }
+    }
+    else
+        m_idleTimer = 0.0f;
 
     m_curFluidVel += force;
     m_curFluidDir += m_curFluidVel * dt;
