@@ -23,6 +23,7 @@ public:
     static const AssetImage *ANIMATEDTEXTURES[ NUM_ANIMATED_COLORS ];
     static const AssetImage *EXPLODINGTEXTURES[ NUM_EXPLODING_COLORS ];
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
+    static const unsigned int NUM_ROLL_FRAMES = 16;
 
 	static const float MARK_SPREAD_DELAY = 0.33f;
 	static const float MARK_BREAK_DELAY = 0.67f;
@@ -76,6 +77,8 @@ private:
     const AssetImage &GetExplodingTexture() const;
     //convert from [-128, 128] to [0, 6] via non-linear quantization
     unsigned int QuantizeTiltValue( float value ) const;
+    //get the rolling frame of the given index
+    unsigned int GetRollingFrame( unsigned int index );
 
 	SLOT_STATE m_state;
 	unsigned int m_color;

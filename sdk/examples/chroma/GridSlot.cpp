@@ -111,22 +111,22 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 			Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
 
 			//PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
-            /*if( m_color < NUM_ANIMATED_COLORS )
+            if( m_color < NUM_ANIMATED_COLORS )
 			{
-				const AssetImage &tex = *ROLLING_ANIM[m_color];
-				vid.BG0_drawAsset(curPos, tex, m_animFrame);
+                const AssetImage &tex = *ANIMATEDTEXTURES[m_color];
+                vid.BG0_drawAsset(curPos, tex, GetRollingFrame( m_animFrame ));
 			}
-            else*/
+            else
 				vid.BG0_drawAsset(curPos, tex, 0);
 			break;
 		}
 		case STATE_FINISHINGMOVE:
 		{
-            /*if( m_color < NUM_ROLLING_COLORS )
-			{
-				const AssetImage &tex = *ROLLING_ANIM[m_color];
-				vid.BG0_drawAsset(vec, tex, m_animFrame);
-            }*/
+            if( m_color < NUM_ANIMATED_COLORS )
+            {
+                const AssetImage &tex = *ANIMATEDTEXTURES[m_color];
+                vid.BG0_drawAsset(vec, tex, GetRollingFrame( m_animFrame ));
+            }
 			break;
 		}
 		case STATE_MARKED:
@@ -184,12 +184,12 @@ void GridSlot::Update(float t)
 				m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
 			else if( vDiff.y != 0 )
 				m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
-            /*else if( m_color < NUM_ROLLING_COLORS )
+            else if( m_color < NUM_ANIMATED_COLORS )
 			{
 				m_animFrame++;
-                if( m_animFrame >= ROLLING_ANIM[ m_color ]->frames )
+                if( m_animFrame >= NUM_ROLL_FRAMES )
 					m_state = STATE_LIVING;
-            }*/
+            }
 			else
 				m_state = STATE_LIVING;
 
@@ -198,7 +198,7 @@ void GridSlot::Update(float t)
 		case STATE_FINISHINGMOVE:
 		{
 			m_animFrame++;
-            //if( m_animFrame >= ROLLING_ANIM[ m_color ]->frames )
+            if( m_animFrame >= NUM_ROLL_FRAMES )
 				m_state = STATE_LIVING;
 
 			break;
@@ -367,7 +367,7 @@ unsigned int GridSlot::GetTiltFrame( Float2 &tiltState ) const
 //convert from [-128, 128] to [0, 6] via non-linear quantization
 unsigned int GridSlot::QuantizeTiltValue( float value ) const
 {
-    int TILT_THRESHOLD_VALUES[NUM_QUANTIZED_TILT_VALUES] =
+    /*int TILT_THRESHOLD_VALUES[NUM_QUANTIZED_TILT_VALUES] =
     {
         -50,
         -30,
@@ -376,8 +376,8 @@ unsigned int GridSlot::QuantizeTiltValue( float value ) const
         30,
         50,
         500
-    };
-    /*int TILT_THRESHOLD_VALUES[NUM_QUANTIZED_TILT_VALUES] =
+    };*/
+    int TILT_THRESHOLD_VALUES[NUM_QUANTIZED_TILT_VALUES] =
         {
             -30,
             -20,
@@ -386,7 +386,7 @@ unsigned int GridSlot::QuantizeTiltValue( float value ) const
             20,
             30,
             500
-        };*/
+        };
 
     for( unsigned int i = 0; i < NUM_QUANTIZED_TILT_VALUES; i++ )
     {
@@ -395,4 +395,16 @@ unsigned int GridSlot::QuantizeTiltValue( float value ) const
     }
 
     return 3;
+}
+
+
+static unsigned int ROLLING_FRAMES[ GridSlot::NUM_ROLL_FRAMES ] =
+{ 1, 3, 23, 20, 17, 14, 11, 8, 10, 13, 17, 16, 0, 4, 0, 16 };
+
+//get the rolling frame of the given index
+unsigned int GridSlot::GetRollingFrame( unsigned int index )
+{
+    ASSERT( index < NUM_ROLL_FRAMES );
+
+    return ROLLING_FRAMES[ index ];
 }
