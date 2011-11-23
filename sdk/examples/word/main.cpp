@@ -78,7 +78,7 @@ void siftmain()
     */
 
     // main loop
-    static WordGame game((Cube*)cubes);
+    static WordGame game(cubes);
     float lastTime = System::clock();
     while (1)
     {

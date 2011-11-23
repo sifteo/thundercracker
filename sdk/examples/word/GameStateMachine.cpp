@@ -3,9 +3,10 @@
 GameStateMachine::GameStateMachine(Cube cubes[]) :
     StateMachine(0)
 {
+    ASSERT(cubes != 0);
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
-        mCubeStateMachines[i].setCube(&cubes[i]);
+        mCubeStateMachines[i].setCube(cubes[i]);
     }
 }
 

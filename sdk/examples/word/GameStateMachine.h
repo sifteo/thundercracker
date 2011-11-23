@@ -19,7 +19,7 @@ public:
     void onEvent(unsigned eventID);
 
 protected:
-    virtual State* getState(unsigned index) { ASSERT(index == 0); return &mScoredState; }
+    virtual State& getState(unsigned index) { ASSERT(index == 0); return mScoredState; }
     virtual unsigned getNumStates() const { return 1; }
 
 private:

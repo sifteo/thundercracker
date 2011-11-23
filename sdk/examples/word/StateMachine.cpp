@@ -10,45 +10,39 @@ StateMachine::StateMachine(unsigned startStateIndex) :
 
 void StateMachine::update(float dt)
 {
-    State* state = getState(mStateIndex);
-    if (state != 0)
+    State& state = getState(mStateIndex);
+    if (mUnhandledOnEnter)
     {
-        if (mUnhandledOnEnter)
-        {
-            state->onEvent(EventID_EnterState);
-            mUnhandledOnEnter = false;
-        }
-        unsigned newStateIndex = state->update(dt, mStateTime);
-        if (newStateIndex != mStateIndex)
-        {
-            setState(newStateIndex, state);
-        }
-        else
-        {
-            mStateTime += dt;
-        }
+        state.onEvent(EventID_EnterState);
+        mUnhandledOnEnter = false;
+    }
+    unsigned newStateIndex = state.update(dt, mStateTime);
+    if (newStateIndex != mStateIndex)
+    {
+        setState(newStateIndex, state);
+    }
+    else
+    {
+        mStateTime += dt;
     }
 }
 
 void StateMachine::onEvent(unsigned eventID)
 {
-    State* state = getState(mStateIndex);
-    if (state != 0)
+    State& state = getState(mStateIndex);
+    unsigned newStateIndex = state.onEvent(eventID);
+    if (newStateIndex != mStateIndex)
     {
-        unsigned newStateIndex = state->onEvent(eventID);
-        if (newStateIndex != mStateIndex)
-        {
-            setState(newStateIndex, state);
-        }
+        setState(newStateIndex, state);
     }
 }
 
-void StateMachine::setState(unsigned newStateIndex, State* oldState)
+void StateMachine::setState(unsigned newStateIndex, State& oldState)
 {
     ASSERT(newStateIndex < getNumStates());
-    oldState->onEvent(EventID_ExitState);
+    oldState.onEvent(EventID_ExitState);
     mStateIndex = newStateIndex;
     mStateTime = .0f;
-    State* newState = getState(mStateIndex);
-    newState->onEvent(EventID_EnterState);
+    State& newState = getState(mStateIndex);
+    newState.onEvent(EventID_EnterState);
 }

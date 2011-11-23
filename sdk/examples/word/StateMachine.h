@@ -12,12 +12,12 @@ public:
     void onEvent(unsigned eventID);
 
 protected:
-    State* getCurrentState() { return getState(mStateIndex); }
+    State& getCurrentState() { return getState(mStateIndex); }
     virtual unsigned getNumStates() const = 0;
-    virtual State* getState(unsigned index) = 0;
+    virtual State& getState(unsigned index) = 0;
 
 private:
-    void setState(unsigned newStateIndex, State* oldState);
+    void setState(unsigned newStateIndex, State& oldState);
 
     unsigned mStateIndex;
     float mStateTime;
