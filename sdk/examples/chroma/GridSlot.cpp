@@ -11,8 +11,12 @@
 #include <stdlib.h>
 
 
-
+const float GridSlot::MARK_SPREAD_DELAY = 0.333333f;
+const float GridSlot::MARK_BREAK_DELAY = 0.666666f;
+const float GridSlot::MARK_EXPLODE_DELAY = 0.16666666f;
+const float GridSlot::SCORE_FADE_DELAY = 2.0f;
 const float GridSlot::EXPLODE_FRAME_LEN = GridSlot::MARK_BREAK_DELAY / 7.0f;
+const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * NUM_FRAMES_PER_ROLL_ANIM_FRAME;
 
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
@@ -404,7 +408,7 @@ static unsigned int ROLLING_FRAMES[ GridSlot::NUM_ROLL_FRAMES ] =
 //get the rolling frame of the given index
 unsigned int GridSlot::GetRollingFrame( unsigned int index )
 {
-    ASSERT( index < NUM_ROLL_FRAMES );
+    ASSERT( index < NUM_ROLL_FRAMES);
 
-    return ROLLING_FRAMES[ index ];
+    return ROLLING_FRAMES[ index / NUM_FRAMES_PER_ROLL_ANIM_FRAME ];
 }
