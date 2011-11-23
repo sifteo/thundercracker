@@ -21,7 +21,7 @@ static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4
 
 const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
 const float CubeWrapper::SPRING_K_CONSTANT = 0.7f;
-const float CubeWrapper::SPRING_DAMPENING_CONSTANT = 0.037f;
+const float CubeWrapper::SPRING_DAMPENING_CONSTANT = 0.07f;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
