@@ -86,7 +86,7 @@ void Game::Update()
 			m_bTestMatches = false;
 		}
 
-		if( m_mode == MODE_TIMED )
+        if( m_mode == MODE_TIMED && m_state == STATE_PLAYING )
 		{
             m_timer.Update( dt );
 			checkGameOver();
@@ -383,5 +383,24 @@ unsigned int Game::getHighScore( unsigned int index ) const
 
 void Game::enterScore()
 {
+    //walk backwards through the high score list and see which ones we can pick off
+    for( unsigned int i = NUM_HIGH_SCORES - 1; i >= 0; i-- )
+    {
+        if( s_HighScores[i] < m_iScore )
+        {
+            if( i < NUM_HIGH_SCORES - 1 )
+            {
+                s_HighScores[i+1] = s_HighScores[i];
+            }
+        }
+        else
+        {
+            if( i < NUM_HIGH_SCORES - 1 )
+            {
+                s_HighScores[i+1] = m_iScore;
+            }
 
+            break;
+        }
+    }
 }

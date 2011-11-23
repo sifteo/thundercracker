@@ -166,12 +166,12 @@ void CubeWrapper::Draw()
             }
             else if( m_cube.id() == 1 )
             {
-                m_vid.BG0_text( Vec2( 2, 3 ), Font, "HIGH SCORES" );
+                m_vid.BG0_text( Vec2( 2, 2 ), Font, "HIGH SCORES" );
 
                 for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
                 {
                     sprintf( aBuf, "%d", Game::Inst().getHighScore(i) );
-                    int xPos = ( Banner::BANNER_WIDTH - strlen( aBuf ) ) / 2;
+                    int xPos = 9 - strlen( aBuf );
 
                     m_vid.BG0_text( Vec2( xPos, 5+2*i ), Font, aBuf );
                 }
