@@ -39,6 +39,31 @@ inline bool operator!=(const Vec2& u, const Vec2& v) { return u.x != v.x || u.y 
 
 
 /**
+ * 2-element float vector
+ */
+
+struct Float2 {
+    Float2()
+        : x(0), y(0) {}
+
+    Float2(float _x, float _y)
+        : x(_x), y(_y) {}
+
+    float x, y;
+};
+
+inline Float2 operator+(const Float2& u, const Float2& v) { return Float2(u.x+v.x, u.y+v.y); }
+inline Float2 operator += (Float2& u, const Float2& v) { return Float2(u.x+=v.x, u.y+=v.y); }
+inline Float2 operator-(const Float2& u, const Float2& v) { return Float2(u.x-v.x, u.y-v.y); }
+inline Float2 operator -= (Float2& u, const Float2& v) { return Float2(u.x-=v.x, u.y-=v.y); }
+inline Float2 operator*(float k, const Float2& v) { return Float2(k*v.x, k*v.y); }
+inline Float2 operator*(const Float2& v, float k) { return Float2(k*v.x, k*v.y); }
+inline Float2 operator*(const Float2& u, const Float2& v) { return Float2(u.x*v.x-u.y*v.y, u.y*v.x+u.x*v.y); } // complex multiplication
+inline bool operator==(const Float2& u, const Float2& v) { return u.x == v.x && u.y == v.y; }
+inline bool operator!=(const Float2& u, const Float2& v) { return u.x != v.x || u.y != v.y; }
+
+
+/**
  * Integer rectangle, stored as Left Top Right Bottom (LTRB).
  */
 

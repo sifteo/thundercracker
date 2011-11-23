@@ -39,6 +39,7 @@ public:
 	Game();
 
 	static const int NUM_CUBES = 2;
+    static const unsigned int NUM_HIGH_SCORES = 5;
 
 	CubeWrapper cubes[NUM_CUBES]; 
 
@@ -62,6 +63,8 @@ public:
 	inline void addLevel() { m_iLevel++; }
 
 	TimeKeeper &getTimer() { return m_timer; }
+    unsigned int getHighScore( unsigned int index ) const;
+    void enterScore();
 
 	void CheckChain( CubeWrapper *pWrapper );
 	void checkGameOver();
@@ -87,6 +90,9 @@ private:
 	GameMode m_mode;
 	float m_splashTime;
 	TimeKeeper m_timer;
+    float m_fLastTime;
+
+    static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
 };
 
 #endif

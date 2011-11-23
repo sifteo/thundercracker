@@ -12,10 +12,11 @@ Banner::Banner()
 {
 	m_Msg[0] = '\0';
 	m_fEndTime = -1.0f;
+    m_tiles = 0;
 }
 
 
-void Banner::Draw( Cube &cube )
+void Banner::Draw( BG1Helper &bg1helper )
 {
 	int iLen = strlen( m_Msg );
 	if( iLen == 0 )
@@ -23,6 +24,19 @@ void Banner::Draw( Cube &cube )
 
 	ASSERT( iLen <= MAX_BANNER_LENGTH );
 
+    //bg1helper.DrawAsset( Vec2( 0, 6 ), BannerImg );
+    bg1helper.DrawPartialAsset( Vec2( CENTER_PT - m_tiles, 6 ), Vec2( CENTER_PT - m_tiles, 0 ), Vec2( m_tiles * 2, BANNER_ROWS ), BannerImg );
+
+    int iStartXTile = ( BANNER_WIDTH - iLen ) / 2;
+
+    for( int i = 0; i < iLen; i++ )
+    {
+        int iOffset = iStartXTile + i;
+
+        bg1helper.DrawAsset( Vec2( iOffset, 7 ), Font, m_Msg[i] - ' ' );
+    }
+
+    /*
 	_SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 	// Allocate tiles for the banner
     _SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0xFFFF, BANNER_ROWS );
@@ -51,10 +65,7 @@ void Banner::Draw( Cube &cube )
 	}
 
 	_SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_y), -48);
-
-	/*_SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2,
-                         Cover.tiles,
-                         0, BANNER_WIDTH * BANNER_ROWS);*/
+*/
 }
 
 
@@ -70,6 +81,10 @@ void Banner::Update(float t, Cube &cube)
 			//clear out
 			_SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0x0000, BANNER_ROWS );
 		}
+        m_tiles++;
+
+        if( m_tiles > CENTER_PT )
+            m_tiles = CENTER_PT;
 	}
 }
 
@@ -82,6 +97,7 @@ void Banner::SetMessage( const char *pMsg, float duration )
 	{
 		strcpy( m_Msg, pMsg );
 		m_fEndTime = System::clock() + duration;
+        m_tiles = 0;
 	}
 }
 
