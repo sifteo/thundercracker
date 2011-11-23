@@ -19,7 +19,13 @@ static unsigned int GEM_VALUE_PROGRESSION[] = { 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 };
 // Order in which the number of fixed gems in a grid increases as the grid is refilled.
 static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4 };
 
-CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_bg1helper( m_cube ), m_ShakesRemaining( STARTING_SHAKES ), m_fShakeTime( -1.0f )
+const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
+const float CubeWrapper::SPRING_K_CONSTANT = 0.7f;
+const float CubeWrapper::SPRING_DAMPENING_CONSTANT = 0.037f;
+
+CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
+        m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
+        m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -35,9 +41,7 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 		}
 	}
 
-	m_state = STATE_PLAYING;
 	//Refill();
-	m_TiltBitMask = 0;
 }
 
 
@@ -80,6 +84,11 @@ bool CubeWrapper::DrawProgress( AssetGroup &assets )
 
 void CubeWrapper::Draw()
 {
+    //debug draw info
+    /*m_vid.clear(Font.tiles[0]);
+    m_vid.BG0_textf( Vec2( 3, 3 ), Font, "state %0.2f %0.2f\nvel %0.2f %0.2f", m_curFluidDir.x, m_curFluidDir.y, m_curFluidVel.x, m_curFluidVel.y );
+    return;*/
+
 	switch( Game::Inst().getState() )
 	{
 		case Game::STATE_SPLASH:
@@ -101,7 +110,7 @@ void CubeWrapper::Draw()
 						for( int j = 0; j < NUM_COLS; j++ )
 						{
 							GridSlot &slot = m_grid[i][j];
-							slot.Draw( m_vid, m_TiltBitMask );
+                            slot.Draw( m_vid, m_curFluidDir );
 						}
 					}
 
@@ -178,7 +187,7 @@ void CubeWrapper::Draw()
 }
 
 
-void CubeWrapper::Update(float t)
+void CubeWrapper::Update(float t, float dt)
 {
 	//check for shaking
 	if( m_state != STATE_NOSHAKES )
@@ -202,15 +211,26 @@ void CubeWrapper::Update(float t)
 		m_banner.Update(t, m_cube);
 	}
 
+    //tilt state
+    _SYSAccelState state;
+    _SYS_getAccel(m_cube.id(), &state);
+
+    //try spring to target
+    Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
+    Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
+
+    m_curFluidVel += force;
+    m_curFluidDir += m_curFluidVel * dt;
+
 	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
 	{
 		bool newValue = m_cube.hasPhysicalNeighborAt(i);
 		Cube::ID id = m_cube.physicalNeighborAt(i);
 
-		if( newValue )
+        /*if( newValue )
 		{
 			PRINT( "we have a neighbor.  it is %d\n", id );
-		}
+        }*/
 
 		//newly neighbored
 		if( newValue )
@@ -220,7 +240,7 @@ void CubeWrapper::Update(float t)
 				Game::Inst().setTestMatchFlag();
 				m_neighbors[i] = id;
 
-				PRINT( "neighbor on side %d is %d", i, id );
+                //PRINT( "neighbor on side %d is %d", i, id );
 			}
 		}
 		else
@@ -978,9 +998,3 @@ void CubeWrapper::checkEmpty()
 }
 
 
-void CubeWrapper::AddTiltInfo( unsigned int dir ) 
-{
-	m_TiltBitMask |= ( 1 << dir );
-
-	//PRINT( "tilt bit mask is now %d\n", m_TiltBitMask );
-}

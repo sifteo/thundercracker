@@ -90,6 +90,7 @@ private:
 	GameMode m_mode;
 	float m_splashTime;
 	TimeKeeper m_timer;
+    float m_fLastTime;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
 };

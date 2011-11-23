@@ -18,16 +18,16 @@ class GridSlot
 public:
 	static const unsigned int NUM_COLORS = 8;
 	static const AssetImage *TEXTURES[ NUM_COLORS ];
-	static const unsigned int NUM_ROLLING_COLORS = 2;
+    static const unsigned int NUM_ANIMATED_COLORS = 1;
     static const unsigned int NUM_EXPLODING_COLORS = 1;
-	static const AssetImage *ROLLING_TEXTURES[ NUM_ROLLING_COLORS ];
-	static const AssetImage *ROLLING_ANIM[ NUM_ROLLING_COLORS ];
+    static const AssetImage *ANIMATEDTEXTURES[ NUM_ANIMATED_COLORS ];
     static const AssetImage *EXPLODINGTEXTURES[ NUM_EXPLODING_COLORS ];
+    static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
 
 	static const float MARK_SPREAD_DELAY = 0.33f;
 	static const float MARK_BREAK_DELAY = 0.67f;
 	static const float MARK_EXPLODE_DELAY = 0.16f;
-	static const float SCORE_FADE_DELAY = 2.0;
+    static const float SCORE_FADE_DELAY = 2.0f;
     static const float EXPLODE_FRAME_LEN;
 
 	typedef enum 
@@ -46,7 +46,7 @@ public:
 
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	//draw self on given vid at given vec
-	void Draw( VidMode_BG0 &vid, unsigned int tiltMask );
+    void Draw( VidMode_BG0 &vid, Float2 &tiltState );
 	void Update(float t);
 	bool isAlive() const { return m_state == STATE_LIVING; }
 	bool isEmpty() const { return m_state == STATE_GONE; }
@@ -70,10 +70,12 @@ public:
 	void startPendingMove();
 private:
 	void markNeighbor( int row, int col );
-	//given a tiltmask, calculate the roll frame we should be in
-	unsigned int CalculateRollFrame( unsigned int tiltMask ) const;
+    //given tilt state, return our desired frame
+    unsigned int GetTiltFrame( Float2 &tiltState ) const;
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
+    //convert from [-128, 128] to [0, 6] via non-linear quantization
+    unsigned int QuantizeTiltValue( float value ) const;
 
 	SLOT_STATE m_state;
 	unsigned int m_color;

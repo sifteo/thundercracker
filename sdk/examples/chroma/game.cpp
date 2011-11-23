@@ -52,11 +52,16 @@ void Game::Init()
 		cubes[i].vidInit();
 
 	m_splashTime = System::clock();
+    m_fLastTime = m_splashTime;
 }
 
 
 void Game::Update()
 {
+    float t = System::clock();
+    float dt = t - m_fLastTime;
+    m_fLastTime = t;
+
 	if( m_state == STATE_SPLASH )
 	{
 		for( int i = 0; i < NUM_CUBES; i++ )
@@ -83,12 +88,12 @@ void Game::Update()
 
 		if( m_mode == MODE_TIMED )
 		{
-			m_timer.Update( System::clock() );
+            m_timer.Update( dt );
 			checkGameOver();
 		}
 
 		for( int i = 0; i < NUM_CUBES; i++ )
-			cubes[i].Update( System::clock() );
+            cubes[i].Update( System::clock(), dt );
 
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();

@@ -96,11 +96,8 @@ void TimeKeeper::Draw( BG1Helper &bg1helper )
 }
 
 
-void TimeKeeper::Update(float t)
+void TimeKeeper::Update(float dt)
 {
-	float dt = t - m_fLastTime;
-	m_fLastTime = t;
-
 	m_fTimer -= dt;
 }
 
@@ -108,7 +105,6 @@ void TimeKeeper::Update(float t)
 void TimeKeeper::Init( float t )
 {
 	Reset();
-	m_fLastTime = t;
 }
 
 

@@ -9,9 +9,7 @@ Gem4 = image{"01_gem04.png", height=32}
 Gem5 = image{"01_gem05.png", height=32}
 Gem6 = image{"01_gem06.png", height=32}
 Gem7 = image{"01_gem07.png", height=32}
-RollingGem0 = image{"RollingGem0.png", height=32}
 RollingGem1 = image{"RollingGem1.png", height=32}
-RollAnim0 = image{"red_triangle_strip.png", height=32}
 RollAnim1 = image{"green_pentagon_strip.png", height=32}
 GemEmpty = image{"gem_Empty.png"}
 Cover = image{"cover.png"}
@@ -23,3 +21,5 @@ TimerEdgeUpLeft = image{"TimerEdgeUpLeft.png", height=8}
 TimerEdgeUpRight = image{"TimerEdgeUpRight.png", height=8}
 --explosions
 ExplodeGem0 = image{"Gem0Explode.png", height=32}
+--gem animations
+Gem0 = image{"Gem0.png", height=32}
