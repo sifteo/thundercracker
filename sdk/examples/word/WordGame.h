@@ -5,13 +5,14 @@
 #include "GameStateMachine.h"
 using namespace Sifteo;
 
+union EventData;
 
 class WordGame
 {
 public:
     WordGame(Cube cubes[]);
     void update(float dt);
-    void onEvent(unsigned eventID);
+    void onEvent(unsigned eventID, const EventData& data);
 
 private:
     GameStateMachine mGameStateMachine;

@@ -31,3 +31,6 @@ CubeState.h
 CubeState.cpp
 ScoredCubeState.h
 ScoredCubeState.cpp
+Dictionary.h
+Dictionary.cpp
+EventData.h

@@ -6,6 +6,8 @@ enum EventID
     EventID_Paint,
     EventID_EnterState,
     EventID_ExitState,
+    EventID_NewAnagram,
+
     NumEventIds
 };
 

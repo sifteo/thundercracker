@@ -7,7 +7,7 @@ ScoredCubeState::ScoredCubeState()
 {
 }
 
-unsigned ScoredCubeState::onEvent(unsigned eventID)
+unsigned ScoredCubeState::onEvent(unsigned eventID, const EventData& data)
 {
     ASSERT(mCube != 0);
 

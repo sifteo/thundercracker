@@ -3,6 +3,7 @@
 #include "assets.gen.h"
 #include "WordGame.h"
 #include "EventID.h"
+#include "EventData.h"
 
 using namespace Sifteo;
 
@@ -87,7 +88,7 @@ void siftmain()
         lastTime = now;
 
         game.update(dt);
-        game.onEvent(EventID_Paint); // TODO decouple
+        game.onEvent(EventID_Paint, EventData()); // TODO decouple
         
         System::paint();
     }

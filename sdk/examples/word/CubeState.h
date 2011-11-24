@@ -10,7 +10,6 @@ class CubeState : public State
 public:
     CubeState() : mCube(0), otherCube(Cube()) { }
     void setCube(Cube& cube);
-    //virtual void onEnter();
 
 protected:
     Cube* mCube;

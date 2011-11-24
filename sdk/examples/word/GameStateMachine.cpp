@@ -19,11 +19,11 @@ void GameStateMachine::update(float dt)
     }
 }
 
-void GameStateMachine::onEvent(unsigned eventID)
+void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
-    StateMachine::onEvent(eventID);
+    StateMachine::onEvent(eventID, data);
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
-        mCubeStateMachines[i].onEvent(eventID);
+        mCubeStateMachines[i].onEvent(eventID, data);
     }
 }

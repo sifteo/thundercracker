@@ -2,14 +2,15 @@
 #define STATEMACHINE_H
 
 class State;
+union EventData;
 
 class StateMachine
 {
 public:
     StateMachine(unsigned startState);
 
-    void update(float dt);
-    void onEvent(unsigned eventID);
+    virtual void update(float dt);
+    virtual void onEvent(unsigned eventID, const EventData& data);
 
 protected:
     State& getCurrentState() { return getState(mStateIndex); }

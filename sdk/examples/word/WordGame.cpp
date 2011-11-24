@@ -12,7 +12,7 @@ void WordGame::update(float dt)
     mGameStateMachine.update(dt);
 }
 
-void WordGame::onEvent(unsigned eventID)
+void WordGame::onEvent(unsigned eventID, const EventData& data)
 {
-    mGameStateMachine.onEvent(eventID);
+    mGameStateMachine.onEvent(eventID, data);
 }

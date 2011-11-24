@@ -16,7 +16,6 @@ public:
     virtual unsigned getNumStates() const { return 1; }
     virtual State& getState(unsigned index) { ASSERT(index == 0); return mScoredState; }
 
-
 private:
     Cube* mCube;
     ScoredCubeState mScoredState;
