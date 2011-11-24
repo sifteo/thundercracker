@@ -7,22 +7,27 @@
 
 using namespace Sifteo;
 
+const unsigned MAX_LETTERS_PER_CUBE = 1;
+
 class CubeStateMachine : public StateMachine
 {
 public:
-    CubeStateMachine() : StateMachine(0), mCube(0) {}
+    CubeStateMachine() : StateMachine(0), mNumLetters(1), mCube(0) {}
+
     void setCube(Cube& cube);
     Cube& getCube();
+
     virtual unsigned getNumStates() const { return 1; }
     virtual State& getState(unsigned index) { ASSERT(index == 0); return mScoredState; }
 
-    const char* getSubString() { return "hi"; }
+    virtual void onEvent(unsigned eventID, const EventData& data);
+
+    const char* getLetters();
 
 private:
     // shared state data
-    const char* mString;
-    unsigned mSubStringStart;
-    unsigned mSubStringLength;
+    char mLetters[MAX_LETTERS_PER_CUBE + 1];
+    unsigned mNumLetters;
 
     Cube* mCube;
     ScoredCubeState mScoredState;

@@ -1,4 +1,6 @@
 #include "CubeStateMachine.h"
+#include "EventID.h"
+#include "EventData.h"
 
 void CubeStateMachine::setCube(Cube& cube)
 {
@@ -14,4 +16,31 @@ Cube& CubeStateMachine::getCube()
 {
     ASSERT(mCube != 0);
     return *mCube;
+}
+
+void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
+{
+    switch (eventID)
+    {
+    case EventID_NewAnagram:
+        uint8_t cubeID = getCube().id();
+        for (unsigned i = 0; i < arraysize(mLetters); ++i)
+        {
+            mLetters[i] = '\0';
+        }
+        for (unsigned i = 0; i < mNumLetters; ++i)
+        {
+            mLetters[i] = data.mNewAnagram[cubeID + i];
+        }
+        // TODO substrings of length 1 to 3
+        break;
+    }
+    StateMachine::onEvent(eventID, data);
+}
+
+
+const char* CubeStateMachine::getLetters()
+{
+    ASSERT(mNumLetters > 0);
+    return mLetters;
 }

@@ -20,7 +20,7 @@ unsigned ScoredCubeState::onEvent(unsigned eventID, const EventData& data)
         VidMode_BG0 vid(getStateMachine().getCube().vbuf);
         vid.init();
         vid.BG0_drawAsset(Vec2(0,0), Background);
-        vid.BG0_text(Vec2(8,8), Font, getStateMachine().getSubString());
+        vid.BG0_text(Vec2(8,8), Font, getStateMachine().getLetters());
 
         break;
 
