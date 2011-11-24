@@ -1,17 +1,24 @@
+#include <sifteo.h>
 #include "CubeState.h"
+#include "CubeStateMachine.h"
 #include "assets.gen.h"
 
-void CubeState::setCube(Cube& cube)
+void CubeState::setStateMachine(CubeStateMachine& csm)
 {
-    mCube = &cube;
+    mStateMachine = &csm;
 
-
+    Cube& cube = csm.getCube();
     // Clear BG1/SPR before switching modes
-    _SYS_vbuf_fill(&mCube->vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
-    _SYS_vbuf_fill(&mCube->vbuf.sys, _SYS_VA_SPR, 0, 8*5/2);
+    _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
+    _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_SPR, 0, 8*5/2);
 
     // Switch modes
-    _SYS_vbuf_pokeb(&mCube->vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
+    _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 }
 
 
+CubeStateMachine& CubeState::getStateMachine()
+{
+    ASSERT(mStateMachine != 0);
+    return *mStateMachine;
+}

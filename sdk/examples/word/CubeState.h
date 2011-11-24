@@ -1,19 +1,19 @@
 #ifndef CUBESTATE_H
 #define CUBESTATE_H
 
-#include <sifteo.h>
 #include "State.h"
-using namespace Sifteo;
+
+class CubeStateMachine;
 
 class CubeState : public State
 {
 public:
-    CubeState() : mCube(0), otherCube(Cube()) { }
-    void setCube(Cube& cube);
+    CubeState() : mStateMachine(0) { }
+    void setStateMachine(CubeStateMachine& csm);
+    CubeStateMachine& getStateMachine();
 
-protected:
-    Cube* mCube;
-    const Cube& otherCube;
+private:
+    CubeStateMachine* mStateMachine;
 };
 
 #endif // CUBESTATE_H

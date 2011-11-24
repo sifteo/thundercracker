@@ -6,6 +6,12 @@ void CubeStateMachine::setCube(Cube& cube)
     for (unsigned i = 0; i < getNumStates(); ++i)
     {
         CubeState& state = (CubeState&)getState(i);
-        state.setCube(cube);
+        state.setStateMachine(*this);
     }
+}
+
+Cube& CubeStateMachine::getCube()
+{
+    ASSERT(mCube != 0);
+    return *mCube;
 }
