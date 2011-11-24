@@ -23,7 +23,8 @@ const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
 const float CubeWrapper::SPRING_K_CONSTANT = 0.7f;
 const float CubeWrapper::SPRING_DAMPENING_CONSTANT = 0.07f;
 const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
-const float CubeWrapper::IDLE_TIME_THRESHOLD = 1.0f;
+const float CubeWrapper::IDLE_TIME_THRESHOLD = 3.0f;
+const float CubeWrapper::IDLE_FINISH_THRESHOLD = IDLE_TIME_THRESHOLD + ( GridSlot::NUM_IDLE_FRAMES * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME * 1 / 60.0f );
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
@@ -226,12 +227,12 @@ void CubeWrapper::Update(float t, float dt)
     {
         m_idleTimer += dt;
 
-        if( m_idleTimer > IDLE_TIME_THRESHOLD )
+        if( m_idleTimer > IDLE_FINISH_THRESHOLD )
         {
             m_idleTimer = 0.0f;
             //kick off force in a random direction
             //for now, just single direction
-            force = Float2( 100.0f, 0.0f );
+            //force = Float2( 100.0f, 0.0f );
         }
     }
     else
@@ -1016,3 +1017,7 @@ void CubeWrapper::checkEmpty()
 }
 
 
+bool CubeWrapper::IsIdle() const
+{
+    return ( m_idleTimer > IDLE_TIME_THRESHOLD );
+}

@@ -16,7 +16,8 @@ const float GridSlot::MARK_BREAK_DELAY = 0.666666f;
 const float GridSlot::MARK_EXPLODE_DELAY = 0.16666666f;
 const float GridSlot::SCORE_FADE_DELAY = 2.0f;
 const float GridSlot::EXPLODE_FRAME_LEN = GridSlot::MARK_BREAK_DELAY / 7.0f;
-const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * NUM_FRAMES_PER_ROLL_ANIM_FRAME;
+const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * GridSlot::NUM_FRAMES_PER_ROLL_ANIM_FRAME;
+const unsigned int GridSlot::NUM_IDLE_FRAMES = 4 * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME;
 
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
@@ -100,7 +101,11 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
                 if( m_color < NUM_ANIMATED_COLORS )
 				{
                     const AssetImage &animtex = *ANIMATEDTEXTURES[ m_color ];
-                    unsigned int frame = GetTiltFrame( tiltState );
+                    unsigned int frame;
+                    if( m_pWrapper->IsIdle() )
+                        frame = GetIdleFrame();
+                    else
+                        frame = GetTiltFrame( tiltState );
                     vid.BG0_drawAsset(vec, animtex, frame);
 				}
 				else
@@ -180,6 +185,18 @@ void GridSlot::Update(float t)
 {
 	switch( m_state )
 	{
+        case STATE_LIVING:
+        {
+            if( m_pWrapper->IsIdle() )
+            {
+                m_animFrame++;
+                if( m_animFrame >= NUM_IDLE_FRAMES )
+                {
+                    m_animFrame = 0;
+                }
+            }
+            break;
+        }
 		case STATE_MOVING:
 		{
 			Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
@@ -402,7 +419,7 @@ unsigned int GridSlot::QuantizeTiltValue( float value ) const
 }
 
 
-static unsigned int ROLLING_FRAMES[ GridSlot::NUM_ROLL_FRAMES ] =
+static unsigned int ROLLING_FRAMES[ GridSlot::NUM_ROLL_FRAMES / GridSlot::NUM_FRAMES_PER_ROLL_ANIM_FRAME ] =
 { 1, 3, 23, 20, 17, 14, 11, 8, 10, 13, 17, 16, 0, 4, 0, 16 };
 
 //get the rolling frame of the given index
@@ -411,4 +428,20 @@ unsigned int GridSlot::GetRollingFrame( unsigned int index )
     ASSERT( index < NUM_ROLL_FRAMES);
 
     return ROLLING_FRAMES[ index / NUM_FRAMES_PER_ROLL_ANIM_FRAME ];
+}
+
+
+static unsigned int IDLE_FRAMES[ GridSlot::NUM_IDLE_FRAMES / GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME ] =
+{ FRAME_N1, FRAME_E1, FRAME_S1, FRAME_W1 };
+
+
+unsigned int GridSlot::GetIdleFrame()
+{
+    ASSERT( m_pWrapper->IsIdle() );
+    if( m_animFrame >= NUM_IDLE_FRAMES )
+    {
+        m_animFrame = 0;
+    }
+
+    return IDLE_FRAMES[ m_animFrame / NUM_FRAMES_PER_IDLE_ANIM_FRAME ];
 }

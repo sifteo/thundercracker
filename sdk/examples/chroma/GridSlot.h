@@ -24,6 +24,7 @@ public:
     static const AssetImage *EXPLODINGTEXTURES[ NUM_EXPLODING_COLORS ];
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
     static const unsigned int NUM_ROLL_FRAMES;
+    static const unsigned int NUM_IDLE_FRAMES;
 
     static const float MARK_SPREAD_DELAY;
     static const float MARK_BREAK_DELAY;
@@ -31,6 +32,7 @@ public:
     static const float SCORE_FADE_DELAY;
     static const float EXPLODE_FRAME_LEN;
     static const int NUM_FRAMES_PER_ROLL_ANIM_FRAME = 3;
+    static const int NUM_FRAMES_PER_IDLE_ANIM_FRAME = 3;
 
 	typedef enum 
 	{
@@ -80,6 +82,7 @@ private:
     unsigned int QuantizeTiltValue( float value ) const;
     //get the rolling frame of the given index
     unsigned int GetRollingFrame( unsigned int index );
+    unsigned int GetIdleFrame();
 
 	SLOT_STATE m_state;
 	unsigned int m_color;
