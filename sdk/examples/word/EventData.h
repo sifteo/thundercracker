@@ -4,7 +4,11 @@
 union EventData
 {
     EventData() {}
-    const char* mNewAnagram;
+    struct
+    {
+        const char* mWord;
+        int mOffLengthIndex;
+    } mNewAnagram;
 };
 
 #endif // EVENTDATA_H

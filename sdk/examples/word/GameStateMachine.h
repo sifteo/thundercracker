@@ -18,10 +18,12 @@ public:
     virtual void update(float dt);
     virtual void onEvent(unsigned eventID, const EventData& data);
     static void sOnEvent(unsigned eventID, const EventData& data);
+    static unsigned GetNumCubes() { return MAX_CUBES; }// TODO
 
 protected:
     virtual State& getState(unsigned index) { ASSERT(index == 0); return mScoredState; }
     virtual unsigned getNumStates() const { return 1; }
+
 
 private:
     ScoredGameState mScoredState;

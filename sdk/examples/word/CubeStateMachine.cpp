@@ -30,7 +30,7 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         }
         for (unsigned i = 0; i < mNumLetters; ++i)
         {
-            mLetters[i] = data.mNewAnagram[cubeID + i];
+            mLetters[i] = data.mNewAnagram.mWord[cubeID + i];
         }
         // TODO substrings of length 1 to 3
         break;
@@ -43,4 +43,26 @@ const char* CubeStateMachine::getLetters()
 {
     ASSERT(mNumLetters > 0);
     return mLetters;
+}
+
+State& CubeStateMachine::getState(unsigned index)
+{
+    ASSERT(index < getNumStates());
+    switch (index)
+    {
+    default:
+    case ScoredCubeSubstate_NotWord:
+        return mNotWordScoredState;
+
+    case ScoredCubeSubstate_NewWord:
+        return mNewWordScoredState;
+
+    case ScoredCubeSubstate_OldWord:
+        return mOldWordScoredState;
+    }
+}
+
+unsigned CubeStateMachine::getNumStates() const
+{
+    return ScoredCubeSubstate_NumStates;
 }

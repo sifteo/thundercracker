@@ -3,6 +3,8 @@
 
 enum EventID
 {
+    EventID_AddNeighbor,
+    EventID_RemoveNeighbor,
     EventID_Paint,
     EventID_EnterState,
     EventID_ExitState,

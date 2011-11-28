@@ -34,3 +34,9 @@ ScoredCubeState.cpp
 Dictionary.h
 Dictionary.cpp
 EventData.h
+ScoredCubeState_NotWord.h
+ScoredCubeState_NotWord.cpp
+ScoredCubeState_NewWord.h
+ScoredCubeState_NewWord.cpp
+ScoredCubeState_OldWord.h
+ScoredCubeState_OldWord.cpp

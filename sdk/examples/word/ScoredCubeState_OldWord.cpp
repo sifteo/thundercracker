@@ -1,14 +1,15 @@
 #include <sifteo.h>
-#include "ScoredCubeState.h"
 #include "EventID.h"
 #include "assets.gen.h"
 #include "CubeStateMachine.h"
 
-ScoredCubeState::ScoredCubeState()
+#include "ScoredCubeState_OldWord.h"
+
+ScoredCubeState_OldWord::ScoredCubeState_OldWord()
 {
 }
 
-unsigned ScoredCubeState::onEvent(unsigned eventID, const EventData& data)
+unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
@@ -32,5 +33,10 @@ unsigned ScoredCubeState::onEvent(unsigned eventID, const EventData& data)
 
 
     }
-    return 0;
+    return getStateMachine().getCurrentStateIndex();
+}
+
+unsigned ScoredCubeState_OldWord::update(float dt, float stateTime)
+{
+    return getStateMachine().getCurrentStateIndex();
 }
