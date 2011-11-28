@@ -15,7 +15,7 @@ const float GridSlot::MARK_SPREAD_DELAY = 0.333333f;
 const float GridSlot::MARK_BREAK_DELAY = 0.666666f;
 const float GridSlot::MARK_EXPLODE_DELAY = 0.16666666f;
 const float GridSlot::SCORE_FADE_DELAY = 2.0f;
-const float GridSlot::EXPLODE_FRAME_LEN = GridSlot::MARK_BREAK_DELAY / 7.0f;
+const float GridSlot::EXPLODE_FRAME_LEN = ( GridSlot::MARK_BREAK_DELAY - GridSlot::MARK_SPREAD_DELAY ) / (float) GridSlot::NUM_EXPLODE_FRAMES;
 const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * GridSlot::NUM_FRAMES_PER_ROLL_ANIM_FRAME;
 const unsigned int GridSlot::NUM_IDLE_FRAMES = 4 * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME;
 
@@ -157,8 +157,16 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		}
 		case STATE_EXPLODING:
 		{
-			const AssetImage &tex = GetTexture();
-			vid.BG0_drawAsset(vec, tex, 4);
+            if( m_color < NUM_EXPLODING_COLORS )
+            {
+                const AssetImage &exTex = GetExplodingTexture();
+                vid.BG0_drawAsset(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
+            }
+            else
+            {
+                const AssetImage &tex = GetTexture();
+                vid.BG0_drawAsset(vec, tex, 4);
+            }
 			break;
 		}
 		case STATE_SHOWINGSCORE:
@@ -241,7 +249,7 @@ void GridSlot::Update(float t)
 		case STATE_EXPLODING:
 		{
 			spread_mark();
-			if( t - m_eventTime > MARK_EXPLODE_DELAY )
+            if( t - m_eventTime > MARK_EXPLODE_DELAY )
                 die();
 			break;
 		}
