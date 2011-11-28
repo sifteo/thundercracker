@@ -11,7 +11,7 @@ Gem6 = image{"01_gem06.png", height=32}
 Gem7 = image{"01_gem07.png", height=32}
 GemEmpty = image{"gem_Empty.png"}
 Cover = image{"cover.png"}
-TimerUp = image{"TimerUp.png"}
+TimerUp = image{"TimerUp.png", height=8}
 TimerLeft = image{"TimerLeft.png"}
 TimerDown = image{"TimerDown.png"}
 TimerRight = image{"TimerRight.png"}
