@@ -14,13 +14,10 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
     {
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
-        break;
-
-    case EventID_NewAnagram:
         {
             VidMode_BG0 vid(getStateMachine().getCube().vbuf);
             vid.init();
-            vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
+            vid.BG0_drawAsset(Vec2(0,0), BGNewWordConnectedMiddle);
             vid.BG0_text(Vec2(8,8), Font, getStateMachine().getLetters());
         }
         break;
@@ -28,7 +25,7 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
 
-        break;
+        return ScoredCubeSubstate_NotWord;
 
 
     }

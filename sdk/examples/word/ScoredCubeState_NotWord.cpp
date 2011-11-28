@@ -15,8 +15,6 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
     {
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
-        break;
-
     case EventID_NewAnagram:
         {
             VidMode_BG0 vid(getStateMachine().getCube().vbuf);
@@ -29,7 +27,7 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
 
-        break;
+        return ScoredCubeSubstate_NewWord;
 
 
     }

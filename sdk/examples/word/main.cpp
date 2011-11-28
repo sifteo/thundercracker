@@ -14,11 +14,15 @@ static const char* sideNames[] =
 
 void neighbor_add(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
+    EventData data;
+    GameStateMachine::sOnEvent(EventID_AddNeighbor, data);
     LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
 void neighbor_remove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
+    EventData data;
+    GameStateMachine::sOnEvent(EventID_RemoveNeighbor, data);
     LOG(("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
@@ -29,7 +33,7 @@ void accel(_SYSCubeID c)
 
 void siftmain()
 {
-    LOG(("HELLO, WORLD"));
+    LOG(("HELLO, WORLD\n"));
     //_SYS_vectors.cubeEvents.accelChange = accel;
     _SYS_vectors.neighborEvents.add = neighbor_add;
     _SYS_vectors.neighborEvents.remove = neighbor_remove;

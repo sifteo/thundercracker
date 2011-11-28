@@ -33,6 +33,8 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 
 void GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
 {
-    ASSERT(sInstance != 0);
-    sInstance->onEvent(eventID, data);
+    if (sInstance != 0)
+    {
+        sInstance->onEvent(eventID, data);
+    }
 }
