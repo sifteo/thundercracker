@@ -10,6 +10,9 @@ public:
 
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
     virtual unsigned update(float dt, float stateTime);
+
+private:
+    void paint();
 };
 
 #endif // SCOREDCUBESTATE_OLDWORD_H

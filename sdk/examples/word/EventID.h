@@ -9,6 +9,9 @@ enum EventID
     EventID_EnterState,
     EventID_ExitState,
     EventID_NewAnagram,
+    EventID_NewWordFound,
+    EventID_OldWordFound,
+    EventID_WordBroken,
 
     NumEventIds
 };

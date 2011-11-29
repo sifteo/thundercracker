@@ -48,38 +48,63 @@ const char* CubeStateMachine::getLetters()
     return mLetters;
 }
 
+bool CubeStateMachine::canBeginWord()
+{
+    // TODO vertical words
+    return (mNumLetters > 0 &&
+            mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
+            mCube->physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
+}
+
 bool CubeStateMachine::beginsWord(bool& isOld)
 {
-    if (mNumLetters > 0)
+    if (canBeginWord())
     {
-        // TODO vertical words
-        if (mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED)
+        char word[_SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE + 1];
+        word[0] = '\0';
+        CubeStateMachine* csm = this;
+        bool neighborLetters = false;
+        for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(SIDE_RIGHT);
+             csm && neighborID != CUBE_ID_UNDEFINED;
+             neighborID = csm->mCube->physicalNeighborAt(SIDE_RIGHT),
+             csm = GameStateMachine::findCSMFromID(neighborID))
         {
-            char word[_SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE + 1];
-            word[0] = '\0';
-            CubeStateMachine* csm = this;
-            bool neighborLetters = false;
-            for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(SIDE_RIGHT);
-                 csm && neighborID != CUBE_ID_UNDEFINED;
-                 neighborID = csm->mCube->physicalNeighborAt(SIDE_RIGHT),
-                 csm = GameStateMachine::findCSMFromID(neighborID))
+            if (csm->mNumLetters <= 0)
             {
-                if (csm->mNumLetters <= 0)
-                {
-                    break;
-                }
-                strcat(word, csm->mLetters);
-                neighborLetters = true;
+                break;
             }
-            if (neighborLetters)
+            strcat(word, csm->mLetters);
+            neighborLetters = true;
+        }
+        if (neighborLetters)
+        {
+            if (Dictionary::isWord(word))
             {
-                LOG((word));
-                if (Dictionary::isWord(word))
-                {
-                    isOld = Dictionary::isOldWord(word);
-                    return true;
-                }
+                isOld = Dictionary::isOldWord(word);
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
+bool CubeStateMachine::isInWord()
+{
+    // FIXME vertical words
+    CubeStateMachine* csm = this;
+    for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(SIDE_LEFT);
+         csm && neighborID != CUBE_ID_UNDEFINED;
+         neighborID = csm->mCube->physicalNeighborAt(SIDE_LEFT),
+         csm = GameStateMachine::findCSMFromID(neighborID))
+    {
+        // only check the left most letter, as it it the one that
+        // determines the entire word state
+        if (csm->mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED)
+        {
+           if (csm->getCurrentStateIndex() == ScoredCubeSubstate_NewWord ||
+               csm->getCurrentStateIndex() == ScoredCubeSubstate_OldWord)
+            {
+                return true;
             }
         }
     }

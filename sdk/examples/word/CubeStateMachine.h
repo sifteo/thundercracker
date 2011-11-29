@@ -22,11 +22,13 @@ public:
     virtual unsigned getNumStates() const;
     virtual State& getState(unsigned index);
 
-    virtual void onEvent(unsigned eventID, const EventData& data);
+    virtual void onEvent(unsigned eventID, const EventData& data);    
+    void sendEventToRow(unsigned eventID, const EventData& data);
 
     const char* getLetters();
-
+    bool canBeginWord();
     bool beginsWord(bool& isOld);
+    bool isInWord();
 
 private:
     // shared state data
