@@ -3,7 +3,7 @@
 
 #include <sifteo/abi.h>
 
-#if defined (BUILD_UNIT_TEST) && defined (UNIT_TEST_RADIO)
+#ifdef USE_MOCK_CUBE
   #define CubeSlot MockCubeSlot
 #endif
 

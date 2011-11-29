@@ -3,11 +3,6 @@
 #include "neighbors.h"
 #include <sifteo/machine.h>
 
-#if defined (BUILD_UNIT_TEST) && defined (UNIT_TEST_RADIO)
-  #include "mockcube.h"
-  #define CubeSlot MockCubeSlot
-#endif
-
 using namespace Sifteo;
 
 

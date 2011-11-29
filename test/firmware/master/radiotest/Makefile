@@ -54,11 +54,7 @@ include $(SIFTEO_FIRMWARE_DIR)/Makefile.defs
 
 
 # Flags passed to the preprocessor.
-#CPPFLAGS += -I$(GTEST_DIR)/include -I$(SIFTEO_SDK_DIR)/include -I$(SIFTEO_MASTER_FIRMWARE_COMMON_DIR) -I$(SIFTEO_SHARED_FIRMWARE_DIR)/include -DBUILD_UNIT_TEST
-#CPPFLAGS += -I$(GTEST_DIR)/include -I$(SIFTEO_SDK_DIR)/include -I$(SIFTEO_FIRMWARE_DIR)/common -I$(SIFTEO_FIRMWARE_DIR)/../include
-
-#CPPFLAGS += -I$(GTEST_DIR)/include $(CFLAGS) -DBUILD_UNIT_TEST -DUNIT_TEST_RADIO
-CPPFLAGS += -I$(GTEST_DIR)/include $(CFLAGS) -DBUILD_UNIT_TEST -DUNIT_TEST_RADIO
+CPPFLAGS += -I$(GTEST_DIR)/include -Imocks $(CFLAGS) -DBUILD_UNIT_TEST -DUSE_MOCK_CUBE
 
 # Flags passed to the C++ compiler.
 #CXXFLAGS += -g -Wall -Wextra

@@ -1,11 +1,15 @@
-#ifndef _MOCK_CUBE_H
-#define _MOCK_CUBE_H
+#ifndef _CUBE_H
+#define _CUBE_H
 
 #include <sifteo/abi.h>
 #include <sifteo/machine.h>
 #include "radio.h"
 #include "cubeslots.h"
 #include "systime.h"
+
+#ifdef USE_MOCK_CUBE
+  #define CubeSlot MockCubeSlot
+#endif
 
 
 struct PacketTransmission;
@@ -88,4 +92,4 @@ class MockCubeSlot {
       _SYSCubeHWID hwid;
 };
 
-#endif _MOCK_CUBE_H
+#endif _CUBE_H

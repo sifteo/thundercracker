@@ -1,13 +1,17 @@
 #include <gtest/gtest.h>
-#include "cube.h"
+
+//#ifdef UNIT_TEST_RADIO
+  //#include "mockcube.h"
+  #include "cube.h"
+  
+  //#define CubeSlot MockCubeSlot
+//#endif
+
+
+//#include "cube.h"
 #include "cubeslots.h"
 #include "radio.h"
 
-#ifdef UNIT_TEST_RADIO
-  //#include "mockcube.h"
-  
-  //#define CubeSlot MockCubeSlot
-#endif
 
 
 class RadioTest : public ::testing::Test {

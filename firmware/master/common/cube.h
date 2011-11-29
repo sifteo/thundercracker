@@ -36,8 +36,6 @@
  * allocated and attached to the slot by application code.
  */
 
-#ifndef UNIT_TEST_RADIO
-
 class CubeSlot {
  public:
     bool radioProduce(PacketTransmission &tx);
@@ -170,7 +168,5 @@ class CubeSlot {
     _SYSAccelState accelState;
     _SYSCubeHWID hwid;
 };
-
-#endif
 
 #endif
