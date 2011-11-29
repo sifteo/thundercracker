@@ -2,7 +2,7 @@
 #include "EventID.h"
 #include "assets.gen.h"
 #include "CubeStateMachine.h"
-
+#include "Dictionary.h"
 #include "ScoredCubeState_NotWord.h"
 
 ScoredCubeState_NotWord::ScoredCubeState_NotWord()
@@ -26,9 +26,16 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
 
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
-
-        return ScoredCubeSubstate_NewWord;
-
+        {
+            bool isOldWord = false;
+            if (getStateMachine().beginsWord(isOldWord))
+            {
+                return (isOldWord) ?
+                            ScoredCubeSubstate_OldWord :
+                            ScoredCubeSubstate_NewWord;
+            }
+        }
+        break;
 
     }
     return getStateMachine().getCurrentStateIndex();

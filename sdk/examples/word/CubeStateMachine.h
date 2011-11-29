@@ -26,6 +26,8 @@ public:
 
     const char* getLetters();
 
+    bool beginsWord(bool& isOld);
+
 private:
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];

@@ -19,6 +19,7 @@ public:
     virtual void onEvent(unsigned eventID, const EventData& data);
     static void sOnEvent(unsigned eventID, const EventData& data);
     static unsigned GetNumCubes() { return MAX_CUBES; }// TODO
+    static CubeStateMachine* findCSMFromID(Cube::ID cubeID);
 
 protected:
     virtual State& getState(unsigned index) { ASSERT(index == 0); return mScoredState; }

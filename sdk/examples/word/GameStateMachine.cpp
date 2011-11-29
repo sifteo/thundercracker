@@ -38,3 +38,19 @@ void GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
         sInstance->onEvent(eventID, data);
     }
 }
+
+
+CubeStateMachine* GameStateMachine::findCSMFromID(Cube::ID cubeID)
+{
+    if (sInstance)
+    {
+        for (unsigned i = 0; i < arraysize(sInstance->mCubeStateMachines); ++i)
+        {
+            if (sInstance->mCubeStateMachines[i].getCube().id() == cubeID)
+            {
+                return &sInstance->mCubeStateMachines[i];
+            }
+        }
+    }
+    return 0;
+}

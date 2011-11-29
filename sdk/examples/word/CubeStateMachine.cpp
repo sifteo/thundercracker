@@ -1,6 +1,9 @@
 #include "CubeStateMachine.h"
 #include "EventID.h"
 #include "EventData.h"
+#include "Dictionary.h"
+#include <string.h>
+#include "GameStateMachine.h"
 
 void CubeStateMachine::setCube(Cube& cube)
 {
@@ -43,6 +46,44 @@ const char* CubeStateMachine::getLetters()
 {
     ASSERT(mNumLetters > 0);
     return mLetters;
+}
+
+bool CubeStateMachine::beginsWord(bool& isOld)
+{
+    if (mNumLetters > 0)
+    {
+        // TODO vertical words
+        if (mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED)
+        {
+            char word[_SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE + 1];
+            word[0] = '\0';
+            CubeStateMachine* csm = this;
+            bool neighborLetters = false;
+            for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(SIDE_RIGHT);
+                 csm && neighborID != CUBE_ID_UNDEFINED;
+                 neighborID = csm->mCube->physicalNeighborAt(SIDE_RIGHT),
+                 csm = GameStateMachine::findCSMFromID(neighborID))
+            {
+                if (csm->mNumLetters <= 0)
+                {
+                    break;
+                }
+                strcat(word, csm->mLetters);
+                neighborLetters = true;
+            }
+            if (neighborLetters)
+            {
+                LOG((word));
+                if (Dictionary::isWord(word))
+                {
+                    isOld = Dictionary::isOldWord(word);
+                    return true;
+                }
+
+            }
+        }
+    }
+    return false;
 }
 
 State& CubeStateMachine::getState(unsigned index)
