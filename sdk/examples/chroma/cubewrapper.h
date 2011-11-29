@@ -10,7 +10,7 @@
 #include <sifteo.h>
 #include "GridSlot.h"
 #include "banner.h"
-//#include "BG1Helper.h"
+#include "Intro.h"
 
 using namespace Sifteo;
 
@@ -112,6 +112,8 @@ private:
     Float2 m_curFluidVel;
     //how long have we been not tilting
     float m_idleTimer;
+
+    Intro m_intro;
 };
 
 #endif

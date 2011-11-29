@@ -69,7 +69,7 @@ void Game::Update()
 
 		if( System::clock() - m_splashTime > 3.0f )
 		{
-			m_state = STATE_PLAYING;
+            m_state = STATE_INTRO;
 			m_timer.Init( System::clock() );
 		}
 	}

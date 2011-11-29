@@ -1,4 +1,9 @@
 GameAssets = group{quality=10}
+--for game start cutscene
+ArrowUp = image{"ArrowUp.png", pinned=true}
+ArrowDown = image{"ArrowDown.png", pinned=true}
+ArrowLeft = image{"ArrowLeft.png", pinned=true}
+ArrowRight = image{"ArrowRight.png", pinned=true}
 Font = image{"font-8x16.png", width=8, height=16}
 BannerImg = image{"banner.png"}
 Gem0 = image{"01_gem00.png", height=32}

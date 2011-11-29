@@ -16,14 +16,15 @@ using namespace Sifteo;
 //singleton class
 class Game
 {
-public:
+public:    
 	typedef enum
 	{
 		STATE_SPLASH,
 		//STARTING_STATE = STATE_SPLASH,
 		STATE_MENU,
-		STATE_PLAYING,
-		STARTING_STATE = STATE_PLAYING,
+        STATE_INTRO,
+        STARTING_STATE = STATE_INTRO,
+		STATE_PLAYING,		
 		STATE_POSTGAME,
 	} GameState;
 
@@ -56,6 +57,7 @@ public:
 	static unsigned int Rand( unsigned int max );
 
 	inline GameState getState() const { return m_state; }
+    inline void setState( GameState state ) { m_state = state; }
 	inline GameMode getMode() const { return m_mode; }
 
 	inline unsigned int getScore() const { return m_iScore; }

@@ -76,6 +76,7 @@ void CubeWrapper::Reset()
         }
     }
 
+    m_intro.Reset();
 	Refill();
 }
 
@@ -100,6 +101,11 @@ void CubeWrapper::Draw()
 			m_vid.BG0_drawAsset(Vec2(0,0), Cover, 0);
 			break;
 		}
+        case Game::STATE_INTRO:
+        {
+            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube );
+            break;
+        }
 		case Game::STATE_PLAYING:
 		{
 			switch( m_state )
@@ -193,6 +199,12 @@ void CubeWrapper::Draw()
 
 void CubeWrapper::Update(float t, float dt)
 {
+    if( Game::Inst().getState() == Game::STATE_INTRO )
+    {
+        m_intro.Update( dt );
+        return;
+    }
+
 	//check for shaking
 	if( m_state != STATE_NOSHAKES )
 	{

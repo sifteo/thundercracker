@@ -15,17 +15,18 @@ using namespace Sifteo;
 class TimeKeeper
 {
 public:
-	static const float TIME_INITIAL = 60.0f;
-	static const float TIME_RETURN_PER_GEM = 1.0f;
+    static const float TIME_INITIAL;
+    static const float TIME_RETURN_PER_GEM;
 	static const int TIMER_TILES = 8;
 
 	TimeKeeper();
 
 	void Reset();
-	void Draw( BG1Helper &bg1helper );
+    void Draw( BG1Helper &bg1helper );
     void Update( float dt );
 	void Init( float t );
 	
+    void DrawMeter( float amount, BG1Helper &bg1helper );
 	float getTime() const { return m_fTimer; }
 	void AddTime( int numGems );
 
