@@ -23,7 +23,7 @@ public:
 
 	void Reset();
 	void Draw( BG1Helper &bg1helper );
-	void Update( float t );
+    void Update( float dt );
 	void Init( float t );
 	
 	float getTime() const { return m_fTimer; }
@@ -31,7 +31,6 @@ public:
 
 private:
 	float m_fTimer;
-	float m_fLastTime;
 };
 
 #endif

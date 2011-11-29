@@ -60,7 +60,7 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define MISC_NB_MASK0   (MISC_NB_OUT1 | MISC_NB_OUT2)
 #define MISC_NB_MASK1   (MISC_NB_OUT1 | MISC_NB_OUT3)
 
-#define MISC_DIR_VALUE  (~MISC_I2C_SCL)
+#define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_I2C_SDA))
 #define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)
 
 #define CTRL_LCD_DCX    (1 << 0)
@@ -75,10 +75,11 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
                            CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT | \
                            CTRL_3V3_EN ))
 
-#define CTRL_IDLE       (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_LCD_DCX)
-#define CTRL_FLASH_CMD  (CTRL_BACKLIGHT | CTRL_FLASH_OE | CTRL_LCD_DCX)
-#define CTRL_LCD_CMD    (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE)
-#define CTRL_FLASH_OUT  (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_LCD_DCX)
+#define CTRL_IDLE       (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE | \
+                         CTRL_LCD_DCX | CTRL_3V3_EN)
+#define CTRL_FLASH_CMD  (CTRL_BACKLIGHT | CTRL_FLASH_OE | CTRL_LCD_DCX | CTRL_3V3_EN)
+#define CTRL_LCD_CMD    (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_3V3_EN)
+#define CTRL_FLASH_OUT  (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_LCD_DCX | CTRL_3V3_EN)
 
 /*
  * Debug UART (P1.0, 38400 baud)
@@ -393,7 +394,7 @@ __sbit __at 0xEA RF_CKEN;
 #define W2CON0_STOP     0x20
 
 // W2CON1 bits
-#define W2CON1_ACK      0x02
+#define W2CON1_NACK     0x02
 #define W2CON1_READY    0x01
 
 

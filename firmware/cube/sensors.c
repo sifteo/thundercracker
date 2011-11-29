@@ -12,6 +12,8 @@
 #include "radio.h"
 #include "time.h"
 
+#define NBR_IO      // comment out to turn off neighbor IO
+
 /*
  * We export a global tick counter, which can be used by other modules
  * who need a low-frequency timebase.
@@ -22,22 +24,29 @@ volatile uint8_t sensor_tick_counter;
 volatile uint8_t sensor_tick_counter_high;
 
 /*
- * These MEMSIC accelerometers are flaky little buggers! We're seeing
- * different chips ship with different addresses, so we have to do a
- * quick search if we don't get a response. Additionally, we're seeing
- * them deadlock the I2C bus occasionally. So, we try to work around
- * that by unjamming the bus manually before every poll.
- */
+    LIS3DH accelerometer.
+*/
 
-#define ADDR_SEARCH_START       0x20    // Start here...
-#define ADDR_SEARCH_INC         0x02    // Add this
-#define ADDR_SEARCH_MASK        0x2F    // And mask to this (Keep the 0x20 bit always)
+#define ACCEL_ADDR              0x30    // 00110010 - SDO is tied LOW
+#define ACCEL_ADDR_RX           0x31    // 00110011 - SDO is tied LOW
 
-uint8_t accel_addr = ADDR_SEARCH_START;
+#define ACCEL_CTRL_REG1         0x20
+#define ACCEL_REG1_INIT         0x4F    // 50 Hz, low power, x/y/z axes enabled
+
+#define ACCEL_CTRL_REG4         0x23
+#define ACCEL_REG4_INIT         0x80    // block update enabled, all others default
+
+#define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
+
 uint8_t accel_state;
-uint8_t accel_x;
+uint8_t accel_x_low;
+uint8_t accel_x_high;
+uint8_t accel_y_low;
+uint8_t accel_y_high;
+uint8_t accel_z_low;
+// last byte of z high is just straight into the RF ack buffer
 
-/*
+/*`
  * Parameters that affect the neighboring protocol. Some of these are
  * baked in to some extent, and not easily changeable with
  * #defines. But they're documented here anyway.
@@ -127,7 +136,7 @@ uint8_t __idata nb_prev_state[4];
  *    of, we use this IRQ to implement a state machine that executes
  *    our I2C read byte-by-byte.
  *
- *    These reads get kicked off during the Radio ISR, so that we'll
+ *    These reads get kicked off right after the neighbor ISR, so that we'll
  *    start taking a new accel reading any time the previous reading,
  *    if any, had a chance to be retrieved.
  *
@@ -159,52 +168,76 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
         mov     a, _accel_state
         jmp     @a+dptr
 
-        ; 1. Address/Write finished, Send register address next
+        ; 1. TX address finished, Send register address next
 
 as_1:
-        mov     _W2DAT, #0              
+        mov     _W2DAT, #ACCEL_START_READ_X
         mov     _accel_state, #(as_2 - as_1)
         sjmp    as_ret
 
-        ; 2. Register address finished. Send repeated start, and address/read
-
+        ; 2. Register address finished. Send repeated start, and RX address
 as_2:
-        orl     _W2CON0, #W2CON0_START  
-        mov     a, _accel_addr
-        orl     a, #1
-        mov     _W2DAT, a
+        orl     _W2CON0, #W2CON0_START
+        mov     _W2DAT, #ACCEL_ADDR_RX
         mov     _accel_state, #(as_3 - as_1)
         sjmp    as_ret
 
-        ; 3. Address/read finished. Subsequent bytes will be reads.
-
+        ; 3. RX address finished. Subsequent bytes will be reads.
 as_3:
         mov     _accel_state, #(as_4 - as_1)
         sjmp    as_ret
 
-        ; 4. Read X axis. This is the second-to-last byte, so we queue a Stop condition.
-
+        ; 4. Read X axis low byte.
 as_4:
-        mov     _accel_x, _W2DAT
-        orl     _W2CON0, #W2CON0_STOP  
+        mov     _accel_x_low, _W2DAT
         mov     _accel_state, #(as_5 - as_1)
         sjmp    as_ret
 
-        ; 5. Read Y axis. In rapid succession, store both axes and set the change flag
+        ; 5. Read X axis high byte.
+as_5:
+        mov     _accel_x_high, _W2DAT
+        mov     _accel_state, #(as_6 - as_1)
+        sjmp    as_ret
+
+        ; 6. Read Y axis low byte.
+as_6:
+        mov     _accel_y_low, _W2DAT
+        mov     _accel_state, #(as_7 - as_1)
+        sjmp    as_ret
+
+        ; 7. Read Y axis high byte.
+as_7:
+        mov     _accel_y_high, _W2DAT
+        mov     _accel_state, #(as_8 - as_1)
+        sjmp    as_ret
+
+        ; 8. Read Z axis low byte.
+        ; This is the second-to-last byte, so we queue a Stop condition.
+as_8:
+        mov     _accel_z_low, _W2DAT
+        orl     _W2CON0, #W2CON0_STOP ; stopping after last read below for now
+        mov     _accel_state, #(as_9 - as_1)
+        sjmp    as_ret
+
+        ; 9. Read Z axis high byte. In rapid succession, store both axes and set the change flag
         ;    if necessary. This minimizes the chances of ever sending one old axis and
         ;    one new axis. In fact, since this interrupt is higher priority than the
         ;    RF interrupt, we are guaranteed to send synchronized updates of both axes.
-
-as_5:
+as_9:
 
         mov     a, _W2DAT
+        ; eh...just stuffing X and & values in for now. need to decide how to
+        ; reformat the RF ACK packet now that we have 3 axes & 16 bit values
+        mov     a, _accel_y_high
+        ; orl     _W2CON0, #W2CON0_STOP
+
         xrl     a, (_ack_data + RF_ACK_ACCEL + 0)
         jz      1$
         xrl     (_ack_data + RF_ACK_ACCEL + 0), a
         orl     _ack_len, #RF_ACK_LEN_ACCEL
 1$:
 
-        mov     a, _accel_x
+        mov     a, _accel_x_high
         xrl     a, (_ack_data + RF_ACK_ACCEL + 1)
         jz      2$
         xrl     (_ack_data + RF_ACK_ACCEL + 1), a
@@ -220,11 +253,6 @@ as_5:
         ; chips are shipping with different addresses!
 
 as_nack:
-        mov     a, _accel_addr
-        add     a, #ADDR_SEARCH_INC
-        anl     a, #ADDR_SEARCH_MASK
-        mov     _accel_addr, a
-
         orl     _W2CON0, #W2CON0_STOP  
         mov     _accel_state, #0
         sjmp    as_ret
@@ -517,8 +545,10 @@ nb_tx:
         rlc     a
         jnc     2$
 
+#ifdef NBR_IO
         orl     MISC_PORT, #MISC_NB_OUT
         anl     _MISC_DIR, #~MISC_NB_OUT        ; 4  HIGH
+#endif
 2$:
         mov     a, (_nb_buffer + 1)             ; 2  Now do a proper 16-bit shift.
         clr     c                               ; 1  Make sure to shift in a zero,
@@ -532,7 +562,9 @@ nb_tx:
         djnz    ACC, .                          ; 12 (3 iters, 4 cycles each)
         nop                                     ; 1
 
+#ifdef NBR_IO
         anl     MISC_PORT, #~MISC_NB_OUT        ; LOW
+#endif
 
         ;--------------------------------------------------------------------
 
@@ -594,15 +626,15 @@ nb_tx_handoff:
         ; for multiple packets. We include a brief GPIO frob first, to try
         ; and clear the lockup on the accelerometer end.
 
-        orl     MISC_PORT, #MISC_I2C      ; Drive the I2C lines high
-        anl     _MISC_DIR, #~MISC_I2C     ;   Output drivers enabled
-        xrl     MISC_PORT, #MISC_I2C_SCL  ;   Now pulse SCL low
+        ; orl     MISC_PORT, #MISC_I2C      ; Drive the I2C lines high
+        ; anl     _MISC_DIR, #~MISC_I2C     ;   Output drivers enabled
+        ; xrl     MISC_PORT, #MISC_I2C_SCL  ;   Now pulse SCL low
         mov     _accel_state, #0          ; Reset accelerometer state machine
         mov     _W2CON0, #0               ; Reset I2C master
         mov     _W2CON0, #1               ;   Turn on I2C controller
         mov     _W2CON0, #7               ;   Master mode, 100 kHz.
-        mov     _W2CON1, #0               ;   Unmask interrupt
-        mov     _W2DAT, _accel_addr       ; Trigger the next I2C transaction
+        mov     _W2CON1, #~0x20               ;   Unmask interrupt
+        mov     _W2DAT, #ACCEL_ADDR       ; Trigger the next I2C transaction
 
         ;--------------------------------------------------------------------
         ; Touch sensing
@@ -644,6 +676,65 @@ nb_irq_ret:
     __endasm;
 }
 
+#define I2C_TX_BYTE(b) {        \
+            IR_SPI = 0;         \
+            W2DAT = (b);        \
+            while (!IR_SPI);    \
+        }
+
+#define I2C_TX_W_ACK(b, fail) {             \
+    for (;;) {                              \
+        uint8_t status;                     \
+        I2C_TX_BYTE(b);                     \
+        status = W2CON1;                    \
+        if (!(status & W2CON1_READY)) {     \
+            continue;                       \
+        }                                   \
+        if (status & W2CON1_NACK)           \
+            goto fail;                      \
+        else                                \
+            break;                          \
+    }                                       \
+}
+
+#if 0
+// used during testing
+static void i2c_rx(uint8_t devaddr, uint8_t regaddr, uint8_t *buf, uint8_t len)
+{
+    I2C_TX_W_ACK(devaddr, cleanup);
+    I2C_TX_W_ACK(regaddr, cleanup);
+
+    W2CON0 |= W2CON0_START;
+
+    I2C_TX_W_ACK(devaddr | 0x1, cleanup);
+
+    // wait for bytes
+    while (len) {
+        while (!IR_SPI);                // Wait until 2-Wire irq flag is set
+        IR_SPI = 0;                     // Clear the interrupt flag
+        *buf = W2DAT;        // Read received data
+        buf++;
+        len--;
+    }
+
+cleanup:
+    W2CON0 |= W2CON0_STOP;
+}
+#endif
+
+// TODO - asm these functions
+static void i2c_tx(uint8_t addr, uint8_t *buf, uint8_t len)
+{
+    I2C_TX_W_ACK(addr, cleanup);
+
+    while (len--) {
+        I2C_TX_W_ACK(*buf, cleanup);
+        buf++;
+    }
+
+cleanup:
+    W2CON0 |= W2CON0_STOP;
+}
 
 void sensors_init()
 {
@@ -712,14 +803,50 @@ void sensors_init()
     /*
      * A/D converter (MISC irq) Priority
      */
-    
+
     IP1 |= 0x10;
     
     /*
      * I2C / 2Wire, for the accelerometer
      */
 
-    INTEXP |= 0x04;             // Enable 2Wire IRQ -> iex3
+    MISC_PORT |= MISC_I2C;      // Drive the I2C lines high
+    MISC_DIR &= ~MISC_I2C;      // Output drivers enabled
+
+    W2CON0 = 0;         // Reset I2C master
+    W2CON0 = 1;         // turn it on
+    W2CON0 = 7;         // Turn on I2C controller, Master mode, 100 kHz.
+    INTEXP |= 0x04;     // Enable 2Wire IRQ -> iex3
+    W2CON1 = ~0x20;     // Unmask interrupt
+
+    {
+        // put lis3d in low power mode with all 3 axes enabled &
+        // block data update enabled
+
+        uint8_t init[2] = { ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
+        i2c_tx(ACCEL_ADDR, init, sizeof(init));
+
+        init[0] = ACCEL_CTRL_REG4; init[1] = ACCEL_REG4_INIT;
+        i2c_tx(ACCEL_ADDR, init, sizeof(init));
+    }
+
+    /*
+        test loop for reading data, blocking style.
+        NOTE - this works *without* having to reset the I2C peripheral...
+        investigate this further, so we don't have to reset it at the beginning
+        of each sample series in the interrupt handler loop
+    */
+#if 0
+    for (;;) {
+        uint16_t c;
+        uint8_t samples[2] = { ACCEL_START_READ_X };
+
+        i2c_rx(ACCEL_ADDR, ACCEL_START_READ_X, samples, sizeof(samples));
+
+        for (c = 0; c < 0xFFF; ++c);
+    }
+#endif
+
     T2CON |= 0x40;              // iex3 rising edge
     IRCON = 0;                  // Clear any spurious IRQs from initialization
     IP0 |= 0x04;                // Interrupt priority level 1.
