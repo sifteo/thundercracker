@@ -101,8 +101,8 @@ bool CubeStateMachine::isInWord()
         // determines the entire word state
         if (csm->mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED)
         {
-           if (csm->getCurrentStateIndex() == ScoredCubeSubstate_NewWord ||
-               csm->getCurrentStateIndex() == ScoredCubeSubstate_OldWord)
+           if (csm->getCurrentStateIndex() == ScoredCubeStateIndex_NewWord ||
+               csm->getCurrentStateIndex() == ScoredCubeStateIndex_OldWord)
             {
                 return true;
             }
@@ -117,18 +117,18 @@ State& CubeStateMachine::getState(unsigned index)
     switch (index)
     {
     default:
-    case ScoredCubeSubstate_NotWord:
+    case ScoredCubeStateIndex_NotWord:
         return mNotWordScoredState;
 
-    case ScoredCubeSubstate_NewWord:
+    case ScoredCubeStateIndex_NewWord:
         return mNewWordScoredState;
 
-    case ScoredCubeSubstate_OldWord:
+    case ScoredCubeStateIndex_OldWord:
         return mOldWordScoredState;
     }
 }
 
 unsigned CubeStateMachine::getNumStates() const
 {
-    return ScoredCubeSubstate_NumStates;
+    return ScoredCubeStateIndex_NumStates;
 }

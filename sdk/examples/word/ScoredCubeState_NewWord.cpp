@@ -34,17 +34,17 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
                 {
                     if (isOldWord)
                     {
-                        return ScoredCubeSubstate_OldWord;
+                        return ScoredCubeStateIndex_OldWord;
                     }
                 }
                 else
                 {
-                    return ScoredCubeSubstate_NotWord;
+                    return ScoredCubeStateIndex_NotWord;
                 }
             }
             else if (!getStateMachine().isInWord())
             {
-                return ScoredCubeSubstate_NotWord;
+                return ScoredCubeStateIndex_NotWord;
             }
             paint();
         }
@@ -53,7 +53,7 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
     case EventID_WordBroken:
         if (!getStateMachine().canBeginWord() && !getStateMachine().isInWord())
         {
-            return ScoredCubeSubstate_NotWord;
+            return ScoredCubeStateIndex_NotWord;
         }
         break;
     }

@@ -33,8 +33,8 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
             if (getStateMachine().beginsWord(isOldWord))
             {
                 return (isOldWord) ?
-                            ScoredCubeSubstate_OldWord :
-                            ScoredCubeSubstate_NewWord;
+                            ScoredCubeStateIndex_OldWord :
+                            ScoredCubeStateIndex_NewWord;
             }
             paint();
         }
@@ -43,14 +43,14 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
     case EventID_NewWordFound:
         if (!getStateMachine().canBeginWord() && getStateMachine().isInWord())
         {
-            return ScoredCubeSubstate_NewWord;
+            return ScoredCubeStateIndex_NewWord;
         }
         break;
 
     case EventID_OldWordFound:
         if (!getStateMachine().canBeginWord() && getStateMachine().isInWord())
         {
-            return ScoredCubeSubstate_OldWord;
+            return ScoredCubeStateIndex_OldWord;
         }
         break;
 
