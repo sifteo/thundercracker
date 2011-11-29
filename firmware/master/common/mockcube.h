@@ -1,6 +1,8 @@
 #ifndef _MOCK_CUBE_H
 #define _MOCK_CUBE_H
 
+#include <sifteo/abi.h>
+#include <sifteo/machine.h>
 #include "radio.h"
 #include "cubeslots.h"
 #include "systime.h"

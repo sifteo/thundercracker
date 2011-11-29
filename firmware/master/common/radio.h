@@ -13,8 +13,10 @@
 #include <sifteo/abi.h>
 #include "runtime.h"
 
+// TODO: This can be removed
 #if defined (BUILD_UNIT_TEST) && defined (UNIT_TEST_RADIO)
   #include "mockcube.h"
+  //#include "cube.h"
   
   #define CubeSlot MockCubeSlot
   #define DISABLE_CUBE

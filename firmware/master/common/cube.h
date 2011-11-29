@@ -14,10 +14,11 @@
 #include "radio.h"
 #include "runtime.h"
 #include "cubeslots.h"
-#include "cubecodec.h"
 #include "systime.h"
 
-#if defined (BUILD_UNIT_TEST) && defined (UNIT_TEST_CUBE)
+#ifndef USE_MOCK_CUBE_CODEC
+  #include "cubecodec.h"
+#else
   #include "mockcubecodec.h"
   #define CubeCodec MockCubeCodec
 #endif
