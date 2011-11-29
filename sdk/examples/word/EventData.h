@@ -9,6 +9,11 @@ union EventData
         const char* mWord;
         int mOffLengthIndex;
     } mNewAnagram;
+
+    struct
+    {
+        bool mFirst;
+    } mEnterState;
 };
 
 #endif // EVENTDATA_H

@@ -14,7 +14,9 @@ void StateMachine::update(float dt)
     State& state = getState(mStateIndex);
     if (mUnhandledOnEnter)
     {
-        state.onEvent(EventID_EnterState, EventData());
+        EventData data;
+        data.mEnterState.mFirst = true;
+        state.onEvent(EventID_EnterState, data);
         mUnhandledOnEnter = false;
     }
     unsigned newStateIndex = state.update(dt, mStateTime);
@@ -45,5 +47,7 @@ void StateMachine::setState(unsigned newStateIndex, State& oldState)
     mStateIndex = newStateIndex;
     mStateTime = .0f;
     State& newState = getState(mStateIndex);
-    newState.onEvent(EventID_EnterState, EventData());
+    EventData data;
+    data.mEnterState.mFirst = false;
+    newState.onEvent(EventID_EnterState, data);
 }
