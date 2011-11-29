@@ -1,0 +1,49 @@
+#include "StateMachine.h"
+#include "State.h"
+#include <sifteo.h>
+#include "EventID.h"
+#include "EventData.h"
+
+StateMachine::StateMachine(unsigned startStateIndex) :
+    mStateIndex(startStateIndex), mStateTime(.0f), mUnhandledOnEnter(true)
+{
+}
+
+void StateMachine::update(float dt)
+{
+    State& state = getState(mStateIndex);
+    if (mUnhandledOnEnter)
+    {
+        state.onEvent(EventID_EnterState, EventData());
+        mUnhandledOnEnter = false;
+    }
+    unsigned newStateIndex = state.update(dt, mStateTime);
+    if (newStateIndex != mStateIndex)
+    {
+        setState(newStateIndex, state);
+    }
+    else
+    {
+        mStateTime += dt;
+    }
+}
+
+void StateMachine::onEvent(unsigned eventID, const EventData& data)
+{
+    State& state = getState(mStateIndex);
+    unsigned newStateIndex = state.onEvent(eventID, data);
+    if (newStateIndex != mStateIndex)
+    {
+        setState(newStateIndex, state);
+    }
+}
+
+void StateMachine::setState(unsigned newStateIndex, State& oldState)
+{
+    ASSERT(newStateIndex < getNumStates());
+    oldState.onEvent(EventID_ExitState, EventData());
+    mStateIndex = newStateIndex;
+    mStateTime = .0f;
+    State& newState = getState(mStateIndex);
+    newState.onEvent(EventID_EnterState, EventData());
+}
