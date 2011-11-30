@@ -26,6 +26,7 @@ struct ItemData {
 };
 
 struct RoomData {
+    //uint8_t centerPosition; // format: 0b00XXXYYY (any use for those two high bits?)
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
 };
