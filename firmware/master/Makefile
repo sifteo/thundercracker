@@ -49,7 +49,6 @@ OBJS_STM32 = \
 	stm32/debug.stm32.o \
     stm32/usart.stm32.o \
     stm32/dma.stm32.o \
-    stm32/button.stm32.o \
     stm32/hwtimer.stm32.o \
     stm32/pwmaudioout.stm32.o \
     stm32/audiooutdevice.stm32.o \
