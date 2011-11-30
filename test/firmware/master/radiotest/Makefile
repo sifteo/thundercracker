@@ -1,4 +1,4 @@
-TESTS = test
+TESTS = testradio
 
 all : $(TESTS)
 
@@ -18,5 +18,8 @@ main.o : main.cpp $(GTEST_HEADERS)
 radio_test.o : radio_test.cpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c radio_test.cpp
 
-test : radio_test.o main.o gtest_main.a $(BIN_SIM)
+testradio : radio_test.o main.o gtest_main.a $(BIN_SIM)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+run :
+	./testradio

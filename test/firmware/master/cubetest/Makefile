@@ -1,4 +1,4 @@
-TESTS = test
+TESTS = testcube
 
 all : $(TESTS)
 
@@ -18,5 +18,8 @@ main.o : main.cpp $(GTEST_HEADERS)
 cube_test.o : cube_test.cpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c cube_test.cpp
 
-test : cube_test.o main.o gtest_main.a $(BIN_SIM)
+testcube : cube_test.o main.o gtest_main.a $(BIN_SIM)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+run :
+	./testcube
