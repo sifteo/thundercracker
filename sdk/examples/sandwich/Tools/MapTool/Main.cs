@@ -9,6 +9,12 @@ namespace MapTool {
   public static class Program {
 
     public static void Main(string[] args) {
+
+      foreach(var p in Spiral.IntoMadness()) {
+        Console.WriteLine("({0}, {1})", p.x, p.y);
+      }
+      return;
+
       while(!File.Exists("Makefile")) {
         Directory.SetCurrentDirectory("..");
         if (Directory.GetCurrentDirectory().Length < 5) {

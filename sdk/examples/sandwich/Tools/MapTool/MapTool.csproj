@@ -49,6 +49,7 @@
     <Compile Include="Map.Triggers.cs" />
     <Compile Include="MapDatabase.cs" />
     <Compile Include="RemapTileSet.cs" />
+    <Compile Include="Spiral.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
