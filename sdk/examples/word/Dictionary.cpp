@@ -16,7 +16,8 @@ const char* Dictionary::pickWord(unsigned length)
 
 bool Dictionary::isWord(const char* string)
 {
-    return root.findWord(string);
+//    return root.findWord(string);
+    return false;
 }
 
 
