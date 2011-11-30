@@ -54,6 +54,10 @@ namespace Typocalypse.Trie
             foreach (char c in key)
             {
                 node = node.GetChild(c);
+                if (node == null) 
+                {
+                  return;
+                }
             }
             node.Value = null;
 

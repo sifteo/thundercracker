@@ -11,7 +11,7 @@ Dictionary::Dictionary()
 const char* Dictionary::pickWord(unsigned length)
 {
     // TODO
-    return "Fredaz";
+    return "abject";
 }
 
 bool Dictionary::isWord(const char* string)

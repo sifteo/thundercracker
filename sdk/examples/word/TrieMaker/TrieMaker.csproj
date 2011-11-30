@@ -48,6 +48,10 @@
     <Compile Include="Trie.cs" />
     <Compile Include="TrieNode.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="badwords.txt" />
+    <Content Include="dictionary.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

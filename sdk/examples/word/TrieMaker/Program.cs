@@ -11,27 +11,34 @@ namespace TrieMaker {
 
       //Create trie
       Trie < string > trie = new Trie < string > ();
- 
-      //Add some key-value pairs to the trie
-      trie.Put("James", "112");
-      trie.Put("Jake", "222");
-      trie.Put("Fred", "326");
-      trie.WriteToCppFile();
 
-      //Search the trie
-      trie.Matcher.NextMatch('J'); //Prefix thus far: "J"
-      trie.Matcher.GetPrefixMatches(); //[112, 222]
-      trie.Matcher.IsExactMatch(); //false
-      trie.Matcher.NextMatch('a');
-      trie.Matcher.NextMatch('m'); //Prefix thus far: "Jam"
-      trie.Matcher.GetPrefixMatches(); //[112]
-      trie.Matcher.NextMatch('e');
-      trie.Matcher.NextMatch('s'); //Prefix thus far: "James"
-      trie.Matcher.IsExactMatch(); //true
-      trie.Matcher.GetExactMatch(); //[112]
- 
-      //Remove a string-value pair
-      trie.Remove("James");
+      // Read each line of the file into a string array. Each element
+      // of the array is one line of the file.
+      string[] lines = System.IO.File.ReadAllLines(@"..\..\dictionary.txt");
+
+      // Display the file contents by using a foreach loop.
+      //System.Console.WriteLine("Contents of WriteLines2.txt = ");
+      foreach (string line in lines) 
+      {
+        // Use a tab to indent each line of the file.
+        trie.Put(line.Trim(), "1");
+        //Console.WriteLine("\t" + line);
+      }
+
+      // Read each line of the file into a string array. Each element
+      // of the array is one line of the file.
+      lines = System.IO.File.ReadAllLines(@"..\..\badwords.txt");
+
+      // Display the file contents by using a foreach loop.
+      //System.Console.WriteLine("Contents of WriteLines2.txt = ");
+      foreach (string line in lines) 
+      {
+        // Use a tab to indent each line of the file.
+        trie.Remove(line.Trim());
+        //Console.WriteLine("\t" + line);
+      }
+
+      trie.WriteToCppFile();
     }
   }
 }
