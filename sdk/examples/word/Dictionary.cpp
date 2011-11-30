@@ -16,17 +16,7 @@ const char* Dictionary::pickWord(unsigned length)
 
 bool Dictionary::isWord(const char* string)
 {
-    // TODO binary search
-    /*
-    TrieNode* node = root;
-    const char* p = string
-
-    for(; p && *p && node; p++, node = node->children)
-    {
-        if (*p != node->)
-    }
-*/
-    return false;
+    return root.findWord(string);
 }
 
 

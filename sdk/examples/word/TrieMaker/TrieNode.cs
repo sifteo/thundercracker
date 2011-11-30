@@ -21,7 +21,7 @@ namespace Typocalypse.Trie
           string varName = (string.IsNullOrEmpty(parentVarName)) ? childVarNamePrefix : parentVarName + this.Key;
           if (children.Count <= 0)
           {
-            file.WriteLine("static TrieNode {0}[] = {{ {{ '{1}', 0, 0 }} }};", varName, this.Key);
+            file.WriteLine("static TrieNode {0}[] = {{ {{ '{1}', {{ 0, true }}, 0 }} }};", varName, this.Key);
           }
           else
           {
@@ -40,12 +40,17 @@ namespace Typocalypse.Trie
             {
               if (kvp.Value.children.Count == 0) 
               {
-                file.Write("{{ '{0}', 0, 0 }}, ", kvp.Value.Key);
+                file.Write("{{ '{0}', {{ 0, true }}, 0 }}, ", kvp.Value.Key);
               }
               else 
               {
                 string childVarName = childVarNamePrefix + kvp.Value.Key;
-                file.Write("{{ '{0}', {1}, {2} }}, ", kvp.Value.Key, kvp.Value.children.Count, childVarName);
+                file.Write(
+                  "{{ '{0}', {{ {1}, {2} }}, {3} }}, ", 
+                  kvp.Value.Key, 
+                  kvp.Value.children.Count, 
+                  kvp.Value.IsTerminater() ? "true" : "false", 
+                  childVarName);
               }
 
             }
@@ -53,7 +58,7 @@ namespace Typocalypse.Trie
             
             if (string.IsNullOrEmpty(parentVarName)) 
             {
-              file.WriteLine("static TrieNode root = {{ '\\0', {0}, {1} }};", this.children.Count, childVarNamePrefix);
+              file.WriteLine("TrieNode root = {{ '\\0', {{ {0}, false }}, {1} }};", this.children.Count, childVarNamePrefix);
             }
 
           }

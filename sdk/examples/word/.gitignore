@@ -12,3 +12,4 @@ assets.html
 *.suo
 *.cache
 *.FileListAbsolute.txt
+*.manifest
