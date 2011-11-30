@@ -38,3 +38,5 @@ ScoredCubeState_NewWord.h
 ScoredCubeState_NewWord.cpp
 ScoredCubeState_OldWord.h
 ScoredCubeState_OldWord.cpp
+TrieNode.h
+TrieNode.cpp
