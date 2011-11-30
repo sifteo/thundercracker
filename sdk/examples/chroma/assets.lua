@@ -16,6 +16,7 @@ Gem6 = image{"01_gem06.png", height=32}
 Gem7 = image{"01_gem07.png", height=32}
 GemEmpty = image{"gem_Empty.png"}
 Cover = image{"cover.png"}
+--timer
 TimerUp = image{"TimerUp.png", height=8}
 TimerLeft = image{"TimerLeft.png"}
 TimerDown = image{"TimerDown.png"}
@@ -28,6 +29,11 @@ TimerEdgeDownLeft = image{"TimerEdgeDownLeft.png", height=8}
 TimerEdgeDownRight = image{"TimerEdgeDownRight.png", height=8}
 TimerEdgeRightUp = image{"TimerEdgeRightUp.png", height=8}
 TimerEdgeRightDown = image{"TimerEdgeRightDown.png", height=8}
+--timer running out
+TimerLowUp = image{"TimerLowUp.png", height=8}
+TimerLowLeft = image{"TimerLowLeft.png", height=16}
+TimerLowDown = image{"TimerLowDown.png", height=8}
+TimerLowRight = image{"TimerLowRight.png", height=16}
 --explosions
 ExplodeGem0 = image{"Gem0Explode.png", height=32}
 --gem animations
