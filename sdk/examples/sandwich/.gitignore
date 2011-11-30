@@ -12,7 +12,6 @@ assets.html
 **bin/Debug**
 **bin/Release**
 
-
 MapTool.exe
 gen_assets.lua
 gen_mapdata.h

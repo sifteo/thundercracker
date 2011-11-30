@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * message banners that show up to display score or game info
+ * helper class for BG1
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
@@ -20,13 +20,7 @@ void BG1Helper::Clear()
 }
 
 void BG1Helper::Flush()
-{
-	_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
-	//copy over our bitset
-	_SYS_vbuf_write(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2,
-                         m_bitset,
-                         BG1_ROWS);
-
+{	
 	unsigned int tileOffset = 0;
 
 	//this part should be smarter (use ranges)
@@ -45,6 +39,13 @@ void BG1Helper::Flush()
 			}
 		}
 	}
+
+    //copy over our bitset
+    _SYS_vbuf_write(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2,
+                         m_bitset,
+                         BG1_ROWS);
+
+    _SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 
 	Clear();
 }

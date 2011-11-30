@@ -10,6 +10,10 @@
 #include "string.h"
 #include <stdlib.h>
 
+//TODO, load this from save file
+unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
+        { 1000, 800, 600, 400, 200 };
+
 Game &Game::Inst()
 {
 	static Game game = Game();
@@ -48,11 +52,16 @@ void Game::Init()
 		cubes[i].vidInit();
 
 	m_splashTime = System::clock();
+    m_fLastTime = m_splashTime;
 }
 
 
 void Game::Update()
 {
+    float t = System::clock();
+    float dt = t - m_fLastTime;
+    m_fLastTime = t;
+
 	if( m_state == STATE_SPLASH )
 	{
 		for( int i = 0; i < NUM_CUBES; i++ )
@@ -79,12 +88,12 @@ void Game::Update()
 
 		if( m_mode == MODE_TIMED )
 		{
-			m_timer.Update( System::clock() );
+            m_timer.Update( dt );
 			checkGameOver();
 		}
 
 		for( int i = 0; i < NUM_CUBES; i++ )
-			cubes[i].Update( System::clock() );
+            cubes[i].Update( System::clock(), dt );
 
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
@@ -199,12 +208,18 @@ void Game::checkGameOver()
 		}
 
 		if( numInPlay <= 1 )
+        {
+            enterScore();
 			m_state = STATE_POSTGAME;
+        }
 	}
 	else if( m_mode == MODE_TIMED )
 	{
 		if( m_timer.getTime() <= 0.0f )
-			m_state = STATE_POSTGAME;
+        {
+            enterScore();
+            m_state = STATE_POSTGAME;
+        }
 	}
 }
 
@@ -351,4 +366,22 @@ bool Game::no_match_mismatch_side() const
 		return true;
 
     return false;
+}
+
+
+unsigned int Game::getHighScore( unsigned int index ) const
+{
+    ASSERT( index < NUM_HIGH_SCORES );
+
+    if( index < NUM_HIGH_SCORES )
+        return s_HighScores[ index ];
+    else
+        return 0;
+}
+
+
+
+void Game::enterScore()
+{
+
 }

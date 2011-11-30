@@ -2,7 +2,9 @@
 #include "GameView.h"
 #include "Game.h"
 
-#define DOOR_PAD (10)
+#define DOOR_PAD 10
+#define FRAMES_PER_CYCLE 6
+#define PIXELS_PER_FRAME 12
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
 pCurrent(gGame.views), pTarget(0), mPosition(64,64),
@@ -45,9 +47,9 @@ int Player::CurrentFrame() {
     case PLAYER_STATUS_IDLE:
       return PlayerStand.index + mDir * (PlayerStand.width * PlayerStand.height);
     case PLAYER_STATUS_WALKING:
-      int frame = (mProgress/WALK_SPEED/2) % 10;
+      int frame = (mProgress/PIXELS_PER_FRAME) % FRAMES_PER_CYCLE;
       int tilesPerFrame = PlayerWalk.width * PlayerWalk.height;
-      int tilesPerStrip = tilesPerFrame * 10;
+      int tilesPerStrip = tilesPerFrame * FRAMES_PER_CYCLE;
       return PlayerWalk.index + mDir * tilesPerStrip + frame * tilesPerFrame;
   }
   return 0;

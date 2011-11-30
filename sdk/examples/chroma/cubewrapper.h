@@ -10,7 +10,7 @@
 #include <sifteo.h>
 #include "GridSlot.h"
 #include "banner.h"
-#include "BG1Helper.h"
+//#include "BG1Helper.h"
 
 using namespace Sifteo;
 
@@ -21,8 +21,10 @@ public:
 	static const int NUM_ROWS = 4;
 	static const int NUM_COLS = 4;
 	static const int STARTING_SHAKES = 3;
-	static const float SHAKE_FILL_DELAY = 1.0f;
+    static const float SHAKE_FILL_DELAY;
 	static const int DEFAULT_COHESION = 3;
+    static const float SPRING_K_CONSTANT;
+    static const float SPRING_DAMPENING_CONSTANT;
 
 	typedef enum
 	{
@@ -38,12 +40,12 @@ public:
 	//draw loading progress.  return true if done
 	bool DrawProgress( AssetGroup &assets );
 	void Draw();
-	void Update(float t);
+    void Update(float t, float dt);
 	void vidInit();
 	void Tilt( int dir );
 	void Shake( bool bShaking );
 
-	Banner &getBanner() { return m_banner; }
+    Banner &getBanner() { return m_banner; }
 
 	bool isFull();
 	bool isEmpty();
@@ -80,9 +82,6 @@ public:
 	bool isDead() const { return m_state == STATE_NOSHAKES; }
 	CubeState getState() const { return m_state; }
 
-	void ClearTiltInfo() { m_TiltBitMask = 0; }
-	void AddTiltInfo( unsigned int dir );
-
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
@@ -103,8 +102,10 @@ private:
 	//what time did we start shaking?
 	float m_fShakeTime;
 
-	//used for in-place tilt animations
-	unsigned int m_TiltBitMask;
+    //render based on current fluid level
+    //use (-128, 128) range since that matches accelerometer
+    Float2 m_curFluidDir;
+    Float2 m_curFluidVel;
 };
 
 #endif
