@@ -1,0 +1,19 @@
+# Thundercracker definitions.
+TC_DIR = ../../../..
+SIFTEO_FIRMWARE_DIR = $(TC_DIR)/firmware/master
+
+DEPS_DIR = $(TC_DIR)/deps/osx
+SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
+                  $(DEPS_DIR)/portaudio/lib/libportaudio.a
+
+
+include $(SIFTEO_FIRMWARE_DIR)/Makefile.objs
+
+CPPFLAGS += -Imocks -I$(SIFTEO_FIRMWARE_DIR)/common -I$(SIFTEO_FIRMWARE_DIR)/../include
+CPPFLAGS += -I$(DEPS_DIR)/portaudio/include \
+            -I$(DEPS_DIR)/speex/include
+
+include $(SIFTEO_FIRMWARE_DIR)/Makefile.defs
+
+# Flags passed to the preprocessor.
+CPPFLAGS += $(CFLAGS)

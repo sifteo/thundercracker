@@ -39,8 +39,6 @@ TEST_F(RadioTest, ackWithPacketShouldCallRadioAcknowledgeOnEnabledCube) {
     PacketBuffer buf;
     RadioManager::ackWithPacket(buf);
     
-    // FIXME: This is failing.  Why?
-    //EXPECT_EQ((uint32_t)0, cube.radioAcknowledgeCallCount);
     EXPECT_EQ((uint32_t)1, cube.radioAcknowledgeCallCount);
 }
 
