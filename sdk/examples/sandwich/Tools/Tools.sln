@@ -21,7 +21,7 @@ Global
 		{EA17ECB1-842A-4118-8A02-278980BCB6DA}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = Misc\Misc.csproj
+		StartupItem = MapTool\MapTool.csproj
 		Policies = $0
 		$0.TextStylePolicy = $1
 		$1.TabWidth = 2

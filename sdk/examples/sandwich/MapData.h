@@ -25,9 +25,14 @@ struct ItemData {
     uint32_t itemId;
 };
 
+struct RoomData {
+    uint8_t collisionMaskRows[8];
+    uint8_t tiles[64];
+};
+
 struct MapData {
     const AssetImage* tileset;
-    uint8_t* tiles; // every 64 tiles represents an 8x8 room of 16px tiles
+    RoomData* rooms;
     uint8_t* xportals; // vertical portals between rooms (x,y) and (x+1,y)
     uint8_t* yportals; // horizontal portals between rooms (x,y) and (x,y+1)
     TriggerData* triggers; // null if empty, callback=0-terminated
@@ -70,7 +75,7 @@ struct MapData {
         ASSERT(0 <= location.y && location.y < height);
         ASSERT(0 <= x && x < 8);
         ASSERT(0 <= y && y < 8);
-        return tiles[ 64 * (location.y * width + location.x) + y * 8 + x ];
+        return rooms[location.y * width + location.x].tiles[y * 8 + x];
     }
 
     inline void SetTileId(Vec2 location, int x, int y, uint8_t tileId) {
@@ -78,7 +83,7 @@ struct MapData {
         ASSERT(0 <= location.y && location.y < height);
         ASSERT(0 <= x && x < 8);
         ASSERT(0 <= y && y < 8);
-        tiles[ 64 * (location.y * width + location.x) + y * 8 + x ] = tileId;
+        rooms[location.y * width + location.x].tiles[y * 8 + x] = tileId;
     }
 
     inline uint8_t GetRoomId(Vec2 location) const {

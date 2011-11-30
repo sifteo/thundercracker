@@ -1,7 +1,7 @@
 #include "Map.h"
 
 Map::Map() {
-  SetData(woods_data);
+  SetData(forest_data);
 }
 
 inline static bool PortalOpen(uint8_t pid) { 

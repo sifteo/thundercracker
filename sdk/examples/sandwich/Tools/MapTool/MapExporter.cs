@@ -84,25 +84,34 @@ namespace MapTool {
         stream.WriteLine("};");
       }
 
-      // write tiles
-      stream.WriteLine("static uint8_t {0}_tiles[] = {{", map.name);
+      // write rooms
+      stream.WriteLine("static RoomData {0}_rooms[] = {{", map.name);
       for(int y=0; y<map.Height; ++y) {
         for(int x=0; x<map.Width; ++x) {
+          stream.WriteLine("    {");
+          // write collision mask rows
+          stream.WriteLine("        {");
+          stream.WriteLine("            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00");
+          stream.WriteLine("        },");
+          // write tiles
+          stream.WriteLine("        {");
           for(int ty=0; ty<8; ++ty) {
-            stream.Write("    ");
+            stream.Write("            ");
             for(int tx=0; tx<8; ++tx) {
               var tile = map.tmxData.backgroundLayer.GetTile(8 * x + tx, 8 * y + ty).LocalId;
               stream.Write("0x{0:X2}, ", Convert.ToByte(tile));
             }
-            stream.Write("\n");
+            stream.Write('\n');
           }
+          stream.WriteLine("        }");
+          stream.WriteLine("    },");
         }
       }
       stream.WriteLine("};");
 
       // write data
       stream.WriteLine(
-        "MapData {0}_data = {{ &TileSet_{0}, {0}_tiles, {0}_xportals, {0}_yportals, {1}, {2}, {3}, {4} }};",
+        "MapData {0}_data = {{ &TileSet_{0}, {0}_rooms, {0}_xportals, {0}_yportals, {1}, {2}, {3}, {4} }};",
         map.name, triggerListName, itemListName, map.Width, map.Height
       );
     }
