@@ -14,6 +14,7 @@ namespace MapTool {
     public static bool IsWall(this TmxTile t) { return t.ContainsKey("wall"); }
     public static bool IsDoor(this TmxTile t) { return t.ContainsKey("door"); }
     public static bool IsOpen(this TmxTile t) { return !t.IsDoor() && !t.IsObstacle() && !t.IsWall(); }
+    public static bool IsWalkable(this TmxTile t) { return !t.IsWall() && !t.IsObstacle(); }
 
     public static Portal PortalType(this TmxTile t) {
       if (t.IsDoor()) {

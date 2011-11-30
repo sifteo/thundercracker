@@ -91,15 +91,26 @@ namespace MapTool {
           stream.WriteLine("    {");
           // write collision mask rows
           stream.WriteLine("        {");
-          stream.WriteLine("            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00");
-          stream.WriteLine("        },");
+          stream.Write("            ");
+          for(int row=0; row<8; ++row) {
+            int rowMask = 0;
+            for(int col=0; col<8; ++col) {
+              var tile = map.tmxData.backgroundLayer.GetTile(8 * x + col, 8 * y + row);
+              if (tile.IsWalkable()) {
+                rowMask |= (1<<col);
+              }
+            }
+            // todo
+            stream.Write("0x{0:X2}, ", rowMask);
+          }
+          stream.WriteLine("\n        },");
           // write tiles
           stream.WriteLine("        {");
           for(int ty=0; ty<8; ++ty) {
             stream.Write("            ");
             for(int tx=0; tx<8; ++tx) {
-              var tile = map.tmxData.backgroundLayer.GetTile(8 * x + tx, 8 * y + ty).LocalId;
-              stream.Write("0x{0:X2}, ", Convert.ToByte(tile));
+              var tile = map.tmxData.backgroundLayer.GetTile(8 * x + tx, 8 * y + ty);
+              stream.Write("0x{0:X2}, ", Convert.ToByte(tile.LocalId));
             }
             stream.Write('\n');
           }
