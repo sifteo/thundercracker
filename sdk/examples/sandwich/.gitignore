@@ -9,6 +9,7 @@ assets.html
 *.userprefs
 *.pidb
 
+Tools/Misc/bin**
 **bin/Debug**
 **bin/Release**
 
