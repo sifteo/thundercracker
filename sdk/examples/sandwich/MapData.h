@@ -26,9 +26,12 @@ struct ItemData {
 };
 
 struct RoomData {
-    //uint8_t centerPosition; // format: 0b00XXXYYY (any use for those two high bits?)
+    uint8_t centerPosition; // format: 0b00XXXYYY (any use for those two high bits?)
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
+
+    inline int LocalCenterX() const { return centerPosition & 0x7; }
+    inline int LocalCenterY() const { return (centerPosition >> 3) & 0x7; }
 };
 
 struct MapData {
@@ -68,6 +71,15 @@ struct MapData {
         ASSERT(0 <= x && x < width);
         ASSERT(0 <= y && y <= height);
         yportals[x * (height+1) + y] = pid;
+    }
+
+    inline RoomData* GetRoomData(uint8_t roomId) const {
+        ASSERT(roomId < width * height);
+        return rooms + roomId;
+    }
+
+    inline RoomData* GetRoomData(Vec2 location) const {
+        return GetRoomData(GetRoomId(location));
     }
 
     inline uint8_t GetTileId(Vec2 location, int x, int y) const {

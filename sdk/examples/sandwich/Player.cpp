@@ -87,14 +87,14 @@ void Player::Update(float dt) {
       // animate walking to target
       pTarget->ShowPlayer();
 
-      mApproachingLockedDoor = gGame.map.GetPortal(pCurrent->Location(), mDir) == PORTAL_LOCK;
+      mApproachingLockedDoor = gGame.map.GetRoom(pCurrent->Location())->GetPortal(mDir) == PORTAL_LOCK;
       if (!mApproachingLockedDoor || HaveBasicKey()) {
         for(mProgress=0; mProgress<128; mProgress+=WALK_SPEED) {
           if (mApproachingLockedDoor && mProgress < 64-DOOR_PAD && mProgress+WALK_SPEED >= 64-DOOR_PAD) {
             DecrementBasicKeyCount();
-            gGame.map.SetPortal(pCurrent->Location(), mDir, PORTAL_DOOR);
-            gGame.map.OpenDoor(pCurrent->Location(), mDir);
-            gGame.map.OpenDoor(pTarget->Location(), (mDir+2)%4);
+            gGame.map.GetRoom(pCurrent->Location())->SetPortal(mDir, PORTAL_DOOR);
+            gGame.map.GetRoom(pCurrent->Location())->OpenDoor(mDir);
+            gGame.map.GetRoom(pTarget->Location())->OpenDoor((mDir+2)%4);
             pCurrent->DrawBackground();
             pTarget->DrawBackground();
             mTimeout = System::clock();

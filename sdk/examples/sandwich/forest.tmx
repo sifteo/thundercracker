@@ -82,9 +82,64 @@
     <property name="wall" value=""/>
    </properties>
   </tile>
+  <tile id="19">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="20">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="21">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="22">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="23">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="24">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
   <tile id="25">
    <properties>
     <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="26">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="27">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="28">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="29">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="30">
+   <properties>
+    <property name="path" value=""/>
    </properties>
   </tile>
   <tile id="31">
@@ -117,6 +172,16 @@
     <property name="wall" value=""/>
    </properties>
   </tile>
+  <tile id="37">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="38">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
   <tile id="39">
    <properties>
     <property name="wall" value=""/>
@@ -142,6 +207,26 @@
     <property name="wall" value=""/>
    </properties>
   </tile>
+  <tile id="44">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="45">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="46">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
+  <tile id="47">
+   <properties>
+    <property name="path" value=""/>
+   </properties>
+  </tile>
   <tile id="48">
    <properties>
     <property name="wall" value=""/>
@@ -160,6 +245,11 @@
   <tile id="51">
    <properties>
     <property name="wall" value=""/>
+   </properties>
+  </tile>
+  <tile id="52">
+   <properties>
+    <property name="path" value=""/>
    </properties>
   </tile>
   <tile id="53">

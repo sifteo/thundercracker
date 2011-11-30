@@ -182,7 +182,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 void Game::TakeItem() {
   int itemId = player.CurrentView()->Room()->itemId;
   if (itemId) {
-    map.SetRoomItem(player.Location(), 0);
+    map.GetRoom(player.Location())->SetItem(0);
     if (itemId == ITEM_BASIC_KEY) {
       player.IncrementBasicKeyCount();
       // do a crazy get-key transition

@@ -88,15 +88,21 @@ namespace MapTool {
       stream.WriteLine("static RoomData {0}_rooms[] = {{", map.name);
       for(int y=0; y<map.Height; ++y) {
         for(int x=0; x<map.Width; ++x) {
+          var room = map.rooms[x,y];
           stream.WriteLine("    {");
+          // write center mask
+          var center = room.Center;
+          int centerMask = center.y;
+          centerMask |= (center.x << 3);
+          stream.WriteLine("        0x{0:X2},", centerMask);
+
           // write collision mask rows
           stream.WriteLine("        {");
           stream.Write("            ");
           for(int row=0; row<8; ++row) {
             int rowMask = 0;
             for(int col=0; col<8; ++col) {
-              var tile = map.tmxData.backgroundLayer.GetTile(8 * x + col, 8 * y + row);
-              if (tile.IsWalkable()) {
+              if (room.GetTile(col, row).IsWalkable()) {
                 rowMask |= (1<<col);
               }
             }
@@ -109,8 +115,7 @@ namespace MapTool {
           for(int ty=0; ty<8; ++ty) {
             stream.Write("            ");
             for(int tx=0; tx<8; ++tx) {
-              var tile = map.tmxData.backgroundLayer.GetTile(8 * x + tx, 8 * y + ty);
-              stream.Write("0x{0:X2}, ", Convert.ToByte(tile.LocalId));
+              stream.Write("0x{0:X2}, ", Convert.ToByte(room.GetTile(tx, ty).LocalId));
             }
             stream.Write('\n');
           }

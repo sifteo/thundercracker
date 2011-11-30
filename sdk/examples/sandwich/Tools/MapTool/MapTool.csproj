@@ -50,6 +50,7 @@
     <Compile Include="MapDatabase.cs" />
     <Compile Include="RemapTileSet.cs" />
     <Compile Include="Spiral.cs" />
+    <Compile Include="Map.Drawing.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,11 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace MapTool {
 
   public struct Int2 {
     public int x;
     public int y;
+
+    public Point ToPoint {
+      get { return new Point(x, y); }
+    }
   }
 
   public static class Spiral {
@@ -16,36 +21,63 @@ namespace MapTool {
       yield return result;
       result.y++;
       yield return result;
-      result.x++;
+      result.x++; result.y--;
       yield return result;
-      for(i=0; i<2; ++i) {
-        result.y--;
-        yield return result;
-      }
-      for(i=0; i<2; ++i) {
-        result.x--;
-        yield return result;
-      }
-      for(i=0; i<3; ++i) {
-        result.y++;
-        yield return result;
-      }
-      for(i=0; i<3; ++i) {
-        result.x++;
-        yield return result;
-      }
-      for(i=0; i<4; ++i) {
-        result.y--;
-        yield return result;
-      }
-      for(i=0; i<4; ++i) {
-        result.x--;
-        yield return result;
-      }
-      for(i=0; i<4; ++i) {
-        result.y++;
-        yield return result;
-      }
+      result.x--; result.y--;
+      yield return result;
+      result.x--; result.y++;
+      yield return result;
+      result.y++;
+      yield return result;
+      result.x+=2;
+      yield return result;
+      result.y-=2;
+      yield return result;
+      result.x-=2;
+      yield return result;
+      result.x += 1; result.y += 3;
+      yield return result;
+      result.x += 2; result.y -= 2;
+      yield return result;
+      result.x -= 2; result.y -= 2;
+      yield return result;
+      result.x -= 2; result.y += 2;
+      yield return result;
+      result.y ++;
+      yield return result;
+      result.x++; result.y ++;
+      yield return result;
+      result.x += 2;
+      yield return result;
+      result.x++; result.y--;
+      yield return result;
+      result.y-=2;
+      yield return result;
+      result.x--; result.y--;
+      yield return result;
+      result.x -= 2;
+      yield return result;
+      result.x--; result.y++;
+      yield return result;
+      result.y += 3;
+      yield return result;
+      result.x += 4;
+      yield return result;
+      result.y -= 4;
+      yield return result;
+      result.x -= 4;
+      yield return result;
+      /*
+      result.x += 2; result.y += 5;
+      yield return result;
+      result.x+=3; result.y -= 3;
+      yield return result;
+      result.x -= 3; result.y -= 3;
+      yield return result;
+      result.x -= 3; result.y += 3;
+      yield return result;
+      */
+
     }
 
   }
