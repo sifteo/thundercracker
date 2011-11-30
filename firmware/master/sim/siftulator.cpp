@@ -25,9 +25,11 @@
  *      the same binary. (After we have a runtime...)
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <assert.h>
 
 #ifdef _WIN32
 #   define WIN32_LEAN_AND_MEAN

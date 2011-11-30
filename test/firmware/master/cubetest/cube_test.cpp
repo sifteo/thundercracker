@@ -52,8 +52,6 @@ TEST_F(CubeTest, CubeStateWhenEnabledWorks) {
     EXPECT_TRUE(cube.enabled());
 }
 
-// FIXME: This is broken
-/*
 TEST_F(CubeTest, RadioProduceWorks) {
     PacketTransmission ptx;
     CubeSlot &cube = CubeSlot::getInstance(1);
@@ -65,4 +63,3 @@ TEST_F(CubeTest, RadioProduceWorks) {
     
     // TODO: Set various bits on the cube to fully test the radio codec.
 }
-*/

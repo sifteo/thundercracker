@@ -1,5 +1,8 @@
-#ifndef _MOCK_CUBECODEC_H
-#define _MOCK_CUBECODEC_H
+#ifndef _SIFTEO_CUBECODEC_H
+#define _SIFTEO_CUBECODEC_H
+
+#include <stdio.h>
+
 
 class MockCubeCodec {
  public:
@@ -24,4 +27,4 @@ class MockCubeCodec {
      }
 };
 
-#endif _MOCK_CUBECODEC_H
+#endif _SIFTEO_CUBECODEC_H

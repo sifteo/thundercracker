@@ -46,9 +46,10 @@ SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
 include $(SIFTEO_FIRMWARE_DIR)/Makefile.objs
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
-CFLAGS := -I$(SIFTEO_FIRMWARE_DIR)/common -I$(SIFTEO_FIRMWARE_DIR)/../include
-CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include \
-             -I$(DEPS_DIR)/speex/include
+CFLAGS := -Imocks -I$(SIFTEO_FIRMWARE_DIR)/common -I$(SIFTEO_FIRMWARE_DIR)/../include \
+          -DBUILD_UNIT_TEST -DUSE_MOCK_CUBE_CODEC
+CFLAGS += -I$(DEPS_DIR)/portaudio/include \
+          -I$(DEPS_DIR)/speex/include
 
 include $(SIFTEO_FIRMWARE_DIR)/Makefile.defs
 
@@ -57,11 +58,12 @@ include $(SIFTEO_FIRMWARE_DIR)/Makefile.defs
 #CPPFLAGS += -I$(GTEST_DIR)/include -I$(SIFTEO_SDK_DIR)/include -I$(SIFTEO_MASTER_FIRMWARE_COMMON_DIR) -I$(SIFTEO_SHARED_FIRMWARE_DIR)/include -DBUILD_UNIT_TEST
 #CPPFLAGS += -I$(GTEST_DIR)/include -I$(SIFTEO_SDK_DIR)/include -I$(SIFTEO_FIRMWARE_DIR)/common -I$(SIFTEO_FIRMWARE_DIR)/../include
 
-CPPFLAGS += -I$(GTEST_DIR)/include $(CFLAGS) -DBUILD_UNIT_TEST -DUSE_MOCK_CUBE_CODEC
+#CPPFLAGS += -I$(GTEST_DIR)/include $(CFLAGS)
+CPPFLAGS += -I$(GTEST_DIR)/include $(CFLAGS)
 
 # Flags passed to the C++ compiler.
 #CXXFLAGS += -g -Wall -Wextra
-CXXFLAGS += -g -Wextra
+#CXXFLAGS += -g -Wextra
 
 
 # Builds gtest.a and gtest_main.a.
@@ -96,7 +98,7 @@ $(BIN_SIM): $(OBJS_SIM)
 	$(LIBTOOL_SIM) -static -o $@ $(^F) $(SIM_STATIC_LIBS)
 
 %.sim.o: %.cpp $(CDEPS)
-	$(CC_SIM) -c -o $(@F) $< $(CCFLAGS_SIM)
+	$(CXX) -c -o $(@F) $< $(CPPFLAGS) $(CXXFLAGS)
 
 
 # Builds a sample test.  A test should link with either gtest.a or
