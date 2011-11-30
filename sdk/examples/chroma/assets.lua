@@ -22,6 +22,12 @@ TimerDown = image{"TimerDown.png"}
 TimerRight = image{"TimerRight.png"}
 TimerEdgeUpLeft = image{"TimerEdgeUpLeft.png", height=8}
 TimerEdgeUpRight = image{"TimerEdgeUpRight.png", height=8}
+TimerEdgeLeftUp = image{"TimerEdgeLeftUp.png", height=8}
+TimerEdgeLeftDown = image{"TimerEdgeLeftDown.png", height=8}
+TimerEdgeDownLeft = image{"TimerEdgeDownLeft.png", height=8}
+TimerEdgeDownRight = image{"TimerEdgeDownRight.png", height=8}
+TimerEdgeRightUp = image{"TimerEdgeRightUp.png", height=8}
+TimerEdgeRightDown = image{"TimerEdgeRightDown.png", height=8}
 --explosions
 ExplodeGem0 = image{"Gem0Explode.png", height=32}
 --gem animations

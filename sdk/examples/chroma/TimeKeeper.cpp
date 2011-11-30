@@ -51,12 +51,7 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper )
 
     int numTiles = TIMER_TILES * amount;
 
-    //have one more
-    /*numTiles++;
-    if( numTiles > TIMER_TILES )
-        numTiles = TIMER_TILES;*/
-
-    int offset = TIMER_TILES - numTiles;
+    int offset = TIMER_TILES - numTiles + 1;
 
     if( numTiles > 0 )
     {
@@ -72,7 +67,16 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper )
         int numSubTiles = ( ( TIMER_TILES * amount ) - numTiles ) * TIMER_TILES;
 
         bg1helper.DrawAsset( Vec2( offset - 1, 0 ), TimerEdgeUpLeft, numSubTiles );
-        bg1helper.DrawAsset( Vec2( ( TIMER_TILES * 2 ) - ( offset ), 0 ), TimerEdgeUpRight, numSubTiles );
+        bg1helper.DrawAsset( Vec2( ( TIMER_TILES * 2 ) - ( offset ) + 2, 0 ), TimerEdgeUpRight, numSubTiles );
+
+        bg1helper.DrawAsset( Vec2( offset - 1, 15 ), TimerEdgeDownLeft, numSubTiles );
+        bg1helper.DrawAsset( Vec2( ( TIMER_TILES * 2 ) - ( offset ) + 2, 15 ), TimerEdgeDownRight, numSubTiles );
+
+        bg1helper.DrawAsset( Vec2( 0, offset - 1 ), TimerEdgeLeftUp, numSubTiles );
+        bg1helper.DrawAsset( Vec2( 0, ( TIMER_TILES * 2 ) - ( offset ) + 2 ), TimerEdgeLeftDown, numSubTiles );
+
+        bg1helper.DrawAsset( Vec2( 15, offset - 1 ), TimerEdgeRightUp, numSubTiles );
+        bg1helper.DrawAsset( Vec2( 15, ( TIMER_TILES * 2 ) - ( offset ) + 2 ), TimerEdgeRightDown, numSubTiles );
     }
 }
 

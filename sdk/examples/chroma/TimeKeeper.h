@@ -17,7 +17,7 @@ class TimeKeeper
 public:
     static const float TIME_INITIAL;
     static const float TIME_RETURN_PER_GEM;
-	static const int TIMER_TILES = 8;
+    static const int TIMER_TILES = 7;
 
 	TimeKeeper();
 
