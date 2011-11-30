@@ -35,7 +35,6 @@ OBJS_STM32 = \
 	common/cubecodec.stm32.o \
 	common/audiomixer.stm32.o \
 	common/speexdecoder.stm32.o \
-	common/audio.gen.stm32.o \
 	common/audiobuffer.stm32.o \
 	common/audiochannel.stm32.o \
 	common/accel.stm32.o \
