@@ -7,7 +7,7 @@ OBJS_SIM = $(ASSETS).gen.sim.o main.sim.o audio.gen.sim.o
 BIN_STM32 = hello.stm32
 OBJS_STM32 = $(ASSETS).gen.stm32.o main.stm32.o audio.gen.stm32.o
 
-ASSETDEPS += audio.txt *.raw *.png $(ASSETS).lua audio.gen.cpp
+ASSETDEPS += audio.txt *.raw *.png $(ASSETS).lua
 
 include $(TC_DIR)/firmware/master/Makefile.rules
 
