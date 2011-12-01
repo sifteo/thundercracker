@@ -9,7 +9,7 @@
 #include <string.h>
 
 // General high-level program constants.
-#define MAX 15
+#define MAX 6//15
 #define NUMBER_OF_ENGLISH_LETTERS 26
 #define INPUT_LIMIT 30
 #define LOWER_IT 32
@@ -26,11 +26,14 @@ typedef enum { FALSE = 0, TRUE = 1 } Bool;
 typedef Bool* BoolPtr;
 
 // The lexicon text file.
-#define RAW_LEXICON "Word-List.txt"
+//#define RAW_LEXICON "Word-List.txt"
+#define RAW_LEXICON "dictionary.txt"
 
 // This program will create "5" binary-data files for use, and "1" text-data file for inspection.
-#define TRADITIONAL_DAWG_DATA "Traditional_Dawg_For_Word-List.dat"
-#define TRADITIONAL_DAWG_TEXT_DATA "Traditional_Dawg_Explicit_Text_For_Word-List.txt"
+//#define TRADITIONAL_DAWG_DATA "Traditional_Dawg_For_Word-List.dat"
+//#define TRADITIONAL_DAWG_TEXT_DATA "Traditional_Dawg_Explicit_Text_For_Word-List.txt"
+#define TRADITIONAL_DAWG_DATA "dictionary.dat"
+#define TRADITIONAL_DAWG_TEXT_DATA "dictionary_stats.txt"
 
 // Lookup tables used for node encoding and number-string decoding.
 const unsigned int PowersOfTwo[INT_BITS - 1] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384,

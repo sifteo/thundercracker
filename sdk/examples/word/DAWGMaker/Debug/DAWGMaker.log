@@ -1,174 +1,162 @@
-﻿Build started 11/30/2011 12:59:48 PM.
+﻿Build started 11/30/2011 5:53:58 PM.
      1>Project "C:\Users\Chris\Documents\Sifteo\thundercracker\sdk\examples\word\DAWGMaker\DAWGMaker.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
-         Creating "Debug\DAWGMaker.unsuccessfulbuild" because "AlwaysCreate" was specified.
+         Touching "Debug\DAWGMaker.unsuccessfulbuild".
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt DAWGMaker.cpp stdafx.cpp
-         stdafx.cpp
-         DAWGMaker.cpp
-         Generating Code...
-         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TC /analyze- /errorReport:prompt TraditionalDawgAnagrammer.c TraditionalDawgCreator.c
+         All outputs are up-to-date.
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TC /analyze- /errorReport:prompt TraditionalDawgCreator.c
          TraditionalDawgCreator.c
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(229): error C2143: syntax error : missing ';' before 'type'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(230): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(231): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(233): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(234): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(264): error C2275: 'TnodePtr' : illegal use of this type as an expression
-                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(116) : see declaration of 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(264): error C2146: syntax error : missing ';' before identifier 'Result'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(264): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(264): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(265): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(265): error C2223: left of '->Letter' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(265): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(265): warning C4047: 'return' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(266): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(266): error C2223: left of '->Letter' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(267): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(267): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(267): error C2223: left of '->Next' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(268): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(268): warning C4047: '==' : 'int' differs in levels of indirection from 'void *'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(270): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(270): error C2223: left of '->Letter' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(270): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(270): warning C4047: 'return' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(280): error C2275: 'TnodePtr' : illegal use of this type as an expression
-                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(116) : see declaration of 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(280): error C2146: syntax error : missing ';' before identifier 'Holder'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(280): error C2065: 'Holder' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(280): warning C4047: '=' : 'int' differs in levels of indirection from 'void *'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(281): error C2275: 'TnodePtr' : illegal use of this type as an expression
-                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(116) : see declaration of 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(281): error C2146: syntax error : missing ';' before identifier 'Currently'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(281): error C2065: 'Currently' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(281): warning C4047: '=' : 'int' differs in levels of indirection from 'void *'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(287): error C2065: 'Holder' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(287): warning C4047: '=' : 'int' differs in levels of indirection from 'tnode *'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(289): error C2065: 'Holder' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(289): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(289): warning C4024: 'TnodeSetDirectChild' : different types for formal and actual parameter 1
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(232): error C2143: syntax error : missing ';' before 'type'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(233): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(234): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(236): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(237): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(267): error C2275: 'TnodePtr' : illegal use of this type as an expression
+                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(119) : see declaration of 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(267): error C2146: syntax error : missing ';' before identifier 'result'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(267): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(267): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(268): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(268): error C2223: left of '->Letter' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(268): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(268): warning C4047: 'return' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(269): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(269): error C2223: left of '->Letter' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(270): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(270): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(270): error C2223: left of '->Next' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(271): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(271): warning C4047: '==' : 'int' differs in levels of indirection from 'void *'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(273): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(273): error C2223: left of '->Letter' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(273): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(273): warning C4047: 'return' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(283): error C2275: 'TnodePtr' : illegal use of this type as an expression
+                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(119) : see declaration of 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(283): error C2146: syntax error : missing ';' before identifier 'Holder'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(283): error C2065: 'Holder' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(283): warning C4047: '=' : 'int' differs in levels of indirection from 'void *'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(284): error C2275: 'TnodePtr' : illegal use of this type as an expression
+                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(119) : see declaration of 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(284): error C2146: syntax error : missing ';' before identifier 'Currently'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(284): error C2065: 'Currently' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(284): warning C4047: '=' : 'int' differs in levels of indirection from 'void *'
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(290): error C2065: 'Holder' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(290): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(290): warning C4024: 'TnodeInit' : different types for formal and actual parameter 2
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(290): warning C4047: '=' : 'int' differs in levels of indirection from 'tnode *'
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(292): error C2065: 'Holder' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(292): error C2223: left of '->ParentalUnit' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(296): error C2065: 'Currently' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(296): warning C4047: '=' : 'int' differs in levels of indirection from 'tnode *'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(297): error C2065: 'Currently' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(297): error C2223: left of '->Next' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(298): error C2065: 'Currently' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(298): error C2223: left of '->Next' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(298): error C2198: 'TnodeLetter' : too few arguments for call
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(292): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(292): warning C4024: 'TnodeSetDirectChild' : different types for formal and actual parameter 1
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(293): error C2065: 'Holder' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(293): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(293): warning C4024: 'TnodeInit' : different types for formal and actual parameter 2
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(295): error C2065: 'Holder' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(295): error C2223: left of '->ParentalUnit' must point to struct/union
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(299): error C2065: 'Currently' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(299): error C2065: 'Currently' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(299): error C2223: left of '->Next' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(301): error C2065: 'Holder' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(299): warning C4047: '=' : 'int' differs in levels of indirection from 'tnode *'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(300): error C2065: 'Currently' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(300): error C2223: left of '->Next' must point to struct/union
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(301): error C2065: 'Currently' : undeclared identifier
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(301): error C2223: left of '->Next' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(301): error C2198: 'TnodeLetter' : too few arguments for call
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(302): error C2065: 'Currently' : undeclared identifier
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(302): error C2065: 'Currently' : undeclared identifier
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(302): error C2223: left of '->Next' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(302): error C2065: 'Holder' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(302): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(302): warning C4024: 'TnodeInit' : different types for formal and actual parameter 2
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(302): error C2065: 'Currently' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(302): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(302): warning C4024: 'TnodeInit' : different types for formal and actual parameter 6
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(303): error C2065: 'Holder' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(303): warning C4047: '!=' : 'int' differs in levels of indirection from 'void *'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(303): error C2065: 'Holder' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(303): error C2223: left of '->ParentalUnit' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(303): error C2065: 'Currently' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(303): error C2223: left of '->Next' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(376): error C2143: syntax error : missing ';' before 'type'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(377): error C2065: 'NodesAdded' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(537): error C2275: 'TnodePtr' : illegal use of this type as an expression
-                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(116) : see declaration of 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(537): error C2146: syntax error : missing ';' before identifier 'Result'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(537): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(537): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(540): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(540): warning C4047: 'return' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(542): error C2275: 'TnodePtr' : illegal use of this type as an expression
-                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(116) : see declaration of 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(542): error C2146: syntax error : missing ';' before identifier 'Result'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(542): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(542): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(543): error C2275: 'BreadthQueueNodePtr' : illegal use of this type as an expression
-                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(487) : see declaration of 'BreadthQueueNodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(543): error C2146: syntax error : missing ';' before identifier 'Holder'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(543): error C2065: 'Holder' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(543): warning C4047: '=' : 'int' differs in levels of indirection from 'BreadthQueueNodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(545): error C2065: 'Holder' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(545): warning C4022: 'free' : pointer mismatch for actual parameter 1
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(547): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(547): warning C4047: 'return' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(556): error C2143: syntax error : missing ';' before 'type'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(557): error C2275: 'TnodePtr' : illegal use of this type as an expression
-                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(116) : see declaration of 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(557): error C2146: syntax error : missing ';' before identifier 'Current'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(557): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(557): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(559): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(559): warning C4047: '!=' : 'int' differs in levels of indirection from 'void *'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(304): error C2065: 'Holder' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(304): error C2065: 'Currently' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(304): error C2223: left of '->Next' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(305): error C2065: 'Currently' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(305): error C2223: left of '->Next' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(305): error C2065: 'Holder' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(305): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(305): warning C4024: 'TnodeInit' : different types for formal and actual parameter 2
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(305): error C2065: 'Currently' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(305): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(305): warning C4024: 'TnodeInit' : different types for formal and actual parameter 6
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(306): error C2065: 'Holder' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(306): warning C4047: '!=' : 'int' differs in levels of indirection from 'void *'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(306): error C2065: 'Holder' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(306): error C2223: left of '->ParentalUnit' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(306): error C2065: 'Currently' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(306): error C2223: left of '->Next' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(379): error C2143: syntax error : missing ';' before 'type'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(380): error C2065: 'NodesAdded' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(540): error C2275: 'TnodePtr' : illegal use of this type as an expression
+                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(119) : see declaration of 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(540): error C2146: syntax error : missing ';' before identifier 'result'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(540): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(540): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(543): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(543): warning C4047: 'return' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(545): error C2275: 'TnodePtr' : illegal use of this type as an expression
+                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(119) : see declaration of 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(545): error C2146: syntax error : missing ';' before identifier 'result'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(545): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(545): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(546): error C2275: 'BreadthQueueNodePtr' : illegal use of this type as an expression
+                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(490) : see declaration of 'BreadthQueueNodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(546): error C2146: syntax error : missing ';' before identifier 'Holder'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(546): error C2065: 'Holder' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(546): warning C4047: '=' : 'int' differs in levels of indirection from 'BreadthQueueNodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(548): error C2065: 'Holder' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(548): warning C4022: 'free' : pointer mismatch for actual parameter 1
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(550): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(550): warning C4047: 'return' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(559): error C2143: syntax error : missing ';' before 'type'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(560): error C2275: 'TnodePtr' : illegal use of this type as an expression
+                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(119) : see declaration of 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(560): error C2146: syntax error : missing ';' before identifier 'Current'
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(560): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(560): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(560): warning C4024: 'BreadthQueuePush' : different types for formal and actual parameter 2
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(561): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(561): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(561): error C2223: left of '->Next' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(565): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(565): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(566): error C2065: 'CurrentMaxChildDepth' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(566): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(566): error C2223: left of '->MaxChildDepth' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(567): error C2065: 'CurrentMaxChildDepth' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(567): error C2065: 'CurrentMaxChildDepth' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(567): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(567): warning C4047: '=' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(568): error C2065: 'CurrentMaxChildDepth' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(560): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(562): error C2065: 'Current' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(562): warning C4047: '!=' : 'int' differs in levels of indirection from 'void *'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(563): error C2065: 'Current' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(563): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(563): warning C4024: 'BreadthQueuePush' : different types for formal and actual parameter 2
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(564): error C2065: 'Current' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(564): error C2065: 'Current' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(564): error C2223: left of '->Next' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(568): error C2065: 'Current' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(568): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(569): error C2065: 'CurrentMaxChildDepth' : undeclared identifier
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(569): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(569): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(569): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(569): warning C4024: 'TnodeChild' : different types for formal and actual parameter 1
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(569): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(569): error C2223: left of '->MaxChildDepth' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(570): error C2065: 'CurrentMaxChildDepth' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(570): error C2065: 'CurrentMaxChildDepth' : undeclared identifier
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(570): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(570): warning C4047: '!=' : 'int' differs in levels of indirection from 'void *'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(571): error C2065: 'Current' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(571): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(571): warning C4024: 'BreadthQueuePush' : different types for formal and actual parameter 2
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(570): warning C4047: '=' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(571): error C2065: 'CurrentMaxChildDepth' : undeclared identifier
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(572): error C2065: 'Current' : undeclared identifier
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(572): error C2065: 'Current' : undeclared identifier
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(572): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(572): warning C4024: 'TnodeNext' : different types for formal and actual parameter 1
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(572): warning C4024: 'TnodeChild' : different types for formal and actual parameter 1
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(572): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(682): error C2275: 'ArrayDawgPtr' : illegal use of this type as an expression
-                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(669) : see declaration of 'ArrayDawgPtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(682): error C2146: syntax error : missing ';' before identifier 'Result'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(682): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(682): warning C4047: '=' : 'int' differs in levels of indirection from 'ArrayDawgPtr'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(686): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(686): error C2223: left of '->MinStringLength' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(687): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(687): error C2223: left of '->MaxStringLength' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(688): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(688): error C2223: left of '->NumberOfStrings' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(689): error C2065: 'Result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(573): error C2065: 'Current' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(573): warning C4047: '!=' : 'int' differs in levels of indirection from 'void *'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(574): error C2065: 'Current' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(574): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(574): warning C4024: 'BreadthQueuePush' : different types for formal and actual parameter 2
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(575): error C2065: 'Current' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(575): error C2065: 'Current' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(575): warning C4047: 'function' : 'TnodePtr' differs in levels of indirection from 'int'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(575): warning C4024: 'TnodeNext' : different types for formal and actual parameter 1
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(575): warning C4047: '=' : 'int' differs in levels of indirection from 'TnodePtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(685): error C2275: 'ArrayDawgPtr' : illegal use of this type as an expression
+                 c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(672) : see declaration of 'ArrayDawgPtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(685): error C2146: syntax error : missing ';' before identifier 'result'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(685): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(685): warning C4047: '=' : 'int' differs in levels of indirection from 'ArrayDawgPtr'
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(689): error C2065: 'result' : undeclared identifier
      1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(689): error C2223: left of '->MinStringLength' must point to struct/union
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(689): error C2065: 'Result' : undeclared identifier
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(689): fatal error C1003: error count exceeds 100; stopping compilation
-         TraditionalDawgAnagrammer.c
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawganagrammer.c(130): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawganagrammer.c(150): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\string.h(105) : see declaration of 'strcpy'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawganagrammer.c(184): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\stdio.h(234) : see declaration of 'fopen'
-     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawganagrammer.c(199): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\stdio.h(234) : see declaration of 'fopen'
-         Generating Code...
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(690): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(690): error C2223: left of '->MaxStringLength' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(691): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(691): error C2223: left of '->NumberOfStrings' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(692): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(692): error C2223: left of '->MinStringLength' must point to struct/union
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(692): error C2065: 'result' : undeclared identifier
+     1>c:\users\chris\documents\sifteo\thundercracker\sdk\examples\word\dawgmaker\traditionaldawgcreator.c(692): fatal error C1003: error count exceeds 100; stopping compilation
      1>Done Building Project "C:\Users\Chris\Documents\Sifteo\thundercracker\sdk\examples\word\DAWGMaker\DAWGMaker.vcxproj" (build target(s)) -- FAILED.
 
 Build FAILED.
 
-Time Elapsed 00:00:02.77
+Time Elapsed 00:00:00.28
