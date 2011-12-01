@@ -16,7 +16,7 @@ BG1Helper::BG1Helper( Cube &cube ) : m_cube( cube )
 void BG1Helper::Clear()
 {
     memset( m_bitset, 0, 32 );
-    memset( m_tileset, 0, 512 );
+    memset( m_tileset, 0xff, 512 );
 }
 
 void BG1Helper::Flush()
@@ -24,13 +24,14 @@ void BG1Helper::Flush()
 	unsigned int tileOffset = 0;
 
 	//this part should be smarter (use ranges)
+    //very unoptimal
 	for (unsigned y = 0; y < BG1_ROWS; y++)
     {
 		if( m_bitset[y] > 0 )
 		{
 			for( unsigned i = 0; i < BG1_COLS; i++ )
 			{
-				if( m_tileset[y][i] > 0 )
+                if( m_tileset[y][i] != 0xffff )
 				{
 					_SYS_vbuf_writei(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2 + tileOffset++,
                          m_tileset[y]+i,
@@ -39,6 +40,8 @@ void BG1Helper::Flush()
 			}
 		}
 	}
+
+    ASSERT( getBitSetCount() == tileOffset );
 
     //copy over our bitset
     _SYS_vbuf_write(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2,
@@ -52,6 +55,7 @@ void BG1Helper::Flush()
 
 void BG1Helper::DrawAsset( const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame )
 {
+    ASSERT( frame < asset.frames );
     unsigned offset = asset.width * asset.height * frame;
 
     for (unsigned y = 0; y < asset.height; y++)
@@ -105,9 +109,9 @@ void BG1Helper::SetBitRange( unsigned int bitsetIndex, unsigned int xOffset, uns
 
 //count how many bits set we have total
 //only used for debug, so I don't care about optimizing it yet
-int BG1Helper::getBitSetCount() const
+unsigned int BG1Helper::getBitSetCount() const
 {
-	int count = 0;
+    unsigned int count = 0;
 	for (unsigned y = 0; y < BG1_ROWS; y++)
 	{
 		count += __builtin_popcount( m_bitset[y] );

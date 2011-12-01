@@ -10,7 +10,9 @@
 #include <sifteo.h>
 #include "GridSlot.h"
 #include "banner.h"
-//#include "BG1Helper.h"
+#include "Intro.h"
+#include "GameOver.h"
+#include "Glimmer.h"
 
 using namespace Sifteo;
 
@@ -25,6 +27,11 @@ public:
 	static const int DEFAULT_COHESION = 3;
     static const float SPRING_K_CONSTANT;
     static const float SPRING_DAMPENING_CONSTANT;
+    static const float MOVEMENT_THRESHOLD;
+    static const float IDLE_TIME_THRESHOLD;
+    static const float IDLE_FINISH_THRESHOLD;
+    static const float MIN_GLIMMER_TIME;
+    static const float MAX_GLIMMER_TIME;
 
 	typedef enum
 	{
@@ -81,6 +88,7 @@ public:
 
 	bool isDead() const { return m_state == STATE_NOSHAKES; }
 	CubeState getState() const { return m_state; }
+    //bool IsIdle() const;
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -106,6 +114,14 @@ private:
     //use (-128, 128) range since that matches accelerometer
     Float2 m_curFluidDir;
     Float2 m_curFluidVel;
+    //how long have we been not tilting
+    float m_idleTimer;
+
+    Intro m_intro;
+    GameOver m_gameover;
+    Glimmer m_glimmer;
+
+    float m_timeTillGlimmer;
 };
 
 #endif
