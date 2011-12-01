@@ -16,7 +16,7 @@ class GameOver
 {
 public:
     static const int NUM_ARROWS = 4;
-    static const int FRAMES_BETWEEN_ANIMS = 4;
+    static const int FRAMES_BETWEEN_ANIMS = 0;
 
     GameOver();
     void Reset();
