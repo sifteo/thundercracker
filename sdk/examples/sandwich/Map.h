@@ -29,6 +29,7 @@ struct MapPath {
   uint8_t moves[PATH_CAPACITY];
   uint8_t *pFirstMove;
   inline int Length() const { return (moves + PATH_CAPACITY) - pFirstMove; }
+  inline const uint8_t* End() const { return moves + PATH_CAPACITY; }
 };
 
 class Map {

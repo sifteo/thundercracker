@@ -2,8 +2,9 @@
 #include "Game.h"
 
 
-//-------
+//-----------------------------------------------------------------------------
 // MAP ROOM STUFF
+//-----------------------------------------------------------------------------
 
 int MapRoom::RoomId() {
   return (int)(this - gGame.map.GetRoom(0));
@@ -81,8 +82,9 @@ void MapRoom::ClearTrigger() {
   }
 }
 
-//-------
+//-----------------------------------------------------------------------------
 // MAP STUFF
+//-----------------------------------------------------------------------------
 
 Map::Map() {
   SetData(forest_data);
@@ -141,7 +143,9 @@ bool Map::IsVertexWalkable(Vec2 vertex) {
 
 }
 
+//-----------------------------------------------------------------------------
 // A* Crud
+//-----------------------------------------------------------------------------
 
 struct ARecord {
   uint8_t tileID; // most significant bit identifies if this is open "0" or closed "1"
@@ -219,7 +223,7 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
   MapRoom* src = GetRoom(loc);
   MapRoom* dst = GetRoom(dloc);
   
-  AStar as; // stack overflow risk?
+  AStar as;
   for(ACell* p = as.cells; p != as.cells + A_STAR_CAP; ++p) { p->record = 0xff; }
 
   // convert src/dst tile positions to normalized coordinates relative to the 65-tile pathfinding grid
@@ -248,7 +252,7 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
     }
   }*/
 
-  // add an open record
+  // add an open record for src
   as.recordCount = 1;
   as.records->tileID = as.TileToID(as.src);
   as.records->parentDirection = 0;
@@ -291,6 +295,7 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
       }
     }
   } while(pSelected);
+  /*
   // WHAT IS THIS MADNESS??
   // Just fill in the trivial-path and call it a day
   outPath->pFirstMove = outPath->moves + PATH_CAPACITY;
@@ -339,7 +344,7 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
       }
     }
   }
-
+  */
   return false;
 }
 

@@ -23,6 +23,10 @@ void Player::Reset() {
   mApproachingLockedDoor = false;
 }
 
+MapRoom* Player::Room() const {
+  return gGame.map.GetRoom(Location());
+}
+
 void Player::SetLocation(Vec2 position, Cube::Side direction) {
   CORO_RESET;
   mPath.steps[0] = -1;
@@ -86,15 +90,60 @@ void Player::Update(float dt) {
       }
       // animate walking to target
       pTarget->ShowPlayer();
+      
+      // <new>
+      ASSERT( gGame.map.FindPath(pCurrent->Location(), mDir, &mMoves) );
+      
+      mProgress = 0;
+      for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
+        if (mProgress != 0) {
+          mPosition += mProgress * kSideToUnit[*pNextMove];
+          mProgress = 0;
+          pCurrent->UpdatePlayer();
+          pTarget->UpdatePlayer();
+          CORO_YIELD;
+        }
+        while(mProgress+WALK_SPEED < 16) {
+          mProgress += WALK_SPEED;
+          mPosition += WALK_SPEED * kSideToUnit[*pNextMove];
+          pCurrent->UpdatePlayer();
+          pTarget->UpdatePlayer();
+          CORO_YIELD;
+        }
+        mPosition += (16 - mProgress) * kSideToUnit[*pNextMove];
+        mProgress = WALK_SPEED - (16-mProgress);
+      }
+      if (mProgress != 0) {
+        pNextMove--;
+        mPosition += mProgress * kSideToUnit[*pNextMove];
+        mProgress = 0;
+        pCurrent->UpdatePlayer();
+        pTarget->UpdatePlayer();
+        CORO_YIELD;
+      }
+      pCurrent->HidePlayer();
+      pCurrent = pTarget;
+      pTarget = 0;  
+      pCurrent->UpdatePlayer();
+      { // passive trigger?
+        MapRoom *mr = pCurrent->Room();
+        if (mr->callback) {
+          mr->callback(TRIGGER_TYPE_PASSIVE);
+        }
+      } //
+      
 
-      mApproachingLockedDoor = gGame.map.GetRoom(pCurrent->Location())->GetPortal(mDir) == PORTAL_LOCK;
+      // </new>
+      // <old>
+      /*
+      mApproachingLockedDoor = pCurrent->Room()->GetPortal(mDir) == PORTAL_LOCK;
       if (!mApproachingLockedDoor || HaveBasicKey()) {
         for(mProgress=0; mProgress<128; mProgress+=WALK_SPEED) {
           if (mApproachingLockedDoor && mProgress < 64-DOOR_PAD && mProgress+WALK_SPEED >= 64-DOOR_PAD) {
             DecrementBasicKeyCount();
-            gGame.map.GetRoom(pCurrent->Location())->SetPortal(mDir, PORTAL_DOOR);
-            gGame.map.GetRoom(pCurrent->Location())->OpenDoor(mDir);
-            gGame.map.GetRoom(pTarget->Location())->OpenDoor((mDir+2)%4);
+            pCurrent->Room()->SetPortal(mDir, PORTAL_DOOR);
+            pCurrent->Room()->OpenDoor(mDir);
+            pTarget->Room()->OpenDoor((mDir+2)%4);
             pCurrent->DrawBackground();
             pTarget->DrawBackground();
             mTimeout = System::clock();
@@ -120,7 +169,6 @@ void Player::Update(float dt) {
           }
         } //
       } else {
-
         // walk up to the locked door, then bounce back
         mPath.Cancel();
         pTarget->HidePlayer();
@@ -137,6 +185,8 @@ void Player::Update(float dt) {
           pCurrent->UpdatePlayer();
         }
       }
+      */ 
+      // </old>
 
     } while(mPath.PopStep(pCurrent));
 
