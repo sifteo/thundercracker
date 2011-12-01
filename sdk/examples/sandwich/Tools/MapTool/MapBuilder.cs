@@ -48,6 +48,8 @@ namespace MapTool {
         tmxData = tmap
       };
 
+      // TODO: MAKE SURE PORTAL OPENINGS ARE TWO-WIDE VERTICALLY!
+
       // infer portal states
       for(int rx=0; rx<result.Width; ++rx) {
         for(int ry=0; ry<result.Height; ++ry) {
