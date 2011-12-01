@@ -1,5 +1,6 @@
 #include <sifteo.h>
 #include <stdlib.h>
+#include <time.h>
 #include "assets.gen.h"
 #include "WordGame.h"
 #include "EventID.h"
@@ -33,6 +34,7 @@ void accel(_SYSCubeID c)
 
 void siftmain()
 {
+    srand((unsigned)time(0)); // seed rand()
     LOG(("HELLO, WORLD\n"));
     //_SYS_vectors.cubeEvents.accelChange = accel;
     _SYS_vectors.neighborEvents.add = neighbor_add;

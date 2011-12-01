@@ -1,10 +1,11 @@
 #include "PrototypeWordList.h"
+#include <string.h>
+#include <cstdlib>
+#include <sifteo.h>
 
-PrototypeWordList::PrototypeWordList()
-{
-}
 
-const char* PrototypeWordList::list[] =
+
+static const char* sList[] =
 {
 "aa",
 "aah",
@@ -28846,3 +28847,45 @@ const char* PrototypeWordList::list[] =
 "zyme",
 "zymes",
 };
+
+
+PrototypeWordList::PrototypeWordList()
+{
+}
+
+const char* PrototypeWordList::pickWord(unsigned length)
+{
+    float r = (float)rand()/(float)RAND_MAX;
+    unsigned numWords = arraysize(sList);
+    unsigned startIndex = (unsigned)(r * numWords);
+    unsigned i = startIndex;
+    do
+    {
+        if (strlen(sList[i]) == length)
+        {
+            return sList[i];
+        }
+        i = (i + 1) % numWords;
+    } while (i != startIndex);
+
+    return sList[0];
+}
+
+static int bsearch_strcmp(const char*a,const char*b)
+{
+    return strcmp(*(const char **)a, *(const char **)b);
+}
+
+bool PrototypeWordList::isWord(const char* string)
+{
+    const char* pItem =
+            (const char*) bsearch(
+                &string,
+                sList,
+                arraysize(sList),
+                sizeof(const char*),
+                (int(*)(const void*,const void*)) bsearch_strcmp);
+
+    return (pItem!=NULL);
+}
+

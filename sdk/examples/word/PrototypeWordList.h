@@ -5,11 +5,11 @@ class PrototypeWordList
 {
 public:
     PrototypeWordList();
-    static const char* pickWord(unsigned length) {return 0;}
-    static bool isWord(const char* string) {return false;}
+    static const char* pickWord(unsigned length);
+    static bool isWord(const char* string);
 
 private:
-    static const char* list[];
+    //static const char* sList[];
 };
 
 #endif // PROTOTYPEWORDLIST_H

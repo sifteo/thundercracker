@@ -52,5 +52,6 @@ CubeStateMachine* GameStateMachine::findCSMFromID(Cube::ID cubeID)
             }
         }
     }
+    ASSERT(0);
     return 0;
 }
