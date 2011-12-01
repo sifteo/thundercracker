@@ -30,6 +30,7 @@ public:
     static const float MOVEMENT_THRESHOLD;
     static const float IDLE_TIME_THRESHOLD;
     static const float IDLE_FINISH_THRESHOLD;
+    static const float MIN_GLIMMER_TIME;
     static const float MAX_GLIMMER_TIME;
 
 	typedef enum

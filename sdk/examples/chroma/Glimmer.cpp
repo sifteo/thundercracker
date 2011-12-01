@@ -5,10 +5,11 @@
  */
 
 #include "Glimmer.h"
-#include "string.h"
+//#include "string.h"
 #include "assets.gen.h"
-#include "sprite.h"
+//#include "sprite.h"
 #include "game.h"
+#include "cubewrapper.h"
 
 
 Vec2 GLIMMER_ORDER_1[] = { Vec2( 0, 0 ) };
@@ -72,9 +73,10 @@ int Glimmer::NUM_PER_GROUP[NUM_GLIMMER_GROUPS] =
 };
 
 
-void Glimmer::Draw( Cube &cube )
+void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
 {
-    if( m_group >= NUM_GLIMMER_GROUPS )
+    //old sprite version
+    /*if( m_group >= NUM_GLIMMER_GROUPS )
     {
         for( int i = 0; i < MAX_GLIMMERS; i++ )
             resizeSprite(cube, i, 0, 0);
@@ -93,6 +95,22 @@ void Glimmer::Draw( Cube &cube )
             resizeSprite(cube, i, 0, 0);
         setSpriteImage(cube, i, GlimmerImg, m_frame);
 
+    }*/
+
+    //bg1 version
+    if( m_group >= NUM_GLIMMER_GROUPS )
+    {
+        return;
+    }
+
+    for( int i = 0; i < MAX_GLIMMERS; i++ )
+    {
+        if( i < NUM_PER_GROUP[ m_group ] )
+        {
+            Vec2 &loc = GLIMMER_ORDER[ m_group ][i];
+            if( pWrapper->GetSlot( loc.x, loc.y )->isAlive() )
+                bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), GlimmerImg, m_frame );
+        }
     }
 }
 

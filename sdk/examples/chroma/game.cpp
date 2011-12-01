@@ -156,6 +156,13 @@ float Game::UnitRand()
 }
 
 
+//get random value from min to max
+float Game::RandomRange( float min, float max )
+{
+    return UnitRand() * ( max - min ) + min;
+}
+
+
 void Game::CheckChain( CubeWrapper *pWrapper )
 {
 	int total_marked = 0;

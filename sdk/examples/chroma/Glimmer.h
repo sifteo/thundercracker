@@ -8,8 +8,11 @@
 #define _Glimmer_H
 
 #include <sifteo.h>
+#include "BG1Helper.h"
 
 using namespace Sifteo;
+
+class CubeWrapper;
 
 class Glimmer
 {
@@ -24,7 +27,7 @@ public:
     Glimmer();
     void Reset();
     void Update( float dt );
-    void Draw( Cube &cube );
+    void Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper );
 	
 private:
     unsigned int m_frame;

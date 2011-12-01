@@ -55,6 +55,7 @@ void BG1Helper::Flush()
 
 void BG1Helper::DrawAsset( const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame )
 {
+    ASSERT( frame < asset.frames );
     unsigned offset = asset.width * asset.height * frame;
 
     for (unsigned y = 0; y < asset.height; y++)
