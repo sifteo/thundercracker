@@ -9,54 +9,7 @@ endif
 SPEEX_DIR = speex
 include $(SPEEX_DIR)/speex.mk
 
-OBJS_SIM = \
-	common/syscall.sim.o \
-	common/runtime.sim.o \
-	common/radio.sim.o \
-	common/cube.sim.o \
-	common/cubecodec.sim.o \
-	common/audiomixer.sim.o \
-	common/speexdecoder.sim.o \
-	common/audiobuffer.sim.o \
-	common/audiochannel.sim.o \
-	common/accel.sim.o \
-	common/neighbors.sim.o \
-	sim/audiooutdevice.sim.o \
-	sim/portaudiooutdevice.sim.o \
-	sim/flashlayer.sim.o \
-	sim/siftulator.sim.o \
-	sim/main.sim.o
-
-OBJS_STM32 = \
-	common/syscall.stm32.o \
-	common/runtime.stm32.o \
-	common/radio.stm32.o \
-	common/cube.stm32.o \
-	common/cubecodec.stm32.o \
-	common/audiomixer.stm32.o \
-	common/speexdecoder.stm32.o \
-	common/audio.gen.stm32.o \
-	common/audiobuffer.stm32.o \
-	common/audiochannel.stm32.o \
-	common/accel.stm32.o \
-	common/neighbors.stm32.o \
-	stm32/systime.stm32.o \
-	stm32/vectors.stm32.o \
-	stm32/setup.stm32.o \
-	stm32/radio.stm32.o \
-	stm32/gpio.stm32.o \
-	stm32/spi.stm32.o \
-	stm32/nrf24l01.stm32.o \
-	stm32/debug.stm32.o \
-    stm32/usart.stm32.o \
-    stm32/dma.stm32.o \
-    stm32/button.stm32.o \
-    stm32/hwtimer.stm32.o \
-    stm32/pwmaudioout.stm32.o \
-    stm32/audiooutdevice.stm32.o \
-    stm32/flashlayer.stm32.o \
-    $(SPEEX_OBJS_STM32) \
-
+include Makefile.objs
 include Makefile.platform
 
 TC_DIR = ../..
