@@ -1,8 +1,8 @@
 #include "Dictionary.h"
 #include <string.h>
-#include "TrieNode.h"
-
-extern TrieNode root;
+//#include "TrieNode.h"
+#include "PrototypeWordList.h"
+//extern TrieNode root;
 
 Dictionary::Dictionary()
 {
@@ -11,12 +11,12 @@ Dictionary::Dictionary()
 const char* Dictionary::pickWord(unsigned length)
 {
     // TODO
-    return "abject";
+    return PrototypeWordList::pickWord(length);
 }
 
 bool Dictionary::isWord(const char* string)
 {
-   return root.findWord(string);
+    return PrototypeWordList::isWord(string);
 }
 
 

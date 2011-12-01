@@ -40,3 +40,5 @@ ScoredCubeState_OldWord.h
 ScoredCubeState_OldWord.cpp
 TrieNode.h
 TrieNode.cpp
+PrototypeWordList.h
+PrototypeWordList.cpp
