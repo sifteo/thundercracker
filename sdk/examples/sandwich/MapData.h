@@ -30,8 +30,7 @@ struct RoomData {
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
 
-    inline int LocalCenterX() const { return centerPosition & 0x7; }
-    inline int LocalCenterY() const { return (centerPosition >> 3) & 0x7; }
+    inline Vec2 LocalCenter() const { return Vec2(centerPosition & 0x7, (centerPosition >> 3) & 0x7); }
 };
 
 struct MapData {
@@ -82,21 +81,29 @@ struct MapData {
         return GetRoomData(GetRoomId(location));
     }
 
-    inline uint8_t GetTileId(Vec2 location, int x, int y) const {
+    inline uint8_t GetTileId(Vec2 location, Vec2 tile) const {
         // this value indexes into tileset.frames
         ASSERT(0 <= location.x && location.x < width);
         ASSERT(0 <= location.y && location.y < height);
-        ASSERT(0 <= x && x < 8);
-        ASSERT(0 <= y && y < 8);
-        return rooms[location.y * width + location.x].tiles[y * 8 + x];
+        ASSERT(0 <= tile.x && tile.x < 8);
+        ASSERT(0 <= tile.y && tile.y < 8);
+        return rooms[location.y * width + location.x].tiles[tile.y * 8 + tile.x];
     }
 
-    inline void SetTileId(Vec2 location, int x, int y, uint8_t tileId) {
+    inline void SetTileId(Vec2 location, Vec2 tile, uint8_t tileId) {
         ASSERT(0 <= location.x && location.x < width);
         ASSERT(0 <= location.y && location.y < height);
-        ASSERT(0 <= x && x < 8);
-        ASSERT(0 <= y && y < 8);
-        rooms[location.y * width + location.x].tiles[y * 8 + x] = tileId;
+        ASSERT(0 <= tile.x && tile.x < 8);
+        ASSERT(0 <= tile.y && tile.y < 8);
+        rooms[location.y * width + location.x].tiles[tile.y * 8 + tile.x] = tileId;
+    }
+
+    inline bool IsTileOpen(Vec2 location, Vec2 tile) {
+        ASSERT(0 <= location.x && location.x < width);
+        ASSERT(0 <= location.y && location.y < height);
+        ASSERT(0 <= tile.x && tile.x < 8);
+        ASSERT(0 <= tile.y && tile.y < 8);
+        return ( rooms[location.y * width + location.x].collisionMaskRows[tile.y] & (1<<tile.x) ) == 0;
     }
 
     inline uint8_t GetRoomId(Vec2 location) const {

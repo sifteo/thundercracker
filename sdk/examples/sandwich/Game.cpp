@@ -129,7 +129,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(map.Data()->tileset),
-          map.Data()->GetTileId(view->Location(), x, y)
+          map.Data()->GetTileId(view->Location(), Vec2(x, y))
         );
       }
     }
@@ -154,7 +154,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(map.Data()->tileset),
-          map.Data()->GetTileId(room, x, y)
+          map.Data()->GetTileId(room, Vec2(x, y))
         );
       }
     }

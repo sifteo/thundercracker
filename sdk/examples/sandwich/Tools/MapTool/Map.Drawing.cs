@@ -42,11 +42,11 @@ namespace MapTool {
           g.DrawRectangle(pen, 8*16*room.x, 8*16*room.y, 8*16, 8*16);
         }
 
-        /*
+
         foreach(var loc in Spiral.IntoMadness()) {
           g.DrawEllipse(pen, loc.x * 16-2, loc.y * 16-2, 4, 4);
         }
-        */
+        
       }
 
       resultImage.Save(outPath);

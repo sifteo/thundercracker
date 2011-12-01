@@ -16,7 +16,6 @@ namespace MapTool {
   public static class Spiral {
 
     public static IEnumerable<Int2> IntoMadness() {
-      int i=0;
       Int2 result = new Int2() { x = 4, y = 4 };
       yield return result;
       result.y++;
