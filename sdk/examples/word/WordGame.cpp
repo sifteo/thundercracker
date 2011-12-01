@@ -7,7 +7,10 @@ using namespace Sifteo;
 WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes)
 {
 #ifdef _WIN32
-    srand((unsigned)System::clock()); // seed rand()
+    int64_t nanosec;
+    _SYS_ticks_ns(&nanosec);
+    unsigned seed = (unsigned)nanosec;
+    srand(seed); // seed rand()
 #endif
 }
 

@@ -3,6 +3,7 @@
 //#include "TrieNode.h"
 #include "PrototypeWordList.h"
 //extern TrieNode root;
+#include <stdio.h>
 
 Dictionary::Dictionary()
 {
@@ -11,7 +12,11 @@ Dictionary::Dictionary()
 const char* Dictionary::pickWord(unsigned length)
 {
     // TODO
-    return PrototypeWordList::pickWord(length);
+    const char* word = PrototypeWordList::pickWord(length);
+#ifdef DEBUG
+    printf("picked word %s\n", word);
+#endif
+    return word;
 }
 
 bool Dictionary::isWord(const char* string)
