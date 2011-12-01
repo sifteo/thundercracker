@@ -12,6 +12,7 @@
 #include "banner.h"
 #include "Intro.h"
 #include "GameOver.h"
+#include "Glimmer.h"
 
 using namespace Sifteo;
 
@@ -29,6 +30,7 @@ public:
     static const float MOVEMENT_THRESHOLD;
     static const float IDLE_TIME_THRESHOLD;
     static const float IDLE_FINISH_THRESHOLD;
+    static const float MAX_GLIMMER_TIME;
 
 	typedef enum
 	{
@@ -116,6 +118,9 @@ private:
 
     Intro m_intro;
     GameOver m_gameover;
+    Glimmer m_glimmer;
+
+    float m_timeTillGlimmer;
 };
 
 #endif

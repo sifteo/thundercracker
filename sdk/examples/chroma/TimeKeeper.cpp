@@ -8,7 +8,7 @@
 #include "string.h"
 #include "assets.gen.h"
 
-const float TimeKeeper::TIME_INITIAL = 3.0f;
+const float TimeKeeper::TIME_INITIAL = 60.0f;
 const float TimeKeeper::TIME_RETURN_PER_GEM = 1.0f;
 
 

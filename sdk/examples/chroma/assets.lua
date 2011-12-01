@@ -43,3 +43,5 @@ DieUp = image{"DieUp.png", height=64, pinned=true}
 DieLeft = image{"DieLeft.png", height=16, pinned=true}
 DieDown = image{"DieDown.png", height=64, pinned=true}
 DieRight = image{"DieRight.png", height=16, pinned=true}
+--idle glimmer
+GlimmerImg = image{"Glimmer.png", height=32, pinned=true}

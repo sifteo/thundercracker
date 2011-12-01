@@ -42,6 +42,7 @@ public:
 
 	static const int NUM_CUBES = 2;
     static const unsigned int NUM_HIGH_SCORES = 5;
+    static const unsigned int INT_MAX = 0x7fff;
 
 	CubeWrapper cubes[NUM_CUBES]; 
 
@@ -56,6 +57,8 @@ public:
 
 	//get random value from 0 to max
 	static unsigned int Rand( unsigned int max );
+    //get random float value from 0 to 1.0
+    static float UnitRand();
 
 	inline GameState getState() const { return m_state; }
     inline void setState( GameState state ) { m_state = state; }

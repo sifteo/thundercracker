@@ -25,6 +25,7 @@ const float CubeWrapper::SPRING_DAMPENING_CONSTANT = 0.07f;
 const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
 const float CubeWrapper::IDLE_TIME_THRESHOLD = 3.0f;
 const float CubeWrapper::IDLE_FINISH_THRESHOLD = IDLE_TIME_THRESHOLD + ( GridSlot::NUM_IDLE_FRAMES * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME * 1 / 60.0f );
+const float CubeWrapper::MAX_GLIMMER_TIME = 20.0f;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
@@ -76,8 +77,10 @@ void CubeWrapper::Reset()
         }
     }
 
+    m_timeTillGlimmer = 0.0f;
     m_intro.Reset();
     m_gameover.Reset();
+    m_glimmer.Reset();
 	Refill();
 }
 
@@ -132,6 +135,7 @@ void CubeWrapper::Draw()
                     if( m_banner.IsActive() )
                         m_banner.Draw( m_bg1helper );
 
+                    m_glimmer.Draw( m_cube );
                     m_bg1helper.Flush();
 
 					break;
@@ -214,6 +218,17 @@ void CubeWrapper::Update(float t, float dt)
     {
         m_gameover.Update( dt );
         return;
+    }
+    else if( Game::Inst().getState() == Game::STATE_PLAYING )
+    {
+        m_timeTillGlimmer -= dt;
+
+        if( m_timeTillGlimmer < 0.0f )
+        {
+            m_timeTillGlimmer = Game::UnitRand() * MAX_GLIMMER_TIME;
+            m_glimmer.Reset();
+        }
+        m_glimmer.Update( dt );
     }
 
     //check for shaking
