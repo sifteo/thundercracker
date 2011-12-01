@@ -37,7 +37,7 @@ namespace TrieMaker {
         trie.Remove(line.Trim());
         //Console.WriteLine("\t" + line);
       }
-
+      System.Console.WriteLine(TrieNode<string>.Count);
       trie.WriteToCppFile();
     }
   }

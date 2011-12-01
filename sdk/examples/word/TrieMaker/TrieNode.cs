@@ -13,7 +13,7 @@ namespace Typocalypse.Trie
     /// <typeparam name="V">Value associated with a character.</typeparam>
     class TrieNode <V> where V:class
     {
-
+      public static int Count = 0;
       //List<string>
         public void WriteToCppFile(System.IO.StreamWriter file, string parentVarName) 
         {
@@ -92,6 +92,7 @@ namespace Typocalypse.Trie
             this.Value = null;
             this.Parent = parent;
             this.children = new Dictionary<Char, TrieNode<V>>();
+            TrieNode<V>.Count++;
         }
 
         /// <summary>

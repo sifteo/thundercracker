@@ -1,0 +1,36 @@
+-- Instructions for building OpenBWT
+
+Requirements:
+=============
+
+* CMake version 2.6.4 or newer (http://www.cmake.org/)
+* An ANSI C/C++ compiler
+
+
+Compilation (with Unix Makefiles):
+==================================
+
+1. Create a 'build' directory in the package source directory and cd into it.
+
+  $ unzip openbwt-2.0.0.zip
+  $ mkdir openbwt-2.0.0/build
+  $ cd openbwt-2.0.0/build
+
+2. Configure the package for your system.
+
+  $ cmake -DCMAKE_BUILD_TYPE="Release" -DBUILD_SHARED_LIBS=OFF -DUSE_OPENMP=OFF ..
+
+3. Compile the package.
+
+  $ make
+
+
+Build options:
+==============
+
+CMAKE_INSTALL_PREFIX : the installation path
+CMAKE_BUILD_TYPE     : default 'Release', can include debug symbols
+                        with either 'Debug' or 'RelWithDebInfo'.
+BUILD_SAMPLES        : default 'ON', compiles additional samples
+USE_OPENMP           : default 'OFF', set to 'ON' to enable OpenMP for parallelization
+BUILD_SHARED_LIBS    : default 'OFF', set to 'ON' to build shared library

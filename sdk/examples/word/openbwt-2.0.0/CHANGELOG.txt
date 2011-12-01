@@ -1,0 +1,43 @@
+2.0.0 - 2010/11/06
+* Added some new inverse BWT algorithms.
+* Removed BWT-WT.
+* Changed all function names to obwt_*().
+* Updated sais with new version.
+* Rewrote bwt.c and unbwt.c.
+
+v1.5.1 - 2010/03/04
+* Fixed a bug in BWT() method. (thanks to Shelwien)
+
+v1.5 - 2009/08/01
+* Added BWT-WT. (Burrows-Wheeler Transformation algorithm based on Wavelet Tree)
+
+v1.4 - 2009/07/30
+* Rewrote BWTS with a new algorithm.
+
+v1.3 - 2008/08/17
+* Added BWTS and UnBWTS.
+
+v1.2 - 2008/08/03
+* Added the following second stage transforms.
+    Transpose
+    Best x of 2x - 1
+    TimeStamp(0)
+    Sort-By-Rank(0.5)
+    Frequency Count
+    Weighted Frequency Count
+    Advanced Weighted Frequency Count
+    Incremental Frequency Count
+* Improved SIF encoding/decoding speed.
+
+v1.1 - 2008/07/30
+* Added the following second stage transforms.
+    Move To Front
+    Move One From Front
+    Move One From Front 2
+    Sorted Inversion Frequencies
+    Distance Coding
+    Sorted Distance Coding
+    Sorted Rank Coding
+
+v1.0 - 2008/07/15
+* First release.

@@ -1,0 +1,73 @@
+include(CheckIncludeFiles)
+include(CheckIncludeFile)
+include(CheckSymbolExists)
+include(CheckTypeSize)
+include(CheckTypeSizeN)
+include(CheckFunctionKeywords)
+include(CheckLFS)
+
+## Checks for header files ##
+check_include_file("inttypes.h" HAVE_INTTYPES_H)
+check_include_file("memory.h" HAVE_MEMORY_H)
+check_include_file("stddef.h" HAVE_STDDEF_H)
+check_include_file("stdint.h" HAVE_STDINT_H)
+check_include_file("stdlib.h" HAVE_STDLIB_H)
+check_include_file("string.h" HAVE_STRING_H)
+check_include_file("strings.h" HAVE_STRINGS_H)
+check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
+if(HAVE_INTTYPES_H)
+  set(INCFILE "#include <inttypes.h>")
+elseif(HAVE_STDINT_H)
+  set(INCFILE "#include <stdint.h>")
+else(HAVE_INTTYPES_H)
+  set(INCFILE "")
+endif(HAVE_INTTYPES_H)
+
+if(BUILD_SAMPLES)
+  ## Checks for WinIO ##
+  if(WIN32)
+    check_include_file("io.h" HAVE_IO_H)
+    check_include_file("fcntl.h" HAVE_FCNTL_H)
+    check_symbol_exists("_setmode" "io.h;fcntl.h" HAVE__SETMODE)
+    if(NOT HAVE__SETMODE)
+      check_symbol_exists("setmode" "io.h;fcntl.h" HAVE_SETMODE)
+    endif(NOT HAVE__SETMODE)
+    check_symbol_exists("_fileno" "stdio.h" HAVE__FILENO)
+    check_symbol_exists("fopen_s" "stdio.h" HAVE_FOPEN_S)
+    check_symbol_exists("_O_BINARY" "fcntl.h" HAVE__O_BINARY)
+  endif(WIN32)
+
+  ## Checks for large file support ##
+  check_lfs(WITH_LFS)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lfs.h.in" "${CMAKE_CURRENT_BINARY_DIR}/lfs.h" @ONLY)
+endif(BUILD_SAMPLES)
+
+## Checks for keywords ##
+check_function_keywords("inline;__inline;__inline__;__declspec(dllexport);__declspec(dllimport)")
+if(HAVE_INLINE)
+  set(INLINE "inline")
+elseif(HAVE___INLINE)
+  set(INLINE "__inline")
+elseif(HAVE___INLINE__)
+  set(INLINE "__inline__")
+else(HAVE_INLINE)
+  set(INLINE "")
+endif(HAVE_INLINE)
+set(DLL_IMPORT "")
+set(DLL_EXPORT "")
+if(BUILD_SHARED_LIBS)
+  if(HAVE___DECLSPEC_DLLIMPORT_)
+    set(DLL_IMPORT "__declspec(dllimport)")
+  endif(HAVE___DECLSPEC_DLLIMPORT_)
+  if(HAVE___DECLSPEC_DLLEXPORT_)
+    set(DLL_EXPORT "__declspec(dllexport)")
+  endif(HAVE___DECLSPEC_DLLEXPORT_)
+endif(BUILD_SHARED_LIBS)
+
+## generate config.h ##
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
+
+## generate openbwt.h ##
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/openbwt.h.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/openbwt.h" @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/openbwt.h" DESTINATION include)

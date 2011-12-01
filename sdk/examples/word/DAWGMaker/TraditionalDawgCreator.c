@@ -9,9 +9,9 @@
 #include <string.h>
 
 // General high-level program constants.
-#define MAX 6//15
+#define MAX 6//15 Must equal max length of word in input file!
 #define NUMBER_OF_ENGLISH_LETTERS 26
-#define INPUT_LIMIT 30
+//#define INPUT_LIMIT 30
 #define LOWER_IT 32
 #define TEN 10
 #define INT_BITS 32
