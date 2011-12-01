@@ -2,7 +2,7 @@
 #include <string.h>
 #include <cstdlib>
 #include <sifteo.h>
-
+#include "WordGame.h"
 
 
 static const char* sList[] =
@@ -28855,9 +28855,8 @@ PrototypeWordList::PrototypeWordList()
 
 const char* PrototypeWordList::pickWord(unsigned length)
 {
-    float r = (float)rand()/(float)RAND_MAX;
     unsigned numWords = arraysize(sList);
-    unsigned startIndex = (unsigned)(r * numWords);
+    unsigned startIndex = WordGame::rand(numWords);
     unsigned i = startIndex;
     do
     {

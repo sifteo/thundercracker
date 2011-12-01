@@ -14,6 +14,8 @@ public:
     void update(float dt);
     void onEvent(unsigned eventID, const EventData& data);
 
+    static unsigned rand(unsigned max);
+
 private:
     GameStateMachine mGameStateMachine;
 };
