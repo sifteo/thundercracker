@@ -18,6 +18,10 @@ const float GridSlot::SCORE_FADE_DELAY = 2.0f;
 const float GridSlot::EXPLODE_FRAME_LEN = ( GridSlot::MARK_BREAK_DELAY - GridSlot::MARK_SPREAD_DELAY ) / (float) GridSlot::NUM_EXPLODE_FRAMES;
 const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * GridSlot::NUM_FRAMES_PER_ROLL_ANIM_FRAME;
 const unsigned int GridSlot::NUM_IDLE_FRAMES = 4 * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME;
+const float GridSlot::START_FADING_TIME = 1.75f;
+const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot::START_FADING_TIME ) / GridSlot::NUM_POINTS_FRAMES;
+
+
 
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
@@ -177,10 +181,16 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
             //sprintf( aStr, "%d", m_score );
 			vid.BG0_drawAsset(vec, GemEmpty, 0);
             //vid.BG0_text(Vec2( vec.x + 1, vec.y + 1 ), Font, aStr);
+            unsigned int fadeFrame = 0;
+
+            float fadeTime = System::clock() - START_FADING_TIME - m_eventTime;
+
+            if( fadeTime > 0.0f )
+                fadeFrame =  ( fadeTime ) / FADE_FRAME_TIME;
 
             if( m_score > 9 )
-                vid.BG0_drawAsset(Vec2( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES);
-            vid.BG0_drawAsset(Vec2( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES);
+                vid.BG0_drawAsset(Vec2( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES + fadeFrame);
+            vid.BG0_drawAsset(Vec2( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
 			break;
 		}
 		/*case STATE_GONE:
