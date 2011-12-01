@@ -36,6 +36,10 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
                     {
                         return ScoredCubeStateIndex_OldWord;
                     }
+                    else
+                    {
+                        GameStateMachine::sOnEvent(EventID_NewWordFound, EventData());
+                    }
                 }
                 else
                 {
