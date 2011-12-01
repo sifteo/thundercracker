@@ -171,10 +171,16 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		}
 		case STATE_SHOWINGSCORE:
 		{
-			char aStr[2];
-			sprintf( aStr, "%d", m_score );
+            if( m_score > 99 )
+                m_score = 99;
+            //char aStr[2];
+            //sprintf( aStr, "%d", m_score );
 			vid.BG0_drawAsset(vec, GemEmpty, 0);
-			vid.BG0_text(Vec2( vec.x + 1, vec.y + 1 ), Font, aStr);
+            //vid.BG0_text(Vec2( vec.x + 1, vec.y + 1 ), Font, aStr);
+
+            if( m_score > 9 )
+                vid.BG0_drawAsset(Vec2( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES);
+            vid.BG0_drawAsset(Vec2( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES);
 			break;
 		}
 		/*case STATE_GONE:

@@ -33,7 +33,8 @@ void Banner::Draw( BG1Helper &bg1helper )
     {
         int iOffset = iStartXTile + i;
 
-        bg1helper.DrawAsset( Vec2( iOffset, 7 ), Font, m_Msg[i] - ' ' );
+        //bg1helper.DrawAsset( Vec2( iOffset, 7 ), Font, m_Msg[i] - ' ' );
+        bg1helper.DrawAsset( Vec2( iOffset, 7 ), BannerPoints, m_Msg[i] - '0' );
     }
 
     /*

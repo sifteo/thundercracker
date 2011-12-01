@@ -34,6 +34,7 @@ public:
     static const int NUM_EXPLODE_FRAMES = 7;
     static const int NUM_FRAMES_PER_ROLL_ANIM_FRAME = 3;
     static const int NUM_FRAMES_PER_IDLE_ANIM_FRAME = 3;
+    static const int NUM_POINTS_FRAMES = 4;
 
 	typedef enum 
 	{

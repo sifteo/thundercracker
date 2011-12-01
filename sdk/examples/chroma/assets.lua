@@ -45,3 +45,6 @@ DieDown = image{"DieDown.png", height=64, pinned=true}
 DieRight = image{"DieRight.png", height=16, pinned=true}
 --idle glimmer
 GlimmerImg = image{"Glimmer.png", height=32}
+--points text
+PointFont = image{"points.png", height=16}
+BannerPoints = image{"Bannerpoints.png", height=16}
