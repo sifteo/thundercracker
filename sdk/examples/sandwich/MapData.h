@@ -30,7 +30,7 @@ struct RoomData {
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
 
-    inline Vec2 LocalCenter() const { return Vec2(centerPosition & 0x7, (centerPosition >> 3) & 0x7); }
+    inline Vec2 LocalCenter() const { return Vec2((centerPosition >> 3) & 0x7, centerPosition & 0x7); }
 };
 
 struct MapData {

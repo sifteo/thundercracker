@@ -44,7 +44,7 @@ namespace MapTool {
 
 
         foreach(var loc in Spiral.IntoMadness()) {
-          g.DrawEllipse(pen, loc.x * 16-2, loc.y * 16-2, 4, 4);
+          g.DrawEllipse(pen, 128 + loc.x * 16-2, 128 + loc.y * 16-2, 4, 4);
         }
         
       }

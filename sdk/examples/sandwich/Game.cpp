@@ -23,6 +23,31 @@ void Game::ObserveNeighbors(bool flag) {
 Game gGame;
 
 void Game::InitializeAssets() {
+
+
+
+  {
+    LOG(("--------------------------------------------------\n"));
+    LOG(("TESTING A-STAR------------------------------------\n"));
+    MapPath path;
+    if (map.FindPath(Vec2(2,4), SIDE_TOP, &path)) {
+      LOG(("FOUND PATH\n"));
+      const char *moveNames[] = { "UP", "LEFT", "DOWN", "RIGHT" };
+      for(int i=0; i<path.Length(); ++i) {
+        LOG(("%s, ", moveNames[path.pFirstMove[i]]));
+      }
+      LOG(("\n"));
+
+    } else {
+      LOG(("NO PATH?!\n"));
+    }
+    LOG(("--------------------------------------------------\n"));
+    LOG(("--------------------------------------------------\n"));
+    while(1) {
+      System::paint();
+    }
+  }
+
   for (Cube::ID i = 0; i < NUM_CUBES; i++) {
     CubeAt(i)->enable(i);
     CubeAt(i)->loadAssets(GameAssets);
@@ -64,6 +89,7 @@ void Game::MainLoop() {
   }
   ObserveNeighbors(true);
   System::paint();
+
   while(1) {
     float now = System::clock();
     float dt = now - simTime;

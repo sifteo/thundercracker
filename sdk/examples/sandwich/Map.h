@@ -4,7 +4,7 @@
 #include "gen_mapdata.h"
 
 #define ROOM_CAPACITY (16*16)
-#define PATH_CAPACITY (16)
+#define PATH_CAPACITY (32)
 
 struct MapRoom {
 	trigger_func callback;
@@ -26,8 +26,9 @@ struct MapRoom {
 };
 
 struct MapPath {
-  uint8_t length;
   uint8_t moves[PATH_CAPACITY];
+  uint8_t *pFirstMove;
+  inline int Length() const { return (moves + PATH_CAPACITY) - pFirstMove; }
 };
 
 class Map {
@@ -46,8 +47,6 @@ public:
   MapRoom* GetRoom(Vec2 loc) const { return (MapRoom*)mRooms + (loc.x + mData->width * loc.y); }
 
   bool FindPath(Vec2 originLocation, Cube::Side direction, MapPath* outPath);
-
-private:
   bool IsVertexWalkable(Vec2 globalVertex);
 
 };
