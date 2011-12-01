@@ -23,8 +23,8 @@ const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
 const float CubeWrapper::SPRING_K_CONSTANT = 0.7f;
 const float CubeWrapper::SPRING_DAMPENING_CONSTANT = 0.07f;
 const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
-const float CubeWrapper::IDLE_TIME_THRESHOLD = 3.0f;
-const float CubeWrapper::IDLE_FINISH_THRESHOLD = IDLE_TIME_THRESHOLD + ( GridSlot::NUM_IDLE_FRAMES * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME * 1 / 60.0f );
+//const float CubeWrapper::IDLE_TIME_THRESHOLD = 3.0f;
+//const float CubeWrapper::IDLE_FINISH_THRESHOLD = IDLE_TIME_THRESHOLD + ( GridSlot::NUM_IDLE_FRAMES * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME * 1 / 60.0f );
 const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 
@@ -265,7 +265,7 @@ void CubeWrapper::Update(float t, float dt)
     Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
     Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
 
-    if( force.len2() < MOVEMENT_THRESHOLD )
+    /*if( force.len2() < MOVEMENT_THRESHOLD )
     {
         m_idleTimer += dt;
 
@@ -278,7 +278,7 @@ void CubeWrapper::Update(float t, float dt)
         }
     }
     else
-        m_idleTimer = 0.0f;
+        m_idleTimer = 0.0f;*/
 
     m_curFluidVel += force;
     m_curFluidDir += m_curFluidVel * dt;
@@ -1061,7 +1061,8 @@ void CubeWrapper::checkEmpty()
 }
 
 
-bool CubeWrapper::IsIdle() const
+/*bool CubeWrapper::IsIdle() const
 {
     return ( m_idleTimer > IDLE_TIME_THRESHOLD );
 }
+*/

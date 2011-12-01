@@ -4,8 +4,8 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _GameOver_H
-#define _GameOver_H
+#ifndef _GAMEOVER_H
+#define _GAMEOVER_H
 
 #include <sifteo.h>
 #include "BG1Helper.h"
