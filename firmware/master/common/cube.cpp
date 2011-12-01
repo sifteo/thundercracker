@@ -15,6 +15,7 @@
 
 #include "neighbors.h"
 
+
 using namespace Sifteo;
 
 /*
@@ -55,36 +56,8 @@ static const int8_t fpSingle = -4;
 static const int8_t fpMax = 5;
 static const int8_t fpMin = -8;
 
-/*
- * Slot instances
- */
 
-CubeSlot CubeSlot::instances[_SYS_NUM_CUBE_SLOTS];
-_SYSCubeIDVector CubeSlot::vecEnabled;
-_SYSCubeIDVector CubeSlot::flashResetWait;
-_SYSCubeIDVector CubeSlot::flashResetSent;
-_SYSCubeIDVector CubeSlot::flashACKValid;
-_SYSCubeIDVector CubeSlot::frameACKValid;
-_SYSCubeIDVector CubeSlot::neighborACKValid;
-
-void CubeSlot::enableCubes(_SYSCubeIDVector cv) {
-    NeighborSlot::resetSlots(cv);
-    Sifteo::Atomic::Or(vecEnabled, cv);
-}
-
-void CubeSlot::disableCubes(_SYSCubeIDVector cv) {
-    Sifteo::Atomic::And(vecEnabled, ~cv);
-    Sifteo::Atomic::And(flashResetWait, ~cv);
-    Sifteo::Atomic::And(flashResetSent, ~cv);
-    Sifteo::Atomic::And(flashACKValid, ~cv);
-    Sifteo::Atomic::And(neighborACKValid, ~cv);
-    NeighborSlot::resetSlots(cv);
-    NeighborSlot::resetPairs(cv);
-    // TODO: if any of the cubes in cv are currently part of a
-    // neighbor-pair with any cubes that are still active, those
-    // active cubes neeed to remove their now-defunct neighbors
-}
-
+#ifndef DISABLE_CUBE
 
 void CubeSlot::loadAssets(_SYSAssetGroup *a) {
     _SYSAssetGroupCube *ac = assetCube(a);
@@ -109,8 +82,8 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a) {
     });
 
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
-    Atomic::And(flashResetSent, ~bit());
-    Atomic::Or(flashResetWait, bit());
+    Atomic::And(CubeSlots::flashResetSent, ~bit());
+    Atomic::Or(CubeSlots::flashResetWait, bit());
 
     // Then start streaming asset data for this group
     a->reqCubes |= bit();
@@ -141,7 +114,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
     // Second priority: Download assets to flash
 
-    if (flashResetWait & bit()) {
+    if (CubeSlots::flashResetWait & bit()) {
         /*
          * We need to reset the flash decoder before we can send any data.
          *
@@ -156,19 +129,19 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
          * valid flash ACK from this cube.
          */
 
-        if (flashResetSent & bit()) {
+        if (CubeSlots::flashResetSent & bit()) {
             // Already sent the reset. Has it timed out?
 
             if (SysTime::ticks() > flashDeadline) {
                 DEBUG_LOG(("FLASH[%d]: Reset timeout\n", id()));
-                Atomic::ClearLZ(flashResetSent, id());
+                Atomic::ClearLZ(CubeSlots::flashResetSent, id());
             }
 
         } else if (codec.flashReset(tx.packet)) {
             // Okay, we sent a reset. Remember to wait for the ACK.
 
             DEBUG_LOG(("FLASH[%d]: Sending reset token\n", id()));
-            Atomic::SetLZ(flashResetSent, id());
+            Atomic::SetLZ(CubeSlots::flashResetSent, id());
             flashDeadline = SysTime::ticks() + SysTime::msTicks(RTT_DEADLINE_MS);
         }
 
@@ -237,19 +210,30 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
+    if (!connected()) {
+        Event::setPending(EventBits::CUBEFOUND, id());
+        setConnected();
+		
+        uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
+        LOG(("%u cubes connected\n", count));
+        if (count >= CubeSlots::minCubes) {
+            Event::resume();
+        }
+    }
+    
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
 
     if (packet.len >= offsetof(RF_ACKType, frame_count) + sizeof ack->frame_count) {
         // This ACK includes a valid frame_count counter
 
-        if (frameACKValid & bit()) {
+        if (CubeSlots::frameACKValid & bit()) {
             // Some frame(s) finished rendering.
 
             uint8_t frameACK = ack->frame_count - framePrevACK;
             Atomic::Add(pendingFrames, -(int32_t)frameACK);
 
         } else {
-            Atomic::SetLZ(frameACKValid, id());
+            Atomic::SetLZ(CubeSlots::frameACKValid, id());
         }
 
         framePrevACK = ack->frame_count;
@@ -258,7 +242,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, flash_fifo_bytes) + sizeof ack->flash_fifo_bytes) {
         // This ACK includes a valid flash_fifo_bytes counter
 
-        if (flashACKValid & bit()) {
+        if (CubeSlots::flashACKValid & bit()) {
             // Two valid ACKs in a row, we can count bytes.
 
             uint8_t loadACK = ack->flash_fifo_bytes - flashPrevACK;
@@ -266,10 +250,10 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d)\n",
                 id(), loadACK, !!(flashResetWait & bit())));
 
-            if (flashResetWait & bit()) {
+            if (CubeSlots::flashResetWait & bit()) {
                 // We're waiting on a reset
                 if (loadACK)
-                    Atomic::ClearLZ(flashResetWait, id());
+                    Atomic::ClearLZ(CubeSlots::flashResetWait, id());
             } else {
                 // Acknowledge FIFO bytes
 
@@ -296,7 +280,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
         } else {
             // Now we've seen one ACK
-            Atomic::SetLZ(flashACKValid, id());
+            Atomic::SetLZ(CubeSlots::flashACKValid, id());
         }
 
         flashPrevACK = ack->flash_fifo_bytes;
@@ -322,7 +306,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, neighbors) + sizeof ack->neighbors) {
         // Has valid neighbor/flag data
 
-        if (neighborACKValid & bit()) {
+        if (CubeSlots::neighborACKValid & bit()) {
             // Look for valid touches, signified by any edge on the touch toggle bit
             
             if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
@@ -332,7 +316,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 			Event::setPending(EventBits::NEIGHBOR, id());
             
         } else {
-            Atomic::SetLZ(neighborACKValid, id());
+            Atomic::SetLZ(CubeSlots::neighborACKValid, id());
         }
 
         // Store the raw state
@@ -358,48 +342,16 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 void CubeSlot::radioTimeout()
 {
     /* XXX: Disconnect this cube */
-}
-
-void CubeSlot::paintCubes(_SYSCubeIDVector cv)
-{
-    /*
-     * If a previous repaint is still in progress, wait for it to
-     * finish. Then trigger a repaint on all cubes that need one.
-     *
-     * Since we always send VRAM data to the radio in order of
-     * increasing address, having the repaint trigger (vram.flags) at
-     * the end of memory guarantees that the remainder of VRAM will
-     * have already been sent by the time the cube gets the trigger.
-     *
-     * Why does this operate on a cube vector? Because we want to
-     * trigger all cubes at close to the same time. So, we first wait
-     * for all cubes to finish their last paint, then we trigger all
-     * cubes.
-     */
-
-    _SYSCubeIDVector waitVec = cv;
-    while (waitVec) {
-        _SYSCubeID id = Intrinsic::CLZ(waitVec);
-        instances[id].waitForPaint();
-        waitVec ^= Intrinsic::LZ(id);
-    }
-
-    SysTime::Ticks timestamp = SysTime::ticks();
-
-    _SYSCubeIDVector paintVec = cv;
-    while (paintVec) {
-        _SYSCubeID id = Intrinsic::CLZ(paintVec);
-        instances[id].triggerPaint(timestamp);
-        paintVec ^= Intrinsic::LZ(id);
-    }
-}
-
-void CubeSlot::finishCubes(_SYSCubeIDVector cv)
-{
-    while (cv) {
-        _SYSCubeID id = Intrinsic::CLZ(cv);
-        instances[id].waitForFinish();
-        cv ^= Intrinsic::LZ(id);
+    
+    if (connected()) {
+        Event::setPending(EventBits::CUBELOST, id());
+        setDisconnected();
+		
+        uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
+        LOG(("%u cubes connected\n", count));
+        if (count < CubeSlots::minCubes) {
+            Event::pause();
+        }
     }
 }
 
@@ -540,7 +492,7 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
          * yet, we have to punt and set continuous mode for now.
          */
         if (!(flags & _SYS_VF_CONTINUOUS) && needPaint) {
-            if (frameACKValid & bit()) {
+            if (CubeSlots::frameACKValid & bit()) {
                 flags &= ~_SYS_VF_TOGGLE;
                 if (!(framePrevACK & 1))
                     flags |= _SYS_VF_TOGGLE;
@@ -570,3 +522,5 @@ void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
      */
     paintTimestamp = timestamp;
 }
+
+#endif // DISABLE_CUBE
