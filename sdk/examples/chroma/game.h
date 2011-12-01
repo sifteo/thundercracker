@@ -25,6 +25,7 @@ public:
         STATE_INTRO,
         STARTING_STATE = STATE_INTRO,
 		STATE_PLAYING,		
+        STATE_DYING,
 		STATE_POSTGAME,
 	} GameState;
 

@@ -210,7 +210,7 @@ void Game::checkGameOver()
 		if( numInPlay <= 1 )
         {
             enterScore();
-			m_state = STATE_POSTGAME;
+            m_state = STATE_DYING;
         }
 	}
 	else if( m_mode == MODE_TIMED )
@@ -218,7 +218,7 @@ void Game::checkGameOver()
 		if( m_timer.getTime() <= 0.0f )
         {
             enterScore();
-            m_state = STATE_POSTGAME;
+            m_state = STATE_DYING;
         }
 	}
 }

@@ -77,6 +77,7 @@ void CubeWrapper::Reset()
     }
 
     m_intro.Reset();
+    m_gameover.Reset();
 	Refill();
 }
 
@@ -159,6 +160,11 @@ void CubeWrapper::Draw()
 			}			
 			break;
 		}
+        case Game::STATE_DYING:
+        {
+            m_gameover.Draw( m_bg1helper, m_cube );
+            break;
+        }
 		case Game::STATE_POSTGAME:
 		{
 			_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
@@ -204,8 +210,13 @@ void CubeWrapper::Update(float t, float dt)
         m_intro.Update( dt );
         return;
     }
+    else if( Game::Inst().getState() == Game::STATE_DYING )
+    {
+        m_gameover.Update( dt );
+        return;
+    }
 
-	//check for shaking
+    //check for shaking
 	if( m_state != STATE_NOSHAKES )
 	{
         if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )

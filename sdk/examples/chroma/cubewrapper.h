@@ -11,6 +11,7 @@
 #include "GridSlot.h"
 #include "banner.h"
 #include "Intro.h"
+#include "GameOver.h"
 
 using namespace Sifteo;
 
@@ -114,6 +115,7 @@ private:
     float m_idleTimer;
 
     Intro m_intro;
+    GameOver m_gameover;
 };
 
 #endif
