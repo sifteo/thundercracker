@@ -40,6 +40,7 @@ unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& dat
                     else
                     {
                         GameStateMachine::sOnEvent(EventID_NewWordFound, data);
+                        return ScoredCubeStateIndex_NewWord;
                     }
                 }
                 else
@@ -68,6 +69,13 @@ unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& dat
         }
         break;
 
+    case EventID_NewWordFound:
+        if (!getStateMachine().canBeginWord() &&
+             getStateMachine().isConnectedToCubeOnSide(data.mWordFound.mCubeIDStart))
+        {
+            return ScoredCubeStateIndex_NewWord;
+        }
+        break;
     }
     return getStateMachine().getCurrentStateIndex();
 }

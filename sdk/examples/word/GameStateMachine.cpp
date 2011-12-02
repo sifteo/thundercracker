@@ -1,4 +1,5 @@
 #include "GameStateMachine.h"
+#include "Dictionary.h"
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
@@ -29,6 +30,7 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
     {
         mCubeStateMachines[i].onEvent(eventID, data);
     }
+    Dictionary::sOnEvent(eventID, data);
 }
 
 void GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
