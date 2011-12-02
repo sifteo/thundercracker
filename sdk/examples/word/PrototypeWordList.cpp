@@ -5,7 +5,9 @@
 #include "WordGame.h"
 
 
-static const char* sList[] =
+
+
+static const char sList[][7] =
 {
 "aa",
 "aah",
@@ -28853,6 +28855,7 @@ PrototypeWordList::PrototypeWordList()
 {
 }
 
+
 const char* PrototypeWordList::pickWord(unsigned length)
 {
     unsigned numWords = arraysize(sList);
@@ -28870,19 +28873,29 @@ const char* PrototypeWordList::pickWord(unsigned length)
     return sList[0];
 }
 
-static int bsearch_strcmp(const char*a,const char*b)
+static int bsearch_strcmp(const void*a,const void*b)
 {
-    return strcmp(*(const char **)a, *(const char **)b);
+#if DEBUG
+    const char** ppa = (const char**)a;
+    const char* pb = (const char*)b;
+    printf("a %s, b %s\n", *(const char **)a, (const char *)b);
+#endif
+    return strcmp(*(const char **)a, (const char *)b);
 }
 
 bool PrototypeWordList::isWord(const char* string)
 {
+    STATIC_ASSERT(sizeof(sList[0]) == 7);
+    STATIC_ASSERT(arraysize(sList) == 28839);
+    const char** pKey = &string;
+    const char* array = &sList[0][0];
+    //const char** pArray = &array;
     const char* pItem =
             (const char*) bsearch(
-                &string,
-                sList,
+                pKey,
+                array,
                 arraysize(sList),
-                sizeof(const char*),
+                sizeof(sList[0]),
                 (int(*)(const void*,const void*)) bsearch_strcmp);
 
     return (pItem!=NULL);
