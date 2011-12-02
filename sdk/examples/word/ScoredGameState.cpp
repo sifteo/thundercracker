@@ -19,6 +19,8 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     {
     case EventID_EnterState:
         mTimeLeft = ROUND_TIME;
+        mAnagramCooldown = .0f;
+        mScore = 0;
         // fall through
     case EventID_Input:
         if (mAnagramCooldown <= .0f)

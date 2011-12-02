@@ -6,6 +6,7 @@
 #include "ScoredCubeState_NotWord.h"
 #include "ScoredCubeState_NewWord.h"
 #include "ScoredCubeState_OldWord.h"
+#include "ScoredCubeState_EndOfRound.h"
 
 using namespace Sifteo;
 
@@ -41,6 +42,7 @@ private:
     ScoredCubeState_NotWord mNotWordScoredState;
     ScoredCubeState_NewWord mNewWordScoredState;
     ScoredCubeState_OldWord mOldWordScoredState;
+    ScoredCubeState_EndOfRound mEndOfRoundScoredState;
 };
 
 #endif // CUBESTATEMACHINE_H

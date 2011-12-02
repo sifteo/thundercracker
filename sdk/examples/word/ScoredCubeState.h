@@ -8,6 +8,7 @@ enum ScoredCubeStateIndex
     ScoredCubeStateIndex_NotWord,
     ScoredCubeStateIndex_NewWord,
     ScoredCubeStateIndex_OldWord,
+    ScoredCubeStateIndex_EndOfRound,
 
     ScoredCubeStateIndex_NumStates
 };

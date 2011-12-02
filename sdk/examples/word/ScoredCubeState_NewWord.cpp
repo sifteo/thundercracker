@@ -76,6 +76,8 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
         }
         break;
 
+    case EventID_EndRound:
+        return ScoredCubeStateIndex_EndOfRound;
     }
     return getStateMachine().getCurrentStateIndex();
 }

@@ -44,3 +44,5 @@ PrototypeWordList.h
 PrototypeWordList.cpp
 ScoredGameState_EndOfRound.h
 ScoredGameState_EndOfRound.cpp
+ScoredCubeState_EndOfRound.h
+ScoredCubeState_EndOfRound.cpp

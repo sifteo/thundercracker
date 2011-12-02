@@ -137,6 +137,10 @@ State& CubeStateMachine::getState(unsigned index)
 
     case ScoredCubeStateIndex_OldWord:
         return mOldWordScoredState;
+
+    case ScoredCubeStateIndex_EndOfRound:
+        return mEndOfRoundScoredState;
+
     }
 }
 
