@@ -11,7 +11,7 @@ const float ROUND_BONUS_TIME = 2.0f; // TODO reduce when tilt bug is gone
 class ScoredGameState : public State
 {
 public:
-    ScoredGameState() : mAnagramCooldown(ANAGRAM_COOLDOWN), mTimeLeft(.0f), mScore(0) {}
+    ScoredGameState() : mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0) {}
     virtual unsigned update(float dt, float stateTime);
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
 

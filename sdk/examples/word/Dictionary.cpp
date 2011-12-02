@@ -46,7 +46,7 @@ void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
-    case EventID_EndRound:
+    case EventID_NewAnagram:
         sNumOldWords = 0;
         break;
 

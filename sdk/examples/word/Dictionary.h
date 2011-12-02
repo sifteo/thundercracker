@@ -3,7 +3,7 @@
 
 #include "CubeStateMachine.h"
 
-const unsigned MAX_OLD_WORDS = 720; // TODO optimize
+const unsigned MAX_OLD_WORDS = 872; // TODO optimize
 
 class Dictionary
 {
