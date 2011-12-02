@@ -128,7 +128,7 @@ bool Encoder::encode(const char *configpath, int channels, int format)
         string path = dir + file;
         int sz = encodeFile(dir, path, channels, format, headerStream, sourceStream);
         
-        sourceStream << "_SYSAudioModule " << FileNameUtils::baseName(file) << " = {\n"
+        sourceStream << "const _SYSAudioModule " << FileNameUtils::baseName(file) << " = {\n"
                         "    Sample, // type\n"
                         "    " << sz << ", // size\n"
                         "    " << FileNameUtils::baseName(file) << "_data\n"
