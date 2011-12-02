@@ -8,6 +8,7 @@ enum EventID
     EventID_Paint,
     EventID_EnterState,
     EventID_ExitState,
+    EventID_RequestNewAnagram,
     EventID_NewAnagram,
     EventID_NewWordFound,
     EventID_OldWordFound,

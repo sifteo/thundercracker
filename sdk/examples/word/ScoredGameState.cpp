@@ -5,11 +5,20 @@
 #include "GameStateMachine.h"
 #include <string.h>
 
+unsigned ScoredGameState::update(float dt, float stateTime)
+{
+    mAnagramCooldown -= dt;
+    mAnagramCooldown = MAX(.0f, mAnagramCooldown);
+    return 0;
+}
+
 unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
     case EventID_EnterState:
+    case EventID_RequestNewAnagram:
+        if (mAnagramCooldown <= .0f)
         {
             EventData data;
             data.mNewAnagram.mWord = Dictionary::pickWord(MAX_CUBES);
@@ -27,6 +36,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
                 //data.mNewAnagram.mOddIndex = ;
             }
             GameStateMachine::sOnEvent(EventID_NewAnagram, data);
+            mAnagramCooldown = ANAGRAM_COOLDOWN;
         }
         break;
 
