@@ -9,6 +9,7 @@ RANLIB_STM32 = arm-none-eabi-ranlib
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
 STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
+SPEEXENC = $(TC_DIR)/speex/encoder/speexencoder$(BIN_EXT)
 
 BINS = $(BIN_SIM)
 ifneq ($(BUILD_STM32),)
@@ -16,7 +17,8 @@ ifneq ($(BUILD_STM32),)
 endif
 
 ASSETS = assets
-GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
+AUDIO = audio
+GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html $(AUDIO).gen.h $(AUDIO).gen.cpp
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 
 ifeq ($(DEBUG),)
