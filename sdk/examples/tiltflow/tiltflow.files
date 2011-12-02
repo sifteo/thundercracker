@@ -8,3 +8,8 @@ BG1Helper.cpp
 TiltFlowMenu.cpp
 TiltFlowMenu.h
 utils.h
+game.h
+game.cpp
+cubewrapper.h
+cubewrapper.cpp
+main.cpp

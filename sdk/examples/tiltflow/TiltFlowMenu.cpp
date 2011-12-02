@@ -3,30 +3,38 @@
   //---------------------------------------------------------------------------
 
 #include "TiltFlowMenu.h"
-
+#include "game.h"
+#include "cubewrapper.h"
 
 const float TiltFlowMenu::UPDATE_DELAY = 1.0f / 30.0f;
 const float TiltFlowMenu::PICK_DELAY = 2.0f;
 const float TiltFlowMenu::REST_DELAY = 0.1f;
 
 
+TiltFlowMenu *TiltFlowMenu::s_pInst = NULL;
+
+
+TiltFlowMenu *TiltFlowMenu::Inst()
+{
+    return s_pInst;
+}
 
 TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( CHOOSING ), mDone( false ),
     mSimTime( 0.0f ), mUpdateTime( 0.0f ), mPickTime( 0.0f ), mNumCubes( numCubes ), mNumItems( numItems ), mNeighborDirty( true )
 {
+    s_pInst = this;
     //TODO SFX
     //Hacky.Sfx("g_neighborA");
 
     //TODO ASSIGN VIEWS
-    for( int i = 0; i < numCubes; i++ )
-        mViews[i].setCube = &Game::Inst()->cubes[i];
+    //for( int i = 0; i < numCubes; i++ )
+      //  mViews[i].SetCube( Game::Inst().cubes[i].GetCube() );
 
     mKeyView = &mViews[0];
-    mKeyView->SetStatus(TiltFlowView.STATUS_MENU);
+    mKeyView->SetStatus(TiltFlowView::STATUS_MENU);
     mKeyView->SetItem(0);
 
-    for( int i = 0; i < numItems; i++ )
-        mItems[i] = pItems[i];
+    mItems = pItems;
 }
 
 void TiltFlowMenu::Tick(float dt)
@@ -44,7 +52,7 @@ void TiltFlowMenu::Tick(float dt)
       }
 
       for( int i = 0; i < mNumCubes; i++ )
-        mViews[i]->Tick();
+        mViews[i].Tick();
 
       if (mStatus == PICKED && mSimTime - mPickTime > PICK_DELAY) {
         mDone = true;
@@ -54,7 +62,7 @@ void TiltFlowMenu::Tick(float dt)
     }
 
     for( int i = 0; i < mNumCubes; i++ )
-      mViews[i]->CheckForRepaint();
+      mViews[i].CheckForRepaint();
 }
 
 
@@ -62,36 +70,41 @@ void TiltFlowMenu::Pick(TiltFlowView &view)
 {
     if (mStatus == CHOOSING) {
         //TODO SFX
-      //Hacky.Sfx("checkpoint2");
-      LOG("Selected {0}", view.Item.name);
+      //Hacky.Sfx("checkpoVec2");
+      //LOG(("Selected {0}", view.Item.name));
       mStatus = PICKED;
       mPickTime = mSimTime;
       for( int i = 0; i < mNumCubes; i++ )
       {
-          TiltFlowView &v = *mViews[i];
-        if (v == view) {
-          v.SetStatus(TiltFlowView.STATUS_INFO);
+          TiltFlowView &v = mViews[i];
+        if (&v == &view) {
+          v.SetStatus(TiltFlowView::STATUS_INFO);
         } else {
-          v.SetStatus(TiltFlowView.Status.None);
+          v.SetStatus(TiltFlowView::STATUS_NONE);
         }
         v.SetDirty();
       }
     }
 }
 
+
+/*
+  //TODO, THIS IS NEIGHBORING, NOT HAPPENING YET
 void TiltFlowMenu::CheckMenuNeighbors() {
   ReassignMenu();
   for( int i = 0; i < mNumCubes; i++ )
   {
-      TiltFlowView &view = *mViews[i];
+      TiltFlowView &view = mViews[i];
     if (&view == mKeyView) {
-      view.SetStatus(TiltFlowView.STATUS_MENU);
+      view.SetStatus(TiltFlowView::STATUS_MENU);
       view.SetDirty();
     } else {
       view.RelateToMenu();
     }
   }
 }
+
+
 
 void TiltFlowMenu::ReassignMenu() {
     //if the keyview is alone
@@ -103,7 +116,7 @@ void TiltFlowMenu::ReassignMenu() {
     {
         TiltFlowView &view = mViews[i];
 
-        if( view.CurrentStatus == TiltFlowView.STATUS_ITEM )
+        if( view.GetStatus() == TiltFlowView::STATUS_ITEM )
             continue;
 
         if( view.ItemIndex < 0 || view.ItemIndex >= mNumItems )
@@ -111,25 +124,25 @@ void TiltFlowMenu::ReassignMenu() {
 
         if (mKeyView.mLastNeighborRemoveSide == Side.LEFT)
         {
-            if( view.Cube.Neighbors.Right != null || view.Cube.Neighbors.Left == null )
+            if( view.Cube.Neighbors.Right != NULL || view.Cube.Neighbors.Left == NULL )
                 continue;
         }
         else if (mKeyView.mLastNeighborRemoveSide == Side.RIGHT)
         {
-            if( view.Cube.Neighbors.Left != null || view.Cube.Neighbors.Right == null )
+            if( view.Cube.Neighbors.Left != NULL || view.Cube.Neighbors.Right == NULL )
                 continue;
         }
 
         //just take the first one
         mKeyView = &view;
     }
-}
+}*/
 
   //---------------------------------------------------------------------------
   // TILT FLOW ITEM
   //---------------------------------------------------------------------------
 
-TiltFlowItem::TiltFlowItem(Sifteo::AssetImage &image, char *pName/*, string description, Int2 sourcePosition=new Int2()*/) :
+TiltFlowItem::TiltFlowItem(Sifteo::AssetImage &image, char *pName/*, string description, Vec2 sourcePosition=new Vec2()*/) :
     mName( pName ), mImage( image )
 {
     //TODO - do we need this stuff?
@@ -148,12 +161,16 @@ const float TiltFlowView::MINACCEL = 3.0f;
 const float TiltFlowView::MAXACCEL = 8.0f;
 const float TiltFlowView::DEEPTILTACCEL = 2.0f;
 const float TiltFlowView::GRAVITY = 1.03f;
+const float TiltFlowView::EPSILON = 0.00001f;
+
+
+int TiltFlowView::s_cubeIndex = 0;
 
 
 TiltFlowView::TiltFlowView() :
     mItem( -1 ), mOffsetX( 0.0f ), mAccel( MINACCEL ),
     mRestTime( -1.0f ), mDrawLabel( true ), mDirty( true ),
-    mLastNeighborRemoveSide( NONE )
+    mLastNeighborRemoveSide( NONE ), mCube( Game::Inst().cubes[ s_cubeIndex++ ].GetCube() )
 {
 }
 
@@ -178,68 +195,70 @@ void TiltFlowView::Tick() {
     // do nothing
     break;
   }
-  if (mRestTime > -1 && menu.SimTime - mRestTime > TiltFlowMenu::REST_DELAY) {
+  if (mRestTime > -1 && TiltFlowMenu::Inst()->GetSimTime() - mRestTime > TiltFlowMenu::REST_DELAY) {
     mDirty = true;
     mDrawLabel = true;
-    if (mDrawLabel && !wasDrawingLabel) {
+
+    //TODO SFX
+    /*if (mDrawLabel && !wasDrawingLabel) {
       Hacky.Sfx("ui_select_01");
-    }
+    }*/
     mRestTime = -1;
   }
 }
 
-void TiltFlowView::Paint(Cube c)
+void TiltFlowView::Paint()
 {
     switch(mStatus) {
     case STATUS_MENU:
-      PaintMenu(c);
+      PaintMenu();
       break;
     case STATUS_ITEM:
-      PaintItem(c);
+      PaintItem();
       break;
     case STATUS_INFO:
-      PaintInfo(c);
+      PaintInfo();
       break;
     default:
-      PaintNone(c);
+      PaintNone();
       break;
     }
 }
 
 
-void TiltFlowView::PaintNone(Cube c) {
-  if (menu.PaintNone != null) {
-    menu.PaintNone(this);
+void TiltFlowView::PaintNone() {
+  /*if (TiltFlowMenu::Inst()->PaintNone != NULL) {
+    TiltFlowMenu::Inst()->PaintNone(this);
   } else {
     c.FillScreen(Color.White);
-    //c.FillScreen(new Color(182, 182, 170)); // magic
-    //menu.Font.Paint(c, "-", Int2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, false, false, new Int2(128,128));
-  }
+  }*/
 }
 
-void TiltFlowView::PaintInfo(Cube c) {
-  if (menu.PaintBackground != null) { menu.PaintBackground(this); } else { c.FillScreen(Color.White); }
+void TiltFlowView::PaintInfo() {
+   /*
+  if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
   DoPaintItem(Item, 24, 80); // magic
-  menu.Font.Paint(c, Item.name, Int2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128,24)); // magic
-  //menu.Font.Paint(c, Item.description, new Int2(0,80), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128,24)); // magic
+  TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128,24)); // magic
+  */
 }
 
-void TiltFlowView::PaintMenu(Cube c) {
-  if (menu.PaintBackground != null) { menu.PaintBackground(this); } else { c.FillScreen(Color.White); }
+void TiltFlowView::PaintMenu() {
+   /*
+  if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
   int x, w;
   ClipIt(24, out x, out w); // magic
   if (w > 0) { DoPaintItem(Item, x, w); }
-  if (c.Neighbors.Left == null && mItem > 0) {
+  if (c.Neighbors.Left == NULL && mItem > 0) {
     ClipIt(-70, out x, out w); // magic
     if (w > 0) { DoPaintItem(menu[mItem-1], x, w); }
   }
-  if (c.Neighbors.Right == null && mItem < menu.ItemCount-1) {
+  if (c.Neighbors.Right == NULL && mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
     ClipIt(118, out x, out w); // magic
     if (w > 0) { DoPaintItem(menu[mItem+1], x, 80); }
   }
   if (mDrawLabel) {
-    if (c.Neighbors.Left == null && c.Neighbors.Right == null) {
-      if (mItem < menu.ItemCount-1) {
+    if (c.Neighbors.Left == NULL && c.Neighbors.Right == NULL) {
+      if (mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
         c.Image("gestures", 4, 99, 0, 192, 27, 25); // magic
         //c.Image("curlyarrows", 4, 108, 0, 16, 16, 16); // magic
       }
@@ -250,15 +269,16 @@ void TiltFlowView::PaintMenu(Cube c) {
       var g = new AABB(0, 0, 24, 28); // magic, taken from GESTURE_ICONS table in original python source
       c.Image("gestures", 64-g.size.x/2, 128-4-g.size.y, g.position.x, g.position.y, g.size.x, g.size.y, 1, 0); // magic
     }
-    menu.Font.Paint(c, Item.name, Int2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128, 20)); // magic
+    TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
   }
+  */
 }
 
 void TiltFlowView::DoPaintItem(TiltFlowItem item, int x, int w) {
   const int y = 24; // magic
   const int h = 80; // magic
-  if (menu.PaintItem != null) {
-    menu.PaintItem(new TiltFlowItemArgs() {
+  /*if (TiltFlowMenu::Inst()->PaintItem != NULL) {
+    TiltFlowMenu::Inst()->PaintItem(new TiltFlowItemArgs() {
       view = this,
       item = item,
       bounds = x==0 && w<80 ? new AABB(w-80, y, h, h) : new AABB(x, y, h, h)
@@ -272,26 +292,26 @@ void TiltFlowView::DoPaintItem(TiltFlowItem item, int x, int w) {
     }
   } else {
     Cube.FillRect(item.color, x, y, w, h);
-  }
+  }*/
 }
 
-void TiltFlowView::PaintItem(Cube c) {
-  if (menu.PaintBackground != null) { menu.PaintBackground(this); } else { c.FillScreen(Color.White); }
+void TiltFlowView::PaintItem() {
+  /*if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
   int x, w;
   ClipIt(24, out x, out w); // magic
   if (w > 0) {
     DoPaintItem(Item, x, w);
     if (mDrawLabel) {
-      menu.Font.Paint(c, Item.name, Int2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128,20)); // magic
+      TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128,20)); // magic
     }
-  }
+  }*/
 }
 
 
-void TiltFlowView::OnButton(Cube c, bool pressed) {
-  if (menu.CurrentStatus == TiltFlowMenu.CHOOSING && mStatus != Status.None) {
+void TiltFlowView::OnButton(bool pressed) {
+  if (TiltFlowMenu::Inst()->GetStatus() == TiltFlowMenu::CHOOSING && mStatus != STATUS_NONE) {
     StopScrolling();
-    menu.Pick(this);
+    TiltFlowMenu::Inst()->Pick(*this);
     mDirty = true;
   }
 }
@@ -300,206 +320,218 @@ void TiltFlowView::OnButton(Cube c, bool pressed) {
 /*
 void TiltFlowView::OnFlip(Cube c, bool newOrientationIsUp) {
   if (!newOrientationIsUp) {
-    menu.CheckFlip();
+    TiltFlowMenu::Inst()->CheckFlip();
   }
 }*/
 
+
+//TODO, remove neighboring for now
+/*
 void TiltFlowView::OnNeighborAdd(Cube c, Side s, Cube nc, Side ns) {
-  if (menu.CurrentStatus == TiltFlowMenu.CHOOSING) {
-    menu.DirtyNeighbors();
+  if (TiltFlowMenu::Inst()->GetStatus() == TiltFlowTiltFlowMenu::Inst()->CHOOSING) {
+    TiltFlowMenu::Inst()->DirtyNeighbors();
   }
 }
 
 void TiltFlowView::OnNeighborRemove(Cube c, Side s, Cube nc, Side ns) {
-  if (menu.CurrentStatus == TiltFlowMenu.CHOOSING) {
+  if (TiltFlowMenu::Inst()->GetStatus() == TiltFlowTiltFlowMenu::Inst()->CHOOSING) {
     mLastNeighborRemoveSide = s;
-    menu.DirtyNeighbors();
+    TiltFlowMenu::Inst()->DirtyNeighbors();
   }
 }
 
-    internal void RelateToMenu() {
-      var oldStatus = mStatus;
-      var oldItem = mItem;
-      Int2 pos;
-      if (menu.KeyView.PositionOf(Cube, out pos)) {
-        if (pos.y == 0) {
-          mItem = menu.KeyView.mItem + pos.x;
-          if (mItem >= 0 && mItem < menu.ItemCount) {
-            if (mStatus != STATUS_ITEM) {
-              mStatus = STATUS_ITEM;
-              mAccel = MAXACCEL;
-              mDrawLabel = false;
-              if (pos.x > 0) {
-                mOffsetX = -40; // magic
-              } else {
-                mOffsetX = 40; // magic
-              }
-            }
+void TiltFlowView::RelateToMenu() {
+  Status oldStatus = mStatus;
+  int oldItem = mItem;
+  Vec2 pos;
+  if (TiltFlowMenu::Inst()->GetKeyView()->PositionOf(Cube, out pos)) {
+    if (pos.y == 0) {
+      mItem = TiltFlowMenu::Inst()->GetKeyView()->mItem + pos.x;
+      if (mItem >= 0 && mItem < TiltFlowMenu::Inst()->GetNumItems()) {
+        if (mStatus != STATUS_ITEM) {
+          mStatus = STATUS_ITEM;
+          mAccel = MAXACCEL;
+          mDrawLabel = false;
+          if (pos.x > 0) {
+            mOffsetX = -40; // magic
           } else {
-            mStatus = Status.None;
+            mOffsetX = 40; // magic
           }
-        } else if (pos.y == -1 || pos.y == 1) {
-          mItem = menu.KeyView.mItem + pos.x;
-          if (mItem >= 0 && mItem < menu.ItemCount) {
-            mStatus = STATUS_INFO;
-            mOffsetX = 0;
-          } else {
-            mStatus = Status.None;
-          }
-        } else {
-          mStatus = Status.None;
         }
       } else {
-        mStatus = Status.None;
+        mStatus = STATUS_NONE;
       }
-      if (mItem != oldItem || mStatus != oldStatus) {
-        Hacky.Sfx("ui_select_02");
-      }
-      mDirty |= mStatus != oldStatus;
-      mDirty |= mItem != oldItem;
-    }
-
-    void UpdateMenu() {
-      if (
-        Cube.Tilt[0] == 1 ||
-        (Cube.Tilt[0] < 1 && mItem == menu.ItemCount-1 && mOffsetX >= 0) ||
-        (Cube.Tilt[0] > 1 && mItem == 0 && mOffsetX <= 0)
-      ) {
-        CoastToStop();
+    } else if (pos.y == -1 || pos.y == 1) {
+      mItem = TiltFlowMenu::Inst()->GetKeyView()->mItem + pos.x;
+      if (mItem >= 0 && mItem < TiltFlowMenu::Inst()->GetNumItems()) {
+        mStatus = STATUS_INFO;
+        mOffsetX = 0;
       } else {
-        mRestTime = menu.SimTime;
+        mStatus = STATUS_NONE;
+      }
+    } else {
+      mStatus = STATUS_NONE;
+    }
+  } else {
+    mStatus = STATUS_NONE;
+  }
 
-        // accelerate in the direction of tilt
-        if (mDrawLabel) {
-          Hacky.Sfx("ui_select_02");
-        }
-        mDrawLabel = false;
-        var vSign = Cube.Tilt[0] < 1f ? -1f : 1f;
+  //TODO SOUND
+  if (mItem != oldItem || mStatus != oldStatus) {
+    Hacky.Sfx("ui_select_02");
+  }
+  mDirty |= mStatus != oldStatus;
+  mDirty |= mItem != oldItem;
+}
+  */
 
-        // if we're way overtilted (into the upper corners!), accelerate super-fast
-        var deepMult = Cube.Tilt[1] == 2 ? DEEPTILTACCEL : 1f;
+void TiltFlowView::UpdateMenu() {
+  Cube::TiltState state = mCube.getTiltState();
 
-        if (vSign > 0) {
-          if (mItem > 0) {
-            if (mOffsetX > 45) { // magic
-              mItem--;
-              mOffsetX -= 90; // magic
-            } else {
-              mOffsetX += Resistence * TILTVEL * mAccel;
-              mAccel = Mathf.Clamp(mAccel * GRAVITY, MINACCEL, MAXACCEL) * deepMult;
-            }
-          }
+  if (
+    state.x == _SYS_TILT_NEUTRAL ||
+    (state.x == _SYS_TILT_NEGATIVE && mItem == TiltFlowMenu::Inst()->GetNumItems()-1 && mOffsetX >= 0) ||
+    (state.x == _SYS_TILT_POSITIVE && mItem == 0 && mOffsetX <= 0)
+  ) {
+    CoastToStop();
+  } else {
+    mRestTime = TiltFlowMenu::Inst()->GetSimTime();
+
+    // accelerate in the direction of tilt
+    //TODO SOUND
+    /*if (mDrawLabel) {
+      Hacky.Sfx("ui_select_02");
+    }*/
+    mDrawLabel = false;
+    float vSign = state.x == _SYS_TILT_NEGATIVE ? -1.0f : 1.0f;
+
+    // if we're way overtilted (into the upper corners!), accelerate super-fast
+    float deepMult = state.y == _SYS_TILT_POSITIVE ? DEEPTILTACCEL : 1.0f;
+
+    if (vSign > 0) {
+      if (mItem > 0) {
+        if (mOffsetX > 45) { // magic
+          mItem--;
+          mOffsetX -= 90; // magic
         } else {
-          if (mItem < menu.ItemCount-1) {
-            if (mOffsetX < -45) { // magic
-              mItem++;
-              mOffsetX += 90; // magic
-            } else {
-              mOffsetX -= Resistence * TILTVEL * mAccel;
-              mAccel = Mathf.Clamp(mAccel * GRAVITY, MINACCEL, MAXACCEL) * deepMult;
-            }
-          }
+            mOffsetX += Resistance() * TILTVEL * mAccel;
+          mAccel = Util::Clamp(mAccel * GRAVITY, MINACCEL, MAXACCEL) * deepMult;
         }
-        mDirty = true;
       }
-    }
-
-    float Resistence {
-      get{
-        var u = 1f - Mathf.Abs(mOffsetX / 45f);
-        return 1f - 0.95f * (u * u);
-      }
-    }
-
-    void CoastToStop() {
-      if (Mathf.Abs(mOffsetX)  > Mathf.Epsilon) {
-        mAccel = Mathf.Clamp(mAccel/GRAVITY, MINACCEL, MAXACCEL);
-        mRestTime = menu.SimTime;
-        if (Mathf.Abs(mOffsetX) < MINACCEL) { // magic
-          StopScrolling();
-        } else if (mOffsetX > 0f) {
-          mOffsetX -= DRIFTVEL * mAccel;
-          if (mOffsetX < 0) { mAccel = MINACCEL; }
+    } else {
+      if (mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
+        if (mOffsetX < -45) { // magic
+          mItem++;
+          mOffsetX += 90; // magic
         } else {
-          mOffsetX += DRIFTVEL * mAccel;
-          if (mOffsetX > 0) { mAccel = MINACCEL; }
+            mOffsetX -= Resistance() * TILTVEL * mAccel;
+          mAccel = Util::Clamp(mAccel * GRAVITY, MINACCEL, MAXACCEL) * deepMult;
         }
-        mDirty = true;
       }
     }
+    mDirty = true;
+  }
+}
 
-    void StopScrolling() {
-      mOffsetX = 0;
-      mAccel = MINACCEL;
-      mRestTime = menu.SimTime;
-      mDrawLabel = false;
-      mDirty = true;
+float TiltFlowView::Resistance() {
+    float u = 1.0f - fabs(mOffsetX / 45.0f);
+    return 1.0f - 0.95f * (u * u);
+}
+
+void TiltFlowView::CoastToStop() {
+  if (fabs(mOffsetX)  > EPSILON ) {
+    mAccel = Util::Clamp(mAccel/GRAVITY, MINACCEL, MAXACCEL);
+    mRestTime = TiltFlowMenu::Inst()->GetSimTime();
+    if (fabs(mOffsetX) < MINACCEL) { // magic
+      StopScrolling();
+    } else if (mOffsetX > 0.0f) {
+      mOffsetX -= DRIFTVEL * mAccel;
+      if (mOffsetX < 0) { mAccel = MINACCEL; }
+    } else {
+      mOffsetX += DRIFTVEL * mAccel;
+      if (mOffsetX > 0) { mAccel = MINACCEL; }
     }
+    mDirty = true;
+  }
+}
 
-    void ClipIt(int ox, out int x, out int w) {
-      x = ox + Mathf.FloorToInt(mOffsetX);
-      w = 80;
-      if (x < 0) {
-        w += x;
-        x = 0;
-      }
-      w -= (x+w>128) ? 80-(128-x) : 0;
+void TiltFlowView::StopScrolling() {
+  mOffsetX = 0;
+  mAccel = MINACCEL;
+  mRestTime = TiltFlowMenu::Inst()->GetSimTime();
+  mDrawLabel = false;
+  mDirty = true;
+}
+/*
+void ClipIt(int ox, out int x, out int w) {
+  x = ox + Mathf.FloorToInt(mOffsetX);
+  w = 80;
+  if (x < 0) {
+    w += x;
+    x = 0;
+  }
+  w -= (x+w>128) ? 80-(128-x) : 0;
+}*/
+
+/*
+  TODO
+  neighboring doesn't happen for tiltflow now
+
+bool PositionOf(Cube c, out Vec2 pos) {
+  if (Cube == c) {
+    pos = Vec2.Zero;
+    return true;
+  }
+  if (Cube == NULL || Cube.Neighbors.IsEmpty) {
+    pos = Vec2.Zero;
+    return false;
+  }
+  foreach(var view in TiltFlowMenu::Inst()->Views) { view.mVisited = false; }
+  mGridPosition = Vec2.Zero;
+  mVisited = true;
+  for(int i=0; i<4; ++i) {
+    Vec2 p;
+    if (PositionOfVisit(this, c, (Side)i, out p)) {
+      pos = p;
+      return true;
     }
+  }
+  pos = Vec2.Zero;
+  return false;
+}
 
-    bool PositionOf(Cube c, out Int2 pos) {
-      if (Cube == c) {
-        pos = Int2.Zero;
+bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Vec2 result) {
+  var n = origin.Cube.Neighbors[s];
+  if (n == NULL) {
+    result = Vec2.Zero;
+    return false;
+  };
+  var view = n.userData as TiltFlowView;
+  if (view.mVisited) {
+    result = Vec2.Zero;
+    return false;
+  }
+  view.mVisited = true;
+  view.mGridPosition = origin.mGridPosition + Vec2.Side(s);
+  if (view.Cube == target) {
+    result = view.mGridPosition;
+    return true;
+  } else {
+    for(int i=0; i<4; ++i) {
+      Vec2 p;
+      if (PositionOfVisit(view, target, (Side)i, out p)) {
+        result = p;
         return true;
       }
-      if (Cube == null || Cube.Neighbors.IsEmpty) {
-        pos = Int2.Zero;
-        return false;
-      }
-      foreach(var view in menu.Views) { view.mVisited = false; }
-      mGridPosition = Int2.Zero;
-      mVisited = true;
-      for(int i=0; i<4; ++i) {
-        Int2 p;
-        if (PositionOfVisit(this, c, (Side)i, out p)) {
-          pos = p;
-          return true;
-        }
-      }
-      pos = Int2.Zero;
-      return false;
     }
-
-    bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Int2 result) {
-      var n = origin.Cube.Neighbors[s];
-      if (n == null) {
-        result = Int2.Zero;
-        return false;
-      };
-      var view = n.userData as TiltFlowView;
-      if (view.mVisited) {
-        result = Int2.Zero;
-        return false;
-      }
-      view.mVisited = true;
-      view.mGridPosition = origin.mGridPosition + Int2.Side(s);
-      if (view.Cube == target) {
-        result = view.mGridPosition;
-        return true;
-      } else {
-        for(int i=0; i<4; ++i) {
-          Int2 p;
-          if (PositionOfVisit(view, target, (Side)i, out p)) {
-            result = p;
-            return true;
-          }
-        }
-        result = Int2.Zero;
-        return false;
-      }
-
-    }
-
+    result = Vec2.Zero;
+    return false;
   }
 
 }
+
+}
+
+*/
+
 
