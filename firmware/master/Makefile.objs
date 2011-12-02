@@ -44,6 +44,8 @@ OBJS_STM32 = \
     stm32/dma.stm32.o \
     stm32/hwtimer.stm32.o \
     stm32/pwmaudioout.stm32.o \
+    stm32/dacaudioout.stm32.o \
     stm32/audiooutdevice.stm32.o \
     stm32/flashlayer.stm32.o \
+    stm32/dac.stm32.o \
     $(SPEEX_OBJS_STM32)

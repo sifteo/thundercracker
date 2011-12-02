@@ -1,5 +1,5 @@
 
-#include "pwmaudioout.h"
+#include "dacaudioout.h"
 #include "audiomixer.h"
 #include <stdio.h>
 #include <string.h>
@@ -11,53 +11,52 @@
 static GPIOPin tim4TestPin(&GPIOC, 4);
 #endif
 
-void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer, GPIOPin &outA, GPIOPin &outB)
+void DacAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer, GPIOPin &output)
 {
 #ifdef SAMPLE_RATE_GPIO
     tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
 #endif
     this->mixer = mixer;
     memset(audioBufs, 0, sizeof(audioBufs));
-    outA.setControl(GPIOPin::OUT_ALT_50MHZ);
-    outB.setControl(GPIOPin::OUT_ALT_50MHZ);
+    // from datasheet: "once the DAC channel is aneabled, the corresponding gpio
+    // is automatically connected to the analog converter output. to avoid
+    // parasitic consumption, the pin should be configured to analog in"
+    output.setControl(GPIOPin::IN_ANALOG);
 
     switch (samplerate) {
-    case AudioOutDevice::kHz8000: sampleTimer.init(2200, 0); break;
-    case AudioOutDevice::kHz16000: sampleTimer.init(1100, 0); break;
+    case AudioOutDevice::kHz8000:  sampleTimer.init(2200, 0); break;
+    case AudioOutDevice::kHz16000: sampleTimer.init(2200, 0); break;
     case AudioOutDevice::kHz32000: sampleTimer.init(550, 0); break;
     }
 
-    pwmTimer.init(500, 0); // TODO - tune the PWM freq we want
-    pwmTimer.configureChannel(this->pwmChan,
-                                HwTimer::ActiveHigh,
-                                HwTimer::Pwm1,
-                                HwTimer::ComplementaryOutput);
+    dac.init();
+    dac.configureChannel(dacChan); //, Waveform waveform = WaveNone, uint8_t mask_amp = 0, Trigger trig = TrigNone, BufferMode buffmode = BufferEnabled);
 }
 
-void PwmAudioOut::start()
+void DacAudioOut::start()
 {
     sampleTimer.setUpdateIsrEnabled(true);
-    pwmTimer.enableChannel(this->pwmChan);
+    dac.enableChannel(this->dacChan);
 }
 
-void PwmAudioOut::stop()
+void DacAudioOut::stop()
 {
     sampleTimer.setUpdateIsrEnabled(false);
     suspend(); // TODO - full shut down?
 }
 
-void PwmAudioOut::suspend()
+void DacAudioOut::suspend()
 {
-    pwmTimer.disableChannel(this->pwmChan);
+    dac.disableChannel(this->dacChan);
 }
 
-void PwmAudioOut::resume()
+void DacAudioOut::resume()
 {
-    pwmTimer.enableChannel(this->pwmChan);
+    dac.enableChannel(this->dacChan);
 }
 
 #if 0
-void PwmAudioOut::dmaIsr(uint32_t flags)
+void DacAudioOut::dmaIsr(uint32_t flags)
 {
     // figure out which of our buffers to pull into
     AudioOutBuffer *b = &audioBufs[0]; // TODO: ping pong
@@ -73,7 +72,7 @@ void PwmAudioOut::dmaIsr(uint32_t flags)
  * Called when our sample rate timer's update ISR has fired.
  * Push the next sample into the output device.
  */
-void PwmAudioOut::tmrIsr()
+void DacAudioOut::tmrIsr()
 {
 #ifdef SAMPLE_RATE_GPIO
     tim4TestPin.toggle();
@@ -87,6 +86,6 @@ void PwmAudioOut::tmrIsr()
         }
     }
     uint16_t duty = b->data[b->offset++] + 0x8000;
-    duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
-    pwmTimer.setDuty(this->pwmChan, duty);
+    duty = (duty * 0xFFF) / 0xFFFF; // scale to 12-bit DAC output
+    dac.write(this->dacChan, duty, Dac::RightAlign12Bit);
 }
