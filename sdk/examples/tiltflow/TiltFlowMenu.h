@@ -19,13 +19,13 @@ using namespace Sifteo;
 class TiltFlowItem {
 public:
   //public readonly Color color;
-    char *mName;
+    const char *mName;
     //char mDescription[32];
-    Sifteo::AssetImage &mImage;
+    const Sifteo::AssetImage &mImage;
     //Vec2 mSrcPos;
   //public readonly Vec2 sourcePosition;
 
-  TiltFlowItem(Sifteo::AssetImage &image, char *pName/*, string description, Vec2 sourcePosition=new Vec2()*/);
+  TiltFlowItem(const Sifteo::AssetImage &image, const char *pName/*, string description, Vec2 sourcePosition=new Vec2()*/);
 };
 
 //---------------------------------------------------------------------------
@@ -61,6 +61,7 @@ public:
   inline void SetStatus( Status status ) { mStatus = status; }
   inline void SetItem( int item ) { mItem = item; }
   inline void SetDirty() { mDirty = true; }
+  inline void SetCube( Cube *pCube ) { mpCube = pCube; }
 
   void CheckForRepaint();
   void Tick();
@@ -74,7 +75,7 @@ private:
   bool mDrawLabel;
   bool mDirty;
   Side mLastNeighborRemoveSide;
-  Cube &mCube;
+  Cube *mpCube;
 
   // for PositionOf and FindGroups
   //bool mVisited;
@@ -135,6 +136,8 @@ public:
     static TiltFlowMenu *Inst();
 
     TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes);
+
+    void AssignViews();
 
     void Tick(float dt);
     void Pick(TiltFlowView &view);

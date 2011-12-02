@@ -9,6 +9,7 @@
 
 #include <sifteo.h>
 #include "cubewrapper.h"
+#include "TiltFlowMenu.h"
 
 using namespace Sifteo;
 
@@ -21,8 +22,7 @@ public:
 	Game();
 
 	static const int NUM_CUBES = 2;
-    static const unsigned int NUM_HIGH_SCORES = 5;
-    static const unsigned int INT_MAX = 0x7fff;
+    static const int NUM_MENU_ITEMS = 3;
 
 	CubeWrapper cubes[NUM_CUBES]; 
 
@@ -33,6 +33,7 @@ public:
 
 private:
     float m_fLastTime;
+    TiltFlowMenu m_Menu;
 };
 
 #endif

@@ -8,6 +8,14 @@
 #include "utils.h"
 #include "assets.gen.h"
 
+
+TiltFlowItem MENUITEMS[ Game::NUM_MENU_ITEMS ] =
+{
+    TiltFlowItem( IconFire, "Fire" ),
+    TiltFlowItem( IconEarth, "Earth" ),
+    TiltFlowItem( IconWater, "Water" ),
+};
+
 Game &Game::Inst()
 {
 	static Game game = Game();
@@ -15,7 +23,7 @@ Game &Game::Inst()
 	return game; 
 }
 
-Game::Game()
+Game::Game() : m_Menu( MENUITEMS, NUM_MENU_ITEMS, NUM_CUBES )
 {
 	//Reset();
 }
@@ -25,6 +33,8 @@ void Game::Init()
 {
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].Init(GameAssets);
+
+    m_Menu.AssignViews();
 
 	bool done = false;
 
@@ -56,11 +66,7 @@ void Game::Update()
     float dt = t - m_fLastTime;
     m_fLastTime = t;
 
-    for( int i = 0; i < NUM_CUBES; i++ )
-        cubes[i].Update( System::clock(), dt );
-
-    for( int i = 0; i < NUM_CUBES; i++ )
-        cubes[i].Draw();
+    m_Menu.Tick(dt);
             
     System::paint();
 }

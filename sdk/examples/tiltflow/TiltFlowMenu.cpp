@@ -26,16 +26,21 @@ TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : m
     //TODO SFX
     //Hacky.Sfx("g_neighborA");
 
-    //TODO ASSIGN VIEWS
-    //for( int i = 0; i < numCubes; i++ )
-      //  mViews[i].SetCube( Game::Inst().cubes[i].GetCube() );
-
     mKeyView = &mViews[0];
     mKeyView->SetStatus(TiltFlowView::STATUS_MENU);
     mKeyView->SetItem(0);
 
     mItems = pItems;
 }
+
+
+void TiltFlowMenu::AssignViews()
+{
+    //TODO ASSIGN VIEWS
+    for( int i = 0; i < mNumCubes; i++ )
+        mViews[i].SetCube( &Game::Inst().cubes[i].GetCube() );
+}
+
 
 void TiltFlowMenu::Tick(float dt)
 {
@@ -142,7 +147,7 @@ void TiltFlowMenu::ReassignMenu() {
   // TILT FLOW ITEM
   //---------------------------------------------------------------------------
 
-TiltFlowItem::TiltFlowItem(Sifteo::AssetImage &image, char *pName/*, string description, Vec2 sourcePosition=new Vec2()*/) :
+TiltFlowItem::TiltFlowItem(const Sifteo::AssetImage &image, const char *pName/*, string description, Vec2 sourcePosition=new Vec2()*/) :
     mName( pName ), mImage( image )
 {
     //TODO - do we need this stuff?
@@ -170,7 +175,7 @@ int TiltFlowView::s_cubeIndex = 0;
 TiltFlowView::TiltFlowView() :
     mItem( -1 ), mOffsetX( 0.0f ), mAccel( MINACCEL ),
     mRestTime( -1.0f ), mDrawLabel( true ), mDirty( true ),
-    mLastNeighborRemoveSide( NONE ), mCube( Game::Inst().cubes[ s_cubeIndex++ ].GetCube() )
+    mLastNeighborRemoveSide( NONE ), mpCube( NULL )
 {
 }
 
@@ -386,7 +391,7 @@ void TiltFlowView::RelateToMenu() {
   */
 
 void TiltFlowView::UpdateMenu() {
-  Cube::TiltState state = mCube.getTiltState();
+  Cube::TiltState state = mpCube->getTiltState();
 
   if (
     state.x == _SYS_TILT_NEUTRAL ||

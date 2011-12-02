@@ -13,3 +13,4 @@ game.cpp
 cubewrapper.h
 cubewrapper.cpp
 main.cpp
+assets.lua
