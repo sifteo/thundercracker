@@ -10,6 +10,7 @@
 using namespace Sifteo;
 
 const unsigned MAX_LETTERS_PER_CUBE = 1;
+const unsigned MAX_LETTERS_PER_WORD = _SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE;
 
 class CubeStateMachine : public StateMachine
 {
@@ -27,8 +28,9 @@ public:
 
     const char* getLetters();
     bool canBeginWord();
-    bool beginsWord(bool& isOld);
-    bool isInWord();
+    bool beginsWord(bool& isOld, char* wordBuffer);
+    bool isConnectedToCubeOnSide(Cube::ID cubeIDStart, Cube::Side side=SIDE_LEFT);
+    bool hasNoNeighbors() const;
 
 private:
     // shared state data

@@ -15,19 +15,19 @@ static const char* sideNames[] =
 void onCubeEventTouch(_SYSCubeID cid)
 {
     LOG(("cube event touch:\t%d\n", cid));
-    GameStateMachine::sOnEvent(EventID_RequestNewAnagram, EventData());
+    GameStateMachine::sOnEvent(EventID_Input, EventData());
 }
 
 void onCubeEventShake(_SYSCubeID cid)
 {
     LOG(("cube event shake:\t%d\n", cid));
-    GameStateMachine::sOnEvent(EventID_RequestNewAnagram, EventData());
+    GameStateMachine::sOnEvent(EventID_Input, EventData());
 }
 
 void onCubeEventTilt(_SYSCubeID cid)
 {
     LOG(("cube event tilt:\t%d\n", cid));
-    GameStateMachine::sOnEvent(EventID_RequestNewAnagram, EventData());
+    GameStateMachine::sOnEvent(EventID_Input, EventData());
 }
 
 void onNeighborEventAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)

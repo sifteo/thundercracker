@@ -60,3 +60,16 @@ CubeStateMachine* GameStateMachine::findCSMFromID(Cube::ID cubeID)
     ASSERT(0);
     return 0;
 }
+
+State& GameStateMachine::getState(unsigned index)
+{
+    // TODO simply the state machine code
+    ASSERT(index < ScoredGameStateIndex_NumStates);
+    switch (index)
+    {
+    default:
+        return mScoredState;
+    case ScoredGameStateIndex_EndOfRound:
+        return mScoredEndOfRoundState;
+    }
+}

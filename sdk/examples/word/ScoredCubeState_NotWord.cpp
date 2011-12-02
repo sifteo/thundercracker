@@ -17,11 +17,6 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
     {
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
-        if (!data.mEnterState.mFirst)
-        {
-            GameStateMachine::sOnEvent(EventID_WordBroken, EventData());
-        }
-        // fall through
     case EventID_NewAnagram:        
         paint();
         break;
@@ -30,25 +25,37 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
     case EventID_RemoveNeighbor:
         {
             bool isOldWord = false;
-            if (getStateMachine().beginsWord(isOldWord))
+            char wordBuffer[MAX_LETTERS_PER_WORD + 1];
+            if (getStateMachine().beginsWord(isOldWord, wordBuffer))
             {
-                return (isOldWord) ?
-                            ScoredCubeStateIndex_OldWord :
-                            ScoredCubeStateIndex_NewWord;
+                EventData data;
+                data.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
+                data.mWordFound.mWord = wordBuffer;
+
+                if (isOldWord)
+                {
+                    GameStateMachine::sOnEvent(EventID_OldWordFound, data);
+                    return ScoredCubeStateIndex_OldWord;
+                }
+
+                GameStateMachine::sOnEvent(EventID_NewWordFound, data);
+                return ScoredCubeStateIndex_NewWord;
             }
             paint();
         }
         break;
 
     case EventID_NewWordFound:
-        if (!getStateMachine().canBeginWord() && getStateMachine().isInWord())
+        if (!getStateMachine().canBeginWord() &&
+             getStateMachine().isConnectedToCubeOnSide(data.mWordFound.mCubeIDStart))
         {
             return ScoredCubeStateIndex_NewWord;
         }
         break;
 
     case EventID_OldWordFound:
-        if (!getStateMachine().canBeginWord() && getStateMachine().isInWord())
+        if (!getStateMachine().canBeginWord() &&
+             getStateMachine().isConnectedToCubeOnSide(data.mWordFound.mCubeIDStart))
         {
             return ScoredCubeStateIndex_OldWord;
         }

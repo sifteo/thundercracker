@@ -17,11 +17,6 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
         paint();
-
-        if (getStateMachine().canBeginWord())
-        {
-            GameStateMachine::sOnEvent(EventID_NewWordFound, EventData());
-        }
         break;
 
     case EventID_AddNeighbor:
@@ -30,23 +25,32 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
             bool isOldWord = false;
             if (getStateMachine().canBeginWord())
             {
-                if (getStateMachine().beginsWord(isOldWord))
+                char wordBuffer[MAX_LETTERS_PER_WORD + 1];
+                if (getStateMachine().beginsWord(isOldWord, wordBuffer))
                 {
+                    EventData data;
+                    data.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
+                    data.mWordFound.mWord = wordBuffer;
+
                     if (isOldWord)
                     {
+                        GameStateMachine::sOnEvent(EventID_OldWordFound, data);
                         return ScoredCubeStateIndex_OldWord;
                     }
                     else
                     {
-                        GameStateMachine::sOnEvent(EventID_NewWordFound, EventData());
+                        GameStateMachine::sOnEvent(EventID_NewWordFound, data);
                     }
                 }
                 else
                 {
+                    EventData data;
+                    data.mWordBroken.mCubeIDStart = getStateMachine().getCube().id();
+                    GameStateMachine::sOnEvent(EventID_WordBroken, data);
                     return ScoredCubeStateIndex_NotWord;
                 }
             }
-            else if (!getStateMachine().isInWord())
+            else if (getStateMachine().hasNoNeighbors())
             {
                 return ScoredCubeStateIndex_NotWord;
             }
@@ -55,7 +59,8 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
         break;
 
     case EventID_WordBroken:
-        if (!getStateMachine().canBeginWord() && !getStateMachine().isInWord())
+        if (!getStateMachine().canBeginWord() &&
+            getStateMachine().isConnectedToCubeOnSide(data.mWordBroken.mCubeIDStart))
         {
             return ScoredCubeStateIndex_NotWord;
         }

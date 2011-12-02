@@ -4,8 +4,17 @@
 #include <sifteo.h>
 #include "StateMachine.h"
 #include "ScoredGameState.h"
+#include "ScoredGameState_EndOfRound.h"
 #include "CubeStateMachine.h"
 using namespace Sifteo;
+
+enum ScoredGameStateIndex
+{
+    ScoredGameStateIndex_Play,
+    ScoredGameStateIndex_EndOfRound,
+
+    ScoredGameStateIndex_NumStates
+};
 
 // HACK workaround inability to check if a Cube is actually connected
 const unsigned MAX_CUBES = 6;
@@ -22,12 +31,13 @@ public:
     static CubeStateMachine* findCSMFromID(Cube::ID cubeID);
 
 protected:
-    virtual State& getState(unsigned index) { ASSERT(index == 0); return mScoredState; }
+    virtual State& getState(unsigned index);
     virtual unsigned getNumStates() const { return 1; }
 
 
 private:
     ScoredGameState mScoredState;
+    ScoredGameState_EndOfRound mScoredEndOfRoundState;
     CubeStateMachine mCubeStateMachines[MAX_CUBES];
     static GameStateMachine* sInstance;
 };

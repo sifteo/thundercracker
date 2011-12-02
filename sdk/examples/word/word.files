@@ -42,3 +42,5 @@ TrieNode.h
 TrieNode.cpp
 PrototypeWordList.h
 PrototypeWordList.cpp
+ScoredGameState_EndOfRound.h
+ScoredGameState_EndOfRound.cpp

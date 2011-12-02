@@ -9,7 +9,8 @@ unsigned ScoredGameState::update(float dt, float stateTime)
 {
     mAnagramCooldown -= dt;
     mAnagramCooldown = MAX(.0f, mAnagramCooldown);
-    return 0;
+    mTimeLeft -= dt;
+    return (mTimeLeft <= .0f) ? ScoredGameStateIndex_EndOfRound : ScoredGameStateIndex_Play;
 }
 
 unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
@@ -17,7 +18,9 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_EnterState:
-    case EventID_RequestNewAnagram:
+        mTimeLeft = ROUND_TIME;
+        // fall through
+    case EventID_Input:
         if (mAnagramCooldown <= .0f)
         {
             EventData data;
@@ -43,7 +46,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     default:
         break;
     }
-    return 0;
+    return ScoredGameStateIndex_Play;
 }
 
 
