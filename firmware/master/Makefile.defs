@@ -28,6 +28,10 @@ else
     CFLAGS += -DDEBUG -g3
 endif
 
+ifneq ($(QTCREATOR),)
+	CFLAGS += -DQTCREATOR
+endif
+
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused
 

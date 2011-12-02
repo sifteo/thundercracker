@@ -26,7 +26,11 @@
 #      define DEBUG_LOG(_x)
 #   endif
 #   define LOG(_x)            printf _x
+#if QTCREATOR
+#   define ASSERT(_x)         if(!(_x)) {asm("int $0x3");} 
+#else
 #   define ASSERT(_x)         assert(_x)
+#endif
 #   define DEBUG_ONLY(x)      x
 #else
 #   define DEBUG_LOG(_x)

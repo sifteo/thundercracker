@@ -22,6 +22,11 @@ static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4
 const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
 const float CubeWrapper::SPRING_K_CONSTANT = 0.7f;
 const float CubeWrapper::SPRING_DAMPENING_CONSTANT = 0.07f;
+const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
+//const float CubeWrapper::IDLE_TIME_THRESHOLD = 3.0f;
+//const float CubeWrapper::IDLE_FINISH_THRESHOLD = IDLE_TIME_THRESHOLD + ( GridSlot::NUM_IDLE_FRAMES * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME * 1 / 60.0f );
+const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
+const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
@@ -61,6 +66,7 @@ void CubeWrapper::Reset()
 	m_ShakesRemaining = STARTING_SHAKES;
 	m_fShakeTime = -1.0f;
 	m_state = STATE_PLAYING;
+    m_idleTimer = 0.0f;
 
     //clear out dots
     for( int i = 0; i < NUM_ROWS; i++ )
@@ -72,6 +78,10 @@ void CubeWrapper::Reset()
         }
     }
 
+    m_timeTillGlimmer = 0.0f;
+    m_intro.Reset();
+    m_gameover.Reset();
+    m_glimmer.Reset();
 	Refill();
 }
 
@@ -96,6 +106,11 @@ void CubeWrapper::Draw()
 			m_vid.BG0_drawAsset(Vec2(0,0), Cover, 0);
 			break;
 		}
+        case Game::STATE_INTRO:
+        {
+            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube );
+            break;
+        }
 		case Game::STATE_PLAYING:
 		{
 			switch( m_state )
@@ -114,12 +129,16 @@ void CubeWrapper::Draw()
 						}
 					}
 
+                    //draw glimmer before timer
+                    m_glimmer.Draw( m_bg1helper, this );
+
                     if( Game::Inst().getMode() == Game::MODE_TIMED )
                     {
                         Game::Inst().getTimer().Draw( m_bg1helper );
                     }
                     if( m_banner.IsActive() )
                         m_banner.Draw( m_bg1helper );
+
 
                     m_bg1helper.Flush();
 
@@ -149,6 +168,11 @@ void CubeWrapper::Draw()
 			}			
 			break;
 		}
+        case Game::STATE_DYING:
+        {
+            m_gameover.Draw( m_bg1helper, m_cube );
+            break;
+        }
 		case Game::STATE_POSTGAME:
 		{
 			_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
@@ -166,12 +190,12 @@ void CubeWrapper::Draw()
             }
             else if( m_cube.id() == 1 )
             {
-                m_vid.BG0_text( Vec2( 2, 3 ), Font, "HIGH SCORES" );
+                m_vid.BG0_text( Vec2( 2, 2 ), Font, "HIGH SCORES" );
 
                 for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
                 {
                     sprintf( aBuf, "%d", Game::Inst().getHighScore(i) );
-                    int xPos = ( Banner::BANNER_WIDTH - strlen( aBuf ) ) / 2;
+                    int xPos = 9 - strlen( aBuf );
 
                     m_vid.BG0_text( Vec2( xPos, 5+2*i ), Font, aBuf );
                 }
@@ -189,7 +213,29 @@ void CubeWrapper::Draw()
 
 void CubeWrapper::Update(float t, float dt)
 {
-	//check for shaking
+    if( Game::Inst().getState() == Game::STATE_INTRO )
+    {
+        m_intro.Update( dt );
+        return;
+    }
+    else if( Game::Inst().getState() == Game::STATE_DYING )
+    {
+        m_gameover.Update( dt );
+        return;
+    }
+    else if( Game::Inst().getState() == Game::STATE_PLAYING )
+    {
+        m_timeTillGlimmer -= dt;
+
+        if( m_timeTillGlimmer < 0.0f )
+        {
+            m_timeTillGlimmer = Game::RandomRange( MIN_GLIMMER_TIME, MAX_GLIMMER_TIME );
+            m_glimmer.Reset();
+        }
+        m_glimmer.Update( dt );
+    }
+
+    //check for shaking
 	if( m_state != STATE_NOSHAKES )
 	{
         if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
@@ -218,6 +264,21 @@ void CubeWrapper::Update(float t, float dt)
     //try spring to target
     Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
     Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
+
+    /*if( force.len2() < MOVEMENT_THRESHOLD )
+    {
+        m_idleTimer += dt;
+
+        if( m_idleTimer > IDLE_FINISH_THRESHOLD )
+        {
+            m_idleTimer = 0.0f;
+            //kick off force in a random direction
+            //for now, just single direction
+            //force = Float2( 100.0f, 0.0f );
+        }
+    }
+    else
+        m_idleTimer = 0.0f;*/
 
     m_curFluidVel += force;
     m_curFluidDir += m_curFluidVel * dt;
@@ -624,7 +685,9 @@ void CubeWrapper::Refill( bool bAddLevel )
 	unsigned int numValues = sizeof( GEM_VALUE_PROGRESSION ) / sizeof( GEM_VALUE_PROGRESSION[0] );
 	unsigned int values = level < numValues ? GEM_VALUE_PROGRESSION[level] : GEM_VALUE_PROGRESSION[numValues - 1];
 	unsigned int numFixIndices = sizeof( GEM_FIX_PROGRESSION ) / sizeof( GEM_FIX_PROGRESSION[0] );
-	unsigned int numFix = level < numFixIndices ? GEM_FIX_PROGRESSION[level] : GEM_FIX_PROGRESSION[numFixIndices - 1];
+    //TODO, for now disable fixed dots
+    //unsigned int numFix = level < numFixIndices ? GEM_FIX_PROGRESSION[level] : GEM_FIX_PROGRESSION[numFixIndices - 1];
+    unsigned int numFix = 0;
 	
 	if( bAddLevel )
 		Game::Inst().addLevel();
@@ -998,3 +1061,8 @@ void CubeWrapper::checkEmpty()
 }
 
 
+/*bool CubeWrapper::IsIdle() const
+{
+    return ( m_idleTimer > IDLE_TIME_THRESHOLD );
+}
+*/

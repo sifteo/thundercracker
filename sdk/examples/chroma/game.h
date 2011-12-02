@@ -16,14 +16,16 @@ using namespace Sifteo;
 //singleton class
 class Game
 {
-public:
+public:    
 	typedef enum
 	{
 		STATE_SPLASH,
 		//STARTING_STATE = STATE_SPLASH,
 		STATE_MENU,
-		STATE_PLAYING,
-		STARTING_STATE = STATE_PLAYING,
+        STATE_INTRO,
+        STARTING_STATE = STATE_INTRO,
+		STATE_PLAYING,		
+        STATE_DYING,
 		STATE_POSTGAME,
 	} GameState;
 
@@ -40,6 +42,7 @@ public:
 
 	static const int NUM_CUBES = 2;
     static const unsigned int NUM_HIGH_SCORES = 5;
+    static const unsigned int INT_MAX = 0x7fff;
 
 	CubeWrapper cubes[NUM_CUBES]; 
 
@@ -54,8 +57,13 @@ public:
 
 	//get random value from 0 to max
 	static unsigned int Rand( unsigned int max );
+    //get random float value from 0 to 1.0
+    static float UnitRand();
+    //get random value from min to max
+    static float RandomRange( float min, float max );
 
 	inline GameState getState() const { return m_state; }
+    inline void setState( GameState state ) { m_state = state; }
 	inline GameMode getMode() const { return m_mode; }
 
 	inline unsigned int getScore() const { return m_iScore; }
