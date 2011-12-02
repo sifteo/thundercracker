@@ -87,7 +87,7 @@ void MapRoom::ClearTrigger() {
 //-----------------------------------------------------------------------------
 
 Map::Map() {
-  SetData(forest_data);
+  SetData(castle_data);
 }
 
 inline static bool PortalOpen(uint8_t pid) { 

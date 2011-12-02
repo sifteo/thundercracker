@@ -7,7 +7,7 @@
 #define GAME_FRAMES_PER_ANIM_FRAME 2
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
-pCurrent(gGame.views), pTarget(0), mPosition(64,64),
+pCurrent(gGame.views), pTarget(0), mPosition(128+64,64), // todo: move intial position to map data
 mDir(2), mKeyCount(0), mAnimFrame(0), mProgress(0), mNextDir(-1), 
 mApproachingLockedDoor(false) {
   CORO_RESET;
@@ -77,10 +77,10 @@ void Player::Update(float dt) {
     while(!gGame.map.CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
       CORO_YIELD;
       mNextDir = pCurrent->VirtualTiltDirection();
-      if (mNextDir != -1) {
-        mDir = mNextDir;
-        pCurrent->UpdatePlayer();
-      } else if (PathDetect()) {
+      //if (mNextDir != -1) {
+      //  mDir = mNextDir;
+      //  pCurrent->UpdatePlayer();
+      if (PathDetect()) {
         break;
       }
     }
