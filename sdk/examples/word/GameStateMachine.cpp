@@ -1,10 +1,12 @@
 #include "GameStateMachine.h"
 #include "Dictionary.h"
+#include "EventID.h"
+#include "EventData.h"
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(Cube cubes[]) :
-    StateMachine(0)
+    StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0)
 {
     ASSERT(cubes != 0);
     sInstance = this;
@@ -16,6 +18,18 @@ GameStateMachine::GameStateMachine(Cube cubes[]) :
 
 void GameStateMachine::update(float dt)
 {
+    mAnagramCooldown -= dt;
+    mAnagramCooldown = MAX(.0f, mAnagramCooldown);
+    unsigned oldSecsLeft = GetSecondsLeft();
+    mTimeLeft -= dt;
+    mTimeLeft = MAX(.0f, mTimeLeft);
+
+    if (oldSecsLeft != GetSecondsLeft())
+    {
+        // TODO dirty flags?
+        onEvent(EventID_Paint, EventData());
+    }
+
     StateMachine::update(dt);
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
@@ -25,6 +39,22 @@ void GameStateMachine::update(float dt)
 
 void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
+    switch (eventID)
+    {
+    case EventID_NewRound:
+        mTimeLeft = ROUND_TIME;
+        mAnagramCooldown = .0f;
+        mScore = 0;
+        break;
+
+    case EventID_NewAnagram:
+        mAnagramCooldown = ANAGRAM_COOLDOWN;
+        break;
+
+    default:
+        break;
+    }
+
     StateMachine::onEvent(eventID, data);
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {

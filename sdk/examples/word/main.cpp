@@ -112,7 +112,7 @@ void siftmain()
         lastTime = now;
 
         game.update(dt);
-        game.onEvent(EventID_Paint, EventData()); // TODO decouple
+        //game.onEvent(EventID_Paint, EventData()); // TODO decouple
         
         System::paint();
     }

@@ -13,6 +13,7 @@ enum EventID
     EventID_NewWordFound,
     EventID_OldWordFound,
     EventID_WordBroken,
+    EventID_NewRound,
     EventID_EndRound,
 
     NumEventIds

@@ -7,10 +7,8 @@
 
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
-    mAnagramCooldown -= dt;
-    mAnagramCooldown = MAX(.0f, mAnagramCooldown);
-    mTimeLeft -= dt;
-    return (mTimeLeft <= .0f) ? ScoredGameStateIndex_EndOfRound : ScoredGameStateIndex_Play;
+    return (GameStateMachine::GetSecondsLeft() <= 0) ?
+                ScoredGameStateIndex_EndOfRound : ScoredGameStateIndex_Play;
 }
 
 unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
@@ -18,12 +16,10 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_EnterState:
-        mTimeLeft = ROUND_TIME;
-        mAnagramCooldown = .0f;
-        mScore = 0;
+        GameStateMachine::sOnEvent(EventID_NewRound, EventData());
         // fall through
     case EventID_Input:
-        if (mAnagramCooldown <= .0f)
+        if (GameStateMachine::GetAnagramCooldown() <= .0f)
         {
             EventData data;
             data.mNewAnagram.mWord = Dictionary::pickWord(MAX_CUBES);
@@ -41,7 +37,6 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
                 //data.mNewAnagram.mOddIndex = ;
             }
             GameStateMachine::sOnEvent(EventID_NewAnagram, data);
-            mAnagramCooldown = ANAGRAM_COOLDOWN;
         }
         break;
 
