@@ -8,12 +8,12 @@
 #define PRINT(...) 
 #endif
 
-enum
+typedef enum
 {
 	UP,
 	LEFT, 
 	DOWN,
 	RIGHT
-};
+} Side;
 
 #endif

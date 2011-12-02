@@ -5,3 +5,6 @@ C:/projects/sifteo/thundercracker/sdk/examples/tiltflow/game.h
 C:/projects/sifteo/thundercracker/sdk/examples/tiltflow/main.cpp
 BG1Helper.h
 BG1Helper.cpp
+TiltFlowMenu.cpp
+TiltFlowMenu.h
+utils.h
