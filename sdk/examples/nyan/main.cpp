@@ -42,13 +42,12 @@ static void init() {
     }
 }
 
-static _SYSAudioBuffer buf;
+static AudioChannel channel;
 
 void siftmain() {
     init();
-	Audio::enableChannel(&buf);
-	_SYSAudioHandle nyanHandle;
-	Audio::play(nyan, &nyanHandle, LoopRepeat);
+	channel.init();
+	channel.play(nyan, LoopRepeat);
     for (unsigned i=0; i<NUM_CUBES; i++) {
 		vid[i].init();
 	}
