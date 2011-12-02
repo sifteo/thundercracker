@@ -94,8 +94,6 @@ void Player::Update(float dt) {
       }
       // animate walking to target
       pTarget->ShowPlayer();
-      
-      // <new>
       ASSERT( gGame.map.FindPath(pCurrent->Location(), mDir, &mMoves) );
       mProgress = 0;
       for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
@@ -136,10 +134,7 @@ void Player::Update(float dt) {
         }
       }
       
-
-      // </new>
-      // <old>
-      /*
+      /* // a reference for how doors used to be implemented
       mApproachingLockedDoor = pCurrent->Room()->GetPortal(mDir) == PORTAL_LOCK;
       if (!mApproachingLockedDoor || HaveBasicKey()) {
         for(mProgress=0; mProgress<128; mProgress+=WALK_SPEED) {
@@ -190,7 +185,6 @@ void Player::Update(float dt) {
         }
       }
       */ 
-      // </old>
 
     } while(mPath.PopStep(pCurrent));
 
