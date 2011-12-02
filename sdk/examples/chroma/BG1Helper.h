@@ -17,7 +17,7 @@ class BG1Helper
 public:
 	static const unsigned int BG1_ROWS = 16;
 	static const unsigned int BG1_COLS = 16;
-	static const int MAX_TILES = 144;
+    static const unsigned int MAX_TILES = 144;
 
 	BG1Helper( Cube &cube );
 
@@ -32,7 +32,7 @@ private:
     void SetBitRange( unsigned int bitsetIndex, unsigned int xOffset, unsigned int number );
 	//count how many bits set we have total
 	//only used for debug, so I don't care about optimizing it yet
-	int getBitSetCount() const;
+    unsigned int getBitSetCount() const;
 
 	//bitset of which tiles are active
 	uint16_t m_bitset[BG1_ROWS];

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Base.h"
+#include "Map.h"
 class GameView;
 struct MapRoom;
 
@@ -33,7 +33,9 @@ private:
   float mTimeout;
 
   Path mPath;
-  
+  MapPath mMoves;
+  uint8_t* pNextMove;
+    
 public:
   Player();
   
@@ -44,6 +46,7 @@ public:
   Cube::Side Direction() { return mDir; }
   Vec2 Position() const { return mPosition; }
   Vec2 Location() const { return mPosition/128; }
+  MapRoom* Room() const;
   int Status() const { return mStatus; }
 
   void IncrementBasicKeyCount() { mKeyCount++; }

@@ -27,6 +27,41 @@ namespace MapTool {
       this.x = x;
       this.y = y;
     }
+
+    public Int2 Center {
+      get {
+        foreach(var loc in Spiral.IntoMadness()) {
+          if (//GetTile(loc.x-1, loc.y-1).IsWalkable() &&
+              GetTile(loc.x-1, loc.y).IsWalkable() &&
+              //GetTile(loc.x, loc.y-1).IsWalkable() &&
+              GetTile(loc.x, loc.y).IsWalkable()) {
+            return Adjust(loc);
+          }
+        }
+        return new Int2() { x=0, y=0 };
+
+      }
+    }
+
+    public Int2 Adjust(Int2 loc) {
+      // if you're half-on a two-wide path, snap to it
+      if (GetTile(loc.x-1, loc.y).IsPath()) {
+        if (!GetTile(loc.x, loc.y).IsPath() && GetTile(loc.x-2, loc.y).IsPath()) {
+          loc.x--;
+        }
+      } else if (GetTile(loc.x, loc.y).IsPath() && GetTile(loc.x+1, loc.y).IsPath()) {
+        loc.x++;
+      }
+      return loc;
+    }
+
+    public bool IsBlocked {
+      get { return Center.x == 0; }
+    }
+
+    public TmxTile GetTile(int x, int y) {
+      return map.tmxData.backgroundLayer.GetTile(8 * this.x + x, 8 * this.y + y);
+    }
   }
 
   public class Map {

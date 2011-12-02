@@ -49,6 +49,8 @@ struct Float2 {
     Float2(float _x, float _y)
         : x(_x), y(_y) {}
 
+    inline float len2() { return ( x * x + y * y ); }
+
     float x, y;
 };
 

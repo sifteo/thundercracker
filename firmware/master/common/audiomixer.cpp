@@ -24,7 +24,7 @@ AudioMixer::AudioMixer() :
 void AudioMixer::init()
 {
     memset(channels, 0, sizeof(channels));
-    for (int i = 0; i < _SYS_AUDIO_NUM_SAMPLE_CHANNELS; i++) {
+    for (int i = 0; i < _SYS_AUDIO_MAX_SAMPLE_CHANNELS; i++) {
         decoders[i].init();
     }
 }
@@ -39,7 +39,7 @@ void AudioMixer::enableChannel(struct _SYSAudioBuffer *buffer)
         return;
     }
     // find the first disabled channel, init it and mark it as enabled
-    for (int i = 0; i < _SYS_AUDIO_NUM_CHANNELS; i++) {
+    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         if (!(enabledChannelMask & (1 << i))) {
             Atomic::SetBit(enabledChannelMask, i);
             channels[i].init(buffer);
@@ -149,7 +149,7 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
 
     memset(buffer, 0, numsamples * sizeof(*buffer));
 
-    AudioChannel *ch = &channels[0];
+    AudioChannelWrapper *ch = &channels[0];
     uint32_t mask = activeChannelMask;
     int samplesMixed = 0;
     for (; mask != 0; mask >>= 1, ch++) {
@@ -203,7 +203,7 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle
     uint32_t activeMask = activeChannelMask;
     uint32_t enabledMask = enabledChannelMask;
     int idx;
-    for (idx = 0; idx < _SYS_AUDIO_NUM_CHANNELS; idx++) {
+    for (idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
         if ((enabledMask & (1 << idx)) &&
            ((activeMask  & (1 << idx))) == 0) {
             break;
@@ -222,7 +222,7 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle
         dec = 0;
     }
 
-    AudioChannel *ch = &channels[idx];
+    AudioChannelWrapper *ch = &channels[idx];
     ch->handle = nextHandle++;
     *handle = ch->handle;
     ch->play(mod, loopMode, dec);
@@ -238,19 +238,19 @@ bool AudioMixer::isPlaying(_SYSAudioHandle handle)
 
 void AudioMixer::stop(_SYSAudioHandle handle)
 {
-    if (AudioChannel *ch = channelForHandle(handle)) {
+    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
         stopChannel(ch);
     }
 }
 
-void AudioMixer::stopChannel(AudioChannel *ch)
+void AudioMixer::stopChannel(AudioChannelWrapper *ch)
 {
     int channelIndex = ch - channels;
-    ASSERT(channelIndex < _SYS_AUDIO_NUM_CHANNELS);
+    ASSERT(channelIndex < _SYS_AUDIO_MAX_CHANNELS);
     Atomic::ClearBit(activeChannelMask, channelIndex);
     if (ch->channelType() == Sample) {
         int decoderIndex = ch->decoder - decoders;
-        ASSERT(decoderIndex < _SYS_AUDIO_NUM_SAMPLE_CHANNELS);
+        ASSERT(decoderIndex < _SYS_AUDIO_MAX_SAMPLE_CHANNELS);
         Atomic::SetBit(availableDecodersMask, decoderIndex);
     }
     ch->onPlaybackComplete();
@@ -258,28 +258,28 @@ void AudioMixer::stopChannel(AudioChannel *ch)
 
 void AudioMixer::pause(_SYSAudioHandle handle)
 {
-    if (AudioChannel *ch = channelForHandle(handle)) {
+    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
         ch->pause();
     }
 }
 
 void AudioMixer::resume(_SYSAudioHandle handle)
 {
-    if (AudioChannel *ch = channelForHandle(handle)) {
+    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
         ch->resume();
     }
 }
 
 void AudioMixer::setVolume(_SYSAudioHandle handle, int volume)
 {
-    if (AudioChannel *ch = channelForHandle(handle)) {
+    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
         ch->volume = Math::clamp(volume, 0, (int)Audio::MAX_VOLUME);
     }
 }
 
 int AudioMixer::volume(_SYSAudioHandle handle)
 {
-    if (AudioChannel *ch = channelForHandle(handle)) {
+    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
         return ch->volume;
     }
     return 0;
@@ -287,17 +287,17 @@ int AudioMixer::volume(_SYSAudioHandle handle)
 
 uint32_t AudioMixer::pos(_SYSAudioHandle handle)
 {
-    if (AudioChannel *ch = channelForHandle(handle)) {
+    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
         ch = 0;
         // TODO - implement
     }
     return 0;
 }
 
-AudioChannel* AudioMixer::channelForHandle(_SYSAudioHandle handle)
+AudioChannelWrapper* AudioMixer::channelForHandle(_SYSAudioHandle handle)
 {
     uint32_t mask = activeChannelMask;
-    AudioChannel *ch = &channels[0];
+    AudioChannelWrapper *ch = &channels[0];
 
     for (; mask != 0; ch++, mask >>= 1) {
         if ((mask & 0x1) && ch->handle == handle) {
@@ -313,7 +313,7 @@ SpeexDecoder* AudioMixer::getDecoder()
         return NULL;
     }
 
-    for (int i = 0; i < _SYS_AUDIO_NUM_SAMPLE_CHANNELS; i++) {
+    for (int i = 0; i < _SYS_AUDIO_MAX_SAMPLE_CHANNELS; i++) {
         if (availableDecodersMask & (1 << i)) {
             Atomic::ClearBit(availableDecodersMask, i);
             return &decoders[i];

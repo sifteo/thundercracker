@@ -15,13 +15,14 @@
 
 class SpeexDecoder;
 
-class AudioChannel {
+// TODO - need a better name, but at least this distinguishes from AudioChannel in audio.h...
+class AudioChannelWrapper {
 public:
     static const int STATE_PAUSED   = (1 << 0);
     static const int STATE_LOOP     = (1 << 1);
     static const int STATE_STOPPED  = (1 << 2);
 
-    AudioChannel();
+    AudioChannelWrapper();
     void init(_SYSAudioBuffer *b);
 
     bool isEnabled() const {
