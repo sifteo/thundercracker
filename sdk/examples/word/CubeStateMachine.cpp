@@ -87,6 +87,27 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
     return false;
 }
 
+unsigned CubeStateMachine::findRowLength()
+{
+    unsigned result = 1;
+    for (Cube::Side side = SIDE_LEFT; side <= SIDE_RIGHT; side +=2)
+    {
+        CubeStateMachine* csm = this;
+        for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(side);
+             csm && neighborID != CUBE_ID_UNDEFINED;
+             neighborID = csm->mCube->physicalNeighborAt(side),
+             csm = GameStateMachine::findCSMFromID(neighborID))
+        {
+            if (csm != this)
+            {
+                ++result;
+            }
+        }
+    }
+
+    return result;
+}
+
 bool CubeStateMachine::hasNoNeighbors() const
 {
     for (Cube::Side side = 0; side < NUM_SIDES; ++side)

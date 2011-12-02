@@ -17,6 +17,7 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
     case EventID_Paint:
+    case EventID_NewWordFound:
         paint();
         break;
 
@@ -107,4 +108,11 @@ void ScoredCubeState_NewWord::paint()
     printf("%d %s\n", getStateMachine().getCube().id(), string);
 #endif
     vid.BG0_text(Vec2(6,14), FontSmall, string);
+
+    sprintf(string, "%+.1d", getStateMachine().findRowLength());
+#if DEBUG
+    printf("score %d %s\n", getStateMachine().getCube().id(), string);
+#endif
+    vid.BG0_text(Vec2(7,0), FontSmall, string);
+
 }

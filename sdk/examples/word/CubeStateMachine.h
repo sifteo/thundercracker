@@ -30,6 +30,7 @@ public:
     const char* getLetters();
     bool canBeginWord();
     bool beginsWord(bool& isOld, char* wordBuffer);
+    unsigned findRowLength();
     bool isConnectedToCubeOnSide(Cube::ID cubeIDStart, Cube::Side side=SIDE_LEFT);
     bool hasNoNeighbors() const;
 
