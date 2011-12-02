@@ -13,6 +13,7 @@ OBJS = \
 	src/script.o \
 	src/proof.o \
 	src/proof_html.o \
+	src/asegwriter.o \
 	src/cppwriter.o \
 	src/imagestack.o \
 	src/tile.o \

@@ -13,6 +13,7 @@
 #include "script.h"
 #include "proof.h"
 #include "cppwriter.h"
+#include "asegwriter.h"
 
 namespace Stir {
 
@@ -70,6 +71,7 @@ bool Script::run(const char *filename)
     ProofWriter proof(log, outputProof);
     CPPHeaderWriter header(log, outputHeader);
     CPPSourceWriter source(log, outputSource);
+    ASegWriter aseg(log, "asegment.bin");
     
     for (std::set<Group*>::iterator i = groups.begin(); i != groups.end(); i++) {
         Group *group = *i;
@@ -83,6 +85,7 @@ bool Script::run(const char *filename)
         proof.writeGroup(*group);
         header.writeGroup(*group);
         source.writeGroup(*group);
+        aseg.writeGroup(*group);
     }
 
     proof.close();
