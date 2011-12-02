@@ -184,20 +184,30 @@ void Game::TakeItem() {
   int itemId = player.CurrentView()->Room()->itemId;
   if (itemId) {
     map.GetRoom(player.Location())->SetItem(0);
+    
+    // generalize to player.GetItem(itemId)?
     if (itemId == ITEM_BASIC_KEY) {
       player.IncrementBasicKeyCount();
-      // do a crazy get-key transition
-      float kDegToRad = 3.14159f / 180.f;
-      for(int i=0; i<360; i += 18) {
-        float radius = (80.f * i)/360.f;
-        player.CurrentView()->SetItemPosition(Vec2(
-          64 + radius * cosf(i * kDegToRad), 
-          64 + radius * sinf(i * kDegToRad)
-        ));
-        System::paint();
-      }
-      player.CurrentView()->HideItem();
     }
+
+    // do a pickup animation
+    for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
+      player.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
+      
+      for(float t=System::clock(); System::clock()-t<0.075f;) {
+        // this calc is kinda annoyingly complex
+        float u = (System::clock() - t) / 0.075f;
+        float du = 1.f / (float) PlayerPickup.frames;
+        u = (frame + u) * du;
+        u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+
+        System::paint();
+        player.CurrentView()->SetItemPosition(Vec2(0, -40.f * u) );
+      }
+    }
+    player.CurrentView()->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
+    for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
+    player.CurrentView()->HideItem();
   }
 }
 

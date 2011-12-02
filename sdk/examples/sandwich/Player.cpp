@@ -3,7 +3,6 @@
 #include "Game.h"
 
 #define DOOR_PAD 10
-#define FRAMES_PER_CYCLE 6
 #define GAME_FRAMES_PER_ANIM_FRAME 2
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
@@ -54,7 +53,7 @@ int Player::CurrentFrame() {
     case PLAYER_STATUS_WALKING:
       int frame = mAnimFrame / GAME_FRAMES_PER_ANIM_FRAME;
       int tilesPerFrame = PlayerWalk.width * PlayerWalk.height;
-      int tilesPerStrip = tilesPerFrame * FRAMES_PER_CYCLE;
+      int tilesPerStrip = tilesPerFrame * (PlayerWalk.frames>>2);
       return PlayerWalk.index + mDir * tilesPerStrip + frame * tilesPerFrame;
   }
   return 0;
@@ -63,7 +62,7 @@ int Player::CurrentFrame() {
 void Player::Update(float dt) {
   // every update code here
   if (mStatus == PLAYER_STATUS_WALKING) {
-    mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * FRAMES_PER_CYCLE);
+    mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * (PlayerWalk.frames>>2));
   }
 
   CORO_BEGIN;

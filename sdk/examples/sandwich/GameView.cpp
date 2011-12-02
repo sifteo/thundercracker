@@ -3,9 +3,9 @@
 #include "Enemy.h"
 
 #define ROOM_NONE (Vec2(-1,-1))
-#define PLAYER_SPRITE_ID 0
-#define ENEMY_SPRITE_ID 1
-#define ITEM_SPRITE_ID 2
+#define ITEM_SPRITE_ID 0
+#define PLAYER_SPRITE_ID 1
+#define ENEMY_SPRITE_ID 2
 
 GameView::GameView() : 
 visited(0), mRoom(-2,-2) {
@@ -84,6 +84,10 @@ void GameView::ShowPlayer() {
   UpdatePlayer();
 }
 
+void GameView::SetPlayerFrame(unsigned frame) {
+  SetSpriteImage(PLAYER_SPRITE_ID, frame);
+}
+
 void GameView::UpdatePlayer() {
   Vec2 localPosition = gGame.player.Position() - 128 * mRoom;
   SetSpriteImage(PLAYER_SPRITE_ID, gGame.player.CurrentFrame());
@@ -126,11 +130,13 @@ void GameView::HideEnemy(Enemy* pEnemy) {
 void GameView::ShowItem(int itemId) {
   SetSpriteImage(ITEM_SPRITE_ID, Items.index + itemId - 1);
   ResizeSprite(ITEM_SPRITE_ID, 16, 16);
-  MoveSprite(ITEM_SPRITE_ID, 64-8, 64-8);
+  Vec2 p = 16 * Room()->Data()->LocalCenter();
+  MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y);
 }
 
 void GameView::SetItemPosition(Vec2 p) {
-  MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y-8);
+  p += 16 * Room()->Data()->LocalCenter();
+  MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y);
 }
 
 void GameView::HideItem() {
