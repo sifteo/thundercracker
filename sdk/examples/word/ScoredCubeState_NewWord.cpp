@@ -94,10 +94,12 @@ void ScoredCubeState_NewWord::paint()
     Cube& c = getStateMachine().getCube();
     // FIXME vertical words
     const Sifteo::AssetImage& bg =
-        (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
+        (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
          c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED) ?
             BGNewWordConnectedMiddle :
-            BGNewWordConnectedLeft;
+            (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED) ?
+                BGNewWordConnectedRight:
+                BGNewWordConnectedLeft;
     VidMode_BG0 vid(c.vbuf);
     vid.init();
     vid.BG0_drawAsset(Vec2(0,0), bg);
