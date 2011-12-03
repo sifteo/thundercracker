@@ -36,7 +36,7 @@ $(AUDIO).gen.cpp: $(SPEEXENC) $(AUDIODEPS)
 .PHONY: clean all ocd program gdb
 
 clean:
-	rm -f $(BINS) *.o $(GENERATED_FILES)
+	rm -f $(BINS) *.o *.d $(GENERATED_FILES)
 
 -include $(OBJS_SIM:%.o=%.d)
 	
