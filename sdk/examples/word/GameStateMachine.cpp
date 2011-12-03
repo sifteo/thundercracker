@@ -54,7 +54,16 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_NewWordFound:
-        mScore += strlen(data.mWordFound.mWord);
+        {
+            unsigned len = strlen(data.mWordFound.mWord);
+            mScore += len;
+            // TODO multiple letters per cube
+            // TODO count active cubes
+            if (len >= 4)
+            {
+                mTimeLeft += len - 2;
+            }
+        }
         break;
 
     default:
