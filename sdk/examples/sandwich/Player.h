@@ -59,6 +59,7 @@ public:
 
   void Move(int dx, int dy);
   void Update(float dt);
+  void UpdateAnimation(float dt);
   void Reset();
   
 private:

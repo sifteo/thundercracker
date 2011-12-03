@@ -58,7 +58,7 @@ void Game::InitializeAssets() {
 }
 
 void Game::MainLoop() {
-  float simTime = System::clock();
+  mSimTime = System::clock();
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->Init();
   }
@@ -66,9 +66,7 @@ void Game::MainLoop() {
   System::paint();
 
   while(1) {
-    float now = System::clock();
-    float dt = now - simTime;
-    simTime = now;
+    float dt = UpdateDeltaTime();
     if (sNeighborDirty) { 
       CheckMapNeighbors(); 
     }
@@ -80,8 +78,16 @@ void Game::MainLoop() {
   }
 }
 
+float Game::UpdateDeltaTime() {
+  float now = System::clock();
+  float result = now - mSimTime;
+  mSimTime = now;
+  return result;
+}
+
 void Game::MovePlayerAndRedraw(int dx, int dy) {
   player.Move(dx, dy);
+  player.UpdateAnimation(UpdateDeltaTime());
   player.CurrentView()->UpdatePlayer();
   System::paint();
 }

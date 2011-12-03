@@ -68,8 +68,7 @@ int Player::CurrentFrame() {
   return 0;
 }
 
-void Player::Update(float dt) {
-  // every update code here
+void Player::UpdateAnimation(float dt) {
   if (mStatus == PLAYER_STATUS_WALKING) {
     mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * (PlayerWalk.frames>>2));
   } else { // PLAYER_STATUS_IDLE
@@ -90,7 +89,12 @@ void Player::Update(float dt) {
     if (before != mAnimFrame) {
       pCurrent->UpdatePlayer();
     }
-  }
+  }  
+}
+
+void Player::Update(float dt) {
+  // every update code here
+  UpdateAnimation(dt);
 
   CORO_BEGIN;
   // stately update code here
