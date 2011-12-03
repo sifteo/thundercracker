@@ -4,7 +4,7 @@
 class GameView;
 struct MapRoom;
 
-#define WALK_SPEED 4
+#define WALK_SPEED 3
 #define PLAYER_STATUS_IDLE 0
 #define PLAYER_STATUS_WALKING 1
 

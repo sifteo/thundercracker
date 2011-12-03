@@ -184,6 +184,9 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   view->Init();
   WalkTo(target);
   CheckMapNeighbors();
+
+  // clear out any accumulated time
+  UpdateDeltaTime();
 }
 
 void Game::TakeItem() {
@@ -208,7 +211,7 @@ void Game::TakeItem() {
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
 
         System::paint();
-        player.CurrentView()->SetItemPosition(Vec2(0, -40.f * u) );
+        player.CurrentView()->SetItemPosition(Vec2(0, -36.f * u) );
       }
     }
     player.CurrentView()->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);

@@ -128,7 +128,6 @@ void Player::Update(float dt) {
         mDir = *pNextMove;  
         if (mProgress != 0) {
           mPosition += mProgress * kSideToUnit[*pNextMove];
-          mProgress = 0;
           pCurrent->UpdatePlayer();
           pTarget->UpdatePlayer();
           CORO_YIELD;
