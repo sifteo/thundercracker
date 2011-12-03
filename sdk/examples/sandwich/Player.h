@@ -26,6 +26,7 @@ private:
   int mDir;
   int mKeyCount;
   int mAnimFrame;
+  float mAnimTime;
 
   // stately variables
   int mProgress;

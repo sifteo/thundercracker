@@ -7,7 +7,7 @@
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
 pCurrent(gGame.views), pTarget(0), mPosition(128+64,64+16), // todo: move intial position to map data
-mDir(2), mKeyCount(0), mAnimFrame(0), mProgress(0), mNextDir(-1), 
+mDir(2), mKeyCount(0), mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
 mApproachingLockedDoor(false) {
   CORO_RESET;
 }
@@ -48,8 +48,17 @@ void Player::Move(int dx, int dy) {
 
 int Player::CurrentFrame() {
   switch(mStatus) {
-    case PLAYER_STATUS_IDLE:
-      return PlayerStand.index + mDir * (PlayerStand.width * PlayerStand.height);
+    case PLAYER_STATUS_IDLE: {
+      if (mAnimFrame == 1) {
+        return PlayerIdle.index;
+      } else if (mAnimFrame == 2) {
+        return PlayerIdle.index + (PlayerIdle.width * PlayerIdle.height);
+      } else if (mAnimFrame == 3 || mAnimFrame == 4) {
+        return PlayerIdle.index + (mAnimFrame-1) * (PlayerIdle.width * PlayerIdle.height);
+      } else {
+        return PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height);
+      }
+    }
     case PLAYER_STATUS_WALKING:
       int frame = mAnimFrame / GAME_FRAMES_PER_ANIM_FRAME;
       int tilesPerFrame = PlayerWalk.width * PlayerWalk.height;
@@ -63,6 +72,24 @@ void Player::Update(float dt) {
   // every update code here
   if (mStatus == PLAYER_STATUS_WALKING) {
     mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * (PlayerWalk.frames>>2));
+  } else { // PLAYER_STATUS_IDLE
+    mAnimTime += dt;
+    if (mAnimTime >= 10.f) {
+      mAnimTime -= 10.f;
+    }
+    int before = mAnimFrame;
+    if (mAnimTime > 0.5f && mAnimTime < 1.f) {
+      mAnimFrame = 1;
+    } else if (mAnimTime > 2.5f && mAnimTime < 3.f) {
+      mAnimFrame = 2;
+    } else if (mAnimTime > 5.f && mAnimTime < 5.5f) {
+      mAnimFrame = (mAnimTime < 5.25f ? 3 : 4);
+    } else {
+      mAnimFrame = 0;
+    }
+    if (before != mAnimFrame) {
+      pCurrent->UpdatePlayer();
+    }
   }
 
   CORO_BEGIN;
@@ -73,18 +100,16 @@ void Player::Update(float dt) {
     pCurrent->UpdatePlayer();
     mNextDir = pCurrent->VirtualTiltDirection();
     mPath.Cancel();
+    mAnimFrame = 0;
+    mAnimTime = 0.f;
     while(!gGame.map.CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
       CORO_YIELD;
       mNextDir = pCurrent->VirtualTiltDirection();
-      //if (mNextDir != -1) {
-      //  mDir = mNextDir;
-      //  pCurrent->UpdatePlayer();
-      if (PathDetect()) {
-        break;
-      }
+      if (PathDetect()) { break; }
     }
     // go to the target
     mStatus = PLAYER_STATUS_WALKING;
+    mAnimFrame = 0;
     mDir = mNextDir;
     do {
       if (mPath.IsDefined()) {
