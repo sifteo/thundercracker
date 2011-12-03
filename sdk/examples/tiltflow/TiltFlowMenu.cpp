@@ -260,21 +260,23 @@ void TiltFlowView::PaintInfo() {
 }
 
 void TiltFlowView::PaintMenu() {
-    DoPaintItem( TiltFlowMenu::Inst()->GetItem( mItem ), 0, 0 );
-   /*
-  if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
+    //test
+    //DoPaintItem( TiltFlowMenu::Inst()->GetItem( mItem ), 0, 0 );
+
+
+  //if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
   int x, w;
-  ClipIt(24, out x, out w); // magic
-  if (w > 0) { DoPaintItem(Item, x, w); }
-  if (c.Neighbors.Left == NULL && mItem > 0) {
-    ClipIt(-70, out x, out w); // magic
-    if (w > 0) { DoPaintItem(menu[mItem-1], x, w); }
+  ClipIt(24, x, w); // magic
+  if (w > 0) { DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), x, w); }
+  if (/*c.Neighbors.Left == NULL && */mItem > 0) {
+    ClipIt(-70, x, w); // magic
+    if (w > 0) { DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), x, w); }
   }
-  if (c.Neighbors.Right == NULL && mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
-    ClipIt(118, out x, out w); // magic
-    if (w > 0) { DoPaintItem(menu[mItem+1], x, 80); }
+  if (/*c.Neighbors.Right == NULL && */mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
+    ClipIt(118, x, w); // magic
+    if (w > 0) { DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), x, 80); }
   }
-  if (mDrawLabel) {
+  /*if (mDrawLabel) {
     if (c.Neighbors.Left == NULL && c.Neighbors.Right == NULL) {
       if (mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
         c.Image("gestures", 4, 99, 0, 192, 27, 25); // magic
@@ -288,8 +290,12 @@ void TiltFlowView::PaintMenu() {
       c.Image("gestures", 64-g.size.x/2, 128-4-g.size.y, g.position.x, g.position.y, g.size.x, g.size.y, 1, 0); // magic
     }
     TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
-  }
-  */
+  }*/
+
+  VidMode_BG0 vid( mpCube->vbuf );
+
+  // Firmware handles all pixel-level scrolling
+  vid.BG0_setPanning(Vec2((int)mOffsetX, 0));
 }
 
 void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int w) {
@@ -312,13 +318,16 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int w) {
     Cube.FillRect(item.color, x, y, w, h);
   }*/
 
+  //TODO draw tile assets.
+  //draw less than 0 one tile.  and greater than 128 one tile
+  //should just fix clipit to do tile clipping
+
+
   if( pItem )
   {
       VidMode_BG0 vid( mpCube->vbuf );
-      vid.BG0_drawAsset(Vec2(0,0), pItem->mImage, 0);
-
-      // Firmware handles all pixel-level scrolling
-      vid.BG0_setPanning(Vec2((int)mOffsetX, 0));
+      //TODO, CHANGE THIS TO PARTIAL ASSETS
+      vid.BG0_drawAsset(Vec2(x/8+1,3), pItem->mImage, 0);
   }
 }
 
@@ -335,6 +344,20 @@ void TiltFlowView::PaintItem() {
 }
 
 
+
+
+void TiltFlowView::ClipIt(int ox, int &x, int &w) {
+x = ox + (int)(mOffsetX);
+  w = 80;
+  if (x < BG0MINX) {
+    w += x;
+    x = BG0MINX;
+  }
+  w -= (x+w>BG0MAXX) ? 80-(BG0MAXX-x) : 0;
+}
+
+
+
 void TiltFlowView::OnButton(bool pressed) {
   if (TiltFlowMenu::Inst()->GetStatus() == TiltFlowMenu::CHOOSING && mStatus != STATUS_NONE) {
     StopScrolling();
@@ -342,6 +365,7 @@ void TiltFlowView::OnButton(bool pressed) {
     mDirty = true;
   }
 }
+
 
 //TODO need flip
 /*

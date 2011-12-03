@@ -41,6 +41,9 @@ public:
   static const float DEEPTILTACCEL;
   static const float GRAVITY;
   static const float EPSILON;
+
+  static const int BG0MINX = -8;
+  static const int BG0MAXX = 136;
   typedef enum
   { STATUS_NONE, STATUS_MENU, STATUS_ITEM, STATUS_INFO }
   Status;
@@ -81,15 +84,14 @@ private:
   //bool mVisited;
   //Vec2 mGridPosition;
 
-
-
-
   void PaintNone();
   void PaintInfo();
   void PaintMenu();
 
   void DoPaintItem(TiltFlowItem *pItem, int x, int w);
   void PaintItem();
+
+  void ClipIt(int ox, int &x, int &w);
 
   void OnButton(bool pressed);
 
