@@ -5,7 +5,7 @@
 
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
-const float ROUND_TIME = 120.0f; // TODO reduce when tilt bug is gone
+const float ROUND_TIME = 12.0f; // TODO reduce when tilt bug is gone
 const float ROUND_BONUS_TIME = 2.0f; // TODO reduce when tilt bug is gone
 
 class ScoredGameState : public State

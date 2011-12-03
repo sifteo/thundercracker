@@ -2,6 +2,7 @@
 #include "Dictionary.h"
 #include "EventID.h"
 #include "EventData.h"
+#include "string.h"
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
@@ -49,6 +50,10 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewAnagram:
         mAnagramCooldown = ANAGRAM_COOLDOWN;
+        break;
+
+    case EventID_NewWordFound:
+        mScore += strlen(data.mWordFound.mWord);
         break;
 
     default:
