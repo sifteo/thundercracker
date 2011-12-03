@@ -89,7 +89,7 @@ void ScoredCubeState_NotWord::paint()
     vid.BG0_text(Vec2(6,3), Font, getStateMachine().getLetters());
     char string[5];
     sprintf(string, "%.4d", GameStateMachine::GetSecondsLeft());
-#if DEBUG
+#if DEBUGZZZZZZZZZ
     printf("%d %s\n", getStateMachine().getCube().id(), string);
 #endif
     vid.BG0_text(Vec2(6,14), FontSmall, string);
