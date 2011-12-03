@@ -93,6 +93,18 @@ void TiltFlowMenu::Pick(TiltFlowView &view)
 }
 
 
+TiltFlowItem *TiltFlowMenu::GetItem( int item )
+{
+    ASSERT( item >= 0 && item < mNumItems );
+
+    if( item >= 0 && item < mNumItems )
+        return &mItems[ item ];
+
+    return NULL;
+}
+
+
+
 /*
   //TODO, THIS IS NEIGHBORING, NOT HAPPENING YET
 void TiltFlowMenu::CheckMenuNeighbors() {
@@ -248,6 +260,7 @@ void TiltFlowView::PaintInfo() {
 }
 
 void TiltFlowView::PaintMenu() {
+    DoPaintItem( TiltFlowMenu::Inst()->GetItem( mItem ), 0, 0 );
    /*
   if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
   int x, w;
@@ -279,7 +292,7 @@ void TiltFlowView::PaintMenu() {
   */
 }
 
-void TiltFlowView::DoPaintItem(TiltFlowItem item, int x, int w) {
+void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int w) {
   const int y = 24; // magic
   const int h = 80; // magic
   /*if (TiltFlowMenu::Inst()->PaintItem != NULL) {
@@ -298,6 +311,15 @@ void TiltFlowView::DoPaintItem(TiltFlowItem item, int x, int w) {
   } else {
     Cube.FillRect(item.color, x, y, w, h);
   }*/
+
+  if( pItem )
+  {
+      VidMode_BG0 vid( mpCube->vbuf );
+      vid.BG0_drawAsset(Vec2(0,0), pItem->mImage, 0);
+
+      // Firmware handles all pixel-level scrolling
+      vid.BG0_setPanning(Vec2((int)mOffsetX, 0));
+  }
 }
 
 void TiltFlowView::PaintItem() {
@@ -450,11 +472,11 @@ void TiltFlowView::CoastToStop() {
     if (fabs(mOffsetX) < MINACCEL) { // magic
       StopScrolling();
     } else if (mOffsetX > 0.0f) {
-      mOffsetX -= DRIFTVEL * mAccel;
-      if (mOffsetX < 0) { mAccel = MINACCEL; }
+          mOffsetX -= DRIFTVEL * mAccel;
+          if (mOffsetX < 0) { mAccel = MINACCEL; }
     } else {
-      mOffsetX += DRIFTVEL * mAccel;
-      if (mOffsetX > 0) { mAccel = MINACCEL; }
+          mOffsetX += DRIFTVEL * mAccel;
+          if (mOffsetX > 0) { mAccel = MINACCEL; }
     }
     mDirty = true;
   }

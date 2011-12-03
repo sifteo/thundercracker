@@ -88,7 +88,7 @@ private:
   void PaintInfo();
   void PaintMenu();
 
-  void DoPaintItem(TiltFlowItem item, int x, int w);
+  void DoPaintItem(TiltFlowItem *pItem, int x, int w);
   void PaintItem();
 
   void OnButton(bool pressed);
@@ -146,6 +146,7 @@ public:
     inline float GetSimTime() const { return mSimTime; }
     inline Status GetStatus() const { return mStatus; }
     inline int GetNumItems() const { return mNumItems; }
+    TiltFlowItem *GetItem( int item );
 
 private:
     //void CheckMenuNeighbors();
