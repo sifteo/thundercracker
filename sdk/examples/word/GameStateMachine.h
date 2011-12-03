@@ -16,6 +16,11 @@ enum ScoredGameStateIndex
     ScoredGameStateIndex_NumStates
 };
 
+
+const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
+const float ROUND_TIME = 120.0f; // TODO reduce when tilt bug is gone
+const float ROUND_BONUS_TIME = 2.0f; // TODO reduce when tilt bug is gone
+
 // HACK workaround inability to check if a Cube is actually connected
 const unsigned MAX_CUBES = 6;
 

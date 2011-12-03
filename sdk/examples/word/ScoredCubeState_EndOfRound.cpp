@@ -7,7 +7,7 @@
 #include "CubeStateMachine.h"
 #include "GameStateMachine.h"
 #include "ScoredCubeState_EndOfRound.h"
-
+#include "SavedData.h"
 
 unsigned ScoredCubeState_EndOfRound::onEvent(unsigned eventID, const EventData& data)
 {
@@ -54,8 +54,28 @@ void ScoredCubeState_EndOfRound::paint()
         break;
 
         // TODO high scores
-    default:
+    case 1:
         vid.BG0_drawAsset(Vec2(0,0), RestartScreen);
+        break;
+
+    default:
+        vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
+        vid.BG0_text(Vec2(3,4), FontSmall, "High Scores");
+
+        for (unsigned i = arraysize(SavedData::sHighScores) - 1;
+             i >= 0;
+             --i)
+        {
+            if (SavedData::sHighScores[i] == 0)
+            {
+                break;
+            }
+            char string[17];
+            sprintf(string, "%.5d", SavedData::sHighScores[i]);
+            vid.BG0_text(Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
+                         FontSmall,
+                         string);
+        }
         break;
     }
 }

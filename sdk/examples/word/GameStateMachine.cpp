@@ -2,7 +2,8 @@
 #include "Dictionary.h"
 #include "EventID.h"
 #include "EventData.h"
-#include "string.h"
+#include <string.h>
+#include "SavedData.h"
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
@@ -59,13 +60,14 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
     default:
         break;
     }
+    Dictionary::sOnEvent(eventID, data);
+    SavedData::sOnEvent(eventID, data);
 
     StateMachine::onEvent(eventID, data);
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
         mCubeStateMachines[i].onEvent(eventID, data);
     }
-    Dictionary::sOnEvent(eventID, data);
 }
 
 void GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
