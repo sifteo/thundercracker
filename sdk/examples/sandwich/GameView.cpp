@@ -128,7 +128,7 @@ void GameView::HideEnemy(Enemy* pEnemy) {
 //----------------------------------------------------------------------
 
 void GameView::ShowItem(int itemId) {
-  SetSpriteImage(ITEM_SPRITE_ID, Items.index + itemId - 1);
+  SetSpriteImage(ITEM_SPRITE_ID, Items.index + (itemId - 1) * Items.width * Items.height);;
   ResizeSprite(ITEM_SPRITE_ID, 16, 16);
   Vec2 p = 16 * Room()->Data()->LocalCenter();
   MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y);

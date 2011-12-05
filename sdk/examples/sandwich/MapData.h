@@ -8,6 +8,7 @@ using namespace Sifteo;
 #define PORTAL_DOOR 2
 #define PORTAL_LOCK	3
 
+#define ITEM_NONE 0
 #define ITEM_BASIC_KEY 1
 
 #define TRIGGER_TYPE_PASSIVE    0

@@ -219,21 +219,28 @@ namespace MapTool {
           Console.WriteLine("BUILD_MAP_WARNING: Object Out of Bounds: " + obj.name);
           continue;
         }
-        Trigger t = null;
-        if ((t = triggerFactory.TryCreateTriggerFrom(obj)) != null) {
-          if (room.trigger != null) {
-            Console.WriteLine("BUILD_MAP_WARNING: Too Many Triggers in Room ({0}, {1})", room.x, room.y);
-          } else {
-            room.trigger = t;
-            t.room = room;
-            t.worldBounds = new Rectangle(
-              obj.pixelX,
-              obj.pixelY,
-              obj.pixelW,
-              obj.pixelH
-            );
-            t.name = obj.name;
-          }
+        switch(obj.type) {
+          case "Item":
+            obj.TryGetValue("id", out room.item);
+            break;
+          default:
+            Trigger t = null;
+            if ((t = triggerFactory.TryCreateTriggerFrom(obj)) != null) {
+              if (room.trigger != null) {
+                Console.WriteLine("BUILD_MAP_WARNING: Too Many Triggers in Room ({0}, {1})", room.x, room.y);
+              } else {
+                room.trigger = t;
+                t.room = room;
+                t.worldBounds = new Rectangle(
+                  obj.pixelX,
+                  obj.pixelY,
+                  obj.pixelW,
+                  obj.pixelH
+                );
+                t.name = obj.name;
+              }
+            }
+            break;
         }
       }
       return result;

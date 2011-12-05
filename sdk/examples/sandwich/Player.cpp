@@ -154,13 +154,41 @@ void Player::Update(float dt) {
       pCurrent = pTarget;
       pTarget = 0;  
       pCurrent->UpdatePlayer();
+      { // pickup item?
+        int itemId = pCurrent->Room()->itemId;
+        if (itemId) {
+          pCurrent->Room()->SetItem(0);
+          // TODO: sandwich parts
+          if (itemId == ITEM_BASIC_KEY) {
+            IncrementBasicKeyCount();
+          }
+          // do a pickup animation
+          for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
+            pCurrent->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
+            
+            for(float t=System::clock(); System::clock()-t<0.075f;) {
+              // this calc is kinda annoyingly complex
+              float u = (System::clock() - t) / 0.075f;
+              float du = 1.f / (float) PlayerPickup.frames;
+              u = (frame + u) * du;
+              u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+
+              System::paint();
+              pCurrent->SetItemPosition(Vec2(0, -36.f * u) );
+            }
+          }
+          pCurrent->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
+          for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
+          pCurrent->HideItem();        
+        }
+      }
       { // passive trigger?
         MapRoom *mr = pCurrent->Room();
         if (mr->callback) {
           mr->callback(TRIGGER_TYPE_PASSIVE);
         }
       }
-      
+
       /* // a reference for how doors used to be implemented
       mApproachingLockedDoor = pCurrent->Room()->GetPortal(mDir) == PORTAL_LOCK;
       if (!mApproachingLockedDoor || HaveBasicKey()) {

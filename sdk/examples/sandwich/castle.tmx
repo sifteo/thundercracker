@@ -394,7 +394,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer name="grid" width="24" height="24" visible="0" opacity="0.15">
+ <layer name="grid" width="24" height="24" opacity="0.15">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
@@ -428,6 +428,10 @@
     <property name="target" value="forest:CastleGate"/>
    </properties>
   </object>
-  <object name="TestKey" type="BasicKey" x="176" y="176" width="32" height="32"/>
+  <object name="TestKey" type="Item" x="176" y="176" width="32" height="32">
+   <properties>
+    <property name="id" value="2"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

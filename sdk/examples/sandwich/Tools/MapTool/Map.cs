@@ -21,6 +21,9 @@ namespace MapTool {
     public readonly int y;
     public int Id { get { return x + map.Width * y; } }
     public Trigger trigger = null;
+    public string item = "";
+
+    public bool HasItem { get { return item.Length > 0 && item != "ITEM_NONE"; } }
 
     public Room(Map map, int x, int y) {
       this.map = map;

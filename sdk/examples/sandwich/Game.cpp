@@ -189,37 +189,6 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   UpdateDeltaTime();
 }
 
-void Game::TakeItem() {
-  int itemId = player.CurrentView()->Room()->itemId;
-  if (itemId) {
-    map.GetRoom(player.Location())->SetItem(0);
-    
-    // generalize to player.GetItem(itemId)?
-    if (itemId == ITEM_BASIC_KEY) {
-      player.IncrementBasicKeyCount();
-    }
-
-    // do a pickup animation
-    for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
-      player.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
-      
-      for(float t=System::clock(); System::clock()-t<0.075f;) {
-        // this calc is kinda annoyingly complex
-        float u = (System::clock() - t) / 0.075f;
-        float du = 1.f / (float) PlayerPickup.frames;
-        u = (frame + u) * du;
-        u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-
-        System::paint();
-        player.CurrentView()->SetItemPosition(Vec2(0, -36.f * u) );
-      }
-    }
-    player.CurrentView()->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
-    for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
-    player.CurrentView()->HideItem();
-  }
-}
-
 //------------------------------------------------------------------
 // NEIGHBOR HANDLING
 //------------------------------------------------------------------

@@ -46,7 +46,7 @@ namespace MapTool {
 
       // find triggers, items
       var triggers = new List<Trigger>();
-      var items = new List<Trigger>();
+      var items = new List<Room>();
       foreach(var room in map.rooms) {
         if (room.trigger != null) {
           triggers.Add(room.trigger);
@@ -54,9 +54,9 @@ namespace MapTool {
             "static void {0}_trigger_{1}(int type) {{ {2} }}",
             map.name, room.Id, room.trigger.GeneratedCode()
           );
-          if (room.trigger.HasItem) {
-            items.Add(room.trigger);
-          }
+        }
+        if (room.HasItem) {
+          items.Add(room);
         }
       }
 
@@ -77,8 +77,8 @@ namespace MapTool {
       if (items.Count > 0) {
         itemListName = map.name + "_items";
         stream.WriteLine("static ItemData {0}[] = {{", itemListName);
-        foreach(var item in items) {
-          stream.WriteLine("    {{ {0}, {1} }},", item.room.Id, item.ItemId);
+        foreach(var room in items) {
+          stream.WriteLine("    {{ {0}, {1} }},", room.Id, room.item);
         }
         stream.WriteLine("    { -1, 0 }");
         stream.WriteLine("};");
