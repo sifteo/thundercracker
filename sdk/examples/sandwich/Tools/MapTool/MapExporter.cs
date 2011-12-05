@@ -127,7 +127,7 @@ namespace MapTool {
 
       // write data
       stream.WriteLine(
-        "MapData {0}_data = {{ &TileSet_{0}, {0}_rooms, {0}_xportals, {0}_yportals, {1}, {2}, {3}, {4} }};",
+        "MapData {0}_data = {{ &TileSet_{0}, &Blank_{0}, {0}_rooms, {0}_xportals, {0}_yportals, {1}, {2}, {3}, {4} }};",
         map.name, triggerListName, itemListName, map.Width, map.Height
       );
     }

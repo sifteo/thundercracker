@@ -1,5 +1,4 @@
 GameAssets = group{quality=10}
-Blank = image{"blank.png", width=128, height=128}
 PlayerStand = image{"stand.png", width=32, height=32,pinned=true}
 PlayerWalk = image{"walk.png", width=32, height=32,pinned=true}
 PlayerPickup = image{"pickup.png", width=32, height=32, pinned=true}

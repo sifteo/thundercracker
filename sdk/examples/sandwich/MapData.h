@@ -36,6 +36,7 @@ struct RoomData {
 
 struct MapData {
     const AssetImage* tileset;
+    const AssetImage* blankImage;
     RoomData* rooms;
     uint8_t* xportals; // vertical portals between rooms (x,y) and (x+1,y)
     uint8_t* yportals; // horizontal portals between rooms (x,y) and (x,y+1)

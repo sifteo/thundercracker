@@ -28,8 +28,6 @@ namespace MapTool {
         name = Path.GetFileNameWithoutExtension(path),
         width = int.Parse(map.Attributes["width"].Value),
         height = int.Parse(map.Attributes["height"].Value),
-        tilePixelWidth = int.Parse(map.Attributes["tilewidth"].Value),
-        tilePixelHeight = int.Parse(map.Attributes["tileheight"].Value)
       };
 
       // load tile sets
@@ -37,8 +35,6 @@ namespace MapTool {
         var tileSet = new TmxTileset() {
           map = result,
           name = node.Attributes["name"].Value,
-          tilePixelWidth = int.Parse(node.Attributes["tilewidth"].Value),
-          tilePixelHeight = int.Parse(node.Attributes["tileheight"].Value),
           firstGid = int.Parse(node.Attributes["firstgid"].Value)
         };
         var imgNode = node.SelectSingleNode("image");
@@ -50,8 +46,8 @@ namespace MapTool {
         tileSet.image.pixelWidth = int.Parse(imgNode.Attributes["width"].Value);
         tileSet.image.pixelHeight = int.Parse(imgNode.Attributes["height"].Value);
         tileSet.tiles = new TmxTile[
-          tileSet.image.pixelWidth / tileSet.tilePixelWidth,
-          tileSet.image.pixelHeight/tileSet.tilePixelHeight
+          tileSet.image.pixelWidth / 16,
+          tileSet.image.pixelHeight/ 16
         ];
         int tileId = tileSet.firstGid;
         for(int x=0; x<tileSet.TileCountX; ++x) {
@@ -108,7 +104,10 @@ namespace MapTool {
         result.nameToLayer.Add(layer.name, layer);
         if (layer.name == "background") {
           result.backgroundLayer = layer;
-          result.backgroundTileSet = layer.GetTile(0,0).tileSet;
+          result.backgroundTileSet = layer.TileSet;
+        } else if (layer.name == "overlay") {
+          result.overlayLayer = layer;
+          result.overlayTileSet = layer.TileSet;
         }
       }
 
