@@ -59,13 +59,10 @@ void AudioMixer::test()
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 
-    _SYSAudioBuffer audio[2];
-    for (unsigned i = 0; i < arraysize(audio); i++) {
-        Audio::enableChannel(&audio[i]);
-    }
+    Sifteo::AudioChannel channel;
+    channel.init();
 
-    _SYSAudioHandle handle;
-    const Sifteo::AudioModule &mod = spaceshipearth_16khz;
+    const _SYSAudioModule &mod = spaceshipearth_16khz;
 #if 0
 
 #include <stdio.h>
@@ -121,15 +118,15 @@ void AudioMixer::test()
     int t = state;
 
 #endif
-    if (!AudioMixer::instance.play(mod, &handle)) {
+    if (!channel.play(mod)) {
         while (1); // error
     }
     for (;;) {
-//        if (!AudioMixer::instance.isPlaying(handle)) {
-//            if (!AudioMixer::instance.play(mod, &handle)) {
-//                while (1); // error
-//            }
-//        }
+        if (!channel.isPlaying()) {
+            if (!channel.play(mod)) {
+                while (1); // error
+            }
+        }
         AudioMixer::instance.fetchData(); // this would normally be interleaved into the runtime
     }
 }

@@ -34,8 +34,8 @@ namespace MapTool {
         }
       } else {
 
-        var map = MapBuilder.Build(TmxImporter.Load("forest.tmx"));
-        map.RenderPreview("preview_forest.png");
+        var map = MapBuilder.Build(TmxImporter.Load("castle.tmx"));
+        map.RenderPreview("preview.png");
 
         //var hWriter = new StringWriter();
         //var sWriter = new StringWriter();

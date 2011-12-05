@@ -1,13 +1,7 @@
-/*
- * This file is part of the internal implementation of the Sifteo SDK.
- * Confidential, not for redistribution.
- *
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
- */
+#ifndef DAC_AUDIO_OUT_H
+#define DAC_AUDIO_OUT_H
 
-#ifndef PWM_AUDIO_OUT_H_
-#define PWM_AUDIO_OUT_H_
-
+#include "dac.h"
 #include "gpio.h"
 #include "hardware.h"
 #include "hwtimer.h"
@@ -16,15 +10,15 @@
 #include "speexdecoder.h"
 class AudioMixer;
 
-class PwmAudioOut
+class DacAudioOut
 {
 public:
-    PwmAudioOut(HwTimer _pwmTimer, int pwmChannel, HwTimer _sampleTimer) :
-        pwmTimer(_pwmTimer),
-        pwmChan(pwmChannel),
+    DacAudioOut(int dacChannel, HwTimer _sampleTimer) :
+        dac(Dac::instance),
+        dacChan(dacChannel),
         sampleTimer(_sampleTimer)
     {}
-    void init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer, GPIOPin &outA, GPIOPin &outB);
+    void init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer, GPIOPin &output);
 
     void start();
     void stop();
@@ -40,8 +34,8 @@ public:
     void tmrIsr();
 
 private:
-    HwTimer pwmTimer;
-    int pwmChan;
+    Dac &dac;
+    int dacChan;
     HwTimer sampleTimer;
 
     typedef struct AudioOutBuffer_t {
@@ -58,4 +52,4 @@ private:
     friend class AudioOutDevice;
 };
 
-#endif // PWM_AUDIO_OUT_H_
+#endif // DAC_AUDIO_OUT_H

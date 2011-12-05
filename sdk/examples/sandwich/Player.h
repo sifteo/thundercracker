@@ -25,7 +25,8 @@ private:
   Vec2 mPosition;
   int mDir;
   int mKeyCount;
-  
+  int mAnimFrame;
+
   // stately variables
   int mProgress;
   int mNextDir;
