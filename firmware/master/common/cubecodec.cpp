@@ -6,10 +6,12 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <stdio.h>
 #include <protocol.h>
 #include <sifteo/machine.h>
 
 #include "cubecodec.h"
+#include "flashlayer.h"
 
 using namespace Sifteo;
 using namespace Sifteo::Intrinsic;
@@ -404,10 +406,15 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     count = MIN(buf.bytesFree(), dataSize - progress);
     count = MIN(count, loadBufferAvail);
 
-    buf.appendUser(src, count);
 
-    progress += count;
-    loadBufferAvail -= count;
+    int size = 0;
+    uint8_t *region = (uint8_t*)FlashLayer::getRegionFromOffset(progress, count, &size);
+    buf.appendUser(region, size);
+    
+    FlashLayer::releaseRegionFromOffset(progress);
+
+    progress += size;
+    loadBufferAvail -= size;
     ac->progress = progress;
 
     ASSERT(progress <= dataSize);
