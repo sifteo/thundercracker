@@ -27,10 +27,21 @@ const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
 //const float CubeWrapper::IDLE_FINISH_THRESHOLD = IDLE_TIME_THRESHOLD + ( GridSlot::NUM_IDLE_FRAMES * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME * 1 / 60.0f );
 const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
+const float CubeWrapper::TIME_PER_MESSAGE_FRAME = 0.5f / NUM_MESSAGE_FRAMES;
+
+
+static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] = {
+    &MessageBox0,
+    &MessageBox1,
+    &MessageBox2,
+    &MessageBox3,
+    &MessageBox4,
+};
+
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
-        m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 )
+        m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -65,7 +76,7 @@ void CubeWrapper::Reset()
 {
 	m_ShakesRemaining = STARTING_SHAKES;
 	m_fShakeTime = -1.0f;
-	m_state = STATE_PLAYING;
+    setState( STATE_PLAYING );
     m_idleTimer = 0.0f;
 
     //clear out dots
@@ -144,6 +155,16 @@ void CubeWrapper::Draw()
 
 					break;
 				}
+                case STATE_MESSAGING:
+                {
+                    int frame = m_stateTime / TIME_PER_MESSAGE_FRAME;
+
+                    if( frame >= NUM_MESSAGE_FRAMES )
+                        frame = NUM_MESSAGE_FRAMES - 1;
+                    const Sifteo::AssetImage &img = *MESSAGE_IMGS[frame];
+                    m_vid.BG0_drawAsset(Vec2(0,16 - img.height), img, 0);
+                    break;
+                }
 				case STATE_EMPTY:
 				{
 					_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
@@ -213,6 +234,8 @@ void CubeWrapper::Draw()
 
 void CubeWrapper::Update(float t, float dt)
 {
+    m_stateTime += dt;
+
     if( Game::Inst().getState() == Game::STATE_INTRO )
     {
         m_intro.Update( dt );
@@ -256,6 +279,13 @@ void CubeWrapper::Update(float t, float dt)
 
 		m_banner.Update(t, m_cube);
 	}
+
+
+    if( m_state == STATE_MESSAGING )
+    {
+        if( m_stateTime / TIME_PER_MESSAGE_FRAME >= NUM_MESSAGE_FRAMES )
+            setState( STATE_EMPTY );
+    }
 
     //tilt state
     _SYSAccelState state;
@@ -617,17 +647,17 @@ bool CubeWrapper::isEmpty()
 void CubeWrapper::checkRefill()
 {
 	if( isFull() )
-            m_state = STATE_PLAYING;
+            setState( STATE_PLAYING );
     else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
 	{
         if( isEmpty() )
-            m_state = STATE_EMPTY;
+            setState( STATE_MESSAGING );
         else
-            m_state = STATE_PLAYING;
+            setState( STATE_PLAYING );
 	}
 	else if( isEmpty() )
 	{
-		m_state = STATE_PLAYING;
+        setState( STATE_PLAYING );
 		Refill( true );
 
 		if( Game::Inst().getMode() == Game::MODE_SHAKES && Game::Inst().getScore() > 0 )
@@ -639,12 +669,12 @@ void CubeWrapper::checkRefill()
 	{
 		if( Game::Inst().getMode() != Game::MODE_SHAKES )
 		{
-			m_state = STATE_PLAYING;
+            setState( STATE_PLAYING );
             Refill( true );
 		}
 		else if( m_ShakesRemaining > 0 )
 		{
-			m_state = STATE_PLAYING;
+            setState( STATE_PLAYING );
             Refill( true );
             m_ShakesRemaining--;
 
@@ -661,7 +691,7 @@ void CubeWrapper::checkRefill()
 		}
 		else
 		{
-			m_state = STATE_NOSHAKES;
+            setState( STATE_NOSHAKES );
 
 			for( int i = 0; i < NUM_ROWS; i++ )
 			{
@@ -1057,7 +1087,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 void CubeWrapper::checkEmpty()
 {
 	if( m_state != STATE_NOSHAKES && isEmpty() )
-		m_state = STATE_EMPTY;
+        setState( STATE_MESSAGING );
 }
 
 
@@ -1066,3 +1096,14 @@ void CubeWrapper::checkEmpty()
     return ( m_idleTimer > IDLE_TIME_THRESHOLD );
 }
 */
+
+
+void CubeWrapper::setState( CubeState state )
+{
+    //TODO, switch over to messaging, but for now don't allow it
+    if( state == STATE_MESSAGING )
+        state = STATE_EMPTY;
+
+    m_state = state;
+    m_stateTime = 0.0f;
+}

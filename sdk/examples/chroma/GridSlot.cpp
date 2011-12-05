@@ -163,8 +163,9 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		{
             if( m_color < NUM_EXPLODING_COLORS )
             {
-                const AssetImage &exTex = GetExplodingTexture();
-                vid.BG0_drawAsset(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
+                vid.BG0_drawAsset(vec, GemEmpty, 0);
+                //const AssetImage &exTex = GetExplodingTexture();
+                //vid.BG0_drawAsset(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
             }
             else
             {
