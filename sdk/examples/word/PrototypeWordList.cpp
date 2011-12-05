@@ -4,8 +4,17 @@
 #include <sifteo.h>
 #include "WordGame.h"
 
+//#define DAWG_TEST 1
+#ifdef DAWG_TEST
+//static const int sDAWG[22000] = {};
 
+static const char sList[][7] =
+{
+"aa",
+"aah",
+};
 
+#else
 
 static const char sList[][7] =
 {
@@ -28849,7 +28858,7 @@ static const char sList[][7] =
 "zyme",
 "zymes",
 };
-
+#endif
 
 PrototypeWordList::PrototypeWordList()
 {
@@ -28886,7 +28895,9 @@ static int bsearch_strcmp(const void*a,const void*b)
 bool PrototypeWordList::isWord(const char* string)
 {
     STATIC_ASSERT(sizeof(sList[0]) == 7);
+#ifndef DAWG_TEST
     STATIC_ASSERT(arraysize(sList) == 28839);
+#endif
     const char** pKey = &string;
     const char* array = &sList[0][0];
     //const char** pArray = &array;

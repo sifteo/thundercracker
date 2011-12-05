@@ -7,6 +7,8 @@
 
 using namespace Sifteo;
 
+static _SYSAudioBuffer buf;
+
 static const char* sideNames[] =
 {
   "top", "left", "bottom", "right"  
@@ -101,7 +103,7 @@ void siftmain()
     for (unsigned i = 0; i < arraysize(demos); i++)
         demos[i].init();
     */
-
+    Audio::enableChannel(&buf);
     // main loop
     static WordGame game(cubes);
     float lastTime = System::clock();
