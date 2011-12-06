@@ -64,6 +64,7 @@ void Game::MainLoop() {
   }
   ObserveNeighbors(true);
   System::paint();
+
   while(1) {
     float now = System::clock();
     float dt = now - simTime;
@@ -129,7 +130,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(map.Data()->tileset),
-          map.Data()->GetTileId(view->Location(), x, y)
+          map.Data()->GetTileId(view->Location(), Vec2(x, y))
         );
       }
     }
@@ -154,7 +155,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(map.Data()->tileset),
-          map.Data()->GetTileId(room, x, y)
+          map.Data()->GetTileId(room, Vec2(x, y))
         );
       }
     }
@@ -182,7 +183,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 void Game::TakeItem() {
   int itemId = player.CurrentView()->Room()->itemId;
   if (itemId) {
-    map.SetRoomItem(player.Location(), 0);
+    map.GetRoom(player.Location())->SetItem(0);
     if (itemId == ITEM_BASIC_KEY) {
       player.IncrementBasicKeyCount();
       // do a crazy get-key transition

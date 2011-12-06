@@ -1,9 +1,16 @@
 #include "GameStateMachine.h"
+#include "Dictionary.h"
+#include "EventID.h"
+#include "EventData.h"
+#include <string.h>
+#include "SavedData.h"
+#include "WordGame.h"
+#include "audio.gen.h"
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(Cube cubes[]) :
-    StateMachine(0)
+    StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0)
 {
     ASSERT(cubes != 0);
     sInstance = this;
@@ -15,6 +22,18 @@ GameStateMachine::GameStateMachine(Cube cubes[]) :
 
 void GameStateMachine::update(float dt)
 {
+    mAnagramCooldown -= dt;
+    mAnagramCooldown = MAX(.0f, mAnagramCooldown);
+    unsigned oldSecsLeft = GetSecondsLeft();
+    mTimeLeft -= dt;
+    mTimeLeft = MAX(.0f, mTimeLeft);
+
+    if (oldSecsLeft != GetSecondsLeft())
+    {
+        // TODO dirty flags?
+        onEvent(EventID_ClockTick, EventData());
+    }
+
     StateMachine::update(dt);
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
@@ -24,6 +43,38 @@ void GameStateMachine::update(float dt)
 
 void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
+    switch (eventID)
+    {
+    case EventID_NewRound:
+        mTimeLeft = ROUND_TIME;
+        mAnagramCooldown = .0f;
+        mScore = 0;
+        break;
+
+    case EventID_NewAnagram:
+        mAnagramCooldown = ANAGRAM_COOLDOWN;
+        break;
+
+    case EventID_NewWordFound:
+        {
+            unsigned len = strlen(data.mWordFound.mWord);
+            mScore += len;
+            // TODO multiple letters per cube
+            // TODO count active cubes
+            if (len >= 4)
+            {
+                mTimeLeft += len - 2;
+                WordGame::playAudio(extratime, AudioChannelIndex_Bonus);
+            }
+        }
+        break;
+
+    default:
+        break;
+    }
+    Dictionary::sOnEvent(eventID, data);
+    SavedData::sOnEvent(eventID, data);
+
     StateMachine::onEvent(eventID, data);
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
@@ -42,6 +93,11 @@ void GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
 
 CubeStateMachine* GameStateMachine::findCSMFromID(Cube::ID cubeID)
 {
+    if (cubeID == CUBE_ID_UNDEFINED)
+    {
+        return 0;
+    }
+
     if (sInstance)
     {
         for (unsigned i = 0; i < arraysize(sInstance->mCubeStateMachines); ++i)
@@ -52,5 +108,19 @@ CubeStateMachine* GameStateMachine::findCSMFromID(Cube::ID cubeID)
             }
         }
     }
+    ASSERT(0);
     return 0;
+}
+
+State& GameStateMachine::getState(unsigned index)
+{
+    // TODO simply the state machine code
+    ASSERT(index < ScoredGameStateIndex_NumStates);
+    switch (index)
+    {
+    default:
+        return mScoredState;
+    case ScoredGameStateIndex_EndOfRound:
+        return mScoredEndOfRoundState;
+    }
 }

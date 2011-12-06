@@ -30,10 +30,13 @@ $(BIN_STM32): $(OBJS_STM32) $(LIBS_STM32) $(LDSCRIPT_STM32)
 $(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
 	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html -v
 
+$(AUDIO).gen.cpp: $(SPEEXENC) $(AUDIODEPS)
+	$(SPEEXENC) -o $(AUDIO).gen.cpp -o $(AUDIO).gen.h $(AUDIO).txt
+
 .PHONY: clean all ocd program gdb
 
 clean:
-	rm -f $(BINS) *.o $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html $(GENERATED_FILES)
+	rm -f $(BINS) *.o *.d $(GENERATED_FILES)
 
 -include $(OBJS_SIM:%.o=%.d)
 	

@@ -19,8 +19,12 @@ class AudioMixer;
 class PwmAudioOut
 {
 public:
-    PwmAudioOut(HwTimer _pwmTimer, int pwmChannel, HwTimer _sampleTimer, GPIOPin outputA, GPIOPin outputB);
-    void init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer);
+    PwmAudioOut(HwTimer _pwmTimer, int pwmChannel, HwTimer _sampleTimer) :
+        pwmTimer(_pwmTimer),
+        pwmChan(pwmChannel),
+        sampleTimer(_sampleTimer)
+    {}
+    void init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer, GPIOPin &outA, GPIOPin &outB);
 
     void start();
     void stop();
@@ -39,8 +43,6 @@ private:
     HwTimer pwmTimer;
     int pwmChan;
     HwTimer sampleTimer;
-    GPIOPin outA;
-    GPIOPin outB;
 
     typedef struct AudioOutBuffer_t {
         int16_t data[SpeexDecoder::DECODED_FRAME_SIZE];

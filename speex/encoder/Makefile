@@ -17,7 +17,12 @@ CC = gcc
 COMMON_FLAGS = -O3 -Werror -Wall $(INCLUDES)
 CCFLAGS = $(COMMON_FLAGS)
 CFLAGS = $(COMMON_FLAGS)
-LDFLAGS += -lspeex -lstdc++
+
+ifeq ($(OS), Windows_NT)
+    LDFLAGS += -static -lspeex -lstdc++
+else
+    LDFLAGS += -lspeex -lstdc++
+endif
 
 all: $(BIN)
 

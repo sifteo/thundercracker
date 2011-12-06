@@ -3,13 +3,14 @@
 
 #include "CubeState.h"
 
-enum ScoredCubeSubstate
+enum ScoredCubeStateIndex
 {
-    ScoredCubeSubstate_NotWord,
-    ScoredCubeSubstate_NewWord,
-    ScoredCubeSubstate_OldWord,
+    ScoredCubeStateIndex_NotWord,
+    ScoredCubeStateIndex_NewWord,
+    ScoredCubeStateIndex_OldWord,
+    ScoredCubeStateIndex_EndOfRound,
 
-    ScoredCubeSubstate_NumStates
+    ScoredCubeStateIndex_NumStates
 };
 
 class ScoredCubeState : public CubeState

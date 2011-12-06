@@ -1,0 +1,51 @@
+# I`m too lazy to learn two make syntaxes, so I use Boralnd`s MAKE.EXE program
+## Take a look at PPMdType.h for additional compiler & environment options
+.AUTODEPEND
+#               User defined variables
+PRJNAME=PPMs
+DEBUG=0
+PROFILE=NO      # NO, GET, USE
+CPP_SET=$(PRJNAME).cpp Model.cpp
+C_SET=
+.path.cpp = ;
+#               End of user defined variables
+
+CC     = icl.exe
+LINK   = link.exe
+ECFLAG = /GR- /GX- -D_MEM_CONFIG=1024
+ELFLAG =/OUT:$(PRJNAME).exe /MAP /ALIGN:4096 /NOLOGO
+LIBS   = LIBC.LIB
+
+!if $(PROFILE) == USE
+    PCFLAG = /Qprof_use /Qfnsplit
+    PLFLAG = /ORDER:@proford.txt
+!elif $(PROFILE) == GET
+    PCFLAG = /Qprof_genx
+    PLFLAG =
+    LIBS = LIBIRC.LIB $(LIBS)
+!endif
+
+!if $(DEBUG) != 0
+    DCFLAG = /Zi /Od 
+    DLFLAG = /DEBUG
+!else
+    DCFLAG = /O3 /G6A /Qxi
+    DLFLAG = /RELEASE 
+!endif
+
+OBJ_SET = $(CPP_SET:.cpp=.obj) $(C_SET:.c=.obj) $(ASM_SET:.asm=.obj)
+
+$(PRJNAME).exe: $(OBJ_SET)
+!if $(PROFILE) == USE
+  -proforder
+!endif
+  @$(LINK) $(ELFLAG) $(DLFLAG) $(PLFLAG) $(OBJ_SET)$(LIBS)
+
+PPMs.obj: PPMs.cpp
+    @icl -O1 /G6A /Qxi $(ECFLAG) $(PCFLAG) -c PPMs.cpp
+
+.cpp.obj:
+    @$(CC) $(ECFLAG) $(DCFLAG) $(PCFLAG) -c {$< }
+
+.c.obj:
+    @$(CC) $(ECFLAG) $(DCFLAG) $(PCFLAG) -c {$< }
