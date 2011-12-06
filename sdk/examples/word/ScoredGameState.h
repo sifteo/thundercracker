@@ -3,11 +3,13 @@
 
 #include "State.h"
 
+
 class ScoredGameState : public State
 {
-public:
-    virtual unsigned update(float dt, float stateTime) { return 0; }
+public:    
+    virtual unsigned update(float dt, float stateTime);
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
+
 };
 
 #endif // SCOREDGAMESTATE_H

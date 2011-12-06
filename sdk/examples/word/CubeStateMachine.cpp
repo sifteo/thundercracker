@@ -56,12 +56,11 @@ bool CubeStateMachine::canBeginWord()
             mCube->physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
 }
 
-bool CubeStateMachine::beginsWord(bool& isOld)
+bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
 {
     if (canBeginWord())
-    {
-        char word[_SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE + 1];
-        word[0] = '\0';
+    {        
+        wordBuffer[0] = '\0';
         CubeStateMachine* csm = this;
         bool neighborLetters = false;
         for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(SIDE_RIGHT);
@@ -73,14 +72,14 @@ bool CubeStateMachine::beginsWord(bool& isOld)
             {
                 break;
             }
-            strcat(word, csm->mLetters);
+            strcat(wordBuffer, csm->mLetters);
             neighborLetters = true;
         }
         if (neighborLetters)
         {
-            if (Dictionary::isWord(word))
+            if (Dictionary::isWord(wordBuffer))
             {
-                isOld = Dictionary::isOldWord(word);
+                isOld = Dictionary::isOldWord(wordBuffer);
                 return true;
             }
         }
@@ -88,24 +87,58 @@ bool CubeStateMachine::beginsWord(bool& isOld)
     return false;
 }
 
-bool CubeStateMachine::isInWord()
+unsigned CubeStateMachine::findRowLength()
 {
-    // FIXME vertical words
+    unsigned result = 1;
+    for (Cube::Side side = SIDE_LEFT; side <= SIDE_RIGHT; side +=2)
+    {
+        CubeStateMachine* csm = this;
+        for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(side);
+             csm && neighborID != CUBE_ID_UNDEFINED;
+             neighborID = csm->mCube->physicalNeighborAt(side),
+             csm = GameStateMachine::findCSMFromID(neighborID))
+        {
+            if (csm != this)
+            {
+                ++result;
+            }
+        }
+    }
+
+    return result;
+}
+
+bool CubeStateMachine::hasNoNeighbors() const
+{
+    for (Cube::Side side = 0; side < NUM_SIDES; ++side)
+    {
+        if (mCube->physicalNeighborAt(side) != CUBE_ID_UNDEFINED)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool CubeStateMachine::isConnectedToCubeOnSide(Cube::ID cubeIDStart,
+                                               Cube::Side side)
+{
+    if (mCube->id() == cubeIDStart)
+    {
+        return true;
+    }
+
     CubeStateMachine* csm = this;
-    for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(SIDE_LEFT);
+    for (Cube::ID neighborID = csm->mCube->physicalNeighborAt(side);
          csm && neighborID != CUBE_ID_UNDEFINED;
-         neighborID = csm->mCube->physicalNeighborAt(SIDE_LEFT),
+         neighborID = csm->mCube->physicalNeighborAt(side),
          csm = GameStateMachine::findCSMFromID(neighborID))
     {
         // only check the left most letter, as it it the one that
         // determines the entire word state
-        if (csm->mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED)
+        if (neighborID == cubeIDStart)
         {
-           if (csm->getCurrentStateIndex() == ScoredCubeSubstate_NewWord ||
-               csm->getCurrentStateIndex() == ScoredCubeSubstate_OldWord)
-            {
-                return true;
-            }
+            return true;
         }
     }
     return false;
@@ -117,18 +150,22 @@ State& CubeStateMachine::getState(unsigned index)
     switch (index)
     {
     default:
-    case ScoredCubeSubstate_NotWord:
+    case ScoredCubeStateIndex_NotWord:
         return mNotWordScoredState;
 
-    case ScoredCubeSubstate_NewWord:
+    case ScoredCubeStateIndex_NewWord:
         return mNewWordScoredState;
 
-    case ScoredCubeSubstate_OldWord:
+    case ScoredCubeStateIndex_OldWord:
         return mOldWordScoredState;
+
+    case ScoredCubeStateIndex_EndOfRound:
+        return mEndOfRoundScoredState;
+
     }
 }
 
 unsigned CubeStateMachine::getNumStates() const
 {
-    return ScoredCubeSubstate_NumStates;
+    return ScoredCubeStateIndex_NumStates;
 }

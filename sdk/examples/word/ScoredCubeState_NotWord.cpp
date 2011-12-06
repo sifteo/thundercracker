@@ -17,12 +17,8 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
     {
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
-        if (!data.mEnterState.mFirst)
-        {
-            GameStateMachine::sOnEvent(EventID_WordBroken, EventData());
-        }
-        // fall through
-    case EventID_NewAnagram:        
+    case EventID_NewAnagram:
+    case EventID_Paint:
         paint();
         break;
 
@@ -30,29 +26,44 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
     case EventID_RemoveNeighbor:
         {
             bool isOldWord = false;
-            if (getStateMachine().beginsWord(isOldWord))
+            char wordBuffer[MAX_LETTERS_PER_WORD + 1];
+            if (getStateMachine().beginsWord(isOldWord, wordBuffer))
             {
-                return (isOldWord) ?
-                            ScoredCubeSubstate_OldWord :
-                            ScoredCubeSubstate_NewWord;
+                EventData data;
+                data.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
+                data.mWordFound.mWord = wordBuffer;
+
+                if (isOldWord)
+                {
+                    GameStateMachine::sOnEvent(EventID_OldWordFound, data);
+                    return ScoredCubeStateIndex_OldWord;
+                }
+
+                GameStateMachine::sOnEvent(EventID_NewWordFound, data);
+                return ScoredCubeStateIndex_NewWord;
             }
             paint();
         }
         break;
 
     case EventID_NewWordFound:
-        if (!getStateMachine().canBeginWord() && getStateMachine().isInWord())
+        if (!getStateMachine().canBeginWord() &&
+             getStateMachine().isConnectedToCubeOnSide(data.mWordFound.mCubeIDStart))
         {
-            return ScoredCubeSubstate_NewWord;
+            return ScoredCubeStateIndex_NewWord;
         }
         break;
 
     case EventID_OldWordFound:
-        if (!getStateMachine().canBeginWord() && getStateMachine().isInWord())
+        if (!getStateMachine().canBeginWord() &&
+             getStateMachine().isConnectedToCubeOnSide(data.mWordFound.mCubeIDStart))
         {
-            return ScoredCubeSubstate_OldWord;
+            return ScoredCubeStateIndex_OldWord;
         }
         break;
+
+    case EventID_EndRound:
+        return ScoredCubeStateIndex_EndOfRound;
 
     }
     return getStateMachine().getCurrentStateIndex();
@@ -75,5 +86,12 @@ void ScoredCubeState_NotWord::paint()
     VidMode_BG0 vid(c.vbuf);
     vid.init();
     vid.BG0_drawAsset(Vec2(0,0), bg);
-    vid.BG0_text(Vec2(8,8), Font, getStateMachine().getLetters());
+    vid.BG0_text(Vec2(6,3), Font, getStateMachine().getLetters());
+    char string[5];
+    sprintf(string, "%.4d", GameStateMachine::GetSecondsLeft());
+#if DEBUGZZZZZZZZZ
+    printf("%d %s\n", getStateMachine().getCube().id(), string);
+#endif
+    vid.BG0_text(Vec2(6,14), FontSmall, string);
+
 }

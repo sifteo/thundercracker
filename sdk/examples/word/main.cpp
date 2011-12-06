@@ -12,14 +12,32 @@ static const char* sideNames[] =
   "top", "left", "bottom", "right"  
 };
 
-void neighbor_add(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+void onCubeEventTouch(_SYSCubeID cid)
+{
+    LOG(("cube event touch:\t%d\n", cid));
+    GameStateMachine::sOnEvent(EventID_Input, EventData());
+}
+
+void onCubeEventShake(_SYSCubeID cid)
+{
+    LOG(("cube event shake:\t%d\n", cid));
+    GameStateMachine::sOnEvent(EventID_Input, EventData());
+}
+
+void onCubeEventTilt(_SYSCubeID cid)
+{
+    LOG(("cube event tilt:\t%d\n", cid));
+    GameStateMachine::sOnEvent(EventID_Input, EventData());
+}
+
+void onNeighborEventAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
     EventData data;
     GameStateMachine::sOnEvent(EventID_AddNeighbor, data);
     LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
-void neighbor_remove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+void onNeighborEventRemove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
     EventData data;
     GameStateMachine::sOnEvent(EventID_RemoveNeighbor, data);
@@ -33,10 +51,12 @@ void accel(_SYSCubeID c)
 
 void siftmain()
 {
-    LOG(("HELLO, WORLD\n"));
-    //_SYS_vectors.cubeEvents.accelChange = accel;
-    _SYS_vectors.neighborEvents.add = neighbor_add;
-    _SYS_vectors.neighborEvents.remove = neighbor_remove;
+    LOG(("Hello, Word Play 2\n"));
+    _SYS_vectors.cubeEvents.touch = onCubeEventTouch;
+    _SYS_vectors.cubeEvents.shake = onCubeEventShake;
+    _SYS_vectors.cubeEvents.tilt = onCubeEventTilt;
+    _SYS_vectors.neighborEvents.add = onNeighborEventAdd;
+    _SYS_vectors.neighborEvents.remove = onNeighborEventRemove;
     
     static Cube cubes[MAX_CUBES];
 
@@ -92,7 +112,7 @@ void siftmain()
         lastTime = now;
 
         game.update(dt);
-        game.onEvent(EventID_Paint, EventData()); // TODO decouple
+        //game.onEvent(EventID_Paint, EventData()); // TODO decouple
         
         System::paint();
     }

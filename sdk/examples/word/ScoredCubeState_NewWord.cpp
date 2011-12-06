@@ -16,12 +16,9 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
     {
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
+    case EventID_Paint:
+    case EventID_NewWordFound:
         paint();
-
-        if (getStateMachine().canBeginWord())
-        {
-            GameStateMachine::sOnEvent(EventID_NewWordFound, EventData());
-        }
         break;
 
     case EventID_AddNeighbor:
@@ -30,32 +27,59 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
             bool isOldWord = false;
             if (getStateMachine().canBeginWord())
             {
-                if (getStateMachine().beginsWord(isOldWord))
+                char wordBuffer[MAX_LETTERS_PER_WORD + 1];
+                if (getStateMachine().beginsWord(isOldWord, wordBuffer))
                 {
+                    EventData data;
+                    data.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
+                    data.mWordFound.mWord = wordBuffer;
+
                     if (isOldWord)
                     {
-                        return ScoredCubeSubstate_OldWord;
+                        GameStateMachine::sOnEvent(EventID_OldWordFound, data);
+                        return ScoredCubeStateIndex_OldWord;
+                    }
+                    else
+                    {
+                        GameStateMachine::sOnEvent(EventID_NewWordFound, data);
+                        return ScoredCubeStateIndex_NewWord;
                     }
                 }
                 else
                 {
-                    return ScoredCubeSubstate_NotWord;
+                    EventData data;
+                    data.mWordBroken.mCubeIDStart = getStateMachine().getCube().id();
+                    GameStateMachine::sOnEvent(EventID_WordBroken, data);
+                    return ScoredCubeStateIndex_NotWord;
                 }
             }
-            else if (!getStateMachine().isInWord())
+            else if (getStateMachine().hasNoNeighbors())
             {
-                return ScoredCubeSubstate_NotWord;
+                return ScoredCubeStateIndex_NotWord;
             }
             paint();
         }
         break;
 
     case EventID_WordBroken:
-        if (!getStateMachine().canBeginWord() && !getStateMachine().isInWord())
+        if (!getStateMachine().canBeginWord() &&
+            getStateMachine().isConnectedToCubeOnSide(data.mWordBroken.mCubeIDStart))
         {
-            return ScoredCubeSubstate_NotWord;
+            return ScoredCubeStateIndex_NotWord;
         }
         break;
+
+
+    case EventID_OldWordFound:
+        if (!getStateMachine().canBeginWord() &&
+             getStateMachine().isConnectedToCubeOnSide(data.mWordFound.mCubeIDStart))
+        {
+            return ScoredCubeStateIndex_OldWord;
+        }
+        break;
+
+    case EventID_EndRound:
+        return ScoredCubeStateIndex_EndOfRound;
     }
     return getStateMachine().getCurrentStateIndex();
 }
@@ -70,12 +94,27 @@ void ScoredCubeState_NewWord::paint()
     Cube& c = getStateMachine().getCube();
     // FIXME vertical words
     const Sifteo::AssetImage& bg =
-        (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
+        (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
          c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED) ?
             BGNewWordConnectedMiddle :
-            BGNewWordConnectedLeft;
+            (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED) ?
+                BGNewWordConnectedRight:
+                BGNewWordConnectedLeft;
     VidMode_BG0 vid(c.vbuf);
     vid.init();
     vid.BG0_drawAsset(Vec2(0,0), bg);
-    vid.BG0_text(Vec2(8,8), Font, getStateMachine().getLetters());
+    vid.BG0_text(Vec2(6,3), Font, getStateMachine().getLetters());
+    char string[5];
+    sprintf(string, "%.4d", GameStateMachine::GetSecondsLeft());
+#if DEBUGZZZZZZZZZZZ
+    printf("%d %s\n", getStateMachine().getCube().id(), string);
+#endif
+    vid.BG0_text(Vec2(6,14), FontSmall, string);
+
+    sprintf(string, "%+.1d", getStateMachine().findRowLength());
+#if DEBUG
+    printf("score %d %s\n", getStateMachine().getCube().id(), string);
+#endif
+    vid.BG0_text(Vec2(7,0), FontSmall, string);
+
 }
