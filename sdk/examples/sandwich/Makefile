@@ -9,7 +9,6 @@ OBJS = \
 	Player.o \
 	Map.o \
 	Enemy.o \
-	BG1Helper.o \
 
 include $(TC_DIR)/firmware/master/Makefile.defs
 

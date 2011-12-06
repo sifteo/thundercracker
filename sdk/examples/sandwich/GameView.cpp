@@ -2,8 +2,6 @@
 #include "Game.h"
 #include "Enemy.h"
 
-#include "BG1Helper.h"
-
 #define ROOM_NONE (Vec2(-1,-1))
 #define ITEM_SPRITE_ID 0
 #define PLAYER_SPRITE_ID 1
