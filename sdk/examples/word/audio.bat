@@ -1,1 +1,0 @@
-..\..\..\speex\encoder\speexencoder -o audio.gen.cpp -o audio.gen.h audio.txt
