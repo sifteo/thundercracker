@@ -81,6 +81,5 @@ Glimmer.cpp
 GameOver.cpp
 game.cpp
 cubewrapper.cpp
-BG1Helper.cpp
 banner.cpp
 assets.gen.cpp

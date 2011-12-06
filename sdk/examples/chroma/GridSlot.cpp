@@ -178,10 +178,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		{
             if( m_score > 99 )
                 m_score = 99;
-            //char aStr[2];
-            //sprintf( aStr, "%d", m_score );
 			vid.BG0_drawAsset(vec, GemEmpty, 0);
-            //vid.BG0_text(Vec2( vec.x + 1, vec.y + 1 ), Font, aStr);
             unsigned int fadeFrame = 0;
 
             float fadeTime = System::clock() - START_FADING_TIME - m_eventTime;
