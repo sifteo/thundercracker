@@ -19,6 +19,6 @@ ScoredCubeState_NotWord.stm32.o ScoredCubeState_OldWord.stm32.o \
 PrototypeWordList.stm32.o ScoredGameState_EndOfRound.stm32.o \
 ScoredCubeState_EndOfRound.stm32.o SavedData.stm32.o audio.gen.stm32.o
 
-ASSETDEPS += audio.txt *.raw *.png $(ASSETS).lua
+ASSETDEPS += *.png $(ASSETS).lua
 
 include $(TC_DIR)/firmware/master/Makefile.rules
