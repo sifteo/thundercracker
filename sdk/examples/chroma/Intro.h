@@ -8,7 +8,6 @@
 #define _INTRO_H
 
 #include <sifteo.h>
-#include "BG1Helper.h"
 #include "TimeKeeper.h"
 
 using namespace Sifteo;

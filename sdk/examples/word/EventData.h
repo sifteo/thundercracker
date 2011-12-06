@@ -27,7 +27,7 @@ union EventData
     struct
     {
         bool mFirst;
-    } mEnterState;
+    } mEnterState;    
 };
 
 #endif // EVENTDATA_H

@@ -61,7 +61,7 @@ void Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube )
 {
     VidMode_BG0 vid( cube.vbuf );
     _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
-    vid.clear(Font.tiles[0]);
+    vid.clear(GemEmpty.tiles[0]);
 
     if( m_fTimer < INTRO_ARROW_TIME )
     {

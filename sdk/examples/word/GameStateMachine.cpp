@@ -4,6 +4,8 @@
 #include "EventData.h"
 #include <string.h>
 #include "SavedData.h"
+#include "WordGame.h"
+#include "audio.gen.h"
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
@@ -29,7 +31,7 @@ void GameStateMachine::update(float dt)
     if (oldSecsLeft != GetSecondsLeft())
     {
         // TODO dirty flags?
-        onEvent(EventID_Paint, EventData());
+        onEvent(EventID_ClockTick, EventData());
     }
 
     StateMachine::update(dt);
@@ -62,6 +64,7 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             if (len >= 4)
             {
                 mTimeLeft += len - 2;
+                WordGame::playAudio(extratime, AudioChannelIndex_Bonus);
             }
         }
         break;

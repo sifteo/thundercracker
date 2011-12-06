@@ -198,8 +198,8 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 				self.sound_manager.add(sound)*/
 
 			char aBuf[16];
-			sprintf( aBuf, "%d", m_iDotScoreSum );
-			pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_FADE_DELAY/2.0f );
+            snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
+			pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_FADE_DELAY/2.0f );        
 		}
 
 		//TODO timer mode

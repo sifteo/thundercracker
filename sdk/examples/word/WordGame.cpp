@@ -1,17 +1,30 @@
 #include <sifteo.h>
 #include "WordGame.h"
+#include "audio.gen.h"
 #include <cstdlib>
 
 using namespace Sifteo;
 
+WordGame* WordGame::sInstance = 0;
+
 WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes)
 {
-#ifdef _WIN32
+    sInstance = this;
+
     int64_t nanosec;
     _SYS_ticks_ns(&nanosec);
-    unsigned seed = (unsigned)nanosec;
-    srand(seed); // seed rand()
+    mRandomSeed = (unsigned)nanosec;
+
+#ifdef _WIN32
+    srand(mRandomSeed); // seed rand()
 #endif
+
+    for (unsigned i = 0; i < arraysize(mAudioChannels); ++i)
+    {
+        mAudioChannels[i].init();
+
+    }
+    playAudio(welcome, AudioChannelIndex_Music);
 }
 
 void WordGame::update(float dt)
@@ -21,7 +34,27 @@ void WordGame::update(float dt)
 
 void WordGame::onEvent(unsigned eventID, const EventData& data)
 {
+    if (sInstance)
+    {
+        sInstance->_onEvent(eventID, data);
+    }
+}
+
+void WordGame::_onEvent(unsigned eventID, const EventData& data)
+{
     mGameStateMachine.onEvent(eventID, data);
+}
+
+bool WordGame::playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
+{
+    ASSERT(sInstance);
+    return sInstance->_playAudio(mod, channel, loopMode);
+}
+
+bool WordGame::_playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
+{
+    ASSERT(channel < arraysize(mAudioChannels));
+    return mAudioChannels[channel].play(mod, loopMode);
 }
 
 unsigned WordGame::rand(unsigned max)
@@ -29,7 +62,6 @@ unsigned WordGame::rand(unsigned max)
 #ifdef _WIN32
  return std::rand() % max;
 #else
- static unsigned int seed = (int)System::clock();
- return rand_r(&seed) % max;
+ return rand_r(&mRandomSeed) % max;
 #endif
 }

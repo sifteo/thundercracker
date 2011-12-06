@@ -4,8 +4,15 @@ ArrowUp = image{"ArrowUp.png", pinned=true}
 ArrowDown = image{"ArrowDown.png", pinned=true}
 ArrowLeft = image{"ArrowLeft.png", pinned=true}
 ArrowRight = image{"ArrowRight.png", pinned=true}
+--UI
 Font = image{"font-8x16.png", width=8, height=16}
 BannerImg = image{"banner.png"}
+MessageBox0 = image{"message0.png"}
+MessageBox1 = image{"message1.png"}
+MessageBox2 = image{"message2.png"}
+MessageBox3 = image{"message3.png"}
+MessageBox4 = image{"message4.png"}
+--the gems
 Gem0 = image{"01_gem00.png", height=32}
 Gem1 = image{"01_gem01.png", height=32}
 Gem2 = image{"01_gem02.png", height=32}

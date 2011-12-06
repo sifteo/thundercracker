@@ -19,6 +19,7 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
     case EventID_EnterState:
     case EventID_NewAnagram:
     case EventID_Paint:
+    case EventID_ClockTick:
         paint();
         break;
 
