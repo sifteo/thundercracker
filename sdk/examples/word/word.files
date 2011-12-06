@@ -47,3 +47,7 @@ ScoredCubeState_EndOfRound.cpp
 SavedData.h
 SavedData.cpp
 audio.txt
+TitleGameState.h
+TitleGameState.cpp
+TitleCubeState.h
+TitleCubeState.cpp

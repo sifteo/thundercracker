@@ -1,15 +1,13 @@
-#include "ScoredCubeState_EndOfRound.h"
-
+#include "TitleCubeState.h"
 #include <sifteo.h>
 #include "EventID.h"
 #include "EventData.h"
 #include "assets.gen.h"
 #include "CubeStateMachine.h"
 #include "GameStateMachine.h"
-#include "ScoredCubeState_EndOfRound.h"
 #include "SavedData.h"
 
-unsigned ScoredCubeState_EndOfRound::onEvent(unsigned eventID, const EventData& data)
+unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
@@ -18,19 +16,18 @@ unsigned ScoredCubeState_EndOfRound::onEvent(unsigned eventID, const EventData& 
         paint();
         break;
 
-    case EventID_NewAnagram:
+    case EventID_NewRound:
         return CubeStateIndex_NotWordScored;
-
     }
     return getStateMachine().getCurrentStateIndex();
 }
 
-unsigned ScoredCubeState_EndOfRound::update(float dt, float stateTime)
+unsigned TitleCubeState::update(float dt, float stateTime)
 {
     return getStateMachine().getCurrentStateIndex();
 }
 
-void ScoredCubeState_EndOfRound::paint()
+void TitleCubeState::paint()
 {
     Cube& c = getStateMachine().getCube();
     // FIXME vertical words
@@ -46,11 +43,7 @@ void ScoredCubeState_EndOfRound::paint()
     switch (getStateMachine().getCube().id())
     {
     case 0:
-        vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
-        vid.BG0_text(Vec2(5,4), FontSmall, "Score");
-        char string[17];
-        sprintf(string, "%.5d", GameStateMachine::GetScore());
-        vid.BG0_text(Vec2(5,6), FontSmall, string);
+        vid.BG0_drawAsset(Vec2(0,0), Title);
         break;
 
         // TODO high scores
@@ -60,6 +53,7 @@ void ScoredCubeState_EndOfRound::paint()
 
     default:
         vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
+        /* TODO load/save
         vid.BG0_text(Vec2(3,4), FontSmall, "High Scores");
 
         for (unsigned i = arraysize(SavedData::sHighScores) - 1;
@@ -76,6 +70,7 @@ void ScoredCubeState_EndOfRound::paint()
                          FontSmall,
                          string);
         }
+        */
         break;
     }
 }

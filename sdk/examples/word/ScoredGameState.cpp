@@ -10,7 +10,7 @@
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
     return (GameStateMachine::GetSecondsLeft() <= 0) ?
-                ScoredGameStateIndex_EndOfRound : ScoredGameStateIndex_Play;
+                GameStateIndex_EndOfRoundScored : GameStateIndex_PlayScored;
 }
 
 unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
@@ -90,7 +90,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     default:
         break;
     }
-    return ScoredGameStateIndex_Play;
+    return GameStateIndex_PlayScored;
 }
 
 

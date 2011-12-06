@@ -10,7 +10,7 @@
 
 unsigned ScoredGameState_EndOfRound::update(float dt, float stateTime)
 {
-    return ScoredGameStateIndex_EndOfRound;
+    return GameStateIndex_EndOfRoundScored;
 }
 
 unsigned ScoredGameState_EndOfRound::onEvent(unsigned eventID, const EventData& data)
@@ -23,10 +23,10 @@ unsigned ScoredGameState_EndOfRound::onEvent(unsigned eventID, const EventData& 
         break;
 
     case EventID_Input:
-        return ScoredGameStateIndex_Play;
+        return GameStateIndex_PlayScored;
 
     default:
         break;
     }
-    return ScoredGameStateIndex_EndOfRound;
+    return GameStateIndex_EndOfRoundScored;
 }
