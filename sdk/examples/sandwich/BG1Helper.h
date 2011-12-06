@@ -1,0 +1,45 @@
+/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
+ *
+ * Helper class for bg1.  Paint into it as you would bg0, then call flush which translates these into proper bg1 calls
+ * super unoptimized for now
+ * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ */
+
+#ifndef _BG1HELPER_H
+#define _BG1HELPER_H
+
+#include <sifteo.h>
+
+using namespace Sifteo;
+
+class BG1Helper
+{
+public:
+	static const unsigned int BG1_ROWS = 16;
+	static const unsigned int BG1_COLS = 16;
+    static const unsigned int MAX_TILES = 144;
+
+	BG1Helper( Cube &cube );
+
+	void Clear();
+	void Flush();
+	void DrawAsset( const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0 );
+	//draw a partial asset.  Pass in the position, xy min points, and width/height
+	void DrawPartialAsset( const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0 );
+
+private:
+    //set a number of bits at xoffset of the current bitset
+    void SetBitRange( unsigned int bitsetIndex, unsigned int xOffset, unsigned int number );
+	//count how many bits set we have total
+	//only used for debug, so I don't care about optimizing it yet
+    unsigned int getBitSetCount() const;
+
+	//bitset of which tiles are active
+	uint16_t m_bitset[BG1_ROWS];
+	//actual contents of tiles
+    ///rows, cols
+	uint16_t m_tileset[BG1_ROWS][BG1_COLS];
+	Cube &m_cube;
+};
+
+#endif
