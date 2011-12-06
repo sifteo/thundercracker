@@ -507,7 +507,7 @@ void CubeWrapper::testMatches()
 			//compare the two
 			for( int j = 0; j < NUM_ROWS; j++ )
 			{
-				if( ourGems[j]->isAlive() && theirGems[j]->isAlive() && ourGems[j]->getColor() == theirGems[j]->getColor() )
+                if( ourGems[j]->isMatchable() && theirGems[j]->isMatchable() && ourGems[j]->getColor() == theirGems[j]->getColor() )
 				{
 					ourGems[j]->mark();
 					theirGems[j]->mark();
@@ -1100,10 +1100,6 @@ void CubeWrapper::checkEmpty()
 
 void CubeWrapper::setState( CubeState state )
 {
-    //TODO, switch over to messaging, but for now don't allow it
-    if( state == STATE_MESSAGING )
-        state = STATE_EMPTY;
-
     m_state = state;
     m_stateTime = 0.0f;
 }
