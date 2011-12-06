@@ -19,7 +19,7 @@ unsigned ScoredCubeState_EndOfRound::onEvent(unsigned eventID, const EventData& 
         break;
 
     case EventID_NewAnagram:
-        return ScoredCubeStateIndex_NotWord;
+        return CubeStateIndex_NotWordScored;
 
     }
     return getStateMachine().getCurrentStateIndex();
@@ -55,7 +55,7 @@ void ScoredCubeState_EndOfRound::paint()
 
         // TODO high scores
     case 1:
-        vid.BG0_drawAsset(Vec2(0,0), RestartScreen);
+        vid.BG0_drawAsset(Vec2(0,0), StartScreen);
         break;
 
     default:
