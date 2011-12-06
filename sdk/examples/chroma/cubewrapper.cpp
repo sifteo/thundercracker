@@ -464,7 +464,7 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 	GridSlot &slot = m_grid[row1][col1];
 	GridSlot &dest = m_grid[row2][col2];
 
-	if( !dest.isEmpty() )
+    if( !dest.isOccupiable() )
 		return false;
 
 	if( slot.isTiltable() && !slot.IsFixed() )
