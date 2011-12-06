@@ -153,6 +153,9 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
     }
   }
   map.SetData(m);
+  for(GameView* p = ViewBegin(); p!= ViewEnd(); ++p) {
+    if (p != view) { p->DrawBackground(); }
+  }
   // zoom out
   { 
     VidMode_BG2 vid(view->cube.vbuf);
