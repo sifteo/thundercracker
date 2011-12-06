@@ -24,7 +24,7 @@ WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes)
         mAudioChannels[i].init();
 
     }
-    playAudio(welcome, AudioChannelIndex_Music);
+    playAudio(welcome, AudioChannelIndex_Time);
 }
 
 void WordGame::update(float dt)

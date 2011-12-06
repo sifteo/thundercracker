@@ -19,6 +19,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     {
     case EventID_EnterState:
         GameStateMachine::sOnEvent(EventID_NewRound, EventData());
+        WordGame::playAudio(wordplay_music_versus, AudioChannelIndex_Music, LoopRepeat);
         // fall through
     case EventID_Input:
         if (GameStateMachine::GetAnagramCooldown() <= .0f)
