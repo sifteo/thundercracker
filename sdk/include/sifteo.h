@@ -18,5 +18,6 @@
 #include <sifteo/macros.h>
 #include <sifteo/video.h>
 #include <sifteo/neighborhood.h>
+#include <sifteo/BG1Helper.h>
 
 #endif

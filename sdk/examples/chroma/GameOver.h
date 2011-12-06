@@ -8,7 +8,6 @@
 #define _GAMEOVER_H
 
 #include <sifteo.h>
-#include "BG1Helper.h"
 
 using namespace Sifteo;
 

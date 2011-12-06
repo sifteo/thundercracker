@@ -226,7 +226,7 @@ void GameView::DrawBackground() {
         mode.BG0_drawAsset(
           Vec2(x<<1,y<<1),
           *(gGame.map.Data()->tileset),
-          gGame.map.Data()->GetTileId(mRoom, x, y)
+          gGame.map.Data()->GetTileId(mRoom, Vec2(x, y))
         );
       }
     }

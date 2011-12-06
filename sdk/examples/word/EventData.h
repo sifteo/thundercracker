@@ -1,6 +1,9 @@
 #ifndef EVENTDATA_H
 #define EVENTDATA_H
 
+#include <sifteo.h>
+using namespace Sifteo;
+
 union EventData
 {
     EventData() {}
@@ -12,8 +15,19 @@ union EventData
 
     struct
     {
+        const char* mWord;
+        Cube::ID mCubeIDStart;
+    } mWordFound;
+
+    struct
+    {
+        Cube::ID mCubeIDStart;
+    } mWordBroken;
+
+    struct
+    {
         bool mFirst;
-    } mEnterState;
+    } mEnterState;    
 };
 
 #endif // EVENTDATA_H
