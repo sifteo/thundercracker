@@ -14,6 +14,8 @@ namespace MapTool {
     public static bool IsWall(this TmxTile t) { return t.ContainsKey("wall"); }
     public static bool IsDoor(this TmxTile t) { return t.ContainsKey("door"); }
     public static bool IsOpen(this TmxTile t) { return !t.IsDoor() && !t.IsObstacle() && !t.IsWall(); }
+    public static bool IsWalkable(this TmxTile t) { return !t.IsWall() && !t.IsObstacle(); }
+    public static bool IsPath(this TmxTile t) { return t.ContainsKey("path"); }
 
     public static Portal PortalType(this TmxTile t) {
       if (t.IsDoor()) {
@@ -46,10 +48,21 @@ namespace MapTool {
         tmxData = tmap
       };
 
+      // TODO: MAKE SURE PORTAL OPENINGS ARE TWO-WIDE VERTICALLY!
+
       // infer portal states
       for(int rx=0; rx<result.Width; ++rx) {
         for(int ry=0; ry<result.Height; ++ry) {
           var room = result.rooms[rx,ry];
+
+          if(room.IsBlocked) {
+            room.portals[0] = Portal.Walled;
+            room.portals[1] = Portal.Walled;
+            room.portals[2] = Portal.Walled;
+            room.portals[3] = Portal.Walled;
+            continue;
+          }
+
           int pixelX = 128 * rx;
           int pixelY = 128 * ry;
           int tileX = pixelX / tmap.tilePixelWidth;
@@ -62,12 +75,20 @@ namespace MapTool {
             tile = layer.GetTile(tileX+i, tileY);
             if ((room.portals[0] = tile.PortalType()) != Portal.Walled) { break; }
           }
+          // double-check top
+          if (room.portals[0] != Portal.Walled && (room.y == 0 || result.rooms[room.x, room.y-1].IsBlocked)) {
+            room.portals[0] = Portal.Walled;
+          }
 
           // left
           tile = null;
           for(int i=0; i<tileSteps; i+=tile.TileHeight) {
             tile = layer.GetTile(tileX, tileY+i);
             if ((room.portals[1] = tile.PortalType()) != Portal.Walled) { break; }
+          }
+          // double-check left
+          if (room.portals[1] != Portal.Walled && (room.x == 0 || result.rooms[room.x-1, room.y].IsBlocked)) {
+            room.portals[1] = Portal.Walled;
           }
 
           // bottom
@@ -76,12 +97,20 @@ namespace MapTool {
             tile = layer.GetTile(tileX+i, tileY+tileSteps-1);
             if ((room.portals[2] = tile.PortalType()) != Portal.Walled) { break; }
           }
+          // double-check bottom
+          if (room.portals[2] != Portal.Walled && (room.y == result.Height-1 || result.rooms[room.x, room.y+1].IsBlocked)) {
+            room.portals[2] = Portal.Walled;
+          }
 
           // right
           tile = null;
           for(int i=0; i<tileSteps; i+=tile.TileWidth) {
             tile = layer.GetTile(tileX+tileSteps-1, tileY+i);
             if ((room.portals[3] = tile.PortalType()) != Portal.Walled) { break; }
+          }
+          // double-check right
+          if (room.portals[3] != Portal.Walled && (room.x == result.Width-1 || result.rooms[room.x+1, room.y].IsBlocked)) {
+            room.portals[3] = Portal.Walled;
           }
 
         }

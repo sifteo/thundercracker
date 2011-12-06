@@ -13,8 +13,17 @@
 #include <sifteo/machine.h>
 #include "radio.h"
 #include "runtime.h"
-#include "cubecodec.h"
+#include "cubeslots.h"
 #include "systime.h"
+
+//#include "cubecodec.h"
+
+#ifndef USE_MOCK_CUBE_CODEC
+  #include "cubecodec.h"
+#else
+  #include "mockcubecodec.h"
+  #define CubeCodec MockCubeCodec
+#endif
 
 
 /**
@@ -35,31 +44,16 @@ class CubeSlot {
     void radioAcknowledge(const PacketBuffer &packet);
     void radioTimeout();
 
-    static CubeSlot instances[_SYS_NUM_CUBE_SLOTS];
-
-    /*
-     * One-bit flags for each cube are packed into global vectors
-     */
-    static _SYSCubeIDVector vecEnabled;         /// Cube enabled
-    static _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
-    static _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
-    static _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid
-    static _SYSCubeIDVector frameACKValid;      /// 'framePrevACK' is valid
-    static _SYSCubeIDVector neighborACKValid;   /// Neighbor/touch state is valid
-    
-    static void enableCubes(_SYSCubeIDVector cv); 
-    static void disableCubes(_SYSCubeIDVector cv);
-
     _SYSCubeID id() const {
-        _SYSCubeID i = this - &instances[0];
+        _SYSCubeID i = this - &CubeSlots::instances[0];
         ASSERT(i < _SYS_NUM_CUBE_SLOTS);
-        STATIC_ASSERT(arraysize(instances) == _SYS_NUM_CUBE_SLOTS);
+        STATIC_ASSERT(arraysize(CubeSlots::instances) == _SYS_NUM_CUBE_SLOTS);
         return i;
     }
 
     static CubeSlot &getInstance(_SYSCubeID id) {
         ASSERT(id < _SYS_NUM_CUBE_SLOTS);
-        return instances[id];
+        return CubeSlots::instances[id];
     }
 
     _SYSCubeIDVector bit() const {
@@ -68,8 +62,20 @@ class CubeSlot {
     }
 
     bool enabled() const {
-        return !!(bit() & vecEnabled);
+        return !!(bit() & CubeSlots::vecEnabled);
     }
+	
+	bool connected() const {
+        return !!(bit() & CubeSlots::vecConnected);
+    }
+	
+	void setConnected() {
+		CubeSlots::connectCubes(Sifteo::Intrinsic::LZ(id()));
+	}
+	
+	void setDisconnected() {
+		CubeSlots::disconnectCubes(Sifteo::Intrinsic::LZ(id()));
+	}
 
     void setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
@@ -119,19 +125,6 @@ class CubeSlot {
     uint16_t getRawBatteryV() const {
         return rawBatteryV;
     }
-    
-    static bool validID(_SYSCubeID id) {
-        // For security/reliability, all cube IDs from game code must be checked
-        return id < _SYS_NUM_CUBE_SLOTS;
-    }
-    
-    static _SYSCubeIDVector truncateVector(_SYSCubeIDVector cv) {
-        // For security/reliability, all cube vectors from game code must be checked
-        return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
-    }
-
-    static void paintCubes(_SYSCubeIDVector cv);
-    static void finishCubes(_SYSCubeIDVector cv);
 
  private:
     // Limit on round-trip time
@@ -177,6 +170,5 @@ class CubeSlot {
     _SYSAccelState accelState;
     _SYSCubeHWID hwid;
 };
-
 
 #endif

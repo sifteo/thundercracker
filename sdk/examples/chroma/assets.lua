@@ -38,3 +38,13 @@ TimerLowRight = image{"TimerLowRight.png", height=16}
 ExplodeGem0 = image{"Gem0Explode.png", height=32}
 --gem animations
 Gem0 = image{"Gem0.png", height=32}
+--death animations
+DieUp = image{"DieUp.png", height=64, pinned=true}
+DieLeft = image{"DieLeft.png", height=16, pinned=true}
+DieDown = image{"DieDown.png", height=64, pinned=true}
+DieRight = image{"DieRight.png", height=16, pinned=true}
+--idle glimmer
+GlimmerImg = image{"Glimmer.png", height=32}
+--points text
+PointFont = image{"points.png", height=16}
+BannerPoints = image{"Bannerpoints.png", height=16}

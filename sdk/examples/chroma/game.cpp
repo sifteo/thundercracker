@@ -17,6 +17,11 @@ unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
 Game &Game::Inst()
 {
 	static Game game = Game();
+
+#ifdef _WIN32
+    //srand((int)System::clock());
+#endif
+
 	return game; 
 }
 
@@ -144,6 +149,19 @@ unsigned int Game::Rand( unsigned int max )
 }
 
 
+//get random float value from 0 to 1.0
+float Game::UnitRand()
+{
+    return (float)Rand( INT_MAX ) * ( 0.999999999f / (float) INT_MAX );
+}
+
+
+//get random value from min to max
+float Game::RandomRange( float min, float max )
+{
+    return UnitRand() * ( max - min ) + min;
+}
+
 
 void Game::CheckChain( CubeWrapper *pWrapper )
 {
@@ -210,7 +228,7 @@ void Game::checkGameOver()
 		if( numInPlay <= 1 )
         {
             enterScore();
-			m_state = STATE_POSTGAME;
+            m_state = STATE_DYING;
         }
 	}
 	else if( m_mode == MODE_TIMED )
@@ -218,7 +236,7 @@ void Game::checkGameOver()
 		if( m_timer.getTime() <= 0.0f )
         {
             enterScore();
-            m_state = STATE_POSTGAME;
+            m_state = STATE_DYING;
         }
 	}
 }

@@ -11,6 +11,8 @@
 #include "GridSlot.h"
 #include "banner.h"
 #include "Intro.h"
+#include "GameOver.h"
+#include "Glimmer.h"
 
 using namespace Sifteo;
 
@@ -28,6 +30,8 @@ public:
     static const float MOVEMENT_THRESHOLD;
     static const float IDLE_TIME_THRESHOLD;
     static const float IDLE_FINISH_THRESHOLD;
+    static const float MIN_GLIMMER_TIME;
+    static const float MAX_GLIMMER_TIME;
 
 	typedef enum
 	{
@@ -84,7 +88,7 @@ public:
 
 	bool isDead() const { return m_state == STATE_NOSHAKES; }
 	CubeState getState() const { return m_state; }
-    bool IsIdle() const;
+    //bool IsIdle() const;
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -114,6 +118,10 @@ private:
     float m_idleTimer;
 
     Intro m_intro;
+    GameOver m_gameover;
+    Glimmer m_glimmer;
+
+    float m_timeTillGlimmer;
 };
 
 #endif

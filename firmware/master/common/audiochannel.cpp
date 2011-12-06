@@ -8,18 +8,18 @@
 
 using namespace Sifteo;
 
-AudioChannel::AudioChannel() :
+AudioChannelWrapper::AudioChannelWrapper() :
     mod(0), state(0), decoder(0), volume(Audio::MAX_VOLUME)
 {
 }
 
-void AudioChannel::init(_SYSAudioBuffer *b)
+void AudioChannelWrapper::init(_SYSAudioBuffer *b)
 {
     buf.init(b);
     volume = Audio::MAX_VOLUME / 6;
 }
 
-void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
+void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
 {
     // if this is a sample & either the passed in decoder is null, or our
     // internal decoder is not null, we've got problems
@@ -34,7 +34,7 @@ void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loo
     }
 }
 
-int AudioChannel::pullAudio(int16_t *buffer, int len)
+int AudioChannelWrapper::pullAudio(int16_t *buffer, int len)
 {
     ASSERT(!(state & STATE_STOPPED));
 
@@ -60,7 +60,7 @@ int AudioChannel::pullAudio(int16_t *buffer, int len)
     return mixable;
 }
 
-void AudioChannel::fetchData()
+void AudioChannelWrapper::fetchData()
 {
     switch (mod->type) {
     case Sample: {
@@ -79,7 +79,7 @@ void AudioChannel::fetchData()
     }
 }
 
-void AudioChannel::onPlaybackComplete()
+void AudioChannelWrapper::onPlaybackComplete()
 {
     state |= STATE_STOPPED;
     this->decoder = 0;

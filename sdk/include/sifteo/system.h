@@ -121,6 +121,10 @@ class System {
         _SYS_ticks_ns(&nanosec);
         return nanosec;
     }
+	
+	static void solicitCubes(_SYSCubeID min, _SYSCubeID max) {
+		_SYS_solicitCubes(min, max);
+	}
 };
 
 

@@ -25,9 +25,11 @@
  *      the same binary. (After we have a runtime...)
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <assert.h>
 
 #ifdef _WIN32
 #   define WIN32_LEAN_AND_MEAN
@@ -276,12 +278,14 @@ static void Siftulator_recv()
             }
 
         } else {
-            if (self.retriesLeft)
-                self.retriesLeft--;
-            else
-                RadioManager::timeout();
+            // only timeout on transition to zero
+            if (self.retriesLeft >= 1) {
+                if (--self.retriesLeft == 0) {
+                    RadioManager::timeout();
+                }
+            }
         }
-
+        
         self.ackPending = false;
     }
 }

@@ -284,19 +284,19 @@ typedef uint32_t _SYSAudioHandle;
 // that's 160 shorts so we can get away with 512 bytes. Wideband is 320 shorts
 // so we need to kick up to 1024 bytes. kind of a lot :/
 #define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t))
-#define _SYS_AUDIO_NUM_CHANNELS         8
-#define _SYS_AUDIO_NUM_SAMPLE_CHANNELS  2
+#define _SYS_AUDIO_MAX_CHANNELS         8
+#define _SYS_AUDIO_MAX_SAMPLE_CHANNELS  2
 
 /*
  * Types of audio supported by the system - TBD if these make sense...
  */
 enum _SYSAudioType {
-    Sample // more tbd...
+    Sample = 0 // more tbd...
 };
 
 enum _SYSAudioLoopType {
-    LoopOnce,
-    LoopRepeat
+    LoopOnce = 0,
+    LoopRepeat = 1
 };
 
 struct _SYSAudioModule {
@@ -404,6 +404,7 @@ void _SYS_paint(void);                          /// Enqueue a new rendering fram
 void _SYS_finish(void);                         /// Wait for enqueued frames to finish
 void _SYS_ticks_ns(int64_t *nanosec);           /// Return the monotonic system timer, in nanoseconds
 
+void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max);
 void _SYS_enableCubes(_SYSCubeIDVector cv);     /// Which cubes will be trying to connect?
 void _SYS_disableCubes(_SYSCubeIDVector cv);
 

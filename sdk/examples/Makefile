@@ -1,6 +1,7 @@
 SUBDIRS = \
-	hello monster text gfxdemo word sensors \
-	scroller-bg0 scroller-bg1 sprites stars tiltShake
+	hello monster text gfxdemo chroma sensors \
+	scroller-bg0 scroller-bg1 sprites stars tiltShake \
+	pairing
 
 .PHONY: clean subdirs $(SUBDIRS)
 

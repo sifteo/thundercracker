@@ -68,7 +68,9 @@ void Encoder::collectInputs(const char *path, vector<string> &inputs)
     string line;
     while (configfile.good()) {
         getline(configfile, line);
-        inputs.push_back(line);
+        if (line.length() > 0) {
+            inputs.push_back(line);
+        }
     }
     configfile.close();
 }
@@ -126,11 +128,11 @@ bool Encoder::encode(const char *configpath, int channels, int format)
         string path = dir + file;
         int sz = encodeFile(dir, path, channels, format, headerStream, sourceStream);
         
-        sourceStream << "Sifteo::AudioModule " << FileNameUtils::baseName(file) << " = {{\n"
+        sourceStream << "_SYSAudioModule " << FileNameUtils::baseName(file) << " = {\n"
                         "    Sample, // type\n"
                         "    " << sz << ", // size\n"
                         "    " << FileNameUtils::baseName(file) << "_data\n"
-                        "}};\n\n";
+                        "};\n\n";
     }
     
     headerStream << "\n#endif\n";
@@ -162,7 +164,7 @@ int Encoder::encodeFile(const string & dir, const string &path, int channels, in
     char buf[16];
     
     srcStream << "static const uint8_t " << basename << "_data[] = {";
-    headerStream << "extern const Sifteo::AudioModule " << basename << ";\n";
+    headerStream << "extern const _SYSAudioModule " << basename << ";\n";
     
     int bytecount = 0;
     int frameCount = 0;
