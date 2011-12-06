@@ -34,13 +34,13 @@ namespace MapTool {
         }
       } else {
 
-        var map = MapBuilder.Build(TmxImporter.Load("castle.tmx"));
-        map.RenderPreview("preview.png");
+        //var map = MapBuilder.Build(TmxImporter.Load("castle.tmx"));
+        //map.RenderPreview("preview.png");
 
-        //var hWriter = new StringWriter();
-        //var sWriter = new StringWriter();
-        //WriteCxx(hWriter, sWriter);
-        //Console.WriteLine("Source:\n{0}", sWriter.ToString());
+        var hWriter = new StringWriter();
+        var sWriter = new StringWriter();
+        WriteCxx(hWriter, sWriter);
+        Console.WriteLine("Source:\n{0}", sWriter.ToString());
 
         //SoWhenIAskedHerOutSheSaidIWasntHerType("woods.tmx");
       }

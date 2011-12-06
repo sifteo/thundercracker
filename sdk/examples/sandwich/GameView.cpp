@@ -2,6 +2,8 @@
 #include "Game.h"
 #include "Enemy.h"
 
+#include "BG1Helper.h"
+
 #define ROOM_NONE (Vec2(-1,-1))
 #define ITEM_SPRITE_ID 0
 #define PLAYER_SPRITE_ID 1
@@ -236,5 +238,20 @@ void GameView::DrawBackground() {
         );
       }
     }
+
+    BG1Helper ovrly(cube);
+    uint8_t *p = Room()->Data()->overlay;
+    if (p) {
+      while(*p != 0xff) {
+        uint8_t pos = p[0];
+        uint8_t frm = p[1];
+        p+=2;
+        if (pos != 0xff && frm != 0xff) {
+          Vec2 position = Vec2(pos>>4, pos & 0xf);
+          ovrly.DrawAsset(2*position, *(gGame.map.Data()->overlay), frm);
+        }
+      }
+    }
+    ovrly.Flush();
   }
 }

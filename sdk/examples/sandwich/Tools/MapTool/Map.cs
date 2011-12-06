@@ -25,6 +25,21 @@ namespace MapTool {
 
     public bool HasItem { get { return item.Length > 0 && item != "ITEM_NONE"; } }
 
+    public bool HasOverlay {
+      get {
+        if (!map.HasOverlay) { return false; }
+        for(int y=0; y<8; ++y) {
+          for(int x=0; x<8; ++x) {
+            var tile = this.GetOverlayTile(x, y);
+            if (tile != null) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+    }
+
     public Room(Map map, int x, int y) {
       this.map = map;
       this.x = x;
@@ -65,6 +80,10 @@ namespace MapTool {
     public TmxTile GetTile(int x, int y) {
       return map.tmxData.backgroundLayer.GetTile(8 * this.x + x, 8 * this.y + y);
     }
+
+    public TmxTile GetOverlayTile(int x, int y) {
+      return map.tmxData.overlayLayer.GetTile(8 * this.x + x, 8 * this.y + y);
+    }
   }
 
   public class Map {
@@ -82,6 +101,10 @@ namespace MapTool {
           rooms[x,y] = new Room(this, x, y);
         }
       }
+    }
+
+    public bool HasOverlay {
+      get { return tmxData.overlayLayer != null; }
     }
 
     public Room RoomAtPixelLocation(int pixelX, int pixelY) {

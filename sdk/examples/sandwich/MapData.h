@@ -30,12 +30,14 @@ struct RoomData {
     uint8_t centerPosition; // format: 0b00XXXYYY (any use for those two high bits?)
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
+    uint8_t* overlay; // format: alternative 0bXXXXYYYY, tileId, 0bXXXXYYYY, tileId, etc
 
     inline Vec2 LocalCenter() const { return Vec2((centerPosition >> 3) & 0x7, centerPosition & 0x7); }
 };
 
 struct MapData {
     const AssetImage* tileset;
+    const AssetImage* overlay;
     const AssetImage* blankImage;
     RoomData* rooms;
     uint8_t* xportals; // vertical portals between rooms (x,y) and (x+1,y)

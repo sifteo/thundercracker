@@ -48,7 +48,7 @@ void BG1Helper::Flush()
                          m_bitset,
                          BG1_ROWS);
 
-    _SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
+    //_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 
 	Clear();
 }
