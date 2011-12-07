@@ -88,7 +88,7 @@ private:
   void PaintInfo();
   void PaintMenu();
 
-  void DoPaintItem(TiltFlowItem *pItem, int x, int w);
+  void DoPaintItem(TiltFlowItem *pItem, int x);
   void PaintItem();
 
   void ClipIt(int ox, int &x, int &w);

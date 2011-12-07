@@ -5,6 +5,7 @@
 #include "TiltFlowMenu.h"
 #include "game.h"
 #include "cubewrapper.h"
+#include "assets.gen.h"
 
 const float TiltFlowMenu::UPDATE_DELAY = 1.0f / 30.0f;
 const float TiltFlowMenu::PICK_DELAY = 2.0f;
@@ -174,6 +175,7 @@ TiltFlowItem::TiltFlowItem(const Sifteo::AssetImage &image, const char *pName/*,
 
 const float TiltFlowView::DRIFTVEL = 2.0f;
 const float TiltFlowView::TILTVEL = 6.0f;
+//const float TiltFlowView::TILTVEL = 0.6f;
 const float TiltFlowView::MINACCEL = 3.0f;
 const float TiltFlowView::MAXACCEL = 8.0f;
 const float TiltFlowView::DEEPTILTACCEL = 2.0f;
@@ -212,6 +214,7 @@ void TiltFlowView::Tick() {
     // do nothing
     break;
   }
+
   if (mRestTime > -1 && TiltFlowMenu::Inst()->GetSimTime() - mRestTime > TiltFlowMenu::REST_DELAY) {
     mDirty = true;
     mDrawLabel = true;
@@ -265,17 +268,27 @@ void TiltFlowView::PaintMenu() {
 
 
   //if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
-  int x, w;
-  ClipIt(24, x, w); // magic
-  if (w > 0) { DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), x, w); }
+
+  //could be better, but just clear for now
+  VidMode_BG0 vid( mpCube->vbuf );
+  vid.clear(Font.tiles[0]);
+
+  //DEBUG DRAW
+  for( unsigned int i = 0; i < VidMode_BG0::BG0_width; i++ )
+  {
+      vid.BG0_textf( Vec2( i, 0 ), Font, "%d", i%10 );
+  }
+
+  DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), 24 + mOffsetX);
+
+#if 1
   if (/*c.Neighbors.Left == NULL && */mItem > 0) {
-    ClipIt(-70, x, w); // magic
-    if (w > 0) { DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), x, w); }
+    DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70 + mOffsetX);
   }
   if (/*c.Neighbors.Right == NULL && */mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
-    ClipIt(118, x, w); // magic
-    if (w > 0) { DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), x, 80); }
+    DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118 + mOffsetX);
   }
+#endif
   /*if (mDrawLabel) {
     if (c.Neighbors.Left == NULL && c.Neighbors.Right == NULL) {
       if (mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
@@ -292,15 +305,13 @@ void TiltFlowView::PaintMenu() {
     TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
   }*/
 
-  VidMode_BG0 vid( mpCube->vbuf );
-
   // Firmware handles all pixel-level scrolling
-  vid.BG0_setPanning(Vec2((int)mOffsetX, 0));
+  vid.BG0_setPanning(Vec2((int)-mOffsetX, 0));
 }
 
-void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int w) {
-  const int y = 24; // magic
-  const int h = 80; // magic
+void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x/*, int w*/) {
+  //const int y = 24; // magic
+  //const int h = 80; // magic
   /*if (TiltFlowMenu::Inst()->PaintItem != NULL) {
     TiltFlowMenu::Inst()->PaintItem(new TiltFlowItemArgs() {
       view = this,
@@ -318,16 +329,52 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int w) {
     Cube.FillRect(item.color, x, y, w, h);
   }*/
 
-  //TODO draw tile assets.
-  //draw less than 0 one tile.  and greater than 128 one tile
-  //should just fix clipit to do tile clipping
-
 
   if( pItem )
   {
       VidMode_BG0 vid( mpCube->vbuf );
-      //TODO, CHANGE THIS TO PARTIAL ASSETS
-      vid.BG0_drawAsset(Vec2(x/8+1,3), pItem->mImage, 0);
+      Vec2 offset = Vec2( 0, 0 );
+      Vec2 size = Vec2( pItem->mImage.width, pItem->mImage.height );
+
+      int leftMostTile = -mOffsetX / 8 - 1;
+      int rightMostTile = leftMostTile + VidMode_BG0::BG0_width - 1;
+      int curTile = x / 8;
+
+      if( curTile > rightMostTile || curTile + (int)pItem->mImage.width < leftMostTile )
+          return;
+
+      if( curTile < leftMostTile )
+      {
+          offset.x = leftMostTile-curTile;
+          size.x -= offset.x;
+          curTile = leftMostTile;
+      }
+      else if( curTile + pItem->mImage.width > (unsigned)rightMostTile + 1 )
+      {
+          size.x -= curTile + pItem->mImage.width - rightMostTile;
+      }
+
+      ASSERT( size.x >= 0 );
+
+      //this shouldn't ever really loop, since we're heavily constraining curTile
+      while( curTile < 0 )
+      {
+          curTile += VidMode_BG0::BG0_width;
+      }
+
+      //need to draw on the right tiles.
+      if( curTile + size.x < (int)VidMode_BG0::BG0_width )
+        vid.BG0_drawPartialAsset(Vec2(curTile,3), offset, size, pItem->mImage, 0);
+      //Handle wrapping
+      else
+      {
+          int wrapAmt = curTile + size.x - VidMode_BG0::BG0_width;
+          size.x -= wrapAmt;
+          vid.BG0_drawPartialAsset(Vec2(curTile,3), offset, size, pItem->mImage, 0);
+          offset.x += size.x;
+          size.x = wrapAmt;
+          vid.BG0_drawPartialAsset(Vec2(0,3), offset, size, pItem->mImage, 0);
+      }
   }
 }
 
@@ -342,20 +389,6 @@ void TiltFlowView::PaintItem() {
     }
   }*/
 }
-
-
-
-
-void TiltFlowView::ClipIt(int ox, int &x, int &w) {
-x = ox + (int)(mOffsetX);
-  w = 80;
-  if (x < BG0MINX) {
-    w += x;
-    x = BG0MINX;
-  }
-  w -= (x+w>BG0MAXX) ? 80-(BG0MAXX-x) : 0;
-}
-
 
 
 void TiltFlowView::OnButton(bool pressed) {
@@ -439,6 +472,15 @@ void TiltFlowView::RelateToMenu() {
 void TiltFlowView::UpdateMenu() {
   Cube::TiltState state = mpCube->getTiltState();
 
+  //TEMP DEBUG, use neighboring instead of tilt
+  /*if( mpCube->hasPhysicalNeighborAt(RIGHT) )
+      state.x = _SYS_TILT_POSITIVE;
+  else if( mpCube->hasPhysicalNeighborAt(LEFT) )
+      state.x = _SYS_TILT_NEGATIVE;
+  else
+      state.x = _SYS_TILT_NEUTRAL;
+*/
+
   if (
     state.x == _SYS_TILT_NEUTRAL ||
     (state.x == _SYS_TILT_NEGATIVE && mItem == TiltFlowMenu::Inst()->GetNumItems()-1 && mOffsetX >= 0) ||
@@ -463,7 +505,7 @@ void TiltFlowView::UpdateMenu() {
       if (mItem > 0) {
         if (mOffsetX > 45) { // magic
           mItem--;
-          mOffsetX -= 90; // magic
+          mOffsetX -= 45; // magic
         } else {
             mOffsetX += Resistance() * TILTVEL * mAccel;
           mAccel = Util::Clamp(mAccel * GRAVITY, MINACCEL, MAXACCEL) * deepMult;
@@ -473,7 +515,7 @@ void TiltFlowView::UpdateMenu() {
       if (mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
         if (mOffsetX < -45) { // magic
           mItem++;
-          mOffsetX += 90; // magic
+          mOffsetX += 45; // magic
         } else {
             mOffsetX -= Resistance() * TILTVEL * mAccel;
           mAccel = Util::Clamp(mAccel * GRAVITY, MINACCEL, MAXACCEL) * deepMult;
@@ -513,16 +555,6 @@ void TiltFlowView::StopScrolling() {
   mDrawLabel = false;
   mDirty = true;
 }
-/*
-void ClipIt(int ox, out int x, out int w) {
-  x = ox + Mathf.FloorToInt(mOffsetX);
-  w = 80;
-  if (x < 0) {
-    w += x;
-    x = 0;
-  }
-  w -= (x+w>128) ? 80-(128-x) : 0;
-}*/
 
 /*
   TODO

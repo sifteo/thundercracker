@@ -238,6 +238,7 @@ class VidMode_BG0 : public VidMode {
      */
 
     void BG0_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
+        ASSERT( frame < asset.frames );
         uint16_t addr = BG0_addr(point);
         unsigned offset = asset.width * asset.height * frame;
         const unsigned base = 0;
@@ -252,6 +253,31 @@ class VidMode_BG0 : public VidMode {
             offset += asset.width;
         }
     }
+
+
+    //draw a partial asset.  Pass in the position, xy min points, and width/height
+    void BG0_drawPartialAsset(const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0) {
+        ASSERT( frame < asset.frames );
+        ASSERT( offset.x >= 0 && offset.y >= 0 );
+        ASSERT( size.x >= 0 && size.y >= 0 );
+        ASSERT( offset.x + size.x <= (int)asset.width );
+        ASSERT( offset.y + size.y <= (int)asset.height );
+        uint16_t addr = BG0_addr(point);
+        ASSERT( addr + BG0_width * ( size.y - 1 ) + size.x < BG0_width * BG0_width );
+        unsigned tileOffset = asset.width * asset.height * frame + ( asset.width * offset.y ) + offset.x;
+        const unsigned base = 0;
+
+        for (int y = 0; y < size.y; y++) {
+            if (asset.tiles)
+                _SYS_vbuf_writei(&buf.sys, addr, asset.tiles + tileOffset, base, size.x);
+            else
+                _SYS_vbuf_seqi(&buf.sys, addr, tileOffset + base, size.x);
+
+            addr += BG0_width;
+            tileOffset += asset.width;
+        }
+    }
+
 
     /**
      * Draw text using a fixed-width font, with a linear mapping from characters to frames.
