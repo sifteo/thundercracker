@@ -8,6 +8,7 @@ using namespace Sifteo;
 #define PORTAL_DOOR 2
 #define PORTAL_LOCK	3
 
+#define ITEM_NONE 0
 #define ITEM_BASIC_KEY 1
 
 #define TRIGGER_TYPE_PASSIVE    0
@@ -29,12 +30,15 @@ struct RoomData {
     uint8_t centerPosition; // format: 0b00XXXYYY (any use for those two high bits?)
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
+    uint8_t* overlay; // format: alternative 0bXXXXYYYY, tileId, 0bXXXXYYYY, tileId, etc
 
     inline Vec2 LocalCenter() const { return Vec2((centerPosition >> 3) & 0x7, centerPosition & 0x7); }
 };
 
 struct MapData {
     const AssetImage* tileset;
+    const AssetImage* overlay;
+    const AssetImage* blankImage;
     RoomData* rooms;
     uint8_t* xportals; // vertical portals between rooms (x,y) and (x+1,y)
     uint8_t* yportals; // horizontal portals between rooms (x,y) and (x,y+1)

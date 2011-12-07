@@ -46,7 +46,7 @@ namespace MapTool {
 
       // find triggers, items
       var triggers = new List<Trigger>();
-      var items = new List<Trigger>();
+      var items = new List<Room>();
       foreach(var room in map.rooms) {
         if (room.trigger != null) {
           triggers.Add(room.trigger);
@@ -54,9 +54,9 @@ namespace MapTool {
             "static void {0}_trigger_{1}(int type) {{ {2} }}",
             map.name, room.Id, room.trigger.GeneratedCode()
           );
-          if (room.trigger.HasItem) {
-            items.Add(room.trigger);
-          }
+        }
+        if (room.HasItem) {
+          items.Add(room);
         }
       }
 
@@ -77,58 +77,96 @@ namespace MapTool {
       if (items.Count > 0) {
         itemListName = map.name + "_items";
         stream.WriteLine("static ItemData {0}[] = {{", itemListName);
-        foreach(var item in items) {
-          stream.WriteLine("    {{ {0}, {1} }},", item.room.Id, item.ItemId);
+        foreach(var room in items) {
+          stream.WriteLine("    {{ {0}, {1} }},", room.Id, room.item);
         }
         stream.WriteLine("    { -1, 0 }");
         stream.WriteLine("};");
       }
 
-      // write rooms
-      stream.WriteLine("static RoomData {0}_rooms[] = {{", map.name);
-      for(int y=0; y<map.Height; ++y) {
-        for(int x=0; x<map.Width; ++x) {
-          var room = map.rooms[x,y];
-          stream.WriteLine("    {");
-          // write center mask
-          var center = room.Center;
-          int centerMask = center.y;
-          centerMask |= (center.x << 3);
-          stream.WriteLine("        0x{0:X2},", centerMask);
-
-          // write collision mask rows
-          stream.WriteLine("        {");
-          stream.Write("            ");
-          for(int row=0; row<8; ++row) {
-            int rowMask = 0;
-            for(int col=0; col<8; ++col) {
-              if (!room.GetTile(col, row).IsWalkable()) {
-                rowMask |= (1<<col);
+      // write overlays
+      if (map.HasOverlay) {
+        foreach(var room in map.rooms) {
+          if (room.HasOverlay) {
+            stream.WriteLine("static uint8_t {0}_overlay_{1}_{2}[] = {{", map.name, room.x, room.y);
+            stream.Write("    ");
+            for(int y=0; y<8; ++y) {
+              for(int x=0; x<8; ++x) {
+                var tile = room.GetOverlayTile(x,y);
+                if (tile != null) {
+                  stream.Write(
+                    "0x{0:X2}, 0x{1:X2}, ",
+                    Convert.ToByte((x<<4)|y),
+                    Convert.ToByte(tile.LocalId)
+                  );
+                }
               }
             }
-            // todo
-            stream.Write("0x{0:X2}, ", rowMask);
+            stream.Write("0xff");
+            stream.WriteLine("\n};");
           }
-          stream.WriteLine("\n        },");
-          // write tiles
-          stream.WriteLine("        {");
-          for(int ty=0; ty<8; ++ty) {
-            stream.Write("            ");
-            for(int tx=0; tx<8; ++tx) {
-              stream.Write("0x{0:X2}, ", Convert.ToByte(room.GetTile(tx, ty).LocalId));
-            }
-            stream.Write('\n');
-          }
-          stream.WriteLine("        }");
-          stream.WriteLine("    },");
         }
+      }
+
+      // write rooms
+      stream.WriteLine("static RoomData {0}_rooms[] = {{", map.name);
+      for(int y=0; y<map.Height; ++y)
+      for(int x=0; x<map.Width; ++x) {
+        var room = map.rooms[x,y];
+
+        stream.WriteLine("    {");
+        // write center mask
+        var center = room.Center;
+        int centerMask = center.y;
+        centerMask |= (center.x << 3);
+        stream.WriteLine("        0x{0:X2},", centerMask);
+
+        // write collision mask rows
+        stream.WriteLine("        {");
+        stream.Write("            ");
+        for(int row=0; row<8; ++row) {
+          int rowMask = 0;
+          for(int col=0; col<8; ++col) {
+            if (!room.GetTile(col, row).IsWalkable()) {
+              rowMask |= (1<<col);
+            }
+          }
+          stream.Write("0x{0:X2}, ", rowMask);
+        }
+        stream.WriteLine("\n        },");
+
+        // write tiles
+        stream.WriteLine("        {");
+        for(int ty=0; ty<8; ++ty) {
+          stream.Write("            ");
+          for(int tx=0; tx<8; ++tx) {
+            stream.Write("0x{0:X2}, ", Convert.ToByte(room.GetTile(tx, ty).LocalId));
+          }
+          stream.Write('\n');
+        }
+        stream.WriteLine("        },");
+
+        // write overlay
+        if (room.HasOverlay) {
+          stream.WriteLine("        {0}_overlay_{1}_{2}", map.name, room.x, room.y);
+        } else {
+          stream.WriteLine("        0");
+        }
+
+
+        stream.WriteLine("    },");
       }
       stream.WriteLine("};");
 
       // write data
       stream.WriteLine(
-        "MapData {0}_data = {{ &TileSet_{0}, {0}_rooms, {0}_xportals, {0}_yportals, {1}, {2}, {3}, {4} }};",
-        map.name, triggerListName, itemListName, map.Width, map.Height
+        "MapData {0}_data = {{ &TileSet_{0}, {5}, &Blank_{0}, {0}_rooms, {0}_xportals, {0}_yportals, {1}, {2}, {3}, {4} }};",
+        map.name,
+        triggerListName,
+        itemListName,
+        map.Width,
+        map.Height,
+        map.HasOverlay ? "&Overlay_" + map.name : "0"
       );
     }
 

@@ -63,17 +63,24 @@ namespace MapTool {
             continue;
           }
 
-          int pixelX = 128 * rx;
-          int pixelY = 128 * ry;
-          int tileX = pixelX / tmap.tilePixelWidth;
-          int tileY = pixelY / tmap.tilePixelHeight;
-          int tileSteps = 128 / tmap.tilePixelWidth;
+          int tileX = 8 * rx;
+          int tileY = 8 * ry;
 
           // top
-          TmxTile tile = null;
-          for(int i=0; i<tileSteps; i+=tile.TileWidth) {
-            tile = layer.GetTile(tileX+i, tileY);
-            if ((room.portals[0] = tile.PortalType()) != Portal.Walled) { break; }
+          var prevType = room.portals[0] = Portal.Walled;
+          for(int i=0; i<8; i++) {
+            var type = layer.GetTile(tileX+i, tileY).PortalType();
+            if (type == Portal.Walled) {
+            } else if (type == Portal.Open) {
+              if (prevType == Portal.Open) {
+                room.portals[0] = Portal.Open;
+                break;
+              }
+            } else {
+              room.portals[0] = type;
+              break;
+            }
+            prevType = type;
           }
           // double-check top
           if (room.portals[0] != Portal.Walled && (room.y == 0 || result.rooms[room.x, room.y-1].IsBlocked)) {
@@ -81,10 +88,20 @@ namespace MapTool {
           }
 
           // left
-          tile = null;
-          for(int i=0; i<tileSteps; i+=tile.TileHeight) {
-            tile = layer.GetTile(tileX, tileY+i);
-            if ((room.portals[1] = tile.PortalType()) != Portal.Walled) { break; }
+          prevType = room.portals[1] = Portal.Walled;
+          for(int i=0; i<8; i++) {
+            var type = layer.GetTile(tileX, tileY+i).PortalType();
+            if (type == Portal.Walled) {
+            } else if (type == Portal.Open) {
+              //if (prevType == Portal.Open) {
+                room.portals[1] = Portal.Open;
+                break;
+              //}
+            } else {
+              room.portals[1] = type;
+              break;
+            }
+            prevType = type;
           }
           // double-check left
           if (room.portals[1] != Portal.Walled && (room.x == 0 || result.rooms[room.x-1, room.y].IsBlocked)) {
@@ -92,21 +109,40 @@ namespace MapTool {
           }
 
           // bottom
-          tile = null;
-          for(int i=0; i<tileSteps; i+=tile.TileWidth) {
-            tile = layer.GetTile(tileX+i, tileY+tileSteps-1);
-            if ((room.portals[2] = tile.PortalType()) != Portal.Walled) { break; }
-          }
+          prevType = room.portals[2] = Portal.Walled;
+          for(int i=0; i<8; i++) {
+            var type = layer.GetTile(tileX+i, tileY+7).PortalType();
+            if (type == Portal.Walled) {
+            } else if (type == Portal.Open) {
+              if (prevType == Portal.Open) {
+                room.portals[2] = Portal.Open;
+                break;
+              }
+            } else {
+              room.portals[2] = type;
+              break;
+            }
+            prevType = type;          }
           // double-check bottom
           if (room.portals[2] != Portal.Walled && (room.y == result.Height-1 || result.rooms[room.x, room.y+1].IsBlocked)) {
             room.portals[2] = Portal.Walled;
           }
 
           // right
-          tile = null;
-          for(int i=0; i<tileSteps; i+=tile.TileWidth) {
-            tile = layer.GetTile(tileX+tileSteps-1, tileY+i);
-            if ((room.portals[3] = tile.PortalType()) != Portal.Walled) { break; }
+          prevType = room.portals[3] = Portal.Walled;
+          for(int i=0; i<8; i++) {
+            var type = layer.GetTile(tileX+7, tileY+i).PortalType();
+            if (type == Portal.Walled) {
+            } else if (type == Portal.Open) {
+              //if (prevType == Portal.Open) {
+                room.portals[3] = Portal.Open;
+                break;
+              //}
+            } else {
+              room.portals[3] = type;
+              break;
+            }
+            prevType = type;
           }
           // double-check right
           if (room.portals[3] != Portal.Walled && (room.x == result.Width-1 || result.rooms[room.x+1, room.y].IsBlocked)) {
@@ -183,21 +219,28 @@ namespace MapTool {
           Console.WriteLine("BUILD_MAP_WARNING: Object Out of Bounds: " + obj.name);
           continue;
         }
-        Trigger t = null;
-        if ((t = triggerFactory.TryCreateTriggerFrom(obj)) != null) {
-          if (room.trigger != null) {
-            Console.WriteLine("BUILD_MAP_WARNING: Too Many Triggers in Room ({0}, {1})", room.x, room.y);
-          } else {
-            room.trigger = t;
-            t.room = room;
-            t.worldBounds = new Rectangle(
-              obj.pixelX,
-              obj.pixelY,
-              obj.pixelW,
-              obj.pixelH
-            );
-            t.name = obj.name;
-          }
+        switch(obj.type) {
+          case "Item":
+            obj.TryGetValue("id", out room.item);
+            break;
+          default:
+            Trigger t = null;
+            if ((t = triggerFactory.TryCreateTriggerFrom(obj)) != null) {
+              if (room.trigger != null) {
+                Console.WriteLine("BUILD_MAP_WARNING: Too Many Triggers in Room ({0}, {1})", room.x, room.y);
+              } else {
+                room.trigger = t;
+                t.room = room;
+                t.worldBounds = new Rectangle(
+                  obj.pixelX,
+                  obj.pixelY,
+                  obj.pixelW,
+                  obj.pixelH
+                );
+                t.name = obj.name;
+              }
+            }
+            break;
         }
       }
       return result;

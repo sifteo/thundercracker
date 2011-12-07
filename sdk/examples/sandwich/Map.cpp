@@ -87,7 +87,7 @@ void MapRoom::ClearTrigger() {
 //-----------------------------------------------------------------------------
 
 Map::Map() {
-  SetData(forest_data);
+  SetData(castle_data);
 }
 
 inline static bool PortalOpen(uint8_t pid) { 
@@ -261,9 +261,9 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
   as.cells[as.records->tileID].record = 0;
 
   ARecord* pSelected;
-  int iters = 0;
+  //int iters = 0;
   do {
-    iters++;
+    //iters++;
     // select the cheapest open node
     pSelected = 0;
     for(ARecord* p=as.records; p!=as.records+as.recordCount; ++p) {

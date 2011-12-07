@@ -11,16 +11,7 @@
 static GPIOPin tim4TestPin(&GPIOC, 4);
 #endif
 
-PwmAudioOut::PwmAudioOut(HwTimer _pwmTimer, int pwmChannel, HwTimer _sampleTimer, GPIOPin outputA, GPIOPin outputB) :
-    pwmTimer(_pwmTimer),
-    pwmChan(pwmChannel),
-    sampleTimer(_sampleTimer),
-    outA(outputA),
-    outB(outputB)
-{
-}
-
-void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
+void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer, GPIOPin &outA, GPIOPin &outB)
 {
 #ifdef SAMPLE_RATE_GPIO
     tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
