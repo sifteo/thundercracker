@@ -30,6 +30,7 @@ public:
   void HideRoom();
   
   void ShowPlayer();
+  void SetPlayerFrame(unsigned frame);
   void UpdatePlayer();
   void HidePlayer();
   

@@ -8,18 +8,18 @@
 
 using namespace Sifteo;
 
-AudioChannel::AudioChannel() :
+AudioChannelWrapper::AudioChannelWrapper() :
     mod(0), state(0), decoder(0), volume(Audio::MAX_VOLUME)
 {
 }
 
-void AudioChannel::init(_SYSAudioBuffer *b)
+void AudioChannelWrapper::init(_SYSAudioBuffer *b)
 {
     buf.init(b);
     volume = Audio::MAX_VOLUME / 6;
 }
 
-void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
+void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
 {
     // if this is a sample & either the passed in decoder is null, or our
     // internal decoder is not null, we've got problems
@@ -30,11 +30,11 @@ void AudioChannel::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loo
     this->mod = mod;
     this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
     if (this->decoder != 0) {
-        this->decoder->setData(mod->data, mod->size);
+        this->decoder->setData(mod->buf, mod->size);
     }
 }
 
-int AudioChannel::pullAudio(int16_t *buffer, int len)
+int AudioChannelWrapper::pullAudio(int16_t *buffer, int len)
 {
     ASSERT(!(state & STATE_STOPPED));
 
@@ -44,13 +44,13 @@ int AudioChannel::pullAudio(int16_t *buffer, int len)
             int16_t src = buf.dequeue() | (buf.dequeue() << 8);
             int32_t sample = *buffer + ((src * this->volume) / Audio::MAX_VOLUME);
             // TODO - more subtle compression instead of hard limiter
-            *buffer += Math::clamp(sample, SHRT_MIN, SHRT_MAX);
+            *buffer += Math::clamp((int16_t)sample, (int16_t)SHRT_MIN, (int16_t)SHRT_MAX);
             buffer++;
         }
         // if we have nothing buffered, and there's nothing else to read, we're done
         if (decoder->endOfStream() && buf.readAvailable() == 0) {
             if (this->state & STATE_LOOP) {
-                this->decoder->setData(mod->data, mod->size);
+                this->decoder->setData(mod->buf, mod->size);
             }
             else {
                 return -1;
@@ -60,7 +60,7 @@ int AudioChannel::pullAudio(int16_t *buffer, int len)
     return mixable;
 }
 
-void AudioChannel::fetchData()
+void AudioChannelWrapper::fetchData()
 {
     switch (mod->type) {
     case Sample: {
@@ -79,7 +79,7 @@ void AudioChannel::fetchData()
     }
 }
 
-void AudioChannel::onPlaybackComplete()
+void AudioChannelWrapper::onPlaybackComplete()
 {
     state |= STATE_STOPPED;
     this->decoder = 0;

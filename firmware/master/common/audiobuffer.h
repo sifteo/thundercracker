@@ -27,7 +27,7 @@ public:
     int read(uint8_t *buf, int len);
 
     inline bool full() const {
-        return (((sys->tail + 1) & (sizeof(sys->data) - 1)) == sys->head);
+        return (((sys->tail + 1) & (sizeof(sys->buf) - 1)) == sys->head);
     }
 
     inline bool empty() const {

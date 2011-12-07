@@ -284,25 +284,25 @@ typedef uint32_t _SYSAudioHandle;
 // that's 160 shorts so we can get away with 512 bytes. Wideband is 320 shorts
 // so we need to kick up to 1024 bytes. kind of a lot :/
 #define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t))
-#define _SYS_AUDIO_NUM_CHANNELS         8
-#define _SYS_AUDIO_NUM_SAMPLE_CHANNELS  2
+#define _SYS_AUDIO_MAX_CHANNELS         8
+#define _SYS_AUDIO_MAX_SAMPLE_CHANNELS  2
 
 /*
  * Types of audio supported by the system - TBD if these make sense...
  */
 enum _SYSAudioType {
-    Sample // more tbd...
+    Sample = 0 // more tbd...
 };
 
 enum _SYSAudioLoopType {
-    LoopOnce,
-    LoopRepeat
+    LoopOnce = 0,
+    LoopRepeat = 1
 };
 
 struct _SYSAudioModule {
     enum _SYSAudioType type;
     uint32_t size;
-    const uint8_t *data;
+    const uint8_t *buf;
 };
 
 struct _SYSAudioBuffer {
@@ -310,9 +310,9 @@ struct _SYSAudioBuffer {
     uint16_t tail;
 #ifdef SIFTEO_SIMULATOR
     // host system is higher latency, needs more buffered data to not stutter
-    uint8_t data[(_SYS_AUDIO_BUF_SIZE * 4)];
+    uint8_t buf[(_SYS_AUDIO_BUF_SIZE * 4)];
 #else
-    uint8_t data[_SYS_AUDIO_BUF_SIZE];
+    uint8_t buf[_SYS_AUDIO_BUF_SIZE];
 #endif
 };
 
@@ -336,7 +336,7 @@ struct _SYSNeighborState {
 typedef enum {
 	_SYS_TILT_NEGATIVE,
 	_SYS_TILT_NEUTRAL,
-	_SYS_TILT_POSITIVE,
+	_SYS_TILT_POSITIVE
 } _SYS_TiltType;
 
 struct _SYSTiltState {
@@ -404,6 +404,7 @@ void _SYS_paint(void);                          /// Enqueue a new rendering fram
 void _SYS_finish(void);                         /// Wait for enqueued frames to finish
 void _SYS_ticks_ns(int64_t *nanosec);           /// Return the monotonic system timer, in nanoseconds
 
+void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max);
 void _SYS_enableCubes(_SYSCubeIDVector cv);     /// Which cubes will be trying to connect?
 void _SYS_disableCubes(_SYSCubeIDVector cv);
 
@@ -433,8 +434,8 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count);
 
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer);
-bool _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, _SYSAudioLoopType loop);
-bool _SYS_audio_isPlaying(_SYSAudioHandle h);
+uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
+uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
 void _SYS_audio_stop(_SYSAudioHandle h);
 void _SYS_audio_pause(_SYSAudioHandle h);
 void _SYS_audio_resume(_SYSAudioHandle h);

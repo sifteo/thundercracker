@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "string.h"
 #include <vector>
+#include "sprite.h"
 
 static _SYSCubeID s_id = 0;
 
@@ -19,7 +20,29 @@ static unsigned int GEM_VALUE_PROGRESSION[] = { 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 };
 // Order in which the number of fixed gems in a grid increases as the grid is refilled.
 static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4 };
 
-CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf), m_bg1helper( m_cube ), m_ShakesRemaining( STARTING_SHAKES ), m_fShakeTime( -1.0f )
+const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
+const float CubeWrapper::SPRING_K_CONSTANT = 0.7f;
+const float CubeWrapper::SPRING_DAMPENING_CONSTANT = 0.07f;
+const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
+//const float CubeWrapper::IDLE_TIME_THRESHOLD = 3.0f;
+//const float CubeWrapper::IDLE_FINISH_THRESHOLD = IDLE_TIME_THRESHOLD + ( GridSlot::NUM_IDLE_FRAMES * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME * 1 / 60.0f );
+const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
+const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
+const float CubeWrapper::TIME_PER_MESSAGE_FRAME = 0.25f / NUM_MESSAGE_FRAMES;
+
+
+static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] = {
+    &MessageBox0,
+    &MessageBox1,
+    &MessageBox2,
+    &MessageBox3,
+    &MessageBox4,
+};
+
+
+CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
+        m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
+        m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -35,9 +58,7 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 		}
 	}
 
-	m_state = STATE_PLAYING;
 	//Refill();
-	m_TiltBitMask = 0;
 }
 
 
@@ -56,7 +77,23 @@ void CubeWrapper::Reset()
 {
 	m_ShakesRemaining = STARTING_SHAKES;
 	m_fShakeTime = -1.0f;
-	m_state = STATE_PLAYING;
+    setState( STATE_PLAYING );
+    m_idleTimer = 0.0f;
+
+    //clear out dots
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+            slot.Init( this, i, j );
+        }
+    }
+
+    m_timeTillGlimmer = 0.0f;
+    m_intro.Reset();
+    m_gameover.Reset();
+    m_glimmer.Reset();
 	Refill();
 }
 
@@ -76,6 +113,11 @@ void CubeWrapper::Draw()
 			m_vid.BG0_drawAsset(Vec2(0,0), Cover, 0);
 			break;
 		}
+        case Game::STATE_INTRO:
+        {
+            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube );
+            break;
+        }
 		case Game::STATE_PLAYING:
 		{
 			switch( m_state )
@@ -83,62 +125,102 @@ void CubeWrapper::Draw()
 				case STATE_PLAYING:
 				{
 					//clear out grid first (somewhat wasteful, optimize if necessary)
-					m_vid.clear(Font.tiles[0]);
+                    m_vid.clear(GemEmpty.tiles[0]);
 					//draw grid
 					for( int i = 0; i < NUM_ROWS; i++ )
 					{
 						for( int j = 0; j < NUM_COLS; j++ )
 						{
 							GridSlot &slot = m_grid[i][j];
-							slot.Draw( m_vid, m_TiltBitMask );
+                            slot.Draw( m_vid, m_curFluidDir );
 						}
 					}
 
-					/*if( m_banner.IsActive() )
-						m_banner.Draw( m_cube );
-					else if( Game::Inst().getMode() == Game::MODE_TIMED )*/
-					{
-						Game::Inst().getTimer().Draw( m_bg1helper );
-						m_bg1helper.Flush();
-					}
+                    //draw glimmer before timer
+                    m_glimmer.Draw( m_bg1helper, this );
+
+                    if( Game::Inst().getMode() == Game::MODE_TIMED )
+                    {
+                        Game::Inst().getTimer().Draw( m_bg1helper );
+                    }
+                    if( m_banner.IsActive() )
+                        m_banner.Draw( m_bg1helper );
+
+
+                    m_bg1helper.Flush();
 
 					break;
 				}
+                case STATE_MESSAGING:
+                {
+                    int frame = m_stateTime / TIME_PER_MESSAGE_FRAME;
+
+                    if( frame >= NUM_MESSAGE_FRAMES )
+                        frame = NUM_MESSAGE_FRAMES - 1;
+                    const Sifteo::AssetImage &img = *MESSAGE_IMGS[frame];
+                    m_vid.BG0_drawAsset(Vec2(0,16 - img.height), img, 0);
+                    break;
+                }
 				case STATE_EMPTY:
 				{
-					_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
-					m_vid.clear(Font.tiles[0]);
-					m_vid.BG0_text( Vec2( 3, 3 ), Font, "SHAKE TO" );
-					m_vid.BG0_text( Vec2( 4, 5 ), Font, "REFILL" );
+                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+                    m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "SHAKE TO" );
+                    m_bg1helper.DrawText( Vec2( 4, 5 ), Font, "REFILL" );
 
-					char aBuf[16];
-
-					sprintf( aBuf, "%d PTS", Game::Inst().getScore() );
-
-					m_vid.BG0_text( Vec2( 4, 9 ), Font, aBuf );
+                    m_bg1helper.DrawTextf( Vec2( 4, 9 ), Font, "%d PTS", Game::Inst().getScore() );
+                    m_bg1helper.Flush();
 					break;
 				}
 				case STATE_NOSHAKES:
 				{
-					m_vid.clear(Font.tiles[0]);
-					m_vid.BG0_text( Vec2( 4, 4 ), Font, "NO SHAKES" );
-					m_vid.BG0_text( Vec2( 4, 6 ), Font, "LEFT" );
+                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+                    m_bg1helper.DrawText( Vec2( 4, 4 ), Font, "NO SHAKES" );
+                    m_bg1helper.DrawText( Vec2( 4, 6 ), Font, "LEFT" );
+
+                    m_bg1helper.Flush();
 					break;
 				}
 			}			
 			break;
 		}
+        case Game::STATE_DYING:
+        {
+            m_gameover.Draw( m_bg1helper, m_cube );
+            break;
+        }
 		case Game::STATE_POSTGAME:
 		{
-			_SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
-			m_vid.clear(Font.tiles[0]);
-			m_vid.BG0_text( Vec2( 3, 3 ), Font, "GAME OVER:" );
+            m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
 
-			char aBuf[16];
+            if( m_cube.id() == 0 )
+            {
+                m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
 
-			sprintf( aBuf, "%d PTS", Game::Inst().getScore() );
+                int score = Game::Inst().getScore();
+                int len = score > 0 ? log10( score ) + 5 : 6;
+                int xPos = ( Banner::BANNER_WIDTH - len ) / 2;
 
-			m_vid.BG0_text( Vec2( 4, 7 ), Font, aBuf );
+                m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
+            }
+            else if( m_cube.id() == 1 )
+            {
+                m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
+
+                for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
+                {
+                    int score = Game::Inst().getHighScore(i);
+                    int len = score > 0 ? log10( score ) + 1 : 2;
+                    int xPos = 9 - len;
+
+                    m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
+                }
+            }
+
+            for( int i = 0; i < GameOver::NUM_ARROWS; i++ )
+                resizeSprite(m_cube, i, 0, 0);
+
+            m_bg1helper.Flush();
+
 			break;
 		}
 		default:
@@ -148,9 +230,33 @@ void CubeWrapper::Draw()
 }
 
 
-void CubeWrapper::Update(float t)
+void CubeWrapper::Update(float t, float dt)
 {
-	//check for shaking
+    m_stateTime += dt;
+
+    if( Game::Inst().getState() == Game::STATE_INTRO )
+    {
+        m_intro.Update( dt );
+        return;
+    }
+    else if( Game::Inst().getState() == Game::STATE_DYING )
+    {
+        m_gameover.Update( dt );
+        return;
+    }
+    else if( Game::Inst().getState() == Game::STATE_PLAYING )
+    {
+        m_timeTillGlimmer -= dt;
+
+        if( m_timeTillGlimmer < 0.0f )
+        {
+            m_timeTillGlimmer = Game::RandomRange( MIN_GLIMMER_TIME, MAX_GLIMMER_TIME );
+            m_glimmer.Reset();
+        }
+        m_glimmer.Update( dt );
+    }
+
+    //check for shaking
 	if( m_state != STATE_NOSHAKES )
 	{
         if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
@@ -172,15 +278,48 @@ void CubeWrapper::Update(float t)
 		m_banner.Update(t, m_cube);
 	}
 
+
+    if( m_state == STATE_MESSAGING )
+    {
+        if( m_stateTime / TIME_PER_MESSAGE_FRAME >= NUM_MESSAGE_FRAMES )
+            setState( STATE_EMPTY );
+    }
+
+    //tilt state
+    _SYSAccelState state;
+    _SYS_getAccel(m_cube.id(), &state);
+
+    //try spring to target
+    Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
+    Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
+
+    /*if( force.len2() < MOVEMENT_THRESHOLD )
+    {
+        m_idleTimer += dt;
+
+        if( m_idleTimer > IDLE_FINISH_THRESHOLD )
+        {
+            m_idleTimer = 0.0f;
+            //kick off force in a random direction
+            //for now, just single direction
+            //force = Float2( 100.0f, 0.0f );
+        }
+    }
+    else
+        m_idleTimer = 0.0f;*/
+
+    m_curFluidVel += force;
+    m_curFluidDir += m_curFluidVel * dt;
+
 	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
 	{
 		bool newValue = m_cube.hasPhysicalNeighborAt(i);
 		Cube::ID id = m_cube.physicalNeighborAt(i);
 
-		if( newValue )
+        /*if( newValue )
 		{
 			PRINT( "we have a neighbor.  it is %d\n", id );
-		}
+        }*/
 
 		//newly neighbored
 		if( newValue )
@@ -190,7 +329,7 @@ void CubeWrapper::Update(float t)
 				Game::Inst().setTestMatchFlag();
 				m_neighbors[i] = id;
 
-				PRINT( "neighbor on side %d is %d", i, id );
+                //PRINT( "neighbor on side %d is %d", i, id );
 			}
 		}
 		else
@@ -323,7 +462,7 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 	GridSlot &slot = m_grid[row1][col1];
 	GridSlot &dest = m_grid[row2][col2];
 
-	if( !dest.isEmpty() )
+    if( !dest.isOccupiable() )
 		return false;
 
 	if( slot.isTiltable() && !slot.IsFixed() )
@@ -366,7 +505,7 @@ void CubeWrapper::testMatches()
 			//compare the two
 			for( int j = 0; j < NUM_ROWS; j++ )
 			{
-				if( ourGems[j]->isAlive() && theirGems[j]->isAlive() && ourGems[j]->getColor() == theirGems[j]->getColor() )
+                if( ourGems[j]->isMatchable() && theirGems[j]->isMatchable() && ourGems[j]->getColor() == theirGems[j]->getColor() )
 				{
 					ourGems[j]->mark();
 					theirGems[j]->mark();
@@ -506,17 +645,17 @@ bool CubeWrapper::isEmpty()
 void CubeWrapper::checkRefill()
 {
 	if( isFull() )
-            m_state = STATE_PLAYING;
+            setState( STATE_PLAYING );
     else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
 	{
         if( isEmpty() )
-            m_state = STATE_EMPTY;
+            setState( STATE_MESSAGING );
         else
-            m_state = STATE_PLAYING;
+            setState( STATE_PLAYING );
 	}
 	else if( isEmpty() )
 	{
-		m_state = STATE_PLAYING;
+        setState( STATE_PLAYING );
 		Refill( true );
 
 		if( Game::Inst().getMode() == Game::MODE_SHAKES && Game::Inst().getScore() > 0 )
@@ -528,12 +667,12 @@ void CubeWrapper::checkRefill()
 	{
 		if( Game::Inst().getMode() != Game::MODE_SHAKES )
 		{
-			m_state = STATE_PLAYING;
+            setState( STATE_PLAYING );
             Refill( true );
 		}
 		else if( m_ShakesRemaining > 0 )
 		{
-			m_state = STATE_PLAYING;
+            setState( STATE_PLAYING );
             Refill( true );
             m_ShakesRemaining--;
 
@@ -543,14 +682,14 @@ void CubeWrapper::checkRefill()
 				m_banner.SetMessage( "1 SHAKE LEFT" );
 			else
 			{
-				char aBuf[16];
-				sprintf( aBuf, "%d SHAKES LEFT", m_ShakesRemaining );
-				m_banner.SetMessage( aBuf );
+                char buf[16];
+                snprintf(buf, sizeof buf - 1, "%d SHAKES LEFT", m_ShakesRemaining );
+                m_banner.SetMessage( buf );
 			}
 		}
 		else
 		{
-			m_state = STATE_NOSHAKES;
+            setState( STATE_NOSHAKES );
 
 			for( int i = 0; i < NUM_ROWS; i++ )
 			{
@@ -574,7 +713,9 @@ void CubeWrapper::Refill( bool bAddLevel )
 	unsigned int numValues = sizeof( GEM_VALUE_PROGRESSION ) / sizeof( GEM_VALUE_PROGRESSION[0] );
 	unsigned int values = level < numValues ? GEM_VALUE_PROGRESSION[level] : GEM_VALUE_PROGRESSION[numValues - 1];
 	unsigned int numFixIndices = sizeof( GEM_FIX_PROGRESSION ) / sizeof( GEM_FIX_PROGRESSION[0] );
-	unsigned int numFix = level < numFixIndices ? GEM_FIX_PROGRESSION[level] : GEM_FIX_PROGRESSION[numFixIndices - 1];
+    //TODO, for now disable fixed dots
+    //unsigned int numFix = level < numFixIndices ? GEM_FIX_PROGRESSION[level] : GEM_FIX_PROGRESSION[numFixIndices - 1];
+    unsigned int numFix = 0;
 	
 	if( bAddLevel )
 		Game::Inst().addLevel();
@@ -944,13 +1085,19 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 void CubeWrapper::checkEmpty()
 {
 	if( m_state != STATE_NOSHAKES && isEmpty() )
-		m_state = STATE_EMPTY;
+        setState( STATE_MESSAGING );
 }
 
 
-void CubeWrapper::AddTiltInfo( unsigned int dir ) 
+/*bool CubeWrapper::IsIdle() const
 {
-	m_TiltBitMask |= ( 1 << dir );
+    return ( m_idleTimer > IDLE_TIME_THRESHOLD );
+}
+*/
 
-	//PRINT( "tilt bit mask is now %d\n", m_TiltBitMask );
+
+void CubeWrapper::setState( CubeState state )
+{
+    m_state = state;
+    m_stateTime = 0.0f;
 }

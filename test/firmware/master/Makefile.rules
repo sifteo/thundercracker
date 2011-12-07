@@ -1,0 +1,8 @@
+BIN_SIM = master-sim.a
+
+$(BIN_SIM): $(OBJS_SIM)
+	rm -f $@
+	$(LIBTOOL_SIM) -static -o $@ $(^F) $(SIM_STATIC_LIBS)
+
+%.sim.o: %.cpp $(CDEPS)
+	$(CXX) -c -o $(@F) $< $(CPPFLAGS) $(CXXFLAGS)

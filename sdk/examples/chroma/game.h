@@ -16,14 +16,16 @@ using namespace Sifteo;
 //singleton class
 class Game
 {
-public:
+public:    
 	typedef enum
 	{
 		STATE_SPLASH,
 		//STARTING_STATE = STATE_SPLASH,
 		STATE_MENU,
-		STATE_PLAYING,
-		STARTING_STATE = STATE_PLAYING,
+        STATE_INTRO,
+        STARTING_STATE = STATE_INTRO,
+		STATE_PLAYING,		
+        STATE_DYING,
 		STATE_POSTGAME,
 	} GameState;
 
@@ -39,6 +41,8 @@ public:
 	Game();
 
 	static const int NUM_CUBES = 2;
+    static const unsigned int NUM_HIGH_SCORES = 5;
+    static const unsigned int INT_MAX = 0x7fff;
 
 	CubeWrapper cubes[NUM_CUBES]; 
 
@@ -53,8 +57,13 @@ public:
 
 	//get random value from 0 to max
 	static unsigned int Rand( unsigned int max );
+    //get random float value from 0 to 1.0
+    static float UnitRand();
+    //get random value from min to max
+    static float RandomRange( float min, float max );
 
 	inline GameState getState() const { return m_state; }
+    inline void setState( GameState state ) { m_state = state; }
 	inline GameMode getMode() const { return m_mode; }
 
 	inline unsigned int getScore() const { return m_iScore; }
@@ -62,6 +71,8 @@ public:
 	inline void addLevel() { m_iLevel++; }
 
 	TimeKeeper &getTimer() { return m_timer; }
+    unsigned int getHighScore( unsigned int index ) const;
+    void enterScore();
 
 	void CheckChain( CubeWrapper *pWrapper );
 	void checkGameOver();
@@ -87,6 +98,9 @@ private:
 	GameMode m_mode;
 	float m_splashTime;
 	TimeKeeper m_timer;
+    float m_fLastTime;
+
+    static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
 };
 
 #endif

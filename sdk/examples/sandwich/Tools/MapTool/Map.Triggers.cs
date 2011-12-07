@@ -13,8 +13,6 @@ namespace MapTool {
     public Room room;
     public Rectangle worldBounds;
 
-    public bool HasItem { get { return ItemId.Length > 0; } }
-    public virtual string ItemId { get { return ""; } }
     public abstract string GeneratedCode();
 
     public delegate Trigger Builder(Dictionary<string,string> props);
@@ -29,7 +27,6 @@ namespace MapTool {
 
     public TriggerFactory() {
       mBuilders.Add("Gateway", TeleportTrigger.CreateFromProperties);
-      mBuilders.Add("BasicKey", props=>new PickupKeyTrigger());
     }
 
     public Trigger TryCreateTriggerFrom(TmxObject obj) {
@@ -44,16 +41,6 @@ namespace MapTool {
   //---------------------------------------------------------------------------
   // CONCRETE TRIGGERS
   //---------------------------------------------------------------------------
-
-  public class PickupKeyTrigger : Trigger {
-    override public string ItemId {
-      get { return "ITEM_BASIC_KEY"; }
-    }
-
-    override public string GeneratedCode() {
-      return " if (type == TRIGGER_TYPE_PASSIVE) gGame.TakeItem(); ";
-    }
-  }
 
   public class TeleportTrigger : Trigger {
     public string targetMap;

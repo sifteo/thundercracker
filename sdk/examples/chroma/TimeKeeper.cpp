@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
- * message banners that show up to display score or game info
+ * timer for the game
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
@@ -8,15 +8,20 @@
 #include "string.h"
 #include "assets.gen.h"
 
+const float TimeKeeper::TIME_INITIAL = 60.0f;
+const float TimeKeeper::TIME_RETURN_PER_GEM = 1.0f;
+
+
 TimeKeeper::TimeKeeper()
 {
-	m_fTimer = TIME_INITIAL;
+    Reset();
 }
 
 
 void TimeKeeper::Reset()
 {
 	m_fTimer = TIME_INITIAL;
+    m_blinkCounter = 0;
 }
 
 void TimeKeeper::Draw( BG1Helper &bg1helper )
@@ -24,89 +29,77 @@ void TimeKeeper::Draw( BG1Helper &bg1helper )
 	//find out what proportion of our timer is left, then multiply by number of tiles
 	float fTimerProportion = m_fTimer / TIME_INITIAL;
 
-	if( fTimerProportion > 1.0f )
-		fTimerProportion = 1.0f;
-
-	int numTiles = TIMER_TILES * fTimerProportion;
-
-	//have one more
-	numTiles++;
-	if( numTiles > TIMER_TILES )
-		numTiles = TIMER_TILES;
-
-	int offset = TIMER_TILES - numTiles;
-
-	if( numTiles > 0 )
-	{
-		bg1helper.DrawPartialAsset( Vec2(offset,0), Vec2(offset,0), Vec2(numTiles * 2,TimerUp.height), TimerUp );
-		bg1helper.DrawPartialAsset( Vec2(0,offset), Vec2(0,offset), Vec2(TimerLeft.width,numTiles * 2), TimerLeft );
-		bg1helper.DrawPartialAsset( Vec2(offset,15), Vec2(offset,0), Vec2(numTiles * 2,TimerDown.height), TimerDown );
-		bg1helper.DrawPartialAsset( Vec2(15,offset), Vec2(0,offset), Vec2(TimerRight.width,numTiles * 2), TimerRight );
-	}
-
-	/*
-	bg1helper.DrawAsset( Vec2(0,0), TimerUp );
-	bg1helper.DrawAsset( Vec2(0,0), TimerLeft );
-	bg1helper.DrawAsset( Vec2(0,15), TimerDown );
-	bg1helper.DrawAsset( Vec2(15,0), TimerRight );
-	*/
-
-/*
-	//for now, just draw in the corner
-	_SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
-	// Allocate tiles for the timer
-
-	char aBuf[16];
-	//how many digits
-	int iTimer = (int)m_fTimer;
-
-	sprintf( aBuf, "%d", iTimer );
-	int iDigits = strlen( aBuf );
-
-	switch( iDigits )
-	{
-		case 1:
-			_SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0x8000, 2 );
-			break;
-		case 2:
-			_SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0xC000, 2 );
-			break;
-		case 3:
-			_SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0xE000, 2 );
-			break;
-	}
-	
-
-	//draw timer
-	for( int i = 0; i < iDigits; i++ )
-	{
-		//double tall
-		for( int j = 0; j < 2; j++ )
-		{
-			_SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2 + i + ( iDigits * ( j ) ),
-							 Font.tiles + ( ( aBuf[i] - ' ' ) * 2 ) + j,
-							 0, 1);
-		}
-	}
-
-	_SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_y), 0);
-	*/
+    DrawMeter( fTimerProportion, bg1helper );
 }
 
 
-void TimeKeeper::Update(float t)
+void TimeKeeper::Update(float dt)
 {
-	float dt = t - m_fLastTime;
-	m_fLastTime = t;
-
 	m_fTimer -= dt;
+    m_blinkCounter++;
 }
 
 
 void TimeKeeper::Init( float t )
 {
 	Reset();
-	m_fLastTime = t;
+}
+
+
+void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper )
+{
+    if( amount > 1.0f )
+        amount = 1.0f;
+
+    int numTiles = TIMER_TILES * amount;
+
+    int offset = TIMER_TILES - numTiles + 1;
+
+    if( numTiles > 0 )
+    {
+        bg1helper.DrawPartialAsset( Vec2(offset,0), Vec2(offset,0), Vec2(numTiles * 2,TimerUp.height), TimerUp );
+        bg1helper.DrawPartialAsset( Vec2(0,offset), Vec2(0,offset), Vec2(TimerLeft.width,numTiles * 2), TimerLeft );
+        bg1helper.DrawPartialAsset( Vec2(offset,15), Vec2(offset,0), Vec2(numTiles * 2,TimerDown.height), TimerDown );
+        bg1helper.DrawPartialAsset( Vec2(15,offset), Vec2(0,offset), Vec2(TimerRight.width,numTiles * 2), TimerRight );
+
+        if( numTiles < TIMER_TILES )
+        {
+            //draw partial timer bits
+            int numSubTiles = ( ( TIMER_TILES * amount ) - numTiles ) * TIMER_TILES;
+
+            if( numSubTiles >= TIMER_TILES )
+                numSubTiles = TIMER_TILES - 1;
+
+            bg1helper.DrawAsset( Vec2( offset - 1, 0 ), TimerEdgeUpLeft, numSubTiles );
+            bg1helper.DrawAsset( Vec2( ( TIMER_TILES * 2 ) - ( offset ) + 2, 0 ), TimerEdgeUpRight, numSubTiles );
+
+            bg1helper.DrawAsset( Vec2( offset - 1, 15 ), TimerEdgeDownLeft, numSubTiles );
+            bg1helper.DrawAsset( Vec2( ( TIMER_TILES * 2 ) - ( offset ) + 2, 15 ), TimerEdgeDownRight, numSubTiles );
+
+            bg1helper.DrawAsset( Vec2( 0, offset - 1 ), TimerEdgeLeftUp, numSubTiles );
+            bg1helper.DrawAsset( Vec2( 0, ( TIMER_TILES * 2 ) - ( offset ) + 2 ), TimerEdgeLeftDown, numSubTiles );
+
+            bg1helper.DrawAsset( Vec2( 15, offset - 1 ), TimerEdgeRightUp, numSubTiles );
+            bg1helper.DrawAsset( Vec2( 15, ( TIMER_TILES * 2 ) - ( offset ) + 2 ), TimerEdgeRightDown, numSubTiles );
+        }
+    }
+    else if( m_blinkCounter >= BLINK_OFF_FRAMES )
+    {
+        //draw the low on timer sprites
+        int frame =  TIMER_TILES - ( ( TIMER_TILES * amount ) - numTiles ) * TIMER_TILES;
+
+        if( frame >= TIMER_TILES )
+            frame = TIMER_TILES - 1;
+
+        bg1helper.DrawAsset( Vec2( 7, 0 ), TimerLowUp, frame );
+        bg1helper.DrawAsset( Vec2( 7, 15 ), TimerLowDown, frame );
+        bg1helper.DrawAsset( Vec2( 0, 7 ), TimerLowLeft, frame );
+        bg1helper.DrawAsset( Vec2( 15, 7 ), TimerLowRight, frame );
+
+        if( m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )
+            m_blinkCounter = 0;
+    }
+
 }
 
 

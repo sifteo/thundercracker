@@ -15,13 +15,14 @@ class Banner
 {
 public:
 	static const unsigned int BANNER_WIDTH = 16;
+    static const unsigned int CENTER_PT = 8;
 	static const int BANNER_ROWS = 4;
 	static const int MAX_BANNER_LENGTH = 16;
 	static const float SCORE_FADE_DELAY = 2.0f;
 
 	Banner();
 
-	void Draw( Cube &cube );
+    void Draw( BG1Helper &bg1helper );
 	void Update(float t, Cube &cube);
 
 	void SetMessage( const char *pMsg, float duration = SCORE_FADE_DELAY );
@@ -30,6 +31,8 @@ public:
 private:
 	char m_Msg[MAX_BANNER_LENGTH];
 	float m_fEndTime;
+    //how many tiles of the banner to show
+    unsigned int m_tiles;
 };
 
 #endif

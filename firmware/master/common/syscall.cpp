@@ -17,6 +17,7 @@
 
 #include <sifteo/abi.h>
 #include "radio.h"
+#include "cubeslots.h"
 #include "cube.h"
 #include "runtime.h"
 #include "vram.h"
@@ -41,13 +42,13 @@ void _SYS_yield(void)
 
 void _SYS_paint(void)
 {
-    CubeSlot::paintCubes(CubeSlot::vecEnabled);
+    CubeSlots::paintCubes(CubeSlots::vecEnabled);
     Event::dispatch();
 }
 
 void _SYS_finish(void)
 {
-    CubeSlot::finishCubes(CubeSlot::vecEnabled);
+    CubeSlots::finishCubes(CubeSlots::vecEnabled);
     Event::dispatch();
 }
 
@@ -57,49 +58,54 @@ void _SYS_ticks_ns(int64_t *nanosec)
         *nanosec = SysTime::ticks();
 }
 
+void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max)
+{
+	CubeSlots::solicitCubes(min, max);
+}
+	
 void _SYS_enableCubes(_SYSCubeIDVector cv)
 {
-    CubeSlot::enableCubes(CubeSlot::truncateVector(cv));
+    CubeSlots::enableCubes(CubeSlots::truncateVector(cv));
 }
 
 void _SYS_disableCubes(_SYSCubeIDVector cv)
 {
-    CubeSlot::disableCubes(CubeSlot::truncateVector(cv));
+    CubeSlots::disableCubes(CubeSlots::truncateVector(cv));
 }
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
 {
-    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf) && CubeSlot::validID(cid))
-        CubeSlot::instances[cid].setVideoBuffer(vbuf);
+    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf) && CubeSlots::validID(cid))
+        CubeSlots::instances[cid].setVideoBuffer(vbuf);
 }
 
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group)
 {
-    if (Runtime::checkUserPointer(group, sizeof *group) && CubeSlot::validID(cid))
-        CubeSlot::instances[cid].loadAssets(group);
+    if (Runtime::checkUserPointer(group, sizeof *group) && CubeSlots::validID(cid))
+        CubeSlots::instances[cid].loadAssets(group);
 }
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state)
 {
-    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid))
-        CubeSlot::instances[cid].getAccelState(state);
+    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlots::validID(cid))
+        CubeSlots::instances[cid].getAccelState(state);
 }
 
 void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) {
-    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid)) {
+    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlots::validID(cid)) {
         NeighborSlot::instances[cid].getNeighborState(state);
     }
 }   
 
 void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state)
 {
-    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid))
+    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlots::validID(cid))
         AccelState::instances[cid].getTiltState(state);
 }
 
 void _SYS_getShake(_SYSCubeID cid, _SYS_ShakeState *state)
 {
-    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlot::validID(cid))
+    if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlots::validID(cid))
         AccelState::instances[cid].getShakeState(state);
 }
 
@@ -116,8 +122,8 @@ void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
 void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v)
 {
     // XXX: Temporary for testing. Master firmware should give cooked battery percentage.
-    if (Runtime::checkUserPointer(v, sizeof v) && CubeSlot::validID(cid))
-        *v = CubeSlot::instances[cid].getRawBatteryV();
+    if (Runtime::checkUserPointer(v, sizeof v) && CubeSlots::validID(cid))
+        *v = CubeSlots::instances[cid].getRawBatteryV();
 }
 
 void _SYS_getCubeHWID(_SYSCubeID cid, _SYSCubeHWID *hwid)
@@ -127,8 +133,8 @@ void _SYS_getCubeHWID(_SYSCubeID cid, _SYSCubeHWID *hwid)
     // XXX: Right now this is only guaranteed to be known after asset downloading, since
     //      there is no code yet to explicitly request it (via a flash reset)
     
-    if (Runtime::checkUserPointer(hwid, sizeof hwid) && CubeSlot::validID(cid))
-        *hwid = CubeSlot::instances[cid].getHWID();
+    if (Runtime::checkUserPointer(hwid, sizeof hwid) && CubeSlots::validID(cid))
+        *hwid = CubeSlots::instances[cid].getHWID();
 }
 
 void _SYS_vbuf_init(_SYSVideoBuffer *vbuf)
@@ -246,7 +252,7 @@ void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
     }
 }
 
-bool _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, _SYSAudioLoopType loop)
+uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
 {
     if (Runtime::checkUserPointer(mod, sizeof(*mod)) && Runtime::checkUserPointer(h, sizeof(*h))) {
         return AudioMixer::instance.play(mod, h, loop);
@@ -254,7 +260,7 @@ bool _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, _SYS
     return false;
 }
 
-bool _SYS_audio_isPlaying(_SYSAudioHandle h)
+uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h)
 {
     return AudioMixer::instance.isPlaying(h);
 }

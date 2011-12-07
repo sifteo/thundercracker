@@ -33,6 +33,7 @@ static RandInit randInit;
 
 static Game &game = Game::Inst();
 
+/*
 static void onAccelChange(_SYSCubeID cid)
 {
     _SYSAccelState state;
@@ -51,6 +52,7 @@ static void onAccelChange(_SYSCubeID cid)
 	else if( state.y < -TILT_THRESHOLD )
 		game.cubes[cid].AddTiltInfo( UP);
 }
+*/
 
 static void onTilt(_SYSCubeID cid)
 {
@@ -82,10 +84,7 @@ void siftmain()
 {
     init();
 
-    /*vid.BG0_text(Vec2(2,1), Font, "Hello World!");
-	vid.BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
- */
-	_SYS_vectors.cubeEvents.accelChange = onAccelChange;
+    //_SYS_vectors.cubeEvents.accelChange = onAccelChange;
     _SYS_vectors.cubeEvents.tilt = onTilt;
 	_SYS_vectors.cubeEvents.shake = onShake;
 

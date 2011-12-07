@@ -8,19 +8,19 @@ namespace MapTool {
     public string name;
     public int width;
     public int height;
-    public int tilePixelWidth;
-    public int tilePixelHeight;
 
     public TmxTileset backgroundTileSet;
     public TmxLayer backgroundLayer;
+    public TmxTileset overlayTileSet;
+    public TmxLayer overlayLayer;
 
     public Dictionary<string,TmxTileset> tileSets = new Dictionary<string, TmxTileset>();
     public Dictionary<string,TmxLayer> nameToLayer = new Dictionary<string, TmxLayer>();
     public List<TmxLayer> layers = new List<TmxLayer>();
     public List<TmxObject> objects = new List<TmxObject>();
 
-    public int PixelWidth { get { return tilePixelWidth * width; } }
-    public int PixelHeight { get { return tilePixelHeight * height; } }
+    public int PixelWidth { get { return 16 * width; } }
+    public int PixelHeight { get { return 16 * height; } }
 
     public TmxTile GetTile(int gid) {
       if (gid != 0) {
@@ -48,8 +48,6 @@ namespace MapTool {
     public TmxMap map;
     public int firstGid;
     public string name;
-    public int tilePixelWidth;
-    public int tilePixelHeight;
     public ImageData image = new ImageData();
 
     public TmxTile[,] tiles;
@@ -80,12 +78,8 @@ namespace MapTool {
     public TmxTileset tileSet;
     public int imageX;
     public int imageY;
-    public int ImagePixelX { get { return tileSet.tilePixelWidth * imageX; } }
-    public int ImagePixelY { get { return tileSet.tilePixelHeight * imageY; } }
-    public int TilePixelWidth { get { return tileSet.tilePixelWidth; } }
-    public int TilePixelHeight { get { return tileSet.tilePixelHeight; } }
-    public int TileWidth { get { return tileSet.tilePixelWidth / tileSet.map.tilePixelWidth; } }
-    public int TileHeight { get { return tileSet.tilePixelHeight / tileSet.map.tilePixelHeight; } }
+    public int ImagePixelX { get { return 16 * imageX; } }
+    public int ImagePixelY { get { return 16 * imageY; } }
 
     public int LocalId {
       get { return tileSet.LocalTileId(imageX, imageY); }
@@ -101,9 +95,21 @@ namespace MapTool {
     public float opacity = 1f;
     public int Width { get { return tiles.GetLength(0); } }
     public int Height { get { return tiles.GetLength(1); }}
-    public TmxTile GetTile(int x, int y) {
 
+    public TmxTile GetTile(int x, int y) {
       return map.GetTile(tiles[x,y]);
+    }
+
+    public TmxTileset TileSet {
+      get {
+        foreach(var tid in tiles) {
+          var tile = map.GetTile(tid);
+          if (tile != null) {
+            return tile.tileSet;
+          }
+        }
+        return null;
+      }
     }
   }
 

@@ -58,16 +58,15 @@ void Game::InitializeAssets() {
 }
 
 void Game::MainLoop() {
-  float simTime = System::clock();
+  mSimTime = System::clock();
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->Init();
   }
   ObserveNeighbors(true);
   System::paint();
+
   while(1) {
-    float now = System::clock();
-    float dt = now - simTime;
-    simTime = now;
+    float dt = UpdateDeltaTime();
     if (sNeighborDirty) { 
       CheckMapNeighbors(); 
     }
@@ -79,8 +78,16 @@ void Game::MainLoop() {
   }
 }
 
+float Game::UpdateDeltaTime() {
+  float now = System::clock();
+  float result = now - mSimTime;
+  mSimTime = now;
+  return result;
+}
+
 void Game::MovePlayerAndRedraw(int dx, int dy) {
   player.Move(dx, dy);
+  player.UpdateAnimation(UpdateDeltaTime());
   player.CurrentView()->UpdatePlayer();
   System::paint();
 }
@@ -129,7 +136,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(map.Data()->tileset),
-          map.Data()->GetTileId(view->Location(), x, y)
+          map.Data()->GetTileId(view->Location(), Vec2(x, y))
         );
       }
     }
@@ -146,6 +153,9 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
     }
   }
   map.SetData(m);
+  for(GameView* p = ViewBegin(); p!= ViewEnd(); ++p) {
+    if (p != view) { p->DrawBackground(); }
+  }
   // zoom out
   { 
     VidMode_BG2 vid(view->cube.vbuf);
@@ -154,7 +164,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(map.Data()->tileset),
-          map.Data()->GetTileId(room, x, y)
+          map.Data()->GetTileId(room, Vec2(x, y))
         );
       }
     }
@@ -177,27 +187,9 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   view->Init();
   WalkTo(target);
   CheckMapNeighbors();
-}
 
-void Game::TakeItem() {
-  int itemId = player.CurrentView()->Room()->itemId;
-  if (itemId) {
-    map.SetRoomItem(player.Location(), 0);
-    if (itemId == ITEM_BASIC_KEY) {
-      player.IncrementBasicKeyCount();
-      // do a crazy get-key transition
-      float kDegToRad = 3.14159f / 180.f;
-      for(int i=0; i<360; i += 18) {
-        float radius = (80.f * i)/360.f;
-        player.CurrentView()->SetItemPosition(Vec2(
-          64 + radius * cosf(i * kDegToRad), 
-          64 + radius * sinf(i * kDegToRad)
-        ));
-        System::paint();
-      }
-      player.CurrentView()->HideItem();
-    }
-  }
+  // clear out any accumulated time
+  UpdateDeltaTime();
 }
 
 //------------------------------------------------------------------

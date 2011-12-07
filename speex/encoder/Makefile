@@ -5,16 +5,24 @@ OBJS =  main.o \
         filename_utils.o
 
 ifeq ($(OS), Windows_NT)
-    SPEEX_INSTALL = ../../deps/win32/speex
-    INCLUDES = -I$(SPEEX_INSTALL)/include
-    LDFLAGS = -L$(SPEEX_INSTALL)/lib -static
+    SPEEX_DIR = ../../deps/win32/speex
+else
+    SPEEX_DIR = ../../deps/osx/speex
 endif
+
+INCLUDES = -I$(SPEEX_DIR)/include
+LDFLAGS = -L$(SPEEX_DIR)/lib
 
 CC = gcc
 COMMON_FLAGS = -O3 -Werror -Wall $(INCLUDES)
 CCFLAGS = $(COMMON_FLAGS)
 CFLAGS = $(COMMON_FLAGS)
-LDFLAGS += -lspeex -lstdc++
+
+ifeq ($(OS), Windows_NT)
+    LDFLAGS += -static -lspeex -lstdc++
+else
+    LDFLAGS += -lspeex -lstdc++
+endif
 
 all: $(BIN)
 

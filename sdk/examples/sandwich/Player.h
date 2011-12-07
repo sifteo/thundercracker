@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Base.h"
+#include "Map.h"
 class GameView;
 struct MapRoom;
 
-#define WALK_SPEED 4
+#define WALK_SPEED 3
 #define PLAYER_STATUS_IDLE 0
 #define PLAYER_STATUS_WALKING 1
 
@@ -25,7 +25,9 @@ private:
   Vec2 mPosition;
   int mDir;
   int mKeyCount;
-  
+  int mAnimFrame;
+  float mAnimTime;
+
   // stately variables
   int mProgress;
   int mNextDir;
@@ -33,7 +35,9 @@ private:
   float mTimeout;
 
   Path mPath;
-  
+  MapPath mMoves;
+  uint8_t* pNextMove;
+    
 public:
   Player();
   
@@ -44,6 +48,7 @@ public:
   Cube::Side Direction() { return mDir; }
   Vec2 Position() const { return mPosition; }
   Vec2 Location() const { return mPosition/128; }
+  MapRoom* Room() const;
   int Status() const { return mStatus; }
 
   void IncrementBasicKeyCount() { mKeyCount++; }
@@ -54,6 +59,7 @@ public:
 
   void Move(int dx, int dy);
   void Update(float dt);
+  void UpdateAnimation(float dt);
   void Reset();
   
 private:

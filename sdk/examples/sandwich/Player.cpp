@@ -2,11 +2,13 @@
 #include "GameView.h"
 #include "Game.h"
 
-#define DOOR_PAD (10)
+#define DOOR_PAD 10
+#define GAME_FRAMES_PER_ANIM_FRAME 2
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
-pCurrent(gGame.views), pTarget(0), mPosition(64,64),
-mDir(2), mKeyCount(0), mProgress(0), mNextDir(-1), mApproachingLockedDoor(false) {
+pCurrent(gGame.views), pTarget(0), mPosition(128+64,64+16), // todo: move intial position to map data
+mDir(2), mKeyCount(0), mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
+mApproachingLockedDoor(false) {
   CORO_RESET;
 }
 
@@ -19,6 +21,10 @@ void Player::Reset() {
   mPosition = Vec2(64,64);
   mStatus = PLAYER_STATUS_IDLE;
   mApproachingLockedDoor = false;
+}
+
+MapRoom* Player::Room() const {
+  return gGame.map.GetRoom(Location());
 }
 
 void Player::SetLocation(Vec2 position, Cube::Side direction) {
@@ -42,20 +48,54 @@ void Player::Move(int dx, int dy) {
 
 int Player::CurrentFrame() {
   switch(mStatus) {
-    case PLAYER_STATUS_IDLE:
-      return PlayerStand.index + mDir * (PlayerStand.width * PlayerStand.height);
+    case PLAYER_STATUS_IDLE: {
+      if (mAnimFrame == 1) {
+        return PlayerIdle.index;
+      } else if (mAnimFrame == 2) {
+        return PlayerIdle.index + (PlayerIdle.width * PlayerIdle.height);
+      } else if (mAnimFrame == 3 || mAnimFrame == 4) {
+        return PlayerIdle.index + (mAnimFrame-1) * (PlayerIdle.width * PlayerIdle.height);
+      } else {
+        return PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height);
+      }
+    }
     case PLAYER_STATUS_WALKING:
-      int frame = (mProgress/WALK_SPEED/2) % 10;
+      int frame = mAnimFrame / GAME_FRAMES_PER_ANIM_FRAME;
       int tilesPerFrame = PlayerWalk.width * PlayerWalk.height;
-      int tilesPerStrip = tilesPerFrame * 10;
+      int tilesPerStrip = tilesPerFrame * (PlayerWalk.frames>>2);
       return PlayerWalk.index + mDir * tilesPerStrip + frame * tilesPerFrame;
   }
   return 0;
 }
 
+void Player::UpdateAnimation(float dt) {
+  if (mStatus == PLAYER_STATUS_WALKING) {
+    mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * (PlayerWalk.frames>>2));
+  } else { // PLAYER_STATUS_IDLE
+    mAnimTime += dt;
+    if (mAnimTime >= 10.f) {
+      mAnimTime -= 10.f;
+    }
+    int before = mAnimFrame;
+    if (mAnimTime > 0.5f && mAnimTime < 1.f) {
+      mAnimFrame = 1;
+    } else if (mAnimTime > 2.5f && mAnimTime < 3.f) {
+      mAnimFrame = 2;
+    } else if (mAnimTime > 5.f && mAnimTime < 5.5f) {
+      mAnimFrame = (mAnimTime < 5.25f ? 3 : 4);
+    } else {
+      mAnimFrame = 0;
+    }
+    if (before != mAnimFrame) {
+      pCurrent->UpdatePlayer();
+    }
+  }  
+}
+
 void Player::Update(float dt) {
   // every update code here
-  
+  UpdateAnimation(dt);
+
   CORO_BEGIN;
   // stately update code here
   for(;;) {
@@ -64,18 +104,16 @@ void Player::Update(float dt) {
     pCurrent->UpdatePlayer();
     mNextDir = pCurrent->VirtualTiltDirection();
     mPath.Cancel();
+    mAnimFrame = 0;
+    mAnimTime = 0.f;
     while(!gGame.map.CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
       CORO_YIELD;
       mNextDir = pCurrent->VirtualTiltDirection();
-      if (mNextDir != -1) {
-        mDir = mNextDir;
-        pCurrent->UpdatePlayer();
-      } else if (PathDetect()) {
-        break;
-      }
+      if (PathDetect()) { break; }
     }
     // go to the target
     mStatus = PLAYER_STATUS_WALKING;
+    mAnimFrame = 0;
     mDir = mNextDir;
     do {
       if (mPath.IsDefined()) {
@@ -84,15 +122,82 @@ void Player::Update(float dt) {
       }
       // animate walking to target
       pTarget->ShowPlayer();
+      ASSERT( gGame.map.FindPath(pCurrent->Location(), mDir, &mMoves) );
+      mProgress = 0;
+      for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
+        mDir = *pNextMove;  
+        if (mProgress != 0) {
+          mPosition += mProgress * kSideToUnit[*pNextMove];
+          pCurrent->UpdatePlayer();
+          pTarget->UpdatePlayer();
+          CORO_YIELD;
+        }
+        while(mProgress+WALK_SPEED < 16) {
+          mProgress += WALK_SPEED;
+          mPosition += WALK_SPEED * kSideToUnit[*pNextMove];
+          pCurrent->UpdatePlayer();
+          pTarget->UpdatePlayer();
+          CORO_YIELD;
+        }
+        mPosition += (16 - mProgress) * kSideToUnit[*pNextMove];
+        mProgress = WALK_SPEED - (16-mProgress);
+      }
+      if (mProgress != 0) {
+        pNextMove--;
+        mPosition += mProgress * kSideToUnit[*pNextMove];
+        mProgress = 0;
+        pCurrent->UpdatePlayer();
+        pTarget->UpdatePlayer();
+        CORO_YIELD;
+      }
+      pCurrent->HidePlayer();
+      pCurrent = pTarget;
+      pTarget = 0;  
+      pCurrent->UpdatePlayer();
+      { // pickup item?
+        int itemId = pCurrent->Room()->itemId;
+        if (itemId) {
+          pCurrent->Room()->SetItem(0);
+          // TODO: sandwich parts
+          if (itemId == ITEM_BASIC_KEY) {
+            IncrementBasicKeyCount();
+          }
+          // do a pickup animation
+          for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
+            pCurrent->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
+            
+            for(float t=System::clock(); System::clock()-t<0.075f;) {
+              // this calc is kinda annoyingly complex
+              float u = (System::clock() - t) / 0.075f;
+              float du = 1.f / (float) PlayerPickup.frames;
+              u = (frame + u) * du;
+              u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
 
-      mApproachingLockedDoor = gGame.map.GetPortal(pCurrent->Location(), mDir) == PORTAL_LOCK;
+              System::paint();
+              pCurrent->SetItemPosition(Vec2(0, -36.f * u) );
+            }
+          }
+          pCurrent->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
+          for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
+          pCurrent->HideItem();        
+        }
+      }
+      { // passive trigger?
+        MapRoom *mr = pCurrent->Room();
+        if (mr->callback) {
+          mr->callback(TRIGGER_TYPE_PASSIVE);
+        }
+      }
+
+      /* // a reference for how doors used to be implemented
+      mApproachingLockedDoor = pCurrent->Room()->GetPortal(mDir) == PORTAL_LOCK;
       if (!mApproachingLockedDoor || HaveBasicKey()) {
         for(mProgress=0; mProgress<128; mProgress+=WALK_SPEED) {
           if (mApproachingLockedDoor && mProgress < 64-DOOR_PAD && mProgress+WALK_SPEED >= 64-DOOR_PAD) {
             DecrementBasicKeyCount();
-            gGame.map.SetPortal(pCurrent->Location(), mDir, PORTAL_DOOR);
-            gGame.map.OpenDoor(pCurrent->Location(), mDir);
-            gGame.map.OpenDoor(pTarget->Location(), (mDir+2)%4);
+            pCurrent->Room()->SetPortal(mDir, PORTAL_DOOR);
+            pCurrent->Room()->OpenDoor(mDir);
+            pTarget->Room()->OpenDoor((mDir+2)%4);
             pCurrent->DrawBackground();
             pTarget->DrawBackground();
             mTimeout = System::clock();
@@ -118,7 +223,6 @@ void Player::Update(float dt) {
           }
         } //
       } else {
-
         // walk up to the locked door, then bounce back
         mPath.Cancel();
         pTarget->HidePlayer();
@@ -135,6 +239,7 @@ void Player::Update(float dt) {
           pCurrent->UpdatePlayer();
         }
       }
+      */ 
 
     } while(mPath.PopStep(pCurrent));
 
@@ -143,7 +248,10 @@ void Player::Update(float dt) {
       if (mr->callback) {
         mr->callback(TRIGGER_TYPE_ACTIVE);
       }
-    } //
+    }
+
+    mDir = SIDE_BOTTOM;
+    pCurrent->UpdatePlayer();
   }
   
   CORO_END;

@@ -8,6 +8,7 @@ using namespace Sifteo;
 #define PORTAL_DOOR 2
 #define PORTAL_LOCK	3
 
+#define ITEM_NONE 0
 #define ITEM_BASIC_KEY 1
 
 #define TRIGGER_TYPE_PASSIVE    0
@@ -25,9 +26,20 @@ struct ItemData {
     uint32_t itemId;
 };
 
+struct RoomData {
+    uint8_t centerPosition; // format: 0b00XXXYYY (any use for those two high bits?)
+    uint8_t collisionMaskRows[8];
+    uint8_t tiles[64];
+    uint8_t* overlay; // format: alternative 0bXXXXYYYY, tileId, 0bXXXXYYYY, tileId, etc
+
+    inline Vec2 LocalCenter() const { return Vec2((centerPosition >> 3) & 0x7, centerPosition & 0x7); }
+};
+
 struct MapData {
     const AssetImage* tileset;
-    uint8_t* tiles; // every 64 tiles represents an 8x8 room of 16px tiles
+    const AssetImage* overlay;
+    const AssetImage* blankImage;
+    RoomData* rooms;
     uint8_t* xportals; // vertical portals between rooms (x,y) and (x+1,y)
     uint8_t* yportals; // horizontal portals between rooms (x,y) and (x,y+1)
     TriggerData* triggers; // null if empty, callback=0-terminated
@@ -64,21 +76,38 @@ struct MapData {
         yportals[x * (height+1) + y] = pid;
     }
 
-    inline uint8_t GetTileId(Vec2 location, int x, int y) const {
+    inline RoomData* GetRoomData(uint8_t roomId) const {
+        ASSERT(roomId < width * height);
+        return rooms + roomId;
+    }
+
+    inline RoomData* GetRoomData(Vec2 location) const {
+        return GetRoomData(GetRoomId(location));
+    }
+
+    inline uint8_t GetTileId(Vec2 location, Vec2 tile) const {
         // this value indexes into tileset.frames
         ASSERT(0 <= location.x && location.x < width);
         ASSERT(0 <= location.y && location.y < height);
-        ASSERT(0 <= x && x < 8);
-        ASSERT(0 <= y && y < 8);
-        return tiles[ 64 * (location.y * width + location.x) + y * 8 + x ];
+        ASSERT(0 <= tile.x && tile.x < 8);
+        ASSERT(0 <= tile.y && tile.y < 8);
+        return rooms[location.y * width + location.x].tiles[tile.y * 8 + tile.x];
     }
 
-    inline void SetTileId(Vec2 location, int x, int y, uint8_t tileId) {
+    inline void SetTileId(Vec2 location, Vec2 tile, uint8_t tileId) {
         ASSERT(0 <= location.x && location.x < width);
         ASSERT(0 <= location.y && location.y < height);
-        ASSERT(0 <= x && x < 8);
-        ASSERT(0 <= y && y < 8);
-        tiles[ 64 * (location.y * width + location.x) + y * 8 + x ] = tileId;
+        ASSERT(0 <= tile.x && tile.x < 8);
+        ASSERT(0 <= tile.y && tile.y < 8);
+        rooms[location.y * width + location.x].tiles[tile.y * 8 + tile.x] = tileId;
+    }
+
+    inline bool IsTileOpen(Vec2 location, Vec2 tile) {
+        ASSERT(0 <= location.x && location.x < width);
+        ASSERT(0 <= location.y && location.y < height);
+        ASSERT(0 <= tile.x && tile.x < 8);
+        ASSERT(0 <= tile.y && tile.y < 8);
+        return ( rooms[location.y * width + location.x].collisionMaskRows[tile.y] & (1<<tile.x) ) == 0;
     }
 
     inline uint8_t GetRoomId(Vec2 location) const {

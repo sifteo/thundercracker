@@ -38,7 +38,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />
-    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="MapExporter.cs" />
     <Compile Include="StirImporter.cs" />
@@ -50,6 +49,8 @@
     <Compile Include="Map.Triggers.cs" />
     <Compile Include="MapDatabase.cs" />
     <Compile Include="RemapTileSet.cs" />
+    <Compile Include="Spiral.cs" />
+    <Compile Include="Map.Drawing.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

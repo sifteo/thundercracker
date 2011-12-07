@@ -3,9 +3,9 @@
 #include "Enemy.h"
 
 #define ROOM_NONE (Vec2(-1,-1))
-#define PLAYER_SPRITE_ID 0
-#define ENEMY_SPRITE_ID 1
-#define ITEM_SPRITE_ID 2
+#define ITEM_SPRITE_ID 0
+#define PLAYER_SPRITE_ID 1
+#define ENEMY_SPRITE_ID 2
 
 GameView::GameView() : 
 visited(0), mRoom(-2,-2) {
@@ -84,6 +84,10 @@ void GameView::ShowPlayer() {
   UpdatePlayer();
 }
 
+void GameView::SetPlayerFrame(unsigned frame) {
+  SetSpriteImage(PLAYER_SPRITE_ID, frame);
+}
+
 void GameView::UpdatePlayer() {
   Vec2 localPosition = gGame.player.Position() - 128 * mRoom;
   SetSpriteImage(PLAYER_SPRITE_ID, gGame.player.CurrentFrame());
@@ -124,13 +128,15 @@ void GameView::HideEnemy(Enemy* pEnemy) {
 //----------------------------------------------------------------------
 
 void GameView::ShowItem(int itemId) {
-  SetSpriteImage(ITEM_SPRITE_ID, Items.index + itemId - 1);
+  SetSpriteImage(ITEM_SPRITE_ID, Items.index + (itemId - 1) * Items.width * Items.height);;
   ResizeSprite(ITEM_SPRITE_ID, 16, 16);
-  MoveSprite(ITEM_SPRITE_ID, 64-8, 64-8);
+  Vec2 p = 16 * Room()->Data()->LocalCenter();
+  MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y);
 }
 
 void GameView::SetItemPosition(Vec2 p) {
-  MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y-8);
+  p += 16 * Room()->Data()->LocalCenter();
+  MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y);
 }
 
 void GameView::HideItem() {
@@ -219,16 +225,31 @@ GameView* GameView::VirtualNeighborAt(Cube::Side side) const {
 void GameView::DrawBackground() {
   VidMode_BG0 mode(cube.vbuf);
   if (!IsShowingRoom()) {
-    mode.BG0_drawAsset(Vec2(0,0), Blank);
+    mode.BG0_drawAsset(Vec2(0,0), *(gGame.map.Data()->blankImage));
   } else {
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
         mode.BG0_drawAsset(
           Vec2(x<<1,y<<1),
           *(gGame.map.Data()->tileset),
-          gGame.map.Data()->GetTileId(mRoom, x, y)
+          gGame.map.Data()->GetTileId(mRoom, Vec2(x, y))
         );
       }
     }
+
+    BG1Helper ovrly(cube);
+    uint8_t *p = Room()->Data()->overlay;
+    if (p) {
+      while(*p != 0xff) {
+        uint8_t pos = p[0];
+        uint8_t frm = p[1];
+        p+=2;
+        if (pos != 0xff && frm != 0xff) {
+          Vec2 position = Vec2(pos>>4, pos & 0xf);
+          ovrly.DrawAsset(2*position, *(gGame.map.Data()->overlay), frm);
+        }
+      }
+    }
+    ovrly.Flush();
   }
 }

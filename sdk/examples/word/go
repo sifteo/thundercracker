@@ -1,0 +1,5 @@
+#!/bin/bash
+make
+../../../emulator/tc-siftulator -n 6 &
+sleep 1s
+./word.sim

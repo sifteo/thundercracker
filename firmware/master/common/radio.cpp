@@ -36,10 +36,10 @@ void RadioManager::produce(PacketTransmission &tx)
         STATIC_ASSERT(_SYS_NUM_CUBE_SLOTS <= 32);
         
         // No more enabled slots? Loop back to zero.
-        if (!(_SYSCubeIDVector)(CubeSlot::vecEnabled << schedNext)) {
+        if (!(_SYSCubeIDVector)(CubeSlots::vecEnabled << schedNext)) {
             schedNext = 0;
 
-            if (!CubeSlot::vecEnabled) {
+            if (!CubeSlots::vecEnabled) {
                 /*
                  * Oh, no enabled slots period.
                  *

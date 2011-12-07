@@ -10,9 +10,18 @@
 #include "string.h"
 #include <stdlib.h>
 
+//TODO, load this from save file
+unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
+        { 1000, 800, 600, 400, 200 };
+
 Game &Game::Inst()
 {
 	static Game game = Game();
+
+#ifdef _WIN32
+    //srand((int)System::clock());
+#endif
+
 	return game; 
 }
 
@@ -48,11 +57,16 @@ void Game::Init()
 		cubes[i].vidInit();
 
 	m_splashTime = System::clock();
+    m_fLastTime = m_splashTime;
 }
 
 
 void Game::Update()
 {
+    float t = System::clock();
+    float dt = t - m_fLastTime;
+    m_fLastTime = t;
+
 	if( m_state == STATE_SPLASH )
 	{
 		for( int i = 0; i < NUM_CUBES; i++ )
@@ -60,7 +74,7 @@ void Game::Update()
 
 		if( System::clock() - m_splashTime > 3.0f )
 		{
-			m_state = STATE_PLAYING;
+            m_state = STATE_INTRO;
 			m_timer.Init( System::clock() );
 		}
 	}
@@ -77,14 +91,14 @@ void Game::Update()
 			m_bTestMatches = false;
 		}
 
-		if( m_mode == MODE_TIMED )
+        if( m_mode == MODE_TIMED && m_state == STATE_PLAYING )
 		{
-			m_timer.Update( System::clock() );
+            m_timer.Update( dt );
 			checkGameOver();
 		}
 
 		for( int i = 0; i < NUM_CUBES; i++ )
-			cubes[i].Update( System::clock() );
+            cubes[i].Update( System::clock(), dt );
 
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
@@ -135,6 +149,19 @@ unsigned int Game::Rand( unsigned int max )
 }
 
 
+//get random float value from 0 to 1.0
+float Game::UnitRand()
+{
+    return (float)Rand( INT_MAX ) * ( 0.999999999f / (float) INT_MAX );
+}
+
+
+//get random value from min to max
+float Game::RandomRange( float min, float max )
+{
+    return UnitRand() * ( max - min ) + min;
+}
+
 
 void Game::CheckChain( CubeWrapper *pWrapper )
 {
@@ -171,8 +198,8 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 				self.sound_manager.add(sound)*/
 
 			char aBuf[16];
-			sprintf( aBuf, "%d", m_iDotScoreSum );
-			pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_FADE_DELAY/2.0f );
+            snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
+			pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_FADE_DELAY/2.0f );        
 		}
 
 		//TODO timer mode
@@ -199,12 +226,18 @@ void Game::checkGameOver()
 		}
 
 		if( numInPlay <= 1 )
-			m_state = STATE_POSTGAME;
+        {
+            enterScore();
+            m_state = STATE_DYING;
+        }
 	}
 	else if( m_mode == MODE_TIMED )
 	{
 		if( m_timer.getTime() <= 0.0f )
-			m_state = STATE_POSTGAME;
+        {
+            enterScore();
+            m_state = STATE_DYING;
+        }
 	}
 }
 
@@ -351,4 +384,41 @@ bool Game::no_match_mismatch_side() const
 		return true;
 
     return false;
+}
+
+
+unsigned int Game::getHighScore( unsigned int index ) const
+{
+    ASSERT( index < NUM_HIGH_SCORES );
+
+    if( index < NUM_HIGH_SCORES )
+        return s_HighScores[ index ];
+    else
+        return 0;
+}
+
+
+
+void Game::enterScore()
+{
+    //walk backwards through the high score list and see which ones we can pick off
+    for( unsigned int i = NUM_HIGH_SCORES - 1; i >= 0; i-- )
+    {
+        if( s_HighScores[i] < m_iScore )
+        {
+            if( i < NUM_HIGH_SCORES - 1 )
+            {
+                s_HighScores[i+1] = s_HighScores[i];
+            }
+        }
+        else
+        {
+            if( i < NUM_HIGH_SCORES - 1 )
+            {
+                s_HighScores[i+1] = m_iScore;
+            }
+
+            break;
+        }
+    }
 }

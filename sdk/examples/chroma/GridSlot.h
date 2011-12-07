@@ -18,14 +18,25 @@ class GridSlot
 public:
 	static const unsigned int NUM_COLORS = 8;
 	static const AssetImage *TEXTURES[ NUM_COLORS ];
-	static const unsigned int NUM_ROLLING_COLORS = 2;
-	static const AssetImage *ROLLING_TEXTURES[ NUM_ROLLING_COLORS ];
-	static const AssetImage *ROLLING_ANIM[ NUM_ROLLING_COLORS ];
+    static const unsigned int NUM_ANIMATED_COLORS = 1;
+    static const unsigned int NUM_EXPLODING_COLORS = 1;
+    static const AssetImage *ANIMATEDTEXTURES[ NUM_ANIMATED_COLORS ];
+    static const AssetImage *EXPLODINGTEXTURES[ NUM_EXPLODING_COLORS ];
+    static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
+    static const unsigned int NUM_ROLL_FRAMES;
+    //static const unsigned int NUM_IDLE_FRAMES;
 
-	static const float MARK_SPREAD_DELAY = 0.33f;
-	static const float MARK_BREAK_DELAY = 0.67f;
-	static const float MARK_EXPLODE_DELAY = 0.16f;
-	static const float SCORE_FADE_DELAY = 2.0;
+    static const float MARK_SPREAD_DELAY;
+    static const float MARK_BREAK_DELAY;
+    static const float MARK_EXPLODE_DELAY;
+    static const float SCORE_FADE_DELAY;
+    static const float START_FADING_TIME;
+    static const float FADE_FRAME_TIME;
+    static const float EXPLODE_FRAME_LEN;
+    static const int NUM_EXPLODE_FRAMES = 7;
+    static const int NUM_FRAMES_PER_ROLL_ANIM_FRAME = 3;
+    static const int NUM_FRAMES_PER_IDLE_ANIM_FRAME = 3;
+    static const int NUM_POINTS_FRAMES = 4;
 
 	typedef enum 
 	{
@@ -42,15 +53,16 @@ public:
 	GridSlot();
 
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
-	const AssetImage &GetTexture() const;
 	//draw self on given vid at given vec
-	void Draw( VidMode_BG0 &vid, unsigned int tiltMask );
+    void Draw( VidMode_BG0 &vid, Float2 &tiltState );
 	void Update(float t);
 	bool isAlive() const { return m_state == STATE_LIVING; }
 	bool isEmpty() const { return m_state == STATE_GONE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
-	bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE ); }
-	void setEmpty() { m_state = STATE_GONE; }
+    bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING ); }
+    bool isMatchable() const { return isAlive() || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING; }
+    bool isOccupiable() const { return isEmpty() || m_state == STATE_SHOWINGSCORE; }
+    void setEmpty() { m_state = STATE_GONE; }
 	unsigned int getColor() const { return m_color; }
 	void FillColor(unsigned int color);
 
@@ -68,8 +80,15 @@ public:
 	void startPendingMove();
 private:
 	void markNeighbor( int row, int col );
-	//given a tiltmask, calculate the roll frame we should be in
-	unsigned int CalculateRollFrame( unsigned int tiltMask ) const;
+    //given tilt state, return our desired frame
+    unsigned int GetTiltFrame( Float2 &tiltState ) const;
+    const AssetImage &GetTexture() const;
+    const AssetImage &GetExplodingTexture() const;
+    //convert from [-128, 128] to [0, 6] via non-linear quantization
+    unsigned int QuantizeTiltValue( float value ) const;
+    //get the rolling frame of the given index
+    unsigned int GetRollingFrame( unsigned int index );
+    //unsigned int GetIdleFrame();
 
 	SLOT_STATE m_state;
 	unsigned int m_color;

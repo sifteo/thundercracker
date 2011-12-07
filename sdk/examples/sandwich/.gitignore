@@ -9,9 +9,9 @@ assets.html
 *.userprefs
 *.pidb
 
+Tools/Misc/bin**
 **bin/Debug**
 **bin/Release**
-
 
 MapTool.exe
 gen_assets.lua

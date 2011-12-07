@@ -10,52 +10,62 @@
 
 namespace Sifteo {
 
-/*
- * A single module of audio - an encoded sample, a tracker style synth table, etc
- */
-class AudioModule {
-public:
-    _SYSAudioModule sys;
-};
-
+// XXX better place to put these?
 class Audio {
 public:
-
     static const int MAX_VOLUME = 256;
+    static const _SYSAudioHandle INVALID_HANDLE = -1;
+};
 
-    static void enableChannel(_SYSAudioBuffer *buffer) {
-        _SYS_audio_enableChannel(buffer);
+class AudioChannel {
+public:
+
+    AudioChannel() : handle(Audio::INVALID_HANDLE)
+    {}
+
+    void init() {
+        _SYS_audio_enableChannel(&buf);
     }
 
-    static bool play(const Sifteo::AudioModule &mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode = LoopOnce) {
-        return _SYS_audio_play(&mod.sys, handle, loopMode);
+    bool play(const _SYSAudioModule &mod, _SYSAudioLoopType loopMode = LoopOnce) {
+        return _SYS_audio_play(&mod, &handle, loopMode);
     }
 
-    static bool isPlaying(_SYSAudioHandle handle) {
+    bool isPlaying() const {
         return _SYS_audio_isPlaying(handle);
     }
 
-    static void stop(_SYSAudioHandle handle) {
+    void stop() {
         _SYS_audio_stop(handle);
     }
 
-    static void pause(_SYSAudioHandle handle) {
+    void pause() {
         _SYS_audio_pause(handle);
     }
-    static void resume(_SYSAudioHandle handle) {
+
+    void resume() {
         _SYS_audio_resume(handle);
     }
 
-    static void setVolume(_SYSAudioHandle handle, int volume) {
+    void setVolume(int volume) {
         _SYS_audio_setVolume(handle, volume);
     }
-    static int volume(_SYSAudioHandle handle) {
+
+    int volume() {
         return _SYS_audio_volume(handle);
     }
 
-    static uint32_t pos(_SYSAudioHandle handle) {
+    uint32_t pos() {
         return _SYS_audio_pos(handle);
     }
+
+private:
+    // TODO - would be nice to have a _SYSAudioChannel type with these two
+    // members, that serves as the object passed to the firmware.
+    // Then, we wouldn't have to search for a channel. given a handle - we could
+    // just calculate its offset within its array to look it up
+    _SYSAudioHandle handle;
+    _SYSAudioBuffer buf;
 };
 
 } // namespace Sifteo

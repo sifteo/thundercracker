@@ -1,0 +1,15 @@
+*~
+*.o
+*.gen.h
+*.gen.cpp
+assets.html
+*.sim
+*.sim.exe
+*.stm32
+*.creator.user
+*.exe
+*.pdb
+*.suo
+*.cache
+*.FileListAbsolute.txt
+*.manifest
