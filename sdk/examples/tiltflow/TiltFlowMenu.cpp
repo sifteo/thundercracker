@@ -263,10 +263,6 @@ void TiltFlowView::PaintInfo() {
 }
 
 void TiltFlowView::PaintMenu() {
-    //test
-    //DoPaintItem( TiltFlowMenu::Inst()->GetItem( mItem ), 0, 0 );
-
-
   //if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
 
   //could be better, but just clear for now
@@ -274,21 +270,20 @@ void TiltFlowView::PaintMenu() {
   vid.clear(Font.tiles[0]);
 
   //DEBUG DRAW
-  for( unsigned int i = 0; i < VidMode_BG0::BG0_width; i++ )
+  /*for( unsigned int i = 0; i < VidMode_BG0::BG0_width; i++ )
   {
       vid.BG0_textf( Vec2( i, 0 ), Font, "%d", i%10 );
-  }
+  }*/
 
-  DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), 24 + mOffsetX);
+  DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), 24);
 
-#if 1
   if (/*c.Neighbors.Left == NULL && */mItem > 0) {
-    DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70 + mOffsetX);
+    DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70);
   }
   if (/*c.Neighbors.Right == NULL && */mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
-    DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118 + mOffsetX);
+    DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118);
   }
-#endif
+
   /*if (mDrawLabel) {
     if (c.Neighbors.Left == NULL && c.Neighbors.Right == NULL) {
       if (mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
@@ -505,7 +500,7 @@ void TiltFlowView::UpdateMenu() {
       if (mItem > 0) {
         if (mOffsetX > 45) { // magic
           mItem--;
-          mOffsetX -= 45; // magic
+          mOffsetX -= 90; // magic
         } else {
             mOffsetX += Resistance() * TILTVEL * mAccel;
           mAccel = Util::Clamp(mAccel * GRAVITY, MINACCEL, MAXACCEL) * deepMult;
@@ -515,7 +510,7 @@ void TiltFlowView::UpdateMenu() {
       if (mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
         if (mOffsetX < -45) { // magic
           mItem++;
-          mOffsetX += 45; // magic
+          mOffsetX += 90; // magic
         } else {
             mOffsetX -= Resistance() * TILTVEL * mAccel;
           mAccel = Util::Clamp(mAccel * GRAVITY, MINACCEL, MAXACCEL) * deepMult;
