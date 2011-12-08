@@ -160,13 +160,15 @@ void TiltFlowMenu::ReassignMenu() {
   // TILT FLOW ITEM
   //---------------------------------------------------------------------------
 
-TiltFlowItem::TiltFlowItem(const Sifteo::AssetImage &image, const char *pName/*, string description, Vec2 sourcePosition=new Vec2()*/) :
+/*
+TiltFlowItem::TiltFlowItem(const Sifteo::AssetImage &image, const char *pName) :
     mName( pName ), mImage( image )
 {
-    //TODO - do we need this stuff?
-    /*this.description = description;
-    this.color = Color.Mask;
-    this.sourcePosition = sourcePosition;*/
+}*/
+
+TiltFlowItem::TiltFlowItem(const Sifteo::AssetImage &image, const Sifteo::AssetImage &label) :
+    mImage( image ), mLabel( label )
+{
 }
 
   //---------------------------------------------------------------------------
@@ -267,7 +269,7 @@ void TiltFlowView::PaintMenu() {
 
   //could be better, but just clear for now
   VidMode_BG0 vid( mpCube->vbuf );
-  vid.clear(Font.tiles[0]);
+  vid.clear(White.tiles[0]);
 
   //DEBUG DRAW
   /*for( unsigned int i = 0; i < VidMode_BG0::BG0_width; i++ )
@@ -284,47 +286,17 @@ void TiltFlowView::PaintMenu() {
     DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118);
   }
 
-  /*if (mDrawLabel) {
-    if (c.Neighbors.Left == NULL && c.Neighbors.Right == NULL) {
-      if (mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
-        c.Image("gestures", 4, 99, 0, 192, 27, 25); // magic
-        //c.Image("curlyarrows", 4, 108, 0, 16, 16, 16); // magic
-      }
-      if (mItem > 0) {
-        c.Image("gestures", 97, 99, 0, 28, 27, 25); // magic
-        //c.Image("curlyarrows", 108, 108, 0, 0, 16, 16); // magic
-      }
-      var g = new AABB(0, 0, 24, 28); // magic, taken from GESTURE_ICONS table in original python source
-      c.Image("gestures", 64-g.size.x/2, 128-4-g.size.y, g.position.x, g.position.y, g.size.x, g.size.y, 1, 0); // magic
-    }
-    TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
-  }*/
+  if (mDrawLabel) {
+    //TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
+      VidMode_BG0 vid( mpCube->vbuf );
+      vid.BG0_drawAsset(Vec2(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
+  }
 
   // Firmware handles all pixel-level scrolling
   vid.BG0_setPanning(Vec2((int)-mOffsetX, 0));
 }
 
-void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x/*, int w*/) {
-  //const int y = 24; // magic
-  //const int h = 80; // magic
-  /*if (TiltFlowMenu::Inst()->PaintItem != NULL) {
-    TiltFlowMenu::Inst()->PaintItem(new TiltFlowItemArgs() {
-      view = this,
-      item = item,
-      bounds = x==0 && w<80 ? new AABB(w-80, y, h, h) : new AABB(x, y, h, h)
-    });
-  }
-  if (item.HasImage) {
-    if (x==0 && w<80) {
-      Cube.Image(item.image, w-80, y, item.sourcePosition.x, item.sourcePosition.y, 80, h, 1, 0);
-    } else {
-      Cube.Image(item.image, x, y, item.sourcePosition.x, item.sourcePosition.y, w, h, 1, 0);
-    }
-  } else {
-    Cube.FillRect(item.color, x, y, w, h);
-  }*/
-
-
+void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x) {
   if( pItem )
   {
       VidMode_BG0 vid( mpCube->vbuf );

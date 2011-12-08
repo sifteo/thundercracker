@@ -18,14 +18,12 @@ using namespace Sifteo;
 
 class TiltFlowItem {
 public:
-  //public readonly Color color;
-    const char *mName;
-    //char mDescription[32];
+    //const char *mName;
     const Sifteo::AssetImage &mImage;
-    //Vec2 mSrcPos;
-  //public readonly Vec2 sourcePosition;
+    const Sifteo::AssetImage &mLabel;
 
-  TiltFlowItem(const Sifteo::AssetImage &image, const char *pName/*, string description, Vec2 sourcePosition=new Vec2()*/);
+  //TiltFlowItem(const Sifteo::AssetImage &image, const char *pName);
+  TiltFlowItem(const Sifteo::AssetImage &image, const Sifteo::AssetImage &label);
 };
 
 //---------------------------------------------------------------------------
@@ -42,8 +40,7 @@ public:
   static const float GRAVITY;
   static const float EPSILON;
 
-  static const int BG0MINX = -8;
-  static const int BG0MAXX = 136;
+  static const int LABEL_OFFSET = 3;
   typedef enum
   { STATUS_NONE, STATUS_MENU, STATUS_ITEM, STATUS_INFO }
   Status;

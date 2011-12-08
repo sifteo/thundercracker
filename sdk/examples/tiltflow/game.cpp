@@ -11,9 +11,9 @@
 
 TiltFlowItem MENUITEMS[ Game::NUM_MENU_ITEMS ] =
 {
-    TiltFlowItem( IconFire, "Fire" ),
-    TiltFlowItem( IconEarth, "Earth" ),
-    TiltFlowItem( IconWater, "Water" ),
+    TiltFlowItem( IconFire, TextFire ),
+    TiltFlowItem( IconEarth, TextEarth ),
+    TiltFlowItem( IconWater, TextWater ),
 };
 
 Game &Game::Inst()
