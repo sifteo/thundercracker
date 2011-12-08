@@ -26,10 +26,10 @@ const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot:
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
 {
-	&Gem0,
-	&Gem1,
-	&Gem2,
-	&Gem3,
+    &Gem0,
+    &Gem1,
+    &Gem2,
+    &Gem3,
 	&Gem4,
 	&Gem5,
 	&Gem6,

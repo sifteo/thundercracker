@@ -91,6 +91,8 @@ void CubeWrapper::Reset()
     }
 
     m_timeTillGlimmer = 0.0f;
+    m_bg1helper.Clear();
+    m_bg1helper.Flush();
     m_intro.Reset();
     m_gameover.Reset();
     m_glimmer.Reset();
