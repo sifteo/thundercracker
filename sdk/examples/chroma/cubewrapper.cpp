@@ -91,6 +91,8 @@ void CubeWrapper::Reset()
     }
 
     m_timeTillGlimmer = 0.0f;
+    m_bg1helper.Clear();
+    m_bg1helper.Flush();
     m_intro.Reset();
     m_gameover.Reset();
     m_glimmer.Reset();
@@ -115,7 +117,7 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_INTRO:
         {
-            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube );
+            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
             break;
         }
 		case Game::STATE_PLAYING:

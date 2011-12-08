@@ -18,10 +18,7 @@ class GridSlot
 public:
 	static const unsigned int NUM_COLORS = 8;
 	static const AssetImage *TEXTURES[ NUM_COLORS ];
-    static const unsigned int NUM_ANIMATED_COLORS = 1;
-    static const unsigned int NUM_EXPLODING_COLORS = 1;
-    static const AssetImage *ANIMATEDTEXTURES[ NUM_ANIMATED_COLORS ];
-    static const AssetImage *EXPLODINGTEXTURES[ NUM_EXPLODING_COLORS ];
+    static const AssetImage *EXPLODINGTEXTURES[ NUM_COLORS ];
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
     static const unsigned int NUM_ROLL_FRAMES;
     //static const unsigned int NUM_IDLE_FRAMES;
@@ -55,6 +52,7 @@ public:
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	//draw self on given vid at given vec
     void Draw( VidMode_BG0 &vid, Float2 &tiltState );
+    void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
 	void Update(float t);
 	bool isAlive() const { return m_state == STATE_LIVING; }
 	bool isEmpty() const { return m_state == STATE_GONE; }

@@ -26,25 +26,26 @@ const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot:
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
 {
-	&Gem0,
-	&Gem1,
-	&Gem2,
-	&Gem3,
+    &Gem0,
+    &Gem1,
+    &Gem2,
+    &Gem3,
 	&Gem4,
 	&Gem5,
 	&Gem6,
     &Gem7,
 };
 
-
-const AssetImage *GridSlot::ANIMATEDTEXTURES[ GridSlot::NUM_ANIMATED_COLORS ] =
-{
-    &Gem0,
-};
-
-const AssetImage *GridSlot::EXPLODINGTEXTURES[ GridSlot::NUM_EXPLODING_COLORS ] =
+const AssetImage *GridSlot::EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 {
     &ExplodeGem0,
+    &ExplodeGem1,
+    &ExplodeGem2,
+    &ExplodeGem3,
+    &ExplodeGem4,
+    &ExplodeGem5,
+    &ExplodeGem6,
+    &ExplodeGem7,
 };
 
 
@@ -101,45 +102,29 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 				vid.BG0_drawAsset(vec, tex, 2);
 			else
 			{
-				//only have some of these now
-                if( m_color < NUM_ANIMATED_COLORS )
-				{
-                    const AssetImage &animtex = *ANIMATEDTEXTURES[ m_color ];
-                    unsigned int frame;
-                    /*if( m_pWrapper->IsIdle() )
-                        frame = GetIdleFrame();
-                    else*/
-                        frame = GetTiltFrame( tiltState );
-                    vid.BG0_drawAsset(vec, animtex, frame);
-				}
-				else
-					vid.BG0_drawAsset(vec, tex, 0);
+                const AssetImage &animtex = *TEXTURES[ m_color ];
+                unsigned int frame;
+                /*if( m_pWrapper->IsIdle() )
+                    frame = GetIdleFrame();
+                else*/
+                    frame = GetTiltFrame( tiltState );
+                vid.BG0_drawAsset(vec, animtex, frame);
 			}
 			break;
 		}
 		case STATE_MOVING:
 		{
-			const AssetImage &tex = GetTexture();
-
 			Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
 
 			//PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
-            if( m_color < NUM_ANIMATED_COLORS )
-			{
-                const AssetImage &tex = *ANIMATEDTEXTURES[m_color];
-                vid.BG0_drawAsset(curPos, tex, GetRollingFrame( m_animFrame ));
-			}
-            else
-				vid.BG0_drawAsset(curPos, tex, 0);
+            const AssetImage &tex = *TEXTURES[m_color];
+            vid.BG0_drawAsset(curPos, tex, GetRollingFrame( m_animFrame ));
 			break;
 		}
 		case STATE_FINISHINGMOVE:
 		{
-            if( m_color < NUM_ANIMATED_COLORS )
-            {
-                const AssetImage &tex = *ANIMATEDTEXTURES[m_color];
-                vid.BG0_drawAsset(vec, tex, GetRollingFrame( m_animFrame ));
-            }
+            const AssetImage &tex = *TEXTURES[m_color];
+            vid.BG0_drawAsset(vec, tex, GetRollingFrame( m_animFrame ));
 			break;
 		}
 		case STATE_MARKED:
@@ -149,29 +134,16 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 				vid.BG0_drawAsset(vec, tex, 3);
 			else
             {
-                if( m_color < NUM_EXPLODING_COLORS )
-                {
-                    const AssetImage &exTex = GetExplodingTexture();
-                    vid.BG0_drawAsset(vec, exTex, m_animFrame);
-                }
-                else
-                    vid.BG0_drawAsset(vec, tex, 1);
+                const AssetImage &exTex = GetExplodingTexture();
+                vid.BG0_drawAsset(vec, exTex, m_animFrame);
             }
 			break;
 		}
 		case STATE_EXPLODING:
 		{
-            if( m_color < NUM_EXPLODING_COLORS )
-            {
-                vid.BG0_drawAsset(vec, GemEmpty, 0);
-                //const AssetImage &exTex = GetExplodingTexture();
-                //vid.BG0_drawAsset(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
-            }
-            else
-            {
-                const AssetImage &tex = GetTexture();
-                vid.BG0_drawAsset(vec, tex, 4);
-            }
+            vid.BG0_drawAsset(vec, GemEmpty, 0);
+            //const AssetImage &exTex = GetExplodingTexture();
+            //vid.BG0_drawAsset(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
 			break;
 		}
 		case STATE_SHOWINGSCORE:
@@ -227,14 +199,12 @@ void GridSlot::Update(float t)
 				m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
 			else if( vDiff.y != 0 )
 				m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
-            else if( m_color < NUM_ANIMATED_COLORS )
+            else
 			{
 				m_animFrame++;
                 if( m_animFrame >= NUM_ROLL_FRAMES )
 					m_state = STATE_LIVING;
             }
-			else
-				m_state = STATE_LIVING;
 
 			break;
 		}
@@ -468,3 +438,36 @@ unsigned int GridSlot::GetIdleFrame()
     return IDLE_FRAMES[ m_animFrame / NUM_FRAMES_PER_IDLE_ANIM_FRAME ];
 }
 */
+
+
+void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
+{
+    Vec2 vec( m_col * 4, m_row * 4 );
+
+    switch( frame )
+    {
+        case 0:
+        {
+            vid.BG0_drawAsset(vec, GemEmpty, 0);
+            break;
+        }
+        case 1:
+        {
+            const AssetImage &exTex = GetExplodingTexture();
+            vid.BG0_drawAsset(vec, exTex, 1);
+            break;
+        }
+        case 2:
+        {
+            const AssetImage &exTex = GetExplodingTexture();
+            vid.BG0_drawAsset(vec, exTex, 0);
+            break;
+        }
+        default:
+        {
+            const AssetImage &tex = *TEXTURES[ m_color ];
+            vid.BG0_drawAsset(vec, tex, 0);
+            break;
+        }
+    }
+}
