@@ -300,19 +300,19 @@ void TiltFlowView::PaintMenu() {
     DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118);
   }
 
+  BG1Helper &bg1helper = Game::Inst().cubes[ mpCube->id() ].GetBG1Helper();
+
   if (mDrawLabel) {
     //TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
-      VidMode_BG0 vid( mpCube->vbuf );
-      vid.BG0_drawAsset(Vec2(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
+      bg1helper.DrawAsset(Vec2(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
   }
 
   //draw the current tip
-  BG1Helper &bg1helper = Game::Inst().cubes[ mpCube->id() ].GetBG1Helper();
   bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
   bg1helper.Flush();
 
   // Firmware handles all pixel-level scrolling
-  vid.BG0_setPanning(Vec2((int)-mOffsetX, 0));
+  vid.BG0_setPanning(Vec2((int)-mOffsetX, COVER_Y_OFFSET));
 }
 
 void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x) {
@@ -350,16 +350,16 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x) {
 
       //need to draw on the right tiles.
       if( curTile + size.x < (int)VidMode_BG0::BG0_width )
-        vid.BG0_drawPartialAsset(Vec2(curTile,3), offset, size, pItem->mImage, 0);
+        vid.BG0_drawPartialAsset(Vec2(curTile,0), offset, size, pItem->mImage, 0);
       //Handle wrapping
       else
       {
           int wrapAmt = curTile + size.x - VidMode_BG0::BG0_width;
           size.x -= wrapAmt;
-          vid.BG0_drawPartialAsset(Vec2(curTile,3), offset, size, pItem->mImage, 0);
+          vid.BG0_drawPartialAsset(Vec2(curTile,0), offset, size, pItem->mImage, 0);
           offset.x += size.x;
           size.x = wrapAmt;
-          vid.BG0_drawPartialAsset(Vec2(0,3), offset, size, pItem->mImage, 0);
+          vid.BG0_drawPartialAsset(Vec2(0,0), offset, size, pItem->mImage, 0);
       }
   }
 }
