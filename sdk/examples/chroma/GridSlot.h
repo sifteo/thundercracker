@@ -18,10 +18,7 @@ class GridSlot
 public:
 	static const unsigned int NUM_COLORS = 8;
 	static const AssetImage *TEXTURES[ NUM_COLORS ];
-    static const unsigned int NUM_ANIMATED_COLORS = 1;
-    static const unsigned int NUM_EXPLODING_COLORS = 1;
-    static const AssetImage *ANIMATEDTEXTURES[ NUM_ANIMATED_COLORS ];
-    static const AssetImage *EXPLODINGTEXTURES[ NUM_EXPLODING_COLORS ];
+    static const AssetImage *EXPLODINGTEXTURES[ NUM_COLORS ];
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
     static const unsigned int NUM_ROLL_FRAMES;
     //static const unsigned int NUM_IDLE_FRAMES;
