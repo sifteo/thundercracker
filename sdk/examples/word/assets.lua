@@ -11,4 +11,4 @@ BGOldWordConnectedRight = image{"ring_connected_r.png", quality=0}
 StartScreen = image{"start_screen.png", quality=0}
 Title = image{"title.png", quality=0}
 Font = image{"font-32x64.png", width=32, height=64, quality=1}
-FontSmall = image{"font-8x16.png", width=8, height=16, quality=1}
+FontSmall = image{"font-8x16.png", width=8, height=16, quality=3}

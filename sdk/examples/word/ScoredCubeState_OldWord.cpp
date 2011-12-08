@@ -4,7 +4,7 @@
 #include "assets.gen.h"
 #include "CubeStateMachine.h"
 #include "GameStateMachine.h"
-
+#include <string.h>
 #include "ScoredCubeState_OldWord.h"
 
 ScoredCubeState_OldWord::ScoredCubeState_OldWord()
@@ -106,10 +106,10 @@ void ScoredCubeState_OldWord::paint()
     vid.BG0_drawAsset(Vec2(0,0), bg);
     vid.BG0_text(Vec2(6,3), Font, getStateMachine().getLetters());
     char string[5];
-    sprintf(string, "%.4d", GameStateMachine::GetSecondsLeft());
+    sprintf(string, "%d", GameStateMachine::GetSecondsLeft());
 #if DEBUGZZZZZZZZ
     printf("%d %s\n", getStateMachine().getCube().id(), string);
 #endif
-    vid.BG0_text(Vec2(6,14), FontSmall, string);
+    vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
 
 }
