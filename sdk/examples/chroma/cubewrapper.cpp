@@ -117,7 +117,7 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_INTRO:
         {
-            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube );
+            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
             break;
         }
 		case Game::STATE_PLAYING:
