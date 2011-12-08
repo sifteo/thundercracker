@@ -39,8 +39,14 @@ public:
   static const float DEEPTILTACCEL;
   static const float GRAVITY;
   static const float EPSILON;
+  static const float TIP_DELAY;
 
   static const int LABEL_OFFSET = 3;
+  static const int TIP_Y_OFFSET = 12;
+
+  static const int NUM_TIPS = 3;
+  static const Sifteo::AssetImage *TIPS[NUM_TIPS];
+
   typedef enum
   { STATUS_NONE, STATUS_MENU, STATUS_ITEM, STATUS_INFO }
   Status;
@@ -74,6 +80,8 @@ private:
   float mRestTime;
   bool mDrawLabel;
   bool mDirty;
+  unsigned int mCurrentTip;
+  float mTipTime;
   Side mLastNeighborRemoveSide;
   Cube *mpCube;
 

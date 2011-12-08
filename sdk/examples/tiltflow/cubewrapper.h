@@ -28,6 +28,7 @@ public:
 	void Shake( bool bShaking );
 
 	Cube &GetCube() { return m_cube; }
+    inline BG1Helper &GetBG1Helper() { return m_bg1helper; }
 
 private:
 	Cube m_cube;

@@ -183,7 +183,14 @@ const float TiltFlowView::MAXACCEL = 8.0f;
 const float TiltFlowView::DEEPTILTACCEL = 2.0f;
 const float TiltFlowView::GRAVITY = 1.03f;
 const float TiltFlowView::EPSILON = 0.00001f;
+const float TiltFlowView::TIP_DELAY = 2.0f;
 
+const Sifteo::AssetImage *TiltFlowView::TIPS[NUM_TIPS] =
+{
+    &Tip1,
+    &Tip2,
+    &Tip3,
+};
 
 int TiltFlowView::s_cubeIndex = 0;
 
@@ -191,7 +198,7 @@ int TiltFlowView::s_cubeIndex = 0;
 TiltFlowView::TiltFlowView() :
     mItem( -1 ), mOffsetX( 0.0f ), mAccel( MINACCEL ),
     mRestTime( -1.0f ), mDrawLabel( true ), mDirty( true ),
-    mLastNeighborRemoveSide( NONE ), mpCube( NULL )
+    mCurrentTip( 0 ), mTipTime(0.0f), mLastNeighborRemoveSide( NONE ), mpCube( NULL )
 {
 }
 
@@ -226,6 +233,13 @@ void TiltFlowView::Tick() {
       Hacky.Sfx("ui_select_01");
     }*/
     mRestTime = -1;
+  }
+
+  if (TiltFlowMenu::Inst()->GetSimTime() - mTipTime > TIP_DELAY)
+  {
+      mCurrentTip = ( mCurrentTip + 1 ) % NUM_TIPS;
+      mTipTime = TiltFlowMenu::Inst()->GetSimTime();
+      mDirty = true;
   }
 }
 
@@ -291,6 +305,11 @@ void TiltFlowView::PaintMenu() {
       VidMode_BG0 vid( mpCube->vbuf );
       vid.BG0_drawAsset(Vec2(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
   }
+
+  //draw the current tip
+  BG1Helper &bg1helper = Game::Inst().cubes[ mpCube->id() ].GetBG1Helper();
+  bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
+  bg1helper.Flush();
 
   // Firmware handles all pixel-level scrolling
   vid.BG0_setPanning(Vec2((int)-mOffsetX, 0));
