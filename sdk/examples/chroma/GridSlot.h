@@ -59,8 +59,10 @@ public:
 	bool isAlive() const { return m_state == STATE_LIVING; }
 	bool isEmpty() const { return m_state == STATE_GONE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
-	bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE ); }
-	void setEmpty() { m_state = STATE_GONE; }
+    bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING ); }
+    bool isMatchable() const { return isAlive() || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING; }
+    bool isOccupiable() const { return isEmpty() || m_state == STATE_SHOWINGSCORE; }
+    void setEmpty() { m_state = STATE_GONE; }
 	unsigned int getColor() const { return m_color; }
 	void FillColor(unsigned int color);
 

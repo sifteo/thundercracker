@@ -12,6 +12,18 @@
  * Currently this is written for SST flashes, specifically the
  * SST39VF1681. But we expect to have to modify this to suit whatever
  * commodity flash memory we source for the product.
+
+ NOTE: this has been updated to also support the Winbond W29GL032C.
+ Relevant changes:
+  - flash_addr_lat2 increments by 2 instead of 4 for adjacent sector addresses for erase
+  - lat1 and lat2 lines are swapped on buddy cube rev 1 - this is accounted for in hardware.h
+  - due to a routing error on buddy cube rev 1, we must use WORD_MODE instead of
+    BYTE_MODE, and your board must be modded accordingly, since the BYTE select
+    pin would normally be tied low.
+
+ TODO: the winbond part also provides a bulk programming mode that would allow
+        us to optimize by  only sending the unlock sequence for each
+        batch of bytes that we want to program, rather than for each byte as we do now.
  */
 
 #include "flash.h"
@@ -58,17 +70,42 @@ static __bit flash_poll_data;  // What data bit are we expecting?
     BUS_DIR = 0xFF;                             \
     CTRL_PORT = CTRL_FLASH_OUT;
 
+/*
+    Byte mode vs Word Mode.
+    Normally we'd like to program a byte a time, but buddy cube rev 1
+    has a routing mistake that means we must use word mode - but we're still only
+    feeding it a byte at a time, so we're essentially discarding the most
+    significant byte and only using half our available storage :(
+
+    Presume this will be removed for subsequent designs
+*/
+#define BYTE_MODE   1
+#define WORD_MODE   2
+
+#ifndef FLASH_PROGRAM_MODE
+#define FLASH_PROGRAM_MODE WORD_MODE
+#endif
+
 static void flash_prefix_aa_55()
 {
+#if FLASH_PROGRAM_MODE == BYTE_MODE
     FLASH_CMD_PREFIX(0xAAA, 0xAA);
     FLASH_CMD_PREFIX(0x555, 0x55);
+#elif FLASH_PROGRAM_MODE == WORD_MODE
+    FLASH_CMD_PREFIX(0x555, 0xAA);
+    FLASH_CMD_PREFIX(0x2AA, 0x55);
+#endif
 }
 
 static void flash_write_unlock()
 {
     // Write unlock prefix
     flash_prefix_aa_55();
+#if FLASH_PROGRAM_MODE == BYTE_MODE
     FLASH_CMD_PREFIX(0xAAA, 0xA0);
+#elif FLASH_PROGRAM_MODE == WORD_MODE
+    FLASH_CMD_PREFIX(0x555, 0xA0);
+#endif
 }
     
 void flash_erase(uint8_t blockCount)
@@ -82,6 +119,10 @@ void flash_erase(uint8_t blockCount)
      * 1) or higher would do a full-chip erase, assuming the current
      * address is zero.
      *
+     * Sector/block erase addresses are given on the highest 6 bits,
+     * so if bits are set anywhere else in the address, we assume it's a
+     * mistake elsewhere.
+     *
      * Erases are ignored if the address is unaligned. This is one of
      * our safety measures against corrupted loadstreams causing
      * repeated erases which could wear out the flash quickly.
@@ -94,7 +135,7 @@ void flash_erase(uint8_t blockCount)
         return;
     if (flash_addr_lat1)
         return;
-    if (flash_addr_lat2 & 3)
+    if (flash_addr_lat2 & 1)    // low bit must be 0 since that's the lcd write strobe
         return;
 
     for (;;) {
@@ -103,13 +144,21 @@ void flash_erase(uint8_t blockCount)
 
         // Common unlock prefix for all erase ops
         flash_prefix_aa_55();
+        #if FLASH_PROGRAM_MODE == BYTE_MODE
         FLASH_CMD_PREFIX(0xAAA, 0x80);
+        #elif FLASH_PROGRAM_MODE == WORD_MODE
+        FLASH_CMD_PREFIX(0x555, 0x80);
+        #endif
         flash_prefix_aa_55();
 
         if (blockCount >= (FLASH_NUM_BLOCKS - 1) && flash_addr_lat2 == 0) {
 
             // Whole-chip erase
+            #if FLASH_PROGRAM_MODE == BYTE_MODE
             FLASH_CMD_PREFIX(0xAAA, 0x10);
+            #elif FLASH_PROGRAM_MODE == WORD_MODE
+            FLASH_CMD_PREFIX(0x555, 0x10);
+            #endif
 
             // Data# polling: Wait for a '1' bit
             FLASH_OUT();
@@ -130,7 +179,7 @@ void flash_erase(uint8_t blockCount)
                 break;
             
             blockCount--;
-            flash_addr_lat2 += 4;
+            flash_addr_lat2 += 2;
         }
     }
 
@@ -170,7 +219,7 @@ void flash_program_end(void)
 3$:     jnb     BUS_PORT.7, 3$
         sjmp    1$
 2$:     jb      BUS_PORT.7, 2$
-1$:                        
+1$:
     __endasm ;
     
     CTRL_PORT = CTRL_IDLE;
@@ -204,7 +253,7 @@ void flash_program_word(uint16_t dat) __naked
 3$:     jnb     BUS_PORT.7, 3$
         sjmp    1$
 2$:     jb      BUS_PORT.7, 2$
-1$:                        
+1$:
     __endasm ;
 
     CTRL_PORT = CTRL_IDLE;
@@ -234,7 +283,7 @@ void flash_program_word(uint16_t dat) __naked
         mov     a, DPL
         rlc     a
         mov     _flash_poll_data, c
-    __endasm ; 
+    __endasm ;
 
     /*
      * High byte
@@ -250,7 +299,7 @@ void flash_program_word(uint16_t dat) __naked
         sjmp    7$
 
 5$:     jb      BUS_PORT.7, 5$
-7$:                        
+7$:
     __endasm ;
 
     CTRL_PORT = CTRL_IDLE;
@@ -300,7 +349,7 @@ void flash_program_word(uint16_t dat) __naked
 8$:     jnb     BUS_PORT.7, 8$
         sjmp    9$
 10$:    jb      BUS_PORT.7, 10$
-9$:                        
+9$:
 
         mov     ADDR_PORT, a
         mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT2)

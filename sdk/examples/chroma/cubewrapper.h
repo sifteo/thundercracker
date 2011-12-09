@@ -32,10 +32,13 @@ public:
     static const float IDLE_FINISH_THRESHOLD;
     static const float MIN_GLIMMER_TIME;
     static const float MAX_GLIMMER_TIME;
+    static const float TIME_PER_MESSAGE_FRAME;
+    static const int NUM_MESSAGE_FRAMES = 5;
 
 	typedef enum
 	{
 		STATE_PLAYING,
+        STATE_MESSAGING,
 		STATE_EMPTY,
 		STATE_NOSHAKES,
 	} CubeState;
@@ -88,6 +91,7 @@ public:
 
 	bool isDead() const { return m_state == STATE_NOSHAKES; }
 	CubeState getState() const { return m_state; }
+    void setState( CubeState state );
     //bool IsIdle() const;
 
 private:
@@ -122,6 +126,8 @@ private:
     Glimmer m_glimmer;
 
     float m_timeTillGlimmer;
+
+    float m_stateTime;
 };
 
 #endif

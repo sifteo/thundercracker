@@ -75,7 +75,8 @@ ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
 
 CFLAGS_STM32 += $(CFLAGS) $(ARCH_STM32)
 CCFLAGS_STM32 := $(CFLAGS_STM32) $(CCFLAGS) # inherit all STM32 CFLAGS plus CCFLAGS
+# TODO - provide $(APP) or similar to specify name of map file
 LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
-              -Wl,--gc-sections,-u,IVT \
+              -Wl,-Map=MAPFILE.map,--gc-sections,-u,IVT \
               -T $(LDSCRIPT_STM32) -nostartfiles
 

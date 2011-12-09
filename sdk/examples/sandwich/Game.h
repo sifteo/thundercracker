@@ -12,6 +12,7 @@ public:
   Player player;
   Map map;
   Enemy enemies[NUM_ENEMIES];
+  float mSimTime;
   
 public:
 
@@ -29,12 +30,15 @@ public:
   // Trigger Actions
   void WalkTo(Vec2 position);
   void TeleportTo(const MapData& m, Vec2 position);
-  void TakeItem();
 
   void OnNeighborAdd(GameView* v1, Cube::Side s1, GameView* v2, Cube::Side s2);
   void OnNeighborRemove(GameView* v1, Cube::Side s1, GameView* v2, Cube::Side s2);
   
+
 private:
+
+  float UpdateDeltaTime();
+
   void ObserveNeighbors(bool flag);
   void CheckMapNeighbors();
   void MovePlayerAndRedraw(int dx, int dy);

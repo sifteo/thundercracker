@@ -338,6 +338,9 @@
    </properties>
   </tile>
  </tileset>
+ <tileset firstgid="113" name="castle_arch" tilewidth="16" tileheight="16">
+  <image source="castle_overlay.png" width="64" height="32"/>
+ </tileset>
  <layer name="background" width="24" height="24">
   <data encoding="csv">
 108,7,108,108,108,108,108,108,108,108,108,108,108,108,108,108,108,108,108,108,7,108,108,108,
@@ -366,7 +369,7 @@
 7,108,108,108,7,108,108,108,51,13,102,103,104,105,13,50,7,108,108,108,7,108,108,108
 </data>
  </layer>
- <layer name="overlay" width="24" height="24" visible="0">
+ <layer name="overlay" width="24" height="24">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -390,11 +393,11 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0,0,0,113,114,115,116,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,117,118,119,120,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer name="grid" width="24" height="24" visible="0" opacity="0.15">
+ <layer name="grid" width="24" height="24" opacity="0.15">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
@@ -423,11 +426,15 @@
 </data>
  </layer>
  <objectgroup name="triggers" width="24" height="24">
-  <object name="ForestGate" type="Gateway" x="176" y="352" width="32" height="32">
+  <object name="ForestGate" type="Gateway" x="176" y="364" width="32" height="32">
    <properties>
     <property name="target" value="forest:CastleGate"/>
    </properties>
   </object>
-  <object name="TestKey" type="BasicKey" x="176" y="176" width="32" height="32"/>
+  <object name="TestKey" type="Item" x="176" y="176" width="32" height="32">
+   <properties>
+    <property name="id" value="2"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

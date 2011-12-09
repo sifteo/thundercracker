@@ -36,5 +36,5 @@ gen_assets.lua: MapTool.exe
 	mono MapTool.exe -gen_lua
 
 MapTool.exe: Tools/MapTool/*.cs
-	gmcs Tools/MapTool/*.cs -out:MapTool.exe -r:System.Drawing.dll
+	gmcs -debug Tools/MapTool/*.cs -out:MapTool.exe -r:System.Drawing.dll
 

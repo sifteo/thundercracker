@@ -4,7 +4,7 @@
 class GameView;
 struct MapRoom;
 
-#define WALK_SPEED 4
+#define WALK_SPEED 3
 #define PLAYER_STATUS_IDLE 0
 #define PLAYER_STATUS_WALKING 1
 
@@ -26,6 +26,7 @@ private:
   int mDir;
   int mKeyCount;
   int mAnimFrame;
+  float mAnimTime;
 
   // stately variables
   int mProgress;
@@ -58,6 +59,7 @@ public:
 
   void Move(int dx, int dy);
   void Update(float dt);
+  void UpdateAnimation(float dt);
   void Reset();
   
 private:
