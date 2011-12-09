@@ -13,6 +13,10 @@ include Makefile.objs
 include Makefile.platform
 
 TC_DIR = ../..
+
+include stm32/st-usb/st-usb.mk
+OBJS_STM32 += $(OBJS_USB_STM32)
+
 ifeq ($(BUILD_PLATFORM), windows32)
     DEPS_DIR = $(TC_DIR)/deps/win32
     # TBD if there's a better way, but windows ar or libtool needs to have all the
@@ -28,7 +32,8 @@ endif
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -Icommon -I../include
-CFLAGS_STM32 := $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER
+# NOTE: ST defines here are temporary until we integrate our own USB code
+CFLAGS_STM32 := -Istm32 $(SPEEX_INC) $(INC_USB_STM32) -DUSE_STM3210C_EVAL -DSTM32F10X_CL -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER
 CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include \
              -I$(DEPS_DIR)/speex/include
 
