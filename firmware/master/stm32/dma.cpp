@@ -20,7 +20,7 @@ void Dma::registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void 
             return;
         }
         if (Ch1Mask == 0) {
-            RCC.AHBENR |= (1 << 0);
+            RCC_SIFTEO.AHBENR |= (1 << 0);
             dma->IFCR = 0x0FFFFFFF; // clear all ISRs
         }
         Ch1Mask |= (1 << channel); // mark it as enabled
@@ -33,7 +33,7 @@ void Dma::registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void 
             return;
         }
         if (Ch1Mask == 0) {
-            RCC.AHBENR |= (1 << 1);
+            RCC_SIFTEO.AHBENR |= (1 << 1);
             dma->IFCR = 0x0FFFFFFF; // clear all ISRs
         }
         Ch2Mask |= (1 << channel); // mark it as enabled
@@ -47,7 +47,7 @@ void Dma::unregisterHandler(volatile DMA_t *dma, int channel)
     if (dma == &DMA1) {
         Ch1Mask &= ~(1 << channel); // mark it as disabled
         if (Ch1Mask == 0) { // last one? shut it down
-            RCC.AHBENR &= ~(1 << 0);
+            RCC_SIFTEO.AHBENR &= ~(1 << 0);
         }
         Ch1Handlers[channel].isrfunc = 0;
         Ch1Handlers[channel].param = 0;
@@ -55,7 +55,7 @@ void Dma::unregisterHandler(volatile DMA_t *dma, int channel)
     else if (dma == &DMA2) {
         Ch2Mask &= ~(1 << channel); // mark it as disabled
         if (Ch2Mask == 0) { // last one? shut it down
-            RCC.AHBENR &= ~(1 << 1);
+            RCC_SIFTEO.AHBENR &= ~(1 << 1);
         }
         Ch2Handlers[channel].isrfunc = 0;
         Ch2Handlers[channel].param = 0;

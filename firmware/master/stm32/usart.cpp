@@ -8,19 +8,19 @@
 void Usart::init(int rate, StopBits bits)
 {
     if (uart == &USART1) {
-        RCC.APB2ENR |= (1 << 14);
+        RCC_SIFTEO.APB2ENR |= (1 << 14);
     }
     else if (uart == &USART2) {
-        RCC.APB1ENR |= (1 << 17);
+        RCC_SIFTEO.APB1ENR |= (1 << 17);
     }
     else if (uart == &USART3) {
-        RCC.APB1ENR |= (1 << 18);
+        RCC_SIFTEO.APB1ENR |= (1 << 18);
     }
     else if (uart == &UART4) {
-        RCC.APB1ENR |= (1 << 19);
+        RCC_SIFTEO.APB1ENR |= (1 << 19);
     }
     else if (uart == &UART5) {
-        RCC.APB1ENR |= (1 << 20);
+        RCC_SIFTEO.APB1ENR |= (1 << 20);
     }
 
     if (uart == &USART1)
@@ -45,19 +45,19 @@ void Usart::init(int rate, StopBits bits)
 void Usart::deinit()
 {
     if (uart == &USART1) {
-        RCC.APB2ENR &= ~(1 << 14);
+        RCC_SIFTEO.APB2ENR &= ~(1 << 14);
     }
     else if (uart == &USART2) {
-        RCC.APB1ENR &= ~(1 << 17);
+        RCC_SIFTEO.APB1ENR &= ~(1 << 17);
     }
     else if (uart == &USART3) {
-        RCC.APB1ENR &= ~(1 << 18);
+        RCC_SIFTEO.APB1ENR &= ~(1 << 18);
     }
     else if (uart == &UART4) {
-        RCC.APB1ENR &= ~(1 << 19);
+        RCC_SIFTEO.APB1ENR &= ~(1 << 19);
     }
     else if (uart == &UART5) {
-        RCC.APB1ENR &= ~(1 << 20);
+        RCC_SIFTEO.APB1ENR &= ~(1 << 20);
     }
 }
 

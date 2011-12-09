@@ -51,8 +51,8 @@ IRQ_HANDLER ISR_TIM4()
 void AudioOutDevice::init(SampleRate samplerate, AudioMixer *mixer)
 {
     AFIO.MAPR |= (1 << 6);                  // TIM1 partial remap for complementary channels
-    NVIC.irqEnable(IVT.TIM4);
-    NVIC.irqPrioritize(IVT.TIM4, 0x80);     //   Reduced priority
+    NVIC_SIFTEO.irqEnable(IVT.TIM4);
+    NVIC_SIFTEO.irqPrioritize(IVT.TIM4, 0x80);     //   Reduced priority
 
 #if AUDIOOUT_BACKEND == PWM_BACKEND
     GPIOPin outA(&GPIOA, 9);
@@ -77,12 +77,12 @@ void AudioOutDevice::stop()
 
 bool AudioOutDevice::isBusy()
 {
-    return audioOutBackend.isBusy();
+    return false; //audioOutBackend.isBusy();
 }
 
 int AudioOutDevice::sampleRate()
 {
-    return audioOutBackend.sampleRate();
+    return 0; //audioOutBackend.sampleRate();
 }
 
 void AudioOutDevice::setSampleRate(SampleRate samplerate)

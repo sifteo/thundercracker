@@ -6,35 +6,35 @@
 void HwTimer::init(int period, int prescaler)
 {
     if (tim == &TIM2) {
-        RCC.APB1ENR |= (1 << 0); // TIM2 enable
-        RCC.APB1RSTR = (1 << 0); // TIM2 reset
-        RCC.APB1RSTR = 0;
+        RCC_SIFTEO.APB1ENR |= (1 << 0); // TIM2 enable
+        RCC_SIFTEO.APB1RSTR = (1 << 0); // TIM2 reset
+        RCC_SIFTEO.APB1RSTR = 0;
     }
     else if (tim == &TIM3) {
-        RCC.APB1ENR |= (1 << 1); // TIM3 enable
-        RCC.APB1RSTR = (1 << 1); // TIM3 reset
-        RCC.APB1RSTR = 0;
+        RCC_SIFTEO.APB1ENR |= (1 << 1); // TIM3 enable
+        RCC_SIFTEO.APB1RSTR = (1 << 1); // TIM3 reset
+        RCC_SIFTEO.APB1RSTR = 0;
 
-        NVIC.irqEnable(IVT.DMA1_Channel3);
-        NVIC.irqPrioritize(IVT.DMA1_Channel3, 0x81);
+        NVIC_SIFTEO.irqEnable(IVT.DMA1_Channel3);
+        NVIC_SIFTEO.irqPrioritize(IVT.DMA1_Channel3, 0x81);
     }
     else if (tim == &TIM4) {
-        RCC.APB1ENR |= (1 << 2); // TIM4 enable
-        RCC.APB1RSTR = (1 << 2); // TIM4 reset
-        RCC.APB1RSTR = 0;
+        RCC_SIFTEO.APB1ENR |= (1 << 2); // TIM4 enable
+        RCC_SIFTEO.APB1RSTR = (1 << 2); // TIM4 reset
+        RCC_SIFTEO.APB1RSTR = 0;
     }
     else if (tim == &TIM5) {
-        RCC.APB1ENR |= (1 << 3); // TIM5 enable
-        RCC.APB1RSTR = (1 << 3); // TIM5 reset
-        RCC.APB1RSTR = 0;
+        RCC_SIFTEO.APB1ENR |= (1 << 3); // TIM5 enable
+        RCC_SIFTEO.APB1RSTR = (1 << 3); // TIM5 reset
+        RCC_SIFTEO.APB1RSTR = 0;
 
-        NVIC.irqEnable(IVT.DMA2_Channel4_5);
-        NVIC.irqPrioritize(IVT.DMA2_Channel4_5, 0x81);
+        NVIC_SIFTEO.irqEnable(IVT.DMA2_Channel4_5);
+        NVIC_SIFTEO.irqPrioritize(IVT.DMA2_Channel4_5, 0x81);
     }
     else if (tim == &TIM1) {
-        RCC.APB2ENR |= (1 << 11); // TIM1 enable
-        RCC.APB2RSTR = (1 << 11); // TIM1 reset
-        RCC.APB2RSTR = 0;
+        RCC_SIFTEO.APB2ENR |= (1 << 11); // TIM1 enable
+        RCC_SIFTEO.APB2RSTR = (1 << 11); // TIM1 reset
+        RCC_SIFTEO.APB2RSTR = 0;
     }
 
     // Timer configuration
@@ -70,21 +70,21 @@ void HwTimer::end()
     tim->SR   = 0;  // clear status
 
     if (tim == &TIM2) {
-        RCC.APB1ENR &= ~(1 << 0); // TIM2 disable
+        RCC_SIFTEO.APB1ENR &= ~(1 << 0); // TIM2 disable
     }
     else if (tim == &TIM3) {
-        RCC.APB1ENR &= ~(1 << 1); // TIM3 disable
-        NVIC.irqDisable(IVT.DMA1_Channel3);
+        RCC_SIFTEO.APB1ENR &= ~(1 << 1); // TIM3 disable
+        NVIC_SIFTEO.irqDisable(IVT.DMA1_Channel3);
     }
     else if (tim == &TIM4) {
-        RCC.APB1ENR &= ~(1 << 2); // TIM4 disable
+        RCC_SIFTEO.APB1ENR &= ~(1 << 2); // TIM4 disable
     }
     else if (tim == &TIM5) {
-        RCC.APB1ENR &= ~(1 << 3); // TIM5 disable
-        NVIC.irqDisable(IVT.DMA2_Channel4_5);
+        RCC_SIFTEO.APB1ENR &= ~(1 << 3); // TIM5 disable
+        NVIC_SIFTEO.irqDisable(IVT.DMA2_Channel4_5);
     }
     else if (tim == &TIM1) {
-        RCC.APB2ENR &= ~(1 << 11); // TIM1 disable
+        RCC_SIFTEO.APB2ENR &= ~(1 << 11); // TIM1 disable
     }
 }
 
@@ -116,20 +116,20 @@ void HwTimer::configureChannel(int ch, Polarity polarity, TimerMode timmode, Out
 
         switch (ch) {
         case 1:
-            NVIC.irqEnable(IVT.DMA1_Channel2);
-            NVIC.irqPrioritize(IVT.DMA1_Channel2, 0x81);
+            NVIC_SIFTEO.irqEnable(IVT.DMA1_Channel2);
+            NVIC_SIFTEO.irqPrioritize(IVT.DMA1_Channel2, 0x81);
             break;
         case 2:
-            NVIC.irqEnable(IVT.DMA1_Channel3);
-            NVIC.irqPrioritize(IVT.DMA1_Channel3, 0x81);
+            NVIC_SIFTEO.irqEnable(IVT.DMA1_Channel3);
+            NVIC_SIFTEO.irqPrioritize(IVT.DMA1_Channel3, 0x81);
             break;
         case 3:
-            NVIC.irqEnable(IVT.DMA1_Channel6);
-            NVIC.irqPrioritize(IVT.DMA1_Channel6, 0x81);
+            NVIC_SIFTEO.irqEnable(IVT.DMA1_Channel6);
+            NVIC_SIFTEO.irqPrioritize(IVT.DMA1_Channel6, 0x81);
             break;
         case 4:
-            NVIC.irqEnable(IVT.DMA1_Channel4);
-            NVIC.irqPrioritize(IVT.DMA1_Channel4, 0x81);
+            NVIC_SIFTEO.irqEnable(IVT.DMA1_Channel4);
+            NVIC_SIFTEO.irqPrioritize(IVT.DMA1_Channel4, 0x81);
             break;
         }
 

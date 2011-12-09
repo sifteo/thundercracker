@@ -16,6 +16,12 @@
 #include "hardware.h"
 #include "vectors.h"
 #include "systime.h"
+#include "usb_core.h"
+#include "usb_conf.h"
+#include "usbd_usr.h"
+#include "usbd_desc.h"
+#include "usbd_cdc_core.h"
+#include "usbd_core.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
@@ -54,28 +60,28 @@ extern "C" void _start()
 
     // system runs from HSI on reset - make sure this is on and stable
     // before we switch away from it
-    RCC.CR |= (1 << 0); // HSION
-    while (!(RCC.CR & (1 << 1))); // wait for HSI ready
+    RCC_SIFTEO.CR |= (1 << 0); // HSION
+    while (!(RCC_SIFTEO.CR & (1 << 1))); // wait for HSI ready
 
-    RCC.CR &=  (0x1F << 3)  |   // HSITRIM reset value
+    RCC_SIFTEO.CR &=  (0x1F << 3)  |   // HSITRIM reset value
                (1 << 0);        // HSION
-    RCC.CFGR = 0;       // reset
+    RCC_SIFTEO.CFGR = 0;       // reset
     // Wait until HSI is the source.
-    while ((RCC.CFGR & (3 << 2)) != 0x0);
+    while ((RCC_SIFTEO.CFGR & (3 << 2)) != 0x0);
 
     // fire up HSE
-    RCC.CR |= (1 << 16); // HSEON
-    while (!(RCC.CR & (1 << 17))); // wait for HSE to be stable
+    RCC_SIFTEO.CR |= (1 << 16); // HSEON
+    while (!(RCC_SIFTEO.CR & (1 << 17))); // wait for HSE to be stable
 
     // fire up the PLL
-    RCC.CFGR |= (7 << 18) |         // PLLMUL (x9)
+    RCC_SIFTEO.CFGR |= (7 << 18) |         // PLLMUL (x9)
                 (0 << 17) |         // PLL XTPRE - no divider
                 (1 << 16);          // PLLSRC - HSE
-    RCC.CR   |= (1 << 24);          // turn PLL on
-    while (!(RCC.CR & (1 << 25)));  // wait for PLL to be ready
+    RCC_SIFTEO.CR   |= (1 << 24);          // turn PLL on
+    while (!(RCC_SIFTEO.CR & (1 << 25)));  // wait for PLL to be ready
 
     // configure all the other buses
-    RCC.CFGR =  (0 << 24)       |   // MCO - mcu clock output
+    RCC_SIFTEO.CFGR =  (0 << 24)       |   // MCO - mcu clock output
                 (1 << 22)       |   // USBPRE - divide by 1
                 (7 << 18)       |   // PLLMUL - x9
                 (0 << 17)       |   // PLLXTPRE - no divider
@@ -88,18 +94,18 @@ extern "C" void _start()
                 (1 << 1);   // two wait states since we're @ 72MHz
 
     // switch to PLL as system clock
-    RCC.CFGR |= (2 << 0);
-    while ((RCC.CFGR & (3 << 2)) != (2 << 2));   // wait till we're running from PLL
+    RCC_SIFTEO.CFGR |= (2 << 0);
+    while ((RCC_SIFTEO.CFGR & (3 << 2)) != (2 << 2));   // wait till we're running from PLL
 
     // reset all peripherals
-    RCC.APB1RSTR = 0xFFFFFFFF;
-    RCC.APB1RSTR = 0;
-    RCC.APB2RSTR = 0xFFFFFFFF;
-    RCC.APB2RSTR = 0;
+    RCC_SIFTEO.APB1RSTR = 0xFFFFFFFF;
+    RCC_SIFTEO.APB1RSTR = 0;
+    RCC_SIFTEO.APB2RSTR = 0xFFFFFFFF;
+    RCC_SIFTEO.APB2RSTR = 0;
 
     // Enable peripheral clocks
-    RCC.APB1ENR = 0x00004000;   // SPI2
-    RCC.APB2ENR = 0x0000003d;   // GPIO/AFIO
+    RCC_SIFTEO.APB1ENR = 0x00004000;   // SPI2
+    RCC_SIFTEO.APB2ENR = 0x0000003d;   // GPIO/AFIO
 
 #if 0
     // debug the clock output - MCO
@@ -128,6 +134,20 @@ extern "C" void _start()
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
         p[0]();
 
+
+    __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
+//    USB_OTG_CORE_HANDLE USB_OTG_dev;
+    USBD_Init(&USB_OTG_dev,
+              USB_OTG_FS_CORE_ID,
+              &USR_desc,
+              &USBD_CDC_cb,
+              &USR_cb);
+//    USBD_DeInit(&USB_OTG_dev);
+
+//    for (;;) {
+//        ;
+//    }
+
     /*
      * Nested Vectored Interrupt Controller setup.
      *
@@ -135,8 +155,8 @@ extern "C" void _start()
      * those need to be unmasked by the peripheral's driver code.
      */
 
-    NVIC.irqEnable(IVT.EXTI15_10);              // Radio interrupt
-    NVIC.irqPrioritize(IVT.EXTI15_10, 0x80);    //   Reduced priority
+    NVIC_SIFTEO.irqEnable(IVT.EXTI15_10);              // Radio interrupt
+    NVIC_SIFTEO.irqPrioritize(IVT.EXTI15_10, 0x80);    //   Reduced priority
 
     /*
      * High-level hardware initialization
