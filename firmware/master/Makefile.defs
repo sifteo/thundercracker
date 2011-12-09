@@ -5,6 +5,7 @@ LIBTOOL_SIM = libtool
 CC_STM32 = arm-none-eabi-gcc
 GDB_STM32 = arm-none-eabi-gdb
 RANLIB_STM32 = arm-none-eabi-ranlib
+AR_STM32 = arm-none-eabi-ar
 
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
