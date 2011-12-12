@@ -44,7 +44,7 @@ int AudioChannelWrapper::pullAudio(int16_t *buffer, int len)
             int16_t src = buf.dequeue() | (buf.dequeue() << 8);
             int32_t sample = *buffer + ((src * this->volume) / Audio::MAX_VOLUME);
             // TODO - more subtle compression instead of hard limiter
-            *buffer += Math::clamp((int16_t)sample, (int16_t)SHRT_MIN, (int16_t)SHRT_MAX);
+            *buffer += Math::clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
             buffer++;
         }
         // if we have nothing buffered, and there's nothing else to read, we're done
