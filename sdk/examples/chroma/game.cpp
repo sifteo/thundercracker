@@ -100,6 +100,9 @@ void Game::Update()
 		for( int i = 0; i < NUM_CUBES; i++ )
             cubes[i].Update( System::clock(), dt );
 
+        //we need to call System::paint before and after drawing for proper syncing
+        System::paint();
+
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
 	}
