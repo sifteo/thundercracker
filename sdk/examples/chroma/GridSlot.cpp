@@ -158,6 +158,9 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
             if( fadeTime > 0.0f )
                 fadeFrame =  ( fadeTime ) / FADE_FRAME_TIME;
 
+            if( fadeFrame >= NUM_POINTS_FRAMES )
+                fadeFrame = NUM_POINTS_FRAMES - 1;
+
             if( m_score > 9 )
                 vid.BG0_drawAsset(Vec2( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES + fadeFrame);
             vid.BG0_drawAsset(Vec2( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
