@@ -109,7 +109,12 @@ void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
         {
             Vec2 &loc = GLIMMER_ORDER[ m_group ][i];
             if( pWrapper->GetSlot( loc.x, loc.y )->isAlive() )
-                bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), GlimmerImg, m_frame );
+            {
+                if( pWrapper->GetSlot( loc.x, loc.y )->IsFixed() )
+                    bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), FixedGlimmer, m_frame );
+                else
+                    bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), GlimmerImg, m_frame );
+            }
         }
     }
 }

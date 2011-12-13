@@ -93,6 +93,7 @@ public:
 	CubeState getState() const { return m_state; }
     void setState( CubeState state );
     //bool IsIdle() const;
+    inline int getLastTiltDir() const { return m_lastTiltDir; }
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -128,6 +129,7 @@ private:
     float m_timeTillGlimmer;
 
     float m_stateTime;
+    int m_lastTiltDir;
 };
 
 #endif

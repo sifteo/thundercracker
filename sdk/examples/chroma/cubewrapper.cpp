@@ -43,7 +43,8 @@ static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] =
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
-        m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f )
+        m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
+        m_lastTiltDir( 0 )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -445,6 +446,8 @@ void CubeWrapper::Tilt( int dir )
 
 	if( bChanged )
 		Game::Inst().setTestMatchFlag();
+
+    m_lastTiltDir = dir;
 }
 
 

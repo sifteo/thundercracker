@@ -49,6 +49,17 @@ const AssetImage *GridSlot::EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 };
 
 
+const AssetImage *GridSlot::FIXED_TEXTURES[ GridSlot::NUM_FIXED_COLORS ] =
+{
+    &FixedGem0,
+};
+
+const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_FIXED_COLORS ] =
+{
+    &FixedExplode0,
+};
+
+
 GridSlot::GridSlot() : 
 	m_state( STATE_GONE ),
 	m_eventTime( 0.0f ),
@@ -99,7 +110,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		{
 			const AssetImage &tex = GetTexture();
 			if( IsFixed() )
-				vid.BG0_drawAsset(vec, tex, 2);
+                vid.BG0_drawAsset(vec, FIXED_TEXTURES[ m_color ], 0);
 			else
 			{
                 const AssetImage &animtex = *TEXTURES[ m_color ];
@@ -127,6 +138,11 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
             vid.BG0_drawAsset(vec, tex, GetRollingFrame( m_animFrame ));
 			break;
 		}
+        case STATE_FIXEDATTEMPT:
+        {
+            vid.BG0_drawAsset(vec, FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
+            break;
+        }
 		case STATE_MARKED:
         {
 			const AssetImage &tex = GetTexture();
@@ -219,6 +235,14 @@ void GridSlot::Update(float t)
 
 			break;
 		}
+        case STATE_FIXEDATTEMPT:
+        {
+            m_animFrame++;
+            if( m_animFrame / NUM_FRAMES_PER_FIXED_ANIM_FRAME >= NUM_FIXED_FRAMES )
+                m_state = STATE_LIVING;
+
+            break;
+        }
 		case STATE_MARKED:
 		{
 			if( t - m_eventTime > MARK_SPREAD_DELAY )
@@ -424,6 +448,16 @@ unsigned int GridSlot::GetRollingFrame( unsigned int index )
     ASSERT( index < NUM_ROLL_FRAMES);
 
     return ROLLING_FRAMES[ index / NUM_FRAMES_PER_ROLL_ANIM_FRAME ];
+}
+
+
+unsigned int GridSlot::GetFixedFrame( unsigned int index )
+{
+    ASSERT( index / NUM_FRAMES_PER_FIXED_ANIM_FRAME < NUM_FIXED_FRAMES);
+
+    int frame = NUM_FIXED_FRAMES * m_pWrapper->getLastTiltDir() + ( index / NUM_FRAMES_PER_FIXED_ANIM_FRAME ) + 1;
+
+    return frame;
 }
 
 /*

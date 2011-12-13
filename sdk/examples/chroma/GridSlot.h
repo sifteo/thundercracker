@@ -19,6 +19,9 @@ public:
 	static const unsigned int NUM_COLORS = 8;
 	static const AssetImage *TEXTURES[ NUM_COLORS ];
     static const AssetImage *EXPLODINGTEXTURES[ NUM_COLORS ];
+    static const unsigned int NUM_FIXED_COLORS = 1;
+    static const AssetImage *FIXED_TEXTURES[ NUM_FIXED_COLORS ];
+    static const AssetImage *FIXED_EXPLODINGTEXTURES[ NUM_FIXED_COLORS ];
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
     static const unsigned int NUM_ROLL_FRAMES;
     //static const unsigned int NUM_IDLE_FRAMES;
@@ -32,8 +35,9 @@ public:
     static const float EXPLODE_FRAME_LEN;
     static const int NUM_EXPLODE_FRAMES = 7;
     static const int NUM_FRAMES_PER_ROLL_ANIM_FRAME = 3;
-    static const int NUM_FRAMES_PER_IDLE_ANIM_FRAME = 3;
+    static const int NUM_FRAMES_PER_FIXED_ANIM_FRAME = 3;
     static const unsigned int NUM_POINTS_FRAMES = 4;
+    static const int NUM_FIXED_FRAMES = 4;
 
 	typedef enum 
 	{
@@ -41,6 +45,7 @@ public:
 		STATE_PENDINGMOVE,
 		STATE_MOVING,
 		STATE_FINISHINGMOVE,
+        STATE_FIXEDATTEMPT,
 		STATE_MARKED,
 		STATE_EXPLODING,
 		STATE_SHOWINGSCORE,
@@ -87,6 +92,7 @@ private:
     //get the rolling frame of the given index
     unsigned int GetRollingFrame( unsigned int index );
     //unsigned int GetIdleFrame();
+    unsigned int GetFixedFrame( unsigned int index );
 
 	SLOT_STATE m_state;
 	unsigned int m_color;
