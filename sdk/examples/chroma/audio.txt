@@ -1,0 +1,6 @@
+astrokraut.raw
+dotFill.raw
+clear2.raw
+clear3.raw
+clear4.raw
+clear5.raw
