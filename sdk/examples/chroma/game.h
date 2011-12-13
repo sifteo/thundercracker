@@ -83,6 +83,8 @@ public:
 	bool no_match_stranded_side() const;
 	bool no_match_mismatch_side() const;
 
+    void playSound( const _SYSAudioModule &sound );
+
 private:
 	void TestMatches();
 	bool m_bTestMatches;
@@ -99,6 +101,9 @@ private:
 	float m_splashTime;
 	TimeKeeper m_timer;
     float m_fLastTime;
+
+    AudioChannel m_SFXChannel;
+    AudioChannel m_musicChannel;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
 };

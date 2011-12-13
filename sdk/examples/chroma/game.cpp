@@ -7,6 +7,7 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 #include "string.h"
 #include <stdlib.h>
 
@@ -58,6 +59,11 @@ void Game::Init()
 
 	m_splashTime = System::clock();
     m_fLastTime = m_splashTime;
+
+    m_SFXChannel.init();
+    m_musicChannel.init();
+
+    m_musicChannel.play( astrokraut, LoopRepeat );
 }
 
 
@@ -75,6 +81,7 @@ void Game::Update()
 		if( System::clock() - m_splashTime > 3.0f )
 		{
             m_state = STATE_INTRO;
+            m_musicChannel.play( astrokraut, LoopRepeat );
 			m_timer.Init( System::clock() );
 		}
 	}
@@ -120,6 +127,7 @@ void Game::Reset()
 	m_iLevel = 0;
 
 	m_state = STARTING_STATE;
+    //m_musicChannel.play( astrokraut, LoopRepeat );
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
@@ -186,19 +194,15 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 			//check_puzzle();
 		}
 		else
-		{
-			//TODO sound
-			/*# play sound based on number of gems cleared in this combo.
-			dings = (
-					(10, "score5"),
-					(7, "score4"),
-					(4, "score3"),
-					(2, "score2"),
-					(0, None),
-					)
-			sound = reduce(lambda x,y: cleared >= x[0] and x or y, dings)[1]
-			if sound:
-				self.sound_manager.add(sound)*/
+		{          
+            if( m_iDotsCleared >= 10 )
+                Game::Inst().playSound(clear5);
+            else if( m_iDotsCleared >= 7 )
+                Game::Inst().playSound(clear4);
+            else if( m_iDotsCleared >= 4 )
+                Game::Inst().playSound(clear3);
+            else if( m_iDotsCleared >= 2 )
+                Game::Inst().playSound(clear2);
 
 			char aBuf[16];
             snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
@@ -424,4 +428,10 @@ void Game::enterScore()
             break;
         }
     }
+}
+
+
+void Game::playSound( const _SYSAudioModule &sound )
+{
+    m_SFXChannel.play(sound, LoopOnce);
 }

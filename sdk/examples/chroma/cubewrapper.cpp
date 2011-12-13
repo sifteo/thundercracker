@@ -7,6 +7,7 @@
 #include "cubewrapper.h"
 #include "game.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 #include "utils.h"
 #include "string.h"
 #include <vector>
@@ -722,17 +723,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 	if( bAddLevel )
 		Game::Inst().addLevel();
 
-	//TODO SOUND
-	//self.game.sound_manager.add("reload")
-
-	/*for( int i = 0; i < NUM_ROWS; i++ )
-	{
-		for( int j = 0; j < NUM_COLS; j++ )
-		{
-			GridSlot &slot = m_grid[i][j];
-			slot.Init( this, i, j );
-		}
-	}*/
+    Game::Inst().playSound(dotFill);
 
 	/*
     Fill all empty spots in the grid with new gems.
