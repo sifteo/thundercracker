@@ -98,6 +98,8 @@ uint8_t accel_z_low;
  
 #define NB_DEADLINE         20      // 15 us (Max 48 us)
 
+#define NBR_SQUELCH_ENABLE          // uncomment to enable squelching during neighbor RX - default is disabled
+
 uint8_t nb_bits_remaining;          // Bit counter for transmit or receive
 uint8_t nb_buffer[2];               // Packet shift register for TX/RX
 uint8_t nb_tx_packet[2];            // The packet we're broadcasting
@@ -499,11 +501,15 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Briefly squelch the receive LC tanks, and clear the mask.
         ; Do this concurently with capturing and resetting Timer 1.
         
+        #ifdef NBR_SQUELCH_ENABLE
         anl     _MISC_DIR, #~MISC_NB_OUT        ; All outputs squelched
+        #endif
         mov     a, TL1                          ; Capture count from Timer 1
         mov     TL1, #0                         ; Reset Timer 1
         add     a, #0xFF                        ; Nonzero -> C
+        #ifdef NBR_SQUELCH_ENABLE
         orl     _MISC_DIR, #MISC_NB_OUT         ; Clear the squelch mask
+        #endif
 
         jnb     _nb_rx_mask_pending, 1$         ; Do we have the second mask bit pending?
         anl     _MISC_DIR, #~MISC_NB_MASK1      ; Yes, set that mask.
