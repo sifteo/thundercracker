@@ -149,17 +149,20 @@ State& CubeStateMachine::getState(unsigned index)
     ASSERT(index < getNumStates());
     switch (index)
     {
+    case CubeStateIndex_Title:
+        return mTitleState;
+
     default:
-    case ScoredCubeStateIndex_NotWord:
+    case CubeStateIndex_NotWordScored:
         return mNotWordScoredState;
 
-    case ScoredCubeStateIndex_NewWord:
+    case CubeStateIndex_NewWordScored:
         return mNewWordScoredState;
 
-    case ScoredCubeStateIndex_OldWord:
+    case CubeStateIndex_OldWordScored:
         return mOldWordScoredState;
 
-    case ScoredCubeStateIndex_EndOfRound:
+    case CubeStateIndex_EndOfRoundScored:
         return mEndOfRoundScoredState;
 
     }
@@ -167,5 +170,5 @@ State& CubeStateMachine::getState(unsigned index)
 
 unsigned CubeStateMachine::getNumStates() const
 {
-    return ScoredCubeStateIndex_NumStates;
+    return CubeStateIndex_NumStates;
 }

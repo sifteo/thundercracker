@@ -3,17 +3,20 @@
 
 #include <sifteo.h>
 #include "StateMachine.h"
+#include "TitleGameState.h"
 #include "ScoredGameState.h"
 #include "ScoredGameState_EndOfRound.h"
 #include "CubeStateMachine.h"
+
 using namespace Sifteo;
 
-enum ScoredGameStateIndex
+enum GameStateIndex
 {
-    ScoredGameStateIndex_Play,
-    ScoredGameStateIndex_EndOfRound,
+    GameStateIndex_Title,
+    GameStateIndex_PlayScored,
+    GameStateIndex_EndOfRoundScored,
 
-    ScoredGameStateIndex_NumStates
+    GameStateIndex_NumStates
 };
 
 
@@ -44,6 +47,7 @@ protected:
 
 
 private:
+    TitleGameState mTitleState;
     ScoredGameState mScoredState;
     ScoredGameState_EndOfRound mScoredEndOfRoundState;
     CubeStateMachine mCubeStateMachines[MAX_CUBES];

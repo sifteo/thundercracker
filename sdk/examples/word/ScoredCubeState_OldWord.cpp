@@ -37,12 +37,12 @@ unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& dat
                     if (isOldWord)
                     {
                         GameStateMachine::sOnEvent(EventID_OldWordFound, data);
-                        return ScoredCubeStateIndex_OldWord;
+                        return CubeStateIndex_OldWordScored;
                     }
                     else
                     {
                         GameStateMachine::sOnEvent(EventID_NewWordFound, data);
-                        return ScoredCubeStateIndex_NewWord;
+                        return CubeStateIndex_NewWordScored;
                     }
                 }
                 else
@@ -51,12 +51,12 @@ unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& dat
                     data.mWordBroken.mCubeIDStart = getStateMachine().getCube().id();
                     GameStateMachine::sOnEvent(EventID_WordBroken, data);
 
-                    return ScoredCubeStateIndex_NotWord;
+                    return CubeStateIndex_NotWordScored;
                 }
             }
             else if (getStateMachine().hasNoNeighbors())
             {
-                return ScoredCubeStateIndex_NotWord;
+                return CubeStateIndex_NotWordScored;
             }
 
             paint();
@@ -67,7 +67,7 @@ unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& dat
         if (!getStateMachine().canBeginWord() &&
             getStateMachine().isConnectedToCubeOnSide(data.mWordBroken.mCubeIDStart))
         {
-            return ScoredCubeStateIndex_NotWord;
+            return CubeStateIndex_NotWordScored;
         }
         break;
 
@@ -75,12 +75,12 @@ unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& dat
         if (!getStateMachine().canBeginWord() &&
              getStateMachine().isConnectedToCubeOnSide(data.mWordFound.mCubeIDStart))
         {
-            return ScoredCubeStateIndex_NewWord;
+            return CubeStateIndex_NewWordScored;
         }
         break;
 
     case EventID_EndRound:
-        return ScoredCubeStateIndex_EndOfRound;
+        return CubeStateIndex_EndOfRoundScored;
     }
     return getStateMachine().getCurrentStateIndex();
 }

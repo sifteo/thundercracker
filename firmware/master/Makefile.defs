@@ -5,6 +5,7 @@ LIBTOOL_SIM = libtool
 CC_STM32 = arm-none-eabi-gcc
 GDB_STM32 = arm-none-eabi-gdb
 RANLIB_STM32 = arm-none-eabi-ranlib
+AR_STM32 = arm-none-eabi-ar
 
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
@@ -75,7 +76,8 @@ ARCH_STM32 := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
 
 CFLAGS_STM32 += $(CFLAGS) $(ARCH_STM32)
 CCFLAGS_STM32 := $(CFLAGS_STM32) $(CCFLAGS) # inherit all STM32 CFLAGS plus CCFLAGS
+# TODO - provide $(APP) or similar to specify name of map file
 LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
-              -Wl,--gc-sections,-u,IVT \
+              -Wl,-Map=MAPFILE.map,--cref,--gc-sections,-u,IVT \
               -T $(LDSCRIPT_STM32) -nostartfiles
 

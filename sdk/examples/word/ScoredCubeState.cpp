@@ -8,6 +8,7 @@ ScoredCubeState::ScoredCubeState()
 {
 }
 
+// TODO remove?
 unsigned ScoredCubeState::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)

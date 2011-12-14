@@ -3,6 +3,7 @@
 
 #include <sifteo.h>
 #include "StateMachine.h"
+#include "TitleCubeState.h"
 #include "ScoredCubeState_NotWord.h"
 #include "ScoredCubeState_NewWord.h"
 #include "ScoredCubeState_OldWord.h"
@@ -40,6 +41,7 @@ private:
     unsigned mNumLetters;
 
     Cube* mCube;
+    TitleCubeState mTitleState;
     ScoredCubeState_NotWord mNotWordScoredState;
     ScoredCubeState_NewWord mNewWordScoredState;
     ScoredCubeState_OldWord mOldWordScoredState;

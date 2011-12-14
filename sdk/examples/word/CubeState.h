@@ -3,6 +3,17 @@
 
 #include "State.h"
 
+enum CubeStateIndex
+{
+    CubeStateIndex_Title,
+    CubeStateIndex_NotWordScored,
+    CubeStateIndex_NewWordScored,
+    CubeStateIndex_OldWordScored,
+    CubeStateIndex_EndOfRoundScored,
+
+    CubeStateIndex_NumStates
+};
+
 class CubeStateMachine;
 
 class CubeState : public State
