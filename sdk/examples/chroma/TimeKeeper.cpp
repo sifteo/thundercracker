@@ -97,7 +97,10 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper )
         bg1helper.DrawAsset( Vec2( 15, 7 ), TimerLowRight, frame );
 
         if( m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )
+        {
             m_blinkCounter = 0;
+            //Game::Inst().playSound(clear2);
+        }
     }
 
 }

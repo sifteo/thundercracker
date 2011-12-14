@@ -31,6 +31,7 @@ void GameOver::Update( float dt )
     if( m_frame >= lastFrame )
     {
         Game::Inst().setState( Game::STATE_POSTGAME );
+        //Game::Inst().playSound(clear2);
         Reset();
     }
 }

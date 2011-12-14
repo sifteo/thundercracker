@@ -282,6 +282,7 @@ void GridSlot::mark()
     m_animFrame = 0;
 	m_state = STATE_MARKED;
 	m_eventTime = System::clock();
+    //Game::Inst().playSound(clear2);
 }
 
 
@@ -342,6 +343,7 @@ void GridSlot::startPendingMove()
 {
 	if( m_state == STATE_PENDINGMOVE )
 	{
+        //Game::Inst().playSound(clear2);
 		m_state = STATE_MOVING;
 		m_animFrame = 0;
 	}
