@@ -35,9 +35,9 @@ public:
     static const float EXPLODE_FRAME_LEN;
     static const int NUM_EXPLODE_FRAMES = 7;
     static const int NUM_FRAMES_PER_ROLL_ANIM_FRAME = 3;
-    static const int NUM_FRAMES_PER_FIXED_ANIM_FRAME = 3;
+    static const unsigned int NUM_FRAMES_PER_FIXED_ANIM_FRAME = 3;
     static const unsigned int NUM_POINTS_FRAMES = 4;
-    static const int NUM_FIXED_FRAMES = 4;
+    static const unsigned int NUM_FIXED_FRAMES = 5;
 
 	typedef enum 
 	{
@@ -65,7 +65,7 @@ public:
     bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING ); }
     bool isMatchable() const { return isAlive() || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING; }
     bool isOccupiable() const { return isEmpty() || m_state == STATE_SHOWINGSCORE; }
-    void setEmpty() { m_state = STATE_GONE; }
+    void setEmpty() { m_state = STATE_GONE; m_bFixed = false; }
 	unsigned int getColor() const { return m_color; }
 	void FillColor(unsigned int color);
 
@@ -76,6 +76,7 @@ public:
 
 	bool IsFixed() const { return m_bFixed; }
 	void MakeFixed() { m_bFixed = true; }
+    inline void setFixedAttempt() { m_state = STATE_FIXEDATTEMPT; m_animFrame = 0;}
 
 	//copy color and some other attributes from target.  Used when tilting
 	void TiltFrom(GridSlot &src);

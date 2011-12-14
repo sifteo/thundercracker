@@ -471,11 +471,19 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
     if( !dest.isOccupiable() )
 		return false;
 
-	if( slot.isTiltable() && !slot.IsFixed() )
+    if( slot.isTiltable() )
 	{
-		dest.TiltFrom(slot);
-		slot.setEmpty();
-		return true;
+        if( slot.IsFixed() )
+        {
+            slot.setFixedAttempt();
+            return false;
+        }
+        else
+        {
+            dest.TiltFrom(slot);
+            slot.setEmpty();
+            return true;
+        }
 	}
 
 	return false;
@@ -866,6 +874,12 @@ void CubeWrapper::Refill( bool bAddLevel )
 		int toFix = Game::Inst().Rand( numEmpties );
 		GridSlot &fix = m_grid[aEmptyLocs[toFix].x][aEmptyLocs[toFix].y];
 		bool bFound = false;
+
+        //TODO, this is only because we don't have all the colors yet!
+        if( fix.getColor() >= GridSlot::NUM_FIXED_COLORS )
+        {
+            fix.FillColor( 0 );
+        }
 
 		if( !fix.IsFixed() )
 		{

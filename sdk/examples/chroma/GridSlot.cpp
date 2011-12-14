@@ -96,7 +96,10 @@ const AssetImage &GridSlot::GetTexture() const
 
 const AssetImage &GridSlot::GetExplodingTexture() const
 {
-    return *EXPLODINGTEXTURES[ m_color ];
+    if( IsFixed() )
+        return *FIXED_EXPLODINGTEXTURES[ m_color ];
+    else
+        return *EXPLODINGTEXTURES[ m_color ];
 }
 
 
@@ -110,7 +113,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		{
 			const AssetImage &tex = GetTexture();
 			if( IsFixed() )
-                vid.BG0_drawAsset(vec, FIXED_TEXTURES[ m_color ], 0);
+                vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
 			else
 			{
                 const AssetImage &animtex = *TEXTURES[ m_color ];
@@ -140,19 +143,13 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		}
         case STATE_FIXEDATTEMPT:
         {
-            vid.BG0_drawAsset(vec, FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
+            vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
             break;
         }
 		case STATE_MARKED:
         {
-			const AssetImage &tex = GetTexture();
-			if( IsFixed() )
-				vid.BG0_drawAsset(vec, tex, 3);
-			else
-            {
-                const AssetImage &exTex = GetExplodingTexture();
-                vid.BG0_drawAsset(vec, exTex, m_animFrame);
-            }
+            const AssetImage &exTex = GetExplodingTexture();
+            vid.BG0_drawAsset(vec, exTex, m_animFrame);
 			break;
 		}
 		case STATE_EXPLODING:
@@ -237,6 +234,7 @@ void GridSlot::Update(float t)
 		}
         case STATE_FIXEDATTEMPT:
         {
+            ASSERT( IsFixed() );
             m_animFrame++;
             if( m_animFrame / NUM_FRAMES_PER_FIXED_ANIM_FRAME >= NUM_FIXED_FRAMES )
                 m_state = STATE_LIVING;
@@ -307,6 +305,7 @@ void GridSlot::explode()
 void GridSlot::die()
 {
 	m_state = STATE_SHOWINGSCORE;
+    m_bFixed = false;
 	m_score = Game::Inst().getIncrementScore();
 	Game::Inst().CheckChain( m_pWrapper );
 	m_eventTime = System::clock();
@@ -329,6 +328,7 @@ void GridSlot::markNeighbor( int row, int col )
 //copy color and some other attributes from target.  Used when tilting
 void GridSlot::TiltFrom(GridSlot &src)
 {
+    m_bFixed = false;
 	m_state = STATE_PENDINGMOVE;
 	m_color = src.m_color;
 	m_eventTime = src.m_eventTime;
