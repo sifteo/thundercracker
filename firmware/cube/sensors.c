@@ -230,7 +230,7 @@ as_9:
         mov     a, _W2DAT
         ; eh...just stuffing X and & values in for now. need to decide how to
         ; reformat the RF ACK packet now that we have 3 axes & 16 bit values
-        mov     a, _accel_y_high
+        mov     a, _accel_x_high
         ; orl     _W2CON0, #W2CON0_STOP
 
         xrl     a, (_ack_data + RF_ACK_ACCEL + 0)
@@ -239,7 +239,7 @@ as_9:
         orl     _ack_len, #RF_ACK_LEN_ACCEL
 1$:
 
-        mov     a, _accel_x_high
+        mov     a, _accel_y_high
         xrl     a, (_ack_data + RF_ACK_ACCEL + 1)
         jz      2$
         xrl     (_ack_data + RF_ACK_ACCEL + 1), a
