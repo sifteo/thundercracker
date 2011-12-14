@@ -227,3 +227,10 @@ void siftmain()
         fade_in_and_out();
     }
 }
+
+
+//USED FOR CES ONLY
+void selectormain()
+{
+    return;
+}

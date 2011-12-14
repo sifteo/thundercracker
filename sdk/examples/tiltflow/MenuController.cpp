@@ -4,35 +4,35 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include "game.h"
+#include "MenuController.h"
 #include "utils.h"
 #include "assets.gen.h"
 
 
-TiltFlowItem MENUITEMS[ Game::NUM_MENU_ITEMS ] =
+TiltFlowItem MENUITEMS[ MenuController::NUM_MENU_ITEMS ] =
 {
     TiltFlowItem( IconFire, TextFire ),
     TiltFlowItem( IconEarth, TextEarth ),
     TiltFlowItem( IconWater, TextWater ),
 };
 
-Game &Game::Inst()
+MenuController &MenuController::Inst()
 {
-	static Game game = Game();
+    static MenuController menu = MenuController();
 
-	return game; 
+    return menu;
 }
 
-Game::Game() : m_Menu( MENUITEMS, NUM_MENU_ITEMS, NUM_CUBES )
+MenuController::MenuController() : m_Menu( MENUITEMS, NUM_MENU_ITEMS, NUM_CUBES )
 {
 	//Reset();
 }
 
 
-void Game::Init()
+void MenuController::Init()
 {
 	for( int i = 0; i < NUM_CUBES; i++ )
-		cubes[i].Init(GameAssets);
+        cubes[i].Init(MenuControllerAssets);
 
     m_Menu.AssignViews();
 
@@ -45,7 +45,7 @@ void Game::Init()
 		done = true;
 		for( int i = 0; i < NUM_CUBES; i++ )
 		{
-			if( !cubes[i].DrawProgress(GameAssets) )
+            if( !cubes[i].DrawProgress(MenuControllerAssets) )
 				done = false;
 
 			PRINT( "in load loop" );
@@ -60,7 +60,7 @@ void Game::Init()
 }
 
 
-void Game::Update()
+void MenuController::Update()
 {
     float t = System::clock();
     float dt = t - m_fLastTime;
@@ -72,7 +72,7 @@ void Game::Update()
 }
 
 
-void Game::Reset()
+void MenuController::Reset()
 {
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{

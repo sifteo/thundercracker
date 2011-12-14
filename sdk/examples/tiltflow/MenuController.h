@@ -4,8 +4,8 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _GAME_H
-#define _GAME_H
+#ifndef _MENUCONTROLLER_H
+#define _MENUCONTROLLER_H
 
 #include <sifteo.h>
 #include "cubewrapper.h"
@@ -14,12 +14,12 @@
 using namespace Sifteo;
 
 //singleton class
-class Game
+class MenuController
 {
 public:    
-	static Game &Inst();
+    static MenuController &Inst();
 	
-	Game();
+    MenuController();
 
 	static const int NUM_CUBES = 2;
     static const int NUM_MENU_ITEMS = 3;

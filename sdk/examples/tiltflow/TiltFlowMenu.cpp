@@ -3,7 +3,7 @@
   //---------------------------------------------------------------------------
 
 #include "TiltFlowMenu.h"
-#include "game.h"
+#include "MenuController.h"
 #include "cubewrapper.h"
 #include "assets.gen.h"
 
@@ -39,7 +39,7 @@ void TiltFlowMenu::AssignViews()
 {
     //TODO ASSIGN VIEWS
     for( int i = 0; i < mNumCubes; i++ )
-        mViews[i].SetCube( &Game::Inst().cubes[i].GetCube() );
+        mViews[i].SetCube( &MenuController::Inst().cubes[i].GetCube() );
 }
 
 
@@ -300,7 +300,7 @@ void TiltFlowView::PaintMenu() {
     DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118);
   }
 
-  BG1Helper &bg1helper = Game::Inst().cubes[ mpCube->id() ].GetBG1Helper();
+  BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
 
   if (mDrawLabel) {
     //TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic

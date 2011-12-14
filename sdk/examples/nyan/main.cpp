@@ -63,3 +63,9 @@ void siftmain() {
 		frame = (frame+1)%12;
     }
 }
+
+//USED FOR CES ONLY
+void selectormain()
+{
+    return;
+}

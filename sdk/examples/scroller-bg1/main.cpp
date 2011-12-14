@@ -77,3 +77,10 @@ void siftmain()
         frame++;
     }
 }
+
+
+//USED FOR CES ONLY
+void selectormain()
+{
+    return;
+}

@@ -11,7 +11,7 @@
 
 using namespace Sifteo;
 
-//wrapper for a cube.  Contains the cube instance and video buffers, along with associated game information
+//wrapper for a cube.  Contains the cube instance and video buffers, along with associated menu information
 class CubeWrapper
 {
 public:

@@ -125,3 +125,9 @@ void siftmain()
     error handler function. For example:
 */
 extern "C" void __cxa_pure_virtual() { while (1); }
+
+//USED FOR CES ONLY
+void selectormain()
+{
+    return;
+}

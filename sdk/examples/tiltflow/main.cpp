@@ -12,26 +12,12 @@
 #include <sifteo.h>
 #include "assets.gen.h"
 #include "cubewrapper.h"
-#include "game.h"
+#include "MenuController.h"
 #include "utils.h"
 
 using namespace Sifteo;
 
-//stupid way to ensure seeding the randomizer before static inits
-#ifdef _WIN32
-class RandInit
-{
-public:
-	RandInit()
-	{
-		srand((int)System::clock());
-	}
-};
-
-static RandInit randInit;
-#endif
-
-static Game &game = Game::Inst();
+static MenuController &menu = MenuController::Inst();
 
 /*
 static void onAccelChange(_SYSCubeID cid)
@@ -41,54 +27,61 @@ static void onAccelChange(_SYSCubeID cid)
 
 	static const int TILT_THRESHOLD = 20;
 
-	game.cubes[cid].ClearTiltInfo();
+    menu.cubes[cid].ClearTiltInfo();
 
 	if( state.x > TILT_THRESHOLD )
-		game.cubes[cid].AddTiltInfo( RIGHT );
+        menu.cubes[cid].AddTiltInfo( RIGHT );
 	else if( state.x < -TILT_THRESHOLD )
-		game.cubes[cid].AddTiltInfo( LEFT );
+        menu.cubes[cid].AddTiltInfo( LEFT );
 	if( state.y > TILT_THRESHOLD )
-		game.cubes[cid].AddTiltInfo( DOWN );
+        menu.cubes[cid].AddTiltInfo( DOWN );
 	else if( state.y < -TILT_THRESHOLD )
-		game.cubes[cid].AddTiltInfo( UP);
+        menu.cubes[cid].AddTiltInfo( UP);
 }
 */
 
 static void onTilt(_SYSCubeID cid)
 {
-    Cube::TiltState state = game.cubes[cid].GetCube().getTiltState();
+    Cube::TiltState state = menu.cubes[cid].GetCube().getTiltState();
 
 	if( state.x == _SYS_TILT_POSITIVE )
-		game.cubes[cid].Tilt( RIGHT );
+        menu.cubes[cid].Tilt( RIGHT );
 	else if( state.x == _SYS_TILT_NEGATIVE )
-		game.cubes[cid].Tilt( LEFT );
+        menu.cubes[cid].Tilt( LEFT );
 	if( state.y == _SYS_TILT_POSITIVE )
-		game.cubes[cid].Tilt( DOWN );
+        menu.cubes[cid].Tilt( DOWN );
 	else if( state.y == _SYS_TILT_NEGATIVE )
-		game.cubes[cid].Tilt( UP);
+        menu.cubes[cid].Tilt( UP);
 }
 
 static void onShake(_SYSCubeID cid)
 {
     _SYS_ShakeState state;
     _SYS_getShake(cid, &state);
-	game.cubes[cid].Shake(state);
+    menu.cubes[cid].Shake(state);
 }
 
 static void init()
 {
-	game.Init();
+    menu.Init();
 }
 
-void siftmain()
+
+void selectormain()
 {
     init();
 
     //_SYS_vectors.cubeEvents.accelChange = onAccelChange;
     _SYS_vectors.cubeEvents.tilt = onTilt;
-	_SYS_vectors.cubeEvents.shake = onShake;
+    _SYS_vectors.cubeEvents.shake = onShake;
 
     while (1) {
-        game.Update();        
+        menu.Update();
     }
 }
+
+void siftmain()
+{
+    return;
+}
+

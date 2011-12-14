@@ -12,3 +12,5 @@ cubewrapper.h
 cubewrapper.cpp
 main.cpp
 assets.lua
+MenuController.h
+MenuController.cpp

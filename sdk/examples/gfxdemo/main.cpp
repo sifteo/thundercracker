@@ -268,3 +268,10 @@ void siftmain()
         brickScroll();
     }
 }
+
+
+//USED FOR CES ONLY
+void selectormain()
+{
+    return;
+}

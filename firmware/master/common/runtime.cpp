@@ -27,6 +27,7 @@ void Runtime::run()
         return;
 
 #ifndef BUILD_UNIT_TEST
+	selectormain();
     siftmain();
 #endif
 }
