@@ -13,6 +13,8 @@
 
 using namespace Sifteo;
 
+void RunMenu();
+
 //singleton class
 class MenuController
 {
