@@ -356,7 +356,9 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
     return true;
 }
 
-bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
+//bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
+//                          _SYSAssetGroupCube *ac, bool &done)
+bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroupID *group,
                           _SYSAssetGroupCube *ac, bool &done)
 {
     /*
@@ -387,17 +389,19 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
         return false;
 
     // Group data header pointer is invalid
-    const _SYSAssetGroupHeader *ghdr = group->hdr;
-    if (!Runtime::checkUserPointer(ghdr, sizeof *ghdr))
-        return false;
+    //const _SYSAssetGroupHeader *ghdr = group->hdr;
+    //if (!Runtime::checkUserPointer(ghdr, sizeof *ghdr))
+    //    return false;
 
     // Inconsistent sizes
-    uint32_t dataSize = ghdr->dataSize;
+    //uint32_t dataSize = ghdr->dataSize;
+    //uint32_t dataSize = 16563;
+    uint32_t dataSize = group->size;
     uint32_t progress = ac->progress;
     if (progress > dataSize)
         return false;
     
-    uint8_t *src = (uint8_t *)ghdr + ghdr->hdrSize + progress;
+    //uint8_t *src = (uint8_t *)ghdr + ghdr->hdrSize + progress;
     uint32_t count;
 
     flashEscape(buf);
@@ -407,8 +411,10 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     count = MIN(count, loadBufferAvail);
 
 
+    //uint32_t offset = 512;
+    uint32_t offset = group->offset;
     int size = 0;
-    uint8_t *region = (uint8_t*)FlashLayer::getRegionFromOffset(progress, count, &size);
+    uint8_t *region = (uint8_t*)FlashLayer::getRegionFromOffset(progress + offset, count, &size);
     buf.appendUser(region, size);
     
     FlashLayer::releaseRegionFromOffset(progress);

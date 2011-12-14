@@ -86,6 +86,14 @@ class BitBuffer {
 };
 
 
+// TODO: Move this elsewhere
+struct AssetGroupType {
+    uint32_t type;
+    uint32_t len;
+    uint32_t offset;
+    uint32_t size;
+};
+
 /**
  * Compression codec, for sending VRAM and Flash data to cubes.
  * This implements the protocol described in protocol.h.
@@ -103,7 +111,8 @@ class CubeCodec {
     bool encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t data);
 
     bool flashReset(PacketBuffer &buf);
-    bool flashSend(PacketBuffer &buf, _SYSAssetGroup *group, _SYSAssetGroupCube *ac, bool &done);
+    //bool flashSend(PacketBuffer &buf, _SYSAssetGroup *group, _SYSAssetGroupCube *ac, bool &done);
+    bool flashSend(PacketBuffer &buf, _SYSAssetGroupID *group, _SYSAssetGroupCube *ac, bool &done);
 
     void flashAckBytes(uint8_t count) {
         loadBufferAvail += count;

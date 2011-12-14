@@ -31,6 +31,8 @@ char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
     
     CachedBlock *b = getCachedBlock(offset);
     if (b == 0) {
+        //fprintf(stdout, "Cache miss for offset: %d\n", offset);
+        
         b = getFreeBlock();
         if (b == 0) {
             fprintf(stdout, "ERROR: No free blocks in cache\n");
@@ -49,6 +51,9 @@ char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
         b->address = bpos * BLOCK_SIZE;
         b->inUse = true;
         b->valid = true;
+    } else {
+        //LOG(("Cache miss for offset: %d\n", offset));
+        //fprintf(stdout, "Cache miss for offset: %d\n", offset);
     }
     
     int boff = offset % BLOCK_SIZE;

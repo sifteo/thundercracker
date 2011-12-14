@@ -78,6 +78,14 @@ void CPPSourceWriter::writeGroup(const Group &group)
     sprintf(buf, "0x%016llx", (long long unsigned int) group.getSignature());
     #endif
 
+    // TODO: increment ids correctly with each group
+    uint32_t id = 1;
+    
+    mStream << "\nuint32_t " << group.getName() << "ID_int = " << id << ";\n";
+    mStream <<
+        "Sifteo::AssetGroupID " << group.getName() << "ID"
+        " = {{ " << group.getName() << "ID_int, (uint32_t)0, (uint32_t)0," << group.getName() << "ID.cubes }};\n";
+
     mStream <<
         "\n"
         "static const struct {\n" <<
@@ -220,6 +228,8 @@ void CPPHeaderWriter::foot()
 
 void CPPHeaderWriter::writeGroup(const Group &group)
 {
+    mStream << "extern Sifteo::AssetGroupID " << group.getName() << "ID;\n";
+    
     mStream << "extern Sifteo::AssetGroup " << group.getName() << ";\n";
 
     for (std::set<Image*>::iterator i = group.getImages().begin();

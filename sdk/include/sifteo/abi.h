@@ -71,6 +71,16 @@ struct _SYSAssetGroup {
     _SYSCubeIDVector doneCubes;                 /// IN     Which cubes have finished installing this group?
 };
 
+//typedef uint32_t _SYSAssetGroupID;
+struct _SYSAssetGroupID {
+    uint32_t id;                                /// OUT    ID of this group in the asset segment
+    uint32_t offset;
+    uint32_t size;
+    struct _SYSAssetGroupCube *cubes;           /// OUT    Array of per-cube state buffers
+    _SYSCubeIDVector reqCubes;                  /// IN     Which cubes have requested to load this group?
+    _SYSCubeIDVector doneCubes;                 /// IN     Which cubes have finished installing this group?
+};
+
 /*
  * _SYSVideoRAM is a representation of the 1KB of RAM resident in each
  * cube, which is used for storing the state of its graphics engine.
@@ -410,6 +420,7 @@ void _SYS_disableCubes(_SYSCubeIDVector cv);
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf);
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
+void _SYS_loadAssetsByID(_SYSCubeID cid, struct _SYSAssetGroupID *group);
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
 void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state);

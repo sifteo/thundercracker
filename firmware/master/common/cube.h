@@ -84,8 +84,17 @@ class CubeSlot {
     bool isAssetGroupLoaded(_SYSAssetGroup *a) {
         return !!(bit() & a->doneCubes);
     }
+    
+    bool isAssetGroupLoaded(_SYSAssetGroupID *a) {
+        return !!(bit() & a->doneCubes);
+    }
 
+    /*
     _SYSAssetGroup *getLastAssetGroup(void) const {
+        return loadGroup;
+    }
+    */
+    _SYSAssetGroupID *getLastAssetGroup(void) const {
         return loadGroup;
     }
 
@@ -112,8 +121,21 @@ class CubeSlot {
             return &group->cubes[i];
         return 0;
     }
+    
+    _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroupID *group) {
+        /*
+         * Safely return this cube's per-cube data on a particular
+         * asset group.  If the user-pointer check fails, returns
+         * NULL.
+         */
+        _SYSCubeID i = id();
+        if (Runtime::checkUserPointer(group->cubes, (sizeof group->cubes[0]) * (i + 1)))
+            return &group->cubes[i];
+        return 0;
+    }
 
     void loadAssets(_SYSAssetGroup *a);
+    void loadAssets(_SYSAssetGroupID *a);
     void waitForPaint();
     void waitForFinish();
     void triggerPaint(SysTime::Ticks timestamp);
@@ -146,7 +168,8 @@ class CubeSlot {
      * group, since it's used for event dispatch purposes as well.
      */
 
-    _SYSAssetGroup *loadGroup;
+    //_SYSAssetGroup *loadGroup;
+    _SYSAssetGroupID *loadGroup;
     _SYSVideoBuffer *vbuf;
     RadioAddress address;
     

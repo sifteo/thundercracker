@@ -12,6 +12,7 @@
 #include "cube.h"
 #include "vram.h"
 #include "accel.h"
+#include "flashlayer.h"
 
 #include "neighbors.h"
 
@@ -87,6 +88,50 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a) {
 
     // Then start streaming asset data for this group
     a->reqCubes |= bit();
+    // FIXME: transition to ID-based assets
+    //loadGroup = a;
+}
+
+void CubeSlot::loadAssets(_SYSAssetGroupID *a)
+{
+    _SYSAssetGroupCube *ac = assetCube(a);
+
+    if (!ac)
+        return;
+    if (isAssetGroupLoaded(a))
+        return;
+    
+    // XXX: Pick a base address too!
+    ac->progress = 0;
+    
+    LOG(("FLASH[%d]: Sending asset group %u\n", id(), a->id));
+    
+    int size = 0;
+    AssetGroupType *type;
+    
+    type = (AssetGroupType*)FlashLayer::getRegionFromOffset(0, sizeof(AssetGroupType), &size);
+    
+    // FIXME: We need to check the size read here, in case the index would not align with a block.
+    //        should make sure the format of asset indices wouldn't allow this to happen.
+    
+    fprintf(stdout, "  rsize: %d\n", size);
+    fprintf(stdout, "  buffer: %s\n", (char*)type);
+    fprintf(stdout, "  type: %u, %u, %u\n", type->type, htons(type->type), ntohs(type->type));
+    fprintf(stdout, "  len: %d\n", type->len);
+    fprintf(stdout, "  offset: %d\n", type->offset);
+    fprintf(stdout, "  size: %d\n", type->size);
+    
+    a->offset = type->offset;
+    a->size = type->size;
+    
+    FlashLayer::releaseRegionFromOffset(0);
+    
+    // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
+    Atomic::And(CubeSlots::flashResetSent, ~bit());
+    Atomic::Or(CubeSlots::flashResetWait, bit());
+    
+    // Then start streaming asset data for this group
+    a->reqCubes |= bit();
     loadGroup = a;
 }
 
@@ -149,7 +194,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         // Not waiting on a reset. See if we need to send asset data.
 
         bool done = false;
-        _SYSAssetGroup *group = loadGroup;
+        //_SYSAssetGroup *group = loadGroup;
+        _SYSAssetGroupID *group = loadGroup;
 
         if (group && !(group->doneCubes & bit()) &&
             codec.flashSend(tx.packet, group, assetCube(group), done)) {
@@ -429,7 +475,8 @@ void CubeSlot::waitForFinish()
 
 void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
 {
-    _SYSAssetGroup *group = loadGroup;
+    //_SYSAssetGroup *group = loadGroup;
+    _SYSAssetGroupID *group = loadGroup;
         
     if (vbuf) {
         uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));

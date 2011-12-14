@@ -85,6 +85,12 @@ void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group)
         CubeSlots::instances[cid].loadAssets(group);
 }
 
+void _SYS_loadAssetsByID(_SYSCubeID cid, _SYSAssetGroupID *group)
+{
+    // TODO: Check user pointer?
+    CubeSlots::instances[cid].loadAssets(group);
+}
+
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state)
 {
     if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlots::validID(cid))
