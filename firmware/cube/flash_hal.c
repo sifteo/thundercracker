@@ -163,6 +163,7 @@ void flash_erase(uint8_t blockCount)
             // Data# polling: Wait for a '1' bit
             FLASH_OUT();
             __asm  1$:  jnb     BUS_PORT.7, 1$  __endasm;
+            break;
 
         } else {
             // Single block
