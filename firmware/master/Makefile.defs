@@ -35,6 +35,10 @@ ifneq ($(QTCREATOR),)
 	CFLAGS += -DQTCREATOR
 endif
 
+ifneq ($(SELECTORMENU),)
+	CFLAGS += -DSELECTORMENU$(SELECTORMENU)
+endif
+
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused
 

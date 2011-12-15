@@ -9,6 +9,8 @@ endif
 SPEEX_DIR = speex
 include $(SPEEX_DIR)/speex.mk
 
+SELECTORMENU_GEN_FILES = $(MASTER_DIR)/selectormenu/$(ASSETS).gen.h $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp $(MASTER_DIR)/selectormenu/$(ASSETS).html $(MASTER_DIR)/selectormenu/$(AUDIO).gen.h $(MASTER_DIR)/selectormenu/$(AUDIO).gen.cpp
+
 include Makefile.objs
 include Makefile.platform
 
@@ -41,6 +43,7 @@ CDEPS := \
 	../include/*.h \
 	$(SDK_DIR)/include/sifteo/*.h \
     $(SPEEX_DEPS) \
+	$(SDK_DIR)/include/sifteo/*.h $(STIR)
 
 all: $(BINS)
 
@@ -71,7 +74,12 @@ $(BIN_STM32): $(OBJS_STM32)
 %.stm32.o: %.s $(CDEPS)
 	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CFLAGS_STM32)
 
+$(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
+	$(STIR) $(MASTER_DIR)/selectormenu/$(ASSETS).lua -o $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp -o $(MASTER_DIR)/selectormenu/$(ASSETS).gen.h -o $(MASTER_DIR)/selectormenu/$(ASSETS).html -v
+
+ASSETDEPS += $(MASTER_DIR)/selectormenu/*.png $(MASTER_DIR)/selectormenu/$(ASSETS).lua
+
 .PHONY: all clean
 
 clean:
-	rm -f $(BINS) $(OBJS_SIM) $(OBJS_STM32)
+	rm -f $(BINS) $(OBJS_SIM) $(OBJS_STM32) $(SELECTORMENU_GEN_FILES)
