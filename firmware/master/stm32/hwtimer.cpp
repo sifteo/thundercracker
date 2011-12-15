@@ -14,9 +14,6 @@ void HwTimer::init(int period, int prescaler)
         RCC_SIFTEO.APB1ENR |= (1 << 1); // TIM3 enable
         RCC_SIFTEO.APB1RSTR = (1 << 1); // TIM3 reset
         RCC_SIFTEO.APB1RSTR = 0;
-
-        NVIC_SIFTEO.irqEnable(IVT.DMA1_Channel3);
-        NVIC_SIFTEO.irqPrioritize(IVT.DMA1_Channel3, 0x81);
     }
     else if (tim == &TIM4) {
         RCC_SIFTEO.APB1ENR |= (1 << 2); // TIM4 enable
@@ -27,9 +24,6 @@ void HwTimer::init(int period, int prescaler)
         RCC_SIFTEO.APB1ENR |= (1 << 3); // TIM5 enable
         RCC_SIFTEO.APB1RSTR = (1 << 3); // TIM5 reset
         RCC_SIFTEO.APB1RSTR = 0;
-
-        NVIC_SIFTEO.irqEnable(IVT.DMA2_Channel4_5);
-        NVIC_SIFTEO.irqPrioritize(IVT.DMA2_Channel4_5, 0x81);
     }
     else if (tim == &TIM1) {
         RCC_SIFTEO.APB2ENR |= (1 << 11); // TIM1 enable
@@ -74,14 +68,12 @@ void HwTimer::end()
     }
     else if (tim == &TIM3) {
         RCC_SIFTEO.APB1ENR &= ~(1 << 1); // TIM3 disable
-        NVIC_SIFTEO.irqDisable(IVT.DMA1_Channel3);
     }
     else if (tim == &TIM4) {
         RCC_SIFTEO.APB1ENR &= ~(1 << 2); // TIM4 disable
     }
     else if (tim == &TIM5) {
         RCC_SIFTEO.APB1ENR &= ~(1 << 3); // TIM5 disable
-        NVIC_SIFTEO.irqDisable(IVT.DMA2_Channel4_5);
     }
     else if (tim == &TIM1) {
         RCC_SIFTEO.APB2ENR &= ~(1 << 11); // TIM1 disable
