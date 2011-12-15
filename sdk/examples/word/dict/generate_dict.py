@@ -43,7 +43,7 @@ def generate_dict():
     fi.close()
 
     print "words in dict: " + str(len(dictionary))
-    fi = open("words0.txt", "r")
+    fi = open("word_list.txt", "r")
     #print "second file " + fi.filename()
     
     word_list = {}
@@ -61,7 +61,7 @@ def generate_dict():
     num_seed_words = 0
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
-        if len(anagrams) > 30:
+        if len(anagrams) > 25:
             num_seed_repeats = 0
             # filter equivalent anagrams
             for w in anagrams:
@@ -70,11 +70,11 @@ def generate_dict():
             if num_seed_repeats <= 1:
                 print word + ": " + str(len(anagrams))
                 num_seed_words += 1
-                output_dictionary[word] = True
+                output_dictionary[word.upper()] = True
                 for w in anagrams:
-                    output_dictionary[w] = True
+                    output_dictionary[w.upper()] = True
             
-    # TODO write dict to file
+    # write dict to file
     print "word list filtered to  " + str(num_seed_words)
     sorted_output_dict = output_dictionary.keys()
     sorted_output_dict.sort()
@@ -82,8 +82,13 @@ def generate_dict():
     
     fi = open("dict.cpp", "w")
     for word in sorted_output_dict:
-        fi.write("\"" + word.upper() + "\",\n")
+        fi.write("\"" + word + "\",\n")
     fi.close()
+    
+    fi = open("word_list_used.txt", "w")
+    for word in word_list:
+        fi.write(word + "\n")
+    fi.close()    
 
 def main():
     print sys.argv[1:]
