@@ -13,6 +13,10 @@
 
 using namespace Sifteo;
 
+namespace SelectorMenu
+{
+
+
 void RunMenu();
 
 //singleton class
@@ -37,5 +41,7 @@ private:
     float m_fLastTime;
     TiltFlowMenu m_Menu;
 };
+
+} //namespace TiltFlowMenu
 
 #endif

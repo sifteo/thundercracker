@@ -8,6 +8,9 @@
 #define PRINT(...) 
 #endif
 
+namespace SelectorMenu
+{
+
 typedef enum
 {
 	UP,
@@ -32,4 +35,6 @@ inline float Clamp( float value, float min, float max )
 }
 
 }
+
+} //namespace SelectorMenu
 #endif

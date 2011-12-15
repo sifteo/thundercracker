@@ -7,6 +7,7 @@
 #include "MenuController.h"
 
 using namespace Sifteo;
+using namespace SelectorMenu;
 
 
 void selectormain()

@@ -7,6 +7,8 @@
 #include "cubewrapper.h"
 #include "assets.gen.h"
 
+using namespace SelectorMenu;
+
 const float TiltFlowMenu::UPDATE_DELAY = 1.0f / 30.0f;
 const float TiltFlowMenu::PICK_DELAY = 2.0f;
 const float TiltFlowMenu::REST_DELAY = 0.1f;

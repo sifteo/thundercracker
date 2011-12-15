@@ -11,6 +11,9 @@
 
 using namespace Sifteo;
 
+namespace SelectorMenu
+{
+
 //wrapper for a cube.  Contains the cube instance and video buffers, along with associated menu information
 class CubeWrapper
 {
@@ -36,5 +39,7 @@ private:
 	VidMode_BG0_ROM m_rom;
 	BG1Helper m_bg1helper;
 };
+
+} //namespace SelectorMenu
 
 #endif

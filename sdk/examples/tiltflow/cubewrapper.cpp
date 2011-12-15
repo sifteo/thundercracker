@@ -8,6 +8,8 @@
 #include "MenuController.h"
 #include "assets.gen.h"
 
+using namespace SelectorMenu;
+
 static _SYSCubeID s_id = 0;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),

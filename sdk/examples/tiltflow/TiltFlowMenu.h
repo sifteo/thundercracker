@@ -10,7 +10,8 @@
 
 using namespace Sifteo;
 
-
+namespace SelectorMenu
+{
 
 //---------------------------------------------------------------------------
 // TILT FLOW ITEM
@@ -202,7 +203,7 @@ private:
 
 
 
-
+}  //namespace SelectorMenu
 
 
 #endif //_TILTFLOWMENU_H

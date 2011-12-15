@@ -8,6 +8,8 @@
 #include "utils.h"
 #include "assets.gen.h"
 
+namespace SelectorMenu
+{
 
 TiltFlowItem MENUITEMS[ MenuController::NUM_MENU_ITEMS ] =
 {
@@ -137,3 +139,6 @@ void MenuController::Reset()
 		cubes[i].Reset();
 	}
 }
+
+
+} //namespace SelectorMenu
