@@ -4,7 +4,7 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include "cubewrapper.h"
+#include "TFcubewrapper.h"
 #include "MenuController.h"
 #include "assets.gen.h"
 

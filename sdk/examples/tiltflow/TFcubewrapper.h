@@ -4,8 +4,8 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _CUBEWRAPPER_H
-#define _CUBEWRAPPER_H
+#ifndef _TFCUBEWRAPPER_H
+#define _TFCUBEWRAPPER_H
 
 #include <sifteo.h>
 

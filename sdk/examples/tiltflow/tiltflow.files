@@ -5,12 +5,10 @@ C:/projects/sifteo/thundercracker/sdk/examples/tiltflow/game.h
 C:/projects/sifteo/thundercracker/sdk/examples/tiltflow/main.cpp
 TiltFlowMenu.cpp
 TiltFlowMenu.h
-utils.h
-game.h
-game.cpp
-cubewrapper.h
-cubewrapper.cpp
 main.cpp
 assets.lua
 MenuController.h
 MenuController.cpp
+TFcubewrapper.h
+TFcubewrapper.cpp
+TFutils.h

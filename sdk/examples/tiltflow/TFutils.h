@@ -1,5 +1,5 @@
-#ifndef _UTILS_H
-#define _UTILS_H
+#ifndef _TFUTILS_H
+#define _TFUTILS_H
 
 #define PRINTS_ON 0
 #if PRINTS_ON

@@ -6,7 +6,7 @@
 #define _TILTFLOWMENU_H
 
 #include <sifteo.h>
-#include "utils.h"
+#include "TFutils.h"
 
 using namespace Sifteo;
 

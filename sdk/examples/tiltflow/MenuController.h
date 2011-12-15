@@ -8,7 +8,7 @@
 #define _MENUCONTROLLER_H
 
 #include <sifteo.h>
-#include "cubewrapper.h"
+#include "TFcubewrapper.h"
 #include "TiltFlowMenu.h"
 
 using namespace Sifteo;
