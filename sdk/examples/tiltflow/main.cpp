@@ -10,13 +10,8 @@ using namespace Sifteo;
 using namespace SelectorMenu;
 
 
-void selectormain()
-{
-    RunMenu();
-}
-
 void siftmain()
 {
-    return;
+    RunMenu();
 }
 

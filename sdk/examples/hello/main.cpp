@@ -90,10 +90,3 @@ void siftmain()
         System::paint();
     }
 }
-
-
-//USED FOR CES ONLY
-void selectormain()
-{
-    return;
-}

@@ -386,13 +386,6 @@ struct _SYSEventVectors {
 
 extern struct _SYSEventVectors _SYS_vectors;
 
-
-/**
- * Entry point to the game selector menu.
- * THIS IS ONLY FOR THE CES DEMO!
- */
-void selectormain(void);
-
 /**
  * Entry point to the game binary.
  */
