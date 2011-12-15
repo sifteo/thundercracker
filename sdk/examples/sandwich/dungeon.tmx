@@ -536,5 +536,10 @@
     <property name="target" value="forest:DungeonGate"/>
    </properties>
   </object>
+  <object name="Key" type="Item" x="432" y="960" width="32" height="32">
+   <properties>
+    <property name="id" value="1"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>
