@@ -5,6 +5,10 @@
 #define DOOR_PAD 10
 #define GAME_FRAMES_PER_ANIM_FRAME 2
 
+inline int fast_abs(int x) {
+	return x<0?-x:x;
+}
+
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
 pCurrent(gGame.views), pTarget(0), mPosition(128+64,64+16), // todo: move intial position to map data
 mDir(2), mKeyCount(0), mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
@@ -42,7 +46,7 @@ void Player::Move(int dx, int dy) {
   mStatus = PLAYER_STATUS_WALKING;
   mPosition.x += dx;
   mPosition.y += dy;
-  mProgress += abs(dx) + abs(dy);
+  mProgress += fast_abs(dx) + fast_abs(dy);
   mDir = InferDirection(Vec2(dx, dy));
 }
 

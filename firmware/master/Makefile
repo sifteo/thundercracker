@@ -61,7 +61,7 @@ endif
 
 $(BIN_STM32): $(OBJS_STM32)
 	rm -f $@
-	$(AR) r $@ $^
+	$(AR_STM32) r $@ $^
 	$(RANLIB_STM32) $@
 
 %.sim.o: %.cpp $(CDEPS)
