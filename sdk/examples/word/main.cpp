@@ -55,7 +55,7 @@ void siftmain()
     LOG(("Hello, Word Play 2\n"));
     _SYS_vectors.cubeEvents.touch = onCubeEventTouch;
     _SYS_vectors.cubeEvents.shake = onCubeEventShake;
-  //  _SYS_vectors.cubeEvents.tilt = onCubeEventTilt;
+    _SYS_vectors.cubeEvents.tilt = onCubeEventTilt;
     _SYS_vectors.neighborEvents.add = onNeighborEventAdd;
     _SYS_vectors.neighborEvents.remove = onNeighborEventRemove;
     

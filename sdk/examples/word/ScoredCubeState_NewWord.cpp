@@ -5,6 +5,7 @@
 #include "CubeStateMachine.h"
 #include "GameStateMachine.h"
 #include "ScoredCubeState_NewWord.h"
+#include <string.h>
 
 ScoredCubeState_NewWord::ScoredCubeState_NewWord()
 {
@@ -106,11 +107,11 @@ void ScoredCubeState_NewWord::paint()
     vid.BG0_drawAsset(Vec2(0,0), bg);
     vid.BG0_text(Vec2(6,3), Font, getStateMachine().getLetters());
     char string[5];
-    sprintf(string, "%.4d", GameStateMachine::GetSecondsLeft());
+    sprintf(string, "%d", GameStateMachine::GetSecondsLeft());
 #if DEBUGZZZZZZZZZZZ
     printf("%d %s\n", getStateMachine().getCube().id(), string);
 #endif
-    vid.BG0_text(Vec2(6,14), FontSmall, string);
+    vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
 
     sprintf(string, "%+.1d", getStateMachine().findRowLength());
 #if DEBUG
