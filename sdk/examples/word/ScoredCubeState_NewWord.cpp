@@ -114,8 +114,8 @@ void ScoredCubeState_NewWord::paint()
     vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
 
     sprintf(string, "%+.1d", getStateMachine().findRowLength());
-#if DEBUG
-    printf("score %d %s\n", getStateMachine().getCube().id(), string);
+#if DEBUGZZZ
+    printf("score %s (=%d)\n", string, GameStateMachine::GetScore());
 #endif
     vid.BG0_text(Vec2(7,0), FontSmall, string);
 

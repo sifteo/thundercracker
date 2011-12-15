@@ -40,28 +40,51 @@ def generate_dict():
     fi = open("dictionary.txt", "r")
     for line in fi:
         dictionary[line.strip()] = True
+    fi.close()
 
     print "words in dict: " + str(len(dictionary))
-    
     fi = open("words0.txt", "r")
     #print "second file " + fi.filename()
     
     word_list = {}
+    seed_size = 6
     for line in fi:
-        print "word list: " + line
-        word_list[line.strip()] = True
-        
-    print "words in dict: " + str(len(word_list))
+        word = line.strip()
+        if len(word) == seed_size and word.find("'") == -1:
+            print "word list: " + line
+            word_list[word] = True        
+    fi.close()
+    
+    print "filtered word list to: " + str(len(word_list))
+    
     output_dictionary = {}
+    num_seed_words = 0
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
-        print word + ": " + str(len(anagrams))
-        for w in anagrams:
-            output_dictionary[w] = True
+        if len(anagrams) > 30:
+            num_seed_repeats = 0
+            # filter equivalent anagrams
+            for w in anagrams:
+                if len(w) == seed_size and w in output_dictionary:
+                    num_seed_repeats += 1
+            if num_seed_repeats <= 1:
+                print word + ": " + str(len(anagrams))
+                num_seed_words += 1
+                output_dictionary[word] = True
+                for w in anagrams:
+                    output_dictionary[w] = True
             
     # TODO write dict to file
-    print "output dict would have " + str(len(output_dictionary.keys()))
+    print "word list filtered to  " + str(num_seed_words)
+    sorted_output_dict = output_dictionary.keys()
+    sorted_output_dict.sort()
+    print "output dict will have " + str(len(sorted_output_dict))
     
+    fi = open("dict.cpp", "w")
+    for word in sorted_output_dict:
+        fi.write("\"" + word.upper() + "\",\n")
+    fi.close()
+
 def main():
     print sys.argv[1:]
     generate_dict()
