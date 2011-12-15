@@ -92,10 +92,3 @@ void siftmain()
         game.Update();        
     }
 }
-
-
-//USED FOR CES ONLY
-void selectormain()
-{
-    return;
-}
