@@ -454,7 +454,7 @@
 3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,36,24,101,102,24,58,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
 </data>
  </layer>
- <layer name="grid" width="48" height="72" visible="0" opacity="0.43">
+ <layer name="grid" width="48" height="72" opacity="0.43">
   <data encoding="csv">
 0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
 0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
@@ -539,6 +539,31 @@
   <object name="Key" type="Item" x="432" y="960" width="32" height="32">
    <properties>
     <property name="id" value="1"/>
+   </properties>
+  </object>
+  <object name="Key" type="Item" x="176" y="576" width="32" height="32">
+   <properties>
+    <property name="id" value="1"/>
+   </properties>
+  </object>
+  <object name="Key" type="Item" x="176" y="288" width="32" height="32">
+   <properties>
+    <property name="id" value="1"/>
+   </properties>
+  </object>
+  <object name="Ham" type="Item" x="48" y="320" width="32" height="32">
+   <properties>
+    <property name="id" value="5"/>
+   </properties>
+  </object>
+  <object name="Tomato" type="Item" x="592" y="448" width="32" height="32">
+   <properties>
+    <property name="id" value="3"/>
+   </properties>
+  </object>
+  <object name="Lettuce" type="Item" x="432" y="544" width="32" height="32">
+   <properties>
+    <property name="id" value="4"/>
    </properties>
   </object>
  </objectgroup>
