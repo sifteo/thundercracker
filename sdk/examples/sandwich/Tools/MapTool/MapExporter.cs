@@ -171,48 +171,9 @@ namespace MapTool {
     }
 
     static string[] kPortalLabels = {
-      "PORTAL_OPEN", "PORTAL_WALL", "PORTAL_DOOR", "PORTAL_LOCK"
+      "PORTAL_OPEN", "PORTAL_WALL", "PORTAL_DOOR"
     }; // order matters
   }
 
 
 }
-
-/*
-
--------------------------------------------------------------------------------
-C++ Interface
--------------------------------------------------------------------------------
-
-#define PORTAL_OPEN  0
-#define PORTAL_WALL  1
-#define PORTAL_DOOR 2
-#define PORTAL_LOCK  3
-
-typedef void (*trigger_func)();
-
-struct TriggerData {
-    trigger_func callback;
-    int room;
-};
-
-struct MapData {
-    const Sifteo::AssetImage* tileset;
-    uint8_t* tiles; // every 64 tiles represents an 8x8 room of 16px tiles
-    uint8_t* xportals; // vertical portals between rooms (x,y) and (x+1,y)
-    uint8_t* yportals; // horizontal portals between rooms (x,y) and (x,y+1)
-    TriggerData* triggers; // is null-terminated
-    uint8_t width;
-    uint8_t height;
-}
-
--------------------------------------------------------------------------------
-Example Output
--------------------------------------------------------------------------------
-
-uint8_t myMap_xportals[] = { ... };
-uint8_t myMap_yportals[] = { ... };
-uint8_y myMap_tiles[] = { ... };
-MapData myMap_data = { &TileSet_myMap, myMap_tiles, myMap_xportals, myMap_yportals, 8, 8  };
-
-*/
