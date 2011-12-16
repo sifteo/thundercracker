@@ -21,6 +21,8 @@ void AudioChannelWrapper::init(_SYSAudioBuffer *b)
 
 void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
 {
+    // obsolete, replace with ID-based assets
+    /*
     // if this is a sample & either the passed in decoder is null, or our
     // internal decoder is not null, we've got problems
     ASSERT(!(mod->type == Sample && dec == NULL));
@@ -31,6 +33,22 @@ void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopT
     this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
     if (this->decoder != 0) {
         this->decoder->setData(mod->buf, mod->size);
+    }
+    */
+}
+
+void AudioChannelWrapper::play(const struct _SYSAudioModuleID *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
+{
+    // if this is a sample & either the passed in decoder is null, or our
+    // internal decoder is not null, we've got problems
+    ASSERT(!(mod->type == Sample && dec == NULL));
+    ASSERT(!(mod->type == Sample && this->decoder != NULL));
+
+    this->decoder = dec;
+    this->mod = mod;
+    this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
+    if (this->decoder != 0) {
+        this->decoder->setOffset(mod->offset, mod->size);
     }
 }
 
@@ -50,7 +68,9 @@ int AudioChannelWrapper::pullAudio(int16_t *buffer, int len)
         // if we have nothing buffered, and there's nothing else to read, we're done
         if (decoder->endOfStream() && buf.readAvailable() == 0) {
             if (this->state & STATE_LOOP) {
-                this->decoder->setData(mod->buf, mod->size);
+                // FIXME: now using ID based assets
+                //this->decoder->setData(mod->buf, mod->size);
+                this->decoder->setOffset(mod->offset, mod->size);
             }
             else {
                 return -1;

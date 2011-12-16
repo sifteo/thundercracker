@@ -30,6 +30,10 @@ public:
     bool play(const _SYSAudioModule &mod, _SYSAudioLoopType loopMode = LoopOnce) {
         return _SYS_audio_play(&mod, &handle, loopMode);
     }
+    
+    bool play(_SYSAudioModuleID &mod, _SYSAudioLoopType loopMode = LoopOnce) {
+        return _SYS_audio_playByID(&mod, &handle, loopMode);
+    }
 
     bool isPlaying() const {
         return _SYS_audio_isPlaying(handle);

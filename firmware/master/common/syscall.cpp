@@ -266,6 +266,14 @@ uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, e
     return false;
 }
 
+uint8_t _SYS_audio_playByID(struct _SYSAudioModuleID *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
+{
+    if (Runtime::checkUserPointer(mod, sizeof(*mod)) && Runtime::checkUserPointer(h, sizeof(*h))) {
+        return AudioMixer::instance.play(mod, h, loop);
+    }
+    return false;
+}
+
 uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h)
 {
     return AudioMixer::instance.isPlaying(h);

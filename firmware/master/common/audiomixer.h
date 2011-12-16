@@ -29,6 +29,7 @@ public:
     static void test();
 
     bool play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode = LoopOnce);
+    bool play(struct _SYSAudioModuleID *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode = LoopOnce);
     bool isPlaying(_SYSAudioHandle handle);
     void stop(_SYSAudioHandle handle);
 

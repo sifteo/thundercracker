@@ -19,6 +19,7 @@ class ASegWriter {
     ASegWriter(Logger &log, const char *filename);
 
     void writeGroup(const Group &group);
+    void writeSound(const Sound &sound);
 
     //void close();
 

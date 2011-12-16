@@ -50,7 +50,8 @@ static AudioChannel channel;
 void siftmain() {
     init();
 	channel.init();
-	channel.play(nyan, LoopRepeat);
+	//channel.play(nyan, LoopRepeat);
+	channel.play(Nyan, LoopRepeat);
     for (unsigned i=0; i<NUM_CUBES; i++) {
 		vid[i].init();
 	}

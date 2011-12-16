@@ -30,6 +30,7 @@ public:
     }
 
     void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
+    void play(const struct _SYSAudioModuleID *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
     int pullAudio(int16_t *buffer, int len);
 
     _SYSAudioType channelType() const {
@@ -52,7 +53,8 @@ protected:
     void onPlaybackComplete();
 
     AudioBuffer buf;
-    const struct _SYSAudioModule *mod;
+    //const struct _SYSAudioModule *mod;
+    const struct _SYSAudioModuleID *mod;
     uint8_t state;
     _SYSAudioHandle handle;
     SpeexDecoder *decoder;

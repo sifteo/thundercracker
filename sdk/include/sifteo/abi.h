@@ -315,6 +315,13 @@ struct _SYSAudioModule {
     const uint8_t *buf;
 };
 
+struct _SYSAudioModuleID {
+    uint32_t id;
+    uint32_t offset;
+    uint32_t size;
+    enum _SYSAudioType type;
+};
+
 struct _SYSAudioBuffer {
     uint16_t head;
     uint16_t tail;
@@ -446,6 +453,7 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
 
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer);
 uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
+uint8_t _SYS_audio_playByID(struct _SYSAudioModuleID *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
 uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
 void _SYS_audio_stop(_SYSAudioHandle h);
 void _SYS_audio_pause(_SYSAudioHandle h);

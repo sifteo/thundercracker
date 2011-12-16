@@ -40,8 +40,24 @@ void SpeexDecoder::init()
 
 void SpeexDecoder::setData(const uint8_t *srcaddr, int size)
 {
-    this->srcaddr = (uintptr_t)srcaddr;
+    // FIXME: audio hacking
+    //this->srcaddr = (uintptr_t)srcaddr;
+    //this->srcBytesRemaining = size;
+    
+    //this->srcaddr = 0;  // 20480
+    //this->srcaddr = 20480;  // 20480
+    //this->srcBytesRemaining = 769924;
+    
+    status = Ok;
+}
+
+void SpeexDecoder::setOffset(const uint32_t offset, int size)
+{
+    fprintf(stdout, "SPEEX SET OFFSET %u, %d\n", offset, size);
+    
+    this->srcaddr = offset;  // 20480
     this->srcBytesRemaining = size;
+    
     status = Ok;
 }
 
@@ -64,14 +80,21 @@ void SpeexDecoder::deinit()
  */
 int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
 {
+    fprintf(stdout, "  decoding frame size %d\n", size);
+    
     if (size < (int)DECODED_FRAME_SIZE || status != Ok) {
         return 0;
     }
 
-    char *localAddr = FlashLayer::getRegion(this->srcaddr, DECODED_FRAME_SIZE + sizeof(uint8_t));
+    int rsize = 0;
+
+    //char *localAddr = FlashLayer::getRegion(this->srcaddr, DECODED_FRAME_SIZE + sizeof(uint8_t));
+    char *localAddr = FlashLayer::getRegionFromOffset(this->srcaddr, DECODED_FRAME_SIZE + sizeof(uint8_t), &rsize);
     if (!localAddr) {
         return 0; // ruh roh, TODO error handling
     }
+
+    fprintf(stdout, "  wanted %lu bytes, read %d\n", DECODED_FRAME_SIZE + sizeof(uint8_t), rsize);
 
     // format: uint8_t of framesize, followed by framesize bytes of frame data
     int sz = *localAddr++;
@@ -89,7 +112,8 @@ int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
     }
 
     // might be able to do this before the decode step
-    FlashLayer::releaseRegion(this->srcaddr);
+    //FlashLayer::releaseRegion(this->srcaddr);
+    FlashLayer::releaseRegionFromOffset(this->srcaddr);
     this->srcaddr += (sz + sizeof(uint8_t));
 
     return DECODED_FRAME_SIZE;

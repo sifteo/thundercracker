@@ -1,4 +1,5 @@
 #include "asegwriter.h"
+#include "speexencoder.h"
 
 using namespace Stir;
 
@@ -53,6 +54,22 @@ void ASegWriter::writeGroup(const Group &group)
     writeArray(group.getLoadstream());
 }
 
+void ASegWriter::writeSound(const Sound &sound)
+{
+    fprintf(stdout, "WRITING SOUND TO ASSET: %s\n", sound.getName().c_str());
+    
+    int channels = 1;               // mono
+    int format = 16;                // 16 bit format
+    
+    
+    mStream.seekp(20480);
+    
+    SpeexEncoder encoder;
+    encoder.encodeFile(sound.getFile(), channels, format, mStream);
+    
+    // TODO: Seek back to the index, and write in offset information for this audio file.
+}
+
 void ASegWriter::writeArray(const std::vector<uint8_t> &array)
 {
     //char buf[8];
@@ -70,3 +87,8 @@ void ASegWriter::writeArray(const std::vector<uint8_t> &array)
 
     //mStream << "\n";
 }
+
+
+
+/* TODO: Speex encoder should be factored out into a separate class. */
+

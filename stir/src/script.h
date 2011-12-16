@@ -27,7 +27,7 @@ namespace Stir {
 
 class Group;
 class Image;
-
+class Sound;
 
 /*
  * Script --
@@ -57,9 +57,11 @@ public:
     const char *outputProof;
 
     std::set<Group*> groups;
+    std::set<Sound*> sounds;
 
     friend class Group;
     friend class Image;
+    friend class Sound;
 
     bool luaRunFile(const char *filename);
     void collect();
@@ -188,6 +190,30 @@ public:
     int frames(lua_State *L);
     int quality(lua_State *L);
     int group(lua_State *L);
+};
+
+class Sound {
+public:
+    static const char className[];
+    static Lunar<Sound>::RegType methods[];
+
+    Sound(lua_State *L);
+    
+    void setName(const char *s) {
+        mName = s;
+    }
+
+    const std::string &getName() const {
+        return mName;
+    }
+    
+    const std::string &getFile() const {
+        return mFile;
+    }
+    
+private:
+    std::string mName;
+    std::string mFile;
 };
 
 

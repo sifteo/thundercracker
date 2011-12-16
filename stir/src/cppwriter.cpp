@@ -111,6 +111,20 @@ void CPPSourceWriter::writeGroup(const Group &group)
         writeImage(**i);
 }
 
+void CPPSourceWriter::writeSound(const Sound &sound)
+{
+    // TODO: increment ids correctly with each group
+    uint32_t id = 2;
+    
+    mStream <<
+        "_SYSAudioModuleID " << sound.getName() << "= {\n" <<
+        id << ",\n" <<
+        "0,\n" <<
+        "0,\n" <<
+        "Sample\n" <<
+        "};\n";
+}
+
 void CPPSourceWriter::writeImage(const Image &image)
 {
     char buf[16];
@@ -246,5 +260,9 @@ void CPPHeaderWriter::writeGroup(const Group &group)
     }
 }
 
+void CPPHeaderWriter::writeSound(const Sound &sound)
+{
+    mStream << "extern _SYSAudioModuleID " << sound.getName() << ";\n";
+}
 
 };  // namespace Stir
