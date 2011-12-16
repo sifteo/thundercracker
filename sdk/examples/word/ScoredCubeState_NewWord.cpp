@@ -105,7 +105,7 @@ void ScoredCubeState_NewWord::paint()
     VidMode_BG0 vid(c.vbuf);
     vid.init();
     vid.BG0_drawAsset(Vec2(0,0), bg);
-    vid.BG0_text(Vec2(6,3), Font, getStateMachine().getLetters());
+    paintLetters(vid, FontNew);
     char string[5];
     sprintf(string, "%d", GameStateMachine::GetSecondsLeft());
 #if DEBUGZZZZZZZZZZZ

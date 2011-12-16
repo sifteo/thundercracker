@@ -22,3 +22,47 @@ CubeStateMachine& CubeState::getStateMachine()
     ASSERT(mStateMachine != 0);
     return *mStateMachine;
 }
+
+
+void CubeState::paintLetters(VidMode_BG0 &vid, const AssetImage &font)
+{
+    Vec2 point(0, 0);
+    //char c;
+    const char *str = getStateMachine().getLetters();
+    switch (strlen(str))
+    {
+    default:
+        {
+            unsigned index = *str - (int)'A';
+            if (index < font.frames)
+            {
+                vid.BG0_drawAsset(point, font, index);
+            }
+        }
+        break;
+
+    case 2:
+        // TODO
+        /*    while ((c = *str))
+    {
+        if (c == '\n')
+        {
+            p.x = point.x;
+            p.y += Font.width;
+        }
+        else
+        {
+            BG0_text(p, Font, c);
+            p.x += Font.height;
+        }
+        str++;
+    }
+*/
+        break;
+
+    case 3:
+        // TODO
+        break;
+    }
+
+}

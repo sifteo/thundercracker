@@ -80,15 +80,17 @@ void ScoredCubeState_NotWord::paint()
 {
     Cube& c = getStateMachine().getCube();
     // FIXME vertical words
+    bool neighbored =
+            (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
+            c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     const Sifteo::AssetImage& bg =
-        (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
-         c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED) ?
+         neighbored ?
             BGNotWordConnected :
             BGNotWordNotConnected;
     VidMode_BG0 vid(c.vbuf);
     vid.init();
     vid.BG0_drawAsset(Vec2(0,0), bg);
-    vid.BG0_text(Vec2(6,3), Font, getStateMachine().getLetters());
+    paintLetters(vid, (neighbored ? FontNeighbored : FontUnneighbored));
     char string[5];
     sprintf(string, "%d", GameStateMachine::GetSecondsLeft());
 #if DEBUGZZZZZZZZZ

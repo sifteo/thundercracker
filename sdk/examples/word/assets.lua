@@ -10,5 +10,8 @@ BGOldWordConnectedLeft = image{"ring_connected.png", quality=0}
 BGOldWordConnectedRight = image{"ring_connected_r.png", quality=0}
 StartScreen = image{"start_screen.png", quality=0}
 Title = image{"title.png", quality=0}
-Font = image{"font-32x64.png", width=32, height=64, quality=2}
+FontNeighbored = image{"font_neighbored.png", width=128, height=128, quality=10}
+FontUnneighbored = image{"font_unneighbored.png", width=128, height=128, quality=10}
+FontNew = image{"font_new.png", width=128, height=128, quality=10}
+FontRepeat = image{"font_repeat.png", width=128, height=128, quality=10}
 FontSmall = image{"font-8x16.png", width=8, height=16, quality=2}

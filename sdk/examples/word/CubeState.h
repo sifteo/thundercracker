@@ -1,6 +1,7 @@
 #ifndef CUBESTATE_H
 #define CUBESTATE_H
 
+#include <sifteo.h>
 #include "State.h"
 
 enum CubeStateIndex
@@ -16,12 +17,16 @@ enum CubeStateIndex
 
 class CubeStateMachine;
 
+
 class CubeState : public State
 {
 public:
     CubeState() : mStateMachine(0) { }
     void setStateMachine(CubeStateMachine& csm);
     CubeStateMachine& getStateMachine();
+
+protected:
+    void paintLetters(VidMode_BG0 &vid, const AssetImage &font);
 
 private:
     CubeStateMachine* mStateMachine;
