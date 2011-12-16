@@ -99,7 +99,7 @@ private:
   void PaintInfo();
   void PaintMenu();
 
-  void DoPaintItem(TiltFlowItem *pItem, int x);
+  void DoPaintItem(TiltFlowItem *pItem, int x, int y = 0);
   void PaintItem();
 
   void ClipIt(int ox, int &x, int &w);

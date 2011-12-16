@@ -238,6 +238,9 @@ void TiltFlowView::Tick() {
   case STATUS_ITEM:
     CoastToStop();
     break;
+  case STATUS_PICKED:
+    mDirty = true;
+    break;
   default:
     // do nothing
     break;
@@ -316,12 +319,13 @@ void TiltFlowView::PaintInfo() {
   */
 }
 
+const float SCROLL_AMOUNT = 220.0f;
 
-Vec2 SCROLL_DIRS[] = {
-	Vec2( 0, 128 ),
-	Vec2( -128, 0 ),
-	Vec2( 0, -128 ),
-	Vec2( 128, 0 ),
+Float2 SCROLL_DIRS[] = {
+	Float2( 0.0f, SCROLL_AMOUNT ),
+	Float2( SCROLL_AMOUNT, 0.0f ),
+	Float2( 0.0f, -SCROLL_AMOUNT ),
+	Float2( -SCROLL_AMOUNT, 0.0f ),
 };
 
 void TiltFlowView::PaintMenu() {
@@ -337,7 +341,18 @@ void TiltFlowView::PaintMenu() {
       vid.BG0_textf( Vec2( i, 0 ), Font, "%d", i%10 );
   }*/
 
-  DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), 24);
+  Vec2 offset( 24, 0 );
+
+  if( mStatus == STATUS_PICKED )
+  {
+	  //scroll the cover off
+	  offset -= Vec2( SCROLL_DIRS[ mLastNeighboredSide ] * TiltFlowMenu::Inst()->GetScrollTime() / TiltFlowMenu::PICK_DELAY );
+	  //printf( "panning %d, %d.  Pan offset : %0.2f\n", offset.x, offset.y, ( SCROLL_DIRS[ mLastNeighboredSide ] * TiltFlowMenu::Inst()->GetScrollTime() / TiltFlowMenu::PICK_DELAY ).x );
+  }
+
+
+  DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), offset.x, offset.y);
+  BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
 
   if( mStatus != STATUS_PICKED )
   {
@@ -347,33 +362,23 @@ void TiltFlowView::PaintMenu() {
 	  if (/*c.Neighbors.Right == NULL && */mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
 		DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118);
 	  }
+
+	  if (mDrawLabel) {
+		//TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
+		  bg1helper.DrawAsset(Vec2(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
+	  }
+
+	  //draw the current tip
+	  bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
   }
 
-  BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
-
-  if (mDrawLabel) {
-    //TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
-      bg1helper.DrawAsset(Vec2(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
-  }
-
-  //draw the current tip
-  bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
   bg1helper.Flush();
 
-  Vec2 panning = Vec2((int)-mOffsetX, COVER_Y_OFFSET);
-
-  if( mStatus == STATUS_PICKED )
-  {
-	  //scroll the cover off
-	  panning += ( SCROLL_DIRS[ mLastNeighboredSide ] * TiltFlowMenu::Inst()->GetScrollTime() / TiltFlowMenu::PICK_DELAY );
-	  mDirty = true;
-  }
-
   // Firmware handles all pixel-level scrolling
-  vid.BG0_setPanning(panning);
+  vid.BG0_setPanning(Vec2((int)-mOffsetX, COVER_Y_OFFSET - offset.y));
 }
 
-void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x) {
+void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int y) {
   if( pItem )
   {
       VidMode_BG0 vid( mpCube->vbuf );
@@ -400,6 +405,30 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x) {
 
       ASSERT( size.x >= 0 );
 
+	  //y axis handled completely differently, since we aren't panning on y
+	  //just clip y to 0 and bottom of screen
+	  //CES HACKERY
+	  int yTile = y / 8;
+	  int yOffset = 0;
+
+	  if( yTile + size.y <= -3 )
+		  return;
+	  else if( yTile < -3 )
+	  {
+		  int diff = -3 - yTile;
+		  offset.y += diff;
+		  size.y -= diff;
+		  yOffset += diff;
+	  }
+	  else if( yTile + pItem->mImage.height > VidMode_BG0::BG0_height - 4 )
+	  {
+		  int diff = ( yTile + pItem->mImage.height ) - ( VidMode_BG0::BG0_height - 4 );
+
+		  if( diff >= size.y )
+			  return;
+		  size.y -= diff;
+	  }
+
       //this shouldn't ever really loop, since we're heavily constraining curTile
       while( curTile < 0 )
       {
@@ -408,16 +437,16 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x) {
 
       //need to draw on the right tiles.
       if( curTile + size.x < (int)VidMode_BG0::BG0_width )
-        vid.BG0_drawPartialAsset(Vec2(curTile,0), offset, size, pItem->mImage, 0);
+        vid.BG0_drawPartialAsset(Vec2(curTile,yOffset), offset, size, pItem->mImage, 0);
       //Handle wrapping
       else
       {
           int wrapAmt = curTile + size.x - VidMode_BG0::BG0_width;
           size.x -= wrapAmt;
-          vid.BG0_drawPartialAsset(Vec2(curTile,0), offset, size, pItem->mImage, 0);
+          vid.BG0_drawPartialAsset(Vec2(curTile,yOffset), offset, size, pItem->mImage, 0);
           offset.x += size.x;
           size.x = wrapAmt;
-          vid.BG0_drawPartialAsset(Vec2(0,0), offset, size, pItem->mImage, 0);
+          vid.BG0_drawPartialAsset(Vec2(0,yOffset), offset, size, pItem->mImage, 0);
       }
   }
 }

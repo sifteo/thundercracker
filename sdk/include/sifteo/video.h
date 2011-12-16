@@ -263,7 +263,7 @@ class VidMode_BG0 : public VidMode {
         ASSERT( offset.x + size.x <= (int)asset.width );
         ASSERT( offset.y + size.y <= (int)asset.height );
         uint16_t addr = BG0_addr(point);
-        ASSERT( addr + BG0_width * ( size.y - 1 ) + size.x < BG0_width * BG0_width );
+        ASSERT( addr + BG0_width * ( size.y - 1 ) + size.x < BG0_width * BG0_height );
         unsigned tileOffset = asset.width * asset.height * frame + ( asset.width * offset.y ) + offset.x;
         const unsigned base = 0;
 
