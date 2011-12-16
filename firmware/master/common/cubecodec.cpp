@@ -417,7 +417,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroupID *group,
     uint8_t *region = (uint8_t*)FlashLayer::getRegionFromOffset(progress + offset, count, &size);
     buf.appendUser(region, size);
     
-    FlashLayer::releaseRegionFromOffset(progress);
+    FlashLayer::releaseRegionFromOffset(progress + offset);
 
     progress += size;
     loadBufferAvail -= size;

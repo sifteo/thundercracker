@@ -38,19 +38,30 @@ void ASegWriter::writeGroup(const Group &group)
     // TODO: Write header information
     //mStream << group.getLoadstream().size();
     
-    uint32_t type = 1;
-    uint32_t val;
+    
+    uint32_t val = 0;
+    uint16_t val16 = 0;
+    uint64_t val64 = 0;
     
     mStream.seekp(0);
-    mStream.write((char *)&type, sizeof(uint32_t));
-    val = sizeof(uint32_t) * 2; // len of asset group = 8 (offset and size)
+    
+    val = 1; // type (1 = asset group)
     mStream.write((char *)&val, sizeof(uint32_t));
     val = 512; // offset
     mStream.write((char *)&val, sizeof(uint32_t));
-    val = group.getLoadstream().size(); // size
-    mStream.write((char *)&val, sizeof(uint32_t));
     
+    // TODO: serialize integers in network format.
     mStream.seekp(512);
+    // write header (see AssetGroupHeader in firmware)
+    val16 = group.getPool().size();
+    mStream.write((char *)&val16, sizeof(uint16_t));
+    val16 = 0;
+    mStream.write((char *)&val16, sizeof(uint16_t));
+    val = group.getLoadstream().size();
+    mStream.write((char *)&val, sizeof(uint32_t));
+    val64 = group.getSignature();
+    mStream.write((char *)&val64, sizeof(uint64_t));
+    // write data
     writeArray(group.getLoadstream());
 }
 
@@ -62,12 +73,25 @@ void ASegWriter::writeSound(const Sound &sound)
     int format = 16;                // 16 bit format
     
     
+    uint32_t val = 0;
+    
+    mStream.seekp(8);  // TODO: Jump around based on IDs
+    
+    // write offset to index
+    val = 2; // type (2 = audio)
+    mStream.write((char *)&val, sizeof(uint32_t));
+    val = 20480 - sizeof(uint32_t); // offset
+    mStream.write((char *)&val, sizeof(uint32_t));
+    
+    // write audio data
+    //mStream.seekp(20480 + sizeof(uint32_t));
     mStream.seekp(20480);
-    
     SpeexEncoder encoder;
-    encoder.encodeFile(sound.getFile(), channels, format, mStream);
+    uint32_t size = encoder.encodeFile(sound.getFile(), channels, format, mStream);
     
-    // TODO: Seek back to the index, and write in offset information for this audio file.
+    //mStream.seekp(20480);
+    mStream.seekp(20480 - sizeof(uint32_t));
+    mStream.write((char *)&size, sizeof(uint32_t));
 }
 
 void ASegWriter::writeArray(const std::vector<uint8_t> &array)

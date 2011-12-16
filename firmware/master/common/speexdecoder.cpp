@@ -80,7 +80,7 @@ void SpeexDecoder::deinit()
  */
 int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
 {
-    fprintf(stdout, "  decoding frame size %d\n", size);
+    //fprintf(stdout, "  decoding frame size %d\n", size);
     
     if (size < (int)DECODED_FRAME_SIZE || status != Ok) {
         return 0;
@@ -94,7 +94,7 @@ int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
         return 0; // ruh roh, TODO error handling
     }
 
-    fprintf(stdout, "  wanted %lu bytes, read %d\n", DECODED_FRAME_SIZE + sizeof(uint8_t), rsize);
+    //fprintf(stdout, "  wanted %lu bytes, read %d\n", DECODED_FRAME_SIZE + sizeof(uint8_t), rsize);
 
     // format: uint8_t of framesize, followed by framesize bytes of frame data
     int sz = *localAddr++;

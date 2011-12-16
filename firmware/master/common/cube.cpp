@@ -106,25 +106,31 @@ void CubeSlot::loadAssets(_SYSAssetGroupID *a)
     
     LOG(("FLASH[%d]: Sending asset group %u\n", id(), a->id));
     
+    
     int size = 0;
-    AssetGroupType *type;
+    AssetIndexEntry *entry;
+
+    entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, 512, &size);
+    entry += a->id;
     
-    type = (AssetGroupType*)FlashLayer::getRegionFromOffset(0, sizeof(AssetGroupType), &size);
+    fprintf(stdout, "  entry type: %u\n", entry->type);
+    fprintf(stdout, "  entry offset: %u\n", entry->offset);
     
-    // FIXME: We need to check the size read here, in case the index would not align with a block.
-    //        should make sure the format of asset indices wouldn't allow this to happen.
-    
-    fprintf(stdout, "  rsize: %d\n", size);
-    fprintf(stdout, "  buffer: %s\n", (char*)type);
-    fprintf(stdout, "  type: %u, %u, %u\n", type->type, htons(type->type), ntohs(type->type));
-    fprintf(stdout, "  len: %d\n", type->len);
-    fprintf(stdout, "  offset: %d\n", type->offset);
-    fprintf(stdout, "  size: %d\n", type->size);
-    
-    a->offset = type->offset;
-    a->size = type->size;
+    int offset = entry->offset;
     
     FlashLayer::releaseRegionFromOffset(0);
+
+    AssetGroupHeader *header;
+    header = (AssetGroupHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(AssetGroupHeader), &size);
+    
+    fprintf(stdout, "  group numTiles: %u\n", header->numTiles);
+    fprintf(stdout, "  group dataSize: %u\n", header->dataSize);
+    fprintf(stdout, "  group signature: %llu\n", header->signature);
+    
+    a->offset = offset + sizeof(AssetGroupHeader);
+    a->size = header->dataSize;
+    
+    FlashLayer::releaseRegionFromOffset(offset);
     
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
     Atomic::And(CubeSlots::flashResetSent, ~bit());

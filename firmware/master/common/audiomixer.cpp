@@ -2,6 +2,7 @@
 #include "audiomixer.h"
 #include "audiooutdevice.h"
 #include "flashlayer.h"
+#include "cubecodec.h"  // TODO: This can be removed when the asset header structs are moved to a common file.
 #include <stdio.h>
 #include <string.h>
 #include <sifteo/machine.h>
@@ -230,12 +231,37 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle
 
 bool AudioMixer::play(struct _SYSAudioModuleID *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
 {
-    fprintf(stdout, "PLAYING AUDIO BY ID\n");
+    fprintf(stdout, "PLAYING AUDIO: %u, %lu\n", mod->id, sizeof(AssetIndexEntry));
+    //fprintf(stdout, "PLAYING AUDIO BY ID: %u, %lu\n", mod->id, sizeof(AssetIndexEntry));
+    
+    int size = 0;
+    AssetIndexEntry *entry;
+
+    entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, 512, &size);
+    entry += mod->id;
+    
+    fprintf(stdout, "  entry type: %u\n", entry->type);
+    fprintf(stdout, "  entry offset: %u\n", entry->offset);
+    
+    int offset = entry->offset;
+    
+    FlashLayer::releaseRegionFromOffset(0);
+    
+    SoundHeader *header;
+    header = (SoundHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size);
+    
+    fprintf(stdout, "  sound dataSize: %u\n", header->dataSize);
+    
+    mod->offset = offset + sizeof(SoundHeader);
+    mod->size = header->dataSize;
+    
+    FlashLayer::releaseRegionFromOffset(offset);    
+    
     
     // TODO: read this out of flash
-    mod->offset = 20480;
-    mod->size = 769924;
-    
+    //mod->offset = 20480;
+    //mod->size = 769924;
+
     if (enabledChannelMask == 0 || activeChannelMask == 0xFFFFFFFF) {
         return false; // no free channels
     }

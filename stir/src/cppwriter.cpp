@@ -79,7 +79,7 @@ void CPPSourceWriter::writeGroup(const Group &group)
     #endif
 
     // TODO: increment ids correctly with each group
-    uint32_t id = 1;
+    uint32_t id = 0;
     
     mStream << "\nuint32_t " << group.getName() << "ID_int = " << id << ";\n";
     mStream <<
@@ -114,7 +114,7 @@ void CPPSourceWriter::writeGroup(const Group &group)
 void CPPSourceWriter::writeSound(const Sound &sound)
 {
     // TODO: increment ids correctly with each group
-    uint32_t id = 2;
+    uint32_t id = 1;
     
     mStream <<
         "_SYSAudioModuleID " << sound.getName() << "= {\n" <<

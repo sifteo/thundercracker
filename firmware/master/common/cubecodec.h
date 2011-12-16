@@ -26,6 +26,24 @@
 #endif
 
 
+struct AssetIndexEntry {
+    uint32_t type;
+    uint32_t offset;
+};
+
+// structs for asset headers.  should move to common shared file
+struct AssetGroupHeader {
+    uint16_t numTiles;
+    uint16_t reserved;
+    uint32_t dataSize;
+    uint64_t signature;
+};
+
+struct SoundHeader {
+    uint32_t dataSize;
+};
+
+
 /**
  * A utility class to buffer bit-streams as we transmit them to a cube.
  *
@@ -83,15 +101,6 @@ class BitBuffer {
  private:
     uint32_t bits;
     uint8_t count;
-};
-
-
-// TODO: Move this elsewhere
-struct AssetGroupType {
-    uint32_t type;
-    uint32_t len;
-    uint32_t offset;
-    uint32_t size;
 };
 
 /**
