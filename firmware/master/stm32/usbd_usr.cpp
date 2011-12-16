@@ -20,9 +20,28 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
+#include "hardware.h"
+
 #include "usbd_usr.h"
 #include "usbd_ioreq.h"
+#include "usb_dcd_int.h"
 //#include "lcd_log.h"
+
+
+USB_OTG_CORE_HANDLE USB_OTG_dev;
+
+IRQ_HANDLER ISR_UsbOtg_FS() {
+    USBD_OTG_ISR_Handler(&USB_OTG_dev);
+}
+
+IRQ_HANDLER ISR_UsbOtg_FS_Wakeup() {
+//    if(USB_OTG_dev.cfg.low_power) {
+//        *(uint32_t *)(0xE000ED10) &= 0xFFFFFFF9 ;
+//        SystemInit();
+//        USB_OTG_UngateClock(&USB_OTG_dev);
+//    }
+//    EXTI_SIFTEO.PR = (1 << 18);    // clear usb wakeup interrupt
+}
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
 * @{
