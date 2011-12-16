@@ -356,9 +356,7 @@ bool CubeCodec::flashReset(PacketBuffer &buf)
     return true;
 }
 
-//bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
-//                          _SYSAssetGroupCube *ac, bool &done)
-bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroupID *group,
+bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
                           _SYSAssetGroupCube *ac, bool &done)
 {
     /*

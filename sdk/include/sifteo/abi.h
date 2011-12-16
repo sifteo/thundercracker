@@ -64,15 +64,16 @@ struct _SYSAssetGroupCube {
     uint32_t progress;          /// IN     Loading progress, in bytes
 };
 
+#if 0
 struct _SYSAssetGroup {
     const struct _SYSAssetGroupHeader *hdr;     /// OUT    Static data for this asset group
     struct _SYSAssetGroupCube *cubes;           /// OUT    Array of per-cube state buffers
     _SYSCubeIDVector reqCubes;                  /// IN     Which cubes have requested to load this group?
     _SYSCubeIDVector doneCubes;                 /// IN     Which cubes have finished installing this group?
 };
+#endif
 
-//typedef uint32_t _SYSAssetGroupID;
-struct _SYSAssetGroupID {
+struct _SYSAssetGroup {
     uint32_t id;                                /// OUT    ID of this group in the asset segment
     uint32_t offset;
     uint32_t size;
@@ -427,7 +428,6 @@ void _SYS_disableCubes(_SYSCubeIDVector cv);
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf);
 void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
-void _SYS_loadAssetsByID(_SYSCubeID cid, struct _SYSAssetGroupID *group);
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
 void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state);

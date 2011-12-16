@@ -24,8 +24,7 @@ static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf) };
 static void init() {
     for (unsigned i=0; i<NUM_CUBES; i++) {
         cubes[i].enable();
-        //cubes[i].loadAssets(GameAssets);
-        cubes[i].loadAssets(GameAssetsID);
+        cubes[i].loadAssets(GameAssets);
         VidMode_BG0_ROM rom(cubes[i].vbuf);
         rom.init();
         rom.BG0_text(Vec2(1,1), "Loading...");
@@ -34,10 +33,8 @@ static void init() {
         bool done = true;
         for (unsigned i = 0; i < NUM_CUBES; i++) {
             VidMode_BG0_ROM rom(cubes[i].vbuf);
-            //rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssetsID, VidMode_BG0::LCD_width), 2);
-            //if (!cubes[i].assetDone(GameAssets))
-            if (!cubes[i].assetDone(GameAssetsID))
+            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+            if (!cubes[i].assetDone(GameAssets))
                 done = false;
         }
         System::paint();

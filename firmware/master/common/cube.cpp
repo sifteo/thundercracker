@@ -60,6 +60,7 @@ static const int8_t fpMin = -8;
 
 #ifndef DISABLE_CUBE
 
+/*
 void CubeSlot::loadAssets(_SYSAssetGroup *a) {
     _SYSAssetGroupCube *ac = assetCube(a);
 
@@ -91,8 +92,9 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a) {
     // FIXME: transition to ID-based assets
     //loadGroup = a;
 }
+*/
 
-void CubeSlot::loadAssets(_SYSAssetGroupID *a)
+void CubeSlot::loadAssets(_SYSAssetGroup *a)
 {
     _SYSAssetGroupCube *ac = assetCube(a);
 
@@ -200,8 +202,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         // Not waiting on a reset. See if we need to send asset data.
 
         bool done = false;
-        //_SYSAssetGroup *group = loadGroup;
-        _SYSAssetGroupID *group = loadGroup;
+        _SYSAssetGroup *group = loadGroup;
 
         if (group && !(group->doneCubes & bit()) &&
             codec.flashSend(tx.packet, group, assetCube(group), done)) {
@@ -481,8 +482,7 @@ void CubeSlot::waitForFinish()
 
 void CubeSlot::triggerPaint(SysTime::Ticks timestamp)
 {
-    //_SYSAssetGroup *group = loadGroup;
-    _SYSAssetGroupID *group = loadGroup;
+    _SYSAssetGroup *group = loadGroup;
         
     if (vbuf) {
         uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));

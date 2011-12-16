@@ -85,9 +85,10 @@ void CPPSourceWriter::writeGroup(const Group &group)
     
     mStream << "\nuint32_t " << group.getName() << "ID_int = " << id << ";\n";
     mStream <<
-        "Sifteo::AssetGroupID " << group.getName() << "ID"
-        " = {{ " << group.getName() << "ID_int, (uint32_t)0, (uint32_t)0," << group.getName() << "ID.cubes }};\n";
+        "Sifteo::AssetGroup " << group.getName() <<
+        " = {{ " << group.getName() << "ID_int, (uint32_t)0, (uint32_t)0," << group.getName() << ".cubes }};\n";
 
+#if 0
     mStream <<
         "\n"
         "static const struct {\n" <<
@@ -107,6 +108,7 @@ void CPPSourceWriter::writeGroup(const Group &group)
         "}};\n\n"
         "Sifteo::AssetGroup " << group.getName() <<
         " = {{ &" << group.getName() << "_data.hdr, " << group.getName() << ".cubes }};\n";
+#endif
 
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++)
@@ -245,8 +247,6 @@ void CPPHeaderWriter::foot()
 
 void CPPHeaderWriter::writeGroup(const Group &group)
 {
-    mStream << "extern Sifteo::AssetGroupID " << group.getName() << "ID;\n";
-    
     mStream << "extern Sifteo::AssetGroup " << group.getName() << ";\n";
 
     for (std::set<Image*>::iterator i = group.getImages().begin();
