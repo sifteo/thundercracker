@@ -119,4 +119,5 @@ void ScoredCubeState_NewWord::paint()
 #endif
     vid.BG0_text(Vec2(7,0), FontSmall, string);
 
+    paintTeeth();
 }

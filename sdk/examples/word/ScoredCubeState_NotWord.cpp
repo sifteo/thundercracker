@@ -98,4 +98,5 @@ void ScoredCubeState_NotWord::paint()
 #endif
     vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
 
+    paintTeeth();
 }

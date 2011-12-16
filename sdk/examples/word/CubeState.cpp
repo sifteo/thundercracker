@@ -23,6 +23,13 @@ CubeStateMachine& CubeState::getStateMachine()
     return *mStateMachine;
 }
 
+void CubeState::paintTeeth()
+{
+    BG1Helper bg1(mStateMachine->getCube());
+    bg1.DrawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(16, 2), Teeth);
+    bg1.DrawPartialAsset(Vec2(0, 13), Vec2(0, 13), Vec2(16, 3), Teeth);
+    bg1.Flush();
+}
 
 void CubeState::paintLetters(VidMode_BG0 &vid, const AssetImage &font)
 {
@@ -33,7 +40,7 @@ void CubeState::paintLetters(VidMode_BG0 &vid, const AssetImage &font)
     {
     default:
         {
-            unsigned index = *str - (int)'A';
+            unsigned index = 0;//*str - (int)'A';
             if (index < font.frames)
             {
                 vid.BG0_drawAsset(point, font, index);
