@@ -35,6 +35,7 @@ class ASegWriter {
     
   private:
     int mCurrentID;
+    uint32_t mCurrentOffset;
 };
 
 }

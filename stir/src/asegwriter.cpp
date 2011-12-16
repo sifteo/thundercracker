@@ -6,7 +6,8 @@ using namespace Stir;
 
 ASegWriter::ASegWriter(Logger &log, const char *filename)
     : mLog(log),
-      mCurrentID(0)
+      mCurrentID(0),
+      mCurrentOffset(512)
 {
     if (filename) {
         mStream.open(filename);
@@ -48,11 +49,11 @@ void ASegWriter::writeGroup(const Group &group)
     
     val = 1; // type (1 = asset group)
     mStream.write((char *)&val, sizeof(uint32_t));
-    val = 512; // offset
+    val = mCurrentOffset; // offset
     mStream.write((char *)&val, sizeof(uint32_t));
     
     // TODO: serialize integers in network format.
-    mStream.seekp(512);
+    mStream.seekp(mCurrentOffset);
     // write header (see AssetGroupHeader in firmware)
     val16 = group.getPool().size();
     mStream.write((char *)&val16, sizeof(uint16_t));
@@ -66,6 +67,10 @@ void ASegWriter::writeGroup(const Group &group)
     writeArray(group.getLoadstream());
     
     mCurrentID++;
+    
+    mCurrentOffset += group.getLoadstream().size() + 16;
+    uint32_t pad = mCurrentOffset % 512;
+    mCurrentOffset += pad;
 }
 
 void ASegWriter::writeSound(const Sound &sound)
@@ -83,20 +88,24 @@ void ASegWriter::writeSound(const Sound &sound)
     // write offset to index
     val = 2; // type (2 = audio)
     mStream.write((char *)&val, sizeof(uint32_t));
-    val = 20480 - sizeof(uint32_t); // offset
+    val = mCurrentOffset - sizeof(uint32_t); // offset
     mStream.write((char *)&val, sizeof(uint32_t));
     
     // write audio data
     //mStream.seekp(20480 + sizeof(uint32_t));
-    mStream.seekp(20480);
+    mStream.seekp(mCurrentOffset);
     SpeexEncoder encoder;
     uint32_t size = encoder.encodeFile(sound.getFile(), channels, format, mStream);
     
     //mStream.seekp(20480);
-    mStream.seekp(20480 - sizeof(uint32_t));
+    mStream.seekp(mCurrentOffset - sizeof(uint32_t));
     mStream.write((char *)&size, sizeof(uint32_t));
     
     mCurrentID++;
+    
+    mCurrentOffset += size;
+    uint32_t pad = mCurrentOffset % 512;
+    mCurrentOffset += pad;
 }
 
 void ASegWriter::writeArray(const std::vector<uint8_t> &array)
