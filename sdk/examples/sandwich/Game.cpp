@@ -20,43 +20,6 @@ void Game::ObserveNeighbors(bool flag) {
 // BOOTSTRAP API
 //------------------------------------------------------------------
 
-Game gGame;
-
-void Game::InitializeAssets() {
-  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-    CubeAt(i)->enable(i);
-    CubeAt(i)->loadAssets(GameAssets);
-    VidMode_BG0_ROM rom(CubeAt(i)->vbuf);
-    rom.init();
-    rom.BG0_text(Vec2(1,1), "Loading...");
-  }
-  for (;;) {
-    bool done = true;
-    for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-      VidMode_BG0_ROM rom(CubeAt(i)->vbuf);
-      rom.BG0_progressBar(Vec2(0,7), CubeAt(i)->assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-      if (!CubeAt(i)->assetDone(GameAssets))
-        done = false;
-    }
-    System::paint();
-    if (done) {
-      break;
-		}
-  }
-  for(Cube::ID i=0; i<NUM_CUBES; ++i) {
-    VidMode_BG0 mode(CubeAt(i)->vbuf);
-    mode.init();
-    mode.BG0_drawAsset(Vec2(0,0), Sting);
-  }
-  float time = System::clock();
-  while(System::clock() - time < 1.f) {
-    for(GameView*v = ViewBegin(); v!=ViewEnd(); ++v) {
-      v->cube.vbuf.touch();
-    }
-    System::paint();
-  }
-}
-
 void Game::MainLoop() {
   mSimTime = System::clock();
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
@@ -184,7 +147,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   }
   
   // walk out of the in-gate
-  Vec2 target = 128*room + Vec2(64,64);
+  Vec2 target = map.GetRoom(room)->Center();
   player.SetLocation(position, InferDirection(target - position));
   view->Init();
   WalkTo(target);

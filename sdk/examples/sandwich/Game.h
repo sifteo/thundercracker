@@ -24,7 +24,6 @@ public:
   Enemy* EnemyBegin() { return enemies; }
   Enemy* EnemyEnd() { return enemies+NUM_ENEMIES; }
   
-  void InitializeAssets();
   void MainLoop();
   
   // Trigger Actions
@@ -44,5 +43,5 @@ private:
   void MovePlayerAndRedraw(int dx, int dy);
 };
 
-extern Game gGame;
+extern Game* pGame;
 

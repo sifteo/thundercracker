@@ -13,8 +13,8 @@ visited(0), mRoom(-2,-2) {
 
 void GameView::Init() {
   EnterSpriteMode();
-  if (gGame.player.CurrentView() == this) {
-    ShowLocation(gGame.player.Location());
+  if (pGame->player.CurrentView() == this) {
+    ShowLocation(pGame->player.Location());
     ShowPlayer();
   } else {
     ShowLocation(ROOM_NONE);
@@ -28,26 +28,28 @@ void GameView::Init() {
 bool GameView::IsShowingRoom() const {
   return mRoom.x >= 0 && 
     mRoom.y >= 0 && 
-    mRoom.x < gGame.map.Data()->width && 
-    mRoom.y < gGame.map.Data()->height; 
+    mRoom.x < pGame->map.Data()->width && 
+    mRoom.y < pGame->map.Data()->height; 
 }
 
 MapRoom* GameView::Room() const { 
   ASSERT(IsShowingRoom()); 
-  return gGame.map.GetRoom(mRoom); 
+  return pGame->map.GetRoom(mRoom); 
 }
 
 void GameView::ShowLocation(Vec2 room) {
   if (mRoom == room) { return; }
   mRoom = room;
   // are we showing an enemy?
-  for(Enemy* p = gGame.EnemyBegin(); p!=gGame.EnemyEnd(); ++p) {
+  /*
+  for(Enemy* p = pGame->EnemyBegin(); p!=pGame->EnemyEnd(); ++p) {
     if (p->IsActive() && p->Tile() == mRoom) {
       ShowEnemy(p);
     } else if (p->view == this) {
       HideEnemy(p);
     }
   }
+  */
   // are we showing an items?
   if (IsShowingRoom()) {
     MapRoom* mr = Room();
@@ -64,11 +66,13 @@ void GameView::ShowLocation(Vec2 room) {
 
 void GameView::HideRoom() {
   if (mRoom == ROOM_NONE) { return; }
-  for(Enemy* p = gGame.EnemyBegin(); p!=gGame.EnemyEnd(); ++p) {
+  /*
+  for(Enemy* p = pGame->EnemyBegin(); p!=pGame->EnemyEnd(); ++p) {
     if (p->view == this) {
       HideEnemy(p);
     }
   }
+  */
   HideItem();
   mRoom = ROOM_NONE;
   DrawBackground();
@@ -89,8 +93,8 @@ void GameView::SetPlayerFrame(unsigned frame) {
 }
 
 void GameView::UpdatePlayer() {
-  Vec2 localPosition = gGame.player.Position() - 128 * mRoom;
-  SetSpriteImage(PLAYER_SPRITE_ID, gGame.player.CurrentFrame());
+  Vec2 localPosition = pGame->player.Position() - 128 * mRoom;
+  SetSpriteImage(PLAYER_SPRITE_ID, pGame->player.CurrentFrame());
   MoveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
 }
 
@@ -219,21 +223,21 @@ void GameView::MoveSprite(int id, int px, int py) {
 
 GameView* GameView::VirtualNeighborAt(Cube::Side side) const {
   Cube::ID neighbor = cube.virtualNeighborAt(side);
-  return neighbor == CUBE_ID_UNDEFINED ? 0 : gGame.views + neighbor;
+  return neighbor == CUBE_ID_UNDEFINED ? 0 : pGame->views + neighbor;
 }
 
 void GameView::DrawBackground() {
   VidMode_BG0 mode(cube.vbuf);
   if (!IsShowingRoom()) {
-    mode.BG0_drawAsset(Vec2(0,0), *(gGame.map.Data()->blankImage));
+    mode.BG0_drawAsset(Vec2(0,0), *(pGame->map.Data()->blankImage));
     BG1Helper(cube).Flush();
   } else {
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
         mode.BG0_drawAsset(
           Vec2(x<<1,y<<1),
-          *(gGame.map.Data()->tileset),
-          gGame.map.Data()->GetTileId(mRoom, Vec2(x, y))
+          *(pGame->map.Data()->tileset),
+          pGame->map.Data()->GetTileId(mRoom, Vec2(x, y))
         );
       }
     }
@@ -247,7 +251,7 @@ void GameView::DrawBackground() {
         p+=2;
         if (pos != 0xff && frm != 0xff) {
           Vec2 position = Vec2(pos>>4, pos & 0xf);
-          ovrly.DrawAsset(2*position, *(gGame.map.Data()->overlay), frm);
+          ovrly.DrawAsset(2*position, *(pGame->map.Data()->overlay), frm);
         }
       }
     }
