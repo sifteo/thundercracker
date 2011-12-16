@@ -106,14 +106,20 @@ void siftmain()
     // main loop
     static WordGame game(cubes);
     float lastTime = System::clock();
+    float lastPaint = System::clock();
     while (1)
     {
         float now = System::clock();
         float dt = now - lastTime;
         lastTime = now;
+        System::paint();
 
         game.update(dt);
-        //game.onEvent(EventID_Paint, EventData()); // TODO decouple
+        if (now - lastPaint >= 1.f/30.f)
+        {
+            game.onEvent(EventID_Paint, EventData()); // TODO decouple
+            lastPaint = now;
+        }
         
         System::paint();
     }

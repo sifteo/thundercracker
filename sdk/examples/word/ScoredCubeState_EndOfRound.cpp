@@ -49,7 +49,7 @@ void ScoredCubeState_EndOfRound::paint()
         vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
         vid.BG0_text(Vec2(5,4), FontSmall, "Score");
         char string[17];
-        sprintf(string, "%.5d", GameStateMachine::GetScore());
+        sprintf(string, "%.5d", GameStateMachine::getScore());
         vid.BG0_text(Vec2(5,6), FontSmall, string);
         break;
 

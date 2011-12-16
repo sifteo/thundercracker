@@ -23,19 +23,54 @@ CubeStateMachine& CubeState::getStateMachine()
     return *mStateMachine;
 }
 
-void CubeState::paintTeeth(bool animate)
+void CubeState::paintTeeth(VidMode_BG0& vid, bool animate, bool reverseAnim)
 {
     unsigned frame = 0;
 
     if (animate)
     {
-        frame = (unsigned) (getStateMachine().getTime() * 3.f);
+        // TODO deal with animStartTime
+        float animTime =  getStateMachine().getTime() / TEETH_ANIM_LENGTH;
+        animTime = MIN(animTime, 1.f);
+        if (reverseAnim)
+        {
+            animTime = 1.f - animTime;
+        }
+        frame = (unsigned) (animTime * Teeth.frames);
         frame = MIN(frame, Teeth.frames - 1);
+//        frame = frame % Teeth.frames;
+    }
+    else if (reverseAnim)
+    {
+        frame = Teeth.frames - 1;
     }
     BG1Helper bg1(mStateMachine->getCube());
-    // TODO scan frame for non-transparent rows and adjust partial draw window
-    bg1.DrawPartialAsset(Vec2(0, frame), Vec2(0, frame), Vec2(16, 2), Teeth, frame);
-    bg1.DrawPartialAsset(Vec2(0, 13), Vec2(0, 13), Vec2(16, 3), Teeth, frame);
+    // scan frame for non-transparent rows and adjust partial draw window
+    const uint16_t* tiles = &Teeth.tiles[frame * Teeth.width * Teeth.height];
+    unsigned rowsPainted = 0;
+    const unsigned MAX_BG1_ROWS = 9;
+    for (int i=Teeth.height-1; i >= 0; --i) // rows
+    {
+        uint16_t firstIndex = tiles[i * Teeth.width];
+        for (unsigned j=0; j < Teeth.width; ++j) // columns
+        {
+            if (tiles[j + i * Teeth.width] != firstIndex)
+            {
+                // paint this opaque row
+                if (rowsPainted >= MAX_BG1_ROWS)
+                {
+                    // TODO paint BG0
+                    vid.BG0_drawPartialAsset(Vec2(0, i), Vec2(0, i), Vec2(16, 1), Teeth, frame);
+                }
+                else
+                {
+                    bg1.DrawPartialAsset(Vec2(0, i), Vec2(0, i), Vec2(16, 1), Teeth, frame);
+                    ++rowsPainted;
+                }
+                break;
+            }
+        }
+    }
     bg1.Flush();
 }
 

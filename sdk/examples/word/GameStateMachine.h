@@ -38,9 +38,11 @@ public:
     static unsigned GetNumCubes() { return MAX_CUBES; }// TODO
     static CubeStateMachine* findCSMFromID(Cube::ID cubeID);
 
-    static float GetAnagramCooldown() { return sInstance->mAnagramCooldown; }
-    static unsigned GetSecondsLeft() { return (unsigned) sInstance->mTimeLeft; }
-    static unsigned GetScore() { return (unsigned) sInstance->mScore; }
+    static float getAnagramCooldown() { return sInstance->mAnagramCooldown; }
+    static unsigned getSecondsLeft() { return (unsigned) sInstance->mTimeLeft; }
+    static unsigned getScore() { return (unsigned) sInstance->mScore; }
+    static float getTime() { return sInstance->StateMachine::getTime(); }
+
 protected:
     virtual State& getState(unsigned index);
     virtual unsigned getNumStates() const { return GameStateIndex_NumStates; }

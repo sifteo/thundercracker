@@ -9,7 +9,7 @@
 
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
-    return (GameStateMachine::GetSecondsLeft() <= 0) ?
+    return (GameStateMachine::getSecondsLeft() <= 0) ?
                 GameStateIndex_EndOfRoundScored : GameStateIndex_PlayScored;
 }
 
@@ -22,7 +22,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
         WordGame::playAudio(wordplay_music_versus, AudioChannelIndex_Music, LoopRepeat);
         // fall through
     case EventID_Input:
-        if (GameStateMachine::GetAnagramCooldown() <= .0f)
+        if (GameStateMachine::getAnagramCooldown() <= .0f)
         {
             EventData data;
             data.mNewAnagram.mWord = Dictionary::pickWord(MAX_CUBES);
@@ -64,7 +64,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_ClockTick:
-        switch (GameStateMachine::GetSecondsLeft())
+        switch (GameStateMachine::getSecondsLeft())
         {
         case 30:
             WordGame::playAudio(seconds30, AudioChannelIndex_Time);

@@ -7,6 +7,7 @@
 enum CubeStateIndex
 {
     CubeStateIndex_Title,
+    CubeStateIndex_TitleExit,
     CubeStateIndex_NotWordScored,
     CubeStateIndex_NewWordScored,
     CubeStateIndex_OldWordScored,
@@ -17,6 +18,7 @@ enum CubeStateIndex
 
 class CubeStateMachine;
 
+const float TEETH_ANIM_LENGTH = 1.0f;
 
 class CubeState : public State
 {
@@ -26,7 +28,7 @@ public:
     CubeStateMachine& getStateMachine();
 
 protected:
-    void paintTeeth(bool animate=false);
+    void paintTeeth(VidMode_BG0& vid, bool animate=false, bool reverseAnim=false);
     void paintLetters(VidMode_BG0 &vid, const AssetImage &font);
 
 private:

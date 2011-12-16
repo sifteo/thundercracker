@@ -4,6 +4,7 @@
 #include <sifteo.h>
 #include "StateMachine.h"
 #include "TitleCubeState.h"
+#include "TitleExitCubeState.h"
 #include "ScoredCubeState_NotWord.h"
 #include "ScoredCubeState_NewWord.h"
 #include "ScoredCubeState_OldWord.h"
@@ -42,6 +43,7 @@ private:
 
     Cube* mCube;
     TitleCubeState mTitleState;
+    TitleExitCubeState mTitleExitState;
     ScoredCubeState_NotWord mNotWordScoredState;
     ScoredCubeState_NewWord mNewWordScoredState;
     ScoredCubeState_OldWord mOldWordScoredState;

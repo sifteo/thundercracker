@@ -51,3 +51,5 @@ TitleGameState.h
 TitleGameState.cpp
 TitleCubeState.h
 TitleCubeState.cpp
+TitleExitCubeState.h
+TitleExitCubeState.cpp
