@@ -50,7 +50,7 @@ public:
   static const Sifteo::AssetImage *TIPS[NUM_TIPS];
 
   typedef enum
-  { STATUS_NONE, STATUS_MENU, STATUS_ITEM, STATUS_INFO }
+  { STATUS_NONE, STATUS_MENU, STATUS_ITEM, STATUS_INFO, STATUS_PICKED }
   Status;
 
   static int s_cubeIndex;
@@ -87,6 +87,9 @@ private:
   float mTipTime;
   Side mLastNeighborRemoveSide;
   Cube *mpCube;
+
+  //for CES hackery
+  Side mLastNeighboredSide;
 
   // for PositionOf and FindGroups
   //bool mVisited;
@@ -157,6 +160,7 @@ public:
     inline float GetSimTime() const { return mSimTime; }
     inline Status GetStatus() const { return mStatus; }
     inline int GetNumItems() const { return mNumItems; }
+	inline float GetScrollTime() const { return mSimTime - mPickTime; }
     TiltFlowItem *GetItem( int item );
 
 private:

@@ -61,8 +61,10 @@ bool TiltFlowMenu::Tick(float dt)
 			TiltFlowView &view = mViews[i];
 			if (&view == mKeyView) {
 				if( view.hasNeighbor() )
-					mDone = true;
+					Pick( view );
 			}
+			else
+				view.hasNeighbor();
 	  }
 
       if (mNeighborDirty) {
@@ -99,7 +101,8 @@ void TiltFlowMenu::Pick(TiltFlowView &view)
       {
           TiltFlowView &v = mViews[i];
         if (&v == &view) {
-          v.SetStatus(TiltFlowView::STATUS_INFO);
+          //v.SetStatus(TiltFlowView::STATUS_INFO);
+			v.SetStatus(TiltFlowView::STATUS_PICKED);
         } else {
           v.SetStatus(TiltFlowView::STATUS_NONE);
         }
@@ -213,7 +216,8 @@ int TiltFlowView::s_cubeIndex = 0;
 TiltFlowView::TiltFlowView() :
     mItem( -1 ), mOffsetX( 0.0f ), mAccel( MINACCEL ),
     mRestTime( -1.0f ), mDrawLabel( true ), mDirty( true ),
-    mCurrentTip( 0 ), mTipTime(0.0f), mLastNeighborRemoveSide( NONE ), mpCube( NULL )
+    mCurrentTip( 0 ), mTipTime(0.0f), mLastNeighborRemoveSide( NONE ), mpCube( NULL ),
+	mLastNeighboredSide( NONE )
 {
 }
 
@@ -264,7 +268,10 @@ bool TiltFlowView::hasNeighbor()
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
 		if( mpCube->hasPhysicalNeighborAt(i) )
+		{
+			mLastNeighboredSide = (Side)i;
 			return true;
+		}
 	}
 
 	return false;
@@ -282,6 +289,9 @@ void TiltFlowView::Paint()
       break;
     case STATUS_INFO:
       PaintInfo();
+      break;
+	case STATUS_PICKED:
+      PaintMenu();
       break;
     default:
       PaintNone();
@@ -306,6 +316,14 @@ void TiltFlowView::PaintInfo() {
   */
 }
 
+
+Vec2 SCROLL_DIRS[] = {
+	Vec2( 0, 128 ),
+	Vec2( -128, 0 ),
+	Vec2( 0, -128 ),
+	Vec2( 128, 0 ),
+};
+
 void TiltFlowView::PaintMenu() {
   //if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
 
@@ -321,11 +339,14 @@ void TiltFlowView::PaintMenu() {
 
   DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), 24);
 
-  if (/*c.Neighbors.Left == NULL && */mItem > 0) {
-    DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70);
-  }
-  if (/*c.Neighbors.Right == NULL && */mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
-    DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118);
+  if( mStatus != STATUS_PICKED )
+  {
+	  if (/*c.Neighbors.Left == NULL && */mItem > 0) {
+		DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70);
+	  }
+	  if (/*c.Neighbors.Right == NULL && */mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
+		DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118);
+	  }
   }
 
   BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
@@ -339,8 +360,17 @@ void TiltFlowView::PaintMenu() {
   bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
   bg1helper.Flush();
 
+  Vec2 panning = Vec2((int)-mOffsetX, COVER_Y_OFFSET);
+
+  if( mStatus == STATUS_PICKED )
+  {
+	  //scroll the cover off
+	  panning += ( SCROLL_DIRS[ mLastNeighboredSide ] * TiltFlowMenu::Inst()->GetScrollTime() / TiltFlowMenu::PICK_DELAY );
+	  mDirty = true;
+  }
+
   // Firmware handles all pixel-level scrolling
-  vid.BG0_setPanning(Vec2((int)-mOffsetX, COVER_Y_OFFSET));
+  vid.BG0_setPanning(panning);
 }
 
 void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x) {
