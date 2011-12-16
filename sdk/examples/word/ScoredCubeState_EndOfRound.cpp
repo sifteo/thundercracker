@@ -15,6 +15,7 @@ unsigned ScoredCubeState_EndOfRound::onEvent(unsigned eventID, const EventData& 
     {
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
+    case EventID_Paint:
         paint();
         break;
 
@@ -34,14 +35,28 @@ void ScoredCubeState_EndOfRound::paint()
 {
     Cube& c = getStateMachine().getCube();
     // FIXME vertical words
-/*    const Sifteo::AssetImage& bg =
-        (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
-         c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED) ?
-            BGNewWordConnectedMiddle :
-            BGNewWordConnectedLeft;
-            */
+    bool neighbored =
+            (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
+            c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
+    const Sifteo::AssetImage& bg =
+         neighbored ?
+            BGNotWordConnected :
+            BGNotWordNotConnected;
     VidMode_BG0 vid(c.vbuf);
     vid.init();
+    if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
+    {
+        vid.BG0_drawAsset(Vec2(0,0), bg);
+        paintLetters(vid, (neighbored ? FontNeighbored : FontUnneighbored));
+        char string[5];
+        sprintf(string, "%d", GameStateMachine::getSecondsLeft());
+    #if DEBUGZZZZZZZZZ
+        printf("%d %s\n", getStateMachine().getCube().id(), string);
+    #endif
+        vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
+        paintTeeth(vid, true, false);
+        return;
+    }
 
     switch (getStateMachine().getCube().id())
     {
