@@ -11,7 +11,8 @@ inline int fast_abs(int x) {
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
 pCurrent(gGame.views), pTarget(0), mPosition(128+64,64+16), // todo: move intial position to map data
-mDir(2), mKeyCount(0), mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
+mDir(2), mKeyCount(0), mSandwichCount(0), 
+mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
 mApproachingLockedDoor(false) {
   CORO_RESET;
 }
