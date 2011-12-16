@@ -33,7 +33,7 @@ public:
 	CubeWrapper cubes[NUM_CUBES]; 
 
 	void Init();
-	void Update();
+	bool Update();
 	void Reset();
 	
 

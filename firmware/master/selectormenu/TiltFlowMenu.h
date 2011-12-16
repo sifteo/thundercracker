@@ -73,6 +73,7 @@ public:
 
   void CheckForRepaint();
   void Tick();
+  bool hasNeighbor();
   //void RelateToMenu();
 private:
   Status mStatus;
@@ -148,7 +149,8 @@ public:
 
     void AssignViews();
 
-    void Tick(float dt);
+    //return true unless done
+	bool Tick(float dt);
     void Pick(TiltFlowView &view);
 
     inline TiltFlowView *GetKeyView() { return mKeyView; }

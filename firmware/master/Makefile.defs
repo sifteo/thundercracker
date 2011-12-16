@@ -35,6 +35,7 @@ ifneq ($(QTCREATOR),)
 	CFLAGS += -DQTCREATOR
 endif
 
+#This will build in the selector menu into the master firmware
 ifneq ($(SELECTORMENU),)
 	CFLAGS += -DSELECTORMENU$(SELECTORMENU)
 endif

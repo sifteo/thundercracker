@@ -45,15 +45,26 @@ void TiltFlowMenu::AssignViews()
 }
 
 
-void TiltFlowMenu::Tick(float dt)
+bool TiltFlowMenu::Tick(float dt)
 {
     mSimTime += dt;
 
     if (mDone) {
-      // mirr?
+      return false;
     }
 
     if (mSimTime - mUpdateTime > UPDATE_DELAY) {
+
+      //CES HACKERY
+	  for( int i = 0; i < mNumCubes; i++ )
+	  {
+			TiltFlowView &view = mViews[i];
+			if (&view == mKeyView) {
+				if( view.hasNeighbor() )
+					mDone = true;
+			}
+	  }
+
       if (mNeighborDirty) {
         mNeighborDirty = false;
         //CheckMenuNeighbors();
@@ -71,6 +82,8 @@ void TiltFlowMenu::Tick(float dt)
 
     for( int i = 0; i < mNumCubes; i++ )
       mViews[i].CheckForRepaint();
+
+	return true;
 }
 
 
@@ -106,12 +119,12 @@ TiltFlowItem *TiltFlowMenu::GetItem( int item )
     return NULL;
 }
 
+	
 
-
+//TODO, THIS IS NEIGHBORING, NOT HAPPENING YET
 /*
-  //TODO, THIS IS NEIGHBORING, NOT HAPPENING YET
-void TiltFlowMenu::CheckMenuNeighbors() {
-  ReassignMenu();
+void TiltFlowMenu::CheckMenuNeighbors() {	
+	ReassignMenu();
   for( int i = 0; i < mNumCubes; i++ )
   {
       TiltFlowView &view = mViews[i];
@@ -244,6 +257,19 @@ void TiltFlowView::Tick() {
       mDirty = true;
   }
 }
+
+
+bool TiltFlowView::hasNeighbor()
+{
+	for( int i = 0; i < NUM_SIDES; i++ )
+	{
+		if( mpCube->hasPhysicalNeighborAt(i) )
+			return true;
+	}
+
+	return false;
+}
+
 
 void TiltFlowView::Paint()
 {

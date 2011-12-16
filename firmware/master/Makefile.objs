@@ -50,6 +50,7 @@ OBJS_STM32 = \
     stm32/dac.stm32.o \
     $(SPEEX_OBJS_STM32)
 
+#This will build in the selector menu into the master firmware
 ifneq ($(SELECTORMENU),)
 OBJS_SIM += \
 	$(MASTER_DIR)/selectormenu/$(ASSETS).gen.sim.o \

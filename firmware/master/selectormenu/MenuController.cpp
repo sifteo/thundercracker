@@ -70,9 +70,7 @@ void RunMenu()
     _SYS_vectors.cubeEvents.tilt = onTilt;
     _SYS_vectors.cubeEvents.shake = onShake;
 
-    while (1) {
-        s_menu.Update();
-    }
+    while (s_menu.Update()) {}
 }
 
 
@@ -120,17 +118,18 @@ void MenuController::Init()
 }
 
 
-void MenuController::Update()
+bool MenuController::Update()
 {
     float t = System::clock();
     float dt = t - m_fLastTime;
     m_fLastTime = t;
 
-    m_Menu.Tick(dt);
+    bool result = m_Menu.Tick(dt);
             
     System::paint();
-}
 
+	return result;
+}
 
 void MenuController::Reset()
 {
