@@ -65,7 +65,8 @@ void CPPWriter::writeArray(const std::vector<uint8_t> &array)
 
 
 CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
-    : CPPWriter(log, filename)
+    : CPPWriter(log, filename),
+      mCurrentID(0)
     {}
 
 void CPPSourceWriter::writeGroup(const Group &group)
@@ -79,7 +80,8 @@ void CPPSourceWriter::writeGroup(const Group &group)
     #endif
 
     // TODO: increment ids correctly with each group
-    uint32_t id = 0;
+    uint32_t id = mCurrentID;
+    mCurrentID++;
     
     mStream << "\nuint32_t " << group.getName() << "ID_int = " << id << ";\n";
     mStream <<
@@ -114,7 +116,8 @@ void CPPSourceWriter::writeGroup(const Group &group)
 void CPPSourceWriter::writeSound(const Sound &sound)
 {
     // TODO: increment ids correctly with each group
-    uint32_t id = 1;
+    uint32_t id = mCurrentID;
+    mCurrentID++;
     
     mStream <<
         "_SYSAudioModuleID " << sound.getName() << "= {\n" <<

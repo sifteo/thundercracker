@@ -32,6 +32,9 @@ class ASegWriter {
     //virtual void foot();
 
     void writeArray(const std::vector<uint8_t> &array);
+    
+  private:
+    int mCurrentID;
 };
 
 }

@@ -58,6 +58,8 @@ class CPPSourceWriter : public CPPWriter {
 
  private:
     void writeImage(const Image &image);
+    
+    int mCurrentID;
 };
 
 
