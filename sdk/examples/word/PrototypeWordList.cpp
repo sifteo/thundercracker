@@ -16,7 +16,7 @@ static const char sList[][7] =
 
 #else
 
-static const char sList[][7] =
+static const char sList[][MAX_LETTERS_PER_WORD + 1] =
 {
     "AA",
     "AAL",

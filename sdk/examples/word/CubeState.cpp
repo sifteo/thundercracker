@@ -23,11 +23,19 @@ CubeStateMachine& CubeState::getStateMachine()
     return *mStateMachine;
 }
 
-void CubeState::paintTeeth()
+void CubeState::paintTeeth(bool animate)
 {
+    unsigned frame = 0;
+
+    if (animate)
+    {
+        frame = (unsigned) (getStateMachine().getTime() * 3.f);
+        frame = MIN(frame, Teeth.frames - 1);
+    }
     BG1Helper bg1(mStateMachine->getCube());
-    bg1.DrawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(16, 2), Teeth);
-    bg1.DrawPartialAsset(Vec2(0, 13), Vec2(0, 13), Vec2(16, 3), Teeth);
+    // TODO scan frame for non-transparent rows and adjust partial draw window
+    bg1.DrawPartialAsset(Vec2(0, frame), Vec2(0, frame), Vec2(16, 2), Teeth, frame);
+    bg1.DrawPartialAsset(Vec2(0, 13), Vec2(0, 13), Vec2(16, 3), Teeth, frame);
     bg1.Flush();
 }
 

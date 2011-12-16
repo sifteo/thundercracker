@@ -9,8 +9,8 @@ BGOldWordConnectedMiddle = image{"ring_connected_mid.png", quality=0}
 BGOldWordConnectedLeft = image{"ring_connected.png", quality=0}
 BGOldWordConnectedRight = image{"ring_connected_r.png", quality=0}
 StartScreen = image{"start_screen.png", quality=0}
-Title = image{"wordcandy.png", quality=10}
-Teeth = image{"teeth.png", width=128, height=128, quality=10}
+Title = image{"wordcandy.png", quality=0}
+Teeth = image{"teeth_anim.png", width=128, height=128, quality=0}
 FontNeighbored = image{"wc_S_neighbored.png", width=128, height=128, quality=0}
 FontUnneighbored = image{"wc_S_unneighbored.png", width=128, height=128, quality=0}
 FontNew = image{"wc_S_connectednew.png", width=128, height=128, quality=0}

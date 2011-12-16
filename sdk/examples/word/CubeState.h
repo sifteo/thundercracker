@@ -26,7 +26,7 @@ public:
     CubeStateMachine& getStateMachine();
 
 protected:
-    void paintTeeth();
+    void paintTeeth(bool animate=false);
     void paintLetters(VidMode_BG0 &vid, const AssetImage &font);
 
 private:
