@@ -310,13 +310,15 @@ enum _SYSAudioLoopType {
     LoopRepeat = 1
 };
 
+#if 0
 struct _SYSAudioModule {
     enum _SYSAudioType type;
     uint32_t size;
     const uint8_t *buf;
 };
+#endif
 
-struct _SYSAudioModuleID {
+struct _SYSAudioModule {
     uint32_t id;
     uint32_t offset;
     uint32_t size;
@@ -452,8 +454,8 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count);
 
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer);
-uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
-uint8_t _SYS_audio_playByID(struct _SYSAudioModuleID *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
+//uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
+uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
 uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
 void _SYS_audio_stop(_SYSAudioHandle h);
 void _SYS_audio_pause(_SYSAudioHandle h);

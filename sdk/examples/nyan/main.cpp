@@ -10,7 +10,7 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
-#include "audio.gen.h"
+//#include "audio.gen.h"
 
 using namespace Sifteo;
 

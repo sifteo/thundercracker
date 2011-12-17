@@ -191,6 +191,7 @@ void AudioMixer::fetchData()
 //
 //}
 
+#if 0
 bool AudioMixer::play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
 {
     if (enabledChannelMask == 0 || activeChannelMask == 0xFFFFFFFF) {
@@ -228,12 +229,10 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle
     Atomic::SetBit(activeChannelMask, idx);
     return true;
 }
+#endif
 
-bool AudioMixer::play(struct _SYSAudioModuleID *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
+bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
 {
-    fprintf(stdout, "PLAYING AUDIO: %u, %lu\n", mod->id, sizeof(AssetIndexEntry));
-    //fprintf(stdout, "PLAYING AUDIO BY ID: %u, %lu\n", mod->id, sizeof(AssetIndexEntry));
-    
     int size = 0;
     AssetIndexEntry *entry;
 
@@ -258,10 +257,6 @@ bool AudioMixer::play(struct _SYSAudioModuleID *mod, _SYSAudioHandle *handle, _S
     FlashLayer::releaseRegionFromOffset(offset);    
     
     
-    // TODO: read this out of flash
-    //mod->offset = 20480;
-    //mod->size = 769924;
-
     if (enabledChannelMask == 0 || activeChannelMask == 0xFFFFFFFF) {
         return false; // no free channels
     }

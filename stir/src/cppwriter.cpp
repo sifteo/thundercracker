@@ -122,7 +122,7 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     mCurrentID++;
     
     mStream <<
-        "_SYSAudioModuleID " << sound.getName() << "= {\n" <<
+        "_SYSAudioModule " << sound.getName() << "= {\n" <<
         id << ",\n" <<
         "0,\n" <<
         "0,\n" <<
@@ -265,7 +265,7 @@ void CPPHeaderWriter::writeGroup(const Group &group)
 
 void CPPHeaderWriter::writeSound(const Sound &sound)
 {
-    mStream << "extern _SYSAudioModuleID " << sound.getName() << ";\n";
+    mStream << "extern _SYSAudioModule " << sound.getName() << ";\n";
 }
 
 };  // namespace Stir

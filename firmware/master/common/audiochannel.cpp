@@ -21,24 +21,6 @@ void AudioChannelWrapper::init(_SYSAudioBuffer *b)
 
 void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
 {
-    // obsolete, replace with ID-based assets
-    /*
-    // if this is a sample & either the passed in decoder is null, or our
-    // internal decoder is not null, we've got problems
-    ASSERT(!(mod->type == Sample && dec == NULL));
-    ASSERT(!(mod->type == Sample && this->decoder != NULL));
-
-    this->decoder = dec;
-    this->mod = mod;
-    this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
-    if (this->decoder != 0) {
-        this->decoder->setData(mod->buf, mod->size);
-    }
-    */
-}
-
-void AudioChannelWrapper::play(const struct _SYSAudioModuleID *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
-{
     // if this is a sample & either the passed in decoder is null, or our
     // internal decoder is not null, we've got problems
     ASSERT(!(mod->type == Sample && dec == NULL));

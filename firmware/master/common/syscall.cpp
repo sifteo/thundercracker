@@ -252,6 +252,7 @@ void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
     }
 }
 
+#if 0
 uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
 {
     if (Runtime::checkUserPointer(mod, sizeof(*mod)) && Runtime::checkUserPointer(h, sizeof(*h))) {
@@ -259,8 +260,9 @@ uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, e
     }
     return false;
 }
+#endif
 
-uint8_t _SYS_audio_playByID(struct _SYSAudioModuleID *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
+uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
 {
     if (Runtime::checkUserPointer(mod, sizeof(*mod)) && Runtime::checkUserPointer(h, sizeof(*h))) {
         return AudioMixer::instance.play(mod, h, loop);
