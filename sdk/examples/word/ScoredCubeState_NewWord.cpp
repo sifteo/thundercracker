@@ -107,17 +107,11 @@ void ScoredCubeState_NewWord::paint()
     vid.BG0_drawAsset(Vec2(0,0), bg);
     paintLetters(vid, FontNew);
     char string[5];
-    sprintf(string, "%d", GameStateMachine::getSecondsLeft());
-#if DEBUGZZZZZZZZZZZ
-    printf("%d %s\n", getStateMachine().getCube().id(), string);
-#endif
-    vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
-
     sprintf(string, "%+.1d", getStateMachine().findRowLength());
 #if DEBUGZZZ
     printf("score %s (=%d)\n", string, GameStateMachine::getScore());
 #endif
-    vid.BG0_text(Vec2(7,0), FontSmall, string);
+    paintNumbers(vid, Vec2(7,0), string);
 
-    paintTeeth(vid);
+    paintTeeth(vid, false, false, true);
 }

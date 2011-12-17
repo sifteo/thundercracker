@@ -1,6 +1,7 @@
 #include <sifteo.h>
 #include "CubeState.h"
 #include "CubeStateMachine.h"
+#include "GameStateMachine.h"
 #include "assets.gen.h"
 
 void CubeState::setStateMachine(CubeStateMachine& csm)
@@ -23,7 +24,7 @@ CubeStateMachine& CubeState::getStateMachine()
     return *mStateMachine;
 }
 
-void CubeState::paintTeeth(VidMode_BG0& vid, bool animate, bool reverseAnim)
+void CubeState::paintTeeth(VidMode_BG0& vid, bool animate, bool reverseAnim, bool paintTime)
 {
     unsigned frame = 0;
 
@@ -71,6 +72,19 @@ void CubeState::paintTeeth(VidMode_BG0& vid, bool animate, bool reverseAnim)
             }
         }
     }
+
+    if (paintTime)
+    {
+        char string[5];
+        sprintf(string, "%d", GameStateMachine::getSecondsLeft());
+        unsigned len = strlen(string);
+        for (unsigned i = 0; i < len; ++i)
+        {
+            bg1.DrawAsset(Vec2(((3 - strlen(string) + i) * 4 + 1), 14),
+                          FontSmall,
+                          string[i] - '0');
+        }
+    }
     bg1.Flush();
 }
 
@@ -116,3 +130,29 @@ void CubeState::paintLetters(VidMode_BG0 &vid, const AssetImage &font)
     }
 
 }
+
+void CubeState::paintNumbers(VidMode_BG0 &vid, const Vec2& position, const char* string)
+{
+    const AssetImage& font = FontSmall;
+    for (; *string; ++string)
+    {
+        unsigned index;
+        switch (*string)
+        {
+        default:
+            index = *string - '0';
+            break;
+
+        case '+':
+            index = 10;
+            break;
+
+        case ' ':
+            index = 11;
+            break;
+        }
+
+        vid.BG0_drawAsset(position, font, index);
+    }
+}
+

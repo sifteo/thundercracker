@@ -105,12 +105,5 @@ void ScoredCubeState_OldWord::paint()
     vid.init();
     vid.BG0_drawAsset(Vec2(0,0), bg);
     paintLetters(vid, FontRepeat);
-    char string[5];
-    sprintf(string, "%d", GameStateMachine::getSecondsLeft());
-#if DEBUGZZZZZZZZ
-    printf("%d %s\n", getStateMachine().getCube().id(), string);
-#endif
-    vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
-
-    paintTeeth(vid);
+    paintTeeth(vid, false, false, true);
 }

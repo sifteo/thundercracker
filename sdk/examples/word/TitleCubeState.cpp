@@ -54,7 +54,7 @@ void TitleCubeState::paint()
     default:
         vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
         /* TODO load/save
-        vid.BG0_text(Vec2(3,4), FontSmall, "High Scores");
+        paintNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
 
         for (unsigned i = arraysize(SavedData::sHighScores) - 1;
              i >= 0;
@@ -66,7 +66,7 @@ void TitleCubeState::paint()
             }
             char string[17];
             sprintf(string, "%.5d", SavedData::sHighScores[i]);
-            vid.BG0_text(Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
+            paintNumbers(vid, Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
                          FontSmall,
                          string);
         }

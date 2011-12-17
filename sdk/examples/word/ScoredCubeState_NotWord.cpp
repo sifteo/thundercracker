@@ -91,16 +91,9 @@ void ScoredCubeState_NotWord::paint()
     vid.init();
     vid.BG0_drawAsset(Vec2(0,0), bg);
     paintLetters(vid, (neighbored ? FontNeighbored : FontUnneighbored));
-    char string[5];
-    sprintf(string, "%d", GameStateMachine::getSecondsLeft());
-#if DEBUGZZZZZZZZZ
-    printf("%d %s\n", getStateMachine().getCube().id(), string);
-#endif
-    vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
-
     if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
     {
-        paintTeeth(vid);
+        paintTeeth(vid, false, false, true);
     }
     else
     {

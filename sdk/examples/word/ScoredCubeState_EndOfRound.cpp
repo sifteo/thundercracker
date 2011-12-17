@@ -48,12 +48,6 @@ void ScoredCubeState_EndOfRound::paint()
     {
         vid.BG0_drawAsset(Vec2(0,0), bg);
         paintLetters(vid, (neighbored ? FontNeighbored : FontUnneighbored));
-        char string[5];
-        sprintf(string, "%d", GameStateMachine::getSecondsLeft());
-    #if DEBUGZZZZZZZZZ
-        printf("%d %s\n", getStateMachine().getCube().id(), string);
-    #endif
-        vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
         paintTeeth(vid, true, false);
         return;
     }
@@ -62,10 +56,10 @@ void ScoredCubeState_EndOfRound::paint()
     {
     case 0:
         vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
-        vid.BG0_text(Vec2(5,4), FontSmall, "Score");
+        paintNumbers(vid, Vec2(5,4), "Score");
         char string[17];
         sprintf(string, "%.5d", GameStateMachine::getScore());
-        vid.BG0_text(Vec2(5,6), FontSmall, string);
+        paintNumbers(vid, Vec2(5,6), string);
         break;
 
         // TODO high scores
@@ -75,7 +69,7 @@ void ScoredCubeState_EndOfRound::paint()
 
     default:
         vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
-        vid.BG0_text(Vec2(3,4), FontSmall, "High Scores");
+        paintNumbers(vid, Vec2(3,4), "High Scores");
 
         for (unsigned i = arraysize(SavedData::sHighScores) - 1;
              i >= 0;
@@ -87,8 +81,7 @@ void ScoredCubeState_EndOfRound::paint()
             }
             char string[17];
             sprintf(string, "%.5d", SavedData::sHighScores[i]);
-            vid.BG0_text(Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
-                         FontSmall,
+            paintNumbers(vid, Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
                          string);
         }
         break;

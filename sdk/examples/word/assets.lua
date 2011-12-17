@@ -15,4 +15,4 @@ FontNeighbored = image{"wc_S_neighbored.png", width=128, height=128, quality=0}
 FontUnneighbored = image{"wc_S_unneighbored.png", width=128, height=128, quality=0}
 FontNew = image{"wc_S_connectednew.png", width=128, height=128, quality=0}
 FontRepeat = image{"wc_S_connectedold.png", width=128, height=128, quality=0}
-FontSmall = image{"font-8x16.png", width=8, height=16, quality=0}
+FontSmall = image{"font-8x16.png", width=8, height=16, quality=3}
