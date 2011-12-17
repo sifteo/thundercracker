@@ -428,8 +428,7 @@
  <objectgroup name="triggers" width="24" height="24">
   <object name="ForestGate" type="Gateway" x="176" y="364" width="32" height="32">
    <properties>
-    <property name="_target" value="forest:CastleGate"/>
-    <property name="target" value="dungeon:DungeonGate"/>
+    <property name="target" value="forest:CastleGate"/>
    </properties>
   </object>
   <object name="Toast" type="Item" x="176" y="176" width="32" height="32">
