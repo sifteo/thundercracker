@@ -32,7 +32,7 @@ struct RCC_t {
     uint32_t CFGR2;
 };
 
-extern volatile RCC_t RCC_SIFTEO;
+extern volatile RCC_t RCC;
 
 
 /*
@@ -465,7 +465,7 @@ struct NVIC_t {
     }
 };
 
-extern volatile NVIC_t NVIC_SIFTEO;
+extern volatile NVIC_t NVIC;
 
 
 #endif

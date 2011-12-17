@@ -6,29 +6,29 @@
 void HwTimer::init(int period, int prescaler)
 {
     if (tim == &TIM2) {
-        RCC_SIFTEO.APB1ENR |= (1 << 0); // TIM2 enable
-        RCC_SIFTEO.APB1RSTR = (1 << 0); // TIM2 reset
-        RCC_SIFTEO.APB1RSTR = 0;
+        RCC.APB1ENR |= (1 << 0); // TIM2 enable
+        RCC.APB1RSTR = (1 << 0); // TIM2 reset
+        RCC.APB1RSTR = 0;
     }
     else if (tim == &TIM3) {
-        RCC_SIFTEO.APB1ENR |= (1 << 1); // TIM3 enable
-        RCC_SIFTEO.APB1RSTR = (1 << 1); // TIM3 reset
-        RCC_SIFTEO.APB1RSTR = 0;
+        RCC.APB1ENR |= (1 << 1); // TIM3 enable
+        RCC.APB1RSTR = (1 << 1); // TIM3 reset
+        RCC.APB1RSTR = 0;
     }
     else if (tim == &TIM4) {
-        RCC_SIFTEO.APB1ENR |= (1 << 2); // TIM4 enable
-        RCC_SIFTEO.APB1RSTR = (1 << 2); // TIM4 reset
-        RCC_SIFTEO.APB1RSTR = 0;
+        RCC.APB1ENR |= (1 << 2); // TIM4 enable
+        RCC.APB1RSTR = (1 << 2); // TIM4 reset
+        RCC.APB1RSTR = 0;
     }
     else if (tim == &TIM5) {
-        RCC_SIFTEO.APB1ENR |= (1 << 3); // TIM5 enable
-        RCC_SIFTEO.APB1RSTR = (1 << 3); // TIM5 reset
-        RCC_SIFTEO.APB1RSTR = 0;
+        RCC.APB1ENR |= (1 << 3); // TIM5 enable
+        RCC.APB1RSTR = (1 << 3); // TIM5 reset
+        RCC.APB1RSTR = 0;
     }
     else if (tim == &TIM1) {
-        RCC_SIFTEO.APB2ENR |= (1 << 11); // TIM1 enable
-        RCC_SIFTEO.APB2RSTR = (1 << 11); // TIM1 reset
-        RCC_SIFTEO.APB2RSTR = 0;
+        RCC.APB2ENR |= (1 << 11); // TIM1 enable
+        RCC.APB2RSTR = (1 << 11); // TIM1 reset
+        RCC.APB2RSTR = 0;
     }
 
     // Timer configuration
@@ -64,19 +64,19 @@ void HwTimer::end()
     tim->SR   = 0;  // clear status
 
     if (tim == &TIM2) {
-        RCC_SIFTEO.APB1ENR &= ~(1 << 0); // TIM2 disable
+        RCC.APB1ENR &= ~(1 << 0); // TIM2 disable
     }
     else if (tim == &TIM3) {
-        RCC_SIFTEO.APB1ENR &= ~(1 << 1); // TIM3 disable
+        RCC.APB1ENR &= ~(1 << 1); // TIM3 disable
     }
     else if (tim == &TIM4) {
-        RCC_SIFTEO.APB1ENR &= ~(1 << 2); // TIM4 disable
+        RCC.APB1ENR &= ~(1 << 2); // TIM4 disable
     }
     else if (tim == &TIM5) {
-        RCC_SIFTEO.APB1ENR &= ~(1 << 3); // TIM5 disable
+        RCC.APB1ENR &= ~(1 << 3); // TIM5 disable
     }
     else if (tim == &TIM1) {
-        RCC_SIFTEO.APB2ENR &= ~(1 << 11); // TIM1 disable
+        RCC.APB2ENR &= ~(1 << 11); // TIM1 disable
     }
 }
 

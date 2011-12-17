@@ -6,7 +6,7 @@ Dac Dac::instance;
 
 void Dac::init()
 {
-    RCC_SIFTEO.APB1ENR |= (1 << 29); // enable dac peripheral clock
+    RCC.APB1ENR |= (1 << 29); // enable dac peripheral clock
 }
 
 // channels: 1 or 2

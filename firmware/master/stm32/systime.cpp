@@ -39,12 +39,12 @@ void SysTime::init()
     tickBase = 0;
     lastTick = 0;
 
-    NVIC_SIFTEO.SysTick_CS = 0;
-    NVIC_SIFTEO.SysTick_RELOAD = SYSTICK_RELOAD;
-    NVIC_SIFTEO.SysTick = 0;
+    NVIC.SysTick_CS = 0;
+    NVIC.SysTick_RELOAD = SYSTICK_RELOAD;
+    NVIC.SysTick = 0;
 
     // Enable timer, enable interrupt
-    NVIC_SIFTEO.SysTick_CS = 3;
+    NVIC.SysTick_CS = 3;
 }
 
 IRQ_HANDLER ISR_SysTick()
@@ -57,7 +57,7 @@ SysTime::Ticks SysTime::ticks()
     /*
      * Fractional part of our timebase (between IRQs)
      */
-    uint32_t fractional = SYSTICK_RELOAD - NVIC_SIFTEO.SysTick;
+    uint32_t fractional = SYSTICK_RELOAD - NVIC.SysTick;
     Ticks t = tickBase;
 
     /*

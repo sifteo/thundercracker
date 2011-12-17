@@ -28,8 +28,8 @@ void Debug::dcc(uint32_t dccData)
      const uint32_t busy = 1;
 
      do {
-         while (NVIC_SIFTEO.DCRDR_l & busy);
-         NVIC_SIFTEO.DCRDR_l = ((dccData & 0xFF) << 8) | busy;
+         while (NVIC.DCRDR_l & busy);
+         NVIC.DCRDR_l = ((dccData & 0xFF) << 8) | busy;
          dccData >>= 8;
      } while (--bytes);
 }
