@@ -33,7 +33,7 @@ void CubeState::paintTeeth(VidMode_BG0& vid, bool animate, bool reverseAnim, boo
         // TODO deal with animStartTime
         float animTime =  getStateMachine().getTime() / TEETH_ANIM_LENGTH;
         animTime = MIN(animTime, 1.f);
-        if (reverseAnim)
+        if (!reverseAnim)
         {
             animTime = 1.f - animTime;
         }
@@ -41,7 +41,7 @@ void CubeState::paintTeeth(VidMode_BG0& vid, bool animate, bool reverseAnim, boo
         frame = MIN(frame, Teeth.frames - 1);
 //        frame = frame % Teeth.frames;
     }
-    else if (reverseAnim)
+    else if (!reverseAnim)
     {
         frame = Teeth.frames - 1;
     }
@@ -81,7 +81,7 @@ void CubeState::paintTeeth(VidMode_BG0& vid, bool animate, bool reverseAnim, boo
         for (unsigned i = 0; i < len; ++i)
         {
             bg1.DrawAsset(Vec2(((3 - strlen(string) + i) * 4 + 1), 14),
-                          FontSmall,
+                          FontTeeth,
                           string[i] - '0');
         }
     }
