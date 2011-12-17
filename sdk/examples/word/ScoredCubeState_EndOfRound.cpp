@@ -38,15 +38,10 @@ void ScoredCubeState_EndOfRound::paint()
     bool neighbored =
             (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
             c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
-    const Sifteo::AssetImage& bg =
-         neighbored ?
-            BGNotWordConnected :
-            BGNotWordNotConnected;
     VidMode_BG0 vid(c.vbuf);
     vid.init();
     if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
     {
-        vid.BG0_drawAsset(Vec2(0,0), bg);
         paintLetters(vid, (neighbored ? FontNeighbored : FontUnneighbored));
         paintTeeth(vid, true, false);
         return;
