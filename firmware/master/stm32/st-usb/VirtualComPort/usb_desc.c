@@ -28,10 +28,10 @@ const uint8_t Virtual_Com_Port_DeviceDescriptor[] =
     0x00,   /* bDeviceSubClass */
     0x00,   /* bDeviceProtocol */
     0x40,   /* bMaxPacketSize0 */
-    0x83,
-    0x04,   /* idVendor = 0x0483 */
-    0x40,
-    0x57,   /* idProduct = 0x7540 */
+    0xFA,
+    0x22,   /* idVendor = 0x22FA */
+    0x03,
+    0x01,   /* idProduct = 0x0103 */
     0x00,
     0x02,   /* bcdDevice = 2.00 */
     1,              /* Index of string descriptor describing manufacturer */
@@ -136,19 +136,18 @@ const uint8_t Virtual_Com_Port_StringVendor[VIRTUAL_COM_PORT_SIZ_STRING_VENDOR] 
     VIRTUAL_COM_PORT_SIZ_STRING_VENDOR,     /* Size of Vendor string */
     USB_STRING_DESCRIPTOR_TYPE,             /* bDescriptorType*/
     /* Manufacturer: "STMicroelectronics" */
-    'S', 0, 'T', 0, 'M', 0, 'i', 0, 'c', 0, 'r', 0, 'o', 0, 'e', 0,
-    'l', 0, 'e', 0, 'c', 0, 't', 0, 'r', 0, 'o', 0, 'n', 0, 'i', 0,
-    'c', 0, 's', 0
+    'S', 0, 'i', 0, 'f', 0, 't', 0, 'e', 0, 'o', 0, ' ', 0, 'I', 0,
+    'n', 0, 'c', 0
   };
 
 const uint8_t Virtual_Com_Port_StringProduct[VIRTUAL_COM_PORT_SIZ_STRING_PRODUCT] =
   {
     VIRTUAL_COM_PORT_SIZ_STRING_PRODUCT,          /* bLength */
     USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */
-    /* Product name: "STM32 Virtual COM Port" */
-    'S', 0, 'T', 0, 'M', 0, '3', 0, '2', 0, ' ', 0, 'V', 0, 'i', 0,
-    'r', 0, 't', 0, 'u', 0, 'a', 0, 'l', 0, ' ', 0, 'C', 0, 'O', 0,
-    'M', 0, ' ', 0, 'P', 0, 'o', 0, 'r', 0, 't', 0, ' ', 0, ' ', 0
+    /* Product name: "Sifteo Thundercracker" */
+    'S', 0, 'i', 0, 'f', 0, 't', 0, 'e', 0, 'o', 0, ' ', 0, 'T', 0,
+    'h', 0, 'u', 0, 'n', 0, 'd', 0, 'e', 0, 'r', 0, 'c', 0, 'r', 0,
+    'a', 0, 'c', 0, 'k', 0, 'e', 0, 'r', 0
   };
 
 uint8_t Virtual_Com_Port_StringSerial[VIRTUAL_COM_PORT_SIZ_STRING_SERIAL] =
