@@ -48,8 +48,5 @@ OBJS_STM32 = \
     stm32/audiooutdevice.stm32.o \
     stm32/flashlayer.stm32.o \
     stm32/dac.stm32.o \
-    stm32/usb_bsp.stm32.o \
-    stm32/usbd_cdc_vcp.stm32.o \
-    stm32/usbd_desc.stm32.o \
-    stm32/usbd_usr.stm32.o \
+    stm32/usb.stm32.o \
     $(SPEEX_OBJS_STM32)
