@@ -60,11 +60,18 @@ bool TiltFlowMenu::Tick(float dt)
 	  {
 			TiltFlowView &view = mViews[i];
 			if (&view == mKeyView) {
-				if( view.hasNeighbor() )
+				_SYSCubeID neighbor = view.getNeighbor();
+
+				if( neighbor != CUBE_ID_UNDEFINED )
+				{
 					Pick( view );
+					TiltFlowView &neighborView = mViews[neighbor];
+
+					neighborView.setUpIncomingCover( view );
+				}
+
+				break;
 			}
-			else
-				view.hasNeighbor();
 	  }
 
       if (mNeighborDirty) {
@@ -239,6 +246,7 @@ void TiltFlowView::Tick() {
     CoastToStop();
     break;
   case STATUS_PICKED:
+  case STATUS_STARTING:
     mDirty = true;
     break;
   default:
@@ -266,18 +274,18 @@ void TiltFlowView::Tick() {
 }
 
 
-bool TiltFlowView::hasNeighbor()
+_SYSCubeID TiltFlowView::getNeighbor()
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
 		if( mpCube->hasPhysicalNeighborAt(i) )
 		{
 			mLastNeighboredSide = (Side)i;
-			return true;
+			return mpCube->physicalNeighborAt(i);
 		}
 	}
 
-	return false;
+	return CUBE_ID_UNDEFINED;
 }
 
 
@@ -295,6 +303,9 @@ void TiltFlowView::Paint()
       break;
 	case STATUS_PICKED:
       PaintMenu();
+      break;
+	case STATUS_STARTING:
+      PaintIncomingCover();
       break;
     default:
       PaintNone();
@@ -464,6 +475,69 @@ void TiltFlowView::PaintItem() {
 }
 
 
+Vec2 TiltFlowView::LerpPosition( const Vec2 &start, const Vec2 &end, float timePercent )
+{
+	if( timePercent < 0.0f )
+		timePercent = 0.0f;
+	if( timePercent > 1.0f )
+		timePercent = 1.0f;
+    Vec2 result( start.x + ( end.x - start.x ) * timePercent, start.y + ( end.y - start.y ) * timePercent );
+
+    return result;
+}
+
+static const int OFFSCREEN_POS = 32;
+
+static const Vec2 STARTING_PT[] = {
+	Vec2( 0, -OFFSCREEN_POS ),
+	Vec2( -OFFSCREEN_POS, 0 ),
+	Vec2( 0, OFFSCREEN_POS ),
+	Vec2( OFFSCREEN_POS, 0 ),
+};
+
+void TiltFlowView::PaintIncomingCover()
+{
+	//BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
+	VidMode_BG0 vid( mpCube->vbuf );
+	vid.BG0_setPanning(Vec2(0, 0));
+	//bg1helper.Flush();
+
+	Vec2 pos = LerpPosition( STARTING_PT[mLastNeighboredSide], Vec2( 0, 0 ), TiltFlowMenu::Inst()->GetScrollTime() / ( TiltFlowMenu::PICK_DELAY - 0.5f ) );
+	Vec2 size( 16, 16 );
+	Vec2 offset( 0, 0 );
+
+	if( pos.x <= -16 || pos.x >= 16 )
+		return;
+	else if( pos.x < 0 )
+	{
+		offset.x -= pos.x;
+		size.x += pos.x;
+		pos.x = 0;
+	}
+	else if( pos.x > 0 )
+	{
+		size.x -= pos.x;
+	}
+
+	if( pos.y <= -16 || pos.y >= 16 )
+		return;
+	else if( pos.y < 0 )
+	{
+		offset.y -= pos.y;
+		size.y += pos.y;
+		pos.y = 0;
+	}
+	else if( pos.y > 0 )
+	{
+		size.y -= pos.y;
+	}
+
+	//printf( "Attempting to draw at %d, %d.  Offset %d, %d, size %d, %d\n", pos.x, pos.y, offset.x, offset.y, size.x, size.y ); 
+
+	vid.BG0_drawPartialAsset(pos, offset, size, ChromaCover, 0);
+}
+
+
 void TiltFlowView::OnButton(bool pressed) {
   if (TiltFlowMenu::Inst()->GetStatus() == TiltFlowMenu::CHOOSING && mStatus != STATUS_NONE) {
     StopScrolling();
@@ -627,6 +701,16 @@ void TiltFlowView::StopScrolling() {
   mRestTime = TiltFlowMenu::Inst()->GetSimTime();
   mDrawLabel = false;
   mDirty = true;
+}
+
+
+//will set up this view to receive a cover from the given view
+void TiltFlowView::setUpIncomingCover( TiltFlowView &view )
+{
+	mpCube->orientTo( *view.mpCube );
+	//just to set it's mLastNeighboredSide
+	getNeighbor();
+	SetStatus( TiltFlowView::STATUS_STARTING );
 }
 
 /*

@@ -74,10 +74,10 @@ $(BIN_STM32): $(OBJS_STM32)
 %.stm32.o: %.s $(CDEPS)
 	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CFLAGS_STM32)
 
+ASSETDEPS += $(MASTER_DIR)/selectormenu/*.png $(MASTER_DIR)/selectormenu/$(ASSETS).lua
+
 $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
 	$(STIR) $(MASTER_DIR)/selectormenu/$(ASSETS).lua -o $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp -o $(MASTER_DIR)/selectormenu/$(ASSETS).gen.h -o $(MASTER_DIR)/selectormenu/$(ASSETS).html -v
-
-ASSETDEPS += $(MASTER_DIR)/selectormenu/*.png $(MASTER_DIR)/selectormenu/$(ASSETS).lua
 
 .PHONY: all clean
 

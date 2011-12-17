@@ -10,3 +10,5 @@ Tip2 = image{"selectormenu/Tip2.png"}
 Tip3 = image{"selectormenu/Tip3.png"}
 --for clearing
 White = image{"selectormenu/White.png"}
+--game covers
+ChromaCover = image{"selectormenu/cover.png"}

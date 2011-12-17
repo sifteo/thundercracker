@@ -50,7 +50,15 @@ public:
   static const Sifteo::AssetImage *TIPS[NUM_TIPS];
 
   typedef enum
-  { STATUS_NONE, STATUS_MENU, STATUS_ITEM, STATUS_INFO, STATUS_PICKED }
+  { 
+	  STATUS_NONE, 
+	  STATUS_MENU, 
+	  STATUS_ITEM, 
+	  STATUS_INFO, 
+	  //CES HACKERY
+	  STATUS_PICKED, 
+	  STATUS_STARTING,
+  }
   Status;
 
   static int s_cubeIndex;
@@ -73,8 +81,12 @@ public:
 
   void CheckForRepaint();
   void Tick();
-  bool hasNeighbor();
+  _SYSCubeID getNeighbor();
   //void RelateToMenu();
+  //CES HACKERY
+  //will set up this view to receive a cover from the given view
+  void setUpIncomingCover( TiltFlowView &view );
+
 private:
   Status mStatus;
   int mItem;
@@ -98,6 +110,7 @@ private:
   void PaintNone();
   void PaintInfo();
   void PaintMenu();
+  void PaintIncomingCover();
 
   void DoPaintItem(TiltFlowItem *pItem, int x, int y = 0);
   void PaintItem();
@@ -105,6 +118,8 @@ private:
   void ClipIt(int ox, int &x, int &w);
 
   void OnButton(bool pressed);
+
+  Vec2 LerpPosition( const Vec2 &start, const Vec2 &end, float timePercent );
 
   //TODO FLIP
   //void OnFlip(Cube c, bool newOrientationIsUp);
