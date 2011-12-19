@@ -43,12 +43,16 @@ public:
   void HideItem();
 
   void DrawBackground();
-private:  
-  // sprite manipulation methods
+
+  // hack for now
   void EnterSpriteMode();
   void SetSpriteImage(int id, int tile);
   void HideSprite(int id);
   void ResizeSprite(int id, int px, int py);
   void MoveSprite(int id, int px, int py);
+
+private:  
+  // sprite manipulation methods (temporarily public)
+  
 
 };
