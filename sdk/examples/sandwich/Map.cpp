@@ -6,16 +6,16 @@
 // MAP ROOM STUFF
 //-----------------------------------------------------------------------------
 
-int MapRoom::RoomId() {
+int MapRoom::RoomId() const {
   return (int)(this - gGame.map.GetRoom(0));
 }
 
-Vec2 MapRoom::Location() {
+Vec2 MapRoom::Location() const {
   int id = RoomId();
   return Vec2(id % gGame.map.Data()->width, id / gGame.map.Data()->width);
 }
 
-RoomData* MapRoom::Data() {
+RoomData* MapRoom::Data() const {
   return gGame.map.Data()->GetRoomData(RoomId());
 }
 
@@ -56,7 +56,15 @@ void MapRoom::SetTile(Vec2 position, uint8_t tid) {
  Data()->tiles[position.x + 8 * position.y] = tid; 
 }
 
-void MapRoom::OpenDoor(Cube::Side side) {
+void MapRoom::OpenDoor(/*Cube::Side side*/) {
+  for(int row=0; row<3; ++row) {
+    for(int col=3; col<=4; ++col) {
+      SetTile(
+        Vec2(col, row), GetTile(Vec2(col, row))+2
+      );
+    }
+  }
+  /*
   Vec2 p = Vec2(0,0);
   switch(side) {
     case SIDE_TOP: p = Vec2(3,0); break;
@@ -72,6 +80,7 @@ void MapRoom::OpenDoor(Cube::Side side) {
     );
     }
   }
+  */
 }
 
 void MapRoom::ClearTrigger() {
@@ -287,11 +296,11 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
         }
         return true;
       } else {
-        // visit NSEW neighbors
-        as.VisitNeighbor(pSelected, 0);
-        as.VisitNeighbor(pSelected, 1);
-        as.VisitNeighbor(pSelected, 2);
-        as.VisitNeighbor(pSelected, 3);
+        // visit NSEW neighbors - first in target dir, then orth dirs, then opposite dir
+        as.VisitNeighbor(pSelected, dir);
+        as.VisitNeighbor(pSelected, (dir+1)%4);
+        as.VisitNeighbor(pSelected, (dir+3)%4);
+        as.VisitNeighbor(pSelected, (dir+2)%4);
       }
     }
   } while(pSelected);

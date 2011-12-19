@@ -11,7 +11,8 @@ inline int fast_abs(int x) {
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
 pCurrent(gGame.views), pTarget(0), mPosition(128+64,64+16), // todo: move intial position to map data
-mDir(2), mKeyCount(0), mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
+mDir(2), mKeyCount(0), mSandwichCount(0), 
+mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
 mApproachingLockedDoor(false) {
   CORO_RESET;
 }
@@ -126,124 +127,117 @@ void Player::Update(float dt) {
       }
       // animate walking to target
       pTarget->ShowPlayer();
-      ASSERT( gGame.map.FindPath(pCurrent->Location(), mDir, &mMoves) );
-      mProgress = 0;
-      for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
-        mDir = *pNextMove;  
-        if (mProgress != 0) {
-          mPosition += mProgress * kSideToUnit[*pNextMove];
+      if (pCurrent->Room()->GetPortal(mDir) == PORTAL_DOOR) { // hack for now -- special case for approaching doors
+        ASSERT( mDir == SIDE_TOP ); // assuming 128 pixel straight-line UP from the current cube
+        for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
+          mPosition.y -= WALK_SPEED;
           pCurrent->UpdatePlayer();
-          pTarget->UpdatePlayer();
           CORO_YIELD;
         }
-        while(mProgress+WALK_SPEED < 16) {
-          mProgress += WALK_SPEED;
-          mPosition += WALK_SPEED * kSideToUnit[*pNextMove];
+        if (HaveBasicKey()) {
+          DecrementBasicKeyCount();
+          // check the door
+          pCurrent->Room()->SetPortal(mDir, PORTAL_OPEN);
+          pCurrent->Room()->OpenDoor();
+          pCurrent->DrawBackground();
           pCurrent->UpdatePlayer();
-          pTarget->UpdatePlayer();
-          CORO_YIELD;
+          mTimeout = System::clock();
+          do {
+            CORO_YIELD;
+          } while(System::clock() - mTimeout <  0.5f);
+          // finish up
+          for(; mProgress+WALK_SPEED<=128; mProgress+=WALK_SPEED) {
+            mPosition.y -= WALK_SPEED;
+            pCurrent->UpdatePlayer();
+            pTarget->UpdatePlayer();
+            CORO_YIELD;
+          }
+          // fill in the remainder
+          mPosition = pTarget->Room()->Center();
+        } else {
+          mPath.Cancel();
+          pTarget->HidePlayer();
+          pTarget = 0;
+          mDir = (mDir+2)%4;
+          for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
+            CORO_YIELD;
+            mPosition.y += WALK_SPEED;
+            pCurrent->UpdatePlayer();
+          }          
         }
-        mPosition += (16 - mProgress) * kSideToUnit[*pNextMove];
-        mProgress = WALK_SPEED - (16-mProgress);
-      }
-      if (mProgress != 0) {
-        pNextMove--;
-        mPosition += mProgress * kSideToUnit[*pNextMove];
+      } else { // general case - A*
+        ASSERT( gGame.map.FindPath(pCurrent->Location(), mDir, &mMoves) );
         mProgress = 0;
-        pCurrent->UpdatePlayer();
-        pTarget->UpdatePlayer();
-        CORO_YIELD;
-      }
-      pCurrent->HidePlayer();
-      pCurrent = pTarget;
-      pTarget = 0;  
-      pCurrent->UpdatePlayer();
-      { // pickup item?
-        int itemId = pCurrent->Room()->itemId;
-        if (itemId) {
-          pCurrent->Room()->SetItem(0);
-          // TODO: sandwich parts
-          if (itemId == ITEM_BASIC_KEY) {
-            IncrementBasicKeyCount();
+        for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
+          mDir = *pNextMove;  
+          if (mProgress != 0) {
+            mPosition += mProgress * kSideToUnit[*pNextMove];
+            pCurrent->UpdatePlayer();
+            pTarget->UpdatePlayer();
+            CORO_YIELD;
           }
-          // do a pickup animation
-          for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
-            pCurrent->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
-            
-            for(float t=System::clock(); System::clock()-t<0.075f;) {
-              // this calc is kinda annoyingly complex
-              float u = (System::clock() - t) / 0.075f;
-              float du = 1.f / (float) PlayerPickup.frames;
-              u = (frame + u) * du;
-              u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-
-              System::paint();
-              pCurrent->SetItemPosition(Vec2(0, -36.f * u) );
-            }
+          while(mProgress+WALK_SPEED < 16) {
+            mProgress += WALK_SPEED;
+            mPosition += WALK_SPEED * kSideToUnit[*pNextMove];
+            pCurrent->UpdatePlayer();
+            pTarget->UpdatePlayer();
+            CORO_YIELD;
           }
-          pCurrent->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
-          for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
-          pCurrent->HideItem();        
+          mPosition += (16 - mProgress) * kSideToUnit[*pNextMove];
+          mProgress = WALK_SPEED - (16-mProgress);
         }
-      }
-      { // passive trigger?
-        MapRoom *mr = pCurrent->Room();
-        if (mr->callback) {
-          mr->callback(TRIGGER_TYPE_PASSIVE);
-        }
-      }
-
-      /* // a reference for how doors used to be implemented
-      mApproachingLockedDoor = pCurrent->Room()->GetPortal(mDir) == PORTAL_LOCK;
-      if (!mApproachingLockedDoor || HaveBasicKey()) {
-        for(mProgress=0; mProgress<128; mProgress+=WALK_SPEED) {
-          if (mApproachingLockedDoor && mProgress < 64-DOOR_PAD && mProgress+WALK_SPEED >= 64-DOOR_PAD) {
-            DecrementBasicKeyCount();
-            pCurrent->Room()->SetPortal(mDir, PORTAL_DOOR);
-            pCurrent->Room()->OpenDoor(mDir);
-            pTarget->Room()->OpenDoor((mDir+2)%4);
-            pCurrent->DrawBackground();
-            pTarget->DrawBackground();
-            mTimeout = System::clock();
-            do {
-              CORO_YIELD;
-            } while(System::clock() - mTimeout <  0.5f);
-          }
-          CORO_YIELD;
-          mPosition += WALK_SPEED * kSideToUnit[mDir];
+        if (mProgress != 0) {
+          pNextMove--;
+          mPosition += mProgress * kSideToUnit[*pNextMove];
+          mProgress = 0;
           pCurrent->UpdatePlayer();
           pTarget->UpdatePlayer();
+          CORO_YIELD;
         }
-        // swap the current view
+      }
+
+      if (pTarget) { // did we land on the target?
         pCurrent->HidePlayer();
         pCurrent = pTarget;
         pTarget = 0;  
-        pCurrent->UpdatePlayer();
+        pCurrent->UpdatePlayer();        
+        { // pickup item?
+          int itemId = pCurrent->Room()->itemId;
+          if (itemId) {
+            pCurrent->Room()->SetItem(0);
+            // TODO: sandwich parts
+            if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
+              IncrementBasicKeyCount();
+            } else {
+              IncrementSandwichCount();
+            }
+            // do a pickup animation
+            for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
+              pCurrent->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
+              
+              for(float t=System::clock(); System::clock()-t<0.075f;) {
+                // this calc is kinda annoyingly complex
+                float u = (System::clock() - t) / 0.075f;
+                float du = 1.f / (float) PlayerPickup.frames;
+                u = (frame + u) * du;
+                u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
 
+                System::paint();
+                pCurrent->SetItemPosition(Vec2(0, -36.f * u) );
+              }
+            }
+            pCurrent->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
+            for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
+            pCurrent->HideItem();        
+          }
+        }
         { // passive trigger?
           MapRoom *mr = pCurrent->Room();
           if (mr->callback) {
             mr->callback(TRIGGER_TYPE_PASSIVE);
           }
-        } //
-      } else {
-        // walk up to the locked door, then bounce back
-        mPath.Cancel();
-        pTarget->HidePlayer();
-        pTarget = 0;
-        for(mProgress=0; mProgress<64-DOOR_PAD; mProgress+=WALK_SPEED) {
-          CORO_YIELD;
-          mPosition += WALK_SPEED * kSideToUnit[mDir];
-          pCurrent->UpdatePlayer();
-        }
-        mDir = (mDir+2)%4;
-        for(mProgress=0; mProgress<64-DOOR_PAD; mProgress+=WALK_SPEED) {
-          CORO_YIELD;
-          mPosition += WALK_SPEED * kSideToUnit[mDir];
-          pCurrent->UpdatePlayer();
         }
       }
-      */ 
 
     } while(mPath.PopStep(pCurrent));
 

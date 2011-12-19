@@ -10,9 +10,12 @@ struct MapRoom {
 	trigger_func callback;
 	int itemId;
 
-  int RoomId();
-  Vec2 Location();
-  RoomData* Data();
+  int RoomId() const;
+  Vec2 Location() const;
+  RoomData* Data() const;
+
+  inline Vec2 Position() const { return 128 * Location(); }
+  inline Vec2 Center() const { return Position() + 16 * Data()->LocalCenter(); }
 
   void SetItem(int itemId);
   uint8_t GetPortal(Cube::Side side);
@@ -20,7 +23,7 @@ struct MapRoom {
 
   uint8_t GetTile(Vec2 position);
   void SetTile(Vec2 position, uint8_t tid);
-  void OpenDoor(Cube::Side side);
+  void OpenDoor(/*Cube::Side side*/);
 
   void ClearTrigger();
 };

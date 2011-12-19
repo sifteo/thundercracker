@@ -29,8 +29,7 @@ namespace MapTool {
           Console.Write("+");
           switch(map.rooms[rx,ry].portals[0]) {
             case Portal.Open: Console.Write(" "); break;
-            case Portal.LockedDoor: Console.Write("L"); break;
-            case Portal.UnlockedDoor: Console.Write("U"); break;
+            case Portal.Door: Console.Write("D"); break;
             default: Console.Write("-"); break;
           }
         }
@@ -38,16 +37,14 @@ namespace MapTool {
         for(int rx=0; rx<map.Width; ++rx) {
           switch(map.rooms[rx,ry].portals[1]) {
             case Portal.Open: Console.Write(" "); break;
-            case Portal.LockedDoor: Console.Write("L"); break;
-            case Portal.UnlockedDoor: Console.Write("U"); break;
+            case Portal.Door: Console.Write("D"); break;
             default: Console.Write("|"); break;
           }
           Console.Write(" ");
         }
         switch(map.rooms[map.Width-1,ry].portals[3]) {
           case Portal.Open: Console.Write(" \n"); break;
-          case Portal.LockedDoor: Console.Write("L\n"); break;
-          case Portal.UnlockedDoor: Console.Write("U\n"); break;
+          case Portal.Door: Console.Write("U\n"); break;
           default: Console.Write("|\n"); break;
         }
       }
@@ -55,8 +52,7 @@ namespace MapTool {
         Console.Write("+");
         switch(map.rooms[rx,map.Height-1].portals[2]) {
           case Portal.Open: Console.Write(" "); break;
-          case Portal.LockedDoor: Console.Write("L"); break;
-          case Portal.UnlockedDoor: Console.Write("U"); break;
+          case Portal.Door: Console.Write("D"); break;
           default: Console.Write("-"); break;
         }
       }

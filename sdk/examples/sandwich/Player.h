@@ -25,6 +25,7 @@ private:
   Vec2 mPosition;
   int mDir;
   int mKeyCount;
+  int mSandwichCount;
   int mAnimFrame;
   float mAnimTime;
 
@@ -53,6 +54,7 @@ public:
 
   void IncrementBasicKeyCount() { mKeyCount++; }
   void DecrementBasicKeyCount() { ASSERT(mKeyCount>0); mKeyCount--; }
+  void IncrementSandwichCount() { mSandwichCount++; }
   bool HaveBasicKey() const { return mKeyCount > 0; }
 
   void SetLocation(Vec2 position, Cube::Side direction);
