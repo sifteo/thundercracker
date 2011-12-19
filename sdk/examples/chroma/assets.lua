@@ -22,6 +22,10 @@ Gem5 = image{"Gem5.png", height=32}
 Gem6 = image{"Gem6.png", height=32}
 Gem7 = image{"Gem7.png", height=32}
 GemEmpty = image{"gem_Empty.png"}
+--fixed gems
+FixedGem0 = image{"fixedGem0.png", height=32}
+FixedExplode0 = image{"fixedExplode0.png", height=32}
+FixedGlimmer = image{"FixedGlimmer.png", height=32}
 Cover = image{"cover.png"}
 --timer
 TimerUp = image{"TimerUp.png", height=8}

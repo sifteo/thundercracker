@@ -7,6 +7,7 @@
 #include "GridSlot.h"
 #include "game.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 #include "utils.h"
 #include <stdlib.h>
 
@@ -49,6 +50,17 @@ const AssetImage *GridSlot::EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 };
 
 
+const AssetImage *GridSlot::FIXED_TEXTURES[ GridSlot::NUM_FIXED_COLORS ] =
+{
+    &FixedGem0,
+};
+
+const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_FIXED_COLORS ] =
+{
+    &FixedExplode0,
+};
+
+
 GridSlot::GridSlot() : 
 	m_state( STATE_GONE ),
 	m_eventTime( 0.0f ),
@@ -85,7 +97,10 @@ const AssetImage &GridSlot::GetTexture() const
 
 const AssetImage &GridSlot::GetExplodingTexture() const
 {
-    return *EXPLODINGTEXTURES[ m_color ];
+    if( IsFixed() )
+        return *FIXED_EXPLODINGTEXTURES[ m_color ];
+    else
+        return *EXPLODINGTEXTURES[ m_color ];
 }
 
 
@@ -99,7 +114,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		{
 			const AssetImage &tex = GetTexture();
 			if( IsFixed() )
-				vid.BG0_drawAsset(vec, tex, 2);
+                vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
 			else
 			{
                 const AssetImage &animtex = *TEXTURES[ m_color ];
@@ -127,16 +142,15 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
             vid.BG0_drawAsset(vec, tex, GetRollingFrame( m_animFrame ));
 			break;
 		}
+        case STATE_FIXEDATTEMPT:
+        {
+            vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
+            break;
+        }
 		case STATE_MARKED:
         {
-			const AssetImage &tex = GetTexture();
-			if( IsFixed() )
-				vid.BG0_drawAsset(vec, tex, 3);
-			else
-            {
-                const AssetImage &exTex = GetExplodingTexture();
-                vid.BG0_drawAsset(vec, exTex, m_animFrame);
-            }
+            const AssetImage &exTex = GetExplodingTexture();
+            vid.BG0_drawAsset(vec, exTex, m_animFrame);
 			break;
 		}
 		case STATE_EXPLODING:
@@ -157,6 +171,9 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 
             if( fadeTime > 0.0f )
                 fadeFrame =  ( fadeTime ) / FADE_FRAME_TIME;
+
+            if( fadeFrame >= NUM_POINTS_FRAMES )
+                fadeFrame = NUM_POINTS_FRAMES - 1;
 
             if( m_score > 9 )
                 vid.BG0_drawAsset(Vec2( vec.x + 1, vec.y + 1 ), PointFont, m_score / 10 * NUM_POINTS_FRAMES + fadeFrame);
@@ -196,9 +213,19 @@ void GridSlot::Update(float t)
 			Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
 
 			if( vDiff.x != 0 )
+            {
 				m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
+
+                if( abs( vDiff.x ) == 1 )
+                    Game::Inst().playSound(collide_02);
+            }
 			else if( vDiff.y != 0 )
+            {
 				m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
+
+                if( abs( vDiff.y ) == 1 )
+                    Game::Inst().playSound(collide_02);
+            }
             else
 			{
 				m_animFrame++;
@@ -216,6 +243,15 @@ void GridSlot::Update(float t)
 
 			break;
 		}
+        case STATE_FIXEDATTEMPT:
+        {
+            ASSERT( IsFixed() );
+            m_animFrame++;
+            if( m_animFrame / NUM_FRAMES_PER_FIXED_ANIM_FRAME >= NUM_FIXED_FRAMES )
+                m_state = STATE_LIVING;
+
+            break;
+        }
 		case STATE_MARKED:
 		{
 			if( t - m_eventTime > MARK_SPREAD_DELAY )
@@ -227,7 +263,10 @@ void GridSlot::Update(float t)
                 m_animFrame = 0;
 
             if( t - m_eventTime > MARK_BREAK_DELAY )
+            {
                 explode();
+                Game::Inst().playSound(bubble_pop_02);
+            }
 			break;
 		}
 		case STATE_EXPLODING:
@@ -254,8 +293,10 @@ void GridSlot::Update(float t)
 
 void GridSlot::mark()
 {
+    m_animFrame = 0;
 	m_state = STATE_MARKED;
 	m_eventTime = System::clock();
+    Game::Inst().playSound(charge_03);
 }
 
 
@@ -279,6 +320,7 @@ void GridSlot::explode()
 void GridSlot::die()
 {
 	m_state = STATE_SHOWINGSCORE;
+    m_bFixed = false;
 	m_score = Game::Inst().getIncrementScore();
 	Game::Inst().CheckChain( m_pWrapper );
 	m_eventTime = System::clock();
@@ -301,6 +343,7 @@ void GridSlot::markNeighbor( int row, int col )
 //copy color and some other attributes from target.  Used when tilting
 void GridSlot::TiltFrom(GridSlot &src)
 {
+    m_bFixed = false;
 	m_state = STATE_PENDINGMOVE;
 	m_color = src.m_color;
 	m_eventTime = src.m_eventTime;
@@ -314,6 +357,7 @@ void GridSlot::startPendingMove()
 {
 	if( m_state == STATE_PENDINGMOVE )
 	{
+        Game::Inst().playSound(slide_39);
 		m_state = STATE_MOVING;
 		m_animFrame = 0;
 	}
@@ -422,6 +466,16 @@ unsigned int GridSlot::GetRollingFrame( unsigned int index )
     return ROLLING_FRAMES[ index / NUM_FRAMES_PER_ROLL_ANIM_FRAME ];
 }
 
+
+unsigned int GridSlot::GetFixedFrame( unsigned int index )
+{
+    ASSERT( index / NUM_FRAMES_PER_FIXED_ANIM_FRAME < NUM_FIXED_FRAMES);
+
+    int frame = NUM_FIXED_FRAMES * m_pWrapper->getLastTiltDir() + ( index / NUM_FRAMES_PER_FIXED_ANIM_FRAME ) + 1;
+
+    return frame;
+}
+
 /*
 static unsigned int IDLE_FRAMES[ GridSlot::NUM_IDLE_FRAMES / GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME ] =
 { FRAME_N1, FRAME_E1, FRAME_S1, FRAME_W1 };
@@ -470,4 +524,12 @@ void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
             break;
         }
     }
+}
+
+
+void GridSlot::setFixedAttempt()
+{
+    m_state = STATE_FIXEDATTEMPT;
+    m_animFrame = 0;
+    Game::Inst().playSound(frozen_06);
 }

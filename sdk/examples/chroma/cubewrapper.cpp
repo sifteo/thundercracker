@@ -7,6 +7,7 @@
 #include "cubewrapper.h"
 #include "game.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 #include "utils.h"
 #include "string.h"
 #include <vector>
@@ -29,6 +30,8 @@ const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
 const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 const float CubeWrapper::TIME_PER_MESSAGE_FRAME = 0.25f / NUM_MESSAGE_FRAMES;
+const float CubeWrapper::TILT_SOUND_EPSILON = 1.0f;
+
 
 
 static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] = {
@@ -42,7 +45,8 @@ static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] =
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
-        m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f )
+        m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
+        m_lastTiltDir( 0 )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -258,60 +262,73 @@ void CubeWrapper::Update(float t, float dt)
         m_glimmer.Update( dt );
     }
 
-    //check for shaking
-	if( m_state != STATE_NOSHAKES )
-	{
-        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
-		{
-            m_fShakeTime = -1.0f;
-            checkRefill();
-		}
-
-		//update all dots
-		for( int i = 0; i < NUM_ROWS; i++ )
-		{
-			for( int j = 0; j < NUM_COLS; j++ )
-			{
-				GridSlot &slot = m_grid[i][j];
-				slot.Update( t );
-			}
-		}
-
-		m_banner.Update(t, m_cube);
-	}
-
-
     if( m_state == STATE_MESSAGING )
     {
         if( m_stateTime / TIME_PER_MESSAGE_FRAME >= NUM_MESSAGE_FRAMES )
             setState( STATE_EMPTY );
     }
 
-    //tilt state
-    _SYSAccelState state;
-    _SYS_getAccel(m_cube.id(), &state);
-
-    //try spring to target
-    Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
-    Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
-
-    /*if( force.len2() < MOVEMENT_THRESHOLD )
+    if( Game::Inst().getState() == Game::STATE_PLAYING )
     {
-        m_idleTimer += dt;
-
-        if( m_idleTimer > IDLE_FINISH_THRESHOLD )
+        //check for shaking
+        if( m_state != STATE_NOSHAKES )
         {
-            m_idleTimer = 0.0f;
-            //kick off force in a random direction
-            //for now, just single direction
-            //force = Float2( 100.0f, 0.0f );
+            if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
+            {
+                m_fShakeTime = -1.0f;
+                checkRefill();
+            }
+
+            //update all dots
+            for( int i = 0; i < NUM_ROWS; i++ )
+            {
+                for( int j = 0; j < NUM_COLS; j++ )
+                {
+                    GridSlot &slot = m_grid[i][j];
+                    slot.Update( t );
+                }
+            }
+
+            m_banner.Update(t, m_cube);
+        }
+
+        //tilt state
+        _SYSAccelState state;
+        _SYS_getAccel(m_cube.id(), &state);
+
+        //try spring to target
+        Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
+
+        //hooke's law
+        Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
+
+        /*if( force.len2() < MOVEMENT_THRESHOLD )
+        {
+            m_idleTimer += dt;
+
+            if( m_idleTimer > IDLE_FINISH_THRESHOLD )
+            {
+                m_idleTimer = 0.0f;
+                //kick off force in a random direction
+                //for now, just single direction
+                //force = Float2( 100.0f, 0.0f );
+            }
+        }
+        else
+            m_idleTimer = 0.0f;*/
+
+        //if sign of velocity changes, play a slosh
+        Float2 oldvel = m_curFluidVel;
+
+        m_curFluidVel += force;
+        m_curFluidDir += m_curFluidVel * dt;
+
+        if( m_curFluidVel.x > TILT_SOUND_EPSILON || m_curFluidVel.y > TILT_SOUND_EPSILON )
+        {
+            if( oldvel.x * m_curFluidVel.x < 0.0f || oldvel.y * m_curFluidVel.y < 0.0f )
+                Game::Inst().playSlosh();
         }
     }
-    else
-        m_idleTimer = 0.0f;*/
-
-    m_curFluidVel += force;
-    m_curFluidDir += m_curFluidVel * dt;
 
 	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
 	{
@@ -444,6 +461,8 @@ void CubeWrapper::Tilt( int dir )
 
 	if( bChanged )
 		Game::Inst().setTestMatchFlag();
+
+    m_lastTiltDir = dir;
 }
 
 
@@ -467,11 +486,19 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
     if( !dest.isOccupiable() )
 		return false;
 
-	if( slot.isTiltable() && !slot.IsFixed() )
+    if( slot.isTiltable() )
 	{
-		dest.TiltFrom(slot);
-		slot.setEmpty();
-		return true;
+        if( slot.IsFixed() )
+        {
+            slot.setFixedAttempt();
+            return false;
+        }
+        else
+        {
+            dest.TiltFrom(slot);
+            slot.setEmpty();
+            return true;
+        }
 	}
 
 	return false;
@@ -715,24 +742,12 @@ void CubeWrapper::Refill( bool bAddLevel )
 	unsigned int numValues = sizeof( GEM_VALUE_PROGRESSION ) / sizeof( GEM_VALUE_PROGRESSION[0] );
 	unsigned int values = level < numValues ? GEM_VALUE_PROGRESSION[level] : GEM_VALUE_PROGRESSION[numValues - 1];
 	unsigned int numFixIndices = sizeof( GEM_FIX_PROGRESSION ) / sizeof( GEM_FIX_PROGRESSION[0] );
-    //TODO, for now disable fixed dots
-    //unsigned int numFix = level < numFixIndices ? GEM_FIX_PROGRESSION[level] : GEM_FIX_PROGRESSION[numFixIndices - 1];
-    unsigned int numFix = 0;
+    unsigned int numFix = level < numFixIndices ? GEM_FIX_PROGRESSION[level] : GEM_FIX_PROGRESSION[numFixIndices - 1];
 	
 	if( bAddLevel )
 		Game::Inst().addLevel();
 
-	//TODO SOUND
-	//self.game.sound_manager.add("reload")
-
-	/*for( int i = 0; i < NUM_ROWS; i++ )
-	{
-		for( int j = 0; j < NUM_COLS; j++ )
-		{
-			GridSlot &slot = m_grid[i][j];
-			slot.Init( this, i, j );
-		}
-	}*/
+    Game::Inst().playSound(glom_delay);
 
 	/*
     Fill all empty spots in the grid with new gems.
@@ -874,6 +889,12 @@ void CubeWrapper::Refill( bool bAddLevel )
 		int toFix = Game::Inst().Rand( numEmpties );
 		GridSlot &fix = m_grid[aEmptyLocs[toFix].x][aEmptyLocs[toFix].y];
 		bool bFound = false;
+
+        //TODO, this is only because we don't have all the colors yet!
+        if( fix.getColor() >= GridSlot::NUM_FIXED_COLORS )
+        {
+            fix.FillColor( 0 );
+        }
 
 		if( !fix.IsFixed() )
 		{
@@ -1102,4 +1123,7 @@ void CubeWrapper::setState( CubeState state )
 {
     m_state = state;
     m_stateTime = 0.0f;
+
+    if( state == STATE_MESSAGING )
+        Game::Inst().playSound(message_pop_03_fx);
 }

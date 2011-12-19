@@ -19,6 +19,9 @@ public:
 	static const unsigned int NUM_COLORS = 8;
 	static const AssetImage *TEXTURES[ NUM_COLORS ];
     static const AssetImage *EXPLODINGTEXTURES[ NUM_COLORS ];
+    static const unsigned int NUM_FIXED_COLORS = 1;
+    static const AssetImage *FIXED_TEXTURES[ NUM_FIXED_COLORS ];
+    static const AssetImage *FIXED_EXPLODINGTEXTURES[ NUM_FIXED_COLORS ];
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
     static const unsigned int NUM_ROLL_FRAMES;
     //static const unsigned int NUM_IDLE_FRAMES;
@@ -32,8 +35,9 @@ public:
     static const float EXPLODE_FRAME_LEN;
     static const int NUM_EXPLODE_FRAMES = 7;
     static const int NUM_FRAMES_PER_ROLL_ANIM_FRAME = 3;
-    static const int NUM_FRAMES_PER_IDLE_ANIM_FRAME = 3;
-    static const int NUM_POINTS_FRAMES = 4;
+    static const unsigned int NUM_FRAMES_PER_FIXED_ANIM_FRAME = 3;
+    static const unsigned int NUM_POINTS_FRAMES = 4;
+    static const unsigned int NUM_FIXED_FRAMES = 5;
 
 	typedef enum 
 	{
@@ -41,6 +45,7 @@ public:
 		STATE_PENDINGMOVE,
 		STATE_MOVING,
 		STATE_FINISHINGMOVE,
+        STATE_FIXEDATTEMPT,
 		STATE_MARKED,
 		STATE_EXPLODING,
 		STATE_SHOWINGSCORE,
@@ -60,7 +65,7 @@ public:
     bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING ); }
     bool isMatchable() const { return isAlive() || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING; }
     bool isOccupiable() const { return isEmpty() || m_state == STATE_SHOWINGSCORE; }
-    void setEmpty() { m_state = STATE_GONE; }
+    void setEmpty() { m_state = STATE_GONE; m_bFixed = false; }
 	unsigned int getColor() const { return m_color; }
 	void FillColor(unsigned int color);
 
@@ -71,6 +76,7 @@ public:
 
 	bool IsFixed() const { return m_bFixed; }
 	void MakeFixed() { m_bFixed = true; }
+    void setFixedAttempt();
 
 	//copy color and some other attributes from target.  Used when tilting
 	void TiltFrom(GridSlot &src);
@@ -87,6 +93,7 @@ private:
     //get the rolling frame of the given index
     unsigned int GetRollingFrame( unsigned int index );
     //unsigned int GetIdleFrame();
+    unsigned int GetFixedFrame( unsigned int index );
 
 	SLOT_STATE m_state;
 	unsigned int m_color;

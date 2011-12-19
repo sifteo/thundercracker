@@ -8,4 +8,4 @@ siftulator-*.png
 tc-siftulator
 tc-siftulator.exe
 src/tc-siftulator-d.exe
-
+stderr.txt
