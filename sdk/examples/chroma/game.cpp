@@ -196,13 +196,13 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 		else
 		{          
             if( m_iDotsCleared >= 10 )
-                Game::Inst().playSound(clear5);
-            else if( m_iDotsCleared >= 7 )
                 Game::Inst().playSound(clear4);
-            else if( m_iDotsCleared >= 4 )
+            else if( m_iDotsCleared >= 7 )
                 Game::Inst().playSound(clear3);
-            else if( m_iDotsCleared >= 2 )
+            else if( m_iDotsCleared >= 4 )
                 Game::Inst().playSound(clear2);
+            else if( m_iDotsCleared >= 2 )
+                Game::Inst().playSound(clear1);
 
 			char aBuf[16];
             snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
@@ -433,5 +433,6 @@ void Game::enterScore()
 
 void Game::playSound( const _SYSAudioModule &sound )
 {
+    m_SFXChannel.stop();
     m_SFXChannel.play(sound, LoopOnce);
 }
