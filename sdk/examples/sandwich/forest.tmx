@@ -619,5 +619,10 @@
     <property name="target" value="castle:ForestGate"/>
    </properties>
   </object>
+  <object name="DungeonGate" type="Gateway" x="560" y="448" width="32" height="32">
+   <properties>
+    <property name="target" value="dungeon:DungeonGate"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

@@ -226,6 +226,7 @@ void GameView::DrawBackground() {
   VidMode_BG0 mode(cube.vbuf);
   if (!IsShowingRoom()) {
     mode.BG0_drawAsset(Vec2(0,0), *(gGame.map.Data()->blankImage));
+    BG1Helper(cube).Flush();
   } else {
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {

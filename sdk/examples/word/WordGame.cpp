@@ -58,9 +58,10 @@ bool WordGame::_playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel 
 
 unsigned WordGame::rand(unsigned max)
 {
+    ASSERT(sInstance);
 #ifdef _WIN32
- return std::rand() % max;
+    return std::rand() % max;
 #else
- return rand_r(&mRandomSeed) % max;
+    return rand_r(&sInstance->mRandomSeed) % max;
 #endif
 }
