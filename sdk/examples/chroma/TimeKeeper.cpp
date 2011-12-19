@@ -6,7 +6,9 @@
 
 #include "TimeKeeper.h"
 #include "string.h"
+#include "Game.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 
 const float TimeKeeper::TIME_INITIAL = 60.0f;
 const float TimeKeeper::TIME_RETURN_PER_GEM = 1.0f;
@@ -99,7 +101,7 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper )
         if( m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )
         {
             m_blinkCounter = 0;
-            //Game::Inst().playSound(clear2);
+            Game::Inst().playSound(timer_blink);
         }
     }
 

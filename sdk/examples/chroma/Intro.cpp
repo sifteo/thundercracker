@@ -7,6 +7,7 @@
 #include "Intro.h"
 #include "string.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 #include "sprite.h"
 #include "game.h"
 
@@ -29,8 +30,8 @@ void Intro::Reset()
 
 void Intro::Update( float dt )
 {
-    //if( m_fTimer == 0.0f )
-      //  Game::Inst().playSound(clear2);
+    if( m_fTimer == 0.0f )
+        Game::Inst().playSound(glom_delay);
 
     m_fTimer += dt;
 

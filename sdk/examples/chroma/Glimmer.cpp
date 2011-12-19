@@ -7,6 +7,7 @@
 #include "Glimmer.h"
 //#include "string.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 //#include "sprite.h"
 #include "game.h"
 #include "cubewrapper.h"
@@ -43,6 +44,7 @@ void Glimmer::Reset()
 {
     m_frame = 0;
     m_group = 0;
+    //Game::Inst().playSound(glimmer_fx_03);
 }
 
 
@@ -56,6 +58,7 @@ void Glimmer::Update( float dt )
         {
             m_frame = 0;
             m_group++;
+            Game::Inst().playSound(glimmer_fx_03);
         }
     }
 }

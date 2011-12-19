@@ -295,6 +295,7 @@ void CubeWrapper::Update(float t, float dt)
 
     //try spring to target
     Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
+    //hooke's law
     Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
 
     /*if( force.len2() < MOVEMENT_THRESHOLD )
@@ -312,8 +313,14 @@ void CubeWrapper::Update(float t, float dt)
     else
         m_idleTimer = 0.0f;*/
 
+    //if sign of velocity changes, play a slosh
+    Float2 oldvel = m_curFluidVel;
+
     m_curFluidVel += force;
     m_curFluidDir += m_curFluidVel * dt;
+
+    if( oldvel.x * m_curFluidVel.x < 0.0f || oldvel.y * m_curFluidVel.y < 0.0f )
+        Game::Inst().playSlosh();
 
 	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
 	{
@@ -732,7 +739,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 	if( bAddLevel )
 		Game::Inst().addLevel();
 
-    Game::Inst().playSound(dotFill);
+    Game::Inst().playSound(glom_delay);
 
 	/*
     Fill all empty spots in the grid with new gems.
@@ -1108,4 +1115,7 @@ void CubeWrapper::setState( CubeState state )
 {
     m_state = state;
     m_stateTime = 0.0f;
+
+    if( state == STATE_MESSAGING )
+        Game::Inst().playSound(message_pop_03_fx);
 }

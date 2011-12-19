@@ -236,6 +236,7 @@ void Game::checkGameOver()
         {
             enterScore();
             m_state = STATE_DYING;
+            playSound(timer_explode);
         }
 	}
 	else if( m_mode == MODE_TIMED )
@@ -244,6 +245,7 @@ void Game::checkGameOver()
         {
             enterScore();
             m_state = STATE_DYING;
+            playSound(timer_explode);
         }
 	}
 }
@@ -435,4 +437,25 @@ void Game::playSound( const _SYSAudioModule &sound )
 {
     m_SFXChannel.stop();
     m_SFXChannel.play(sound, LoopOnce);
+}
+
+const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
+{
+  &slosh_01,
+    &slosh_02,
+    &slosh_03,
+    &slosh_04,
+    &slosh_05,
+    &slosh_06,
+    &slosh_07,
+    &slosh_08,
+};
+
+
+//play a random slosh sound
+void Game::playSlosh()
+{
+    int index = Rand( NUM_SLOSH_SOUNDS );
+
+    m_SFXChannel.play(*SLOSH_SOUNDS[index], LoopOnce);
 }
