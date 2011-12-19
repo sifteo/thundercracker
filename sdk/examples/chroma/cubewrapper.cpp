@@ -30,6 +30,8 @@ const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
 const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 const float CubeWrapper::TIME_PER_MESSAGE_FRAME = 0.25f / NUM_MESSAGE_FRAMES;
+const float CubeWrapper::TILT_SOUND_EPSILON = 1.0f;
+
 
 
 static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] = {
@@ -260,67 +262,73 @@ void CubeWrapper::Update(float t, float dt)
         m_glimmer.Update( dt );
     }
 
-    //check for shaking
-	if( m_state != STATE_NOSHAKES )
-	{
-        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
-		{
-            m_fShakeTime = -1.0f;
-            checkRefill();
-		}
-
-		//update all dots
-		for( int i = 0; i < NUM_ROWS; i++ )
-		{
-			for( int j = 0; j < NUM_COLS; j++ )
-			{
-				GridSlot &slot = m_grid[i][j];
-				slot.Update( t );
-			}
-		}
-
-		m_banner.Update(t, m_cube);
-	}
-
-
     if( m_state == STATE_MESSAGING )
     {
         if( m_stateTime / TIME_PER_MESSAGE_FRAME >= NUM_MESSAGE_FRAMES )
             setState( STATE_EMPTY );
     }
 
-    //tilt state
-    _SYSAccelState state;
-    _SYS_getAccel(m_cube.id(), &state);
-
-    //try spring to target
-    Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
-    //hooke's law
-    Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
-
-    /*if( force.len2() < MOVEMENT_THRESHOLD )
+    if( Game::Inst().getState() == Game::STATE_PLAYING )
     {
-        m_idleTimer += dt;
-
-        if( m_idleTimer > IDLE_FINISH_THRESHOLD )
+        //check for shaking
+        if( m_state != STATE_NOSHAKES )
         {
-            m_idleTimer = 0.0f;
-            //kick off force in a random direction
-            //for now, just single direction
-            //force = Float2( 100.0f, 0.0f );
+            if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
+            {
+                m_fShakeTime = -1.0f;
+                checkRefill();
+            }
+
+            //update all dots
+            for( int i = 0; i < NUM_ROWS; i++ )
+            {
+                for( int j = 0; j < NUM_COLS; j++ )
+                {
+                    GridSlot &slot = m_grid[i][j];
+                    slot.Update( t );
+                }
+            }
+
+            m_banner.Update(t, m_cube);
+        }
+
+        //tilt state
+        _SYSAccelState state;
+        _SYS_getAccel(m_cube.id(), &state);
+
+        //try spring to target
+        Float2 delta = Float2( state.x, state.y ) - m_curFluidDir;
+
+        //hooke's law
+        Float2 force = SPRING_K_CONSTANT * delta - SPRING_DAMPENING_CONSTANT * m_curFluidVel;
+
+        /*if( force.len2() < MOVEMENT_THRESHOLD )
+        {
+            m_idleTimer += dt;
+
+            if( m_idleTimer > IDLE_FINISH_THRESHOLD )
+            {
+                m_idleTimer = 0.0f;
+                //kick off force in a random direction
+                //for now, just single direction
+                //force = Float2( 100.0f, 0.0f );
+            }
+        }
+        else
+            m_idleTimer = 0.0f;*/
+
+        //if sign of velocity changes, play a slosh
+        Float2 oldvel = m_curFluidVel;
+
+        m_curFluidVel += force;
+        m_curFluidDir += m_curFluidVel * dt;
+
+        if( m_curFluidVel.x > TILT_SOUND_EPSILON || m_curFluidVel.y > TILT_SOUND_EPSILON )
+        {
+            if( oldvel.x * m_curFluidVel.x < 0.0f || oldvel.y * m_curFluidVel.y < 0.0f )
+                Game::Inst().playSlosh();
         }
     }
-    else
-        m_idleTimer = 0.0f;*/
-
-    //if sign of velocity changes, play a slosh
-    Float2 oldvel = m_curFluidVel;
-
-    m_curFluidVel += force;
-    m_curFluidDir += m_curFluidVel * dt;
-
-    if( oldvel.x * m_curFluidVel.x < 0.0f || oldvel.y * m_curFluidVel.y < 0.0f )
-        Game::Inst().playSlosh();
 
 	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
 	{

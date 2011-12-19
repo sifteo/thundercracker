@@ -63,6 +63,10 @@ void Game::Init()
     m_SFXChannel.init();
     m_musicChannel.init();
 
+    //doesn't seem to work
+    //m_musicChannel.setVolume( 1 );
+    //m_SFXChannel.setVolume( 256 );
+
     m_musicChannel.play( astrokraut, LoopRepeat );
 }
 
