@@ -120,9 +120,6 @@ void Virtual_Com_Port_init(void)
   /* Perform basic device initialization operations */
   USB_SIL_Init();
 
-  /* configure the USART to the default settings */
-  USART_Config_Default();
-
   bDeviceState = UNCONNECTED;
 }
 
@@ -235,7 +232,7 @@ void Virtual_Com_Port_Status_In(void)
 {
   if (Request == SET_LINE_CODING)
   {
-    USART_Config();
+//    USART_Config();
     Request = 0;
   }
 }

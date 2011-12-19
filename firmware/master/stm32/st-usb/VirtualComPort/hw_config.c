@@ -36,8 +36,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-ErrorStatus HSEStartUpStatus;
-//USART_InitTypeDef USART_InitStructure;
 
 uint8_t  USART_Rx_Buffer [USART_RX_DATA_SIZE];
 uint32_t USART_Rx_ptr_in = 0;
@@ -106,34 +104,6 @@ void Set_System(void)
 }
 
 /*******************************************************************************
-* Function Name  : Set_USBClock
-* Description    : Configures USB Clock input (48MHz)
-* Input          : None.
-* Return         : None.
-*******************************************************************************/
-void Set_USBClock(void)
-{
-#if defined(STM32L1XX_MD)
-  /* Enable USB clock */
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, ENABLE);
-  
-#elif defined(STM32F10X_CL)
-  /* Select USBCLK source */
-  RCC_OTGFSCLKConfig(RCC_OTGFSCLKSource_PLLVCO_Div3);
-
-  /* Enable the USB clock */ 
-  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_OTG_FS, ENABLE) ;
-  
-#else 
-  /* Select USBCLK source */
-  RCC_USBCLKConfig(RCC_USBCLKSource_PLLCLK_1Div5);
-  
-  /* Enable the USB clock */
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, ENABLE);
-#endif /* STM32F10X_CL */
-}
-
-/*******************************************************************************
 * Function Name  : Enter_LowPowerMode
 * Description    : Power-off system clocks and power while entering suspend mode
 * Input          : None.
@@ -165,47 +135,6 @@ void Leave_LowPowerMode(void)
   {
     bDeviceState = ATTACHED;
   }
-}
-
-/*******************************************************************************
-* Function Name  : USB_Interrupts_Config
-* Description    : Configures the USB interrupts
-* Input          : None.
-* Return         : None.
-*******************************************************************************/
-void USB_Interrupts_Config(void)
-{
-  NVIC_InitTypeDef NVIC_InitStructure;
-
-  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
-
-#ifdef STM32L1XX_MD
-  NVIC_InitStructure.NVIC_IRQChannel = USB_LP_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
-  
-#elif defined(STM32F10X_CL) 
-  /* Enable the USB Interrupts */
-  NVIC_InitStructure.NVIC_IRQChannel = OTG_FS_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
-  
-#else
-  NVIC_InitStructure.NVIC_IRQChannel = USB_LP_CAN1_RX0_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
-#endif /* STM32L1XX_MD */
-
-  /* Enable USART Interrupt */
-//  NVIC_InitStructure.NVIC_IRQChannel = EVAL_COM1_IRQn;
-//  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-//  NVIC_Init(&NVIC_InitStructure);
 }
 
 /*******************************************************************************
@@ -246,140 +175,6 @@ void USB_Cable_Config (FunctionalState NewState)
     GPIO_SetBits(USB_DISCONNECT, USB_DISCONNECT_PIN);
   }
 #endif /* USE_STM3210C_EVAL */
-}
-
-/*******************************************************************************
-* Function Name  :  USART_Config_Default.
-* Description    :  configure the EVAL_COM1 with default values.
-* Input          :  None.
-* Return         :  None.
-*******************************************************************************/
-void USART_Config_Default(void)
-{
-  /* EVAL_COM1 default configuration */
-  /* EVAL_COM1 configured as follow:
-        - BaudRate = 9600 baud  
-        - Word Length = 8 Bits
-        - One Stop Bit
-        - Parity Odd
-        - Hardware flow control disabled
-        - Receive and transmit enabled
-  */
-//  USART_InitStructure.USART_BaudRate = 9600;
-//  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-//  USART_InitStructure.USART_StopBits = USART_StopBits_1;
-//  USART_InitStructure.USART_Parity = USART_Parity_Odd;
-//  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-//  USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-
-//  /* Configure and enable the USART */
-//  STM_EVAL_COMInit(COM1, &USART_InitStructure);
-
-//  /* Enable the USART Receive interrupt */
-//  USART_ITConfig(EVAL_COM1, USART_IT_RXNE, ENABLE);
-}
-
-/*******************************************************************************
-* Function Name  :  USART_Config.
-* Description    :  Configure the EVAL_COM1 according to the line coding structure.
-* Input          :  None.
-* Return         :  Configuration status
-                    TRUE : configuration done with success
-                    FALSE : configuration aborted.
-*******************************************************************************/
-uint8_t USART_Config(void)
-{
-
-  /* set the Stop bit*/
-  switch (linecoding.format)
-  {
-    case 0:
-//      USART_InitStructure.USART_StopBits = USART_StopBits_1;
-      break;
-    case 1:
-//      USART_InitStructure.USART_StopBits = USART_StopBits_1_5;
-      break;
-    case 2:
-//      USART_InitStructure.USART_StopBits = USART_StopBits_2;
-      break;
-    default :
-    {
-//      USART_Config_Default();
-      return (FALSE);
-    }
-  }
-
-  /* set the parity bit*/
-  switch (linecoding.paritytype)
-  {
-    case 0:
-//      USART_InitStructure.USART_Parity = USART_Parity_No;
-      break;
-    case 1:
-//      USART_InitStructure.USART_Parity = USART_Parity_Even;
-      break;
-    case 2:
-//      USART_InitStructure.USART_Parity = USART_Parity_Odd;
-      break;
-    default :
-    {
-//      USART_Config_Default();
-      return (FALSE);
-    }
-  }
-
-  /*set the data type : only 8bits and 9bits is supported */
-  switch (linecoding.datatype)
-  {
-    case 0x07:
-      /* With this configuration a parity (Even or Odd) should be set */
-//      USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-      break;
-    case 0x08:
-//      if (USART_InitStructure.USART_Parity == USART_Parity_No)
-//      {
-//        USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-//      }
-//      else
-//      {
-//        USART_InitStructure.USART_WordLength = USART_WordLength_9b;
-//      }
-      
-      break;
-    default :
-    {
-//      USART_Config_Default();
-      return (FALSE);
-    }
-  }
-
-//  USART_InitStructure.USART_BaudRate = linecoding.bitrate;
-//  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-//  USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
- 
-//  /* Configure and enable the USART */
-//  STM_EVAL_COMInit(COM1, &USART_InitStructure);
-
-  return (TRUE);
-}
-
-/*******************************************************************************
-* Function Name  : USB_To_USART_Send_Data.
-* Description    : send the received data from USB to the UART 0.
-* Input          : data_buffer: data address.
-                   Nb_bytes: number of bytes to send.
-* Return         : none.
-*******************************************************************************/
-void USB_To_USART_Send_Data(uint8_t* data_buffer, uint8_t Nb_bytes)
-{
-  
-  uint32_t i;
-  
-  for (i = 0; i < Nb_bytes; i++)
-  {
-//    USART_SendData(EVAL_COM1, *(data_buffer + i));
-//    while(USART_GetFlagStatus(EVAL_COM1, USART_FLAG_TXE) == RESET);
-  }  
 }
 
 /*******************************************************************************
@@ -443,32 +238,6 @@ void Handle_USBAsynchXfer (void)
 #endif /* USE_STM3210C_EVAL */
   }  
   
-}
-/*******************************************************************************
-* Function Name  : UART_To_USB_Send_Data.
-* Description    : send the received data from UART 0 to USB.
-* Input          : None.
-* Return         : none.
-*******************************************************************************/
-void USART_To_USB_Send_Data(void)
-{
-  
-  if (linecoding.datatype == 7)
-  {
-//    USART_Rx_Buffer[USART_Rx_ptr_in] = USART_ReceiveData(EVAL_COM1) & 0x7F;
-  }
-  else if (linecoding.datatype == 8)
-  {
-//    USART_Rx_Buffer[USART_Rx_ptr_in] = USART_ReceiveData(EVAL_COM1);
-  }
-  
-  USART_Rx_ptr_in++;
-  
-  /* To avoid buffer overflow */
-  if(USART_Rx_ptr_in == USART_RX_DATA_SIZE)
-  {
-    USART_Rx_ptr_in = 0;
-  }
 }
 
 /*******************************************************************************
