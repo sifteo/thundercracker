@@ -95,7 +95,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   { 
     System::paintSync();
   
-    VidMode_BG2 vid(view->cube.vbuf);
+    VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
         vid.BG2_drawAsset(
@@ -123,7 +123,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   }
   // zoom out
   { 
-    VidMode_BG2 vid(view->cube.vbuf);
+    VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
         vid.BG2_drawAsset(
@@ -166,7 +166,7 @@ static void VisitMapView(GameView* view, Vec2 loc, GameView* origin=0) {
   view->visited = true;
   view->ShowLocation(loc);
   if (origin) {
-    view->cube.orientTo(origin->cube);
+    view->GetCube()->orientTo(*(origin->GetCube()));
   }
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
     VisitMapView(view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);

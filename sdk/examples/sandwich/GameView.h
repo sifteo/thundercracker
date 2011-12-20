@@ -6,7 +6,6 @@ struct MapRoom;
 
 class GameView {
 public:
-  Cube cube;
   int visited;
 
 private:
@@ -16,6 +15,7 @@ public:
   GameView();
   
   // getters
+  Cube* GetCube() const;
   bool IsShowingRoom() const;
   bool InSpriteMode() const;
   Vec2 Location() const { return mRoom; }

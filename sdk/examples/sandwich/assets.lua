@@ -14,4 +14,13 @@ WinscreenAnim = image{"winscreen_anim.png", width=56, height=80, quality=2}
 Sparkle = image{"sparkle.png", width=8, height=8, pinned=true}
 Flash = image{"flash.png", width=8, height=8}
 
+ScrollLeft = image{"scroll_left.png", width=16, height=128}
+ScrollLeftAccent = image{"scroll_left_accent.png", width=8, height=128}
+ScrollMiddle = image{"scroll_middle.png", width=8, height=128}
+ScrollRightAccent = image{"scroll_right_accent.png", width=8, height=128}
+ScrollRight = image{"scroll_right.png", width=16, height=128}
+
+ScrollBubble = image{"scroll_bubble.png", width=80, height=32}
+ScrollThoughts = image{"scroll_thoughts.png", width=16, height=16}
+
 dofile "gen_assets.lua"

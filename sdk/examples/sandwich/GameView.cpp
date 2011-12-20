@@ -21,6 +21,11 @@ void GameView::Init() {
   }
 }
 
+Cube* GameView::GetCube() const {
+  int id = (int)(this - pGame->ViewBegin());
+  return cubes + id;
+}
+
 //----------------------------------------------------------------
 // ROOM METHODS
 //----------------------------------------------------------------
@@ -155,7 +160,7 @@ void GameView::HideItem() {
 #define TILT_THRESHOLD 50
 
 Cube::Side GameView::VirtualTiltDirection() const {
-  Vec2 accel = cube.virtualAccel();
+  Vec2 accel = GetCube()->virtualAccel();
   if (accel.y < -TILT_THRESHOLD) {
     return 0;
   } else if (accel.x < -TILT_THRESHOLD) {
@@ -175,24 +180,24 @@ Cube::Side GameView::VirtualTiltDirection() const {
 
 bool GameView::InSpriteMode() const {
   uint8_t byte;
-  _SYS_vbuf_peekb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), &byte);
+  _SYS_vbuf_peekb(&GetCube()->vbuf.sys, offsetof(_SYSVideoRAM, mode), &byte);
   return byte == _SYS_VM_BG0_SPR_BG1;
 }
 
 void GameView::EnterSpriteMode() {
   // Clear BG1/SPR before switching modes
-  _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
-  _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_TILES/2, 0, 32);
-  _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_SPR, 0, 8*5/2);
+  _SYS_vbuf_fill(&GetCube()->vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
+  _SYS_vbuf_fill(&GetCube()->vbuf.sys, _SYS_VA_BG1_TILES/2, 0, 32);
+  _SYS_vbuf_fill(&GetCube()->vbuf.sys, _SYS_VA_SPR, 0, 8*5/2);
   // Switch modes
-  _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
+  _SYS_vbuf_pokeb(&GetCube()->vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
 }
 
 void GameView::SetSpriteImage(int id, int tile) {
   uint16_t word = VideoBuffer::indexWord(tile);
   uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
                    sizeof(_SYSSpriteInfo)/2 * id ); 
-  _SYS_vbuf_poke(&cube.vbuf.sys, addr, word);
+  _SYS_vbuf_poke(&GetCube()->vbuf.sys, addr, word);
 }
 
 void GameView::HideSprite(int id) {
@@ -205,7 +210,7 @@ void GameView::ResizeSprite(int id, int px, int py) {
   uint16_t word = ((uint16_t)xb << 8) | yb;
   uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
                    sizeof(_SYSSpriteInfo)/2 * id ); 
-  _SYS_vbuf_poke(&cube.vbuf.sys, addr, word);
+  _SYS_vbuf_poke(&GetCube()->vbuf.sys, addr, word);
 }
 
 void GameView::MoveSprite(int id, int px, int py) {
@@ -214,7 +219,7 @@ void GameView::MoveSprite(int id, int px, int py) {
   uint16_t word = ((uint16_t)xb << 8) | yb;
   uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
                    sizeof(_SYSSpriteInfo)/2 * id ); 
-  _SYS_vbuf_poke(&cube.vbuf.sys, addr, word);
+  _SYS_vbuf_poke(&GetCube()->vbuf.sys, addr, word);
 }
 
 //----------------------------------------------------------------------
@@ -222,15 +227,15 @@ void GameView::MoveSprite(int id, int px, int py) {
 //----------------------------------------------------------------------
 
 GameView* GameView::VirtualNeighborAt(Cube::Side side) const {
-  Cube::ID neighbor = cube.virtualNeighborAt(side);
+  Cube::ID neighbor = GetCube()->virtualNeighborAt(side);
   return neighbor == CUBE_ID_UNDEFINED ? 0 : pGame->views + neighbor;
 }
 
 void GameView::DrawBackground() {
-  VidMode_BG0 mode(cube.vbuf);
+  VidMode_BG0 mode(GetCube()->vbuf);
   if (!IsShowingRoom()) {
     mode.BG0_drawAsset(Vec2(0,0), *(pGame->map.Data()->blankImage));
-    BG1Helper(cube).Flush();
+    BG1Helper(*GetCube()).Flush();
   } else {
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
@@ -242,7 +247,7 @@ void GameView::DrawBackground() {
       }
     }
 
-    BG1Helper ovrly(cube);
+    BG1Helper ovrly(*GetCube());
     uint8_t *p = Room()->Data()->overlay;
     if (p) {
       while(*p != 0xff) {

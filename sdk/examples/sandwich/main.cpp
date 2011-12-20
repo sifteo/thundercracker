@@ -1,5 +1,6 @@
 #include "Game.h"
 
+Cube cubes[NUM_CUBES];
 static Game sGame;
 Game* pGame = &sGame;
 
@@ -9,9 +10,9 @@ void siftmain() {
 	// TODO: Move Cubes out of GameView to separate Alloc?
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-	    sGame.CubeAt(i)->enable(i);
-	    sGame.CubeAt(i)->loadAssets(GameAssets);
-	    VidMode_BG0_ROM rom(sGame.CubeAt(i)->vbuf);
+	    cubes[i].enable(i);
+	    cubes[i].loadAssets(GameAssets);
+	    VidMode_BG0_ROM rom(cubes[i].vbuf);
 	    rom.init();
 	    rom.BG0_text(Vec2(1,1), "Loading...");
 	  }
@@ -19,21 +20,21 @@ void siftmain() {
 	  while(!done) {
 	  	done = true;
 	    for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-	      VidMode_BG0_ROM rom(sGame.CubeAt(i)->vbuf);
-	      rom.BG0_progressBar(Vec2(0,7), sGame.CubeAt(i)->assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-	      done &= sGame.CubeAt(i)->assetDone(GameAssets);
+	      VidMode_BG0_ROM rom(cubes[i].vbuf);
+	      rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+	      done &= cubes[i].assetDone(GameAssets);
 	    }
 	    System::paint();
 	  }
 	  for(Cube::ID i=0; i<NUM_CUBES; ++i) {
-	    VidMode_BG0 mode(sGame.CubeAt(i)->vbuf);
+	    VidMode_BG0 mode(cubes[i].vbuf);
 	    mode.init();
 	    mode.BG0_drawAsset(Vec2(0,0), Sting);
 	  }
 	  float time = System::clock();
 	  while(System::clock() - time < 1.f) {
 	  	for(int i=0; i<NUM_CUBES; ++i) {
-	  		sGame.CubeAt(i)->vbuf.touch();
+	  		cubes[i].vbuf.touch();
 	  	}
 	    System::paint();
 	  }		
@@ -43,6 +44,16 @@ void siftmain() {
 
 	sGame.MainLoop();
 }
+
+//-----------------------------------------------------------------------------
+// SCROLL FX
+//-----------------------------------------------------------------------------
+
+
+
+//-----------------------------------------------------------------------------
+// WIN SCREEN FX
+//-----------------------------------------------------------------------------
 
 struct Spartikle {
 	unsigned frame;
@@ -73,7 +84,7 @@ struct Spartikle {
 void WinScreenTest() {
 	sGame.ViewAt(0)->EnterSpriteMode();
 	for(;;) {
-		Cube& cube = *(sGame.CubeAt(0));
+		Cube& cube = *cubes;
 		{
 			VidMode_BG0 mode(cube.vbuf);
 	    	mode.BG0_drawAsset(Vec2(0,0), WinscreenBackground);

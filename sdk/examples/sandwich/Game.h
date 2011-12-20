@@ -18,7 +18,6 @@ public:
 
   // Getters
   
-  Cube* CubeAt(int i) { return &(views[i].cube); }
   GameView* ViewAt(int i) { return views+i; }
   GameView* ViewBegin() { return views; }
   GameView* ViewEnd() { return views+NUM_CUBES; }

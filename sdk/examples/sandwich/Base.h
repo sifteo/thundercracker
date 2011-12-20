@@ -7,6 +7,8 @@
 #  define NUM_CUBES 3
 #endif
 
+extern Cube cubes[NUM_CUBES];
+
 using namespace Sifteo;
 
 #define CORO_PARAMS int mState;
