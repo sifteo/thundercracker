@@ -12,7 +12,7 @@ visited(0), mRoom(-2,-2) {
 }
 
 void GameView::Init() {
-  EnterSpriteMode();
+  EnterSpriteMode(GetCube());
   if (pGame->player.CurrentView() == this) {
     ShowLocation(pGame->player.Location());
     ShowPlayer();
@@ -89,22 +89,22 @@ void GameView::HideRoom() {
 
 
 void GameView::ShowPlayer() {
-  ResizeSprite(PLAYER_SPRITE_ID, 32, 32);
+  ResizeSprite(GetCube(), PLAYER_SPRITE_ID, 32, 32);
   UpdatePlayer();
 }
 
 void GameView::SetPlayerFrame(unsigned frame) {
-  SetSpriteImage(PLAYER_SPRITE_ID, frame);
+  SetSpriteImage(GetCube(), PLAYER_SPRITE_ID, frame);
 }
 
 void GameView::UpdatePlayer() {
   Vec2 localPosition = pGame->player.Position() - 128 * mRoom;
-  SetSpriteImage(PLAYER_SPRITE_ID, pGame->player.CurrentFrame());
-  MoveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
+  SetSpriteImage(GetCube(), PLAYER_SPRITE_ID, pGame->player.CurrentFrame());
+  MoveSprite(GetCube(), PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
 }
 
 void GameView::HidePlayer() {
-  ResizeSprite(PLAYER_SPRITE_ID, 0, 0);
+  ResizeSprite(GetCube(), PLAYER_SPRITE_ID, 0, 0);
 }
 
 //----------------------------------------------------------------------
@@ -112,21 +112,21 @@ void GameView::HidePlayer() {
 //----------------------------------------------------------------------
 
 void GameView::ShowEnemy(Enemy* pEnemy) {
-  ResizeSprite(ENEMY_SPRITE_ID, 32, 32);
+  ResizeSprite(GetCube(), ENEMY_SPRITE_ID, 32, 32);
   pEnemy->view = this;
   UpdateEnemy(pEnemy);
 }
 
 void GameView::UpdateEnemy(Enemy* pEnemy) {
-  SetSpriteImage(ENEMY_SPRITE_ID, pEnemy->CurrentFrame());
+  SetSpriteImage(GetCube(), ENEMY_SPRITE_ID, pEnemy->CurrentFrame());
   Vec2 localPosition = pEnemy->Position();
-  MoveSprite(ENEMY_SPRITE_ID, localPosition.x-16, localPosition.y-16);
+  MoveSprite(GetCube(), ENEMY_SPRITE_ID, localPosition.x-16, localPosition.y-16);
   
 }
 
 void GameView::HideEnemy(Enemy* pEnemy) {
   if (pEnemy->view == this) {
-    ResizeSprite(ENEMY_SPRITE_ID, 0, 0);
+    HideSprite(GetCube(), ENEMY_SPRITE_ID);
     pEnemy->view = 0;
   }
 }
@@ -137,19 +137,19 @@ void GameView::HideEnemy(Enemy* pEnemy) {
 //----------------------------------------------------------------------
 
 void GameView::ShowItem(int itemId) {
-  SetSpriteImage(ITEM_SPRITE_ID, Items.index + (itemId - 1) * Items.width * Items.height);;
-  ResizeSprite(ITEM_SPRITE_ID, 16, 16);
+  SetSpriteImage(GetCube(), ITEM_SPRITE_ID, Items.index + (itemId - 1) * Items.width * Items.height);;
+  ResizeSprite(GetCube(), ITEM_SPRITE_ID, 16, 16);
   Vec2 p = 16 * Room()->Data()->LocalCenter();
-  MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y);
+  MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
 }
 
 void GameView::SetItemPosition(Vec2 p) {
   p += 16 * Room()->Data()->LocalCenter();
-  MoveSprite(ITEM_SPRITE_ID, p.x-8, p.y);
+  MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
 }
 
 void GameView::HideItem() {
-  ResizeSprite(ITEM_SPRITE_ID, 0, 0);
+  ResizeSprite(GetCube(), ITEM_SPRITE_ID, 0, 0);
 }
 
 
@@ -172,54 +172,6 @@ Cube::Side GameView::VirtualTiltDirection() const {
   } else {
     return -1;
   }
-}
-
-//----------------------------------------------------------------------
-// SPRITE STUFF - all yoinked from stars demo
-//----------------------------------------------------------------------
-
-bool GameView::InSpriteMode() const {
-  uint8_t byte;
-  _SYS_vbuf_peekb(&GetCube()->vbuf.sys, offsetof(_SYSVideoRAM, mode), &byte);
-  return byte == _SYS_VM_BG0_SPR_BG1;
-}
-
-void GameView::EnterSpriteMode() {
-  // Clear BG1/SPR before switching modes
-  _SYS_vbuf_fill(&GetCube()->vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
-  _SYS_vbuf_fill(&GetCube()->vbuf.sys, _SYS_VA_BG1_TILES/2, 0, 32);
-  _SYS_vbuf_fill(&GetCube()->vbuf.sys, _SYS_VA_SPR, 0, 8*5/2);
-  // Switch modes
-  _SYS_vbuf_pokeb(&GetCube()->vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
-}
-
-void GameView::SetSpriteImage(int id, int tile) {
-  uint16_t word = VideoBuffer::indexWord(tile);
-  uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
-                   sizeof(_SYSSpriteInfo)/2 * id ); 
-  _SYS_vbuf_poke(&GetCube()->vbuf.sys, addr, word);
-}
-
-void GameView::HideSprite(int id) {
-  ResizeSprite(id, 0, 0);
-}
-
-void GameView::ResizeSprite(int id, int px, int py) {
-  uint8_t xb = -px;
-  uint8_t yb = -py;
-  uint16_t word = ((uint16_t)xb << 8) | yb;
-  uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
-                   sizeof(_SYSSpriteInfo)/2 * id ); 
-  _SYS_vbuf_poke(&GetCube()->vbuf.sys, addr, word);
-}
-
-void GameView::MoveSprite(int id, int px, int py) {
-  uint8_t xb = -px;
-  uint8_t yb = -py;
-  uint16_t word = ((uint16_t)xb << 8) | yb;
-  uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
-                   sizeof(_SYSSpriteInfo)/2 * id ); 
-  _SYS_vbuf_poke(&GetCube()->vbuf.sys, addr, word);
 }
 
 //----------------------------------------------------------------------

@@ -62,7 +62,7 @@ struct Spartikle {
 	float vx;
 	float vy;
 
-	inline void Update(float dt, GameView* v, int id) {
+	inline void Update(float dt, int id) {
 		vy += dt * 9.8f;
 		px += dt * vx;
 		py += dt * vy;
@@ -71,8 +71,8 @@ struct Spartikle {
 			vy *= -0.5f;
 		}
 		frame = (frame+1)%4;
-		v->SetSpriteImage(id, Sparkle.index + frame);
-		v->MoveSprite(id, (int)(px+0.5f)-4, (int)(py+0.5f)-4);
+		SetSpriteImage(&cubes[0], id, Sparkle.index + frame);
+		MoveSprite(&cubes[0], id, (int)(px+0.5f)-4, (int)(py+0.5f)-4);
 	}
 
 	inline void SetVel(float x, float y) {
@@ -82,7 +82,7 @@ struct Spartikle {
 };
 
 void WinScreenTest() {
-	sGame.ViewAt(0)->EnterSpriteMode();
+	EnterSpriteMode(&cubes[0]);
 	for(;;) {
 		Cube& cube = *cubes;
 		{
@@ -134,17 +134,17 @@ void WinScreenTest() {
 	    for(unsigned id=0; id<4; ++id) {
 	    	sp[id].vx *= 1.5f;
 	    	sp[id].vy *= 2.f;
-	    	sGame.ViewAt(0)->ResizeSprite(id, 8, 8);
+	    	ResizeSprite(&cubes[0], id, 8, 8);
 	    }
 	    float t = System::clock();
 	    do {
 		    for(unsigned id=0; id<4; ++id) {
-	    		sp[id].Update(0.2f, sGame.ViewAt(0), id);
+	    		sp[id].Update(0.2f, id);
 	    	}
 	    	System::paint();
 	    } while(System::clock() - t < 2.5f);
 	    for(unsigned id=0; id<8; ++id) {
-	    	sGame.ViewAt(0)->HideSprite(id);
+	    	HideSprite(&cubes[0], id);
 	    }
 	    System::paintSync();
 	}
