@@ -41,8 +41,9 @@ void siftmain() {
 	}
 	
 	//
-	//ScrollTest();
+	ScrollTest();
 	//for(;;) WinScreenTest();
+	*pGame = Game();
 	pGame->MainLoop();
 }
 

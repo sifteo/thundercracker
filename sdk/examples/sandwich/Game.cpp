@@ -21,7 +21,11 @@ void Game::ObserveNeighbors(bool flag) {
 //------------------------------------------------------------------
 
 void Game::MainLoop() {
-  mNeedsSync = false;
+  // reset everything
+  //for(GameView *vp=ViewBegin(); vp!=ViewEnd(); ++vp) { *vp = GameView(); }
+  //player = Player();
+  //map = Map();
+  // todo: enemies
 
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->Init();
@@ -57,8 +61,8 @@ void Game::MainLoop() {
     view->Init();
     System::paintSync();
   }  
-  mSimTime = System::clock();
 
+  mSimTime = System::clock();
   ObserveNeighbors(true);
   CheckMapNeighbors();
 
