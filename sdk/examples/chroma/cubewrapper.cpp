@@ -73,7 +73,7 @@ void CubeWrapper::Init( AssetGroup &assets )
 
     m_rom.init();
     m_rom.BG0_text(Vec2(1,1), "Loading...");
-	Refill();
+    //Refill();
 }
 
 

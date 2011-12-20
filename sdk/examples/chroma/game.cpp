@@ -19,11 +19,7 @@ Game &Game::Inst()
 {
 	static Game game = Game();
 
-#ifdef _WIN32
-    //srand((int)System::clock());
-#endif
-
-	return game; 
+    return game;
 }
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f )
@@ -54,6 +50,14 @@ void Game::Init()
 		System::paint();
 	}
 	PRINT( "done loading" );
+
+#ifdef _WIN32
+    srand((int)( System::clock() * 10000 ));
+#endif
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+        cubes[i].Reset();
+
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].vidInit();
 
@@ -162,7 +166,7 @@ unsigned int Game::Rand( unsigned int max )
 #ifdef _WIN32
 	return rand()%max;
 #else
-	static unsigned int seed = (int)System::clock();
+    static unsigned int seed = (int)( System::clock() * 10000);
 	return rand_r(&seed)%max;
 #endif
 }

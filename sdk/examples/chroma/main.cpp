@@ -17,20 +17,6 @@
 
 using namespace Sifteo;
 
-//stupid way to ensure seeding the randomizer before static inits
-#ifdef _WIN32
-class RandInit
-{
-public:
-	RandInit()
-	{
-		srand((int)System::clock());
-	}
-};
-
-static RandInit randInit;
-#endif
-
 static Game &game = Game::Inst();
 
 /*
