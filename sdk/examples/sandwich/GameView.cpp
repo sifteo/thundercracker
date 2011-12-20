@@ -14,6 +14,7 @@ visited(0), mRoom(-2,-2) {
 void GameView::Init() {
   EnterSpriteMode(GetCube());
   if (pGame->player.CurrentView() == this) {
+    mRoom = Vec2(-1,-1);
     ShowLocation(pGame->player.Location());
     ShowPlayer();
   } else {
