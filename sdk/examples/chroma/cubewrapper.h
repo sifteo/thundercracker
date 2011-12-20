@@ -97,6 +97,7 @@ public:
     void setState( CubeState state );
     //bool IsIdle() const;
     inline int getLastTiltDir() const { return m_lastTiltDir; }
+    inline BG1Helper &getBG1Helper() { return m_bg1helper; }
 
 private:
 	//try moving a gem from row1/col1 to row2/col2

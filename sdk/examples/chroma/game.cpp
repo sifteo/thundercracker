@@ -119,14 +119,30 @@ void Game::Update()
 		for( int i = 0; i < NUM_CUBES; i++ )
             cubes[i].Update( System::clock(), dt );
 
-        //we need to call System::paint before and after drawing for proper syncing
-        System::paint();
+        System::finish();
 
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
 	}
             
-    System::paint();
+    /*bool bForceDraw = false;
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( cubes[i].getBG1Helper().NeedFinish() )
+        {
+            System::paintSync();
+            //printf( "finishing\n" );
+            bForceDraw = true;
+            break;
+        }
+    }
+
+    if( !bForceDraw )*/
+        System::paint();
+
+    //don't really need to call paintSync every frame.. Just need to call if bg1 map changes.
+    //System::paintSync();
 }
 
 
