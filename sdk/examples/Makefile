@@ -1,5 +1,5 @@
 SUBDIRS = \
-	hello monster text gfxdemo chroma sensors \
+	hello monster text gfxdemo chroma nyan sensors \
 	scroller-bg0 scroller-bg1 sprites stars tiltShake \
 	pairing
 
