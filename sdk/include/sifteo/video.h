@@ -464,12 +464,13 @@ public:
     bool isSpriteHidden(int id)
     {
         uint16_t word;
+        uint16_t addr;
 
 #ifdef DEBUG
         // check all the sprite parameters, for debugging
 
         // check image
-        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
+        addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
                          sizeof(_SYSSpriteInfo)/2 * id );
         _SYS_vbuf_peek(&buf.sys, addr, &word);
 
