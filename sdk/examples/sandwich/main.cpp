@@ -146,7 +146,16 @@ void ScrollTest() {
 		MoveSprite(&cubes[0], i+1, x, 42);
 		System::paintSync();
 	}
-	WaitForSeconds(3.f);
+	WaitForSeconds(1.f);
+
+	// do the pickup animation
+	for(unsigned i=0; i<PlayerPickup.frames; ++i) {
+		SetSpriteImage(&cubes[0], 0, PlayerPickup.index + i * PlayerPickup.width * PlayerPickup.height);
+		System::paintSync();
+		WaitForSeconds(0.1f);
+	}
+	SetSpriteImage(&cubes[0], 0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	WaitForSeconds(2.f);
 
 	// hide items and bubble
 	HideSprite(&cubes[0], 1);
