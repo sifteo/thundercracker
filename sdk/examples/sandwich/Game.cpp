@@ -22,11 +22,6 @@ void Game::ObserveNeighbors(bool flag) {
 
 void Game::MainLoop() {
   // reset everything
-  //for(GameView *vp=ViewBegin(); vp!=ViewEnd(); ++vp) { *vp = GameView(); }
-  //player = Player();
-  //map = Map();
-  // todo: enemies
-
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->Init();
   }
@@ -66,7 +61,8 @@ void Game::MainLoop() {
   ObserveNeighbors(true);
   CheckMapNeighbors();
 
-  while(1) {
+  mIsDone = false;
+  while(!mIsDone) {
     mNeedsSync = false;
     float dt = UpdateDeltaTime();
     if (sNeighborDirty) { 
@@ -209,6 +205,14 @@ void Game::OnInventoryChanged() {
   for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->RefreshInventory();
   }
+  const int firstSandwichId = 2;
+  int count = 0;
+  for(int i=firstSandwichId; i<firstSandwichId+4; ++i) {
+    if(!player.HasItem(i)) {
+      return;
+    }
+  }
+  mIsDone = true;
 }
 
 //------------------------------------------------------------------

@@ -14,6 +14,7 @@ public:
   Enemy enemies[NUM_ENEMIES];
   float mSimTime;
   bool mNeedsSync;
+  bool mIsDone;
 
 public:
 

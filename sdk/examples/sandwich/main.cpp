@@ -4,8 +4,8 @@ Cube cubes[NUM_CUBES];
 static Game sGame;
 Game* pGame = &sGame;
 
-void ScrollTest();
-void WinScreenTest();
+void IntroCutscene();
+void WinScreen();
 
 void siftmain() {
 	{ // initialize assets
@@ -40,11 +40,12 @@ void siftmain() {
 	  }		
 	}
 	
-	//
-	ScrollTest();
-	//for(;;) WinScreenTest();
-	*pGame = Game();
-	pGame->MainLoop();
+	for(;;) {
+		IntroCutscene();
+		*pGame = Game(); // re-initialize memory
+		pGame->MainLoop();
+		WinScreen();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -56,7 +57,7 @@ static void WaitForSeconds(float dt) {
 	do { System::paint(); } while(System::clock() - t < dt);
 }
 
-void ScrollTest() {
+void IntroCutscene() {
 	EnterSpriteMode(&cubes[0]);
 	VidMode_BG0 mode(cubes[0].vbuf);
 	//mode.BG0_drawAsset(Vec2(0,0), Sting);
@@ -214,9 +215,14 @@ struct Spartikle {
 	}
 };
 
-void WinScreenTest() {
+void WinScreen() {
 	EnterSpriteMode(&cubes[0]);
 	VidMode_BG0(cubes[0].vbuf).BG0_drawAsset(Vec2(0,0), WinscreenBackground);
+	for(unsigned i=1; i<NUM_CUBES; ++i) {
+		VidMode_BG0 idleMode(cubes[i].vbuf);
+		idleMode.init();
+		idleMode.BG0_drawAsset(Vec2(0,0), Sting);
+	}
     for(unsigned frame=0; frame<WinscreenAnim.frames; ++frame) {
   	    BG1Helper mode(cubes[0]);
   	    mode.DrawAsset(Vec2(9, 0), WinscreenAnim, frame);
