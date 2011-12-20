@@ -60,7 +60,11 @@ void Game::Init()
 	m_splashTime = System::clock();
     m_fLastTime = m_splashTime;
 
-    m_SFXChannel.init();
+    for( int i = 0; i < NUM_SFX_CHANNELS; i++ )
+    {
+        m_SFXChannels[i].init();
+        m_SFXlastUsed[i] = System::clock();
+    }
     m_musicChannel.init();
 
     //doesn't seem to work
@@ -439,8 +443,25 @@ void Game::enterScore()
 
 void Game::playSound( const _SYSAudioModule &sound )
 {
-    m_SFXChannel.stop();
-    m_SFXChannel.play(sound, LoopOnce);
+    //figure out which channel played a sound longest ago
+    int iOldest = 0;
+    float fOldest = m_SFXlastUsed[0];
+
+    for( int i = 1; i < NUM_SFX_CHANNELS; i++ )
+    {
+        if( m_SFXlastUsed[i] < fOldest )
+        {
+            iOldest = i;
+            fOldest = m_SFXlastUsed[i];
+        }
+    }
+
+
+    m_SFXChannels[iOldest].stop();
+    m_SFXChannels[iOldest].play(sound, LoopOnce);
+    m_SFXlastUsed[iOldest] = System::clock();
+
+    //printf( "playing a sound effect on channel %d\n", iOldest );
 }
 
 const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
@@ -460,6 +481,5 @@ const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 void Game::playSlosh()
 {
     int index = Rand( NUM_SLOSH_SOUNDS );
-
-    m_SFXChannel.play(*SLOSH_SOUNDS[index], LoopOnce);
+    playSound(*SLOSH_SOUNDS[index]);
 }
