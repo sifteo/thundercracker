@@ -200,11 +200,11 @@ class VidMode_BG0 : public VidMode {
         setWindow(0, LCD_height);
     }
 
-    void set() {
+    virtual void set() {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
     }
 
-    void clear(uint16_t tile=0) {
+    virtual void clear(uint16_t tile=0) {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
     }
 
@@ -416,6 +416,101 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
     }
 };
 
+/**
+ * A video mode that supports two scrolling layers of 8x8-pixel tiles,
+ * and a layer of up to 8 sprites in between.
+ *
+ * The native format of the scrolling layers of this mode is an 18x18 grid of
+ * tiles, with horizontal and vertical wrap-around. Other classes build on this
+ * basic primitive to do infinite scrolling, or to add additional
+ * layers on top of this background.
+ */
+class VidMode_BG0_SPR_BG1 : public VidMode_BG0
+{
+public:
+    VidMode_BG0_SPR_BG1(VideoBuffer &vbuf)
+        : VidMode_BG0(vbuf) {}
+
+    virtual void set()
+    {
+        _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
+    }
+
+    virtual void clear(uint16_t tile=0)
+    {
+        _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
+
+        // FIXME clear BG1 tiles starting from "tile"
+        _SYS_vbuf_fill(&buf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
+        _SYS_vbuf_fill(&buf.sys, _SYS_VA_BG1_TILES/2, 0, 32);
+        _SYS_vbuf_fill(&buf.sys, _SYS_VA_SPR, 0, 8*5/2);
+    }
+
+    bool isInMode()
+    {
+      uint8_t byte;
+      _SYS_vbuf_peekb(&buf.sys, offsetof(_SYSVideoRAM, mode), &byte);
+      return byte == _SYS_VM_BG0_SPR_BG1;
+    }
+
+    void setSpriteImage(int id, int tile)
+    {
+      uint16_t word = VideoBuffer::indexWord(tile);
+      uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
+                       sizeof(_SYSSpriteInfo)/2 * id );
+      _SYS_vbuf_poke(&buf.sys, addr, word);
+    }
+
+    bool isSpriteHidden(int id)
+    {
+        uint16_t word;
+
+#ifdef DEBUG
+        // check all the sprite parameters, for debugging
+
+        // check image
+        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
+                         sizeof(_SYSSpriteInfo)/2 * id );
+        _SYS_vbuf_peek(&buf.sys, addr, &word);
+
+        // get position, to debug
+        addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
+                         sizeof(_SYSSpriteInfo)/2 * id );
+        _SYS_vbuf_peek(&buf.sys, addr, &word);
+#endif
+
+        // check size
+        addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
+                         sizeof(_SYSSpriteInfo)/2 * id );
+        _SYS_vbuf_peek(&buf.sys, addr, &word);
+        return (word == 0);
+    }
+
+    void resizeSprite(int id, int px, int py)
+    {
+      uint8_t xb = -px;
+      uint8_t yb = -py;
+      uint16_t word = ((uint16_t)xb << 8) | yb;
+      uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
+                       sizeof(_SYSSpriteInfo)/2 * id );
+      _SYS_vbuf_poke(&buf.sys, addr, word);
+    }
+
+    void hideSprite(int id)
+    {
+      resizeSprite(id, 0, 0);
+    }
+
+    void moveSprite(int id, int px, int py)
+    {
+      uint8_t xb = -px;
+      uint8_t yb = -py;
+      uint16_t word = ((uint16_t)xb << 8) | yb;
+      uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
+                       sizeof(_SYSSpriteInfo)/2 * id );
+      _SYS_vbuf_poke(&buf.sys, addr, word);
+    }
+};
 
 /**
  * A special-purpose video mode for affine transform effects.
