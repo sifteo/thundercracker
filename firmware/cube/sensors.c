@@ -632,16 +632,19 @@ nb_tx_handoff:
        
         jb      _battery_adc_lock, nb_packet_done
 
-        mov     _ADCCON2, #0x0c         ; Single-step, no auto-powerdown
-        mov     _ADCCON3, #0xe0         ; 12-bit, right justified
-        mov     _ADCCON1, #0xbc         ; 1 0 1111 00, Chold to 2/3 VDD reference
-        
+        ;mov     _ADCCON2, #0x0c         ; Single-step, no auto-powerdown
+        ;mov     _ADCCON3, #0xe0         ; 12-bit, right justified
+        ;mov     _ADCCON1, #0xbc         ; 1 0 1111 00, Chold to 2/3 VDD reference
+        mov		_ADCCON2, #0x08			; pdd=24us
+        mov		_ADCCON3, #0xe0
+        mov 	_ADCCON1, #((1<<7) | (VDD13_ADC_CH << 2) | REF_INT_ADC)
+
         ; While we wait, ground the neighbor sensor, to fully discharge its
         ; capacitance and maximize the amount of charge we can transfer into
         ; it later.
         
-        anl     MISC_PORT, #~MISC_TOUCH     ; 4
-        anl     _MISC_DIR, #~MISC_TOUCH     ; 4
+        ;anl     MISC_PORT, #~MISC_TOUCH     ; 4
+        ;anl     _MISC_DIR, #~MISC_TOUCH     ; 4
         
         ; Wait Twup (15us) + Tack (0.75 us) for Chold to charge. This needs to be 252
         ; cycles from ADCCON1 write to ADCCON1 write. The timing here needs to be very
@@ -651,18 +654,18 @@ nb_tx_handoff:
         ; concurrent with neighbor RX, so we really only impact graphics framerate.
         ; This is only a small fraction of a percent of our total execution time.
         
-        mov     a, #58                      ; 2
-        djnz    acc, .                      ; 4*N = 232
-        movc    a, @a+pc                    ; 3  (used as a 1-byte 3-cycle nop)
+        ;mov     a, #58                      ; 2
+        ;djnz    acc, .                      ; 4*N = 232
+        ;movc    a, @a+pc                    ; 3  (used as a 1-byte 3-cycle nop)
         
         ; Now, while the audience is distracted, swap input channels. This is where the
         ; charge transfer happens.
         
-        orl     _MISC_DIR, #MISC_TOUCH                          ; 4
-        mov     _ADCCON1, #(0x80 | (TOUCH_ADC_CH << 2))         ; 3
+        ;orl     _MISC_DIR, #MISC_TOUCH                          ; 4
+        ;mov     _ADCCON1, #(0x80 | (TOUCH_ADC_CH << 2))         ; 3
         
         ; Continue in the ADC interrupt, after conversion finishes.
-        
+        ; orl 	CTRL_PORT, #BIT_3			; debug
         setb    _IEN_MISC
         
         ;--------------------------------------------------------------------

@@ -42,6 +42,12 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define MISC_NB_IN      (1 << 6)   // T1 input
 #define MISC_NB_OUT4    (1 << 7)
 
+#define POWERUP_ADC		(1 << 7)
+#define POWERDN_ADC		0
+#define REF_INT_ADC		0
+#define	REF_VDD_ADC		1
+#define VDD13_ADC_CH	14
+#define VDD23_ADC_CH	15
 #define TOUCH_ADC_CH    12
 #define BATTERY_ADC_CH  0
 

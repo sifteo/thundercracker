@@ -9,6 +9,9 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
+#define TOUCH_STANDALONE 1
+//#define DEBUG_TOUCH 1
+
 // Set by main-loop routines when they accomplished some actual work.
 extern __bit global_busy_flag;
 

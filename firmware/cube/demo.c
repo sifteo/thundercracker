@@ -7,6 +7,7 @@
  */
 
 #include <stdint.h>
+#include "main.h"
 #include "graphics.h"
 #include "hardware.h"
 #include "flash.h"
@@ -42,13 +43,20 @@ void demo(void)
 
     while (1) {
         uint8_t i;
-        uint8_t d = debug_touch;
+        uint8_t d = ts_touchval.valL; //debug_touch;
+        uint8_t d2 = ts_touchval.valH;
+        uint16_t dd = ts_touchval.val;
 
         draw_xy = XY(1,2);
         draw_hex(d);
+        draw_xy = XY(1,4);
+        draw_hex(d2);
 
         for (i = 0; i < 18; i++)
-            vram.bg0_tiles[i] = d < (i * 3 + 60) ? 0 : 0x26fe;
+        	vram.bg0_tiles[i] = dd < (i * 100 + 1800) ? 0 : 0x26fe;
+
+        //for (i = 0; i < 18; i++)
+        //    vram.bg0_tiles[i] = d < (i * 3 + 60) ? 0 : 0x26fe;
 
         graphics_render();
     }
@@ -71,3 +79,4 @@ void demo(void)
     graphics_render();
     draw_exit();
 }
+
