@@ -32,7 +32,7 @@ void siftmain() {
 	    mode.BG0_drawAsset(Vec2(0,0), Sting);
 	  }
 	  float time = System::clock();
-	  while(System::clock() - time < 1.f) {
+	  while(System::clock() - time < 2.f) {
 	  	for(int i=0; i<NUM_CUBES; ++i) {
 	  		cubes[i].vbuf.touch();
 	  	}
@@ -41,8 +41,8 @@ void siftmain() {
 	}
 	
 	//
-	ScrollTest();
-	//WinScreenTest();
+	//ScrollTest();
+	//for(;;) WinScreenTest();
 	pGame->MainLoop();
 }
 
@@ -59,8 +59,6 @@ void ScrollTest() {
 	EnterSpriteMode(&cubes[0]);
 	VidMode_BG0 mode(cubes[0].vbuf);
 	//mode.BG0_drawAsset(Vec2(0,0), Sting);
-	{float t = System::clock();
-	do { System::paint(); } while(System::clock() - t < 0.5f);}
 
 	// iris out
 	for(unsigned i=0; i<8; ++i) {
@@ -162,9 +160,7 @@ void ScrollTest() {
 	HideSprite(&cubes[0], 2);
 	HideSprite(&cubes[0], 3);
 	HideSprite(&cubes[0], 4);
-	for(int x=3; x<13; ++x) {
-		mode.BG0_drawAsset(Vec2(x, 0), ScrollMiddle);
-	}
+	for(int x=3; x<13; ++x) { mode.BG0_drawAsset(Vec2(x, 0), ScrollMiddle); }
 	System::paintSync();
 
 	// walk off
@@ -219,57 +215,55 @@ struct Spartikle {
 
 void WinScreenTest() {
 	EnterSpriteMode(&cubes[0]);
-	for(;;) {
-		VidMode_BG0(cubes[0].vbuf).BG0_drawAsset(Vec2(0,0), WinscreenBackground);
-	    for(unsigned frame=0; frame<WinscreenAnim.frames; ++frame) {
-	  	    BG1Helper mode(cubes[0]);
-	  	    mode.DrawAsset(Vec2(9, 0), WinscreenAnim, frame);
-	  	    mode.Flush();
-	    	System::paintSync();
-	    }
-		{
-			VidMode_BG0 mode(cubes[0].vbuf);
-			for(unsigned row=0; row<8; ++row) {
-				for(unsigned col=0; col<16; ++col) {
-					mode.BG0_drawAsset(Vec2(col,8+row), Flash);
-					mode.BG0_drawAsset(Vec2(col,8-row-1), Flash);
-				}
-				if (row%2 == 1) {
-					System::paintSync();
-				}
+	VidMode_BG0(cubes[0].vbuf).BG0_drawAsset(Vec2(0,0), WinscreenBackground);
+    for(unsigned frame=0; frame<WinscreenAnim.frames; ++frame) {
+  	    BG1Helper mode(cubes[0]);
+  	    mode.DrawAsset(Vec2(9, 0), WinscreenAnim, frame);
+  	    mode.Flush();
+    	System::paintSync();
+    }
+	{
+		VidMode_BG0 mode(cubes[0].vbuf);
+		for(unsigned row=0; row<8; ++row) {
+			for(unsigned col=0; col<16; ++col) {
+				mode.BG0_drawAsset(Vec2(col,8+row), Flash);
+				mode.BG0_drawAsset(Vec2(col,8-row-1), Flash);
 			}
-			for(unsigned row=0; row<8; ++row) {
-				unsigned top = 7-row;
-				unsigned height = 2 * (row+1);
-				mode.BG0_drawPartialAsset(Vec2(0, top), Vec2(0, top), Vec2(16, height), Winscreen);
-				if (row%2 == 1) {
-					System::paintSync();
-				}
+			if (row%2 == 1) {
+				System::paintSync();
 			}
-	    }
-    	BG1Helper(cubes[0]).Flush();
-    	VidMode_BG0(cubes[0].vbuf).BG0_drawAsset(Vec2(0,0), Winscreen);
+		}
+		for(unsigned row=0; row<8; ++row) {
+			unsigned top = 7-row;
+			unsigned height = 2 * (row+1);
+			mode.BG0_drawPartialAsset(Vec2(0, top), Vec2(0, top), Vec2(16, height), Winscreen);
+			if (row%2 == 1) {
+				System::paintSync();
+			}
+		}
+    }
+	BG1Helper(cubes[0]).Flush();
+	VidMode_BG0(cubes[0].vbuf).BG0_drawAsset(Vec2(0,0), Winscreen);
 
-	    // sparkles
-	    Spartikle sp[4] = {
-	    	{ 0, 91, 39, -10, -8 },
-	    	{ 2, 111, 63, -5, -12 },
-	    	{ 1, 80, 66, -2, -10 },
-	    	{ 3, 89, 50, 3, -8 },
-	    };
-	    for(unsigned id=0; id<4; ++id) {
-	    	sp[id].vx *= 1.5f;
-	    	sp[id].vy *= 2.f;
-	    	ResizeSprite(&cubes[0], id, 8, 8);
-	    }
-	    float t = System::clock();
-	    do {
-		    for(unsigned id=0; id<4; ++id) { sp[id].Update(0.2f, id); }
-	    	System::paint();
-	    } while(System::clock() - t < 2.5f);
-	    for(unsigned id=0; id<8; ++id) {
-	    	HideSprite(&cubes[0], id);
-	    }
-	    System::paintSync();
-	}
+    // sparkles
+    Spartikle sp[4] = {
+    	{ 0, 91, 39, -10, -8 },
+    	{ 2, 111, 63, -5, -12 },
+    	{ 1, 80, 66, -2, -10 },
+    	{ 3, 89, 50, 3, -8 },
+    };
+    for(unsigned id=0; id<4; ++id) {
+    	sp[id].vx *= 1.5f;
+    	sp[id].vy *= 2.f;
+    	ResizeSprite(&cubes[0], id, 8, 8);
+    }
+    float t = System::clock();
+    do {
+	    for(unsigned id=0; id<4; ++id) { sp[id].Update(0.2f, id); }
+    	System::paint();
+    } while(System::clock() - t < 2.5f);
+    for(unsigned id=0; id<8; ++id) {
+    	HideSprite(&cubes[0], id);
+    }
+    System::paintSync();
 }

@@ -745,11 +745,6 @@
     <property name="id" value="5"/>
    </properties>
   </object>
-  <object name="Tomato" type="Item" x="576" y="448" width="32" height="32">
-   <properties>
-    <property name="id" value="3"/>
-   </properties>
-  </object>
   <object name="Lettuce" type="Item" x="432" y="544" width="32" height="32">
    <properties>
     <property name="id" value="4"/>

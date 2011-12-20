@@ -21,6 +21,8 @@ void Game::ObserveNeighbors(bool flag) {
 //------------------------------------------------------------------
 
 void Game::MainLoop() {
+  mNeedsSync = false;
+
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->Init();
   }
@@ -61,6 +63,7 @@ void Game::MainLoop() {
   CheckMapNeighbors();
 
   while(1) {
+    mNeedsSync = false;
     float dt = UpdateDeltaTime();
     if (sNeighborDirty) { 
       CheckMapNeighbors(); 
@@ -71,7 +74,12 @@ void Game::MainLoop() {
       p->Update(dt);
     }
     */
-    System::paint();
+    if (mNeedsSync) {
+      System::paintSync();
+      mNeedsSync = false;
+    } else {
+      System::paint();
+    }
   }
 }
 
@@ -187,6 +195,16 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 
   // clear out any accumulated time
   UpdateDeltaTime();
+}
+
+//------------------------------------------------------------------
+// MISC EVENTS
+//------------------------------------------------------------------
+
+void Game::OnInventoryChanged() {
+  for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
+    p->RefreshInventory();
+  }
 }
 
 //------------------------------------------------------------------

@@ -11,7 +11,7 @@ inline int fast_abs(int x) {
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
 pCurrent(pGame->views), pTarget(0), mPosition(128+64,64+16), // todo: move intial position to map data
-mDir(2), mKeyCount(0), mSandwichCount(0), 
+mDir(2), mKeyCount(0), mItemMask(0), 
 mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
 mApproachingLockedDoor(false) {
   CORO_RESET;
@@ -30,6 +30,28 @@ void Player::Reset() {
 
 MapRoom* Player::Room() const {
   return pGame->map.GetRoom(Location());
+}
+
+void Player::PickupItem(int itemId) {
+  if (itemId == 0) { return; }
+  if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
+    mKeyCount++;
+    if (mKeyCount == 1) {
+      pGame->OnInventoryChanged();
+    }
+  } else if (!HasItem(itemId)) {
+    mItemMask |= (1<<itemId);
+    ASSERT(HasItem(itemId));
+    pGame->OnInventoryChanged();
+  }
+}
+
+void Player::DecrementBasicKeyCount() { 
+  ASSERT(mKeyCount>0); 
+  mKeyCount--; 
+  if (mKeyCount == 0) {
+    pGame->OnInventoryChanged();
+  }
 }
 
 void Player::SetLocation(Vec2 position, Cube::Side direction) {
@@ -205,12 +227,7 @@ void Player::Update(float dt) {
           int itemId = pCurrent->Room()->itemId;
           if (itemId) {
             pCurrent->Room()->SetItem(0);
-            // TODO: sandwich parts
-            if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
-              IncrementBasicKeyCount();
-            } else {
-              IncrementSandwichCount();
-            }
+            PickupItem(itemId);
             // do a pickup animation
             for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
               pCurrent->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));

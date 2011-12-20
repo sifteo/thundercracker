@@ -16,7 +16,6 @@ void GameView::Init() {
   if (pGame->player.CurrentView() == this) {
     mRoom = Vec2(-1,-1);
     ShowLocation(pGame->player.Location());
-    ShowPlayer();
   } else {
     ShowLocation(ROOM_NONE);
   }
@@ -44,7 +43,7 @@ MapRoom* GameView::Room() const {
 }
 
 void GameView::ShowLocation(Vec2 room) {
-  if (mRoom == room) { return; }
+  if (room == mRoom) { return; }
   mRoom = room;
   // are we showing an enemy?
   /*
@@ -58,20 +57,22 @@ void GameView::ShowLocation(Vec2 room) {
   */
   // are we showing an items?
   if (IsShowingRoom()) {
+    HideInventorySprites();
     MapRoom* mr = Room();
     if (mr->itemId) {
       ShowItem(mr->itemId);
-    } else {
-      HideItem();
     }
+    if (this == pGame->player.CurrentView()) {
+      ShowPlayer();
+    }
+    DrawBackground();
   } else {
-    HideItem();
+    HideRoom();
   }
-  DrawBackground();
+  pGame->NeedsSync();
 }
 
 void GameView::HideRoom() {
-  if (mRoom == ROOM_NONE) { return; }
   /*
   for(Enemy* p = pGame->EnemyBegin(); p!=pGame->EnemyEnd(); ++p) {
     if (p->view == this) {
@@ -79,8 +80,9 @@ void GameView::HideRoom() {
     }
   }
   */
-  HideItem();
   mRoom = ROOM_NONE;
+  HideItem();
+  DrawInventorySprites();
   DrawBackground();
 }
 
@@ -154,6 +156,42 @@ void GameView::HideItem() {
 }
 
 
+void GameView::RefreshInventory() {
+  if (!IsShowingRoom()) {
+    DrawInventorySprites();
+  }
+}
+
+void GameView::DrawInventorySprites() {
+  int count = 0;
+  const int pad = 24;
+  const int innerPad = (128-pad-pad)/3;
+  const int firstSandwichId = 2;
+  for(int itemId=firstSandwichId; itemId<firstSandwichId+4; ++itemId) {
+    if (pGame->player.HasItem(itemId)) {
+      ResizeSprite(GetCube(), count, 16, 16);
+      MoveSprite(GetCube(), count, pad + innerPad * count - 8, 108);
+      SetSpriteImage(GetCube(), count, Items.index + (itemId-1) * Items.width * Items.height);
+      count++;
+    }
+  }
+  if (pGame->player.HaveBasicKey()) {
+      ResizeSprite(GetCube(), count, 16, 16);
+      MoveSprite(GetCube(), count, pad + innerPad * count - 8, 108);
+      SetSpriteImage(GetCube(), count, Items.index + (ITEM_BASIC_KEY-1) * Items.width * Items.height);
+      count++;
+  }
+  for(int i=count; i<4; ++i) {
+    HideSprite(GetCube(), i);
+  }
+}
+
+void GameView::HideInventorySprites() {
+  for(int i=0; i<4; ++i) {
+    HideSprite(GetCube(), i);
+  }
+}
+
 //----------------------------------------------------------------------
 // ACCELEROMETER SHTUFF
 //----------------------------------------------------------------------
@@ -190,8 +228,8 @@ void GameView::DrawBackground() {
     mode.BG0_drawAsset(Vec2(0,0), *(pGame->map.Data()->blankImage));
     BG1Helper(*GetCube()).Flush();
   } else {
-    for(int x=0; x<8; ++x) {
-      for(int y=0; y<8; ++y) {
+    for(int y=0; y<8; ++y) {
+      for(int x=0; x<8; ++x) {
         mode.BG0_drawAsset(
           Vec2(x<<1,y<<1),
           *(pGame->map.Data()->tileset),

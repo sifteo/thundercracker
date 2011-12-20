@@ -42,6 +42,11 @@ public:
   void SetItemPosition(Vec2 p);
   void HideItem();
 
+  void RefreshInventory();
+
   void DrawBackground();
 
+private:
+  void DrawInventorySprites();
+  void HideInventorySprites();
 };
