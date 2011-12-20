@@ -43,6 +43,7 @@ public:
         STATE_MESSAGING,
 		STATE_EMPTY,
 		STATE_NOSHAKES,
+        STATE_REFILL,
 	} CubeState;
 
 	CubeWrapper();

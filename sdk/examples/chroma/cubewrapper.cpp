@@ -186,6 +186,11 @@ void CubeWrapper::Draw()
                     m_bg1helper.Flush();
 					break;
 				}
+                case STATE_REFILL:
+                {
+                    m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
+                    break;
+                }
 			}			
 			break;
 		}
@@ -240,9 +245,13 @@ void CubeWrapper::Update(float t, float dt)
 {
     m_stateTime += dt;
 
-    if( Game::Inst().getState() == Game::STATE_INTRO )
+    if( Game::Inst().getState() == Game::STATE_INTRO || m_state == STATE_REFILL )
     {
-        m_intro.Update( dt );
+        if( !m_intro.Update( dt ) )
+        {
+            if( m_state == STATE_REFILL )
+                m_state = STATE_PLAYING;
+        }
         return;
     }
     else if( Game::Inst().getState() == Game::STATE_DYING )
@@ -684,7 +693,8 @@ void CubeWrapper::checkRefill()
 	}
 	else if( isEmpty() )
 	{
-        setState( STATE_PLAYING );
+        setState( STATE_REFILL );
+        m_intro.Reset( true );
 		Refill( true );
 
 		if( Game::Inst().getMode() == Game::MODE_SHAKES && Game::Inst().getScore() > 0 )
@@ -696,12 +706,14 @@ void CubeWrapper::checkRefill()
 	{
 		if( Game::Inst().getMode() != Game::MODE_SHAKES )
 		{
-            setState( STATE_PLAYING );
+            setState( STATE_REFILL );
+            m_intro.Reset( true );
             Refill( true );
 		}
 		else if( m_ShakesRemaining > 0 )
 		{
-            setState( STATE_PLAYING );
+            setState( STATE_REFILL );
+            m_intro.Reset( true );
             Refill( true );
             m_ShakesRemaining--;
 
@@ -747,7 +759,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 	if( bAddLevel )
 		Game::Inst().addLevel();
 
-    Game::Inst().playSound(glom_delay);
+    //Game::Inst().playSound(glom_delay);
 
 	/*
     Fill all empty spots in the grid with new gems.
