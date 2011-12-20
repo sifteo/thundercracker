@@ -12,7 +12,9 @@ WinscreenBackground = image{"winscreen_background.png", width=128, height=128}
 WinscreenAnim = image{"winscreen_anim.png", width=56, height=80, quality=2}
 
 Sparkle = image{"sparkle.png", width=8, height=8, pinned=true}
+
 Flash = image{"flash.png", width=8, height=8}
+Black = image{"black.png", width=8, height=8}
 
 ScrollLeft = image{"scroll_left.png", width=16, height=128}
 ScrollLeftAccent = image{"scroll_left_accent.png", width=8, height=128}

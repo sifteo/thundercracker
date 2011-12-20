@@ -1,9 +1,9 @@
 #include "Game.h"
 
 Cube cubes[NUM_CUBES];
-static Game sGame;
-Game* pGame = &sGame;
+Game* pGame = 0;
 
+void ScrollTest();
 void WinScreenTest();
 
 void siftmain() {
@@ -39,17 +39,39 @@ void siftmain() {
 	    System::paint();
 	  }		
 	}
-
+	
+	//
+	//ScrollTest();
 	WinScreenTest();
 
-	sGame.MainLoop();
+	{
+		Game game;
+		pGame = &game;
+		game.MainLoop();
+		pGame = 0;
+	}
+	
 }
 
 //-----------------------------------------------------------------------------
 // SCROLL FX
 //-----------------------------------------------------------------------------
 
-
+void ScrollTest() {
+	{
+		VidMode_BG0 mode(cubes[0].vbuf);
+		mode.BG0_drawAsset(Vec2(0,0), ScrollLeft);
+		mode.BG0_drawAsset(Vec2(2,0), ScrollLeftAccent);
+		for(int i=3; i<13; ++i) {
+			mode.BG0_drawAsset(Vec2(i,0), ScrollMiddle);
+		}
+		mode.BG0_drawAsset(Vec2(13,0), ScrollRightAccent);
+		mode.BG0_drawAsset(Vec2(14,0), ScrollRight);
+	}
+	for(;;) {
+		System::paint();
+	}
+}
 
 //-----------------------------------------------------------------------------
 // WIN SCREEN FX
@@ -84,19 +106,18 @@ struct Spartikle {
 void WinScreenTest() {
 	EnterSpriteMode(&cubes[0]);
 	for(;;) {
-		Cube& cube = *cubes;
 		{
-			VidMode_BG0 mode(cube.vbuf);
+			VidMode_BG0 mode(cubes[0].vbuf);
 	    	mode.BG0_drawAsset(Vec2(0,0), WinscreenBackground);
 	    }
 	    for(unsigned frame=0; frame<WinscreenAnim.frames; ++frame) {
-	  	    BG1Helper mode(cube);
+	  	    BG1Helper mode(cubes[0]);
 	  	    mode.DrawAsset(Vec2(9, 0), WinscreenAnim, frame);
 	  	    mode.Flush();
 	    	System::paintSync();
 	    }
 		{
-			VidMode_BG0 mode(cube.vbuf);
+			VidMode_BG0 mode(cubes[0].vbuf);
 			for(unsigned row=0; row<8; ++row) {
 				for(unsigned col=0; col<16; ++col) {
 					mode.BG0_drawAsset(Vec2(col,8+row), Flash);
@@ -116,11 +137,11 @@ void WinScreenTest() {
 			}
 	    }
 	    {
-	    	BG1Helper mode(cube);
+	    	BG1Helper mode(cubes[0]);
 	    	mode.Flush();
 	    }
 	    {
-	    	VidMode_BG0 mode(cube.vbuf);
+	    	VidMode_BG0 mode(cubes[0].vbuf);
 	    	mode.BG0_drawAsset(Vec2(0,0), Winscreen);
 	    }
 
