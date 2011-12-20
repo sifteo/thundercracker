@@ -84,7 +84,7 @@ public:
 	bool no_match_stranded_side() const;
 	bool no_match_mismatch_side() const;
 
-    void playSound( const _SYSAudioModule &sound );
+    void playSound( _SYSAudioModule &sound );
     //play random slosh sound
     void playSlosh();
 

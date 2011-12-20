@@ -64,3 +64,28 @@ GlimmerImg = image{"Glimmer.png", height=32}
 --points text
 PointFont = image{"points.png", height=16}
 BannerPoints = image{"Bannerpoints.png", height=16}
+--sounds
+astrokraut = sound{"astrokraut.raw"}
+bubble_pop_02 = sound{"bubble_pop_02.raw"}
+charge_03 = sound{"charge_03.raw"}
+clear1 = sound{"clear1.raw"}
+clear2 = sound{"clear2.raw"}
+clear3 = sound{"clear3.raw"}
+clear4 = sound{"clear4.raw"}
+collide_02 = sound{"collide_02.raw"}
+frozen_06 = sound{"frozen_06.raw"}
+game_over = sound{"game_over.raw"}
+glimmer_fx_03 = sound{"glimmer_fx_03.raw"}
+glom_delay = sound{"glom_delay.raw"}
+message_pop_03_fx = sound{"message_pop_03_fx.raw"}
+slide_39 = sound{"slide_39.raw"}
+slosh_01 = sound{"slosh_01.raw"}
+slosh_02 = sound{"slosh_02.raw"}
+slosh_03 = sound{"slosh_03.raw"}
+slosh_04 = sound{"slosh_04.raw"}
+slosh_05 = sound{"slosh_05.raw"}
+slosh_06 = sound{"slosh_06.raw"}
+slosh_07 = sound{"slosh_07.raw"}
+slosh_08 = sound{"slosh_08.raw"}
+timer_blink = sound{"timer_blink.raw"}
+timer_explode = sound{"timer_explode.raw"}

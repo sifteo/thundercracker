@@ -7,7 +7,7 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
-#include "audio.gen.h"
+//#include "audio.gen.h"
 #include "string.h"
 #include <stdlib.h>
 
@@ -437,13 +437,13 @@ void Game::enterScore()
 }
 
 
-void Game::playSound( const _SYSAudioModule &sound )
+void Game::playSound( _SYSAudioModule &sound )
 {
     m_SFXChannel.stop();
     m_SFXChannel.play(sound, LoopOnce);
 }
 
-const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
+_SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 {
   &slosh_01,
     &slosh_02,

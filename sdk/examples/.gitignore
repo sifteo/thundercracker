@@ -6,6 +6,7 @@ assets.html
 *.sim
 *.sim.exe
 *.stm32
+*.bin
 *.map
 *.user
 *.config
