@@ -1,5 +1,5 @@
-#ifndef _UTILS_H
-#define _UTILS_H
+#ifndef _TFUTILS_H
+#define _TFUTILS_H
 
 #define PRINTS_ON 0
 #if PRINTS_ON
@@ -7,6 +7,9 @@
 #else
 #define PRINT(...) 
 #endif
+
+namespace SelectorMenu
+{
 
 typedef enum
 {
@@ -32,4 +35,6 @@ inline float Clamp( float value, float min, float max )
 }
 
 }
+
+} //namespace SelectorMenu
 #endif

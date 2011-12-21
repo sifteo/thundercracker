@@ -50,3 +50,20 @@ OBJS_STM32 = \
     stm32/dac.stm32.o \
     stm32/usb.stm32.o \
     $(SPEEX_OBJS_STM32)
+
+#This will build in the selector menu into the master firmware
+ifneq ($(SELECTORMENU),)
+OBJS_SIM += \
+	$(MASTER_DIR)/selectormenu/$(ASSETS).gen.sim.o \
+	$(MASTER_DIR)/selectormenu/$(AUDIO).gen.sim.o \
+	$(MASTER_DIR)/selectormenu/MenuController.sim.o \
+	$(MASTER_DIR)/selectormenu/TFcubewrapper.sim.o \
+	$(MASTER_DIR)/selectormenu/TiltFlowMenu.sim.o
+
+OBJS_STM32 += \
+	$(MASTER_DIR)/selectormenu/$(ASSETS).gen.stm32.o \
+	$(MASTER_DIR)/selectormenu/$(AUDIO).gen.stm32.o \
+	$(MASTER_DIR)/selectormenu/MenuController.stm32.o \
+	$(MASTER_DIR)/selectormenu/TFcubewrapper.stm32.o \
+	$(MASTER_DIR)/selectormenu/TiltFlowMenu.stm32.o
+endif

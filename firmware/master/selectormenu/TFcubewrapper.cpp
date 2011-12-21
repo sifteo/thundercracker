@@ -4,9 +4,11 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include "cubewrapper.h"
-#include "game.h"
+#include "TFcubewrapper.h"
+#include "MenuController.h"
 #include "assets.gen.h"
+
+using namespace SelectorMenu;
 
 static _SYSCubeID s_id = 0;
 
@@ -32,7 +34,7 @@ void CubeWrapper::Reset()
 
 bool CubeWrapper::DrawProgress( AssetGroup &assets )
 {
-	m_rom.BG0_progressBar(Vec2(0,7), m_cube.assetProgress(GameAssets, m_vid.LCD_width), 2);
+    m_rom.BG0_progressBar(Vec2(0,7), m_cube.assetProgress(MenuControllerAssets, m_vid.LCD_width), 2);
         
 	return m_cube.assetDone(assets);
 }

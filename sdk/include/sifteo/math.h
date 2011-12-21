@@ -13,32 +13,6 @@ namespace Sifteo {
 namespace Math {
 
 /**
- * 2-element integer vector
- */
-
-struct Vec2 {
-	Vec2()
-        : x(0), y(0) {}
-
-    Vec2(int _x, int _y)
-        : x(_x), y(_y) {}
-
-    int x, y;
-};
-
-inline Vec2 operator+(const Vec2& u, const Vec2& v) { return Vec2(u.x+v.x, u.y+v.y); }
-inline Vec2 operator += (Vec2& u, const Vec2& v) { return Vec2(u.x+=v.x, u.y+=v.y); }
-inline Vec2 operator-(const Vec2& u, const Vec2& v) { return Vec2(u.x-v.x, u.y-v.y); }
-inline Vec2 operator -= (Vec2& u, const Vec2& v) { return Vec2(u.x-=v.x, u.y-=v.y); }
-inline Vec2 operator*(int k, const Vec2& v) { return Vec2(k*v.x, k*v.y); }
-inline Vec2 operator*(const Vec2& v, int k) { return Vec2(k*v.x, k*v.y); }
-inline Vec2 operator*(const Vec2& u, const Vec2& v) { return Vec2(u.x*v.x-u.y*v.y, u.y*v.x+u.x*v.y); } // complex multiplication
-inline Vec2 operator/(const Vec2& u, const int k) { return Vec2(u.x/k, u.y/k); }
-inline bool operator==(const Vec2& u, const Vec2& v) { return u.x == v.x && u.y == v.y; }
-inline bool operator!=(const Vec2& u, const Vec2& v) { return u.x != v.x || u.y != v.y; }
-
-
-/**
  * 2-element float vector
  */
 
@@ -61,8 +35,39 @@ inline Float2 operator -= (Float2& u, const Float2& v) { return Float2(u.x-=v.x,
 inline Float2 operator*(float k, const Float2& v) { return Float2(k*v.x, k*v.y); }
 inline Float2 operator*(const Float2& v, float k) { return Float2(k*v.x, k*v.y); }
 inline Float2 operator*(const Float2& u, const Float2& v) { return Float2(u.x*v.x-u.y*v.y, u.y*v.x+u.x*v.y); } // complex multiplication
+inline Float2 operator/(const Float2& u, float k) { return Float2(u.x/k, u.y/k); }
 inline bool operator==(const Float2& u, const Float2& v) { return u.x == v.x && u.y == v.y; }
 inline bool operator!=(const Float2& u, const Float2& v) { return u.x != v.x || u.y != v.y; }
+
+/**
+ * 2-element integer vector
+ */
+
+struct Vec2 {
+	Vec2()
+        : x(0), y(0) {}
+
+	Vec2(int _x, int _y)
+        : x(_x), y(_y) {}
+
+	//implicit conversion from float
+	Vec2( const Float2 &other)
+        : x( (int)other.x ), y( (int)other.y ) {}
+
+    int x, y;
+};
+
+inline Vec2 operator+(const Vec2& u, const Vec2& v) { return Vec2(u.x+v.x, u.y+v.y); }
+inline Vec2 operator += (Vec2& u, const Vec2& v) { return Vec2(u.x+=v.x, u.y+=v.y); }
+inline Vec2 operator-(const Vec2& u, const Vec2& v) { return Vec2(u.x-v.x, u.y-v.y); }
+inline Vec2 operator -= (Vec2& u, const Vec2& v) { return Vec2(u.x-=v.x, u.y-=v.y); }
+inline Vec2 operator*(int k, const Vec2& v) { return Vec2(k*v.x, k*v.y); }
+inline Vec2 operator*(const Vec2& v, int k) { return Vec2(k*v.x, k*v.y); }
+inline Vec2 operator*(const Vec2& u, const Vec2& v) { return Vec2(u.x*v.x-u.y*v.y, u.y*v.x+u.x*v.y); } // complex multiplication
+inline Vec2 operator/(const Vec2& u, const int k) { return Vec2(u.x/k, u.y/k); }
+inline bool operator==(const Vec2& u, const Vec2& v) { return u.x == v.x && u.y == v.y; }
+inline bool operator!=(const Vec2& u, const Vec2& v) { return u.x != v.x || u.y != v.y; }
+
 
 
 /**
