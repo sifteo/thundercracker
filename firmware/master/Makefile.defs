@@ -35,6 +35,10 @@ ifneq ($(QTCREATOR),)
 	CFLAGS += -DQTCREATOR
 endif
 
+ifneq ($(QTCREATOR_TERMINAL),)
+	CFLAGS += -DQTCREATOR_TERMINAL
+endif
+
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused
 
