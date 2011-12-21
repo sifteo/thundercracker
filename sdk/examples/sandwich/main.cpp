@@ -146,7 +146,7 @@ void IntroCutscene() {
 	for(unsigned i=0; i<PlayerPickup.frames; ++i) {
 		SetSpriteImage(&cubes[0], 0, PlayerPickup.index + i * PlayerPickup.width * PlayerPickup.height);
 		System::paintSync();
-		WaitForSeconds(0.1f);
+		WaitForSeconds(0.05f);
 	}
 	SetSpriteImage(&cubes[0], 0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
 	WaitForSeconds(2.f);

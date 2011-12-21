@@ -3,6 +3,8 @@
 #include <sifteo.h>
 #include "assets.gen.h"
 
+//#define FAST_FORWARD 1
+
 #ifndef NUM_CUBES
 #  define NUM_CUBES 3
 #endif
