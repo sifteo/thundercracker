@@ -1,12 +1,16 @@
 GameAssets = group{}
 
-BGNotWordNotConnected = image{"ering.png", quality=0}
-StartScreen = image{"start_screen.png", quality=0}
-Title = image{"title.png", quality=0}
-Teeth = image{"wp_transition.png", width=128, height=128, quality=10}
-FontNeighbored = image{"wc_S_neighbored.png", width=128, height=128, quality=0}
-FontUnneighbored = image{"wc_S_unneighbored.png", width=128, height=128, quality=0}
-FontNew = image{"wc_S_connectednew.png", width=128, height=128, quality=0}
-FontRepeat = image{"wc_S_connectedold.png", width=128, height=128, quality=0}
-FontSmall = image{"font-8x16.png", width=8, height=16, quality=0}
-FontTeeth = image{"teeth_numbers.png", width=16, height=16, quality=3}
+FontUnneighbored = image{"WC_letters.png", width=128, height=128, quality=10}
+BGNotWordNotConnected = image{"ering.png", quality=10}
+StartScreen = image{"start_screen.png", quality=10}
+Title = image{"title.png", quality=10}
+Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
+FontSmall = image{"font-8x16.png", width=8, height=16, quality=10}
+FontTeeth = image{"teeth_numbers.png", width=16, height=16, quality=10}
+TeethClock30_0 = image{"teeth_numbers.png", width=16, height=16, quality=10}
+TeethClock20_2 = image{"teeth_numbers.png", width=16, height=16, quality=10}
+TeethClock10_1 = image{"teeth_numbers.png", width=16, height=16, quality=10}
+TeethClock3 = image{"teeth_numbers.png", width=16, height=16, quality=10}
+TeethClock2 = image{"teeth_numbers.png", width=16, height=16, quality=10}
+TeethClock1 = image{"teeth_numbers.png", width=16, height=16, quality=10}
+TeethClock30_3 = image{"teeth_numbers.png", width=16, height=16, quality=10}

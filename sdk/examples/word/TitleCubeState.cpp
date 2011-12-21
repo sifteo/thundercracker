@@ -13,6 +13,7 @@ unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
     {
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
+    case EventID_Paint:
         paint();
         break;
 
@@ -37,7 +38,7 @@ void TitleCubeState::paint()
             BGNewWordConnectedMiddle :
             BGNewWordConnectedLeft;
             */
-    VidMode_BG0 vid(c.vbuf);
+    VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
 
     switch (getStateMachine().getCube().id())
@@ -54,7 +55,7 @@ void TitleCubeState::paint()
     default:
         vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
         /* TODO load/save
-        paintNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
+        paintScoreNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
 
         for (unsigned i = arraysize(SavedData::sHighScores) - 1;
              i >= 0;
@@ -66,7 +67,7 @@ void TitleCubeState::paint()
             }
             char string[17];
             sprintf(string, "%.5d", SavedData::sHighScores[i]);
-            paintNumbers(vid, Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
+            paintScoreNumbers(vid, Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
                          FontSmall,
                          string);
         }

@@ -28,9 +28,9 @@ public:
     CubeStateMachine& getStateMachine();
 
 protected:
-    void paintTeeth(VidMode_BG0& vid, bool animate=false, bool reverseAnim=false, bool paintTime=false);
-    void paintLetters(VidMode_BG0 &vid, const AssetImage &font);
-    void paintNumbers(VidMode_BG0 &vid, const Vec2& position, const char* string);
+    void paintTeeth(VidMode_BG0_SPR_BG1& vid, bool animate=false, bool reverseAnim=false, bool paintTime=false);
+    void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font);
+    void paintScoreNumbers(VidMode_BG0_SPR_BG1 &vid, const Vec2& position, const char* string);
 
 private:
     CubeStateMachine* mStateMachine;

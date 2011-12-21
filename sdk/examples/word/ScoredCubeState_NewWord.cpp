@@ -94,15 +94,15 @@ unsigned ScoredCubeState_NewWord::update(float dt, float stateTime)
 void ScoredCubeState_NewWord::paint()
 {
     Cube& c = getStateMachine().getCube();
-    VidMode_BG0 vid(c.vbuf);
+    VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    paintLetters(vid, FontNew);
+    paintLetters(vid, FontUnneighbored);
     char string[5];
     sprintf(string, "%+.1d", getStateMachine().findRowLength());
 #if DEBUGZZZ
     printf("score %s (=%d)\n", string, GameStateMachine::getScore());
 #endif
-    paintNumbers(vid, Vec2(7,0), string);
+    paintScoreNumbers(vid, Vec2(7,0), string);
 
     paintTeeth(vid, false, false, true);
 }

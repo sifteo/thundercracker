@@ -35,7 +35,7 @@ void TitleExitCubeState::paint()
             BGNewWordConnectedMiddle :
             BGNewWordConnectedLeft;
             */
-    VidMode_BG0 vid(c.vbuf);
+    VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     paintTeeth(vid, true, true);
 }

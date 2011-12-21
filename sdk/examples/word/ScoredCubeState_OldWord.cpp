@@ -93,8 +93,8 @@ unsigned ScoredCubeState_OldWord::update(float dt, float stateTime)
 void ScoredCubeState_OldWord::paint()
 {
     Cube& c = getStateMachine().getCube();
-    VidMode_BG0 vid(c.vbuf);
+    VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    paintLetters(vid, FontRepeat);
+    paintLetters(vid, FontUnneighbored);
     paintTeeth(vid, false, false, true);
 }

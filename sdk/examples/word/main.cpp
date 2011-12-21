@@ -53,16 +53,15 @@ void accel(_SYSCubeID c)
 void siftmain()
 {
     LOG(("Hello, Word Play 2\n"));
+
     _SYS_vectors.cubeEvents.touch = onCubeEventTouch;
     _SYS_vectors.cubeEvents.shake = onCubeEventShake;
     _SYS_vectors.cubeEvents.tilt = onCubeEventTilt;
     _SYS_vectors.neighborEvents.add = onNeighborEventAdd;
     _SYS_vectors.neighborEvents.remove = onNeighborEventRemove;
-    
+
     static Cube cubes[MAX_CUBES];
 
-    //static CubeSim demos[] = { CubeSim(cubes[0]), CubeSim(cubes[1]) };
-    
     // start loading assets
     for (unsigned i = 0; i < arraysize(cubes); i++)
     {
@@ -83,7 +82,7 @@ void siftmain()
         for (unsigned i = 0; i < arraysize(cubes); i++)
         {
             VidMode_BG0_ROM rom(cubes[i].vbuf);
-            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0_SPR_BG1::LCD_width), 2);
             if (!cubes[i].assetDone(GameAssets))
             {
                 done = false;
@@ -97,10 +96,20 @@ void siftmain()
             break;
         }
     }
-
-    /*
-    for (unsigned i = 0; i < arraysize(demos); i++)
-        demos[i].init();
+    /* FIXME remove test code
+    // done loading
+    Cube& cube = cubes[0];
+    VidMode_BG0_SPR_BG1 vid(cube.vbuf);
+    vid.init();
+    vid.BG0_drawAsset(Vec2(0,0), Title);
+    vid.resizeSprite(1, 64, 64);
+    vid.setSpriteImage(1, Bullet.index);// + (frame % font.frames) * font.width * font.height);
+    vid.moveSprite(1, 64 + WordGame::rand(10), 32);
+    //ASSERT(!WordGame::spriteIsHidden(cube, 1));
+    while (1)
+    {
+        System::paint();
+    }
     */
 
     // main loop
@@ -112,16 +121,24 @@ void siftmain()
         float now = System::clock();
         float dt = now - lastTime;
         lastTime = now;
-        System::paint();
 
         game.update(dt);
-        if (now - lastPaint >= 1.f/30.f)
+
+        // decouple paint frequency from update frequency
+        if (now - lastPaint >= 1.f/25.f)
         {
-            game.onEvent(EventID_Paint, EventData()); // TODO decouple
+            game.onEvent(EventID_Paint, EventData());
             lastPaint = now;
         }
-        
-        System::paint();
+
+        if (game.needsPaintSync())
+        {
+            game.paintSync();
+        }
+        else
+        {
+            System::paint();
+        }
     }
 }
 
@@ -131,3 +148,13 @@ void siftmain()
     error handler function. For example:
 */
 extern "C" void __cxa_pure_virtual() { while (1); }
+
+
+
+void assertWrapper(bool testResult)
+{
+    if (!testResult)
+    {
+        assert(testResult);
+    }
+}

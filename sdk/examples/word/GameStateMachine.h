@@ -21,7 +21,7 @@ enum GameStateIndex
 
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
-const float ROUND_TIME = 180.0f;
+const float ROUND_TIME = 6;//180.0f;
 const float ROUND_BONUS_TIME = 10.0f;
 
 // HACK workaround inability to check if a Cube is actually connected

@@ -83,9 +83,10 @@ void ScoredCubeState_NotWord::paint()
     bool neighbored =
             (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
             c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
-    VidMode_BG0 vid(c.vbuf);
+    VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    paintLetters(vid, (neighbored ? FontNeighbored : FontUnneighbored));
+//    paintLetters(vid, (neighbored ? FontNeighbored : FontUnneighbored));
+    paintLetters(vid, FontUnneighbored);
     if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
     {
         paintTeeth(vid, false, false, true);

@@ -7,7 +7,7 @@ using namespace Sifteo;
 
 WordGame* WordGame::sInstance = 0;
 
-WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes)
+WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes), mNeedsPaintSync(false)
 {
     sInstance = this;
 
