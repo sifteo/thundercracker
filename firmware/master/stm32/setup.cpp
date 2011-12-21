@@ -12,6 +12,7 @@
 
 #include <sifteo/abi.h>
 #include "radio.h"
+#include "usb.h"
 #include "runtime.h"
 #include "hardware.h"
 #include "vectors.h"
@@ -67,6 +68,13 @@ extern "C" void _start()
     RCC.CR |= (1 << 16); // HSEON
     while (!(RCC.CR & (1 << 17))); // wait for HSE to be stable
 
+    // PLL2 configuration: PLL2CLK = (HSE / 5) * 8 = 40 MHz
+    // PREDIV1 configuration: PREDIV1CLK = PLL2 / 5 = 8 MHz
+    RCC.CFGR2 &= ~0x10FFF;
+    RCC.CFGR2 |= 0x10644;
+    RCC.CR |= (1 << 26);             // turn PLL2 on
+    while (!(RCC.CR & (1 << 27)));   // wait for it to be ready
+
     // fire up the PLL
     RCC.CFGR |= (7 << 18) |         // PLLMUL (x9)
                 (0 << 17) |         // PLL XTPRE - no divider
@@ -76,7 +84,7 @@ extern "C" void _start()
 
     // configure all the other buses
     RCC.CFGR =  (0 << 24)       |   // MCO - mcu clock output
-                (1 << 22)       |   // USBPRE - divide by 1
+                (0 << 22)       |   // USBPRE - divide by 3
                 (7 << 18)       |   // PLLMUL - x9
                 (0 << 17)       |   // PLLXTPRE - no divider
                 (1 << 16)       |   // PLLSRC - HSE
@@ -98,8 +106,9 @@ extern "C" void _start()
     RCC.APB2RSTR = 0;
 
     // Enable peripheral clocks
-    RCC.APB1ENR = 0x00004000;   // SPI2
-    RCC.APB2ENR = 0x0000003d;   // GPIO/AFIO
+    RCC.APB1ENR = 0x00004000;    // SPI2
+    RCC.APB2ENR = 0x0000003d;    // GPIO/AFIO
+    RCC.AHBENR  = 0x00001000;    // USB OTG
 
 #if 0
     // debug the clock output - MCO
@@ -138,12 +147,16 @@ extern "C" void _start()
     NVIC.irqEnable(IVT.EXTI15_10);              // Radio interrupt
     NVIC.irqPrioritize(IVT.EXTI15_10, 0x80);    //   Reduced priority
 
+    NVIC.irqEnable(IVT.UsbOtg_FS);
+    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);
+
     /*
      * High-level hardware initialization
      */
 
     SysTime::init();
     Radio::open();
+    Usb::init();
 
     /*
      * Launch our game runtime!
