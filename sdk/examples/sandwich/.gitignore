@@ -19,5 +19,6 @@ gen_mapdata.h
 gen_mapdata.cpp
 
 _build
-
+*.swf
+*-app.xml
 *.xcodeproj

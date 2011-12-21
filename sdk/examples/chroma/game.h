@@ -42,6 +42,7 @@ public:
 
 	static const int NUM_CUBES = 2;
     static const unsigned int NUM_HIGH_SCORES = 5;
+    static const int NUM_SLOSH_SOUNDS = 8;
     static const unsigned int INT_MAX = 0x7fff;
 
 	CubeWrapper cubes[NUM_CUBES]; 
@@ -83,6 +84,10 @@ public:
 	bool no_match_stranded_side() const;
 	bool no_match_mismatch_side() const;
 
+    void playSound( const _SYSAudioModule &sound );
+    //play random slosh sound
+    void playSlosh();
+
 private:
 	void TestMatches();
 	bool m_bTestMatches;
@@ -99,6 +104,9 @@ private:
 	float m_splashTime;
 	TimeKeeper m_timer;
     float m_fLastTime;
+
+    AudioChannel m_SFXChannel;
+    AudioChannel m_musicChannel;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
 };

@@ -13,18 +13,19 @@ public:
   Map map;
   Enemy enemies[NUM_ENEMIES];
   float mSimTime;
-  
+  bool mNeedsSync;
+  bool mIsDone;
+
 public:
 
   // Getters
   
-  Cube* CubeAt(int i) { return &(views[i].cube); }
+  GameView* ViewAt(int i) { return views+i; }
   GameView* ViewBegin() { return views; }
   GameView* ViewEnd() { return views+NUM_CUBES; }
   Enemy* EnemyBegin() { return enemies; }
   Enemy* EnemyEnd() { return enemies+NUM_ENEMIES; }
   
-  void InitializeAssets();
   void MainLoop();
   
   // Trigger Actions
@@ -34,6 +35,9 @@ public:
   void OnNeighborAdd(GameView* v1, Cube::Side s1, GameView* v2, Cube::Side s2);
   void OnNeighborRemove(GameView* v1, Cube::Side s1, GameView* v2, Cube::Side s2);
   
+  void OnInventoryChanged();
+
+  void NeedsSync() { mNeedsSync = true; }
 
 private:
 
@@ -44,5 +48,5 @@ private:
   void MovePlayerAndRedraw(int dx, int dy);
 };
 
-extern Game gGame;
+extern Game* pGame;
 

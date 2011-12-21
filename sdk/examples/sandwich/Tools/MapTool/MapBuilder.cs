@@ -19,7 +19,7 @@ namespace MapTool {
 
     public static Portal PortalType(this TmxTile t) {
       if (t.IsDoor()) {
-        return Portal.UnlockedDoor;
+        return Portal.Door;
       } else if (t.IsWall() || t.IsObstacle()) {
         return Portal.Walled;
       } else {
@@ -82,7 +82,7 @@ namespace MapTool {
             }
             prevType = type;
           }
-          // double-check top
+          // double-check topdoor
           if (room.portals[0] != Portal.Walled && (room.y == 0 || result.rooms[room.x, room.y-1].IsBlocked)) {
             room.portals[0] = Portal.Walled;
           }
@@ -149,33 +149,6 @@ namespace MapTool {
             room.portals[3] = Portal.Walled;
           }
 
-        }
-      }
-
-      // look through BasicLocks and convert those portals into locks
-      foreach(var obj in tmap.objects) {
-        if (obj.type == "BasicLock") {
-          if (obj.pixelW > obj.pixelH) {
-            // this is an X-Portal
-            var lroom = result.rooms[obj.pixelX/128, obj.pixelY/128];
-            var rroom = result.rooms[obj.pixelX/128+1, obj.pixelY/128];
-            if (lroom.portals[3] != Portal.UnlockedDoor || rroom.portals[1] != Portal.UnlockedDoor) {
-              Console.WriteLine("BUILD_MAP_ERROR: Non-Door annotated with a lock");
-              return null;
-            }
-            lroom.portals[3] = Portal.LockedDoor;
-            rroom.portals[1] = Portal.LockedDoor;
-          } else {
-            // this is a Y-Portal
-            var troom = result.rooms[obj.pixelX/128, obj.pixelY/128];
-            var broom = result.rooms[obj.pixelX/128, obj.pixelY/128+1];
-            if (troom.portals[2] != Portal.UnlockedDoor || broom.portals[0] != Portal.UnlockedDoor) {
-              Console.WriteLine("BUILD_MAP_ERROR: Non-Door annotated with a lock");
-              return null;
-            }
-            troom.portals[2] = Portal.LockedDoor;
-            broom.portals[0] = Portal.LockedDoor;
-          }
         }
       }
 

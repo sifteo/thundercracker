@@ -7,6 +7,8 @@
 #  define NUM_CUBES 3
 #endif
 
+extern Cube cubes[NUM_CUBES];
+
 using namespace Sifteo;
 
 #define CORO_PARAMS int mState;
@@ -16,3 +18,10 @@ using namespace Sifteo;
 #define CORO_END mState=-1;case -1:;}
 
 Cube::Side InferDirection(Vec2 u);
+
+bool InSpriteMode(Cube* c);
+void EnterSpriteMode(Cube *c);
+void SetSpriteImage(Cube *c, int id, int tile);
+void HideSprite(Cube *c, int id);
+void ResizeSprite(Cube *c, int id, int px, int py);
+void MoveSprite(Cube *c, int id, int px, int py);
