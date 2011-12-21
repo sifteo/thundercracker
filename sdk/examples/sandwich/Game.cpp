@@ -81,6 +81,40 @@ void Game::MainLoop() {
       System::paint();
     }
   }
+  /*{
+    GameView* view = player.CurrentView();
+    view->HidePlayer();
+    // blank other cubes
+    for(GameView* p = ViewBegin(); p != ViewEnd(); ++p) {
+      if (p != view) { p->HideRoom(); }
+    }
+    // zoom in
+    { 
+      System::paintSync();
+    
+      VidMode_BG2 vid(view->GetCube()->vbuf);
+      for(int x=0; x<8; ++x) {
+        for(int y=0; y<8; ++y) {
+          vid.BG2_drawAsset(
+            Vec2(x<<1,y<<1),
+            *(map.Data()->tileset),
+            map.Data()->GetTileId(view->Location(), Vec2(x, y))
+          );
+        }
+      }
+      vid.BG2_setBorder(0x0000);
+      vid.set();
+      for (float t = 0; t < 1.0f; t += 0.025f) {
+        AffineMatrix m = AffineMatrix::identity();
+        m.translate(64, 64);
+        m.scale(1.f+9.f*t);
+        m.rotate(t * 1.1f);
+        m.translate(-64, -64);
+        vid.BG2_setMatrix(m);
+        System::paint();
+      }
+    }  
+  }*/
 }
 
 float Game::UpdateDeltaTime() {
