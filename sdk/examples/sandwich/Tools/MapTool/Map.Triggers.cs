@@ -77,8 +77,8 @@ namespace MapTool {
       }
       return string.Format(
         "\n    if (type == TRIGGER_TYPE_ACTIVE) {{" +
-        "\n        gGame.WalkTo(Vec2({0}, {1}));" +
-        "\n        gGame.TeleportTo({2}_data, Vec2({3}, {4}));" +
+        "\n        pGame->WalkTo(Vec2({0}, {1}));" +
+        "\n        pGame->TeleportTo({2}_data, Vec2({3}, {4}));" +
         "\n    }}\n",
         PixelX, PixelY,
         targetMap, tt.PixelX, tt.PixelY
