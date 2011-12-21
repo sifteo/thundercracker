@@ -6,23 +6,23 @@
 // MAP ROOM STUFF
 //-----------------------------------------------------------------------------
 
-int MapRoom::RoomId() {
-  return (int)(this - gGame.map.GetRoom(0));
+int MapRoom::RoomId() const {
+  return (int)(this - pGame->map.GetRoom(0));
 }
 
-Vec2 MapRoom::Location() {
+Vec2 MapRoom::Location() const {
   int id = RoomId();
-  return Vec2(id % gGame.map.Data()->width, id / gGame.map.Data()->width);
+  return Vec2(id % pGame->map.Data()->width, id / pGame->map.Data()->width);
 }
 
-RoomData* MapRoom::Data() {
-  return gGame.map.Data()->GetRoomData(RoomId());
+RoomData* MapRoom::Data() const {
+  return pGame->map.Data()->GetRoomData(RoomId());
 }
 
 void MapRoom::SetItem(int iid) {
   if (itemId != iid) {
     itemId = iid;
-    ItemData* id = gGame.map.Data()->FindItemData(RoomId());
+    ItemData* id = pGame->map.Data()->FindItemData(RoomId());
     if (id) { id->itemId = itemId; }
   }
 }
@@ -30,10 +30,10 @@ void MapRoom::SetItem(int iid) {
 uint8_t MapRoom::GetPortal(Cube::Side side) {
   Vec2 p = Location();
   switch(side) {
-    case SIDE_TOP: return gGame.map.Data()->GetPortalY(p.x, p.y);
-    case SIDE_LEFT: return gGame.map.Data()->GetPortalX(p.x, p.y);
-    case SIDE_BOTTOM: return gGame.map.Data()->GetPortalY(p.x, p.y+1);
-    case SIDE_RIGHT: return gGame.map.Data()->GetPortalX(p.x+1, p.y);
+    case SIDE_TOP: return pGame->map.Data()->GetPortalY(p.x, p.y);
+    case SIDE_LEFT: return pGame->map.Data()->GetPortalX(p.x, p.y);
+    case SIDE_BOTTOM: return pGame->map.Data()->GetPortalY(p.x, p.y+1);
+    case SIDE_RIGHT: return pGame->map.Data()->GetPortalX(p.x+1, p.y);
   }
   return 0;
 }
@@ -41,10 +41,10 @@ uint8_t MapRoom::GetPortal(Cube::Side side) {
 void MapRoom::SetPortal(Cube::Side side, uint8_t pid) {
   Vec2 p = Location();
   switch(side) {
-    case SIDE_TOP: gGame.map.Data()->SetPortalY(p.x, p.y, pid); break;
-    case SIDE_LEFT: gGame.map.Data()->SetPortalX(p.x, p.y, pid); break;
-    case SIDE_BOTTOM: gGame.map.Data()->SetPortalY(p.x, p.y+1, pid); break;
-    case SIDE_RIGHT: gGame.map.Data()->SetPortalX(p.x+1, p.y, pid); break;
+    case SIDE_TOP: pGame->map.Data()->SetPortalY(p.x, p.y, pid); break;
+    case SIDE_LEFT: pGame->map.Data()->SetPortalX(p.x, p.y, pid); break;
+    case SIDE_BOTTOM: pGame->map.Data()->SetPortalY(p.x, p.y+1, pid); break;
+    case SIDE_RIGHT: pGame->map.Data()->SetPortalX(p.x+1, p.y, pid); break;
   }
 }
 
@@ -56,7 +56,15 @@ void MapRoom::SetTile(Vec2 position, uint8_t tid) {
  Data()->tiles[position.x + 8 * position.y] = tid; 
 }
 
-void MapRoom::OpenDoor(Cube::Side side) {
+void MapRoom::OpenDoor(/*Cube::Side side*/) {
+  for(int row=0; row<3; ++row) {
+    for(int col=3; col<=4; ++col) {
+      SetTile(
+        Vec2(col, row), GetTile(Vec2(col, row))+2
+      );
+    }
+  }
+  /*
   Vec2 p = Vec2(0,0);
   switch(side) {
     case SIDE_TOP: p = Vec2(3,0); break;
@@ -72,12 +80,13 @@ void MapRoom::OpenDoor(Cube::Side side) {
     );
     }
   }
+  */
 }
 
 void MapRoom::ClearTrigger() {
   if (callback) {
     callback = 0;
-    TriggerData* t = gGame.map.Data()->FindTriggerData(RoomId());
+    TriggerData* t = pGame->map.Data()->FindTriggerData(RoomId());
     if (t) { t->callback = 0; }
   }
 }
@@ -204,7 +213,7 @@ struct AStar {
       p->tileID = nid;
       recordCount++;
       // is it walkable? (remember to convert normalized tile position to global tile position)
-      if (gGame.map.IsVertexWalkable(ntile + Vec2(2,2) + (8 * offset))) {
+      if (pGame->map.IsVertexWalkable(ntile + Vec2(2,2) + (8 * offset))) {
         // open the record
         p->parentDirection = (dir+2)%4;
         p->costToThis = parent->costToThis + 1;
@@ -287,11 +296,11 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
         }
         return true;
       } else {
-        // visit NSEW neighbors
-        as.VisitNeighbor(pSelected, 0);
-        as.VisitNeighbor(pSelected, 1);
-        as.VisitNeighbor(pSelected, 2);
-        as.VisitNeighbor(pSelected, 3);
+        // visit NSEW neighbors - first in target dir, then orth dirs, then opposite dir
+        as.VisitNeighbor(pSelected, dir);
+        as.VisitNeighbor(pSelected, (dir+1)%4);
+        as.VisitNeighbor(pSelected, (dir+3)%4);
+        as.VisitNeighbor(pSelected, (dir+2)%4);
       }
     }
   } while(pSelected);

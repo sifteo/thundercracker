@@ -6,3 +6,4 @@ assets.html
 *.sim
 *.sim.exe
 *.stm32
+*_enc.raw

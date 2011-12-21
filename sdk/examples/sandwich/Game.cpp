@@ -20,62 +20,101 @@ void Game::ObserveNeighbors(bool flag) {
 // BOOTSTRAP API
 //------------------------------------------------------------------
 
-Game gGame;
-
-void Game::InitializeAssets() {
-  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-    CubeAt(i)->enable(i);
-    CubeAt(i)->loadAssets(GameAssets);
-    VidMode_BG0_ROM rom(CubeAt(i)->vbuf);
-    rom.init();
-    rom.BG0_text(Vec2(1,1), "Loading...");
-  }
-  for (;;) {
-    bool done = true;
-    for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-      VidMode_BG0_ROM rom(CubeAt(i)->vbuf);
-      rom.BG0_progressBar(Vec2(0,7), CubeAt(i)->assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-      if (!CubeAt(i)->assetDone(GameAssets))
-        done = false;
-    }
-    System::paint();
-    if (done) {
-      break;
-		}
-  }
-  for(Cube::ID i=0; i<NUM_CUBES; ++i) {
-    VidMode_BG0 mode(CubeAt(i)->vbuf);
-    mode.init();
-    mode.BG0_drawAsset(Vec2(0,0), Sting);
-  }
-  float time = System::clock();
-  while(System::clock() - time < 1.f) {
-    for(GameView*v = ViewBegin(); v!=ViewEnd(); ++v) {
-      v->cube.vbuf.touch();
-    }
-    System::paint();
-  }
-}
-
 void Game::MainLoop() {
-  mSimTime = System::clock();
+  // reset everything
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->Init();
   }
-  ObserveNeighbors(true);
-  System::paint();
 
-  while(1) {
+  // initial zoom out (yoinked and modded from TeleportTo)
+  { 
+    GameView* view = player.CurrentView();
+    view->HidePlayer();
+    Vec2 room = player.Location();
+    VidMode_BG2 vid(view->GetCube()->vbuf);
+    for(int x=0; x<8; ++x) {
+      for(int y=0; y<8; ++y) {
+        vid.BG2_drawAsset(
+          Vec2(x<<1,y<<1),
+          *(map.Data()->tileset),
+          map.Data()->GetTileId(room, Vec2(x, y))
+        );
+      }
+    }
+    vid.BG2_setBorder(0x0000);
+    vid.set();
+    for (float t = 1.0f; t > 0.0f; t -= 0.025f) {
+      AffineMatrix m = AffineMatrix::identity();
+      m.translate(64, 64);
+      m.scale(1.f+9.f*t);
+      m.rotate(t * 1.1f);
+      m.translate(-64, -64);
+      vid.BG2_setMatrix(m);
+      System::paint();
+    }    
+    System::paintSync();
+    view->Init();
+    System::paintSync();
+  }  
+
+  mSimTime = System::clock();
+  ObserveNeighbors(true);
+  CheckMapNeighbors();
+
+  mIsDone = false;
+  while(!mIsDone) {
+    mNeedsSync = false;
     float dt = UpdateDeltaTime();
     if (sNeighborDirty) { 
       CheckMapNeighbors(); 
     }
     player.Update(dt);
+    /*
     for(Enemy* p = EnemyBegin(); p != EnemyEnd(); ++p) {
       p->Update(dt);
     }
-    System::paint();
+    */
+    if (mNeedsSync) {
+      System::paintSync();
+      mNeedsSync = false;
+    } else {
+      System::paint();
+    }
   }
+  /*{
+    GameView* view = player.CurrentView();
+    view->HidePlayer();
+    // blank other cubes
+    for(GameView* p = ViewBegin(); p != ViewEnd(); ++p) {
+      if (p != view) { p->HideRoom(); }
+    }
+    // zoom in
+    { 
+      System::paintSync();
+    
+      VidMode_BG2 vid(view->GetCube()->vbuf);
+      for(int x=0; x<8; ++x) {
+        for(int y=0; y<8; ++y) {
+          vid.BG2_drawAsset(
+            Vec2(x<<1,y<<1),
+            *(map.Data()->tileset),
+            map.Data()->GetTileId(view->Location(), Vec2(x, y))
+          );
+        }
+      }
+      vid.BG2_setBorder(0x0000);
+      vid.set();
+      for (float t = 0; t < 1.0f; t += 0.025f) {
+        AffineMatrix m = AffineMatrix::identity();
+        m.translate(64, 64);
+        m.scale(1.f+9.f*t);
+        m.rotate(t * 1.1f);
+        m.translate(-64, -64);
+        vid.BG2_setMatrix(m);
+        System::paint();
+      }
+    }  
+  }*/
 }
 
 float Game::UpdateDeltaTime() {
@@ -130,7 +169,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   { 
     System::paintSync();
   
-    VidMode_BG2 vid(view->cube.vbuf);
+    VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
         vid.BG2_drawAsset(
@@ -158,7 +197,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   }
   // zoom out
   { 
-    VidMode_BG2 vid(view->cube.vbuf);
+    VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
         vid.BG2_drawAsset(
@@ -182,7 +221,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   }
   
   // walk out of the in-gate
-  Vec2 target = 128*room + Vec2(64,64);
+  Vec2 target = map.GetRoom(room)->Center();
   player.SetLocation(position, InferDirection(target - position));
   view->Init();
   WalkTo(target);
@@ -190,6 +229,26 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 
   // clear out any accumulated time
   UpdateDeltaTime();
+}
+
+//------------------------------------------------------------------
+// MISC EVENTS
+//------------------------------------------------------------------
+
+void Game::OnInventoryChanged() {
+  for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
+    p->RefreshInventory();
+  }
+  #ifndef FAST_FORWARD
+  const int firstSandwichId = 2;
+  int count = 0;
+  for(int i=firstSandwichId; i<firstSandwichId+4; ++i) {
+    if(!player.HasItem(i)) {
+      return;
+    }
+  }
+  #endif
+  mIsDone = true;
 }
 
 //------------------------------------------------------------------
@@ -201,7 +260,7 @@ static void VisitMapView(GameView* view, Vec2 loc, GameView* origin=0) {
   view->visited = true;
   view->ShowLocation(loc);
   if (origin) {
-    view->cube.orientTo(origin->cube);
+    view->GetCube()->orientTo(*(origin->GetCube()));
   }
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
     VisitMapView(view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);

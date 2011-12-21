@@ -129,9 +129,12 @@ IRQ_HANDLER ISR_DMA2_Channel3()
     Dma::serveIsr(&DMA2, 2, Dma::Ch2Handlers);
 }
 
-IRQ_HANDLER ISR_DMA2_Channel4_5()
+IRQ_HANDLER ISR_DMA2_Channel4()
 {
     Dma::serveIsr(&DMA2, 3, Dma::Ch2Handlers);
+}
+
+IRQ_HANDLER ISR_DMA2_Channel5() {
     Dma::serveIsr(&DMA2, 4, Dma::Ch2Handlers);
 }
 

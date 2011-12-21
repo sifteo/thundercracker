@@ -77,12 +77,12 @@ void AudioOutDevice::stop()
 
 bool AudioOutDevice::isBusy()
 {
-    return audioOutBackend.isBusy();
+    return false; //audioOutBackend.isBusy();
 }
 
 int AudioOutDevice::sampleRate()
 {
-    return audioOutBackend.sampleRate();
+    return 0; //audioOutBackend.sampleRate();
 }
 
 void AudioOutDevice::setSampleRate(SampleRate samplerate)
