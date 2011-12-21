@@ -325,11 +325,8 @@ void TiltFlowView::Paint()
 
 
 void TiltFlowView::PaintNone() {
-  /*if (TiltFlowMenu::Inst()->PaintNone != NULL) {
-    TiltFlowMenu::Inst()->PaintNone(this);
-  } else {
-    c.FillScreen(Color.White);
-  }*/
+  VidMode_BG0 vid( mpCube->vbuf );
+  vid.clear(White.tiles[0]);
 }
 
 void TiltFlowView::PaintInfo() {
