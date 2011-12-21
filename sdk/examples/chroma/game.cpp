@@ -75,7 +75,8 @@ void Game::Init()
     //m_musicChannel.setVolume( 1 );
     //m_SFXChannel.setVolume( 256 );
 
-    m_musicChannel.play( astrokraut, LoopRepeat );
+    //m_musicChannel.play( astrokraut, LoopRepeat );
+    m_musicChannel.play( StingerIV2, LoopOnce );
 }
 
 
@@ -90,9 +91,10 @@ void Game::Update()
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
 
-		if( System::clock() - m_splashTime > 3.0f )
+        if( System::clock() - m_splashTime > 7.0f )
 		{
             m_state = STATE_INTRO;
+            m_musicChannel.stop();
             m_musicChannel.play( astrokraut, LoopRepeat );
 			m_timer.Init( System::clock() );
 		}
