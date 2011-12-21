@@ -18,7 +18,7 @@ enum CubeStateIndex
 
 class CubeStateMachine;
 
-const float TEETH_ANIM_LENGTH = 1.0f;
+const float TEETH_ANIM_LENGTH = 0.6f;
 
 class CubeState : public State
 {

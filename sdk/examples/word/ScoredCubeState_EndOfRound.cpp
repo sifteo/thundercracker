@@ -44,11 +44,11 @@ void ScoredCubeState_EndOfRound::paint()
     if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
     {
         // intro animation
-        if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH - 0.3f)
+        /*if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH - 0.2f)
         {
             paintLetters(vid, Font1Letter);
         }
-        else
+        else*/
         {
             // no letters during blip
             vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
@@ -64,7 +64,7 @@ void ScoredCubeState_EndOfRound::paint()
         vid.BG0_drawAsset(Vec2(0,0), Score);
         char string[17];
         sprintf(string, "%.5d", GameStateMachine::getScore());
-        paintScoreNumbers(vid, Vec2(3,6), string);
+        paintScoreNumbers(vid, Vec2(7,3), string);
         break;
 
     case 1:
@@ -84,7 +84,7 @@ void ScoredCubeState_EndOfRound::paint()
             }
             char string[17];
             sprintf(string, "%.5d", SavedData::sHighScores[i]);
-            paintScoreNumbers(vid, Vec2(3,4 + (arraysize(SavedData::sHighScores) - i) * 2),
+            paintScoreNumbers(vid, Vec2(7,3 + (arraysize(SavedData::sHighScores) - i) * 2),
                          string);
         }
         break;

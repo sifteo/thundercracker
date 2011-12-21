@@ -88,7 +88,7 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
 
 unsigned ScoredCubeState_NewWord::update(float dt, float stateTime)
 {
-    return getStateMachine().getTime() > 0.5f ?
+    return getStateMachine().getTime() < 0.5f ?
                 CubeStateIndex_NewWordScored : CubeStateIndex_OldWordScored;
 }
 
@@ -98,5 +98,5 @@ void ScoredCubeState_NewWord::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     paintLetters(vid, Font1Letter);
-    paintTeeth(vid, TeethLoopWord, true, false, false, true);
+    paintTeeth(vid, TeethNewWord, true, false, false, true);
 }

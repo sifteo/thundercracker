@@ -56,7 +56,7 @@ void siftmain()
 
     _SYS_vectors.cubeEvents.touch = onCubeEventTouch;
     _SYS_vectors.cubeEvents.shake = onCubeEventShake;
-#ifdef DEBUG
+#ifdef DEBUGzzzzzzzzzzz
     _SYS_vectors.cubeEvents.tilt = onCubeEventTilt;
 #endif
     _SYS_vectors.neighborEvents.add = onNeighborEventAdd;

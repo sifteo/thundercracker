@@ -72,11 +72,11 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                 if (rowsPainted >= MAX_BG1_ROWS)
                 {
                     // paint BG0
-                    vid.BG0_drawPartialAsset(Vec2(0, i), Vec2(0, i), Vec2(16, 1), Teeth, frame);
+                    vid.BG0_drawPartialAsset(Vec2(0, i), Vec2(0, i), Vec2(16, 1), teeth, frame);
                 }
                 else
                 {
-                    bg1.DrawPartialAsset(Vec2(0, i), Vec2(0, i), Vec2(16, 1), Teeth, frame);
+                    bg1.DrawPartialAsset(Vec2(0, i), Vec2(0, i), Vec2(16, 1), teeth, frame);
                     ++rowsPainted;
                 }
                 break;
