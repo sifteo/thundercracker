@@ -270,7 +270,7 @@ void TiltFlowView::Tick() {
     mDrawLabel = true;
 
     if (mDrawLabel && !wasDrawingLabel) {
-      TiltFlowMenu::Inst()->playSound( changeoption );
+      TiltFlowMenu::Inst()->playSound( settle );
     }
     mRestTime = -1;
   }
@@ -648,10 +648,9 @@ void TiltFlowView::UpdateMenu() {
     mRestTime = TiltFlowMenu::Inst()->GetSimTime();
 
     // accelerate in the direction of tilt
-    //TODO SOUND
-    /*if (mDrawLabel) {
-      Hacky.Sfx("ui_select_02");
-    }*/
+    if (mDrawLabel) {
+      TiltFlowMenu::Inst()->playSound( changeoption );
+    }
     mDrawLabel = false;
     float vSign = state.x == _SYS_TILT_NEGATIVE ? -1.0f : 1.0f;
 
@@ -662,7 +661,6 @@ void TiltFlowView::UpdateMenu() {
       if (mItem > 0) {
         if (mOffsetX > 45) { // magic
           mItem--;
-		  //TiltFlowMenu::Inst()->playSound( changeoption );
           mOffsetX -= 90; // magic
         } else {
             mOffsetX += Resistance() * TILTVEL * mAccel;
@@ -673,7 +671,6 @@ void TiltFlowView::UpdateMenu() {
       if (mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
         if (mOffsetX < -45) { // magic
           mItem++;
-		  //TiltFlowMenu::Inst()->playSound( changeoption );
           mOffsetX += 90; // magic
         } else {
             mOffsetX -= Resistance() * TILTVEL * mAccel;
