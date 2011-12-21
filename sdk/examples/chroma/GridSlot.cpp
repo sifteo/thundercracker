@@ -7,6 +7,7 @@
 #include "GridSlot.h"
 #include "game.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 #include "utils.h"
 #include <stdlib.h>
 
@@ -212,9 +213,19 @@ void GridSlot::Update(float t)
 			Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
 
 			if( vDiff.x != 0 )
+            {
 				m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
+
+                if( abs( vDiff.x ) == 1 )
+                    Game::Inst().playSound(collide_02);
+            }
 			else if( vDiff.y != 0 )
+            {
 				m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
+
+                if( abs( vDiff.y ) == 1 )
+                    Game::Inst().playSound(collide_02);
+            }
             else
 			{
 				m_animFrame++;
@@ -252,7 +263,10 @@ void GridSlot::Update(float t)
                 m_animFrame = 0;
 
             if( t - m_eventTime > MARK_BREAK_DELAY )
+            {
                 explode();
+                Game::Inst().playSound(bubble_pop_02);
+            }
 			break;
 		}
 		case STATE_EXPLODING:
@@ -282,7 +296,7 @@ void GridSlot::mark()
     m_animFrame = 0;
 	m_state = STATE_MARKED;
 	m_eventTime = System::clock();
-    //Game::Inst().playSound(clear2);
+    Game::Inst().playSound(charge_03);
 }
 
 
@@ -343,7 +357,7 @@ void GridSlot::startPendingMove()
 {
 	if( m_state == STATE_PENDINGMOVE )
 	{
-        //Game::Inst().playSound(clear2);
+        Game::Inst().playSound(slide_39);
 		m_state = STATE_MOVING;
 		m_animFrame = 0;
 	}
@@ -510,4 +524,12 @@ void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
             break;
         }
     }
+}
+
+
+void GridSlot::setFixedAttempt()
+{
+    m_state = STATE_FIXEDATTEMPT;
+    m_animFrame = 0;
+    Game::Inst().playSound(frozen_06);
 }

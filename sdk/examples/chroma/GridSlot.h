@@ -76,7 +76,7 @@ public:
 
 	bool IsFixed() const { return m_bFixed; }
 	void MakeFixed() { m_bFixed = true; }
-    inline void setFixedAttempt() { m_state = STATE_FIXEDATTEMPT; m_animFrame = 0;}
+    void setFixedAttempt();
 
 	//copy color and some other attributes from target.  Used when tilting
 	void TiltFrom(GridSlot &src);

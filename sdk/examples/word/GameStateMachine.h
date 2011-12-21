@@ -43,7 +43,7 @@ public:
     static unsigned GetScore() { return (unsigned) sInstance->mScore; }
 protected:
     virtual State& getState(unsigned index);
-    virtual unsigned getNumStates() const { return 1; }
+    virtual unsigned getNumStates() const { return GameStateIndex_NumStates; }
 
 
 private:

@@ -63,6 +63,10 @@ void Game::Init()
     m_SFXChannel.init();
     m_musicChannel.init();
 
+    //doesn't seem to work
+    //m_musicChannel.setVolume( 1 );
+    //m_SFXChannel.setVolume( 256 );
+
     m_musicChannel.play( astrokraut, LoopRepeat );
 }
 
@@ -196,13 +200,13 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 		else
 		{          
             if( m_iDotsCleared >= 10 )
-                Game::Inst().playSound(clear5);
-            else if( m_iDotsCleared >= 7 )
                 Game::Inst().playSound(clear4);
-            else if( m_iDotsCleared >= 4 )
+            else if( m_iDotsCleared >= 7 )
                 Game::Inst().playSound(clear3);
-            else if( m_iDotsCleared >= 2 )
+            else if( m_iDotsCleared >= 4 )
                 Game::Inst().playSound(clear2);
+            else if( m_iDotsCleared >= 2 )
+                Game::Inst().playSound(clear1);
 
 			char aBuf[16];
             snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
@@ -236,6 +240,7 @@ void Game::checkGameOver()
         {
             enterScore();
             m_state = STATE_DYING;
+            playSound(timer_explode);
         }
 	}
 	else if( m_mode == MODE_TIMED )
@@ -244,6 +249,7 @@ void Game::checkGameOver()
         {
             enterScore();
             m_state = STATE_DYING;
+            playSound(timer_explode);
         }
 	}
 }
@@ -433,5 +439,27 @@ void Game::enterScore()
 
 void Game::playSound( const _SYSAudioModule &sound )
 {
+    m_SFXChannel.stop();
     m_SFXChannel.play(sound, LoopOnce);
+}
+
+const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
+{
+  &slosh_01,
+    &slosh_02,
+    &slosh_03,
+    &slosh_04,
+    &slosh_05,
+    &slosh_06,
+    &slosh_07,
+    &slosh_08,
+};
+
+
+//play a random slosh sound
+void Game::playSlosh()
+{
+    int index = Rand( NUM_SLOSH_SOUNDS );
+
+    m_SFXChannel.play(*SLOSH_SOUNDS[index], LoopOnce);
 }
