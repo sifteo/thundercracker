@@ -97,12 +97,5 @@ void ScoredCubeState_NewWord::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     paintLetters(vid, FontUnneighbored);
-    char string[5];
-    sprintf(string, "%+.1d", getStateMachine().findRowLength());
-#if DEBUGZZZ
-    printf("score %s (=%d)\n", string, GameStateMachine::getScore());
-#endif
-    paintScoreNumbers(vid, Vec2(7,0), string);
-
-    paintTeeth(vid, false, false, true);
+    paintTeeth(vid, false, true, true);
 }

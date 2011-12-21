@@ -45,15 +45,15 @@ void ScoredCubeState_EndOfRound::paint()
     {
         //        paintLetters(vid, (neighbored ? FontNeighbored : FontUnneighbored));
         paintLetters(vid, FontUnneighbored);
-        paintTeeth(vid, true, false);
+        paintTeeth(vid, true, true);
         return;
     }
 
     switch (getStateMachine().getCube().id())
     {
-    case 0:
-        // TODO paint "Score" asset
-        vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
+    default:
+        // paint "Score" asset
+        vid.BG0_drawAsset(Vec2(0,0), Score);
         char string[17];
         sprintf(string, "%.5d", GameStateMachine::getScore());
         paintScoreNumbers(vid, Vec2(5,6), string);
@@ -63,9 +63,9 @@ void ScoredCubeState_EndOfRound::paint()
         vid.BG0_drawAsset(Vec2(0,0), StartScreen);
         break;
 
-    default:
-        // TODO paint "high scores" asset
-        vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
+    case 0:
+        // paint "high scores" asset
+        vid.BG0_drawAsset(Vec2(0,0), HighScores);
         for (unsigned i = arraysize(SavedData::sHighScores) - 1;
              i >= 0;
              --i)

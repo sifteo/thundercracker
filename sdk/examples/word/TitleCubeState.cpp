@@ -53,7 +53,7 @@ void TitleCubeState::paint()
         break;
 
     default:
-        vid.BG0_drawAsset(Vec2(0,0), BGNotWordNotConnected);
+        paintTeeth(vid);
         /* TODO load/save
         paintScoreNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
 

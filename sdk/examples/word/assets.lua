@@ -1,9 +1,10 @@
 GameAssets = group{}
 
 FontUnneighbored = image{"WC_letters.png", width=128, height=128, quality=10}
-BGNotWordNotConnected = image{"ering.png", quality=10}
 StartScreen = image{"start_screen.png", quality=10}
 Title = image{"title.png", quality=10}
+HighScores = image{"high_scores.png", quality=10}
+Score = image{"score.png", quality=10}
 Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
 FontSmall = image{"font-8x16.png", width=8, height=16, quality=10}
 FontTeeth = image{"teeth_numbers.png", width=16, height=16, quality=10}

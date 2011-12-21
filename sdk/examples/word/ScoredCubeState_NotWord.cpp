@@ -89,10 +89,10 @@ void ScoredCubeState_NotWord::paint()
     paintLetters(vid, FontUnneighbored);
     if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
     {
-        paintTeeth(vid, false, false, true);
+        paintTeeth(vid, false, true, true);
     }
     else
     {
-        paintTeeth(vid, true, true);
+        paintTeeth(vid, true, false);
     }
 }
