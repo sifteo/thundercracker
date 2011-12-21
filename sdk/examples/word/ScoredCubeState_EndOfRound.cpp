@@ -43,9 +43,17 @@ void ScoredCubeState_EndOfRound::paint()
     vid.init();
     if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
     {
-        //        paintLetters(vid, (neighbored ? FontNeighbored : FontUnneighbored));
-        paintLetters(vid, FontUnneighbored);
-        paintTeeth(vid, true, true);
+        // intro animation
+        if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH - 0.3f)
+        {
+            paintLetters(vid, Font1Letter);
+        }
+        else
+        {
+            // no letters during blip
+            vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
+        }
+        paintTeeth(vid, Teeth, true, true);
         return;
     }
 
@@ -56,7 +64,7 @@ void ScoredCubeState_EndOfRound::paint()
         vid.BG0_drawAsset(Vec2(0,0), Score);
         char string[17];
         sprintf(string, "%.5d", GameStateMachine::getScore());
-        paintScoreNumbers(vid, Vec2(5,6), string);
+        paintScoreNumbers(vid, Vec2(3,6), string);
         break;
 
     case 1:
@@ -76,7 +84,7 @@ void ScoredCubeState_EndOfRound::paint()
             }
             char string[17];
             sprintf(string, "%.5d", SavedData::sHighScores[i]);
-            paintScoreNumbers(vid, Vec2(5,4 + (arraysize(SavedData::sHighScores) - i) * 2),
+            paintScoreNumbers(vid, Vec2(3,4 + (arraysize(SavedData::sHighScores) - i) * 2),
                          string);
         }
         break;

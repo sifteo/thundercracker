@@ -85,14 +85,23 @@ void ScoredCubeState_NotWord::paint()
             c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-//    paintLetters(vid, (neighbored ? FontNeighbored : FontUnneighbored));
-    paintLetters(vid, FontUnneighbored);
     if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
     {
-        paintTeeth(vid, false, true, true);
+        // intro anim done
+        paintLetters(vid, Font1Letter);
+        if (neighbored)
+        {
+            paintTeeth(vid, TeethLoopConnected, true, false, true, true);
+        }
+        else
+        {
+            paintTeeth(vid, Teeth, false, true, false, true);
+        }
     }
     else
     {
-        paintTeeth(vid, true, false);
+        // intro anim
+        vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
+        paintTeeth(vid, Teeth, true, false);
     }
 }

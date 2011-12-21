@@ -1,4 +1,5 @@
 #include <sifteo.h>
+#include <math.h>
 #include "CubeState.h"
 #include "CubeStateMachine.h"
 #include "GameStateMachine.h"
@@ -21,7 +22,12 @@ CubeStateMachine& CubeState::getStateMachine()
     return *mStateMachine;
 }
 
-void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid, bool animate, bool reverseAnim, bool paintTime)
+void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
+                           const AssetImage& teeth,
+                           bool animate,
+                           bool reverseAnim,
+                           bool loopAnim,
+                           bool paintTime)
 {
     unsigned frame = 0;
     unsigned secondsLeft = GameStateMachine::getSecondsLeft();
@@ -29,30 +35,38 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid, bool animate, bool reverseA
     if (animate)
     {
         float animTime =  getStateMachine().getTime() / TEETH_ANIM_LENGTH;
-        animTime = MIN(animTime, 1.f);
+        if (loopAnim)
+        {
+            animTime = fmodf(animTime, 1.0f);
+        }
+        else
+        {
+            animTime = MIN(animTime, 1.f);
+        }
+
         if (reverseAnim)
         {
             animTime = 1.f - animTime;
         }
-        frame = (unsigned) (animTime * Teeth.frames);
-        frame = MIN(frame, Teeth.frames - 1);
+        frame = (unsigned) (animTime * teeth.frames);
+        frame = MIN(frame, teeth.frames - 1);
     }
     else if (reverseAnim)
     {
-        frame = Teeth.frames - 1;
+        frame = teeth.frames - 1;
     }
 
     BG1Helper bg1(mStateMachine->getCube());
     // scan frame for non-transparent rows and adjust partial draw window
-    const uint16_t* tiles = &Teeth.tiles[frame * Teeth.width * Teeth.height];
+    const uint16_t* tiles = &teeth.tiles[frame * teeth.width * teeth.height];
     unsigned rowsPainted = 0;
     const unsigned MAX_BG1_ROWS = 9;
-    for (int i = Teeth.height - 1; i >= 0; --i) // rows
+    for (int i = teeth.height - 1; i >= 0; --i) // rows
     {
-        uint16_t firstIndex = tiles[i * Teeth.width];
-        for (unsigned j=0; j < Teeth.width; ++j) // columns
+        uint16_t firstIndex = tiles[i * teeth.width];
+        for (unsigned j=0; j < teeth.width; ++j) // columns
         {
-            if (tiles[j + i * Teeth.width] != firstIndex)
+            if (tiles[j + i * teeth.width] != firstIndex)
             {
                 // paint this opaque row
                 if (rowsPainted >= MAX_BG1_ROWS)

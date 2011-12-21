@@ -53,7 +53,7 @@ void TitleCubeState::paint()
         break;
 
     default:
-        paintTeeth(vid);
+        paintTeeth(vid, Teeth);
         /* TODO load/save
         paintScoreNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
 
