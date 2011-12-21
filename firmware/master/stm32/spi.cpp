@@ -11,6 +11,16 @@
 
 void SPIMaster::init()
 {
+    if (hw == &SPI1) {
+        RCC.APB2ENR |= (1 << 12);
+    }
+    else if (hw == &SPI2) {
+        RCC.APB1ENR |= (1 << 14);
+    }
+    else if (hw == &SPI3) {
+        RCC.APB1ENR |= (1 << 15);
+    }
+
     csn.setHigh();
     csn.setControl(GPIOPin::OUT_10MHZ);
     sck.setControl(GPIOPin::OUT_ALT_10MHZ);
