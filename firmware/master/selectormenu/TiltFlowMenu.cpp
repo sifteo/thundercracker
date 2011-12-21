@@ -6,6 +6,7 @@
 #include "MenuController.h"
 #include "TFcubewrapper.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 
 using namespace SelectorMenu;
 
@@ -22,8 +23,9 @@ TiltFlowMenu *TiltFlowMenu::Inst()
     return s_pInst;
 }
 
-TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( CHOOSING ), mDone( false ),
-    mSimTime( 0.0f ), mUpdateTime( 0.0f ), mPickTime( 0.0f ), mNumCubes( numCubes ), mNumItems( numItems ), mNeighborDirty( true )
+TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( CHOOSING ), 
+    mSimTime( 0.0f ), mUpdateTime( 0.0f ), mPickTime( 0.0f ), mNumCubes( numCubes ), mNumItems( numItems ), 
+	mDone( false ), mNeighborDirty( true )
 {
     s_pInst = this;
     //TODO SFX
@@ -42,6 +44,9 @@ void TiltFlowMenu::AssignViews()
     //TODO ASSIGN VIEWS
     for( int i = 0; i < mNumCubes; i++ )
         mViews[i].SetCube( &MenuController::Inst().cubes[i].GetCube() );
+
+	//for some reason this doesn't work if it's called in the constructor, so put it here for now.
+	m_SFXChannel.init();
 }
 
 
@@ -99,8 +104,7 @@ bool TiltFlowMenu::Tick(float dt)
 void TiltFlowMenu::Pick(TiltFlowView &view)
 {
     if (mStatus == CHOOSING) {
-        //TODO SFX
-      //Hacky.Sfx("checkpoVec2");
+      TiltFlowMenu::Inst()->playSound( select );
       //LOG(("Selected {0}", view.Item.name));
       mStatus = PICKED;
       mPickTime = mSimTime;
@@ -181,6 +185,13 @@ void TiltFlowMenu::ReassignMenu() {
     }
 }*/
 
+
+void TiltFlowMenu::playSound( const _SYSAudioModule &sound )
+{
+    m_SFXChannel.stop();
+    m_SFXChannel.play(sound, LoopOnce);
+}
+
   //---------------------------------------------------------------------------
   // TILT FLOW ITEM
   //---------------------------------------------------------------------------
@@ -258,10 +269,9 @@ void TiltFlowView::Tick() {
     mDirty = true;
     mDrawLabel = true;
 
-    //TODO SFX
-    /*if (mDrawLabel && !wasDrawingLabel) {
-      Hacky.Sfx("ui_select_01");
-    }*/
+    if (mDrawLabel && !wasDrawingLabel) {
+      TiltFlowMenu::Inst()->playSound( changeoption );
+    }
     mRestTime = -1;
   }
 
@@ -652,6 +662,7 @@ void TiltFlowView::UpdateMenu() {
       if (mItem > 0) {
         if (mOffsetX > 45) { // magic
           mItem--;
+		  //TiltFlowMenu::Inst()->playSound( changeoption );
           mOffsetX -= 90; // magic
         } else {
             mOffsetX += Resistance() * TILTVEL * mAccel;
@@ -662,6 +673,7 @@ void TiltFlowView::UpdateMenu() {
       if (mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
         if (mOffsetX < -45) { // magic
           mItem++;
+		  //TiltFlowMenu::Inst()->playSound( changeoption );
           mOffsetX += 90; // magic
         } else {
             mOffsetX -= Resistance() * TILTVEL * mAccel;

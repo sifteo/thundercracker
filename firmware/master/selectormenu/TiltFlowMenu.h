@@ -178,6 +178,8 @@ public:
 	inline float GetScrollTime() const { return mSimTime - mPickTime; }
     TiltFlowItem *GetItem( int item );
 
+	void playSound( const _SYSAudioModule &sound );
+
 private:
     //void CheckMenuNeighbors();
     //void ReassignMenu();
@@ -187,7 +189,6 @@ private:
     //user provided!
     TiltFlowItem *mItems;
     Status mStatus;
-    bool mDone;
     float mSimTime;
     float mUpdateTime;
     float mPickTime;
@@ -195,6 +196,8 @@ private:
     int mNumItems;
     TiltFlowView *mKeyView;
     TiltFlowView mViews[ MAX_CUBES ];
+	AudioChannel m_SFXChannel;
+	bool mDone;
     bool mNeighborDirty;
 };
 
