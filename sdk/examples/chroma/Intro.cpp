@@ -7,11 +7,13 @@
 #include "Intro.h"
 #include "string.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 #include "sprite.h"
 #include "game.h"
 
 const float Intro::INTRO_ARROW_TIME = 0.4f;
 const float Intro::INTRO_TIMEREXPANSION_TIME = 0.5f;
+const float Intro::INTRO_BALLEXPLODE_TIME = 0.5f;
 
 
 Intro::Intro()
@@ -28,9 +30,12 @@ void Intro::Reset()
 
 void Intro::Update( float dt )
 {
+    if( m_fTimer == 0.0f )
+        Game::Inst().playSound(glom_delay);
+
     m_fTimer += dt;
 
-    if( m_fTimer > INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME )
+    if( m_fTimer > INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME + INTRO_BALLEXPLODE_TIME )
         Game::Inst().setState( Game::STATE_PLAYING );
 }
 
@@ -57,7 +62,7 @@ Vec2 ENDPOS[ Intro::NUM_ARROWS ] = {
     Vec2( 128 - ArrowRight.width * 8, 64 - ArrowRight.height * 8 / 2 ),
 };
 
-void Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube )
+void Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapper *pWrapper )
 {
     VidMode_BG0 vid( cube.vbuf );
     _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
@@ -76,7 +81,7 @@ void Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube )
             moveSprite(cube, i, pos.x, pos.y);
         }
     }
-    else
+    else if( m_fTimer < INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME )
     {
         for( int i = 0; i < NUM_ARROWS; i++ )
         {
@@ -87,6 +92,28 @@ void Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube )
         float amount = ( m_fTimer - INTRO_ARROW_TIME ) / INTRO_TIMEREXPANSION_TIME;
         timer.DrawMeter( amount, bg1helper );
         bg1helper.Flush();
+    }
+    else
+    {
+        int baseFrame = ( m_fTimer - ( INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME ) ) / INTRO_BALLEXPLODE_TIME * NUM_TOTAL_EXPLOSION_FRAMES;
+
+        for( int i = 0; i < CubeWrapper::NUM_ROWS; i++ )
+        {
+            for( int j = 0; j < CubeWrapper::NUM_COLS; j++ )
+            {
+                GridSlot *pSlot = pWrapper->GetSlot( i, j );
+                int frame = baseFrame;
+
+                //middle ones are first
+                if( i >= 1 && i < 3 && j >= 1 && j < 3 )
+                    frame++;
+                //corner ones are last
+                if( frame > 0 && ( i == 0 || i == 3 ) && ( j == 0 || j == 3 ) )
+                    frame--;
+
+                pSlot->DrawIntroFrame( vid, frame );
+            }
+        }
     }
 }
 

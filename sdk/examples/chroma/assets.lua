@@ -13,15 +13,19 @@ MessageBox2 = image{"message2.png"}
 MessageBox3 = image{"message3.png"}
 MessageBox4 = image{"message4.png"}
 --the gems
-Gem0 = image{"01_gem00.png", height=32}
-Gem1 = image{"01_gem01.png", height=32}
-Gem2 = image{"01_gem02.png", height=32}
-Gem3 = image{"01_gem03.png", height=32}
-Gem4 = image{"01_gem04.png", height=32}
-Gem5 = image{"01_gem05.png", height=32}
-Gem6 = image{"01_gem06.png", height=32}
-Gem7 = image{"01_gem07.png", height=32}
+Gem0 = image{"Gem0.png", height=32}
+Gem1 = image{"Gem1.png", height=32}
+Gem2 = image{"Gem2.png", height=32}
+Gem3 = image{"Gem3.png", height=32}
+Gem4 = image{"Gem4.png", height=32}
+Gem5 = image{"Gem5.png", height=32}
+Gem6 = image{"Gem6.png", height=32}
+Gem7 = image{"Gem7.png", height=32}
 GemEmpty = image{"gem_Empty.png"}
+--fixed gems
+FixedGem0 = image{"fixedGem0.png", height=32}
+FixedExplode0 = image{"fixedExplode0.png", height=32}
+FixedGlimmer = image{"FixedGlimmer.png", height=32}
 Cover = image{"cover.png"}
 --timer
 TimerUp = image{"TimerUp.png", height=8}
@@ -43,8 +47,13 @@ TimerLowDown = image{"TimerLowDown.png", height=8}
 TimerLowRight = image{"TimerLowRight.png", height=16}
 --explosions
 ExplodeGem0 = image{"Gem0Explode.png", height=32}
---gem animations
-Gem0 = image{"Gem0.png", height=32}
+ExplodeGem1 = image{"Gem1Explode.png", height=32}
+ExplodeGem2 = image{"Gem2Explode.png", height=32}
+ExplodeGem3 = image{"Gem3Explode.png", height=32}
+ExplodeGem4 = image{"Gem4Explode.png", height=32}
+ExplodeGem5 = image{"Gem5Explode.png", height=32}
+ExplodeGem6 = image{"Gem6Explode.png", height=32}
+ExplodeGem7 = image{"Gem7Explode.png", height=32}
 --death animations
 DieUp = image{"DieUp.png", height=64, pinned=true}
 DieLeft = image{"DieLeft.png", height=16, pinned=true}

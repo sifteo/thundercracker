@@ -6,7 +6,6 @@ struct MapRoom;
 
 class GameView {
 public:
-  Cube cube;
   int visited;
 
 private:
@@ -16,6 +15,7 @@ public:
   GameView();
   
   // getters
+  Cube* GetCube() const;
   bool IsShowingRoom() const;
   bool InSpriteMode() const;
   Vec2 Location() const { return mRoom; }
@@ -42,13 +42,11 @@ public:
   void SetItemPosition(Vec2 p);
   void HideItem();
 
-  void DrawBackground();
-private:  
-  // sprite manipulation methods
-  void EnterSpriteMode();
-  void SetSpriteImage(int id, int tile);
-  void HideSprite(int id);
-  void ResizeSprite(int id, int px, int py);
-  void MoveSprite(int id, int px, int py);
+  void RefreshInventory();
 
+  void DrawBackground();
+
+private:
+  void DrawInventorySprites();
+  void HideInventorySprites();
 };

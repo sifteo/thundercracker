@@ -7,7 +7,7 @@ using System.Text;
 namespace MapTool {
 
   public enum Portal {
-    Open=0, Walled=1, UnlockedDoor=2, LockedDoor=3
+    Open=0, Walled=1, Door=2
   }
 
   public enum Side {

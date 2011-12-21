@@ -19,7 +19,7 @@ endif
 
 ASSETS = assets
 AUDIO = audio
-GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html $(AUDIO).gen.h $(AUDIO).gen.cpp
+GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html $(AUDIO).gen.h $(AUDIO).gen.cpp MAPFILE.map
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 
 ifeq ($(DEBUG),)

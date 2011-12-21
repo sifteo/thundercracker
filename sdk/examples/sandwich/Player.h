@@ -25,6 +25,7 @@ private:
   Vec2 mPosition;
   int mDir;
   int mKeyCount;
+  int mItemMask;
   int mAnimFrame;
   float mAnimTime;
 
@@ -51,9 +52,10 @@ public:
   MapRoom* Room() const;
   int Status() const { return mStatus; }
 
-  void IncrementBasicKeyCount() { mKeyCount++; }
-  void DecrementBasicKeyCount() { ASSERT(mKeyCount>0); mKeyCount--; }
+  void PickupItem(int itemId);
   bool HaveBasicKey() const { return mKeyCount > 0; }
+  bool HasItem(int itemId) const { return (mItemMask & (1<<itemId)) != 0; }
+  void DecrementBasicKeyCount();
 
   void SetLocation(Vec2 position, Cube::Side direction);
 

@@ -6,10 +6,14 @@ using namespace Sifteo;
 #define PORTAL_OPEN	0
 #define PORTAL_WALL	1
 #define PORTAL_DOOR 2
-#define PORTAL_LOCK	3
 
-#define ITEM_NONE 0
-#define ITEM_BASIC_KEY 1
+#define ITEM_NONE           0
+#define ITEM_BASIC_KEY      1
+#define ITEM_BREAD          2
+#define ITEM_TOMATO         3
+#define ITEM_LETTUCE        4
+#define ITEM_HAM            5
+#define ITEM_SKELETON_KEY   6
 
 #define TRIGGER_TYPE_PASSIVE    0
 #define TRIGGER_TYPE_ACTIVE     1

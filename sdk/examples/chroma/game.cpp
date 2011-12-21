@@ -7,6 +7,7 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
 #include "string.h"
 #include <stdlib.h>
 
@@ -58,6 +59,15 @@ void Game::Init()
 
 	m_splashTime = System::clock();
     m_fLastTime = m_splashTime;
+
+    m_SFXChannel.init();
+    m_musicChannel.init();
+
+    //doesn't seem to work
+    //m_musicChannel.setVolume( 1 );
+    //m_SFXChannel.setVolume( 256 );
+
+    m_musicChannel.play( astrokraut, LoopRepeat );
 }
 
 
@@ -75,6 +85,7 @@ void Game::Update()
 		if( System::clock() - m_splashTime > 3.0f )
 		{
             m_state = STATE_INTRO;
+            m_musicChannel.play( astrokraut, LoopRepeat );
 			m_timer.Init( System::clock() );
 		}
 	}
@@ -100,6 +111,9 @@ void Game::Update()
 		for( int i = 0; i < NUM_CUBES; i++ )
             cubes[i].Update( System::clock(), dt );
 
+        //we need to call System::paint before and after drawing for proper syncing
+        System::paint();
+
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
 	}
@@ -117,6 +131,7 @@ void Game::Reset()
 	m_iLevel = 0;
 
 	m_state = STARTING_STATE;
+    //m_musicChannel.play( astrokraut, LoopRepeat );
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
@@ -183,19 +198,15 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 			//check_puzzle();
 		}
 		else
-		{
-			//TODO sound
-			/*# play sound based on number of gems cleared in this combo.
-			dings = (
-					(10, "score5"),
-					(7, "score4"),
-					(4, "score3"),
-					(2, "score2"),
-					(0, None),
-					)
-			sound = reduce(lambda x,y: cleared >= x[0] and x or y, dings)[1]
-			if sound:
-				self.sound_manager.add(sound)*/
+		{          
+            if( m_iDotsCleared >= 10 )
+                Game::Inst().playSound(clear4);
+            else if( m_iDotsCleared >= 7 )
+                Game::Inst().playSound(clear3);
+            else if( m_iDotsCleared >= 4 )
+                Game::Inst().playSound(clear2);
+            else if( m_iDotsCleared >= 2 )
+                Game::Inst().playSound(clear1);
 
 			char aBuf[16];
             snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
@@ -229,6 +240,7 @@ void Game::checkGameOver()
         {
             enterScore();
             m_state = STATE_DYING;
+            playSound(timer_explode);
         }
 	}
 	else if( m_mode == MODE_TIMED )
@@ -237,6 +249,7 @@ void Game::checkGameOver()
         {
             enterScore();
             m_state = STATE_DYING;
+            playSound(timer_explode);
         }
 	}
 }
@@ -421,4 +434,32 @@ void Game::enterScore()
             break;
         }
     }
+}
+
+
+void Game::playSound( const _SYSAudioModule &sound )
+{
+    m_SFXChannel.stop();
+    m_SFXChannel.play(sound, LoopOnce);
+}
+
+const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
+{
+  &slosh_01,
+    &slosh_02,
+    &slosh_03,
+    &slosh_04,
+    &slosh_05,
+    &slosh_06,
+    &slosh_07,
+    &slosh_08,
+};
+
+
+//play a random slosh sound
+void Game::playSlosh()
+{
+    int index = Rand( NUM_SLOSH_SOUNDS );
+
+    m_SFXChannel.play(*SLOSH_SOUNDS[index], LoopOnce);
 }

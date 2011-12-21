@@ -14,22 +14,33 @@
 #include "radio.h"
 #include "nrf24l01.h"
 #include "debug.h"
+#include "board.h"
 
-static NRF24L01 NordicRadio(GPIOPin(&GPIOB, 10),                // CE
-                            GPIOPin(&GPIOB, 11),                // IRQ
-                            SPIMaster(&SPI2,                    // SPI:
-                                      GPIOPin(&GPIOB, 12),      //   CSN
-                                      GPIOPin(&GPIOB, 13),      //   SCK
-                                      GPIOPin(&GPIOB, 14),      //   MISO
-                                      GPIOPin(&GPIOB, 15)));    //   MOSI
+static NRF24L01 NordicRadio(RF_CE_GPIO,
+                            RF_IRQ_GPIO,
+                            SPIMaster(&RF_SPI,              // SPI:
+                                      RF_SPI_CSN_GPIO,      //   CSN
+                                      RF_SPI_SCK_GPIO,      //   SCK
+                                      RF_SPI_MISO_GPIO,     //   MISO
+                                      RF_SPI_MOSI_GPIO));   //   MOSI
 
+#if BOARD == BOARD_TC_MASTER_REV1
+IRQ_HANDLER ISR_EXTI9_5()
+{
+    NordicRadio.isr();
+}
+#else
 IRQ_HANDLER ISR_EXTI15_10()
 {
     NordicRadio.isr();
 }
+#endif
 
 void Radio::open()
 {
+#if BOARD == BOARD_TC_MASTER_REV1
+    AFIO.MAPR |= (1 << 28);     // SPI3 remap to PC10-12
+#endif
     NordicRadio.init();
     NordicRadio.ptxMode();
 }
