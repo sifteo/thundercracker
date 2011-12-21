@@ -205,6 +205,7 @@ void Game::OnInventoryChanged() {
   for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->RefreshInventory();
   }
+  /*
   const int firstSandwichId = 2;
   int count = 0;
   for(int i=firstSandwichId; i<firstSandwichId+4; ++i) {
@@ -212,6 +213,7 @@ void Game::OnInventoryChanged() {
       return;
     }
   }
+  */
   mIsDone = true;
 }
 

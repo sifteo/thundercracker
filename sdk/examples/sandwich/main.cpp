@@ -5,7 +5,7 @@ static Game sGame;
 Game* pGame = &sGame;
 
 void IntroCutscene();
-void WinScreen();
+void WinScreen(Cube* primaryCube);
 
 void siftmain() {
 	{ // initialize assets
@@ -26,25 +26,12 @@ void siftmain() {
 	    }
 	    System::paint();
 	  }
-	  for(Cube::ID i=0; i<NUM_CUBES; ++i) {
-	    VidMode_BG0 mode(cubes[i].vbuf);
-	    mode.init();
-	    mode.BG0_drawAsset(Vec2(0,0), Sting);
-	  }
-	  float time = System::clock();
-	  while(System::clock() - time < 2.f) {
-	  	for(int i=0; i<NUM_CUBES; ++i) {
-	  		cubes[i].vbuf.touch();
-	  	}
-	    System::paint();
-	  }		
 	}
-	
 	for(;;) {
 		IntroCutscene();
 		*pGame = Game(); // re-initialize memory
 		pGame->MainLoop();
-		WinScreen();
+		WinScreen(pGame->player.CurrentView()->GetCube());
 	}
 }
 
@@ -58,9 +45,16 @@ static void WaitForSeconds(float dt) {
 }
 
 void IntroCutscene() {
+	for(int i=0; i<NUM_CUBES; ++i) {
+		VidMode_BG0 stingMode(cubes[i].vbuf);
+		stingMode.init();
+		stingMode.BG0_drawAsset(Vec2(0,0), Sting);
+		cubes[i].vbuf.touch();
+	}
+	//System::paintSync();
+	WaitForSeconds(2.f);
 	EnterSpriteMode(&cubes[0]);
 	VidMode_BG0 mode(cubes[0].vbuf);
-	//mode.BG0_drawAsset(Vec2(0,0), Sting);
 
 	// iris out
 	for(unsigned i=0; i<8; ++i) {
@@ -201,7 +195,7 @@ struct Spartikle {
 	float vx;
 	float vy;
 
-	inline void Update(float dt, int id) {
+	inline void Update(float dt, Cube* c, int id) {
 		vy += dt * 9.8f;
 		px += dt * vx;
 		py += dt * vy;
@@ -210,27 +204,30 @@ struct Spartikle {
 			vy *= -0.5f;
 		}
 		frame = (frame+1)%4;
-		SetSpriteImage(&cubes[0], id, Sparkle.index + frame);
-		MoveSprite(&cubes[0], id, (int)(px+0.5f)-4, (int)(py+0.5f)-4);
+		SetSpriteImage(c, id, Sparkle.index + frame);
+		MoveSprite(c, id, (int)(px+0.5f)-4, (int)(py+0.5f)-4);
 	}
 };
 
-void WinScreen() {
-	EnterSpriteMode(&cubes[0]);
-	VidMode_BG0(cubes[0].vbuf).BG0_drawAsset(Vec2(0,0), WinscreenBackground);
-	for(unsigned i=1; i<NUM_CUBES; ++i) {
-		VidMode_BG0 idleMode(cubes[i].vbuf);
-		idleMode.init();
-		idleMode.BG0_drawAsset(Vec2(0,0), Sting);
+void WinScreen(Cube* primaryCube) {
+	EnterSpriteMode(primaryCube);
+	for(unsigned i=0; i<8; ++i) { HideSprite(primaryCube, i); }
+	VidMode_BG0(primaryCube->vbuf).BG0_drawAsset(Vec2(0,0), WinscreenBackground);
+	for(unsigned i=0; i<NUM_CUBES; ++i) {
+		if (cubes+i != primaryCube) {
+			VidMode_BG0 idleMode(cubes[i].vbuf);
+			idleMode.init();
+			idleMode.BG0_drawAsset(Vec2(0,0), Sting);
+		}
 	}
     for(unsigned frame=0; frame<WinscreenAnim.frames; ++frame) {
-  	    BG1Helper mode(cubes[0]);
+  	    BG1Helper mode(*primaryCube);
   	    mode.DrawAsset(Vec2(9, 0), WinscreenAnim, frame);
   	    mode.Flush();
     	System::paintSync();
     }
 	{
-		VidMode_BG0 mode(cubes[0].vbuf);
+		VidMode_BG0 mode(primaryCube->vbuf);
 		for(unsigned row=0; row<8; ++row) {
 			for(unsigned col=0; col<16; ++col) {
 				mode.BG0_drawAsset(Vec2(col,8+row), Flash);
@@ -249,8 +246,8 @@ void WinScreen() {
 			}
 		}
     }
-	BG1Helper(cubes[0]).Flush();
-	VidMode_BG0(cubes[0].vbuf).BG0_drawAsset(Vec2(0,0), Winscreen);
+	BG1Helper(*primaryCube).Flush();
+	VidMode_BG0(primaryCube->vbuf).BG0_drawAsset(Vec2(0,0), Winscreen);
 
     // sparkles
     Spartikle sp[4] = {
@@ -262,15 +259,16 @@ void WinScreen() {
     for(unsigned id=0; id<4; ++id) {
     	sp[id].vx *= 1.5f;
     	sp[id].vy *= 2.f;
-    	ResizeSprite(&cubes[0], id, 8, 8);
+    	ResizeSprite(primaryCube, id, 8, 8);
     }
     float t = System::clock();
     do {
-	    for(unsigned id=0; id<4; ++id) { sp[id].Update(0.2f, id); }
+	    for(unsigned id=0; id<4; ++id) { sp[id].Update(0.2f, primaryCube, id); }
     	System::paint();
     } while(System::clock() - t < 2.5f);
     for(unsigned id=0; id<8; ++id) {
-    	HideSprite(&cubes[0], id);
+    	HideSprite(primaryCube, id);
     }
     System::paintSync();
+    WaitForSeconds(2.f);
 }
