@@ -24,8 +24,8 @@ public:
     static const int NUM_TOTAL_EXPLOSION_FRAMES = 5;
 
     Intro();
-    void Reset();
-    void Update( float dt );
+    void Reset( bool ingamereset = false );
+    bool Update( float dt );
     void Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapper *pWrapper );
 	
 private:
