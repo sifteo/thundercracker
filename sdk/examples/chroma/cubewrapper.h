@@ -99,6 +99,9 @@ public:
     inline int getLastTiltDir() const { return m_lastTiltDir; }
     inline BG1Helper &getBG1Helper() { return m_bg1helper; }
 
+    //if we need to, flush bg1
+    void FlushBG1();
+
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
@@ -134,6 +137,9 @@ private:
 
     float m_stateTime;
     int m_lastTiltDir;
+
+    //do we need to do a bg1 flush?
+    bool m_queuedFlush;
 };
 
 #endif

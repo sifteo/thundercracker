@@ -75,7 +75,8 @@ void Game::Init()
     //m_musicChannel.setVolume( 1 );
     //m_SFXChannel.setVolume( 256 );
 
-    m_musicChannel.play( astrokraut, LoopRepeat );
+    //m_musicChannel.play( astrokraut, LoopRepeat );
+    m_musicChannel.play( StingerIV2, LoopOnce );
 }
 
 
@@ -90,9 +91,10 @@ void Game::Update()
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
 
-		if( System::clock() - m_splashTime > 3.0f )
+        if( System::clock() - m_splashTime > 7.0f )
 		{
             m_state = STATE_INTRO;
+            m_musicChannel.stop();
             m_musicChannel.play( astrokraut, LoopRepeat );
 			m_timer.Init( System::clock() );
 		}
@@ -119,30 +121,30 @@ void Game::Update()
 		for( int i = 0; i < NUM_CUBES; i++ )
             cubes[i].Update( System::clock(), dt );
 
-        System::finish();
-
-		for( int i = 0; i < NUM_CUBES; i++ )
+        for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
-	}
-            
-    /*bool bForceDraw = false;
 
-    for( int i = 0; i < NUM_CUBES; i++ )
-    {
-        if( cubes[i].getBG1Helper().NeedFinish() )
+        //always finishing works
+        //System::finish();
+
+        //if any of our cubes have messed with bg1's bitmaps,
+        //force a finish here
+        for( int i = 0; i < NUM_CUBES; i++ )
         {
-            System::paintSync();
-            //printf( "finishing\n" );
-            bForceDraw = true;
-            break;
+            if( cubes[i].getBG1Helper().NeedFinish() )
+            {
+                //System::finish();
+                System::paintSync();
+                //printf( "finishing\n" );
+                break;
+            }
         }
-    }
 
-    if( !bForceDraw )*/
-        System::paint();
+        for( int i = 0; i < NUM_CUBES; i++ )
+            cubes[i].FlushBG1();
+	}
 
-    //don't really need to call paintSync every frame.. Just need to call if bg1 map changes.
-    //System::paintSync();
+    System::paint();
 }
 
 

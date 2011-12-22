@@ -26,7 +26,8 @@ public:
     Intro();
     void Reset( bool ingamereset = false );
     bool Update( float dt );
-    void Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapper *pWrapper );
+    //return whether we touched bg1 or not
+    bool Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapper *pWrapper );
 	
 private:
     Vec2 LerpPosition( Vec2 &start, Vec2 &end, float timePercent );

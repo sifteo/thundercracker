@@ -20,7 +20,7 @@ public:
     GameOver();
     void Reset();
     void Update( float dt );
-    void Draw( BG1Helper &bg1helper, Cube &cube );
+    void Draw( Cube &cube );
 	
 private:
     unsigned int m_frame;
