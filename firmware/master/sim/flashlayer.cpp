@@ -24,17 +24,11 @@ char* FlashLayer::getRegion(uintptr_t address, int len)
 
 char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
 {
-    if (mFile == NULL) {
-        fprintf(stdout, "ERROR: asset segment file not open\n");
-    }
-    
     CachedBlock *b = getCachedBlock(offset);
     if (b == 0) {
-        //fprintf(stdout, "Cache miss for offset: %d\n", offset);
-        
         b = getFreeBlock();
         if (b == 0) {
-            fprintf(stdout, "ERROR: No free blocks in cache\n");
+            LOG(("Flashlayer: No free blocks in cache\n"));
             return 0;
         }
         
@@ -78,11 +72,6 @@ FILE * FlashLayer::mFile = NULL;
 
 void FlashLayer::init()
 {
-    fprintf(stdout, "FlashLayer::init\n");
-    
     mFile = fopen("asegment.bin", "rb");
-    if (mFile == NULL) {
-        fprintf(stdout, "ERROR: failed to open asset segment\n");
-        return;
-    }
+    ASSERT(mFile != NULL && "ERROR: FlashLayer failed to open asset segment - make sure asegment.bin is next to your executable.\n");
 }

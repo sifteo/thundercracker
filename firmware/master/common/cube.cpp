@@ -115,19 +115,12 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
     entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, 512, &size);
     entry += a->id;
     
-    fprintf(stdout, "  entry type: %u\n", entry->type);
-    fprintf(stdout, "  entry offset: %u\n", entry->offset);
-    
     int offset = entry->offset;
     
     FlashLayer::releaseRegionFromOffset(0);
 
     AssetGroupHeader *header;
     header = (AssetGroupHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(AssetGroupHeader), &size);
-    
-    fprintf(stdout, "  group numTiles: %u\n", header->numTiles);
-    fprintf(stdout, "  group dataSize: %u\n", header->dataSize);
-    fprintf(stdout, "  group signature: %llu\n", header->signature);
     
     a->offset = offset + sizeof(AssetGroupHeader);
     a->size = header->dataSize;

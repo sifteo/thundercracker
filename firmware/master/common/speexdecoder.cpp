@@ -53,9 +53,7 @@ void SpeexDecoder::setData(const uint8_t *srcaddr, int size)
 
 void SpeexDecoder::setOffset(const uint32_t offset, int size)
 {
-    fprintf(stdout, "SPEEX SET OFFSET %u, %d\n", offset, size);
-    
-    this->srcaddr = offset;  // 20480
+    this->srcaddr = offset;
     this->srcBytesRemaining = size;
     
     status = Ok;
@@ -80,8 +78,6 @@ void SpeexDecoder::deinit()
  */
 int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
 {
-    //fprintf(stdout, "  decoding frame size %d\n", size);
-    
     if (size < (int)DECODED_FRAME_SIZE || status != Ok) {
         return 0;
     }

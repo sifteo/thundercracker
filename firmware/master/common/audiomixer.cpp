@@ -239,17 +239,12 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, 512, &size);
     entry += mod->id;
     
-    fprintf(stdout, "  entry type: %u\n", entry->type);
-    fprintf(stdout, "  entry offset: %u\n", entry->offset);
-    
     int offset = entry->offset;
     
     FlashLayer::releaseRegionFromOffset(0);
     
     SoundHeader *header;
     header = (SoundHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size);
-    
-    fprintf(stdout, "  sound dataSize: %u\n", header->dataSize);
     
     mod->offset = offset + sizeof(SoundHeader);
     mod->size = header->dataSize;
