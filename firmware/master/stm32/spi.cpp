@@ -7,17 +7,23 @@
  */
 
 #include "spi.h"
-
+#include "board.h"
 
 void SPIMaster::init()
 {
     if (hw == &SPI1) {
+        #if BOARD == BOARD_TC_MASTER_REV1
+        AFIO.MAPR |= (1 << 0);  // remap SPI1 to PB3-5
+        #endif
         RCC.APB2ENR |= (1 << 12);
     }
     else if (hw == &SPI2) {
         RCC.APB1ENR |= (1 << 14);
     }
     else if (hw == &SPI3) {
+        #if BOARD == BOARD_TC_MASTER_REV1
+        AFIO.MAPR |= (1 << 28);     // remap SPI3 to PC10-12
+        #endif
         RCC.APB1ENR |= (1 << 15);
     }
 

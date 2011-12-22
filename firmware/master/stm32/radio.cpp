@@ -38,9 +38,6 @@ IRQ_HANDLER ISR_EXTI15_10()
 
 void Radio::open()
 {
-#if BOARD == BOARD_TC_MASTER_REV1
-    AFIO.MAPR |= (1 << 28);     // SPI3 remap to PC10-12
-#endif
     NordicRadio.init();
     NordicRadio.ptxMode();
 }
