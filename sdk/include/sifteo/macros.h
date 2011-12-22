@@ -28,6 +28,9 @@
 #   define LOG(_x)            printf _x
 #if QTCREATOR
 #   define ASSERT(_x)         if(!(_x)) {asm("int $0x3");} 
+#elif QTCREATOR_TERMINAL // FIXME figure out how to trap int 3 in Qt Terminal
+extern void assertWrapper(bool b);
+#   define ASSERT(_x)        assertWrapper(_x)
 #else
 #   define ASSERT(_x)         assert(_x)
 #endif

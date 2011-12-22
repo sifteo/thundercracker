@@ -152,6 +152,9 @@ State& CubeStateMachine::getState(unsigned index)
     case CubeStateIndex_Title:
         return mTitleState;
 
+    case CubeStateIndex_TitleExit:
+        return mTitleExitState;
+
     default:
     case CubeStateIndex_NotWordScored:
         return mNotWordScoredState;

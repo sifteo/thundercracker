@@ -44,7 +44,8 @@ private:
     friend void ISR_DMA2_Channel1();
     friend void ISR_DMA2_Channel2();
     friend void ISR_DMA2_Channel3();
-    friend void ISR_DMA2_Channel4_5();
+    friend void ISR_DMA2_Channel4();
+    friend void ISR_DMA2_Channel5();
 };
 
 #endif // DMA_H_

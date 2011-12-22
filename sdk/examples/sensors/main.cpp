@@ -39,6 +39,7 @@ void siftmain()
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
             //uint8_t nb[4];
+            _SYSCubeID id = cubes[i].id();
             _SYSNeighborState nb;
             _SYSCubeHWID hwid;
             _SYSAccelState accel;
@@ -48,10 +49,10 @@ void siftmain()
              * Ugly in all sorts of ways...
              */
 
-            _SYS_getAccel(i, &accel);
-            _SYS_getNeighbors(i, &nb);
-            _SYS_getRawBatteryV(i, &battery);
-            _SYS_getCubeHWID(i, &hwid);
+            _SYS_getAccel(id, &accel);
+            _SYS_getNeighbors(id, &nb);
+            _SYS_getRawBatteryV(id, &battery);
+            _SYS_getCubeHWID(id, &hwid);
 
             vid[i].BG0_textf(Vec2(1,2),
                              "I am cube #%d\n"
@@ -67,7 +68,7 @@ void siftmain()
                              "\n"
                              "Raw battery:\n"
                              " %04x\n",
-                             i,
+                             id,
                              hwid.bytes[0], hwid.bytes[1], hwid.bytes[2],
                              hwid.bytes[3], hwid.bytes[4], hwid.bytes[5],
                              nb.sides[0], nb.sides[1], nb.sides[2], nb.sides[3],

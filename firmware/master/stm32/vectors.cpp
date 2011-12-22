@@ -66,10 +66,10 @@ HANDLER_LOG_HALT(ISR_DefaultDebug);
 #pragma weak ISR_DMA1_Channel6 = ISR_Default
 #pragma weak ISR_DMA1_Channel7 = ISR_Default
 #pragma weak ISR_ADC1_2 = ISR_Default
-#pragma weak ISR_USB_HP_CAN_TX = ISR_Default
-#pragma weak ISR_USB_LP_CAN_RX0 = ISR_Default
-#pragma weak ISR_CAN_RX1 = ISR_Default
-#pragma weak ISR_CAN_SCE = ISR_Default
+#pragma weak ISR_CAN1_TX = ISR_Default
+#pragma weak ISR_CAN1_RX0 = ISR_Default
+#pragma weak ISR_CAN1_RX1 = ISR_Default
+#pragma weak ISR_CAN1_SCE = ISR_Default
 #pragma weak ISR_EXTI9_5 = ISR_Default
 #pragma weak ISR_TIM1_BRK = ISR_Default
 #pragma weak ISR_TIM1_UP = ISR_Default
@@ -89,14 +89,7 @@ HANDLER_LOG_HALT(ISR_DefaultDebug);
 #pragma weak ISR_USART3 = ISR_Default
 #pragma weak ISR_EXTI15_10 = ISR_Default
 #pragma weak ISR_RTCAlarm = ISR_Default
-#pragma weak ISR_USBWakeup = ISR_Default
-#pragma weak ISR_TIM8_BRK = ISR_Default
-#pragma weak ISR_TIM8_UP = ISR_Default
-#pragma weak ISR_TIM8_TRG_COM = ISR_Default
-#pragma weak ISR_TIM8_CC = ISR_Default
-#pragma weak ISR_ADC3 = ISR_Default
-#pragma weak ISR_FSMC = ISR_Default
-#pragma weak ISR_SDIO = ISR_Default
+#pragma weak ISR_UsbOtg_FS_Wakeup = ISR_Default
 #pragma weak ISR_TIM5 = ISR_Default
 #pragma weak ISR_SPI3 = ISR_Default
 #pragma weak ISR_UART4 = ISR_Default
@@ -106,7 +99,15 @@ HANDLER_LOG_HALT(ISR_DefaultDebug);
 #pragma weak ISR_DMA2_Channel1 = ISR_Default
 #pragma weak ISR_DMA2_Channel2 = ISR_Default
 #pragma weak ISR_DMA2_Channel3 = ISR_Default
-#pragma weak ISR_DMA2_Channel4_5 = ISR_Default
+#pragma weak ISR_DMA2_Channel4 = ISR_Default
+#pragma weak ISR_DMA2_Channel5 = ISR_Default
+#pragma weak ISR_Ethernet = ISR_Default
+#pragma weak ISR_EthernetWakeup = ISR_Default
+#pragma weak ISR_CAN2_TX = ISR_Default
+#pragma weak ISR_CAN2_RX0 = ISR_Default
+#pragma weak ISR_CAN2_RX1 = ISR_Default
+#pragma weak ISR_CAN2_SCE = ISR_Default
+#pragma weak ISR_UsbOtg_FS = ISR_Default
 
 __attribute__ ((section (".vectors"))) const struct IVT_t IVT =
 {
@@ -142,10 +143,10 @@ __attribute__ ((section (".vectors"))) const struct IVT_t IVT =
     ISR_DMA1_Channel6,
     ISR_DMA1_Channel7,
     ISR_ADC1_2,
-    ISR_USB_HP_CAN_TX,
-    ISR_USB_LP_CAN_RX0,
-    ISR_CAN_RX1,
-    ISR_CAN_SCE,
+    ISR_CAN1_TX,
+    ISR_CAN1_RX0,
+    ISR_CAN1_RX1,
+    ISR_CAN1_SCE,
     ISR_EXTI9_5,
     ISR_TIM1_BRK,
     ISR_TIM1_UP,
@@ -165,14 +166,8 @@ __attribute__ ((section (".vectors"))) const struct IVT_t IVT =
     ISR_USART3,
     ISR_EXTI15_10,
     ISR_RTCAlarm,
-    ISR_USBWakeup,
-    ISR_TIM8_BRK,
-    ISR_TIM8_UP,
-    ISR_TIM8_TRG_COM,
-    ISR_TIM8_CC,
-    ISR_ADC3,
-    ISR_FSMC,
-    ISR_SDIO,
+    ISR_UsbOtg_FS_Wakeup,
+    { 0 },
     ISR_TIM5,
     ISR_SPI3,
     ISR_UART4,
@@ -182,6 +177,14 @@ __attribute__ ((section (".vectors"))) const struct IVT_t IVT =
     ISR_DMA2_Channel1,
     ISR_DMA2_Channel2,
     ISR_DMA2_Channel3,
-    ISR_DMA2_Channel4_5,
+    ISR_DMA2_Channel4,
+    ISR_DMA2_Channel5,
+    ISR_Ethernet,
+    ISR_EthernetWakeup,
+    ISR_CAN2_TX,
+    ISR_CAN2_RX0,
+    ISR_CAN2_RX1,
+    ISR_CAN2_SCE,
+    ISR_UsbOtg_FS
 };
 

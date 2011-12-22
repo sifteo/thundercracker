@@ -18,9 +18,7 @@ const char* Dictionary::pickWord(unsigned length)
 {
     // TODO
     const char* word = PrototypeWordList::pickWord(length);
-#ifdef DEBUG
-    printf("picked word %s\n", word);
-#endif
+    DEBUG_LOG(("picked word %s\n", word));
     return word;
 }
 

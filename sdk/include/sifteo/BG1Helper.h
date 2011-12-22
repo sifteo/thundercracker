@@ -28,8 +28,8 @@ public:
 
     void Clear()
     {
-        memset( m_bitset, 0, 32 );
-        memset( m_tileset, 0xff, 512 );
+        memset( m_bitset, 0, BG1_ROWS * 2 );
+        memset( m_tileset, 0xff, BG1_ROWS * BG1_COLS * 2 );
     }
 
     void Flush()
@@ -61,7 +61,10 @@ public:
                              m_bitset,
                              BG1_ROWS);
 
-        _SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
+        _SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);	
+
+        //store off last bitset for comparison later
+        memcpy( m_lastbitset, m_bitset, BG1_ROWS * 2 );
 
         Clear();
     }
@@ -141,6 +144,19 @@ public:
         va_end(ap);
     }
 
+    inline bool NeedFinish()
+    {
+        for( unsigned int i = 0; i < BG1_ROWS; i++ )
+        {
+            if( m_bitset[i] != m_lastbitset[i] )
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 private:
     //set a number of bits at xoffset of the current bitset
     void SetBitRange( unsigned int bitsetIndex, unsigned int xOffset, unsigned int number )
@@ -171,6 +187,9 @@ private:
 
 	//bitset of which tiles are active
 	uint16_t m_bitset[BG1_ROWS];
+	//last flushed bitset, used to tell whether we've made changes that will require a finish() to be called before the next frame
+    uint16_t m_lastbitset[BG1_ROWS];
+
 	//actual contents of tiles
     ///rows, cols
 	uint16_t m_tileset[BG1_ROWS][BG1_COLS];

@@ -1,7 +1,12 @@
 #include "macronixmx25.h"
+#include "board.h"
 
 void MacronixMX25::init()
 {
+    GPIOPin writeProtect = FLASH_WP_GPIO;
+    writeProtect.setControl(GPIOPin::OUT_10MHZ);
+    writeProtect.setHigh();
+
     spi.init();
 
     // reset

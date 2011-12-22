@@ -29,8 +29,8 @@ class AccelState {
 	static const int NUM_SAMPLES      = 16; //how many samples we keep in the data buffer
 	static const int MEAN_SHIFT_BY	  = 4; //if NUM_SAMPLES is 16, we can bit shift the sum by 4 to get the mean
 
-	static const int SHAKE_THRESHOLD  = (NUM_SAMPLES * 45);
-	static const int SHAKE_HYSTERESIS = (NUM_SAMPLES * 25);   // measured empirically
+	static const int SHAKE_THRESHOLD  = (NUM_SAMPLES * 38);  // Gen 1 @ 100HZ would be 45
+	static const int SHAKE_HYSTERESIS = (NUM_SAMPLES * 21);  // Gen 1 @ 100HZ would be 25
 
     static AccelState instances[_SYS_NUM_CUBE_SLOTS];
 

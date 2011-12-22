@@ -21,8 +21,12 @@ enum GameStateIndex
 
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
-const float ROUND_TIME = 120.0f; // TODO reduce when tilt bug is gone
-const float ROUND_BONUS_TIME = 10.0f; // TODO reduce when tilt bug is gone
+#ifdef DEBUG
+const float ROUND_TIME = 20;
+#else
+const float ROUND_TIME = 180.0f;
+#endif
+const float ROUND_BONUS_TIME = 10.0f;
 
 // HACK workaround inability to check if a Cube is actually connected
 const unsigned MAX_CUBES = 6;
@@ -38,9 +42,11 @@ public:
     static unsigned GetNumCubes() { return MAX_CUBES; }// TODO
     static CubeStateMachine* findCSMFromID(Cube::ID cubeID);
 
-    static float GetAnagramCooldown() { return sInstance->mAnagramCooldown; }
-    static unsigned GetSecondsLeft() { return (unsigned) sInstance->mTimeLeft; }
-    static unsigned GetScore() { return (unsigned) sInstance->mScore; }
+    static float getAnagramCooldown() { return sInstance->mAnagramCooldown; }
+    static unsigned getSecondsLeft() { return (unsigned) sInstance->mTimeLeft; }
+    static unsigned getScore() { return (unsigned) sInstance->mScore; }
+    static float getTime() { return sInstance->StateMachine::getTime(); }
+
 protected:
     virtual State& getState(unsigned index);
     virtual unsigned getNumStates() const { return GameStateIndex_NumStates; }

@@ -10,8 +10,8 @@ inline int fast_abs(int x) {
 }
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
-pCurrent(gGame.views), pTarget(0), mPosition(128+64,64+16), // todo: move intial position to map data
-mDir(2), mKeyCount(0), mSandwichCount(0), 
+pCurrent(pGame->views), pTarget(0), mPosition(128+64,64+16), // todo: move intial position to map data
+mDir(2), mKeyCount(0), mItemMask(0), 
 mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
 mApproachingLockedDoor(false) {
   CORO_RESET;
@@ -29,7 +29,29 @@ void Player::Reset() {
 }
 
 MapRoom* Player::Room() const {
-  return gGame.map.GetRoom(Location());
+  return pGame->map.GetRoom(Location());
+}
+
+void Player::PickupItem(int itemId) {
+  if (itemId == 0) { return; }
+  if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
+    mKeyCount++;
+    if (mKeyCount == 1) {
+      pGame->OnInventoryChanged();
+    }
+  } else if (!HasItem(itemId)) {
+    mItemMask |= (1<<itemId);
+    ASSERT(HasItem(itemId));
+    pGame->OnInventoryChanged();
+  }
+}
+
+void Player::DecrementBasicKeyCount() { 
+  ASSERT(mKeyCount>0); 
+  mKeyCount--; 
+  if (mKeyCount == 0) {
+    pGame->OnInventoryChanged();
+  }
 }
 
 void Player::SetLocation(Vec2 position, Cube::Side direction) {
@@ -111,7 +133,7 @@ void Player::Update(float dt) {
     mPath.Cancel();
     mAnimFrame = 0;
     mAnimTime = 0.f;
-    while(!gGame.map.CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
+    while(!pGame->map.CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
       CORO_YIELD;
       mNextDir = pCurrent->VirtualTiltDirection();
       if (PathDetect()) { break; }
@@ -166,7 +188,7 @@ void Player::Update(float dt) {
           }          
         }
       } else { // general case - A*
-        ASSERT( gGame.map.FindPath(pCurrent->Location(), mDir, &mMoves) );
+        ASSERT( pGame->map.FindPath(pCurrent->Location(), mDir, &mMoves) );
         mProgress = 0;
         for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
           mDir = *pNextMove;  
@@ -205,12 +227,7 @@ void Player::Update(float dt) {
           int itemId = pCurrent->Room()->itemId;
           if (itemId) {
             pCurrent->Room()->SetItem(0);
-            // TODO: sandwich parts
-            if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
-              IncrementBasicKeyCount();
-            } else {
-              IncrementSandwichCount();
-            }
+            PickupItem(itemId);
             // do a pickup animation
             for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
               pCurrent->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
@@ -287,11 +304,11 @@ void Path::Cancel() {
 
 bool Player::PathDetect() {
   if (pTarget) { return false; }
-  for(GameView *p = gGame.ViewBegin(); p!=gGame.ViewEnd(); ++p) { p->visited = false; }
+  for(GameView *p = pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) { p->visited = false; }
   pCurrent->visited = true;
   for(int side=0; side<NUM_SIDES; ++side) {
     mPath.steps[0] = side;
-    if (gGame.map.CanTraverse(pCurrent->Location(), side) && PathVisit(pCurrent->VirtualNeighborAt(side), 1)) {
+    if (pGame->map.CanTraverse(pCurrent->Location(), side) && PathVisit(pCurrent->VirtualNeighborAt(side), 1)) {
       return true;
     }
   }
@@ -308,7 +325,7 @@ bool Player::PathVisit(GameView* view, int depth) {
   } else {
     for(int side=0; side<NUM_SIDES; ++side) {
       mPath.steps[depth] = side;
-      if (gGame.map.CanTraverse(view->Location(), side) && PathVisit(view->VirtualNeighborAt(side), depth+1)) {
+      if (pGame->map.CanTraverse(view->Location(), side) && PathVisit(view->VirtualNeighborAt(side), depth+1)) {
         return true;
       } else {
         mPath.steps[depth] = -1;

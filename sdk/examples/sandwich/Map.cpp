@@ -7,22 +7,22 @@
 //-----------------------------------------------------------------------------
 
 int MapRoom::RoomId() const {
-  return (int)(this - gGame.map.GetRoom(0));
+  return (int)(this - pGame->map.GetRoom(0));
 }
 
 Vec2 MapRoom::Location() const {
   int id = RoomId();
-  return Vec2(id % gGame.map.Data()->width, id / gGame.map.Data()->width);
+  return Vec2(id % pGame->map.Data()->width, id / pGame->map.Data()->width);
 }
 
 RoomData* MapRoom::Data() const {
-  return gGame.map.Data()->GetRoomData(RoomId());
+  return pGame->map.Data()->GetRoomData(RoomId());
 }
 
 void MapRoom::SetItem(int iid) {
   if (itemId != iid) {
     itemId = iid;
-    ItemData* id = gGame.map.Data()->FindItemData(RoomId());
+    ItemData* id = pGame->map.Data()->FindItemData(RoomId());
     if (id) { id->itemId = itemId; }
   }
 }
@@ -30,10 +30,10 @@ void MapRoom::SetItem(int iid) {
 uint8_t MapRoom::GetPortal(Cube::Side side) {
   Vec2 p = Location();
   switch(side) {
-    case SIDE_TOP: return gGame.map.Data()->GetPortalY(p.x, p.y);
-    case SIDE_LEFT: return gGame.map.Data()->GetPortalX(p.x, p.y);
-    case SIDE_BOTTOM: return gGame.map.Data()->GetPortalY(p.x, p.y+1);
-    case SIDE_RIGHT: return gGame.map.Data()->GetPortalX(p.x+1, p.y);
+    case SIDE_TOP: return pGame->map.Data()->GetPortalY(p.x, p.y);
+    case SIDE_LEFT: return pGame->map.Data()->GetPortalX(p.x, p.y);
+    case SIDE_BOTTOM: return pGame->map.Data()->GetPortalY(p.x, p.y+1);
+    case SIDE_RIGHT: return pGame->map.Data()->GetPortalX(p.x+1, p.y);
   }
   return 0;
 }
@@ -41,10 +41,10 @@ uint8_t MapRoom::GetPortal(Cube::Side side) {
 void MapRoom::SetPortal(Cube::Side side, uint8_t pid) {
   Vec2 p = Location();
   switch(side) {
-    case SIDE_TOP: gGame.map.Data()->SetPortalY(p.x, p.y, pid); break;
-    case SIDE_LEFT: gGame.map.Data()->SetPortalX(p.x, p.y, pid); break;
-    case SIDE_BOTTOM: gGame.map.Data()->SetPortalY(p.x, p.y+1, pid); break;
-    case SIDE_RIGHT: gGame.map.Data()->SetPortalX(p.x+1, p.y, pid); break;
+    case SIDE_TOP: pGame->map.Data()->SetPortalY(p.x, p.y, pid); break;
+    case SIDE_LEFT: pGame->map.Data()->SetPortalX(p.x, p.y, pid); break;
+    case SIDE_BOTTOM: pGame->map.Data()->SetPortalY(p.x, p.y+1, pid); break;
+    case SIDE_RIGHT: pGame->map.Data()->SetPortalX(p.x+1, p.y, pid); break;
   }
 }
 
@@ -86,7 +86,7 @@ void MapRoom::OpenDoor(/*Cube::Side side*/) {
 void MapRoom::ClearTrigger() {
   if (callback) {
     callback = 0;
-    TriggerData* t = gGame.map.Data()->FindTriggerData(RoomId());
+    TriggerData* t = pGame->map.Data()->FindTriggerData(RoomId());
     if (t) { t->callback = 0; }
   }
 }
@@ -213,7 +213,7 @@ struct AStar {
       p->tileID = nid;
       recordCount++;
       // is it walkable? (remember to convert normalized tile position to global tile position)
-      if (gGame.map.IsVertexWalkable(ntile + Vec2(2,2) + (8 * offset))) {
+      if (pGame->map.IsVertexWalkable(ntile + Vec2(2,2) + (8 * offset))) {
         // open the record
         p->parentDirection = (dir+2)%4;
         p->costToThis = parent->costToThis + 1;

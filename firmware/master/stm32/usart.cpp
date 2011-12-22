@@ -1,11 +1,15 @@
 
 #include "usart.h"
+#include "board.h"
 
 // NOTE - these divisors must reflect the startup values configured in setup.cpp
 #define APB2RATE (72000000 / 2)
 #define APB1RATE (72000000 / 4)
 
-void Usart::init(int rate, StopBits bits)
+// static
+Usart Usart::Dbg(&UART_DBG);
+
+void Usart::init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits)
 {
     if (uart == &USART1) {
         RCC.APB2ENR |= (1 << 14);
@@ -22,6 +26,9 @@ void Usart::init(int rate, StopBits bits)
     else if (uart == &UART5) {
         RCC.APB1ENR |= (1 << 20);
     }
+
+    rx.setControl(GPIOPin::IN_FLOAT);
+    tx.setControl(GPIOPin::OUT_ALT_50MHZ);
 
     if (uart == &USART1)
         uart->BRR = APB2RATE / rate;

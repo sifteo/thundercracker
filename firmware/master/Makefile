@@ -9,10 +9,21 @@ endif
 SPEEX_DIR = speex
 include $(SPEEX_DIR)/speex.mk
 
-include Makefile.objs
-include Makefile.platform
+# TODO - MASTER_DIR gets defined in Makefile.defs, a little naughty to refer to it here before that's included
+SELECTORMENU_GEN_FILES = $(MASTER_DIR)/selectormenu/$(ASSETS).gen.h \
+                            $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp \
+                            $(MASTER_DIR)/selectormenu/$(ASSETS).html \
+                            $(MASTER_DIR)/selectormenu/$(AUDIO).gen.h \
+                            $(MASTER_DIR)/selectormenu/$(AUDIO).gen.cpp
 
 TC_DIR = ../..
+
+include Makefile.objs
+include $(TC_DIR)/Makefile.platform
+
+include stm32/st-usb/st-usb.mk
+OBJS_STM32 += $(OBJS_USB_STM32)
+
 ifeq ($(BUILD_PLATFORM), windows32)
     DEPS_DIR = $(TC_DIR)/deps/win32
     # TBD if there's a better way, but windows ar or libtool needs to have all the
@@ -28,7 +39,9 @@ endif
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -Icommon -I../include
-CFLAGS_STM32 := $(SPEEX_INC) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER
+CFLAGS_STM32 := -Istm32 $(SPEEX_INC) $(INC_USB_STM32) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER
+# NOTE: ST defines here are temporary until we integrate our own USB code
+CFLAGS_STM32 += -DUSE_STM3210C_EVAL -DSTM32F10X_CL -DUSE_STDPERIPH_DRIVER
 CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include \
              -I$(DEPS_DIR)/speex/include
 
@@ -41,6 +54,7 @@ CDEPS := \
 	../include/*.h \
 	$(SDK_DIR)/include/sifteo/*.h \
     $(SPEEX_DEPS) \
+	$(SDK_DIR)/include/sifteo/*.h $(STIR)
 
 all: $(BINS)
 
@@ -71,7 +85,16 @@ $(BIN_STM32): $(OBJS_STM32)
 %.stm32.o: %.s $(CDEPS)
 	$(CC_STM32) -x assembler-with-cpp -c -o $@ $< $(CFLAGS_STM32)
 
+ASSETDEPS += $(MASTER_DIR)/selectormenu/*.png $(MASTER_DIR)/selectormenu/$(ASSETS).lua
+AUDIODEPS += $(MASTER_DIR)/selectormenu/*.raw $(MASTER_DIR)/selectormenu/$(AUDIO).txt
+
+$(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
+	$(STIR) $(MASTER_DIR)/selectormenu/$(ASSETS).lua -o $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp -o $(MASTER_DIR)/selectormenu/$(ASSETS).gen.h -o $(MASTER_DIR)/selectormenu/$(ASSETS).html -v
+
+$(MASTER_DIR)/selectormenu/$(AUDIO).gen.cpp: $(SPEEXENC) $(AUDIODEPS)
+	$(SPEEXENC) -o $(MASTER_DIR)/selectormenu/$(AUDIO).gen.cpp -o $(MASTER_DIR)/selectormenu/$(AUDIO).gen.h $(MASTER_DIR)/selectormenu/$(AUDIO).txt
+
 .PHONY: all clean
 
 clean:
-	rm -f $(BINS) $(OBJS_SIM) $(OBJS_STM32)
+	rm -f $(BINS) $(OBJS_SIM) $(OBJS_STM32) $(SELECTORMENU_GEN_FILES)

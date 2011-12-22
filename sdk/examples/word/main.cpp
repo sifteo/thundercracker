@@ -15,19 +15,19 @@ static const char* sideNames[] =
 
 void onCubeEventTouch(_SYSCubeID cid)
 {
-    LOG(("cube event touch:\t%d\n", cid));
+    DEBUG_LOG(("cube event touch:\t%d\n", cid));
     WordGame::onEvent(EventID_Input, EventData());
 }
 
 void onCubeEventShake(_SYSCubeID cid)
 {
-    LOG(("cube event shake:\t%d\n", cid));
+    DEBUG_LOG(("cube event shake:\t%d\n", cid));
     WordGame::onEvent(EventID_Input, EventData());
 }
 
 void onCubeEventTilt(_SYSCubeID cid)
 {
-    LOG(("cube event tilt:\t%d\n", cid));
+    DEBUG_LOG(("cube event tilt:\t%d\n", cid));
     WordGame::onEvent(EventID_Input, EventData());
 }
 
@@ -35,34 +35,35 @@ void onNeighborEventAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID 
 {
     EventData data;
     WordGame::onEvent(EventID_AddNeighbor, data);
-    LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
+    DEBUG_LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
 void onNeighborEventRemove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
     EventData data;
     WordGame::onEvent(EventID_RemoveNeighbor, data);
-    LOG(("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
+    DEBUG_LOG(("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
 void accel(_SYSCubeID c)
 {
-    LOG(("accelerometer changed\n"));
+    DEBUG_LOG(("accelerometer changed\n"));
 }
 
 void siftmain()
 {
-    LOG(("Hello, Word Play 2\n"));
+    DEBUG_LOG(("Hello, Word Play 2\n"));
+
     _SYS_vectors.cubeEvents.touch = onCubeEventTouch;
     _SYS_vectors.cubeEvents.shake = onCubeEventShake;
+#ifdef DEBUGzzzzzzzzzzz
     _SYS_vectors.cubeEvents.tilt = onCubeEventTilt;
+#endif
     _SYS_vectors.neighborEvents.add = onNeighborEventAdd;
     _SYS_vectors.neighborEvents.remove = onNeighborEventRemove;
-    
+
     static Cube cubes[MAX_CUBES];
 
-    //static CubeSim demos[] = { CubeSim(cubes[0]), CubeSim(cubes[1]) };
-    
     // start loading assets
     for (unsigned i = 0; i < arraysize(cubes); i++)
     {
@@ -83,7 +84,7 @@ void siftmain()
         for (unsigned i = 0; i < arraysize(cubes); i++)
         {
             VidMode_BG0_ROM rom(cubes[i].vbuf);
-            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0_SPR_BG1::LCD_width), 2);
             if (!cubes[i].assetDone(GameAssets))
             {
                 done = false;
@@ -97,15 +98,26 @@ void siftmain()
             break;
         }
     }
-
-    /*
-    for (unsigned i = 0; i < arraysize(demos); i++)
-        demos[i].init();
+    /* FIXME remove test code
+    // done loading
+    Cube& cube = cubes[0];
+    VidMode_BG0_SPR_BG1 vid(cube.vbuf);
+    vid.init();
+    vid.BG0_drawAsset(Vec2(0,0), Title);
+    vid.resizeSprite(1, 64, 64);
+    vid.setSpriteImage(1, Bullet.index);// + (frame % font.frames) * font.width * font.height);
+    vid.moveSprite(1, 64 + WordGame::rand(10), 32);
+    //ASSERT(!WordGame::spriteIsHidden(cube, 1));
+    while (1)
+    {
+        System::paint();
+    }
     */
 
     // main loop
     static WordGame game(cubes);
     float lastTime = System::clock();
+    float lastPaint = System::clock();
     while (1)
     {
         float now = System::clock();
@@ -113,9 +125,22 @@ void siftmain()
         lastTime = now;
 
         game.update(dt);
-        //game.onEvent(EventID_Paint, EventData()); // TODO decouple
-        
-        System::paint();
+
+        // decouple paint frequency from update frequency
+        if (now - lastPaint >= 1.f/25.f)
+        {
+            game.onEvent(EventID_Paint, EventData());
+            lastPaint = now;
+        }
+
+        if (game.needsPaintSync())
+        {
+            game.paintSync();
+        }
+        else
+        {
+            System::paint();
+        }
     }
 }
 
@@ -125,3 +150,13 @@ void siftmain()
     error handler function. For example:
 */
 extern "C" void __cxa_pure_virtual() { while (1); }
+
+
+
+void assertWrapper(bool testResult)
+{
+    if (!testResult)
+    {
+        assert(testResult);
+    }
+}
