@@ -1,12 +1,13 @@
 
 #include "usart.h"
+#include "board.h"
 
 // NOTE - these divisors must reflect the startup values configured in setup.cpp
 #define APB2RATE (72000000 / 2)
 #define APB1RATE (72000000 / 4)
 
 // static
-Usart Usart::Dbg(&USART3);
+Usart Usart::Dbg(&UART_DBG);
 
 void Usart::init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits)
 {
