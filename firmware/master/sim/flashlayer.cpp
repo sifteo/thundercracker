@@ -2,7 +2,9 @@
 #include "flashlayer.h"
 #include <sifteo/macros.h>
 
+// statics
 FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
+struct FlashLayer::Stats FlashLayer::stats;
 
 char* FlashLayer::getRegion(uintptr_t address, int len)
 {
@@ -26,6 +28,7 @@ char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
 {
     CachedBlock *b = getCachedBlock(offset);
     if (b == 0) {
+        stats.misses++;
         b = getFreeBlock();
         if (b == 0) {
             LOG(("Flashlayer: No free blocks in cache\n"));
@@ -45,8 +48,12 @@ char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
         b->inUse = true;
         b->valid = true;
     } else {
-        //LOG(("Cache miss for offset: %d\n", offset));
-        //fprintf(stdout, "Cache miss for offset: %d\n", offset);
+        stats.hits++;
+    }
+
+    if (stats.hits + stats.misses >= 1000) {
+        DEBUG_LOG(("Flashlayer, stats for last 1000 accesses: %u hits, %u misses\n", stats.hits, stats.misses));
+        stats.hits = stats.misses = 0;
     }
     
     int boff = offset % BLOCK_SIZE;
@@ -74,4 +81,5 @@ void FlashLayer::init()
 {
     mFile = fopen("asegment.bin", "rb");
     ASSERT(mFile != NULL && "ERROR: FlashLayer failed to open asset segment - make sure asegment.bin is next to your executable.\n");
+    stats.hits = stats.misses = 0;
 }

@@ -70,9 +70,11 @@ private:
     //       hardware emulation layer, and firmware implementation
     
     static FILE * mFile;
-    // cache statistics
-    static int hits;
-    static int misses;
+    struct Stats {
+        unsigned hits;
+        unsigned misses;
+    };
+    static struct Stats stats;
 #endif
 
 };
