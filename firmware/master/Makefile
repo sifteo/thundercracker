@@ -9,12 +9,17 @@ endif
 SPEEX_DIR = speex
 include $(SPEEX_DIR)/speex.mk
 
-SELECTORMENU_GEN_FILES = $(MASTER_DIR)/selectormenu/$(ASSETS).gen.h $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp $(MASTER_DIR)/selectormenu/$(ASSETS).html $(MASTER_DIR)/selectormenu/$(AUDIO).gen.h $(MASTER_DIR)/selectormenu/$(AUDIO).gen.cpp
-
-include Makefile.objs
-include Makefile.platform
+# TODO - MASTER_DIR gets defined in Makefile.defs, a little naughty to refer to it here before that's included
+SELECTORMENU_GEN_FILES = $(MASTER_DIR)/selectormenu/$(ASSETS).gen.h \
+                            $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp \
+                            $(MASTER_DIR)/selectormenu/$(ASSETS).html \
+                            $(MASTER_DIR)/selectormenu/$(AUDIO).gen.h \
+                            $(MASTER_DIR)/selectormenu/$(AUDIO).gen.cpp
 
 TC_DIR = ../..
+
+include Makefile.objs
+include $(TC_DIR)/Makefile.platform
 
 include stm32/st-usb/st-usb.mk
 OBJS_STM32 += $(OBJS_USB_STM32)
