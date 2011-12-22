@@ -22,21 +22,32 @@ Intro::Intro()
 }
 
 
-void Intro::Reset()
+void Intro::Reset( bool ingamereset)
 {
-    m_fTimer = 0.0f;
+    if( ingamereset )
+    {
+        m_fTimer = INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME;
+        Game::Inst().playSound(glom_delay);
+    }
+    else
+        m_fTimer = 0.0f;
 }
 
 
-void Intro::Update( float dt )
+bool Intro::Update( float dt )
 {
-    if( m_fTimer == 0.0f )
-        Game::Inst().playSound(glom_delay);
-
     m_fTimer += dt;
 
+    if( m_fTimer <= INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME && m_fTimer + dt > INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME )
+        Game::Inst().playSound(glom_delay);
+
     if( m_fTimer > INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME + INTRO_BALLEXPLODE_TIME )
+    {
         Game::Inst().setState( Game::STATE_PLAYING );
+        return false;
+    }
+
+    return true;
 }
 
 const Sifteo::PinnedAssetImage *ARROW_SPRITES[ Intro::NUM_ARROWS ] =

@@ -4,22 +4,28 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _GAME_H
-#define _GAME_H
+#ifndef _MENUCONTROLLER_H
+#define _MENUCONTROLLER_H
 
 #include <sifteo.h>
-#include "cubewrapper.h"
+#include "TFcubewrapper.h"
 #include "TiltFlowMenu.h"
 
 using namespace Sifteo;
 
+namespace SelectorMenu
+{
+
+
+void RunMenu();
+
 //singleton class
-class Game
+class MenuController
 {
 public:    
-	static Game &Inst();
+    static MenuController &Inst();
 	
-	Game();
+    MenuController();
 
 	static const int NUM_CUBES = 2;
     static const int NUM_MENU_ITEMS = 3;
@@ -27,7 +33,7 @@ public:
 	CubeWrapper cubes[NUM_CUBES]; 
 
 	void Init();
-	void Update();
+	bool Update();
 	void Reset();
 	
 
@@ -35,5 +41,7 @@ private:
     float m_fLastTime;
     TiltFlowMenu m_Menu;
 };
+
+} //namespace TiltFlowMenu
 
 #endif

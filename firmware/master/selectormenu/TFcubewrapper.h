@@ -4,14 +4,17 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _CUBEWRAPPER_H
-#define _CUBEWRAPPER_H
+#ifndef _TFCUBEWRAPPER_H
+#define _TFCUBEWRAPPER_H
 
 #include <sifteo.h>
 
 using namespace Sifteo;
 
-//wrapper for a cube.  Contains the cube instance and video buffers, along with associated game information
+namespace SelectorMenu
+{
+
+//wrapper for a cube.  Contains the cube instance and video buffers, along with associated menu information
 class CubeWrapper
 {
 public:
@@ -36,5 +39,7 @@ private:
 	VidMode_BG0_ROM m_rom;
 	BG1Helper m_bg1helper;
 };
+
+} //namespace SelectorMenu
 
 #endif

@@ -6,11 +6,12 @@
 #define _TILTFLOWMENU_H
 
 #include <sifteo.h>
-#include "utils.h"
+#include "TFutils.h"
 
 using namespace Sifteo;
 
-
+namespace SelectorMenu
+{
 
 //---------------------------------------------------------------------------
 // TILT FLOW ITEM
@@ -49,7 +50,15 @@ public:
   static const Sifteo::AssetImage *TIPS[NUM_TIPS];
 
   typedef enum
-  { STATUS_NONE, STATUS_MENU, STATUS_ITEM, STATUS_INFO }
+  { 
+	  STATUS_NONE, 
+	  STATUS_MENU, 
+	  STATUS_ITEM, 
+	  STATUS_INFO, 
+	  //CES HACKERY
+	  STATUS_PICKED, 
+	  STATUS_STARTING,
+  }
   Status;
 
   static int s_cubeIndex;
@@ -72,7 +81,12 @@ public:
 
   void CheckForRepaint();
   void Tick();
+  _SYSCubeID getNeighbor();
   //void RelateToMenu();
+  //CES HACKERY
+  //will set up this view to receive a cover from the given view
+  void setUpIncomingCover( TiltFlowView &view );
+
 private:
   Status mStatus;
   int mItem;
@@ -86,6 +100,9 @@ private:
   Side mLastNeighborRemoveSide;
   Cube *mpCube;
 
+  //for CES hackery
+  Side mLastNeighboredSide;
+
   // for PositionOf and FindGroups
   //bool mVisited;
   //Vec2 mGridPosition;
@@ -93,13 +110,16 @@ private:
   void PaintNone();
   void PaintInfo();
   void PaintMenu();
+  void PaintIncomingCover();
 
-  void DoPaintItem(TiltFlowItem *pItem, int x);
+  void DoPaintItem(TiltFlowItem *pItem, int x, int y = 0);
   void PaintItem();
 
   void ClipIt(int ox, int &x, int &w);
 
   void OnButton(bool pressed);
+
+  Vec2 LerpPosition( const Vec2 &start, const Vec2 &end, float timePercent );
 
   //TODO FLIP
   //void OnFlip(Cube c, bool newOrientationIsUp);
@@ -147,14 +167,18 @@ public:
 
     void AssignViews();
 
-    void Tick(float dt);
+    //return true unless done
+	bool Tick(float dt);
     void Pick(TiltFlowView &view);
 
     inline TiltFlowView *GetKeyView() { return mKeyView; }
     inline float GetSimTime() const { return mSimTime; }
     inline Status GetStatus() const { return mStatus; }
     inline int GetNumItems() const { return mNumItems; }
+	inline float GetScrollTime() const { return mSimTime - mPickTime; }
     TiltFlowItem *GetItem( int item );
+
+	void playSound( const _SYSAudioModule &sound );
 
 private:
     //void CheckMenuNeighbors();
@@ -165,7 +189,6 @@ private:
     //user provided!
     TiltFlowItem *mItems;
     Status mStatus;
-    bool mDone;
     float mSimTime;
     float mUpdateTime;
     float mPickTime;
@@ -173,6 +196,8 @@ private:
     int mNumItems;
     TiltFlowView *mKeyView;
     TiltFlowView mViews[ MAX_CUBES ];
+	AudioChannel m_SFXChannel;
+	bool mDone;
     bool mNeighborDirty;
 };
 
@@ -202,7 +227,7 @@ private:
 
 
 
-
+}  //namespace SelectorMenu
 
 
 #endif //_TILTFLOWMENU_H

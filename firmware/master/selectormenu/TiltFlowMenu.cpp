@@ -3,9 +3,12 @@
   //---------------------------------------------------------------------------
 
 #include "TiltFlowMenu.h"
-#include "game.h"
-#include "cubewrapper.h"
+#include "MenuController.h"
+#include "TFcubewrapper.h"
 #include "assets.gen.h"
+#include "audio.gen.h"
+
+using namespace SelectorMenu;
 
 const float TiltFlowMenu::UPDATE_DELAY = 1.0f / 30.0f;
 const float TiltFlowMenu::PICK_DELAY = 2.0f;
@@ -20,8 +23,9 @@ TiltFlowMenu *TiltFlowMenu::Inst()
     return s_pInst;
 }
 
-TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( CHOOSING ), mDone( false ),
-    mSimTime( 0.0f ), mUpdateTime( 0.0f ), mPickTime( 0.0f ), mNumCubes( numCubes ), mNumItems( numItems ), mNeighborDirty( true )
+TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( CHOOSING ), 
+    mSimTime( 0.0f ), mUpdateTime( 0.0f ), mPickTime( 0.0f ), mNumCubes( numCubes ), mNumItems( numItems ), 
+	mDone( false ), mNeighborDirty( true )
 {
     s_pInst = this;
     //TODO SFX
@@ -39,19 +43,42 @@ void TiltFlowMenu::AssignViews()
 {
     //TODO ASSIGN VIEWS
     for( int i = 0; i < mNumCubes; i++ )
-        mViews[i].SetCube( &Game::Inst().cubes[i].GetCube() );
+        mViews[i].SetCube( &MenuController::Inst().cubes[i].GetCube() );
+
+	//for some reason this doesn't work if it's called in the constructor, so put it here for now.
+	m_SFXChannel.init();
 }
 
 
-void TiltFlowMenu::Tick(float dt)
+bool TiltFlowMenu::Tick(float dt)
 {
     mSimTime += dt;
 
     if (mDone) {
-      // mirr?
+      return false;
     }
 
     if (mSimTime - mUpdateTime > UPDATE_DELAY) {
+
+      //CES HACKERY
+	  for( int i = 0; i < mNumCubes; i++ )
+	  {
+			TiltFlowView &view = mViews[i];
+			if (&view == mKeyView) {
+				_SYSCubeID neighbor = view.getNeighbor();
+
+				if( neighbor != CUBE_ID_UNDEFINED )
+				{
+					Pick( view );
+					TiltFlowView &neighborView = mViews[neighbor];
+
+					neighborView.setUpIncomingCover( view );
+				}
+
+				break;
+			}
+	  }
+
       if (mNeighborDirty) {
         mNeighborDirty = false;
         //CheckMenuNeighbors();
@@ -69,14 +96,15 @@ void TiltFlowMenu::Tick(float dt)
 
     for( int i = 0; i < mNumCubes; i++ )
       mViews[i].CheckForRepaint();
+
+	return true;
 }
 
 
 void TiltFlowMenu::Pick(TiltFlowView &view)
 {
     if (mStatus == CHOOSING) {
-        //TODO SFX
-      //Hacky.Sfx("checkpoVec2");
+      TiltFlowMenu::Inst()->playSound( select );
       //LOG(("Selected {0}", view.Item.name));
       mStatus = PICKED;
       mPickTime = mSimTime;
@@ -84,7 +112,8 @@ void TiltFlowMenu::Pick(TiltFlowView &view)
       {
           TiltFlowView &v = mViews[i];
         if (&v == &view) {
-          v.SetStatus(TiltFlowView::STATUS_INFO);
+          //v.SetStatus(TiltFlowView::STATUS_INFO);
+			v.SetStatus(TiltFlowView::STATUS_PICKED);
         } else {
           v.SetStatus(TiltFlowView::STATUS_NONE);
         }
@@ -104,12 +133,12 @@ TiltFlowItem *TiltFlowMenu::GetItem( int item )
     return NULL;
 }
 
+	
 
-
+//TODO, THIS IS NEIGHBORING, NOT HAPPENING YET
 /*
-  //TODO, THIS IS NEIGHBORING, NOT HAPPENING YET
-void TiltFlowMenu::CheckMenuNeighbors() {
-  ReassignMenu();
+void TiltFlowMenu::CheckMenuNeighbors() {	
+	ReassignMenu();
   for( int i = 0; i < mNumCubes; i++ )
   {
       TiltFlowView &view = mViews[i];
@@ -156,6 +185,13 @@ void TiltFlowMenu::ReassignMenu() {
     }
 }*/
 
+
+void TiltFlowMenu::playSound( const _SYSAudioModule &sound )
+{
+    m_SFXChannel.stop();
+    m_SFXChannel.play(sound, LoopOnce);
+}
+
   //---------------------------------------------------------------------------
   // TILT FLOW ITEM
   //---------------------------------------------------------------------------
@@ -198,7 +234,8 @@ int TiltFlowView::s_cubeIndex = 0;
 TiltFlowView::TiltFlowView() :
     mItem( -1 ), mOffsetX( 0.0f ), mAccel( MINACCEL ),
     mRestTime( -1.0f ), mDrawLabel( true ), mDirty( true ),
-    mCurrentTip( 0 ), mTipTime(0.0f), mLastNeighborRemoveSide( NONE ), mpCube( NULL )
+    mCurrentTip( 0 ), mTipTime(0.0f), mLastNeighborRemoveSide( NONE ), mpCube( NULL ),
+	mLastNeighboredSide( NONE )
 {
 }
 
@@ -219,6 +256,10 @@ void TiltFlowView::Tick() {
   case STATUS_ITEM:
     CoastToStop();
     break;
+  case STATUS_PICKED:
+  case STATUS_STARTING:
+    mDirty = true;
+    break;
   default:
     // do nothing
     break;
@@ -228,10 +269,9 @@ void TiltFlowView::Tick() {
     mDirty = true;
     mDrawLabel = true;
 
-    //TODO SFX
-    /*if (mDrawLabel && !wasDrawingLabel) {
-      Hacky.Sfx("ui_select_01");
-    }*/
+    if (mDrawLabel && !wasDrawingLabel) {
+      TiltFlowMenu::Inst()->playSound( settle );
+    }
     mRestTime = -1;
   }
 
@@ -242,6 +282,22 @@ void TiltFlowView::Tick() {
       mDirty = true;
   }
 }
+
+
+_SYSCubeID TiltFlowView::getNeighbor()
+{
+	for( int i = 0; i < NUM_SIDES; i++ )
+	{
+		if( mpCube->hasPhysicalNeighborAt(i) )
+		{
+			mLastNeighboredSide = (Side)i;
+			return mpCube->physicalNeighborAt(i);
+		}
+	}
+
+	return CUBE_ID_UNDEFINED;
+}
+
 
 void TiltFlowView::Paint()
 {
@@ -255,6 +311,12 @@ void TiltFlowView::Paint()
     case STATUS_INFO:
       PaintInfo();
       break;
+	case STATUS_PICKED:
+      PaintMenu();
+      break;
+	case STATUS_STARTING:
+      PaintIncomingCover();
+      break;
     default:
       PaintNone();
       break;
@@ -263,11 +325,8 @@ void TiltFlowView::Paint()
 
 
 void TiltFlowView::PaintNone() {
-  /*if (TiltFlowMenu::Inst()->PaintNone != NULL) {
-    TiltFlowMenu::Inst()->PaintNone(this);
-  } else {
-    c.FillScreen(Color.White);
-  }*/
+  VidMode_BG0 vid( mpCube->vbuf );
+  vid.clear(White.tiles[0]);
 }
 
 void TiltFlowView::PaintInfo() {
@@ -277,6 +336,15 @@ void TiltFlowView::PaintInfo() {
   TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128,24)); // magic
   */
 }
+
+const float SCROLL_AMOUNT = 220.0f;
+
+Float2 SCROLL_DIRS[] = {
+	Float2( 0.0f, SCROLL_AMOUNT ),
+	Float2( SCROLL_AMOUNT, 0.0f ),
+	Float2( 0.0f, -SCROLL_AMOUNT ),
+	Float2( -SCROLL_AMOUNT, 0.0f ),
+};
 
 void TiltFlowView::PaintMenu() {
   //if (TiltFlowMenu::Inst()->PaintBackground != NULL) { TiltFlowMenu::Inst()->PaintBackground(this); } else { c.FillScreen(Color.White); }
@@ -291,31 +359,44 @@ void TiltFlowView::PaintMenu() {
       vid.BG0_textf( Vec2( i, 0 ), Font, "%d", i%10 );
   }*/
 
-  DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), 24);
+  Vec2 offset( 24, 0 );
 
-  if (/*c.Neighbors.Left == NULL && */mItem > 0) {
-    DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70);
-  }
-  if (/*c.Neighbors.Right == NULL && */mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
-    DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118);
-  }
-
-  BG1Helper &bg1helper = Game::Inst().cubes[ mpCube->id() ].GetBG1Helper();
-
-  if (mDrawLabel) {
-    //TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
-      bg1helper.DrawAsset(Vec2(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
+  if( mStatus == STATUS_PICKED )
+  {
+	  //scroll the cover off
+	  offset -= Vec2( SCROLL_DIRS[ mLastNeighboredSide ] * TiltFlowMenu::Inst()->GetScrollTime() / TiltFlowMenu::PICK_DELAY );
+	  //printf( "panning %d, %d.  Pan offset : %0.2f\n", offset.x, offset.y, ( SCROLL_DIRS[ mLastNeighboredSide ] * TiltFlowMenu::Inst()->GetScrollTime() / TiltFlowMenu::PICK_DELAY ).x );
   }
 
-  //draw the current tip
-  bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
+
+  DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), offset.x, offset.y);
+  BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
+
+  if( mStatus != STATUS_PICKED )
+  {
+	  if (/*c.Neighbors.Left == NULL && */mItem > 0) {
+		DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70);
+	  }
+	  if (/*c.Neighbors.Right == NULL && */mItem < TiltFlowMenu::Inst()->GetNumItems()-1) {
+		DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem + 1), 118);
+	  }
+
+	  if (mDrawLabel) {
+		//TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128, 20)); // magic
+		  bg1helper.DrawAsset(Vec2(LABEL_OFFSET,0), TiltFlowMenu::Inst()->GetItem( mItem )->mLabel);
+	  }
+
+	  //draw the current tip
+	  bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
+  }
+
   bg1helper.Flush();
 
   // Firmware handles all pixel-level scrolling
-  vid.BG0_setPanning(Vec2((int)-mOffsetX, COVER_Y_OFFSET));
+  vid.BG0_setPanning(Vec2((int)-mOffsetX, COVER_Y_OFFSET - offset.y));
 }
 
-void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x) {
+void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x, int y) {
   if( pItem )
   {
       VidMode_BG0 vid( mpCube->vbuf );
@@ -342,6 +423,30 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x) {
 
       ASSERT( size.x >= 0 );
 
+	  //y axis handled completely differently, since we aren't panning on y
+	  //just clip y to 0 and bottom of screen
+	  //CES HACKERY
+	  int yTile = y / 8;
+	  int yOffset = 0;
+
+	  if( yTile + size.y <= -3 )
+		  return;
+	  else if( yTile < -3 )
+	  {
+		  int diff = -3 - yTile;
+		  offset.y += diff;
+		  size.y -= diff;
+		  yOffset += diff;
+	  }
+	  else if( yTile + pItem->mImage.height > VidMode_BG0::BG0_height - 4 )
+	  {
+		  int diff = ( yTile + pItem->mImage.height ) - ( VidMode_BG0::BG0_height - 4 );
+
+		  if( diff >= size.y )
+			  return;
+		  size.y -= diff;
+	  }
+
       //this shouldn't ever really loop, since we're heavily constraining curTile
       while( curTile < 0 )
       {
@@ -350,16 +455,16 @@ void TiltFlowView::DoPaintItem(TiltFlowItem *pItem, int x) {
 
       //need to draw on the right tiles.
       if( curTile + size.x < (int)VidMode_BG0::BG0_width )
-        vid.BG0_drawPartialAsset(Vec2(curTile,0), offset, size, pItem->mImage, 0);
+        vid.BG0_drawPartialAsset(Vec2(curTile,yOffset), offset, size, pItem->mImage, 0);
       //Handle wrapping
       else
       {
           int wrapAmt = curTile + size.x - VidMode_BG0::BG0_width;
           size.x -= wrapAmt;
-          vid.BG0_drawPartialAsset(Vec2(curTile,0), offset, size, pItem->mImage, 0);
+          vid.BG0_drawPartialAsset(Vec2(curTile,yOffset), offset, size, pItem->mImage, 0);
           offset.x += size.x;
           size.x = wrapAmt;
-          vid.BG0_drawPartialAsset(Vec2(0,0), offset, size, pItem->mImage, 0);
+          vid.BG0_drawPartialAsset(Vec2(0,yOffset), offset, size, pItem->mImage, 0);
       }
   }
 }
@@ -374,6 +479,69 @@ void TiltFlowView::PaintItem() {
       TiltFlowMenu::Inst()->Font.Paint(c, Item.name, Vec2.Zero, HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Vec2(128,20)); // magic
     }
   }*/
+}
+
+
+Vec2 TiltFlowView::LerpPosition( const Vec2 &start, const Vec2 &end, float timePercent )
+{
+	if( timePercent < 0.0f )
+		timePercent = 0.0f;
+	if( timePercent > 1.0f )
+		timePercent = 1.0f;
+    Vec2 result( start.x + ( end.x - start.x ) * timePercent, start.y + ( end.y - start.y ) * timePercent );
+
+    return result;
+}
+
+static const int OFFSCREEN_POS = 32;
+
+static const Vec2 STARTING_PT[] = {
+	Vec2( 0, -OFFSCREEN_POS ),
+	Vec2( -OFFSCREEN_POS, 0 ),
+	Vec2( 0, OFFSCREEN_POS ),
+	Vec2( OFFSCREEN_POS, 0 ),
+};
+
+void TiltFlowView::PaintIncomingCover()
+{
+	//BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
+	VidMode_BG0 vid( mpCube->vbuf );
+	vid.BG0_setPanning(Vec2(0, 0));
+	//bg1helper.Flush();
+
+	Vec2 pos = LerpPosition( STARTING_PT[mLastNeighboredSide], Vec2( 0, 0 ), TiltFlowMenu::Inst()->GetScrollTime() / ( TiltFlowMenu::PICK_DELAY - 0.5f ) );
+	Vec2 size( 16, 16 );
+	Vec2 offset( 0, 0 );
+
+	if( pos.x <= -16 || pos.x >= 16 )
+		return;
+	else if( pos.x < 0 )
+	{
+		offset.x -= pos.x;
+		size.x += pos.x;
+		pos.x = 0;
+	}
+	else if( pos.x > 0 )
+	{
+		size.x -= pos.x;
+	}
+
+	if( pos.y <= -16 || pos.y >= 16 )
+		return;
+	else if( pos.y < 0 )
+	{
+		offset.y -= pos.y;
+		size.y += pos.y;
+		pos.y = 0;
+	}
+	else if( pos.y > 0 )
+	{
+		size.y -= pos.y;
+	}
+
+	//printf( "Attempting to draw at %d, %d.  Offset %d, %d, size %d, %d\n", pos.x, pos.y, offset.x, offset.y, size.x, size.y ); 
+
+	vid.BG0_drawPartialAsset(pos, offset, size, ChromaCover, 0);
 }
 
 
@@ -477,10 +645,9 @@ void TiltFlowView::UpdateMenu() {
     mRestTime = TiltFlowMenu::Inst()->GetSimTime();
 
     // accelerate in the direction of tilt
-    //TODO SOUND
-    /*if (mDrawLabel) {
-      Hacky.Sfx("ui_select_02");
-    }*/
+    if (mDrawLabel) {
+      TiltFlowMenu::Inst()->playSound( changeoption );
+    }
     mDrawLabel = false;
     float vSign = state.x == _SYS_TILT_NEGATIVE ? -1.0f : 1.0f;
 
@@ -540,6 +707,16 @@ void TiltFlowView::StopScrolling() {
   mRestTime = TiltFlowMenu::Inst()->GetSimTime();
   mDrawLabel = false;
   mDirty = true;
+}
+
+
+//will set up this view to receive a cover from the given view
+void TiltFlowView::setUpIncomingCover( TiltFlowView &view )
+{
+	mpCube->orientTo( *view.mpCube );
+	//just to set it's mLastNeighboredSide
+	getNeighbor();
+	SetStatus( TiltFlowView::STATUS_STARTING );
 }
 
 /*
