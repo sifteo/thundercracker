@@ -20,10 +20,10 @@ public:
 	typedef enum
 	{
 		STATE_SPLASH,
-		//STARTING_STATE = STATE_SPLASH,
+        STARTING_STATE = STATE_SPLASH,
 		STATE_MENU,
         STATE_INTRO,
-        STARTING_STATE = STATE_INTRO,
+        //STARTING_STATE = STATE_INTRO,
 		STATE_PLAYING,		
         STATE_DYING,
 		STATE_POSTGAME,
@@ -42,6 +42,7 @@ public:
 
 	static const int NUM_CUBES = 2;
     static const unsigned int NUM_HIGH_SCORES = 5;
+    static const int NUM_SFX_CHANNELS = 3;
     static const int NUM_SLOSH_SOUNDS = 8;
     static const unsigned int INT_MAX = 0x7fff;
 
@@ -105,7 +106,8 @@ private:
 	TimeKeeper m_timer;
     float m_fLastTime;
 
-    AudioChannel m_SFXChannel;
+    AudioChannel m_SFXChannels[NUM_SFX_CHANNELS];
+    float m_SFXlastUsed[NUM_SFX_CHANNELS];
     AudioChannel m_musicChannel;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];

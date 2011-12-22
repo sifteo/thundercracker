@@ -7,7 +7,7 @@ using namespace Sifteo;
 
 WordGame* WordGame::sInstance = 0;
 
-WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes)
+WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes), mNeedsPaintSync(false)
 {
     sInstance = this;
 
@@ -52,7 +52,7 @@ bool WordGame::playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel ,
 
 bool WordGame::_playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
 {
-    ASSERT(channel < arraysize(mAudioChannels));
+    ASSERT((unsigned)channel < arraysize(mAudioChannels));
     return mAudioChannels[channel].play(mod, loopMode);
 }
 

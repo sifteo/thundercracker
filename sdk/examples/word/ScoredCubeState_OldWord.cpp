@@ -93,23 +93,8 @@ unsigned ScoredCubeState_OldWord::update(float dt, float stateTime)
 void ScoredCubeState_OldWord::paint()
 {
     Cube& c = getStateMachine().getCube();
-    // FIXME vertical words
-    const Sifteo::AssetImage& bg =
-        (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
-         c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED) ?
-            BGOldWordConnectedMiddle :
-            (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED) ?
-                BGOldWordConnectedRight:
-                BGOldWordConnectedLeft;
-    VidMode_BG0 vid(c.vbuf);
+    VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    vid.BG0_drawAsset(Vec2(0,0), bg);
-    vid.BG0_text(Vec2(6,3), Font, getStateMachine().getLetters());
-    char string[5];
-    sprintf(string, "%d", GameStateMachine::GetSecondsLeft());
-#if DEBUGZZZZZZZZ
-    printf("%d %s\n", getStateMachine().getCube().id(), string);
-#endif
-    vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
-
+    paintLetters(vid, Font1Letter);
+    paintTeeth(vid, TeethLoopWord, true, false, true, true);
 }

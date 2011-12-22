@@ -80,20 +80,28 @@ void ScoredCubeState_NotWord::paint()
 {
     Cube& c = getStateMachine().getCube();
     // FIXME vertical words
-    const Sifteo::AssetImage& bg =
-        (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
-         c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED) ?
-            BGNotWordConnected :
-            BGNotWordNotConnected;
-    VidMode_BG0 vid(c.vbuf);
+    bool neighbored =
+            (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
+            c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
+    VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    vid.BG0_drawAsset(Vec2(0,0), bg);
-    vid.BG0_text(Vec2(6,3), Font, getStateMachine().getLetters());
-    char string[5];
-    sprintf(string, "%d", GameStateMachine::GetSecondsLeft());
-#if DEBUGZZZZZZZZZ
-    printf("%d %s\n", getStateMachine().getCube().id(), string);
-#endif
-    vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
-
+    if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
+    {
+        // intro anim done
+        paintLetters(vid, Font1Letter);
+        if (neighbored)
+        {
+            paintTeeth(vid, TeethLoopConnected, true, false, true, true);
+        }
+        else
+        {
+            paintTeeth(vid, Teeth, false, true, false, true);
+        }
+    }
+    else
+    {
+        // intro anim
+        vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
+        paintTeeth(vid, Teeth, true, false);
+    }
 }

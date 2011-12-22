@@ -24,11 +24,11 @@ void GameStateMachine::update(float dt)
 {
     mAnagramCooldown -= dt;
     mAnagramCooldown = MAX(.0f, mAnagramCooldown);
-    unsigned oldSecsLeft = GetSecondsLeft();
+    unsigned oldSecsLeft = getSecondsLeft();
     mTimeLeft -= dt;
     mTimeLeft = MAX(.0f, mTimeLeft);
 
-    if (oldSecsLeft != GetSecondsLeft())
+    if (oldSecsLeft != getSecondsLeft())
     {
         // TODO dirty flags?
         onEvent(EventID_ClockTick, EventData());

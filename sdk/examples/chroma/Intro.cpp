@@ -22,21 +22,32 @@ Intro::Intro()
 }
 
 
-void Intro::Reset()
+void Intro::Reset( bool ingamereset)
 {
-    m_fTimer = 0.0f;
+    if( ingamereset )
+    {
+        m_fTimer = INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME;
+        Game::Inst().playSound(glom_delay);
+    }
+    else
+        m_fTimer = 0.0f;
 }
 
 
-void Intro::Update( float dt )
+bool Intro::Update( float dt )
 {
-    if( m_fTimer == 0.0f )
-        Game::Inst().playSound(glom_delay);
-
     m_fTimer += dt;
 
+    if( m_fTimer <= INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME && m_fTimer + dt > INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME )
+        Game::Inst().playSound(glom_delay);
+
     if( m_fTimer > INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME + INTRO_BALLEXPLODE_TIME )
+    {
         Game::Inst().setState( Game::STATE_PLAYING );
+        return false;
+    }
+
+    return true;
 }
 
 const Sifteo::PinnedAssetImage *ARROW_SPRITES[ Intro::NUM_ARROWS ] =
@@ -62,7 +73,8 @@ Vec2 ENDPOS[ Intro::NUM_ARROWS ] = {
     Vec2( 128 - ArrowRight.width * 8, 64 - ArrowRight.height * 8 / 2 ),
 };
 
-void Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapper *pWrapper )
+//return whether we touched bg1 or not
+bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapper *pWrapper )
 {
     VidMode_BG0 vid( cube.vbuf );
     _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
@@ -91,7 +103,7 @@ void Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapp
         //charge up timers
         float amount = ( m_fTimer - INTRO_ARROW_TIME ) / INTRO_TIMEREXPANSION_TIME;
         timer.DrawMeter( amount, bg1helper );
-        bg1helper.Flush();
+        return true;
     }
     else
     {
@@ -115,6 +127,8 @@ void Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapp
             }
         }
     }
+
+    return false;
 }
 
 
