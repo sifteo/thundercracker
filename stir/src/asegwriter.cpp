@@ -10,7 +10,7 @@ ASegWriter::ASegWriter(Logger &log, const char *filename)
       mCurrentOffset(512)
 {
     if (filename) {
-        mStream.open(filename);
+        mStream.open(filename, std::ios::binary);
         if (!mStream.is_open())
             log.error("Error opening output file '%s'", filename);
     }
@@ -27,7 +27,7 @@ void ASegWriter::writeGroup(const Group &group)
 {
     fprintf(stdout, "Writing group to asset segment: %s\n", group.getName().c_str());
     fprintf(stdout, "  name: %s\n", group.getName().c_str());
-    fprintf(stdout, "  size: %lu\n", group.getLoadstream().size());
+    fprintf(stdout, "  size: %lu\n", (long unsigned)group.getLoadstream().size());
     
     char buf[32];
 
