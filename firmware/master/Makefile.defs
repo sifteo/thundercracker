@@ -61,7 +61,7 @@ LDFLAGS += -lm
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 
-include $(MASTER_DIR)/Makefile.platform
+include $(TC_DIR)/Makefile.platform
 
 ifeq ($(BUILD_PLATFORM), windows32)
     # portaudio requirements
