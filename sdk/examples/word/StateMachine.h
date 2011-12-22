@@ -12,6 +12,7 @@ public:
     virtual void update(float dt);
     virtual void onEvent(unsigned eventID, const EventData& data);
     unsigned getCurrentStateIndex() { return mStateIndex; }
+    float getTime() const { return mStateTime; }
 
 protected:
     State& getCurrentState() { return getState(mStateIndex); }

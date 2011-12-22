@@ -10,6 +10,7 @@
 #include "cube.h"
 #include "neighbors.h"
 #include "audiomixer.h"
+#include "../selectormenu/MenuController.h"
 
 using namespace Sifteo;
 
@@ -27,6 +28,11 @@ void Runtime::run()
         return;
 
 #ifndef BUILD_UNIT_TEST
+
+#ifdef SELECTORMENUCHROMA
+	SelectorMenu::RunMenu();
+#endif
+
     siftmain();
 #endif
 }

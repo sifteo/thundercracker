@@ -52,11 +52,8 @@ Vec2 SPRITEPOS[ Intro::NUM_ARROWS ] = {
     Vec2( 128 - DieRight.width * 8, 64 - DieLeft.height * 8 / 2 ),
 };
 
-void GameOver::Draw( BG1Helper &bg1helper, Cube &cube )
+void GameOver::Draw( Cube &cube )
 {
-    bg1helper.Clear();
-    bg1helper.Flush();
-
     //arrow sprites
     for( int i = 0; i < NUM_ARROWS; i++ )
     {

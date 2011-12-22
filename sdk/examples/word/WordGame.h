@@ -24,6 +24,13 @@ class WordGame
 public:
     WordGame(Cube cubes[]);
     void update(float dt);
+
+    bool needsPaintSync() const { return mNeedsPaintSync; }
+    void setNeedsPaintSync() { mNeedsPaintSync = true; }
+    void paintSync() { System::paintSync(); mNeedsPaintSync = false; }
+
+    static WordGame* instance() { return sInstance; }
+
     static void onEvent(unsigned eventID, const EventData& data);
     static bool playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
     static unsigned rand(unsigned max);
@@ -35,6 +42,7 @@ private:
     GameStateMachine mGameStateMachine;
     AudioChannel mAudioChannels[Num_AudioChannelIndexs];
     unsigned mRandomSeed;
+    bool mNeedsPaintSync;
     static WordGame* sInstance;
 };
 

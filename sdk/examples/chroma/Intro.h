@@ -24,9 +24,10 @@ public:
     static const int NUM_TOTAL_EXPLOSION_FRAMES = 5;
 
     Intro();
-    void Reset();
-    void Update( float dt );
-    void Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapper *pWrapper );
+    void Reset( bool ingamereset = false );
+    bool Update( float dt );
+    //return whether we touched bg1 or not
+    bool Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapper *pWrapper );
 	
 private:
     Vec2 LerpPosition( Vec2 &start, Vec2 &end, float timePercent );

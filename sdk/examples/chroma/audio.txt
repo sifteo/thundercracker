@@ -20,5 +20,6 @@ slosh_05.raw
 slosh_06.raw
 slosh_07.raw
 slosh_08.raw
+StingerIV2.raw
 timer_blink.raw
 timer_explode.raw

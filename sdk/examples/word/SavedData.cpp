@@ -30,7 +30,7 @@ void SavedData::sOnEvent(unsigned eventID, const EventData& data)
     {
     case EventID_EndRound:
         {
-            unsigned score = GameStateMachine::GetScore();
+            unsigned score = GameStateMachine::getScore();
             for (unsigned i = 0; i < arraysize(sHighScores); ++i)
             {
                 if (score > sHighScores[i])

@@ -88,35 +88,15 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
 
 unsigned ScoredCubeState_NewWord::update(float dt, float stateTime)
 {
-    return getStateMachine().getCurrentStateIndex();
+    return getStateMachine().getTime() < 0.5f ?
+                CubeStateIndex_NewWordScored : CubeStateIndex_OldWordScored;
 }
 
 void ScoredCubeState_NewWord::paint()
 {
     Cube& c = getStateMachine().getCube();
-    // FIXME vertical words
-    const Sifteo::AssetImage& bg =
-        (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
-         c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED) ?
-            BGNewWordConnectedMiddle :
-            (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED) ?
-                BGNewWordConnectedRight:
-                BGNewWordConnectedLeft;
-    VidMode_BG0 vid(c.vbuf);
+    VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    vid.BG0_drawAsset(Vec2(0,0), bg);
-    vid.BG0_text(Vec2(6,3), Font, getStateMachine().getLetters());
-    char string[5];
-    sprintf(string, "%d", GameStateMachine::GetSecondsLeft());
-#if DEBUGZZZZZZZZZZZ
-    printf("%d %s\n", getStateMachine().getCube().id(), string);
-#endif
-    vid.BG0_text(Vec2(5 + (4 - strlen(string)), 14), FontSmall, string);
-
-    sprintf(string, "%+.1d", getStateMachine().findRowLength());
-#if DEBUG
-    printf("score %d %s\n", getStateMachine().getCube().id(), string);
-#endif
-    vid.BG0_text(Vec2(7,0), FontSmall, string);
-
+    paintLetters(vid, Font1Letter);
+    paintTeeth(vid, TeethNewWord, true, false, false, true);
 }
