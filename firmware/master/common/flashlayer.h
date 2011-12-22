@@ -17,10 +17,16 @@ public:
     static const int NUM_BLOCKS = 2;
     static const int BLOCK_SIZE = 512; // XXX - HW dependent
 
+    static void init();
     static char* getRegion(uintptr_t address, int len);
     static char* getRegionFromOffset(int offset, int len, int *size);
     static void releaseRegion(uintptr_t address);
-    static void releaseRegionFromOffset(int offset);
+
+    static void releaseRegionFromOffset(int offset) {
+        if (CachedBlock *b = getCachedBlock(offset)) {
+            b->inUse = false;
+        }
+    }
 
 private:
     typedef struct CachedBlock_t {
@@ -32,25 +38,41 @@ private:
         bool valid;
     } CachedBlock;
 
-#ifdef SIFTEO_SIMULATOR
-    static int hits;
-    static int misses;
-#endif
     static CachedBlock blocks[NUM_BLOCKS];
-//    static uint8_t freeBlocksMask = 0;      // bitmask indicating which blocks are in use
 
-    static CachedBlock* getCachedBlock(uintptr_t address);
-    static CachedBlock* getFreeBlock();
-    
+    // Try to find an existing cached block for the given address.
+    static CachedBlock* getCachedBlock(uintptr_t address) {
+        CachedBlock *b;
+        int i;
+        for (i = 0, b = FlashLayer::blocks; i < NUM_BLOCKS; i++, b++) {
+            if (address >= b->address && address < b->address + BLOCK_SIZE && b->valid) {
+                return b;
+            }
+        }
+        return 0;
+    }
+
+    static CachedBlock* getFreeBlock() {
+        // TODO: get rid of inUse flag and use bitmask for more efficient lookup of
+        //       free blocks.
+        CachedBlock *b;
+        int i;
+        for (i = 0, b = FlashLayer::blocks; i < NUM_BLOCKS; i++, b++) {
+            if (!b->inUse) {
+                return b;
+            }
+        }
+        return 0;
+    }
     
 #ifdef SIFTEO_SIMULATOR
     // HACK: Attempt to redirect the flash layer at a file.  Need a proper
     //       hardware emulation layer, and firmware implementation
     
     static FILE * mFile;
-    static bool mInit;
-    
-    static void init();
+    // cache statistics
+    static int hits;
+    static int misses;
 #endif
 
 };

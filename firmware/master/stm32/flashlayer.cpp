@@ -25,18 +25,3 @@ void FlashLayer::releaseRegion(uintptr_t address)
 {
     (void)address;
 }
-
-/*
- * Try to find an existing cached block for the given address.
- */
-FlashLayer::CachedBlock* FlashLayer::getCachedBlock(uintptr_t address)
-{
-    FlashLayer::CachedBlock *b;
-    int i;
-    for (i = 0, b = FlashLayer::blocks; i < NUM_BLOCKS; i++, b++) {
-        if (address >= b->address && address < b->address + BLOCK_SIZE) {
-            return b;
-        }
-    }
-    return 0;
-}
