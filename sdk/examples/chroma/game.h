@@ -110,6 +110,8 @@ private:
     //which channel to use
     unsigned m_curChannel;
     AudioChannel m_musicChannel;
+    //use to avoid playing the same sound multiple times in one frame
+    const _SYSAudioModule *m_pSoundThisFrame;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
 };

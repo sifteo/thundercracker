@@ -22,7 +22,7 @@ Game &Game::Inst()
     return game;
 }
 
-Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ), m_curChannel( 0 )
+Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL )
 {
 	//Reset();
 }
@@ -144,6 +144,8 @@ void Game::Update()
 	}
 
     System::paint();
+
+    m_pSoundThisFrame = NULL;
 }
 
 
@@ -464,6 +466,9 @@ void Game::enterScore()
 
 void Game::playSound( const _SYSAudioModule &sound )
 {
+    if( &sound == m_pSoundThisFrame )
+        return;
+
     m_SFXChannels[m_curChannel].stop();
     m_SFXChannels[m_curChannel].play(sound, LoopOnce);
 
@@ -473,6 +478,8 @@ void Game::playSound( const _SYSAudioModule &sound )
 
     if( m_curChannel >= NUM_SFX_CHANNELS )
         m_curChannel = 0;
+
+    m_pSoundThisFrame = &sound;
 }
 
 const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
