@@ -4,7 +4,9 @@ OBJS =  main.o \
         encoder.o \
         filename_utils.o
 
-ifeq ($(OS), Windows_NT)
+include ../../Makefile.platform
+
+ifeq ($(BUILD_PLATFORM), windows32)
     SPEEX_DIR = ../../deps/win32/speex
 else
     SPEEX_DIR = ../../deps/osx/speex
@@ -18,7 +20,7 @@ COMMON_FLAGS = -O3 -Werror -Wall $(INCLUDES)
 CCFLAGS = $(COMMON_FLAGS)
 CFLAGS = $(COMMON_FLAGS)
 
-ifeq ($(OS), Windows_NT)
+ifeq ($(BUILD_PLATFORM), windows32)
     LDFLAGS += -static -lspeex -lstdc++
 else
     LDFLAGS += -lspeex -lstdc++
