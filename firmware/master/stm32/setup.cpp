@@ -68,13 +68,6 @@ extern "C" void _start()
     RCC.CR |= (1 << 16); // HSEON
     while (!(RCC.CR & (1 << 17))); // wait for HSE to be stable
 
-    // PLL2 configuration: PLL2CLK = (HSE / 5) * 8 = 40 MHz
-    // PREDIV1 configuration: PREDIV1CLK = PLL2 / 5 = 8 MHz
-    RCC.CFGR2 &= ~0x10FFF;
-    RCC.CFGR2 |= 0x10644;
-    RCC.CR |= (1 << 26);             // turn PLL2 on
-    while (!(RCC.CR & (1 << 27)));   // wait for it to be ready
-
     // fire up the PLL
     RCC.CFGR |= (7 << 18) |         // PLLMUL (x9)
                 (0 << 17) |         // PLL XTPRE - no divider
