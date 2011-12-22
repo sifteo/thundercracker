@@ -87,5 +87,6 @@ slosh_05 = sound{"slosh_05.raw"}
 slosh_06 = sound{"slosh_06.raw"}
 slosh_07 = sound{"slosh_07.raw"}
 slosh_08 = sound{"slosh_08.raw"}
+StingerIV2 = sound{"StingerIV2.raw"}
 timer_blink = sound{"timer_blink.raw"}
 timer_explode = sound{"timer_explode.raw"}
