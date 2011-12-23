@@ -509,7 +509,14 @@ void TiltFlowView::PaintIncomingCover()
 	vid.BG0_setPanning(Vec2(0, 0));
 	//bg1helper.Flush();
 
-	Vec2 pos = LerpPosition( STARTING_PT[mLastNeighboredSide], Vec2( 0, 0 ), TiltFlowMenu::Inst()->GetScrollTime() / ( TiltFlowMenu::PICK_DELAY - 0.5f ) );
+	int startIndex = mLastNeighboredSide - mpCube->orientation();
+
+	if( startIndex < 0 )
+		startIndex += 4;
+
+	startIndex %= 4;
+
+	Vec2 pos = LerpPosition( STARTING_PT[startIndex], Vec2( 0, 0 ), TiltFlowMenu::Inst()->GetScrollTime() / ( TiltFlowMenu::PICK_DELAY - 0.5f ) );
 	Vec2 size( 16, 16 );
 	Vec2 offset( 0, 0 );
 
