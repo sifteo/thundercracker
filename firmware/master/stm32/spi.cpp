@@ -13,7 +13,8 @@ void SPIMaster::init()
 {
     if (hw == &SPI1) {
         #if BOARD == BOARD_TC_MASTER_REV1
-        AFIO.MAPR |= (1 << 0);  // remap SPI1 to PB3-5
+        AFIO.MAPR |= (0x4 << 24) |  // disable JTAG so we can talk to flash
+                     (1 << 0);      // remap SPI1 to PB3-5
         #endif
         RCC.APB2ENR |= (1 << 12);
     }
