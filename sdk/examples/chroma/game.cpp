@@ -484,14 +484,8 @@ void Game::playSound( const _SYSAudioModule &sound )
 
 const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 {
-  &slosh_01,
-    &slosh_02,
-    &slosh_03,
-    &slosh_04,
-    &slosh_05,
-    &slosh_06,
-    &slosh_07,
-    &slosh_08,
+  &slosh_multi_01,
+    &slosh_multi_02,
 };
 
 
