@@ -137,8 +137,8 @@ extern "C" void _start()
      * those need to be unmasked by the peripheral's driver code.
      */
 
-    NVIC.irqEnable(IVT.EXTI15_10);              // Radio interrupt
-    NVIC.irqPrioritize(IVT.EXTI15_10, 0x80);    //   Reduced priority
+    NVIC.irqEnable(IVT.EXTI9_5);              // Radio interrupt
+    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);    //   Reduced priority
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);
