@@ -18,10 +18,7 @@ public:
     static const int BLOCK_SIZE = 512; // XXX - HW dependent
 
     static void init();
-    static char* getRegion(uintptr_t address, int len);
     static char* getRegionFromOffset(int offset, int len, int *size);
-    static void releaseRegion(uintptr_t address);
-
     static void releaseRegionFromOffset(int offset) {
         if (CachedBlock *b = getCachedBlock(offset)) {
             b->inUse = false;
@@ -35,7 +32,7 @@ private:
         // TODO - track multiple references? timestamp?
         // TODO: use a bitfield to track this state, get rid of inUse and valid
         bool inUse;
-        bool valid;
+        bool valid; // does this block contain valid data? TODO: invalidation?
     } CachedBlock;
 
     static CachedBlock blocks[NUM_BLOCKS];

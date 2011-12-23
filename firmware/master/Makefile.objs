@@ -47,6 +47,7 @@ OBJS_STM32 = \
     stm32/dacaudioout.stm32.o \
     stm32/audiooutdevice.stm32.o \
     stm32/flashlayer.stm32.o \
+    stm32/macronixmx25.stm32.o \
     stm32/dac.stm32.o \
     stm32/usb.stm32.o \
     $(SPEEX_OBJS_STM32)
