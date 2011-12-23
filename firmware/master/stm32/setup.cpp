@@ -13,6 +13,7 @@
 #include <sifteo/abi.h>
 #include "radio.h"
 #include "usb.h"
+#include "flashlayer.h"
 #include "runtime.h"
 #include "hardware.h"
 #include "vectors.h"
@@ -150,6 +151,7 @@ extern "C" void _start()
     SysTime::init();
     Radio::open();
     Usb::init();
+    FlashLayer::init();
 
     /*
      * Launch our game runtime!
