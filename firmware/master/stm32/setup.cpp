@@ -14,9 +14,10 @@
 #include "radio.h"
 #include "usb.h"
 #include "runtime.h"
-#include "hardware.h"
+#include "board.h"
 #include "vectors.h"
 #include "systime.h"
+#include "gpio.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
@@ -108,6 +109,17 @@ extern "C" void _start()
     GPIOPin mco(&GPIOA, 8); // PA8 on the keil MCBSTM32E board - change as appropriate
     mco.setControl(GPIOPin::OUT_ALT_50MHZ);
 #endif
+
+    {
+        GPIOPin vcc20 = VCC20_ENABLE_GPIO;
+        GPIOPin vcc33 = VCC33_ENABLE_GPIO;
+
+        vcc20.setControl(GPIOPin::OUT_10MHZ);
+        vcc33.setControl(GPIOPin::OUT_10MHZ);
+
+        vcc20.setHigh();
+        vcc33.setHigh();
+    }
 
     /*
      * Initialize data segments (In parallel with oscillator startup)
