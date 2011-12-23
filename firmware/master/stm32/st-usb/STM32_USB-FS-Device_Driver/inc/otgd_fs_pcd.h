@@ -17,6 +17,10 @@
 #ifndef __USB_OTG_PCD_H__
 #define __USB_OTG_PCD_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "otgd_fs_regs.h"
 
 #define MAX_EP0_SIZE                    0x40
@@ -85,6 +89,10 @@ uint32_t    PCD_Handle_ISR(void);
 USB_OTG_EP* PCD_GetOutEP(uint32_t ep_num) ;
 USB_OTG_EP* PCD_GetInEP(uint32_t ep_num);
 void        PCD_EP0_OutStart(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

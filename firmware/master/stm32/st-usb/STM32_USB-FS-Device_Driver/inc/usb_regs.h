@@ -17,6 +17,10 @@
 #ifndef __USB_REGS_H
 #define __USB_REGS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef STM32F10X_CL
 
 /* Includes ------------------------------------------------------------------*/
@@ -665,6 +669,10 @@ uint16_t ToWord(uint8_t, uint8_t);
 uint16_t ByteSwap(uint16_t);
 
 #endif /* STM32F10X_CL */
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* __USB_REGS_H */
 
