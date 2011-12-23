@@ -49,6 +49,13 @@
 #define LED_GREEN_GPIO      GPIOPin(&GPIOB, 0)
 #define LED_RED_GPIO        GPIOPin(&GPIOB, 1)
 
+// P O W E R
+#define VCC20_ENABLE_GPIO   GPIOPin(&GPIOC, 13)
+#define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 14)
+
+// M I S C
+#define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
+
 #elif BOARD == BOARD_STM32F10C
 
 // R A D I O
