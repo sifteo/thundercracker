@@ -1,6 +1,5 @@
 astrokraut.raw
 bubble_pop_02.raw
-charge_03.raw
 clear1.raw
 clear2.raw
 clear3.raw
@@ -10,6 +9,7 @@ frozen_06.raw
 game_over.raw
 glimmer_fx_03.raw
 glom_delay.raw
+match2.raw
 message_pop_03_fx.raw
 slide_39.raw
 slosh_01.raw

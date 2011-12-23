@@ -48,8 +48,6 @@ void Banner::Update(float t, Cube &cube)
 		{
 			m_Msg[0] = '\0';
 			m_fEndTime = -1.0f;
-			//clear out
-			_SYS_vbuf_fill(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_bitmap) / 2, 0x0000, BANNER_ROWS );
 		}
         m_tiles++;
 
