@@ -28,7 +28,7 @@ public:
     MenuController();
 
 	static const int NUM_CUBES = 2;
-    static const int NUM_MENU_ITEMS = 3;
+    static const int NUM_MENU_ITEMS = 5;
 
 	CubeWrapper cubes[NUM_CUBES]; 
 

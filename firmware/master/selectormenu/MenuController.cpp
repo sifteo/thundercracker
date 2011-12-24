@@ -13,9 +13,11 @@ namespace SelectorMenu
 
 TiltFlowItem MENUITEMS[ MenuController::NUM_MENU_ITEMS ] =
 {
-    TiltFlowItem( IconFire, TextFire ),
-    TiltFlowItem( IconEarth, TextEarth ),
-    TiltFlowItem( IconWater, TextWater ),
+    TiltFlowItem( IconGameChroma, LabelChroma ),
+    TiltFlowItem( IconGameWord, LabelWord ),
+    TiltFlowItem( IconGameSandwich, LabelSandwich ),
+    TiltFlowItem( IconGamePeano, LabelPeano ),
+    TiltFlowItem( IconGameMore, LabelMore ),
 };
 
 MenuController &s_menu = MenuController::Inst();
