@@ -37,6 +37,28 @@ extern uint32_t STM32_PCD_OTG_ISR_Handler (void);
 /*                           Common Core Layer                                */
 /******************************************************************************/
 
+// Sifteo: relocate this routine inside the core library - it's only used in here
+//          not sure why it was originally defined externally
+#include "stm32f10x_rcc.h"
+#include "misc.h"
+
+void USB_OTG_BSP_uDelay (const uint32_t usec)
+{
+  RCC_ClocksTypeDef  RCC_Clocks;
+
+  /* Configure HCLK clock as SysTick clock source */
+  SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
+
+  RCC_GetClocksFreq(&RCC_Clocks);
+
+  SysTick_Config(usec * (RCC_Clocks.HCLK_Frequency / 1000000));
+
+  SysTick->CTRL  &= ~SysTick_CTRL_TICKINT_Msk ;
+
+  while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk));
+}
+// end Sifteo edit
+
 /*******************************************************************************
 * Function Name  : OTGD_FS_WritePacket
 * Description    : Writes a packet into the Tx FIFO associated with the EP
