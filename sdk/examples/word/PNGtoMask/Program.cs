@@ -15,16 +15,17 @@ namespace PNGtoMask {
 
     static void Main(string[] args) {
       // Open a Stream and decode a PNG image
-      using (Bitmap image = new Bitmap(@"..\\..\\..\\wc_transition.png", false)) {
+      string inputFileName = @"..\\..\\..\\wc_transition.png";
+      List<byte> outputList = new List<byte>();
+      using (Bitmap image = new Bitmap(inputFileName, false)) {
 
         int numTiles = 16; // assumes 128x128 full screen image
         int frameSize = 128;
         const int TILE_SIZE = 8;
         byte output = 0;
-        List<byte> outputList = new List<byte>();
         int outputShift = 0;
         int outputTileBits = 2; // bits
-        int maxOutputShift = 7;
+        int maxOutputShift = 8 - outputTileBits;
 
         // Loop through the images pixels to reset color.
         for (int frame = 0; frame * frameSize < image.Width; ++frame) {
@@ -61,7 +62,7 @@ namespace PNGtoMask {
               else {
                 bits = OutputBits.SomeTransparent; // alpha && opqaue or !alpha && !opaque
               }
-              Console.Out.WriteLine("frame {0}, tile ({1}, {2}), {3}", frame, tileX, tileY, bits.ToString());
+              //Console.Out.WriteLine("frame {0}, tile ({1}, {2}), {3}", frame, tileX, tileY, bits.ToString());
               output |= (byte) ((int)bits << outputShift);
               outputShift += outputTileBits;
               if (outputShift > maxOutputShift) {
@@ -74,10 +75,28 @@ namespace PNGtoMask {
             }
           }
         }
-
-        Console.Out.WriteLine(outputList.ToString());
-
       }
+
+      // Example #3: Write only some strings in an array to a file.
+      using (System.IO.StreamWriter file = 
+              new System.IO.StreamWriter(inputFileName + ".cpp")) {
+        file.WriteLine("const static char imageMask[] =");
+        file.WriteLine("{");
+        file.Write("\t");
+        for (int i = 0; i < outputList.Count; ++i) {
+            file.Write("0x" + outputList[i].ToString("x"));
+            file.Write(", ");
+            if ((i % 4) == 3) {
+              file.WriteLine();
+              file.Write("\t");
+            }
+        }
+        file.WriteLine("};");
+      }
+
+      Console.Out.WriteLine(outputList.ToString());
+
+
     }
   }
 }
