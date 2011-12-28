@@ -96,5 +96,5 @@ void ScoredCubeState_OldWord::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     paintLetters(vid, Font1Letter);
-    paintTeeth(vid, TeethLoopWord, true, false, true, true);
+    paintTeeth(vid, ImageIndex_Connected, true, false, true, true);
 }

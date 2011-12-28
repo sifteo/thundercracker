@@ -5,7 +5,7 @@
 #include "GameStateMachine.h"
 #include "assets.gen.h"
 #include "WordGame.h"
-
+#include "TileTransparencyLookup.h"
 
 void CubeState::setStateMachine(CubeStateMachine& csm)
 {
@@ -23,12 +23,19 @@ CubeStateMachine& CubeState::getStateMachine()
 }
 
 void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
-                           const AssetImage& teeth,
+                           ImageIndex teethImageIndex,
                            bool animate,
                            bool reverseAnim,
                            bool loopAnim,
                            bool paintTime)
 {
+    const AssetImage* teethImages[NumImageIndexes] =
+    {
+      &Teeth, &TeethLoopConnected, &TeethLoopWord, &TeethNewWord
+    };
+    ASSERT(teethImageIndex >= 0);
+    ASSERT(teethImageIndex < arraysize(teethImages));
+    const AssetImage& teeth = *teethImages[teethImageIndex];
     unsigned frame = 0;
     unsigned secondsLeft = GameStateMachine::getSecondsLeft();
 
@@ -59,26 +66,24 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     BG1Helper bg1(mStateMachine->getCube());
     // scan frame for non-transparent rows and adjust partial draw window
     const uint16_t* tiles = &teeth.tiles[frame * teeth.width * teeth.height];
-    unsigned rowsPainted = 0;
-    const unsigned MAX_BG1_ROWS = 9;
     for (int i = teeth.height - 1; i >= 0; --i) // rows
     {
-        uint16_t firstIndex = tiles[i * teeth.width];
         for (unsigned j=0; j < teeth.width; ++j) // columns
         {
-            if (tiles[j + i * teeth.width] != firstIndex)
+            switch (getTransparencyType(teethImageIndex, frame, j, i))
             {
-                // paint this opaque row
-                if (rowsPainted >= MAX_BG1_ROWS)
-                {
-                    // paint BG0
-                    vid.BG0_drawPartialAsset(Vec2(0, i), Vec2(0, i), Vec2(16, 1), teeth, frame);
-                }
-                else
-                {
-                    bg1.DrawPartialAsset(Vec2(0, i), Vec2(0, i), Vec2(16, 1), teeth, frame);
-                    ++rowsPainted;
-                }
+            case TransparencyType_None:
+                // paint this opaque tile
+                // paint BG0
+                vid.BG0_drawPartialAsset(Vec2(j, i), Vec2(j, i), Vec2(1, 1), teeth, frame);
+                break;
+
+            case TransparencyType_Some:
+                bg1.DrawPartialAsset(Vec2(j, i), Vec2(j, i), Vec2(1, 1), teeth, frame);
+                break;
+
+            default:
+                ASSERT(getTransparencyType(teethImageIndex, frame, j, i) == TransparencyType_All);
                 break;
             }
         }

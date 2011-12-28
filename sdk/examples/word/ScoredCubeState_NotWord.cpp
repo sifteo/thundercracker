@@ -91,17 +91,17 @@ void ScoredCubeState_NotWord::paint()
         paintLetters(vid, Font1Letter);
         if (neighbored)
         {
-            paintTeeth(vid, TeethLoopConnected, true, false, true, true);
+            paintTeeth(vid, ImageIndex_Connected, true, false, true, true);
         }
         else
         {
-            paintTeeth(vid, Teeth, false, true, false, true);
+            paintTeeth(vid, ImageIndex_Teeth, false, true, false, true);
         }
     }
     else
     {
         // intro anim
         vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
-        paintTeeth(vid, Teeth, true, false);
+        paintTeeth(vid, ImageIndex_Teeth, true, false);
     }
 }

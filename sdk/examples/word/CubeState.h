@@ -3,6 +3,7 @@
 
 #include <sifteo.h>
 #include "State.h"
+#include "TileTransparencyLookup.h"
 
 enum CubeStateIndex
 {
@@ -17,7 +18,6 @@ enum CubeStateIndex
 };
 
 class CubeStateMachine;
-
 const float TEETH_ANIM_LENGTH = 0.6f;
 
 class CubeState : public State
@@ -29,7 +29,7 @@ public:
 
 protected:
     void paintTeeth(VidMode_BG0_SPR_BG1& vid,
-                    const AssetImage& teeth,
+                    ImageIndex teethImageIndex,
                     bool animate=false,
                     bool reverseAnim=false,
                     bool loopAnim=false,

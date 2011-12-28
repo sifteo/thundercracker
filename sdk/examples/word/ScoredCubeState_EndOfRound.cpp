@@ -53,7 +53,7 @@ void ScoredCubeState_EndOfRound::paint()
             // no letters during blip
             vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
         }
-        paintTeeth(vid, Teeth, true, true);
+        paintTeeth(vid, ImageIndex_Teeth, true, true);
         return;
     }
 
