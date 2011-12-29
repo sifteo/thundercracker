@@ -56,3 +56,5 @@ TitleExitCubeState.cpp
 TileTransparencyLookup.h
 TileTransparencyLookup.cpp
 TileTransparencyLookupData.cpp
+PartialAnimationData.cpp
+PartialAnimationData.h
