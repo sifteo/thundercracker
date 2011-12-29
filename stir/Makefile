@@ -30,17 +30,16 @@ DEPFILES := $(OBJS:.o=.d)
 PYTHON := python
 OS  := $(shell uname)
 
-ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
-	OS := windows32
+include ../Makefile.platform
+
+ifeq ($(BUILD_PLATFORM), windows32)
 	CC := mingw32-gcc
-endif
-ifeq ($(OS),windows32)
 	DEPS := ../deps/win32
 	OBJS += src/winres.o
 endif
 
 CFLAGS += -O3 -g -ffast-math -Werror -Wall -I$(FIRMWARE_INC) -MMD
-ifneq ($(OS), windows32)
+ifneq ($(BUILD_PLATFORM), windows32)
 	CFLAGS += -DLUA_USE_MKSTEMP
 endif
 LDFLAGS += -g -lm -lstdc++
@@ -48,7 +47,7 @@ CCFLAGS := $(CFLAGS)
 
 all: $(BIN)
 
-ifeq ($(OS),windows32)
+ifeq ($(BUILD_PLATFORM), windows32)
 # We like having stripped binaries plus a separate file with
 # debug info. Do that on Win32 too.
 $(BIN): $(OBJS)

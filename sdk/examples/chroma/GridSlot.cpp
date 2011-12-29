@@ -296,7 +296,7 @@ void GridSlot::mark()
     m_animFrame = 0;
 	m_state = STATE_MARKED;
 	m_eventTime = System::clock();
-    Game::Inst().playSound(charge_03);
+    Game::Inst().playSound(match2);
 }
 
 

@@ -16,6 +16,10 @@
 #ifndef __USB_OTG_REGS_H__
 #define __USB_OTG_REGS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef STM32F10X_CL
 
 #include "stm32f10x.h"
@@ -709,5 +713,9 @@ uint32_t reserved3 :
 #endif /* STM32F10X_CL */
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

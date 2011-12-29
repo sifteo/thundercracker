@@ -22,7 +22,7 @@ Game &Game::Inst()
     return game;
 }
 
-Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f )
+Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL )
 {
 	//Reset();
 }
@@ -64,10 +64,9 @@ void Game::Init()
 	m_splashTime = System::clock();
     m_fLastTime = m_splashTime;
 
-    for( int i = 0; i < NUM_SFX_CHANNELS; i++ )
+    for( unsigned int i = 0; i < NUM_SFX_CHANNELS; i++ )
     {
         m_SFXChannels[i].init();
-        m_SFXlastUsed[i] = System::clock();
     }
     m_musicChannel.init();
 
@@ -75,7 +74,8 @@ void Game::Init()
     //m_musicChannel.setVolume( 1 );
     //m_SFXChannel.setVolume( 256 );
 
-    m_musicChannel.play( astrokraut, LoopRepeat );
+    //m_musicChannel.play( astrokraut, LoopRepeat );
+    m_musicChannel.play( StingerIV2, LoopOnce );
 }
 
 
@@ -90,9 +90,10 @@ void Game::Update()
 		for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
 
-		if( System::clock() - m_splashTime > 3.0f )
+        if( System::clock() - m_splashTime > 7.0f )
 		{
             m_state = STATE_INTRO;
+            m_musicChannel.stop();
             m_musicChannel.play( astrokraut, LoopRepeat );
 			m_timer.Init( System::clock() );
 		}
@@ -119,30 +120,32 @@ void Game::Update()
 		for( int i = 0; i < NUM_CUBES; i++ )
             cubes[i].Update( System::clock(), dt );
 
-        System::finish();
-
-		for( int i = 0; i < NUM_CUBES; i++ )
+        for( int i = 0; i < NUM_CUBES; i++ )
 			cubes[i].Draw();
-	}
-            
-    /*bool bForceDraw = false;
 
-    for( int i = 0; i < NUM_CUBES; i++ )
-    {
-        if( cubes[i].getBG1Helper().NeedFinish() )
+        //always finishing works
+        //System::finish();
+
+        //if any of our cubes have messed with bg1's bitmaps,
+        //force a finish here
+        for( int i = 0; i < NUM_CUBES; i++ )
         {
-            System::paintSync();
-            //printf( "finishing\n" );
-            bForceDraw = true;
-            break;
+            if( cubes[i].getBG1Helper().NeedFinish() )
+            {
+                //System::finish();
+                System::paintSync();
+                //printf( "finishing\n" );
+                break;
+            }
         }
-    }
 
-    if( !bForceDraw )*/
-        System::paint();
+        for( int i = 0; i < NUM_CUBES; i++ )
+            cubes[i].FlushBG1();
+	}
 
-    //don't really need to call paintSync every frame.. Just need to call if bg1 map changes.
-    //System::paintSync();
+    System::paint();
+
+    m_pSoundThisFrame = NULL;
 }
 
 
@@ -463,25 +466,20 @@ void Game::enterScore()
 
 void Game::playSound( const _SYSAudioModule &sound )
 {
-    //figure out which channel played a sound longest ago
-    int iOldest = 0;
-    float fOldest = m_SFXlastUsed[0];
+    if( &sound == m_pSoundThisFrame )
+        return;
 
-    for( int i = 1; i < NUM_SFX_CHANNELS; i++ )
-    {
-        if( m_SFXlastUsed[i] < fOldest )
-        {
-            iOldest = i;
-            fOldest = m_SFXlastUsed[i];
-        }
-    }
+    m_SFXChannels[m_curChannel].stop();
+    m_SFXChannels[m_curChannel].play(sound, LoopOnce);
 
+    //printf( "playing a sound effect %d on channel %d\n", sound.size, m_curChannel );
 
-    m_SFXChannels[iOldest].stop();
-    m_SFXChannels[iOldest].play(sound, LoopOnce);
-    m_SFXlastUsed[iOldest] = System::clock();
+    m_curChannel++;
 
-    //printf( "playing a sound effect on channel %d\n", iOldest );
+    if( m_curChannel >= NUM_SFX_CHANNELS )
+        m_curChannel = 0;
+
+    m_pSoundThisFrame = &sound;
 }
 
 const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =

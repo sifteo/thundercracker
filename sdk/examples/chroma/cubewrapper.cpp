@@ -46,7 +46,7 @@ static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] =
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
         m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
-        m_lastTiltDir( 0 )
+        m_lastTiltDir( 0 ), m_queuedFlush( false )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -96,7 +96,7 @@ void CubeWrapper::Reset()
 
     m_timeTillGlimmer = 0.0f;
     m_bg1helper.Clear();
-    m_bg1helper.Flush();
+    m_queuedFlush = true;
     m_intro.Reset();
     m_gameover.Reset();
     m_glimmer.Reset();
@@ -122,6 +122,7 @@ void CubeWrapper::Draw()
         case Game::STATE_INTRO:
         {
             m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
+            m_queuedFlush = true;
             break;
         }
 		case Game::STATE_PLAYING:
@@ -153,7 +154,7 @@ void CubeWrapper::Draw()
                         m_banner.Draw( m_bg1helper );
 
 
-                    m_bg1helper.Flush();
+                    m_queuedFlush = true;
 
 					break;
 				}
@@ -174,7 +175,7 @@ void CubeWrapper::Draw()
                     m_bg1helper.DrawText( Vec2( 4, 5 ), Font, "REFILL" );
 
                     m_bg1helper.DrawTextf( Vec2( 4, 9 ), Font, "%d PTS", Game::Inst().getScore() );
-                    m_bg1helper.Flush();
+                    m_queuedFlush = true;
 					break;
 				}
 				case STATE_NOSHAKES:
@@ -183,12 +184,13 @@ void CubeWrapper::Draw()
                     m_bg1helper.DrawText( Vec2( 4, 4 ), Font, "NO SHAKES" );
                     m_bg1helper.DrawText( Vec2( 4, 6 ), Font, "LEFT" );
 
-                    m_bg1helper.Flush();
+                    m_queuedFlush = true;
 					break;
 				}
                 case STATE_REFILL:
                 {
                     m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
+                    m_queuedFlush = true;
                     break;
                 }
 			}			
@@ -196,7 +198,8 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_DYING:
         {
-            m_gameover.Draw( m_bg1helper, m_cube );
+            m_gameover.Draw( m_cube );
+            m_queuedFlush = true;
             break;
         }
 		case Game::STATE_POSTGAME:
@@ -230,7 +233,7 @@ void CubeWrapper::Draw()
             for( int i = 0; i < GameOver::NUM_ARROWS; i++ )
                 resizeSprite(m_cube, i, 0, 0);
 
-            m_bg1helper.Flush();
+            m_queuedFlush = true;
 
 			break;
 		}
@@ -1138,4 +1141,15 @@ void CubeWrapper::setState( CubeState state )
 
     if( state == STATE_MESSAGING )
         Game::Inst().playSound(message_pop_03_fx);
+}
+
+
+//if we need to, flush bg1
+void CubeWrapper::FlushBG1()
+{
+    if( m_queuedFlush )
+    {
+        m_bg1helper.Flush();
+        m_queuedFlush = false;
+    }
 }

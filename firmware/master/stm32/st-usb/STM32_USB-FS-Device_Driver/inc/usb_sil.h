@@ -17,6 +17,10 @@
 #ifndef __USB_SIL_H
 #define __USB_SIL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -28,6 +32,10 @@ uint32_t USB_SIL_Write(uint8_t bEpAddr, uint8_t* pBufferPointer, uint32_t wBuffe
 uint32_t USB_SIL_Read(uint8_t bEpAddr, uint8_t* pBufferPointer);
 
 /* External variables --------------------------------------------------------*/
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* __USB_SIL_H */
 

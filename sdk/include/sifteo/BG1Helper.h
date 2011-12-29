@@ -21,7 +21,7 @@ public:
 	static const unsigned int BG1_COLS = 16;
     static const unsigned int MAX_TILES = 144;
 
-    BG1Helper( Cube &cube ) : m_cube( cube )//, m_requireFinish( true )
+    BG1Helper( Cube &cube ) : m_cube( cube )
     {
         Clear();
     }
@@ -61,23 +61,10 @@ public:
                              m_bitset,
                              BG1_ROWS);
 
-        _SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
+        _SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);	
 
-		//tests whether we've changed from our last bitset.  If we have, then set m_requireFinish
-		//to true
-		/*m_requireFinish = false;
-
-        for( unsigned int i = 0; i < BG1_ROWS; i++ )
-		{
-			if( m_bitset[i] != m_lastbitset[i] )
-			{
-				//store off last bitset for comparison later
-				memcpy( m_lastbitset, m_bitset, BG1_ROWS * 2 );
-				m_requireFinish = true;
-				break;
-			}
-		}*/
-		
+        //store off last bitset for comparison later
+        memcpy( m_lastbitset, m_bitset, BG1_ROWS * 2 );
 
         Clear();
     }
@@ -157,7 +144,18 @@ public:
         va_end(ap);
     }
 
-	//inline bool NeedFinish() const { return m_requireFinish; }
+    inline bool NeedFinish()
+    {
+        for( unsigned int i = 0; i < BG1_ROWS; i++ )
+        {
+            if( m_bitset[i] != m_lastbitset[i] )
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 private:
     //set a number of bits at xoffset of the current bitset
@@ -190,14 +188,12 @@ private:
 	//bitset of which tiles are active
 	uint16_t m_bitset[BG1_ROWS];
 	//last flushed bitset, used to tell whether we've made changes that will require a finish() to be called before the next frame
-	//uint16_t m_lastbitset[BG1_ROWS];
+    uint16_t m_lastbitset[BG1_ROWS];
 
 	//actual contents of tiles
     ///rows, cols
 	uint16_t m_tileset[BG1_ROWS][BG1_COLS];
 	Cube &m_cube;
-	//records whether we've changed our bitset, thus requiring a finish before the next frame to avoid artifacts
-	//bool m_requireFinish;
 };
 
 #endif

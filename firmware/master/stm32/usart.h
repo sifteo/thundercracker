@@ -9,10 +9,13 @@
 #define USART_H_
 
 #include "hardware.h"
+#include "gpio.h"
 
 class Usart
 {
 public:
+
+    static Usart Dbg;
 
     enum StopBits {
         Stop1 = 0,
@@ -22,7 +25,7 @@ public:
     };
     Usart(volatile USART_t *hw) : uart(hw)
     {}
-    void init(int rate, StopBits bits = Stop1);
+    void init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits = Stop1);
     void deinit();
 
     void write(const char* buf, int size);

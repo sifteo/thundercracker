@@ -1,0 +1,13 @@
+
+BUILD_PLATFORM := $(shell uname)
+
+ifeq ($(findstring MINGW32_NT,$(BUILD_PLATFORM)),MINGW32_NT)
+      BUILD_PLATFORM := windows32
+endif
+
+ifeq ($(BUILD_PLATFORM), windows32)
+        BIN_EXT = .exe
+else
+        BIN_EXT =
+endif
+

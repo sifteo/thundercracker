@@ -18,7 +18,6 @@ OBJS_USB_STM32 = \
     $(USB_DIR)/STM32F10x_StdPeriph_Driver/src/misc.stm32.o \
     $(USB_DIR)/VirtualComPort/hw_config.stm32.o \
     $(USB_DIR)/VirtualComPort/usb_desc.stm32.o \
-    $(USB_DIR)/VirtualComPort/usb_endp.stm32.o \
     $(USB_DIR)/VirtualComPort/usb_istr.stm32.o \
     $(USB_DIR)/VirtualComPort/usb_prop.stm32.o \
     $(USB_DIR)/VirtualComPort/usb_pwr.stm32.o

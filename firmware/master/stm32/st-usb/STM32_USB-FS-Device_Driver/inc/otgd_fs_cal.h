@@ -15,6 +15,10 @@
 #ifndef __OTG_CORE_H__
 #define __OTG_CORE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef STM32F10X_CL
 
 #include "stm32f10x.h"
@@ -197,6 +201,10 @@ void            OTGD_FS_SetRemoteWakeup(void);
 void            OTGD_FS_ResetRemoteWakeup(void);
 
 #endif /* STM32F10X_CL */
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
