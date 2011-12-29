@@ -6,6 +6,7 @@
 #include "assets.gen.h"
 #include "WordGame.h"
 #include "TileTransparencyLookup.h"
+#include "PartialAnimationData.h"
 
 void CubeState::setStateMachine(CubeStateMachine& csm)
 {
@@ -170,6 +171,40 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font)
             if (frame < font.frames)
             {
                 vid.BG0_drawAsset(Vec2(0,0), font, frame);
+
+                const EyeData& ed = getEyeData(*str);
+                _SYSTiltState state;
+                _SYS_getTilt(getStateMachine().getCube().id(), &state);
+                enum TiltDirection {
+                    TiltDirection_None = -1,
+                    TiltDirection_N = 0,
+                    TiltDirection_NW,
+                    TiltDirection_W,
+                    TiltDirection_SW,
+                    TiltDirection_S,
+                    TiltDirection_SE,
+                    TiltDirection_E,
+                    TiltDirection_NE,
+
+                    NumTiltDirections
+                };
+
+                const static TiltDirection tiltStateToDirection[3][3] =
+                {
+                    // x == 0
+                    {TiltDirection_NW, TiltDirection_W, TiltDirection_SW},
+
+                    // x == 1
+                    {TiltDirection_N, TiltDirection_None, TiltDirection_S},
+
+                    // x == 2
+                    {TiltDirection_NE, TiltDirection_E, TiltDirection_SE},
+                };
+
+                TiltDirection dir = tiltStateToDirection[state.x][state.y];
+                unsigned eyeFrame = MAX(0, dir);
+                vid.BG0_drawPartialAsset(Vec2(ed.lx, ed.ly), Vec2(0,0), Vec2(1,2), Eye, eyeFrame);
+                vid.BG0_drawPartialAsset(Vec2(ed.rx, ed.ry), Vec2(0,0), Vec2(1,2), Eye, eyeFrame);
             }
         }
         break;

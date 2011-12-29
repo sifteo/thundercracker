@@ -19,3 +19,5 @@ TeethClock3 = image{"teeth_numbers.png", width=16, height=16, quality=0}
 TeethClock2 = image{"teeth_numbers.png", width=16, height=16, quality=0}
 TeethClock1 = image{"teeth_numbers.png", width=16, height=16, quality=0}
 TeethClock30_3 = image{"teeth_numbers.png", width=16, height=16, quality=0}
+Eye = image{"font-8x16.png", width=8, height=16, quality=10}
+EyeBlink = image{"font-8x16.png", width=8, height=16, quality=10}
