@@ -65,3 +65,11 @@ unsigned WordGame::rand(unsigned max)
     return rand_r(&sInstance->mRandomSeed) % max;
 #endif
 }
+
+void WordGame::hideSprites(VidMode_BG0_SPR_BG1 &vid)
+{
+    for (int i=0; i < 8; ++i)
+    {
+        vid.hideSprite(i);
+    }
+}

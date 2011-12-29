@@ -3,10 +3,10 @@
 
 struct EyeData
 {
-    unsigned lx : 4;
-    unsigned ly : 4;
-    unsigned rx : 4;
-    unsigned ry : 4;
+    unsigned lx : 7;
+    unsigned ly : 7;
+    unsigned rx : 7;
+    unsigned ry : 7;
     bool special : 1;
 };
 

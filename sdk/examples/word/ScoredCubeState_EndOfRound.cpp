@@ -8,6 +8,7 @@
 #include "GameStateMachine.h"
 #include "ScoredCubeState_EndOfRound.h"
 #include "SavedData.h"
+#include "WordGame.h"
 
 unsigned ScoredCubeState_EndOfRound::onEvent(unsigned eventID, const EventData& data)
 {
@@ -57,6 +58,7 @@ void ScoredCubeState_EndOfRound::paint()
         return;
     }
 
+    WordGame::hideSprites(vid);
     switch (getStateMachine().getCube().id())
     {
     default:

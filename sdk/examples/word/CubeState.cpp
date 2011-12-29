@@ -159,7 +159,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     WordGame::instance()->setNeedsPaintSync();
 }
 
-void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font)
+void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites)
 {
     const char *str = getStateMachine().getLetters();
     switch (strlen(str))
@@ -172,39 +172,59 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font)
             {
                 vid.BG0_drawAsset(Vec2(0,0), font, frame);
 
-                const EyeData& ed = getEyeData(*str);
-                _SYSTiltState state;
-                _SYS_getTilt(getStateMachine().getCube().id(), &state);
-                enum TiltDirection {
-                    TiltDirection_None = -1,
-                    TiltDirection_N = 0,
-                    TiltDirection_NW,
-                    TiltDirection_W,
-                    TiltDirection_SW,
-                    TiltDirection_S,
-                    TiltDirection_SE,
-                    TiltDirection_E,
-                    TiltDirection_NE,
+                enum LetterStateSpriteID {
+                    LetterStateSpriteID_LeftEye,
+                    LetterStateSpriteID_RightEye,
+                    NumLetterStateSpriteIDs
 
-                    NumTiltDirections
                 };
 
-                const static TiltDirection tiltStateToDirection[3][3] =
+                if (paintSprites)
                 {
-                    // x == 0
-                    {TiltDirection_NW, TiltDirection_W, TiltDirection_SW},
+                    const EyeData& ed = getEyeData(*str);
+                    _SYSTiltState state;
+                    _SYS_getTilt(getStateMachine().getCube().id(), &state);
+                    enum TiltDirection {
+                        TiltDirection_None = -1,
+                        TiltDirection_N = 0,
+                        TiltDirection_NW,
+                        TiltDirection_W,
+                        TiltDirection_SW,
+                        TiltDirection_S,
+                        TiltDirection_SE,
+                        TiltDirection_E,
+                        TiltDirection_NE,
 
-                    // x == 1
-                    {TiltDirection_N, TiltDirection_None, TiltDirection_S},
+                        NumTiltDirections
+                    };
 
-                    // x == 2
-                    {TiltDirection_NE, TiltDirection_E, TiltDirection_SE},
-                };
 
-                TiltDirection dir = tiltStateToDirection[state.x][state.y];
-                unsigned eyeFrame = MAX(0, dir);
-                vid.BG0_drawPartialAsset(Vec2(ed.lx, ed.ly), Vec2(0,0), Vec2(1,2), Eye, eyeFrame);
-                vid.BG0_drawPartialAsset(Vec2(ed.rx, ed.ry), Vec2(0,0), Vec2(1,2), Eye, eyeFrame);
+                    const static TiltDirection tiltStateToDirection[3][3] =
+                    {
+                        // x == 0
+                        {TiltDirection_NW, TiltDirection_W, TiltDirection_SW},
+
+                        // x == 1
+                        {TiltDirection_N, TiltDirection_None, TiltDirection_S},
+
+                        // x == 2
+                        {TiltDirection_NE, TiltDirection_E, TiltDirection_SE},
+                    };
+
+                    TiltDirection dir = tiltStateToDirection[state.x][state.y];
+                    unsigned eyeFrame = MAX(0, dir);
+                    vid.setSpriteImage(LetterStateSpriteID_LeftEye, EyeLeft.index + (eyeFrame % EyeLeft.frames) * EyeLeft.width * EyeLeft.height);
+                    vid.resizeSprite(LetterStateSpriteID_LeftEye, EyeLeft.width * 8, EyeLeft.height * 8);
+                    vid.moveSprite(LetterStateSpriteID_LeftEye, ed.lx, ed.ly);
+
+                    vid.setSpriteImage(LetterStateSpriteID_RightEye, EyeRight.index + (eyeFrame % EyeRight.frames) * EyeRight.width * EyeRight.height);
+                    vid.resizeSprite(LetterStateSpriteID_RightEye, EyeRight.width * 8, EyeRight.height * 8);
+                    vid.moveSprite(LetterStateSpriteID_RightEye, ed.rx, ed.ry);
+                }
+                else
+                {
+                    WordGame::hideSprites(vid);
+                }
             }
         }
         break;

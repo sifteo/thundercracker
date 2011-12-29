@@ -34,7 +34,7 @@ protected:
                     bool reverseAnim=false,
                     bool loopAnim=false,
                     bool paintTime=false);
-    void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font);
+    void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites=false);
     void paintScoreNumbers(VidMode_BG0_SPR_BG1 &vid, const Vec2& position, const char* string);
 
 private:

@@ -97,6 +97,6 @@ void ScoredCubeState_NewWord::paint()
     Cube& c = getStateMachine().getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    paintLetters(vid, Font1Letter);
+    paintLetters(vid, Font1Letter, true);
     paintTeeth(vid, ImageIndex_ConnectedWord, true, false, false, true);
 }

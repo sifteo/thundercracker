@@ -88,7 +88,7 @@ void ScoredCubeState_NotWord::paint()
     if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
     {
         // intro anim done
-        paintLetters(vid, Font1Letter);
+        paintLetters(vid, Font1Letter, true);
         if (neighbored)
         {
             paintTeeth(vid, ImageIndex_Neighbored, true, false, true, true);

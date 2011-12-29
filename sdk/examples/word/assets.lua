@@ -1,5 +1,9 @@
 GameAssets = group{}
 
+EyeLeft = image{"teeth_numbers.png", width=16, height=16, quality=0, pinned=true}
+EyeRight = image{"teeth_numbers.png", width=16, height=16, quality=0, pinned=true}
+EyeLeftBlink = image{"teeth_numbers.png", width=16, height=16, quality=0, pinned=true}
+EyeRightBlink = image{"teeth_numbers.png", width=16, height=16, quality=0, pinned=true}
 Font1Letter = image{"WC_letters.png", width=128, height=128, quality=0}
 LetterBG = image{"wc_letters_background.png", quality=0}
 StartScreen = image{"start_screen.png", quality=0}
@@ -19,5 +23,4 @@ TeethClock3 = image{"teeth_numbers.png", width=16, height=16, quality=0}
 TeethClock2 = image{"teeth_numbers.png", width=16, height=16, quality=0}
 TeethClock1 = image{"teeth_numbers.png", width=16, height=16, quality=0}
 TeethClock30_3 = image{"teeth_numbers.png", width=16, height=16, quality=0}
-Eye = image{"font-8x16.png", width=8, height=16, quality=10}
-EyeBlink = image{"font-8x16.png", width=8, height=16, quality=10}
+

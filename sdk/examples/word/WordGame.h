@@ -31,6 +31,7 @@ public:
 
     static WordGame* instance() { return sInstance; }
 
+    static void hideSprites(VidMode_BG0_SPR_BG1 &vid);
     static void onEvent(unsigned eventID, const EventData& data);
     static bool playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
     static unsigned rand(unsigned max);
