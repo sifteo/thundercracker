@@ -188,8 +188,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
                 };
 
-                // TODO disabled WIP
-                if (false && paintSprites)
+                if (paintSprites)
                 {
                     const EyeData& ed = getEyeData(*str);
                     _SYSTiltState state;
@@ -222,7 +221,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                     };
 
                     TiltDirection dir = tiltStateToDirection[state.x][state.y];
-                    unsigned eyeFrame = MAX(0, dir);
+                    unsigned eyeFrame = MAX(0, NumTiltDirections - dir); // asset frames are backwards
                     vid.setSpriteImage(LetterStateSpriteID_LeftEye, EyeLeft.index + (eyeFrame % EyeLeft.frames) * EyeLeft.width * EyeLeft.height);
                     vid.resizeSprite(LetterStateSpriteID_LeftEye, EyeLeft.width * 8, EyeLeft.height * 8);
                     vid.moveSprite(LetterStateSpriteID_LeftEye, ed.lx, ed.ly);

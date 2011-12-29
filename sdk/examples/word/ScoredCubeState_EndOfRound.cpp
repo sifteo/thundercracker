@@ -42,6 +42,7 @@ void ScoredCubeState_EndOfRound::paint()
             c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
+    WordGame::hideSprites(vid);
     if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
     {
         // intro animation
@@ -58,7 +59,6 @@ void ScoredCubeState_EndOfRound::paint()
         return;
     }
 
-    WordGame::hideSprites(vid);
     switch (getStateMachine().getCube().id())
     {
     default:

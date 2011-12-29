@@ -96,5 +96,17 @@ void ScoredCubeState_OldWord::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     paintLetters(vid, Font1Letter, true);
-    paintTeeth(vid, ImageIndex_Connected, true, false, true, false);
+
+    ImageIndex ii = ImageIndex_Connected;
+    if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
+        c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
+    {
+        ii = ImageIndex_ConnectedLeft;
+    }
+    else if (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
+             c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
+    {
+        ii = ImageIndex_ConnectedRight;
+    }
+    paintTeeth(vid, ii, true, false, true, false);
 }
