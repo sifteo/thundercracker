@@ -179,7 +179,8 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
                 };
 
-                if (paintSprites)
+                // TODO disabled WIP
+                if (false && paintSprites)
                 {
                     const EyeData& ed = getEyeData(*str);
                     _SYSTiltState state;
