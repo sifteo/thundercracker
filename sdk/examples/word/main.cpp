@@ -155,8 +155,10 @@ extern "C" void __cxa_pure_virtual() { while (1); }
 
 void assertWrapper(bool testResult)
 {
+#ifdef SIFTEO_SIMULATOR
     if (!testResult)
     {
         assert(testResult);
     }
+#endif
 }
