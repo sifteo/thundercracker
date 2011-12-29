@@ -9,13 +9,16 @@ enum TransparencyType {
 };
 
 enum ImageIndex {
-    ImageIndex_Teeth,
-    ImageIndex_Neighbored,
     ImageIndex_Connected,
     ImageIndex_ConnectedWord,
+    ImageIndex_ConnectedLeft,
+    ImageIndex_ConnectedLeftWord,
+    ImageIndex_ConnectedRight,
+    ImageIndex_ConnectedRightWord,
+    ImageIndex_Neighbored,
+    ImageIndex_Teeth,
 
     NumImageIndexes
-
 };
 
 TransparencyType getTransparencyType(ImageIndex imageIndex,

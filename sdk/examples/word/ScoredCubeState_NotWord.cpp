@@ -91,7 +91,7 @@ void ScoredCubeState_NotWord::paint()
         paintLetters(vid, Font1Letter, true);
         if (neighbored)
         {
-            paintTeeth(vid, ImageIndex_Neighbored, true, false, true, true);
+            paintTeeth(vid, ImageIndex_Neighbored, true, false, true, false);
         }
         else
         {

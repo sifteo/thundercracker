@@ -17,10 +17,14 @@ namespace PNGtoMask {
     static void Main(string[] args) {
       // Open a Stream and decode a PNG image
       string[] inputFileNames = { 
+        @"..\\..\\..\\wc_letters_connected_center.png",
+        @"..\\..\\..\\wc_letters_connected_center_new.png",
+        @"..\\..\\..\\wc_letters_connected_left.png",
+        @"..\\..\\..\\wc_letters_connected_left_new.png",
+        @"..\\..\\..\\wc_letters_connected_right.png",
+        @"..\\..\\..\\WC_letters_connected_right_new.png",
+        @"..\\..\\..\\wc_letters_neighbored.png",
         @"..\\..\\..\\wc_transition.png",
-        @"..\\..\\..\\WC_letters_neighbored.png",
-        @"..\\..\\..\\WC_letters_connected.png",
-        @"..\\..\\..\\WC_letters_connected_word.png",
       };
 
       using (var outputFile = new System.IO.StreamWriter("..\\..\\..\\TileTransparencyLookupData.cpp")) {

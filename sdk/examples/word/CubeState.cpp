@@ -30,10 +30,19 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                            bool loopAnim,
                            bool paintTime)
 {
-    const AssetImage* teethImages[NumImageIndexes] =
+    const AssetImage* teethImages[] =
     {
-      &Teeth, &TeethLoopConnected, &TeethLoopWord, &TeethNewWord
+        &TeethLoopWord,     // ImageIndex_Connected,
+        &TeethNewWord,      // ImageIndex_ConnectedWord,
+        &TeethLoopWordLeft, // ImageIndex_ConnectedLeft,
+        &TeethNewWordLeft,  // ImageIndex_ConnectedLeftWord,
+        &TeethLoopWordRight,// ImageIndex_ConnectedRight,
+        &TeethNewWordRight, // ImageIndex_ConnectedRightWord,
+        &TeethLoopConnected,// ImageIndex_Neighbored,
+        &Teeth,             // ImageIndex_Teeth,
     };
+
+    STATIC_ASSERT(arraysize(teethImages) == NumImageIndexes);
     ASSERT(teethImageIndex >= 0);
     ASSERT(teethImageIndex < arraysize(teethImages));
     const AssetImage& teeth = *teethImages[teethImageIndex];
