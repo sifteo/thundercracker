@@ -12,7 +12,9 @@ enum CubeStateIndex
     CubeStateIndex_NotWordScored,
     CubeStateIndex_NewWordScored,
     CubeStateIndex_OldWordScored,
+    CubeStateIndex_StartOfRoundScored,
     CubeStateIndex_EndOfRoundScored,
+    CubeStateIndex_ShuffleScored,
 
     CubeStateIndex_NumStates
 };
@@ -33,7 +35,8 @@ protected:
                     bool animate=false,
                     bool reverseAnim=false,
                     bool loopAnim=false,
-                    bool paintTime=false);
+                    bool paintTime=false,
+                    float animStartTime=0.f);
     void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites=false);
     void paintScoreNumbers(VidMode_BG0_SPR_BG1 &vid, const Vec2& position, const char* string);
 

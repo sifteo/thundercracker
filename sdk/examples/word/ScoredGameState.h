@@ -10,6 +10,7 @@ public:
     virtual unsigned update(float dt, float stateTime);
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
 
+    static void createNewAnagram();
 };
 
 #endif // SCOREDGAMESTATE_H

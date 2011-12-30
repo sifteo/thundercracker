@@ -16,7 +16,7 @@ Dictionary::Dictionary()
 
 const char* Dictionary::pickWord(unsigned length)
 {
-    // TODO
+    //return "CITIES";
     const char* word = PrototypeWordList::pickWord(length);
     DEBUG_LOG(("picked word %s\n", word));
     return word;

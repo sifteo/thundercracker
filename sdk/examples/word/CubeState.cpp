@@ -28,12 +28,22 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                            bool animate,
                            bool reverseAnim,
                            bool loopAnim,
-                           bool paintTime)
+                           bool paintTime,
+                           float animStartTime)
 {
-    const AssetImage* teethImages[NumImageIndexes] =
+    const AssetImage* teethImages[] =
     {
-      &Teeth, &TeethLoopConnected, &TeethLoopWord, &TeethNewWord
+        &TeethLoopWord,     // ImageIndex_Connected,
+        &TeethNewWord,      // ImageIndex_ConnectedWord,
+        &TeethLoopWordLeft, // ImageIndex_ConnectedLeft,
+        &TeethNewWordLeft,  // ImageIndex_ConnectedLeftWord,
+        &TeethLoopWordRight,// ImageIndex_ConnectedRight,
+        &TeethNewWordRight, // ImageIndex_ConnectedRightWord,
+        &TeethLoopConnected,// ImageIndex_Neighbored,
+        &Teeth,             // ImageIndex_Teeth,
     };
+
+    STATIC_ASSERT(arraysize(teethImages) == NumImageIndexes);
     ASSERT(teethImageIndex >= 0);
     ASSERT(teethImageIndex < arraysize(teethImages));
     const AssetImage& teeth = *teethImages[teethImageIndex];
@@ -42,7 +52,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
 
     if (animate)
     {
-        float animTime =  getStateMachine().getTime() / TEETH_ANIM_LENGTH;
+        float animTime =  (getStateMachine().getTime() - animStartTime) / TEETH_ANIM_LENGTH;
         if (loopAnim)
         {
             animTime = fmodf(animTime, 1.0f);
@@ -58,6 +68,14 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         }
         frame = (unsigned) (animTime * teeth.frames);
         frame = MIN(frame, teeth.frames - 1);
+
+        // HACK skip blip if reversing anim (chomp)
+        if (reverseAnim && (frame == 4 || frame == 5))
+        {
+            frame = 3;
+        }
+        DEBUG_LOG(("shuffle: [c: %d] anim: %d, frame: %d, time: %f\n", getStateMachine().getCube().id(), teethImageIndex, frame, GameStateMachine::getTime()));
+
     }
     else if (reverseAnim)
     {
@@ -155,7 +173,8 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
             }
         }
     }
-    bg1.Flush();
+
+    bg1.Flush(); // TODO only flush if mask has changed recently
     WordGame::instance()->setNeedsPaintSync();
 }
 
@@ -179,8 +198,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
                 };
 
-                // TODO disabled WIP
-                if (false && paintSprites)
+                if (paintSprites)
                 {
                     const EyeData& ed = getEyeData(*str);
                     _SYSTiltState state;
@@ -213,7 +231,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                     };
 
                     TiltDirection dir = tiltStateToDirection[state.x][state.y];
-                    unsigned eyeFrame = MAX(0, dir);
+                    unsigned eyeFrame = MAX(0, NumTiltDirections - dir); // asset frames are backwards
                     vid.setSpriteImage(LetterStateSpriteID_LeftEye, EyeLeft.index + (eyeFrame % EyeLeft.frames) * EyeLeft.width * EyeLeft.height);
                     vid.resizeSprite(LetterStateSpriteID_LeftEye, EyeLeft.width * 8, EyeLeft.height * 8);
                     vid.moveSprite(LetterStateSpriteID_LeftEye, ed.lx, ed.ly);

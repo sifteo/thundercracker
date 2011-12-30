@@ -64,9 +64,16 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
         }
         break;
 
-    case EventID_EndRound:
-        return CubeStateIndex_EndOfRoundScored;
+    case EventID_GameStateChanged:
+        switch (data.mGameStateChanged.mNewStateIndex)
+        {
+        case GameStateIndex_EndOfRoundScored:
+            return CubeStateIndex_EndOfRoundScored;
 
+        case GameStateIndex_ShuffleScored:
+            return CubeStateIndex_ShuffleScored;
+        }
+        break;
     }
     return getStateMachine().getCurrentStateIndex();
 }
@@ -85,23 +92,13 @@ void ScoredCubeState_NotWord::paint()
             c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
+    paintLetters(vid, Font1Letter, true);
+    if (neighbored)
     {
-        // intro anim done
-        paintLetters(vid, Font1Letter, true);
-        if (neighbored)
-        {
-            paintTeeth(vid, ImageIndex_Neighbored, true, false, true, true);
-        }
-        else
-        {
-            paintTeeth(vid, ImageIndex_Teeth, false, true, false, true);
-        }
+        paintTeeth(vid, ImageIndex_Neighbored, true, false, true, false);
     }
     else
     {
-        // intro anim
-        vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
-        paintTeeth(vid, ImageIndex_Teeth, true, false);
+        paintTeeth(vid, ImageIndex_Teeth, false, true, false, true);
     }
 }

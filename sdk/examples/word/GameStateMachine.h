@@ -5,7 +5,9 @@
 #include "StateMachine.h"
 #include "TitleGameState.h"
 #include "ScoredGameState.h"
+#include "ScoredGameState_StartOfRound.h"
 #include "ScoredGameState_EndOfRound.h"
+#include "ScoredGameState_Shuffle.h"
 #include "CubeStateMachine.h"
 
 using namespace Sifteo;
@@ -14,7 +16,9 @@ enum GameStateIndex
 {
     GameStateIndex_Title,
     GameStateIndex_PlayScored,
+    GameStateIndex_StartOfRoundScored,
     GameStateIndex_EndOfRoundScored,
+    GameStateIndex_ShuffleScored,
 
     GameStateIndex_NumStates
 };
@@ -22,9 +26,9 @@ enum GameStateIndex
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 #ifdef DEBUG
-const float ROUND_TIME = 20;
+const float ROUND_TIME = 30.0f;
 #else
-const float ROUND_TIME = 180.0f;
+const float ROUND_TIME = 120.0f;
 #endif
 const float ROUND_BONUS_TIME = 10.0f;
 
@@ -49,13 +53,16 @@ public:
 
 protected:
     virtual State& getState(unsigned index);
+    virtual void setState(unsigned newStateIndex, State& oldState);
     virtual unsigned getNumStates() const { return GameStateIndex_NumStates; }
 
 
 private:
     TitleGameState mTitleState;
     ScoredGameState mScoredState;
+    ScoredGameState_StartOfRound mScoredStartOfRoundState;
     ScoredGameState_EndOfRound mScoredEndOfRoundState;
+    ScoredGameState_Shuffle mScoredShuffleState;
     CubeStateMachine mCubeStateMachines[MAX_CUBES];
     float mAnagramCooldown;
     float mTimeLeft;

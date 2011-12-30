@@ -18,12 +18,15 @@ unsigned ScoredGameState_EndOfRound::onEvent(unsigned eventID, const EventData& 
     switch (eventID)
     {
     case EventID_EnterState:
-        GameStateMachine::sOnEvent(EventID_EndRound, EventData());
         WordGame::playAudio(wordplay_music_sayonara, AudioChannelIndex_Music, LoopRepeat);
         break;
 
     case EventID_Input:
-        return GameStateIndex_PlayScored;
+        if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
+        {
+            return GameStateIndex_StartOfRoundScored;
+        }
+        break;
 
     default:
         break;
