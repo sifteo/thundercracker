@@ -19,10 +19,13 @@ unsigned ScoredCubeState_EndOfRound::onEvent(unsigned eventID, const EventData& 
         paint();
         break;
 
-    case EventID_NewAnagram:
-        // fired from ScoredGameState::onEvent on _Input
-        return CubeStateIndex_NotWordScored;
-
+    case EventID_GameStateChanged:
+        switch (data.mGameStateChanged.mNewStateIndex)
+        {
+        case GameStateIndex_StartOfRoundScored:
+            return CubeStateIndex_StartOfRoundScored;
+        }
+        break;
     }
     return getStateMachine().getCurrentStateIndex();
 }

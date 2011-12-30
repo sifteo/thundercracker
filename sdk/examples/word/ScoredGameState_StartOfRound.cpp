@@ -13,7 +13,6 @@ unsigned ScoredGameState_StartOfRound::update(float dt, float stateTime)
 
     if (stateTime > TEETH_ANIM_LENGTH)
     {
-        GameStateMachine::sOnEvent(EventID_NewRound, EventData());
         WordGame::playAudio(wordplay_music_versus, AudioChannelIndex_Music, LoopRepeat);
         ScoredGameState::createNewAnagram();
         return GameStateIndex_PlayScored;

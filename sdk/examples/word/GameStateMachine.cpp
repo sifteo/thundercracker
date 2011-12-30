@@ -45,10 +45,13 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
-    case EventID_NewRound:
-        mTimeLeft = ROUND_TIME;
-        mAnagramCooldown = .0f;
-        mScore = 0;
+    case EventID_GameStateChanged:
+        if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_StartOfRoundScored)
+        {
+            mTimeLeft = ROUND_TIME;
+            mAnagramCooldown = .0f;
+            mScore = 0;
+        }
         break;
 
     case EventID_NewAnagram:
@@ -135,4 +138,13 @@ State& GameStateMachine::getState(unsigned index)
     case GameStateIndex_ShuffleScored:
         return mScoredShuffleState;
     }
+}
+
+void GameStateMachine::setState(unsigned newStateIndex, State& oldState)
+{
+    EventData data;
+    data.mGameStateChanged.mPreviousStateIndex = getCurrentStateIndex();
+    data.mGameStateChanged.mNewStateIndex = newStateIndex;
+    StateMachine::setState(newStateIndex, oldState);
+    onEvent(EventID_GameStateChanged, data);
 }

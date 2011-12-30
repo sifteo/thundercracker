@@ -23,6 +23,13 @@ unsigned ScoredCubeState_StartOfRound::onEvent(unsigned eventID, const EventData
         paint();
         break;
 
+    case EventID_GameStateChanged:
+        switch (data.mGameStateChanged.mNewStateIndex)
+        {
+        case GameStateIndex_PlayScored:
+            return CubeStateIndex_NotWordScored;
+        }
+        break;
     }
     return getStateMachine().getCurrentStateIndex();
 }
@@ -35,10 +42,6 @@ unsigned ScoredCubeState_StartOfRound::update(float dt, float stateTime)
 void ScoredCubeState_StartOfRound::paint()
 {
     Cube& c = getStateMachine().getCube();
-    // FIXME vertical words
-    bool neighbored =
-            (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED ||
-            c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     // intro anim

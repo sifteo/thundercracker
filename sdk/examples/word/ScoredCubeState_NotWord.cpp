@@ -64,11 +64,16 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
         }
         break;
 
-    case EventID_EndRound:
-        return CubeStateIndex_EndOfRoundScored;
+    case EventID_GameStateChanged:
+        switch (data.mGameStateChanged.mNewStateIndex)
+        {
+        case GameStateIndex_EndOfRoundScored:
+            return CubeStateIndex_EndOfRoundScored;
 
-    case EventID_Shuffle:
-        return CubeStateIndex_ShuffleScored;
+        case GameStateIndex_ShuffleScored:
+            return CubeStateIndex_ShuffleScored;
+        }
+        break;
     }
     return getStateMachine().getCurrentStateIndex();
 }

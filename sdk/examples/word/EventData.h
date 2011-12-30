@@ -29,6 +29,12 @@ union EventData
         bool mFirst;
         unsigned mPreviousStateIndex;
     } mEnterState;    
+
+    struct
+    {
+        unsigned mPreviousStateIndex;
+        unsigned mNewStateIndex;
+    } mGameStateChanged;
 };
 
 #endif // EVENTDATA_H

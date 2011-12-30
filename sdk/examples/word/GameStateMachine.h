@@ -53,6 +53,7 @@ public:
 
 protected:
     virtual State& getState(unsigned index);
+    virtual void setState(unsigned newStateIndex, State& oldState);
     virtual unsigned getNumStates() const { return GameStateIndex_NumStates; }
 
 

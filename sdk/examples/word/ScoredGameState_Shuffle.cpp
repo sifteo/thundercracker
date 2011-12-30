@@ -23,7 +23,6 @@ unsigned ScoredGameState_Shuffle::onEvent(unsigned eventID, const EventData& dat
     switch (eventID)
     {
     case EventID_EnterState:
-        GameStateMachine::sOnEvent(EventID_Shuffle, EventData());
         break;
 
     default:

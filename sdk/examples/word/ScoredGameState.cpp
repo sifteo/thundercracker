@@ -43,8 +43,12 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
         WordGame::playAudio(shuffle, AudioChannelIndex_NewAnagram);
         break;
 
-    case EventID_EndRound:
-        WordGame::playAudio(timesup, AudioChannelIndex_Time);
+    case EventID_GameStateChanged:
+        switch (data.mGameStateChanged.mNewStateIndex)
+        {
+        case GameStateIndex_EndOfRoundScored:
+            WordGame::playAudio(timesup, AudioChannelIndex_Time);
+        }
         break;
 
     case EventID_ClockTick:
