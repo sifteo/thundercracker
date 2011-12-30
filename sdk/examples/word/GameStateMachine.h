@@ -26,9 +26,9 @@ enum GameStateIndex
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 #ifdef DEBUG
-const float ROUND_TIME = 20;
+const float ROUND_TIME = 30.0f;
 #else
-const float ROUND_TIME = 180.0f;
+const float ROUND_TIME = 120.0f;
 #endif
 const float ROUND_BONUS_TIME = 10.0f;
 

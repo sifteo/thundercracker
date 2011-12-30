@@ -6,7 +6,7 @@ EyeLeftBlink = image{"wc_eyeball_left.png", width=16, height=16, quality=10, pin
 EyeRightBlink = image{"wc_eyeball_right_blink.png", width=16, height=16, quality=10, pinned=true}
 Font1Letter = image{"WC_letters.png", width=128, height=128, quality=10}
 LetterBG = image{"wc_letters_background.png", quality=10}
-StartScreen = image{"start_screen.png", quality=0}
+StartScreen = image{"start_screen.png", quality=10}
 Title = image{"title.png", quality=10}
 HighScores = image{"high_scores.png", quality=10}
 Score = image{"score.png", quality=10}
