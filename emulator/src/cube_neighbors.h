@@ -48,8 +48,8 @@ class Neighbors {
     enum Side {
         TOP = 0,
         LEFT,
-        BOTTOM,
         RIGHT,
+        BOTTOM,
         NUM_SIDES,
     };
 

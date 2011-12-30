@@ -77,8 +77,8 @@ void siftmain()
                              
             drawSide(i, nb.sides[0] != CUBE_ID_UNDEFINED, 1,  0,  1, 0);  // Top
             drawSide(i, nb.sides[1] != CUBE_ID_UNDEFINED, 0,  1,  0, 1);  // Left
-            drawSide(i, nb.sides[2] != CUBE_ID_UNDEFINED, 1,  15, 1, 0);  // Bottom
-            drawSide(i, nb.sides[3] != CUBE_ID_UNDEFINED, 15, 1,  0, 1);  // Right
+            drawSide(i, nb.sides[2] != CUBE_ID_UNDEFINED, 15, 1,  0, 1);  // Right
+            drawSide(i, nb.sides[3] != CUBE_ID_UNDEFINED, 1,  15, 1, 0);  // Bottom
         }
 
         System::paint();
