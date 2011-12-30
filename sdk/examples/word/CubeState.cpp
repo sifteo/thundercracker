@@ -68,6 +68,12 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         }
         frame = (unsigned) (animTime * teeth.frames);
         frame = MIN(frame, teeth.frames - 1);
+
+        // HACK skip blip if reversing anim (chomp)
+        if (reverseAnim && (frame == 4 || frame == 5))
+        {
+            frame = 3;
+        }
         DEBUG_LOG(("shuffle: [c: %d] anim: %d, frame: %d, time: %f\n", getStateMachine().getCube().id(), teethImageIndex, frame, GameStateMachine::getTime()));
 
     }

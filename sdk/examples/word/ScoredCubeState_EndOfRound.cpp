@@ -47,16 +47,7 @@ void ScoredCubeState_EndOfRound::paint()
     WordGame::hideSprites(vid);
     if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
     {
-        // intro animation
-        /*if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH - 0.2f)
-        {
-            paintLetters(vid, Font1Letter);
-        }
-        else*/
-        {
-            // no letters during blip
-            vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
-        }
+        paintLetters(vid, Font1Letter);
         paintTeeth(vid, ImageIndex_Teeth, true, true);
         return;
     }
