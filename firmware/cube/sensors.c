@@ -92,11 +92,13 @@ uint8_t accel_z_low;
 #define NB_TX_BITS          18      // 1 header, 2 mask, 13 payload, 2 damping
 #define NB_RX_BITS          15      // 2 mask, 13 payload
 
-// 2us pulses, 9us bit periods
-#define NB_BIT_TICKS        12      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   13      // Tweak for sampling halfway between pulses
+// 2us pulses, 48us bit periods
+// TODO: bit period is maxed out to account for measured tank ring down of
+// about 48us. Better squelching should hopefully allow us to reduce this significantly.
+#define NB_BIT_TICKS        64      // In 0.75 us ticks
+#define NB_BIT_TICK_FIRST   66      // Tweak for sampling halfway between pulses
  
-#define NB_DEADLINE         20      // 15 us (Max 48 us)
+#define NB_DEADLINE         64      // 48us (previously 15 us - please tune me back down) (Max 48 us)
 
 #define NBR_SQUELCH_ENABLE          // uncomment to enable squelching during neighbor RX - default is disabled
 

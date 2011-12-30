@@ -77,13 +77,11 @@ static void gpio_init(void)
      * We enable pull-downs for input mode, when we're receiving pulses from
      * our neighbors. This improves the isolation between each side's input.
      *
-     * We do NOT use high-drive mode, as it seems to actually make things a
-     * lot worse!
+     * High drive is enabled.
      */
 
-    MISC_CON = 0x30;
-    MISC_CON = 0x31;
-    MISC_CON = 0x35;
-    MISC_CON = 0x37;
+    MISC_CON = 0x60;
+    MISC_CON = 0x61;
+    MISC_CON = 0x65;
+    MISC_CON = 0x67;
 }
-
