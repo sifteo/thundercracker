@@ -23,7 +23,11 @@ unsigned ScoredGameState_EndOfRound::onEvent(unsigned eventID, const EventData& 
         break;
 
     case EventID_Input:
-        return GameStateIndex_PlayScored;
+        if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
+        {
+            return GameStateIndex_StartOfRoundScored;
+        }
+        break;
 
     default:
         break;

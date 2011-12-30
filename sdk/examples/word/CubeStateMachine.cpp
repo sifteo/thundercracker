@@ -156,6 +156,8 @@ State& CubeStateMachine::getState(unsigned index)
         return mTitleExitState;
 
     default:
+        ASSERT(0);
+        // fall through
     case CubeStateIndex_NotWordScored:
         return mNotWordScoredState;
 
@@ -165,9 +167,14 @@ State& CubeStateMachine::getState(unsigned index)
     case CubeStateIndex_OldWordScored:
         return mOldWordScoredState;
 
+    case CubeStateIndex_StartOfRoundScored:
+        return mStartOfRoundScoredState;
+
     case CubeStateIndex_EndOfRoundScored:
         return mEndOfRoundScoredState;
 
+    case CubeStateIndex_ShuffleScored:
+        return mShuffleScoredState;
     }
 }
 

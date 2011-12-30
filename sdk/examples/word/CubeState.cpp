@@ -28,7 +28,8 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                            bool animate,
                            bool reverseAnim,
                            bool loopAnim,
-                           bool paintTime)
+                           bool paintTime,
+                           float animStartTime)
 {
     const AssetImage* teethImages[] =
     {
@@ -51,7 +52,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
 
     if (animate)
     {
-        float animTime =  getStateMachine().getTime() / TEETH_ANIM_LENGTH;
+        float animTime =  (getStateMachine().getTime() - animStartTime) / TEETH_ANIM_LENGTH;
         if (loopAnim)
         {
             animTime = fmodf(animTime, 1.0f);
@@ -67,6 +68,8 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         }
         frame = (unsigned) (animTime * teeth.frames);
         frame = MIN(frame, teeth.frames - 1);
+        DEBUG_LOG(("shuffle: [c: %d] anim: %d, frame: %d, time: %f\n", getStateMachine().getCube().id(), teethImageIndex, frame, GameStateMachine::getTime()));
+
     }
     else if (reverseAnim)
     {
@@ -164,7 +167,8 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
             }
         }
     }
-    bg1.Flush();
+
+    bg1.Flush(); // TODO only flush if mask has changed recently
     WordGame::instance()->setNeedsPaintSync();
 }
 

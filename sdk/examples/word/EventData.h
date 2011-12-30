@@ -27,6 +27,7 @@ union EventData
     struct
     {
         bool mFirst;
+        unsigned mPreviousStateIndex;
     } mEnterState;    
 };
 

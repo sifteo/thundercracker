@@ -14,7 +14,6 @@ unsigned ScoredCubeState_EndOfRound::onEvent(unsigned eventID, const EventData& 
 {
     switch (eventID)
     {
-    // TODO debug: case EventID_Paint:
     case EventID_EnterState:
     case EventID_Paint:
         paint();

@@ -121,8 +121,18 @@ State& GameStateMachine::getState(unsigned index)
     case GameStateIndex_Title:
         return mTitleState;
     default:
+        ASSERT(0);
+        // fall through
+    case GameStateIndex_PlayScored:
         return mScoredState;
+
+    case GameStateIndex_StartOfRoundScored:
+        return mScoredStartOfRoundState;
+
     case GameStateIndex_EndOfRoundScored:
         return mScoredEndOfRoundState;
+
+    case GameStateIndex_ShuffleScored:
+        return mScoredShuffleState;
     }
 }

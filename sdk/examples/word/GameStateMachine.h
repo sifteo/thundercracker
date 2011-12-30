@@ -5,7 +5,9 @@
 #include "StateMachine.h"
 #include "TitleGameState.h"
 #include "ScoredGameState.h"
+#include "ScoredGameState_StartOfRound.h"
 #include "ScoredGameState_EndOfRound.h"
+#include "ScoredGameState_Shuffle.h"
 #include "CubeStateMachine.h"
 
 using namespace Sifteo;
@@ -14,7 +16,9 @@ enum GameStateIndex
 {
     GameStateIndex_Title,
     GameStateIndex_PlayScored,
+    GameStateIndex_StartOfRoundScored,
     GameStateIndex_EndOfRoundScored,
+    GameStateIndex_ShuffleScored,
 
     GameStateIndex_NumStates
 };
@@ -55,7 +59,9 @@ protected:
 private:
     TitleGameState mTitleState;
     ScoredGameState mScoredState;
+    ScoredGameState_StartOfRound mScoredStartOfRoundState;
     ScoredGameState_EndOfRound mScoredEndOfRoundState;
+    ScoredGameState_Shuffle mScoredShuffleState;
     CubeStateMachine mCubeStateMachines[MAX_CUBES];
     float mAnagramCooldown;
     float mTimeLeft;

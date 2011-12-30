@@ -16,6 +16,7 @@ enum EventID
     EventID_WordBroken,
     EventID_NewRound,
     EventID_EndRound,
+    EventID_Shuffle,
     EventID_Title,
 
     NumEventIds

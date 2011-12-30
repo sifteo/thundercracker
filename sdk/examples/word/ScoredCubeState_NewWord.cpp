@@ -82,6 +82,9 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
 
     case EventID_EndRound:
         return CubeStateIndex_EndOfRoundScored;
+
+    case EventID_Shuffle:
+        return CubeStateIndex_ShuffleScored;
     }
     return getStateMachine().getCurrentStateIndex();
 }

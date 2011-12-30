@@ -8,7 +8,9 @@
 #include "ScoredCubeState_NotWord.h"
 #include "ScoredCubeState_NewWord.h"
 #include "ScoredCubeState_OldWord.h"
+#include "ScoredCubeState_StartOfRound.h"
 #include "ScoredCubeState_EndOfRound.h"
+#include "ScoredCubeState_Shuffle.h"
 
 using namespace Sifteo;
 
@@ -47,7 +49,9 @@ private:
     ScoredCubeState_NotWord mNotWordScoredState;
     ScoredCubeState_NewWord mNewWordScoredState;
     ScoredCubeState_OldWord mOldWordScoredState;
+    ScoredCubeState_StartOfRound mStartOfRoundScoredState;
     ScoredCubeState_EndOfRound mEndOfRoundScoredState;
+    ScoredCubeState_Shuffle mShuffleScoredState;
 };
 
 #endif // CUBESTATEMACHINE_H

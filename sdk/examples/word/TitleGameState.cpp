@@ -24,7 +24,7 @@ unsigned TitleGameState::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_Input:
-        return GameStateIndex_PlayScored;
+        return GameStateIndex_StartOfRoundScored;
 
     default:
         break;
