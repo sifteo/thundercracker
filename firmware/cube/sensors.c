@@ -641,7 +641,6 @@ nb_tx_handoff:
         mov     _W2CON0, #0               ; Reset I2C master
         mov     _W2CON0, #1               ;   Turn on I2C controller
         mov     _W2CON0, #7               ;   Master mode, 100 kHz.
-        mov     _W2CON1, #~0x20               ;   Unmask interrupt
         mov     _W2DAT, #ACCEL_ADDR       ; Trigger the next I2C transaction
 
         ;--------------------------------------------------------------------
