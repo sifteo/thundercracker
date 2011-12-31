@@ -151,6 +151,9 @@ class I2CBus {
                           (cpu->mSFR[REG_INTEXP] & 0x04) );
        
         if (UNLIKELY(nextIEX3 != iex3)) {
+            if (cpu->isTracing)
+                fprintf(cpu->traceFile, "[%2d] I2C: IEX3 level %d -> %d\n", cpu->id, iex3, nextIEX3);
+
             if (cpu->mSFR[REG_T2CON] & 0x40) {
                 // Rising edge
                 if (nextIEX3 && !iex3) {

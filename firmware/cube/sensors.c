@@ -821,11 +821,16 @@ void sensors_init()
     MISC_PORT |= MISC_I2C;      // Drive the I2C lines high
     MISC_DIR &= ~MISC_I2C;      // Output drivers enabled
 
-    W2CON0 = 0;         // Reset I2C master
-    W2CON0 = 1;         // turn it on
-    W2CON0 = 7;         // Turn on I2C controller, Master mode, 100 kHz.
-    INTEXP |= 0x04;     // Enable 2Wire IRQ -> iex3
-    W2CON1 = ~0x20;     // Unmask interrupt
+    W2CON0 = 0;                 // Reset I2C master
+    W2CON0 = 1;                 // turn it on
+    W2CON0 = 7;                 // Turn on I2C controller, Master mode, 100 kHz.
+    INTEXP |= 0x04;             // Enable 2Wire IRQ -> iex3
+    W2CON1 = 0;                 // Unmask interrupt, leave everything at default
+
+    T2CON |= 0x40;              // iex3 rising edge
+    IRCON = 0;                  // Clear any spurious IRQs from initialization
+    IP0 |= 0x04;                // Interrupt priority level 1.
+    IEN_SPI_I2C = 1;            // Global enable for SPI interrupts
 
     {
         // put lis3d in low power mode with all 3 axes enabled &
@@ -854,11 +859,6 @@ void sensors_init()
         for (c = 0; c < 0xFFF; ++c);
     }
 #endif
-
-    T2CON |= 0x40;              // iex3 rising edge
-    IRCON = 0;                  // Clear any spurious IRQs from initialization
-    IP0 |= 0x04;                // Interrupt priority level 1.
-    IEN_SPI_I2C = 1;            // Global enable for SPI interrupts
 
     /*
      * Timer 0: master sensor period
