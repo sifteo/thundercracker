@@ -177,17 +177,22 @@ class TimeGovernor {
          * up.
          */
 
-        static const double maxSecondsBehind = 5.0;
+        static const double maxDeviation = 0.75;
 
         et.capture();
 
         secondsAhead += et.virtualSeconds() - et.realSeconds();
 
+        /*
+         * Fully reset if we're lagging/leading too much, rather than clamping to our limit.
+         * (Among other things, this avoids catch-up delay when coming out of Turbo)
+         */        
+
+        if (secondsAhead < -maxDeviation || secondsAhead > maxDeviation)
+            secondsAhead = 0;
+
         if (secondsAhead > 0)
             glfwSleep(secondsAhead);
-
-        if (secondsAhead < -maxSecondsBehind)
-            secondsAhead = -maxSecondsBehind;
        
         et.start();
     }

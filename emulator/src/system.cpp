@@ -13,7 +13,7 @@
 
 System::System()
         : opt_numCubes(DEFAULT_CUBES),
-        opt_noThrottle(false),
+        opt_turbo(false),
         opt_continueOnException(false),
         opt_cube0Debug(NULL),
         threadRunning(false),
@@ -248,7 +248,7 @@ void System::threadFn(void *param)
          * we have the CPU power to do so.
          */
 
-        if (!self->opt_noThrottle)
+        if (!self->opt_turbo)
             gov.step();
     }
 }

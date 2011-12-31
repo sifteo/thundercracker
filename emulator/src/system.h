@@ -33,7 +33,7 @@ class System {
     // Options; can be set prior to init
     unsigned opt_numCubes;
     std::string opt_cubeFirmware;
-    bool opt_noThrottle;
+    bool opt_turbo;
 
     // Global debug options
     std::string opt_cubeTrace;
