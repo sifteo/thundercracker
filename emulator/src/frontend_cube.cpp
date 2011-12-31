@@ -190,9 +190,11 @@ void FrontendCube::animate()
      * convert this acceleration into device-local coordinates. This will take into
      * account tilting, as well as the cube's angular orientation.
      */
+     
+    /* XXX: Real 3-axis support! This hardcoded Z is a total hack. */
 
     b2Vec3 accelLocal = modelMatrix.Solve33(accelG);
-    hw->setAcceleration(accelLocal.x, accelLocal.y);
+    hw->setAcceleration(accelLocal.x, accelLocal.y, -1.0f);
 }
 
 void FrontendCube::computeAABB(b2AABB &aabb)
