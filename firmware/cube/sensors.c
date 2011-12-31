@@ -730,7 +730,7 @@ cleanup:
 #endif
 
 // TODO - asm these functions
-static void i2c_tx(uint8_t addr, uint8_t *buf, uint8_t len)
+static void i2c_tx(uint8_t addr, const __code uint8_t *buf, uint8_t len)
 {
     I2C_TX_W_ACK(addr, cleanup);
 
@@ -829,14 +829,14 @@ void sensors_init()
     IRCON = 0;                  // Reset interrupt flag (used below)
     
     {
-        // put lis3d in low power mode with all 3 axes enabled &
+        // put LIS3D in low power mode with all 3 axes enabled &
         // block data update enabled
 
-        uint8_t init[2] = { ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
-        i2c_tx(ACCEL_ADDR, init, sizeof(init));
+        const __code uint8_t init1[] = { ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
+        const __code uint8_t init2[] = { ACCEL_CTRL_REG4, ACCEL_REG4_INIT };
 
-        init[0] = ACCEL_CTRL_REG4; init[1] = ACCEL_REG4_INIT;
-        i2c_tx(ACCEL_ADDR, init, sizeof(init));
+        i2c_tx(ACCEL_ADDR, init1, sizeof init1);
+        i2c_tx(ACCEL_ADDR, init2, sizeof init2);
     }
     /*
         test loop for reading data, blocking style.
