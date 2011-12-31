@@ -34,7 +34,7 @@ volatile uint8_t sensor_tick_counter_high;
 #define ACCEL_REG1_INIT         0x4F    // 50 Hz, low power, x/y/z axes enabled
 
 #define ACCEL_CTRL_REG4         0x23
-#define ACCEL_REG4_INIT         0x80    // block update enabled, all others default
+#define ACCEL_REG4_INIT         0x80    // block update, 2g full-scale, little endian
 
 #define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
 
