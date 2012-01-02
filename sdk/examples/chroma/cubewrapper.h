@@ -97,6 +97,7 @@ public:
     void setState( CubeState state );
     //bool IsIdle() const;
     inline int getLastTiltDir() const { return m_lastTiltDir; }
+    inline Float2 getTiltDir() const { return m_curFluidDir; }
     inline BG1Helper &getBG1Helper() { return m_bg1helper; }
 
     //if we need to, flush bg1
