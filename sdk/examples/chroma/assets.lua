@@ -11,7 +11,7 @@ MessageBox0 = image{"message0.png"}
 MessageBox1 = image{"message1.png"}
 MessageBox2 = image{"message2.png"}
 MessageBox3 = image{"message3.png"}
-MessageBox4 = image{"message4c.png"}
+MessageBox4 = image{"message4.png"}
 --the gems
 Gem0 = image{"Gem0.png", height=32}
 Gem1 = image{"Gem1.png", height=32}
