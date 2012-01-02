@@ -222,6 +222,7 @@ void NRF24L01::transmitPacket()
      * ways. We assume that re-entry only occurs after ce.setHigh().
      */
 
+    txBuffer.noAck = false;
     RadioManager::produce(txBuffer);
     softRetriesLeft = SOFT_RETRY_MAX;
 
@@ -255,7 +256,7 @@ void NRF24L01::transmitPacket()
      */
 
     spi.begin();
-    spi.transfer(CMD_W_TX_PAYLOAD);
+    spi.transfer(txBuffer.noAck ? CMD_W_TX_PAYLOAD_NO_ACK : CMD_W_TX_PAYLOAD);
     for (unsigned i = 0; i < txBuffer.packet.len; i++)
         spi.transfer(txBuffer.packet.bytes[i]);
     spi.end();

@@ -65,7 +65,9 @@ void RadioManager::produce(PacketTransmission &tx)
 
         if (slot.enabled() && slot.radioProduce(tx)) {
             // Remember this slot in our queue.
-            fifoPush(id);
+            if (tx.noAck == false) {
+                fifoPush(id);
+            }
             break;
         }
     }

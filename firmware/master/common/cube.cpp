@@ -178,22 +178,18 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
      *      time division multiplexing. The packet itself is a short
      *      (3 byte) and simple packet which simply adjusts the phase
      *      of the cube's sensor timer.
-     *
-     *      We'll need to do some work on the master to calculate this
-     *      phase by using the current time plus an estimate of radio
-     *      latency. We'll also want to disable hardware retries on
-     *      these packets, so that we always have the best possible
-     *      control over our latency.
-     *
-     *      This is totally fake for now. We just rely on getting
-     *      lucky, and having few enough cubes that it's likely we do.
      */
 
     if (timeSyncState)  {
         timeSyncState--;
     } else if (tx.packet.len == 0) {
-        timeSyncState = 10000;
-        codec.timeSync(tx.packet, id() << 12);
+        timeSyncState = 1000;
+        // cube timer runs at 16Mhz with a prescaler of 12
+        const SysTime::Ticks cubeticks = SysTime::ticks() / SysTime::hzTicks(16000000 / 12);
+        const uint16_t cubeSyncTime = (cubeticks + (id() * NEIGHBOR_TX_SLOT_TICKS)) % NEIGHBOR_TIMER_PERIOD_TICKS;
+
+        codec.timeSync(tx.packet, cubeSyncTime);
+        tx.noAck = true;    // just throw it out there UDP style
         return true;
     }
 

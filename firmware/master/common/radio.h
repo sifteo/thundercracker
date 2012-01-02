@@ -93,11 +93,12 @@ struct PacketBuffer {
 struct PacketTransmission {
     PacketBuffer packet;
     const RadioAddress *dest;
+    bool noAck;
 
-    PacketTransmission() {}
+    PacketTransmission() : noAck(false) {}
 
     PacketTransmission(const RadioAddress *_dest, uint8_t *_bytes, unsigned _len=0)
-        : packet(PacketBuffer(_bytes, _len)), dest(_dest) {}
+        : packet(PacketBuffer(_bytes, _len)), dest(_dest), noAck(false) {}
 
     void log() const {
         #if defined(SIFTEO_SIMULATOR) && defined(DEBUG)
