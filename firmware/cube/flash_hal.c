@@ -27,6 +27,7 @@
  */
 
 #include "flash.h"
+#include "radio.h"
 
 uint8_t flash_addr_low;
 uint8_t flash_addr_lat1;
@@ -174,17 +175,21 @@ void flash_erase(uint8_t blockCount)
             //          sectors to ensure the area that the master actually wants
             //          to program is successfully erased.
             num_extra_sectors = 4;
-            while (num_extra_sectors--) {
-                // NOTE: after the first sector erase command has been received,
-                // subsequent commands may be received within a 50us timeout
-                // without having to send another unlock sequence.
-                // ie, don't put anything else in this loop :)
-                ADDR_PORT = flash_addr_lat2 + (num_extra_sectors * 2);
-                CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
-                ADDR_PORT = 0;
-                BUS_PORT = 0x30;
-                FLASH_CMD_STROBE();
-            }
+            radio_critical_section({
+                while (num_extra_sectors--) {
+                    // NOTE: after the first sector erase command has been received,
+                    // subsequent commands may be received within a 50us timeout
+                    // without having to send another unlock sequence.
+                    // ie, don't put anything else in this loop :)
+                    // longer term, master should only be telling us exactly
+                    // what it wants us to erase
+                    ADDR_PORT = flash_addr_lat2 + (num_extra_sectors * 2);
+                    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+                    ADDR_PORT = 0;
+                    BUS_PORT = 0x30;
+                    FLASH_CMD_STROBE();
+                }
+            )};
 
             FLASH_OUT();
             __asm  2$:  jnb     BUS_PORT.7, 2$  __endasm;
