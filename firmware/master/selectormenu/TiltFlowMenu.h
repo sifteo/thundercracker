@@ -155,6 +155,7 @@ public:
 
     static const float UPDATE_DELAY;
     static const float PICK_DELAY;
+    static const float POST_PICK_DELAY;
     static const float REST_DELAY;
 
     typedef enum
