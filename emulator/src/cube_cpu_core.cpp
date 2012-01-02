@@ -43,6 +43,62 @@ namespace Cube {
 namespace CPU {
 
 
+NEVER_INLINE void trace_execution(em8051 *mCPU)
+{
+    char assembly[128];
+    uint8_t bank = (mCPU->mSFR[REG_PSW] & (PSWMASK_RS0|PSWMASK_RS1)) >> PSW_RS0;
+
+    em8051_decode(mCPU, mCPU->mPC, assembly);
+
+    fprintf(mCPU->traceFile,
+            "[%2d] %u i%d @%04X a%02X r%d[%02X%02X%02X%02X-%02X%02X%02X%02X] "
+            "d%d[%04X%04X] p[%02X%02X%02X%02X-%02X%02X%02X%02X] "
+            "t[%02X%02X%02X%02X%02X%02X]  %s\n",
+
+            mCPU->id,
+            (unsigned) mCPU->vtime->clocks,
+            mCPU->irq_count, mCPU->mPC,
+            mCPU->mSFR[REG_ACC],
+            bank,
+            mCPU->mData[bank*8 + 0],
+            mCPU->mData[bank*8 + 1],
+            mCPU->mData[bank*8 + 2],
+            mCPU->mData[bank*8 + 3],
+            mCPU->mData[bank*8 + 4],
+            mCPU->mData[bank*8 + 5],
+            mCPU->mData[bank*8 + 6],
+            mCPU->mData[bank*8 + 7],
+            mCPU->mSFR[REG_DPS] & 1,
+            (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
+            (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
+            mCPU->mSFR[REG_P0],
+            mCPU->mSFR[REG_P1],
+            mCPU->mSFR[REG_P2],
+            mCPU->mSFR[REG_P3],
+            mCPU->mSFR[REG_P0DIR],
+            mCPU->mSFR[REG_P1DIR],
+            mCPU->mSFR[REG_P2DIR],
+            mCPU->mSFR[REG_P3DIR],
+            mCPU->mSFR[REG_TH0],
+            mCPU->mSFR[REG_TL0],
+            mCPU->mSFR[REG_TH1],
+            mCPU->mSFR[REG_TL1],
+            mCPU->mSFR[REG_TH2],
+            mCPU->mSFR[REG_TL2],
+            assembly);
+}
+
+NEVER_INLINE void profile_tick(em8051 *aCPU, unsigned pc)
+{
+    struct profile_data *pd = &aCPU->mProfileData[pc];
+    pd->total_cycles += aCPU->mTickDelay;
+    if (pd->loop_prev) {
+        pd->loop_cycles += aCPU->vtime->clocks - pd->loop_prev;
+        pd->loop_hits++;
+    }
+    pd->loop_prev = aCPU->vtime->clocks;
+}
+
 int em8051_decode(em8051 *aCPU, int aPosition, char *aBuffer)
 {
     return aCPU->dec[aCPU->mCodeMem[aPosition & (CODE_SIZE - 1)]](aCPU, aPosition, aBuffer);
