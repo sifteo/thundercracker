@@ -66,6 +66,11 @@ unsigned WordGame::rand(unsigned max)
 #endif
 }
 
+float WordGame::rand(float min, float max)
+{
+    return min + ((float)rand((unsigned)(1000.f * (max - min))))/1000.f;
+}
+
 void WordGame::hideSprites(VidMode_BG0_SPR_BG1 &vid)
 {
     for (int i=0; i < 8; ++i)

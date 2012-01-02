@@ -35,6 +35,7 @@ public:
     static void onEvent(unsigned eventID, const EventData& data);
     static bool playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
     static unsigned rand(unsigned max);
+    static float rand(float min, float max);
 
 private:
     bool _playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
