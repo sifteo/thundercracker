@@ -159,12 +159,12 @@ void System::exit()
     if (!mIsInitialized)
         return;
     mIsInitialized = false;
-    mIsStarted = false;
         
     network.exit();
 
     if (mIsStarted) {
         stopThread();
+        mIsStarted = false;
 
         if (opt_cube0Debug)
             Cube::Debug::exit();
