@@ -16,7 +16,7 @@ TiltFlowItem MENUITEMS[ MenuController::NUM_MENU_ITEMS ] =
     TiltFlowItem( IconGameChroma, LabelChroma ),
     TiltFlowItem( IconGameWord, LabelWord ),
     TiltFlowItem( IconGameSandwich, LabelSandwich ),
-    TiltFlowItem( IconGamePeano, LabelPeano ),
+    //TiltFlowItem( IconGamePeano, LabelPeano ),
     TiltFlowItem( IconGameMore, LabelMore ),
 };
 
