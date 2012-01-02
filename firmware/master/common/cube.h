@@ -129,6 +129,13 @@ class CubeSlot {
  private:
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
+    // number of cube (ie, not master) ticks for a neighbor tx slot.
+    // represents cube bit period * num total bits in a tx sequence.
+    // NOTE: must be synced with NB_BIT_TICKS * NB_TX_BITS in firmware/cube/sensors.c
+    // XXX: at the moment, NB_TX_BITS is 18 on the cube, but making it wider here (24) to be conservative
+    static const unsigned NEIGHBOR_TX_SLOT_TICKS = 64 * 24;
+    // rollover duration of cube timer, in cube ticks
+    static const unsigned NEIGHBOR_TIMER_PERIOD_TICKS = 0x1FFF; // 13 bit
     
     /*
      * Data buffers, provided by game code.
