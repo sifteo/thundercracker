@@ -80,6 +80,7 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
 
 unsigned ScoredCubeState_NotWord::update(float dt, float stateTime)
 {
+    CubeState::update(dt, stateTime);
     return getStateMachine().getCurrentStateIndex();
 }
 

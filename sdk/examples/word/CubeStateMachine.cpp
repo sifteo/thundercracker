@@ -50,7 +50,6 @@ const char* CubeStateMachine::getLetters()
 
 bool CubeStateMachine::canBeginWord()
 {
-    // TODO vertical words
     return (mNumLetters > 0 &&
             mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
             mCube->physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);

@@ -10,11 +10,11 @@ union EventData;
 enum AudioChannelIndex
 {
     AudioChannelIndex_Music,
-    AudioChannelIndex_Neighbor,
-    AudioChannelIndex_Score,
-    AudioChannelIndex_Bonus,
-    AudioChannelIndex_NewAnagram,
-    AudioChannelIndex_Time,
+    AudioChannelIndex_Neighbor = 1,
+    AudioChannelIndex_Score = 1,   // HACK only 2 channels are funcitoning for now
+    AudioChannelIndex_Bonus = 1,
+    AudioChannelIndex_NewAnagram = 1,
+    AudioChannelIndex_Time = 1,
 
     Num_AudioChannelIndexs
 };
@@ -35,6 +35,7 @@ public:
     static void onEvent(unsigned eventID, const EventData& data);
     static bool playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
     static unsigned rand(unsigned max);
+    static float rand(float min, float max);
 
 private:
     bool _playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);

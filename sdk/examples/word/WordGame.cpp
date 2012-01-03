@@ -46,6 +46,10 @@ void WordGame::_onEvent(unsigned eventID, const EventData& data)
 
 bool WordGame::playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
 {
+    if (channel == AudioChannelIndex_Music)
+    {
+        return false;
+    }
     ASSERT(sInstance);
     return sInstance->_playAudio(mod, channel, loopMode);
 }
@@ -64,6 +68,11 @@ unsigned WordGame::rand(unsigned max)
 #else
     return rand_r(&sInstance->mRandomSeed) % max;
 #endif
+}
+
+float WordGame::rand(float min, float max)
+{
+    return min + ((float)rand((unsigned)(1000.f * (max - min))))/1000.f;
 }
 
 void WordGame::hideSprites(VidMode_BG0_SPR_BG1 &vid)
