@@ -24,7 +24,7 @@ AudioMixer::AudioMixer() :
 void AudioMixer::init()
 {
     memset(channels, 0, sizeof(channels));
-    for (int i = 0; i < _SYS_AUDIO_MAX_SAMPLE_CHANNELS; i++) {
+    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         decoders[i].init();
     }
 }
@@ -247,7 +247,7 @@ void AudioMixer::stopChannel(AudioChannelWrapper *ch)
     Atomic::ClearBit(activeChannelMask, channelIndex);
     if (ch->channelType() == Sample) {
         int decoderIndex = ch->decoder - decoders;
-        ASSERT(decoderIndex < _SYS_AUDIO_MAX_SAMPLE_CHANNELS);
+        ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
         Atomic::SetBit(availableDecodersMask, decoderIndex);
     }
     ch->onPlaybackComplete();
@@ -310,7 +310,7 @@ SpeexDecoder* AudioMixer::getDecoder()
         return NULL;
     }
 
-    for (int i = 0; i < _SYS_AUDIO_MAX_SAMPLE_CHANNELS; i++) {
+    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         if (availableDecodersMask & (1 << i)) {
             Atomic::ClearBit(availableDecodersMask, i);
             return &decoders[i];
