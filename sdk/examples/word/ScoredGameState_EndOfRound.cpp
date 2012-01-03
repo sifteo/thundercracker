@@ -15,6 +15,7 @@ unsigned ScoredGameState_EndOfRound::update(float dt, float stateTime)
 
 unsigned ScoredGameState_EndOfRound::onEvent(unsigned eventID, const EventData& data)
 {
+    ScoredGameState::onAudioEvent(eventID, data);
     switch (eventID)
     {
     case EventID_EnterState:

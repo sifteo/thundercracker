@@ -11,6 +11,9 @@ public:
     virtual unsigned onEvent(unsigned eventID, const EventData& data);
 
     static void createNewAnagram();
+
+    static void onAudioEvent(unsigned eventID, const EventData& data);
+
 };
 
 #endif // SCOREDGAMESTATE_H

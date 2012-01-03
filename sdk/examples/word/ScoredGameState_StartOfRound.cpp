@@ -23,6 +23,7 @@ unsigned ScoredGameState_StartOfRound::update(float dt, float stateTime)
 
 unsigned ScoredGameState_StartOfRound::onEvent(unsigned eventID, const EventData& data)
 {
+    ScoredGameState::onAudioEvent(eventID, data);
     switch (eventID)
     {
     case EventID_EnterState:

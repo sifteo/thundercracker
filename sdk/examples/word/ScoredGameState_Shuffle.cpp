@@ -20,6 +20,7 @@ unsigned ScoredGameState_Shuffle::update(float dt, float stateTime)
 
 unsigned ScoredGameState_Shuffle::onEvent(unsigned eventID, const EventData& data)
 {
+    ScoredGameState::onAudioEvent(eventID, data);
     switch (eventID)
     {
     case EventID_EnterState:
