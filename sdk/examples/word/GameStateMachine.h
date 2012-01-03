@@ -23,6 +23,8 @@ enum GameStateIndex
     GameStateIndex_NumStates
 };
 
+// HACK workaround inability to check if a Cube is actually connected
+const unsigned MAX_CUBES = 6;
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 #ifdef DEBUG
@@ -32,8 +34,6 @@ const float ROUND_TIME = 120.0f;
 #endif
 const float ROUND_BONUS_TIME = 10.0f;
 
-// HACK workaround inability to check if a Cube is actually connected
-const unsigned MAX_CUBES = 6;
 
 class GameStateMachine : public StateMachine
 {
