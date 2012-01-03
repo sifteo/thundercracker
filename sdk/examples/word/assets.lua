@@ -6,10 +6,10 @@ EyeLeftBlink = image{"wc_eyeball_left_blink.png", width=16, height=16, quality=1
 EyeRightBlink = image{"wc_eyeball_right_blink.png", width=16, height=16, quality=10, pinned=true}
 Font1Letter = image{"WC_letters.png", width=128, height=128, quality=10}
 LetterBG = image{"wc_letters_background.png", quality=10}
-StartScreen = image{"start_screen.png", quality=0}
+StartScreen = image{"start_screen.png", quality=10}
 Title = image{"wc_title.png", quality=10}
-HighScores = image{"high_scores.png", quality=0}
-Score = image{"score.png", quality=0}
+HighScores = image{"high_scores.png", quality=10}
+Score = image{"score.png", quality=10}
 Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
 TeethLoopWord = image{"wc_letters_connected_center.png", width=128, height=128, quality=10}
 TeethLoopWordLeft = image{"wc_letters_connected_left.png", width=128, height=128, quality=10}
