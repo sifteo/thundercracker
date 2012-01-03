@@ -106,7 +106,10 @@ uint8_t nb_bits_remaining;          // Bit counter for transmit or receive
 uint8_t nb_buffer[2];               // Packet shift register for TX/RX
 uint8_t nb_tx_packet[2];            // The packet we're broadcasting
 __bit nb_tx_mode;                   // We're in the middle of an active transmission
-__bit nb_rx_mask_pending;           // We still need to do another RX mask bit
+__bit nb_rx_mask_state0;
+__bit nb_rx_mask_state1;
+__bit nb_rx_mask_bit0;
+__bit nb_rx_mask_bit1;
 
 /*
  * We do a little bit of signal conditioning on neighbors before
@@ -471,10 +474,11 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
         mov     _TL2, #(0x100 - NB_BIT_TICK_FIRST)
         setb    _T2CON_T2I0
 
-        ; In the mean time, set up RX state
+        ; In the mean time, reset RX state
 
         mov     _nb_bits_remaining, #NB_RX_BITS
-        setb    _nb_rx_mask_pending
+        clr     _nb_rx_mask_state0
+        clr     _nb_rx_mask_state1
 
         reti
     __endasm;
@@ -503,7 +507,7 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Briefly squelch the receive LC tanks, and clear the mask.
         ; Do this concurently with capturing and resetting Timer 1.
         
-        #ifdef NBR_SQUELCH_ENABLE
+        #if defined(NBR_SQUELCH_ENABLE) && defined(NBR_IO)
         anl     _MISC_DIR, #~MISC_NB_OUT        ; Squelch all sides
         #endif
 
@@ -512,14 +516,25 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         add     a, #0xFF                        ; Nonzero -> C
         mov     a, (_nb_buffer + 1)             ; Previous shift reg contents -> A
 
+        #ifdef NBR_IO
         orl     _MISC_DIR, #MISC_NB_OUT         ; Clear squelch and/or masking
+        #endif
 
-        jnb     _nb_rx_mask_pending, 1$         ; Do we have the second mask bit pending?
-        anl     _MISC_DIR, #~MISC_NB_MASK1      ; Yes, set that mask.
-        clr     _nb_rx_mask_pending
-        sjmp    2$
-
+        jb      _nb_rx_mask_state0, 1$          ; Finished first mask bit?
+        setb    _nb_rx_mask_state0
+        mov     _nb_rx_mask_bit0, c             ;    Store mask bit
+        #ifdef NBR_IO
+        anl     _MISC_DIR, #~MISC_NB_MASK1      ;    Prepare mask for next bit
+        #endif
+        sjmp    10$                             ;    End of masking
 1$:
+
+        jb      _nb_rx_mask_state1, 2$          ; Finished second mask bit?
+        setb    _nb_rx_mask_state1
+        mov     _nb_rx_mask_bit1, c             ;    Store mask bit
+        sjmp    10$                             ;    End of masking
+2$:
+
         ; Finished receiving the mask bits. For future bits, we want to set the mask only
         ; to the exact side that we need. This serves as a check for the side bits we
         ; received. This check is important, since there is otherwise no way to valdiate
@@ -528,9 +543,23 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; At this point, the first side bit is stored in ACC.0 and the second side bit is in C.
         ; We decode them rapidly using a jump tree.
 
-        ; XXX: To Do.
+        #ifdef NBR_IO
+        jb      _nb_rx_mask_bit0, 3$
+         jb     _nb_rx_mask_bit1, 4$
+          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_0_TOP)      ; 00
+          sjmp  10$
+4$:
+          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_1_LEFT)     ; 01
+          sjmp  10$
+3$:
+         jb     _nb_rx_mask_bit1, 5$
+          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_2_BOTTOM)   ; 10
+          sjmp  10$
+5$:
+          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_3_RIGHT)    ; 11
+        #endif
 
-2$:
+10$:
         ; Done with masking.
         ; Shift in the received bit, MSB-first, to our 16-bit packet
         ; _nb_buffer+1 is in already in A
