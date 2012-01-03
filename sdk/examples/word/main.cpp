@@ -62,7 +62,7 @@ void siftmain()
     _SYS_vectors.neighborEvents.add = onNeighborEventAdd;
     _SYS_vectors.neighborEvents.remove = onNeighborEventRemove;
 
-    static Cube cubes[MAX_CUBES];
+    static Cube cubes[MAX_CUBES]; // must be static!
 
     // start loading assets
     for (unsigned i = 0; i < arraysize(cubes); i++)
@@ -115,7 +115,7 @@ void siftmain()
     */
 
     // main loop
-    static WordGame game(cubes);
+    WordGame game(cubes); // must not be static!
     float lastTime = System::clock();
     float lastPaint = System::clock();
     while (1)
