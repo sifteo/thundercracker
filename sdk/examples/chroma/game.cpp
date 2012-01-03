@@ -15,6 +15,9 @@
 unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
         { 1000, 800, 600, 400, 200 };
 
+
+const float Game::SLOSH_THRESHOLD = 0.4f;
+
 Game &Game::Inst()
 {
 	static Game game = Game();
@@ -22,7 +25,7 @@ Game &Game::Inst()
     return game;
 }
 
-Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL )
+Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ), m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL )
 {
 	//Reset();
 }
@@ -484,20 +487,19 @@ void Game::playSound( const _SYSAudioModule &sound )
 
 const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 {
-  &slosh_01,
-    &slosh_02,
-    &slosh_03,
-    &slosh_04,
-    &slosh_05,
-    &slosh_06,
-    &slosh_07,
-    &slosh_08,
+  &slosh_multi_01,
+    &slosh_multi_02,
 };
 
 
 //play a random slosh sound
 void Game::playSlosh()
 {
-    int index = Rand( NUM_SLOSH_SOUNDS );
-    playSound(*SLOSH_SOUNDS[index]);
+    if( System::clock() - m_fLastSloshTime > SLOSH_THRESHOLD )
+    {
+        int index = Rand( NUM_SLOSH_SOUNDS );
+        playSound(*SLOSH_SOUNDS[index]);
+
+        m_fLastSloshTime = System::clock();
+    }
 }

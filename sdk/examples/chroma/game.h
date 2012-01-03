@@ -43,8 +43,9 @@ public:
 	static const int NUM_CUBES = 2;
     static const unsigned int NUM_HIGH_SCORES = 5;
     static const unsigned int NUM_SFX_CHANNELS = 3;
-    static const int NUM_SLOSH_SOUNDS = 8;
+    static const int NUM_SLOSH_SOUNDS = 2;
     static const unsigned int INT_MAX = 0x7fff;
+    static const float SLOSH_THRESHOLD;
 
 	CubeWrapper cubes[NUM_CUBES]; 
 
@@ -105,6 +106,7 @@ private:
 	float m_splashTime;
 	TimeKeeper m_timer;
     float m_fLastTime;
+    float m_fLastSloshTime;
 
     AudioChannel m_SFXChannels[NUM_SFX_CHANNELS];
     //which channel to use

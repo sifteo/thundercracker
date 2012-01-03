@@ -85,7 +85,7 @@ public:
 private:
 	void markNeighbor( int row, int col );
     //given tilt state, return our desired frame
-    unsigned int GetTiltFrame( Float2 &tiltState ) const;
+    unsigned int GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const;
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
     //convert from [-128, 128] to [0, 6] via non-linear quantization
@@ -110,6 +110,8 @@ private:
 	bool		 m_bFixed;
 
 	unsigned int m_animFrame;
+    //x,y coordinates of our last frame, so we don't make any large jumps
+    Vec2 m_lastFrameDir;
 };
 
 

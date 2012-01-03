@@ -61,6 +61,51 @@ const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_FIXED_COLORS 
 };
 
 
+//order of our frames
+enum
+{
+    FRAME_REST,
+    FRAME_N1,
+    FRAME_N2,
+    FRAME_N3,
+    FRAME_NE1,
+    FRAME_NE2,
+    FRAME_NE3,
+    FRAME_E1,
+    FRAME_E2,
+    FRAME_E3,
+    FRAME_SE1,
+    FRAME_SE2,
+    FRAME_SE3,
+    FRAME_S1,
+    FRAME_S2,
+    FRAME_S3,
+    FRAME_SW1,
+    FRAME_SW2,
+    FRAME_SW3,
+    FRAME_W1,
+    FRAME_W2,
+    FRAME_W3,
+    FRAME_NW1,
+    FRAME_NW2,
+    FRAME_NW3,
+};
+
+//quantize our tilt state from [-128, 128] to [-3, 3], then offset to [0, 6]
+//use those values to index into this lookup table to find which frame to render
+//in row, column format
+unsigned int TILTTOFRAMES[GridSlot::NUM_QUANTIZED_TILT_VALUES][GridSlot::NUM_QUANTIZED_TILT_VALUES] = {
+    //most northward
+    { FRAME_NW3, FRAME_NW3, FRAME_N3, FRAME_N3, FRAME_N3, FRAME_NE3, FRAME_NE3 },
+    { FRAME_NW3, FRAME_NW2, FRAME_N2, FRAME_N2, FRAME_N2, FRAME_NE2, FRAME_NE3 },
+    { FRAME_W3, FRAME_W2, FRAME_NW1, FRAME_N1, FRAME_NE1, FRAME_E2, FRAME_E3 },
+    { FRAME_W3, FRAME_W2, FRAME_W1, FRAME_REST, FRAME_E1, FRAME_E2, FRAME_E3 },
+    { FRAME_W3, FRAME_W2, FRAME_SW1, FRAME_S1, FRAME_SE1, FRAME_E2, FRAME_E3 },
+    { FRAME_SW3, FRAME_SW2, FRAME_S2, FRAME_S2, FRAME_S2, FRAME_SE2, FRAME_SE3 },
+    { FRAME_SW3, FRAME_SW3, FRAME_S3, FRAME_S3, FRAME_S3, FRAME_SE3, FRAME_SE3 },
+};
+
+
 GridSlot::GridSlot() : 
 	m_state( STATE_GONE ),
 	m_eventTime( 0.0f ),
@@ -69,6 +114,7 @@ GridSlot::GridSlot() :
 	m_animFrame( 0 )
 {
 	m_color = Game::Rand(NUM_COLORS);
+    m_lastFrameDir = Vec2( 0, 0 );
 }
 
 
@@ -122,7 +168,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
                 /*if( m_pWrapper->IsIdle() )
                     frame = GetIdleFrame();
                 else*/
-                    frame = GetTiltFrame( tiltState );
+                    frame = GetTiltFrame( tiltState, m_lastFrameDir );
                 vid.BG0_drawAsset(vec, animtex, frame);
 			}
 			break;
@@ -137,9 +183,9 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 			break;
 		}
 		case STATE_FINISHINGMOVE:
-		{
-            const AssetImage &tex = *TEXTURES[m_color];
-            vid.BG0_drawAsset(vec, tex, GetRollingFrame( m_animFrame ));
+		{           
+            const AssetImage &animtex = *TEXTURES[ m_color ];
+            vid.BG0_drawAsset(vec, animtex, m_animFrame);
 			break;
 		}
         case STATE_FIXEDATTEMPT:
@@ -230,16 +276,37 @@ void GridSlot::Update(float t)
 			{
 				m_animFrame++;
                 if( m_animFrame >= NUM_ROLL_FRAMES )
-					m_state = STATE_LIVING;
+                {
+                    m_state = STATE_FINISHINGMOVE;
+                    m_animFrame = GetRollingFrame( NUM_ROLL_FRAMES - 1 );
+                }
             }
 
 			break;
 		}
 		case STATE_FINISHINGMOVE:
 		{
-			m_animFrame++;
-            if( m_animFrame >= NUM_ROLL_FRAMES )
-				m_state = STATE_LIVING;
+            //interpolate frames back to normal state
+            Float2 cubeDir = m_pWrapper->getTiltDir();
+            Vec2 curDir;
+
+            GetTiltFrame( cubeDir, curDir );
+
+            if( m_lastFrameDir == curDir )
+                m_state = STATE_LIVING;
+            else
+            {
+                if( curDir.x > m_lastFrameDir.x )
+                    m_lastFrameDir.x++;
+                else if( curDir.x < m_lastFrameDir.x )
+                    m_lastFrameDir.x--;
+                if( curDir.y > m_lastFrameDir.y )
+                    m_lastFrameDir.y++;
+                else if( curDir.y < m_lastFrameDir.y )
+                    m_lastFrameDir.y--;
+
+                m_animFrame = TILTTOFRAMES[ m_lastFrameDir.y ][ m_lastFrameDir.x ];
+            }
 
 			break;
 		}
@@ -364,57 +431,12 @@ void GridSlot::startPendingMove()
 }
 
 
-//order of our frames
-enum
-{
-    FRAME_REST,
-    FRAME_N1,
-    FRAME_N2,
-    FRAME_N3,
-    FRAME_NE1,
-    FRAME_NE2,
-    FRAME_NE3,
-    FRAME_E1,
-    FRAME_E2,
-    FRAME_E3,
-    FRAME_SE1,
-    FRAME_SE2,
-    FRAME_SE3,
-    FRAME_S1,
-    FRAME_S2,
-    FRAME_S3,
-    FRAME_SW1,
-    FRAME_SW2,
-    FRAME_SW3,
-    FRAME_W1,
-    FRAME_W2,
-    FRAME_W3,
-    FRAME_NW1,
-    FRAME_NW2,
-    FRAME_NW3,
-};
-
-//quantize our tilt state from [-128, 128] to [-3, 3], then offset to [0, 6]
-//use those values to index into this lookup table to find which frame to render
-//in row, column format
-unsigned int TILTTOFRAMES[GridSlot::NUM_QUANTIZED_TILT_VALUES][GridSlot::NUM_QUANTIZED_TILT_VALUES] = {
-    //most northward
-    { FRAME_NW3, FRAME_NW3, FRAME_N3, FRAME_N3, FRAME_N3, FRAME_NE3, FRAME_NE3 },
-    { FRAME_NW3, FRAME_NW2, FRAME_N2, FRAME_N2, FRAME_N2, FRAME_NE2, FRAME_NE3 },
-    { FRAME_W3, FRAME_W2, FRAME_NW1, FRAME_N1, FRAME_NE1, FRAME_E2, FRAME_E3 },
-    { FRAME_W3, FRAME_W2, FRAME_W1, FRAME_REST, FRAME_E1, FRAME_E2, FRAME_E3 },
-    { FRAME_W3, FRAME_W2, FRAME_SW1, FRAME_S1, FRAME_SE1, FRAME_E2, FRAME_E3 },
-    { FRAME_SW3, FRAME_SW2, FRAME_S2, FRAME_S2, FRAME_S2, FRAME_SE2, FRAME_SE3 },
-    { FRAME_SW3, FRAME_SW3, FRAME_S3, FRAME_S3, FRAME_S3, FRAME_SE3, FRAME_SE3 },
-};
-
-
 //given tilt state, return our desired frame
-unsigned int GridSlot::GetTiltFrame( Float2 &tiltState ) const
+unsigned int GridSlot::GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const
 {
     //quantize and convert to the appropriate range
     //non-linear quantization.
-    Vec2 quantized = Vec2( QuantizeTiltValue( tiltState.x ), QuantizeTiltValue( tiltState.y ) );
+    quantized = Vec2( QuantizeTiltValue( tiltState.x ), QuantizeTiltValue( tiltState.y ) );
 
     return TILTTOFRAMES[ quantized.y ][ quantized.x ];
 }
