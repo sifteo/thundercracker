@@ -100,7 +100,7 @@ uint8_t accel_z_low;
  
 #define NB_DEADLINE         64      // 48us (previously 15 us - please tune me back down) (Max 48 us)
 
-#define NBR_SQUELCH_ENABLE          // uncomment to enable squelching during neighbor RX - default is disabled
+#define NBR_SQUELCH_ENABLE          // Enable squelching during neighbor RX
 
 uint8_t nb_bits_remaining;          // Bit counter for transmit or receive
 uint8_t nb_buffer[2];               // Packet shift register for TX/RX
@@ -504,23 +504,37 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Do this concurently with capturing and resetting Timer 1.
         
         #ifdef NBR_SQUELCH_ENABLE
-        anl     _MISC_DIR, #~MISC_NB_OUT        ; All outputs squelched
+        anl     _MISC_DIR, #~MISC_NB_OUT        ; Squelch all sides
         #endif
+
         mov     a, TL1                          ; Capture count from Timer 1
         mov     TL1, #0                         ; Reset Timer 1
         add     a, #0xFF                        ; Nonzero -> C
-        #ifdef NBR_SQUELCH_ENABLE
-        orl     _MISC_DIR, #MISC_NB_OUT         ; Clear the squelch mask
-        #endif
+        mov     a, (_nb_buffer + 1)             ; Previous shift reg contents -> A
+
+        orl     _MISC_DIR, #MISC_NB_OUT         ; Clear squelch and/or masking
 
         jnb     _nb_rx_mask_pending, 1$         ; Do we have the second mask bit pending?
         anl     _MISC_DIR, #~MISC_NB_MASK1      ; Yes, set that mask.
         clr     _nb_rx_mask_pending
+        sjmp    2$
+
 1$:
+        ; Finished receiving the mask bits. For future bits, we want to set the mask only
+        ; to the exact side that we need. This serves as a check for the side bits we
+        ; received. This check is important, since there is otherwise no way to valdiate
+        ; the received side bits.
+        ;
+        ; At this point, the first side bit is stored in ACC.0 and the second side bit is in C.
+        ; We decode them rapidly using a jump tree.
 
-        ; Shift in this bit, MSB-first, to our 16-bit packet
+        ; XXX: To Do.
 
-        mov     a, (_nb_buffer + 1)
+2$:
+        ; Done with masking.
+        ; Shift in the received bit, MSB-first, to our 16-bit packet
+        ; _nb_buffer+1 is in already in A
+
         rlc     a
         mov     (_nb_buffer + 1), a
         mov     a, _nb_buffer

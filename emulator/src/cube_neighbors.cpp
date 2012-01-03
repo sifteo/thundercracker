@@ -23,7 +23,7 @@ void Neighbors::attachCubes(Cube::Hardware *cubes)
 
 void Neighbors::ioTick(CPU::em8051 &cpu)
 {
-    static const uint8_t outPinLUT[] = { PIN_OUT1, PIN_OUT2, PIN_OUT3, PIN_OUT4 };
+    static const uint8_t outPinLUT[] = { PIN_0_TOP, PIN_1_LEFT, PIN_2_BOTTOM, PIN_3_RIGHT };
 
     if (!otherCubes) {
         // So lonely...
@@ -60,14 +60,25 @@ void Neighbors::ioTick(CPU::em8051 &cpu)
      */
 
     if (driveEdge) {
+        if (cpu.isTracing)
+            fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Send pulse (pins %02x)\n", cpu.id, driveEdge);
+
         for (unsigned mySide = 0; mySide < NUM_SIDES; mySide++) {
             uint8_t mySideBit = outPinLUT[mySide];
-
+            
             if (mySideBit & driveEdge) {
                 // We're transmitting on this side
 
                 // If we're listening, we'll hear an echo
+                // (Arbitrary nonzero value. It is distinctive only for debug purposes.)
                 inputs |= 0x80;
+                
+                if (cpu.isTracing)
+                    fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Matrix, side %d: %02x %02x %02x %02x\n", cpu.id, mySide,
+                            mySides[mySide].otherSides[0],
+                            mySides[mySide].otherSides[1],
+                            mySides[mySide].otherSides[2],
+                            mySides[mySide].otherSides[3]);
 
                 // Look at each other-side bitmask...
                 for (unsigned otherSide = 0; otherSide < NUM_SIDES; otherSide++) {
