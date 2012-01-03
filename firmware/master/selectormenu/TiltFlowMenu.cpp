@@ -11,9 +11,10 @@
 using namespace SelectorMenu;
 
 const float TiltFlowMenu::UPDATE_DELAY = 1.0f / 30.0f;
-const float TiltFlowMenu::PICK_DELAY = 2.0f;
+const float TiltFlowMenu::PICK_DELAY = 2.3f;
+const float TiltFlowMenu::POST_PICK_DELAY = 0.9f;
 const float TiltFlowMenu::REST_DELAY = 0.1f;
-
+const float TiltFlowMenu::LOGO_TIME = 2.0f;
 
 TiltFlowMenu *TiltFlowMenu::s_pInst = NULL;
 
@@ -23,13 +24,11 @@ TiltFlowMenu *TiltFlowMenu::Inst()
     return s_pInst;
 }
 
-TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( CHOOSING ), 
+TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( LOGO ), 
     mSimTime( 0.0f ), mUpdateTime( 0.0f ), mPickTime( 0.0f ), mNumCubes( numCubes ), mNumItems( numItems ), 
 	mDone( false ), mNeighborDirty( true )
 {
     s_pInst = this;
-    //TODO SFX
-    //Hacky.Sfx("g_neighborA");
 
     mKeyView = &mViews[0];
     mKeyView->SetStatus(TiltFlowView::STATUS_MENU);
@@ -43,7 +42,9 @@ void TiltFlowMenu::AssignViews()
 {
     //TODO ASSIGN VIEWS
     for( int i = 0; i < mNumCubes; i++ )
+	{
         mViews[i].SetCube( &MenuController::Inst().cubes[i].GetCube() );
+	}
 
 	//for some reason this doesn't work if it's called in the constructor, so put it here for now.
 	m_SFXChannel.init();
@@ -57,6 +58,14 @@ bool TiltFlowMenu::Tick(float dt)
     if (mDone) {
       return false;
     }
+
+	if( mStatus == LOGO ) 
+	{
+		if( mSimTime - mUpdateTime < LOGO_TIME )
+			return true;
+		else
+			mStatus = CHOOSING;
+	}
 
     if (mSimTime - mUpdateTime > UPDATE_DELAY) {
 
@@ -87,7 +96,7 @@ bool TiltFlowMenu::Tick(float dt)
       for( int i = 0; i < mNumCubes; i++ )
         mViews[i].Tick();
 
-      if (mStatus == PICKED && mSimTime - mPickTime > PICK_DELAY) {
+      if (mStatus == PICKED && mSimTime - mPickTime > PICK_DELAY+POST_PICK_DELAY) {
         mDone = true;
       }
 
@@ -191,6 +200,21 @@ void TiltFlowMenu::playSound( const _SYSAudioModule &sound )
     m_SFXChannel.stop();
     m_SFXChannel.play(sound, LoopOnce);
 }
+
+
+void TiltFlowMenu::showLogo()
+{
+	for( int i = 0; i < mNumCubes; i++ )
+	{
+		//show logo
+		VidMode_BG0 vid( MenuController::Inst().cubes[i].GetCube().vbuf );
+		vid.BG0_drawAsset(Vec2(0,0), LogoCover);
+	}
+	playSound( game_start );
+
+	mStatus = LOGO;
+}
+
 
   //---------------------------------------------------------------------------
   // TILT FLOW ITEM
