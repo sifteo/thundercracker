@@ -157,9 +157,14 @@ public:
     static const float PICK_DELAY;
     static const float POST_PICK_DELAY;
     static const float REST_DELAY;
+	static const float LOGO_TIME;
 
     typedef enum
-    { CHOOSING, PICKED }
+    { 
+		LOGO, 
+		CHOOSING, 
+		PICKED 
+	}
     Status;
 
     static TiltFlowMenu *Inst();
@@ -180,6 +185,8 @@ public:
     TiltFlowItem *GetItem( int item );
 
 	void playSound( const _SYSAudioModule &sound );
+
+	void showLogo();
 
 private:
     //void CheckMenuNeighbors();

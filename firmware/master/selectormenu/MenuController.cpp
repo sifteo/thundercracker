@@ -116,6 +116,7 @@ void MenuController::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].vidInit();
 
+	m_Menu.showLogo();
     m_fLastTime = System::clock();
 }
 
