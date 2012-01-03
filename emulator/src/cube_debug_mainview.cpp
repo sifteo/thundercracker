@@ -535,7 +535,7 @@ void mainview_update(Cube::Hardware *cube)
             stringpos += sprintf(temp + stringpos,"\n%04X  ", old_pc & 0xffff);
             
             for (i = 0; i < opcode_bytes; i++)
-                stringpos += sprintf(temp + stringpos,"%02X ", aCPU->mCodeMem[(old_pc + i) & (CODE_SIZE - 1)]);
+                stringpos += sprintf(temp + stringpos,"%02X ", aCPU->mCodeMem[(old_pc + i) & PC_MASK]);
             
             for (i = opcode_bytes; i < 3; i++)
                 stringpos += sprintf(temp + stringpos,"   ");

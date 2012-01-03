@@ -68,7 +68,11 @@ class System {
     static void threadFn(void *param);
     bool initCube(unsigned id);
     void exitCube(unsigned id);
-    void tick();
+    ALWAYS_INLINE void tick();
+    
+    NEVER_INLINE void tickLoopDebug();
+    NEVER_INLINE void tickLoopGeneral();
+    NEVER_INLINE void tickLoopFastSBT();
 
     GLFWthread thread;
     bool threadRunning;

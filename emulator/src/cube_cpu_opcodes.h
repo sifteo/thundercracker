@@ -849,7 +849,7 @@ static ALWAYS_INLINE FASTCALL int anl_c_bitaddr(em8051 *aCPU, unsigned &PC, uint
 static ALWAYS_INLINE FASTCALL int movc_a_indir_a_pc(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = PC + 1 + ACC;
-    address &= CODE_SIZE - 1;
+    address &= PC_MASK;
 
 #ifdef PROFILE_MOVC
     aCPU->mProfilerMem[address].total_cycles++;
@@ -955,7 +955,7 @@ static ALWAYS_INLINE FASTCALL int mov_bitaddr_c(em8051 *aCPU, unsigned &PC, uint
 static ALWAYS_INLINE FASTCALL int movc_a_indir_a_dptr(em8051 *aCPU, unsigned &PC, uint8_t opcode, uint8_t operand1, uint8_t operand2)
 {
     int address = ((aCPU->mSFR[CUR_DPH] << 8) | (aCPU->mSFR[CUR_DPL] << 0)) + ACC;
-    address &= CODE_SIZE - 1;
+    address &= PC_MASK;
 
 #ifdef PROFILE_MOVC
     aCPU->mProfilerMem[address].total_cycles++;

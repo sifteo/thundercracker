@@ -132,7 +132,7 @@ class Flash {
                  * wasting time!
                  */
                 if (cpu->mProfileData) {
-                    unsigned pc = cpu->mPC & (CODE_SIZE - 1);
+                    unsigned pc = cpu->mPC & PC_MASK;
                     CPU::profile_data *pd = &cpu->mProfileData[pc];
                     pd->flash_idle++;
                 }

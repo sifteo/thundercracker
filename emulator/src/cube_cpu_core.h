@@ -42,7 +42,8 @@ namespace Cube {
 namespace CPU {
 
 NEVER_INLINE void trace_execution(em8051 *mCPU);
-NEVER_INLINE void profile_tick(em8051 *mCPU, unsigned pc);
+NEVER_INLINE void profile_tick(em8051 *mCPU);
+NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12, uint8_t fallingEdges);
 
 static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
 {
@@ -65,303 +66,12 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
      * The timer code is slow, and we'd really rather not run it every tick.
      */
 
-    if (LIKELY(tick12 == false && fallingEdges == 0))
-        return;
-
-    /*
-     * Timer 0 / Timer 1
-     */
-
-    if ((aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0)) == (TMODMASK_M0_0 | TMODMASK_M1_0))
-    {
-        // timer/counter 0 in mode 3
-
-        bool increment = 0;
-        
-        // Check if we're run enabled
-        // TODO: also run if GATE is one and INT is one (external interrupt)
-        if (!(aCPU->mSFR[REG_TMOD] & TMODMASK_GATE_0) && 
-            (aCPU->mSFR[REG_TCON] & TCONMASK_TR0))
-        {
-            // check timer / counter mode
-            if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_0)
-                increment = fallingEdges & PIN_T0;
-            else
-                increment = tick12;
-        }
-        if (increment)
-        {
-            int v = aCPU->mSFR[REG_TL0];
-            v++;
-            aCPU->mSFR[REG_TL0] = v & 0xff;
-
-            // TL0 overflowed
-            if (v > 0xff) {
-                aCPU->mSFR[REG_TCON] |= TCONMASK_TF0;
-                aCPU->needInterruptDispatch = true;
-            }
-        }
-
-        increment = false;
-        
-        // Check if we're run enabled
-        // TODO: also run if GATE is one and INT is one (external interrupt)
-        if (!(aCPU->mSFR[REG_TMOD] & TMODMASK_GATE_1) && 
-            (aCPU->mSFR[REG_TCON] & TCONMASK_TR1))
-        {
-            // check timer / counter mode
-            if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_1)
-                increment = fallingEdges & PIN_T1;
-            else
-                increment = tick12;
-        }
-
-        if (increment)
-        {
-            int v = aCPU->mSFR[REG_TH0];
-            v++;
-            aCPU->mSFR[REG_TH0] = v & 0xff;
-
-            // TH0 overflowed
-            if (v > 0xff) {
-                aCPU->mSFR[REG_TCON] |= TCONMASK_TF1;
-                aCPU->needInterruptDispatch = true;
-            }
-        }
-
-    }
-
-    /*
-     * Timer 0
-     */
-
-    {        
-        bool increment = 0;
-        
-        // Check if we're run enabled
-        // TODO: also run if GATE is one and INT is one (external interrupt)
-        if (!(aCPU->mSFR[REG_TMOD] & TMODMASK_GATE_0) && 
-            (aCPU->mSFR[REG_TCON] & TCONMASK_TR0))
-        {
-            // check timer / counter mode
-            if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_0)
-                increment = fallingEdges & PIN_T0;
-            else
-                increment = tick12;
-        }
-        
-        if (increment)
-        {
-            int v;
-
-            switch (aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0))
-            {
-            case 0: // 13-bit timer
-                v = aCPU->mSFR[REG_TL0] & 0x1f; // lower 5 bits of TL0
-                v++;
-                aCPU->mSFR[REG_TL0] = (aCPU->mSFR[REG_TL0] & ~0x1f) | (v & 0x1f);
-                if (v > 0x1f)
-                {
-                    // TL0 overflowed
-                    v = aCPU->mSFR[REG_TH0];
-                    v++;
-                    aCPU->mSFR[REG_TH0] = v & 0xff;
-                    if (v > 0xff)
-                    {
-                        // TH0 overflowed; set bit
-                        aCPU->mSFR[REG_TCON] |= TCONMASK_TF0;
-                        aCPU->needInterruptDispatch = true;
-                    }
-                }
-                break;
-            case TMODMASK_M0_0: // 16-bit timer/counter
-                v = aCPU->mSFR[REG_TL0];
-                v++;
-                aCPU->mSFR[REG_TL0] = v & 0xff;
-                if (v > 0xff)
-                {
-                    // TL0 overflowed
-                    v = aCPU->mSFR[REG_TH0];
-                    v++;
-                    aCPU->mSFR[REG_TH0] = v & 0xff;
-                    if (v > 0xff)
-                    {
-                        // TH0 overflowed; set bit
-                        aCPU->mSFR[REG_TCON] |= TCONMASK_TF0;
-                        aCPU->needInterruptDispatch = true;
-                    }
-                }
-                break;
-            case TMODMASK_M1_0: // 8-bit auto-reload timer
-                v = aCPU->mSFR[REG_TL0];
-                v++;
-                aCPU->mSFR[REG_TL0] = v & 0xff;
-                if (v > 0xff)
-                {
-                    // TL0 overflowed; reload
-                    aCPU->mSFR[REG_TL0] = aCPU->mSFR[REG_TH0];
-                    aCPU->mSFR[REG_TCON] |= TCONMASK_TF0;
-                    aCPU->needInterruptDispatch = true;
-                }
-                break;
-            default: // two 8-bit timers
-                // TODO
-                break;
-            }
-        }
-    }
-
-    /*
-     * Timer 1
-     */
-
-    {        
-        bool increment = 0;
-
-        if (!(aCPU->mSFR[REG_TMOD] & TMODMASK_GATE_1) && 
-            (aCPU->mSFR[REG_TCON] & TCONMASK_TR1))
-        {
-            if (aCPU->mSFR[REG_TMOD] & TMODMASK_CT_1)
-                increment = fallingEdges & PIN_T1;
-            else
-                increment = tick12;
-        }
-
-        if (increment)
-        {
-            int v;
-
-            switch (aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_1 | TMODMASK_M1_1))
-            {
-            case 0: // 13-bit timer
-                v = aCPU->mSFR[REG_TL1] & 0x1f; // lower 5 bits of TL0
-                v++;
-                aCPU->mSFR[REG_TL1] = (aCPU->mSFR[REG_TL1] & ~0x1f) | (v & 0x1f);
-                if (v > 0x1f)
-                {
-                    // TL1 overflowed
-                    v = aCPU->mSFR[REG_TH1];
-                    v++;
-                    aCPU->mSFR[REG_TH1] = v & 0xff;
-                    if (v > 0xff)
-                    {
-                        // TH1 overflowed; set bit
-                        // Only update TF1 if timer 0 is not in "mode 3"
-                        if (!(aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0))) {
-                            aCPU->mSFR[REG_TCON] |= TCONMASK_TF1;
-                            aCPU->needInterruptDispatch = true;
-                        }
-                    }
-                }
-                break;
-            case TMODMASK_M0_1: // 16-bit timer/counter
-                v = aCPU->mSFR[REG_TL1];
-                v++;
-                aCPU->mSFR[REG_TL1] = v & 0xff;
-                if (v > 0xff)
-                {
-                    // TL1 overflowed
-                    v = aCPU->mSFR[REG_TH1];
-                    v++;
-                    aCPU->mSFR[REG_TH1] = v & 0xff;
-                    if (v > 0xff)
-                    {
-                        // TH1 overflowed; set bit
-                        // Only update TF1 if timer 0 is not in "mode 3"
-                        if (!(aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0))) {
-                            aCPU->mSFR[REG_TCON] |= TCONMASK_TF1;
-                            aCPU->needInterruptDispatch = true;
-                        }
-                    }
-                }
-                break;
-            case TMODMASK_M1_1: // 8-bit auto-reload timer
-                v = aCPU->mSFR[REG_TL1];
-                v++;
-                aCPU->mSFR[REG_TL1] = v & 0xff;
-                if (v > 0xff)
-                {
-                    // TL0 overflowed; reload
-                    aCPU->mSFR[REG_TL1] = aCPU->mSFR[REG_TH1];
-                    // Only update TF1 if timer 0 is not in "mode 3"
-                    if (!(aCPU->mSFR[REG_TMOD] & (TMODMASK_M0_0 | TMODMASK_M1_0))) {
-                        aCPU->mSFR[REG_TCON] |= TCONMASK_TF1;
-                        aCPU->needInterruptDispatch = true;
-                    }
-                }
-                break;
-            default: // disabled
-                break;
-            }
-        }
-    }
-
-    /*
-     * Timer 2
-     *
-     * XXX: Capture not implemented
-     * XXX: Reload from t2ex not implemented
-     */
-
-    {        
-        bool tick24 = false;
-
-        if (tick12 && ++aCPU->prescaler24 == 2) {
-            tick24 = true;
-            aCPU->prescaler24 = 0;
-        }
-
-        uint8_t t2con = aCPU->mSFR[REG_T2CON];
-        bool t2Clk = (t2con & 0x80) ? tick24 : tick12;
-
-        // Timer mode
-
-        bool increment = false;
-        switch (t2con & 0x03) {
-        case 0: increment = 0; break;
-        case 1: increment = t2Clk; break;
-        case 2: increment = fallingEdges & PIN_T2; break;
-        case 3: increment = t2Clk && (nextT012 & PIN_T2); break;
-        }
-         
-        if (increment) {
-            int v = aCPU->mSFR[REG_TL2];
-            v++;
-            aCPU->mSFR[REG_TL2] = v & 0xff;
-
-            if (v > 0xff) {
-                // TL2 overflowed
-                v = aCPU->mSFR[REG_TH2];
-                v++;
-                aCPU->mSFR[REG_TH2] = v & 0xff;
-
-                if (v > 0xff) {
-                    // TH2 overflowed, reload and set interrupt
-                    
-                    switch (t2con & 0x18) {
-
-                    case 0x10:  
-                        // Reload Mode 0
-                        aCPU->mSFR[REG_TL2] = aCPU->mSFR[REG_CRCL];
-                        aCPU->mSFR[REG_TH2] = aCPU->mSFR[REG_CRCH];
-                        break;                 
-
-                    case 0x18:
-                        // Reload Mode 1
-                        // XXX: Not implemented
-                        break;
-                    }
-                    
-                    aCPU->mSFR[REG_IRCON] |= IRCON_TF2;
-                    aCPU->needInterruptDispatch = true;
-                }
-            }
-        }
-    }
+    if (UNLIKELY(tick12 || fallingEdges))
+    timer_tick_work(aCPU, tick12, fallingEdges);
 }
 
 
-static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
+static ALWAYS_INLINE int em8051_tick(em8051 *aCPU, bool sbt, bool isProfiling, bool isTracing, bool hasBreakpoint)
 {
     int ticked = 0;
 
@@ -402,16 +112,17 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
          * Or, in SBT mode, run one translated basic block.
          */
 
-        unsigned pc = aCPU->mPC & (CODE_SIZE - 1);
+        unsigned pc = aCPU->mPC;
         aCPU->mPreviousPC = pc;
 
-        if (aCPU->sbt) {
+        if (sbt) {
             aCPU->mTickDelay = sbt_rom_code[pc](aCPU);
         } else {
             uint8_t opcode = aCPU->mCodeMem[pc];
-            uint8_t operand1 = aCPU->mCodeMem[(pc + 1) & (CODE_SIZE - 1)];
-            uint8_t operand2 = aCPU->mCodeMem[(pc + 2) & (CODE_SIZE - 1)];
-            aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU, aCPU->mPC, opcode, operand1, operand2);
+            uint8_t operand1 = aCPU->mCodeMem[(pc + 1) & PC_MASK];
+            uint8_t operand2 = aCPU->mCodeMem[(pc + 2) & PC_MASK];
+            aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU, pc, opcode, operand1, operand2);
+            aCPU->mPC = pc & PC_MASK;
         }
 
         ticked = 1;
@@ -420,8 +131,8 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
          * Update profiler stats for this byte
          */
 
-        if (UNLIKELY(aCPU->mProfileData != NULL))
-            profile_tick(aCPU, pc);
+        if (UNLIKELY(isProfiling))
+            profile_tick(aCPU);
 
         /*
          * Update parity bit
@@ -442,14 +153,14 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU)
          * Write execution trace
          */
 
-        if (UNLIKELY(aCPU->isTracing))
+        if (UNLIKELY(isTracing))
             trace_execution(aCPU);
 
         /*
          * Fire breakpoints
          */
         
-        if (UNLIKELY(aCPU->mBreakpoint && aCPU->mBreakpoint == aCPU->mPC))
+        if (UNLIKELY(hasBreakpoint && aCPU->mBreakpoint == aCPU->mPC))
             except(aCPU, EXCEPTION_BREAK);
     }
 
