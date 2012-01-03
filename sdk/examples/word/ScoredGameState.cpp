@@ -15,11 +15,9 @@ unsigned ScoredGameState::update(float dt, float stateTime)
 
 unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
 {
+    onAudioEvent(eventID, data);
     switch (eventID)
     {
-    case EventID_EnterState:        
-        break;
-
     case EventID_Input:
         if (GameStateMachine::getAnagramCooldown() <= .0f)
         {
@@ -27,6 +25,16 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
         }
         break;
 
+    default:
+        break;
+    }
+    return GameStateIndex_PlayScored;
+}
+
+void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
+{
+    switch (eventID)
+    {
     case EventID_AddNeighbor:
         WordGame::playAudio(clink, AudioChannelIndex_Neighbor);
         break;
@@ -78,9 +86,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     default:
         break;
     }
-    return GameStateIndex_PlayScored;
 }
-
 
 void ScoredGameState::createNewAnagram()
 {
