@@ -87,7 +87,7 @@ class CodeGenerator:
                 % (addr, addr))
 
     def endBlock(self, f):
-        f.write("\taCPU->mPC = pc;\n"
+        f.write("\taCPU->mPC = pc & PC_MASK;\n"
                 "\treturn clk;\n"
                 "}\n")
         
