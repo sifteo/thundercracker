@@ -540,7 +540,7 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; received. This check is important, since there is otherwise no way to valdiate
         ; the received side bits.
         ;
-        ; At this point, the first side bit is stored in ACC.0 and the second side bit is in C.
+        ; At this point, the side bits have been stored independently in nb_rx_mask_bit*.
         ; We decode them rapidly using a jump tree.
 
         #ifdef NBR_IO
