@@ -123,6 +123,9 @@ class Radio {
                 fprintf(cpu->traceFile, "[%2d] SPI: rf end\n", cpu->id);
         }
         
+        if (nextCE != ce && cpu->isTracing)
+            fprintf(cpu->traceFile, "[%2d] RADIO: ce %d\n", cpu->id, nextCE);
+
         csn = nextCSN;
         ce = nextCE;
     }
@@ -176,8 +179,21 @@ class Radio {
             fprintf(cpu->traceFile, " (rxc=%d txc=%d)\n",
                     rx_fifo_count, tx_fifo_count);
         }
+        
+        if (!ce) {
+            /*
+             * Radio receiver is disabled. On real hardware, we'd have no idea this packet
+             * was ever on the air. Discard it with no ACK.
+             */
 
-        if (rx_fifo_count < FIFO_SIZE) {
+            if (cpu->isTracing)
+                fprintf(cpu->traceFile, "[%2d] RADIO: rx disabled, NAK\n", cpu->id);
+        
+        } else if (rx_fifo_count < FIFO_SIZE) {
+            /*
+             * Received a packet successfully, with space in the FIFO to store it.
+             */
+
             *rx_head = incoming;
             rx_fifo_head = (rx_fifo_head + 1) % FIFO_SIZE;
             rx_fifo_count++;

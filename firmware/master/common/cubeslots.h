@@ -23,6 +23,7 @@ namespace CubeSlots {
     extern _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid
     extern _SYSCubeIDVector frameACKValid;      /// 'framePrevACK' is valid
     extern _SYSCubeIDVector neighborACKValid;   /// Neighbor/touch state is valid
+    extern _SYSCubeIDVector expectStaleACK;     /// Expect this cube to send us one stale (buffered) ACK
     
     extern _SYSCubeID minCubes;
     extern _SYSCubeID maxCubes;

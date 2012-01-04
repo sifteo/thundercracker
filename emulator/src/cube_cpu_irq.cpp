@@ -27,7 +27,10 @@ void NEVER_INLINE handle_interrupts(struct em8051 *cpu)
      */
      
     if (cpu->isTracing)
-        fprintf(cpu->traceFile, "[%2d] IRQ: Checking for interrupts\n", cpu->id);
+        fprintf(cpu->traceFile, "[%2d] IRQ: Checking for interrupts "
+                "(IEN=%02x.%02x T=%02x IR=%02x S0=%02x)\n",
+                cpu->id, cpu->mSFR[REG_IEN0], cpu->mSFR[REG_IEN1],
+                cpu->mSFR[REG_TCON], cpu->mSFR[REG_IRCON], cpu->mSFR[REG_S0CON]);
 
     // IFP is currently disabled, we don't use it.
 #ifdef EM8051_SUPPORT_IFP
