@@ -217,6 +217,12 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         }
     }
     
+    // If we're expecting a stale packet, completely ignore its contents.
+    if (CubeSlots::expectStaleACK & bit()) {
+        Atomic::ClearLZ(CubeSlots::expectStaleACK, id());
+        return;
+    }
+    
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
 
     if (packet.len >= offsetof(RF_ACKType, frame_count) + sizeof ack->frame_count) {
@@ -243,10 +249,12 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
             uint8_t loadACK = ack->flash_fifo_bytes - flashPrevACK;
         
-            DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d)\n",
-                id(), loadACK, !!(CubeSlots::flashResetWait & bit())));
+            DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d, resetSent=%d)\n",
+                id(), loadACK,
+                !!(CubeSlots::flashResetWait & bit()),
+                !!(CubeSlots::flashResetSent & bit())));
 
-            if (CubeSlots::flashResetWait & bit()) {
+            if ((CubeSlots::flashResetWait & bit()) && (CubeSlots::flashResetSent & bit())) {
                 // We're waiting on a reset
                 if (loadACK)
                     Atomic::ClearLZ(CubeSlots::flashResetWait, id());
