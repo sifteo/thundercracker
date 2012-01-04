@@ -1,6 +1,7 @@
 #!/bin/bash
 #ls *.raw > audio.txt
 make
+rm *_enc.raw
 tc-siftulator -n 3 &
 sleep 1s
 ./sandwichcraft.sim

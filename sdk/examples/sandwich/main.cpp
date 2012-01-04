@@ -57,7 +57,7 @@ void IntroCutscene() {
 		gCubes[i].vbuf.touch();
 	}
 	//System::paintSync();
-	WaitForSeconds(2.f);
+	WaitForSeconds(5.f);
 	EnterSpriteMode(&gCubes[0]);
 	VidMode_BG0 mode(gCubes[0].vbuf);
 
