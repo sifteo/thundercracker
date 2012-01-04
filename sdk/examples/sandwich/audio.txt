@@ -1,1 +1,2 @@
 sfx_running.raw
+sting.raw

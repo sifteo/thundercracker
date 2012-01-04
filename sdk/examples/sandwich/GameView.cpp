@@ -31,7 +31,9 @@ Cube* GameView::GetCube() const {
 #define FRAMES_PER_TORCH_FRAME 4
 
 void GameView::Update() {
-  if (!IsShowingRoom()) { return; }
+  if (!IsShowingRoom()) { 
+    return; 
+  }
 
   // h4cky torch stuff
   RoomData *p = Room()->Data();

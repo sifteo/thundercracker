@@ -62,8 +62,8 @@ void Game::MainLoop() {
   CheckMapNeighbors();
 
   mIsDone = false;
+  mNeedsSync = 0;
   while(!mIsDone) {
-    mNeedsSync = false;
     float dt = UpdateDeltaTime();
     if (sNeighborDirty) { 
       CheckMapNeighbors(); 
@@ -73,8 +73,11 @@ void Game::MainLoop() {
       p->Update();
     }
     if (mNeedsSync) {
+      //for(unsigned i=0; i<NUM_CUBES; ++i) {
+      //  gCubes[i].vbuf.touch();
+      //}
       System::paintSync();
-      mNeedsSync = false;
+      mNeedsSync--;
     } else {
       System::paint();
     }

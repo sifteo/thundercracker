@@ -3,15 +3,13 @@
 #include "Player.h"
 #include "Map.h"
 
-#define NUM_ENEMIES 8
-
 class Game {
 public:
   GameView views[NUM_CUBES];
   Player player;
   Map map;
   float mSimTime;
-  bool mNeedsSync;
+  int mNeedsSync;
   bool mIsDone;
 
 public:
@@ -34,7 +32,7 @@ public:
   
   void OnInventoryChanged();
 
-  void NeedsSync() { mNeedsSync = true; }
+  void NeedsSync() { mNeedsSync = 1; }
 
 private:
 
