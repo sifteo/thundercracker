@@ -96,7 +96,7 @@ bool TiltFlowMenu::Tick(float dt)
 void TiltFlowMenu::Pick(TiltFlowView &view)
 {
     if (mStatus == CHOOSING) {
-      TiltFlowMenu::Inst()->playSound( select );
+      TiltFlowMenu::Inst()->playSound( ui_select );
       //LOG(("Selected {0}", view.Item.name));
       mStatus = PICKED;
       mPickTime = mSimTime;
