@@ -16,7 +16,7 @@ AudioChannelWrapper::AudioChannelWrapper() :
 void AudioChannelWrapper::init(_SYSAudioBuffer *b)
 {
     buf.init(b);
-    volume = Audio::MAX_VOLUME / 6;
+    volume = Audio::MAX_VOLUME / 2;
 }
 
 void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
