@@ -68,12 +68,13 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 
 void CubeWrapper::Init( AssetGroup &assets )
 {
-	m_cube.enable();
-    m_cube.loadAssets( assets );
+    m_cube.enable();
+    //TAKEN OUT SINCE SELECTOR MENU IS LOADING ASSETS
+    //m_cube.loadAssets( assets );
 
     m_rom.init();
-    m_rom.BG0_text(Vec2(1,1), "Loading...");
-    //Refill();
+    //TAKEN OUT SINCE SELECTOR MENU IS LOADING ASSETS
+    //m_rom.BG0_text(Vec2(1,1), "Loading...");
 }
 
 

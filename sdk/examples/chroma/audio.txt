@@ -17,3 +17,7 @@ slosh_multi_02.raw
 StingerIV2.raw
 timer_blink.raw
 timer_explode.raw
+changeoption.raw
+select.raw
+settle.raw
+game_start.raw
