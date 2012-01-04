@@ -154,6 +154,15 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
             continue;
         }
         int mixed = ch->pullAudio(buffer, numsamples);
+
+        /*
+         * XXX: I don't think this actually does what we want it to do?
+         *      Taking a MAX() will seem to work if only one channel
+         *      is audibly playing, but it won't correctly mix multiple
+         *      channels of audio. This should be summing all channels,
+         *      but taking care to use dynamic range compression to avoid
+         *      overflow or clipping. --beth
+         */
         if (mixed > samplesMixed) {
             samplesMixed = mixed;
         }
