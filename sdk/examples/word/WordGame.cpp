@@ -9,6 +9,7 @@ WordGame* WordGame::sInstance = 0;
 
 WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes), mNeedsPaintSync(false)
 {
+    STATIC_ASSERT(NumAudioChannelIndexes == 2);// HACK work around API bug
     sInstance = this;
 
     int64_t nanosec;
@@ -46,10 +47,12 @@ void WordGame::_onEvent(unsigned eventID, const EventData& data)
 
 bool WordGame::playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
 {
+    /* FIXME remove
     if (channel == AudioChannelIndex_Music)
     {
         return false;
     }
+    */
     ASSERT(sInstance);
     return sInstance->_playAudio(mod, channel, loopMode);
 }
@@ -57,6 +60,10 @@ bool WordGame::playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel ,
 bool WordGame::_playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
 {
     ASSERT((unsigned)channel < arraysize(mAudioChannels));
+    if (mAudioChannels[channel].isPlaying())
+    {
+        mAudioChannels[channel].stop();
+    }
     return mAudioChannels[channel].play(mod, loopMode);
 }
 
