@@ -185,6 +185,13 @@ void AudioMixer::fetchData()
     // note - refer to activeChannelMask on each iteration,
     // as opposed to copying it to a local, in case it gets updated
     // during a call to fetchData()
+    
+    /*
+     * XXX: This could be converted into a CLZ-style loop, as used in
+     *      many other places in the firmware. That lets us iterate over
+     *      only active channels, rather than interating over every
+     *      preceeding inactive channel too. --beth
+     */
     for (int i = 0; ; i++) {
         int m = activeChannelMask >> i;
         if (m == 0)
@@ -319,6 +326,9 @@ SpeexDecoder* AudioMixer::getDecoder()
         return NULL;
     }
 
+    /*
+     * XXX: CLZ could do this in constant time, without the loop. --beth
+     */
     for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         if (availableDecodersMask & (1 << i)) {
             Atomic::ClearBit(availableDecodersMask, i);
