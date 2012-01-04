@@ -927,10 +927,10 @@ void radio_init(void)
         0,
     };
 
+    radio_rx_disable();                 // Receiver starts out disabled
     RF_CKEN = 1;                        // Radio clock running
     radio_transfer_table(table);        // Send initialization commands
     radio_irq_enable();
-    radio_rx_enable();
 }
 
 
