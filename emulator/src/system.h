@@ -30,14 +30,14 @@ class System {
 
     Cube::Hardware cubes[MAX_CUBES];
 
-    // Options; can be set prior to init
+    // Static Options; can be set prior to init only
     unsigned opt_numCubes;
     std::string opt_cubeFirmware;
-    bool opt_turbo;
 
     // Global debug options
     std::string opt_cubeTrace;
     bool opt_continueOnException;
+    bool opt_turbo;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
