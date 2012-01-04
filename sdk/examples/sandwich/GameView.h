@@ -1,7 +1,6 @@
 #pragma once
 #include "Base.h"
 
-class Enemy;
 struct MapRoom;
 
 class GameView {
@@ -10,7 +9,12 @@ public:
 
 private:
   Vec2 mRoom;
-  
+
+  int mIdleHoverIndex;
+  // h4cky torch stuff
+  int mTorchTime;
+  //
+
 public:  
   GameView();
   
@@ -25,6 +29,7 @@ public:
   
   // methods
   void Init();
+  void Update();
 
   void ShowLocation(Vec2 room);
   void HideRoom();
@@ -33,10 +38,6 @@ public:
   void SetPlayerFrame(unsigned frame);
   void UpdatePlayer();
   void HidePlayer();
-  
-  void ShowEnemy(Enemy* pEnemy);
-  void UpdateEnemy(Enemy* pEnemy);
-  void HideEnemy(Enemy* pEnemy);
   
   void ShowItem(int itemId);
   void SetItemPosition(Vec2 p);

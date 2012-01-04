@@ -8,6 +8,8 @@ void IntroCutscene();
 void WinScreen(Cube* primaryCube);
 
 void siftmain() {
+	LOG(("------> %d, %d\n", TileSet_dungeon.width, TileSet_dungeon.height));
+
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
 	    cubes[i].enable(i);
@@ -28,7 +30,7 @@ void siftmain() {
 	  }
 	}
 	for(;;) {
-		IntroCutscene();
+		//IntroCutscene();
 		*pGame = Game(); // re-initialize memory
 		pGame->MainLoop();
 		WinScreen(pGame->player.CurrentView()->GetCube());

@@ -79,11 +79,11 @@ int Player::CurrentFrame() {
       if (mAnimFrame == 1) {
         return PlayerIdle.index;
       } else if (mAnimFrame == 2) {
-        return PlayerIdle.index + (PlayerIdle.width * PlayerIdle.height);
+        return PlayerIdle.index + 16;
       } else if (mAnimFrame == 3 || mAnimFrame == 4) {
-        return PlayerIdle.index + (mAnimFrame-1) * (PlayerIdle.width * PlayerIdle.height);
+        return PlayerIdle.index + (mAnimFrame-1) * 16;
       } else {
-        return PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height);
+        return PlayerStand.index + SIDE_BOTTOM * 16;
       }
     }
     case PLAYER_STATUS_WALKING:

@@ -1,14 +1,15 @@
 #include "GameView.h"
 #include "Game.h"
-#include "Enemy.h"
 
 #define ROOM_NONE (Vec2(-1,-1))
 #define ITEM_SPRITE_ID 0
 #define PLAYER_SPRITE_ID 1
-#define ENEMY_SPRITE_ID 2
+
+static int8_t sHoverTable[] = { 0, 0, 1, 2, 2, 3, 3, 3, 4, 3, 3, 3, 2, 2, 1, 0, -1, -1, -2, -3, -3, -4, -4, -4, -4, -4, -4, -4, -3, -3, -2, -1, };
+#define HOVER_COUNT 32
 
 GameView::GameView() : 
-visited(0), mRoom(-2,-2) {
+visited(0), mRoom(ROOM_NONE), mIdleHoverIndex(0), mTorchTime(0) {
 }
 
 void GameView::Init() {
@@ -17,6 +18,7 @@ void GameView::Init() {
     mRoom = Vec2(-1,-1);
     ShowLocation(pGame->player.Location());
   } else {
+    mRoom.x = -2; // h4ck
     ShowLocation(ROOM_NONE);
   }
 }
@@ -24,6 +26,58 @@ void GameView::Init() {
 Cube* GameView::GetCube() const {
   int id = (int)(this - pGame->ViewBegin());
   return cubes + id;
+}
+
+#define FRAMES_PER_TORCH_FRAME 4
+
+void GameView::Update() {
+  if (!IsShowingRoom()) { return; }
+
+  // h4cky torch stuff
+  RoomData *p = Room()->Data();
+  if (p->torch0 != 0xff) {
+    mTorchTime = (mTorchTime + 1) % (6 * FRAMES_PER_TORCH_FRAME);
+    int torchFrame = mTorchTime / FRAMES_PER_TORCH_FRAME;
+    if (torchFrame * FRAMES_PER_TORCH_FRAME == mTorchTime) {
+      // advancing the frame
+      Vec2 tt0 = p->TorchTile0();
+      VidMode_BG0 mode(GetCube()->vbuf);
+      mode.BG0_drawAsset(
+        Vec2(tt0.x<<1,tt0.y<<1),
+        *(pGame->map.Data()->tileset),
+        pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
+      );
+      tt0.y++;
+      mode.BG0_drawAsset(
+        Vec2(tt0.x<<1,tt0.y<<1),
+        *(pGame->map.Data()->tileset),
+        pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
+      );
+      if (p->torch1 != 0xff) {
+        tt0 = p->TorchTile1();
+        mode.BG0_drawAsset(
+          Vec2(tt0.x<<1,tt0.y<<1),
+          *(pGame->map.Data()->tileset),
+          pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
+        );
+        tt0.y++;
+        mode.BG0_drawAsset(
+          Vec2(tt0.x<<1,tt0.y<<1),
+          *(pGame->map.Data()->tileset),
+          pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
+        );
+      }
+    }
+  }
+  //
+
+  // item hover
+  if (Room()->itemId) {
+    mIdleHoverIndex = (mIdleHoverIndex + 1) % HOVER_COUNT;
+    Vec2 p = 16 * Room()->Data()->LocalCenter();
+    MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y + sHoverTable[mIdleHoverIndex]);
+  }
+
 }
 
 //----------------------------------------------------------------
@@ -45,16 +99,6 @@ MapRoom* GameView::Room() const {
 void GameView::ShowLocation(Vec2 room) {
   if (room == mRoom) { return; }
   mRoom = room;
-  // are we showing an enemy?
-  /*
-  for(Enemy* p = pGame->EnemyBegin(); p!=pGame->EnemyEnd(); ++p) {
-    if (p->IsActive() && p->Tile() == mRoom) {
-      ShowEnemy(p);
-    } else if (p->view == this) {
-      HideEnemy(p);
-    }
-  }
-  */
   // are we showing an items?
   if (IsShowingRoom()) {
     HideInventorySprites();
@@ -66,6 +110,7 @@ void GameView::ShowLocation(Vec2 room) {
       ShowPlayer();
     }
     DrawBackground();
+    mIdleHoverIndex = 0;
   } else {
     HideRoom();
   }
@@ -73,13 +118,6 @@ void GameView::ShowLocation(Vec2 room) {
 }
 
 void GameView::HideRoom() {
-  /*
-  for(Enemy* p = pGame->EnemyBegin(); p!=pGame->EnemyEnd(); ++p) {
-    if (p->view == this) {
-      HideEnemy(p);
-    }
-  }
-  */
   mRoom = ROOM_NONE;
   HideItem();
   DrawInventorySprites();
@@ -109,31 +147,6 @@ void GameView::UpdatePlayer() {
 void GameView::HidePlayer() {
   ResizeSprite(GetCube(), PLAYER_SPRITE_ID, 0, 0);
 }
-
-//----------------------------------------------------------------------
-// ENEMY METHODS
-//----------------------------------------------------------------------
-
-void GameView::ShowEnemy(Enemy* pEnemy) {
-  ResizeSprite(GetCube(), ENEMY_SPRITE_ID, 32, 32);
-  pEnemy->view = this;
-  UpdateEnemy(pEnemy);
-}
-
-void GameView::UpdateEnemy(Enemy* pEnemy) {
-  SetSpriteImage(GetCube(), ENEMY_SPRITE_ID, pEnemy->CurrentFrame());
-  Vec2 localPosition = pEnemy->Position();
-  MoveSprite(GetCube(), ENEMY_SPRITE_ID, localPosition.x-16, localPosition.y-16);
-  
-}
-
-void GameView::HideEnemy(Enemy* pEnemy) {
-  if (pEnemy->view == this) {
-    HideSprite(GetCube(), ENEMY_SPRITE_ID);
-    pEnemy->view = 0;
-  }
-}
-
   
 //----------------------------------------------------------------------
 // ITEM METHODS

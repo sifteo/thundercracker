@@ -8,7 +8,6 @@ OBJS = \
 	Base.o \
 	Player.o \
 	Map.o \
-	Enemy.o \
 
 include $(TC_DIR)/firmware/master/Makefile.defs
 
@@ -18,7 +17,7 @@ OBJS_SIM = $(OBJS:.o=.sim.o)
 BIN_STM32 = $(APP).stm32
 OBJS_STM32 = $(OBJS:.o=.stm32.o)
 
-ASSETDEPS += *.png $(ASSETS).lua gen_assets.lua *.tmx
+ASSETDEPS += *.png $(ASSETS).lua gen_assets.lua
 CDEPS += *.h 
 
 include $(TC_DIR)/firmware/master/Makefile.rules
@@ -29,10 +28,10 @@ GENERATED_FILES += gen_mapdata.h
 GENERATED_FILES += gen_mapdata.cpp
 
 
-gen_mapdata.cpp: MapTool.exe $(ASSETDEPS)
+gen_mapdata.cpp: MapTool.exe $(ASSETDEPS) *.tmx
 	mono MapTool.exe -gen_cxx
 
-gen_assets.lua: MapTool.exe
+gen_assets.lua: MapTool.exe *.tmx
 	mono MapTool.exe -gen_lua
 
 MapTool.exe: Tools/MapTool/*.cs

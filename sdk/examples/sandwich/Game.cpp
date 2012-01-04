@@ -69,11 +69,9 @@ void Game::MainLoop() {
       CheckMapNeighbors(); 
     }
     player.Update(dt);
-    /*
-    for(Enemy* p = EnemyBegin(); p != EnemyEnd(); ++p) {
-      p->Update(dt);
+    for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
+      p->Update();
     }
-    */
     if (mNeedsSync) {
       System::paintSync();
       mNeedsSync = false;
