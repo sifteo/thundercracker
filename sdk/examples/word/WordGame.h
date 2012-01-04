@@ -13,10 +13,11 @@ enum AudioChannelIndex
     AudioChannelIndex_Neighbor = 1,
     AudioChannelIndex_Score = 1,   // HACK only 2 channels are funcitoning for now
     AudioChannelIndex_Bonus = 1,
-    AudioChannelIndex_NewAnagram = 1,
+    AudioChannelIndex_Teeth = 1,
+    AudioChannelIndex_Shake = 1,
     AudioChannelIndex_Time = 1,
 
-    Num_AudioChannelIndexs
+    NumAudioChannelIndexes
 };
 
 class WordGame
@@ -42,7 +43,7 @@ private:
     void _onEvent(unsigned eventID, const EventData& data);
 
     GameStateMachine mGameStateMachine;
-    AudioChannel mAudioChannels[Num_AudioChannelIndexs];
+    AudioChannel mAudioChannels[NumAudioChannelIndexes];
     unsigned mRandomSeed;
     bool mNeedsPaintSync;
     static WordGame* sInstance;
