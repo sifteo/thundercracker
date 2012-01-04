@@ -23,6 +23,7 @@ unsigned TitleGameState::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_Input:
+        WordGame::playAudio(shake, AudioChannelIndex_Shake);
         return GameStateIndex_StartOfRoundScored;
 
     default:

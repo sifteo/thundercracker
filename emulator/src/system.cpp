@@ -13,8 +13,8 @@
 
 System::System()
         : opt_numCubes(DEFAULT_CUBES),
-        opt_turbo(false),
         opt_continueOnException(false),
+        opt_turbo(false),
         opt_cube0Debug(NULL),
         threadRunning(false),
         traceFile(NULL),

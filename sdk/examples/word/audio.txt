@@ -8,13 +8,16 @@ oldword.raw
 seconds10.raw
 seconds20.raw
 seconds30.raw
-shuffle.raw
+teeth_open.raw
+teeth_close.raw
 time01.raw
 time02.raw
 time03.raw
 timesup.raw
 welcome.raw
 word.raw
+shake.raw
+swap.raw
 wordplay_music_sayonara.raw
 wordplay_music_sohcahtoa.raw
 wordplay_music_versus.raw

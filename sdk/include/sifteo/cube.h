@@ -30,7 +30,7 @@ namespace Sifteo {
  */
 
 // unit vectors for directions
-static Vec2 kSideToUnit[4] = {
+static const Vec2 kSideToUnit[4] = {
   Vec2(0, -1),
   Vec2(-1, 0),
   Vec2(0, 1),
@@ -38,7 +38,7 @@ static Vec2 kSideToUnit[4] = {
 };
 
 // complex rotation vectors for directions
-static Vec2 kSideToQ[4] = { 
+static const Vec2 kSideToQ[4] = { 
   Vec2(1,0),
   Vec2(0,1),
   Vec2(-1,0),
@@ -46,7 +46,7 @@ static Vec2 kSideToQ[4] = {
 };
 
 // internal -- used by setOrientation()
-static VidMode::Rotation kSideToRotation[4] = {
+static const VidMode::Rotation kSideToRotation[4] = {
   VidMode::ROT_NORMAL,
   VidMode::ROT_LEFT_90,
   VidMode::ROT_180,
@@ -54,7 +54,7 @@ static VidMode::Rotation kSideToRotation[4] = {
 };
 
 // internal -- used by orientTo()
-static int kOrientationTable[4][4] = {
+static const int kOrientationTable[4][4] = {
   {2,1,0,3},
   {3,2,1,0},
   {0,3,2,1},

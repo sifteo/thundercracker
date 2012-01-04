@@ -11,6 +11,12 @@
 unsigned ScoredGameState_StartOfRound::update(float dt, float stateTime)
 {
 
+    const float BLIP_TIME = 4.f/7.f * TEETH_ANIM_LENGTH;
+    if (stateTime > BLIP_TIME && stateTime - dt <= BLIP_TIME)
+    {
+        WordGame::playAudio(swap, AudioChannelIndex_Time);
+    }
+
     if (stateTime > TEETH_ANIM_LENGTH)
     {
         WordGame::playAudio(wordplay_music_versus, AudioChannelIndex_Music, LoopRepeat);
@@ -27,6 +33,7 @@ unsigned ScoredGameState_StartOfRound::onEvent(unsigned eventID, const EventData
     switch (eventID)
     {
     case EventID_EnterState:
+        WordGame::playAudio(teeth_open, AudioChannelIndex_Teeth);
         break;
 
     default:
