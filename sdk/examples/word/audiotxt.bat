@@ -1,1 +1,1 @@
-dir assets\audio /B /L *.raw > audio.txt
+dir /B /L *.raw > audio.txt

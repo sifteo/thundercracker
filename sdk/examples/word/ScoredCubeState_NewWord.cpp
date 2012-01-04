@@ -96,6 +96,7 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
 
 unsigned ScoredCubeState_NewWord::update(float dt, float stateTime)
 {
+    CubeState::update(dt, stateTime);
     return getStateMachine().getTime() < 0.5f ?
                 CubeStateIndex_NewWordScored : CubeStateIndex_OldWordScored;
 }

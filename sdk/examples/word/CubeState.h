@@ -19,13 +19,29 @@ enum CubeStateIndex
     CubeStateIndex_NumStates
 };
 
+enum EyeState
+{
+    EyeState_Closed = -2,
+    EyeState_Center = -1,
+    EyeState_N = 0,
+    EyeState_NW,
+    EyeState_W,
+    EyeState_SW,
+    EyeState_S,
+    EyeState_SE,
+    EyeState_E,
+    EyeState_NE,
+
+    NumEyeStates
+};
+
 class CubeStateMachine;
 const float TEETH_ANIM_LENGTH = 0.6f;
 
 class CubeState : public State
 {
 public:
-    CubeState() : mStateMachine(0) { }
+    CubeState() : mStateMachine(0), mEyeState(EyeState_Center), mEyeDirChangeDelay(0.f), mEyeBlinkDelay(0.f) { }
     void setStateMachine(CubeStateMachine& csm);
     CubeStateMachine& getStateMachine();
 
@@ -40,8 +56,14 @@ protected:
     void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites=false);
     void paintScoreNumbers(VidMode_BG0_SPR_BG1 &vid, const Vec2& position, const char* string);
 
+    virtual unsigned update(float dt, float stateTime);
+
 private:
     CubeStateMachine* mStateMachine;
+
+    EyeState mEyeState;
+    float mEyeDirChangeDelay;
+    float mEyeBlinkDelay;
 };
 
 #endif // CUBESTATE_H

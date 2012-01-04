@@ -191,54 +191,154 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
             {
                 vid.BG0_drawAsset(Vec2(0,0), font, frame);
 
-                enum LetterStateSpriteID {
-                    LetterStateSpriteID_LeftEye,
-                    LetterStateSpriteID_RightEye,
-                    NumLetterStateSpriteIDs
-
-                };
 
                 if (paintSprites)
                 {
-                    const EyeData& ed = getEyeData(*str);
-                    _SYSTiltState state;
-                    _SYS_getTilt(getStateMachine().getCube().id(), &state);
-                    enum TiltDirection {
-                        TiltDirection_None = -1,
-                        TiltDirection_N = 0,
-                        TiltDirection_NW,
-                        TiltDirection_W,
-                        TiltDirection_SW,
-                        TiltDirection_S,
-                        TiltDirection_SE,
-                        TiltDirection_E,
-                        TiltDirection_NE,
+                    enum EyePersonality
+                    {
+                        EyePersonality_Calm = 0,
+                        EyePersonality_Wired,
+                        EyePersonality_Sleepy,
+                        EyePersonality_Blinky,
+                        EyePersonality_Shy,
+                        EyePersonality_Foo,
 
-                        NumTiltDirections
+                        NumEyePersonalities
                     };
 
+                    const static float BlinkDelayMax[NumEyePersonalities] =
+                    {
+                      2.2f, 8.8f, 1.1f, .28f, .55f, 4.4f
+                    };
 
-                    const static TiltDirection tiltStateToDirection[3][3] =
+                    const static float BlinkDelayMin[NumEyePersonalities] =
+                    {
+                      1.8f, 7.2f, 0.9f, .22f, .45f, 3.6f
+                    };
+
+                    const static float BlinkHoldMax[NumEyePersonalities] =
+                    {
+                      0.1375f, 0.55f, 0.06875f, 0.0175f, 0.034375f, 0.275f
+                    };
+
+                    const static float BlinkHoldMin[NumEyePersonalities] =
+                    {
+                      0.1125f, 0.45f, .05f, 0.01375f, 0.0275f, 0.225f
+                    };
+
+                    const static float DirDelayMax[NumEyePersonalities] =
+                    {
+                      2.2f, 8.8f, 1.1f, .28f, .55f, 4.4f
+                    };
+
+                    const static float DirDelayMin[NumEyePersonalities] =
+                    {
+                      1.8f, 7.2f, 0.9f, .22f, .45f, 3.6f
+                    };
+
+                    enum LetterStateSpriteID
+                    {
+                        LetterStateSpriteID_LeftEye,
+                        LetterStateSpriteID_RightEye,
+
+                        NumLetterStateSpriteIDs
+                    };
+
+                    const static EyeState tiltStateToEyeState[3][3] =
                     {
                         // x == 0
-                        {TiltDirection_NW, TiltDirection_W, TiltDirection_SW},
+                        {EyeState_NW, EyeState_W, EyeState_SW},
 
                         // x == 1
-                        {TiltDirection_N, TiltDirection_None, TiltDirection_S},
+                        {EyeState_N, EyeState_Center, EyeState_S},
 
                         // x == 2
-                        {TiltDirection_NE, TiltDirection_E, TiltDirection_SE},
+                        {EyeState_NE, EyeState_E, EyeState_SE},
                     };
 
-                    TiltDirection dir = tiltStateToDirection[state.x][state.y];
-                    unsigned eyeFrame = MAX(0, NumTiltDirections - dir); // asset frames are backwards
-                    vid.setSpriteImage(LetterStateSpriteID_LeftEye, EyeLeft.index + (eyeFrame % EyeLeft.frames) * EyeLeft.width * EyeLeft.height);
-                    vid.resizeSprite(LetterStateSpriteID_LeftEye, EyeLeft.width * 8, EyeLeft.height * 8);
-                    vid.moveSprite(LetterStateSpriteID_LeftEye, ed.lx, ed.ly);
+                    unsigned eyeFrame = 0;
+                    const EyeData& ed = getEyeData(*str);
 
-                    vid.setSpriteImage(LetterStateSpriteID_RightEye, EyeRight.index + (eyeFrame % EyeRight.frames) * EyeRight.width * EyeRight.height);
-                    vid.resizeSprite(LetterStateSpriteID_RightEye, EyeRight.width * 8, EyeRight.height * 8);
-                    vid.moveSprite(LetterStateSpriteID_RightEye, ed.rx, ed.ry);
+                    EyePersonality personality =
+                            (EyePersonality)(getStateMachine().getCube().id() % NumEyePersonalities);
+                    if (mEyeBlinkDelay <= 0.f && mEyeState != EyeState_Closed)
+                    {
+                        // blinking closed trumps tilt and direction change timer
+                        mEyeState = EyeState_Closed;
+                        mEyeBlinkDelay =
+                            WordGame::rand(BlinkHoldMin[personality],
+                                           BlinkHoldMax[personality]);
+                    }
+                    // else blink delay > 0 || eye state == closed
+                    else if (mEyeBlinkDelay <= 0.f || mEyeState != EyeState_Closed)
+                    {
+                        // else if time to open eyes, or eyes open and not time to close eyes
+                        // tilt trumps direction change timer
+                        _SYSTiltState state;
+                        _SYS_getTilt(getStateMachine().getCube().id(), &state);
+                        EyeState newEyeState = tiltStateToEyeState[state.x][state.y];
+                        if (newEyeState == EyeState_Center)
+                        {
+                            // not tilted
+                            if (mEyeDirChangeDelay <= 0.f || mEyeBlinkDelay <= 0.f)
+                            {
+                                // time to open eyes or change dir
+                                newEyeState = (EyeState)WordGame::rand(NumEyeStates);
+                                mEyeDirChangeDelay =
+                                        WordGame::rand(DirDelayMin[personality],
+                                                       DirDelayMax[personality]);
+                            }
+                            else
+                            {
+                                // waiting on timers
+                                newEyeState = mEyeState;
+                            }
+                        }
+                        else
+                        {
+                            // tilted, correct newEyeState already determined
+                        }
+
+                        if (mEyeState == EyeState_Closed)
+                        {
+                            // opening eyes
+                            mEyeBlinkDelay =
+                                WordGame::rand(BlinkDelayMin[personality],
+                                               BlinkDelayMax[personality]);
+                        }
+                        mEyeState = newEyeState;
+                    }
+
+                    switch (mEyeState)
+                    {
+                    case EyeState_Closed:
+                        vid.setSpriteImage(LetterStateSpriteID_LeftEye, EyeLeftBlink.index);
+                        vid.resizeSprite(LetterStateSpriteID_LeftEye, EyeLeft.width * 8, EyeLeft.height * 8);
+                        vid.moveSprite(LetterStateSpriteID_LeftEye, ed.lx, ed.ly);
+
+                        vid.setSpriteImage(LetterStateSpriteID_RightEye, EyeRightBlink.index);
+                        vid.resizeSprite(LetterStateSpriteID_RightEye, EyeRight.width * 8, EyeRight.height * 8);
+                        vid.moveSprite(LetterStateSpriteID_RightEye, ed.rx, ed.ry);
+                        break;
+
+                    case EyeState_Center:
+                        WordGame::hideSprites(vid);
+                        break;
+
+                    default:
+                        {
+                            unsigned eyeFrame = MAX(0, NumEyeStates - mEyeState); // asset frames are backwards
+                            vid.setSpriteImage(LetterStateSpriteID_LeftEye, EyeLeft.index + (eyeFrame % EyeLeft.frames) * EyeLeft.width * EyeLeft.height);
+                            vid.resizeSprite(LetterStateSpriteID_LeftEye, EyeLeft.width * 8, EyeLeft.height * 8);
+                            vid.moveSprite(LetterStateSpriteID_LeftEye, ed.lx, ed.ly);
+
+                            vid.setSpriteImage(LetterStateSpriteID_RightEye, EyeRight.index + (eyeFrame % EyeRight.frames) * EyeRight.width * EyeRight.height);
+                            vid.resizeSprite(LetterStateSpriteID_RightEye, EyeRight.width * 8, EyeRight.height * 8);
+                            vid.moveSprite(LetterStateSpriteID_RightEye, ed.rx, ed.ry);
+                        }
+                        break;
+                    }
+
                 }
                 else
                 {
@@ -299,5 +399,14 @@ void CubeState::paintScoreNumbers(VidMode_BG0_SPR_BG1 &vid, const Vec2& position
     }
 }
 
+unsigned CubeState::update(float dt, float stateTime)
+{
+    mEyeDirChangeDelay -= dt;
+    mEyeDirChangeDelay = MAX(0.f, mEyeDirChangeDelay);
+    mEyeBlinkDelay -= dt;
+    mEyeBlinkDelay = MAX(0.f, mEyeBlinkDelay);
+
+    return getStateMachine().getCurrentStateIndex();
+}
 
 
