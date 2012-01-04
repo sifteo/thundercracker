@@ -41,7 +41,7 @@ bool System::init()
     if (opt_cubeFirmware.empty() && (!opt_cube0Profile.empty() || 
                                      !opt_cubeTrace.empty() ||
                                      opt_cube0Debug)) {
-        fprintf(stderr, "Debug features only available if a firmware image is provided.");
+        fprintf(stderr, "Debug features only available if a firmware image is provided.\n");
         return false;
     }
 

@@ -16,6 +16,7 @@
 class SpeexDecoder;
 
 // TODO - need a better name, but at least this distinguishes from AudioChannel in audio.h...
+// Maybe "AudioChannelSlot", by analogy with "CubeSlot"?
 class AudioChannelWrapper {
 public:
     static const int STATE_PAUSED   = (1 << 0);

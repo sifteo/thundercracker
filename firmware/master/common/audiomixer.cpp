@@ -154,6 +154,15 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
             continue;
         }
         int mixed = ch->pullAudio(buffer, numsamples);
+
+        /*
+         * XXX: I don't think this actually does what we want it to do?
+         *      Taking a MAX() will seem to work if only one channel
+         *      is audibly playing, but it won't correctly mix multiple
+         *      channels of audio. This should be summing all channels,
+         *      but taking care to use dynamic range compression to avoid
+         *      overflow or clipping. --beth
+         */
         if (mixed > samplesMixed) {
             samplesMixed = mixed;
         }
@@ -176,6 +185,13 @@ void AudioMixer::fetchData()
     // note - refer to activeChannelMask on each iteration,
     // as opposed to copying it to a local, in case it gets updated
     // during a call to fetchData()
+    
+    /*
+     * XXX: This could be converted into a CLZ-style loop, as used in
+     *      many other places in the firmware. That lets us iterate over
+     *      only active channels, rather than interating over every
+     *      preceeding inactive channel too. --beth
+     */
     for (int i = 0; ; i++) {
         int m = activeChannelMask >> i;
         if (m == 0)
@@ -310,6 +326,9 @@ SpeexDecoder* AudioMixer::getDecoder()
         return NULL;
     }
 
+    /*
+     * XXX: CLZ could do this in constant time, without the loop. --beth
+     */
     for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         if (availableDecodersMask & (1 << i)) {
             Atomic::ClearBit(availableDecodersMask, i);
