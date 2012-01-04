@@ -67,7 +67,15 @@ void AudioChannelWrapper::fetchData()
         if (decoder->endOfStream() || buf.writeAvailable() < SpeexDecoder::DECODED_FRAME_SIZE) {
             return;
         }
-        // TODO - better way to avoid copying data here?
+        
+        /*
+         * TODO - better way to avoid copying data here?
+         * 
+         * In the past I've written buffer APIs that had a two-phase 'write';
+         * first you reserve() a particular number of bytes, recieving a pointer
+         * to which you write the data. Then an atomic commit() operation updates
+         * the buffer's write pointer. --beth
+         */
         uint8_t buffer[SpeexDecoder::DECODED_FRAME_SIZE];
         uint32_t sz = decoder->decodeFrame(buffer, sizeof(buffer));
         ASSERT(sz == SpeexDecoder::DECODED_FRAME_SIZE);
