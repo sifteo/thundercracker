@@ -178,6 +178,7 @@ class TimeGovernor {
          */
 
         static const double maxDeviation = 0.75;
+        static const double minSleep = 0.01;
 
         et.capture();
 
@@ -191,7 +192,7 @@ class TimeGovernor {
         if (secondsAhead < -maxDeviation || secondsAhead > maxDeviation)
             secondsAhead = 0;
 
-        if (secondsAhead > 0)
+        if (secondsAhead > minSleep)
             glfwSleep(secondsAhead);
        
         et.start();
