@@ -21,6 +21,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     case EventID_Input:
         if (GameStateMachine::getAnagramCooldown() <= .0f)
         {
+            WordGame::playAudio(shake, AudioChannelIndex_Shake);
             return GameStateIndex_ShuffleScored;
         }
         break;
@@ -47,15 +48,18 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         WordGame::playAudio(oldword, AudioChannelIndex_Score);
         break;
 
+    /*
     case EventID_NewAnagram:
-        WordGame::playAudio(shuffle, AudioChannelIndex_NewAnagram);
+        WordGame::playAudio(swap, AudioChannelIndex_NewAnagram);
         break;
+    */
 
     case EventID_GameStateChanged:
         switch (data.mGameStateChanged.mNewStateIndex)
         {
         case GameStateIndex_EndOfRoundScored:
             WordGame::playAudio(timesup, AudioChannelIndex_Time);
+            break;
         }
         break;
 

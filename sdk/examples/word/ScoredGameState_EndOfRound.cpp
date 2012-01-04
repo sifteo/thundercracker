@@ -20,11 +20,13 @@ unsigned ScoredGameState_EndOfRound::onEvent(unsigned eventID, const EventData& 
     {
     case EventID_EnterState:
         WordGame::playAudio(wordplay_music_sayonara, AudioChannelIndex_Music, LoopRepeat);
+        WordGame::playAudio(teeth_close, AudioChannelIndex_Teeth);
         break;
 
     case EventID_Input:
         if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
         {
+            WordGame::playAudio(shake, AudioChannelIndex_Shake);
             return GameStateIndex_StartOfRoundScored;
         }
         break;
