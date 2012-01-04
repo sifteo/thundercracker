@@ -205,7 +205,7 @@ void TiltFlowMenu::checkNeighbors()
     for( int i = 0; i < mNumCubes; i++ )
     {
           TiltFlowView &view = mViews[i];
-          if (&view == mKeyView) {
+          if (&view == mKeyView && view.GetItem() == 0) {
               _SYSCubeID neighbor = view.getNeighbor();
 
               if( neighbor != CUBE_ID_UNDEFINED )

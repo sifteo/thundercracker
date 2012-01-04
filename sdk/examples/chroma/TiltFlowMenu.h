@@ -76,6 +76,7 @@ public:
   inline Status GetStatus() const { return mStatus; }
   inline void SetStatus( Status status ) { mStatus = status; }
   inline void SetItem( int item ) { mItem = item; }
+  inline int GetItem() const { return mItem; }
   inline void SetDirty() { mDirty = true; }
   inline void SetCube( Cube *pCube ) { mpCube = pCube; }
 
