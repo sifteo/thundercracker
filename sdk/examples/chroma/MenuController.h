@@ -36,6 +36,7 @@ public:
 	bool Update();
 	void Reset();
 	
+    void checkNeighbors();
 
 private:
     float m_fLastTime;

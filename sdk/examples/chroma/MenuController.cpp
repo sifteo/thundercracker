@@ -65,12 +65,19 @@ static void onShake(_SYSCubeID cid)
 }
 
 
+static void onNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+{
+    s_menu.checkNeighbors();
+}
+
+
 void RunMenu()
 {
     s_menu.Init();
 
     _SYS_vectors.cubeEvents.tilt = onTilt;
     _SYS_vectors.cubeEvents.shake = onShake;
+    _SYS_vectors.neighborEvents.add = onNeighborAdd;
 
     while (s_menu.Update()) {}
 }
@@ -140,6 +147,11 @@ void MenuController::Reset()
 	{
 		cubes[i].Reset();
 	}
+}
+
+void MenuController::checkNeighbors()
+{
+    m_Menu.checkNeighbors();
 }
 
 

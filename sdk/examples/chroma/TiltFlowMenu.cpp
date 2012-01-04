@@ -69,24 +69,7 @@ bool TiltFlowMenu::Tick(float dt)
 
     if (mSimTime - mUpdateTime > UPDATE_DELAY) {
 
-      //CES HACKERY
-	  for( int i = 0; i < mNumCubes; i++ )
-	  {
-			TiltFlowView &view = mViews[i];
-			if (&view == mKeyView) {
-				_SYSCubeID neighbor = view.getNeighbor();
 
-				if( neighbor != CUBE_ID_UNDEFINED )
-				{
-					Pick( view );
-					TiltFlowView &neighborView = mViews[neighbor];
-
-					neighborView.setUpIncomingCover( view );
-				}
-
-				break;
-			}
-	  }
 
       if (mNeighborDirty) {
         mNeighborDirty = false;
@@ -213,6 +196,29 @@ void TiltFlowMenu::showLogo()
 	playSound( game_start );
 
 	mStatus = LOGO;
+}
+
+
+void TiltFlowMenu::checkNeighbors()
+{
+    //CES HACKERY
+    for( int i = 0; i < mNumCubes; i++ )
+    {
+          TiltFlowView &view = mViews[i];
+          if (&view == mKeyView) {
+              _SYSCubeID neighbor = view.getNeighbor();
+
+              if( neighbor != CUBE_ID_UNDEFINED )
+              {
+                  Pick( view );
+                  TiltFlowView &neighborView = mViews[neighbor];
+
+                  neighborView.setUpIncomingCover( view );
+              }
+
+              break;
+          }
+    }
 }
 
 

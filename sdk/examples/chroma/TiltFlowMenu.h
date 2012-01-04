@@ -187,6 +187,7 @@ public:
 	void playSound( const _SYSAudioModule &sound );
 
 	void showLogo();
+    void checkNeighbors();
 
 private:
     //void CheckMenuNeighbors();
