@@ -6,11 +6,6 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-/*
- * Vector table. Defined in C rather than C++, so that we
- * can use C99 struct initializers.
- */
-
 #include "vectors.h"
 #include "debug.h"
 
