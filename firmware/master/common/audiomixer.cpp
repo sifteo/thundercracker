@@ -153,7 +153,11 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
         if ((mask & 1) == 0 || (ch->isPaused())) {
             continue;
         }
-        int mixed = ch->pullAudio(buffer, numsamples);
+        
+        // Each channel individually mixes itself with the existing buffer contents
+        int mixed = ch->mixAudio(buffer, numsamples);
+
+        // Update size of overall mixed audio buffer
         if (mixed > samplesMixed) {
             samplesMixed = mixed;
         }
@@ -176,6 +180,13 @@ void AudioMixer::fetchData()
     // note - refer to activeChannelMask on each iteration,
     // as opposed to copying it to a local, in case it gets updated
     // during a call to fetchData()
+    
+    /*
+     * XXX: This could be converted into a CLZ-style loop, as used in
+     *      many other places in the firmware. That lets us iterate over
+     *      only active channels, rather than interating over every
+     *      preceeding inactive channel too. --beth
+     */
     for (int i = 0; ; i++) {
         int m = activeChannelMask >> i;
         if (m == 0)
@@ -310,6 +321,9 @@ SpeexDecoder* AudioMixer::getDecoder()
         return NULL;
     }
 
+    /*
+     * XXX: CLZ could do this in constant time, without the loop. --beth
+     */
     for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         if (availableDecodersMask & (1 << i)) {
             Atomic::ClearBit(availableDecodersMask, i);

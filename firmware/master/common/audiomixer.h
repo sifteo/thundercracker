@@ -21,7 +21,6 @@ public:
     AudioMixer();
 
     static AudioMixer instance;
-    static const int MAXVOLUME;
 
     void init();
     void enableChannel(struct _SYSAudioBuffer *buffer);
@@ -40,7 +39,7 @@ public:
 
     uint32_t pos(_SYSAudioHandle handle);
 
-    bool active() const { return activeChannelMask; }
+    bool active() const { return activeChannelMask != 0; }
 
     int pullAudio(int16_t *buffer, int numsamples);
     void fetchData();
