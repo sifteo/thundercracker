@@ -230,6 +230,10 @@ void CubeWrapper::Draw()
                     m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
                 }
             }
+            else if( m_cube.id() == 2 )
+            {
+                m_bg1helper.DrawTextf( Vec2( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
+            }
 
             for( int i = 0; i < GameOver::NUM_ARROWS; i++ )
                 resizeSprite(m_cube, i, 0, 0);
@@ -340,6 +344,14 @@ void CubeWrapper::Update(float t, float dt)
         {
             if( oldvel.x * m_curFluidVel.x < 0.0f || oldvel.y * m_curFluidVel.y < 0.0f )
                 Game::Inst().playSlosh();
+        }
+    }
+    else if( Game::Inst().getState() == Game::STATE_POSTGAME )
+    {
+        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
+        {
+            Game::Inst().setTestMatchFlag();
+            m_fShakeTime = -1.0f;
         }
     }
 

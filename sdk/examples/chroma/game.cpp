@@ -161,7 +161,7 @@ void Game::Reset()
 	m_iDotsCleared = 0;
 	m_iLevel = 0;
 
-	m_state = STARTING_STATE;
+    m_state = STATE_INTRO;
     //m_musicChannel.play( astrokraut, LoopRepeat );
 
 	for( int i = 0; i < NUM_CUBES; i++ )
