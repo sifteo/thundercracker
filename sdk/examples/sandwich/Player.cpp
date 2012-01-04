@@ -189,7 +189,10 @@ void Player::Update(float dt) {
           }          
         }
       } else { // general case - A*
-        ASSERT( pGame->map.FindPath(pCurrent->Location(), mDir, &mMoves) );
+		{
+			bool result = pGame->map.FindPath(pCurrent->Location(), mDir, &mMoves);
+			ASSERT(result);
+		}
         mProgress = 0;
         for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
           mDir = *pNextMove;  
@@ -218,11 +221,11 @@ void Player::Update(float dt) {
           CORO_YIELD;
         }
       }
-
       if (pTarget) { // did we land on the target?
         pCurrent->HidePlayer();
         pCurrent = pTarget;
         pTarget = 0;  
+        mPosition = pCurrent->Room()->Center();
         pCurrent->UpdatePlayer();        
         { // pickup item?
           int itemId = pCurrent->Room()->itemId;
