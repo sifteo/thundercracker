@@ -2,6 +2,7 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
+#include "audio.gen.h"
 
 //#define FAST_FORWARD 1
 
@@ -9,7 +10,8 @@
 #  define NUM_CUBES 3
 #endif
 
-extern Cube cubes[NUM_CUBES];
+extern Cube gCubes[NUM_CUBES];
+extern AudioChannel gChannelSfx;
 
 using namespace Sifteo;
 

@@ -25,7 +25,7 @@ void GameView::Init() {
 
 Cube* GameView::GetCube() const {
   int id = (int)(this - pGame->ViewBegin());
-  return cubes + id;
+  return gCubes + id;
 }
 
 #define FRAMES_PER_TORCH_FRAME 4
