@@ -18,7 +18,7 @@ unsigned ScoredGameState_Shuffle::update(float dt, float stateTime)
     }
     else if (stateTime > BLIP_TIME && stateTime - dt <= BLIP_TIME)
     {
-        WordGame::playAudio(swap, AudioChannelIndex_Time);
+        WordGame::playAudio(blip, AudioChannelIndex_Time);
     }
 
     return (stateTime > TEETH_ANIM_LENGTH * 2.f) ? GameStateIndex_PlayScored : GameStateIndex_ShuffleScored;
