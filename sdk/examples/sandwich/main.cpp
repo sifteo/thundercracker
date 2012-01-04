@@ -36,7 +36,9 @@ void siftmain() {
 		gChannelSfx.stop();
 		*pGame = Game(); // re-initialize memory
 		pGame->MainLoop();
+		gChannelSfx.play(win_screen);
 		WinScreen(pGame->player.CurrentView()->GetCube());
+		gChannelSfx.stop();
 	}
 }
 
