@@ -21,7 +21,6 @@ public:
     AudioMixer();
 
     static AudioMixer instance;
-    static const int MAXVOLUME;
 
     void init();
     void enableChannel(struct _SYSAudioBuffer *buffer);

@@ -34,7 +34,7 @@ void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopT
     }
 }
 
-int AudioChannelWrapper::pullAudio(int16_t *buffer, int len)
+int AudioChannelWrapper::mixAudio(int16_t *buffer, int len)
 {
     ASSERT(!(state & STATE_STOPPED));
 
@@ -42,9 +42,12 @@ int AudioChannelWrapper::pullAudio(int16_t *buffer, int len)
     if (mixable > 0) {
         for (int i = 0; i < mixable; i++) {
             int16_t src = buf.dequeue() | (buf.dequeue() << 8);
-            int32_t sample = *buffer + ((src * this->volume) / Audio::MAX_VOLUME);
+
+            // Mix this sample, after volume adjustment, with the existing buffer contents
+            int32_t sample = *buffer + ((src * (int32_t)this->volume) / Audio::MAX_VOLUME);
+            
             // TODO - more subtle compression instead of hard limiter
-            *buffer += Math::clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
+            *buffer = Math::clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
             buffer++;
         }
         // if we have nothing buffered, and there's nothing else to read, we're done
