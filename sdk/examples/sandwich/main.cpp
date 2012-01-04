@@ -31,7 +31,7 @@ void siftmain() {
 	}
 	gChannelSfx.init();
 	for(;;) {
-		//IntroCutscene();
+		IntroCutscene();
 		*pGame = Game(); // re-initialize memory
 		pGame->MainLoop();
 		WinScreen(pGame->player.CurrentView()->GetCube());

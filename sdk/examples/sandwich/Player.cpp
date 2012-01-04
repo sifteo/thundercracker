@@ -140,7 +140,7 @@ void Player::Update(float dt) {
     }
     // go to the target
     mStatus = PLAYER_STATUS_WALKING;
-    gChannelSfx.play(sfx_running, LoopRepeat);
+    //gChannelSfx.play(sfx_running, LoopRepeat);
     mAnimFrame = 0;
     mDir = mNextDir;
     do {
@@ -258,7 +258,7 @@ void Player::Update(float dt) {
       }
 
     } while(mPath.PopStep(pCurrent));
-    gChannelSfx.stop();
+    //gChannelSfx.stop();
 
 
     { // active trigger?
