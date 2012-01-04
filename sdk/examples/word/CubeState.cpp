@@ -45,7 +45,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
 
     STATIC_ASSERT(arraysize(teethImages) == NumImageIndexes);
     ASSERT(teethImageIndex >= 0);
-    ASSERT(teethImageIndex < arraysize(teethImages));
+    ASSERT(teethImageIndex < (ImageIndex)arraysize(teethImages));
     const AssetImage& teeth = *teethImages[teethImageIndex];
     unsigned frame = 0;
     unsigned secondsLeft = GameStateMachine::getSecondsLeft();
