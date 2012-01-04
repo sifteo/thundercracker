@@ -401,7 +401,7 @@ void GridSlot::markNeighbor( int row, int col )
 
 	//PRINT( "pneighbor = %p", pNeighbor );
 	//PRINT( "color = %d", pNeighbor->getColor() );
-    if( pNeighbor && pNeighbor->isMatchable() && pNeighbor->getColor() == m_color )
+    if( pNeighbor && pNeighbor->isMatchable() && !pNeighbor->isMarked() && pNeighbor->getColor() == m_color )
 		pNeighbor->mark();
 }
 
