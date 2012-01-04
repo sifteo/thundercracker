@@ -118,6 +118,40 @@ void MenuController::Init()
         System::paint();
     }
     PRINT( "done loading" );
+
+    //CES hackery, fake power on
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        VidMode_BG0_ROM rom( cubes[i].GetCube().vbuf );
+        rom.clear();
+        rom.BG0_text(Vec2(1,1), "Chroma");
+        rom.BG0_textf(Vec2(14,14), "%d", i + 1);
+    }
+
+    while( true )
+    {
+        bool satisfied = true;
+        System::paint();
+
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            if( i > 0 && cubes[i].GetCube().physicalNeighborAt(LEFT) != i - 1 )
+            {
+                satisfied = false;
+                break;
+            }
+
+            if( i < NUM_CUBES - 1 && cubes[i].GetCube().physicalNeighborAt(RIGHT) != i + 1 )
+            {
+                satisfied = false;
+                break;
+            }
+        }
+
+        if( satisfied )
+            break;
+    }
+
     m_Menu.AssignViews();
 
 	for( int i = 0; i < NUM_CUBES; i++ )
