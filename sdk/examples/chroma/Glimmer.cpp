@@ -50,6 +50,9 @@ void Glimmer::Reset()
 
 void Glimmer::Update( float dt )
 {
+    if( m_group == 0 && m_frame == 0 )
+        Game::Inst().playSound(glimmer_fx_03);
+
     if( m_group < NUM_GLIMMER_GROUPS )
     {
         m_frame++;
@@ -58,7 +61,7 @@ void Glimmer::Update( float dt )
         {
             m_frame = 0;
             m_group++;
-            Game::Inst().playSound(glimmer_fx_03);
+            //Game::Inst().playSound(glimmer_fx_03);
         }
     }
 }
