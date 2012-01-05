@@ -78,15 +78,15 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     switch (teethImageIndex)
     {
     case ImageIndex_ConnectedWord:
-        pteeth = teethCenterImages[MIN(arraysize(teethCenterImages) - 1, GameStateMachine::getNewWordLength() - 2)];
+        pteeth = teethCenterImages[MIN(((unsigned)arraysize(teethCenterImages) - 1), ((unsigned)GameStateMachine::getNewWordLength() - 2))];
         break;
 
     case ImageIndex_ConnectedLeftWord:
-        pteeth = teethCenterImages[MIN(arraysize(teethLeftImages) - 1, GameStateMachine::getNewWordLength() - 2)];
+        pteeth = teethCenterImages[MIN(((unsigned)arraysize(teethLeftImages) - 1), ((unsigned)GameStateMachine::getNewWordLength() - 2))];
         break;
 
     case ImageIndex_ConnectedRightWord:
-        pteeth = teethCenterImages[MIN(arraysize(teethRightImages) - 1, GameStateMachine::getNewWordLength() - 2)];
+        pteeth = teethCenterImages[MIN(((unsigned)arraysize(teethRightImages) - 1), ((unsigned)GameStateMachine::getNewWordLength() - 2))];
         break;
 
     default:
