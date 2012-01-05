@@ -12,6 +12,10 @@
 #include "audiomixer.h"
 #include "../selectormenu/MenuController.h"
 
+#ifndef SIFTEO_SIMULATOR
+#include "tasks.h"
+#endif
+
 using namespace Sifteo;
 
 jmp_buf Runtime::jmpExit;
@@ -71,6 +75,10 @@ void Event::dispatch()
             }
         Atomic::And(pending, ~Intrinsic::LZ(event));
     }
+
+#ifndef SIFTEO_SIMULATOR
+    Tasks::work();  // TODO: find a more appropriate place for this
+#endif
 
     /*
       TODO - this is super temporary, but we don't currently have another
