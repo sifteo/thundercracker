@@ -34,6 +34,7 @@ MapRoom* Player::Room() const {
 
 void Player::PickupItem(int itemId) {
   if (itemId == 0) { return; }
+  PlaySfx(sfx_pickup);
   if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
     mKeyCount++;
     if (mKeyCount == 1) {
@@ -79,11 +80,11 @@ int Player::CurrentFrame() {
       if (mAnimFrame == 1) {
         return PlayerIdle.index;
       } else if (mAnimFrame == 2) {
-        return PlayerIdle.index + (PlayerIdle.width * PlayerIdle.height);
+        return PlayerIdle.index + 16;
       } else if (mAnimFrame == 3 || mAnimFrame == 4) {
-        return PlayerIdle.index + (mAnimFrame-1) * (PlayerIdle.width * PlayerIdle.height);
+        return PlayerIdle.index + (mAnimFrame-1) * 16;
       } else {
-        return PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height);
+        return PlayerStand.index + SIDE_BOTTOM * 16;
       }
     }
     case PLAYER_STATUS_WALKING:
@@ -140,6 +141,8 @@ void Player::Update(float dt) {
     }
     // go to the target
     mStatus = PLAYER_STATUS_WALKING;
+    PlaySfx(sfx_walkStart);
+    //gChannelSfx.play(sfx_running, LoopRepeat);
     mAnimFrame = 0;
     mDir = mNextDir;
     do {
@@ -162,11 +165,14 @@ void Player::Update(float dt) {
           pCurrent->Room()->SetPortal(mDir, PORTAL_OPEN);
           pCurrent->Room()->OpenDoor();
           pCurrent->DrawBackground();
+          pCurrent->GetCube()->vbuf.touch();
           pCurrent->UpdatePlayer();
           mTimeout = System::clock();
+          pGame->NeedsSync();
           do {
             CORO_YIELD;
           } while(System::clock() - mTimeout <  0.5f);
+          PlaySfx(sfx_doorOpen);
           // finish up
           for(; mProgress+WALK_SPEED<=128; mProgress+=WALK_SPEED) {
             mPosition.y -= WALK_SPEED;
@@ -177,6 +183,7 @@ void Player::Update(float dt) {
           // fill in the remainder
           mPosition = pTarget->Room()->Center();
         } else {
+          PlaySfx(sfx_doorBlock);
           mPath.Cancel();
           pTarget->HidePlayer();
           pTarget = 0;
@@ -188,7 +195,10 @@ void Player::Update(float dt) {
           }          
         }
       } else { // general case - A*
-        ASSERT( pGame->map.FindPath(pCurrent->Location(), mDir, &mMoves) );
+		{
+			bool result = pGame->map.FindPath(pCurrent->Location(), mDir, &mMoves);
+			ASSERT(result);
+		}
         mProgress = 0;
         for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
           mDir = *pNextMove;  
@@ -217,11 +227,11 @@ void Player::Update(float dt) {
           CORO_YIELD;
         }
       }
-
       if (pTarget) { // did we land on the target?
         pCurrent->HidePlayer();
         pCurrent = pTarget;
         pTarget = 0;  
+        mPosition = pCurrent->Room()->Center();
         pCurrent->UpdatePlayer();        
         { // pickup item?
           int itemId = pCurrent->Room()->itemId;
@@ -238,8 +248,7 @@ void Player::Update(float dt) {
                 float du = 1.f / (float) PlayerPickup.frames;
                 u = (frame + u) * du;
                 u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-
-                System::paint();
+                pGame->Paint();
                 pCurrent->SetItemPosition(Vec2(0, -36.f * u) );
               }
             }
@@ -257,6 +266,8 @@ void Player::Update(float dt) {
       }
 
     } while(mPath.PopStep(pCurrent));
+    //gChannelSfx.stop();
+
 
     { // active trigger?
       MapRoom *mr = pCurrent->Room();

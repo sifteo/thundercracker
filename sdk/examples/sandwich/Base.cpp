@@ -55,3 +55,24 @@ void MoveSprite(Cube *c, int id, int px, int py) {
                    sizeof(_SYSSpriteInfo)/2 * id ); 
   _SYS_vbuf_poke(&c->vbuf.sys, addr, word);
 }
+
+void PlaySfx(const _SYSAudioModule& handle, bool preempt) {
+  if (gChannelSfx.isPlaying()) {
+    if (preempt) {
+      gChannelSfx.stop();
+    } else {
+      return;
+    }
+  }
+  gChannelSfx.play(handle);
+}
+
+unsigned int Rand( unsigned int max ) {
+#ifdef _WIN32
+  return rand()%max;
+#else
+    static unsigned int seed = (int)( System::clock() * 10000);
+  return rand_r(&seed)%max;
+#endif
+}
+

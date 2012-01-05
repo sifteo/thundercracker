@@ -6,6 +6,35 @@ using System.Text;
 
 namespace MapTool {
 
+  public class Map {
+    public MapDatabase database;
+    public string name;
+    public readonly Room[,] rooms;
+    public int Width { get { return rooms.GetLength(0); } }
+    public int Height { get { return rooms.GetLength(1); } }
+    public TmxMap tmxData;
+
+    public Map (int w, int h) {
+      rooms = new Room[w,h];
+      for(int x=0; x<w; ++x) {
+        for(int y=0; y<h; ++y) {
+          rooms[x,y] = new Room(this, x, y);
+        }
+      }
+    }
+
+    public bool HasOverlay {
+      get { return tmxData.overlayLayer != null; }
+    }
+
+    public Room RoomAtPixelLocation(int pixelX, int pixelY) {
+      pixelX /= 128;
+      pixelY /= 128;
+      return rooms[pixelX, pixelY];
+    }
+
+  }
+
   public enum Portal {
     Open=0, Walled=1, Door=2
   }
@@ -23,6 +52,12 @@ namespace MapTool {
     public Trigger trigger = null;
     public string item = "";
 
+    public Room(Map map, int x, int y) {
+      this.map = map;
+      this.x = x;
+      this.y = y;
+    }
+
     public bool HasItem { get { return item.Length > 0 && item != "ITEM_NONE"; } }
 
     public bool HasOverlay {
@@ -38,12 +73,6 @@ namespace MapTool {
         }
         return false;
       }
-    }
-
-    public Room(Map map, int x, int y) {
-      this.map = map;
-      this.x = x;
-      this.y = y;
     }
 
     public Int2 Center {
@@ -84,35 +113,18 @@ namespace MapTool {
     public TmxTile GetOverlayTile(int x, int y) {
       return map.tmxData.overlayLayer.GetTile(8 * this.x + x, 8 * this.y + y);
     }
-  }
 
-  public class Map {
-    public MapDatabase database;
-    public string name;
-    public readonly Room[,] rooms;
-    public int Width { get { return rooms.GetLength(0); } }
-    public int Height { get { return rooms.GetLength(1); } }
-    public TmxMap tmxData;
-
-    public Map (int w, int h) {
-      rooms = new Room[w,h];
-      for(int x=0; x<w; ++x) {
-        for(int y=0; y<h; ++y) {
-          rooms[x,y] = new Room(this, x, y);
+    public IEnumerable<Int2> ListTorchTiles() {
+      var result = new Int2();
+      for(result.x=0; result.x<8; ++result.x) {
+        for(result.y=0; result.y<8-1; ++result.y) {
+          if (GetTile(result.x,result.y).IsTorch() && (result.y==0 || !GetTile(result.x,result.y-1).IsTorch())) {
+            yield return result;
+          }
         }
       }
+      yield break;
     }
-
-    public bool HasOverlay {
-      get { return tmxData.overlayLayer != null; }
-    }
-
-    public Room RoomAtPixelLocation(int pixelX, int pixelY) {
-      pixelX /= 128;
-      pixelY /= 128;
-      return rooms[pixelX, pixelY];
-    }
-
   }
 
 }
