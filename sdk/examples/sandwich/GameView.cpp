@@ -252,6 +252,7 @@ bool GameView::ShowLocation(Vec2 room) {
         MoveSprite(GetCube(), BFF_SPRITE_ID, mScene.forest.bffX-68, mScene.forest.bffY-68);
       }
     }
+    // end h4cky stuff
 
   } else {
     HideRoom();
@@ -363,7 +364,11 @@ void GameView::HideInventorySprites() {
 // ACCELEROMETER SHTUFF
 //----------------------------------------------------------------------
 
+#ifdef SIFTEO_SIMULATOR
 #define TILT_THRESHOLD 50
+#else
+#define TILT_THRESHOLD 25
+#endif
 
 Cube::Side GameView::VirtualTiltDirection() const {
   Vec2 accel = GetCube()->virtualAccel();

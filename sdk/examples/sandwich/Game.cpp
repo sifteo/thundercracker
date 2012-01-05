@@ -28,7 +28,7 @@ void Game::MainLoop() {
 
   // initial zoom out (yoinked and modded from TeleportTo)
   { 
-    PlaySfx(sfx_zoomIn, true);
+    PlaySfx(sfx_zoomIn);
     GameView* view = player.CurrentView();
     view->HidePlayer();
     Vec2 room = player.Location();
@@ -58,7 +58,7 @@ void Game::MainLoop() {
     System::paintSync();
   }  
 
-  PlaySfx(sfx_neighbor, true);
+  PlaySfx(sfx_neighbor);
 
   mSimTime = System::clock();
   ObserveNeighbors(true);
@@ -144,7 +144,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   // zoom in
   { 
     System::paintSync();
-    PlaySfx(sfx_zoomOut, true);
+    PlaySfx(sfx_zoomOut);
     VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
@@ -173,7 +173,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   }
   // zoom out
   { 
-    PlaySfx(sfx_zoomIn, true);
+    PlaySfx(sfx_zoomIn);
     VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
