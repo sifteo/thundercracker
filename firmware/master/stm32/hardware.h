@@ -34,6 +34,13 @@ struct RCC_t {
 
 extern volatile RCC_t RCC;
 
+struct CRC_t {
+  uint32_t DR;
+  uint32_t IDR;
+  uint32_t CR;
+};
+
+extern volatile CRC_t CRC;
 
 /*
  * GPIOs.

@@ -102,7 +102,7 @@ extern "C" void _start()
     // Enable peripheral clocks
     RCC.APB1ENR = 0x00004000;    // SPI2
     RCC.APB2ENR = 0x0000003d;    // GPIO/AFIO
-    RCC.AHBENR  = 0x00001000;    // USB OTG
+    RCC.AHBENR  = 0x00001040;    // USB OTG, CRC
 
 #if 0
     // debug the clock output - MCO
