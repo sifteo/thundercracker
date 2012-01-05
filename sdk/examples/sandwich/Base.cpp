@@ -1,5 +1,9 @@
 #include "Base.h"
 
+#ifdef _WIN32
+#include <cstdlib>
+#endif
+
 Cube::Side InferDirection(Vec2 u) {
 	if (u.x > 0) {
 		return SIDE_RIGHT;
