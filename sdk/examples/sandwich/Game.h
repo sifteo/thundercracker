@@ -21,7 +21,8 @@ public:
   GameView* ViewEnd() { return views+NUM_CUBES; }
   
   void MainLoop();
-  
+  void Paint(bool sync=false);
+
   // Trigger Actions
   void WalkTo(Vec2 position);
   void TeleportTo(const MapData& m, Vec2 position);

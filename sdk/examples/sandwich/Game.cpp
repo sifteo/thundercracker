@@ -72,53 +72,25 @@ void Game::MainLoop() {
       CheckMapNeighbors(); 
     }
     player.Update(dt);
-    for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
-      p->Update();
-    }
-    if (mNeedsSync) {
-      //for(unsigned i=0; i<NUM_CUBES; ++i) {
-      //  gCubes[i].vbuf.touch();
-      //}
-      System::paintSync();
-      mNeedsSync--;
-    } else {
-      System::paint();
-    }
+    Paint();
   }
-  /*{
-    GameView* view = player.CurrentView();
-    view->HidePlayer();
-    // blank other cubes
-    for(GameView* p = ViewBegin(); p != ViewEnd(); ++p) {
-      if (p != view) { p->HideRoom(); }
+}
+
+void Game::Paint(bool sync) {
+  for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
+    p->Update();
+  }
+  if (sync || mNeedsSync) {
+    //for(unsigned i=0; i<NUM_CUBES; ++i) {
+    //  gCubes[i].vbuf.touch();
+    //}
+    System::paintSync();
+    if (mNeedsSync > 0) {
+      mNeedsSync--;
     }
-    // zoom in
-    { 
-      System::paintSync();
-    
-      VidMode_BG2 vid(view->GetCube()->vbuf);
-      for(int x=0; x<8; ++x) {
-        for(int y=0; y<8; ++y) {
-          vid.BG2_drawAsset(
-            Vec2(x<<1,y<<1),
-            *(map.Data()->tileset),
-            map.Data()->GetTileId(view->Location(), Vec2(x, y))
-          );
-        }
-      }
-      vid.BG2_setBorder(0x0000);
-      vid.set();
-      for (float t = 0; t < 1.0f; t += 0.025f) {
-        AffineMatrix m = AffineMatrix::identity();
-        m.translate(64, 64);
-        m.scale(1.f+9.f*t);
-        m.rotate(t * 1.1f);
-        m.translate(-64, -64);
-        vid.BG2_setMatrix(m);
-        System::paint();
-      }
-    }  
-  }*/
+  } else {
+    System::paint();
+  }
 }
 
 float Game::UpdateDeltaTime() {

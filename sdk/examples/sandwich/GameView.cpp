@@ -17,6 +17,9 @@ static const int8_t sHoverTable[] = {
 };
 #define HOVER_COUNT 32
 
+const static uint8_t sHopTable[] = { 0, 1, 3, 4, 6, 6, 7, 7, 8, 7, 7, 6, 6, 4, 3, 1, };
+#define HOP_COUNT 16
+#define HOP_PHASE 7
 
 #define FRAMES_PER_TORCH_FRAME 4
 #define BFF_FRAME_COUNT 4
@@ -60,6 +63,21 @@ Cube* GameView::GetCube() const {
 
 void GameView::Update() {
   if (!IsShowingRoom()) { 
+    // compute position of each inventory item based on phase and current time
+    if (mScene.idle.count > 0 && mScene.idle.time <= HOP_PHASE * (mScene.idle.count-1) + HOP_COUNT) {
+      int count = 0;
+      const int pad = 24;
+      const int innerPad = (128-pad-pad)/3;
+      for(int i=0; i<mScene.idle.count; ++i) {
+        int localTime = mScene.idle.time - HOP_PHASE * i;
+        if (localTime < HOP_COUNT) {
+          MoveSprite(GetCube(), i, pad + innerPad * i - 8, 108  - sHopTable[localTime]);
+        } else {
+          MoveSprite(GetCube(), i, pad + innerPad * i - 8, 108);
+        }
+      }
+      mScene.idle.time++;
+    }
     return; 
   }
 
@@ -249,7 +267,9 @@ bool GameView::HideRoom() {
   HideSprite(GetCube(), PLAYER_SPRITE_ID);
   HideSprite(GetCube(), ITEM_SPRITE_ID);
   HideSprite(GetCube(), BFF_SPRITE_ID);
-  mScene.idle.time = 0;
+  if(result) {
+    mScene.idle.time = 0;
+  }
 
   DrawInventorySprites();
   DrawBackground();
@@ -303,30 +323,32 @@ void GameView::HideItem() {
 
 void GameView::RefreshInventory() {
   if (!IsShowingRoom()) {
+    mScene.idle.time = 0;
     DrawInventorySprites();
   }
 }
 
 void GameView::DrawInventorySprites() {
-  int count = 0;
+  mScene.idle.count = 0;
   const int pad = 24;
   const int innerPad = (128-pad-pad)/3;
   const int firstSandwichId = 2;
-  for(int itemId=firstSandwichId; itemId<firstSandwichId+4; ++itemId) {
+  const int sandwichTypeCount = 4;
+  for(int itemId=firstSandwichId; itemId<firstSandwichId+sandwichTypeCount; ++itemId) {
     if (pGame->player.HasItem(itemId)) {
-      ResizeSprite(GetCube(), count, 16, 16);
-      MoveSprite(GetCube(), count, pad + innerPad * count - 8, 108);
-      SetSpriteImage(GetCube(), count, Items.index + (itemId-1) * Items.width * Items.height);
-      count++;
+      ResizeSprite(GetCube(), mScene.idle.count, 16, 16);
+      MoveSprite(GetCube(), mScene.idle.count, pad + innerPad * mScene.idle.count - 8, 108);
+      SetSpriteImage(GetCube(), mScene.idle.count, Items.index + (itemId-1) * Items.width * Items.height);
+      mScene.idle.count++;
     }
   }
   if (pGame->player.HaveBasicKey()) {
-      ResizeSprite(GetCube(), count, 16, 16);
-      MoveSprite(GetCube(), count, pad + innerPad * count - 8, 108);
-      SetSpriteImage(GetCube(), count, Items.index + (ITEM_BASIC_KEY-1) * Items.width * Items.height);
-      count++;
+      ResizeSprite(GetCube(), mScene.idle.count, 16, 16);
+      MoveSprite(GetCube(), mScene.idle.count, pad + innerPad * mScene.idle.count - 8, 108);
+      SetSpriteImage(GetCube(), mScene.idle.count, Items.index + (ITEM_BASIC_KEY-1) * Items.width * Items.height);
+      mScene.idle.count++;
   }
-  for(int i=count; i<4; ++i) {
+  for(int i=mScene.idle.count; i<4; ++i) {
     HideSprite(GetCube(), i);
   }
 }

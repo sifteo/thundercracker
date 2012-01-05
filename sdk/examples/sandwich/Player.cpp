@@ -248,8 +248,7 @@ void Player::Update(float dt) {
                 float du = 1.f / (float) PlayerPickup.frames;
                 u = (frame + u) * du;
                 u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-
-                System::paint();
+                pGame->Paint();
                 pCurrent->SetItemPosition(Vec2(0, -36.f * u) );
               }
             }

@@ -14,7 +14,8 @@ private:
   // h4cky scene-specific stuff
   union {
     struct {
-      uint32_t time;
+      uint16_t count;
+      uint16_t time;
     } idle;
     struct {
       uint32_t torchTime;
