@@ -63,7 +63,7 @@ void GameView::Update() {
     return; 
   }
 
-  // h4cky scene-specific stuff
+  // begin h4cky scene-specific stuff
   RoomData *p = Room()->Data();
   if (pGame->map.Data() == &dungeon_data) {
     if (p->torch0 != 0xff) {
@@ -139,9 +139,7 @@ void GameView::Update() {
         break;
     }
   }
-
-
-  //
+  // end h4cky section
 
   // item hover
   if (Room()->itemId) {
@@ -229,7 +227,7 @@ bool GameView::ShowLocation(Vec2 room) {
     } else if (pGame->map.Data() == &forest_data) {
       if (mr->itemId) {
         mScene.forest.hasBff = 0;
-      } else if ( (mScene.forest.hasBff = (uint8_t) Rand(2)) ) {
+      } else if ( (mScene.forest.hasBff = (Rand(3) == 0)) ) {
         RandomizeBff();
         ResizeSprite(GetCube(), BFF_SPRITE_ID, 8, 8);
         SetSpriteImage(GetCube(), BFF_SPRITE_ID, Butterfly.index + 4 * mScene.forest.bffDir);
@@ -251,6 +249,7 @@ bool GameView::HideRoom() {
   HideSprite(GetCube(), PLAYER_SPRITE_ID);
   HideSprite(GetCube(), ITEM_SPRITE_ID);
   HideSprite(GetCube(), BFF_SPRITE_ID);
+  mScene.idle.time = 0;
 
   DrawInventorySprites();
   DrawBackground();
