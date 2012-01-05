@@ -31,9 +31,11 @@ void siftmain() {
 	}
 	gChannelSfx.init();
 	for(;;) {
+		/*
 		gChannelSfx.play(sting);
 		IntroCutscene();
 		gChannelSfx.stop();
+		*/
 		*pGame = Game(); // re-initialize memory
 		pGame->MainLoop();
 		gChannelSfx.play(win_screen);

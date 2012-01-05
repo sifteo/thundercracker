@@ -34,6 +34,7 @@ MapRoom* Player::Room() const {
 
 void Player::PickupItem(int itemId) {
   if (itemId == 0) { return; }
+  PlaySfx(sfx_pickup);
   if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
     mKeyCount++;
     if (mKeyCount == 1) {
@@ -140,6 +141,7 @@ void Player::Update(float dt) {
     }
     // go to the target
     mStatus = PLAYER_STATUS_WALKING;
+    PlaySfx(sfx_walkStart);
     //gChannelSfx.play(sfx_running, LoopRepeat);
     mAnimFrame = 0;
     mDir = mNextDir;
@@ -163,11 +165,14 @@ void Player::Update(float dt) {
           pCurrent->Room()->SetPortal(mDir, PORTAL_OPEN);
           pCurrent->Room()->OpenDoor();
           pCurrent->DrawBackground();
+          pCurrent->GetCube()->vbuf.touch();
           pCurrent->UpdatePlayer();
           mTimeout = System::clock();
+          pGame->NeedsSync();
           do {
             CORO_YIELD;
           } while(System::clock() - mTimeout <  0.5f);
+          PlaySfx(sfx_doorOpen);
           // finish up
           for(; mProgress+WALK_SPEED<=128; mProgress+=WALK_SPEED) {
             mPosition.y -= WALK_SPEED;
@@ -178,6 +183,7 @@ void Player::Update(float dt) {
           // fill in the remainder
           mPosition = pTarget->Room()->Center();
         } else {
+          PlaySfx(sfx_doorBlock);
           mPath.Cancel();
           pTarget->HidePlayer();
           pTarget = 0;
