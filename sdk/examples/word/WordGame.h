@@ -37,6 +37,7 @@ public:
     static bool playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
     static unsigned rand(unsigned max);
     static float rand(float min, float max);
+    static void seedRand(unsigned seed);
 
 private:
     bool _playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);

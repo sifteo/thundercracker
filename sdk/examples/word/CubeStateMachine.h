@@ -14,8 +14,11 @@
 
 using namespace Sifteo;
 
+// HACK workaround inability to check if a Cube is actually connected
+const unsigned MAX_CUBES = 5;
+
 const unsigned MAX_LETTERS_PER_CUBE = 1;
-const unsigned MAX_LETTERS_PER_WORD = 6;// TODO longer words post CES: _SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE;
+const unsigned MAX_LETTERS_PER_WORD = MAX_LETTERS_PER_CUBE * MAX_CUBES;// TODO longer words post CES: _SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE;
 
 class CubeStateMachine : public StateMachine
 {

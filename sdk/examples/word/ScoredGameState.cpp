@@ -38,17 +38,36 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_AddNeighbor:
-//        WordGame::playAudio(pause_off, AudioChannelIndex_Neighbor);
         WordGame::playAudio(neighbor, AudioChannelIndex_Neighbor);
         break;
 
     case EventID_NewWordFound:
 //        WordGame::playAudio(fireball_laugh, AudioChannelIndex_Score);
-        WordGame::playAudio(fanfare_fire_laugh_01, AudioChannelIndex_Score);
+        switch (strlen(data.mWordFound.mWord))
+        {
+        case 2:
+            WordGame::playAudio(fanfare_fire_laugh_01, AudioChannelIndex_Score);
+            break;
+
+        case 3:
+            WordGame::playAudio(fanfare_fire_laugh_02, AudioChannelIndex_Score);
+            break;
+
+        case 4:
+            WordGame::playAudio(fanfare_fire_laugh_03, AudioChannelIndex_Score);
+            break;
+
+        case 5:
+            WordGame::playAudio(fanfare_fire_laugh_04, AudioChannelIndex_Score);
+            break;
+
+        default:
+            WordGame::playAudio(fanfare_fire_laugh_04, AudioChannelIndex_Score);
+            break;
+        }
         break;
 
     case EventID_OldWordFound:
-//        WordGame::playAudio(pause_on, AudioChannelIndex_Score);
         WordGame::playAudio(lip_snort, AudioChannelIndex_Score);
         break;
 
@@ -63,7 +82,7 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         {
         case GameStateIndex_EndOfRoundScored:
             // TODO diff endings
-            WordGame::playAudio(timeup_01, AudioChannelIndex_Time);
+            WordGame::playAudio(timeup_02, AudioChannelIndex_Time);
             break;
         }
         break;
@@ -72,12 +91,16 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         switch (GameStateMachine::getSecondsLeft())
         {
         case 30:
+//            WordGame::playAudio(bonus, AudioChannelIndex_Time);
+
             WordGame::playAudio(timer_30sec, AudioChannelIndex_Time);
             break;
         case 20:
+//            WordGame::playAudio(pause_on, AudioChannelIndex_Time);
             WordGame::playAudio(timer_20sec, AudioChannelIndex_Time);
             break;
         case 10:
+//            WordGame::playAudio(pause_off, AudioChannelIndex_Time);
             WordGame::playAudio(timer_10sec, AudioChannelIndex_Time);
             break;
         case 3:
@@ -101,7 +124,30 @@ void ScoredGameState::createNewAnagram()
 {
     // make a new anagram of letters halfway through the shuffle animation
     EventData data;
-    data.mNewAnagram.mWord = Dictionary::pickWord(MAX_CUBES);
+    data.mNewAnagram.mWord = Dictionary::pickWord(MAX_LETTERS_PER_WORD);
+
+    // scramble the string (random permutation)
+    // TODO multiple letters per cube
+    char scrambled[MAX_LETTERS_PER_WORD + 1];
+    memset(scrambled, 0, sizeof(scrambled));
+    for (unsigned i = 0; i < MAX_LETTERS_PER_WORD; ++i)
+    {
+        // for each letter, place it randomly in the scrambled array
+        for (unsigned j = WordGame::rand(MAX_LETTERS_PER_WORD);
+             true;
+             j = (j + 1) % MAX_LETTERS_PER_WORD)
+        {
+            if (scrambled[j] == '\0')
+            {
+                scrambled[j] = data.mNewAnagram.mWord[i];
+                break;
+            }
+        }
+    }
+
+    DEBUG_LOG(("scrambled %s to %s\n", data.mNewAnagram.mWord, scrambled));
+    ASSERT(strlen(scrambled) == MAX_LETTERS_PER_WORD);
+    data.mNewAnagram.mWord = scrambled;
     unsigned wordLen = strlen(data.mNewAnagram.mWord);
     unsigned numCubes = GameStateMachine::GetNumCubes();
     if ((wordLen % numCubes) == 0)

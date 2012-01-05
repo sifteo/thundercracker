@@ -62,13 +62,16 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
             unsigned len = strlen(data.mWordFound.mWord);
             mScore += len;
+            mNewWordLength = len;
             // TODO multiple letters per cube
             // TODO count active cubes
+            /* TODO extra time sound
             if (len >= 4)
             {
                 mTimeLeft += len - 2;
                 WordGame::playAudio(extratime, AudioChannelIndex_Bonus);
             }
+            */
         }
         break;
 
@@ -92,7 +95,6 @@ void GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
         sInstance->onEvent(eventID, data);
     }
 }
-
 
 CubeStateMachine* GameStateMachine::findCSMFromID(Cube::ID cubeID)
 {

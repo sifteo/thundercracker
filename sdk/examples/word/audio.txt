@@ -2,12 +2,13 @@ allextratime.raw
 allletters.raw
 allwords.raw
 blip.raw
+bonus.raw
 extrapoints.raw
 extratime.raw
 fanfare_fire_laugh_01.raw
 fanfare_fire_laugh_02.raw
 fanfare_fire_laugh_03.raw
-fireball_laugh.raw
+fanfare_fire_laugh_04.raw
 flap_laugh_fireball.raw
 flap_laugh_fireball_mx.raw
 lip_snort.raw
