@@ -15,6 +15,8 @@
 #define CUBE_ID_MASK (0x1F)
 #define HAS_NEIGHBOR_MASK (0x80)
 
+#define NO_SIDE (-1)
+
 using namespace Sifteo;
 
 NeighborSlot NeighborSlot::instances[_SYS_NUM_CUBE_SLOTS];
@@ -22,14 +24,15 @@ NeighborSlot NeighborSlot::instances[_SYS_NUM_CUBE_SLOTS];
 #define NUM_UNIQUE_PAIRS ((_SYS_NUM_CUBE_SLOTS * (_SYS_NUM_CUBE_SLOTS)) >> 1)
 
 struct NeighborPair {
-    _SYSSideID side0;
-    _SYSSideID side1;
 
-    inline bool fullyConnected() const { return side0 >= 0 && side1 >= 0; }
-    inline bool fullyDisconnected() const { return side0 < 0 && side1 < 0; }
-    inline void clear() { side0=-1; side1=-1; }
+    _SYSSideID side0 : 4;
+    _SYSSideID side1 : 4;
+    inline bool fullyConnected() const { return side0 != NO_SIDE && side1 != NO_SIDE; }
+    inline bool fullyDisconnected() const { return side0 == NO_SIDE && side1 == NO_SIDE; }
+    inline void clear() { side0=NO_SIDE; side1=NO_SIDE; }
+    NeighborPair() : side0(NO_SIDE), side1(NO_SIDE) {}
 
-    NeighborPair() : side0(-1), side1(-1) {}
+
 
     _SYSSideID setSideAndGetOtherSide(_SYSCubeID cid0, _SYSCubeID cid1, _SYSSideID side, NeighborPair** outPair) {
         // abstract the order-of-arguments invariant of lookup()
@@ -143,7 +146,7 @@ void NeighborSlot::clearSide(_SYSSideID side) {
 
 void NeighborSlot::removeNeighborFromSide(_SYSCubeID dstId, _SYSSideID side) {
     NeighborPair* pair;
-    gCubesToSides->setSideAndGetOtherSide(id(), dstId, -1, &pair);
+    gCubesToSides->setSideAndGetOtherSide(id(), dstId, NO_SIDE, &pair);
     if (pair->fullyDisconnected() && neighbors.sides[side] == dstId) {
         clearSide(side);
     }
