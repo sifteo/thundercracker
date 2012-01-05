@@ -4,8 +4,6 @@
 #include "assets.gen.h"
 #include "audio.gen.h"
 
-//#define FAST_FORWARD 1
-
 #ifndef NUM_CUBES
 #  define NUM_CUBES 3
 #endif
@@ -21,11 +19,16 @@ using namespace Sifteo;
 #define CORO_YIELD mState=__LINE__; return; case __LINE__:;
 #define CORO_END mState=-1;case -1:;}
 
+// Utils
 Cube::Side InferDirection(Vec2 u);
 
+// Sprite Schmutz
 bool InSpriteMode(Cube* c);
 void EnterSpriteMode(Cube *c);
 void SetSpriteImage(Cube *c, int id, int tile);
 void HideSprite(Cube *c, int id);
 void ResizeSprite(Cube *c, int id, int px, int py);
 void MoveSprite(Cube *c, int id, int px, int py);
+
+// Audio Smutz
+void PlaySfx(const _SYSAudioModule& handle, bool preempt=false);

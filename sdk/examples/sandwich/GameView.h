@@ -31,8 +31,8 @@ public:
   void Init();
   void Update();
 
-  void ShowLocation(Vec2 room);
-  void HideRoom();
+  bool ShowLocation(Vec2 room);
+  bool HideRoom();
   
   void ShowPlayer();
   void SetPlayerFrame(unsigned frame);

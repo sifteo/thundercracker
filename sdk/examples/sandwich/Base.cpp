@@ -55,3 +55,14 @@ void MoveSprite(Cube *c, int id, int px, int py) {
                    sizeof(_SYSSpriteInfo)/2 * id ); 
   _SYS_vbuf_poke(&c->vbuf.sys, addr, word);
 }
+
+void PlaySfx(const _SYSAudioModule& handle, bool preempt) {
+  if (gChannelSfx.isPlaying()) {
+    if (preempt) {
+      gChannelSfx.stop();
+    } else {
+      return;
+    }
+  }
+  gChannelSfx.play(handle);
+}

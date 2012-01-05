@@ -98,8 +98,8 @@ MapRoom* GameView::Room() const {
   return pGame->map.GetRoom(mRoom); 
 }
 
-void GameView::ShowLocation(Vec2 room) {
-  if (room == mRoom) { return; }
+bool GameView::ShowLocation(Vec2 room) {
+  if (room == mRoom) { return false; }
   mRoom = room;
   // are we showing an items?
   if (IsShowingRoom()) {
@@ -117,13 +117,16 @@ void GameView::ShowLocation(Vec2 room) {
     HideRoom();
   }
   pGame->NeedsSync();
+  return true;
 }
 
-void GameView::HideRoom() {
+bool GameView::HideRoom() {
+  bool result = mRoom != ROOM_NONE;
   mRoom = ROOM_NONE;
   HideItem();
   DrawInventorySprites();
   DrawBackground();
+  return result;
 }
 
 //----------------------------------------------------------------

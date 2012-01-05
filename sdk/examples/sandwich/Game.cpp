@@ -259,7 +259,9 @@ void Game::OnInventoryChanged() {
 static void VisitMapView(GameView* view, Vec2 loc, GameView* origin=0) {
   if (!view || view->visited) { return; }
   view->visited = true;
-  view->ShowLocation(loc);
+  if (view->ShowLocation(loc)) {
+    PlaySfx(sfx_neighbor);
+  }
   if (origin) {
     view->GetCube()->orientTo(*(origin->GetCube()));
   }
@@ -274,7 +276,11 @@ void Game::CheckMapNeighbors() {
   }
   VisitMapView(player.KeyView(), player.KeyView()->Location());
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    if (!v->visited) { v->HideRoom(); }
+    if (!v->visited) { 
+      if (v->HideRoom()) {
+        PlaySfx(sfx_deNeighbor);
+      }
+    }
   }
   sNeighborDirty = false;
 }
