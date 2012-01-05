@@ -14,16 +14,11 @@ WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes), mNeedsPaintSync(fal
 
     int64_t nanosec;
     _SYS_ticks_ns(&nanosec);
-    mRandomSeed = (unsigned)nanosec;
-
-#ifdef _WIN32
-    srand(mRandomSeed); // seed rand()
-#endif
+    WordGame::seedRand((unsigned)nanosec);
 
     for (unsigned i = 0; i < arraysize(mAudioChannels); ++i)
     {
         mAudioChannels[i].init();
-
     }
 }
 
@@ -80,6 +75,16 @@ unsigned WordGame::rand(unsigned max)
 float WordGame::rand(float min, float max)
 {
     return min + ((float)rand((unsigned)(1000.f * (max - min))))/1000.f;
+}
+
+void WordGame::seedRand(unsigned seed)
+{
+    ASSERT(sInstance);
+    sInstance->mRandomSeed = seed;
+
+#ifdef _WIN32
+    srand(sInstance->mRandomSeed); // seed rand()
+#endif
 }
 
 void WordGame::hideSprites(VidMode_BG0_SPR_BG1 &vid)

@@ -48,6 +48,7 @@ void TitleCubeState::paint()
 
     switch (getStateMachine().getCube().id())
     {
+    default:
     case 0:
         vid.BG0_drawAsset(Vec2(0,0), Title);
         break;
@@ -57,6 +58,7 @@ void TitleCubeState::paint()
         vid.BG0_drawAsset(Vec2(0,0), StartScreen);
         break;
 
+#if BLAH
     default:
         paintTeeth(vid, ImageIndex_Teeth);
         /* TODO load/save
@@ -78,5 +80,6 @@ void TitleCubeState::paint()
         }
         */
         break;
+#endif
     }
 }
