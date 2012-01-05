@@ -50,7 +50,7 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
     // are we done?
     // XXX: assumes 0 based address, boo
     if (installation.currentAddress >= installation.size) {
-        installation.state == WaitingForLength;
+        installation.state = WaitingForLength;
 
         uint32_t crc = CRC.DR;
 
