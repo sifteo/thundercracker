@@ -23,9 +23,9 @@ struct NeighborPair {
     _SYSSideID side0;
     _SYSSideID side1;
 
-    bool fullyConnected() const { return side0 >= 0 && side1 >= 0; }
-    bool fullyDisconnected() const { return side0 < 0 && side1 < 0; }
-    void clear() { side0=-1; side1=-1; }
+    inline bool fullyConnected() const { return side0 >= 0 && side1 >= 0; }
+    inline bool fullyDisconnected() const { return side0 < 0 && side1 < 0; }
+    inline void clear() { side0=-1; side1=-1; }
 
     NeighborPair() : side0(-1), side1(-1) {}
 
@@ -42,7 +42,7 @@ struct NeighborPair {
         }
     }
 
-    NeighborPair* lookup(_SYSCubeID cid0, _SYSCubeID cid1) {
+    inline NeighborPair* lookup(_SYSCubeID cid0, _SYSCubeID cid1) {
         // invariant this == pairs[0]
         // invariant cid0 < cid1
         return this + (cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
@@ -116,12 +116,15 @@ void NeighborSlot::addNeighborToSide(_SYSCubeID dstId, _SYSSideID side) {
 void NeighborSlot::clearSide(_SYSSideID side) {
     _SYSCubeID otherId = neighbors.sides[side];
     if (otherId != 0xff) {
-        _SYSSideID otherSide = 0;
-        while(instances[otherId].neighbors.sides[otherSide] != id()) { ++otherSide; }
         neighbors.sides[side] = 0xff;
-        instances[otherId].neighbors.sides[otherSide] = 0xff;
-        if (_SYS_vectors.neighborEvents.remove) {
-            _SYS_vectors.neighborEvents.remove(id(), side, otherId, otherSide);
+        for(_SYSSideID otherSide=0; otherSide<4; ++otherSide) {
+            if (instances[otherId].neighbors.sides[otherSide] == id()) {
+                instances[otherId].neighbors.sides[otherSide] = 0xff;
+                if (_SYS_vectors.neighborEvents.remove) {
+                    _SYS_vectors.neighborEvents.remove(id(), side, otherId, otherSide);
+                }
+                return;
+            }
         }
     }    
 }
