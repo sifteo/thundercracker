@@ -240,6 +240,9 @@ void CubeWrapper::Draw()
 
             m_queuedFlush = true;
 
+            //force touch of a cube, maybe it'll fix things
+            m_cube.vbuf.touch();
+
 			break;
 		}
 		default:
