@@ -141,8 +141,6 @@ void Player::Update(float dt) {
     }
     // go to the target
     mStatus = PLAYER_STATUS_WALKING;
-    PlaySfx(sfx_walkStart);
-    //gChannelSfx.play(sfx_running, LoopRepeat);
     mAnimFrame = 0;
     mDir = mNextDir;
     do {
@@ -151,6 +149,7 @@ void Player::Update(float dt) {
         pTarget = pCurrent->VirtualNeighborAt(mDir);
       }
       // animate walking to target
+      PlaySfx(sfx_running);
       pTarget->ShowPlayer();
       if (pCurrent->Room()->GetPortal(mDir) == PORTAL_DOOR) { // hack for now -- special case for approaching doors
         ASSERT( mDir == SIDE_TOP ); // assuming 128 pixel straight-line UP from the current cube

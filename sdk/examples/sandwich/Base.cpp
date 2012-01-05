@@ -16,6 +16,10 @@ Cube::Side InferDirection(Vec2 u) {
 	}
 }
 
+//------------------------------------------------------------------------------
+// Sprite Utilities
+//------------------------------------------------------------------------------
+
 bool InSpriteMode(Cube* c){
   uint8_t byte;
   _SYS_vbuf_peekb(&c->vbuf.sys, offsetof(_SYSVideoRAM, mode), &byte);
@@ -60,6 +64,10 @@ void MoveSprite(Cube *c, int id, int px, int py) {
   _SYS_vbuf_poke(&c->vbuf.sys, addr, word);
 }
 
+//------------------------------------------------------------------------------
+// Sfx Utilities
+//------------------------------------------------------------------------------
+
 void PlaySfx(const _SYSAudioModule& handle, bool preempt) {
   if (gChannelSfx.isPlaying()) {
     if (preempt) {
@@ -70,6 +78,17 @@ void PlaySfx(const _SYSAudioModule& handle, bool preempt) {
   }
   gChannelSfx.play(handle);
 }
+
+void PlayMusic(const _SYSAudioModule& music) {
+  if (gChannelMusic.isPlaying()) {
+    gChannelMusic.stop();
+  }
+  gChannelMusic.play(music, LoopRepeat);
+}
+
+//------------------------------------------------------------------------------
+// Miscellaneous Utilities
+//------------------------------------------------------------------------------
 
 unsigned int Rand( unsigned int max ) {
 #ifdef _WIN32

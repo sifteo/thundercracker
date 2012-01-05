@@ -13,6 +13,7 @@
 
 extern Cube gCubes[NUM_CUBES];
 extern AudioChannel gChannelSfx;
+extern AudioChannel gChannelMusic;
 
 using namespace Sifteo;
 
@@ -36,3 +37,4 @@ void MoveSprite(Cube *c, int id, int px, int py);
 
 // Audio Smutz
 void PlaySfx(const _SYSAudioModule& handle, bool preempt=true);
+void PlayMusic(const _SYSAudioModule& music);
