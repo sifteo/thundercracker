@@ -1,7 +1,6 @@
 #pragma once
 #include "Base.h"
 
-class Enemy;
 struct MapRoom;
 
 class GameView {
@@ -10,7 +9,25 @@ public:
 
 private:
   Vec2 mRoom;
-  
+
+  int mIdleHoverIndex;
+  // h4cky scene-specific stuff
+  union {
+    struct {
+      uint16_t count;
+      uint16_t time;
+    } idle;
+    struct {
+      uint32_t torchTime;
+    } dungeon;
+    struct {
+      uint8_t hasBff;
+      uint8_t bffDir;
+      uint8_t bffX;
+      uint8_t bffY;
+    } forest;
+  } mScene;
+
 public:  
   GameView();
   
@@ -25,18 +42,15 @@ public:
   
   // methods
   void Init();
+  void Update();
 
-  void ShowLocation(Vec2 room);
-  void HideRoom();
+  bool ShowLocation(Vec2 room);
+  bool HideRoom();
   
   void ShowPlayer();
   void SetPlayerFrame(unsigned frame);
   void UpdatePlayer();
   void HidePlayer();
-  
-  void ShowEnemy(Enemy* pEnemy);
-  void UpdateEnemy(Enemy* pEnemy);
-  void HideEnemy(Enemy* pEnemy);
   
   void ShowItem(int itemId);
   void SetItemPosition(Vec2 p);
@@ -49,4 +63,7 @@ public:
 private:
   void DrawInventorySprites();
   void HideInventorySprites();
+
+  // misc hacky stuff
+  void RandomizeBff();
 };

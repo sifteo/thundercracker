@@ -184,8 +184,8 @@ int LuaSystem::setOptions(lua_State *L)
     if (LuaScript::argMatch(L, "cubeFirmware"))
         sys->opt_cubeFirmware = lua_tostring(L, -1);
     
-    if (LuaScript::argMatch(L, "noThrottle"))
-        sys->opt_noThrottle = lua_toboolean(L, -1);
+    if (LuaScript::argMatch(L, "turbo"))
+        sys->opt_turbo = lua_toboolean(L, -1);
     
     if (LuaScript::argMatch(L, "cubeTrace"))
         sys->opt_cubeTrace = lua_tostring(L, -1);

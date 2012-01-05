@@ -89,13 +89,13 @@ class Neighbors {
  private:
     void transmitPulse(CPU::em8051 &cpu, unsigned otherCube, uint8_t otherSide);
 
-    static const unsigned PORT     = REG_P1;
-    static const unsigned DIR      = REG_P1DIR;
-    static const unsigned PIN_IN   = (1 << 6);
-    static const unsigned PIN_OUT1 = (1 << 0);
-    static const unsigned PIN_OUT2 = (1 << 1);
-    static const unsigned PIN_OUT3 = (1 << 5);
-    static const unsigned PIN_OUT4 = (1 << 7);
+    static const unsigned PORT          = REG_P1;
+    static const unsigned DIR           = REG_P1DIR;
+    static const unsigned PIN_IN        = (1 << 6);
+    static const unsigned PIN_0_TOP     = (1 << 0);
+    static const unsigned PIN_1_LEFT    = (1 << 1);
+    static const unsigned PIN_2_BOTTOM  = (1 << 7);
+    static const unsigned PIN_3_RIGHT   = (1 << 5);
     
     uint8_t inputs;
     uint8_t inputMask;

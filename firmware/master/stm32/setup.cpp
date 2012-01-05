@@ -10,14 +10,17 @@
  * Low level hardware setup for the STM32 board.
  */
 
-#include <sifteo/abi.h>
+#include <sifteo.h>
 #include "radio.h"
 #include "usb.h"
 #include "flashlayer.h"
 #include "runtime.h"
-#include "hardware.h"
+#include "board.h"
 #include "vectors.h"
 #include "systime.h"
+#include "gpio.h"
+#include "macronixmx25.h"
+#include "tasks.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
@@ -102,13 +105,24 @@ extern "C" void _start()
     // Enable peripheral clocks
     RCC.APB1ENR = 0x00004000;    // SPI2
     RCC.APB2ENR = 0x0000003d;    // GPIO/AFIO
-    RCC.AHBENR  = 0x00001000;    // USB OTG
+    RCC.AHBENR  = 0x00001040;    // USB OTG, CRC
 
 #if 0
     // debug the clock output - MCO
     GPIOPin mco(&GPIOA, 8); // PA8 on the keil MCBSTM32E board - change as appropriate
     mco.setControl(GPIOPin::OUT_ALT_50MHZ);
 #endif
+
+    {
+        GPIOPin vcc20 = VCC20_ENABLE_GPIO;
+        GPIOPin vcc33 = VCC33_ENABLE_GPIO;
+
+        vcc20.setControl(GPIOPin::OUT_10MHZ);
+        vcc33.setControl(GPIOPin::OUT_10MHZ);
+
+        vcc20.setHigh();
+        vcc33.setHigh();
+    }
 
     /*
      * Initialize data segments (In parallel with oscillator startup)
@@ -131,6 +145,10 @@ extern "C" void _start()
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
         p[0]();
 
+
+    AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
+    MacronixMX25::instance.init();
+
     /*
      * Nested Vectored Interrupt Controller setup.
      *
@@ -138,8 +156,8 @@ extern "C" void _start()
      * those need to be unmasked by the peripheral's driver code.
      */
 
-    NVIC.irqEnable(IVT.EXTI15_10);              // Radio interrupt
-    NVIC.irqPrioritize(IVT.EXTI15_10, 0x80);    //   Reduced priority
+    NVIC.irqEnable(IVT.EXTI9_5);              // Radio interrupt
+    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);    //   Reduced priority
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);
@@ -150,6 +168,7 @@ extern "C" void _start()
 
     SysTime::init();
     Radio::open();
+    Tasks::init();
     Usb::init();
     FlashLayer::init();
 

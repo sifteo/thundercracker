@@ -17,8 +17,13 @@ unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
         paint();
         break;
 
-    case EventID_NewRound:
-        return CubeStateIndex_NotWordScored;
+    case EventID_GameStateChanged:
+        switch (data.mGameStateChanged.mNewStateIndex)
+        {
+        case GameStateIndex_StartOfRoundScored:
+            return CubeStateIndex_StartOfRoundScored;
+        }
+        break;
     }
     return getStateMachine().getCurrentStateIndex();
 }
@@ -53,7 +58,7 @@ void TitleCubeState::paint()
         break;
 
     default:
-        paintTeeth(vid, Teeth);
+        paintTeeth(vid, ImageIndex_Teeth);
         /* TODO load/save
         paintScoreNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
 

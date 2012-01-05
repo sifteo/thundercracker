@@ -29,9 +29,28 @@ void main(void)
     flash_init();
     sensors_init();
     params_init();
+    
+    /*
+     * Global interrupt enable, only AFTER every module has a chance to
+     * run its init() code. Modules may set subsystem-specific interrupt
+     * enables, but they may not set the global interrupt enable on their
+     * own.
+     */
     sti();
 
-    demo();  // XXX
+    /*
+     * Allow incoming radio packets. We do this very last, after we are truly
+     * ready to handle packets.
+     *
+     * Most importantly, we allow incoming radio packets only AFTER the global
+     * IRQ enable is set. If a radio packet comes in earlier, its interrupt
+     * will be delayed; and not all of our initialization code will correctly
+     * preserve this flag in IRCON.
+     */
+    radio_rx_enable();
+
+    // XXX
+    demo();
     
     while (1) {
         global_busy_flag = 0;
@@ -77,13 +96,11 @@ static void gpio_init(void)
      * We enable pull-downs for input mode, when we're receiving pulses from
      * our neighbors. This improves the isolation between each side's input.
      *
-     * We do NOT use high-drive mode, as it seems to actually make things a
-     * lot worse!
+     * High drive is enabled.
      */
 
-    MISC_CON = 0x30;
-    MISC_CON = 0x31;
-    MISC_CON = 0x35;
-    MISC_CON = 0x37;
+    MISC_CON = 0x60;
+    MISC_CON = 0x61;
+    MISC_CON = 0x65;
+    MISC_CON = 0x67;
 }
-

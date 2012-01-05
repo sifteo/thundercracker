@@ -296,7 +296,6 @@ typedef uint32_t _SYSAudioHandle;
 // so we need to kick up to 1024 bytes. kind of a lot :/
 #define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t))
 #define _SYS_AUDIO_MAX_CHANNELS         8
-#define _SYS_AUDIO_MAX_SAMPLE_CHANNELS  2
 
 /*
  * Types of audio supported by the system - TBD if these make sense...

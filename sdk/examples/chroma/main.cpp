@@ -15,6 +15,8 @@
 #include "game.h"
 #include "utils.h"
 
+#include "MenuController.h"
+
 using namespace Sifteo;
 
 static Game &game = Game::Inst();
@@ -68,6 +70,8 @@ static void init()
 
 void siftmain()
 {
+    SelectorMenu::RunMenu();
+
     init();
 
     //_SYS_vectors.cubeEvents.accelChange = onAccelChange;

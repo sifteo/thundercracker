@@ -34,7 +34,7 @@ volatile uint8_t sensor_tick_counter_high;
 #define ACCEL_REG1_INIT         0x4F    // 50 Hz, low power, x/y/z axes enabled
 
 #define ACCEL_CTRL_REG4         0x23
-#define ACCEL_REG4_INIT         0x80    // block update enabled, all others default
+#define ACCEL_REG4_INIT         0x80    // block update, 2g full-scale, little endian
 
 #define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
 
@@ -92,19 +92,24 @@ uint8_t accel_z_low;
 #define NB_TX_BITS          18      // 1 header, 2 mask, 13 payload, 2 damping
 #define NB_RX_BITS          15      // 2 mask, 13 payload
 
-// 2us pulses, 9us bit periods
-#define NB_BIT_TICKS        12      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   13      // Tweak for sampling halfway between pulses
+// 2us pulses, 48us bit periods
+// TODO: bit period is maxed out to account for measured tank ring down of
+// about 48us. Better squelching should hopefully allow us to reduce this significantly.
+#define NB_BIT_TICKS        64      // In 0.75 us ticks
+#define NB_BIT_TICK_FIRST   66      // Tweak for sampling halfway between pulses
  
-#define NB_DEADLINE         20      // 15 us (Max 48 us)
+#define NB_DEADLINE         64      // 48us (previously 15 us - please tune me back down) (Max 48 us)
 
-#define NBR_SQUELCH_ENABLE          // uncomment to enable squelching during neighbor RX - default is disabled
+#define NBR_SQUELCH_ENABLE          // Enable squelching during neighbor RX
 
 uint8_t nb_bits_remaining;          // Bit counter for transmit or receive
 uint8_t nb_buffer[2];               // Packet shift register for TX/RX
 uint8_t nb_tx_packet[2];            // The packet we're broadcasting
 __bit nb_tx_mode;                   // We're in the middle of an active transmission
-__bit nb_rx_mask_pending;           // We still need to do another RX mask bit
+__bit nb_rx_mask_state0;
+__bit nb_rx_mask_state1;
+__bit nb_rx_mask_bit0;
+__bit nb_rx_mask_bit1;
 
 /*
  * We do a little bit of signal conditioning on neighbors before
@@ -469,10 +474,11 @@ void tf1_isr(void) __interrupt(VECTOR_TF1) __naked
         mov     _TL2, #(0x100 - NB_BIT_TICK_FIRST)
         setb    _T2CON_T2I0
 
-        ; In the mean time, set up RX state
+        ; In the mean time, reset RX state
 
         mov     _nb_bits_remaining, #NB_RX_BITS
-        setb    _nb_rx_mask_pending
+        clr     _nb_rx_mask_state0
+        clr     _nb_rx_mask_state1
 
         reti
     __endasm;
@@ -501,24 +507,63 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Briefly squelch the receive LC tanks, and clear the mask.
         ; Do this concurently with capturing and resetting Timer 1.
         
-        #ifdef NBR_SQUELCH_ENABLE
-        anl     _MISC_DIR, #~MISC_NB_OUT        ; All outputs squelched
+        #if defined(NBR_SQUELCH_ENABLE) && defined(NBR_IO)
+        anl     _MISC_DIR, #~MISC_NB_OUT        ; Squelch all sides
         #endif
+
         mov     a, TL1                          ; Capture count from Timer 1
         mov     TL1, #0                         ; Reset Timer 1
         add     a, #0xFF                        ; Nonzero -> C
-        #ifdef NBR_SQUELCH_ENABLE
-        orl     _MISC_DIR, #MISC_NB_OUT         ; Clear the squelch mask
+        mov     a, (_nb_buffer + 1)             ; Previous shift reg contents -> A
+
+        #ifdef NBR_IO
+        orl     _MISC_DIR, #MISC_NB_OUT         ; Clear squelch and/or masking
         #endif
 
-        jnb     _nb_rx_mask_pending, 1$         ; Do we have the second mask bit pending?
-        anl     _MISC_DIR, #~MISC_NB_MASK1      ; Yes, set that mask.
-        clr     _nb_rx_mask_pending
+        jb      _nb_rx_mask_state0, 1$          ; Finished first mask bit?
+        setb    _nb_rx_mask_state0
+        mov     _nb_rx_mask_bit0, c             ;    Store mask bit
+        #ifdef NBR_IO
+        anl     _MISC_DIR, #~MISC_NB_MASK1      ;    Prepare mask for next bit
+        #endif
+        sjmp    10$                             ;    End of masking
 1$:
 
-        ; Shift in this bit, MSB-first, to our 16-bit packet
+        jb      _nb_rx_mask_state1, 2$          ; Finished second mask bit?
+        setb    _nb_rx_mask_state1
+        mov     _nb_rx_mask_bit1, c             ;    Store mask bit
+        sjmp    10$                             ;    End of masking
+2$:
 
-        mov     a, (_nb_buffer + 1)
+        ; Finished receiving the mask bits. For future bits, we want to set the mask only
+        ; to the exact side that we need. This serves as a check for the side bits we
+        ; received. This check is important, since there is otherwise no way to valdiate
+        ; the received side bits.
+        ;
+        ; At this point, the side bits have been stored independently in nb_rx_mask_bit*.
+        ; We decode them rapidly using a jump tree.
+
+        #ifdef NBR_IO
+        jb      _nb_rx_mask_bit0, 3$
+         jb     _nb_rx_mask_bit1, 4$
+          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_0_TOP)      ; 00
+          sjmp  10$
+4$:
+          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_1_LEFT)     ; 01
+          sjmp  10$
+3$:
+         jb     _nb_rx_mask_bit1, 5$
+          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_2_BOTTOM)   ; 10
+          sjmp  10$
+5$:
+          anl   _MISC_DIR, #~(MISC_NB_OUT ^ MISC_NB_3_RIGHT)    ; 11
+        #endif
+
+10$:
+        ; Done with masking.
+        ; Shift in the received bit, MSB-first, to our 16-bit packet
+        ; _nb_buffer+1 is in already in A
+
         rlc     a
         mov     (_nb_buffer + 1), a
         mov     a, _nb_buffer
@@ -639,7 +684,6 @@ nb_tx_handoff:
         mov     _W2CON0, #0               ; Reset I2C master
         mov     _W2CON0, #1               ;   Turn on I2C controller
         mov     _W2CON0, #7               ;   Master mode, 100 kHz.
-        mov     _W2CON1, #~0x20               ;   Unmask interrupt
         mov     _W2DAT, #ACCEL_ADDR       ; Trigger the next I2C transaction
 
         ;--------------------------------------------------------------------
@@ -729,7 +773,7 @@ cleanup:
 #endif
 
 // TODO - asm these functions
-static void i2c_tx(uint8_t addr, uint8_t *buf, uint8_t len)
+static void i2c_tx(uint8_t addr, const __code uint8_t *buf, uint8_t len)
 {
     I2C_TX_W_ACK(addr, cleanup);
 
@@ -819,23 +863,24 @@ void sensors_init()
     MISC_PORT |= MISC_I2C;      // Drive the I2C lines high
     MISC_DIR &= ~MISC_I2C;      // Output drivers enabled
 
-    W2CON0 = 0;         // Reset I2C master
-    W2CON0 = 1;         // turn it on
-    W2CON0 = 7;         // Turn on I2C controller, Master mode, 100 kHz.
-    INTEXP |= 0x04;     // Enable 2Wire IRQ -> iex3
-    W2CON1 = ~0x20;     // Unmask interrupt
-
+    W2CON0 = 0;                 // Reset I2C master
+    W2CON0 = 1;                 // turn it on
+    W2CON0 = 7;                 // Turn on I2C controller, Master mode, 100 kHz.
+    INTEXP |= 0x04;             // Enable 2Wire IRQ -> iex3
+    W2CON1 = 0;                 // Unmask interrupt, leave everything at default
+    T2CON |= 0x40;              // iex3 rising edge
+    IRCON = 0;                  // Reset interrupt flag (used below)
+    
     {
-        // put lis3d in low power mode with all 3 axes enabled &
+        // put LIS3D in low power mode with all 3 axes enabled &
         // block data update enabled
 
-        uint8_t init[2] = { ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
-        i2c_tx(ACCEL_ADDR, init, sizeof(init));
+        const __code uint8_t init1[] = { ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
+        const __code uint8_t init2[] = { ACCEL_CTRL_REG4, ACCEL_REG4_INIT };
 
-        init[0] = ACCEL_CTRL_REG4; init[1] = ACCEL_REG4_INIT;
-        i2c_tx(ACCEL_ADDR, init, sizeof(init));
+        i2c_tx(ACCEL_ADDR, init1, sizeof init1);
+        i2c_tx(ACCEL_ADDR, init2, sizeof init2);
     }
-
     /*
         test loop for reading data, blocking style.
         NOTE - this works *without* having to reset the I2C peripheral...
@@ -853,8 +898,7 @@ void sensors_init()
     }
 #endif
 
-    T2CON |= 0x40;              // iex3 rising edge
-    IRCON = 0;                  // Clear any spurious IRQs from initialization
+    IRCON = 0;                  // Clear any spurious IRQs from the above initialization
     IP0 |= 0x04;                // Interrupt priority level 1.
     IEN_SPI_I2C = 1;            // Global enable for SPI interrupts
 

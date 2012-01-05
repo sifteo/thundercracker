@@ -1,0 +1,19 @@
+{
+  "name": "sifteoctl",
+  "description": "Control interface to Sifteo Cubes G2.",
+  "version": "0.0.1",
+  "contributors": [{
+    "name": "Jared Hanson",
+    "email": "jared@sifteo.com"
+  }],
+  "main": "./lib/sifteoctl",
+  "bin" : { "sifteo-install-app" : "./bin/install-app.js" },
+  "dependencies": {
+    "optimist": "0.3.x",
+    "serialport": "0.6.5",
+    "binary":  "0.2.x"
+  },
+  "engines": { "node": ">= 0.6.0" },
+  "keywords": ["sifteo"],
+  "private": true
+}

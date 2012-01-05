@@ -16,6 +16,7 @@
 class SpeexDecoder;
 
 // TODO - need a better name, but at least this distinguishes from AudioChannel in audio.h...
+// Maybe "AudioChannelSlot", by analogy with "CubeSlot"?
 class AudioChannelWrapper {
 public:
     static const int STATE_PAUSED   = (1 << 0);
@@ -30,7 +31,7 @@ public:
     }
 
     void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
-    int pullAudio(int16_t *buffer, int len);
+    int mixAudio(int16_t *buffer, int len);
 
     _SYSAudioType channelType() const {
         ASSERT(mod != NULL);

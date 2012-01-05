@@ -69,8 +69,8 @@ static const uint8_t BUS_PORT_DIR    = REG_P2DIR;
 static const uint8_t CTRL_PORT_DIR   = REG_P3DIR;
 
 static const uint8_t CTRL_LCD_DCX    = (1 << 0);
-static const uint8_t CTRL_FLASH_LAT1 = (1 << 1);
-static const uint8_t CTRL_FLASH_LAT2 = (1 << 2);
+static const uint8_t CTRL_FLASH_LAT1 = (1 << 2);   // LAT1 and LAT2 swapped on current rev PCBs vs. prototype
+static const uint8_t CTRL_FLASH_LAT2 = (1 << 1);
 static const uint8_t CTRL_FLASH_WE   = (1 << 5);
 static const uint8_t CTRL_FLASH_OE   = (1 << 6);
 
@@ -101,7 +101,14 @@ class Hardware {
     void reset();
 
     ALWAYS_INLINE bool tick() {
-        bool cpuTicked = CPU::em8051_tick(&cpu);
+        bool cpuTicked = CPU::em8051_tick(&cpu, cpu.sbt, cpu.mProfileData != NULL, cpu.isTracing, cpu.mBreakpoint != 0);
+        hardwareTick();
+        return cpuTicked;
+    }
+
+    ALWAYS_INLINE bool tickFastSBT() {
+        // Assume at compile-time that we're in SBT mode, and no debug features are active
+        bool cpuTicked = CPU::em8051_tick(&cpu, true, false, false, false);
         hardwareTick();
         return cpuTicked;
     }
@@ -110,7 +117,7 @@ class Hardware {
         lcd.pulseTE(hwDeadline);
     }
 
-    void setAcceleration(float xG, float yG);
+    void setAcceleration(float xG, float yG, float zG);
     void setTouch(float amount);
 
     bool isDebugging();
@@ -152,6 +159,25 @@ class Hardware {
         neighbors.tick(cpu);
         if (LIKELY(flash_drv))
             cpu.mSFR[BUS_PORT] = flash.dataOut();
+    }
+
+    int16_t scaleAccelAxis(float g)
+    {
+        /*
+         * Scale a raw acceleration, in G's, and return the corresponding
+         * two's complement accelerometer reading. Saturates at either extreme.
+         */
+         
+        const int range = 1 << 15;
+        const float fullScale = 2.0f;
+        
+        int scaled = g * (range / fullScale);
+        int16_t truncated = scaled;
+        
+        if (scaled != truncated)
+            truncated = scaled > 0 ? range - 1 : -range;
+            
+        return truncated;
     }
 
     void hwDeadlineWork();

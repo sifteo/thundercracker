@@ -28,7 +28,8 @@ void SavedData::sOnEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
-    case EventID_EndRound:
+    case EventID_GameStateChanged:
+        if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_EndOfRoundScored)
         {
             unsigned score = GameStateMachine::getScore();
             for (unsigned i = 0; i < arraysize(sHighScores); ++i)

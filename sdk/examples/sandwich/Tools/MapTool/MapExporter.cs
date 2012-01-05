@@ -146,6 +146,19 @@ namespace MapTool {
         }
         stream.WriteLine("        },");
 
+        // write torches
+        int torchCount = 0;
+        foreach(Int2 t in room.ListTorchTiles()) {
+          if (torchCount == 2) {
+            throw new Exception("Too Many Torches in One Room (capacity 2)");
+          }
+          stream.WriteLine("        0x{0:X2},", Convert.ToByte((t.x<<4) + t.y));
+          torchCount++;
+        }
+        for(int i=torchCount; i<2; ++i) {
+          stream.WriteLine("        0xff, ");
+        }
+
         // write overlay
         if (room.HasOverlay) {
           stream.WriteLine("        {0}_overlay_{1}_{2}", map.name, room.x, room.y);

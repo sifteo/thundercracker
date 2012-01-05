@@ -13,8 +13,8 @@
 
 System::System()
         : opt_numCubes(DEFAULT_CUBES),
-        opt_noThrottle(false),
         opt_continueOnException(false),
+        opt_turbo(false),
         opt_cube0Debug(NULL),
         threadRunning(false),
         traceFile(NULL),
@@ -41,7 +41,7 @@ bool System::init()
     if (opt_cubeFirmware.empty() && (!opt_cube0Profile.empty() || 
                                      !opt_cubeTrace.empty() ||
                                      opt_cube0Debug)) {
-        fprintf(stderr, "Debug features only available if a firmware image is provided.");
+        fprintf(stderr, "Debug features only available if a firmware image is provided.\n");
         return false;
     }
 
@@ -159,12 +159,12 @@ void System::exit()
     if (!mIsInitialized)
         return;
     mIsInitialized = false;
-    mIsStarted = false;
         
     network.exit();
 
     if (mIsStarted) {
         stopThread();
+        mIsStarted = false;
 
         if (opt_cube0Debug)
             Cube::Debug::exit();
@@ -206,39 +206,21 @@ void System::threadFn(void *param)
     srand(glfwGetTime() * 1e6);
         
     while (self->threadRunning) {
+        
+        /*
+         * Pick one of several specific tick batch loops. This keeps the loop tight by
+         * eliminating unused features when possible.
+         *
+         * All batch loops are marked NEVER_INLINE, so that they will show up separately
+         * in profilers.
+         */
+         
         if (debug) {
-            /*
-             * Debug loop. Handle breakpoints, exceptions, debug UI updates.
-             * When debugging, the timestep may change dynamically.
-             */
-
-            bool tick0 = false;
-            Cube::Hardware &debugCube = self->cubes[0];
-
-            for (unsigned t = 0; t < self->time.timestepTicks(); t++) {
-                if (debugCube.tick()) {
-                    tick0 = true;
-                    Cube::Debug::recordHistory();
-                }
-                for (unsigned i = 1; i < nCubes; i++)
-                    self->cubes[i].tick();
-                self->tick();
-            }
-
-            if (tick0 && Cube::Debug::updateUI()) {
-                // Debugger requested that we quit
-                self->threadRunning = false;
-            }
-
+            self->tickLoopDebug();
+        } else if (nCubes < 1 || !self->cubes[0].cpu.sbt || self->cubes[0].cpu.mProfileData || self->cubes[0].cpu.isTracing) {
+            self->tickLoopGeneral();
         } else {
-            // Faster loop for the non-debug case
-                     
-            unsigned batch = self->time.timestepTicks();
-            while (batch--) {
-                for (unsigned i = 0; i < nCubes; i++)
-                    self->cubes[i].tick();
-                self->tick();
-            }
+            self->tickLoopFastSBT();
         }
 
         /*
@@ -248,7 +230,7 @@ void System::threadFn(void *param)
          * we have the CPU power to do so.
          */
 
-        if (!self->opt_noThrottle)
+        if (!self->opt_turbo)
             gov.step();
     }
 }
@@ -275,3 +257,64 @@ void System::setTraceMode(bool t)
             startThread();
     }
 }
+
+NEVER_INLINE void System::tickLoopDebug()
+{
+    /*
+     * Debug loop. Handle breakpoints, exceptions, debug UI updates.
+     * When debugging, the timestep may change dynamically.
+     */
+
+    bool tick0 = false;
+    Cube::Hardware &debugCube = cubes[0];
+    unsigned nCubes = opt_numCubes;
+
+    for (unsigned t = 0; t < time.timestepTicks(); t++) {
+        if (debugCube.tick()) {
+            tick0 = true;
+            Cube::Debug::recordHistory();
+        }
+        for (unsigned i = 1; i < nCubes; i++)
+            cubes[i].tick();
+        tick();
+    }
+
+    if (tick0 && Cube::Debug::updateUI()) {
+        // Debugger requested that we quit
+        threadRunning = false;
+    }
+}
+
+NEVER_INLINE void System::tickLoopGeneral()
+{
+    /*
+     * Faster loop for the non-debug case, but when we still might be using interpreted firmware,
+     * profiling, or tracing.
+     */
+            
+    unsigned batch = time.timestepTicks();
+    unsigned nCubes = opt_numCubes;
+    
+    while (batch--) {
+        for (unsigned i = 0; i < nCubes; i++)
+            cubes[i].tick();
+        tick();
+    }
+}
+
+NEVER_INLINE void System::tickLoopFastSBT()
+{
+    /*
+     * Fastest path: No debugging, SBT only.
+     */
+            
+    unsigned batch = time.timestepTicks();
+    unsigned nCubes = opt_numCubes;
+    
+    while (batch--) {
+        for (unsigned i = 0; i < nCubes; i++)
+            cubes[i].tickFastSBT();
+        tick();
+    }
+}
+

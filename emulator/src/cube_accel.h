@@ -7,7 +7,10 @@
  */
 
 /*
- * Simulated I2C accelerometer: MEMSIC DTOS v005
+ * Simulated I2C accelerometer: ST LIS3DH.
+ *
+ * XXX: This is a very featureful accelerometer! Currently we only simulate
+ *      a tiny bit of its functionality.
  */
 
 #ifndef _CUBE_ACCEL_H
@@ -21,10 +24,10 @@ namespace Cube {
 class I2CAccelerometer {
  public:
 
-    void setVector(int8_t x, int8_t y) {
-        /* XXX: Axes swapped on our prototype hardware */
-        regs.x = y;
-        regs.y = x;
+    void setVector(int16_t x, int16_t y, int16_t z) {
+        regs.out_x = x;
+        regs.out_y = y;
+        regs.out_z = z;
     }
 
     void i2cStart() {
@@ -54,7 +57,8 @@ class I2CAccelerometer {
             break;
             
         case S_REG_ADDRESS:
-            regAddress = byte;
+            // XXX: MSB enables/disables auto-increment.
+            regAddress = byte & 0x7F;
             state = S_DATA;
             break;
 
@@ -84,20 +88,41 @@ class I2CAccelerometer {
     }
 
  private:
-    static const uint8_t deviceAddress = 0x2A;
+    static const uint8_t deviceAddress = 0x30;
     uint8_t regAddress;
 
+    // Matches device register layout. Assumes little-endian.
     union {
-        uint8_t bytes[11];
+        uint8_t bytes[0x31];
         struct {
-            int8_t x;
-            int8_t y;
-            uint8_t status;
-            uint8_t _res0;
-            uint8_t detection;
-            uint8_t _res1[3];
-            uint8_t id[2];
-            uint8_t address;
+            uint8_t reserved0[7];       // 00
+            uint8_t status_reg;         // 07
+            uint16_t out_adc1;          // 08
+            uint16_t out_adc2;          // 0a
+            uint16_t out_adc3;          // 0c
+            uint8_t int_counter_reg;    // 0e
+            uint8_t who_am_i;           // 0f
+            uint8_t reserved1[15];      // 10
+            uint8_t temp_cfg_reg;       // 1f
+            uint8_t ctrl_reg[6];        // 20
+            uint8_t reference;          // 26
+            uint8_t status_reg2;        // 27
+            int16_t out_x;              // 28
+            int16_t out_y;              // 2a
+            int16_t out_z;              // 2c
+            uint8_t fifo_ctrl_reg;      // 2e
+            uint8_t fifo_src_reg;       // 2f
+            uint8_t int1_cfg;           // 30
+            uint8_t int1_source;        // 31
+            uint8_t int1_ths;           // 32
+            uint8_t int1_duration;      // 33
+            uint8_t reserved2[4];       // 34
+            uint8_t click_cfg;          // 38
+            uint8_t click_src;          // 39
+            uint8_t click_ths;          // 3a
+            uint8_t time_limit;         // 3b
+            uint8_t time_latency;       // 3c
+            uint8_t time_window;        // 3d
         };
     } regs;
 

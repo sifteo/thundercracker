@@ -63,7 +63,7 @@ public:
 	bool isEmpty() const { return m_state == STATE_GONE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
     bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING ); }
-    bool isMatchable() const { return isAlive() || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING; }
+    bool isMatchable() const { return isAlive() || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING || isMarked(); }
     bool isOccupiable() const { return isEmpty() || m_state == STATE_SHOWINGSCORE; }
     void setEmpty() { m_state = STATE_GONE; m_bFixed = false; }
 	unsigned int getColor() const { return m_color; }
@@ -85,7 +85,7 @@ public:
 private:
 	void markNeighbor( int row, int col );
     //given tilt state, return our desired frame
-    unsigned int GetTiltFrame( Float2 &tiltState ) const;
+    unsigned int GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const;
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
     //convert from [-128, 128] to [0, 6] via non-linear quantization
@@ -110,6 +110,8 @@ private:
 	bool		 m_bFixed;
 
 	unsigned int m_animFrame;
+    //x,y coordinates of our last frame, so we don't make any large jumps
+    Vec2 m_lastFrameDir;
 };
 
 

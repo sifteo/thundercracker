@@ -21,7 +21,6 @@ public:
     AudioMixer();
 
     static AudioMixer instance;
-    static const int MAXVOLUME;
 
     void init();
     void enableChannel(struct _SYSAudioBuffer *buffer);
@@ -41,7 +40,7 @@ public:
 
     uint32_t pos(_SYSAudioHandle handle);
 
-    bool active() const { return activeChannelMask; }
+    bool active() const { return activeChannelMask != 0; }
 
     int pullAudio(int16_t *buffer, int numsamples);
     void fetchData();
@@ -56,9 +55,9 @@ private:
     static const uint32_t ALL_CHANNELS_ENABLED = 0xFF;
 
     // decoders can be loaned to a channel for sample playback
-    SpeexDecoder decoders[_SYS_AUDIO_MAX_SAMPLE_CHANNELS];
+    SpeexDecoder decoders[_SYS_AUDIO_MAX_CHANNELS];
     uint32_t availableDecodersMask;
-    static const int ALL_DECODERS_AVAILABLE = 0x3;
+    static const int ALL_DECODERS_AVAILABLE = 0xFF;
 
     AudioChannelWrapper* channelForHandle(_SYSAudioHandle handle);
     SpeexDecoder* getDecoder();

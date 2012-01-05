@@ -22,9 +22,9 @@ class AccelState {
 	static const int NUM_AXES = 2;
 
 	//bunch of constants from gen 1..  maybe they need to be revisited
-	static const int TILT_THRESHOLD   = 12;  // measured empirically (gen 1)
+	static const int TILT_THRESHOLD   = 14;//12;  // measured empirically (gen 1)
 	static const int DEFAULT_RESTVAL  = 0;
-	static const int TILT_HYSTERESIS  = 5;   // measured empirically (gen 1)
+	static const int TILT_HYSTERESIS  = 4;//5;   // measured empirically (gen 1)
 
 	static const int NUM_SAMPLES      = 16; //how many samples we keep in the data buffer
 	static const int MEAN_SHIFT_BY	  = 4; //if NUM_SAMPLES is 16, we can bit shift the sum by 4 to get the mean

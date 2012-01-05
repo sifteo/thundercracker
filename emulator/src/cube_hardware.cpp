@@ -194,26 +194,15 @@ void Hardware::graphicsTick()
     cpu.mSFR[BUS_PORT] = bus;
 }
 
-void Hardware::setAcceleration(float xG, float yG)
+void Hardware::setAcceleration(float xG, float yG, float zG)
 {
     /*
      * Set the cube's current acceleration, in G's. Scale it
-     * according to the accelerometer's maximum range (ours is rated
-     * at +/- 2G).
+     * according to the accelerometer's maximum range (assuming
+     * the firmware has it configured for a full scale of +/- 2g).
      */
 
-    const float deviceAccelScale = 128.0 / 2.0;
-
-    int x = xG * deviceAccelScale;
-    int y = yG * deviceAccelScale;
-
-    if (x < -128) x = -128;
-    if (x > 127) x = 127;
-
-    if (y < -128) y = -128;
-    if (y > 127) y = 127;
-
-    i2c.accel.setVector(x, y);
+    i2c.accel.setVector(scaleAccelAxis(xG), scaleAccelAxis(yG), scaleAccelAxis(zG));
 }
 
 NEVER_INLINE void Hardware::hwDeadlineWork() 

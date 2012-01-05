@@ -80,14 +80,23 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
         }
         break;
 
-    case EventID_EndRound:
-        return CubeStateIndex_EndOfRoundScored;
+    case EventID_GameStateChanged:
+        switch (data.mGameStateChanged.mNewStateIndex)
+        {
+        case GameStateIndex_EndOfRoundScored:
+            return CubeStateIndex_EndOfRoundScored;
+
+        case GameStateIndex_ShuffleScored:
+            return CubeStateIndex_ShuffleScored;
+        }
+        break;
     }
     return getStateMachine().getCurrentStateIndex();
 }
 
 unsigned ScoredCubeState_NewWord::update(float dt, float stateTime)
 {
+    CubeState::update(dt, stateTime);
     return getStateMachine().getTime() < 0.5f ?
                 CubeStateIndex_NewWordScored : CubeStateIndex_OldWordScored;
 }
@@ -97,6 +106,19 @@ void ScoredCubeState_NewWord::paint()
     Cube& c = getStateMachine().getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    paintLetters(vid, Font1Letter);
-    paintTeeth(vid, TeethNewWord, true, false, false, true);
+    paintLetters(vid, Font1Letter, true);
+
+    ImageIndex ii = ImageIndex_ConnectedWord;
+    if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
+        c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
+    {
+        ii = ImageIndex_ConnectedLeftWord;
+    }
+    else if (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
+             c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
+    {
+        ii = ImageIndex_ConnectedRightWord;
+    }
+
+    paintTeeth(vid, ii, true, false, false, false);
 }

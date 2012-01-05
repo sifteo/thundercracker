@@ -13,64 +13,14 @@
 * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
 *******************************************************************************/
 
-/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __USB_CONF_H
 #define __USB_CONF_H
 
-/* Includes ------------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
-/* External variables --------------------------------------------------------*/
-
-/*-------------------------------------------------------------*/
 /* EP_NUM */
 /* defines how many endpoints are used by the device */
-/*-------------------------------------------------------------*/
 
 #define EP_NUM                          (4)
 
-
-#ifndef STM32F10X_CL
-/*-------------------------------------------------------------*/
-/* --------------   Buffer Description Table  -----------------*/
-/*-------------------------------------------------------------*/
-/* buffer table base address */
-/* buffer table base address */
-#define BTABLE_ADDRESS      (0x00)
-
-/* EP0  */
-/* rx/tx buffer base address */
-#define ENDP0_RXADDR        (0x40)
-#define ENDP0_TXADDR        (0x80)
-
-/* EP1  */
-/* tx buffer base address */
-#define ENDP1_TXADDR        (0xC0)
-#define ENDP2_TXADDR        (0x100)
-#define ENDP3_RXADDR        (0x110)
-
-
-/*-------------------------------------------------------------*/
-/* -------------------   ISTR events  -------------------------*/
-/*-------------------------------------------------------------*/
-/* IMR_MSK */
-/* mask defining which events has to be handled */
-/* by the device application software */
-#define IMR_MSK (CNTR_CTRM  | CNTR_SOFM  | CNTR_RESETM )
-
-/*#define CTR_CALLBACK*/
-/*#define DOVR_CALLBACK*/
-/*#define ERR_CALLBACK*/
-/*#define WKUP_CALLBACK*/
-/*#define SUSP_CALLBACK*/
-/*#define RESET_CALLBACK*/
-#define SOF_CALLBACK
-/*#define ESOF_CALLBACK*/
-#endif /* STM32F10X_CL */
-
-#ifdef STM32F10X_CL
 /*******************************************************************************
 *                              FIFO Size Configuration
 *  
@@ -143,7 +93,7 @@
 /* Comment the define to enable the selected interrupt subroutine and replace it
    by user code */
 #define  INTR_MODEMISMATCH_Callback      NOP_Process
-/* #define  INTR_SOFINTR_Callback           NOP_Process */
+#define  INTR_SOFINTR_Callback           NOP_Process
 #define  INTR_RXSTSQLVL_Callback         NOP_Process
 #define  INTR_NPTXFEMPTY_Callback        NOP_Process
 #define  INTR_NPTXFEMPTY_Callback        NOP_Process
@@ -170,8 +120,6 @@
 #define ISOC_BUFFER_SZE                  1
 /* Number of sub-buffers (number of single buffers/transfers), should be even */
 #define NUM_SUB_BUFFERS                  2
-
-#endif /* STM32F10X_CL */
 
 
 /* CTR service routines */

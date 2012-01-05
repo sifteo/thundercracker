@@ -50,7 +50,6 @@ const char* CubeStateMachine::getLetters()
 
 bool CubeStateMachine::canBeginWord()
 {
-    // TODO vertical words
     return (mNumLetters > 0 &&
             mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
             mCube->physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
@@ -156,6 +155,8 @@ State& CubeStateMachine::getState(unsigned index)
         return mTitleExitState;
 
     default:
+        ASSERT(0);
+        // fall through
     case CubeStateIndex_NotWordScored:
         return mNotWordScoredState;
 
@@ -165,9 +166,14 @@ State& CubeStateMachine::getState(unsigned index)
     case CubeStateIndex_OldWordScored:
         return mOldWordScoredState;
 
+    case CubeStateIndex_StartOfRoundScored:
+        return mStartOfRoundScoredState;
+
     case CubeStateIndex_EndOfRoundScored:
         return mEndOfRoundScoredState;
 
+    case CubeStateIndex_ShuffleScored:
+        return mShuffleScoredState;
     }
 }
 

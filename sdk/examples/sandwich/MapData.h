@@ -31,12 +31,16 @@ struct ItemData {
 };
 
 struct RoomData {
-    uint8_t centerPosition; // format: 0b00XXXYYY (any use for those two high bits?)
+    uint16_t centerPosition; // format: 0b0000000000XXXYYY (any use for those high bits?)
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
+    uint8_t torch0; // 0bXXXXYYYY
+    uint8_t torch1; // 0bXXXXYYYY
     uint8_t* overlay; // format: alternative 0bXXXXYYYY, tileId, 0bXXXXYYYY, tileId, etc
 
     inline Vec2 LocalCenter() const { return Vec2((centerPosition >> 3) & 0x7, centerPosition & 0x7); }
+    inline Vec2 TorchTile0() const { return Vec2(torch0 >> 4, torch0 & 0xf); }
+    inline Vec2 TorchTile1() const { return Vec2(torch1 >> 4, torch1 & 0xf); }
 };
 
 struct MapData {

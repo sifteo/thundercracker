@@ -6,7 +6,10 @@
 class MacronixMX25
 {
 public:
-    static const unsigned PAGE_SIZE = 256;
+    static const unsigned PAGE_SIZE = 256;      // programming granularity
+    static const unsigned SECTOR_SIZE = 4096;   // erase granularity
+
+    static MacronixMX25 instance;
 
     enum Status {
         Ok                  = 0,

@@ -15,15 +15,21 @@ unsigned ScoredGameState_EndOfRound::update(float dt, float stateTime)
 
 unsigned ScoredGameState_EndOfRound::onEvent(unsigned eventID, const EventData& data)
 {
+    ScoredGameState::onAudioEvent(eventID, data);
     switch (eventID)
     {
     case EventID_EnterState:
-        GameStateMachine::sOnEvent(EventID_EndRound, EventData());
         WordGame::playAudio(wordplay_music_sayonara, AudioChannelIndex_Music, LoopRepeat);
+        WordGame::playAudio(teeth_close, AudioChannelIndex_Teeth);
         break;
 
     case EventID_Input:
-        return GameStateIndex_PlayScored;
+        if (GameStateMachine::getTime() > TEETH_ANIM_LENGTH)
+        {
+            WordGame::playAudio(shake, AudioChannelIndex_Shake);
+            return GameStateIndex_StartOfRoundScored;
+        }
+        break;
 
     default:
         break;

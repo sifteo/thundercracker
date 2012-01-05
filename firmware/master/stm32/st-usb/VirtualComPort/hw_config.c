@@ -297,7 +297,7 @@ static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len)
     pbuf[ 2* idx + 1] = 0;
   }
 }
-#ifdef STM32F10X_CL
+
 /*******************************************************************************
 * Function Name  : USB_OTG_BSP_uDelay.
 * Description    : provide delay (usec).
@@ -305,6 +305,7 @@ static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
+#if 0   // Sifteo: moved this routine into core USB library
 void USB_OTG_BSP_uDelay (const uint32_t usec)
 {
   RCC_ClocksTypeDef  RCC_Clocks;  
@@ -320,5 +321,6 @@ void USB_OTG_BSP_uDelay (const uint32_t usec)
   
   while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk));
 }
-#endif /* STM32F10X_CL */
+#endif
+
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

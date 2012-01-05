@@ -42,23 +42,27 @@ union word16 {
 
 __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 
-#define MISC_NB_OUT1    (1 << 0)
-#define MISC_NB_OUT2    (1 << 1)
 #define MISC_I2C_SCL    (1 << 2)
 #define MISC_I2C_SDA    (1 << 3)
 #define MISC_TOUCH      (1 << 4)   // AIN12 and GPINT2
-#define MISC_NB_OUT3    (1 << 5)
 #define MISC_NB_IN      (1 << 6)   // T1 input
-#define MISC_NB_OUT4    (1 << 7)
+
+// Numbered according to the standard side enum.
+// Both the number and name are represented here; due to the binary masking, both are critical.
+#define MISC_NB_0_TOP       (1 << 0)
+#define MISC_NB_1_LEFT      (1 << 1)
+#define MISC_NB_2_BOTTOM    (1 << 7)
+#define MISC_NB_3_RIGHT     (1 << 5)
 
 #define TOUCH_ADC_CH    12
 #define BATTERY_ADC_CH  0
 
 #define MISC_I2C        (MISC_I2C_SCL | MISC_I2C_SDA)
-#define MISC_NB_OUT     (MISC_NB_OUT1 | MISC_NB_OUT2 | MISC_NB_OUT3 | MISC_NB_OUT4)
+#define MISC_NB_OUT     (MISC_NB_0_TOP | MISC_NB_1_LEFT | MISC_NB_2_BOTTOM | MISC_NB_3_RIGHT)
 
-#define MISC_NB_MASK0   (MISC_NB_OUT1 | MISC_NB_OUT2)
-#define MISC_NB_MASK1   (MISC_NB_OUT1 | MISC_NB_OUT3)
+// Bitwise neighbor masking
+#define MISC_NB_MASK0   (MISC_NB_0_TOP | MISC_NB_1_LEFT)
+#define MISC_NB_MASK1   (MISC_NB_0_TOP | MISC_NB_2_BOTTOM)
 
 #define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_I2C_SDA))
 #define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)

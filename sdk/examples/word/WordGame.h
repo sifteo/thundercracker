@@ -10,13 +10,14 @@ union EventData;
 enum AudioChannelIndex
 {
     AudioChannelIndex_Music,
-    AudioChannelIndex_Neighbor,
-    AudioChannelIndex_Score,
-    AudioChannelIndex_Bonus,
-    AudioChannelIndex_NewAnagram,
-    AudioChannelIndex_Time,
+    AudioChannelIndex_Neighbor = 1,
+    AudioChannelIndex_Score = 1,   // HACK only 2 channels are funcitoning for now
+    AudioChannelIndex_Bonus = 1,
+    AudioChannelIndex_Teeth = 1,
+    AudioChannelIndex_Shake = 1,
+    AudioChannelIndex_Time = 1,
 
-    Num_AudioChannelIndexs
+    NumAudioChannelIndexes
 };
 
 class WordGame
@@ -31,16 +32,18 @@ public:
 
     static WordGame* instance() { return sInstance; }
 
+    static void hideSprites(VidMode_BG0_SPR_BG1 &vid);
     static void onEvent(unsigned eventID, const EventData& data);
     static bool playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
     static unsigned rand(unsigned max);
+    static float rand(float min, float max);
 
 private:
     bool _playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
     void _onEvent(unsigned eventID, const EventData& data);
 
     GameStateMachine mGameStateMachine;
-    AudioChannel mAudioChannels[Num_AudioChannelIndexs];
+    AudioChannel mAudioChannels[NumAudioChannelIndexes];
     unsigned mRandomSeed;
     bool mNeedsPaintSync;
     static WordGame* sInstance;

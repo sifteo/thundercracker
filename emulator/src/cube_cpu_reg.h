@@ -15,6 +15,8 @@ namespace Cube {
 #define IDATA_SIZE      256
 #define CODE_SIZE       16384
 
+#define PC_MASK         (CODE_SIZE - 1)
+
 #define NVM_SIZE        1024
 #define NVM_BASE        0xFC00
 

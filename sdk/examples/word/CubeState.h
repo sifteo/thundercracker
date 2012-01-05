@@ -3,6 +3,7 @@
 
 #include <sifteo.h>
 #include "State.h"
+#include "TileTransparencyLookup.h"
 
 enum CubeStateIndex
 {
@@ -11,34 +12,58 @@ enum CubeStateIndex
     CubeStateIndex_NotWordScored,
     CubeStateIndex_NewWordScored,
     CubeStateIndex_OldWordScored,
+    CubeStateIndex_StartOfRoundScored,
     CubeStateIndex_EndOfRoundScored,
+    CubeStateIndex_ShuffleScored,
 
     CubeStateIndex_NumStates
 };
 
-class CubeStateMachine;
+enum EyeState
+{
+    EyeState_Closed = -2,
+    EyeState_Center = -1,
+    EyeState_N = 0,
+    EyeState_NW,
+    EyeState_W,
+    EyeState_SW,
+    EyeState_S,
+    EyeState_SE,
+    EyeState_E,
+    EyeState_NE,
 
-const float TEETH_ANIM_LENGTH = 0.6f;
+    NumEyeStates
+};
+
+class CubeStateMachine;
+const float TEETH_ANIM_LENGTH = 1.7f;
 
 class CubeState : public State
 {
 public:
-    CubeState() : mStateMachine(0) { }
+    CubeState() : mStateMachine(0), mEyeState(EyeState_Center), mEyeDirChangeDelay(0.f), mEyeBlinkDelay(0.f) { }
     void setStateMachine(CubeStateMachine& csm);
     CubeStateMachine& getStateMachine();
 
 protected:
     void paintTeeth(VidMode_BG0_SPR_BG1& vid,
-                    const AssetImage& teeth,
+                    ImageIndex teethImageIndex,
                     bool animate=false,
                     bool reverseAnim=false,
                     bool loopAnim=false,
-                    bool paintTime=false);
-    void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font);
+                    bool paintTime=false,
+                    float animStartTime=0.f);
+    void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites=false);
     void paintScoreNumbers(VidMode_BG0_SPR_BG1 &vid, const Vec2& position, const char* string);
+
+    virtual unsigned update(float dt, float stateTime);
 
 private:
     CubeStateMachine* mStateMachine;
+
+    EyeState mEyeState;
+    float mEyeDirChangeDelay;
+    float mEyeBlinkDelay;
 };
 
 #endif // CUBESTATE_H

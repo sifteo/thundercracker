@@ -35,14 +35,14 @@ void onNeighborEventAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID 
 {
     EventData data;
     WordGame::onEvent(EventID_AddNeighbor, data);
-    DEBUG_LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
+    LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
 void onNeighborEventRemove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
     EventData data;
     WordGame::onEvent(EventID_RemoveNeighbor, data);
-    DEBUG_LOG(("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
+    LOG(("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
 void accel(_SYSCubeID c)
@@ -56,13 +56,13 @@ void siftmain()
 
     _SYS_vectors.cubeEvents.touch = onCubeEventTouch;
     _SYS_vectors.cubeEvents.shake = onCubeEventShake;
-#ifdef DEBUGzzzzzzzzzzz
+#ifdef DEBUG_disable
     _SYS_vectors.cubeEvents.tilt = onCubeEventTilt;
 #endif
     _SYS_vectors.neighborEvents.add = onNeighborEventAdd;
     _SYS_vectors.neighborEvents.remove = onNeighborEventRemove;
 
-    static Cube cubes[MAX_CUBES];
+    static Cube cubes[MAX_CUBES]; // must be static!
 
     // start loading assets
     for (unsigned i = 0; i < arraysize(cubes); i++)
@@ -115,7 +115,7 @@ void siftmain()
     */
 
     // main loop
-    static WordGame game(cubes);
+    WordGame game(cubes); // must not be static!
     float lastTime = System::clock();
     float lastPaint = System::clock();
     while (1)
@@ -155,8 +155,10 @@ extern "C" void __cxa_pure_virtual() { while (1); }
 
 void assertWrapper(bool testResult)
 {
+#ifdef SIFTEO_SIMULATOR
     if (!testResult)
     {
         assert(testResult);
     }
+#endif
 }

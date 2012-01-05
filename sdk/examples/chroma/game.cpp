@@ -15,6 +15,9 @@
 unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
         { 1000, 800, 600, 400, 200 };
 
+
+const float Game::SLOSH_THRESHOLD = 0.4f;
+
 Game &Game::Inst()
 {
 	static Game game = Game();
@@ -22,7 +25,7 @@ Game &Game::Inst()
     return game;
 }
 
-Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f )
+Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ), m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL )
 {
 	//Reset();
 }
@@ -33,7 +36,8 @@ void Game::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].Init(GameAssets);
 
-	bool done = false;
+    //TAKEN OUT SINCE SELECTOR MENU IS LOADING ASSETS
+    /*bool done = false;
 
 	PRINT( "getting ready to load" );
 
@@ -49,7 +53,7 @@ void Game::Init()
 		}
 		System::paint();
 	}
-	PRINT( "done loading" );
+    PRINT( "done loading" );*/
 
 #ifdef _WIN32
     srand((int)( System::clock() * 10000 ));
@@ -64,10 +68,9 @@ void Game::Init()
 	m_splashTime = System::clock();
     m_fLastTime = m_splashTime;
 
-    for( int i = 0; i < NUM_SFX_CHANNELS; i++ )
+    for( unsigned int i = 0; i < NUM_SFX_CHANNELS; i++ )
     {
         m_SFXChannels[i].init();
-        m_SFXlastUsed[i] = System::clock();
     }
     m_musicChannel.init();
 
@@ -145,6 +148,8 @@ void Game::Update()
 	}
 
     System::paint();
+
+    m_pSoundThisFrame = NULL;
 }
 
 
@@ -156,7 +161,7 @@ void Game::Reset()
 	m_iDotsCleared = 0;
 	m_iLevel = 0;
 
-	m_state = STARTING_STATE;
+    m_state = STATE_INTRO;
     //m_musicChannel.play( astrokraut, LoopRepeat );
 
 	for( int i = 0; i < NUM_CUBES; i++ )
@@ -465,43 +470,37 @@ void Game::enterScore()
 
 void Game::playSound( _SYSAudioModule &sound )
 {
-    //figure out which channel played a sound longest ago
-    int iOldest = 0;
-    float fOldest = m_SFXlastUsed[0];
+    if( &sound == m_pSoundThisFrame )
+        return;
 
-    for( int i = 1; i < NUM_SFX_CHANNELS; i++ )
-    {
-        if( m_SFXlastUsed[i] < fOldest )
-        {
-            iOldest = i;
-            fOldest = m_SFXlastUsed[i];
-        }
-    }
+    m_SFXChannels[m_curChannel].stop();
+    m_SFXChannels[m_curChannel].play(sound, LoopOnce);
 
+    //printf( "playing a sound effect %d on channel %d\n", sound.size, m_curChannel );
 
-    m_SFXChannels[iOldest].stop();
-    m_SFXChannels[iOldest].play(sound, LoopOnce);
-    m_SFXlastUsed[iOldest] = System::clock();
+    m_curChannel++;
 
-    //printf( "playing a sound effect on channel %d\n", iOldest );
+    if( m_curChannel >= NUM_SFX_CHANNELS )
+        m_curChannel = 0;
+
+    m_pSoundThisFrame = &sound;
 }
 
 _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 {
-  &slosh_01,
-    &slosh_02,
-    &slosh_03,
-    &slosh_04,
-    &slosh_05,
-    &slosh_06,
-    &slosh_07,
-    &slosh_08,
+  &slosh_multi_01,
+    &slosh_multi_02,
 };
 
 
 //play a random slosh sound
 void Game::playSlosh()
 {
-    int index = Rand( NUM_SLOSH_SOUNDS );
-    playSound(*SLOSH_SOUNDS[index]);
+    if( System::clock() - m_fLastSloshTime > SLOSH_THRESHOLD )
+    {
+        int index = Rand( NUM_SLOSH_SOUNDS );
+        playSound(*SLOSH_SOUNDS[index]);
+
+        m_fLastSloshTime = System::clock();
+    }
 }

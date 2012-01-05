@@ -494,6 +494,11 @@ public:
       uint16_t word = ((uint16_t)xb << 8) | yb;
       uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
                        sizeof(_SYSSpriteInfo)/2 * id );
+
+      // Size must be a power of two in current firmwares.
+      ASSERT((px & (px - 1)) == 0);
+      ASSERT((py & (py - 1)) == 0);
+
       _SYS_vbuf_poke(&buf.sys, addr, word);
     }
 

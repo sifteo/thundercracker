@@ -8,21 +8,24 @@
 #include "GameStateMachine.h"
 #include "ScoredCubeState_EndOfRound.h"
 #include "SavedData.h"
+#include "WordGame.h"
 
 unsigned ScoredCubeState_EndOfRound::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
-    // TODO debug: case EventID_Paint:
     case EventID_EnterState:
     case EventID_Paint:
         paint();
         break;
 
-    case EventID_NewAnagram:
-        // fired from ScoredGameState::onEvent on _Input
-        return CubeStateIndex_NotWordScored;
-
+    case EventID_GameStateChanged:
+        switch (data.mGameStateChanged.mNewStateIndex)
+        {
+        case GameStateIndex_StartOfRoundScored:
+            return CubeStateIndex_StartOfRoundScored;
+        }
+        break;
     }
     return getStateMachine().getCurrentStateIndex();
 }
@@ -41,19 +44,11 @@ void ScoredCubeState_EndOfRound::paint()
             c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
+    WordGame::hideSprites(vid);
     if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
     {
-        // intro animation
-        /*if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH - 0.2f)
-        {
-            paintLetters(vid, Font1Letter);
-        }
-        else*/
-        {
-            // no letters during blip
-            vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
-        }
-        paintTeeth(vid, Teeth, true, true);
+        paintLetters(vid, Font1Letter);
+        paintTeeth(vid, ImageIndex_Teeth, true, true);
         return;
     }
 

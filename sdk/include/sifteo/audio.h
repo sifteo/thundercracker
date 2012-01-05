@@ -13,7 +13,7 @@ namespace Sifteo {
 // XXX better place to put these?
 class Audio {
 public:
-    static const int MAX_VOLUME = 256;
+    static const int MAX_VOLUME = 256;      // Guaranteed to be a power of two    
     static const _SYSAudioHandle INVALID_HANDLE = -1;
 };
 

@@ -34,10 +34,10 @@ def fixupImage(p):
     # this means we need to stick a jump to main() in there
     # after setting up the stack.
 
-    p.instructions[0x0000].extend([
+    p.instructions[0x0000] = [
             (0x75, 0x81) + p.getSym8('__start__stack'),
             (0x02,) + p.getSym16('_main'),
-            ])
+            ]
         
     # Our ROM palettes are actually generated machine code that
     # is jumped to when we set each palette. These never existed
@@ -87,7 +87,7 @@ class CodeGenerator:
                 % (addr, addr))
 
     def endBlock(self, f):
-        f.write("\taCPU->mPC = pc;\n"
+        f.write("\taCPU->mPC = pc & PC_MASK;\n"
                 "\treturn clk;\n"
                 "}\n")
         

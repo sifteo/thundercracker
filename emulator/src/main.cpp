@@ -50,7 +50,7 @@ static void usage()
             "Options:\n"
             "  -h            Show this help message, and exit\n"
             "  -n NUM        Set initial number of cubes\n"
-            "  -T            No throttle; run faster than real-time if we can\n"
+            "  -T            Turbo mode; run faster than real-time if we can\n"
             "\n"
             "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n");
 }
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
         }
 
         if (!strcmp(arg, "-T")) {
-            sys.opt_noThrottle = true;
+            sys.opt_turbo = true;
             continue;
         }
          

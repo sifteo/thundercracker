@@ -17,6 +17,10 @@
 #ifndef __USB_INT_H
 #define __USB_INT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -46,6 +50,10 @@ uint32_t OTGD_FS_Handle_Wakeup_ISR(void);
 #endif /* STM32F10X_CL */
 
 /* External variables --------------------------------------------------------*/
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* __USB_INT_H */
 

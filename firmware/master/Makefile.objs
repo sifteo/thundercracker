@@ -50,6 +50,8 @@ OBJS_STM32 = \
     stm32/macronixmx25.stm32.o \
     stm32/dac.stm32.o \
     stm32/usb.stm32.o \
+    stm32/tasks.stm32.o \
+    stm32/assetmanager.stm32.o \
     $(SPEEX_OBJS_STM32)
 
 #This will build in the selector menu into the master firmware

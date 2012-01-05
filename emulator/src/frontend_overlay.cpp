@@ -130,7 +130,7 @@ void FrontendOverlay::drawHelp()
         "While pulling, Right-click or Space to hover, again to rotate.",
         "Shift-drag or Right-drag to tilt a cube.",
         "Mouse wheel resizes the play surface.\n",
-        "'S' - Screenshot, 'F' - Fullscreen, 'Z' - Zoom. +/- Adds/removes cubes.",
+        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'Z' - Zoom. +/- Adds/removes cubes.",
         "",
         "Copyright (c) 2011 Sifteo, Inc. All rights reserved.",
     };
@@ -165,4 +165,9 @@ void FrontendOverlay::drawRealTimeInfo()
     unsigned barW = width * MIN(1.0f, filteredTimeRatio);
     renderer->overlayRect(x, y, barW, barH, realTimeColor.v);
     y += barH + margin;
+
+    if (sys->opt_turbo) {
+        // Turbo indicator
+        text(realTimeColor, "Turbo Mode", 0.0f);
+    }
 }

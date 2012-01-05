@@ -323,7 +323,11 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
         }
 
-        case 'T': {
+        case 'T':
+            instance->sys->opt_turbo ^= true;
+            break;
+
+        case 'R': {
             /*
              * Intentionally undocumented: Toggle trace mode.
              * Requires that a trace file was specified on the command line.

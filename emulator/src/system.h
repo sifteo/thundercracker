@@ -30,14 +30,14 @@ class System {
 
     Cube::Hardware cubes[MAX_CUBES];
 
-    // Options; can be set prior to init
+    // Static Options; can be set prior to init only
     unsigned opt_numCubes;
     std::string opt_cubeFirmware;
-    bool opt_noThrottle;
 
     // Global debug options
     std::string opt_cubeTrace;
     bool opt_continueOnException;
+    bool opt_turbo;
 
     // Debug options, applicable to cube 0 only
     bool opt_cube0Debug;
@@ -68,7 +68,11 @@ class System {
     static void threadFn(void *param);
     bool initCube(unsigned id);
     void exitCube(unsigned id);
-    void tick();
+    ALWAYS_INLINE void tick();
+    
+    NEVER_INLINE void tickLoopDebug();
+    NEVER_INLINE void tickLoopGeneral();
+    NEVER_INLINE void tickLoopFastSBT();
 
     GLFWthread thread;
     bool threadRunning;

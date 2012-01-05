@@ -58,7 +58,7 @@ ifeq ($(BUILD_PLATFORM), windows32)
 endif
 
 CFLAGS += -O3 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -MMD
-ifneq ($(OS), windows32)
+ifneq ($(BUILD_PLATFORM), windows32)
 	CFLAGS += -DLUA_USE_MKSTEMP
 endif
 LDFLAGS += -g -lm -lstdc++
