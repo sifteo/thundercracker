@@ -29,9 +29,28 @@ void main(void)
     flash_init();
     sensors_init();
     params_init();
+    
+    /*
+     * Global interrupt enable, only AFTER every module has a chance to
+     * run its init() code. Modules may set subsystem-specific interrupt
+     * enables, but they may not set the global interrupt enable on their
+     * own.
+     */
     sti();
 
-    demo();  // XXX
+    /*
+     * Allow incoming radio packets. We do this very last, after we are truly
+     * ready to handle packets.
+     *
+     * Most importantly, we allow incoming radio packets only AFTER the global
+     * IRQ enable is set. If a radio packet comes in earlier, its interrupt
+     * will be delayed; and not all of our initialization code will correctly
+     * preserve this flag in IRCON.
+     */
+    radio_rx_enable();
+
+    // XXX
+    demo();
     
     while (1) {
         global_busy_flag = 0;

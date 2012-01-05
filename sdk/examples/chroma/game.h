@@ -40,7 +40,7 @@ public:
 	
 	Game();
 
-	static const int NUM_CUBES = 2;
+    static const int NUM_CUBES = 3;
     static const unsigned int NUM_HIGH_SCORES = 5;
     static const unsigned int NUM_SFX_CHANNELS = 3;
     static const int NUM_SLOSH_SOUNDS = 2;

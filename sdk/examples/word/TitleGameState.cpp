@@ -18,7 +18,7 @@ unsigned TitleGameState::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_EnterState:
-        WordGame::playAudio(welcome, AudioChannelIndex_Time);
+        WordGame::playAudio(flap_laugh_fireball, AudioChannelIndex_Time);
         WordGame::playAudio(wordplay_music_sohcahtoa, AudioChannelIndex_Music, LoopRepeat);
         break;
 

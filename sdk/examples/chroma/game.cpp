@@ -36,7 +36,8 @@ void Game::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].Init(GameAssets);
 
-	bool done = false;
+    //TAKEN OUT SINCE SELECTOR MENU IS LOADING ASSETS
+    /*bool done = false;
 
 	PRINT( "getting ready to load" );
 
@@ -52,7 +53,7 @@ void Game::Init()
 		}
 		System::paint();
 	}
-	PRINT( "done loading" );
+    PRINT( "done loading" );*/
 
 #ifdef _WIN32
     srand((int)( System::clock() * 10000 ));
@@ -160,7 +161,7 @@ void Game::Reset()
 	m_iDotsCleared = 0;
 	m_iLevel = 0;
 
-	m_state = STARTING_STATE;
+    m_state = STATE_INTRO;
     //m_musicChannel.play( astrokraut, LoopRepeat );
 
 	for( int i = 0; i < NUM_CUBES; i++ )
