@@ -10,7 +10,8 @@ namespace MapTool {
     // TILE EXTENSION METHODS
     //-------------------------------------------------------------------------
 
-    public static bool IsObstacle(this TmxTile t) { return t.ContainsKey("obstacle"); }
+    public static bool IsTorch(this TmxTile t) { return t.ContainsKey("torch"); }
+    public static bool IsObstacle(this TmxTile t) { return t.ContainsKey("obstacle") || t.ContainsKey("torch"); }
     public static bool IsWall(this TmxTile t) { return t.ContainsKey("wall"); }
     public static bool IsDoor(this TmxTile t) { return t.ContainsKey("door"); }
     public static bool IsOpen(this TmxTile t) { return !t.IsDoor() && !t.IsObstacle() && !t.IsWall(); }

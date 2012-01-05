@@ -28,6 +28,7 @@ void Game::MainLoop() {
 
   // initial zoom out (yoinked and modded from TeleportTo)
   { 
+    PlaySfx(sfx_zoomIn);
     GameView* view = player.CurrentView();
     view->HidePlayer();
     Vec2 room = player.Location();
@@ -57,64 +58,39 @@ void Game::MainLoop() {
     System::paintSync();
   }  
 
+  PlaySfx(sfx_neighbor);
+
   mSimTime = System::clock();
   ObserveNeighbors(true);
   CheckMapNeighbors();
 
   mIsDone = false;
+  mNeedsSync = 0;
   while(!mIsDone) {
-    mNeedsSync = false;
     float dt = UpdateDeltaTime();
     if (sNeighborDirty) { 
       CheckMapNeighbors(); 
     }
     player.Update(dt);
-    /*
-    for(Enemy* p = EnemyBegin(); p != EnemyEnd(); ++p) {
-      p->Update(dt);
-    }
-    */
-    if (mNeedsSync) {
-      System::paintSync();
-      mNeedsSync = false;
-    } else {
-      System::paint();
-    }
+    Paint();
   }
-  /*{
-    GameView* view = player.CurrentView();
-    view->HidePlayer();
-    // blank other cubes
-    for(GameView* p = ViewBegin(); p != ViewEnd(); ++p) {
-      if (p != view) { p->HideRoom(); }
+}
+
+void Game::Paint(bool sync) {
+  for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
+    p->Update();
+  }
+  if (sync || mNeedsSync) {
+    //for(unsigned i=0; i<NUM_CUBES; ++i) {
+    //  gCubes[i].vbuf.touch();
+    //}
+    System::paintSync();
+    if (mNeedsSync > 0) {
+      mNeedsSync--;
     }
-    // zoom in
-    { 
-      System::paintSync();
-    
-      VidMode_BG2 vid(view->GetCube()->vbuf);
-      for(int x=0; x<8; ++x) {
-        for(int y=0; y<8; ++y) {
-          vid.BG2_drawAsset(
-            Vec2(x<<1,y<<1),
-            *(map.Data()->tileset),
-            map.Data()->GetTileId(view->Location(), Vec2(x, y))
-          );
-        }
-      }
-      vid.BG2_setBorder(0x0000);
-      vid.set();
-      for (float t = 0; t < 1.0f; t += 0.025f) {
-        AffineMatrix m = AffineMatrix::identity();
-        m.translate(64, 64);
-        m.scale(1.f+9.f*t);
-        m.rotate(t * 1.1f);
-        m.translate(-64, -64);
-        vid.BG2_setMatrix(m);
-        System::paint();
-      }
-    }  
-  }*/
+  } else {
+    System::paint();
+  }
 }
 
 float Game::UpdateDeltaTime() {
@@ -168,7 +144,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   // zoom in
   { 
     System::paintSync();
-  
+    PlaySfx(sfx_zoomOut);
     VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
@@ -197,6 +173,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   }
   // zoom out
   { 
+    PlaySfx(sfx_zoomIn);
     VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
@@ -258,7 +235,9 @@ void Game::OnInventoryChanged() {
 static void VisitMapView(GameView* view, Vec2 loc, GameView* origin=0) {
   if (!view || view->visited) { return; }
   view->visited = true;
-  view->ShowLocation(loc);
+  if (view->ShowLocation(loc)) {
+    PlaySfx(sfx_neighbor);
+  }
   if (origin) {
     view->GetCube()->orientTo(*(origin->GetCube()));
   }
@@ -273,7 +252,11 @@ void Game::CheckMapNeighbors() {
   }
   VisitMapView(player.KeyView(), player.KeyView()->Location());
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    if (!v->visited) { v->HideRoom(); }
+    if (!v->visited) { 
+      if (v->HideRoom()) {
+        PlaySfx(sfx_deNeighbor);
+      }
+    }
   }
   sNeighborDirty = false;
 }

@@ -15,19 +15,24 @@
 #define CUBE_ID_MASK (0x1F)
 #define HAS_NEIGHBOR_MASK (0x80)
 
+#define NO_SIDE (-1)
+
 using namespace Sifteo;
 
 NeighborSlot NeighborSlot::instances[_SYS_NUM_CUBE_SLOTS];
 
+#define NUM_UNIQUE_PAIRS ((_SYS_NUM_CUBE_SLOTS * (_SYS_NUM_CUBE_SLOTS)) >> 1)
+
 struct NeighborPair {
-    _SYSSideID side0;
-    _SYSSideID side1;
 
-    bool fullyConnected() const { return side0 >= 0 && side1 >= 0; }
-    bool fullyDisconnected() const { return side0 < 0 && side1 < 0; }
-    void clear() { side0=-1; side1=-1; }
+    _SYSSideID side0 : 4;
+    _SYSSideID side1 : 4;
+    inline bool fullyConnected() const { return side0 != NO_SIDE && side1 != NO_SIDE; }
+    inline bool fullyDisconnected() const { return side0 == NO_SIDE && side1 == NO_SIDE; }
+    inline void clear() { side0=NO_SIDE; side1=NO_SIDE; }
+    NeighborPair() : side0(NO_SIDE), side1(NO_SIDE) {}
 
-    NeighborPair() : side0(-1), side1(-1) {}
+
 
     _SYSSideID setSideAndGetOtherSide(_SYSCubeID cid0, _SYSCubeID cid1, _SYSSideID side, NeighborPair** outPair) {
         // abstract the order-of-arguments invariant of lookup()
@@ -42,14 +47,24 @@ struct NeighborPair {
         }
     }
 
-    NeighborPair* lookup(_SYSCubeID cid0, _SYSCubeID cid1) {
+    inline NeighborPair* lookup(_SYSCubeID cid0, _SYSCubeID cid1) {
         // invariant this == pairs[0]
         // invariant cid0 < cid1
-        return this + (cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
+        
+        // space-wasting pair buffer
+        //return this + (cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
+
+        // space-conservative pair buffer
+        const unsigned n = _SYS_NUM_CUBE_SLOTS - cid0;
+        return this + ( (NUM_UNIQUE_PAIRS-1) - ( (n*(n-1)) >> 1 ) + cid1 );
     }
 };
 
-static NeighborPair gCubesToSides[(_SYS_NUM_CUBE_SLOTS-1)*(_SYS_NUM_CUBE_SLOTS-1)];
+// space-conserving pair-buffer that only stores upper-echelon cells
+static NeighborPair gCubesToSides[NUM_UNIQUE_PAIRS];
+
+// space-wasting pair-buffer w/ uniform row length
+//static NeighborPair gCubesToSides[(_SYS_NUM_CUBE_SLOTS-1)*(_SYS_NUM_CUBE_SLOTS-1)];
 
 void NeighborSlot::computeEvents() {
     uint8_t rawNeighbors[4];
@@ -93,7 +108,7 @@ void NeighborSlot::resetPairs(_SYSCubeIDVector cv) {
             gCubesToSides->lookup(i, cubeId)->clear();
         }
         for(_SYSCubeID i=cubeId+1; i<_SYS_NUM_CUBE_SLOTS; ++i) {
-            gCubesToSides->lookup(i, cubeId)->clear();
+            gCubesToSides->lookup(cubeId, i)->clear();
         }
         cv ^= Intrinsic::LZ(cubeId);
     }
@@ -116,19 +131,22 @@ void NeighborSlot::addNeighborToSide(_SYSCubeID dstId, _SYSSideID side) {
 void NeighborSlot::clearSide(_SYSSideID side) {
     _SYSCubeID otherId = neighbors.sides[side];
     if (otherId != 0xff) {
-        _SYSSideID otherSide = 0;
-        while(instances[otherId].neighbors.sides[otherSide] != id()) { ++otherSide; }
         neighbors.sides[side] = 0xff;
-        instances[otherId].neighbors.sides[otherSide] = 0xff;
-        if (_SYS_vectors.neighborEvents.remove) {
-            _SYS_vectors.neighborEvents.remove(id(), side, otherId, otherSide);
+        for(_SYSSideID otherSide=0; otherSide<4; ++otherSide) {
+            if (instances[otherId].neighbors.sides[otherSide] == id()) {
+                instances[otherId].neighbors.sides[otherSide] = 0xff;
+                if (_SYS_vectors.neighborEvents.remove) {
+                    _SYS_vectors.neighborEvents.remove(id(), side, otherId, otherSide);
+                }
+                return;
+            }
         }
     }    
 }
 
 void NeighborSlot::removeNeighborFromSide(_SYSCubeID dstId, _SYSSideID side) {
     NeighborPair* pair;
-    gCubesToSides->setSideAndGetOtherSide(id(), dstId, -1, &pair);
+    gCubesToSides->setSideAndGetOtherSide(id(), dstId, NO_SIDE, &pair);
     if (pair->fullyDisconnected() && neighbors.sides[side] == dstId) {
         clearSide(side);
     }

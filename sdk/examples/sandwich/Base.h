@@ -2,14 +2,17 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
-
-//#define FAST_FORWARD 1
+#include "audio.gen.h"
 
 #ifndef NUM_CUBES
 #  define NUM_CUBES 3
 #endif
 
-extern Cube cubes[NUM_CUBES];
+//#define SKIP_INTRO
+//#define SKIP_OUTRO
+
+extern Cube gCubes[NUM_CUBES];
+extern AudioChannel gChannelSfx;
 
 using namespace Sifteo;
 
@@ -19,11 +22,17 @@ using namespace Sifteo;
 #define CORO_YIELD mState=__LINE__; return; case __LINE__:;
 #define CORO_END mState=-1;case -1:;}
 
+// Utils
 Cube::Side InferDirection(Vec2 u);
+unsigned int Rand( unsigned int max );
 
+// Sprite Schmutz
 bool InSpriteMode(Cube* c);
 void EnterSpriteMode(Cube *c);
 void SetSpriteImage(Cube *c, int id, int tile);
 void HideSprite(Cube *c, int id);
 void ResizeSprite(Cube *c, int id, int px, int py);
 void MoveSprite(Cube *c, int id, int px, int py);
+
+// Audio Smutz
+void PlaySfx(const _SYSAudioModule& handle, bool preempt=true);
