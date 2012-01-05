@@ -71,7 +71,7 @@ void Usart::deinit()
 /*
  * Just synchronous for now, to serve as a stupid data dump stream.
  */
-void Usart::write(const char *buf, int size)
+void Usart::write(const uint8_t *buf, int size)
 {
     while (size--) {
         while (!(uart->SR & (1 << 7))); // wait for empty data register
@@ -90,7 +90,7 @@ void Usart::write(const char *buf)
 /*
  * Just synchronous for now, to serve as a stupid data dump stream.
  */
-void Usart::read(char *buf, int size)
+void Usart::read(uint8_t *buf, int size)
 {
     while (size--) {
         while (!(uart->SR & (1 << 5))); // wait for data register to be not-not empty

@@ -1,19 +1,32 @@
 #ifndef USB_H
 #define USB_H
 
-#define EP0_OUT                    0x00
-#define EP0_IN                     0x80
-#define EP1_OUT                    0x01
-#define EP1_IN                     0x81
-#define EP2_OUT                    0x02
-#define EP2_IN                     0x82
-#define EP3_OUT                    0x03
-#define EP3_IN                     0x83
+#include <stdint.h>
 
 class Usb
 {
 public:
+    enum Endpoints {
+        Ep0Out  = 0x00,
+        Ep0In   = 0x80,
+        Ep1Out  = 0x01,
+        Ep1In   = 0x81,
+        Ep2Out  = 0x02,
+        Ep2In   = 0x82,
+        Ep3Out  = 0x03,
+        Ep3In   = 0x83
+    };
+
     static void init();
+
+    static void handleINData(void *p);
+    static void handleOUTData(void *p);
+
+    static int read(uint8_t *buf, unsigned len);
+    static int write(const uint8_t *buf, unsigned len);
+
+private:
+
 };
 
 #endif // USB_H
