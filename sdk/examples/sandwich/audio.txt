@@ -1,3 +1,7 @@
+music_castle.raw
+music_dungeon.raw
+music_sting.raw
+music_winscreen.raw
 sfx_deNeighbor.raw
 sfx_doorBlock.raw
 sfx_doorOpen.raw
@@ -7,5 +11,3 @@ sfx_running.raw
 sfx_walkStart.raw
 sfx_zoomIn.raw
 sfx_zoomOut.raw
-sting.raw
-win_screen.raw
