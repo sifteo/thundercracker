@@ -29,6 +29,27 @@ void siftmain() {
 	    System::paint();
 	  }
 	}
+	{ // fake power-on
+		for(unsigned hack=0; hack<4; ++hack) {
+			for(unsigned i=0; i<NUM_CUBES; ++i) {
+				VidMode_BG0 mode(gCubes[i].vbuf);
+				mode.init();
+				mode.BG0_drawAsset(Vec2(0,0), PowerOff);
+				gCubes[i].vbuf.touch();
+			}
+			System::paintSync();
+		}
+		unsigned cnt = 0;
+		while(cnt < 2 * (NUM_CUBES-1)) {
+			System::paint();
+			cnt = 0;
+			for(unsigned i=0; i<NUM_CUBES; ++i) {
+				for(Cube::Side s=0; s<4; ++s) {
+					cnt += gCubes[i].hasPhysicalNeighborAt(s);
+				}
+			}
+		}
+	}
 	gChannelSfx.init();
 	for(;;) {
 		#ifndef SKIP_INTRO
