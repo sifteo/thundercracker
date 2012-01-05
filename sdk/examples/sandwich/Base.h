@@ -37,4 +37,4 @@ void MoveSprite(Cube *c, int id, int px, int py);
 
 // Audio Smutz
 void PlaySfx(const _SYSAudioModule& handle, bool preempt=true);
-void PlayMusic(const _SYSAudioModule& music);
+void PlayMusic(const _SYSAudioModule& music, bool loop=true);

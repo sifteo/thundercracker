@@ -79,11 +79,11 @@ void PlaySfx(const _SYSAudioModule& handle, bool preempt) {
   gChannelSfx.play(handle);
 }
 
-void PlayMusic(const _SYSAudioModule& music) {
+void PlayMusic(const _SYSAudioModule& music, bool loop) {
   if (gChannelMusic.isPlaying()) {
     gChannelMusic.stop();
   }
-  gChannelMusic.play(music, LoopRepeat);
+  gChannelMusic.play(music, loop ? LoopRepeat : LoopOnce);
 }
 
 //------------------------------------------------------------------------------
