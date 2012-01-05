@@ -8,7 +8,8 @@
 #  define NUM_CUBES 3
 #endif
 
-#define SKIP_INTRO
+//#define SKIP_INTRO
+//#define SKIP_OUTRO
 
 extern Cube gCubes[NUM_CUBES];
 extern AudioChannel gChannelSfx;
