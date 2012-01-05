@@ -19,6 +19,7 @@ public:
 private:
     static char sOldWords[MAX_OLD_WORDS][MAX_LETTERS_PER_WORD + 1];
     static unsigned sNumOldWords;
+    static unsigned sRandSeed;
 };
 
 #endif // DICTIONARY_H
