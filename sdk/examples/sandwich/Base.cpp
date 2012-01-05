@@ -66,3 +66,13 @@ void PlaySfx(const _SYSAudioModule& handle, bool preempt) {
   }
   gChannelSfx.play(handle);
 }
+
+unsigned int Rand( unsigned int max ) {
+#ifdef _WIN32
+  return rand()%max;
+#else
+    static unsigned int seed = (int)( System::clock() * 10000);
+  return rand_r(&seed)%max;
+#endif
+}
+

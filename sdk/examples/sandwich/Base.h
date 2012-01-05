@@ -8,6 +8,8 @@
 #  define NUM_CUBES 3
 #endif
 
+#define SKIP_INTRO
+
 extern Cube gCubes[NUM_CUBES];
 extern AudioChannel gChannelSfx;
 
@@ -21,6 +23,7 @@ using namespace Sifteo;
 
 // Utils
 Cube::Side InferDirection(Vec2 u);
+unsigned int Rand( unsigned int max );
 
 // Sprite Schmutz
 bool InSpriteMode(Cube* c);

@@ -89,7 +89,7 @@ namespace MapTool {
           layer.opacity = float.Parse(node.Attributes["opacity"].Value);
         }
         int y = 0;
-        foreach(var line in node.SelectSingleNode("data").InnerText.Split(new char[] {'\n' }, StringSplitOptions.RemoveEmptyEntries)) {
+        foreach(var line in node.SelectSingleNode("data").InnerText.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)) {
           int x = 0;
           foreach(var gid in line.Trim().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)) {
             layer.tiles[x,y] = int.Parse(gid);
