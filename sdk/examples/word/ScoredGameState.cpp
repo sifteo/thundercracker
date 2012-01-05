@@ -44,7 +44,28 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewWordFound:
 //        WordGame::playAudio(fireball_laugh, AudioChannelIndex_Score);
-        WordGame::playAudio(fanfare_fire_laugh_01, AudioChannelIndex_Score);
+        switch (strlen(data.mWordFound.mWord))
+        {
+        case 2:
+            WordGame::playAudio(fanfare_fire_laugh_01, AudioChannelIndex_Score);
+            break;
+
+        case 3:
+            WordGame::playAudio(fanfare_fire_laugh_02, AudioChannelIndex_Score);
+            break;
+
+        case 4:
+            WordGame::playAudio(fanfare_fire_laugh_03, AudioChannelIndex_Score);
+            break;
+
+        case 5:
+            WordGame::playAudio(fanfare_fire_laugh_04, AudioChannelIndex_Score);
+            break;
+
+        default:
+            WordGame::playAudio(fanfare_fire_laugh_04, AudioChannelIndex_Score);
+            break;
+        }
         break;
 
     case EventID_OldWordFound:
