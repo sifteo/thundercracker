@@ -31,16 +31,18 @@ void siftmain() {
 	}
 	gChannelSfx.init();
 	for(;;) {
-		/*
+		#ifndef SKIP_INTRO
 		gChannelSfx.play(sting);
 		IntroCutscene();
 		gChannelSfx.stop();
-		*/
+		#endif
 		*pGame = Game(); // re-initialize memory
 		pGame->MainLoop();
+		#ifndef SKIP_OUTRO
 		gChannelSfx.play(win_screen);
 		WinScreen(pGame->player.CurrentView()->GetCube());
 		gChannelSfx.stop();
+		#endif
 	}
 }
 
