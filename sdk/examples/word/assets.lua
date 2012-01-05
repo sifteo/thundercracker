@@ -11,13 +11,28 @@ Title = image{"wc_title.png", quality=10}
 HighScores = image{"high_scores.png", quality=10}
 Score = image{"score.png", quality=10}
 Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
+TeethLoopConnected = image{"wc_letters_neighbored.png", width=128, height=128, quality=10}
 TeethLoopWord = image{"wc_letters_connected_center.png", width=128, height=128, quality=10}
 TeethLoopWordLeft = image{"wc_letters_connected_left.png", width=128, height=128, quality=10}
 TeethLoopWordRight = image{"wc_letters_connected_right.png", width=128, height=128, quality=10}
-TeethLoopConnected = image{"WC_letters_neighbored.png", width=128, height=128, quality=10}
 TeethNewWord = image{"wc_letters_connected_center_new.png", width=128, height=128, quality=10}
 TeethNewWordLeft = image{"wc_letters_connected_left_new.png", width=128, height=128, quality=10}
 TeethNewWordRight = image{"WC_letters_connected_right_new.png", width=128, height=128, quality=10}
+TeethNewWord2 = image{"wc_letters_connected_center_2.png", width=128, height=128, quality=10}
+TeethNewWord2Left = image{"wc_letters_connected_left_2.png", width=128, height=128, quality=10}
+TeethNewWord2Right = image{"WC_letters_connected_right_2.png", width=128, height=128, quality=10}
+TeethNewWord3 = image{"wc_letters_connected_center_new.png", width=128, height=128, quality=10}
+TeethNewWord3Left = image{"wc_letters_connected_left_new.png", width=128, height=128, quality=10}
+TeethNewWord3Right = image{"WC_letters_connected_right_new.png", width=128, height=128, quality=10}
+TeethNewWord4 = image{"wc_letters_connected_center_new.png", width=128, height=128, quality=10}
+TeethNewWord4Left = image{"wc_letters_connected_left_new.png", width=128, height=128, quality=10}
+TeethNewWord4Right = image{"WC_letters_connected_right_new.png", width=128, height=128, quality=10}
+TeethNewWord5 = image{"wc_letters_connected_center_new.png", width=128, height=128, quality=10}
+TeethNewWord5Left = image{"wc_letters_connected_left_new.png", width=128, height=128, quality=10}
+TeethNewWord5Right = image{"WC_letters_connected_right_new.png", width=128, height=128, quality=10}
+TeethNewWord6 = image{"wc_letters_connected_center_new.png", width=128, height=128, quality=10}
+TeethNewWord6Left = image{"wc_letters_connected_left_new.png", width=128, height=128, quality=10}
+TeethNewWord6Right = image{"WC_letters_connected_right_new.png", width=128, height=128, quality=10}
 FontSmall = image{"font-8x16.png", width=8, height=16, quality=10}
 FontTeeth = image{"teeth_numbers.png", width=16, height=16, quality=10}
 TeethClock30_0 = image{"teeth_numbers.png", width=16, height=16, quality=10}

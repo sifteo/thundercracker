@@ -11,6 +11,7 @@
 char Dictionary::sOldWords[MAX_OLD_WORDS][MAX_LETTERS_PER_WORD + 1];
 unsigned Dictionary::sNumOldWords = 0;
 unsigned Dictionary::sRandSeed = 0;
+const unsigned WORD_RAND_SEED_INCREMENT = 1000;
 
 Dictionary::Dictionary()
 {
@@ -19,7 +20,7 @@ Dictionary::Dictionary()
 const char* Dictionary::pickWord(unsigned length)
 {
     // TODO remove demo code
-    sRandSeed += 1000;
+    sRandSeed += WORD_RAND_SEED_INCREMENT;
     WordGame::seedRand(sRandSeed++);
 
     //return "CITIES";
@@ -58,6 +59,15 @@ void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
         if (sNumOldWords + 1 < MAX_OLD_WORDS)
         {
             strcpy(sOldWords[sNumOldWords++], data.mWordFound.mWord);
+        }
+        break;
+
+    case EventID_GameStateChanged:
+        switch (data.mGameStateChanged.mNewStateIndex)
+        {
+        case GameStateIndex_EndOfRoundScored:
+            sRandSeed += 120 * WORD_RAND_SEED_INCREMENT;
+            break;
         }
         break;
 

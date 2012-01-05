@@ -16,7 +16,8 @@ static const char sList[][7] =
 
 #else
 
-static const char sList[][MAX_LETTERS_PER_WORD + 1] =
+// TODO compress bits, remove 6 letter words, regenerate, etc. etc.
+static const char sList[][6 + 1] =
 {
     "AA",
     "AAL",
