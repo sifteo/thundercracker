@@ -6,7 +6,6 @@
 #include "MenuController.h"
 #include "TFcubewrapper.h"
 #include "assets.gen.h"
-#include "audio.gen.h"
 
 using namespace SelectorMenu;
 
@@ -181,7 +180,8 @@ void TiltFlowMenu::ReassignMenu() {
 void TiltFlowMenu::playSound( const _SYSAudioModule &sound )
 {
     m_SFXChannel.stop();
-    m_SFXChannel.play(sound, LoopOnce);
+    // super temp during assetbndl testing, don't bother playing sound.
+//    m_SFXChannel.play(sound, LoopOnce);
 }
 
 
