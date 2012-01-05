@@ -3,3 +3,5 @@
 *.d
 *~
 failed-*.png
+*_enc.raw
+asegment.bin
