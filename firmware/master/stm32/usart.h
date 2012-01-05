@@ -28,9 +28,9 @@ public:
     void init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits = Stop1);
     void deinit();
 
-    void write(const char* buf, int size);
+    void write(const uint8_t* buf, int size);
     void write(const char* buf);
-    void read(char *buf, int size);
+    void read(uint8_t *buf, int size);
 
     void put(char c);
     char get();
