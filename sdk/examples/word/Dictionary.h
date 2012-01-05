@@ -3,7 +3,7 @@
 
 #include "CubeStateMachine.h"
 
-const unsigned MAX_OLD_WORDS = 63; // as determined by offline check
+const unsigned MAX_OLD_WORDS = 32; // as determined by offline check
 
 class Dictionary
 {
