@@ -6,9 +6,11 @@
 #include <stdio.h>
 #include "EventID.h"
 #include "EventData.h"
+#include "WordGame.h"
 
 char Dictionary::sOldWords[MAX_OLD_WORDS][MAX_LETTERS_PER_WORD + 1];
 unsigned Dictionary::sNumOldWords = 0;
+unsigned Dictionary::sRandSeed = 0;
 
 Dictionary::Dictionary()
 {
@@ -16,6 +18,10 @@ Dictionary::Dictionary()
 
 const char* Dictionary::pickWord(unsigned length)
 {
+    // TODO remove demo code
+    sRandSeed += 1000;
+    WordGame::seedRand(sRandSeed++);
+
     //return "CITIES";
     const char* word = PrototypeWordList::pickWord(length);
     DEBUG_LOG(("picked word %s\n", word));

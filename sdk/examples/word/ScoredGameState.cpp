@@ -101,7 +101,30 @@ void ScoredGameState::createNewAnagram()
 {
     // make a new anagram of letters halfway through the shuffle animation
     EventData data;
-    data.mNewAnagram.mWord = Dictionary::pickWord(MAX_CUBES);
+    data.mNewAnagram.mWord = Dictionary::pickWord(MAX_LETTERS_PER_WORD);
+
+    // scramble the string (random permutation)
+    // TODO multiple letters per cube
+    char scrambled[MAX_LETTERS_PER_WORD + 1];
+    memset(scrambled, 0, sizeof(scrambled));
+    for (unsigned i = 0; i < MAX_LETTERS_PER_WORD; ++i)
+    {
+        // for each letter, place it randomly in the scrambled array
+        for (unsigned j = WordGame::rand(MAX_LETTERS_PER_WORD);
+             true;
+             j = (j + 1) % MAX_LETTERS_PER_WORD)
+        {
+            if (scrambled[j] == '\0')
+            {
+                scrambled[j] = data.mNewAnagram.mWord[i];
+                break;
+            }
+        }
+    }
+
+    DEBUG_LOG(("scrambled %s to %s\n", data.mNewAnagram.mWord, scrambled));
+    ASSERT(strlen(scrambled) == MAX_LETTERS_PER_WORD);
+    data.mNewAnagram.mWord = scrambled;
     unsigned wordLen = strlen(data.mNewAnagram.mWord);
     unsigned numCubes = GameStateMachine::GetNumCubes();
     if ((wordLen % numCubes) == 0)

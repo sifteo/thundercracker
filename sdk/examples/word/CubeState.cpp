@@ -74,7 +74,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         {
             frame = 3;
         }
-        DEBUG_LOG(("shuffle: [c: %d] anim: %d, frame: %d, time: %f\n", getStateMachine().getCube().id(), teethImageIndex, frame, GameStateMachine::getTime()));
+        //DEBUG_LOG(("shuffle: [c: %d] anim: %d, frame: %d, time: %f\n", getStateMachine().getCube().id(), teethImageIndex, frame, GameStateMachine::getTime()));
 
     }
     else if (reverseAnim)
