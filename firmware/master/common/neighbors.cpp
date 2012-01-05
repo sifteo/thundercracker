@@ -19,6 +19,8 @@ using namespace Sifteo;
 
 NeighborSlot NeighborSlot::instances[_SYS_NUM_CUBE_SLOTS];
 
+#define NUM_UNIQUE_PAIRS ((_SYS_NUM_CUBE_SLOTS * (_SYS_NUM_CUBE_SLOTS)) >> 1)
+
 struct NeighborPair {
     _SYSSideID side0;
     _SYSSideID side1;
@@ -45,18 +47,21 @@ struct NeighborPair {
     inline NeighborPair* lookup(_SYSCubeID cid0, _SYSCubeID cid1) {
         // invariant this == pairs[0]
         // invariant cid0 < cid1
-        return this + (cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
+        
+        // space-wasting pair buffer
+        //return this + (cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
 
-
+        // space-conservative pair buffer
+        const unsigned n = _SYS_NUM_CUBE_SLOTS - cid0;
+        return this + ( (NUM_UNIQUE_PAIRS-1) - ( (n*(n-1)) >> 1 ) + cid1 );
     }
 };
 
-// note: technically we're wasting space addressing uniform-length rows, but a compact
-// representation would require a more clever impl of NeighborPair::lookup
-// static NeighborPair gCubesToSides[_SYS_NUM_CUBE_SLOTS*(_SYS_NUM_CUBE_SLOTS-1)/2];
+// space-conserving pair-buffer that only stores upper-echelon cells
+static NeighborPair gCubesToSides[NUM_UNIQUE_PAIRS];
 
-// for refrence the waste is (#CUBES-1)(#CUBES-2)/2 = (31)(30)/2 = 465 int16 = 930 bytes
-static NeighborPair gCubesToSides[(_SYS_NUM_CUBE_SLOTS-1)*(_SYS_NUM_CUBE_SLOTS-1)];
+// space-wasting pair-buffer w/ uniform row length
+//static NeighborPair gCubesToSides[(_SYS_NUM_CUBE_SLOTS-1)*(_SYS_NUM_CUBE_SLOTS-1)];
 
 void NeighborSlot::computeEvents() {
     uint8_t rawNeighbors[4];
