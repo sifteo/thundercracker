@@ -46,9 +46,16 @@ struct NeighborPair {
         // invariant this == pairs[0]
         // invariant cid0 < cid1
         return this + (cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
+
+
     }
 };
 
+// note: technically we're wasting space addressing uniform-length rows, but a compact
+// representation would require a more clever impl of NeighborPair::lookup
+// static NeighborPair gCubesToSides[_SYS_NUM_CUBE_SLOTS*(_SYS_NUM_CUBE_SLOTS-1)/2];
+
+// for refrence the waste is (#CUBES-1)(#CUBES-2)/2 = (31)(30)/2 = 465 int16 = 930 bytes
 static NeighborPair gCubesToSides[(_SYS_NUM_CUBE_SLOTS-1)*(_SYS_NUM_CUBE_SLOTS-1)];
 
 void NeighborSlot::computeEvents() {
@@ -93,7 +100,7 @@ void NeighborSlot::resetPairs(_SYSCubeIDVector cv) {
             gCubesToSides->lookup(i, cubeId)->clear();
         }
         for(_SYSCubeID i=cubeId+1; i<_SYS_NUM_CUBE_SLOTS; ++i) {
-            gCubesToSides->lookup(i, cubeId)->clear();
+            gCubesToSides->lookup(cubeId, i)->clear();
         }
         cv ^= Intrinsic::LZ(cubeId);
     }
