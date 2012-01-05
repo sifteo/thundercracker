@@ -82,7 +82,7 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         {
         case GameStateIndex_EndOfRoundScored:
             // TODO diff endings
-            WordGame::playAudio(timeup_02, AudioChannelIndex_Time);
+            WordGame::playAudio(timeup_01_laugh, AudioChannelIndex_Time);
             break;
         }
         break;
