@@ -5,6 +5,8 @@ import os, sys
 import fileinput
 import sys
 
+seed_size = 5
+
 def find_anagrams(string, dictionary):
 
     words = {}
@@ -17,6 +19,23 @@ def find_anagrams(string, dictionary):
     #print string
     #print words
     return words
+
+def generate_word_list_file():
+    fi = open("words0.txt", "r")
+    #print "second file " + fi.filename()
+    
+    word_list = {}
+    for line in fi:
+        word = line.strip()
+        if len(word) == seed_size and word.find("'") == -1:
+            print "word list: " + line
+            word_list[word] = True        
+    fi.close()
+
+    fi = open("word_list.txt", "w")
+    for word in word_list:
+        fi.write(word + "\n")
+    fi.close()
     
 def generate_dict():
     """ Reads in a dictionary and a word list, then writes out a (hopefully smaller) dictionary that is composed of that word list and all possible anagram of each word"""
@@ -28,11 +47,13 @@ def generate_dict():
     fi.close()
 
     print "words in dict: " + str(len(dictionary))
+    
+    # uncomment to regenerate: generate_word_list_file()
+    
     fi = open("word_list.txt", "r")
     #print "second file " + fi.filename()
     
     word_list = {}
-    seed_size = 6
     for line in fi:
         word = line.strip()
         if len(word) == seed_size and word.find("'") == -1:

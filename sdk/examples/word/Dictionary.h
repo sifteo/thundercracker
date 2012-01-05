@@ -3,7 +3,7 @@
 
 #include "CubeStateMachine.h"
 
-const unsigned MAX_OLD_WORDS = 63; // as determined by offline check
+const unsigned MAX_OLD_WORDS = 32; // as determined by offline check
 
 class Dictionary
 {
@@ -19,6 +19,7 @@ public:
 private:
     static char sOldWords[MAX_OLD_WORDS][MAX_LETTERS_PER_WORD + 1];
     static unsigned sNumOldWords;
+    static unsigned sRandSeed;
 };
 
 #endif // DICTIONARY_H

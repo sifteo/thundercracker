@@ -1,5 +1,4 @@
 astrokraut.raw
-bubble_pop_02.raw
 clear1.raw
 clear2.raw
 clear3.raw

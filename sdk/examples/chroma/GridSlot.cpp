@@ -332,7 +332,7 @@ void GridSlot::Update(float t)
             if( t - m_eventTime > MARK_BREAK_DELAY )
             {
                 explode();
-                Game::Inst().playSound(bubble_pop_02);
+                //Game::Inst().playSound(bubble_pop_02);
             }
 			break;
 		}
@@ -401,7 +401,7 @@ void GridSlot::markNeighbor( int row, int col )
 
 	//PRINT( "pneighbor = %p", pNeighbor );
 	//PRINT( "color = %d", pNeighbor->getColor() );
-    if( pNeighbor && pNeighbor->isMatchable() && pNeighbor->getColor() == m_color )
+    if( pNeighbor && pNeighbor->isMatchable() && !pNeighbor->isMarked() && pNeighbor->getColor() == m_color )
 		pNeighbor->mark();
 }
 

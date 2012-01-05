@@ -1,6 +1,8 @@
 #include "Game.h"
 
-Cube cubes[NUM_CUBES];
+Cube gCubes[NUM_CUBES];
+AudioChannel gChannelSfx;
+
 static Game sGame;
 Game* pGame = &sGame;
 
@@ -10,9 +12,9 @@ void WinScreen(Cube* primaryCube);
 void siftmain() {
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-	    cubes[i].enable(i);
-	    cubes[i].loadAssets(GameAssets);
-	    VidMode_BG0_ROM rom(cubes[i].vbuf);
+	    gCubes[i].enable(i);
+	    gCubes[i].loadAssets(GameAssets);
+	    VidMode_BG0_ROM rom(gCubes[i].vbuf);
 	    rom.init();
 	    rom.BG0_text(Vec2(1,1), "Loading...");
 	  }
@@ -20,18 +22,48 @@ void siftmain() {
 	  while(!done) {
 	  	done = true;
 	    for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-	      VidMode_BG0_ROM rom(cubes[i].vbuf);
-	      rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-	      done &= cubes[i].assetDone(GameAssets);
+	      VidMode_BG0_ROM rom(gCubes[i].vbuf);
+	      rom.BG0_progressBar(Vec2(0,7), gCubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+	      done &= gCubes[i].assetDone(GameAssets);
 	    }
 	    System::paint();
 	  }
 	}
+	{ // fake power-on
+		for(unsigned hack=0; hack<4; ++hack) {
+			for(unsigned i=0; i<NUM_CUBES; ++i) {
+				VidMode_BG0 mode(gCubes[i].vbuf);
+				mode.init();
+				mode.BG0_drawAsset(Vec2(0,0), PowerOff);
+				gCubes[i].vbuf.touch();
+			}
+			System::paintSync();
+		}
+		unsigned cnt = 0;
+		while(cnt < 2 * (NUM_CUBES-1)) {
+			System::paint();
+			cnt = 0;
+			for(unsigned i=0; i<NUM_CUBES; ++i) {
+				for(Cube::Side s=0; s<4; ++s) {
+					cnt += gCubes[i].hasPhysicalNeighborAt(s);
+				}
+			}
+		}
+	}
+	gChannelSfx.init();
 	for(;;) {
+		#ifndef SKIP_INTRO
+		gChannelSfx.play(sting);
 		IntroCutscene();
+		gChannelSfx.stop();
+		#endif
 		*pGame = Game(); // re-initialize memory
 		pGame->MainLoop();
+		#ifndef SKIP_OUTRO
+		gChannelSfx.play(win_screen);
 		WinScreen(pGame->player.CurrentView()->GetCube());
+		gChannelSfx.stop();
+		#endif
 	}
 }
 
@@ -46,15 +78,15 @@ static void WaitForSeconds(float dt) {
 
 void IntroCutscene() {
 	for(int i=0; i<NUM_CUBES; ++i) {
-		VidMode_BG0 stingMode(cubes[i].vbuf);
+		VidMode_BG0 stingMode(gCubes[i].vbuf);
 		stingMode.init();
 		stingMode.BG0_drawAsset(Vec2(0,0), Sting);
-		cubes[i].vbuf.touch();
+		gCubes[i].vbuf.touch();
 	}
 	//System::paintSync();
-	WaitForSeconds(2.f);
-	EnterSpriteMode(&cubes[0]);
-	VidMode_BG0 mode(cubes[0].vbuf);
+	WaitForSeconds(5.f);
+	EnterSpriteMode(&gCubes[0]);
+	VidMode_BG0 mode(gCubes[0].vbuf);
 
 	// iris out
 	for(unsigned i=0; i<8; ++i) {
@@ -93,26 +125,26 @@ void IntroCutscene() {
 	// pearl walks up from bottom
 	int framesPerCycle = PlayerWalk.frames >> 2;
 	int tilesPerFrame = PlayerWalk.width * PlayerWalk.height;
-	ResizeSprite(&cubes[0], 0, 32, 32);
+	ResizeSprite(&gCubes[0], 0, 32, 32);
 	for(unsigned i=0; i<48; ++i) {
-		SetSpriteImage(&cubes[0], 0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
-		MoveSprite(&cubes[0], 0, 64-16, 128-i);
+		SetSpriteImage(&gCubes[0], 0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
+		MoveSprite(&gCubes[0], 0, 64-16, 128-i);
 		System::paintSync();
 	}
 	// face front
-	SetSpriteImage(&cubes[0], 0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	SetSpriteImage(&gCubes[0], 0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
 	WaitForSeconds(0.5f);
 
 	// look left
-	SetSpriteImage(&cubes[0], 0, PlayerIdle.index);
+	SetSpriteImage(&gCubes[0], 0, PlayerIdle.index);
 	WaitForSeconds(0.5f);
-	SetSpriteImage(&cubes[0], 0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	SetSpriteImage(&gCubes[0], 0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
 	WaitForSeconds(0.5f);
 
 	// look right
-	SetSpriteImage(&cubes[0], 0, PlayerIdle.index + (PlayerIdle.width * PlayerIdle.height));
+	SetSpriteImage(&gCubes[0], 0, PlayerIdle.index + (PlayerIdle.width * PlayerIdle.height));
 	WaitForSeconds(0.5f);
-	SetSpriteImage(&cubes[0], 0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	SetSpriteImage(&gCubes[0], 0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
 	WaitForSeconds(0.5f);
 
 	// thought bubble appears
@@ -126,47 +158,47 @@ void IntroCutscene() {
 	const int innerPad = (128 - pad - pad) / 3;
 	for(unsigned i = 0; i < 4; ++i) {
 		int x = pad + innerPad * i - 8;
-		SetSpriteImage(&cubes[0], i+1, Items.index + Items.width * Items.height * (i+1));
-		ResizeSprite(&cubes[0], i+1, 16, 16);
+		SetSpriteImage(&gCubes[0], i+1, Items.index + Items.width * Items.height * (i+1));
+		ResizeSprite(&gCubes[0], i+1, 16, 16);
 		// jump
 		for(int j=0; j<6; j++) {
-			MoveSprite(&cubes[0], i+1, x, 42 - j);
+			MoveSprite(&gCubes[0], i+1, x, 42 - j);
 			System::paint();
 		}
 		for(int j=6; j>0; --j) {
-			MoveSprite(&cubes[0], i+1, x, 42 - j);
+			MoveSprite(&gCubes[0], i+1, x, 42 - j);
 			System::paint();
 		}
-		MoveSprite(&cubes[0], i+1, x, 42);
+		MoveSprite(&gCubes[0], i+1, x, 42);
 		System::paintSync();
 	}
 	WaitForSeconds(1.f);
 
 	// do the pickup animation
 	for(unsigned i=0; i<PlayerPickup.frames; ++i) {
-		SetSpriteImage(&cubes[0], 0, PlayerPickup.index + i * PlayerPickup.width * PlayerPickup.height);
+		SetSpriteImage(&gCubes[0], 0, PlayerPickup.index + i * PlayerPickup.width * PlayerPickup.height);
 		System::paintSync();
 		WaitForSeconds(0.05f);
 	}
-	SetSpriteImage(&cubes[0], 0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
+	SetSpriteImage(&gCubes[0], 0, PlayerStand.index + SIDE_BOTTOM * (PlayerStand.width * PlayerStand.height));
 	WaitForSeconds(2.f);
 
 	// hide items and bubble
-	HideSprite(&cubes[0], 1);
-	HideSprite(&cubes[0], 2);
-	HideSprite(&cubes[0], 3);
-	HideSprite(&cubes[0], 4);
+	HideSprite(&gCubes[0], 1);
+	HideSprite(&gCubes[0], 2);
+	HideSprite(&gCubes[0], 3);
+	HideSprite(&gCubes[0], 4);
 	for(int x=3; x<13; ++x) { mode.BG0_drawAsset(Vec2(x, 0), ScrollMiddle); }
 	System::paintSync();
 
 	// walk off
 	unsigned downIndex = PlayerWalk.index + SIDE_BOTTOM * tilesPerFrame * framesPerCycle;
 	for(unsigned i=48; i>0; --i) {
-		SetSpriteImage(&cubes[0], 0, downIndex + tilesPerFrame * (i%framesPerCycle));
-		MoveSprite(&cubes[0], 0, 64-16, 128-i);
+		SetSpriteImage(&gCubes[0], 0, downIndex + tilesPerFrame * (i%framesPerCycle));
+		MoveSprite(&gCubes[0], 0, 64-16, 128-i);
 		System::paintSync();
 	}
-	HideSprite(&cubes[0], 0);
+	HideSprite(&gCubes[0], 0);
 
 	// iris out
 	for(unsigned i=0; i<8; ++i) {
@@ -214,8 +246,8 @@ void WinScreen(Cube* primaryCube) {
 	for(unsigned i=0; i<8; ++i) { HideSprite(primaryCube, i); }
 	VidMode_BG0(primaryCube->vbuf).BG0_drawAsset(Vec2(0,0), WinscreenBackground);
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
-		if (cubes+i != primaryCube) {
-			VidMode_BG0 idleMode(cubes[i].vbuf);
+		if (gCubes+i != primaryCube) {
+			VidMode_BG0 idleMode(gCubes[i].vbuf);
 			idleMode.init();
 			idleMode.BG0_drawAsset(Vec2(0,0), Sting);
 		}

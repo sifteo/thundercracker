@@ -1,6 +1,12 @@
 #include "macronixmx25.h"
 #include "board.h"
 
+MacronixMX25 MacronixMX25::instance(SPIMaster(&FLASH_SPI,
+                                              FLASH_CS_GPIO,
+                                              FLASH_SCK_GPIO,
+                                              FLASH_MISO_GPIO,
+                                              FLASH_MOSI_GPIO));
+
 void MacronixMX25::init()
 {
     GPIOPin writeProtect = FLASH_WP_GPIO;
@@ -10,6 +16,7 @@ void MacronixMX25::init()
     spi.init();
 
     // reset
+#if 0
     spi.begin();
     spi.transfer(ResetEnable);
     spi.end();
@@ -17,6 +24,7 @@ void MacronixMX25::init()
     spi.begin();
     spi.transfer(Reset);
     spi.end();
+#endif
 
     // prepare to write the status register
     spi.begin();

@@ -10,7 +10,7 @@
  * Low level hardware setup for the STM32 board.
  */
 
-#include <sifteo/abi.h>
+#include <sifteo.h>
 #include "radio.h"
 #include "usb.h"
 #include "runtime.h"
@@ -18,6 +18,8 @@
 #include "vectors.h"
 #include "systime.h"
 #include "gpio.h"
+#include "macronixmx25.h"
+#include "tasks.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
@@ -102,7 +104,7 @@ extern "C" void _start()
     // Enable peripheral clocks
     RCC.APB1ENR = 0x00004000;    // SPI2
     RCC.APB2ENR = 0x0000003d;    // GPIO/AFIO
-    RCC.AHBENR  = 0x00001000;    // USB OTG
+    RCC.AHBENR  = 0x00001040;    // USB OTG, CRC
 
 #if 0
     // debug the clock output - MCO
@@ -142,6 +144,10 @@ extern "C" void _start()
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
         p[0]();
 
+
+    AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
+    MacronixMX25::instance.init();
+
     /*
      * Nested Vectored Interrupt Controller setup.
      *
@@ -161,6 +167,7 @@ extern "C" void _start()
 
     SysTime::init();
     Radio::open();
+    Tasks::init();
     Usb::init();
 
     /*

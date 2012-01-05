@@ -1,0 +1,11 @@
+sfx_deNeighbor.raw
+sfx_doorBlock.raw
+sfx_doorOpen.raw
+sfx_neighbor.raw
+sfx_pickup.raw
+sfx_running.raw
+sfx_walkStart.raw
+sfx_zoomIn.raw
+sfx_zoomOut.raw
+sting.raw
+win_screen.raw
