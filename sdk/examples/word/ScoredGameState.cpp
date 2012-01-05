@@ -38,7 +38,6 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_AddNeighbor:
-//        WordGame::playAudio(pause_off, AudioChannelIndex_Neighbor);
         WordGame::playAudio(neighbor, AudioChannelIndex_Neighbor);
         break;
 
@@ -69,7 +68,6 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_OldWordFound:
-//        WordGame::playAudio(pause_on, AudioChannelIndex_Score);
         WordGame::playAudio(lip_snort, AudioChannelIndex_Score);
         break;
 
@@ -84,7 +82,7 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         {
         case GameStateIndex_EndOfRoundScored:
             // TODO diff endings
-            WordGame::playAudio(timeup_01, AudioChannelIndex_Time);
+            WordGame::playAudio(timeup_02, AudioChannelIndex_Time);
             break;
         }
         break;
@@ -93,12 +91,16 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         switch (GameStateMachine::getSecondsLeft())
         {
         case 30:
+//            WordGame::playAudio(bonus, AudioChannelIndex_Time);
+
             WordGame::playAudio(timer_30sec, AudioChannelIndex_Time);
             break;
         case 20:
+//            WordGame::playAudio(pause_on, AudioChannelIndex_Time);
             WordGame::playAudio(timer_20sec, AudioChannelIndex_Time);
             break;
         case 10:
+//            WordGame::playAudio(pause_off, AudioChannelIndex_Time);
             WordGame::playAudio(timer_10sec, AudioChannelIndex_Time);
             break;
         case 3:
