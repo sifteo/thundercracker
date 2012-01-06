@@ -316,10 +316,10 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
                     unsigned eyeFrame = 0;
                     const EyeData& ed = getEyeData(*str);
-                    ASSERT(ed.ly > 0); // eyes should not be in top or bottom rows, there seems to be a bug with HW sprite positioning
-                    ASSERT(ed.ry > 0);
-                    ASSERT(ed.ly < 15);
-                    ASSERT(ed.ry < 15);
+                    ASSERT(ed.ly > 8); // eyes should not be in top or bottom rows, there seems to be a bug with HW sprite positioning
+                    ASSERT(ed.ry > 8);
+                    ASSERT(ed.ly < 120);
+                    ASSERT(ed.ry < 120);
 
                     EyePersonality personality =
                             (EyePersonality)(getStateMachine().getCube().id() % NumEyePersonalities);
