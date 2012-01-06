@@ -71,12 +71,6 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         WordGame::playAudio(lip_snort, AudioChannelIndex_Score);
         break;
 
-    /*
-    case EventID_NewAnagram:
-        WordGame::playAudio(swap, AudioChannelIndex_NewAnagram);
-        break;
-    */
-
     case EventID_GameStateChanged:
         switch (data.mGameStateChanged.mNewStateIndex)
         {
@@ -95,20 +89,25 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
 
             WordGame::playAudio(timer_30sec, AudioChannelIndex_Time);
             break;
+
         case 20:
 //            WordGame::playAudio(pause_on, AudioChannelIndex_Time);
             WordGame::playAudio(timer_20sec, AudioChannelIndex_Time);
             break;
+
         case 10:
 //            WordGame::playAudio(pause_off, AudioChannelIndex_Time);
             WordGame::playAudio(timer_10sec, AudioChannelIndex_Time);
             break;
+
         case 3:
             WordGame::playAudio(timer_3sec, AudioChannelIndex_Time);
             break;
+
         case 2:
             WordGame::playAudio(timer_2sec, AudioChannelIndex_Time);
             break;
+
         case 1:
             WordGame::playAudio(timer_1sec, AudioChannelIndex_Time);
             break;
