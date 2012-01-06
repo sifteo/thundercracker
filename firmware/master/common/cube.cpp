@@ -12,6 +12,7 @@
 #include "cube.h"
 #include "vram.h"
 #include "accel.h"
+#include "flashlayer.h"
 
 #include "neighbors.h"
 
@@ -59,6 +60,7 @@ static const int8_t fpMin = -8;
 
 #ifndef DISABLE_CUBE
 
+/*
 void CubeSlot::loadAssets(_SYSAssetGroup *a) {
     _SYSAssetGroupCube *ac = assetCube(a);
 
@@ -85,6 +87,50 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a) {
     Atomic::And(CubeSlots::flashResetSent, ~bit());
     Atomic::Or(CubeSlots::flashResetWait, bit());
 
+    // Then start streaming asset data for this group
+    a->reqCubes |= bit();
+    // FIXME: transition to ID-based assets
+    //loadGroup = a;
+}
+*/
+
+void CubeSlot::loadAssets(_SYSAssetGroup *a)
+{
+    _SYSAssetGroupCube *ac = assetCube(a);
+
+    if (!ac)
+        return;
+    if (isAssetGroupLoaded(a))
+        return;
+    
+    // XXX: Pick a base address too!
+    ac->progress = 0;
+    
+    LOG(("FLASH[%d]: Sending asset group %u\n", id(), a->id));
+    
+    
+    int size = 0;
+    AssetIndexEntry *entry;
+
+    entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, 512, &size);
+    entry += a->id;
+    
+    int offset = entry->offset;
+    
+    FlashLayer::releaseRegionFromOffset(0);
+
+    AssetGroupHeader *header;
+    header = (AssetGroupHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(AssetGroupHeader), &size);
+    
+    a->offset = offset + sizeof(AssetGroupHeader);
+    a->size = header->dataSize;
+    
+    FlashLayer::releaseRegionFromOffset(offset);
+    
+    // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
+    Atomic::And(CubeSlots::flashResetSent, ~bit());
+    Atomic::Or(CubeSlots::flashResetWait, bit());
+    
     // Then start streaming asset data for this group
     a->reqCubes |= bit();
     loadGroup = a;

@@ -40,7 +40,7 @@ static int portAudioTestCallback(const void *inputBuffer, void *outputBuffer,
     (void) timeInfo; /* Prevent unused variable warnings. */
     (void) inputBuffer;
     if (statusFlags != paNoError) {
-        LOG(("statusFlags: %ld\n", statusFlags));
+        //LOG(("statusFlags: %ld\n", statusFlags));
     }
 
     for (unsigned long i = 0; i < framesPerBuffer; i++) {
@@ -64,7 +64,7 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
 
     PortAudioOutDevice *dev = static_cast<PortAudioOutDevice*>(userData);
     if (statusFlags != paNoError) {
-        LOG(("statusFlags: %ld\n", statusFlags));
+        //LOG(("statusFlags: %ld\n", statusFlags));
     }
     if (dev->mixer->pullAudio((int16_t*)outputBuffer, framesPerBuffer) <= 0) {
         memset(outputBuffer, 0, framesPerBuffer * sizeof(int16_t));

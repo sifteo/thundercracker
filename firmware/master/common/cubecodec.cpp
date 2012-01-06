@@ -6,10 +6,12 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <stdio.h>
 #include <protocol.h>
 #include <sifteo/machine.h>
 
 #include "cubecodec.h"
+#include "flashlayer.h"
 
 using namespace Sifteo;
 using namespace Sifteo::Intrinsic;
@@ -385,17 +387,19 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
         return false;
 
     // Group data header pointer is invalid
-    const _SYSAssetGroupHeader *ghdr = group->hdr;
-    if (!Runtime::checkUserPointer(ghdr, sizeof *ghdr))
-        return false;
+    //const _SYSAssetGroupHeader *ghdr = group->hdr;
+    //if (!Runtime::checkUserPointer(ghdr, sizeof *ghdr))
+    //    return false;
 
     // Inconsistent sizes
-    uint32_t dataSize = ghdr->dataSize;
+    //uint32_t dataSize = ghdr->dataSize;
+    //uint32_t dataSize = 16563;
+    uint32_t dataSize = group->size;
     uint32_t progress = ac->progress;
     if (progress > dataSize)
         return false;
     
-    uint8_t *src = (uint8_t *)ghdr + ghdr->hdrSize + progress;
+    //uint8_t *src = (uint8_t *)ghdr + ghdr->hdrSize + progress;
     uint32_t count;
 
     flashEscape(buf);
@@ -404,10 +408,17 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     count = MIN(buf.bytesFree(), dataSize - progress);
     count = MIN(count, loadBufferAvail);
 
-    buf.appendUser(src, count);
 
-    progress += count;
-    loadBufferAvail -= count;
+    //uint32_t offset = 512;
+    uint32_t offset = group->offset;
+    int size = 0;
+    uint8_t *region = (uint8_t*)FlashLayer::getRegionFromOffset(progress + offset, count, &size);
+    buf.appendUser(region, size);
+    
+    FlashLayer::releaseRegionFromOffset(progress + offset);
+
+    progress += size;
+    loadBufferAvail -= size;
     ac->progress = progress;
 
     ASSERT(progress <= dataSize);

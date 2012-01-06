@@ -2,6 +2,7 @@
 #include "audiomixer.h"
 #include "audiooutdevice.h"
 #include "flashlayer.h"
+#include "cubecodec.h"  // TODO: This can be removed when the asset header structs are moved to a common file.
 #include <stdio.h>
 #include <string.h>
 #include <sifteo/machine.h>
@@ -201,6 +202,7 @@ void AudioMixer::fetchData()
 //
 //}
 
+#if 0
 bool AudioMixer::play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
 {
     if (enabledChannelMask == 0 || activeChannelMask == 0xFFFFFFFF) {
@@ -236,6 +238,65 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod, _SYSAudioHandle *handle
     ch->play(mod, loopMode, dec);
 
     Atomic::SetBit(activeChannelMask, idx);
+    return true;
+}
+#endif
+
+bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
+{
+    int size = 0;
+    AssetIndexEntry *entry;
+
+    entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, 512, &size);
+    entry += mod->id;
+    
+    int offset = entry->offset;
+    
+    FlashLayer::releaseRegionFromOffset(0);
+    
+    SoundHeader *header;
+    header = (SoundHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size);
+    
+    mod->offset = offset + sizeof(SoundHeader);
+    mod->size = header->dataSize;
+    
+    FlashLayer::releaseRegionFromOffset(offset);    
+    
+    
+    if (enabledChannelMask == 0 || activeChannelMask == 0xFFFFFFFF) {
+        return false; // no free channels
+    }
+
+    // find the next channel that's both enabled and inactive
+    uint32_t activeMask = activeChannelMask;
+    uint32_t enabledMask = enabledChannelMask;
+    int idx;
+    for (idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
+        if ((enabledMask & (1 << idx)) &&
+           ((activeMask  & (1 << idx))) == 0) {
+            break;
+        }
+    }
+
+    // does this module require a decoder? if so, get one
+    SpeexDecoder *dec;
+    if (mod->type == Sample) {
+        dec = getDecoder();
+        if (dec == NULL) {
+            return false; // no decoders available
+        }
+    }
+    else {
+        dec = 0;
+    }
+
+    AudioChannelWrapper *ch = &channels[idx];
+    ch->handle = nextHandle++;
+    *handle = ch->handle;
+    ch->play(mod, loopMode, dec);
+
+    Atomic::SetBit(activeChannelMask, idx);
+    
     return true;
 }
 

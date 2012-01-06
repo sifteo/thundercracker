@@ -13,6 +13,7 @@
 #include "script.h"
 #include "proof.h"
 #include "cppwriter.h"
+#include "asegwriter.h"
 
 namespace Stir {
 
@@ -22,6 +23,7 @@ namespace Stir {
 
 const char Group::className[] = "group";
 const char Image::className[] = "image";
+const char Sound::className[] = "sound";
 
 Lunar<Group>::RegType Group::methods[] = {
     {0,0}
@@ -33,6 +35,10 @@ Lunar<Image>::RegType Image::methods[] = {
     LUNAR_DECLARE_METHOD(Image, frames),
     LUNAR_DECLARE_METHOD(Image, quality),
     LUNAR_DECLARE_METHOD(Image, group),
+    {0,0}
+};
+
+Lunar<Sound>::RegType Sound::methods[] = {
     {0,0}
 };
 
@@ -50,6 +56,7 @@ Script::Script(Logger &l)
 
     Lunar<Group>::Register(L);
     Lunar<Image>::Register(L);
+    Lunar<Sound>::Register(L);
 }
 
 Script::~Script()
@@ -70,6 +77,7 @@ bool Script::run(const char *filename)
     ProofWriter proof(log, outputProof);
     CPPHeaderWriter header(log, outputHeader);
     CPPSourceWriter source(log, outputSource);
+    ASegWriter aseg(log, "asegment.bin");
     
     for (std::set<Group*>::iterator i = groups.begin(); i != groups.end(); i++) {
         Group *group = *i;
@@ -83,6 +91,14 @@ bool Script::run(const char *filename)
         proof.writeGroup(*group);
         header.writeGroup(*group);
         source.writeGroup(*group);
+        aseg.writeGroup(*group);
+    }
+    
+    for (std::set<Sound*>::iterator i = sounds.begin(); i != sounds.end(); i++) {
+        Sound *sound = *i;
+        header.writeSound(*sound);
+        source.writeSound(*sound);
+        aseg.writeSound(*sound);
     }
 
     proof.close();
@@ -250,6 +266,7 @@ void Script::collect()
         const char *name = lua_tostring(L, -1);
         Group *group = Lunar<Group>::cast(L, -2);
         Image *image = Lunar<Image>::cast(L, -2);
+        Sound *sound = Lunar<Sound>::cast(L, -2);
 
         if (name && name[0] != '_') {
             if (group) {
@@ -259,6 +276,10 @@ void Script::collect()
             if (image) {
                 image->setName(name);
                 image->getGroup()->addImage(image);
+            }
+            if (sound) {
+                sound->setName(name);
+                sounds.insert(sound);
             }
         }
 
@@ -454,6 +475,21 @@ void Image::createGrids()
         mGrids.push_back(TileGrid(&mGroup->getPool()));
         mImages.storeFrame(frame, mGrids.back(), mTileOpt);
     }
+}
+
+
+Sound::Sound(lua_State *L)
+{
+    if (!Script::argBegin(L, className))
+        return;
+        
+    if (Script::argMatch(L, 1)) {
+        const char *filename = lua_tostring(L, -1);
+        mFile = filename;
+    }
+
+    if (!Script::argEnd(L))
+        return;
 }
 
 

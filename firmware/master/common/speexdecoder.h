@@ -40,6 +40,7 @@ public:
     void deinit();
 
     void setData(const uint8_t *srcaddr, int size);
+    void setOffset(const uint32_t offset, int size);
     int decodeFrame(uint8_t *buf, int size);
     bool endOfStream() const {
         return (status == Ok) ? srcBytesRemaining <= 0 : true;
@@ -49,6 +50,7 @@ private:
     void* decodeState;
     SpeexBits bits;
     uintptr_t srcaddr;
+    //uint32_t srcaddr;
     int srcBytesRemaining;
     DecodeStatus status;
 };

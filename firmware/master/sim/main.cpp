@@ -17,6 +17,7 @@
 #include "systime.h"
 #include "audiooutdevice.h"
 #include "audiomixer.h"
+#include "flashlayer.h"
 
 
 int main(int argc, char **argv)
@@ -28,6 +29,7 @@ int main(int argc, char **argv)
     AudioOutDevice::start();
 
     Radio::open();
+    FlashLayer::init();
 
     Runtime::run();
 
