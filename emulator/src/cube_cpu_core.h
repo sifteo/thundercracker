@@ -43,31 +43,27 @@ namespace CPU {
 
 NEVER_INLINE void trace_execution(em8051 *mCPU);
 NEVER_INLINE void profile_tick(em8051 *mCPU);
-NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12, uint8_t fallingEdges);
+NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12);
 
 static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
 {
     /*
-     * Examine all of the possible counter/timer clock sources
-     */
-
-    bool tick12 = false;
-    if (UNLIKELY(!--aCPU->prescaler12)) { 
-        tick12 = true;
-        aCPU->prescaler12 = 12;
-    }
-
-    uint8_t nextT012 = aCPU->mSFR[PORT_T012] & (PIN_T0 | PIN_T1 | PIN_T2);
-    uint8_t fallingEdges = aCPU->t012 & ~nextT012;
-    aCPU->t012 = nextT012;
-
-    /*
+     * Examine all of the possible counter/timer clock sources.
+     *
      * If no clock sources are active, exit early.
      * The timer code is slow, and we'd really rather not run it every tick.
      */
 
-    if (UNLIKELY(tick12 || fallingEdges))
-    timer_tick_work(aCPU, tick12, fallingEdges);
+    bool tick12 = false;
+
+    if (UNLIKELY(!--aCPU->prescaler12)) { 
+        tick12 = true;
+        aCPU->prescaler12 = 12;
+        timer_tick_work(aCPU, true);
+
+    } else if (UNLIKELY(aCPU->needTimerEdgeCheck)) {
+        timer_tick_work(aCPU, false);
+    }
 }
 
 
