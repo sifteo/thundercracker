@@ -12,6 +12,7 @@ TitleSmoke = image{"wc_title_smoke.png", width=64, height=64, quality=10}
 HighScores = image{"high_scores.png", quality=10}
 Score = image{"score.png", quality=10}
 Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
+ScorePan = image{"wc_score_pan.png", width=128, height=128, quality=10}
 TeethLoopConnected = image{"wc_letters_neighbored.png", width=128, height=128, quality=10}
 TeethLoopWord = image{"wc_letters_connected_center.png", width=128, height=128, quality=10}
 TeethLoopWordLeft = image{"wc_letters_connected_left.png", width=128, height=128, quality=10}
