@@ -9,9 +9,6 @@
 #  define NUM_CUBES 3
 #endif
 
-//#define SKIP_INTRO
-//#define SKIP_OUTRO
-
 #ifndef SIFTEO_SIMULATOR
 #define KLUDGES
 #endif

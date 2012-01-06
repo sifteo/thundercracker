@@ -63,16 +63,12 @@ void siftmain() {
 	gChannelSfx.init();
 	gChannelMusic.init();
 	for(;;) {
-		#ifndef SKIP_INTRO
 		PlayMusic(music_sting, false);
 		IntroCutscene();
-		#endif
 		*pGame = Game(); // re-initialize memory
 		pGame->MainLoop();
-		#ifndef SKIP_OUTRO
 		PlayMusic(music_winscreen, false);
 		WinScreen(pGame->player.CurrentView()->GetCube());
-		#endif
 	}
 }
 
