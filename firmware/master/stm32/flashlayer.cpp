@@ -2,18 +2,14 @@
 #include "flashlayer.h"
 #include "macronixmx25.h"
 #include "board.h"
+#include <string.h>
 
 FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
-
-static MacronixMX25 flash(SPIMaster(&FLASH_SPI,
-                                    FLASH_CS_GPIO,
-                                    FLASH_SCK_GPIO,
-                                    FLASH_MISO_GPIO,
-                                    FLASH_MOSI_GPIO));
+static MacronixMX25 &flash = MacronixMX25::instance;
 
 void FlashLayer::init()
 {
-    flash.init();
+    memset(blocks, 0, sizeof(blocks));
 }
 
 char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
