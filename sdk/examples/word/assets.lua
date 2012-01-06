@@ -13,8 +13,7 @@ HighScores = image{"WC_letters_connected_3.png", quality=10}
 Score = image{"WC_letters_connected_3.png", quality=10}
 Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
 ScorePan = image{"wc_score_pan.png", width=128, height=128, quality=10}
-TeethLoopConnectedTop = image{"wc_letters_neighbored_top.png", width=128, height=8, quality=10}
-TeethLoopConnectedBottom = image{"wc_letters_neighbored_bottom.png", width=128, height=8, quality=10}
+TeethLoopConnected = image{"wc_letters_neighbored.png", width=128, height=128, quality=10}
 TeethLoopWord = image{"wc_letters_connected_center.png", width=128, height=128, quality=10}
 TeethLoopWordLeft = image{"wc_letters_connected_left.png", width=128, height=128, quality=10}
 TeethLoopWordRight = image{"wc_letters_connected_right.png", width=128, height=128, quality=10}
