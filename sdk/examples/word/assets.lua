@@ -8,6 +8,7 @@ Font1Letter = image{"WC_letters.png", width=128, height=128, quality=10}
 LetterBG = image{"wc_letters_background.png", quality=10}
 StartScreen = image{"wc_shaketoplay.png", quality=10}
 Title = image{"wc_title.png", quality=10}
+TitleSmoke = image{"WC_letters_connected_3.png", width=56, height=32, quality=10}
 HighScores = image{"high_scores.png", quality=10}
 Score = image{"score.png", quality=10}
 Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
@@ -27,5 +28,3 @@ TeethClockPulse3 = image{"teeth_3.png", width=16, height=16, quality=10}
 TeethClockPulse2 = image{"teeth_2.png", width=16, height=16, quality=10}
 TeethClockPulse1 = image{"teeth_1.png", width=16, height=16, quality=10}
 TeethClockPulse0 = image{"teeth_0.png", width=16, height=16, quality=10}
-
-

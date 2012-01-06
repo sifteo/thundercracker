@@ -6,6 +6,7 @@
 #include "CubeStateMachine.h"
 #include "GameStateMachine.h"
 #include "SavedData.h"
+#include "WordGame.h"
 
 unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
 {
@@ -51,6 +52,20 @@ void TitleCubeState::paint()
     default:
     case 0:
         vid.BG0_drawAsset(Vec2(0,0), Title);
+        {
+            const float ANIM_LENGTH = 1.0f;
+            const AssetImage& anim = TitleSmoke;
+            float animTime =
+                    fmodf(getStateMachine().getTime(), ANIM_LENGTH) / ANIM_LENGTH;
+            animTime = MIN(animTime, 1.f);
+            unsigned frame = (unsigned) (animTime * anim.frames);
+            frame = MIN(frame, anim.frames - 1);
+
+            BG1Helper bg1(getStateMachine().getCube());
+            bg1.DrawAsset(Vec2(6, 0), anim, frame);
+            bg1.Flush(); // TODO only flush if mask has changed recently
+            WordGame::instance()->setNeedsPaintSync();
+        }
         break;
 
         // TODO high scores
