@@ -203,6 +203,11 @@ public:
         mName = s;
     }
     
+    void setEncode(const std::string &encode)
+    {
+        mEncode = encode;
+    }
+    
     void setQuality(int quality)
     {
         mQuality = quality;
@@ -216,6 +221,10 @@ public:
         return mFile;
     }
     
+    const std::string &getEncode() const {
+        return mEncode;
+    }
+    
     const int getQuality() const {
         return mQuality;
     }
@@ -223,6 +232,7 @@ public:
 private:
     std::string mName;
     std::string mFile;
+    std::string mEncode;
     int mQuality;
 };
 
