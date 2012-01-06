@@ -11,6 +11,10 @@
 //#define SKIP_INTRO
 //#define SKIP_OUTRO
 
+#ifndef SIFTEO_SIMULATOR
+#define KLUDGES
+#endif
+
 extern Cube gCubes[NUM_CUBES];
 extern AudioChannel gChannelSfx;
 extern AudioChannel gChannelMusic;
