@@ -3,7 +3,7 @@
 #include "EventData.h"
 #include "Dictionary.h"
 #include "GameStateMachine.h"
-#include "audio.gen.h"
+#include "assets.gen.h"
 #include "WordGame.h"
 #include <string.h>
 

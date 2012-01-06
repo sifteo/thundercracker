@@ -5,7 +5,7 @@
 #include <string.h>
 #include "SavedData.h"
 #include "WordGame.h"
-#include "audio.gen.h"
+#include "assets.gen.h"
 
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone

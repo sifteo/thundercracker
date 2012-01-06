@@ -30,3 +30,39 @@ TeethClockPulse3 = image{"teeth_3.png", width=16, height=16, quality=10}
 TeethClockPulse2 = image{"teeth_2.png", width=16, height=16, quality=10}
 TeethClockPulse1 = image{"teeth_1.png", width=16, height=16, quality=10}
 TeethClockPulse0 = image{"teeth_0.png", width=16, height=16, quality=10}
+
+allextratime = sound{"allextratime.raw"}
+allletters = sound{"allletters.raw"}
+allwords = sound{"allwords.raw"}
+blip = sound{"blip.raw"}
+bonus = sound{"bonus.raw"}
+extrapoints = sound{"extrapoints.raw"}
+extratime = sound{"extratime.raw"}
+fanfare_fire_laugh_01 = sound{"fanfare_fire_laugh_01.raw"}
+fanfare_fire_laugh_02 = sound{"fanfare_fire_laugh_02.raw"}
+fanfare_fire_laugh_03 = sound{"fanfare_fire_laugh_03.raw"}
+fanfare_fire_laugh_04 = sound{"fanfare_fire_laugh_04.raw"}
+flap_laugh_fireball = sound{"flap_laugh_fireball.raw"}
+flap_laugh_fireball_mx = sound{"flap_laugh_fireball_mx.raw"}
+lip_snort = sound{"lip_snort.raw"}
+neighbor = sound{"neighbor.raw"}
+pause_off = sound{"pause_off.raw"}
+pause_on = sound{"pause_on.raw"}
+shake = sound{"shake.raw"}
+teeth_close = sound{"teeth_close.raw"}
+teeth_open = sound{"teeth_open.raw"}
+timer_10sec = sound{"timer_10sec.raw"}
+timer_1sec = sound{"timer_1sec.raw"}
+timer_20sec = sound{"timer_20sec.raw"}
+timer_2sec = sound{"timer_2sec.raw"}
+timer_30sec = sound{"timer_30sec.raw"}
+timer_3sec = sound{"timer_3sec.raw"}
+timeup_01 = sound{"timeup_01.raw"}
+timeup_01_laugh = sound{"timeup_01_laugh.raw"}
+timeup_02 = sound{"timeup_02.raw"}
+timeup_02_laugh = sound{"timeup_02_laugh.raw"}
+timeup_03 = sound{"timeup_03.raw"}
+timeup_03_laugh = sound{"timeup_03_laugh.raw"}
+wordplay_music_sayonara = sound{"wordplay_music_sayonara.raw"}
+wordplay_music_sohcahtoa = sound{"wordplay_music_sohcahtoa.raw"}
+wordplay_music_versus = sound{"wordplay_music_versus.raw"}

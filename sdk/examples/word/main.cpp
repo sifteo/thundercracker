@@ -1,7 +1,7 @@
 #include <sifteo.h>
 #include <stdlib.h>
 #include "assets.gen.h"
-#include "audio.gen.h"
+#include "assets.gen.h"
 #include "WordGame.h"
 #include "EventID.h"
 #include "EventData.h"
