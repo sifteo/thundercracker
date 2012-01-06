@@ -64,6 +64,7 @@ void siftmain()
 
     static Cube cubes[MAX_CUBES]; // must be static!
 
+#ifndef DISABLE_ASSET_LOADING
     // start loading assets
     for (unsigned i = 0; i < arraysize(cubes); i++)
     {
@@ -98,21 +99,7 @@ void siftmain()
             break;
         }
     }
-    /* FIXME remove test code
-    // done loading
-    Cube& cube = cubes[0];
-    VidMode_BG0_SPR_BG1 vid(cube.vbuf);
-    vid.init();
-    vid.BG0_drawAsset(Vec2(0,0), Title);
-    vid.resizeSprite(1, 64, 64);
-    vid.setSpriteImage(1, Bullet.index);// + (frame % font.frames) * font.width * font.height);
-    vid.moveSprite(1, 64 + WordGame::rand(10), 32);
-    //ASSERT(!WordGame::spriteIsHidden(cube, 1));
-    while (1)
-    {
-        System::paint();
-    }
-    */
+#endif // DISABLE_ASSET_LOADING
 
     // main loop
     WordGame game(cubes); // must not be static!

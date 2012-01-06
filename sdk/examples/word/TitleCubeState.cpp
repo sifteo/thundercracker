@@ -6,6 +6,9 @@
 #include "CubeStateMachine.h"
 #include "GameStateMachine.h"
 #include "SavedData.h"
+#include "WordGame.h"
+
+const float ANIM_LENGTH = 2.0f;
 
 unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
 {
@@ -13,6 +16,8 @@ unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
     {
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
+        mAnimDelay = 2.f;
+        // fall through
     case EventID_Paint:
         paint();
         break;
@@ -30,6 +35,15 @@ unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
 
 unsigned TitleCubeState::update(float dt, float stateTime)
 {
+    if (mAnimDelay > 0.f)
+    {
+        mAnimDelay -= dt;
+        mAnimDelay = MAX(0.f, mAnimDelay);
+        if (mAnimDelay <= 0.f)
+        {
+            mAnimStart = true;
+        }
+    }
     return getStateMachine().getCurrentStateIndex();
 }
 
@@ -46,11 +60,42 @@ void TitleCubeState::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
 
+    const float ANIM_START_DELAY = 2.f;
+
     switch (getStateMachine().getCube().id())
     {
     default:
     case 0:
         vid.BG0_drawAsset(Vec2(0,0), Title);
+        if (mAnimDelay <= 0.f)
+        {
+            if (mAnimStart)
+            {
+                mAnimStart = false;
+                mAnimStartTime = getStateMachine().getTime();
+            }
+
+            if (getStateMachine().getTime() - mAnimStartTime >= ANIM_LENGTH)
+            {
+                mAnimDelay = WordGame::rand(2.f, 4.f);
+            }
+            else
+            {
+                const float ANIM_LENGTH = 2.0f;
+                const AssetImage& anim = TitleSmoke;
+                float animTime =
+                        fmodf(getStateMachine().getTime() - mAnimStartTime, ANIM_LENGTH) / ANIM_LENGTH;
+                animTime = MIN(animTime, 1.f);
+                unsigned frame = (unsigned) (animTime * anim.frames);
+                frame = MIN(frame, anim.frames - 1);
+
+                BG1Helper bg1(getStateMachine().getCube());
+                bg1.DrawAsset(Vec2(8, 0), anim, frame);
+                bg1.Flush(); // TODO only flush if mask has changed recently
+                WordGame::instance()->setNeedsPaintSync();
+            }
+
+        }
         break;
 
         // TODO high scores

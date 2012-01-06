@@ -144,7 +144,7 @@ void ScoredGameState::createNewAnagram()
         }
     }
 
-    DEBUG_LOG(("scrambled %s to %s\n", data.mNewAnagram.mWord, scrambled));
+    LOG(("scrambled %s to %s\n", data.mNewAnagram.mWord, scrambled));
     ASSERT(strlen(scrambled) == MAX_LETTERS_PER_WORD);
     data.mNewAnagram.mWord = scrambled;
     unsigned wordLen = strlen(data.mNewAnagram.mWord);
