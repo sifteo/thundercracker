@@ -81,6 +81,8 @@ class Neighbors {
             fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Received pulse (sides %02x)\n", cpu.id, inputs);
 
         cpu.mSFR[PORT] |= PIN_IN;
+        cpu.needTimerEdgeCheck = true;
+
         inputs = 0;
     }
 

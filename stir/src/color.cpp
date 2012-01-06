@@ -141,79 +141,82 @@ void ColorReducer::reduce(Logger &log)
 
     log.taskBegin("Optimizing palette");
 
-    // Base case: One single color.
-    box root = { 0, (unsigned)colors.size() };
-    boxes.clear();
-    boxes.push_back(root);
-    boxQueue.clear();
-    boxQueue.push_back(0);
+    if (colors.size() >= 1) {
 
-    /*
-     * Keep splitting until all colors are within the acceptable
-     * tolerance, or we run out of boxes.
-     *
-     * It's actually much more expensive to calculate the MSE and the
-     * color LUT than it is to perform palette splits. So, we're extra
-     * careful here to minimize the overhead of error measurement. The
-     * LUT is calculated lazily, and we always avoid error
-     * calculations for colors that couldn't possibly contribute to
-     * the success or failure of the current iteration: We always stop
-     * after finding one color that's out of the acceptable tolerance,
-     * and we avoid re-checking colors that have already been solved.
-     *
-     * The lazy LUT calculations are handled automatically by
-     * nearest(), but we use a stack of not-yet-solved colors here in
-     * order to reduce the number of LUT entries we ever have to
-     * touch.
-     */
+        // Base case: One single color.
+        box root = { 0, (unsigned)colors.size() };
+        boxes.clear();
+        boxes.push_back(root);
+        boxQueue.clear();
+        boxQueue.push_back(0);
 
-    std::vector<uint16_t> errorStack;
-
-    for (unsigned i = 0; i < LUT_SIZE; i++)
-        errorStack.push_back(i);
-
-    while (!boxQueue.empty()) {
         /*
-         * Try to reduce the size of the error stack. Any colors that
-         * are now within range can be popped off of it permanently.
+         * Keep splitting until all colors are within the acceptable
+         * tolerance, or we run out of boxes.
+         *
+         * It's actually much more expensive to calculate the MSE and the
+         * color LUT than it is to perform palette splits. So, we're extra
+         * careful here to minimize the overhead of error measurement. The
+         * LUT is calculated lazily, and we always avoid error
+         * calculations for colors that couldn't possibly contribute to
+         * the success or failure of the current iteration: We always stop
+         * after finding one color that's out of the acceptable tolerance,
+         * and we avoid re-checking colors that have already been solved.
+         *
+         * The lazy LUT calculations are handled automatically by
+         * nearest(), but we use a stack of not-yet-solved colors here in
+         * order to reduce the number of LUT entries we ever have to
+         * touch.
          */
 
-        while (errorStack.size()) {
-            unsigned v = errorStack.back();
-            RGB565 color((uint16_t)v);
-            double maxMSE = colorMSE[v];
-            double mse = CIELab(nearest(color)).meanSquaredError(CIELab(color));
+        std::vector<uint16_t> errorStack;
 
-            if (mse <= maxMSE)
-                errorStack.pop_back();
-            else
+        for (unsigned i = 0; i < LUT_SIZE; i++)
+            errorStack.push_back(i);
+
+        while (!boxQueue.empty()) {
+            /*
+             * Try to reduce the size of the error stack. Any colors that
+             * are now within range can be popped off of it permanently.
+             */
+
+            while (errorStack.size()) {
+                unsigned v = errorStack.back();
+                RGB565 color((uint16_t)v);
+                double maxMSE = colorMSE[v];
+                double mse = CIELab(nearest(color)).meanSquaredError(CIELab(color));
+
+                if (mse <= maxMSE)
+                    errorStack.pop_back();
+                else
+                    break;
+            }
+
+            if (boxes.size() % 64 == 0 || !errorStack.size())
+                log.taskProgress("%d colors in palette", (int)boxes.size());
+
+            if (!errorStack.size())
                 break;
+
+            /*
+             * Perform the next split
+             */
+        
+            unsigned boxIndex = *boxQueue.begin();
+            struct box& b = boxes[boxIndex];
+            boxQueue.pop_front();
+
+            int major = CIELab::findMajorAxis(&colors[b.begin], b.end - b.begin);
+
+            std::sort(colors.begin() + b.begin,
+                      colors.begin() + b.end,
+                      CIELab::sortAxis(major));
+        
+            splitBox(b);
+
+            // Invalidate all inverseLUT entries
+            newestLUTStamp++;
         }
-
-        if (boxes.size() % 64 == 0 || !errorStack.size())
-            log.taskProgress("%d colors in palette", (int)boxes.size());
-
-        if (!errorStack.size())
-            break;
-
-        /*
-         * Perform the next split
-         */
-        
-        unsigned boxIndex = *boxQueue.begin();
-        struct box& b = boxes[boxIndex];
-        boxQueue.pop_front();
-
-        int major = CIELab::findMajorAxis(&colors[b.begin], b.end - b.begin);
-
-        std::sort(colors.begin() + b.begin,
-                  colors.begin() + b.end,
-                  CIELab::sortAxis(major));
-        
-        splitBox(b);
-
-        // Invalidate all inverseLUT entries
-        newestLUTStamp++;
     }
 
     log.taskEnd();

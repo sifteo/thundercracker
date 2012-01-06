@@ -243,6 +243,10 @@ class TickDeadline {
     bool hasPassed() const {
         return UNLIKELY(ticks <= vtime->clocks);
     }
+    
+    bool hasPassed(const VirtualTime *v) const {
+        return UNLIKELY(ticks <= v->clocks);
+    }
 
     bool hasPassed(uint64_t ref) const {
         return UNLIKELY(ref <= vtime->clocks);

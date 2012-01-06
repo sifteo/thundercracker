@@ -29,8 +29,8 @@ class SystemNetwork {
     void init(const VirtualTime *vtime);
     void exit();
 
-    ALWAYS_INLINE void tick(System &sys) {
-        if (deadline.hasPassed())
+    ALWAYS_INLINE void tick(System &sys, const VirtualTime *vtime) {
+        if (deadline.hasPassed(vtime))
             deadlineWork(sys);
     }
             

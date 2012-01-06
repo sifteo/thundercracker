@@ -240,8 +240,17 @@ const char *em8051_exc_name(int aCode)
 }
 
 
-NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12, uint8_t fallingEdges)
+NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12)
 {
+    /*
+     * Check T1/2/3 edges only when prompted via aCPU->needTimerEdgeCheck.
+     */
+
+    uint8_t nextT012 = aCPU->mSFR[PORT_T012] & (PIN_T0 | PIN_T1 | PIN_T2);
+    uint8_t fallingEdges = aCPU->t012 & ~nextT012;
+    aCPU->t012 = nextT012;
+    aCPU->needTimerEdgeCheck = false;
+    
     /*
      * Timer 0 / Timer 1
      */

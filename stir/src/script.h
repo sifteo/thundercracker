@@ -202,6 +202,11 @@ public:
     void setName(const char *s) {
         mName = s;
     }
+    
+    void setQuality(int quality)
+    {
+        mQuality = quality;
+    }
 
     const std::string &getName() const {
         return mName;
@@ -211,9 +216,14 @@ public:
         return mFile;
     }
     
+    const int getQuality() const {
+        return mQuality;
+    }
+    
 private:
     std::string mName;
     std::string mFile;
+    int mQuality;
 };
 
 
