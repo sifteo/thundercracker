@@ -1,6 +1,6 @@
 #include <sifteo.h>
 #include "WordGame.h"
-#include "audio.gen.h"
+#include "assets.gen.h"
 #include <cstdlib>
 
 using namespace Sifteo;
@@ -40,7 +40,7 @@ void WordGame::_onEvent(unsigned eventID, const EventData& data)
     mGameStateMachine.onEvent(eventID, data);
 }
 
-bool WordGame::playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
+bool WordGame::playAudio(_SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
 {
     /* FIXME remove
     if (channel == AudioChannelIndex_Music)
@@ -52,7 +52,7 @@ bool WordGame::playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel ,
     return sInstance->_playAudio(mod, channel, loopMode);
 }
 
-bool WordGame::_playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
+bool WordGame::_playAudio(_SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
 {
     ASSERT((unsigned)channel < arraysize(mAudioChannels));
     if (mAudioChannels[channel].isPlaying())

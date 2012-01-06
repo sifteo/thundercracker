@@ -237,6 +237,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
 
 void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites)
 {
+    vid.BG0_drawAsset(Vec2(0,0), LetterBG);
     const char *str = getStateMachine().getLetters();
     switch (strlen(str))
     {
@@ -246,7 +247,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
             if (frame < font.frames)
             {
-                vid.BG0_drawAsset(Vec2(0,0), font, frame);
+                vid.BG0_drawAsset(Vec2(1,3), font, frame);
 
 
                 if (paintSprites)

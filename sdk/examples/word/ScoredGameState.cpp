@@ -3,7 +3,7 @@
 #include "EventData.h"
 #include "Dictionary.h"
 #include "GameStateMachine.h"
-#include "audio.gen.h"
+#include "assets.gen.h"
 #include "WordGame.h"
 #include <string.h>
 
@@ -144,7 +144,7 @@ void ScoredGameState::createNewAnagram()
         }
     }
 
-    DEBUG_LOG(("scrambled %s to %s\n", data.mNewAnagram.mWord, scrambled));
+    LOG(("scrambled %s to %s\n", data.mNewAnagram.mWord, scrambled));
     ASSERT(strlen(scrambled) == MAX_LETTERS_PER_WORD);
     data.mNewAnagram.mWord = scrambled;
     unsigned wordLen = strlen(data.mNewAnagram.mWord);

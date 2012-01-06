@@ -68,7 +68,7 @@ void MoveSprite(Cube *c, int id, int px, int py) {
 // Sfx Utilities
 //------------------------------------------------------------------------------
 
-void PlaySfx(const _SYSAudioModule& handle, bool preempt) {
+void PlaySfx(_SYSAudioModule& handle, bool preempt) {
   if (gChannelSfx.isPlaying()) {
     if (preempt) {
       gChannelSfx.stop();
@@ -79,7 +79,7 @@ void PlaySfx(const _SYSAudioModule& handle, bool preempt) {
   gChannelSfx.play(handle);
 }
 
-void PlayMusic(const _SYSAudioModule& music, bool loop) {
+void PlayMusic(_SYSAudioModule& music, bool loop) {
   if (gChannelMusic.isPlaying()) {
     gChannelMusic.stop();
   }
