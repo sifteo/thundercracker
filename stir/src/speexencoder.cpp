@@ -18,13 +18,13 @@ using namespace std;
 // #define SAMPLE_RATE 32000
 // #define SPEEX_MODE  SPEEX_MODEID_UWB
 
-SpeexEncoder::SpeexEncoder() :
+SpeexEncoder::SpeexEncoder(int quality /* = 8 */) :
     frameSize(0)
 {
     encoderState = speex_encoder_init(speex_lib_get_mode(SPEEX_MODE));
     speex_bits_init(&bits);
 
-    int quality = 8; // 8 is the default for speexenc - need to accept this as a param
+    // 8 is the default for speexenc 
     speex_encoder_ctl(encoderState, SPEEX_SET_QUALITY, &quality);
     speex_encoder_ctl(encoderState,SPEEX_GET_FRAME_SIZE, &frameSize);
 }

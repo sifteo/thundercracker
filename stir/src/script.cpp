@@ -487,6 +487,12 @@ Sound::Sound(lua_State *L)
         const char *filename = lua_tostring(L, -1);
         mFile = filename;
     }
+    
+    if (Script::argMatch(L, "quality")) {
+        setQuality(lua_tonumber(L, -1));
+    } else {
+        setQuality(10);
+    }
 
     if (!Script::argEnd(L))
         return;
