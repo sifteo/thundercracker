@@ -94,7 +94,7 @@ void ASegWriter::writeSound(const Sound &sound)
     // write audio data
     //mStream.seekp(20480 + sizeof(uint32_t));
     mStream.seekp(mCurrentOffset);
-    SpeexEncoder encoder;
+    SpeexEncoder encoder(sound.getQuality());
     uint32_t size = encoder.encodeFile(sound.getFile(), channels, format, mStream);
     
     //mStream.seekp(20480);

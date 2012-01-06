@@ -9,7 +9,7 @@
 
 class SpeexEncoder {
 public:
-    SpeexEncoder();
+    SpeexEncoder(int quality = 8);
     ~SpeexEncoder();
     
     int encodeFile(const std::string &file, int channels, int format, std::ofstream & outStream);
