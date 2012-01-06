@@ -1,10 +1,10 @@
-# for miker
-#TC_DIR = ../../.. 
+ifndef TC_DIR
+TC_DIR = ../../../
+endif
 
 APP = sandwichcraft
 OBJS = \
 	$(ASSETS).gen.o \
-	$(AUDIO).gen.o \
 	gen_mapdata.o \
 	main.o \
 	Game.o \
@@ -23,9 +23,6 @@ OBJS_STM32 = $(OBJS:.o=.stm32.o)
 
 ASSETDEPS += *.png $(ASSETS).lua gen_assets.lua
 CDEPS += *.h 
-
-AUDIODEPS += *.raw $(AUDIO).txt
-
 
 include $(TC_DIR)/firmware/master/Makefile.rules
 

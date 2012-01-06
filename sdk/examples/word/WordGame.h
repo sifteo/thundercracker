@@ -34,13 +34,13 @@ public:
 
     static void hideSprites(VidMode_BG0_SPR_BG1 &vid);
     static void onEvent(unsigned eventID, const EventData& data);
-    static bool playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
+    static bool playAudio(_SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
     static unsigned rand(unsigned max);
     static float rand(float min, float max);
     static void seedRand(unsigned seed);
 
 private:
-    bool _playAudio(const _SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
+    bool _playAudio(_SYSAudioModule &mod, AudioChannelIndex channel = AudioChannelIndex_Music, _SYSAudioLoopType loopMode = LoopOnce);
     void _onEvent(unsigned eventID, const EventData& data);
 
     GameStateMachine mGameStateMachine;

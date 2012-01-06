@@ -6,7 +6,7 @@
 #include "GameStateMachine.h"
 #include <string.h>
 #include "WordGame.h"
-#include "audio.gen.h"
+#include "assets.gen.h"
 
 unsigned ScoredGameState_StartOfRound::update(float dt, float stateTime)
 {

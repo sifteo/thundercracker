@@ -25,7 +25,7 @@ TiltFlowMenu *TiltFlowMenu::Inst()
 
 TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( LOGO ), 
     mSimTime( 0.0f ), mUpdateTime( 0.0f ), mPickTime( 0.0f ), mNumCubes( numCubes ), mNumItems( numItems ), 
-	mDone( false ), mNeighborDirty( true )
+    mDone( false ), mNeighborDirty( true )
 {
     s_pInst = this;
 
@@ -87,6 +87,35 @@ bool TiltFlowMenu::Tick(float dt)
 
     for( int i = 0; i < mNumCubes; i++ )
       mViews[i].CheckForRepaint();
+
+    bool bFlush = false;
+
+    //sync and flush
+    for( int i = 0; i < mNumCubes; i++ )
+    {
+        if( mViews[i].IsFlushNeeded() )
+        {
+            //System::finish();
+
+            //total weirdness
+            mViews[i].Flush();
+            System::paintSync();
+            //printf( "finishing\n" );
+            bFlush = true;
+            break;
+        }
+    }
+
+    /*for( int i = 0; i < mNumCubes; i++ )
+    {
+        if( mViews[i].IsFlushNeeded() )
+        {
+            mViews[i].Flush();
+        }
+    }
+
+    if( bFlush )
+        System::paintSync();*/
 
 	return true;
 }
@@ -177,11 +206,10 @@ void TiltFlowMenu::ReassignMenu() {
 }*/
 
 
-void TiltFlowMenu::playSound( const _SYSAudioModule &sound )
+void TiltFlowMenu::playSound( _SYSAudioModule &sound )
 {
     m_SFXChannel.stop();
-    // super temp during assetbndl testing, don't bother playing sound.
-//    m_SFXChannel.play(sound, LoopOnce);
+    m_SFXChannel.play(sound, LoopOnce);
 }
 
 
@@ -265,7 +293,7 @@ TiltFlowView::TiltFlowView() :
     mItem( -1 ), mOffsetX( 0.0f ), mAccel( MINACCEL ),
     mRestTime( -1.0f ), mDrawLabel( true ), mDirty( true ),
     mCurrentTip( 0 ), mTipTime(0.0f), mLastNeighborRemoveSide( NONE ), mpCube( NULL ),
-	mLastNeighboredSide( NONE )
+    mLastNeighboredSide( NONE ), mFlushNeeded( false )
 {
 }
 
@@ -400,10 +428,11 @@ void TiltFlowView::PaintMenu() {
 
 
   DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), offset.x, offset.y);
-  BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
 
   if( mStatus != STATUS_PICKED )
   {
+      BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
+
 	  if (/*c.Neighbors.Left == NULL && */mItem > 0) {
 		DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70);
 	  }
@@ -418,9 +447,13 @@ void TiltFlowView::PaintMenu() {
 
 	  //draw the current tip
 	  bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
+
+      //bg1helper.Flush();
+      mFlushNeeded = true;
+      //printf ("would have flushed here\n");
   }
 
-  bg1helper.Flush();
+
 
   // Firmware handles all pixel-level scrolling
   vid.BG0_setPanning(Vec2((int)-mOffsetX, COVER_Y_OFFSET - offset.y));
@@ -818,3 +851,11 @@ bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Vec2 result) 
 */
 
 
+void TiltFlowView::Flush()
+{
+    //printf( "flushing\n" );
+    MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper().Flush();
+    //force touch
+    //MenuController::Inst().cubes[ mpCube->id() ].GetCube().vbuf.touch();
+    mFlushNeeded = false;
+}

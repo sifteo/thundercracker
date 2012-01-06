@@ -239,7 +239,21 @@ ALWAYS_INLINE void System::tick()
 {
     // Everything but the cubes
     time.tick();
-    network.tick(*this);
+    
+    /*
+     * Note: It's redundant to be passing our 'time' pointer to network.tick
+     * separately, but there are two reasons this is really important:
+     *
+     *   1. The process of dereferencing VirtualTime from a TickDeadline was
+     *      causing a very slow memory access every tick, at least on my system.
+     *      Eliminating this memory access increased my sim performance by ~10%!
+     *
+     *   2. SystemNetwork can't access System::time directly, even though it's
+     *      public, because it would introduce a circular dependency.
+     *
+     * So, we pass 'time' separately to this (inlined) function.
+     */
+    network.tick(*this, &time);
 }
 
 void System::setTraceMode(bool t)
