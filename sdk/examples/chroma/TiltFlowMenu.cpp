@@ -25,7 +25,7 @@ TiltFlowMenu *TiltFlowMenu::Inst()
 
 TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( LOGO ), 
     mSimTime( 0.0f ), mUpdateTime( 0.0f ), mPickTime( 0.0f ), mNumCubes( numCubes ), mNumItems( numItems ), 
-	mDone( false ), mNeighborDirty( true )
+    mDone( false ), mNeighborDirty( true )
 {
     s_pInst = this;
 
@@ -87,6 +87,27 @@ bool TiltFlowMenu::Tick(float dt)
 
     for( int i = 0; i < mNumCubes; i++ )
       mViews[i].CheckForRepaint();
+
+    //sync and flush
+    for( int i = 0; i < mNumCubes; i++ )
+    {
+        if( mViews[i].IsFlushNeeded() )
+        {
+            //System::finish();
+            System::paintSync();
+            //printf( "finishing\n" );
+            break;
+        }
+    }
+
+    for( int i = 0; i < mNumCubes; i++ )
+    {
+        if( mViews[i].IsFlushNeeded() )
+        {
+            MenuController::Inst().cubes[i].GetBG1Helper().Flush();
+            mViews[i].Flushed();
+        }
+    }
 
 	return true;
 }
@@ -177,11 +198,10 @@ void TiltFlowMenu::ReassignMenu() {
 }*/
 
 
-void TiltFlowMenu::playSound( const _SYSAudioModule &sound )
+void TiltFlowMenu::playSound( _SYSAudioModule &sound )
 {
     m_SFXChannel.stop();
-    // super temp during assetbndl testing, don't bother playing sound.
-//    m_SFXChannel.play(sound, LoopOnce);
+    m_SFXChannel.play(sound, LoopOnce);
 }
 
 
@@ -265,7 +285,7 @@ TiltFlowView::TiltFlowView() :
     mItem( -1 ), mOffsetX( 0.0f ), mAccel( MINACCEL ),
     mRestTime( -1.0f ), mDrawLabel( true ), mDirty( true ),
     mCurrentTip( 0 ), mTipTime(0.0f), mLastNeighborRemoveSide( NONE ), mpCube( NULL ),
-	mLastNeighboredSide( NONE )
+    mLastNeighboredSide( NONE ), mFlushNeeded( false )
 {
 }
 
@@ -420,7 +440,8 @@ void TiltFlowView::PaintMenu() {
 	  bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
   }
 
-  bg1helper.Flush();
+  //bg1helper.Flush();
+  mFlushNeeded = true;
 
   // Firmware handles all pixel-level scrolling
   vid.BG0_setPanning(Vec2((int)-mOffsetX, COVER_Y_OFFSET - offset.y));

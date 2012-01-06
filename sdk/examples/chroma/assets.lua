@@ -86,10 +86,6 @@ slosh_multi_02 = sound{"slosh_multi_02.raw"}
 StingerIV2 = sound{"StingerIV2.raw"}
 timer_blink = sound{"timer_blink.raw"}
 timer_explode = sound{"timer_explode.raw"}
-changeoption = sound{"changeoption.raw"}
-ui_select = sound{"ui_select.raw"}
-settle = sound{"settle.raw"}
-game_start = sound{"game_start.raw"}
 
 --  SELECTOR MENU ASSETS
 IconGameChroma = image{"icon_game_cs.png"}
@@ -107,4 +103,8 @@ Tip3 = image{"Tip3.png"}
 White = image{"White.png"}
 --game covers
 LogoCover = image{"logo.png"}
-
+--audio
+changeoption = sound{"changeoption.raw"}
+ui_select = sound{"ui_select.raw"}
+settle = sound{"settle.raw"}
+game_start = sound{"game_start.raw"}
