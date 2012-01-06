@@ -13,3 +13,4 @@ assets.html
 *.cache
 *.FileListAbsolute.txt
 *.manifest
+*_enc.raw

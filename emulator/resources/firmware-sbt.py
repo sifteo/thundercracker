@@ -124,6 +124,9 @@ class CodeGenerator:
                 0xDA,  # W2DAT
                 0xE1,  # W2CON1
                 0xE2,  # W2CON0
+                
+                # RF SPI
+                0xE7,  # SPIRDAT
 
                 ):
                 return True
