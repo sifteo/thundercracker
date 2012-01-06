@@ -10,6 +10,7 @@
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 #ifdef DEBUG
+
 const float ROUND_TIME = 38.0f;
 #else
 const float ROUND_TIME = 120.0f;
