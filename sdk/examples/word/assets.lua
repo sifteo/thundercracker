@@ -23,11 +23,9 @@ TeethNewWord4 = image{"WC_letters_connected_4.png", width=56, height=32, quality
 TeethNewWord5 = image{"WC_letters_connected_5.png", width=56, height=32, quality=10}
 FontSmall = image{"font-8x16.png", width=8, height=16, quality=10}
 FontTeeth = image{"teeth_numbers.png", width=16, height=16, quality=10}
-TeethClock30_0 = image{"teeth_numbers.png", width=16, height=16, quality=10}
-TeethClock20_2 = image{"teeth_numbers.png", width=16, height=16, quality=10}
-TeethClock10_1 = image{"teeth_numbers.png", width=16, height=16, quality=10}
-TeethClock3 = image{"teeth_numbers.png", width=16, height=16, quality=10}
-TeethClock2 = image{"teeth_numbers.png", width=16, height=16, quality=10}
-TeethClock1 = image{"teeth_numbers.png", width=16, height=16, quality=10}
-TeethClock30_3 = image{"teeth_numbers.png", width=16, height=16, quality=10}
+TeethClockPulse3 = image{"teeth_3.png", width=16, height=16, quality=10}
+TeethClockPulse2 = image{"teeth_2.png", width=16, height=16, quality=10}
+TeethClockPulse1 = image{"teeth_1.png", width=16, height=16, quality=10}
+TeethClockPulse0 = image{"teeth_0.png", width=16, height=16, quality=10}
+
 

@@ -169,7 +169,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     if (paintTime)
     {
         int animIndex = -1;
-        /* TODO
+
         switch (secondsLeft)
         {
         case 30:
@@ -185,24 +185,23 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
             break;
         }
 
-        */
-
         // 1, 2, 3, 10, 20, 30
         float animLength[6] = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
 
         // 1, 2, 3, 10, 20, 30
         const AssetImage* lowDigitAnim[6] =
-            {&TeethClock1, &TeethClock2, &TeethClock3,
-             &TeethClock30_0, &TeethClock30_0, &TeethClock30_0};
+            {&TeethClockPulse1, &TeethClockPulse2, &TeethClockPulse3,
+             &TeethClockPulse0, &TeethClockPulse0, &TeethClockPulse0};
 
         const AssetImage* highDigitAnim[6] =
             {0, 0, 0,
-             &TeethClock10_1, &TeethClock20_2, &TeethClock30_3};
+             &TeethClockPulse1, &TeethClockPulse2, &TeethClockPulse3};
 
         frame = 0;
         if (animIndex >= 0)
         {
-            float animTime =  getStateMachine().getTime() / animLength[animIndex];
+            float animTime =
+                    fmodf(getStateMachine().getTime(), animLength[animIndex]) / animLength[animIndex];
             animTime = MIN(animTime, 1.f);
             frame = (unsigned) (animTime * lowDigitAnim[animIndex]->frames);
             frame = MIN(frame, lowDigitAnim[animIndex]->frames - 1);
