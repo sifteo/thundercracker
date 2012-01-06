@@ -29,3 +29,17 @@ ScrollBubble = image{"scroll_bubble.png", width=80, height=32}
 ScrollThoughts = image{"scroll_thoughts.png", width=16, height=16}
 
 dofile "gen_assets.lua"
+
+music_castle = sound{ "music_castle.raw" }
+music_dungeon = sound{ "music_dungeon.raw" }
+music_sting = sound{ "music_sting.raw" }
+music_winscreen = sound{ "music_winscreen.raw" }
+sfx_deNeighbor = sound{ "sfx_deNeighbor.raw" }
+sfx_doorBlock = sound{ "sfx_doorBlock.raw" }
+sfx_doorOpen = sound{ "sfx_doorOpen.raw" }
+sfx_neighbor = sound{ "sfx_neighbor.raw" }
+sfx_pickup = sound{ "sfx_pickup.raw" }
+sfx_running = sound{ "sfx_running.raw" }
+sfx_walkStart = sound{ "sfx_walkStart.raw" }
+sfx_zoomIn = sound{ "sfx_zoomIn.raw" }
+sfx_zoomOut = sound{ "sfx_zoomOut.raw" }

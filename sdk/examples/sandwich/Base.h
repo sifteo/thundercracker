@@ -2,7 +2,7 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
-#include "audio.gen.h"
+//#include "audio.gen.h"
 
 #ifndef NUM_CUBES
 #  define NUM_CUBES 3
@@ -40,5 +40,5 @@ void ResizeSprite(Cube *c, int id, int px, int py);
 void MoveSprite(Cube *c, int id, int px, int py);
 
 // Audio Smutz
-void PlaySfx(const _SYSAudioModule& handle, bool preempt=true);
-void PlayMusic(const _SYSAudioModule& music, bool loop=true);
+void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
+void PlayMusic(_SYSAudioModule& music, bool loop=true);
