@@ -47,22 +47,25 @@ void TitleCubeState::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
 
+    const float ANIM_START_DELAY = 2.f;
+
     switch (getStateMachine().getCube().id())
     {
     default:
     case 0:
         vid.BG0_drawAsset(Vec2(0,0), Title);
+        if (getStateMachine().getTime() > ANIM_START_DELAY)
         {
-            const float ANIM_LENGTH = 1.0f;
+            const float ANIM_LENGTH = 2.0f;
             const AssetImage& anim = TitleSmoke;
             float animTime =
-                    fmodf(getStateMachine().getTime(), ANIM_LENGTH) / ANIM_LENGTH;
+                    fmodf(getStateMachine().getTime() - ANIM_START_DELAY , ANIM_LENGTH) / ANIM_LENGTH;
             animTime = MIN(animTime, 1.f);
             unsigned frame = (unsigned) (animTime * anim.frames);
             frame = MIN(frame, anim.frames - 1);
 
             BG1Helper bg1(getStateMachine().getCube());
-            bg1.DrawAsset(Vec2(6, 0), anim, frame);
+            bg1.DrawAsset(Vec2(8, 0), anim, frame);
             bg1.Flush(); // TODO only flush if mask has changed recently
             WordGame::instance()->setNeedsPaintSync();
         }
