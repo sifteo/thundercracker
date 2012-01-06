@@ -34,67 +34,45 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     const AssetImage* teethImages[] =
     {
         &TeethLoopWord,     // ImageIndex_Connected,
-        &TeethNewWord,      // ImageIndex_ConnectedWord,
+        &TeethNewWord2,      // ImageIndex_ConnectedWord,
         &TeethLoopWordLeft, // ImageIndex_ConnectedLeft,
-        &TeethNewWordLeft,  // ImageIndex_ConnectedLeftWord,
+        &TeethNewWord2Left,  // ImageIndex_ConnectedLeftWord,
         &TeethLoopWordRight,// ImageIndex_ConnectedRight,
-        &TeethNewWordRight, // ImageIndex_ConnectedRightWord,
+        &TeethNewWord2Right, // ImageIndex_ConnectedRightWord,
         &TeethLoopConnected,// ImageIndex_Neighbored,
         &Teeth,             // ImageIndex_Teeth,
     };
 
-    const AssetImage* teethCenterImages[] =
+    const AssetImage* teethNumberImages[] =
     {
-        &TeethNewWord2,
         &TeethNewWord3,
         &TeethNewWord4,
         &TeethNewWord5,
-        &TeethNewWord6,
     };
 
-    const AssetImage* teethLeftImages[] =
-    {
-        &TeethNewWord2Left,
-        &TeethNewWord3Left,
-        &TeethNewWord4Left,
-        &TeethNewWord5Left,
-        &TeethNewWord6Left,
-    };
-
-    const AssetImage* teethRightImages[] =
-    {
-        &TeethNewWord2Right,
-        &TeethNewWord3Right,
-        &TeethNewWord4Right,
-        &TeethNewWord5Right,
-        &TeethNewWord6Right,
-    };
-
+    const Vec2 TEETH_NUM_POS(4, 6);
     STATIC_ASSERT(arraysize(teethImages) == NumImageIndexes);
     ASSERT(teethImageIndex >= 0);
     ASSERT(teethImageIndex < (ImageIndex)arraysize(teethImages));
-    const AssetImage* pteeth = teethImages[teethImageIndex];
+    const AssetImage& teeth = *teethImages[teethImageIndex];
+    const AssetImage* teethNumber = 0;
 
-    switch (teethImageIndex)
+    unsigned teethNumberIndex = GameStateMachine::getNewWordLength();
+    if (teethNumberIndex > 2)
     {
-    case ImageIndex_ConnectedWord:
-        pteeth = teethCenterImages[MIN(((unsigned)arraysize(teethCenterImages) - 1), ((unsigned)GameStateMachine::getNewWordLength() - 2))];
-        break;
+        teethNumberIndex -= 3;
+        switch (teethImageIndex)
+        {
+        case ImageIndex_ConnectedWord:
+        case ImageIndex_ConnectedLeftWord:
+        case ImageIndex_ConnectedRightWord:
+            teethNumber = teethNumberImages[MIN(((unsigned)arraysize(teethNumberImages) - 1), teethNumberIndex)];
+            break;
 
-    case ImageIndex_ConnectedLeftWord:
-        pteeth = teethCenterImages[MIN(((unsigned)arraysize(teethLeftImages) - 1), ((unsigned)GameStateMachine::getNewWordLength() - 2))];
-        break;
-
-    case ImageIndex_ConnectedRightWord:
-        pteeth = teethCenterImages[MIN(((unsigned)arraysize(teethRightImages) - 1), ((unsigned)GameStateMachine::getNewWordLength() - 2))];
-        break;
-
-    default:
-        break;
+        default:
+            break;
+        }
     }
-
-    const AssetImage& teeth = *pteeth;
-
     unsigned frame = 0;
     unsigned secondsLeft = GameStateMachine::getSecondsLeft();
 
@@ -142,11 +120,43 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
             case TransparencyType_None:
                 // paint this opaque tile
                 // paint BG0
-                vid.BG0_drawPartialAsset(Vec2(j, i), Vec2(j, i), Vec2(1, 1), teeth, frame);
+                if (teethNumber &&
+                    frame >= 2 && frame - 2 < teethNumber->frames &&
+                    j >= ((unsigned) TEETH_NUM_POS.x) &&
+                    j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
+                    i >= TEETH_NUM_POS.y &&
+                    i < ((int) teethNumber->height) + TEETH_NUM_POS.y)
+                {
+                    vid.BG0_drawPartialAsset(Vec2(j, i),
+                                             Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
+                                             Vec2(1, 1),
+                                             *teethNumber,
+                                             frame - 2);
+                }
+                else
+                {
+                    vid.BG0_drawPartialAsset(Vec2(j, i), Vec2(j, i), Vec2(1, 1), teeth, frame);
+                }
                 break;
 
             case TransparencyType_Some:
-                bg1.DrawPartialAsset(Vec2(j, i), Vec2(j, i), Vec2(1, 1), teeth, frame);
+                if (teethNumber &&
+                    frame >= 2 && frame - 2 < teethNumber->frames &&
+                    j >= ((unsigned) TEETH_NUM_POS.x) &&
+                    j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
+                    i >= TEETH_NUM_POS.y &&
+                    i < ((int) teethNumber->height) + TEETH_NUM_POS.y)
+                {
+                    bg1.DrawPartialAsset(Vec2(j, i),
+                                         Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
+                                         Vec2(1, 1),
+                                         *teethNumber,
+                                         frame - 2);
+                }
+                else
+                {
+                    bg1.DrawPartialAsset(Vec2(j, i), Vec2(j, i), Vec2(1, 1), teeth, frame);
+                }
                 break;
 
             default:
