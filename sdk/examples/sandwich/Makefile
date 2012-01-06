@@ -1,5 +1,6 @@
-# for miker
-#TC_DIR = ../../.. 
+ifndef TC_DIR
+TC_DIR = ../../../
+endif
 
 APP = sandwichcraft
 OBJS = \
