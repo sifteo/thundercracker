@@ -55,12 +55,15 @@ private:
     static const uint32_t ALL_CHANNELS_ENABLED = 0xFF;
 
     // decoders can be loaned to a channel for sample playback
+    // TODO: Don't allocate both types of decoders
     SpeexDecoder decoders[_SYS_AUDIO_MAX_CHANNELS];
+    PCMDecoder pcmDecoders[_SYS_AUDIO_MAX_CHANNELS];
     uint32_t availableDecodersMask;
     static const int ALL_DECODERS_AVAILABLE = 0xFF;
 
     AudioChannelWrapper* channelForHandle(_SYSAudioHandle handle);
     SpeexDecoder* getDecoder();
+    PCMDecoder* getPCMDecoder();
     void stopChannel(AudioChannelWrapper *ch);
 };
 

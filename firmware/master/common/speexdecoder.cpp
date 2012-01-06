@@ -1,4 +1,4 @@
-
+#include <string.h>
 #include "speexdecoder.h"
 #include "flashlayer.h"
 #include <sifteo/macros.h>
@@ -90,7 +90,7 @@ int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
         return 0; // ruh roh, TODO error handling
     }
 
-    //fprintf(stdout, "  wanted %lu bytes, read %d\n", DECODED_FRAME_SIZE + sizeof(uint8_t), rsize);
+    //fprintf(stdout, "  wanted %lu bytes, read %d, sz: %d\n", DECODED_FRAME_SIZE + sizeof(uint8_t), rsize, sz);
 
     // format: uint8_t of framesize, followed by framesize bytes of frame data
     int sz = *localAddr++;
@@ -134,3 +134,47 @@ void _speex_putc(int ch, void *file)
     }
 }
 
+
+PCMDecoder::PCMDecoder() :
+    //decodeState(0),
+    srcBytesRemaining(0),
+    status(EndOfStream)
+{
+}
+
+void PCMDecoder::setOffset(const uint32_t offset, int size)
+{
+    this->srcaddr = offset;
+    this->srcBytesRemaining = size;
+    
+    status = Ok;
+}
+
+int PCMDecoder::decodeFrame(uint8_t *buf, int size)
+{
+    if (size < (int)FRAME_SIZE || status != Ok) {
+        return 0;
+    }
+    
+    if ((unsigned)this->srcBytesRemaining < FRAME_SIZE) {
+        status = EndOfStream;
+        return 0;   // not enough data left
+    }
+    
+    int rsize = 0;
+    
+    char *localAddr = FlashLayer::getRegionFromOffset(this->srcaddr, FRAME_SIZE, &rsize);
+    if (!localAddr) {
+        return 0; // ruh roh, TODO error handling
+    }
+    
+    memcpy(buf, localAddr, FRAME_SIZE);
+    //buf = (uint8_t *)localAddr;
+    this->srcBytesRemaining -= FRAME_SIZE;
+    
+    
+    FlashLayer::releaseRegionFromOffset(this->srcaddr);
+    this->srcaddr += FRAME_SIZE;
+
+    return FRAME_SIZE;
+}

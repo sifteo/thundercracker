@@ -14,6 +14,7 @@
 #include "audiobuffer.h"
 
 class SpeexDecoder;
+class PCMDecoder;
 
 // TODO - need a better name, but at least this distinguishes from AudioChannel in audio.h...
 // Maybe "AudioChannelSlot", by analogy with "CubeSlot"?
@@ -31,6 +32,7 @@ public:
     }
 
     void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
+    void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, PCMDecoder *dec);
     int mixAudio(int16_t *buffer, int len);
 
     _SYSAudioType channelType() const {
@@ -56,7 +58,9 @@ protected:
     const struct _SYSAudioModule *mod;
     uint8_t state;
     _SYSAudioHandle handle;
+    // TODO: Make an IAudioDecoder interface.
     SpeexDecoder *decoder;
+    PCMDecoder *pcmDecoder;
     int volume;
 
     friend class AudioMixer;    // mixer can tell us to fetchData()

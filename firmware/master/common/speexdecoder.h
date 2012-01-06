@@ -55,4 +55,31 @@ private:
     DecodeStatus status;
 };
 
+class PCMDecoder
+{
+public:
+    static const unsigned FRAME_SIZE = 128;
+    
+    enum DecodeStatus {
+        Ok = 0,
+        EndOfStream = -1,
+        CorruptStream = -2
+    };
+    
+    PCMDecoder();
+    
+    void setOffset(const uint32_t offset, int size);
+    int decodeFrame(uint8_t *buf, int size);
+    
+    bool endOfStream() const {
+        return (status == Ok) ? srcBytesRemaining <= 0 : true;
+    }
+    
+private:
+    uintptr_t srcaddr;
+    //uint32_t srcaddr;
+    int srcBytesRemaining;
+    DecodeStatus status;
+};
+
 #endif /* SPEEXDECODER_H_ */

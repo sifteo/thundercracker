@@ -259,6 +259,7 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     
     mod->offset = offset + sizeof(SoundHeader);
     mod->size = header->dataSize;
+    mod->type = (_SYSAudioType)header->encoding;
     
     FlashLayer::releaseRegionFromOffset(offset);    
     
@@ -280,9 +281,15 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
 
     // does this module require a decoder? if so, get one
     SpeexDecoder *dec;
+    PCMDecoder *pcmdec = 0;
     if (mod->type == Sample) {
         dec = getDecoder();
         if (dec == NULL) {
+            return false; // no decoders available
+        }
+    } else if (mod->type == PCM) {
+        pcmdec = getPCMDecoder();
+        if (pcmdec == NULL) {
             return false; // no decoders available
         }
     }
@@ -293,8 +300,12 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     AudioChannelWrapper *ch = &channels[idx];
     ch->handle = nextHandle++;
     *handle = ch->handle;
-    ch->play(mod, loopMode, dec);
-
+    if (pcmdec) {
+        ch->play(mod, loopMode, pcmdec);
+    } else {
+        ch->play(mod, loopMode, dec);
+    }
+    
     Atomic::SetBit(activeChannelMask, idx);
     
     return true;
@@ -389,6 +400,24 @@ SpeexDecoder* AudioMixer::getDecoder()
         if (availableDecodersMask & (1 << i)) {
             Atomic::ClearBit(availableDecodersMask, i);
             return &decoders[i];
+        }
+    }
+    return NULL;
+}
+
+PCMDecoder* AudioMixer::getPCMDecoder()
+{
+    if (availableDecodersMask == 0) {
+        return NULL;
+    }
+
+    /*
+     * XXX: CLZ could do this in constant time, without the loop. --beth
+     */
+    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
+        if (availableDecodersMask & (1 << i)) {
+            Atomic::ClearBit(availableDecodersMask, i);
+            return &pcmDecoders[i];
         }
     }
     return NULL;

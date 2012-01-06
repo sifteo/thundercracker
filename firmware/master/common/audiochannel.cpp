@@ -34,6 +34,16 @@ void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopT
     }
 }
 
+void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, PCMDecoder *dec)
+{
+    this->pcmDecoder = dec;
+    this->mod = mod;
+    this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
+    if (this->pcmDecoder != 0) {
+        this->pcmDecoder->setOffset(mod->offset, mod->size);
+    }
+}
+
 int AudioChannelWrapper::mixAudio(int16_t *buffer, int len)
 {
     ASSERT(!(state & STATE_STOPPED));
@@ -51,11 +61,19 @@ int AudioChannelWrapper::mixAudio(int16_t *buffer, int len)
             buffer++;
         }
         // if we have nothing buffered, and there's nothing else to read, we're done
-        if (decoder->endOfStream() && buf.readAvailable() == 0) {
+        if (decoder && decoder->endOfStream() && buf.readAvailable() == 0) {
             if (this->state & STATE_LOOP) {
                 // FIXME: now using ID based assets
                 //this->decoder->setData(mod->buf, mod->size);
                 this->decoder->setOffset(mod->offset, mod->size);
+            }
+            else {
+                return -1;
+            }
+        }
+        else if (pcmDecoder && pcmDecoder->endOfStream() && buf.readAvailable() == 0) {
+            if (this->state & STATE_LOOP) {
+                this->pcmDecoder->setOffset(mod->offset, mod->size);
             }
             else {
                 return -1;
@@ -87,6 +105,17 @@ void AudioChannelWrapper::fetchData()
         buf.write(buffer, sz);
     }
         break;
+    case PCM: {
+        if (pcmDecoder->endOfStream() || buf.writeAvailable() < PCMDecoder::FRAME_SIZE) {
+            return;
+        }
+        
+        // TODO: Is there some frame size for PCM data?
+        uint8_t buffer[PCMDecoder::FRAME_SIZE];
+        uint32_t sz = pcmDecoder->decodeFrame(buffer, sizeof(buffer));
+        ASSERT(sz == PCMDecoder::FRAME_SIZE);
+        buf.write(buffer, sz);
+    }
     default:
         break;
     }
