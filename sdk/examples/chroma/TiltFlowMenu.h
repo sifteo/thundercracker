@@ -80,7 +80,7 @@ public:
   inline void SetDirty() { mDirty = true; }
   inline void SetCube( Cube *pCube ) { mpCube = pCube; }
   inline bool IsFlushNeeded() const { return mFlushNeeded; }
-  inline void Flushed() { mFlushNeeded = false; }
+  inline void Flush();
 
   void CheckForRepaint();
   void Tick();

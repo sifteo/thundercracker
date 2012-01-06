@@ -88,26 +88,34 @@ bool TiltFlowMenu::Tick(float dt)
     for( int i = 0; i < mNumCubes; i++ )
       mViews[i].CheckForRepaint();
 
+    bool bFlush = false;
+
     //sync and flush
     for( int i = 0; i < mNumCubes; i++ )
     {
         if( mViews[i].IsFlushNeeded() )
         {
             //System::finish();
+
+            //total weirdness
+            mViews[i].Flush();
             System::paintSync();
             //printf( "finishing\n" );
+            bFlush = true;
             break;
         }
     }
 
-    for( int i = 0; i < mNumCubes; i++ )
+    /*for( int i = 0; i < mNumCubes; i++ )
     {
         if( mViews[i].IsFlushNeeded() )
         {
-            MenuController::Inst().cubes[i].GetBG1Helper().Flush();
-            mViews[i].Flushed();
+            mViews[i].Flush();
         }
     }
+
+    if( bFlush )
+        System::paintSync();*/
 
 	return true;
 }
@@ -420,10 +428,11 @@ void TiltFlowView::PaintMenu() {
 
 
   DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem ), offset.x, offset.y);
-  BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
 
   if( mStatus != STATUS_PICKED )
   {
+      BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
+
 	  if (/*c.Neighbors.Left == NULL && */mItem > 0) {
 		DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70);
 	  }
@@ -438,10 +447,13 @@ void TiltFlowView::PaintMenu() {
 
 	  //draw the current tip
 	  bg1helper.DrawAsset(Vec2(0,TIP_Y_OFFSET), *TIPS[mCurrentTip]);
+
+      //bg1helper.Flush();
+      mFlushNeeded = true;
+      //printf ("would have flushed here\n");
   }
 
-  //bg1helper.Flush();
-  mFlushNeeded = true;
+
 
   // Firmware handles all pixel-level scrolling
   vid.BG0_setPanning(Vec2((int)-mOffsetX, COVER_Y_OFFSET - offset.y));
@@ -839,3 +851,11 @@ bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Vec2 result) 
 */
 
 
+void TiltFlowView::Flush()
+{
+    //printf( "flushing\n" );
+    MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper().Flush();
+    //force touch
+    //MenuController::Inst().cubes[ mpCube->id() ].GetCube().vbuf.touch();
+    mFlushNeeded = false;
+}
