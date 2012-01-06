@@ -316,12 +316,12 @@ struct _SYSAudioBuffer {
 };
 
 /**
- * Accelerometer state
+ * Accelerometer state.
  */
 
 struct _SYSAccelState {
-    int8_t x;
-    int8_t y;
+    int8_t x;       // +X towards the right
+    int8_t y;       // +Y towards the bottom
 };
 
 struct _SYSNeighborState {
