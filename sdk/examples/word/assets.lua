@@ -9,8 +9,8 @@ LetterBG = image{"wc_letters_background.png", quality=10}
 StartScreen = image{"wc_shaketoplay.png", quality=10}
 Title = image{"wc_title.png", quality=10}
 TitleSmoke = image{"wc_title_smoke.png", width=64, height=64, quality=10}
-HighScores = image{"high_scores.png", quality=10}
-Score = image{"score.png", quality=10}
+HighScores = image{"WC_letters_connected_3.png", quality=10}
+Score = image{"WC_letters_connected_3.png", quality=10}
 Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
 ScorePan = image{"wc_score_pan.png", width=128, height=128, quality=10}
 TeethLoopConnected = image{"wc_letters_neighbored.png", width=128, height=128, quality=10}
