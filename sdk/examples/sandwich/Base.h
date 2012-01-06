@@ -3,6 +3,7 @@
 #include <sifteo.h>
 #include "assets.gen.h"
 //#include "audio.gen.h"
+#include <stdlib.h>
 
 #ifndef NUM_CUBES
 #  define NUM_CUBES 3
