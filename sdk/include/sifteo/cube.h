@@ -101,7 +101,7 @@ class Cube {
     void disable() {
         _SYS_disableCubes(Intrinsic::LZ(mID));
     }
-
+    
     void loadAssets(AssetGroup &group) {
         _SYS_loadAssets(mID, &group.sys);
     }
@@ -110,15 +110,15 @@ class Cube {
      * Get the asset loading progress, on this cube, scaled between 0 and 'max'.
      * By default, this returns percent complete.
      */
-
+    
     int assetProgress(AssetGroup &group, int max=100) {
         ASSERT(id() < arraysize(group.cubes));
-        return group.cubes[id()].progress * max / group.sys.hdr->dataSize;
+        return group.cubes[id()].progress * max / group.sys.size;
     }
-
+    
     bool assetDone(AssetGroup &group) {
         return !!(group.sys.doneCubes & Sifteo::Intrinsic::LZ(id()));
-    }   
+    }
 
     ID id() const {
         return mID;

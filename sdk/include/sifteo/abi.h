@@ -64,8 +64,19 @@ struct _SYSAssetGroupCube {
     uint32_t progress;          /// IN     Loading progress, in bytes
 };
 
+#if 0
 struct _SYSAssetGroup {
     const struct _SYSAssetGroupHeader *hdr;     /// OUT    Static data for this asset group
+    struct _SYSAssetGroupCube *cubes;           /// OUT    Array of per-cube state buffers
+    _SYSCubeIDVector reqCubes;                  /// IN     Which cubes have requested to load this group?
+    _SYSCubeIDVector doneCubes;                 /// IN     Which cubes have finished installing this group?
+};
+#endif
+
+struct _SYSAssetGroup {
+    uint32_t id;                                /// OUT    ID of this group in the asset segment
+    uint32_t offset;
+    uint32_t size;
     struct _SYSAssetGroupCube *cubes;           /// OUT    Array of per-cube state buffers
     _SYSCubeIDVector reqCubes;                  /// IN     Which cubes have requested to load this group?
     _SYSCubeIDVector doneCubes;                 /// IN     Which cubes have finished installing this group?
@@ -298,10 +309,19 @@ enum _SYSAudioLoopType {
     LoopRepeat = 1
 };
 
+#if 0
 struct _SYSAudioModule {
     enum _SYSAudioType type;
     uint32_t size;
     const uint8_t *buf;
+};
+#endif
+
+struct _SYSAudioModule {
+    uint32_t id;
+    uint32_t offset;
+    uint32_t size;
+    enum _SYSAudioType type;
 };
 
 struct _SYSAudioBuffer {
@@ -316,12 +336,12 @@ struct _SYSAudioBuffer {
 };
 
 /**
- * Accelerometer state
+ * Accelerometer state.
  */
 
 struct _SYSAccelState {
-    int8_t x;
-    int8_t y;
+    int8_t x;       // +X towards the right
+    int8_t y;       // +Y towards the bottom
 };
 
 struct _SYSNeighborState {
@@ -432,7 +452,8 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count);
 
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer);
-uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
+//uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
+uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
 uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
 void _SYS_audio_stop(_SYSAudioHandle h);
 void _SYS_audio_pause(_SYSAudioHandle h);

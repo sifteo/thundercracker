@@ -1,42 +1,42 @@
 
 #include "flashlayer.h"
+#include "macronixmx25.h"
+#include "board.h"
+#include <string.h>
 
 FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
+static MacronixMX25 &flash = MacronixMX25::instance;
 
-char* FlashLayer::getRegion(uintptr_t address, int len)
+void FlashLayer::init()
 {
-    (void)len;
-    return (char*)address;
-#if 0 // eventually
-    CachedBlock *b = getCachedBlock(address);
-    if (b != 0) {
-        if (address + len > b->address + sizeof(b->data)) {
-            // requested region crosses block boundary :(
+    memset(blocks, 0, sizeof(blocks));
+}
+
+char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
+{
+    CachedBlock *b = getCachedBlock(offset);
+    if (b == 0) {
+        b = getFreeBlock();
+        if (b == 0) {
             return 0;
         }
-        return b->data + (address - b->address);
-    }
-    // XXX - pull from external flash via DMA
-    return 0;
-#endif
-}
 
-void FlashLayer::releaseRegion(uintptr_t address)
-{
-    (void)address;
-}
+        // find the start address of the block that contains this offset,
+        // and read in the entire block.
+        b->address = (offset / BLOCK_SIZE) * BLOCK_SIZE;
+        flash.read(b->address, (uint8_t*)b->data, BLOCK_SIZE);
 
-/*
- * Try to find an existing cached block for the given address.
- */
-FlashLayer::CachedBlock* FlashLayer::getCachedBlock(uintptr_t address)
-{
-    FlashLayer::CachedBlock *b;
-    int i;
-    for (i = 0, b = FlashLayer::blocks; i < NUM_BLOCKS; i++, b++) {
-        if (address >= b->address && address < b->address + BLOCK_SIZE) {
-            return b;
-        }
+        b->inUse = true;
+        b->valid = true;
     }
-    return 0;
+
+    int boff = offset % BLOCK_SIZE;
+    *size = len;
+
+    if ((unsigned)offset + len > b->address + sizeof(b->data)) {
+        // requested region crosses block boundary :(
+        *size = b->address + BLOCK_SIZE - offset;
+    }
+
+    return b->data + boff;
 }

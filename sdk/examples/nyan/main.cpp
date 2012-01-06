@@ -10,7 +10,7 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
-#include "audio.gen.h"
+//#include "audio.gen.h"
 
 using namespace Sifteo;
 
@@ -47,7 +47,8 @@ static AudioChannel channel;
 void siftmain() {
     init();
 	channel.init();
-	channel.play(nyan, LoopRepeat);
+	//channel.play(nyan, LoopRepeat);
+	channel.play(Nyan, LoopRepeat);
     for (unsigned i=0; i<NUM_CUBES; i++) {
 		vid[i].init();
 	}

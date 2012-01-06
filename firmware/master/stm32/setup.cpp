@@ -13,6 +13,7 @@
 #include <sifteo.h>
 #include "radio.h"
 #include "usb.h"
+#include "flashlayer.h"
 #include "runtime.h"
 #include "board.h"
 #include "vectors.h"
@@ -168,7 +169,19 @@ extern "C" void _start()
     SysTime::init();
     Radio::open();
     Tasks::init();
+    FlashLayer::init();
+
+#if 0
+    // ALERT! ST's usb library appears to overwrite registers related to
+    // SysTick and as such, cannot be used while you want to talk to cubes
+    // over the radio. It's fine for loading data over USB, though.
     Usb::init();
+    // super hack: just wait around for data to be loaded. revel in the crappiness
+    // as you disable this block and reflash your board to re-enable SysTick.
+    for (;;) {
+        Sifteo::System::yield();
+    }
+#endif
 
     /*
      * Launch our game runtime!

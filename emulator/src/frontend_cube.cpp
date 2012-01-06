@@ -178,9 +178,6 @@ void FrontendCube::animate()
      * for gravity. We're now measuring it in G's, so we apply an
      * arbitrary conversion from our simulated units (Box2D "meters"
      * per timestep) to something realistic.
-     *
-     * In our coordinate system, +Z is toward the camera, and -Z is
-     * down, into the table.
      */
 
     b2Vec3 accelG = accel.measure(body, 0.06f);
@@ -190,11 +187,19 @@ void FrontendCube::animate()
      * convert this acceleration into device-local coordinates. This will take into
      * account tilting, as well as the cube's angular orientation.
      */
-     
+
+    /*
+     * In our coordinate system, +Z is toward the camera, and -Z is
+     * down, into the table. +X is to the right, and +Y is towards the
+     * bottom. This measurement's polarity and magnitude should try
+     * hard to mimic the physical hardware's accelerometer orientation
+     * and sensitivity.
+     */
+
     /* XXX: Real 3-axis support! This hardcoded Z is a total hack. */
 
     b2Vec3 accelLocal = modelMatrix.Solve33(accelG);
-    hw->setAcceleration(accelLocal.x, accelLocal.y, -1.0f);
+    hw->setAcceleration(-accelLocal.x, -accelLocal.y, -accelLocal.z);
 }
 
 void FrontendCube::computeAABB(b2AABB &aabb)

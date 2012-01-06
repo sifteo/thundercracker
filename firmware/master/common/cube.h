@@ -80,7 +80,7 @@ class CubeSlot {
     void setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
     }
-
+    
     bool isAssetGroupLoaded(_SYSAssetGroup *a) {
         return !!(bit() & a->doneCubes);
     }
@@ -100,7 +100,7 @@ class CubeSlot {
         buf[2] = neighbors[2];
         buf[3] = neighbors[3];
     }
-
+    
     _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
         /*
          * Safely return this cube's per-cube data on a particular

@@ -7,7 +7,7 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
-#include "audio.gen.h"
+//#include "audio.gen.h"
 #include "string.h"
 #include <stdlib.h>
 
@@ -468,7 +468,7 @@ void Game::enterScore()
 }
 
 
-void Game::playSound( const _SYSAudioModule &sound )
+void Game::playSound( _SYSAudioModule &sound )
 {
     if( &sound == m_pSoundThisFrame )
         return;
@@ -486,7 +486,7 @@ void Game::playSound( const _SYSAudioModule &sound )
     m_pSoundThisFrame = &sound;
 }
 
-const _SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
+_SYSAudioModule *SLOSH_SOUNDS[Game::NUM_SLOSH_SOUNDS] =
 {
   &slosh_multi_01,
     &slosh_multi_02,

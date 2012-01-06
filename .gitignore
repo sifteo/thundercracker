@@ -1,5 +1,8 @@
 .DS_Store
 *.bak
+*.bin
 *.d
 *~
 failed-*.png
+*_enc.raw
+asegment.bin
