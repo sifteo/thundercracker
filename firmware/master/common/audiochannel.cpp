@@ -30,7 +30,7 @@ void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopT
     this->mod = mod;
     this->state = (loopMode == LoopOnce) ? 0 : STATE_LOOP;
     if (this->decoder != 0) {
-        this->decoder->setData(mod->buf, mod->size);
+        this->decoder->setOffset(mod->offset, mod->size);
     }
 }
 
@@ -53,7 +53,9 @@ int AudioChannelWrapper::mixAudio(int16_t *buffer, int len)
         // if we have nothing buffered, and there's nothing else to read, we're done
         if (decoder->endOfStream() && buf.readAvailable() == 0) {
             if (this->state & STATE_LOOP) {
-                this->decoder->setData(mod->buf, mod->size);
+                // FIXME: now using ID based assets
+                //this->decoder->setData(mod->buf, mod->size);
+                this->decoder->setOffset(mod->offset, mod->size);
             }
             else {
                 return -1;

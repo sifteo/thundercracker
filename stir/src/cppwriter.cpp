@@ -65,7 +65,8 @@ void CPPWriter::writeArray(const std::vector<uint8_t> &array)
 
 
 CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
-    : CPPWriter(log, filename)
+    : CPPWriter(log, filename),
+      mCurrentID(0)
     {}
 
 void CPPSourceWriter::writeGroup(const Group &group)
@@ -78,6 +79,16 @@ void CPPSourceWriter::writeGroup(const Group &group)
     sprintf(buf, "0x%016llx", (long long unsigned int) group.getSignature());
     #endif
 
+    // TODO: increment ids correctly with each group
+    uint32_t id = mCurrentID;
+    mCurrentID++;
+    
+    mStream << "\nuint32_t " << group.getName() << "ID_int = " << id << ";\n";
+    mStream <<
+        "Sifteo::AssetGroup " << group.getName() <<
+        " = {{ " << group.getName() << "ID_int, (uint32_t)0, (uint32_t)0," << group.getName() << ".cubes }};\n";
+
+#if 0
     mStream <<
         "\n"
         "static const struct {\n" <<
@@ -97,10 +108,26 @@ void CPPSourceWriter::writeGroup(const Group &group)
         "}};\n\n"
         "Sifteo::AssetGroup " << group.getName() <<
         " = {{ &" << group.getName() << "_data.hdr, " << group.getName() << ".cubes }};\n";
+#endif
 
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++)
         writeImage(**i);
+}
+
+void CPPSourceWriter::writeSound(const Sound &sound)
+{
+    // TODO: increment ids correctly with each group
+    uint32_t id = mCurrentID;
+    mCurrentID++;
+    
+    mStream <<
+        "_SYSAudioModule " << sound.getName() << "= {\n" <<
+        id << ",\n" <<
+        "0,\n" <<
+        "0,\n" <<
+        "Sample\n" <<
+        "};\n";
 }
 
 void CPPSourceWriter::writeImage(const Image &image)
@@ -236,5 +263,9 @@ void CPPHeaderWriter::writeGroup(const Group &group)
     }
 }
 
+void CPPHeaderWriter::writeSound(const Sound &sound)
+{
+    mStream << "extern _SYSAudioModule " << sound.getName() << ";\n";
+}
 
 };  // namespace Stir

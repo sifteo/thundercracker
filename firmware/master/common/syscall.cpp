@@ -79,7 +79,7 @@ void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
         CubeSlots::instances[cid].setVideoBuffer(vbuf);
 }
 
-void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group)
+void _SYS_loadAssets(_SYSCubeID cid, _SYSAssetGroup *group)
 {
     if (Runtime::checkUserPointer(group, sizeof *group) && CubeSlots::validID(cid))
         CubeSlots::instances[cid].loadAssets(group);
@@ -252,7 +252,17 @@ void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
     }
 }
 
+#if 0
 uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
+{
+    if (Runtime::checkUserPointer(mod, sizeof(*mod)) && Runtime::checkUserPointer(h, sizeof(*h))) {
+        return AudioMixer::instance.play(mod, h, loop);
+    }
+    return false;
+}
+#endif
+
+uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
 {
     if (Runtime::checkUserPointer(mod, sizeof(*mod)) && Runtime::checkUserPointer(h, sizeof(*h))) {
         return AudioMixer::instance.play(mod, h, loop);

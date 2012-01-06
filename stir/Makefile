@@ -13,6 +13,7 @@ OBJS = \
 	src/script.o \
 	src/proof.o \
 	src/proof_html.o \
+	src/asegwriter.o \
 	src/cppwriter.o \
 	src/imagestack.o \
 	src/tile.o \
@@ -22,7 +23,25 @@ OBJS = \
 	src/logger.o \
 	src/lodepng.o \
 	src/sha1.o \
+	src/speexencoder.o \
 	$(OBJS_lua) \
+
+# speex
+ifeq ($(OS), Windows_NT)
+    SPEEX_DIR = ../deps/win32/speex
+else
+    SPEEX_DIR = ../deps/osx/speex
+endif
+
+INCLUDES = -I$(SPEEX_DIR)/include
+LDFLAGS = -L$(SPEEX_DIR)/lib
+
+ifeq ($(OS), Windows_NT)
+    LDFLAGS += -static -lspeex -lstdc++
+else
+    LDFLAGS += -lspeex -lstdc++
+endif
+# end speex
 
 FIRMWARE_INC = ../firmware/include
 DEPFILES := $(OBJS:.o=.d)
@@ -38,7 +57,7 @@ ifeq ($(BUILD_PLATFORM), windows32)
 	OBJS += src/winres.o
 endif
 
-CFLAGS += -O3 -g -ffast-math -Werror -Wall -I$(FIRMWARE_INC) -MMD
+CFLAGS += -O3 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -MMD
 ifneq ($(BUILD_PLATFORM), windows32)
 	CFLAGS += -DLUA_USE_MKSTEMP
 endif
