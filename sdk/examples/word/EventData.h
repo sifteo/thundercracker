@@ -17,7 +17,7 @@ union EventData
     {
         const char* mWord;
         Cube::ID mCubeIDStart;
-    } mWordFound;
+    } mWordFound; // used for NewWordFound and OldWordFound
 
     struct
     {

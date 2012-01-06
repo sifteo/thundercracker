@@ -2,6 +2,7 @@
 
 Cube gCubes[NUM_CUBES];
 AudioChannel gChannelSfx;
+AudioChannel gChannelMusic;
 
 static Game sGame;
 Game* pGame = &sGame;
@@ -51,18 +52,17 @@ void siftmain() {
 		}
 	}
 	gChannelSfx.init();
+	gChannelMusic.init();
 	for(;;) {
 		#ifndef SKIP_INTRO
-		gChannelSfx.play(sting);
+		PlayMusic(music_sting, false);
 		IntroCutscene();
-		gChannelSfx.stop();
 		#endif
 		*pGame = Game(); // re-initialize memory
 		pGame->MainLoop();
 		#ifndef SKIP_OUTRO
-		gChannelSfx.play(win_screen);
+		PlayMusic(music_winscreen, false);
 		WinScreen(pGame->player.CurrentView()->GetCube());
-		gChannelSfx.stop();
 		#endif
 	}
 }

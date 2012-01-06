@@ -36,10 +36,10 @@ void Intro::Reset( bool ingamereset)
 
 bool Intro::Update( float dt )
 {
-    m_fTimer += dt;
-
     if( m_fTimer <= INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME && m_fTimer + dt > INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME )
         Game::Inst().playSound(glom_delay);
+
+    m_fTimer += dt;
 
     if( m_fTimer > INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME + INTRO_BALLEXPLODE_TIME )
     {

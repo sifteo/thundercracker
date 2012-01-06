@@ -43,10 +43,58 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         &Teeth,             // ImageIndex_Teeth,
     };
 
+    const AssetImage* teethCenterImages[] =
+    {
+        &TeethNewWord2,
+        &TeethNewWord3,
+        &TeethNewWord4,
+        &TeethNewWord5,
+        &TeethNewWord6,
+    };
+
+    const AssetImage* teethLeftImages[] =
+    {
+        &TeethNewWord2Left,
+        &TeethNewWord3Left,
+        &TeethNewWord4Left,
+        &TeethNewWord5Left,
+        &TeethNewWord6Left,
+    };
+
+    const AssetImage* teethRightImages[] =
+    {
+        &TeethNewWord2Right,
+        &TeethNewWord3Right,
+        &TeethNewWord4Right,
+        &TeethNewWord5Right,
+        &TeethNewWord6Right,
+    };
+
     STATIC_ASSERT(arraysize(teethImages) == NumImageIndexes);
     ASSERT(teethImageIndex >= 0);
     ASSERT(teethImageIndex < (ImageIndex)arraysize(teethImages));
-    const AssetImage& teeth = *teethImages[teethImageIndex];
+    const AssetImage* pteeth = teethImages[teethImageIndex];
+
+    switch (teethImageIndex)
+    {
+    case ImageIndex_ConnectedWord:
+        pteeth = teethCenterImages[MIN(((unsigned)arraysize(teethCenterImages) - 1), ((unsigned)GameStateMachine::getNewWordLength() - 2))];
+        break;
+
+    case ImageIndex_ConnectedLeftWord:
+        pteeth = teethCenterImages[MIN(((unsigned)arraysize(teethLeftImages) - 1), ((unsigned)GameStateMachine::getNewWordLength() - 2))];
+        break;
+
+    case ImageIndex_ConnectedRightWord:
+        pteeth = teethCenterImages[MIN(((unsigned)arraysize(teethRightImages) - 1), ((unsigned)GameStateMachine::getNewWordLength() - 2))];
+        break;
+
+    default:
+        break;
+    }
+
+    const AssetImage& teeth = *pteeth;
+
     unsigned frame = 0;
     unsigned secondsLeft = GameStateMachine::getSecondsLeft();
 
@@ -74,7 +122,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         {
             frame = 3;
         }
-        DEBUG_LOG(("shuffle: [c: %d] anim: %d, frame: %d, time: %f\n", getStateMachine().getCube().id(), teethImageIndex, frame, GameStateMachine::getTime()));
+        //DEBUG_LOG(("shuffle: [c: %d] anim: %d, frame: %d, time: %f\n", getStateMachine().getCube().id(), teethImageIndex, frame, GameStateMachine::getTime()));
 
     }
     else if (reverseAnim)

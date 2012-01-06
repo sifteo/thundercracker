@@ -23,9 +23,6 @@ enum GameStateIndex
     GameStateIndex_NumStates
 };
 
-// HACK workaround inability to check if a Cube is actually connected
-const unsigned MAX_CUBES = 6;
-
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 #ifdef DEBUG
 const float ROUND_TIME = 35.0f;
@@ -50,6 +47,7 @@ public:
     static unsigned getSecondsLeft() { return (unsigned) sInstance->mTimeLeft; }
     static unsigned getScore() { return (unsigned) sInstance->mScore; }
     static float getTime() { return sInstance->StateMachine::getTime(); }
+    static unsigned char getNewWordLength() { return sInstance->mNewWordLength; }
 
 protected:
     virtual State& getState(unsigned index);
@@ -67,6 +65,7 @@ private:
     float mAnagramCooldown;
     float mTimeLeft;
     unsigned mScore;
+    unsigned char mNewWordLength;
 
     static GameStateMachine* sInstance;
 };

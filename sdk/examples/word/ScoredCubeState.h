@@ -6,7 +6,7 @@
 class ScoredCubeState : public CubeState
 {
 public:
-    ScoredCubeState();
+    ScoredCubeState();    
 };
 
 #endif // SCOREDCUBESTATE_H

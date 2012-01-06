@@ -28,6 +28,7 @@ void Game::MainLoop() {
 
   // initial zoom out (yoinked and modded from TeleportTo)
   { 
+    gChannelMusic.stop();
     PlaySfx(sfx_zoomIn);
     GameView* view = player.CurrentView();
     view->HidePlayer();
@@ -57,8 +58,8 @@ void Game::MainLoop() {
     view->Init();
     System::paintSync();
   }  
-
-  PlaySfx(sfx_neighbor);
+  PlayMusic(music_castle);
+  //PlaySfx(sfx_neighbor);
 
   mSimTime = System::clock();
   ObserveNeighbors(true);
@@ -81,9 +82,6 @@ void Game::Paint(bool sync) {
     p->Update();
   }
   if (sync || mNeedsSync) {
-    //for(unsigned i=0; i<NUM_CUBES; ++i) {
-    //  gCubes[i].vbuf.touch();
-    //}
     System::paintSync();
     if (mNeedsSync > 0) {
       mNeedsSync--;
@@ -108,6 +106,7 @@ void Game::MovePlayerAndRedraw(int dx, int dy) {
 }
 
 void Game::WalkTo(Vec2 position) {
+  PlaySfx(sfx_running);
   Vec2 delta = position - player.Position();
   while(delta.x > WALK_SPEED) {
     MovePlayerAndRedraw(WALK_SPEED, 0);
@@ -134,6 +133,7 @@ void Game::WalkTo(Vec2 position) {
 }
 
 void Game::TeleportTo(const MapData& m, Vec2 position) {
+  gChannelMusic.stop();
   Vec2 room = position/128;
   GameView* view = player.CurrentView();
   view->HidePlayer();
@@ -197,6 +197,8 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
     System::paintSync();
   }
   
+  PlayMusic(map.Data() == &dungeon_data ? music_dungeon : music_castle);
+
   // walk out of the in-gate
   Vec2 target = map.GetRoom(room)->Center();
   player.SetLocation(position, InferDirection(target - position));

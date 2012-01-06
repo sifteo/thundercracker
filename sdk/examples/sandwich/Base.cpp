@@ -1,5 +1,9 @@
 #include "Base.h"
 
+#ifdef _WIN32
+#include <cstdlib>
+#endif
+
 Cube::Side InferDirection(Vec2 u) {
 	if (u.x > 0) {
 		return SIDE_RIGHT;
@@ -11,6 +15,10 @@ Cube::Side InferDirection(Vec2 u) {
 		return SIDE_BOTTOM;
 	}
 }
+
+//------------------------------------------------------------------------------
+// Sprite Utilities
+//------------------------------------------------------------------------------
 
 bool InSpriteMode(Cube* c){
   uint8_t byte;
@@ -56,6 +64,10 @@ void MoveSprite(Cube *c, int id, int px, int py) {
   _SYS_vbuf_poke(&c->vbuf.sys, addr, word);
 }
 
+//------------------------------------------------------------------------------
+// Sfx Utilities
+//------------------------------------------------------------------------------
+
 void PlaySfx(const _SYSAudioModule& handle, bool preempt) {
   if (gChannelSfx.isPlaying()) {
     if (preempt) {
@@ -66,6 +78,17 @@ void PlaySfx(const _SYSAudioModule& handle, bool preempt) {
   }
   gChannelSfx.play(handle);
 }
+
+void PlayMusic(const _SYSAudioModule& music, bool loop) {
+  if (gChannelMusic.isPlaying()) {
+    gChannelMusic.stop();
+  }
+  gChannelMusic.play(music, loop ? LoopRepeat : LoopOnce);
+}
+
+//------------------------------------------------------------------------------
+// Miscellaneous Utilities
+//------------------------------------------------------------------------------
 
 unsigned int Rand( unsigned int max ) {
 #ifdef _WIN32

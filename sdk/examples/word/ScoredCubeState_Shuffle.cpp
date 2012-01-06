@@ -39,7 +39,7 @@ void ScoredCubeState_Shuffle::paint()
         // teeth closing animation
         paintLetters(vid, Font1Letter);
         paintTeeth(vid, ImageIndex_Teeth, true, true);
-        DEBUG_LOG(("shuffle: [c: %d] teeth closing %f\n", c.id(), GameStateMachine::getTime()));
+        //DEBUG_LOG(("shuffle: [c: %d] teeth closing %f\n", c.id(), GameStateMachine::getTime()));
     }
     else
     {
@@ -54,6 +54,6 @@ void ScoredCubeState_Shuffle::paint()
             vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
         }
         paintTeeth(vid, ImageIndex_Teeth, true, false, false, false, TEETH_ANIM_LENGTH);
-        DEBUG_LOG(("shuffle: [c: %d] teeth opening %f\n", c.id(), GameStateMachine::getTime()));
+        //DEBUG_LOG(("shuffle: [c: %d] teeth opening %f\n", c.id(), GameStateMachine::getTime()));
     }
 }
