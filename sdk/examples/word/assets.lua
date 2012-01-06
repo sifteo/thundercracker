@@ -4,6 +4,7 @@ EyeLeft = image{"wc_eyeball_left.png", width=16, height=16, quality=10, pinned=t
 EyeRight = image{"wc_eyeball_right.png", width=16, height=16, quality=10, pinned=true}
 EyeLeftBlink = image{"wc_eyeball_left_blink.png", width=16, height=16, quality=10, pinned=true}
 EyeRightBlink = image{"wc_eyeball_right_blink.png", width=16, height=16, quality=10, pinned=true}
+LetterSparkle = image{"wc_eyeball_right.png", width=16, height=16, quality=10, pinned=true}
 Font1Letter = image{"WC_letters.png", width=120, height=88, quality=10}
 LetterBG = image{"wc_letters_background.png", quality=10}
 StartScreen = image{"wc_shaketoplay.png", quality=10}
