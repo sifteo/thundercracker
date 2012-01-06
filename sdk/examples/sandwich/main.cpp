@@ -10,6 +10,13 @@ Game* pGame = &sGame;
 void IntroCutscene();
 void WinScreen(Cube* primaryCube);
 
+static bool AnyNeighbors(const Cube& c) {
+	return c.hasPhysicalNeighborAt(0) || 
+		c.hasPhysicalNeighborAt(1) || 
+		c.hasPhysicalNeighborAt(2) || 
+		c.hasPhysicalNeighborAt(3);
+}
+
 void siftmain() {
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
@@ -48,6 +55,8 @@ void siftmain() {
 				for(Cube::Side s=0; s<4; ++s) {
 					cnt += gCubes[i].hasPhysicalNeighborAt(s);
 				}
+				VidMode_BG0(gCubes[i].vbuf)
+					.BG0_drawAsset(Vec2(0,0), AnyNeighbors(gCubes[i]) ? Sting : PowerOff);
 			}
 		}
 	}

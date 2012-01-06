@@ -137,7 +137,9 @@ void Player::Update(float dt) {
     while(!pGame->map.CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
       CORO_YIELD;
       mNextDir = pCurrent->VirtualTiltDirection();
-      if (PathDetect()) { break; }
+      #if SIFTEO_SIMULATOR
+      // /if (PathDetect()) { break; }
+      #endif
     }
     // go to the target
     mStatus = PLAYER_STATUS_WALKING;
