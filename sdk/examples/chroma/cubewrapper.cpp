@@ -133,7 +133,7 @@ void CubeWrapper::Draw()
 				case STATE_PLAYING:
 				{
 					//clear out grid first (somewhat wasteful, optimize if necessary)
-                    m_vid.clear(GemEmpty.tiles[0]);
+                    //m_vid.clear(GemEmpty.tiles[0]);
 					//draw grid
 					for( int i = 0; i < NUM_ROWS; i++ )
 					{
@@ -305,7 +305,7 @@ void CubeWrapper::Update(float t, float dt)
                 for( int j = 0; j < NUM_COLS; j++ )
                 {
                     GridSlot &slot = m_grid[i][j];
-                    slot.Update( t );
+                    slot.Update( t, m_vid );
                 }
             }
 
