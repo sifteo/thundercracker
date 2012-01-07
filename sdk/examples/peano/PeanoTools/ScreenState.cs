@@ -8,6 +8,13 @@ namespace PeanoTools {
     public BitSet right;
 
     public BitSet Union { get { return top | left | bottom | right; } }
+
+    public bool IsValid {
+      get {
+        // connection counts
+        // 
+      }
+    }
   }
 }
 
