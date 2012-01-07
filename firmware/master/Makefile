@@ -32,9 +32,15 @@ ifeq ($(BUILD_PLATFORM), windows32)
     SIM_STATIC_OBJS = $(DEPS_DIR)/speex/lib/obj/*.o \
                         $(DEPS_DIR)/portaudio/lib/obj/*.o
 else
-    DEPS_DIR = $(TC_DIR)/deps/osx
-    SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
-                        $(DEPS_DIR)/portaudio/lib/libportaudio.a
+    ifeq ( $(BUILD_ARCH),i386 )
+		DEPS_DIR = $(TC_DIR)/deps/osx/i386
+	    SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
+	                        $(DEPS_DIR)/portaudio/lib/libportaudio.a
+	else
+		DEPS_DIR = $(TC_DIR)/deps/osx/x86_64
+	    SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
+	                        $(DEPS_DIR)/portaudio/lib/libportaudio.a
+	endif
 endif
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
