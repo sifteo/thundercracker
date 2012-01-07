@@ -14,8 +14,10 @@ HighScores = image{"score_highscore.png", quality=10}
 Score = image{"score_endscore.png", quality=10}
 Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
 ScorePan = image{"score_endgame.png", width=128, height=128, quality=10}
-TeethLoopConnected = image{"wc_letters_neighbored.png", width=128, height=128, quality=10}
-TeethLoopWord = image{"wc_letters_connected_center.png", width=128, height=128, quality=10}
+TeethLoopNeighboredTop = image{"wc_letters_neighbored_top.png", width=128, height=16, quality=10}
+TeethLoopNeighboredBottom = image{"wc_letters_neighbored_bottom.png", width=128, height=16, quality=10}
+TeethLoopWordTop = image{"wc_letters_connected_center_top.png", width=128, height=16, quality=10}
+TeethLoopWordBottom = image{"wc_letters_connected_center_bottom.png", width=128, height=16, quality=10}
 TeethLoopWordLeft = image{"wc_letters_connected_left.png", width=128, height=128, quality=10}
 TeethLoopWordRight = image{"wc_letters_connected_right.png", width=128, height=128, quality=10}
 TeethNewWord2 = image{"wc_letters_connected_center_2.png", width=128, height=128, quality=10}
@@ -38,7 +40,6 @@ fanfare_fire_laugh_02 = sound{"fanfare_fire_laugh_02.raw"}
 fanfare_fire_laugh_03 = sound{"fanfare_fire_laugh_03.raw"}
 fanfare_fire_laugh_04 = sound{"fanfare_fire_laugh_04.raw"}
 flap_laugh_fireball = sound{"flap_laugh_fireball.raw"}
-flap_laugh_fireball_mx = sound{"flap_laugh_fireball_mx.raw"}
 lip_snort = sound{"lip_snort.raw"}
 neighbor = sound{"neighbor.raw"}
 pause_off = sound{"pause_off.raw"}
@@ -53,11 +54,8 @@ timer_2sec = sound{"timer_2sec.raw"}
 timer_30sec = sound{"timer_30sec.raw"}
 timer_3sec = sound{"timer_3sec_fadein_lowcut_wimpy.raw"}
 timeup_01 = sound{"timeup_01.raw"}
-timeup_01_laugh = sound{"timeup_01_laugh.raw"}
 timeup_02 = sound{"timeup_02.raw"}
-timeup_02_laugh = sound{"timeup_02_laugh.raw"}
-timeup_03 = sound{"timeup_03.raw"}
-timeup_03_laugh = sound{"timeup_03_laugh.raw"}
+timeup_03 = sound{"timer_3sec_fadein_lowcut_wimpy.raw"}
 wordplay_music_sayonara = sound{"wordplay_music_sayonara.raw"}
 wordplay_music_sohcahtoa = sound{"wordplay_music_sohcahtoa.raw"}
 wordplay_music_versus = sound{"wordplay_music_versus.raw"}
