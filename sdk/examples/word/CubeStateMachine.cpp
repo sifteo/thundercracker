@@ -4,6 +4,8 @@
 #include "Dictionary.h"
 #include <string.h>
 #include "GameStateMachine.h"
+#include "config.h"
+
 
 void CubeStateMachine::setCube(Cube& cube)
 {
@@ -26,14 +28,14 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_NewAnagram:
-        uint8_t cubeID = getCube().id();
+        unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
         for (unsigned i = 0; i < arraysize(mLetters); ++i)
         {
             mLetters[i] = '\0';
         }
         for (unsigned i = 0; i < mNumLetters; ++i)
         {
-            mLetters[i] = data.mNewAnagram.mWord[cubeID + i];
+            mLetters[i] = data.mNewAnagram.mWord[cubeIndex + i];
         }
         // TODO substrings of length 1 to 3
         break;

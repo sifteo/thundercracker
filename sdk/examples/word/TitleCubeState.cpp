@@ -7,6 +7,8 @@
 #include "GameStateMachine.h"
 #include "SavedData.h"
 #include "WordGame.h"
+#include "config.h"
+
 
 const float SMOKE_ANIM_LENGTH = 2.f;
 
@@ -62,7 +64,7 @@ void TitleCubeState::paint()
 
     const float ANIM_START_DELAY = 2.f;
 
-    switch (getStateMachine().getCube().id())
+    switch (getStateMachine().getCube().id() - CUBE_ID_BASE)
     {
     default:
     case 0:

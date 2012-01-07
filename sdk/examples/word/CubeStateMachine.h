@@ -11,14 +11,12 @@
 #include "ScoredCubeState_StartOfRound.h"
 #include "ScoredCubeState_EndOfRound.h"
 #include "ScoredCubeState_Shuffle.h"
+#include "config.h"
 
 using namespace Sifteo;
 
-// HACK workaround inability to check if a Cube is actually connected
-const unsigned MAX_CUBES = 3;
-
 const unsigned MAX_LETTERS_PER_CUBE = 1;
-const unsigned MAX_LETTERS_PER_WORD = MAX_LETTERS_PER_CUBE * MAX_CUBES;// TODO longer words post CES: _SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE;
+const unsigned MAX_LETTERS_PER_WORD = MAX_LETTERS_PER_CUBE * NUM_CUBES;// TODO longer words post CES: _SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE;
 
 class CubeStateMachine : public StateMachine
 {

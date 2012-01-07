@@ -42,12 +42,24 @@ void WordGame::_onEvent(unsigned eventID, const EventData& data)
 
 bool WordGame::playAudio(_SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
 {
-    /* FIXME remove
-    if (channel == AudioChannelIndex_Music)
+
+    switch (channel)
     {
-        return false;
+    case AudioChannelIndex_Music:
+        if (!MUSIC_ON)
+        {
+            return false;
+        }
+        break;
+
+    default:
+        if (!SFX_ON)
+        {
+            return false;
+        }
+        break;
+
     }
-    */
     ASSERT(sInstance);
     return sInstance->_playAudio(mod, channel, loopMode);
 }

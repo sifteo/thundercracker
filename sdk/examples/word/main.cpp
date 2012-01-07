@@ -62,44 +62,45 @@ void siftmain()
     _SYS_vectors.neighborEvents.add = onNeighborEventAdd;
     _SYS_vectors.neighborEvents.remove = onNeighborEventRemove;
 
-    static Cube cubes[MAX_CUBES]; // must be static!
+    static Cube cubes[NUM_CUBES]; // must be static!
 
-#ifndef DISABLE_ASSET_LOADING
-    // start loading assets
-    for (unsigned i = 0; i < arraysize(cubes); i++)
+    if (LOAD_ASSETS)
     {
-        cubes[i].enable(i);
-        cubes[i].loadAssets(GameAssets);
-
-        VidMode_BG0_ROM rom(cubes[i].vbuf);
-        rom.init();
-        
-        rom.BG0_text(Vec2(1,1), "Loading...");
-    }
-
-    // wait for assets to finish loading
-    for (;;)
-    {
-        bool done = true;
-
+        // start loading assets
         for (unsigned i = 0; i < arraysize(cubes); i++)
         {
+            cubes[i].enable(i);
+            cubes[i].loadAssets(GameAssets);
+
             VidMode_BG0_ROM rom(cubes[i].vbuf);
-            rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0_SPR_BG1::LCD_width), 2);
-            if (!cubes[i].assetDone(GameAssets))
+            rom.init();
+
+            rom.BG0_text(Vec2(1,1), "Loading...");
+        }
+
+        // wait for assets to finish loading
+        for (;;)
+        {
+            bool done = true;
+
+            for (unsigned i = 0; i < arraysize(cubes); i++)
             {
-                done = false;
+                VidMode_BG0_ROM rom(cubes[i].vbuf);
+                rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0_SPR_BG1::LCD_width), 2);
+                if (!cubes[i].assetDone(GameAssets))
+                {
+                    done = false;
+                }
+            }
+
+            System::paint();
+
+            if (done)
+            {
+                break;
             }
         }
-
-        System::paint();
-
-        if (done)
-        {
-            break;
-        }
     }
-#endif // DISABLE_ASSET_LOADING
 
     // main loop
     WordGame game(cubes); // must not be static!
