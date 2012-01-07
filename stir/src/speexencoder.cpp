@@ -83,3 +83,40 @@ int SpeexEncoder::encodeFile(const std::string &path, int channels, int format, 
     
     return bytecount;
 }
+
+
+
+
+PCMEncoder::PCMEncoder()
+{
+}
+
+PCMEncoder::~PCMEncoder()
+{
+}
+
+int PCMEncoder::encodeFile(const std::string &path, std::ofstream & outStream)
+{
+    FILE *fin = fopen(path.c_str(), "rb");
+    if (fin == 0) {
+        fprintf(stderr, "error: couldn't open %s for reading (%s)\n", path.c_str(), strerror(errno));
+        return 0;
+    }
+    
+    // just dump the raw file.
+    
+    char inbuf[512];
+    int bytecount = 0;
+    
+    for (;;) {
+        int rx = fread(inbuf, sizeof(char), 512, fin);
+        if (feof(fin) && rx == 0) {
+            break;
+        }
+        
+        outStream.write(inbuf, rx);
+        bytecount += rx;
+    }
+    
+    return bytecount;
+}

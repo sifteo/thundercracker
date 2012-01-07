@@ -15,6 +15,7 @@
 #include "nrf24l01.h"
 #include "debug.h"
 #include "board.h"
+#include "audiomixer.h"
 
 static NRF24L01 NordicRadio(RF_CE_GPIO,
                             RF_IRQ_GPIO,
@@ -51,6 +52,8 @@ void Radio::halt()
      * very annoying, since the JTAG clock is also turned off while
      * we're waiting.
      */
+     
+    AudioMixer::instance.fetchData();
 
 #ifndef DEBUG
     __asm__ __volatile__ ("wfi");

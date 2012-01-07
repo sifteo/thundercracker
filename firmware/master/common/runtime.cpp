@@ -86,7 +86,8 @@ void Event::dispatch()
       to be interleaved with the runtime, or done periodically on a timer
       interrupt (ie, separate thread in the simulator).
     */
-    AudioMixer::instance.fetchData();
+    // Moved to Radio::halt(), which gives audibly better audio responsiveness.
+    //AudioMixer::instance.fetchData();
 
     dispatchInProgress = false;
 }

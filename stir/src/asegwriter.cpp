@@ -85,20 +85,32 @@ void ASegWriter::writeSound(const Sound &sound)
     
     mStream.seekp(mCurrentID * 8);
     
+    // TODO: Do we want to serialize encoding options such as channels, format, etc?
+    
     // write offset to index
     val = 2; // type (2 = audio)
     mStream.write((char *)&val, sizeof(uint32_t));
-    val = mCurrentOffset - sizeof(uint32_t); // offset
+    val = mCurrentOffset - (sizeof(uint32_t) * 2); // offset
     mStream.write((char *)&val, sizeof(uint32_t));
     
     // write audio data
     //mStream.seekp(20480 + sizeof(uint32_t));
     mStream.seekp(mCurrentOffset);
-    SpeexEncoder encoder(sound.getQuality());
-    uint32_t size = encoder.encodeFile(sound.getFile(), channels, format, mStream);
+    
+    uint32_t encoding = 0;
+    uint32_t size = 0;
+    if (sound.getEncode() == "pcm") {
+        encoding = 1;
+        PCMEncoder encoder;
+        size = encoder.encodeFile(sound.getFile(), mStream);
+    } else {
+        SpeexEncoder encoder(sound.getQuality());
+        size = encoder.encodeFile(sound.getFile(), channels, format, mStream);
+    }
     
     //mStream.seekp(20480);
-    mStream.seekp(mCurrentOffset - sizeof(uint32_t));
+    mStream.seekp(mCurrentOffset - (sizeof(uint32_t) * 2));
+    mStream.write((char *)&encoding, sizeof(uint32_t));
     mStream.write((char *)&size, sizeof(uint32_t));
     
     mCurrentID++;

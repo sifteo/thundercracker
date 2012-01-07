@@ -24,4 +24,14 @@ private:
     int frameSize;
 };
 
+class PCMEncoder {
+public:
+    PCMEncoder();
+    ~PCMEncoder();
+    
+    int encodeFile(const std::string &file, std::ofstream & outStream);
+    
+private:
+};
+
 #endif

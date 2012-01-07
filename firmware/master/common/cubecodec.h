@@ -40,6 +40,7 @@ struct AssetGroupHeader {
 };
 
 struct SoundHeader {
+    uint32_t encoding;
     uint32_t dataSize;
 };
 

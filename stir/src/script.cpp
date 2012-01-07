@@ -488,6 +488,12 @@ Sound::Sound(lua_State *L)
         mFile = filename;
     }
     
+    if (Script::argMatch(L, "encode")) {
+        setEncode(lua_tostring(L, -1));
+    } else {
+        setEncode("speex");
+    }
+    
     if (Script::argMatch(L, "quality")) {
         setQuality(lua_tonumber(L, -1));
     } else {
