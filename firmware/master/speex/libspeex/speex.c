@@ -47,21 +47,24 @@
 #define MAX_IN_SAMPLES 640
 
 
-
+#ifndef STRIP_ENCODER
 EXPORT void *speex_encoder_init(const SpeexMode *mode)
 {
    return mode->enc_init(mode);
 }
+#endif
 
 EXPORT void *speex_decoder_init(const SpeexMode *mode)
 {
    return mode->dec_init(mode);
 }
 
+#ifndef STRIP_ENCODER
 EXPORT void speex_encoder_destroy(void *state)
 {
    (*((SpeexMode**)state))->enc_destroy(state);
 }
+#endif
 
 EXPORT void speex_decoder_destroy(void *state)
 {
@@ -69,11 +72,12 @@ EXPORT void speex_decoder_destroy(void *state)
 }
 
 
-
+#ifndef STRIP_ENCODER
 int speex_encode_native(void *state, spx_word16_t *in, SpeexBits *bits)
 {
    return (*((SpeexMode**)state))->enc(state, in, bits);
 }
+#endif
 
 int speex_decode_native(void *state, SpeexBits *bits, spx_word16_t *out)
 {
@@ -83,6 +87,8 @@ int speex_decode_native(void *state, SpeexBits *bits, spx_word16_t *out)
 
 
 #ifdef FIXED_POINT
+
+#ifndef STRIP_ENCODER
 
 #ifndef DISABLE_FLOAT_API
 EXPORT int speex_encode(void *state, float *in, SpeexBits *bits)
@@ -111,6 +117,8 @@ EXPORT int speex_encode_int(void *state, spx_int16_t *in, SpeexBits *bits)
    return (mode)->enc(state, in, bits);
 }
 
+#endif /* #ifndef STRIP_ENCODER */
+
 #ifndef DISABLE_FLOAT_API
 EXPORT int speex_decode(void *state, SpeexBits *bits, float *out)
 {
@@ -133,6 +141,8 @@ EXPORT int speex_decode_int(void *state, SpeexBits *bits, spx_int16_t *out)
 
 #else
 
+#ifndef STRIP_ENCODER
+
 EXPORT int speex_encode(void *state, float *in, SpeexBits *bits)
 {
    return (*((SpeexMode**)state))->enc(state, in, bits);
@@ -148,6 +158,8 @@ EXPORT int speex_encode_int(void *state, spx_int16_t *in, SpeexBits *bits)
       float_in[i] = in[i];
    return (*((SpeexMode**)state))->enc(state, float_in, bits);
 }
+
+#endif
 
 EXPORT int speex_decode(void *state, SpeexBits *bits, float *out)
 {
@@ -176,11 +188,14 @@ EXPORT int speex_decode_int(void *state, SpeexBits *bits, spx_int16_t *out)
 #endif
 
 
+#ifndef STRIP_ENCODER
 
 EXPORT int speex_encoder_ctl(void *state, int request, void *ptr)
 {
    return (*((SpeexMode**)state))->enc_ctl(state, request, ptr);
 }
+
+#endif
 
 EXPORT int speex_decoder_ctl(void *state, int request, void *ptr)
 {

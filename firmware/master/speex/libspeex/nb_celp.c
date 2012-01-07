@@ -33,6 +33,8 @@
 #include "config.h"
 #endif
 
+#ifndef STRIP_NB_MODE
+
 #include <math.h>
 #include "nb_celp.h"
 #include "lpc.h"
@@ -1901,3 +1903,6 @@ int nb_decoder_ctl(void *state, int request, void *ptr)
    }
    return 0;
 }
+
+#endif
+

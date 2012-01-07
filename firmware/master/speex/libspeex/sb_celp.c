@@ -186,6 +186,7 @@ static const float h0[64] = {
 extern const spx_word16_t lag_window[];
 extern const spx_word16_t lpc_window[];
 
+#ifndef STRIP_ENCODER
 
 void *sb_encoder_init(const SpeexMode *m)
 {
@@ -747,6 +748,8 @@ int sb_encode(void *state, void *vin, SpeexBits *bits)
 
    return 1;
 }
+
+#endif
 
 
 

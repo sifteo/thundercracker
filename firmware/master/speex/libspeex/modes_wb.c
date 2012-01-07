@@ -206,13 +206,23 @@ EXPORT const SpeexMode speex_wb_mode = {
    "wideband (sub-band CELP)",
    1,
    4,
+#ifndef STRIP_ENCODER
    &sb_encoder_init,
    &sb_encoder_destroy,
    &sb_encode,
+#else
+   0,
+   0,
+   0,
+#endif
    &sb_decoder_init,
    &sb_decoder_destroy,
    &sb_decode,
+#ifndef STRIP_ENCODER
    &sb_encoder_ctl,
+#else
+   0,
+#endif
    &sb_decoder_ctl,
 };
 
@@ -276,13 +286,23 @@ EXPORT const SpeexMode speex_uwb_mode = {
    "ultra-wideband (sub-band CELP)",
    2,
    4,
+#ifndef STRIP_ENCODER
    &sb_encoder_init,
    &sb_encoder_destroy,
    &sb_encode,
+#else
+   0,
+   0,
+   0,
+#endif
    &sb_decoder_init,
    &sb_decoder_destroy,
    &sb_decode,
+#ifndef STRIP_ENCODER
    &sb_encoder_ctl,
+#else
+   0,
+#endif
    &sb_decoder_ctl,
 };
 
