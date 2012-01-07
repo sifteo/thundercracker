@@ -98,11 +98,25 @@ void TitleCubeState::paint()
         }
         break;
 
-        // TODO high scores
     case 1:
-        vid.BG0_drawAsset(Vec2(0,0), StartScreen);
+        vid.BG0_drawAsset(Vec2(0, 0), Teeth);
+        {
+            const float ANIM_LENGTH = 1.0f;
+            const AssetImage& anim = StartPrompt;
+            float animTime =
+                    fmodf(getStateMachine().getTime() - 0.f, ANIM_LENGTH) / ANIM_LENGTH;
+            animTime = MIN(animTime, 1.f);
+            unsigned frame = (unsigned) (animTime * anim.frames);
+            frame = MIN(frame, anim.frames - 1);
+
+            BG1Helper bg1(getStateMachine().getCube());
+            bg1.DrawAsset(Vec2(5, 2), anim, frame);
+            bg1.Flush(); // TODO only flush if mask has changed recently
+            WordGame::instance()->setNeedsPaintSync();
+        }
         break;
 
+        // TODO high scores
 #if BLAH
     default:
         paintTeeth(vid, ImageIndex_Teeth);
