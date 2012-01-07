@@ -1,0 +1,13 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" ActiveRuntime="Mono 2.6.7" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Program.ComputeAssets.cs">
+    <Files>
+      <File FileName="Program.Main.cs" Line="8" Column="4" />
+      <File FileName="Program.ComputeAssets.cs" Line="15" Column="1" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
