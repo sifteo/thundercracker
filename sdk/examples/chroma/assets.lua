@@ -11,7 +11,12 @@ MessageBox0 = image{"message0.png"}
 MessageBox1 = image{"message1.png"}
 MessageBox2 = image{"message2.png"}
 MessageBox3 = image{"message3.png"}
-MessageBox4 = image{"message4.png"}
+--MessageBox4 = image{"message4.png"}
+--just for CES messages
+MsgGameOver = image{"gameover.png"}
+MsgHighScores = image{"highscores.png"}
+MsgShakeOrNeighbor = image{"shakeorneighbor.png"}
+MsgShakeToRefill = image{"shaketorefill.png"}
 --the gems
 Gem0 = image{"Gem0.png", height=32}
 Gem1 = image{"Gem1.png", height=32}

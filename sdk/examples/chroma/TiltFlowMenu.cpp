@@ -429,6 +429,10 @@ void TiltFlowView::PaintMenu() {
 	  //scroll the cover off
 	  offset -= Vec2( SCROLL_DIRS[ mLastNeighboredSide ] * TiltFlowMenu::Inst()->GetScrollTime() / TiltFlowMenu::PICK_DELAY );
 	  //printf( "panning %d, %d.  Pan offset : %0.2f\n", offset.x, offset.y, ( SCROLL_DIRS[ mLastNeighboredSide ] * TiltFlowMenu::Inst()->GetScrollTime() / TiltFlowMenu::PICK_DELAY ).x );
+      BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() - CUBE_ID_BASE ].GetBG1Helper();
+
+      bg1helper.Clear();
+      mFlushNeeded = true;
   }
 
 
