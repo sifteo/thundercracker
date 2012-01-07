@@ -17,9 +17,17 @@ if __name__ == '__main__':
         sz = ""
         for c in [size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF]:
             sz = sz + chr(c)
-        print "loading %s, %d bytes" % (filepath, size)
+
+        sys.stderr.write("loading %s, %d bytes" % (filepath, size))
         port.write(sz)
-        port.write(blob)
+
+        while blob:
+            blockSize = min(16384, len(blob))
+            sys.stderr.write(".")
+            port.write(blob[:blockSize])
+            blob = blob[blockSize:]
+
+        sys.stderr.write("\n")
         
     except KeyboardInterrupt:
         print "keyboard interrupt"
