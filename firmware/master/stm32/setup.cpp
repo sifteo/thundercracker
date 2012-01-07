@@ -21,6 +21,9 @@
 #include "gpio.h"
 #include "macronixmx25.h"
 #include "tasks.h"
+#include "audiomixer.h"
+#include "audiooutdevice.h"
+#include "usart.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
@@ -166,6 +169,12 @@ extern "C" void _start()
      * High-level hardware initialization
      */
 
+    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
+
+    AudioMixer::instance.init();
+    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
+    AudioOutDevice::start();
+
     SysTime::init();
     Radio::open();
     Tasks::init();
@@ -192,7 +201,7 @@ extern "C" void _start()
 
 extern "C" void *_sbrk(intptr_t increment)
 {
-#if 0
+#if 1
     // speex needs to alloc some memory on init...this allows it to but
     // doesn't allow alloc'd mem to be reclaimed. just a hack until we decide what to do.
     // NOTE - this also requires passing -fno-threasafe-statics in your CPPFLAGS
