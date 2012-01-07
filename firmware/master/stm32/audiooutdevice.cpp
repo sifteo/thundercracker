@@ -22,7 +22,7 @@ static PwmAudioOut pwmAudioOut(HwTimer(&TIM1), pwmChan, HwTimer(&TIM4));
 
 #elif AUDIOOUT_BACKEND == DAC_BACKEND
 
-static const int dacChan = 2;
+static const int dacChan = 1;
 static DacAudioOut dacAudioOut(dacChan, HwTimer(&TIM4));
 #define audioOutBackend dacAudioOut
 
@@ -59,8 +59,8 @@ void AudioOutDevice::init(SampleRate samplerate, AudioMixer *mixer)
     GPIOPin outB(&GPIOB, 0);
     pwmAudioOut.init(samplerate, mixer, outA, outB);
 #elif AUDIOOUT_BACKEND == DAC_BACKEND
-//    GPIOPin dacOut(&GPIOA, 4);      // DAC_OUT1
-    GPIOPin dacOut(&GPIOA, 5);      // DAC_OUT2
+    GPIOPin dacOut(&GPIOA, 4);      // DAC_OUT1
+//    GPIOPin dacOut(&GPIOA, 5);      // DAC_OUT2
     dacAudioOut.init(samplerate, mixer, dacOut);
 #endif
 }
