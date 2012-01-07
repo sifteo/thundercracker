@@ -183,15 +183,14 @@ int PCMDecoder::decodeFrame(uint8_t *buf, int size)
         return 0; // ruh roh, TODO error handling
     }
     
-    memcpy(buf, localAddr, FRAME_SIZE);
-    //buf = (uint8_t *)localAddr;
-    this->srcBytesRemaining -= FRAME_SIZE;
+    memcpy(buf, localAddr, rsize);
+    this->srcBytesRemaining -= rsize;
     if (this->srcBytesRemaining < (int)FRAME_SIZE) {
         status = EndOfStream;
     }
     
     FlashLayer::releaseRegionFromOffset(this->srcaddr);
-    this->srcaddr += FRAME_SIZE;
+    this->srcaddr += rsize;
 
-    return FRAME_SIZE;
+    return rsize;
 }

@@ -110,10 +110,9 @@ void AudioChannelWrapper::fetchData()
             return;
         }
         
-        // TODO: Is there some frame size for PCM data?
         uint8_t buffer[PCMDecoder::FRAME_SIZE];
         uint32_t sz = pcmDecoder->decodeFrame(buffer, sizeof(buffer));
-        ASSERT(sz == PCMDecoder::FRAME_SIZE);
+        ASSERT(sz <= PCMDecoder::FRAME_SIZE);
         buf.write(buffer, sz);
     }
     default:
