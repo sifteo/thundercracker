@@ -203,7 +203,7 @@ EXPORT int speex_decoder_ctl(void *state, int request, void *ptr)
 }
 
 
-
+#ifndef STRIP_NB_MODE
 int nb_mode_query(const void *mode, int request, void *ptr)
 {
    const SpeexNBMode *m = (const SpeexNBMode*)mode;
@@ -227,7 +227,7 @@ int nb_mode_query(const void *mode, int request, void *ptr)
    }
    return 0;
 }
-
+#endif
 
 
 EXPORT int speex_lib_ctl(int request, void *ptr)
