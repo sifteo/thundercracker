@@ -226,11 +226,11 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
             vid.BG0_drawAsset(Vec2( vec.x + 2, vec.y + 1 ), PointFont, m_score % 10 * NUM_POINTS_FRAMES + fadeFrame);
 			break;
 		}
-		/*case STATE_GONE:
+        /*case STATE_GONE:
 		{
 			vid.BG0_drawAsset(vec, GemEmpty, 0);
 			break;
-		}*/
+        }*/
 		default:
 			break;
 	}
@@ -238,7 +238,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 }
 
 
-void GridSlot::Update(float t)
+void GridSlot::Update(float t, VidMode_BG0 &vid)
 {
 	switch( m_state )
 	{
@@ -257,6 +257,9 @@ void GridSlot::Update(float t)
 		case STATE_MOVING:
 		{
 			Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
+
+            //clear this out in update
+            vid.BG0_drawAsset(m_curMovePos, GemEmpty, 0);
 
 			if( vDiff.x != 0 )
             {
@@ -352,6 +355,13 @@ void GridSlot::Update(float t)
 			}
 			break;
 		}
+        //clear this out in update, so it doesn't bash moving balls
+        case STATE_GONE:
+        {
+            Vec2 vec( m_col * 4, m_row * 4 );
+            vid.BG0_drawAsset(vec, GemEmpty, 0);
+            break;
+        }
 		default:
 			break;
 	}

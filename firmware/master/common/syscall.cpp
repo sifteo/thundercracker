@@ -109,15 +109,12 @@ void _SYS_getShake(_SYSCubeID cid, _SYS_ShakeState *state)
         AccelState::instances[cid].getShakeState(state);
 }
 
-
-/*
 void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
 {
     // XXX: Temporary for testing/demoing
-    if (Runtime::checkUserPointer(buf, sizeof buf) && CubeSlot::validID(cid))
-        CubeSlot::instances[cid].getRawNeighbors(buf);
+    if (Runtime::checkUserPointer(buf, sizeof buf) && CubeSlots::validID(cid))
+        CubeSlots::instances[cid].getRawNeighbors(buf);
 }
-*/
 
 void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v)
 {
