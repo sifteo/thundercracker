@@ -10,7 +10,7 @@ namespace PeanoTools {
         Directory.SetCurrentDirectory("..");
       }
 
-			ComputeAssets();
+			//ComputeAssets();
 		}
 
 	}

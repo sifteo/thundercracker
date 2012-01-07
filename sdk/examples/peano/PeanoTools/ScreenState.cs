@@ -8,7 +8,7 @@ namespace PeanoTools {
     public BitSet bottom;
     public BitSet right;
 
-    public BitSet Union { get { return top | left | bottom | right; } }
+    public BitSet Union { get { return top.mask | left.mask | bottom.mask | right.mask; } }
     public unsafe BitSet this[int i] { get {
         fixed(BitSet* p = &top) {
           return p[i];
@@ -49,19 +49,38 @@ namespace PeanoTools {
       }
     }
 
-    public static IEnumerable<BitSet> AllValid {
+    public static IEnumerable<ScreenState> AllValid {
       get {
         ScreenState ss = new ScreenState();
         for(ss.top.mask=0; ss.top.mask<32; ++ss.top.mask) {
           for(ss.left.mask=0; ss.left.mask<32; ++ss.left.mask) {
-            for(ss.left.mask=0; ss.left.mask<32; ++ss.left.mask) {
-              for(ss.left.mask=0; ss.left.mask<32; ++ss.left.mask) {
-
+            for(ss.bottom.mask=0; ss.bottom.mask<32; ++ss.bottom.mask) {
+              for(ss.right.mask=0; ss.right.mask<32; ++ss.right.mask) {
+                if (ss.IsValid) {
+                  yield return ss;
+                }
               }
             }
           }
         }
       }
+    }
+
+    public static int ComputeValidCount() {
+      int count = 0;
+      ScreenState ss = new ScreenState();
+      for(ss.top.mask=0; ss.top.mask<32; ++ss.top.mask) {
+        for(ss.left.mask=0; ss.left.mask<32; ++ss.left.mask) {
+          for(ss.bottom.mask=0; ss.bottom.mask<32; ++ss.bottom.mask) {
+            for(ss.right.mask=0; ss.right.mask<32; ++ss.right.mask) {
+              if (ss.IsValid) {
+                count++;
+              }
+            }
+          }
+        }
+      }
+      return count%4;
     }
   }
 }
