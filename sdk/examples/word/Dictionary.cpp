@@ -19,8 +19,9 @@ Dictionary::Dictionary()
 {
 }
 
-const char* Dictionary::pickWord(unsigned length)
+bool Dictionary::pickWord(char* buffer)
 {
+    ASSERT(buffer);
     if (sRound < DEMO_MAX_DETERMINISTIC_ROUNDS)
     {
         // TODO remove demo code
@@ -29,9 +30,12 @@ const char* Dictionary::pickWord(unsigned length)
     }
 
     //return "CITIES";
-    const char* word = PrototypeWordList::pickWord(length);
-    DEBUG_LOG(("picked word %s\n", word));
-    return word;
+    if (PrototypeWordList::pickWord(buffer))
+    {
+        DEBUG_LOG(("picked word %s\n", buffer));
+        return true;
+    }
+    return false;
 }
 
 bool Dictionary::isWord(const char* string)
