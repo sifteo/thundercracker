@@ -200,6 +200,10 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     
     SoundHeader *header;
     header = (SoundHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size);
+    if (!header) {
+        LOG(("Got null SoundHeader from flashlayer\n"));
+        return false;
+    }
     
     mod->offset = offset + sizeof(SoundHeader);
     mod->size = header->dataSize;
@@ -213,12 +217,10 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     }
 
     // find the next channel that's both enabled and inactive
-    uint32_t activeMask = activeChannelMask;
-    uint32_t enabledMask = enabledChannelMask;
     int idx;
     for (idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
-        if ((enabledMask & (1 << idx)) &&
-           ((activeMask  & (Intrinsic::LZ(idx)))) == 0) {
+        if ((enabledChannelMask & (1 << idx)) &&
+           ((activeChannelMask  & (Intrinsic::LZ(idx)))) == 0) {
             break;
         }
     }
