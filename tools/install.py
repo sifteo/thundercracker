@@ -1,38 +1,27 @@
-import serial
-import struct
-
-# helpful links:
-# http://stackoverflow.com/questions/6076300/python-pack-4-byte-integer-with-bytes-in-bytearray-struct-pack
+import sys, serial
 
 if __name__ == '__main__':
 	
-	#port = serial.Serial(port = "COM17", baudrate = 115200, timeout = 2)
-	#port = serial.Serial('/dev/tty.usbmodem621', 115200, timeout=1)
-	port = serial.Serial('/dev/tty.usbmodem411', 115200, timeout=1)
-	print port
+	if (len(sys.argv) < 2):
+		print "must specify file to install"
+		print "usage: python asset_install.py /path/to/my/assetfile"
+		sys.exit(1)
 	
+	filepath = sys.argv[1]
+	port = serial.Serial(port = "COM21", baudrate = 115200, timeout = 2)
+	port.flushInput()
 	
 	try:
-		cntr = 0
+		blob = open(filepath, 'rb').read()
+		size = len(blob)
+		sz = ""
+		for c in [size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF]:
+			sz = sz + chr(c)
+		print "loading %s, %d bytes" % (filepath, size)
+		port.write(sz)
+		port.write(blob)
 		
-		#f = open('asegment.bin', 'rb')
-		f = open('test.txt', 'r')
-		data = f.read()
-		print "length: ", len(data)
-		
-		val = long(len(data)) 
-		s = bytearray(struct.pack("i", val))
-		bwrit = port.write(s)
-		#print "wrote: ", bwrit
-		
-		for c in data:
-			#print "c", c
-			b = port.write(c)
-			#print "wrote: ", b
-			response = port.read()
-			#print "response", response
-			
 	except KeyboardInterrupt:
 		print "keyboard interrupt"
-	except Exception:
-		print "exception"
+
+	port.close()
