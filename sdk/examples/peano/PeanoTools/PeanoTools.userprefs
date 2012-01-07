@@ -3,8 +3,8 @@
   <MonoDevelop.Ide.Workbench ActiveDocument="ScreenState.cs">
     <Files>
       <File FileName="Program.Main.cs" Line="8" Column="4" />
-      <File FileName="Program.ComputeAssets.cs" Line="15" Column="1" />
-      <File FileName="ScreenState.cs" Line="15" Column="12" />
+      <File FileName="Program.ComputeAssets.cs" Line="1" Column="1" />
+      <File FileName="ScreenState.cs" Line="12" Column="9" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
