@@ -285,18 +285,18 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     if (mod->type == Sample) {
         dec = getDecoder();
         if (dec == NULL) {
-            fprintf(stdout, "ERROR: No channels available.\n");
+            LOG(("ERROR: No channels available.\n"));
             return false; // no decoders available
         }
     } else if (mod->type == PCM) {
         pcmdec = getPCMDecoder();
         if (pcmdec == NULL) {
-            fprintf(stdout, "ERROR: No channels available.\n");
+            LOG(("ERROR: No channels available.\n"));
             return false; // no decoders available
         }
     }
     else {
-        fprintf(stdout, "ERROR: Unknown audio encoding.\n");
+        LOG(("ERROR: Unknown audio encoding.\n"));
         dec = 0;
     }
 

@@ -165,7 +165,7 @@ int PCMDecoder::decodeFrame(uint8_t *buf, int size)
     
     char *localAddr = FlashLayer::getRegionFromOffset(this->srcaddr, FRAME_SIZE, &rsize);
     if (!localAddr) {
-        fprintf(stdout, "ERROR: Failed to read from flash layer.\n");
+        LOG(("ERROR: Failed to read from flash layer.\n"));
         return 0; // ruh roh, TODO error handling
     }
     
