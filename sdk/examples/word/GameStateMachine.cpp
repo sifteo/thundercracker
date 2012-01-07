@@ -55,7 +55,7 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_GameStateChanged:
-        if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_StartOfRoundScored)
+        if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_PlayScored)
         {
             mTimeLeft = ROUND_TIME;
             mAnagramCooldown = .0f;
