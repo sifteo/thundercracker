@@ -44,23 +44,23 @@ static void onAccelChange(_SYSCubeID cid)
 
 static void onTilt(_SYSCubeID cid)
 {
-    Cube::TiltState state = game.cubes[cid].GetCube().getTiltState();
+    Cube::TiltState state = game.cubes[cid - CUBE_ID_BASE].GetCube().getTiltState();
 
 	if( state.x == _SYS_TILT_POSITIVE )
-		game.cubes[cid].Tilt( RIGHT );
+        game.cubes[cid - CUBE_ID_BASE].Tilt( RIGHT );
 	else if( state.x == _SYS_TILT_NEGATIVE )
-		game.cubes[cid].Tilt( LEFT );
+        game.cubes[cid - CUBE_ID_BASE].Tilt( LEFT );
 	if( state.y == _SYS_TILT_POSITIVE )
-		game.cubes[cid].Tilt( DOWN );
+        game.cubes[cid - CUBE_ID_BASE].Tilt( DOWN );
 	else if( state.y == _SYS_TILT_NEGATIVE )
-		game.cubes[cid].Tilt( UP);
+        game.cubes[cid - CUBE_ID_BASE].Tilt( UP);
 }
 
 static void onShake(_SYSCubeID cid)
 {
     _SYS_ShakeState state;
     _SYS_getShake(cid, &state);
-	game.cubes[cid].Shake(state);
+    game.cubes[cid - CUBE_ID_BASE].Shake(state);
 }
 
 static void init()
@@ -77,6 +77,7 @@ void siftmain()
     //_SYS_vectors.cubeEvents.accelChange = onAccelChange;
     _SYS_vectors.cubeEvents.tilt = onTilt;
 	_SYS_vectors.cubeEvents.shake = onShake;
+    _SYS_vectors.neighborEvents.add = 0;
 
     while (1) {
         game.Update();        

@@ -6,6 +6,7 @@
 #include "MenuController.h"
 #include "TFcubewrapper.h"
 #include "assets.gen.h"
+#include "config.h"
 
 using namespace SelectorMenu;
 
@@ -210,8 +211,10 @@ void TiltFlowMenu::ReassignMenu() {
 
 void TiltFlowMenu::playSound( _SYSAudioModule &sound )
 {
+#if SFX_ON
     m_SFXChannel.stop();
     m_SFXChannel.play(sound, LoopOnce);
+#endif
 }
 
 
@@ -236,7 +239,7 @@ void TiltFlowMenu::checkNeighbors()
     {
           TiltFlowView &view = mViews[i];
           if (&view == mKeyView && view.GetItem() == 0) {
-              _SYSCubeID neighbor = view.getNeighbor();
+              _SYSCubeID neighbor = view.getNeighbor() - CUBE_ID_BASE;
 
               if( neighbor != CUBE_ID_UNDEFINED )
               {
@@ -433,7 +436,7 @@ void TiltFlowView::PaintMenu() {
 
   if( mStatus != STATUS_PICKED )
   {
-      BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
+      BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() - CUBE_ID_BASE ].GetBG1Helper();
 
 	  if (/*c.Neighbors.Left == NULL && */mItem > 0) {
 		DoPaintItem(TiltFlowMenu::Inst()->GetItem( mItem - 1 ), -70);
@@ -569,7 +572,7 @@ static const Vec2 STARTING_PT[] = {
 
 void TiltFlowView::PaintIncomingCover()
 {
-	//BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper();
+    //BG1Helper &bg1helper = MenuController::Inst().cubes[ mpCube->id() - CUBE_ID_BASE ].GetBG1Helper();
 	VidMode_BG0 vid( mpCube->vbuf );
 	vid.BG0_setPanning(Vec2(0, 0));
 	//bg1helper.Flush();
@@ -856,8 +859,8 @@ bool PositionOfVisit(TiltFlowView origin, Cube target, Side s, out Vec2 result) 
 void TiltFlowView::Flush()
 {
     //printf( "flushing\n" );
-    MenuController::Inst().cubes[ mpCube->id() ].GetBG1Helper().Flush();
+    MenuController::Inst().cubes[ mpCube->id() - CUBE_ID_BASE ].GetBG1Helper().Flush();
     //force touch
-    //MenuController::Inst().cubes[ mpCube->id() ].GetCube().vbuf.touch();
+    //MenuController::Inst().cubes[ mpCube->id() - CUBE_ID_BASE ].GetCube().vbuf.touch();
     mFlushNeeded = false;
 }

@@ -10,7 +10,7 @@
 
 using namespace SelectorMenu;
 
-static _SYSCubeID s_id = 0;
+static _SYSCubeID s_id = CUBE_ID_BASE;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube )

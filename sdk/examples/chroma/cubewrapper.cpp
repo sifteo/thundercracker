@@ -12,8 +12,9 @@
 #include "string.h"
 #include <vector>
 #include "sprite.h"
+#include "config.h"
 
-static _SYSCubeID s_id = 0;
+static _SYSCubeID s_id = CUBE_ID_BASE;
 
 // Order in which the number of colors in a grid increases as the grid is refilled.
 static unsigned int GEM_VALUE_PROGRESSION[] = { 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 };
@@ -40,13 +41,14 @@ static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] =
     &MessageBox2,
     &MessageBox3,
     &MessageBox4,
+    //&MsgGameOver,
 };
 
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
         m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
-        m_lastTiltDir( 0 ), m_queuedFlush( false )
+        m_lastTiltDir( 0 ), m_queuedFlush( false ), m_dirty( true )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -171,6 +173,9 @@ void CubeWrapper::Draw()
                 }
 				case STATE_EMPTY:
 				{
+                    //m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeToRefill, 0);
+
+
                     m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
                     m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "SHAKE TO" );
                     m_bg1helper.DrawText( Vec2( 4, 5 ), Font, "REFILL" );
@@ -181,7 +186,7 @@ void CubeWrapper::Draw()
 				}
 				case STATE_NOSHAKES:
 				{
-                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+                    //m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
                     m_bg1helper.DrawText( Vec2( 4, 4 ), Font, "NO SHAKES" );
                     m_bg1helper.DrawText( Vec2( 4, 6 ), Font, "LEFT" );
 
@@ -205,9 +210,12 @@ void CubeWrapper::Draw()
         }
 		case Game::STATE_POSTGAME:
 		{
+            if( !m_dirty )
+                break;
+            //m_vid.BG0_drawAsset(Vec2(0,0), MsgGameOver, 0);
             m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
 
-            if( m_cube.id() == 0 )
+            if( m_cube.id() == 0 + CUBE_ID_BASE)
             {
                 m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
 
@@ -217,7 +225,7 @@ void CubeWrapper::Draw()
 
                 m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
             }
-            else if( m_cube.id() == 1 )
+            else if( m_cube.id() == 1 + CUBE_ID_BASE )
             {
                 m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
 
@@ -230,7 +238,7 @@ void CubeWrapper::Draw()
                     m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
                 }
             }
-            else if( m_cube.id() == 2 )
+            else if( m_cube.id() == 2 + CUBE_ID_BASE )
             {
                 m_bg1helper.DrawTextf( Vec2( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
             }
@@ -239,6 +247,7 @@ void CubeWrapper::Draw()
                 resizeSprite(m_cube, i, 0, 0);
 
             m_queuedFlush = true;
+            m_dirty = false;
 
             //force touch of a cube, maybe it'll fix things
             m_cube.vbuf.touch();
@@ -374,14 +383,14 @@ void CubeWrapper::Update(float t, float dt)
 			if( id != m_neighbors[i] )
 			{
 				Game::Inst().setTestMatchFlag();
-				m_neighbors[i] = id;
+                m_neighbors[i] = id - CUBE_ID_BASE;
 
                 //PRINT( "neighbor on side %d is %d", i, id );
 			}
 		}
 		else
-			m_neighbors[i] = -1;
-	}
+            m_neighbors[i] = -1;
+    }
 }
 
 
@@ -538,7 +547,7 @@ void CubeWrapper::testMatches()
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
-		if( m_neighbors[i] >= 0 && m_neighbors[i] < m_cube.id() )
+        if( m_neighbors[i] >= 0 && m_neighbors[i] < m_cube.id() - CUBE_ID_BASE )
 		{
 			//as long we we test one block going clockwise, and the other going counter-clockwise, we'll match up
 			int side = Game::Inst().cubes[m_neighbors[i]].GetSideNeighboredOn( 0, m_cube );
@@ -648,7 +657,7 @@ int CubeWrapper::GetSideNeighboredOn( _SYSCubeID id, Cube &cube )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
-		if( m_neighbors[i] == cube.id() )
+        if( m_neighbors[i] == cube.id() - CUBE_ID_BASE )
 			return i;
 	}
 
