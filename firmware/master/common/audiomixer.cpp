@@ -141,17 +141,17 @@ void AudioMixer::test()
  */
 int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
 {
-    if (activeChannelMask == 0) {
-        return 0;
-    }
-
     memset(buffer, 0, numsamples * sizeof(*buffer));
 
-    AudioChannelSlot *ch = &channelSlots[0];
+    AudioChannelSlot *ch;
     uint32_t mask = activeChannelMask;
     int samplesMixed = 0;
-    for (; mask != 0; mask >>= 1, ch++) {
-        if ((mask & 1) == 0 || (ch->isPaused())) {
+    while (mask) {
+        unsigned idx = Intrinsic::CLZ(mask);
+        ch = &channelSlots[idx];
+        Atomic::ClearLZ(mask, idx);
+
+        if (ch->isPaused()) {
             continue;
         }
         
@@ -178,22 +178,11 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
  */
 void AudioMixer::fetchData()
 {
-    // note - refer to activeChannelMask on each iteration,
-    // as opposed to copying it to a local, in case it gets updated
-    // during a call to fetchData()
-    
-    /*
-     * XXX: This could be converted into a CLZ-style loop, as used in
-     *      many other places in the firmware. That lets us iterate over
-     *      only active channels, rather than interating over every
-     *      preceeding inactive channel too. --beth
-     */
-    for (int i = 0; ; i++) {
-        int m = activeChannelMask >> i;
-        if (m == 0)
-            return;
-        if (m & 1)
-            channelSlots[i].fetchData();
+    uint32_t mask = activeChannelMask;
+    while (mask) {
+        unsigned idx = Intrinsic::CLZ(mask);
+        channelSlots[idx].fetchData();
+        Atomic::ClearLZ(mask, idx);
     }
 }
 
@@ -219,7 +208,7 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     FlashLayer::releaseRegionFromOffset(offset);    
     
     
-    if (enabledChannelMask == 0 || activeChannelMask == 0xFFFFFFFF) {
+    if (enabledChannelMask == 0 || activeChannelMask == 0xFF000000) {
         return false; // no free channels
     }
 
@@ -229,7 +218,7 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     int idx;
     for (idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
         if ((enabledMask & (1 << idx)) &&
-           ((activeMask  & (1 << idx))) == 0) {
+           ((activeMask  & (Intrinsic::LZ(idx)))) == 0) {
             break;
         }
     }
@@ -264,7 +253,7 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
         ch->play(mod, loopMode, dec);
     }
     
-    Atomic::SetBit(activeChannelMask, idx);
+    Atomic::SetLZ(activeChannelMask, idx);
     
     return true;
 }
@@ -285,15 +274,17 @@ void AudioMixer::stopChannel(AudioChannelSlot *ch)
 {
     int channelIndex = ch - channelSlots;
     ASSERT(channelIndex < _SYS_AUDIO_MAX_CHANNELS);
-    Atomic::ClearBit(activeChannelMask, channelIndex);
+    Atomic::ClearLZ(activeChannelMask, channelIndex);
+
     if (ch->channelType() == Sample) {
         int decoderIndex = ch->decoder - decoders;
         ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
         Atomic::SetLZ(availableDecodersMask, decoderIndex);
-    } else if (ch->channelType() == PCM) {
+    }
+    else if (ch->channelType() == PCM) {
         int decoderIndex = ch->pcmDecoder - pcmDecoders;
         ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
-        Atomic::SetBit(availableDecodersMask, decoderIndex);
+        Atomic::SetLZ(availableDecodersMask, decoderIndex);
     }
     ch->onPlaybackComplete();
 }
@@ -339,12 +330,12 @@ uint32_t AudioMixer::pos(_SYSAudioHandle handle)
 AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle)
 {
     uint32_t mask = activeChannelMask;
-    AudioChannelSlot *ch = &channelSlots[0];
-
-    for (; mask != 0; ch++, mask >>= 1) {
-        if ((mask & 0x1) && ch->handle == handle) {
-            return ch;
+    while (mask) {
+        unsigned idx = Intrinsic::CLZ(mask);
+        if (channelSlots[idx].handle == handle) {
+            return &channelSlots[idx];
         }
+        Atomic::ClearLZ(mask, idx);
     }
     return 0;
 }
@@ -356,7 +347,7 @@ SpeexDecoder* AudioMixer::getDecoder()
     }
 
     unsigned idx = Intrinsic::CLZ(availableDecodersMask);
-    Atomic::And(availableDecodersMask, ~Intrinsic::LZ(idx));
+    Atomic::ClearLZ(availableDecodersMask, idx);
     return &decoders[idx];
 }
 
@@ -366,14 +357,7 @@ PCMDecoder* AudioMixer::getPCMDecoder()
         return NULL;
     }
 
-    /*
-     * XXX: CLZ could do this in constant time, without the loop. --beth
-     */
-    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
-        if (availableDecodersMask & (1 << i)) {
-            Atomic::ClearBit(availableDecodersMask, i);
-            return &pcmDecoders[i];
-        }
-    }
-    return NULL;
+    unsigned idx = Intrinsic::CLZ(availableDecodersMask);
+    Atomic::ClearLZ(availableDecodersMask, idx);
+    return &pcmDecoders[idx];
 }
