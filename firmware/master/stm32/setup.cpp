@@ -24,6 +24,7 @@
 #include "audiomixer.h"
 #include "audiooutdevice.h"
 #include "usart.h"
+#include "button.h"
 
 /* One function in the init_array segment */
 typedef void (*initFunc_t)(void);
@@ -159,11 +160,13 @@ extern "C" void _start()
      * those need to be unmasked by the peripheral's driver code.
      */
 
-    NVIC.irqEnable(IVT.EXTI9_5);              // Radio interrupt
-    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);    //   Reduced priority
+    NVIC.irqEnable(IVT.EXTI9_5);                // Radio interrupt
+    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);      //   Reduced priority
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);
+
+    NVIC.irqEnable(IVT.EXTI0);                  // home button
 
     /*
      * High-level hardware initialization
@@ -171,14 +174,15 @@ extern "C" void _start()
 
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
-    AudioMixer::instance.init();
-    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
-    AudioOutDevice::start();
-
     SysTime::init();
     Radio::open();
     Tasks::init();
     FlashLayer::init();
+    Button::init();
+
+    AudioMixer::instance.init();
+    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
+    AudioOutDevice::start();
 
 #if 0
     // ALERT! ST's usb library appears to overwrite registers related to

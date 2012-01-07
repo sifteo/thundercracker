@@ -1,32 +1,20 @@
 
 #include "button.h"
-#include "hardware.h"
+#include "board.h"
 
-
-Button pushButton(GPIOPin(&GPIOG, 8)); // MCBSTM32E eval board has USER button on PG8
-
-//#include "audiomixer.h"
-//#include "audio.gen.h"
-//static _SYSAudioHandle handle = -1;
-//static const Sifteo::AudioModule &mod = blueshift_8kHz;
-
-void Button::enablePushButton()
-{
-    NVIC_SIFTEO.irqEnable(IVT.EXTI9_5);
-    pushButton.init();
-}
+GPIOPin Button::homeButton = BTN_HOME_GPIO;
 
 void Button::init()
 {
-    irq.setControl(GPIOPin::IN_FLOAT);
-    irq.irqInit();
-    irq.irqSetFallingEdge();                // TODO - tweak once we have real HW
-    irq.irqEnable();
+    homeButton.setControl(GPIOPin::IN_FLOAT);
+    homeButton.irqInit();
+    homeButton.irqSetFallingEdge();                // TODO - tweak once we have real HW
+    homeButton.irqEnable();
 }
 
 void Button::isr()
 {
-    irq.irqAcknowledge();
+    homeButton.irqAcknowledge();
     // TODO - hook up
 //    if (!AudioMixer::instance.isPlaying(handle)) {
 //        AudioMixer::instance.play(mod, &handle);
@@ -34,7 +22,7 @@ void Button::isr()
 
 }
 
-IRQ_HANDLER ISR_EXTI9_5()
+IRQ_HANDLER ISR_EXTI0()
 {
-    pushButton.isr();
+    Button::isr();
 }
