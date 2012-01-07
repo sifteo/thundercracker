@@ -180,9 +180,10 @@ extern "C" void _start()
     FlashLayer::init();
     Button::init();
 
-    AudioMixer::instance.init();
+	//eliao, commenting out temporarily to get under stm limit
+    /*AudioMixer::instance.init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
-    AudioOutDevice::start();
+    AudioOutDevice::start();*/
 
 #if 0
     // ALERT! ST's usb library appears to overwrite registers related to
