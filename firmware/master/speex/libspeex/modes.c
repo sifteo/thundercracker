@@ -343,6 +343,7 @@ EXPORT const SpeexMode speex_nb_mode = {
    "narrowband",
    0,
    4,
+#ifndef STRIP_NB_MODE
    &nb_encoder_init,
    &nb_encoder_destroy,
    &nb_encode,
@@ -351,6 +352,16 @@ EXPORT const SpeexMode speex_nb_mode = {
    &nb_decode,
    &nb_encoder_ctl,
    &nb_decoder_ctl,
+#else
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+#endif
 };
 
 
