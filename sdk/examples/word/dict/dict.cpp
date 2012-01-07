@@ -1,1267 +1,1267 @@
-"AB",
-"ABET",
-"ABLE",
-"ABO",
-"ABOUT",
-"ABUT",
-"ABY",
-"ABYE",
-"ACE",
-"ACES",
-"ACHE",
-"ACNE",
-"ACRE",
-"ACT",
-"ACTS",
-"AD",
-"ADO",
-"ADOPT",
-"AE",
-"AEON",
-"AERY",
-"AFT",
-"AFTER",
-"AG",
-"AGE",
-"AGER",
-"AGO",
-"AGON",
-"AH",
-"AI",
-"AID",
-"AIL",
-"AIN",
-"AIR",
-"AIRN",
-"AIRS",
-"AIRT",
-"AIS",
-"AIT",
-"AL",
-"ALB",
-"ALE",
-"ALEC",
-"ALECS",
-"ALERT",
-"ALES",
-"ALIF",
-"ALME",
-"ALOE",
-"ALONE",
-"ALP",
-"ALS",
-"ALT",
-"ALTER",
-"ALTS",
-"AM",
-"AMEN",
-"AMENT",
-"AMONG",
-"AMP",
-"AMPS",
-"AN",
-"ANE",
-"ANGEL",
-"ANGLE",
-"ANI",
-"ANIL",
-"ANOLE",
-"ANT",
-"ANTE",
-"ANTI",
-"APE",
-"APES",
-"APOD",
-"APSE",
-"APT",
-"AR",
-"ARB",
-"ARC",
-"ARCH",
-"ARE",
-"ARES",
-"ARF",
-"ARGLE",
-"ARID",
-"ARISE",
-"ARK",
-"ARM",
-"ARMY",
-"ARS",
-"ARSE",
-"ART",
-"ARTEL",
-"ARTY",
-"ARYL",
-"AS",
-"ASCOT",
-"ASH",
-"ASK",
-"ASP",
-"AT",
-"ATE",
-"ATES",
-"ATOP",
-"ATT",
-"AUTO",
-"AW",
-"AWE",
-"AWN",
-"AX",
-"AXE",
-"AY",
-"AYE",
-"BA",
-"BAD",
-"BAG",
-"BAKE",
-"BAKER",
-"BAL",
-"BALE",
-"BAM",
-"BAN",
-"BANE",
-"BANG",
-"BAR",
-"BARD",
-"BARE",
-"BARK",
-"BAT",
-"BATE",
-"BAY",
-"BE",
-"BEAK",
-"BEAM",
-"BEAMY",
-"BEAN",
-"BEAR",
-"BEAT",
-"BEG",
-"BEGAN",
-"BEL",
-"BELOW",
-"BELT",
-"BEMA",
-"BEN",
-"BENS",
-"BET",
-"BETA",
-"BEY",
-"BLAE",
-"BLAT",
-"BLATE",
-"BLEAT",
-"BLET",
-"BLEW",
-"BLOW",
-"BO",
-"BOA",
-"BOAR",
-"BOARD",
-"BOAT",
-"BOD",
-"BOLE",
-"BONE",
-"BONES",
-"BORA",
-"BOS",
-"BOT",
-"BOTA",
-"BOUT",
-"BOW",
-"BOWEL",
-"BOWL",
-"BRA",
-"BRAD",
-"BRAE",
-"BRAKE",
-"BREAK",
-"BRO",
-"BROAD",
-"BUT",
-"BY",
-"BYE",
-"CAN",
-"CANE",
-"CAP",
-"CAPE",
-"CAPES",
-"CAPS",
-"CAR",
-"CARE",
-"CARL",
-"CARLE",
-"CASE",
-"CAST",
-"CAT",
-"CATE",
-"CATS",
-"CEL",
-"CELS",
-"CEP",
-"CEPS",
-"CERO",
-"CEROS",
-"CHAR",
-"CHARE",
-"CHAT",
-"CHEAT",
-"CLAN",
-"CLAP",
-"CLEAN",
-"CLEAR",
-"CLOSE",
-"COAST",
-"COAT",
-"COATS",
-"COL",
-"COLE",
-"COLES",
-"COLS",
-"COR",
-"CORE",
-"CORES",
-"CORSE",
-"COS",
-"COST",
-"COSTA",
-"COT",
-"COTS",
-"DAB",
-"DAH",
-"DAL",
-"DALE",
-"DAP",
-"DARB",
-"DARE",
-"DART",
-"DATE",
-"DATER",
-"DATO",
-"DAY",
-"DE",
-"DEAL",
-"DEAR",
-"DEARY",
-"DEATH",
-"DEFI",
-"DEIL",
-"DEILS",
-"DEL",
-"DELAY",
-"DELF",
-"DELI",
-"DELIS",
-"DELS",
-"DEN",
-"DERAT",
-"DERAY",
-"DEY",
-"DIE",
-"DIEL",
-"DIES",
-"DIP",
-"DIS",
-"DO",
-"DOAT",
-"DOBRA",
-"DON",
-"DONS",
-"DOPA",
-"DOR",
-"DOS",
-"DOT",
-"DOTY",
-"DOUR",
-"DRAB",
-"DRAT",
-"DRAY",
-"DRIP",
-"DRY",
-"DUE",
-"DUN",
-"DUNE",
-"DUNS",
-"DUO",
-"DUOS",
-"DURE",
-"DURN",
-"DURO",
-"DYE",
-"DYER",
-"EACH",
-"EAR",
-"EARL",
-"EARLY",
-"EARN",
-"EARS",
-"EARTH",
-"EAST",
-"EAT",
-"EATH",
-"EATS",
-"EBON",
-"EBONS",
-"ED",
-"EDH",
-"EEL",
-"EELS",
-"EF",
-"EFT",
-"EGAL",
-"EH",
-"EL",
-"ELAN",
-"ELBOW",
-"ELD",
-"ELDS",
-"ELF",
-"ELM",
-"ELS",
-"ELSE",
-"EM",
-"EMBAY",
-"EN",
-"END",
-"ENG",
-"ENOL",
-"ENOW",
-"ENS",
-"EON",
-"EONS",
-"EPHA",
-"EPHAS",
-"ER",
-"ERA",
-"ERAS",
-"ERG",
-"ERN",
-"EROS",
-"ERS",
-"ERST",
-"ES",
-"ET",
-"ETA",
-"ETAS",
-"ETCH",
-"ETH",
-"ETHOS",
-"ETHS",
-"ETNA",
-"EX",
-"EXTRA",
-"EYRA",
-"FA",
-"FAIL",
-"FAIN",
-"FAN",
-"FAR",
-"FARE",
-"FART",
-"FAT",
-"FATE",
-"FEAR",
-"FEAT",
-"FED",
-"FELID",
-"FEN",
-"FER",
-"FET",
-"FETA",
-"FID",
-"FIE",
-"FIELD",
-"FIL",
-"FILA",
-"FILE",
-"FILED",
-"FIN",
-"FINAL",
-"FLAN",
-"FLED",
-"FLIED",
-"FOE",
-"FON",
-"FONT",
-"FRAE",
-"FRAT",
-"FRET",
-"GAB",
-"GAE",
-"GAEN",
-"GAL",
-"GALE",
-"GAM",
-"GAN",
-"GANE",
-"GAR",
-"GAT",
-"GATE",
-"GEAR",
-"GEL",
-"GEN",
-"GET",
-"GETA",
-"GLARE",
-"GLEAN",
-"GLEN",
-"GNAR",
-"GNAT",
-"GO",
-"GOA",
-"GRAN",
-"GRANT",
-"GRAT",
-"GRATE",
-"GREAT",
-"HA",
-"HAD",
-"HADE",
-"HAE",
-"HAED",
-"HAES",
-"HAET",
-"HAP",
-"HAPS",
-"HARD",
-"HARE",
-"HARED",
-"HARP",
-"HARPS",
-"HART",
-"HAS",
-"HASP",
-"HAT",
-"HATE",
-"HATED",
-"HATER",
-"HE",
-"HEAD",
-"HEAP",
-"HEAPS",
-"HEAR",
-"HEARD",
-"HEART",
-"HEAT",
-"HEIR",
-"HEP",
-"HER",
-"HERD",
-"HERO",
-"HEROS",
-"HERS",
-"HES",
-"HEST",
-"HET",
-"HETS",
-"HEW",
-"HEWS",
-"HI",
-"HIE",
-"HIRE",
-"HIT",
-"HO",
-"HOE",
-"HOER",
-"HOERS",
-"HOES",
-"HON",
-"HONS",
-"HORSE",
-"HORST",
-"HOSE",
-"HOST",
-"HOT",
-"HOTS",
-"HOUSE",
-"HOW",
-"HOWE",
-"HOWES",
-"HOWS",
-"HUE",
-"HUES",
-"HUT",
-"HUTS",
-"ID",
-"IDES",
-"IDLE",
-"IDLES",
-"IDS",
-"IF",
-"IN",
-"INAPT",
-"INTO",
-"ION",
-"IRE",
-"IRES",
-"IS",
-"ISLE",
-"ISLED",
-"IT",
-"ITHER",
-"KA",
-"KAB",
-"KAE",
-"KAES",
-"KAS",
-"KBAR",
-"KEA",
-"KEAS",
-"KEBAR",
-"KEP",
-"KEPS",
-"KERB",
-"LA",
-"LAB",
-"LAC",
-"LACE",
-"LACER",
-"LACES",
-"LACS",
-"LAD",
-"LADE",
-"LADY",
-"LAG",
-"LAGER",
-"LAIN",
-"LAM",
-"LAME",
-"LANCE",
-"LANE",
-"LANG",
-"LAP",
-"LAR",
-"LARGE",
-"LAS",
-"LASE",
-"LAST",
-"LAT",
-"LATE",
-"LATER",
-"LATS",
-"LAY",
-"LAYED",
-"LAYER",
-"LEA",
-"LEAD",
-"LEADY",
-"LEAN",
-"LEAP",
-"LEAR",
-"LEARN",
-"LEARY",
-"LEAS",
-"LEAST",
-"LED",
-"LEE",
-"LEES",
-"LEET",
-"LEETS",
-"LEG",
-"LEI",
-"LEIS",
-"LENO",
-"LEST",
-"LET",
-"LETS",
-"LEY",
-"LI",
-"LID",
-"LIDS",
-"LIE",
-"LIED",
-"LIEF",
-"LIES",
-"LIFE",
-"LIN",
-"LIS",
-"LO",
-"LOAN",
-"LOB",
-"LOBE",
-"LONE",
-"LOSE",
-"LOST",
-"LOT",
-"LOTS",
-"LOW",
-"LOWE",
-"LYE",
-"LYRE",
-"MA",
-"MABE",
-"MAE",
-"MAG",
-"MALE",
-"MALT",
-"MAN",
-"MANE",
-"MANGO",
-"MANO",
-"MAP",
-"MAPS",
-"MAR",
-"MAS",
-"MAST",
-"MAT",
-"MATE",
-"MATS",
-"MAW",
-"MAWN",
-"MAY",
-"MAYBE",
-"MAYO",
-"MAYOR",
-"ME",
-"MEAL",
-"MEAN",
-"MEANT",
-"MEAT",
-"MEL",
-"MELT",
-"MEN",
-"MENO",
-"MENTA",
-"MEOW",
-"MET",
-"META",
-"METAL",
-"MEW",
-"MO",
-"MOA",
-"MOAN",
-"MOG",
-"MON",
-"MONEY",
-"MONY",
-"MOR",
-"MORA",
-"MORAY",
-"MOW",
-"MOWN",
-"MY",
-"NA",
-"NAB",
-"NABE",
-"NAE",
-"NAG",
-"NAIF",
-"NAIL",
-"NAM",
-"NAME",
-"NAP",
-"NAPE",
-"NAW",
-"NE",
-"NEAP",
-"NEAR",
-"NEAT",
-"NEB",
-"NEBS",
-"NEMA",
-"NERD",
-"NEST",
-"NET",
-"NETS",
-"NEW",
-"NIL",
-"NIP",
-"NIPA",
-"NIT",
-"NO",
-"NOB",
-"NOBS",
-"NOD",
-"NODS",
-"NODUS",
-"NOEL",
-"NOES",
-"NOG",
-"NOH",
-"NOM",
-"NOMA",
-"NOME",
-"NOR",
-"NOS",
-"NOSE",
-"NOSH",
-"NOT",
-"NOTE",
-"NOTES",
-"NOUS",
-"NOW",
-"NOWS",
-"NU",
-"NUDE",
-"NUDER",
-"NURD",
-"NUS",
-"OAR",
-"OAST",
-"OAT",
-"OATS",
-"OBE",
-"OBES",
-"OCA",
-"OCAS",
-"OD",
-"ODS",
-"OE",
-"OES",
-"OF",
-"OFT",
-"OFTEN",
-"OGAM",
-"OH",
-"OHS",
-"OLE",
-"OLEA",
-"OLES",
-"OM",
-"OMEN",
-"ON",
-"ONE",
-"ONES",
-"ONS",
-"ONSET",
-"ONUS",
-"OP",
-"OPE",
-"OPT",
-"OR",
-"ORA",
-"ORAD",
-"ORB",
-"ORC",
-"ORCS",
-"ORE",
-"ORES",
-"ORS",
-"ORT",
-"ORTS",
-"OS",
-"OSE",
-"OTHER",
-"OUD",
-"OUDS",
-"OUR",
-"OUST",
-"OUT",
-"OUTS",
-"OW",
-"OWE",
-"OWES",
-"OWL",
-"OWN",
-"OWNS",
-"OWSE",
-"OY",
-"PA",
-"PAC",
-"PACE",
-"PACES",
-"PACS",
-"PAD",
-"PADI",
-"PADRI",
-"PAH",
-"PAID",
-"PAIN",
-"PAINT",
-"PAIR",
-"PAL",
-"PALE",
-"PAM",
-"PAMS",
-"PAN",
-"PANE",
-"PANEL",
-"PANT",
-"PAR",
-"PARD",
-"PARDI",
-"PARS",
-"PART",
-"PARTY",
-"PAS",
-"PASE",
-"PASH",
-"PAST",
-"PAT",
-"PATIN",
-"PATS",
-"PATY",
-"PAY",
-"PE",
-"PEA",
-"PEAK",
-"PEAKS",
-"PEAL",
-"PEAN",
-"PEAS",
-"PEC",
-"PECS",
-"PEH",
-"PEHS",
-"PEN",
-"PENAL",
-"PER",
-"PES",
-"PEW",
-"PHASE",
-"PI",
-"PIA",
-"PIAN",
-"PIN",
-"PINA",
-"PINOT",
-"PINT",
-"PINTA",
-"PINTO",
-"PION",
-"PIT",
-"PITA",
-"PITON",
-"PLACE",
-"PLAN",
-"PLANE",
-"PLEA",
-"PLENA",
-"POD",
-"POI",
-"POINT",
-"PORE",
-"POT",
-"POW",
-"POWER",
-"PRAT",
-"PRAY",
-"PRO",
-"PROW",
-"PRY",
-"PYA",
-"RACE",
-"RAD",
-"RAFT",
-"RAG",
-"RAGE",
-"RAH",
-"RAID",
-"RAIN",
-"RAISE",
-"RAKE",
-"RALE",
-"RAM",
-"RAN",
-"RANG",
-"RANI",
-"RANT",
-"RAP",
-"RAPID",
-"RAPS",
-"RAPT",
-"RAS",
-"RASE",
-"RASH",
-"RASP",
-"RAT",
-"RATE",
-"RATED",
-"RATEL",
-"RATH",
-"RATHE",
-"RAW",
-"RAX",
-"RAY",
-"RAYED",
-"RE",
-"REACH",
-"READ",
-"READY",
-"REAL",
-"REB",
-"REC",
-"RECS",
-"RED",
-"REF",
-"REFT",
-"REG",
-"REGAL",
-"REI",
-"REIS",
-"RELAY",
-"RELY",
-"RENAL",
-"REND",
-"REP",
-"REPO",
-"RES",
-"RESH",
-"REST",
-"RET",
-"RETAG",
-"RETAX",
-"RETS",
-"REX",
-"RHEA",
-"RHO",
-"RHOS",
-"RIA",
-"RIANT",
-"RIAS",
-"RID",
-"RIN",
-"RIP",
-"RISE",
-"RITE",
-"ROAD",
-"ROAM",
-"ROB",
-"ROC",
-"ROCS",
-"ROD",
-"ROE",
-"ROES",
-"ROM",
-"ROPE",
-"ROSE",
-"ROSET",
-"ROSY",
-"ROT",
-"ROTE",
-"ROTES",
-"ROTS",
-"ROUND",
-"ROW",
-"ROWTH",
-"RUDE",
-"RUE",
-"RUED",
-"RUN",
-"RUNE",
-"RYA",
-"RYE",
-"RYOT",
-"RYOTS",
-"SAC",
-"SAE",
-"SAKE",
-"SAL",
-"SALE",
-"SALT",
-"SAMP",
-"SAP",
-"SARI",
-"SAT",
-"SATE",
-"SCALE",
-"SCAPE",
-"SCAT",
-"SCORE",
-"SCOT",
-"SEA",
-"SEAL",
-"SEAR",
-"SEAT",
-"SEC",
-"SEE",
-"SEEL",
-"SEI",
-"SEL",
-"SEN",
-"SENT",
-"SER",
-"SERA",
-"SERAI",
-"SET",
-"SETA",
-"SETAL",
-"SETON",
-"SETT",
-"SEW",
-"SH",
-"SHA",
-"SHAPE",
-"SHARP",
-"SHE",
-"SHEA",
-"SHEW",
-"SHOE",
-"SHOER",
-"SHORE",
-"SHORT",
-"SHOT",
-"SHOTE",
-"SHOUT",
-"SHOW",
-"SHOWN",
-"SHUT",
-"SI",
-"SIDE",
-"SIDLE",
-"SILD",
-"SIR",
-"SIRE",
-"SKA",
-"SKEP",
-"SLAT",
-"SLATE",
-"SLED",
-"SLEET",
-"SLID",
-"SLIDE",
-"SLOE",
-"SLOT",
-"SNOB",
-"SNOT",
-"SNOW",
-"SO",
-"SOB",
-"SOCLE",
-"SOD",
-"SOL",
-"SOLE",
-"SON",
-"SONE",
-"SORE",
-"SORT",
-"SOT",
-"SOTH",
-"SOU",
-"SOUND",
-"SOUTH",
-"SOW",
-"SOWN",
-"SOY",
-"SPA",
-"SPACE",
-"SPAE",
-"SPAKE",
-"SPAR",
-"SPAT",
-"SPEAK",
-"SPEC",
-"SRI",
-"STALE",
-"STAMP",
-"STAT",
-"STATE",
-"STEAL",
-"STEEL",
-"STELA",
-"STELE",
-"STENO",
-"STET",
-"STOA",
-"STOLE",
-"STONE",
-"STORE",
-"STORY",
-"STROY",
-"STY",
-"SUE",
-"SUN",
-"TA",
-"TAB",
-"TABLE",
-"TABU",
-"TACE",
-"TACH",
-"TACHE",
-"TACO",
-"TACOS",
-"TAD",
-"TAE",
-"TAEL",
-"TAELS",
-"TAG",
-"TAHR",
-"TAIN",
-"TALE",
-"TALER",
-"TALES",
-"TAM",
-"TAME",
-"TAMP",
-"TAMPS",
-"TAMS",
-"TAN",
-"TANG",
-"TAO",
-"TAOS",
-"TAP",
-"TAPS",
-"TAR",
-"TARE",
-"TARED",
-"TARGE",
-"TARN",
-"TARP",
-"TAS",
-"TASTE",
-"TAT",
-"TATE",
-"TATES",
-"TATS",
-"TAU",
-"TAW",
-"TAWER",
-"TAX",
-"TAXER",
-"TEA",
-"TEACH",
-"TEAL",
-"TEALS",
-"TEAM",
-"TEAR",
-"TEAS",
-"TEAT",
-"TEATS",
-"TED",
-"TEE",
-"TEEL",
-"TEELS",
-"TEES",
-"TEG",
-"TEL",
-"TELA",
-"TELE",
-"TELES",
-"TELOS",
-"TELS",
-"TEN",
-"TENS",
-"TERGA",
-"TESLA",
-"TEST",
-"TESTA",
-"TET",
-"TETS",
-"TEW",
-"THAE",
-"THE",
-"THECA",
-"THEIR",
-"THIR",
-"THO",
-"THOSE",
-"THOU",
-"THOUS",
-"THRO",
-"THROE",
-"THROW",
-"THUS",
-"TI",
-"TIE",
-"TIER",
-"TIN",
-"TIP",
-"TIRE",
-"TO",
-"TOAD",
-"TOADY",
-"TOD",
-"TODAY",
-"TODY",
-"TOE",
-"TOES",
-"TOLE",
-"TOLES",
-"TON",
-"TONE",
-"TONES",
-"TONS",
-"TOP",
-"TOPI",
-"TOR",
-"TORE",
-"TORES",
-"TORS",
-"TORSE",
-"TORY",
-"TOSH",
-"TOW",
-"TOWER",
-"TOY",
-"TOYS",
-"TRAD",
-"TRADE",
-"TRAIN",
-"TRAP",
-"TRAY",
-"TREAD",
-"TREF",
-"TROW",
-"TROY",
-"TROYS",
-"TRY",
-"TUB",
-"TUBA",
-"TUSH",
-"TWA",
-"TWAE",
-"TWO",
-"TYRO",
-"TYROS",
-"UDO",
-"UDOS",
-"UH",
-"UN",
-"UNDE",
-"UNDER",
-"UNDO",
-"UNS",
-"URD",
-"URN",
-"US",
-"USE",
-"UT",
-"UTA",
-"UTS",
-"WAE",
-"WAN",
-"WAR",
-"WARE",
-"WART",
-"WAT",
-"WATER",
-"WE",
-"WEAR",
-"WEB",
-"WEN",
-"WERT",
-"WET",
-"WHO",
-"WHORT",
-"WHOSE",
-"WO",
-"WOE",
-"WOES",
-"WOMAN",
-"WOMEN",
-"WON",
-"WONS",
-"WOP",
-"WORE",
-"WORT",
-"WORTH",
-"WOS",
-"WOT",
-"WROTE",
-"WROTH",
-"YA",
-"YALD",
-"YAM",
-"YAP",
-"YAR",
-"YARD",
-"YARE",
-"YE",
-"YEA",
-"YEAR",
-"YELD",
-"YEN",
-"YO",
-"YOD",
-"YOM",
-"YON",
+0x41,		// AB
+0xa1441,		// ABET
+0x2b041,		// ABLE
+0x3c41,		// ABO
+0x14abc41,		// ABOUT
+0xa5441,		// ABUT
+0x6441,		// ABY
+0x2e441,		// ABYE
+0x1461,		// ACE
+0x99461,		// ACES
+0x2a061,		// ACHE
+0x2b861,		// ACNE
+0x2c861,		// ACRE
+0x5061,		// ACT
+0x9d061,		// ACTS
+0x81,		// AD
+0x3c81,		// ADO
+0x1483c81,		// ADOPT
+0xa1,		// AE
+0x73ca1,		// AEON
+0xcc8a1,		// AERY
+0x50c1,		// AFT
+0x122d0c1,		// AFTER
+0xe1,		// AG
+0x14e1,		// AGE
+0x914e1,		// AGER
+0x3ce1,		// AGO
+0x73ce1,		// AGON
+0x101,		// AH
+0x121,		// AI
+0x1121,		// AID
+0x3121,		// AIL
+0x3921,		// AIN
+0x4921,		// AIR
+0x74921,		// AIRN
+0x9c921,		// AIRS
+0xa4921,		// AIRT
+0x4d21,		// AIS
+0x5121,		// AIT
+0x181,		// AL
+0x981,		// ALB
+0x1581,		// ALE
+0x19581,		// ALEC
+0x1319581,		// ALECS
+0x1491581,		// ALERT
+0x99581,		// ALES
+0x32581,		// ALIF
+0x2b581,		// ALME
+0x2bd81,		// ALOE
+0x573d81,		// ALONE
+0x4181,		// ALP
+0x4d81,		// ALS
+0x5181,		// ALT
+0x122d181,		// ALTER
+0x9d181,		// ALTS
+0x1a1,		// AM
+0x715a1,		// AMEN
+0x14715a1,		// AMENT
+0x773da1,		// AMONG
+0x41a1,		// AMP
+0x9c1a1,		// AMPS
+0x1c1,		// AN
+0x15c1,		// ANE
+0xc29dc1,		// ANGEL
+0x561dc1,		// ANGLE
+0x25c1,		// ANI
+0x625c1,		// ANIL
+0x563dc1,		// ANOLE
+0x51c1,		// ANT
+0x2d1c1,		// ANTE
+0x4d1c1,		// ANTI
+0x1601,		// APE
+0x99601,		// APES
+0x23e01,		// APOD
+0x2ce01,		// APSE
+0x5201,		// APT
+0x241,		// AR
+0xa41,		// ARB
+0xe41,		// ARC
+0x40e41,		// ARCH
+0x1641,		// ARE
+0x99641,		// ARES
+0x1a41,		// ARF
+0x561e41,		// ARGLE
+0x22641,		// ARID
+0x59a641,		// ARISE
+0x2e41,		// ARK
+0x3641,		// ARM
+0xcb641,		// ARMY
+0x4e41,		// ARS
+0x2ce41,		// ARSE
+0x5241,		// ART
+0xc2d241,		// ARTEL
+0xcd241,		// ARTY
+0x66641,		// ARYL
+0x261,		// AS
+0x1478e61,		// ASCOT
+0x2261,		// ASH
+0x2e61,		// ASK
+0x4261,		// ASP
+0x281,		// AT
+0x1681,		// ATE
+0x99681,		// ATES
+0x83e81,		// ATOP
+0x5281,		// ATT
+0x7d2a1,		// AUTO
+0x2e1,		// AW
+0x16e1,		// AWE
+0x3ae1,		// AWN
+0x301,		// AX
+0x1701,		// AXE
+0x321,		// AY
+0x1721,		// AYE
+0x22,		// BA
+0x1022,		// BAD
+0x1c22,		// BAG
+0x2ac22,		// BAKE
+0x122ac22,		// BAKER
+0x3022,		// BAL
+0x2b022,		// BALE
+0x3422,		// BAM
+0x3822,		// BAN
+0x2b822,		// BANE
+0x3b822,		// BANG
+0x4822,		// BAR
+0x24822,		// BARD
+0x2c822,		// BARE
+0x5c822,		// BARK
+0x5022,		// BAT
+0x2d022,		// BATE
+0x6422,		// BAY
+0xa2,		// BE
+0x584a2,		// BEAK
+0x684a2,		// BEAM
+0x19684a2,		// BEAMY
+0x704a2,		// BEAN
+0x904a2,		// BEAR
+0xa04a2,		// BEAT
+0x1ca2,		// BEG
+0xe09ca2,		// BEGAN
+0x30a2,		// BEL
+0x177b0a2,		// BELOW
+0xa30a2,		// BELT
+0xb4a2,		// BEMA
+0x38a2,		// BEN
+0x9b8a2,		// BENS
+0x50a2,		// BET
+0xd0a2,		// BETA
+0x64a2,		// BEY
+0x28582,		// BLAE
+0xa0582,		// BLAT
+0x5a0582,		// BLATE
+0x1409582,		// BLEAT
+0xa1582,		// BLET
+0xb9582,		// BLEW
+0xbbd82,		// BLOW
+0x1e2,		// BO
+0x5e2,		// BOA
+0x905e2,		// BOAR
+0x4905e2,		// BOARD
+0xa05e2,		// BOAT
+0x11e2,		// BOD
+0x2b1e2,		// BOLE
+0x2b9e2,		// BONE
+0x132b9e2,		// BONES
+0xc9e2,		// BORA
+0x4de2,		// BOS
+0x51e2,		// BOT
+0xd1e2,		// BOTA
+0xa55e2,		// BOUT
+0x5de2,		// BOW
+0xc2dde2,		// BOWEL
+0x65de2,		// BOWL
+0x642,		// BRA
+0x20642,		// BRAD
+0x28642,		// BRAE
+0x558642,		// BRAKE
+0xb09642,		// BREAK
+0x3e42,		// BRO
+0x40be42,		// BROAD
+0x52a2,		// BUT
+0x322,		// BY
+0x1722,		// BYE
+0x3823,		// CAN
+0x2b823,		// CANE
+0x4023,		// CAP
+0x2c023,		// CAPE
+0x132c023,		// CAPES
+0x9c023,		// CAPS
+0x4823,		// CAR
+0x2c823,		// CARE
+0x64823,		// CARL
+0x564823,		// CARLE
+0x2cc23,		// CASE
+0xa4c23,		// CAST
+0x5023,		// CAT
+0x2d023,		// CATE
+0x9d023,		// CATS
+0x30a3,		// CEL
+0x9b0a3,		// CELS
+0x40a3,		// CEP
+0x9c0a3,		// CEPS
+0x7c8a3,		// CERO
+0x137c8a3,		// CEROS
+0x90503,		// CHAR
+0x590503,		// CHARE
+0xa0503,		// CHAT
+0x1409503,		// CHEAT
+0x70583,		// CLAN
+0x80583,		// CLAP
+0xe09583,		// CLEAN
+0x1209583,		// CLEAR
+0x59bd83,		// CLOSE
+0x14985e3,		// COAST
+0xa05e3,		// COAT
+0x13a05e3,		// COATS
+0x31e3,		// COL
+0x2b1e3,		// COLE
+0x132b1e3,		// COLES
+0x9b1e3,		// COLS
+0x49e3,		// COR
+0x2c9e3,		// CORE
+0x132c9e3,		// CORES
+0x59c9e3,		// CORSE
+0x4de3,		// COS
+0xa4de3,		// COST
+0x1a4de3,		// COSTA
+0x51e3,		// COT
+0x9d1e3,		// COTS
+0x824,		// DAB
+0x2024,		// DAH
+0x3024,		// DAL
+0x2b024,		// DALE
+0x4024,		// DAP
+0x14824,		// DARB
+0x2c824,		// DARE
+0xa4824,		// DART
+0x2d024,		// DATE
+0x122d024,		// DATER
+0x7d024,		// DATO
+0x6424,		// DAY
+0xa4,		// DE
+0x604a4,		// DEAL
+0x904a4,		// DEAR
+0x19904a4,		// DEARY
+0x8a04a4,		// DEATH
+0x498a4,		// DEFI
+0x624a4,		// DEIL
+0x13624a4,		// DEILS
+0x30a4,		// DEL
+0x190b0a4,		// DELAY
+0x330a4,		// DELF
+0x4b0a4,		// DELI
+0x134b0a4,		// DELIS
+0x9b0a4,		// DELS
+0x38a4,		// DEN
+0x140c8a4,		// DERAT
+0x190c8a4,		// DERAY
+0x64a4,		// DEY
+0x1524,		// DIE
+0x61524,		// DIEL
+0x99524,		// DIES
+0x4124,		// DIP
+0x4d24,		// DIS
+0x1e4,		// DO
+0xa05e4,		// DOAT
+0x1909e4,		// DOBRA
+0x39e4,		// DON
+0x9b9e4,		// DONS
+0xc1e4,		// DOPA
+0x49e4,		// DOR
+0x4de4,		// DOS
+0x51e4,		// DOT
+0xcd1e4,		// DOTY
+0x955e4,		// DOUR
+0x10644,		// DRAB
+0xa0644,		// DRAT
+0xc8644,		// DRAY
+0x82644,		// DRIP
+0x6644,		// DRY
+0x16a4,		// DUE
+0x3aa4,		// DUN
+0x2baa4,		// DUNE
+0x9baa4,		// DUNS
+0x3ea4,		// DUO
+0x9bea4,		// DUOS
+0x2caa4,		// DURE
+0x74aa4,		// DURN
+0x7caa4,		// DURO
+0x1724,		// DYE
+0x91724,		// DYER
+0x40c25,		// EACH
+0x4825,		// EAR
+0x64825,		// EARL
+0x1964825,		// EARLY
+0x74825,		// EARN
+0x9c825,		// EARS
+0x8a4825,		// EARTH
+0xa4c25,		// EAST
+0x5025,		// EAT
+0x45025,		// EATH
+0x9d025,		// EATS
+0x73c45,		// EBON
+0x1373c45,		// EBONS
+0x85,		// ED
+0x2085,		// EDH
+0x30a5,		// EEL
+0x9b0a5,		// EELS
+0xc5,		// EF
+0x50c5,		// EFT
+0x604e5,		// EGAL
+0x105,		// EH
+0x185,		// EL
+0x70585,		// ELAN
+0x1778985,		// ELBOW
+0x1185,		// ELD
+0x99185,		// ELDS
+0x1985,		// ELF
+0x3585,		// ELM
+0x4d85,		// ELS
+0x2cd85,		// ELSE
+0x1a5,		// EM
+0x19089a5,		// EMBAY
+0x1c5,		// EN
+0x11c5,		// END
+0x1dc5,		// ENG
+0x63dc5,		// ENOL
+0xbbdc5,		// ENOW
+0x4dc5,		// ENS
+0x39e5,		// EON
+0x9b9e5,		// EONS
+0xa205,		// EPHA
+0x130a205,		// EPHAS
+0x245,		// ER
+0x645,		// ERA
+0x98645,		// ERAS
+0x1e45,		// ERG
+0x3a45,		// ERN
+0x9be45,		// EROS
+0x4e45,		// ERS
+0xa4e45,		// ERST
+0x265,		// ES
+0x285,		// ET
+0x685,		// ETA
+0x98685,		// ETAS
+0x40e85,		// ETCH
+0x2285,		// ETH
+0x137a285,		// ETHOS
+0x9a285,		// ETHS
+0xba85,		// ETNA
+0x305,		// EX
+0x195305,		// EXTRA
+0xcb25,		// EYRA
+0x26,		// FA
+0x62426,		// FAIL
+0x72426,		// FAIN
+0x3826,		// FAN
+0x4826,		// FAR
+0x2c826,		// FARE
+0xa4826,		// FART
+0x5026,		// FAT
+0x2d026,		// FATE
+0x904a6,		// FEAR
+0xa04a6,		// FEAT
+0x10a6,		// FED
+0x44b0a6,		// FELID
+0x38a6,		// FEN
+0x48a6,		// FER
+0x50a6,		// FET
+0xd0a6,		// FETA
+0x1126,		// FID
+0x1526,		// FIE
+0x461526,		// FIELD
+0x3126,		// FIL
+0xb126,		// FILA
+0x2b126,		// FILE
+0x42b126,		// FILED
+0x3926,		// FIN
+0xc0b926,		// FINAL
+0x70586,		// FLAN
+0x21586,		// FLED
+0x42a586,		// FLIED
+0x15e6,		// FOE
+0x39e6,		// FON
+0xa39e6,		// FONT
+0x28646,		// FRAE
+0xa0646,		// FRAT
+0xa1646,		// FRET
+0x827,		// GAB
+0x1427,		// GAE
+0x71427,		// GAEN
+0x3027,		// GAL
+0x2b027,		// GALE
+0x3427,		// GAM
+0x3827,		// GAN
+0x2b827,		// GANE
+0x4827,		// GAR
+0x5027,		// GAT
+0x2d027,		// GATE
+0x904a7,		// GEAR
+0x30a7,		// GEL
+0x38a7,		// GEN
+0x50a7,		// GET
+0xd0a7,		// GETA
+0x590587,		// GLARE
+0xe09587,		// GLEAN
+0x71587,		// GLEN
+0x905c7,		// GNAR
+0xa05c7,		// GNAT
+0x1e7,		// GO
+0x5e7,		// GOA
+0x70647,		// GRAN
+0x1470647,		// GRANT
+0xa0647,		// GRAT
+0x5a0647,		// GRATE
+0x1409647,		// GREAT
+0x28,		// HA
+0x1028,		// HAD
+0x29028,		// HADE
+0x1428,		// HAE
+0x21428,		// HAED
+0x99428,		// HAES
+0xa1428,		// HAET
+0x4028,		// HAP
+0x9c028,		// HAPS
+0x24828,		// HARD
+0x2c828,		// HARE
+0x42c828,		// HARED
+0x84828,		// HARP
+0x1384828,		// HARPS
+0xa4828,		// HART
+0x4c28,		// HAS
+0x84c28,		// HASP
+0x5028,		// HAT
+0x2d028,		// HATE
+0x42d028,		// HATED
+0x122d028,		// HATER
+0xa8,		// HE
+0x204a8,		// HEAD
+0x804a8,		// HEAP
+0x13804a8,		// HEAPS
+0x904a8,		// HEAR
+0x4904a8,		// HEARD
+0x14904a8,		// HEART
+0xa04a8,		// HEAT
+0x924a8,		// HEIR
+0x40a8,		// HEP
+0x48a8,		// HER
+0x248a8,		// HERD
+0x7c8a8,		// HERO
+0x137c8a8,		// HEROS
+0x9c8a8,		// HERS
+0x4ca8,		// HES
+0xa4ca8,		// HEST
+0x50a8,		// HET
+0x9d0a8,		// HETS
+0x5ca8,		// HEW
+0x9dca8,		// HEWS
+0x128,		// HI
+0x1528,		// HIE
+0x2c928,		// HIRE
+0x5128,		// HIT
+0x1e8,		// HO
+0x15e8,		// HOE
+0x915e8,		// HOER
+0x13915e8,		// HOERS
+0x995e8,		// HOES
+0x39e8,		// HON
+0x9b9e8,		// HONS
+0x59c9e8,		// HORSE
+0x149c9e8,		// HORST
+0x2cde8,		// HOSE
+0xa4de8,		// HOST
+0x51e8,		// HOT
+0x9d1e8,		// HOTS
+0x59d5e8,		// HOUSE
+0x5de8,		// HOW
+0x2dde8,		// HOWE
+0x132dde8,		// HOWES
+0x9dde8,		// HOWS
+0x16a8,		// HUE
+0x996a8,		// HUES
+0x52a8,		// HUT
+0x9d2a8,		// HUTS
+0x89,		// ID
+0x99489,		// IDES
+0x2b089,		// IDLE
+0x132b089,		// IDLES
+0x4c89,		// IDS
+0xc9,		// IF
+0x1c9,		// IN
+0x14805c9,		// INAPT
+0x7d1c9,		// INTO
+0x39e9,		// ION
+0x1649,		// IRE
+0x99649,		// IRES
+0x269,		// IS
+0x2b269,		// ISLE
+0x42b269,		// ISLED
+0x289,		// IT
+0x122a289,		// ITHER
+0x2b,		// KA
+0x82b,		// KAB
+0x142b,		// KAE
+0x9942b,		// KAES
+0x4c2b,		// KAS
+0x9044b,		// KBAR
+0x4ab,		// KEA
+0x984ab,		// KEAS
+0x12088ab,		// KEBAR
+0x40ab,		// KEP
+0x9c0ab,		// KEPS
+0x148ab,		// KERB
+0x2c,		// LA
+0x82c,		// LAB
+0xc2c,		// LAC
+0x28c2c,		// LACE
+0x1228c2c,		// LACER
+0x1328c2c,		// LACES
+0x98c2c,		// LACS
+0x102c,		// LAD
+0x2902c,		// LADE
+0xc902c,		// LADY
+0x1c2c,		// LAG
+0x1229c2c,		// LAGER
+0x7242c,		// LAIN
+0x342c,		// LAM
+0x2b42c,		// LAME
+0x51b82c,		// LANCE
+0x2b82c,		// LANE
+0x3b82c,		// LANG
+0x402c,		// LAP
+0x482c,		// LAR
+0x53c82c,		// LARGE
+0x4c2c,		// LAS
+0x2cc2c,		// LASE
+0xa4c2c,		// LAST
+0x502c,		// LAT
+0x2d02c,		// LATE
+0x122d02c,		// LATER
+0x9d02c,		// LATS
+0x642c,		// LAY
+0x42e42c,		// LAYED
+0x122e42c,		// LAYER
+0x4ac,		// LEA
+0x204ac,		// LEAD
+0x19204ac,		// LEADY
+0x704ac,		// LEAN
+0x804ac,		// LEAP
+0x904ac,		// LEAR
+0xe904ac,		// LEARN
+0x19904ac,		// LEARY
+0x984ac,		// LEAS
+0x14984ac,		// LEAST
+0x10ac,		// LED
+0x14ac,		// LEE
+0x994ac,		// LEES
+0xa14ac,		// LEET
+0x13a14ac,		// LEETS
+0x1cac,		// LEG
+0x24ac,		// LEI
+0x9a4ac,		// LEIS
+0x7b8ac,		// LENO
+0xa4cac,		// LEST
+0x50ac,		// LET
+0x9d0ac,		// LETS
+0x64ac,		// LEY
+0x12c,		// LI
+0x112c,		// LID
+0x9912c,		// LIDS
+0x152c,		// LIE
+0x2152c,		// LIED
+0x3152c,		// LIEF
+0x9952c,		// LIES
+0x2992c,		// LIFE
+0x392c,		// LIN
+0x4d2c,		// LIS
+0x1ec,		// LO
+0x705ec,		// LOAN
+0x9ec,		// LOB
+0x289ec,		// LOBE
+0x2b9ec,		// LONE
+0x2cdec,		// LOSE
+0xa4dec,		// LOST
+0x51ec,		// LOT
+0x9d1ec,		// LOTS
+0x5dec,		// LOW
+0x2ddec,		// LOWE
+0x172c,		// LYE
+0x2cb2c,		// LYRE
+0x2d,		// MA
+0x2882d,		// MABE
+0x142d,		// MAE
+0x1c2d,		// MAG
+0x2b02d,		// MALE
+0xa302d,		// MALT
+0x382d,		// MAN
+0x2b82d,		// MANE
+0xf3b82d,		// MANGO
+0x7b82d,		// MANO
+0x402d,		// MAP
+0x9c02d,		// MAPS
+0x482d,		// MAR
+0x4c2d,		// MAS
+0xa4c2d,		// MAST
+0x502d,		// MAT
+0x2d02d,		// MATE
+0x9d02d,		// MATS
+0x5c2d,		// MAW
+0x75c2d,		// MAWN
+0x642d,		// MAY
+0x51642d,		// MAYBE
+0x7e42d,		// MAYO
+0x127e42d,		// MAYOR
+0xad,		// ME
+0x604ad,		// MEAL
+0x704ad,		// MEAN
+0x14704ad,		// MEANT
+0xa04ad,		// MEAT
+0x30ad,		// MEL
+0xa30ad,		// MELT
+0x38ad,		// MEN
+0x7b8ad,		// MENO
+0x1a38ad,		// MENTA
+0xbbcad,		// MEOW
+0x50ad,		// MET
+0xd0ad,		// META
+0xc0d0ad,		// METAL
+0x5cad,		// MEW
+0x1ed,		// MO
+0x5ed,		// MOA
+0x705ed,		// MOAN
+0x1ded,		// MOG
+0x39ed,		// MON
+0x192b9ed,		// MONEY
+0xcb9ed,		// MONY
+0x49ed,		// MOR
+0xc9ed,		// MORA
+0x190c9ed,		// MORAY
+0x5ded,		// MOW
+0x75ded,		// MOWN
+0x32d,		// MY
+0x2e,		// NA
+0x82e,		// NAB
+0x2882e,		// NABE
+0x142e,		// NAE
+0x1c2e,		// NAG
+0x3242e,		// NAIF
+0x6242e,		// NAIL
+0x342e,		// NAM
+0x2b42e,		// NAME
+0x402e,		// NAP
+0x2c02e,		// NAPE
+0x5c2e,		// NAW
+0xae,		// NE
+0x804ae,		// NEAP
+0x904ae,		// NEAR
+0xa04ae,		// NEAT
+0x8ae,		// NEB
+0x988ae,		// NEBS
+0xb4ae,		// NEMA
+0x248ae,		// NERD
+0xa4cae,		// NEST
+0x50ae,		// NET
+0x9d0ae,		// NETS
+0x5cae,		// NEW
+0x312e,		// NIL
+0x412e,		// NIP
+0xc12e,		// NIPA
+0x512e,		// NIT
+0x1ee,		// NO
+0x9ee,		// NOB
+0x989ee,		// NOBS
+0x11ee,		// NOD
+0x991ee,		// NODS
+0x13a91ee,		// NODUS
+0x615ee,		// NOEL
+0x995ee,		// NOES
+0x1dee,		// NOG
+0x21ee,		// NOH
+0x35ee,		// NOM
+0xb5ee,		// NOMA
+0x2b5ee,		// NOME
+0x49ee,		// NOR
+0x4dee,		// NOS
+0x2cdee,		// NOSE
+0x44dee,		// NOSH
+0x51ee,		// NOT
+0x2d1ee,		// NOTE
+0x132d1ee,		// NOTES
+0x9d5ee,		// NOUS
+0x5dee,		// NOW
+0x9ddee,		// NOWS
+0x2ae,		// NU
+0x292ae,		// NUDE
+0x12292ae,		// NUDER
+0x24aae,		// NURD
+0x4eae,		// NUS
+0x482f,		// OAR
+0xa4c2f,		// OAST
+0x502f,		// OAT
+0x9d02f,		// OATS
+0x144f,		// OBE
+0x9944f,		// OBES
+0x46f,		// OCA
+0x9846f,		// OCAS
+0x8f,		// OD
+0x4c8f,		// ODS
+0xaf,		// OE
+0x4caf,		// OES
+0xcf,		// OF
+0x50cf,		// OFT
+0xe2d0cf,		// OFTEN
+0x684ef,		// OGAM
+0x10f,		// OH
+0x4d0f,		// OHS
+0x158f,		// OLE
+0x958f,		// OLEA
+0x9958f,		// OLES
+0x1af,		// OM
+0x715af,		// OMEN
+0x1cf,		// ON
+0x15cf,		// ONE
+0x995cf,		// ONES
+0x4dcf,		// ONS
+0x142cdcf,		// ONSET
+0x9d5cf,		// ONUS
+0x20f,		// OP
+0x160f,		// OPE
+0x520f,		// OPT
+0x24f,		// OR
+0x64f,		// ORA
+0x2064f,		// ORAD
+0xa4f,		// ORB
+0xe4f,		// ORC
+0x98e4f,		// ORCS
+0x164f,		// ORE
+0x9964f,		// ORES
+0x4e4f,		// ORS
+0x524f,		// ORT
+0x9d24f,		// ORTS
+0x26f,		// OS
+0x166f,		// OSE
+0x122a28f,		// OTHER
+0x12af,		// OUD
+0x992af,		// OUDS
+0x4aaf,		// OUR
+0xa4eaf,		// OUST
+0x52af,		// OUT
+0x9d2af,		// OUTS
+0x2ef,		// OW
+0x16ef,		// OWE
+0x996ef,		// OWES
+0x32ef,		// OWL
+0x3aef,		// OWN
+0x9baef,		// OWNS
+0x2ceef,		// OWSE
+0x32f,		// OY
+0x30,		// PA
+0xc30,		// PAC
+0x28c30,		// PACE
+0x1328c30,		// PACES
+0x98c30,		// PACS
+0x1030,		// PAD
+0x49030,		// PADI
+0x991030,		// PADRI
+0x2030,		// PAH
+0x22430,		// PAID
+0x72430,		// PAIN
+0x1472430,		// PAINT
+0x92430,		// PAIR
+0x3030,		// PAL
+0x2b030,		// PALE
+0x3430,		// PAM
+0x9b430,		// PAMS
+0x3830,		// PAN
+0x2b830,		// PANE
+0xc2b830,		// PANEL
+0xa3830,		// PANT
+0x4830,		// PAR
+0x24830,		// PARD
+0x924830,		// PARDI
+0x9c830,		// PARS
+0xa4830,		// PART
+0x19a4830,		// PARTY
+0x4c30,		// PAS
+0x2cc30,		// PASE
+0x44c30,		// PASH
+0xa4c30,		// PAST
+0x5030,		// PAT
+0xe4d030,		// PATIN
+0x9d030,		// PATS
+0xcd030,		// PATY
+0x6430,		// PAY
+0xb0,		// PE
+0x4b0,		// PEA
+0x584b0,		// PEAK
+0x13584b0,		// PEAKS
+0x604b0,		// PEAL
+0x704b0,		// PEAN
+0x984b0,		// PEAS
+0xcb0,		// PEC
+0x98cb0,		// PECS
+0x20b0,		// PEH
+0x9a0b0,		// PEHS
+0x38b0,		// PEN
+0xc0b8b0,		// PENAL
+0x48b0,		// PER
+0x4cb0,		// PES
+0x5cb0,		// PEW
+0x598510,		// PHASE
+0x130,		// PI
+0x530,		// PIA
+0x70530,		// PIAN
+0x3930,		// PIN
+0xb930,		// PINA
+0x147b930,		// PINOT
+0xa3930,		// PINT
+0x1a3930,		// PINTA
+0xfa3930,		// PINTO
+0x73d30,		// PION
+0x5130,		// PIT
+0xd130,		// PITA
+0xe7d130,		// PITON
+0x518590,		// PLACE
+0x70590,		// PLAN
+0x570590,		// PLANE
+0x9590,		// PLEA
+0x171590,		// PLENA
+0x11f0,		// POD
+0x25f0,		// POI
+0x14725f0,		// POINT
+0x2c9f0,		// PORE
+0x51f0,		// POT
+0x5df0,		// POW
+0x122ddf0,		// POWER
+0xa0650,		// PRAT
+0xc8650,		// PRAY
+0x3e50,		// PRO
+0xbbe50,		// PROW
+0x6650,		// PRY
+0x730,		// PYA
+0x28c32,		// RACE
+0x1032,		// RAD
+0xa1832,		// RAFT
+0x1c32,		// RAG
+0x29c32,		// RAGE
+0x2032,		// RAH
+0x22432,		// RAID
+0x72432,		// RAIN
+0x59a432,		// RAISE
+0x2ac32,		// RAKE
+0x2b032,		// RALE
+0x3432,		// RAM
+0x3832,		// RAN
+0x3b832,		// RANG
+0x4b832,		// RANI
+0xa3832,		// RANT
+0x4032,		// RAP
+0x44c032,		// RAPID
+0x9c032,		// RAPS
+0xa4032,		// RAPT
+0x4c32,		// RAS
+0x2cc32,		// RASE
+0x44c32,		// RASH
+0x84c32,		// RASP
+0x5032,		// RAT
+0x2d032,		// RATE
+0x42d032,		// RATED
+0xc2d032,		// RATEL
+0x45032,		// RATH
+0x545032,		// RATHE
+0x5c32,		// RAW
+0x6032,		// RAX
+0x6432,		// RAY
+0x42e432,		// RAYED
+0xb2,		// RE
+0x8184b2,		// REACH
+0x204b2,		// READ
+0x19204b2,		// READY
+0x604b2,		// REAL
+0x8b2,		// REB
+0xcb2,		// REC
+0x98cb2,		// RECS
+0x10b2,		// RED
+0x18b2,		// REF
+0xa18b2,		// REFT
+0x1cb2,		// REG
+0xc09cb2,		// REGAL
+0x24b2,		// REI
+0x9a4b2,		// REIS
+0x190b0b2,		// RELAY
+0xcb0b2,		// RELY
+0xc0b8b2,		// RENAL
+0x238b2,		// REND
+0x40b2,		// REP
+0x7c0b2,		// REPO
+0x4cb2,		// RES
+0x44cb2,		// RESH
+0xa4cb2,		// REST
+0x50b2,		// RET
+0x70d0b2,		// RETAG
+0x180d0b2,		// RETAX
+0x9d0b2,		// RETS
+0x60b2,		// REX
+0x9512,		// RHEA
+0x3d12,		// RHO
+0x9bd12,		// RHOS
+0x532,		// RIA
+0x1470532,		// RIANT
+0x98532,		// RIAS
+0x1132,		// RID
+0x3932,		// RIN
+0x4132,		// RIP
+0x2cd32,		// RISE
+0x2d132,		// RITE
+0x205f2,		// ROAD
+0x685f2,		// ROAM
+0x9f2,		// ROB
+0xdf2,		// ROC
+0x98df2,		// ROCS
+0x11f2,		// ROD
+0x15f2,		// ROE
+0x995f2,		// ROES
+0x35f2,		// ROM
+0x2c1f2,		// ROPE
+0x2cdf2,		// ROSE
+0x142cdf2,		// ROSET
+0xccdf2,		// ROSY
+0x51f2,		// ROT
+0x2d1f2,		// ROTE
+0x132d1f2,		// ROTES
+0x9d1f2,		// ROTS
+0x4755f2,		// ROUND
+0x5df2,		// ROW
+0x8a5df2,		// ROWTH
+0x292b2,		// RUDE
+0x16b2,		// RUE
+0x216b2,		// RUED
+0x3ab2,		// RUN
+0x2bab2,		// RUNE
+0x732,		// RYA
+0x1732,		// RYE
+0xa3f32,		// RYOT
+0x13a3f32,		// RYOTS
+0xc33,		// SAC
+0x1433,		// SAE
+0x2ac33,		// SAKE
+0x3033,		// SAL
+0x2b033,		// SALE
+0xa3033,		// SALT
+0x83433,		// SAMP
+0x4033,		// SAP
+0x4c833,		// SARI
+0x5033,		// SAT
+0x2d033,		// SATE
+0x560473,		// SCALE
+0x580473,		// SCAPE
+0xa0473,		// SCAT
+0x593c73,		// SCORE
+0xa3c73,		// SCOT
+0x4b3,		// SEA
+0x604b3,		// SEAL
+0x904b3,		// SEAR
+0xa04b3,		// SEAT
+0xcb3,		// SEC
+0x14b3,		// SEE
+0x614b3,		// SEEL
+0x24b3,		// SEI
+0x30b3,		// SEL
+0x38b3,		// SEN
+0xa38b3,		// SENT
+0x48b3,		// SER
+0xc8b3,		// SERA
+0x90c8b3,		// SERAI
+0x50b3,		// SET
+0xd0b3,		// SETA
+0xc0d0b3,		// SETAL
+0xe7d0b3,		// SETON
+0xa50b3,		// SETT
+0x5cb3,		// SEW
+0x113,		// SH
+0x513,		// SHA
+0x580513,		// SHAPE
+0x1090513,		// SHARP
+0x1513,		// SHE
+0x9513,		// SHEA
+0xb9513,		// SHEW
+0x2bd13,		// SHOE
+0x122bd13,		// SHOER
+0x593d13,		// SHORE
+0x1493d13,		// SHORT
+0xa3d13,		// SHOT
+0x5a3d13,		// SHOTE
+0x14abd13,		// SHOUT
+0xbbd13,		// SHOW
+0xebbd13,		// SHOWN
+0xa5513,		// SHUT
+0x133,		// SI
+0x29133,		// SIDE
+0x561133,		// SIDLE
+0x23133,		// SILD
+0x4933,		// SIR
+0x2c933,		// SIRE
+0x573,		// SKA
+0x81573,		// SKEP
+0xa0593,		// SLAT
+0x5a0593,		// SLATE
+0x21593,		// SLED
+0x1429593,		// SLEET
+0x22593,		// SLID
+0x522593,		// SLIDE
+0x2bd93,		// SLOE
+0xa3d93,		// SLOT
+0x13dd3,		// SNOB
+0xa3dd3,		// SNOT
+0xbbdd3,		// SNOW
+0x1f3,		// SO
+0x9f3,		// SOB
+0x560df3,		// SOCLE
+0x11f3,		// SOD
+0x31f3,		// SOL
+0x2b1f3,		// SOLE
+0x39f3,		// SON
+0x2b9f3,		// SONE
+0x2c9f3,		// SORE
+0xa49f3,		// SORT
+0x51f3,		// SOT
+0x451f3,		// SOTH
+0x55f3,		// SOU
+0x4755f3,		// SOUND
+0x8a55f3,		// SOUTH
+0x5df3,		// SOW
+0x75df3,		// SOWN
+0x65f3,		// SOY
+0x613,		// SPA
+0x518613,		// SPACE
+0x28613,		// SPAE
+0x558613,		// SPAKE
+0x90613,		// SPAR
+0xa0613,		// SPAT
+0xb09613,		// SPEAK
+0x19613,		// SPEC
+0x2653,		// SRI
+0x560693,		// STALE
+0x1068693,		// STAMP
+0xa0693,		// STAT
+0x5a0693,		// STATE
+0xc09693,		// STEAL
+0xc29693,		// STEEL
+0x161693,		// STELA
+0x561693,		// STELE
+0xf71693,		// STENO
+0xa1693,		// STET
+0xbe93,		// STOA
+0x563e93,		// STOLE
+0x573e93,		// STONE
+0x593e93,		// STORE
+0x1993e93,		// STORY
+0x197ca93,		// STROY
+0x6693,		// STY
+0x16b3,		// SUE
+0x3ab3,		// SUN
+0x34,		// TA
+0x834,		// TAB
+0x560834,		// TABLE
+0xa8834,		// TABU
+0x28c34,		// TACE
+0x40c34,		// TACH
+0x540c34,		// TACHE
+0x78c34,		// TACO
+0x1378c34,		// TACOS
+0x1034,		// TAD
+0x1434,		// TAE
+0x61434,		// TAEL
+0x1361434,		// TAELS
+0x1c34,		// TAG
+0x92034,		// TAHR
+0x72434,		// TAIN
+0x2b034,		// TALE
+0x122b034,		// TALER
+0x132b034,		// TALES
+0x3434,		// TAM
+0x2b434,		// TAME
+0x83434,		// TAMP
+0x1383434,		// TAMPS
+0x9b434,		// TAMS
+0x3834,		// TAN
+0x3b834,		// TANG
+0x3c34,		// TAO
+0x9bc34,		// TAOS
+0x4034,		// TAP
+0x9c034,		// TAPS
+0x4834,		// TAR
+0x2c834,		// TARE
+0x42c834,		// TARED
+0x53c834,		// TARGE
+0x74834,		// TARN
+0x84834,		// TARP
+0x4c34,		// TAS
+0x5a4c34,		// TASTE
+0x5034,		// TAT
+0x2d034,		// TATE
+0x132d034,		// TATES
+0x9d034,		// TATS
+0x5434,		// TAU
+0x5c34,		// TAW
+0x122dc34,		// TAWER
+0x6034,		// TAX
+0x122e034,		// TAXER
+0x4b4,		// TEA
+0x8184b4,		// TEACH
+0x604b4,		// TEAL
+0x13604b4,		// TEALS
+0x684b4,		// TEAM
+0x904b4,		// TEAR
+0x984b4,		// TEAS
+0xa04b4,		// TEAT
+0x13a04b4,		// TEATS
+0x10b4,		// TED
+0x14b4,		// TEE
+0x614b4,		// TEEL
+0x13614b4,		// TEELS
+0x994b4,		// TEES
+0x1cb4,		// TEG
+0x30b4,		// TEL
+0xb0b4,		// TELA
+0x2b0b4,		// TELE
+0x132b0b4,		// TELES
+0x137b0b4,		// TELOS
+0x9b0b4,		// TELS
+0x38b4,		// TEN
+0x9b8b4,		// TENS
+0x13c8b4,		// TERGA
+0x164cb4,		// TESLA
+0xa4cb4,		// TEST
+0x1a4cb4,		// TESTA
+0x50b4,		// TET
+0x9d0b4,		// TETS
+0x5cb4,		// TEW
+0x28514,		// THAE
+0x1514,		// THE
+0x119514,		// THECA
+0x1249514,		// THEIR
+0x92514,		// THIR
+0x3d14,		// THO
+0x59bd14,		// THOSE
+0xabd14,		// THOU
+0x13abd14,		// THOUS
+0x7c914,		// THRO
+0x57c914,		// THROE
+0x177c914,		// THROW
+0x9d514,		// THUS
+0x134,		// TI
+0x1534,		// TIE
+0x91534,		// TIER
+0x3934,		// TIN
+0x4134,		// TIP
+0x2c934,		// TIRE
+0x1f4,		// TO
+0x205f4,		// TOAD
+0x19205f4,		// TOADY
+0x11f4,		// TOD
+0x19091f4,		// TODAY
+0xc91f4,		// TODY
+0x15f4,		// TOE
+0x995f4,		// TOES
+0x2b1f4,		// TOLE
+0x132b1f4,		// TOLES
+0x39f4,		// TON
+0x2b9f4,		// TONE
+0x132b9f4,		// TONES
+0x9b9f4,		// TONS
+0x41f4,		// TOP
+0x4c1f4,		// TOPI
+0x49f4,		// TOR
+0x2c9f4,		// TORE
+0x132c9f4,		// TORES
+0x9c9f4,		// TORS
+0x59c9f4,		// TORSE
+0xcc9f4,		// TORY
+0x44df4,		// TOSH
+0x5df4,		// TOW
+0x122ddf4,		// TOWER
+0x65f4,		// TOY
+0x9e5f4,		// TOYS
+0x20654,		// TRAD
+0x520654,		// TRADE
+0xe48654,		// TRAIN
+0x80654,		// TRAP
+0xc8654,		// TRAY
+0x409654,		// TREAD
+0x31654,		// TREF
+0xbbe54,		// TROW
+0xcbe54,		// TROY
+0x13cbe54,		// TROYS
+0x6654,		// TRY
+0xab4,		// TUB
+0x8ab4,		// TUBA
+0x44eb4,		// TUSH
+0x6f4,		// TWA
+0x286f4,		// TWAE
+0x3ef4,		// TWO
+0x7cb34,		// TYRO
+0x137cb34,		// TYROS
+0x3c95,		// UDO
+0x9bc95,		// UDOS
+0x115,		// UH
+0x1d5,		// UN
+0x291d5,		// UNDE
+0x12291d5,		// UNDER
+0x791d5,		// UNDO
+0x4dd5,		// UNS
+0x1255,		// URD
+0x3a55,		// URN
+0x275,		// US
+0x1675,		// USE
+0x295,		// UT
+0x695,		// UTA
+0x4e95,		// UTS
+0x1437,		// WAE
+0x3837,		// WAN
+0x4837,		// WAR
+0x2c837,		// WARE
+0xa4837,		// WART
+0x5037,		// WAT
+0x122d037,		// WATER
+0xb7,		// WE
+0x904b7,		// WEAR
+0x8b7,		// WEB
+0x38b7,		// WEN
+0xa48b7,		// WERT
+0x50b7,		// WET
+0x3d17,		// WHO
+0x1493d17,		// WHORT
+0x59bd17,		// WHOSE
+0x1f7,		// WO
+0x15f7,		// WOE
+0x995f7,		// WOES
+0xe0b5f7,		// WOMAN
+0xe2b5f7,		// WOMEN
+0x39f7,		// WON
+0x9b9f7,		// WONS
+0x41f7,		// WOP
+0x2c9f7,		// WORE
+0xa49f7,		// WORT
+0x8a49f7,		// WORTH
+0x4df7,		// WOS
+0x51f7,		// WOT
+0x5a3e57,		// WROTE
+0x8a3e57,		// WROTH
+0x39,		// YA
+0x23039,		// YALD
+0x3439,		// YAM
+0x4039,		// YAP
+0x4839,		// YAR
+0x24839,		// YARD
+0x2c839,		// YARE
+0xb9,		// YE
+0x4b9,		// YEA
+0x904b9,		// YEAR
+0x230b9,		// YELD
+0x38b9,		// YEN
+0x1f9,		// YO
+0x11f9,		// YOD
+0x35f9,		// YOM
+0x39f9,		// YON
