@@ -10,10 +10,10 @@ LetterBG = image{"wc_letters_background.png", quality=10}
 StartScreen = image{"wc_shaketoplay.png", quality=10}
 Title = image{"wc_title.png", quality=10}
 TitleSmoke = image{"wc_title_smoke.png", width=64, height=64, quality=10}
-HighScores = image{"WC_letters_connected_3.png", quality=10}
-Score = image{"WC_letters_connected_3.png", quality=10}
+HighScores = image{"score_highscore.png", quality=10}
+Score = image{"score_endscore.png", quality=10}
 Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
-ScorePan = image{"wc_score_pan.png", width=128, height=128, quality=10}
+ScorePan = image{"score_endgame.png", width=128, height=128, quality=10}
 TeethLoopConnected = image{"wc_letters_neighbored.png", width=128, height=128, quality=10}
 TeethLoopWord = image{"wc_letters_connected_center.png", width=128, height=128, quality=10}
 TeethLoopWordLeft = image{"wc_letters_connected_left.png", width=128, height=128, quality=10}
@@ -24,7 +24,7 @@ TeethNewWord2Right = image{"WC_letters_connected_right_2.png", width=128, height
 TeethNewWord3 = image{"WC_letters_connected_3.png", width=56, height=32, quality=10}
 TeethNewWord4 = image{"WC_letters_connected_4.png", width=56, height=32, quality=10}
 TeethNewWord5 = image{"WC_letters_connected_5.png", width=56, height=32, quality=10}
-FontSmall = image{"font-8x16.png", width=8, height=16, quality=10}
+FontSmall = image{"score_font.png", width=8, height=16, quality=10}
 FontTeeth = image{"teeth_numbers.png", width=16, height=16, quality=10}
 TeethClockPulse3 = image{"teeth_3.png", width=16, height=16, quality=10}
 TeethClockPulse2 = image{"teeth_2.png", width=16, height=16, quality=10}
@@ -51,7 +51,7 @@ timer_1sec = sound{"timer_1sec.raw"}
 timer_20sec = sound{"timer_20sec.raw"}
 timer_2sec = sound{"timer_2sec.raw"}
 timer_30sec = sound{"timer_30sec.raw"}
-timer_3sec = sound{"timer_3sec_fadein_lowcut.raw"}
+timer_3sec = sound{"timer_3sec_fadein_lowcut_wimpy.raw"}
 timeup_01 = sound{"timeup_01.raw"}
 timeup_01_laugh = sound{"timeup_01_laugh.raw"}
 timeup_02 = sound{"timeup_02.raw"}

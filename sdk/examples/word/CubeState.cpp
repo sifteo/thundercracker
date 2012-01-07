@@ -8,6 +8,7 @@
 #include "TileTransparencyLookup.h"
 #include "PartialAnimationData.h"
 
+
 void CubeState::setStateMachine(CubeStateMachine& csm)
 {
     mStateMachine = &csm;
@@ -436,28 +437,28 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
 }
 
-void CubeState::paintScoreNumbers(VidMode_BG0_SPR_BG1 &vid, const Vec2& position, const char* string)
+void CubeState::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, const char* string)
 {
+    Vec2 position(position_RHS);
     const AssetImage& font = FontSmall;
+    unsigned len = strlen(string);
+
+    const unsigned MAX_SCORE_STRLEN = 7;
+    const char* MAX_SCORE_STR = "9999999";
+
+    if (len > MAX_SCORE_STRLEN)
+    {
+        string = MAX_SCORE_STR;
+        len = MAX_SCORE_STRLEN;
+    }
+    position.x -= len - 1;
+
     for (; *string; ++string)
     {
-        unsigned index;
-        switch (*string)
-        {
-        default:
-            index = *string - '0';
-            break;
-
-        case '+':
-            index = 10;
-            break;
-
-        case ' ':
-            index = 11;
-            break;
-        }
-
-        vid.BG0_drawAsset(position, font, index);
+        unsigned index = *string - '0';
+        ASSERT(index < font.frames);
+        position.x++;
+        bg1.DrawAsset(position, font, index);
     }
 }
 

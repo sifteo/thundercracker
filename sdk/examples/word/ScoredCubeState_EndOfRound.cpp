@@ -10,6 +10,10 @@
 #include "SavedData.h"
 #include "WordGame.h"
 
+const unsigned START_SCREEN_CUBE_ID = 1;
+const unsigned SCORE_RHS_X = 9;
+const unsigned SCORE_RHS_Y = 2;
+
 unsigned ScoredCubeState_EndOfRound::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
@@ -51,24 +55,52 @@ void ScoredCubeState_EndOfRound::paint()
         paintTeeth(vid, ImageIndex_Teeth, true, true);
         return;
     }
+    else if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH * 2.f)
+    {
+        if (getStateMachine().getCube().id() == START_SCREEN_CUBE_ID)
+        {
+            // hold on blank shake to play screen until pan animation is done
+            vid.BG0_drawAsset(Vec2(0, 0), Teeth);
+            return;
+        }
+        const float ANIM_LENGTH = TEETH_ANIM_LENGTH;
+        const AssetImage& anim = ScorePan;
+        float animTime =
+                (getStateMachine().getTime() - TEETH_ANIM_LENGTH) / ANIM_LENGTH;
+        animTime = MIN(animTime, 1.f);
+        unsigned frame = (unsigned) (animTime * anim.frames);
+        frame = MIN(frame, anim.frames - 1);
+
+        vid.BG0_drawAsset(Vec2(0, 0), anim, frame);
+        return;
+    }
 
     switch (getStateMachine().getCube().id())
     {
     default:
         // paint "Score" asset
-        vid.BG0_drawAsset(Vec2(0,0), Score);
-        char string[17];
-        sprintf(string, "%.5d", GameStateMachine::getScore());
-        paintScoreNumbers(vid, Vec2(7,3), string);
+        vid.BG0_drawAsset(Vec2(0,0), ScorePan, ScorePan.frames - 1);
+        vid.BG0_drawAsset(Vec2(4,0), Score);
+        {
+            char string[17];
+            sprintf(string, "%d", GameStateMachine::getScore());
+            BG1Helper bg1(getStateMachine().getCube());
+            paintScoreNumbers(bg1, Vec2(SCORE_RHS_X,SCORE_RHS_Y), string);
+            bg1.Flush(); // TODO only flush if mask has changed recently
+        }
+        WordGame::instance()->setNeedsPaintSync();
         break;
 
-    case 1:
+    case START_SCREEN_CUBE_ID:
         vid.BG0_drawAsset(Vec2(0,0), StartScreen);
         break;
 
     case 0:
         // paint "high scores" asset
-        vid.BG0_drawAsset(Vec2(0,0), HighScores);
+        vid.BG0_drawAsset(Vec2(0,0), ScorePan, ScorePan.frames - 1);
+        vid.BG0_drawAsset(Vec2(1,0), HighScores);
+        BG1Helper bg1(getStateMachine().getCube());
+
         for (unsigned i = arraysize(SavedData::sHighScores) - 1;
              i >= 0;
              --i)
@@ -78,10 +110,14 @@ void ScoredCubeState_EndOfRound::paint()
                 break;
             }
             char string[17];
-            sprintf(string, "%.5d", SavedData::sHighScores[i]);
-            paintScoreNumbers(vid, Vec2(7,3 + (arraysize(SavedData::sHighScores) - i) * 2),
-                         string);
+            sprintf(string, "%d", SavedData::sHighScores[i]);
+            paintScoreNumbers(bg1,
+                              Vec2(SCORE_RHS_X,SCORE_RHS_Y + (arraysize(SavedData::sHighScores) - 1 - i) * 2),
+                              string);
         }
+        bg1.Flush(); // TODO only flush if mask has changed recently
+        WordGame::instance()->setNeedsPaintSync();
+
         break;
     }
 }
