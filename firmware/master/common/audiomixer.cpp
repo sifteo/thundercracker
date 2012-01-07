@@ -24,7 +24,7 @@ AudioMixer::AudioMixer() :
 
 void AudioMixer::init()
 {
-    memset(channels, 0, sizeof(channels));
+    memset(channelSlots, 0, sizeof(channelSlots));
     for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         decoders[i].init();
     }
@@ -43,7 +43,7 @@ void AudioMixer::enableChannel(struct _SYSAudioBuffer *buffer)
     for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         if (!(enabledChannelMask & (1 << i))) {
             Atomic::SetBit(enabledChannelMask, i);
-            channels[i].init(buffer);
+            channelSlots[i].init(buffer);
             return;
         }
     }
@@ -147,7 +147,7 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
 
     memset(buffer, 0, numsamples * sizeof(*buffer));
 
-    AudioChannelWrapper *ch = &channels[0];
+    AudioChannelSlot *ch = &channelSlots[0];
     uint32_t mask = activeChannelMask;
     int samplesMixed = 0;
     for (; mask != 0; mask >>= 1, ch++) {
@@ -193,7 +193,7 @@ void AudioMixer::fetchData()
         if (m == 0)
             return;
         if (m & 1)
-            channels[i].fetchData();
+            channelSlots[i].fetchData();
     }
 }
 
@@ -300,7 +300,7 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
         dec = 0;
     }
 
-    AudioChannelWrapper *ch = &channels[idx];
+    AudioChannelSlot *ch = &channelSlots[idx];
     ch->handle = nextHandle++;
     *handle = ch->handle;
     if (pcmdec) {
@@ -321,14 +321,14 @@ bool AudioMixer::isPlaying(_SYSAudioHandle handle)
 
 void AudioMixer::stop(_SYSAudioHandle handle)
 {
-    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle)) {
         stopChannel(ch);
     }
 }
 
-void AudioMixer::stopChannel(AudioChannelWrapper *ch)
+void AudioMixer::stopChannel(AudioChannelSlot *ch)
 {
-    int channelIndex = ch - channels;
+    int channelIndex = ch - channelSlots;
     ASSERT(channelIndex < _SYS_AUDIO_MAX_CHANNELS);
     Atomic::ClearBit(activeChannelMask, channelIndex);
     if (ch->channelType() == Sample) {
@@ -345,28 +345,28 @@ void AudioMixer::stopChannel(AudioChannelWrapper *ch)
 
 void AudioMixer::pause(_SYSAudioHandle handle)
 {
-    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle)) {
         ch->pause();
     }
 }
 
 void AudioMixer::resume(_SYSAudioHandle handle)
 {
-    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle)) {
         ch->resume();
     }
 }
 
 void AudioMixer::setVolume(_SYSAudioHandle handle, int volume)
 {
-    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle)) {
         ch->volume = Math::clamp(volume, 0, (int)Audio::MAX_VOLUME);
     }
 }
 
 int AudioMixer::volume(_SYSAudioHandle handle)
 {
-    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle)) {
         return ch->volume;
     }
     return 0;
@@ -374,17 +374,17 @@ int AudioMixer::volume(_SYSAudioHandle handle)
 
 uint32_t AudioMixer::pos(_SYSAudioHandle handle)
 {
-    if (AudioChannelWrapper *ch = channelForHandle(handle)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle)) {
         ch = 0;
         // TODO - implement
     }
     return 0;
 }
 
-AudioChannelWrapper* AudioMixer::channelForHandle(_SYSAudioHandle handle)
+AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle)
 {
     uint32_t mask = activeChannelMask;
-    AudioChannelWrapper *ch = &channels[0];
+    AudioChannelSlot *ch = &channelSlots[0];
 
     for (; mask != 0; ch++, mask >>= 1) {
         if ((mask & 0x1) && ch->handle == handle) {

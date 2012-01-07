@@ -51,7 +51,7 @@ private:
 
     _SYSAudioHandle nextHandle;
 
-    AudioChannelWrapper channels[_SYS_AUDIO_MAX_CHANNELS];
+    AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
     static const uint32_t ALL_CHANNELS_ENABLED = 0xFF;
 
     // decoders can be loaned to a channel for sample playback
@@ -61,10 +61,10 @@ private:
     uint32_t availableDecodersMask;
     static const int ALL_DECODERS_AVAILABLE = 0xFF;
 
-    AudioChannelWrapper* channelForHandle(_SYSAudioHandle handle);
+    AudioChannelSlot* channelForHandle(_SYSAudioHandle handle);
     SpeexDecoder* getDecoder();
     PCMDecoder* getPCMDecoder();
-    void stopChannel(AudioChannelWrapper *ch);
+    void stopChannel(AudioChannelSlot *ch);
 };
 
 #endif /* AUDIOMIXER_H_ */
