@@ -8,7 +8,7 @@
 #include "SavedData.h"
 #include "WordGame.h"
 
-const float ANIM_LENGTH = 2.0f;
+const float SMOKE_ANIM_LENGTH = 2.f;
 
 unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
 {
@@ -16,7 +16,7 @@ unsigned TitleCubeState::onEvent(unsigned eventID, const EventData& data)
     {
     // TODO debug: case EventID_Paint:
     case EventID_EnterState:
-        mAnimDelay = 2.f;
+        mAnimDelay = 0.f;
         // fall through
     case EventID_Paint:
         paint();
@@ -75,16 +75,24 @@ void TitleCubeState::paint()
                 mAnimStartTime = getStateMachine().getTime();
             }
 
-            if (getStateMachine().getTime() - mAnimStartTime >= ANIM_LENGTH)
+            if (getStateMachine().getTime() - mAnimStartTime >= SMOKE_ANIM_LENGTH)
             {
-                mAnimDelay = WordGame::rand(2.f, 4.f);
+                if (mFirstAnimDelay)
+                {
+                    mFirstAnimDelay = false;
+                    mAnimStart = true;
+                    mAnimDelay = 0.f;
+                }
+                else
+                {
+                    mAnimDelay = WordGame::rand(2.f, 4.f);
+                }
             }
             else
             {
-                const float ANIM_LENGTH = 2.0f;
                 const AssetImage& anim = TitleSmoke;
                 float animTime =
-                        fmodf(getStateMachine().getTime() - mAnimStartTime, ANIM_LENGTH) / ANIM_LENGTH;
+                        fmodf(getStateMachine().getTime() - mAnimStartTime, SMOKE_ANIM_LENGTH) / SMOKE_ANIM_LENGTH;
                 animTime = MIN(animTime, 1.f);
                 unsigned frame = (unsigned) (animTime * anim.frames);
                 frame = MIN(frame, anim.frames - 1);
@@ -94,12 +102,12 @@ void TitleCubeState::paint()
                 bg1.Flush(); // TODO only flush if mask has changed recently
                 WordGame::instance()->setNeedsPaintSync();
             }
-
         }
         break;
 
     case 1:
         vid.BG0_drawAsset(Vec2(0, 0), Teeth);
+        if (getStateMachine().getTime() > 4.1f)
         {
             const float ANIM_LENGTH = 1.0f;
             const AssetImage& anim = StartPrompt;
