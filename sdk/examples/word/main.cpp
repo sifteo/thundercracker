@@ -69,7 +69,7 @@ void siftmain()
         // start loading assets
         for (unsigned i = 0; i < arraysize(cubes); i++)
         {
-            cubes[i].enable(i);
+            cubes[i].enable(i + CUBE_ID_BASE);
             cubes[i].loadAssets(GameAssets);
 
             VidMode_BG0_ROM rom(cubes[i].vbuf);
