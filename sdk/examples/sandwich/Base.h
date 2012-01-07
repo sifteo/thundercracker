@@ -5,9 +5,7 @@
 //#include "audio.gen.h"
 #include <stdlib.h>
 
-#ifndef NUM_CUBES
-#  define NUM_CUBES 3
-#endif
+#include "config.h"
 
 #ifndef SIFTEO_SIMULATOR
 #define KLUDGES
