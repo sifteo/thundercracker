@@ -74,3 +74,21 @@ bool Banner::IsActive() const
 {
 	return m_Msg[0] != '\0';
 }
+
+
+void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, int score )
+{
+    char buf[16];
+    snprintf(buf, sizeof buf - 1, "%d", score );
+
+    int iLen = strlen( buf );
+    if( iLen == 0 )
+        return;
+
+    for( int i = 0; i < iLen; i++ )
+    {
+        int iOffset = pos.x + i;
+
+        bg1helper.DrawAsset( Vec2( iOffset, pos.y ), BannerPoints, buf[i] - '0' );
+    }
+}
