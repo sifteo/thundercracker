@@ -285,15 +285,18 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     if (mod->type == Sample) {
         dec = getDecoder();
         if (dec == NULL) {
+            fprintf(stdout, "ERROR: No channels available.\n");
             return false; // no decoders available
         }
     } else if (mod->type == PCM) {
         pcmdec = getPCMDecoder();
         if (pcmdec == NULL) {
+            fprintf(stdout, "ERROR: No channels available.\n");
             return false; // no decoders available
         }
     }
     else {
+        fprintf(stdout, "ERROR: Unknown audio encoding.\n");
         dec = 0;
     }
 
@@ -330,6 +333,10 @@ void AudioMixer::stopChannel(AudioChannelWrapper *ch)
     Atomic::ClearBit(activeChannelMask, channelIndex);
     if (ch->channelType() == Sample) {
         int decoderIndex = ch->decoder - decoders;
+        ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
+        Atomic::SetBit(availableDecodersMask, decoderIndex);
+    } else if (ch->channelType() == PCM) {
+        int decoderIndex = ch->pcmDecoder - pcmDecoders;
         ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
         Atomic::SetBit(availableDecodersMask, decoderIndex);
     }
