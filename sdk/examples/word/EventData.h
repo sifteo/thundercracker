@@ -2,6 +2,7 @@
 #define EVENTDATA_H
 
 #include <sifteo.h>
+#include "CubeStateMachine.h"
 using namespace Sifteo;
 
 union EventData
@@ -9,7 +10,7 @@ union EventData
     EventData() {}
     struct
     {
-        const char* mWord;
+        char mWord[MAX_LETTERS_PER_WORD + 1];
         int mOffLengthIndex;
     } mNewAnagram;
 
