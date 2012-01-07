@@ -14,13 +14,11 @@
 class Button
 {
 public:
-    static void enablePushButton();
-
     static void init();
     static void isr();
 
 private:
-    GPIOPin homeButton;
+    static GPIOPin homeButton;
 };
 
 #endif /* BUTTON_H_ */
