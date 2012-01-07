@@ -334,7 +334,7 @@ void AudioMixer::stopChannel(AudioChannelSlot *ch)
     if (ch->channelType() == Sample) {
         int decoderIndex = ch->decoder - decoders;
         ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
-        Atomic::SetBit(availableDecodersMask, decoderIndex);
+        Atomic::SetLZ(availableDecodersMask, decoderIndex);
     } else if (ch->channelType() == PCM) {
         int decoderIndex = ch->pcmDecoder - pcmDecoders;
         ASSERT(decoderIndex < _SYS_AUDIO_MAX_CHANNELS);
@@ -400,16 +400,9 @@ SpeexDecoder* AudioMixer::getDecoder()
         return NULL;
     }
 
-    /*
-     * XXX: CLZ could do this in constant time, without the loop. --beth
-     */
-    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
-        if (availableDecodersMask & (1 << i)) {
-            Atomic::ClearBit(availableDecodersMask, i);
-            return &decoders[i];
-        }
-    }
-    return NULL;
+    unsigned idx = Intrinsic::CLZ(availableDecodersMask);
+    Atomic::And(availableDecodersMask, ~Intrinsic::LZ(idx));
+    return &decoders[idx];
 }
 
 PCMDecoder* AudioMixer::getPCMDecoder()

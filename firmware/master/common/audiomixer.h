@@ -59,7 +59,8 @@ private:
     SpeexDecoder decoders[_SYS_AUDIO_MAX_CHANNELS];
     PCMDecoder pcmDecoders[_SYS_AUDIO_MAX_CHANNELS];
     uint32_t availableDecodersMask;
-    static const int ALL_DECODERS_AVAILABLE = 0xFF;
+    // 8 channels, but left aligned for use with CLZ() & friends
+    static const int ALL_DECODERS_AVAILABLE = 0xFF000000;
 
     AudioChannelSlot* channelForHandle(_SYSAudioHandle handle);
     SpeexDecoder* getDecoder();
