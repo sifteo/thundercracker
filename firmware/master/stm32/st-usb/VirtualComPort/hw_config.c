@@ -37,10 +37,12 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
+#if 0
 uint8_t  USART_Rx_Buffer [USART_RX_DATA_SIZE];
 uint32_t USART_Rx_ptr_in = 0;
 uint32_t USART_Rx_ptr_out = 0;
 uint32_t USART_Rx_length  = 0;
+#endif
 
 uint8_t  USB_Tx_State = 0;
 static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len);
@@ -185,7 +187,7 @@ void USB_Cable_Config (FunctionalState NewState)
 *******************************************************************************/
 void Handle_USBAsynchXfer (void)
 {
-  
+  #if 0
   uint16_t USB_Tx_ptr;
   uint16_t USB_Tx_length;
   
@@ -237,6 +239,7 @@ void Handle_USBAsynchXfer (void)
     SetEPTxValid(ENDP1); 
 #endif /* USE_STM3210C_EVAL */
   }  
+#endif
   
 }
 

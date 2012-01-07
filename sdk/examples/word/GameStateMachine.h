@@ -32,7 +32,7 @@ public:
     virtual void update(float dt);
     virtual void onEvent(unsigned eventID, const EventData& data);
     static void sOnEvent(unsigned eventID, const EventData& data);
-    static unsigned GetNumCubes() { return MAX_CUBES; }// TODO
+    static unsigned GetNumCubes() { return NUM_CUBES; }// TODO
     static CubeStateMachine* findCSMFromID(Cube::ID cubeID);
 
     static float getAnagramCooldown() { return sInstance->mAnagramCooldown; }
@@ -54,7 +54,7 @@ private:
     ScoredGameState_StartOfRound mScoredStartOfRoundState;
     ScoredGameState_EndOfRound mScoredEndOfRoundState;
     ScoredGameState_Shuffle mScoredShuffleState;
-    CubeStateMachine mCubeStateMachines[MAX_CUBES];
+    CubeStateMachine mCubeStateMachines[NUM_CUBES];
     float mAnagramCooldown;
     float mTimeLeft;
     unsigned mScore;

@@ -7,7 +7,7 @@
 #include "WordGame.h"
 #include "TileTransparencyLookup.h"
 #include "PartialAnimationData.h"
-
+#include "config.h"
 
 void CubeState::setStateMachine(CubeStateMachine& csm)
 {
@@ -340,7 +340,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                     ASSERT(ed.ry < 120);
 
                     EyePersonality personality =
-                            (EyePersonality)(getStateMachine().getCube().id() % NumEyePersonalities);
+                            (EyePersonality)((getStateMachine().getCube().id() - CUBE_ID_BASE) % NumEyePersonalities);
                     if (mEyeBlinkDelay <= 0.f && mEyeState != EyeState_Closed)
                     {
                         // blinking closed trumps tilt and direction change timer
