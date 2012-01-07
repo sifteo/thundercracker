@@ -199,10 +199,12 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
              &TeethClockPulse1, &TeethClockPulse2, &TeethClockPulse3};
 
         frame = 0;
-        if (animIndex >= 0)
+        float animTime =
+                1.f - fmodf(GameStateMachine::getSecondsLeftFloat(), 1.f);
+        if (animIndex >= 0 && animTime < animLength[animIndex])
         {
-            float animTime =
-                    fmodf(getStateMachine().getTime(), animLength[animIndex]) / animLength[animIndex];
+            // normalize
+            animTime /= animLength[animIndex];
             animTime = MIN(animTime, 1.f);
             frame = (unsigned) (animTime * lowDigitAnim[animIndex]->frames);
             frame = MIN(frame, lowDigitAnim[animIndex]->frames - 1);
