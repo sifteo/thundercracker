@@ -46,7 +46,7 @@ void siftmain() {
 			for(unsigned i=0; i<NUM_CUBES; ++i) {
 				VidMode_BG0 mode(gCubes[i].vbuf);
 				mode.init();
-				mode.BG0_drawAsset(Vec2(0,0), PowerOff);
+				mode.BG0_drawAsset(Vec2(0,0), ScreenOff);
 				gCubes[i].vbuf.touch();
 			}
 			System::paintSync();
@@ -60,7 +60,7 @@ void siftmain() {
 					cnt += gCubes[i].hasPhysicalNeighborAt(s);
 				}
 				VidMode_BG0(gCubes[i].vbuf)
-					.BG0_drawAsset(Vec2(0,0), AnyNeighbors(gCubes[i]) ? Sting : PowerOff);
+					.BG0_drawAsset(Vec2(0,0), AnyNeighbors(gCubes[i]) ? Sting : ScreenOff);
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 GameAssets = group{quality=10}
 
-PowerOff = image{"PowerOff.png", width=128, height=128}
+ScreenOff = image{"PowerOff.png", width=128, height=128}
 
 PlayerStand = image{"stand.png", width=32, height=32,pinned=true}
 PlayerWalk = image{"walk.png", width=32, height=32,pinned=true}
