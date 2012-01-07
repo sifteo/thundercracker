@@ -391,7 +391,7 @@ Cube::Side GameView::VirtualTiltDirection() const {
 
 GameView* GameView::VirtualNeighborAt(Cube::Side side) const {
   Cube::ID neighbor = GetCube()->virtualNeighborAt(side);
-  return neighbor == CUBE_ID_UNDEFINED ? 0 : pGame->views + neighbor;
+  return neighbor == CUBE_ID_UNDEFINED ? 0 : pGame->views + (neighbor-CUBE_ID_BASE);
 }
 
 void GameView::DrawBackground() {
