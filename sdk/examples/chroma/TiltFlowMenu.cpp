@@ -97,7 +97,9 @@ bool TiltFlowMenu::Tick(float dt)
         {
             //System::finish();
 
-            //total weirdness
+            //total weirdness.. for some reason if I put a paintSync before the flush as intended,
+            //the flush doesn't draw.  Not sure why.
+            //System::paintSync();
             mViews[i].Flush();
             System::paintSync();
             //printf( "finishing\n" );
