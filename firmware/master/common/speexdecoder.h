@@ -53,6 +53,7 @@ private:
     //uint32_t srcaddr;
     int srcBytesRemaining;
     DecodeStatus status;
+    char contiguous[512];
 };
 
 class PCMDecoder

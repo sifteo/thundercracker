@@ -94,12 +94,26 @@ int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
 
     // format: uint8_t of framesize, followed by framesize bytes of frame data
     int sz = *localAddr++;
+    memcpy(contiguous, localAddr, rsize - 1);
+    if (sz > rsize - 1) {
+        //LOG(("WARNING: Flash boundary crossed reading audio data: %d, %d\n", sz, rsize));
+        
+        int nsize = 0;
+        char *nlocalAddr = FlashLayer::getRegionFromOffset(this->srcaddr + rsize, DECODED_FRAME_SIZE + sizeof(uint8_t), &nsize);
+        if (!nlocalAddr) {
+            return 0; // ruh roh, TODO error handling
+        }
+        
+        memcpy(contiguous + rsize - 1, nlocalAddr, sz - rsize);
+        FlashLayer::releaseRegionFromOffset(this->srcaddr + rsize);
+    }
     if ((unsigned)this->srcBytesRemaining < (sz + sizeof(uint8_t))) {
         status = EndOfStream;
         return 0;   // not enough data left
     }
 
-    speex_bits_read_from(&this->bits, localAddr, sz);
+    //speex_bits_read_from(&this->bits, localAddr, sz);
+    speex_bits_read_from(&this->bits, contiguous, sz);
     this->srcBytesRemaining -= (sz + sizeof(uint8_t));
 
     this->status = (DecodeStatus)speex_decode_int(this->decodeState, &this->bits, (spx_int16_t*)buf);
