@@ -1100,6 +1100,7 @@ int sb_decode(void *state, SpeexBits *bits, void *vout)
    return 0;
 }
 
+#ifndef STRIP_ENCODER
 
 int sb_encoder_ctl(void *state, int request, void *ptr)
 {
@@ -1359,6 +1360,8 @@ int sb_encoder_ctl(void *state, int request, void *ptr)
    }
    return 0;
 }
+
+#endif
 
 int sb_decoder_ctl(void *state, int request, void *ptr)
 {
