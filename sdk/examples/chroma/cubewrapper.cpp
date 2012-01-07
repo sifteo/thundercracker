@@ -103,6 +103,7 @@ void CubeWrapper::Reset()
     m_intro.Reset();
     m_gameover.Reset();
     m_glimmer.Reset();
+    m_dirty = true;
 	Refill();
 }
 
