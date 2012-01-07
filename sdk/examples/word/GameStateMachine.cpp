@@ -55,7 +55,8 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_GameStateChanged:
-        if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_PlayScored)
+        if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_PlayScored &&
+            data.mGameStateChanged.mPreviousStateIndex != GameStateIndex_ShuffleScored)
         {
             mTimeLeft = ROUND_TIME;
             mAnagramCooldown = .0f;
