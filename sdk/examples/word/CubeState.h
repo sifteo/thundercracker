@@ -54,7 +54,7 @@ protected:
                     bool paintTime=false,
                     float animStartTime=0.f);
     void paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites=false);
-    void paintScoreNumbers(VidMode_BG0_SPR_BG1 &vid, const Vec2& position, const char* string);
+    void paintScoreNumbers(BG1Helper &bg1, const Vec2& position, const char* string);
 
     virtual unsigned update(float dt, float stateTime);
 

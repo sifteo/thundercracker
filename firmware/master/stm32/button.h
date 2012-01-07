@@ -14,16 +14,11 @@
 class Button
 {
 public:
-    Button(GPIOPin pin) : irq(pin)
-    {}
-
-    static void enablePushButton();
-
-    void init();
-    void isr();
+    static void init();
+    static void isr();
 
 private:
-    GPIOPin irq;
+    static GPIOPin homeButton;
 };
 
 #endif /* BUTTON_H_ */

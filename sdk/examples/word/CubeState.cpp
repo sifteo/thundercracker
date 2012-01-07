@@ -8,6 +8,7 @@
 #include "TileTransparencyLookup.h"
 #include "PartialAnimationData.h"
 
+
 void CubeState::setStateMachine(CubeStateMachine& csm)
 {
     mStateMachine = &csm;
@@ -33,13 +34,13 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
 {
     const AssetImage* teethImages[] =
     {
-        &TeethLoopWord,     // ImageIndex_Connected,
+        &TeethLoopWordTop,     // ImageIndex_Connected,
         &TeethNewWord2,      // ImageIndex_ConnectedWord,
         &TeethLoopWordLeft, // ImageIndex_ConnectedLeft,
         &TeethNewWord2Left,  // ImageIndex_ConnectedLeftWord,
         &TeethLoopWordRight,// ImageIndex_ConnectedRight,
         &TeethNewWord2Right, // ImageIndex_ConnectedRightWord,
-        &TeethLoopConnected,// ImageIndex_Neighbored,
+        &TeethLoopNeighboredTop,// ImageIndex_Neighbored,
         &Teeth,             // ImageIndex_Teeth,
     };
 
@@ -54,7 +55,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     STATIC_ASSERT(arraysize(teethImages) == NumImageIndexes);
     ASSERT(teethImageIndex >= 0);
     ASSERT(teethImageIndex < (ImageIndex)arraysize(teethImages));
-    const AssetImage& teeth = *teethImages[teethImageIndex];
+    const AssetImage* teeth = teethImages[teethImageIndex];
     const AssetImage* teethNumber = 0;
 
     unsigned teethNumberIndex = GameStateMachine::getNewWordLength();
@@ -92,8 +93,8 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         {
             animTime = 1.f - animTime;
         }
-        frame = (unsigned) (animTime * teeth.frames);
-        frame = MIN(frame, teeth.frames - 1);
+        frame = (unsigned) (animTime * teeth->frames);
+        frame = MIN(frame, teeth->frames - 1);
 
         // HACK skip blip if reversing anim (chomp)
         if (reverseAnim && (frame == 4 || frame == 5))
@@ -105,15 +106,30 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     }
     else if (reverseAnim)
     {
-        frame = teeth.frames - 1;
+        frame = teeth->frames - 1;
     }
 
     BG1Helper bg1(mStateMachine->getCube());
-    // scan frame for non-transparent rows and adjust partial draw window
-    const uint16_t* tiles = &teeth.tiles[frame * teeth.width * teeth.height];
-    for (int i = teeth.height - 1; i >= 0; --i) // rows
+    for (unsigned int i = 0; i < 16; ++i) // rows
     {
-        for (unsigned j=0; j < teeth.width; ++j) // columns
+        if (i > 8)
+        {
+            switch (teethImageIndex)
+            {
+            case ImageIndex_Connected:
+                teeth = &TeethLoopWordBottom;
+                break;
+
+            case ImageIndex_Neighbored:
+                teeth = &TeethLoopNeighboredBottom;
+                break;
+
+            default:
+                break;
+            }
+        }
+
+        for (unsigned j=0; j < teeth->width; ++j) // columns
         {
             switch (getTransparencyType(teethImageIndex, frame, j, i))
             {
@@ -124,8 +140,8 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                     frame >= 2 && frame - 2 < teethNumber->frames &&
                     j >= ((unsigned) TEETH_NUM_POS.x) &&
                     j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
-                    i >= TEETH_NUM_POS.y &&
-                    i < ((int) teethNumber->height) + TEETH_NUM_POS.y)
+                    i >= ((unsigned) TEETH_NUM_POS.y) &&
+                    i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
                 {
                     vid.BG0_drawPartialAsset(Vec2(j, i),
                                              Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
@@ -135,7 +151,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                 }
                 else
                 {
-                    vid.BG0_drawPartialAsset(Vec2(j, i), Vec2(j, i), Vec2(1, 1), teeth, frame);
+                    vid.BG0_drawPartialAsset(Vec2(j, i), Vec2(j, i % teeth->height), Vec2(1, 1), *teeth, frame);
                 }
                 break;
 
@@ -144,8 +160,8 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                     frame >= 2 && frame - 2 < teethNumber->frames &&
                     j >= ((unsigned) TEETH_NUM_POS.x) &&
                     j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
-                    i >= TEETH_NUM_POS.y &&
-                    i < ((int) teethNumber->height) + TEETH_NUM_POS.y)
+                    i >= ((unsigned) TEETH_NUM_POS.y) &&
+                    i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
                 {
                     bg1.DrawPartialAsset(Vec2(j, i),
                                          Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
@@ -155,7 +171,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                 }
                 else
                 {
-                    bg1.DrawPartialAsset(Vec2(j, i), Vec2(j, i), Vec2(1, 1), teeth, frame);
+                    bg1.DrawPartialAsset(Vec2(j, i), Vec2(j, i % teeth->height), Vec2(1, 1), *teeth, frame);
                 }
                 break;
 
@@ -198,10 +214,12 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
              &TeethClockPulse1, &TeethClockPulse2, &TeethClockPulse3};
 
         frame = 0;
-        if (animIndex >= 0)
+        float animTime =
+                1.f - fmodf(GameStateMachine::getSecondsLeftFloat(), 1.f);
+        if (animIndex >= 0 && animTime < animLength[animIndex])
         {
-            float animTime =
-                    fmodf(getStateMachine().getTime(), animLength[animIndex]) / animLength[animIndex];
+            // normalize
+            animTime /= animLength[animIndex];
             animTime = MIN(animTime, 1.f);
             frame = (unsigned) (animTime * lowDigitAnim[animIndex]->frames);
             frame = MIN(frame, lowDigitAnim[animIndex]->frames - 1);
@@ -316,6 +334,10 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
                     unsigned eyeFrame = 0;
                     const EyeData& ed = getEyeData(*str);
+                    ASSERT(ed.ly > 8); // eyes should not be in top or bottom rows, there seems to be a bug with HW sprite positioning
+                    ASSERT(ed.ry > 8);
+                    ASSERT(ed.ly < 120);
+                    ASSERT(ed.ry < 120);
 
                     EyePersonality personality =
                             (EyePersonality)(getStateMachine().getCube().id() % NumEyePersonalities);
@@ -432,28 +454,28 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
 }
 
-void CubeState::paintScoreNumbers(VidMode_BG0_SPR_BG1 &vid, const Vec2& position, const char* string)
+void CubeState::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, const char* string)
 {
+    Vec2 position(position_RHS);
     const AssetImage& font = FontSmall;
+    unsigned len = strlen(string);
+
+    const unsigned MAX_SCORE_STRLEN = 7;
+    const char* MAX_SCORE_STR = "9999999";
+
+    if (len > MAX_SCORE_STRLEN)
+    {
+        string = MAX_SCORE_STR;
+        len = MAX_SCORE_STRLEN;
+    }
+    position.x -= len - 1;
+
     for (; *string; ++string)
     {
-        unsigned index;
-        switch (*string)
-        {
-        default:
-            index = *string - '0';
-            break;
-
-        case '+':
-            index = 10;
-            break;
-
-        case ' ':
-            index = 11;
-            break;
-        }
-
-        vid.BG0_drawAsset(position, font, index);
+        unsigned index = *string - '0';
+        ASSERT(index < font.frames);
+        position.x++;
+        bg1.DrawAsset(position, font, index);
     }
 }
 

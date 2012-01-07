@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include "GameStateMachine.h"
 
-unsigned SavedData::sHighScores[4];
+unsigned SavedData::sHighScores[3];
 
 SavedData::SavedData()
 {
