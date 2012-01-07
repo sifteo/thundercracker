@@ -21,7 +21,7 @@ void siftmain() {
   for (Cube::ID i = 0; i < NUM_CUBES; i++) {
     gCubes[i].enable(i + CUBE_ID_BASE);
   }
-#ifdef LOAD_ASSETS
+#if LOAD_ASSETS
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
       gCubes[i].loadAssets(GameAssets);

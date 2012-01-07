@@ -69,7 +69,7 @@ void MoveSprite(Cube *c, int id, int px, int py) {
 //------------------------------------------------------------------------------
 
 void PlaySfx(_SYSAudioModule& handle, bool preempt) {
-#ifdef SFX_ON
+#if SFX_ON
   if (gChannelSfx.isPlaying()) {
     if (preempt) {
       gChannelSfx.stop();
@@ -82,7 +82,7 @@ void PlaySfx(_SYSAudioModule& handle, bool preempt) {
 }
 
 void PlayMusic(_SYSAudioModule& music, bool loop) {
-#ifdef MUSIC_ON
+#if MUSIC_ON
   if (gChannelMusic.isPlaying()) {
     gChannelMusic.stop();
   }
