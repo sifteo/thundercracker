@@ -62,6 +62,11 @@ void AudioOutDevice::init(SampleRate samplerate, AudioMixer *mixer)
     GPIOPin dacOut(&GPIOA, 4);      // DAC_OUT1
 //    GPIOPin dacOut(&GPIOA, 5);      // DAC_OUT2
     dacAudioOut.init(samplerate, mixer, dacOut);
+
+    // XXX: Amplifier always on
+    GPIOPin ampEnable(&GPIOA, 6);
+    ampEnable.setControl(GPIOPin::OUT_2MHZ);
+    ampEnable.setHigh();
 #endif
 }
 
