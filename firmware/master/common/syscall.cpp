@@ -242,6 +242,49 @@ void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index,
     }
 }
 
+void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count,
+                     uint16_t lines, uint16_t src_stride, uint16_t addr_stride)
+{
+    /*
+     * Shortcut for a rectangular blit, comprised of multiple calls to SYS_vbuf_writei.
+     * We save the pointer validation for writei, since we want to do it per-scanline anyway.
+     */
+
+    while (lines--) {
+        _SYS_vbuf_writei(vbuf, addr, src, offset, count);
+        src += src_stride;
+        addr += addr_stride;
+    }
+}
+
+void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height)
+{
+    // Address validation occurs after these calculations, in _SYS_vbuf_poke.
+    // Sprite ID validation is implicit.
+
+    uint8_t xb = -(int)width;
+    uint8_t yb = -(int_height;
+    uint16_t word = ((uint16_t)xb << 8) | yb;
+    uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
+                     sizeof(_SYSSpriteInfo)/2 * id );
+
+    _SYS_vbuf_poke(vbuf, addr, word);
+}
+
+void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y)
+{
+    // Address validation occurs after these calculations, in _SYS_vbuf_poke.
+    // Sprite ID validation is implicit.
+
+    uint8_t xb = -x;
+    uint8_t yb = -y;
+    uint16_t word = ((uint16_t)xb << 8) | yb;
+    uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
+                      sizeof(_SYSSpriteInfo)/2 * id );
+
+    _SYS_vbuf_poke(vbuf, addr, word);
+}
+
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
 {
     if (Runtime::checkUserPointer(buffer, sizeof(*buffer))) {
