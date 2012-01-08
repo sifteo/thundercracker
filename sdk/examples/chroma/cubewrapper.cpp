@@ -22,7 +22,8 @@ static unsigned int GEM_VALUE_PROGRESSION[] = { 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 };
 // Order in which the number of fixed gems in a grid increases as the grid is refilled.
 static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4 };
 
-const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
+//const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
+const float CubeWrapper::SHAKE_FILL_DELAY = 0.4f;
 const float CubeWrapper::SPRING_K_CONSTANT = 0.7f;
 const float CubeWrapper::SPRING_DAMPENING_CONSTANT = 0.07f;
 const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
