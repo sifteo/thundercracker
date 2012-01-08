@@ -9,10 +9,12 @@ namespace PeanoTools {
     public Bitmap BackgroundLit;
     public Bitmap[] Levels = new Bitmap[5];
     public Color[] Colors = new Color[5];
+    public Color BackgroundColor;
 
     public SourceMaterials () {
       Background = new Bitmap("background.png");
       BackgroundLit = new Bitmap("background_lit.png");
+      BackgroundColor = Background.GetPixel(56, 56);
       for(int i=0; i<5; i++) {
         var bmp = new Bitmap(string.Format("level{0}.png", i));
         Colors[i] = bmp.GetPixel(bmp.Width>>1, bmp.Height>>1);
