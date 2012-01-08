@@ -1,4 +1,4 @@
-prefix=/usr/local/Cellar/portaudio/19.20111026
+prefix=/usr/local/Cellar/portaudio/19.20071207
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
