@@ -36,7 +36,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     {
         &TeethLoopWordTop,     // ImageIndex_Connected,
         &TeethNewWord2,      // ImageIndex_ConnectedWord,
-        &TeethLoopWordLeft, // ImageIndex_ConnectedLeft,
+        &TeethLoopWordLeftTop, // ImageIndex_ConnectedLeft,
         &TeethNewWord2Left,  // ImageIndex_ConnectedLeftWord,
         &TeethLoopWordRightTop,// ImageIndex_ConnectedRight,
         &TeethNewWord2Right, // ImageIndex_ConnectedRightWord,
@@ -131,6 +131,20 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                 {
                     teeth = &TeethLoopNeighboredBottom;
                     texCoord.y = i - 14;
+                }
+                break;
+
+            case ImageIndex_ConnectedLeft:
+                if (i >= 14)
+                {
+                    teeth = &TeethLoopWordLeftBottom;
+                    texCoord.y = i - 14;
+                }
+                else if (i >= 2)
+                {
+                    teeth = &TeethLoopWordLeftLeft;
+                    texCoord.x = j % teeth->width;
+                    texCoord.y = i - 2;
                 }
                 break;
 
@@ -289,7 +303,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                 vid.BG0_drawAsset(Vec2(1,3), font, frame);
 
 
-                if (false && paintSprites)
+                if (paintSprites)
                 {
                     enum EyePersonality
                     {
