@@ -1,0 +1,6 @@
+#!/bin/bash
+#ls *.raw > audio.txt
+make
+tc-siftulator -n 3 &
+sleep 1s
+./peano.sim

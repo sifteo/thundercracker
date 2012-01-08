@@ -21,7 +21,7 @@ using namespace Sifteo;
 
 NeighborSlot NeighborSlot::instances[_SYS_NUM_CUBE_SLOTS];
 
-#define NUM_UNIQUE_PAIRS ((_SYS_NUM_CUBE_SLOTS * (_SYS_NUM_CUBE_SLOTS-1)) >> 1)
+#define NUM_UNIQUE_PAIRS ((_SYS_NUM_CUBE_SLOTS*(_SYS_NUM_CUBE_SLOTS-1)) >> 1)
 
 struct NeighborPair {
 
@@ -50,21 +50,12 @@ struct NeighborPair {
     inline NeighborPair* lookup(_SYSCubeID cid0, _SYSCubeID cid1) {
         // invariant this == pairs[0]
         // invariant cid0 < cid1
-        
-        // space-wasting pair buffer
-        //return this + (cid0 * (_SYS_NUM_CUBE_SLOTS-1) + (cid1-1));
-
-        // space-conservative pair buffer
         const unsigned n = _SYS_NUM_CUBE_SLOTS - cid0;
         return this + ( (NUM_UNIQUE_PAIRS-1) - ( (n*(n-1)) >> 1 ) + cid1 );
     }
 };
 
-// space-conserving pair-buffer that only stores upper-echelon cells
 static NeighborPair gCubesToSides[NUM_UNIQUE_PAIRS];
-
-// space-wasting pair-buffer w/ uniform row length
-//static NeighborPair gCubesToSides[(_SYS_NUM_CUBE_SLOTS-1)*(_SYS_NUM_CUBE_SLOTS-1)];
 
 void NeighborSlot::computeEvents() {
     uint8_t rawNeighbors[4];
