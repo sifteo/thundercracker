@@ -71,16 +71,6 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         WordGame::playAudio(lip_snort, AudioChannelIndex_Score);
         break;
 
-    case EventID_GameStateChanged:
-        switch (data.mGameStateChanged.mNewStateIndex)
-        {
-        case GameStateIndex_EndOfRoundScored:
-            // TODO diff endings
-            WordGame::playAudio(timeup_01, AudioChannelIndex_Time);
-            break;
-        }
-        break;
-
     case EventID_ClockTick:
         switch (GameStateMachine::getSecondsLeft())
         {

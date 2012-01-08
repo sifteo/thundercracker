@@ -5,7 +5,7 @@ import os, sys
 import fileinput
 import sys
 
-seed_size = 5
+max_seed_word_len = 5
 
 def find_anagrams(string, dictionary):
 
@@ -15,7 +15,7 @@ def find_anagrams(string, dictionary):
             for subword in permutations(string, k):
                 if ''.join(subword) in dictionary and not''.join(subword) in words:
                     # Check if it's a max lengthword and a bad word
-                    words[''.join(subword)] = True
+                    words[''.join(subword).upper()] = True
     #print string
     #print words
     return words
@@ -27,9 +27,9 @@ def generate_word_list_file():
     word_list = {}
     for line in fi:
         word = line.strip()
-        if len(word) == seed_size and word.find("'") == -1:
-            print "word list: " + line
-            word_list[word] = True        
+        if len(word) <= max_seed_word_len and word.find("'") == -1:
+            #print "word list: " + line
+            word_list[word.upper()] = True        
     fi.close()
 
     fi = open("word_list.txt", "w")
@@ -43,12 +43,19 @@ def generate_dict():
     dictionary = {}
     fi = open("dictionary.txt", "r")
     for line in fi:
-        dictionary[line.strip()] = True
+        dictionary[line.strip().upper()] = True
     fi.close()
 
     print "words in dict: " + str(len(dictionary))
+
+    bad_words = {}
+    fi = open("badwords.txt", "r")
+    for line in fi:
+        bad_words[line.strip().upper()] = True
+    fi.close()
     
-    # uncomment to regenerate: generate_word_list_file()
+    # uncomment to regenerate: 
+    #generate_word_list_file()
     
     fi = open("word_list.txt", "r")
     #print "second file " + fi.filename()
@@ -56,27 +63,31 @@ def generate_dict():
     word_list = {}
     for line in fi:
         word = line.strip()
-        if len(word) == seed_size and word.find("'") == -1:
-            print "word list: " + line
-            word_list[word] = True        
+        if len(word) <= max_seed_word_len and word.find("'") == -1 and word.find(".") == -1:
+            #print "word list: " + line
+            word_list[word.upper()] = True        
     fi.close()
     
-    print "filtered word list to: " + str(len(word_list))
+    print "filtered word list to one size and no punctuation: " + str(len(word_list))
     
     output_dictionary = {}
-    num_seed_words = 0
     max_anagrams = 0
+    word_list_used = {}
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
-        if len(anagrams) > 25:
+        min_anagrams = [1, 1, 3, 12, 23, 25]
+        if len(anagrams) > min_anagrams[len(word) - 1]:
             num_seed_repeats = 0
-            # filter equivalent anagrams
+            # skip it if a pre-existing seed word has the same anagram set 
+            bad = False
             for w in anagrams:
-                if len(w) == seed_size and w in output_dictionary:
+                if len(w) == len(word) and w.upper() in word_list_used.keys():
                     num_seed_repeats += 1
-            if num_seed_repeats <= 1:
-                print word + ": " + str(len(anagrams))
-                num_seed_words += 1
+                if w in bad_words.keys():
+                    bad = True
+            if num_seed_repeats == 0 and not bad:
+                #print word + ": " + str(len(anagrams))
+                word_list_used[word.upper()] = True
                 num_anagrams = len(anagrams)
                 if max_anagrams < num_anagrams:
                     max_anagrams = num_anagrams
@@ -85,8 +96,11 @@ def generate_dict():
                     output_dictionary[w.upper()] = True
             
     # write dict to file
-    print "word list filtered to  " + str(num_seed_words)
-    print "max anagrams: " + str(num_anagrams)
+    num_words = [0, 0, 0, 0, 0, 0]
+    for w in word_list_used:
+        num_words[len(w) - 1] += 1
+    print "seed words with enough anagrams  " + str(num_words)
+    print "max anagrams: " + str(max_anagrams)
     sorted_output_dict = output_dictionary.keys()
     sorted_output_dict.sort()
     print "output dict will have " + str(len(sorted_output_dict))
@@ -100,17 +114,21 @@ def generate_dict():
         for letter in word:
             bits |= ((1 + ord(letter) - ord('A')) << (letter_index * letter_bits))
             letter_index += 1
-    
-        fi.write(hex(bits) + ",\t\t// " + word + "\n")
+        if word in word_list_used.keys():
+            bits |= (len(word) << 29)
+            #print "533D: " + word
+            fi.write(hex(bits) + ",\t\t// " + word + ", seed word (533D: " + str(len(word)) + ")\n")
+        else:
+            fi.write(hex(bits) + ",\t\t// " + word + "\n")
     fi.close()
     
     fi = open("word_list_used.txt", "w")
-    for word in word_list:
+    for word in word_list_used.keys():
         fi.write(word + "\n")
     fi.close()    
 
 def main():
-    print sys.argv[1:]
+    #print sys.argv[1:]
     generate_dict()
 
 if __name__ == '__main__':

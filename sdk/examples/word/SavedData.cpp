@@ -4,6 +4,8 @@
 #include "EventID.h"
 #include <cstdlib>
 #include "GameStateMachine.h"
+#include "assets.gen.h"
+#include "WordGame.h"
 
 unsigned SavedData::sHighScores[3];
 
@@ -19,8 +21,8 @@ static int compare_ints(const void* a, const void* b)   // comparison function
 {
     int* arg1 = (int*) a;
     int* arg2 = (int*) b;
-    if( *arg1 < *arg2 ) return -1;
-    else if( *arg1 == *arg2 ) return 0;
+    if ( *arg1 < *arg2 ) return -1;
+    else if ( *arg1 == *arg2 ) return 0;
     else return 1;
 }
 
@@ -45,6 +47,31 @@ void SavedData::sOnEvent(unsigned eventID, const EventData& data)
 
                 }
             }
+
+            enum EndingType
+            {
+                EndingType_NoHighScore,
+                EndingType_HighScore,
+                EndingType_TopHighScore,
+
+                NumEndingTypes
+            };
+
+            _SYSAudioModule* EndingJingles[NumEndingTypes] =
+            {
+                &timeup_01, &timeup_02, &timeup_03
+            };
+
+            EndingType endType = EndingType_NoHighScore;
+            if (score == sHighScores[arraysize(sHighScores) - 1])
+            {
+                endType = EndingType_TopHighScore;
+            }
+            else if (score > 0 && score >= sHighScores[0])
+            {
+                endType = EndingType_HighScore;
+            }
+            WordGame::playAudio(*EndingJingles[(unsigned)endType], AudioChannelIndex_Time);
         }
         break;
 
