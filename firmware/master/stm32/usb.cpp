@@ -1,4 +1,5 @@
 #include "usb.h"
+#include <sifteo.h>
 #include "hardware.h"
 #include "usart.h"
 #include "tasks.h"
@@ -23,9 +24,10 @@ void Usb::handleOUTData(void *p) {
 
     uint8_t buf[64];
     while (pendingOUTBytes > 0) {
-        unsigned rxed = Usb::read(buf, sizeof(buf));
-        AssetManager::onData(buf, rxed);
-        pendingOUTBytes -= rxed;
+        unsigned chunk = MIN(sizeof(buf), pendingOUTBytes);
+        Usb::read(buf, chunk);
+        AssetManager::onData(buf, chunk);
+        pendingOUTBytes -= chunk;
     }
 }
 

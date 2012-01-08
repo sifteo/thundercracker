@@ -21,10 +21,14 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 void CubeWrapper::Init( AssetGroup &assets )
 {
 	m_cube.enable();
+#if LOAD_ASSETS
     m_cube.loadAssets( assets );
+#endif
 
     m_rom.init();
+#if LOAD_ASSETS
     m_rom.BG0_text(Vec2(1,1), "Loading...");
+#endif
 }
 
 
