@@ -40,8 +40,8 @@ static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] =
     &MessageBox1,
     &MessageBox2,
     &MessageBox3,
-    &MessageBox4,
-    //&MsgGameOver,
+    //&MessageBox4,
+    &MsgGameOver,
 };
 
 
@@ -103,6 +103,7 @@ void CubeWrapper::Reset()
     m_intro.Reset();
     m_gameover.Reset();
     m_glimmer.Reset();
+    m_dirty = true;
 	Refill();
 }
 
@@ -173,14 +174,19 @@ void CubeWrapper::Draw()
                 }
 				case STATE_EMPTY:
 				{
-                    //m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeToRefill, 0);
+                    m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeToRefill, 0);
+                    int score = Game::Inst().getScore();
+                    int len = score > 0 ? log10( score ) + 1 : 2;
+                    int xPos = ( Banner::BANNER_WIDTH - len ) / 2;
 
+                    Banner::DrawScore( m_bg1helper, Vec2( xPos, 10 ), score );
 
-                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+                    /*m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
                     m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "SHAKE TO" );
                     m_bg1helper.DrawText( Vec2( 4, 5 ), Font, "REFILL" );
 
-                    m_bg1helper.DrawTextf( Vec2( 4, 9 ), Font, "%d PTS", Game::Inst().getScore() );
+                    m_bg1helper.DrawTextf( Vec2( 4, 9 ), Font, "%d PTS", Game::Inst().getScore() );*/
+
                     m_queuedFlush = true;
 					break;
 				}
@@ -211,23 +217,31 @@ void CubeWrapper::Draw()
 		case Game::STATE_POSTGAME:
 		{
             if( !m_dirty )
+            {
+                //force touch of a cube, maybe it'll fix things
+                m_cube.vbuf.touch();
                 break;
-            //m_vid.BG0_drawAsset(Vec2(0,0), MsgGameOver, 0);
-            m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+            }
+
+            //m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
 
             if( m_cube.id() == 0 + CUBE_ID_BASE)
             {
-                m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
+                m_vid.BG0_drawAsset(Vec2(0,0), MsgGameOver, 0);
 
                 int score = Game::Inst().getScore();
-                int len = score > 0 ? log10( score ) + 5 : 6;
+                //int len = score > 0 ? log10( score ) + 5 : 6;
+                int len = score > 0 ? log10( score ) + 1 : 2;
                 int xPos = ( Banner::BANNER_WIDTH - len ) / 2;
 
-                m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
+                //m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
+                //m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
+                Banner::DrawScore( m_bg1helper, Vec2( xPos, 11 ), Game::Inst().getScore() );
             }
             else if( m_cube.id() == 1 + CUBE_ID_BASE )
             {
-                m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
+                m_vid.BG0_drawAsset(Vec2(0,0), MsgHighScores, 0);
+                //m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
 
                 for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
                 {
@@ -235,12 +249,15 @@ void CubeWrapper::Draw()
                     int len = score > 0 ? log10( score ) + 1 : 2;
                     int xPos = 9 - len;
 
-                    m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
+                    //m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
+                    Banner::DrawScore( m_bg1helper, Vec2( xPos, 5+2*i ), Game::Inst().getHighScore(i) );
+
                 }
             }
             else if( m_cube.id() == 2 + CUBE_ID_BASE )
             {
-                m_bg1helper.DrawTextf( Vec2( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
+                m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeOrNeighbor, 0);
+                //m_bg1helper.DrawTextf( Vec2( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
             }
 
             for( int i = 0; i < GameOver::NUM_ARROWS; i++ )
@@ -248,9 +265,6 @@ void CubeWrapper::Draw()
 
             m_queuedFlush = true;
             m_dirty = false;
-
-            //force touch of a cube, maybe it'll fix things
-            m_cube.vbuf.touch();
 
 			break;
 		}

@@ -93,7 +93,15 @@ def generate_dict():
     
     fi = open("dict.cpp", "w")
     for word in sorted_output_dict:
-        fi.write("\"" + word + "\",\n")
+        # write out compressed version of word (uses fact that demo only has up to 5 letter words)
+        bits = 0
+        letter_index = 0
+        letter_bits = 5
+        for letter in word:
+            bits |= ((1 + ord(letter) - ord('A')) << (letter_index * letter_bits))
+            letter_index += 1
+    
+        fi.write(hex(bits) + ",\t\t// " + word + "\n")
     fi.close()
     
     fi = open("word_list_used.txt", "w")

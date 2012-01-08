@@ -185,7 +185,6 @@ void USB_Cable_Config (FunctionalState NewState)
 *******************************************************************************/
 void Handle_USBAsynchXfer (void)
 {
-  
   uint16_t USB_Tx_ptr;
   uint16_t USB_Tx_length;
   
@@ -236,8 +235,7 @@ void Handle_USBAsynchXfer (void)
     SetEPTxCount(ENDP1, USB_Tx_length);
     SetEPTxValid(ENDP1); 
 #endif /* USE_STM3210C_EVAL */
-  }  
-  
+  }
 }
 
 /*******************************************************************************

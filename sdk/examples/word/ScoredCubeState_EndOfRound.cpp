@@ -9,8 +9,10 @@
 #include "ScoredCubeState_EndOfRound.h"
 #include "SavedData.h"
 #include "WordGame.h"
+#include "config.h"
 
-const unsigned START_SCREEN_CUBE_ID = 1;
+
+const unsigned START_SCREEN_CUBE_INDEX = 1;
 const unsigned SCORE_RHS_X = 9;
 const unsigned SCORE_RHS_Y = 2;
 
@@ -57,7 +59,7 @@ void ScoredCubeState_EndOfRound::paint()
     }
     else if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH * 2.f)
     {
-        if (getStateMachine().getCube().id() == START_SCREEN_CUBE_ID)
+        if ((getStateMachine().getCube().id() - CUBE_ID_BASE) == START_SCREEN_CUBE_INDEX)
         {
             // hold on blank shake to play screen until pan animation is done
             vid.BG0_drawAsset(Vec2(0, 0), Teeth);
@@ -75,7 +77,7 @@ void ScoredCubeState_EndOfRound::paint()
         return;
     }
 
-    switch (getStateMachine().getCube().id())
+    switch (getStateMachine().getCube().id() - CUBE_ID_BASE)
     {
     default:
         // paint "Score" asset
@@ -91,7 +93,7 @@ void ScoredCubeState_EndOfRound::paint()
         WordGame::instance()->setNeedsPaintSync();
         break;
 
-    case START_SCREEN_CUBE_ID:
+    case START_SCREEN_CUBE_INDEX:
         vid.BG0_drawAsset(Vec2(0, 0), Teeth);
         {
             const float ANIM_LENGTH = 1.0f;
