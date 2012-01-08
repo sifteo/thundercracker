@@ -261,7 +261,7 @@ class VidMode_BG0 : public VidMode {
         const unsigned base = 0;
 
         _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + tileOffset, base,
-                        size.x, asset.height, asset.width, BG0_width);
+                        size.x, size.y, asset.width, BG0_width);
     }
 
 
