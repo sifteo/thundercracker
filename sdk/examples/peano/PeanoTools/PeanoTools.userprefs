@@ -1,10 +1,12 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" ActiveRuntime="Mono 2.6.7" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="ScreenState.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Program.ComputeAssets.cs">
     <Files>
-      <File FileName="Program.Main.cs" Line="8" Column="4" />
-      <File FileName="Program.ComputeAssets.cs" Line="1" Column="1" />
+      <File FileName="Program.Main.cs" Line="13" Column="4" />
+      <File FileName="Program.ComputeAssets.cs" Line="110" Column="13" />
       <File FileName="ScreenState.cs" Line="12" Column="9" />
+      <File FileName="SourceMaterials.cs" Line="33" Column="6" />
+      <File FileName="BitSet.cs" Line="6" Column="23" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

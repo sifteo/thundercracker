@@ -73,10 +73,10 @@ namespace PeanoTools {
           }
 
           // Diagonals
-          using (var img = new Bitmap(16, 16 * 32)) {
-            for(BitSet union=0; union.mask < 32; ++union.mask) {
+          using (var img = new Bitmap(8, 8 * 4)) {
+            for(BitSet union=0; union.mask < 4; ++union.mask) {
               canvas.Composite(src, union, 0);
-              img.DrawBitmap(canvas, 24, 24, 16, 16, 0, 16*union.mask);
+              img.DrawBitmap(canvas, 32, 32, 8, 8, 0, 8*union.mask);
             }
             img.Save("assets_jointNW.png");
             img.RotateFlip(RotateFlipType.Rotate270FlipNone);
