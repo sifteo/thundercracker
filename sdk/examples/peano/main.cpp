@@ -6,6 +6,41 @@
 
 using namespace Sifteo;
 
+enum Bits {
+  B00000,
+  B00001,
+  B00010,
+  B00011,
+  B00100,
+  B00101,
+  B00110,
+  B00111,
+  B01000,
+  B01001,
+  B01010,
+  B01011,
+  B01100,
+  B01101,
+  B01110,
+  B01111,
+  B10000,
+  B10001,
+  B10010,
+  B10011,
+  B10100,
+  B10101,
+  B10110,
+  B10111,
+  B11000,
+  B11001,
+  B11010,
+  B11011,
+  B11100,
+  B11101,
+  B11110,
+  B11111,
+};
+
 //-----------------------------------------------------------------------------
 // TYPES
 //-----------------------------------------------------------------------------
@@ -27,6 +62,16 @@ static Cube cubes[] = { Cube(0), Cube(1) };
 //-----------------------------------------------------------------------------
 // FUNCTIONS
 //-----------------------------------------------------------------------------
+
+static const uint8_t keyIndices[] = { 0, 1, 3, 5, 8, 10, 13, 16, 20, 22, 25, 28, 32, 35, 39, 43, 48, 50, 53, 56, 60, 63, 67, 71, 76, 79, 83, 87, 92, 96, 101, 106, };
+
+static int CountBits(uint8_t mask) {
+  unsigned result = 0;
+  for(unsigned i=0; i<5; ++i) {
+    if (mask & (1<<i)) { result++; }
+  }
+  return result;
+}
 
 static void RenderView(Cube& c, ViewState view) {
   // compute the screen state union (assuming it's valid)
@@ -51,15 +96,38 @@ static void RenderView(Cube& c, ViewState view) {
     mode.BG0_drawAsset(Vec2(j,i), Center, lowestBit);
   }
   
-  // Horizontal and Vertical
+  // Horizontal
+  mode.BG0_drawAsset(Vec2(3,0), Horizontal, view.masks[SIDE_TOP]);
+  mode.BG0_drawAsset(Vec2(3,13), Horizontal, view.masks[SIDE_BOTTOM]);
+  mode.BG0_drawAsset(Vec2(3,14), Horizontal, view.masks[SIDE_BOTTOM]);
+  mode.BG0_drawAsset(Vec2(3,15), Horizontal, view.masks[SIDE_BOTTOM]);
   
-  
+  // Vertical
+  mode.BG0_drawAsset(Vec2(0,3), Vertical, view.masks[SIDE_LEFT]);
+  mode.BG0_drawAsset(Vec2(13,3), Vertical, view.masks[SIDE_RIGHT]);
+  mode.BG0_drawAsset(Vec2(14,3), Vertical, view.masks[SIDE_RIGHT]);
+  mode.BG0_drawAsset(Vec2(15,3), Vertical, view.masks[SIDE_RIGHT]);
+
+  // Minor Diagonals
+  if (vunion & 0x10) {
+    mode.BG0_drawAsset(Vec2(2,2), MinorNW, 1);
+    mode.BG0_drawAsset(Vec2(2,11), MinorSW, 1);
+    mode.BG0_drawAsset(Vec2(11,11), MinorSE, 0);
+    mode.BG0_drawAsset(Vec2(11,2), MinorNE, 0);
+  }
+
+  // Major Diagonals
+  mode.BG0_drawAsset(Vec2(3,3), MajorNW, vunion);
+  mode.BG0_drawAsset(Vec2(3,9), MajorSW, vunion);
+  mode.BG0_drawAsset(Vec2(9,9), MajorSE, 31 - vunion);
+  mode.BG0_drawAsset(Vec2(9,3), MajorNE, 31 -vunion);
   
   // Major Joints
-  // Major Diagonals
-  // Minor Joints
-  // Minor Diagonals
-  
+  mode.BG0_drawAsset(Vec2(3,1), MajorN, keyIndices[vunion] + CountBits(vunion ^ view.masks[0]));
+  mode.BG0_drawAsset(Vec2(1,3), MajorW, keyIndices[vunion] + CountBits(vunion ^ view.masks[1]));
+  mode.BG0_drawAsset(Vec2(3,10), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ view.masks[2]));
+  mode.BG0_drawAsset(Vec2(10,3), MajorE, 111 - keyIndices[vunion] - CountBits(vunion ^ view.masks[3]));
+
 }
 
 void siftmain() {
@@ -87,7 +155,7 @@ void siftmain() {
   }
   
   {
-    ViewState view = { { 0x01, 0x00, 0x00, 0x00 }  };
+    ViewState view = { { B10111, B10111, B10110, B00000 }  };
     RenderView(cubes[0], view);
     
   }

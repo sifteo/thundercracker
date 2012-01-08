@@ -21,7 +21,7 @@ using namespace Sifteo;
 
 NeighborSlot NeighborSlot::instances[_SYS_NUM_CUBE_SLOTS];
 
-#define NUM_UNIQUE_PAIRS ((_SYS_NUM_CUBE_SLOTS * (_SYS_NUM_CUBE_SLOTS)) >> 1)
+#define NUM_UNIQUE_PAIRS ((_SYS_NUM_CUBE_SLOTS * (_SYS_NUM_CUBE_SLOTS-1)) >> 1)
 
 struct NeighborPair {
 

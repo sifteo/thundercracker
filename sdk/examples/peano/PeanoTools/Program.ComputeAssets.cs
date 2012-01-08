@@ -42,13 +42,15 @@ namespace PeanoTools {
   
           // Cardinal Directions
           const int kPossibilities = 112; // precalculated by counting :P
-          using(var img = new Bitmap(64, 16 * kPossibilities)) {
+          using(var img = new Bitmap(64, 24 * kPossibilities)) {
             int cnt = 0;
             // iterate through all the possibilities for the "union" mask
+            Console.Write("static const uint8_t keyIndices[] = {");
             for(BitSet union = 0; union.mask < 32; ++union.mask) {
+              Console.Write(" {0},", cnt);
               // render everything pointing up top
               canvas.Composite(src, union, union);
-              img.DrawBitmap(canvas, 24, 8, 64, 16, 0, 16 * cnt);
+              img.DrawBitmap(canvas, 24, 8, 64, 24, 0, 24 * cnt);
               cnt++;
               // iterate through removing all the lower levels from the union
               int bitCount = union.Count;
@@ -56,10 +58,11 @@ namespace PeanoTools {
               for(int i=0; i<bitCount; ++i) {
                 bitSet = bitSet.WithoutLowestBit;
                 canvas.Composite(src, union, bitSet);
-                img.DrawBitmap(canvas, 24, 8, 64, 16, 0, 16 * cnt);
+                img.DrawBitmap(canvas, 24, 8, 64, 24, 0, 24 * cnt);
                 cnt++;
               }
             }
+            Console.WriteLine(" };");
             img.Save("assets_jointN.png");
             img.RotateFlip(RotateFlipType.Rotate270FlipNone);
             img.Save("assets_jointW.png");
@@ -68,7 +71,7 @@ namespace PeanoTools {
             img.RotateFlip(RotateFlipType.Rotate270FlipNone);
             img.Save("assets_jointE.png");
           }
-  
+
           // Diagonals
           using (var img = new Bitmap(16, 16 * 32)) {
             for(BitSet union=0; union.mask < 32; ++union.mask) {
@@ -87,12 +90,13 @@ namespace PeanoTools {
           Console.WriteLine("- Rendering Minor Joint Assets");
 
           // Cardinal Directions
-          using (var img = new Bitmap(32, 8*4)) {
-
+          /*
+          using (var img = new Bitmap(32, 8*(1+4))) {
             for(BitSet union=0; union.mask<4; ++union.mask) {
               canvas.Composite(src, union, 0);
               img.DrawBitmap(canvas, 40, 24, 32, 8, 0, 8*union.mask);
             }
+            img.FillRect(0, 8*4, 32, 8, src.Colors[0]);
 
             img.Save("assets_minorN.png");
             img.RotateFlip(RotateFlipType.Rotate270FlipNone);
@@ -103,6 +107,7 @@ namespace PeanoTools {
             img.Save("assets_minorE.png");
 
           }
+          */
 
           // Diagonals
           using (var img = new Bitmap(8, 8*2)) {
