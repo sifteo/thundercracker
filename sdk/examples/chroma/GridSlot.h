@@ -58,7 +58,7 @@ public:
 	//draw self on given vid at given vec
     void Draw( VidMode_BG0 &vid, Float2 &tiltState );
     void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
-    void Update(float t, VidMode_BG0 &vid);
+    void Update(float t);
 	bool isAlive() const { return m_state == STATE_LIVING; }
 	bool isEmpty() const { return m_state == STATE_GONE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }

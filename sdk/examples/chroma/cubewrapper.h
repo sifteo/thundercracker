@@ -103,6 +103,10 @@ public:
     //if we need to, flush bg1
     void FlushBG1();
 
+    //queue a location to be cleared by gemEmpty.
+    //This exists because we need to do all our clears first, and then do our draws
+    void QueueClear( Vec2 &pos );
+
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
@@ -138,6 +142,11 @@ private:
 
     float m_stateTime;
     int m_lastTiltDir;
+
+    //array of queued clears.
+    //clears get queued up in update, then they get drawn before any draws and cleared out
+    Vec2 m_queuedClears[NUM_ROWS * NUM_COLS];
+    int m_numQueuedClears;
 
     //do we need to do a bg1 flush?
     bool m_queuedFlush;
