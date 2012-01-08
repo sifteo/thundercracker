@@ -19,7 +19,9 @@ TeethLoopNeighboredBottom = image{"wc_letters_neighbored_bottom.png", width=128,
 TeethLoopWordTop = image{"wc_letters_connected_center_top.png", width=128, height=16, quality=10}
 TeethLoopWordBottom = image{"wc_letters_connected_center_bottom.png", width=128, height=16, quality=10}
 TeethLoopWordLeft = image{"wc_letters_connected_left.png", width=128, height=128, quality=10}
-TeethLoopWordRight = image{"wc_letters_connected_right.png", width=128, height=128, quality=10}
+TeethLoopWordRightTop = image{"wc_letters_connected_right_top.png", width=128, height=16, quality=10}
+TeethLoopWordRightBottom = image{"wc_letters_connected_right_bottom.png", width=128, height=16, quality=10}
+TeethLoopWordRightRight = image{"wc_letters_connected_right_right.png", width=16, height=96, quality=10}
 TeethNewWord2 = image{"wc_letters_connected_center_2.png", width=128, height=128, quality=10}
 TeethNewWord2Left = image{"wc_letters_connected_left_2.png", width=128, height=128, quality=10}
 TeethNewWord2Right = image{"WC_letters_connected_right_2.png", width=128, height=128, quality=10}

@@ -75,7 +75,8 @@ def generate_dict():
     word_list_used = {}
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
-        min_anagrams = [1, 1, 3, 12, 23, 25]
+        min_anagrams = [999, 1, 3, 14, 25, 25]
+        #min_anagrams = [999, 999, 4, 15, 25, 25]
         if len(anagrams) > min_anagrams[len(word) - 1]:
             num_seed_repeats = 0
             # skip it if a pre-existing seed word has the same anagram set 

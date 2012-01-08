@@ -3,16 +3,13 @@
 0x8002b041L,		// ABLE, seed word (533D: 4)
 0x3c41,		// ABO
 0xa14abc41L,		// ABOUT, seed word (533D: 5)
-0x4c41,		// ABS
 0xa5441,		// ABUT
 0x6441,		// ABY
 0x2e441,		// ABYE
 0x1461,		// ACE
-0x21461,		// ACED
 0x99461,		// ACES
 0x2a061,		// ACHE
 0x2b861,		// ACNE
-0x42b861,		// ACNED
 0x2c861,		// ACRE
 0x5061,		// ACT
 0x9d061,		// ACTS
@@ -48,12 +45,10 @@
 0x1491581,		// ALERT
 0x99581,		// ALES
 0x32581,		// ALIF
-0xa055a581L,		// ALIKE, seed word (533D: 5)
 0xa2581,		// ALIT
 0x2b581,		// ALME
 0x2bd81,		// ALOE
 0xa0573d81L,		// ALONE, seed word (533D: 5)
-0xa0773d81L,		// ALONG, seed word (533D: 5)
 0x4181,		// ALP
 0x4d81,		// ALS
 0x5181,		// ALT
@@ -90,11 +85,9 @@
 0x60001641,		// ARE, seed word (533D: 3)
 0x1a41,		// ARF
 0x561e41,		// ARGLE
-0x13a9e41,		// ARGUS
 0x22641,		// ARID
 0x62641,		// ARIL
 0x3641,		// ARM
-0x8009b641L,		// ARMS, seed word (533D: 4)
 0x800cb641L,		// ARMY, seed word (533D: 4)
 0x4e41,		// ARS
 0x60005241,		// ART, seed word (533D: 3)
@@ -105,7 +98,6 @@
 0x1478e61,		// ASCOT
 0x2261,		// ASH
 0x60002e61,		// ASK, seed word (533D: 3)
-0xa042ae61L,		// ASKED, seed word (533D: 5)
 0x4261,		// ASP
 0x40000281,		// AT, seed word (533D: 2)
 0x1681,		// ATE
@@ -127,8 +119,6 @@
 0x3022,		// BAL
 0x2b022,		// BALE
 0x3422,		// BAM
-0x4c22,		// BAS
-0x8002cc22L,		// BASE, seed word (533D: 4)
 0x5022,		// BAT
 0x2d022,		// BATE
 0x6422,		// BAY
@@ -160,12 +150,8 @@
 0x52a2,		// BUT
 0x322,		// BY
 0x1722,		// BYE
-0x1023,		// CAD
-0x29023,		// CADE
-0x3423,		// CAM
 0x3823,		// CAN
 0x2b823,		// CANE
-0x42b823,		// CANED
 0x4023,		// CAP
 0x2c023,		// CAPE
 0x132c023,		// CAPES
@@ -174,28 +160,21 @@
 0x2c823,		// CARE
 0x64823,		// CARL
 0x564823,		// CARLE
-0xa4823,		// CART
 0x2cc23,		// CASE
 0xa4c23,		// CAST
 0x60005023,		// CAT, seed word (533D: 3)
 0x2d023,		// CATE
 0x9d023,		// CATS
-0x490a3,		// CEDI
 0x30a3,		// CEL
 0x9b0a3,		// CELS
 0x40a3,		// CEP
 0x9c0a3,		// CEPS
 0x7c8a3,		// CERO
 0x137c8a3,		// CEROS
-0x68503,		// CHAM
 0x90503,		// CHAR
 0x590503,		// CHARE
-0xd90503,		// CHARM
-0xa1490503L,		// CHART, seed word (533D: 5)
 0xa0503,		// CHAT
 0x1409503,		// CHEAT
-0x1229123,		// CIDER
-0x2c923,		// CIRE
 0x70583,		// CLAN
 0x80583,		// CLAP
 0xa0e09583L,		// CLEAN, seed word (533D: 5)
@@ -217,26 +196,16 @@
 0x1a4de3,		// COSTA
 0x51e3,		// COT
 0x9d1e3,		// COTS
-0x68643,		// CRAM
-0xa042a643L,		// CRIED, seed word (533D: 5)
-0x582643,		// CRIPE
 0x824,		// DAB
-0x28c24,		// DACE
-0x1c24,		// DAG
 0x2024,		// DAH
 0x9a024,		// DAHS
 0x9a424,		// DAIS
-0x2c24,		// DAK
-0x9ac24,		// DAKS
 0x3024,		// DAL
 0x2b024,		// DALE
 0x3424,		// DAM
 0x2b424,		// DAME
-0xa051b824L,		// DANCE, seed word (533D: 5)
-0x3b824,		// DANG
 0x4024,		// DAP
 0x2c824,		// DARE
-0x74824,		// DARN
 0xa4824,		// DART
 0x80044c24L,		// DASH, seed word (533D: 4)
 0x8002d024L,		// DATE, seed word (533D: 4)
@@ -245,7 +214,6 @@
 0x60006424,		// DAY, seed word (533D: 3)
 0xa4,		// DE
 0x604a4,		// DEAL
-0x704a4,		// DEAN
 0x904a4,		// DEAR
 0x19904a4,		// DEARY
 0x8a4,		// DEB
@@ -259,52 +227,35 @@
 0x134b0a4,		// DELIS
 0x9b0a4,		// DELS
 0x38a4,		// DEN
-0x9b8a4,		// DENS
 0x140c8a4,		// DERAT
 0x190c8a4,		// DERAY
-0x5cca4,		// DESK
-0x58a4,		// DEV
 0x64a4,		// DEY
-0x28d24,		// DICE
-0x1228d24,		// DICER
 0x1524,		// DIE
 0x61524,		// DIEL
 0x99524,		// DIES
 0xa1524,		// DIET
 0x4124,		// DIP
-0x2c924,		// DIRE
 0x4d24,		// DIS
 0x5124,		// DIT
 0x2d124,		// DITE
-0x2d924,		// DIVE
-0x122d924,		// DIVER
 0x400001e4,		// DO, seed word (533D: 2)
 0xa05e4,		// DOAT
 0x15e4,		// DOE
 0x800995e4L,		// DOES, seed word (533D: 4)
 0x60001de4,		// DOG, seed word (533D: 3)
 0x31e4,		// DOL
-0x9b1e4,		// DOLS
 0x39e4,		// DON
 0x8002b9e4L,		// DONE, seed word (533D: 4)
 0x9b9e4,		// DONS
 0x49e4,		// DOR
-0x9c9e4,		// DORS
 0x4de4,		// DOS
 0x2cde4,		// DOSE
 0x51e4,		// DOT
 0xcd1e4,		// DOTY
 0x955e4,		// DOUR
-0x5de4,		// DOW
-0x80075de4L,		// DOWN, seed word (533D: 4)
-0x9dde4,		// DOWS
-0x2e9e4,		// DOZE
-0xa0e2e9e4L,		// DOZEN, seed word (533D: 5)
-0x38644,		// DRAG
 0xa0644,		// DRAT
 0xc8644,		// DRAY
 0x82644,		// DRIP
-0xa05b2644L,		// DRIVE, seed word (533D: 5)
 0x6644,		// DRY
 0x16a4,		// DUE
 0x3aa4,		// DUN
@@ -312,7 +263,6 @@
 0x9baa4,		// DUNS
 0x3ea4,		// DUO
 0x9bea4,		// DUOS
-0x42a4,		// DUP
 0x2caa4,		// DURE
 0x74aa4,		// DURN
 0x7caa4,		// DURO
@@ -337,14 +287,12 @@
 0xc5,		// EF
 0x50c5,		// EFT
 0x604e5,		// EGAL
-0x3ce5,		// EGO
 0x105,		// EH
 0x185,		// EL
 0x70585,		// ELAN
 0x1185,		// ELD
 0x99185,		// ELDS
 0x1985,		// ELF
-0x2d85,		// ELK
 0x3585,		// ELM
 0x4d85,		// ELS
 0x2cd85,		// ELSE
@@ -353,7 +301,6 @@
 0x4da5,		// EMS
 0x1c5,		// EN
 0x600011c5,		// END, seed word (533D: 3)
-0x991c5,		// ENDS
 0x1dc5,		// ENG
 0x63dc5,		// ENOL
 0xbbdc5,		// ENOW
@@ -362,17 +309,14 @@
 0x9b9e5,		// EONS
 0xa205,		// EPHA
 0x130a205,		// EPHAS
-0x1a605,		// EPIC
 0x245,		// ER
 0x645,		// ERA
-0x1645,		// ERE
 0x1e45,		// ERG
 0x3a45,		// ERN
 0x9be45,		// EROS
 0x4e45,		// ERS
 0xa4e45,		// ERST
 0x265,		// ES
-0x4e65,		// ESS
 0x285,		// ET
 0x685,		// ETA
 0x98685,		// ETAS
@@ -381,9 +325,6 @@
 0x137a285,		// ETHOS
 0x9a285,		// ETHS
 0xba85,		// ETNA
-0x16c5,		// EVE
-0x916c5,		// EVER
-0x996c5,		// EVES
 0x305,		// EX
 0xa0195305L,		// EXTRA, seed word (533D: 5)
 0x98725,		// EYAS
@@ -409,13 +350,7 @@
 0x42b126,		// FILED
 0x3926,		// FIN
 0xa0c0b926L,		// FINAL, seed word (533D: 5)
-0x4926,		// FIR
-0x8002c926L,		// FIRE, seed word (533D: 4)
-0x9c926,		// FIRS
-0xa149c926L,		// FIRST, seed word (533D: 5)
-0xa4d26,		// FIST
 0x60005126,		// FIT, seed word (533D: 3)
-0x9d126,		// FITS
 0x70586,		// FLAN
 0x21586,		// FLED
 0x42a586,		// FLIED
@@ -424,31 +359,20 @@
 0xa39e6,		// FONT
 0x600049e6,		// FOR, seed word (533D: 3)
 0x28646,		// FRAE
-0xa2646,		// FRIT
-0x13a2646,		// FRITS
 0x3e46,		// FRO
-0x1027,		// GAD
 0x1427,		// GAE
 0x71427,		// GAEN
 0x3027,		// GAL
 0x2b027,		// GALE
 0x3427,		// GAM
-0x8002b427L,		// GAME, seed word (533D: 4)
 0x3827,		// GAN
 0x2b827,		// GANE
-0x63c27,		// GAOL
-0x4027,		// GAP
-0x2c027,		// GAPE
 0x4827,		// GAR
-0x9c827,		// GARS
 0x60004c27,		// GAS, seed word (533D: 3)
 0x5027,		// GAT
 0x2d027,		// GATE
-0x95427,		// GAUR
-0x1395427,		// GAURS
 0x904a7,		// GEAR
 0x30a7,		// GEL
-0x34a7,		// GEM
 0x38a7,		// GEN
 0x50a7,		// GET
 0xd0a7,		// GETA
@@ -460,19 +384,13 @@
 0x55c7,		// GNU
 0x1e7,		// GO
 0x5e7,		// GOA
-0x605e7,		// GOAL
 0x11e7,		// GOD
-0x8002b9e7L,		// GONE, seed word (533D: 4)
 0x600051e7,		// GOT, seed word (533D: 3)
-0x20647,		// GRAD
 0x70647,		// GRAN
-0xa0470647L,		// GRAND, seed word (533D: 5)
 0xa1470647L,		// GRANT, seed word (533D: 5)
 0xa0647,		// GRAT
 0x5a0647,		// GRATE
 0xa1409647L,		// GREAT, seed word (533D: 5)
-0x906a7,		// GUAR
-0x13906a7,		// GUARS
 0x60003aa7,		// GUN, seed word (533D: 3)
 0x28,		// HA
 0x60001028,		// HAD, seed word (533D: 3)
@@ -481,14 +399,11 @@
 0x21428,		// HAED
 0x99428,		// HAES
 0xa1428,		// HAET
-0x3428,		// HAM
-0xa3828,		// HANT
 0x4028,		// HAP
 0x9c028,		// HAPS
 0x24828,		// HARD
 0x2c828,		// HARE
 0x42c828,		// HARED
-0x6c828,		// HARM
 0x84828,		// HARP
 0x1384828,		// HARPS
 0xa4828,		// HART
@@ -508,10 +423,7 @@
 0xa14904a8L,		// HEART, seed word (533D: 5)
 0x800a04a8L,		// HEAT, seed word (533D: 4)
 0x924a8,		// HEIR
-0x7b0a8,		// HELO
 0x34a8,		// HEM
-0x38a8,		// HEN
-0xa38a8,		// HENT
 0x40a8,		// HEP
 0x600048a8,		// HER, seed word (533D: 3)
 0x248a8,		// HERD
@@ -524,7 +436,6 @@
 0x9d0a8,		// HETS
 0x5ca8,		// HEW
 0x9dca8,		// HEWS
-0x64a8,		// HEY
 0x128,		// HI
 0x1528,		// HIE
 0x60003528,		// HIM, seed word (533D: 3)
@@ -539,17 +450,14 @@
 0x915e8,		// HOER
 0x13915e8,		// HOERS
 0x995e8,		// HOES
-0x2b1e8,		// HOLE
 0x8002b5e8L,		// HOME, seed word (533D: 4)
 0x39e8,		// HON
 0x9b9e8,		// HONS
 0x41e8,		// HOP
-0x8002c1e8L,		// HOPE, seed word (533D: 4)
 0x9c1e8,		// HOPS
 0xa059c9e8L,		// HORSE, seed word (533D: 5)
 0x149c9e8,		// HORST
 0x2cde8,		// HOSE
-0x132cde8,		// HOSES
 0xa4de8,		// HOST
 0x600051e8,		// HOT, seed word (533D: 3)
 0x9d1e8,		// HOTS
@@ -557,29 +465,18 @@
 0x5de8,		// HOW
 0x2dde8,		// HOWE
 0x132dde8,		// HOWES
-0x65de8,		// HOWL
 0x9dde8,		// HOWS
 0x16a8,		// HUE
 0x996a8,		// HUES
-0x2d328,		// HYTE
-0x1469,		// ICE
-0x21469,		// ICED
 0x89,		// ID
 0x99489,		// IDES
 0x2b089,		// IDLE
 0x132b089,		// IDLES
 0x4c89,		// IDS
 0xc9,		// IF
-0x4cc9,		// IFS
-0x9589,		// ILEA
-0x2d89,		// ILK
-0xad89,		// ILKA
-0x3189,		// ILL
-0x9b189,		// ILLS
 0x1c9,		// IN
 0x14805c9,		// INAPT
 0x1649,		// IRE
-0x21649,		// IRED
 0x99649,		// IRES
 0x40000269,		// IS, seed word (533D: 2)
 0x2b269,		// ISLE
@@ -590,8 +487,6 @@
 0x2b,		// KA
 0x142b,		// KAE
 0x9942b,		// KAES
-0x6242b,		// KAIL
-0x2b02b,		// KALE
 0x4c2b,		// KAS
 0x502b,		// KAT
 0x4ab,		// KEA
@@ -612,7 +507,6 @@
 0x1229c2c,		// LAGER
 0x7242c,		// LAIN
 0x9242c,		// LAIR
-0x8002ac2cL,		// LAKE, seed word (533D: 4)
 0x342c,		// LAM
 0x2b42c,		// LAME
 0x51b82c,		// LANCE
@@ -637,7 +531,6 @@
 0x4ac,		// LEA
 0x800204acL,		// LEAD, seed word (533D: 4)
 0x19204ac,		// LEADY
-0x584ac,		// LEAK
 0x704ac,		// LEAN
 0x804ac,		// LEAP
 0x904ac,		// LEAR
@@ -653,13 +546,10 @@
 0x1cac,		// LEG
 0x24ac,		// LEI
 0x9a4ac,		// LEIS
-0x2cac,		// LEK
 0x7b8ac,		// LENO
 0xa4cac,		// LEST
 0x600050ac,		// LET, seed word (533D: 3)
 0x9d0ac,		// LETS
-0x58ac,		// LEV
-0x7d8ac,		// LEVO
 0x64ac,		// LEY
 0x12c,		// LI
 0x9052c,		// LIAR
@@ -670,10 +560,6 @@
 0x3152c,		// LIEF
 0x9952c,		// LIES
 0x2992c,		// LIFE
-0x2ad2c,		// LIKE
-0xa312c,		// LILT
-0x13a312c,		// LILTS
-0xb52c,		// LIMA
 0x392c,		// LIN
 0x412c,		// LIP
 0xc92c,		// LIRA
@@ -683,36 +569,21 @@
 0x9d12c,		// LITS
 0x1ec,		// LO
 0x705ec,		// LOAN
-0x1dec,		// LOG
-0xe09dec,		// LOGAN
 0x2b9ec,		// LONE
-0x3b9ec,		// LONG
-0x3dec,		// LOO
-0x9bdec,		// LOOS
-0xa3dec,		// LOOT
-0x13a3dec,		// LOOTS
 0x8002cdecL,		// LOSE, seed word (533D: 4)
 0xa4dec,		// LOST
 0x51ec,		// LOT
-0x137d1ec,		// LOTOS
 0x9d1ec,		// LOTS
-0x2d9ec,		// LOVE
-0x132d9ec,		// LOVES
 0x60005dec,		// LOW, seed word (533D: 3)
-0x2ddec,		// LOWE
 0x172c,		// LYE
 0x2cb2c,		// LYRE
 0x2d,		// MA
 0x2882d,		// MABE
-0xc2d,		// MAC
-0x40c2d,		// MACH
 0x102d,		// MAD
 0x8002902dL,		// MADE, seed word (533D: 4)
 0x142d,		// MAE
 0x9942d,		// MAES
 0x1c2d,		// MAG
-0x29c2d,		// MAGE
-0x8006242dL,		// MAIL, seed word (533D: 4)
 0x8007242dL,		// MAIN, seed word (533D: 4)
 0x2b02d,		// MALE
 0xa302d,		// MALT
@@ -724,9 +595,6 @@
 0x6000402d,		// MAP, seed word (533D: 3)
 0x9c02d,		// MAPS
 0x482d,		// MAR
-0x1c82d,		// MARC
-0xa081c82dL,		// MARCH, seed word (533D: 5)
-0x9c82d,		// MARS
 0x4c2d,		// MAS
 0xa4c2d,		// MAST
 0x502d,		// MAT
@@ -758,7 +626,6 @@
 0x5cad,		// MEW
 0x3d0d,		// MHO
 0x12d,		// MI
-0x312d,		// MIL
 0xb92d,		// MINA
 0x1ed,		// MO
 0x5ed,		// MOA
@@ -767,16 +634,10 @@
 0x39ed,		// MON
 0xa192b9edL,		// MONEY, seed word (533D: 5)
 0xcb9ed,		// MONY
-0x41ed,		// MOP
-0x2c1ed,		// MOPE
 0x49ed,		// MOR
 0xc9ed,		// MORA
 0x190c9ed,		// MORAY
 0x8002c9edL,		// MORE, seed word (533D: 4)
-0x4ded,		// MOS
-0x800a4dedL,		// MOST, seed word (533D: 4)
-0x51ed,		// MOT
-0x9d1ed,		// MOTS
 0x5ded,		// MOW
 0x75ded,		// MOWN
 0x2ad,		// MU
@@ -786,14 +647,12 @@
 0x2e,		// NA
 0x142e,		// NAE
 0x1c2e,		// NAG
-0x202e,		// NAH
 0x3242e,		// NAIF
 0x6242e,		// NAIL
 0x342e,		// NAM
 0x8002b42eL,		// NAME, seed word (533D: 4)
 0x402e,		// NAP
 0x2c02e,		// NAPE
-0x2482e,		// NARD
 0x5c2e,		// NAW
 0x642e,		// NAY
 0xae,		// NE
@@ -835,7 +694,6 @@
 0x60005dee,		// NOW, seed word (533D: 3)
 0x9ddee,		// NOWS
 0xa5dee,		// NOWT
-0x228e,		// NTH
 0x2ae,		// NU
 0x292ae,		// NUDE
 0x12292ae,		// NUDER
@@ -861,32 +719,25 @@
 0x4000010f,		// OH, seed word (533D: 2)
 0x350f,		// OHM
 0x4d0f,		// OHS
-0x312f,		// OIL
-0x9b12f,		// OILS
 0x6000118f,		// OLD, seed word (533D: 3)
-0x9918f,		// OLDS
 0x158f,		// OLE
 0x958f,		// OLEA
 0x9958f,		// OLES
 0x1af,		// OM
 0x715af,		// OMEN
 0x915af,		// OMER
-0x4daf,		// OMS
 0x400001cf,		// ON, seed word (533D: 2)
 0x600015cf,		// ONE, seed word (533D: 3)
 0x995cf,		// ONES
 0x4dcf,		// ONS
 0x142cdcf,		// ONSET
 0x9d5cf,		// ONUS
-0x51ef,		// OOT
-0x9d1ef,		// OOTS
 0x20f,		// OP
 0x160f,		// OPE
 0x8007160fL,		// OPEN, seed word (533D: 4)
 0x4e0f,		// OPS
 0x24f,		// OR
 0x64f,		// ORA
-0x2064f,		// ORAD
 0xe4f,		// ORC
 0x98e4f,		// ORCS
 0x164f,		// ORE
@@ -896,7 +747,6 @@
 0x9d24f,		// ORTS
 0x26f,		// OS
 0x166f,		// OSE
-0x9966f,		// OSES
 0xa122a28fL,		// OTHER, seed word (533D: 5)
 0x12af,		// OUD
 0x992af,		// OUDS
@@ -918,7 +768,6 @@
 0x1030,		// PAD
 0x49030,		// PADI
 0x991030,		// PADRI
-0x80029c30L,		// PAGE, seed word (533D: 4)
 0x2030,		// PAH
 0x22430,		// PAID
 0x62430,		// PAIL
@@ -951,7 +800,6 @@
 0x60006430,		// PAY, seed word (533D: 3)
 0xb0,		// PE
 0x4b0,		// PEA
-0x384b0,		// PEAG
 0x584b0,		// PEAK
 0x13584b0,		// PEAKS
 0x604b0,		// PEAL
@@ -959,20 +807,13 @@
 0x984b0,		// PEAS
 0xcb0,		// PEC
 0x98cb0,		// PECS
-0x1cb0,		// PEG
 0x20b0,		// PEH
 0x9a0b0,		// PEHS
 0x38b0,		// PEN
 0xc0b8b0,		// PENAL
-0x9b8b0,		// PENS
-0xa38b0,		// PENT
 0x73cb0,		// PEON
 0x48b0,		// PER
-0x4c8b0,		// PERI
 0x4cb0,		// PES
-0xa4cb0,		// PEST
-0x50b0,		// PET
-0x9d0b0,		// PETS
 0x598510,		// PHASE
 0x2510,		// PHI
 0x9a510,		// PHIS
@@ -980,10 +821,6 @@
 0x530,		// PIA
 0x60530,		// PIAL
 0x70530,		// PIAN
-0xd30,		// PIC
-0x28d30,		// PICE
-0x1530,		// PIE
-0x91530,		// PIER
 0x120b130,		// PILAR
 0x3930,		// PIN
 0xb930,		// PINA
@@ -1000,40 +837,28 @@
 0x9590,		// PLEA
 0x171590,		// PLENA
 0x6590,		// PLY
-0x11f0,		// POD
-0x800695f0L,		// POEM, seed word (533D: 4)
 0x21f0,		// POH
-0x35f0,		// POM
-0x2b5f0,		// POME
-0x239f0,		// POND
 0x2b9f0,		// PONE
 0x2c9f0,		// PORE
 0x44df0,		// POSH
-0xa04755f0L,		// POUND, seed word (533D: 5)
 0xa0650,		// PRAT
 0xc8650,		// PRAY
-0xa051a650L,		// PRICE, seed word (533D: 5)
 0x3e50,		// PRO
 0x6650,		// PRY
 0x2670,		// PSI
-0x12b0,		// PUD
-0x3ab0,		// PUN
 0x600052b0,		// PUT, seed word (533D: 3)
 0x730,		// PYA
-0x80028c32L,		// RACE, seed word (533D: 4)
+0x28c32,		// RACE
 0x1032,		// RAD
 0x1c32,		// RAG
 0x29c32,		// RAGE
-0x99c32,		// RAGS
 0x2032,		// RAH
 0x22432,		// RAID
 0x62432,		// RAIL
-0x80072432L,		// RAIN, seed word (533D: 4)
+0x72432,		// RAIN
 0x2b032,		// RALE
 0x3432,		// RAM
-0x9b432,		// RAMS
 0x60003832,		// RAN, seed word (533D: 3)
-0x23832,		// RAND
 0x3b832,		// RANG
 0x4b832,		// RANI
 0xa3832,		// RANT
@@ -1045,7 +870,6 @@
 0x44c32,		// RASH
 0x84c32,		// RASP
 0x5032,		// RAT
-0x81d032,		// RATCH
 0x8002d032L,		// RATE, seed word (533D: 4)
 0x42d032,		// RATED
 0xc2d032,		// RATEL
@@ -1063,13 +887,10 @@
 0xcb2,		// REC
 0x98cb2,		// RECS
 0x600010b2,		// RED, seed word (533D: 3)
-0x14b2,		// REE
-0x994b2,		// REES
 0x18b2,		// REF
 0x1cb2,		// REG
 0xc09cb2,		// REGAL
 0x24b2,		// REI
-0x324b2,		// REIF
 0x9a4b2,		// REIS
 0x190b0b2,		// RELAY
 0xcb0b2,		// RELY
@@ -1085,8 +906,6 @@
 0x70d0b2,		// RETAG
 0x180d0b2,		// RETAX
 0x9d0b2,		// RETS
-0x58b2,		// REV
-0x9d8b2,		// REVS
 0x60b2,		// REX
 0x9512,		// RHEA
 0x3d12,		// RHO
@@ -1094,28 +913,15 @@
 0x532,		// RIA
 0x60532,		// RIAL
 0x1470532,		// RIANT
-0x28d32,		// RICE
-0x428d32,		// RICED
 0x1132,		// RID
-0x80029132L,		// RIDE, seed word (533D: 4)
-0x1932,		// RIF
-0x29932,		// RIFE
-0x99932,		// RIFS
-0xa1932,		// RIFT
-0x13a1932,		// RIFTS
 0x3932,		// RIN
 0x4132,		// RIP
-0x2c132,		// RIPE
 0x8002cd32L,		// RISE, seed word (533D: 4)
 0x2d132,		// RITE
-0x2d932,		// RIVE
-0x42d932,		// RIVED
-0x800205f2L,		// ROAD, seed word (533D: 4)
 0x685f2,		// ROAM
 0xdf2,		// ROC
 0x98df2,		// ROCS
 0x11f2,		// ROD
-0x991f2,		// RODS
 0x15f2,		// ROE
 0x995f2,		// ROES
 0x35f2,		// ROM
@@ -1129,15 +935,11 @@
 0x9d1f2,		// ROTS
 0xa04755f2L,		// ROUND, seed word (533D: 5)
 0x60005df2,		// ROW, seed word (533D: 3)
-0x9ddf2,		// ROWS
 0x8a5df2,		// ROWTH
 0x292b2,		// RUDE
 0x16b2,		// RUE
 0x216b2,		// RUED
 0x996b2,		// RUES
-0x1eb2,		// RUG
-0x9eb2,		// RUGA
-0x99eb2,		// RUGS
 0x60003ab2,		// RUN, seed word (533D: 3)
 0x2bab2,		// RUNE
 0x2ceb2,		// RUSE
@@ -1145,11 +947,8 @@
 0x1732,		// RYE
 0xa3f32,		// RYOT
 0x13a3f32,		// RYOTS
-0x833,		// SAB
-0x28833,		// SABE
 0xc33,		// SAC
 0x1033,		// SAD
-0x29033,		// SADE
 0x49033,		// SADI
 0x1433,		// SAE
 0x1c33,		// SAG
@@ -1164,7 +963,6 @@
 0x4033,		// SAP
 0x60005033,		// SAT, seed word (533D: 3)
 0x2d033,		// SATE
-0x5433,		// SAU
 0x5c33,		// SAW
 0x60006433,		// SAY, seed word (533D: 3)
 0xa0560473L,		// SCALE, seed word (533D: 5)
@@ -1179,21 +977,15 @@
 0xcb3,		// SEC
 0x14b3,		// SEE
 0x614b3,		// SEEL
-0x914b3,		// SEER
 0x24b3,		// SEI
 0x30b3,		// SEL
 0x38b3,		// SEN
-0x800238b3L,		// SEND, seed word (533D: 4)
-0x800a38b3L,		// SENT, seed word (533D: 4)
-0xa40b3,		// SEPT
+0xa38b3,		// SENT
 0x48b3,		// SER
-0x2c8b3,		// SERE
-0xa05b48b3L,		// SERVE, seed word (533D: 5)
 0x50b3,		// SET
 0xd0b3,		// SETA
 0xc0d0b3,		// SETAL
 0xe7d0b3,		// SETON
-0x122d8b3,		// SEVER
 0x5cb3,		// SEW
 0x113,		// SH
 0x513,		// SHA
@@ -1203,27 +995,22 @@
 0xb8513,		// SHAW
 0x60001513,		// SHE, seed word (533D: 3)
 0x9513,		// SHEA
-0x99513,		// SHES
 0xb9513,		// SHEW
 0x80082513L,		// SHIP, seed word (533D: 4)
 0x2bd13,		// SHOE
 0x122bd13,		// SHOER
-0xa132bd13L,		// SHOES, seed word (533D: 5)
 0x80083d13L,		// SHOP, seed word (533D: 4)
 0x593d13,		// SHORE
 0xa1493d13L,		// SHORT, seed word (533D: 5)
 0xa3d13,		// SHOT
 0x5a3d13,		// SHOTE
-0x800bbd13L,		// SHOW, seed word (533D: 4)
+0xbbd13,		// SHOW
 0xa0ebbd13L,		// SHOWN, seed word (533D: 5)
 0x133,		// SI
 0x60533,		// SIAL
-0x80029133L,		// SIDE, seed word (533D: 4)
+0x29133,		// SIDE
 0x561133,		// SIDLE
-0xa1933,		// SIFT
 0x23133,		// SILD
-0x63133,		// SILL
-0x7b133,		// SILO
 0xa3133,		// SILT
 0x4133,		// SIP
 0x60004933,		// SIR, seed word (533D: 3)
@@ -1241,32 +1028,21 @@
 0xa2593,		// SLIT
 0x2bd93,		// SLOE
 0xa3d93,		// SLOT
-0x215d3,		// SNED
 0xa3dd3,		// SNOT
 0x800bbdd3L,		// SNOW, seed word (533D: 4)
 0x400001f3,		// SO, seed word (533D: 2)
 0x560df3,		// SOCLE
 0x11f3,		// SOD
-0x800625f3L,		// SOIL, seed word (533D: 4)
 0x31f3,		// SOL
-0x800231f3L,		// SOLD, seed word (533D: 4)
 0x2b1f3,		// SOLE
-0x4b1f3,		// SOLI
-0x7b1f3,		// SOLO
-0xa05b31f3L,		// SOLVE, seed word (533D: 5)
-0x8002b5f3L,		// SOME, seed word (533D: 4)
 0x600039f3,		// SON, seed word (533D: 3)
 0x2b9f3,		// SONE
-0xa3df3,		// SOOT
 0x41f3,		// SOP
 0x441f3,		// SOPH
-0x249f3,		// SORD
 0x2c9f3,		// SORE
 0xa49f3,		// SORT
-0x4df3,		// SOS
 0x51f3,		// SOT
 0x451f3,		// SOTH
-0xc7d1f3,		// SOTOL
 0x55f3,		// SOU
 0xa04755f3L,		// SOUND, seed word (533D: 5)
 0x5df3,		// SOW
@@ -1280,7 +1056,6 @@
 0xa0613,		// SPAT
 0xa0b09613L,		// SPEAK, seed word (533D: 5)
 0x19613,		// SPEC
-0xa1471613L,		// SPENT, seed word (533D: 5)
 0x2653,		// SRI
 0x560693,		// STALE
 0xa1068693L,		// STAMP, seed word (533D: 5)
@@ -1289,26 +1064,18 @@
 0x161693,		// STELA
 0x561693,		// STELE
 0xf71693,		// STENO
-0x81693,		// STEP
-0xa0c62693L,		// STILL, seed word (533D: 5)
-0x92693,		// STIR
 0xbe93,		// STOA
 0xa0563e93L,		// STOLE, seed word (533D: 5)
 0xa0573e93L,		// STONE, seed word (533D: 5)
-0xc7be93,		// STOOL
 0xa0593e93L,		// STORE, seed word (533D: 5)
 0xa1993e93L,		// STORY, seed word (533D: 5)
 0x197ca93,		// STROY
 0x6693,		// STY
 0x16b3,		// SUE
 0x916b3,		// SUER
-0xa1209eb3L,		// SUGAR, seed word (533D: 5)
-0x800a26b3L,		// SUIT, seed word (533D: 4)
 0x600036b3,		// SUM, seed word (533D: 3)
 0x60003ab3,		// SUN, seed word (533D: 3)
-0xcab3,		// SURA
 0x8002cab3L,		// SURE, seed word (533D: 4)
-0x493ef3,		// SWORD
 0x34,		// TA
 0x834,		// TAB
 0xa0560834L,		// TABLE, seed word (533D: 5)
@@ -1380,29 +1147,21 @@
 0x164cb4,		// TESLA
 0x5cb4,		// TEW
 0x28514,		// THAE
-0x80070514L,		// THAN, seed word (533D: 4)
-0xb8514,		// THAW
 0x60001514,		// THE, seed word (533D: 3)
 0x119514,		// THECA
 0xa1249514L,		// THEIR, seed word (533D: 5)
-0x80071514L,		// THEN, seed word (533D: 4)
-0xb9514,		// THEW
-0x800c9514L,		// THEY, seed word (533D: 4)
 0x92514,		// THIR
 0x3d14,		// THO
 0xa059bd14L,		// THOSE, seed word (533D: 5)
 0x7c914,		// THRO
 0x57c914,		// THROE
 0x177c914,		// THROW
-0x6514,		// THY
 0x134,		// TI
 0x29134,		// TIDE
 0x1534,		// TIE
 0x80021534L,		// TIED, seed word (533D: 4)
 0x91534,		// TIER
 0x3134,		// TIL
-0x63134,		// TILL
-0x1363134,		// TILLS
 0x9b134,		// TILS
 0x3934,		// TIN
 0x4134,		// TIP
@@ -1419,15 +1178,10 @@
 0x1df4,		// TOG
 0x2b1f4,		// TOLE
 0x132b1f4,		// TOLES
-0x35f4,		// TOM
-0x9b5f4,		// TOMS
 0x39f4,		// TON
 0x8002b9f4L,		// TONE, seed word (533D: 4)
 0x132b9f4,		// TONES
 0x9b9f4,		// TONS
-0x3df4,		// TOO
-0x63df4,		// TOOL
-0xa1363df4L,		// TOOLS, seed word (533D: 5)
 0x49f4,		// TOR
 0x2c9f4,		// TORE
 0x132c9f4,		// TORES
@@ -1452,8 +1206,6 @@
 0x6654,		// TRY
 0xab4,		// TUB
 0x8ab4,		// TUBA
-0x26b4,		// TUI
-0x9a6b4,		// TUIS
 0x3ab4,		// TUN
 0xbab4,		// TUNA
 0x42b4,		// TUP
@@ -1473,34 +1225,15 @@
 0x791d5,		// UNDO
 0x4dd5,		// UNS
 0x215,		// UP
-0x79215,		// UPDO
-0x3e15,		// UPO
-0x73e15,		// UPON
 0x1255,		// URD
 0x3a55,		// URN
-0xce55,		// URSA
 0x275,		// US
 0x60001675,		// USE, seed word (533D: 3)
 0x91675,		// USER
 0x295,		// UT
 0x695,		// UTA
-0x4e95,		// UTS
-0x14b6,		// VEE
-0x914b6,		// VEER
-0x13914b6,		// VEERS
-0x994b6,		// VEES
-0x59c8b6,		// VERSE
-0x29136,		// VIDE
-0x1536,		// VIE
-0x21536,		// VIED
-0x91536,		// VIER
-0x15f6,		// VOE
-0x995f6,		// VOES
-0x2b1f6,		// VOLE
-0x132b1f6,		// VOLES
 0x1437,		// WAE
 0x3837,		// WAN
-0x800a3837L,		// WANT, seed word (533D: 4)
 0x60004837,		// WAR, seed word (533D: 3)
 0x2c837,		// WARE
 0xa4837,		// WART
@@ -1515,19 +1248,9 @@
 0xa48b7,		// WERT
 0x50b7,		// WET
 0x517,		// WHA
-0x800a0517L,		// WHAT, seed word (533D: 4)
-0xa1517,		// WHET
-0xa2517,		// WHIT
-0xa05a2517L,		// WHITE, seed word (533D: 5)
 0x60003d17,		// WHO, seed word (533D: 3)
-0xa0563d17L,		// WHOLE, seed word (533D: 5)
-0x8006bd17L,		// WHOM, seed word (533D: 4)
 0x1493d17,		// WHORT
 0xa059bd17L,		// WHOSE, seed word (533D: 5)
-0x5137,		// WIT
-0x2d137,		// WITE
-0x45137,		// WITH
-0x545137,		// WITHE
 0x1f7,		// WO
 0x15f7,		// WOE
 0x995f7,		// WOES
@@ -1536,8 +1259,6 @@
 0x39f7,		// WON
 0x9b9f7,		// WONS
 0xa39f7,		// WONT
-0x249f7,		// WORD
-0xa13249f7L,		// WORDS, seed word (533D: 5)
 0x2c9f7,		// WORE
 0xa49f7,		// WORT
 0xa08a49f7L,		// WORTH, seed word (533D: 5)
@@ -1559,7 +1280,6 @@
 0x4b9,		// YEA
 0x800904b9L,		// YEAR, seed word (533D: 4)
 0x984b9,		// YEAS
-0x20b9,		// YEH
 0x230b9,		// YELD
 0x38b9,		// YEN
 0x4cb9,		// YES
@@ -1569,6 +1289,3 @@
 0x11f9,		// YOD
 0x35f9,		// YOM
 0x39f9,		// YON
-0x10ba,		// ZED
-0x2b9fa,		// ZONE
-0x42b9fa,		// ZONED
