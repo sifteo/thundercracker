@@ -60,7 +60,7 @@ struct Connection {
 //-----------------------------------------------------------------------------
 
 #ifndef NUM_CUBES
-#  define NUM_CUBES 3
+#  define NUM_CUBES 4
 #endif
 
 static Cube cubes[NUM_CUBES];
@@ -127,11 +127,17 @@ static void RenderView(Cube& c, ViewState view) {
   }
 
   // Major Diagonals
-
-  mode.BG0_drawAsset(Vec2(4,4), MajorNW, vunion & 0x03);
-  mode.BG0_drawAsset(Vec2(4,9), MajorSW, vunion & 0x03);
-  mode.BG0_drawAsset(Vec2(9,9), MajorSE, 3 - (vunion & 0x03));
-  mode.BG0_drawAsset(Vec2(9,4), MajorNE, 3 - (vunion & 0x03));
+  if (lowestBit > 1) {
+    mode.BG0_drawAsset(Vec2(4,4), Center, lowestBit);
+    mode.BG0_drawAsset(Vec2(4,9), Center, lowestBit);
+    mode.BG0_drawAsset(Vec2(9,9), Center, lowestBit);
+    mode.BG0_drawAsset(Vec2(9,4), Center, lowestBit);
+  } else {
+    mode.BG0_drawAsset(Vec2(4,4), MajorNW, vunion & 0x03);
+    mode.BG0_drawAsset(Vec2(4,9), MajorSW, vunion & 0x03);
+    mode.BG0_drawAsset(Vec2(9,9), MajorSE, 3 - (vunion & 0x03));
+    mode.BG0_drawAsset(Vec2(9,4), MajorNE, 3 - (vunion & 0x03));
+  }
 
   // Major Joints
   mode.BG0_drawAsset(Vec2(3,1), MajorN, keyIndices[vunion] + CountBits(vunion ^ view.masks[0]));
