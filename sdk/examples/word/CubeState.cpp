@@ -38,7 +38,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         &TeethNewWord2,      // ImageIndex_ConnectedWord,
         &TeethLoopWordLeft, // ImageIndex_ConnectedLeft,
         &TeethNewWord2Left,  // ImageIndex_ConnectedLeftWord,
-        &TeethLoopWordRight,// ImageIndex_ConnectedRight,
+        &TeethLoopWordRightTop,// ImageIndex_ConnectedRight,
         &TeethNewWord2Right, // ImageIndex_ConnectedRightWord,
         &TeethLoopNeighboredTop,// ImageIndex_Neighbored,
         &Teeth,             // ImageIndex_Teeth,
@@ -112,25 +112,46 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     BG1Helper bg1(mStateMachine->getCube());
     for (unsigned int i = 0; i < 16; ++i) // rows
     {
-        if (i > 8)
+        for (unsigned j=0; j < 16; ++j) // columns
         {
+
+            Vec2 texCoord(j, i);
             switch (teethImageIndex)
             {
             case ImageIndex_Connected:
-                teeth = &TeethLoopWordBottom;
+                if (i >= 14)
+                {
+                    teeth = &TeethLoopWordBottom;
+                    texCoord.y = i - 14;
+                }
                 break;
 
             case ImageIndex_Neighbored:
-                teeth = &TeethLoopNeighboredBottom;
+                if (i >= 14)
+                {
+                    teeth = &TeethLoopNeighboredBottom;
+                    texCoord.y = i - 14;
+                }
+                break;
+
+            case ImageIndex_ConnectedRight:
+                if (i >= 14)
+                {
+                    teeth = &TeethLoopWordRightBottom;
+                    texCoord.y = i - 14;
+                }
+                else if (i >= 2)
+                {
+                    teeth = &TeethLoopWordRightRight;
+                    texCoord.x = j % teeth->width;
+                    texCoord.y = i - 2;
+                }
                 break;
 
             default:
                 break;
             }
-        }
 
-        for (unsigned j=0; j < teeth->width; ++j) // columns
-        {
             switch (getTransparencyType(teethImageIndex, frame, j, i))
             {
             case TransparencyType_None:
@@ -151,7 +172,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                 }
                 else
                 {
-                    vid.BG0_drawPartialAsset(Vec2(j, i), Vec2(j, i % teeth->height), Vec2(1, 1), *teeth, frame);
+                    vid.BG0_drawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
                 }
                 break;
 
@@ -171,7 +192,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                 }
                 else
                 {
-                    bg1.DrawPartialAsset(Vec2(j, i), Vec2(j, i % teeth->height), Vec2(1, 1), *teeth, frame);
+                    bg1.DrawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
                 }
                 break;
 
@@ -268,7 +289,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                 vid.BG0_drawAsset(Vec2(1,3), font, frame);
 
 
-                if (paintSprites)
+                if (false && paintSprites)
                 {
                     enum EyePersonality
                     {
