@@ -4,7 +4,7 @@
 #include <sifteo.h>
 
 const unsigned CUBE_ID_BASE = 0; //- start of the range of cube IDs
-const unsigned NUM_CUBES = 5;
+const unsigned NUM_CUBES = 3;
 inline void compileMe() { STATIC_ASSERT(CUBE_ID_BASE + NUM_CUBES <= CUBE_ALLOCATION); }
 
 const bool MUSIC_ON = false;
