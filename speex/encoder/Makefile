@@ -9,7 +9,11 @@ include ../../Makefile.platform
 ifeq ($(BUILD_PLATFORM), windows32)
     SPEEX_DIR = ../../deps/win32/speex
 else
-    SPEEX_DIR = ../../deps/osx/x86_64/speex
+	ifeq ( $(BUILD_ARCH),i386 )
+	SPEEX_DIR = ../../deps/osx/i386/speex
+	else
+	SPEEX_DIR = ../../deps/osx/x86_64/speex
+	endif
 endif
 
 INCLUDES = -I$(SPEEX_DIR)/include
