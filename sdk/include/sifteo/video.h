@@ -238,18 +238,36 @@ class VidMode_BG0 : public VidMode {
         buf.pokei(BG0_addr(point), index);
     }
 
-    void BG0_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
+    /*
+     * XXX: We already have two different kinds of assets (pinned vs. mapped) overloaded
+     *      in AssetImage. We should probably have STIR generate totally different classes
+     *      for assets that have different storage formats, so that we can have overloaded
+     *      routines to handle them differently.
+     *
+     * XXX: Support for pinned assets currently TOTALLY bogus. STIR hasn't even given
+     *      us a base address, we're just assuming zero.
+     */
+
+    NEVER_INLINE void BG0_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
         ASSERT( frame < asset.frames );
         uint16_t addr = BG0_addr(point);
         unsigned offset = asset.width * asset.height * frame;
         const unsigned base = 0;
 
-        _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
-                        asset.width, asset.height, asset.width, BG0_width);
+        for (unsigned y = 0; y < asset.height; y++) {
+            if (asset.tiles)
+                _SYS_vbuf_writei(&buf.sys, addr, asset.tiles + offset, base, asset.width);
+            else
+                _SYS_vbuf_seqi(&buf.sys, addr, offset + base, asset.width);
+
+            addr += BG0_width;
+            offset += asset.width;
+        }
     }
 
+
     //draw a partial asset.  Pass in the position, xy min points, and width/height
-    void BG0_drawPartialAsset(const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0) {
+    NEVER_INLINE void BG0_drawPartialAsset(const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0) {
         ASSERT( frame < asset.frames );
         ASSERT( offset.x >= 0 && offset.y >= 0 );
         ASSERT( size.x >= 0 && size.y >= 0 );
@@ -260,8 +278,15 @@ class VidMode_BG0 : public VidMode {
         unsigned tileOffset = asset.width * asset.height * frame + ( asset.width * offset.y ) + offset.x;
         const unsigned base = 0;
 
-        _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + tileOffset, base,
-                        size.x, size.y, asset.width, BG0_width);
+        for (int y = 0; y < size.y; y++) {
+            if (asset.tiles)
+                _SYS_vbuf_writei(&buf.sys, addr, asset.tiles + tileOffset, base, size.x);
+            else
+                _SYS_vbuf_seqi(&buf.sys, addr, tileOffset + base, size.x);
+
+            addr += BG0_width;
+            tileOffset += asset.width;
+        }
     }
 
 
@@ -475,21 +500,32 @@ public:
 
     void resizeSprite(int id, int px, int py)
     {
-        // Size must be a power of two in current firmwares.
-        ASSERT((px & (px - 1)) == 0);
-        ASSERT((py & (py - 1)) == 0);
+      uint8_t xb = -px;
+      uint8_t yb = -py;
+      uint16_t word = ((uint16_t)xb << 8) | yb;
+      uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
+                       sizeof(_SYSSpriteInfo)/2 * id );
 
-        _SYS_vbuf_spr_resize(&buf.sys, id, px, py);
+      // Size must be a power of two in current firmwares.
+      ASSERT((px & (px - 1)) == 0);
+      ASSERT((py & (py - 1)) == 0);
+
+      _SYS_vbuf_poke(&buf.sys, addr, word);
     }
 
     void hideSprite(int id)
     {
-        resizeSprite(id, 0, 0);
+      resizeSprite(id, 0, 0);
     }
 
     void moveSprite(int id, int px, int py)
     {
-        _SYS_vbuf_spr_resize(&buf.sys, id, px, py);
+      uint8_t xb = -px;
+      uint8_t yb = -py;
+      uint16_t word = ((uint16_t)xb << 8) | yb;
+      uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
+                       sizeof(_SYSSpriteInfo)/2 * id );
+      _SYS_vbuf_poke(&buf.sys, addr, word);
     }
 };
 
@@ -549,13 +585,25 @@ class VidMode_BG2 : public VidMode {
         buf.pokei(BG2_addr(point), index);
     }
 
-    void BG2_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
+    /*
+     * XXX: Same code as BG0_drawAsset for now, same problems. Needs a
+     *      big hit with the refactoring stick.
+     */
+
+    NEVER_INLINE void BG2_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
         uint16_t addr = BG2_addr(point);
         unsigned offset = asset.width * asset.height * frame;
         const unsigned base = 0;
 
-        _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
-                        asset.width, asset.height, asset.width, BG2_width);
+        for (unsigned y = 0; y < asset.height; y++) {
+            if (asset.tiles)
+                _SYS_vbuf_writei(&buf.sys, addr, asset.tiles + offset, base, asset.width);
+            else
+                _SYS_vbuf_seqi(&buf.sys, addr, offset + base, asset.width);
+
+            addr += BG2_width;
+            offset += asset.width;
+        }
     }
 };    
 
