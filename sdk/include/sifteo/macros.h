@@ -13,6 +13,24 @@
 #endif
 
 /*
+ * When we're doing an embedded build with Newlib, use integer-only
+ * printf() functions, so we can avoid linking in atod() and all of the
+ * giant dependencies that this entails.
+ *
+ * This means that specifiers like %f and %g will not work!
+ *
+ * (Of course, they wouldn't work anyway if we were running without dynamic
+ * memory allocation support, as atod requires a malloc'ed buffer.)
+ */
+ 
+#ifdef _NEWLIB_STDIO_H
+#define printf      iprintf
+#define sprintf     siprintf
+#define snprintf    sniprintf
+#define vsnprintf   vsniprintf
+#endif
+
+/*
  * ASSERT is not an error handling mechanism! They are only present in
  * simulator builds. Use ASSERTs to catch errors that shouldn't be
  * possible; cases where without the ASSERT, you'd be crashing or
