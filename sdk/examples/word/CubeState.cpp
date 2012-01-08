@@ -112,14 +112,14 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     BG1Helper bg1(mStateMachine->getCube());
     for (unsigned int i = 0; i < 16; ++i) // rows
     {
-        for (unsigned j=0; j < teeth->width; ++j) // columns
+        for (unsigned j=0; j < 16; ++j) // columns
         {
 
             Vec2 texCoord(j, i);
             switch (teethImageIndex)
             {
             case ImageIndex_Connected:
-                if (i > 8)
+                if (i >= 14)
                 {
                     teeth = &TeethLoopWordBottom;
                     texCoord.y = i - 14;
@@ -127,7 +127,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                 break;
 
             case ImageIndex_Neighbored:
-                if (i > 8)
+                if (i >= 14)
                 {
                     teeth = &TeethLoopNeighboredBottom;
                     texCoord.y = i - 14;
@@ -135,16 +135,16 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                 break;
 
             case ImageIndex_ConnectedRight:
-                if (i >= 2)
-                {
-                    teeth = &TeethLoopWordRightRight;
-                    texCoord.x = j - 14;
-                    texCoord.y = i - 2;
-                }
-                else if (i >= 14)
+                if (i >= 14)
                 {
                     teeth = &TeethLoopWordRightBottom;
                     texCoord.y = i - 14;
+                }
+                else if (i >= 2)
+                {
+                    teeth = &TeethLoopWordRightRight;
+                    texCoord.x = j % teeth->width;
+                    texCoord.y = i - 2;
                 }
                 break;
 
@@ -289,7 +289,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                 vid.BG0_drawAsset(Vec2(1,3), font, frame);
 
 
-                if (paintSprites)
+                if (false && paintSprites)
                 {
                     enum EyePersonality
                     {
