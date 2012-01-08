@@ -238,7 +238,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 }
 
 
-void GridSlot::Update(float t, VidMode_BG0 &vid)
+void GridSlot::Update(float t)
 {
 	switch( m_state )
 	{
@@ -259,7 +259,9 @@ void GridSlot::Update(float t, VidMode_BG0 &vid)
 			Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
 
             //clear this out in update
-            vid.BG0_drawAsset(m_curMovePos, GemEmpty, 0);
+            //vid.BG0_drawAsset(m_curMovePos, GemEmpty, 0);
+            m_pWrapper->QueueClear( m_curMovePos );
+
 
 			if( vDiff.x != 0 )
             {
@@ -359,7 +361,8 @@ void GridSlot::Update(float t, VidMode_BG0 &vid)
         case STATE_GONE:
         {
             Vec2 vec( m_col * 4, m_row * 4 );
-            vid.BG0_drawAsset(vec, GemEmpty, 0);
+            m_pWrapper->QueueClear( vec );
+            //vid.BG0_drawAsset(vec, GemEmpty, 0);
             break;
         }
 		default:

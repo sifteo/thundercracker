@@ -49,7 +49,7 @@ static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] =
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
         m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
-        m_lastTiltDir( 0 ), m_queuedFlush( false ), m_dirty( true )
+        m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true )
 {
 	for( int i = 0; i < NUM_SIDES; i++ )
 	{
@@ -104,6 +104,7 @@ void CubeWrapper::Reset()
     m_intro.Reset();
     m_gameover.Reset();
     m_glimmer.Reset();
+    m_numQueuedClears = 0;
     m_dirty = true;
 	Refill();
 }
@@ -116,7 +117,7 @@ bool CubeWrapper::DrawProgress( AssetGroup &assets )
 }
 
 void CubeWrapper::Draw()
-{
+{   
 	switch( Game::Inst().getState() )
 	{
 		case Game::STATE_SPLASH:
@@ -138,6 +139,14 @@ void CubeWrapper::Draw()
 				{
 					//clear out grid first (somewhat wasteful, optimize if necessary)
                     //m_vid.clear(GemEmpty.tiles[0]);
+                    //flush our queued clears
+                    for( int i = 0; i < m_numQueuedClears; i++ )
+                    {
+                        m_vid.BG0_drawAsset(m_queuedClears[i], GemEmpty, 0);
+                    }
+
+                    m_numQueuedClears = 0;
+
 					//draw grid
 					for( int i = 0; i < NUM_ROWS; i++ )
 					{
@@ -329,7 +338,7 @@ void CubeWrapper::Update(float t, float dt)
                 for( int j = 0; j < NUM_COLS; j++ )
                 {
                     GridSlot &slot = m_grid[i][j];
-                    slot.Update( t, m_vid );
+                    slot.Update( t );
                 }
             }
 
@@ -1192,4 +1201,12 @@ void CubeWrapper::FlushBG1()
         m_bg1helper.Flush();
         m_queuedFlush = false;
     }
+}
+
+
+void CubeWrapper::QueueClear( Vec2 &pos )
+{
+    m_queuedClears[m_numQueuedClears] = pos;
+    m_numQueuedClears++;
+    ASSERT( m_numQueuedClears <= NUM_ROWS * NUM_COLS );
 }

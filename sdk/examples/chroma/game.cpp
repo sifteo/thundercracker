@@ -93,6 +93,8 @@ void Game::Update()
     float dt = t - m_fLastTime;
     m_fLastTime = t;
 
+    bool needsync = false;
+
 	if( m_state == STATE_SPLASH )
 	{
 		for( int i = 0; i < NUM_CUBES; i++ )
@@ -135,7 +137,7 @@ void Game::Update()
 
         //always finishing works
         //System::finish();
-
+#if !SLOW_MODE
         //if any of our cubes have messed with bg1's bitmaps,
         //force a finish here
         for( int i = 0; i < NUM_CUBES; i++ )
@@ -144,16 +146,24 @@ void Game::Update()
             {
                 //System::finish();
                 System::paintSync();
+                needsync = true;
                 //printf( "finishing\n" );
                 break;
             }
         }
-
+#endif
         for( int i = 0; i < NUM_CUBES; i++ )
             cubes[i].FlushBG1();
 	}
 
-    System::paint();
+#if SLOW_MODE
+    System::paintSync();
+#else
+    if( needsync )
+        System::paintSync();
+    else
+        System::paint();
+#endif
 
     m_pSoundThisFrame = NULL;
 }
