@@ -33,6 +33,8 @@ TeethClockPulse2 = image{"teeth_2.png", width=16, height=16, quality=10}
 TeethClockPulse1 = image{"teeth_1.png", width=16, height=16, quality=10}
 TeethClockPulse0 = image{"teeth_0.png", width=16, height=16, quality=10}
 
+ScreenOff = image{"PowerOff.png", width=128, height=128}
+
 blip = sound{"blip.raw"}
 bonus = sound{"bonus.raw"}
 fanfare_fire_laugh_01 = sound{"fanfare_fire_laugh_01.raw"}
