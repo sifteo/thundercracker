@@ -174,7 +174,7 @@ static void RenderViews() {
 }
 
 static void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
-  if (s0 != (s1+2)%4) {
+  if (connectionCount == NUM_CUBES-1 || s0 != (s1+2)%4) {
     return;
   }
   // update connections list
