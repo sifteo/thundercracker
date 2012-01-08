@@ -129,6 +129,8 @@ typedef struct SBDecState {
 } SBDecState;
 
 
+#ifndef STRIP_ENCODER
+
 /**Initializes encoder state*/
 void *sb_encoder_init(const SpeexMode *m);
 
@@ -137,6 +139,8 @@ void sb_encoder_destroy(void *state);
 
 /**Encodes one frame*/
 int sb_encode(void *state, void *in, SpeexBits *bits);
+
+#endif
 
 
 /**Initializes decoder state*/
@@ -148,7 +152,9 @@ void sb_decoder_destroy(void *state);
 /**Decodes one frame*/
 int sb_decode(void *state, SpeexBits *bits, void *out);
 
+#ifndef STRIP_ENCODER
 int sb_encoder_ctl(void *state, int request, void *ptr);
+#endif
 
 int sb_decoder_ctl(void *state, int request, void *ptr);
 

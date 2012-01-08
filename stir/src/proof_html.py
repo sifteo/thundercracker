@@ -134,10 +134,10 @@ header = """
          this.ctx.drawImage(tile, 0, 0, tile.width, tile.height, 
                             x*this.size, y*this.size, this.size, this.size);
 
-         if (highlightTile != null && tile != highlightTile) {
-           // Dim this tile
+         if (tile == highlightTile) {
+           // Hilight (brighten) this tile
            this.ctx.globalAlpha = 0.5;
-           this.ctx.fillStyle = "#000";
+           this.ctx.fillStyle = "#fff";
            this.ctx.fillRect(x*this.size, y*this.size, this.size, this.size);
          }
 
@@ -191,23 +191,12 @@ header = """
              var prev = highlightTile;
              highlightTile = nextHighlightTile;
 
-             if (prev == null || highlightTile == null) {
-               /*
-                * Transitions from highlighted to not highlighted or vice versa
-                * require a full draw, since we're dimming all non-hilighted tiles.
-                */
-          
-               for (var i in allTileGrids)
-                 allTileGrids[i].draw();
+             /*
+              * Only draw the affected tiles
+              */
 
-             } else {
-               /*
-                * Only draw the affected tiles
-                */
-
-               drawTile(prev);
-               drawTile(highlightTile);
-             }
+             drawTile(prev);
+             drawTile(highlightTile);
            }
          }, 0);
        }

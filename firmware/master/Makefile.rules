@@ -21,6 +21,9 @@ program: $(BIN_STM32)
 gdb:
 	$(GDB_STM32) -x $(MASTER_DIR)/stm32/gdb.conf $(BIN_STM32)
 
+sizeprof: $(BIN_STM32)
+	nm --size-sort $(BIN_STM32) | egrep -v " [bB] " | arm-none-eabi-c++filt
+
 $(BIN_SIM): $(OBJS_SIM) $(LIBS_SIM)
 	$(CC_SIM) -o $@ $^ $(LDFLAGS_SIM)
 

@@ -45,23 +45,23 @@ static void onAccelChange(_SYSCubeID cid)
 
 static void onTilt(_SYSCubeID cid)
 {
-    Cube::TiltState state = s_menu.cubes[cid].GetCube().getTiltState();
+    Cube::TiltState state = s_menu.cubes[cid - CUBE_ID_BASE].GetCube().getTiltState();
 
     if( state.x == _SYS_TILT_POSITIVE )
-        s_menu.cubes[cid].Tilt( RIGHT );
+        s_menu.cubes[cid - CUBE_ID_BASE].Tilt( RIGHT );
     else if( state.x == _SYS_TILT_NEGATIVE )
-        s_menu.cubes[cid].Tilt( LEFT );
+        s_menu.cubes[cid - CUBE_ID_BASE].Tilt( LEFT );
     if( state.y == _SYS_TILT_POSITIVE )
-        s_menu.cubes[cid].Tilt( DOWN );
+        s_menu.cubes[cid - CUBE_ID_BASE].Tilt( DOWN );
     else if( state.y == _SYS_TILT_NEGATIVE )
-        s_menu.cubes[cid].Tilt( UP);
+        s_menu.cubes[cid - CUBE_ID_BASE].Tilt( UP);
 }
 
 static void onShake(_SYSCubeID cid)
 {
     _SYS_ShakeState state;
     _SYS_getShake(cid, &state);
-    s_menu.cubes[cid].Shake(state);
+    s_menu.cubes[cid - CUBE_ID_BASE].Shake(state);
 }
 
 
@@ -103,6 +103,7 @@ void MenuController::Init()
 
     bool done = false;
 
+#if LOAD_ASSETS
     PRINT( "getting ready to load" );
 
     while( !done )
@@ -118,6 +119,7 @@ void MenuController::Init()
         System::paint();
     }
     PRINT( "done loading" );
+#endif
 
     //CES hackery, fake power on
     for( int i = 0; i < NUM_CUBES; i++ )

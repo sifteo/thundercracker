@@ -18,10 +18,13 @@ static bool AnyNeighbors(const Cube& c) {
 }
 
 void siftmain() {
+  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
+    gCubes[i].enable(i + CUBE_ID_BASE);
+  }
+#if LOAD_ASSETS
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-	    gCubes[i].enable(i);
-	    gCubes[i].loadAssets(GameAssets);
+      gCubes[i].loadAssets(GameAssets);
 	    VidMode_BG0_ROM rom(gCubes[i].vbuf);
 	    rom.init();
 	    rom.BG0_text(Vec2(1,1), "Loading...");
@@ -37,12 +40,13 @@ void siftmain() {
 	    System::paint();
 	  }
 	}
+#endif
 	{ // fake power-on
 		for(unsigned hack=0; hack<4; ++hack) {
 			for(unsigned i=0; i<NUM_CUBES; ++i) {
 				VidMode_BG0 mode(gCubes[i].vbuf);
 				mode.init();
-				mode.BG0_drawAsset(Vec2(0,0), PowerOff);
+				mode.BG0_drawAsset(Vec2(0,0), ScreenOff);
 				gCubes[i].vbuf.touch();
 			}
 			System::paintSync();
@@ -56,7 +60,7 @@ void siftmain() {
 					cnt += gCubes[i].hasPhysicalNeighborAt(s);
 				}
 				VidMode_BG0(gCubes[i].vbuf)
-					.BG0_drawAsset(Vec2(0,0), AnyNeighbors(gCubes[i]) ? Sting : PowerOff);
+					.BG0_drawAsset(Vec2(0,0), AnyNeighbors(gCubes[i]) ? Sting : ScreenOff);
 			}
 		}
 	}

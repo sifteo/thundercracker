@@ -14,6 +14,17 @@
 
 using namespace Sifteo;
 
+/*
+ * XXX: This is a kludge to save memory for the moment, by not inlining
+ *      frequently used but complex functions. The long-term solution is
+ *      to refactor code into system calls as necessary to avoid unnecessary
+ *      inlining. (If there's one copy of this code, it should live in the firmware
+ *      instead of in each game binary)
+ */
+#ifndef NEVER_INLINE
+#define NEVER_INLINE    __attribute__ ((noinline))
+#endif
+
 class BG1Helper
 {
 public:
@@ -26,13 +37,13 @@ public:
         Clear();
     }
 
-    void Clear()
+    NEVER_INLINE void Clear()
     {
         memset( m_bitset, 0, BG1_ROWS * 2 );
         memset( m_tileset, 0xff, BG1_ROWS * BG1_COLS * 2 );
     }
 
-    void Flush()
+    NEVER_INLINE void Flush()
     {
         unsigned int tileOffset = 0;
 
@@ -69,7 +80,7 @@ public:
         Clear();
     }
 
-    void DrawAsset( const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0 )
+    NEVER_INLINE void DrawAsset( const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0 )
     {
         ASSERT( frame < asset.frames );
         unsigned offset = asset.width * asset.height * frame;
@@ -89,7 +100,7 @@ public:
 
 
 	//draw a partial asset.  Pass in the position, xy min points, and width/height
-    void DrawPartialAsset( const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0 )
+    NEVER_INLINE void DrawPartialAsset( const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0 )
     {
         ASSERT( frame < asset.frames );
         unsigned tileOffset = asset.width * asset.height * frame + ( asset.width * offset.y ) + offset.x;
@@ -115,7 +126,7 @@ public:
     }
 
 
-    void DrawText( const Vec2 &point, const Sifteo::AssetImage &font, const char *str )
+    NEVER_INLINE void DrawText( const Vec2 &point, const Sifteo::AssetImage &font, const char *str )
     {
         Vec2 p = point;
         char c;
@@ -132,7 +143,7 @@ public:
         }
     }
 
-    void DrawTextf( const Vec2 &point, const Sifteo::AssetImage &font, const char *fmt, ... )
+    NEVER_INLINE void DrawTextf( const Vec2 &point, const Sifteo::AssetImage &font, const char *fmt, ... )
     {
         char buf[128];
         va_list ap;
@@ -159,7 +170,7 @@ public:
 
 private:
     //set a number of bits at xoffset of the current bitset
-    void SetBitRange( unsigned int bitsetIndex, unsigned int xOffset, unsigned int number )
+    NEVER_INLINE void SetBitRange( unsigned int bitsetIndex, unsigned int xOffset, unsigned int number )
     {
         ASSERT( bitsetIndex < 16 );
         ASSERT( xOffset < 16 );
@@ -174,7 +185,7 @@ private:
     }
 	//count how many bits set we have total
 	//only used for debug, so I don't care about optimizing it yet
-    unsigned int getBitSetCount() const
+    NEVER_INLINE unsigned int getBitSetCount() const
     {
         unsigned int count = 0;
         for (unsigned y = 0; y < BG1_ROWS; y++)

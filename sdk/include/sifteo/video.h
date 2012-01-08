@@ -14,6 +14,17 @@
 #include <sifteo/machine.h>
 #include <sifteo/math.h>
 
+/*
+ * XXX: This is a kludge to save memory for the moment, by not inlining
+ *      frequently used but complex functions. The long-term solution is
+ *      to refactor code into system calls as necessary to avoid unnecessary
+ *      inlining. (If there's one copy of this code, it should live in the firmware
+ *      instead of in each game binary)
+ */
+#ifndef NEVER_INLINE
+#define NEVER_INLINE    __attribute__ ((noinline))
+#endif
+
 namespace Sifteo {
 
 using namespace Sifteo::Math;
@@ -166,7 +177,7 @@ class VidMode {
         buf.poke(offsetof(_SYSVideoRAM, first_line) / 2, firstLine | (numLines << 8));
     }
 
-    void setRotation(enum Rotation r) {
+    NEVER_INLINE void setRotation(enum Rotation r) {
         const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
         uint8_t flags = buf.peekb(offsetof(_SYSVideoRAM, flags));
         flags &= ~mask;
@@ -211,7 +222,7 @@ class VidMode_BG0 : public VidMode {
     static const unsigned BG0_width = _SYS_VRAM_BG0_WIDTH;
     static const unsigned BG0_height = _SYS_VRAM_BG0_WIDTH;
 
-    void BG0_setPanning(Vec2 pixels) {
+    NEVER_INLINE void BG0_setPanning(Vec2 pixels) {
         pixels.x = pixels.x % (int)(BG0_width * TILE);
         pixels.y = pixels.y % (int)(BG0_height * TILE);
         if (pixels.x < 0) pixels.x += BG0_width * TILE;
@@ -227,33 +238,15 @@ class VidMode_BG0 : public VidMode {
         buf.pokei(BG0_addr(point), index);
     }
 
-    /*
-     * XXX: We already have two different kinds of assets (pinned vs. mapped) overloaded
-     *      in AssetImage. We should probably have STIR generate totally different classes
-     *      for assets that have different storage formats, so that we can have overloaded
-     *      routines to handle them differently.
-     *
-     * XXX: Support for pinned assets currently TOTALLY bogus. STIR hasn't even given
-     *      us a base address, we're just assuming zero.
-     */
-
     void BG0_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
         ASSERT( frame < asset.frames );
         uint16_t addr = BG0_addr(point);
         unsigned offset = asset.width * asset.height * frame;
         const unsigned base = 0;
 
-        for (unsigned y = 0; y < asset.height; y++) {
-            if (asset.tiles)
-                _SYS_vbuf_writei(&buf.sys, addr, asset.tiles + offset, base, asset.width);
-            else
-                _SYS_vbuf_seqi(&buf.sys, addr, offset + base, asset.width);
-
-            addr += BG0_width;
-            offset += asset.width;
-        }
+        _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
+                        asset.width, asset.height, asset.width, BG0_width);
     }
-
 
     //draw a partial asset.  Pass in the position, xy min points, and width/height
     void BG0_drawPartialAsset(const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0) {
@@ -267,15 +260,8 @@ class VidMode_BG0 : public VidMode {
         unsigned tileOffset = asset.width * asset.height * frame + ( asset.width * offset.y ) + offset.x;
         const unsigned base = 0;
 
-        for (int y = 0; y < size.y; y++) {
-            if (asset.tiles)
-                _SYS_vbuf_writei(&buf.sys, addr, asset.tiles + tileOffset, base, size.x);
-            else
-                _SYS_vbuf_seqi(&buf.sys, addr, tileOffset + base, size.x);
-
-            addr += BG0_width;
-            tileOffset += asset.width;
-        }
+        _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + tileOffset, base,
+                        size.x, size.y, asset.width, BG0_width);
     }
 
 
@@ -293,13 +279,13 @@ class VidMode_BG0 : public VidMode {
      *      on those details.
      */
 
-    void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, char c) {
+    NEVER_INLINE void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, char c) {
         unsigned index = c - (int)' ';
         if (index < font.frames)
             BG0_drawAsset(point, font, index);
     }
 
-    void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, const char *str) {
+    NEVER_INLINE void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, const char *str) {
         Vec2 p = point;
         char c;
 
@@ -315,7 +301,7 @@ class VidMode_BG0 : public VidMode {
         }
     }
 
-    void BG0_textf(const Vec2 &point, const Sifteo::AssetImage &font, const char *fmt, ...) {
+    NEVER_INLINE void BG0_textf(const Vec2 &point, const Sifteo::AssetImage &font, const char *fmt, ...) {
         char buf[128];
         va_list ap;
 
@@ -368,7 +354,7 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         BG0_putTile(point, c - ' ');
     }
 
-    void BG0_text(const Vec2 &point, const char *str) {
+    NEVER_INLINE void BG0_text(const Vec2 &point, const char *str) {
         Vec2 p = point;
         char c;
 
@@ -384,7 +370,7 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         }
     }
 
-    void BG0_textf(const Vec2 &point, const char *fmt, ...) {
+    NEVER_INLINE void BG0_textf(const Vec2 &point, const char *fmt, ...) {
         char buf[128];
         va_list ap;
 
@@ -395,7 +381,7 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         va_end(ap);
     }
 
-    void BG0_progressBar(const Vec2 &point, int pixelWidth, int tileHeight=1) {
+    NEVER_INLINE void BG0_progressBar(const Vec2 &point, int pixelWidth, int tileHeight=1) {
         /*
          * XXX: This is kind of the hugest hack.. we should have some good way
          *      of using "well-known assets" from ROM somehow. This could either
@@ -489,32 +475,21 @@ public:
 
     void resizeSprite(int id, int px, int py)
     {
-      uint8_t xb = -px;
-      uint8_t yb = -py;
-      uint16_t word = ((uint16_t)xb << 8) | yb;
-      uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
-                       sizeof(_SYSSpriteInfo)/2 * id );
+        // Size must be a power of two in current firmwares.
+        ASSERT((px & (px - 1)) == 0);
+        ASSERT((py & (py - 1)) == 0);
 
-      // Size must be a power of two in current firmwares.
-      ASSERT((px & (px - 1)) == 0);
-      ASSERT((py & (py - 1)) == 0);
-
-      _SYS_vbuf_poke(&buf.sys, addr, word);
+        _SYS_vbuf_spr_resize(&buf.sys, id, px, py);
     }
 
     void hideSprite(int id)
     {
-      resizeSprite(id, 0, 0);
+        resizeSprite(id, 0, 0);
     }
 
     void moveSprite(int id, int px, int py)
     {
-      uint8_t xb = -px;
-      uint8_t yb = -py;
-      uint16_t word = ((uint16_t)xb << 8) | yb;
-      uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
-                       sizeof(_SYSSpriteInfo)/2 * id );
-      _SYS_vbuf_poke(&buf.sys, addr, word);
+        _SYS_vbuf_spr_resize(&buf.sys, id, px, py);
     }
 };
 
@@ -574,25 +549,13 @@ class VidMode_BG2 : public VidMode {
         buf.pokei(BG2_addr(point), index);
     }
 
-    /*
-     * XXX: Same code as BG0_drawAsset for now, same problems. Needs a
-     *      big hit with the refactoring stick.
-     */
-
     void BG2_drawAsset(const Vec2 &point, const Sifteo::AssetImage &asset, unsigned frame=0) {
         uint16_t addr = BG2_addr(point);
         unsigned offset = asset.width * asset.height * frame;
         const unsigned base = 0;
 
-        for (unsigned y = 0; y < asset.height; y++) {
-            if (asset.tiles)
-                _SYS_vbuf_writei(&buf.sys, addr, asset.tiles + offset, base, asset.width);
-            else
-                _SYS_vbuf_seqi(&buf.sys, addr, offset + base, asset.width);
-
-            addr += BG2_width;
-            offset += asset.width;
-        }
+        _SYS_vbuf_wrect(&buf.sys, addr, asset.tiles + offset, base,
+                        asset.width, asset.height, asset.width, BG2_width);
     }
 };    
 

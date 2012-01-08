@@ -68,10 +68,13 @@ void Game::Init()
 	m_splashTime = System::clock();
     m_fLastTime = m_splashTime;
 
+#if SFX_ON
     for( unsigned int i = 0; i < NUM_SFX_CHANNELS; i++ )
     {
         m_SFXChannels[i].init();
     }
+#endif
+#if MUSIC_ON
     m_musicChannel.init();
 
     //doesn't seem to work
@@ -80,6 +83,7 @@ void Game::Init()
 
     //m_musicChannel.play( astrokraut, LoopRepeat );
     m_musicChannel.play( StingerIV2, LoopOnce );
+#endif
 }
 
 
@@ -97,8 +101,10 @@ void Game::Update()
         if( System::clock() - m_splashTime > 7.0f )
 		{
             m_state = STATE_INTRO;
+#if MUSIC_ON
             m_musicChannel.stop();
             m_musicChannel.play( astrokraut, LoopRepeat );
+#endif
 			m_timer.Init( System::clock() );
 		}
 	}
@@ -473,8 +479,10 @@ void Game::playSound( _SYSAudioModule &sound )
     if( &sound == m_pSoundThisFrame )
         return;
 
+#if SFX_ON
     m_SFXChannels[m_curChannel].stop();
     m_SFXChannels[m_curChannel].play(sound, LoopOnce);
+#endif
 
     //printf( "playing a sound effect %d on channel %d\n", sound.size, m_curChannel );
 

@@ -8,18 +8,18 @@
 
 using namespace Sifteo;
 
-AudioChannelWrapper::AudioChannelWrapper() :
+AudioChannelSlot::AudioChannelSlot() :
     mod(0), state(0), decoder(0), volume(Audio::MAX_VOLUME)
 {
 }
 
-void AudioChannelWrapper::init(_SYSAudioBuffer *b)
+void AudioChannelSlot::init(_SYSAudioBuffer *b)
 {
     buf.init(b);
     volume = Audio::MAX_VOLUME / 2;
 }
 
-void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
+void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec)
 {
     // if this is a sample & either the passed in decoder is null, or our
     // internal decoder is not null, we've got problems
@@ -34,7 +34,7 @@ void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopT
     }
 }
 
-void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, PCMDecoder *dec)
+void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, PCMDecoder *dec)
 {
     this->pcmDecoder = dec;
     this->mod = mod;
@@ -44,7 +44,7 @@ void AudioChannelWrapper::play(const struct _SYSAudioModule *mod, _SYSAudioLoopT
     }
 }
 
-int AudioChannelWrapper::mixAudio(int16_t *buffer, int len)
+int AudioChannelSlot::mixAudio(int16_t *buffer, int len)
 {
     ASSERT(!(state & STATE_STOPPED));
 
@@ -83,7 +83,7 @@ int AudioChannelWrapper::mixAudio(int16_t *buffer, int len)
     return mixable;
 }
 
-void AudioChannelWrapper::fetchData()
+void AudioChannelSlot::fetchData()
 {
     switch (mod->type) {
     case Sample: {
@@ -110,10 +110,9 @@ void AudioChannelWrapper::fetchData()
             return;
         }
         
-        // TODO: Is there some frame size for PCM data?
         uint8_t buffer[PCMDecoder::FRAME_SIZE];
         uint32_t sz = pcmDecoder->decodeFrame(buffer, sizeof(buffer));
-        ASSERT(sz == PCMDecoder::FRAME_SIZE);
+        ASSERT(sz <= PCMDecoder::FRAME_SIZE);
         buf.write(buffer, sz);
     }
     default:
@@ -121,7 +120,7 @@ void AudioChannelWrapper::fetchData()
     }
 }
 
-void AudioChannelWrapper::onPlaybackComplete()
+void AudioChannelSlot::onPlaybackComplete()
 {
     state |= STATE_STOPPED;
     this->decoder = 0;

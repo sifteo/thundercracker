@@ -76,7 +76,7 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         {
         case GameStateIndex_EndOfRoundScored:
             // TODO diff endings
-            WordGame::playAudio(timeup_01_laugh, AudioChannelIndex_Time);
+            WordGame::playAudio(timeup_01, AudioChannelIndex_Time);
             break;
         }
         break;
@@ -123,7 +123,7 @@ void ScoredGameState::createNewAnagram()
 {
     // make a new anagram of letters halfway through the shuffle animation
     EventData data;
-    data.mNewAnagram.mWord = Dictionary::pickWord(MAX_LETTERS_PER_WORD);
+    Dictionary::pickWord(data.mNewAnagram.mWord);
 
     // scramble the string (random permutation)
     // TODO multiple letters per cube
@@ -146,7 +146,7 @@ void ScoredGameState::createNewAnagram()
 
     LOG(("scrambled %s to %s\n", data.mNewAnagram.mWord, scrambled));
     ASSERT(strlen(scrambled) == MAX_LETTERS_PER_WORD);
-    data.mNewAnagram.mWord = scrambled;
+    strcpy(data.mNewAnagram.mWord, scrambled);
     unsigned wordLen = strlen(data.mNewAnagram.mWord);
     unsigned numCubes = GameStateMachine::GetNumCubes();
     if ((wordLen % numCubes) == 0)

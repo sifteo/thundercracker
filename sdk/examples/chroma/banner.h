@@ -28,6 +28,8 @@ public:
 	void SetMessage( const char *pMsg, float duration = SCORE_FADE_DELAY );
 	bool IsActive() const;
 
+    static void DrawScore( BG1Helper &bg1helper, const Vec2 &pos, int score );
+
 private:
 	char m_Msg[MAX_BANNER_LENGTH];
 	float m_fEndTime;

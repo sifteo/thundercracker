@@ -1,12 +1,15 @@
 #ifndef PROTOTYPEWORDLIST_H
 #define PROTOTYPEWORDLIST_H
 
+#include <sifteo.h>
+
 class PrototypeWordList
 {
 public:
     PrototypeWordList();
-    static const char* pickWord(unsigned length);
+    static bool pickWord(char* buffer);
     static bool isWord(const char* string);
+    static bool bitsToString(uint32_t bits, char* buffer);
 
 private:
     //static const char* sList[];

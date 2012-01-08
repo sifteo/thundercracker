@@ -10,7 +10,7 @@ class Dictionary
 public:
     Dictionary();
 
-    static const char* pickWord(unsigned length);
+    static bool pickWord(char* buffer);
     static bool isWord(const char* string);
     static bool isOldWord(const char* word);
 
@@ -20,6 +20,7 @@ private:
     static char sOldWords[MAX_OLD_WORDS][MAX_LETTERS_PER_WORD + 1];
     static unsigned sNumOldWords;
     static unsigned sRandSeed;
+    static unsigned sRound;
 };
 
 #endif // DICTIONARY_H

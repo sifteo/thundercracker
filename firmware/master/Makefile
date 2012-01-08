@@ -32,14 +32,20 @@ ifeq ($(BUILD_PLATFORM), windows32)
     SIM_STATIC_OBJS = $(DEPS_DIR)/speex/lib/obj/*.o \
                         $(DEPS_DIR)/portaudio/lib/obj/*.o
 else
-    DEPS_DIR = $(TC_DIR)/deps/osx
-    SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
-                        $(DEPS_DIR)/portaudio/lib/libportaudio.a
+    ifeq ( $(BUILD_ARCH),i386 )
+		DEPS_DIR = $(TC_DIR)/deps/osx/i386
+	    SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
+	                        $(DEPS_DIR)/portaudio/lib/libportaudio.a
+	else
+		DEPS_DIR = $(TC_DIR)/deps/osx/x86_64
+	    SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
+	                        $(DEPS_DIR)/portaudio/lib/libportaudio.a
+	endif
 endif
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
 CFLAGS := -Icommon -I../include
-CFLAGS_STM32 := -Istm32 $(SPEEX_INC) $(INC_USB_STM32) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER
+CFLAGS_STM32 := -Istm32 $(SPEEX_INC) $(INC_USB_STM32) -DHAVE_CONFIG_H -D_BUILD_SPEEX -DDISABLE_ENCODER -DSTRIP_ENCODER -DSTRIP_NB_MODE
 # NOTE: ST defines here are temporary until we integrate our own USB code
 CFLAGS_STM32 += -DUSE_STM3210C_EVAL -DSTM32F10X_CL -DUSE_STDPERIPH_DRIVER
 CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include \

@@ -10,6 +10,7 @@
 #include <sifteo.h>
 #include "cubewrapper.h"
 #include "TimeKeeper.h"
+#include "config.h"
 
 using namespace Sifteo;
 
@@ -40,7 +41,7 @@ public:
 	
 	Game();
 
-    static const int NUM_CUBES = 3;
+    //static const int NUM_CUBES = 3;
     static const unsigned int NUM_HIGH_SCORES = 5;
     static const unsigned int NUM_SFX_CHANNELS = 3;
     static const int NUM_SLOSH_SOUNDS = 2;
@@ -108,10 +109,14 @@ private:
     float m_fLastTime;
     float m_fLastSloshTime;
 
+#if SFX_ON
     AudioChannel m_SFXChannels[NUM_SFX_CHANNELS];
+#endif
     //which channel to use
     unsigned m_curChannel;
+#if MUSIC_ON
     AudioChannel m_musicChannel;
+#endif
     //use to avoid playing the same sound multiple times in one frame
     const _SYSAudioModule *m_pSoundThisFrame;
 

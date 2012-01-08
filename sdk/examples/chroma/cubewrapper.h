@@ -141,6 +141,8 @@ private:
 
     //do we need to do a bg1 flush?
     bool m_queuedFlush;
+    //TODO, need to start using this for other screens
+    bool m_dirty;
 };
 
 #endif

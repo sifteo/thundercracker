@@ -232,7 +232,10 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         timeSyncState = 1000;
         // cube timer runs at 16Mhz with a prescaler of 12
         const SysTime::Ticks cubeticks = SysTime::ticks() / SysTime::hzTicks(16000000 / 12);
-        const uint16_t cubeSyncTime = (cubeticks + (id() * NEIGHBOR_TX_SLOT_TICKS)) % NEIGHBOR_TIMER_PERIOD_TICKS;
+        // right now, we only have three slots, but want to accommodate larger cube IDs
+        // remove this once we trim neighbor tx slots back down
+        const uint8_t id_tmp = id() % 3;
+        const uint16_t cubeSyncTime = (cubeticks + (id_tmp * NEIGHBOR_TX_SLOT_TICKS)) % NEIGHBOR_TIMER_PERIOD_TICKS;
 
         codec.timeSync(tx.packet, cubeSyncTime);
         tx.noAck = true;    // just throw it out there UDP style
