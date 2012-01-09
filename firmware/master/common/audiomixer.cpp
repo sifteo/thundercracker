@@ -192,6 +192,10 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     AssetIndexEntry *entry;
 
     entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, 512, &size);
+    if (!entry) {
+        LOG(("got null AssetIndexEntry from flash"));
+        return false;
+    }
     entry += mod->id;
     
     int offset = entry->offset;
