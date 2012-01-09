@@ -18,11 +18,11 @@ namespace PNGtoMask {
       // Open a Stream and decode a PNG image
       string[] inputFileNames = { 
         @"..\\..\\..\\wc_letters_connected_center.png",
-        @"..\\..\\..\\wc_letters_connected_center_new.png",
+        @"..\\..\\..\\wc_letters_connected_center_2.png",
         @"..\\..\\..\\wc_letters_connected_left.png",
-        @"..\\..\\..\\wc_letters_connected_left_new.png",
+        @"..\\..\\..\\wc_letters_connected_left_2.png",
         @"..\\..\\..\\wc_letters_connected_right.png",
-        @"..\\..\\..\\WC_letters_connected_right_new.png",
+        @"..\\..\\..\\WC_letters_connected_right_2.png",
         @"..\\..\\..\\wc_letters_neighbored.png",
         @"..\\..\\..\\wc_transition.png",
       };
@@ -60,14 +60,12 @@ namespace PNGtoMask {
                     int startY = tileY * TILE_SIZE;
                     for (int y = startY; y < startY + TILE_SIZE; ++y) {
                       Color pixelColor = image.GetPixel(x, y);
-                      switch (pixelColor.A) {
-                        case 0xff:
-                          opaque = true;
-                          break;
-
-                        default:
+                      if (pixelColor.A < 0x80) {
+                          // alphaThreshold from tile.cpp in STIR code
                           alpha = true;
-                          break;
+                      }
+                      else {
+                          opaque = true;
                       }
                     }
                   }
