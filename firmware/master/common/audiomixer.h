@@ -67,6 +67,7 @@ private:
     SpeexDecoder* getDecoder();
     PCMDecoder* getPCMDecoder();
     void stopChannel(AudioChannelSlot *ch);
+    bool populateModuleMetaData(struct _SYSAudioModule *mod);
 };
 
 #endif /* AUDIOMIXER_H_ */

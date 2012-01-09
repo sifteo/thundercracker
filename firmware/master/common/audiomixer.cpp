@@ -194,38 +194,49 @@ void AudioMixer::fetchData()
     }
 }
 
-bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
+/*
+    Read the details of this module out of flash.
+*/
+bool AudioMixer::populateModuleMetaData(struct _SYSAudioModule *mod)
 {
+    // TODO: can we tag these as already populated and avoid subsequent lookups?
     int size = 0;
     AssetIndexEntry *entry;
 
-    entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, 512, &size);
+    entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, FlashLayer::BLOCK_SIZE, &size);
     if (!entry) {
         LOG(("got null AssetIndexEntry from flash"));
         return false;
     }
     entry += mod->id;
-    
+
     int offset = entry->offset;
-    
+
     FlashLayer::releaseRegionFromOffset(0);
-    
+
     SoundHeader *header;
     header = (SoundHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size);
     if (!header) {
         LOG(("Got null SoundHeader from flashlayer\n"));
         return false;
     }
-    
+
     mod->offset = offset + sizeof(SoundHeader);
     mod->size = header->dataSize;
     mod->type = (_SYSAudioType)header->encoding;
-    
-    FlashLayer::releaseRegionFromOffset(offset);    
-    
-    
+
+    FlashLayer::releaseRegionFromOffset(offset);
+    return true;
+}
+
+bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
+{
     if (enabledChannelMask == 0 || activeChannelMask == 0xFF000000) {
         return false; // no free channels
+    }
+
+    if (!populateModuleMetaData(mod)) {
+        return false;
     }
 
     // find the next channel that's both enabled and inactive
