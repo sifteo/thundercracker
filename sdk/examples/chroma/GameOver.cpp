@@ -32,6 +32,7 @@ void GameOver::Update( float dt )
     if( m_frame >= lastFrame )
     {
         Game::Inst().setState( Game::STATE_POSTGAME );
+        Game::Inst().forcePaintSync();
         Game::Inst().playSound(game_over);
         Reset();
     }
