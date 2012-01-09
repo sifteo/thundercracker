@@ -99,6 +99,10 @@ void IntroCutscene() {
 	//System::paintSync();
 	WaitForSeconds(5.f);
 	EnterSpriteMode(&gCubes[0]);
+	for(unsigned i=0; i<NUM_CUBES; ++i)
+	for(unsigned j=0; j<8; ++j) {
+		HideSprite(gCubes+i, j);
+	}
 	VidMode_BG0 mode(gCubes[0].vbuf);
 
 	// iris out
