@@ -489,7 +489,7 @@ public:
 
     void moveSprite(int id, int px, int py)
     {
-        _SYS_vbuf_spr_resize(&buf.sys, id, px, py);
+        _SYS_vbuf_spr_move(&buf.sys, id, px, py);
     }
 };
 
