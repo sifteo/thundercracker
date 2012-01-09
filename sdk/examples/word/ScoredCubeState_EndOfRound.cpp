@@ -59,12 +59,6 @@ void ScoredCubeState_EndOfRound::paint()
     }
     else if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH * 2.f)
     {
-        if ((getStateMachine().getCube().id() - CUBE_ID_BASE) == START_SCREEN_CUBE_INDEX)
-        {
-            // hold on blank shake to play screen until pan animation is done
-            vid.BG0_drawAsset(Vec2(0, 0), Teeth);
-            return;
-        }
         const float ANIM_LENGTH = TEETH_ANIM_LENGTH;
         const AssetImage& anim = ScorePan;
         float animTime =
@@ -94,7 +88,7 @@ void ScoredCubeState_EndOfRound::paint()
         break;
 
     case START_SCREEN_CUBE_INDEX:
-        vid.BG0_drawAsset(Vec2(0, 0), Teeth);
+        vid.BG0_drawAsset(Vec2(0,0), ScorePan, ScorePan.frames - 1);
         {
             const float ANIM_LENGTH = 1.0f;
             const AssetImage& anim = StartPrompt;
