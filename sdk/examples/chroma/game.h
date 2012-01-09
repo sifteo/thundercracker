@@ -91,6 +91,8 @@ public:
     //play random slosh sound
     void playSlosh();
 
+    inline void forcePaintSync() { m_bForcePaintSync = true; }
+
 private:
 	void TestMatches();
 	bool m_bTestMatches;
@@ -121,6 +123,9 @@ private:
     const _SYSAudioModule *m_pSoundThisFrame;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
+
+    //force a 1 frame paint sync before/after drawing
+    bool m_bForcePaintSync;
 };
 
 #endif

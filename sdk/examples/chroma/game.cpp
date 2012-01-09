@@ -25,7 +25,7 @@ Game &Game::Inst()
     return game;
 }
 
-Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ), m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL )
+Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ), m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ), m_bForcePaintSync( false )
 {
 	//Reset();
 }
@@ -94,6 +94,13 @@ void Game::Update()
     m_fLastTime = t;
 
     bool needsync = false;
+
+    if( m_bForcePaintSync )
+    {
+        needsync = true;
+        System::paintSync();
+        m_bForcePaintSync = false;
+    }
 
 	if( m_state == STATE_SPLASH )
 	{
