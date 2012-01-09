@@ -45,10 +45,10 @@ void Game::MainLoop() {
     }
     vid.BG2_setBorder(0x0000);
     vid.set();
-    for (float t = 1.0f; t > 0.0f; t -= 0.025f) {
+    for (float t = 1.0f; t > 0.0f; t -= 0.05f) {
       AffineMatrix m = AffineMatrix::identity();
       m.translate(64, 64);
-      m.scale(1.f+9.f*t);
+      m.scale(1.f + 9.f*t);
       m.rotate(t * 1.1f);
       m.translate(-64, -64);
       vid.BG2_setMatrix(m);
@@ -160,7 +160,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
     }
     vid.BG2_setBorder(0x0000);
     vid.set();
-    for (float t = 0; t < 1.0f; t += 0.025f) {
+    for (float t = 0; t < 1.0f; t += 0.05f) {
       AffineMatrix m = AffineMatrix::identity();
       m.translate(64, 64);
       m.scale(1.f+9.f*t);
@@ -187,7 +187,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         );
       }
     }
-    for (float t = 1.0f; t > 0.0f; t -= 0.025f) {
+    for (float t = 1.0f; t > 0.0f; t -= 0.05f) {
       AffineMatrix m = AffineMatrix::identity();
       m.translate(64, 64);
       m.scale(1.f+9.f*t);
