@@ -33,7 +33,7 @@ public:
     static const float MIN_GLIMMER_TIME;
     static const float MAX_GLIMMER_TIME;
     static const float TIME_PER_MESSAGE_FRAME;
-    static const int NUM_MESSAGE_FRAMES = 5;
+    static const int NUM_MESSAGE_FRAMES = 4;
     //anything below this we don't care about
     static const float TILT_SOUND_EPSILON;
 

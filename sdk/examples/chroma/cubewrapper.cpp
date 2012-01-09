@@ -41,8 +41,6 @@ static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] =
     &MessageBox1,
     &MessageBox2,
     &MessageBox3,
-    //&MessageBox4,
-    &MsgGameOver,
 };
 
 
