@@ -356,7 +356,11 @@ EXPORT const SpeexMode speex_nb_mode = {
    &nb_decoder_init,
    &nb_decoder_destroy,
    &nb_decode,
+#ifndef STRIP_ENCODER
    &nb_encoder_ctl,
+#else
+   0,
+#endif
    &nb_decoder_ctl,
 #else
    0,
