@@ -146,7 +146,7 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
 
     int samplesMixed = 0;
     // iterate through active channels that are not waiting to be stopped
-    uint32_t mask = activeChannelMask ^ stoppedChannelMask;
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
         AudioChannelSlot *ch = &channelSlots[idx];
@@ -348,7 +348,7 @@ uint32_t AudioMixer::pos(_SYSAudioHandle handle)
 AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle)
 {
     // channels that are active, and not marked as stopped
-    uint32_t mask = activeChannelMask ^ stoppedChannelMask;
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
         if (channelSlots[idx].handle == handle) {
