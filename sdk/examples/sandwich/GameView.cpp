@@ -367,7 +367,7 @@ void GameView::HideInventorySprites() {
 #ifdef SIFTEO_SIMULATOR
 #define TILT_THRESHOLD 50
 #else
-#define TILT_THRESHOLD 45
+#define TILT_THRESHOLD 35
 #endif
 
 Cube::Side GameView::VirtualTiltDirection() const {
