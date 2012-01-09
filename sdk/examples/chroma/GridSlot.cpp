@@ -256,16 +256,13 @@ void GridSlot::Update(float t)
         }
 		case STATE_MOVING:
 		{
-			Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
-
-            //clear this out in update
-            //vid.BG0_drawAsset(m_curMovePos, GemEmpty, 0);
-            m_pWrapper->QueueClear( m_curMovePos );
-
+			Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );           
 
 			if( vDiff.x != 0 )
             {
 				m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
+                //clear this out in update
+                m_pWrapper->QueueClear( m_curMovePos );
 
                 if( abs( vDiff.x ) == 1 )
                     Game::Inst().playSound(collide_02);
@@ -273,6 +270,8 @@ void GridSlot::Update(float t)
 			else if( vDiff.y != 0 )
             {
 				m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
+                //clear this out in update
+                m_pWrapper->QueueClear( m_curMovePos );
 
                 if( abs( vDiff.y ) == 1 )
                     Game::Inst().playSound(collide_02);
