@@ -48,6 +48,7 @@ public:
 private:
     uint32_t enabledChannelMask;    // channels userspace has provided buffers for
     uint32_t activeChannelMask;     // channels that are actively playing
+    uint32_t stoppedChannelMask;    // channels that have finished that need to be cleaned up
 
     _SYSAudioHandle nextHandle;
 
