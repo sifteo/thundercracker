@@ -6,6 +6,7 @@
 // MAP ROOM STUFF
 //-----------------------------------------------------------------------------
 
+
 int MapRoom::RoomId() const {
   return (int)(this - pGame->map.GetRoom(0));
 }
@@ -63,31 +64,6 @@ void MapRoom::OpenDoor(/*Cube::Side side*/) {
         Vec2(col, row), GetTile(Vec2(col, row))+2
       );
     }
-  }
-  /*
-  Vec2 p = Vec2(0,0);
-  switch(side) {
-    case SIDE_TOP: p = Vec2(3,0); break;
-    case SIDE_LEFT: p = Vec2(0, 3); break;
-    case SIDE_BOTTOM: p = Vec2(3, 6); break;
-    case SIDE_RIGHT: p = Vec2(6, 3); break;
-  }
-  for(int x=0; x<2; ++x) {
-    for(int y=0; y<2; ++y) {
-      SetTile(
-        Vec2(p.x+x, p.y+y), 
-        GetTile(Vec2(p.x+x, p.y+y))+2
-    );
-    }
-  }
-  */
-}
-
-void MapRoom::ClearTrigger() {
-  if (callback) {
-    callback = 0;
-    TriggerData* t = pGame->map.Data()->FindTriggerData(RoomId());
-    if (t) { t->callback = 0; }
   }
 }
 
