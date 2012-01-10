@@ -17,7 +17,7 @@
  */
 
 #ifndef CUBE_ALLOCATION
-#define CUBE_ALLOCATION  6
+#define CUBE_ALLOCATION  12
 #endif
 
 #endif

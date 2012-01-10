@@ -45,6 +45,8 @@ static const Vec2 kSideToQ[4] = {
   Vec2(0,-1)
 };
 
+#ifdef SIFTEO_SIMULATOR
+
 // internal -- used by setOrientation()
 static const VidMode::Rotation kSideToRotation[4] = {
   VidMode::ROT_NORMAL,
@@ -52,6 +54,17 @@ static const VidMode::Rotation kSideToRotation[4] = {
   VidMode::ROT_180,
   VidMode::ROT_RIGHT_90
 };
+
+#else
+// internal -- used by setOrientation()
+static const VidMode::Rotation kSideToRotation[4] = {
+  VidMode::ROT_NORMAL,
+  VidMode::ROT_RIGHT_90,
+  VidMode::ROT_180,
+  VidMode::ROT_LEFT_90
+};
+
+#endif
 
 // internal -- used by orientTo()
 static const int kOrientationTable[4][4] = {
@@ -184,6 +197,7 @@ class Cube {
      */
     
     Side orientation() const {
+      #ifdef SIFTEO_SIMULATOR
         switch(rotation()) {
             case VidMode::ROT_NORMAL: return SIDE_TOP;
             case VidMode::ROT_LEFT_90: return SIDE_LEFT;
@@ -191,6 +205,15 @@ class Cube {
             case VidMode::ROT_RIGHT_90: return SIDE_RIGHT;
             default: return SIDE_UNDEFINED;
         }
+      #else
+        switch(rotation()) {
+            case VidMode::ROT_NORMAL: return SIDE_TOP;
+            case VidMode::ROT_RIGHT_90: return SIDE_LEFT;
+            case VidMode::ROT_180: return SIDE_BOTTOM;
+            case VidMode::ROT_LEFT_90: return SIDE_RIGHT;
+            default: return SIDE_UNDEFINED;
+        }
+      #endif
     }
     
 	void setOrientation(Side topSide) {
