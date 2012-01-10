@@ -16,19 +16,26 @@ static const char* sideNames[] =
 void onCubeEventTouch(_SYSCubeID cid)
 {
     DEBUG_LOG(("cube event touch:\t%d\n", cid));
-    WordGame::onEvent(EventID_Input, EventData());
+    EventData data;
+    data.mInput.mCubeID = cid;
+    WordGame::onEvent(EventID_Input, data);
 }
 
 void onCubeEventShake(_SYSCubeID cid)
 {
     DEBUG_LOG(("cube event shake:\t%d\n", cid));
-    WordGame::onEvent(EventID_Input, EventData());
+    EventData data;
+    data.mInput.mCubeID = cid;
+    WordGame::onEvent(EventID_Input, data);
 }
 
 void onCubeEventTilt(_SYSCubeID cid)
 {
     DEBUG_LOG(("cube event tilt:\t%d\n", cid));
-    WordGame::onEvent(EventID_Input, EventData());
+    //WordGame::onEvent(EventID_Input, EventData());
+    EventData data;
+    data.mInput.mCubeID = cid;
+    WordGame::onEvent(EventID_Tilt, data);
 }
 
 void onNeighborEventAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
@@ -63,9 +70,7 @@ void siftmain()
 
     _SYS_vectors.cubeEvents.touch = onCubeEventTouch;
     _SYS_vectors.cubeEvents.shake = onCubeEventShake;
-#ifdef DEBUG_disable
     _SYS_vectors.cubeEvents.tilt = onCubeEventTilt;
-#endif
     _SYS_vectors.neighborEvents.add = onNeighborEventAdd;
     _SYS_vectors.neighborEvents.remove = onNeighborEventRemove;
 
