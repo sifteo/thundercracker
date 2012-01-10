@@ -25,6 +25,7 @@ namespace PNGtoMask {
         @"..\\..\\..\\WC_letters_connected_right_2.png",
         @"..\\..\\..\\wc_letters_neighbored.png",
         @"..\\..\\..\\wc_transition.png",
+        @"..\\..\\..\\wc_transition_noblip.png",
       };
 
       using (var outputFile = new System.IO.StreamWriter("..\\..\\..\\TileTransparencyLookupData.cpp")) {
