@@ -46,7 +46,7 @@ uint8_t accel_y_high;
 uint8_t accel_z_low;
 // last byte of z high is just straight into the RF ack buffer
 
-/*`
+/*
  * Parameters that affect the neighboring protocol. Some of these are
  * baked in to some extent, and not easily changeable with
  * #defines. But they're documented here anyway.

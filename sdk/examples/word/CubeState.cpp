@@ -32,7 +32,13 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                            bool paintTime,
                            float animStartTime)
 {
-    const AssetImage* teethImages[] =
+    if (teethImageIndex == ImageIndex_Teeth && reverseAnim)
+    {
+        // no blip when reversing teeth anim (use the same anim, but
+        // diff transparency data, to save room)
+        teethImageIndex = ImageIndex_Teeth_NoBlip;
+    }
+    const AssetImage* teethImages[NumImageIndexes] =
     {
         &TeethLoopWordTop,     // ImageIndex_Connected,
         &TeethNewWord2,      // ImageIndex_ConnectedWord,
@@ -42,6 +48,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         &TeethNewWord2Right, // ImageIndex_ConnectedRightWord,
         &TeethLoopNeighboredTop,// ImageIndex_Neighbored,
         &Teeth,             // ImageIndex_Teeth,
+        &Teeth,             // ImageIndex_Teeth_NoBlip,
     };
 
     const AssetImage* teethNumberImages[] =
@@ -96,11 +103,6 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         frame = (unsigned) (animTime * teeth->frames);
         frame = MIN(frame, teeth->frames - 1);
 
-        // HACK skip blip if reversing anim (chomp)
-        if (reverseAnim && (frame == 4 || frame == 5))
-        {
-            frame = 3;
-        }
         //DEBUG_LOG(("shuffle: [c: %d] anim: %d, frame: %d, time: %f\n", getStateMachine().getCube().id(), teethImageIndex, frame, GameStateMachine::getTime()));
 
     }

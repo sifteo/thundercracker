@@ -1575,6 +1575,8 @@ int nb_decode(void *state, SpeexBits *bits, void *vout)
    return 0;
 }
 
+#ifndef STRIP_ENCODER
+
 int nb_encoder_ctl(void *state, int request, void *ptr)
 {
    EncState *st;
@@ -1778,6 +1780,8 @@ int nb_encoder_ctl(void *state, int request, void *ptr)
    }
    return 0;
 }
+
+#endif
 
 int nb_decoder_ctl(void *state, int request, void *ptr)
 {
