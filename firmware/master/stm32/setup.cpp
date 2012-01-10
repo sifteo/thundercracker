@@ -119,13 +119,14 @@ extern "C" void _start()
 
     {
         GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-        GPIOPin vcc33 = VCC33_ENABLE_GPIO;
-
-        vcc20.setControl(GPIOPin::OUT_10MHZ);
-        vcc33.setControl(GPIOPin::OUT_10MHZ);
-
+        vcc20.setControl(GPIOPin::OUT_2MHZ);
         vcc20.setHigh();
+
+        /*
+        GPIOPin vcc33 = VCC33_ENABLE_GPIO;
+        vcc33.setControl(GPIOPin::OUT_2MHZ);
         vcc33.setHigh();
+        */
     }
 
     /*
