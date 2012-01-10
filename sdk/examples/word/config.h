@@ -11,8 +11,8 @@ const unsigned NUM_CUBES = 3;
 // least the sum of all their NUM_CUBES
 inline void compileMe() { STATIC_ASSERT(CUBE_ID_BASE + NUM_CUBES <= CUBE_ALLOCATION); }
 
-const bool MUSIC_ON = true;
-const bool SFX_ON = true;
+const bool MUSIC_ON = false;
+const bool SFX_ON = false;
 const bool LOAD_ASSETS = true; //- do we load assets, or not?
 
 #endif // CONFIG_H
