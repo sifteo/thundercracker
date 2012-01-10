@@ -33,6 +33,8 @@ public:
     virtual void update(float dt);
     void sendEventToRow(unsigned eventID, const EventData& data);
 
+    void resetStateTime() { mStateTime = 0.0f; }
+
     const char* getLetters();
     bool canBeginWord();
     bool beginsWord(bool& isOld, char* wordBuffer);
