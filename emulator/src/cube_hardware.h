@@ -100,17 +100,17 @@ class Hardware {
     
     void reset();
 
-    ALWAYS_INLINE bool tick() {
-        bool cpuTicked = CPU::em8051_tick(&cpu, cpu.sbt, cpu.mProfileData != NULL, cpu.isTracing, cpu.mBreakpoint != 0);
+    ALWAYS_INLINE void tick(bool *cpuTicked=NULL) {
+        CPU::em8051_tick(&cpu, 1, cpu.sbt, cpu.mProfileData != NULL, cpu.isTracing, cpu.mBreakpoint != 0, cpuTicked);
         hardwareTick();
-        return cpuTicked;
     }
 
-    ALWAYS_INLINE bool tickFastSBT() {
-        // Assume at compile-time that we're in SBT mode, and no debug features are active
-        bool cpuTicked = CPU::em8051_tick(&cpu, true, false, false, false);
+    ALWAYS_INLINE void tickFastSBT(unsigned tickBatch=1) {
+        // Assume at compile-time that we're in SBT mode, and no debug features are active.
+        // Also try to aggressively skip ticks when possible. The fastest code is code that never runs.
+        
+        CPU::em8051_tick(&cpu, tickBatch, true, false, false, false, NULL);
         hardwareTick();
-        return cpuTicked;
     }
 
     void lcdPulseTE() {
@@ -135,6 +135,12 @@ class Hardware {
     uint32_t getExceptionCount();
     void incExceptionCount();
     
+    ALWAYS_INLINE uint8_t readFlashBus() {
+        if (LIKELY(flash_drv))
+            cpu.mSFR[BUS_PORT] = flash.dataOut();
+        return cpu.mSFR[BUS_PORT];
+    }    
+    
  private:
 
     ALWAYS_INLINE void hardwareTick()
@@ -151,14 +157,6 @@ class Hardware {
 
         if (hwDeadline.hasPassed() || cpu.needHardwareTick)
             hwDeadlineWork();
-
-        /*
-         * A few small things currently have to happen per-tick
-         */
-
-        neighbors.tick(cpu);
-        if (LIKELY(flash_drv))
-            cpu.mSFR[BUS_PORT] = flash.dataOut();
     }
 
     int16_t scaleAccelAxis(float g)

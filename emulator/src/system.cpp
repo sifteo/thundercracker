@@ -284,10 +284,14 @@ NEVER_INLINE void System::tickLoopDebug()
     unsigned nCubes = opt_numCubes;
 
     for (unsigned t = 0; t < time.timestepTicks(); t++) {
-        if (debugCube.tick()) {
+        bool debugCPUTicked = false;
+        debugCube.tick(&debugCPUTicked);
+        
+        if (debugCPUTicked) {
             tick0 = true;
             Cube::Debug::recordHistory();
         }
+
         for (unsigned i = 1; i < nCubes; i++)
             cubes[i].tick();
         tick();

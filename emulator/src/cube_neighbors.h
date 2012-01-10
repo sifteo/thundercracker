@@ -68,22 +68,18 @@ class Neighbors {
         /* Mark two neighbor sensors as not-in-range. ONLY called by the UI thread. */
         mySides[mySide].otherSides[otherSide] &= ~(1 << otherCube);
     }
-
-    ALWAYS_INLINE void tick(CPU::em8051 &cpu) {
-        if (UNLIKELY(inputs))
-            inputWork(cpu);
-        else
-            cpu.mSFR[PORT] &= ~PIN_IN;
+    
+    static ALWAYS_INLINE void clearNeighborInput(CPU::em8051 &cpu) {
+        // Immediately after we handle timer edges, auto-clear the neighbor input
+        cpu.mSFR[PORT] &= ~PIN_IN;
     }
     
-    NEVER_INLINE void inputWork(CPU::em8051 &cpu) {
+    static void receivedPulse(CPU::em8051 &cpu) {
         if (cpu.isTracing)
-            fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Received pulse (sides %02x)\n", cpu.id, inputs);
+            fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Received pulse\n", cpu.id);
 
         cpu.mSFR[PORT] |= PIN_IN;
         cpu.needTimerEdgeCheck = true;
-
-        inputs = 0;
     }
 
     void ioTick(CPU::em8051 &cpu);
@@ -99,7 +95,6 @@ class Neighbors {
     static const unsigned PIN_2_BOTTOM  = (1 << 7);
     static const unsigned PIN_3_RIGHT   = (1 << 5);
     
-    uint8_t inputs;
     uint8_t inputMask;
     uint8_t prevDriveHigh;
 
