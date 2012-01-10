@@ -9,6 +9,7 @@
 #ifndef _CUBE_HARDWARE_H
 #define _CUBE_HARDWARE_H
 
+#include <algorithm>
 #include "cube_cpu.h"
 #include "cube_radio.h"
 #include "cube_adc.h"
@@ -105,12 +106,15 @@ class Hardware {
         hardwareTick();
     }
 
-    ALWAYS_INLINE void tickFastSBT(unsigned tickBatch=1) {
+    ALWAYS_INLINE unsigned tickFastSBT(unsigned tickBatch=1) {
         // Assume at compile-time that we're in SBT mode, and no debug features are active.
         // Also try to aggressively skip ticks when possible. The fastest code is code that never runs.
+        // Returns the number of ticks that may be safely batched next time.
         
         CPU::em8051_tick(&cpu, tickBatch, true, false, false, false, NULL);
         hardwareTick();
+                    
+        return std::min((uint64_t)cpu.mTickDelay, hwDeadline.remaining());
     }
 
     void lcdPulseTE() {
@@ -153,6 +157,10 @@ class Hardware {
          * to inline) method, just by writing to a byte in the CPU
          * struct. This is used by the inline SFR callbacks
          * in cube_cpu_callbacks.h.
+         *
+         * We can safely assume that needHardwareTick is set by CPU code,
+         * before hardwareTick executes, and that it won't be set during
+         * hwDeadlineWork().
          */
 
         if (hwDeadline.hasPassed() || cpu.needHardwareTick)

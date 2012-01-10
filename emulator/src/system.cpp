@@ -235,10 +235,9 @@ void System::threadFn(void *param)
     }
 }
 
-ALWAYS_INLINE void System::tick()
+ALWAYS_INLINE void System::tick(unsigned count)
 {
-    // Everything but the cubes
-    time.tick();
+    time.tick(count);
     
     /*
      * Note: It's redundant to be passing our 'time' pointer to network.tick
@@ -323,16 +322,24 @@ NEVER_INLINE void System::tickLoopGeneral()
 NEVER_INLINE void System::tickLoopFastSBT()
 {
     /*
-     * Fastest path: No debugging, SBT only.
+     * Fastest path: No debugging, SBT only, advance by more than one tick when we can.
      */
             
     unsigned batch = time.timestepTicks();
     unsigned nCubes = opt_numCubes;
+    unsigned stepSize = 1;
     
-    while (batch--) {
+    while (batch) {
+        unsigned nextStep;
+
+        batch -= stepSize;
+        nextStep = batch;
+        
         for (unsigned i = 0; i < nCubes; i++)
-            cubes[i].tickFastSBT();
-        tick();
+            nextStep = std::min(nextStep, cubes[i].tickFastSBT(stepSize));
+        
+        tick(stepSize);
+        stepSize = std::min((uint64_t)nextStep, network.deadlineRemaining());
     }
 }
 

@@ -68,7 +68,7 @@ class System {
     static void threadFn(void *param);
     bool initCube(unsigned id);
     void exitCube(unsigned id);
-    ALWAYS_INLINE void tick();
+    ALWAYS_INLINE void tick(unsigned count=1);
     
     NEVER_INLINE void tickLoopDebug();
     NEVER_INLINE void tickLoopGeneral();
