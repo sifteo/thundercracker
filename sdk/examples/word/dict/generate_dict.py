@@ -4,6 +4,8 @@ from itertools import *
 import os, sys
 import fileinput
 import sys
+from ctypes import *
+
 
 max_seed_word_len = 5
 
@@ -128,6 +130,37 @@ def generate_dict():
         fi.write(word + "\n")
     fi.close()    
 
+    fi = open("anagram_seeds.txt", "w")
+    seed_inc = 88
+    seed = 0
+    max_picks = 34
+    pick = 0
+    pick_length = 3
+    max_rounds = 5
+    dict_len = len(output_dictionary.keys())
+    print dict_len
+    libc = cdll.msvcrt # doctest: +WINDOWS
+    while pick_length <= 5:
+        round = 0
+        fi.write("======== " + str(pick_length) + " cube puzzles ========\n")
+        while round < max_rounds:
+            pick = 0
+            seed = max_picks * seed_inc * round
+            fi.write("\n-------- Round " + str(round + 1) + " --------\n")
+            while pick < max_picks:
+                seed += seed_inc
+                libc.srand(seed)
+                seed += 1
+                i = libc.rand() % dict_len
+                while len(sorted_output_dict[i]) != pick_length or sorted_output_dict[i] not in word_list_used.keys():
+                    #print sorted_output_dict[i]
+                    i  = (i + 1) % dict_len
+                fi.write(sorted_output_dict[i] + "\n")
+                pick += 1
+            round += 1
+        pick_length += 1
+        fi.write("\n")
+    fi.close()
 def main():
     #print sys.argv[1:]
     generate_dict()
