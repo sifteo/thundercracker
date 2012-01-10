@@ -19,6 +19,7 @@ WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes), mNeedsPaintSync(fal
     for (unsigned i = 0; i < arraysize(mAudioChannels); ++i)
     {
         mAudioChannels[i].init();
+        mLastAudioPriority[i] = AudioPriority_None;
     }
 }
 
@@ -40,7 +41,10 @@ void WordGame::_onEvent(unsigned eventID, const EventData& data)
     mGameStateMachine.onEvent(eventID, data);
 }
 
-bool WordGame::playAudio(_SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
+bool WordGame::playAudio(_SYSAudioModule &mod,
+                         AudioChannelIndex channel ,
+                         _SYSAudioLoopType loopMode,
+                         AudioPriority priority)
 {
 
     switch (channel)
@@ -61,17 +65,35 @@ bool WordGame::playAudio(_SYSAudioModule &mod, AudioChannelIndex channel , _SYSA
 
     }
     ASSERT(sInstance);
-    return sInstance->_playAudio(mod, channel, loopMode);
+    return sInstance->_playAudio(mod, channel, loopMode, priority);
 }
 
-bool WordGame::_playAudio(_SYSAudioModule &mod, AudioChannelIndex channel , _SYSAudioLoopType loopMode)
+bool WordGame::_playAudio(_SYSAudioModule &mod,
+                          AudioChannelIndex channel,
+                          _SYSAudioLoopType loopMode,
+                          AudioPriority priority)
 {
     ASSERT((unsigned)channel < arraysize(mAudioChannels));
+    bool played = false;
     if (mAudioChannels[channel].isPlaying())
     {
-        mAudioChannels[channel].stop();
+        if (priority >= mLastAudioPriority[channel])
+        {
+            mAudioChannels[channel].stop();
+            played = mAudioChannels[channel].play(mod, loopMode);
+        }
     }
-    return mAudioChannels[channel].play(mod, loopMode);
+    else
+    {
+        played = mAudioChannels[channel].play(mod, loopMode);
+    }
+
+    if (played)
+    {
+        mLastAudioPriority[channel] = priority;
+    }
+
+    return played;
 }
 
 unsigned WordGame::rand(unsigned max)

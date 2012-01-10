@@ -24,8 +24,6 @@ struct MapRoom {
   uint8_t GetTile(Vec2 position);
   void SetTile(Vec2 position, uint8_t tid);
   void OpenDoor(/*Cube::Side side*/);
-
-  void ClearTrigger();
 };
 
 struct MapPath {
@@ -52,5 +50,8 @@ public:
 
   bool FindPath(Vec2 originLocation, Cube::Side direction, MapPath* outPath);
   bool IsVertexWalkable(Vec2 globalVertex);
+
+
+  void HackyMapRevert();
 
 };

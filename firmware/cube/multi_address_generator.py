@@ -16,21 +16,11 @@ import subprocess
 
 date = datetime.date.today().isoformat()
 
-if platform.system() == 'Windows':
+print "\nCube Binary Generator\nCompiling firmare 0x00 to 0x08...\n"
 	
-	print "Windows"
-	
-elif platform.system() == 'Darwin' or platform.system == 'Linux':
-	
-	print "\nCube Binary Generator\nCompiling firmare 0x00 to 0x08...\n"
-	
-	for addr in ["0x00","0x01","0x02","0x03","0x04","0x05","0x06","0x07","0x08"]:
-		subprocess.check_call(["make","clean"])
-		myenv = dict(os.environ)
-		myenv["CFLAGS"] = "-DCUBE_ADDR="+addr
-		subprocess.check_call(["make"], env=myenv)
-		shutil.move("cube.ihx", "cube_"+date+"_addr_"+addr+".hex")
-	
-else:
-	print "Unsupported system!"
-	sys.exit(0)
+for addr in ["0x00","0x01","0x02","0x03","0x04","0x05","0x06","0x07","0x08"]:
+	subprocess.check_call(["make","clean"])
+	myenv = dict(os.environ)
+	myenv["CFLAGS"] = "-DCUBE_ADDR="+addr
+	subprocess.check_call(["make"], env=myenv)
+	shutil.move("cube.ihx", "cube_"+date+"_addr_"+addr+".hex")

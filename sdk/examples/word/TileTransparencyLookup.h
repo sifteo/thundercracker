@@ -17,6 +17,7 @@ enum ImageIndex {
     ImageIndex_ConnectedRightWord,
     ImageIndex_Neighbored,
     ImageIndex_Teeth,
+    ImageIndex_Teeth_NoBlip,
 
     NumImageIndexes
 };
