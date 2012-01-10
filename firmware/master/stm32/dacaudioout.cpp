@@ -77,15 +77,16 @@ void DacAudioOut::tmrIsr()
 #ifdef SAMPLE_RATE_GPIO
     tim4TestPin.toggle();
 #endif
-    AudioOutBuffer *b = &audioBufs[0];
-    if (b->offset >= b->count) {
-        b->offset = 0;
-        b->count = mixer->pullAudio(b->data, arraysize(b->data));
-        if (!b->count) {
+
+    AudioOutBuffer &b = audioBufs[0];
+    if (b.offset >= b.count) {
+        b.offset = 0;
+        b.count = mixer->pullAudio(b.data, arraysize(b.data));
+        if (!b.count) {
             return;
         }
     }
-    uint16_t duty = b->data[b->offset++] + 0x8000;
+    uint16_t duty = b.data[b.offset++] + 0x8000;
     duty = (duty * 0xFFF) / 0xFFFF; // scale to 12-bit DAC output
     dac.write(this->dacChan, duty, Dac::RightAlign12Bit);
 }

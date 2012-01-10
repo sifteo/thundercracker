@@ -45,7 +45,7 @@ private:
     } AudioOutBuffer;
 
     AudioMixer *mixer;
-    AudioOutBuffer audioBufs[2];
+    AudioOutBuffer audioBufs[1];
 
     void dmaIsr(uint32_t flags);
 //    void tmrIsr();
