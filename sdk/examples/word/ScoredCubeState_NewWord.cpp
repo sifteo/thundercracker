@@ -16,7 +16,10 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
     switch (eventID)
     {
     case EventID_NewWordFound:
-        getStateMachine().resetStateTime();
+        if (getStateMachine().isConnectedToCubeOnSide(data.mWordFound.mCubeIDStart))
+        {
+            getStateMachine().resetStateTime();
+        }
         // fall through
     case EventID_EnterState:
     case EventID_Paint:
