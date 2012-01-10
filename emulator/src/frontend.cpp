@@ -374,6 +374,9 @@ void GLFWCALL Frontend::onMouseMove(int x, int y)
 {
     instance->mouseX = x;
     instance->mouseY = y;
+    
+    if (instance->toggleZoom)
+        instance->idleFrames = 0;    
 }
 
 void GLFWCALL Frontend::onMouseButton(int button, int state)
