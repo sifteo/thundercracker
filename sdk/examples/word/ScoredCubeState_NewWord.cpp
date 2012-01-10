@@ -15,11 +15,12 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
 {
     switch (eventID)
     {
-    // TODO debug: case EventID_Paint:
+    case EventID_NewWordFound:
+        getStateMachine().resetStateTime();
+        // fall through
     case EventID_EnterState:
     case EventID_Paint:
     case EventID_ClockTick:
-    case EventID_NewWordFound:
         paint();
         break;
 
