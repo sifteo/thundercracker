@@ -69,8 +69,11 @@ void siftmain() {
 	for(;;) {
 		PlayMusic(music_sting, false);
 		IntroCutscene();
-		*pGame = Game(); // re-initialize memory
+		{
+			*pGame = Game(); // re-initialize memory
+		}
 		pGame->MainLoop();
+		pGame->map.HackyMapRevert();
 		PlayMusic(music_winscreen, false);
 		WinScreen(pGame->player.CurrentView()->GetCube());
 	}
