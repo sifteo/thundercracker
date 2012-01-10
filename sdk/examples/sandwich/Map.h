@@ -51,4 +51,7 @@ public:
   bool FindPath(Vec2 originLocation, Cube::Side direction, MapPath* outPath);
   bool IsVertexWalkable(Vec2 globalVertex);
 
+
+  void HackyMapRevert();
+
 };
