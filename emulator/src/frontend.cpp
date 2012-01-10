@@ -12,7 +12,9 @@
 Frontend *Frontend::instance = NULL;
 
 Frontend::Frontend() 
-  : world(b2Vec2(0.0f, 0.0f)),
+  : frameCount(0),
+    idleFrames(0),
+    world(b2Vec2(0.0f, 0.0f)),
     mouseBody(NULL),
     mouseJoint(NULL),
     mouseIsAligning(false),
@@ -106,6 +108,8 @@ bool Frontend::init(System *_sys)
 void Frontend::numCubesChanged()
 {
     unsigned i;
+
+    idleFrames = 0;
 
     for (i = 0; i < sys->opt_numCubes; i++)
         if (!cubes[i].isInitialized()) {
@@ -231,7 +235,9 @@ bool Frontend::runFrame()
 
     animate();
     draw();
+
     frameCount++;
+    idleFrames++;
 
     return true;
 }
@@ -276,6 +282,7 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
 
 void GLFWCALL Frontend::onResize(int width, int height)
 {
+    instance->idleFrames = 0;
     if (width && height)
         instance->renderer.setViewport(width, height);
 }
@@ -288,7 +295,7 @@ int GLFWCALL Frontend::onWindowClose()
 
 void GLFWCALL Frontend::onKey(int key, int state)
 {
-    if (state == GLFW_PRESS)
+    if (state == GLFW_PRESS) {
         switch (key) {
         
         case 'H':
@@ -352,8 +359,15 @@ void GLFWCALL Frontend::onKey(int key, int state)
         case '=':
             instance->addCube();
             break;
+            
+        default:
+            return;
 
         }
+        
+        // Any handled key resets the idle timer
+        instance->idleFrames = 0;
+    }   
 }
 
 void GLFWCALL Frontend::onMouseMove(int x, int y)
@@ -368,6 +382,8 @@ void GLFWCALL Frontend::onMouseButton(int button, int state)
         instance->onMouseDown(button);
     else if (state == GLFW_RELEASE)
         instance->onMouseUp(button);
+
+    instance->idleFrames = 0;
 }
 
 void GLFWCALL Frontend::onMouseWheel(int pos)
@@ -382,10 +398,13 @@ void GLFWCALL Frontend::onMouseWheel(int pos)
         scale = powf(1.1f, -delta);
         
     instance->scaleViewExtent(scale);
+    instance->idleFrames = 0;
 }
 
 void Frontend::onMouseDown(int button)
 {
+    idleFrames = 0;
+    
     if (button == GLFW_MOUSE_BUTTON_RIGHT && mouseIsPulling)
         hoverOrRotate();
     
@@ -495,6 +514,8 @@ void Frontend::onMouseUp(int button)
 {
     bool eitherButton = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) ||
                         glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT);
+        
+    idleFrames = 0;
                         
     if (mouseBody && !eitherButton) {
         // All buttons released
@@ -532,6 +553,7 @@ void Frontend::animate()
 
     if (mouseIsPulling) {
         pushBodyTowards(mouseBody, mouseVec(normalViewExtent), 50.0f);
+        idleFrames = 0;
     }
 
     if (mouseIsAligning || mouseIsSpinning) {
@@ -548,6 +570,7 @@ void Frontend::animate()
              * Rotate the cube toward 'spinTarget'. When we get there, we disable spin mode.
              */
             error = cubeAngle - spinTarget;
+            idleFrames = 0;
             if (fabs(error) < 0.001f)
                 mouseIsSpinning = false; 
         
@@ -583,6 +606,7 @@ void Frontend::animate()
             b2Vec2 local = b2Mul(b2Rot(-mousePicker.mCube->body->GetAngle()), tiltTarget);
 
             mousePicker.mCube->setTiltTarget(local);
+            idleFrames = 0;
         }
     }
         
@@ -617,7 +641,10 @@ void Frontend::draw()
     renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
 
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
-        cubes[i].draw(renderer);
+        if (cubes[i].draw(renderer)) {
+            // We found a cube that isn't idle.
+            idleFrames = 0;
+        }
 
     renderer.beginOverlay();
         
@@ -637,6 +664,16 @@ void Frontend::draw()
 
     // Fixed portion of the overlay, should be topmost.
     overlay.draw();
+        
+    /*
+     * If we haven't had any interesting input (user interaction, cube rendering) in a while,
+     * assume we're idle and throttle the frame rate way down. Otherwise, render at a zippy but
+     * bounded refresh rate.
+     *
+     * This throttling is vital when we can't sync to the host's vertical refresh, and the idling
+     * is really nice to avoid killing laptop batteries...
+     */
+    frControl.setTargetFPS(idleFrames > 100 ? 10.0 : 75.0);
         
     renderer.endFrame();
     frControl.endFrame();
