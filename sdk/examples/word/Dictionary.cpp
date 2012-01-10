@@ -12,7 +12,7 @@ char Dictionary::sOldWords[MAX_OLD_WORDS][MAX_LETTERS_PER_WORD + 1];
 unsigned Dictionary::sNumOldWords = 0;
 unsigned Dictionary::sRandSeed = 0;
 unsigned Dictionary::sRound = 0;
-const unsigned WORD_RAND_SEED_INCREMENT = 1000;
+const unsigned WORD_RAND_SEED_INCREMENT = 88;
 const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
 Dictionary::Dictionary()
@@ -88,7 +88,7 @@ void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
             }
             else
             {
-                sRandSeed = 120 * WORD_RAND_SEED_INCREMENT * sRound;
+                sRandSeed = 34 * WORD_RAND_SEED_INCREMENT * sRound;
             }
             break;
         }

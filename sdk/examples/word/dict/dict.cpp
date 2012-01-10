@@ -368,7 +368,6 @@
 0x3827,		// GAN
 0x2b827,		// GANE
 0x4827,		// GAR
-0x60004c27,		// GAS, seed word (533D: 3)
 0x5027,		// GAT
 0x2d027,		// GATE
 0x904a7,		// GEAR
@@ -951,7 +950,6 @@
 0x1033,		// SAD
 0x49033,		// SADI
 0x1433,		// SAE
-0x1c33,		// SAG
 0x80022433L,		// SAID, seed word (533D: 4)
 0x80062433L,		// SAIL, seed word (533D: 4)
 0x2ac33,		// SAKE
