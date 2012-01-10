@@ -197,6 +197,7 @@ class Cube {
      */
     
     Side orientation() const {
+      #ifdef SIFTEO_SIMULATOR
         switch(rotation()) {
             case VidMode::ROT_NORMAL: return SIDE_TOP;
             case VidMode::ROT_LEFT_90: return SIDE_LEFT;
@@ -204,6 +205,15 @@ class Cube {
             case VidMode::ROT_RIGHT_90: return SIDE_RIGHT;
             default: return SIDE_UNDEFINED;
         }
+      #else
+        switch(rotation()) {
+            case VidMode::ROT_NORMAL: return SIDE_TOP;
+            case VidMode::ROT_RIGHT_90: return SIDE_LEFT;
+            case VidMode::ROT_180: return SIDE_BOTTOM;
+            case VidMode::ROT_LEFT_90: return SIDE_RIGHT;
+            default: return SIDE_UNDEFINED;
+        }
+      #endif
     }
     
 	void setOrientation(Side topSide) {
