@@ -6,6 +6,7 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include "macros.h"
 #include "tracer.h"
 #include "vtime.h"
 

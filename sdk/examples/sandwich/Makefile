@@ -7,11 +7,12 @@ OBJS = \
 	$(ASSETS).gen.o \
 	gen_mapdata.o \
 	main.o \
+	Base.o \
+	DialogView.o \
 	Game.o \
 	GameView.o \
-	Base.o \
-	Player.o \
 	Map.o \
+	Player.o \
 
 include $(TC_DIR)/firmware/master/Makefile.defs
 

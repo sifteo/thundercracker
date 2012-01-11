@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "DialogView.h"
 
 Cube gCubes[NUM_CUBES];
 AudioChannel gChannelSfx;
@@ -41,6 +42,10 @@ void siftmain() {
 	  }
 	}
 #endif
+	
+	DialogTest();
+
+	/*
 	{ // fake power-on
 		for(unsigned hack=0; hack<4; ++hack) {
 			for(unsigned i=0; i<NUM_CUBES; ++i) {
@@ -77,6 +82,7 @@ void siftmain() {
 		PlayMusic(music_winscreen, false);
 		WinScreen(pGame->player.CurrentView()->GetCube());
 	}
+	*/
 }
 
 //-----------------------------------------------------------------------------

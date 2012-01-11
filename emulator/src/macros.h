@@ -9,6 +9,8 @@
 #ifndef _MACROS_H
 #define _MACROS_H
 
+#include <stdint.h>
+
 #define APP_TITLE   "Thundercracker"
 
 /*
@@ -36,8 +38,12 @@
 #   endif
 #endif
 
-#if defined(_WIN32) && !defined(PRIu64)
-#   define PRIu64 "I64u"
+#ifndef PRIu64
+#   ifdef _WIN32
+#      define PRIu64 "I64u"
+#   else
+#      define PRIu64 "llu"
+#   endif
 #endif
 
 #endif
