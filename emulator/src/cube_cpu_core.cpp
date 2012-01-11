@@ -114,7 +114,9 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     memset(aCPU->mSFR, 0, 128);
 
     aCPU->mPC = 0;
-    aCPU->mTickDelay = 0;
+    aCPU->mTickDelay = 1;
+    aCPU->prescaler12 = 12;
+
     aCPU->mSFR[REG_SP] = 7;
     aCPU->mSFR[REG_P0] = 0xff;
     aCPU->mSFR[REG_P1] = 0xff;
@@ -131,8 +133,6 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     aCPU->mSFR[REG_SPIRSTAT] = 0x03;
     aCPU->mSFR[REG_SPIRDAT] = 0x00;
     aCPU->mSFR[REG_RFCON] = RFCON_RFCSN;
-
-    aCPU->prescaler12 = 12;
     
     // build function pointer lists
 

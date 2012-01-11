@@ -334,7 +334,7 @@ NEVER_INLINE void System::tickLoopFastSBT()
             nextStep = std::min(nextStep, cubes[i].tickFastSBT(stepSize));
         
         tick(stepSize);
-        stepSize = std::min((uint64_t)nextStep, network.deadlineRemaining());
+        stepSize = std::min(nextStep, (unsigned)network.deadlineRemaining());
     }
 }
 

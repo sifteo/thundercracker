@@ -109,14 +109,22 @@ class Hardware {
     }
 
     ALWAYS_INLINE unsigned tickFastSBT(unsigned tickBatch=1) {
-        // Assume at compile-time that we're in SBT mode, and no debug features are active.
-        // Also try to aggressively skip ticks when possible. The fastest code is code that never runs.
-        // Returns the number of ticks that may be safely batched next time.
+        /*
+         * Assume at compile-time that we're in SBT mode, and no debug features are active.
+         * Also try to aggressively skip ticks when possible. The fastest code is code that never runs.
+         * Returns the number of ticks that may be safely batched next time.
+         * 
+         * Also note that we calculate our remaining clock cycles using 32-bit math, and we blindly
+         * truncate the output of remaining(). This is intentional; normally remaining() will fit in
+         * 32 bits, but even if it does cause overflow the worst case is that we'll end up skipping
+         * fewer ticks than possible. So, this is always safe, and it's highly important for performance
+         * when we're running on 32-bit platforms.
+         */
         
         CPU::em8051_tick(&cpu, tickBatch, true, false, false, false, NULL);
         hardwareTick();
                     
-        return std::min((uint64_t)cpu.mTickDelay, hwDeadline.remaining());
+        return std::min(cpu.mTickDelay, (unsigned)hwDeadline.remaining());
     }
 
     void lcdPulseTE() {

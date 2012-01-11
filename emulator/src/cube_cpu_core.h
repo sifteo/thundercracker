@@ -97,10 +97,11 @@ static ALWAYS_INLINE void em8051_tick(em8051 *aCPU, unsigned numTicks,
 
     if (UNLIKELY(aCPU->needInterruptDispatch) && (aCPU->sbt || aCPU->mTickDelay <= 0)) {
         aCPU->needInterruptDispatch = false;
+        aCPU->needInterruptDispatch = false;
         handle_interrupts(aCPU);
     }
     
-    if (aCPU->mTickDelay <= 0) {
+    if (!aCPU->mTickDelay) {
 
         /*
          * Run one instruction!
