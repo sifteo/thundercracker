@@ -286,7 +286,13 @@ void Hardware::initVCD(VCDWriter &vcd)
         vcd.define("nb_bottom_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 7);
         vcd.define("nb_right", &cpu.mSFR[MISC_PORT], 1, 5);
         vcd.define("nb_right_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 5);
-        vcd.define("nb_in", &cpu.mSFR[MISC_PORT], 1, 6);
+        
+        /*
+         * Neighbor IN is sampled from t012 instead of MISC_PORT,
+         * since the corresponding bit in MISC_PORT is cleared by
+         * Neighbors::clearNeighborInput before we can read it.
+         */
+        vcd.define("nb_in", &cpu.t012, 1, 6);
         vcd.define("nb_in_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 6);
 
     } vcd.leaveScope();
