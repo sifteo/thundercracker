@@ -139,7 +139,9 @@ def generate_dict():
     max_rounds = 5
     dict_len = len(output_dictionary.keys())
     print dict_len
-    libc = cdll.msvcrt # doctest: +WINDOWS
+    cdll.LoadLibrary("libc.dylib") # doctest: +LINUX	
+    libc = CDLL("libc.dylib")     # doctest: +LINUX
+    #libc = cdll.msvcrt # doctest: +WINDOWS
     while pick_length <= 5:
         round = 0
         fi.write("======== " + str(pick_length) + " cube puzzles ========\n")
