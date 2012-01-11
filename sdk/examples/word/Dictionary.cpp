@@ -29,7 +29,9 @@ bool Dictionary::pickWord(char* buffer)
         WordGame::seedRand(sRandSeed++);
     }
 
-    //return "CITIES";
+    strcpy(buffer, "DONE");
+    return true;
+
     if (PrototypeWordList::pickWord(buffer))
     {
         DEBUG_LOG(("picked word %s\n", buffer));

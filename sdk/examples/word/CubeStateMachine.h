@@ -15,7 +15,7 @@
 
 using namespace Sifteo;
 
-const unsigned MAX_LETTERS_PER_CUBE = 1;
+const unsigned MAX_LETTERS_PER_CUBE = 2;
 const unsigned MAX_LETTERS_PER_WORD = MAX_LETTERS_PER_CUBE * NUM_CUBES;// TODO longer words post CES: _SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE;
 
 class CubeStateMachine : public StateMachine

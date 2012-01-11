@@ -99,6 +99,6 @@ void ScoredCubeState_NotWord::paint()
     }
     else
     {
-        paintTeeth(vid, ImageIndex_Teeth, false, true, false, true);
+        //paintTeeth(vid, ImageIndex_Teeth, false, true, false, true);
     }
 }

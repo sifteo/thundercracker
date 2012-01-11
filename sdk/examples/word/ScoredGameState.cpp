@@ -114,9 +114,8 @@ void ScoredGameState::createNewAnagram()
     // make a new anagram of letters halfway through the shuffle animation
     EventData data;
     Dictionary::pickWord(data.mNewAnagram.mWord);
-
+#if (0)
     // scramble the string (random permutation)
-    // TODO multiple letters per cube
     char scrambled[MAX_LETTERS_PER_WORD + 1];
     memset(scrambled, 0, sizeof(scrambled));
     for (unsigned i = 0; i < MAX_LETTERS_PER_WORD; ++i)
@@ -133,10 +132,10 @@ void ScoredGameState::createNewAnagram()
             }
         }
     }
-
     LOG(("scrambled %s to %s\n", data.mNewAnagram.mWord, scrambled));
     ASSERT(strlen(scrambled) == MAX_LETTERS_PER_WORD);
     strcpy(data.mNewAnagram.mWord, scrambled);
+#endif
     unsigned wordLen = strlen(data.mNewAnagram.mWord);
     unsigned numCubes = GameStateMachine::GetNumCubes();
     if ((wordLen % numCubes) == 0)
@@ -146,6 +145,8 @@ void ScoredGameState::createNewAnagram()
     }
     else
     {
+        // TODO odd number of multiple letters per cube
+
         // pick a cube index randomly to have the off length
         // word fragment
         //data.mNewAnagram.mOddIndex = ;

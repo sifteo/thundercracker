@@ -48,9 +48,10 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
             mLetters[i] = '\0';
         }
-        for (unsigned i = 0; i < mNumLetters; ++i)
+        // TODO multiple letters: variable
+        for (unsigned i = 0; i < MAX_LETTERS_PER_CUBE; ++i)
         {
-            mLetters[i] = data.mNewAnagram.mWord[cubeIndex + i];
+            mLetters[i] = data.mNewAnagram.mWord[cubeIndex * MAX_LETTERS_PER_CUBE + i];
         }
         // TODO substrings of length 1 to 3
         break;
