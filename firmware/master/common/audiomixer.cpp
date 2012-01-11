@@ -142,6 +142,12 @@ void AudioMixer::test()
  */
 int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
 {
+    // NOTE - *must* bail ASAP if we don't have anything to do. we really
+    // want to minimize the work done in this ISR since it's happening so
+    // frequently
+    if (activeChannelMask == 0) {
+        return 0;
+    }
     memset(buffer, 0, numsamples * sizeof(*buffer));
 
     int samplesMixed = 0;
@@ -191,6 +197,23 @@ void AudioMixer::fetchData()
         unsigned idx = Intrinsic::CLZ(mask);
         channelSlots[idx].fetchData();
         Atomic::ClearLZ(mask, idx);
+    }
+}
+
+/*
+    Called from within Tasks::work to mix audio on the main thread, to be
+    consumed by the audio out device.
+*/
+void AudioMixer::handleAudioOutEmpty(void *p) {
+    AudioBuffer *buf = (AudioBuffer*)p;
+
+    uint8_t tempbuf[_SYS_AUDIO_BUF_SIZE * 16];
+    unsigned samplesToMix = MIN(buf->writeAvailable(), sizeof(tempbuf)) / sizeof(int16_t);
+
+    int mixed = AudioMixer::instance.pullAudio((int16_t*)tempbuf, samplesToMix);
+
+    if (mixed > 0) {
+        buf->write(tempbuf, mixed * sizeof(int16_t));
     }
 }
 
