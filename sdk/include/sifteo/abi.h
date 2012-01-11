@@ -294,7 +294,11 @@ typedef uint32_t _SYSAudioHandle;
 // but must also accommodate a full frame's worth of speex data. If we go narrowband,
 // that's 160 shorts so we can get away with 512 bytes. Wideband is 320 shorts
 // so we need to kick up to 1024 bytes. kind of a lot :/
+#ifdef SIFTEO_SIMULATOR
+#define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t) * 16)
+#else
 #define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t))
+#endif
 #define _SYS_AUDIO_MAX_CHANNELS         8
 
 /*
@@ -328,12 +332,7 @@ struct _SYSAudioModule {
 struct _SYSAudioBuffer {
     uint16_t head;
     uint16_t tail;
-#ifdef SIFTEO_SIMULATOR
-    // host system is higher latency, needs more buffered data to not stutter
-    uint8_t buf[(_SYS_AUDIO_BUF_SIZE * 4)];
-#else
     uint8_t buf[_SYS_AUDIO_BUF_SIZE];
-#endif
 };
 
 /**
