@@ -17,8 +17,6 @@ System::System()
         opt_turbo(false),
         opt_cube0Debug(NULL),
         threadRunning(false),
-        traceFile(NULL),
-        mIsTracing(false),
         mIsInitialized(false),
         mIsStarted(false)
         {}
@@ -39,20 +37,9 @@ bool System::init()
      */
 
     if (opt_cubeFirmware.empty() && (!opt_cube0Profile.empty() || 
-                                     !opt_cubeTrace.empty() ||
                                      opt_cube0Debug)) {
         fprintf(stderr, "Debug features only available if a firmware image is provided.\n");
         return false;
-    }
-
-    if (!opt_cubeTrace.empty()) {
-        traceFile = fopen(opt_cubeTrace.c_str(), "w");
-        if (!traceFile) {
-            perror("Error opening trace file");
-            return false;
-        }
-    } else {
-        traceFile = NULL;
     }
 
     for (unsigned i = 0; i < opt_numCubes; i++)
@@ -109,8 +96,6 @@ bool System::initCube(unsigned id)
         return false;
 
     cubes[id].cpu.id = id;
-    cubes[id].cpu.traceFile = traceFile;
-    cubes[id].cpu.isTracing = mIsTracing;
     
     if (id == 0 && !opt_cube0Profile.empty()) {
         Cube::CPU::profile_data *pd;
@@ -176,10 +161,7 @@ void System::exit()
     if (!opt_cube0Profile.empty())
         Cube::Debug::writeProfile(&cubes[0].cpu, opt_cube0Profile.c_str());
 
-    if (traceFile) {
-        fclose(traceFile);
-        traceFile = NULL;
-    }
+    tracer.close();
 }
 
 void System::threadFn(void *param)
@@ -217,7 +199,7 @@ void System::threadFn(void *param)
          
         if (debug) {
             self->tickLoopDebug();
-        } else if (nCubes < 1 || !self->cubes[0].cpu.sbt || self->cubes[0].cpu.mProfileData || self->cubes[0].cpu.isTracing) {
+        } else if (nCubes < 1 || !self->cubes[0].cpu.sbt || self->cubes[0].cpu.mProfileData || Tracer::isEnabled()) {
             self->tickLoopGeneral();
         } else {
             self->tickLoopFastSBT();
@@ -253,22 +235,6 @@ ALWAYS_INLINE void System::tick(unsigned count)
      * So, we pass 'time' separately to this (inlined) function.
      */
     network.tick(*this, &time);
-}
-
-void System::setTraceMode(bool t)
-{
-    mIsTracing = !opt_cubeTrace.empty() && traceFile && t;
-
-    if (opt_numCubes) {
-        bool startStop = mIsStarted;
-    
-        if (startStop)
-            stopThread();
-        for (unsigned i = 0; i < opt_numCubes; i++)
-            cubes[i].cpu.isTracing = mIsTracing;
-        if (startStop)
-            startThread();
-    }
 }
 
 NEVER_INLINE void System::tickLoopDebug()

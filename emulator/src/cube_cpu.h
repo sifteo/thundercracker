@@ -91,7 +91,6 @@ struct em8051
     bool needInterruptDispatch;
     bool needHardwareTick;
     bool needTimerEdgeCheck;
-    bool isTracing;
     
     uint8_t irq_count;          // Number of currently active IRQ handlers
     uint8_t ifp;                // Last IFP state

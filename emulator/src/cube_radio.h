@@ -17,6 +17,7 @@
 #define _CUBE_RADIO_H
 
 #include "vtime.h"
+#include "tracer.h"
 #include "cube_cpu.h"
 
 namespace Cube {
@@ -111,20 +112,18 @@ class Radio {
             // Begin new SPI command
             spi_index = -1;
 
-            if (cpu->isTracing)
-                fprintf(cpu->traceFile, "[%2d] SPI: rf begin\n", cpu->id);
+            Tracer::log(cpu, "SPI: rf begin");
         }
         
         if (!csn && nextCSN) {
             // End an SPI command
             spiCmdEnd(spi_cmd);
 
-            if (cpu->isTracing)
-                fprintf(cpu->traceFile, "[%2d] SPI: rf end\n", cpu->id);
+            Tracer::log(cpu, "SPI: rf end");
         }
         
-        if (nextCE != ce && cpu->isTracing)
-            fprintf(cpu->traceFile, "[%2d] RADIO: ce %d\n", cpu->id, nextCE);
+        if (nextCE != ce)
+            Tracer::log(cpu, "RADIO: ce %d", nextCE);
 
         csn = nextCSN;
         ce = nextCE;
@@ -172,13 +171,8 @@ class Radio {
         Packet *tx_tail = &tx_fifo[tx_fifo_tail];
         bool hasACK = false;
 
-        if (cpu->isTracing) {
-            fprintf(cpu->traceFile, "[%2d] RADIO: rx [%2d] ", cpu->id, incoming.len);
-            for (int i = 0; i < incoming.len; i++)
-                fprintf(cpu->traceFile, "%02x", incoming.payload[i]);
-            fprintf(cpu->traceFile, " (rxc=%d txc=%d)\n",
-                    rx_fifo_count, tx_fifo_count);
-        }
+        Tracer::log(cpu, "RADIO: rxc=%d txc=%d", rx_fifo_count, tx_fifo_count);
+        Tracer::logHex(cpu, "RADIO: rx", incoming.len, incoming.payload);
         
         if (!ce) {
             /*
@@ -186,9 +180,8 @@ class Radio {
              * was ever on the air. Discard it with no ACK.
              */
 
-            if (cpu->isTracing)
-                fprintf(cpu->traceFile, "[%2d] RADIO: rx disabled, NAK\n", cpu->id);
-        
+            Tracer::log(cpu, "RADIO: rx disabled, NAK");
+
         } else if (rx_fifo_count < FIFO_SIZE) {
             /*
              * Received a packet successfully, with space in the FIFO to store it.
@@ -206,13 +199,8 @@ class Radio {
             if (tx_fifo_count) {
                 // ACK with payload
 
-                if (cpu->isTracing) {
-                    fprintf(cpu->traceFile, "[%2d] RADIO: ack [%2d] ", cpu->id, tx_tail->len);
-                    for (int i = 0; i < tx_tail->len; i++)
-                        fprintf(cpu->traceFile, "%02x", tx_tail->payload[i]);
-                    fprintf(cpu->traceFile, "\n");
-                }
-
+                Tracer::logHex(cpu, "RADIO: ack", tx_tail->len, tx_tail->payload);
+                
                 byte_count += tx_tail->len;
                 ack = *tx_tail;
                 hasACK = true;
@@ -239,8 +227,7 @@ class Radio {
              * long compared to our shortest inter-packet period.
              */
 
-            if (cpu->isTracing)
-                fprintf(cpu->traceFile, "[%2d] RADIO: rx full, NAK\n", cpu->id);
+            Tracer::log(cpu, "RADIO: rx full, NAK");
         }
 
         updateStatus();
@@ -345,11 +332,9 @@ class Radio {
         case CMD_W_ACK_PAYLOAD:
             tx_fifo[tx_fifo_head].len = spi_index;
  
-            if (cpu->isTracing) {
-                fprintf(cpu->traceFile, "[%2d] RADIO: ack enq %d [%2d]\n", cpu->id, tx_fifo_head, spi_index);
-            }
+            Tracer::log(cpu, "RADIO: ack enq %d [%2d]", tx_fifo_head, spi_index);
 
-           if (tx_fifo_count < FIFO_SIZE) {
+            if (tx_fifo_count < FIFO_SIZE) {
                 tx_fifo_count++;
                 tx_fifo_head = (tx_fifo_head + 1) % FIFO_SIZE;
             } else

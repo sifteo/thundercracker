@@ -334,16 +334,14 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->sys->opt_turbo ^= true;
             break;
 
-        case 'R': {
+        case 'R':
             /*
              * Intentionally undocumented: Toggle trace mode.
-             * Requires that a trace file was specified on the command line.
+             * If trace mode isn't available, this key is a silent no-op.
              */
-            bool t = !instance->sys->isTracing();
-            instance->overlay.postMessage((t ? "Enabling" : "Disabling") + std::string(" trace mode"));
-            instance->sys->setTraceMode(t);
+            if (instance->sys->isTraceAllowed())
+                instance->sys->tracer.setEnabled(!instance->sys->tracer.isEnabled());
             break;
-        }
         
         case GLFW_KEY_SPACE:
             if (instance->mouseIsPulling)

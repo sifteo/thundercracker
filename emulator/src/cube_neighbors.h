@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include "tracer.h"
 #include "cube_cpu.h"
 #include "cube_cpu_reg.h"
 #include "vtime.h"
@@ -75,8 +76,7 @@ class Neighbors {
     }
     
     static void receivedPulse(CPU::em8051 &cpu) {
-        if (cpu.isTracing)
-            fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Received pulse\n", cpu.id);
+        Tracer::log(&cpu, "NEIGHBOR: Received pulse");
 
         cpu.mSFR[PORT] |= PIN_IN;
         cpu.needTimerEdgeCheck = true;

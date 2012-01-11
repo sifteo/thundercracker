@@ -24,6 +24,7 @@
 #include "cube_cpu_core.h"
 #include "cube_debug.h"
 #include "vtime.h"
+#include "tracer.h"
 
 namespace Cube {
 
@@ -102,7 +103,7 @@ class Hardware {
     void reset();
 
     ALWAYS_INLINE void tick(bool *cpuTicked=NULL) {
-        CPU::em8051_tick(&cpu, 1, cpu.sbt, cpu.mProfileData != NULL, cpu.isTracing, cpu.mBreakpoint != 0, cpuTicked);
+        CPU::em8051_tick(&cpu, 1, cpu.sbt, cpu.mProfileData != NULL, Tracer::isEnabled(), cpu.mBreakpoint != 0, cpuTicked);
         hardwareTick();
     }
 

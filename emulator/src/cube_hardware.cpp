@@ -78,17 +78,15 @@ void CPU::except(CPU::em8051 *cpu, int exc)
 {
     Hardware *self = (Hardware*) cpu->callbackData;
     const char *name = CPU::em8051_exc_name(exc);
-    const char *fmt = "[%2d] EXCEPTION at 0x%04x: %s\n";
     
     self->incExceptionCount();
-    
-    if (cpu->isTracing)
-        fprintf(cpu->traceFile, fmt, cpu->id, cpu->mPC, name);
+
+    Tracer::log(cpu, "@%04x EXCEPTION: %s", cpu->mPC, name);
 
     if (self == Cube::Debug::cube && Cube::Debug::stopOnException)
         Cube::Debug::emu_exception(cpu, exc);
     else
-        fprintf(stderr, fmt, cpu->id, cpu->mPC, name);
+        fprintf(stderr, "[%2d] EXCEPTION at 0x%04x: %s\n", cpu->id, cpu->mPC, name);
 }
 
 // cube_cpu_callbacks.h

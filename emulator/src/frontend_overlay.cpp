@@ -166,8 +166,13 @@ void FrontendOverlay::drawRealTimeInfo()
     renderer->overlayRect(x, y, barW, barH, realTimeColor.v);
     y += barH + margin;
 
-    if (sys->opt_turbo) {
-        // Turbo indicator
+    /*
+     * Mode Indicators
+     */
+
+    if (sys->opt_turbo)
         text(realTimeColor, "Turbo Mode", 0.0f);
-    }
+    
+    if (sys->tracer.isEnabled())
+        text(debugColor, "Trace Enabled", 0.0f);
 }
