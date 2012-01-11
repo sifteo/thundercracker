@@ -7,7 +7,7 @@ import sys
 from ctypes import *
 
 
-max_seed_word_len = 5
+max_seed_word_len = 6
 
 def find_anagrams(string, dictionary):
 
@@ -57,7 +57,7 @@ def generate_dict():
     fi.close()
     
     # uncomment to regenerate: 
-    #generate_word_list_file()
+    generate_word_list_file()
     
     fi = open("word_list.txt", "r")
     #print "second file " + fi.filename()
@@ -130,6 +130,7 @@ def generate_dict():
         fi.write(word + "\n")
     fi.close()    
 
+    return;
     fi = open("anagram_seeds.txt", "w")
     seed_inc = 88
     seed = 0

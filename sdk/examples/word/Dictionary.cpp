@@ -29,7 +29,7 @@ bool Dictionary::pickWord(char* buffer)
         WordGame::seedRand(sRandSeed++);
     }
 
-    strcpy(buffer, "DONE");
+    strcpy(buffer, "WONDER");
     return true;
 
     if (PrototypeWordList::pickWord(buffer))

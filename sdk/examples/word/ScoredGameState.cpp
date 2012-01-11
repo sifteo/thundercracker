@@ -43,7 +43,7 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewWordFound:
 //        WordGame::playAudio(fireball_laugh, AudioChannelIndex_Score);
-        switch (strlen(data.mWordFound.mWord))
+        switch (strlen(data.mWordFound.mWord) / MAX_LETTERS_PER_CUBE)
         {
         case 2:
             WordGame::playAudio(fanfare_fire_laugh_01, AudioChannelIndex_Score);

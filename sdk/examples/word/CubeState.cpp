@@ -65,7 +65,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     const AssetImage* teeth = teethImages[teethImageIndex];
     const AssetImage* teethNumber = 0;
 
-    unsigned teethNumberIndex = GameStateMachine::getNewWordLength();
+    unsigned teethNumberIndex = GameStateMachine::getNewWordLength() / MAX_LETTERS_PER_CUBE;
     if (teethNumberIndex > 2)
     {
         teethNumberIndex -= 3;
