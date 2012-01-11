@@ -72,7 +72,10 @@ class Neighbors {
     
     static ALWAYS_INLINE void clearNeighborInput(CPU::em8051 &cpu) {
         // Immediately after we handle timer edges, auto-clear the neighbor input
-        cpu.mSFR[PORT] &= ~PIN_IN;
+        if (cpu.mSFR[PORT] & PIN_IN) {
+            cpu.mSFR[PORT] &= ~PIN_IN;
+            cpu.needTimerEdgeCheck = true;
+        }
     }
     
     static void receivedPulse(CPU::em8051 &cpu) {

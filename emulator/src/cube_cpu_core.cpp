@@ -249,6 +249,15 @@ NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12)
     aCPU->needTimerEdgeCheck = false;
     
     /*
+     * Neighbor input pulses are simulated as instantaneous events
+     * less than one clock cycle in duration. Immediately clear the
+     * neighbor inputs after we've sampled a new t012 value.
+     */
+ 
+    Neighbors::clearNeighborInput(*aCPU);
+    
+    
+    /*
      * Timer 0 / Timer 1
      */
 

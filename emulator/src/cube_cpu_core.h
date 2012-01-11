@@ -60,10 +60,9 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
         tick12 = true;
         aCPU->prescaler12 = 12;
         timer_tick_work(aCPU, true);
-
+        
     } else if (UNLIKELY(aCPU->needTimerEdgeCheck)) {
         timer_tick_work(aCPU, false);
-        Neighbors::clearNeighborInput(*aCPU);
     }
 }
 
