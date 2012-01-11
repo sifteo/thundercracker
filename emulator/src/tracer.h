@@ -40,7 +40,7 @@ class Tracer {
         return UNLIKELY(enabled);
     }
     
-    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt, ...)
+    static void log(const Cube::CPU::em8051 *cpu, const char *fmt, ...)
         __attribute__ ((format(printf,2,3)))
     {
         if (isEnabled()) {
