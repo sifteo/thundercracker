@@ -60,18 +60,18 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
         tick12 = true;
         aCPU->prescaler12 = 12;
         timer_tick_work(aCPU, true);
-
+        
     } else if (UNLIKELY(aCPU->needTimerEdgeCheck)) {
         timer_tick_work(aCPU, false);
     }
 }
 
 
-static ALWAYS_INLINE int em8051_tick(em8051 *aCPU, bool sbt, bool isProfiling, bool isTracing, bool hasBreakpoint)
+static ALWAYS_INLINE void em8051_tick(em8051 *aCPU, unsigned numTicks,
+                                      bool sbt, bool isProfiling, bool isTracing, bool hasBreakpoint,
+                                      bool *ticked)
 {
-    int ticked = 0;
-
-    aCPU->mTickDelay--;
+    aCPU->mTickDelay -= numTicks;
     
     /*
      * Interrupts are sent if the following cases are not true:
@@ -97,10 +97,11 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU, bool sbt, bool isProfiling, b
 
     if (UNLIKELY(aCPU->needInterruptDispatch) && (aCPU->sbt || aCPU->mTickDelay <= 0)) {
         aCPU->needInterruptDispatch = false;
+        aCPU->needInterruptDispatch = false;
         handle_interrupts(aCPU);
     }
     
-    if (aCPU->mTickDelay <= 0) {
+    if (!aCPU->mTickDelay) {
 
         /*
          * Run one instruction!
@@ -120,8 +121,9 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU, bool sbt, bool isProfiling, b
             aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU, pc, opcode, operand1, operand2);
             aCPU->mPC = pc & PC_MASK;
         }
-
-        ticked = 1;
+        
+        if (ticked)
+            *ticked = true;
 
         /*
          * Update profiler stats for this byte
@@ -161,8 +163,6 @@ static ALWAYS_INLINE int em8051_tick(em8051 *aCPU, bool sbt, bool isProfiling, b
     }
 
     timer_tick(aCPU);
-
-    return ticked;
 }
 
 

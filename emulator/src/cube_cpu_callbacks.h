@@ -121,7 +121,6 @@ struct SFR {
 
         // Use some register reads as hints to wake up the hardware emulation clock.
         case REG_SPIRSTAT:      // SPI rx polling
-        case BUS_PORT:          // Flash memory erase/program polling
             cpu->needHardwareTick = true;
             break;
         
@@ -150,6 +149,10 @@ struct SFR {
             return self->rng.controlRead(*self->time, *cpu);
         case REG_RNGDAT:
             return self->rng.dataRead(*self->time, *cpu);
+
+        case BUS_PORT:
+            cpu->needHardwareTick = true;
+            return self->readFlashBus();
 
         }
         

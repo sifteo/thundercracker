@@ -83,15 +83,13 @@ struct em8051
 
     unsigned mPC;
     unsigned mPreviousPC;
-    int mTickDelay;             // How many ticks we should delay before continuing
-    int mTimerTickDelay;
+    unsigned mTickDelay;        // How many ticks we should delay before continuing
     unsigned mBreakpoint;
     
     bool sbt;                   // In static binary translation mode
     bool needInterruptDispatch;
     bool needHardwareTick;
     bool needTimerEdgeCheck;
-    bool isTracing;
     
     uint8_t irq_count;          // Number of currently active IRQ handlers
     uint8_t ifp;                // Last IFP state
