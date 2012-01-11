@@ -234,6 +234,24 @@ class Radio {
 
         return hasACK;
     }
+    
+    void initVCD(VCDWriter &vcd)
+    {
+        vcd.define("radio_irq", &irq_state, 3, 4); 
+
+        vcd.define("csn", &csn, 1, 0); 
+        vcd.define("ce", &ce, 1, 0); 
+        vcd.define("spi_cmd", &spi_cmd, 8, 0); 
+        vcd.define("spi_index", &spi_index, 8, 0); 
+         
+        vcd.define("rx_fifo_count", &rx_fifo_count, 2, 0); 
+        vcd.define("rx_fifo_head", &rx_fifo_head, 2, 0); 
+        vcd.define("rx_fifo_tail", &rx_fifo_tail, 2, 0);
+        
+        vcd.define("tx_fifo_count", &tx_fifo_count, 2, 0); 
+        vcd.define("tx_fifo_head", &tx_fifo_head, 2, 0); 
+        vcd.define("tx_fifo_tail", &tx_fifo_tail, 2, 0); 
+    }
 
  private:
     void updateIRQ() {

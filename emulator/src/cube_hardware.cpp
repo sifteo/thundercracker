@@ -312,6 +312,10 @@ void Hardware::initVCD(VCDWriter &vcd)
         vcd.define("TCON", &cpu.mSFR[REG_TCON], 8); 
         vcd.define("IRCON", &cpu.mSFR[REG_IRCON], 8); 
     } vcd.leaveScope();
+    
+    vcd.enterScope("radio"); {
+        spi.radio.initVCD(vcd);
+    } vcd.leaveScope();        
 }
 
 
