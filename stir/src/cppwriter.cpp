@@ -120,14 +120,14 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     // TODO: increment ids correctly with each group
     uint32_t id = mCurrentID;
     mCurrentID++;
-    
+
     mStream <<
         "_SYSAudioModule " << sound.getName() << "= {\n" <<
-        id << ",\n" <<
-        "0,\n" <<
-        "0,\n" <<
-        "Sample\n" <<
-        "};\n";
+        indent << "/* id     */ " << id << ",\n" <<
+        indent << "/* offset */ " << 0 << ",\n" <<
+        indent << "/* size   */ " << 0 << ",\n" <<
+        indent << "/* type   */ " << sound.getEncode() << "\n" <<
+        "};\n\n";
 }
 
 void CPPSourceWriter::writeImage(const Image &image)
@@ -152,7 +152,7 @@ void CPPSourceWriter::writeImage(const Image &image)
             indent << "/* height  */ " << height << ",\n" <<
             indent << "/* frames  */ " << grids.size() << ",\n" <<
             indent << "/* index   */ " << pool.index(grid.tile(0, 0)) <<
-            ",\n};\n";
+            ",\n};\n\n";
             
     } else {
         /*
@@ -188,7 +188,7 @@ void CPPSourceWriter::writeImage(const Image &image)
             indent << "/* height  */ " << height << ",\n" <<
             indent << "/* frames  */ " << grids.size() << ",\n" <<
             indent << "/* tiles   */ " << image.getName() << "_tiles,\n" <<
-            "};\n";
+            "};\n\n";
     }
 }
 
