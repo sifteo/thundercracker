@@ -335,6 +335,15 @@ NEVER_INLINE void System::tickLoopFastSBT()
         batch -= stepSize;
         nextStep = batch;
         
+#if 0
+        // Debugging batch sizes
+        printf("batch %d, cubes: %d @%04x, %d @%04x, %d @%04x\n",
+                stepSize,
+                cubes[0].cpu.mTickDelay, cubes[0].cpu.mPC,
+                cubes[1].cpu.mTickDelay, cubes[1].cpu.mPC,
+                cubes[2].cpu.mTickDelay, cubes[2].cpu.mPC);        
+#endif
+        
         for (unsigned i = 0; i < nCubes; i++)
             nextStep = std::min(nextStep, cubes[i].tickFastSBT(stepSize));
         
