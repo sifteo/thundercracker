@@ -6,6 +6,7 @@
 #include "hardware.h"
 #include "hwtimer.h"
 
+#include "audiobuffer.h"
 #include "audiooutdevice.h"
 #include "speexdecoder.h"
 class AudioMixer;
@@ -38,14 +39,10 @@ private:
     int dacChan;
     HwTimer sampleTimer;
 
-    typedef struct AudioOutBuffer_t {
-        int16_t data[SpeexDecoder::DECODED_FRAME_SIZE];
-        int count;
-        int offset;
-    } AudioOutBuffer;
+    AudioBuffer buf;
+    _SYSAudioBuffer sys;
 
     AudioMixer *mixer;
-    AudioOutBuffer audioBufs[1];
 
     void dmaIsr(uint32_t flags);
 //    void tmrIsr();

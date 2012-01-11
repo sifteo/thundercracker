@@ -1,6 +1,7 @@
 
 #include "dacaudioout.h"
 #include "audiomixer.h"
+#include "tasks.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -17,7 +18,7 @@ void DacAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
     tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
 #endif
     this->mixer = mixer;
-    memset(audioBufs, 0, sizeof(audioBufs));
+    buf.init(&this->sys);
     // from datasheet: "once the DAC channel is aneabled, the corresponding gpio
     // is automatically connected to the analog converter output. to avoid
     // parasitic consumption, the pin should be configured to analog in"
@@ -78,15 +79,14 @@ void DacAudioOut::tmrIsr()
     tim4TestPin.toggle();
 #endif
 
-    AudioOutBuffer &b = audioBufs[0];
-    if (b.offset >= b.count) {
-        b.offset = 0;
-        b.count = mixer->pullAudio(b.data, arraysize(b.data));
-        if (!b.count) {
+    // TODO - tune the refill threshold if needed
+    if (buf.readAvailable() < buf.capacity() / 2) {
+        Tasks::setPending(Tasks::AudioOutEmpty, &buf);
+        if (buf.readAvailable() < 2)
             return;
-        }
     }
-    uint16_t duty = b.data[b.offset++] + 0x8000;
+
+    uint16_t duty = (buf.dequeue() | (buf.dequeue() << 8)) + 0x8000;
     duty = (duty * 0xFFF) / 0xFFFF; // scale to 12-bit DAC output
     dac.write(this->dacChan, duty, Dac::RightAlign12Bit);
 }
