@@ -66,7 +66,7 @@ class Tracer {
     static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt)
     {
         if (isEnabled())
-            logV(cpu, fmt);
+            logV(cpu, "%s", fmt);
     }
 
     static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt,
