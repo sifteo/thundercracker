@@ -295,7 +295,7 @@ typedef uint32_t _SYSAudioHandle;
 // that's 160 shorts so we can get away with 512 bytes. Wideband is 320 shorts
 // so we need to kick up to 1024 bytes. kind of a lot :/
 #ifdef SIFTEO_SIMULATOR
-#define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t) * 16)
+#define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t) * 4)
 #else
 #define _SYS_AUDIO_BUF_SIZE             (512 * sizeof(int16_t))
 #endif
