@@ -41,8 +41,12 @@ bool System::init()
         return false;
     }
 
-    // Set up VCD variables for all possible cubes, not just the default cubes
-    for (unsigned i = 0; i < MAX_CUBES; i++) {
+    /*
+     * To save on clutter in the trace file, we intentionally only set up tracing
+     * for the initial number of cubes, not the maximum number of cubes. Additional cubes
+     * added dynamically will not be traced.
+     */
+    for (unsigned i = 0; i < opt_numCubes; i++) {
         char cubeName[32];
 
         snprintf(cubeName, sizeof cubeName, "cube_%02d", i);
