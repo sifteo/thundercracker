@@ -1,19 +1,26 @@
 #include "tasks.h"
-#include <sifteo/machine.h>
+#include <sifteo.h>
 #include "usb.h"
+#include "audiomixer.h"
 
 using namespace Sifteo;
 
-uint32_t Tasks::pending;
+uint32_t Tasks::pendingMask;
 
 Tasks::Task Tasks::TaskList[MAX_TASKS] = {
+    #ifdef SIFTEO_SIMULATOR
+    { 0 },
+    { 0 },
+    #else
     { Usb::handleINData, 0 },
     { Usb::handleOUTData, 0 },
+    #endif
+    { AudioMixer::handleAudioOutEmpty, 0 }
 };
 
 void Tasks::init()
 {
-    pending = 0;
+    pendingMask = 0;
 }
 
 /*
@@ -22,10 +29,10 @@ void Tasks::init()
 void Tasks::setPending(TaskID id, void* p)
 {
     Task &task = TaskList[id];
-    if (task.callback) {
-        task.param = p;
-        Atomic::SetLZ(pending, id);
-    }
+    ASSERT(task.callback != NULL);
+
+    task.param = p;
+    Atomic::SetLZ(pendingMask, id);
 }
 
 /*
@@ -35,9 +42,10 @@ void Tasks::setPending(TaskID id, void* p)
 */
 void Tasks::work()
 {
-    while (pending) {
-        unsigned tsk = Intrinsic::CLZ(pending);
-        TaskList[tsk].callback(TaskList[tsk].param);
-        Atomic::And(pending, ~Intrinsic::LZ(tsk));
+    while (pendingMask) {
+        unsigned idx = Intrinsic::CLZ(pendingMask);
+        Task &task = TaskList[idx];
+        task.callback(task.param);
+        Atomic::ClearLZ(pendingMask, idx);
     }
 }

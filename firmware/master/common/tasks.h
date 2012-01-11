@@ -10,7 +10,8 @@ public:
 
     enum TaskID {
         UsbIN,
-        UsbOUT
+        UsbOUT,
+        AudioOutEmpty
     };
 
     static void init();
@@ -20,7 +21,7 @@ public:
 private:
     typedef void (*TaskCallback)(void *);
 
-    static uint32_t pending;
+    static uint32_t pendingMask;
     struct Task {
         TaskCallback callback;
         void *param;
