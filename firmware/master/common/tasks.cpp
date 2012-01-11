@@ -42,10 +42,13 @@ void Tasks::setPending(TaskID id, void* p)
 */
 void Tasks::work()
 {
-    while (pendingMask) {
-        unsigned idx = Intrinsic::CLZ(pendingMask);
+    // take a snapshot so we don't get stuck servicing pendingMask in here forever
+    // in the event it gets set by an ISR while we're still working.
+    uint32_t pendingSnapshot = pendingMask;
+    while (pendingSnapshot) {
+        unsigned idx = Intrinsic::CLZ(pendingSnapshot);
         Task &task = TaskList[idx];
         task.callback(task.param);
-        Atomic::ClearLZ(pendingMask, idx);
+        Atomic::ClearLZ(pendingSnapshot, idx);
     }
 }
