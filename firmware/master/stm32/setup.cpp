@@ -149,6 +149,8 @@ extern "C" void _start()
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
         p[0]();
 
+    // This is the earliest point at which it's safe to use Usart::Dbg.
+    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
     AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
     MacronixMX25::instance.init();
@@ -172,17 +174,18 @@ extern "C" void _start()
      * High-level hardware initialization
      */
 
-    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
-
     SysTime::init();
     Radio::open();
     Tasks::init();
     FlashLayer::init();
     Button::init();
 
+#if 0
+    // XXX: Audio temporarily disable due to Speex init crash
     AudioMixer::instance.init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
+#endif
 
 #if 0
     // ALERT! ST's usb library appears to overwrite registers related to
