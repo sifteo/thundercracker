@@ -152,8 +152,10 @@ extern "C" void _start()
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
+#ifndef DEBUG
     AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
     MacronixMX25::instance.init();
+#endif
 
     /*
      * Nested Vectored Interrupt Controller setup.
