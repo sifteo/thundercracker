@@ -59,8 +59,8 @@ class VirtualTime {
         run();
     }
         
-    ALWAYS_INLINE void tick() {
-        clocks++;
+    ALWAYS_INLINE void tick(unsigned count=1) {
+        clocks += count;
     }
 
     double elapsedSeconds() const {

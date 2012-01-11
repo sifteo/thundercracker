@@ -33,6 +33,10 @@ class SystemNetwork {
         if (deadline.hasPassed(vtime))
             deadlineWork(sys);
     }
+    
+    ALWAYS_INLINE uint64_t deadlineRemaining() {
+        return deadline.remaining();
+    }
             
  private:
     static const unsigned POLL_MS = 100;

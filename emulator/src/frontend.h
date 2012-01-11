@@ -23,12 +23,15 @@ class FrameRateController {
 public:
     FrameRateController();
     void endFrame();
-    
-    static const double targetFPS = 75.0;
+
+    void setTargetFPS(double target) {
+        targetFPS = target;
+    }
 
 private:
     double lastTimestamp;
     double accumulator;
+    double targetFPS;
 };
 
 
@@ -111,6 +114,7 @@ class Frontend {
 
     System *sys;
     unsigned frameCount;
+    unsigned idleFrames;
     FrontendCube cubes[System::MAX_CUBES];
 
     bool toggleZoom;

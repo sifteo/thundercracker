@@ -149,7 +149,7 @@ void FrontendOverlay::drawHelp()
 
 void FrontendOverlay::drawRealTimeInfo()
 {
-    const unsigned width = 152;
+    const unsigned width = 160;
     const unsigned barH = 3;
     
     // Right-justify the text so it doesn't bounce so much
@@ -166,8 +166,13 @@ void FrontendOverlay::drawRealTimeInfo()
     renderer->overlayRect(x, y, barW, barH, realTimeColor.v);
     y += barH + margin;
 
-    if (sys->opt_turbo) {
-        // Turbo indicator
+    /*
+     * Mode Indicators
+     */
+
+    if (sys->opt_turbo)
         text(realTimeColor, "Turbo Mode", 0.0f);
-    }
+    
+    if (sys->tracer.isEnabled())
+        text(debugColor, "Trace Enabled", 0.0f);
 }

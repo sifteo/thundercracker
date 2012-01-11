@@ -693,10 +693,6 @@ rx_special:
         ; We can calculate the number of complete bytes here as (nybble_count - 1) / 2.
         ; If that byte count is zero, we reset. Ignoring the dummy nybbles requries
         ; no special effort, since we pull bytes directly from SPI now.
-        ;
-        ; This is a pretty tight loop- we need to take at least 16 clock cycles
-        ; between SPI reads, and the timing here is kind of close. So, the loop
-        ; is annotated with cycle counts.
 
 rx_flash:
 
@@ -707,24 +703,23 @@ rx_flash:
         jz      rx_flash_reset                  ;    Zero bytes, do a flash reset
         mov     R_NYBBLE_COUNT, a               ;    Otherwise, this is the new loop iterator   
         
-        SPI_WAIT
-
 rx_flash_loop:
-        mov     a, _flash_fifo_head             ; 2  Load the flash write pointer
-        add     a, #_flash_fifo                 ; 2  Address relative to flash_fifo[]
-        mov     R_TMP, a                        ; 2
+        mov     a, _flash_fifo_head             ; Load the flash write pointer
+        add     a, #_flash_fifo                 ; Address relative to flash_fifo[]
+        mov     R_TMP, a
 
-        mov     a, _SPIRDAT                     ; 2  Load next SPI byte
-        mov     _SPIRDAT, #0                    ; 3
-        mov     @R_TMP, a                       ; 3  Store it in the FIFO
+        SPI_WAIT
+        mov     a, _SPIRDAT                     ; Load next SPI byte
+        mov     _SPIRDAT, #0
+        mov     @R_TMP, a                       ; Store it in the FIFO
 
-        mov     a, _flash_fifo_head             ; 2  Advance head pointer
-        inc     a                               ; 1
-        anl     a, #(FLS_FIFO_SIZE - 1)         ; 2
-        mov     _flash_fifo_head, a             ; 3
+        mov     a, _flash_fifo_head             ; Advance head pointer
+        inc     a
+        anl     a, #(FLS_FIFO_SIZE - 1)
+        mov     _flash_fifo_head, a
 
-        djnz    R_NYBBLE_COUNT, rx_flash_loop   ; 3
-        sjmp    rx_complete                     ; 3
+        djnz    R_NYBBLE_COUNT, rx_flash_loop
+        sjmp    rx_complete
 
 rx_flash_reset:
         mov     _flash_fifo_head, #FLS_FIFO_RESET

@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include "tracer.h"
 #include "cube_cpu.h"
 #include "cube_cpu_reg.h"
 #include "vtime.h"
@@ -68,22 +69,20 @@ class Neighbors {
         /* Mark two neighbor sensors as not-in-range. ONLY called by the UI thread. */
         mySides[mySide].otherSides[otherSide] &= ~(1 << otherCube);
     }
-
-    ALWAYS_INLINE void tick(CPU::em8051 &cpu) {
-        if (UNLIKELY(inputs))
-            inputWork(cpu);
-        else
+    
+    static ALWAYS_INLINE void clearNeighborInput(CPU::em8051 &cpu) {
+        // Immediately after we handle timer edges, auto-clear the neighbor input
+        if (cpu.mSFR[PORT] & PIN_IN) {
             cpu.mSFR[PORT] &= ~PIN_IN;
+            cpu.needTimerEdgeCheck = true;
+        }
     }
     
-    NEVER_INLINE void inputWork(CPU::em8051 &cpu) {
-        if (cpu.isTracing)
-            fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Received pulse (sides %02x)\n", cpu.id, inputs);
+    static void receivedPulse(CPU::em8051 &cpu) {
+        Tracer::log(&cpu, "NEIGHBOR: Received pulse");
 
         cpu.mSFR[PORT] |= PIN_IN;
         cpu.needTimerEdgeCheck = true;
-
-        inputs = 0;
     }
 
     void ioTick(CPU::em8051 &cpu);
@@ -99,7 +98,6 @@ class Neighbors {
     static const unsigned PIN_2_BOTTOM  = (1 << 7);
     static const unsigned PIN_3_RIGHT   = (1 << 5);
     
-    uint8_t inputs;
     uint8_t inputMask;
     uint8_t prevDriveHigh;
 
