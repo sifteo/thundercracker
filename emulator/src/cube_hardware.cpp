@@ -247,4 +247,66 @@ void Hardware::incExceptionCount()
     exceptionCount++;
 }
 
+void Hardware::initVCD(VCDWriter &vcd)
+{
+    /*
+     * Set up trace variables for our VCD file output.
+     *
+     * This feature acts like a built-in logic analyzer;
+     * during initialization we identify interesting variables,
+     * then they're monitored during each clock tick (when tracing
+     * is enabled) and the results are written to an industry
+     * standard VCD file.
+     */
+     
+    vcd.enterScope("gpio"); {
+    
+        // Parallel busses
+        vcd.define("addr", &cpu.mSFR[ADDR_PORT], 8); 
+        vcd.define("addr_dir", &cpu.mSFR[ADDR_PORT_DIR], 8); 
+        vcd.define("bus", &cpu.mSFR[BUS_PORT], 8); 
+        vcd.define("bus_dir", &cpu.mSFR[BUS_PORT_DIR], 8); 
+    
+        // Ctrl port, broken out
+        vcd.define("lcd_dcx", &cpu.mSFR[CTRL_PORT], 1, 0);
+        vcd.define("flash_lat2", &cpu.mSFR[CTRL_PORT], 1, 1);
+        vcd.define("flash_lat1", &cpu.mSFR[CTRL_PORT], 1, 2);
+        vcd.define("en3v3", &cpu.mSFR[CTRL_PORT], 1, 3);
+        vcd.define("lcd_backlight", &cpu.mSFR[CTRL_PORT], 1, 4);
+        vcd.define("flash_we", &cpu.mSFR[CTRL_PORT], 1, 5);
+        vcd.define("flash_oe", &cpu.mSFR[CTRL_PORT], 1, 6);
+        vcd.define("ctrl_dir", &cpu.mSFR[CTRL_PORT_DIR], 8); 
+
+        // Misc port, broken out
+        vcd.define("nb_top", &cpu.mSFR[MISC_PORT], 1, 0);
+        vcd.define("nb_top_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 0);
+        vcd.define("nb_left", &cpu.mSFR[MISC_PORT], 1, 1);
+        vcd.define("nb_left_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 1);
+        vcd.define("nb_bottom", &cpu.mSFR[MISC_PORT], 1, 7);
+        vcd.define("nb_bottom_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 7);
+        vcd.define("nb_right", &cpu.mSFR[MISC_PORT], 1, 5);
+        vcd.define("nb_right_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 5);
+        vcd.define("nb_in", &cpu.mSFR[MISC_PORT], 1, 6);
+        vcd.define("nb_in_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 6);
+
+    } vcd.leaveScope();
+    
+    vcd.enterScope("cpu"); {
+        // Internal state
+        vcd.define("irq_count", &cpu.irq_count, 3);
+        vcd.define("PC", &cpu.mPC, 16);
+
+        // Important registers
+        vcd.define("TL0", &cpu.mSFR[REG_TL0], 8); 
+        vcd.define("TH0", &cpu.mSFR[REG_TH0], 8); 
+        vcd.define("TL1", &cpu.mSFR[REG_TL1], 8); 
+        vcd.define("TH1", &cpu.mSFR[REG_TH1], 8); 
+        vcd.define("TL2", &cpu.mSFR[REG_TL2], 8); 
+        vcd.define("TH2", &cpu.mSFR[REG_TH2], 8); 
+        vcd.define("TCON", &cpu.mSFR[REG_TCON], 8); 
+        vcd.define("IRCON", &cpu.mSFR[REG_IRCON], 8); 
+    } vcd.leaveScope();
+}
+
+
 };  // namespace Cube

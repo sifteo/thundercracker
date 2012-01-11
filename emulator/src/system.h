@@ -64,7 +64,7 @@ class System {
          * both because the traces will be less useful, and because it could
          * make it easier to reverse engineer our translated firmware.
          */
-        return opt_numCubes && cubes[0].cpu.sbt == false;
+        return !opt_cubeFirmware.empty();                                     
     }
 
     // Use with care... They must remain exactly paired.

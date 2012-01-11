@@ -28,6 +28,11 @@ class Tracer {
     void setEnabled(bool b);     
     void close();
 
+    ALWAYS_INLINE void tick(const VirtualTime &vtime) {
+        if (isEnabled())
+            vcd.writeTick(vcdTraceFile, vtime);
+    }
+
     ALWAYS_INLINE static bool isEnabled() {
         return UNLIKELY(enabled);
     }

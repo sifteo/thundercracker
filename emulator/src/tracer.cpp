@@ -18,10 +18,15 @@ void Tracer::setEnabled(bool b)
     if (b) {
         instance = this;
         
-        if (!textTraceFile)
+        if (!textTraceFile) {
             textTraceFile = fopen("trace.txt", "w");
-        if (!vcdTraceFile)
+        }
+
+        if (!vcdTraceFile) {
             vcdTraceFile = fopen("trace.vcd", "w");
+            if (vcdTraceFile)
+                vcd.writeHeader(vcdTraceFile);
+        }
             
         enabled = textTraceFile && vcdTraceFile;
         if (!enabled)

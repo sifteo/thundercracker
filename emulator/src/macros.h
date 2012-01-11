@@ -36,4 +36,8 @@
 #   endif
 #endif
 
+#if defined(_WIN32) && !defined(PRIu64)
+#   define PRIu64 "I64u"
+#endif
+
 #endif

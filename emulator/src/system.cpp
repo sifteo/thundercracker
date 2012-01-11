@@ -27,19 +27,27 @@ bool System::init()
     if (mIsInitialized)
         return true;
         
-    /*
-     * We want to disable our debugging features when using the
-     * built-in binary translated firmware. The debugger won't really
-     * work properly in SBT mode anyway, but we additionally want to
-     * disable it in order to make it harder to reverse engineer our
-     * firmware. Of course, any dedicated reverse engineer could just
-     * disable this test easily :)
-     */
-
     if (opt_cubeFirmware.empty() && (!opt_cube0Profile.empty() || 
                                      opt_cube0Debug)) {
+        /*
+         * We want to disable our debugging features when using the
+         * built-in binary translated firmware. The debugger won't really
+         * work properly in SBT mode anyway, but we additionally want to
+         * disable it in order to make it harder to reverse engineer our
+         * firmware. Of course, any dedicated reverse engineer could just
+         * disable this test easily :)
+         */
         fprintf(stderr, "Debug features only available if a firmware image is provided.\n");
         return false;
+    }
+
+    // Set up VCD variables for all possible cubes, not just the default cubes
+    for (unsigned i = 0; i < MAX_CUBES; i++) {
+        char cubeName[32];
+        snprintf(cubeName, sizeof cubeName, "cube_%02d", i);
+        tracer.vcd.enterScope(cubeName);
+        cubes[i].initVCD(tracer.vcd);
+        tracer.vcd.leaveScope();
     }
 
     for (unsigned i = 0; i < opt_numCubes; i++)
@@ -115,7 +123,7 @@ bool System::initCube(unsigned id)
      * when running firmware that doesn't have a real address
      * assignment scheme implemented.
      */
-    cubes[id].spi.radio.setAddressLSB(id);        
+    cubes[id].spi.radio.setAddressLSB(id);
 
     return true;
 }
@@ -260,6 +268,7 @@ NEVER_INLINE void System::tickLoopDebug()
         for (unsigned i = 1; i < nCubes; i++)
             cubes[i].tick();
         tick();
+        tracer.tick(time);
     }
 
     if (tick0 && Cube::Debug::updateUI()) {
@@ -282,13 +291,15 @@ NEVER_INLINE void System::tickLoopGeneral()
         for (unsigned i = 0; i < nCubes; i++)
             cubes[i].tick();
         tick();
+        tracer.tick(time);
     }
 }
 
 NEVER_INLINE void System::tickLoopFastSBT()
 {
     /*
-     * Fastest path: No debugging, SBT only, advance by more than one tick when we can.
+     * Fastest path: No debugging, no tracing, SBT only,
+     * and advance by more than one tick when we can.
      */
             
     unsigned batch = time.timestepTicks();

@@ -26,6 +26,7 @@
 #include "vtime.h"
 #include "tracer.h"
 
+
 namespace Cube {
 
 /*
@@ -126,6 +127,7 @@ class Hardware {
     void setTouch(float amount);
 
     bool isDebugging();
+    void initVCD(VCDWriter &vcd);
 
     // SFR side-effects
     void sfrWrite(int reg);
