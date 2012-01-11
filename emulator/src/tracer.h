@@ -40,7 +40,13 @@ class Tracer {
         return UNLIKELY(enabled);
     }
     
-    static void log(const Cube::CPU::em8051 *cpu, const char *fmt, ...)
+    /*
+     * Note that some versions of GCC can't inline variatic functions.
+     * This function should be used sparingly, and if it's used in performance
+     * critical locations it should always be surrounded by an isEnabled() test.
+     */
+     
+    static void logV(const Cube::CPU::em8051 *cpu, const char *fmt, ...)
         __attribute__ ((format(printf,2,3)))
     {
         if (isEnabled()) {
@@ -50,6 +56,84 @@ class Tracer {
             va_end(ap);
         }
     }
+    
+    /*
+     * Fixed-argument log() functions. These are used with a printf()-style format
+     * string, but since they aren't actually variadic functions, they can always
+     * be inlined correctly.
+     */
+     
+    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt)
+    {
+        if (isEnabled())
+            logV(cpu, fmt);
+    }
+
+    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt,
+                                  int a)
+    {
+        if (isEnabled())
+            logV(cpu, fmt, a);
+    }
+
+    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt,
+                                  int a, int b)
+    {
+        if (isEnabled())
+            logV(cpu, fmt, a, b);
+    }
+
+    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt,
+                                  int a, const char *b)
+    {
+        if (isEnabled())
+            logV(cpu, fmt, a, b);
+    }
+    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt,
+                                  int a, int b, int c)
+    {
+        if (isEnabled())
+            logV(cpu, fmt, a, b, c);
+    }
+
+    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt,
+                                  int a, int b, int c, int d)
+    {
+        if (isEnabled())
+            logV(cpu, fmt, a, b, c, d);
+    }
+
+    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt,
+                                  int a, int b, int c, int d, int e)
+    {
+        if (isEnabled())
+            logV(cpu, fmt, a, b, c, d, e);
+    }
+
+    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt,
+                                  int a, int b, int c, int d, int e, int f)
+    {
+        if (isEnabled())
+            logV(cpu, fmt, a, b, c, d, e, f);
+    }
+
+    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt,
+                                  int a, int b, int c, int d, int e, int f, int g)
+    {
+        if (isEnabled())
+            logV(cpu, fmt, a, b, c, d, e, f, g);
+    }
+
+    static ALWAYS_INLINE void log(const Cube::CPU::em8051 *cpu, const char *fmt,
+                                  int a, int b, int c, int d, int e, int f, int g, int h)
+    {
+        if (isEnabled())
+            logV(cpu, fmt, a, b, c, d, e, f, g, h);
+    }
+    
+    /*
+     * Specialized logging functions
+     */
 
     static ALWAYS_INLINE void logHex(const Cube::CPU::em8051 *cpu, const char *msg, size_t len, void *data)
     {
