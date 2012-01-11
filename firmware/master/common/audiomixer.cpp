@@ -26,9 +26,9 @@ AudioMixer::AudioMixer() :
 void AudioMixer::init()
 {
     memset(channelSlots, 0, sizeof(channelSlots));
-    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
-        decoders[i].init();
-    }
+//    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
+//        decoders[i].init();
+//    }
 }
 
 /*
@@ -205,15 +205,14 @@ void AudioMixer::fetchData()
     consumed by the audio out device.
 */
 void AudioMixer::handleAudioOutEmpty(void *p) {
-    AudioBuffer *buf = (AudioBuffer*)p;
+    AudioBuffer *buf = static_cast<AudioBuffer*>(p);
 
-    uint8_t tempbuf[_SYS_AUDIO_BUF_SIZE * 16];
-    unsigned samplesToMix = MIN(buf->writeAvailable(), sizeof(tempbuf)) / sizeof(int16_t);
-
-    int mixed = AudioMixer::instance.pullAudio((int16_t*)tempbuf, samplesToMix);
-
+    unsigned bytesToWrite;
+    int16_t *audiobuf = (int16_t*)buf->reserve(buf->writeAvailable(), &bytesToWrite);
+    unsigned mixed = AudioMixer::instance.pullAudio(audiobuf, bytesToWrite / sizeof(int16_t));
+    ASSERT(mixed < bytesToWrite * sizeof(int16_t));
     if (mixed > 0) {
-        buf->write(tempbuf, mixed * sizeof(int16_t));
+        buf->commit(mixed * sizeof(int16_t));
     }
 }
 
