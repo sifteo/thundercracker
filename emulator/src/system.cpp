@@ -44,8 +44,13 @@ bool System::init()
     // Set up VCD variables for all possible cubes, not just the default cubes
     for (unsigned i = 0; i < MAX_CUBES; i++) {
         char cubeName[32];
+
         snprintf(cubeName, sizeof cubeName, "cube_%02d", i);
         tracer.vcd.enterScope(cubeName);
+
+        snprintf(cubeName, sizeof cubeName, "c%02d_", i);
+        tracer.vcd.setNamePrefix(cubeName);
+
         cubes[i].initVCD(tracer.vcd);
         tracer.vcd.leaveScope();
     }

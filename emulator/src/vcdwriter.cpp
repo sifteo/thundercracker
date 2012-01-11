@@ -20,6 +20,11 @@ void VCDWriter::leaveScope()
     defs << "$upscope $end\n";
 }
 
+void VCDWriter::setNamePrefix(const std::string prefix)
+{
+    namePrefix = prefix;
+}
+
 void VCDWriter::define(const std::string name, void *var, unsigned numBits, unsigned firstBit)
 {
     std::string identifier = createIdentifier(sources.size());
@@ -28,7 +33,7 @@ void VCDWriter::define(const std::string name, void *var, unsigned numBits, unsi
     SignalSource s(var, numBits, firstBit);
     sources.push_back(s);
 
-    defs << "$var reg " << numBits << " " << identifier << " " << name;
+    defs << "$var reg " << numBits << " " << identifier << " " << namePrefix << name;
     if (numBits > 1)
         defs << "[" << (numBits - 1) << ":0]";
     defs << " $end\n";

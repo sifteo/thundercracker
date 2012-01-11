@@ -33,6 +33,7 @@ public:
 
     void enterScope(const std::string scope);
     void leaveScope();
+    void setNamePrefix(const std::string prefix);
     void define(const std::string name, void *var, unsigned numBits=1, unsigned firstBit=0);
 
     void writeHeader(FILE *f);
@@ -69,6 +70,7 @@ private:
 
     std::vector<SignalSource> sources;
     std::vector<std::string> identifiers;
+    std::string namePrefix;
     std::stringstream defs;
     uint64_t currentTick;
     
