@@ -20,7 +20,7 @@ public:
         return sys != 0;
     }
 
-    unsigned capacity() const {
+    inline unsigned capacity() const {
         return sizeof(sys->buf) - 1;
     }
 
@@ -41,8 +41,14 @@ public:
     unsigned readAvailable() const;
     unsigned writeAvailable() const;
 
+    uint8_t *reserve(unsigned numBytes, unsigned *outBytesAvailable);
+    void commit(unsigned numBytes);
+
 private:
-    _SYSAudioBuffer *sys; // provided by userspace
+    _SYSAudioBuffer *sys;                       // provided by userspace
+    // to support reserve/commit API, when we need to wrap around the end of our
+    // actual sys buffer, provide a coalescer
+    uint8_t coalescer[_SYS_AUDIO_BUF_SIZE];
 };
 
 #endif // AUDIOBUFFER_H_
