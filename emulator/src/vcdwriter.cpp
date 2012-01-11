@@ -45,16 +45,16 @@ void VCDWriter::writeHeader(FILE *f)
         ((uint64_t)1e15) / VirtualTime::HZ, defs.str().c_str());
 }
 
-void VCDWriter::writeTick(FILE *f, const VirtualTime &vtime)
+void VCDWriter::writeTick(FILE *f, uint64_t clock)
 {
     for (unsigned id = 0; id < sources.size(); id++) {
         SignalSource &source = sources[id];
         uint64_t newValue = source.sample();
         
         if (newValue != source.value) {
-            if (vtime.clocks != currentTick) {
-                fprintf(f, "#%"PRIu64"\n", vtime.clocks);
-                currentTick = vtime.clocks;
+            if (clock != currentTick) {
+                fprintf(f, "#%"PRIu64"\n", clock);
+                currentTick = clock;
             }
             
             if (source.numBits > 1)

@@ -37,7 +37,7 @@ public:
     void define(const std::string name, void *var, unsigned numBits=1, unsigned firstBit=0);
 
     void writeHeader(FILE *f);
-    void writeTick(FILE *f, const VirtualTime &vtime);
+    void writeTick(FILE *f, uint64_t clock);
 
 private:
     struct SignalSource {

@@ -23,6 +23,9 @@
 
 class Tracer {
  public:
+    Tracer()
+        : epochIsSet(false), textTraceFile(NULL), vcdTraceFile(NULL) {}
+
     VCDWriter vcd;
      
     void setEnabled(bool b);     
@@ -30,7 +33,7 @@ class Tracer {
 
     ALWAYS_INLINE void tick(const VirtualTime &vtime) {
         if (isEnabled())
-            vcd.writeTick(vcdTraceFile, vtime);
+            vcd.writeTick(vcdTraceFile, getLocalClock(vtime));
     }
 
     ALWAYS_INLINE static bool isEnabled() {
@@ -58,8 +61,26 @@ class Tracer {
     static bool enabled;
     static Tracer *instance;
      
+    bool epochIsSet;
+    uint64_t epoch;
+
     FILE *textTraceFile;
     FILE *vcdTraceFile;
+    
+    uint64_t getLocalClock(const VirtualTime &vtime)
+    {
+        /*
+         * Use our own local epoch, so that logged timestamps start at zero.
+         */
+
+        if (epochIsSet) {
+            return vtime.clocks - epoch;
+        } else {
+            epoch = vtime.clocks;
+            epochIsSet = true;
+            return 0;
+        }
+    }
     
     void logWork(const Cube::CPU::em8051 *cpu);
     void logWork(const Cube::CPU::em8051 *cpu, const char *fmt, va_list ap);

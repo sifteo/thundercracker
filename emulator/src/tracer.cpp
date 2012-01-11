@@ -57,7 +57,7 @@ void Tracer::close()
 
 void Tracer::logWork(const Cube::CPU::em8051 *cpu)
 {
-    fprintf(textTraceFile, "[%02d t=%u] ", cpu->id, (unsigned)cpu->vtime->clocks);
+    fprintf(textTraceFile, "[%02d t=%"PRIu64"] ", cpu->id, getLocalClock(*cpu->vtime));
 }
 
 void Tracer::logWork(const Cube::CPU::em8051 *cpu, const char *fmt, va_list ap)
