@@ -149,7 +149,7 @@ void FrontendOverlay::drawHelp()
 
 void FrontendOverlay::drawRealTimeInfo()
 {
-    const unsigned width = 152;
+    const unsigned width = 160;
     const unsigned barH = 3;
     
     // Right-justify the text so it doesn't bounce so much
