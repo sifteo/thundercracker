@@ -13,7 +13,7 @@
  * simulator.
  */
 
-PortAudioOutDevice portaudio;
+static PortAudioOutDevice portaudio;
 
 void AudioOutDevice::init(SampleRate samplerate, AudioMixer *mixer)
 {
