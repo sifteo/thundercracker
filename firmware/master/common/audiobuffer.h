@@ -20,6 +20,10 @@ public:
         return sys != 0;
     }
 
+    unsigned capacity() const {
+        return sizeof(sys->buf) - 1;
+    }
+
     void enqueue(uint8_t c);
     uint8_t dequeue();
 
