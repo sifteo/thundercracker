@@ -44,7 +44,7 @@ class GLRenderer {
     bool init();
     void setViewport(int width, int height);
 
-    void beginFrame(float viewExtent, b2Vec2 viewCenter);
+    void beginFrame(float viewExtent, b2Vec2 viewCenter, bool pixelAccurate=false);
     void endFrame();
 
     void drawBackground(float extent, float scale);
@@ -127,6 +127,11 @@ class GLRenderer {
     GLuint backgroundTexture;
     
     GLuint fontTexture;
+    
+    struct {
+        float viewExtent;
+        bool pixelAccurate;
+    } currentFrame;
 
     std::vector<VertexTN> faceVA;
     std::vector<VertexTN> sidesVA;

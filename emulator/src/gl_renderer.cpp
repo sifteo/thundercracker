@@ -158,7 +158,7 @@ void GLRenderer::setViewport(int width, int height)
     viewportHeight = height;
 }
 
-void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter)
+void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter, bool pixelAccurate)
 {
     /*
      * Camera.
@@ -170,6 +170,9 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter)
      * We scale this so that the X axis is from -viewExtent to
      * +viewExtent at the level of the cube face.
      */
+     
+    currentFrame.viewExtent = viewExtent;
+    currentFrame.pixelAccurate = pixelAccurate;
 
     float aspect = viewportHeight / (float)viewportWidth;
     float yExtent = aspect * viewExtent;
@@ -478,6 +481,21 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
 
      if (!cubes[id].initialized)
         initCube(id);
+
+    if (currentFrame.pixelAccurate) {
+        // Nudge the position to a pixel grid boundary        
+        float pixelSize = currentFrame.viewExtent * 2.0f / viewportWidth;
+        center.x = round(center.x / pixelSize) * pixelSize;
+        center.y = round(center.y / pixelSize) * pixelSize;
+
+        // Center adjustment for odd-sized viewports
+        if (viewportWidth & 1)
+            center.x -= pixelSize * 0.5f;
+        if (viewportHeight & 1)
+            center.y -= pixelSize * 0.5f;
+    }
+
+
 
     cubeTransform(center, angle, hover, tilt, modelMatrix);
 

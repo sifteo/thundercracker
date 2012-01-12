@@ -98,7 +98,7 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
     body->CreateFixture(&fixtureDef);
 }
 
-bool FrontendCube::draw(GLRenderer &r, bool pixelAccurate, float pixelSize)
+bool FrontendCube::draw(GLRenderer &r)
 {
     const uint16_t *framebuffer;
 
@@ -129,17 +129,9 @@ bool FrontendCube::draw(GLRenderer &r, bool pixelAccurate, float pixelSize)
     } else {
         framebuffer = NULL;
     }
-    
-    b2Vec2 pos = body->GetPosition();
-    float angle = body->GetAngle();
 
-    if (pixelAccurate) {
-        // Nudge the position to a pixel grid boundary
-        pos.x = round(pos.x / pixelSize) * pixelSize;
-        pos.y = round(pos.y / pixelSize) * pixelSize;
-    }
-
-    r.drawCube(id, pos, angle, hover, tiltVector, framebuffer, modelMatrix);
+    r.drawCube(id, body->GetPosition(), body->GetAngle(),
+               hover, tiltVector, framebuffer, modelMatrix);
 
     return nonIdle;
 }

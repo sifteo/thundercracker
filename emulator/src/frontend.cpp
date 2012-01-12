@@ -664,16 +664,13 @@ void Frontend::scaleViewExtent(float ratio)
 
 void Frontend::draw()
 {
-    renderer.beginFrame(viewExtent, viewCenter);
+    renderer.beginFrame(viewExtent, viewCenter, isPixelAccurate());
 
     float ratio = std::max(1.0f, renderer.getHeight() / (float)renderer.getWidth());
     renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
 
-    bool pixelAccurate = isPixelAccurate();
-    float pixelSize = viewExtent * 2.0f / renderer.getWidth();
-
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
-        if (cubes[i].draw(renderer, pixelAccurate, pixelSize)) {
+        if (cubes[i].draw(renderer)) {
             // We found a cube that isn't idle.
             idleFrames = 0;
         }
