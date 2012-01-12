@@ -27,6 +27,21 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
+    case EventID_Input:
+    case EventID_Tilt:
+        if (data.mInput.mCubeID == mCube->id())
+        {
+            mIdleTime = 0.f;
+        }
+        break;
+
+    case EventID_EnterState:
+    case EventID_GameStateChanged:
+    case EventID_AddNeighbor:
+    case EventID_RemoveNeighbor:
+        mIdleTime = 0.f;
+        break;
+
     case EventID_NewAnagram:
         unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
         for (unsigned i = 0; i < arraysize(mLetters); ++i)
@@ -182,4 +197,10 @@ State& CubeStateMachine::getState(unsigned index)
 unsigned CubeStateMachine::getNumStates() const
 {
     return CubeStateIndex_NumStates;
+}
+
+void CubeStateMachine::update(float dt)
+{
+    mIdleTime += dt;
+    StateMachine::update(dt);
 }

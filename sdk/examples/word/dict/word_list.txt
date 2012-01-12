@@ -502,7 +502,6 @@ firm
 dry
 life
 fire
-gas
 else
 child
 catch

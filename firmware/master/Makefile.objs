@@ -13,6 +13,7 @@ OBJS_SIM = \
 	$(MASTER_DIR)/common/audiochannel.sim.o \
 	$(MASTER_DIR)/common/accel.sim.o \
 	$(MASTER_DIR)/common/neighbors.sim.o \
+    $(MASTER_DIR)/common/tasks.sim.o \
 	$(MASTER_DIR)/sim/audiooutdevice.sim.o \
 	$(MASTER_DIR)/sim/portaudiooutdevice.sim.o \
 	$(MASTER_DIR)/sim/flashlayer.sim.o \
@@ -32,6 +33,7 @@ OBJS_STM32 = \
 	common/audiochannel.stm32.o \
 	common/accel.stm32.o \
 	common/neighbors.stm32.o \
+    common/tasks.stm32.o \
 	stm32/systime.stm32.o \
 	stm32/vectors.stm32.o \
 	stm32/setup.stm32.o \
@@ -51,7 +53,6 @@ OBJS_STM32 = \
     stm32/macronixmx25.stm32.o \
     stm32/dac.stm32.o \
     stm32/usb.stm32.o \
-    stm32/tasks.stm32.o \
     stm32/assetmanager.stm32.o \
     $(SPEEX_OBJS_STM32)
 

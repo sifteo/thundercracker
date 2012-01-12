@@ -16,6 +16,7 @@
 #include "debug.h"
 #include "board.h"
 #include "audiomixer.h"
+#include "tasks.h"
 
 static NRF24L01 NordicRadio(RF_CE_GPIO,
                             RF_IRQ_GPIO,
@@ -46,14 +47,21 @@ void Radio::open()
 void Radio::halt()
 {
     /*
+      TODO - these are temporary, but we don't currently have another
+      better context in which to handle longer running tasks. Ultimately this is likely
+      to be interleaved with the runtime, or done periodically on a timer
+      interrupt (ie, separate thread in the simulator).
+    */
+    AudioMixer::instance.fetchData();
+    Tasks::work();
+
+    /*
      * Wait for any interrupt
      *
      * Disabled during debug builds. WFI loops make JTAG debugging
      * very annoying, since the JTAG clock is also turned off while
      * we're waiting.
      */
-     
-    AudioMixer::instance.fetchData();
 
 #ifndef DEBUG
     __asm__ __volatile__ ("wfi");

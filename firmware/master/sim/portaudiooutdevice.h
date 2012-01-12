@@ -10,6 +10,7 @@
 
 #include "portaudio.h"
 #include "audiooutdevice.h"
+#include "audiobuffer.h"
 
 class AudioMixer;
 
@@ -24,6 +25,8 @@ public:
 private:
     PaStream *outStream;
     AudioMixer *mixer;
+    AudioBuffer buf;
+    _SYSAudioBuffer sysbuf;
 
     static int portAudioCallback(const void *inputBuffer, void *outputBuffer,
                                 unsigned long framesPerBuffer,
