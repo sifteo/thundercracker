@@ -92,3 +92,4 @@ MenuController.h
 TiltFlowMenu.cpp
 TFcubewrapper.cpp
 MenuController.cpp
+config.h
