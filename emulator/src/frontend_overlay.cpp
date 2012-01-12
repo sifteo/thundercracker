@@ -17,7 +17,7 @@ static const Color debugColor(1,0.5,0.5,1);
 
 
 FrontendOverlay::FrontendOverlay()
-    : messageTimer(0), helpVisible(false) {}
+    : helpVisible(false) {}
 
 void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 {
@@ -26,10 +26,10 @@ void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 
     slowTimer.init(&sys->time);
     fastTimer.init(&sys->time);
+    realTimeMessageTimer.init(&sys->time);
 
     filteredTimeRatio = 1.0f;
     realTimeMessage[0] = '\0';
-    realTimeMessageTimer = 10000;
     
     for (unsigned i = 0; i < System::MAX_CUBES; i++)
         cubes[i].fps[0] = '\0';
@@ -42,6 +42,7 @@ void FrontendOverlay::draw()
         
     slowTimer.capture();
     fastTimer.capture(slowTimer);
+    realTimeMessageTimer.capture(slowTimer);
     
     if (slowTimer.realSeconds() > statsInterval) {
         float rtPercent = slowTimer.virtualRatio() * 100.0f;
@@ -159,10 +160,8 @@ void FrontendOverlay::drawRealTimeInfo()
     
     // If we've been close to 100% for a while, hide the indicator
     if (filteredTimeRatio < 0.95f || sys->opt_turbo)
-        realTimeMessageTimer = 0;
-    else
-        realTimeMessageTimer++;
-    if (realTimeMessageTimer < (unsigned)(75 * 1.5f)) {
+        realTimeMessageTimer.start();
+    if (realTimeMessageTimer.realSeconds() < 1.0f) {
     
         // Right-justify the text so it doesn't bounce so much
         x += width;

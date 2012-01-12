@@ -68,10 +68,11 @@ private:
     
     ElapsedTime slowTimer;
     ElapsedTime fastTimer;
+    ElapsedTime realTimeMessageTimer;
+    
     char realTimeMessage[64];
     Color realTimeColor;
     float filteredTimeRatio;
-    unsigned realTimeMessageTimer;
     
     unsigned x, y;
     
