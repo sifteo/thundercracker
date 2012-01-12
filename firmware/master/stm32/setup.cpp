@@ -182,12 +182,9 @@ extern "C" void _start()
     FlashLayer::init();
     Button::init();
 
-#if 0
-    // XXX: Audio temporarily disable due to Speex init crash
     AudioMixer::instance.init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
-#endif
 
 #if 0
     // ALERT! ST's usb library appears to overwrite registers related to
@@ -220,7 +217,8 @@ extern "C" void *_sbrk(intptr_t increment)
     void *p = (void*)__heap;
     __heap += increment;
     return p;
-#endif
+
+#else
     /*
      * We intentionally don't want to support dynamic allocation yet.
      * If anyone tries a malloc(), we'll just trap here infinitely.
@@ -232,4 +230,5 @@ extern "C" void *_sbrk(intptr_t increment)
 
     while (1);
     return NULL;
+#endif
 }
