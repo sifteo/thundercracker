@@ -169,7 +169,7 @@ void FrontendOverlay::drawRealTimeInfo()
         x -= width;
 
         // Include a tiny bargraph, to show the rate visually
-        unsigned barW = width * MIN(1.0f, filteredTimeRatio);
+        unsigned barW = width * std::min(1.0f, filteredTimeRatio);
         renderer->overlayRect(x, y, barW, barH, realTimeColor.v);
         y += barH + margin;
     }
@@ -179,8 +179,8 @@ void FrontendOverlay::drawRealTimeInfo()
      */
 
     if (sys->opt_turbo)
-        text(realTimeColor, "Turbo Mode", 0.0f);
+        text(realTimeColor, "Turbo Mode");
     
     if (sys->tracer.isEnabled())
-        text(debugColor, "Trace Enabled", 0.0f);
+        text(debugColor, "Trace Enabled");
 }
