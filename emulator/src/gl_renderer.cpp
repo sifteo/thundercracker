@@ -51,6 +51,7 @@ bool GLRenderer::init()
     cubeFaceProgram = linkProgram(cubeFaceFP, cubeFaceVP);
 
     glUseProgramObjectARB(cubeFaceProgram);
+    glUniform1fARB(glGetUniformLocationARB(cubeFaceProgram, "LCD_SIZE"), FrontendCube::LCD_SIZE);
     glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "face"), 0);
     glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "hilight"), 1);
     glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "mask"), 2);
