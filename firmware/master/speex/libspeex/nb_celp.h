@@ -36,8 +36,6 @@
 #ifndef NB_CELP_H
 #define NB_CELP_H
 
-#ifndef STRIP_NB_MODE
-
 #include "modes.h"
 #include <speex/speex_bits.h>
 #include <speex/speex_callbacks.h>
@@ -202,7 +200,5 @@ int nb_encoder_ctl(void *state, int request, void *ptr);
 
 /** ioctl-like function for controlling a narrowband decoder */
 int nb_decoder_ctl(void *state, int request, void *ptr);
-
-#endif
 
 #endif
