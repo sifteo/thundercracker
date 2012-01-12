@@ -10,7 +10,6 @@
 #include "cube.h"
 #include "neighbors.h"
 #include "audiomixer.h"
-#include "../selectormenu/MenuController.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "tasks.h"
@@ -32,11 +31,6 @@ void Runtime::run()
         return;
 
 #ifndef BUILD_UNIT_TEST
-
-#ifdef SELECTORMENUCHROMA
-	SelectorMenu::RunMenu();
-#endif
-
     siftmain();
 #endif
 }

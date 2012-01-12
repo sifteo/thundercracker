@@ -39,11 +39,6 @@ ifneq ($(QTCREATOR_TERMINAL),)
 	CFLAGS += -DQTCREATOR_TERMINAL
 endif
 
-#This will build in the selector menu into the master firmware
-ifneq ($(SELECTORMENU),)
-	CFLAGS += -DSELECTORMENU$(SELECTORMENU)
-endif
-
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused
 

@@ -158,3 +158,9 @@ void MenuController::checkNeighbors()
 
 
 } //namespace SelectorMenu
+
+
+void siftmain()
+{
+    SelectorMenu::RunMenu();
+}
