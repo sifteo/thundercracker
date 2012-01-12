@@ -479,7 +479,7 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
      * If framebuffer==NULL, don't reupload the framebuffer, it hasn't changed.
      */
 
-     if (!cubes[id].initialized)
+    if (!cubes[id].initialized)
         initCube(id);
 
     if (currentFrame.pixelAccurate) {
@@ -494,8 +494,6 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
         if (viewportHeight & 1)
             center.y -= pixelSize * 0.5f;
     }
-
-
 
     cubeTransform(center, angle, hover, tilt, modelMatrix);
 
