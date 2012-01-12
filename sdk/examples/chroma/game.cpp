@@ -36,8 +36,7 @@ void Game::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].Init(GameAssets);
 
-    //TAKEN OUT SINCE SELECTOR MENU IS LOADING ASSETS
-    /*bool done = false;
+    bool done = false;
 
 	PRINT( "getting ready to load" );
 
@@ -53,7 +52,7 @@ void Game::Init()
 		}
 		System::paint();
 	}
-    PRINT( "done loading" );*/
+    PRINT( "done loading" );
 
 #ifdef _WIN32
     srand((int)( System::clock() * 10000 ));

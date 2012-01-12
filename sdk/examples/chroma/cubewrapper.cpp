@@ -70,12 +70,10 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 void CubeWrapper::Init( AssetGroup &assets )
 {
     m_cube.enable();
-    //TAKEN OUT SINCE SELECTOR MENU IS LOADING ASSETS
-    //m_cube.loadAssets( assets );
+    m_cube.loadAssets( assets );
 
     m_rom.init();
-    //TAKEN OUT SINCE SELECTOR MENU IS LOADING ASSETS
-    //m_rom.BG0_text(Vec2(1,1), "Loading...");
+    m_rom.BG0_text(Vec2(1,1), "Loading...");
 }
 
 
@@ -109,7 +107,7 @@ void CubeWrapper::Reset()
 
 bool CubeWrapper::DrawProgress( AssetGroup &assets )
 {
-	m_rom.BG0_progressBar(Vec2(0,7), m_cube.assetProgress(GameAssets, m_vid.LCD_width), 2);
+    m_rom.BG0_progressBar(Vec2(0,7), m_cube.assetProgress(assets, m_vid.LCD_width), 2);
         
 	return m_cube.assetDone(assets);
 }
