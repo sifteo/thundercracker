@@ -27,8 +27,9 @@ void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
     slowTimer.init(&sys->time);
     fastTimer.init(&sys->time);
 
-    filteredTimeRatio = 0.0f;
+    filteredTimeRatio = 1.0f;
     realTimeMessage[0] = '\0';
+    realTimeMessageTimer = 10000;
     
     for (unsigned i = 0; i < System::MAX_CUBES; i++)
         cubes[i].fps[0] = '\0';
@@ -151,20 +152,28 @@ void FrontendOverlay::drawRealTimeInfo()
 {
     const unsigned width = 160;
     const unsigned barH = 3;
-    
-    // Right-justify the text so it doesn't bounce so much
-    x += width;
-    text(realTimeColor, realTimeMessage, 1.0f);
-    x -= width;
-    
+
     // Filter the time ratio a bit. The fastTimer is really jumpy
     float ratio = fastTimer.virtualRatio();
-    filteredTimeRatio += 0.1f * (ratio - filteredTimeRatio);
+    filteredTimeRatio += 0.05f * (ratio - filteredTimeRatio);
     
-    // Include a tiny bargraph, to show the rate visually
-    unsigned barW = width * MIN(1.0f, filteredTimeRatio);
-    renderer->overlayRect(x, y, barW, barH, realTimeColor.v);
-    y += barH + margin;
+    // If we've been close to 100% for a while, hide the indicator
+    if (filteredTimeRatio < 0.95f || sys->opt_turbo)
+        realTimeMessageTimer = 0;
+    else
+        realTimeMessageTimer++;
+    if (realTimeMessageTimer < (unsigned)(75 * 1.5f)) {
+    
+        // Right-justify the text so it doesn't bounce so much
+        x += width;
+        text(realTimeColor, realTimeMessage, 1.0f);
+        x -= width;
+
+        // Include a tiny bargraph, to show the rate visually
+        unsigned barW = width * MIN(1.0f, filteredTimeRatio);
+        renderer->overlayRect(x, y, barW, barH, realTimeColor.v);
+        y += barH + margin;
+    }
 
     /*
      * Mode Indicators
