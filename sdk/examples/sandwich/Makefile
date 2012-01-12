@@ -8,7 +8,7 @@ OBJS = \
 	gen_mapdata.o \
 	main.o \
 	Base.o \
-	DialogView.o \
+	Dialog.o \
 	Game.o \
 	GameView.o \
 	Map.o \

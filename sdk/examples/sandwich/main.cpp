@@ -1,5 +1,5 @@
 #include "Game.h"
-#include "DialogView.h"
+#include "Dialog.h"
 
 Cube gCubes[NUM_CUBES];
 AudioChannel gChannelSfx;
@@ -42,8 +42,8 @@ void siftmain() {
 	  }
 	}
 #endif
-	
-	DialogTest();
+	DialogData data;
+	DoDialog(data);
 
 	/*
 	{ // fake power-on
