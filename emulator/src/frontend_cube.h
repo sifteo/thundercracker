@@ -48,7 +48,7 @@ class FrontendCube {
     void exit();
 
     void animate();
-    bool draw(GLRenderer &r);
+    bool draw(GLRenderer &r, bool pixelAccurate, float pixelSize);
 
     void setTiltTarget(b2Vec2 angles);
     void updateNeighbor(bool touching, unsigned mySide,

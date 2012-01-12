@@ -131,8 +131,9 @@ void FrontendOverlay::drawHelp()
         "Drag by an edge or corner to pull and rotate it.",
         "While pulling, Right-click or Space to hover, again to rotate.",
         "Shift-drag or Right-drag to tilt a cube.",
-        "Mouse wheel resizes the play surface.\n",
-        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'Z' - Zoom. +/- Adds/removes cubes.",
+        "Mouse wheel resizes the play surface.",
+        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'Z' - Zoom, '1' - 1:1 view.",
+        "+/- Adds/removes cubes.",
         "",
         "Copyright (c) 2011 Sifteo, Inc. All rights reserved.",
     };

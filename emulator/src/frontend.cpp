@@ -309,6 +309,10 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->isRunning = false;
             break;
         
+        case '1':
+            instance->normalViewExtent = instance->pixelViewExtent();
+            break;
+        
         case 'Z':
             instance->toggleZoom ^= true;
             break;
@@ -619,6 +623,9 @@ void Frontend::animate()
     {
         const float gain = 0.1;
 
+        if (isPixelAccurate())
+            normalViewExtent += gain * (pixelViewExtent() - normalViewExtent);
+
         viewExtent += gain * (targetViewExtent() - viewExtent);
         viewCenter += gain * (targetViewCenter() - viewCenter);
 
@@ -626,6 +633,27 @@ void Frontend::animate()
     }
 
     world.Step(timeStep, velocityIterations, positionIterations);
+}
+
+float Frontend::pixelViewExtent()
+{
+    // Calculate the viewExtent which would give a 1:1 pixel mapping
+    return (renderer.getWidth() * FrontendCube::LCD_SIZE) / (2.0f * Cube::LCD::WIDTH);
+}
+
+bool Frontend::isPixelAccurate()
+{
+    /*
+     * If we're close to a 1:1 zoom, we try to be pixel accurate. When this
+     * function returns true, both the viewport and the cubes themselves should
+     * attempt to align themselves to pixel boundaries.
+     */
+     
+     float extent1to1 = pixelViewExtent();
+     float absDist1to1 = extent1to1 - normalViewExtent;
+     float relDist1to1 = fabs(absDist1to1) / extent1to1;
+
+     return relDist1to1 < 0.25f;
 }
 
 void Frontend::scaleViewExtent(float ratio)
@@ -641,8 +669,11 @@ void Frontend::draw()
     float ratio = std::max(1.0f, renderer.getHeight() / (float)renderer.getWidth());
     renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
 
+    bool pixelAccurate = isPixelAccurate();
+    float pixelSize = viewExtent * 2.0f / renderer.getWidth();
+
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
-        if (cubes[i].draw(renderer)) {
+        if (cubes[i].draw(renderer, pixelAccurate, pixelSize)) {
             // We found a cube that isn't idle.
             idleFrames = 0;
         }
