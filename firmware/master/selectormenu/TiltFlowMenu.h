@@ -76,8 +76,11 @@ public:
   inline Status GetStatus() const { return mStatus; }
   inline void SetStatus( Status status ) { mStatus = status; }
   inline void SetItem( int item ) { mItem = item; }
+  inline int GetItem() const { return mItem; }
   inline void SetDirty() { mDirty = true; }
   inline void SetCube( Cube *pCube ) { mpCube = pCube; }
+  inline bool IsFlushNeeded() const { return mFlushNeeded; }
+  inline void Flush();
 
   void CheckForRepaint();
   void Tick();
@@ -102,6 +105,7 @@ private:
 
   //for CES hackery
   Side mLastNeighboredSide;
+  bool mFlushNeeded;
 
   // for PositionOf and FindGroups
   //bool mVisited;
@@ -184,9 +188,10 @@ public:
 	inline float GetScrollTime() const { return mSimTime - mPickTime; }
     TiltFlowItem *GetItem( int item );
 
-	void playSound( const _SYSAudioModule &sound );
+    void playSound( _SYSAudioModule &sound );
 
 	void showLogo();
+    void checkNeighbors();
 
 private:
     //void CheckMenuNeighbors();

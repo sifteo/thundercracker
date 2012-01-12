@@ -15,3 +15,8 @@ White = image{"selectormenu/White.png"}
 --game covers
 ChromaCover = image{"selectormenu/cover.png"}
 LogoCover = image{"selectormenu/logo.png"}
+--audio
+changeoption = sound{"changeoption.raw"}
+ui_select = sound{"ui_select.raw"}
+settle = sound{"settle.raw"}
+game_start = sound{"game_start.raw"}

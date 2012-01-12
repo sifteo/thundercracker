@@ -45,23 +45,30 @@ static void onAccelChange(_SYSCubeID cid)
 
 static void onTilt(_SYSCubeID cid)
 {
-    Cube::TiltState state = s_menu.cubes[cid].GetCube().getTiltState();
+	//TODO, make not reliant on id base
+    Cube::TiltState state = s_menu.cubes[cid - CUBE_ID_BASE].GetCube().getTiltState();
 
     if( state.x == _SYS_TILT_POSITIVE )
-        s_menu.cubes[cid].Tilt( RIGHT );
+        s_menu.cubes[cid - CUBE_ID_BASE].Tilt( RIGHT );
     else if( state.x == _SYS_TILT_NEGATIVE )
-        s_menu.cubes[cid].Tilt( LEFT );
+        s_menu.cubes[cid - CUBE_ID_BASE].Tilt( LEFT );
     if( state.y == _SYS_TILT_POSITIVE )
-        s_menu.cubes[cid].Tilt( DOWN );
+        s_menu.cubes[cid - CUBE_ID_BASE].Tilt( DOWN );
     else if( state.y == _SYS_TILT_NEGATIVE )
-        s_menu.cubes[cid].Tilt( UP);
+        s_menu.cubes[cid - CUBE_ID_BASE].Tilt( UP);
 }
 
 static void onShake(_SYSCubeID cid)
 {
     _SYS_ShakeState state;
     _SYS_getShake(cid, &state);
-    s_menu.cubes[cid].Shake(state);
+    s_menu.cubes[cid - CUBE_ID_BASE].Shake(state);
+}
+
+
+static void onNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+{
+    s_menu.checkNeighbors();
 }
 
 
@@ -71,6 +78,7 @@ void RunMenu()
 
     _SYS_vectors.cubeEvents.tilt = onTilt;
     _SYS_vectors.cubeEvents.shake = onShake;
+    _SYS_vectors.neighborEvents.add = onNeighborAdd;
 
     while (s_menu.Update()) {}
 }
@@ -94,11 +102,10 @@ void MenuController::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
         cubes[i].Init(MenuControllerAssets);
 
-    m_Menu.AssignViews();
+    bool done = false;
 
-	bool done = false;
-
-	PRINT( "getting ready to load" );
+#if LOAD_ASSETS
+    PRINT( "getting ready to load" );
 
 	while( !done )
 	{
@@ -113,6 +120,8 @@ void MenuController::Init()
 		System::paint();
 	}
 	PRINT( "done loading" );
+#endif
+    m_Menu.AssignViews();
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].vidInit();
 
@@ -140,6 +149,11 @@ void MenuController::Reset()
 	{
 		cubes[i].Reset();
 	}
+}
+
+void MenuController::checkNeighbors()
+{
+    m_Menu.checkNeighbors();
 }
 
 

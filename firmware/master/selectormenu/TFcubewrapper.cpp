@@ -7,10 +7,11 @@
 #include "TFcubewrapper.h"
 #include "MenuController.h"
 #include "assets.gen.h"
+#include "config.h"
 
 using namespace SelectorMenu;
 
-static _SYSCubeID s_id = 0;
+static _SYSCubeID s_id = CUBE_ID_BASE;
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
         m_bg1helper( m_cube )
@@ -21,10 +22,14 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 void CubeWrapper::Init( AssetGroup &assets )
 {
 	m_cube.enable();
+#if LOAD_ASSETS
     m_cube.loadAssets( assets );
+#endif
 
     m_rom.init();
+#if LOAD_ASSETS
     m_rom.BG0_text(Vec2(1,1), "Loading...");
+#endif
 }
 
 

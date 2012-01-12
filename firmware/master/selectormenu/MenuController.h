@@ -7,9 +7,10 @@
 #ifndef _MENUCONTROLLER_H
 #define _MENUCONTROLLER_H
 
-#include <sifteo.h>
+//#include <sifteo.h>
 #include "TFcubewrapper.h"
 #include "TiltFlowMenu.h"
+#include "config.h"
 
 using namespace Sifteo;
 
@@ -27,7 +28,7 @@ public:
 	
     MenuController();
 
-	static const int NUM_CUBES = 2;
+    //static const int NUM_CUBES = 3;
     static const int NUM_MENU_ITEMS = 4;
 
 	CubeWrapper cubes[NUM_CUBES]; 
@@ -36,6 +37,7 @@ public:
 	bool Update();
 	void Reset();
 	
+    void checkNeighbors();
 
 private:
     float m_fLastTime;

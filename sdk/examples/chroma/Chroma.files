@@ -86,10 +86,4 @@ assets.gen.cpp
 audio.txt
 audio.gen.h
 audio.gen.cpp
-TiltFlowMenu.h
-TFcubewrapper.h
-MenuController.h
-TiltFlowMenu.cpp
-TFcubewrapper.cpp
-MenuController.cpp
 config.h

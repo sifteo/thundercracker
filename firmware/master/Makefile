@@ -13,8 +13,6 @@ include $(SPEEX_DIR)/speex.mk
 SELECTORMENU_GEN_FILES = $(MASTER_DIR)/selectormenu/$(ASSETS).gen.h \
                             $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp \
                             $(MASTER_DIR)/selectormenu/$(ASSETS).html \
-                            $(MASTER_DIR)/selectormenu/$(AUDIO).gen.h \
-                            $(MASTER_DIR)/selectormenu/$(AUDIO).gen.cpp
 
 TC_DIR = ../..
 
@@ -96,9 +94,6 @@ AUDIODEPS += $(MASTER_DIR)/selectormenu/*.raw $(MASTER_DIR)/selectormenu/$(AUDIO
 
 $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
 	$(STIR) $(MASTER_DIR)/selectormenu/$(ASSETS).lua -o $(MASTER_DIR)/selectormenu/$(ASSETS).gen.cpp -o $(MASTER_DIR)/selectormenu/$(ASSETS).gen.h -o $(MASTER_DIR)/selectormenu/$(ASSETS).html -v
-
-$(MASTER_DIR)/selectormenu/$(AUDIO).gen.cpp: $(SPEEXENC) $(AUDIODEPS)
-	$(SPEEXENC) -o $(MASTER_DIR)/selectormenu/$(AUDIO).gen.cpp -o $(MASTER_DIR)/selectormenu/$(AUDIO).gen.h $(MASTER_DIR)/selectormenu/$(AUDIO).txt
 
 .PHONY: all clean
 
