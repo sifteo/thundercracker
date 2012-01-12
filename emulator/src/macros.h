@@ -9,6 +9,8 @@
 #ifndef _MACROS_H
 #define _MACROS_H
 
+#include <stdint.h>
+
 #define APP_TITLE   "Thundercracker"
 
 /*
@@ -33,6 +35,14 @@
 #       define FASTCALL __attribute__ ((fastcall))
 #   else
 #       define FASTCALL
+#   endif
+#endif
+
+#ifndef PRIu64
+#   ifdef _WIN32
+#      define PRIu64 "I64u"
+#   else
+#      define PRIu64 "llu"
 #   endif
 #endif
 

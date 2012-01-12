@@ -187,9 +187,6 @@ int LuaSystem::setOptions(lua_State *L)
     if (LuaScript::argMatch(L, "turbo"))
         sys->opt_turbo = lua_toboolean(L, -1);
     
-    if (LuaScript::argMatch(L, "cubeTrace"))
-        sys->opt_cubeTrace = lua_tostring(L, -1);
-
     if (LuaScript::argMatch(L, "continueOnException"))
         sys->opt_continueOnException = lua_toboolean(L, -1);
 
@@ -210,7 +207,7 @@ int LuaSystem::setOptions(lua_State *L)
 
 int LuaSystem::setTraceMode(lua_State *L)
 {
-    sys->setTraceMode(lua_toboolean(L, 1));
+    sys->tracer.setEnabled(lua_toboolean(L, 1));
     return 0;
 }
 

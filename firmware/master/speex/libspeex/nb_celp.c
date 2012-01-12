@@ -33,8 +33,6 @@
 #include "config.h"
 #endif
 
-#ifndef STRIP_NB_MODE
-
 #include <math.h>
 #include "nb_celp.h"
 #include "lpc.h"
@@ -1575,6 +1573,8 @@ int nb_decode(void *state, SpeexBits *bits, void *vout)
    return 0;
 }
 
+#ifndef STRIP_ENCODER
+
 int nb_encoder_ctl(void *state, int request, void *ptr)
 {
    EncState *st;
@@ -1779,6 +1779,8 @@ int nb_encoder_ctl(void *state, int request, void *ptr)
    return 0;
 }
 
+#endif
+
 int nb_decoder_ctl(void *state, int request, void *ptr)
 {
    DecState *st;
@@ -1903,6 +1905,4 @@ int nb_decoder_ctl(void *state, int request, void *ptr)
    }
    return 0;
 }
-
-#endif
 

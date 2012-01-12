@@ -113,7 +113,6 @@ typedef struct SpeexSubmode {
    int               bits_per_frame; /**< Number of bits per frame after encoding*/
 } SpeexSubmode;
 
-#ifndef STRIP_NB_MODE
 /** Struct defining the encoding/decoding mode*/
 typedef struct SpeexNBMode {
    int     frameSize;      /**< Size of frames used for encoding */
@@ -130,7 +129,6 @@ typedef struct SpeexNBMode {
    int     defaultSubmode; /**< Default sub-mode to use when encoding */
    int     quality_map[11]; /**< Mode corresponding to each quality setting */
 } SpeexNBMode;
-#endif
 
 /** Struct defining the encoding/decoding mode for SB-CELP (wideband) */
 typedef struct SpeexSBMode {

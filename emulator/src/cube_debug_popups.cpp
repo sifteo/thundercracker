@@ -341,10 +341,8 @@ int emu_readhz(CPU::em8051 *aCPU, const char *aPrompt, int aOldvalue)
 int emu_reset(CPU::em8051 *aCPU)
 {
     WINDOW * exc;
-    char temp[256];
     int ch = 0;
     int result;
-    temp[0] = 0;
 
     runmode = 0;
     setSpeed(speed, runmode);
@@ -392,9 +390,6 @@ int emu_reset(CPU::em8051 *aCPU)
 void emu_help(CPU::em8051 *aCPU)
 {
     WINDOW * exc;
-    char temp[256];
-    int ch = 0;
-    temp[0] = 0;
 
     runmode = 0;
     setSpeed(speed, runmode);
@@ -441,7 +436,7 @@ void emu_help(CPU::em8051 *aCPU)
 
     wrefresh(exc);
 
-    ch = getch();
+    getch();
 
     delwin(exc);
     refreshView();

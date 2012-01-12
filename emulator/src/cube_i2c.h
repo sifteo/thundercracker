@@ -45,8 +45,8 @@ class I2CBus {
         if (!(w2con0 & W2CON0_ENABLE)) {
             // Hardware disabled, reset state
             
-            if (state != I2C_IDLE && cpu->isTracing)
-                fprintf(cpu->traceFile, "[%2d] I2C: State reset\n", cpu->id);
+            if (state != I2C_IDLE)
+                Tracer::log(cpu, "I2C: State reset");
             
             timer = 0;
             state = I2C_IDLE;
@@ -63,8 +63,7 @@ class I2CBus {
                  * condition if necessary.
                  */
 
-                if (cpu->isTracing)
-                    fprintf(cpu->traceFile, "[%2d] I2C: timer fired\n", cpu->id);
+                Tracer::log(cpu, "I2C: timer fired");
 
                 timer = 0;
 
@@ -151,8 +150,7 @@ class I2CBus {
                           (cpu->mSFR[REG_INTEXP] & 0x04) );
        
         if (UNLIKELY(nextIEX3 != iex3)) {
-            if (cpu->isTracing)
-                fprintf(cpu->traceFile, "[%2d] I2C: IEX3 level %d -> %d\n", cpu->id, iex3, nextIEX3);
+            Tracer::log(cpu, "I2C: IEX3 level %d -> %d", iex3, nextIEX3);
 
             if (cpu->mSFR[REG_T2CON] & 0x40) {
                 // Rising edge
@@ -172,8 +170,7 @@ class I2CBus {
     }
     
     void writeData(CPU::em8051 *cpu, uint8_t data) {
-        if (cpu->isTracing)
-            fprintf(cpu->traceFile, "[%2d] I2C: write %02x\n", cpu->id, data);
+        Tracer::log(cpu, "I2C: write %02x", data);
 
         if (tx_buffer_full) {
             CPU::except(cpu, CPU::EXCEPTION_I2C);
@@ -187,8 +184,7 @@ class I2CBus {
         if (!rx_buffer_full)
             CPU::except(cpu, CPU::EXCEPTION_I2C);
 
-        if (cpu->isTracing)
-            fprintf(cpu->traceFile, "[%2d] I2C: read %02x\n", cpu->id, rx_buffer);
+        Tracer::log(cpu, "I2C: read %02x", rx_buffer);
         
         rx_buffer_full = 0;
         return rx_buffer;
@@ -200,8 +196,7 @@ class I2CBus {
         // Reset READY bit after each read
         cpu->mSFR[REG_W2CON1] = value & ~W2CON1_READY;
 
-        if (cpu->isTracing)
-            fprintf(cpu->traceFile, "[%2d] I2C: con1 -> %02x\n", cpu->id, value);
+        Tracer::log(cpu, "I2C: con1 -> %02x", value);
         
         return value;
     }
@@ -212,8 +207,7 @@ class I2CBus {
          * Wake after 'bits' bit periods, and set READY.
          */
 
-        if (cpu->isTracing)
-            fprintf(cpu->traceFile, "[%2d] I2C: timer started, %d bits\n", cpu->id, bits);
+        Tracer::log(cpu, "I2C: timer started, %d bits", bits);
         
         uint8_t w2con0 = cpu->mSFR[REG_W2CON0];
         switch (w2con0 & W2CON0_SPEED) {
@@ -224,22 +218,19 @@ class I2CBus {
     }
 
     void busStart(CPU::em8051 *cpu) {
-        if (cpu->isTracing)
-            fprintf(cpu->traceFile, "[%2d] I2C: BUS start\n", cpu->id); 
+        Tracer::log(cpu, "I2C: BUS start"); 
 
         accel.i2cStart();
     }
 
     void busStop(CPU::em8051 *cpu) {
-        if (cpu->isTracing)
-            fprintf(cpu->traceFile, "[%2d] I2C: BUS stop\n", cpu->id); 
+        Tracer::log(cpu, "I2C: BUS stop");
 
         accel.i2cStop();
     }
     
     uint8_t busWrite(CPU::em8051 *cpu, uint8_t byte) {
-        if (cpu->isTracing)
-            fprintf(cpu->traceFile, "[%2d] I2C: BUS write %02x\n", cpu->id, byte); 
+        Tracer::log(cpu, "I2C: BUS write %02x", byte); 
 
         return accel.i2cWrite(byte);
     }
@@ -247,8 +238,7 @@ class I2CBus {
     uint8_t busRead(CPU::em8051 *cpu, uint8_t ack) {
         uint8_t result = accel.i2cRead(ack);
 
-        if (cpu->isTracing)
-            fprintf(cpu->traceFile, "[%2d] I2C: BUS read(%d) %02x\n", cpu->id, ack, result);
+        Tracer::log(cpu, "I2C: BUS read(%d) %02x", ack, result);
 
         return result;
     }
