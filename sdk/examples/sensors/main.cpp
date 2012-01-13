@@ -8,7 +8,7 @@
 
 using namespace Sifteo;
 
-#define NUM_CUBES 3
+#define NUM_CUBES 1
 
 static Cube cubes[NUM_CUBES];
 
@@ -78,8 +78,7 @@ void siftmain()
 
             vid.BG0_textf(Vec2(1,2),
                           "I am cube #%d\n"
-                          "\n"
-                          "id %02x%02x%02x%02x%02x%02x\n"
+                          "%02x%02x%02x%02x%02x%02x\n"
                           "\n"
                           "nb %02x %02x %02x %02x\n"
                           "   +%d, -%d\n"
