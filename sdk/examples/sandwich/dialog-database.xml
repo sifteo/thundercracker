@@ -1,6 +1,6 @@
 <dialog-database>
-	<dialog>
-		<text id="dialog">Hello, World</text>
-		<text id="dialog">Wheee!</text>
+	<dialog id="skeletonhello" npc="skeleton">
+		<text image="dialog">Hello, Pearl</text>
+		<text image="dialog">Wheee!</text>
 	</dialog>
 </dialog-database>

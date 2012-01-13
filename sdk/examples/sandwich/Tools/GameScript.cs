@@ -22,13 +22,13 @@ namespace MapTool {
       var xml = new XmlDocument();
       xml.Load("game-script.xml");
       foreach(XmlNode state in xml.SelectNodes("game-script/state")) {
-        var sid = state["id"].InnerText.ToString();
+        var sid = state.Attributes["id"].InnerText.ToString();
         if (!result.states.TrueForAll(s => s.id != sid)) {
           throw new Exception(string.Format("Repeat state ID in game script: {0}", sid));
         }
         var stateInst = new State() { id = sid };
         foreach(XmlNode flag in state.SelectNodes("flag")) {
-          var fid = flag["id"].InnerText.ToString();
+          var fid = flag.Attributes["id"].InnerText.ToString();
           if (!stateInst.flags.TrueForAll(f => f.id != fid)) {
             throw new Exception(string.Format("Repeat flag IDs in game state: {0}", stateInst.id));
           }
