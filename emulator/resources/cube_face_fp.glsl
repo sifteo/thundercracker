@@ -1,4 +1,4 @@
-const float LCD_SIZE = 0.645;
+uniform float LCD_SIZE;
 const float HILIGHT = 1.0;
 
 varying vec2 faceCoord;

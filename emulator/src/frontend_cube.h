@@ -48,7 +48,7 @@ class FrontendCube {
     void exit();
 
     void animate();
-    bool draw(GLRenderer &r);
+    bool draw(GLRenderer &r, bool pixelAccurate, float pixelSize);
 
     void setTiltTarget(b2Vec2 angles);
     void updateNeighbor(bool touching, unsigned mySide,
@@ -96,6 +96,13 @@ class FrontendCube {
      * This is in cube-sized units (will be multiplied with SIZE to get world coordinates).
      */
     static const float CENTER_SIZE = 0.6;
+    
+    /*
+     * Size of the portion of the cube covered by the LCD image.
+     *
+     * This is in cube-sized units (will be multiplied with SIZE to get world coordinates).
+     */
+    static const float LCD_SIZE = 0.645;
 
     /*
      * The sensitive region for this cube's neighbor transceivers.

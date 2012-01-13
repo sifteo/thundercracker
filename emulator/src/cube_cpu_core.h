@@ -54,10 +54,7 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
      * The timer code is slow, and we'd really rather not run it every tick.
      */
 
-    bool tick12 = false;
-
     if (UNLIKELY(!--aCPU->prescaler12)) { 
-        tick12 = true;
         aCPU->prescaler12 = 12;
         timer_tick_work(aCPU, true);
         

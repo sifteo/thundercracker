@@ -315,7 +315,6 @@ static const SpeexSubmode nb_submode7 = {
    492
 };
 
-#ifndef STRIP_NB_MODE
 /* Default mode for narrowband */
 static const SpeexNBMode nb_mode = {
    160,    /*frameSize*/
@@ -334,22 +333,15 @@ static const SpeexNBMode nb_mode = {
    5,
    {1, 8, 2, 3, 3, 4, 4, 5, 5, 6, 7}
 };
-#endif
 
 
 /* Default mode for narrowband */
 EXPORT const SpeexMode speex_nb_mode = {
-#ifndef STRIP_NB_MODE
    &nb_mode,
    nb_mode_query,
-#else
-   0,
-   0,
-#endif
    "narrowband",
    0,
    4,
-#ifndef STRIP_NB_MODE
    &nb_encoder_init,
    &nb_encoder_destroy,
    &nb_encode,
@@ -362,16 +354,6 @@ EXPORT const SpeexMode speex_nb_mode = {
    0,
 #endif
    &nb_decoder_ctl,
-#else
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0
-#endif
 };
 
 

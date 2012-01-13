@@ -1,0 +1,4 @@
+<game-script>
+	<state id="tutorial"/>
+	<state id="dungeon0"/>
+</game-script>

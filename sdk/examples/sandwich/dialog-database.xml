@@ -1,0 +1,6 @@
+<dialog-database>
+	<dialog>
+		<text id="dialog">Hello, World</text>
+		<text id="dialog">Wheee!</text>
+	</dialog>
+</dialog-database>

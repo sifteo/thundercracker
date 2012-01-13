@@ -192,7 +192,7 @@ void DialogView::DrawText(const char *str) {
 unsigned DialogView::MeasureText(const char *str) {
     unsigned width = 0;
     char c;
-    while (c = *str) {
+    while ((c = *str)) {
         str++;
         width += MeasureGlyph(c);
     }
