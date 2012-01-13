@@ -482,15 +482,20 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
 
 
 void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
-                          b2Vec2 tilt, const uint16_t *framebuffer, b2Mat33 &modelMatrix)
+                          b2Vec2 tilt, const uint16_t *framebuffer, bool framebufferChanged,
+                          b2Mat33 &modelMatrix)
 {
     /*
      * Draw one cube, and place its modelview matrix in 'modelmatrix'.
      * If framebuffer==NULL, don't reupload the framebuffer, it hasn't changed.
      */
 
-    if (!cubes[id].initialized)
+    if (!cubes[id].initialized) {
         initCube(id);
+        
+        // Re-upload framebuffer, even if the LCD hasn't changed
+        framebufferChanged = true;
+    }
 
     if (currentFrame.pixelZoomMode) {
         // Nudge the position to a pixel grid boundary        
@@ -510,7 +515,7 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
     cubeTransform(center, angle, hover, tilt, tState);
 
     drawCubeBody();
-    drawCubeFace(id, framebuffer, tState);
+    drawCubeFace(id, framebufferChanged ? framebuffer : NULL, tState);
 }
 
 void GLRenderer::drawCubeBody()

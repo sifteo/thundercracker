@@ -100,8 +100,6 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
 
 bool FrontendCube::draw(GLRenderer &r)
 {
-    const uint16_t *framebuffer;
-
     /*
      * We only want to upload a new framebuffer image to the GPU if the LCD
      * has actually been written to. Use the LCD hardware's pixel counter as
@@ -120,20 +118,17 @@ bool FrontendCube::draw(GLRenderer &r)
      */
      
     uint32_t cookie = hw->lcd.isVisible() ? (hw->lcd.getPixelCount() & 0x7FFFFFFF) : ((uint32_t)-1);
-    bool nonIdle = cookie != lastLcdCookie;
+    bool framebufferChanged = cookie != lastLcdCookie;
+    lastLcdCookie = cookie;
     
-    if (nonIdle) {
-        lastLcdCookie = cookie;
-        static const uint16_t blackness[hw->lcd.WIDTH * hw->lcd.HEIGHT] = { 0 };
-        framebuffer = hw->lcd.isVisible() ? hw->lcd.fb_mem : blackness;
-    } else {
-        framebuffer = NULL;
-    }
+    static const uint16_t blackness[hw->lcd.WIDTH * hw->lcd.HEIGHT] = { 0 };
+    const uint16_t *framebuffer = hw->lcd.isVisible() ? hw->lcd.fb_mem : blackness;
 
     r.drawCube(id, body->GetPosition(), body->GetAngle(),
-               hover, tiltVector, framebuffer, modelMatrix);
+               hover, tiltVector, framebuffer, framebufferChanged,
+               modelMatrix);
 
-    return nonIdle;
+    return framebufferChanged;
 }
 
 void FrontendCube::setTiltTarget(b2Vec2 angles)
