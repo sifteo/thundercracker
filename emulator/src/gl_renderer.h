@@ -134,6 +134,7 @@ class GLRenderer {
 
     GLhandleARB backgroundProgram;
     GLuint backgroundTexture;
+    GLuint bgLightTexture;
     
     GLuint fontTexture;
     
