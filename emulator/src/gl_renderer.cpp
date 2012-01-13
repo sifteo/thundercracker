@@ -425,15 +425,28 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
     tState.isTilted = false;
     tState.nonPixelAccurate = false;
      
-    glLoadIdentity();
-    glTranslatef(center.x, center.y, 0.0f);
-    glRotatef(angle * (180.0f / M_PI), 0,0,1);      
-
-    // Are we rotating to a non-right-angle? Not pixel accurate.
+    /*
+     * Are we rotating to a non-right-angle? Not pixel accurate.
+     * But if we're really close to a right angle, nudge it to line
+     * up exactly so we can stay accurate.
+     */
+     
     float fractional = fmod(angle + M_PI/4, M_PI/2);
     if (fractional < 0) fractional += M_PI/2;
-    if (fabs(fractional - M_PI/4) > 1e-3)
+    fractional -= M_PI/4;
+
+    if (fabs(fractional) > 0.02f)
         tState.nonPixelAccurate = true;
+    else
+        angle -= fractional;
+
+    /*
+     * Build the OpenGL transform
+     */
+
+    glLoadIdentity();
+    glTranslatef(center.x, center.y, 0.0f);
+    glRotatef(angle * (180.0f / M_PI), 0,0,1);
    
     const float tiltDeadzone = 5.0f;
     const float height = FrontendCube::HEIGHT;
