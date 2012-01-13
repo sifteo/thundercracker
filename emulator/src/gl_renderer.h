@@ -44,7 +44,7 @@ class GLRenderer {
     bool init();
     void setViewport(int width, int height);
 
-    void beginFrame(float viewExtent, b2Vec2 viewCenter);
+    void beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZoomMode=0);
     void endFrame();
 
     void drawBackground(float extent, float scale);
@@ -94,15 +94,21 @@ class GLRenderer {
         uint8_t page;
         uint8_t channel;
     };
-
+    
+    struct CubeTransformState {
+        b2Mat33 *modelMatrix;
+        bool isTilted;
+        bool nonPixelAccurate;
+    };
+        
     const Glyph *findGlyph(uint32_t id);
     
     void initCube(unsigned id);
     void cubeTransform(b2Vec2 center, float angle, float hover,
-                       b2Vec2 tilt, b2Mat33 &modelMatrix);
+                       b2Vec2 tilt, CubeTransformState &tState);
 
     void drawCubeBody();
-    void drawCubeFace(unsigned id, const uint16_t *framebuffer);
+    void drawCubeFace(unsigned id, const uint16_t *framebuffer, const CubeTransformState &tState);
     
     GLuint loadTexture(const uint8_t *pngData, GLenum wrap=GL_CLAMP, GLenum filter=GL_LINEAR);
     GLhandleARB loadShader(GLenum type, const uint8_t *source);
@@ -127,6 +133,11 @@ class GLRenderer {
     GLuint backgroundTexture;
     
     GLuint fontTexture;
+    
+    struct {
+        float viewExtent;
+        unsigned pixelZoomMode;
+    } currentFrame;
 
     std::vector<VertexTN> faceVA;
     std::vector<VertexTN> sidesVA;

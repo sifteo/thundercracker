@@ -103,11 +103,11 @@ class Frontend {
     float zoomedViewExtent();
     float targetViewExtent();
     float pixelViewExtent();
+    unsigned pixelZoomMode();
+
     b2Vec2 targetViewCenter();
     b2Vec2 mouseVec(float viewExtent);
     b2Vec2 worldToScreen(b2Vec2 world);
-
-    bool isPixelAccurate();
 
     void addCube();
     void removeCube();

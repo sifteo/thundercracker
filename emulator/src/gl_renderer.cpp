@@ -158,7 +158,7 @@ void GLRenderer::setViewport(int width, int height)
     viewportHeight = height;
 }
 
-void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter)
+void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZoomMode)
 {
     /*
      * Camera.
@@ -170,6 +170,9 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter)
      * We scale this so that the X axis is from -viewExtent to
      * +viewExtent at the level of the cube face.
      */
+     
+    currentFrame.viewExtent = viewExtent;
+    currentFrame.pixelZoomMode = pixelZoomMode;
 
     float aspect = viewportHeight / (float)viewportWidth;
     float yExtent = aspect * viewExtent;
@@ -393,24 +396,14 @@ void GLRenderer::initCube(unsigned id)
 
         glTexImage2D(GL_TEXTURE_2D, 0, 3, Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
                      0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
-        
-        /*
-         * We rely on mipmaps (with autogeneration) for good-looking
-         * minification, and our nonlinear texture sampling (in the
-         * fragment program) for good-looking rotation and magnification.
-         */
 
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 5.0f);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
     }
 }
 
 void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
-                               b2Vec2 tilt, b2Mat33 &modelMatrix)
+                               b2Vec2 tilt, GLRenderer::CubeTransformState &tState)
 {
     /*
      * The whole modelview matrix is ours to set up as a cube->world
@@ -418,10 +411,19 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
      * use in converting acceleration data back to cube coordinates.
      */
 
+    tState.isTilted = false;
+    tState.nonPixelAccurate = false;
+     
     glLoadIdentity();
     glTranslatef(center.x, center.y, 0.0f);
     glRotatef(angle * (180.0f / M_PI), 0,0,1);      
 
+    // Are we rotating to a non-right-angle? Not pixel accurate.
+    float fractional = fmod(angle + M_PI/4, M_PI/2);
+    if (fractional < 0) fractional += M_PI/2;
+    if (fabs(fractional - M_PI/4) > 1e-3)
+        tState.nonPixelAccurate = true;
+   
     const float tiltDeadzone = 5.0f;
     const float height = FrontendCube::HEIGHT;
 
@@ -429,42 +431,53 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
         glTranslatef(FrontendCube::SIZE, 0, height * FrontendCube::SIZE);
         glRotatef(tilt.x - tiltDeadzone, 0,1,0);
         glTranslatef(-FrontendCube::SIZE, 0, -height * FrontendCube::SIZE);
+        tState.isTilted = true;
+        tState.nonPixelAccurate = true;
     }
     if (tilt.x < -tiltDeadzone) {
         glTranslatef(-FrontendCube::SIZE, 0, height * FrontendCube::SIZE);
         glRotatef(tilt.x + tiltDeadzone, 0,1,0);
         glTranslatef(FrontendCube::SIZE, 0, -height * FrontendCube::SIZE);
+        tState.isTilted = true;
+        tState.nonPixelAccurate = true;
     }
 
     if (tilt.y > tiltDeadzone) {
         glTranslatef(0, FrontendCube::SIZE, height * FrontendCube::SIZE);
         glRotatef(-tilt.y + tiltDeadzone, 1,0,0);
         glTranslatef(0, -FrontendCube::SIZE, -height * FrontendCube::SIZE);
+        tState.isTilted = true;
+        tState.nonPixelAccurate = true;
     }
     if (tilt.y < -tiltDeadzone) {
         glTranslatef(0, -FrontendCube::SIZE, height * FrontendCube::SIZE);
         glRotatef(-tilt.y - tiltDeadzone, 1,0,0);
         glTranslatef(0, FrontendCube::SIZE, -height * FrontendCube::SIZE);
+        tState.isTilted = true;
+        tState.nonPixelAccurate = true;
     }
 
     /* Save a copy of the transformation, before scaling it by our size. */
     GLfloat mat[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, mat);
-    modelMatrix.ex.x = mat[0];
-    modelMatrix.ex.y = mat[1];
-    modelMatrix.ex.z = mat[2];
-    modelMatrix.ey.x = mat[4];
-    modelMatrix.ey.y = mat[5];
-    modelMatrix.ey.z = mat[6];
-    modelMatrix.ez.x = mat[8];
-    modelMatrix.ez.y = mat[9];
-    modelMatrix.ez.z = mat[10];
+    tState.modelMatrix->ex.x = mat[0];
+    tState.modelMatrix->ex.y = mat[1];
+    tState.modelMatrix->ex.z = mat[2];
+    tState.modelMatrix->ey.x = mat[4];
+    tState.modelMatrix->ey.y = mat[5];
+    tState.modelMatrix->ey.z = mat[6];
+    tState.modelMatrix->ez.x = mat[8];
+    tState.modelMatrix->ez.y = mat[9];
+    tState.modelMatrix->ez.z = mat[10];
 
     /* Now scale it */
     glScalef(FrontendCube::SIZE, FrontendCube::SIZE, FrontendCube::SIZE);
     
     /* Hover is relative to cube size, so apply that now. */
-    glTranslatef(0.0f, 0.0f, hover);
+    if (hover > 1e-3) {
+        glTranslatef(0.0f, 0.0f, hover);
+        tState.nonPixelAccurate = true;
+    }
 }
 
 
@@ -476,13 +489,28 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
      * If framebuffer==NULL, don't reupload the framebuffer, it hasn't changed.
      */
 
-     if (!cubes[id].initialized)
+    if (!cubes[id].initialized)
         initCube(id);
 
-    cubeTransform(center, angle, hover, tilt, modelMatrix);
+    if (currentFrame.pixelZoomMode) {
+        // Nudge the position to a pixel grid boundary        
+        float pixelSize = currentFrame.viewExtent * 2.0f / viewportWidth;
+        center.x = round(center.x / pixelSize) * pixelSize;
+        center.y = round(center.y / pixelSize) * pixelSize;
+
+        // Center adjustment for odd-sized viewports
+        if (viewportWidth & 1)
+            center.x -= pixelSize * 0.5f;
+        if (viewportHeight & 1)
+            center.y -= pixelSize * 0.5f;
+    }
+
+    CubeTransformState tState;
+    tState.modelMatrix = &modelMatrix;
+    cubeTransform(center, angle, hover, tilt, tState);
 
     drawCubeBody();
-    drawCubeFace(id, framebuffer);
+    drawCubeFace(id, framebuffer, tState);
 }
 
 void GLRenderer::drawCubeBody()
@@ -492,7 +520,7 @@ void GLRenderer::drawCubeBody()
     glDrawArrays(GL_TRIANGLE_STRIP, 0, (GLsizei) sidesVA.size());
 }
 
-void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
+void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer, const CubeTransformState &tState)
 {
     GLCube &cube = cubes[id];
 
@@ -516,6 +544,7 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
     
     glActiveTexture(GL_TEXTURE3);
     glEnable(GL_TEXTURE_2D);
+
     if (framebuffer) {
         /*
          * Next LCD texture in the ring.
@@ -524,14 +553,46 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
          * graphics pipeline stalls down to a minimum. GPU drivers hate it
          * when we touch a resource that the GPU might still be using :)
          */
-         cube.currentLcdTexture = (cube.currentLcdTexture + 1) % NUM_LCD_TEXTURES;
-        glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[cube.currentLcdTexture]);
+
+        cube.currentLcdTexture = (cube.currentLcdTexture + 1) % NUM_LCD_TEXTURES;
+    }
+        
+    glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[cube.currentLcdTexture]);
+
+    if (currentFrame.pixelZoomMode && !tState.nonPixelAccurate) {
+        /*
+         * Pixel-accurate zooming and transforms. Disable filtering entirely.
+         * (The shader's nonlinear sampling becomes a no-op here)
+         */
+
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 0.0f);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+
+    } else {
+        /*
+         * Default high-quality filtering. We rely on linear sampling, plus
+         * a higher-order polynomial filter implemented in a fragment program.
+         *
+         * We rely on mipmaps (with autogeneration) for good-looking
+         * minification, and our nonlinear texture sampling (in the
+         * fragment program) for good-looking rotation and magnification.
+         *
+         * We also use anisotropic filtering if we're tilted at all.
+         */
+
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, tState.isTilted ? 5.0f : 0.0f);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    }
+
+    if (framebuffer) {
+        // Upload the new framebuffer image, now that we have filtering set up
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
                         Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
                         GL_RGB, GL_UNSIGNED_SHORT_5_6_5, framebuffer);
-    } else {
-        // Recycle the old image
-        glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[cube.currentLcdTexture]);
     }
 
     if (!pendingScreenshotName.empty()) {

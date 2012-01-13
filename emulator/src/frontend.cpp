@@ -313,6 +313,10 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->normalViewExtent = instance->pixelViewExtent();
             break;
         
+        case '2':
+            instance->normalViewExtent = instance->pixelViewExtent() / 2.0f;
+            break;
+        
         case 'Z':
             instance->toggleZoom ^= true;
             break;
@@ -622,9 +626,11 @@ void Frontend::animate()
     /* Animated viewport centering/zooming */
     {
         const float gain = 0.1;
-
-        if (isPixelAccurate())
-            normalViewExtent += gain * (pixelViewExtent() - normalViewExtent);
+        int pzoom = pixelZoomMode();
+        
+        // Pull toward a pixel-accurate zoom, if we're close
+        if (pzoom)
+            normalViewExtent += gain * (pixelViewExtent() / pzoom - normalViewExtent);
 
         viewExtent += gain * (targetViewExtent() - viewExtent);
         viewCenter += gain * (targetViewCenter() - viewCenter);
@@ -638,22 +644,35 @@ void Frontend::animate()
 float Frontend::pixelViewExtent()
 {
     // Calculate the viewExtent which would give a 1:1 pixel mapping
-    return (renderer.getWidth() * FrontendCube::LCD_SIZE) / (2.0f * Cube::LCD::WIDTH);
+    return renderer.getWidth() * (FrontendCube::LCD_SIZE / (2.0f * Cube::LCD::WIDTH));
 }
 
-bool Frontend::isPixelAccurate()
+unsigned Frontend::pixelZoomMode()
 {
     /*
-     * If we're close to a 1:1 zoom, we try to be pixel accurate. When this
-     * function returns true, both the viewport and the cubes themselves should
-     * attempt to align themselves to pixel boundaries.
+     * If we're close to an integer multiple zoom, we try to be pixel accurate.
+     *
+     * This returns zero if we're not close to an integer zoom, otherwise it returns
+     * the integer zoom factor that we're close to. When this returns a nonzero number,
+     * both the viewport and the cubes themselves should attempt to align themselves
+     * to pixel boundaries.
      */
-     
-     float extent1to1 = pixelViewExtent();
-     float absDist1to1 = extent1to1 - normalViewExtent;
-     float relDist1to1 = fabs(absDist1to1) / extent1to1;
+    
+    const float threshold = 0.2f;
+    const unsigned maxMultiplier = 4;
+    float extent1to1 = pixelViewExtent();
+       
+    // Perform a relative distance test on several integer multiples
+    for (unsigned multiplier = 1; multiplier <= maxMultiplier; multiplier++) {
+        float extent = extent1to1 / multiplier;
+        float absDist = extent - normalViewExtent;
+        float relDist = fabs(absDist) / extent;
 
-     return relDist1to1 < 0.25f;
+        if (relDist < threshold)
+            return multiplier;
+    }
+    
+    return 0;
 }
 
 void Frontend::scaleViewExtent(float ratio)
@@ -664,16 +683,16 @@ void Frontend::scaleViewExtent(float ratio)
 
 void Frontend::draw()
 {
-    renderer.beginFrame(viewExtent, viewCenter);
+    // Pixel zoom mode, with respect to current view rather than target view.
+    int effectivePixelZoomMode = fabs(viewExtent - normalViewExtent) < 1e-3 ? pixelZoomMode() : 0;
+    
+    renderer.beginFrame(viewExtent, viewCenter, effectivePixelZoomMode);
 
     float ratio = std::max(1.0f, renderer.getHeight() / (float)renderer.getWidth());
     renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
 
-    bool pixelAccurate = isPixelAccurate();
-    float pixelSize = viewExtent * 2.0f / renderer.getWidth();
-
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
-        if (cubes[i].draw(renderer, pixelAccurate, pixelSize)) {
+        if (cubes[i].draw(renderer)) {
             // We found a cube that isn't idle.
             idleFrames = 0;
         }
