@@ -27,8 +27,30 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
-    case EventID_Input:
     case EventID_Tilt:
+        if (data.mInput.mCubeID == getCube().id())
+        {
+            switch (MAX_LETTERS_PER_CUBE)
+            {
+            case 2:
+                {
+                    _SYSTiltState state;
+                    _SYS_getTilt(getCube().id(), &state);
+                    if (state.x != 1)
+                    {
+                        mBG0TargetPanning = (mBG0TargetPanning == 0.f) ? 64.f : 0.f;
+                    }
+                }
+                break;
+
+            default:
+                break;
+            }
+
+
+        }
+        // fall through
+    case EventID_Input:
         if (data.mInput.mCubeID == mCube->id())
         {
             mIdleTime = 0.f;
@@ -204,4 +226,8 @@ void CubeStateMachine::update(float dt)
 {
     mIdleTime += dt;
     StateMachine::update(dt);
+    if ((int)mBG0Panning != (int)mBG0TargetPanning)
+    {
+        mBG0Panning += (mBG0TargetPanning - mBG0Panning) * dt * 7.5f;
+    }
 }

@@ -7,6 +7,7 @@
 #include "Dictionary.h"
 #include "ScoredCubeState_NotWord.h"
 #include <string.h>
+#include "WordGame.h"
 
 ScoredCubeState_NotWord::ScoredCubeState_NotWord()
 {

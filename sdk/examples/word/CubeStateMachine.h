@@ -21,7 +21,9 @@ const unsigned MAX_LETTERS_PER_WORD = MAX_LETTERS_PER_CUBE * NUM_CUBES;// TODO l
 class CubeStateMachine : public StateMachine
 {
 public:
-    CubeStateMachine() : StateMachine(0), mNumLetters(1), mIdleTime(0.f), mCube(0) {}
+    CubeStateMachine() :
+        StateMachine(0), mNumLetters(1), mIdleTime(0.f),
+        mBG0Panning(0.f), mBG0TargetPanning(0.f), mCube(0) {}
 
     void setCube(Cube& cube);
     Cube& getCube();
@@ -42,12 +44,16 @@ public:
     bool isConnectedToCubeOnSide(Cube::ID cubeIDStart, Cube::Side side=SIDE_LEFT);
     bool hasNoNeighbors() const;
     float getIdleTime() const { return mIdleTime; }
+    int getPanning() const { return (int) mBG0Panning; }
 
 private:
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     unsigned mNumLetters;
     float mIdleTime;
+
+    float mBG0Panning;
+    float mBG0TargetPanning;
 
     Cube* mCube;
     TitleCubeState mTitleState;

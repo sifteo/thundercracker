@@ -294,6 +294,14 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 {
     paintSprites = false;
     vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
+    vid.BG0_drawPartialAsset(Vec2(17, 0),
+                             Vec2(0, 0),
+                             Vec2(1, 16),
+                             ScreenOff);
+    vid.BG0_drawPartialAsset(Vec2(16, 0),
+                             Vec2(0, 0),
+                             Vec2(1, 16),
+                             ScreenOff);
     const char *str = getStateMachine().getLetters();
     switch (strlen(str))
     {
@@ -440,41 +448,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
                     switch (mEyeState)
                     {
-                    case EyeState_Closed:
-                        vid.setSpriteImage(LetterStateSpriteID_LeftEye, EyeLeftBlink.index);
-                        vid.resizeSprite(LetterStateSpriteID_LeftEye, EyeLeft.width * 8, EyeLeft.height * 8);
-                        vid.moveSprite(LetterStateSpriteID_LeftEye, ed.lx, ed.ly);
-
-                        vid.setSpriteImage(LetterStateSpriteID_RightEye, EyeRightBlink.index);
-                        vid.resizeSprite(LetterStateSpriteID_RightEye, EyeRight.width * 8, EyeRight.height * 8);
-                        vid.moveSprite(LetterStateSpriteID_RightEye, ed.rx, ed.ry);
-
-                        if (mAsleep)
-                        {
-                            unsigned zzzFrame = (unsigned)floorf(getStateMachine().getTime() / 0.5f);
-                            vid.setSpriteImage(LetterStateSpriteID_Zzz, LetterZzZ.index + (zzzFrame % LetterZzZ.frames) * LetterZzZ.width * LetterZzZ.height);
-                            vid.resizeSprite(LetterStateSpriteID_Zzz, LetterZzZ.width * 8, LetterZzZ.height * 8);
-                            vid.moveSprite(LetterStateSpriteID_Zzz,
-                                           MIN(128 - LetterZzZ.width * 8, ed.rx + EyeRight.width * 8 + 2),
-                                           MAX(0, 24 - (2 + LetterZzZ.height * 8)));
-                        }
-                        break;
-
-                    case EyeState_Center:
-                        WordGame::hideSprites(vid);
-                        break;
-
                     default:
-                        {
-                            unsigned eyeFrame = MAX(0, NumEyeStates - mEyeState); // asset frames are backwards
-                            vid.setSpriteImage(LetterStateSpriteID_LeftEye, EyeLeft.index + (eyeFrame % EyeLeft.frames) * EyeLeft.width * EyeLeft.height);
-                            vid.resizeSprite(LetterStateSpriteID_LeftEye, EyeLeft.width * 8, EyeLeft.height * 8);
-                            vid.moveSprite(LetterStateSpriteID_LeftEye, ed.lx, ed.ly);
-
-                            vid.setSpriteImage(LetterStateSpriteID_RightEye, EyeRight.index + (eyeFrame % EyeRight.frames) * EyeRight.width * EyeRight.height);
-                            vid.resizeSprite(LetterStateSpriteID_RightEye, EyeRight.width * 8, EyeRight.height * 8);
-                            vid.moveSprite(LetterStateSpriteID_RightEye, ed.rx, ed.ry);
-                        }
                         break;
                     }
 
@@ -509,6 +483,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
         // TODO
       //  break;
     }
+    vid.BG0_setPanning(Vec2(getStateMachine().getPanning(), 0.f));
 
 }
 

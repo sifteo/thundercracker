@@ -1,10 +1,5 @@
 GameAssets = group{}
 
-EyeLeft = image{"wc_eyeball_left.png", width=16, height=16, quality=0, pinned=true}
-EyeRight = image{"wc_eyeball_right.png", width=16, height=16, quality=0, pinned=true}
-EyeLeftBlink = image{"wc_eyeball_left_blink.png", width=16, height=16, quality=0, pinned=true}
-EyeRightBlink = image{"wc_eyeball_right_blink.png", width=16, height=16, quality=0, pinned=true}
-LetterZzZ = image{"wc_zzz.png", width=8, height=16, quality=0, pinned=true}
 Font1Letter = image{"font64.png", width=64, height=64, quality=0}
 LetterBG = image{"wc_background.png", quality=0}
 StartPrompt = image{"wc_shaketoplay.png", width=48, height=56, quality=0}
