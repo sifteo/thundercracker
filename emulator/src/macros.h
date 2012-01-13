@@ -11,7 +11,8 @@
 
 #include <stdint.h>
 
-#define APP_TITLE   "Thundercracker"
+#define APP_TITLE      "Thundercracker"
+#define APP_COPYRIGHT  "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
 
 /*
  * Tick functions should always be inlined, otherwise the function

@@ -135,7 +135,7 @@ void FrontendOverlay::drawHelp()
         "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'Z' - Zoom, '1' - 1:1 view, '2' - 2x view.",
         "+/- Adds/removes cubes.",
         "",
-        "Copyright (c) 2011 Sifteo, Inc. All rights reserved.",
+        APP_COPYRIGHT,
     };
     
     const unsigned numLines = sizeof lines / sizeof lines[0];
