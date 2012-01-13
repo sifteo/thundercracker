@@ -42,4 +42,5 @@ clean:
 	rm -f $(BINS) *.o *.d $(GENERATED_FILES)
 
 -include $(OBJS_SIM:%.o=%.d)
+-include $(OBJS_STM32:%.o=%.d)
 	
