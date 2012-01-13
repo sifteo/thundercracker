@@ -51,7 +51,7 @@ static void usage()
             "  -n NUM        Set initial number of cubes\n"
             "  -T            Turbo mode; run faster than real-time if we can\n"
             "\n"
-            "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n");
+            APP_COPYRIGHT "\n");
 }
 
 static void getConsole()

@@ -700,7 +700,7 @@ void Frontend::draw()
     renderer.beginOverlay();
         
     // Per-cube overlays (Only when sufficiently zoomed-in)
-    if (viewExtent < FrontendCube::SIZE * 4.0f)
+    if (viewExtent < pixelViewExtent() * 1.5f)
         for (unsigned i = 0; i < sys->opt_numCubes;  i++) {
             FrontendCube &c = cubes[i]; 
             b2AABB aabb;    
