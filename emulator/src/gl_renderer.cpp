@@ -29,33 +29,10 @@ bool GLRenderer::init()
         
     /*
      * Compile our shaders
-     *
-     * About our shader for rendering the LCD... We could probably do
-     * something more complicated with simulating the subpixels in the
-     * LCD screens, but right now I just have two goals:
-     *
-     *   1. See each pixel distinctly at >100% zooms
-     *   2. No visible aliasing artifacts
-     *
-     * This uses a simple algorithm that decomposes texture coordinates
-     * into a fractional and whole pixel portion, and applies a smooth
-     * nonlinear interpolation across pixel boundaries:
-     *
-     * http://www.iquilezles.org/www/articles/texture/texture.htm
-     */
+     */ 
 
-    extern const uint8_t cube_face_fp[];
-    extern const uint8_t cube_face_vp[];
-    GLhandleARB cubeFaceFP = loadShader(GL_FRAGMENT_SHADER, cube_face_fp);
-    GLhandleARB cubeFaceVP = loadShader(GL_VERTEX_SHADER, cube_face_vp);
-    cubeFaceProgram = linkProgram(cubeFaceFP, cubeFaceVP);
-
-    glUseProgramObjectARB(cubeFaceProgram);
-    glUniform1fARB(glGetUniformLocationARB(cubeFaceProgram, "LCD_SIZE"), FrontendCube::LCD_SIZE);
-    glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "face"), 0);
-    glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "hilight"), 1);
-    glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "mask"), 2);
-    glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "lcd"), 3);    
+    cubeFaceProgFiltered = loadCubeFaceProgram("#define FILTER\n");
+    cubeFaceProgUnfiltered = loadCubeFaceProgram("");
 
     extern const uint8_t cube_side_fp[];
     extern const uint8_t cube_side_vp[];
@@ -105,13 +82,47 @@ bool GLRenderer::init()
     return true;
 }
 
-GLhandleARB GLRenderer::loadShader(GLenum type, const uint8_t *source)
+GLhandleARB GLRenderer::loadCubeFaceProgram(const char *prefix)
 {
-    const GLchar *stringArray[1];
-    stringArray[0] = (const GLchar *) source;
+    /*
+     * About our shader for rendering the LCD... We could probably do
+     * something more complicated with simulating the subpixels in the
+     * LCD screens, but right now I just have two goals:
+     *
+     *   1. See each pixel distinctly at >100% zooms
+     *   2. No visible aliasing artifacts
+     *
+     * This uses a simple algorithm that decomposes texture coordinates
+     * into a fractional and whole pixel portion, and applies a smooth
+     * nonlinear interpolation across pixel boundaries:
+     *
+     * http://www.iquilezles.org/www/articles/texture/texture.htm
+     */
+
+    extern const uint8_t cube_face_fp[];
+    extern const uint8_t cube_face_vp[];
+    GLhandleARB cubeFaceFP = loadShader(GL_FRAGMENT_SHADER, cube_face_fp, prefix);
+    GLhandleARB cubeFaceVP = loadShader(GL_VERTEX_SHADER, cube_face_vp, prefix);
+    GLhandleARB prog = linkProgram(cubeFaceFP, cubeFaceVP);
+
+    glUseProgramObjectARB(prog);
+    glUniform1fARB(glGetUniformLocationARB(prog, "LCD_SIZE"), FrontendCube::LCD_SIZE);
+    glUniform1iARB(glGetUniformLocationARB(prog, "face"), 0);
+    glUniform1iARB(glGetUniformLocationARB(prog, "hilight"), 1);
+    glUniform1iARB(glGetUniformLocationARB(prog, "mask"), 2);
+    glUniform1iARB(glGetUniformLocationARB(prog, "lcd"), 3);
+
+    return prog;
+}
+    
+GLhandleARB GLRenderer::loadShader(GLenum type, const uint8_t *source, const char *prefix)
+{
+    const GLchar *stringArray[2];
+    stringArray[0] = (const GLchar *) prefix;
+    stringArray[1] = (const GLchar *) source;
 
     GLhandleARB shader = glCreateShaderObjectARB(type);
-    glShaderSourceARB(shader, 1, stringArray, NULL);
+    glShaderSourceARB(shader, 2, stringArray, NULL);
     glCompileShaderARB(shader);
 
     GLint isCompiled = false;
@@ -528,8 +539,9 @@ void GLRenderer::drawCubeBody()
 void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer, const CubeTransformState &tState)
 {
     GLCube &cube = cubes[id];
-
-    glUseProgramObjectARB(cubeFaceProgram);
+    bool pixelAccurate = currentFrame.pixelZoomMode && !tState.nonPixelAccurate;
+    
+    glUseProgramObjectARB(pixelAccurate ? cubeFaceProgUnfiltered : cubeFaceProgFiltered);
 
     /*
      * Set up samplers
@@ -564,7 +576,7 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer, const Cu
         
     glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[cube.currentLcdTexture]);
 
-    if (currentFrame.pixelZoomMode && !tState.nonPixelAccurate) {
+    if (pixelAccurate) {
         /*
          * Pixel-accurate zooming and transforms. Disable filtering entirely.
          * (The shader's nonlinear sampling becomes a no-op here)

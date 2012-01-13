@@ -101,7 +101,7 @@ class GLRenderer {
         bool isTilted;
         bool nonPixelAccurate;
     };
-        
+    
     const Glyph *findGlyph(uint32_t id);
     
     void initCube(unsigned id);
@@ -112,9 +112,10 @@ class GLRenderer {
     void drawCubeFace(unsigned id, const uint16_t *framebuffer, const CubeTransformState &tState);
     
     GLuint loadTexture(const uint8_t *pngData, GLenum wrap=GL_CLAMP, GLenum filter=GL_LINEAR);
-    GLhandleARB loadShader(GLenum type, const uint8_t *source);
+    GLhandleARB loadShader(GLenum type, const uint8_t *source, const char *prefix="");
     GLhandleARB linkProgram(GLhandleARB fp, GLhandleARB vp);
-
+    GLhandleARB loadCubeFaceProgram(const char *prefix);
+    
     void createRoundedRect(std::vector<VertexTN> &outPolygon, float size, float height, float relRadius);
     void extrudePolygon(const std::vector<VertexTN> &inPolygon, std::vector<VertexTN> &outTristrip);
 
@@ -123,7 +124,8 @@ class GLRenderer {
 	
     int viewportWidth, viewportHeight;
     
-    GLhandleARB cubeFaceProgram;
+    GLhandleARB cubeFaceProgFiltered;
+    GLhandleARB cubeFaceProgUnfiltered;
     GLuint cubeFaceTexture;
     GLuint cubeFaceHilightTexture;
     GLuint cubeFaceHilightMaskTexture;
