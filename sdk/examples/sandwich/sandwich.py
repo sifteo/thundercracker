@@ -31,13 +31,35 @@ KEYWORD_TO_TRIGGER_TYPE = {
 def load():
 	return World(".")
 
+def export():
+	World(".").export()
+
 class World:
 	def __init__(self, dir):
 		self.script = GameScript(self, os.path.join(dir, "game-script.xml"))
 		self.dialog = DialogDatabase(self, os.path.join(dir, "dialog-database.xml"))
 		self.maps = dict((path[0:-4], Map(self, os.path.join(dir, path))) for path in os.listdir(dir) if path.endswith(".tmx"))
+		#validate maps
 		if len(self.maps) == 0:
 			raise Exception("No maps!")
+		# validate map links
+		for map in self.maps.itervalues():
+			for gate in (t for t in map.list_triggers() if t.type == TRIGGER_GATEWAY):
+				if not gate.target_map in self.maps:
+					raise Exception("Link to non-existent map: " + gate.target_map)
+				tmap = self.maps[gate.target_map]
+				found = False
+				for othergate in (t for t in tmap.list_triggers() if t.type == TRIGGER_GATEWAY):
+					if othergate.name == gate.target_gate:
+						found = True
+						break
+				if not found:
+					raise Exception("Link to non-existent gate: " + gate.target_gate)
+
+
+	def export():
+		# todo
+		pass
 
 
 #------------------------------------------------------------------------------
@@ -66,7 +88,7 @@ class GameScript:
 			return self.quests[self.quest_dict[m.group(1)].index + int(m.group(2))]
 		m = EXP_MINUS.match(name)
 		if m is not None:
-			return self.quests[self.quest_dict[m.group(1)].index + int(m.group(2))]
+			return self.quests[self.quest_dict[m.group(1)].index - int(m.group(2))]
 		raise Exception("Invalid Quest Identifier: " + name)
 
 
@@ -129,19 +151,19 @@ class DialogDatabase:
 					yield text.image + ".png"
 					hash[text.image] = True
 
-class Text:
+class Dialog:
+	def __init__(self, xml):
+		self.id = xml.get("id").lower()
+		self.npc = xml.get("npc")
+		self.texts = [DialogText(self, i, elem) for i,elem in enumerate(xml.findall("text"))]
+
+class DialogText:
 	def __init__(self, dialog, index, xml):
 		self.dialog = dialog
 		self.index = index
 		self.text = xml.text
 		self.image = xml.get("image")
 
-
-class Dialog:
-	def __init__(self, xml):
-		self.id = xml.get("id").lower()
-		self.npc = xml.get("npc")
-		self.texts = [Text(self, i, elem) for i,elem in enumerate(xml.findall("text"))]
 
 #------------------------------------------------------------------------------
 # MAP DATABASE
@@ -250,9 +272,12 @@ class Map:
 					raise Exception ("Portal Mismatch in Map: %s" % self.name)
 		# unpack triggers
 		for obj in self.raw.objects:
-			if istrigger(obj):
+			if obj.type in KEYWORD_TO_TRIGGER_TYPE:
 				room = self.roomatpx(obj.px, obj.py)
-				room.triggers.append(Trigger(room, obj))
+				trig = Trigger(room, obj)
+				if trig.name in room.triggers:
+					raise Exception("Multiple triggers with the Same Name in the Same Room")
+				room.triggers[trig.name] = trig
 		# validate triggers
 		# todo
 
@@ -260,7 +285,12 @@ class Map:
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
 	def roomatpx(self, px, py): return self.roomat(px/128, py/128)
-		
+	
+	def list_triggers(self):
+		for r in self.rooms:
+			for t in r.triggers.itervalues():
+				yield t
+
 class Room:
 	def __init__(self, map, lid):
 		self.map = map
@@ -268,7 +298,7 @@ class Room:
 		self.x = lid % map.width
 		self.y = lid / map.width
 		self.portals = [ PORTAL_WALLED, PORTAL_WALLED, PORTAL_WALLED, PORTAL_WALLED ]
-		self.triggers = []
+		self.triggers = {}
 
 	def hasitem(self): return len(self.item) > 0 and self.item != "ITEM_NONE"
 	def tileat(self, x, y): return self.map.background.tileat(8*self.x + x, 8*self.y + y)
@@ -343,8 +373,6 @@ class Trigger:
 #------------------------------------------------------------------------------
 # HELPERS
 #------------------------------------------------------------------------------
-
-def istrigger(obj): return obj.type in KEYWORD_TO_TRIGGER_TYPE
 
 def istorch(tile): return "torch" in tile.props
 def isobst(tile): return "obstacle" in tile.props or istorch(tile)
