@@ -1,4 +1,4 @@
 <game-script>
-	<state id="tutorial"/>
-	<state id="dungeon0"/>
+	<quest id="tutorial"/>
+	<quest id="dungeon0"/>
 </game-script>

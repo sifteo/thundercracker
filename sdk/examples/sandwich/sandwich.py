@@ -1,6 +1,9 @@
 # implementation of sandwich kingdom maps
 
+import lxml.etree
 import os
+import os.path
+
 import tmx
 import misc
 
@@ -18,16 +21,100 @@ def load():
 	return World(".")
 
 class World:
-	
 	def __init__(self, dir):
-		self.maps = dict((path[0:-4], Map(path)) for path in os.listdir(dir) if path.endswith(".tmx"))
+		self.script = GameScript(os.path.join(dir, "game-script.xml"))
+		self.dialog = DialogDatabase(os.path.join(dir, "dialog-database.xml"))
+		self.maps = dict((path[0:-4], Map(os.path.join(dir, path))) for path in os.listdir(dir) if path.endswith(".tmx"))
+		if len(self.maps) == 0:
+			raise Exception("No maps!")
 
+
+#------------------------------------------------------------------------------
+# GAME SCRIPT
+#------------------------------------------------------------------------------
+
+class GameScript:
+	def __init__(self, path):
+		xml = lxml.etree.parse(path)
+		self.quests = [Quest(i, elem) for i,elem in enumerate(xml.findall("quest"))]
+		if len(self.quests) > 1:
+			for index,quest in enumerate(self.quests[0:-1]):
+				for otherQuest in self.quests[index+1:]:
+					if quest.id == otherQuest.id:
+						raise Exception("Duplicate Quest ID")
+
+class Quest:
+	def __init__(self, index, xml):
+		self.index = index
+		self.id = xml.get("id")
+		self.flags = [QuestFloat(i, elem) for i,elem in enumerate(xml.findall("flag"))]
+		if len(self.flags) > 32:
+			raise Exception("Too Many Flags for Quest: %s" % self.id)
+		if len(self.flags) > 1:
+			for index,flag in enumerate(self.flags[0:-1]):
+				for otherFlag in self.flags[index+1:]:
+					if flag.id == otherFlag.id:
+						raise Exception("Duplicate Quest Flag ID")
+
+class QuestFlag:
+	def __init__(self, index, xml):
+		self.index = index
+		self.id = xml.get("id")
+
+#------------------------------------------------------------------------------
+# DIALOG DATABASE
+#------------------------------------------------------------------------------
+
+class DialogDatabase:
+	def __init__(self, path):
+		doc = lxml.etree.parse(path)
+		dialogs = [Dialog(node) for node in doc.findall("dialog")]
+		if len(dialogs) > 1:
+			for i,d in enumerate(dialogs[:-1]):
+				for otherd in dialogs[i+1:]:
+					if d.id == otherd.id:
+						raise Exception("Duplicate Dialog ID")
+		# todo: validate dialog images
+		self.dialogs = dict((d.id, d) for d in dialogs)
+
+	def list_npc_image_paths(self):
+		hash = {}
+		for dialog in self.dialogs:
+			if not dialog.npc in hash:
+				yield dialog.npc + ".png"
+				hash[dialog.npc] = True
 		
+	
+	def list_detail_image_paths(self):
+		hash = {}
+		for dialog in self.dialogs:
+			for text in dialog.texts:
+				if not text.image in hash:
+					yield text.image + ".png"
+					hash[text.image] = True
+
+class Text:
+	def __init__(self, dialog, index, xml):
+		self.dialog = dialog
+		self.index = index
+		self.text = xml.text
+		self.image = xml.get("image")
+
+
+class Dialog:
+	def __init__(self, xml):
+		self.id = xml.get("id")
+		self.npc = xml.get("npc")
+		self.texts = [Text(self, i, elem) for i,elem in enumerate(xml.findall("text"))]
+
+#------------------------------------------------------------------------------
+# MAP DATABASE
+#------------------------------------------------------------------------------
 
 class Map:
 	def __init__(self, path):
-		self.name = path[0:-4]
 		self.raw = tmx.Map(path)
+		self.name = os.path.basename(path)[:-4]
 		if not "background" in self.raw.layer_dict:
 			raise Exception("Map Does Note Contain Background Layer: %s" % self.name)
 		self.background = self.raw.layer_dict["background"]
@@ -196,4 +283,5 @@ def portal_type(tile):
 		return PORTAL_WALLED
 	else:
 		return PORTAL_OPEN
+
 

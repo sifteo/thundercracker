@@ -6,7 +6,7 @@ import os.path
 class Map:
 	def __init__(self, path):
 		doc = lxml.etree.parse(path)
-		self.name = path[0:-4]
+		self.path = path
 		self.width = int(doc.getroot().get("width"))
 		self.height = int(doc.getroot().get("height"))
 		self.pw = 16 * self.width

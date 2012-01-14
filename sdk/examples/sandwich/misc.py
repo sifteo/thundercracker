@@ -62,7 +62,6 @@ def spiral_into_madness():
 	yield (x,y)
 	x -= 4
 	yield (x,y)
-
 	#x += 2 
 	#y += 5
 	#yield (x,y)
