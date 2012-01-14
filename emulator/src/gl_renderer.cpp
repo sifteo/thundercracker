@@ -48,6 +48,7 @@ bool GLRenderer::init()
 
     glUseProgramObjectARB(backgroundProgram);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "texture"), 0);
+    glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "lightmap"), 1);
 
     /*
      * Load textures
@@ -57,12 +58,14 @@ bool GLRenderer::init()
     extern const uint8_t img_cube_face_hilight[];
     extern const uint8_t img_cube_face_hilight_mask[];
     extern const uint8_t img_wood[];
+    extern const uint8_t img_bg_light[];
     extern const uint8_t ui_font_data_0[];
 
     cubeFaceTexture = loadTexture(img_cube_face);
     cubeFaceHilightTexture = loadTexture(img_cube_face_hilight);
     cubeFaceHilightMaskTexture = loadTexture(img_cube_face_hilight_mask);
     backgroundTexture = loadTexture(img_wood, GL_REPEAT);
+    bgLightTexture = loadTexture(img_bg_light);
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
     
     /*
@@ -225,7 +228,6 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZ
 
     glDisable(GL_BLEND);
     glDisable(GL_LIGHTING);
-    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
 
@@ -382,16 +384,31 @@ void GLRenderer::drawBackground(float extent, float scale)
 
     glLoadIdentity();
     glUseProgramObjectARB(backgroundProgram);
-
+    
+    // For speed, don't bother with depth writes
+    glDisable(GL_DEPTH_TEST);
+    
     glActiveTexture(GL_TEXTURE0);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, backgroundTexture);
 
+    glActiveTexture(GL_TEXTURE1);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, bgLightTexture);
+
     glInterleavedArrays(GL_T2F_N3F_V3F, 0, bg);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    
+    /*
+     * Clean up GL state.
+     */
 
+    glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);
-}
+    glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
+}    
 
 void GLRenderer::initCube(unsigned id)
 {

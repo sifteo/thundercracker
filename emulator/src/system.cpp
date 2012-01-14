@@ -142,6 +142,25 @@ void System::exitCube(unsigned id)
     cubes[id].exit();
 }
 
+bool System::isTraceAllowed()
+{   
+    /*
+     * Tracing allowed only in non-SBT mode normally
+     * you can only trace if you're a developer who built
+     * the firmware yourself. Normally it's bad to trace in SBT mode,
+     * both because the traces will be less useful, and because it could
+     * make it easier to reverse engineer our translated firmware.
+     *
+     * This test can be overridden (e.g. to debug the SBT code itself)
+     * with a #define at compile-time.
+     */
+#ifdef ALWAYS_ALLOW_TRACE
+    return true;
+#else
+    return !opt_cubeFirmware.empty();
+#endif
+}
+
 void System::start()
 {
     if (!mIsInitialized || mIsStarted)

@@ -257,7 +257,10 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
 
     if (!renderer.init())
         return false;
-    
+
+    isFullscreen = fullscreen;
+    mouseWheelPos = 0;
+        
     glfwSwapInterval(1);
     glfwEnable(GLFW_MOUSE_CURSOR);
     glfwSetWindowTitle(APP_TITLE);
@@ -266,8 +269,6 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
     glfwGetWindowSize(&w, &h);
     onResize(w, h);
     
-    isFullscreen = fullscreen;
-    mouseWheelPos = 0;
     moveWalls(true);
     
     glfwSetWindowSizeCallback(onResize);
@@ -283,8 +284,16 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
 void GLFWCALL Frontend::onResize(int width, int height)
 {
     instance->idleFrames = 0;
-    if (width && height)
+    
+    if (width && height) {    
+        if (!instance->isFullscreen) {
+            // Save this width/height, for restoring windowed mode after fullscreen
+            instance->lastWindowW = width;
+            instance->lastWindowH = height;
+        }
+
         instance->renderer.setViewport(width, height);
+    }
 }
 
 int GLFWCALL Frontend::onWindowClose()
@@ -322,13 +331,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
 
         case 'F':
-            /*
-            * XXX: Pick the resolution automatically or configurably.
-            *      This is just a common 16:9 resolution that isn't too big
-            *      for my integrated GPU to render smoothly :)
-            */         
-            glfwCloseWindow();
-            instance->openWindow(1280, 720, !instance->isFullscreen);
+            instance->toggleFullscreen();
             break;
                 
         case 'S': {
@@ -375,6 +378,22 @@ void GLFWCALL Frontend::onKey(int key, int state)
         instance->idleFrames = 0;
     }   
 }
+
+void Frontend::toggleFullscreen()
+{
+    if (isFullscreen) {
+        // Restore last windowed mode
+        // Restore last windowed mode
+        glfwCloseWindow();            
+        openWindow(lastWindowW, lastWindowH, false);
+    } else {
+        // Full-screen, using the desktop's native video mode
+        GLFWvidmode mode;
+        glfwGetDesktopMode(&mode);
+        glfwCloseWindow();
+        openWindow(mode.Width, mode.Height, true);
+    }
+}           
 
 void GLFWCALL Frontend::onMouseMove(int x, int y)
 {

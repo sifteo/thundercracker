@@ -56,16 +56,7 @@ class System {
         return threadRunning;
     }
     
-    bool isTraceAllowed() {
-        /*
-         * Tracing allowed only in non-SBT mode normally
-         * you can only trace if you're a developer who built
-         * the firmware yourself. Normally it's bad to trace in SBT mode,
-         * both because the traces will be less useful, and because it could
-         * make it easier to reverse engineer our translated firmware.
-         */
-        return !opt_cubeFirmware.empty();                                     
-    }
+    bool isTraceAllowed();
 
     // Use with care... They must remain exactly paired.
     void startThread();

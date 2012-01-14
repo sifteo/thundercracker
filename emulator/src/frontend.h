@@ -80,6 +80,7 @@ class Frontend {
     void draw();
 
     bool openWindow(int width, int height, bool fullscreen=false);
+    void toggleFullscreen();
     
     static void GLFWCALL onResize(int width, int height);
     static void GLFWCALL onKey(int key, int state);
@@ -127,6 +128,7 @@ class Frontend {
     int mouseX, mouseY;
     int mouseWheelPos;
     unsigned gridW, gridH;
+    unsigned lastWindowW, lastWindowH;
 
     float viewExtent;
     float normalViewExtent;
