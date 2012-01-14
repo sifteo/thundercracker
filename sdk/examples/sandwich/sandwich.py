@@ -162,6 +162,7 @@ class DialogText:
 		self.dialog = dialog
 		self.index = index
 		self.text = xml.text
+		# validate text length (prerender?)
 		self.image = xml.get("image")
 
 
@@ -175,7 +176,7 @@ class Map:
 		self.name = os.path.basename(path)[:-4]
 		self.raw = tmx.Map(path)
 		if not "background" in self.raw.layer_dict:
-			raise Exception("Map Does Note Contain Background Layer: %s" % self.name)
+			raise Exception("Map does not contain background layer: %s" % self.name)
 		self.background = self.raw.layer_dict["background"]
 		if self.background.gettileset().count >= 256:
 			raise Exception("Map is too large (must have < 256 tiles): %s" % self.name)
@@ -276,7 +277,7 @@ class Map:
 				room = self.roomatpx(obj.px, obj.py)
 				trig = Trigger(room, obj)
 				if trig.name in room.triggers:
-					raise Exception("Multiple triggers with the Same Name in the Same Room")
+					raise Exception("Multiple triggers with the Same Name in the Same Room for map: " + self.name)
 				room.triggers[trig.name] = trig
 		# validate triggers
 		# todo
