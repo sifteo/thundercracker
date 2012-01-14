@@ -84,10 +84,10 @@ class Obj:
 	def __init__(self, map, xml):
 		self.map = map
 		self.name = xml.get("name")
-		self.type = xml.get("type")
-		self.px = xml.get("x")
-		self.py = xml.get("y")
-		self.pw = xml.get("width")
-		self.ph = xml.get("height")
+		self.type = xml.get("type").lower()
+		self.px = int(xml.get("x"))
+		self.py = int(xml.get("y"))
+		self.pw = int(xml.get("width"))
+		self.ph = int(xml.get("height"))
 		self.tile = map.gettile(int(xml.get("gid", "0")))
 		self.props = dict((prop.get("name").lower(), prop.get("value")) for prop in xml.findall("properties/property"))

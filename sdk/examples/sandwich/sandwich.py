@@ -1,13 +1,13 @@
-# implementation of sandwich kingdom maps
+# implementation of sandwich kingdom content specification
 
 import lxml.etree
 import os
 import os.path
-
+import re
 import tmx
 import misc
 
-# enums
+# constants
 PORTAL_OPEN = 0
 PORTAL_WALLED = 1
 PORTAL_DOOR = 2
@@ -15,16 +15,27 @@ SIDE_TOP = 0
 SIDE_LEFT = 1
 SIDE_BOTTOM = 2
 SIDE_RIGHT = 3
-
+EXP_REGULAR = re.compile(r"^([a-z]+)$")
+EXP_PLUS = re.compile(r"^([a-z]+)\+(\d+)$")
+EXP_MINUS = re.compile(r"^([a-z]+)\-(\d+)$")
+EXP_GATEWAY = re.compile(r"^(\w+):(\w+)$")
+TRIGGER_GATEWAY = 0
+TRIGGER_ITEM = 1
+TRIGGER_NPC = 2
+KEYWORD_TO_TRIGGER_TYPE = {
+	"gateway": TRIGGER_GATEWAY,
+	"item": TRIGGER_ITEM,
+	"npc": TRIGGER_NPC
+}
 
 def load():
 	return World(".")
 
 class World:
 	def __init__(self, dir):
-		self.script = GameScript(os.path.join(dir, "game-script.xml"))
-		self.dialog = DialogDatabase(os.path.join(dir, "dialog-database.xml"))
-		self.maps = dict((path[0:-4], Map(os.path.join(dir, path))) for path in os.listdir(dir) if path.endswith(".tmx"))
+		self.script = GameScript(self, os.path.join(dir, "game-script.xml"))
+		self.dialog = DialogDatabase(self, os.path.join(dir, "dialog-database.xml"))
+		self.maps = dict((path[0:-4], Map(self, os.path.join(dir, path))) for path in os.listdir(dir) if path.endswith(".tmx"))
 		if len(self.maps) == 0:
 			raise Exception("No maps!")
 
@@ -34,7 +45,9 @@ class World:
 #------------------------------------------------------------------------------
 
 class GameScript:
-	def __init__(self, path):
+	def __init__(self, world, path):
+		self.world = world
+		self.path = path
 		xml = lxml.etree.parse(path)
 		self.quests = [Quest(i, elem) for i,elem in enumerate(xml.findall("quest"))]
 		if len(self.quests) > 1:
@@ -42,11 +55,25 @@ class GameScript:
 				for otherQuest in self.quests[index+1:]:
 					if quest.id == otherQuest.id:
 						raise Exception("Duplicate Quest ID")
+		self.quest_dict = dict((quest.id, quest) for quest in self.quests)
+	
+	def getquest(self, name):
+		m = EXP_REGULAR.match(name)
+		if m is not None:
+			return self.quest_dict[name]
+		m = EXP_PLUS.match(name)
+		if m is not None:
+			return self.quests[self.quest_dict[m.group(1)].index + int(m.group(2))]
+		m = EXP_MINUS.match(name)
+		if m is not None:
+			return self.quests[self.quest_dict[m.group(1)].index + int(m.group(2))]
+		raise Exception("Invalid Quest Identifier: " + name)
+
 
 class Quest:
 	def __init__(self, index, xml):
 		self.index = index
-		self.id = xml.get("id")
+		self.id = xml.get("id").lower()
 		self.flags = [QuestFloat(i, elem) for i,elem in enumerate(xml.findall("flag"))]
 		if len(self.flags) > 32:
 			raise Exception("Too Many Flags for Quest: %s" % self.id)
@@ -55,18 +82,27 @@ class Quest:
 				for otherFlag in self.flags[index+1:]:
 					if flag.id == otherFlag.id:
 						raise Exception("Duplicate Quest Flag ID")
+		self.flag_dict = dict((flag.id,flag) for flag in self.flags)
+
+		def getflag(self, name):
+			if name in self.flag_dict:
+				return self.flag_dict[name]
+			raise Exception("Invalid Quest Flag Identifier: " + name)
+
 
 class QuestFlag:
 	def __init__(self, index, xml):
 		self.index = index
-		self.id = xml.get("id")
+		self.id = xml.get("id").lower()
 
 #------------------------------------------------------------------------------
 # DIALOG DATABASE
 #------------------------------------------------------------------------------
 
 class DialogDatabase:
-	def __init__(self, path):
+	def __init__(self, world, path):
+		self.world = world
+		self.path = path
 		doc = lxml.etree.parse(path)
 		dialogs = [Dialog(node) for node in doc.findall("dialog")]
 		if len(dialogs) > 1:
@@ -103,7 +139,7 @@ class Text:
 
 class Dialog:
 	def __init__(self, xml):
-		self.id = xml.get("id")
+		self.id = xml.get("id").lower()
 		self.npc = xml.get("npc")
 		self.texts = [Text(self, i, elem) for i,elem in enumerate(xml.findall("text"))]
 
@@ -112,9 +148,10 @@ class Dialog:
 #------------------------------------------------------------------------------
 
 class Map:
-	def __init__(self, path):
-		self.raw = tmx.Map(path)
+	def __init__(self, world, path):
+		self.world = world
 		self.name = os.path.basename(path)[:-4]
+		self.raw = tmx.Map(path)
 		if not "background" in self.raw.layer_dict:
 			raise Exception("Map Does Note Contain Background Layer: %s" % self.name)
 		self.background = self.raw.layer_dict["background"]
@@ -211,16 +248,18 @@ class Map:
 			for y in range(self.height-1):
 				if self.roomat(x,y).portals[2] != self.roomat(x,y+1).portals[0]:
 					raise Exception ("Portal Mismatch in Map: %s" % self.name)
-		# unpack objects
-		print "TODO: UNPACK OBJECTS"
+		# unpack triggers
 		for obj in self.raw.objects:
-			pass
+			if istrigger(obj):
+				room = self.roomatpx(obj.px, obj.py)
+				room.triggers.append(Trigger(room, obj))
+		# validate triggers
+		# todo
 
-
-
+				
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
-
+	def roomatpx(self, px, py): return self.roomat(px/128, py/128)
 		
 class Room:
 	def __init__(self, map, lid):
@@ -229,8 +268,7 @@ class Room:
 		self.x = lid % map.width
 		self.y = lid / map.width
 		self.portals = [ PORTAL_WALLED, PORTAL_WALLED, PORTAL_WALLED, PORTAL_WALLED ]
-		self.trigger = None
-		self.item = ""
+		self.triggers = []
 
 	def hasitem(self): return len(self.item) > 0 and self.item != "ITEM_NONE"
 	def tileat(self, x, y): return self.map.background.tileat(8*self.x + x, 8*self.y + y)
@@ -266,7 +304,47 @@ class Room:
 					return True
 		return False
 
-#convenience getters
+# Trigger Types (screw inheretance - they all "quack" like a trigger)
+
+class Trigger:
+	def __init__(self, room, obj):
+		self.name = obj.name
+		self.room = room
+		self.raw = obj
+		self.type = KEYWORD_TO_TRIGGER_TYPE[obj.type]
+		# deterine quest state
+		if "quest" in obj.props:
+			self.quest = room.map.world.script.getquest(obj.props["quest"])
+			if "questflag" in obj.props:
+				self.qflag = self.quest.getflag(obj.props["questflag"])
+		else:
+			if "minquest" in obj.props:
+				self.minquest = room.map.world.script.getquest(obj.props["minquest"])
+			if "maxquest" in obj.props:
+				self.maxquest = room.map.world.script.getquest(obj.props["maxquest"])
+			if hasattr(self, "minquest") and hasattr(self, "maxquest"):
+				if self.minquest.index > self.maxquest.index:
+					raise Exception("MaxQuest > MinQuest for object in map: " + room.map.name)
+		if self.type == TRIGGER_ITEM:
+			self.itemid = int(obj.props["id"])
+			# validate?
+		elif self.type == TRIGGER_GATEWAY:
+			m = EXP_GATEWAY.match(obj.props.get("target", ""))
+			if m is None:
+				raise Exception("Malformed Gateway Target in Map: " + room.map.name)
+			self.target_map = m.group(1)
+			self.target_gate = m.group(2)
+		elif self.type == TRIGGER_NPC:
+			did = obj.props["id"]
+			if not did in room.map.world.dialog.dialogs:
+				raise Exception("Invalid Dialog ID in Map: " + room.map.name)
+			self.dialog = room.map.world.dialog.dialogs[did]
+
+#------------------------------------------------------------------------------
+# HELPERS
+#------------------------------------------------------------------------------
+
+def istrigger(obj): return obj.type in KEYWORD_TO_TRIGGER_TYPE
 
 def istorch(tile): return "torch" in tile.props
 def isobst(tile): return "obstacle" in tile.props or istorch(tile)
@@ -283,5 +361,3 @@ def portal_type(tile):
 		return PORTAL_WALLED
 	else:
 		return PORTAL_OPEN
-
-
