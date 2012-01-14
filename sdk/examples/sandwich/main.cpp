@@ -42,6 +42,10 @@ void siftmain() {
 	  }
 	}
 #endif
+  
+  //DialogData data;
+  //DoDialog(data);
+
 	{ // fake power-on
 		for(unsigned hack=0; hack<4; ++hack) {
 			for(unsigned i=0; i<NUM_CUBES; ++i) {

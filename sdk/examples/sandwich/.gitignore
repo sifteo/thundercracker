@@ -21,3 +21,5 @@ _build
 *.swf
 *-app.xml
 *.xcodeproj
+
+*.pyc

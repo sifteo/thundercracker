@@ -246,15 +246,18 @@ void DoDialog(DialogData& data) {
     view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
     view.GetCube()->vbuf.poke(0x3fc/2, 0x3000 + 80);
     view.GetCube()->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
+
+    for(;;) {
     view.Erase();
     System::paintSync();
     view.Show("Hello, World");
-    view.Show("Wheee!");
+    view.Show("I'm dialog!");
     view.Fade();
     view.Erase();
     view.Show("Oh boy");
     view.Show("Another!");
     view.Fade();
+    }
 
 
     for(;;) {
