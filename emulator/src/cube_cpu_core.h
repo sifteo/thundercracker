@@ -45,7 +45,7 @@ NEVER_INLINE void trace_execution(em8051 *mCPU);
 NEVER_INLINE void profile_tick(em8051 *mCPU);
 NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12);
 
-static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
+static ALWAYS_INLINE void timer_tick(em8051 *aCPU, unsigned numTicks)
 {
     /*
      * Examine all of the possible counter/timer clock sources.
@@ -54,7 +54,9 @@ static ALWAYS_INLINE void timer_tick(em8051 *aCPU)
      * The timer code is slow, and we'd really rather not run it every tick.
      */
 
-    if (UNLIKELY(!--aCPU->prescaler12)) { 
+    aCPU->prescaler12 -= numTicks;
+     
+    if (UNLIKELY(!aCPU->prescaler12)) { 
         aCPU->prescaler12 = 12;
         timer_tick_work(aCPU, true);
         
@@ -159,7 +161,7 @@ static ALWAYS_INLINE void em8051_tick(em8051 *aCPU, unsigned numTicks,
             except(aCPU, EXCEPTION_BREAK);
     }
 
-    timer_tick(aCPU);
+    timer_tick(aCPU, numTicks);
 }
 
 
