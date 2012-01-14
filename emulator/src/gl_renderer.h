@@ -109,7 +109,7 @@ class GLRenderer {
                        b2Vec2 tilt, CubeTransformState &tState);
 
     void drawCubeBody();
-    void drawCubeFace(unsigned id, const uint16_t *framebuffer, const CubeTransformState &tState);
+    void drawCubeFace(unsigned id, const uint16_t *framebuffer);
     
     GLuint loadTexture(const uint8_t *pngData, GLenum wrap=GL_CLAMP, GLenum filter=GL_LINEAR);
     GLhandleARB loadShader(GLenum type, const uint8_t *source, const char *prefix="");
@@ -152,6 +152,8 @@ class GLRenderer {
     
     struct GLCube {
         bool initialized;
+        bool pixelAccurate;
+        bool isTilted;
         uint8_t currentLcdTexture;
         GLuint lcdTextures[NUM_LCD_TEXTURES];
     } cubes[System::MAX_CUBES];
