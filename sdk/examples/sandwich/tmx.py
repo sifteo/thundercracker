@@ -66,8 +66,9 @@ class Layer:
 		self.name = xml.get("name")
 		self.width = int(xml.get("width"))
 		self.height = int(xml.get("height"))
-		self.visible = xml.get("visible", "0") != "0"
+		self.visible = xml.get("visible", "1") != "0"
 		self.opacity = float(xml.get("opacity", "1"))
+		# replace with csv module?  support base64?
 		self.tiles = [int(ch) for l in xml.findtext("data").strip().splitlines() for ch in l.split(',') if len(ch) > 0]
 		self.props = dict((prop.get("name").lower(), prop.get("value")) for prop in xml.findall("properties/property"))
 		
