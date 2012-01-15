@@ -11,7 +11,7 @@ import misc
 PORTAL_OPEN = 0
 PORTAL_WALLED = 1
 PORTAL_DOOR = 2
-PORTAL_LABELS = [ "PORTAL_OPEN", "PORTAL_WALLED", "PORTAL_DOOR" ]
+PORTAL_LABELS = [ "PORTAL_OPEN", "PORTAL_WALL", "PORTAL_DOOR" ]
 SIDE_TOP = 0
 SIDE_LEFT = 1
 SIDE_BOTTOM = 2
@@ -458,8 +458,6 @@ class Room:
 		else:
 			src.write("        0\n")
 		src.write("    },\n")		
-
-# Trigger Types (screw inheretance - they all "quack" like a trigger)
 
 class Trigger:
 	def __init__(self, room, obj):

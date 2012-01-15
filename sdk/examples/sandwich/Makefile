@@ -5,7 +5,7 @@ endif
 APP = sandwichcraft
 OBJS = \
 	$(ASSETS).gen.o \
-	gen_mapdata.o \
+	gen_assets.o \
 	main.o \
 	Base.o \
 	Dialog.o \
@@ -29,16 +29,14 @@ include $(TC_DIR)/firmware/master/Makefile.rules
 
 GENERATED_FILES += MapTool.exe
 GENERATED_FILES += gen_assets.lua
-GENERATED_FILES += gen_mapdata.h
-GENERATED_FILES += gen_mapdata.cpp
+GENERATED_FILES += gen_assets.h
+GENERATED_FILES += gen_assets.cpp
 
 
-gen_mapdata.cpp: MapTool.exe $(ASSETDEPS) *.tmx
-	mono MapTool.exe -gen_cxx
+gen_assets.cpp: gen_assets
 
-gen_assets.lua: MapTool.exe *.tmx
-	mono MapTool.exe -gen_lua
+gen_assets.lua: gen_assets
 
-MapTool.exe: Tools/*.cs
-	gmcs -debug Tools/*.cs -out:MapTool.exe -r:System.Drawing.dll
-
+gen_assets: sandwich.py tmx.py
+	python -c "import sandwich; sandwich.export()"
+	
