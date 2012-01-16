@@ -119,6 +119,7 @@ class GameScript:
 					if quest.id == otherQuest.id:
 						raise Exception("Duplicate Quest ID")
 		self.quest_dict = dict((quest.id, quest) for quest in self.quests)
+		self.unlockables = [ elem.get("id") for elem in xml.findall("unlockables/flag") ]
 	
 	def getquest(self, name):
 		m = EXP_REGULAR.match(name)
