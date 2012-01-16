@@ -10,18 +10,14 @@ struct MapRoom {
 
   int RoomId() const;
   Vec2 Location() const;
-  RoomData* Data() const;
+  const RoomData* Data() const;
 
   inline Vec2 Position() const { return 128 * Location(); }
   inline Vec2 LocalCenter() const { return Vec2(Data()->centerx, Data()->centery); }
   inline Vec2 Center() const { return Position() + 16 * LocalCenter(); }
 
-  void SetItem(int itemId);
   uint8_t GetPortal(Cube::Side side);
-  void SetPortal(Cube::Side side, uint8_t pid);
-
   uint8_t GetTile(Vec2 position);
-  void SetTile(Vec2 position, uint8_t tid);
   void OpenDoor(/*Cube::Side side*/);
 };
 
@@ -41,8 +37,9 @@ public:
   Map();
   
   // Map Data Getters
-  MapData* Data() const { return mData; }
-  inline const uint8_t* GetPortalX(int x, int y) {
+  const MapData* Data() const { return mData; }
+  
+  inline const uint8_t* GetPortalX(int x, int y) const {
       // note that the pitch here is one greater than the width because there's
       // an extra wall on the right side of the last tile in each row
       ASSERT(0 <= x && x <= mData->width);
@@ -50,7 +47,7 @@ public:
       return mData->xportals + (y * (mData->width+1) + x);
   }
 
-  inline const uint8_t* GetPortalY(int x, int y) {
+  inline const uint8_t* GetPortalY(int x, int y) const {
       // Like GetPortalX except we're in column-major order
       ASSERT(0 <= x && x < mData->width);
       ASSERT(0 <= y && y <= mData->height);
@@ -75,7 +72,7 @@ public:
       return mData->rooms[location.y * mData->width + location.x].tiles[tile.y * 8 + tile.x];
   }
 
-  inline bool IsTileOpen(Vec2 location, Vec2 tile) {
+  inline bool IsTileOpen(Vec2 location, Vec2 tile) const {
       ASSERT(0 <= location.x && location.x < mData->width);
       ASSERT(0 <= location.y && location.y < mData->height);
       ASSERT(0 <= tile.x && tile.x < 8);
