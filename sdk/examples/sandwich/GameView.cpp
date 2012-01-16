@@ -82,6 +82,7 @@ void GameView::Update() {
   }
 
   // begin h4cky scene-specific stuff
+  /*
   RoomData *p = Room()->Data();
   if (pGame->map.Data() == &dungeon_data) {
     if (p->torch0 != 0xff) {
@@ -157,12 +158,13 @@ void GameView::Update() {
         break;
     }
   }
+  */
   // end h4cky section
 
   // item hover
   if (Room()->itemId) {
     mIdleHoverIndex = (mIdleHoverIndex + 1) % HOVER_COUNT;
-    Vec2 p = 16 * Room()->Data()->LocalCenter();
+    Vec2 p = 16 * Room()->LocalCenter();
     MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y + sHoverTable[mIdleHoverIndex]);
   }
 
@@ -240,6 +242,7 @@ bool GameView::ShowLocation(Vec2 room) {
     mIdleHoverIndex = 0;
 
     // h4cky scene-specific stuff
+    /*
     if (pGame->map.Data() == &dungeon_data) {
       mScene.dungeon.torchTime = 0;
     } else if (pGame->map.Data() == &forest_data) {
@@ -252,6 +255,7 @@ bool GameView::ShowLocation(Vec2 room) {
         MoveSprite(GetCube(), BFF_SPRITE_ID, mScene.forest.bffX-68, mScene.forest.bffY-68);
       }
     }
+    */
     // end h4cky stuff
 
   } else {
@@ -308,12 +312,12 @@ void GameView::HidePlayer() {
 void GameView::ShowItem(int itemId) {
   SetSpriteImage(GetCube(), ITEM_SPRITE_ID, Items.index + (itemId - 1) * Items.width * Items.height);;
   ResizeSprite(GetCube(), ITEM_SPRITE_ID, 16, 16);
-  Vec2 p = 16 * Room()->Data()->LocalCenter();
+  Vec2 p = 16 * Room()->LocalCenter();
   MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
 }
 
 void GameView::SetItemPosition(Vec2 p) {
-  p += 16 * Room()->Data()->LocalCenter();
+  p += 16 * Room()->LocalCenter();
   MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
 }
 
@@ -405,13 +409,13 @@ void GameView::DrawBackground() {
         mode.BG0_drawAsset(
           Vec2(x<<1,y<<1),
           *(pGame->map.Data()->tileset),
-          pGame->map.Data()->GetTileId(mRoom, Vec2(x, y))
+          pGame->map.GetTileId(mRoom, Vec2(x, y))
         );
       }
     }
 
     BG1Helper ovrly(*GetCube());
-    uint8_t *p = Room()->Data()->overlay;
+    const uint8_t *p = Room()->Data()->overlay;
     if (p) {
       while(*p != 0xff) {
         uint8_t pos = p[0];

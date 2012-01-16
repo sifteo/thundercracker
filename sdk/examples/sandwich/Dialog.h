@@ -1,9 +1,6 @@
 #pragma once
 
 #include "Base.h"
-
-struct DialogData {
-	
-};
+#include "Content.h"
 
 void DoDialog(DialogData& data);

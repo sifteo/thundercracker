@@ -1,4 +1,4 @@
 <game-script>
-	<quest id="tutorial"/>
-	<quest id="dungeon0"/>
+	<quest id="tutorial" map="castle" />
+	<quest id="dungeon0" map="dungeon" />
 </game-script>

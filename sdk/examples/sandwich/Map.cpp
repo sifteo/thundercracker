@@ -6,40 +6,6 @@
 // MAP ROOM STUFF
 //-----------------------------------------------------------------------------
 
-// h4ck
-struct ItemDataChange {
-  ItemData* location;
-  ItemData value;
-  void Save(ItemData* p) {
-    location = p;
-    value = *p;
-  }
-};
-struct ByteChange {
-  uint8_t* location;
-  uint8_t value;
-  void Save(uint8_t* p) {
-    location = p;
-    value = *p;
-  }
-};
-static ItemDataChange sItemChanges[16];
-static ByteChange sByteChanges[64];
-static unsigned sItemChangeCount = 0;
-static unsigned sByteChangeCount = 0; 
-
-void Map::HackyMapRevert() {
-  for(unsigned i=0; i<sItemChangeCount; ++i) {
-    *(sItemChanges[i].location) = sItemChanges[i].value;
-  }
-  for(unsigned i=0; i<sByteChangeCount; ++i) {
-    *(sByteChanges[i].location) = sByteChanges[i].value;
-  }
-  sItemChangeCount = 0;
-  sByteChangeCount = 0;
-}
-// /h4ck
-
 int MapRoom::RoomId() const {
   return (int)(this - pGame->map.GetRoom(0));
 }
@@ -115,7 +81,7 @@ void MapRoom::OpenDoor(/*Cube::Side side*/) {
 //-----------------------------------------------------------------------------
 
 Map::Map() {
-  SetData(castle_data);
+  SetData(gMapData[gQuestData->mapId]);
 }
 
 inline static bool PortalOpen(uint8_t pid) { 
