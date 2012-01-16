@@ -14,7 +14,7 @@ void AudioBuffer::enqueue(uint8_t c)
     ASSERT(isValid());
     ASSERT(!full());
     sys->buf[sys->tail] = c;
-    sys->tail = (sys->tail + 1) & (sizeof(sys->buf) - 1);
+    sys->tail = (sys->tail + 1) & capacity();
     ASSERT(sys->tail != sys->head);
 }
 
@@ -24,7 +24,7 @@ uint8_t AudioBuffer::dequeue()
     ASSERT(!empty());
     ASSERT(sys->head < sizeof(sys->buf));
     uint8_t c = sys->buf[sys->head];
-    sys->head = (sys->head + 1) & (sizeof(sys->buf) - 1);
+    sys->head = (sys->head + 1) & capacity();
     return c;
 }
 
@@ -55,6 +55,29 @@ unsigned AudioBuffer::readAvailable() const
 unsigned AudioBuffer::writeAvailable() const
 {
     ASSERT(isValid());
-    return (sizeof(sys->buf) - 1) - readAvailable();
+    return capacity() - readAvailable();
 }
 
+/*
+    XXX: this reserve/commit implementation is quite fake at the moment.
+    We should be able to write directly into our real buffer instead of always
+    into our coalescer buffer, to avoid copying. At least now, clients can avoid
+    copying, and we can implement it later.
+*/
+uint8_t *AudioBuffer::reserve(unsigned numBytes, unsigned *outBytesAvailable)
+{
+    ASSERT(isValid());
+    // TODO - give a pointer to our buffer directly if possible to avoid copying
+    *outBytesAvailable = MIN(numBytes, writeAvailable());
+    return coalescer;
+}
+
+void AudioBuffer::commit(unsigned numBytes)
+{
+    ASSERT(isValid());
+    // TODO - determine whether data was written directly to our real buffer,
+    // and update write pointer atomically.
+    for (unsigned i = 0; i < numBytes; ++i) {
+        enqueue(coalescer[i]);
+    }
+}

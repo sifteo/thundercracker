@@ -109,7 +109,7 @@ void TitleCubeState::paint()
 
     case 1:
         vid.BG0_drawAsset(Vec2(0, 0), Teeth);
-        if (getStateMachine().getTime() > 4.1f)
+        if (getStateMachine().getTime() > SMOKE_ANIM_LENGTH)
         {
             const float ANIM_LENGTH = 1.0f;
             const AssetImage& anim = StartPrompt;

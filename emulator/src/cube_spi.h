@@ -51,6 +51,7 @@
 #ifndef _CUBE_SPI_H
 #define _CUBE_SPI_H
 
+#include "tracer.h"
 #include "cube_cpu.h"
 
 namespace Cube {
@@ -122,10 +123,7 @@ class SPIBus {
 
                 uint8_t miso = radio.spiByte(tx_mosi);
 
-                if (cpu->isTracing) {
-                    fprintf(cpu->traceFile, "[%2d] SPI: %02x -> %02x\n",
-                            cpu->id, tx_mosi, miso);
-                }
+                Tracer::log(cpu, "SPI: %02x -> %02x", tx_mosi, miso);
 
                 if (rx_count < SPI_FIFO_SIZE)
                     rx_fifo[rx_count++] = miso;
@@ -155,15 +153,8 @@ class SPIBus {
         }   
 
         if (status_dirty) {
-            if (cpu->isTracing) {
-                fprintf(cpu->traceFile, "[%2d] SPI: rx [ ", cpu->id);
-                for (int i = 0; i < rx_count; i++)
-                    fprintf(cpu->traceFile, "%02x ", rx_fifo[i]);
-                fprintf(cpu->traceFile, "] tx [ ");
-                for (int i = 0; i < tx_count; i++)
-                    fprintf(cpu->traceFile, "%02x ", tx_fifo[i]);
-                fprintf(cpu->traceFile, "]\n");
-            }
+            Tracer::logHex(cpu, "SPI: rxf", rx_count, rx_fifo);
+            Tracer::logHex(cpu, "SPI: txf", tx_count, tx_fifo);
 
             // Update status register
             spiRegs[SPI_REG_STATUS] = 

@@ -11,6 +11,8 @@ LOCAL_OBJS = \
         src/main.o \
         src/system.o \
         src/system_network.o \
+	src/tracer.o \
+	src/vcdwriter.o \
         src/cube_cpu_core.o \
         src/cube_cpu_disasm.o \
         src/cube_cpu_opcodes.o \

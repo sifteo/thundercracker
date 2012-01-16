@@ -57,33 +57,21 @@ struct MapData {
     
     // Convenience Methods
 
-    inline uint8_t GetPortalX(int x, int y) const {
+    inline uint8_t* GetPortalX(int x, int y) {
         // note that the pitch here is one greater than the width because there's
         // an extra wall on the right side of the last tile in each row
         ASSERT(0 <= x && x <= width);
         ASSERT(0 <= y && y < height);
-        return xportals[y * (width+1) + x];
+        return xportals + (y * (width+1) + x);
     }
 
-    inline uint8_t GetPortalY(int x, int y) const {
+    inline uint8_t* GetPortalY(int x, int y) {
         // Like GetPortalX except we're in column-major order
         ASSERT(0 <= x && x < width);
         ASSERT(0 <= y && y <= height);
-        return yportals[x * (height+1) + y];
+        return yportals + (x * (height+1) + y);
     }
     
-    inline void SetPortalX(int x, int y, uint8_t pid) {
-        ASSERT(0 <= x && x <= width);
-        ASSERT(0 <= y && y < height);
-        xportals[y * (width+1) + x] = pid;
-    }
-
-    inline void SetPortalY(int x, int y, uint8_t pid) {
-        ASSERT(0 <= x && x < width);
-        ASSERT(0 <= y && y <= height);
-        yportals[x * (height+1) + y] = pid;
-    }
-
     inline RoomData* GetRoomData(uint8_t roomId) const {
         ASSERT(roomId < width * height);
         return rooms + roomId;

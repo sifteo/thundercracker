@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include "tracer.h"
 #include "vtime.h"
 #include "cube_cpu.h"
 
@@ -71,18 +72,15 @@ private:
     {
         // Still busy
         if (vtime.clocks < busy_timer) {
-            if (cpu.isTracing)
-                fprintf(cpu.traceFile, "[%2d] MDU: Still busy, %d cycles left\n",
-                        cpu.id, (int)(busy_timer - vtime.clocks));
-                        
+            Tracer::log(&cpu, "MDU: Still busy, %d cycles left", (int)(busy_timer - vtime.clocks));
+
             CPU::except(&cpu, CPU::EXCEPTION_MDU);
         }    
     
-        if (cpu.isTracing)
-            fprintf(cpu.traceFile, "[%2d] MDU: seq %08x reg %02x:%02x:%02x:%02x:%02x:%02x ar %02x\n",
-                        cpu.id, write_sequence, cpu.mSFR[REG_MD5], cpu.mSFR[REG_MD4],
-                        cpu.mSFR[REG_MD3], cpu.mSFR[REG_MD2], cpu.mSFR[REG_MD1],
-                        cpu.mSFR[REG_MD0], cpu.mSFR[REG_ARCON]);
+        Tracer::log(&cpu, "MDU: seq %08x reg %02x:%02x:%02x:%02x:%02x:%02x ar %02x",
+                    write_sequence, cpu.mSFR[REG_MD5], cpu.mSFR[REG_MD4],
+                    cpu.mSFR[REG_MD3], cpu.mSFR[REG_MD2], cpu.mSFR[REG_MD1],
+                    cpu.mSFR[REG_MD0], cpu.mSFR[REG_ARCON]);
           
         switch (write_sequence) {
         

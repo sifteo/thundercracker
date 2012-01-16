@@ -19,6 +19,7 @@
 #include "vtime.h"
 #include "cube_hardware.h"
 #include "system_network.h"
+#include "tracer.h"
 
 
 class System {
@@ -29,13 +30,13 @@ class System {
     static const unsigned MAX_CUBES = 32;
 
     Cube::Hardware cubes[MAX_CUBES];
+    Tracer tracer;
 
     // Static Options; can be set prior to init only
     unsigned opt_numCubes;
     std::string opt_cubeFirmware;
 
     // Global debug options
-    std::string opt_cubeTrace;
     bool opt_continueOnException;
     bool opt_turbo;
 
@@ -50,15 +51,12 @@ class System {
     void start();
     void exit();
     void setNumCubes(unsigned n);
-    void setTraceMode(bool t);
     
     bool isRunning() {
         return threadRunning;
     }
     
-    bool isTracing() {
-        return mIsTracing;
-    }
+    bool isTraceAllowed();
 
     // Use with care... They must remain exactly paired.
     void startThread();
@@ -68,7 +66,7 @@ class System {
     static void threadFn(void *param);
     bool initCube(unsigned id);
     void exitCube(unsigned id);
-    ALWAYS_INLINE void tick();
+    ALWAYS_INLINE void tick(unsigned count=1);
     
     NEVER_INLINE void tickLoopDebug();
     NEVER_INLINE void tickLoopGeneral();
@@ -77,7 +75,8 @@ class System {
     GLFWthread thread;
     bool threadRunning;
 
-    FILE *traceFile;
+    FILE *textTraceFile;
+    FILE *vcdTraceFile;
     bool mIsTracing;
     bool mIsInitialized;
     bool mIsStarted;

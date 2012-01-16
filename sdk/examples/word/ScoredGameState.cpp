@@ -38,7 +38,7 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_AddNeighbor:
-        WordGame::playAudio(neighbor, AudioChannelIndex_Neighbor);
+        WordGame::playAudio(neighbor, AudioChannelIndex_Neighbor, LoopOnce, AudioPriority_Low);
         break;
 
     case EventID_NewWordFound:
@@ -68,7 +68,7 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_OldWordFound:
-        WordGame::playAudio(lip_snort, AudioChannelIndex_Score);
+        WordGame::playAudio(lip_snort, AudioChannelIndex_Score, LoopOnce, AudioPriority_Low);
         break;
 
     case EventID_ClockTick:
@@ -77,29 +77,29 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
         case 30:
 //            WordGame::playAudio(bonus, AudioChannelIndex_Time);
 
-            WordGame::playAudio(timer_30sec, AudioChannelIndex_Time);
+            WordGame::playAudio(timer_30sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
             break;
 
         case 20:
 //            WordGame::playAudio(pause_on, AudioChannelIndex_Time);
-            WordGame::playAudio(timer_20sec, AudioChannelIndex_Time);
+            WordGame::playAudio(timer_20sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
             break;
 
         case 10:
 //            WordGame::playAudio(pause_off, AudioChannelIndex_Time);
-            WordGame::playAudio(timer_10sec, AudioChannelIndex_Time);
+            WordGame::playAudio(timer_10sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
             break;
 
         case 3:
-            WordGame::playAudio(timer_3sec, AudioChannelIndex_Time);
+            WordGame::playAudio(timer_3sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
             break;
 
         case 2:
-            WordGame::playAudio(timer_2sec, AudioChannelIndex_Time);
+            WordGame::playAudio(timer_2sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
             break;
 
         case 1:
-            WordGame::playAudio(timer_1sec, AudioChannelIndex_Time);
+            WordGame::playAudio(timer_1sec, AudioChannelIndex_Time, LoopOnce, AudioPriority_High);
             break;
         }
         break;

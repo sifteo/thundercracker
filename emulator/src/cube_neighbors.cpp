@@ -60,8 +60,7 @@ void Neighbors::ioTick(CPU::em8051 &cpu)
      */
 
     if (driveEdge) {
-        if (cpu.isTracing)
-            fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Send pulse (pins %02x)\n", cpu.id, driveEdge);
+        Tracer::log(&cpu, "NEIGHBOR: Send pulse (pins %02x)", driveEdge);
 
         for (unsigned mySide = 0; mySide < NUM_SIDES; mySide++) {
             uint8_t mySideBit = outPinLUT[mySide];
@@ -70,11 +69,9 @@ void Neighbors::ioTick(CPU::em8051 &cpu)
                 // We're transmitting on this side
 
                 // If we're listening, we'll hear an echo
-                // (Arbitrary nonzero value. It is distinctive only for debug purposes.)
-                inputs |= 0x80;
+                receivedPulse(cpu);
                 
-                if (cpu.isTracing)
-                    fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Matrix, side %d: %02x %02x %02x %02x\n", cpu.id, mySide,
+                Tracer::log(&cpu, "NEIGHBOR: Matrix, side %d: %02x %02x %02x %02x", mySide,
                             mySides[mySide].otherSides[0],
                             mySides[mySide].otherSides[1],
                             mySides[mySide].otherSides[2],
@@ -104,19 +101,13 @@ void Neighbors::ioTick(CPU::em8051 &cpu)
 void Neighbors::transmitPulse(CPU::em8051 &cpu, unsigned otherCube, uint8_t otherSide)
 {
     uint8_t bit = 1 << otherSide;
-    Neighbors &dest = otherCubes[otherCube].neighbors;
+    Hardware &dest = otherCubes[otherCube];
 
-    if (dest.inputMask & bit) {
-        if (cpu.isTracing)
-            fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Sending pulse to %d.%d\n",
-                    cpu.id, otherCube, otherSide);
-
-        dest.inputs |= bit;
-
+    if (dest.neighbors.inputMask & bit) {
+        Tracer::log(&cpu, "NEIGHBOR: Sending pulse to %d.%d", otherCube, otherSide);
+        receivedPulse(dest.cpu);
     } else {
-        if (cpu.isTracing)
-            fprintf(cpu.traceFile, "[%2d] NEIGHBOR: Pulse to %d.%d was masked\n", 
-                    cpu.id, otherCube, otherSide);
+        Tracer::log(&cpu, "NEIGHBOR: Pulse to %d.%d was masked", otherCube, otherSide);
     }
 }
 

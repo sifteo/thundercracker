@@ -421,6 +421,7 @@ TileStack* TilePool::closest(TileRef t, double &mse)
      */
 
     double distance = DBL_MAX;
+    const double epsilon = 1e-3;
     TileStack *closest = NULL;
 
     for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
@@ -428,6 +429,10 @@ TileStack* TilePool::closest(TileRef t, double &mse)
         if (err < distance) {
             distance = err;
             closest = &*i;
+        }
+        if (distance < epsilon) {
+            // Not going to improve on this; early out.
+            break;
         }
     }
 

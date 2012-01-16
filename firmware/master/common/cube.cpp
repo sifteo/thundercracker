@@ -60,39 +60,6 @@ static const int8_t fpMin = -8;
 
 #ifndef DISABLE_CUBE
 
-/*
-void CubeSlot::loadAssets(_SYSAssetGroup *a) {
-    _SYSAssetGroupCube *ac = assetCube(a);
-
-    if (!ac)
-        return;
-    if (isAssetGroupLoaded(a))
-        return;
-
-    const _SYSAssetGroupHeader *hdr = a->hdr;
-    if (!Runtime::checkUserPointer(hdr, sizeof *hdr))
-        return;
-    
-    // XXX: Pick a base address too!
-    ac->progress = 0;
-
-    LOG(("FLASH[%d]: Sending asset group %p, %d bytes\n", id(), a, hdr->dataSize));
-
-    DEBUG_ONLY({
-        // In debug builds, we log the asset download time
-        assetLoadTimestamp = SysTime::ticks();
-    });
-
-    // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
-    Atomic::And(CubeSlots::flashResetSent, ~bit());
-    Atomic::Or(CubeSlots::flashResetWait, bit());
-
-    // Then start streaming asset data for this group
-    a->reqCubes |= bit();
-    // FIXME: transition to ID-based assets
-    //loadGroup = a;
-}
-*/
 
 void CubeSlot::loadAssets(_SYSAssetGroup *a)
 {
@@ -108,6 +75,10 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
     
     LOG(("FLASH[%d]: Sending asset group %u\n", id(), a->id));
     
+    DEBUG_ONLY({
+        // In debug builds, we log the asset download time
+        assetLoadTimestamp = SysTime::ticks();
+    });
     
     int size = 0;
     AssetIndexEntry *entry;
@@ -232,14 +203,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         timeSyncState = 1000;
         // cube timer runs at 16Mhz with a prescaler of 12
         const SysTime::Ticks cubeticks = SysTime::ticks() / SysTime::hzTicks(16000000 / 12);
-        // right now, we only have three slots, but want to accommodate larger cube IDs
-        // remove this once we trim neighbor tx slots back down
-#ifndef SIFTEO_SIMULATOR
-        const uint8_t id_tmp = id() % 3;
-#else
-        const uint8_t id_tmp = id();
-#endif
-        const uint16_t cubeSyncTime = (cubeticks + (id_tmp * NEIGHBOR_TX_SLOT_TICKS)) % NEIGHBOR_TIMER_PERIOD_TICKS;
+
+        const uint16_t cubeSyncTime = (cubeticks + (id() * NEIGHBOR_TX_SLOT_TICKS)) % NEIGHBOR_TIMER_PERIOD_TICKS;
 
         codec.timeSync(tx.packet, cubeSyncTime);
         tx.noAck = true;    // just throw it out there UDP style

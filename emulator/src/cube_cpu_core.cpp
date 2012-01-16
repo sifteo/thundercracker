@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "tracer.h"
 #include "cube_debug.h"
 #include "cube_cpu.h"
 
@@ -50,42 +51,38 @@ NEVER_INLINE void trace_execution(em8051 *mCPU)
 
     em8051_decode(mCPU, mCPU->mPC, assembly);
 
-    fprintf(mCPU->traceFile,
-            "[%2d] %u i%d @%04X a%02X r%d[%02X%02X%02X%02X-%02X%02X%02X%02X] "
-            "d%d[%04X%04X] p[%02X%02X%02X%02X-%02X%02X%02X%02X] "
-            "t[%02X%02X%02X%02X%02X%02X]  %s\n",
-
-            mCPU->id,
-            (unsigned) mCPU->vtime->clocks,
-            mCPU->irq_count, mCPU->mPC,
-            mCPU->mSFR[REG_ACC],
-            bank,
-            mCPU->mData[bank*8 + 0],
-            mCPU->mData[bank*8 + 1],
-            mCPU->mData[bank*8 + 2],
-            mCPU->mData[bank*8 + 3],
-            mCPU->mData[bank*8 + 4],
-            mCPU->mData[bank*8 + 5],
-            mCPU->mData[bank*8 + 6],
-            mCPU->mData[bank*8 + 7],
-            mCPU->mSFR[REG_DPS] & 1,
-            (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
-            (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
-            mCPU->mSFR[REG_P0],
-            mCPU->mSFR[REG_P1],
-            mCPU->mSFR[REG_P2],
-            mCPU->mSFR[REG_P3],
-            mCPU->mSFR[REG_P0DIR],
-            mCPU->mSFR[REG_P1DIR],
-            mCPU->mSFR[REG_P2DIR],
-            mCPU->mSFR[REG_P3DIR],
-            mCPU->mSFR[REG_TH0],
-            mCPU->mSFR[REG_TL0],
-            mCPU->mSFR[REG_TH1],
-            mCPU->mSFR[REG_TL1],
-            mCPU->mSFR[REG_TH2],
-            mCPU->mSFR[REG_TL2],
-            assembly);
+    Tracer::logV(mCPU, "@%04X i%d a%02X r%d[%02X%02X%02X%02X-%02X%02X%02X%02X] "
+                 "d%d[%04X%04X] p[%02X%02X%02X%02X-%02X%02X%02X%02X] "
+                 "t[%02X%02X%02X%02X%02X%02X]  %s",
+                 mCPU->mPC, mCPU->irq_count,
+                 mCPU->mSFR[REG_ACC],
+                 bank,
+                 mCPU->mData[bank*8 + 0],
+                 mCPU->mData[bank*8 + 1],
+                 mCPU->mData[bank*8 + 2],
+                 mCPU->mData[bank*8 + 3],
+                 mCPU->mData[bank*8 + 4],
+                 mCPU->mData[bank*8 + 5],
+                 mCPU->mData[bank*8 + 6],
+                 mCPU->mData[bank*8 + 7],
+                 mCPU->mSFR[REG_DPS] & 1,
+                 (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
+                 (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
+                 mCPU->mSFR[REG_P0],
+                 mCPU->mSFR[REG_P1],
+                 mCPU->mSFR[REG_P2],
+                 mCPU->mSFR[REG_P3],
+                 mCPU->mSFR[REG_P0DIR],
+                 mCPU->mSFR[REG_P1DIR],
+                 mCPU->mSFR[REG_P2DIR],
+                 mCPU->mSFR[REG_P3DIR],
+                 mCPU->mSFR[REG_TH0],
+                 mCPU->mSFR[REG_TL0],
+                 mCPU->mSFR[REG_TH1],
+                 mCPU->mSFR[REG_TL1],
+                 mCPU->mSFR[REG_TH2],
+                 mCPU->mSFR[REG_TL2],
+                 assembly);
 }
 
 NEVER_INLINE void profile_tick(em8051 *aCPU)
@@ -117,7 +114,9 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     memset(aCPU->mSFR, 0, 128);
 
     aCPU->mPC = 0;
-    aCPU->mTickDelay = 0;
+    aCPU->mTickDelay = 1;
+    aCPU->prescaler12 = 12;
+
     aCPU->mSFR[REG_SP] = 7;
     aCPU->mSFR[REG_P0] = 0xff;
     aCPU->mSFR[REG_P1] = 0xff;
@@ -134,8 +133,6 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     aCPU->mSFR[REG_SPIRSTAT] = 0x03;
     aCPU->mSFR[REG_SPIRDAT] = 0x00;
     aCPU->mSFR[REG_RFCON] = RFCON_RFCSN;
-
-    aCPU->prescaler12 = 12;
     
     // build function pointer lists
 
@@ -250,6 +247,15 @@ NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12)
     uint8_t fallingEdges = aCPU->t012 & ~nextT012;
     aCPU->t012 = nextT012;
     aCPU->needTimerEdgeCheck = false;
+    
+    /*
+     * Neighbor input pulses are simulated as instantaneous events
+     * less than one clock cycle in duration. Immediately clear the
+     * neighbor inputs after we've sampled a new t012 value.
+     */
+ 
+    Neighbors::clearNeighborInput(*aCPU);
+    
     
     /*
      * Timer 0 / Timer 1

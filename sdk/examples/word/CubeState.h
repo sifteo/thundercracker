@@ -41,7 +41,7 @@ const float TEETH_ANIM_LENGTH = 1.7f;
 class CubeState : public State
 {
 public:
-    CubeState() : mStateMachine(0), mEyeState(EyeState_Center), mEyeDirChangeDelay(0.f), mEyeBlinkDelay(0.f) { }
+    CubeState() : mStateMachine(0), mEyeState(EyeState_Center), mEyeDirChangeDelay(0.f), mEyeBlinkDelay(0.f), mAsleep(false) { }
     void setStateMachine(CubeStateMachine& csm);
     CubeStateMachine& getStateMachine();
 
@@ -64,6 +64,7 @@ private:
     EyeState mEyeState;
     float mEyeDirChangeDelay;
     float mEyeBlinkDelay;
+    bool mAsleep;
 };
 
 #endif // CUBESTATE_H

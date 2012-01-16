@@ -9,6 +9,7 @@
 #ifndef _CUBE_HARDWARE_H
 #define _CUBE_HARDWARE_H
 
+#include <algorithm>
 #include "cube_cpu.h"
 #include "cube_radio.h"
 #include "cube_adc.h"
@@ -23,6 +24,8 @@
 #include "cube_cpu_core.h"
 #include "cube_debug.h"
 #include "vtime.h"
+#include "tracer.h"
+
 
 namespace Cube {
 
@@ -100,17 +103,29 @@ class Hardware {
     
     void reset();
 
-    ALWAYS_INLINE bool tick() {
-        bool cpuTicked = CPU::em8051_tick(&cpu, cpu.sbt, cpu.mProfileData != NULL, cpu.isTracing, cpu.mBreakpoint != 0);
+    ALWAYS_INLINE void tick(bool *cpuTicked=NULL) {
+        CPU::em8051_tick(&cpu, 1, cpu.sbt, cpu.mProfileData != NULL, Tracer::isEnabled(), cpu.mBreakpoint != 0, cpuTicked);
         hardwareTick();
-        return cpuTicked;
     }
 
-    ALWAYS_INLINE bool tickFastSBT() {
-        // Assume at compile-time that we're in SBT mode, and no debug features are active
-        bool cpuTicked = CPU::em8051_tick(&cpu, true, false, false, false);
+    ALWAYS_INLINE unsigned tickFastSBT(unsigned tickBatch=1) {
+        /*
+         * Assume at compile-time that we're in SBT mode, and no debug features are active.
+         * Also try to aggressively skip ticks when possible. The fastest code is code that never runs.
+         * Returns the number of ticks that may be safely batched next time.
+         * 
+         * Also note that we calculate our remaining clock cycles using 32-bit math, and we blindly
+         * truncate the output of remaining(). This is intentional; normally remaining() will fit in
+         * 32 bits, but even if it does cause overflow the worst case is that we'll end up skipping
+         * fewer ticks than possible. So, this is always safe, and it's highly important for performance
+         * when we're running on 32-bit platforms.
+         */
+        
+        CPU::em8051_tick(&cpu, tickBatch, true, false, false, false, NULL);
         hardwareTick();
-        return cpuTicked;
+                    
+        return std::min(std::min(cpu.mTickDelay, (unsigned)cpu.prescaler12),
+                        (unsigned)hwDeadline.remaining());
     }
 
     void lcdPulseTE() {
@@ -121,6 +136,7 @@ class Hardware {
     void setTouch(float amount);
 
     bool isDebugging();
+    void initVCD(VCDWriter &vcd);
 
     // SFR side-effects
     void sfrWrite(int reg);
@@ -135,6 +151,12 @@ class Hardware {
     uint32_t getExceptionCount();
     void incExceptionCount();
     
+    ALWAYS_INLINE uint8_t readFlashBus() {
+        if (LIKELY(flash_drv))
+            cpu.mSFR[BUS_PORT] = flash.dataOut();
+        return cpu.mSFR[BUS_PORT];
+    }    
+    
  private:
 
     ALWAYS_INLINE void hardwareTick()
@@ -147,18 +169,14 @@ class Hardware {
          * to inline) method, just by writing to a byte in the CPU
          * struct. This is used by the inline SFR callbacks
          * in cube_cpu_callbacks.h.
+         *
+         * We can safely assume that needHardwareTick is set by CPU code,
+         * before hardwareTick executes, and that it won't be set during
+         * hwDeadlineWork().
          */
 
         if (hwDeadline.hasPassed() || cpu.needHardwareTick)
             hwDeadlineWork();
-
-        /*
-         * A few small things currently have to happen per-tick
-         */
-
-        neighbors.tick(cpu);
-        if (LIKELY(flash_drv))
-            cpu.mSFR[BUS_PORT] = flash.dataOut();
     }
 
     int16_t scaleAccelAxis(float g)

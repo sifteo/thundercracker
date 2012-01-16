@@ -9,10 +9,8 @@
 #include "runtime.h"
 #include "cube.h"
 #include "neighbors.h"
-#include "audiomixer.h"
-
 #ifndef SIFTEO_SIMULATOR
-#include "tasks.h"
+    #include "tasks.h"
 #endif
 
 using namespace Sifteo;
@@ -69,19 +67,6 @@ void Event::dispatch()
             }
         Atomic::And(pending, ~Intrinsic::LZ(event));
     }
-
-#ifndef SIFTEO_SIMULATOR
-    Tasks::work();  // TODO: find a more appropriate place for this
-#endif
-
-    /*
-      TODO - this is super temporary, but we don't currently have another
-      context in which to fetch & decode audio. Ultimately this is likely
-      to be interleaved with the runtime, or done periodically on a timer
-      interrupt (ie, separate thread in the simulator).
-    */
-    // Moved to Radio::halt(), which gives audibly better audio responsiveness.
-    //AudioMixer::instance.fetchData();
 
     dispatchInProgress = false;
 }

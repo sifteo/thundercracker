@@ -119,13 +119,14 @@ extern "C" void _start()
 
     {
         GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-        GPIOPin vcc33 = VCC33_ENABLE_GPIO;
-
-        vcc20.setControl(GPIOPin::OUT_10MHZ);
-        vcc33.setControl(GPIOPin::OUT_10MHZ);
-
+        vcc20.setControl(GPIOPin::OUT_2MHZ);
         vcc20.setHigh();
+
+        /*
+        GPIOPin vcc33 = VCC33_ENABLE_GPIO;
+        vcc33.setControl(GPIOPin::OUT_2MHZ);
         vcc33.setHigh();
+        */
     }
 
     /*
@@ -149,9 +150,13 @@ extern "C" void _start()
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
         p[0]();
 
+    // This is the earliest point at which it's safe to use Usart::Dbg.
+    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
+#ifndef DEBUG
     AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
     MacronixMX25::instance.init();
+#endif
 
     /*
      * Nested Vectored Interrupt Controller setup.
@@ -172,8 +177,6 @@ extern "C" void _start()
      * High-level hardware initialization
      */
 
-    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
-
     SysTime::init();
     Radio::open();
     Tasks::init();
@@ -192,6 +195,7 @@ extern "C" void _start()
     // super hack: just wait around for data to be loaded. revel in the crappiness
     // as you disable this block and reflash your board to re-enable SysTick.
     for (;;) {
+        Tasks::work();
         Sifteo::System::yield();
     }
 #endif
@@ -215,7 +219,8 @@ extern "C" void *_sbrk(intptr_t increment)
     void *p = (void*)__heap;
     __heap += increment;
     return p;
-#endif
+
+#else
     /*
      * We intentionally don't want to support dynamic allocation yet.
      * If anyone tries a malloc(), we'll just trap here infinitely.
@@ -227,4 +232,5 @@ extern "C" void *_sbrk(intptr_t increment)
 
     while (1);
     return NULL;
+#endif
 }
