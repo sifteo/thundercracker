@@ -5,7 +5,7 @@
 #include "EventData.h"
 
 StateMachine::StateMachine(unsigned startStateIndex) :
-    mStateIndex(startStateIndex), mStateTime(.0f), mUnhandledOnEnter(true)
+    mStateTime(.0f), mStateIndex(startStateIndex), mUnhandledOnEnter(true)
 {
 }
 

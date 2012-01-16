@@ -39,6 +39,7 @@ void HwTimer::init(int period, int prescaler)
         tim->BDTR = (1 << 15);  // MOE - main output enable
     }
 
+    tim->DIER = 0;
     tim->CR2  = 0;
     tim->CCER = 0;
     tim->SR   = 0;              // clear status register

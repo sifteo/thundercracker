@@ -69,8 +69,12 @@ void siftmain() {
 			}
 		}
 	}
+	#if SFX_ON
 	gChannelSfx.init();
+	#endif
+	#if MUSIC_ON
 	gChannelMusic.init();
+	#endif
 	for(;;) {
 		PlayMusic(music_sting, false);
 		IntroCutscene();

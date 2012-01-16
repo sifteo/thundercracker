@@ -49,6 +49,14 @@ class GPIOPin {
         port()->ODR ^= bit();
     }
 
+    bool isHigh() const {
+        return port()->IDR & bit();
+    }
+
+    bool isLow() const {
+        return (port()->IDR & bit()) == 0;
+    }
+
     void setControl(Control c) const;
     void irqInit() const;
 

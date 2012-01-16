@@ -19,11 +19,11 @@ protected:
     virtual unsigned getNumStates() const = 0;
     virtual State& getState(unsigned index) = 0;
     virtual void setState(unsigned newStateIndex, State& oldState);
+    float mStateTime;
 
 private:
 
     unsigned mStateIndex;
-    float mStateTime;
     bool mUnhandledOnEnter;
 };
 

@@ -124,7 +124,8 @@ class Hardware {
         CPU::em8051_tick(&cpu, tickBatch, true, false, false, false, NULL);
         hardwareTick();
                     
-        return std::min(cpu.mTickDelay, (unsigned)hwDeadline.remaining());
+        return std::min(std::min(cpu.mTickDelay, (unsigned)cpu.prescaler12),
+                        (unsigned)hwDeadline.remaining());
     }
 
     void lcdPulseTE() {

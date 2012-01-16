@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include "vectors.h"
 
+extern volatile uint32_t DEBUGMCU_CR;
 
 /*
  * Reset / Clock Control

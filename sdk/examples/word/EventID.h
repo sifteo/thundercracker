@@ -10,6 +10,7 @@ enum EventID
     EventID_EnterState,
     EventID_ExitState,
     EventID_Input,
+    EventID_Tilt,
     EventID_NewAnagram,
     EventID_NewWordFound,
     EventID_OldWordFound,

@@ -25,21 +25,23 @@ include stm32/st-usb/st-usb.mk
 OBJS_STM32 += $(OBJS_USB_STM32)
 
 ifeq ($(BUILD_PLATFORM), windows32)
-    DEPS_DIR = $(TC_DIR)/deps/win32
-    # TBD if there's a better way, but windows ar or libtool needs to have all the
-    # individual object files available from any static libs you want to merge
-    # in. these have been extracted in the deps folder via `ar -x libfoo.a`
-    SIM_STATIC_OBJS = $(DEPS_DIR)/speex/lib/obj/*.o \
-                        $(DEPS_DIR)/portaudio/lib/obj/*.o
-else
-    ifeq ( $(BUILD_ARCH),i386 )
+	DEPS_DIR = $(TC_DIR)/deps/win32
+	# TBD if there's a better way, but windows ar or libtool needs to have all the
+	# individual object files available from any static libs you want to merge
+	# in. these have been extracted in the deps folder via `ar -x libfoo.a`
+	SIM_STATIC_OBJS = $(DEPS_DIR)/speex/lib/obj/*.o $(DEPS_DIR)/portaudio/lib/obj/*.o
+endif
+ifeq ($(BUILD_PLATFORM), Darwin)
+	ifeq ( $(BUILD_ARCH),i386 )
 		DEPS_DIR = $(TC_DIR)/deps/osx/i386
-	    SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
-	                        $(DEPS_DIR)/portaudio/lib/libportaudio.a
+		SIM_STATIC_LIBS = \
+			$(DEPS_DIR)/speex/lib/libspeex.a \
+			$(DEPS_DIR)/portaudio/lib/libportaudio.a
 	else
 		DEPS_DIR = $(TC_DIR)/deps/osx/x86_64
-	    SIM_STATIC_LIBS = $(DEPS_DIR)/speex/lib/libspeex.a \
-	                        $(DEPS_DIR)/portaudio/lib/libportaudio.a
+		SIM_STATIC_LIBS = \
+			$(DEPS_DIR)/speex/lib/libspeex.a \
+			$(DEPS_DIR)/portaudio/lib/libportaudio.a
 	endif
 endif
 
@@ -59,19 +61,19 @@ CDEPS := \
 	stm32/*.h \
 	../include/*.h \
 	$(SDK_DIR)/include/sifteo/*.h \
-    $(SPEEX_DEPS) \
+	$(SPEEX_DEPS) \
 	$(SDK_DIR)/include/sifteo/*.h $(STIR)
 
 all: $(BINS)
 
-ifeq ($(BUILD_PLATFORM), windows32)
-$(BIN_SIM): $(OBJS_SIM)
-	rm -f $@
-	$(AR) rcs $@ $^ $(SIM_STATIC_OBJS)
-else
+ifeq ($(BUILD_PLATFORM), Darwin)
 $(BIN_SIM): $(OBJS_SIM)
 	rm -f $@
 	$(LIBTOOL_SIM) -static -o $@ $^ $(SIM_STATIC_LIBS)
+else
+$(BIN_SIM): $(OBJS_SIM)
+	rm -f $@
+	$(AR) rcs $@ $^ $(SIM_STATIC_OBJS)
 endif
 
 $(BIN_STM32): $(OBJS_STM32)
