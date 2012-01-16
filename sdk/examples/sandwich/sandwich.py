@@ -363,14 +363,13 @@ class Map:
 		if self.overlay is not None:
 			for room in self.rooms:
 				if room.hasoverlay():
-					src.write("static const uint8_t %s_overlay_%d_%d[] = {\n" % (self.name, room.x, room.y))
-					src.write("    ")
+					src.write("static const uint8_t %s_overlay_%d_%d[] = { " % (self.name, room.x, room.y))
 					for y in range(8):
 						for x in range(8):
 							tile = room.overlaytileat(x,y)
 							if tile is not None:
 								src.write("%s, %s, " % (hex(x<<4|y), hex(tile.lid)))
-					src.write("0xff \n};\n")
+					src.write("0xff };\n")
 		src.write("static const RoomData %s_rooms[] = {\n" % self.name)
 		for y in range(self.height):
 			for x in range(self.width):
@@ -384,7 +383,7 @@ class Map:
 		else:
 			overlay_msg = "0"
 		src.write(
-			"    { &TileSet_%s, %s, &Blank_%s, %s_rooms, %s_xportals, %s_yportals, %d, %d, 0, 0 },\n" % \
+			"    { &TileSet_%s, %s, &Blank_%s, %s_rooms, %s_xportals, %s_yportals, 0, 0, 0, %d, %d },\n" % \
 			(self.name, overlay_msg, self.name, self.name, self.name, self.name, self.width, self.height))
 		
 
@@ -435,14 +434,14 @@ class Room:
 	def write_source_to(self, src):
 		src.write("    {\n")
 		# collision mask rows
-		src.write("        {\n            ")
+		src.write("        { ")
 		for row in range(8):
 			rowMask = 0
 			for col in range(8):
 				if not iswalkable(self.tileat(col, row)):
 					rowMask |= (1<<col)
 			src.write("%s, " % hex(rowMask))
-		src.write("\n        },\n")
+		src.write("},\n")
 		# tiles
 		src.write("        {\n")
 		for ty in range(8):
@@ -458,7 +457,7 @@ class Room:
 			src.write("        0, ")
 		# centerx, centery, reserved
 		cx,cy = self.center()
-		src.write("%d, %d, 0,\n" % (cx, cy))
+		src.write("%d, %d, \n" % (cx, cy))
 
 		# torches - should be moved out to a flat list like items / etc
 		#torchcount = 0

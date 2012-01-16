@@ -22,30 +22,47 @@ struct QuestData {
     uint8_t mapId;
 };
 
+struct DialogTextData {
+    const AssetImage* detail;
+    const char* line;
+};
+
 struct DialogData {
-    uint32_t todo;
+    const PinnedAssetImage* npc;
+    const DialogTextData* text;
+};
+
+struct TriggerData {
+    uint8_t questBegin;
+    uint8_t questEnd;
+    uint8_t flagId; // could be global or local flag
+    uint8_t room;
 };
 
 struct ItemData {
-    uint32_t room;
+    TriggerData trigger;
     uint32_t itemId;
 };
 
 struct GatewayData {
-    uint32_t todo;
+    TriggerData trigger;
+    uint8_t targetMap;
+    uint8_t targetGate;
+    uint8_t x;
+    uint8_t y;
 };
 
 struct NpcData {
-    uint32_t todo;
+    TriggerData trigger;
+    uint32_t dialog;
 };
 
 struct RoomData {
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
     const uint8_t* overlay; // format: alternate 0bXXXXYYYY, tileId, 0bXXXXYYYY, tileId, etc
-    uint32_t centerx : 4;
-    uint32_t centery : 4;
-    uint32_t reserved : 24;
+    uint16_t centerx;
+    uint16_t centery;
 };
 
 struct MapData {
@@ -55,10 +72,11 @@ struct MapData {
     const RoomData* rooms;
     const uint8_t* xportals; // vertical portals between rooms (x,y) and (x+1,y)
     const uint8_t* yportals; // horizontal portals between rooms (x,y) and (x,y+1)
-    uint8_t width;
-    uint8_t height;
-    const ItemData* items; // null if empty, itemId=0-termindated
-    uint16_t reserved;
+    const ItemData* items; 
+    const GatewayData* gates;
+    const NpcData* npcs;
+    uint16_t width;
+    uint16_t height;
 };
 
 extern const MapData gMapData[];
