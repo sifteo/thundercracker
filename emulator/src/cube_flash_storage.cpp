@@ -66,9 +66,9 @@ void FlashStorage::write()
         unsigned size = sizeof data;
         while (size && ((uint8_t*)&data)[size-1] == 0xFF)
             size--;
-        ftruncate(fileno(file), size);
-
-        fprintf(stderr, "FLASH: Flushed to disk\n");
+        
+        if (!ftruncate(fileno(file), size))
+            fprintf(stderr, "FLASH: Flushed to disk\n");
     }
 }
 
