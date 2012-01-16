@@ -773,7 +773,7 @@ void CubeWrapper::checkRefill()
 			{
                 char buf[16];
                 snprintf(buf, sizeof buf - 1, "%d SHAKES LEFT", m_ShakesRemaining );
-                m_banner.SetMessage( buf );
+                m_banner.SetMessage( buf, false );
 			}
 		}
 		else

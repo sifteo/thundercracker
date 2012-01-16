@@ -25,7 +25,7 @@ public:
     void Draw( BG1Helper &bg1helper );
 	void Update(float t, Cube &cube);
 
-	void SetMessage( const char *pMsg, float duration = SCORE_FADE_DELAY );
+    void SetMessage( const char *pMsg, bool bScoreMsg = false );
 	bool IsActive() const;
 
     static void DrawScore( BG1Helper &bg1helper, const Vec2 &pos, int score );
@@ -35,6 +35,7 @@ private:
 	float m_fEndTime;
     //how many tiles of the banner to show
     unsigned int m_tiles;
+    bool m_bIsScoreMsg;
 };
 
 #endif
