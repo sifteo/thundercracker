@@ -1,14 +1,14 @@
 
 BUILD_PLATFORM := $(shell uname)
-BUILD_ARCH	:= $(shell arch)
 
 ifeq ($(findstring MINGW32_NT,$(BUILD_PLATFORM)),MINGW32_NT)
-      BUILD_PLATFORM := windows32
+    BUILD_PLATFORM := windows32
 endif
 
 ifeq ($(BUILD_PLATFORM), windows32)
-        BIN_EXT = .exe
+    BIN_EXT = .exe
 else
-        BIN_EXT =
+    BUILD_ARCH := $(shell arch)
+    BIN_EXT =
 endif
 
