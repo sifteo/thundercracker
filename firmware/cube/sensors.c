@@ -95,10 +95,10 @@ uint8_t accel_z_low;
 // 2us pulses, 48us bit periods
 // TODO: bit period is maxed out to account for measured tank ring down of
 // about 48us. Better squelching should hopefully allow us to reduce this significantly.
-#define NB_BIT_TICKS        64      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   66      // Tweak for sampling halfway between pulses
+#define NB_BIT_TICKS        70      // In 0.75 us ticks
+#define NB_BIT_TICK_FIRST   72      // Tweak for sampling halfway between pulses
  
-#define NB_DEADLINE         64      // 48us (previously 15 us - please tune me back down) (Max 48 us)
+#define NB_DEADLINE         70      // 48us (previously 15 us - please tune me back down) (Max 48 us)
 
 #define NBR_SQUELCH_ENABLE          // Enable squelching during neighbor RX
 

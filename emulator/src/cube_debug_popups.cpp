@@ -37,6 +37,7 @@
 #include <string.h>
 #include "curses.h"
 
+#include "macros.h"
 #include "cube_cpu.h"
 #include "cube_debug.h"
 
@@ -341,10 +342,8 @@ int emu_readhz(CPU::em8051 *aCPU, const char *aPrompt, int aOldvalue)
 int emu_reset(CPU::em8051 *aCPU)
 {
     WINDOW * exc;
-    char temp[256];
     int ch = 0;
     int result;
-    temp[0] = 0;
 
     runmode = 0;
     setSpeed(speed, runmode);
@@ -392,9 +391,6 @@ int emu_reset(CPU::em8051 *aCPU)
 void emu_help(CPU::em8051 *aCPU)
 {
     WINDOW * exc;
-    char temp[256];
-    int ch = 0;
-    temp[0] = 0;
 
     runmode = 0;
     setSpeed(speed, runmode);
@@ -409,7 +405,7 @@ void emu_help(CPU::em8051 *aCPU)
     wmove(exc, 2, 2);
     waddstr(exc, "Sifteo Thundercracker simulator - M. Elizabeth Scott <beth@sifteo.com>");
     wmove(exc, 3, 2);
-    waddstr(exc, "Copyright (c) 2011 Sifteo, Inc.");
+    waddstr(exc, APP_COPYRIGHT);
 
     wmove(exc, 5, 2);
     waddstr(exc, "Based on 8051 Emulator v. 0.72 - http://iki.fi/sol/");
@@ -441,7 +437,7 @@ void emu_help(CPU::em8051 *aCPU)
 
     wrefresh(exc);
 
-    ch = getch();
+    getch();
 
     delwin(exc);
     refreshView();

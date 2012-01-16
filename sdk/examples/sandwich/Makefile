@@ -7,11 +7,12 @@ OBJS = \
 	$(ASSETS).gen.o \
 	gen_mapdata.o \
 	main.o \
+	Base.o \
+	DialogView.o \
 	Game.o \
 	GameView.o \
-	Base.o \
-	Player.o \
 	Map.o \
+	Player.o \
 
 include $(TC_DIR)/firmware/master/Makefile.defs
 
@@ -38,6 +39,6 @@ gen_mapdata.cpp: MapTool.exe $(ASSETDEPS) *.tmx
 gen_assets.lua: MapTool.exe *.tmx
 	mono MapTool.exe -gen_lua
 
-MapTool.exe: Tools/MapTool/*.cs
-	gmcs -debug Tools/MapTool/*.cs -out:MapTool.exe -r:System.Drawing.dll
+MapTool.exe: Tools/*.cs
+	gmcs -debug Tools/*.cs -out:MapTool.exe -r:System.Drawing.dll
 

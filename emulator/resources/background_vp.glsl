@@ -6,5 +6,6 @@ void main() {
 
      vec4 pos = gl_ModelViewProjectionMatrix * gl_Vertex;
      gl_Position = pos;
-     eyeCoord = pos.xy / pos.w;
+
+     eyeCoord = pos.xy / pos.w * vec2(0.5, -0.5) + 0.5;
 }

@@ -143,14 +143,17 @@ void siftmain()
      */
 
     cube.vbuf.init();
+    
+  for(unsigned i=0; i<42; ++i) {
     memset(cube.vbuf.sys.vram.words, 0, sizeof cube.vbuf.sys.vram.words);
     cube.vbuf.sys.vram.mode = _SYS_VM_SOLID;
     cube.vbuf.sys.vram.num_lines = 128;
     cube.vbuf.sys.vram.colormap[0] = color_lerp(0);
     cube.vbuf.sys.vram.colormap[1] = color_lerp(0);
-
+    cube.vbuf.touch();
     // And wait for it to fully draw
     System::paintSync();
+  }
 
     /*
      * Now set up a letterboxed 128x48 mode

@@ -29,32 +29,10 @@ bool GLRenderer::init()
         
     /*
      * Compile our shaders
-     *
-     * About our shader for rendering the LCD... We could probably do
-     * something more complicated with simulating the subpixels in the
-     * LCD screens, but right now I just have two goals:
-     *
-     *   1. See each pixel distinctly at >100% zooms
-     *   2. No visible aliasing artifacts
-     *
-     * This uses a simple algorithm that decomposes texture coordinates
-     * into a fractional and whole pixel portion, and applies a smooth
-     * nonlinear interpolation across pixel boundaries:
-     *
-     * http://www.iquilezles.org/www/articles/texture/texture.htm
-     */
+     */ 
 
-    extern const uint8_t cube_face_fp[];
-    extern const uint8_t cube_face_vp[];
-    GLhandleARB cubeFaceFP = loadShader(GL_FRAGMENT_SHADER, cube_face_fp);
-    GLhandleARB cubeFaceVP = loadShader(GL_VERTEX_SHADER, cube_face_vp);
-    cubeFaceProgram = linkProgram(cubeFaceFP, cubeFaceVP);
-
-    glUseProgramObjectARB(cubeFaceProgram);
-    glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "face"), 0);
-    glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "hilight"), 1);
-    glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "mask"), 2);
-    glUniform1iARB(glGetUniformLocationARB(cubeFaceProgram, "lcd"), 3);    
+    cubeFaceProgFiltered = loadCubeFaceProgram("#define FILTER\n");
+    cubeFaceProgUnfiltered = loadCubeFaceProgram("");
 
     extern const uint8_t cube_side_fp[];
     extern const uint8_t cube_side_vp[];
@@ -70,6 +48,7 @@ bool GLRenderer::init()
 
     glUseProgramObjectARB(backgroundProgram);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "texture"), 0);
+    glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "lightmap"), 1);
 
     /*
      * Load textures
@@ -79,12 +58,14 @@ bool GLRenderer::init()
     extern const uint8_t img_cube_face_hilight[];
     extern const uint8_t img_cube_face_hilight_mask[];
     extern const uint8_t img_wood[];
+    extern const uint8_t img_bg_light[];
     extern const uint8_t ui_font_data_0[];
 
     cubeFaceTexture = loadTexture(img_cube_face);
     cubeFaceHilightTexture = loadTexture(img_cube_face_hilight);
     cubeFaceHilightMaskTexture = loadTexture(img_cube_face_hilight_mask);
     backgroundTexture = loadTexture(img_wood, GL_REPEAT);
+    bgLightTexture = loadTexture(img_bg_light);
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
     
     /*
@@ -104,13 +85,47 @@ bool GLRenderer::init()
     return true;
 }
 
-GLhandleARB GLRenderer::loadShader(GLenum type, const uint8_t *source)
+GLhandleARB GLRenderer::loadCubeFaceProgram(const char *prefix)
 {
-    const GLchar *stringArray[1];
-    stringArray[0] = (const GLchar *) source;
+    /*
+     * About our shader for rendering the LCD... We could probably do
+     * something more complicated with simulating the subpixels in the
+     * LCD screens, but right now I just have two goals:
+     *
+     *   1. See each pixel distinctly at >100% zooms
+     *   2. No visible aliasing artifacts
+     *
+     * This uses a simple algorithm that decomposes texture coordinates
+     * into a fractional and whole pixel portion, and applies a smooth
+     * nonlinear interpolation across pixel boundaries:
+     *
+     * http://www.iquilezles.org/www/articles/texture/texture.htm
+     */
+
+    extern const uint8_t cube_face_fp[];
+    extern const uint8_t cube_face_vp[];
+    GLhandleARB cubeFaceFP = loadShader(GL_FRAGMENT_SHADER, cube_face_fp, prefix);
+    GLhandleARB cubeFaceVP = loadShader(GL_VERTEX_SHADER, cube_face_vp, prefix);
+    GLhandleARB prog = linkProgram(cubeFaceFP, cubeFaceVP);
+
+    glUseProgramObjectARB(prog);
+    glUniform1fARB(glGetUniformLocationARB(prog, "LCD_SIZE"), FrontendCube::LCD_SIZE);
+    glUniform1iARB(glGetUniformLocationARB(prog, "face"), 0);
+    glUniform1iARB(glGetUniformLocationARB(prog, "hilight"), 1);
+    glUniform1iARB(glGetUniformLocationARB(prog, "mask"), 2);
+    glUniform1iARB(glGetUniformLocationARB(prog, "lcd"), 3);
+
+    return prog;
+}
+    
+GLhandleARB GLRenderer::loadShader(GLenum type, const uint8_t *source, const char *prefix)
+{
+    const GLchar *stringArray[2];
+    stringArray[0] = (const GLchar *) prefix;
+    stringArray[1] = (const GLchar *) source;
 
     GLhandleARB shader = glCreateShaderObjectARB(type);
-    glShaderSourceARB(shader, 1, stringArray, NULL);
+    glShaderSourceARB(shader, 2, stringArray, NULL);
     glCompileShaderARB(shader);
 
     GLint isCompiled = false;
@@ -157,7 +172,7 @@ void GLRenderer::setViewport(int width, int height)
     viewportHeight = height;
 }
 
-void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter)
+void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZoomMode)
 {
     /*
      * Camera.
@@ -169,6 +184,9 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter)
      * We scale this so that the X axis is from -viewExtent to
      * +viewExtent at the level of the cube face.
      */
+     
+    currentFrame.viewExtent = viewExtent;
+    currentFrame.pixelZoomMode = pixelZoomMode;
 
     float aspect = viewportHeight / (float)viewportWidth;
     float yExtent = aspect * viewExtent;
@@ -210,7 +228,6 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter)
 
     glDisable(GL_BLEND);
     glDisable(GL_LIGHTING);
-    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
 
@@ -230,9 +247,9 @@ void GLRenderer::beginOverlay()
      * full screenshot, and end our pending screenshot request.
      */
     if (!pendingScreenshotName.empty()) {
-                saveColorBufferPNG(pendingScreenshotName + ".png");
-                pendingScreenshotName.clear();
-        }       
+        saveColorBufferPNG(pendingScreenshotName + ".png");
+        pendingScreenshotName.clear();
+    }
 
     // Do our text rendering in pixel coordinates
     glMatrixMode(GL_PROJECTION);
@@ -367,16 +384,31 @@ void GLRenderer::drawBackground(float extent, float scale)
 
     glLoadIdentity();
     glUseProgramObjectARB(backgroundProgram);
-
+    
+    // For speed, don't bother with depth writes
+    glDisable(GL_DEPTH_TEST);
+    
     glActiveTexture(GL_TEXTURE0);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, backgroundTexture);
 
+    glActiveTexture(GL_TEXTURE1);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, bgLightTexture);
+
     glInterleavedArrays(GL_T2F_N3F_V3F, 0, bg);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    
+    /*
+     * Clean up GL state.
+     */
 
+    glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);
-}
+    glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
+}    
 
 void GLRenderer::initCube(unsigned id)
 {
@@ -392,24 +424,14 @@ void GLRenderer::initCube(unsigned id)
 
         glTexImage2D(GL_TEXTURE_2D, 0, 3, Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
                      0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
-        
-        /*
-         * We rely on mipmaps (with autogeneration) for good-looking
-         * minification, and our nonlinear texture sampling (in the
-         * fragment program) for good-looking rotation and magnification.
-         */
 
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 5.0f);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
     }
 }
 
 void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
-                               b2Vec2 tilt, b2Mat33 &modelMatrix)
+                               b2Vec2 tilt, GLRenderer::CubeTransformState &tState)
 {
     /*
      * The whole modelview matrix is ours to set up as a cube->world
@@ -417,10 +439,32 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
      * use in converting acceleration data back to cube coordinates.
      */
 
+    tState.isTilted = false;
+    tState.nonPixelAccurate = false;
+     
+    /*
+     * Are we rotating to a non-right-angle? Not pixel accurate.
+     * But if we're really close to a right angle, nudge it to line
+     * up exactly so we can stay accurate.
+     */
+     
+    float fractional = fmod(angle + M_PI/4, M_PI/2);
+    if (fractional < 0) fractional += M_PI/2;
+    fractional -= M_PI/4;
+
+    if (fabs(fractional) > 0.02f)
+        tState.nonPixelAccurate = true;
+    else
+        angle -= fractional;
+
+    /*
+     * Build the OpenGL transform
+     */
+
     glLoadIdentity();
     glTranslatef(center.x, center.y, 0.0f);
-    glRotatef(angle * (180.0f / M_PI), 0,0,1);      
-
+    glRotatef(angle * (180.0f / M_PI), 0,0,1);
+   
     const float tiltDeadzone = 5.0f;
     const float height = FrontendCube::HEIGHT;
 
@@ -428,60 +472,103 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
         glTranslatef(FrontendCube::SIZE, 0, height * FrontendCube::SIZE);
         glRotatef(tilt.x - tiltDeadzone, 0,1,0);
         glTranslatef(-FrontendCube::SIZE, 0, -height * FrontendCube::SIZE);
+        tState.isTilted = true;
+        tState.nonPixelAccurate = true;
     }
     if (tilt.x < -tiltDeadzone) {
         glTranslatef(-FrontendCube::SIZE, 0, height * FrontendCube::SIZE);
         glRotatef(tilt.x + tiltDeadzone, 0,1,0);
         glTranslatef(FrontendCube::SIZE, 0, -height * FrontendCube::SIZE);
+        tState.isTilted = true;
+        tState.nonPixelAccurate = true;
     }
 
     if (tilt.y > tiltDeadzone) {
         glTranslatef(0, FrontendCube::SIZE, height * FrontendCube::SIZE);
         glRotatef(-tilt.y + tiltDeadzone, 1,0,0);
         glTranslatef(0, -FrontendCube::SIZE, -height * FrontendCube::SIZE);
+        tState.isTilted = true;
+        tState.nonPixelAccurate = true;
     }
     if (tilt.y < -tiltDeadzone) {
         glTranslatef(0, -FrontendCube::SIZE, height * FrontendCube::SIZE);
         glRotatef(-tilt.y - tiltDeadzone, 1,0,0);
         glTranslatef(0, FrontendCube::SIZE, -height * FrontendCube::SIZE);
+        tState.isTilted = true;
+        tState.nonPixelAccurate = true;
     }
 
     /* Save a copy of the transformation, before scaling it by our size. */
     GLfloat mat[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, mat);
-    modelMatrix.ex.x = mat[0];
-    modelMatrix.ex.y = mat[1];
-    modelMatrix.ex.z = mat[2];
-    modelMatrix.ey.x = mat[4];
-    modelMatrix.ey.y = mat[5];
-    modelMatrix.ey.z = mat[6];
-    modelMatrix.ez.x = mat[8];
-    modelMatrix.ez.y = mat[9];
-    modelMatrix.ez.z = mat[10];
+    tState.modelMatrix->ex.x = mat[0];
+    tState.modelMatrix->ex.y = mat[1];
+    tState.modelMatrix->ex.z = mat[2];
+    tState.modelMatrix->ey.x = mat[4];
+    tState.modelMatrix->ey.y = mat[5];
+    tState.modelMatrix->ey.z = mat[6];
+    tState.modelMatrix->ez.x = mat[8];
+    tState.modelMatrix->ez.y = mat[9];
+    tState.modelMatrix->ez.z = mat[10];
 
     /* Now scale it */
     glScalef(FrontendCube::SIZE, FrontendCube::SIZE, FrontendCube::SIZE);
     
     /* Hover is relative to cube size, so apply that now. */
-    glTranslatef(0.0f, 0.0f, hover);
+    if (hover > 1e-3) {
+        glTranslatef(0.0f, 0.0f, hover);
+        tState.nonPixelAccurate = true;
+    }
 }
 
 
 void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
-                          b2Vec2 tilt, const uint16_t *framebuffer, b2Mat33 &modelMatrix)
+                          b2Vec2 tilt, const uint16_t *framebuffer, bool framebufferChanged,
+                          b2Mat33 &modelMatrix)
 {
     /*
      * Draw one cube, and place its modelview matrix in 'modelmatrix'.
      * If framebuffer==NULL, don't reupload the framebuffer, it hasn't changed.
      */
 
-     if (!cubes[id].initialized)
+    if (!cubes[id].initialized) {
         initCube(id);
+        
+        // Re-upload framebuffer, even if the LCD hasn't changed
+        framebufferChanged = true;
+    }
 
-    cubeTransform(center, angle, hover, tilt, modelMatrix);
+    if (currentFrame.pixelZoomMode) {
+        // Nudge the position to a pixel grid boundary        
+        float pixelSize = currentFrame.viewExtent * 2.0f / viewportWidth;
+        center.x = round(center.x / pixelSize) * pixelSize;
+        center.y = round(center.y / pixelSize) * pixelSize;
+
+        // Center adjustment for odd-sized viewports
+        if (viewportWidth & 1)
+            center.x -= pixelSize * 0.5f;
+        if (viewportHeight & 1)
+            center.y -= pixelSize * 0.5f;
+    }
+    
+    CubeTransformState tState;
+    tState.modelMatrix = &modelMatrix;
+    cubeTransform(center, angle, hover, tilt, tState);
+
+    bool pixelAccurate = currentFrame.pixelZoomMode && !tState.nonPixelAccurate;
+    if (pixelAccurate != cubes[id].pixelAccurate || tState.isTilted != cubes[id].isTilted) {
+        /*
+          * Re-upload framebuffer if the filtering mode has changed.
+          * We may need to regenerate mipmaps, and we definitely need to
+          * change texture state. Avoid doing all this work on every frame.
+          */
+        framebufferChanged = true;
+        cubes[id].pixelAccurate = pixelAccurate;
+        cubes[id].isTilted = tState.isTilted;
+    }
 
     drawCubeBody();
-    drawCubeFace(id, framebuffer);
+    drawCubeFace(id, framebufferChanged ? framebuffer : NULL);
 }
 
 void GLRenderer::drawCubeBody()
@@ -495,7 +582,7 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
 {
     GLCube &cube = cubes[id];
 
-    glUseProgramObjectARB(cubeFaceProgram);
+    glUseProgramObjectARB(cube.pixelAccurate ? cubeFaceProgUnfiltered : cubeFaceProgFiltered);
 
     /*
      * Set up samplers
@@ -515,6 +602,7 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
     
     glActiveTexture(GL_TEXTURE3);
     glEnable(GL_TEXTURE_2D);
+
     if (framebuffer) {
         /*
          * Next LCD texture in the ring.
@@ -523,13 +611,45 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
          * graphics pipeline stalls down to a minimum. GPU drivers hate it
          * when we touch a resource that the GPU might still be using :)
          */
-         cube.currentLcdTexture = (cube.currentLcdTexture + 1) % NUM_LCD_TEXTURES;
+
+        cube.currentLcdTexture = (cube.currentLcdTexture + 1) % NUM_LCD_TEXTURES;
         glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[cube.currentLcdTexture]);
+
+        if (cube.pixelAccurate) {
+            /*
+             * Pixel-accurate zooming and transforms. Disable filtering entirely.
+             * (The shader's nonlinear sampling becomes a no-op here)
+             */
+
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 0.0f);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+
+        } else {
+            /*
+             * Default high-quality filtering. We rely on linear sampling, plus
+             * a higher-order polynomial filter implemented in a fragment program.
+             *
+             * We rely on mipmaps (with autogeneration) for good-looking
+             * minification, and our nonlinear texture sampling (in the
+             * fragment program) for good-looking rotation and magnification.
+             *
+             * We also use anisotropic filtering if we're tilted at all.
+             */
+
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, cube.isTilted ? 5.0f : 0.0f);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+        }
+
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
                         Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
                         GL_RGB, GL_UNSIGNED_SHORT_5_6_5, framebuffer);
+
     } else {
-        // Recycle the old image
+        // Recycle a previous framebuffer texture, with no changes.
         glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[cube.currentLcdTexture]);
     }
 

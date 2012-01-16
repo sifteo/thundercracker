@@ -35,7 +35,6 @@ static void usage()
      *
      *  -f FIRMWARE.hex   Specify firmware image for cubes
      *  -e SCRIPT.lua     Execute a Lua script, instead of running the GUI
-     *  -t TRACE.txt      Trace firmware execution to a text file (Toggle with 'T' key)
      *  -F FLASH.bin      Load/save flash memory (first cube only) to a binary file
      *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
      *  -d                Launch firmware debugger (first cube only)
@@ -52,7 +51,7 @@ static void usage()
             "  -n NUM        Set initial number of cubes\n"
             "  -T            Turbo mode; run faster than real-time if we can\n"
             "\n"
-            "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n");
+            APP_COPYRIGHT "\n");
 }
 
 static void getConsole()
@@ -170,12 +169,6 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "-F") && argv[c+1]) {
             sys.opt_cube0Flash = argv[c+1];
-            c++;
-            continue;
-        }
-
-        if (!strcmp(arg, "-t") && argv[c+1]) {
-            sys.opt_cubeTrace = argv[c+1];
             c++;
             continue;
         }

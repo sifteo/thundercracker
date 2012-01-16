@@ -150,9 +150,13 @@ extern "C" void _start()
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
         p[0]();
 
+    // This is the earliest point at which it's safe to use Usart::Dbg.
+    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
+#ifndef DEBUG
     AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
     MacronixMX25::instance.init();
+#endif
 
     /*
      * Nested Vectored Interrupt Controller setup.
@@ -172,8 +176,6 @@ extern "C" void _start()
     /*
      * High-level hardware initialization
      */
-
-    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
     SysTime::init();
     Radio::open();
@@ -216,7 +218,8 @@ extern "C" void *_sbrk(intptr_t increment)
     void *p = (void*)__heap;
     __heap += increment;
     return p;
-#endif
+
+#else
     /*
      * We intentionally don't want to support dynamic allocation yet.
      * If anyone tries a malloc(), we'll just trap here infinitely.
@@ -228,4 +231,5 @@ extern "C" void *_sbrk(intptr_t increment)
 
     while (1);
     return NULL;
+#endif
 }

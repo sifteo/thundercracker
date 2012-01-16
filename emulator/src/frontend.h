@@ -23,12 +23,15 @@ class FrameRateController {
 public:
     FrameRateController();
     void endFrame();
-    
-    static const double targetFPS = 75.0;
+
+    void setTargetFPS(double target) {
+        targetFPS = target;
+    }
 
 private:
     double lastTimestamp;
     double accumulator;
+    double targetFPS;
 };
 
 
@@ -77,6 +80,7 @@ class Frontend {
     void draw();
 
     bool openWindow(int width, int height, bool fullscreen=false);
+    void toggleFullscreen();
     
     static void GLFWCALL onResize(int width, int height);
     static void GLFWCALL onKey(int key, int state);
@@ -99,6 +103,9 @@ class Frontend {
 
     float zoomedViewExtent();
     float targetViewExtent();
+    float pixelViewExtent();
+    unsigned pixelZoomMode();
+
     b2Vec2 targetViewCenter();
     b2Vec2 mouseVec(float viewExtent);
     b2Vec2 worldToScreen(b2Vec2 world);
@@ -111,6 +118,7 @@ class Frontend {
 
     System *sys;
     unsigned frameCount;
+    unsigned idleFrames;
     FrontendCube cubes[System::MAX_CUBES];
 
     bool toggleZoom;
@@ -120,6 +128,7 @@ class Frontend {
     int mouseX, mouseY;
     int mouseWheelPos;
     unsigned gridW, gridH;
+    unsigned lastWindowW, lastWindowH;
 
     float viewExtent;
     float normalViewExtent;

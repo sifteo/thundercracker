@@ -22,13 +22,25 @@ AUDIO = audio
 GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html $(AUDIO).gen.h $(AUDIO).gen.cpp MAPFILE.map
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 
-ifeq ($(DEBUG),)
-    # Only disable this for debugging! The -O2 flag is important, we use
-    # a lot of C++ code that's written assuming it will be inlined. The
-    # inlined code should end up being smaller due to constant folding.
-    CFLAGS += -O2
-else
-    CFLAGS += -DDEBUG -g3
+# Only disable this in debugging emergencies!
+#
+# The -O2 flag is important, we use a lot of C++ code that's written
+# assuming it will be inlined. The inlined code should end up being
+# smaller due to constant folding.
+#
+# Without optimization, a lot of our code ends up too large and/or slow
+# to run on real hardware!
+CFLAGS += -O2
+
+# Always build with debug symbols (It can't hurt)
+CFLAGS += -g3
+
+# Heavy debug options, only enabled by an explicit environment variable.
+# This can prevent the firmware from operating normally, so only enable it
+# if you know what you're doing! The main effect it has right now is to make
+# JTAG debugging possible, at the expense of flash memory access.
+ifneq ($(DEBUG),)
+    CFLAGS += -DDEBUG
 endif
 
 ifneq ($(QTCREATOR),)
@@ -66,10 +78,14 @@ include $(TC_DIR)/Makefile.platform
 ifeq ($(BUILD_PLATFORM), windows32)
     # portaudio requirements
     LDFLAGS_SIM += -lws2_32 -lwinmm -lole32
-else
+endif
+ifeq ($(BUILD_PLATFORM), Darwin)
     # these are all required by portaudio, believe it or not
     LDFLAGS_SIM += -framework CoreAudio -framework AudioToolbox \
                     -framework AudioUnit -framework CoreServices
+endif
+ifeq ($(BUILD_PLATFORM), Linux)
+	LDFLAGS_SIM += -lspeex -lportaudio
 endif
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a

@@ -15,6 +15,7 @@ INPUTS = [
     ('rb', "resources/img_cube_face_hilight.png"),
     ('rb', "resources/img_cube_face_hilight_mask.png"),
     ('rb', "resources/img_wood.png"),
+    ('rb', "resources/img_bg_light.png"),
     ('r',  "resources/cube_face_fp.glsl"),
     ('r',  "resources/cube_face_vp.glsl"),
     ('r',  "resources/cube_side_fp.glsl"),

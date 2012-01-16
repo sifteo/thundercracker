@@ -9,7 +9,10 @@
 #ifndef _MACROS_H
 #define _MACROS_H
 
-#define APP_TITLE   "Thundercracker"
+#include <stdint.h>
+
+#define APP_TITLE      "Thundercracker"
+#define APP_COPYRIGHT  "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
 
 /*
  * Tick functions should always be inlined, otherwise the function
@@ -33,6 +36,16 @@
 #       define FASTCALL __attribute__ ((fastcall))
 #   else
 #       define FASTCALL
+#   endif
+#endif
+
+#ifndef PRIu64
+#   if defined(_WIN32)
+#      define PRIu64 "I64u"
+#   elif defined(_LP64)
+#      define PRIu64 "lu"
+#   else
+#      define PRIu64 "llu"
 #   endif
 #endif
 

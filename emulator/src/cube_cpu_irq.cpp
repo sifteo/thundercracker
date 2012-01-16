@@ -7,6 +7,7 @@
  */
 
 #include <string.h>
+#include "tracer.h"
 #include "cube_cpu.h"
 #include "cube_cpu_irq.h"
 
@@ -26,10 +27,9 @@ void NEVER_INLINE handle_interrupts(struct em8051 *cpu)
      * in the L1 cache.
      */
      
-    if (cpu->isTracing)
-        fprintf(cpu->traceFile, "[%2d] IRQ: Checking for interrupts "
-                "(IEN=%02x.%02x T=%02x IR=%02x S0=%02x)\n",
-                cpu->id, cpu->mSFR[REG_IEN0], cpu->mSFR[REG_IEN1],
+    Tracer::log(cpu, "IRQ: Checking for interrupts "
+                "(IEN=%02x.%02x T=%02x IR=%02x S0=%02x)",
+                cpu->mSFR[REG_IEN0], cpu->mSFR[REG_IEN1],
                 cpu->mSFR[REG_TCON], cpu->mSFR[REG_IRCON], cpu->mSFR[REG_S0CON]);
 
     // IFP is currently disabled, we don't use it.
@@ -122,9 +122,7 @@ void NEVER_INLINE handle_interrupts(struct em8051 *cpu)
  */
 int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
 {
-    if (cpu->isTracing)
-        fprintf(cpu->traceFile, "[%2d] IRQ: Interrupt arrived, prio=%d vector=0x%04x\n",
-                cpu->id, priority, vector);
+    Tracer::log(cpu, "IRQ: Interrupt arrived, prio=%d vector=0x%04x", priority, vector);
 
     if (cpu->irq_count) {
         // Another IRQ is in progress. Are we higher priority?
@@ -132,9 +130,7 @@ int irq_invoke(struct em8051 *cpu, uint8_t priority, uint16_t vector)
         if (priority <= cpu->irql[cpu->irq_count - 1].priority) {
             // Nope. Can't interrupt the last handler.
      
-            if (cpu->isTracing)
-                fprintf(cpu->traceFile, "[%2d] IRQ: Higher priority interrupt in progress\n", cpu->id);
-
+            Tracer::log(cpu, "IRQ: Higher priority interrupt in progress");
             return 0;
         }
     }

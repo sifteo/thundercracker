@@ -98,10 +98,8 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
     body->CreateFixture(&fixtureDef);
 }
 
-void FrontendCube::draw(GLRenderer &r)
+bool FrontendCube::draw(GLRenderer &r)
 {
-    const uint16_t *framebuffer;
-
     /*
      * We only want to upload a new framebuffer image to the GPU if the LCD
      * has actually been written to. Use the LCD hardware's pixel counter as
@@ -114,20 +112,23 @@ void FrontendCube::draw(GLRenderer &r)
      * Additionally, if the LCD is invisible, send the renderer a blank black
      * texture. To capture all of this state, we build a single 32-bit cookie
      * that combines a 31-bit pixel count and a blanking bit.
+     *
+     * Returns true if and only if the display has changed. Always draws the
+     * cube.
      */
      
     uint32_t cookie = hw->lcd.isVisible() ? (hw->lcd.getPixelCount() & 0x7FFFFFFF) : ((uint32_t)-1);
+    bool framebufferChanged = cookie != lastLcdCookie;
+    lastLcdCookie = cookie;
     
-    if (cookie != lastLcdCookie) {
-        lastLcdCookie = cookie;
-        static const uint16_t blackness[hw->lcd.WIDTH * hw->lcd.HEIGHT] = { 0 };
-        framebuffer = hw->lcd.isVisible() ? hw->lcd.fb_mem : blackness;
-    } else {
-        framebuffer = NULL;
-    }
+    static const uint16_t blackness[hw->lcd.WIDTH * hw->lcd.HEIGHT] = { 0 };
+    const uint16_t *framebuffer = hw->lcd.isVisible() ? hw->lcd.fb_mem : blackness;
 
     r.drawCube(id, body->GetPosition(), body->GetAngle(),
-               hover, tiltVector, framebuffer, modelMatrix);
+               hover, tiltVector, framebuffer, framebufferChanged,
+               modelMatrix);
+
+    return framebufferChanged;
 }
 
 void FrontendCube::setTiltTarget(b2Vec2 angles)

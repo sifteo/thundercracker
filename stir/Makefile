@@ -26,10 +26,13 @@ OBJS = \
 	src/speexencoder.o \
 	$(OBJS_lua) \
 
+include ../Makefile.platform
+
 # speex
-ifeq ($(OS), Windows_NT)
-    SPEEX_DIR = ../deps/win32/speex
-else
+ifeq ($(BUILD_PLATFORM), windows32)
+	SPEEX_DIR = ../deps/win32/speex
+endif
+ifeq ($(BUILD_PLATFORM), Darwin)
 	ifeq ( $(BUILD_ARCH),i386 )
 		SPEEX_DIR = ../deps/osx/i386/speex
 	else
@@ -37,23 +40,19 @@ else
 	endif
 endif
 
-INCLUDES = -I$(SPEEX_DIR)/include
-LDFLAGS = -L$(SPEEX_DIR)/lib
+INCLUDES += -I$(SPEEX_DIR)/include
+LDFLAGS += -L$(SPEEX_DIR)/lib
 
-ifeq ($(OS), Windows_NT)
-    LDFLAGS += -static -lspeex -lstdc++
-else
-    LDFLAGS += -lspeex -lstdc++
+ifeq ($(BUILD_PLATFORM), windows32)
+    LDFLAGS += -static
 endif
+LDFLAGS += -lspeex -lstdc++
 # end speex
 
 FIRMWARE_INC = ../firmware/include
 DEPFILES := $(OBJS:.o=.d)
 
 PYTHON := python
-OS  := $(shell uname)
-
-include ../Makefile.platform
 
 ifeq ($(BUILD_PLATFORM), windows32)
 	CC := mingw32-gcc
@@ -84,7 +83,7 @@ else
 $(BIN): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 endif	
-	
+
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
 

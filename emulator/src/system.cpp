@@ -17,8 +17,6 @@ System::System()
         opt_turbo(false),
         opt_cube0Debug(NULL),
         threadRunning(false),
-        traceFile(NULL),
-        mIsTracing(false),
         mIsInitialized(false),
         mIsStarted(false)
         {}
@@ -29,30 +27,36 @@ bool System::init()
     if (mIsInitialized)
         return true;
         
-    /*
-     * We want to disable our debugging features when using the
-     * built-in binary translated firmware. The debugger won't really
-     * work properly in SBT mode anyway, but we additionally want to
-     * disable it in order to make it harder to reverse engineer our
-     * firmware. Of course, any dedicated reverse engineer could just
-     * disable this test easily :)
-     */
-
     if (opt_cubeFirmware.empty() && (!opt_cube0Profile.empty() || 
-                                     !opt_cubeTrace.empty() ||
                                      opt_cube0Debug)) {
+        /*
+         * We want to disable our debugging features when using the
+         * built-in binary translated firmware. The debugger won't really
+         * work properly in SBT mode anyway, but we additionally want to
+         * disable it in order to make it harder to reverse engineer our
+         * firmware. Of course, any dedicated reverse engineer could just
+         * disable this test easily :)
+         */
         fprintf(stderr, "Debug features only available if a firmware image is provided.\n");
         return false;
     }
 
-    if (!opt_cubeTrace.empty()) {
-        traceFile = fopen(opt_cubeTrace.c_str(), "w");
-        if (!traceFile) {
-            perror("Error opening trace file");
-            return false;
-        }
-    } else {
-        traceFile = NULL;
+    /*
+     * To save on clutter in the trace file, we intentionally only set up tracing
+     * for the initial number of cubes, not the maximum number of cubes. Additional cubes
+     * added dynamically will not be traced.
+     */
+    for (unsigned i = 0; i < opt_numCubes; i++) {
+        char cubeName[32];
+
+        snprintf(cubeName, sizeof cubeName, "cube_%02d", i);
+        tracer.vcd.enterScope(cubeName);
+
+        snprintf(cubeName, sizeof cubeName, "c%02d_", i);
+        tracer.vcd.setNamePrefix(cubeName);
+
+        cubes[i].initVCD(tracer.vcd);
+        tracer.vcd.leaveScope();
     }
 
     for (unsigned i = 0; i < opt_numCubes; i++)
@@ -109,8 +113,6 @@ bool System::initCube(unsigned id)
         return false;
 
     cubes[id].cpu.id = id;
-    cubes[id].cpu.traceFile = traceFile;
-    cubes[id].cpu.isTracing = mIsTracing;
     
     if (id == 0 && !opt_cube0Profile.empty()) {
         Cube::CPU::profile_data *pd;
@@ -130,7 +132,7 @@ bool System::initCube(unsigned id)
      * when running firmware that doesn't have a real address
      * assignment scheme implemented.
      */
-    cubes[id].spi.radio.setAddressLSB(id);        
+    cubes[id].spi.radio.setAddressLSB(id);
 
     return true;
 }
@@ -138,6 +140,25 @@ bool System::initCube(unsigned id)
 void System::exitCube(unsigned id)
 {
     cubes[id].exit();
+}
+
+bool System::isTraceAllowed()
+{   
+    /*
+     * Tracing allowed only in non-SBT mode normally
+     * you can only trace if you're a developer who built
+     * the firmware yourself. Normally it's bad to trace in SBT mode,
+     * both because the traces will be less useful, and because it could
+     * make it easier to reverse engineer our translated firmware.
+     *
+     * This test can be overridden (e.g. to debug the SBT code itself)
+     * with a #define at compile-time.
+     */
+#ifdef ALWAYS_ALLOW_TRACE
+    return true;
+#else
+    return !opt_cubeFirmware.empty();
+#endif
 }
 
 void System::start()
@@ -176,10 +197,7 @@ void System::exit()
     if (!opt_cube0Profile.empty())
         Cube::Debug::writeProfile(&cubes[0].cpu, opt_cube0Profile.c_str());
 
-    if (traceFile) {
-        fclose(traceFile);
-        traceFile = NULL;
-    }
+    tracer.close();
 }
 
 void System::threadFn(void *param)
@@ -217,7 +235,7 @@ void System::threadFn(void *param)
          
         if (debug) {
             self->tickLoopDebug();
-        } else if (nCubes < 1 || !self->cubes[0].cpu.sbt || self->cubes[0].cpu.mProfileData || self->cubes[0].cpu.isTracing) {
+        } else if (nCubes < 1 || !self->cubes[0].cpu.sbt || self->cubes[0].cpu.mProfileData || Tracer::isEnabled()) {
             self->tickLoopGeneral();
         } else {
             self->tickLoopFastSBT();
@@ -235,10 +253,9 @@ void System::threadFn(void *param)
     }
 }
 
-ALWAYS_INLINE void System::tick()
+ALWAYS_INLINE void System::tick(unsigned count)
 {
-    // Everything but the cubes
-    time.tick();
+    time.tick(count);
     
     /*
      * Note: It's redundant to be passing our 'time' pointer to network.tick
@@ -256,22 +273,6 @@ ALWAYS_INLINE void System::tick()
     network.tick(*this, &time);
 }
 
-void System::setTraceMode(bool t)
-{
-    mIsTracing = !opt_cubeTrace.empty() && traceFile && t;
-
-    if (opt_numCubes) {
-        bool startStop = mIsStarted;
-    
-        if (startStop)
-            stopThread();
-        for (unsigned i = 0; i < opt_numCubes; i++)
-            cubes[i].cpu.isTracing = mIsTracing;
-        if (startStop)
-            startThread();
-    }
-}
-
 NEVER_INLINE void System::tickLoopDebug()
 {
     /*
@@ -284,13 +285,18 @@ NEVER_INLINE void System::tickLoopDebug()
     unsigned nCubes = opt_numCubes;
 
     for (unsigned t = 0; t < time.timestepTicks(); t++) {
-        if (debugCube.tick()) {
+        bool debugCPUTicked = false;
+        debugCube.tick(&debugCPUTicked);
+        
+        if (debugCPUTicked) {
             tick0 = true;
             Cube::Debug::recordHistory();
         }
+
         for (unsigned i = 1; i < nCubes; i++)
             cubes[i].tick();
         tick();
+        tracer.tick(time);
     }
 
     if (tick0 && Cube::Debug::updateUI()) {
@@ -313,22 +319,41 @@ NEVER_INLINE void System::tickLoopGeneral()
         for (unsigned i = 0; i < nCubes; i++)
             cubes[i].tick();
         tick();
+        tracer.tick(time);
     }
 }
 
 NEVER_INLINE void System::tickLoopFastSBT()
 {
     /*
-     * Fastest path: No debugging, SBT only.
+     * Fastest path: No debugging, no tracing, SBT only,
+     * and advance by more than one tick when we can.
      */
             
     unsigned batch = time.timestepTicks();
     unsigned nCubes = opt_numCubes;
+    unsigned stepSize = 1;
     
-    while (batch--) {
+    while (batch) {
+        unsigned nextStep;
+
+        batch -= stepSize;
+        nextStep = batch;
+        
+#if 0
+        // Debugging batch sizes
+        printf("batch %d, cubes: %d @%04x, %d @%04x, %d @%04x\n",
+                stepSize,
+                cubes[0].cpu.mTickDelay, cubes[0].cpu.mPC,
+                cubes[1].cpu.mTickDelay, cubes[1].cpu.mPC,
+                cubes[2].cpu.mTickDelay, cubes[2].cpu.mPC);        
+#endif
+        
         for (unsigned i = 0; i < nCubes; i++)
-            cubes[i].tickFastSBT();
-        tick();
+            nextStep = std::min(nextStep, cubes[i].tickFastSBT(stepSize));
+        
+        tick(stepSize);
+        stepSize = std::min(nextStep, (unsigned)network.deadlineRemaining());
     }
 }
 

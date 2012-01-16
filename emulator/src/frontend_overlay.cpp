@@ -17,7 +17,7 @@ static const Color debugColor(1,0.5,0.5,1);
 
 
 FrontendOverlay::FrontendOverlay()
-    : messageTimer(0), helpVisible(false) {}
+    : helpVisible(false) {}
 
 void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 {
@@ -26,8 +26,9 @@ void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 
     slowTimer.init(&sys->time);
     fastTimer.init(&sys->time);
+    realTimeMessageTimer.init(&sys->time);
 
-    filteredTimeRatio = 0.0f;
+    filteredTimeRatio = 1.0f;
     realTimeMessage[0] = '\0';
     
     for (unsigned i = 0; i < System::MAX_CUBES; i++)
@@ -41,6 +42,7 @@ void FrontendOverlay::draw()
         
     slowTimer.capture();
     fastTimer.capture(slowTimer);
+    realTimeMessageTimer.capture(slowTimer);
     
     if (slowTimer.realSeconds() > statsInterval) {
         float rtPercent = slowTimer.virtualRatio() * 100.0f;
@@ -129,10 +131,11 @@ void FrontendOverlay::drawHelp()
         "Drag by an edge or corner to pull and rotate it.",
         "While pulling, Right-click or Space to hover, again to rotate.",
         "Shift-drag or Right-drag to tilt a cube.",
-        "Mouse wheel resizes the play surface.\n",
-        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'Z' - Zoom. +/- Adds/removes cubes.",
+        "Mouse wheel resizes the play surface.",
+        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'Z' - Zoom, '1' - 1:1 view, '2' - 2x view.",
+        "+/- Adds/removes cubes.",
         "",
-        "Copyright (c) 2011 Sifteo, Inc. All rights reserved.",
+        APP_COPYRIGHT,
     };
     
     const unsigned numLines = sizeof lines / sizeof lines[0];
@@ -149,25 +152,36 @@ void FrontendOverlay::drawHelp()
 
 void FrontendOverlay::drawRealTimeInfo()
 {
-    const unsigned width = 152;
+    const unsigned width = 160;
     const unsigned barH = 3;
-    
-    // Right-justify the text so it doesn't bounce so much
-    x += width;
-    text(realTimeColor, realTimeMessage, 1.0f);
-    x -= width;
-    
+
     // Filter the time ratio a bit. The fastTimer is really jumpy
     float ratio = fastTimer.virtualRatio();
-    filteredTimeRatio += 0.1f * (ratio - filteredTimeRatio);
+    filteredTimeRatio += 0.05f * (ratio - filteredTimeRatio);
     
-    // Include a tiny bargraph, to show the rate visually
-    unsigned barW = width * MIN(1.0f, filteredTimeRatio);
-    renderer->overlayRect(x, y, barW, barH, realTimeColor.v);
-    y += barH + margin;
+    // If we've been close to 100% for a while, hide the indicator
+    if (filteredTimeRatio < 0.95f || sys->opt_turbo)
+        realTimeMessageTimer.start();
+    if (realTimeMessageTimer.realSeconds() < 1.0f) {
+    
+        // Right-justify the text so it doesn't bounce so much
+        x += width;
+        text(realTimeColor, realTimeMessage, 1.0f);
+        x -= width;
 
-    if (sys->opt_turbo) {
-        // Turbo indicator
-        text(realTimeColor, "Turbo Mode", 0.0f);
+        // Include a tiny bargraph, to show the rate visually
+        unsigned barW = width * std::min(1.0f, filteredTimeRatio);
+        renderer->overlayRect(x, y, barW, barH, realTimeColor.v);
+        y += barH + margin;
     }
+
+    /*
+     * Mode Indicators
+     */
+
+    if (sys->opt_turbo)
+        text(realTimeColor, "Turbo Mode");
+    
+    if (sys->tracer.isEnabled())
+        text(debugColor, "Trace Enabled");
 }

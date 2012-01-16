@@ -12,7 +12,9 @@
 Frontend *Frontend::instance = NULL;
 
 Frontend::Frontend() 
-  : world(b2Vec2(0.0f, 0.0f)),
+  : frameCount(0),
+    idleFrames(0),
+    world(b2Vec2(0.0f, 0.0f)),
     mouseBody(NULL),
     mouseJoint(NULL),
     mouseIsAligning(false),
@@ -106,6 +108,8 @@ bool Frontend::init(System *_sys)
 void Frontend::numCubesChanged()
 {
     unsigned i;
+
+    idleFrames = 0;
 
     for (i = 0; i < sys->opt_numCubes; i++)
         if (!cubes[i].isInitialized()) {
@@ -231,7 +235,9 @@ bool Frontend::runFrame()
 
     animate();
     draw();
+
     frameCount++;
+    idleFrames++;
 
     return true;
 }
@@ -251,7 +257,10 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
 
     if (!renderer.init())
         return false;
-    
+
+    isFullscreen = fullscreen;
+    mouseWheelPos = 0;
+        
     glfwSwapInterval(1);
     glfwEnable(GLFW_MOUSE_CURSOR);
     glfwSetWindowTitle(APP_TITLE);
@@ -260,8 +269,6 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
     glfwGetWindowSize(&w, &h);
     onResize(w, h);
     
-    isFullscreen = fullscreen;
-    mouseWheelPos = 0;
     moveWalls(true);
     
     glfwSetWindowSizeCallback(onResize);
@@ -276,8 +283,17 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
 
 void GLFWCALL Frontend::onResize(int width, int height)
 {
-    if (width && height)
+    instance->idleFrames = 0;
+    
+    if (width && height) {    
+        if (!instance->isFullscreen) {
+            // Save this width/height, for restoring windowed mode after fullscreen
+            instance->lastWindowW = width;
+            instance->lastWindowH = height;
+        }
+
         instance->renderer.setViewport(width, height);
+    }
 }
 
 int GLFWCALL Frontend::onWindowClose()
@@ -288,7 +304,7 @@ int GLFWCALL Frontend::onWindowClose()
 
 void GLFWCALL Frontend::onKey(int key, int state)
 {
-    if (state == GLFW_PRESS)
+    if (state == GLFW_PRESS) {
         switch (key) {
         
         case 'H':
@@ -302,18 +318,20 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->isRunning = false;
             break;
         
+        case '1':
+            instance->normalViewExtent = instance->pixelViewExtent();
+            break;
+        
+        case '2':
+            instance->normalViewExtent = instance->pixelViewExtent() / 2.0f;
+            break;
+        
         case 'Z':
             instance->toggleZoom ^= true;
             break;
 
         case 'F':
-            /*
-            * XXX: Pick the resolution automatically or configurably.
-            *      This is just a common 16:9 resolution that isn't too big
-            *      for my integrated GPU to render smoothly :)
-            */         
-            glfwCloseWindow();
-            instance->openWindow(1280, 720, !instance->isFullscreen);
+            instance->toggleFullscreen();
             break;
                 
         case 'S': {
@@ -327,16 +345,14 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->sys->opt_turbo ^= true;
             break;
 
-        case 'R': {
+        case 'R':
             /*
              * Intentionally undocumented: Toggle trace mode.
-             * Requires that a trace file was specified on the command line.
+             * If trace mode isn't available, this key is a silent no-op.
              */
-            bool t = !instance->sys->isTracing();
-            instance->overlay.postMessage((t ? "Enabling" : "Disabling") + std::string(" trace mode"));
-            instance->sys->setTraceMode(t);
+            if (instance->sys->isTraceAllowed())
+                instance->sys->tracer.setEnabled(!instance->sys->tracer.isEnabled());
             break;
-        }
         
         case GLFW_KEY_SPACE:
             if (instance->mouseIsPulling)
@@ -352,14 +368,40 @@ void GLFWCALL Frontend::onKey(int key, int state)
         case '=':
             instance->addCube();
             break;
+            
+        default:
+            return;
 
         }
+        
+        // Any handled key resets the idle timer
+        instance->idleFrames = 0;
+    }   
 }
+
+void Frontend::toggleFullscreen()
+{
+    if (isFullscreen) {
+        // Restore last windowed mode
+        // Restore last windowed mode
+        glfwCloseWindow();            
+        openWindow(lastWindowW, lastWindowH, false);
+    } else {
+        // Full-screen, using the desktop's native video mode
+        GLFWvidmode mode;
+        glfwGetDesktopMode(&mode);
+        glfwCloseWindow();
+        openWindow(mode.Width, mode.Height, true);
+    }
+}           
 
 void GLFWCALL Frontend::onMouseMove(int x, int y)
 {
     instance->mouseX = x;
     instance->mouseY = y;
+    
+    if (instance->toggleZoom)
+        instance->idleFrames = 0;    
 }
 
 void GLFWCALL Frontend::onMouseButton(int button, int state)
@@ -368,6 +410,8 @@ void GLFWCALL Frontend::onMouseButton(int button, int state)
         instance->onMouseDown(button);
     else if (state == GLFW_RELEASE)
         instance->onMouseUp(button);
+
+    instance->idleFrames = 0;
 }
 
 void GLFWCALL Frontend::onMouseWheel(int pos)
@@ -382,10 +426,13 @@ void GLFWCALL Frontend::onMouseWheel(int pos)
         scale = powf(1.1f, -delta);
         
     instance->scaleViewExtent(scale);
+    instance->idleFrames = 0;
 }
 
 void Frontend::onMouseDown(int button)
 {
+    idleFrames = 0;
+    
     if (button == GLFW_MOUSE_BUTTON_RIGHT && mouseIsPulling)
         hoverOrRotate();
     
@@ -495,6 +542,8 @@ void Frontend::onMouseUp(int button)
 {
     bool eitherButton = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) ||
                         glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT);
+        
+    idleFrames = 0;
                         
     if (mouseBody && !eitherButton) {
         // All buttons released
@@ -532,6 +581,7 @@ void Frontend::animate()
 
     if (mouseIsPulling) {
         pushBodyTowards(mouseBody, mouseVec(normalViewExtent), 50.0f);
+        idleFrames = 0;
     }
 
     if (mouseIsAligning || mouseIsSpinning) {
@@ -548,6 +598,7 @@ void Frontend::animate()
              * Rotate the cube toward 'spinTarget'. When we get there, we disable spin mode.
              */
             error = cubeAngle - spinTarget;
+            idleFrames = 0;
             if (fabs(error) < 0.001f)
                 mouseIsSpinning = false; 
         
@@ -583,6 +634,7 @@ void Frontend::animate()
             b2Vec2 local = b2Mul(b2Rot(-mousePicker.mCube->body->GetAngle()), tiltTarget);
 
             mousePicker.mCube->setTiltTarget(local);
+            idleFrames = 0;
         }
     }
         
@@ -593,6 +645,11 @@ void Frontend::animate()
     /* Animated viewport centering/zooming */
     {
         const float gain = 0.1;
+        int pzoom = pixelZoomMode();
+        
+        // Pull toward a pixel-accurate zoom, if we're close
+        if (pzoom)
+            normalViewExtent += gain * (pixelViewExtent() / pzoom - normalViewExtent);
 
         viewExtent += gain * (targetViewExtent() - viewExtent);
         viewCenter += gain * (targetViewCenter() - viewCenter);
@@ -603,6 +660,40 @@ void Frontend::animate()
     world.Step(timeStep, velocityIterations, positionIterations);
 }
 
+float Frontend::pixelViewExtent()
+{
+    // Calculate the viewExtent which would give a 1:1 pixel mapping
+    return renderer.getWidth() * (FrontendCube::LCD_SIZE / (2.0f * Cube::LCD::WIDTH));
+}
+
+unsigned Frontend::pixelZoomMode()
+{
+    /*
+     * If we're close to an integer multiple zoom, we try to be pixel accurate.
+     *
+     * This returns zero if we're not close to an integer zoom, otherwise it returns
+     * the integer zoom factor that we're close to. When this returns a nonzero number,
+     * both the viewport and the cubes themselves should attempt to align themselves
+     * to pixel boundaries.
+     */
+    
+    const float threshold = 0.2f;
+    const unsigned maxMultiplier = 4;
+    float extent1to1 = pixelViewExtent();
+       
+    // Perform a relative distance test on several integer multiples
+    for (unsigned multiplier = 1; multiplier <= maxMultiplier; multiplier++) {
+        float extent = extent1to1 / multiplier;
+        float absDist = extent - normalViewExtent;
+        float relDist = fabs(absDist) / extent;
+
+        if (relDist < threshold)
+            return multiplier;
+    }
+    
+    return 0;
+}
+
 void Frontend::scaleViewExtent(float ratio)
 {
     normalViewExtent = b2Clamp<float>(normalViewExtent * ratio,
@@ -611,18 +702,24 @@ void Frontend::scaleViewExtent(float ratio)
 
 void Frontend::draw()
 {
-    renderer.beginFrame(viewExtent, viewCenter);
+    // Pixel zoom mode, with respect to current view rather than target view.
+    int effectivePixelZoomMode = fabs(viewExtent - normalViewExtent) < 1e-3 ? pixelZoomMode() : 0;
+    
+    renderer.beginFrame(viewExtent, viewCenter, effectivePixelZoomMode);
 
     float ratio = std::max(1.0f, renderer.getHeight() / (float)renderer.getWidth());
     renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
 
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
-        cubes[i].draw(renderer);
+        if (cubes[i].draw(renderer)) {
+            // We found a cube that isn't idle.
+            idleFrames = 0;
+        }
 
     renderer.beginOverlay();
         
     // Per-cube overlays (Only when sufficiently zoomed-in)
-    if (viewExtent < FrontendCube::SIZE * 4.0f)
+    if (viewExtent < pixelViewExtent() * 1.5f)
         for (unsigned i = 0; i < sys->opt_numCubes;  i++) {
             FrontendCube &c = cubes[i]; 
             b2AABB aabb;    
@@ -637,6 +734,16 @@ void Frontend::draw()
 
     // Fixed portion of the overlay, should be topmost.
     overlay.draw();
+        
+    /*
+     * If we haven't had any interesting input (user interaction, cube rendering) in a while,
+     * assume we're idle and throttle the frame rate way down. Otherwise, render at a zippy but
+     * bounded refresh rate.
+     *
+     * This throttling is vital when we can't sync to the host's vertical refresh, and the idling
+     * is really nice to avoid killing laptop batteries...
+     */
+    frControl.setTargetFPS(idleFrames > 100 ? 10.0 : 75.0);
         
     renderer.endFrame();
     frControl.endFrame();

@@ -4,6 +4,7 @@
 *.pyc
 *.vcxproj.user
 *.dSYM
+trace.*
 siftulator-*.png
 tc-siftulator
 tc-siftulator.exe
