@@ -1,7 +1,10 @@
 #include "tasks.h"
 #include <sifteo.h>
-#include "usb.h"
 #include "audiomixer.h"
+
+#ifndef SIFTEO_SIMULATOR
+#include "usb.h"
+#endif
 
 using namespace Sifteo;
 
