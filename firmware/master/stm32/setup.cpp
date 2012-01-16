@@ -195,6 +195,7 @@ extern "C" void _start()
     // super hack: just wait around for data to be loaded. revel in the crappiness
     // as you disable this block and reflash your board to re-enable SysTick.
     for (;;) {
+        Tasks::work();
         Sifteo::System::yield();
     }
 #endif
