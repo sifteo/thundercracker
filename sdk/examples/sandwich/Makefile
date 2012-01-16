@@ -22,7 +22,7 @@ OBJS_SIM = $(OBJS:.o=.sim.o)
 BIN_STM32 = $(APP).stm32
 OBJS_STM32 = $(OBJS:.o=.stm32.o)
 
-ASSETDEPS += *.png $(ASSETS).lua
+ASSETDEPS += *.png $(ASSETS).lua content.gen.lua
 CDEPS += *.h 
 
 include $(TC_DIR)/firmware/master/Makefile.rules
@@ -31,9 +31,9 @@ GENERATED_FILES += content.gen.lua
 GENERATED_FILES += content.gen.cpp
 
 
-Content.gen.cpp: gen_content
+content.gen.cpp: gen_content
 
-content.lua: gen_content
+content.gen.lua: gen_content
 
 gen_content: sandwich.py tmx.py *.tmx *.xml
 	python -c "import sandwich; sandwich.export()"
