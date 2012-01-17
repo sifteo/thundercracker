@@ -13,11 +13,12 @@ assets.html
 **bin/Release**
 
 MapTool.exe
-gen_assets.lua
-gen_mapdata.h
-gen_mapdata.cpp
+content.gen.lua
+content.gen.cpp
 
 _build
 *.swf
 *-app.xml
 *.xcodeproj
+
+*.pyc

@@ -42,7 +42,7 @@
 #ifndef PRIu64
 #   if defined(_WIN32)
 #      define PRIu64 "I64u"
-#   elif defined(_LP64)
+#   elif !defined(_LP64)
 #      define PRIu64 "lu"
 #   else
 #      define PRIu64 "llu"

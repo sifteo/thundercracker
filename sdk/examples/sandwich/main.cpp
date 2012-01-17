@@ -1,5 +1,5 @@
 #include "Game.h"
-#include "DialogView.h"
+#include "Dialog.h"
 
 Cube gCubes[NUM_CUBES];
 AudioChannel gChannelSfx;
@@ -42,10 +42,10 @@ void siftmain() {
 	  }
 	}
 #endif
-	
-	//DialogTest();
+  
+  //DialogData data;
+  //DoDialog(data);
 
-	
 	{ // fake power-on
 		for(unsigned hack=0; hack<4; ++hack) {
 			for(unsigned i=0; i<NUM_CUBES; ++i) {
@@ -82,7 +82,6 @@ void siftmain() {
 			*pGame = Game(); // re-initialize memory
 		}
 		pGame->MainLoop();
-		pGame->map.HackyMapRevert();
 		PlayMusic(music_winscreen, false);
 		WinScreen(pGame->player.CurrentView()->GetCube());
 	}

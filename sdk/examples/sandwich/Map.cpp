@@ -6,40 +6,6 @@
 // MAP ROOM STUFF
 //-----------------------------------------------------------------------------
 
-// h4ck
-struct ItemDataChange {
-  ItemData* location;
-  ItemData value;
-  void Save(ItemData* p) {
-    location = p;
-    value = *p;
-  }
-};
-struct ByteChange {
-  uint8_t* location;
-  uint8_t value;
-  void Save(uint8_t* p) {
-    location = p;
-    value = *p;
-  }
-};
-static ItemDataChange sItemChanges[16];
-static ByteChange sByteChanges[64];
-static unsigned sItemChangeCount = 0;
-static unsigned sByteChangeCount = 0; 
-
-void Map::HackyMapRevert() {
-  for(unsigned i=0; i<sItemChangeCount; ++i) {
-    *(sItemChanges[i].location) = sItemChanges[i].value;
-  }
-  for(unsigned i=0; i<sByteChangeCount; ++i) {
-    *(sByteChanges[i].location) = sByteChanges[i].value;
-  }
-  sItemChangeCount = 0;
-  sByteChangeCount = 0;
-}
-// /h4ck
-
 int MapRoom::RoomId() const {
   return (int)(this - pGame->map.GetRoom(0));
 }
@@ -49,58 +15,28 @@ Vec2 MapRoom::Location() const {
   return Vec2(id % pGame->map.Data()->width, id / pGame->map.Data()->width);
 }
 
-RoomData* MapRoom::Data() const {
-  return pGame->map.Data()->GetRoomData(RoomId());
-}
-
-void MapRoom::SetItem(int iid) {
-  if (itemId != iid) {
-    itemId = iid;
-    ItemData* id = pGame->map.Data()->FindItemData(RoomId());
-    if (id) { 
-      sItemChanges[sItemChangeCount].Save(id);
-      sItemChangeCount++;
-      id->itemId = itemId; 
-    }
-  }
+const RoomData* MapRoom::Data() const {
+  return pGame->map.GetRoomData(RoomId());
 }
 
 uint8_t MapRoom::GetPortal(Cube::Side side) {
   Vec2 p = Location();
   switch(side) {
-    case SIDE_TOP: return *( pGame->map.Data()->GetPortalY(p.x, p.y) );
-    case SIDE_LEFT: return *( pGame->map.Data()->GetPortalX(p.x, p.y) );
-    case SIDE_BOTTOM: return *( pGame->map.Data()->GetPortalY(p.x, p.y+1) );
-    case SIDE_RIGHT: return *( pGame->map.Data()->GetPortalX(p.x+1, p.y) );
+    case SIDE_TOP: return *( pGame->map.GetPortalY(p.x, p.y) );
+    case SIDE_LEFT: return *( pGame->map.GetPortalX(p.x, p.y) );
+    case SIDE_BOTTOM: return *( pGame->map.GetPortalY(p.x, p.y+1) );
+    case SIDE_RIGHT: return *( pGame->map.GetPortalX(p.x+1, p.y) );
   }
   return 0;
-}
-
-void MapRoom::SetPortal(Cube::Side side, uint8_t pid) {
-  Vec2 p = Location();
-  uint8_t *loc = 0;
-  switch(side) {
-    case SIDE_TOP: loc = pGame->map.Data()->GetPortalY(p.x, p.y); break;
-    case SIDE_LEFT: loc = pGame->map.Data()->GetPortalX(p.x, p.y); break;
-    case SIDE_BOTTOM: loc = pGame->map.Data()->GetPortalY(p.x, p.y+1); break;
-    case SIDE_RIGHT: loc = pGame->map.Data()->GetPortalX(p.x+1, p.y); break;
-  }
-  sByteChanges[sByteChangeCount].Save(loc);
-  sByteChangeCount++;
-  *loc = pid;
 }
 
 uint8_t MapRoom::GetTile(Vec2 position) {
   return Data()->tiles[position.x + 8 * position.y];
 }
 
-void MapRoom::SetTile(Vec2 position, uint8_t tid) {
-  sByteChanges[sByteChangeCount].Save(Data()->tiles + (position.x + 8 * position.y));
-  sByteChangeCount++;
-  Data()->tiles[position.x + 8 * position.y] = tid; 
-}
-
-void MapRoom::OpenDoor(/*Cube::Side side*/) {
+void MapRoom::OpenDoor() {
+  ASSERT(false);
+  /*
   for(int row=0; row<3; ++row) {
     for(int col=3; col<=4; ++col) {
       SetTile(
@@ -108,6 +44,7 @@ void MapRoom::OpenDoor(/*Cube::Side side*/) {
       );
     }
   }
+  */
 }
 
 //-----------------------------------------------------------------------------
@@ -115,11 +52,11 @@ void MapRoom::OpenDoor(/*Cube::Side side*/) {
 //-----------------------------------------------------------------------------
 
 Map::Map() {
-  SetData(castle_data);
+  SetData(gMapData[gQuestData->mapId]);
 }
 
-inline static bool PortalOpen(uint8_t pid) { 
-    return pid != PORTAL_WALL;
+inline static bool PortalOpen(const uint8_t* pid) { 
+    return *pid != PORTAL_WALL;
 }
 
 void Map::SetData(const MapData& map) { 
@@ -128,15 +65,11 @@ void Map::SetData(const MapData& map) {
     MapRoom *proom = mRooms;
     for(int y=0; y<map.height; ++y) {
       for(int x=0; x<map.width; ++x) {
-        proom->callback = 0;
         proom->itemId = 0;
         ++proom;
       }
     }
-    for(TriggerData* p = mData->triggers; p && p->room>=0; ++p) {
-      (mRooms + p->room)->callback = p->callback;
-    }
-    for(ItemData* p = mData->items; p && p->room>=0; ++p) {
+    for(const ItemData* p = mData->items; p && p->room>=0; ++p) {
       (mRooms + p->room)->itemId = p->itemId;
     }    
   }
@@ -145,13 +78,13 @@ void Map::SetData(const MapData& map) {
 bool Map::CanTraverse(Vec2 loc, Cube::Side direction) const {
     switch(direction) {
       case SIDE_TOP:
-        return loc.y > 0 && PortalOpen( *(mData->GetPortalY(loc.x, loc.y)) );
+        return loc.y > 0 && PortalOpen( GetPortalY(loc.x, loc.y) );
       case SIDE_LEFT:
-        return loc.x > 0 && PortalOpen( *(mData->GetPortalX(loc.x, loc.y)) );
+        return loc.x > 0 && PortalOpen( GetPortalX(loc.x, loc.y) );
       case SIDE_BOTTOM:
-        return loc.y < mData->height-1 && PortalOpen( *(mData->GetPortalY(loc.x, loc.y+1)) );
+        return loc.y < mData->height-1 && PortalOpen( GetPortalY(loc.x, loc.y+1) );
       case SIDE_RIGHT:
-        return loc.x < mData->width-1 && PortalOpen( *(mData->GetPortalX(loc.x+1, loc.y)) );
+        return loc.x < mData->width-1 && PortalOpen( GetPortalX(loc.x+1, loc.y) );
   }
   return false;
 }
@@ -163,10 +96,10 @@ bool Map::IsVertexWalkable(Vec2 vertex) {
     return false; // out of bounds
   }
   vertex -= 8 * loc;
-  return mData->IsTileOpen(loc, vertex) && (
+  return IsTileOpen(loc, vertex) && (
     vertex.x == 0 ? // are we between rooms?
-      mData->IsTileOpen(Vec2(loc.x-1, loc.y), Vec2(7, vertex.y)) : 
-      mData->IsTileOpen(loc, Vec2(vertex.x-1, vertex.y))
+      IsTileOpen(Vec2(loc.x-1, loc.y), Vec2(7, vertex.y)) : 
+      IsTileOpen(loc, Vec2(vertex.x-1, vertex.y))
   );
 
 }
@@ -256,8 +189,8 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
 
   // convert src/dst tile positions to normalized coordinates relative to the 65-tile pathfinding grid
   as.offset = dir == SIDE_TOP || dir == SIDE_LEFT ? dloc : loc;
-  as.src = src->Data()->LocalCenter() + 8 * (loc - as.offset) - Vec2(2,2);
-  as.dst = dst->Data()->LocalCenter() + 8 * (dloc - as.offset) - Vec2(2,2);
+  as.src = src->LocalCenter() + 8 * (loc - as.offset) - Vec2(2,2);
+  as.dst = dst->LocalCenter() + 8 * (dloc - as.offset) - Vec2(2,2);
   as.cellPitch = dir % 2 == 0 ? 5 : 13; // vertical or horizontal?
   as.cellRowCount = dir % 2 == 0 ? 13 : 5; // vertical or horizontal?
 

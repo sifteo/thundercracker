@@ -5,10 +5,10 @@ endif
 APP = sandwichcraft
 OBJS = \
 	$(ASSETS).gen.o \
-	gen_mapdata.o \
+	content.gen.o \
 	main.o \
 	Base.o \
-	DialogView.o \
+	Dialog.o \
 	Game.o \
 	GameView.o \
 	Map.o \
@@ -22,23 +22,19 @@ OBJS_SIM = $(OBJS:.o=.sim.o)
 BIN_STM32 = $(APP).stm32
 OBJS_STM32 = $(OBJS:.o=.stm32.o)
 
-ASSETDEPS += *.png $(ASSETS).lua gen_assets.lua
+ASSETDEPS += *.png $(ASSETS).lua content.gen.lua
 CDEPS += *.h 
 
 include $(TC_DIR)/firmware/master/Makefile.rules
 
-GENERATED_FILES += MapTool.exe
-GENERATED_FILES += gen_assets.lua
-GENERATED_FILES += gen_mapdata.h
-GENERATED_FILES += gen_mapdata.cpp
+GENERATED_FILES += content.gen.lua
+GENERATED_FILES += content.gen.cpp
 
 
-gen_mapdata.cpp: MapTool.exe $(ASSETDEPS) *.tmx
-	mono MapTool.exe -gen_cxx
+content.gen.cpp: gen_content
 
-gen_assets.lua: MapTool.exe *.tmx
-	mono MapTool.exe -gen_lua
+content.gen.lua: gen_content
 
-MapTool.exe: Tools/*.cs
-	gmcs -debug Tools/*.cs -out:MapTool.exe -r:System.Drawing.dll
-
+gen_content: sandwich.py tmx.py *.tmx *.xml
+	python -c "import sandwich; sandwich.export()"
+	
