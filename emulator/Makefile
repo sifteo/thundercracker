@@ -242,7 +242,8 @@ $(BIN): $(OBJS)
 else
 ifeq ($(OS),Darwin)
 # Mac OS Link: Create an app bundle with a stripped binary.
-$(BIN): $(OBJS)
+$(BIN): $(BIN).app
+$(BIN).app: $(OBJS)
 	$(CC) -o "src/$(BIN)-d" $(OBJS) $(LDFLAGS)
 	mkdir -p "$(BIN).app/Contents/MacOS"
 	mkdir -p "$(BIN).app/Contents/Resources"
