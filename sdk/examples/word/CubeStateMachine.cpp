@@ -38,7 +38,7 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     _SYS_getTilt(getCube().id(), &state);
                     if (state.x != 1)
                     {
-                        mBG0TargetPanning = (mBG0TargetPanning == 0.f) ? 64.f : 0.f;
+                        mBG0TargetPanning -= 72.f * (state.x - 1);
                     }
                 }
                 break;
@@ -46,8 +46,6 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             default:
                 break;
             }
-
-
         }
         // fall through
     case EventID_Input:
@@ -57,8 +55,8 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         }
         break;
 
-    case EventID_EnterState:
     case EventID_GameStateChanged:
+    case EventID_EnterState:
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
         mIdleTime = 0.f;
@@ -82,10 +80,30 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 }
 
 
-const char* CubeStateMachine::getLetters()
+bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
 {
     ASSERT(mNumLetters > 0);
-    return mLetters;
+    if (mNumLetters <= 0)
+    {
+        return false;
+    }
+    switch (MAX_LETTERS_PER_CUBE)
+    {
+    case 2:
+        if (!forPaint && mBG0TargetPanning != 0.f)
+        {
+            char swapped[MAX_LETTERS_PER_CUBE + 1];
+            swapped[0] = mLetters[1];
+            swapped[1] = mLetters[0];
+            swapped[2] = '\0';
+            strcpy(buffer, swapped);
+            return true;
+        }
+        // else fall through
+    default:
+        strcpy(buffer, mLetters);
+        return true;
+    }
 }
 
 bool CubeStateMachine::canBeginWord()

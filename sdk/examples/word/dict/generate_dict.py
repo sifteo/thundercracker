@@ -118,7 +118,7 @@ def generate_dict():
             bits |= ((1 + ord(letter) - ord('A')) << (letter_index * letter_bits))
             letter_index += 1
         if word in word_list_used.keys():
-            bits |= (len(word) << 29)
+            bits |= (1 << 31)
             #print "533D: " + word
             fi.write(hex(bits) + ",\t\t// " + word + ", seed word (533D: " + str(len(word)) + ")\n")
         else:

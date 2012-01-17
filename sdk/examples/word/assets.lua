@@ -1,6 +1,6 @@
 GameAssets = group{}
 
-Font1Letter = image{"font64.png", width=64, height=64, quality=0}
+Font1Letter = image{"font_2ltr.png", width=56, height=56, quality=0}
 LetterBG = image{"wc_background.png", quality=0}
 StartPrompt = image{"wc_shaketoplay.png", width=48, height=56, quality=0}
 Title = image{"wc_title.png", quality=0}

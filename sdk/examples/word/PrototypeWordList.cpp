@@ -28,11 +28,11 @@ static const uint32_t sList[] =
     0xa1441,		// ABET
     0x8002b041L,		// ABLE, seed word (533D: 4)
     0x3c41,		// ABO
-    0xa14abc41L,		// ABOUT, seed word (533D: 5)
+    0x814abc41L,		// ABOUT, seed word (533D: 5)
     0xa5441,		// ABUT
     0x6441,		// ABY
     0x2e441,		// ABYE
-    0xe9028c61L,		// ACCEPT, seed word (533D: 6)
+    0xa9028c61L,		// ACCEPT, seed word (533D: 6)
     0x1461,		// ACE
     0x21461,		// ACED
     0x99461,		// ACES
@@ -41,7 +41,7 @@ static const uint32_t sList[] =
     0x2c861,		// ACRE
     0x5061,		// ACT
     0xe4d061,		// ACTIN
-    0xdcf4d061L,		// ACTION, seed word (533D: 6)
+    0x9cf4d061L,		// ACTION, seed word (533D: 6)
     0x9d061,		// ACTS
     0x81,		// AD
     0x3c81,		// ADO
@@ -51,18 +51,18 @@ static const uint32_t sList[] =
     0x73ca1,		// AEON
     0xcc8a1,		// AERY
     0x904c1,		// AFAR
-    0xc890c8c1L,		// AFRAID, seed word (533D: 6)
+    0x8890c8c1L,		// AFRAID, seed word (533D: 6)
     0xe1,		// AG
-    0x600014e1,		// AGE, seed word (533D: 3)
+    0x800014e1L,		// AGE, seed word (533D: 3)
     0x214e1,		// AGED
     0x294e1,		// AGEE
     0x5714e1,		// AGENE
     0x914e1,		// AGER
     0x52b0e1,		// AGLEE
-    0x60003ce1,		// AGO, seed word (533D: 3)
+    0x80003ce1L,		// AGO, seed word (533D: 3)
     0x73ce1,		// AGON
     0x52c8e1,		// AGREE
-    0xc852c8e1L,		// AGREED, seed word (533D: 6)
+    0x8852c8e1L,		// AGREED, seed word (533D: 6)
     0x101,		// AH
     0x121,		// AI
     0x1121,		// AID
@@ -73,7 +73,7 @@ static const uint32_t sList[] =
     0x122b521,		// AIMER
     0x3921,		// AIN
     0x9b921,		// AINS
-    0x60004921,		// AIR, seed word (533D: 3)
+    0x80004921L,		// AIR, seed word (533D: 3)
     0x122c921,		// AIRER
     0x1c56c921,		// AIRMEN
     0x74921,		// AIRN
@@ -98,14 +98,14 @@ static const uint32_t sList[] =
     0xa2581,		// ALIT
     0x3181,		// ALL
     0x52b181,		// ALLEE
-    0xca72b181L,		// ALLEGE, seed word (533D: 6)
+    0x8a72b181L,		// ALLEGE, seed word (533D: 6)
     0x192b181,		// ALLEY
     0xcb181,		// ALLY
     0x2b581,		// ALME
-    0xe937b581L,		// ALMOST, seed word (533D: 6)
+    0xa937b581L,		// ALMOST, seed word (533D: 6)
     0x9b581,		// ALMS
     0x2bd81,		// ALOE
-    0xa0573d81L,		// ALONE, seed word (533D: 5)
+    0x80573d81L,		// ALONE, seed word (533D: 5)
     0x4181,		// ALP
     0x9c181,		// ALPS
     0x4d81,		// ALS
@@ -116,8 +116,8 @@ static const uint32_t sList[] =
     0x137d181,		// ALTOS
     0x9d181,		// ALTS
     0x190dd81,		// ALWAY
-    0xe790dd81L,		// ALWAYS, seed word (533D: 6)
-    0x400001a1,		// AM, seed word (533D: 2)
+    0xa790dd81L,		// ALWAYS, seed word (533D: 6)
+    0x800001a1L,		// AM, seed word (533D: 2)
     0x715a1,		// AMEN
     0x14715a1,		// AMENT
     0x25a1,		// AMI
@@ -125,22 +125,22 @@ static const uint32_t sList[] =
     0x725a1,		// AMIN
     0x5725a1,		// AMINE
     0x925a1,		// AMIR
-    0xa0773da1L,		// AMONG, seed word (533D: 5)
-    0xe8eabda1L,		// AMOUNT, seed word (533D: 6)
+    0x80773da1L,		// AMONG, seed word (533D: 5)
+    0xa8eabda1L,		// AMOUNT, seed word (533D: 6)
     0x41a1,		// AMP
     0x9c1a1,		// AMPS
     0x55a1,		// AMU
     0x9d5a1,		// AMUS
     0x665a1,		// AMYL
-    0x400001c1,		// AN, seed word (533D: 2)
+    0x800001c1L,		// AN, seed word (533D: 2)
     0xe78dc1,		// ANCON
-    0x600011c1,		// AND, seed word (533D: 3)
+    0x800011c1L,		// AND, seed word (533D: 3)
     0x991c1,		// ANDS
     0x15c1,		// ANE
     0x995c1,		// ANES
     0xc29dc1,		// ANGEL
     0x1229dc1,		// ANGER
-    0xa0561dc1L,		// ANGLE, seed word (533D: 5)
+    0x80561dc1L,		// ANGLE, seed word (533D: 5)
     0x25c1,		// ANI
     0x625c1,		// ANIL
     0x13625c1,		// ANILS
@@ -156,16 +156,16 @@ static const uint32_t sList[] =
     0x4d1c1,		// ANTI
     0x34d1c1,		// ANTIC
     0x9d1c1,		// ANTS
-    0x600065c1,		// ANY, seed word (533D: 3)
+    0x800065c1L,		// ANY, seed word (533D: 3)
     0x1601,		// APE
     0x99601,		// APES
-    0xa0c4ca01L,		// APRIL, seed word (533D: 5)
+    0x80c4ca01L,		// APRIL, seed word (533D: 5)
     0x2ce01,		// APSE
     0x5201,		// APT
     0x241,		// AR
     0xe41,		// ARC
     0x40e41,		// ARCH
-    0x60001641,		// ARE, seed word (533D: 3)
+    0x80001641L,		// ARE, seed word (533D: 3)
     0x1a41,		// ARF
     0x561e41,		// ARGLE
     0xa641,		// ARIA
@@ -173,10 +173,10 @@ static const uint32_t sList[] =
     0x62641,		// ARIL
     0x3641,		// ARM
     0x800cb641L,		// ARMY, seed word (533D: 4)
-    0xc8eabe41L,		// AROUND, seed word (533D: 6)
-    0xcb64ca41L,		// ARRIVE, seed word (533D: 6)
+    0x88eabe41L,		// AROUND, seed word (533D: 6)
+    0x8b64ca41L,		// ARRIVE, seed word (533D: 6)
     0x4e41,		// ARS
-    0x60005241,		// ART, seed word (533D: 3)
+    0x80005241L,		// ART, seed word (533D: 3)
     0xc2d241,		// ARTEL
     0xcd241,		// ARTY
     0x66641,		// ARYL
@@ -184,20 +184,20 @@ static const uint32_t sList[] =
     0x261,		// AS
     0x1478e61,		// ASCOT
     0x2261,		// ASH
-    0x60002e61,		// ASK, seed word (533D: 3)
+    0x80002e61L,		// ASK, seed word (533D: 3)
     0x4261,		// ASP
     0x166661,		// ASYLA
-    0x40000281,		// AT, seed word (533D: 2)
+    0x80000281L,		// AT, seed word (533D: 2)
     0x1681,		// ATE
     0x99681,		// ATES
     0x6be81,		// ATOM
     0x136be81,		// ATOMS
     0x6973e81,		// ATONIC
-    0xe93a9ea1L,		// AUGUST, seed word (533D: 6)
+    0xa93a9ea1L,		// AUGUST, seed word (533D: 6)
     0x800a3aa1L,		// AUNT, seed word (533D: 4)
     0x7d2a1,		// AUTO
     0x16c1,		// AVE
-    0xcb5716c1L,		// AVENUE, seed word (533D: 6)
+    0x8b5716c1L,		// AVENUE, seed word (533D: 6)
     0x916c1,		// AVER
     0x14916c1,		// AVERT
     0x2e1,		// AW
@@ -214,7 +214,7 @@ static const uint32_t sList[] =
     0x99721,		// AYES
     0x4f21,		// AYS
     0x22,		// BA
-    0x60001022,		// BAD, seed word (533D: 3)
+    0x80001022L,		// BAD, seed word (533D: 3)
     0x29022,		// BADE
     0xa2422,		// BAIT
     0x3022,		// BAL
@@ -232,21 +232,21 @@ static const uint32_t sList[] =
     0x684a2,		// BEAM
     0x19684a2,		// BEAMY
     0x800a04a2L,		// BEAT, seed word (533D: 4)
-    0x600010a2,		// BED, seed word (533D: 3)
+    0x800010a2L,		// BED, seed word (533D: 3)
     0x990a2,		// BEDS
     0x14a2,		// BEE
     0x994a2,		// BEES
     0xa14a2,		// BEET
     0x1ca2,		// BEG
     0x9249ca2,		// BEGIRD
-    0xc8e4a0a2L,		// BEHIND, seed word (533D: 6)
+    0x88e4a0a2L,		// BEHIND, seed word (533D: 6)
     0x30a2,		// BEL
     0xa30a2,		// BELT
     0xb4a2,		// BEMA
     0x38a2,		// BEN
     0x238a2,		// BEND
     0x3c8a2,		// BERG
-    0xca44cca2L,		// BESIDE, seed word (533D: 6)
+    0x8a44cca2L,		// BESIDE, seed word (533D: 6)
     0x50a2,		// BET
     0xd0a2,		// BETA
     0x64a2,		// BEY
@@ -270,7 +270,7 @@ static const uint32_t sList[] =
     0x24922,		// BIRD
     0x4d22,		// BIS
     0x2cd22,		// BISE
-    0x60005122,		// BIT, seed word (533D: 3)
+    0x80005122L,		// BIT, seed word (533D: 3)
     0x28582,		// BLAE
     0xa0582,		// BLAT
     0x5a0582,		// BLATE
@@ -288,10 +288,10 @@ static const uint32_t sList[] =
     0x51e2,		// BOT
     0xd1e2,		// BOTA
     0xa55e2,		// BOUT
-    0x600065e2,		// BOY, seed word (533D: 3)
+    0x800065e2L,		// BOY, seed word (533D: 3)
     0x21642,		// BRED
     0x522642,		// BRIDE
-    0xca722642L,		// BRIDGE, seed word (533D: 6)
+    0x8a722642L,		// BRIDGE, seed word (533D: 6)
     0x2a642,		// BRIE
     0x3a642,		// BRIG
     0x52a2,		// BUT
@@ -303,10 +303,10 @@ static const uint32_t sList[] =
     0x1229c23,		// CAGER
     0x72423,		// CAIN
     0x63023,		// CALL
-    0xc8563023L,		// CALLED, seed word (533D: 6)
+    0x88563023L,		// CALLED, seed word (533D: 6)
     0x3823,		// CAN
     0x2b823,		// CANE
-    0xe8f73823L,		// CANNOT, seed word (533D: 6)
+    0xa8f73823L,		// CANNOT, seed word (533D: 6)
     0xe7b823,		// CANON
     0xa3823,		// CANT
     0xfa3823,		// CANTO
@@ -321,7 +321,7 @@ static const uint32_t sList[] =
     0x564823,		// CARLE
     0x2cc23,		// CASE
     0xa4c23,		// CAST
-    0x60005023,		// CAT, seed word (533D: 3)
+    0x80005023L,		// CAT, seed word (533D: 3)
     0x2d023,		// CATE
     0x1cf4d023,		// CATION
     0x9d023,		// CATS
@@ -351,10 +351,10 @@ static const uint32_t sList[] =
     0x2d0a3,		// CETE
     0x132d0a3,		// CETES
     0x770503,		// CHANG
-    0xca770503L,		// CHANGE, seed word (533D: 6)
+    0x8a770503L,		// CHANGE, seed word (533D: 6)
     0x90503,		// CHAR
     0x590503,		// CHARE
-    0xca790503L,		// CHARGE, seed word (533D: 6)
+    0x8a790503L,		// CHARGE, seed word (533D: 6)
     0xa0503,		// CHAT
     0x1409503,		// CHEAT
     0x2503,		// CHI
@@ -365,7 +365,7 @@ static const uint32_t sList[] =
     0x9a503,		// CHIS
     0xf63d03,		// CHOLO
     0x26f63d03,		// CHOLOS
-    0xcb37bd03L,		// CHOOSE, seed word (533D: 6)
+    0x8b37bd03L,		// CHOOSE, seed word (533D: 6)
     0x59bd03,		// CHOSE
     0x78523,		// CIAO
     0x1229123,		// CIDER
@@ -379,17 +379,17 @@ static const uint32_t sList[] =
     0x42d123,		// CITED
     0x122d123,		// CITER
     0x132d123,		// CITES
-    0xe654d123L,		// CITIES, seed word (533D: 6)
+    0xa654d123L,		// CITIES, seed word (533D: 6)
     0x20583,		// CLAD
     0x520583,		// CLADE
     0x70583,		// CLAN
     0x80583,		// CLAP
-    0xa0e09583L,		// CLEAN, seed word (533D: 5)
-    0xa1209583L,		// CLEAR, seed word (533D: 5)
+    0x80e09583L,		// CLEAN, seed word (533D: 5)
+    0x81209583L,		// CLEAR, seed word (533D: 5)
     0x82583,		// CLIP
     0x83d83,		// CLOP
-    0xa059bd83L,		// CLOSE, seed word (533D: 5)
-    0xa14985e3L,		// COAST, seed word (533D: 5)
+    0x8059bd83L,		// CLOSE, seed word (533D: 5)
+    0x814985e3L,		// COAST, seed word (533D: 5)
     0xa05e3,		// COAT
     0x9a05e3,		// COATI
     0x13a05e3,		// COATS
@@ -413,7 +413,7 @@ static const uint32_t sList[] =
     0x132b1e3,		// COLES
     0x9b1e3,		// COLS
     0x2b5e3,		// COME
-    0xcee4b5e3L,		// COMING, seed word (533D: 6)
+    0x8ee4b5e3L,		// COMING, seed word (533D: 6)
     0x39e3,		// CON
     0x2b9e3,		// CONE
     0x42b9e3,		// CONED
@@ -437,7 +437,7 @@ static const uint32_t sList[] =
     0x122c9e3,		// CORER
     0x132c9e3,		// CORES
     0x749e3,		// CORN
-    0xe45749e3L,		// CORNER, seed word (533D: 6)
+    0xa45749e3L,		// CORNER, seed word (533D: 6)
     0x59c9e3,		// CORSE
     0x4de3,		// COS
     0x44de3,		// COSH
@@ -447,7 +447,7 @@ static const uint32_t sList[] =
     0xe0d1e3,		// COTAN
     0x2d1e3,		// COTE
     0x9d1e3,		// COTS
-    0xcb3955e3L,		// COURSE, seed word (533D: 6)
+    0x8b3955e3L,		// COURSE, seed word (533D: 6)
     0x38643,		// CRAG
     0x28921643,		// CREDIT
     0xf21643,		// CREDO
@@ -487,15 +487,15 @@ static const uint32_t sList[] =
     0x8002d024L,		// DATE, seed word (533D: 4)
     0x122d024,		// DATER
     0x7d024,		// DATO
-    0x60006424,		// DAY, seed word (533D: 3)
+    0x80006424L,		// DAY, seed word (533D: 3)
     0xa4,		// DE
     0x604a4,		// DEAL
     0x704a4,		// DEAN
     0x904a4,		// DEAR
     0x19904a4,		// DEARY
-    0xa08a04a4L,		// DEATH, seed word (533D: 5)
+    0x808a04a4L,		// DEATH, seed word (533D: 5)
     0x8a4,		// DEB
-    0xcb4088a4L,		// DEBATE, seed word (533D: 6)
+    0x8b4088a4L,		// DEBATE, seed word (533D: 6)
     0x988a4,		// DEBS
     0xa08a4,		// DEBT
     0xc08ca4,		// DECAL
@@ -517,7 +517,7 @@ static const uint32_t sList[] =
     0x13624a4,		// DEILS
     0xd9a4a4,		// DEISM
     0x30a4,		// DEL
-    0xa190b0a4L,		// DELAY, seed word (533D: 5)
+    0x8190b0a4L,		// DELAY, seed word (533D: 5)
     0x330a4,		// DELF
     0x14330a4,		// DELFT
     0x4b0a4,		// DELI
@@ -537,9 +537,9 @@ static const uint32_t sList[] =
     0x190c8a4,		// DERAY
     0x2c8a4,		// DERE
     0x6c8a4,		// DERM
-    0xe922cca4L,		// DESERT, seed word (533D: 6)
-    0xdc74cca4L,		// DESIGN, seed word (533D: 6)
-    0xcb24cca4L,		// DESIRE, seed word (533D: 6)
+    0xa922cca4L,		// DESERT, seed word (533D: 6)
+    0x9c74cca4L,		// DESIGN, seed word (533D: 6)
+    0x8b24cca4L,		// DESIRE, seed word (533D: 6)
     0x122d0a4,		// DETER
     0x2722d0a4,		// DETERS
     0x58a4,		// DEV
@@ -579,7 +579,7 @@ static const uint32_t sList[] =
     0xa3924,		// DINT
     0x4124,		// DIP
     0x2c924,		// DIRE
-    0xe832c924L,		// DIRECT, seed word (533D: 6)
+    0xa832c924L,		// DIRECT, seed word (533D: 6)
     0x53c924,		// DIRGE
     0xa4924,		// DIRT
     0x4d24,		// DIS
@@ -589,15 +589,15 @@ static const uint32_t sList[] =
     0x2d924,		// DIVE
     0x122d924,		// DIVER
     0x72544,		// DJIN
-    0x400001e4,		// DO, seed word (533D: 2)
+    0x800001e4L,		// DO, seed word (533D: 2)
     0xa05e4,		// DOAT
     0xde4,		// DOC
     0x98de4,		// DOCS
-    0xe4fa0de4L,		// DOCTOR, seed word (533D: 6)
+    0xa4fa0de4L,		// DOCTOR, seed word (533D: 6)
     0x15e4,		// DOE
     0x915e4,		// DOER
     0x800995e4L,		// DOES, seed word (533D: 4)
-    0x60001de4,		// DOG, seed word (533D: 3)
+    0x80001de4L,		// DOG, seed word (533D: 3)
     0x31e4,		// DOL
     0x2b1e4,		// DOLE
     0x631e4,		// DOLL
@@ -641,7 +641,7 @@ static const uint32_t sList[] =
     0x132a644,		// DRIES
     0x82644,		// DRIP
     0x5b2644,		// DRIVE
-    0xdc5b2644L,		// DRIVEN, seed word (533D: 6)
+    0x9c5b2644L,		// DRIVEN, seed word (533D: 6)
     0xc63e44,		// DROLL
     0x573e44,		// DRONE
     0x83e44,		// DROP
@@ -672,7 +672,7 @@ static const uint32_t sList[] =
     0x9c2a4,		// DUPS
     0xcaa4,		// DURA
     0x2caa4,		// DURE
-    0xcee4caa4L,		// DURING, seed word (533D: 6)
+    0x8ee4caa4L,		// DURING, seed word (533D: 6)
     0x74aa4,		// DURN
     0x7caa4,		// DURO
     0x1724,		// DYE
@@ -684,13 +684,13 @@ static const uint32_t sList[] =
     0x4825,		// EAR
     0x42c825,		// EARED
     0x64825,		// EARL
-    0xa1964825L,		// EARLY, seed word (533D: 5)
+    0x81964825L,		// EARLY, seed word (533D: 5)
     0x74825,		// EARN
     0x8a4825,		// EARTH
     0x2cc25,		// EASE
     0xa4c25,		// EAST
     0x800ccc25L,		// EASY, seed word (533D: 4)
-    0x60005025,		// EAT, seed word (533D: 3)
+    0x80005025L,		// EAT, seed word (533D: 3)
     0xe2d025,		// EATEN
     0x45025,		// EATH
     0x9d025,		// EATS
@@ -714,7 +714,7 @@ static const uint32_t sList[] =
     0xcc8a5,		// EERY
     0xc5,		// EF
     0x18c5,		// EFF
-    0xe92798c5L,		// EFFORT, seed word (533D: 6)
+    0xa92798c5L,		// EFFORT, seed word (533D: 6)
     0x998c5,		// EFFS
     0x4cc5,		// EFS
     0x50c5,		// EFT
@@ -731,7 +731,7 @@ static const uint32_t sList[] =
     0x27229125,		// EIDERS
     0x1441d25,		// EIGHT
     0x11441d25,		// EIGHTH
-    0xe4545125L,		// EITHER, seed word (533D: 6)
+    0xa4545125L,		// EITHER, seed word (533D: 6)
     0x185,		// EL
     0x70585,		// ELAN
     0x1185,		// ELD
@@ -752,30 +752,30 @@ static const uint32_t sList[] =
     0x1a5a5,		// EMIC
     0x925a5,		// EMIR
     0xa25a5,		// EMIT
-    0xf2f641a5L,		// EMPLOY, seed word (533D: 6)
+    0xb2f641a5L,		// EMPLOY, seed word (533D: 6)
     0x4da5,		// EMS
     0x55a5,		// EMU
     0x265a5,		// EMYD
     0x1c5,		// EN
     0x5a05c5,		// ENATE
     0x265a05c5,		// ENATES
-    0x600011c5,		// END, seed word (533D: 3)
+    0x800011c5L,		// END, seed word (533D: 3)
     0x4291c5,		// ENDED
     0x17791c5,		// ENDOW
     0x991c5,		// ENDS
-    0xf27915c5L,		// ENERGY, seed word (533D: 6)
+    0xb27915c5L,		// ENERGY, seed word (533D: 6)
     0x1dc5,		// ENG
-    0xca709dc5L,		// ENGAGE, seed word (533D: 6)
+    0x8a709dc5L,		// ENGAGE, seed word (533D: 6)
     0x99dc5,		// ENGS
     0x2934b1c5,		// ENLIST
     0x63dc5,		// ENOL
     0x1363dc5,		// ENOLS
     0xd93dc5,		// ENORM
-    0xd07abdc5L,		// ENOUGH, seed word (533D: 6)
+    0x907abdc5L,		// ENOUGH, seed word (533D: 6)
     0xbbdc5,		// ENOW
     0x4dc5,		// ENS
     0x122d1c5,		// ENTER
-    0xcb24d1c5L,		// ENTIRE, seed word (533D: 6)
+    0x8b24d1c5L,		// ENTIRE, seed word (533D: 6)
     0x39e5,		// EON
     0x9b9e5,		// EONS
     0x1418605,		// EPACT
@@ -818,7 +818,7 @@ static const uint32_t sList[] =
     0x996e5,		// EWES
     0x305,		// EX
     0x73f05,		// EXON
-    0xa0195305L,		// EXTRA, seed word (533D: 5)
+    0x80195305L,		// EXTRA, seed word (533D: 5)
     0x98725,		// EYAS
     0x1725,		// EYE
     0x71725,		// EYEN
@@ -832,10 +832,10 @@ static const uint32_t sList[] =
     0x72426,		// FAIN
     0x92426,		// FAIR
     0x1992426,		// FAIRY
-    0xf2c4b426L,		// FAMILY, seed word (533D: 6)
-    0xe757b426L,		// FAMOUS, seed word (533D: 6)
+    0xb2c4b426L,		// FAMILY, seed word (533D: 6)
+    0xa757b426L,		// FAMOUS, seed word (533D: 6)
     0x3826,		// FAN
-    0x60004826,		// FAR, seed word (533D: 3)
+    0x80004826L,		// FAR, seed word (533D: 3)
     0x40c826,		// FARAD
     0x24826,		// FARD
     0x2c826,		// FARE
@@ -868,10 +868,10 @@ static const uint32_t sList[] =
     0x90526,		// FIAR
     0x1126,		// FID
     0x1526,		// FIE
-    0xa0461526L,		// FIELD, seed word (533D: 5)
+    0x80461526L,		// FIELD, seed word (533D: 5)
     0x471526,		// FIEND
     0x1d26,		// FIG
-    0xcb2a9d26L,		// FIGURE, seed word (533D: 6)
+    0x8b2a9d26L,		// FIGURE, seed word (533D: 6)
     0x3126,		// FIL
     0xb126,		// FILA
     0x2b126,		// FILE
@@ -882,12 +882,12 @@ static const uint32_t sList[] =
     0x2742b126,		// FILETS
     0x63126,		// FILL
     0x563126,		// FILLE
-    0xc8563126L,		// FILLED, seed word (533D: 6)
+    0x88563126L,		// FILLED, seed word (533D: 6)
     0x6b126,		// FILM
     0x196b126,		// FILMY
     0x9b126,		// FILS
     0x3926,		// FIN
-    0xa0c0b926L,		// FINAL, seed word (533D: 5)
+    0x80c0b926L,		// FINAL, seed word (533D: 5)
     0x23926,		// FIND
     0x24523926,		// FINDER
     0x2b926,		// FINE
@@ -900,7 +900,7 @@ static const uint32_t sList[] =
     0x6c926,		// FIRM
     0x74926,		// FIRN
     0xa4d26,		// FIST
-    0x60005126,		// FIT, seed word (533D: 3)
+    0x80005126L,		// FIT, seed word (533D: 3)
     0x9d126,		// FITS
     0x68586,		// FLAM
     0x1968586,		// FLAMY
@@ -928,12 +928,12 @@ static const uint32_t sList[] =
     0x725e6,		// FOIN
     0x39e6,		// FON
     0xa39e6,		// FONT
-    0x600049e6,		// FOR, seed word (533D: 3)
+    0x800049e6L,		// FOR, seed word (533D: 3)
     0x2c9e6,		// FORE
     0x132c9e6,		// FORES
-    0xe932c9e6L,		// FOREST, seed word (533D: 6)
+    0xa932c9e6L,		// FOREST, seed word (533D: 6)
     0x53c9e6,		// FORGE
-    0xe853c9e6L,		// FORGET, seed word (533D: 6)
+    0xa853c9e6L,		// FORGET, seed word (533D: 6)
     0x6c9e6,		// FORM
     0xa49e6,		// FORT
     0x5a49e6,		// FORTE
@@ -943,16 +943,16 @@ static const uint32_t sList[] =
     0x245a4de6,		// FOSTER
     0x55e6,		// FOU
     0x955e6,		// FOUR
-    0xd14955e6L,		// FOURTH, seed word (533D: 6)
+    0x914955e6L,		// FOURTH, seed word (533D: 6)
     0x28646,		// FRAE
     0xc8646,		// FRAY
     0x29646,		// FREE
     0x1329646,		// FREES
     0xa1646,		// FRET
     0x13a1646,		// FRETS
-    0xf2122646L,		// FRIDAY, seed word (533D: 6)
+    0xb2122646L,		// FRIDAY, seed word (533D: 6)
     0x42a646,		// FRIED
-    0xc8e2a646L,		// FRIEND, seed word (533D: 6)
+    0x88e2a646L,		// FRIEND, seed word (533D: 6)
     0x3a646,		// FRIG
     0x3e46,		// FRO
     0x2be46,		// FROE
@@ -983,9 +983,9 @@ static const uint32_t sList[] =
     0x2b827,		// GANE
     0x3b827,		// GANG
     0x4827,		// GAR
-    0xdc524827L,		// GARDEN, seed word (533D: 6)
+    0x9c524827L,		// GARDEN, seed word (533D: 6)
     0x8594827,		// GARRED
-    0x60004c27,		// GAS, seed word (533D: 3)
+    0x80004c27L,		// GAS, seed word (533D: 3)
     0xa4c27,		// GAST
     0x5027,		// GAT
     0x2d027,		// GATE
@@ -1055,7 +1055,7 @@ static const uint32_t sList[] =
     0x122b9e7,		// GONER
     0x49e7,		// GOR
     0x2c9e7,		// GORE
-    0x600051e7,		// GOT, seed word (533D: 3)
+    0x800051e7L,		// GOT, seed word (533D: 3)
     0x61e7,		// GOX
     0x65e7,		// GOY
     0x518647,		// GRACE
@@ -1064,10 +1064,10 @@ static const uint32_t sList[] =
     0x24520647,		// GRADER
     0x70647,		// GRAN
     0x470647,		// GRAND
-    0xa1470647L,		// GRANT, seed word (533D: 5)
+    0x81470647L,		// GRANT, seed word (533D: 5)
     0xa0647,		// GRAT
     0x5a0647,		// GRATE
-    0xa1409647L,		// GREAT, seed word (533D: 5)
+    0x81409647L,		// GREAT, seed word (533D: 5)
     0x29647,		// GREE
     0x429647,		// GREED
     0xe29647,		// GREEN
@@ -1087,14 +1087,14 @@ static const uint32_t sList[] =
     0x13a3e47,		// GROTS
     0x2d647,		// GRUE
     0x226a7,		// GUID
-    0x60003aa7,		// GUN, seed word (533D: 3)
+    0x80003aa7L,		// GUN, seed word (533D: 3)
     0xa4ea7,		// GUST
     0x52a7,		// GUT
     0x9d2a7,		// GUTS
     0x2cb27,		// GYRE
     0xae2cb27,		// GYRENE
     0x28,		// HA
-    0x60001028,		// HAD, seed word (533D: 3)
+    0x80001028L,		// HAD, seed word (533D: 3)
     0x29028,		// HADE
     0x1428,		// HAE
     0x21428,		// HAED
@@ -1105,7 +1105,7 @@ static const uint32_t sList[] =
     0x51b828,		// HANCE
     0x3b828,		// HANG
     0x4028,		// HAP
-    0xdc584028L,		// HAPPEN, seed word (533D: 6)
+    0x9c584028L,		// HAPPEN, seed word (533D: 6)
     0x9c028,		// HAPS
     0x24828,		// HARD
     0x2c828,		// HARE
@@ -1113,34 +1113,34 @@ static const uint32_t sList[] =
     0x84828,		// HARP
     0x1384828,		// HARPS
     0xa4828,		// HART
-    0x60004c28,		// HAS, seed word (533D: 3)
+    0x80004c28L,		// HAS, seed word (533D: 3)
     0x84c28,		// HASP
-    0x60005028,		// HAT, seed word (533D: 3)
+    0x80005028L,		// HAT, seed word (533D: 3)
     0x2d028,		// HATE
     0x42d028,		// HATED
     0x122d028,		// HATER
     0x5c28,		// HAW
     0x9dc28,		// HAWS
-    0x400000a8,		// HE, seed word (533D: 2)
+    0x800000a8L,		// HE, seed word (533D: 2)
     0x800204a8L,		// HEAD, seed word (533D: 4)
     0x804a8,		// HEAP
     0x13804a8,		// HEAPS
     0x800904a8L,		// HEAR, seed word (533D: 4)
-    0xa04904a8L,		// HEARD, seed word (533D: 5)
-    0xa14904a8L,		// HEART, seed word (533D: 5)
+    0x804904a8L,		// HEARD, seed word (533D: 5)
+    0x814904a8L,		// HEART, seed word (533D: 5)
     0x800a04a8L,		// HEAT, seed word (533D: 4)
     0x614a8,		// HEEL
     0x13614a8,		// HEELS
     0x20a8,		// HEH
     0x83a4a8,		// HEIGH
-    0xe883a4a8L,		// HEIGHT, seed word (533D: 6)
+    0xa883a4a8L,		// HEIGHT, seed word (533D: 6)
     0x924a8,		// HEIR
     0x34a8,		// HEM
     0x38a8,		// HEN
     0x9b8a8,		// HENS
     0xa38a8,		// HENT
     0x40a8,		// HEP
-    0x600048a8,		// HER, seed word (533D: 3)
+    0x800048a8L,		// HER, seed word (533D: 3)
     0x248a8,		// HERD
     0x2c8a8,		// HERE
     0x7c8a8,		// HERO
@@ -1162,16 +1162,16 @@ static const uint32_t sList[] =
     0x99528,		// HIES
     0x41d28,		// HIGH
     0x1441d28,		// HIGHT
-    0x60003528,		// HIM, seed word (533D: 3)
+    0x80003528L,		// HIM, seed word (533D: 3)
     0x3928,		// HIN
     0x23928,		// HIND
     0x9b928,		// HINS
     0x4128,		// HIP
     0x9c128,		// HIPS
     0x2c928,		// HIRE
-    0x60004d28,		// HIS, seed word (533D: 3)
+    0x80004d28L,		// HIS, seed word (533D: 3)
     0x74d28,		// HISN
-    0x60005128,		// HIT, seed word (533D: 3)
+    0x80005128L,		// HIT, seed word (533D: 3)
     0x1a8,		// HM
     0x1e8,		// HO
     0x11e8,		// HOD
@@ -1191,14 +1191,14 @@ static const uint32_t sList[] =
     0x9b9e8,		// HONS
     0x41e8,		// HOP
     0x9c1e8,		// HOPS
-    0xa059c9e8L,		// HORSE, seed word (533D: 5)
+    0x8059c9e8L,		// HORSE, seed word (533D: 5)
     0x149c9e8,		// HORST
     0x2cde8,		// HOSE
     0xa4de8,		// HOST
-    0x600051e8,		// HOT, seed word (533D: 3)
+    0x800051e8L,		// HOT, seed word (533D: 3)
     0x9d1e8,		// HOTS
     0x955e8,		// HOUR
-    0xa059d5e8L,		// HOUSE, seed word (533D: 5)
+    0x8059d5e8L,		// HOUSE, seed word (533D: 5)
     0x5de8,		// HOW
     0x2dde8,		// HOWE
     0x132dde8,		// HOWES
@@ -1239,17 +1239,17 @@ static const uint32_t sList[] =
     0x14805c9,		// INAPT
     0xd905c9,		// INARM
     0x40dc9,		// INCH
-    0xe6540dc9L,		// INCHES, seed word (533D: 6)
+    0xa6540dc9L,		// INCHES, seed word (533D: 6)
     0x778dc9,		// INCOG
-    0xcad78dc9L,		// INCOME, seed word (533D: 6)
-    0xc85291c9L,		// INDEED, seed word (533D: 6)
+    0x8ad78dc9L,		// INCOME, seed word (533D: 6)
+    0x885291c9L,		// INDEED, seed word (533D: 6)
     0x28e291c9,		// INDENT
     0x5491c9,		// INDIE
     0x265491c9,		// INDIES
     0x14915c9,		// INERT
     0x12299c9,		// INFER
     0x799c9,		// INFO
-    0xdb2799c9L,		// INFORM, seed word (533D: 6)
+    0x9b2799c9L,		// INFORM, seed word (533D: 6)
     0x561dc9,		// INGLE
     0x26561dc9,		// INGLES
     0x142b1c9,		// INLET
@@ -1259,8 +1259,8 @@ static const uint32_t sList[] =
     0x7c9c9,		// INRO
     0x4dc9,		// INS
     0x142cdc9,		// INSET
-    0xca44cdc9L,		// INSIDE, seed word (533D: 6)
-    0xc8e2d1c9L,		// INTEND, seed word (533D: 6)
+    0x8a44cdc9L,		// INSIDE, seed word (533D: 6)
+    0x88e2d1c9L,		// INTEND, seed word (533D: 6)
     0x122d1c9,		// INTER
     0x7d1c9,		// INTO
     0x39e9,		// ION
@@ -1270,24 +1270,24 @@ static const uint32_t sList[] =
     0x99649,		// IRES
     0x73e49,		// IRON
     0x573e49,		// IRONE
-    0x40000269,		// IS, seed word (533D: 2)
-    0xc8e0b269L,		// ISLAND, seed word (533D: 6)
+    0x80000269L,		// IS, seed word (533D: 2)
+    0x88e0b269L,		// ISLAND, seed word (533D: 6)
     0x2b269,		// ISLE
     0x42b269,		// ISLED
     0x142b269,		// ISLET
     0x3669,		// ISM
     0x565269,		// ISTLE
-    0x40000289,		// IT, seed word (533D: 2)
+    0x80000289L,		// IT, seed word (533D: 2)
     0x69689,		// ITEM
     0x122a289,		// ITHER
     0x4e89,		// ITS
-    0xccc2ce89L,		// ITSELF, seed word (533D: 6)
+    0x8cc2ce89L,		// ITSELF, seed word (533D: 6)
     0x73caa,		// JEON
     0x392a,		// JIN
     0x1ea,		// JO
     0x15ea,		// JOE
     0x725ea,		// JOIN
-    0xc85725eaL,		// JOINED, seed word (533D: 6)
+    0x885725eaL,		// JOINED, seed word (533D: 6)
     0x2b,		// KA
     0x142b,		// KAE
     0x9942b,		// KAES
@@ -1329,7 +1329,7 @@ static const uint32_t sList[] =
     0x134c02c,		// LAPIS
     0x9c02c,		// LAPS
     0x482c,		// LAR
-    0xa053c82cL,		// LARGE, seed word (533D: 5)
+    0x8053c82cL,		// LARGE, seed word (533D: 5)
     0x4c82c,		// LARI
     0x9c82c,		// LARS
     0x4c2c,		// LAS
@@ -1337,15 +1337,15 @@ static const uint32_t sList[] =
     0x800a4c2cL,		// LAST, seed word (533D: 4)
     0x502c,		// LAT
     0x8002d02cL,		// LATE, seed word (533D: 4)
-    0xa122d02cL,		// LATER, seed word (533D: 5)
+    0x8122d02cL,		// LATER, seed word (533D: 5)
     0x4d02c,		// LATI
     0x9d02c,		// LATS
     0x582c,		// LAV
     0x2d82c,		// LAVE
     0x122d82c,		// LAVER
-    0x60005c2c,		// LAW, seed word (533D: 3)
+    0x80005c2cL,		// LAW, seed word (533D: 3)
     0x9dc2c,		// LAWS
-    0x6000642c,		// LAY, seed word (533D: 3)
+    0x8000642cL,		// LAY, seed word (533D: 3)
     0x42e42c,		// LAYED
     0x122e42c,		// LAYER
     0x9e42c,		// LAYS
@@ -1356,12 +1356,12 @@ static const uint32_t sList[] =
     0x704ac,		// LEAN
     0x804ac,		// LEAP
     0x904ac,		// LEAR
-    0xa0e904acL,		// LEARN, seed word (533D: 5)
+    0x80e904acL,		// LEARN, seed word (533D: 5)
     0x19904ac,		// LEARY
     0x984ac,		// LEAS
-    0xa14984acL,		// LEAST, seed word (533D: 5)
+    0x814984acL,		// LEAST, seed word (533D: 5)
     0x19b04ac,		// LEAVY
-    0x600010ac,		// LED, seed word (533D: 3)
+    0x800010acL,		// LED, seed word (533D: 3)
     0x14ac,		// LEE
     0x914ac,		// LEER
     0x994ac,		// LEES
@@ -1374,16 +1374,16 @@ static const uint32_t sList[] =
     0x99cac,		// LEGS
     0x24ac,		// LEI
     0x9a4ac,		// LEIS
-    0xd143b8acL,		// LENGTH, seed word (533D: 6)
+    0x9143b8acL,		// LENGTH, seed word (533D: 6)
     0x134b8ac,		// LENIS
     0x7b8ac,		// LENO
     0x137b8ac,		// LENOS
     0x9b8ac,		// LENS
     0xa38ac,		// LENT
     0x9ccac,		// LESS
-    0xdcf9ccacL,		// LESSON, seed word (533D: 6)
+    0x9cf9ccacL,		// LESSON, seed word (533D: 6)
     0xa4cac,		// LEST
-    0x600050ac,		// LET, seed word (533D: 3)
+    0x800050acL,		// LET, seed word (533D: 3)
     0x9d0ac,		// LETS
     0x54ac,		// LEU
     0x254ac,		// LEUD
@@ -1397,7 +1397,7 @@ static const uint32_t sList[] =
     0x28d2c,		// LICE
     0x112c,		// LID
     0x9912c,		// LIDS
-    0x6000152c,		// LIE, seed word (533D: 3)
+    0x8000152cL,		// LIE, seed word (533D: 3)
     0x2152c,		// LIED
     0x3152c,		// LIEF
     0x2453152c,		// LIEFER
@@ -1408,7 +1408,7 @@ static const uint32_t sList[] =
     0x2992c,		// LIFE
     0x122992c,		// LIFER
     0xa192c,		// LIFT
-    0xc85a192cL,		// LIFTED, seed word (533D: 6)
+    0x885a192cL,		// LIFTED, seed word (533D: 6)
     0x13a192c,		// LIFTS
     0xb52c,		// LIMA
     0x2b52c,		// LIME
@@ -1432,7 +1432,7 @@ static const uint32_t sList[] =
     0x4d2c,		// LIS
     0x84d2c,		// LISP
     0x800a4d2cL,		// LIST, seed word (533D: 4)
-    0xdc5a4d2cL,		// LISTEN, seed word (533D: 6)
+    0x9c5a4d2cL,		// LISTEN, seed word (533D: 6)
     0x512c,		// LIT
     0x2d12c,		// LITE
     0x9d12c,		// LITS
@@ -1469,7 +1469,7 @@ static const uint32_t sList[] =
     0x130d1ec,		// LOTAS
     0x9d1ec,		// LOTS
     0x255ec,		// LOUD
-    0x60005dec,		// LOW, seed word (533D: 3)
+    0x80005decL,		// LOW, seed word (533D: 3)
     0x2ddec,		// LOWE
     0x122ddec,		// LOWER
     0x2722ddec,		// LOWERS
@@ -1497,13 +1497,13 @@ static const uint32_t sList[] =
     0x2b02d,		// MALE
     0xa302d,		// MALT
     0x13a302d,		// MALTS
-    0x6000382d,		// MAN, seed word (533D: 3)
+    0x8000382dL,		// MAN, seed word (533D: 3)
     0x2b82d,		// MANE
     0xf3b82d,		// MANGO
-    0xe457382dL,		// MANNER, seed word (533D: 6)
+    0xa457382dL,		// MANNER, seed word (533D: 6)
     0x7b82d,		// MANO
     0x800cb82dL,		// MANY, seed word (533D: 4)
-    0x6000402d,		// MAP, seed word (533D: 3)
+    0x8000402dL,		// MAP, seed word (533D: 3)
     0x9c02d,		// MAPS
     0x482d,		// MAR
     0x2c82d,		// MARE
@@ -1517,26 +1517,26 @@ static const uint32_t sList[] =
     0xa542d,		// MAUT
     0x5c2d,		// MAW
     0x75c2d,		// MAWN
-    0x6000642d,		// MAY, seed word (533D: 3)
-    0xa051642dL,		// MAYBE, seed word (533D: 5)
+    0x8000642dL,		// MAY, seed word (533D: 3)
+    0x8051642dL,		// MAYBE, seed word (533D: 5)
     0x7e42d,		// MAYO
-    0xa127e42dL,		// MAYOR, seed word (533D: 5)
-    0x400000ad,		// ME, seed word (533D: 2)
+    0x8127e42dL,		// MAYOR, seed word (533D: 5)
+    0x800000adL,		// ME, seed word (533D: 2)
     0x204ad,		// MEAD
     0x604ad,		// MEAL
     0x704ad,		// MEAN
-    0xa14704adL,		// MEANT, seed word (533D: 5)
+    0x814704adL,		// MEANT, seed word (533D: 5)
     0xa04ad,		// MEAT
     0x10ad,		// MED
     0x30ad,		// MEL
     0x230ad,		// MELD
     0x13230ad,		// MELDS
-    0xf247b0adL,		// MELODY, seed word (533D: 6)
+    0xb247b0adL,		// MELODY, seed word (533D: 6)
     0x9b0ad,		// MELS
     0xa30ad,		// MELT
     0x34ad,		// MEM
     0x7b4ad,		// MEMO
-    0x600038ad,		// MEN, seed word (533D: 3)
+    0x800038adL,		// MEN, seed word (533D: 3)
     0x238ad,		// MEND
     0x7b8ad,		// MENO
     0x1a38ad,		// MENTA
@@ -1545,14 +1545,14 @@ static const uint32_t sList[] =
     0xccad,		// MESA
     0x50ad,		// MET
     0xd0ad,		// META
-    0xa0c0d0adL,		// METAL, seed word (533D: 5)
+    0x80c0d0adL,		// METAL, seed word (533D: 5)
     0x5cad,		// MEW
     0x3d0d,		// MHO
     0x9bd0d,		// MHOS
     0x12d,		// MI
     0x28d2d,		// MICE
     0x112d,		// MID
-    0xcac2112dL,		// MIDDLE, seed word (533D: 6)
+    0x8ac2112dL,		// MIDDLE, seed word (533D: 6)
     0x9912d,		// MIDS
     0x7152d,		// MIEN
     0x1d2d,		// MIG
@@ -1569,7 +1569,7 @@ static const uint32_t sList[] =
     0x127b92d,		// MINOR
     0xa392d,		// MINT
     0x285ab92d,		// MINUET
-    0xcb4ab92dL,		// MINUTE, seed word (533D: 6)
+    0x8b4ab92dL,		// MINUTE, seed word (533D: 6)
     0x492d,		// MIR
     0x2c92d,		// MIRE
     0x4d2d,		// MIS
@@ -1587,7 +1587,7 @@ static const uint32_t sList[] =
     0x11ed,		// MOD
     0x291ed,		// MODE
     0xc291ed,		// MODEL
-    0xdd2291edL,		// MODERN, seed word (533D: 6)
+    0x9d2291edL,		// MODERN, seed word (533D: 6)
     0x1ded,		// MOG
     0x31ed,		// MOL
     0xb1ed,		// MOLA
@@ -1601,18 +1601,18 @@ static const uint32_t sList[] =
     0xcb1ed,		// MOLY
     0x35ed,		// MOM
     0x2b5ed,		// MOME
-    0xe8e2b5edL,		// MOMENT, seed word (533D: 6)
+    0xa8e2b5edL,		// MOMENT, seed word (533D: 6)
     0x9b5ed,		// MOMS
     0x13ab5ed,		// MOMUS
     0x39ed,		// MON
     0x5239ed,		// MONDE
-    0xa192b9edL,		// MONEY, seed word (533D: 5)
+    0x8192b9edL,		// MONEY, seed word (533D: 5)
     0x54b9ed,		// MONIE
     0x7b9ed,		// MONO
     0x9b9ed,		// MONS
     0x5a39ed,		// MONTE
     0x8a39ed,		// MONTH
-    0xe68a39edL,		// MONTHS, seed word (533D: 6)
+    0xa68a39edL,		// MONTHS, seed word (533D: 6)
     0xcb9ed,		// MONY
     0x3ded,		// MOO
     0x73ded,		// MOON
@@ -1632,7 +1632,7 @@ static const uint32_t sList[] =
     0x2d1ed,		// MOTE
     0x451ed,		// MOTH
     0x13451ed,		// MOTHS
-    0xdcf4d1edL,		// MOTION, seed word (533D: 6)
+    0x9cf4d1edL,		// MOTION, seed word (533D: 6)
     0x9d1ed,		// MOTS
     0x14755ed,		// MOUNT
     0x5ded,		// MOW
@@ -1673,14 +1673,14 @@ static const uint32_t sList[] =
     0x2482e,		// NARD
     0xcc82e,		// NARY
     0x132d02e,		// NATES
-    0xdcf4d02eL,		// NATION, seed word (533D: 6)
+    0x9cf4d02eL,		// NATION, seed word (533D: 6)
     0x2d82e,		// NAVE
     0x5c2e,		// NAW
     0x642e,		// NAY
     0xae,		// NE
     0x804ae,		// NEAP
     0x800904aeL,		// NEAR, seed word (533D: 4)
-    0xf2c904aeL,		// NEARLY, seed word (533D: 6)
+    0xb2c904aeL,		// NEARLY, seed word (533D: 6)
     0xa04ae,		// NEAT
     0x13a04ae,		// NEATS
     0x8ae,		// NEB
@@ -1697,7 +1697,7 @@ static const uint32_t sList[] =
     0x6d4ae,		// NEUM
     0x2d8ae,		// NEVE
     0x4d8ae,		// NEVI
-    0x60005cae,		// NEW, seed word (533D: 3)
+    0x80005caeL,		// NEW, seed word (533D: 3)
     0xa5cae,		// NEWT
     0x92e,		// NIB
     0x28d2e,		// NICE
@@ -1725,7 +1725,7 @@ static const uint32_t sList[] =
     0xe7d12e,		// NITON
     0x59512e,		// NITRE
     0x9d12e,		// NITS
-    0x400001ee,		// NO, seed word (533D: 2)
+    0x800001eeL,		// NO, seed word (533D: 2)
     0x9ee,		// NOB
     0x11ee,		// NOD
     0x291ee,		// NODE
@@ -1749,7 +1749,7 @@ static const uint32_t sList[] =
     0xb9ee,		// NONA
     0x3dee,		// NOO
     0x2c1ee,		// NOPE
-    0x600049ee,		// NOR, seed word (533D: 3)
+    0x800049eeL,		// NOR, seed word (533D: 3)
     0x4c9ee,		// NORI
     0x6c9ee,		// NORM
     0x856c9ee,		// NORMED
@@ -1758,14 +1758,14 @@ static const uint32_t sList[] =
     0x42cdee,		// NOSED
     0x132cdee,		// NOSES
     0x44dee,		// NOSH
-    0x600051ee,		// NOT, seed word (533D: 3)
+    0x800051eeL,		// NOT, seed word (533D: 3)
     0xd1ee,		// NOTA
     0x2d1ee,		// NOTE
     0x132d1ee,		// NOTES
-    0xca34d1eeL,		// NOTICE, seed word (533D: 6)
+    0x8a34d1eeL,		// NOTICE, seed word (533D: 6)
     0xdad1ee,		// NOTUM
     0x9d5ee,		// NOUS
-    0x60005dee,		// NOW, seed word (533D: 3)
+    0x80005deeL,		// NOW, seed word (533D: 3)
     0x9ddee,		// NOWS
     0xa5dee,		// NOWT
     0x228e,		// NTH
@@ -1787,8 +1787,8 @@ static const uint32_t sList[] =
     0x244f,		// OBI
     0xa44f,		// OBIA
     0xa244f,		// OBIT
-    0xca74b04fL,		// OBLIGE, seed word (533D: 6)
-    0xdc90d04fL,		// OBTAIN, seed word (533D: 6)
+    0x8a74b04fL,		// OBLIGE, seed word (533D: 6)
+    0x9c90d04fL,		// OBTAIN, seed word (533D: 6)
     0x46f,		// OCA
     0x9846f,		// OCAS
     0xe0d06f,		// OCTAN
@@ -1805,18 +1805,18 @@ static const uint32_t sList[] =
     0x18cf,		// OFF
     0x12298cf,		// OFFER
     0x50cf,		// OFT
-    0xa0e2d0cfL,		// OFTEN, seed word (533D: 5)
+    0x80e2d0cfL,		// OFTEN, seed word (533D: 5)
     0x122d0cf,		// OFTER
     0x684ef,		// OGAM
     0x2b0ef,		// OGLE
     0x2c8ef,		// OGRE
-    0x4000010f,		// OH, seed word (533D: 2)
+    0x8000010fL,		// OH, seed word (533D: 2)
     0x350f,		// OHM
     0x9b50f,		// OHMS
     0x3d0f,		// OHO
     0x4d0f,		// OHS
     0x312f,		// OIL
-    0x6000118f,		// OLD, seed word (533D: 3)
+    0x8000118fL,		// OLD, seed word (533D: 3)
     0x122918f,		// OLDER
     0x9918f,		// OLDS
     0xc918f,		// OLDY
@@ -1831,7 +1831,7 @@ static const uint32_t sList[] =
     0x4daf,		// OMS
     0x1cf,		// ON
     0x28dcf,		// ONCE
-    0x600015cf,		// ONE, seed word (533D: 3)
+    0x800015cfL,		// ONE, seed word (533D: 3)
     0x995cf,		// ONES
     0x4dcf,		// ONS
     0x142cdcf,		// ONSET
@@ -1865,7 +1865,7 @@ static const uint32_t sList[] =
     0x26f,		// OS
     0x166f,		// OSE
     0x9966f,		// OSES
-    0xa122a28fL,		// OTHER, seed word (533D: 5)
+    0x8122a28fL,		// OTHER, seed word (533D: 5)
     0x1a68f,		// OTIC
     0x12af,		// OUD
     0x992af,		// OUDS
@@ -1887,7 +1887,7 @@ static const uint32_t sList[] =
     0x30f,		// OX
     0x7170f,		// OXEN
     0x670f,		// OXY
-    0xdc53e70fL,		// OXYGEN, seed word (533D: 6)
+    0x9c53e70fL,		// OXYGEN, seed word (533D: 6)
     0x32f,		// OY
     0x30,		// PA
     0xc30,		// PAC
@@ -1904,7 +1904,7 @@ static const uint32_t sList[] =
     0x1362430,		// PAILS
     0x72430,		// PAIN
     0x1372430,		// PAINS
-    0xa1472430L,		// PAINT, seed word (533D: 5)
+    0x81472430L,		// PAINT, seed word (533D: 5)
     0x92430,		// PAIR
     0x3030,		// PAL
     0x2b030,		// PALE
@@ -1923,7 +1923,7 @@ static const uint32_t sList[] =
     0x924830,		// PARDI
     0x9c830,		// PARS
     0x800a4830L,		// PART, seed word (533D: 4)
-    0xa19a4830L,		// PARTY, seed word (533D: 5)
+    0x819a4830L,		// PARTY, seed word (533D: 5)
     0x4c30,		// PAS
     0x2cc30,		// PASE
     0x44c30,		// PASH
@@ -1933,7 +1933,7 @@ static const uint32_t sList[] =
     0xe4d030,		// PATIN
     0x9d030,		// PATS
     0xcd030,		// PATY
-    0x60006430,		// PAY, seed word (533D: 3)
+    0x80006430L,		// PAY, seed word (533D: 3)
     0xb0,		// PE
     0x4b0,		// PEA
     0x584b0,		// PEAK
@@ -1954,9 +1954,9 @@ static const uint32_t sList[] =
     0x73cb0,		// PEON
     0x40b0,		// PEP
     0x7c0b0,		// PEPO
-    0x600048b0,		// PER, seed word (533D: 3)
+    0x800048b0L,		// PER, seed word (533D: 3)
     0x4c8b0,		// PERI
-    0xc8f4c8b0L,		// PERIOD, seed word (533D: 6)
+    0x88f4c8b0L,		// PERIOD, seed word (533D: 6)
     0xa48b0,		// PERT
     0x4cb0,		// PES
     0x50b0,		// PET
@@ -1989,11 +1989,11 @@ static const uint32_t sList[] =
     0x44d30,		// PISH
     0x5130,		// PIT
     0xd130,		// PITA
-    0xa0518590L,		// PLACE, seed word (533D: 5)
+    0x80518590L,		// PLACE, seed word (533D: 5)
     0xe48590,		// PLAIN
-    0xe6e48590L,		// PLAINS, seed word (533D: 6)
+    0xa6e48590L,		// PLAINS, seed word (533D: 6)
     0x70590,		// PLAN
-    0xa0570590L,		// PLANE, seed word (533D: 5)
+    0x80570590L,		// PLANE, seed word (533D: 5)
     0x1370590,		// PLANS
     0x800c8590L,		// PLAY, seed word (533D: 4)
     0x9590,		// PLEA
@@ -2010,7 +2010,7 @@ static const uint32_t sList[] =
     0x25f0,		// POI
     0x31f0,		// POL
     0x2b1f0,		// POLE
-    0xca34b1f0L,		// POLICE, seed word (533D: 6)
+    0x8a34b1f0L,		// POLICE, seed word (533D: 6)
     0xcb1f0,		// POLY
     0x35f0,		// POM
     0x2b5f0,		// POME
@@ -2024,18 +2024,18 @@ static const uint32_t sList[] =
     0x42c9f0,		// PORED
     0x44df0,		// POSH
     0x4755f0,		// POUND
-    0xe64755f0L,		// POUNDS, seed word (533D: 6)
+    0xa64755f0L,		// POUNDS, seed word (533D: 6)
     0xa0650,		// PRAT
     0xc8650,		// PRAY
     0x81650,		// PREP
-    0xf34a1650L,		// PRETTY, seed word (533D: 6)
+    0xb34a1650L,		// PRETTY, seed word (533D: 6)
     0xc9650,		// PREY
     0x522650,		// PRIDE
     0x42a650,		// PRIED
     0x3e50,		// PRO
     0x23e50,		// PROD
     0x83e50,		// PROP
-    0xe4583e50L,		// PROPER, seed word (533D: 6)
+    0xa4583e50L,		// PROPER, seed word (533D: 6)
     0x6650,		// PRY
     0x4a9670,		// PSEUD
     0x2670,		// PSI
@@ -2045,13 +2045,13 @@ static const uint32_t sList[] =
     0x2b2b0,		// PULE
     0x42b2b0,		// PULED
     0x632b0,		// PULL
-    0xc85632b0L,		// PULLED, seed word (533D: 6)
+    0x885632b0L,		// PULLED, seed word (533D: 6)
     0x3ab0,		// PUN
     0x9bab0,		// PUNS
     0x4eb0,		// PUS
     0x44eb0,		// PUSH
-    0xc8544eb0L,		// PUSHED, seed word (533D: 6)
-    0x600052b0,		// PUT, seed word (533D: 3)
+    0x88544eb0L,		// PUSHED, seed word (533D: 6)
+    0x800052b0L,		// PUT, seed word (533D: 3)
     0x730,		// PYA
     0x1730,		// PYE
     0x2cb30,		// PYRE
@@ -2073,7 +2073,7 @@ static const uint32_t sList[] =
     0x3432,		// RAM
     0x4b432,		// RAMI
     0x54b432,		// RAMIE
-    0x60003832,		// RAN, seed word (533D: 3)
+    0x80003832L,		// RAN, seed word (533D: 3)
     0x23832,		// RAND
     0x3b832,		// RANG
     0x53b832,		// RANGE
@@ -2081,7 +2081,7 @@ static const uint32_t sList[] =
     0x4b832,		// RANI
     0xa3832,		// RANT
     0x4032,		// RAP
-    0xa044c032L,		// RAPID, seed word (533D: 5)
+    0x8044c032L,		// RAPID, seed word (533D: 5)
     0x9c032,		// RAPS
     0xa4032,		// RAPT
     0x2c832,		// RARE
@@ -2096,7 +2096,7 @@ static const uint32_t sList[] =
     0x122d032,		// RATER
     0x45032,		// RATH
     0x545032,		// RATHE
-    0xe4545032L,		// RATHER, seed word (533D: 6)
+    0xa4545032L,		// RATHER, seed word (533D: 6)
     0x2d832,		// RAVE
     0xc2d832,		// RAVEL
     0x122d832,		// RAVER
@@ -2108,22 +2108,22 @@ static const uint32_t sList[] =
     0x42e432,		// RAYED
     0x9e432,		// RAYS
     0xb2,		// RE
-    0xa08184b2L,		// REACH, seed word (533D: 5)
+    0x808184b2L,		// REACH, seed word (533D: 5)
     0x800204b2L,		// READ, seed word (533D: 4)
-    0xa19204b2L,		// READY, seed word (533D: 5)
+    0x819204b2L,		// READY, seed word (533D: 5)
     0x800604b2L,		// REAL, seed word (533D: 4)
-    0xf2c604b2L,		// REALLY, seed word (533D: 6)
+    0xb2c604b2L,		// REALLY, seed word (533D: 6)
     0x684b2,		// REAM
     0x904b2,		// REAR
     0x8b2,		// REB
     0x4488b2,		// REBID
     0xcb2,		// REC
     0xe78cb2,		// RECON
-    0xc9278cb2L,		// RECORD, seed word (533D: 6)
+    0x89278cb2L,		// RECORD, seed word (533D: 6)
     0x98cb2,		// RECS
     0x9a0cb2,		// RECTI
     0xb3a8cb2,		// RECUSE
-    0x600010b2,		// RED, seed word (533D: 3)
+    0x800010b2L,		// RED, seed word (533D: 3)
     0xe090b2,		// REDAN
     0x290b2,		// REDE
     0x13290b2,		// REDES
@@ -2146,11 +2146,11 @@ static const uint32_t sList[] =
     0x8e498b2,		// REFIND
     0x998b2,		// REFS
     0xa18b2,		// REFT
-    0xcb3a98b2L,		// REFUSE, seed word (533D: 6)
+    0x8b3a98b2L,		// REFUSE, seed word (533D: 6)
     0x1cb2,		// REG
     0xc09cb2,		// REGAL
-    0xc9209cb2L,		// REGARD, seed word (533D: 6)
-    0xdcf49cb2L,		// REGION, seed word (533D: 6)
+    0x89209cb2L,		// REGARD, seed word (533D: 6)
+    0x9cf49cb2L,		// REGION, seed word (533D: 6)
     0x171cb2,		// REGNA
     0x24b2,		// REI
     0x324b2,		// REIF
@@ -2158,10 +2158,10 @@ static const uint32_t sList[] =
     0x724b2,		// REIN
     0x9a4b2,		// REIS
     0x190b0b2,		// RELAY
-    0xcc54b0b2L,		// RELIEF, seed word (533D: 6)
+    0x8c54b0b2L,		// RELIEF, seed word (533D: 6)
     0xcb0b2,		// RELY
     0x34b2,		// REM
-    0xdc90b4b2L,		// REMAIN, seed word (533D: 6)
+    0x9c90b4b2L,		// REMAIN, seed word (533D: 6)
     0xe0b4b2,		// REMAN
     0xc0b8b2,		// RENAL
     0x238b2,		// REND
@@ -2192,7 +2192,7 @@ static const uint32_t sList[] =
     0x54d0b2,		// RETIE
     0xae4d0b2,		// RETINE
     0x9d0b2,		// RETS
-    0xdd2ad0b2L,		// RETURN, seed word (533D: 6)
+    0x9d2ad0b2L,		// RETURN, seed word (533D: 6)
     0x59d4b2,		// REUSE
     0x58b2,		// REV
     0xe4dcb2,		// REWIN
@@ -2250,7 +2250,7 @@ static const uint32_t sList[] =
     0x2b1f2,		// ROLE
     0x132b1f2,		// ROLES
     0x631f2,		// ROLL
-    0xc85631f2L,		// ROLLED, seed word (533D: 6)
+    0x885631f2L,		// ROLLED, seed word (533D: 6)
     0x35f2,		// ROM
     0x23df2,		// ROOD
     0xa3df2,		// ROOT
@@ -2267,11 +2267,11 @@ static const uint32_t sList[] =
     0x9d1f2,		// ROTS
     0x2d5f2,		// ROUE
     0x132d5f2,		// ROUES
-    0xa04755f2L,		// ROUND, seed word (533D: 5)
+    0x804755f2L,		// ROUND, seed word (533D: 5)
     0x59d5f2,		// ROUSE
     0xa55f2,		// ROUT
     0x8a55f2,		// ROUTH
-    0x60005df2,		// ROW, seed word (533D: 3)
+    0x80005df2L,		// ROW, seed word (533D: 3)
     0x42ddf2,		// ROWED
     0xc2ddf2,		// ROWEL
     0x26c2ddf2,		// ROWELS
@@ -2290,7 +2290,7 @@ static const uint32_t sList[] =
     0x1eb2,		// RUG
     0x726b2,		// RUIN
     0x7726b2,		// RUING
-    0x60003ab2,		// RUN, seed word (533D: 3)
+    0x80003ab2L,		// RUN, seed word (533D: 3)
     0x2bab2,		// RUNE
     0x3bab2,		// RUNG
     0xa3ab2,		// RUNT
@@ -2312,7 +2312,7 @@ static const uint32_t sList[] =
     0x72433,		// SAIN
     0x2ac33,		// SAKE
     0x3033,		// SAL
-    0xf320b033L,		// SALARY, seed word (533D: 6)
+    0xb320b033L,		// SALARY, seed word (533D: 6)
     0x2b033,		// SALE
     0x83033,		// SALP
     0xa3033,		// SALT
@@ -2321,30 +2321,30 @@ static const uint32_t sList[] =
     0x23833,		// SAND
     0x2b833,		// SANE
     0x4033,		// SAP
-    0x60005033,		// SAT, seed word (533D: 3)
+    0x80005033L,		// SAT, seed word (533D: 3)
     0x2d033,		// SATE
     0x1c52d033,		// SATEEN
     0x5433,		// SAU
-    0x60005c33,		// SAW, seed word (533D: 3)
-    0x60006433,		// SAY, seed word (533D: 3)
-    0xa0560473L,		// SCALE, seed word (533D: 5)
+    0x80005c33L,		// SAW, seed word (533D: 3)
+    0x80006433L,		// SAY, seed word (533D: 3)
+    0x80560473L,		// SCALE, seed word (533D: 5)
     0x580473,		// SCAPE
     0xa0473,		// SCAT
     0x471473,		// SCEND
-    0xd8f7a073L,		// SCHOOL, seed word (533D: 6)
+    0x98f7a073L,		// SCHOOL, seed word (533D: 6)
     0x573c73,		// SCONE
-    0xa0593c73L,		// SCORE, seed word (533D: 5)
+    0x80593c73L,		// SCORE, seed word (533D: 5)
     0xa3c73,		// SCOT
     0x12abc73,		// SCOUR
     0x52c873,		// SCREE
-    0x600004b3,		// SEA, seed word (533D: 3)
+    0x800004b3L,		// SEA, seed word (533D: 3)
     0x604b3,		// SEAL
     0x684b3,		// SEAM
     0x800a04b3L,		// SEAT, seed word (533D: 4)
     0xcb3,		// SEC
-    0xc8e78cb3L,		// SECOND, seed word (533D: 6)
+    0x88e78cb3L,		// SECOND, seed word (533D: 6)
     0xa0cb3,		// SECT
-    0xcb2a8cb3L,		// SECURE, seed word (533D: 6)
+    0x8b2a8cb3L,		// SECURE, seed word (533D: 6)
     0x12290b3,		// SEDER
     0x14b3,		// SEE
     0x214b3,		// SEED
@@ -2357,12 +2357,12 @@ static const uint32_t sList[] =
     0x324b3,		// SEIF
     0x9a4b3,		// SEIS
     0x30b3,		// SEL
-    0xe832b0b3L,		// SELECT, seed word (533D: 6)
+    0xa832b0b3L,		// SELECT, seed word (533D: 6)
     0x330b3,		// SELF
     0x9b0b3,		// SELS
     0x4b4b3,		// SEMI
     0x38b3,		// SEN
-    0xcb40b8b3L,		// SENATE, seed word (533D: 6)
+    0x8b40b8b3L,		// SENATE, seed word (533D: 6)
     0x238b3,		// SEND
     0x2b8b3,		// SENE
     0x93b8b3,		// SENGI
@@ -2387,10 +2387,10 @@ static const uint32_t sList[] =
     0x113,		// SH
     0x513,		// SHA
     0x20513,		// SHAD
-    0xa0580513L,		// SHAPE, seed word (533D: 5)
-    0xa1090513L,		// SHARP, seed word (533D: 5)
+    0x80580513L,		// SHAPE, seed word (533D: 5)
+    0x81090513L,		// SHARP, seed word (533D: 5)
     0xb8513,		// SHAW
-    0x60001513,		// SHE, seed word (533D: 3)
+    0x80001513L,		// SHE, seed word (533D: 3)
     0x9513,		// SHEA
     0x21513,		// SHED
     0xb9513,		// SHEW
@@ -2405,12 +2405,12 @@ static const uint32_t sList[] =
     0xc7bd13,		// SHOOL
     0x80083d13L,		// SHOP, seed word (533D: 4)
     0x593d13,		// SHORE
-    0xa1493d13L,		// SHORT, seed word (533D: 5)
+    0x81493d13L,		// SHORT, seed word (533D: 5)
     0xa3d13,		// SHOT
     0x5a3d13,		// SHOTE
-    0xc8cabd13L,		// SHOULD, seed word (533D: 6)
+    0x88cabd13L,		// SHOULD, seed word (533D: 6)
     0xbbd13,		// SHOW
-    0xa0ebbd13L,		// SHOWN, seed word (533D: 5)
+    0x80ebbd13L,		// SHOWN, seed word (533D: 5)
     0x65513,		// SHUL
     0x133,		// SI
     0x60533,		// SIAL
@@ -2427,30 +2427,30 @@ static const uint32_t sList[] =
     0xa3133,		// SILT
     0x3533,		// SIM
     0x83533,		// SIMP
-    0xcac83533L,		// SIMPLE, seed word (533D: 6)
+    0x8ac83533L,		// SIMPLE, seed word (533D: 6)
     0x3933,		// SIN
     0x51b933,		// SINCE
     0x2b933,		// SINE
     0x3b933,		// SING
     0x53b933,		// SINGE
     0x853b933,		// SINGED
-    0xcac3b933L,		// SINGLE, seed word (533D: 6)
+    0x8ac3b933L,		// SINGLE, seed word (533D: 6)
     0x43933,		// SINH
     0x4133,		// SIP
     0x2c133,		// SIPE
-    0x60004933,		// SIR, seed word (533D: 3)
+    0x80004933L,		// SIR, seed word (533D: 3)
     0x2c933,		// SIRE
     0x42c933,		// SIRED
     0x52c933,		// SIREE
     0x132c933,		// SIRES
     0x9c933,		// SIRS
     0x4d33,		// SIS
-    0xe45a4d33L,		// SISTER, seed word (533D: 6)
-    0x60005133,		// SIT, seed word (533D: 3)
+    0xa45a4d33L,		// SISTER, seed word (533D: 6)
+    0x80005133L,		// SIT, seed word (533D: 3)
     0x2d133,		// SITE
     0x132d133,		// SITES
     0x9d133,		// SITS
-    0x60006133,		// SIX, seed word (533D: 3)
+    0x80006133L,		// SIX, seed word (533D: 3)
     0x573,		// SKA
     0x81573,		// SKEP
     0xe48593,		// SLAIN
@@ -2464,7 +2464,7 @@ static const uint32_t sList[] =
     0x1429593,		// SLEET
     0xb9593,		// SLEW
     0x22593,		// SLID
-    0xa0522593L,		// SLIDE, seed word (533D: 5)
+    0x80522593L,		// SLIDE, seed word (533D: 5)
     0x6a593,		// SLIM
     0x56a593,		// SLIME
     0x856a593,		// SLIMED
@@ -2476,14 +2476,14 @@ static const uint32_t sList[] =
     0x132bd93,		// SLOES
     0xa3d93,		// SLOT
     0xbbd93,		// SLOW
-    0xe45bbd93L,		// SLOWER, seed word (533D: 6)
+    0xa45bbd93L,		// SLOWER, seed word (533D: 6)
     0x2d593,		// SLUE
     0x132d593,		// SLUES
     0x6593,		// SLY
     0x14605b3,		// SMALT
     0x1f4605b3,		// SMALTO
     0x5625b3,		// SMILE
-    0xc85625b3L,		// SMILED, seed word (533D: 6)
+    0x885625b3L,		// SMILED, seed word (533D: 6)
     0x1463db3,		// SMOLT
     0xc485d3,		// SNAIL
     0x805d3,		// SNAP
@@ -2495,7 +2495,7 @@ static const uint32_t sList[] =
     0x1493dd3,		// SNORT
     0xa3dd3,		// SNOT
     0x800bbdd3L,		// SNOW, seed word (533D: 4)
-    0x400001f3,		// SO, seed word (533D: 2)
+    0x800001f3L,		// SO, seed word (533D: 2)
     0x560df3,		// SOCLE
     0x11f3,		// SOD
     0x99f3,		// SOFA
@@ -2509,7 +2509,7 @@ static const uint32_t sList[] =
     0x7b1f3,		// SOLO
     0x9b1f3,		// SOLS
     0xb5f3,		// SOMA
-    0x600039f3,		// SON, seed word (533D: 3)
+    0x800039f3L,		// SON, seed word (533D: 3)
     0x5239f3,		// SONDE
     0x2b9f3,		// SONE
     0x132b9f3,		// SONES
@@ -2526,7 +2526,7 @@ static const uint32_t sList[] =
     0x451f3,		// SOTH
     0x55f3,		// SOU
     0x655f3,		// SOUL
-    0xa04755f3L,		// SOUND, seed word (533D: 5)
+    0x804755f3L,		// SOUND, seed word (533D: 5)
     0x855f3,		// SOUP
     0x955f3,		// SOUR
     0xa3955f3,		// SOURCE
@@ -2535,14 +2535,14 @@ static const uint32_t sList[] =
     0x75df3,		// SOWN
     0x65f3,		// SOY
     0x613,		// SPA
-    0xa0518613L,		// SPACE, seed word (533D: 5)
+    0x80518613L,		// SPACE, seed word (533D: 5)
     0x28613,		// SPAE
     0xc48613,		// SPAIL
     0x558613,		// SPAKE
     0x70613,		// SPAN
     0x90613,		// SPAR
     0xa0613,		// SPAT
-    0xa0b09613L,		// SPEAK, seed word (533D: 5)
+    0x80b09613L,		// SPEAK, seed word (533D: 5)
     0x19613,		// SPEC
     0x21613,		// SPED
     0xc49613,		// SPEIL
@@ -2558,11 +2558,11 @@ static const uint32_t sList[] =
     0x9a653,		// SRIS
     0x38693,		// STAG
     0x560693,		// STALE
-    0xa1068693L,		// STAMP, seed word (533D: 5)
+    0x81068693L,		// STAMP, seed word (533D: 5)
     0x570693,		// STANE
     0xc09693,		// STEAL
     0x429693,		// STEED
-    0xa0c29693L,		// STEEL, seed word (533D: 5)
+    0x80c29693L,		// STEEL, seed word (533D: 5)
     0x1229693,		// STEER
     0xe49693,		// STEIN
     0x161693,		// STELA
@@ -2577,29 +2577,29 @@ static const uint32_t sList[] =
     0x92693,		// STIR
     0x1392693,		// STIRS
     0xbe93,		// STOA
-    0xa0563e93L,		// STOLE, seed word (533D: 5)
+    0x80563e93L,		// STOLE, seed word (533D: 5)
     0x16be93,		// STOMA
     0x1816be93,		// STOMAL
-    0xa0573e93L,		// STONE, seed word (533D: 5)
-    0xa0593e93L,		// STORE, seed word (533D: 5)
-    0xa1993e93L,		// STORY, seed word (533D: 5)
-    0xe852ca93L,		// STREET, seed word (533D: 6)
-    0xcee4ca93L,		// STRING, seed word (533D: 6)
-    0xcee7ca93L,		// STRONG, seed word (533D: 6)
+    0x80573e93L,		// STONE, seed word (533D: 5)
+    0x80593e93L,		// STORE, seed word (533D: 5)
+    0x81993e93L,		// STORY, seed word (533D: 5)
+    0xa852ca93L,		// STREET, seed word (533D: 6)
+    0x8ee4ca93L,		// STRING, seed word (533D: 6)
+    0x8ee7ca93L,		// STRONG, seed word (533D: 6)
     0x197ca93,		// STROY
     0x6693,		// STY
     0x590eb3,		// SUCRE
     0x212b3,		// SUDD
-    0xdc5212b3L,		// SUDDEN, seed word (533D: 6)
+    0x9c5212b3L,		// SUDDEN, seed word (533D: 6)
     0x16b3,		// SUE
     0x216b3,		// SUED
     0x916b3,		// SUER
     0x996b3,		// SUES
-    0xe4531ab3L,		// SUFFER, seed word (533D: 6)
-    0x600036b3,		// SUM, seed word (533D: 3)
-    0xdcf6b6b3L,		// SUMMON, seed word (533D: 6)
+    0xa4531ab3L,		// SUFFER, seed word (533D: 6)
+    0x800036b3L,		// SUM, seed word (533D: 3)
+    0x9cf6b6b3L,		// SUMMON, seed word (533D: 6)
     0x7b6b3,		// SUMO
-    0x60003ab3,		// SUN, seed word (533D: 3)
+    0x80003ab3L,		// SUN, seed word (533D: 3)
     0x9bab3,		// SUNS
     0x42b3,		// SUP
     0x2c2b3,		// SUPE
@@ -2609,7 +2609,7 @@ static const uint32_t sList[] =
     0x593ef3,		// SWORE
     0x34,		// TA
     0x834,		// TAB
-    0xa0560834L,		// TABLE, seed word (533D: 5)
+    0x80560834L,		// TABLE, seed word (533D: 5)
     0xa8834,		// TABU
     0x28c34,		// TACE
     0x40c34,		// TACH
@@ -2656,10 +2656,10 @@ static const uint32_t sList[] =
     0x5834,		// TAV
     0x5c34,		// TAW
     0x122dc34,		// TAWER
-    0x60006034,		// TAX, seed word (533D: 3)
+    0x80006034L,		// TAX, seed word (533D: 3)
     0x122e034,		// TAXER
     0x4b4,		// TEA
-    0xa08184b4L,		// TEACH, seed word (533D: 5)
+    0x808184b4L,		// TEACH, seed word (533D: 5)
     0x584b4,		// TEAK
     0x604b4,		// TEAL
     0x13604b4,		// TEALS
@@ -2685,7 +2685,7 @@ static const uint32_t sList[] =
     0x132b0b4,		// TELES
     0x137b0b4,		// TELOS
     0x9b0b4,		// TELS
-    0x600038b4,		// TEN, seed word (533D: 3)
+    0x800038b4L,		// TEN, seed word (533D: 3)
     0x238b4,		// TEND
     0x9b8b4,		// TENS
     0x59b8b4,		// TENSE
@@ -2702,18 +2702,18 @@ static const uint32_t sList[] =
     0x9d0b4,		// TETS
     0x5cb4,		// TEW
     0x28514,		// THAE
-    0x60001514,		// THE, seed word (533D: 3)
+    0x80001514L,		// THE, seed word (533D: 3)
     0x119514,		// THECA
     0x29514,		// THEE
     0xe39514,		// THEGN
-    0xa1249514L,		// THEIR, seed word (533D: 5)
+    0x81249514L,		// THEIR, seed word (533D: 5)
     0x71514,		// THEN
     0x591514,		// THERE
     0xb9514,		// THEW
     0x83a514,		// THIGH
     0x92514,		// THIR
     0x3d14,		// THO
-    0xa059bd14L,		// THOSE, seed word (533D: 5)
+    0x8059bd14L,		// THOSE, seed word (533D: 5)
     0xabd14,		// THOU
     0x52c914,		// THREE
     0x7c914,		// THRO
@@ -2754,7 +2754,7 @@ static const uint32_t sList[] =
     0x205f4,		// TOAD
     0x19205f4,		// TOADY
     0x11f4,		// TOD
-    0xa19091f4L,		// TODAY, seed word (533D: 5)
+    0x819091f4L,		// TODAY, seed word (533D: 5)
     0xc91f4,		// TODY
     0x15f4,		// TOE
     0x995f4,		// TOES
@@ -2797,11 +2797,11 @@ static const uint32_t sList[] =
     0x65f4,		// TOY
     0x9e5f4,		// TOYS
     0x20654,		// TRAD
-    0xa0520654L,		// TRADE, seed word (533D: 5)
-    0xa0e48654L,		// TRAIN, seed word (533D: 5)
+    0x80520654L,		// TRADE, seed word (533D: 5)
+    0x80e48654L,		// TRAIN, seed word (533D: 5)
     0x80654,		// TRAP
     0x5b0654,		// TRAVE
-    0xd85b0654L,		// TRAVEL, seed word (533D: 6)
+    0x985b0654L,		// TRAVEL, seed word (533D: 6)
     0xc8654,		// TRAY
     0x409654,		// TREAD
     0x29654,		// TREE
@@ -2848,7 +2848,7 @@ static const uint32_t sList[] =
     0x726f4,		// TWIN
     0x5726f4,		// TWINE
     0x245726f4,		// TWINER
-    0x60003ef4,		// TWO, seed word (533D: 3)
+    0x80003ef4L,		// TWO, seed word (533D: 3)
     0x1734,		// TYE
     0x91734,		// TYER
     0x2c334,		// TYPE
@@ -2863,12 +2863,12 @@ static const uint32_t sList[] =
     0x35b5,		// UMM
     0x1d5,		// UN
     0x291d5,		// UNDE
-    0xa12291d5L,		// UNDER, seed word (533D: 5)
+    0x812291d5L,		// UNDER, seed word (533D: 5)
     0x791d5,		// UNDO
     0x9249dd5,		// UNGIRD
     0xa25d5,		// UNIT
     0x5a25d5,		// UNITE
-    0xe732b1d5L,		// UNLESS, seed word (533D: 6)
+    0xa732b1d5L,		// UNLESS, seed word (533D: 6)
     0x142b5d5,		// UNMET
     0x74c9d5,		// UNRIG
     0x4dd5,		// UNS
@@ -2884,7 +2884,7 @@ static const uint32_t sList[] =
     0x29e55,		// URGE
     0x3a55,		// URN
     0x275,		// US
-    0x60001675,		// USE, seed word (533D: 3)
+    0x80001675L,		// USE, seed word (533D: 3)
     0x21675,		// USED
     0x91675,		// USER
     0x99675,		// USES
@@ -2896,7 +2896,7 @@ static const uint32_t sList[] =
     0x92436,		// VAIR
     0x2b036,		// VALE
     0x142b036,		// VALET
-    0xf2563036L,		// VALLEY, seed word (533D: 6)
+    0xb2563036L,		// VALLEY, seed word (533D: 6)
     0x3836,		// VAN
     0x2b836,		// VANE
     0x4836,		// VAR
@@ -2929,14 +2929,14 @@ static const uint32_t sList[] =
     0x1437,		// WAE
     0xcb037,		// WALY
     0x3837,		// WAN
-    0x60004837,		// WAR, seed word (533D: 3)
+    0x80004837L,		// WAR, seed word (533D: 3)
     0x2c837,		// WARE
     0xa4837,		// WART
     0x4c37,		// WAS
     0x80044c37L,		// WASH, seed word (533D: 4)
     0x5037,		// WAT
-    0xa122d037L,		// WATER, seed word (533D: 5)
-    0x60006437,		// WAY, seed word (533D: 3)
+    0x8122d037L,		// WATER, seed word (533D: 5)
+    0x80006437L,		// WAY, seed word (533D: 3)
     0x9e437,		// WAYS
     0xb7,		// WE
     0x800904b7L,		// WEAR, seed word (533D: 4)
@@ -2945,7 +2945,7 @@ static const uint32_t sList[] =
     0x614b7,		// WEEL
     0x994b7,		// WEES
     0x83a4b7,		// WEIGH
-    0xe883a4b7L,		// WEIGHT, seed word (533D: 6)
+    0xa883a4b7L,		// WEIGHT, seed word (533D: 6)
     0x924b7,		// WEIR
     0x630b7,		// WELL
     0x19630b7,		// WELLY
@@ -2958,19 +2958,19 @@ static const uint32_t sList[] =
     0x517,		// WHA
     0x29517,		// WHEE
     0xc29517,		// WHEEL
-    0xe6c29517L,		// WHEELS, seed word (533D: 6)
+    0xa6c29517L,		// WHEELS, seed word (533D: 6)
     0xa1517,		// WHET
     0x3a517,		// WHIG
     0xa2517,		// WHIT
     0x5a2517,		// WHITE
-    0x60003d17,		// WHO, seed word (533D: 3)
+    0x80003d17L,		// WHO, seed word (533D: 3)
     0x1493d17,		// WHORT
-    0xa059bd17L,		// WHOSE, seed word (533D: 5)
+    0x8059bd17L,		// WHOSE, seed word (533D: 5)
     0x1d37,		// WIG
     0x1441d37,		// WIGHT
     0x3937,		// WIN
     0x2b937,		// WINE
-    0xe45a3937L,		// WINTER, seed word (533D: 6)
+    0xa45a3937L,		// WINTER, seed word (533D: 6)
     0x2c937,		// WIRE
     0x5137,		// WIT
     0x2d137,		// WITE
@@ -2979,10 +2979,10 @@ static const uint32_t sList[] =
     0x1f7,		// WO
     0x15f7,		// WOE
     0x995f7,		// WOES
-    0xa0e0b5f7L,		// WOMAN, seed word (533D: 5)
-    0xa0e2b5f7L,		// WOMEN, seed word (533D: 5)
+    0x80e0b5f7L,		// WOMAN, seed word (533D: 5)
+    0x80e2b5f7L,		// WOMEN, seed word (533D: 5)
     0x39f7,		// WON
-    0xe45239f7L,		// WONDER, seed word (533D: 6)
+    0xa45239f7L,		// WONDER, seed word (533D: 6)
     0x9b9f7,		// WONS
     0xa39f7,		// WONT
     0x249f7,		// WORD
@@ -2990,13 +2990,13 @@ static const uint32_t sList[] =
     0x749f7,		// WORN
     0x59c9f7,		// WORSE
     0xa49f7,		// WORT
-    0xa08a49f7L,		// WORTH, seed word (533D: 5)
+    0x808a49f7L,		// WORTH, seed word (533D: 5)
     0x4df7,		// WOS
     0x51f7,		// WOT
     0x71657,		// WREN
     0xa2657,		// WRIT
     0x5a2657,		// WRITE
-    0xa05a3e57L,		// WROTE, seed word (533D: 5)
+    0x805a3e57L,		// WROTE, seed word (533D: 5)
     0x8a3e57,		// WROTH
     0x1737,		// WYE
     0x2b337,		// WYLE
@@ -3023,12 +3023,12 @@ static const uint32_t sList[] =
     0x984b9,		// YEAS
     0x230b9,		// YELD
     0x630b9,		// YELL
-    0xeef630b9L,		// YELLOW, seed word (533D: 6)
+    0xaef630b9L,		// YELLOW, seed word (533D: 6)
     0x830b9,		// YELP
     0x38b9,		// YEN
     0x40b9,		// YEP
     0x4cb9,		// YES
-    0x600050b9,		// YET, seed word (533D: 3)
+    0x800050b9L,		// YET, seed word (533D: 3)
     0xa50b9,		// YETT
     0x5cb9,		// YEW
     0x1139,		// YID
@@ -3061,7 +3061,7 @@ bool PrototypeWordList::pickWord(char* buffer)
     do
     {
         // if the 3 seed word bits are set to this num cubes
-        if (((sList[i] >> 29) & 0x7) == NUM_CUBES)
+        if (((sList[i] >> 31)))
         {
             char word[MAX_LETTERS_PER_WORD + 1];
             if (!bitsToString(sList[i], word))
@@ -3070,9 +3070,11 @@ bool PrototypeWordList::pickWord(char* buffer)
                 return false;
             }
 
-            ASSERT(strlen(word) == MAX_LETTERS_PER_WORD);
-            strcpy(buffer, word);
-            return true;
+            if (strlen(word) == MAX_LETTERS_PER_WORD)
+            {
+                strcpy(buffer, word);
+                return true;
+            }
         }
         i = (i + 1) % numWords;
     } while (i != startIndex);

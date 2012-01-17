@@ -22,15 +22,8 @@ Dictionary::Dictionary()
 bool Dictionary::pickWord(char* buffer)
 {
     ASSERT(buffer);
-    if (sRound < DEMO_MAX_DETERMINISTIC_ROUNDS)
-    {
-        // TODO remove demo code
-        sRandSeed += WORD_RAND_SEED_INCREMENT;
-        WordGame::seedRand(sRandSeed++);
-    }
-
-    strcpy(buffer, "WONDER");
-    return true;
+    //strcpy(buffer, "WONDER");
+    //return true;
 
     if (PrototypeWordList::pickWord(buffer))
     {
@@ -80,18 +73,10 @@ void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
             // TODO remove demo code
             // start the first 5 rounds off with a set word list (reset the
             // rand to a value that is dependent on the round, but then increments)
-            sRound++;
-            if (sRound == DEMO_MAX_DETERMINISTIC_ROUNDS)
-            {
-                // randomize based on time from here on out
-                int64_t nanosec;
-                _SYS_ticks_ns(&nanosec);
-                WordGame::seedRand((unsigned)nanosec);
-            }
-            else
-            {
-                sRandSeed = 34 * WORD_RAND_SEED_INCREMENT * sRound;
-            }
+            // randomize based on time from here on out
+            int64_t nanosec;
+            _SYS_ticks_ns(&nanosec);
+            WordGame::seedRand((unsigned)nanosec);
             break;
         }
         break;

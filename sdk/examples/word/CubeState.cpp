@@ -302,7 +302,8 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                              Vec2(0, 0),
                              Vec2(1, 16),
                              ScreenOff);
-    const char *str = getStateMachine().getLetters();
+    char str[MAX_LETTERS_PER_CUBE + 1];
+    getStateMachine().getLetters(str, true);
     switch (strlen(str))
     {
     default:
@@ -473,7 +474,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
             if (frame < font.frames)
             {
-                vid.BG0_drawAsset(Vec2(8,4), font, frame);
+                vid.BG0_drawAsset(Vec2(9,4), font, frame);
             }
 
         }

@@ -37,7 +37,7 @@ public:
 
     void resetStateTime() { mStateTime = 0.0f; }
 
-    const char* getLetters();
+    bool getLetters(char *buffer, bool forPaint=false);
     bool canBeginWord();
     bool beginsWord(bool& isOld, char* wordBuffer);
     unsigned findRowLength();
@@ -45,6 +45,7 @@ public:
     bool hasNoNeighbors() const;
     float getIdleTime() const { return mIdleTime; }
     int getPanning() const { return (int) mBG0Panning; }
+    bool canNeighbor() const { return (int)mBG0Panning == (int)mBG0TargetPanning; }
 
 private:
     // shared state data
