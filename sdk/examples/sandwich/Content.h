@@ -75,9 +75,9 @@ struct MapData {
     const ItemData* items; 
     const GatewayData* gates;
     const NpcData* npcs;
-    uint32_t item_count : 11;
-    uint32_t gate_count : 10;
-    uint32_t npc_count : 11;
+    uint32_t itemCount : 11;
+    uint32_t gateCount : 10;
+    uint32_t npcCount : 11;
     uint16_t width;
     uint16_t height;
 };

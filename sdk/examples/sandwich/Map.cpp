@@ -69,9 +69,9 @@ void Map::SetData(const MapData& map) {
         ++proom;
       }
     }
-    for(const ItemData* p = mData->items; p && p->itemId > 0; ++p) {
-      (mRooms + p->trigger.room)->itemId = p->itemId;
-    }    
+    for(unsigned i=0; i<mData->itemCount; ++i) {
+      mRooms[mData->items[i].trigger.room].itemId = mData->items[i].itemId;
+    }
   }
 }
 
