@@ -184,21 +184,18 @@ class Map:
 			for item in self.list_triggers_of_type(TRIGGER_ITEM):
 				item.write_item_to(src)
 			src.write("};\n")
-			#src.write("};\n")
 		
 		if len(self.gate_dict):
 			src.write("static const GatewayData %s_gateways[] = { " % self.name)
 			for gate in self.list_triggers_of_type(TRIGGER_GATEWAY):
 				gate.write_gateway_to(src)
 			src.write("};\n")
-			#src.write("};\n")
-		
+
 		if len(self.npc_dict) > 0:
 			src.write("static const NpcData %s_npcs[] = { " % self.name)
 			for npc in self.list_triggers_of_type(TRIGGER_NPC):
 				npc.write_npc_to(src)
 			src.write("};\n")
-			#src.write("};\n")
 		
 		if self.overlay is not None:
 			for room in self.rooms:
@@ -344,6 +341,13 @@ class Trigger:
 			if not obj.props["unlockflag"] in room.map.world.script.unlockables_dict:
 				raise Exception("Undefined unlock flag in map: " + room.map.name)
 			self.unlockflag = room.map.world.script.unlockables_dict[obj.props["unlockflag"]]
+		
+
+		self.qbegin = self.minquest.index if hasattr(self, "minquest") else 0xff
+		self.qend = self.maxquest.index if hasattr(self, "maxquest") else 0xff
+		self.flagid = 0
+		if hasattr(self, "qflag"): self.flagid = 1 + self.qflag.index
+		elif hasattr(self, "unlockflag"): self.flagid = 33 + self.unlockflag.index
 
 		if self.type == TRIGGER_ITEM:
 			self.itemid = int(obj.props["id"])
@@ -360,27 +364,13 @@ class Trigger:
 				raise Exception("Invalid Dialog ID in Map: " + room.map.name)
 			self.dialog = room.map.world.dialog.dialogs[did]
 	
-	def qbegin(self):
-		if hasattr(self, "minquest"): return self.minquest.index
-		return 0xff
-	
-	def qend(self):
-		if hasattr(self, "maxquest"): return self.maxquest.index
-		return 0xff
-	
-	def flagid(self):
-		if hasattr(self, "qflag"): return 1 + self.qflag.index
-		if hasattr(self, "unlockflag"): return 33 + self.unlockflag.index
-		return 0
-	
 	def write_trigger_to(self, src):
-		src.write("{ %s, %s, %s, %s }" % (hex(self.qbegin()), hex(self.qend()), hex(self.flagid()), hex(self.room.lid)))
+		src.write("{ %s, %s, %s, %s }" % (hex(self.qbegin), hex(self.qend), hex(self.flagid), hex(self.room.lid)))
 
 	def write_item_to(self, src):
 		src.write("{ ")
 		self.write_trigger_to(src)
 		src.write(", %d }, " % self.itemid)
-
 	
 	def write_gateway_to(self, src):
 		src.write("{ ")
