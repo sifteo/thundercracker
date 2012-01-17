@@ -10,6 +10,7 @@ OBJS = \
 	Base.o \
 	Dialog.o \
 	Game.o \
+	GameState.o \
 	GameView.o \
 	Map.o \
 	Player.o \
@@ -43,6 +44,6 @@ CONTENT_TOOLS = \
 	tmx.py
 
 
-content: $(CONTENT_TOOLS) *.tmx *.xml
+content: *.tmx game-script.xml dialog-database.xml
 	python -c "import sandwich; sandwich.export()"
 	

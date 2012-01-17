@@ -358,20 +358,16 @@ class Trigger:
 			self.dialog = room.map.world.dialog.dialogs[did]
 	
 	def qbegin(self):
-		if hasattr(self, "minquest"):
-			return self.minquest.index
+		if hasattr(self, "minquest"): return self.minquest.index
 		return 0xff
 	
 	def qend(self):
-		if hasattr(self, "maxquest"):
-			return self.maxquest.index
+		if hasattr(self, "maxquest"): return self.maxquest.index
 		return 0xff
 	
 	def flagid(self):
-		if hasattr(self, "qflag"):
-			return self.qflag.index
-		if hasattr(self, "unlockflag"):
-			return self.unlockflag.index + 32
+		if hasattr(self, "qflag"): return 1 + self.qflag.index
+		if hasattr(self, "unlockflag"): return 33 + self.unlockflag.index
 		return 0
 	
 	def write_trigger_to(self, src):
