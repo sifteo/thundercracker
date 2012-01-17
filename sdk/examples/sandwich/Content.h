@@ -17,6 +17,7 @@ using namespace Sifteo;
 
 struct QuestData {
     uint8_t mapId;
+    uint8_t roomId;
 };
 
 struct DialogTextData {

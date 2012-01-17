@@ -69,8 +69,11 @@ void Map::SetData(const MapData& map) {
         ++proom;
       }
     }
-    for(unsigned i=0; i<mData->itemCount; ++i) {
-      mRooms[mData->items[i].trigger.room].itemId = mData->items[i].itemId;
+    // find items which are active
+    for(const ItemData* p = mData->items; p!= mData->items + mData->itemCount; ++p) {
+      if (pGame->state.IsActive(p->trigger)) {
+        mRooms[p->trigger.room].itemId = p->itemId;
+      }
     }
   }
 }

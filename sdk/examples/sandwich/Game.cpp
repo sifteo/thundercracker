@@ -20,6 +20,14 @@ void Game::ObserveNeighbors(bool flag) {
 // BOOTSTRAP API
 //------------------------------------------------------------------
 
+Game::Game() {
+  const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
+  player.SetPosition(Vec2(
+    128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerx,
+    128 * (gQuestData->roomId / gMapData[gQuestData->mapId].width) + 16 * room.centery
+  ));
+}
+
 void Game::MainLoop() {
   // reset everything
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {

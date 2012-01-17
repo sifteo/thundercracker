@@ -342,9 +342,9 @@ class Trigger:
 		if self.type == TRIGGER_ITEM:
 			self.itemid = int(obj.props["id"])
 			if self.quest is not None:
-				self.qflag = self.quest.flag_dict[self.id]
+				self.qflag = self.quest.add_flag_if_undefined(self.id)
 			else:
-				self.unlockflag = room.map.world.script.unlockables_dict[self.id]
+				self.unlockflag = room.map.world.script.add_flag_if_undefined(self.id)
 		elif self.type == TRIGGER_GATEWAY:
 			m = EXP_GATEWAY.match(obj.props.get("target", ""))
 			if m is None:

@@ -24,6 +24,10 @@ BIN_STM32 = $(APP).stm32
 OBJS_STM32 = $(OBJS:.o=.stm32.o)
 
 ASSETDEPS += *.png $(ASSETS).lua content.gen.lua
+ifdef MAX_HAX
+ASSETDEPS -= content.gen.lua
+endif
+
 CDEPS += *.h 
 
 include $(TC_DIR)/firmware/master/Makefile.rules
@@ -45,6 +49,5 @@ CONTENT_TOOLS = \
 	misc.py
 
 
-content: *.tmx game-script.xml dialog-database.xml
-	python -c "import sandwich; sandwich.export()"
-	
+content: $(CONTENT_TOOLS) *.tmx game-script.xml dialog-database.xml
+	python sandwich.py

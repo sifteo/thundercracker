@@ -21,7 +21,7 @@ class GameScript:
 					if quest.id == otherQuest.id:
 						raise Exception("Duplicate Quest ID")
 		self.quest_dict = dict((quest.id, quest) for quest in self.quests)
-		self.unlockables = [ UnlockFlag(i, elem) for i,elem in enumerate(xml.findall("unlockables/flag")) ]
+		self.unlockables = [ Flag(i, elem) for i,elem in enumerate(xml.findall("unlockables/flag")) ]
 		self.unlockables_dict = dict((flag.id, flag) for flag in self.unlockables)
 	
 	def getquest(self, name):
@@ -36,13 +36,22 @@ class GameScript:
 			return self.quests[self.quest_dict[m.group(1)].index - int(m.group(2))]
 		raise Exception("Invalid Quest Identifier: " + name)
 
+	def add_flag_if_undefined(self, id):
+		if not id in self.unlockables_dict:
+			flag = Flag(len(self.flags), id)
+			self.unlockables.append(flag)
+			self.unlockables_dict[id] = flag
+		return self.unlockables_dict[id]
+
 
 class Quest:
 	def __init__(self, index, xml):
 		self.index = index
 		self.id = xml.get("id").lower()
 		self.map = xml.get("map").lower()
-		self.flags = [QuestFlag(i, elem) for i,elem in enumerate(xml.findall("flag"))]
+		self.x = int(xml.get("x"))
+		self.y = int(xml.get("y"))
+		self.flags = [Flag(i, elem) for i,elem in enumerate(xml.findall("flag"))]
 		if len(self.flags) > 32:
 			raise Exception("Too Many Flags for Quest: %s" % self.id)
 		if len(self.flags) > 1:
@@ -51,14 +60,16 @@ class Quest:
 					if flag.id == otherFlag.id:
 						raise Exception("Duplicate Quest Flag ID")
 		self.flag_dict = dict((flag.id,flag) for flag in self.flags)
+	
+	def add_flag_if_undefined(self, id):
+		if not id in self.flag_dict:
+			flag = Flag(len(self.flags), id)
+			self.flags.append(flag)
+			self.flag_dict[id] = flag
+		return self.flag_dict[id]
 
 
-class QuestFlag:
-	def __init__(self, index, xml):
+class Flag:
+	def __init__(self, index, xml_or_id):
 		self.index = index
-		self.id = xml.get("id").lower()
-
-class UnlockFlag:
-	def __init__(self, index, xml):
-		self.index = index
-		self.id = xml.get("id").lower()
+		self.id = (xml_or_id if isinstance(xml_or_id, str) else xml_or_id.get("id")).lower()

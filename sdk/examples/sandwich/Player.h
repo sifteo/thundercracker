@@ -58,6 +58,7 @@ public:
   void DecrementBasicKeyCount();
 
   void SetLocation(Vec2 position, Cube::Side direction);
+  void SetPosition(Vec2 position) { mPosition = position; }
 
   void Move(int dx, int dy);
   void Update(float dt);

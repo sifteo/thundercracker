@@ -8,13 +8,15 @@ class Game {
 public:
   GameView views[NUM_CUBES];
   GameState state;
-  Player player;
   Map map;
+  Player player;
   float mSimTime;
   int mNeedsSync;
   bool mIsDone;
 
 public:
+
+  Game();
 
   // Getters
   

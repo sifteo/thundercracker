@@ -101,8 +101,10 @@ class World:
 
 			src.write("const QuestData gQuestData[] = {\n")
 			for q in self.script.quests:
-				src.write("    { %d },\n" % self.map_dict[q.map].index)
+				m = self.map_dict[q.map]
+				src.write("    { %s, %s },\n" % (hex(m.index), hex(m.roomat(q.x, q.y).lid)))
 			src.write("};\n\n")
 			src.write("const DialogData gDialogData[] = {};\n\n")
 
 
+if __name__ == "__main__": export()
