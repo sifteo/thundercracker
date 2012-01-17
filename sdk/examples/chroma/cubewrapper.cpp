@@ -950,12 +950,6 @@ void CubeWrapper::Refill( bool bAddLevel )
 		GridSlot &fix = m_grid[aEmptyLocs[toFix].x][aEmptyLocs[toFix].y];
 		bool bFound = false;
 
-        //TODO, this is only because we don't have all the colors yet!
-        if( fix.getColor() >= GridSlot::NUM_FIXED_COLORS )
-        {
-            fix.FillColor( 0 );
-        }
-
 		if( !fix.IsFixed() )
 		{
 			//make sure there's an another unfixed dot of this color

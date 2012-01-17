@@ -29,6 +29,13 @@ Gem7 = image{"Gem7.png", height=32}
 GemEmpty = image{"gem_Empty.png"}
 --fixed gems
 FixedGem0 = image{"fixedGem0.png", height=32}
+FixedGem1 = image{"fixedGem1.png", height=32}
+FixedGem2 = image{"fixedGem2.png", height=32}
+FixedGem3 = image{"fixedGem3.png", height=32}
+FixedGem4 = image{"fixedGem4.png", height=32}
+FixedGem5 = image{"fixedGem5.png", height=32}
+FixedGem6 = image{"fixedGem6.png", height=32}
+FixedGem7 = image{"fixedGem7.png", height=32}
 FixedExplode0 = image{"fixedExplode0.png", height=32}
 FixedGlimmer = image{"FixedGlimmer.png", height=32}
 Cover = image{"cover.png"}
