@@ -40,19 +40,15 @@ static DacAudioOut dacAudioOut(dacChan, HwTimer(&TIM4));
  * simulator.
  */
 
-#if 1
 IRQ_HANDLER ISR_TIM4()
 {
     TIM4.SR = 0; // must clear status to acknowledge the ISR
     audioOutBackend.tmrIsr();
 }
-#endif
 
 void AudioOutDevice::init(SampleRate samplerate, AudioMixer *mixer)
 {
     AFIO.MAPR |= (1 << 6);                  // TIM1 partial remap for complementary channels
-    NVIC.irqEnable(IVT.TIM4);
-    NVIC.irqPrioritize(IVT.TIM4, 0x80);     //   Reduced priority
 
 #if AUDIOOUT_BACKEND == PWM_BACKEND
     GPIOPin outA(&GPIOA, 9);

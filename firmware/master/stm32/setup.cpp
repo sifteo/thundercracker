@@ -166,12 +166,15 @@ extern "C" void _start()
      */
 
     NVIC.irqEnable(IVT.EXTI9_5);                // Radio interrupt
-    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);      //   Reduced priority
+    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);      //  Reduced priority
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
-    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);
+    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
 
-    NVIC.irqEnable(IVT.EXTI0);                  // home button
+    NVIC.irqEnable(IVT.EXTI0);                  //  home button
+
+    NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
+    NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio
 
     /*
      * High-level hardware initialization
