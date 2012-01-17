@@ -416,18 +416,63 @@ void GLRenderer::initCube(unsigned id)
     
     cube.initialized = true;
 
-    glGenTextures(NUM_LCD_TEXTURES, &cube.lcdTextures[0]);
+    glGenTextures(NUM_LCD_TEXTURES, &cube.texFiltered[0]);
+    glGenTextures(NUM_LCD_TEXTURES, &cube.texAccurate[0]);
     cube.currentLcdTexture = 0;
+
+    /*
+     * To reduce GL state thrashing, plus to work around a specific
+     * GPU driver bug (pivotal 23521255) we use separate textures for
+     * filtered vs. pixel-accurate modes. Each texture has filtering
+     * and mipgen state that we never change during the lifetime of the
+     * texture.
+     */
     
     for (unsigned i = 0; i < NUM_LCD_TEXTURES; i++) {
-        glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[i]);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, 3, Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
-                     0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        initCubeTexture(cube.texAccurate[i], true);
+        initCubeTexture(cube.texFiltered[i], false);
     }
+}
+
+void GLRenderer::initCubeTexture(GLuint name, bool pixelAccurate)
+{
+    glBindTexture(GL_TEXTURE_2D, name);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
+                 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+    // Enabled dynamically only when tilted
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 0.0f);
+
+    if (pixelAccurate) {
+        /*
+         * Pixel-accurate zooming and transforms. Disable filtering entirely.
+         * (The shader's nonlinear sampling becomes a no-op here)
+         */
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);        
+
+    } else {
+        /*
+         * Default high-quality filtering. We rely on linear sampling, plus
+         * a higher-order polynomial filter implemented in a fragment program.
+         *
+         * We rely on mipmaps (with autogeneration) for good-looking
+         * minification, and our nonlinear texture sampling (in the
+         * fragment program) for good-looking rotation and magnification.
+         *
+         * We also use anisotropic filtering if we're tilted at all.
+         */
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    }    
 }
 
 void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
@@ -561,6 +606,10 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
           * Re-upload framebuffer if the filtering mode has changed.
           * We may need to regenerate mipmaps, and we definitely need to
           * change texture state. Avoid doing all this work on every frame.
+          *
+          * (Also, now that we're using separate textures for the accurate vs. non-accurate
+          * case, we do need to re-upload because we'll be using a totally separate GL texture
+          * name.)
           */
         framebufferChanged = true;
         cubes[id].pixelAccurate = pixelAccurate;
@@ -613,44 +662,23 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
          */
 
         cube.currentLcdTexture = (cube.currentLcdTexture + 1) % NUM_LCD_TEXTURES;
-        glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[cube.currentLcdTexture]);
+    }
 
-        if (cube.pixelAccurate) {
-            /*
-             * Pixel-accurate zooming and transforms. Disable filtering entirely.
-             * (The shader's nonlinear sampling becomes a no-op here)
-             */
+    glBindTexture(GL_TEXTURE_2D, (cube.pixelAccurate ?
+        cube.texAccurate : cube.texFiltered)[cube.currentLcdTexture]);
 
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 0.0f);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
-
-        } else {
-            /*
-             * Default high-quality filtering. We rely on linear sampling, plus
-             * a higher-order polynomial filter implemented in a fragment program.
-             *
-             * We rely on mipmaps (with autogeneration) for good-looking
-             * minification, and our nonlinear texture sampling (in the
-             * fragment program) for good-looking rotation and magnification.
-             *
-             * We also use anisotropic filtering if we're tilted at all.
-             */
-
+    if (framebuffer) {
+        /*
+         * Update the texture's image and anisotropy.
+         */
+        
+        if (!cube.pixelAccurate) {
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, cube.isTilted ? 5.0f : 0.0f);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
         }
 
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
                         Cube::LCD::WIDTH, Cube::LCD::HEIGHT,
                         GL_RGB, GL_UNSIGNED_SHORT_5_6_5, framebuffer);
-
-    } else {
-        // Recycle a previous framebuffer texture, with no changes.
-        glBindTexture(GL_TEXTURE_2D, cube.lcdTextures[cube.currentLcdTexture]);
     }
 
     if (!pendingScreenshotName.empty()) {

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>tc-siftulator</string>
+	<key>CFBundleGetInfoString</key>
+	<string>Thundercracker Simulator</string>
+	<key>CFBundleIconFile</key>
+	<string>tc-siftulator.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.sifteo.tc-siftulator</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1</string>
+	<key>CFBundleSignature</key>
+	<string>Tcsf</string>
+	<key>CFBundleVersion</key>
+	<string>0.1</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright &lt;c&gt; 2011-2012 Sifteo, Inc. All rights reserved.</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.6</string>
+</dict>
+</plist>
