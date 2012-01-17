@@ -39,6 +39,11 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     if (state.x != 1)
                     {
                         mBG0TargetPanning -= 72.f * (state.x - 1);
+                        while (mBG0TargetPanning < 0.f)
+                        {
+                            mBG0TargetPanning += 144.f;
+                            mBG0Panning += 144.f;
+                        }
                     }
                 }
                 break;
@@ -64,6 +69,7 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewAnagram:
         unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
+        mBG0TargetPanning = 0.f;
         for (unsigned i = 0; i < arraysize(mLetters); ++i)
         {
             mLetters[i] = '\0';
@@ -90,7 +96,7 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
     switch (MAX_LETTERS_PER_CUBE)
     {
     case 2:
-        if (!forPaint && mBG0TargetPanning != 0.f)
+        if (!forPaint && fmodf(mBG0TargetPanning, 144.f) != 0.f)
         {
             char swapped[MAX_LETTERS_PER_CUBE + 1];
             swapped[0] = mLetters[1];
@@ -129,7 +135,9 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
             {
                 break;
             }
-            strcat(wordBuffer, csm->mLetters);
+            char str[MAX_LETTERS_PER_CUBE + 1];
+            csm->getLetters(str, false);
+            strcat(wordBuffer, str);
             neighborLetters = true;
         }
         if (neighborLetters)
