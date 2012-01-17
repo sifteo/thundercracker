@@ -137,6 +137,9 @@ void CubeWrapper::Draw()
 				{
 					//clear out grid first (somewhat wasteful, optimize if necessary)
                     //m_vid.clear(GemEmpty.tiles[0]);
+
+                    ASSERT( m_numQueuedClears < NUM_ROWS * NUM_COLS && m_numQueuedClears >= 0 );
+
                     //flush our queued clears
                     for( int i = 0; i < m_numQueuedClears; i++ )
                     {
@@ -1187,7 +1190,10 @@ void CubeWrapper::setState( CubeState state )
     m_stateTime = 0.0f;
 
     if( state == STATE_MESSAGING )
+    {
         Game::Inst().playSound(message_pop_03_fx);
+        m_numQueuedClears = 0;
+    }
 }
 
 
