@@ -69,7 +69,7 @@ void Map::SetData(const MapData& map) {
         ++proom;
       }
     }
-    for(const ItemData* p = mData->items; p && p->itemId >= 0; ++p) {
+    for(const ItemData* p = mData->items; p && p->itemId > 0; ++p) {
       (mRooms + p->trigger.room)->itemId = p->itemId;
     }    
   }
