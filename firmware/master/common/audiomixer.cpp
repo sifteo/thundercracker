@@ -5,9 +5,7 @@
 #include "cubecodec.h"  // TODO: This can be removed when the asset header structs are moved to a common file.
 #include <stdio.h>
 #include <string.h>
-#include <sifteo/machine.h>
-#include <sifteo/audio.h>
-#include <sifteo/math.h>
+#include <sifteo.h>
 
 using namespace Sifteo;
 
@@ -142,6 +140,12 @@ void AudioMixer::test()
  */
 int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
 {
+    // NOTE - *must* bail ASAP if we don't have anything to do. we really
+    // want to minimize the work done in this ISR since it's happening so
+    // frequently
+    if (activeChannelMask == 0) {
+        return 0;
+    }
     memset(buffer, 0, numsamples * sizeof(*buffer));
 
     int samplesMixed = 0;
@@ -191,6 +195,22 @@ void AudioMixer::fetchData()
         unsigned idx = Intrinsic::CLZ(mask);
         channelSlots[idx].fetchData();
         Atomic::ClearLZ(mask, idx);
+    }
+}
+
+/*
+    Called from within Tasks::work to mix audio on the main thread, to be
+    consumed by the audio out device.
+*/
+void AudioMixer::handleAudioOutEmpty(void *p) {
+    AudioBuffer *buf = static_cast<AudioBuffer*>(p);
+
+    unsigned bytesToWrite;
+    int16_t *audiobuf = (int16_t*)buf->reserve(buf->writeAvailable(), &bytesToWrite);
+    unsigned mixed = AudioMixer::instance.pullAudio(audiobuf, bytesToWrite / sizeof(int16_t));
+    ASSERT(mixed < bytesToWrite * sizeof(int16_t));
+    if (mixed > 0) {
+        buf->commit(mixed * sizeof(int16_t));
     }
 }
 

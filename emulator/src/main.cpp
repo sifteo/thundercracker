@@ -188,6 +188,11 @@ int main(int argc, char **argv)
             c++;
             continue;
         }
+        
+        if (!strncmp(arg, "-psn_", 5)) {
+            // Used by Mac OS app bundles; ignore it.
+            continue;
+        }
 
         if (arg[0] == '-') {
             message("Unrecognized option: '%s'", arg);

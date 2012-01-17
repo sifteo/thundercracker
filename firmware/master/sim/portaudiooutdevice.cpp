@@ -1,6 +1,7 @@
 
 #include "portaudiooutdevice.h"
 #include "audiomixer.h"
+#include "tasks.h"
 #include <sifteo/macros.h>
 #include <string.h>
 
@@ -66,8 +67,22 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
     if (statusFlags != paNoError) {
         //LOG(("statusFlags: %ld\n", statusFlags));
     }
-    if (dev->mixer->pullAudio((int16_t*)outputBuffer, framesPerBuffer) <= 0) {
+
+    AudioBuffer &audiobuf = dev->buf;
+    unsigned avail = audiobuf.readAvailable();
+    if (avail > 0) {
+        uint8_t *outBuf = (uint8_t*)outputBuffer;
+        unsigned bytesToWrite = MIN(framesPerBuffer * sizeof(int16_t), avail);
+        while (bytesToWrite--)
+            *outBuf++ = audiobuf.dequeue();
+    }
+    else {
         memset(outputBuffer, 0, framesPerBuffer * sizeof(int16_t));
+    }
+    // getting low? time to ask for a refill
+    // TODO: tune this thresh if needed
+    if (avail < audiobuf.capacity() / 2) {
+        Tasks::setPending(Tasks::AudioOutEmpty, &audiobuf);
     }
 
     return paContinue;
@@ -110,6 +125,8 @@ void PortAudioOutDevice::init(AudioOutDevice::SampleRate samplerate, AudioMixer 
         devInfo->defaultLowOutputLatency,   // suggestedLatency
         NULL                                // hostApiSpecificStreamInfo
     };
+
+    buf.init(&this->sysbuf);
 
     int rate = 0;
     switch (samplerate) {

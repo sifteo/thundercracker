@@ -99,7 +99,7 @@ void ASegWriter::writeSound(const Sound &sound)
     
     uint32_t encoding = 0;
     uint32_t size = 0;
-    if (sound.getEncode() == "pcm") {
+    if (sound.getEncode() == "PCM") {
         encoding = 1;
         PCMEncoder encoder;
         size = encoder.encodeFile(sound.getFile(), mStream);

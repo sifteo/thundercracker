@@ -71,7 +71,10 @@ void SavedData::sOnEvent(unsigned eventID, const EventData& data)
             {
                 endType = EndingType_HighScore;
             }
-            WordGame::playAudio(*EndingJingles[(unsigned)endType], AudioChannelIndex_Time);
+            WordGame::playAudio(*EndingJingles[(unsigned)endType],
+                                AudioChannelIndex_Time,
+                                LoopOnce,
+                                AudioPriority_High);
         }
         break;
 

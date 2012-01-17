@@ -491,7 +491,7 @@ Sound::Sound(lua_State *L)
     if (Script::argMatch(L, "encode")) {
         setEncode(lua_tostring(L, -1));
     } else {
-        setEncode("speex");
+        setEncode("Sample");    // TODO: this will eventually change to "SpeexSample" in the master FW
     }
     
     if (Script::argMatch(L, "quality")) {

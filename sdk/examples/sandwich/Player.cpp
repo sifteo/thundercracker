@@ -163,7 +163,7 @@ void Player::Update(float dt) {
         if (HaveBasicKey()) {
           DecrementBasicKeyCount();
           // check the door
-          pCurrent->Room()->SetPortal(mDir, PORTAL_OPEN);
+          //pCurrent->Room()->SetPortal(mDir, PORTAL_OPEN); // REPLACE
           pCurrent->Room()->OpenDoor();
           pCurrent->DrawBackground();
           pCurrent->GetCube()->vbuf.touch();
@@ -237,7 +237,7 @@ void Player::Update(float dt) {
         { // pickup item?
           int itemId = pCurrent->Room()->itemId;
           if (itemId) {
-            pCurrent->Room()->SetItem(0);
+            // pCurrent->Room()->SetItem(0); // REPLACE
             PickupItem(itemId);
             // do a pickup animation
             for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
@@ -259,10 +259,8 @@ void Player::Update(float dt) {
           }
         }
         { // passive trigger?
-          MapRoom *mr = pCurrent->Room();
-          if (mr->callback) {
-            mr->callback(TRIGGER_TYPE_PASSIVE);
-          }
+          //MapRoom *mr = pCurrent->Room();
+          // REPLACE
         }
       }
 
@@ -271,10 +269,8 @@ void Player::Update(float dt) {
 
 
     { // active trigger?
-      MapRoom *mr = pCurrent->Room();
-      if (mr->callback) {
-        mr->callback(TRIGGER_TYPE_ACTIVE);
-      }
+      //MapRoom *mr = pCurrent->Room();
+      // REPLACE
     }
 
     mDir = SIDE_BOTTOM;

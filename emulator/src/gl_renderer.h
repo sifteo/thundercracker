@@ -105,6 +105,7 @@ class GLRenderer {
     const Glyph *findGlyph(uint32_t id);
     
     void initCube(unsigned id);
+    void initCubeTexture(GLuint name, bool pixelAccurate);
     void cubeTransform(b2Vec2 center, float angle, float hover,
                        b2Vec2 tilt, CubeTransformState &tState);
 
@@ -155,7 +156,8 @@ class GLRenderer {
         bool pixelAccurate;
         bool isTilted;
         uint8_t currentLcdTexture;
-        GLuint lcdTextures[NUM_LCD_TEXTURES];
+        GLuint texFiltered[NUM_LCD_TEXTURES];
+        GLuint texAccurate[NUM_LCD_TEXTURES];
     } cubes[System::MAX_CUBES];
 	
 	std::string pendingScreenshotName;

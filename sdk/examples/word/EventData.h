@@ -36,6 +36,11 @@ union EventData
         unsigned mPreviousStateIndex;
         unsigned mNewStateIndex;
     } mGameStateChanged;
+
+    struct
+    {
+        Cube::ID mCubeID;
+    } mInput; // also tilt
 };
 
 #endif // EVENTDATA_H

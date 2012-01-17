@@ -1,6 +1,7 @@
 #!/bin/bash
 #ls *.raw > audio.txt
 make
-tc-siftulator -n 3 &
+#tc-siftulator -n 3 &
+tc-siftulator -n 3 -f ../firmware/cube/cube.ihx &
 sleep 1s
 ./sandwichcraft.sim

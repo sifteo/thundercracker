@@ -44,6 +44,7 @@ public:
 
     int pullAudio(int16_t *buffer, int numsamples);
     void fetchData();
+    static void handleAudioOutEmpty(void *p);
 
 private:
     uint32_t enabledChannelMask;    // channels userspace has provided buffers for

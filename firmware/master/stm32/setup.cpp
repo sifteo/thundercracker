@@ -119,13 +119,14 @@ extern "C" void _start()
 
     {
         GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-        GPIOPin vcc33 = VCC33_ENABLE_GPIO;
-
-        vcc20.setControl(GPIOPin::OUT_10MHZ);
-        vcc33.setControl(GPIOPin::OUT_10MHZ);
-
+        vcc20.setControl(GPIOPin::OUT_2MHZ);
         vcc20.setHigh();
+
+        /*
+        GPIOPin vcc33 = VCC33_ENABLE_GPIO;
+        vcc33.setControl(GPIOPin::OUT_2MHZ);
         vcc33.setHigh();
+        */
     }
 
     /*
@@ -165,12 +166,15 @@ extern "C" void _start()
      */
 
     NVIC.irqEnable(IVT.EXTI9_5);                // Radio interrupt
-    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);      //   Reduced priority
+    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);      //  Reduced priority
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
-    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);
+    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
 
-    NVIC.irqEnable(IVT.EXTI0);                  // home button
+    NVIC.irqEnable(IVT.EXTI0);                  //  home button
+
+    NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
+    NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio
 
     /*
      * High-level hardware initialization
@@ -194,6 +198,7 @@ extern "C" void _start()
     // super hack: just wait around for data to be loaded. revel in the crappiness
     // as you disable this block and reflash your board to re-enable SysTick.
     for (;;) {
+        Tasks::work();
         Sifteo::System::yield();
     }
 #endif

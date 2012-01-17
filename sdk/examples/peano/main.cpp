@@ -32,7 +32,7 @@ struct Connection {
 //-----------------------------------------------------------------------------
 
 #ifndef NUM_CUBES
-#  define NUM_CUBES 3
+#  define NUM_CUBES 5
 #endif
 
 static Cube cubes[NUM_CUBES];
