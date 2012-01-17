@@ -5,9 +5,7 @@
 #include "cubecodec.h"  // TODO: This can be removed when the asset header structs are moved to a common file.
 #include <stdio.h>
 #include <string.h>
-#include <sifteo/machine.h>
-#include <sifteo/audio.h>
-#include <sifteo/math.h>
+#include <sifteo.h>
 
 using namespace Sifteo;
 
@@ -26,9 +24,9 @@ AudioMixer::AudioMixer() :
 void AudioMixer::init()
 {
     memset(channelSlots, 0, sizeof(channelSlots));
-//    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
-//        decoders[i].init();
-//    }
+    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
+        decoders[i].init();
+    }
 }
 
 /*
