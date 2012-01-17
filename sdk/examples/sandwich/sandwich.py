@@ -10,12 +10,26 @@ import os.path
 import re
 import tmx
 import misc
+import sys
+import traceback
 
 def load():
-	return World(".")
+	try:
+		return World(".")
+	except:
+		log_error()
 
 def export():
-	World(".").export()
+	try:
+		World(".").export()
+	except:
+		log_error()
+
+def log_error():
+	typ,val,bt = sys.exc_info()
+	print "\n\nUnexpected error:", val
+	print "-----------"
+	traceback.print_tb(bt)
 
 class World:
 	def __init__(self, dir):
@@ -51,6 +65,10 @@ class World:
 		for quest in self.script.quests:
 			if not quest.map in self.map_dict:
 				raise Exception("Unknown map in game script: " + quest.map)
+		# log for good measure
+		print len(self.script.quests), " quests found: ", [q.id for q in self.script.quests]
+		print len(self.dialog.dialogs), " dialogs found: ", [d for d in self.dialog.dialogs]
+		print len(self.maps), " maps found: ", [m.name for m in self.maps]
 
 	def export(self):
 		with open(os.path.join(self.dir,"content.gen.lua"), "w") as lua:

@@ -183,21 +183,21 @@ class Map:
 			src.write("static const ItemData %s_items[] = { " % self.name)
 			for item in self.list_triggers_of_type(TRIGGER_ITEM):
 				item.write_item_to(src)
-			src.write("ITEM_TERMINATOR };\n")
+			src.write("};\n")
 			#src.write("};\n")
 		
 		if len(self.gate_dict):
 			src.write("static const GatewayData %s_gateways[] = { " % self.name)
 			for gate in self.list_triggers_of_type(TRIGGER_GATEWAY):
 				gate.write_gateway_to(src)
-			src.write("GATE_TERMINATOR };\n")
+			src.write("};\n")
 			#src.write("};\n")
 		
 		if len(self.npc_dict) > 0:
 			src.write("static const NpcData %s_npcs[] = { " % self.name)
 			for npc in self.list_triggers_of_type(TRIGGER_NPC):
 				npc.write_npc_to(src)
-			src.write("NPC_TERMINATOR };\n")
+			src.write("};\n")
 			#src.write("};\n")
 		
 		if self.overlay is not None:
@@ -218,19 +218,22 @@ class Map:
 		src.write("};\n")
 	
 	def write_decl_to(self, src):
-		if self.overlay is not None:
-			overlay_msg = "&Overlay_" + self.name
-		else:
-			overlay_msg = "0"
-		item_name = "0"
-		if len(self.item_dict) > 0: item_name = self.name + "_items"
-		gate_name = "0"
-		if len(self.gate_dict): gate_name = self.name + "_gateways"
-		npc_name = "0"
-		if len(self.npc_dict) > 0: npc_name = self.name + "_npcs"
 		src.write(
-			"    { &TileSet_%s, %s, &Blank_%s, %s_rooms, %s_xportals, %s_yportals, %s, %s, %s, %d, %d },\n" % \
-			(self.name, overlay_msg, self.name, self.name, self.name, self.name, item_name, gate_name, npc_name, self.width, self.height))
+			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, " \
+			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, " \
+			"%(nitems)d, %(ngates)d, %(nnpcs)d, %(w)d, %(h)d },\n" % \
+			{ 
+				"name": self.name,
+				"overlay": "&Overlay_" + self.name if self.overlay is not None else "0",
+				"item": self.name + "_items" if len(self.item_dict) > 0 else "0",
+				"gate": self.name + "_gateways" if len(self.gate_dict) > 0 else "0",
+				"npc": self.name + "_npcs" if len(self.npc_dict) > 0 else "0",
+				"w": self.width,
+				"h": self.height,
+				"nitems": len(self.item_dict),
+				"ngates": len(self.gate_dict),
+				"nnpcs": len(self.npc_dict)
+			})
 		
 
 

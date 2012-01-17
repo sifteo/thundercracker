@@ -57,10 +57,6 @@ struct NpcData {
     uint32_t dialog;
 };
 
-#define ITEM_TERMINATOR {{0,0,0,0},0}
-#define GATE_TERMINATOR {{0,0,0,0},0,0,0,0 }
-#define NPC_TERMINATOR {{0,0,0,0},0}
-
 struct RoomData {
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
@@ -79,6 +75,9 @@ struct MapData {
     const ItemData* items; 
     const GatewayData* gates;
     const NpcData* npcs;
+    uint32_t item_count : 11;
+    uint32_t gate_count : 10;
+    uint32_t npc_count : 11;
     uint16_t width;
     uint16_t height;
 };

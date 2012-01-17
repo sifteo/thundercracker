@@ -41,7 +41,8 @@ CONTENT_TOOLS = \
 	sandwich_dialog.py \
 	sandwich_map.py \
 	sandwich_script.py \
-	tmx.py
+	tmx.py \
+	misc.py
 
 
 content: *.tmx game-script.xml dialog-database.xml
