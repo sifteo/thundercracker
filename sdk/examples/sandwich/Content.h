@@ -15,9 +15,6 @@ using namespace Sifteo;
 #define ITEM_HAM            5
 #define ITEM_SKELETON_KEY   6
 
-#define TRIGGER_TYPE_PASSIVE    0
-#define TRIGGER_TYPE_ACTIVE     1
-
 struct QuestData {
     uint8_t mapId;
 };
@@ -33,9 +30,9 @@ struct DialogData {
 };
 
 struct TriggerData {
-    uint8_t questBegin;
-    uint8_t questEnd;
-    uint8_t flagId; // could be global or local flag
+    uint8_t questBegin; // 0xff means start-at-beginning
+    uint8_t questEnd; // 0xff means means never-stop
+    uint8_t flagId; // could be 1-32 is local, 33-64 is global
     uint8_t room;
 };
 

@@ -1,4 +1,12 @@
 <game-script>
-	<quest id="tutorial" map="castle" />
+	<quest id="tutorial" map="castle">
+		<flag id="Toast" />
+		<flag id="Tomato" />
+		<flag id="Lettuce" />
+		<flag id="Ham" />
+		<flag id="Key0" />
+		<flag id="Key1" />
+		<flag id="Key2" />
+	</quest>
 	<quest id="dungeon0" map="dungeon" />
 </game-script>

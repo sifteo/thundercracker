@@ -42,7 +42,7 @@ class Quest:
 		self.index = index
 		self.id = xml.get("id").lower()
 		self.map = xml.get("map").lower()
-		self.flags = [QuestFloat(i, elem) for i,elem in enumerate(xml.findall("flag"))]
+		self.flags = [QuestFlag(i, elem) for i,elem in enumerate(xml.findall("flag"))]
 		if len(self.flags) > 32:
 			raise Exception("Too Many Flags for Quest: %s" % self.id)
 		if len(self.flags) > 1:
@@ -51,11 +51,6 @@ class Quest:
 					if flag.id == otherFlag.id:
 						raise Exception("Duplicate Quest Flag ID")
 		self.flag_dict = dict((flag.id,flag) for flag in self.flags)
-
-		def getflag(self, name):
-			if name in self.flag_dict:
-				return self.flag_dict[name]
-			raise Exception("Invalid Quest Flag Identifier: " + name)
 
 
 class QuestFlag:

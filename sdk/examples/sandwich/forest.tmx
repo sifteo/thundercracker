@@ -627,6 +627,7 @@
   <object name="Tomato" type="Item" x="432" y="576" width="32" height="32">
    <properties>
     <property name="id" value="3"/>
+    <property name="quest" value="tutorial"/>
    </properties>
   </object>
  </objectgroup>

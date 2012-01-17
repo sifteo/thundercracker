@@ -38,7 +38,7 @@ class World:
 		self.dialog = DialogDatabase(self, os.path.join(dir, "dialog-database.xml"))
 
 		# list maps in alphabetical order
-		maps_by_name = [ (map.name, map) for map in (Map(self, os.path.join(dir, path)) for path in os.listdir(dir) if path.endswith(".tmx")) ]
+		maps_by_name = [ (map.id, map) for map in (Map(self, os.path.join(dir, path)) for path in os.listdir(dir) if path.endswith(".tmx")) ]
 		maps_by_name.sort();
 		self.maps = [ map for _,map in maps_by_name ]
 		self.map_dict = dict(maps_by_name)
@@ -56,7 +56,7 @@ class World:
 				tmap = self.map_dict[gate.target_map]
 				found = False
 				for othergate in tmap.list_triggers_of_type(TRIGGER_GATEWAY):
-					if othergate.name == gate.target_gate:
+					if othergate.id == gate.target_gate:
 						found = True
 						break
 				if not found:
@@ -68,7 +68,7 @@ class World:
 		# log for good measure
 		print len(self.script.quests), " quests found: ", [q.id for q in self.script.quests]
 		print len(self.dialog.dialogs), " dialogs found: ", [d for d in self.dialog.dialogs]
-		print len(self.maps), " maps found: ", [m.name for m in self.maps]
+		print len(self.maps), " maps found: ", [m.id for m in self.maps]
 
 	def export(self):
 		with open(os.path.join(self.dir,"content.gen.lua"), "w") as lua:
