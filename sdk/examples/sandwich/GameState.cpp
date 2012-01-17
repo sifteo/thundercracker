@@ -4,8 +4,9 @@ GameState::GameState() : mQuest(0), mQuestMask(0), mUnlockMask(0) {
 }
 
 void GameState::AdvanceQuest() {
-	// need to export total quest list
-	mQuest++;
+	if (mQuest < gQuestCount) {
+		mQuest++;
+	}
 }
 
 bool GameState::IsActive(const TriggerData& trigger) const {

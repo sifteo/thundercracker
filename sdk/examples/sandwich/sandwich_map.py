@@ -7,7 +7,7 @@ import misc
 
 # constants
 PORTAL_OPEN = 0
-PORTAL_WALLED = 1
+PORTAL_WALL = 1
 PORTAL_DOOR = 2
 PORTAL_LABELS = [ "PORTAL_OPEN", "PORTAL_WALL", "PORTAL_DOOR" ]
 SIDE_TOP = 0
@@ -45,17 +45,17 @@ class Map:
 		# infer portal states (part of me reeeally wants this to be more clever)
 		for r in self.rooms:
 			if r.isblocked():
-				r.portals[0] = PORTAL_WALLED
-				r.portals[1] = PORTAL_WALLED
-				r.portals[2] = PORTAL_WALLED
-				r.portals[3] = PORTAL_WALLED
+				r.portals[0] = PORTAL_WALL
+				r.portals[1] = PORTAL_WALL
+				r.portals[2] = PORTAL_WALL
+				r.portals[3] = PORTAL_WALL
 				continue
 			tx,ty = (8*r.x, 8*r.y)
 			# top
-			prevType = r.portals[0] = PORTAL_WALLED
+			prevType = r.portals[0] = PORTAL_WALL
 			for i in range(8):
 				typ = portal_type(self.background.tileat(tx+i, ty))
-				if typ == PORTAL_WALLED:
+				if typ == PORTAL_WALL:
 					pass
 				elif typ == PORTAL_OPEN:
 					if prevType == PORTAL_OPEN:
@@ -65,13 +65,13 @@ class Map:
 					r.portals[0] = typ
 					break
 				prevType = typ
-			if r.portals[0] != PORTAL_WALLED and (r.y == 0 or self.roomat(r.x, r.y-1).isblocked()):
-				r.portals[0] = PORTAL_WALLED
+			if r.portals[0] != PORTAL_WALL and (r.y == 0 or self.roomat(r.x, r.y-1).isblocked()):
+				r.portals[0] = PORTAL_WALL
 			# left
-			prevType = r.portals[1] = PORTAL_WALLED
+			prevType = r.portals[1] = PORTAL_WALL
 			for i in range(8):
 				typ = portal_type(self.background.tileat(tx, ty+i))
-				if typ == PORTAL_WALLED:
+				if typ == PORTAL_WALL:
 					pass
 				elif typ == PORTAL_OPEN:
 					r.portals[1] = PORTAL_OPEN
@@ -80,13 +80,13 @@ class Map:
 					r.portals[i] =typ
 					break
 				prevType = typ
-			if r.portals[1] != PORTAL_WALLED and (r.x == 0 or self.roomat(r.x-1, r.y).isblocked()):
-				r.portals[1] = PORTAL_WALLED
+			if r.portals[1] != PORTAL_WALL and (r.x == 0 or self.roomat(r.x-1, r.y).isblocked()):
+				r.portals[1] = PORTAL_WALL
 			# bottom
-			prevType = r.portals[2] = PORTAL_WALLED
+			prevType = r.portals[2] = PORTAL_WALL
 			for i in range(8):
 				typ = portal_type(self.background.tileat(tx+i, ty+7))
-				if typ == PORTAL_WALLED:
+				if typ == PORTAL_WALL:
 					pass
 				elif typ == PORTAL_OPEN:
 					if prevType == PORTAL_OPEN:
@@ -96,13 +96,13 @@ class Map:
 					r.portals[2] = typ
 					break
 				prevType = typ
-			if r.portals[2] != PORTAL_WALLED and (r.y == self.height-1 or self.roomat(r.x, r.y+1).isblocked()):
-				r.portals[2] = PORTAL_WALLED
+			if r.portals[2] != PORTAL_WALL and (r.y == self.height-1 or self.roomat(r.x, r.y+1).isblocked()):
+				r.portals[2] = PORTAL_WALL
 			# right
-			prevType = r.portals[3] = PORTAL_WALLED
+			prevType = r.portals[3] = PORTAL_WALL
 			for i in range(8):
 				typ = portal_type(self.background.tileat(tx+7, ty+i))
-				if typ == PORTAL_WALLED:
+				if typ == PORTAL_WALL:
 					pass
 				elif typ == PORTAL_OPEN:
 					r.portals[3] = PORTAL_OPEN
@@ -110,8 +110,8 @@ class Map:
 					r.portals[3] = typ
 					break
 				prevType = typ
-			if r.portals[3] != PORTAL_WALLED and (r.x == self.width-1 or self.roomat(r.x+1, r.y).isblocked()):
-				r.portals[3] = PORTAL_WALLED
+			if r.portals[3] != PORTAL_WALL and (r.x == self.width-1 or self.roomat(r.x+1, r.y).isblocked()):
+				r.portals[3] = PORTAL_WALL
 		# validate portals
 		for y in range(self.height):
 			if self.roomat(0,y).portals[1] == PORTAL_OPEN or self.roomat(self.width-1, y).portals[3] == PORTAL_OPEN:
@@ -160,23 +160,17 @@ class Map:
 		src.write("//--------------------------------------------------------\n")
 		src.write("// EXPORTED FROM %s.tmx\n" % self.name)
 		src.write("//--------------------------------------------------------\n\n")
-		src.write("static const uint8_t %s_xportals[] = {\n" % self.name)
+		src.write("static const uint8_t %s_xportals[] = { " % self.name)
 		for y in range(self.height):
-			src.write("    ")
 			for x in range(self.width):
-				src.write(PORTAL_LABELS[self.roomat(x,y).portals[SIDE_LEFT]])
-				src.write(", ")
-			src.write(PORTAL_LABELS[self.roomat(self.width-1,y).portals[SIDE_RIGHT]])
-			src.write(",\n")
+				src.write("%s, " % hex(self.roomat(x,y).portals[SIDE_LEFT]))
+			src.write("%s, " % hex(self.roomat(self.width-1,y).portals[SIDE_RIGHT]))
 		src.write("};\n")
-		src.write("static const uint8_t %s_yportals[] = {\n" % self.name)
+		src.write("static const uint8_t %s_yportals[] = { " % self.name)
 		for x in range(self.width):
-			src.write("    ")
 			for y in range(self.height):
-				src.write(PORTAL_LABELS[self.roomat(x,y).portals[SIDE_TOP]])
-				src.write(", ")
-			src.write(PORTAL_LABELS[self.roomat(x, self.height-1).portals[SIDE_BOTTOM]])
-			src.write(",\n")
+				src.write("%s, " % hex(self.roomat(x,y).portals[SIDE_TOP]))
+			src.write("%s, " % hex(self.roomat(x, self.height-1).portals[SIDE_BOTTOM]))
 		src.write("};\n")
 
 		if len(self.item_dict) > 0:
@@ -240,7 +234,7 @@ class Room:
 		self.lid = lid
 		self.x = lid % map.width
 		self.y = lid / map.width
-		self.portals = [ PORTAL_WALLED, PORTAL_WALLED, PORTAL_WALLED, PORTAL_WALLED ]
+		self.portals = [ PORTAL_WALL, PORTAL_WALL, PORTAL_WALL, PORTAL_WALL ]
 		self.triggers = []
 		self.trigger_dict = {}
 
@@ -400,6 +394,6 @@ def portal_type(tile):
 	if isdoor(tile):
 		return PORTAL_DOOR
 	elif iswall(tile) or isobst(tile):
-		return PORTAL_WALLED
+		return PORTAL_WALL
 	else:
 		return PORTAL_OPEN

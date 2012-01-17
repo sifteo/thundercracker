@@ -10,6 +10,7 @@ private:
 public:
 	GameState();
 	void AdvanceQuest();
+	bool AllQuestsComplete() { return mQuest == gQuestCount; }
 	bool IsActive(const TriggerData& trigger) const;
 
 private:

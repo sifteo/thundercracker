@@ -82,6 +82,9 @@ struct MapData {
     uint16_t height;
 };
 
+extern const unsigned gMapCount;
+extern const unsigned gQuestCount;
+extern const unsigned gDialogCount;
 extern const MapData gMapData[];
 extern const QuestData gQuestData[];
 extern const DialogData gDialogData[];
