@@ -31,10 +31,18 @@ GENERATED_FILES += content.gen.lua
 GENERATED_FILES += content.gen.cpp
 
 
-content.gen.cpp: gen_content
+content.gen.cpp: content
 
-content.gen.lua: gen_content
+content.gen.lua: content
 
-gen_content: sandwich.py tmx.py *.tmx *.xml
+CONTENT_TOOLS = \
+	sandwich.py \
+	sandwich_dialog.py \
+	sandwich_map.py \
+	sandwich_script.py \
+	tmx.py
+
+
+content: $(CONTENT_TOOLS) *.tmx *.xml
 	python -c "import sandwich; sandwich.export()"
 	

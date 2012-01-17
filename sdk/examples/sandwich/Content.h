@@ -39,6 +39,10 @@ struct TriggerData {
     uint8_t room;
 };
 
+#define ITEM_TERMINATOR {{0,0,0,0},0}
+#define GATE_TERMINATOR {{0,0,0,0},0,0,0,0 }
+#define NPC_TERMINATOR {{0,0,0,0},0}
+
 struct ItemData {
     TriggerData trigger;
     uint32_t itemId;
