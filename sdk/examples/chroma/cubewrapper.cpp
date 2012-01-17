@@ -1192,8 +1192,9 @@ void CubeWrapper::setState( CubeState state )
     if( state == STATE_MESSAGING )
     {
         Game::Inst().playSound(message_pop_03_fx);
-        m_numQueuedClears = 0;
     }
+
+    m_numQueuedClears = 0;
 }
 
 
