@@ -111,7 +111,7 @@ void ScoredCubeState_EndOfRound::paint()
         vid.BG0_drawAsset(Vec2(1,0), HighScores);
         BG1Helper bg1(getStateMachine().getCube());
 
-        for (unsigned i = arraysize(SavedData::sHighScores) - 1;
+        for (int i = arraysize(SavedData::sHighScores) - 1;
              i >= 0;
              --i)
         {
