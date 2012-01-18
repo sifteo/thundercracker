@@ -71,6 +71,11 @@ class World:
 			assert quest.map in self.map_dict, "unknown map in gamte sript: " + quest.map
 			assert 0 <= quest.x and 0 <= quest.y and quest.x < self.map_dict[quest.map].width and quest.y < self.map_dict[quest.map].height, "invalid map starting position"
 			assert len(quest.flags) <= 32, "More than 32 flags (implicit and explicit) in quest: " + quest.id
+			# validate triggers
+			for m in self.maps:
+				for r in m.rooms:
+					r.validate_triggers_for_quest(quest)
+
 
 	def export(self):
 		with open(os.path.join(self.dir,"content.gen.lua"), "w") as lua:

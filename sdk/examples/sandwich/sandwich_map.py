@@ -264,6 +264,9 @@ class Room:
 					return True
 		return False
 	
+	def validate_triggers_for_quest(self, quest):
+		assert len([t for t in self.triggers if t.is_active_for(quest)]) < 2, "Too many triggers in room in map: " + self.map.id
+
 	def write_source_to(self, src):
 		src.write("    {\n")
 		# collision mask rows
@@ -352,6 +355,10 @@ class Trigger:
 		if hasattr(self, "qflag"): self.flagid = 1 + self.qflag.index
 		elif hasattr(self, "unlockflag"): self.flagid = 33 + self.unlockflag.index
 
+	def is_active_for(self, quest):
+		if self.qbegin != 0xff and self.qbegin < quest.index: return False
+		if self.qend != 0xff and self.qend > quest.index: return False
+		return True
 
 	
 	def write_trigger_to(self, src):
