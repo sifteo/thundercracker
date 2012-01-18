@@ -73,3 +73,4 @@ class Flag:
 	def __init__(self, index, xml_or_id):
 		self.index = index
 		self.id = (xml_or_id if isinstance(xml_or_id, str) else xml_or_id.get("id")).lower()
+

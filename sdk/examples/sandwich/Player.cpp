@@ -28,7 +28,7 @@ void Player::Reset() {
   mApproachingLockedDoor = false;
 }
 
-MapRoom* Player::Room() const {
+Room* Player::CurrentRoom() const {
   return pGame->map.GetRoom(Location());
 }
 
@@ -138,7 +138,7 @@ void Player::Update(float dt) {
       CORO_YIELD;
       mNextDir = pCurrent->VirtualTiltDirection();
       #if SIFTEO_SIMULATOR
-      // /if (PathDetect()) { break; }
+      if (PathDetect()) { break; }
       #endif
     }
     // go to the target
@@ -153,7 +153,7 @@ void Player::Update(float dt) {
       // animate walking to target
       PlaySfx(sfx_running);
       pTarget->ShowPlayer();
-      if (pCurrent->Room()->GetPortal(mDir) == PORTAL_DOOR) { // hack for now -- special case for approaching doors
+      if (pCurrent->CurrentRoom()->GetPortal(mDir) == PORTAL_DOOR) { // hack for now -- special case for approaching doors
         ASSERT( mDir == SIDE_TOP ); // assuming 128 pixel straight-line UP from the current cube
         for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
           mPosition.y -= WALK_SPEED;
@@ -164,7 +164,7 @@ void Player::Update(float dt) {
           DecrementBasicKeyCount();
           // check the door
           //pCurrent->Room()->SetPortal(mDir, PORTAL_OPEN); // REPLACE
-          pCurrent->Room()->OpenDoor();
+          pCurrent->CurrentRoom()->OpenDoor();
           pCurrent->DrawBackground();
           pCurrent->GetCube()->vbuf.touch();
           pCurrent->UpdatePlayer();
@@ -182,7 +182,7 @@ void Player::Update(float dt) {
             CORO_YIELD;
           }
           // fill in the remainder
-          mPosition = pTarget->Room()->Center();
+          mPosition = pTarget->CurrentRoom()->Center();
         } else {
           PlaySfx(sfx_doorBlock);
           mPath.Cancel();
@@ -232,12 +232,14 @@ void Player::Update(float dt) {
         pCurrent->HidePlayer();
         pCurrent = pTarget;
         pTarget = 0;  
-        mPosition = pCurrent->Room()->Center();
+        mPosition = pCurrent->CurrentRoom()->Center();
         pCurrent->UpdatePlayer();        
         { // pickup item?
-          int itemId = pCurrent->Room()->itemId;
+          int itemId = pCurrent->CurrentRoom()->itemId;
           if (itemId) {
             // pCurrent->Room()->SetItem(0); // REPLACE
+            
+            
             PickupItem(itemId);
             // do a pickup animation
             for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
@@ -259,7 +261,7 @@ void Player::Update(float dt) {
           }
         }
         { // passive trigger?
-          //MapRoom *mr = pCurrent->Room();
+          //Room *mr = pCurrent->Room();
           // REPLACE
         }
       }
@@ -269,7 +271,7 @@ void Player::Update(float dt) {
 
 
     { // active trigger?
-      //MapRoom *mr = pCurrent->Room();
+      //Room *mr = pCurrent->Room();
       // REPLACE
     }
 

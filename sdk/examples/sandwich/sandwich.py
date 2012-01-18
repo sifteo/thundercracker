@@ -5,13 +5,8 @@ from sandwich_dialog import *
 from sandwich_script import *
 
 import lxml.etree
-import os
-import os.path
-import re
-import tmx
-import misc
-import sys
-import traceback
+import os, os.path, re, traceback, sys, zlib
+import tmx, misc
 
 def load():
 	try:
@@ -22,6 +17,10 @@ def load():
 def export():
 	try:
 		World(".").export()
+		content_hash = crc([ "content.gen.lua", "content.gen.cpp" ])
+		print "CONTENT CRC = " + content_hash
+		with open("content_crc.txt", "w") as f: 
+			f.write(content_hash + "\n")
 	except:
 		log_error()
 
@@ -30,6 +29,13 @@ def log_error():
 	print "\n\nUnexpected error:", val
 	print "-----------"
 	traceback.print_tb(bt)
+
+def crc(fileNames):
+    prev = 0
+    for fileName in fileNames:
+    	for eachLine in open(fileName,"rb"):
+        	prev = zlib.crc32(eachLine, prev)
+    return "%X"%(prev & 0xFFFFFFFF)
 
 class World:
 	def __init__(self, dir):
@@ -62,13 +68,13 @@ class World:
 				if not found:
 					raise Exception("Link to non-existent gate: " + gate.target_gate)
 		# validate quests
+		if len(self.script.unlockables) > 32:
+			raise Exception("More than 32 unlockable flags (implicit and explicit) in game script")
 		for quest in self.script.quests:
 			if not quest.map in self.map_dict:
 				raise Exception("Unknown map in game script: " + quest.map)
-		# log for good measure
-		print len(self.script.quests), " quests found: ", [q.id for q in self.script.quests]
-		print len(self.dialog.dialogs), " dialogs found: ", [d for d in self.dialog.dialogs]
-		print len(self.maps), " maps found: ", [m.id for m in self.maps]
+			if len(quest.flags) > 32:
+				raise Exception("More than 32 flags (implicit and explicit) in quest: " + quest.id)
 
 	def export(self):
 		with open(os.path.join(self.dir,"content.gen.lua"), "w") as lua:

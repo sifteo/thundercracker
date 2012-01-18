@@ -14,6 +14,7 @@ OBJS = \
 	GameView.o \
 	Map.o \
 	Player.o \
+	Room.o
 
 include $(TC_DIR)/firmware/master/Makefile.defs
 
@@ -34,11 +35,11 @@ include $(TC_DIR)/firmware/master/Makefile.rules
 
 GENERATED_FILES += content.gen.lua
 GENERATED_FILES += content.gen.cpp
+GENERATED_FILES += content_crc.txt
 
+content.gen.cpp: content_crc.txt
 
-content.gen.cpp: content
-
-content.gen.lua: content
+content.gen.lua: content_crc.txt
 
 CONTENT_TOOLS = \
 	sandwich.py \
@@ -49,5 +50,5 @@ CONTENT_TOOLS = \
 	misc.py
 
 
-content: $(CONTENT_TOOLS) *.tmx game-script.xml dialog-database.xml
+content_crc.txt: $(CONTENT_TOOLS) *.tmx game-script.xml dialog-database.xml
 	python sandwich.py
