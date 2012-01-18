@@ -1,5 +1,7 @@
 *~
 *.o
+*.ll
+*.bc
 *.gen.h
 *.gen.cpp
 assets.html
