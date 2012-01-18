@@ -9,7 +9,6 @@ import misc
 PORTAL_OPEN = 0
 PORTAL_WALL = 1
 PORTAL_DOOR = 2
-PORTAL_LABELS = [ "PORTAL_OPEN", "PORTAL_WALL", "PORTAL_DOOR" ]
 SIDE_TOP = 0
 SIDE_LEFT = 1
 SIDE_BOTTOM = 2
@@ -375,7 +374,7 @@ class Trigger:
 		mapid = self.room.map.world.map_dict[self.target_map].index
 		gateid = self.room.map.world.map_dict[self.target_map].gate_dict[self.target_gate].index
 		x = self.raw.px + (self.raw.pw >> 1) - 128 * self.room.x
-		y = self.raw.py + (self.raw.ph >> 1) - 127 * self.room.y
+		y = self.raw.py + (self.raw.ph >> 1) - 128 * self.room.y
 		src.write(", %s, %s, %s, %s }, " % (hex(mapid), hex(gateid), hex(x), hex(y)))
 	
 	def write_npc_to(self, src):

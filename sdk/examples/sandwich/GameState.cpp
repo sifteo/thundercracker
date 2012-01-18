@@ -24,7 +24,7 @@ bool GameState::IsActive(const TriggerData& trigger) const {
 	);
 }
 
-bool GameState::DoTrigger(const TriggerData& trigger) {
+bool GameState::FlagTrigger(const TriggerData& trigger) {
 	if (IsActive(trigger) && trigger.flagId) {
 		if (trigger.flagId <= 32) {
 			mQuestMask |= (1 << (trigger.flagId-1));
