@@ -15,6 +15,7 @@ assets.html
 MapTool.exe
 content.gen.lua
 content.gen.cpp
+content_crc.txt
 
 _build
 *.swf
