@@ -1,0 +1,19 @@
+# we expect $(TC_DIR)/sdk/Makefile.defs has already been included
+
+all: $(BIN)
+
+%.o: %.cpp $(CDEPS)
+	$(CC) -c -o $@ $< $(CCFLAGS)
+
+$(BIN): $(OBJS)
+	$(LD) -o $@ $^ $(LDFLAGS)
+
+$(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
+	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html -v
+
+.PHONY: clean all
+
+clean:
+	rm -f $(BIN) *.o *.d $(GENERATED_FILES)
+
+-include $(OBJS:%.o=%.d)

@@ -1,0 +1,28 @@
+include $(TC_DIR)/Makefile.platform
+
+CC = clang
+LD = llvm-ld
+
+SDK_DIR = $(TC_DIR)/sdk
+STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
+
+BIN = $(APP)$(BIN_EXT)
+ASSETS = assets
+
+GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html asegment.bin
+CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
+CFLAGS += -I$(SDK_DIR)/include
+
+CFLAGS += -O2 -g
+
+# Disable unwanted warnings, but be generally pretty pedantic
+CFLAGS += -Wall -Werror -Wno-unused
+
+# generate dependency files
+CFLAGS += -MD -MP
+
+# Disable unwanted C++ features
+CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+
+# C++ inherits CFLAGS too
+CCFLAGS += $(CFLAGS)
