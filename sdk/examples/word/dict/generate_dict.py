@@ -22,12 +22,16 @@ def find_anagrams(string, dictionary):
                         words[sw] = True
     else:
         #print string
+        # for all the seed_word_lens, up to the length of this string
         for k in range(len(string) + 1):
             if k in seed_word_lens:        
-                for sub_perm_index in range(int(math.pow(letters_per_cube, k/letters_per_cube))):
+                # count up a number to figure out how to shift each cube set of letters
+                for sub_perm_index in range(int(math.pow(letters_per_cube, len(string)/letters_per_cube))):
+                    #print sub_perm_index
                     s = string
                     cube_ltrs = []
                     cube_index = 0
+                    # break the string into cube sets of letters, and shift
                     while len(s) > 0:
                         st = s[:letters_per_cube]
                         shift = (sub_perm_index / math.pow(letters_per_cube, cube_index)) % letters_per_cube
@@ -41,13 +45,16 @@ def find_anagrams(string, dictionary):
                         cube_index += 1
                         #print s
                     #print cube_ltrs
+                    # for all the permuations of cube sets of letters
                     for cube_ltr_set in permutations(cube_ltrs, k/letters_per_cube):			
                         #print cube_ltr_set
+                        # form the string
                         sw = ''
                         for cltrs in cube_ltr_set:
                             #print cltrs
                             sw += cltrs
                         #print sw
+                        # if it's in the dictionary, save it
                         if sw in dictionary and not sw in words:
                             #print sw + "\n"
                             # Check if it's a max lengthword and a bad word
@@ -110,6 +117,8 @@ def generate_dict():
     output_dictionary = {}
     max_anagrams = 0
     word_list_used = {}
+    #find_anagrams("LISTEN", dictionary)
+    #return
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
         min_anagrams = [999, 999, 999, 999, 999, 3]
@@ -127,7 +136,7 @@ def generate_dict():
                     bad = True
             if num_seed_repeats == 0 and not bad:
                 #print word + ": " + str(len(anagrams))
-                word_list_used[word.upper()] = True
+                word_list_used[word.upper()] = len(anagrams)
                 num_anagrams = len(anagrams)
                 if max_anagrams < num_anagrams:
                     max_anagrams = num_anagrams
