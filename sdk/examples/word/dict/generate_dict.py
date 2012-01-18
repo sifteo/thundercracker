@@ -7,17 +7,37 @@ import sys
 from ctypes import *
 
 
-max_seed_word_len = 6
+seed_word_lens = [4, 6]#, 9]
+letters_per_cube = 2
 
 def find_anagrams(string, dictionary):
-
     words = {}
-    for k in range(len(string) + 1):
-        if k >= 2:
-            for subword in permutations(string, k):
-                if ''.join(subword) in dictionary and not''.join(subword) in words:
-                    # Check if it's a max lengthword and a bad word
-                    words[''.join(subword).upper()] = True
+    if letters_per_cube == 1:
+        for k in range(len(string) + 1):
+            if k in seed_word_lens:
+                for subword in permutations(string, k):			
+                    sw = ''.join(subword).upper()
+                    if sw in dictionary and not sw in words:
+                        # Check if it's a max lengthword and a bad word
+                        words[sw] = True
+    else:
+        cube_ltrs = []
+        s = string
+        for k in range(len(string) + 1):
+            if k in seed_word_lens:        
+                while len(s) > 0:
+                    cube_ltrs.append(s[:letters_per_cube])
+                    s = s[letters_per_cube:]
+                    #print s
+                for cube_ltr_set in permutations(cube_ltrs, k/letters_per_cube):			
+                    sw = ''
+                    for cltrs in cube_ltr_set:
+                        sw = sw.join(cltrs).upper()
+                    if sw in dictionary and not sw in words:
+                        #print sw + "\n"
+                        # Check if it's a max lengthword and a bad word
+                        words[sw] = True
+                        
     #print string
     #print words
     return words
@@ -29,7 +49,7 @@ def generate_word_list_file():
     word_list = {}
     for line in fi:
         word = line.strip()
-        if len(word) <= max_seed_word_len and word.find("'") == -1:
+        if len(word) in seed_word_lens and word.find("'") == -1:
             #print "word list: " + line
             word_list[word.upper()] = True        
     fi.close()
@@ -65,7 +85,7 @@ def generate_dict():
     word_list = {}
     for line in fi:
         word = line.strip()
-        if len(word) <= max_seed_word_len and word.find("'") == -1 and word.find(".") == -1:
+        if len(word) in seed_word_lens and word.find("'") == -1 and word.find(".") == -1:
             #print "word list: " + line
             word_list[word.upper()] = True        
     fi.close()
@@ -77,9 +97,11 @@ def generate_dict():
     word_list_used = {}
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
-        min_anagrams = [999, 1, 3, 14, 25, 25]
+        min_anagrams = [999, 999, 999, 999, 999, 1]
         #min_anagrams = [999, 999, 4, 15, 25, 25]
+        #print "checking word " + word
         if len(anagrams) > min_anagrams[len(word) - 1]:
+            print word + " " + str(anagrams)
             num_seed_repeats = 0
             # skip it if a pre-existing seed word has the same anagram set 
             bad = False
