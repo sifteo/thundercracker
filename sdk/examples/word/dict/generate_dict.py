@@ -25,19 +25,25 @@ def find_anagrams(string, dictionary):
         s = string
         for k in range(len(string) + 1):
             if k in seed_word_lens:        
-                while len(s) > 0:
-                    cube_ltrs.append(s[:letters_per_cube])
-                    s = s[letters_per_cube:]
-                    #print s
-                for cube_ltr_set in permutations(cube_ltrs, k/letters_per_cube):			
-                    sw = ''
-                    for cltrs in cube_ltr_set:
-                        sw = sw.join(cltrs).upper()
-                    if sw in dictionary and not sw in words:
-                        #print sw + "\n"
-                        # Check if it's a max lengthword and a bad word
-                        words[sw] = True
-                        
+                for sub_perm_index in range(math.pow(letters_per_cube, k/letters_per_cube)):
+                    cube_index = 0
+                    while len(s) > 0:
+                        st = s[:letters_per_cube]
+                        shift = (sub_perm_index / math.pow(letters_per_cube, cube_index)) % letters_per_cube
+                        st = st[:shift] + st[shift:]
+                        cube_ltrs.append(st)
+                        s = s[letters_per_cube:]
+                        cube_index += 1
+                        #print s
+                    for cube_ltr_set in permutations(cube_ltrs, k/letters_per_cube):			
+                        sw = ''
+                        for cltrs in cube_ltr_set:
+                            sw = sw.join(cltrs).upper()
+                        if sw in dictionary and not sw in words:
+                            #print sw + "\n"
+                            # Check if it's a max lengthword and a bad word
+                            words[sw] = True
+                            
     #print string
     #print words
     return words
