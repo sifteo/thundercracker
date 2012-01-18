@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import time, random
+import math, random
 from itertools import *
 import os, sys
 import fileinput
@@ -21,24 +21,33 @@ def find_anagrams(string, dictionary):
                         # Check if it's a max lengthword and a bad word
                         words[sw] = True
     else:
-        cube_ltrs = []
-        s = string
+        #print string
         for k in range(len(string) + 1):
             if k in seed_word_lens:        
-                for sub_perm_index in range(math.pow(letters_per_cube, k/letters_per_cube)):
+                for sub_perm_index in range(int(math.pow(letters_per_cube, k/letters_per_cube))):
+                    s = string
+                    cube_ltrs = []
                     cube_index = 0
                     while len(s) > 0:
                         st = s[:letters_per_cube]
                         shift = (sub_perm_index / math.pow(letters_per_cube, cube_index)) % letters_per_cube
-                        st = st[:shift] + st[shift:]
+                        shift = int(shift)
+                        #print shift
+                        #print "bef: " + st
+                        st = st[shift:] + st[:shift]
+                        #print "af: " + st
                         cube_ltrs.append(st)
                         s = s[letters_per_cube:]
                         cube_index += 1
                         #print s
+                    print cube_ltrs
                     for cube_ltr_set in permutations(cube_ltrs, k/letters_per_cube):			
+                        #print cube_ltr_set
                         sw = ''
                         for cltrs in cube_ltr_set:
-                            sw = sw.join(cltrs).upper()
+                            #print cltrs
+                            sw += cltrs
+                        #print sw
                         if sw in dictionary and not sw in words:
                             #print sw + "\n"
                             # Check if it's a max lengthword and a bad word
@@ -103,6 +112,7 @@ def generate_dict():
     word_list_used = {}
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
+        break
         min_anagrams = [999, 999, 999, 999, 999, 1]
         #min_anagrams = [999, 999, 4, 15, 25, 25]
         #print "checking word " + word
