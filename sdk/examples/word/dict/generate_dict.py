@@ -112,7 +112,7 @@ def generate_dict():
     word_list_used = {}
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
-        min_anagrams = [999, 999, 999, 999, 999, 1]
+        min_anagrams = [999, 999, 999, 999, 999, 3]
         #min_anagrams = [999, 999, 4, 15, 25, 25]
         #print "checking word " + word
         if len(anagrams) > min_anagrams[len(word) - 1]:
