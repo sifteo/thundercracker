@@ -10,17 +10,17 @@ class DialogDatabase:
 		self.world = world
 		self.path = path
 		doc = lxml.etree.parse(path)
-		dialogs = [Dialog(i,node) for i,node in enumerate(doc.findall("dialog"))]
-		if len(dialogs) > 1:
-			for i,d in enumerate(dialogs[:-1]):
-				for otherd in dialogs[i+1:]:
+		self.dialogs = [Dialog(i,node) for i,node in enumerate(doc.findall("dialog"))]
+		if len(self.dialogs) > 1:
+			for i,d in enumerate(self.dialogs[:-1]):
+				for otherd in self.dialogs[i+1:]:
 					assert d.id != otherd.id, "duplicate dialog id"
 		# todo: validate dialog images
-		self.dialogs = dict((d.id, d) for d in dialogs)
+		self.dialog_dict = dict((d.id, d) for d in self.dialogs)
 
 	def list_npc_image_names(self):
 		hash = {}
-		for dialog in self.dialogs.itervalues():
+		for dialog in self.dialogs:
 			if not dialog.npc in hash:
 				yield dialog.npc
 				hash[dialog.npc] = True
@@ -28,8 +28,8 @@ class DialogDatabase:
 	
 	def list_detail_image_names(self):
 		hash = {}
-		for dialog in self.dialogs.itervalues():
-			for text in dialog.texts:
+		for dialog in self.dialogs:
+			for text in dialog.lines:
 				if not text.image in hash:
 					yield text.image
 					hash[text.image] = True
@@ -39,7 +39,7 @@ class Dialog:
 		self.id = xml.get("id").lower()
 		self.index = index
 		self.npc = xml.get("npc")
-		self.texts = [DialogText(self, i, elem) for i,elem in enumerate(xml.findall("text"))]
+		self.lines = [DialogText(self, i, elem) for i,elem in enumerate(xml.findall("text"))]
 
 class DialogText:
 	def __init__(self, dialog, index, xml):

@@ -1,7 +1,8 @@
 #pragma once
 #include "Base.h"
+#include "Content.h"
 
-struct Room;
+class Room;
 
 class GameView {
 public:
@@ -52,12 +53,10 @@ public:
   void UpdatePlayer();
   void HidePlayer();
   
-  void ShowItem(int itemId);
   void SetItemPosition(Vec2 p);
   void HideItem();
 
   void RefreshInventory();
-
   void DrawBackground();
 
 private:

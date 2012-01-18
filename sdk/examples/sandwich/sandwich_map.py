@@ -278,13 +278,13 @@ class Room:
 			src.write("%s, " % hex(rowMask))
 		src.write("},\n")
 		# tiles
-		src.write("        {\n")
+		src.write("        { ")
 		for ty in range(8):
-			src.write("            ")
+			#src.write("            ")
 			for tx in range(8):
 				src.write("%s, " % hex(self.tileat(tx,ty).lid))
-			src.write("\n")
-		src.write("        },\n")
+			#src.write("\n")
+		src.write("},\n")
 		# overlay
 		if self.hasoverlay():
 			src.write("        %s_overlay_%d_%d, " % (self.map.id, self.x, self.y))
@@ -344,8 +344,8 @@ class Trigger:
 			self.target_gate = m.group(2).lower()
 		elif self.type == TRIGGER_NPC:
 			did = obj.props["id"].lower()
-			assert did in room.map.world.dialog.dialogs, "Invalid Dialog ID in Map: " + room.map.id
-			self.dialog = room.map.world.dialog.dialogs[did]
+			assert did in room.map.world.dialog.dialog_dict, "Invalid Dialog ID in Map: " + room.map.id
+			self.dialog = room.map.world.dialog.dialog_dict[did]
 		
 				
 		self.qbegin = self.minquest.index if hasattr(self, "minquest") else 0xff

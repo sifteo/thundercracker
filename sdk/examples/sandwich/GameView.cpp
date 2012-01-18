@@ -3,10 +3,11 @@
 
 // Constants
 
-#define ROOM_NONE (Vec2(-1,-1))
-#define BFF_SPRITE_ID 0
-#define ITEM_SPRITE_ID 1
-#define PLAYER_SPRITE_ID 2
+#define LOCATION_UNDEFINED  (Vec2(-1,-1))
+#define BFF_SPRITE_ID     0
+#define ITEM_SPRITE_ID    1
+#define PLAYER_SPRITE_ID  2
+#define NPC_SPRITE_ID     3
 
 static const int8_t sHoverTable[] = { 
   0, 0, 1, 2, 2, 3, 3, 3, 
@@ -42,7 +43,7 @@ static const Vec2 sBffTable[] = {
 // methods
 
 GameView::GameView() : 
-visited(0), mRoom(ROOM_NONE), mIdleHoverIndex(0) {
+visited(0), mRoom(LOCATION_UNDEFINED), mIdleHoverIndex(0) {
 }
 
 void GameView::Init() {
@@ -52,7 +53,7 @@ void GameView::Init() {
     ShowLocation(pGame->player.Location());
   } else {
     mRoom.x = -2; // h4ck
-    ShowLocation(ROOM_NONE);
+    ShowLocation(LOCATION_UNDEFINED);
   }
 }
 
@@ -233,7 +234,10 @@ bool GameView::ShowLocation(Vec2 room) {
     HideInventorySprites();
     Room* mr = CurrentRoom();
     if (mr->HasItem()) {
-      ShowItem(mr->TriggerAsItem()->itemId);
+      SetSpriteImage(GetCube(), ITEM_SPRITE_ID, Items.index + (mr->TriggerAsItem()->itemId - 1) * Items.width * Items.height);
+      ResizeSprite(GetCube(), ITEM_SPRITE_ID, 16, 16);
+      Vec2 p = 16 * CurrentRoom()->LocalCenter();
+      MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
     }
     if (this == pGame->player.CurrentView()) {
       ShowPlayer();
@@ -266,8 +270,8 @@ bool GameView::ShowLocation(Vec2 room) {
 }
 
 bool GameView::HideRoom() {
-  bool result = mRoom != ROOM_NONE;
-  mRoom = ROOM_NONE;
+  bool result = mRoom != LOCATION_UNDEFINED;
+  mRoom = LOCATION_UNDEFINED;
   // hide sprites
   HideSprite(GetCube(), PLAYER_SPRITE_ID);
   HideSprite(GetCube(), ITEM_SPRITE_ID);
@@ -280,11 +284,6 @@ bool GameView::HideRoom() {
   DrawBackground();
   return result;
 }
-
-//----------------------------------------------------------------
-// PLAYER METHODS
-//----------------------------------------------------------------
-
 
 void GameView::ShowPlayer() {
   ResizeSprite(GetCube(), PLAYER_SPRITE_ID, 32, 32);
@@ -305,17 +304,6 @@ void GameView::HidePlayer() {
   HideSprite(GetCube(), PLAYER_SPRITE_ID);
 }
   
-//----------------------------------------------------------------------
-// ITEM METHODS
-//----------------------------------------------------------------------
-
-void GameView::ShowItem(int itemId) {
-  SetSpriteImage(GetCube(), ITEM_SPRITE_ID, Items.index + (itemId - 1) * Items.width * Items.height);;
-  ResizeSprite(GetCube(), ITEM_SPRITE_ID, 16, 16);
-  Vec2 p = 16 * CurrentRoom()->LocalCenter();
-  MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
-}
-
 void GameView::SetItemPosition(Vec2 p) {
   p += 16 * CurrentRoom()->LocalCenter();
   MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
@@ -324,7 +312,6 @@ void GameView::SetItemPosition(Vec2 p) {
 void GameView::HideItem() {
   HideSprite(GetCube(), ITEM_SPRITE_ID);
 }
-
 
 void GameView::RefreshInventory() {
   if (!IsShowingRoom()) {
