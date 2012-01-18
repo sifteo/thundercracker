@@ -28,14 +28,11 @@ class Map:
 	def __init__(self, world, path):
 		self.world = world
 		self.id = os.path.basename(path)[:-4].lower()
-		if not os.path.exists(path[:-4]+"_blank.png"):
-			raise Exception("Map missing blank image: %s_blank.png", self.id)
+		assert os.path.exists(path[:-4]+"_blank.png"), "Map missing blank image: " + self.id
 		self.raw = tmx.Map(path)
-		if not "background" in self.raw.layer_dict:
-			raise Exception("Map does not contain background layer: %s" % self.id)
+		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
-		if self.background.gettileset().count >= 256:
-			raise Exception("Map is too large (must have < 256 tiles): %s" % self.id)
+		assert self.background.gettileset().count < 256, "Map is too large (must have < 256 tiles): " + self.id
 		self.overlay = self.raw.layer_dict.get("overlay", None)
 		self.width = self.raw.pw / 128
 		self.height = self.raw.ph / 128
@@ -114,26 +111,21 @@ class Map:
 				r.portals[3] = PORTAL_WALL
 		# validate portals
 		for y in range(self.height):
-			if self.roomat(0,y).portals[1] == PORTAL_OPEN or self.roomat(self.width-1, y).portals[3] == PORTAL_OPEN:
-				raise Exception("Boundary Wall Error in Map: %s" % self.id)
+			assert not self.roomat(0,y).portals[1] == PORTAL_OPEN and not self.roomat(self.width-1, y).portals[3] == PORTAL_OPEN, "Boundary Wall Error in Map: " + self.id
 		for x in range(self.width):
-			if self.roomat(x,0).portals[0] == PORTAL_OPEN or self.roomat(x, self.height-1).portals[2] == PORTAL_OPEN:
-				raise Exception("Boundary Wall Error in Map: %s" % self.id)
+			assert not self.roomat(x,0).portals[0] == PORTAL_OPEN and not self.roomat(x, self.height-1).portals[2] == PORTAL_OPEN, "Boundary Wall Error in Map: " + self.id
 		for x in range(self.width-1):
 			for y in range(self.height):
-				if self.roomat(x,y).portals[3] != self.roomat(x+1,y).portals[1]:
-					raise Exception ("Portal Mismatch in Map: %s" % self.id)
+				assert self.roomat(x,y).portals[3] == self.roomat(x+1,y).portals[1], "Portal Mismatch in Map: " + self.id
 		for x in range(self.width):
 			for y in range(self.height-1):
-				if self.roomat(x,y).portals[2] != self.roomat(x,y+1).portals[0]:
-					raise Exception ("Portal Mismatch in Map: %s" % self.id)
+				assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id
 		# unpack triggers
 		for obj in self.raw.objects:
 			if obj.type in KEYWORD_TO_TRIGGER_TYPE:
 				room = self.roomatpx(obj.px, obj.py)
 				trig = Trigger(room, obj)
-				if trig.id in room.trigger_dict:
-					raise Exception("Multiple triggers with the Same Name in the Same Room for map: " + self.id)
+				assert not trig.id in room.trigger_dict, "Duplicate Trigger IDs in the same room for map: " + self.id #extend map-wide?
 				room.triggers.append(trig)
 				room.trigger_dict[trig.id] = trig
 		# assign trigger indices, build map-dicts
@@ -331,11 +323,9 @@ class Trigger:
 			if "maxquest" in obj.props:
 				self.maxquest = room.map.world.script.getquest(obj.props["maxquest"])
 			if hasattr(self, "minquest") and hasattr(self, "maxquest"):
-				if self.minquest.index > self.maxquest.index:
-					raise Exception("MaxQuest > MinQuest for object in map: " + room.map.id)
+				assert self.minquest.index <= self.maxquest.index, "MaxQuest > MinQuest for object in map: " + room.map.id
 		if "unlockflag" in obj.props:
-			if not obj.props["unlockflag"] in room.map.world.script.unlockables_dict:
-				raise Exception("Undefined unlock flag in map: " + room.map.id)
+			assert obj.props["unlockflag"] in room.map.world.script.unlockables_dict, "Undefined unlock flag in map: " + room.map.id
 			self.unlockflag = room.map.world.script.unlockables_dict[obj.props["unlockflag"]]
 		
 
@@ -347,14 +337,12 @@ class Trigger:
 				self.unlockflag = room.map.world.script.add_flag_if_undefined(self.id)
 		elif self.type == TRIGGER_GATEWAY:
 			m = EXP_GATEWAY.match(obj.props.get("target", ""))
-			if m is None:
-				raise Exception("Malformed Gateway Target in Map: " + room.map.id)
+			assert m is not None, "Malformed Gateway Target in Map: " + room.map.id
 			self.target_map = m.group(1).lower()
 			self.target_gate = m.group(2).lower()
 		elif self.type == TRIGGER_NPC:
 			did = obj.props["id"].lower()
-			if not did in room.map.world.dialog.dialogs:
-				raise Exception("Invalid Dialog ID in Map: " + room.map.id)
+			assert did in room.map.world.dialog.dialogs, "Invalid Dialog ID in Map: " + room.map.id
 			self.dialog = room.map.world.dialog.dialogs[did]
 		
 				

@@ -14,8 +14,7 @@ class DialogDatabase:
 		if len(dialogs) > 1:
 			for i,d in enumerate(dialogs[:-1]):
 				for otherd in dialogs[i+1:]:
-					if d.id == otherd.id:
-						raise Exception("Duplicate Dialog ID")
+					assert d.id != otherd.id, "duplciate dialog id"
 		# todo: validate dialog images
 		self.dialogs = dict((d.id, d) for d in dialogs)
 

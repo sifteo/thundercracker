@@ -20,7 +20,7 @@ def export():
 		content_hash = crc([ "content.gen.lua", "content.gen.cpp" ])
 		print "CONTENT CRC = " + content_hash
 		with open("content_crc.txt", "w") as f: 
-			f.write(content_hash + "\n")
+			f.write(content_hash)
 	except:
 		log_error()
 
@@ -52,29 +52,25 @@ class World:
 			m.index = i
 		
 		#validate maps
-		if len(self.maps) == 0:
-			raise Exception("No maps!")
+		assert len(self.maps) > 0
 		# validate map links
 		for map in self.maps:
 			for gate in map.list_triggers_of_type(TRIGGER_GATEWAY):
-				if not gate.target_map in self.map_dict:
-					raise Exception("Link to non-existent map: " + gate.target_map)
+				assert gate.target_map in self.map_dict, "gateway to unknown map: " + gate.target_map
 				tmap = self.map_dict[gate.target_map]
 				found = False
 				for othergate in tmap.list_triggers_of_type(TRIGGER_GATEWAY):
 					if othergate.id == gate.target_gate:
 						found = True
 						break
-				if not found:
-					raise Exception("Link to non-existent gate: " + gate.target_gate)
+				assert found, "link to unknown map-gate: " + gate.target_gate
 		# validate quests
 		if len(self.script.unlockables) > 32:
 			raise Exception("More than 32 unlockable flags (implicit and explicit) in game script")
 		for quest in self.script.quests:
-			if not quest.map in self.map_dict:
-				raise Exception("Unknown map in game script: " + quest.map)
-			if len(quest.flags) > 32:
-				raise Exception("More than 32 flags (implicit and explicit) in quest: " + quest.id)
+			assert quest.map in self.map_dict, "unknown map in gamte sript: " + quest.map
+			assert 0 <= quest.x and 0 <= quest.y and quest.x < self.map_dict[quest.map].width and quest.y < self.map_dict[quest.map].height, "invalid map starting position"
+			assert len(quest.flags) <= 32, "More than 32 flags (implicit and explicit) in quest: " + quest.id
 
 	def export(self):
 		with open(os.path.join(self.dir,"content.gen.lua"), "w") as lua:
