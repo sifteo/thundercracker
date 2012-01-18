@@ -162,7 +162,7 @@ void GameView::Update() {
   // end h4cky section
 
   // item hover
-  if (CurrentRoom()->itemId) {
+  if (CurrentRoom()->HasItem()) {
     mIdleHoverIndex = (mIdleHoverIndex + 1) % HOVER_COUNT;
     Vec2 p = 16 * CurrentRoom()->LocalCenter();
     MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y + sHoverTable[mIdleHoverIndex]);
@@ -232,8 +232,8 @@ bool GameView::ShowLocation(Vec2 room) {
   if (IsShowingRoom()) {
     HideInventorySprites();
     Room* mr = CurrentRoom();
-    if (mr->itemId) {
-      ShowItem(mr->itemId);
+    if (mr->HasItem()) {
+      ShowItem(mr->TriggerAsItem()->itemId);
     }
     if (this == pGame->player.CurrentView()) {
       ShowPlayer();

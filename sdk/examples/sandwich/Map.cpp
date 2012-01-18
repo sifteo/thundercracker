@@ -13,17 +13,27 @@ inline static bool PortalOpen(const uint8_t* pid) {
 void Map::SetData(const MapData& map) { 
   if (mData != (MapData*)&map) {
     mData = (MapData*)&map; 
-    Room *proom = mRooms;
-    for(int y=0; y<map.height; ++y) {
-      for(int x=0; x<map.width; ++x) {
-        proom->itemId = 0;
-        ++proom;
-      }
-    }
-    // find items which are active
+
+    const Room* pEnd = mRooms + (map.width*map.height);
+    for(Room* p=mRooms; p!=pEnd; ++p) { p->ClearTrigger(); }
+
+    // find active triggers
     for(const ItemData* p = mData->items; p!= mData->items + mData->itemCount; ++p) {
       if (pGame->state.IsActive(p->trigger)) {
-        mRooms[p->trigger.room].itemId = p->itemId;
+        ASSERT(!mRooms[p->trigger.room].HasTrigger());
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &(p->trigger));
+      }
+    }
+    for(const GatewayData* p = mData->gates; p != mData->gates + mData->gateCount; ++p) {
+      if (pGame->state.IsActive(p->trigger)) {
+        ASSERT(!mRooms[p->trigger.room].HasTrigger());
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_GATEWAY, &(p->trigger));
+      }
+    }
+    for(const NpcData* p = mData->npcs; p != mData->npcs + mData->npcCount; ++p) {
+      if (pGame->state.IsActive(p->trigger)) {
+        ASSERT(!mRooms[p->trigger.room].HasTrigger());
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &(p->trigger));
       }
     }
   }

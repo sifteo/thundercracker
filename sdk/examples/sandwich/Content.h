@@ -3,9 +3,9 @@
 
 using namespace Sifteo;
 
-#define PORTAL_OPEN	0
-#define PORTAL_WALL	1
-#define PORTAL_DOOR 2
+#define PORTAL_OPEN	        0
+#define PORTAL_WALL	        1
+#define PORTAL_DOOR         2
 
 #define ITEM_NONE           0
 #define ITEM_BASIC_KEY      1
@@ -14,6 +14,11 @@ using namespace Sifteo;
 #define ITEM_LETTUCE        4
 #define ITEM_HAM            5
 #define ITEM_SKELETON_KEY   6
+
+#define TRIGGER_UNDEFINED   -1
+#define TRIGGER_GATEWAY     0
+#define TRIGGER_ITEM        1
+#define TRIGGER_NPC         2
 
 struct QuestData {
     uint8_t mapId;

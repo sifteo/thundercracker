@@ -235,12 +235,12 @@ void Player::Update(float dt) {
         mPosition = pCurrent->CurrentRoom()->Center();
         pCurrent->UpdatePlayer();        
         { // pickup item?
-          int itemId = pCurrent->CurrentRoom()->itemId;
-          if (itemId) {
-            // pCurrent->Room()->SetItem(0); // REPLACE
-            
-            
-            PickupItem(itemId);
+          if (pCurrent->CurrentRoom()->HasItem()) {
+            const ItemData* pItem = pCurrent->CurrentRoom()->TriggerAsItem();
+            if (pGame->state.DoTrigger(pItem->trigger)) {
+              pCurrent->CurrentRoom()->ClearTrigger();
+            }
+            PickupItem(pItem->itemId);
             // do a pickup animation
             for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
               pCurrent->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
