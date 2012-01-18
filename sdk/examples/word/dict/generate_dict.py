@@ -40,7 +40,7 @@ def find_anagrams(string, dictionary):
                         s = s[letters_per_cube:]
                         cube_index += 1
                         #print s
-                    print cube_ltrs
+                    #print cube_ltrs
                     for cube_ltr_set in permutations(cube_ltrs, k/letters_per_cube):			
                         #print cube_ltr_set
                         sw = ''
@@ -112,7 +112,6 @@ def generate_dict():
     word_list_used = {}
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
-        break
         min_anagrams = [999, 999, 999, 999, 999, 1]
         #min_anagrams = [999, 999, 4, 15, 25, 25]
         #print "checking word " + word
