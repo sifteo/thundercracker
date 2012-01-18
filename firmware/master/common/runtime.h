@@ -9,8 +9,9 @@
 #ifndef _SIFTEO_RUNTIME_H
 #define _SIFTEO_RUNTIME_H
 
-#include <csetjmp>
-#include <sifteo.h>
+#include <setjmp.h>
+#include <sifteo/abi.h>
+#include <sifteo/machine.h>
 
 namespace EventBits {
 	enum ID {
