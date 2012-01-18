@@ -27,10 +27,6 @@ void Runtime::run()
 {
     if (setjmp(jmpExit))
         return;
-
-#ifndef BUILD_UNIT_TEST
-    siftmain();
-#endif
 }
 
 void Runtime::exit()

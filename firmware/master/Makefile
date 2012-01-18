@@ -1,4 +1,4 @@
-BIN_SIM = master-sim.a
+BIN_SIM = master-sim
 BIN_STM32 = master-stm32.a
 
 BINS = $(BIN_SIM)
@@ -59,20 +59,11 @@ CDEPS := \
 
 all: $(BINS)
 
-ifeq ($(BUILD_PLATFORM), Darwin)
 $(BIN_SIM): $(OBJS_SIM)
-	rm -f $@
-	$(LIBTOOL_SIM) -static -o $@ $^ $(SIM_STATIC_LIBS)
-else
-$(BIN_SIM): $(OBJS_SIM)
-	rm -f $@
-	$(AR) rcs $@ $^ $(SIM_STATIC_OBJS)
-endif
+	$(CC) -o $@ $^ $(SIM_STATIC_LIBS) $(LDFLAGS_SIM)
 
 $(BIN_STM32): $(OBJS_STM32)
-	rm -f $@
-	$(AR_STM32) r $@ $^
-	$(RANLIB_STM32) $@
+	$(CC) -o $@ $^ $(LDFLAGS_STM32)
 
 %.sim.o: %.cpp $(CDEPS)
 	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
