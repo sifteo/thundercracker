@@ -13,6 +13,7 @@ Banner::Banner()
 	m_Msg[0] = '\0';
 	m_fEndTime = -1.0f;
     m_tiles = 0;
+    m_bIsScoreMsg = false;
 }
 
 
@@ -33,8 +34,11 @@ void Banner::Draw( BG1Helper &bg1helper )
     {
         int iOffset = iStartXTile + i;
 
-        //bg1helper.DrawAsset( Vec2( iOffset, 7 ), Font, m_Msg[i] - ' ' );
-        bg1helper.DrawAsset( Vec2( iOffset, 7 ), BannerPoints, m_Msg[i] - '0' );
+
+        if( m_bIsScoreMsg )
+            bg1helper.DrawAsset( Vec2( iOffset, 7 ), BannerPoints, m_Msg[i] - '0' );
+        else
+            bg1helper.DrawAsset( Vec2( iOffset, 7 ), Font, m_Msg[i] - ' ' );
     }
 }
 
@@ -57,15 +61,17 @@ void Banner::Update(float t, Cube &cube)
 }
 
 
-void Banner::SetMessage( const char *pMsg, float duration )
+void Banner::SetMessage( const char *pMsg, bool bScoreMsg )
 {
 	ASSERT( strlen( pMsg ) < BANNER_WIDTH );
 
 	if( strlen( pMsg ) < BANNER_WIDTH )
 	{
 		strcpy( m_Msg, pMsg );
-		m_fEndTime = System::clock() + duration;
+        float msgTime = bScoreMsg ? SCORE_FADE_DELAY/2.0f : SCORE_FADE_DELAY;
+        m_fEndTime = System::clock() + msgTime;
         m_tiles = 0;
+        m_bIsScoreMsg = bScoreMsg;
 	}
 }
 

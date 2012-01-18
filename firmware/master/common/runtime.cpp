@@ -9,7 +9,9 @@
 #include "runtime.h"
 #include "cube.h"
 #include "neighbors.h"
-#include "../selectormenu/MenuController.h"
+#ifndef SIFTEO_SIMULATOR
+    #include "tasks.h"
+#endif
 
 using namespace Sifteo;
 
@@ -27,11 +29,6 @@ void Runtime::run()
         return;
 
 #ifndef BUILD_UNIT_TEST
-
-#ifdef SELECTORMENUCHROMA
-	SelectorMenu::RunMenu();
-#endif
-
     siftmain();
 #endif
 }
