@@ -1,7 +1,7 @@
 #pragma once
 #include "Base.h"
 
-struct Room;
+class Room;
 
 class GameView {
 public:

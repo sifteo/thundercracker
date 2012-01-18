@@ -2,7 +2,7 @@
 
 #include "Map.h"
 class GameView;
-struct Room;
+class Room;
 
 #define WALK_SPEED 3
 #define PLAYER_STATUS_IDLE 0
