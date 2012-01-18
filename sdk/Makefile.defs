@@ -6,20 +6,24 @@ LD = llvm-ld
 SDK_DIR = $(TC_DIR)/sdk
 STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
 
-BIN = $(APP)$(BIN_EXT)
+BIN = $(APP).bc
 ASSETS = assets
 
 GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html asegment.bin
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
-CFLAGS += -O2 -g
+CFLAGS += -O2
+LDFLAGS += -strip-all -link-as-library
 
 # Disable unwanted warnings, but be generally pretty pedantic
-CFLAGS += -Wall -Werror -Wno-unused
+CFLAGS += -Wall -Werror -Wno-unused -Wno-c++0x-static-nonintegral-init
 
 # generate dependency files
 CFLAGS += -MD -MP
+
+# clang generates native .o files by default. Use LLVM bitcode.
+CFLAGS += -emit-llvm
 
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
