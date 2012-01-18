@@ -45,7 +45,7 @@ static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] =
 
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
-        m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
+        m_bg1helper( m_cube ), m_state( STATE_PLAYING ),
         m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
         m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true )
 {
@@ -79,7 +79,6 @@ void CubeWrapper::Init( AssetGroup &assets )
 
 void CubeWrapper::Reset()
 {
-	m_ShakesRemaining = STARTING_SHAKES;
 	m_fShakeTime = -1.0f;
     setState( STATE_PLAYING );
     m_idleTimer = 0.0f;
@@ -761,21 +760,21 @@ void CubeWrapper::checkRefill()
             m_intro.Reset( true );
             Refill( true );
 		}
-		else if( m_ShakesRemaining > 0 )
+        else if( Game::Inst().getShakesLeft() > 0 )
 		{
             setState( STATE_REFILL );
             m_intro.Reset( true );
             Refill( true );
-            m_ShakesRemaining--;
+            Game::Inst().useShake();
 
-			if( m_ShakesRemaining == 0 )
+            if( Game::Inst().getShakesLeft() == 0 )
 				m_banner.SetMessage( "NO SHAKES LEFT" );
-			else if( m_ShakesRemaining == 1 )
+            else if( Game::Inst().getShakesLeft() == 1 )
 				m_banner.SetMessage( "1 SHAKE LEFT" );
 			else
 			{
                 char buf[16];
-                snprintf(buf, sizeof buf - 1, "%d SHAKES LEFT", m_ShakesRemaining );
+                snprintf(buf, sizeof buf - 1, "%d SHAKES LEFT", Game::Inst().getShakesLeft() );
                 m_banner.SetMessage( buf, false );
 			}
 		}

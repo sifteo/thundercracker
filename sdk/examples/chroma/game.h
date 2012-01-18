@@ -21,10 +21,14 @@ public:
 	typedef enum
 	{
 		STATE_SPLASH,
+#if SPLASH_ON
         STARTING_STATE = STATE_SPLASH,
+#endif
 		STATE_MENU,
         STATE_INTRO,
-        //STARTING_STATE = STATE_INTRO,
+#if !SPLASH_ON
+        STARTING_STATE = STATE_INTRO,
+#endif
 		STATE_PLAYING,		
         STATE_DYING,
 		STATE_POSTGAME,
@@ -43,6 +47,7 @@ public:
 
     //static const int NUM_CUBES = 3;
     static const unsigned int NUM_HIGH_SCORES = 5;
+    static const int STARTING_SHAKES = 3;
     static const unsigned int NUM_SFX_CHANNELS = 3;
     static const int NUM_SLOSH_SOUNDS = 2;
     static const unsigned int INT_MAX = 0x7fff;
@@ -93,6 +98,9 @@ public:
 
     inline void forcePaintSync() { m_bForcePaintSync = true; }
 
+    inline unsigned int getShakesLeft() const { return m_ShakesRemaining; }
+    inline void useShake() { m_ShakesRemaining--; }
+
 private:
 	void TestMatches();
 	bool m_bTestMatches;
@@ -123,6 +131,7 @@ private:
     const _SYSAudioModule *m_pSoundThisFrame;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
+    unsigned int m_ShakesRemaining;
 
     //force a 1 frame paint sync before/after drawing
     bool m_bForcePaintSync;

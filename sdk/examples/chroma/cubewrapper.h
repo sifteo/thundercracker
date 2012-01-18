@@ -22,7 +22,6 @@ class CubeWrapper
 public:
 	static const int NUM_ROWS = 4;
 	static const int NUM_COLS = 4;
-	static const int STARTING_SHAKES = 3;
     static const float SHAKE_FILL_DELAY;
 	static const int DEFAULT_COHESION = 3;
     static const float SPRING_K_CONSTANT;
@@ -123,7 +122,6 @@ private:
 
 	//neighbor info
 	int m_neighbors[NUM_SIDES];
-	unsigned int m_ShakesRemaining;
 	//what time did we start shaking?
 	float m_fShakeTime;
 
