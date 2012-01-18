@@ -70,12 +70,10 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 void CubeWrapper::Init( AssetGroup &assets )
 {
     m_cube.enable();
-    //TAKEN OUT SINCE SELECTOR MENU IS LOADING ASSETS
-    //m_cube.loadAssets( assets );
+    m_cube.loadAssets( assets );
 
     m_rom.init();
-    //TAKEN OUT SINCE SELECTOR MENU IS LOADING ASSETS
-    //m_rom.BG0_text(Vec2(1,1), "Loading...");
+    m_rom.BG0_text(Vec2(1,1), "Loading...");
 }
 
 
@@ -109,7 +107,7 @@ void CubeWrapper::Reset()
 
 bool CubeWrapper::DrawProgress( AssetGroup &assets )
 {
-	m_rom.BG0_progressBar(Vec2(0,7), m_cube.assetProgress(GameAssets, m_vid.LCD_width), 2);
+    m_rom.BG0_progressBar(Vec2(0,7), m_cube.assetProgress(assets, m_vid.LCD_width), 2);
         
 	return m_cube.assetDone(assets);
 }
@@ -137,13 +135,14 @@ void CubeWrapper::Draw()
 				{
 					//clear out grid first (somewhat wasteful, optimize if necessary)
                     //m_vid.clear(GemEmpty.tiles[0]);
+
+                    ASSERT( m_numQueuedClears <= NUM_ROWS * NUM_COLS && m_numQueuedClears >= 0 );
+
                     //flush our queued clears
                     for( int i = 0; i < m_numQueuedClears; i++ )
                     {
                         m_vid.BG0_drawAsset(m_queuedClears[i], GemEmpty, 0);
                     }
-
-                    m_numQueuedClears = 0;
 
 					//draw grid
 					for( int i = 0; i < NUM_ROWS; i++ )
@@ -279,6 +278,8 @@ void CubeWrapper::Draw()
 		default:
 			break;
 	}
+
+    m_numQueuedClears = 0;
 	
 }
 
@@ -775,7 +776,7 @@ void CubeWrapper::checkRefill()
 			{
                 char buf[16];
                 snprintf(buf, sizeof buf - 1, "%d SHAKES LEFT", m_ShakesRemaining );
-                m_banner.SetMessage( buf );
+                m_banner.SetMessage( buf, false );
 			}
 		}
 		else
@@ -951,12 +952,6 @@ void CubeWrapper::Refill( bool bAddLevel )
 		int toFix = Game::Inst().Rand( numEmpties );
 		GridSlot &fix = m_grid[aEmptyLocs[toFix].x][aEmptyLocs[toFix].y];
 		bool bFound = false;
-
-        //TODO, this is only because we don't have all the colors yet!
-        if( fix.getColor() >= GridSlot::NUM_FIXED_COLORS )
-        {
-            fix.FillColor( 0 );
-        }
 
 		if( !fix.IsFixed() )
 		{
@@ -1187,7 +1182,9 @@ void CubeWrapper::setState( CubeState state )
     m_stateTime = 0.0f;
 
     if( state == STATE_MESSAGING )
+    {
         Game::Inst().playSound(message_pop_03_fx);
+    }
 }
 
 
