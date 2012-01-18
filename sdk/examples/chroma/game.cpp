@@ -28,7 +28,7 @@ Game &Game::Inst()
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
                 m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_splashTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
-                m_ShakesRemaining( STARTING_SHAKES ), m_bForcePaintSync( false )
+                m_ShakesRemaining( STARTING_SHAKES ), m_bForcePaintSync( false ), m_bHyperDotMatched( false )
 {
 	//Reset();
 }
@@ -74,17 +74,19 @@ void Game::Init()
     for( unsigned int i = 0; i < NUM_SFX_CHANNELS; i++ )
     {
         m_SFXChannels[i].init();
+        //m_SFXChannels[i].setVolume( 256 );
     }
 #endif
 #if MUSIC_ON
     m_musicChannel.init();
 
     //doesn't seem to work
-    //m_musicChannel.setVolume( 1 );
-    //m_SFXChannel.setVolume( 256 );
-
-    //m_musicChannel.play( astrokraut, LoopRepeat );
+    m_musicChannel.setVolume( 1 );
+#if SPLASH_ON
     m_musicChannel.play( StingerIV2, LoopOnce );
+#else
+    m_musicChannel.play( astrokraut, LoopRepeat );
+#endif
 #endif
 }
 
@@ -185,6 +187,7 @@ void Game::Reset()
 	m_iScore = 0;
 	m_iDotsCleared = 0;
 	m_iLevel = 0;
+    m_bHyperDotMatched = false;
 
     m_state = STATE_INTRO;
     m_ShakesRemaining = STARTING_SHAKES;
@@ -244,6 +247,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 		total_marked += cubes[i].getNumMarked();
 	}
 
+    //chain is finished
     if( total_marked == 0 )
 	{
 		m_iScore += m_iDotScoreSum;
@@ -256,14 +260,25 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 		}
 		else
 		{          
-            if( m_iDotsCleared >= 10 )
-                Game::Inst().playSound(clear4);
-            else if( m_iDotsCleared >= 7 )
-                Game::Inst().playSound(clear3);
-            else if( m_iDotsCleared >= 4 )
-                Game::Inst().playSound(clear2);
-            else if( m_iDotsCleared >= 2 )
-                Game::Inst().playSound(clear1);
+            //free shake
+            if( m_mode == MODE_SHAKES && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
+            {
+
+            }
+            else if( m_iDotsCleared >= DOT_THRESHOLD4 )
+            {
+                playSound(clear4);
+
+                //is it dangerous to add one here?  do we need to queue it?
+                if( !m_bHyperDotMatched && !DoesHyperDotExist() )
+                    pWrapper->SpawnHyper();
+            }
+            else if( m_iDotsCleared >= DOT_THRESHOLD3 )
+                playSound(clear3);
+            else if( m_iDotsCleared >= DOT_THRESHOLD2 )
+                playSound(clear2);
+            else if( m_iDotsCleared >= DOT_THRESHOLD1 )
+                playSound(clear1);
 
 			char aBuf[16];
             snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
@@ -275,6 +290,9 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 
 		m_iDotScore = 0;
 		m_iDotScoreSum = 0;
+        m_iDotsCleared = 0;
+
+        m_bHyperDotMatched = false;
 	}
 }
 
@@ -471,18 +489,18 @@ unsigned int Game::getHighScore( unsigned int index ) const
 void Game::enterScore()
 {
     //walk backwards through the high score list and see which ones we can pick off
-    for( unsigned int i = NUM_HIGH_SCORES - 1; i >= 0; i-- )
+    for( int i = (int)NUM_HIGH_SCORES - 1; i >= 0; i-- )
     {
         if( s_HighScores[i] < m_iScore )
         {
-            if( i < NUM_HIGH_SCORES - 1 )
+            if( i < (int)NUM_HIGH_SCORES - 1 )
             {
                 s_HighScores[i+1] = s_HighScores[i];
             }
         }
         else
         {
-            if( i < NUM_HIGH_SCORES - 1 )
+            if( i < (int)NUM_HIGH_SCORES - 1 )
             {
                 s_HighScores[i+1] = m_iScore;
             }
@@ -530,4 +548,28 @@ void Game::playSlosh()
 
         m_fLastSloshTime = System::clock();
     }
+}
+
+
+
+//destroy all dots of the given color
+void Game::BlowAll( unsigned int color )
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        cubes[i].BlowAll( color );
+    }
+}
+
+
+
+bool Game::DoesHyperDotExist()
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( cubes[i].HasHyperDot() )
+            return true;
+    }
+
+    return false;
 }

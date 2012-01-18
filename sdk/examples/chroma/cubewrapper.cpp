@@ -593,13 +593,27 @@ void CubeWrapper::testMatches()
 			//compare the two
 			for( int j = 0; j < NUM_ROWS; j++ )
 			{
-                if( ourGems[j]->isMatchable() && theirGems[j]->isMatchable() && ourGems[j]->getColor() == theirGems[j]->getColor() )
+                if( ourGems[j]->isMatchable() && theirGems[j]->isMatchable() )
 				{
-					ourGems[j]->mark();
-					theirGems[j]->mark();
+                    //hypercolor madness
+                    if( ourGems[j]->getColor() == GridSlot::HYPERCOLOR )
+                    {
+                        Game::Inst().BlowAll( theirGems[j]->getColor() );
+                        ourGems[j]->mark();
+                    }
+                    else if( theirGems[j]->getColor() == GridSlot::HYPERCOLOR )
+                    {
+                        Game::Inst().BlowAll( ourGems[j]->getColor() );
+                        theirGems[j]->mark();
+                    }
+                    else if( ourGems[j]->getColor() == theirGems[j]->getColor() )
+                    {
+                        ourGems[j]->mark();
+                        theirGems[j]->mark();
+                    }
 				}
 			}
-		}
+        }
 	}
 }
 
@@ -1101,7 +1115,7 @@ unsigned int CubeWrapper::getNumDots() const
 	{
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
-			const GridSlot &slot = m_grid[i][j];
+            const GridSlot &slot = m_grid[i][j];
 			if( slot.isAlive() )
 				count++;
 		}
@@ -1203,4 +1217,58 @@ void CubeWrapper::QueueClear( Vec2 &pos )
     m_queuedClears[m_numQueuedClears] = pos;
     m_numQueuedClears++;
     ASSERT( m_numQueuedClears <= NUM_ROWS * NUM_COLS );
+}
+
+
+//look for an empty spot to put a hyper dot
+void CubeWrapper::SpawnHyper()
+{
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+
+            if( slot.isOccupiable() )
+            {
+                slot.MakeHyper();
+                return;
+            }
+        }
+    }
+}
+
+
+//destroy all dots of the given color
+void CubeWrapper::BlowAll( unsigned int color )
+{
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+
+            if( slot.isMatchable() && slot.getColor() == color )
+            {
+                slot.mark();
+            }
+        }
+    }
+}
+
+
+bool CubeWrapper::HasHyperDot() const
+{
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            const GridSlot &slot = m_grid[i][j];
+
+            if( slot.isAlive() && slot.getColor() == GridSlot::HYPERCOLOR )
+                return true;
+        }
+    }
+
+    return false;
 }

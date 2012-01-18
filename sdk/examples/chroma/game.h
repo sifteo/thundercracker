@@ -53,12 +53,22 @@ public:
     static const unsigned int INT_MAX = 0x7fff;
     static const float SLOSH_THRESHOLD;
 
+    //number of dots needed for certain thresholds
+    enum
+    {
+        DOT_THRESHOLD1 = 2,
+        DOT_THRESHOLD2 = 4,
+        DOT_THRESHOLD3 = 7,
+        DOT_THRESHOLD4 = 10,
+        DOT_THRESHOLD5 = 15,
+    };
+
 	CubeWrapper cubes[NUM_CUBES]; 
 
 	void Init();
 	void Update();
 	void Reset();
-	
+
 	//flag self to test matches
 	void setTestMatchFlag() { m_bTestMatches = true; }
 
@@ -101,8 +111,12 @@ public:
     inline unsigned int getShakesLeft() const { return m_ShakesRemaining; }
     inline void useShake() { m_ShakesRemaining--; }
 
+    //destroy all dots of the given color
+    void BlowAll( unsigned int color );
+
 private:
 	void TestMatches();
+    bool DoesHyperDotExist();
 	bool m_bTestMatches;
 	//how much our current dot is worth
 	unsigned int m_iDotScore;
@@ -135,6 +149,8 @@ private:
 
     //force a 1 frame paint sync before/after drawing
     bool m_bForcePaintSync;
+    //keeps track of whether a hyperdot was used this chain
+    bool m_bHyperDotMatched;
 };
 
 #endif

@@ -16,11 +16,15 @@ class CubeWrapper;
 class GridSlot
 {
 public:
-	static const unsigned int NUM_COLORS = 8;
-	static const AssetImage *TEXTURES[ NUM_COLORS ];
+    static const unsigned int NUM_COLORS = 8;
+    static const AssetImage *TEXTURES[ NUM_COLORS ];
     static const AssetImage *EXPLODINGTEXTURES[ NUM_COLORS ];
     static const AssetImage *FIXED_TEXTURES[ NUM_COLORS ];
     static const AssetImage *FIXED_EXPLODINGTEXTURES[ NUM_COLORS ];
+
+    //the hyper-dot is a special case
+    static const unsigned int HYPERCOLOR = NUM_COLORS;
+
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
     static const unsigned int NUM_ROLL_FRAMES;
     //static const unsigned int NUM_IDLE_FRAMES;
@@ -76,6 +80,9 @@ public:
 	bool IsFixed() const { return m_bFixed; }
 	void MakeFixed() { m_bFixed = true; }
     void setFixedAttempt();
+
+    inline void MakeHyper() { FillColor( HYPERCOLOR ); }
+    inline bool IsHyper() const { return m_color == HYPERCOLOR; }
 
 	//copy color and some other attributes from target.  Used when tilting
 	void TiltFrom(GridSlot &src);

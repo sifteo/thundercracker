@@ -105,6 +105,10 @@ public:
     //queue a location to be cleared by gemEmpty.
     //This exists because we need to do all our clears first, and then do our draws
     void QueueClear( Vec2 &pos );
+    void SpawnHyper();
+    //destroy all dots of the given color
+    void BlowAll( unsigned int color );
+    bool HasHyperDot() const;
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
