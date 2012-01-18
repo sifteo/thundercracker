@@ -44,10 +44,12 @@ public:
     bool isConnectedToCubeOnSide(Cube::ID cubeIDStart, Cube::Side side=SIDE_LEFT);
     bool hasNoNeighbors() const;
     float getIdleTime() const { return mIdleTime; }
-    int getPanning() const { return (int) mBG0Panning; }
     bool canNeighbor() const { return (int)mBG0Panning == (int)mBG0TargetPanning; }
+    int getPanning() const { return (int)mBG0Panning; }
 
 private:
+    void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
+
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     unsigned mNumLetters;

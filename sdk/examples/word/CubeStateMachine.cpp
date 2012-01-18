@@ -44,6 +44,8 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                             mBG0TargetPanning += 144.f;
                             mBG0Panning += 144.f;
                         }
+                        VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
+                        setPanning(vid, mBG0Panning);
                     }
                 }
                 break;
@@ -70,6 +72,8 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     case EventID_NewAnagram:
         unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
         mBG0TargetPanning = 0.f;
+        VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
+        setPanning(vid, 0.f);
         for (unsigned i = 0; i < arraysize(mLetters); ++i)
         {
             mLetters[i] = '\0';
@@ -255,5 +259,13 @@ void CubeStateMachine::update(float dt)
     if ((int)mBG0Panning != (int)mBG0TargetPanning)
     {
         mBG0Panning += (mBG0TargetPanning - mBG0Panning) * dt * 7.5f;
+        VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
+        setPanning(vid, mBG0Panning);
     }
+}
+
+void CubeStateMachine::setPanning(VidMode_BG0_SPR_BG1& vid, float panning)
+{
+    mBG0Panning = panning;
+    //vid.BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
 }

@@ -112,6 +112,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     }
 
     BG1Helper bg1(mStateMachine->getCube());
+    unsigned bg1Tiles = 0;
     for (unsigned int i = 0; i < 16; ++i) // rows
     {
         for (unsigned j=0; j < 16; ++j) // columns
@@ -171,44 +172,52 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
             switch (getTransparencyType(teethImageIndex, frame, j, i))
             {
             case TransparencyType_None:
-                // paint this opaque tile
-                // paint BG0
-                if (teethNumber &&
-                    frame >= 2 && frame - 2 < teethNumber->frames &&
-                    j >= ((unsigned) TEETH_NUM_POS.x) &&
-                    j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
-                    i >= ((unsigned) TEETH_NUM_POS.y) &&
-                    i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
+                if (teethImageIndex == ImageIndex_Teeth || teethImageIndex == ImageIndex_Teeth_NoBlip)
                 {
-                    vid.BG0_drawPartialAsset(Vec2(j, i),
+                    // paint this opaque tile
+                    // paint BG0
+                    if (teethNumber &&
+                        frame >= 2 && frame - 2 < teethNumber->frames &&
+                        j >= ((unsigned) TEETH_NUM_POS.x) &&
+                        j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
+                        i >= ((unsigned) TEETH_NUM_POS.y) &&
+                        i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
+                    {
+                        vid.BG0_drawPartialAsset(Vec2(j, i),
+                                                 Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
+                                                 Vec2(1, 1),
+                                                 *teethNumber,
+                                                 frame - 2);
+                    }
+                    else
+                    {
+                        vid.BG0_drawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                    }
+                    break;
+                }
+                // else fall through
+
+            case TransparencyType_Some:
+                if (bg1Tiles < 144)
+                {
+                    if (teethNumber &&
+                        frame >= 2 && frame - 2 < teethNumber->frames &&
+                        j >= ((unsigned) TEETH_NUM_POS.x) &&
+                        j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
+                        i >= ((unsigned) TEETH_NUM_POS.y) &&
+                        i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
+                    {
+                        bg1.DrawPartialAsset(Vec2(j, i),
                                              Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
                                              Vec2(1, 1),
                                              *teethNumber,
                                              frame - 2);
-                }
-                else
-                {
-                    vid.BG0_drawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
-                }
-                break;
-
-            case TransparencyType_Some:
-                if (teethNumber &&
-                    frame >= 2 && frame - 2 < teethNumber->frames &&
-                    j >= ((unsigned) TEETH_NUM_POS.x) &&
-                    j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
-                    i >= ((unsigned) TEETH_NUM_POS.y) &&
-                    i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
-                {
-                    bg1.DrawPartialAsset(Vec2(j, i),
-                                         Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
-                                         Vec2(1, 1),
-                                         *teethNumber,
-                                         frame - 2);
-                }
-                else
-                {
-                    bg1.DrawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                    }
+                    else
+                    {
+                        bg1.DrawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                    }
+                    ++bg1Tiles;
                 }
                 break;
 
@@ -484,8 +493,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
         // TODO
       //  break;
     }
-    vid.BG0_setPanning(Vec2(getStateMachine().getPanning(), 0.f));
-
+    vid.BG0_setPanning(Vec2(getStateMachine().getPanning(), 0));
 }
 
 void CubeState::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, const char* string)

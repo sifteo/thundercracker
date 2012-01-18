@@ -15,6 +15,8 @@ unsigned ScoredCubeState_Shuffle::onEvent(unsigned eventID, const EventData& dat
     switch (eventID)
     {
     case EventID_EnterState:
+        WordGame::instance()->setNeedsPaintSync();
+        // fall through
     case EventID_Paint:
         paint();
         break;
