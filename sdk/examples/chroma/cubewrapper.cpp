@@ -136,15 +136,13 @@ void CubeWrapper::Draw()
 					//clear out grid first (somewhat wasteful, optimize if necessary)
                     //m_vid.clear(GemEmpty.tiles[0]);
 
-                    ASSERT( m_numQueuedClears < NUM_ROWS * NUM_COLS && m_numQueuedClears >= 0 );
+                    ASSERT( m_numQueuedClears <= NUM_ROWS * NUM_COLS && m_numQueuedClears >= 0 );
 
                     //flush our queued clears
                     for( int i = 0; i < m_numQueuedClears; i++ )
                     {
                         m_vid.BG0_drawAsset(m_queuedClears[i], GemEmpty, 0);
                     }
-
-                    m_numQueuedClears = 0;
 
 					//draw grid
 					for( int i = 0; i < NUM_ROWS; i++ )
@@ -280,6 +278,8 @@ void CubeWrapper::Draw()
 		default:
 			break;
 	}
+
+    m_numQueuedClears = 0;
 	
 }
 
@@ -1185,8 +1185,6 @@ void CubeWrapper::setState( CubeState state )
     {
         Game::Inst().playSound(message_pop_03_fx);
     }
-
-    m_numQueuedClears = 0;
 }
 
 
