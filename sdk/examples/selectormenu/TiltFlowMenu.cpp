@@ -26,7 +26,7 @@ TiltFlowMenu *TiltFlowMenu::Inst()
 
 TiltFlowMenu::TiltFlowMenu(TiltFlowItem *pItems, int numItems, int numCubes) : mStatus( LOGO ), 
     mSimTime( 0.0f ), mUpdateTime( 0.0f ), mPickTime( 0.0f ), mNumCubes( numCubes ), mNumItems( numItems ), 
-    mDone( false ), mNeighborDirty( true )
+	mDone( false ), mNeighborDirty( true )
 {
     s_pInst = this;
 
@@ -620,7 +620,7 @@ void TiltFlowView::PaintIncomingCover()
 
 	//printf( "Attempting to draw at %d, %d.  Offset %d, %d, size %d, %d\n", pos.x, pos.y, offset.x, offset.y, size.x, size.y ); 
 
-    vid.BG0_drawPartialAsset(pos, offset, size, Cover, 0);
+	vid.BG0_drawPartialAsset(pos, offset, size, ChromaCover, 0);
 }
 
 

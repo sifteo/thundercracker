@@ -50,13 +50,27 @@ const AssetImage *GridSlot::EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 };
 
 
-const AssetImage *GridSlot::FIXED_TEXTURES[ GridSlot::NUM_FIXED_COLORS ] =
+const AssetImage *GridSlot::FIXED_TEXTURES[ GridSlot::NUM_COLORS ] =
 {
     &FixedGem0,
+    &FixedGem1,
+    &FixedGem2,
+    &FixedGem3,
+    &FixedGem4,
+    &FixedGem5,
+    &FixedGem6,
+    &FixedGem7,
 };
 
-const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_FIXED_COLORS ] =
+const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 {
+    &FixedExplode0,
+    &FixedExplode0,
+    &FixedExplode0,
+    &FixedExplode0,
+    &FixedExplode0,
+    &FixedExplode0,
+    &FixedExplode0,
     &FixedExplode0,
 };
 

@@ -25,7 +25,7 @@ Game &Game::Inst()
     return game;
 }
 
-Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ), m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ), m_bForcePaintSync( false )
+Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ), m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_splashTime( 0.0f ), m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ), m_bForcePaintSync( false )
 {
 	//Reset();
 }
@@ -36,8 +36,7 @@ void Game::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].Init(GameAssets);
 
-    //TAKEN OUT SINCE SELECTOR MENU IS LOADING ASSETS
-    /*bool done = false;
+    bool done = false;
 
 	PRINT( "getting ready to load" );
 
@@ -53,7 +52,7 @@ void Game::Init()
 		}
 		System::paint();
 	}
-    PRINT( "done loading" );*/
+    PRINT( "done loading" );
 
 #ifdef _WIN32
     srand((int)( System::clock() * 10000 ));
@@ -264,10 +263,9 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 
 			char aBuf[16];
             snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
-			pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_FADE_DELAY/2.0f );        
+            pWrapper->getBanner().SetMessage( aBuf, true );
 		}
 
-		//TODO timer mode
 		if( m_mode == MODE_TIMED )
 			m_timer.AddTime(m_iDotScore);
 

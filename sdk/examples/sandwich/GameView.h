@@ -1,7 +1,7 @@
 #pragma once
 #include "Base.h"
 
-struct MapRoom;
+struct Room;
 
 class GameView {
 public:
@@ -36,7 +36,7 @@ public:
   bool IsShowingRoom() const;
   bool InSpriteMode() const;
   Vec2 Location() const { return mRoom; }
-  MapRoom* Room() const;
+  Room* CurrentRoom() const;
   Cube::Side VirtualTiltDirection() const;
   GameView* VirtualNeighborAt(Cube::Side side) const;
   

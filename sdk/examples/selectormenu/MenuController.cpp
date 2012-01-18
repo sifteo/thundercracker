@@ -45,6 +45,7 @@ static void onAccelChange(_SYSCubeID cid)
 
 static void onTilt(_SYSCubeID cid)
 {
+	//TODO, make not reliant on id base
     Cube::TiltState state = s_menu.cubes[cid - CUBE_ID_BASE].GetCube().getTiltState();
 
     if( state.x == _SYS_TILT_POSITIVE )
@@ -98,54 +99,29 @@ MenuController::MenuController() : m_Menu( MENUITEMS, NUM_MENU_ITEMS, NUM_CUBES 
 
 void MenuController::Init()
 {
-    for( int i = 0; i < NUM_CUBES; i++ )
-        cubes[i].Init(GameAssets);
+	for( int i = 0; i < NUM_CUBES; i++ )
+        cubes[i].Init(MenuControllerAssets);
 
     bool done = false;
 
 #if LOAD_ASSETS
     PRINT( "getting ready to load" );
 
-    while( !done )
-    {
-        done = true;
-        for( int i = 0; i < NUM_CUBES; i++ )
-        {
-            if( !cubes[i].DrawProgress(GameAssets) )
-                done = false;
+	while( !done )
+	{
+		done = true;
+		for( int i = 0; i < NUM_CUBES; i++ )
+		{
+            if( !cubes[i].DrawProgress(MenuControllerAssets) )
+				done = false;
 
-            PRINT( "in load loop" );
-        }
-        System::paint();
-    }
-    PRINT( "done loading" );
+			PRINT( "in load loop" );
+		}
+		System::paint();
+	}
+	PRINT( "done loading" );
 #endif
-
-    //CES hackery, fake power on
-    for( int i = 0; i < NUM_CUBES; i++ )
-    {
-        VidMode_BG0_ROM rom( cubes[i].GetCube().vbuf );
-        rom.clear();
-        rom.BG0_text(Vec2(1,1), "Chroma");
-        //rom.BG0_textf(Vec2(14,14), "%d", i + 1);
-    }
-
-    unsigned cnt = 0;
-    while(cnt < 2 * (NUM_CUBES-1))
-    {
-      System::paint();
-      cnt = 0;
-      for(int i=0; i<NUM_CUBES; ++i)
-      {
-        for(Cube::Side s=0; s<4; ++s)
-        {
-          cnt += cubes[i].GetCube().hasPhysicalNeighborAt(s);
-        }
-      }
-    }
-
     m_Menu.AssignViews();
-
 	for( int i = 0; i < NUM_CUBES; i++ )
 		cubes[i].vidInit();
 
@@ -182,3 +158,9 @@ void MenuController::checkNeighbors()
 
 
 } //namespace SelectorMenu
+
+
+void siftmain()
+{
+    SelectorMenu::RunMenu();
+}
