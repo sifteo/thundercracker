@@ -13,7 +13,7 @@ GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html asegment.bin
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
-CFLAGS += -O2
+CFLAGS += -Os -ffreestanding -emit-llvm
 LDFLAGS += -strip-all -link-as-library
 
 # Disable unwanted warnings, but be generally pretty pedantic
@@ -21,9 +21,6 @@ CFLAGS += -Wall -Werror -Wno-unused -Wno-c++0x-static-nonintegral-init
 
 # generate dependency files
 CFLAGS += -MD -MP
-
-# clang generates native .o files by default. Use LLVM bitcode.
-CFLAGS += -emit-llvm
 
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti

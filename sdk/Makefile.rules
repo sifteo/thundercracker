@@ -2,6 +2,9 @@
 
 all: $(BIN)
 
+disassemble: $(BIN)
+	@llvm-dis $(BIN) -o -
+
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
 
@@ -11,7 +14,7 @@ $(BIN): $(OBJS)
 $(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
 	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -o $(ASSETS).html -v
 
-.PHONY: clean all
+.PHONY: clean all disassemble
 
 clean:
 	rm -f $(BIN) *.o *.d $(GENERATED_FILES)
