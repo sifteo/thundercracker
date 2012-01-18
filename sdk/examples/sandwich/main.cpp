@@ -45,7 +45,7 @@ void siftmain() {
   
   //DialogData data;
   //DoDialog(data);
-
+  /*
 	{ // fake power-on
 		for(unsigned hack=0; hack<4; ++hack) {
 			for(unsigned i=0; i<NUM_CUBES; ++i) {
@@ -69,6 +69,7 @@ void siftmain() {
 			}
 		}
 	}
+	*/
 	#if SFX_ON
 	gChannelSfx.init();
 	#endif
@@ -76,11 +77,9 @@ void siftmain() {
 	gChannelMusic.init();
 	#endif
 	for(;;) {
-		PlayMusic(music_sting, false);
-		IntroCutscene();
-		{
-			*pGame = Game(); // re-initialize memory
-		}
+		//PlayMusic(music_sting, false);
+		//IntroCutscene();
+		{ *pGame = Game(); } // re-initialize memory
 		pGame->MainLoop();
 		PlayMusic(music_winscreen, false);
 		WinScreen(pGame->player.CurrentView()->GetCube());

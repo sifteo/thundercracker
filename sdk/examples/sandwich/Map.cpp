@@ -2,55 +2,6 @@
 #include "Game.h"
 
 
-//-----------------------------------------------------------------------------
-// MAP ROOM STUFF
-//-----------------------------------------------------------------------------
-
-int MapRoom::RoomId() const {
-  return (int)(this - pGame->map.GetRoom(0));
-}
-
-Vec2 MapRoom::Location() const {
-  int id = RoomId();
-  return Vec2(id % pGame->map.Data()->width, id / pGame->map.Data()->width);
-}
-
-const RoomData* MapRoom::Data() const {
-  return pGame->map.GetRoomData(RoomId());
-}
-
-uint8_t MapRoom::GetPortal(Cube::Side side) {
-  Vec2 p = Location();
-  switch(side) {
-    case SIDE_TOP: return *( pGame->map.GetPortalY(p.x, p.y) );
-    case SIDE_LEFT: return *( pGame->map.GetPortalX(p.x, p.y) );
-    case SIDE_BOTTOM: return *( pGame->map.GetPortalY(p.x, p.y+1) );
-    case SIDE_RIGHT: return *( pGame->map.GetPortalX(p.x+1, p.y) );
-  }
-  return 0;
-}
-
-uint8_t MapRoom::GetTile(Vec2 position) {
-  return Data()->tiles[position.x + 8 * position.y];
-}
-
-void MapRoom::OpenDoor() {
-  ASSERT(false);
-  /*
-  for(int row=0; row<3; ++row) {
-    for(int col=3; col<=4; ++col) {
-      SetTile(
-        Vec2(col, row), GetTile(Vec2(col, row))+2
-      );
-    }
-  }
-  */
-}
-
-//-----------------------------------------------------------------------------
-// MAP STUFF
-//-----------------------------------------------------------------------------
-
 Map::Map() {
   SetData(gMapData[gQuestData->mapId]);
 }
@@ -62,16 +13,29 @@ inline static bool PortalOpen(const uint8_t* pid) {
 void Map::SetData(const MapData& map) { 
   if (mData != (MapData*)&map) {
     mData = (MapData*)&map; 
-    MapRoom *proom = mRooms;
-    for(int y=0; y<map.height; ++y) {
-      for(int x=0; x<map.width; ++x) {
-        proom->itemId = 0;
-        ++proom;
+
+    const Room* pEnd = mRooms + (map.width*map.height);
+    for(Room* p=mRooms; p!=pEnd; ++p) { p->ClearTrigger(); }
+
+    // find active triggers
+    for(const ItemData* p = mData->items; p!= mData->items + mData->itemCount; ++p) {
+      if (pGame->state.IsActive(p->trigger)) {
+        ASSERT(!mRooms[p->trigger.room].HasTrigger());
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &(p->trigger));
       }
     }
-    for(const ItemData* p = mData->items; p && p->room>=0; ++p) {
-      (mRooms + p->room)->itemId = p->itemId;
-    }    
+    for(const GatewayData* p = mData->gates; p != mData->gates + mData->gateCount; ++p) {
+      if (pGame->state.IsActive(p->trigger)) {
+        ASSERT(!mRooms[p->trigger.room].HasTrigger());
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_GATEWAY, &(p->trigger));
+      }
+    }
+    for(const NpcData* p = mData->npcs; p != mData->npcs + mData->npcCount; ++p) {
+      if (pGame->state.IsActive(p->trigger)) {
+        ASSERT(!mRooms[p->trigger.room].HasTrigger());
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &(p->trigger));
+      }
+    }
   }
 }
 
@@ -181,8 +145,8 @@ struct AStar {
 bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
   if (!CanTraverse(loc, dir)) { return false; }
   Vec2 dloc = loc + kSideToUnit[dir];
-  MapRoom* src = GetRoom(loc);
-  MapRoom* dst = GetRoom(dloc);
+  Room* src = GetRoom(loc);
+  Room* dst = GetRoom(dloc);
   
   AStar as;
   for(ACell* p = as.cells; p != as.cells + A_STAR_CAP; ++p) { p->record = 0xff; }

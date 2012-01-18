@@ -2,7 +2,7 @@
 
 #include "Map.h"
 class GameView;
-struct MapRoom;
+struct Room;
 
 #define WALK_SPEED 3
 #define PLAYER_STATUS_IDLE 0
@@ -49,7 +49,7 @@ public:
   Cube::Side Direction() { return mDir; }
   Vec2 Position() const { return mPosition; }
   Vec2 Location() const { return mPosition/128; }
-  MapRoom* Room() const;
+  Room* CurrentRoom() const;
   int Status() const { return mStatus; }
 
   void PickupItem(int itemId);
@@ -58,6 +58,7 @@ public:
   void DecrementBasicKeyCount();
 
   void SetLocation(Vec2 position, Cube::Side direction);
+  void SetPosition(Vec2 position) { mPosition = position; }
 
   void Move(int dx, int dy);
   void Update(float dt);

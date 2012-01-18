@@ -2,17 +2,21 @@
 #include "GameView.h"
 #include "Player.h"
 #include "Map.h"
+#include "GameState.h"
 
 class Game {
 public:
   GameView views[NUM_CUBES];
-  Player player;
+  GameState state;
   Map map;
+  Player player;
   float mSimTime;
   int mNeedsSync;
   bool mIsDone;
 
 public:
+
+  Game();
 
   // Getters
   

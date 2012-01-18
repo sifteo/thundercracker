@@ -905,29 +905,34 @@
     <property name="target" value="forest:DungeonGate"/>
    </properties>
   </object>
-  <object name="Key" type="Item" x="432" y="960" width="32" height="32">
+  <object name="Key0" type="Item" x="432" y="960" width="32" height="32">
    <properties>
     <property name="id" value="1"/>
+    <property name="quest" value="tutorial"/>
    </properties>
   </object>
-  <object name="Key" type="Item" x="176" y="576" width="32" height="32">
+  <object name="Key1" type="Item" x="176" y="576" width="32" height="32">
    <properties>
     <property name="id" value="1"/>
+    <property name="quest" value="tutorial"/>
    </properties>
   </object>
-  <object name="Key" type="Item" x="176" y="288" width="32" height="32">
+  <object name="Key2" type="Item" x="176" y="288" width="32" height="32">
    <properties>
     <property name="id" value="1"/>
+    <property name="quest" value="tutorial"/>
    </properties>
   </object>
   <object name="Ham" type="Item" x="48" y="320" width="32" height="32">
    <properties>
     <property name="id" value="5"/>
+    <property name="quest" value="tutorial"/>
    </properties>
   </object>
   <object name="Lettuce" type="Item" x="432" y="544" width="32" height="32">
    <properties>
     <property name="id" value="4"/>
+    <property name="quest" value="tutorial"/>
    </properties>
   </object>
  </objectgroup>

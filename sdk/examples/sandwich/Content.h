@@ -3,9 +3,9 @@
 
 using namespace Sifteo;
 
-#define PORTAL_OPEN	0
-#define PORTAL_WALL	1
-#define PORTAL_DOOR 2
+#define PORTAL_OPEN	        0
+#define PORTAL_WALL	        1
+#define PORTAL_DOOR         2
 
 #define ITEM_NONE           0
 #define ITEM_BASIC_KEY      1
@@ -15,11 +15,14 @@ using namespace Sifteo;
 #define ITEM_HAM            5
 #define ITEM_SKELETON_KEY   6
 
-#define TRIGGER_TYPE_PASSIVE    0
-#define TRIGGER_TYPE_ACTIVE     1
+#define TRIGGER_UNDEFINED   -1
+#define TRIGGER_GATEWAY     0
+#define TRIGGER_ITEM        1
+#define TRIGGER_NPC         2
 
 struct QuestData {
     uint8_t mapId;
+    uint8_t roomId;
 };
 
 struct DialogTextData {
@@ -33,9 +36,9 @@ struct DialogData {
 };
 
 struct TriggerData {
-    uint8_t questBegin;
-    uint8_t questEnd;
-    uint8_t flagId; // could be global or local flag
+    uint8_t questBegin; // 0xff means start-at-beginning
+    uint8_t questEnd; // 0xff means means never-stop
+    uint8_t flagId; // could be 1-32 is local, 33-64 is global
     uint8_t room;
 };
 
@@ -75,10 +78,16 @@ struct MapData {
     const ItemData* items; 
     const GatewayData* gates;
     const NpcData* npcs;
+    uint32_t itemCount;
+    uint32_t gateCount;
+    uint32_t npcCount;
     uint16_t width;
     uint16_t height;
 };
 
+extern const unsigned gMapCount;
+extern const unsigned gQuestCount;
+extern const unsigned gDialogCount;
 extern const MapData gMapData[];
 extern const QuestData gQuestData[];
 extern const DialogData gDialogData[];
