@@ -353,6 +353,15 @@ TileStack::TileStack()
 
 void TileStack::add(TileRef t)
 {
+    const double epsilon = 1e-3;
+    double maxMSE = t->options().getMaxMSE();
+
+    if (maxMSE < epsilon) {
+        // Lossless. Replace the entire stack, yielding a trivial median.
+        tiles.clear();
+    }
+
+    // Add to stack, invalidating cache
     tiles.push_back(t);
     cache = TileRef();
 
@@ -369,45 +378,53 @@ TileRef TileStack::median()
 
     if (cache)
         return cache;
+        
+    if (tiles.size() == 1) {
+        // Special-case for a single-tile stack. No copy, just add a reference
+        cache = TileRef(tiles[0]);
 
-    Tile *t = new Tile();
-    std::vector<RGB565> colors(tiles.size());
+    } else {
+        // General-case median algorithm
 
-    // The median algorithm repeats independently for every pixel in the tile.
-    for (unsigned i = 0; i < Tile::PIXELS; i++) {
+        Tile *t = new Tile();
+        std::vector<RGB565> colors(tiles.size());
 
-        // Collect possible colors for this pixel
-        for (unsigned j = 0; j < tiles.size(); j++)
-            colors[j] = tiles[j]->pixel(i);
+        // The median algorithm repeats independently for every pixel in the tile.
+        for (unsigned i = 0; i < Tile::PIXELS; i++) {
 
-        // Sort along the major axis
-        int major = CIELab::findMajorAxis(&colors[0], colors.size());
-        std::sort(colors.begin(), colors.end(),
-                  CIELab::sortAxis(major));
+            // Collect possible colors for this pixel
+            for (unsigned j = 0; j < tiles.size(); j++)
+                colors[j] = tiles[j]->pixel(i);
 
-        // Pick the median color
-        t->mPixels[i] = colors[colors.size() >> 1];
-    }
+            // Sort along the major axis
+            int major = CIELab::findMajorAxis(&colors[0], colors.size());
+            std::sort(colors.begin(), colors.end(),
+                      CIELab::sortAxis(major));
 
-    cache = TileRef(t);
+            // Pick the median color
+            t->mPixels[i] = colors[colors.size() >> 1];
+        }
 
-    /*
-     * Some individual tiles will receive a huge number of references.
-     * This is a bit of a hack to prevent a single tile stack from growing
-     * boundlessly. If we just calculated a median for a stack over a preset
-     * maximum size, we replace the entire stack with copies of the median
-     * image, in order to give that median significant (but not absolute)
-     * statistical weight.
-     *
-     * The problem with this is that a tile's median is no longer
-     * computed globally across the entire asset group, but is instead
-     * more of a sliding window. But for the kinds of heavily repeated
-     * tiles that this algorithm will apply to, maybe this isn't an
-     * issue?
-     */
+        cache = TileRef(t);
 
-    if (tiles.size() > MAX_SIZE) {
-        tiles = std::vector<TileRef>(MAX_SIZE / 2, cache);
+        /*
+         * Some individual tiles will receive a huge number of references.
+         * This is a bit of a hack to prevent a single tile stack from growing
+         * boundlessly. If we just calculated a median for a stack over a preset
+         * maximum size, we replace the entire stack with copies of the median
+         * image, in order to give that median significant (but not absolute)
+         * statistical weight.
+         *
+         * The problem with this is that a tile's median is no longer
+         * computed globally across the entire asset group, but is instead
+         * more of a sliding window. But for the kinds of heavily repeated
+         * tiles that this algorithm will apply to, maybe this isn't an
+         * issue?
+         */
+
+        if (tiles.size() > MAX_SIZE) {
+            tiles = std::vector<TileRef>(MAX_SIZE / 2, cache);
+        }
     }
 
     return cache;
@@ -485,18 +502,35 @@ void TilePool::optimizePalette(Logger &log)
      */
 
     ColorReducer reducer;
+    bool needReduction = false;
+    const double epsilon = 1e-3;
 
     // First, add ALL tile data to the reducer's pool    
-    for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
-        for (unsigned j = 0; j < Tile::PIXELS; j++)
-            reducer.add((*i)->pixel(j), (*i)->options().getMaxMSE());
+    for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++) {
+        double maxMSE = (*i)->options().getMaxMSE();
+        
+        if (maxMSE > epsilon) {
+            // Lossy mode
+            
+            needReduction = true;
+            for (unsigned j = 0; j < Tile::PIXELS; j++)
+                reducer.add((*i)->pixel(j), maxMSE);
+        }
+    }
+    
+    // Skip the rest if all tiles are lossless
+    if (needReduction) {
+ 
+        // Ask the reducer to do its own (slow!) global optimization
+        reducer.reduce(log);
 
-    // Ask the reducer to do its own (slow!) global optimization
-    reducer.reduce(log);
-
-    // Now reduce each tile, using the agreed-upon color palette
-    for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
-        *i = (*i)->reduce(reducer);
+        // Now reduce each tile, using the agreed-upon color palette
+        for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++) {
+            double maxMSE = (*i)->options().getMaxMSE();        
+            if (maxMSE > epsilon)
+                *i = (*i)->reduce(reducer);
+        }
+    }
 }
 
 void TilePool::optimizeTiles(Logger &log)
