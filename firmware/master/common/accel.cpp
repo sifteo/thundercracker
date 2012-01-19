@@ -92,11 +92,11 @@ int8_t AccelState::calculateTiltState(uint8_t axis) {
 }
 
 void AccelState::updateShakeState() {
-	_SYS_ShakeState newGlobalShakeState = NOT_SHAKING;
+	_SYSShakeState newGlobalShakeState = NOT_SHAKING;
 	uint8_t i;
  
 	for (i = 0; i < NUM_AXES; i++) {
-		_SYS_ShakeState ss;
+		_SYSShakeState ss;
 		ss = calculateShakeState(i);
 		//DEBUG_LOG(("axis %d, shaking = %d\n", i, ss));
 		if (ss == SHAKING)
@@ -110,7 +110,7 @@ void AccelState::updateShakeState() {
 	}
 }
 
-_SYS_ShakeState AccelState::calculateShakeState(uint8_t axis) {
+_SYSShakeState AccelState::calculateShakeState(uint8_t axis) {
 	uint8_t i;
 	uint16_t variance = 0; //this sum will never exceed 16 bits over 32 samples
 	const int16_t mean = GetMean(dataSum[axis]);
