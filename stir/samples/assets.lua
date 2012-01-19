@@ -45,3 +45,8 @@ Owlbear = image{"samples/owlbear.png", width=128, height=128, quality=6}
 -- The map is implied by the order in which the tiles occur in memory.
 
 Font = image{"samples/font-8x16.png", width=8, height=16, pinned=true, quality=10}
+
+-- Some larger images with lossy compression, as a performance stress-test
+
+Sunset = image{"samples/sunset512.png", quality=8}
+House = image{"samples/pink-house.png", quality=8}

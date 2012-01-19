@@ -11,8 +11,10 @@
 
 #include <stdint.h>
 #include <float.h>
+#include <string.h>
 #include <tr1/memory>
-#include <set>
+#include <tr1/unordered_set>
+#include <tr1/unordered_map>
 
 #include "color.h"
 #include "logger.h"
@@ -99,6 +101,12 @@ struct TileOptions {
     double quality;
     bool pinned;
     bool chromaKey;
+    
+    bool operator== (const TileOptions &other) const {
+        return quality == other.quality &&
+               pinned == other.pinned &&
+               chromaKey == other.chromaKey;
+    }
 };
 
 
@@ -106,13 +114,14 @@ struct TileOptions {
  * Tile --
  *
  *    One fixed-size image tile, in palettized RGB565 color. 
+ *
  *    Tile objects are immutable after they are initially created.
+ *    Tiles are flyweighted; any tiles that have an identical
+ *    TileData will share the same Tile instance.
  */
 
 class Tile {
  public:
-    Tile(const TileOptions &opt, uint8_t *rgba, size_t stride);
-
     static const unsigned SIZE = 8;       // Number of pixels on a side
     static const unsigned PIXELS = 64;    // Total pixels in a tile
 
@@ -120,12 +129,25 @@ class Tile {
     static const uint8_t CHROMA_KEY    = 0x4F;
     static const uint8_t CKEY_BIT_EOL  = 0x40;
 
+    // Unique key that identifies a tile
+    struct Identity {
+        RGB565 pixels[PIXELS];
+        TileOptions options;
+        
+        bool operator== (const Identity &other) const {
+            return options == other.options && !memcmp(pixels, other.pixels, sizeof pixels);
+        }
+    };
+
+    static TileRef instance(const Identity &id);
+    static TileRef instance(const TileOptions &opt, uint8_t *rgba, size_t stride);
+    
     RGB565 pixel(unsigned i) const {
-        return mPixels[i];
+        return mID.pixels[i];
     }
 
     RGB565 pixel(unsigned x, unsigned y) const {
-        return mPixels[x + y * SIZE];
+        return pixel(x + y * SIZE);
     }
 
     RGB565 pixelWrap(unsigned x, unsigned y) const {
@@ -140,7 +162,7 @@ class Tile {
     }   
 
     const TileOptions &options() const {
-        return mOptions;
+        return mID.options;
     }
 
     double errorMetric(Tile &other, double limit=DBL_MAX);
@@ -152,21 +174,20 @@ class Tile {
     TileRef reduce(ColorReducer &reducer) const;
 
  private:
-    Tile();
-    Tile(const TileOptions &opt);
+    Tile(const Identity &id);
 
+    static std::tr1::unordered_map<Identity, TileRef> instances;
+    
     void constructPalette();
     void constructSobel();
     void constructDec4();
 
     friend class TileStack;
-
+    
     bool mHasSobel;
     bool mHasDec4;
-    TileOptions mOptions;
     TilePalette mPalette;
-
-    RGB565 mPixels[PIXELS];
+    Identity mID;
     CIELab mDec4[4];
     double mSobelGx[PIXELS];
     double mSobelGy[PIXELS];
@@ -254,10 +275,11 @@ class TilePool {
     void optimizePalette(Logger &log);
     void optimizeOrder(Logger &log);
     void optimizeTiles(Logger &log);
-    void optimizeTilesPass(Logger &log, std::set<TileStack *> &activeStacks,
+    void optimizeTilesPass(Logger &log,
+                           std::tr1::unordered_set<TileStack *> &activeStacks,
                            bool gather, bool pinned);
 
-    TileStack *closest(TileRef t, double &mse);
+    TileStack *closest(TileRef t);
 };
 
 

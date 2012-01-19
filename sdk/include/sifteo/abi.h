@@ -363,11 +363,10 @@ struct _SYSTiltState {
     unsigned y		: 4;
 };
 
-
 typedef enum {
   NOT_SHAKING,
   SHAKING
-} _SYS_ShakeState;
+} _SYSShakeState;
 
 /**
  * Every cube has an arbitrary unique hardware ID.
@@ -432,7 +431,7 @@ void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
 void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state);
 void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state);
-void _SYS_getShake(_SYSCubeID cid, _SYS_ShakeState *state);
+void _SYS_getShake(_SYSCubeID cid, _SYSShakeState *state);
 
 // XXX: Temporary for testing/demoing
 void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);

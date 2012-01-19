@@ -7,7 +7,6 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
-//#include "audio.gen.h"
 #include "string.h"
 #include <stdlib.h>
 
@@ -467,18 +466,18 @@ unsigned int Game::getHighScore( unsigned int index ) const
 void Game::enterScore()
 {
     //walk backwards through the high score list and see which ones we can pick off
-    for( unsigned int i = NUM_HIGH_SCORES - 1; i >= 0; i-- )
+    for( int i = NUM_HIGH_SCORES - 1; i >= 0; i-- )
     {
         if( s_HighScores[i] < m_iScore )
         {
-            if( i < NUM_HIGH_SCORES - 1 )
+            if( (unsigned)i < NUM_HIGH_SCORES - 1 )
             {
                 s_HighScores[i+1] = s_HighScores[i];
             }
         }
         else
         {
-            if( i < NUM_HIGH_SCORES - 1 )
+            if( (unsigned)i < NUM_HIGH_SCORES - 1 )
             {
                 s_HighScores[i+1] = m_iScore;
             }

@@ -349,7 +349,6 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
     }
 
-
     void BG0_text(const Vec2 &point, char c) {
         BG0_putTile(point, c - ' ');
     }
