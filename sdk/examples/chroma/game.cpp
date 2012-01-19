@@ -259,30 +259,44 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 			//check_puzzle();
 		}
 		else
-		{          
+        {
+            bool bannered = false;
+
             //free shake
-            if( m_mode == MODE_SHAKES && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
+            /*if( m_mode == MODE_SHAKES && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
             {
 
             }
-            else if( m_iDotsCleared >= DOT_THRESHOLD4 )
+            else */if( m_iDotsCleared >= DOT_THRESHOLD4 )
             {
                 playSound(clear4);
+
+                if( m_mode == MODE_SHAKES && !m_bHyperDotMatched )
+                {
+                    pWrapper->getBanner().SetMessage( "Bonus Shake!" );
+                    bannered = true;
+                    m_ShakesRemaining++;
+                }
+            }
+            else if( m_iDotsCleared >= DOT_THRESHOLD3 )
+            {
+                playSound(clear3);
 
                 //is it dangerous to add one here?  do we need to queue it?
                 if( !m_bHyperDotMatched && !DoesHyperDotExist() )
                     pWrapper->SpawnHyper();
             }
-            else if( m_iDotsCleared >= DOT_THRESHOLD3 )
-                playSound(clear3);
             else if( m_iDotsCleared >= DOT_THRESHOLD2 )
                 playSound(clear2);
             else if( m_iDotsCleared >= DOT_THRESHOLD1 )
                 playSound(clear1);
 
-			char aBuf[16];
-            snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
-            pWrapper->getBanner().SetMessage( aBuf, true );
+            if( !bannered )
+            {
+                char aBuf[16];
+                snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
+                pWrapper->getBanner().SetMessage( aBuf, true );
+            }
 		}
 
 		if( m_mode == MODE_TIMED )
@@ -559,6 +573,8 @@ void Game::BlowAll( unsigned int color )
     {
         cubes[i].BlowAll( color );
     }
+
+    m_bHyperDotMatched = true;
 }
 
 

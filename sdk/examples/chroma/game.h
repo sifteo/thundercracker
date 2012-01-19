@@ -58,8 +58,8 @@ public:
     {
         DOT_THRESHOLD1 = 2,
         DOT_THRESHOLD2 = 4,
-        DOT_THRESHOLD3 = 7,
-        DOT_THRESHOLD4 = 10,
+        DOT_THRESHOLD3 = 9,
+        DOT_THRESHOLD4 = 14,
         DOT_THRESHOLD5 = 15,
     };
 
