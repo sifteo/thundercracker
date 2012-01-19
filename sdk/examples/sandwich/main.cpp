@@ -107,7 +107,7 @@ void IntroCutscene() {
 	WaitForSeconds(5.f);
 	VidMode_BG0_SPR_BG1 mode(gCubes->vbuf);
 	mode.set();
-	mode.clear();
+	//mode.clear();
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
 		VidMode_BG0_SPR_BG1 m(gCubes[i].vbuf);
 		for(unsigned j=0; j<8; ++j) {
