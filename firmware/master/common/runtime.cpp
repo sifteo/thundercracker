@@ -276,11 +276,58 @@ extern "C" {
         return GenericValue();
     }
 
+    GenericValue lle_X_memcpy(FunctionType *ft, const std::vector<GenericValue> &args)
+    {
+        ASSERT(args.size() == 3);
+        memcpy(GVTOP(args[0]), GVTOP(args[1]), args[2].IntVal.getZExtValue());
+        return GenericValue();
+    }
+
     GenericValue lle_X_rand_r(FunctionType *ft, const std::vector<GenericValue> &args)
     {
         ASSERT(args.size() == 1);
         GenericValue ret;
         ret.IntVal = rand_r((unsigned *)GVTOP(args[0]));
         return ret;
+    }
+
+    GenericValue lle_X_sinf(FunctionType *ft, const std::vector<GenericValue> &args)
+    {
+        ASSERT(args.size() == 1);
+        GenericValue ret;
+        ret.FloatVal = sinf(args[0].FloatVal);
+        return ret;
+    }
+
+    GenericValue lle_X_cosf(FunctionType *ft, const std::vector<GenericValue> &args)
+    {
+        ASSERT(args.size() == 1);
+        GenericValue ret;
+        ret.FloatVal = cosf(args[0].FloatVal);
+        return ret;
+    }
+
+    GenericValue lle_X_vsnprintf(FunctionType *ft, const std::vector<GenericValue> &args)
+    {
+        // XXX: Total stub!
+        return GenericValue();
+    }
+
+    GenericValue lle_X_snprintf(FunctionType *ft, const std::vector<GenericValue> &args)
+    {
+        // XXX: Total stub!
+        return GenericValue();
+    }
+
+    GenericValue lle_X_strlen(FunctionType *ft, const std::vector<GenericValue> &args)
+    {
+        // XXX: Total stub!
+        return GenericValue();
+    }
+
+    GenericValue lle_X_strcpy(FunctionType *ft, const std::vector<GenericValue> &args)
+    {
+        // XXX: Total stub!
+        return GenericValue();
     }
 }
