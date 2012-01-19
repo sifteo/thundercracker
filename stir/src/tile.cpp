@@ -6,6 +6,7 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <float.h>
 #include <algorithm>
@@ -15,41 +16,81 @@
 #include "tile.h"
 #include "tilecodec.h"
 
+
+/*
+ * Tile hash -- A 32-bit FNV-1 hash computed over all pixels.
+ * See: http://isthe.com/chongo/tech/comp/fnv/
+ */
+namespace std {
+	namespace tr1 {
+		template<> struct hash<Stir::Tile::Identity> {
+			std::size_t operator()(Stir::Tile::Identity const &key) const {			
+				uint32_t h = 2166136261UL;
+				unsigned len = sizeof(key.pixels) / sizeof(uint32_t);
+				uint32_t *data = (uint32_t*) &key.pixels[0];
+				
+				do {
+					h ^= *(data++);
+					h *= 16777619UL;
+				} while (--len);
+				
+				return h;
+			}
+		};
+	}
+}
+
 namespace Stir {
 
+std::tr1::unordered_map<Tile::Identity, TileRef> Tile::instances;
 
-Tile::Tile()
-    : mHasSobel(false), mHasDec4(false)
-    {}
+Tile::Tile(const Identity &id)
+    : mHasSobel(false), mHasDec4(false), mID(id)
+	{}
 
-Tile::Tile(const TileOptions &opt)
-    : mHasSobel(false), mHasDec4(false), mOptions(opt)
-    {}
+TileRef Tile::instance(const Identity &id)
+{
+	/*
+	 * Return an existing Tile matching the given identity, or create a new one if necessary.
+	 */
+	 
+	std::tr1::unordered_map<Identity, TileRef>::iterator i = instances.find(id);
+		
+	if (i == instances.end()) {
+		TileRef tr(new Tile(id));
+		instances[id] = tr;
+		return tr;
+	} else {
+		return i->second;
+	}
+}
 
-Tile::Tile(const TileOptions &opt, uint8_t *rgba, size_t stride)
-    : mHasSobel(false), mHasDec4(false), mOptions(opt)
+TileRef Tile::instance(const TileOptions &opt, uint8_t *rgba, size_t stride)
 {
     /*
-     * Load the tile image from a full-color RGBA source bitmap.
+     * Load a tile image from a full-color RGBA source bitmap.
      */
 
+	Identity id;
     const uint8_t alphaThreshold = 0x80;
     uint8_t *row, *pixel;
     unsigned x, y;
+	
+	id.options = opt;
 
     // First pass.. are there any transparent pixels?
     for (row = rgba, y = SIZE; y; --y, row += stride)
         for (pixel = row, x = SIZE; x; --x, pixel += 4)
             if (pixel[3] < alphaThreshold)
-                mOptions.chromaKey = true;
+                id.options.chromaKey = true;
 
     // Second pass.. convert to RGB565, possibly with colorkey.
-    RGB565 *dest = mPixels;
+    RGB565 *dest = id.pixels;
     for (row = rgba, y = SIZE; y; --y, row += stride)
         for (pixel = row, x = SIZE; x; --x, pixel += 4) {
             RGB565 color = RGB565(pixel);
 
-            if (!mOptions.chromaKey) {
+            if (!id.options.chromaKey) {
                 // No transparency in the image, we're allowed to use any color.
                 *dest = color;
             }
@@ -91,7 +132,9 @@ Tile::Tile(const TileOptions &opt, uint8_t *rgba, size_t stride)
             }
 
             dest++;
-        }           
+        }    
+
+	return instance(id);
 }
 
 double TileOptions::getMaxMSE() const
@@ -121,7 +164,7 @@ void Tile::constructPalette(void)
     std::map<RGB565, unsigned> colors;
 
     for (unsigned i = 0; i < PIXELS; i++)
-        colors[mPixels[i]] = colors[mPixels[i]] + 1;
+        colors[mID.pixels[i]] = colors[mID.pixels[i]] + 1;
 
     mPalette.numColors = colors.size();
 
@@ -249,7 +292,7 @@ double Tile::fineMSE(Tile &other)
     double error = 0;
 
     for (unsigned i = 0; i < PIXELS; i++)
-        error += CIELab(mPixels[i]).meanSquaredError(CIELab(other.mPixels[i]));
+        error += CIELab(mID.pixels[i]).meanSquaredError(CIELab(other.mID.pixels[i]));
 
     return error / PIXELS;
 }
@@ -306,28 +349,30 @@ TileRef Tile::reduce(ColorReducer &reducer) const
      * the color selections, emphasizing color runs when possible.
      */
 
-    TileRef result = TileRef(new Tile(mOptions));
     RGB565 run;
 
+	Identity reduced;	
+	reduced.options = mID.options;
+
     // Hysteresis amount
-    double limit = mOptions.getMaxMSE() * 0.05;
+    double limit = mID.options.getMaxMSE() * 0.05;
     
     for (unsigned i = 0; i < PIXELS; i++) {
-        RGB565 original = mPixels[i];
+        RGB565 original = mID.pixels[i];
         
         if ((original.value >> 8) == CHROMA_KEY) {
             // Don't touch it if this is a special keyed color
-            result->mPixels[i] = original;
+            reduced.pixels[i] = original;
         } else {
             RGB565 color = reducer.nearest(original);
             double error = CIELab(color).meanSquaredError(CIELab(run));
             if (error > limit)
                 run = color;
-            result->mPixels[i] = run;
+            reduced.pixels[i] = run;
         }
     }
 
-    return result;
+    return instance(reduced);
 }
 
 TilePalette::TilePalette()
@@ -352,6 +397,15 @@ TileStack::TileStack()
 
 void TileStack::add(TileRef t)
 {
+    const double epsilon = 1e-3;
+    double maxMSE = t->options().getMaxMSE();
+
+    if (maxMSE < epsilon) {
+        // Lossless. Replace the entire stack, yielding a trivial median.
+        tiles.clear();
+    }
+
+    // Add to stack, invalidating cache
     tiles.push_back(t);
     cache = TileRef();
 
@@ -368,75 +422,84 @@ TileRef TileStack::median()
 
     if (cache)
         return cache;
+        
+    if (tiles.size() == 1) {
+        // Special-case for a single-tile stack. No copy, just add a reference
+        cache = TileRef(tiles[0]);
 
-    Tile *t = new Tile();
-    std::vector<RGB565> colors(tiles.size());
+    } else {
+        // General-case median algorithm
 
-    // The median algorithm repeats independently for every pixel in the tile.
-    for (unsigned i = 0; i < Tile::PIXELS; i++) {
+		Tile::Identity median;
+        std::vector<RGB565> colors(tiles.size());
 
-        // Collect possible colors for this pixel
-        for (unsigned j = 0; j < tiles.size(); j++)
-            colors[j] = tiles[j]->pixel(i);
+        // The median algorithm repeats independently for every pixel in the tile.
+        for (unsigned i = 0; i < Tile::PIXELS; i++) {
 
-        // Sort along the major axis
-        int major = CIELab::findMajorAxis(&colors[0], colors.size());
-        std::sort(colors.begin(), colors.end(),
-                  CIELab::sortAxis(major));
+            // Collect possible colors for this pixel
+            for (unsigned j = 0; j < tiles.size(); j++)
+                colors[j] = tiles[j]->pixel(i);
 
-        // Pick the median color
-        t->mPixels[i] = colors[colors.size() >> 1];
-    }
+            // Sort along the major axis
+            int major = CIELab::findMajorAxis(&colors[0], colors.size());
+            std::sort(colors.begin(), colors.end(),
+                      CIELab::sortAxis(major));
 
-    cache = TileRef(t);
+            // Pick the median color
+            median.pixels[i] = colors[colors.size() >> 1];
+        }
 
-    /*
-     * Some individual tiles will receive a huge number of references.
-     * This is a bit of a hack to prevent a single tile stack from growing
-     * boundlessly. If we just calculated a median for a stack over a preset
-     * maximum size, we replace the entire stack with copies of the median
-     * image, in order to give that median significant (but not absolute)
-     * statistical weight.
-     *
-     * The problem with this is that a tile's median is no longer
-     * computed globally across the entire asset group, but is instead
-     * more of a sliding window. But for the kinds of heavily repeated
-     * tiles that this algorithm will apply to, maybe this isn't an
-     * issue?
-     */
+        cache = Tile::instance(median);
 
-    if (tiles.size() > MAX_SIZE) {
-        tiles = std::vector<TileRef>(MAX_SIZE / 2, cache);
+        /*
+         * Some individual tiles will receive a huge number of references.
+         * This is a bit of a hack to prevent a single tile stack from growing
+         * boundlessly. If we just calculated a median for a stack over a preset
+         * maximum size, we replace the entire stack with copies of the median
+         * image, in order to give that median significant (but not absolute)
+         * statistical weight.
+         *
+         * The problem with this is that a tile's median is no longer
+         * computed globally across the entire asset group, but is instead
+         * more of a sliding window. But for the kinds of heavily repeated
+         * tiles that this algorithm will apply to, maybe this isn't an
+         * issue?
+         */
+
+        if (tiles.size() > MAX_SIZE) {
+            tiles = std::vector<TileRef>(MAX_SIZE / 2, cache);
+        }
     }
 
     return cache;
 }
 
-TileStack* TilePool::closest(TileRef t, double &mse)
+TileStack* TilePool::closest(TileRef t)
 {
     /*
      * Search for the closest tile set for the provided tile image.
-     * Returns the tile stack, if any was found, and the MSE
-     * between the provided tile and that tile's current median.
+     * Returns the tile stack, if any was found which meets the tile's
+     * stated maximum MSE requirement.
      */
 
-    double distance = DBL_MAX;
     const double epsilon = 1e-3;
+    double distance = t->options().getMaxMSE();
     TileStack *closest = NULL;
 
     for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
         double err = i->median()->errorMetric(*t, distance);
-        if (err < distance) {
+
+        if (err <= distance) {
             distance = err;
             closest = &*i;
-        }
-        if (distance < epsilon) {
-            // Not going to improve on this; early out.
-            break;
+
+            if (distance < epsilon) {
+                // Not going to improve on this; early out.
+                break;
+            }
         }
     }
 
-    mse = distance;
     return closest;
 }
 
@@ -453,10 +516,10 @@ void TileGrid::load(const TileOptions &opt, uint8_t *rgba,
 
     for (unsigned y = 0; y < mHeight; y++)
         for (unsigned x = 0; x < mWidth; x++) {
-            TileRef t = TileRef(new Tile(opt,
-                                         rgba + (x * Tile::SIZE * 4) +
-                                         (y * Tile::SIZE * stride),
-                                         stride));
+            TileRef t = Tile::instance(opt,
+                                       rgba + (x * Tile::SIZE * 4) +
+                                       (y * Tile::SIZE * stride),
+                                       stride);
             tiles[x + y * mWidth] = mPool->add(t);
         }
 }
@@ -483,18 +546,35 @@ void TilePool::optimizePalette(Logger &log)
      */
 
     ColorReducer reducer;
+    bool needReduction = false;
+    const double epsilon = 1e-3;
 
     // First, add ALL tile data to the reducer's pool    
-    for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
-        for (unsigned j = 0; j < Tile::PIXELS; j++)
-            reducer.add((*i)->pixel(j), (*i)->options().getMaxMSE());
+    for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++) {
+        double maxMSE = (*i)->options().getMaxMSE();
+        
+        if (maxMSE > epsilon) {
+            // Lossy mode
+            
+            needReduction = true;
+            for (unsigned j = 0; j < Tile::PIXELS; j++)
+                reducer.add((*i)->pixel(j), maxMSE);
+        }
+    }
+    
+    // Skip the rest if all tiles are lossless
+    if (needReduction) {
+ 
+        // Ask the reducer to do its own (slow!) global optimization
+        reducer.reduce(log);
 
-    // Ask the reducer to do its own (slow!) global optimization
-    reducer.reduce(log);
-
-    // Now reduce each tile, using the agreed-upon color palette
-    for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++)
-        *i = (*i)->reduce(reducer);
+        // Now reduce each tile, using the agreed-upon color palette
+        for (std::vector<TileRef>::iterator i = tiles.begin(); i != tiles.end(); i++) {
+            double maxMSE = (*i)->options().getMaxMSE();        
+            if (maxMSE > epsilon)
+                *i = (*i)->reduce(reducer);
+        }
+    }
 }
 
 void TilePool::optimizeTiles(Logger &log)
@@ -517,7 +597,8 @@ void TilePool::optimizeTiles(Logger &log)
      * in 'stackList' and 'stackIndex'.
      */
 
-    std::set<TileStack *> activeStacks;
+    std::tr1::unordered_set<TileStack *> activeStacks;
+
     stackList.clear();
     stackIndex.clear();
     stackIndex.resize(tiles.size());
@@ -535,31 +616,65 @@ void TilePool::optimizeTiles(Logger &log)
     log.taskEnd();
 }
     
-void TilePool::optimizeTilesPass(Logger &log, std::set<TileStack *> &activeStacks,
+void TilePool::optimizeTilesPass(Logger &log,
+                                 std::tr1::unordered_set<TileStack *> &activeStacks,
                                  bool gather, bool pinned)
 {
     // A single pass from the multi-pass optimizeTiles() algorithm
 
+    std::tr1::unordered_map<Tile *, TileStack *> memo;
+	
     for (Serial serial = 0; serial < tiles.size(); serial++) {
         TileRef tr = tiles[serial];
 
         if (tr->options().pinned == pinned) {
-            double mse;
-            TileStack *c = pinned ? NULL : closest(tr, mse);
-        
-            if (gather) {
-                // Create or augment a TileStack
+            TileStack *c = NULL;
 
-                if (!c || mse > tr->options().getMaxMSE()) {
-                    stackList.push_back(TileStack());
-                    c = &stackList.back();
-                }
+			if (!pinned) {
+				/*
+				 * Assuming we aren't gathering pinned tiles, we start by looking for
+				 * the closest existing stack. This is a very slow step, but we can
+				 * save a lot of time on common datasets (with plenty of duplicated tiles)
+				 * by memoizing the results.
+				 *
+				 * This memoization is easy because tiles are unique and immutable.
+				 * We only keep the memo for the duration of one optimization pass; the whole
+				 * point of a multi-pass algorithm is that we expect the result of closest()
+				 * to change between the gathering and optimization passes.
+				 *
+				 * Note that this memoization does actually change the algorithmic complexity
+				 * of our optimization passes. Instead of doing what may be an O(N^2) algorithm
+				 * on each pass, this is significantly faster (up to O(N) in the best case). We
+				 * end up deferring much more of the optimization to the second pass, whereas
+				 * without memoization we end up getting very close to a solution in one pass,
+				 * at the expense of quite a lot of performance.
+				 *
+				 * So in our case, two passes can be much faster than one. Yay.
+				 */
+
+				std::tr1::unordered_map<Tile *, TileStack *>::iterator i = memo.find(&*tr);
+				if (i == memo.end()) {
+					c = closest(tr);
+					memo[&*tr] = c;
+				} else {
+					c = memo[&*tr];
+				}
+			}			
+
+            if (!c) {
+                // Need to create a fresh stack
+                stackList.push_back(TileStack());
+                c = &stackList.back();
+                c->add(tr);
+            } else if (gather) {
+                // Add to an existing stack
                 c->add(tr);
             }
 
             if (!gather || pinned) {
                 // Remember this stack, we've selected it for good.
                 
+                assert(c != NULL);
                 stackIndex[serial] = c; 
                 activeStacks.insert(c);
             }

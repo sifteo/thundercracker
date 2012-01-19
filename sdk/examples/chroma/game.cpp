@@ -7,7 +7,6 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
-//#include "audio.gen.h"
 #include "string.h"
 #include <stdlib.h>
 
@@ -471,14 +470,14 @@ void Game::enterScore()
     {
         if( s_HighScores[i] < m_iScore )
         {
-            if( i < NUM_HIGH_SCORES - 1 )
+            if( (unsigned)i < NUM_HIGH_SCORES - 1 )
             {
                 s_HighScores[i+1] = s_HighScores[i];
             }
         }
         else
         {
-            if( i < NUM_HIGH_SCORES - 1 )
+            if( (unsigned)i < NUM_HIGH_SCORES - 1 )
             {
                 s_HighScores[i+1] = m_iScore;
             }
