@@ -6,7 +6,7 @@ LD = llvm-ld
 SDK_DIR = $(TC_DIR)/sdk
 STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
 
-BIN = $(APP).bc
+BIN = runtime.bc
 ASSETS = assets
 
 GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html asegment.bin
