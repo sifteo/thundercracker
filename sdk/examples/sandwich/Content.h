@@ -58,7 +58,9 @@ struct GatewayData {
 
 struct NpcData {
     TriggerData trigger;
-    uint32_t dialog;
+    uint16_t dialog;
+    uint8_t x;
+    uint8_t y;
 };
 
 struct RoomData {

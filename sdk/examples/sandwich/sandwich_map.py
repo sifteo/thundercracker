@@ -359,6 +359,9 @@ class Trigger:
 		if self.qend != 0xff and self.qend > quest.index: return False
 		return True
 
+	def local_position(self):
+		return (self.raw.px + (self.raw.pw >> 1) - 128 * self.room.x, self.raw.py + (self.raw.ph >> 1) - 128 * self.room.y)
+
 	
 	def write_trigger_to(self, src):
 		src.write("{ %s, %s, %s, %s }" % (hex(self.qbegin), hex(self.qend), hex(self.flagid), hex(self.room.lid)))
@@ -373,14 +376,14 @@ class Trigger:
 		self.write_trigger_to(src)
 		mapid = self.room.map.world.map_dict[self.target_map].index
 		gateid = self.room.map.world.map_dict[self.target_map].gate_dict[self.target_gate].index
-		x = self.raw.px + (self.raw.pw >> 1) - 128 * self.room.x
-		y = self.raw.py + (self.raw.ph >> 1) - 128 * self.room.y
+		x,y = self.local_position()
 		src.write(", %s, %s, %s, %s }, " % (hex(mapid), hex(gateid), hex(x), hex(y)))
 	
 	def write_npc_to(self, src):
 		src.write("{ ")
 		self.write_trigger_to(src)
-		src.write(", %d }, " % self.dialog.index)
+		x,y = self.local_position()
+		src.write(", %x, %x, %x }, " % (self.dialog.index, x, y))
 
 
 

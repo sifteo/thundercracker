@@ -4,10 +4,9 @@
 // Constants
 
 #define LOCATION_UNDEFINED  (Vec2(-1,-1))
-#define BFF_SPRITE_ID     0
-#define ITEM_SPRITE_ID    1
-#define PLAYER_SPRITE_ID  2
-#define NPC_SPRITE_ID     3
+#define BFF_SPRITE_ID       0
+#define TRIGGER_SPRITE_ID   1
+#define PLAYER_SPRITE_ID    3
 
 static const int8_t sHoverTable[] = { 
   0, 0, 1, 2, 2, 3, 3, 3, 
@@ -166,7 +165,7 @@ void GameView::Update() {
   if (CurrentRoom()->HasItem()) {
     mIdleHoverIndex = (mIdleHoverIndex + 1) % HOVER_COUNT;
     Vec2 p = 16 * CurrentRoom()->LocalCenter();
-    MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y + sHoverTable[mIdleHoverIndex]);
+    MoveSprite(GetCube(), TRIGGER_SPRITE_ID, p.x-8, p.y + sHoverTable[mIdleHoverIndex]);
   }
 
 }
@@ -232,16 +231,25 @@ bool GameView::ShowLocation(Vec2 room) {
   // are we showing an items?
   if (IsShowingRoom()) {
     HideInventorySprites();
-    Room* mr = CurrentRoom();
-    if (mr->HasItem()) {
-      SetSpriteImage(GetCube(), ITEM_SPRITE_ID, Items.index + (mr->TriggerAsItem()->itemId - 1) * Items.width * Items.height);
-      ResizeSprite(GetCube(), ITEM_SPRITE_ID, 16, 16);
-      Vec2 p = 16 * CurrentRoom()->LocalCenter();
-      MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
+    Room* r = CurrentRoom();
+    switch(r->TriggerType()) {
+      case TRIGGER_ITEM: 
+        SetSpriteImage(GetCube(), TRIGGER_SPRITE_ID, Items.index + (r->TriggerAsItem()->itemId - 1) * Items.width * Items.height);
+        ResizeSprite(GetCube(), TRIGGER_SPRITE_ID, 16, 16);
+        {
+          Vec2 p = 16 * CurrentRoom()->LocalCenter();
+          MoveSprite(GetCube(), TRIGGER_SPRITE_ID, p.x-8, p.y);
+        }
+        break;
+      case TRIGGER_NPC:
+        const NpcData* npc = r->TriggerAsNPC();
+        const DialogData& dialog = gDialogData[npc->dialog];
+        SetSpriteImage(GetCube(), TRIGGER_SPRITE_ID, dialog.npc->index);
+        ResizeSprite(GetCube(), TRIGGER_SPRITE_ID, 32, 32);
+        MoveSprite(GetCube(), TRIGGER_SPRITE_ID, npc->x, npc->y);
+        break;
     }
-    if (this == pGame->player.CurrentView()) {
-      ShowPlayer();
-    }
+    if (this == pGame->player.CurrentView()) { ShowPlayer(); }
     DrawBackground();
     mIdleHoverIndex = 0;
 
@@ -274,7 +282,7 @@ bool GameView::HideRoom() {
   mRoom = LOCATION_UNDEFINED;
   // hide sprites
   HideSprite(GetCube(), PLAYER_SPRITE_ID);
-  HideSprite(GetCube(), ITEM_SPRITE_ID);
+  HideSprite(GetCube(), TRIGGER_SPRITE_ID);
   HideSprite(GetCube(), BFF_SPRITE_ID);
   if(result) {
     mScene.idle.time = 0;
@@ -306,11 +314,11 @@ void GameView::HidePlayer() {
   
 void GameView::SetItemPosition(Vec2 p) {
   p += 16 * CurrentRoom()->LocalCenter();
-  MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
+  MoveSprite(GetCube(), TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
 
 void GameView::HideItem() {
-  HideSprite(GetCube(), ITEM_SPRITE_ID);
+  HideSprite(GetCube(), TRIGGER_SPRITE_ID);
 }
 
 void GameView::RefreshInventory() {

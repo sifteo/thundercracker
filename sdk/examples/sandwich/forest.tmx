@@ -630,5 +630,10 @@
     <property name="quest" value="tutorial"/>
    </properties>
   </object>
+  <object name="Skelly" type="NPC" x="16" y="192" width="32" height="32">
+   <properties>
+    <property name="id" value="skeletonhello"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>
