@@ -8,6 +8,7 @@
 #define _GAME_H
 
 #include <sifteo.h>
+#include "Level.h"
 #include "cubewrapper.h"
 #include "TimeKeeper.h"
 #include "config.h"
@@ -86,7 +87,7 @@ public:
 	inline GameMode getMode() const { return m_mode; }
 
 	inline unsigned int getScore() const { return m_iScore; }
-	inline unsigned int getLevel() const { return m_iLevel; }
+    inline const Level &getLevel() const { return Level::GetLevel( m_iLevel ); }
 	inline void addLevel() { m_iLevel++; }
 
 	TimeKeeper &getTimer() { return m_timer; }

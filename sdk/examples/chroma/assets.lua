@@ -41,6 +41,7 @@ FixedGlimmer = image{"FixedGlimmer.png", height=32}
 Cover = image{"cover.png"}
 --special dots
 hyperdot = image{"hyper.png"}
+rockdot = image{"rock.png"}
 --timer
 TimerUp = image{"TimerUp.png", height=8}
 TimerLeft = image{"TimerLeft.png"}

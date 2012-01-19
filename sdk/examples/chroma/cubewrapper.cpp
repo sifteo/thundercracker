@@ -16,12 +16,6 @@
 
 static _SYSCubeID s_id = CUBE_ID_BASE;
 
-// Order in which the number of colors in a grid increases as the grid is refilled.
-static unsigned int GEM_VALUE_PROGRESSION[] = { 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 };
-
-// Order in which the number of fixed gems in a grid increases as the grid is refilled.
-static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4 };
-
 //const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
 const float CubeWrapper::SHAKE_FILL_DELAY = 0.4f;
 const float CubeWrapper::SPRING_K_CONSTANT = 0.7f;
@@ -814,11 +808,7 @@ void CubeWrapper::checkRefill()
 //massively ugly, but wanted to stick to the python functionality 
 void CubeWrapper::Refill( bool bAddLevel )
 {
-	unsigned int level = Game::Inst().getLevel();
-	unsigned int numValues = sizeof( GEM_VALUE_PROGRESSION ) / sizeof( GEM_VALUE_PROGRESSION[0] );
-	unsigned int values = level < numValues ? GEM_VALUE_PROGRESSION[level] : GEM_VALUE_PROGRESSION[numValues - 1];
-	unsigned int numFixIndices = sizeof( GEM_FIX_PROGRESSION ) / sizeof( GEM_FIX_PROGRESSION[0] );
-    unsigned int numFix = level < numFixIndices ? GEM_FIX_PROGRESSION[level] : GEM_FIX_PROGRESSION[numFixIndices - 1];
+    const Level &level = Game::Inst().getLevel();
 	
 	if( bAddLevel )
 		Game::Inst().addLevel();
@@ -842,10 +832,10 @@ void CubeWrapper::Refill( bool bAddLevel )
 
 	int numDots = NUM_ROWS * NUM_COLS;
 
-	for( unsigned int i = 0; i < values; i++ )
+    for( unsigned int i = 0; i < level.m_numColors; i++ )
 	{
-		aNumNeeded[i] = numDots / values;
-		if( i < numDots % values )
+        aNumNeeded[i] = numDots / level.m_numColors;
+        if( i < numDots % level.m_numColors )
 			aNumNeeded[i]++;
 	}
 
@@ -960,7 +950,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 
     
 	//fixed gems
-	while( iNumFixed < numFix )
+    while( iNumFixed < level.m_numFixed )
 	{
 		int toFix = Game::Inst().Rand( numEmpties );
 		GridSlot &fix = m_grid[aEmptyLocs[toFix].x][aEmptyLocs[toFix].y];

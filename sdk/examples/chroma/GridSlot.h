@@ -17,13 +17,22 @@ class GridSlot
 {
 public:
     static const unsigned int NUM_COLORS = 8;
+
+    //these are special dots
+    enum
+    {
+        HYPERCOLOR = NUM_COLORS,
+        ROCKCOLOR,
+        AFTERLASTSPECIAL,
+        NUM_SPECIALS = AFTERLASTSPECIAL - NUM_COLORS
+    };
+
     static const AssetImage *TEXTURES[ NUM_COLORS ];
     static const AssetImage *EXPLODINGTEXTURES[ NUM_COLORS ];
     static const AssetImage *FIXED_TEXTURES[ NUM_COLORS ];
     static const AssetImage *FIXED_EXPLODINGTEXTURES[ NUM_COLORS ];
+    static const AssetImage *SPECIALTEXTURES[ NUM_SPECIALS ];
 
-    //the hyper-dot is a special case
-    static const unsigned int HYPERCOLOR = NUM_COLORS;
 
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
     static const unsigned int NUM_ROLL_FRAMES;
@@ -83,6 +92,7 @@ public:
 
     inline void MakeHyper() { FillColor( HYPERCOLOR ); }
     inline bool IsHyper() const { return m_color == HYPERCOLOR; }
+    inline bool IsSpecial() const { return m_color >= NUM_COLORS; }
 
 	//copy color and some other attributes from target.  Used when tilting
 	void TiltFrom(GridSlot &src);
@@ -94,6 +104,7 @@ private:
     unsigned int GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const;
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
+    const AssetImage &GetSpecialTexture() const;
     //convert from [-128, 128] to [0, 6] via non-linear quantization
     unsigned int QuantizeTiltValue( float value ) const;
     //get the rolling frame of the given index

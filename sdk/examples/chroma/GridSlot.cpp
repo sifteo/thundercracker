@@ -75,6 +75,14 @@ const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 };
 
 
+const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
+{
+    &hyperdot,
+    &rockdot
+};
+
+
+
 //order of our frames
 enum
 {
@@ -164,6 +172,12 @@ const AssetImage &GridSlot::GetExplodingTexture() const
 }
 
 
+const AssetImage &GridSlot::GetSpecialTexture() const
+{
+    return *SPECIALTEXTURES[ m_color - NUM_COLORS ];
+}
+
+
 //draw self on given vid at given vec
 void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 {
@@ -172,8 +186,8 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 	{
 		case STATE_LIVING:
 		{
-            if( IsHyper() )
-                vid.BG0_drawAsset(vec, hyperdot);
+            if( IsSpecial() )
+                vid.BG0_drawAsset(vec, GetSpecialTexture());
             else if( IsFixed() )
                 vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
 			else
@@ -193,8 +207,8 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 			Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
 
 			//PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
-            if( IsHyper() )
-                vid.BG0_drawAsset(curPos, hyperdot);
+            if( IsSpecial() )
+                vid.BG0_drawAsset(curPos, GetSpecialTexture());
             else
             {
                 const AssetImage &tex = *TEXTURES[m_color];
@@ -204,8 +218,8 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		}
 		case STATE_FINISHINGMOVE:
 		{           
-            if( IsHyper() )
-                vid.BG0_drawAsset(vec, hyperdot);
+            if( IsSpecial() )
+                vid.BG0_drawAsset(vec, GetSpecialTexture());
             else
             {
                 const AssetImage &animtex = *TEXTURES[ m_color ];
@@ -220,8 +234,8 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
         }
 		case STATE_MARKED:
         {
-            if( IsHyper() )
-                vid.BG0_drawAsset(vec, hyperdot);
+            if( IsSpecial() )
+                vid.BG0_drawAsset(vec, GetSpecialTexture());
             else
             {
                 const AssetImage &exTex = GetExplodingTexture();
@@ -231,8 +245,8 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		}
 		case STATE_EXPLODING:
 		{
-            if( IsHyper() )
-                vid.BG0_drawAsset(vec, hyperdot);
+            if( IsSpecial() )
+                vid.BG0_drawAsset(vec, GetSpecialTexture());
             else
             {
                 vid.BG0_drawAsset(vec, GemEmpty, 0);
