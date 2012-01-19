@@ -83,9 +83,14 @@ ifeq ($(BUILD_PLATFORM), Linux)
 	LDFLAGS_SIM += -lspeex -lportaudio
 endif
 
+# LLVM Runtime
+LDFLAGS_SIM += -lLLVMCore -lLLVMInterpreter -lLLVMBitReader -lLLVMExecutionEngine \
+			   -lLLVMSupport -lLLVMCodeGen -lLLVMTarget -lLLVMAsmParser -lstdc++
+CCFLAGS_SIM += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
+
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
-CCFLAGS_SIM := $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
+CCFLAGS_SIM += $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
 LDFLAGS_SIM += $(LDFLAGS)
 
 LIBS_STM32 := $(MASTER_DIR)/master-stm32.a
