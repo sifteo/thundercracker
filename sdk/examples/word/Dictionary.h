@@ -21,6 +21,7 @@ private:
     static unsigned sNumOldWords;
     static unsigned sRandSeed;
     static unsigned sRound;
+    static unsigned sPickIndex;
 };
 
 #endif // DICTIONARY_H

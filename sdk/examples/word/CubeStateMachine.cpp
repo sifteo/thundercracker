@@ -5,7 +5,7 @@
 #include <string.h>
 #include "GameStateMachine.h"
 #include "config.h"
-
+#include "WordGame.h"
 
 void CubeStateMachine::setCube(Cube& cube)
 {
@@ -47,6 +47,7 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                         }
                         VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
                         setPanning(vid, mBG0Panning);
+                        WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
                     }
                 }
                 break;

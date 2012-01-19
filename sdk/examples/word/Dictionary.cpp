@@ -12,8 +12,82 @@ char Dictionary::sOldWords[MAX_OLD_WORDS][MAX_LETTERS_PER_WORD + 1];
 unsigned Dictionary::sNumOldWords = 0;
 unsigned Dictionary::sRandSeed = 0;
 unsigned Dictionary::sRound = 0;
+unsigned Dictionary::sPickIndex = 0;
 const unsigned WORD_RAND_SEED_INCREMENT = 88;
 const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
+const static char* picks[] =
+{
+    "ARREST",
+    "STREET",
+    "STREAM",
+    "DESIRE",
+    "SISTER",
+    "RELIEF",
+    "ALMOST",
+    "AGREED",
+    "LISTEN",
+    "ESCAPE",
+    "DEBATE",
+    "SECURE",
+    "LIFTED",
+    "PEOPLE",
+    "RECENT",
+    "REPORT",
+    "DESIGN",
+    "ENTIRE",
+    "REMAIN",
+    "SPREAD",
+    "FOREST",
+    "REPAIR",
+    "OBTAIN",
+    "SINGLE",
+    "ITSELF",
+    "SELECT",
+    "ENGAGE",
+    "GARDEN",
+    "DOCTOR",
+    "REALLY",
+    "ASSURE",
+    "INCHES",
+    "REFUSE",
+    "RESULT",
+    "SENATE",
+    "CALLED",
+    "CHARGE",
+    "SLOWER",
+    "SMILED",
+    "SIMPLE",
+    "MODERN",
+    "DECIDE",
+    "PROPER",
+    "SUFFER",
+    "MATTER",
+    "SILENT",
+    "RATHER",
+    "ROLLED",
+    "MOTION",
+    "INFORM",
+    "MOTHER",
+    "PICKED",
+    "FILLED",
+    "DIVIDE",
+    "INDEED",
+    "ENERGY",
+    "SUMMER",
+    "PERIOD",
+    "DRIVEN",
+    "PUSHED",
+    "AFRAID",
+    "LESSON",
+    "NATION",
+    "RECORD",
+    "ARRIVE",
+    "INSIDE",
+    "BOTTOM",
+    "FOURTH",
+    "INCOME",
+    "STRUCK",
+};
 
 Dictionary::Dictionary()
 {
@@ -25,6 +99,9 @@ bool Dictionary::pickWord(char* buffer)
     //strcpy(buffer, "WONDER");
     //return true;
 
+    strcpy(buffer, picks[sPickIndex]);
+    sPickIndex = (sPickIndex + 1) % arraysize(picks);
+    return true;
     if (PrototypeWordList::pickWord(buffer))
     {
         DEBUG_LOG(("picked word %s\n", buffer));

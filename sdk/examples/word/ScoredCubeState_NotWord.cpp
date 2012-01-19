@@ -26,25 +26,38 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
 
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
+    case EventID_LetterOrderChange:
         {
             bool isOldWord = false;
-            char wordBuffer[MAX_LETTERS_PER_WORD + 1];
-            if (getStateMachine().beginsWord(isOldWord, wordBuffer))
+            if (getStateMachine().canBeginWord())
             {
-                EventData data;
-                data.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
-                data.mWordFound.mWord = wordBuffer;
 
-                if (isOldWord)
+                char wordBuffer[MAX_LETTERS_PER_WORD + 1];
+                if (getStateMachine().beginsWord(isOldWord, wordBuffer))
                 {
-                    GameStateMachine::sOnEvent(EventID_OldWordFound, data);
-                    return CubeStateIndex_OldWordScored;
-                }
+                    EventData data;
+                    data.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
+                    data.mWordFound.mWord = wordBuffer;
 
-                GameStateMachine::sOnEvent(EventID_NewWordFound, data);
-                return CubeStateIndex_NewWordScored;
+                    if (isOldWord)
+                    {
+                        GameStateMachine::sOnEvent(EventID_OldWordFound, data);
+                        return CubeStateIndex_OldWordScored;
+                    }
+
+                    GameStateMachine::sOnEvent(EventID_NewWordFound, data);
+                    return CubeStateIndex_NewWordScored;
+                }
+                else
+                {
+                    EventData data;
+                    data.mWordBroken.mCubeIDStart = getStateMachine().getCube().id();
+                    GameStateMachine::sOnEvent(EventID_WordBroken, data);
+
+                    return CubeStateIndex_NotWordScored;
+                }
+                paint();
             }
-            paint();
         }
         break;
 

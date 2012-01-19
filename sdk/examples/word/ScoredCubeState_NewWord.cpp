@@ -33,6 +33,7 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
 
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
+    case EventID_LetterOrderChange:
         {
             bool isOldWord = false;
             if (getStateMachine().canBeginWord())

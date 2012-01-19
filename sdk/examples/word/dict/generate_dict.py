@@ -5,7 +5,7 @@ import os, sys
 import fileinput
 import sys
 from ctypes import *
-
+import operator
 
 seed_word_lens = [4, 6]#, 9]
 letters_per_cube = 2
@@ -171,9 +171,13 @@ def generate_dict():
             fi.write(hex(bits) + ",\t\t// " + word + "\n")
     fi.close()
     
-    fi = open("word_list_used.txt", "w")
-    for word in word_list_used.keys():
-        fi.write(word + "\n")
+
+    # sort keys by values
+    sorted_word_list_used = sorted(word_list_used.iteritems(), key=operator.itemgetter(1), reverse=True)    
+    print sorted_word_list_used
+    fi = open("word_list_used.cpp", "w")
+    for word, value in sorted_word_list_used:
+        fi.write("    \"" + word + "\",\n")
     fi.close()    
 
     return;
