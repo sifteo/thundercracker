@@ -162,9 +162,9 @@ void GameView::Update() {
   // end h4cky section
 
   // item hover
-  if (Room()->itemId) {
+  if (CurrentRoom()->HasItem()) {
     mIdleHoverIndex = (mIdleHoverIndex + 1) % HOVER_COUNT;
-    Vec2 p = 16 * Room()->LocalCenter();
+    Vec2 p = 16 * CurrentRoom()->LocalCenter();
     MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y + sHoverTable[mIdleHoverIndex]);
   }
 
@@ -181,7 +181,7 @@ bool GameView::IsShowingRoom() const {
     mRoom.y < pGame->map.Data()->height; 
 }
 
-MapRoom* GameView::Room() const { 
+Room* GameView::CurrentRoom() const { 
   ASSERT(IsShowingRoom()); 
   return pGame->map.GetRoom(mRoom); 
 }
@@ -231,9 +231,9 @@ bool GameView::ShowLocation(Vec2 room) {
   // are we showing an items?
   if (IsShowingRoom()) {
     HideInventorySprites();
-    MapRoom* mr = Room();
-    if (mr->itemId) {
-      ShowItem(mr->itemId);
+    Room* mr = CurrentRoom();
+    if (mr->HasItem()) {
+      ShowItem(mr->TriggerAsItem()->itemId);
     }
     if (this == pGame->player.CurrentView()) {
       ShowPlayer();
@@ -312,12 +312,12 @@ void GameView::HidePlayer() {
 void GameView::ShowItem(int itemId) {
   SetSpriteImage(GetCube(), ITEM_SPRITE_ID, Items.index + (itemId - 1) * Items.width * Items.height);;
   ResizeSprite(GetCube(), ITEM_SPRITE_ID, 16, 16);
-  Vec2 p = 16 * Room()->LocalCenter();
+  Vec2 p = 16 * CurrentRoom()->LocalCenter();
   MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
 }
 
 void GameView::SetItemPosition(Vec2 p) {
-  p += 16 * Room()->LocalCenter();
+  p += 16 * CurrentRoom()->LocalCenter();
   MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
 }
 
@@ -415,7 +415,7 @@ void GameView::DrawBackground() {
     }
 
     BG1Helper ovrly(*GetCube());
-    const uint8_t *p = Room()->Data()->overlay;
+    const uint8_t *p = CurrentRoom()->Data()->overlay;
     if (p) {
       while(*p != 0xff) {
         uint8_t pos = p[0];

@@ -54,8 +54,8 @@ class AccelState {
 	void getTiltState(struct _SYSTiltState *state) {
         *state = tiltState;
     }
-	void getShakeState(_SYS_ShakeState *state) {
-        *state = (_SYS_ShakeState)shakeState;
+	void getShakeState(_SYSShakeState *state) {
+        *state = (_SYSShakeState)shakeState;
     }
 
 	void update(int8_t x, int8_t y);
@@ -64,7 +64,7 @@ class AccelState {
 	bool updateTiltState(void);
 	int8_t calculateTiltState(uint8_t axis);
 	void updateShakeState();
-	_SYS_ShakeState calculateShakeState(uint8_t axis);
+	_SYSShakeState calculateShakeState(uint8_t axis);
 
  private:
 	//based on gen 1's AccelAxis

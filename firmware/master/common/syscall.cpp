@@ -103,7 +103,7 @@ void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state)
         AccelState::instances[cid].getTiltState(state);
 }
 
-void _SYS_getShake(_SYSCubeID cid, _SYS_ShakeState *state)
+void _SYS_getShake(_SYSCubeID cid, _SYSShakeState *state)
 {
     if (Runtime::checkUserPointer(state, sizeof *state) && CubeSlots::validID(cid))
         AccelState::instances[cid].getShakeState(state);

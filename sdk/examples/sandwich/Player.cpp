@@ -10,7 +10,7 @@ inline int fast_abs(int x) {
 }
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
-pCurrent(pGame->views), pTarget(0), mPosition(128+64,64+16), // todo: move intial position to map data
+pCurrent(pGame->views), pTarget(0), 
 mDir(2), mKeyCount(0), mItemMask(0), 
 mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
 mApproachingLockedDoor(false) {
@@ -28,7 +28,7 @@ void Player::Reset() {
   mApproachingLockedDoor = false;
 }
 
-MapRoom* Player::Room() const {
+Room* Player::CurrentRoom() const {
   return pGame->map.GetRoom(Location());
 }
 
@@ -138,7 +138,7 @@ void Player::Update(float dt) {
       CORO_YIELD;
       mNextDir = pCurrent->VirtualTiltDirection();
       #if SIFTEO_SIMULATOR
-      // /if (PathDetect()) { break; }
+      if (PathDetect()) { break; }
       #endif
     }
     // go to the target
@@ -153,7 +153,7 @@ void Player::Update(float dt) {
       // animate walking to target
       PlaySfx(sfx_running);
       pTarget->ShowPlayer();
-      if (pCurrent->Room()->GetPortal(mDir) == PORTAL_DOOR) { // hack for now -- special case for approaching doors
+      if (pCurrent->CurrentRoom()->GetPortal(mDir) == PORTAL_DOOR) { // hack for now -- special case for approaching doors
         ASSERT( mDir == SIDE_TOP ); // assuming 128 pixel straight-line UP from the current cube
         for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
           mPosition.y -= WALK_SPEED;
@@ -164,7 +164,7 @@ void Player::Update(float dt) {
           DecrementBasicKeyCount();
           // check the door
           //pCurrent->Room()->SetPortal(mDir, PORTAL_OPEN); // REPLACE
-          pCurrent->Room()->OpenDoor();
+          pCurrent->CurrentRoom()->OpenDoor();
           pCurrent->DrawBackground();
           pCurrent->GetCube()->vbuf.touch();
           pCurrent->UpdatePlayer();
@@ -182,7 +182,7 @@ void Player::Update(float dt) {
             CORO_YIELD;
           }
           // fill in the remainder
-          mPosition = pTarget->Room()->Center();
+          mPosition = pTarget->CurrentRoom()->Center();
         } else {
           PlaySfx(sfx_doorBlock);
           mPath.Cancel();
@@ -232,45 +232,47 @@ void Player::Update(float dt) {
         pCurrent->HidePlayer();
         pCurrent = pTarget;
         pTarget = 0;  
-        mPosition = pCurrent->Room()->Center();
+        mPosition = pCurrent->CurrentRoom()->Center();
         pCurrent->UpdatePlayer();        
-        { // pickup item?
-          int itemId = pCurrent->Room()->itemId;
-          if (itemId) {
-            // pCurrent->Room()->SetItem(0); // REPLACE
-            PickupItem(itemId);
-            // do a pickup animation
-            for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
-              pCurrent->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
-              
-              for(float t=System::clock(); System::clock()-t<0.075f;) {
-                // this calc is kinda annoyingly complex
-                float u = (System::clock() - t) / 0.075f;
-                float du = 1.f / (float) PlayerPickup.frames;
-                u = (frame + u) * du;
-                u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-                pGame->Paint();
-                pCurrent->SetItemPosition(Vec2(0, -36.f * u) );
-              }
+        if (pCurrent->CurrentRoom()->HasItem()) {
+          const ItemData* pItem = pCurrent->CurrentRoom()->TriggerAsItem();
+          if (pGame->state.FlagTrigger(pItem->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
+          PickupItem(pItem->itemId);
+          // do a pickup animation
+          for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
+            pCurrent->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
+            
+            for(float t=System::clock(); System::clock()-t<0.075f;) {
+              // this calc is kinda annoyingly complex
+              float u = (System::clock() - t) / 0.075f;
+              const float du = 1.f / (float) PlayerPickup.frames;
+              u = (frame + u) * du;
+              u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+              pGame->Paint();
+              pCurrent->SetItemPosition(Vec2(0, -36.f * u) );
             }
-            pCurrent->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
-            for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
-            pCurrent->HideItem();        
           }
+          pCurrent->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
+          for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
+          pCurrent->HideItem();        
         }
-        { // passive trigger?
-          //MapRoom *mr = pCurrent->Room();
-          // REPLACE
+        if (pCurrent->CurrentRoom()->HasNPC()) {
+          const NpcData* pNpc = pCurrent->CurrentRoom()->TriggerAsNPC();
+          if (pGame->state.FlagTrigger(pNpc->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
+          // TODO
         }
       }
-
     } while(mPath.PopStep(pCurrent));
-    //gChannelSfx.stop();
-
-
-    { // active trigger?
-      //MapRoom *mr = pCurrent->Room();
-      // REPLACE
+    if (pCurrent->CurrentRoom()->HasGateway()) {
+      const GatewayData* pGate = pCurrent->CurrentRoom()->TriggerAsGate();
+      const MapData& targetMap = gMapData[pGate->targetMap];
+      const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
+      if (pGame->state.FlagTrigger(pGate->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); } 
+      pGame->WalkTo(128 * pCurrent->CurrentRoom()->Location() + Vec2(pGate->x, pGate->y));
+      pGame->TeleportTo(gMapData[pGate->targetMap], Vec2(
+        128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
+        128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
+      ));
     }
 
     mDir = SIDE_BOTTOM;

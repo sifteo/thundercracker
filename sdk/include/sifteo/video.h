@@ -345,10 +345,9 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_ROM);
     }
 
-    void clear() {
-        _SYS_vbuf_fill(&buf.sys, 0, 0, BG0_width * BG0_height);
+    virtual void clear(uint16_t tile=0) {
+        _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
     }
-
 
     void BG0_text(const Vec2 &point, char c) {
         BG0_putTile(point, c - ' ');

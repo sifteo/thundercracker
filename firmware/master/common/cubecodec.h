@@ -62,7 +62,7 @@ class BitBuffer {
     unsigned flush(PacketBuffer &buf) {
         ASSERT(count <= 32);
 
-        unsigned byteWidth = MIN(buf.bytesFree(), count >> 3);
+        unsigned byteWidth = MIN(buf.bytesFree(), (unsigned)(count >> 3));
         buf.append((uint8_t *) &bits, byteWidth);
 
         unsigned bitWidth = byteWidth << 3;
