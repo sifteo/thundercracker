@@ -23,7 +23,8 @@ class CubeStateMachine : public StateMachine
 public:
     CubeStateMachine() :
         StateMachine(0), mNumLetters(1), mIdleTime(0.f),
-        mBG0Panning(0.f), mBG0TargetPanning(0.f), mCube(0) {}
+        mBG0Panning(0.f), mBG0TargetPanning(0.f), mBG0PanningLocked(true),
+        mCube(0) {}
 
     void setCube(Cube& cube);
     Cube& getCube();
@@ -57,6 +58,7 @@ private:
 
     float mBG0Panning;
     float mBG0TargetPanning;
+    bool mBG0PanningLocked;
 
     Cube* mCube;
     TitleCubeState mTitleState;

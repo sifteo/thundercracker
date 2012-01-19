@@ -33,6 +33,7 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             switch (MAX_LETTERS_PER_CUBE)
             {
             case 2:
+                if (!mBG0PanningLocked)
                 {
                     _SYSTiltState state;
                     _SYS_getTilt(getCube().id(), &state);
@@ -63,6 +64,13 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_GameStateChanged:
+        mBG0PanningLocked = (data.mGameStateChanged.mNewStateIndex != GameStateIndex_PlayScored);
+        mBG0TargetPanning = 0.f;
+        {
+            VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
+            setPanning(vid, 0.f);
+        }
+        // fall through
     case EventID_EnterState:
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
@@ -71,9 +79,6 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewAnagram:
         unsigned cubeIndex = (getCube().id() - CUBE_ID_BASE);
-        mBG0TargetPanning = 0.f;
-        VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
-        setPanning(vid, 0.f);
         for (unsigned i = 0; i < arraysize(mLetters); ++i)
         {
             mLetters[i] = '\0';
@@ -267,5 +272,5 @@ void CubeStateMachine::update(float dt)
 void CubeStateMachine::setPanning(VidMode_BG0_SPR_BG1& vid, float panning)
 {
     mBG0Panning = panning;
-    //vid.BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
+    vid.BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
 }

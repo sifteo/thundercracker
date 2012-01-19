@@ -172,7 +172,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
             switch (getTransparencyType(teethImageIndex, frame, j, i))
             {
             case TransparencyType_None:
-                if (teethImageIndex == ImageIndex_Teeth || teethImageIndex == ImageIndex_Teeth_NoBlip)
+                if (teethImageIndex == ImageIndex_ConnectedRightWord || teethImageIndex == ImageIndex_ConnectedLeftWord || teethImageIndex == ImageIndex_ConnectedWord || teethImageIndex == ImageIndex_Teeth || teethImageIndex == ImageIndex_Teeth_NoBlip)
                 {
                     // paint this opaque tile
                     // paint BG0

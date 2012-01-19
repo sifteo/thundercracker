@@ -6,6 +6,7 @@
 #include "GameStateMachine.h"
 #include "ScoredCubeState_NewWord.h"
 #include <string.h>
+#include "WordGame.h"
 
 ScoredCubeState_NewWord::ScoredCubeState_NewWord()
 {
@@ -22,6 +23,9 @@ unsigned ScoredCubeState_NewWord::onEvent(unsigned eventID, const EventData& dat
         }
         // fall through
     case EventID_EnterState:
+        WordGame::instance()->setNeedsPaintSync();
+        // fall through
+
     case EventID_Paint:
     case EventID_ClockTick:
         paint();
@@ -110,8 +114,8 @@ void ScoredCubeState_NewWord::paint()
     Cube& c = getStateMachine().getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    paintLetters(vid, Font1Letter, true);
-
+//    paintLetters(vid, Font1Letter, true);
+    vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
     ImageIndex ii = ImageIndex_ConnectedWord;
     if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
         c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
@@ -125,4 +129,5 @@ void ScoredCubeState_NewWord::paint()
     }
 
     paintTeeth(vid, ii, true, false, false, false);
+    vid.BG0_setPanning(Vec2(0.f, 0.f));
 }
