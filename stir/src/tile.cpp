@@ -6,6 +6,7 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <float.h>
 #include <algorithm>
@@ -412,31 +413,32 @@ TileRef TileStack::median()
     return cache;
 }
 
-TileStack* TilePool::closest(TileRef t, double &mse)
+TileStack* TilePool::closest(TileRef t)
 {
     /*
      * Search for the closest tile set for the provided tile image.
-     * Returns the tile stack, if any was found, and the MSE
-     * between the provided tile and that tile's current median.
+     * Returns the tile stack, if any was found which meets the tile's
+     * stated maximum MSE requirement.
      */
 
-    double distance = DBL_MAX;
     const double epsilon = 1e-3;
+    double distance = t->options().getMaxMSE();
     TileStack *closest = NULL;
 
     for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
         double err = i->median()->errorMetric(*t, distance);
-        if (err < distance) {
+
+        if (err <= distance) {
             distance = err;
             closest = &*i;
-        }
-        if (distance < epsilon) {
-            // Not going to improve on this; early out.
-            break;
+
+            if (distance < epsilon) {
+                // Not going to improve on this; early out.
+                break;
+            }
         }
     }
 
-    mse = distance;
     return closest;
 }
 
@@ -544,22 +546,22 @@ void TilePool::optimizeTilesPass(Logger &log, std::set<TileStack *> &activeStack
         TileRef tr = tiles[serial];
 
         if (tr->options().pinned == pinned) {
-            double mse;
-            TileStack *c = pinned ? NULL : closest(tr, mse);
+            TileStack *c = pinned ? NULL : closest(tr);
         
-            if (gather) {
-                // Create or augment a TileStack
-
-                if (!c || mse > tr->options().getMaxMSE()) {
-                    stackList.push_back(TileStack());
-                    c = &stackList.back();
-                }
+            if (!c) {
+                // Need to create a fresh stack
+                stackList.push_back(TileStack());
+                c = &stackList.back();
+                c->add(tr);
+            } else if (gather) {
+                // Add to an existing stack
                 c->add(tr);
             }
 
             if (!gather || pinned) {
                 // Remember this stack, we've selected it for good.
                 
+                assert(c != NULL);
                 stackIndex[serial] = c; 
                 activeStacks.insert(c);
             }

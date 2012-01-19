@@ -257,7 +257,7 @@ class TilePool {
     void optimizeTilesPass(Logger &log, std::set<TileStack *> &activeStacks,
                            bool gather, bool pinned);
 
-    TileStack *closest(TileRef t, double &mse);
+    TileStack *closest(TileRef t);
 };
 
 
