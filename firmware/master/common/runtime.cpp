@@ -151,7 +151,7 @@ extern "C" {
     LLVM_SYS_VOID_I1_PTR(getAccel, _SYSAccelState)
     LLVM_SYS_VOID_I1_PTR(getNeighbors, _SYSNeighborState)
     LLVM_SYS_VOID_I1_PTR(getTilt, _SYSTiltState)
-    LLVM_SYS_VOID_I1_PTR(getShake, _SYS_ShakeState)
+    LLVM_SYS_VOID_I1_PTR(getShake, _SYSShakeState)
 
 #if 0
     uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
