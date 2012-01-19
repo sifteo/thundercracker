@@ -2,6 +2,7 @@
 *.d
 *.o
 *~
+src/stir-d.exe
 stir
 stir.exe
 tilemap.bin
