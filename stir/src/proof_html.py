@@ -29,7 +29,7 @@ header = """
          // every occurrance of this tile in the TileGrids.
          img.tgRedraw = []
  
-        tiles[i] = img;
+         tiles[i] = img;
        }
        return tiles;
      }
@@ -85,14 +85,20 @@ header = """
        this.tiles = a;
      }
 
-     TileGrid.prototype.draw = function() {
+     TileGrid.prototype.drawAsync = function() {
        /*
-        * Draw the whole TileGrid unconditionally
+        * Draw the whole TileGrid unconditionally but asynchronously.
+        * We batch the tiles, drawing one row at a time.
         */
 
-       for (var y = 0; y < this.height; y++)
-         for (var x = 0; x < this.width; x++)
-           this.drawTile(x, y);
+       for (var y = 0; y < this.height; y++) {
+         window.setTimeout(function(y, obj){
+           return function() {
+             for (var x = 0; x < obj.width; x++)
+               obj.drawTile(x, y);
+           }
+         }(y, this), 0);
+       }
      }
 
      TileGrid.prototype.installDrawHandlers = function() {
@@ -152,12 +158,13 @@ header = """
 
      function onload() {
        /*
-        * Draw all TileGrids after our images have loaded
+        * Draw all TileGrids after our images have loaded.
+        * The drawing itself happens asynchronously, so as not to block the page load.
         */
 
        for (var i in allTileGrids) {
          allTileGrids[i].installDrawHandlers();
-         allTileGrids[i].draw();
+         allTileGrids[i].drawAsync();
        }
      }
 
@@ -270,7 +277,7 @@ header = """
        }
      }
 
-  </script> 
+  </script>
   <style> 
  
     body { 
