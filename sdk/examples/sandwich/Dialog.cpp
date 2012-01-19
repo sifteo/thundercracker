@@ -228,40 +228,26 @@ void DialogView::Fade() {
     }
 }
 
-void DoDialog(DialogData& data) {
-    DialogView view(gCubes);
+void DoDialog(const DialogData& data, Cube* cube) {
+    if (!cube) cube = gCubes;
+    DialogView view(cube);
+    for(unsigned line=0; line<data.lineCount; ++line) {
+        const DialogTextData& txt = data.lines[line];
 
-    VidMode_BG0 mode(view.GetCube()->vbuf);
-    mode.init();
-    mode.BG0_drawAsset(Vec2(0,0), ScreenOff);
-    for(unsigned i=0; i<4; ++i) {
-        view.GetCube()->vbuf.touch();
+        VidMode_BG0 mode(view.GetCube()->vbuf);
+        mode.init();
+        mode.BG0_drawAsset(Vec2(0,0), *(txt.detail));
         System::paintSync();
+
+        //Now set up a letterboxed 128x48 mode
+        view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, color_lerp(0));
+        view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
+        view.GetCube()->vbuf.poke(0x3fc/2, 0x3000 + 80);
+        view.GetCube()->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
+        
+        view.Erase();
+        System::paintSync();
+        view.Show(txt.line);
+        view.Fade();
     }
-    mode.BG0_drawAsset(Vec2(0,0), Dialog);
-    System::paintSync();
-
-    //Now set up a letterboxed 128x48 mode
-    view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, color_lerp(0));
-    view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
-    view.GetCube()->vbuf.poke(0x3fc/2, 0x3000 + 80);
-    view.GetCube()->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
-
-    for(;;) {
-    view.Erase();
-    System::paintSync();
-    view.Show("Hello, World");
-    view.Show("I'm dialog!");
-    view.Fade();
-    view.Erase();
-    view.Show("Oh boy");
-    view.Show("Another!");
-    view.Fade();
-    }
-
-
-    for(;;) {
-        view.GetCube()->vbuf.touch();
-        System::paint();
-    }    
 }

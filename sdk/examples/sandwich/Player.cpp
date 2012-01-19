@@ -1,6 +1,7 @@
 #include "Player.h"
 #include "GameView.h"
 #include "Game.h"
+#include "Dialog.h"
 
 #define DOOR_PAD 10
 #define GAME_FRAMES_PER_ANIM_FRAME 2
@@ -256,11 +257,6 @@ void Player::Update(float dt) {
           for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
           pCurrent->HideItem();        
         }
-        if (pCurrent->CurrentRoom()->HasNPC()) {
-          const NpcData* pNpc = pCurrent->CurrentRoom()->TriggerAsNPC();
-          if (pGame->state.FlagTrigger(pNpc->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
-          // TODO
-        }
       }
     } while(mPath.PopStep(pCurrent));
     if (pCurrent->CurrentRoom()->HasGateway()) {
@@ -273,7 +269,13 @@ void Player::Update(float dt) {
         128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
         128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
       ));
+    } else if (pCurrent->CurrentRoom()->HasNPC()) {
+      const NpcData* pNpc = pCurrent->CurrentRoom()->TriggerAsNPC();
+      if (pGame->state.FlagTrigger(pNpc->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
+      DoDialog(gDialogData[pNpc->dialog], pCurrent->GetCube());
+      // TODO
     }
+
 
     mDir = SIDE_BOTTOM;
     pCurrent->UpdatePlayer();
