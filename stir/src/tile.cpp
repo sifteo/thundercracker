@@ -23,7 +23,7 @@
  */
 namespace std {
 	namespace tr1 {
-		template<> struct hash<typename Stir::Tile::Identity> {
+		template<> struct hash<Stir::Tile::Identity> {
 			std::size_t operator()(Stir::Tile::Identity const &key) const {			
 				uint32_t h = 2166136261UL;
 				unsigned len = sizeof(key.pixels) / sizeof(uint32_t);
