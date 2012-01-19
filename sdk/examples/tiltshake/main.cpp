@@ -36,7 +36,7 @@ static void onTilt(_SYSCubeID cid)
 
 static void onShake(_SYSCubeID cid)
 {
-    _SYS_ShakeState state;
+    _SYSShakeState state;
     _SYS_getShake(cid, &state);
 	if( state == SHAKING )
 		vid[cid].BG0_drawAsset(Vec2(0,0), Shake);

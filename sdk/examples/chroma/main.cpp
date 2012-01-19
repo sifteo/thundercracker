@@ -56,7 +56,7 @@ static void onTilt(_SYSCubeID cid)
 
 static void onShake(_SYSCubeID cid)
 {
-    _SYS_ShakeState state;
+    _SYSShakeState state;
     _SYS_getShake(cid, &state);
     game.cubes[cid - CUBE_ID_BASE].Shake(state);
 }
