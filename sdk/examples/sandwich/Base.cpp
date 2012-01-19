@@ -19,7 +19,7 @@ Cube::Side InferDirection(Vec2 u) {
 //------------------------------------------------------------------------------
 // Sprite Utilities
 //------------------------------------------------------------------------------
-
+/*
 bool InSpriteMode(Cube* c){
   uint8_t byte;
   _SYS_vbuf_peekb(&c->vbuf.sys, offsetof(_SYSVideoRAM, mode), &byte);
@@ -63,6 +63,7 @@ void MoveSprite(Cube *c, int id, int px, int py) {
                    sizeof(_SYSSpriteInfo)/2 * id ); 
   _SYS_vbuf_poke(&c->vbuf.sys, addr, word);
 }
+*/
 
 //------------------------------------------------------------------------------
 // Sfx Utilities

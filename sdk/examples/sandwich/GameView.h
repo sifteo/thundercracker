@@ -44,6 +44,7 @@ public:
   // methods
   void Init();
   void Update();
+  void Restore();
 
   bool ShowLocation(Vec2 room);
   bool HideRoom();
