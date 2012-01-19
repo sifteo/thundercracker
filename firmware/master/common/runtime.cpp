@@ -131,6 +131,93 @@ void Event::dispatch()
          return GenericValue(); \
      }
 
+#define LLVM_SYS_VOID_I2(name) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 2); \
+         _SYS_##name(args[0].IntVal.getZExtValue(), args[1].IntVal.getZExtValue()); \
+         return GenericValue(); \
+     }
+
+#define LLVM_SYS_VOID_PTR_I1(name, t) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 2); \
+         _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue()); \
+         return GenericValue(); \
+     }
+
+#define LLVM_SYS_VOID_PTR_I2(name, t) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 3); \
+         _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), args[2].IntVal.getZExtValue()); \
+         return GenericValue(); \
+     }
+
+#define LLVM_SYS_VOID_PTR_I3(name, t) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 4); \
+         _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), args[2].IntVal.getZExtValue(), args[3].IntVal.getZExtValue()); \
+         return GenericValue(); \
+     }
+     
+#define LLVM_SYS_VOID_PTR_I_PTR(name, t, u) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 3); \
+         _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2])); \
+         return GenericValue(); \
+     }
+
+#define LLVM_SYS_I_PTR_PTR_ENUM(name, t, u, v) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 3); \
+         GenericValue ret; \
+         ret.IntVal = _SYS_##name((t*)GVTOP(args[0]), (u*)GVTOP(args[1]), (v)args[2].IntVal.getZExtValue()); \
+         return ret; \
+     }
+
+#define LLVM_SYS_I_I1(name) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 1); \
+         GenericValue ret; \
+         ret.IntVal = _SYS_##name(args[0].IntVal.getZExtValue()); \
+         return ret; \
+     }
+     
+#define LLVM_SYS_VOID_PTR_I_PTR_I1(name, t, u) \
+          GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+          { \
+              ASSERT(args.size() == 4); \
+              _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2]), \
+                          args[3].IntVal.getZExtValue()); \
+              return GenericValue(); \
+          }
+
+#define LLVM_SYS_VOID_PTR_I_PTR_I2(name, t, u) \
+          GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+          { \
+              ASSERT(args.size() == 5); \
+              _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2]), \
+                          args[3].IntVal.getZExtValue(), args[4].IntVal.getZExtValue()); \
+              return GenericValue(); \
+          }
+
+#define LLVM_SYS_VOID_PTR_I_PTR_I5(name, t, u) \
+          GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+          { \
+              ASSERT(args.size() == 8); \
+              _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2]), \
+                          args[3].IntVal.getZExtValue(), args[4].IntVal.getZExtValue(), \
+                          args[5].IntVal.getZExtValue(), args[6].IntVal.getZExtValue(), \
+                          args[7].IntVal.getZExtValue()); \
+              return GenericValue(); \
+          }
+
 extern "C" {
 
     LLVM_SYS_VOID(exit)
@@ -152,39 +239,27 @@ extern "C" {
     LLVM_SYS_VOID_I1_PTR(getNeighbors, _SYSNeighborState)
     LLVM_SYS_VOID_I1_PTR(getTilt, _SYSTiltState)
     LLVM_SYS_VOID_I1_PTR(getShake, _SYSShakeState)
-
-#if 0
-    uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
-    int  _SYS_audio_volume(_SYSAudioHandle h);
-
-     void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max);
-    
-
-
-     // XXX: Temporary for testing/demoing
-     void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);
-     void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v);
-     void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid);
-
-     void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr);
-     void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word);
-     void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte);
-     void _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word);
-     void _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte);
-     void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count);
-     void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count);
-     void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count);
-     void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count);
-     void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count,
-                          uint16_t lines, uint16_t src_stride, uint16_t addr_stride);
-     void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height);
-     void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y);
-
-     //uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
-     uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
-     void _SYS_audio_setVolume(_SYSAudioHandle h, int volume);
-     uint32_t _SYS_audio_pos(_SYSAudioHandle h);
- #endif
+    LLVM_SYS_VOID_I1_PTR(getRawNeighbors, uint8_t)
+    LLVM_SYS_VOID_I1_PTR(getRawBatteryV, uint16_t)
+    LLVM_SYS_VOID_I1_PTR(getCubeHWID, _SYSCubeHWID)
+    LLVM_SYS_VOID_I2(solicitCubes)
+    LLVM_SYS_VOID_I2(audio_setVolume)
+    LLVM_SYS_VOID_PTR_I1(vbuf_lock, _SYSVideoBuffer)
+    LLVM_SYS_VOID_PTR_I2(vbuf_poke, _SYSVideoBuffer)
+    LLVM_SYS_VOID_PTR_I2(vbuf_pokeb, _SYSVideoBuffer)
+    LLVM_SYS_VOID_PTR_I3(vbuf_spr_resize, _SYSVideoBuffer)
+    LLVM_SYS_VOID_PTR_I3(vbuf_spr_move, _SYSVideoBuffer)
+    LLVM_SYS_VOID_PTR_I3(vbuf_fill, _SYSVideoBuffer)
+    LLVM_SYS_VOID_PTR_I3(vbuf_seqi, _SYSVideoBuffer)
+    LLVM_SYS_VOID_PTR_I_PTR(vbuf_peek, _SYSVideoBuffer, uint16_t)
+    LLVM_SYS_VOID_PTR_I_PTR(vbuf_peekb, _SYSVideoBuffer, uint8_t)
+    LLVM_SYS_I_I1(audio_isPlaying)
+    LLVM_SYS_I_I1(audio_volume)
+    LLVM_SYS_I_I1(audio_pos)
+    LLVM_SYS_I_PTR_PTR_ENUM(audio_play, _SYSAudioModule, _SYSAudioHandle, _SYSAudioLoopType)
+    LLVM_SYS_VOID_PTR_I_PTR_I1(vbuf_write, _SYSVideoBuffer, uint16_t)
+    LLVM_SYS_VOID_PTR_I_PTR_I2(vbuf_writei, _SYSVideoBuffer, uint16_t)
+    LLVM_SYS_VOID_PTR_I_PTR_I5(vbuf_wrect, _SYSVideoBuffer, uint16_t)
 }
  
 /*
