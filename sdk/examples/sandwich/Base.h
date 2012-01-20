@@ -27,14 +27,6 @@ using namespace Sifteo;
 Cube::Side InferDirection(Vec2 u);
 unsigned int Rand( unsigned int max );
 
-// Sprite Schmutz
-bool InSpriteMode(Cube* c);
-void EnterSpriteMode(Cube *c);
-void SetSpriteImage(Cube *c, int id, int tile);
-void HideSprite(Cube *c, int id);
-void ResizeSprite(Cube *c, int id, int px, int py);
-void MoveSprite(Cube *c, int id, int px, int py);
-
 // Audio Smutz
 void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
 void PlayMusic(_SYSAudioModule& music, bool loop=true);

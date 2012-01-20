@@ -1,14 +1,11 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
  * This file is part of the public interface to the Sifteo SDK.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _SIFTEO_VIDEO_H
 #define _SIFTEO_VIDEO_H
-
-#include <stdio.h>
-#include <stdarg.h>
 
 #include <sifteo/macros.h>
 #include <sifteo/machine.h>
@@ -272,11 +269,6 @@ class VidMode_BG0 : public VidMode {
      *      generate different kinds of assets for them. Lots of room
      *      for cleanup here...  Especially in the assumed mapping
      *      here! Ugh.
-     *
-     * XXX: There should also probably just be a higher-level text renderer
-     *      that can work with different combinations of video modes and font
-     *      types. It sucks to have even high-level things like printf() depend
-     *      on those details.
      */
 
     NEVER_INLINE void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, char c) {
@@ -299,17 +291,6 @@ class VidMode_BG0 : public VidMode {
             }
             str++;
         }
-    }
-
-    NEVER_INLINE void BG0_textf(const Vec2 &point, const Sifteo::AssetImage &font, const char *fmt, ...) {
-        char buf[128];
-        va_list ap;
-
-        va_start(ap, fmt);
-        vsnprintf(buf, sizeof buf - 1, fmt, ap);
-        buf[sizeof buf - 1] = 0;
-        BG0_text(point, font, buf);
-        va_end(ap);
     }
 };    
   
@@ -367,17 +348,6 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
             }
             str++;
         }
-    }
-
-    NEVER_INLINE void BG0_textf(const Vec2 &point, const char *fmt, ...) {
-        char buf[128];
-        va_list ap;
-
-        va_start(ap, fmt);
-        vsnprintf(buf, sizeof buf - 1, fmt, ap);
-        buf[sizeof buf - 1] = 0;
-        BG0_text(point, buf);
-        va_end(ap);
     }
 
     NEVER_INLINE void BG0_progressBar(const Vec2 &point, int pixelWidth, int tileHeight=1) {

@@ -24,25 +24,31 @@ static void onAccelChange(_SYSCubeID cid)
 {
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
-    vid[cid].BG0_textf(Vec2(2,2), Font, "Accel: %02x %02x", state.x + 0x80, state.y + 0x80);
+
+    String<18> str;
+    str << "Accel: " << Hex(state.x + 0x80, 2) << " " << Hex(state.y + 0x80, 2);
+    vid[cid].BG0_text(Vec2(2,2), Font, str);
 }
 
 static void onTilt(_SYSCubeID cid)
 {
     _SYSTiltState state;
     _SYS_getTilt(cid, &state);
-    vid[cid].BG0_textf(Vec2(2,4), Font, "Tilt: %d %d     ", state.x - 1, state.y - 1);
+
+    String<18> str;
+    str << "Tilt: " << (state.x - 1) << " " << (state.y - 1) << "     ";
+    vid[cid].BG0_text(Vec2(2,4), Font, str);
 }
 
 static void onShake(_SYSCubeID cid)
 {
     _SYSShakeState state;
     _SYS_getShake(cid, &state);
+
 	if( state == SHAKING )
 		vid[cid].BG0_drawAsset(Vec2(0,0), Shake);
 	else
 		vid[cid].clear(Font.tiles[0]);
-    //vid[cid].BG0_textf(Vec2(2,7), Font, "Shaking: %d", state);
 }
 
 static void init()

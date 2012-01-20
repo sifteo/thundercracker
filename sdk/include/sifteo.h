@@ -1,7 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
  * This file is part of the public interface to the Sifteo SDK.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _SIFTEO_H
@@ -18,6 +18,7 @@
 #include <sifteo/macros.h>
 #include <sifteo/video.h>
 #include <sifteo/neighborhood.h>
+#include <sifteo/string.h>
 #include <sifteo/BG1Helper.h>
 
 #endif

@@ -1,6 +1,6 @@
 /*
  * This file is part of the public interface to the Sifteo SDK.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef AUDIO_H_

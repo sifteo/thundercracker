@@ -278,13 +278,13 @@ class Room:
 			src.write("%s, " % hex(rowMask))
 		src.write("},\n")
 		# tiles
-		src.write("        {\n")
+		src.write("        { ")
 		for ty in range(8):
-			src.write("            ")
+			#src.write("            ")
 			for tx in range(8):
 				src.write("%s, " % hex(self.tileat(tx,ty).lid))
-			src.write("\n")
-		src.write("        },\n")
+			#src.write("\n")
+		src.write("},\n")
 		# overlay
 		if self.hasoverlay():
 			src.write("        %s_overlay_%d_%d, " % (self.map.id, self.x, self.y))
@@ -344,8 +344,8 @@ class Trigger:
 			self.target_gate = m.group(2).lower()
 		elif self.type == TRIGGER_NPC:
 			did = obj.props["id"].lower()
-			assert did in room.map.world.dialog.dialogs, "Invalid Dialog ID in Map: " + room.map.id
-			self.dialog = room.map.world.dialog.dialogs[did]
+			assert did in room.map.world.dialog.dialog_dict, "Invalid Dialog ID in Map: " + room.map.id
+			self.dialog = room.map.world.dialog.dialog_dict[did]
 		
 				
 		self.qbegin = self.minquest.index if hasattr(self, "minquest") else 0xff
@@ -358,6 +358,10 @@ class Trigger:
 		if self.qbegin != 0xff and self.qbegin < quest.index: return False
 		if self.qend != 0xff and self.qend > quest.index: return False
 		return True
+
+	def local_position(self):
+		return (self.raw.px + (self.raw.pw >> 1) - 128 * self.room.x, 
+				self.raw.py + (self.raw.ph >> 1) - 128 * self.room.y)
 
 	
 	def write_trigger_to(self, src):
@@ -373,14 +377,14 @@ class Trigger:
 		self.write_trigger_to(src)
 		mapid = self.room.map.world.map_dict[self.target_map].index
 		gateid = self.room.map.world.map_dict[self.target_map].gate_dict[self.target_gate].index
-		x = self.raw.px + (self.raw.pw >> 1) - 128 * self.room.x
-		y = self.raw.py + (self.raw.ph >> 1) - 128 * self.room.y
+		x,y = self.local_position()
 		src.write(", %s, %s, %s, %s }, " % (hex(mapid), hex(gateid), hex(x), hex(y)))
 	
 	def write_npc_to(self, src):
 		src.write("{ ")
 		self.write_trigger_to(src)
-		src.write(", %d }, " % self.dialog.index)
+		x,y = self.local_position()
+		src.write(", %s, %s, %s }, " % (hex(self.dialog.index), hex(x), hex(y)))
 
 
 

@@ -43,5 +43,3 @@ sfx_running = sound{ "sfx_running.raw" }
 sfx_walkStart = sound{ "sfx_walkStart.raw" }
 sfx_zoomIn = sound{ "sfx_zoomIn.raw" }
 sfx_zoomOut = sound{ "sfx_zoomOut.raw" }
-
-Dialog = image{"dialog.png"}

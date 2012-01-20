@@ -107,13 +107,13 @@ static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
 static uint16_t color_lerp(uint8_t alpha) {
     // Linear interpolation between foreground and background
 
-    const unsigned bg_r = 0x00;
-    const unsigned bg_g = 0x91;
-    const unsigned bg_b = 0x55;
+    const unsigned bg_r = 0xe8;
+    const unsigned bg_g = 0xdc;
+    const unsigned bg_b = 0xcc;
 
-    const unsigned fg_r = 0xff;//0xf4;
-    const unsigned fg_g = 0xff;//0xd8;
-    const unsigned fg_b = 0xff;//0xb7;
+    const unsigned fg_r = 0x0;//0xf4;
+    const unsigned fg_g = 0x0;//0xd8;
+    const unsigned fg_b = 0x0;//0xb7;
     
     const uint8_t invalpha = 0xff - alpha;
 
@@ -131,11 +131,11 @@ private:
 public:
     DialogView(Cube *mCube);
     Cube* GetCube() const { return mCube; }
-    void Show(const char* msg);
+    const char* Show(const char* msg);
     void DrawGlyph(char ch);
     unsigned MeasureGlyph(char ch);
     void DrawText(const char* msg);
-    unsigned MeasureText(const char* msg);
+    void MeasureText(const char *str, unsigned *outCount, unsigned *outPx);
     void Erase();
     void Fade();
 
@@ -144,10 +144,13 @@ public:
 DialogView::DialogView(Cube* pCube) : mCube(pCube) {
 }
 
-void DialogView::Show(const char* str) {
-	mPosition.x = (128 - MeasureText(str)) >> 1;
+const char* DialogView::Show(const char* str) {
+    unsigned count, length;
+    MeasureText(str, &count, &length);
+	mPosition.x = (128 - length) >> 1;
     DrawText(str);
-    mPosition.y += kFontHeight;
+    mPosition.y += kFontHeight + 1;
+    return str + count;
 }
 
 void DialogView::DrawGlyph(char ch) {
@@ -183,24 +186,26 @@ unsigned DialogView::MeasureGlyph(char ch) {
 
 void DialogView::DrawText(const char *str) {
     char c;
-    while ((c = *str)) {
+    while ((c = *str) && c != '\n') {
         str++;
         DrawGlyph(c);
     }
 }
 
-unsigned DialogView::MeasureText(const char *str) {
-    unsigned width = 0;
+void DialogView::MeasureText(const char *str, unsigned *outCount, unsigned *outPx) {
+    *outPx = 0;
+    *outCount = 0;
     char c;
-    while ((c = *str)) {
+    while ((c = *str) && c != '\n') {
         str++;
-        width += MeasureGlyph(c);
+        (*outCount)++;
+        *outPx += MeasureGlyph(c);
     }
-    return width;
+    if (c) { (*outCount)++; }
 }
 
 void DialogView::Erase() {
-    mPosition.y = 4;
+    mPosition.y = 8;
     for (unsigned i = 0; i < sizeof mCube->vbuf.sys.vram.fb / 2; i++) {
     	mCube->vbuf.poke(i, 0);
     }
@@ -209,59 +214,59 @@ void DialogView::Erase() {
 void DialogView::Fade() {
     const unsigned speed = 4;
     const unsigned hold = 100;
-    for (unsigned i = 0; i < 0x100; i += speed) {
+    for (unsigned i = 0; i < 128; i += speed) {
         mCube->vbuf.poke(
             offsetof(_SYSVideoRAM, colormap) / 2 + 1,
-            color_lerp(i)
+            color_lerp(2*i)
         );
         System::paint();
     }
     for (unsigned i = 0; i < hold; i++) {
         System::paint();
     }
-    for (unsigned i = 0; i < 0x100; i += speed) {
+    for (unsigned i = 0; i < 128; i += speed) {
         mCube->vbuf.poke(
             offsetof(_SYSVideoRAM, colormap) / 2 + 1,
-            color_lerp(0xFF - i)
+            color_lerp(0xFF - 2*i)
         );
         System::paint();
     }
 }
 
-void DoDialog(DialogData& data) {
-    DialogView view(gCubes);
+void DoDialog(const DialogData& data, Cube* cube) {
+    if (!cube) cube = gCubes;
+    DialogView view(cube);
 
     VidMode_BG0 mode(view.GetCube()->vbuf);
-    mode.init();
-    mode.BG0_drawAsset(Vec2(0,0), ScreenOff);
-    for(unsigned i=0; i<4; ++i) {
-        view.GetCube()->vbuf.touch();
+
+    for(unsigned line=0; line<data.lineCount; ++line) {
+        const DialogTextData& txt = data.lines[line];
+
+        if (line == 0 || data.lines[line-1].detail != txt.detail) {
+            System::paintSync();
+            mode.init();
+            mode.BG0_drawAsset(Vec2(0,0), *(txt.detail));
+            System::paintSync();
+            for(unsigned i=0; i<4; ++i) {
+                view.GetCube()->vbuf.touch();
+                System::paintSync();
+            }
+            //Now set up a letterboxed 128x48 mode
+            view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, color_lerp(0));
+            view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
+            view.GetCube()->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
+            mode.setWindow(80, 48);
+        }
+        
+        view.Erase();
         System::paintSync();
+        const char* pNextChar = txt.line;
+        while(*pNextChar) {
+            pNextChar = view.Show(pNextChar);
+        }
+        view.Fade();
     }
-    mode.BG0_drawAsset(Vec2(0,0), Dialog);
-    System::paintSync();
-
-    //Now set up a letterboxed 128x48 mode
-    view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, color_lerp(0));
-    view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
-    view.GetCube()->vbuf.poke(0x3fc/2, 0x3000 + 80);
-    view.GetCube()->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
-
-    for(;;) {
-    view.Erase();
-    System::paintSync();
-    view.Show("Hello, World");
-    view.Show("I'm dialog!");
-    view.Fade();
-    view.Erase();
-    view.Show("Oh boy");
-    view.Show("Another!");
-    view.Fade();
-    }
-
-
-    for(;;) {
-        view.GetCube()->vbuf.touch();
+    for(unsigned i=0; i<16; ++i) {
         System::paint();
-    }    
+    }
 }
