@@ -122,7 +122,7 @@ void ScoredGameState::createNewAnagram()
     for (unsigned i = 0; i < MAX_LETTERS_PER_WORD; ++i)
     {
         // for each letter, place it randomly in the scrambled array
-        for (unsigned j = WordGame::rand(MAX_LETTERS_PER_WORD);
+        for (unsigned j = WordGame::random.randrange(MAX_LETTERS_PER_WORD);
              true;
              j = (j + 1) % MAX_LETTERS_PER_WORD)
         {

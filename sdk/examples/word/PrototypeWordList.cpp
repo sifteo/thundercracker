@@ -1319,7 +1319,7 @@ PrototypeWordList::PrototypeWordList()
 bool PrototypeWordList::pickWord(char* buffer)
 {
     unsigned numWords = arraysize(sList);
-    unsigned startIndex = WordGame::rand(numWords);
+    unsigned startIndex = WordGame::random.randrange(numWords);
     unsigned i = startIndex;
     do
     {

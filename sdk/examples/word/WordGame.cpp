@@ -6,15 +6,13 @@
 using namespace Sifteo;
 
 WordGame* WordGame::sInstance = 0;
+Math::Random WordGame::random;
+
 
 WordGame::WordGame(Cube cubes[]) : mGameStateMachine(cubes), mNeedsPaintSync(false)
 {
     STATIC_ASSERT(NumAudioChannelIndexes == 2);// HACK work around API bug
     sInstance = this;
-
-    int64_t nanosec;
-    _SYS_ticks_ns(&nanosec);
-    WordGame::seedRand((unsigned)nanosec);
 
     for (unsigned i = 0; i < arraysize(mAudioChannels); ++i)
     {
@@ -94,31 +92,6 @@ bool WordGame::_playAudio(_SYSAudioModule &mod,
     }
 
     return played;
-}
-
-unsigned WordGame::rand(unsigned max)
-{
-    ASSERT(sInstance);
-#ifdef _WIN32
-    return std::rand() % max;
-#else
-    return rand_r(&sInstance->mRandomSeed) % max;
-#endif
-}
-
-float WordGame::rand(float min, float max)
-{
-    return min + ((float)rand((unsigned)(1000.f * (max - min))))/1000.f;
-}
-
-void WordGame::seedRand(unsigned seed)
-{
-    ASSERT(sInstance);
-    sInstance->mRandomSeed = seed;
-
-#ifdef _WIN32
-    srand(sInstance->mRandomSeed); // seed rand()
-#endif
 }
 
 void WordGame::hideSprites(VidMode_BG0_SPR_BG1 &vid)
