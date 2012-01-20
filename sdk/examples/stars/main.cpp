@@ -250,8 +250,6 @@ private:
         stars[id].x = 0;
         stars[id].y = 0;
         
-        gRandom.randint(0, 10);
-        
         float angle = gRandom.uniform(0, 2 * M_PI);
         float speed = gRandom.uniform(starEmitSpeed * 0.5f, starEmitSpeed);
     
@@ -265,25 +263,8 @@ static const char* sideNames[] = {
   "top", "left", "bottom", "right"  
 };
 
-void neighbor_add(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
-    LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
-}
-
-void neighbor_remove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
-    LOG(("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
-}
-
-void accel(_SYSCubeID c) {
-    LOG(("accelerometer changed\n"));
-}
-
 void siftmain()
 {
-    LOG(("HELLO, WORLD\n"));
-    //_SYS_vectors.cubeEvents.accelChange = accel;
-    _SYS_vectors.neighborEvents.add = neighbor_add;
-    _SYS_vectors.neighborEvents.remove = neighbor_remove;
-    
     static Cube cubes[] = { Cube(0), Cube(1) };
     static StarDemo demos[] = { StarDemo(cubes[0]), StarDemo(cubes[1]) };
     
