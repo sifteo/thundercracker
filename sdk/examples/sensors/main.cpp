@@ -78,26 +78,36 @@ void siftmain()
             _SYS_getRawBatteryV(id, &battery);
             _SYS_getCubeHWID(id, &hwid);
 
-            vid.BG0_textf(Vec2(1,2),
-                          "I am cube #%d\n"
-                          "%02x%02x%02x%02x%02x%02x\n"
-                          "\n"
-                          "nb %02x %02x %02x %02x\n"
-                          "   +%d, -%d\n"
-                          "\n"
-                          "bat:   %04x\n"
-                          "touch: %d\n"
-                          "\n"
-                          "acc: %3d %3d\n",
-                          id,
-                          hwid.bytes[0], hwid.bytes[1], hwid.bytes[2],
-                          hwid.bytes[3], hwid.bytes[4], hwid.bytes[5],
-                          nb.sides[0], nb.sides[1], nb.sides[2], nb.sides[3],
-                          counts[id].neighborAdd, counts[id].neighborRemove,
-                          battery,
-                          counts[id].touch,
-                          accel.x, accel.y);
-                             
+            String<128> str;
+
+            str << "I am cube #" << id << "\n";
+            
+            str << Hex(hwid.bytes[0], 2)
+                << Hex(hwid.bytes[1], 2)
+                << Hex(hwid.bytes[2], 2)
+                << Hex(hwid.bytes[3], 2)
+                << Hex(hwid.bytes[4], 2)
+                << Hex(hwid.bytes[5], 2)
+                << "\n\n";
+                
+            str << "nb "
+                << Hex(nb.sides[0], 2) << " "
+                << Hex(nb.sides[1], 2) << " "
+                << Hex(nb.sides[2], 2) << " "
+                << Hex(nb.sides[3], 2) << "\n";
+            
+            str << "   +" << counts[id].neighborAdd
+                << ", -" << counts[id].neighborRemove
+                << "\n\n";
+            
+            str << "bat:   " << Hex(battery, 4) << "\n";
+            str << "touch: " << counts[id].touch << "\n\n";
+            
+            str << "acc: " << Fixed(accel.x, 3) << " "
+                << Fixed(accel.y, 3) << "\n";
+
+            vid.BG0_text(Vec2(1,2), str);
+
             drawSide(i, nb.sides[0] != CUBE_ID_UNDEFINED, 1,  0,  1, 0);  // Top
             drawSide(i, nb.sides[1] != CUBE_ID_UNDEFINED, 0,  1,  0, 1);  // Left
             drawSide(i, nb.sides[2] != CUBE_ID_UNDEFINED, 1,  15, 1, 0);  // Bottom
