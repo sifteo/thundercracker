@@ -185,6 +185,21 @@ struct Random {
     unsigned randrange(unsigned a, unsigned b) {
         return randint(a, b - 1);
     }
+    
+    /**
+     * The one-argument variant of randrange() always starts at zero, and
+     * returns an integer up to but not including 'count'. It is guaranteed
+     * to be capable of returning 'count' distinct values, starting at zero.
+     */
+
+    int randrange(int count) {
+        return randrange(0, count);
+    }
+
+    unsigned randrange(unsigned count) {
+        return randrange((unsigned)0, count);
+    }
+
 };
 
 
