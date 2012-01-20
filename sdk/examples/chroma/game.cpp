@@ -329,7 +329,7 @@ unsigned int Game::numColors() const
 {
 	bool aColors[GridSlot::NUM_COLORS];
 
-	memset( aColors, 0, sizeof( bool ) * GridSlot::NUM_COLORS );
+    _SYS_memset8( (uint8_t*)aColors, 0, sizeof( bool ) * GridSlot::NUM_COLORS );
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{

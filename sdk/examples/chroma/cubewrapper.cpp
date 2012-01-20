@@ -820,10 +820,10 @@ void CubeWrapper::Refill( bool bAddLevel )
     */
 
     //build a list of values to be added.
-	unsigned int aNumNeeded[GridSlot::NUM_COLORS];
+	uint32_t aNumNeeded[GridSlot::NUM_COLORS];
 	unsigned int iNumFixed = 0;
 
-	memset( aNumNeeded, 0, GridSlot::NUM_COLORS * sizeof( int ) );
+	_SYS_memset32( aNumNeeded, 0, GridSlot::NUM_COLORS );
 
 	int numDots = NUM_ROWS * NUM_COLS;
 

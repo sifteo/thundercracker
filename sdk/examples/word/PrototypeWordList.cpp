@@ -1385,7 +1385,7 @@ bool PrototypeWordList::isWord(const char* string)
 bool PrototypeWordList::bitsToString(uint32_t bits, char* buffer)
 {
     char word[MAX_LETTERS_PER_WORD + 1];
-    memset(word, 0, sizeof(word));
+    _SYS_memset8((uint8_t*)word, 0, sizeof(word));
     const unsigned LTR_MASK = 0x1f; // 5 bits per letter
     const unsigned BITS_PER_LETTER = 5;
     for (unsigned j = 0; j < MAX_LETTERS_PER_WORD; ++j)
