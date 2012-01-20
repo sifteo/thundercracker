@@ -260,8 +260,8 @@ void Game::CheckChain( CubeWrapper *pWrapper )
             else if( m_iDotsCleared >= 2 )
                 Game::Inst().playSound(clear1);
 
-			char aBuf[16];
-            snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
+			String<16> aBuf;
+            aBuf << m_iDotScoreSum;
             pWrapper->getBanner().SetMessage( aBuf, true );
 		}
 

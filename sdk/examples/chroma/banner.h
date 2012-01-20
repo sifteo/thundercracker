@@ -14,10 +14,9 @@ using namespace Sifteo;
 class Banner
 {
 public:
-	static const unsigned int BANNER_WIDTH = 16;
+    static const unsigned int BANNER_WIDTH = 16;
     static const unsigned int CENTER_PT = 8;
 	static const int BANNER_ROWS = 4;
-	static const int MAX_BANNER_LENGTH = 16;
 	static const float SCORE_FADE_DELAY = 2.0f;
 
 	Banner();
@@ -31,8 +30,8 @@ public:
     static void DrawScore( BG1Helper &bg1helper, const Vec2 &pos, int score );
 
 private:
-	char m_Msg[MAX_BANNER_LENGTH];
-	float m_fEndTime;
+    String<BANNER_WIDTH + 1> m_Msg;
+    float m_fEndTime;
     //how many tiles of the banner to show
     unsigned int m_tiles;
     bool m_bIsScoreMsg;
