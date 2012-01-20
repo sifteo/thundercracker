@@ -18,24 +18,14 @@ include stm32/st-usb/st-usb.mk
 OBJS_STM32 += $(OBJS_USB_STM32)
 
 ifeq ($(BUILD_PLATFORM), windows32)
-	DEPS_DIR = $(TC_DIR)/deps/win32
 	# TBD if there's a better way, but windows ar or libtool needs to have all the
 	# individual object files available from any static libs you want to merge
 	# in. these have been extracted in the deps folder via `ar -x libfoo.a`
 	SIM_STATIC_OBJS = $(DEPS_DIR)/speex/lib/obj/*.o $(DEPS_DIR)/portaudio/lib/obj/*.o
-endif
-ifeq ($(BUILD_PLATFORM), Darwin)
-	ifeq ( $(BUILD_ARCH),i386 )
-		DEPS_DIR = $(TC_DIR)/deps/osx/i386
-		SIM_STATIC_LIBS = \
-			$(DEPS_DIR)/speex/lib/libspeex.a \
-			$(DEPS_DIR)/portaudio/lib/libportaudio.a
-	else
-		DEPS_DIR = $(TC_DIR)/deps/osx/x86_64
-		SIM_STATIC_LIBS = \
-			$(DEPS_DIR)/speex/lib/libspeex.a \
-			$(DEPS_DIR)/portaudio/lib/libportaudio.a
-	endif
+else
+	SIM_STATIC_LIBS = \
+		$(DEPS_DIR)/speex/lib/libspeex.a \
+		$(DEPS_DIR)/portaudio/lib/libportaudio.a
 endif
 
 # CFLAGS gets added to the platform specific CFLAGS within Makefile.defs
