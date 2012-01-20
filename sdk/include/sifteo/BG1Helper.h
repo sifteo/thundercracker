@@ -141,18 +141,6 @@ public:
         }
     }
 
-    NEVER_INLINE void DrawTextf( const Vec2 &point, const Sifteo::AssetImage &font, const char *fmt, ... )
-    {
-        char buf[128];
-        va_list ap;
-
-        va_start(ap, fmt);
-        vsnprintf(buf, sizeof buf - 1, fmt, ap);
-        buf[sizeof buf - 1] = 0;
-        DrawText(point, font, buf);
-        va_end(ap);
-    }
-
     inline bool NeedFinish()
     {
         for( unsigned int i = 0; i < BG1_ROWS; i++ )
