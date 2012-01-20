@@ -7,10 +7,8 @@
 #include "cubewrapper.h"
 #include "game.h"
 #include "assets.gen.h"
-//#include "audio.gen.h"
 #include "utils.h"
 #include "string.h"
-#include <vector>
 #include "sprite.h"
 #include "config.h"
 
@@ -774,8 +772,8 @@ void CubeWrapper::checkRefill()
 				m_banner.SetMessage( "1 SHAKE LEFT" );
 			else
 			{
-                char buf[16];
-                snprintf(buf, sizeof buf - 1, "%d SHAKES LEFT", m_ShakesRemaining );
+                String<16> buf;
+                buf << m_ShakesRemaining << " SHAKES LEFT";
                 m_banner.SetMessage( buf, false );
 			}
 		}
