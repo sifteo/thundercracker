@@ -2,7 +2,7 @@
  *
  * Helper class for bg1.  Paint into it as you would bg0, then call flush which translates these into proper bg1 calls
  * super unoptimized for now
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _BG1HELPER_H
