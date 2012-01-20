@@ -422,6 +422,7 @@ void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count);
 void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count);
 void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count);
 
+uint32_t _SYS_strnlen(const char *str, uint32_t maxLen);
 void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize);
 void _SYS_strlcat(char *dest, const char *src, uint32_t destSize);
 void _SYS_strlcat_int(char *dest, int src, uint32_t destSize);
