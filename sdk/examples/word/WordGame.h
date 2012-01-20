@@ -49,9 +49,7 @@ public:
                           _SYSAudioLoopType loopMode = LoopOnce,
                           AudioPriority priority = AudioPriority_Normal);
 
-    static unsigned rand(unsigned max);
-    static float rand(float min, float max);
-    static void seedRand(unsigned seed);
+    static Math::Random random;
 
 private:
     bool _playAudio(_SYSAudioModule &mod, AudioChannelIndex channel,
@@ -61,7 +59,6 @@ private:
 
     GameStateMachine mGameStateMachine;
     AudioChannel mAudioChannels[NumAudioChannelIndexes];
-    unsigned mRandomSeed;
     bool mNeedsPaintSync;
     AudioPriority mLastAudioPriority[NumAudioChannelIndexes];
     static WordGame* sInstance;

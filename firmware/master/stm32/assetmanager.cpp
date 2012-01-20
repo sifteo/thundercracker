@@ -1,5 +1,6 @@
 #include "assetmanager.h"
 #include "usart.h"
+#include "usb.h"
 #include <sifteo.h>
 
 MacronixMX25 &AssetManager::flash = MacronixMX25::instance;
@@ -9,6 +10,9 @@ void AssetManager::init()
 {
     installation.state = WaitingForLength;
 }
+
+// XXX: static so it hangs around until the usb device actually writes it out
+static uint8_t status;
 
 /*
     Totally fake for now.
@@ -34,6 +38,8 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
                 ; // TODO
             }
         }
+        status = 0x0;
+        Usb::write(&status, 1);
         CRC.CR = 1; // reset CRC unit
         installation.state = WritingData;
     }
@@ -68,7 +74,8 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
             addr += chunksize;
         }
 
-        Usart::Dbg.write(crc == CRC.DR ? "match!\r\n" : "no match :(\r\n");
+        status = (crc == CRC.DR) ? 0 : 1;
+        Usb::write(&status, 1);
     }
 
 }

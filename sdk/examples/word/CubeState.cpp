@@ -386,12 +386,12 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                         // blinking closed trumps tilt and direction change timer
                         mEyeState = EyeState_Closed;
                         mEyeBlinkDelay =
-                           WordGame::rand(BlinkHoldMin[personality],
-                                          BlinkHoldMax[personality]);
+                           WordGame::random.uniform(BlinkHoldMin[personality],
+                                                    BlinkHoldMax[personality]);
                         if (getStateMachine().getIdleTime() > sleepIdleTime)
                         {
                             mAsleep = true;
-                            mEyeBlinkDelay = 99999.f;//WordGame::rand(3.f, 10.f);
+                            mEyeBlinkDelay = 99999.f; //WordGame::random.uniform(3.f, 10.f);
                         }
                     }
                     // else blink delay > 0 || eye state == closed
@@ -410,10 +410,10 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                             if (mEyeDirChangeDelay <= 0.f || mEyeBlinkDelay <= 0.f)
                             {
                                 // time to open eyes or change dir
-                                newEyeState = (EyeState)WordGame::rand(NumEyeStates);
+                                newEyeState = (EyeState)WordGame::random.randrange(NumEyeStates);
                                 mEyeDirChangeDelay =
-                                        WordGame::rand(DirDelayMin[personality],
-                                                       DirDelayMax[personality]);
+                                        WordGame::random.uniform(DirDelayMin[personality],
+                                                                 DirDelayMax[personality]);
                             }
                             else
                             {
@@ -432,8 +432,8 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                             mAsleep = false;
                             vid.hideSprite(LetterStateSpriteID_Zzz);
                             mEyeBlinkDelay =
-                                WordGame::rand(BlinkDelayMin[personality],
-                                               BlinkDelayMax[personality]);
+                                WordGame::random.uniform(BlinkDelayMin[personality],
+                                                         BlinkDelayMax[personality]);
                         }
                         mEyeState = newEyeState;
                     }

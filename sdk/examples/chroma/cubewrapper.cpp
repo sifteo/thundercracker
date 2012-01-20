@@ -306,7 +306,7 @@ void CubeWrapper::Update(float t, float dt)
 
         if( m_timeTillGlimmer < 0.0f )
         {
-            m_timeTillGlimmer = Game::RandomRange( MIN_GLIMMER_TIME, MAX_GLIMMER_TIME );
+            m_timeTillGlimmer = Game::random.uniform( MIN_GLIMMER_TIME, MAX_GLIMMER_TIME );
             m_glimmer.Reset();
         }
         m_glimmer.Update( dt );
@@ -820,10 +820,10 @@ void CubeWrapper::Refill( bool bAddLevel )
     */
 
     //build a list of values to be added.
-	unsigned int aNumNeeded[GridSlot::NUM_COLORS];
+	uint32_t aNumNeeded[GridSlot::NUM_COLORS];
 	unsigned int iNumFixed = 0;
 
-	memset( aNumNeeded, 0, GridSlot::NUM_COLORS * sizeof( int ) );
+	_SYS_memset32( aNumNeeded, 0, GridSlot::NUM_COLORS );
 
 	int numDots = NUM_ROWS * NUM_COLS;
 
@@ -869,7 +869,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 	//randomize
 	for( unsigned int i = 0; i < numEmpties; i++ )
 	{
-		unsigned int randIndex = Game::Inst().Rand( numEmpties );
+		unsigned int randIndex = Game::random.randrange( numEmpties );
 		unsigned int temp = aLocIndices[randIndex];
 		aLocIndices[randIndex] = aLocIndices[i];
 		aLocIndices[i] = temp;
@@ -904,7 +904,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 			while( true )
 			{
 				//random neighbor side
-				int side = Game::Inst().Rand( NUM_SIDES );
+				int side = Game::random.randrange( NUM_SIDES );
 				int neighborX = curX, neighborY = curY;
 				//up left down right
 				//note that x is rows in this context
@@ -947,7 +947,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 	//fixed gems
 	while( iNumFixed < numFix )
 	{
-		int toFix = Game::Inst().Rand( numEmpties );
+		int toFix = Game::random.randrange( numEmpties );
 		GridSlot &fix = m_grid[aEmptyLocs[toFix].x][aEmptyLocs[toFix].y];
 		bool bFound = false;
 

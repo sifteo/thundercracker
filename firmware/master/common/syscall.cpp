@@ -24,6 +24,7 @@
 #include "neighbors.h"
 #include "accel.h"
 #include "audiomixer.h"
+#include "prng.h"
 
 extern "C" {
 
@@ -172,6 +173,26 @@ void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint
         // Guaranteed to NUL-termiante
         *last = '\0';
     }
+}
+
+void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed)
+{
+    if (Runtime::checkUserPointer(state, sizeof *state))
+        PRNG::init(state, seed);
+}
+
+uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state)
+{
+    if (Runtime::checkUserPointer(state, sizeof *state))
+        return PRNG::value(state);
+    return 0;
+}
+
+uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit)
+{
+    if (Runtime::checkUserPointer(state, sizeof *state))
+        return PRNG::valueBounded(state, limit);
+    return 0;
 }
 
 void _SYS_exit(void)

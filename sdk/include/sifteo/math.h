@@ -7,6 +7,7 @@
 #ifndef _SIFTEO_MATH_H
 #define _SIFTEO_MATH_H
 
+#include <sifteo/abi.h>
 #include <math.h>
 
 namespace Sifteo {
@@ -95,6 +96,122 @@ struct RectWH {
 
 
 /**
+ * Pseudo-random number generator.
+ * Each instance of the Random class has a distinct PRNG state.
+ *
+ * When possible, method semantics here have been designed to match
+ * those used by Python's "random" module.
+ */
+ 
+struct Random {
+    _SYSPseudoRandomState state;
+
+    /**
+     * Construct a new random number generator, using an arbitrary seed.
+     */
+
+    Random() {
+        seed();
+    }
+    
+    /**
+     * Construct a new random number generator with a well-defined seed.
+     */
+     
+    Random(uint32_t s) {
+        seed(s);
+    }
+    
+    /**
+     * Re-seed this random number generator. For a given seed, the subsequent
+     * random numbers are guaranteed to be deterministic.
+     */
+    
+    void seed(uint32_t s) {
+        _SYS_prng_init(&state, s);
+    }
+
+    /**
+     * Re-seed this random number generator arbitrarily.
+     * This implementation uses the system's nanosecond timer.
+     */
+    
+    void seed() {
+        int64_t nanosec;
+        _SYS_ticks_ns(&nanosec);
+        seed((uint32_t) nanosec);
+    }
+
+    /**
+     * Returns the next raw 32-bit pseudo-random number
+     */
+    
+    uint32_t raw() {
+        return _SYS_prng_value(&state);
+    }
+    
+    /**
+     * Returns a uniformly distributed floating point number between 0 and 1, inclusive.
+     */
+    
+    float random() {
+        return raw() * (1.0f / 0xFFFFFFFF);
+    }
+
+    /**
+     * Returns a uniformly distributed floating point number in the range [a, b) or
+     * [a, b], depending on rounding.
+     */
+    
+    float uniform(float a, float b) {
+        // Order of operations here allows constant folding if the endpoints are constant
+        return a + raw() * ((b-a) / 0xFFFFFFFF);
+    }
+
+    /**
+     * Returns a uniformly distributed random integer in the range [a, b], including both
+     * end points.
+     */
+    
+    int randint(int a, int b) {
+        return a + _SYS_prng_valueBounded(&state, b - a);
+    }
+
+    unsigned randint(unsigned a, unsigned b) {
+        return a + _SYS_prng_valueBounded(&state, b - a);
+    }
+
+    /**
+     * Returns a uniformly distributed random integer in the half-open interval [a, b),
+     * including the lower but not the upper end point.
+     */
+    
+    int randrange(int a, int b) {
+        return randint(a, b - 1);
+    }
+
+    unsigned randrange(unsigned a, unsigned b) {
+        return randint(a, b - 1);
+    }
+    
+    /**
+     * The one-argument variant of randrange() always starts at zero, and
+     * returns an integer up to but not including 'count'. It is guaranteed
+     * to be capable of returning 'count' distinct values, starting at zero.
+     */
+
+    int randrange(int count) {
+        return randrange(0, count);
+    }
+
+    unsigned randrange(unsigned count) {
+        return randrange((unsigned)0, count);
+    }
+
+};
+
+
+/**
  * An augmented 3x2 matrix, for doing 2D affine transforms.
  *
  *  [ xx  yx  cx ]
@@ -169,7 +286,10 @@ struct AffineMatrix {
     }
 };
 
-/* General helper routines */
+
+/*
+ * General helper routines
+ */
 
 template <typename T> inline T clamp(const T& value, const T& low, const T& high)
 {

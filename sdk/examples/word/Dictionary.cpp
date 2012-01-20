@@ -26,7 +26,7 @@ bool Dictionary::pickWord(char* buffer)
     {
         // TODO remove demo code
         sRandSeed += WORD_RAND_SEED_INCREMENT;
-        WordGame::seedRand(sRandSeed++);
+        WordGame::random.seed(sRandSeed++);
     }
 
     //return "CITIES";
@@ -82,9 +82,7 @@ void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
             if (sRound == DEMO_MAX_DETERMINISTIC_ROUNDS)
             {
                 // randomize based on time from here on out
-                int64_t nanosec;
-                _SYS_ticks_ns(&nanosec);
-                WordGame::seedRand((unsigned)nanosec);
+                WordGame::random.seed();
             }
             else
             {

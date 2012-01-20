@@ -2,9 +2,6 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
-//#include "audio.gen.h"
-#include <stdlib.h>
-
 #include "config.h"
 
 #ifndef SIFTEO_SIMULATOR
@@ -14,6 +11,7 @@
 extern Cube gCubes[NUM_CUBES];
 extern AudioChannel gChannelSfx;
 extern AudioChannel gChannelMusic;
+extern Math::Random gRandom;
 
 using namespace Sifteo;
 
@@ -25,7 +23,6 @@ using namespace Sifteo;
 
 // Utils
 Cube::Side InferDirection(Vec2 u);
-unsigned int Rand( unsigned int max );
 
 // Audio Smutz
 void PlaySfx(_SYSAudioModule& handle, bool preempt=true);

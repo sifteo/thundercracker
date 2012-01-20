@@ -127,7 +127,7 @@ GridSlot::GridSlot() :
 	m_bFixed( false ),
 	m_animFrame( 0 )
 {
-	m_color = Game::Rand(NUM_COLORS);
+	m_color = Game::random.randrange(NUM_COLORS);
     m_lastFrameDir = Vec2( 0, 0 );
 }
 

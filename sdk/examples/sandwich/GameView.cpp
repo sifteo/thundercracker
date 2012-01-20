@@ -192,39 +192,39 @@ Room* GameView::CurrentRoom() const {
 
 void GameView::RandomizeBff() {
   using namespace BffDir;
-  mScene.forest.bffDir = (uint8_t) Rand(8);
+  mScene.forest.bffDir = (uint8_t) gRandom.randrange(8);
   switch(mScene.forest.bffDir) {
     case S:
-      mScene.forest.bffX = 64 + (uint8_t) Rand(128);
-      mScene.forest.bffY = (uint8_t) Rand(64);
+      mScene.forest.bffX = 64 + (uint8_t) gRandom.randrange(128);
+      mScene.forest.bffY = (uint8_t) gRandom.randrange(64);
       break;
     case SE:
-      mScene.forest.bffX = (uint8_t) Rand(64);
-      mScene.forest.bffY = (uint8_t) Rand(64);
+      mScene.forest.bffX = (uint8_t) gRandom.randrange(64);
+      mScene.forest.bffY = (uint8_t) gRandom.randrange(64);
       break;
     case E:
-      mScene.forest.bffX = (uint8_t) Rand(64);
-      mScene.forest.bffY = 64 + (uint8_t) Rand(128);
+      mScene.forest.bffX = (uint8_t) gRandom.randrange(64);
+      mScene.forest.bffY = 64 + (uint8_t) gRandom.randrange(128);
       break;
     case NE:
-      mScene.forest.bffX = (uint8_t) Rand(64);
-      mScene.forest.bffY = 192 + (uint8_t) Rand(64);
+      mScene.forest.bffX = (uint8_t) gRandom.randrange(64);
+      mScene.forest.bffY = 192 + (uint8_t) gRandom.randrange(64);
       break;
     case N:
-      mScene.forest.bffX = 64 + (uint8_t) Rand(128);
-      mScene.forest.bffY = 192 + (uint8_t) Rand(64);
+      mScene.forest.bffX = 64 + (uint8_t) gRandom.randrange(128);
+      mScene.forest.bffY = 192 + (uint8_t) gRandom.randrange(64);
       break;
     case NW:
-      mScene.forest.bffX = 192 + (uint8_t) Rand(64);
-      mScene.forest.bffY = 192 + (uint8_t) Rand(64);
+      mScene.forest.bffX = 192 + (uint8_t) gRandom.randrange(64);
+      mScene.forest.bffY = 192 + (uint8_t) gRandom.randrange(64);
       break;
     case W:
-      mScene.forest.bffX = 192 + (uint8_t) Rand(64);
-      mScene.forest.bffY = 64 + (uint8_t) Rand(128);
+      mScene.forest.bffX = 192 + (uint8_t) gRandom.randrange(64);
+      mScene.forest.bffY = 64 + (uint8_t) gRandom.randrange(128);
       break;
     case SW:
-      mScene.forest.bffX = 192 + (uint8_t) Rand(128);
-      mScene.forest.bffY = (uint8_t) Rand(64);
+      mScene.forest.bffX = 192 + (uint8_t) gRandom.randrange(128);
+      mScene.forest.bffY = (uint8_t) gRandom.randrange(64);
       break;
   }
 }
@@ -265,7 +265,7 @@ bool GameView::ShowLocation(Vec2 room) {
     } else if (pGame->map.Data() == &forest_data) {
       if (mr->itemId) {
         mScene.forest.hasBff = 0;
-      } else if ( (mScene.forest.hasBff = (Rand(3) == 0)) ) {
+      } else if ( (mScene.forest.hasBff = (gRandom.randrange(3) == 0)) ) {
         RandomizeBff();
         ResizeSprite(GetCube(), BFF_SPRITE_ID, 8, 8);
         SetSpriteImage(GetCube(), BFF_SPRITE_ID, Butterfly.index + 4 * mScene.forest.bffDir);

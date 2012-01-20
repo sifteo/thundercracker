@@ -1,8 +1,7 @@
 #include "Base.h"
 
-#ifdef _WIN32
-#include <cstdlib>
-#endif
+Math::Random gRandom;
+
 
 Cube::Side InferDirection(Vec2 u) {
 	if (u.x > 0) {
@@ -41,17 +40,3 @@ void PlayMusic(_SYSAudioModule& music, bool loop) {
   gChannelMusic.play(music, loop ? LoopRepeat : LoopOnce);
 #endif
 }
-
-//------------------------------------------------------------------------------
-// Miscellaneous Utilities
-//------------------------------------------------------------------------------
-
-unsigned int Rand( unsigned int max ) {
-#ifdef _WIN32
-  return rand()%max;
-#else
-    static unsigned int seed = (int)( System::clock() * 10000);
-  return rand_r(&seed)%max;
-#endif
-}
-
