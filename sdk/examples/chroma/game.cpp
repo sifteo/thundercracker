@@ -7,8 +7,6 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
-#include "string.h"
-#include <stdlib.h>
 
 //TODO, load this from save file
 unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
@@ -16,6 +14,9 @@ unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
 
 
 const float Game::SLOSH_THRESHOLD = 0.4f;
+
+Math::Random Game::random;
+
 
 Game &Game::Inst()
 {
@@ -201,34 +202,6 @@ void Game::TestMatches()
 		cubes[i].testMatches();
 	}
 }
-
-
-
-//get random value from 0 to max
-unsigned int Game::Rand( unsigned int max )
-{
-#ifdef _WIN32
-	return rand()%max;
-#else
-    static unsigned int seed = (int)( System::clock() * 10000);
-	return rand_r(&seed)%max;
-#endif
-}
-
-
-//get random float value from 0 to 1.0
-float Game::UnitRand()
-{
-    return (float)Rand( INT_MAX ) * ( 0.999999999f / (float) INT_MAX );
-}
-
-
-//get random value from min to max
-float Game::RandomRange( float min, float max )
-{
-    return UnitRand() * ( max - min ) + min;
-}
-
 
 void Game::CheckChain( CubeWrapper *pWrapper )
 {
@@ -520,7 +493,7 @@ void Game::playSlosh()
 {
     if( System::clock() - m_fLastSloshTime > SLOSH_THRESHOLD )
     {
-        int index = Rand( NUM_SLOSH_SOUNDS );
+        int index = random.randrange( NUM_SLOSH_SOUNDS );
         playSound(*SLOSH_SOUNDS[index]);
 
         m_fLastSloshTime = System::clock();

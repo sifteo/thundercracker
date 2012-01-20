@@ -48,7 +48,8 @@ public:
     static const unsigned int INT_MAX = 0x7fff;
     static const float SLOSH_THRESHOLD;
 
-	CubeWrapper cubes[NUM_CUBES]; 
+	CubeWrapper cubes[NUM_CUBES];
+    static Math::Random random;
 
 	void Init();
 	void Update();
@@ -58,13 +59,6 @@ public:
 	void setTestMatchFlag() { m_bTestMatches = true; }
 
 	unsigned int getIncrementScore() { m_iDotScoreSum += ++m_iDotScore; return m_iDotScore; }
-
-	//get random value from 0 to max
-	static unsigned int Rand( unsigned int max );
-    //get random float value from 0 to 1.0
-    static float UnitRand();
-    //get random value from min to max
-    static float RandomRange( float min, float max );
 
 	inline GameState getState() const { return m_state; }
     inline void setState( GameState state ) { m_state = state; }
