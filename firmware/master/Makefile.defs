@@ -84,9 +84,18 @@ ifeq ($(BUILD_PLATFORM), Linux)
 endif
 
 # LLVM Runtime
-LDFLAGS_SIM += -lLLVMCore -lLLVMInterpreter -lLLVMBitReader -lLLVMExecutionEngine \
-			   -lLLVMSupport -lLLVMCodeGen -lLLVMTarget -lLLVMAsmParser -lstdc++
 CCFLAGS_SIM += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
+LDFLAGS_SIM += \
+	-lstdc++ \
+	$(LLVM_DIR)/lib/libLLVMCore.a \
+	$(LLVM_DIR)/lib/libLLVMInterpreter.a \
+	$(LLVM_DIR)/lib/libLLVMBitReader.a \
+	$(LLVM_DIR)/lib/libLLVMExecutionEngine.a \
+	$(LLVM_DIR)/lib/libLLVMSupport.a \
+	$(LLVM_DIR)/lib/libLLVMCodeGen.a \
+	$(LLVM_DIR)/lib/libLLVMTarget.a \
+	$(LLVM_DIR)/lib/libLLVMAsmParser.a \
+	$(LLVM_DIR)/lib/libLLVMMC.a \
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR

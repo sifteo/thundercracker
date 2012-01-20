@@ -1,7 +1,7 @@
 include $(TC_DIR)/Makefile.platform
 
-CC = clang
-LD = llvm-ld
+CC = $(LLVM_DIR)/bin/clang
+LD = $(LLVM_DIR)/bin/llvm-ld
 
 SDK_DIR = $(TC_DIR)/sdk
 STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
@@ -13,11 +13,15 @@ GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html asegment.bin
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
-CFLAGS += -Os -ffreestanding -emit-llvm
+# Size optimization. (Runtime is typically dominated by instruction/data fetch)
+CFLAGS += -Os
+
+# Compile for a minimal environment, but allow unresolved symbols
+CFLAGS += -ffreestanding -emit-llvm
 LDFLAGS += -strip-all -link-as-library
 
 # Disable unwanted warnings, but be generally pretty pedantic
-CFLAGS += -Wall -Werror -Wno-unused -Wno-c++0x-static-nonintegral-init
+CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu
 
 # generate dependency files
 CFLAGS += -MD -MP
