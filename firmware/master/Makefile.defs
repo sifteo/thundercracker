@@ -92,7 +92,7 @@ CCFLAGS_SIM += \
 	-I$(LLVM_INC)
 LDFLAGS_SIM += -lstdc++ -lpthread
 ifeq ($(BUILD_PLATFORM), windows32)
-    LDFLAGS_SIM += /c/Windows/System32/dbghelp.dll
+    LDFLAGS_SIM += -limagehlp -lpsapi
 endif
 SIM_STATIC_LIBS += \
 	$(LLVM_LIB)/libLLVMBitReader.a \
