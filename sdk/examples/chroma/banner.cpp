@@ -85,6 +85,7 @@ void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Banner::Anchor an
     int offset;
     switch( anchor )
     {
+		default:
         case LEFT:
         {
             // "pos" is the position of the leftmost tile in our score
