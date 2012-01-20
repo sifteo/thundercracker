@@ -78,8 +78,8 @@ void ScoredCubeState_EndOfRound::paint()
         vid.BG0_drawAsset(Vec2(0,0), ScorePan, ScorePan.frames - 1);
         vid.BG0_drawAsset(Vec2(4,0), Score);
         {
-            char string[17];
-            sprintf(string, "%d", GameStateMachine::getScore());
+            String<17> string;
+            string << GameStateMachine::getScore();
             BG1Helper bg1(getStateMachine().getCube());
             paintScoreNumbers(bg1, Vec2(SCORE_RHS_X,SCORE_RHS_Y), string);
             bg1.Flush(); // TODO only flush if mask has changed recently
@@ -119,8 +119,8 @@ void ScoredCubeState_EndOfRound::paint()
             {
                 break;
             }
-            char string[17];
-            sprintf(string, "%d", SavedData::sHighScores[i]);
+            String<17> string;
+            string << SavedData::sHighScores[i];
             paintScoreNumbers(bg1,
                               Vec2(SCORE_RHS_X,SCORE_RHS_Y + (arraysize(SavedData::sHighScores) - 1 - i) * 2),
                               string);
