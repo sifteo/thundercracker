@@ -68,6 +68,10 @@ extern void assertWrapper(bool b);
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
 #endif
 
+#ifndef NULL
+#define NULL 0
+#endif
+
 #ifndef arraysize
 #define arraysize(a)   (sizeof(a) / sizeof((a)[0]))
 #endif
