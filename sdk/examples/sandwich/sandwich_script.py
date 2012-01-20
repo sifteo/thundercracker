@@ -38,7 +38,7 @@ class GameScript:
 
 	def add_flag_if_undefined(self, id):
 		if not id in self.unlockables_dict:
-			flag = Flag(len(self.flags), id)
+			flag = Flag(len(self.unlockables), id)
 			self.unlockables.append(flag)
 			self.unlockables_dict[id] = flag
 		return self.unlockables_dict[id]
