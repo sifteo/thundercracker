@@ -151,7 +151,7 @@ private:
     //force a 1 frame paint sync before/after drawing
     bool m_bForcePaintSync;
     //keeps track of whether a hyperdot was used this chain
-    bool m_bHyperDotMatched;
+    //bool m_bHyperDotMatched;
 };
 
 #endif

@@ -27,7 +27,7 @@ Game &Game::Inst()
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
                 m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_splashTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
-                m_ShakesRemaining( STARTING_SHAKES ), m_bForcePaintSync( false ), m_bHyperDotMatched( false )
+                m_ShakesRemaining( STARTING_SHAKES ), m_bForcePaintSync( false )//, m_bHyperDotMatched( false )
 {
 	//Reset();
 }
@@ -186,7 +186,7 @@ void Game::Reset()
 	m_iScore = 0;
 	m_iDotsCleared = 0;
 	m_iLevel = 0;
-    m_bHyperDotMatched = false;
+    //m_bHyperDotMatched = false;
 
     m_state = STATE_INTRO;
     m_ShakesRemaining = STARTING_SHAKES;
@@ -270,7 +270,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
             {
                 playSound(clear4);
 
-                if( m_mode == MODE_SHAKES && !m_bHyperDotMatched )
+                if( m_mode == MODE_SHAKES /*&& !m_bHyperDotMatched*/ )
                 {
                     pWrapper->getBanner().SetMessage( "Bonus Shake!" );
                     bannered = true;
@@ -282,7 +282,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
                 playSound(clear3);
 
                 //is it dangerous to add one here?  do we need to queue it?
-                if( !m_bHyperDotMatched && !DoesHyperDotExist() )
+                if( /*!m_bHyperDotMatched && */!DoesHyperDotExist() )
                     pWrapper->SpawnHyper();
             }
             else if( m_iDotsCleared >= DOT_THRESHOLD2 )
@@ -305,7 +305,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 		m_iDotScoreSum = 0;
         m_iDotsCleared = 0;
 
-        m_bHyperDotMatched = false;
+        //m_bHyperDotMatched = false;
 	}
 }
 
@@ -573,7 +573,7 @@ void Game::BlowAll( unsigned int color )
         cubes[i].BlowAll( color );
     }
 
-    m_bHyperDotMatched = true;
+    //m_bHyperDotMatched = true;
 }
 
 
