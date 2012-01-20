@@ -14,6 +14,7 @@ OBJS_COMMON = \
 	$(MASTER_DIR)/common/accel.o \
 	$(MASTER_DIR)/common/neighbors.o \
 	$(MASTER_DIR)/common/tasks.o \
+	$(MASTER_DIR)/common/prng.o \
 
 OBJS_SIM = \
 	$(OBJS_COMMON:.o=.sim.o) \
