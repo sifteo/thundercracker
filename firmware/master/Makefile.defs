@@ -85,20 +85,25 @@ endif
 
 # LLVM Runtime
 LLVM_VER = llvm-3.0
+LLVM_LIB = $(DEPS_DIR)/$(LLVM_VER)/lib
+LLVM_INC = $(TC_DIR)/deps/src/$(LLVM_VER)/include
 CCFLAGS_SIM += \
 	-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
-	-I$(TC_DIR)/deps/src/$(LLVM_VER)/include
-LDFLAGS_SIM += \
-	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMCore.a \
-	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMInterpreter.a \
-	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMBitReader.a \
-	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMExecutionEngine.a \
-	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMSupport.a \
-	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMCodeGen.a \
-	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMTarget.a \
-	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMAsmParser.a \
-	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMMC.a \
-	-lstdc++ -lpthread
+	-I$(LLVM_INC)
+LDFLAGS_SIM += -lstdc++ -lpthread
+ifeq ($(BUILD_PLATFORM), windows32)
+    LDFLAGS_SIM += -limagehlp -lpsapi
+endif
+SIM_STATIC_LIBS += \
+	$(LLVM_LIB)/libLLVMBitReader.a \
+	$(LLVM_LIB)/libLLVMInterpreter.a \
+	$(LLVM_LIB)/libLLVMExecutionEngine.a \
+	$(LLVM_LIB)/libLLVMCodeGen.a \
+	$(LLVM_LIB)/libLLVMTarget.a \
+	$(LLVM_LIB)/libLLVMAsmParser.a \
+	$(LLVM_LIB)/libLLVMMC.a \
+	$(LLVM_LIB)/libLLVMCore.a \
+	$(LLVM_LIB)/libLLVMSupport.a
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR

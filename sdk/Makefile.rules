@@ -3,7 +3,10 @@
 all: $(BIN)
 
 disassemble: $(BIN)
-	@llvm-dis $(BIN) -o -
+	@$(LLVM_BIN)/llvm-dis $(BIN) -o -
+
+symlist: $(BIN)
+	@$(LLVM_BIN)/llvm-nm $(BIN) | grep "U "
 
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)

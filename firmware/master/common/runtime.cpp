@@ -9,9 +9,8 @@
 #include "runtime.h"
 #include "cube.h"
 #include "neighbors.h"
-#ifndef SIFTEO_SIMULATOR
-    #include "tasks.h"
-#endif
+#include "tasks.h"
+#include <sifteo/abi.h>
 
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -81,7 +80,8 @@ void Event::dispatch()
 		while (eventCubes[event]) {
                 _SYSCubeID slot = Intrinsic::CLZ(eventCubes[event]);
                 if (event <= EventBits::LAST_CUBE_EVENT) {
-                    callCubeEvent(event, slot);
+                    // XXX: Not implemented in interpreter yet
+                    //callCubeEvent(event, slot);
                 } else if (event == EventBits::NEIGHBOR) {
                     NeighborSlot::instances[slot].computeEvents();
                 }
@@ -193,7 +193,8 @@ void Event::dispatch()
      { \
          ASSERT(args.size() == 3); \
          GenericValue ret; \
-         ret.IntVal = _SYS_##name((t*)GVTOP(args[0]), (u*)GVTOP(args[1]), (v)args[2].IntVal.getZExtValue()); \
+         ret.IntVal = APInt(32U, (uint64_t)_SYS_##name((t*)GVTOP(args[0]), (u*)GVTOP(args[1]), \
+            (v)args[2].IntVal.getZExtValue())); \
          return ret; \
      }
 
@@ -202,7 +203,7 @@ void Event::dispatch()
      { \
          ASSERT(args.size() == 1); \
          GenericValue ret; \
-         ret.IntVal = _SYS_##name(args[0].IntVal.getZExtValue()); \
+         ret.IntVal = APInt(32U, (uint64_t)_SYS_##name(args[0].IntVal.getZExtValue())); \
          return ret; \
      }
 
@@ -211,7 +212,7 @@ void Event::dispatch()
      { \
          ASSERT(args.size() == 1); \
          GenericValue ret; \
-         ret.IntVal = _SYS_##name((t*)GVTOP(args[0])); \
+         ret.IntVal = APInt(32U, (uint64_t)_SYS_##name((t*)GVTOP(args[0]))); \
          return ret; \
      }
 
@@ -220,7 +221,7 @@ void Event::dispatch()
      { \
          ASSERT(args.size() == 2); \
          GenericValue ret; \
-         ret.IntVal = _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue()); \
+         ret.IntVal = APInt(32U, (uint64_t)_SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue())); \
          return ret; \
      }
      
