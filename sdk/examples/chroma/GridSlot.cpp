@@ -580,30 +580,35 @@ void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
 {
     Vec2 vec( m_col * 4, m_row * 4 );
 
-    switch( frame )
+    if( IsSpecial() )
+        vid.BG0_drawAsset(vec, GetSpecialTexture());
+    else
     {
-        case 0:
+        switch( frame )
         {
-            vid.BG0_drawAsset(vec, GemEmpty, 0);
-            break;
-        }
-        case 1:
-        {
-            const AssetImage &exTex = GetExplodingTexture();
-            vid.BG0_drawAsset(vec, exTex, 1);
-            break;
-        }
-        case 2:
-        {
-            const AssetImage &exTex = GetExplodingTexture();
-            vid.BG0_drawAsset(vec, exTex, 0);
-            break;
-        }
-        default:
-        {
-            const AssetImage &tex = *TEXTURES[ m_color ];
-            vid.BG0_drawAsset(vec, tex, 0);
-            break;
+            case 0:
+            {
+                vid.BG0_drawAsset(vec, GemEmpty, 0);
+                break;
+            }
+            case 1:
+            {
+                const AssetImage &exTex = GetExplodingTexture();
+                vid.BG0_drawAsset(vec, exTex, 1);
+                break;
+            }
+            case 2:
+            {
+                const AssetImage &exTex = GetExplodingTexture();
+                vid.BG0_drawAsset(vec, exTex, 0);
+                break;
+            }
+            default:
+            {
+                const AssetImage &tex = *TEXTURES[ m_color ];
+                vid.BG0_drawAsset(vec, tex, 0);
+                break;
+            }
         }
     }
 }

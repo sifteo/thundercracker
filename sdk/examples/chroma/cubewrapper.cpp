@@ -600,6 +600,11 @@ void CubeWrapper::testMatches()
                         Game::Inst().BlowAll( ourGems[j]->getColor() );
                         theirGems[j]->mark();
                     }
+                    //rocks can't match
+                    else if( ourGems[j]->getColor() == GridSlot::ROCKCOLOR )
+                    {
+
+                    }
                     else if( ourGems[j]->getColor() == theirGems[j]->getColor() )
                     {
                         ourGems[j]->mark();
@@ -880,6 +885,21 @@ void CubeWrapper::Refill( bool bAddLevel )
 		aLocIndices[i] = temp;
 	}
 
+    //spawn rocks
+    for( unsigned int i = 0; i < level.m_numRocks; i++ )
+    {
+        int curX = aEmptyLocs[aLocIndices[numEmpties - 1]].x;
+        int curY = aEmptyLocs[aLocIndices[numEmpties - 1]].y;
+        GridSlot &slot = m_grid[curX][curY];
+
+        ASSERT( !slot.isAlive() );
+        if( slot.isAlive() )
+            continue;
+
+        slot.FillColor( GridSlot::ROCKCOLOR );
+        numEmpties--;
+    }
+
 	unsigned int iCurColor = 0;
 
 	for( unsigned int i = 0; i < numEmpties; i++ )
@@ -888,8 +908,12 @@ void CubeWrapper::Refill( bool bAddLevel )
 		int curY = aEmptyLocs[aLocIndices[i]].y;
 		GridSlot &slot = m_grid[curX][curY];
 
+        //ASSERT( !slot.isAlive() );
 		if( slot.isAlive() )
+        {
+            printf( "wtf\n");
 			continue;
+        }
 
 		while( aNumNeeded[iCurColor] <= 0 && iCurColor < GridSlot::NUM_COLORS )
 			iCurColor++;
