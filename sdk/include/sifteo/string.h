@@ -86,6 +86,10 @@ public:
         return *this;
     }
 
+    char operator[](unsigned index) const {
+        return buffer[index];
+    }
+
     String& operator<<(const char *src) {
         _SYS_strlcat(buffer, src, _capacity);
         return *this;
@@ -105,7 +109,7 @@ public:
         _SYS_strlcat_int_hex(buffer, src.value, src.width, src.leadingZeroes, _capacity);
         return *this;
     }
-
+    
 private:
     char buffer[_capacity];
 };
