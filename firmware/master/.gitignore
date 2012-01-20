@@ -1,4 +1,7 @@
 *~
 *.a
 *.o
+master-sim
+*.bc
+*.ll
 
