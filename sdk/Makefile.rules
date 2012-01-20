@@ -3,7 +3,7 @@
 all: $(BIN)
 
 disassemble: $(BIN)
-	@llvm-dis $(BIN) -o -
+	@$(LLVM_BIN)/llvm-dis $(BIN) -o -
 
 %.o: %.cpp $(CDEPS)
 	$(CC) -c -o $@ $< $(CCFLAGS)
