@@ -408,6 +408,12 @@ public:
       return byte == _SYS_VM_BG0_SPR_BG1;
     }
 
+    void BG1_setPanning(const Vec2 &pos)
+    {
+        _SYS_vbuf_poke(&buf.sys, offsetof(_SYSVideoRAM, bg1_x) / 2,
+            ((uint8_t)pos.x) | ((uint16_t)(uint8_t)pos.y << 8));
+    }
+
     void setSpriteImage(int id, int tile)
     {
       uint16_t word = VideoBuffer::indexWord(tile);
@@ -450,6 +456,11 @@ public:
 
         _SYS_vbuf_spr_resize(&buf.sys, id, px, py);
     }
+    
+    void resizeSprite(int id, const Vec2 &size)
+    {
+        resizeSprite(id, size.x, size.y);
+    }
 
     void hideSprite(int id)
     {
@@ -459,6 +470,11 @@ public:
     void moveSprite(int id, int px, int py)
     {
         _SYS_vbuf_spr_move(&buf.sys, id, px, py);
+    }
+
+    void moveSprite(int id, const Vec2 &pos)
+    {
+        _SYS_vbuf_spr_move(&buf.sys, id, pos.x, pos.y);
     }
 };
 
