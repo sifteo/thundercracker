@@ -1,5 +1,6 @@
 #pragma once
 #include "Base.h"
+#include "Content.h"
 
 class Room;
 
@@ -43,7 +44,7 @@ public:
   // methods
   void Init();
   void Update();
-
+  
   bool ShowLocation(Vec2 room);
   bool HideRoom();
   
@@ -52,12 +53,10 @@ public:
   void UpdatePlayer();
   void HidePlayer();
   
-  void ShowItem(int itemId);
   void SetItemPosition(Vec2 p);
   void HideItem();
 
   void RefreshInventory();
-
   void DrawBackground();
 
 private:

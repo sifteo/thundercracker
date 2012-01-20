@@ -9,7 +9,7 @@
 using namespace Sifteo;
 
 #ifndef NUM_CUBES
-#  define NUM_CUBES 1
+#  define NUM_CUBES 3
 #endif
 
 static Cube cubes[NUM_CUBES];

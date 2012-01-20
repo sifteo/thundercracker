@@ -1,6 +1,12 @@
 <dialog-database>
-	<dialog id="skeletonhello" npc="skeleton">
-		<text image="dialog">Hello, Pearl</text>
-		<text image="dialog">Wheee!</text>
+	<dialog id="zelda_hello" npc="zelda">
+		<text image="zelda_detail">
+			Hello, Princess Pearl!
+			It's me, Zelda!
+		</text>
+		<text image="zelda_happy">
+			Fancy meeting you
+			here in the woods!
+		</text>
 	</dialog>
 </dialog-database>

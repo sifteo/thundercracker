@@ -3,10 +3,10 @@
 
 // Constants
 
-#define ROOM_NONE (Vec2(-1,-1))
-#define BFF_SPRITE_ID 0
-#define ITEM_SPRITE_ID 1
-#define PLAYER_SPRITE_ID 2
+#define LOCATION_UNDEFINED  (Vec2(-1,-1))
+#define BFF_SPRITE_ID       0
+#define TRIGGER_SPRITE_ID   1
+#define PLAYER_SPRITE_ID    3
 
 static const int8_t sHoverTable[] = { 
   0, 0, 1, 2, 2, 3, 3, 3, 
@@ -42,17 +42,20 @@ static const Vec2 sBffTable[] = {
 // methods
 
 GameView::GameView() : 
-visited(0), mRoom(ROOM_NONE), mIdleHoverIndex(0) {
+visited(0), mRoom(LOCATION_UNDEFINED), mIdleHoverIndex(0) {
 }
 
 void GameView::Init() {
-  EnterSpriteMode(GetCube());
+  VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
+  mode.set();
+  mode.clear();
+  mode.setWindow(0, 128);
   if (pGame->player.CurrentView() == this) {
     mRoom = Vec2(-1,-1);
     ShowLocation(pGame->player.Location());
   } else {
     mRoom.x = -2; // h4ck
-    ShowLocation(ROOM_NONE);
+    ShowLocation(LOCATION_UNDEFINED);
   }
 }
 
@@ -62,6 +65,7 @@ Cube* GameView::GetCube() const {
 }
 
 void GameView::Update() {
+  VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   if (!IsShowingRoom()) { 
     // compute position of each inventory item based on phase and current time
     if (mScene.idle.count > 0 && mScene.idle.time <= HOP_PHASE * (mScene.idle.count-1) + HOP_COUNT) {
@@ -71,9 +75,9 @@ void GameView::Update() {
       for(int i=0; i<mScene.idle.count; ++i) {
         int localTime = mScene.idle.time - HOP_PHASE * i;
         if (localTime < HOP_COUNT) {
-          MoveSprite(GetCube(), i, pad + innerPad * i - 8, 108  - sHopTable[localTime]);
+          mode.moveSprite(i, pad + innerPad * i - 8, 108  - sHopTable[localTime]);
         } else {
-          MoveSprite(GetCube(), i, pad + innerPad * i - 8, 108);
+          mode.moveSprite(i, pad + innerPad * i - 8, 108);
         }
       }
       mScene.idle.time++;
@@ -165,7 +169,7 @@ void GameView::Update() {
   if (CurrentRoom()->HasItem()) {
     mIdleHoverIndex = (mIdleHoverIndex + 1) % HOVER_COUNT;
     Vec2 p = 16 * CurrentRoom()->LocalCenter();
-    MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y + sHoverTable[mIdleHoverIndex]);
+    mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + sHoverTable[mIdleHoverIndex]);
   }
 
 }
@@ -230,14 +234,27 @@ bool GameView::ShowLocation(Vec2 room) {
   mRoom = room;
   // are we showing an items?
   if (IsShowingRoom()) {
+    VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
     HideInventorySprites();
-    Room* mr = CurrentRoom();
-    if (mr->HasItem()) {
-      ShowItem(mr->TriggerAsItem()->itemId);
+    Room* r = CurrentRoom();
+    switch(r->TriggerType()) {
+      case TRIGGER_ITEM: 
+        mode.setSpriteImage(TRIGGER_SPRITE_ID, Items.index + (r->TriggerAsItem()->itemId - 1) * Items.width * Items.height);
+        mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
+        {
+          Vec2 p = 16 * CurrentRoom()->LocalCenter();
+          mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
+        }
+        break;
+      case TRIGGER_NPC:
+        const NpcData* npc = r->TriggerAsNPC();
+        const DialogData& dialog = gDialogData[npc->dialog];
+        mode.setSpriteImage(TRIGGER_SPRITE_ID, dialog.npc->index);
+        mode.resizeSprite(TRIGGER_SPRITE_ID, 32, 32);
+        mode.moveSprite(TRIGGER_SPRITE_ID, npc->x-16, npc->y-16);
+        break;
     }
-    if (this == pGame->player.CurrentView()) {
-      ShowPlayer();
-    }
+    if (this == pGame->player.CurrentView()) { ShowPlayer(); }
     DrawBackground();
     mIdleHoverIndex = 0;
 
@@ -266,12 +283,13 @@ bool GameView::ShowLocation(Vec2 room) {
 }
 
 bool GameView::HideRoom() {
-  bool result = mRoom != ROOM_NONE;
-  mRoom = ROOM_NONE;
+  bool result = mRoom != LOCATION_UNDEFINED;
+  mRoom = LOCATION_UNDEFINED;
   // hide sprites
-  HideSprite(GetCube(), PLAYER_SPRITE_ID);
-  HideSprite(GetCube(), ITEM_SPRITE_ID);
-  HideSprite(GetCube(), BFF_SPRITE_ID);
+  VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
+  mode.hideSprite(PLAYER_SPRITE_ID);
+  mode.hideSprite(TRIGGER_SPRITE_ID);
+  mode.hideSprite(BFF_SPRITE_ID);
   if(result) {
     mScene.idle.time = 0;
   }
@@ -281,50 +299,34 @@ bool GameView::HideRoom() {
   return result;
 }
 
-//----------------------------------------------------------------
-// PLAYER METHODS
-//----------------------------------------------------------------
-
-
 void GameView::ShowPlayer() {
-  ResizeSprite(GetCube(), PLAYER_SPRITE_ID, 32, 32);
+  VidMode_BG0_SPR_BG1(GetCube()->vbuf).resizeSprite(PLAYER_SPRITE_ID, 32, 32);
   UpdatePlayer();
 }
 
 void GameView::SetPlayerFrame(unsigned frame) {
-  SetSpriteImage(GetCube(), PLAYER_SPRITE_ID, frame);
+  VidMode_BG0_SPR_BG1(GetCube()->vbuf).setSpriteImage(PLAYER_SPRITE_ID, frame);
 }
 
 void GameView::UpdatePlayer() {
   Vec2 localPosition = pGame->player.Position() - 128 * mRoom;
-  SetSpriteImage(GetCube(), PLAYER_SPRITE_ID, pGame->player.CurrentFrame());
-  MoveSprite(GetCube(), PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
+  VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
+  mode.setSpriteImage(PLAYER_SPRITE_ID, pGame->player.CurrentFrame());
+  mode.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
 }
 
 void GameView::HidePlayer() {
-  HideSprite(GetCube(), PLAYER_SPRITE_ID);
+  VidMode_BG0_SPR_BG1(GetCube()->vbuf).hideSprite(PLAYER_SPRITE_ID);
 }
   
-//----------------------------------------------------------------------
-// ITEM METHODS
-//----------------------------------------------------------------------
-
-void GameView::ShowItem(int itemId) {
-  SetSpriteImage(GetCube(), ITEM_SPRITE_ID, Items.index + (itemId - 1) * Items.width * Items.height);;
-  ResizeSprite(GetCube(), ITEM_SPRITE_ID, 16, 16);
-  Vec2 p = 16 * CurrentRoom()->LocalCenter();
-  MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
-}
-
 void GameView::SetItemPosition(Vec2 p) {
   p += 16 * CurrentRoom()->LocalCenter();
-  MoveSprite(GetCube(), ITEM_SPRITE_ID, p.x-8, p.y);
+  VidMode_BG0_SPR_BG1(GetCube()->vbuf).moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
 
 void GameView::HideItem() {
-  HideSprite(GetCube(), ITEM_SPRITE_ID);
+  VidMode_BG0_SPR_BG1(GetCube()->vbuf).hideSprite(TRIGGER_SPRITE_ID);
 }
-
 
 void GameView::RefreshInventory() {
   if (!IsShowingRoom()) {
@@ -334,6 +336,7 @@ void GameView::RefreshInventory() {
 }
 
 void GameView::DrawInventorySprites() {
+  VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   mScene.idle.count = 0;
   const int pad = 24;
   const int innerPad = (128-pad-pad)/3;
@@ -341,26 +344,27 @@ void GameView::DrawInventorySprites() {
   const int sandwichTypeCount = 4;
   for(int itemId=firstSandwichId; itemId<firstSandwichId+sandwichTypeCount; ++itemId) {
     if (pGame->player.HasItem(itemId)) {
-      ResizeSprite(GetCube(), mScene.idle.count, 16, 16);
-      MoveSprite(GetCube(), mScene.idle.count, pad + innerPad * mScene.idle.count - 8, 108);
-      SetSpriteImage(GetCube(), mScene.idle.count, Items.index + (itemId-1) * Items.width * Items.height);
+      mode.resizeSprite(mScene.idle.count, 16, 16);
+      mode.moveSprite(mScene.idle.count, pad + innerPad * mScene.idle.count - 8, 108);
+      mode.setSpriteImage(mScene.idle.count, Items.index + (itemId-1) * Items.width * Items.height);
       mScene.idle.count++;
     }
   }
   if (pGame->player.HaveBasicKey()) {
-      ResizeSprite(GetCube(), mScene.idle.count, 16, 16);
-      MoveSprite(GetCube(), mScene.idle.count, pad + innerPad * mScene.idle.count - 8, 108);
-      SetSpriteImage(GetCube(), mScene.idle.count, Items.index + (ITEM_BASIC_KEY-1) * Items.width * Items.height);
+      mode.resizeSprite(mScene.idle.count, 16, 16);
+      mode.moveSprite(mScene.idle.count, pad + innerPad * mScene.idle.count - 8, 108);
+      mode.setSpriteImage(mScene.idle.count, Items.index + (ITEM_BASIC_KEY-1) * Items.width * Items.height);
       mScene.idle.count++;
   }
   for(int i=mScene.idle.count; i<4; ++i) {
-    HideSprite(GetCube(), i);
+    mode.hideSprite(i);
   }
 }
 
 void GameView::HideInventorySprites() {
+  VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   for(int i=0; i<4; ++i) {
-    HideSprite(GetCube(), i);
+    mode.hideSprite(i);
   }
 }
 

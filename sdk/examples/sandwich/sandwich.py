@@ -111,7 +111,17 @@ class World:
 				m = self.map_dict[q.map]
 				src.write("    { %s, %s },\n" % (hex(m.index), hex(m.roomat(q.x, q.y).lid)))
 			src.write("};\n\n")
-			src.write("const DialogData gDialogData[] = {};\n\n")
+			
+			for d in self.dialog.dialogs:
+				src.write("static const DialogTextData %s_lines[] = {\n" % d.id)
+				for l in d.lines:
+					src.write("    { &NPC_Detail_%s, \"%s\" },\n" % (l.image, l.text))
+				src.write("};\n")
+			src.write("\nconst DialogData gDialogData[] = {\n")
+			for d in self.dialog.dialogs:
+				src.write("    { &NPC_%s, %d, %s_lines },\n" % (d.npc, len(d.lines), d.id))
+
+			src.write("};\n\n")
 
 
 if __name__ == "__main__": export()

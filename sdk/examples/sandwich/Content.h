@@ -32,7 +32,8 @@ struct DialogTextData {
 
 struct DialogData {
     const PinnedAssetImage* npc;
-    const DialogTextData* text;
+    uint32_t lineCount;
+    const DialogTextData* lines;
 };
 
 struct TriggerData {
@@ -57,7 +58,9 @@ struct GatewayData {
 
 struct NpcData {
     TriggerData trigger;
-    uint32_t dialog;
+    uint16_t dialog;
+    uint8_t x;
+    uint8_t y;
 };
 
 struct RoomData {
