@@ -107,14 +107,11 @@ struct Random {
     _SYSPseudoRandomState state;
 
     /**
-     * Construct a new random number generator, using an arbitrary
-     * seed. (This implementation uses the system nanosecond timer)
+     * Construct a new random number generator, using an arbitrary seed.
      */
 
     Random() {
-        int64_t nanosec;
-        _SYS_ticks_ns(&nanosec);
-        seed((uint32_t) nanosec);
+        seed();
     }
     
     /**
@@ -133,7 +130,18 @@ struct Random {
     void seed(uint32_t s) {
         _SYS_prng_init(&state, s);
     }
+
+    /**
+     * Re-seed this random number generator arbitrarily.
+     * This implementation uses the system's nanosecond timer.
+     */
     
+    void seed() {
+        int64_t nanosec;
+        _SYS_ticks_ns(&nanosec);
+        seed((uint32_t) nanosec);
+    }
+
     /**
      * Returns the next raw 32-bit pseudo-random number
      */
