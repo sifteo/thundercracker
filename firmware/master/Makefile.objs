@@ -14,7 +14,7 @@ OBJS_COMMON = \
 	$(MASTER_DIR)/common/accel.o \
 	$(MASTER_DIR)/common/neighbors.o \
 	$(MASTER_DIR)/common/tasks.o \
-	$(MASTER_DIR)/common/prng.o \
+	$(MASTER_DIR)/common/prng.o
 
 OBJS_SIM = \
 	$(OBJS_COMMON:.o=.sim.o) \
@@ -22,7 +22,7 @@ OBJS_SIM = \
 	$(MASTER_DIR)/sim/portaudiooutdevice.sim.o \
 	$(MASTER_DIR)/sim/flashlayer.sim.o \
 	$(MASTER_DIR)/sim/siftulator.sim.o \
-	$(MASTER_DIR)/sim/main.sim.o \
+	$(MASTER_DIR)/sim/main.sim.o
 
 OBJS_STM32 = \
 	$(OBJS_COMMON:.o=.stm32.o) \
@@ -46,4 +46,4 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/macronixmx25.stm32.o \
     $(MASTER_DIR)/stm32/dac.stm32.o \
     $(MASTER_DIR)/stm32/usb.stm32.o \
-    $(MASTER_DIR)/stm32/assetmanager.stm32.o \
+    $(MASTER_DIR)/stm32/assetmanager.stm32.o
