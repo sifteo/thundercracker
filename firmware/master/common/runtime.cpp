@@ -162,12 +162,29 @@ void Event::dispatch()
          _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), args[2].IntVal.getZExtValue(), args[3].IntVal.getZExtValue()); \
          return GenericValue(); \
      }
+
+#define LLVM_SYS_VOID_PTR_I4(name, t) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 5); \
+         _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), args[2].IntVal.getZExtValue(), \
+                     args[3].IntVal.getZExtValue(), args[4].IntVal.getZExtValue()); \
+         return GenericValue(); \
+     }
      
 #define LLVM_SYS_VOID_PTR_I_PTR(name, t, u) \
      GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
      { \
          ASSERT(args.size() == 3); \
          _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2])); \
+         return GenericValue(); \
+     }
+
+#define LLVM_SYS_VOID_PTR_PTR_I(name, t, u) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 3); \
+         _SYS_##name((t*)GVTOP(args[0]), (u*)GVTOP(args[1]), args[2].IntVal.getZExtValue()); \
          return GenericValue(); \
      }
 
@@ -186,6 +203,24 @@ void Event::dispatch()
          ASSERT(args.size() == 1); \
          GenericValue ret; \
          ret.IntVal = _SYS_##name(args[0].IntVal.getZExtValue()); \
+         return ret; \
+     }
+
+#define LLVM_SYS_I_PTR(name, t) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 1); \
+         GenericValue ret; \
+         ret.IntVal = _SYS_##name((t*)GVTOP(args[0])); \
+         return ret; \
+     }
+
+#define LLVM_SYS_I_PTR_I1(name, t) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 2); \
+         GenericValue ret; \
+         ret.IntVal = _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue()); \
          return ret; \
      }
      
@@ -245,51 +280,46 @@ extern "C" {
     LLVM_SYS_VOID_I2(solicitCubes)
     LLVM_SYS_VOID_I2(audio_setVolume)
     LLVM_SYS_VOID_PTR_I1(vbuf_lock, _SYSVideoBuffer)
+    LLVM_SYS_VOID_PTR_I1(prng_init, _SYSPseudoRandomState)
     LLVM_SYS_VOID_PTR_I2(vbuf_poke, _SYSVideoBuffer)
     LLVM_SYS_VOID_PTR_I2(vbuf_pokeb, _SYSVideoBuffer)
+    LLVM_SYS_VOID_PTR_I2(memset8, uint8_t)
+    LLVM_SYS_VOID_PTR_I2(memset16, uint16_t)
+    LLVM_SYS_VOID_PTR_I2(memset32, uint32_t)
+    LLVM_SYS_VOID_PTR_I2(strlcat_int, char)
     LLVM_SYS_VOID_PTR_I3(vbuf_spr_resize, _SYSVideoBuffer)
     LLVM_SYS_VOID_PTR_I3(vbuf_spr_move, _SYSVideoBuffer)
     LLVM_SYS_VOID_PTR_I3(vbuf_fill, _SYSVideoBuffer)
     LLVM_SYS_VOID_PTR_I3(vbuf_seqi, _SYSVideoBuffer)
+    LLVM_SYS_VOID_PTR_I4(strlcat_int_fixed, char)
+    LLVM_SYS_VOID_PTR_I4(strlcat_int_hex, char)
     LLVM_SYS_VOID_PTR_I_PTR(vbuf_peek, _SYSVideoBuffer, uint16_t)
     LLVM_SYS_VOID_PTR_I_PTR(vbuf_peekb, _SYSVideoBuffer, uint8_t)
     LLVM_SYS_I_I1(audio_isPlaying)
     LLVM_SYS_I_I1(audio_volume)
     LLVM_SYS_I_I1(audio_pos)
+    LLVM_SYS_I_PTR(prng_value, _SYSPseudoRandomState)
+    LLVM_SYS_I_PTR_I1(strnlen, char)
+    LLVM_SYS_I_PTR_I1(prng_valueBounded, _SYSPseudoRandomState)
     LLVM_SYS_I_PTR_PTR_ENUM(audio_play, _SYSAudioModule, _SYSAudioHandle, _SYSAudioLoopType)
     LLVM_SYS_VOID_PTR_I_PTR_I1(vbuf_write, _SYSVideoBuffer, uint16_t)
     LLVM_SYS_VOID_PTR_I_PTR_I2(vbuf_writei, _SYSVideoBuffer, uint16_t)
     LLVM_SYS_VOID_PTR_I_PTR_I5(vbuf_wrect, _SYSVideoBuffer, uint16_t)
+    LLVM_SYS_VOID_PTR_PTR_I(memcpy8, uint8_t, uint8_t)
+    LLVM_SYS_VOID_PTR_PTR_I(memcpy16, uint16_t, uint16_t)
+    LLVM_SYS_VOID_PTR_PTR_I(memcpy32, uint32_t, uint32_t)
+    LLVM_SYS_VOID_PTR_PTR_I(strlcpy, char, char)
+    LLVM_SYS_VOID_PTR_PTR_I(strlcat, char, char)
 }
- 
+
+
 /*
- * XXX: Temporary trampolines for libc functions that have leaked into games.
- *      These should be redesigned in terms of syscalls and our ABI!
+ * XXX: Temporary trampolines for libm functions. Need to figure out what to do with
+ *      these.. some of them correspond with LLVM intrinsics, but clang seems to like
+ *      generating function calls anyway.
  */
  
 extern "C" {
-
-    GenericValue lle_X_memset(FunctionType *ft, const std::vector<GenericValue> &args)
-    {
-        ASSERT(args.size() == 3);
-        memset(GVTOP(args[0]), args[1].IntVal.getZExtValue(), args[2].IntVal.getZExtValue());
-        return GenericValue();
-    }
-
-    GenericValue lle_X_memcpy(FunctionType *ft, const std::vector<GenericValue> &args)
-    {
-        ASSERT(args.size() == 3);
-        memcpy(GVTOP(args[0]), GVTOP(args[1]), args[2].IntVal.getZExtValue());
-        return GenericValue();
-    }
-
-    GenericValue lle_X_rand_r(FunctionType *ft, const std::vector<GenericValue> &args)
-    {
-        ASSERT(args.size() == 1);
-        GenericValue ret;
-        ret.IntVal = rand_r((unsigned *)GVTOP(args[0]));
-        return ret;
-    }
 
     GenericValue lle_X_sinf(FunctionType *ft, const std::vector<GenericValue> &args)
     {
@@ -306,28 +336,24 @@ extern "C" {
         ret.FloatVal = cosf(args[0].FloatVal);
         return ret;
     }
+}
 
-    GenericValue lle_X_vsnprintf(FunctionType *ft, const std::vector<GenericValue> &args)
+
+/*
+ * XXX: Temporary trampolines for other intrinsics. Clang is generating proper LLVM
+ *      intrinsics for memcpy and memset, but the LLVM interpreter is turning
+ *      those back into library calls.
+ */
+ 
+extern "C" {
+
+    GenericValue lle_X_memset(FunctionType *ft, const std::vector<GenericValue> &args)
     {
-        // XXX: Total stub!
-        return GenericValue();
+        return lle_X__SYS_memset8(ft, args);
     }
 
-    GenericValue lle_X_snprintf(FunctionType *ft, const std::vector<GenericValue> &args)
+    GenericValue lle_X_memcpy(FunctionType *ft, const std::vector<GenericValue> &args)
     {
-        // XXX: Total stub!
-        return GenericValue();
-    }
-
-    GenericValue lle_X_strlen(FunctionType *ft, const std::vector<GenericValue> &args)
-    {
-        // XXX: Total stub!
-        return GenericValue();
-    }
-
-    GenericValue lle_X_strcpy(FunctionType *ft, const std::vector<GenericValue> &args)
-    {
-        // XXX: Total stub!
-        return GenericValue();
+        return lle_X__SYS_memcpy8(ft, args);
     }
 }
