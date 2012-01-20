@@ -73,7 +73,7 @@ bool Banner::IsActive() const
 }
 
 
-void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, int score )
+void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Banner::Anchor anchor, int score )
 {
     String<16> buf;
     buf << score;
@@ -82,10 +82,33 @@ void Banner::DrawScore( BG1Helper &bg1helper, const Vec2 &pos, int score )
     if( iLen == 0 )
         return;
 
+    int offset;
+    switch( anchor )
+    {
+        case LEFT:
+        {
+            // "pos" is the position of the leftmost tile in our score
+            offset = 0;
+            break;
+        }
+        
+        case CENTER:
+        {
+            // "pos" is the center tile in our score
+            offset = -iLen / 2;
+            break;
+        }
+        
+        case RIGHT:
+        {
+            // "pos" is the position of the rightmost tile
+            offset = -iLen + 1;
+            break;
+        }
+    }
+
     for( int i = 0; i < iLen; i++ )
     {
-        int iOffset = pos.x + i;
-
-        bg1helper.DrawAsset( Vec2( iOffset, pos.y ), BannerPoints, buf[i] - '0' );
+        bg1helper.DrawAsset( Vec2( pos.x + i + offset, pos.y ), BannerPoints, buf[i] - '0' );
     }
 }

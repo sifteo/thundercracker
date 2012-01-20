@@ -9,7 +9,6 @@
 #include "assets.gen.h"
 //#include "audio.gen.h"
 #include "utils.h"
-#include <stdlib.h>
 
 
 const float GridSlot::MARK_SPREAD_DELAY = 0.333333f;

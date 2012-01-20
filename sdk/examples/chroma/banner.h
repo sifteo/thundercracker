@@ -19,6 +19,12 @@ public:
 	static const int BANNER_ROWS = 4;
 	static const float SCORE_FADE_DELAY = 2.0f;
 
+    enum Anchor {
+        LEFT,
+        CENTER,
+        RIGHT,
+    };
+
 	Banner();
 
     void Draw( BG1Helper &bg1helper );
@@ -27,7 +33,7 @@ public:
     void SetMessage( const char *pMsg, bool bScoreMsg = false );
 	bool IsActive() const;
 
-    static void DrawScore( BG1Helper &bg1helper, const Vec2 &pos, int score );
+    static void DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Anchor anchor, int score );
 
 private:
     String<BANNER_WIDTH + 1> m_Msg;
