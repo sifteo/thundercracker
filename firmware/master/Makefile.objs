@@ -26,7 +26,6 @@ OBJS_SIM = \
 
 OBJS_STM32 = \
 	$(OBJS_COMMON:.o=.stm32.o) \
-    $(SPEEX_OBJS_STM32) \
 	$(MASTER_DIR)/stm32/systime.stm32.o \
 	$(MASTER_DIR)/stm32/vectors.stm32.o \
 	$(MASTER_DIR)/stm32/setup.stm32.o \
@@ -46,4 +45,5 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/macronixmx25.stm32.o \
     $(MASTER_DIR)/stm32/dac.stm32.o \
     $(MASTER_DIR)/stm32/usb.stm32.o \
-    $(MASTER_DIR)/stm32/assetmanager.stm32.o
+    $(MASTER_DIR)/stm32/assetmanager.stm32.o \
+    $(SPEEX_OBJS_STM32)

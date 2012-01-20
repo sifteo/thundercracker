@@ -50,10 +50,10 @@ CDEPS := \
 all: $(BINS)
 
 $(BIN_SIM): $(OBJS_SIM)
-	$(CC) -o $@ $^ $(SIM_STATIC_LIBS) $(LDFLAGS_SIM)
+	$(CC_SIM) -o $@ $^ $(SIM_STATIC_LIBS) $(LDFLAGS_SIM)
 
 $(BIN_STM32): $(OBJS_STM32)
-	$(CC) -o $@ $^ $(LDFLAGS_STM32)
+	$(CC_STM32) -o $@ $^ $(LDFLAGS_STM32)
 
 %.sim.o: %.cpp $(CDEPS)
 	$(CC_SIM) -c -o $@ $< $(CCFLAGS_SIM)
@@ -69,5 +69,8 @@ $(BIN_STM32): $(OBJS_STM32)
 
 .PHONY: all clean
 
+# Several steps, to work around Win32 command line length limits
 clean:
-	rm -f $(BINS) $(OBJS_SIM) $(OBJS_STM32) 
+	rm -f $(BINS)
+	rm -f $(OBJS_SIM)
+	rm -f $(OBJS_STM32) 

@@ -84,18 +84,21 @@ ifeq ($(BUILD_PLATFORM), Linux)
 endif
 
 # LLVM Runtime
-CCFLAGS_SIM += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
+LLVM_VER = llvm-3.0
+CCFLAGS_SIM += \
+	-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
+	-I$(TC_DIR)/deps/src/$(LLVM_VER)/include
 LDFLAGS_SIM += \
-	-lstdc++ \
-	$(LLVM_DIR)/lib/libLLVMCore.a \
-	$(LLVM_DIR)/lib/libLLVMInterpreter.a \
-	$(LLVM_DIR)/lib/libLLVMBitReader.a \
-	$(LLVM_DIR)/lib/libLLVMExecutionEngine.a \
-	$(LLVM_DIR)/lib/libLLVMSupport.a \
-	$(LLVM_DIR)/lib/libLLVMCodeGen.a \
-	$(LLVM_DIR)/lib/libLLVMTarget.a \
-	$(LLVM_DIR)/lib/libLLVMAsmParser.a \
-	$(LLVM_DIR)/lib/libLLVMMC.a \
+	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMCore.a \
+	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMInterpreter.a \
+	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMBitReader.a \
+	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMExecutionEngine.a \
+	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMSupport.a \
+	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMCodeGen.a \
+	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMTarget.a \
+	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMAsmParser.a \
+	$(DEPS_DIR)/$(LLVM_VER)/lib/libLLVMMC.a \
+	-lstdc++ -lpthread
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR

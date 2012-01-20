@@ -22,5 +22,3 @@ ifeq ($(BUILD_PLATFORM), Darwin)
 		DEPS_DIR = $(TC_DIR)/deps/osx/x86_64
 	endif
 endif
-
-LLVM_DIR = $(DEPS_DIR)/llvm-3.0
