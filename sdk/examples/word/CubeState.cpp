@@ -273,13 +273,14 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         }
         else
         {
-            char string[5];
-            sprintf(string, "%d", secondsLeft);
-            unsigned len = strlen(string);
+            String<5> string;
+            string << secondsLeft;
+            unsigned len = string.size();
+
             for (unsigned i = 0; i < len; ++i)
             {
                 frame = string[i] - '0';
-                bg1.DrawAsset(Vec2(((3 - strlen(string) + i) * 4 + 1), 14),
+                bg1.DrawAsset(Vec2(((3 - len + i) * 4 + 1), 14),
                               FontTeeth,
                               frame);
             }
@@ -294,7 +295,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 {
     vid.BG0_drawAsset(Vec2(0,0), LetterBG);
     const char *str = getStateMachine().getLetters();
-    switch (strlen(str))
+    switch (_SYS_strnlen(str, 16))
     {
     default:
         {
@@ -516,7 +517,7 @@ void CubeState::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, cons
 {
     Vec2 position(position_RHS);
     const AssetImage& font = FontSmall;
-    unsigned len = strlen(string);
+    unsigned len = _SYS_strnlen(string, 8);
 
     const unsigned MAX_SCORE_STRLEN = 7;
     const char* MAX_SCORE_STR = "9999999";
