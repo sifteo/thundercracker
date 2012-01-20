@@ -9,8 +9,6 @@
 #define _BG1HELPER_H
 
 #include <sifteo.h>
-//only for memset?
-#include "string.h"
 
 using namespace Sifteo;
 
@@ -39,8 +37,8 @@ public:
 
     NEVER_INLINE void Clear()
     {
-        memset( m_bitset, 0, BG1_ROWS * 2 );
-        memset( m_tileset, 0xff, BG1_ROWS * BG1_COLS * 2 );
+        _SYS_memset16( &m_bitset[0], 0, BG1_ROWS );
+        _SYS_memset16( &m_tileset[0][0], 0xffff, BG1_ROWS * BG1_COLS);
     }
 
     NEVER_INLINE void Flush()
@@ -75,7 +73,7 @@ public:
         _SYS_vbuf_pokeb(&m_cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);	
 
         //store off last bitset for comparison later
-        memcpy( m_lastbitset, m_bitset, BG1_ROWS * 2 );
+        _SYS_memcpy16( m_lastbitset, m_bitset, BG1_ROWS );
 
         Clear();
     }
@@ -90,7 +88,7 @@ public:
             unsigned yOff = y + point.y;
             SetBitRange( yOff, point.x, asset.width );
 
-            memcpy( m_tileset[yOff] + point.x, asset.tiles + offset, asset.width * 2 );
+            _SYS_memcpy16( m_tileset[yOff] + point.x, asset.tiles + offset, asset.width );
 
             offset += asset.width;
         }
@@ -110,7 +108,7 @@ public:
             unsigned yOff = y + point.y;
             SetBitRange( yOff, point.x, size.x );
 
-            memcpy( m_tileset[yOff] + point.x, asset.tiles + tileOffset, size.x * 2 );
+            _SYS_memcpy16( m_tileset[yOff] + point.x, asset.tiles + tileOffset, size.x );
 
             tileOffset += asset.width;
         }
