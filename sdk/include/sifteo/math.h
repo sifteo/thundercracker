@@ -24,8 +24,24 @@ struct Float2 {
     Float2(float _x, float _y)
         : x(_x), y(_y) {}
 
-    inline float len2() { return ( x * x + y * y ); }
+    static Float2 polar(float angle, float magnitude) {
+        Float2 f;
+        f.setPolar(angle, magnitude);
+        return f;
+    }
 
+    void set(float _x, float _y) {
+        x = _x;
+        y = _y;
+    }
+
+    void setPolar(float angle, float magnitude) {
+        x = cosf(angle) * magnitude;
+        y = sinf(angle) * magnitude;
+    }
+
+    inline float len2() { return ( x * x + y * y ); }
+    
     float x, y;
 };
 
@@ -37,6 +53,8 @@ inline Float2 operator*(float k, const Float2& v) { return Float2(k*v.x, k*v.y);
 inline Float2 operator*(const Float2& v, float k) { return Float2(k*v.x, k*v.y); }
 inline Float2 operator*(const Float2& u, const Float2& v) { return Float2(u.x*v.x-u.y*v.y, u.y*v.x+u.x*v.y); } // complex multiplication
 inline Float2 operator/(const Float2& u, float k) { return Float2(u.x/k, u.y/k); }
+inline Float2 operator += (Float2& u, float k) { return Float2(u.x+=k, u.y+=k); }
+inline Float2 operator *= (Float2& u, float k) { return Float2(u.x*=k, u.y*=k); }
 inline bool operator==(const Float2& u, const Float2& v) { return u.x == v.x && u.y == v.y; }
 inline bool operator!=(const Float2& u, const Float2& v) { return u.x != v.x || u.y != v.y; }
 
@@ -51,9 +69,19 @@ struct Vec2 {
 	Vec2(int _x, int _y)
         : x(_x), y(_y) {}
 
-	//implicit conversion from float
-	Vec2( const Float2 &other)
-        : x( (int)other.x ), y( (int)other.y ) {}
+    void set(int _x, int _y) {
+        x = _x;
+        y = _y;
+    }
+
+	// Implicit conversion from float (truncation)
+	Vec2(const Float2 &other)
+        : x((int)other.x), y((int)other.y) {}
+
+    // Explicit rounding
+    static Vec2 round(const Float2 &other) {
+        return Vec2((int)(other.x + 0.5f), (int)(other.y + 0.5f));
+    }
 
     int x, y;
 };
