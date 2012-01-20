@@ -780,7 +780,7 @@ void CubeWrapper::checkRefill()
 			else
 			{
                 String<16> buf;
-                buf << m_ShakesRemaining << " SHAKES LEFT";
+                buf << Game::Inst().getShakesLeft() << " SHAKES LEFT";
                 m_banner.SetMessage( buf, false );
 			}
 		}
