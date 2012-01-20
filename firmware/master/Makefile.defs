@@ -90,17 +90,20 @@ LLVM_INC = $(TC_DIR)/deps/src/$(LLVM_VER)/include
 CCFLAGS_SIM += \
 	-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
 	-I$(LLVM_INC)
-LDFLAGS_SIM += \
-	$(LLVM_LIB)/libLLVMCore.a \
-	$(LLVM_LIB)/libLLVMInterpreter.a \
+LDFLAGS_SIM += -lstdc++ -lpthread
+ifeq ($(BUILD_PLATFORM), windows32)
+    LDFLAGS_SIM += /c/Windows/System32/dbghelp.dll
+endif
+SIM_STATIC_LIBS += \
 	$(LLVM_LIB)/libLLVMBitReader.a \
+	$(LLVM_LIB)/libLLVMInterpreter.a \
 	$(LLVM_LIB)/libLLVMExecutionEngine.a \
-	$(LLVM_LIB)/libLLVMSupport.a \
 	$(LLVM_LIB)/libLLVMCodeGen.a \
 	$(LLVM_LIB)/libLLVMTarget.a \
 	$(LLVM_LIB)/libLLVMAsmParser.a \
 	$(LLVM_LIB)/libLLVMMC.a \
-	-lstdc++ -lpthread
+	$(LLVM_LIB)/libLLVMCore.a \
+	$(LLVM_LIB)/libLLVMSupport.a
 
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
