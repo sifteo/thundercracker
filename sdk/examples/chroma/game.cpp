@@ -54,10 +54,6 @@ void Game::Init()
 	}
     PRINT( "done loading" );
 
-#ifdef _WIN32
-    srand((int)( System::clock() * 10000 ));
-#endif
-
     for( int i = 0; i < NUM_CUBES; i++ )
         cubes[i].Reset();
 
