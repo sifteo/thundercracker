@@ -904,7 +904,6 @@ void CubeWrapper::Refill( bool bAddLevel )
         //ASSERT( !slot.isAlive() );
 		if( slot.isAlive() )
         {
-            printf( "wtf\n");
 			continue;
         }
 
