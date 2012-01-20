@@ -45,6 +45,7 @@ class DialogText:
 	def __init__(self, dialog, index, xml):
 		self.dialog = dialog
 		self.index = index
-		self.text = xml.text
+		self.text = "\\n".join(( line.strip() for line in xml.text.strip().splitlines() ))
+		#print self.text
 		# validate text length (prerender?)
 		self.image = xml.get("image")

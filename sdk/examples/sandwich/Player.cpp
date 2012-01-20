@@ -270,13 +270,19 @@ void Player::Update(float dt) {
         128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
       ));
     } else if (pCurrent->CurrentRoom()->HasNPC()) {
+      ////////
+      mStatus = PLAYER_STATUS_IDLE;
+      pCurrent->UpdatePlayer();
+      for(int i=0; i<16; ++i) {
+        pGame->Paint(true);
+      }
       const NpcData* pNpc = pCurrent->CurrentRoom()->TriggerAsNPC();
       if (pGame->state.FlagTrigger(pNpc->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
       DoDialog(gDialogData[pNpc->dialog], pCurrent->GetCube());
-      // TODO
+      System::paintSync();
+      pCurrent->Init();
+      System::paintSync();
     }
-
-
     mDir = SIDE_BOTTOM;
     pCurrent->UpdatePlayer();
   }

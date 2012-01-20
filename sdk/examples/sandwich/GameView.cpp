@@ -49,6 +49,7 @@ void GameView::Init() {
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   mode.set();
   mode.clear();
+  mode.setWindow(0, 128);
   if (pGame->player.CurrentView() == this) {
     mRoom = Vec2(-1,-1);
     ShowLocation(pGame->player.Location());
@@ -56,10 +57,6 @@ void GameView::Init() {
     mRoom.x = -2; // h4ck
     ShowLocation(LOCATION_UNDEFINED);
   }
-}
-
-void GameView::Restore() {
-  
 }
 
 Cube* GameView::GetCube() const {
@@ -254,7 +251,7 @@ bool GameView::ShowLocation(Vec2 room) {
         const DialogData& dialog = gDialogData[npc->dialog];
         mode.setSpriteImage(TRIGGER_SPRITE_ID, dialog.npc->index);
         mode.resizeSprite(TRIGGER_SPRITE_ID, 32, 32);
-        mode.moveSprite(TRIGGER_SPRITE_ID, npc->x, npc->y);
+        mode.moveSprite(TRIGGER_SPRITE_ID, npc->x-16, npc->y-16);
         break;
     }
     if (this == pGame->player.CurrentView()) { ShowPlayer(); }

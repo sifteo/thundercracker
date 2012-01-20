@@ -360,7 +360,8 @@ class Trigger:
 		return True
 
 	def local_position(self):
-		return (self.raw.px + (self.raw.pw >> 1) - 128 * self.room.x, self.raw.py + (self.raw.ph >> 1) - 128 * self.room.y)
+		return (self.raw.px + (self.raw.pw >> 1) - 128 * self.room.x, 
+				self.raw.py + (self.raw.ph >> 1) - 128 * self.room.y)
 
 	
 	def write_trigger_to(self, src):
@@ -383,7 +384,7 @@ class Trigger:
 		src.write("{ ")
 		self.write_trigger_to(src)
 		x,y = self.local_position()
-		src.write(", %x, %x, %x }, " % (self.dialog.index, x, y))
+		src.write(", %s, %s, %s }, " % (hex(self.dialog.index), hex(x), hex(y)))
 
 
 
