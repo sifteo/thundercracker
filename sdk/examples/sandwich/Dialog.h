@@ -3,4 +3,4 @@
 #include "Base.h"
 #include "Content.h"
 
-void DoDialog(DialogData& data);
+void DoDialog(const DialogData& data, Cube* cube=0);

@@ -87,7 +87,7 @@ void TitleCubeState::paint()
                 }
                 else
                 {
-                    mAnimDelay = WordGame::rand(2.f, 4.f);
+                    mAnimDelay = WordGame::random.uniform(2.f, 4.f);
                 }
             }
             else

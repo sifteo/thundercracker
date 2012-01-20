@@ -24,10 +24,176 @@
 #include "neighbors.h"
 #include "accel.h"
 #include "audiomixer.h"
+#include "prng.h"
 
 extern "C" {
 
 struct _SYSEventVectors _SYS_vectors;
+
+
+#define MEMSET_BODY() {                                                 \
+    if (Runtime::checkUserArrayPointer(dest, sizeof *dest, count)) {    \
+        while (count) {                                                 \
+            *(dest++) = value;                                          \
+            count--;                                                    \
+        }                                                               \
+    }                                                                   \
+}   
+
+void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) MEMSET_BODY()
+void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) MEMSET_BODY()
+void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) MEMSET_BODY()
+
+#define MEMCPY_BODY() {                                                 \
+    if (Runtime::checkUserArrayPointer(dest, sizeof *dest, count) &&    \
+        Runtime::checkUserArrayPointer(src, sizeof *src, count)) {      \
+        while (count) {                                                 \
+            *(dest++) = *(src++);                                       \
+            count--;                                                    \
+        }                                                               \
+    }                                                                   \
+}   
+
+void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) MEMCPY_BODY()
+void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) MEMCPY_BODY()
+void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) MEMCPY_BODY()
+
+uint32_t _SYS_strnlen(const char *str, uint32_t maxLen)
+{
+    uint32_t len = 0;
+
+    if (Runtime::checkUserPointer(str, maxLen)) {
+        while (len < maxLen && *str) {
+            str++;
+            len++;
+        }
+    }
+    
+    return len;
+}
+
+void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize)
+{
+    /*
+     * Like the BSD strlcpy(), guaranteed to NUL-terminate.
+     * We check the src pointer as we go, since the size is not known ahead of time.
+     */
+
+    if (destSize && Runtime::checkUserPointer(dest, destSize)) {
+        char *last = dest + destSize - 1;
+        
+        while (dest < last && Runtime::checkUserPointer(src, 1)) {
+            char c = *(src++);
+            if (c)
+                *(dest++) = c;
+            else
+                break;
+        }
+
+        // Guaranteed to NUL-terminate
+        *dest = '\0';
+    }            
+}
+
+void _SYS_strlcat(char *dest, const char *src, uint32_t destSize)
+{
+    if (destSize && Runtime::checkUserPointer(dest, destSize)) {
+        char *last = dest + destSize - 1;
+
+        // Skip to NUL character
+        while (dest < last && *dest)
+            dest++;
+
+        // Append all the bytes we can
+        while (dest < last && Runtime::checkUserPointer(src, 1)) {
+            char c = *(src++);
+            if (c)
+                *(dest++) = c;
+            else
+                break;
+        }
+
+        // Guaranteed to NUL-termiante
+        *dest = '\0';
+    }            
+    
+}
+
+void _SYS_strlcat_int(char *dest, int src, uint32_t destSize)
+{
+    /*
+     * Integer to string conversion. Currently uses snprintf
+     * (or sniprintf on embedded builds) but doesn't necessarily need to.
+     */
+
+    if (destSize && Runtime::checkUserPointer(dest, destSize)) {
+        char *last = dest + destSize - 1;
+
+        // Skip to NUL character
+        while (dest < last && *dest)
+            dest++;
+
+        if (dest < last)
+            snprintf(dest, last-dest, "%d", src);
+
+        // Guaranteed to NUL-termiante
+        *last = '\0';
+    }
+}
+
+void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize)
+{
+    if (destSize && Runtime::checkUserPointer(dest, destSize)) {
+        char *last = dest + destSize - 1;
+
+        // Skip to NUL character
+        while (dest < last && *dest)
+            dest++;
+
+        if (dest < last)
+            snprintf(dest, last-dest, lz ? "%0*d" : "%*d", width, src);
+
+        // Guaranteed to NUL-termiante
+        *last = '\0';
+    }
+}
+    
+void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize)
+{
+    if (destSize && Runtime::checkUserPointer(dest, destSize)) {
+        char *last = dest + destSize - 1;
+
+        // Skip to NUL character
+        while (dest < last && *dest)
+            dest++;
+
+        if (dest < last)
+            snprintf(dest, last-dest, lz ? "%0*x" : "%*x", width, src);
+
+        // Guaranteed to NUL-termiante
+        *last = '\0';
+    }
+}
+
+void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed)
+{
+    if (Runtime::checkUserPointer(state, sizeof *state))
+        PRNG::init(state, seed);
+}
+
+uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state)
+{
+    if (Runtime::checkUserPointer(state, sizeof *state))
+        return PRNG::value(state);
+    return 0;
+}
+
+uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit)
+{
+    if (Runtime::checkUserPointer(state, sizeof *state))
+        return PRNG::valueBounded(state, limit);
+    return 0;
+}
 
 void _SYS_exit(void)
 {

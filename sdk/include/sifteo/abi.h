@@ -1,7 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
  * This file is part of the public interface to the Sifteo SDK.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 /*
@@ -63,15 +63,6 @@ struct _SYSAssetGroupCube {
     uint32_t baseAddr;          /// IN     Base address where this group is installed
     uint32_t progress;          /// IN     Loading progress, in bytes
 };
-
-#if 0
-struct _SYSAssetGroup {
-    const struct _SYSAssetGroupHeader *hdr;     /// OUT    Static data for this asset group
-    struct _SYSAssetGroupCube *cubes;           /// OUT    Array of per-cube state buffers
-    _SYSCubeIDVector reqCubes;                  /// IN     Which cubes have requested to load this group?
-    _SYSCubeIDVector doneCubes;                 /// IN     Which cubes have finished installing this group?
-};
-#endif
 
 struct _SYSAssetGroup {
     uint32_t id;                                /// OUT    ID of this group in the asset segment
@@ -404,6 +395,10 @@ struct _SYSEventVectors {
 
 extern struct _SYSEventVectors _SYS_vectors;
 
+struct _SYSPseudoRandomState {
+    uint32_t a, b, c, d;
+};
+
 /**
  * Entry point to the game binary.
  */
@@ -414,7 +409,25 @@ void siftmain(void);
 /**
  * Low-level system call interface.
  */
-    
+ 
+void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count);
+void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count);
+void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count);
+void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count);
+void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count);
+void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count);
+
+uint32_t _SYS_strnlen(const char *str, uint32_t maxLen);
+void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize);
+void _SYS_strlcat(char *dest, const char *src, uint32_t destSize);
+void _SYS_strlcat_int(char *dest, int src, uint32_t destSize);
+void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
+void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
+
+void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed);
+uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state);
+uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit);
+
 void _SYS_exit(void);                           /// Equivalent to return from siftmain()
 void _SYS_yield(void);                          /// Temporarily cede control to the firmware
 void _SYS_paint(void);                          /// Enqueue a new rendering frame
@@ -455,7 +468,6 @@ void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned wi
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y);
                      
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer);
-//uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
 uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
 uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
 void _SYS_audio_stop(_SYSAudioHandle h);

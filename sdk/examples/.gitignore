@@ -10,3 +10,5 @@ assets.html
 *.map
 *.user
 *.config
+*.bc
+*.ll

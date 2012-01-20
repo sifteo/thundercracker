@@ -118,11 +118,11 @@ void ScoredGameState::createNewAnagram()
     // scramble the string (random permutation)
     // TODO multiple letters per cube
     char scrambled[MAX_LETTERS_PER_WORD + 1];
-    memset(scrambled, 0, sizeof(scrambled));
+    _SYS_memset8((uint8_t*)scrambled, 0, sizeof(scrambled));
     for (unsigned i = 0; i < MAX_LETTERS_PER_WORD; ++i)
     {
         // for each letter, place it randomly in the scrambled array
-        for (unsigned j = WordGame::rand(MAX_LETTERS_PER_WORD);
+        for (unsigned j = WordGame::random.randrange(MAX_LETTERS_PER_WORD);
              true;
              j = (j + 1) % MAX_LETTERS_PER_WORD)
         {

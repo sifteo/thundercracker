@@ -7,10 +7,8 @@
 #include "cubewrapper.h"
 #include "game.h"
 #include "assets.gen.h"
-//#include "audio.gen.h"
 #include "utils.h"
 #include "string.h"
-#include <vector>
 #include "sprite.h"
 #include "config.h"
 
@@ -176,10 +174,9 @@ void CubeWrapper::Draw()
 				{
                     m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeToRefill, 0);
                     int score = Game::Inst().getScore();
-                    int len = score > 0 ? log10( score ) + 1 : 2;
-                    int xPos = ( Banner::BANNER_WIDTH - len ) / 2;
 
-                    Banner::DrawScore( m_bg1helper, Vec2( xPos, 10 ), score );
+                    Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 10 ),
+                                       Banner::CENTER, score );
 
                     /*m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
                     m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "SHAKE TO" );
@@ -230,13 +227,11 @@ void CubeWrapper::Draw()
                 m_vid.BG0_drawAsset(Vec2(0,0), MsgGameOver, 0);
 
                 int score = Game::Inst().getScore();
-                //int len = score > 0 ? log10( score ) + 5 : 6;
-                int len = score > 0 ? log10( score ) + 1 : 2;
-                int xPos = ( Banner::BANNER_WIDTH - len ) / 2;
 
                 //m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
                 //m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
-                Banner::DrawScore( m_bg1helper, Vec2( xPos, 11 ), Game::Inst().getScore() );
+                Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 11 ),
+                                   Banner::CENTER, score );
             }
             else if( m_cube.id() == 1 + CUBE_ID_BASE )
             {
@@ -246,11 +241,9 @@ void CubeWrapper::Draw()
                 for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
                 {
                     int score = Game::Inst().getHighScore(i);
-                    int len = score > 0 ? log10( score ) + 1 : 2;
-                    int xPos = 9 - len;
-
+                    
                     //m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
-                    Banner::DrawScore( m_bg1helper, Vec2( xPos, 5+2*i ), Game::Inst().getHighScore(i) );
+                    Banner::DrawScore( m_bg1helper, Vec2( 8, 5+2*i ), Banner::RIGHT, score );
 
                 }
             }
@@ -301,7 +294,7 @@ void CubeWrapper::Update(float t, float dt)
 
         if( m_timeTillGlimmer < 0.0f )
         {
-            m_timeTillGlimmer = Game::RandomRange( MIN_GLIMMER_TIME, MAX_GLIMMER_TIME );
+            m_timeTillGlimmer = Game::random.uniform( MIN_GLIMMER_TIME, MAX_GLIMMER_TIME );
             m_glimmer.Reset();
         }
         m_glimmer.Update( dt );
@@ -786,8 +779,8 @@ void CubeWrapper::checkRefill()
 				m_banner.SetMessage( "1 SHAKE LEFT" );
 			else
 			{
-                char buf[16];
-                snprintf(buf, sizeof buf - 1, "%d SHAKES LEFT", Game::Inst().getShakesLeft() );
+                String<16> buf;
+                buf << m_ShakesRemaining << " SHAKES LEFT";
                 m_banner.SetMessage( buf, false );
 			}
 		}
@@ -830,10 +823,10 @@ void CubeWrapper::Refill( bool bAddLevel )
     */
 
     //build a list of values to be added.
-	unsigned int aNumNeeded[GridSlot::NUM_COLORS];
+	uint32_t aNumNeeded[GridSlot::NUM_COLORS];
 	unsigned int iNumFixed = 0;
 
-	memset( aNumNeeded, 0, GridSlot::NUM_COLORS * sizeof( int ) );
+	_SYS_memset32( aNumNeeded, 0, GridSlot::NUM_COLORS );
 
 	int numDots = NUM_ROWS * NUM_COLS;
 
@@ -879,7 +872,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 	//randomize
 	for( unsigned int i = 0; i < numEmpties; i++ )
 	{
-		unsigned int randIndex = Game::Inst().Rand( numEmpties );
+		unsigned int randIndex = Game::random.randrange( numEmpties );
 		unsigned int temp = aLocIndices[randIndex];
 		aLocIndices[randIndex] = aLocIndices[i];
 		aLocIndices[i] = temp;
@@ -933,7 +926,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 			while( true )
 			{
 				//random neighbor side
-				int side = Game::Inst().Rand( NUM_SIDES );
+				int side = Game::random.randrange( NUM_SIDES );
 				int neighborX = curX, neighborY = curY;
 				//up left down right
 				//note that x is rows in this context
@@ -976,7 +969,7 @@ void CubeWrapper::Refill( bool bAddLevel )
 	//fixed gems
     while( iNumFixed < level.m_numFixed )
 	{
-		int toFix = Game::Inst().Rand( numEmpties );
+		int toFix = Game::random.randrange( numEmpties );
 		GridSlot &fix = m_grid[aEmptyLocs[toFix].x][aEmptyLocs[toFix].y];
 		bool bFound = false;
 

@@ -1,7 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
  * This file is part of the public interface to the Sifteo SDK.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
 #ifndef _SIFTEO_MACROS_H
@@ -66,6 +66,10 @@ extern void assertWrapper(bool b);
 #ifndef MIN
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef NULL
+#define NULL 0
 #endif
 
 #ifndef arraysize

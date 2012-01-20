@@ -24,7 +24,11 @@ static void onAccelChange(_SYSCubeID cid)
 {
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
-    vid[cid].BG0_textf(Vec2(2,4), Font, "Tilt: %02x %02x", state.x + 0x80, state.y + 0x80);
+
+    String<64> str;
+    str << "Tilt: " << Hex(state.x + 0x80, 2) << " " << Hex(state.y + 0x80, 2);
+
+    vid[cid].BG0_text(Vec2(2,4), Font, str);
     vid[cid].BG0_setPanning(Vec2(-state.x/2, -state.y/2));
 }
 
@@ -78,9 +82,11 @@ void siftmain()
 
     while (1) {
         float t = System::clock();
+        String<64> timeStr;
+        timeStr << "Time: " << Fixed((int)t, 4) << "." << ((int)(t * 10) % 10);
 
         for (unsigned i = 0; i < NUM_CUBES; i++) {
-            vid[i].BG0_textf(Vec2(2,6), Font, "Time: %4u.%u", (int)t, (int)(t*10) % 10);
+            vid[i].BG0_text(Vec2(2,6), Font, timeStr);
             vid[i].BG0_drawAsset(Vec2(11,9), Kirby, frame >> rate);
         }
 

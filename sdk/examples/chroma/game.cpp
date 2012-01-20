@@ -7,8 +7,6 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
-#include "string.h"
-#include <stdlib.h>
 
 //TODO, load this from save file
 unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
@@ -16,6 +14,9 @@ unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
 
 
 const float Game::SLOSH_THRESHOLD = 0.4f;
+
+Math::Random Game::random;
+
 
 Game &Game::Inst()
 {
@@ -55,10 +56,6 @@ void Game::Init()
 		System::paint();
 	}
     PRINT( "done loading" );
-
-#ifdef _WIN32
-    srand((int)( System::clock() * 10000 ));
-#endif
 
     for( int i = 0; i < NUM_CUBES; i++ )
         cubes[i].Reset();
@@ -209,34 +206,6 @@ void Game::TestMatches()
 	}
 }
 
-
-
-//get random value from 0 to max
-unsigned int Game::Rand( unsigned int max )
-{
-#ifdef _WIN32
-	return rand()%max;
-#else
-    static unsigned int seed = (int)( System::clock() * 10000);
-	return rand_r(&seed)%max;
-#endif
-}
-
-
-//get random float value from 0 to 1.0
-float Game::UnitRand()
-{
-    return (float)Rand( INT_MAX ) * ( 0.999999999f / (float) INT_MAX );
-}
-
-
-//get random value from min to max
-float Game::RandomRange( float min, float max )
-{
-    return UnitRand() * ( max - min ) + min;
-}
-
-
 void Game::CheckChain( CubeWrapper *pWrapper )
 {
 	int total_marked = 0;
@@ -292,8 +261,8 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 
             if( !bannered )
             {
-                char aBuf[16];
-                snprintf(aBuf, sizeof aBuf - 1, "%d", m_iDotScoreSum );
+                String<16> aBuf;
+                aBuf << m_iDotScoreSum;
                 pWrapper->getBanner().SetMessage( aBuf, true );
             }
 		}
@@ -365,7 +334,7 @@ unsigned int Game::numColors() const
 {
 	bool aColors[GridSlot::NUM_COLORS];
 
-	memset( aColors, 0, sizeof( bool ) * GridSlot::NUM_COLORS );
+    _SYS_memset8( (uint8_t*)aColors, 0, sizeof( bool ) * GridSlot::NUM_COLORS );
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
@@ -556,7 +525,7 @@ void Game::playSlosh()
 {
     if( System::clock() - m_fLastSloshTime > SLOSH_THRESHOLD )
     {
-        int index = Rand( NUM_SLOSH_SOUNDS );
+        int index = random.randrange( NUM_SLOSH_SOUNDS );
         playSound(*SLOSH_SOUNDS[index]);
 
         m_fLastSloshTime = System::clock();

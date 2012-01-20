@@ -17,4 +17,4 @@ master.a:
 clean:
 	@make -C cube clean
 	@make -C master clean
-	rm -f $(TARGETS)
+	rm -f cube.hex

@@ -9,7 +9,6 @@
 #include "assets.gen.h"
 //#include "audio.gen.h"
 #include "utils.h"
-#include <stdlib.h>
 
 
 const float GridSlot::MARK_SPREAD_DELAY = 0.333333f;
@@ -135,7 +134,7 @@ GridSlot::GridSlot() :
 	m_bFixed( false ),
 	m_animFrame( 0 )
 {
-	m_color = Game::Rand(NUM_COLORS);
+	m_color = Game::random.randrange(NUM_COLORS);
     m_lastFrameDir = Vec2( 0, 0 );
 }
 

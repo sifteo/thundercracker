@@ -42,7 +42,8 @@ class Runtime {
     static void run();
     static void exit();
 
-    static bool checkUserPointer(const void *ptr, intptr_t size, bool allowNULL=false) {
+    static bool checkUserPointer(const void *ptr, uint32_t size, bool allowNULL=false)
+    {
         /*
          * XXX: Validate a memory address that was provided to us by the game,
          *      make sure it isn't outside the game's sandbox region. This code
@@ -65,6 +66,27 @@ class Runtime {
             return false;
 
         return true;
+    }
+    
+    static bool checkUserArrayPointer(const void *ptr, uint32_t itemSize, uint32_t count, bool allowNULL=false)
+    {
+        /*
+         * Check a pointer to a variable-sized array. Also checks for integer
+         * overflow when calculating the total size of the array.
+         *
+         * The current implementation assumes object sizes will fit in 16 bits.
+         * This test is sufficient to ensure that the multiplication will
+         * never overflow, without resorting to hardware-specific overflow detection
+         * checks, division, or 64-bit multiplication.
+         */
+
+        if (itemSize >= 0x10000)
+            return false;
+        
+        if (count >= 0x10000)
+            return false;
+        
+        return checkUserPointer(ptr, itemSize * count, allowNULL);
     }
 
  private:

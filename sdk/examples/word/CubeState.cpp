@@ -273,13 +273,14 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         }
         else
         {
-            char string[5];
-            sprintf(string, "%d", secondsLeft);
-            unsigned len = strlen(string);
+            String<5> string;
+            string << secondsLeft;
+            unsigned len = string.size();
+
             for (unsigned i = 0; i < len; ++i)
             {
                 frame = string[i] - '0';
-                bg1.DrawAsset(Vec2(((3 - strlen(string) + i) * 4 + 1), 14),
+                bg1.DrawAsset(Vec2(((3 - len + i) * 4 + 1), 14),
                               FontTeeth,
                               frame);
             }
@@ -294,7 +295,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 {
     vid.BG0_drawAsset(Vec2(0,0), LetterBG);
     const char *str = getStateMachine().getLetters();
-    switch (strlen(str))
+    switch (_SYS_strnlen(str, 16))
     {
     default:
         {
@@ -385,12 +386,12 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                         // blinking closed trumps tilt and direction change timer
                         mEyeState = EyeState_Closed;
                         mEyeBlinkDelay =
-                           WordGame::rand(BlinkHoldMin[personality],
-                                          BlinkHoldMax[personality]);
+                           WordGame::random.uniform(BlinkHoldMin[personality],
+                                                    BlinkHoldMax[personality]);
                         if (getStateMachine().getIdleTime() > sleepIdleTime)
                         {
                             mAsleep = true;
-                            mEyeBlinkDelay = 99999.f;//WordGame::rand(3.f, 10.f);
+                            mEyeBlinkDelay = 99999.f; //WordGame::random.uniform(3.f, 10.f);
                         }
                     }
                     // else blink delay > 0 || eye state == closed
@@ -409,10 +410,10 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                             if (mEyeDirChangeDelay <= 0.f || mEyeBlinkDelay <= 0.f)
                             {
                                 // time to open eyes or change dir
-                                newEyeState = (EyeState)WordGame::rand(NumEyeStates);
+                                newEyeState = (EyeState)WordGame::random.randrange(NumEyeStates);
                                 mEyeDirChangeDelay =
-                                        WordGame::rand(DirDelayMin[personality],
-                                                       DirDelayMax[personality]);
+                                        WordGame::random.uniform(DirDelayMin[personality],
+                                                                 DirDelayMax[personality]);
                             }
                             else
                             {
@@ -431,8 +432,8 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                             mAsleep = false;
                             vid.hideSprite(LetterStateSpriteID_Zzz);
                             mEyeBlinkDelay =
-                                WordGame::rand(BlinkDelayMin[personality],
-                                               BlinkDelayMax[personality]);
+                                WordGame::random.uniform(BlinkDelayMin[personality],
+                                                         BlinkDelayMax[personality]);
                         }
                         mEyeState = newEyeState;
                     }
@@ -516,7 +517,7 @@ void CubeState::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, cons
 {
     Vec2 position(position_RHS);
     const AssetImage& font = FontSmall;
-    unsigned len = strlen(string);
+    unsigned len = _SYS_strnlen(string, 8);
 
     const unsigned MAX_SCORE_STRLEN = 7;
     const char* MAX_SCORE_STR = "9999999";

@@ -5,7 +5,6 @@
  */
 
 #include <sifteo.h>
-#include <stdlib.h>
 #include "assets.gen.h"
 
 #define NUM_CUBES 3
@@ -16,6 +15,8 @@ struct FVec2 {
     float x, y;
 };
 
+Math::Random gRandom;
+
 class StarDemo {
 public:
 
@@ -24,7 +25,7 @@ public:
     static const float textSpeed = 0.2f;
     static const float bgScrollSpeed = 10.0f;
     static const float bgTiltSpeed = 1.0f;
-    static const float starEmitSpeed = 0.3f;
+    static const float starEmitSpeed = 60.0f;
     static const float starTiltSpeed = 3.0f;
 
     StarDemo(Cube &cube)
@@ -121,11 +122,10 @@ public:
              * flow control in System::paint() works.
              */
 
-             char buf[17];
+            String<17> buf;
             float fps = frame / fpsTimespan;
-            snprintf(buf, sizeof buf, "%d.%02d FPS avg        ",
-                    (int)fps, (int)(fps * 100) % 100);
-            buf[16] = 0;
+            buf << (int)fps << "." << Fixed((int)(fps * 100) % 100, 2, true)
+                << " FPS avg        ";
             writeText(buf);
             break;
         }
@@ -250,21 +250,13 @@ private:
         stars[id].x = 0;
         stars[id].y = 0;
         
-        float angle = randint(1000) * (2 * M_PI / 1000.0f);
-        float speed = (randint(200) + 50) * starEmitSpeed;
+        gRandom.randint(0, 10);
         
+        float angle = gRandom.uniform(0, 2 * M_PI);
+        float speed = gRandom.uniform(starEmitSpeed * 0.5f, starEmitSpeed);
+    
         stars[id].vx = cosf(angle) * speed;
         stars[id].vy = sinf(angle) * speed;
-    }
-     
-    static unsigned int randint(unsigned int max)
-    {
-    #ifdef _WIN32
-        return rand()%max;
-    #else
-        static unsigned int seed = (int)System::clock();
-        return rand_r(&seed)%max;
-    #endif
     }
 };
 
@@ -287,7 +279,7 @@ void accel(_SYSCubeID c) {
 
 void siftmain()
 {
-    LOG(("HELLO, WORLD"));
+    LOG(("HELLO, WORLD\n"));
     //_SYS_vectors.cubeEvents.accelChange = accel;
     _SYS_vectors.neighborEvents.add = neighbor_add;
     _SYS_vectors.neighborEvents.remove = neighbor_remove;
