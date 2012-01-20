@@ -122,11 +122,10 @@ public:
              * flow control in System::paint() works.
              */
 
-             char buf[17];
+            String<17> buf;
             float fps = frame / fpsTimespan;
-            snprintf(buf, sizeof buf, "%d.%02d FPS avg        ",
-                    (int)fps, (int)(fps * 100) % 100);
-            buf[16] = 0;
+            buf << (int)fps << "." << Fixed((int)(fps * 100) % 100, 2, true)
+                << " FPS avg        ";
             writeText(buf);
             break;
         }
