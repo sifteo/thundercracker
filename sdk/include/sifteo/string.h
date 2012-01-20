@@ -90,6 +90,10 @@ public:
         return buffer[index];
     }
 
+    char operator[](int index) const {
+        return buffer[index];
+    }
+
     String& operator<<(const char *src) {
         _SYS_strlcat(buffer, src, _capacity);
         return *this;
