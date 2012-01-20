@@ -414,7 +414,20 @@ void siftmain(void);
 /**
  * Low-level system call interface.
  */
-    
+ 
+void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count);
+void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count);
+void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count);
+void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count);
+void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count);
+void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count);
+
+void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize);
+void _SYS_strlcat(char *dest, const char *src, uint32_t destSize);
+void _SYS_strlcat_int(char *dest, int src, uint32_t destSize);
+void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
+void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
+
 void _SYS_exit(void);                           /// Equivalent to return from siftmain()
 void _SYS_yield(void);                          /// Temporarily cede control to the firmware
 void _SYS_paint(void);                          /// Enqueue a new rendering frame
@@ -455,7 +468,6 @@ void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned wi
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y);
                      
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer);
-//uint8_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
 uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
 uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
 void _SYS_audio_stop(_SYSAudioHandle h);
