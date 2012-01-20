@@ -181,10 +181,9 @@ void CubeWrapper::Draw()
 				{
                     m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeToRefill, 0);
                     int score = Game::Inst().getScore();
-                    int len = score > 0 ? log10( score ) + 1 : 2;
-                    int xPos = ( Banner::BANNER_WIDTH - len ) / 2;
 
-                    Banner::DrawScore( m_bg1helper, Vec2( xPos, 10 ), score );
+                    Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 10 ),
+                                       Banner::CENTER, score );
 
                     /*m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
                     m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "SHAKE TO" );
@@ -235,13 +234,11 @@ void CubeWrapper::Draw()
                 m_vid.BG0_drawAsset(Vec2(0,0), MsgGameOver, 0);
 
                 int score = Game::Inst().getScore();
-                //int len = score > 0 ? log10( score ) + 5 : 6;
-                int len = score > 0 ? log10( score ) + 1 : 2;
-                int xPos = ( Banner::BANNER_WIDTH - len ) / 2;
 
                 //m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
                 //m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
-                Banner::DrawScore( m_bg1helper, Vec2( xPos, 11 ), Game::Inst().getScore() );
+                Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 11 ),
+                                   Banner::CENTER, score );
             }
             else if( m_cube.id() == 1 + CUBE_ID_BASE )
             {
@@ -251,11 +248,9 @@ void CubeWrapper::Draw()
                 for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
                 {
                     int score = Game::Inst().getHighScore(i);
-                    int len = score > 0 ? log10( score ) + 1 : 2;
-                    int xPos = 9 - len;
-
+                    
                     //m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
-                    Banner::DrawScore( m_bg1helper, Vec2( xPos, 5+2*i ), Game::Inst().getHighScore(i) );
+                    Banner::DrawScore( m_bg1helper, Vec2( 8, 5+2*i ), Banner::RIGHT, score );
 
                 }
             }
