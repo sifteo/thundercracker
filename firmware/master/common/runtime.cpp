@@ -6,7 +6,7 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include <map>
+#include <tr1/unordered_map>
 
 #include "runtime.h"
 #include "cube.h"
@@ -401,6 +401,8 @@ index 27917da..7341e5e 100644
 namespace llvm {
     void xxx_InstructionHook(Instruction &I)
     {
+        SysTime::Ticks now = SysTime::ticks();
+        
         /*
          * Right now we do only a very cursory simulation. Assume that each LLVM instruction
          * encodes to a fixed-size machine instruction, and lay them out in memory linearly in
@@ -413,11 +415,11 @@ namespace llvm {
         
         const uint32_t instructionSize = 2;
         const uint32_t blockSize = 512;
-        const uint32_t cacheBlocks = 4;
+        const uint32_t cacheBlocks = 2;
 
         static uint32_t iCount = 0;
         static uint32_t nextAddress = 0;
-        static std::map<Instruction*, uint32_t> addrMap;
+        static std::tr1::unordered_map<Instruction*, uint32_t> addrMap;
         
         iCount++;
         
@@ -425,7 +427,7 @@ namespace llvm {
          * Simulated program counter
          */
 
-        std::map<Instruction*, uint32_t>::iterator iter = addrMap.find(&I);
+        std::tr1::unordered_map<Instruction*, uint32_t>::iterator iter = addrMap.find(&I);
         uint32_t pc;
         if (iter == addrMap.end()) {
             addrMap[&I] = pc = nextAddress;
@@ -439,8 +441,54 @@ namespace llvm {
          */
 
         static uint32_t cache[cacheBlocks];
-        uint32_t block = pc / blockSize;
+        static SysTime::Ticks cacheTS[cacheBlocks];
+        uint32_t block = 1 + pc / blockSize;
+        bool hit = false;
+        static uint64_t blocksLoaded;
+        
+        for (unsigned i = 0; i < cacheBlocks; i++) {
+            if (cache[i] == block) {
+                cacheTS[i] = now;
+                hit = true;
+                break;
+            }
+        }
+        if (!hit) {
+            // Replace the oldest block
+            unsigned oldestI = 0;
+            SysTime::Ticks oldestT = now;
+            for (unsigned i = 0; i < cacheBlocks; i++) {
+                if (cacheTS[i] < oldestT) {
+                    oldestI = i;
+                    oldestT = cacheTS[i];
+                }
+            }
+            cache[oldestI] = block;
+            cacheTS[oldestI] = now;
+            blocksLoaded++;
+        }
+        
+        /*
+         * Periodic stats dump
+         */
+        
+        static SysTime::Ticks lastDumpTime; 
+        SysTime::Ticks interval = now - lastDumpTime;
 
-        printf("PC = %x  blk = %d\n", pc, block);
+        if (now - lastDumpTime >= SysTime::msTicks(100)) {
+            float seconds = interval / (float)SysTime::sTicks(1); 
+            float blkRate = blocksLoaded / seconds;
+
+            printf("%12.1f i/s  %10.1f blk/s  %10.2f KiB/s  %12f %%miss  [ ",
+                iCount / seconds, blkRate, blkRate * blockSize / 1024.0f,
+                blocksLoaded * 100.0f / iCount);
+            for (unsigned i = 0; i < cacheBlocks; i++)
+                printf("%04x ", cache[i]);
+            printf("]\n");
+            
+            iCount = 0;
+            blocksLoaded = 0;
+            lastDumpTime = now;
+        }
     }
 }
