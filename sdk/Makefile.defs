@@ -14,12 +14,25 @@ GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html asegment.bin
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
-# Size optimization. (Runtime is typically dominated by instruction/data fetch)
-CFLAGS += -Os
-
 # Compile for a minimal environment, but allow unresolved symbols
 CFLAGS += -ffreestanding -emit-llvm
 LDFLAGS += -strip-all -link-as-library
+
+# Link-time optimization passes
+LDFLAGS += \
+	-targetlibinfo -no-aa -tbaa -basicaa -preverify -domtree \
+	-verify -lowersetjmp -globalopt -ipsccp -deadargelim -instcombine \
+	-simplifycfg -basiccg -prune-eh -inline -functionattrs -argpromotion \
+	-scalarrepl-ssa -domtree -early-cse -simplify-libcalls -lazy-value-info \
+	-jump-threading -correlated-propagation -simplifycfg -instcombine \
+	-tailcallelim -simplifycfg -reassociate -domtree -loops -loop-simplify \
+	-lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine \
+	-scalar-evolution -loop-simplify -lcssa -iv-users -indvars -loop-idiom \
+	-loop-deletion -loop-unroll -instcombine -memdep -gvn -constprop \
+	-loweratomic -lowerswitch -mergefunc -mem2reg -memdep -memcpyopt \
+	-sccp -instcombine -lazy-value-info -jump-threading -correlated-propagation \
+	-domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes \
+	-print-used-types -globaldce -constmerge -preverify -domtree -verify
 
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu
