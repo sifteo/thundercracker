@@ -20,6 +20,7 @@
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/Support/IRReader.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 using namespace Sifteo;
@@ -413,9 +414,10 @@ namespace llvm {
          * just an order-of-magnitude estimate right now.
          */
         
-        const uint32_t instructionSize = 2;
+        const uint32_t instructionSize = 4;
         const uint32_t blockSize = 512;
-        const uint32_t cacheBlocks = 2;
+        const uint32_t cacheBlocks = 16;    
+        const float maxFlashKBPS = 18.0f / 8.0f * 1024.0f;
 
         static uint32_t iCount = 0;
         static uint32_t nextAddress = 0;
@@ -466,6 +468,8 @@ namespace llvm {
             cache[oldestI] = block;
             cacheTS[oldestI] = now;
             blocksLoaded++;
+            
+            //dbgs() << I << "\n";
         }
         
         /*
@@ -478,12 +482,13 @@ namespace llvm {
         if (now - lastDumpTime >= SysTime::msTicks(100)) {
             float seconds = interval / (float)SysTime::sTicks(1); 
             float blkRate = blocksLoaded / seconds;
+            float kbps = blkRate * blockSize / 1024.0f;
 
-            printf("%12.1f i/s  %10.1f blk/s  %10.2f KiB/s  %12f %%miss  [ ",
-                iCount / seconds, blkRate, blkRate * blockSize / 1024.0f,
+            printf("%12.1f i/s  %10.1f blk/s  %10.2f KiB/s  %10.2f %%max  %12f %%miss  [ ",
+                iCount / seconds, blkRate, kbps, kbps * 100.0f / maxFlashKBPS,
                 blocksLoaded * 100.0f / iCount);
             for (unsigned i = 0; i < cacheBlocks; i++)
-                printf("%04x ", cache[i]);
+                printf("%02x ", cache[i]);
             printf("]\n");
             
             iCount = 0;
