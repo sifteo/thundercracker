@@ -15,6 +15,7 @@
  * necessarily validate their input.
  */
 
+#include <math.h>
 #include <sifteo/abi.h>
 #include "radio.h"
 #include "cubeslots.h"
@@ -173,6 +174,26 @@ void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint
         // Guaranteed to NUL-termiante
         *last = '\0';
     }
+}
+
+void _SYS_sincosf(float x, float *sinOut, float *cosOut)
+{
+	/*
+	 * This syscall exists as such because it's very common, especially for
+	 * our game code, to compute both sine and cosine of the same angle.
+	 *
+	 * It's possible to do both operations in one step, e.g. with the
+	 * sincosf() function from GNU's math library.
+	 *
+	 * Right now we eschew this optimization in favor of portability,
+	 * but this function is in the ABI so we can optimize later without
+	 * breaking compatibility.
+	 */
+
+	if (Runtime::checkUserPointer(sinOut, sizeof *sinOut))
+		*sinOut = sinf(x);
+	if (Runtime::checkUserPointer(cosOut, sizeof *cosOut))
+		*cosOut = cosf(x);
 }
 
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed)

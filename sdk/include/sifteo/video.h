@@ -422,6 +422,18 @@ public:
       _SYS_vbuf_poke(&buf.sys, addr, word);
     }
 
+	void setSpriteImage(int id, const PinnedAssetImage &image)
+	{
+		resizeSprite(id, image.width * TILE, image.height * TILE);
+		setSpriteImage(id, image.index);
+	}
+
+	void setSpriteImage(int id, const PinnedAssetImage &image, int frame)
+	{
+		resizeSprite(id, image.width * TILE, image.height * TILE);
+		setSpriteImage(id, image.index + (image.width * image.height) * frame);
+	}
+
     bool isSpriteHidden(int id)
     {
         uint16_t word;

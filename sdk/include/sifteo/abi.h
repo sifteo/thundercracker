@@ -424,6 +424,8 @@ void _SYS_strlcat_int(char *dest, int src, uint32_t destSize);
 void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
 void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
 
+void _SYS_sincosf(float x, float *sinOut, float *cosOut);
+
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed);
 uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state);
 uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit);

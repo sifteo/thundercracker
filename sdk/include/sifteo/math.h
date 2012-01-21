@@ -36,15 +36,26 @@ struct Float2 {
     }
 
     void setPolar(float angle, float magnitude) {
-        x = cosf(angle) * magnitude;
-        y = sinf(angle) * magnitude;
+		float s, c;
+		_SYS_sincosf(angle, &s, &c);
+        x = c * magnitude;
+        y = s * magnitude;
     }
-
-    inline float len2() { return ( x * x + y * y ); }
+	
+	Float2 rotate(float angle) const {
+		float s, c;
+		_SYS_sincosf(angle, &s, &c);
+        return Float2(x*c - y*s, x*s + y*c);
+	}
+		
+    inline float len2() const {
+		return ( x * x + y * y );
+	}
     
     float x, y;
 };
 
+inline Float2 operator-(const Float2& u) { return Float2(-u.x, -u.y); }
 inline Float2 operator+(const Float2& u, const Float2& v) { return Float2(u.x+v.x, u.y+v.y); }
 inline Float2 operator += (Float2& u, const Float2& v) { return Float2(u.x+=v.x, u.y+=v.y); }
 inline Float2 operator-(const Float2& u, const Float2& v) { return Float2(u.x-v.x, u.y-v.y); }
