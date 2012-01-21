@@ -6,10 +6,13 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include <map>
+
 #include "runtime.h"
 #include "cube.h"
 #include "neighbors.h"
 #include "tasks.h"
+
 #include <sifteo/abi.h>
 
 #include "llvm/LLVMContext.h"
@@ -356,5 +359,79 @@ extern "C" {
     GenericValue lle_X_memcpy(FunctionType *ft, const std::vector<GenericValue> &args)
     {
         return lle_X__SYS_memcpy8(ft, args);
+    }
+}
+
+/*
+ * Instrumentation support, for helping us understand the execution patterns of games.
+ * This uses a tiny patch to LLVM, giving us an easy and unobtrusive hook for monitoring
+ * the interpreter's progress:
+ *
+
+diff --git a/lib/ExecutionEngine/Interpreter/Execution.cpp b/lib/ExecutionEngine/Interpreter/Execution.cpp
+index 27917da..7341e5e 100644
+--- a/lib/ExecutionEngine/Interpreter/Execution.cpp
++++ b/lib/ExecutionEngine/Interpreter/Execution.cpp
+@@ -1326,6 +1326,8 @@ void Interpreter::run() {
+     ++NumDynamicInsts;
+ 
+     DEBUG(dbgs() << "About to interpret: " << I);
++    extern void xxx_InstructionHook(Instruction &I);
++    xxx_InstructionHook(I);
+     visit(I);   // Dispatch to one of the visit* methods...
+ #if 0
+     // This is not safe, as visiting the instruction could lower it and free I.
+
+ *
+ * After applying the patch, you can select an external LLVM tree to use. For example, I
+ * run the following build command:
+ *
+ * make LLVM_LIB=~/src/llvm/Debug+Asserts/lib LLVM_INC=~/src/llvm/include
+ */
+
+namespace llvm {
+    void xxx_InstructionHook(Instruction &I)
+    {
+        /*
+         * Right now we do only a very cursory simulation. Assume that each LLVM instruction
+         * encodes to a fixed-size machine instruction, and lay them out in memory linearly in
+         * the order we encounter them. Then, simulate a small flash memory cache.
+         *
+         * This is not even close to fully accurate. In particular, we ignore data fetches and
+         * literals, and we aren't yet trying to align things to block boundaries. But it's
+         * just an order-of-magnitude estimate right now.
+         */
+        
+        const uint32_t instructionSize = 2;
+        const uint32_t blockSize = 512;
+        const uint32_t cacheBlocks = 4;
+
+        static uint32_t iCount = 0;
+        static uint32_t nextAddress = 0;
+        static std::map<Instruction*, uint32_t> addrMap;
+        
+        iCount++;
+        
+        /*
+         * Simulated program counter
+         */
+
+        std::map<Instruction*, uint32_t>::iterator iter = addrMap.find(&I);
+        uint32_t pc;
+        if (iter == addrMap.end()) {
+            addrMap[&I] = pc = nextAddress;
+            nextAddress += instructionSize;
+        } else {
+            pc = iter->second;
+        }
+
+        /*
+         * Simulated block cache
+         */
+
+        static uint32_t cache[cacheBlocks];
+        uint32_t block = pc / blockSize;
+
+        printf("PC = %x  blk = %d\n", pc, block);
     }
 }
