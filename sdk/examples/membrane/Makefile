@@ -7,9 +7,6 @@ OBJS = \
 	flavor.o \
 	particle.o \
 	portal.o \
-	sprites.o \
-	utils.o \
-	neighbors.o \
 	loading.o \
 
 TC_DIR = ../../..

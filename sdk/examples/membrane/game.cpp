@@ -1,10 +1,12 @@
 /* Copyright <c> 2011 Sifteo, Inc. All rights reserved. */
 
-#include <stdlib.h>
+#include <stdio.h>
 #include <sifteo.h>
 
 #include "game.h"
 
+Random Game::random;
+Game * Game::instance;
 
 Game::Game()
     : cube_0(0), cube_1(1), cube_2(2),
@@ -40,12 +42,15 @@ void Game::init()
         
     for (unsigned i = 0; i < NUM_PARTICLES; i++)
         particles[i].instantiate(&getGameCube(i % NUM_CUBES));
+
+	// Install event handlers
+	instance = this;
+	_SYS_vectors.neighborEvents.add = onNeighborAdd;
+	_SYS_vectors.neighborEvents.remove = onNeighborRemove;
 }
 
 void Game::animate(float dt)
 {
-    checkNeighbors();
-   
     for (unsigned i = 0; i < NUM_PARTICLES; i++)
         particles[i].animate(dt);
 
@@ -61,6 +66,40 @@ void Game::doPhysics(float dt)
         for (unsigned j = i+i; j < NUM_PARTICLES; j++)
             particles[i].doPairPhysics(particles[j], dt);
     }
+}
+
+void Game::onNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+{
+	GameCube &gc0 = instance->getGameCube(c0);
+	GameCube &gc1 = instance->getGameCube(c1);
+
+	// Animate the portals opening
+	gc0.getPortal(s0).setOpen(true);
+	gc1.getPortal(s1).setOpen(true);
+
+	// Send particles in both directions through the new portal
+	PortalPair forward = { &gc0, &gc1, s0, s1 };
+	PortalPair reverse = { &gc1, &gc0, s1, s0 };
+	
+	for (unsigned i = 0; i < NUM_PARTICLES; i++) {
+		Particle &p = instance->particles[i];
+		
+		p.portalNotify(forward);
+		p.portalNotify(reverse);
+	}
+}
+
+void Game::onNeighborRemove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+{
+	// Animate the portals closing
+	instance->getGameCube(c0).getPortal(s0).setOpen(false);
+	instance->getGameCube(c1).getPortal(s1).setOpen(false);
+
+	/*
+	 * When a cube is removed, that's when we check for matches. This lets you get a fourth
+	 * match if you can do it without removing a cube first.
+	 */
+	instance->checkMatches();
 }
 
 void Game::draw()

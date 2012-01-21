@@ -20,17 +20,11 @@ GameCube::GameCube(int id)
 
 void GameCube::init()
 {
-    VidMode_BG0 vid(cube.vbuf);
-    Sprites spr(cube.vbuf);
+    VidMode_BG0_SPR_BG1 vid(cube.vbuf);
 
     vid.init();
-    spr.init();
     hilighter.init();
     vid.BG0_drawAsset(Vec2(0,0), Playfield);
-        
-    for (unsigned side = 0; side < NUM_SIDES; side++)
-        setNeighbor(side, INVALID_ID);
-        
 }
 
 void GameCube::animate(float timeStep)
@@ -70,25 +64,13 @@ void GameCube::placeMarker(int id)
     numMarkers++;
 }
 
-void GameCube::setNeighbor(int side, int id)
-{
-    getPortal(side).setOpen(id != INVALID_ID);
-    neighbors[side] = id;
-}
-
-int GameCube::getNeighbor(int side)
-{
-    return neighbors[side];
-}
-
-Vec2F GameCube::velocityFromTilt()
+Float2 GameCube::velocityFromTilt()
 {
     _SYSAccelState accel;
     _SYS_getAccel(cube.id(), &accel);
     
     const float coeff = 0.1f;
-    Vec2F v = { accel.x * coeff, accel.y * coeff };
-    return v;
+    return Float2( accel.x * coeff, accel.y * coeff );
 }
 
 bool GameCube::reportMatches(unsigned bits)

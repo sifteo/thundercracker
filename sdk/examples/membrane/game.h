@@ -7,61 +7,30 @@
 #include "assets.gen.h"
 
 using namespace Sifteo;
+using namespace Sifteo::Math;
 
 #define NUM_CUBES     3
 #define NUM_PARTICLES 6
 
-#define INVALID_ID  (-1)
-
-
-int randint(int min, int max);
-
-
-struct Vec2F {
-    float x, y;
-    
-    Vec2 round();
-    
-    Vec2F operator -(const Vec2F b) const {
-        Vec2F c = { x - b.x, y - b.y };
-        return c;
-    }
-
-    Vec2F operator +(const Vec2F b) const {
-        Vec2F c = { x + b.x, y + b.y };
-        return c;
-    }
-
-    Vec2F operator *(float b) const {
-        Vec2F c = { x * b, y * b };
-        return c;
-    }
-    
-    Vec2F operator -() const {
-        Vec2F c = { -x, -y };
-        return c;
-    }
-
-    Vec2F rotate(float r) const {
-        float s = sinf(r);
-        float c = cosf(r);
-        Vec2F v = { x*c - y*s, x*s + y*c };
-        return v;
-    }
-            
-    float dist2() const {
-        return x*x + y*y;
-    }
-};
-
 
 class Ticker {
 public:
-    Ticker();
-    Ticker(float hz);
+    Ticker() : accum(0) {}
 
-    void setRate(float hz);    
-    int tick(float dt);
+    Ticker(float hz) : accum(0) {
+		setRate(hz);
+	}
+
+    void setRate(float hz) {
+	    period = 1.0f / hz;
+	}
+
+    int tick(float dt) {
+		accum += dt;
+		int frames = accum / period;
+		accum -= frames * period;
+		return frames;
+	}
     
     float getPeriod() {
         return period;
@@ -69,25 +38,6 @@ public:
     
 private:
     float period, accum;
-};
-
-
-class Sprites {
-public:
-    Sprites(VideoBuffer &vbuf)
-        : vbuf(vbuf) {}
-        
-    void init();    
-    
-    void move(int id, Vec2 pos);
-    void set(int id, const PinnedAssetImage &image, int frame=0);
-    void hide(int id);
-        
-    void resizeSprite(int id, int w, int h);
-    void setSpriteImage(int id, int tile);    
- 
-private:
-    VideoBuffer &vbuf;
 };
 
 
@@ -99,10 +49,10 @@ public:
     void animate();
     void draw(Cube &cube);
     
-    Vec2F getTarget() const;
+    Float2 getTarget() const;
 
-    float distanceFrom(Vec2F coord);
-    Vec2F rotateTo(const Portal &dest, Vec2F coord);
+    float distanceFrom(Float2 coord);
+    Float2 rotateTo(const Portal &dest, const Float2 &coord);
     
 private:
     enum {
@@ -146,11 +96,8 @@ public:
     
     void placeMarker(int id);
     bool reportMatches(unsigned bits);
-    
-    void setNeighbor(int side, int id);
-    int getNeighbor(int side);
-    
-    Vec2F velocityFromTilt();
+
+    Float2 velocityFromTilt();
     
     Cube cube;
     CubeHilighter hilighter;
@@ -167,7 +114,6 @@ public:
     }
     
 private:
-    int neighbors[NUM_SIDES];
     Ticker portalTicker;
     unsigned numMarkers;
 };
@@ -247,7 +193,7 @@ private:
         S_RESPAWN_PENDING,
     } state;
 
-    Vec2F pos, velocity;
+    Float2 pos, velocity;
     GameCube *onCube;
 
     Ticker ticker;    
@@ -274,6 +220,8 @@ public:
     void doPhysics(float dt);
     void draw();    
     
+	static Random random;
+
 private:
     GameCube cube_0, cube_1, cube_2;
     GameCube &getGameCube(unsigned i) {
@@ -288,8 +236,12 @@ private:
     Particle particles[NUM_PARTICLES];
     Ticker physicsClock;
     
-    void checkNeighbors();
     void checkMatches();
+	
+	// Event handlers
+	static Game *instance;
+	static void onNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
+	static void onNeighborRemove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
 };
 
 #endif

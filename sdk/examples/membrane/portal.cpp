@@ -63,24 +63,25 @@ void Portal::draw(Cube &cube)
     vid.BG0_drawAsset(info[side].pos, *info[side].asset, frame);
 }
 
-Vec2F Portal::getTarget() const
+Float2 Portal::getTarget() const
 {
-    static const Vec2F center[NUM_SIDES] = {
-        {  64,    -20 },
-        { -20,     64 },
-        {  64,     128+20 },
-        {  128+20, 64 },
+    static const float center[] = {
+         64,    -20,
+        -20,     64,
+         64,     128+20,
+         128+20, 64,
     };
     
-    return center[side];
+	unsigned index = side << 1;
+    return Float2(center[index], center[index+1]);
 }
 
-Vec2F Portal::rotateTo(const Portal &dest, Vec2F coord)
+Float2 Portal::rotateTo(const Portal &dest, const Float2 &coord)
 {
     return coord.rotate((dest.side - side) * (M_PI/2));
 }
 
-float Portal::distanceFrom(Vec2F coord)
+float Portal::distanceFrom(Float2 coord)
 {
     switch (side) {    
     default:

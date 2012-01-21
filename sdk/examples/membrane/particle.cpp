@@ -42,8 +42,8 @@ void Particle::doPhysics(float dt)
     if (state == S_DESTROY_PENDING && System::clock() > stateDeadline)
         return;
 
-    const Vec2F center = { VidMode::LCD_width / 2, VidMode::LCD_height / 2};
-    Vec2F cv = center - pos;
+    const Float2 center( VidMode::LCD_width / 2, VidMode::LCD_height / 2 );
+    Float2 cv = center - pos;
     const float radius = 35.0f;
     
     if (state == S_MOVE_PENDING) {
@@ -58,13 +58,13 @@ void Particle::doPhysics(float dt)
          */
         
         Portal &p = pendingMove.cube0->getPortal(pendingMove.side0);
-        Vec2F pv = p.getTarget() - pos;
+        Float2 pv = p.getTarget() - pos;
         velocity = velocity * 0.8f + pv * (60.0f * dt);
         
         if (p.distanceFrom(pos) < 0.0f)
             applyPendingMove();
     
-    } else if (cv.dist2() > radius*radius) {
+    } else if (cv.len2() > radius*radius) {
         /*
          * Too far from the center? Pull toward the middle,
          * and add a little damping.
@@ -78,22 +78,22 @@ void Particle::doPhysics(float dt)
     }
     
     // Integrate velocity
-    pos.x += velocity.x * dt;
-    pos.y += velocity.y * dt;
+	pos += velocity * dt;
 }
 
 void Particle::doPairPhysics(Particle &other, float dt)
 {
     if (onCube == other.onCube && state == S_NORMAL && other.state == S_NORMAL) {
-        Vec2F v = other.pos - pos;
+        Float2 v = other.pos - pos;
         
         if (v.x == 0 && v.y == 0) {
-            v.x += randint(0,2) - 1;
-            v.y += randint(0,2) - 1;
+			// Random nudge if two particles have the exact same location
+            v.x += Game::random.randint(-1, 1);
+			v.y += Game::random.randint(-1, 1);
         }
             
-        Vec2F force;
-        float dist2 = v.dist2();
+        Float2 force;
+        float dist2 = v.len2();
         const float repelDist = 15.0f;
         
         if (dist2 > repelDist * repelDist) {
@@ -113,24 +113,24 @@ void Particle::doPairPhysics(Particle &other, float dt)
 
 void Particle::draw(GameCube *gc, int spriteId)
 {
-    Sprites spr(gc->cube.vbuf);
+    VidMode_BG0_SPR_BG1 vid(gc->cube.vbuf);
     const PinnedAssetImage *asset;
     unsigned frame;
 
     if (gc != onCube) {
-        spr.hide(spriteId);
+        vid.hideSprite(spriteId);
         return;
     }
 
     // Destruction    
     if (state == S_DESTROY_PENDING && System::clock() > stateDeadline &&
-        gc->hilighter.doHilight(pos.round())) {
+        gc->hilighter.doHilight(Vec2::round(pos))) {
         
-        stateDeadline = System::clock() + randint(50,300) * 0.01f;
+        stateDeadline = System::clock() + Game::random.uniform(0.5, 3.0);
         state = S_RESPAWN_PENDING;
     }
     if (state == S_RESPAWN_PENDING) {
-        spr.hide(spriteId);
+        vid.hideSprite(spriteId);
         if (System::clock() > stateDeadline)
             instantiate(gc);
         return;
@@ -156,7 +156,7 @@ void Particle::draw(GameCube *gc, int spriteId)
         int f = 6 - dist * (6.0f / 35.0f);
 
         if (f > 5) {
-            spr.hide(spriteId);
+            vid.hideSprite(spriteId);
             return;
         }
         
@@ -172,10 +172,9 @@ void Particle::draw(GameCube *gc, int spriteId)
     
     // Drawing
     
-    Vec2F center = { asset->width * 4, asset->height * 4 };
-    spr.set(spriteId, *asset, frame);
-    spr.move(spriteId, (pos - center).round());
-    
+    Float2 center( asset->width * 4, asset->height * 4 );
+    vid.setSpriteImage(spriteId, *asset, frame);
+    vid.moveSprite(spriteId, Vec2::round(pos - center));
 }
 
 void Particle::instantiate(GameCube *gc)
@@ -187,20 +186,19 @@ void Particle::instantiate(GameCube *gc)
     flavor.randomize();
     
     // Random animation speed
-    ticker.setRate(randint(5, 60));
+    ticker.setRate(Game::random.randint(5, 60));
     
     // Put it nearish the center of the screen
     int radius = 20;    
-    pos.x = randint(VidMode::LCD_width/2 - radius,
-                    VidMode::LCD_width/2 + radius);
-    pos.y = randint(VidMode::LCD_height/2 - radius,
-                    VidMode::LCD_height/2 + radius);
+    pos.x = Game::random.randint(VidMode::LCD_width/2 - radius,
+								 VidMode::LCD_width/2 + radius);
+    pos.y = Game::random.randint(VidMode::LCD_height/2 - radius,
+								 VidMode::LCD_height/2 + radius);
                        
     // Random velocity
-    float angle = randint(0, 1000) * (2 * M_PI / 1000.0f);
-    float speed = randint(50, 250) * 0.2f;
-    velocity.x = cosf(angle) * speed;
-    velocity.y = sinf(angle) * speed;
+    float angle = Game::random.uniform(0, 2 * M_PI);
+	float speed = Game::random.uniform(10, 50);
+	velocity.setPolar(angle, speed);
 }
 
 void Particle::portalNotify(const PortalPair &pair)
