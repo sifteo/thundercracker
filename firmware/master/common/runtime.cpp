@@ -229,33 +229,41 @@ void Event::dispatch()
      }
      
 #define LLVM_SYS_VOID_PTR_I_PTR_I1(name, t, u) \
-          GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
-          { \
-              ASSERT(args.size() == 4); \
-              _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2]), \
-                          args[3].IntVal.getZExtValue()); \
-              return GenericValue(); \
-          }
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 4); \
+         _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2]), \
+            args[3].IntVal.getZExtValue()); \
+         return GenericValue(); \
+     }
 
 #define LLVM_SYS_VOID_PTR_I_PTR_I2(name, t, u) \
-          GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
-          { \
-              ASSERT(args.size() == 5); \
-              _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2]), \
-                          args[3].IntVal.getZExtValue(), args[4].IntVal.getZExtValue()); \
-              return GenericValue(); \
-          }
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 5); \
+         _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2]), \
+            args[3].IntVal.getZExtValue(), args[4].IntVal.getZExtValue()); \
+         return GenericValue(); \
+     }
 
 #define LLVM_SYS_VOID_PTR_I_PTR_I5(name, t, u) \
-          GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
-          { \
-              ASSERT(args.size() == 8); \
-              _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2]), \
-                          args[3].IntVal.getZExtValue(), args[4].IntVal.getZExtValue(), \
-                          args[5].IntVal.getZExtValue(), args[6].IntVal.getZExtValue(), \
-                          args[7].IntVal.getZExtValue()); \
-              return GenericValue(); \
-          }
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 8); \
+         _SYS_##name((t*)GVTOP(args[0]), args[1].IntVal.getZExtValue(), (u*)GVTOP(args[2]), \
+                     args[3].IntVal.getZExtValue(), args[4].IntVal.getZExtValue(), \
+                     args[5].IntVal.getZExtValue(), args[6].IntVal.getZExtValue(), \
+                     args[7].IntVal.getZExtValue()); \
+         return GenericValue(); \
+     }
+
+#define LLVM_SYS_VOID_F_PTR_PTR(name, t, u) \
+     GenericValue lle_X__SYS_##name(FunctionType *ft, const std::vector<GenericValue> &args) \
+     { \
+         ASSERT(args.size() == 3); \
+         _SYS_##name(args[0].FloatVal, (t*)GVTOP(args[1]), (u*)GVTOP(args[2])); \
+         return GenericValue(); \
+     }
 
 extern "C" {
 
@@ -314,6 +322,7 @@ extern "C" {
     LLVM_SYS_VOID_PTR_PTR_I(memcpy32, uint32_t, uint32_t)
     LLVM_SYS_VOID_PTR_PTR_I(strlcpy, char, char)
     LLVM_SYS_VOID_PTR_PTR_I(strlcat, char, char)
+    LLVM_SYS_VOID_F_PTR_PTR(sincosf, float, float)
 }
 
 
