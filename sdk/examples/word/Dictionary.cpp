@@ -1,9 +1,7 @@
 #include "Dictionary.h"
-#include <string.h>
 //#include "TrieNode.h"
 #include "PrototypeWordList.h"
 //extern TrieNode root;
-#include <stdio.h>
 #include "EventID.h"
 #include "EventData.h"
 #include "WordGame.h"
@@ -47,7 +45,7 @@ bool Dictionary::isOldWord(const char* word)
 {
     for (unsigned i = 0; i < sNumOldWords; ++i)
     {
-        if (strcmp(sOldWords[i], word) == 0)
+        if (_SYS_strncmp(sOldWords[i], word, MAX_LETTERS_PER_WORD) == 0)
         {
             return true;
         }
@@ -67,7 +65,8 @@ void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
     case EventID_NewWordFound:
         if (sNumOldWords + 1 < MAX_OLD_WORDS)
         {
-            strcpy(sOldWords[sNumOldWords++], data.mWordFound.mWord);
+            _SYS_strlcpy(sOldWords[sNumOldWords++], data.mWordFound.mWord,
+                         MAX_LETTERS_PER_WORD + 1);
         }
         break;
 

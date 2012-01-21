@@ -5,8 +5,6 @@
  */
 
 #include <sifteo.h>
-#include <stdio.h>
-#include <string.h>
 #include "monsters.h"
 
 using namespace Sifteo;

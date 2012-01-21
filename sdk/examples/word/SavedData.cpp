@@ -2,10 +2,17 @@
 #include <sifteo.h>
 #include "EventData.h"
 #include "EventID.h"
-#include <cstdlib>
 #include "GameStateMachine.h"
 #include "assets.gen.h"
 #include "WordGame.h"
+
+/*
+ * XXX: Only used for qsort() currently. We should think about what kind of low-level VM
+ *      primitives the sort should be based on (with regard to ABI, as well as cache
+ *      behavior) and design it with a proper syscall interface. But for now, we're leaking
+ *      some libc code into the game :(
+ */
+#include <stdlib.h>
 
 unsigned SavedData::sHighScores[3];
 

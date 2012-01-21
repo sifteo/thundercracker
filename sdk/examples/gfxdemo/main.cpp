@@ -4,11 +4,7 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <sifteo.h>
-
 #include "assets.gen.h"
 #include "monsters_small.h"
 
@@ -198,7 +194,9 @@ void brickScroll()
             _SYS_vbuf_writei(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_tiles) / 2, Cat.tiles, 0, 8*9);
         }
 
-        vid.BG0_setPanning(Vec2( frame * 2.5f + 0.5f, sinf(frame * 0.06f) * 60.0f + 0.5f ));
+        float s;
+        _SYS_sincosf(frame * 0.06f, &s, NULL);
+        vid.BG0_setPanning(Vec2( frame * 2.5f + 0.5f, s * 60.0f + 0.5f ));
         System::paint();
     }
 }

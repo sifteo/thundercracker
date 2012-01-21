@@ -59,6 +59,19 @@ void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) MEMCPY_BODY
 void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) MEMCPY_BODY()
 void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) MEMCPY_BODY()
 
+int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)
+{
+    if (Runtime::checkUserPointer(a, count) && Runtime::checkUserPointer(b, count)) {
+        while (count) {
+            int diff = *(a++) - *(b++);
+            if (diff)
+                return diff;
+            count--;
+        }
+    }
+    return 0;
+}
+
 uint32_t _SYS_strnlen(const char *str, uint32_t maxLen)
 {
     uint32_t len = 0;
@@ -176,6 +189,23 @@ void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint
     }
 }
 
+int _SYS_strncmp(const char *a, const char *b, uint32_t count)
+{
+    if (Runtime::checkUserPointer(a, count) && Runtime::checkUserPointer(b, count)) {
+        while (count) {
+            uint8_t aV = *(a++);
+            uint8_t bV = *(b++);
+            int diff = aV - bV;
+            if (diff)
+                return diff;
+            if (!aV)
+                break;
+            count--;
+        }
+    }
+    return 0;
+}
+
 void _SYS_sincosf(float x, float *sinOut, float *cosOut)
 {
 	/*
@@ -194,6 +224,14 @@ void _SYS_sincosf(float x, float *sinOut, float *cosOut)
 		*sinOut = sinf(x);
 	if (Runtime::checkUserPointer(cosOut, sizeof *cosOut))
 		*cosOut = cosf(x);
+}
+
+float _SYS_fmodf(float a, float b)
+{
+    if (isfinite(a) && b != 0)
+        return fmodf(a, b);
+    else
+        return NAN;
 }
 
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed)

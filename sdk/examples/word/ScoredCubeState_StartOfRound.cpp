@@ -6,7 +6,6 @@
 #include "GameStateMachine.h"
 #include "Dictionary.h"
 #include "ScoredCubeState_StartOfRound.h"
-#include <string.h>
 
 ScoredCubeState_StartOfRound::ScoredCubeState_StartOfRound()
 {

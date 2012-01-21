@@ -1,8 +1,6 @@
 /* Copyright <c> 2011 Sifteo, Inc. All rights reserved. */
 
-#include <stdio.h>
 #include <sifteo.h>
-
 #include "game.h"
 
 Random Game::random;
