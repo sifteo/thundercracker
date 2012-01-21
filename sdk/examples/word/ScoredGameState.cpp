@@ -5,7 +5,6 @@
 #include "GameStateMachine.h"
 #include "assets.gen.h"
 #include "WordGame.h"
-#include <string.h>
 
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
@@ -43,7 +42,7 @@ void ScoredGameState::onAudioEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewWordFound:
 //        WordGame::playAudio(fireball_laugh, AudioChannelIndex_Score);
-        switch (strlen(data.mWordFound.mWord))
+        switch (_SYS_strnlen(data.mWordFound.mWord, 6))
         {
         case 2:
             WordGame::playAudio(fanfare_fire_laugh_01, AudioChannelIndex_Score);
@@ -135,9 +134,9 @@ void ScoredGameState::createNewAnagram()
     }
 
     LOG(("scrambled %s to %s\n", data.mNewAnagram.mWord, scrambled));
-    ASSERT(strlen(scrambled) == MAX_LETTERS_PER_WORD);
-    strcpy(data.mNewAnagram.mWord, scrambled);
-    unsigned wordLen = strlen(data.mNewAnagram.mWord);
+    ASSERT(_SYS_strnlen(scrambled, MAX_LETTERS_PER_WORD + 1) == MAX_LETTERS_PER_WORD);
+    _SYS_strlcpy(data.mNewAnagram.mWord, scrambled, sizeof data.mNewAnagram.mWord);
+    unsigned wordLen = _SYS_strnlen(data.mNewAnagram.mWord, sizeof data.mNewAnagram.mWord);
     unsigned numCubes = GameStateMachine::GetNumCubes();
     if ((wordLen % numCubes) == 0)
     {

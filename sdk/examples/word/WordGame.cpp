@@ -1,7 +1,6 @@
 #include <sifteo.h>
 #include "WordGame.h"
 #include "assets.gen.h"
-#include <cstdlib>
 
 using namespace Sifteo;
 

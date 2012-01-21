@@ -1,8 +1,6 @@
 /* Copyright <c> 2011 Sifteo, Inc. All rights reserved. */
 
-#include <stdlib.h>
 #include <sifteo.h>
-
 #include "game.h"
 
 

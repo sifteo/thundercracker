@@ -4,7 +4,6 @@
 #include "EventData.h"
 #include "Dictionary.h"
 #include "GameStateMachine.h"
-#include <string.h>
 #include "WordGame.h"
 #include "assets.gen.h"
 

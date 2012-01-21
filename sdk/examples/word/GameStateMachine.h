@@ -36,7 +36,7 @@ public:
     static CubeStateMachine* findCSMFromID(Cube::ID cubeID);
 
     static float getAnagramCooldown() { return sInstance->mAnagramCooldown; }
-    static unsigned getSecondsLeft() { return (unsigned) ceilf(sInstance->mTimeLeft); }
+    static unsigned getSecondsLeft() { return (unsigned) (sInstance->mTimeLeft + 0.999f); }
     static float getSecondsLeftFloat() { return sInstance->mTimeLeft; }
     static unsigned getScore() { return (unsigned) sInstance->mScore; }
     static float getTime() { return sInstance->StateMachine::getTime(); }
