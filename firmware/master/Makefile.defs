@@ -84,9 +84,6 @@ ifeq ($(BUILD_PLATFORM), Linux)
 endif
 
 # LLVM Runtime
-LLVM_VER = llvm-3.0
-LLVM_LIB = $(DEPS_DIR)/$(LLVM_VER)/lib
-LLVM_INC = $(TC_DIR)/deps/src/$(LLVM_VER)/include
 CCFLAGS_SIM += \
 	-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
 	-I$(LLVM_INC)

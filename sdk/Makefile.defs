@@ -1,13 +1,11 @@
 include $(TC_DIR)/Makefile.platform
+CC := $(LLVM_BIN)/clang
+LD := $(LLVM_BIN)/llvm-ld
 
-LLVM_BIN = $(DEPS_DIR)/llvm-3.0/bin
-CC = $(LLVM_BIN)/clang
-LD = $(LLVM_BIN)/llvm-ld
+SDK_DIR := $(TC_DIR)/sdk
+STIR := $(TC_DIR)/stir/stir$(BIN_EXT)
 
-SDK_DIR = $(TC_DIR)/sdk
-STIR = $(TC_DIR)/stir/stir$(BIN_EXT)
-
-BIN = runtime.bc
+BIN := runtime.bc
 ASSETS = assets
 
 GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html asegment.bin
