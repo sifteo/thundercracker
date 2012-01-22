@@ -26,44 +26,27 @@ OBJS = \
 	src/speexencoder.o \
 	$(OBJS_lua) \
 
-include ../Makefile.platform
+TC_DIR := ..
+include $(TC_DIR)/Makefile.platform
 
 # speex
-ifeq ($(BUILD_PLATFORM), windows32)
-	SPEEX_DIR = ../deps/win32/speex
-endif
-ifeq ($(BUILD_PLATFORM), Darwin)
-	ifeq ( $(BUILD_ARCH),i386 )
-		SPEEX_DIR = ../deps/osx/i386/speex
-	else
-		SPEEX_DIR = ../deps/osx/x86_64/speex
-	endif
-endif
-
+SPEEX_DIR := $(DEPS_DIR)/speex
 INCLUDES += -I$(SPEEX_DIR)/include
 LDFLAGS += -L$(SPEEX_DIR)/lib
-
 ifeq ($(BUILD_PLATFORM), windows32)
     LDFLAGS += -static
 endif
 LDFLAGS += -lspeex -lstdc++
-# end speex
-
-FIRMWARE_INC = ../firmware/include
-DEPFILES := $(OBJS:.o=.d)
-
-PYTHON := python
 
 ifeq ($(BUILD_PLATFORM), windows32)
-	CC := mingw32-gcc
-	DEPS := ../deps/win32
 	OBJS += src/winres.o
-endif
-
-CFLAGS += -O3 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -MMD
-ifneq ($(BUILD_PLATFORM), windows32)
+else
 	CFLAGS += -DLUA_USE_MKSTEMP
 endif
+
+DEPFILES := $(OBJS:.o=.d)
+FIRMWARE_INC = $(TC_DIR)/firmware/include
+CFLAGS += -O3 -g -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -MMD
 LDFLAGS += -g -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 
@@ -76,7 +59,7 @@ $(BIN): $(OBJS)
 	$(CC) -o src/$(BIN)-d.exe $(OBJS) $(LDFLAGS)
 	objcopy --only-keep-debug src/$(BIN)-d.exe $(BIN).dSYM
 	strip -s src/$(BIN)-d.exe -o $(BIN).exe
-	$(DEPS)/upx307w/upx.exe $(BIN).exe
+	$(UPX) $(BIN).exe
 else
 # Default link
 $(BIN): $(OBJS)
@@ -90,7 +73,7 @@ endif
 	$(CC) -c -o $@ $< $(CCFLAGS)
 
 %.o: %.rc
-	windres -i $< -o $@
+	$(WINDRES) -i $< -o $@
 
 src/proof_html.cpp: src/proof_html.py
 	$(PYTHON) $< $@

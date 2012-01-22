@@ -5,20 +5,32 @@ ifeq ($(findstring MINGW32_NT,$(BUILD_PLATFORM)),MINGW32_NT)
 endif
 
 ifeq ($(BUILD_PLATFORM), windows32)
-    BIN_EXT = .exe
+    BIN_EXT := .exe
+    CC := mingw32-gcc
 else
     BUILD_ARCH := $(shell arch)
-    BIN_EXT =
+    BIN_EXT :=
 endif
 
 ifeq ($(BUILD_PLATFORM), windows32)
-	DEPS_DIR = $(TC_DIR)/deps/win32
+	DEPS_DIR := $(TC_DIR)/deps/win32
+	UPX := $(DEPS_DIR)/upx307w/upx.exe
+	WINDRES := windres
 endif
 
 ifeq ($(BUILD_PLATFORM), Darwin)
 	ifeq ( $(BUILD_ARCH),i386 )
-		DEPS_DIR = $(TC_DIR)/deps/osx/i386
+		DEPS_DIR := $(TC_DIR)/deps/osx/i386
 	else
-		DEPS_DIR = $(TC_DIR)/deps/osx/x86_64
+		DEPS_DIR := $(TC_DIR)/deps/osx/x86_64
 	endif
 endif
+
+PYTHON := python
+OBJCOPY := objcopy
+STRIP := strip
+
+LLVM_VER := llvm-3.0
+LLVM_INC := $(TC_DIR)/deps/src/$(LLVM_VER)/include
+LLVM_LIB := $(DEPS_DIR)/$(LLVM_VER)/lib
+LLVM_BIN := $(DEPS_DIR)/$(LLVM_VER)/bin
