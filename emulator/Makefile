@@ -107,8 +107,9 @@ ifeq ($(BUILD_PLATFORM),Darwin)
 	LIBS += -framework OpenGL
 else ifeq ($(BUILD_PLATFORM),windows32)
 	OBJS += src/glew/glew.o
-	INCLUDES += -I$(DEPS)/glew-1.7.0/include
-	LIBS += $(DEPS)/glew-1.7.0/lib/glew32mxs.lib $(DEPS)/glew-1.7.0/lib/glew32s.lib -lOpenGL32 
+	INCLUDES += -I$(DEPS_DIR)/glew-1.7.0/include
+	LIBS += $(DEPS_DIR)/glew-1.7.0/lib/glew32mxs.lib \
+		$(DEPS_DIR)/glew-1.7.0/lib/glew32s.lib -lOpenGL32 
 else
 	LIBS += -lGL
 endif
