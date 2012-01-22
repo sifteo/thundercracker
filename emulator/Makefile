@@ -32,17 +32,6 @@ LOCAL_OBJS = \
 OBJS := $(LOCAL_OBJS)
 DEPFILES := $(LOCAL_OBJS:.o=.d)
 
-# OS detection
-OS := $(shell uname)
-ifeq ($(findstring MINGW32_NT,$(OS)),MINGW32_NT)  
-	OS := windows32
-endif
-ifeq ($(OS),windows32)
-	CC := mingw32-gcc
-	DEPS := ../deps/win32
-	LIBS += -lws2_32
-endif
-
 # LodePNG, self-contained PNG encoder/decoder
 OBJS += src/lodepng.o
 
@@ -104,14 +93,19 @@ OBJS += \
 	src/lua/lmathlib.o src/lua/loslib.o src/lua/ltablib.o src/lua/lstrlib.o \
 	src/lua/loadlib.o src/lua/linit.o src/lua/bit.o \
 
-ifneq ($(OS), windows32)
+TC_DIR := ..
+include $(TC_DIR)/Makefile.platform
+
+ifeq ($(BUILD_PLATFORM), windows32)
+	LIBS += -lws2_32
+else
 	FLAGS += -DLUA_USE_MKSTEMP
 endif
 
 # OpenGL
-ifeq ($(OS),Darwin)
+ifeq ($(BUILD_PLATFORM),Darwin)
 	LIBS += -framework OpenGL
-else ifeq ($(OS),windows32)
+else ifeq ($(BUILD_PLATFORM),windows32)
 	OBJS += src/glew/glew.o
 	INCLUDES += -I$(DEPS)/glew-1.7.0/include
 	LIBS += $(DEPS)/glew-1.7.0/lib/glew32mxs.lib $(DEPS)/glew-1.7.0/lib/glew32s.lib -lOpenGL32 
@@ -125,7 +119,7 @@ OBJS += \
     src/glfw/enable.o	   src/glfw/window.o src/glfw/joystick.o  src/glfw/thread.o \
     src/glfw/fullscreen.o  src/glfw/init.o   src/glfw/stream.o	  src/glfw/time.o   \
     src/glfw/glext.o	   src/glfw/input.o
-ifeq ($(OS),Darwin)
+ifeq ($(BUILD_PLATFORM),Darwin)
 	LIBS += -framework Cocoa
 	INCLUDES += -Isrc/glfw/cocoa
 	OBJS += \
@@ -133,7 +127,7 @@ ifeq ($(OS),Darwin)
 	    src/glfw/cocoa/cocoa_fullscreen.o  src/glfw/cocoa/cocoa_time.o	\
 	    src/glfw/cocoa/cocoa_glext.o       src/glfw/cocoa/cocoa_window.o	\
 	    src/glfw/cocoa/cocoa_init.o	       src/glfw/cocoa/cocoa_joystick.o
-else ifeq ($(OS),windows32)
+else ifeq ($(BUILD_PLATFORM),windows32)
 	LIBS += -lmingw32 -lwinmm -lgdi32 -lm -mwindows
 	INCLUDES += -Isrc/glfw/win32
 	OBJS += \
@@ -154,7 +148,7 @@ else
 endif
 
 # Curses
-ifeq ($(OS),windows32)
+ifeq ($(BUILD_PLATFORM),windows32)
 	# Use our own copy of pdcurses on Win32
 	# This is the "Win32a" variant, from http://www.projectpluto.com/win32a.htm
 	INCLUDES += -Isrc/pdcurses
@@ -189,19 +183,19 @@ else
 endif
 
 # Resources
-ifeq ($(OS),windows32)
+ifeq ($(BUILD_PLATFORM),windows32)
 	OBJS += resources/winres.o
 endif
 
 # C++ Libary
-ifeq ($(OS),windows32)
+ifeq ($(BUILD_PLATFORM),windows32)
 	LIBS += -static -lstdc++
 else
 	LIBS += -lstdc++
 endif
 
 # Linker flags
-ifneq ($(OS),Darwin)
+ifneq ($(BUILD_PLATFORM),Darwin)
 	# Not supported on Apple's LLVM GCC frontend
 	LIBS += -Wl,--gc-sections
 endif
@@ -232,15 +226,15 @@ LDFLAGS := $(FLAGS) $(LIBS)
 
 all: $(BIN)
 
-ifeq ($(OS),windows32)
+ifeq ($(BUILD_PLATFORM),windows32)
 # Win32 Link: Stripped and packed binaries, and separate debug symbols.
 $(BIN): $(OBJS)
 	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
 	objcopy --only-keep-debug "src/$(BIN)-d.exe" "$(BIN).dSYM"
 	strip -s "src/$(BIN)-d.exe" -o "$(BIN).exe"
-	$(DEPS)/upx307w/upx.exe "$(BIN).exe"
+	$(UPX) "$(BIN).exe"
 else
-ifeq ($(OS),Darwin)
+ifeq ($(BUILD_PLATFORM),Darwin)
 # Mac OS Link: Create an app bundle with a stripped binary.
 $(BIN): $(BIN).app
 $(BIN).app: $(OBJS)
@@ -267,7 +261,7 @@ endif
 	$(CC) -c $(MFLAGS) $*.m -o $*.o
 
 %.o: %.rc
-	windres -i $< -o $@
+	$(WINDRES) -i $< -o $@
 
 # Data dependencies don't need to be rebuilt by everyone,
 # the resulting generated code is checked into git. The
