@@ -28,3 +28,10 @@ ifeq ($(BUILD_PLATFORM), Darwin)
 endif
 
 PYTHON := python
+OBJCOPY := objcopy
+STRIP := strip
+
+LLVM_VER := llvm-3.0
+LLVM_INC := $(TC_DIR)/deps/src/$(LLVM_VER)/include
+LLVM_LIB := $(DEPS_DIR)/$(LLVM_VER)/lib
+LLVM_BIN := $(DEPS_DIR)/$(LLVM_VER)/bin

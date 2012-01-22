@@ -230,8 +230,8 @@ ifeq ($(BUILD_PLATFORM),windows32)
 # Win32 Link: Stripped and packed binaries, and separate debug symbols.
 $(BIN): $(OBJS)
 	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
-	objcopy --only-keep-debug "src/$(BIN)-d.exe" "$(BIN).dSYM"
-	strip -s "src/$(BIN)-d.exe" -o "$(BIN).exe"
+	$(OBJCOPY) --only-keep-debug "src/$(BIN)-d.exe" "$(BIN).dSYM"
+	$(STRIP) -s "src/$(BIN)-d.exe" -o "$(BIN).exe"
 	$(UPX) "$(BIN).exe"
 else
 ifeq ($(BUILD_PLATFORM),Darwin)
@@ -243,7 +243,7 @@ $(BIN).app: $(OBJS)
 	mkdir -p "$(BIN).app/Contents/Resources"
 	cp resources/Info.plist "$(BIN).app/Contents/Info.plist"
 	cp resources/siftrunner_icon.icns "$(BIN).app/Contents/Resources/$(BIN).icns"
-	strip -Sx "src/$(BIN)-d" -o "$(BIN).app/contents/MacOS/$(BIN)"
+	$(STRIP) -Sx "src/$(BIN)-d" -o "$(BIN).app/contents/MacOS/$(BIN)"
 else
 # Default link
 $(BIN): $(OBJS)
@@ -276,10 +276,10 @@ endif
 # the command line.
 
 resources/data.cpp: $(DATADEPS)
-	python resources/bin2c.py
+	$(PYTHON) resources/bin2c.py
 
 firmware:
-	python resources/firmware-sbt.py ../firmware/cube/*.rst
+	$(PYTHON) resources/firmware-sbt.py ../firmware/cube/*.rst
 
 .PHONY: clean firmware
 
