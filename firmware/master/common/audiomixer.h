@@ -63,7 +63,7 @@ private:
     // 8 channels, but left aligned for use with CLZ() & friends
     static const int ALL_DECODERS_AVAILABLE = 0xFF000000;
 
-    AudioChannelSlot* channelForHandle(_SYSAudioHandle handle);
+    AudioChannelSlot* channelForHandle(_SYSAudioHandle handle, uint32_t mask);
     SpeexDecoder* getDecoder();
     PCMDecoder* getPCMDecoder();
     void stopChannel(AudioChannelSlot *ch);

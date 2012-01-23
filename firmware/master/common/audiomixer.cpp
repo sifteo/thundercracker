@@ -302,12 +302,14 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
 
 bool AudioMixer::isPlaying(_SYSAudioHandle handle)
 {
-    return channelForHandle(handle) != 0;
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    return channelForHandle(handle, mask) != 0;
 }
 
 void AudioMixer::stop(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
         stopChannel(ch);
     }
 }
@@ -337,28 +339,30 @@ void AudioMixer::stopChannel(AudioChannelSlot *ch)
 
 void AudioMixer::pause(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
         ch->pause();
     }
 }
 
 void AudioMixer::resume(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
         ch->resume();
     }
 }
 
 void AudioMixer::setVolume(_SYSAudioHandle handle, int volume)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle, enabledChannelMask)) {
         ch->volume = Math::clamp(volume, 0, (int)Audio::MAX_VOLUME);
     }
 }
 
 int AudioMixer::volume(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle, enabledChannelMask)) {
         return ch->volume;
     }
     return 0;
@@ -366,17 +370,16 @@ int AudioMixer::volume(_SYSAudioHandle handle)
 
 uint32_t AudioMixer::pos(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
         ch = 0;
         // TODO - implement
     }
     return 0;
 }
 
-AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle)
+AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle, uint32_t mask)
 {
-    // channels that are active, and not marked as stopped
-    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
         if (channelSlots[idx].handle == handle) {
