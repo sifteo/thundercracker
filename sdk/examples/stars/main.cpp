@@ -7,13 +7,7 @@
 #include <sifteo.h>
 #include "assets.gen.h"
 
-#define NUM_CUBES 3
-
 using namespace Sifteo;
-
-struct FVec2 {
-    float x, y;
-};
 
 Math::Random gRandom;
 
@@ -41,21 +35,14 @@ public:
         for (unsigned i = 0; i < numStars; i++)
             initStar(i);
 
-        VidMode_BG0 vid(cube.vbuf);
-        vid.init();
+        VidMode_BG0_SPR_BG1 vid(cube.vbuf);
+        vid.clear();
         vid.BG0_drawAsset(Vec2(0,0), Background);
- 
-        // Clear BG1/SPR before switching modes
-        _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_BITMAP/2, 0, 16);
-        _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_TILES/2,
-                       cube.vbuf.indexWord(Font.index), 32);
-        _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_SPR, 0, 8*5/2);
         
         // Allocate 16x2 tiles on BG1 for text at the bottom of the screen
         _SYS_vbuf_fill(&cube.vbuf.sys, _SYS_VA_BG1_BITMAP/2 + 14, 0xFFFF, 2);
 
-        // Switch modes
-        _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
+        vid.set();
     }
     
     void update(float timeStep)
@@ -67,8 +54,7 @@ public:
         switch (frame) {
         
         case 0:
-            text.x = 0;
-            text.y = -20;
+            text.set(0, -20);
             textTarget = text;
             break;
         
@@ -110,10 +96,8 @@ public:
             break;
         
         case 800: {
-            text.x = -4;
-            text.y = 128;
-            textTarget.x = -4;
-            textTarget.y = 128-16;
+            text.set(-4, 128);
+            textTarget.set(-4, 128-16);
             
             /*
              * This is the *average* FPS so far, as measured by the game.
@@ -146,21 +130,24 @@ public:
          
         _SYSAccelState accel;
         _SYS_getAccel(cube.id(), &accel);
+        Float2 tilt(accel.x, accel.y);
+        tilt *= starTiltSpeed;
         
         /*
          * Update starfield animation
          */
         
+        VidMode_BG0_SPR_BG1 vid(cube.vbuf);
         for (unsigned i = 0; i < numStars; i++) {
-            resizeSprite(i, 8, 8);
-            setSpriteImage(i, Star.index + (frame % Star.frames) * Star.width * Star.height);
-            moveSprite(i, stars[i].x + (64 - 3.5f), stars[i].y + (64 - 3.5f));
-           
-            stars[i].x += timeStep * (stars[i].vx + accel.x * starTiltSpeed);
-            stars[i].y += timeStep * (stars[i].vy + accel.y * starTiltSpeed);
+            const Float2 center(64 - 3.5f, 64 - 3.5f);
+            vid.resizeSprite(i, 8, 8);
+            vid.setSpriteImage(i, Star.index + (frame % Star.frames) * Star.width * Star.height);
+            vid.moveSprite(i, stars[i].pos + center);
             
-            if (stars[i].x > 80 || stars[i].x < -80 ||
-                stars[i].y > 80 || stars[i].y < -80)
+            stars[i].pos += timeStep * (stars[i].velocity + tilt);
+            
+            if (stars[i].pos.x > 80 || stars[i].pos.x < -80 ||
+                stars[i].pos.y > 80 || stars[i].pos.y < -80)
                 initStar(i);
         }
         
@@ -171,65 +158,23 @@ public:
         frame++;
         fpsTimespan += timeStep;
 
-        VidMode_BG0 vid(cube.vbuf);
-        bg.x += timeStep * (accel.x * bgTiltSpeed);
-        bg.y += timeStep * (accel.y * bgTiltSpeed - bgScrollSpeed);
-        vid.BG0_setPanning(Vec2(bg.x + 0.5f, bg.y + 0.5f));
+        Float2 bgVelocity(accel.x * bgTiltSpeed, accel.y * bgTiltSpeed - bgScrollSpeed);
+        bg += timeStep * bgVelocity;
+        vid.BG0_setPanning(Vec2::round(bg));
         
-        text.x += (textTarget.x - text.x) * textSpeed;
-        text.y += (textTarget.y - text.y) * textSpeed;
-        panBG1(text.x + 0.5f, text.y + 0.5f);
+        text += (textTarget - text) * textSpeed;
+        vid.BG1_setPanning(Vec2::round(text));
     }
 
 private:   
     struct {
-        float x, y, vx, vy;
+        Float2 pos, velocity;
     } stars[numStars];
     
     Cube &cube;
     unsigned frame;
-    FVec2 bg, text, textTarget;
-    
+    Float2 bg, text, textTarget;
     float fpsTimespan;
-    
-    void moveSprite(int id, int x, int y)
-    {
-        uint8_t xb = -x;
-        uint8_t yb = -y;
-
-        uint16_t word = ((uint16_t)xb << 8) | yb;
-        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
-                        sizeof(_SYSSpriteInfo)/2 * id ); 
-
-        _SYS_vbuf_poke(&cube.vbuf.sys, addr, word);
-    }
-
-    void resizeSprite(int id, int w, int h)
-    {
-        uint8_t xb = -w;
-        uint8_t yb = -h;
-
-        uint16_t word = ((uint16_t)xb << 8) | yb;
-        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
-                          sizeof(_SYSSpriteInfo)/2 * id ); 
-
-        _SYS_vbuf_poke(&cube.vbuf.sys, addr, word);
-    }
-
-    void setSpriteImage(int id, int tile)
-    {
-        uint16_t word = VideoBuffer::indexWord(tile);
-        uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].tile)/2 +
-                          sizeof(_SYSSpriteInfo)/2 * id ); 
-
-        _SYS_vbuf_poke(&cube.vbuf.sys, addr, word);
-    }
-
-    void panBG1(int8_t x, int8_t y)
-    {
-        _SYS_vbuf_poke(&cube.vbuf.sys, offsetof(_SYSVideoRAM, bg1_x) / 2,
-                       ((uint8_t)x) | ((uint16_t)(uint8_t)y << 8));
-    }
 
     void writeText(const char *str)
     {
@@ -247,43 +192,16 @@ private:
 
     void initStar(int id)
     {
-        stars[id].x = 0;
-        stars[id].y = 0;
-        
-        gRandom.randint(0, 10);
-        
         float angle = gRandom.uniform(0, 2 * M_PI);
-        float speed = gRandom.uniform(starEmitSpeed * 0.5f, starEmitSpeed);
-    
-        stars[id].vx = cosf(angle) * speed;
-        stars[id].vy = sinf(angle) * speed;
+        float speed = gRandom.uniform(starEmitSpeed * 0.5f, starEmitSpeed);    
+        stars[id].pos.set(0, 0);
+        stars[id].velocity.setPolar(angle, speed);
     }
 };
 
 
-static const char* sideNames[] = {
-  "top", "left", "bottom", "right"  
-};
-
-void neighbor_add(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
-    LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
-}
-
-void neighbor_remove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
-    LOG(("neighbor remove:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
-}
-
-void accel(_SYSCubeID c) {
-    LOG(("accelerometer changed\n"));
-}
-
 void siftmain()
 {
-    LOG(("HELLO, WORLD\n"));
-    //_SYS_vectors.cubeEvents.accelChange = accel;
-    _SYS_vectors.neighborEvents.add = neighbor_add;
-    _SYS_vectors.neighborEvents.remove = neighbor_remove;
-    
     static Cube cubes[] = { Cube(0), Cube(1) };
     static StarDemo demos[] = { StarDemo(cubes[0]), StarDemo(cubes[1]) };
     
@@ -293,7 +211,6 @@ void siftmain()
 
         VidMode_BG0_ROM rom(cubes[i].vbuf);
         rom.init();
-        
         rom.BG0_text(Vec2(1,1), "Loading...");
         rom.BG0_text(Vec2(1,13), "zomg it's full\nof stars!!!");
     }
