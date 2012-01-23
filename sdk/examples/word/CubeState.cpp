@@ -1,5 +1,4 @@
 #include <sifteo.h>
-#include <math.h>
 #include "CubeState.h"
 #include "CubeStateMachine.h"
 #include "GameStateMachine.h"
@@ -451,7 +450,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
 
                         if (mAsleep)
                         {
-                            unsigned zzzFrame = (unsigned)floorf(getStateMachine().getTime() / 0.5f);
+                            unsigned zzzFrame = (unsigned)(getStateMachine().getTime() / 0.5f);
                             vid.setSpriteImage(LetterStateSpriteID_Zzz, LetterZzZ.index + (zzzFrame % LetterZzZ.frames) * LetterZzZ.width * LetterZzZ.height);
                             vid.resizeSprite(LetterStateSpriteID_Zzz, LetterZzZ.width * 8, LetterZzZ.height * 8);
                             vid.moveSprite(LetterStateSpriteID_Zzz,

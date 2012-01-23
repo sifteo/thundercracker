@@ -416,6 +416,7 @@ void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count);
 void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count);
 void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count);
 void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count);
+int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count);
 
 uint32_t _SYS_strnlen(const char *str, uint32_t maxLen);
 void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize);
@@ -423,6 +424,10 @@ void _SYS_strlcat(char *dest, const char *src, uint32_t destSize);
 void _SYS_strlcat_int(char *dest, int src, uint32_t destSize);
 void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
 void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
+int _SYS_strncmp(const char *a, const char *b, uint32_t count);
+
+void _SYS_sincosf(float x, float *sinOut, float *cosOut);
+float _SYS_fmodf(float a, float b);
 
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed);
 uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state);

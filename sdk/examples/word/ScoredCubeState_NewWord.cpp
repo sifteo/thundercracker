@@ -5,7 +5,6 @@
 #include "CubeStateMachine.h"
 #include "GameStateMachine.h"
 #include "ScoredCubeState_NewWord.h"
-#include <string.h>
 
 ScoredCubeState_NewWord::ScoredCubeState_NewWord()
 {

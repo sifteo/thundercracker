@@ -8,10 +8,30 @@
 #define _SIFTEO_MATH_H
 
 #include <sifteo/abi.h>
-#include <math.h>
 
 namespace Sifteo {
 namespace Math {
+
+
+/**
+ * Common mathematical constants
+ */
+ 
+#define M_E         2.71828182845904523536028747135266250   // e
+#define M_LOG2E     1.44269504088896340735992468100189214   // log 2e
+#define M_LOG10E    0.434294481903251827651128918916605082  // log 10e
+#define M_LN2       0.693147180559945309417232121458176568  // log e2
+#define M_LN10      2.30258509299404568401799145468436421   // log e10
+#define M_PI        3.14159265358979323846264338327950288   // pi
+#define M_PI_2      1.57079632679489661923132169163975144   // pi/2
+#define M_PI_4      0.785398163397448309615660845819875721  // pi/4
+#define M_1_PI      0.318309886183790671537767526745028724  // 1/pi
+#define M_2_PI      0.636619772367581343075535053490057448  // 2/pi
+#define M_2_SQRTPI  1.12837916709551257389615890312154517   // 2/sqrt(pi)
+#define M_SQRT2     1.41421356237309504880168872420969808   // sqrt(2)
+#define M_SQRT1_2   0.707106781186547524400844362104849039  // 1/sqrt(2)
+#define MAXFLOAT    ((float)3.40282346638528860e+38)
+
 
 /**
  * 2-element float vector
@@ -24,11 +44,38 @@ struct Float2 {
     Float2(float _x, float _y)
         : x(_x), y(_y) {}
 
-    inline float len2() { return ( x * x + y * y ); }
+    static Float2 polar(float angle, float magnitude) {
+        Float2 f;
+        f.setPolar(angle, magnitude);
+        return f;
+    }
 
+    void set(float _x, float _y) {
+        x = _x;
+        y = _y;
+    }
+
+    void setPolar(float angle, float magnitude) {
+		float s, c;
+		_SYS_sincosf(angle, &s, &c);
+        x = c * magnitude;
+        y = s * magnitude;
+    }
+	
+	Float2 rotate(float angle) const {
+		float s, c;
+		_SYS_sincosf(angle, &s, &c);
+        return Float2(x*c - y*s, x*s + y*c);
+	}
+		
+    inline float len2() const {
+		return ( x * x + y * y );
+	}
+    
     float x, y;
 };
 
+inline Float2 operator-(const Float2& u) { return Float2(-u.x, -u.y); }
 inline Float2 operator+(const Float2& u, const Float2& v) { return Float2(u.x+v.x, u.y+v.y); }
 inline Float2 operator += (Float2& u, const Float2& v) { return Float2(u.x+=v.x, u.y+=v.y); }
 inline Float2 operator-(const Float2& u, const Float2& v) { return Float2(u.x-v.x, u.y-v.y); }
@@ -37,6 +84,8 @@ inline Float2 operator*(float k, const Float2& v) { return Float2(k*v.x, k*v.y);
 inline Float2 operator*(const Float2& v, float k) { return Float2(k*v.x, k*v.y); }
 inline Float2 operator*(const Float2& u, const Float2& v) { return Float2(u.x*v.x-u.y*v.y, u.y*v.x+u.x*v.y); } // complex multiplication
 inline Float2 operator/(const Float2& u, float k) { return Float2(u.x/k, u.y/k); }
+inline Float2 operator += (Float2& u, float k) { return Float2(u.x+=k, u.y+=k); }
+inline Float2 operator *= (Float2& u, float k) { return Float2(u.x*=k, u.y*=k); }
 inline bool operator==(const Float2& u, const Float2& v) { return u.x == v.x && u.y == v.y; }
 inline bool operator!=(const Float2& u, const Float2& v) { return u.x != v.x || u.y != v.y; }
 
@@ -51,9 +100,19 @@ struct Vec2 {
 	Vec2(int _x, int _y)
         : x(_x), y(_y) {}
 
-	//implicit conversion from float
-	Vec2( const Float2 &other)
-        : x( (int)other.x ), y( (int)other.y ) {}
+    void set(int _x, int _y) {
+        x = _x;
+        y = _y;
+    }
+
+	// Implicit conversion from float (truncation)
+	Vec2(const Float2 &other)
+        : x((int)other.x), y((int)other.y) {}
+
+    // Explicit rounding
+    static Vec2 round(const Float2 &other) {
+        return Vec2((int)(other.x + 0.5f), (int)(other.y + 0.5f));
+    }
 
     int x, y;
 };
@@ -254,8 +313,8 @@ struct AffineMatrix {
     }
 
     static AffineMatrix rotation(float angle) {
-        float s = sinf(angle);
-        float c = cosf(angle);
+        float s, c;
+        _SYS_sincosf(angle, &s, &c);
         return AffineMatrix(c, -s, 0,
                             s, c, 0);
     }
@@ -308,6 +367,35 @@ template <typename T> inline T abs(const T& value)
         return -value;
     }
     return value;
+}
+
+float inline fmodf(float a, float b)
+{
+    return _SYS_fmodf(a, b);
+}
+
+
+/*
+ * Trigonometry
+ */
+ 
+float inline sinf(float x)
+{
+    float s;
+    _SYS_sincosf(x, &s, NULL);
+    return s;
+}
+
+float inline cosf(float x)
+{
+    float c;
+    _SYS_sincosf(x, NULL, &c);
+    return c;
+}
+
+void inline sincosf(float x, float *s, float *c)
+{
+    _SYS_sincosf(x, s, c);
 }
 
 
