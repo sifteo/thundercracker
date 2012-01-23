@@ -176,9 +176,12 @@ def generate_dict():
     sorted_word_list_used = sorted(word_list_used.iteritems(), key=operator.itemgetter(1), reverse=True)    
     print sorted_word_list_used
     fi = open("word_list_used.cpp", "w")
+    ficnt = open("word_list_used_anagram_count.cpp", "w")
     for word, value in sorted_word_list_used:
         fi.write("    \"" + word + "\",\n")
+        ficnt.write("    \"" + str(word_list_used[word]) + "\",\t// " + word + "\n")
     fi.close()    
+    ficnt.close()
 
     return;
     fi = open("anagram_seeds.txt", "w")
