@@ -13,7 +13,6 @@ WARNFLAGS := -Werror -Wall -Wno-uninitialized
 # LLVM
 FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 INCLUDES += -I$(LLVM_INC)
-LIBS += -lstdc++
 LIBS += \
 	$(LLVM_LIB)/libLLVMScalarOpts.a \
 	$(LLVM_LIB)/libLLVMTransformUtils.a \
@@ -35,7 +34,7 @@ LIBS += \
 FLAGS += -MMD
 
 CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
-LDFLAGS := $(FLAGS) $(LIBS)
+LDFLAGS := $(LIB_STDCPP) $(FLAGS) $(LIBS)
 
 all: $(BIN)
 
