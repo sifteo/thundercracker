@@ -1,16 +1,24 @@
+# Determine the build platform string
+
 BUILD_PLATFORM := $(shell uname)
 
 ifeq ($(findstring MINGW32_NT,$(BUILD_PLATFORM)),MINGW32_NT)
     BUILD_PLATFORM := windows32
 endif
 
+# Windows-isms
+
 ifeq ($(BUILD_PLATFORM), windows32)
+    LIB_STDCPP := -static -lstdc++
     BIN_EXT := .exe
     CC := mingw32-gcc
 else
+    LIB_STDCPP := -static -lstdc++
     BUILD_ARCH := $(shell arch)
     BIN_EXT :=
 endif
+
+# Pick a DEPS_DIR, set up target-specific tools
 
 ifeq ($(BUILD_PLATFORM), windows32)
 	DEPS_DIR := $(TC_DIR)/deps/win32
@@ -25,6 +33,8 @@ ifeq ($(BUILD_PLATFORM), Darwin)
 		DEPS_DIR := $(TC_DIR)/deps/osx/x86_64
 	endif
 endif
+
+# Tools that aren't (yet) target-specific
 
 PYTHON := python
 OBJCOPY := objcopy
