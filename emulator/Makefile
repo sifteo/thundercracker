@@ -189,11 +189,7 @@ ifeq ($(BUILD_PLATFORM),windows32)
 endif
 
 # C++ Libary
-ifeq ($(BUILD_PLATFORM),windows32)
-	LIBS += -static -lstdc++
-else
-	LIBS += -lstdc++
-endif
+LIBS += $(LIB_STDCPP)
 
 # Linker flags
 ifneq ($(BUILD_PLATFORM),Darwin)
