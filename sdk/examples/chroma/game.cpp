@@ -235,18 +235,18 @@ void Game::CheckChain( CubeWrapper *pWrapper )
             {
 
             }
-            else */if( m_iDotsCleared >= DOT_THRESHOLD4 )
+            else if( m_iDotsCleared >= DOT_THRESHOLD4 )
             {
                 playSound(clear4);
 
-                if( m_mode == MODE_SHAKES /*&& !m_bHyperDotMatched*/ )
+                if( m_mode == MODE_SHAKES && !m_bHyperDotMatched )
                 {
                     pWrapper->getBanner().SetMessage( "Bonus Shake!" );
                     bannered = true;
                     m_ShakesRemaining++;
                 }
             }
-            else if( m_iDotsCleared >= DOT_THRESHOLD3 )
+            else */if( m_iDotsCleared >= DOT_THRESHOLD3 )
             {
                 playSound(clear3);
 
