@@ -13,7 +13,7 @@ ifeq ($(BUILD_PLATFORM), windows32)
     BIN_EXT := .exe
     CC := mingw32-gcc
 else
-    LIB_STDCPP := -static -lstdc++
+    LIB_STDCPP := -lstdc++
     BUILD_ARCH := $(shell arch)
     BIN_EXT :=
 endif
