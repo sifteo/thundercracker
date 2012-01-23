@@ -118,10 +118,6 @@ public:
     JumpTableUId(0), PICLabelUId(0),
     VarArgsFrameIndex(0), HasITBlocks(false) {}
 
-  bool isThumbFunction() const { return isThumb; }
-  bool isThumb1OnlyFunction() const { return isThumb && !hasThumb2; }
-  bool isThumb2Function() const { return isThumb && hasThumb2; }
-
   unsigned getVarArgsRegSaveSize() const { return VarArgsRegSaveSize; }
   void setVarArgsRegSaveSize(unsigned s) { VarArgsRegSaveSize = s; }
 

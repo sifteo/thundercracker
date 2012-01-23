@@ -313,23 +313,12 @@ const MachineInstrBuilder &AddNoT1CC(const MachineInstrBuilder &MIB) {
 
 static inline
 bool isUncondBranchOpcode(int Opc) {
-  return Opc == ARM::B || Opc == ARM::tB || Opc == ARM::t2B;
+  return Opc == ARM::tB;
 }
 
 static inline
 bool isCondBranchOpcode(int Opc) {
-  return Opc == ARM::Bcc || Opc == ARM::tBcc || Opc == ARM::t2Bcc;
-}
-
-static inline
-bool isJumpTableBranchOpcode(int Opc) {
-  return Opc == ARM::BR_JTr || Opc == ARM::BR_JTm || Opc == ARM::BR_JTadd ||
-    Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT;
-}
-
-static inline
-bool isIndirectBranchOpcode(int Opc) {
-  return Opc == ARM::BX || Opc == ARM::MOVPCRX || Opc == ARM::tBRIND;
+  return Opc == ARM::tBcc;
 }
 
 /// getInstrPredicate - If instruction is predicated, returns its predicate

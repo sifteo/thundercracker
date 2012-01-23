@@ -16,6 +16,7 @@
 
 #include "ARM.h"
 #include "ARMTargetMachine.h"
+#include "ARMMachineFunctionInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Support/Compiler.h"
 
@@ -65,7 +66,6 @@ public:
                                      const char *ExtraCode, raw_ostream &O);
 
   void EmitJumpTable(const MachineInstr *MI);
-  void EmitJump2Table(const MachineInstr *MI);
   virtual void EmitInstruction(const MachineInstr *MI);
   bool runOnMachineFunction(MachineFunction &F);
 

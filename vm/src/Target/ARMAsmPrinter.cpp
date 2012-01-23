@@ -944,68 +944,6 @@ void ARMAsmPrinter::EmitJumpTable(const MachineInstr *MI) {
   }
 }
 
-void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
-  unsigned Opcode = MI->getOpcode();
-  int OpNum = (Opcode == ARM::t2BR_JT) ? 2 : 1;
-  const MachineOperand &MO1 = MI->getOperand(OpNum);
-  const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
-  unsigned JTI = MO1.getIndex();
-
-  // Emit a label for the jump table.
-  if (MI->getOpcode() == ARM::t2TBB_JT) {
-    OutStreamer.EmitJumpTable8Region();
-  } else if (MI->getOpcode() == ARM::t2TBH_JT) {
-    OutStreamer.EmitJumpTable16Region();
-  } else {
-    OutStreamer.EmitJumpTable32Region();
-  }
-
-  MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
-  OutStreamer.EmitLabel(JTISymbol);
-
-  // Emit each entry of the table.
-  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
-  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
-  const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
-  unsigned OffsetWidth = 4;
-  if (MI->getOpcode() == ARM::t2TBB_JT)
-    OffsetWidth = 1;
-  else if (MI->getOpcode() == ARM::t2TBH_JT)
-    OffsetWidth = 2;
-
-  for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
-    MachineBasicBlock *MBB = JTBBs[i];
-    const MCExpr *MBBSymbolExpr = MCSymbolRefExpr::Create(MBB->getSymbol(),
-                                                      OutContext);
-    // If this isn't a TBB or TBH, the entries are direct branch instructions.
-    if (OffsetWidth == 4) {
-      MCInst BrInst;
-      BrInst.setOpcode(ARM::t2B);
-      BrInst.addOperand(MCOperand::CreateExpr(MBBSymbolExpr));
-      BrInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-      BrInst.addOperand(MCOperand::CreateReg(0));
-      OutStreamer.EmitInstruction(BrInst);
-      continue;
-    }
-    // Otherwise it's an offset from the dispatch instruction. Construct an
-    // MCExpr for the entry. We want a value of the form:
-    // (BasicBlockAddr - TableBeginAddr) / 2
-    //
-    // For example, a TBB table with entries jumping to basic blocks BB0 and BB1
-    // would look like:
-    // LJTI_0_0:
-    //    .byte (LBB0 - LJTI_0_0) / 2
-    //    .byte (LBB1 - LJTI_0_0) / 2
-    const MCExpr *Expr =
-      MCBinaryExpr::CreateSub(MBBSymbolExpr,
-                              MCSymbolRefExpr::Create(JTISymbol, OutContext),
-                              OutContext);
-    Expr = MCBinaryExpr::CreateDiv(Expr, MCConstantExpr::Create(2, OutContext),
-                                   OutContext);
-    OutStreamer.EmitValue(Expr, OffsetWidth);
-  }
-}
-
 void ARMAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
                                            raw_ostream &OS) {
   unsigned NOps = MI->getNumOperands();
@@ -1089,14 +1027,6 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       // Special case here: no src & dst reg, but two extra imp ops.
       StartOp = 2; NumOffset = 2;
     case ARM::STMDB_UPD:
-    case ARM::t2STMDB_UPD:
-    case ARM::VSTMDDB_UPD:
-      assert(SrcReg == ARM::SP &&
-             "Only stack pointer as a source reg is supported");
-      for (unsigned i = StartOp, NumOps = MI->getNumOperands() - NumOffset;
-           i != NumOps; ++i)
-        RegList.push_back(MI->getOperand(i).getReg());
-      break;
     case ARM::STR_PRE_IMM:
     case ARM::STR_PRE_REG:
       assert(MI->getOperand(2).getReg() == ARM::SP &&
@@ -1104,7 +1034,6 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       RegList.push_back(SrcReg);
       break;
     }
-    OutStreamer.EmitRegSave(RegList, Opc == ARM::VSTMDDB_UPD);
   } else {
     // Changes of stack / frame pointer.
     if (SrcReg == ARM::SP) {
@@ -1195,7 +1124,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   // Check for manual lowerings.
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
-  case ARM::t2MOVi32imm: assert(0 && "Should be lowered by thumb2it pass");
   case ARM::DBG_VALUE: {
     if (isVerbose() && OutStreamer.hasRawTextSupport()) {
       SmallString<128> TmpStr;
@@ -1207,34 +1135,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case ARM::LEApcrel:
   case ARM::tLEApcrel:
-  case ARM::t2LEApcrel: {
-    // FIXME: Need to also handle globals and externals
-    MCInst TmpInst;
-    TmpInst.setOpcode(MI->getOpcode() == ARM::t2LEApcrel ? ARM::t2ADR
-                      : (MI->getOpcode() == ARM::tLEApcrel ? ARM::tADR
-                         : ARM::ADR));
-    populateADROperands(TmpInst, MI->getOperand(0).getReg(),
-                        GetCPISymbol(MI->getOperand(1).getIndex()),
-                        MI->getOperand(2).getImm(), MI->getOperand(3).getReg(),
-                        OutContext);
-    OutStreamer.EmitInstruction(TmpInst);
-    return;
-  }
   case ARM::LEApcrelJT:
   case ARM::tLEApcrelJT:
-  case ARM::t2LEApcrelJT: {
-    MCInst TmpInst;
-    TmpInst.setOpcode(MI->getOpcode() == ARM::t2LEApcrelJT ? ARM::t2ADR
-                      : (MI->getOpcode() == ARM::tLEApcrelJT ? ARM::tADR
-                         : ARM::ADR));
-    populateADROperands(TmpInst, MI->getOperand(0).getReg(),
-                      GetARMJTIPICJumpTableLabel2(MI->getOperand(1).getIndex(),
-                                                  MI->getOperand(2).getImm()),
-                      MI->getOperand(3).getImm(), MI->getOperand(4).getReg(),
-                      OutContext);
-    OutStreamer.EmitInstruction(TmpInst);
-    return;
-  }
   // Darwin call instructions are just normal call instructions with different
   // clobber semantics (they clobber R9).
   case ARM::BXr9_CALL:
@@ -1310,8 +1212,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  case ARM::MOVi16_ga_pcrel:
-  case ARM::t2MOVi16_ga_pcrel: {
+  case ARM::MOVi16_ga_pcrel: {
     MCInst TmpInst;
     TmpInst.setOpcode(Opc == ARM::MOVi16_ga_pcrel? ARM::MOVi16 : ARM::t2MOVi16);
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
@@ -1497,52 +1398,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
     else
       EmitGlobalConstant(MCPE.Val.ConstVal);
-    return;
-  }
-  case ARM::t2BR_JT: {
-    // Lower and emit the instruction itself, then the jump table following it.
-    MCInst TmpInst;
-    TmpInst.setOpcode(ARM::tMOVr);
-    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.EmitInstruction(TmpInst);
-    // Output the data for the jump table itself
-    EmitJump2Table(MI);
-    return;
-  }
-  case ARM::t2TBB_JT: {
-    // Lower and emit the instruction itself, then the jump table following it.
-    MCInst TmpInst;
-
-    TmpInst.setOpcode(ARM::t2TBB);
-    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.EmitInstruction(TmpInst);
-    // Output the data for the jump table itself
-    EmitJump2Table(MI);
-    // Make sure the next instruction is 2-byte aligned.
-    EmitAlignment(1);
-    return;
-  }
-  case ARM::t2TBH_JT: {
-    // Lower and emit the instruction itself, then the jump table following it.
-    MCInst TmpInst;
-
-    TmpInst.setOpcode(ARM::t2TBH);
-    TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.EmitInstruction(TmpInst);
-    // Output the data for the jump table itself
-    EmitJump2Table(MI);
     return;
   }
   case ARM::tBR_JTr:

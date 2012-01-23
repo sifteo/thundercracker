@@ -15,10 +15,6 @@
 // Thumb specific DAG Nodes.
 //
 
-def ARMtcall : SDNode<"ARMISD::tCALL", SDT_ARMcall,
-                      [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
-                       SDNPVariadic]>;
-
 def imm_sr_XFORM: SDNodeXForm<imm, [{
   unsigned Imm = N->getZExtValue();
   return CurDAG->getTargetConstant((Imm == 32 ? 0 : Imm), MVT::i32);
@@ -226,30 +222,11 @@ def t_addrmode_pc : Operand<i32> {
 //  Miscellaneous Instructions.
 //
 
-// FIXME: Marking these as hasSideEffects is necessary to prevent machine DCE
-// from removing one half of the matched pairs. That breaks PEI, which assumes
-// these will always be in pairs, and asserts if it finds otherwise. Better way?
-let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
-def tADJCALLSTACKUP :
-  PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2), NoItinerary,
-             [(ARMcallseq_end imm:$amt1, imm:$amt2)]>,
-            Requires<[IsThumb, IsThumb1Only]>;
-
-def tADJCALLSTACKDOWN :
-  PseudoInst<(outs), (ins i32imm:$amt), NoItinerary,
-             [(ARMcallseq_start imm:$amt)]>,
-            Requires<[IsThumb, IsThumb1Only]>;
-}
-
 class T1SystemEncoding<bits<8> opc>
   : T1Encoding<0b101111> {
   let Inst{9-8} = 0b11;
   let Inst{7-0} = opc;
 }
-
-def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "", []>,
-           T1SystemEncoding<0x00>, // A8.6.110
-        Requires<[IsThumb2]>;
 
 def tYIELD : T1pI<(outs), (ins), NoItinerary, "yield", "", []>,
            T1SystemEncoding<0x10>; // A8.6.410
@@ -274,41 +251,6 @@ def tBKPT : T1I<(outs), (ins imm0_255:$val), NoItinerary, "bkpt\t$val",
   let Inst{7-0} = val;
 }
 
-def tSETEND : T1I<(outs), (ins setend_op:$end), NoItinerary, "setend\t$end",
-                  []>, T1Encoding<0b101101> {
-  bits<1> end;
-  // A8.6.156
-  let Inst{9-5} = 0b10010;
-  let Inst{4}   = 1;
-  let Inst{3}   = end;
-  let Inst{2-0} = 0b000;
-}
-
-// Change Processor State is a system instruction -- for disassembly only.
-def tCPS : T1I<(outs), (ins imod_op:$imod, iflags_op:$iflags),
-                NoItinerary, "cps$imod $iflags", []>,
-           T1Misc<0b0110011> {
-  // A8.6.38 & B6.1.1
-  bit imod;
-  bits<3> iflags;
-
-  let Inst{4}   = imod;
-  let Inst{3}   = 0;
-  let Inst{2-0} = iflags;
-  let DecoderMethod = "DecodeThumbCPS";
-}
-
-// For both thumb1 and thumb2.
-let isNotDuplicable = 1, isCodeGenOnly = 1 in
-def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
-                  [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>,
-              T1Special<{0,0,?,?}> {
-  // A8.6.6
-  bits<3> dst;
-  let Inst{6-3} = 0b1111; // Rm = pc
-  let Inst{2-0} = dst;
-}
-
 // ADD <Rd>, sp, #<imm8>
 // FIXME: This should not be marked as having side effects, and it should be
 // rematerializable. Clearing the side effect bit causes miscompilations,
@@ -323,6 +265,15 @@ def tADDrSPi : T1pI<(outs tGPR:$dst), (ins GPRsp:$sp, t_imm0_1020s4:$imm),
   let Inst{7-0}  = imm;
   let DecoderMethod = "DecodeThumbAddSpecialReg";
 }
+
+let neverHasSideEffects = 1, isReMaterializable = 1 in
+def tLEApcrel   : tPseudoInst<(outs tGPR:$Rd), (ins i32imm:$label, pred:$p),
+                              2, IIC_iALUi, []>;
+
+def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
+                              (ins i32imm:$label, nohash_imm:$id, pred:$p),
+                              2, IIC_iALUi, []>;
+
 
 // ADD sp, sp, #<imm7>
 def tADDspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
@@ -346,9 +297,9 @@ def tSUBspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
 }
 
 // Can optionally specify SP as a three operand instruction.
-def : tInstAlias<"add${p} sp, sp, $imm",
+def : InstAlias<"add${p} sp, sp, $imm",
                  (tADDspi SP, t_imm0_508s4:$imm, pred:$p)>;
-def : tInstAlias<"sub${p} sp, sp, $imm",
+def : InstAlias<"sub${p} sp, sp, $imm",
                  (tSUBspi SP, t_imm0_508s4:$imm, pred:$p)>;
 
 // ADD <Rm>, sp
@@ -390,100 +341,6 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   }
 }
 
-let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
-  def tBX_RET : tPseudoExpand<(outs), (ins pred:$p), 2, IIC_Br,
-                   [(ARMretflag)], (tBX LR, pred:$p)>;
-
-  // Alternative return instruction used by vararg functions.
-  def tBX_RET_vararg : tPseudoExpand<(outs), (ins tGPR:$Rm, pred:$p),
-                   2, IIC_Br, [],
-                   (tBX GPR:$Rm, pred:$p)>;
-}
-
-// All calls clobber the non-callee saved registers. SP is marked as a use to
-// prevent stack-pointer assignments that appear immediately before calls from
-// potentially appearing dead.
-let isCall = 1,
-  // On non-Darwin platforms R9 is callee-saved.
-  Defs = [R0,  R1,  R2,  R3,  R12, LR, QQQQ0, QQQQ2, QQQQ3, CPSR, FPSCR],
-  Uses = [SP] in {
-  // Also used for Thumb2
-  def tBL  : TIx2<0b11110, 0b11, 1,
-                  (outs), (ins pred:$p, t_bltarget:$func, variable_ops), IIC_Br,
-                  "bl${p}\t$func",
-                  [(ARMtcall tglobaladdr:$func)]>,
-             Requires<[IsThumb, IsNotDarwin]> {
-    bits<22> func;
-    let Inst{26} = func{21};
-    let Inst{25-16} = func{20-11};
-    let Inst{13} = 1;
-    let Inst{11} = 1;
-    let Inst{10-0} = func{10-0};
-  }
-
-  // ARMv5T and above, also used for Thumb2
-  def tBLXi : TIx2<0b11110, 0b11, 0,
-                 (outs), (ins pred:$p, t_blxtarget:$func, variable_ops), IIC_Br,
-                   "blx${p}\t$func",
-                   [(ARMcall tglobaladdr:$func)]>,
-              Requires<[IsThumb, HasV5T, IsNotDarwin]> {
-    bits<21> func;
-    let Inst{25-16} = func{20-11};
-    let Inst{13} = 1;
-    let Inst{11} = 1;
-    let Inst{10-1} = func{10-1};
-    let Inst{0} = 0; // func{0} is assumed zero
-  }
-
-  // Also used for Thumb2
-  def tBLXr : TI<(outs), (ins pred:$p, GPR:$func, variable_ops), IIC_Br,
-                  "blx${p}\t$func",
-                  [(ARMtcall GPR:$func)]>,
-              Requires<[IsThumb, HasV5T, IsNotDarwin]>,
-              T1Special<{1,1,1,?}> { // A6.2.3 & A8.6.24;
-    bits<4> func;
-    let Inst{6-3} = func;
-    let Inst{2-0} = 0b000;
-  }
-
-  // ARMv4T
-  def tBX_CALL : tPseudoInst<(outs), (ins tGPR:$func, variable_ops),
-                  4, IIC_Br,
-                  [(ARMcall_nolink tGPR:$func)]>,
-            Requires<[IsThumb, IsThumb1Only, IsNotDarwin]>;
-}
-
-let isCall = 1,
-  // On Darwin R9 is call-clobbered.
-  // R7 is marked as a use to prevent frame-pointer assignments from being
-  // moved above / below calls.
-  Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR, QQQQ0, QQQQ2, QQQQ3, CPSR, FPSCR],
-  Uses = [R7, SP] in {
-  // Also used for Thumb2
-  def tBLr9 : tPseudoExpand<(outs), (ins pred:$p, t_bltarget:$func, variable_ops),
-                          4, IIC_Br, [(ARMtcall tglobaladdr:$func)],
-                          (tBL pred:$p, t_bltarget:$func)>,
-              Requires<[IsThumb, IsDarwin]>;
-
-  // ARMv5T and above, also used for Thumb2
-  def tBLXi_r9 : tPseudoExpand<(outs), (ins pred:$p, t_blxtarget:$func, variable_ops),
-                      4, IIC_Br, [(ARMcall tglobaladdr:$func)],
-                      (tBLXi pred:$p, t_blxtarget:$func)>,
-                 Requires<[IsThumb, HasV5T, IsDarwin]>;
-
-  // Also used for Thumb2
-  def tBLXr_r9 : tPseudoExpand<(outs), (ins pred:$p, GPR:$func, variable_ops),
-                    2, IIC_Br, [(ARMtcall GPR:$func)],
-                    (tBLXr pred:$p, GPR:$func)>,
-                 Requires<[IsThumb, HasV5T, IsDarwin]>;
-
-  // ARMv4T
-  def tBXr9_CALL : tPseudoInst<(outs), (ins tGPR:$func, variable_ops),
-                   4, IIC_Br,
-                   [(ARMcall_nolink tGPR:$func)]>,
-              Requires<[IsThumb, IsThumb1Only, IsDarwin]>;
-}
-
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   let isPredicable = 1 in
   def tB   : T1pI<(outs), (ins t_brtarget:$target), IIC_Br,
@@ -491,20 +348,6 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
              T1Encoding<{1,1,1,0,0,?}> {
     bits<11> target;
     let Inst{10-0} = target;
-  }
-
-  // Far jump
-  // Just a pseudo for a tBL instruction. Needed to let regalloc know about
-  // the clobber of LR.
-  let Defs = [LR] in
-  def tBfar : tPseudoExpand<(outs), (ins t_bltarget:$target, pred:$p),
-                          4, IIC_Br, [], (tBL pred:$p, t_bltarget:$target)>;
-
-  def tBR_JTr : tPseudoInst<(outs),
-                      (ins tGPR:$target, i32imm:$jt, i32imm:$id),
-                      0, IIC_Br,
-                      [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]> {
-    list<Predicate> Predicates = [IsThumb, IsThumb1Only];
   }
 }
 
@@ -520,34 +363,6 @@ let isBranch = 1, isTerminator = 1 in
   let Inst{11-8} = p;
   let Inst{7-0} = target;
 }
-
-// Tail calls
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
-  // Darwin versions.
-  let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
-      Uses = [SP] in {
-    // tTAILJMPd: Darwin version uses a Thumb2 branch (no Thumb1 tail calls
-    // on Darwin), so it's in ARMInstrThumb2.td.
-    def tTAILJMPr : tPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
-                     4, IIC_Br, [],
-                     (tBX GPR:$dst, (ops 14, zero_reg))>,
-                     Requires<[IsThumb, IsDarwin]>;
-  }
-  // Non-Darwin versions (the difference is R9).
-  let Defs = [R0, R1, R2, R3, R12, QQQQ0, QQQQ2, QQQQ3, PC],
-      Uses = [SP] in {
-    def tTAILJMPdND : tPseudoExpand<(outs),
-                   (ins t_brtarget:$dst, pred:$p, variable_ops),
-                   4, IIC_Br, [],
-                   (tB t_brtarget:$dst, pred:$p)>,
-                 Requires<[IsThumb, IsNotDarwin]>;
-    def tTAILJMPrND : tPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
-                     4, IIC_Br, [],
-                     (tBX GPR:$dst, (ops 14, zero_reg))>,
-                     Requires<[IsThumb, IsNotDarwin]>;
-  }
-}
-
 
 // A8.6.218 Supervisor Call (Software Interrupt)
 // A8.6.16 B: Encoding T1
@@ -707,76 +522,6 @@ def tSTRspi : T1pIs<(outs), (ins tGPR:$Rt, t_addrmode_sp:$addr), IIC_iStore_i,
   let Inst{7-0} = addr;
 }
 
-//===----------------------------------------------------------------------===//
-//  Load / store multiple Instructions.
-//
-
-// These require base address to be written back or one of the loaded regs.
-let neverHasSideEffects = 1 in {
-
-let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
-def tLDMIA : T1I<(outs), (ins tGPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-        IIC_iLoad_m, "ldm${p}\t$Rn, $regs", []>, T1Encoding<{1,1,0,0,1,?}> {
-  bits<3> Rn;
-  bits<8> regs;
-  let Inst{10-8} = Rn;
-  let Inst{7-0}  = regs;
-}
-
-// Writeback version is just a pseudo, as there's no encoding difference.
-// Writeback happens iff the base register is not in the destination register
-// list.
-def tLDMIA_UPD :
-    InstTemplate<AddrModeNone, 0, IndexModeNone, Pseudo, GenericDomain,
-                 "$Rn = $wb", IIC_iLoad_mu>,
-    PseudoInstExpansion<(tLDMIA tGPR:$Rn, pred:$p, reglist:$regs)> {
-  let Size = 2;
-  let OutOperandList = (outs GPR:$wb);
-  let InOperandList = (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops);
-  let Pattern = [];
-  let isCodeGenOnly = 1;
-  let isPseudo = 1;
-  list<Predicate> Predicates = [IsThumb];
-}
-
-// There is no non-writeback version of STM for Thumb.
-let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
-def tSTMIA_UPD : Thumb1I<(outs GPR:$wb),
-                         (ins tGPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-                         AddrModeNone, 2, IIC_iStore_mu,
-                         "stm${p}\t$Rn!, $regs", "$Rn = $wb", []>,
-                     T1Encoding<{1,1,0,0,0,?}> {
-  bits<3> Rn;
-  bits<8> regs;
-  let Inst{10-8} = Rn;
-  let Inst{7-0}  = regs;
-}
-
-} // neverHasSideEffects
-
-def : InstAlias<"ldm${p} $Rn!, $regs",
-                (tLDMIA tGPR:$Rn, pred:$p, reglist:$regs)>,
-        Requires<[IsThumb, IsThumb1Only]>;
-
-let mayLoad = 1, Uses = [SP], Defs = [SP], hasExtraDefRegAllocReq = 1 in
-def tPOP : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
-               IIC_iPop,
-               "pop${p}\t$regs", []>,
-           T1Misc<{1,1,0,?,?,?,?}> {
-  bits<16> regs;
-  let Inst{8}   = regs{15};
-  let Inst{7-0} = regs{7-0};
-}
-
-let mayStore = 1, Uses = [SP], Defs = [SP], hasExtraSrcRegAllocReq = 1 in
-def tPUSH : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
-                IIC_iStore_m,
-                "push${p}\t$regs", []>,
-            T1Misc<{0,1,0,?,?,?,?}> {
-  bits<16> regs;
-  let Inst{8}   = regs{14};
-  let Inst{7-0} = regs{7-0};
-}
 
 //===----------------------------------------------------------------------===//
 //  Arithmetic Instructions.
@@ -1035,7 +780,7 @@ def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins imm0_255:$imm8), IIC_iMOVi,
 }
 // Because we have an explicit tMOVSr below, we need an alias to handle
 // the immediate "movs" form here. Blech.
-def : tInstAlias <"movs $Rdn, $imm",
+def : InstAlias <"movs $Rdn, $imm",
                  (tMOVi8 tGPR:$Rdn, CPSR, imm0_255:$imm, 14, 0)>;
 
 // A7-73: MOV(2) - mov setting flag.
@@ -1078,7 +823,7 @@ def tMUL :                      // A8.6.105 T1
   let AsmMatchConverter = "cvtThumbMultiply";
 }
 
-def :tInstAlias<"mul${s}${p} $Rdm, $Rn", (tMUL tGPR:$Rdm, s_cc_out:$s, tGPR:$Rn,
+def :InstAlias<"mul${s}${p} $Rdm, $Rn", (tMUL tGPR:$Rdm, s_cc_out:$s, tGPR:$Rn,
                                                pred:$p)>;
 
 // Move inverse register
@@ -1100,22 +845,19 @@ def tREV :                      // A8.6.134
   T1pIMiscEncode<{1,0,1,0,0,0,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "rev", "\t$Rd, $Rm",
-                 [(set tGPR:$Rd, (bswap tGPR:$Rm))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 [(set tGPR:$Rd, (bswap tGPR:$Rm))]>;
 
 def tREV16 :                    // A8.6.135
   T1pIMiscEncode<{1,0,1,0,0,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "rev16", "\t$Rd, $Rm",
-             [(set tGPR:$Rd, (rotr (bswap tGPR:$Rm), (i32 16)))]>,
-                Requires<[IsThumb, IsThumb1Only, HasV6]>;
+             [(set tGPR:$Rd, (rotr (bswap tGPR:$Rm), (i32 16)))]>;
 
 def tREVSH :                    // A8.6.136
   T1pIMiscEncode<{1,0,1,0,1,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "revsh", "\t$Rd, $Rm",
-                 [(set tGPR:$Rd, (sra (bswap tGPR:$Rm), (i32 16)))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 [(set tGPR:$Rd, (sra (bswap tGPR:$Rm), (i32 16)))]>;
 
 // Rotate right register
 def tROR :                      // A8.6.139
@@ -1131,7 +873,7 @@ def tRSB :                      // A8.6.141
                "rsb", "\t$Rd, $Rn, #0",
                [(set tGPR:$Rd, (ineg tGPR:$Rn))]>;
 
-def : tInstAlias<"neg${s}${p} $Rd, $Rm",
+def : InstAlias<"neg${s}${p} $Rd, $Rm",
                  (tRSB tGPR:$Rd, s_cc_out:$s, tGPR:$Rm, pred:$p)>;
 
 // Subtract with carry register
@@ -1170,16 +912,14 @@ def tSXTB :                     // A8.6.222
   T1pIMiscEncode<{0,0,1,0,0,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "sxtb", "\t$Rd, $Rm",
-                 [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i8))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i8))]>;
 
 // Sign-extend short
 def tSXTH :                     // A8.6.224
   T1pIMiscEncode<{0,0,1,0,0,0,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "sxth", "\t$Rd, $Rm",
-                 [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i16))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i16))]>;
 
 // Test
 let isCompare = 1, isCommutable = 1, Defs = [CPSR] in
@@ -1193,16 +933,14 @@ def tUXTB :                     // A8.6.262
   T1pIMiscEncode<{0,0,1,0,1,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "uxtb", "\t$Rd, $Rm",
-                 [(set tGPR:$Rd, (and tGPR:$Rm, 0xFF))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 [(set tGPR:$Rd, (and tGPR:$Rm, 0xFF))]>;
 
 // Zero-extend short
 def tUXTH :                     // A8.6.264
   T1pIMiscEncode<{0,0,1,0,1,0,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "uxth", "\t$Rd, $Rm",
-                 [(set tGPR:$Rd, (and tGPR:$Rm, 0xFFFF))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 [(set tGPR:$Rd, (and tGPR:$Rm, 0xFFFF))]>;
 
 // Conditional move tMOVCCr - Used to implement the Thumb SELECT_CC operation.
 // Expanded after instruction selection into a branch sequence.
@@ -1225,212 +963,101 @@ def tADR : T1I<(outs tGPR:$Rd), (ins t_adrlabel:$addr, pred:$p),
   let DecoderMethod = "DecodeThumbAddSpecialReg";
 }
 
-let neverHasSideEffects = 1, isReMaterializable = 1 in
-def tLEApcrel   : tPseudoInst<(outs tGPR:$Rd), (ins i32imm:$label, pred:$p),
-                              2, IIC_iALUi, []>;
-
-def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
-                              (ins i32imm:$label, nohash_imm:$id, pred:$p),
-                              2, IIC_iALUi, []>;
-
-//===----------------------------------------------------------------------===//
-// TLS Instructions
-//
-
-// __aeabi_read_tp preserves the registers r1-r3.
-// This is a pseudo inst so that we can get the encoding right,
-// complete with fixup for the aeabi_read_tp function.
-let isCall = 1, Defs = [R0, R12, LR, CPSR], Uses = [SP] in
-def tTPsoft : tPseudoInst<(outs), (ins), 4, IIC_Br,
-                          [(set R0, ARMthread_pointer)]>;
-
-//===----------------------------------------------------------------------===//
-// SJLJ Exception handling intrinsics
-//
-
-// eh_sjlj_setjmp() is an instruction sequence to store the return address and
-// save #0 in R0 for the non-longjmp case.  Since by its nature we may be coming
-// from some other function to get here, and we're using the stack frame for the
-// containing function to save/restore registers, we can't keep anything live in
-// regs across the eh_sjlj_setjmp(), else it will almost certainly have been
-// tromped upon when we get here from a longjmp(). We force everything out of
-// registers except for our own input by listing the relevant registers in
-// Defs. By doing so, we also cause the prologue/epilogue code to actively
-// preserve all of the callee-saved resgisters, which is exactly what we want.
-// $val is a scratch register for our use.
-let Defs = [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12, CPSR ],
-    hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1 in
-def tInt_eh_sjlj_setjmp : ThumbXI<(outs),(ins tGPR:$src, tGPR:$val),
-                                  AddrModeNone, 0, NoItinerary, "","",
-                          [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>;
-
-// FIXME: Non-Darwin version(s)
-let isBarrier = 1, hasSideEffects = 1, isTerminator = 1, isCodeGenOnly = 1,
-    Defs = [ R7, LR, SP ] in
-def tInt_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
-                              AddrModeNone, 0, IndexModeNone,
-                              Pseudo, NoItinerary, "", "",
-                              [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
-                             Requires<[IsThumb, IsDarwin]>;
-
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
 
 // Comparisons
-def : T1Pat<(ARMcmpZ tGPR:$Rn, imm0_255:$imm8),
+def : Pat<(ARMcmpZ tGPR:$Rn, imm0_255:$imm8),
             (tCMPi8  tGPR:$Rn, imm0_255:$imm8)>;
-def : T1Pat<(ARMcmpZ tGPR:$Rn, tGPR:$Rm),
+def : Pat<(ARMcmpZ tGPR:$Rn, tGPR:$Rm),
             (tCMPr   tGPR:$Rn, tGPR:$Rm)>;
 
 // Add with carry
-def : T1Pat<(addc   tGPR:$lhs, imm0_7:$rhs),
+def : Pat<(addc   tGPR:$lhs, imm0_7:$rhs),
             (tADDi3 tGPR:$lhs, imm0_7:$rhs)>;
-def : T1Pat<(addc   tGPR:$lhs, imm8_255:$rhs),
+def : Pat<(addc   tGPR:$lhs, imm8_255:$rhs),
             (tADDi8 tGPR:$lhs, imm8_255:$rhs)>;
-def : T1Pat<(addc   tGPR:$lhs, tGPR:$rhs),
+def : Pat<(addc   tGPR:$lhs, tGPR:$rhs),
             (tADDrr tGPR:$lhs, tGPR:$rhs)>;
 
 // Subtract with carry
-def : T1Pat<(addc   tGPR:$lhs, imm0_7_neg:$rhs),
+def : Pat<(addc   tGPR:$lhs, imm0_7_neg:$rhs),
             (tSUBi3 tGPR:$lhs, imm0_7_neg:$rhs)>;
-def : T1Pat<(addc   tGPR:$lhs, imm8_255_neg:$rhs),
+def : Pat<(addc   tGPR:$lhs, imm8_255_neg:$rhs),
             (tSUBi8 tGPR:$lhs, imm8_255_neg:$rhs)>;
-def : T1Pat<(subc   tGPR:$lhs, tGPR:$rhs),
+def : Pat<(subc   tGPR:$lhs, tGPR:$rhs),
             (tSUBrr tGPR:$lhs, tGPR:$rhs)>;
 
 // ConstantPool, GlobalAddress
-def : T1Pat<(ARMWrapper  tglobaladdr :$dst), (tLEApcrel tglobaladdr :$dst)>;
-def : T1Pat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
-
-// JumpTable
-def : T1Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
-            (tLEApcrelJT tjumptable:$dst, imm:$id)>;
-
-// Direct calls
-def : T1Pat<(ARMtcall texternalsym:$func), (tBL texternalsym:$func)>,
-      Requires<[IsThumb, IsNotDarwin]>;
-def : T1Pat<(ARMtcall texternalsym:$func), (tBLr9 texternalsym:$func)>,
-      Requires<[IsThumb, IsDarwin]>;
-
-def : Tv5Pat<(ARMcall texternalsym:$func), (tBLXi texternalsym:$func)>,
-      Requires<[IsThumb, HasV5T, IsNotDarwin]>;
-def : Tv5Pat<(ARMcall texternalsym:$func), (tBLXi_r9 texternalsym:$func)>,
-      Requires<[IsThumb, HasV5T, IsDarwin]>;
-
-// Indirect calls to ARM routines
-def : Tv5Pat<(ARMcall GPR:$dst), (tBLXr GPR:$dst)>,
-      Requires<[IsThumb, HasV5T, IsNotDarwin]>;
-def : Tv5Pat<(ARMcall GPR:$dst), (tBLXr_r9 GPR:$dst)>,
-      Requires<[IsThumb, HasV5T, IsDarwin]>;
+def : Pat<(ARMWrapper  tglobaladdr :$dst), (tLEApcrel tglobaladdr :$dst)>;
+def : Pat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
 
 // zextload i1 -> zextload i8
-def : T1Pat<(zextloadi1 t_addrmode_rrs1:$addr),
+def : Pat<(zextloadi1 t_addrmode_rrs1:$addr),
             (tLDRBr t_addrmode_rrs1:$addr)>;
-def : T1Pat<(zextloadi1 t_addrmode_is1:$addr),
+def : Pat<(zextloadi1 t_addrmode_is1:$addr),
             (tLDRBi t_addrmode_is1:$addr)>;
 
 // extload -> zextload
-def : T1Pat<(extloadi1  t_addrmode_rrs1:$addr), (tLDRBr t_addrmode_rrs1:$addr)>;
-def : T1Pat<(extloadi1  t_addrmode_is1:$addr),  (tLDRBi t_addrmode_is1:$addr)>;
-def : T1Pat<(extloadi8  t_addrmode_rrs1:$addr), (tLDRBr t_addrmode_rrs1:$addr)>;
-def : T1Pat<(extloadi8  t_addrmode_is1:$addr),  (tLDRBi t_addrmode_is1:$addr)>;
-def : T1Pat<(extloadi16 t_addrmode_rrs2:$addr), (tLDRHr t_addrmode_rrs2:$addr)>;
-def : T1Pat<(extloadi16 t_addrmode_is2:$addr),  (tLDRHi t_addrmode_is2:$addr)>;
+def : Pat<(extloadi1  t_addrmode_rrs1:$addr), (tLDRBr t_addrmode_rrs1:$addr)>;
+def : Pat<(extloadi1  t_addrmode_is1:$addr),  (tLDRBi t_addrmode_is1:$addr)>;
+def : Pat<(extloadi8  t_addrmode_rrs1:$addr), (tLDRBr t_addrmode_rrs1:$addr)>;
+def : Pat<(extloadi8  t_addrmode_is1:$addr),  (tLDRBi t_addrmode_is1:$addr)>;
+def : Pat<(extloadi16 t_addrmode_rrs2:$addr), (tLDRHr t_addrmode_rrs2:$addr)>;
+def : Pat<(extloadi16 t_addrmode_is2:$addr),  (tLDRHi t_addrmode_is2:$addr)>;
 
 // If it's impossible to use [r,r] address mode for sextload, select to
 // ldr{b|h} + sxt{b|h} instead.
-def : T1Pat<(sextloadi8 t_addrmode_is1:$addr),
-            (tSXTB (tLDRBi t_addrmode_is1:$addr))>,
-      Requires<[IsThumb, IsThumb1Only, HasV6]>;
-def : T1Pat<(sextloadi8 t_addrmode_rrs1:$addr),
-            (tSXTB (tLDRBr t_addrmode_rrs1:$addr))>,
-      Requires<[IsThumb, IsThumb1Only, HasV6]>;
-def : T1Pat<(sextloadi16 t_addrmode_is2:$addr),
-            (tSXTH (tLDRHi t_addrmode_is2:$addr))>,
-      Requires<[IsThumb, IsThumb1Only, HasV6]>;
-def : T1Pat<(sextloadi16 t_addrmode_rrs2:$addr),
-            (tSXTH (tLDRHr t_addrmode_rrs2:$addr))>,
-      Requires<[IsThumb, IsThumb1Only, HasV6]>;
+def : Pat<(sextloadi8 t_addrmode_is1:$addr),
+            (tSXTB (tLDRBi t_addrmode_is1:$addr))>;
+def : Pat<(sextloadi8 t_addrmode_rrs1:$addr),
+            (tSXTB (tLDRBr t_addrmode_rrs1:$addr))>;
+def : Pat<(sextloadi16 t_addrmode_is2:$addr),
+            (tSXTH (tLDRHi t_addrmode_is2:$addr))>;
+def : Pat<(sextloadi16 t_addrmode_rrs2:$addr),
+            (tSXTH (tLDRHr t_addrmode_rrs2:$addr))>;
 
-def : T1Pat<(sextloadi8 t_addrmode_rrs1:$addr),
+def : Pat<(sextloadi8 t_addrmode_rrs1:$addr),
             (tASRri (tLSLri (tLDRBr t_addrmode_rrs1:$addr), 24), 24)>;
-def : T1Pat<(sextloadi8 t_addrmode_is1:$addr),
+def : Pat<(sextloadi8 t_addrmode_is1:$addr),
             (tASRri (tLSLri (tLDRBi t_addrmode_is1:$addr), 24), 24)>;
-def : T1Pat<(sextloadi16 t_addrmode_rrs2:$addr),
+def : Pat<(sextloadi16 t_addrmode_rrs2:$addr),
             (tASRri (tLSLri (tLDRHr t_addrmode_rrs2:$addr), 16), 16)>;
-def : T1Pat<(sextloadi16 t_addrmode_is2:$addr),
+def : Pat<(sextloadi16 t_addrmode_is2:$addr),
             (tASRri (tLSLri (tLDRHi t_addrmode_is2:$addr), 16), 16)>;
 
-def : T1Pat<(atomic_load_8 t_addrmode_is1:$src),
+def : Pat<(atomic_load_8 t_addrmode_is1:$src),
              (tLDRBi t_addrmode_is1:$src)>;
-def : T1Pat<(atomic_load_8 t_addrmode_rrs1:$src),
+def : Pat<(atomic_load_8 t_addrmode_rrs1:$src),
              (tLDRBr t_addrmode_rrs1:$src)>;
-def : T1Pat<(atomic_load_16 t_addrmode_is2:$src),
+def : Pat<(atomic_load_16 t_addrmode_is2:$src),
              (tLDRHi t_addrmode_is2:$src)>;
-def : T1Pat<(atomic_load_16 t_addrmode_rrs2:$src),
+def : Pat<(atomic_load_16 t_addrmode_rrs2:$src),
              (tLDRHr t_addrmode_rrs2:$src)>;
-def : T1Pat<(atomic_load_32 t_addrmode_is4:$src),
+def : Pat<(atomic_load_32 t_addrmode_is4:$src),
              (tLDRi t_addrmode_is4:$src)>;
-def : T1Pat<(atomic_load_32 t_addrmode_rrs4:$src),
+def : Pat<(atomic_load_32 t_addrmode_rrs4:$src),
              (tLDRr t_addrmode_rrs4:$src)>;
-def : T1Pat<(atomic_store_8 t_addrmode_is1:$ptr, tGPR:$val),
+def : Pat<(atomic_store_8 t_addrmode_is1:$ptr, tGPR:$val),
              (tSTRBi tGPR:$val, t_addrmode_is1:$ptr)>;
-def : T1Pat<(atomic_store_8 t_addrmode_rrs1:$ptr, tGPR:$val),
+def : Pat<(atomic_store_8 t_addrmode_rrs1:$ptr, tGPR:$val),
              (tSTRBr tGPR:$val, t_addrmode_rrs1:$ptr)>;
-def : T1Pat<(atomic_store_16 t_addrmode_is2:$ptr, tGPR:$val),
+def : Pat<(atomic_store_16 t_addrmode_is2:$ptr, tGPR:$val),
              (tSTRHi tGPR:$val, t_addrmode_is2:$ptr)>;
-def : T1Pat<(atomic_store_16 t_addrmode_rrs2:$ptr, tGPR:$val),
+def : Pat<(atomic_store_16 t_addrmode_rrs2:$ptr, tGPR:$val),
              (tSTRHr tGPR:$val, t_addrmode_rrs2:$ptr)>;
-def : T1Pat<(atomic_store_32 t_addrmode_is4:$ptr, tGPR:$val),
+def : Pat<(atomic_store_32 t_addrmode_is4:$ptr, tGPR:$val),
              (tSTRi tGPR:$val, t_addrmode_is4:$ptr)>;
-def : T1Pat<(atomic_store_32 t_addrmode_rrs4:$ptr, tGPR:$val),
+def : Pat<(atomic_store_32 t_addrmode_rrs4:$ptr, tGPR:$val),
              (tSTRr tGPR:$val, t_addrmode_rrs4:$ptr)>;
 
 // Large immediate handling.
 
 // Two piece imms.
-def : T1Pat<(i32 thumb_immshifted:$src),
+def : Pat<(i32 thumb_immshifted:$src),
             (tLSLri (tMOVi8 (thumb_immshifted_val imm:$src)),
                     (thumb_immshifted_shamt imm:$src))>;
 
-def : T1Pat<(i32 imm0_255_comp:$src),
+def : Pat<(i32 imm0_255_comp:$src),
             (tMVN (tMOVi8 (imm_comp_XFORM imm:$src)))>;
-
-// Pseudo instruction that combines ldr from constpool and add pc. This should
-// be expanded into two instructions late to allow if-conversion and
-// scheduling.
-let isReMaterializable = 1 in
-def tLDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
-                             NoItinerary,
-               [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
-                                           imm:$cp))]>,
-               Requires<[IsThumb, IsThumb1Only]>;
-
-// Pseudo-instruction for merged POP and return.
-// FIXME: remove when we have a way to marking a MI with these properties.
-let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
-    hasExtraDefRegAllocReq = 1 in
-def tPOP_RET : tPseudoExpand<(outs), (ins pred:$p, reglist:$regs, variable_ops),
-                           2, IIC_iPop_Br, [],
-                           (tPOP pred:$p, reglist:$regs)>;
-
-// Indirect branch using "mov pc, $Rm"
-let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
-  def tBRIND : tPseudoExpand<(outs), (ins GPR:$Rm, pred:$p),
-                  2, IIC_Br, [(brind GPR:$Rm)],
-                  (tMOVr PC, GPR:$Rm, pred:$p)>;
-}
-
-
-// In Thumb1, "nop" is encoded as a "mov r8, r8". Technically, the bf00
-// encoding is available on ARMv6K, but we don't differentiate that finely.
-def : InstAlias<"nop", (tMOVr R8, R8, 14, 0)>,Requires<[IsThumb, IsThumb1Only]>;
-
-
-// For round-trip assembly/disassembly, we have to handle a CPS instruction
-// without any iflags. That's not, strictly speaking, valid syntax, but it's
-// a useful extention and assembles to defined behaviour (the insn does
-// nothing).
-def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;
-def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;

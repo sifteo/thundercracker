@@ -141,29 +141,6 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
-
-  // A8.6.355 VPUSH
-  if ((Opcode == ARM::VSTMSDB_UPD || Opcode == ARM::VSTMDDB_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP) {
-    O << '\t' << "vpush";
-    printPredicateOperand(MI, 2, O);
-    O << '\t';
-    printRegisterList(MI, 4, O);
-    printAnnotation(O, Annot);
-    return;
-  }
-
-  // A8.6.354 VPOP
-  if ((Opcode == ARM::VLDMSIA_UPD || Opcode == ARM::VLDMDIA_UPD) &&
-      MI->getOperand(0).getReg() == ARM::SP) {
-    O << '\t' << "vpop";
-    printPredicateOperand(MI, 2, O);
-    O << '\t';
-    printRegisterList(MI, 4, O);
-    printAnnotation(O, Annot);
-    return;
-  }
-
   if (Opcode == ARM::tLDMIA) {
     bool Writeback = true;
     unsigned BaseReg = MI->getOperand(0).getReg();

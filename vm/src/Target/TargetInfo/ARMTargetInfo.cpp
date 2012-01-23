@@ -15,9 +15,6 @@ using namespace llvm;
 Target llvm::TheARMTarget, llvm::TheThumbTarget;
 
 extern "C" void LLVMInitializeARMTargetInfo() { 
-  RegisterTarget<Triple::arm, /*HasJIT=*/true>
-    X(TheARMTarget, "arm", "ARM");
-
-  RegisterTarget<Triple::thumb, /*HasJIT=*/true>
+  RegisterTarget<Triple::thumb, /*HasJIT=*/false>
     Y(TheThumbTarget, "thumb", "Thumb");
 }
