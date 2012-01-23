@@ -8,5 +8,3 @@
 #include "SVMMachineFunctionInfo.h"
 
 using namespace llvm;
-
-void SVMMachineFunctionInfo::anchor() {}

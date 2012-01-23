@@ -14,10 +14,8 @@ namespace llvm {
 
     class SVMMachineFunctionInfo : public MachineFunctionInfo {
     public:
-        SVMMachineFunctionInfo()
-            : GlobalBaseReg(0), VarArgsFrameOffset(0), SRetReturnReg(0) {}
-        explicit SVMMachineFunctionInfo(MachineFunction &MF)
-            : GlobalBaseReg(0), VarArgsFrameOffset(0), SRetReturnReg(0) {}
+        SVMMachineFunctionInfo() {}
+        explicit SVMMachineFunctionInfo(MachineFunction &MF) {}
 
     };
 

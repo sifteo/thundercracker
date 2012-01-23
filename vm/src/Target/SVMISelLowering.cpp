@@ -22,3 +22,8 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
+
+SVMTargetLowering::SVMTargetLowering(TargetMachine &TM)
+    : TargetLowering(TM, new TargetLoweringObjectFileELF())
+{
+}

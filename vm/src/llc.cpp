@@ -44,10 +44,10 @@
 #include <memory>
 using namespace llvm;
 
-extern "C" void LLVMInitializeARMAsmPrinter();
-extern "C" void LLVMInitializeARMTarget();
-extern "C" void LLVMInitializeARMTargetMC();
-extern "C" void LLVMInitializeARMTargetInfo();
+extern "C" void LLVMInitializeSVMAsmPrinter();
+extern "C" void LLVMInitializeSVMTarget();
+extern "C" void LLVMInitializeSVMTargetMC();
+extern "C" void LLVMInitializeSVMTargetInfo();
 
 // General options for llc.  Other pass-specific options are specified
 // within the corresponding llc passes, and target-specific options
@@ -172,10 +172,10 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   // Initialize targets first, so that --version shows registered targets.
-  LLVMInitializeARMAsmPrinter();
-  LLVMInitializeARMTarget();
-  LLVMInitializeARMTargetMC();
-  LLVMInitializeARMTargetInfo();
+  LLVMInitializeSVMAsmPrinter();
+  LLVMInitializeSVMTarget();
+  LLVMInitializeSVMTargetMC();
+  LLVMInitializeSVMTargetInfo();
 
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);

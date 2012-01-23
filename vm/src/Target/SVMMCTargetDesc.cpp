@@ -30,7 +30,7 @@ static MCInstrInfo *createSVMMCInstrInfo()
 static MCRegisterInfo *createSVMMCRegisterInfo(StringRef TT)
 {
     MCRegisterInfo *X = new MCRegisterInfo();
-    InitSVMMCRegisterInfo(X);
+    InitSVMMCRegisterInfo(X, SVM::R7);
     return X;
 }
 

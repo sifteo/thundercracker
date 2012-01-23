@@ -6,6 +6,7 @@
  */
 
 #include "SVM.h"
+#include "SVMMCTargetDesc.h"
 #include "SVMTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -16,10 +17,12 @@ extern "C" void LLVMInitializeSVMTarget()
     RegisterTargetMachine<SVMTargetMachine> X(TheSVMTarget);
 }
 
-SVMTargetMachine::SVMTargetMachine(const Target &T)
-: LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
-  DataLayout(Subtarget.getDataLayout()),
-  TLInfo(*this), TSInfo(*this) {}
+SVMTargetMachine::SVMTargetMachine(const Target &T, StringRef TT, 
+                                   StringRef CPU, StringRef FS,
+                                   Reloc::Model RM, CodeModel::Model CM)
+    : LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
+      DataLayout("E-p:32:32:32-i64:64:64-f64:64:64-f128:64:64-n32"),
+      TLInfo(*this), TSInfo(*this) {}
 
 bool SVMTargetMachine::addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
 {

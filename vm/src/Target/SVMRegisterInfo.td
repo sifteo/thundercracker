@@ -6,7 +6,7 @@
  */
 
 class SVMReg<bits<3> num, string n> : Register<n> {
-    field bits<5> Num;
+    field bits<3> Num;
     let Namespace = "SVM";
     let Num = num;
 }
@@ -19,3 +19,6 @@ def R4 : SVMReg< 0, "r4" >;
 def R5 : SVMReg< 0, "r5" >;
 def R6 : SVMReg< 0, "r6" >;
 def R7 : SVMReg< 0, "r7" >;
+
+def IntRegs : RegisterClass<"SVM", [i32], 32,
+                            (add R0, R1, R2, R3, R4, R5, R6, R7)>;

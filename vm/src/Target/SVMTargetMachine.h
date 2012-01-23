@@ -26,7 +26,9 @@ class SVMTargetMachine : public LLVMTargetMachine {
     SVMFrameLowering FrameLowering;
 
 public:
-    SVMTargetMachine(const Target &T);
+    SVMTargetMachine(const Target &T, StringRef TT, 
+                     StringRef CPU, StringRef FS,
+                     Reloc::Model RM, CodeModel::Model CM);
 
     virtual const SVMInstrInfo *getInstrInfo() const { return &InstrInfo; }
     virtual const TargetFrameLowering  *getFrameLowering() const { return &FrameLowering; }

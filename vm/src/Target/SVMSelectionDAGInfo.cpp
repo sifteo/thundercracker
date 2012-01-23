@@ -8,7 +8,7 @@
 #include "SVMTargetMachine.h"
 using namespace llvm;
 
-VMSelectionDAGInfo::SVMSelectionDAGInfo(const SVMTargetMachine &TM)
+SVMSelectionDAGInfo::SVMSelectionDAGInfo(const SVMTargetMachine &TM)
     : TargetSelectionDAGInfo(TM) {}
 
 SVMSelectionDAGInfo::~SVMSelectionDAGInfo() {}

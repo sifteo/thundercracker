@@ -6,6 +6,7 @@
  */
 
 #include "SVMTargetMachine.h"
+#include "SVMMCTargetDesc.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Support/Compiler.h"
@@ -42,4 +43,8 @@ SDNode *SVMDAGToDAGISel::Select(SDNode *N)
     }
 
     return SelectCode(N);
+}
+
+FunctionPass *llvm::createSVMISelDag(SVMTargetMachine &TM) {
+    return new SVMDAGToDAGISel(TM);
 }

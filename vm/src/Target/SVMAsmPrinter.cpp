@@ -9,6 +9,7 @@
 #include "SVM.h"
 #include "SVMInstrInfo.h"
 #include "SVMTargetMachine.h"
+#include "SVMMCTargetDesc.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCAsmInfo.h"

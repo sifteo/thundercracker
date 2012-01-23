@@ -18,7 +18,7 @@ namespace llvm {
 
 class SVMInstrInfo : public SVMGenInstrInfo {
 public:
-    explicit SVMInstrInfo(SVMSubtarget &ST);
+    explicit SVMInstrInfo();
     virtual const SVMRegisterInfo &getRegisterInfo() const { return RI; }
 private:
     const SVMRegisterInfo RI;

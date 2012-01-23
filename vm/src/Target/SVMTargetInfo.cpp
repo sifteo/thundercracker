@@ -12,6 +12,8 @@ using namespace llvm;
 
 Target llvm::TheSVMTarget;
 
-extern "C" void LLVMInitializeSVMTargetInfo() { 
-    RegisterTarget<Triple::thumb> X(TheSVMTarget, "svm", "SVM");
+extern "C" void LLVMInitializeSVMTargetInfo()
+{ 
+    RegisterTarget<Triple::thumb>
+        X(TheSVMTarget, "svm", "Sifteo Virtual Machine");
 }

@@ -9,6 +9,7 @@ include "llvm/Target/Target.td"
 
 include "SVMRegisterInfo.td"
 include "SVMCallingConv.td"
+include "SVMInstrFormats.td"
 include "SVMInstrInfo.td"
 
 def SVMInstrInfo : InstrInfo;
