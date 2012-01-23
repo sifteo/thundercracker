@@ -11,9 +11,9 @@
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 #ifdef DEBUG
 
-const float ROUND_TIME = 9999.0f;
+const float ROUND_TIME = 999999.0f;
 #else
-const float ROUND_TIME = 120.0f;
+const float ROUND_TIME = 999999.0f;
 #endif
 
 GameStateMachine* GameStateMachine::sInstance = 0;

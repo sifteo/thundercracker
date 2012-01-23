@@ -8,6 +8,8 @@
 #include "TileTransparencyLookup.h"
 #include "PartialAnimationData.h"
 #include "config.h"
+#include <string.h>
+#include <stdio.h>
 
 void CubeState::setStateMachine(CubeStateMachine& csm)
 {
@@ -32,6 +34,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                            bool paintTime,
                            float animStartTime)
 {
+	paintTime = false;
     if (teethImageIndex == ImageIndex_Teeth && reverseAnim)
     {
         // no blip when reversing teeth anim (use the same anim, but
@@ -172,7 +175,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
             switch (getTransparencyType(teethImageIndex, frame, j, i))
             {
             case TransparencyType_None:
-                if (teethImageIndex == ImageIndex_ConnectedRightWord || teethImageIndex == ImageIndex_ConnectedLeftWord || teethImageIndex == ImageIndex_ConnectedWord || teethImageIndex == ImageIndex_Teeth || teethImageIndex == ImageIndex_Teeth_NoBlip)
+                if (animate && (teethImageIndex == ImageIndex_ConnectedRightWord || teethImageIndex == ImageIndex_ConnectedLeftWord || teethImageIndex == ImageIndex_ConnectedWord || teethImageIndex == ImageIndex_Teeth || teethImageIndex == ImageIndex_Teeth_NoBlip))
                 {
                     // paint this opaque tile
                     // paint BG0

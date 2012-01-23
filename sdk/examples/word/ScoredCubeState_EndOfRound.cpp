@@ -10,7 +10,8 @@
 #include "SavedData.h"
 #include "WordGame.h"
 #include "config.h"
-
+#include <string.h>
+#include <stdio.h>
 
 const unsigned START_SCREEN_CUBE_INDEX = 1;
 const unsigned SCORE_RHS_X = 9;
