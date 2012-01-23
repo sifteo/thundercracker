@@ -37,16 +37,62 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include <memory>
 using namespace llvm;
 
+extern "C" void LLVMInitializeARMAsmPrinter();
+extern "C" void LLVMInitializeARMTarget();
+extern "C" void LLVMInitializeARMAsmLexer();
+extern "C" void LLVMInitializeARMAsmLexer();
+extern "C" void LLVMInitializeARMAsmParser();
+extern "C" void LLVMInitializeARMDisassembler();
+extern "C" void LLVMInitializeARMTargetMC();
+extern "C" void LLVMInitializeARMTargetInfo();
+
+// General options for llc.  Other pass-specific options are specified
+// within the corresponding llc passes, and target-specific options
+// and back-end code generation options are specified with the target machine.
+//
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
+
+// Determine optimization level.
+static cl::opt<char>
+OptLevel("O",
+         cl::desc("Optimization level. [-O0, -O1, -O2, or -O3] "
+                  "(default = '-O2')"),
+         cl::Prefix,
+         cl::ZeroOrMore,
+         cl::init(' '));
+
+static cl::list<std::string>
+MAttrs("mattr",
+  cl::CommaSeparated,
+  cl::desc("Target specific attributes (-mattr=help for details)"),
+  cl::value_desc("a1,+a2,-a3,..."));
+
+cl::opt<TargetMachine::CodeGenFileType>
+FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
+  cl::desc("Choose a file type (not all types are supported by all targets):"),
+  cl::values(
+       clEnumValN(TargetMachine::CGFT_AssemblyFile, "asm",
+                  "Emit an assembly ('.s') file"),
+       clEnumValN(TargetMachine::CGFT_ObjectFile, "obj",
+                  "Emit a native object ('.o') file [experimental]"),
+       clEnumValN(TargetMachine::CGFT_Null, "null",
+                  "Emit nothing, for performance testing"),
+       clEnumValEnd));
+
+cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
+                       cl::desc("Do not verify input module"));
+
 
 // GetFileNameRoot - Helper function to get the basename of a filename.
 static inline std::string
@@ -65,17 +111,47 @@ GetFileNameRoot(const std::string &InputFilename) {
   return outputFilename;
 }
 
-static tool_output_file *GetOutputStream(const char *ProgName) {
+static tool_output_file *GetOutputStream(const char *TargetName,
+                                         Triple::OSType OS,
+                                         const char *ProgName) {
   // If we don't yet have an output filename, make one.
   if (OutputFilename.empty()) {
     if (InputFilename == "-")
       OutputFilename = "-";
-    else
+    else {
       OutputFilename = GetFileNameRoot(InputFilename);
+
+      switch (FileType) {
+      default: assert(0 && "Unknown file type");
+      case TargetMachine::CGFT_AssemblyFile:
+        OutputFilename += ".s";
+        break;
+      case TargetMachine::CGFT_ObjectFile:
+        OutputFilename += ".o";
+        break;
+      case TargetMachine::CGFT_Null:
+        OutputFilename += ".null";
+        break;
+      }
+    }
   }
 
+  // Decide if we need "binary" output.
+  bool Binary = false;
+  switch (FileType) {
+  default: assert(0 && "Unknown file type");
+  case TargetMachine::CGFT_AssemblyFile:
+    break;
+  case TargetMachine::CGFT_ObjectFile:
+  case TargetMachine::CGFT_Null:
+    Binary = true;
+    break;
+  }
+
+  // Open the file.
   std::string error;
-  unsigned OpenFlags = raw_fd_ostream::F_Binary;
+  unsigned OpenFlags = 0;
+  if (Binary) OpenFlags |= raw_fd_ostream::F_Binary;
   tool_output_file *FDOut = new tool_output_file(OutputFilename.c_str(), error,
                                                  OpenFlags);
   if (!error.empty()) {
@@ -87,6 +163,8 @@ static tool_output_file *GetOutputStream(const char *ProgName) {
   return FDOut;
 }
 
+// main - Entry point for the llc compiler.
+//
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
@@ -96,6 +174,19 @@ int main(int argc, char **argv) {
 
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
+  // Initialize targets first, so that --version shows registered targets.
+  LLVMInitializeARMAsmPrinter();
+  LLVMInitializeARMTarget();
+  LLVMInitializeARMAsmLexer();
+  LLVMInitializeARMAsmLexer();
+  LLVMInitializeARMAsmParser();
+  LLVMInitializeARMDisassembler();
+  LLVMInitializeARMTargetMC();
+  LLVMInitializeARMTargetInfo();
+
+  // Register the target printer for --version.
+  cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
 
   cl::ParseCommandLineOptions(argc, argv, "Sifteo VM Compiler\n");
 
@@ -110,13 +201,47 @@ int main(int argc, char **argv) {
   }
   Module &mod = *M.get();
 
-  std::auto_ptr<TargetMachine> target;
+  // Always override the target triple
+  mod.setTargetTriple(Triple::normalize("thumb-sifteo-vm"));
+
+  Triple TheTriple(mod.getTargetTriple());
+  if (TheTriple.getTriple().empty())
+    TheTriple.setTriple(sys::getHostTriple());
+
+  // Allocate target machine
+  const Target *TheTarget = 0;
+  {
+    std::string Err;
+    TheTarget = TargetRegistry::lookupTarget(TheTriple.getTriple(), Err);
+    assert(TheTarget != 0);
+    if (TheTarget == 0) {
+      errs() << argv[0] << ": error selecting target\n";
+      return 1;
+    }
+  }
+
+  std::auto_ptr<TargetMachine>
+    target(TheTarget->createTargetMachine(TheTriple.getTriple(),
+           "", "", Reloc::Default, CodeModel::Default));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
 
   // Figure out where we are going to send the output...
-  OwningPtr<tool_output_file> Out (GetOutputStream(argv[0]));
+  OwningPtr<tool_output_file> Out
+    (GetOutputStream(TheTarget->getName(), TheTriple.getOS(), argv[0]));
   if (!Out) return 1;
+
+  CodeGenOpt::Level OLvl = CodeGenOpt::Default;
+  switch (OptLevel) {
+  default:
+    errs() << argv[0] << ": invalid optimization level.\n";
+    return 1;
+  case ' ': break;
+  case '0': OLvl = CodeGenOpt::None; break;
+  case '1': OLvl = CodeGenOpt::Less; break;
+  case '2': OLvl = CodeGenOpt::Default; break;
+  case '3': OLvl = CodeGenOpt::Aggressive; break;
+  }
 
   // Build up all of the passes that we want to do to the module.
   PassManager PM;
@@ -127,12 +252,14 @@ int main(int argc, char **argv) {
   else
     PM.add(new TargetData(&mod));
 
+  // Override default to generate verbose assembly.
+  Target.setAsmVerbosityDefault(true);
+
   {
     formatted_raw_ostream FOS(Out->os());
 
     // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitFile(PM, FOS, TargetMachine::CGFT_ObjectFile,
-        CodeGenOpt::Aggressive, false)) {
+    if (Target.addPassesToEmitFile(PM, FOS, FileType, OLvl, NoVerify)) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       return 1;

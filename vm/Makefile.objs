@@ -1,0 +1,102 @@
+OBJS = \
+	src/llc.o \
+	src/Target/ARMAsmPrinter.o \
+	src/Target/ARMBaseInstrInfo.o \
+	src/Target/ARMBaseRegisterInfo.o \
+	src/Target/ARMCodeEmitter.o \
+	src/Target/ARMConstantIslandPass.o \
+	src/Target/ARMConstantPoolValue.o \
+	src/Target/ARMELFWriterInfo.o \
+	src/Target/ARMExpandPseudoInsts.o \
+	src/Target/ARMFastISel.o \
+	src/Target/ARMFrameLowering.o \
+	src/Target/ARMGlobalMerge.o \
+	src/Target/ARMHazardRecognizer.o \
+	src/Target/ARMInstrInfo.o \
+	src/Target/ARMISelDAGToDAG.o \
+	src/Target/ARMISelLowering.o \
+	src/Target/ARMJITInfo.o \
+	src/Target/ARMLoadStoreOptimizer.o \
+	src/Target/ARMMCInstLower.o \
+	src/Target/ARMRegisterInfo.o \
+	src/Target/ARMSelectionDAGInfo.o \
+	src/Target/ARMSubtarget.o \
+	src/Target/ARMTargetMachine.o \
+	src/Target/ARMTargetObjectFile.o \
+	src/Target/AsmParser/ARMAsmLexer.o \
+	src/Target/AsmParser/ARMAsmParser.o \
+	src/Target/Disassembler/ARMDisassembler.o \
+	src/Target/InstPrinter/ARMInstPrinter.o \
+	src/Target/MCTargetDesc/ARMAsmBackend.o \
+	src/Target/MCTargetDesc/ARMMachObjectWriter.o \
+	src/Target/MCTargetDesc/ARMMCAsmInfo.o \
+	src/Target/MCTargetDesc/ARMMCCodeEmitter.o \
+	src/Target/MCTargetDesc/ARMMCExpr.o \
+	src/Target/MCTargetDesc/ARMMCTargetDesc.o \
+	src/Target/MLxExpansionPass.o \
+	src/Target/TargetInfo/ARMTargetInfo.o \
+	src/Target/Thumb1FrameLowering.o \
+	src/Target/Thumb1InstrInfo.o \
+	src/Target/Thumb1RegisterInfo.o \
+	src/Target/Thumb2InstrInfo.o \
+	src/Target/Thumb2ITBlockPass.o \
+	src/Target/Thumb2RegisterInfo.o \
+	src/Target/Thumb2SizeReduction.o
+
+TABLES := \
+	src/Target/ARMGenRegisterInfo.inc \
+	src/Target/ARMGenInstrInfo.inc \
+	src/Target/ARMGenAsmWriter.inc \
+	src/Target/ARMGenAsmMatcher.inc \
+	src/Target/ARMGenDAGISel.inc \
+	src/Target/ARMGenSubtargetInfo.inc \
+	src/Target/ARMGenCodeEmitter.inc \
+	src/Target/ARMGenCallingConv.inc \
+	src/Target/ARMGenEDInfo.inc \
+	src/Target/ARMGenFastISel.inc \
+	src/Target/ARMGenMCCodeEmitter.inc \
+	src/Target/ARMGenMCPseudoLowering.inc \
+	src/Target/ARMGenDisassemblerTables.inc
+	
+TABLEDEPS := src/Target/*.td
+TABLEGEN = $(LLVM_BIN)/llvm-tblgen $(INCLUDES) -o $@ $<
+
+src/Target/ARMGenRegisterInfo.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-register-info
+
+src/Target/ARMGenInstrInfo.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-instr-info
+
+src/Target/ARMGenAsmWriter.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-asm-writer
+
+src/Target/ARMGenAsmMatcher.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-asm-matcher
+
+src/Target/ARMGenDAGISel.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-dag-isel
+
+src/Target/ARMGenSubtargetInfo.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-subtarget
+
+src/Target/ARMGenCodeEmitter.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-emitter
+
+src/Target/ARMGenCallingConv.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-callingconv
+
+src/Target/ARMGenEDInfo.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-enhanced-disassembly-info
+
+src/Target/ARMGenFastISel.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-fast-isel
+
+src/Target/ARMGenMCCodeEmitter.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-emitter -mc-emitter
+	
+src/Target/ARMGenMCPseudoLowering.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-pseudo-lowering
+
+src/Target/ARMGenDisassemblerTables.inc: src/Target/ARM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-disassembler
+

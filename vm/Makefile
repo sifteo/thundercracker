@@ -2,16 +2,17 @@ TC_DIR := ..
 include $(TC_DIR)/Makefile.platform
 
 BIN = svmc
+all: $(BIN)
 
-OBJS = src/llc.o
-
+include Makefile.objs
 DEPFILES := $(OBJS:.o=.d)
 
+INCLUDES += -Isrc/Target
 FLAGS += -O3 -g -fomit-frame-pointer
 WARNFLAGS := -Werror -Wall -Wno-uninitialized
 
 # LLVM
-FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
+FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -DNDEBUG -fno-rtti
 INCLUDES += -I$(LLVM_INC)
 LIBS += \
 	$(LLVM_LIB)/libLLVMScalarOpts.a \
@@ -25,6 +26,7 @@ LIBS += \
 	$(LLVM_LIB)/libLLVMTarget.a \
 	$(LLVM_LIB)/libLLVMAsmParser.a \
 	$(LLVM_LIB)/libLLVMAsmPrinter.a \
+	$(LLVM_LIB)/libLLVMMCDisassembler.a \
 	$(LLVM_LIB)/libLLVMMCParser.a \
 	$(LLVM_LIB)/libLLVMMC.a \
 	$(LLVM_LIB)/libLLVMCore.a \
@@ -36,17 +38,15 @@ FLAGS += -MMD
 CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
 LDFLAGS := $(LIB_STDCPP) $(FLAGS) $(LIBS)
 
-all: $(BIN)
-
-$(BIN): $(OBJS)
+$(BIN): $(OBJS) $(TABLES)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
-%.o: %.cpp
+%.o: %.cpp $(TABLES)
 	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o
 
 .PHONY: clean
 
 clean:
-	rm -Rf $(BIN) $(OBJS) $(DEPFILES) $(BIN).exe
+	rm -Rf $(BIN) $(OBJS) $(DEPFILES) $(TABLES) $(BIN).exe
 
 -include $(DEPFILES)
