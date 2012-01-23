@@ -78,7 +78,7 @@ void siftmain() {
 	#endif
 	for(;;) {
 		PlayMusic(music_sting, false);
-		IntroCutscene();
+		//IntroCutscene();
 		{ *pGame = Game(); } // re-initialize memory
 		pGame->MainLoop();
 		PlayMusic(music_winscreen, false);
