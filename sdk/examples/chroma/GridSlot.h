@@ -50,6 +50,7 @@ public:
     static const unsigned int NUM_FRAMES_PER_FIXED_ANIM_FRAME = 3;
     static const unsigned int NUM_POINTS_FRAMES = 4;
     static const unsigned int NUM_FIXED_FRAMES = 5;
+    static const unsigned int MAX_ROCK_HEALTH = 4;
 
 	typedef enum 
 	{
@@ -98,13 +99,18 @@ public:
 	void TiltFrom(GridSlot &src);
 	//if we have a move pending, start it
 	void startPendingMove();
+
+    void DamageRock();
+
 private:
 	void markNeighbor( int row, int col );
+    void hurtNeighboringRock( int row, int col );
     //given tilt state, return our desired frame
     unsigned int GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const;
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
     const AssetImage &GetSpecialTexture() const;
+    unsigned int GetSpecialFrame() const;
     //convert from [-128, 128] to [0, 6] via non-linear quantization
     unsigned int QuantizeTiltValue( float value ) const;
     //get the rolling frame of the given index
@@ -127,6 +133,7 @@ private:
 	bool		 m_bFixed;
 
 	unsigned int m_animFrame;
+    unsigned int m_RockHealth;
     //x,y coordinates of our last frame, so we don't make any large jumps
     Vec2 m_lastFrameDir;
 };

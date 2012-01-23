@@ -82,7 +82,6 @@ game.cpp
 cubewrapper.cpp
 banner.cpp
 assets.gen.cpp
-audio.txt
 audio.gen.h
 audio.gen.cpp
 config.h
