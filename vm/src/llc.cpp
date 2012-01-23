@@ -46,10 +46,6 @@ using namespace llvm;
 
 extern "C" void LLVMInitializeARMAsmPrinter();
 extern "C" void LLVMInitializeARMTarget();
-extern "C" void LLVMInitializeARMAsmLexer();
-extern "C" void LLVMInitializeARMAsmLexer();
-extern "C" void LLVMInitializeARMAsmParser();
-extern "C" void LLVMInitializeARMDisassembler();
 extern "C" void LLVMInitializeARMTargetMC();
 extern "C" void LLVMInitializeARMTargetInfo();
 
@@ -178,10 +174,6 @@ int main(int argc, char **argv) {
   // Initialize targets first, so that --version shows registered targets.
   LLVMInitializeARMAsmPrinter();
   LLVMInitializeARMTarget();
-  LLVMInitializeARMAsmLexer();
-  LLVMInitializeARMAsmLexer();
-  LLVMInitializeARMAsmParser();
-  LLVMInitializeARMDisassembler();
   LLVMInitializeARMTargetMC();
   LLVMInitializeARMTargetInfo();
 
