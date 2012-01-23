@@ -54,7 +54,6 @@ private:
     _SYSAudioHandle nextHandle;
 
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
-    static const uint32_t ALL_CHANNELS_ENABLED = 0xFF;
 
     // decoders can be loaned to a channel for sample playback
     // TODO: Don't allocate both types of decoders

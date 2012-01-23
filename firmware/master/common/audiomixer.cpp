@@ -35,14 +35,11 @@ void AudioMixer::init()
  */
 void AudioMixer::enableChannel(struct _SYSAudioBuffer *buffer)
 {
-    if (enabledChannelMask >= ALL_CHANNELS_ENABLED) {
-        return;
-    }
     // find the first disabled channel, init it and mark it as enabled
-    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
-        if (!(enabledChannelMask & (1 << i))) {
-            Atomic::SetBit(enabledChannelMask, i);
-            channelSlots[i].init(buffer);
+    for (unsigned idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
+        if (!(enabledChannelMask & Intrinsic::LZ(idx))) {
+            channelSlots[idx].init(buffer);
+            Atomic::SetLZ(enabledChannelMask, idx);
             return;
         }
     }
@@ -262,8 +259,8 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     // find the next channel that's both enabled and inactive
     int idx;
     for (idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
-        if ((enabledChannelMask & (1 << idx)) &&
-           ((activeChannelMask  & (Intrinsic::LZ(idx)))) == 0) {
+        if ((enabledChannelMask & Intrinsic::LZ(idx)) &&
+           !(activeChannelMask  & Intrinsic::LZ(idx))) {
             break;
         }
     }
@@ -289,13 +286,13 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
         dec = 0;
     }
 
-    AudioChannelSlot *ch = &channelSlots[idx];
-    ch->handle = nextHandle++;
-    *handle = ch->handle;
+    AudioChannelSlot &ch = channelSlots[idx];
+    ch.handle = nextHandle++;
+    *handle = ch.handle;
     if (pcmdec) {
-        ch->play(mod, loopMode, pcmdec);
+        ch.play(mod, loopMode, pcmdec);
     } else {
-        ch->play(mod, loopMode, dec);
+        ch.play(mod, loopMode, dec);
     }
     
     Atomic::SetLZ(activeChannelMask, idx);
