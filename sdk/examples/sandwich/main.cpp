@@ -77,7 +77,7 @@ void siftmain() {
 	gChannelMusic.init();
 	#endif
 	for(;;) {
-		//PlayMusic(music_sting, false);
+		PlayMusic(music_sting, false);
 		//IntroCutscene();
 		{ *pGame = Game(); } // re-initialize memory
 		pGame->MainLoop();

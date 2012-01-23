@@ -23,6 +23,7 @@ def export():
 			f.write(content_hash)
 	except:
 		log_error()
+		sys.exit(-1)
 
 def log_error():
 	typ,val,bt = sys.exc_info()
