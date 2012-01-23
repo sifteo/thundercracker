@@ -11,6 +11,7 @@ enum EventID
     EventID_ExitState,
     EventID_Input,
     EventID_Tilt,
+    EventID_Shuffle,
     EventID_NewAnagram,
     EventID_NewWordFound,
     EventID_OldWordFound,

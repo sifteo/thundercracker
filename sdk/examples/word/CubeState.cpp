@@ -115,7 +115,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     }
 
     BG1Helper bg1(mStateMachine->getCube());
-    unsigned bg1Tiles = 0;
+    unsigned bg1Tiles = 2;
     for (unsigned int i = 0; i < 16; ++i) // rows
     {
         for (unsigned j=0; j < 16; ++j) // columns
@@ -298,13 +298,25 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         }
     }
 
+    // TODO merge in 2 ltr cube proto code
+    if (!(animate &&
+        (teethImageIndex == ImageIndex_ConnectedRightWord ||
+         teethImageIndex == ImageIndex_ConnectedLeftWord ||
+         teethImageIndex == ImageIndex_ConnectedWord ||
+         teethImageIndex == ImageIndex_Teeth ||
+         teethImageIndex == ImageIndex_Teeth_NoBlip)))
+    {
+        bg1.DrawAsset(Vec2(8,11), FontSmall, GameStateMachine::getNumAnagramsRemaining());
+    }
+
     bg1.Flush(); // TODO only flush if mask has changed recently
     WordGame::instance()->setNeedsPaintSync();
 }
 
-void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites)
+void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
+                             const AssetImage &font,
+                             bool paintSprites)
 {
-    paintSprites = false;
     vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
     vid.BG0_drawPartialAsset(Vec2(17, 0),
                              Vec2(0, 0),

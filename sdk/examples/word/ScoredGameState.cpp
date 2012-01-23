@@ -18,6 +18,14 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     onAudioEvent(eventID, data);
     switch (eventID)
     {
+    case EventID_Shuffle:
+        if (GameStateMachine::getSecondsLeft() > 3)
+        {
+            WordGame::playAudio(shake, AudioChannelIndex_Shake);
+            return GameStateIndex_ShuffleScored;
+        }
+        break;
+
     case EventID_Input:
         if (GameStateMachine::getAnagramCooldown() <= .0f &&
             GameStateMachine::getSecondsLeft() > 3)
@@ -113,7 +121,7 @@ void ScoredGameState::createNewAnagram()
 {
     // make a new anagram of letters halfway through the shuffle animation
     EventData data;
-    Dictionary::pickWord(data.mNewAnagram.mWord);
+    Dictionary::pickWord(data.mNewAnagram.mWord, data.mNewAnagram.mNumAnagrams);
     // scramble the string (random permutation)
     char scrambled[MAX_LETTERS_PER_WORD + 1];
     memset(scrambled, 0, sizeof(scrambled));

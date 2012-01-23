@@ -12,6 +12,7 @@ union EventData
     {
         char mWord[MAX_LETTERS_PER_WORD + 1];
         int mOffLengthIndex;
+        unsigned mNumAnagrams;
     } mNewAnagram;
 
     struct

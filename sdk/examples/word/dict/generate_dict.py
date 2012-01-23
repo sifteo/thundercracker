@@ -71,7 +71,7 @@ def generate_word_list_file():
     word_list = {}
     for line in fi:
         word = line.strip()
-        if len(word) in seed_word_lens and word.find("'") == -1:
+        if len(word) in seed_word_lens and word.find("'") == -1 and word.find(".") == -1:
             #print "word list: " + line
             word_list[word.upper()] = True        
     fi.close()
@@ -99,7 +99,7 @@ def generate_dict():
     fi.close()
     
     # uncomment to regenerate: 
-    generate_word_list_file()
+    #generate_word_list_file()
     
     fi = open("word_list.txt", "r")
     #print "second file " + fi.filename()
@@ -121,22 +121,27 @@ def generate_dict():
     #return
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
-        min_anagrams = [999, 999, 999, 999, 999, 3]
+        min_anagrams = [999, 999, 999, 999, 999, 1]
         #min_anagrams = [999, 999, 4, 15, 25, 25]
         #print "checking word " + word
         if len(anagrams) > min_anagrams[len(word) - 1]:
-            print word + " " + str(anagrams)
+            #print word + " " + str(anagrams)
             num_seed_repeats = 0
             # skip it if a pre-existing seed word has the same anagram set 
             bad = False
+            num_common_anagrams = 0
             for w in anagrams:
                 if len(w) == len(word) and w.upper() in word_list_used.keys():
                     num_seed_repeats += 1
+                    break
                 if w in bad_words.keys():
                     bad = True
+                    break
+                if w in word_list:
+                    num_common_anagrams += 1
             if num_seed_repeats == 0 and not bad:
                 #print word + ": " + str(len(anagrams))
-                word_list_used[word.upper()] = len(anagrams)
+                word_list_used[word.upper()] = len(anagrams) - num_common_anagrams
                 num_anagrams = len(anagrams)
                 if max_anagrams < num_anagrams:
                     max_anagrams = num_anagrams
@@ -171,18 +176,19 @@ def generate_dict():
             fi.write(hex(bits) + ",\t\t// " + word + "\n")
     fi.close()
     
-
-    # sort keys by values
-    sorted_word_list_used = sorted(word_list_used.iteritems(), key=operator.itemgetter(1), reverse=True)    
-    print sorted_word_list_used
+    # sort word list used by value numeric (keys by values in dict)
+    sorted_word_list_used = sorted(word_list_used.iteritems(), key=operator.itemgetter(1), reverse=False)    
+    #print sorted_word_list_used
     fi = open("word_list_used.cpp", "w")
     ficnt = open("word_list_used_anagram_count.cpp", "w")
     for word, value in sorted_word_list_used:
         fi.write("    \"" + word + "\",\n")
-        ficnt.write("    \"" + str(word_list_used[word]) + "\",\t// " + word + "\n")
+        ficnt.write("    " + str(len(find_anagrams(word, dictionary))) + ",\t// " + word + ", uncommon anagrams: " + str(word_list_used[word]) + "\n")
     fi.close()    
     ficnt.close()
 
+    # skip the prototype code below, it just generates the word lists for the demo, if 
+    # the seeds are set for each pick at run time
     return;
     fi = open("anagram_seeds.txt", "w")
     seed_inc = 88

@@ -10,7 +10,7 @@ class Dictionary
 public:
     Dictionary();
 
-    static bool pickWord(char* buffer);
+    static bool pickWord(char* buffer, unsigned& numAnagrams);
     static bool isWord(const char* string);
     static bool isOldWord(const char* word);
 

@@ -41,6 +41,7 @@ public:
     static unsigned getScore() { return (unsigned) sInstance->mScore; }
     static float getTime() { return sInstance->StateMachine::getTime(); }
     static unsigned char getNewWordLength() { return sInstance->mNewWordLength; }
+    static unsigned getNumAnagramsRemaining() { return sInstance->mNumAnagramsRemaining; }
 
 protected:
     virtual State& getState(unsigned index);
@@ -59,6 +60,7 @@ private:
     float mTimeLeft;
     unsigned mScore;
     unsigned char mNewWordLength;
+    unsigned mNumAnagramsRemaining;
 
     static GameStateMachine* sInstance;
 };
