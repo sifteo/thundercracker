@@ -363,9 +363,9 @@ bool Game::no_match_color_imbalance() const
 	{
 		int total = 0;
 
-		for( int i = 0; i < NUM_CUBES; i++ )
+        for( int j = 0; j < NUM_CUBES; j++ )
 		{
-			if( cubes[i].hasColor(i) )
+            if( cubes[j].hasColor(i) )
 				total++;
 		}
 
