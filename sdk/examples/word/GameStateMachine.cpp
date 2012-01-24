@@ -163,3 +163,18 @@ void GameStateMachine::setState(unsigned newStateIndex, State& oldState)
     StateMachine::setState(newStateIndex, oldState);
     onEvent(EventID_GameStateChanged, data);
 }
+
+
+unsigned GameStateMachine::getNumCubesInState(CubeStateIndex stateIndex)
+{
+    ASSERT(sInstance);
+    unsigned count = 0;
+    for (unsigned i = 0; i < arraysize(sInstance->mCubeStateMachines); ++i)
+    {
+        if (sInstance->mCubeStateMachines[i].getCurrentStateIndex() == stateIndex)
+        {
+            ++count;
+        }
+    }
+    return count;
+}

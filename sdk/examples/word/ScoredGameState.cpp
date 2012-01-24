@@ -9,8 +9,22 @@
 
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
-    return (GameStateMachine::getSecondsLeft() <= 0) ?
-                GameStateIndex_EndOfRoundScored : GameStateIndex_PlayScored;
+    if (GameStateMachine::getSecondsLeft() <= 0)
+    {
+        return GameStateIndex_EndOfRoundScored;
+    }
+    else
+    {
+        if (GameStateMachine::getNumAnagramsRemaining() <= 0 &&
+            GameStateMachine::getNumCubesInState(CubeStateIndex_NewWordScored) <= 0)
+        {
+            // wait for all the cube states to exit the new word state
+            // then shuffle
+            WordGame::playAudio(shake, AudioChannelIndex_Shake);
+            return GameStateIndex_ShuffleScored;        }
+
+        return GameStateIndex_PlayScored;
+    }
 }
 
 unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
@@ -222,3 +236,5 @@ void ScoredGameState::createNewAnagram()
     }
     GameStateMachine::sOnEvent(EventID_NewAnagram, data);
 }
+
+

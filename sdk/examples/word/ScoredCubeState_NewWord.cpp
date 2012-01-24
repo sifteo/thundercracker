@@ -112,12 +112,7 @@ unsigned ScoredCubeState_NewWord::update(float dt, float stateTime)
     }
     else
     {
-        if (GameStateMachine::getNumAnagramsRemaining() <= 0)
-        {
-            WordGame::onEvent(EventID_Shuffle, EventData());
-        }
-        return (getStateMachine().getCurrentStateIndex() == CubeStateIndex_NewWordScored) ?
-                    CubeStateIndex_OldWordScored : getStateMachine().getCurrentStateIndex();
+        return CubeStateIndex_OldWordScored;
     }
 }
 
