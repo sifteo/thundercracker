@@ -26,4 +26,44 @@ using namespace llvm;
 SVMTargetLowering::SVMTargetLowering(TargetMachine &TM)
     : TargetLowering(TM, new TargetLoweringObjectFileELF())
 {
+    addRegisterClass(MVT::i32, SVM::IntRegsRegisterClass);
+}
+
+SDValue SVMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
+{
+    switch (Op.getOpcode()) {
+    default:
+        llvm_unreachable("Should not custom lower this!");
+    }
+}
+
+SDValue SVMTargetLowering::LowerFormalArguments(SDValue Chain,
+                                                CallingConv::ID CallConv,
+                                                bool isVarArg,
+                                                const SmallVectorImpl<ISD::InputArg> &Ins,
+                                                DebugLoc dl, SelectionDAG &DAG,
+                                                SmallVectorImpl<SDValue> &InVals) const
+{
+    return Chain;
+}
+
+SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
+                                     CallingConv::ID CallConv, bool isVarArg,
+                                     bool &isTailCall,
+                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                     const SmallVectorImpl<SDValue> &OutVals,
+                                     const SmallVectorImpl<ISD::InputArg> &Ins,
+                                     DebugLoc dl, SelectionDAG &DAG,
+                                     SmallVectorImpl<SDValue> &InVals) const
+{
+    return Chain;
+}
+
+SDValue SVMTargetLowering::LowerReturn(SDValue Chain,
+                                       CallingConv::ID CallConv, bool isVarArg,
+                                       const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                       const SmallVectorImpl<SDValue> &OutVals,
+                                       DebugLoc dl, SelectionDAG &DAG) const
+{
+    return Chain;
 }

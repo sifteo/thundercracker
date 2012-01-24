@@ -12,7 +12,7 @@ FLAGS += -O3 -g -fomit-frame-pointer
 WARNFLAGS := -Werror -Wall -Wno-uninitialized
 
 # LLVM
-FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -DNDEBUG -fno-rtti
+FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -fno-rtti
 INCLUDES += -I$(LLVM_INC)
 LIBS += \
 	$(LLVM_LIB)/libLLVMScalarOpts.a \
@@ -31,6 +31,13 @@ LIBS += \
 	$(LLVM_LIB)/libLLVMMC.a \
 	$(LLVM_LIB)/libLLVMCore.a \
 	$(LLVM_LIB)/libLLVMSupport.a
+
+# The DEBUG-ness of this build must match what LLVM was compiled with.
+# Our libraries in deps are release builds, but if you want to set LLVM_LIB
+# yourself, you can turn debugging back on.
+ifeq ($(DEBUG),)
+	FLAGS += -DNDEBUG
+endif
 
 # Automatic dependency generation (*.d files)
 FLAGS += -MMD
