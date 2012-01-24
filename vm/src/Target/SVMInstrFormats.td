@@ -7,21 +7,88 @@
 
 class InstSVM<dag outs, dag ins, string asmstr, list<dag> pattern> : Instruction
 {
-    field bits<16> Inst;
-
     let Namespace = "SVM";
-
     dag OutOperandList = outs;
     dag InOperandList = ins;
     let AsmString   = asmstr;
     let Pattern = pattern;
 }
 
-class F1<dag outs, dag ins, string asmstr, list<dag> pattern>
+/*
+ * A 16-bit Thumb instruction. The top three bits are always a constant
+ * "major" opcode. The individual formats here are numbered accoRding to
+ * Figure 5-1 in the ARM7TDMI data sheet.
+ */
+ 
+class ThumbInst<dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstSVM<outs, ins, asmstr, pattern>
 {
-    bits<6>  op6;
-    bits<10> imm10;
-    let Inst{15-10} = op6;
-    let Inst{9-0}  = imm10;
+    field bits<16> Inst;
+    bits<3> opA;
+    let Inst{15-13} = opA;
+}
+
+class T1<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst<outs, ins, asmstr, pattern>
+{
+    let opA = 0;
+    bits<2> opB;
+    bits<5> offset5;
+    bits<3> Rs;
+    bits<3> Rd;
+    let Inst{12-11} = opB;
+    let Inst{10-6} = offset5;
+    let Inst{5-3} = Rs;
+    let Inst{2-0} = Rd;
+}
+
+class T2<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst<outs, ins, asmstr, pattern>
+{
+    let opA = 0;
+    bits<1> imm;
+    bits<1> op;
+    bits<3> rN;
+    bits<3> Rs;
+    bits<3> Rd;
+    let Inst{12-11} = 3;
+    let Inst{10} = imm;
+    let Inst{9} = op;
+    let Inst{8-6} = rN;
+    let Inst{5-3} = Rs;
+    let Inst{2-0} = Rd;
+}
+
+class T3<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst<outs, ins, asmstr, pattern>
+{
+    let opA = 1;
+    bits<2> opB;
+    bits<3> Rd;
+    bits<8> offset8;
+    let Inst{12-11} = opB;
+    let Inst{10-8} = Rd;
+    let Inst{7-0} = offset8;
+}
+
+class T4<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst<outs, ins, asmstr, pattern>
+{
+    let opA = 2;
+    bits<4> opB;
+    bits<3> Rs;
+    bits<3> Rd;
+    let Inst{12-10} = 0;
+    let Inst{9-6} = opB;
+    let Inst{5-3} = Rs;
+    let Inst{2-0} = Rd;
+}
+
+class T17<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst<outs, ins, asmstr, pattern>
+{
+    let opA = 6;
+    bits<8> value8;
+    let Inst{12-8} = 0b11111;
+    let Inst{7-0} = value8;
 }

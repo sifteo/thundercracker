@@ -26,7 +26,18 @@ using namespace llvm;
 SVMTargetLowering::SVMTargetLowering(TargetMachine &TM)
     : TargetLowering(TM, new TargetLoweringObjectFileELF())
 {
-    addRegisterClass(MVT::i32, SVM::IntRegsRegisterClass);
+    addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
+    
+    computeRegisterProperties();
+}
+
+const char *SVMTargetLowering::getTargetNodeName(unsigned Opcode) const
+{
+    switch (Opcode) {
+    default: return 0;
+    case SVMISD::CALL:          return "SVMISD::CALL";
+    case SVMISD::RETURN:        return "SVMISD::RETURN";
+    }
 }
 
 SDValue SVMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
@@ -56,6 +67,14 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                      DebugLoc dl, SelectionDAG &DAG,
                                      SmallVectorImpl<SDValue> &InVals) const
 {
+    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+    
+    std::vector<SDValue> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Callee);
+    
+    Chain = DAG.getNode(SVMISD::CALL, dl, NodeTys, &Ops[0], Ops.size());
+
     return Chain;
 }
 
@@ -65,5 +84,5 @@ SDValue SVMTargetLowering::LowerReturn(SDValue Chain,
                                        const SmallVectorImpl<SDValue> &OutVals,
                                        DebugLoc dl, SelectionDAG &DAG) const
 {
-    return Chain;
+    return DAG.getNode(SVMISD::RETURN, dl, MVT::Other, Chain);
 }

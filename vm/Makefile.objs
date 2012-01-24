@@ -11,13 +11,15 @@ OBJS = \
 	src/Target/SVMRegisterInfo.o \
 	src/Target/SVMSelectionDAGInfo.o \
 	src/Target/SVMTargetInfo.o \
-	src/Target/SVMTargetMachine.o
+	src/Target/SVMTargetMachine.o \
+	src/Target/SVMSubtarget.o
 
 TABLES := \
 	src/Target/SVMGenAsmWriter.inc \
 	src/Target/SVMGenDAGISel.inc \
 	src/Target/SVMGenInstrInfo.inc \
-	src/Target/SVMGenRegisterInfo.inc	 
+	src/Target/SVMGenRegisterInfo.inc \
+	src/Target/SVMGenSubtargetInfo.inc
 	
 TABLEDEPS := src/Target/*.td
 TABLEGEN = $(LLVM_BIN)/llvm-tblgen $(INCLUDES) -o $@ $<
@@ -33,3 +35,7 @@ src/Target/SVMGenAsmWriter.inc: src/Target/SVM.td $(TABLEDEPS)
 
 src/Target/SVMGenDAGISel.inc: src/Target/SVM.td $(TABLEDEPS)
 	$(TABLEGEN) -gen-dag-isel
+
+src/Target/SVMGenSubtargetInfo.inc: src/Target/SVM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-subtarget
+

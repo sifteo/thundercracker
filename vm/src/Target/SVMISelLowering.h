@@ -13,10 +13,21 @@
 
 namespace llvm {
 
+    namespace SVMISD {
+        // SVM specific DAG nodes
+        enum NodeType {
+            FIRST_NUMBER = ISD::BUILTIN_OP_END,
+            CALL,
+            RETURN,
+        };
+    }
+
     class SVMTargetLowering : public TargetLowering {
     public:
         SVMTargetLowering(TargetMachine &TM);
-        
+
+        virtual const char *getTargetNodeName(unsigned Opcode) const;
+
         virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 
         virtual SDValue

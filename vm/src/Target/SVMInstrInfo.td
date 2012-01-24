@@ -5,7 +5,19 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-def FooInstr : F1<
-     (outs IntRegs:$dst), (ins IntRegs:$src),
-     "foo $src, $dst",
-     [(set IntRegs:$dst, (not IntRegs:$src))]>;
+def SDT_SVMCall     : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
+def call            : SDNode<"SVMISD::CALL", SDT_SVMCall,
+                        [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
+
+def ret             : SDNode<"SVMISD::RETURN", SDTNone,
+                        [SDNPHasChain, SDNPOptInGlue]>;
+
+/*
+ * Normal instructions
+ */
+
+def MOV : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
+    "mov\t$Rd, $Rs",
+    [(set GPReg:$Rd, GPReg:$Rs)]>;
+
+def RET : T1<(outs), (ins), "ret", [(ret)]>;

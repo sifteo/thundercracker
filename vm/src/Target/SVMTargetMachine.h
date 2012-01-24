@@ -12,6 +12,7 @@
 #include "SVMISelLowering.h"
 #include "SVMFrameLowering.h"
 #include "SVMSelectionDAGInfo.h"
+#include "SVMSubtarget.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -24,6 +25,7 @@ class SVMTargetMachine : public LLVMTargetMachine {
     SVMSelectionDAGInfo TSInfo;
     SVMInstrInfo InstrInfo;
     SVMFrameLowering FrameLowering;
+    SVMSubtarget Subtarget;
 
 public:
     SVMTargetMachine(const Target &T, StringRef TT, 
@@ -36,6 +38,7 @@ public:
     virtual const SVMTargetLowering* getTargetLowering() const { return &TLInfo; }
     virtual const SVMSelectionDAGInfo* getSelectionDAGInfo() const { return &TSInfo; }
     virtual const TargetData *getTargetData() const { return &DataLayout; }
+    virtual const SVMSubtarget *getSubtargetImpl() const { return &Subtarget; }
 
     virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
 };

@@ -22,7 +22,8 @@ SVMTargetMachine::SVMTargetMachine(const Target &T, StringRef TT,
                                    Reloc::Model RM, CodeModel::Model CM)
     : LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
       DataLayout("E-p:32:32:32-i64:64:64-f64:64:64-f128:64:64-n32"),
-      TLInfo(*this), TSInfo(*this) {}
+      TLInfo(*this), TSInfo(*this), Subtarget(TT, CPU, FS)
+{}
 
 bool SVMTargetMachine::addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
 {

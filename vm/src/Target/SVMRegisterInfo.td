@@ -20,5 +20,6 @@ def R5 : SVMReg< 0, "r5" >;
 def R6 : SVMReg< 0, "r6" >;
 def R7 : SVMReg< 0, "r7" >;
 
-def IntRegs : RegisterClass<"SVM", [i32], 32,
-                            (add R0, R1, R2, R3, R4, R5, R6, R7)>;
+// General purpose registers
+def GPReg : RegisterClass<"SVM", [i32], 32,
+    (add R0, R1, R2, R3, R4, R5, R6, R7)>;
