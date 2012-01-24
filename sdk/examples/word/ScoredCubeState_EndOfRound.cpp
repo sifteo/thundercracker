@@ -54,7 +54,17 @@ void ScoredCubeState_EndOfRound::paint()
     WordGame::hideSprites(vid);
     if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
     {
-        paintLetters(vid, Font1Letter);
+        switch (MAX_LETTERS_PER_CUBE)
+        {
+        case 1:
+            paintLetters(vid, Font1Letter);
+            break;
+
+        default:
+            vid.BG0_drawAsset(Vec2(0,0), LetterBG);
+            break;
+        }
+
         paintTeeth(vid, ImageIndex_Teeth, true, true);
         return;
     }

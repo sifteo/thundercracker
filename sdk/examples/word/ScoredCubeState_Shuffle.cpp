@@ -39,7 +39,14 @@ void ScoredCubeState_Shuffle::paint()
     if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
     {
         // teeth closing animation
-        paintLetters(vid, Font1Letter);
+        if (MAX_LETTERS_PER_CUBE == 1)
+        {
+            paintLetters(vid, Font1Letter);
+        }
+        else
+        {
+            vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
+        }
         paintTeeth(vid, ImageIndex_Teeth, true, true);
         //DEBUG_LOG(("shuffle: [c: %d] teeth closing %f\n", c.id(), GameStateMachine::getTime()));
     }
