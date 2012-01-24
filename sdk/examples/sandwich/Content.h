@@ -3,10 +3,6 @@
 
 using namespace Sifteo;
 
-#define PORTAL_OPEN	        0
-#define PORTAL_WALL	        1
-#define PORTAL_DOOR         2
-
 #define ITEM_NONE           0
 #define ITEM_BASIC_KEY      1
 #define ITEM_BREAD          2

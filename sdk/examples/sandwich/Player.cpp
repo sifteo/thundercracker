@@ -154,7 +154,8 @@ void Player::Update(float dt) {
       // animate walking to target
       PlaySfx(sfx_running);
       pTarget->ShowPlayer();
-      if (pCurrent->CurrentRoom()->GetPortal(mDir) == PORTAL_DOOR) { // hack for now -- special case for approaching doors
+      //if (pCurrent->CurrentRoom()->GetPortal(mDir) == PORTAL_DOOR) { // hack for now -- special case for approaching doors
+      if (false) {
         ASSERT( mDir == SIDE_TOP ); // assuming 128 pixel straight-line UP from the current cube
         for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
           mPosition.y -= WALK_SPEED;

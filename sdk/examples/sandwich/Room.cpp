@@ -17,10 +17,10 @@ const RoomData* Room::Data() const {
 uint8_t Room::GetPortal(Cube::Side side) {
   Vec2 p = Location();
   switch(side) {
-    case SIDE_TOP: return *( pGame->map.GetPortalY(p.x, p.y) );
-    case SIDE_LEFT: return *( pGame->map.GetPortalX(p.x, p.y) );
-    case SIDE_BOTTOM: return *( pGame->map.GetPortalY(p.x, p.y+1) );
-    case SIDE_RIGHT: return *( pGame->map.GetPortalX(p.x+1, p.y) );
+    case SIDE_TOP: return pGame->map.GetPortalY(p.x, p.y-1);
+    case SIDE_LEFT: return pGame->map.GetPortalX(p.x-1, p.y);
+    case SIDE_BOTTOM: return pGame->map.GetPortalY(p.x, p.y);
+    case SIDE_RIGHT: return pGame->map.GetPortalX(p.x, p.y);
   }
   return 0;
 }

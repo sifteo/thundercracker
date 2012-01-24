@@ -6,10 +6,6 @@ Map::Map() {
   SetData(gMapData[gQuestData->mapId]);
 }
 
-inline static bool PortalOpen(const uint8_t* pid) { 
-    return *pid != PORTAL_WALL;
-}
-
 void Map::SetData(const MapData& map) { 
   if (mData != (MapData*)&map) {
     mData = (MapData*)&map; 
@@ -42,13 +38,13 @@ void Map::SetData(const MapData& map) {
 bool Map::CanTraverse(Vec2 loc, Cube::Side direction) const {
     switch(direction) {
       case SIDE_TOP:
-        return loc.y > 0 && PortalOpen( GetPortalY(loc.x, loc.y) );
+        return loc.y > 0 && GetPortalY(loc.x, loc.y-1);
       case SIDE_LEFT:
-        return loc.x > 0 && PortalOpen( GetPortalX(loc.x, loc.y) );
+        return loc.x > 0 && GetPortalX(loc.x-1, loc.y);
       case SIDE_BOTTOM:
-        return loc.y < mData->height-1 && PortalOpen( GetPortalY(loc.x, loc.y+1) );
+        return loc.y < mData->height-1 && GetPortalY(loc.x, loc.y);
       case SIDE_RIGHT:
-        return loc.x < mData->width-1 && PortalOpen( GetPortalX(loc.x+1, loc.y) );
+        return loc.x < mData->width-1 && GetPortalX(loc.x, loc.y);
   }
   return false;
 }

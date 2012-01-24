@@ -1,9 +1,4 @@
-import lxml.etree
-import os
-import os.path
-import re
-import tmx
-import misc
+import lxml.etree, os, os.path, re, tmx, misc, math
 
 # constants
 PORTAL_OPEN = 0
@@ -37,77 +32,22 @@ class Map:
 		self.height = self.raw.ph / 128
 		self.count = self.width * self.height
 		self.rooms = [Room(self, i) for i in range(self.count)]
-
-		# infer portal states (part of me reeeally wants this to be more clever)
+		# infer portals
 		for r in self.rooms:
-			if r.isblocked():
-				r.portals[0] = PORTAL_WALL
-				r.portals[1] = PORTAL_WALL
-				r.portals[2] = PORTAL_WALL
-				r.portals[3] = PORTAL_WALL
-				continue
+			if r.isblocked(): continue
 			tx,ty = (8*r.x, 8*r.y)
-			# top
-			prevType = r.portals[0] = PORTAL_WALL
-			for i in range(8):
-				typ = portal_type(self.background.tileat(tx+i, ty))
-				if typ == PORTAL_WALL:
-					pass
-				elif typ == PORTAL_OPEN:
-					if prevType == PORTAL_OPEN:
-						r.portals[0] = PORTAL_OPEN
-						break
-				else:
-					r.portals[0] = typ
-					break
-				prevType = typ
-			if r.portals[0] != PORTAL_WALL and (r.y == 0 or self.roomat(r.x, r.y-1).isblocked()):
-				r.portals[0] = PORTAL_WALL
-			# left
-			prevType = r.portals[1] = PORTAL_WALL
-			for i in range(8):
-				typ = portal_type(self.background.tileat(tx, ty+i))
-				if typ == PORTAL_WALL:
-					pass
-				elif typ == PORTAL_OPEN:
-					r.portals[1] = PORTAL_OPEN
-					break
-				else:
-					r.portals[i] =typ
-					break
-				prevType = typ
-			if r.portals[1] != PORTAL_WALL and (r.x == 0 or self.roomat(r.x-1, r.y).isblocked()):
-				r.portals[1] = PORTAL_WALL
-			# bottom
-			prevType = r.portals[2] = PORTAL_WALL
-			for i in range(8):
-				typ = portal_type(self.background.tileat(tx+i, ty+7))
-				if typ == PORTAL_WALL:
-					pass
-				elif typ == PORTAL_OPEN:
-					if prevType == PORTAL_OPEN:
-						r.portals[2] = PORTAL_OPEN
-						break
-				else:
-					r.portals[2] = typ
-					break
-				prevType = typ
-			if r.portals[2] != PORTAL_WALL and (r.y == self.height-1 or self.roomat(r.x, r.y+1).isblocked()):
-				r.portals[2] = PORTAL_WALL
-			# right
-			prevType = r.portals[3] = PORTAL_WALL
-			for i in range(8):
-				typ = portal_type(self.background.tileat(tx+7, ty+i))
-				if typ == PORTAL_WALL:
-					pass
-				elif typ == PORTAL_OPEN:
-					r.portals[3] = PORTAL_OPEN
-				else:
-					r.portals[3] = typ
-					break
-				prevType = typ
-			if r.portals[3] != PORTAL_WALL and (r.x == self.width-1 or self.roomat(r.x+1, r.y).isblocked()):
-				r.portals[3] = PORTAL_WALL
+			if r.y != 0 and not self.roomat(r.x, r.y-1).isblocked():
+				ports = [ portal_type(self.background.tileat(tx+i, ty)) for i in range(8) ]
+				r.portals[SIDE_TOP] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+			if r.x != 0 and not self.roomat(r.x-1, r.y).isblocked():
+				ports = [ portal_type(self.background.tileat(tx, ty+i)) for i in range(8) ]
+				r.portals[SIDE_LEFT] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+			if r.y != self.height-1 and not self.roomat(r.x, r.y+1).isblocked():
+				ports = [ portal_type(self.background.tileat(tx+i, ty+7)) for i in range(8) ]
+				r.portals[SIDE_BOTTOM] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+			if r.x != self.width-1 and not self.roomat(r.x+1, r.y).isblocked():
+				ports = [ portal_type(self.background.tileat(tx+7, ty+i)) for i in range(8) ]
+				r.portals[SIDE_RIGHT] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
 		# validate portals
 		for y in range(self.height):
 			assert not self.roomat(0,y).portals[1] == PORTAL_OPEN and not self.roomat(self.width-1, y).portals[3] == PORTAL_OPEN, "Boundary Wall Error in Map: " + self.id
@@ -152,18 +92,34 @@ class Map:
 		src.write("// EXPORTED FROM %s.tmx\n" % self.id)
 		src.write("//--------------------------------------------------------\n\n")
 		src.write("static const uint8_t %s_xportals[] = { " % self.id)
+
+		byte = 0
+		cnt = 0
 		for y in range(self.height):
-			for x in range(self.width):
-				src.write("%s, " % hex(self.roomat(x,y).portals[SIDE_LEFT]))
-			src.write("%s, " % hex(self.roomat(self.width-1,y).portals[SIDE_RIGHT]))
+			for x in range(self.width-1):
+				if self.roomat(x,y).portals[SIDE_RIGHT] != PORTAL_WALL:
+					byte = byte | (1 << cnt)
+				cnt = cnt + 1
+				if cnt == 8:
+					cnt = 0
+					src.write("%s, " % hex(byte))
+					byte = 0
+		if cnt > 0: src.write("%s, " % hex(byte))
 		src.write("};\n")
 		src.write("static const uint8_t %s_yportals[] = { " % self.id)
+		byte = 0
+		cnt = 0
 		for x in range(self.width):
-			for y in range(self.height):
-				src.write("%s, " % hex(self.roomat(x,y).portals[SIDE_TOP]))
-			src.write("%s, " % hex(self.roomat(x, self.height-1).portals[SIDE_BOTTOM]))
+			for y in range(self.height-1):
+				if self.roomat(x,y).portals[SIDE_BOTTOM] != PORTAL_WALL:
+					byte = byte | (1 << cnt)
+				cnt = cnt + 1
+				if cnt == 8:
+					cnt = 0
+					src.write("%s, " % hex(byte))
+					byte = 0
+		if cnt > 0: src.write("%s, " % hex(byte))
 		src.write("};\n")
-
 		if len(self.item_dict) > 0:
 			src.write("static const ItemData %s_items[] = { " % self.id)
 			for item in self.list_triggers_of_type(TRIGGER_ITEM):
