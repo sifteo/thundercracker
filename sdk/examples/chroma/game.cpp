@@ -38,7 +38,7 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
 void Game::Init()
 {
 	for( int i = 0; i < NUM_CUBES; i++ )
-		cubes[i].Init(GameAssets);
+        m_cubes[i].Init(GameAssets);
 
     bool done = false;
 
@@ -49,7 +49,7 @@ void Game::Init()
 		done = true;
 		for( int i = 0; i < NUM_CUBES; i++ )
 		{
-			if( !cubes[i].DrawProgress(GameAssets) )
+            if( !m_cubes[i].DrawProgress(GameAssets) )
 				done = false;
 
 			PRINT( "in load loop" );
@@ -59,10 +59,10 @@ void Game::Init()
     PRINT( "done loading" );
 
     for( int i = 0; i < NUM_CUBES; i++ )
-        cubes[i].Reset();
+        m_cubes[i].Reset();
 
 	for( int i = 0; i < NUM_CUBES; i++ )
-		cubes[i].vidInit();
+        m_cubes[i].vidInit();
 
 	m_splashTime = System::clock();
     m_fLastTime = m_splashTime;
@@ -106,7 +106,7 @@ void Game::Update()
 	if( m_state == STATE_SPLASH )
 	{
 		for( int i = 0; i < NUM_CUBES; i++ )
-			cubes[i].Draw();
+            m_cubes[i].Draw();
 
         if( System::clock() - m_splashTime > 7.0f )
 		{
@@ -148,10 +148,10 @@ void Game::Update()
         }
 
 		for( int i = 0; i < NUM_CUBES; i++ )
-            cubes[i].Update( System::clock(), dt );
+            m_cubes[i].Update( System::clock(), dt );
 
         for( int i = 0; i < NUM_CUBES; i++ )
-			cubes[i].Draw();
+            m_cubes[i].Draw();
 
         //always finishing works
         //System::finish();
@@ -160,7 +160,7 @@ void Game::Update()
         //force a finish here
         for( int i = 0; i < NUM_CUBES; i++ )
         {
-            if( cubes[i].getBG1Helper().NeedFinish() )
+            if( m_cubes[i].getBG1Helper().NeedFinish() )
             {
                 //System::finish();
                 System::paintSync();
@@ -171,7 +171,7 @@ void Game::Update()
         }
 #endif
         for( int i = 0; i < NUM_CUBES; i++ )
-            cubes[i].FlushBG1();
+            m_cubes[i].FlushBG1();
 	}
 
 #if SLOW_MODE
@@ -202,7 +202,7 @@ void Game::Reset()
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
-		cubes[i].Reset();
+        m_cubes[i].Reset();
 	}
 
 	m_timer.Reset();
@@ -215,7 +215,7 @@ void Game::TestMatches()
 	//for every cube test matches with every other cube
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
-		cubes[i].testMatches();
+        m_cubes[i].testMatches();
 	}
 }
 
@@ -225,7 +225,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
-		total_marked += cubes[i].getNumMarked();
+        total_marked += m_cubes[i].getNumMarked();
 	}
 
     //chain is finished
@@ -339,7 +339,7 @@ unsigned int Game::numColors() const
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
-		cubes[i].fillColorMap( aColors );
+        m_cubes[i].fillColorMap( aColors );
 	}
     
 	int numColors = 0;
@@ -365,7 +365,7 @@ bool Game::no_match_color_imbalance() const
 
         for( int j = 0; j < NUM_CUBES; j++ )
 		{
-            if( cubes[j].hasColor(i) )
+            if( m_cubes[j].hasColor(i) )
 				total++;
 		}
 
@@ -384,7 +384,7 @@ bool Game::no_match_stranded_interior() const
     */
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
-		if( cubes[i].hasStrandedFixedDots() )
+        if( m_cubes[i].hasStrandedFixedDots() )
 			return true;
 	}
 
@@ -400,7 +400,7 @@ bool Game::no_match_stranded_side() const
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
-		if( cubes[i].allFixedDotsAreStrandedSide() )
+        if( m_cubes[i].allFixedDotsAreStrandedSide() )
 		{
 			int numCorners = 0;
 
@@ -409,9 +409,9 @@ bool Game::no_match_stranded_side() const
 				
 				if( i != j )
 				{
-					unsigned int thisCubeNumCorners = cubes[j].getNumCornerDots();
+                    unsigned int thisCubeNumCorners = m_cubes[j].getNumCornerDots();
 					numCorners += thisCubeNumCorners;
-					if( numCorners > 1 || cubes[j].getNumDots() > thisCubeNumCorners )
+                    if( numCorners > 1 || m_cubes[j].getNumDots() > thisCubeNumCorners )
 						break;
 				}
 			}
@@ -437,7 +437,7 @@ bool Game::no_match_mismatch_side() const
 
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
-		if( cubes[i].getFixedDot( aBuddies[iNumBuddies] ) )
+        if( m_cubes[i].getFixedDot( aBuddies[iNumBuddies] ) )
 		{
 			iNumBuddies++;
 			if( iNumBuddies > 2 )
@@ -540,7 +540,7 @@ void Game::BlowAll( unsigned int color )
 {
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        cubes[i].BlowAll( color );
+        m_cubes[i].BlowAll( color );
     }
 
     //m_bHyperDotMatched = true;
@@ -552,7 +552,7 @@ bool Game::DoesHyperDotExist()
 {
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        if( cubes[i].HasHyperDot() )
+        if( m_cubes[i].HasHyperDot() )
             return true;
     }
 
@@ -571,7 +571,7 @@ bool Game::AreNoCubesEmpty() const
 {
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        if( cubes[i].isEmpty() )
+        if( m_cubes[i].isEmpty() )
             return false;
     }
 

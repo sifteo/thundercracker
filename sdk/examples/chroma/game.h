@@ -64,7 +64,7 @@ public:
         DOT_THRESHOLD5 = 15,
     };
 
-	CubeWrapper cubes[NUM_CUBES]; 
+    CubeWrapper m_cubes[NUM_CUBES];
     static Math::Random random;
 
 	void Init();

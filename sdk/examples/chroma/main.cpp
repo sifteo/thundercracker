@@ -22,38 +22,38 @@ static void onAccelChange(_SYSCubeID cid)
 
 	static const int TILT_THRESHOLD = 20;
 
-	game.cubes[cid].ClearTiltInfo();
+	game.m_cubes[cid].ClearTiltInfo();
 
 	if( state.x > TILT_THRESHOLD )
-		game.cubes[cid].AddTiltInfo( RIGHT );
+		game.m_cubes[cid].AddTiltInfo( RIGHT );
 	else if( state.x < -TILT_THRESHOLD )
-		game.cubes[cid].AddTiltInfo( LEFT );
+		game.m_cubes[cid].AddTiltInfo( LEFT );
 	if( state.y > TILT_THRESHOLD )
-		game.cubes[cid].AddTiltInfo( DOWN );
+		game.m_cubes[cid].AddTiltInfo( DOWN );
 	else if( state.y < -TILT_THRESHOLD )
-		game.cubes[cid].AddTiltInfo( UP);
+		game.m_cubes[cid].AddTiltInfo( UP);
 }
 */
 
 static void onTilt(_SYSCubeID cid)
 {
-    Cube::TiltState state = game.cubes[cid - CUBE_ID_BASE].GetCube().getTiltState();
+    Cube::TiltState state = game.m_cubes[cid - CUBE_ID_BASE].GetCube().getTiltState();
 
 	if( state.x == _SYS_TILT_POSITIVE )
-        game.cubes[cid - CUBE_ID_BASE].Tilt( RIGHT );
+        game.m_cubes[cid - CUBE_ID_BASE].Tilt( RIGHT );
 	else if( state.x == _SYS_TILT_NEGATIVE )
-        game.cubes[cid - CUBE_ID_BASE].Tilt( LEFT );
+        game.m_cubes[cid - CUBE_ID_BASE].Tilt( LEFT );
 	if( state.y == _SYS_TILT_POSITIVE )
-        game.cubes[cid - CUBE_ID_BASE].Tilt( DOWN );
+        game.m_cubes[cid - CUBE_ID_BASE].Tilt( DOWN );
 	else if( state.y == _SYS_TILT_NEGATIVE )
-        game.cubes[cid - CUBE_ID_BASE].Tilt( UP);
+        game.m_cubes[cid - CUBE_ID_BASE].Tilt( UP);
 }
 
 static void onShake(_SYSCubeID cid)
 {
     _SYSShakeState state;
     _SYS_getShake(cid, &state);
-    game.cubes[cid - CUBE_ID_BASE].Shake(state);
+    game.m_cubes[cid - CUBE_ID_BASE].Shake(state);
 }
 
 static void init()

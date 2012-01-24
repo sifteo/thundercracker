@@ -547,7 +547,7 @@ void CubeWrapper::testMatches()
         if( m_neighbors[i] >= 0 && m_neighbors[i] < m_cube.id() - CUBE_ID_BASE )
 		{
 			//as long we we test one block going clockwise, and the other going counter-clockwise, we'll match up
-			int side = Game::Inst().cubes[m_neighbors[i]].GetSideNeighboredOn( 0, m_cube );
+            int side = Game::Inst().m_cubes[m_neighbors[i]].GetSideNeighboredOn( 0, m_cube );
 
 			//no good, just set our flag again and return
 			if( side < 0 )
@@ -562,7 +562,7 @@ void CubeWrapper::testMatches()
 
 			FillSlotArray( ourGems, i, true );
 
-			CubeWrapper &otherCube = Game::Inst().cubes[m_neighbors[i]];
+            CubeWrapper &otherCube = Game::Inst().m_cubes[m_neighbors[i]];
 			otherCube.FillSlotArray( theirGems, side, false );
 
 			//compare the two
