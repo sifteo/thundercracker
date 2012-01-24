@@ -312,6 +312,8 @@ void Game::checkGameOver()
 
 bool Game::NoMatches()
 {
+    if( DoesHyperDotExist() )
+        return false;
     //""" Return True if no matches are possible with the current gems. """
     if( no_match_color_imbalance() )
 		return true;
@@ -575,3 +577,4 @@ bool Game::AreNoCubesEmpty() const
 
     return true;
 }
+
