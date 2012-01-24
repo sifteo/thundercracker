@@ -60,7 +60,7 @@ public:
     Banner &getBanner() { return m_banner; }
 
 	bool isFull();
-	bool isEmpty();
+    bool isEmpty() const;
 	void checkEmpty();
 
 	void checkRefill();

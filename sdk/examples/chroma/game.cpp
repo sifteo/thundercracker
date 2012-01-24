@@ -28,7 +28,8 @@ Game &Game::Inst()
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
                 m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_splashTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
-                m_ShakesRemaining( STARTING_SHAKES ), m_bForcePaintSync( false )//, m_bHyperDotMatched( false )
+                m_ShakesRemaining( STARTING_SHAKES ), m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
+                , m_bStabilized( false )
 {
 	//Reset();
 }
@@ -130,11 +131,21 @@ void Game::Update()
 			m_bTestMatches = false;
 		}
 
-        if( m_mode == MODE_TIMED && m_state == STATE_PLAYING )
-		{
-            m_timer.Update( dt );
-			checkGameOver();
-		}
+        if( m_state == STATE_PLAYING )
+        {
+            if( m_mode == MODE_TIMED )
+            {
+                m_timer.Update( dt );
+                checkGameOver();
+            }
+            else if( m_mode == MODE_SHAKES )
+            {
+                if( m_bStabilized && m_ShakesRemaining == 0 && AreNoCubesEmpty() )
+                    checkGameOver();
+
+                m_bStabilized = false;
+            }
+        }
 
 		for( int i = 0; i < NUM_CUBES; i++ )
             cubes[i].Update( System::clock(), dt );
@@ -195,6 +206,8 @@ void Game::Reset()
 	}
 
 	m_timer.Reset();
+
+    m_bStabilized = false;
 }
 
 void Game::TestMatches()
@@ -275,6 +288,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
         m_iDotsCleared = 0;
 
         //m_bHyperDotMatched = false;
+        m_bStabilized = true;
 	}
 }
 
@@ -294,18 +308,14 @@ void Game::checkGameOver()
 
 		if( numInPlay <= 1 )
         {
-            enterScore();
-            m_state = STATE_DYING;
-            playSound(timer_explode);
+            EndGame();
         }
 	}
 	else if( m_mode == MODE_TIMED )
 	{
 		if( m_timer.getTime() <= 0.0f )
         {
-            enterScore();
-            m_state = STATE_DYING;
-            playSound(timer_explode);
+            EndGame();
         }
 	}
 }
@@ -556,4 +566,23 @@ bool Game::DoesHyperDotExist()
     }
 
     return false;
+}
+
+
+void Game::EndGame()
+{
+    enterScore();
+    m_state = STATE_DYING;
+    playSound(timer_explode);
+}
+
+bool Game::AreNoCubesEmpty() const
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( cubes[i].isEmpty() )
+            return false;
+    }
+
+    return true;
 }

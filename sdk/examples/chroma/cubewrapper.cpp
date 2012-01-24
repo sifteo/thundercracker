@@ -720,13 +720,13 @@ bool CubeWrapper::isFull()
 	return true;
 }
 
-bool CubeWrapper::isEmpty()
+bool CubeWrapper::isEmpty() const
 {
 	for( int i = 0; i < NUM_ROWS; i++ )
 	{
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
-			GridSlot &slot = m_grid[i][j];
+            const GridSlot &slot = m_grid[i][j];
 			if( !slot.isEmpty() )
 				return false;
 		}
@@ -796,8 +796,6 @@ void CubeWrapper::checkRefill()
 					slot.setEmpty();
 				}
 			}
-
-			Game::Inst().checkGameOver();
 		}
 	}
 }

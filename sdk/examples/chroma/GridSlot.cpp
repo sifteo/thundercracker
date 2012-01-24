@@ -525,6 +525,8 @@ void GridSlot::TiltFrom(GridSlot &src)
 	m_curMovePos.x = src.m_col * 4;
 	m_curMovePos.y = src.m_row * 4;
     m_RockHealth = src.m_RockHealth;
+
+    Game::Inst().Stabilize();
 }
 
 
