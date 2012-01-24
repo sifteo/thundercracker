@@ -41,7 +41,6 @@ public:
 		STATE_PLAYING,
         STATE_MESSAGING,
 		STATE_EMPTY,
-		STATE_NOSHAKES,
         STATE_REFILL,
 	} CubeState;
 
@@ -91,7 +90,6 @@ public:
 	//fills in the position of that dot
 	bool getFixedDot( Vec2 &pos ) const;
 
-	bool isDead() const { return m_state == STATE_NOSHAKES; }
 	CubeState getState() const { return m_state; }
     void setState( CubeState state );
     //bool IsIdle() const;

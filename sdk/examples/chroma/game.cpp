@@ -297,19 +297,8 @@ void Game::checkGameOver()
 {
 	if( m_mode == MODE_SHAKES )
 	{
-		//1 or fewer cubes not dead 
-		int numInPlay = 0;
-
-		for( int i = 0; i < NUM_CUBES; i++ )
-		{
-			if( !cubes[i].isDead() )
-				numInPlay++;
-		}
-
-		if( numInPlay <= 1 )
-        {
+        if( NoMatches() )
             EndGame();
-        }
 	}
 	else if( m_mode == MODE_TIMED )
 	{

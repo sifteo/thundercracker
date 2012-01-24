@@ -187,15 +187,6 @@ void CubeWrapper::Draw()
                     m_queuedFlush = true;
 					break;
 				}
-				case STATE_NOSHAKES:
-				{
-                    //m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
-                    m_bg1helper.DrawText( Vec2( 4, 4 ), Font, "NO SHAKES" );
-                    m_bg1helper.DrawText( Vec2( 4, 6 ), Font, "LEFT" );
-
-                    m_queuedFlush = true;
-					break;
-				}
                 case STATE_REFILL:
                 {
                     m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
@@ -309,26 +300,23 @@ void CubeWrapper::Update(float t, float dt)
     if( Game::Inst().getState() == Game::STATE_PLAYING )
     {
         //check for shaking
-        if( m_state != STATE_NOSHAKES )
+        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
         {
-            if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
-            {
-                m_fShakeTime = -1.0f;
-                checkRefill();
-            }
-
-            //update all dots
-            for( int i = 0; i < NUM_ROWS; i++ )
-            {
-                for( int j = 0; j < NUM_COLS; j++ )
-                {
-                    GridSlot &slot = m_grid[i][j];
-                    slot.Update( t );
-                }
-            }
-
-            m_banner.Update(t, m_cube);
+            m_fShakeTime = -1.0f;
+            checkRefill();
         }
+
+        //update all dots
+        for( int i = 0; i < NUM_ROWS; i++ )
+        {
+            for( int j = 0; j < NUM_COLS; j++ )
+            {
+                GridSlot &slot = m_grid[i][j];
+                slot.Update( t );
+            }
+        }
+
+        m_banner.Update(t, m_cube);
 
         //tilt state
         _SYSAccelState state;
@@ -786,16 +774,7 @@ void CubeWrapper::checkRefill()
 		}
 		else
 		{
-            setState( STATE_NOSHAKES );
-
-			for( int i = 0; i < NUM_ROWS; i++ )
-			{
-				for( int j = 0; j < NUM_COLS; j++ )
-				{
-					GridSlot &slot = m_grid[i][j];
-					slot.setEmpty();
-				}
-			}
+            m_banner.SetMessage( "NO SHAKES LEFT" );
 		}
 	}
 }
@@ -1181,7 +1160,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 
 void CubeWrapper::checkEmpty()
 {
-	if( m_state != STATE_NOSHAKES && isEmpty() )
+    if( isEmpty() )
         setState( STATE_MESSAGING );
 }
 
