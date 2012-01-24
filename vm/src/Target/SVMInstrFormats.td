@@ -92,3 +92,12 @@ class T17<dag outs, dag ins, string asmstr, list<dag> pattern>
     let Inst{12-8} = 0b11111;
     let Inst{7-0} = value8;
 }
+
+class T18<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst<outs, ins, asmstr, pattern>
+{
+    let opA = 7;
+    bits<11> offset11;
+    let Inst{12-11} = 0b00;
+    let Inst{10-0} = offset11;
+}

@@ -32,8 +32,6 @@ namespace {
             return "SVM Assembly Printer";
         }
 
-        void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
-
         virtual void EmitInstruction(const MachineInstr *MI) {
             SmallString<128> Str;
             raw_svector_ostream OS(Str);
@@ -41,17 +39,45 @@ namespace {
             OutStreamer.EmitRawText(OS.str());
         }
 
+        void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
+
+        // Generated code
         void printInstruction(const MachineInstr *MI, raw_ostream &OS);
         static const char *getRegisterName(unsigned RegNo);
+        static const char *getInstructionName(unsigned Opcode);
     };
 }
 
 #include "SVMGenAsmWriter.inc"
 
-void SVMAsmPrinter::printOperand(const MachineInstr *MI, int opNum, raw_ostream &O)
-{
-}
-
 extern "C" void LLVMInitializeSVMAsmPrinter() { 
     RegisterAsmPrinter<SVMAsmPrinter> X(TheSVMTarget);
 }
+
+void SVMAsmPrinter::printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS)
+{
+    const MachineOperand &MO = MI->getOperand(opNum);
+
+    switch (MO.getType()) {
+    case MachineOperand::MO_Register:
+        OS << "%" << LowercaseString(getRegisterName(MO.getReg()));
+        break;
+    case MachineOperand::MO_Immediate:
+        OS << (int)MO.getImm();
+        break;
+    case MachineOperand::MO_MachineBasicBlock:
+        OS << *MO.getMBB()->getSymbol();
+        return;
+    case MachineOperand::MO_GlobalAddress:
+        OS << *Mang->getSymbol(MO.getGlobal());
+        break;
+    case MachineOperand::MO_ConstantPoolIndex:
+        OS << MAI->getPrivateGlobalPrefix() << "CPI"
+            << getFunctionNumber() << "_" << MO.getIndex();
+        break;
+    default:
+        llvm_unreachable("<unknown operand type>");
+    }
+}
+
+

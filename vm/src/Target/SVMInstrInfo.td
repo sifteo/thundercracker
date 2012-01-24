@@ -12,6 +12,9 @@ def call            : SDNode<"SVMISD::CALL", SDT_SVMCall,
 def ret             : SDNode<"SVMISD::RETURN", SDTNone,
                         [SDNPHasChain, SDNPOptInGlue]>;
 
+def bTarget : Operand<OtherVT>;
+def callTarget : Operand<i32>;
+
 /*
  * Normal instructions
  */
@@ -21,3 +24,6 @@ def MOV : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
     [(set GPReg:$Rd, GPReg:$Rs)]>;
 
 def RET : T1<(outs), (ins), "ret", [(ret)]>;
+
+def B : T18<(outs), (ins bTarget:$offset11),
+    "b\t$offset11", [(br bb:$offset11)]>;
