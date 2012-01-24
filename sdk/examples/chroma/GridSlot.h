@@ -63,7 +63,7 @@ public:
 		STATE_EXPLODING,
 		STATE_SHOWINGSCORE,
 		STATE_GONE,
-	} SLOT_STATE;
+    } SLOT_STATE;
 
 	GridSlot();
 
@@ -72,7 +72,7 @@ public:
     void Draw( VidMode_BG0 &vid, Float2 &tiltState );
     void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
     void Update(float t);
-	bool isAlive() const { return m_state == STATE_LIVING; }
+    bool isAlive() const { return m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_MOVING || m_state == STATE_FINISHINGMOVE || m_state == STATE_FIXEDATTEMPT; }
 	bool isEmpty() const { return m_state == STATE_GONE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
     bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING ); }
