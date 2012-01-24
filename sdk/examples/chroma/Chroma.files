@@ -69,7 +69,6 @@ Glimmer.h
 GameOver.h
 game.h
 cubewrapper.h
-BG1Helper.h
 banner.h
 assets.gen.h
 TimeKeeper.cpp
@@ -87,3 +86,5 @@ audio.txt
 audio.gen.h
 audio.gen.cpp
 config.h
+Level.h
+Level.cpp

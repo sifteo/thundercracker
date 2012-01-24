@@ -24,7 +24,7 @@ const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot:
 
 
 
-const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] = 
+const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 {
     &Gem0,
     &Gem1,
@@ -72,6 +72,14 @@ const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
     &FixedExplode0,
     &FixedExplode0,
 };
+
+
+const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
+{
+    &hyperdot,
+    &rockdot
+};
+
 
 
 //order of our frames
@@ -163,6 +171,12 @@ const AssetImage &GridSlot::GetExplodingTexture() const
 }
 
 
+const AssetImage &GridSlot::GetSpecialTexture() const
+{
+    return *SPECIALTEXTURES[ m_color - NUM_COLORS ];
+}
+
+
 //draw self on given vid at given vec
 void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 {
@@ -171,8 +185,9 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 	{
 		case STATE_LIVING:
 		{
-			const AssetImage &tex = GetTexture();
-			if( IsFixed() )
+            if( IsSpecial() )
+                vid.BG0_drawAsset(vec, GetSpecialTexture());
+            else if( IsFixed() )
                 vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
 			else
 			{
@@ -191,14 +206,24 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 			Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
 
 			//PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
-            const AssetImage &tex = *TEXTURES[m_color];
-            vid.BG0_drawAsset(curPos, tex, GetRollingFrame( m_animFrame ));
+            if( IsSpecial() )
+                vid.BG0_drawAsset(curPos, GetSpecialTexture());
+            else
+            {
+                const AssetImage &tex = *TEXTURES[m_color];
+                vid.BG0_drawAsset(curPos, tex, GetRollingFrame( m_animFrame ));
+            }
 			break;
 		}
 		case STATE_FINISHINGMOVE:
 		{           
-            const AssetImage &animtex = *TEXTURES[ m_color ];
-            vid.BG0_drawAsset(vec, animtex, m_animFrame);
+            if( IsSpecial() )
+                vid.BG0_drawAsset(vec, GetSpecialTexture());
+            else
+            {
+                const AssetImage &animtex = *TEXTURES[ m_color ];
+                vid.BG0_drawAsset(vec, animtex, m_animFrame);
+            }
 			break;
 		}
         case STATE_FIXEDATTEMPT:
@@ -208,15 +233,25 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
         }
 		case STATE_MARKED:
         {
-            const AssetImage &exTex = GetExplodingTexture();
-            vid.BG0_drawAsset(vec, exTex, m_animFrame);
+            if( IsSpecial() )
+                vid.BG0_drawAsset(vec, GetSpecialTexture());
+            else
+            {
+                const AssetImage &exTex = GetExplodingTexture();
+                vid.BG0_drawAsset(vec, exTex, m_animFrame);
+            }
 			break;
 		}
 		case STATE_EXPLODING:
 		{
-            vid.BG0_drawAsset(vec, GemEmpty, 0);
-            //const AssetImage &exTex = GetExplodingTexture();
-            //vid.BG0_drawAsset(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
+            if( IsSpecial() )
+                vid.BG0_drawAsset(vec, GetSpecialTexture());
+            else
+            {
+                vid.BG0_drawAsset(vec, GemEmpty, 0);
+                //const AssetImage &exTex = GetExplodingTexture();
+                //vid.BG0_drawAsset(vec, exTex, GridSlot::NUM_EXPLODE_FRAMES - 1);
+            }
 			break;
 		}
 		case STATE_SHOWINGSCORE:
@@ -431,7 +466,6 @@ void GridSlot::markNeighbor( int row, int col )
 }
 
 
-
 //copy color and some other attributes from target.  Used when tilting
 void GridSlot::TiltFrom(GridSlot &src)
 {
@@ -545,30 +579,35 @@ void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
 {
     Vec2 vec( m_col * 4, m_row * 4 );
 
-    switch( frame )
+    if( IsSpecial() )
+        vid.BG0_drawAsset(vec, GetSpecialTexture());
+    else
     {
-        case 0:
+        switch( frame )
         {
-            vid.BG0_drawAsset(vec, GemEmpty, 0);
-            break;
-        }
-        case 1:
-        {
-            const AssetImage &exTex = GetExplodingTexture();
-            vid.BG0_drawAsset(vec, exTex, 1);
-            break;
-        }
-        case 2:
-        {
-            const AssetImage &exTex = GetExplodingTexture();
-            vid.BG0_drawAsset(vec, exTex, 0);
-            break;
-        }
-        default:
-        {
-            const AssetImage &tex = *TEXTURES[ m_color ];
-            vid.BG0_drawAsset(vec, tex, 0);
-            break;
+            case 0:
+            {
+                vid.BG0_drawAsset(vec, GemEmpty, 0);
+                break;
+            }
+            case 1:
+            {
+                const AssetImage &exTex = GetExplodingTexture();
+                vid.BG0_drawAsset(vec, exTex, 1);
+                break;
+            }
+            case 2:
+            {
+                const AssetImage &exTex = GetExplodingTexture();
+                vid.BG0_drawAsset(vec, exTex, 0);
+                break;
+            }
+            default:
+            {
+                const AssetImage &tex = *TEXTURES[ m_color ];
+                vid.BG0_drawAsset(vec, tex, 0);
+                break;
+            }
         }
     }
 }

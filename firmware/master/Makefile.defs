@@ -30,7 +30,11 @@ CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 #
 # Without optimization, a lot of our code ends up too large and/or slow
 # to run on real hardware!
-CFLAGS += -O2
+#allow games to turn off -O2 via environment variable
+ifneq ($(GAMEDEBUG),)
+else
+	CFLAGS += -O2
+endif
 
 # Always build with debug symbols (It can't hurt)
 CFLAGS += -g3

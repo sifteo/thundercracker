@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="48" height="72" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="quest" value="dungeon"/>
+ </properties>
  <tileset firstgid="1" name="dungeon" tilewidth="16" tileheight="16">
   <image source="dungeon.png" width="128" height="368"/>
   <tile id="1">
@@ -747,7 +750,7 @@
 3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,36,24,101,102,24,58,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
 </data>
  </layer>
- <layer name="grid" width="48" height="72" opacity="0.22">
+ <layer name="grid" width="48" height="72" opacity="0.2">
   <data encoding="csv">
 0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
 0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
@@ -908,31 +911,26 @@
   <object name="Key0" type="Item" x="432" y="960" width="32" height="32">
    <properties>
     <property name="id" value="1"/>
-    <property name="quest" value="tutorial"/>
    </properties>
   </object>
   <object name="Key1" type="Item" x="176" y="576" width="32" height="32">
    <properties>
     <property name="id" value="1"/>
-    <property name="quest" value="tutorial"/>
    </properties>
   </object>
   <object name="Key2" type="Item" x="176" y="288" width="32" height="32">
    <properties>
     <property name="id" value="1"/>
-    <property name="quest" value="tutorial"/>
    </properties>
   </object>
   <object name="Ham" type="Item" x="48" y="320" width="32" height="32">
    <properties>
     <property name="id" value="5"/>
-    <property name="quest" value="tutorial"/>
    </properties>
   </object>
   <object name="Lettuce" type="Item" x="432" y="544" width="32" height="32">
    <properties>
     <property name="id" value="4"/>
-    <property name="quest" value="tutorial"/>
    </properties>
   </object>
  </objectgroup>
