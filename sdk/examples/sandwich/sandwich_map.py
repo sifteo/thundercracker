@@ -31,6 +31,7 @@ class Map:
 		self.width = self.raw.pw / 128
 		self.height = self.raw.ph / 128
 		self.count = self.width * self.height
+		self.quest = world.script.getquest(self.raw.props["quest"]) if "quest" in self.raw.props else None
 		self.rooms = [Room(self, i) for i in range(self.count)]
 		# infer portals
 		for r in self.rooms:
@@ -49,10 +50,9 @@ class Map:
 				ports = [ portal_type(self.background.tileat(tx+7, ty+i)) for i in range(8) ]
 				r.portals[SIDE_RIGHT] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
 		# validate portals
-		for y in range(self.height):
-			assert not self.roomat(0,y).portals[1] == PORTAL_OPEN and not self.roomat(self.width-1, y).portals[3] == PORTAL_OPEN, "Boundary Wall Error in Map: " + self.id
-		for x in range(self.width):
-			assert not self.roomat(x,0).portals[0] == PORTAL_OPEN and not self.roomat(x, self.height-1).portals[2] == PORTAL_OPEN, "Boundary Wall Error in Map: " + self.id
+		for r in self.rooms:
+			assert r.portals[SIDE_LEFT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
+			assert r.portals[SIDE_RIGHT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
 		for x in range(self.width-1):
 			for y in range(self.height):
 				assert self.roomat(x,y).portals[3] == self.roomat(x+1,y).portals[1], "Portal Mismatch in Map: " + self.id
@@ -86,7 +86,7 @@ class Map:
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
 	def roomatpx(self, px, py): return self.roomat(px/128, py/128)
 	def list_triggers_of_type(self, type): return (t for r in self.rooms for t in r.triggers if t.type == type)
-	
+
 	def write_source_to(self, src):
 		src.write("//--------------------------------------------------------\n")
 		src.write("// EXPORTED FROM %s.tmx\n" % self.id)

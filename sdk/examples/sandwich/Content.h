@@ -39,6 +39,11 @@ struct TriggerData {
     uint8_t room;
 };
 
+struct DoorData {
+    TriggerData trigger;
+    uint32_t roomId; // could use some of these bits for "special key requirements" (only 8-bits needed for a roomid)
+};
+
 struct ItemData {
     TriggerData trigger;
     uint32_t itemId;
