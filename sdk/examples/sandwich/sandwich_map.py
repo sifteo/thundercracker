@@ -80,7 +80,9 @@ class Map:
 		for i,npc in enumerate(self.list_triggers_of_type(TRIGGER_NPC)):
 			npc.index = i
 			self.npc_dict[npc.id] = npc
-
+		self.doors = [Door(r) for r in self.rooms if r.portals[0] == PORTAL_DOOR]
+		for i,d in enumerate(self.doors):
+			d.index = i
 				
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
@@ -138,6 +140,12 @@ class Map:
 				npc.write_npc_to(src)
 			src.write("};\n")
 		
+		if len(self.doors) > 0:
+			src.write("static const DoorData %s_doors[] = { " % self.id)
+			for door in self.doors:
+				src.write("{ %s, %s }, " % (hex(door.room.lid), hex(door.)))
+			src.write("};\n")
+
 		if self.overlay is not None:
 			for room in self.rooms:
 				if room.hasoverlay():
@@ -154,23 +162,27 @@ class Map:
 				room = self.roomat(x,y)
 				room.write_source_to(src)
 		src.write("};\n")
+
 	
 	def write_decl_to(self, src):
 		src.write(
 			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, " \
-			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, " \
-			"%(nitems)d, %(ngates)d, %(nnpcs)d, %(w)d, %(h)d },\n" % \
+			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s," \
+			"%(nitems)d, %(ngates)d, %(nnpcs)d, %(doorQuestId)d, %d(ndoors), %(w)d, %(h)d },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
 				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
+				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"w": self.width,
 				"h": self.height,
 				"nitems": len(self.item_dict),
 				"ngates": len(self.gate_dict),
-				"nnpcs": len(self.npc_dict)
+				"nnpcs": len(self.npc_dict),
+				"doorQuestId": self.quest.index,
+				"ndoors": len(self.doors)
 			})
 		
 
@@ -184,6 +196,7 @@ class Room:
 		self.portals = [ PORTAL_WALL, PORTAL_WALL, PORTAL_WALL, PORTAL_WALL ]
 		self.triggers = []
 		self.trigger_dict = {}
+		self.door = None
 
 	def hasitem(self): return len(self.item) > 0 and self.item != "ITEM_NONE"
 	def tileat(self, x, y): return self.map.background.tileat(8*self.x + x, 8*self.y + y)
@@ -249,17 +262,15 @@ class Room:
 		# centerx, centery, reserved
 		cx,cy = self.center()
 		src.write("%d, %d, \n" % (cx, cy))
-
-		# torches - should be moved out to a flat list like items / etc
-		#torchcount = 0
-		#for tx,ty in self.listtorchtiles():
-		#	if torchcount == 2:
-		#		raise Exception("Too man torches in one room (capacity 2): "  + self.id)
-		#	src.write("        %s,\n" % hex((tx<<4) + ty))
-		#	torchcount+=1
-		#for i in range(2-torchcount):
-		#	src.write("        0xff,\n")
 		src.write("    },\n")		
+
+class Door:
+	def __init__(self, room):
+		self.id = "_door_%s_%d" % (room.map.id, room.lid)
+		self.room = room
+		room.door = self
+		self.qflag = room.map.quest.add_flag_if_undefined(self.id) if room.map.quest is not None else None
+		self.unlockflag = room.map.world.script.add_flag_if_undefined(self.id) if room.map.quest is None else None
 
 class Trigger:
 	def __init__(self, room, obj):
@@ -268,6 +279,11 @@ class Trigger:
 		self.raw = obj
 		self.type = KEYWORD_TO_TRIGGER_TYPE[obj.type]
 		# deterine quest state
+		self.quest = None
+		self.minquest = None
+		self.maxquest = None
+		self.qflag = None
+		self.unlockflag = None
 		if "quest" in obj.props:
 			self.quest = room.map.world.script.getquest(obj.props["quest"])
 			self.minquest = self.quest
@@ -275,23 +291,24 @@ class Trigger:
 			if "questflag" in obj.props:
 				self.qflag = self.quest.flag_dict[obj.props["questflag"]]
 		else:
-			self.quest = None
-			if "minquest" in obj.props:
-				self.minquest = room.map.world.script.getquest(obj.props["minquest"])
-			if "maxquest" in obj.props:
-				self.maxquest = room.map.world.script.getquest(obj.props["maxquest"])
-			if hasattr(self, "minquest") and hasattr(self, "maxquest"):
+			self.minquest = room.map.world.script.getquest(obj.props["minquest"]) if "minquest" in obj.props else None
+			self.maxquest = room.map.world.script.getquest(obj.props["maxquest"]) if "maxquest" in obj.props else None
+			if self.minquest is not None and self.maxquest is not None:
 				assert self.minquest.index <= self.maxquest.index, "MaxQuest > MinQuest for object in map: " + room.map.id
-		if "unlockflag" in obj.props:
-			assert obj.props["unlockflag"] in room.map.world.script.unlockables_dict, "Undefined unlock flag in map: " + room.map.id
-			self.unlockflag = room.map.world.script.unlockables_dict[obj.props["unlockflag"]]
-		
-
+		if self.quest is None and self.minquest is None and self.maxquest is None and room.map.quest is not None:
+			self.quest = room.map.quest
+			self.minquest = room.map.quest
+			self.maxquest = room.map.quest
+			self.qflag = self.quest.add_flag_if_undefined(obj.props["questflag"]) if "questflag" in obj.props
+		if self.quest is None and "unlockflag" in obj.props:
+			self.unlockflag = room.map.world.script.add_flag_if_undefined(obj.props["unlockflag"])
+		# type-specific initialization
 		if self.type == TRIGGER_ITEM:
 			self.itemid = int(obj.props["id"])
 			if self.quest is not None:
-				self.qflag = self.quest.add_flag_if_undefined(self.id)
-			else:
+				if self.qflag is None:
+					self.qflag = self.quest.add_flag_if_undefined(self.id)
+			elif self.unlockflag is None:
 				self.unlockflag = room.map.world.script.add_flag_if_undefined(self.id)
 		elif self.type == TRIGGER_GATEWAY:
 			m = EXP_GATEWAY.match(obj.props.get("target", ""))
