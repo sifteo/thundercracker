@@ -143,7 +143,7 @@ class Map:
 		if len(self.doors) > 0:
 			src.write("static const DoorData %s_doors[] = { " % self.id)
 			for door in self.doors:
-				src.write("{ %s, %s }, " % (hex(door.room.lid), hex(door.)))
+				src.write("{ %s, %s }, " % (hex(door.room.lid), hex(door.flag.gindex)))
 			src.write("};\n")
 
 		if self.overlay is not None:
@@ -168,7 +168,7 @@ class Map:
 		src.write(
 			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, " \
 			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s," \
-			"%(nitems)d, %(ngates)d, %(nnpcs)d, %(doorQuestId)d, %d(ndoors), %(w)d, %(h)d },\n" % \
+			"%(nitems)d, %(ngates)d, %(nnpcs)d, %(doorQuestId)d, %(ndoors)d, %(w)d, %(h)d },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
@@ -181,7 +181,7 @@ class Map:
 				"nitems": len(self.item_dict),
 				"ngates": len(self.gate_dict),
 				"nnpcs": len(self.npc_dict),
-				"doorQuestId": self.quest.index,
+				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
 				"ndoors": len(self.doors)
 			})
 		
@@ -269,8 +269,9 @@ class Door:
 		self.id = "_door_%s_%d" % (room.map.id, room.lid)
 		self.room = room
 		room.door = self
-		self.qflag = room.map.quest.add_flag_if_undefined(self.id) if room.map.quest is not None else None
-		self.unlockflag = room.map.world.script.add_flag_if_undefined(self.id) if room.map.quest is None else None
+		self.flag = room.map.quest.add_flag_if_undefined(self.id) \
+			if room.map.quest is not None \
+			else room.map.world.script.add_flag_if_undefined(self.id)
 
 class Trigger:
 	def __init__(self, room, obj):
@@ -299,7 +300,7 @@ class Trigger:
 			self.quest = room.map.quest
 			self.minquest = room.map.quest
 			self.maxquest = room.map.quest
-			self.qflag = self.quest.add_flag_if_undefined(obj.props["questflag"]) if "questflag" in obj.props
+			self.qflag = self.quest.add_flag_if_undefined(obj.props["questflag"]) if "questflag" in obj.props else None
 		if self.quest is None and "unlockflag" in obj.props:
 			self.unlockflag = room.map.world.script.add_flag_if_undefined(obj.props["unlockflag"])
 		# type-specific initialization
@@ -321,11 +322,12 @@ class Trigger:
 			self.dialog = room.map.world.dialog.dialog_dict[did]
 		
 				
-		self.qbegin = self.minquest.index if hasattr(self, "minquest") else 0xff
-		self.qend = self.maxquest.index if hasattr(self, "maxquest") else 0xff
-		self.flagid = 0
-		if hasattr(self, "qflag"): self.flagid = 1 + self.qflag.index
-		elif hasattr(self, "unlockflag"): self.flagid = 33 + self.unlockflag.index
+		self.qbegin = self.minquest.index if self.minquest is not None else 0xff
+		self.qend = self.maxquest.index if self.maxquest is not None else 0xff
+		if self.qflag is not None: self.flagid = 1 + self.qflag.index
+		elif self.unlockflag is not None: self.flagid = 33 + self.unlockflag.index
+		else: self.flagid = 0
+
 
 	def is_active_for(self, quest):
 		if self.qbegin != 0xff and self.qbegin < quest.index: return False
