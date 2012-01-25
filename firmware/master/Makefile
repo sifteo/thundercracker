@@ -6,16 +6,17 @@ ifneq ($(BUILD_STM32),)
 	BINS += $(BIN_STM32)
 endif
 
-SPEEX_DIR = speex
-include $(SPEEX_DIR)/speex.mk
-
 TC_DIR = ../..
 
 include Makefile.objs
 include $(TC_DIR)/Makefile.platform
 
+# STM32 only dependencies
+SPEEX_DIR = speex
+include $(SPEEX_DIR)/speex.mk
 include stm32/st-usb/st-usb.mk
-OBJS_STM32 += $(OBJS_USB_STM32)
+OBJS_STM32 +=   $(OBJS_USB_STM32) \
+                $(SPEEX_OBJS_STM32)
 
 ifeq ($(BUILD_PLATFORM), windows32)
 	# TBD if there's a better way, but windows ar or libtool needs to have all the

@@ -4,7 +4,6 @@
 #include "assets.gen.h"
 #include "CubeStateMachine.h"
 #include "GameStateMachine.h"
-#include <string.h>
 #include "ScoredCubeState_OldWord.h"
 
 ScoredCubeState_OldWord::ScoredCubeState_OldWord()

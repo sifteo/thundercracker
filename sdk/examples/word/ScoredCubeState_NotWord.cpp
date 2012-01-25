@@ -6,7 +6,6 @@
 #include "GameStateMachine.h"
 #include "Dictionary.h"
 #include "ScoredCubeState_NotWord.h"
-#include <string.h>
 
 ScoredCubeState_NotWord::ScoredCubeState_NotWord()
 {

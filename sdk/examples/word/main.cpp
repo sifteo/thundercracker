@@ -1,5 +1,4 @@
 #include <sifteo.h>
-#include <stdlib.h>
 #include "assets.gen.h"
 #include "assets.gen.h"
 #include "WordGame.h"
