@@ -324,8 +324,8 @@ class Trigger:
 				
 		self.qbegin = self.minquest.index if self.minquest is not None else 0xff
 		self.qend = self.maxquest.index if self.maxquest is not None else 0xff
-		if self.qflag is not None: self.flagid = 1 + self.qflag.index
-		elif self.unlockflag is not None: self.flagid = 33 + self.unlockflag.index
+		if self.qflag is not None: self.flagid = self.qflag.gindex
+		elif self.unlockflag is not None: self.flagid = self.unlockflag.gindex
 		else: self.flagid = 0
 
 
