@@ -1045,8 +1045,8 @@ bool CubeWrapper::hasStrandedFixedDots() const
 
 					bHasFixed = true;
 				}
-				//we have floating dots
-				else
+                //we have floating non-rock dots
+                else if( slot.getColor() != GridSlot::ROCKCOLOR )
 					return false;
 			}
 		}
@@ -1079,14 +1079,31 @@ bool CubeWrapper::allFixedDotsAreStrandedSide() const
 
 					bHasFixed = true;
 				}
-				//we have floating dots
-				else
+                //we have floating non-rock dots
+                else if( slot.getColor() != GridSlot::ROCKCOLOR )
 					return false;
 			}
 		}
 	}
 
 	return bHasFixed;
+}
+
+
+
+bool CubeWrapper::hasNonStrandedDot() const
+{
+    if( hasStrandedFixedDots() )
+        return false;
+
+    if( allFixedDotsAreStrandedSide() && Game::Inst().OnlyOneOtherCorner( this ) )
+        return false;
+
+    //if we have a fixed dot, and all of the same color are only fixed dots, we need a reverse polarity fixed dot
+    //if( AllFixedDotsAreUnMatchable() )
+      //  return false;
+
+    return true;
 }
 
 
@@ -1148,7 +1165,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 					pos.x = i;
 					pos.y = j;
 				}
-				else
+                else if( slot.getColor() != GridSlot::ROCKCOLOR )
 					return false;
 			}
 		}

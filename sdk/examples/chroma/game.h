@@ -96,6 +96,10 @@ public:
 	bool no_match_stranded_interior() const;
 	bool no_match_stranded_side() const;
 	bool no_match_mismatch_side() const;
+    bool IsColorUnmatchable( unsigned int color ) const;
+    bool AreAllColorsUnmatchable() const;
+    bool DoCubesOnlyHaveStrandedDots() const;
+    bool OnlyOneOtherCorner( const CubeWrapper *pWrapper ) const;
 
     void playSound( _SYSAudioModule &sound );
     //play random slosh sound

@@ -89,6 +89,7 @@ public:
 	//returns if we have one and only one fixed dot (and zero floating dots)
 	//fills in the position of that dot
 	bool getFixedDot( Vec2 &pos ) const;
+    bool hasNonStrandedDot() const;
 
 	CubeState getState() const { return m_state; }
     void setState( CubeState state );

@@ -314,18 +314,30 @@ bool Game::NoMatches()
 {
     if( DoesHyperDotExist() )
         return false;
-    //""" Return True if no matches are possible with the current gems. """
-    if( no_match_color_imbalance() )
-		return true;
-    if( numColors() == 1 )
-	{
-        if( no_match_stranded_interior() )
+
+    //shakes mode checks for no possible moves, whereas puzzle mode checks if the puzzle is lost
+    if( m_mode == MODE_SHAKES )
+    {
+        if( AreAllColorsUnmatchable() )
             return true;
-        else if( no_match_stranded_side() )
+        if( DoCubesOnlyHaveStrandedDots() )
             return true;
-        else if( no_match_mismatch_side() )
+    }
+    else if( m_mode == MODE_PUZZLE )
+    {
+        //""" Return True if no matches are possible with the current gems. """
+        if( no_match_color_imbalance() )
             return true;
-	}
+        if( numColors() == 1 )
+        {
+            if( no_match_stranded_interior() )
+                return true;
+            else if( no_match_stranded_side() )
+                return true;
+            else if( no_match_mismatch_side() )
+                return true;
+        }
+    }
 
     return false;
 }
@@ -361,20 +373,42 @@ bool Game::no_match_color_imbalance() const
     */
 	for( unsigned int i = 0; i < GridSlot::NUM_COLORS; i++ )
 	{
-		int total = 0;
-
-        for( int j = 0; j < NUM_CUBES; j++ )
-		{
-            if( m_cubes[j].hasColor(i) )
-				total++;
-		}
-
-		if( total == 1 )
-			return true;
+        if( IsColorUnmatchable(i) )
+            return true;
 	}
 
 	return false;
 }
+
+
+bool Game::AreAllColorsUnmatchable() const
+{
+    for( unsigned int i = 0; i < GridSlot::NUM_COLORS; i++ )
+    {
+        if( !IsColorUnmatchable(i) )
+            return false;
+    }
+
+    return true;
+}
+
+
+bool Game::IsColorUnmatchable( unsigned int color ) const
+{
+    int total = 0;
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[i].hasColor(color) )
+            total++;
+    }
+
+    if( total == 1 )
+        return true;
+
+    return false;
+}
+
 
 bool Game::no_match_stranded_interior() const
 {
@@ -402,26 +436,35 @@ bool Game::no_match_stranded_side() const
 	{
         if( m_cubes[i].allFixedDotsAreStrandedSide() )
 		{
-			int numCorners = 0;
-
-			for( int j = 0; j < NUM_CUBES; j++ )
-			{
-				
-				if( i != j )
-				{
-                    unsigned int thisCubeNumCorners = m_cubes[j].getNumCornerDots();
-					numCorners += thisCubeNumCorners;
-                    if( numCorners > 1 || m_cubes[j].getNumDots() > thisCubeNumCorners )
-						break;
-				}
-			}
-
-			if( numCorners == 1 )
-				return true;
+            if( OnlyOneOtherCorner( &m_cubes[i] ) )
+                return true;
 		}
 	}
 
 	return false;   
+}
+
+
+bool Game::OnlyOneOtherCorner( const CubeWrapper *pWrapper ) const
+{
+    int numCorners = 0;
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+
+        if( &m_cubes[i] != pWrapper )
+        {
+            unsigned int thisCubeNumCorners = m_cubes[i].getNumCornerDots();
+            numCorners += thisCubeNumCorners;
+            if( numCorners > 1 || m_cubes[i].getNumDots() > thisCubeNumCorners )
+                return false;
+        }
+    }
+
+    if( numCorners == 1 )
+        return true;
+
+    return false;
 }
 
 
@@ -453,7 +496,23 @@ bool Game::no_match_mismatch_side() const
 	if( SIDE_MISMATCH_SET2[aBuddies[0].x] == aBuddies[0].y && SIDE_MISMATCH_SET2[aBuddies[1].x] == aBuddies[1].y )
 		return true;
 
+    //aren't there 2 sets missing here?
+
     return false;
+}
+
+
+bool Game::DoCubesOnlyHaveStrandedDots() const
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[i].hasNonStrandedDot() )
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 
