@@ -369,7 +369,7 @@ def iswall(tile): return "wall" in tile.props
 def isdoor(tile): return "door" in tile.props
 def isopen(tile): return not isdoor(tile) and not isobst(tile) and not iswall(tile)
 def iswalkable(tile): return not iswall(tile) and not isobst(tile)
-def ispath(tile): return not "path" in tile.props
+def ispath(tile): return "path" in tile.props
 
 def portal_type(tile):
 	if isdoor(tile):

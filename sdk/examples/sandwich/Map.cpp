@@ -157,7 +157,7 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
   as.cellPitch = dir % 2 == 0 ? 5 : 13; // vertical or horizontal?
   as.cellRowCount = dir % 2 == 0 ? 13 : 5; // vertical or horizontal?
 
-  {
+  /*{
     // log what we *think* the map looks like
     LOG(("-------\n"));
     for(int row=0; row<as.cellRowCount; ++row) {
@@ -175,7 +175,7 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
       }
       LOG(("\n"));
     }
-  }
+  }*/
 
   // add an open record for src
   as.recordCount = 1;
