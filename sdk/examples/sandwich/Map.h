@@ -22,19 +22,21 @@ public:
   // Map Data Getters
   const MapData* Data() const { return mData; }
   
-  inline const uint8_t* GetPortalX(int x, int y) const {
-      // note that the pitch here is one greater than the width because there's
-      // an extra wall on the right side of the last tile in each row
-      ASSERT(0 <= x && x <= mData->width);
+  inline const bool GetPortalX(int x, int y) const {
+      // note that the pitch here is one less than the width because 
+      // we're only counting walls in between
+      ASSERT(0 <= x && x < mData->width-1);
       ASSERT(0 <= y && y < mData->height);
-      return mData->xportals + (y * (mData->width+1) + x);
+      const int idx = (y * (mData->width-1) + x);
+      return mData->xportals[idx/8] & (1<<(idx%8));
   }
 
-  inline const uint8_t* GetPortalY(int x, int y) const {
+  inline const bool GetPortalY(int x, int y) const {
       // Like GetPortalX except we're in column-major order
       ASSERT(0 <= x && x < mData->width);
-      ASSERT(0 <= y && y <= mData->height);
-      return mData->yportals + (x * (mData->height+1) + y);
+      ASSERT(0 <= y && y < mData->height-1);
+      const int idx = (x * (mData->height-1) + y);
+      return mData->yportals[idx/8] & (1<<(idx%8));
   }
   
   inline const RoomData* GetRoomData(uint8_t roomId) const {

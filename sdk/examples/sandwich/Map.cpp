@@ -6,16 +6,12 @@ Map::Map() {
   SetData(gMapData[gQuestData->mapId]);
 }
 
-inline static bool PortalOpen(const uint8_t* pid) { 
-    return *pid != PORTAL_WALL;
-}
-
 void Map::SetData(const MapData& map) { 
   if (mData != (MapData*)&map) {
     mData = (MapData*)&map; 
 
     const Room* pEnd = mRooms + (map.width*map.height);
-    for(Room* p=mRooms; p!=pEnd; ++p) { p->ClearTrigger(); }
+    for(Room* p=mRooms; p!=pEnd; ++p) { p->Clear(); }
 
     // find active triggers
     for(const ItemData* p = mData->items; p!= mData->items + mData->itemCount; ++p) {
@@ -36,19 +32,22 @@ void Map::SetData(const MapData& map) {
         mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &(p->trigger));
       }
     }
+    for(const DoorData* p = mData->doors; p != mData->doors + mData->doorCount; ++p) {
+      mRooms[p->roomId].SetDoor(p);
+    }
   }
 }
 
 bool Map::CanTraverse(Vec2 loc, Cube::Side direction) const {
     switch(direction) {
       case SIDE_TOP:
-        return loc.y > 0 && PortalOpen( GetPortalY(loc.x, loc.y) );
+        return loc.y > 0 && GetPortalY(loc.x, loc.y-1);
       case SIDE_LEFT:
-        return loc.x > 0 && PortalOpen( GetPortalX(loc.x, loc.y) );
+        return loc.x > 0 && GetPortalX(loc.x-1, loc.y);
       case SIDE_BOTTOM:
-        return loc.y < mData->height-1 && PortalOpen( GetPortalY(loc.x, loc.y+1) );
+        return loc.y < mData->height-1 && GetPortalY(loc.x, loc.y);
       case SIDE_RIGHT:
-        return loc.x < mData->width-1 && PortalOpen( GetPortalX(loc.x+1, loc.y) );
+        return loc.x < mData->width-1 && GetPortalX(loc.x, loc.y);
   }
   return false;
 }
@@ -158,8 +157,9 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
   as.cellPitch = dir % 2 == 0 ? 5 : 13; // vertical or horizontal?
   as.cellRowCount = dir % 2 == 0 ? 13 : 5; // vertical or horizontal?
 
-  /*{
+  {
     // log what we *think* the map looks like
+    LOG(("-------\n"));
     for(int row=0; row<as.cellRowCount; ++row) {
       for(int col=0; col<as.cellPitch; ++col) {
         Vec2 tile = Vec2(col, row);
@@ -175,7 +175,7 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
       }
       LOG(("\n"));
     }
-  }*/
+  }
 
   // add an open record for src
   as.recordCount = 1;

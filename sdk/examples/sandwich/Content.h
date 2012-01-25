@@ -3,10 +3,6 @@
 
 using namespace Sifteo;
 
-#define PORTAL_OPEN	        0
-#define PORTAL_WALL	        1
-#define PORTAL_DOOR         2
-
 #define ITEM_NONE           0
 #define ITEM_BASIC_KEY      1
 #define ITEM_BREAD          2
@@ -43,6 +39,11 @@ struct TriggerData {
     uint8_t room;
 };
 
+struct DoorData {
+    uint8_t roomId;
+    uint8_t flagId; // doors are associated with the default quest for the map
+};
+
 struct ItemData {
     TriggerData trigger;
     uint32_t itemId;
@@ -76,14 +77,17 @@ struct MapData {
     const AssetImage* overlay;
     const AssetImage* blankImage;
     const RoomData* rooms;
-    const uint8_t* xportals; // vertical portals between rooms (x,y) and (x+1,y)
-    const uint8_t* yportals; // horizontal portals between rooms (x,y) and (x,y+1)
+    const uint8_t* xportals; // bit array of portals between rooms (x,y) and (x+1,y)
+    const uint8_t* yportals; // bit array of portals between rooms (x,y) and (x,y+1)
     const ItemData* items; 
     const GatewayData* gates;
     const NpcData* npcs;
-    uint32_t itemCount;
-    uint32_t gateCount;
-    uint32_t npcCount;
+    const DoorData* doors;
+    uint16_t itemCount;
+    uint16_t gateCount;
+    uint16_t npcCount;
+    uint8_t doorQuestId; // 0xff if doors are all global (dangerous/crazy)
+    uint8_t doorCount;
     uint16_t width;
     uint16_t height;
 };
