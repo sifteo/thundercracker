@@ -19,7 +19,7 @@ void FlashLayer::init()
     }
 }
 
-void* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
+void* FlashLayer::getRegionFromOffset(unsigned offset, unsigned len, unsigned *size)
 {
     CachedBlock *b = getCachedBlock(offset);
     if (b == 0) {
@@ -40,10 +40,10 @@ void* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
         Atomic::ClearLZ(freeBlocksMask, idx);
     }
 
-    int boff = offset % BLOCK_SIZE;
+    unsigned boff = offset % BLOCK_SIZE;
     *size = len;
 
-    if ((unsigned)offset + len > b->address + sizeof(b->data)) {
+    if (offset + len > b->address + sizeof(b->data)) {
         // requested region crosses block boundary :(
         *size = b->address + BLOCK_SIZE - offset;
     }

@@ -8,7 +8,7 @@ struct FlashLayer::Stats FlashLayer::stats;
 uint32_t FlashLayer::validBlocksMask = 0;
 uint32_t FlashLayer::freeBlocksMask = 0;
 
-void *FlashLayer::getRegionFromOffset(int offset, int len, int *size)
+void *FlashLayer::getRegionFromOffset(unsigned offset, unsigned len, unsigned *size)
 {
     CachedBlock *b = getCachedBlock(offset);
     if (b == 0) {
@@ -19,7 +19,7 @@ void *FlashLayer::getRegionFromOffset(int offset, int len, int *size)
             return 0;
         }
         
-        int bpos = offset / BLOCK_SIZE;
+        unsigned bpos = offset / BLOCK_SIZE;
         ASSERT(fseek(mFile, bpos * BLOCK_SIZE, SEEK_SET) == 0);
         
         size_t result = fread (b->data, 1, BLOCK_SIZE, mFile);
@@ -45,10 +45,10 @@ void *FlashLayer::getRegionFromOffset(int offset, int len, int *size)
         stats.hits = stats.misses = 0;
     }
     
-    int boff = offset % BLOCK_SIZE;
+    unsigned boff = offset % BLOCK_SIZE;
     *size = len;
     
-    if ((unsigned)offset + len > b->address + sizeof(b->data)) {
+    if (offset + len > b->address + sizeof(b->data)) {
         // requested region crosses block boundary :(
         int valid = b->address + BLOCK_SIZE - offset;
         *size = valid;

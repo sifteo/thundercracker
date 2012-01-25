@@ -19,7 +19,7 @@ public:
     static const unsigned BLOCK_SIZE = 512;
 
     static void init();
-    static void* getRegionFromOffset(int offset, int len, int *size);
+    static void* getRegionFromOffset(unsigned offset, unsigned len, unsigned *size);
     static void releaseRegionFromOffset(int offset) {
         if (CachedBlock *b = getCachedBlock(offset)) {
             unsigned idx = b - blocks;
