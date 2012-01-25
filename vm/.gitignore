@@ -2,6 +2,8 @@
 *.o
 *.bc
 *.inc
+test.o
+test.o.ll
 test.s
 svmc
 
