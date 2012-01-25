@@ -22,7 +22,6 @@ class CubeWrapper
 public:
 	static const int NUM_ROWS = 4;
 	static const int NUM_COLS = 4;
-	static const int STARTING_SHAKES = 3;
     static const float SHAKE_FILL_DELAY;
 	static const int DEFAULT_COHESION = 3;
     static const float SPRING_K_CONSTANT;
@@ -42,7 +41,6 @@ public:
 		STATE_PLAYING,
         STATE_MESSAGING,
 		STATE_EMPTY,
-		STATE_NOSHAKES,
         STATE_REFILL,
 	} CubeState;
 
@@ -61,7 +59,7 @@ public:
     Banner &getBanner() { return m_banner; }
 
 	bool isFull();
-	bool isEmpty();
+    bool isEmpty() const;
 	void checkEmpty();
 
 	void checkRefill();
@@ -91,8 +89,8 @@ public:
 	//returns if we have one and only one fixed dot (and zero floating dots)
 	//fills in the position of that dot
 	bool getFixedDot( Vec2 &pos ) const;
+    bool hasNonStrandedDot() const;
 
-	bool isDead() const { return m_state == STATE_NOSHAKES; }
 	CubeState getState() const { return m_state; }
     void setState( CubeState state );
     //bool IsIdle() const;
@@ -106,6 +104,10 @@ public:
     //queue a location to be cleared by gemEmpty.
     //This exists because we need to do all our clears first, and then do our draws
     void QueueClear( Vec2 &pos );
+    void SpawnHyper();
+    //destroy all dots of the given color
+    void BlowAll( unsigned int color );
+    bool HasHyperDot() const;
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -123,7 +125,6 @@ private:
 
 	//neighbor info
 	int m_neighbors[NUM_SIDES];
-	unsigned int m_ShakesRemaining;
 	//what time did we start shaking?
 	float m_fShakeTime;
 

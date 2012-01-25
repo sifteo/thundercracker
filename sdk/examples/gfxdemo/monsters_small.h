@@ -10,7 +10,7 @@
 #ifndef _MONSTER_H
 #define _MONSTER_H
 
-#include <stdint.h>
+#include <sifteo.h>
 
 struct MonsterData {
     uint8_t fb[512 + 32];

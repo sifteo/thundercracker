@@ -17,10 +17,10 @@ const RoomData* Room::Data() const {
 uint8_t Room::GetPortal(Cube::Side side) {
   Vec2 p = Location();
   switch(side) {
-    case SIDE_TOP: return *( pGame->map.GetPortalY(p.x, p.y) );
-    case SIDE_LEFT: return *( pGame->map.GetPortalX(p.x, p.y) );
-    case SIDE_BOTTOM: return *( pGame->map.GetPortalY(p.x, p.y+1) );
-    case SIDE_RIGHT: return *( pGame->map.GetPortalX(p.x+1, p.y) );
+    case SIDE_TOP: return pGame->map.GetPortalY(p.x, p.y-1);
+    case SIDE_LEFT: return pGame->map.GetPortalX(p.x-1, p.y);
+    case SIDE_BOTTOM: return pGame->map.GetPortalY(p.x, p.y);
+    case SIDE_RIGHT: return pGame->map.GetPortalX(p.x, p.y);
   }
   return 0;
 }
@@ -29,15 +29,21 @@ uint8_t Room::GetTile(Vec2 position) {
   return Data()->tiles[position.x + 8 * position.y];
 }
 
-void Room::OpenDoor() {
-  LOG(("OpenDoor TODO\n"));
-  /*
-  for(int row=0; row<3; ++row) {
-    for(int col=3; col<=4; ++col) {
-      SetTile(
-        Vec2(col, row), GetTile(Vec2(col, row))+2
-      );
-    }
-  }
-  */
+bool Room::HasOpenDoor() const {
+  return HasDoor() && !pGame->state.IsActive(pGame->map.Data()->doorQuestId, mDoor->flagId);
+}
+
+bool Room::HasClosedDoor() const {
+  return HasDoor() && pGame->state.IsActive(pGame->map.Data()->doorQuestId, mDoor->flagId);
+}
+
+bool Room::OpenDoor() {
+  ASSERT(HasDoor());
+  return pGame->state.Flag(pGame->map.Data()->doorQuestId, mDoor->flagId);
+}
+
+void Room::Clear() { 
+  mTriggerType = TRIGGER_UNDEFINED;
+  mTrigger = 0; 
+  mDoor = 0;
 }

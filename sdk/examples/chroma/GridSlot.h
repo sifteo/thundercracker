@@ -16,11 +16,24 @@ class CubeWrapper;
 class GridSlot
 {
 public:
-	static const unsigned int NUM_COLORS = 8;
-	static const AssetImage *TEXTURES[ NUM_COLORS ];
+    static const unsigned int NUM_COLORS = 8;
+
+    //these are special dots
+    enum
+    {
+        HYPERCOLOR = NUM_COLORS,
+        ROCKCOLOR,
+        AFTERLASTSPECIAL,
+        NUM_SPECIALS = AFTERLASTSPECIAL - NUM_COLORS
+    };
+
+    static const AssetImage *TEXTURES[ NUM_COLORS ];
     static const AssetImage *EXPLODINGTEXTURES[ NUM_COLORS ];
     static const AssetImage *FIXED_TEXTURES[ NUM_COLORS ];
     static const AssetImage *FIXED_EXPLODINGTEXTURES[ NUM_COLORS ];
+    static const AssetImage *SPECIALTEXTURES[ NUM_SPECIALS ];
+
+
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
     static const unsigned int NUM_ROLL_FRAMES;
     //static const unsigned int NUM_IDLE_FRAMES;
@@ -37,6 +50,7 @@ public:
     static const unsigned int NUM_FRAMES_PER_FIXED_ANIM_FRAME = 3;
     static const unsigned int NUM_POINTS_FRAMES = 4;
     static const unsigned int NUM_FIXED_FRAMES = 5;
+    static const unsigned int MAX_ROCK_HEALTH = 4;
 
 	typedef enum 
 	{
@@ -49,7 +63,7 @@ public:
 		STATE_EXPLODING,
 		STATE_SHOWINGSCORE,
 		STATE_GONE,
-	} SLOT_STATE;
+    } SLOT_STATE;
 
 	GridSlot();
 
@@ -58,7 +72,7 @@ public:
     void Draw( VidMode_BG0 &vid, Float2 &tiltState );
     void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
     void Update(float t);
-	bool isAlive() const { return m_state == STATE_LIVING; }
+    bool isAlive() const { return m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_MOVING || m_state == STATE_FINISHINGMOVE || m_state == STATE_FIXEDATTEMPT; }
 	bool isEmpty() const { return m_state == STATE_GONE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
     bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING ); }
@@ -77,16 +91,26 @@ public:
 	void MakeFixed() { m_bFixed = true; }
     void setFixedAttempt();
 
+    inline void MakeHyper() { FillColor( HYPERCOLOR ); }
+    inline bool IsHyper() const { return m_color == HYPERCOLOR; }
+    inline bool IsSpecial() const { return m_color >= NUM_COLORS; }
+
 	//copy color and some other attributes from target.  Used when tilting
 	void TiltFrom(GridSlot &src);
 	//if we have a move pending, start it
 	void startPendingMove();
+
+    void DamageRock();
+
 private:
 	void markNeighbor( int row, int col );
+    void hurtNeighboringRock( int row, int col );
     //given tilt state, return our desired frame
     unsigned int GetTiltFrame( Float2 &tiltState, Vec2 &quantized ) const;
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
+    const AssetImage &GetSpecialTexture() const;
+    unsigned int GetSpecialFrame() const;
     //convert from [-128, 128] to [0, 6] via non-linear quantization
     unsigned int QuantizeTiltValue( float value ) const;
     //get the rolling frame of the given index
@@ -109,6 +133,7 @@ private:
 	bool		 m_bFixed;
 
 	unsigned int m_animFrame;
+    unsigned int m_RockHealth;
     //x,y coordinates of our last frame, so we don't make any large jumps
     Vec2 m_lastFrameDir;
 };

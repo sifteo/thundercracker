@@ -39,6 +39,9 @@ FixedGem7 = image{"fixedGem7.png", height=32}
 FixedExplode0 = image{"fixedExplode0.png", height=32}
 FixedGlimmer = image{"FixedGlimmer.png", height=32}
 Cover = image{"cover.png"}
+--special dots
+hyperdot = image{"hyper.png"}
+rockdot = image{"rock.png", height=32}
 --timer
 TimerUp = image{"TimerUp.png", height=8}
 TimerLeft = image{"TimerLeft.png"}

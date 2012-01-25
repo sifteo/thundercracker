@@ -2,7 +2,6 @@
 #include "Dictionary.h"
 #include "EventID.h"
 #include "EventData.h"
-#include <string.h>
 #include "SavedData.h"
 #include "WordGame.h"
 #include "assets.gen.h"
@@ -70,7 +69,7 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewWordFound:
         {
-            unsigned len = strlen(data.mWordFound.mWord);
+            unsigned len = _SYS_strnlen(data.mWordFound.mWord, 32);
             mScore += len;
             mNewWordLength = len;
             // TODO multiple letters per cube

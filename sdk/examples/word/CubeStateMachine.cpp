@@ -2,7 +2,6 @@
 #include "EventID.h"
 #include "EventData.h"
 #include "Dictionary.h"
-#include <string.h>
 #include "GameStateMachine.h"
 #include "config.h"
 
@@ -88,7 +87,7 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
             {
                 break;
             }
-            strcat(wordBuffer, csm->mLetters);
+            _SYS_strlcat(wordBuffer, csm->mLetters, MAX_LETTERS_PER_WORD + 1);
             neighborLetters = true;
         }
         if (neighborLetters)

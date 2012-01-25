@@ -18,6 +18,8 @@ static bool AnyNeighbors(const Cube& c) {
 		c.hasPhysicalNeighborAt(3);
 }
 
+
+
 void siftmain() {
   for (Cube::ID i = 0; i < NUM_CUBES; i++) {
     gCubes[i].enable(i + CUBE_ID_BASE);
@@ -77,7 +79,7 @@ void siftmain() {
 	gChannelMusic.init();
 	#endif
 	for(;;) {
-		//PlayMusic(music_sting, false);
+		PlayMusic(music_sting, false);
 		//IntroCutscene();
 		{ *pGame = Game(); } // re-initialize memory
 		pGame->MainLoop();

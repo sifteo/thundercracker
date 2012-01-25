@@ -1,3 +1,4 @@
 <game-script>
+	<quest id="dungeon" map="dungeon" x="3" y="8" />
 	<quest id="tutorial" map="forest" x="1" y="0" />
 </game-script>

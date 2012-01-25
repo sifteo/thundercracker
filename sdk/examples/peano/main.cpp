@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
 #include <sifteo.h>
 #include "assets.gen.h"
 

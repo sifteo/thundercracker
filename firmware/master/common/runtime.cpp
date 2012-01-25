@@ -9,9 +9,6 @@
 #include "runtime.h"
 #include "cube.h"
 #include "neighbors.h"
-#ifndef SIFTEO_SIMULATOR
-    #include "tasks.h"
-#endif
 
 using namespace Sifteo;
 

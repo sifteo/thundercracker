@@ -14,12 +14,6 @@
 
 static _SYSCubeID s_id = CUBE_ID_BASE;
 
-// Order in which the number of colors in a grid increases as the grid is refilled.
-static unsigned int GEM_VALUE_PROGRESSION[] = { 3, 4, 4, 5, 5, 6, 6, 7, 7, 8 };
-
-// Order in which the number of fixed gems in a grid increases as the grid is refilled.
-static unsigned int GEM_FIX_PROGRESSION[] = { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4 };
-
 //const float CubeWrapper::SHAKE_FILL_DELAY = 1.0f;
 const float CubeWrapper::SHAKE_FILL_DELAY = 0.4f;
 const float CubeWrapper::SPRING_K_CONSTANT = 0.7f;
@@ -43,7 +37,7 @@ static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] =
 
 
 CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vbuf),
-        m_bg1helper( m_cube ), m_state( STATE_PLAYING ), m_ShakesRemaining( STARTING_SHAKES ),
+        m_bg1helper( m_cube ), m_state( STATE_PLAYING ),
         m_fShakeTime( -1.0f ), m_curFluidDir( 0, 0 ), m_curFluidVel( 0, 0 ), m_stateTime( 0.0f ),
         m_lastTiltDir( 0 ), m_numQueuedClears( 0 ), m_queuedFlush( false ), m_dirty( true )
 {
@@ -68,7 +62,9 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 void CubeWrapper::Init( AssetGroup &assets )
 {
     m_cube.enable();
+#if LOAD_ASSETS
     m_cube.loadAssets( assets );
+#endif
 
     m_rom.init();
     m_rom.BG0_text(Vec2(1,1), "Loading...");
@@ -77,7 +73,6 @@ void CubeWrapper::Init( AssetGroup &assets )
 
 void CubeWrapper::Reset()
 {
-	m_ShakesRemaining = STARTING_SHAKES;
 	m_fShakeTime = -1.0f;
     setState( STATE_PLAYING );
     m_idleTimer = 0.0f;
@@ -190,15 +185,6 @@ void CubeWrapper::Draw()
                     m_bg1helper.DrawText( Vec2( 4, 5 ), Font, "REFILL" );
 
                     m_bg1helper.DrawTextf( Vec2( 4, 9 ), Font, "%d PTS", Game::Inst().getScore() );*/
-
-                    m_queuedFlush = true;
-					break;
-				}
-				case STATE_NOSHAKES:
-				{
-                    //m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
-                    m_bg1helper.DrawText( Vec2( 4, 4 ), Font, "NO SHAKES" );
-                    m_bg1helper.DrawText( Vec2( 4, 6 ), Font, "LEFT" );
 
                     m_queuedFlush = true;
 					break;
@@ -316,26 +302,23 @@ void CubeWrapper::Update(float t, float dt)
     if( Game::Inst().getState() == Game::STATE_PLAYING )
     {
         //check for shaking
-        if( m_state != STATE_NOSHAKES )
+        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
         {
-            if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
-            {
-                m_fShakeTime = -1.0f;
-                checkRefill();
-            }
-
-            //update all dots
-            for( int i = 0; i < NUM_ROWS; i++ )
-            {
-                for( int j = 0; j < NUM_COLS; j++ )
-                {
-                    GridSlot &slot = m_grid[i][j];
-                    slot.Update( t );
-                }
-            }
-
-            m_banner.Update(t, m_cube);
+            m_fShakeTime = -1.0f;
+            checkRefill();
         }
+
+        //update all dots
+        for( int i = 0; i < NUM_ROWS; i++ )
+        {
+            for( int j = 0; j < NUM_COLS; j++ )
+            {
+                GridSlot &slot = m_grid[i][j];
+                slot.Update( t );
+            }
+        }
+
+        m_banner.Update(t, m_cube);
 
         //tilt state
         _SYSAccelState state;
@@ -566,7 +549,7 @@ void CubeWrapper::testMatches()
         if( m_neighbors[i] >= 0 && m_neighbors[i] < m_cube.id() - CUBE_ID_BASE )
 		{
 			//as long we we test one block going clockwise, and the other going counter-clockwise, we'll match up
-			int side = Game::Inst().cubes[m_neighbors[i]].GetSideNeighboredOn( 0, m_cube );
+            int side = Game::Inst().m_cubes[m_neighbors[i]].GetSideNeighboredOn( 0, m_cube );
 
 			//no good, just set our flag again and return
 			if( side < 0 )
@@ -581,19 +564,38 @@ void CubeWrapper::testMatches()
 
 			FillSlotArray( ourGems, i, true );
 
-			CubeWrapper &otherCube = Game::Inst().cubes[m_neighbors[i]];
+            CubeWrapper &otherCube = Game::Inst().m_cubes[m_neighbors[i]];
 			otherCube.FillSlotArray( theirGems, side, false );
 
 			//compare the two
 			for( int j = 0; j < NUM_ROWS; j++ )
 			{
-                if( ourGems[j]->isMatchable() && theirGems[j]->isMatchable() && ourGems[j]->getColor() == theirGems[j]->getColor() )
+                if( ourGems[j]->isMatchable() && theirGems[j]->isMatchable() )
 				{
-					ourGems[j]->mark();
-					theirGems[j]->mark();
+                    //hypercolor madness
+                    if( ourGems[j]->getColor() == GridSlot::HYPERCOLOR )
+                    {
+                        Game::Inst().BlowAll( theirGems[j]->getColor() );
+                        ourGems[j]->mark();
+                    }
+                    else if( theirGems[j]->getColor() == GridSlot::HYPERCOLOR )
+                    {
+                        Game::Inst().BlowAll( ourGems[j]->getColor() );
+                        theirGems[j]->mark();
+                    }
+                    //rocks can't match
+                    else if( ourGems[j]->getColor() == GridSlot::ROCKCOLOR )
+                    {
+
+                    }
+                    else if( ourGems[j]->getColor() == theirGems[j]->getColor() )
+                    {
+                        ourGems[j]->mark();
+                        theirGems[j]->mark();
+                    }
 				}
 			}
-		}
+        }
 	}
 }
 
@@ -708,13 +710,13 @@ bool CubeWrapper::isFull()
 	return true;
 }
 
-bool CubeWrapper::isEmpty()
+bool CubeWrapper::isEmpty() const
 {
 	for( int i = 0; i < NUM_ROWS; i++ )
 	{
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
-			GridSlot &slot = m_grid[i][j];
+            const GridSlot &slot = m_grid[i][j];
 			if( !slot.isEmpty() )
 				return false;
 		}
@@ -754,38 +756,27 @@ void CubeWrapper::checkRefill()
             m_intro.Reset( true );
             Refill( true );
 		}
-		else if( m_ShakesRemaining > 0 )
+        else if( Game::Inst().getShakesLeft() > 0 )
 		{
             setState( STATE_REFILL );
             m_intro.Reset( true );
             Refill( true );
-            m_ShakesRemaining--;
+            Game::Inst().useShake();
 
-			if( m_ShakesRemaining == 0 )
+            if( Game::Inst().getShakesLeft() == 0 )
 				m_banner.SetMessage( "NO SHAKES LEFT" );
-			else if( m_ShakesRemaining == 1 )
+            else if( Game::Inst().getShakesLeft() == 1 )
 				m_banner.SetMessage( "1 SHAKE LEFT" );
 			else
 			{
                 String<16> buf;
-                buf << m_ShakesRemaining << " SHAKES LEFT";
+                buf << Game::Inst().getShakesLeft() << " SHAKES LEFT";
                 m_banner.SetMessage( buf, false );
 			}
 		}
 		else
 		{
-            setState( STATE_NOSHAKES );
-
-			for( int i = 0; i < NUM_ROWS; i++ )
-			{
-				for( int j = 0; j < NUM_COLS; j++ )
-				{
-					GridSlot &slot = m_grid[i][j];
-					slot.setEmpty();
-				}
-			}
-
-			Game::Inst().checkGameOver();
+            m_banner.SetMessage( "NO SHAKES LEFT" );
 		}
 	}
 }
@@ -794,11 +785,7 @@ void CubeWrapper::checkRefill()
 //massively ugly, but wanted to stick to the python functionality 
 void CubeWrapper::Refill( bool bAddLevel )
 {
-	unsigned int level = Game::Inst().getLevel();
-	unsigned int numValues = sizeof( GEM_VALUE_PROGRESSION ) / sizeof( GEM_VALUE_PROGRESSION[0] );
-	unsigned int values = level < numValues ? GEM_VALUE_PROGRESSION[level] : GEM_VALUE_PROGRESSION[numValues - 1];
-	unsigned int numFixIndices = sizeof( GEM_FIX_PROGRESSION ) / sizeof( GEM_FIX_PROGRESSION[0] );
-    unsigned int numFix = level < numFixIndices ? GEM_FIX_PROGRESSION[level] : GEM_FIX_PROGRESSION[numFixIndices - 1];
+    const Level &level = Game::Inst().getLevel();
 	
 	if( bAddLevel )
 		Game::Inst().addLevel();
@@ -822,10 +809,10 @@ void CubeWrapper::Refill( bool bAddLevel )
 
 	int numDots = NUM_ROWS * NUM_COLS;
 
-	for( unsigned int i = 0; i < values; i++ )
+    for( unsigned int i = 0; i < level.m_numColors; i++ )
 	{
-		aNumNeeded[i] = numDots / values;
-		if( i < numDots % values )
+        aNumNeeded[i] = numDots / level.m_numColors;
+        if( i < numDots % level.m_numColors )
 			aNumNeeded[i]++;
 	}
 
@@ -870,6 +857,21 @@ void CubeWrapper::Refill( bool bAddLevel )
 		aLocIndices[i] = temp;
 	}
 
+    //spawn rocks
+    for( unsigned int i = 0; i < level.m_numRocks; i++ )
+    {
+        int curX = aEmptyLocs[aLocIndices[numEmpties - 1]].x;
+        int curY = aEmptyLocs[aLocIndices[numEmpties - 1]].y;
+        GridSlot &slot = m_grid[curX][curY];
+
+        ASSERT( !slot.isAlive() );
+        if( slot.isAlive() )
+            continue;
+
+        slot.FillColor( GridSlot::ROCKCOLOR );
+        numEmpties--;
+    }
+
 	unsigned int iCurColor = 0;
 
 	for( unsigned int i = 0; i < numEmpties; i++ )
@@ -878,8 +880,11 @@ void CubeWrapper::Refill( bool bAddLevel )
 		int curY = aEmptyLocs[aLocIndices[i]].y;
 		GridSlot &slot = m_grid[curX][curY];
 
+        //ASSERT( !slot.isAlive() );
 		if( slot.isAlive() )
+        {
 			continue;
+        }
 
 		while( aNumNeeded[iCurColor] <= 0 && iCurColor < GridSlot::NUM_COLORS )
 			iCurColor++;
@@ -940,13 +945,13 @@ void CubeWrapper::Refill( bool bAddLevel )
 
     
 	//fixed gems
-	while( iNumFixed < numFix )
+    while( iNumFixed < level.m_numFixed )
 	{
 		int toFix = Game::random.randrange( numEmpties );
 		GridSlot &fix = m_grid[aEmptyLocs[toFix].x][aEmptyLocs[toFix].y];
 		bool bFound = false;
 
-		if( !fix.IsFixed() )
+        if( !fix.IsFixed() && !fix.IsSpecial() )
 		{
 			//make sure there's an another unfixed dot of this color
 			for( int i = 0; i < NUM_ROWS; i++ )
@@ -1042,8 +1047,8 @@ bool CubeWrapper::hasStrandedFixedDots() const
 
 					bHasFixed = true;
 				}
-				//we have floating dots
-				else
+                //we have floating non-rock dots
+                else if( slot.getColor() != GridSlot::ROCKCOLOR )
 					return false;
 			}
 		}
@@ -1076,14 +1081,31 @@ bool CubeWrapper::allFixedDotsAreStrandedSide() const
 
 					bHasFixed = true;
 				}
-				//we have floating dots
-				else
+                //we have floating non-rock dots
+                else if( slot.getColor() != GridSlot::ROCKCOLOR )
 					return false;
 			}
 		}
 	}
 
 	return bHasFixed;
+}
+
+
+
+bool CubeWrapper::hasNonStrandedDot() const
+{
+    if( hasStrandedFixedDots() )
+        return false;
+
+    if( allFixedDotsAreStrandedSide() && Game::Inst().OnlyOneOtherCorner( this ) )
+        return false;
+
+    //if we have a fixed dot, and all of the same color are only fixed dots, we need a reverse polarity fixed dot
+    //if( AllFixedDotsAreUnMatchable() )
+      //  return false;
+
+    return true;
 }
 
 
@@ -1095,7 +1117,7 @@ unsigned int CubeWrapper::getNumDots() const
 	{
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
-			const GridSlot &slot = m_grid[i][j];
+            const GridSlot &slot = m_grid[i][j];
 			if( slot.isAlive() )
 				count++;
 		}
@@ -1145,7 +1167,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 					pos.x = i;
 					pos.y = j;
 				}
-				else
+                else if( slot.getColor() != GridSlot::ROCKCOLOR )
 					return false;
 			}
 		}
@@ -1157,7 +1179,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 
 void CubeWrapper::checkEmpty()
 {
-	if( m_state != STATE_NOSHAKES && isEmpty() )
+    if( isEmpty() )
         setState( STATE_MESSAGING );
 }
 
@@ -1197,4 +1219,58 @@ void CubeWrapper::QueueClear( Vec2 &pos )
     m_queuedClears[m_numQueuedClears] = pos;
     m_numQueuedClears++;
     ASSERT( m_numQueuedClears <= NUM_ROWS * NUM_COLS );
+}
+
+
+//look for an empty spot to put a hyper dot
+void CubeWrapper::SpawnHyper()
+{
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+
+            if( slot.isOccupiable() )
+            {
+                slot.MakeHyper();
+                return;
+            }
+        }
+    }
+}
+
+
+//destroy all dots of the given color
+void CubeWrapper::BlowAll( unsigned int color )
+{
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+
+            if( slot.isMatchable() && slot.getColor() == color )
+            {
+                slot.mark();
+            }
+        }
+    }
+}
+
+
+bool CubeWrapper::HasHyperDot() const
+{
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            const GridSlot &slot = m_grid[i][j];
+
+            if( slot.isAlive() && slot.getColor() == GridSlot::HYPERCOLOR )
+                return true;
+        }
+    }
+
+    return false;
 }

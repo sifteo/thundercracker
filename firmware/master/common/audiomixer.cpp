@@ -35,14 +35,11 @@ void AudioMixer::init()
  */
 void AudioMixer::enableChannel(struct _SYSAudioBuffer *buffer)
 {
-    if (enabledChannelMask >= ALL_CHANNELS_ENABLED) {
-        return;
-    }
     // find the first disabled channel, init it and mark it as enabled
-    for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
-        if (!(enabledChannelMask & (1 << i))) {
-            Atomic::SetBit(enabledChannelMask, i);
-            channelSlots[i].init(buffer);
+    for (unsigned idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
+        if (!(enabledChannelMask & Intrinsic::LZ(idx))) {
+            channelSlots[idx].init(buffer);
+            Atomic::SetLZ(enabledChannelMask, idx);
             return;
         }
     }
@@ -220,22 +217,22 @@ void AudioMixer::handleAudioOutEmpty(void *p) {
 bool AudioMixer::populateModuleMetaData(struct _SYSAudioModule *mod)
 {
     // TODO: can we tag these as already populated and avoid subsequent lookups?
-    int size = 0;
+    unsigned size = 0;
     AssetIndexEntry *entry;
 
-    entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, FlashLayer::BLOCK_SIZE, &size);
+    entry = static_cast<AssetIndexEntry*>(FlashLayer::getRegionFromOffset(0, FlashLayer::BLOCK_SIZE, &size));
     if (!entry) {
         LOG(("got null AssetIndexEntry from flash"));
         return false;
     }
     entry += mod->id;
 
-    int offset = entry->offset;
+    unsigned offset = entry->offset;
 
     FlashLayer::releaseRegionFromOffset(0);
 
     SoundHeader *header;
-    header = (SoundHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size);
+    header = static_cast<SoundHeader*>(FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size));
     if (!header) {
         LOG(("Got null SoundHeader from flashlayer\n"));
         return false;
@@ -262,8 +259,8 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     // find the next channel that's both enabled and inactive
     int idx;
     for (idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
-        if ((enabledChannelMask & (1 << idx)) &&
-           ((activeChannelMask  & (Intrinsic::LZ(idx)))) == 0) {
+        if ((enabledChannelMask & Intrinsic::LZ(idx)) &&
+           !(activeChannelMask  & Intrinsic::LZ(idx))) {
             break;
         }
     }
@@ -285,17 +282,17 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
         }
     }
     else {
-        LOG(("ERROR: Unknown audio encoding.\n"));
+        LOG(("ERROR: Unknown audio encoding. id: %d type: %d.\n", mod->id, mod->type));
         dec = 0;
     }
 
-    AudioChannelSlot *ch = &channelSlots[idx];
-    ch->handle = nextHandle++;
-    *handle = ch->handle;
+    AudioChannelSlot &ch = channelSlots[idx];
+    ch.handle = nextHandle++;
+    *handle = ch.handle;
     if (pcmdec) {
-        ch->play(mod, loopMode, pcmdec);
+        ch.play(mod, loopMode, pcmdec);
     } else {
-        ch->play(mod, loopMode, dec);
+        ch.play(mod, loopMode, dec);
     }
     
     Atomic::SetLZ(activeChannelMask, idx);
@@ -305,12 +302,14 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
 
 bool AudioMixer::isPlaying(_SYSAudioHandle handle)
 {
-    return channelForHandle(handle) != 0;
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    return channelForHandle(handle, mask) != 0;
 }
 
 void AudioMixer::stop(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
         stopChannel(ch);
     }
 }
@@ -340,28 +339,30 @@ void AudioMixer::stopChannel(AudioChannelSlot *ch)
 
 void AudioMixer::pause(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
         ch->pause();
     }
 }
 
 void AudioMixer::resume(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
         ch->resume();
     }
 }
 
 void AudioMixer::setVolume(_SYSAudioHandle handle, int volume)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle, enabledChannelMask)) {
         ch->volume = Math::clamp(volume, 0, (int)Audio::MAX_VOLUME);
     }
 }
 
 int AudioMixer::volume(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    if (AudioChannelSlot *ch = channelForHandle(handle, enabledChannelMask)) {
         return ch->volume;
     }
     return 0;
@@ -369,17 +370,16 @@ int AudioMixer::volume(_SYSAudioHandle handle)
 
 uint32_t AudioMixer::pos(_SYSAudioHandle handle)
 {
-    if (AudioChannelSlot *ch = channelForHandle(handle)) {
+    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
+    if (AudioChannelSlot *ch = channelForHandle(handle, mask)) {
         ch = 0;
         // TODO - implement
     }
     return 0;
 }
 
-AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle)
+AudioChannelSlot* AudioMixer::channelForHandle(_SYSAudioHandle handle, uint32_t mask)
 {
-    // channels that are active, and not marked as stopped
-    uint32_t mask = activeChannelMask & ~stoppedChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
         if (channelSlots[idx].handle == handle) {

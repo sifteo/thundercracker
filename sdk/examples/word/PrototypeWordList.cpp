@@ -1,8 +1,14 @@
 #include "PrototypeWordList.h"
-#include <string.h>
-#include <cstdlib>
 #include <sifteo.h>
 #include "WordGame.h"
+
+/*
+ * XXX: Only used for bsearch() currently. We should think about what kind of low-level VM
+ *      primitives the search should be based on (with regard to ABI, as well as cache
+ *      behavior) and design it with a proper syscall interface. But for now, we're leaking
+ *      some libc code into the game :(
+ */
+#include <stdlib.h>
 
 //#define DAWG_TEST 1
 #ifdef DAWG_TEST
@@ -1333,8 +1339,8 @@ bool PrototypeWordList::pickWord(char* buffer)
                 return false;
             }
 
-            ASSERT(strlen(word) == MAX_LETTERS_PER_WORD);
-            strcpy(buffer, word);
+            ASSERT(_SYS_strnlen(word, MAX_LETTERS_PER_WORD + 1) == MAX_LETTERS_PER_WORD);
+            _SYS_strlcpy(buffer, word, MAX_LETTERS_PER_WORD + 1);
             return true;
         }
         i = (i + 1) % numWords;
@@ -1357,7 +1363,7 @@ static int bsearch_strcmp(const void*a,const void*b)
     char word[MAX_LETTERS_PER_WORD + 1];
     if (PrototypeWordList::bitsToString(*pb, word))
     {
-        return strcmp(*(const char **)a, word);
+        return _SYS_strncmp(*(const char **)a, word, MAX_LETTERS_PER_WORD + 1);
     }
     ASSERT(0);
     return 0;
@@ -1397,6 +1403,6 @@ bool PrototypeWordList::bitsToString(uint32_t bits, char* buffer)
         }
         word[j] = letter;
     }
-    strcpy(buffer, word);
-    return strlen(buffer) > 0;
+    _SYS_strlcpy(buffer, word, MAX_LETTERS_PER_WORD + 1);
+    return buffer[0] != '\0';
 }
