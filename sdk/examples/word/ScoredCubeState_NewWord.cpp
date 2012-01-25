@@ -90,6 +90,10 @@ unsigned ScoredCubeState_NewWord::update(float dt, float stateTime)
     {
         return CubeStateIndex_NewWordScored;
     }
+    else if (GameStateMachine::getNumAnagramsRemaining() <= 0)
+    {
+        return CubeStateIndex_ShuffleScored;
+    }
     else
     {
         bool isOldWord = false;
