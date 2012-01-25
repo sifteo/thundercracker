@@ -145,6 +145,7 @@ void GridSlot::Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col )
 	m_row = row;
 	m_col = col;
 	m_state = STATE_GONE;
+    m_RockHealth = MAX_ROCK_HEALTH;
 }
 
 
@@ -153,6 +154,9 @@ void GridSlot::FillColor(unsigned int color)
 	m_state = STATE_LIVING;
 	m_color = color;
 	m_bFixed = false;
+
+    if( color == ROCKCOLOR )
+        m_RockHealth = MAX_ROCK_HEALTH;
 }
 
 
@@ -177,6 +181,20 @@ const AssetImage &GridSlot::GetSpecialTexture() const
 }
 
 
+unsigned int GridSlot::GetSpecialFrame() const
+{
+    if( m_color == ROCKCOLOR )
+    {
+        if( m_RockHealth > 0 )
+            return MAX_ROCK_HEALTH - m_RockHealth;
+        else
+            return 0;
+    }
+    else
+        return 0;
+}
+
+
 //draw self on given vid at given vec
 void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 {
@@ -186,7 +204,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		case STATE_LIVING:
 		{
             if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture());
+                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
             else if( IsFixed() )
                 vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
 			else
@@ -207,7 +225,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 
 			//PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
             if( IsSpecial() )
-                vid.BG0_drawAsset(curPos, GetSpecialTexture());
+                vid.BG0_drawAsset(curPos, GetSpecialTexture(), GetSpecialFrame());
             else
             {
                 const AssetImage &tex = *TEXTURES[m_color];
@@ -218,7 +236,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		case STATE_FINISHINGMOVE:
 		{           
             if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture());
+                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
             else
             {
                 const AssetImage &animtex = *TEXTURES[ m_color ];
@@ -234,7 +252,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		case STATE_MARKED:
         {
             if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture());
+                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
             else
             {
                 const AssetImage &exTex = GetExplodingTexture();
@@ -245,7 +263,7 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 		case STATE_EXPLODING:
 		{
             if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture());
+                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
             else
             {
                 vid.BG0_drawAsset(vec, GemEmpty, 0);
@@ -441,6 +459,12 @@ void GridSlot::spread_mark()
 void GridSlot::explode()
 {
 	m_state = STATE_EXPLODING;
+
+    hurtNeighboringRock( m_row - 1, m_col );
+    hurtNeighboringRock( m_row, m_col - 1 );
+    hurtNeighboringRock( m_row + 1, m_col );
+    hurtNeighboringRock( m_row, m_col + 1 );
+
 	m_eventTime = System::clock();
 }
 
@@ -466,6 +490,31 @@ void GridSlot::markNeighbor( int row, int col )
 }
 
 
+void GridSlot::hurtNeighboringRock( int row, int col )
+{
+    //find my neighbor and see if we match
+    GridSlot *pNeighbor = m_pWrapper->GetSlot( row, col );
+
+    //PRINT( "pneighbor = %p", pNeighbor );
+    //PRINT( "color = %d", pNeighbor->getColor() );
+    if( pNeighbor && pNeighbor->getColor() == ROCKCOLOR )
+        pNeighbor->DamageRock();
+}
+
+
+void GridSlot::DamageRock()
+{
+    if( m_RockHealth > 0 )
+    {
+        m_RockHealth--;
+
+        if( m_RockHealth == 0 )
+            explode();
+    }
+}
+
+
+
 //copy color and some other attributes from target.  Used when tilting
 void GridSlot::TiltFrom(GridSlot &src)
 {
@@ -475,6 +524,9 @@ void GridSlot::TiltFrom(GridSlot &src)
 	m_eventTime = src.m_eventTime;
 	m_curMovePos.x = src.m_col * 4;
 	m_curMovePos.y = src.m_row * 4;
+    m_RockHealth = src.m_RockHealth;
+
+    Game::Inst().Stabilize();
 }
 
 
@@ -580,7 +632,7 @@ void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
     Vec2 vec( m_col * 4, m_row * 4 );
 
     if( IsSpecial() )
-        vid.BG0_drawAsset(vec, GetSpecialTexture());
+        vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
     else
     {
         switch( frame )
