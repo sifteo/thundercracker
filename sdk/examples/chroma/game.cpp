@@ -40,6 +40,7 @@ void Game::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Init(GameAssets);
 
+#if LOAD_ASSETS
     bool done = false;
 
 	PRINT( "getting ready to load" );
@@ -57,7 +58,7 @@ void Game::Init()
 		System::paint();
 	}
     PRINT( "done loading" );
-
+#endif
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Reset();
 
