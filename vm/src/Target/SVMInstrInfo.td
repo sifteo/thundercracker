@@ -27,3 +27,12 @@ def RET : T1<(outs), (ins), "ret", [(ret)]>;
 
 def B : T18<(outs), (ins bTarget:$offset11),
     "b\t$offset11", [(br bb:$offset11)]>;
+
+def CALL : T18<(outs), (ins callTarget:$dst, variable_ops), "call\t$dst", []>;
+
+/*
+ * Non-instruction patterns
+ */
+ 
+def : Pat<(call tglobaladdr:$dst), (CALL tglobaladdr:$dst)>;
+def : Pat<(call texternalsym:$dst), (CALL texternalsym:$dst)>;
