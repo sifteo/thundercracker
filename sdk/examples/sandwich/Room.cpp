@@ -29,8 +29,13 @@ uint8_t Room::GetTile(Vec2 position) {
   return Data()->tiles[position.x + 8 * position.y];
 }
 
-void Room::OpenDoor() {
-  LOG(("OpenDoor TODO\n"));
+bool Room::HasOpenDoor() const {
+  return HasDoor() && pGame->state.IsActive(pGame->map.Data()->doorQuestId, mDoor->flagId);
+}
+
+bool Room::OpenDoor() {
+  ASSERT(HasDoor());
+  return pGame->state.Flag(pGame->map.Data()->doorQuestId, mDoor->flagId);
   /*
   for(int row=0; row<3; ++row) {
     for(int col=3; col<=4; ++col) {
@@ -40,4 +45,10 @@ void Room::OpenDoor() {
     }
   }
   */
+}
+
+void Room::Clear() { 
+  mTriggerType = TRIGGER_UNDEFINED; 
+  mTrigger = 0; 
+  mDoor = 0;
 }

@@ -417,6 +417,19 @@ void GameView::DrawBackground() {
         );
       }
     }
+    // hack alert!
+    if (CurrentRoom()->HasOpenDoor()) {
+      for(int y=0; y<3; ++y) {
+        for(int x=3; x<=4; ++x) {
+          mode.BG0_drawAsset(
+            Vec2(x<<1,y<<1),
+            *(pGame->map.Data()->tileset),
+            pGame->map.GetTileId(mRoom, Vec2(x, y))+2
+          );
+        }
+      }
+    }
+
 
     BG1Helper ovrly(*GetCube());
     const uint8_t *p = CurrentRoom()->Data()->overlay;

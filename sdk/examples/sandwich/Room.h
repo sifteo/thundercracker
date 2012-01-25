@@ -6,14 +6,17 @@ class Room {
 private:
   int mTriggerType;
 	const TriggerData* mTrigger;
+  const DoorData* mDoor;
 
 public:
 
-  // getters
+  // basic getters
 
   int RoomId() const;
   Vec2 Location() const;
   const RoomData* Data() const;
+
+  // telem getters
 
   inline Vec2 Position() const { return 128 * Location(); }
   inline Vec2 LocalCenter() const { return Vec2(Data()->centerx, Data()->centery); }
@@ -21,6 +24,7 @@ public:
   uint8_t GetPortal(Cube::Side side);
   uint8_t GetTile(Vec2 position);
 
+  // trigger getters
 
   const TriggerData* Trigger() const { return mTrigger; }
   int TriggerType() const { return mTriggerType; }
@@ -32,10 +36,17 @@ public:
   const ItemData* TriggerAsItem() { ASSERT(mTriggerType == TRIGGER_ITEM); return (const ItemData*) mTrigger; }
   const NpcData* TriggerAsNPC() { ASSERT(mTriggerType == TRIGGER_NPC); return (const NpcData*) mTrigger; }
 
+  // door getters
+
+  bool HasDoor() const { return mDoor != 0; }
+  bool HasOpenDoor() const;
+
   // methods
   
   void SetTrigger(int type, const TriggerData* p) { mTriggerType = type; mTrigger = p; }
-  void ClearTrigger() { mTriggerType = TRIGGER_UNDEFINED; mTrigger = 0; }
+  void SetDoor(const DoorData* p) { mDoor = p; }
+  void Clear();
+  void ClearTrigger() { mTriggerType = 0; mTrigger = 0; }
 
-  void OpenDoor();
+  bool OpenDoor();
 };
