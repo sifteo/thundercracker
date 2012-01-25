@@ -5,14 +5,21 @@
 #include <string.h>
 
 FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
+uint32_t FlashLayer::validBlocksMask = 0;
+uint32_t FlashLayer::freeBlocksMask = 0;
+
 static MacronixMX25 &flash = MacronixMX25::instance;
 
 void FlashLayer::init()
 {
     memset(blocks, 0, sizeof(blocks));
+    // all blocks begin their lives free
+    for (unsigned i = 0; i < NUM_BLOCKS; ++i) {
+        Atomic::SetLZ(freeBlocksMask, i);
+    }
 }
 
-char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
+void* FlashLayer::getRegionFromOffset(unsigned offset, unsigned len, unsigned *size)
 {
     CachedBlock *b = getCachedBlock(offset);
     if (b == 0) {
@@ -26,14 +33,17 @@ char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
         b->address = (offset / BLOCK_SIZE) * BLOCK_SIZE;
         flash.read(b->address, (uint8_t*)b->data, BLOCK_SIZE);
 
-        b->inUse = true;
-        b->valid = true;
+        // mark it as both valid & no longer free
+        unsigned idx = b - blocks;
+        ASSERT(idx < NUM_BLOCKS);
+        Atomic::SetLZ(validBlocksMask, idx);
+        Atomic::ClearLZ(freeBlocksMask, idx);
     }
 
-    int boff = offset % BLOCK_SIZE;
+    unsigned boff = offset % BLOCK_SIZE;
     *size = len;
 
-    if ((unsigned)offset + len > b->address + sizeof(b->data)) {
+    if (offset + len > b->address + sizeof(b->data)) {
         // requested region crosses block boundary :(
         *size = b->address + BLOCK_SIZE - offset;
     }

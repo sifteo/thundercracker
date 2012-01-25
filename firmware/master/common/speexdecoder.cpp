@@ -82,24 +82,22 @@ int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
         return 0;
     }
 
-    int rsize = 0;
+    unsigned rsize = 0;
 
     //char *localAddr = FlashLayer::getRegion(this->srcaddr, DECODED_FRAME_SIZE + sizeof(uint8_t));
-    char *localAddr = FlashLayer::getRegionFromOffset(this->srcaddr, DECODED_FRAME_SIZE + sizeof(uint8_t), &rsize);
+    char *localAddr = static_cast<char*>(FlashLayer::getRegionFromOffset(this->srcaddr, DECODED_FRAME_SIZE + sizeof(uint8_t), &rsize));
     if (!localAddr) {
         return 0; // ruh roh, TODO error handling
     }
 
-    //fprintf(stdout, "  wanted %lu bytes, read %d, sz: %d\n", DECODED_FRAME_SIZE + sizeof(uint8_t), rsize, sz);
-
     // format: uint8_t of framesize, followed by framesize bytes of frame data
-    int sz = *localAddr++;
+    unsigned sz = *localAddr++;
     memcpy(contiguous, localAddr, rsize - 1);
     if (sz > rsize - 1) {
         //LOG(("WARNING: Flash boundary crossed reading audio data: %d, %d\n", sz, rsize));
         
-        int nsize = 0;
-        char *nlocalAddr = FlashLayer::getRegionFromOffset(this->srcaddr + rsize, DECODED_FRAME_SIZE + sizeof(uint8_t), &nsize);
+        unsigned nsize = 0;
+        char *nlocalAddr = static_cast<char*>(FlashLayer::getRegionFromOffset(this->srcaddr + rsize, DECODED_FRAME_SIZE + sizeof(uint8_t), &nsize));
         if (!nlocalAddr) {
             return 0; // ruh roh, TODO error handling
         }
@@ -175,9 +173,9 @@ int PCMDecoder::decodeFrame(uint8_t *buf, int size)
         return 0;   // not enough data left
     }
     
-    int rsize = 0;
+    unsigned rsize = 0;
     
-    char *localAddr = FlashLayer::getRegionFromOffset(this->srcaddr, FRAME_SIZE, &rsize);
+    char *localAddr = static_cast<char*>(FlashLayer::getRegionFromOffset(this->srcaddr, FRAME_SIZE, &rsize));
     if (!localAddr) {
         LOG(("ERROR: Failed to read from flash layer.\n"));
         return 0; // ruh roh, TODO error handling

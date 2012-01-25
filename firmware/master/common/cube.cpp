@@ -80,18 +80,18 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
         assetLoadTimestamp = SysTime::ticks();
     });
     
-    int size = 0;
+    unsigned size = 0;
     AssetIndexEntry *entry;
 
-    entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, 512, &size);
+    entry = static_cast<AssetIndexEntry*>(FlashLayer::getRegionFromOffset(0, 512, &size));
     entry += a->id;
     
-    int offset = entry->offset;
+    unsigned offset = entry->offset;
     
     FlashLayer::releaseRegionFromOffset(0);
 
     AssetGroupHeader *header;
-    header = (AssetGroupHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(AssetGroupHeader), &size);
+    header = static_cast<AssetGroupHeader*>(FlashLayer::getRegionFromOffset(offset, sizeof(AssetGroupHeader), &size));
     
     a->offset = offset + sizeof(AssetGroupHeader);
     a->size = header->dataSize;

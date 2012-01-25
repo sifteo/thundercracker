@@ -5,8 +5,10 @@
 // statics
 FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
 struct FlashLayer::Stats FlashLayer::stats;
+uint32_t FlashLayer::validBlocksMask = 0;
+uint32_t FlashLayer::freeBlocksMask = 0;
 
-char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
+void *FlashLayer::getRegionFromOffset(unsigned offset, unsigned len, unsigned *size)
 {
     CachedBlock *b = getCachedBlock(offset);
     if (b == 0) {
@@ -17,7 +19,7 @@ char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
             return 0;
         }
         
-        int bpos = offset / BLOCK_SIZE;
+        unsigned bpos = offset / BLOCK_SIZE;
         ASSERT(fseek(mFile, bpos * BLOCK_SIZE, SEEK_SET) == 0);
         
         size_t result = fread (b->data, 1, BLOCK_SIZE, mFile);
@@ -27,9 +29,14 @@ char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
         }
         
         b->address = bpos * BLOCK_SIZE;
-        b->inUse = true;
-        b->valid = true;
-    } else {
+
+        // mark it as both valid & no longer free
+        unsigned idx = b - blocks;
+        ASSERT(idx < NUM_BLOCKS);
+        Atomic::SetLZ(validBlocksMask, idx);
+        Atomic::ClearLZ(freeBlocksMask, idx);
+    }
+    else {
         stats.hits++;
     }
 
@@ -38,10 +45,10 @@ char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
         stats.hits = stats.misses = 0;
     }
     
-    int boff = offset % BLOCK_SIZE;
+    unsigned boff = offset % BLOCK_SIZE;
     *size = len;
     
-    if ((unsigned)offset + len > b->address + sizeof(b->data)) {
+    if (offset + len > b->address + sizeof(b->data)) {
         // requested region crosses block boundary :(
         int valid = b->address + BLOCK_SIZE - offset;
         *size = valid;
@@ -56,6 +63,10 @@ FILE * FlashLayer::mFile = NULL;
 
 void FlashLayer::init()
 {
+    // all blocks begin their lives free
+    for (unsigned i = 0; i < NUM_BLOCKS; ++i) {
+        Atomic::SetLZ(freeBlocksMask, i);
+    }
     mFile = fopen("asegment.bin", "rb");
     ASSERT(mFile != NULL && "ERROR: FlashLayer failed to open asset segment - make sure asegment.bin is next to your executable.\n");
     stats.hits = stats.misses = 0;

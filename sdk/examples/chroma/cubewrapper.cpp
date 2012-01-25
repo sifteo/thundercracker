@@ -62,7 +62,9 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 void CubeWrapper::Init( AssetGroup &assets )
 {
     m_cube.enable();
+#if LOAD_ASSETS
     m_cube.loadAssets( assets );
+#endif
 
     m_rom.init();
     m_rom.BG0_text(Vec2(1,1), "Loading...");
@@ -187,15 +189,6 @@ void CubeWrapper::Draw()
                     m_queuedFlush = true;
 					break;
 				}
-				case STATE_NOSHAKES:
-				{
-                    //m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
-                    m_bg1helper.DrawText( Vec2( 4, 4 ), Font, "NO SHAKES" );
-                    m_bg1helper.DrawText( Vec2( 4, 6 ), Font, "LEFT" );
-
-                    m_queuedFlush = true;
-					break;
-				}
                 case STATE_REFILL:
                 {
                     m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
@@ -309,26 +302,23 @@ void CubeWrapper::Update(float t, float dt)
     if( Game::Inst().getState() == Game::STATE_PLAYING )
     {
         //check for shaking
-        if( m_state != STATE_NOSHAKES )
+        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
         {
-            if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
-            {
-                m_fShakeTime = -1.0f;
-                checkRefill();
-            }
-
-            //update all dots
-            for( int i = 0; i < NUM_ROWS; i++ )
-            {
-                for( int j = 0; j < NUM_COLS; j++ )
-                {
-                    GridSlot &slot = m_grid[i][j];
-                    slot.Update( t );
-                }
-            }
-
-            m_banner.Update(t, m_cube);
+            m_fShakeTime = -1.0f;
+            checkRefill();
         }
+
+        //update all dots
+        for( int i = 0; i < NUM_ROWS; i++ )
+        {
+            for( int j = 0; j < NUM_COLS; j++ )
+            {
+                GridSlot &slot = m_grid[i][j];
+                slot.Update( t );
+            }
+        }
+
+        m_banner.Update(t, m_cube);
 
         //tilt state
         _SYSAccelState state;
@@ -559,7 +549,7 @@ void CubeWrapper::testMatches()
         if( m_neighbors[i] >= 0 && m_neighbors[i] < m_cube.id() - CUBE_ID_BASE )
 		{
 			//as long we we test one block going clockwise, and the other going counter-clockwise, we'll match up
-			int side = Game::Inst().cubes[m_neighbors[i]].GetSideNeighboredOn( 0, m_cube );
+            int side = Game::Inst().m_cubes[m_neighbors[i]].GetSideNeighboredOn( 0, m_cube );
 
 			//no good, just set our flag again and return
 			if( side < 0 )
@@ -574,7 +564,7 @@ void CubeWrapper::testMatches()
 
 			FillSlotArray( ourGems, i, true );
 
-			CubeWrapper &otherCube = Game::Inst().cubes[m_neighbors[i]];
+            CubeWrapper &otherCube = Game::Inst().m_cubes[m_neighbors[i]];
 			otherCube.FillSlotArray( theirGems, side, false );
 
 			//compare the two
@@ -720,13 +710,13 @@ bool CubeWrapper::isFull()
 	return true;
 }
 
-bool CubeWrapper::isEmpty()
+bool CubeWrapper::isEmpty() const
 {
 	for( int i = 0; i < NUM_ROWS; i++ )
 	{
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
-			GridSlot &slot = m_grid[i][j];
+            const GridSlot &slot = m_grid[i][j];
 			if( !slot.isEmpty() )
 				return false;
 		}
@@ -786,18 +776,7 @@ void CubeWrapper::checkRefill()
 		}
 		else
 		{
-            setState( STATE_NOSHAKES );
-
-			for( int i = 0; i < NUM_ROWS; i++ )
-			{
-				for( int j = 0; j < NUM_COLS; j++ )
-				{
-					GridSlot &slot = m_grid[i][j];
-					slot.setEmpty();
-				}
-			}
-
-			Game::Inst().checkGameOver();
+            m_banner.SetMessage( "NO SHAKES LEFT" );
 		}
 	}
 }
@@ -1068,8 +1047,8 @@ bool CubeWrapper::hasStrandedFixedDots() const
 
 					bHasFixed = true;
 				}
-				//we have floating dots
-				else
+                //we have floating non-rock dots
+                else if( slot.getColor() != GridSlot::ROCKCOLOR )
 					return false;
 			}
 		}
@@ -1102,14 +1081,31 @@ bool CubeWrapper::allFixedDotsAreStrandedSide() const
 
 					bHasFixed = true;
 				}
-				//we have floating dots
-				else
+                //we have floating non-rock dots
+                else if( slot.getColor() != GridSlot::ROCKCOLOR )
 					return false;
 			}
 		}
 	}
 
 	return bHasFixed;
+}
+
+
+
+bool CubeWrapper::hasNonStrandedDot() const
+{
+    if( hasStrandedFixedDots() )
+        return false;
+
+    if( allFixedDotsAreStrandedSide() && Game::Inst().OnlyOneOtherCorner( this ) )
+        return false;
+
+    //if we have a fixed dot, and all of the same color are only fixed dots, we need a reverse polarity fixed dot
+    //if( AllFixedDotsAreUnMatchable() )
+      //  return false;
+
+    return true;
 }
 
 
@@ -1171,7 +1167,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 					pos.x = i;
 					pos.y = j;
 				}
-				else
+                else if( slot.getColor() != GridSlot::ROCKCOLOR )
 					return false;
 			}
 		}
@@ -1183,7 +1179,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 
 void CubeWrapper::checkEmpty()
 {
-	if( m_state != STATE_NOSHAKES && isEmpty() )
+    if( isEmpty() )
         setState( STATE_MESSAGING );
 }
 

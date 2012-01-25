@@ -217,22 +217,22 @@ void AudioMixer::handleAudioOutEmpty(void *p) {
 bool AudioMixer::populateModuleMetaData(struct _SYSAudioModule *mod)
 {
     // TODO: can we tag these as already populated and avoid subsequent lookups?
-    int size = 0;
+    unsigned size = 0;
     AssetIndexEntry *entry;
 
-    entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, FlashLayer::BLOCK_SIZE, &size);
+    entry = static_cast<AssetIndexEntry*>(FlashLayer::getRegionFromOffset(0, FlashLayer::BLOCK_SIZE, &size));
     if (!entry) {
         LOG(("got null AssetIndexEntry from flash"));
         return false;
     }
     entry += mod->id;
 
-    int offset = entry->offset;
+    unsigned offset = entry->offset;
 
     FlashLayer::releaseRegionFromOffset(0);
 
     SoundHeader *header;
-    header = (SoundHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size);
+    header = static_cast<SoundHeader*>(FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size));
     if (!header) {
         LOG(("Got null SoundHeader from flashlayer\n"));
         return false;

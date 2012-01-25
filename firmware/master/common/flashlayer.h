@@ -8,20 +8,23 @@
 #ifndef FLASH_LAYER_H_
 #define FLASH_LAYER_H_
 
+#include <sifteo.h>
 #include <stdio.h>
 #include <stdint.h>
 
 class FlashLayer
 {
 public:
-    static const int NUM_BLOCKS = 2;
-    static const int BLOCK_SIZE = 512; // XXX - HW dependent
+    static const unsigned NUM_BLOCKS = 2;
+    static const unsigned BLOCK_SIZE = 512;
 
     static void init();
-    static char* getRegionFromOffset(int offset, int len, int *size);
+    static void* getRegionFromOffset(unsigned offset, unsigned len, unsigned *size);
     static void releaseRegionFromOffset(int offset) {
         if (CachedBlock *b = getCachedBlock(offset)) {
-            b->inUse = false;
+            unsigned idx = b - blocks;
+            ASSERT(idx < NUM_BLOCKS);
+            Atomic::SetLZ(freeBlocksMask, idx);
         }
     }
 
@@ -30,42 +33,36 @@ private:
         char data[BLOCK_SIZE];
         uint32_t address;
         // TODO - track multiple references? timestamp?
-        // TODO: use a bitfield to track this state, get rid of inUse and valid
-        bool inUse;
-        bool valid; // does this block contain valid data? TODO: invalidation?
     } CachedBlock;
 
     static CachedBlock blocks[NUM_BLOCKS];
+    static uint32_t freeBlocksMask;
+    static uint32_t validBlocksMask;    // TODO: invalidation?
 
     // Try to find an existing cached block for the given address.
     static CachedBlock* getCachedBlock(uintptr_t address) {
-        CachedBlock *b;
-        int i;
-        for (i = 0, b = FlashLayer::blocks; i < NUM_BLOCKS; i++, b++) {
-            if (address >= b->address && address < b->address + BLOCK_SIZE && b->valid) {
+        uint32_t mask = validBlocksMask;
+        while (mask) {
+            unsigned idx = Intrinsic::CLZ(mask);
+            CachedBlock *b = &blocks[idx];
+            if (address >= b->address && address < b->address + BLOCK_SIZE) {
                 return b;
             }
+            Atomic::ClearLZ(mask, idx);
         }
         return 0;
     }
 
     static CachedBlock* getFreeBlock() {
-        // TODO: get rid of inUse flag and use bitmask for more efficient lookup of
-        //       free blocks.
-        CachedBlock *b;
-        int i;
-        for (i = 0, b = FlashLayer::blocks; i < NUM_BLOCKS; i++, b++) {
-            if (!b->inUse) {
-                return b;
-            }
+        if (freeBlocksMask == 0) {
+            return 0;
         }
-        return 0;
+
+        unsigned idx = Intrinsic::CLZ(freeBlocksMask);
+        return &blocks[idx];
     }
     
 #ifdef SIFTEO_SIMULATOR
-    // HACK: Attempt to redirect the flash layer at a file.  Need a proper
-    //       hardware emulation layer, and firmware implementation
-    
     static FILE * mFile;
     struct Stats {
         unsigned hits;
