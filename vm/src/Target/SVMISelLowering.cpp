@@ -67,12 +67,14 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                      DebugLoc dl, SelectionDAG &DAG,
                                      SmallVectorImpl<SDValue> &InVals) const
 {
-    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
-    
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+        Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32);
+
     std::vector<SDValue> Ops;
     Ops.push_back(Chain);
     Ops.push_back(Callee);
-    
+
+    SDVTList NodeTys = DAG.getVTList(MVT::Other);
     Chain = DAG.getNode(SVMISD::CALL, dl, NodeTys, &Ops[0], Ops.size());
 
     return Chain;

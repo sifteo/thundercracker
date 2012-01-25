@@ -3,7 +3,6 @@
 *.bc
 *.inc
 test.o
-test.o.ll
-test.s
+test.o.s
 svmc
 

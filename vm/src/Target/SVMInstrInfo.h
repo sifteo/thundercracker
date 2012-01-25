@@ -20,6 +20,30 @@ class SVMInstrInfo : public SVMGenInstrInfo {
 public:
     explicit SVMInstrInfo();
     virtual const SVMRegisterInfo &getRegisterInfo() const { return RI; }
+
+    virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
+                                         int &FrameIndex) const;
+
+    virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
+                                        int &FrameIndex) const;
+
+    virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MBBI,
+                                     unsigned SrcReg, bool isKill, int FrameIndex,
+                                     const TargetRegisterClass *RC,
+                                     const TargetRegisterInfo *TRI) const;
+
+    virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                      MachineBasicBlock::iterator MBBI,
+                                      unsigned DestReg, int FrameIndex,
+                                      const TargetRegisterClass *RC,
+                                      const TargetRegisterInfo *TRI) const;
+
+    virtual void copyPhysReg(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator MBBI, DebugLoc DL,
+                             unsigned DestReg, unsigned SrcReg,
+                             bool KillSrc) const;
+
 private:
     const SVMRegisterInfo RI;
 };

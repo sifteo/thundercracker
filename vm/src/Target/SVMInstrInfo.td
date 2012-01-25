@@ -5,12 +5,9 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-def SDT_SVMCall     : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
-def call            : SDNode<"SVMISD::CALL", SDT_SVMCall,
-                        [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
-
-def ret             : SDNode<"SVMISD::RETURN", SDTNone,
-                        [SDNPHasChain, SDNPOptInGlue]>;
+def SDT_SVMCall     : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
+def call            : SDNode<"SVMISD::CALL", SDT_SVMCall, [SDNPHasChain]>;
+def ret             : SDNode<"SVMISD::RETURN", SDTNone, [SDNPHasChain]>;
 
 def bTarget : Operand<OtherVT>;
 def callTarget : Operand<i32>;
@@ -21,18 +18,24 @@ def callTarget : Operand<i32>;
 
 def MOV : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
     "mov\t$Rd, $Rs",
-    [(set GPReg:$Rd, GPReg:$Rs)]>;
+    [(set GPReg:$Rd, GPReg:$Rs)]>
+{
+    // XXX: This sets conditions codes, since it's really a LSL!
+    let opB = 0;
+    let offset5 = 0;
+}
 
-def RET : T1<(outs), (ins), "ret", [(ret)]>;
+def RET : SVC<1, (outs), (ins),
+ 	"sys.ret", [(ret)]>;
 
 def B : T18<(outs), (ins bTarget:$offset11),
-    "b\t$offset11", [(br bb:$offset11)]>;
+    "b  \t$offset11", [(br bb:$offset11)]>;
 
-def CALL : T18<(outs), (ins callTarget:$dst, variable_ops), "call\t$dst", []>;
+def CALL : SVC<2, (outs), (ins callTarget:$offset11),
+    "sys.call\t$offset11", [(call tglobaladdr:$offset11)]>;
 
-/*
- * Non-instruction patterns
- */
- 
-def : Pat<(call tglobaladdr:$dst), (CALL tglobaladdr:$dst)>;
-def : Pat<(call texternalsym:$dst), (CALL texternalsym:$dst)>;
+def LDRsp : T11<1, (outs), (ins GPReg:$Rd, i8imm:$word8),
+    "ldr\t$Rd, [SP, #$word8]", []>;
+
+def STRsp : T11<0, (outs), (ins GPReg:$Rd, i8imm:$word8),
+    "str\t$Rd, [SP, #$word8]", []>;

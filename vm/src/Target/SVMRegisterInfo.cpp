@@ -8,6 +8,9 @@
 #include "SVM.h"
 #include "SVMMCTargetDesc.h"
 #include "SVMRegisterInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 
 #define GET_REGINFO_TARGET_DESC
 #include "SVMGenRegisterInfo.inc"
@@ -29,11 +32,28 @@ BitVector SVMRegisterInfo::getReservedRegs(const MachineFunction &MF) const
     return res;
 }
 
-void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj, RegScavenger *RS) const
+void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                          int SPAdj, RegScavenger *RS) const
 {
+    assert(SPAdj == 0 && "Not allowed to modify SP");
+
+    unsigned i = 0;
+    MachineInstr &MI = *II;
+    DebugLoc dl = MI.getDebugLoc();
+    while (!MI.getOperand(i).isFI()) {
+        ++i;
+        assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+    }
+
+    int FrameIndex = MI.getOperand(i).getIndex();
+    MachineFunction &MF = *MI.getParent()->getParent();
+    int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+
+    //assert(Offset >= 0 && Offset < 256);
+    MI.getOperand(i).ChangeToImmediate(Offset);
 }
 
 unsigned int SVMRegisterInfo::getFrameRegister(const MachineFunction &MF) const
 {
-    return 0;
+    return SVM::SP;
 }

@@ -84,6 +84,18 @@ class T4<dag outs, dag ins, string asmstr, list<dag> pattern>
     let Inst{2-0} = Rd;
 }
 
+class T11<bits<1> isLoad, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst<outs, ins, asmstr, pattern>
+{
+    bits<3> Rd;
+    bits<8> word8;
+    let opA = 4;
+    let Inst{12} = 1;
+    let Inst{11} = isLoad;
+    let Inst{10-8} = Rd;
+    let Inst{7-0} = word8;
+}
+
 class T17<dag outs, dag ins, string asmstr, list<dag> pattern>
     : ThumbInst<outs, ins, asmstr, pattern>
 {
@@ -100,4 +112,10 @@ class T18<dag outs, dag ins, string asmstr, list<dag> pattern>
     bits<11> offset11;
     let Inst{12-11} = 0b00;
     let Inst{10-0} = offset11;
+}
+
+class SVC<bits<8> num, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : T17<outs, ins, asmstr, pattern>
+{
+    let value8 = num;
 }
