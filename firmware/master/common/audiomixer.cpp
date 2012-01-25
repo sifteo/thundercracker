@@ -282,7 +282,7 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
         }
     }
     else {
-        LOG(("ERROR: Unknown audio encoding.\n"));
+        LOG(("ERROR: Unknown audio encoding. id: %d type: %d.\n", mod->id, mod->type));
         dec = 0;
     }
 
