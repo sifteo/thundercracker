@@ -5,6 +5,8 @@
 // statics
 FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
 struct FlashLayer::Stats FlashLayer::stats;
+uint32_t FlashLayer::validBlocksMask = 0;
+uint32_t FlashLayer::freeBlocksMask = 0;
 
 void *FlashLayer::getRegionFromOffset(int offset, int len, int *size)
 {
@@ -27,9 +29,14 @@ void *FlashLayer::getRegionFromOffset(int offset, int len, int *size)
         }
         
         b->address = bpos * BLOCK_SIZE;
-        b->inUse = true;
-        b->valid = true;
-    } else {
+
+        // mark it as both valid & no longer free
+        unsigned idx = b - blocks;
+        ASSERT(idx < NUM_BLOCKS);
+        Atomic::SetLZ(validBlocksMask, idx);
+        Atomic::ClearLZ(freeBlocksMask, idx);
+    }
+    else {
         stats.hits++;
     }
 
@@ -56,6 +63,10 @@ FILE * FlashLayer::mFile = NULL;
 
 void FlashLayer::init()
 {
+    // all blocks begin their lives free
+    for (unsigned i = 0; i < NUM_BLOCKS; ++i) {
+        Atomic::SetLZ(freeBlocksMask, i);
+    }
     mFile = fopen("asegment.bin", "rb");
     ASSERT(mFile != NULL && "ERROR: FlashLayer failed to open asset segment - make sure asegment.bin is next to your executable.\n");
     stats.hits = stats.misses = 0;
