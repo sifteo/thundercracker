@@ -29,11 +29,11 @@ public:
     }
 
 private:
-    typedef struct CachedBlock_t {
-        char data[BLOCK_SIZE];
+    struct CachedBlock {
         uint32_t address;
+        char data[BLOCK_SIZE];
         // TODO - track multiple references? timestamp?
-    } CachedBlock;
+    }  __attribute__((aligned(sizeof(uint32_t))));
 
     static CachedBlock blocks[NUM_BLOCKS];
     static uint32_t freeBlocksMask;
