@@ -12,7 +12,7 @@ void FlashLayer::init()
     memset(blocks, 0, sizeof(blocks));
 }
 
-char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
+void* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
 {
     CachedBlock *b = getCachedBlock(offset);
     if (b == 0) {

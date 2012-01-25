@@ -18,7 +18,7 @@ public:
     static const int BLOCK_SIZE = 512; // XXX - HW dependent
 
     static void init();
-    static char* getRegionFromOffset(int offset, int len, int *size);
+    static void* getRegionFromOffset(int offset, int len, int *size);
     static void releaseRegionFromOffset(int offset) {
         if (CachedBlock *b = getCachedBlock(offset)) {
             b->inUse = false;

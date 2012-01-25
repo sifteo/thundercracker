@@ -220,7 +220,7 @@ bool AudioMixer::populateModuleMetaData(struct _SYSAudioModule *mod)
     int size = 0;
     AssetIndexEntry *entry;
 
-    entry = (AssetIndexEntry*)FlashLayer::getRegionFromOffset(0, FlashLayer::BLOCK_SIZE, &size);
+    entry = static_cast<AssetIndexEntry*>(FlashLayer::getRegionFromOffset(0, FlashLayer::BLOCK_SIZE, &size));
     if (!entry) {
         LOG(("got null AssetIndexEntry from flash"));
         return false;
@@ -232,7 +232,7 @@ bool AudioMixer::populateModuleMetaData(struct _SYSAudioModule *mod)
     FlashLayer::releaseRegionFromOffset(0);
 
     SoundHeader *header;
-    header = (SoundHeader*)FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size);
+    header = static_cast<SoundHeader*>(FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size));
     if (!header) {
         LOG(("Got null SoundHeader from flashlayer\n"));
         return false;

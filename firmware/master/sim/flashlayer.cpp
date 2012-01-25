@@ -6,7 +6,7 @@
 FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
 struct FlashLayer::Stats FlashLayer::stats;
 
-char* FlashLayer::getRegionFromOffset(int offset, int len, int *size)
+void *FlashLayer::getRegionFromOffset(int offset, int len, int *size)
 {
     CachedBlock *b = getCachedBlock(offset);
     if (b == 0) {
