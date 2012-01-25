@@ -36,7 +36,7 @@ void ScoredCubeState_Shuffle::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     WordGame::hideSprites(vid);
-    if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
+    if (getStateMachine().getTime() <= TEETH_ANIM_LENGTH)
     {
         // teeth closing animation
         if (MAX_LETTERS_PER_CUBE == 1)
