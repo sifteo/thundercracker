@@ -40,13 +40,13 @@ public:
 
   bool HasDoor() const { return mDoor != 0; }
   bool HasOpenDoor() const;
-
+  bool HasClosedDoor() const;
   // methods
   
   void SetTrigger(int type, const TriggerData* p) { mTriggerType = type; mTrigger = p; }
   void SetDoor(const DoorData* p) { mDoor = p; }
   void Clear();
-  void ClearTrigger() { mTriggerType = 0; mTrigger = 0; }
+  void ClearTrigger() { mTriggerType = TRIGGER_UNDEFINED; mTrigger = 0; }
 
   bool OpenDoor();
 };

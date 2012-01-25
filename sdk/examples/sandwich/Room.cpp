@@ -30,25 +30,20 @@ uint8_t Room::GetTile(Vec2 position) {
 }
 
 bool Room::HasOpenDoor() const {
+  return HasDoor() && !pGame->state.IsActive(pGame->map.Data()->doorQuestId, mDoor->flagId);
+}
+
+bool Room::HasClosedDoor() const {
   return HasDoor() && pGame->state.IsActive(pGame->map.Data()->doorQuestId, mDoor->flagId);
 }
 
 bool Room::OpenDoor() {
   ASSERT(HasDoor());
   return pGame->state.Flag(pGame->map.Data()->doorQuestId, mDoor->flagId);
-  /*
-  for(int row=0; row<3; ++row) {
-    for(int col=3; col<=4; ++col) {
-      SetTile(
-        Vec2(col, row), GetTile(Vec2(col, row))+2
-      );
-    }
-  }
-  */
 }
 
 void Room::Clear() { 
-  mTriggerType = TRIGGER_UNDEFINED; 
+  mTriggerType = TRIGGER_UNDEFINED;
   mTrigger = 0; 
   mDoor = 0;
 }

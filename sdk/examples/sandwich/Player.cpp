@@ -154,8 +154,7 @@ void Player::Update(float dt) {
       // animate walking to target
       PlaySfx(sfx_running);
       pTarget->ShowPlayer();
-      if (mDir == SIDE_TOP && pCurrent->CurrentRoom()->HasDoor()) {
-        ASSERT( mDir == SIDE_TOP ); // assuming 128 pixel straight-line UP from the current cube
+      if (mDir == SIDE_TOP && pCurrent->CurrentRoom()->HasClosedDoor()) {
         for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
           mPosition.y -= WALK_SPEED;
           pCurrent->UpdatePlayer();
@@ -164,7 +163,6 @@ void Player::Update(float dt) {
         if (HaveBasicKey()) {
           DecrementBasicKeyCount();
           // check the door
-          //pCurrent->Room()->SetPortal(mDir, PORTAL_OPEN); // REPLACE
           pCurrent->CurrentRoom()->OpenDoor();
           pCurrent->DrawBackground();
           pCurrent->GetCube()->vbuf.touch();
