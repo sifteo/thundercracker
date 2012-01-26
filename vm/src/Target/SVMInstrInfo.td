@@ -60,7 +60,10 @@ def CMPr : T4<(outs), (ins GPReg:$Rd, GPReg:$Rs),
 }
 
 def Bcc : T16<(outs), (ins bTarget:$offset11, CCop:$cc),
-    "b.$cc\t$offset11", [(SVMBrcond bb:$offset11, imm:$cc)]>;
+    "b.$cc\t$offset11", [(SVMBrcond bb:$offset11, imm:$cc)]> {
+    let isBranch = 1;
+    let isTerminator = 1;
+}
 
 
 /****************************************************************
@@ -111,7 +114,10 @@ def SUBr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
 }
 
 def B : T18<(outs), (ins bTarget:$offset11),
-    "b  \t$offset11", [(br bb:$offset11)]>;
+    "b  \t$offset11", [(br bb:$offset11)]> {
+    let isBranch = 1;
+    let isTerminator = 1;
+}
 
 def LDRsp : T11<1, (outs), (ins GPReg:$Rd, i8imm:$word8),
     "ldr\t$Rd, [SP, #$word8]", []>;
