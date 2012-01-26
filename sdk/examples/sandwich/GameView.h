@@ -3,6 +3,7 @@
 #include "Content.h"
 
 class Room;
+#define ANIM_TILE_CAPACITY 4
 
 class GameView {
 public:
@@ -13,6 +14,11 @@ public:
 private:
   unsigned mRoomId;
 
+  struct AnimTileView {
+    uint8_t lid;
+    uint8_t frameCount;
+  };
+
   union {
     struct {
       unsigned start_frame;
@@ -20,6 +26,8 @@ private:
     } idle;
     struct {
       unsigned start_frame;
+      unsigned anim_tile_count;
+      AnimTileView anim_tiles[ANIM_TILE_CAPACITY];
     } room;
   } mScene;
 
@@ -54,6 +62,8 @@ public:
 private:
   void DrawInventorySprites();
   void HideInventorySprites();
+
+  void ComputeAnimatedTiles();
 
   // misc hacky stuff
   void RandomizeBff();

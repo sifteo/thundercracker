@@ -51,7 +51,6 @@ public:
   }
 
   inline uint8_t GetTileId(unsigned roomId, Vec2 tile) const {
-    ASSERT(roomId < (unsigned) mData->width * mData->height);
     ASSERT(0 <= tile.x && tile.x < 8);
     ASSERT(0 <= tile.y && tile.y < 8);
   return mData->rooms[roomId].tiles[(tile.y<<3) + tile.x];
@@ -80,7 +79,6 @@ public:
   }
 
   inline Vec2 GetLocation(uint8_t roomId) const {
-    ASSERT(roomId < mData->width * mData->height);
     return Vec2(roomId % mData->width, roomId / mData->width);
   }
 

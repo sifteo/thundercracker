@@ -21,7 +21,6 @@ const static uint8_t sHopTable[] = { 0, 0, 0, 1, 3, 4, 6, 6, 7, 7, 8, 7, 7, 6, 6
 #define HOP_COUNT 18
 #define HOP_PHASE 9
 
-#define FRAMES_PER_TORCH_FRAME 4
 #define BFF_FRAME_COUNT 4
 
 /*
@@ -84,45 +83,24 @@ void GameView::Update() {
     return; 
   }
 
+  // update animated tiles (could suffer some optimization)
+  const unsigned t = pGame->AnimFrame() - mScene.room.start_frame;
+  for(unsigned i=0; i<mScene.room.anim_tile_count; ++i) {
+    const AnimTileView& view = mScene.room.anim_tiles[i];
+    const unsigned localt = t % (view.frameCount << 2);
+    if (localt % 4 == 0) {
+        mode.BG0_drawAsset(
+          Vec2((view.lid%8)<<1,(view.lid>>3)<<1),
+          *(pGame->GetMap()->Data()->tileset),
+          pGame->GetMap()->Data()->rooms[mRoomId].tiles[view.lid] + (localt>>2)
+        );
+    }
+  }
+
   // begin h4cky scene-specific stuff
   /*
   RoomData *p = Room()->Data();
-  if (pGame->GetMap()->Data() == &dungeon_data) {
-    if (p->torch0 != 0xff) {
-      mScene.dungeon.torchTime = (mScene.dungeon.torchTime + 1) % (6 * FRAMES_PER_TORCH_FRAME);
-      unsigned torchFrame = mScene.dungeon.torchTime / FRAMES_PER_TORCH_FRAME;
-      if (torchFrame * FRAMES_PER_TORCH_FRAME == mScene.dungeon.torchTime) {
-        // advancing the frame
-        Vec2 tt0 = p->TorchTile0();
-        VidMode_BG0 mode(GetCube()->vbuf);
-        mode.BG0_drawAsset(
-          Vec2(tt0.x<<1,tt0.y<<1),
-          *(pGame->GetMap()->Data()->tileset),
-          pGame->GetMap()->Data()->GetTileId(mRoom, tt0) + torchFrame
-        );
-        tt0.y++;
-        mode.BG0_drawAsset(
-          Vec2(tt0.x<<1,tt0.y<<1),
-          *(pGame->GetMap()->Data()->tileset),
-          pGame->GetMap()->Data()->GetTileId(mRoom, tt0) + torchFrame
-        );
-        if (p->torch1 != 0xff) {
-          tt0 = p->TorchTile1();
-          mode.BG0_drawAsset(
-            Vec2(tt0.x<<1,tt0.y<<1),
-            *(pGame->GetMap()->Data()->tileset),
-            pGame->GetMap()->Data()->GetTileId(mRoom, tt0) + torchFrame
-          );
-          tt0.y++;
-          mode.BG0_drawAsset(
-            Vec2(tt0.x<<1,tt0.y<<1),
-            *(pGame->GetMap()->Data()->tileset),
-            pGame->GetMap()->Data()->GetTileId(mRoom, tt0) + torchFrame
-          );
-        }
-      }
-    }    
-  } else if (pGame->GetMap()->Data() == &forest_data && mScene.forest.hasBff) {
+  if (pGame->GetMap()->Data() == &forest_data && mScene.forest.hasBff) {
     // butterfly stuff
     Vec2 delta = sBffTable[mScene.forest.bffDir];
     mScene.forest.bffX += (uint8_t) delta.x;
@@ -236,6 +214,8 @@ bool GameView::ShowLocation(Vec2 room) {
   mRoomId = roomId;
   // are we showing an items?
   if (IsShowingRoom()) {
+    mScene.room.start_frame = pGame->AnimFrame();
+    ComputeAnimatedTiles();
     VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
     HideInventorySprites();
     Room* r = CurrentRoom();
@@ -258,13 +238,10 @@ bool GameView::ShowLocation(Vec2 room) {
     }
     if (this == pGame->GetPlayer()->CurrentView()) { ShowPlayer(); }
     DrawBackground();
-    mScene.room.start_frame = pGame->AnimFrame();
 
     // h4cky scene-specific stuff
     /*
-    if (pGame->GetMap()->Data() == &dungeon_data) {
-      mScene.dungeon.torchTime = 0;
-    } else if (pGame->GetMap()->Data() == &forest_data) {
+    if (pGame->GetMap()->Data() == &forest_data) {
       if (mr->itemId) {
         mScene.forest.hasBff = 0;
       } else if ( (mScene.forest.hasBff = (gRandom.randrange(3) == 0)) ) {
@@ -447,5 +424,26 @@ void GameView::DrawBackground() {
       }
     }
     ovrly.Flush();
+  }
+}
+
+void GameView::ComputeAnimatedTiles() {
+  mScene.room.anim_tile_count = 0;
+  const unsigned tc = pGame->GetMap()->Data()->animatedTileCount;
+  if (mRoomId == ROOM_UNDEFINED || tc == 0) { return; }
+  const AnimatedTileData* pAnims = pGame->GetMap()->Data()->animatedTiles;
+  for(unsigned lid=0; lid<64; ++lid) {
+    uint8_t tid = pGame->GetMap()->Data()->rooms[mRoomId].tiles[lid];
+    bool is_animated = false;
+    for(unsigned i=0; i<tc; ++i) {
+      if (pAnims[i].tileId == tid) {
+        AnimTileView& view = mScene.room.anim_tiles[mScene.room.anim_tile_count];
+        view.lid = lid;
+        view.frameCount = pAnims[i].frameCount;
+        mScene.room.anim_tile_count++;
+        break;
+      }
+    }
+    if (mScene.room.anim_tile_count == ANIM_TILE_CAPACITY) { break; }
   }
 }
