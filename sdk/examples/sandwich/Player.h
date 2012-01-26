@@ -40,8 +40,7 @@ private:
   uint8_t* pNextMove;
     
 public:
-  Player();
-  
+  void Init();
   int CurrentFrame();
   GameView* CurrentView() { return pCurrent; }
   GameView* TargetView() { return pTarget; }

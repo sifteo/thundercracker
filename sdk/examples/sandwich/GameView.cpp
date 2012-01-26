@@ -43,11 +43,8 @@ static const Vec2 sBffTable[] = {
 
 // methods
 
-GameView::GameView() : 
-visited(false), mRoomId(ROOM_UNDEFINED) {
-}
-
 void GameView::Init() {
+  visited = false;
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   mode.set();
   mode.clear();

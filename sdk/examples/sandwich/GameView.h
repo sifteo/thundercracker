@@ -24,8 +24,6 @@ private:
   } mScene;
 
 public:  
-  GameView();
-  
   // getters
   Cube* GetCube() const;
   bool IsShowingRoom() const;

@@ -1,6 +1,9 @@
 #include "GameState.h"
 
-GameState::GameState() : mQuest(0), mQuestMask(0), mUnlockMask(0) {
+void GameState::Init() {
+	mQuest = 0;
+	mQuestMask = 0;
+	mUnlockMask = 0;
 }
 
 bool GameState::AdvanceQuest() {

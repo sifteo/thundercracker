@@ -10,11 +10,21 @@ inline int fast_abs(int x) {
 	return x<0?-x:x;
 }
 
-Player::Player() : mStatus(PLAYER_STATUS_IDLE),
-pCurrent(pGame->ViewBegin()), pTarget(0), 
-mDir(2), mKeyCount(0), mItemMask(0), 
-mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
-mApproachingLockedDoor(false) {
+void Player::Init() {
+  const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
+  pCurrent = pGame->ViewBegin();
+  pTarget = 0;
+  mPosition.x = 128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerx;
+  mPosition.y = 128 * (gQuestData->roomId / gMapData[gQuestData->mapId].width) + 16 * room.centery;
+  mStatus = PLAYER_STATUS_IDLE;
+  mDir = 2;
+  mKeyCount = 0;
+  mItemMask = 0;
+  mAnimFrame = 0;
+  mAnimTime = 0.f;
+  mProgress = 0;
+  mNextDir = -1;
+  mApproachingLockedDoor = false;
   CORO_RESET;
 }
 

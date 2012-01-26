@@ -8,7 +8,7 @@ private:
 	uint32_t mUnlockMask;
 
 public:
-	GameState();
+	void Init();
 	bool AdvanceQuest();
 	bool FlagTrigger(const TriggerData& trigger);
 	bool Flag(uint8_t questId, uint8_t flagId);

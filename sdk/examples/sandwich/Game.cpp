@@ -28,17 +28,14 @@ void Game::ObserveNeighbors(bool flag) {
 
 void Game::MainLoop() {
   // reset everything
-  for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    v->Init();
-  }
-  _SYS_vectors.cubeEvents.touch = onTouch;
-  const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  mPlayer.SetPosition(Vec2(
-    128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerx,
-    128 * (gQuestData->roomId / gMapData[gQuestData->mapId].width) + 16 * room.centery
-  ));
   mSimFrames = 0;
   mAnimFrames = 0;
+  mIsDone = false;
+  mNeedsSync = 0;
+  mState.Init();
+  mMap.Init();
+  mPlayer.Init();
+  for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) { v->Init(); }
 
   // initial zoom out (yoinked and modded from TeleportTo)
   { 
@@ -72,14 +69,12 @@ void Game::MainLoop() {
     view->Init();
     System::paintSync();
   }  
-  PlayMusic(music_castle);
 
+  PlayMusic(music_castle);
   mSimTime = System::clock();
   ObserveNeighbors(true);
   CheckMapNeighbors();
 
-  mIsDone = false;
-  mNeedsSync = 0;
   while(!mIsDone) {
     float dt = UpdateDeltaTime();
     if (sNeighborDirty) { 

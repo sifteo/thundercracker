@@ -17,9 +17,11 @@ private:
   Room mRooms[ROOM_CAPACITY];
 
 public:
-  Map();
-  
+
+  void Init();
+
   // Map Data Getters
+
   const MapData* Data() const { return mData; }
   
   inline const bool GetPortalX(int x, int y) const {

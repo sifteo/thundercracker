@@ -1,8 +1,7 @@
 #include "Map.h"
 #include "Game.h"
 
-
-Map::Map() {
+void Map::Init() {
   SetData(gMapData[gQuestData->mapId]);
 }
 
