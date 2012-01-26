@@ -16,11 +16,13 @@ import subprocess
 
 date = datetime.date.today().isoformat()
 
-print "\nCube Binary Generator\nCompiling firmare 0x00 to 0x08...\n"
+print "\nCube Binary Generator\nCompiling firmare 0x00 to 0x02...\n"
+
+for chan in ["0x00","0x10","0x20"]:
 	
-for addr in ["0x00","0x01","0x02","0x03","0x04","0x05","0x06","0x07","0x08"]:
-	subprocess.check_call(["make","clean"])
-	myenv = dict(os.environ)
-	myenv["CFLAGS"] = "-DCUBE_ADDR="+addr
-	subprocess.check_call(["make"], env=myenv)
-	shutil.move("cube.ihx", "cube_"+date+"_addr_"+addr+".hex")
+	for addr in ["0x00","0x01","0x02"]:
+		subprocess.check_call(["make","clean"])
+		myenv = dict(os.environ)
+		myenv["CFLAGS"] = "-DCUBE_ADDR="+addr+" -DCUBE_CHAN="+chan
+		subprocess.check_call(["make"], env=myenv)
+		shutil.move("cube.ihx", "cube_"+date+"_chan_"+chan+"_addr_"+addr+".hex")
