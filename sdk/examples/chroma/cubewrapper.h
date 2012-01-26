@@ -33,6 +33,8 @@ public:
     static const float MAX_GLIMMER_TIME;
     static const float TIME_PER_MESSAGE_FRAME;
     static const int NUM_MESSAGE_FRAMES = 4;
+
+    static const int TEST_TILT_ITERATIONS = 4;
     //anything below this we don't care about
     static const float TILT_SOUND_EPSILON;
 
@@ -54,11 +56,12 @@ public:
     void Update(float t, float dt);
 	void vidInit();
 	void Tilt( int dir );
+    static bool FakeTilt( int dir, GridSlot **grid );
 	void Shake( bool bShaking );
 
     Banner &getBanner() { return m_banner; }
 
-	bool isFull();
+    bool isFull() const;
     bool isEmpty() const;
 	void checkEmpty();
 
@@ -109,10 +112,21 @@ public:
     void BlowAll( unsigned int color );
     bool HasHyperDot() const;
 
+    //pretend to tilt this cube in a series of tilts, and update whether we see the given color on corners or side patterns 1 or 2
+    void UpdateColorPositions( unsigned int color, bool &bCorners, bool &side1, bool &side2 ) const;
+
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
 	bool TryMove( int row1, int col1, int row2, int col2 );
+    static bool FakeTryMove( int row1, int col1, int row2, int col2, GridSlot **grid );
+
+    //check different parts of the given grid for the given color
+    static void TestGridForColor( GridSlot **grid, unsigned int color, bool &bCorners, bool &side1, bool &side2 );
+    //recursive function to tilt and test grid
+    static void TiltAndTestGrid( GridSlot **grid, unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations );
+
+    bool HasFloatingDots() const;
 
 	Cube m_cube;
 	VidMode_BG0 m_vid;

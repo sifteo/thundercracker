@@ -99,6 +99,8 @@ public:
 	void TiltFrom(GridSlot &src);
 	//if we have a move pending, start it
 	void startPendingMove();
+    //fake moves don't animate or take time, just finish them
+    void finishFakeMove();
 
     void DamageRock();
 

@@ -394,20 +394,66 @@ bool Game::AreAllColorsUnmatchable() const
 }
 
 
+//this only checks if a cube has a color that no other cubes have
 bool Game::IsColorUnmatchable( unsigned int color ) const
 {
     int total = 0;
+    bool aHasColor[ NUM_CUBES ];
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
         if( m_cubes[i].hasColor(color) )
+        {
             total++;
+            aHasColor[i] = true;
+        }
+        else
+            aHasColor[i] = false;
     }
 
     if( total == 1 )
         return true;
 
-    return false;
+    //also, make sure these colors on these cubes can possibly match
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        int numCorners = 0;
+        bool side1 = false;
+        bool side2 = false;
+
+        if( aHasColor[i] )
+        {
+            bool localCorners = false;
+            bool localside1 = false;
+            bool localside2 = false;
+
+            m_cubes[i].UpdateColorPositions( color, localCorners, localside1, localside2 );
+
+            if( localCorners )
+            {
+                numCorners++;
+                //this color has corners on multiple cubes, there's a match!
+                if( numCorners >= 2 )
+                    return false;
+            }
+
+            //side1 on one cube can match side2 on another
+            if( localside1 )
+            {
+                if( side2 )
+                    return false;
+                side1 = true;
+            }
+            if( localside2 )
+            {
+                if( side1 )
+                    return false;
+                side2 = true;
+            }
+        }
+    }
+
+    return true;
 }
 
 
