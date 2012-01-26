@@ -5,11 +5,11 @@
 #include "GameState.h"
 
 class Game {
-public:
-  GameView views[NUM_CUBES];
-  GameState state;
-  Map map;
-  Player player;
+private:
+  GameView mViews[NUM_CUBES];
+  GameState mState;
+  Map mMap;
+  Player mPlayer;
   float mSimTime;
   int mNeedsSync;
   bool mIsDone;
@@ -20,9 +20,13 @@ public:
 
   // Getters
   
-  GameView* ViewAt(int i) { return views+i; }
-  GameView* ViewBegin() { return views; }
-  GameView* ViewEnd() { return views+NUM_CUBES; }
+  inline GameState* GetState() { return &mState; }
+  inline Map* GetMap() { return &mMap; }
+  inline Player* GetPlayer() { return &mPlayer; }
+
+  GameView* ViewAt(int i) { return mViews+i; }
+  GameView* ViewBegin() { return mViews; }
+  GameView* ViewEnd() { return mViews+NUM_CUBES; }
   
   void MainLoop();
   void Paint(bool sync=false);

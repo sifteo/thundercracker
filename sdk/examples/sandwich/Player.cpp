@@ -11,7 +11,7 @@ inline int fast_abs(int x) {
 }
 
 Player::Player() : mStatus(PLAYER_STATUS_IDLE),
-pCurrent(pGame->views), pTarget(0), 
+pCurrent(pGame->ViewBegin()), pTarget(0), 
 mDir(2), mKeyCount(0), mItemMask(0), 
 mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
 mApproachingLockedDoor(false) {
@@ -30,7 +30,7 @@ void Player::Reset() {
 }
 
 Room* Player::CurrentRoom() const {
-  return pGame->map.GetRoom(Location());
+  return pGame->GetMap()->GetRoom(Location());
 }
 
 void Player::PickupItem(int itemId) {
@@ -135,7 +135,7 @@ void Player::Update(float dt) {
     mPath.Cancel();
     mAnimFrame = 0;
     mAnimTime = 0.f;
-    while(!pGame->map.CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
+    while(!pGame->GetMap()->CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
       CORO_YIELD;
       mNextDir = pCurrent->VirtualTiltDirection();
       #if SIFTEO_SIMULATOR
@@ -196,7 +196,7 @@ void Player::Update(float dt) {
         }
       } else { // general case - A*
 		{
-			bool result = pGame->map.FindPath(pCurrent->Location(), mDir, &mMoves);
+			bool result = pGame->GetMap()->FindPath(pCurrent->Location(), mDir, &mMoves);
 			ASSERT(result);
 		}
         mProgress = 0;
@@ -235,7 +235,7 @@ void Player::Update(float dt) {
         pCurrent->UpdatePlayer();        
         if (pCurrent->CurrentRoom()->HasItem()) {
           const ItemData* pItem = pCurrent->CurrentRoom()->TriggerAsItem();
-          if (pGame->state.FlagTrigger(pItem->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
+          if (pGame->GetState()->FlagTrigger(pItem->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
           PickupItem(pItem->itemId);
           // do a pickup animation
           for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
@@ -261,7 +261,7 @@ void Player::Update(float dt) {
       const GatewayData* pGate = pCurrent->CurrentRoom()->TriggerAsGate();
       const MapData& targetMap = gMapData[pGate->targetMap];
       const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
-      if (pGame->state.FlagTrigger(pGate->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); } 
+      if (pGame->GetState()->FlagTrigger(pGate->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); } 
       pGame->WalkTo(128 * pCurrent->CurrentRoom()->Location() + Vec2(pGate->x, pGate->y));
       pGame->TeleportTo(gMapData[pGate->targetMap], Vec2(
         128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
@@ -275,7 +275,7 @@ void Player::Update(float dt) {
         pGame->Paint(true);
       }
       const NpcData* pNpc = pCurrent->CurrentRoom()->TriggerAsNPC();
-      if (pGame->state.FlagTrigger(pNpc->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
+      if (pGame->GetState()->FlagTrigger(pNpc->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
       DoDialog(gDialogData[pNpc->dialog], pCurrent->GetCube());
       System::paintSync();
       pCurrent->Init();
@@ -324,7 +324,7 @@ bool Player::PathDetect() {
   pCurrent->visited = true;
   for(int side=0; side<NUM_SIDES; ++side) {
     mPath.steps[0] = side;
-    if (pGame->map.CanTraverse(pCurrent->Location(), side) && PathVisit(pCurrent->VirtualNeighborAt(side), 1)) {
+    if (pGame->GetMap()->CanTraverse(pCurrent->Location(), side) && PathVisit(pCurrent->VirtualNeighborAt(side), 1)) {
       return true;
     }
   }
@@ -341,7 +341,7 @@ bool Player::PathVisit(GameView* view, int depth) {
   } else {
     for(int side=0; side<NUM_SIDES; ++side) {
       mPath.steps[depth] = side;
-      if (pGame->map.CanTraverse(view->Location(), side) && PathVisit(view->VirtualNeighborAt(side), depth+1)) {
+      if (pGame->GetMap()->CanTraverse(view->Location(), side) && PathVisit(view->VirtualNeighborAt(side), depth+1)) {
         return true;
       } else {
         mPath.steps[depth] = -1;

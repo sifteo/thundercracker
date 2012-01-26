@@ -84,7 +84,7 @@ void siftmain() {
 		{ *pGame = Game(); } // re-initialize memory
 		pGame->MainLoop();
 		PlayMusic(music_winscreen, false);
-		WinScreen(pGame->player.CurrentView()->GetCube());
+		WinScreen(pGame->GetPlayer()->CurrentView()->GetCube());
 	}
 	
 }

@@ -50,9 +50,9 @@ void GameView::Init() {
   mode.set();
   mode.clear();
   mode.setWindow(0, 128);
-  if (pGame->player.CurrentView() == this) {
+  if (pGame->GetPlayer()->CurrentView() == this) {
     mRoom = Vec2(-1,-1);
-    ShowLocation(pGame->player.Location());
+    ShowLocation(pGame->GetPlayer()->Location());
   } else {
     mRoom.x = -2; // h4ck
     ShowLocation(LOCATION_UNDEFINED);
@@ -88,7 +88,7 @@ void GameView::Update() {
   // begin h4cky scene-specific stuff
   /*
   RoomData *p = Room()->Data();
-  if (pGame->map.Data() == &dungeon_data) {
+  if (pGame->GetMap()->Data() == &dungeon_data) {
     if (p->torch0 != 0xff) {
       mScene.dungeon.torchTime = (mScene.dungeon.torchTime + 1) % (6 * FRAMES_PER_TORCH_FRAME);
       unsigned torchFrame = mScene.dungeon.torchTime / FRAMES_PER_TORCH_FRAME;
@@ -98,32 +98,32 @@ void GameView::Update() {
         VidMode_BG0 mode(GetCube()->vbuf);
         mode.BG0_drawAsset(
           Vec2(tt0.x<<1,tt0.y<<1),
-          *(pGame->map.Data()->tileset),
-          pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
+          *(pGame->GetMap()->Data()->tileset),
+          pGame->GetMap()->Data()->GetTileId(mRoom, tt0) + torchFrame
         );
         tt0.y++;
         mode.BG0_drawAsset(
           Vec2(tt0.x<<1,tt0.y<<1),
-          *(pGame->map.Data()->tileset),
-          pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
+          *(pGame->GetMap()->Data()->tileset),
+          pGame->GetMap()->Data()->GetTileId(mRoom, tt0) + torchFrame
         );
         if (p->torch1 != 0xff) {
           tt0 = p->TorchTile1();
           mode.BG0_drawAsset(
             Vec2(tt0.x<<1,tt0.y<<1),
-            *(pGame->map.Data()->tileset),
-            pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
+            *(pGame->GetMap()->Data()->tileset),
+            pGame->GetMap()->Data()->GetTileId(mRoom, tt0) + torchFrame
           );
           tt0.y++;
           mode.BG0_drawAsset(
             Vec2(tt0.x<<1,tt0.y<<1),
-            *(pGame->map.Data()->tileset),
-            pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
+            *(pGame->GetMap()->Data()->tileset),
+            pGame->GetMap()->Data()->GetTileId(mRoom, tt0) + torchFrame
           );
         }
       }
     }    
-  } else if (pGame->map.Data() == &forest_data && mScene.forest.hasBff) {
+  } else if (pGame->GetMap()->Data() == &forest_data && mScene.forest.hasBff) {
     // butterfly stuff
     Vec2 delta = sBffTable[mScene.forest.bffDir];
     mScene.forest.bffX += (uint8_t) delta.x;
@@ -181,13 +181,13 @@ void GameView::Update() {
 bool GameView::IsShowingRoom() const {
   return mRoom.x >= 0 && 
     mRoom.y >= 0 && 
-    mRoom.x < pGame->map.Data()->width && 
-    mRoom.y < pGame->map.Data()->height; 
+    mRoom.x < pGame->GetMap()->Data()->width && 
+    mRoom.y < pGame->GetMap()->Data()->height; 
 }
 
 Room* GameView::CurrentRoom() const { 
   ASSERT(IsShowingRoom()); 
-  return pGame->map.GetRoom(mRoom); 
+  return pGame->GetMap()->GetRoom(mRoom); 
 }
 
 void GameView::RandomizeBff() {
@@ -254,15 +254,15 @@ bool GameView::ShowLocation(Vec2 room) {
         mode.moveSprite(TRIGGER_SPRITE_ID, npc->x-16, npc->y-16);
         break;
     }
-    if (this == pGame->player.CurrentView()) { ShowPlayer(); }
+    if (this == pGame->GetPlayer()->CurrentView()) { ShowPlayer(); }
     DrawBackground();
     mIdleHoverIndex = 0;
 
     // h4cky scene-specific stuff
     /*
-    if (pGame->map.Data() == &dungeon_data) {
+    if (pGame->GetMap()->Data() == &dungeon_data) {
       mScene.dungeon.torchTime = 0;
-    } else if (pGame->map.Data() == &forest_data) {
+    } else if (pGame->GetMap()->Data() == &forest_data) {
       if (mr->itemId) {
         mScene.forest.hasBff = 0;
       } else if ( (mScene.forest.hasBff = (gRandom.randrange(3) == 0)) ) {
@@ -309,9 +309,9 @@ void GameView::SetPlayerFrame(unsigned frame) {
 }
 
 void GameView::UpdatePlayer() {
-  Vec2 localPosition = pGame->player.Position() - 128 * mRoom;
+  Vec2 localPosition = pGame->GetPlayer()->Position() - 128 * mRoom;
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
-  mode.setSpriteImage(PLAYER_SPRITE_ID, pGame->player.CurrentFrame());
+  mode.setSpriteImage(PLAYER_SPRITE_ID, pGame->GetPlayer()->CurrentFrame());
   mode.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
 }
 
@@ -343,14 +343,14 @@ void GameView::DrawInventorySprites() {
   const int firstSandwichId = 2;
   const int sandwichTypeCount = 4;
   for(int itemId=firstSandwichId; itemId<firstSandwichId+sandwichTypeCount; ++itemId) {
-    if (pGame->player.HasItem(itemId)) {
+    if (pGame->GetPlayer()->HasItem(itemId)) {
       mode.resizeSprite(mScene.idle.count, 16, 16);
       mode.moveSprite(mScene.idle.count, pad + innerPad * mScene.idle.count - 8, 108);
       mode.setSpriteImage(mScene.idle.count, Items.index + (itemId-1) * Items.width * Items.height);
       mScene.idle.count++;
     }
   }
-  if (pGame->player.HaveBasicKey()) {
+  if (pGame->GetPlayer()->HaveBasicKey()) {
       mode.resizeSprite(mScene.idle.count, 16, 16);
       mode.moveSprite(mScene.idle.count, pad + innerPad * mScene.idle.count - 8, 108);
       mode.setSpriteImage(mScene.idle.count, Items.index + (ITEM_BASIC_KEY-1) * Items.width * Items.height);
@@ -399,21 +399,21 @@ Cube::Side GameView::VirtualTiltDirection() const {
 
 GameView* GameView::VirtualNeighborAt(Cube::Side side) const {
   Cube::ID neighbor = GetCube()->virtualNeighborAt(side);
-  return neighbor == CUBE_ID_UNDEFINED ? 0 : pGame->views + (neighbor-CUBE_ID_BASE);
+  return neighbor == CUBE_ID_UNDEFINED ? 0 : pGame->ViewAt(neighbor-CUBE_ID_BASE);
 }
 
 void GameView::DrawBackground() {
   VidMode_BG0 mode(GetCube()->vbuf);
   if (!IsShowingRoom()) {
-    mode.BG0_drawAsset(Vec2(0,0), *(pGame->map.Data()->blankImage));
+    mode.BG0_drawAsset(Vec2(0,0), *(pGame->GetMap()->Data()->blankImage));
     BG1Helper(*GetCube()).Flush();
   } else {
     for(int y=0; y<8; ++y) {
       for(int x=0; x<8; ++x) {
         mode.BG0_drawAsset(
           Vec2(x<<1,y<<1),
-          *(pGame->map.Data()->tileset),
-          pGame->map.GetTileId(mRoom, Vec2(x, y))
+          *(pGame->GetMap()->Data()->tileset),
+          pGame->GetMap()->GetTileId(mRoom, Vec2(x, y))
         );
       }
     }
@@ -423,8 +423,8 @@ void GameView::DrawBackground() {
         for(int x=3; x<=4; ++x) {
           mode.BG0_drawAsset(
             Vec2(x<<1,y<<1),
-            *(pGame->map.Data()->tileset),
-            pGame->map.GetTileId(mRoom, Vec2(x, y))+2
+            *(pGame->GetMap()->Data()->tileset),
+            pGame->GetMap()->GetTileId(mRoom, Vec2(x, y))+2
           );
         }
       }
@@ -440,7 +440,7 @@ void GameView::DrawBackground() {
         p+=2;
         if (pos != 0xff && frm != 0xff) {
           Vec2 position = Vec2(pos>>4, pos & 0xf);
-          ovrly.DrawAsset(2*position, *(pGame->map.Data()->overlay), frm);
+          ovrly.DrawAsset(2*position, *(pGame->GetMap()->Data()->overlay), frm);
         }
       }
     }
