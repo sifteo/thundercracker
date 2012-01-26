@@ -5,6 +5,6 @@ void siftmain() {
 	while (1) {
 		count++;
 		if (count > 100)
-		    dummy(192, count, 42);
+		    dummy(190 + sizeof(void*), count, 42);
 	}
 }
