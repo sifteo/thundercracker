@@ -73,11 +73,10 @@ public:
     void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
     void Update(float t);
     bool isAlive() const { return m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_MOVING || m_state == STATE_FINISHINGMOVE || m_state == STATE_FIXEDATTEMPT; }
-	bool isEmpty() const { return m_state == STATE_GONE; }
+    bool isEmpty() const { return m_state == STATE_GONE || m_state == STATE_SHOWINGSCORE; }
 	bool isMarked() const { return ( m_state == STATE_MARKED || m_state == STATE_EXPLODING ); }
     bool isTiltable() const { return ( m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING ); }
     bool isMatchable() const { return isAlive() || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING || isMarked(); }
-    bool isOccupiable() const { return isEmpty() || m_state == STATE_SHOWINGSCORE; }
     void setEmpty() { m_state = STATE_GONE; m_bFixed = false; }
 	unsigned int getColor() const { return m_color; }
 	void FillColor(unsigned int color);

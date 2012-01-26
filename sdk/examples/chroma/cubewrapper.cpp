@@ -619,7 +619,7 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 	GridSlot &slot = m_grid[row1][col1];
 	GridSlot &dest = m_grid[row2][col2];
 
-    if( !dest.isOccupiable() )
+    if( !dest.isEmpty() )
 		return false;
 
     if( slot.isTiltable() )
@@ -648,7 +648,7 @@ bool CubeWrapper::FakeTryMove( int row1, int col1, int row2, int col2, GridSlot 
     GridSlot &slot = grid[row1][col1];
     GridSlot &dest = grid[row2][col2];
 
-    if( !dest.isOccupiable() )
+    if( !dest.isEmpty() )
         return false;
 
     if( slot.isTiltable() )
@@ -1303,7 +1303,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 
 void CubeWrapper::checkEmpty()
 {
-    if( isEmpty() )
+    if( isEmpty() && m_state != STATE_MESSAGING )
         setState( STATE_MESSAGING );
 }
 
@@ -1355,7 +1355,7 @@ void CubeWrapper::SpawnHyper()
         {
             GridSlot &slot = m_grid[i][j];
 
-            if( slot.isOccupiable() )
+            if( slot.isEmpty() )
             {
                 slot.MakeHyper();
                 return;
