@@ -16,21 +16,11 @@ private:
   Vec2 mRoom;
 
   int mIdleHoverIndex;
-  // h4cky scene-specific stuff
   union {
     struct {
       uint16_t count;
       uint16_t time;
     } idle;
-    struct {
-      uint32_t torchTime;
-    } dungeon;
-    struct {
-      uint8_t hasBff;
-      uint8_t bffDir;
-      uint8_t bffX;
-      uint8_t bffY;
-    } forest;
   } mScene;
 
 public:  

@@ -189,7 +189,7 @@ Room* GameView::CurrentRoom() const {
   ASSERT(IsShowingRoom()); 
   return pGame->GetMap()->GetRoom(mRoom); 
 }
-
+/*
 void GameView::RandomizeBff() {
   using namespace BffDir;
   mScene.forest.bffDir = (uint8_t) gRandom.randrange(8);
@@ -228,6 +228,7 @@ void GameView::RandomizeBff() {
       break;
   }
 }
+*/
 
 bool GameView::ShowLocation(Vec2 room) {
   if (room == mRoom) { return false; }
