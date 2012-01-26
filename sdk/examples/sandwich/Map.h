@@ -3,6 +3,7 @@
 
 #define ROOM_CAPACITY (81)
 #define PATH_CAPACITY (32)
+#define TILE_CAPACITY 
 
 struct MapPath {
   uint8_t moves[PATH_CAPACITY];
@@ -17,8 +18,17 @@ private:
   Room mRooms[ROOM_CAPACITY];
 
 public:
-
   void Init();
+  
+  bool IsShowing(const MapData& map) const { return mData == &map; }
+  bool CanTraverse(Vec2 loc, Cube::Side direction) const;
+  void SetData(const MapData& map);
+  
+  Room* GetRoom(int roomId) const { return (Room*)mRooms + roomId; }
+  Room* GetRoom(Vec2 loc) const { return (Room*)mRooms + (loc.x + mData->width * loc.y); }
+
+  bool FindPath(Vec2 originLocation, Cube::Side direction, MapPath* outPath);
+  bool IsVertexWalkable(Vec2 globalVertex);
 
   // Map Data Getters
 
@@ -86,13 +96,4 @@ public:
     return loc.x >= 0 && loc.y >= 0 && loc.x < mData->width && loc.y < mData->height;
   }
 
-  bool IsShowing(const MapData& map) const { return mData == &map; }
-  bool CanTraverse(Vec2 loc, Cube::Side direction) const;
-  void SetData(const MapData& map);
-  
-  Room* GetRoom(int roomId) const { return (Room*)mRooms + roomId; }
-  Room* GetRoom(Vec2 loc) const { return (Room*)mRooms + (loc.x + mData->width * loc.y); }
-
-  bool FindPath(Vec2 originLocation, Cube::Side direction, MapPath* outPath);
-  bool IsVertexWalkable(Vec2 globalVertex);
 };

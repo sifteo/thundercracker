@@ -33,7 +33,7 @@ public:
 
     void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, SpeexDecoder *dec);
     void play(const struct _SYSAudioModule *mod, _SYSAudioLoopType loopMode, PCMDecoder *dec);
-    int mixAudio(int16_t *buffer, int len);
+    int mixAudio(int16_t *buffer, unsigned len);
 
     _SYSAudioType channelType() const {
         ASSERT(mod != NULL);

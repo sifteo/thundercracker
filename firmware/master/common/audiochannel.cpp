@@ -44,13 +44,14 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *mod, _SYSAudioLoopType
     }
 }
 
-int AudioChannelSlot::mixAudio(int16_t *buffer, int len)
+int AudioChannelSlot::mixAudio(int16_t *buffer, unsigned len)
 {
     ASSERT(!(state & STATE_STOPPED));
 
-    int mixable = MIN(buf.readAvailable() / sizeof(*buffer), (unsigned)len);
+    int mixable = MIN(buf.readAvailable() / sizeof(*buffer), len);
     if (mixable > 0) {
         for (int i = 0; i < mixable; i++) {
+            ASSERT(buf.readAvailable() >= 2);
             int16_t src = buf.dequeue() | (buf.dequeue() << 8);
 
             // Mix this sample, after volume adjustment, with the existing buffer contents
@@ -63,8 +64,6 @@ int AudioChannelSlot::mixAudio(int16_t *buffer, int len)
         // if we have nothing buffered, and there's nothing else to read, we're done
         if (decoder && decoder->endOfStream() && buf.readAvailable() == 0) {
             if (this->state & STATE_LOOP) {
-                // FIXME: now using ID based assets
-                //this->decoder->setData(mod->buf, mod->size);
                 this->decoder->setOffset(mod->offset, mod->size);
             }
             else {
@@ -85,6 +84,7 @@ int AudioChannelSlot::mixAudio(int16_t *buffer, int len)
 
 void AudioChannelSlot::fetchData()
 {
+    ASSERT(!(state & STATE_STOPPED));
     switch (mod->type) {
     case Sample: {
         if (decoder->endOfStream() || buf.writeAvailable() < SpeexDecoder::DECODED_FRAME_SIZE) {
@@ -96,7 +96,7 @@ void AudioChannelSlot::fetchData()
         uint32_t sz = decoder->decodeFrame(p, bytesAvail);
         ASSERT(sz == SpeexDecoder::DECODED_FRAME_SIZE || sz == 0);
         if (sz) {
-            buf.commit(bytesAvail);
+            buf.commit(sz);
         }
     }
         break;
@@ -109,7 +109,7 @@ void AudioChannelSlot::fetchData()
         uint8_t *p = buf.reserve(PCMDecoder::FRAME_SIZE, &bytesAvail);
         uint32_t sz = pcmDecoder->decodeFrame(p, bytesAvail);
         ASSERT(sz <= PCMDecoder::FRAME_SIZE);
-        buf.commit(bytesAvail);
+        buf.commit(sz);
     }
     default:
         break;

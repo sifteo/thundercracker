@@ -25,13 +25,13 @@ private:
         void *param;
     };
 
-    static void serveIsr(volatile DMA_t *dma, int ch, struct DmaHandler_t *handlers);
+    static void serveIsr(volatile DMA_t *dma, int ch, DmaHandler_t *handlers);
 
     static uint32_t Ch1Mask;
-    static struct DmaHandler_t Ch1Handlers[7];
+    static DmaHandler_t Ch1Handlers[7];
 
     static uint32_t Ch2Mask;
-    static struct DmaHandler_t Ch2Handlers[5];
+    static DmaHandler_t Ch2Handlers[5];
 
     friend void ISR_DMA1_Channel1();
     friend void ISR_DMA1_Channel2();

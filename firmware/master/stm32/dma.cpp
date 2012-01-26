@@ -9,8 +9,8 @@
 
 uint32_t Dma::Ch1Mask = 0;
 uint32_t Dma::Ch2Mask = 0;
-struct Dma::DmaHandler_t Dma::Ch1Handlers[7];
-struct Dma::DmaHandler_t Dma::Ch2Handlers[5];
+Dma::DmaHandler_t Dma::Ch1Handlers[7];
+Dma::DmaHandler_t Dma::Ch2Handlers[5];
 
 void Dma::registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param)
 {
@@ -62,13 +62,13 @@ void Dma::unregisterHandler(volatile DMA_t *dma, int channel)
     }
 }
 
-void Dma::serveIsr(volatile DMA_t *dma, int ch, struct DmaHandler_t *handlers)
+void Dma::serveIsr(volatile DMA_t *dma, int ch, DmaHandler_t *handlers)
 {
-    uint32_t flags = dma->ISR >> (ch * 4);
+    uint32_t flags = (dma->ISR >> (ch * 4)) & 0xF;  // only bottom 4 bits are relevant to a single channel
     dma->IFCR = 1 << (ch * 4); // clear the channel
-    struct Dma::DmaHandler_t* handler = &handlers[ch];
-    if (handler->isrfunc) {
-        handler->isrfunc(handler->param, flags);
+    DmaHandler_t &handler = handlers[ch];
+    if (handler.isrfunc) {
+        handler.isrfunc(handler.param, flags);
     }
 }
 
