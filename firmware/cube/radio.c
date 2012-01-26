@@ -914,7 +914,12 @@ void radio_init(void)
          * XXX: Hardcoded cube addresses, for testing only
          */
 #ifdef CUBE_ADDR
+
+#ifdef CUBE_CHAN
+        2, RF_CMD_W_REGISTER | RF_REG_RF_CH,          CUBE_CHAN,
+#else
         2, RF_CMD_W_REGISTER | RF_REG_RF_CH,          0x02,
+#endif
         6, RF_CMD_W_REGISTER | RF_REG_TX_ADDR,        CUBE_ADDR, 0xe7, 0xe7, 0xe7, 0xe7,
         6, RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0,     CUBE_ADDR, 0xe7, 0xe7, 0xe7, 0xe7,
 #endif
