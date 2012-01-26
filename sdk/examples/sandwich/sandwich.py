@@ -110,7 +110,7 @@ class World:
 			src.write("const QuestData gQuestData[] = {\n")
 			for q in self.script.quests:
 				m = self.map_dict[q.map]
-				src.write("    { %s, %s },\n" % (hex(m.index), hex(m.roomat(q.x, q.y).lid)))
+				src.write("    { 0x%x, 0x%x },\n" % (m.index, m.roomat(q.x, q.y).lid))
 			src.write("};\n\n")
 			
 			for d in self.dialog.dialogs:

@@ -27,10 +27,13 @@ class Map:
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
 		assert self.background.gettileset().count < 256, "Map is too large (must have < 256 tiles): " + self.id
+		self.animatedtiles = [ AnimatedTile(t) for t in self.background.gettileset().tiles if "animated" in t.props ]
 		self.overlay = self.raw.layer_dict.get("overlay", None)
 		self.width = self.raw.pw / 128
 		self.height = self.raw.ph / 128
 		self.count = self.width * self.height
+		assert self.count > 0, "map is empty: " + self.id
+		assert self.count <= 81, "too many rooms in map (max 72): " + self.id
 		self.quest = world.script.getquest(self.raw.props["quest"]) if "quest" in self.raw.props else None
 		self.rooms = [Room(self, i) for i in range(self.count)]
 		# infer portals
@@ -104,9 +107,9 @@ class Map:
 				cnt = cnt + 1
 				if cnt == 8:
 					cnt = 0
-					src.write("%s, " % hex(byte))
+					src.write("0x%x, " % byte)
 					byte = 0
-		if cnt > 0: src.write("%s, " % hex(byte))
+		if cnt > 0: src.write("0x%x, " % byte)
 		src.write("};\n")
 		src.write("static const uint8_t %s_yportals[] = { " % self.id)
 		byte = 0
@@ -118,9 +121,9 @@ class Map:
 				cnt = cnt + 1
 				if cnt == 8:
 					cnt = 0
-					src.write("%s, " % hex(byte))
+					src.write("0x%x, " % byte)
 					byte = 0
-		if cnt > 0: src.write("%s, " % hex(byte))
+		if cnt > 0: src.write("0x%x, " % byte)
 		src.write("};\n")
 		if len(self.item_dict) > 0:
 			src.write("static const ItemData %s_items[] = { " % self.id)
@@ -143,7 +146,13 @@ class Map:
 		if len(self.doors) > 0:
 			src.write("static const DoorData %s_doors[] = { " % self.id)
 			for door in self.doors:
-				src.write("{ %s, %s }, " % (hex(door.room.lid), hex(door.flag.gindex)))
+				src.write("{ 0x%x, 0x%x }, " % (door.room.lid, door.flag.gindex))
+			src.write("};\n")
+
+		if len(self.animatedtiles) > 0:
+			src.write("static const AnimatedTileData %s_animtiles[] = { " % self.id)
+			for atile in self.animatedtiles:
+				src.write("{ 0x%x, 0x%x }, " % (atile.tile.lid, atile.numframes))
 			src.write("};\n")
 
 		if self.overlay is not None:
@@ -154,7 +163,7 @@ class Map:
 						for x in range(8):
 							tile = room.overlaytileat(x,y)
 							if tile is not None:
-								src.write("%s, %s, " % (hex(x<<4|y), hex(tile.lid)))
+								src.write("0x%x, 0x%x, " % (x<<4|y, tile.lid))
 					src.write("0xff };\n")
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
 		for y in range(self.height):
@@ -167,8 +176,8 @@ class Map:
 	def write_decl_to(self, src):
 		src.write(
 			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, " \
-			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s," \
-			"%(nitems)d, %(ngates)d, %(nnpcs)d, %(doorQuestId)d, %(ndoors)d, %(w)d, %(h)d },\n" % \
+			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, " \
+			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(w)x, 0x%(h)x },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
@@ -176,16 +185,22 @@ class Map:
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
+				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"w": self.width,
 				"h": self.height,
 				"nitems": len(self.item_dict),
 				"ngates": len(self.gate_dict),
 				"nnpcs": len(self.npc_dict),
 				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
-				"ndoors": len(self.doors)
+				"ndoors": len(self.doors),
+				"nanimtiles": len(self.animatedtiles)
 			})
 		
-
+class AnimatedTile:
+	def __init__(self, tile):
+		self.tile = tile
+		self.numframes = int(tile.props["animated"])
+		assert self.numframes < 16, "tile animation too long (capacity 15)"
 
 class Room:
 	def __init__(self, map, lid):
@@ -244,14 +259,14 @@ class Room:
 			for col in range(8):
 				if not iswalkable(self.tileat(col, row)):
 					rowMask |= (1<<col)
-			src.write("%s, " % hex(rowMask))
+			src.write("0x%x, " % rowMask)
 		src.write("},\n")
 		# tiles
 		src.write("        { ")
 		for ty in range(8):
 			#src.write("            ")
 			for tx in range(8):
-				src.write("%s, " % hex(self.tileat(tx,ty).lid))
+				src.write("0x%x, " % self.tileat(tx,ty).lid)
 			#src.write("\n")
 		src.write("},\n")
 		# overlay
@@ -340,7 +355,7 @@ class Trigger:
 
 	
 	def write_trigger_to(self, src):
-		src.write("{ %s, %s, %s, %s }" % (hex(self.qbegin), hex(self.qend), hex(self.flagid), hex(self.room.lid)))
+		src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }" % (self.qbegin, self.qend, self.flagid, self.room.lid))
 
 	def write_item_to(self, src):
 		src.write("{ ")
@@ -353,13 +368,13 @@ class Trigger:
 		mapid = self.room.map.world.map_dict[self.target_map].index
 		gateid = self.room.map.world.map_dict[self.target_map].gate_dict[self.target_gate].index
 		x,y = self.local_position()
-		src.write(", %s, %s, %s, %s }, " % (hex(mapid), hex(gateid), hex(x), hex(y)))
+		src.write(", 0x%x, 0x%x, 0x%x, 0x%x }, " % (mapid, gateid, x, y))
 	
 	def write_npc_to(self, src):
 		src.write("{ ")
 		self.write_trigger_to(src)
 		x,y = self.local_position()
-		src.write(", %s, %s, %s }, " % (hex(self.dialog.index), hex(x), hex(y)))
+		src.write(", 0x%x, 0x%x, 0x%x }, " % (self.dialog.index, x, y))
 
 
 

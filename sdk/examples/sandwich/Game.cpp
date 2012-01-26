@@ -6,6 +6,12 @@ static void onNeighbor(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
   sNeighborDirty = true;
 }
 
+static void onTouch(_SYSCubeID cid) {    
+    pGame->ViewAt(cid)->touched = true;
+}
+
+
+
 void Game::ObserveNeighbors(bool flag) {
   if (flag) {
     _SYS_vectors.neighborEvents.add = onNeighbor;
@@ -33,6 +39,7 @@ void Game::MainLoop() {
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->Init();
   }
+  _SYS_vectors.cubeEvents.touch = onTouch;
 
   // initial zoom out (yoinked and modded from TeleportTo)
   { 
@@ -88,6 +95,7 @@ void Game::MainLoop() {
 void Game::Paint(bool sync) {
   for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->Update();
+    p->touched = false;
     #ifdef KLUDGES
     p->GetCube()->vbuf.touch();
     #endif

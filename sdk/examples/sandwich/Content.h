@@ -10,11 +10,13 @@ using namespace Sifteo;
 #define ITEM_LETTUCE        4
 #define ITEM_HAM            5
 #define ITEM_SKELETON_KEY   6
+#define ITEM_TYPE_COUNT     7
 
-#define TRIGGER_UNDEFINED   -1
-#define TRIGGER_GATEWAY     0
-#define TRIGGER_ITEM        1
-#define TRIGGER_NPC         2
+#define TRIGGER_UNDEFINED   0
+#define TRIGGER_GATEWAY     1
+#define TRIGGER_ITEM        2
+#define TRIGGER_NPC         3
+#define TRIGGER_TYPE_COUNT  4
 
 struct QuestData {
     uint8_t mapId;
@@ -64,12 +66,17 @@ struct NpcData {
     uint8_t y;
 };
 
+struct AnimatedTileData {
+    uint8_t tileId;
+    uint8_t frameCount;
+};
+
 struct RoomData {
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
     const uint8_t* overlay; // format: alternate 0bXXXXYYYY, tileId, 0bXXXXYYYY, tileId, etc
-    uint16_t centerx;
-    uint16_t centery;
+    uint8_t centerx;
+    uint8_t centery;
 };
 
 struct MapData {
@@ -83,13 +90,15 @@ struct MapData {
     const GatewayData* gates;
     const NpcData* npcs;
     const DoorData* doors;
-    uint16_t itemCount;
-    uint16_t gateCount;
-    uint16_t npcCount;
-    uint8_t doorQuestId; // 0xff if doors are all global (dangerous/crazy)
+    const AnimatedTileData* animatedTiles;
+    uint8_t itemCount;
+    uint8_t gateCount;
+    uint8_t npcCount;
+    uint8_t doorQuestId; // 0xff if doors are all global (probably not intentional)
     uint8_t doorCount;
-    uint16_t width;
-    uint16_t height;
+    uint8_t animatedTileCount;
+    uint8_t width : 4;
+    uint8_t height : 4;
 };
 
 extern const unsigned gMapCount;

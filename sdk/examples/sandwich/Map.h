@@ -1,7 +1,7 @@
 #pragma once
 #include "Room.h"
 
-#define ROOM_CAPACITY (16*16)
+#define ROOM_CAPACITY (81)
 #define PATH_CAPACITY (32)
 
 struct MapPath {
