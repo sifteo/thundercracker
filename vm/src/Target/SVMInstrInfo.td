@@ -9,18 +9,17 @@
  * Function Calls
  */
 
-def SDT_SVMCall     : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
+def SDT_SVMCall : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
 def SDT_SPCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
-def SDT_SPCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>,
-                                        SDTCisVT<1, i32> ]>;
+def SDT_SPCallSeqEnd : SDCallSeqEnd<[ SDTCisVT<0, i32>, SDTCisVT<1, i32> ]>;
 
-def call            : SDNode<"SVMISD::CALL", SDT_SVMCall,
+def SVMCall : SDNode<"SVMISD::CALL", SDT_SVMCall,
     [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
-def ret             : SDNode<"SVMISD::RETURN", SDTNone,
+def SVMRet : SDNode<"SVMISD::RETURN", SDTNone,
     [SDNPHasChain, SDNPOptInGlue]>;
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeqStart,
     [SDNPHasChain, SDNPOutGlue]>;
-def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
+def callseq_end : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
     [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 def bTarget : Operand<OtherVT>;
@@ -31,12 +30,37 @@ def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
 def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
     "!ADJCALLSTACKUP $amt1", [(callseq_end timm:$amt1, timm:$amt2)]>;
 
-def RET : SVC<1, (outs), (ins), "sys.ret", [(ret)]>;
+def RET : SVC<1, (outs), (ins), "sys.ret", [(SVMRet)]>;
 
 def CALL : SVC<2, (outs), (ins callTarget:$offset11),
-    "sys.call\t$offset11", [(call tglobaladdr:$offset11)]> {
+    "sys.call\t$offset11", [(SVMCall tglobaladdr:$offset11)]> {
     let isCall = 1;
 }
+
+/****************************************************************
+ * Conditionals
+ */
+ 
+def CCop : Operand<i32> {
+    let PrintMethod = "printCCOperand";
+}
+ 
+def SDT_SVMCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
+def SDT_SVMBrcond : SDTypeProfile<0, 2,
+    [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>]>;
+
+def SVMCmp : SDNode<"SVMISD::CMP", SDT_SVMCmp, [SDNPOutGlue]>;
+def SVMBrcond : SDNode<"SVMISD::BRCOND", SDT_SVMBrcond,
+    [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
+
+def CMPr : T4<(outs), (ins GPReg:$Rd, GPReg:$Rs),
+    "cmp\t$Rd, $Rs", [(SVMCmp GPReg:$Rd, GPReg:$Rs)]> {
+    let isCompare = 1;
+    let Defs = [CPSR];
+}
+
+def Bcc : T16<(outs), (ins bTarget:$offset11, CCop:$cc),
+    "b.$cc\t$offset11", [(SVMBrcond bb:$offset11, imm:$cc)]>;
 
 
 /****************************************************************
@@ -46,39 +70,44 @@ def CALL : SVC<2, (outs), (ins callTarget:$offset11),
 def MOVi : T3<(outs GPReg:$Rd), (ins i32imm:$offset8),
     "mov\t$Rd, #$offset8", [(set GPReg:$Rd, imm8:$offset8)]> {
     let isAsCheapAsAMove = 1;
+    let Defs = [CPSR];
 }
 
 def MOVr : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
     "mov\t$Rd, $Rs",
     [(set GPReg:$Rd, GPReg:$Rs)]> {
-    // XXX: This sets conditions codes, since it's really a LSL!
     let opB = 0;
     let offset5 = 0;
     let isAsCheapAsAMove = 1;
+    let Defs = [CPSR];
 }
 
 def ADDi : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
     "add\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (add GPReg:$Rs, imm8:$Rn))]> {
     let imm = 1;
     let opB = 0;
+    let Defs = [CPSR];
 }
 
 def SUBi : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
     "sub\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, imm8:$Rn))]> {
     let imm = 1;
     let opB = 1;
+    let Defs = [CPSR];
 }
 
 def ADDr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
     "add\t$Rd, $Rs, $Rn", [(set GPReg:$Rd, (add GPReg:$Rs, GPReg:$Rn))]> {
     let imm = 0;
     let opB = 0;
+    let Defs = [CPSR];
 }
 
 def SUBr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
     "sub\t$Rd, $Rs, $Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, GPReg:$Rn))]> {
     let imm = 0;
     let opB = 1;
+    let Defs = [CPSR];
 }
 
 def B : T18<(outs), (ins bTarget:$offset11),

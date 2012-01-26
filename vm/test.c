@@ -4,6 +4,7 @@ void siftmain() {
 	unsigned int count = 50;
 	while (1) {
 		count++;
-		dummy(192, count, 42);
+		if (count > 100)
+		    dummy(192, count, 42);
 	}
 }

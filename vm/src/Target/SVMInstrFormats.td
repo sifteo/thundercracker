@@ -10,7 +10,7 @@ class InstSVM<dag outs, dag ins, string asmstr, list<dag> pattern> : Instruction
     let Namespace = "SVM";
     dag OutOperandList = outs;
     dag InOperandList = ins;
-    let AsmString   = asmstr;
+    let AsmString = asmstr;
     let Pattern = pattern;
 }
 
@@ -104,6 +104,17 @@ class T11<bits<1> isLoad, dag outs, dag ins, string asmstr, list<dag> pattern>
     let Inst{11} = isLoad;
     let Inst{10-8} = Rd;
     let Inst{7-0} = word8;
+}
+
+class T16<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst<outs, ins, asmstr, pattern>
+{
+    let opA = 6;
+    bits<4> cc;
+    bits<8> offset8;
+    let Inst{12} = 1;
+    let Inst{11-8} = cc;
+    let Inst{7-0} = offset8;
 }
 
 class T17<dag outs, dag ins, string asmstr, list<dag> pattern>

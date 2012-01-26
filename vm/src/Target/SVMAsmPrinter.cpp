@@ -40,6 +40,7 @@ namespace {
         }
 
         void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
+        void printCCOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
 
         // Generated code
         void printInstruction(const MachineInstr *MI, raw_ostream &OS);
@@ -78,6 +79,17 @@ void SVMAsmPrinter::printOperand(const MachineInstr *MI, int opNum, raw_ostream 
     default:
         llvm_unreachable("<unknown operand type>");
     }
+}
+
+void SVMAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O)
+{
+    int CC = (int)MI->getOperand(opNum).getImm();
+    static const char *ccNames[] = {
+        "eq", "ne", "hs", "lo", "mi", "pl", "vs", "vc",
+        "hi", "ls", "ge", "lt", "gt", "le", "al"
+    };  
+
+    O << ccNames[CC];
 }
 
 

@@ -19,6 +19,8 @@ namespace llvm {
             FIRST_NUMBER = ISD::BUILTIN_OP_END,
             CALL,
             RETURN,
+            CMP,
+            BRCOND,
         };
     }
 
@@ -55,7 +57,6 @@ namespace llvm {
                       const SmallVectorImpl<SDValue> &OutVals,
                       DebugLoc dl, SelectionDAG &DAG) const;
     };
-
 }
 
 #endif

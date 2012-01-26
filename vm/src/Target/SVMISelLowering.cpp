@@ -29,8 +29,15 @@ using namespace llvm;
 SVMTargetLowering::SVMTargetLowering(TargetMachine &TM)
     : TargetLowering(TM, new TargetLoweringObjectFileELF())
 {
+    // Register classes
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
-    
+
+    // Branches
+    setOperationAction(ISD::BRCOND, MVT::Other, Expand);
+    setOperationAction(ISD::BRIND, MVT::Other, Expand);
+    setOperationAction(ISD::BR_JT, MVT::Other, Expand);
+    setOperationAction(ISD::BR_CC, MVT::i32, Custom);
+
     computeRegisterProperties();
 }
 
@@ -40,14 +47,6 @@ const char *SVMTargetLowering::getTargetNodeName(unsigned Opcode) const
     default: return 0;
     case SVMISD::CALL:          return "SVMISD::CALL";
     case SVMISD::RETURN:        return "SVMISD::RETURN";
-    }
-}
-
-SDValue SVMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
-{
-    switch (Op.getOpcode()) {
-    default:
-        llvm_unreachable("Should not custom lower this!");
     }
 }
 
@@ -155,4 +154,42 @@ SDValue SVMTargetLowering::LowerReturn(SDValue Chain,
                                        DebugLoc dl, SelectionDAG &DAG) const
 {
     return DAG.getNode(SVMISD::RETURN, dl, MVT::Other, Chain);
+}
+
+static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG)
+{
+    SDValue Chain = Op.getOperand(0);
+    ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
+    SDValue LHS = Op.getOperand(2);
+    SDValue RHS = Op.getOperand(3);
+    SDValue Dest = Op.getOperand(4);
+    DebugLoc dl = Op.getDebugLoc();
+
+    SVMCC::CondCodes sCC;
+    switch (CC) {
+    default: llvm_unreachable("Unknown condition code!");
+    case ISD::SETNE:  sCC = SVMCC::NE;
+    case ISD::SETEQ:  sCC = SVMCC::EQ;
+    case ISD::SETGT:  sCC = SVMCC::GT;
+    case ISD::SETGE:  sCC = SVMCC::GE;
+    case ISD::SETLT:  sCC = SVMCC::LT;
+    case ISD::SETLE:  sCC = SVMCC::LE;
+    case ISD::SETUGT: sCC = SVMCC::HI;
+    case ISD::SETUGE: sCC = SVMCC::HS;
+    case ISD::SETULT: sCC = SVMCC::LO;
+    case ISD::SETULE: sCC = SVMCC::LS;
+    }
+    
+    SDValue Cmp = DAG.getNode(SVMISD::CMP, dl, MVT::Glue, LHS, RHS);
+    SDValue CCR = DAG.getRegister(SVM::CPSR, MVT::i32);
+    return DAG.getNode(SVMISD::BRCOND, dl, MVT::Other,
+        Chain, Dest, DAG.getConstant(sCC, MVT::i32), CCR, Cmp);
+}
+
+SDValue SVMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
+{
+    switch (Op.getOpcode()) {
+    default: llvm_unreachable("Should not custom lower this!");
+    case ISD::BR_CC:         return LowerBR_CC(Op, DAG);
+    }
 }

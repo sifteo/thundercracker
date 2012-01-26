@@ -9,11 +9,6 @@ class SVMReg<string n> : Register<n> {
     let Namespace = "SVM";
 }
 
-class SVMRegAny<bits<4> num, string n> : SVMReg<n> {
-    field bits<4> Num;
-    let Num = num;
-}
-
 class SVMRegLow<bits<3> num, string n> : SVMReg<n> {
     field bits<3> Num;
     let Num = num;
@@ -28,7 +23,8 @@ def R5 : SVMRegLow< 5, "r5" >;
 def R6 : SVMRegLow< 6, "r6" >;
 def R7 : SVMRegLow< 7, "r7" >;
 
-def SP : SVMRegAny< 13, "sp" >;
+def SP : SVMReg< "sp" >;
+def CPSR : SVMReg< "cpsr" >;
 
 // General purpose registers
 def GPReg : RegisterClass<"SVM", [i32], 32,

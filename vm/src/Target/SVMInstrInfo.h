@@ -15,6 +15,12 @@
 #include "SVMGenInstrInfo.inc"
 
 namespace llvm {
+    
+namespace SVMCC {
+    enum CondCodes {
+        EQ, NE, HS, LO, MI, PL, VS, VC, HI, LS, GE, LT, GT, LE, AL
+    };
+}
 
 class SVMInstrInfo : public SVMGenInstrInfo {
 public:
