@@ -1,6 +1,7 @@
 OBJS = \
 	src/llc.o \
 	src/Target/SVMAsmPrinter.o \
+	src/Target/SVMInstPrinter.o \
 	src/Target/SVMFrameLowering.o \
 	src/Target/SVMISelDAGToDAG.o \
 	src/Target/SVMISelLowering.o \

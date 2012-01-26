@@ -8,7 +8,7 @@ include Makefile.objs
 DEPFILES := $(OBJS:.o=.d)
 
 INCLUDES += -Isrc/Target
-FLAGS += -O3 -g -fomit-frame-pointer
+FLAGS += -g
 WARNFLAGS := -Werror -Wall -Wno-uninitialized
 
 # LLVM
@@ -37,6 +37,7 @@ LIBS += \
 # yourself, you can turn debugging back on.
 ifeq ($(DEBUG),)
 	FLAGS += -DNDEBUG
+	FLAGS += -O3 -fomit-frame-pointer
 endif
 
 # Automatic dependency generation (*.d files)

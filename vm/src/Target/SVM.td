@@ -14,6 +14,12 @@ include "SVMInstrInfo.td"
 
 def SVMInstrInfo : InstrInfo;
 
+def SVMAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "InstPrinter";
+  bit isMCAsmWriter = 1;
+}
+
 def SVM : Target {
     let InstructionSet = SVMInstrInfo;
+    let AssemblyWriters = [SVMAsmWriter];
 }

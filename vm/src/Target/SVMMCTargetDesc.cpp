@@ -7,6 +7,7 @@
 
 #include "SVMMCTargetDesc.h"
 #include "SVMMCAsmInfo.h"
+#include "SVMInstPrinter.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -53,6 +54,12 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
   return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
 }
 
+static MCInstPrinter *createSVMMCInstPrinter(const Target &T, unsigned SyntaxVariant,
+                                             const MCAsmInfo &MAI, const MCSubtargetInfo &STI)
+{
+    return new SVMInstPrinter(MAI);
+}
+
 extern "C" void LLVMInitializeSVMTargetMC() {
     RegisterMCAsmInfo<SVMMCAsmInfo> X(TheSVMTarget);
     TargetRegistry::RegisterMCCodeGenInfo(TheSVMTarget, createSVMMCCodeGenInfo);
@@ -61,4 +68,5 @@ extern "C" void LLVMInitializeSVMTargetMC() {
     TargetRegistry::RegisterMCCodeEmitter(TheSVMTarget, createSVMMCCodeEmitter);
     TargetRegistry::RegisterMCAsmBackend(TheSVMTarget, createSVMAsmBackend);
     TargetRegistry::RegisterMCObjectStreamer(TheSVMTarget, createMCStreamer);
+    TargetRegistry::RegisterMCInstPrinter(TheSVMTarget, createSVMMCInstPrinter);
 }

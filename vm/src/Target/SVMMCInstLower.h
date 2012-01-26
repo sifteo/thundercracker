@@ -35,6 +35,9 @@ namespace llvm {
         SVMAsmPrinter &AsmPrinter;
 
         MCOperand LowerOperand(const MachineOperand& MO) const;
+        MCOperand LowerSymbolOperand(const MachineOperand &MO,
+                                     MachineOperandType MOTy,
+                                     unsigned Offset) const;
     };
 }
 

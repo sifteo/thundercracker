@@ -1,5 +1,5 @@
 set -e
-OPTS="-print-isel-input -view-isel-dags -show-mc-inst -show-mc-encoding"
+OPTS="-print-isel-input -view-isel-dags -show-mc-encoding"
 
 make DEBUG=1 LLVM_LIB=~/src/llvm-3.0/Debug+Asserts/lib -j 4
 clang -emit-llvm -ffreestanding -O2 -c test.c
