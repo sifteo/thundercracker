@@ -204,7 +204,7 @@ extern "C" void _start()
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 
-#if 0
+#ifdef USB_LOAD
     // ALERT! ST's usb library appears to overwrite registers related to
     // SysTick and as such, cannot be used while you want to talk to cubes
     // over the radio. It's fine for loading data over USB, though.
