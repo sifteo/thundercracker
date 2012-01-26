@@ -150,15 +150,16 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
     uint32_t mask = activeChannelMask & ~stoppedChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
-        AudioChannelSlot *ch = &channelSlots[idx];
+        ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
+        AudioChannelSlot &ch = channelSlots[idx];
         Atomic::ClearLZ(mask, idx);
 
-        if (ch->isPaused()) {
+        if (ch.isPaused()) {
             continue;
         }
         
         // Each channel individually mixes itself with the existing buffer contents
-        int mixed = ch->mixAudio(buffer, numsamples);
+        int mixed = ch.mixAudio(buffer, numsamples);
 
         // Update size of overall mixed audio buffer
         if (mixed > samplesMixed) {
