@@ -504,7 +504,7 @@ void CubeWrapper::Tilt( int dir )
 }
 
 
-bool CubeWrapper::FakeTilt( int dir, GridSlot **grid )
+bool CubeWrapper::FakeTilt( int dir, GridSlot grid[][NUM_COLS] )
 {
     bool bChanged = false;
 
@@ -642,7 +642,7 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 }
 
 
-bool CubeWrapper::FakeTryMove( int row1, int col1, int row2, int col2, GridSlot **grid )
+bool CubeWrapper::FakeTryMove( int row1, int col1, int row2, int col2, GridSlot grid[][NUM_COLS] )
 {
     //start shifting it over
     GridSlot &slot = grid[row1][col1];
@@ -1403,7 +1403,7 @@ bool CubeWrapper::HasHyperDot() const
 //pretend to tilt this cube in a series of tilts, and update whether we see the given color on corners or side patterns 1 or 2
 void CubeWrapper::UpdateColorPositions( unsigned int color, bool &bCorners, bool &side1, bool &side2 ) const
 {
-    TestGridForColor( (GridSlot **)m_grid, color, bCorners, side1, side2 );
+    TestGridForColor( m_grid, color, bCorners, side1, side2 );
 
     //we've already satisfied everything
     if( bCorners && side1 && side2 )
@@ -1416,7 +1416,7 @@ void CubeWrapper::UpdateColorPositions( unsigned int color, bool &bCorners, bool
         _SYS_memcpy8( (uint8_t *)grid, (uint8_t *)m_grid, sizeof( grid ) );
 
         //recursive function to tilt and test grid
-        TiltAndTestGrid( (GridSlot **)grid, color, bCorners, side1, side2, TEST_TILT_ITERATIONS );
+        TiltAndTestGrid( grid, color, bCorners, side1, side2, TEST_TILT_ITERATIONS );
 
         //we've already satisfied everything
         if( bCorners && side1 && side2 )
@@ -1426,7 +1426,7 @@ void CubeWrapper::UpdateColorPositions( unsigned int color, bool &bCorners, bool
 
 
 //check different parts of the given grid for the given color
-void CubeWrapper::TestGridForColor( GridSlot **grid, unsigned int color, bool &bCorners, bool &side1, bool &side2 )
+void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 )
 {
     //only check for spots that haven't been found already
     if( !bCorners )
@@ -1511,7 +1511,7 @@ void CubeWrapper::TestGridForColor( GridSlot **grid, unsigned int color, bool &b
 
 
 //recursive function to tilt and test grid
-void CubeWrapper::TiltAndTestGrid( GridSlot **grid, unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations )
+void CubeWrapper::TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations )
 {
     for( int i = 0; i < NUM_SIDES; i++ )
     {
@@ -1521,9 +1521,9 @@ void CubeWrapper::TiltAndTestGrid( GridSlot **grid, unsigned int color, bool &bC
         _SYS_memcpy8( (uint8_t *)childgrid, (uint8_t *)grid, sizeof( grid ) );
 
         //tilt it
-        if( FakeTilt( i, (GridSlot **)childgrid ) )
+        if( FakeTilt( i, childgrid ) )
         {
-            TestGridForColor( (GridSlot **)childgrid, color, bCorners, side1, side2 );
+            TestGridForColor( childgrid, color, bCorners, side1, side2 );
 
             //we've already satisfied everything
             if( bCorners && side1 && side2 )
@@ -1531,7 +1531,7 @@ void CubeWrapper::TiltAndTestGrid( GridSlot **grid, unsigned int color, bool &bC
 
             //recurse
             if( iterations > 0 )
-                TiltAndTestGrid( (GridSlot **)childgrid, color, bCorners, side1, side2, iterations - 1 );
+                TiltAndTestGrid( childgrid, color, bCorners, side1, side2, iterations - 1 );
         }
     }
 }

@@ -56,7 +56,7 @@ public:
     void Update(float t, float dt);
 	void vidInit();
 	void Tilt( int dir );
-    static bool FakeTilt( int dir, GridSlot **grid );
+    static bool FakeTilt( int dir, GridSlot grid[][NUM_COLS] );
 	void Shake( bool bShaking );
 
     Banner &getBanner() { return m_banner; }
@@ -119,12 +119,12 @@ private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
 	bool TryMove( int row1, int col1, int row2, int col2 );
-    static bool FakeTryMove( int row1, int col1, int row2, int col2, GridSlot **grid );
+    static bool FakeTryMove( int row1, int col1, int row2, int col2, GridSlot grid[][NUM_COLS] );
 
     //check different parts of the given grid for the given color
-    static void TestGridForColor( GridSlot **grid, unsigned int color, bool &bCorners, bool &side1, bool &side2 );
+    static void TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 );
     //recursive function to tilt and test grid
-    static void TiltAndTestGrid( GridSlot **grid, unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations );
+    static void TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations );
 
     bool HasFloatingDots() const;
 

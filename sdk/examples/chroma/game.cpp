@@ -411,7 +411,9 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
             aHasColor[i] = false;
     }
 
-    if( total == 1 )
+    if( total == 0 )
+        return false;
+    else if( total == 1 )
         return true;
 
     //also, make sure these colors on these cubes can possibly match
