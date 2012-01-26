@@ -80,6 +80,6 @@ void SVMInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     if (!SVM::GPRegRegClass.contains(DestReg, SrcReg))
         llvm_unreachable("Impossible reg-to-reg copy");
 
-    BuildMI(MBB, MBBI, DL, get(SVM::MOVr), DestReg)
+    BuildMI(MBB, MBBI, DL, get(SVM::MOVSr), DestReg)
           .addReg(SrcReg, getKillRegState(KillSrc));
 }

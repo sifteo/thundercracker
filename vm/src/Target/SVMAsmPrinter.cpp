@@ -29,3 +29,14 @@ void SVMAsmPrinter::EmitInstruction(const MachineInstr *MI)
     MCInstLowering.Lower(MI, MCI);
     OutStreamer.EmitInstruction(MCI);
 }
+
+void SVMAsmPrinter::EmitFunctionEntryLabel()
+{
+    OutStreamer.ForceCodeRegion();
+
+    // Always flag this as a thumb function
+    OutStreamer.EmitAssemblerFlag(MCAF_Code16);
+    OutStreamer.EmitThumbFunc(CurrentFnSym);
+
+    OutStreamer.EmitLabel(CurrentFnSym);
+}

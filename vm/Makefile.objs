@@ -24,7 +24,8 @@ TABLES := \
 	src/Target/SVMGenInstrInfo.inc \
 	src/Target/SVMGenRegisterInfo.inc \
 	src/Target/SVMGenSubtargetInfo.inc \
-	src/Target/SVMGenCallingConv.inc
+	src/Target/SVMGenCallingConv.inc \
+	src/Target/SVMGenMCCodeEmitter.inc
 	
 TABLEDEPS := src/Target/*.td
 TABLEGEN = $(LLVM_BIN)/llvm-tblgen $(INCLUDES) -o $@ $<
@@ -46,3 +47,7 @@ src/Target/SVMGenSubtargetInfo.inc: src/Target/SVM.td $(TABLEDEPS)
 
 src/Target/SVMGenCallingConv.inc: src/Target/SVM.td $(TABLEDEPS)
 	$(TABLEGEN) -gen-callingconv
+
+src/Target/SVMGenMCCodeEmitter.inc: src/Target/SVM.td $(TABLEDEPS)
+	$(TABLEGEN) -mc-emitter -gen-emitter
+

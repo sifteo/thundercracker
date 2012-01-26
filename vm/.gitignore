@@ -4,6 +4,7 @@
 *.inc
 test.o
 test.o.s
+test.elf
 test.png
 test.out
 svmc

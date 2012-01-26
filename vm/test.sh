@@ -19,3 +19,5 @@ cat test.o.s
 
 echo ------------------------
 
+./svmc -filetype=obj test.o -o test.elf
+arm-none-eabi-objdump -d test.elf

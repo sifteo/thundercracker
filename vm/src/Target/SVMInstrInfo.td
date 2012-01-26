@@ -60,7 +60,7 @@ def CMPr : T4<(outs), (ins GPReg:$Rd, GPReg:$Rs),
 }
 
 def Bcc : T16<(outs), (ins bTarget:$offset11, CCop:$cc),
-    "b.$cc\t$offset11", [(SVMBrcond bb:$offset11, imm:$cc)]> {
+    "b$cc\t$offset11", [(SVMBrcond bb:$offset11, imm:$cc)]> {
     let isBranch = 1;
     let isTerminator = 1;
 }
@@ -70,14 +70,15 @@ def Bcc : T16<(outs), (ins bTarget:$offset11, CCop:$cc),
  * Normal instructions
  */
 
-def MOVi : T3<(outs GPReg:$Rd), (ins i32imm:$offset8),
-    "mov\t$Rd, #$offset8", [(set GPReg:$Rd, imm8:$offset8)]> {
+def MOVSi : T3<(outs GPReg:$Rd), (ins i32imm:$offset8),
+    "movs\t$Rd, #$offset8", [(set GPReg:$Rd, imm8:$offset8)]> {
+    let opB = 0;
     let isAsCheapAsAMove = 1;
     let Defs = [CPSR];
 }
 
-def MOVr : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
-    "mov\t$Rd, $Rs",
+def MOVSr : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
+    "movs\t$Rd, $Rs",
     [(set GPReg:$Rd, GPReg:$Rs)]> {
     let opB = 0;
     let offset5 = 0;
@@ -85,29 +86,29 @@ def MOVr : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
     let Defs = [CPSR];
 }
 
-def ADDi : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
-    "add\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (add GPReg:$Rs, imm8:$Rn))]> {
+def ADDSi : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
+    "adds\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (add GPReg:$Rs, imm8:$Rn))]> {
     let imm = 1;
     let opB = 0;
     let Defs = [CPSR];
 }
 
-def SUBi : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
-    "sub\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, imm8:$Rn))]> {
+def SUBSi : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
+    "subs\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, imm8:$Rn))]> {
     let imm = 1;
     let opB = 1;
     let Defs = [CPSR];
 }
 
-def ADDr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
-    "add\t$Rd, $Rs, $Rn", [(set GPReg:$Rd, (add GPReg:$Rs, GPReg:$Rn))]> {
+def ADDSr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "adds\t$Rd, $Rs, $Rn", [(set GPReg:$Rd, (add GPReg:$Rs, GPReg:$Rn))]> {
     let imm = 0;
     let opB = 0;
     let Defs = [CPSR];
 }
 
-def SUBr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
-    "sub\t$Rd, $Rs, $Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, GPReg:$Rn))]> {
+def SUBSr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "subs\t$Rd, $Rs, $Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, GPReg:$Rn))]> {
     let imm = 0;
     let opB = 1;
     let Defs = [CPSR];

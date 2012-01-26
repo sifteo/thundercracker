@@ -12,16 +12,21 @@ class InstSVM<dag outs, dag ins, string asmstr, list<dag> pattern> : Instruction
     dag InOperandList = ins;
     let AsmString = asmstr;
     let Pattern = pattern;
+    let Size = 2;
 }
 
 class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
-   : InstSVM<outs, ins, asmstr, pattern>;
+   : InstSVM<outs, ins, asmstr, pattern> {
+   let isCodeGenOnly = 1;
+   let isPseudo = 1;
+   let Size = 0;
+}
 
 /*
  * Patterns
  */
 
-// Small immediates 
+// Small immediates
 def imm8 : PatLeaf<(imm), [{ return (unsigned)N->getZExtValue() < 256; }]>;
 
 /*
