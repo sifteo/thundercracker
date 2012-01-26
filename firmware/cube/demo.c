@@ -12,7 +12,7 @@
 #include "flash.h"
 #include "draw.h"
 #include "radio.h"
-#include "touch.h"
+//#include "touch.h"
 
 extern const __code uint8_t img_logo[];
 extern const __code uint8_t img_battery[];
@@ -54,6 +54,7 @@ void demo(void)
     }
 #endif
 
+
     draw_xy = XY(0,0);
     draw_image(img_battery);
     draw_xy = XY(1,1);
@@ -69,5 +70,23 @@ void demo(void)
     draw_hex(radio_get_cube_id());
 
     graphics_render();
+
+	// draw_attr = ATTR_NONE;
+	// 
+	// while(1) {
+	// 	
+	// 	MISC_DIR |= MISC_TOUCH;
+	// 	
+	// 	draw_xy = XY(1,12);
+	// 	if( MISC_PORT & MISC_TOUCH ) {
+	// 		draw_string("Touch!");
+	// 	} else {
+	// 		draw_string("      ");
+	// 	}
+	// 
+	// 	graphics_render();
+	// 
+	// }
+
     draw_exit();
 }

@@ -125,4 +125,7 @@ class World:
 			src.write("};\n\n")
 
 
-if __name__ == "__main__": export()
+if __name__ == "__main__": 
+	export()
+
+

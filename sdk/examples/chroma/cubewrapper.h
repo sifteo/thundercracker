@@ -41,7 +41,6 @@ public:
 		STATE_PLAYING,
         STATE_MESSAGING,
 		STATE_EMPTY,
-		STATE_NOSHAKES,
         STATE_REFILL,
 	} CubeState;
 
@@ -60,7 +59,7 @@ public:
     Banner &getBanner() { return m_banner; }
 
 	bool isFull();
-	bool isEmpty();
+    bool isEmpty() const;
 	void checkEmpty();
 
 	void checkRefill();
@@ -90,8 +89,8 @@ public:
 	//returns if we have one and only one fixed dot (and zero floating dots)
 	//fills in the position of that dot
 	bool getFixedDot( Vec2 &pos ) const;
+    bool hasNonStrandedDot() const;
 
-	bool isDead() const { return m_state == STATE_NOSHAKES; }
 	CubeState getState() const { return m_state; }
     void setState( CubeState state );
     //bool IsIdle() const;

@@ -16,6 +16,8 @@ class Map:
 		self.layer_dict = dict((layer.name,layer) for layer in self.layers)
 		self.objects = [Obj(self, elem) for elem in doc.findall("objectgroup/object")]
 		self.object_dict = dict((obj.name, obj) for obj in self.objects)
+		self.props = dict((prop.get("name"), prop.get("value")) for prop in doc.findall("properties/property"))
+
 
 	def gettile(self, gid):
 		for result in (tileset.gettile(gid) for tileset in self.tilesets):
@@ -70,7 +72,6 @@ class Layer:
 		self.opacity = float(xml.get("opacity", "1"))
 		# replace with csv module?  support base64?
 		self.tiles = [int(ch) for l in xml.findtext("data").strip().splitlines() for ch in l.split(',') if len(ch) > 0]
-		self.props = dict((prop.get("name").lower(), prop.get("value")) for prop in xml.findall("properties/property"))
 		
 	def tileat(self, x, y):
 		return self.map.gettile(self.tiles[x + y * self.width])

@@ -64,7 +64,7 @@ public:
         DOT_THRESHOLD5 = 15,
     };
 
-	CubeWrapper cubes[NUM_CUBES]; 
+    CubeWrapper m_cubes[NUM_CUBES];
     static Math::Random random;
 
 	void Init();
@@ -96,6 +96,10 @@ public:
 	bool no_match_stranded_interior() const;
 	bool no_match_stranded_side() const;
 	bool no_match_mismatch_side() const;
+    bool IsColorUnmatchable( unsigned int color ) const;
+    bool AreAllColorsUnmatchable() const;
+    bool DoCubesOnlyHaveStrandedDots() const;
+    bool OnlyOneOtherCorner( const CubeWrapper *pWrapper ) const;
 
     void playSound( _SYSAudioModule &sound );
     //play random slosh sound
@@ -108,6 +112,11 @@ public:
 
     //destroy all dots of the given color
     void BlowAll( unsigned int color );
+    void EndGame();
+
+    inline void Stabilize() { m_bStabilized = true; }
+
+    bool AreNoCubesEmpty() const;
 
 private:
 	void TestMatches();
@@ -146,6 +155,8 @@ private:
     bool m_bForcePaintSync;
     //keeps track of whether a hyperdot was used this chain
     //bool m_bHyperDotMatched;
+    //set to true every time the state of the game is stabilized to run checks on
+    bool m_bStabilized;
 };
 
 #endif

@@ -13,7 +13,7 @@
 #include "hardware.h"
 #include "flash.h"
 #include "params.h"
-#include "touch.h"
+//#include "touch.h"
 #include "battery.h"
 #include "demo.h"
 
@@ -84,11 +84,10 @@ static void gpio_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
 
     /*
-     * It's really important that there's no pull-up/pull-down on our
-     * touch sensor input. Reset that, just in case.
+     * Setting pull down on input so it doesn't float.
      */
 
-    MISC_CON = 0x04;
+    // MISC_CON = 0x34;
 
     /*
      * Neighbor TX pins

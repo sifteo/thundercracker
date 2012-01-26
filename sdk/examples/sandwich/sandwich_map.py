@@ -1,9 +1,4 @@
-import lxml.etree
-import os
-import os.path
-import re
-import tmx
-import misc
+import lxml.etree, os, os.path, re, tmx, misc, math
 
 # constants
 PORTAL_OPEN = 0
@@ -36,83 +31,28 @@ class Map:
 		self.width = self.raw.pw / 128
 		self.height = self.raw.ph / 128
 		self.count = self.width * self.height
+		self.quest = world.script.getquest(self.raw.props["quest"]) if "quest" in self.raw.props else None
 		self.rooms = [Room(self, i) for i in range(self.count)]
-
-		# infer portal states (part of me reeeally wants this to be more clever)
+		# infer portals
 		for r in self.rooms:
-			if r.isblocked():
-				r.portals[0] = PORTAL_WALL
-				r.portals[1] = PORTAL_WALL
-				r.portals[2] = PORTAL_WALL
-				r.portals[3] = PORTAL_WALL
-				continue
+			if r.isblocked(): continue
 			tx,ty = (8*r.x, 8*r.y)
-			# top
-			prevType = r.portals[0] = PORTAL_WALL
-			for i in range(8):
-				typ = portal_type(self.background.tileat(tx+i, ty))
-				if typ == PORTAL_WALL:
-					pass
-				elif typ == PORTAL_OPEN:
-					if prevType == PORTAL_OPEN:
-						r.portals[0] = PORTAL_OPEN
-						break
-				else:
-					r.portals[0] = typ
-					break
-				prevType = typ
-			if r.portals[0] != PORTAL_WALL and (r.y == 0 or self.roomat(r.x, r.y-1).isblocked()):
-				r.portals[0] = PORTAL_WALL
-			# left
-			prevType = r.portals[1] = PORTAL_WALL
-			for i in range(8):
-				typ = portal_type(self.background.tileat(tx, ty+i))
-				if typ == PORTAL_WALL:
-					pass
-				elif typ == PORTAL_OPEN:
-					r.portals[1] = PORTAL_OPEN
-					break
-				else:
-					r.portals[i] =typ
-					break
-				prevType = typ
-			if r.portals[1] != PORTAL_WALL and (r.x == 0 or self.roomat(r.x-1, r.y).isblocked()):
-				r.portals[1] = PORTAL_WALL
-			# bottom
-			prevType = r.portals[2] = PORTAL_WALL
-			for i in range(8):
-				typ = portal_type(self.background.tileat(tx+i, ty+7))
-				if typ == PORTAL_WALL:
-					pass
-				elif typ == PORTAL_OPEN:
-					if prevType == PORTAL_OPEN:
-						r.portals[2] = PORTAL_OPEN
-						break
-				else:
-					r.portals[2] = typ
-					break
-				prevType = typ
-			if r.portals[2] != PORTAL_WALL and (r.y == self.height-1 or self.roomat(r.x, r.y+1).isblocked()):
-				r.portals[2] = PORTAL_WALL
-			# right
-			prevType = r.portals[3] = PORTAL_WALL
-			for i in range(8):
-				typ = portal_type(self.background.tileat(tx+7, ty+i))
-				if typ == PORTAL_WALL:
-					pass
-				elif typ == PORTAL_OPEN:
-					r.portals[3] = PORTAL_OPEN
-				else:
-					r.portals[3] = typ
-					break
-				prevType = typ
-			if r.portals[3] != PORTAL_WALL and (r.x == self.width-1 or self.roomat(r.x+1, r.y).isblocked()):
-				r.portals[3] = PORTAL_WALL
+			if r.y != 0 and not self.roomat(r.x, r.y-1).isblocked():
+				ports = [ portal_type(self.background.tileat(tx+i, ty)) for i in range(8) ]
+				r.portals[SIDE_TOP] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+			if r.x != 0 and not self.roomat(r.x-1, r.y).isblocked():
+				ports = [ portal_type(self.background.tileat(tx, ty+i)) for i in range(8) ]
+				r.portals[SIDE_LEFT] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+			if r.y != self.height-1 and not self.roomat(r.x, r.y+1).isblocked():
+				ports = [ portal_type(self.background.tileat(tx+i, ty+7)) for i in range(8) ]
+				r.portals[SIDE_BOTTOM] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+			if r.x != self.width-1 and not self.roomat(r.x+1, r.y).isblocked():
+				ports = [ portal_type(self.background.tileat(tx+7, ty+i)) for i in range(8) ]
+				r.portals[SIDE_RIGHT] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
 		# validate portals
-		for y in range(self.height):
-			assert not self.roomat(0,y).portals[1] == PORTAL_OPEN and not self.roomat(self.width-1, y).portals[3] == PORTAL_OPEN, "Boundary Wall Error in Map: " + self.id
-		for x in range(self.width):
-			assert not self.roomat(x,0).portals[0] == PORTAL_OPEN and not self.roomat(x, self.height-1).portals[2] == PORTAL_OPEN, "Boundary Wall Error in Map: " + self.id
+		for r in self.rooms:
+			assert r.portals[SIDE_LEFT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
+			assert r.portals[SIDE_RIGHT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id
 		for x in range(self.width-1):
 			for y in range(self.height):
 				assert self.roomat(x,y).portals[3] == self.roomat(x+1,y).portals[1], "Portal Mismatch in Map: " + self.id
@@ -140,30 +80,48 @@ class Map:
 		for i,npc in enumerate(self.list_triggers_of_type(TRIGGER_NPC)):
 			npc.index = i
 			self.npc_dict[npc.id] = npc
-
+		self.doors = [Door(r) for r in self.rooms if r.portals[0] == PORTAL_DOOR]
+		for i,d in enumerate(self.doors):
+			d.index = i
 				
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
 	def roomatpx(self, px, py): return self.roomat(px/128, py/128)
 	def list_triggers_of_type(self, type): return (t for r in self.rooms for t in r.triggers if t.type == type)
-	
+
 	def write_source_to(self, src):
 		src.write("//--------------------------------------------------------\n")
 		src.write("// EXPORTED FROM %s.tmx\n" % self.id)
 		src.write("//--------------------------------------------------------\n\n")
 		src.write("static const uint8_t %s_xportals[] = { " % self.id)
+
+		byte = 0
+		cnt = 0
 		for y in range(self.height):
-			for x in range(self.width):
-				src.write("%s, " % hex(self.roomat(x,y).portals[SIDE_LEFT]))
-			src.write("%s, " % hex(self.roomat(self.width-1,y).portals[SIDE_RIGHT]))
+			for x in range(self.width-1):
+				if self.roomat(x,y).portals[SIDE_RIGHT] != PORTAL_WALL:
+					byte = byte | (1 << cnt)
+				cnt = cnt + 1
+				if cnt == 8:
+					cnt = 0
+					src.write("%s, " % hex(byte))
+					byte = 0
+		if cnt > 0: src.write("%s, " % hex(byte))
 		src.write("};\n")
 		src.write("static const uint8_t %s_yportals[] = { " % self.id)
+		byte = 0
+		cnt = 0
 		for x in range(self.width):
-			for y in range(self.height):
-				src.write("%s, " % hex(self.roomat(x,y).portals[SIDE_TOP]))
-			src.write("%s, " % hex(self.roomat(x, self.height-1).portals[SIDE_BOTTOM]))
+			for y in range(self.height-1):
+				if self.roomat(x,y).portals[SIDE_BOTTOM] != PORTAL_WALL:
+					byte = byte | (1 << cnt)
+				cnt = cnt + 1
+				if cnt == 8:
+					cnt = 0
+					src.write("%s, " % hex(byte))
+					byte = 0
+		if cnt > 0: src.write("%s, " % hex(byte))
 		src.write("};\n")
-
 		if len(self.item_dict) > 0:
 			src.write("static const ItemData %s_items[] = { " % self.id)
 			for item in self.list_triggers_of_type(TRIGGER_ITEM):
@@ -182,6 +140,12 @@ class Map:
 				npc.write_npc_to(src)
 			src.write("};\n")
 		
+		if len(self.doors) > 0:
+			src.write("static const DoorData %s_doors[] = { " % self.id)
+			for door in self.doors:
+				src.write("{ %s, %s }, " % (hex(door.room.lid), hex(door.flag.gindex)))
+			src.write("};\n")
+
 		if self.overlay is not None:
 			for room in self.rooms:
 				if room.hasoverlay():
@@ -198,23 +162,27 @@ class Map:
 				room = self.roomat(x,y)
 				room.write_source_to(src)
 		src.write("};\n")
+
 	
 	def write_decl_to(self, src):
 		src.write(
 			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, " \
-			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, " \
-			"%(nitems)d, %(ngates)d, %(nnpcs)d, %(w)d, %(h)d },\n" % \
+			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s," \
+			"%(nitems)d, %(ngates)d, %(nnpcs)d, %(doorQuestId)d, %(ndoors)d, %(w)d, %(h)d },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
 				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
+				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"w": self.width,
 				"h": self.height,
 				"nitems": len(self.item_dict),
 				"ngates": len(self.gate_dict),
-				"nnpcs": len(self.npc_dict)
+				"nnpcs": len(self.npc_dict),
+				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
+				"ndoors": len(self.doors)
 			})
 		
 
@@ -228,6 +196,7 @@ class Room:
 		self.portals = [ PORTAL_WALL, PORTAL_WALL, PORTAL_WALL, PORTAL_WALL ]
 		self.triggers = []
 		self.trigger_dict = {}
+		self.door = None
 
 	def hasitem(self): return len(self.item) > 0 and self.item != "ITEM_NONE"
 	def tileat(self, x, y): return self.map.background.tileat(8*self.x + x, 8*self.y + y)
@@ -293,17 +262,16 @@ class Room:
 		# centerx, centery, reserved
 		cx,cy = self.center()
 		src.write("%d, %d, \n" % (cx, cy))
-
-		# torches - should be moved out to a flat list like items / etc
-		#torchcount = 0
-		#for tx,ty in self.listtorchtiles():
-		#	if torchcount == 2:
-		#		raise Exception("Too man torches in one room (capacity 2): "  + self.id)
-		#	src.write("        %s,\n" % hex((tx<<4) + ty))
-		#	torchcount+=1
-		#for i in range(2-torchcount):
-		#	src.write("        0xff,\n")
 		src.write("    },\n")		
+
+class Door:
+	def __init__(self, room):
+		self.id = "_door_%s_%d" % (room.map.id, room.lid)
+		self.room = room
+		room.door = self
+		self.flag = room.map.quest.add_flag_if_undefined(self.id) \
+			if room.map.quest is not None \
+			else room.map.world.script.add_flag_if_undefined(self.id)
 
 class Trigger:
 	def __init__(self, room, obj):
@@ -312,6 +280,11 @@ class Trigger:
 		self.raw = obj
 		self.type = KEYWORD_TO_TRIGGER_TYPE[obj.type]
 		# deterine quest state
+		self.quest = None
+		self.minquest = None
+		self.maxquest = None
+		self.qflag = None
+		self.unlockflag = None
 		if "quest" in obj.props:
 			self.quest = room.map.world.script.getquest(obj.props["quest"])
 			self.minquest = self.quest
@@ -319,23 +292,24 @@ class Trigger:
 			if "questflag" in obj.props:
 				self.qflag = self.quest.flag_dict[obj.props["questflag"]]
 		else:
-			self.quest = None
-			if "minquest" in obj.props:
-				self.minquest = room.map.world.script.getquest(obj.props["minquest"])
-			if "maxquest" in obj.props:
-				self.maxquest = room.map.world.script.getquest(obj.props["maxquest"])
-			if hasattr(self, "minquest") and hasattr(self, "maxquest"):
+			self.minquest = room.map.world.script.getquest(obj.props["minquest"]) if "minquest" in obj.props else None
+			self.maxquest = room.map.world.script.getquest(obj.props["maxquest"]) if "maxquest" in obj.props else None
+			if self.minquest is not None and self.maxquest is not None:
 				assert self.minquest.index <= self.maxquest.index, "MaxQuest > MinQuest for object in map: " + room.map.id
-		if "unlockflag" in obj.props:
-			assert obj.props["unlockflag"] in room.map.world.script.unlockables_dict, "Undefined unlock flag in map: " + room.map.id
-			self.unlockflag = room.map.world.script.unlockables_dict[obj.props["unlockflag"]]
-		
-
+		if self.quest is None and self.minquest is None and self.maxquest is None and room.map.quest is not None:
+			self.quest = room.map.quest
+			self.minquest = room.map.quest
+			self.maxquest = room.map.quest
+			self.qflag = self.quest.add_flag_if_undefined(obj.props["questflag"]) if "questflag" in obj.props else None
+		if self.quest is None and "unlockflag" in obj.props:
+			self.unlockflag = room.map.world.script.add_flag_if_undefined(obj.props["unlockflag"])
+		# type-specific initialization
 		if self.type == TRIGGER_ITEM:
 			self.itemid = int(obj.props["id"])
 			if self.quest is not None:
-				self.qflag = self.quest.add_flag_if_undefined(self.id)
-			else:
+				if self.qflag is None:
+					self.qflag = self.quest.add_flag_if_undefined(self.id)
+			elif self.unlockflag is None:
 				self.unlockflag = room.map.world.script.add_flag_if_undefined(self.id)
 		elif self.type == TRIGGER_GATEWAY:
 			m = EXP_GATEWAY.match(obj.props.get("target", ""))
@@ -348,11 +322,12 @@ class Trigger:
 			self.dialog = room.map.world.dialog.dialog_dict[did]
 		
 				
-		self.qbegin = self.minquest.index if hasattr(self, "minquest") else 0xff
-		self.qend = self.maxquest.index if hasattr(self, "maxquest") else 0xff
-		self.flagid = 0
-		if hasattr(self, "qflag"): self.flagid = 1 + self.qflag.index
-		elif hasattr(self, "unlockflag"): self.flagid = 33 + self.unlockflag.index
+		self.qbegin = self.minquest.index if self.minquest is not None else 0xff
+		self.qend = self.maxquest.index if self.maxquest is not None else 0xff
+		if self.qflag is not None: self.flagid = self.qflag.gindex
+		elif self.unlockflag is not None: self.flagid = self.unlockflag.gindex
+		else: self.flagid = 0
+
 
 	def is_active_for(self, quest):
 		if self.qbegin != 0xff and self.qbegin < quest.index: return False
@@ -394,7 +369,7 @@ def iswall(tile): return "wall" in tile.props
 def isdoor(tile): return "door" in tile.props
 def isopen(tile): return not isdoor(tile) and not isobst(tile) and not iswall(tile)
 def iswalkable(tile): return not iswall(tile) and not isobst(tile)
-def ispath(tile): return not "path" in tile.props
+def ispath(tile): return "path" in tile.props
 
 def portal_type(tile):
 	if isdoor(tile):
