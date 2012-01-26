@@ -249,22 +249,21 @@ bool AudioMixer::populateModuleMetaData(struct _SYSAudioModule *mod)
 
 bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
 {
-    if (enabledChannelMask == 0 || activeChannelMask == 0xFF000000) {
-        return false; // no free channels
+    // find channels that are enabled, not active & not marked as stopped
+    uint32_t selector = enabledChannelMask & ~activeChannelMask & ~stoppedChannelMask;
+    if (selector == 0) {
+        return false;
     }
 
     if (!populateModuleMetaData(mod)) {
         return false;
     }
 
-    // find the next channel that's both enabled and inactive
-    int idx;
-    for (idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
-        if ((enabledChannelMask & Intrinsic::LZ(idx)) &&
-           !(activeChannelMask  & Intrinsic::LZ(idx))) {
-            break;
-        }
-    }
+    unsigned idx = Intrinsic::CLZ(selector);
+    ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
+    AudioChannelSlot &ch = channelSlots[idx];
+    ch.handle = nextHandle++;
+    *handle = ch.handle;
 
     // does this module require a decoder? if so, get one
     SpeexDecoder *dec;
@@ -272,28 +271,22 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     if (mod->type == Sample) {
         dec = getDecoder();
         if (dec == NULL) {
-            LOG(("ERROR: No channels available.\n"));
-            return false; // no decoders available
+            LOG(("ERROR: No SpeexDecoder available.\n"));
+            return false;
         }
-    } else if (mod->type == PCM) {
+        ch.play(mod, loopMode, dec);
+    }
+    else if (mod->type == PCM) {
         pcmdec = getPCMDecoder();
         if (pcmdec == NULL) {
-            LOG(("ERROR: No channels available.\n"));
-            return false; // no decoders available
+            LOG(("ERROR: No PCMDecoder available.\n"));
+            return false;
         }
+        ch.play(mod, loopMode, pcmdec);
     }
     else {
         LOG(("ERROR: Unknown audio encoding. id: %d type: %d.\n", mod->id, mod->type));
-        dec = 0;
-    }
-
-    AudioChannelSlot &ch = channelSlots[idx];
-    ch.handle = nextHandle++;
-    *handle = ch.handle;
-    if (pcmdec) {
-        ch.play(mod, loopMode, pcmdec);
-    } else {
-        ch.play(mod, loopMode, dec);
+        return false;
     }
     
     Atomic::SetLZ(activeChannelMask, idx);
