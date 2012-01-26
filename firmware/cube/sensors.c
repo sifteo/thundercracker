@@ -110,6 +110,7 @@ __bit nb_rx_mask_state0;
 __bit nb_rx_mask_state1;
 __bit nb_rx_mask_bit0;
 __bit nb_rx_mask_bit1;
+__bit touch;
 
 /*
  * We do a little bit of signal conditioning on neighbors before
@@ -410,8 +411,28 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
 4$:
 
+		;--------------------------------------------------------------------
+        ; Touch sensing
         ;--------------------------------------------------------------------
 
+		mov a, _MISC_PORT
+		anl a, #MISC_TOUCH
+		cjne a, #MISC_TOUCH, 6$
+		
+		jb _touch, 8$	
+		setb _touch
+		sjmp 7$
+6$:
+		jnb _touch, 8$
+		clr _touch
+7$:	
+		// xrl _CTRL_PORT, #CTRL_BACKLIGHT
+
+		xrl (_ack_data + RF_ACK_NEIGHBOR + 0), #(NB0_FLAG_TOUCH)
+		orl _ack_len, #RF_ACK_LEN_NEIGHBOR
+		
+8$:
+        ;--------------------------------------------------------------------
         ; Tick tock.. this is not latency-critical at all, it goes last.
         
         mov     a, _sensor_tick_counter
@@ -686,26 +707,23 @@ nb_tx_handoff:
         mov     _W2CON0, #7               ;   Master mode, 100 kHz.
         mov     _W2DAT, #ACCEL_ADDR       ; Trigger the next I2C transaction
 
-        ;--------------------------------------------------------------------
-        ; Touch sensing
-        ;--------------------------------------------------------------------
-
-        ; Start the touch sensing process. This method uses the A/D converter
-        ; as a capacitance meter, by first charging the hold capacitor to a
-        ; known level, then transferring a portion of that charge to the external
-        ; touch plate. By measuring the remaining charge on the hold cap, we can
-        ; measure the capacitance ratio between the touch plate and the internal
-        ; hold capacitor.
-       
-        jb      _battery_adc_lock, nb_packet_done
-
-        mov     _ADCCON2, #0x0c         ; Single-step, no auto-powerdown
-        mov     _ADCCON3, #0xc0         ; 12-bit, left justified
-        mov     _ADCCON1, #0xbd         ; 1 0 1111 01, Measure 2/3 VDD reference
-        
-        ; Continue in the ADC interrupt, after conversion finishes.
-        
-        setb    _IEN_MISC
+        // 
+        // ; Start the touch sensing process. This method uses the A/D converter
+        // ; as a capacitance meter, by first charging the hold capacitor to a
+        // ; known level, then transferring a portion of that charge to the external
+        // ; touch plate. By measuring the remaining charge on the hold cap, we can
+        // ; measure the capacitance ratio between the touch plate and the internal
+        // ; hold capacitor.
+        //        
+        // jb      _battery_adc_lock, nb_packet_done
+        // 
+        // mov     _ADCCON2, #0x0c         ; Single-step, no auto-powerdown
+        // mov     _ADCCON3, #0xc0         ; 12-bit, left justified
+        // mov     _ADCCON1, #0xbd         ; 1 0 1111 01, Measure 2/3 VDD reference
+        // 
+        // ; Continue in the ADC interrupt, after conversion finishes.
+        // 
+        // setb    _IEN_MISC
         
         ;--------------------------------------------------------------------
 

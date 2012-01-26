@@ -19,7 +19,7 @@ bool GameState::IsActive(const TriggerData& trigger) const {
 		(
 			trigger.flagId == 0 || 
 			(trigger.flagId <= 32 && (mQuestMask & (1<<(trigger.flagId-1))) == 0) || 
-			((mUnlockMask & (1<<(trigger.flagId-33))) == 0)
+			(trigger.flagId > 32 && (mUnlockMask & (1<<(trigger.flagId-33))) == 0)
 		)
 	);
 }
@@ -28,9 +28,9 @@ bool GameState::IsActive(uint8_t questId, uint8_t flagId) const {
 	return (
 		(questId == 0xff || questId == mQuest) &&
 		(
-			flagId == 0 ||
+			flagId == 0 || 
 			(flagId <= 32 && (mQuestMask & (1<<(flagId-1))) == 0) || 
-			((mUnlockMask & (1<<(flagId-33))) == 0)
+			(flagId > 32 && (mUnlockMask & (1<<(flagId-33))) == 0)
 		)
 	);
 }
@@ -42,6 +42,7 @@ bool GameState::FlagTrigger(const TriggerData& trigger) {
 		} else {
 			mUnlockMask |= (1 << (trigger.flagId-33));
 		}
+		ASSERT(!IsActive(trigger));
 		Save();
 		return true;
 	}
@@ -49,12 +50,13 @@ bool GameState::FlagTrigger(const TriggerData& trigger) {
 }
 
 bool GameState::Flag(uint8_t questId, uint8_t flagId) {
-	if (IsActive(questId, flagId)) {
+	if (IsActive(questId, flagId) && flagId) {
 		if (flagId <= 32) {
 			mQuestMask |= (1 << (flagId-1));
 		} else {
 			mUnlockMask |= (1 << (flagId-33));
 		}
+		ASSERT(!IsActive(questId, flagId));
 		Save();
 		return true;
 	}

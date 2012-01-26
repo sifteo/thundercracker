@@ -42,7 +42,7 @@ static const Vec2 sBffTable[] = {
 // methods
 
 GameView::GameView() : 
-visited(0), mRoom(LOCATION_UNDEFINED), mIdleHoverIndex(0) {
+touched(false), visited(0), mRoom(LOCATION_UNDEFINED), mIdleHoverIndex(0) {
 }
 
 void GameView::Init() {

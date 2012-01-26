@@ -6,6 +6,10 @@ class Room;
 
 class GameView {
 public:
+
+  // hack
+  bool touched;
+
   int visited;
 
 private:
