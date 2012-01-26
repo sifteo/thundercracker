@@ -18,6 +18,13 @@ class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
    : InstSVM<outs, ins, asmstr, pattern>;
 
 /*
+ * Patterns
+ */
+
+// Small immediates 
+def imm8 : PatLeaf<(imm), [{ return (unsigned)N->getZExtValue() < 256; }]>;
+
+/*
  * A 16-bit Thumb instruction. The top three bits are always a constant
  * "major" opcode. The individual formats here are numbered accoRding to
  * Figure 5-1 in the ARM7TDMI data sheet.
@@ -50,14 +57,14 @@ class T2<dag outs, dag ins, string asmstr, list<dag> pattern>
 {
     let opA = 0;
     bits<1> imm;
-    bits<1> op;
-    bits<3> rN;
+    bits<1> opB;
+    bits<3> Rn;
     bits<3> Rs;
     bits<3> Rd;
     let Inst{12-11} = 3;
     let Inst{10} = imm;
-    let Inst{9} = op;
-    let Inst{8-6} = rN;
+    let Inst{9} = opB;
+    let Inst{8-6} = Rn;
     let Inst{5-3} = Rs;
     let Inst{2-0} = Rd;
 }

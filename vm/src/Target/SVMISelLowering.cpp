@@ -86,7 +86,17 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     Chain = DAG.getCALLSEQ_START(Chain,
         DAG.getIntPtrConstant(ArgsStackSize, true));
 
+    // Resolve address of callee
+    // XXX: Is this where we should handle syscalls?
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+        Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32);
+
+    std::vector<SDValue> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Callee);
+
     // Copy input parameters
+    SDValue InFlag;
     for (unsigned i = 0, end = ArgLocs.size(); i != end; i++) {
         CCValAssign &VA = ArgLocs[i];
         ISD::ArgFlagsTy Flags = Outs[i].Flags;
@@ -113,29 +123,27 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         if (VA.isRegLoc()) {
             // Passed by register
             
-            Arg = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Arg);
-            Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), Arg,
-                Chain.getValue(1));
+            unsigned Reg = VA.getLocReg();
+            Chain = DAG.getCopyToReg(Chain, dl, Reg, Arg, InFlag);
+            InFlag = Chain.getValue(1);
+
+            // Reference this register, so it doesn't get optimized out
+            Ops.push_back(DAG.getRegister(Reg, Arg.getValueType()));
             
         } else {
             llvm_unreachable("Non-register parameters not yet supported");
         }
     }
-
-    // Resolve address of callee
-    // XXX: Is this where we should handle syscalls?
-    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-        Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32);
-
-    std::vector<SDValue> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(Callee);
+    
+    if (InFlag.getNode())
+      Ops.push_back(InFlag);
 
     SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
     Chain = DAG.getNode(SVMISD::CALL, dl, NodeTys, &Ops[0], Ops.size());
+    InFlag = Chain.getValue(1);
 
     Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(0, true),
-        DAG.getIntPtrConstant(0, true), Chain.getValue(1));
+        DAG.getIntPtrConstant(0, true), InFlag);
 
     return Chain;
 }

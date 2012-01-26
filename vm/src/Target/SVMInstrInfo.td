@@ -43,18 +43,43 @@ def CALL : SVC<2, (outs), (ins callTarget:$offset11),
  * Normal instructions
  */
 
-def MOV : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
+def MOVi : T3<(outs GPReg:$Rd), (ins i32imm:$offset8),
+    "mov\t$Rd, #$offset8", [(set GPReg:$Rd, imm8:$offset8)]> {
+    let isAsCheapAsAMove = 1;
+}
+
+def MOVr : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
     "mov\t$Rd, $Rs",
-    [(set GPReg:$Rd, GPReg:$Rs)]>
-{
+    [(set GPReg:$Rd, GPReg:$Rs)]> {
     // XXX: This sets conditions codes, since it's really a LSL!
     let opB = 0;
     let offset5 = 0;
+    let isAsCheapAsAMove = 1;
 }
 
-// XXX: Immediate is only 8-bit now, need literal pools...
-def MOVi : T3<(outs GPReg:$Rd), (ins i32imm:$offset8),
-    "mov\t$Rd, #$offset8", [(set GPReg:$Rd, imm:$offset8)]>;
+def ADDi : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
+    "add\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (add GPReg:$Rs, imm8:$Rn))]> {
+    let imm = 1;
+    let opB = 0;
+}
+
+def SUBi : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
+    "sub\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, imm8:$Rn))]> {
+    let imm = 1;
+    let opB = 1;
+}
+
+def ADDr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "add\t$Rd, $Rs, $Rn", [(set GPReg:$Rd, (add GPReg:$Rs, GPReg:$Rn))]> {
+    let imm = 0;
+    let opB = 0;
+}
+
+def SUBr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "sub\t$Rd, $Rs, $Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, GPReg:$Rn))]> {
+    let imm = 0;
+    let opB = 1;
+}
 
 def B : T18<(outs), (ins bTarget:$offset11),
     "b  \t$offset11", [(br bb:$offset11)]>;
