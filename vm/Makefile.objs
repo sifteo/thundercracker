@@ -19,7 +19,8 @@ TABLES := \
 	src/Target/SVMGenDAGISel.inc \
 	src/Target/SVMGenInstrInfo.inc \
 	src/Target/SVMGenRegisterInfo.inc \
-	src/Target/SVMGenSubtargetInfo.inc
+	src/Target/SVMGenSubtargetInfo.inc \
+	src/Target/SVMGenCallingConv.inc
 	
 TABLEDEPS := src/Target/*.td
 TABLEGEN = $(LLVM_BIN)/llvm-tblgen $(INCLUDES) -o $@ $<
@@ -39,3 +40,5 @@ src/Target/SVMGenDAGISel.inc: src/Target/SVM.td $(TABLEDEPS)
 src/Target/SVMGenSubtargetInfo.inc: src/Target/SVM.td $(TABLEDEPS)
 	$(TABLEGEN) -gen-subtarget
 
+src/Target/SVMGenCallingConv.inc: src/Target/SVM.td $(TABLEDEPS)
+	$(TABLEGEN) -gen-callingconv

@@ -6,5 +6,6 @@
  */
 
 def CC_SVM : CallingConv<[
-    CCIfType<[i32, f32], CCAssignToReg<[R0, R1, R2, R3, R4, R5, R6, R7]>>
+    CCIfType<[i32, f32], CCAssignToReg<[R0, R1, R2, R3, R4, R5, R6, R7]>>,
+    CCAssignToStack<4, 4>
 ]>;

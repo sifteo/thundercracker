@@ -7,6 +7,7 @@
 
 #include "SVMISelLowering.h"
 #include "SVMTargetMachine.h"
+#include "SVMMCTargetDesc.h"
 #include "SVMMachineFunctionInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -21,6 +22,8 @@
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
+
+#include "SVMGenCallingConv.inc"
 
 
 SVMTargetLowering::SVMTargetLowering(TargetMachine &TM)
@@ -67,6 +70,60 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                      DebugLoc dl, SelectionDAG &DAG,
                                      SmallVectorImpl<SDValue> &InVals) const
 {
+    // Let the calling convention assign locations to each operand
+    SmallVector<CCValAssign, 16> ArgLocs;
+    CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+        DAG.getTarget(), ArgLocs, *DAG.getContext());
+    CCInfo.AnalyzeCallOperands(Outs, CC_SVM);
+    
+    // How much stack space do we require?
+    unsigned ArgsStackSize = CCInfo.getNextStackOffset();
+
+    // For now, assume 4-byte alignment
+    ArgsStackSize = (ArgsStackSize + 3) & ~3;
+
+    // Start calling sequence
+    Chain = DAG.getCALLSEQ_START(Chain,
+        DAG.getIntPtrConstant(ArgsStackSize, true));
+
+    // Copy input parameters
+    for (unsigned i = 0, end = ArgLocs.size(); i != end; i++) {
+        CCValAssign &VA = ArgLocs[i];
+        ISD::ArgFlagsTy Flags = Outs[i].Flags;
+        SDValue Arg = OutVals[i];
+        
+        // Optional type promotion
+        switch (VA.getLocInfo()) {
+        default: llvm_unreachable("Unsupported parameter loc");
+        case CCValAssign::Full: break;
+        case CCValAssign::SExt:
+            Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
+            break;
+        case CCValAssign::ZExt:
+            Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
+            break;
+        case CCValAssign::AExt:
+            Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
+            break;
+        case CCValAssign::BCvt:
+            Arg = DAG.getNode(ISD::BITCAST, dl, VA.getLocVT(), Arg);
+            break;
+        }
+        
+        if (VA.isRegLoc()) {
+            // Passed by register
+            
+            Arg = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Arg);
+            Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), Arg,
+                Chain.getValue(1));
+            
+        } else {
+            llvm_unreachable("Non-register parameters not yet supported");
+        }
+    }
+
+    // Resolve address of callee
+    // XXX: Is this where we should handle syscalls?
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
         Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32);
 
@@ -74,8 +131,11 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     Ops.push_back(Chain);
     Ops.push_back(Callee);
 
-    SDVTList NodeTys = DAG.getVTList(MVT::Other);
+    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
     Chain = DAG.getNode(SVMISD::CALL, dl, NodeTys, &Ops[0], Ops.size());
+
+    Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(0, true),
+        DAG.getIntPtrConstant(0, true), Chain.getValue(1));
 
     return Chain;
 }

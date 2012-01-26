@@ -1,9 +1,9 @@
-void dummy(unsigned int i);
+void dummy(unsigned int op, unsigned int i);
 
 void siftmain() {
 	unsigned int count = 0;
 	while (1) {
-		count++;
-		dummy(count);
+//		count++;
+		dummy(42, count);
 	}
 }

@@ -14,6 +14,9 @@ class InstSVM<dag outs, dag ins, string asmstr, list<dag> pattern> : Instruction
     let Pattern = pattern;
 }
 
+class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
+   : InstSVM<outs, ins, asmstr, pattern>;
+
 /*
  * A 16-bit Thumb instruction. The top three bits are always a constant
  * "major" opcode. The individual formats here are numbered accoRding to
