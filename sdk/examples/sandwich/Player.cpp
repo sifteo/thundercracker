@@ -335,7 +335,7 @@ bool Player::PathDetect() {
 bool Player::PathVisit(GameView* view, int depth) {
   if (!view || view->visited) { return false; }
   view->visited = true;
-  if (view->VirtualTiltDirection() != -1 || view->touched) {
+  if (view->VirtualTiltDirection() != -1/* || view->touched*/) {
     mPath.steps[depth] = -1;
     return true;
   } else {

@@ -8,19 +8,19 @@ class GameView {
 public:
 
   // hack
-  bool touched;
-
-  int visited;
+  bool visited;
 
 private:
-  Vec2 mRoom;
+  unsigned mRoomId;
 
-  int mIdleHoverIndex;
   union {
     struct {
-      uint16_t count;
-      uint16_t time;
+      unsigned start_frame;
+      unsigned count;
     } idle;
+    struct {
+      unsigned start_frame;
+    } room;
   } mScene;
 
 public:  
@@ -30,7 +30,7 @@ public:
   Cube* GetCube() const;
   bool IsShowingRoom() const;
   bool InSpriteMode() const;
-  Vec2 Location() const { return mRoom; }
+  Vec2 Location() const;
   Room* CurrentRoom() const;
   Cube::Side VirtualTiltDirection() const;
   GameView* VirtualNeighborAt(Cube::Side side) const;
@@ -39,7 +39,7 @@ public:
   void Init();
   void Update();
   
-  bool ShowLocation(Vec2 room);
+  bool ShowLocation(Vec2 loc);
   bool HideRoom();
   
   void ShowPlayer();

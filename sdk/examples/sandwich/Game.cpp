@@ -7,7 +7,7 @@ static void onNeighbor(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
 }
 
 static void onTouch(_SYSCubeID cid) {    
-    pGame->ViewAt(cid)->touched = true;
+    // /pGame->ViewAt(cid)->touched = !pGame->ViewAt(cid)->touched;
 }
 
 
@@ -26,20 +26,19 @@ void Game::ObserveNeighbors(bool flag) {
 // BOOTSTRAP API
 //------------------------------------------------------------------
 
-Game::Game() {
-  const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  mPlayer.SetPosition(Vec2(
-    128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerx,
-    128 * (gQuestData->roomId / gMapData[gQuestData->mapId].width) + 16 * room.centery
-  ));
-}
-
 void Game::MainLoop() {
   // reset everything
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->Init();
   }
   _SYS_vectors.cubeEvents.touch = onTouch;
+  const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
+  mPlayer.SetPosition(Vec2(
+    128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerx,
+    128 * (gQuestData->roomId / gMapData[gQuestData->mapId].width) + 16 * room.centery
+  ));
+  mSimFrames = 0;
+  mAnimFrames = 0;
 
   // initial zoom out (yoinked and modded from TeleportTo)
   { 
@@ -74,7 +73,6 @@ void Game::MainLoop() {
     System::paintSync();
   }  
   PlayMusic(music_castle);
-  //PlaySfx(sfx_neighbor);
 
   mSimTime = System::clock();
   ObserveNeighbors(true);
@@ -89,13 +87,13 @@ void Game::MainLoop() {
     }
     mPlayer.Update(dt);
     Paint();
+    mSimFrames++;
   }
 }
 
 void Game::Paint(bool sync) {
   for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->Update();
-    p->touched = false;
     #ifdef KLUDGES
     p->GetCube()->vbuf.touch();
     #endif
@@ -108,6 +106,7 @@ void Game::Paint(bool sync) {
   } else {
     System::paint();
   }
+  mAnimFrames++;
 }
 
 float Game::UpdateDeltaTime() {
@@ -237,7 +236,6 @@ void Game::OnInventoryChanged() {
   for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->RefreshInventory();
   }
-  #ifndef FAST_FORWARD
   const int firstSandwichId = 2;
   int count = 0;
   for(int i=firstSandwichId; i<firstSandwichId+4; ++i) {
@@ -245,7 +243,6 @@ void Game::OnInventoryChanged() {
       return;
     }
   }
-  #endif
   mIsDone = true;
 }
 

@@ -3,10 +3,10 @@
 
 // Constants
 
-#define LOCATION_UNDEFINED  (Vec2(-1,-1))
+#define ROOM_UNDEFINED  (0xff)
 #define BFF_SPRITE_ID       0
 #define TRIGGER_SPRITE_ID   1
-#define PLAYER_SPRITE_ID    3
+#define PLAYER_SPRITE_ID    2
 
 static const int8_t sHoverTable[] = { 
   0, 0, 1, 2, 2, 3, 3, 3, 
@@ -24,6 +24,7 @@ const static uint8_t sHopTable[] = { 0, 0, 0, 1, 3, 4, 6, 6, 7, 7, 8, 7, 7, 6, 6
 #define FRAMES_PER_TORCH_FRAME 4
 #define BFF_FRAME_COUNT 4
 
+/*
 namespace BffDir {
   enum ID { E, SE, S, SW, W, NW, N, NE };
 }
@@ -38,11 +39,12 @@ static const Vec2 sBffTable[] = {
   Vec2(0, -1),
   Vec2(1, -1),
 };
+*/
 
 // methods
 
 GameView::GameView() : 
-touched(false), visited(0), mRoom(LOCATION_UNDEFINED), mIdleHoverIndex(0) {
+visited(false), mRoomId(ROOM_UNDEFINED) {
 }
 
 void GameView::Init() {
@@ -51,16 +53,16 @@ void GameView::Init() {
   mode.clear();
   mode.setWindow(0, 128);
   if (pGame->GetPlayer()->CurrentView() == this) {
-    mRoom = Vec2(-1,-1);
+    mRoomId = ROOM_UNDEFINED;
     ShowLocation(pGame->GetPlayer()->Location());
   } else {
-    mRoom.x = -2; // h4ck
-    ShowLocation(LOCATION_UNDEFINED);
+    mRoomId = 0;
+    ShowLocation(Vec2(-1,-1));
   }
 }
 
 Cube* GameView::GetCube() const {
-  int id = (int)(this - pGame->ViewBegin());
+  const int id = (int)(this - pGame->ViewBegin());
   return gCubes + id;
 }
 
@@ -68,19 +70,19 @@ void GameView::Update() {
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   if (!IsShowingRoom()) { 
     // compute position of each inventory item based on phase and current time
-    if (mScene.idle.count > 0 && mScene.idle.time <= HOP_PHASE * (mScene.idle.count-1) + HOP_COUNT) {
+    const unsigned t = pGame->AnimFrame() - mScene.idle.start_frame;
+    if (mScene.idle.count > 0 && t <= HOP_PHASE * (mScene.idle.count-1) + HOP_COUNT) {
       int count = 0;
       const int pad = 24;
       const int innerPad = (128-pad-pad)/3;
-      for(int i=0; i<mScene.idle.count; ++i) {
-        int localTime = mScene.idle.time - HOP_PHASE * i;
+      for(unsigned i=0; i<mScene.idle.count; ++i) {
+        int localTime = t - HOP_PHASE * i;
         if (localTime < HOP_COUNT) {
           mode.moveSprite(i, pad + innerPad * i - 8, 108  - sHopTable[localTime]);
         } else {
           mode.moveSprite(i, pad + innerPad * i - 8, 108);
         }
       }
-      mScene.idle.time++;
     }
     return; 
   }
@@ -167,9 +169,9 @@ void GameView::Update() {
 
   // item hover
   if (CurrentRoom()->HasItem()) {
-    mIdleHoverIndex = (mIdleHoverIndex + 1) % HOVER_COUNT;
+    const unsigned hover_time = (pGame->AnimFrame() - mScene.room.start_frame) % HOVER_COUNT;
     Vec2 p = 16 * CurrentRoom()->LocalCenter();
-    mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + sHoverTable[mIdleHoverIndex]);
+    mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + sHoverTable[hover_time]);
   }
 
 }
@@ -178,16 +180,17 @@ void GameView::Update() {
 // ROOM METHODS
 //----------------------------------------------------------------
 
+Vec2 GameView::Location() const {
+  return pGame->GetMap()->GetLocation(mRoomId);
+}
+
 bool GameView::IsShowingRoom() const {
-  return mRoom.x >= 0 && 
-    mRoom.y >= 0 && 
-    mRoom.x < pGame->GetMap()->Data()->width && 
-    mRoom.y < pGame->GetMap()->Data()->height; 
+  return mRoomId != ROOM_UNDEFINED;
 }
 
 Room* GameView::CurrentRoom() const { 
   ASSERT(IsShowingRoom()); 
-  return pGame->GetMap()->GetRoom(mRoom); 
+  return pGame->GetMap()->GetRoom(mRoomId);
 }
 /*
 void GameView::RandomizeBff() {
@@ -231,8 +234,9 @@ void GameView::RandomizeBff() {
 */
 
 bool GameView::ShowLocation(Vec2 room) {
-  if (room == mRoom) { return false; }
-  mRoom = room;
+  const unsigned roomId = pGame->GetMap()->Contains(room) ? pGame->GetMap()->GetRoomId(room) : ROOM_UNDEFINED;
+  if (roomId == mRoomId) { return false; }
+  mRoomId = roomId;
   // are we showing an items?
   if (IsShowingRoom()) {
     VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
@@ -257,7 +261,7 @@ bool GameView::ShowLocation(Vec2 room) {
     }
     if (this == pGame->GetPlayer()->CurrentView()) { ShowPlayer(); }
     DrawBackground();
-    mIdleHoverIndex = 0;
+    mScene.room.start_frame = pGame->AnimFrame();
 
     // h4cky scene-specific stuff
     /*
@@ -284,15 +288,15 @@ bool GameView::ShowLocation(Vec2 room) {
 }
 
 bool GameView::HideRoom() {
-  bool result = mRoom != LOCATION_UNDEFINED;
-  mRoom = LOCATION_UNDEFINED;
+  bool result = mRoomId != ROOM_UNDEFINED;
+  mRoomId = ROOM_UNDEFINED;
   // hide sprites
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   mode.hideSprite(PLAYER_SPRITE_ID);
   mode.hideSprite(TRIGGER_SPRITE_ID);
   mode.hideSprite(BFF_SPRITE_ID);
   if(result) {
-    mScene.idle.time = 0;
+    mScene.idle.start_frame = pGame->AnimFrame();
   }
 
   DrawInventorySprites();
@@ -310,7 +314,7 @@ void GameView::SetPlayerFrame(unsigned frame) {
 }
 
 void GameView::UpdatePlayer() {
-  Vec2 localPosition = pGame->GetPlayer()->Position() - 128 * mRoom;
+  Vec2 localPosition = pGame->GetPlayer()->Position() - 128 * Location();
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   mode.setSpriteImage(PLAYER_SPRITE_ID, pGame->GetPlayer()->CurrentFrame());
   mode.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
@@ -331,7 +335,7 @@ void GameView::HideItem() {
 
 void GameView::RefreshInventory() {
   if (!IsShowingRoom()) {
-    mScene.idle.time = 0;
+    mScene.idle.start_frame = pGame->AnimFrame();
     DrawInventorySprites();
   }
 }
@@ -414,7 +418,7 @@ void GameView::DrawBackground() {
         mode.BG0_drawAsset(
           Vec2(x<<1,y<<1),
           *(pGame->GetMap()->Data()->tileset),
-          pGame->GetMap()->GetTileId(mRoom, Vec2(x, y))
+          pGame->GetMap()->GetTileId(mRoomId, Vec2(x, y))
         );
       }
     }
@@ -425,7 +429,7 @@ void GameView::DrawBackground() {
           mode.BG0_drawAsset(
             Vec2(x<<1,y<<1),
             *(pGame->GetMap()->Data()->tileset),
-            pGame->GetMap()->GetTileId(mRoom, Vec2(x, y))+2
+            pGame->GetMap()->GetTileId(mRoomId, Vec2(x, y))+2
           );
         }
       }
