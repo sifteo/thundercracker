@@ -45,6 +45,9 @@ class Map:
 		for x in range(self.width):
 			for y in range(self.height-1):
 				assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id
+		# validate animated tile capacity (max 4 per room)
+		for r in self.rooms:
+			assert len([(x,y) for x in range(8) for y in range(8) if "animated" in r.tileat(x,y).props]) <= 4, "too many tiles in room in map: " + self.id
 		# unpack triggers
 		for obj in self.raw.objects:
 			if obj.type in KEYWORD_TO_TRIGGER_TYPE:
