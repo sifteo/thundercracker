@@ -104,9 +104,25 @@ class T11<bits<1> isLoad, dag outs, dag ins, string asmstr, list<dag> pattern>
 {
     bits<3> Rd;
     bits<8> word8;
+    bits<10> offset10;
     let opA = 4;
+    let word8 = offset10{9-2};
     let Inst{12} = 1;
     let Inst{11} = isLoad;
+    let Inst{10-8} = Rd;
+    let Inst{7-0} = word8;
+}
+
+class T12<bits<1> isSP, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst<outs, ins, asmstr, pattern>
+{
+    bits<3> Rd;
+    bits<8> word8;
+    bits<10> offset10;
+    let opA = 5;
+    let word8 = offset10{9-2};
+    let Inst{12} = 0;
+    let Inst{11} = isSP;
     let Inst{10-8} = Rd;
     let Inst{7-0} = word8;
 }

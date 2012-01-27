@@ -9,6 +9,7 @@
 #define SVMINSTRUCTIONINFO_H
 
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/CodeGen/ISDOpcodes.h"
 #include "SVMRegisterInfo.h"
 #include "SVMMCTargetDesc.h"
 
@@ -21,6 +22,8 @@ namespace SVMCC {
     enum CondCodes {
         EQ, NE, HS, LO, MI, PL, VS, VC, HI, LS, GE, LT, GT, LE, AL
     };
+    
+    CondCodes mapTo(ISD::CondCode CC);
 }
 
 class SVMInstrInfo : public SVMGenInstrInfo {

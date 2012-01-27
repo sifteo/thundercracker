@@ -32,10 +32,15 @@ SVMTargetLowering::SVMTargetLowering(TargetMachine &TM)
     // Register classes
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
 
-    // Branches
+    // Unsupported conditional operations
     setOperationAction(ISD::BRCOND, MVT::Other, Expand);
     setOperationAction(ISD::BRIND, MVT::Other, Expand);
     setOperationAction(ISD::BR_JT, MVT::Other, Expand);
+    setOperationAction(ISD::SETCC, MVT::i32, Expand);
+    setOperationAction(ISD::SELECT, MVT::i32, Expand);
+    setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
+
+    // Normal conditional branch
     setOperationAction(ISD::BR_CC, MVT::i32, Custom);
 
     // 64-bit operations
@@ -169,8 +174,13 @@ SDValue SVMTargetLowering::LowerReturn(SDValue Chain,
     return DAG.getNode(SVMISD::RETURN, dl, MVT::Other, Chain);
 }
 
-static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG)
+SDValue SVMTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG)
 {
+    /*
+     * Trivial custom lowering for conditional branches; just do the
+     * mapping from ISD branch conditions to SVMISD.
+     */
+    
     SDValue Chain = Op.getOperand(0);
     ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
     SDValue LHS = Op.getOperand(2);
@@ -178,25 +188,41 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG)
     SDValue Dest = Op.getOperand(4);
     DebugLoc dl = Op.getDebugLoc();
 
-    SVMCC::CondCodes sCC;
-    switch (CC) {
-    default: llvm_unreachable("Unknown condition code!");
-    case ISD::SETNE:  sCC = SVMCC::NE;
-    case ISD::SETEQ:  sCC = SVMCC::EQ;
-    case ISD::SETGT:  sCC = SVMCC::GT;
-    case ISD::SETGE:  sCC = SVMCC::GE;
-    case ISD::SETLT:  sCC = SVMCC::LT;
-    case ISD::SETLE:  sCC = SVMCC::LE;
-    case ISD::SETUGT: sCC = SVMCC::HI;
-    case ISD::SETUGE: sCC = SVMCC::HS;
-    case ISD::SETULT: sCC = SVMCC::LO;
-    case ISD::SETULE: sCC = SVMCC::LS;
-    }
-    
     SDValue Cmp = DAG.getNode(SVMISD::CMP, dl, MVT::Glue, LHS, RHS);
     SDValue CCR = DAG.getRegister(SVM::CPSR, MVT::i32);
+
     return DAG.getNode(SVMISD::BRCOND, dl, MVT::Other,
-        Chain, Dest, DAG.getConstant(sCC, MVT::i32), CCR, Cmp);
+        Chain, Dest, DAG.getConstant(SVMCC::mapTo(CC), MVT::i32), CCR, Cmp);
+}
+
+SDValue SVMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
+{
+    /*
+     * We don't really support conditional moves, or any of LLVM's many
+     * operations that are typically implemented in terms of conditional
+     * moves. When we ask LegalizeDAG to expand all of these, they funnel
+     * into SELECT_CC (LHS, RHS, TrueVal, FAlseVal, CC) -> Out.
+     *
+     * We'll need to replace this with branching, but we can't do that
+     * during ISel. For now, insert a CMOV pseudo-op, which will be expanded
+     * with a custom code emitter.
+     *
+     * (This is the same technique used by several other targets)
+     */
+
+    EVT VT = Op.getValueType();
+    SDValue LHS = Op.getOperand(0);
+    SDValue RHS = Op.getOperand(1);
+    ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+    SDValue TrueVal = Op.getOperand(2);
+    SDValue FalseVal = Op.getOperand(3);
+    DebugLoc dl = Op.getDebugLoc();
+
+    SDValue Cmp = DAG.getNode(SVMISD::CMP, dl, MVT::Glue, LHS, RHS);
+    SDValue CCR = DAG.getRegister(SVM::CPSR, MVT::i32);
+    
+    return DAG.getNode(SVMISD::CMOV, dl, VT, TrueVal, FalseVal,
+        DAG.getConstant(SVMCC::mapTo(CC), MVT::i32), CCR, Cmp);
 }
 
 SDValue SVMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
@@ -204,5 +230,6 @@ SDValue SVMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
     switch (Op.getOpcode()) {
     default: llvm_unreachable("Should not custom lower this!");
     case ISD::BR_CC:         return LowerBR_CC(Op, DAG);
+    case ISD::SELECT_CC:     return LowerSELECT_CC(Op, DAG);
     }
 }

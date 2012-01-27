@@ -42,7 +42,6 @@ public:
         if (MO.isImm())
             return static_cast<unsigned>(MO.getImm());
 
-        // XXX: To-do
         return 0;
     }
 
@@ -64,14 +63,12 @@ public:
         SmallVectorImpl<MCFixup> &Fixups) const
     {
         const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
-
         int Size = Desc.getSize();
-        assert(Size > 0);
-
-        uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
-        EmitConstant(Binary, Size, OS);
+        if (Size > 0) {
+            uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
+            EmitConstant(Binary, Size, OS);
+        }
     }
-    
 };
 
 }  // end namespace

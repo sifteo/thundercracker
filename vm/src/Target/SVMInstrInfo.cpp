@@ -21,9 +21,25 @@
 
 using namespace llvm;
 
+SVMCC::CondCodes SVMCC::mapTo(ISD::CondCode CC)
+{
+    switch (CC) {
+    default: llvm_unreachable("Unknown condition code!");
+    case ISD::SETNE:  return SVMCC::NE;
+    case ISD::SETEQ:  return SVMCC::EQ;
+    case ISD::SETGT:  return SVMCC::GT;
+    case ISD::SETGE:  return SVMCC::GE;
+    case ISD::SETLT:  return SVMCC::LT;
+    case ISD::SETLE:  return SVMCC::LE;
+    case ISD::SETUGT: return SVMCC::HI;
+    case ISD::SETUGE: return SVMCC::HS;
+    case ISD::SETULT: return SVMCC::LO;
+    case ISD::SETULE: return SVMCC::LS;
+    }
+}
+
 SVMInstrInfo::SVMInstrInfo()
   : RI(*this) {}
-
 
 unsigned SVMInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                            int &FrameIndex) const

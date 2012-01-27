@@ -21,6 +21,7 @@ namespace llvm {
             RETURN,
             CMP,
             BRCOND,
+            CMOV,
         };
     }
 
@@ -56,6 +57,11 @@ namespace llvm {
                       const SmallVectorImpl<ISD::OutputArg> &Outs,
                       const SmallVectorImpl<SDValue> &OutVals,
                       DebugLoc dl, SelectionDAG &DAG) const;
+                      
+    private:
+        // Custom lowering
+        static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
+        static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
     };
 }
 
