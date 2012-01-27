@@ -40,7 +40,7 @@ public:
       ASSERT(0 <= x && x < mData->width-1);
       ASSERT(0 <= y && y < mData->height);
       const int idx = (y * (mData->width-1) + x);
-      return mData->xportals[idx/8] & (1<<(idx%8));
+      return mData->xportals[idx>>3] & (1<<(idx%8));
   }
 
   inline const bool GetPortalY(int x, int y) const {
@@ -48,7 +48,7 @@ public:
       ASSERT(0 <= x && x < mData->width);
       ASSERT(0 <= y && y < mData->height-1);
       const int idx = (x * (mData->height-1) + y);
-      return mData->yportals[idx/8] & (1<<(idx%8));
+      return mData->yportals[idx>>3] & (1<<(idx%8));
   }
   
   inline const RoomData* GetRoomData(uint8_t roomId) const {
