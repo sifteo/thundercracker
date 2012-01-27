@@ -438,6 +438,8 @@ void GridSlot::Update(float t)
 
 void GridSlot::mark()
 {
+    if( m_state == STATE_MARKED || m_state == STATE_EXPLODING )
+        return;
     m_animFrame = 0;
 	m_state = STATE_MARKED;
 	m_eventTime = System::clock();
@@ -525,8 +527,6 @@ void GridSlot::TiltFrom(GridSlot &src)
 	m_curMovePos.x = src.m_col * 4;
 	m_curMovePos.y = src.m_row * 4;
     m_RockHealth = src.m_RockHealth;
-
-    Game::Inst().Stabilize();
 }
 
 
@@ -539,6 +539,16 @@ void GridSlot::startPendingMove()
 		m_state = STATE_MOVING;
 		m_animFrame = 0;
 	}
+}
+
+
+//fake moves don't animate or take time, just finish them
+void GridSlot::finishFakeMove()
+{
+    if( m_state == STATE_PENDINGMOVE )
+    {
+        m_state = STATE_LIVING;
+    }
 }
 
 

@@ -65,6 +65,14 @@ void demo(void)
     draw_xy = XY(12,0);
     draw_image(img_radio_3);
 
+	#ifdef CUBE_CHAN
+
+		draw_xy = XY(0,15);
+	    draw_attr = ATTR_GRAY;
+	    draw_hex(CUBE_CHAN);
+
+	#endif
+
     draw_xy = XY(14,15);
     draw_attr = ATTR_GRAY;
     draw_hex(radio_get_cube_id());
