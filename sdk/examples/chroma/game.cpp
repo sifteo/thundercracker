@@ -604,6 +604,9 @@ void Game::enterScore()
             if( i < (int)NUM_HIGH_SCORES - 1 )
             {
                 s_HighScores[i+1] = s_HighScores[i];
+
+                if( i == 0 )
+                    s_HighScores[0] = m_iScore;
             }
         }
         else
