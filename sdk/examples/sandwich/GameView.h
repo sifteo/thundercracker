@@ -21,13 +21,13 @@ private:
 
   union {
     struct {
-      unsigned start_frame;
+      unsigned startFrame;
       unsigned count;
     } idle;
     struct {
-      unsigned start_frame;
-      unsigned anim_tile_count;
-      AnimTileView anim_tiles[ANIM_TILE_CAPACITY];
+      unsigned startFrame;
+      unsigned animTileCount;
+      AnimTileView animTiles[ANIM_TILE_CAPACITY];
     } room;
   } mScene;
 
@@ -37,7 +37,7 @@ public:
   bool IsShowingRoom() const;
   bool InSpriteMode() const;
   Vec2 Location() const;
-  Room* CurrentRoom() const;
+  Room* GetRoom() const;
   Cube::Side VirtualTiltDirection() const;
   GameView* VirtualNeighborAt(Cube::Side side) const;
   

@@ -164,7 +164,7 @@ void Player::Update(float dt) {
       // animate walking to target
       PlaySfx(sfx_running);
       pTarget->ShowPlayer();
-      if (mDir == SIDE_TOP && pCurrent->CurrentRoom()->HasClosedDoor()) {
+      if (mDir == SIDE_TOP && pCurrent->GetRoom()->HasClosedDoor()) {
         for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
           mPosition.y -= WALK_SPEED;
           pCurrent->UpdatePlayer();
@@ -173,7 +173,7 @@ void Player::Update(float dt) {
         if (HaveBasicKey()) {
           DecrementBasicKeyCount();
           // check the door
-          pCurrent->CurrentRoom()->OpenDoor();
+          pCurrent->GetRoom()->OpenDoor();
           pCurrent->DrawBackground();
           pCurrent->GetCube()->vbuf.touch();
           pCurrent->UpdatePlayer();
@@ -191,7 +191,7 @@ void Player::Update(float dt) {
             CORO_YIELD;
           }
           // fill in the remainder
-          mPosition = pTarget->CurrentRoom()->Center();
+          mPosition = pTarget->GetRoom()->Center();
         } else {
           PlaySfx(sfx_doorBlock);
           mPath.Cancel();
@@ -241,11 +241,11 @@ void Player::Update(float dt) {
         pCurrent->HidePlayer();
         pCurrent = pTarget;
         pTarget = 0;  
-        mPosition = pCurrent->CurrentRoom()->Center();
+        mPosition = pCurrent->GetRoom()->Center();
         pCurrent->UpdatePlayer();        
-        if (pCurrent->CurrentRoom()->HasItem()) {
-          const ItemData* pItem = pCurrent->CurrentRoom()->TriggerAsItem();
-          if (pGame->GetState()->FlagTrigger(pItem->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
+        if (pCurrent->GetRoom()->HasItem()) {
+          const ItemData* pItem = pCurrent->GetRoom()->TriggerAsItem();
+          if (pGame->GetState()->FlagTrigger(pItem->trigger)) { pCurrent->GetRoom()->ClearTrigger(); }
           PickupItem(pItem->itemId);
           // do a pickup animation
           for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
@@ -267,25 +267,25 @@ void Player::Update(float dt) {
         }
       }
     } while(mPath.PopStep(pCurrent));
-    if (pCurrent->CurrentRoom()->HasGateway()) {
-      const GatewayData* pGate = pCurrent->CurrentRoom()->TriggerAsGate();
+    if (pCurrent->GetRoom()->HasGateway()) {
+      const GatewayData* pGate = pCurrent->GetRoom()->TriggerAsGate();
       const MapData& targetMap = gMapData[pGate->targetMap];
       const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
-      if (pGame->GetState()->FlagTrigger(pGate->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); } 
-      pGame->WalkTo(128 * pCurrent->CurrentRoom()->Location() + Vec2(pGate->x, pGate->y));
+      if (pGame->GetState()->FlagTrigger(pGate->trigger)) { pCurrent->GetRoom()->ClearTrigger(); } 
+      pGame->WalkTo(128 * pCurrent->GetRoom()->Location() + Vec2(pGate->x, pGate->y));
       pGame->TeleportTo(gMapData[pGate->targetMap], Vec2(
         128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
         128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
       ));
-    } else if (pCurrent->CurrentRoom()->HasNPC()) {
+    } else if (pCurrent->GetRoom()->HasNPC()) {
       ////////
       mStatus = PLAYER_STATUS_IDLE;
       pCurrent->UpdatePlayer();
       for(int i=0; i<16; ++i) {
         pGame->Paint(true);
       }
-      const NpcData* pNpc = pCurrent->CurrentRoom()->TriggerAsNPC();
-      if (pGame->GetState()->FlagTrigger(pNpc->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
+      const NpcData* pNpc = pCurrent->GetRoom()->TriggerAsNPC();
+      if (pGame->GetState()->FlagTrigger(pNpc->trigger)) { pCurrent->GetRoom()->ClearTrigger(); }
       DoDialog(gDialogData[pNpc->dialog], pCurrent->GetCube());
       System::paintSync();
       pCurrent->Init();

@@ -147,7 +147,7 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
   Room* dst = GetRoom(dloc);
   
   AStar as;
-  for(ACell* p = as.cells; p != as.cells + A_STAR_CAP; ++p) { p->record = 0xff; }
+  _SYS_memset8(&(as.cells->record), 0xff, A_STAR_CAP);
 
   // convert src/dst tile positions to normalized coordinates relative to the 65-tile pathfinding grid
   as.offset = dir == SIDE_TOP || dir == SIDE_LEFT ? dloc : loc;
@@ -219,56 +219,7 @@ bool Map::FindPath(Vec2 loc, Cube::Side dir, MapPath* outPath) {
       }
     }
   } while(pSelected);
-  /*
-  // WHAT IS THIS MADNESS??
-  // Just fill in the trivial-path and call it a day
-  outPath->pFirstMove = outPath->moves + PATH_CAPACITY;
-  if (dir % 2 == 0) {
-    // up-down neighbors, do XY order, left-right neighbors do YX order
-    if (as.dst.x != as.src.x) {
-      if (as.dst.x > as.src.x) {
-        for(int i=as.src.x; i<as.dst.x; ++i) {
-          (outPath->pFirstMove)--;
-          *(outPath->pFirstMove) = SIDE_RIGHT;
-        }
-      } else {
-        for(int i=as.src.x; i>as.dst.x; --i) {
-          (outPath->pFirstMove)--;
-          *(outPath->pFirstMove) = SIDE_LEFT;
-        }
-      }
-    }
-  }
-  if (as.dst.y != as.src.y) {
-    if (as.dst.y > as.src.y) {
-      for(int i=as.src.y; i<as.dst.y; ++i) {
-        (outPath->pFirstMove)--;
-        *(outPath->pFirstMove) = SIDE_BOTTOM;
-      }
-    } else {
-      for(int i=as.src.y; i>as.dst.y; --i) {
-        (outPath->pFirstMove)--;
-        *(outPath->pFirstMove) = SIDE_TOP;
-      }
-    }
-  }
-  if (dir%2 == 1) {
-    // up-down neighbors, do XY order
-    if (as.dst.x != as.src.x) {
-      if (as.dst.x > as.src.x) {
-        for(int i=as.src.x; i<as.dst.x; ++i) {
-          (outPath->pFirstMove)--;
-          *(outPath->pFirstMove) = SIDE_RIGHT;
-        }
-      } else {
-        for(int i=as.src.x; i>as.dst.x; --i) {
-          (outPath->pFirstMove)--;
-          *(outPath->pFirstMove) = SIDE_LEFT;
-        }
-      }
-    }
-  }
-  */
+  // WHAT IS THIS MADNESS?  Some bad data was exported
   return false;
 }
 
