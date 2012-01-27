@@ -37,6 +37,8 @@ public:
     static const int TEST_TILT_ITERATIONS = 4;
     //anything below this we don't care about
     static const float TILT_SOUND_EPSILON;
+    static const int PTS_PER_EMPTIED_CUBE = 100;
+    static const float SHOW_BONUS_TIME;
 
 	typedef enum
 	{
@@ -44,6 +46,7 @@ public:
         STATE_MESSAGING,
 		STATE_EMPTY,
         STATE_REFILL,
+        STATE_CUBEBONUS,
 	} CubeState;
 
 	CubeWrapper();

@@ -25,7 +25,7 @@ const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 const float CubeWrapper::TIME_PER_MESSAGE_FRAME = 0.25f / NUM_MESSAGE_FRAMES;
 const float CubeWrapper::TILT_SOUND_EPSILON = 1.0f;
-
+const float CubeWrapper::SHOW_BONUS_TIME = 3.1f;
 
 
 static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] = {
@@ -192,6 +192,24 @@ void CubeWrapper::Draw()
                     m_queuedFlush = true;
 					break;
 				}
+                case STATE_CUBEBONUS:
+                {
+                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+
+                    String<3> bufCubes;
+
+                    unsigned int numCubes = Game::Inst().CountEmptyCubes();
+                    bufCubes << numCubes;
+
+                    m_bg1helper.DrawText( Vec2( 5, 3 ), Font, bufCubes );
+                    m_bg1helper.DrawText( Vec2( 7, 3 ), Font, "Cube" );
+                    m_bg1helper.DrawText( Vec2( 4, 5 ), Font, "Bonus:" );
+                    Banner::DrawScore( m_bg1helper, Vec2( 7, 7 ), Banner::CENTER, numCubes * PTS_PER_EMPTIED_CUBE );
+
+                    m_queuedFlush = true;
+                    break;
+                }
+
                 case STATE_REFILL:
                 {
                     m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
@@ -305,6 +323,21 @@ void CubeWrapper::Update(float t, float dt)
     if( m_state == STATE_MESSAGING )
     {
         if( m_stateTime / TIME_PER_MESSAGE_FRAME >= NUM_MESSAGE_FRAMES )
+        {
+            int count = Game::Inst().CountEmptyCubes();
+            //bonuses for multiple cubes being empty
+            if( count > 1 )
+            {
+                setState( STATE_CUBEBONUS );
+                Game::Inst().addScore( count * PTS_PER_EMPTIED_CUBE );
+            }
+            else
+                setState( STATE_EMPTY );
+        }
+    }
+    else if( m_state == STATE_CUBEBONUS )
+    {
+        if( m_stateTime > SHOW_BONUS_TIME )
             setState( STATE_EMPTY );
     }
 
@@ -866,7 +899,10 @@ void CubeWrapper::checkRefill()
     else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
 	{
         if( isEmpty() )
-            setState( STATE_MESSAGING );
+        {
+            if( m_state != STATE_MESSAGING )
+                setState( STATE_MESSAGING );
+        }
         else
             setState( STATE_PLAYING );
 	}

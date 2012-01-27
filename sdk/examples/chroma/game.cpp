@@ -713,3 +713,15 @@ bool Game::AreNoCubesEmpty() const
     return true;
 }
 
+unsigned int Game::CountEmptyCubes() const
+{
+    int count = 0;
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[i].isEmpty() )
+            count++;
+    }
+
+    return count;
+}
