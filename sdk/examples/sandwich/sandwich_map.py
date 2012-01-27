@@ -181,3 +181,12 @@ class Map:
 				"ndoors": len(self.doors),
 				"nanimtiles": len(self.animatedtiles)
 			})
+
+
+def portal_type(tile):
+	if "door" in tile.props:
+		return PORTAL_DOOR
+	elif "wall" in tile.props or "obstacle" in tile.props:
+		return PORTAL_WALL
+	else:
+		return PORTAL_OPEN

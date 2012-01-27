@@ -1,12 +1,9 @@
+#!/usr/bin/python
 # implementation of sandwich kingdom content specification
-
+import lxml.etree, os, os.path, re, traceback, sys, zlib, tmx, misc
 from sandwich_map import *
 from sandwich_dialog import *
 from sandwich_script import *
-
-import lxml.etree
-import os, os.path, re, traceback, sys, zlib
-import tmx, misc
 
 def load():
 	try:
@@ -127,5 +124,3 @@ class World:
 
 if __name__ == "__main__": 
 	export()
-
-
