@@ -7,7 +7,7 @@ static void onNeighbor(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
 }
 
 static void onTouch(_SYSCubeID cid) {    
-    pGame->ViewAt(cid)->touched = true;
+    // /pGame->ViewAt(cid)->touched = !pGame->ViewAt(cid)->touched;
 }
 
 
@@ -26,35 +26,31 @@ void Game::ObserveNeighbors(bool flag) {
 // BOOTSTRAP API
 //------------------------------------------------------------------
 
-Game::Game() {
-  const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  player.SetPosition(Vec2(
-    128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerx,
-    128 * (gQuestData->roomId / gMapData[gQuestData->mapId].width) + 16 * room.centery
-  ));
-}
-
 void Game::MainLoop() {
   // reset everything
-  for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    v->Init();
-  }
-  _SYS_vectors.cubeEvents.touch = onTouch;
+  mSimFrames = 0;
+  mAnimFrames = 0;
+  mIsDone = false;
+  mNeedsSync = 0;
+  mState.Init();
+  mMap.Init();
+  mPlayer.Init();
+  for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) { v->Init(); }
 
   // initial zoom out (yoinked and modded from TeleportTo)
   { 
     gChannelMusic.stop();
     PlaySfx(sfx_zoomIn);
-    GameView* view = player.CurrentView();
+    GameView* view = mPlayer.CurrentView();
     view->HidePlayer();
-    Vec2 room = player.Location();
+    Vec2 room = mPlayer.Location();
     VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
-          *(map.Data()->tileset),
-          map.GetTileId(room, Vec2(x, y))
+          *(mMap.Data()->tileset),
+          mMap.GetTileId(room, Vec2(x, y))
         );
       }
     }
@@ -73,29 +69,26 @@ void Game::MainLoop() {
     view->Init();
     System::paintSync();
   }  
-  PlayMusic(music_castle);
-  //PlaySfx(sfx_neighbor);
 
+  PlayMusic(music_castle);
   mSimTime = System::clock();
   ObserveNeighbors(true);
   CheckMapNeighbors();
 
-  mIsDone = false;
-  mNeedsSync = 0;
   while(!mIsDone) {
     float dt = UpdateDeltaTime();
     if (sNeighborDirty) { 
       CheckMapNeighbors(); 
     }
-    player.Update(dt);
+    mPlayer.Update(dt);
     Paint();
+    mSimFrames++;
   }
 }
 
 void Game::Paint(bool sync) {
   for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->Update();
-    p->touched = false;
     #ifdef KLUDGES
     p->GetCube()->vbuf.touch();
     #endif
@@ -108,6 +101,7 @@ void Game::Paint(bool sync) {
   } else {
     System::paint();
   }
+  mAnimFrames++;
 }
 
 float Game::UpdateDeltaTime() {
@@ -118,15 +112,15 @@ float Game::UpdateDeltaTime() {
 }
 
 void Game::MovePlayerAndRedraw(int dx, int dy) {
-  player.Move(dx, dy);
-  player.UpdateAnimation(UpdateDeltaTime());
-  player.CurrentView()->UpdatePlayer();
+  mPlayer.Move(dx, dy);
+  mPlayer.UpdateAnimation(UpdateDeltaTime());
+  mPlayer.CurrentView()->UpdatePlayer();
   System::paint();
 }
 
 void Game::WalkTo(Vec2 position) {
   PlaySfx(sfx_running);
-  Vec2 delta = position - player.Position();
+  Vec2 delta = position - mPlayer.Position();
   while(delta.x > WALK_SPEED) {
     MovePlayerAndRedraw(WALK_SPEED, 0);
     delta.x -= WALK_SPEED;
@@ -154,7 +148,7 @@ void Game::WalkTo(Vec2 position) {
 void Game::TeleportTo(const MapData& m, Vec2 position) {
   gChannelMusic.stop();
   Vec2 room = position/128;
-  GameView* view = player.CurrentView();
+  GameView* view = mPlayer.CurrentView();
   view->HidePlayer();
   // blank other cubes
   for(GameView* p = ViewBegin(); p != ViewEnd(); ++p) {
@@ -169,8 +163,8 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
       for(int y=0; y<8; ++y) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
-          *(map.Data()->tileset),
-          map.GetTileId(view->Location(), Vec2(x, y))
+          *(mMap.Data()->tileset),
+          mMap.GetTileId(view->Location(), Vec2(x, y))
         );
       }
     }
@@ -186,7 +180,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
       System::paint();
     }
   }
-  map.SetData(m);
+  mMap.SetData(m);
   for(GameView* p = ViewBegin(); p!= ViewEnd(); ++p) {
     if (p != view) { p->DrawBackground(); }
   }
@@ -198,8 +192,8 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
       for(int y=0; y<8; ++y) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
-          *(map.Data()->tileset),
-          map.GetTileId(room, Vec2(x, y))
+          *(mMap.Data()->tileset),
+          mMap.GetTileId(room, Vec2(x, y))
         );
       }
     }
@@ -216,11 +210,11 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
     System::paintSync();
   }
   
-  PlayMusic(map.Data() == &gMapData[1] ? music_dungeon : music_castle);
+  PlayMusic(mMap.Data() == &gMapData[1] ? music_dungeon : music_castle);
 
   // walk out of the in-gate
-  Vec2 target = map.GetRoom(room)->Center();
-  player.SetLocation(position, InferDirection(target - position));
+  Vec2 target = mMap.GetRoom(room)->Center();
+  mPlayer.SetLocation(position, InferDirection(target - position));
   view->Init();
   WalkTo(target);
   CheckMapNeighbors();
@@ -237,15 +231,13 @@ void Game::OnInventoryChanged() {
   for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->RefreshInventory();
   }
-  #ifndef FAST_FORWARD
   const int firstSandwichId = 2;
   int count = 0;
   for(int i=firstSandwichId; i<firstSandwichId+4; ++i) {
-    if(!player.HasItem(i)) {
+    if(!mPlayer.HasItem(i)) {
       return;
     }
   }
-  #endif
   mIsDone = true;
 }
 
@@ -271,7 +263,7 @@ void Game::CheckMapNeighbors() {
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     v->visited = false;
   }
-  VisitMapView(player.KeyView(), player.KeyView()->Location());
+  VisitMapView(mPlayer.KeyView(), mPlayer.KeyView()->Location());
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
     if (!v->visited) { 
       if (v->HideRoom()) {

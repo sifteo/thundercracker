@@ -1,8 +1,7 @@
 #include "Map.h"
 #include "Game.h"
 
-
-Map::Map() {
+void Map::Init() {
   SetData(gMapData[gQuestData->mapId]);
 }
 
@@ -15,19 +14,19 @@ void Map::SetData(const MapData& map) {
 
     // find active triggers
     for(const ItemData* p = mData->items; p!= mData->items + mData->itemCount; ++p) {
-      if (pGame->state.IsActive(p->trigger)) {
+      if (pGame->GetState()->IsActive(p->trigger)) {
         ASSERT(!mRooms[p->trigger.room].HasTrigger());
         mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &(p->trigger));
       }
     }
     for(const GatewayData* p = mData->gates; p != mData->gates + mData->gateCount; ++p) {
-      if (pGame->state.IsActive(p->trigger)) {
+      if (pGame->GetState()->IsActive(p->trigger)) {
         ASSERT(!mRooms[p->trigger.room].HasTrigger());
         mRooms[p->trigger.room].SetTrigger(TRIGGER_GATEWAY, &(p->trigger));
       }
     }
     for(const NpcData* p = mData->npcs; p != mData->npcs + mData->npcCount; ++p) {
-      if (pGame->state.IsActive(p->trigger)) {
+      if (pGame->GetState()->IsActive(p->trigger)) {
         ASSERT(!mRooms[p->trigger.room].HasTrigger());
         mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &(p->trigger));
       }
@@ -128,7 +127,7 @@ struct AStar {
       p->tileID = nid;
       recordCount++;
       // is it walkable? (remember to convert normalized tile position to global tile position)
-      if (pGame->map.IsVertexWalkable(ntile + Vec2(2,2) + (8 * offset))) {
+      if (pGame->GetMap()->IsVertexWalkable(ntile + Vec2(2,2) + (8 * offset))) {
         // open the record
         p->parentDirection = (dir+2)%4;
         p->costToThis = parent->costToThis + 1;
