@@ -28,14 +28,25 @@ class SPIMaster {
     void end();
 
     uint8_t transfer(uint8_t b);
+    void transfer(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len);
     void transferTable(const uint8_t *table);
+
+    void transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len);
+    void txDma(const uint8_t *txbuf, unsigned len);
+    void rxDma(uint8_t *rxbuf, unsigned len);
+
+    bool dmaInProgress() const;
   
  private:
     volatile SPI_t *hw;
+    volatile DMAChannel_t *dmaRxChan;
+    volatile DMAChannel_t *dmaTxChan;
     GPIOPin csn;
     GPIOPin sck;
     GPIOPin miso;
     GPIOPin mosi;
+
+    static void dmaCallback(void *p, uint8_t flags);
 };
 
 #endif
