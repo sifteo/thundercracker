@@ -1,9 +1,12 @@
 #include "assetmanager.h"
-#include "usart.h"
-#include "usb.h"
+#include "flash.h"
 #include <sifteo.h>
 
-MacronixMX25 &AssetManager::flash = MacronixMX25::instance;
+#ifndef SIFTEO_SIMULATOR
+#include "usb.h"
+#include "hardware.h"
+#endif
+
 struct AssetManager::AssetInstallation AssetManager::installation;
 
 void AssetManager::init()
@@ -33,22 +36,27 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
 
         // make sure enough sectors are erased for this asset
         // XXX: just starting from 0 for now, assuming only one game's assets
-        for (unsigned i = 0; i < installation.size; i += flash.SECTOR_SIZE) {
+        for (unsigned i = 0; i < installation.size; i += Flash::SECTOR_SIZE) {
+#ifndef SIFTEO_SIMULATOR
             status = 2;
             Usb::write(&status, 1);
-            if (flash.eraseSector(i) != MacronixMX25::Ok) {
+#endif
+            if (!Flash::eraseSector(i)) {
                 ; // TODO
             }
         }
+#ifndef SIFTEO_SIMULATOR
         status = 0x0;
         Usb::write(&status, 1);
+
         CRC.CR = 1; // reset CRC unit
+#endif
         installation.state = WritingData;
     }
 
     unsigned chunk = MIN(installation.size - installation.currentAddress, len);
 
-    if (flash.write(installation.currentAddress, buf, chunk) != MacronixMX25::Ok) {
+    if (!Flash::write(installation.currentAddress, buf, chunk)) {
         ; // TODO
     }
     installation.currentAddress += chunk;
@@ -60,24 +68,29 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
     if (installation.currentAddress >= installation.size) {
         installation.state = WaitingForLength;
 
-        uint32_t crc = CRC.DR;
+        uint32_t crc;
+#ifndef SIFTEO_SIMULATOR
+        crc = CRC.DR;
 
         CRC.CR = 1; // reset CRC for verification
+#endif
+
         installation.crcwordBytes = 0;
         installation.crcword = 0;
 
         // debug: read back out and verify CRC
-        uint8_t b[flash.PAGE_SIZE];
+        uint8_t b[Flash::PAGE_SIZE];
         unsigned addr = 0;
         while (addr < installation.size) {  // XXX: assumes 0 based offset
             unsigned chunksize = MIN(installation.size - addr, sizeof(b));
-            flash.read(addr, b, chunksize);
+            Flash::read(addr, b, chunksize);
             addToCrc(b, chunksize);
             addr += chunksize;
         }
-
+#ifndef SIFTEO_SIMULATOR
         status = (crc == CRC.DR) ? 0 : 1;
         Usb::write(&status, 1);
+#endif
     }
 
 }
@@ -95,7 +108,9 @@ void AssetManager::addToCrc(const uint8_t *buf, unsigned len)
         len--;
 
         if (installation.crcwordBytes == 4) {
+#ifndef SIFTEO_SIMULATOR
             CRC.DR = installation.crcword;
+#endif
             installation.crcwordBytes = 0;
             installation.crcword = 0;
         }
