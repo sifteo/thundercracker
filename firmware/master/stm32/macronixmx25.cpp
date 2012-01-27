@@ -147,6 +147,28 @@ MacronixMX25::Status MacronixMX25::eraseSector(uint32_t address)
     return (Status)(readReg(ReadSecurityReg) & (EraseFail | WriteProtected));
 }
 
+/*
+ * Any address within a block is valid to erase that block.
+ */
+MacronixMX25::Status MacronixMX25::eraseBlock(uint32_t address)
+{
+    ensureWriteEnabled();
+
+    spi.begin();
+    spi.transfer(BlockErase64);
+    spi.transfer(address >> 16);
+    spi.transfer(address >> 8);
+    spi.transfer(address >> 0);
+    spi.end();
+
+    // wait for erase complete
+    while (readReg(ReadStatusReg) & WriteInProgress) {
+        ; // do something better here :/
+    }
+
+    return (Status)(readReg(ReadSecurityReg) & (EraseFail | WriteProtected));
+}
+
 MacronixMX25::Status MacronixMX25::chipErase()
 {
     ensureWriteEnabled();
