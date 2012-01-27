@@ -28,6 +28,10 @@ namespace {
             return "SVM DAG->DAG Pattern Instruction Selection";
         }
         
+        // Custom selectors
+        bool shouldUseConstantPool(uint32_t val);
+        void moveConstantToPool(SDNode *N, uint32_t val);
+        
         // Complex patterns
         bool SelectAddrSP(SDValue N, SDValue &Base, SDValue &Offset);
 
@@ -41,11 +45,55 @@ SDNode *SVMDAGToDAGISel::Select(SDNode *N)
         return NULL;
 
     switch (N->getOpcode()) {
+
+    case ISD::Constant: {
+        uint32_t val = cast<ConstantSDNode>(N)->getZExtValue();
+        if (shouldUseConstantPool(val)) {
+            moveConstantToPool(N, val);
+            return NULL;
+        }
+        break;
+    }
+
     default:
         break;
     }
 
     return SelectCode(N);
+}
+
+bool SVMDAGToDAGISel::shouldUseConstantPool(uint32_t val)
+{
+    /*
+     * Is this value more efficient or only possible to express using a
+     * constant pool?
+     *
+     * Right now we only consider the range of MOVSi8. All constants
+     * over 255 are moved to the pool. In the future it may make more sense
+     * to generate some values programmatically using negation or shifting,
+     * if this can be done using fewer unshared bytes than a const pool entry.
+     */
+    return val > 0xFF;
+}
+
+void SVMDAGToDAGISel::moveConstantToPool(SDNode *N, uint32_t val)
+{
+    /*
+     * Convert a Constant node to a constant pool entry. We do this
+     * automatically for constants that are too large for a MOVSi8.
+     */
+    
+    SDValue CPIdx =
+        CurDAG->getTargetConstantPool(ConstantInt::get(
+                               Type::getInt32Ty(*CurDAG->getContext()), val),
+                               TLI.getPointerTy());
+
+    DebugLoc dl = N->getDebugLoc();
+    SDNode *newNode = CurDAG->getMachineNode(SVM::LDRpc, dl, MVT::i32,
+                                             MVT::Other, CPIdx,
+                                             CurDAG->getEntryNode());
+
+    ReplaceUses(SDValue(N, 0), SDValue(newNode, 0));
 }
 
 bool SVMDAGToDAGISel::SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset)

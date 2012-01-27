@@ -55,7 +55,7 @@ SVMTargetLowering::SVMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
     setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
     setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
-    
+
     computeRegisterProperties();
 }
 
@@ -65,6 +65,9 @@ const char *SVMTargetLowering::getTargetNodeName(unsigned Opcode) const
     default: return 0;
     case SVMISD::CALL:          return "SVMISD::CALL";
     case SVMISD::RETURN:        return "SVMISD::RETURN";
+    case SVMISD::CMP:           return "SVMISD::CMP";
+    case SVMISD::BRCOND:        return "SVMISD::BRCOND";
+    case SVMISD::CMOV:          return "SVMISD::CMOV";
     }
 }
 

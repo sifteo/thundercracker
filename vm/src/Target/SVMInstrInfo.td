@@ -30,7 +30,10 @@ def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
 def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
     "!ADJCALLSTACKUP $amt1", [(callseq_end timm:$amt1, timm:$amt2)]>;
 
-def RET : SVC<1, (outs), (ins), "s.ret", [(SVMRet)]>;
+def RET : SVC<1, (outs), (ins), "s.ret", [(SVMRet)]> {
+    let isReturn = 1;
+    let isTerminator = 1;
+}
 
 def CALL : SVC<2, (outs), (ins callTarget:$offset11),
     "s.call\t$offset11", [(SVMCall tglobaladdr:$offset11)]> {
@@ -263,13 +266,22 @@ def MVNr : T4<(outs GPReg:$Rs), (ins GPReg:$Rn),
     let opB = 15;
 }
 
+
+/****************************************************************
+ * Constant Pool
+ */
+ 
+def LDRpc : T6<(outs GPReg:$Rd), (ins i32imm:$offset8),
+    "ldr\t$Rd, [PC, #$offset8]", [(set GPReg:$Rd, tconstpool:$offset8)]>;
+
+
 /****************************************************************
  * Stack operations
  */
 
 def ADDRsp : Operand<i32>,
     ComplexPattern<iPTR, 2, "SelectAddrSP", [frameindex], []> {
-        let MIOperandInfo = (ops GPReg:$base, i32imm:$offset10);
+    let MIOperandInfo = (ops GPReg:$base, i32imm:$offset10);
 }
 
 def LDRsp : T11<1, (outs GPReg:$Rd), (ins ADDRsp:$offset10),

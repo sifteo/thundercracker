@@ -18,7 +18,8 @@ void siftmain() {
         _SYS_ticks_ns(&now);
         int64_t delta = now - then;
 
-        func(buf, 5);
+        func(buf, 0x12345678);
+        func(buf, 0xabcdef00);
         
         if (delta > 100000) {
             //then = now;

@@ -111,6 +111,19 @@ class T4<dag outs, dag ins, string asmstr, list<dag> pattern>
     let Defs = [CPSR];
 }
 
+class T6<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst<outs, ins, asmstr, pattern>
+{
+    bits<3> Rd;
+    bits<8> word8;
+    bits<10> offset10;
+    let opA = 2;
+    let word8 = offset10{9-2};
+    let Inst{12-11} = 1;
+    let Inst{10-8} = Rd;
+    let Inst{7-0} = word8;
+}
+
 class T11<bits<1> isLoad, dag outs, dag ins, string asmstr, list<dag> pattern>
     : ThumbInst<outs, ins, asmstr, pattern>
 {
