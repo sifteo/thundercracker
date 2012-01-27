@@ -25,7 +25,7 @@ const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 const float CubeWrapper::TIME_PER_MESSAGE_FRAME = 0.25f / NUM_MESSAGE_FRAMES;
 const float CubeWrapper::TILT_SOUND_EPSILON = 1.0f;
-
+const float CubeWrapper::SHOW_BONUS_TIME = 3.1f;
 
 
 static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] = {
@@ -160,6 +160,9 @@ void CubeWrapper::Draw()
 
                     m_queuedFlush = true;
 
+                    //super debug code!
+                    //Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, m_cube.id() );
+
 					break;
 				}
                 case STATE_MESSAGING:
@@ -189,6 +192,24 @@ void CubeWrapper::Draw()
                     m_queuedFlush = true;
 					break;
 				}
+                case STATE_CUBEBONUS:
+                {
+                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+
+                    String<3> bufCubes;
+
+                    unsigned int numCubes = Game::Inst().CountEmptyCubes();
+                    bufCubes << numCubes;
+
+                    m_bg1helper.DrawText( Vec2( 5, 3 ), Font, bufCubes );
+                    m_bg1helper.DrawText( Vec2( 7, 3 ), Font, "Cube" );
+                    m_bg1helper.DrawText( Vec2( 4, 5 ), Font, "Bonus:" );
+                    Banner::DrawScore( m_bg1helper, Vec2( 7, 7 ), Banner::CENTER, numCubes * PTS_PER_EMPTIED_CUBE );
+
+                    m_queuedFlush = true;
+                    break;
+                }
+
                 case STATE_REFILL:
                 {
                     m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
@@ -200,7 +221,10 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_DYING:
         {
-            m_gameover.Draw( m_cube );
+            if( m_banner.IsActive() )
+                m_banner.Draw( m_bg1helper );
+            else
+                m_gameover.Draw( m_cube );
             m_queuedFlush = true;
             break;
         }
@@ -278,7 +302,10 @@ void CubeWrapper::Update(float t, float dt)
     }
     else if( Game::Inst().getState() == Game::STATE_DYING )
     {
-        m_gameover.Update( dt );
+        if( m_banner.IsActive() )
+            m_banner.Update(t, m_cube);
+        else
+            m_gameover.Update( dt );
         return;
     }
     else if( Game::Inst().getState() == Game::STATE_PLAYING )
@@ -296,6 +323,21 @@ void CubeWrapper::Update(float t, float dt)
     if( m_state == STATE_MESSAGING )
     {
         if( m_stateTime / TIME_PER_MESSAGE_FRAME >= NUM_MESSAGE_FRAMES )
+        {
+            int count = Game::Inst().CountEmptyCubes();
+            //bonuses for multiple cubes being empty
+            if( count > 1 )
+            {
+                setState( STATE_CUBEBONUS );
+                Game::Inst().addScore( count * PTS_PER_EMPTIED_CUBE );
+            }
+            else
+                setState( STATE_EMPTY );
+        }
+    }
+    else if( m_state == STATE_CUBEBONUS )
+    {
+        if( m_stateTime > SHOW_BONUS_TIME )
             setState( STATE_EMPTY );
     }
 
@@ -403,8 +445,6 @@ void CubeWrapper::Tilt( int dir )
 {
 	bool bChanged = false;
 
-	PRINT( "tilting" );
-
 	if( m_fShakeTime > 0.0f )
 		return;
 
@@ -485,20 +525,122 @@ void CubeWrapper::Tilt( int dir )
 		}
 	}        
 
-	//change all pending movers to movers
-	for( int i = 0; i < NUM_ROWS; i++ )
-	{
-		for( int j = 0; j < NUM_COLS; j++ )
-		{
-			GridSlot &slot = m_grid[i][j];
-			slot.startPendingMove();
-		}
-	}
+    if( bChanged )
+    {
 
-	if( bChanged )
+        //change all pending movers to movers
+        for( int i = 0; i < NUM_ROWS; i++ )
+        {
+            for( int j = 0; j < NUM_COLS; j++ )
+            {
+                GridSlot &slot = m_grid[i][j];
+                slot.startPendingMove();
+            }
+        }
+
+
 		Game::Inst().setTestMatchFlag();
+    }
 
     m_lastTiltDir = dir;
+}
+
+
+bool CubeWrapper::FakeTilt( int dir, GridSlot grid[][NUM_COLS] )
+{
+    bool bChanged = false;
+
+    //hastily ported from the python
+    switch( dir )
+    {
+        case 0:
+        {
+            for( int i = 0; i < NUM_COLS; i++ )
+            {
+                for( int j = 0; j < NUM_ROWS; j++ )
+                {
+                    //start shifting it over
+                    for( int k = j - 1; k >= 0; k-- )
+                    {
+                        if( FakeTryMove( k+1, i, k, i, grid ) )
+                            bChanged = true;
+                        else
+                            break;
+                    }
+                }
+            }
+            break;
+        }
+        case 1:
+        {
+            for( int i = 0; i < NUM_ROWS; i++ )
+            {
+                for( int j = 0; j < NUM_COLS; j++ )
+                {
+                    //start shifting it over
+                    for( int k = j - 1; k >= 0; k-- )
+                    {
+                        if( FakeTryMove( i, k+1, i, k, grid ) )
+                            bChanged = true;
+                        else
+                            break;
+                    }
+                }
+            }
+            break;
+        }
+        case 2:
+        {
+            for( int i = 0; i < NUM_COLS; i++ )
+            {
+                for( int j = NUM_ROWS - 1; j >= 0; j-- )
+                {
+                    //start shifting it over
+                    for( int k = j + 1; k < NUM_ROWS; k++ )
+                    {
+                        if( FakeTryMove( k-1, i, k, i, grid ) )
+                            bChanged = true;
+                        else
+                            break;
+                    }
+                }
+            }
+            break;
+        }
+        case 3:
+        {
+            for( int i = 0; i < NUM_ROWS; i++ )
+            {
+                for( int j = NUM_COLS - 1; j >= 0; j-- )
+                {
+                    //start shifting it over
+                    for( int k = j + 1; k < NUM_COLS; k++ )
+                    {
+                        if( FakeTryMove( i, k-1, i, k, grid ) )
+                            bChanged = true;
+                        else
+                            break;
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    if( bChanged )
+    {
+        //change all pending movers to movers
+        for( int i = 0; i < NUM_ROWS; i++ )
+        {
+            for( int j = 0; j < NUM_COLS; j++ )
+            {
+                GridSlot &slot = grid[i][j];
+                slot.finishFakeMove();
+            }
+        }
+    }
+
+    return bChanged;
 }
 
 
@@ -519,7 +661,7 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 	GridSlot &slot = m_grid[row1][col1];
 	GridSlot &dest = m_grid[row2][col2];
 
-    if( !dest.isOccupiable() )
+    if( !dest.isEmpty() )
 		return false;
 
     if( slot.isTiltable() )
@@ -533,11 +675,35 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
         {
             dest.TiltFrom(slot);
             slot.setEmpty();
+            Game::Inst().Stabilize();
             return true;
         }
 	}
 
 	return false;
+}
+
+
+bool CubeWrapper::FakeTryMove( int row1, int col1, int row2, int col2, GridSlot grid[][NUM_COLS] )
+{
+    //start shifting it over
+    GridSlot &slot = grid[row1][col1];
+    GridSlot &dest = grid[row2][col2];
+
+    if( !dest.isEmpty() )
+        return false;
+
+    if( slot.isTiltable() )
+    {
+        if( !slot.IsFixed() )
+        {
+            dest.TiltFrom(slot);
+            slot.setEmpty();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 
@@ -695,13 +861,13 @@ GridSlot *CubeWrapper::GetSlot( int row, int col )
 }
 
 
-bool CubeWrapper::isFull()
+bool CubeWrapper::isFull() const
 {
 	for( int i = 0; i < NUM_ROWS; i++ )
 	{
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
-			GridSlot &slot = m_grid[i][j];
+            const GridSlot &slot = m_grid[i][j];
 			if( slot.isEmpty() )
 				return false;
 		}
@@ -733,7 +899,10 @@ void CubeWrapper::checkRefill()
     else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
 	{
         if( isEmpty() )
-            setState( STATE_MESSAGING );
+        {
+            if( m_state != STATE_MESSAGING )
+                setState( STATE_MESSAGING );
+        }
         else
             setState( STATE_PLAYING );
 	}
@@ -1179,7 +1348,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 
 void CubeWrapper::checkEmpty()
 {
-    if( isEmpty() )
+    if( isEmpty() && m_state != STATE_MESSAGING )
         setState( STATE_MESSAGING );
 }
 
@@ -1231,7 +1400,7 @@ void CubeWrapper::SpawnHyper()
         {
             GridSlot &slot = m_grid[i][j];
 
-            if( slot.isOccupiable() )
+            if( slot.isEmpty() )
             {
                 slot.MakeHyper();
                 return;
@@ -1268,6 +1437,160 @@ bool CubeWrapper::HasHyperDot() const
             const GridSlot &slot = m_grid[i][j];
 
             if( slot.isAlive() && slot.getColor() == GridSlot::HYPERCOLOR )
+                return true;
+        }
+    }
+
+    return false;
+}
+
+
+//pretend to tilt this cube in a series of tilts, and update whether we see the given color on corners or side patterns 1 or 2
+void CubeWrapper::UpdateColorPositions( unsigned int color, bool &bCorners, bool &side1, bool &side2 ) const
+{
+    TestGridForColor( m_grid, color, bCorners, side1, side2 );
+
+    //we've already satisfied everything
+    if( bCorners && side1 && side2 )
+        return;
+
+    if( !isFull() && HasFloatingDots() )
+    {
+        GridSlot grid[NUM_ROWS][NUM_COLS];
+
+        _SYS_memcpy8( (uint8_t *)grid, (uint8_t *)m_grid, sizeof( grid ) );
+
+        //recursive function to tilt and test grid
+        TiltAndTestGrid( grid, color, bCorners, side1, side2, TEST_TILT_ITERATIONS );
+
+        //we've already satisfied everything
+        if( bCorners && side1 && side2 )
+            return;
+    }
+}
+
+
+//check different parts of the given grid for the given color
+void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 )
+{
+    //only check for spots that haven't been found already
+    if( !bCorners )
+    {
+        const Vec2 cornerLocs[] = {
+            Vec2( 0, 0 ),
+            Vec2( 0, NUM_COLS - 1 ),
+            Vec2( NUM_ROWS - 1, 0 ),
+            Vec2( NUM_ROWS - 1, NUM_COLS - 1 )
+        };
+
+        for( int i = 0; i < 4; i++ )
+        {
+            const GridSlot &slot = grid[ cornerLocs[i].x ][ cornerLocs[i].y ];
+            if( slot.isAlive() && slot.getColor() == color )
+            {
+                bCorners = true;
+                break;
+            }
+        }
+    }
+
+    //side 1 looks like a spinning star spinning left
+    /*
+      XOXX
+      XXXO
+      OXXX
+      XXOX
+
+      only works with 4x4!
+      */
+    if( !side1 )
+    {
+        STATIC_ASSERT( ( NUM_ROWS == 4 ) && ( NUM_COLS == 4 ) );
+        const Vec2 locs[] = {
+            Vec2( 0, 1 ),
+            Vec2( 1, 3 ),
+            Vec2( 2, 0 ),
+            Vec2( 3, 2 )
+        };
+
+        for( int i = 0; i < 4; i++ )
+        {
+            const GridSlot &slot = grid[ locs[i].x ][ locs[i].y ];
+            if( slot.isAlive() && slot.getColor() == color )
+            {
+                side1 = true;
+                break;
+            }
+        }
+    }
+
+    //side 2 looks like a spinning star spinning right
+    /*
+      XXOX
+      OXXX
+      XXXO
+      XOXX
+
+      only works with 4x4!
+      */
+    if( !side2 )
+    {
+        const Vec2 locs[] = {
+            Vec2( 0, 2 ),
+            Vec2( 1, 0 ),
+            Vec2( 2, 3 ),
+            Vec2( 3, 1 )
+        };
+
+        for( int i = 0; i < 4; i++ )
+        {
+            const GridSlot &slot = grid[ locs[i].x ][ locs[i].y ];
+            if( slot.isAlive() && slot.getColor() == color )
+            {
+                side2 = true;
+                break;
+            }
+        }
+    }
+}
+
+
+//recursive function to tilt and test grid
+void CubeWrapper::TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations )
+{
+    for( int i = 0; i < NUM_SIDES; i++ )
+    {
+        //copy the grid
+        GridSlot childgrid[NUM_ROWS][NUM_COLS];
+
+        _SYS_memcpy8( (uint8_t *)childgrid, (uint8_t *)grid, sizeof( childgrid ) );
+
+        //tilt it
+        if( FakeTilt( i, childgrid ) )
+        {
+            TestGridForColor( childgrid, color, bCorners, side1, side2 );
+
+            //we've already satisfied everything
+            if( bCorners && side1 && side2 )
+                return;
+
+            //recurse
+            if( iterations > 0 )
+                TiltAndTestGrid( childgrid, color, bCorners, side1, side2, iterations - 1 );
+        }
+    }
+}
+
+
+
+bool CubeWrapper::HasFloatingDots() const
+{
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            const GridSlot &slot = m_grid[i][j];
+            if( slot.isAlive() && !slot.IsFixed() )
                 return true;
         }
     }
