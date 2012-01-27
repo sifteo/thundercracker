@@ -10,6 +10,7 @@
 
 #include "llvm/Target/TargetInstrInfo.h"
 #include "SVMRegisterInfo.h"
+#include "SVMMCTargetDesc.h"
 
 #define GET_INSTRINFO_HEADER
 #include "SVMGenInstrInfo.inc"
@@ -50,8 +51,32 @@ public:
                              unsigned DestReg, unsigned SrcReg,
                              bool KillSrc) const;
 
+    virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                               MachineBasicBlock *&FBB,
+                               SmallVectorImpl<MachineOperand> &Cond,
+                               bool AllowModify) const;
+
+    virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
+
+    virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                  MachineBasicBlock *FBB,
+                                  const SmallVectorImpl<MachineOperand> &Cond,
+                                  DebugLoc DL) const;                        
+
 private:
     const SVMRegisterInfo RI;
+
+    bool inline isUncondBranchOpcode(unsigned op) const {
+        return op == SVM::B;
+    }
+
+    bool inline isCondBranchOpcode(unsigned op) const {
+        return op == SVM::Bcc;
+    }
+
+    bool inline isBranchOpcode(unsigned op) const {
+        return isCondBranchOpcode(op) || isUncondBranchOpcode(op);
+    }
 };
 
 }

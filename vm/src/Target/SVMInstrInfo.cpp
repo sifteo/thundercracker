@@ -83,3 +83,80 @@ void SVMInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MBBI, DL, get(SVM::MOVSr), DestReg)
           .addReg(SrcReg, getKillRegState(KillSrc));
 }
+
+bool SVMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                                 MachineBasicBlock *&FBB,
+                                 SmallVectorImpl<MachineOperand> &Cond,
+                                 bool AllowModify) const
+{
+    /*
+     * Find the last instruction in the block. If there is no termiantor,
+     * it implicitly falls through to the next block.
+     */
+    
+    MachineBasicBlock::iterator I = MBB.end();
+    if (I == MBB.begin()) 
+        return false;
+    --I;
+
+    // Skip debug values
+    while (I->isDebugValue()) {
+        if (I == MBB.begin())
+            return false;
+        --I;
+    }
+    
+    if (!isUnpredicatedTerminator(I))
+        return false;
+    
+    // Actually the last instruction
+    MachineInstr *lastI = I;
+    unsigned lastOp = lastI->getOpcode();
+    
+    if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
+        // Only a single terminator instruction
+        
+        if (isUncondBranchOpcode(lastOp)) {
+            // Unconditional branch
+            TBB = lastI->getOperand(0).getMBB();
+            return false;
+        }
+    }
+        
+    // Unhandled
+    return true;
+}
+
+unsigned SVMInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const
+{
+    unsigned removedInstructions = 0;
+    MachineBasicBlock::iterator I = MBB.end();
+    if (I == MBB.begin()) 
+        return false;
+    --I;
+
+    do {
+        if (I->isDebugValue()) {
+            --I;
+        } else if (isBranchOpcode(I->getOpcode())) {
+            I->eraseFromParent();
+            removedInstructions++;
+            I = MBB.end();
+        } else {
+            break;
+        }
+    } while (I != MBB.begin());
+
+    printf("Erased %d\n", removedInstructions);
+    return removedInstructions;
+}
+
+unsigned SVMInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+    MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+    const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const
+{
+    assert(FBB == NULL && "Conditional branch analysis not yet implemented");
+    
+    BuildMI(&MBB, DL, get(SVM::B)).addMBB(TBB);
+    return 1;
+}
