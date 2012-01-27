@@ -14,7 +14,7 @@
 class Dma
 {
 public:
-    typedef void (*DmaIsr_t)(void *p, uint32_t flags);
+    typedef void (*DmaIsr_t)(void *p, uint8_t flags);
 
     enum IsrFlags {
         Complete        = (1 << 1),
