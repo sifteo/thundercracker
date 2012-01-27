@@ -135,6 +135,22 @@ MacronixMX25::Status MacronixMX25::eraseSector(uint32_t address)
     return (Status)(readReg(ReadSecurityReg) & (EraseFail | WriteProtected));
 }
 
+MacronixMX25::Status MacronixMX25::chipErase()
+{
+    ensureWriteEnabled();
+
+    spi.begin();
+    spi.transfer(ChipErase);
+    spi.end();
+
+    // wait for erase complete
+    while (readReg(ReadStatusReg) & WriteInProgress) {
+        ; // do something better here :/
+    }
+
+    return (Status)(readReg(ReadSecurityReg) & (EraseFail | WriteProtected));
+}
+
 void MacronixMX25::ensureWriteEnabled()
 {
     do {
