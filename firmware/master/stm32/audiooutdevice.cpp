@@ -3,7 +3,7 @@
 #include "pwmaudioout.h"
 #include "dacaudioout.h"
 
-#include "hardware.h"
+#include "board.h"
 #include "gpio.h"
 #include "hwtimer.h"
 
@@ -16,13 +16,13 @@
 // since we don't want to bother with inheritance/virtual methods
 #if AUDIOOUT_BACKEND == PWM_BACKEND
 
-static const int pwmChan = 2;
+static const int pwmChan = AUDIO_PWM_CHAN;
 static PwmAudioOut pwmAudioOut(HwTimer(&TIM1), pwmChan, HwTimer(&TIM4));
 #define audioOutBackend  pwmAudioOut
 
 #elif AUDIOOUT_BACKEND == DAC_BACKEND
 
-static const int dacChan = 1;
+static const int dacChan = AUDIO_DAC_CHAN;
 static DacAudioOut dacAudioOut(dacChan, HwTimer(&TIM4));
 #define audioOutBackend dacAudioOut
 
@@ -48,21 +48,23 @@ IRQ_HANDLER ISR_TIM4()
 
 void AudioOutDevice::init(SampleRate samplerate, AudioMixer *mixer)
 {
-    AFIO.MAPR |= (1 << 6);                  // TIM1 partial remap for complementary channels
-
 #if AUDIOOUT_BACKEND == PWM_BACKEND
-    GPIOPin outA(&GPIOA, 9);
-    GPIOPin outB(&GPIOB, 0);
+
+    AFIO.MAPR |= (1 << 6);          // TIM1 partial remap for complementary channels
+    GPIOPin outA = AUDIO_PWMA_GPIO;
+    GPIOPin outB = AUDIO_PWMB_GPIO;
     pwmAudioOut.init(samplerate, mixer, outA, outB);
+
 #elif AUDIOOUT_BACKEND == DAC_BACKEND
-    GPIOPin dacOut(&GPIOA, 4);      // DAC_OUT1
-//    GPIOPin dacOut(&GPIOA, 5);      // DAC_OUT2
+
+    GPIOPin dacOut = AUDIO_DAC_GPIO;
     dacAudioOut.init(samplerate, mixer, dacOut);
 
     // XXX: Amplifier always on
     GPIOPin ampEnable(&GPIOA, 6);
     ampEnable.setControl(GPIOPin::OUT_2MHZ);
     ampEnable.setHigh();
+
 #endif
 }
 

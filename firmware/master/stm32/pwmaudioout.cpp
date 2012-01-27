@@ -24,7 +24,7 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
 
     switch (samplerate) {
     case AudioOutDevice::kHz8000: sampleTimer.init(2200, 0); break;
-    case AudioOutDevice::kHz16000: sampleTimer.init(1100, 0); break;
+    case AudioOutDevice::kHz16000: sampleTimer.init(2200, 0); break;
     case AudioOutDevice::kHz32000: sampleTimer.init(550, 0); break;
     }
 
