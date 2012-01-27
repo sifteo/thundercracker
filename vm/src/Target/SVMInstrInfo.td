@@ -30,10 +30,10 @@ def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
 def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
     "!ADJCALLSTACKUP $amt1", [(callseq_end timm:$amt1, timm:$amt2)]>;
 
-def RET : SVC<1, (outs), (ins), "sys.ret", [(SVMRet)]>;
+def RET : SVC<1, (outs), (ins), "s.ret", [(SVMRet)]>;
 
 def CALL : SVC<2, (outs), (ins callTarget:$offset11),
-    "sys.call\t$offset11", [(SVMCall tglobaladdr:$offset11)]> {
+    "s.call\t$offset11", [(SVMCall tglobaladdr:$offset11)]> {
     let isCall = 1;
 }
 
@@ -67,7 +67,7 @@ def Bcc : T16<(outs), (ins bTarget:$offset11, CCop:$cc),
 
 
 /****************************************************************
- * Normal instructions
+ * Data processing instructions
  */
 
 def MOVSi : T3<(outs GPReg:$Rd), (ins i32imm:$offset8),
@@ -120,8 +120,20 @@ def B : T18<(outs), (ins bTarget:$offset11),
     let isTerminator = 1;
 }
 
-def LDRsp : T11<1, (outs), (ins GPReg:$Rd, i8imm:$word8),
-    "ldr\t$Rd, [SP, #$word8]", []>;
 
-def STRsp : T11<0, (outs), (ins GPReg:$Rd, i8imm:$word8),
-    "str\t$Rd, [SP, #$word8]", []>;
+/****************************************************************
+ * Memory load / store
+ */
+
+def ADDRsp : Operand<i32>,
+    ComplexPattern<iPTR, 2, "SelectAddrSP", [frameindex], []> {
+        let MIOperandInfo = (ops GPReg:$base, i32imm:$offset);
+}
+
+def LDRsp : T11<1, (outs GPReg:$Rd), (ins ADDRsp:$offset),
+    "ldr\t$Rd, [SP, #$offset]",
+    [(set GPReg:$Rd, (load ADDRsp:$offset))]>;
+
+def STRsp : T11<0, (outs), (ins GPReg:$Rd, ADDRsp:$offset),
+    "str\t$Rd, [SP, #$offset]",
+    [(store GPReg:$Rd, ADDRsp:$offset)]>;

@@ -38,6 +38,19 @@ SVMTargetLowering::SVMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BR_JT, MVT::Other, Expand);
     setOperationAction(ISD::BR_CC, MVT::i32, Custom);
 
+    // 64-bit operations
+    setOperationAction(ISD::LOAD, MVT::i64, Expand);
+    setOperationAction(ISD::STORE, MVT::i64, Expand);
+    setOperationAction(ISD::ADD, MVT::i64, Expand);
+    setOperationAction(ISD::SUB, MVT::i64, Expand);
+    setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
+    setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
+    setOperationAction(ISD::MULHS, MVT::i32, Expand);
+    setOperationAction(ISD::MULHU, MVT::i32, Expand);
+    setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
+    setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
+    setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
+    
     computeRegisterProperties();
 }
 

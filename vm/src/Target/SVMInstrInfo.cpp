@@ -147,7 +147,6 @@ unsigned SVMInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const
         }
     } while (I != MBB.begin());
 
-    printf("Erased %d\n", removedInstructions);
     return removedInstructions;
 }
 
