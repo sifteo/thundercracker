@@ -203,7 +203,10 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_DYING:
         {
-            m_gameover.Draw( m_cube );
+            if( m_banner.IsActive() )
+                m_banner.Draw( m_bg1helper );
+            else
+                m_gameover.Draw( m_cube );
             m_queuedFlush = true;
             break;
         }
@@ -281,7 +284,10 @@ void CubeWrapper::Update(float t, float dt)
     }
     else if( Game::Inst().getState() == Game::STATE_DYING )
     {
-        m_gameover.Update( dt );
+        if( m_banner.IsActive() )
+            m_banner.Update(t, m_cube);
+        else
+            m_gameover.Update( dt );
         return;
     }
     else if( Game::Inst().getState() == Game::STATE_PLAYING )

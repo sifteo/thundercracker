@@ -689,6 +689,16 @@ void Game::EndGame()
 {
     enterScore();
     m_state = STATE_DYING;
+
+    if( m_mode == MODE_SHAKES )
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            m_cubes[i].getBanner().SetMessage( "NO MORE MATCHES" );
+        }
+
+    }
+
     playSound(timer_explode);
 }
 
