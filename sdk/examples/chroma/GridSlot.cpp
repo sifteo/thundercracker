@@ -438,6 +438,8 @@ void GridSlot::Update(float t)
 
 void GridSlot::mark()
 {
+    if( m_state == STATE_MARKED || m_state == STATE_EXPLODING )
+        return;
     m_animFrame = 0;
 	m_state = STATE_MARKED;
 	m_eventTime = System::clock();
