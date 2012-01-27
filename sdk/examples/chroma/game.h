@@ -96,6 +96,7 @@ public:
 	bool no_match_stranded_interior() const;
 	bool no_match_stranded_side() const;
 	bool no_match_mismatch_side() const;
+    unsigned int NumCubesWithColor( unsigned int color ) const;
     bool IsColorUnmatchable( unsigned int color ) const;
     bool AreAllColorsUnmatchable() const;
     bool DoCubesOnlyHaveStrandedDots() const;

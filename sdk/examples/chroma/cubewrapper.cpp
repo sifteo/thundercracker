@@ -160,6 +160,9 @@ void CubeWrapper::Draw()
 
                     m_queuedFlush = true;
 
+                    //super debug code!
+                    //Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, m_cube.id() );
+
 					break;
 				}
                 case STATE_MESSAGING:
@@ -1518,7 +1521,7 @@ void CubeWrapper::TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color
         //copy the grid
         GridSlot childgrid[NUM_ROWS][NUM_COLS];
 
-        _SYS_memcpy8( (uint8_t *)childgrid, (uint8_t *)grid, sizeof( grid ) );
+        _SYS_memcpy8( (uint8_t *)childgrid, (uint8_t *)grid, sizeof( childgrid ) );
 
         //tilt it
         if( FakeTilt( i, childgrid ) )

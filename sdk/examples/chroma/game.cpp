@@ -374,7 +374,7 @@ bool Game::no_match_color_imbalance() const
     */
 	for( unsigned int i = 0; i < GridSlot::NUM_COLORS; i++ )
 	{
-        if( IsColorUnmatchable(i) )
+        if( NumCubesWithColor(i) == 1 )
             return true;
 	}
 
@@ -411,18 +411,16 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
             aHasColor[i] = false;
     }
 
-    if( total == 0 )
-        return false;
-    else if( total == 1 )
+    if( total <= 1 )
         return true;
+
+    int numCorners = 0;
+    bool side1 = false;
+    bool side2 = false;
 
     //also, make sure these colors on these cubes can possibly match
     for( int i = 0; i < NUM_CUBES; i++ )
     {
-        int numCorners = 0;
-        bool side1 = false;
-        bool side2 = false;
-
         if( aHasColor[i] )
         {
             bool localCorners = false;
@@ -444,18 +442,37 @@ bool Game::IsColorUnmatchable( unsigned int color ) const
             {
                 if( side2 )
                     return false;
-                side1 = true;
             }
             if( localside2 )
             {
                 if( side1 )
                     return false;
-                side2 = true;
             }
+
+            if( localside1 )
+                side1 = true;
+            if( localside2 )
+                side2 = true;
         }
     }
 
     return true;
+}
+
+//return the number of cubes with the given color
+unsigned int Game::NumCubesWithColor( unsigned int color ) const
+{
+    int total = 0;
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[i].hasColor(color) )
+        {
+            total++;
+        }
+    }
+
+    return total;
 }
 
 
