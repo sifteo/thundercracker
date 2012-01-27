@@ -7,7 +7,7 @@ clang -emit-llvm -m32 -ffreestanding -O2 -c test.c
 echo ------------------------
 
 rm -f test.o.s
-./svmc $OPTS test.o $* 2>&1 | tee test.out
+./svmc -filetype=asm $OPTS test.o $* 2>&1 | tee test.out
 
 DOTFILE=`grep \.dot test.out | tail -n 1 | cut -d "'" -f 2`
 dot -Tpng $DOTFILE > test.png
@@ -19,5 +19,5 @@ cat test.o.s
 
 echo ------------------------
 
-./svmc -filetype=obj test.o -o test.elf $*
+./svmc test.o $*
 arm-none-eabi-objdump -d test.elf
