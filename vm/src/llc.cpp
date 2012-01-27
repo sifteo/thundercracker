@@ -75,13 +75,13 @@ MAttrs("mattr",
   cl::value_desc("a1,+a2,-a3,..."));
 
 cl::opt<TargetMachine::CodeGenFileType>
-FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
+FileType("filetype", cl::init(TargetMachine::CGFT_ObjectFile),
   cl::desc("Choose a file type (not all types are supported by all targets):"),
   cl::values(
        clEnumValN(TargetMachine::CGFT_AssemblyFile, "asm",
                   "Emit an assembly ('.s') file"),
-       clEnumValN(TargetMachine::CGFT_ObjectFile, "obj",
-                  "Emit a native object ('.o') file [experimental]"),
+       clEnumValN(TargetMachine::CGFT_ObjectFile, "elf",
+                  "Emit an ELF object ('.elf') file"),
        clEnumValN(TargetMachine::CGFT_Null, "null",
                   "Emit nothing, for performance testing"),
        clEnumValEnd));
@@ -123,7 +123,7 @@ static tool_output_file *GetOutputStream(const char *TargetName,
         OutputFilename += ".s";
         break;
       case TargetMachine::CGFT_ObjectFile:
-        OutputFilename += ".o";
+        OutputFilename += ".elf";
         break;
       case TargetMachine::CGFT_Null:
         OutputFilename += ".null";
