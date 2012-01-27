@@ -266,10 +266,8 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     *handle = ch.handle;
 
     // does this module require a decoder? if so, get one
-    SpeexDecoder *dec;
-    PCMDecoder *pcmdec = 0;
     if (mod->type == Sample) {
-        dec = getDecoder();
+        SpeexDecoder *dec = getDecoder();
         if (dec == NULL) {
             LOG(("ERROR: No SpeexDecoder available.\n"));
             return false;
@@ -277,7 +275,7 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
         ch.play(mod, loopMode, dec);
     }
     else if (mod->type == PCM) {
-        pcmdec = getPCMDecoder();
+        PCMDecoder *pcmdec = getPCMDecoder();
         if (pcmdec == NULL) {
             LOG(("ERROR: No PCMDecoder available.\n"));
             return false;
@@ -288,9 +286,9 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
         LOG(("ERROR: Unknown audio encoding. id: %d type: %d.\n", mod->id, mod->type));
         return false;
     }
-    
+
     Atomic::SetLZ(activeChannelMask, idx);
-    
+
     return true;
 }
 
