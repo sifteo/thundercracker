@@ -75,6 +75,32 @@ SDValue SVMTargetLowering::LowerFormalArguments(SDValue Chain,
                                                 DebugLoc dl, SelectionDAG &DAG,
                                                 SmallVectorImpl<SDValue> &InVals) const
 {
+    MachineFunction &MF = DAG.getMachineFunction();
+    
+    // Let the calling convention assign locations to each operand
+    SmallVector<CCValAssign, 16> ArgLocs;
+    CCState CCInfo(CallConv, isVarArg, MF, DAG.getTarget(),
+        ArgLocs, *DAG.getContext());
+    CCInfo.AnalyzeFormalArguments(Ins, CC_SVM);
+
+    for (unsigned i = 0, end = ArgLocs.size(); i != end; i++) {
+        CCValAssign &VA = ArgLocs[i];
+
+        if (VA.isRegLoc()) {
+            // Passed by register. Convert the physical register to virtual.
+
+            unsigned VReg = MF.getRegInfo().
+                createVirtualRegister(SVM::GPRegRegisterClass);
+            MF.getRegInfo().addLiveIn(VA.getLocReg(), VReg);
+            SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
+            
+            InVals.push_back(ArgValue);
+
+        } else {
+            llvm_unreachable("Non-register parameters not yet supported");
+        }
+    }
+    
     return Chain;
 }
 
@@ -104,7 +130,6 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         DAG.getIntPtrConstant(ArgsStackSize, true));
 
     // Resolve address of callee
-    // XXX: Is this where we should handle syscalls?
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
         Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32);
 

@@ -38,7 +38,7 @@ def CALL : SVC<2, (outs), (ins callTarget:$offset11),
 }
 
 /****************************************************************
- * Conditionals
+ * Control Flow
  */
  
 def CCop : Operand<i32> {
@@ -56,14 +56,14 @@ def SVMBrcond : SDNode<"SVMISD::BRCOND", SDT_SVMBrcond,
     [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
 def SVMCmov : SDNode<"SVMISD::CMOV", SDT_SVMCmov, []>;
 
-def CMPr : T4<(outs), (ins GPReg:$Rd, GPReg:$Rs),
-    "cmp\t$Rd, $Rs", [(SVMCmp GPReg:$Rd, GPReg:$Rs)]> {
-    let isCompare = 1;
-    let Defs = [CPSR];
-}
-
 def Bcc : T16<(outs), (ins bTarget:$offset11, CCop:$cc),
     "b$cc\t$offset11", [(SVMBrcond bb:$offset11, imm:$cc)]> {
+    let isBranch = 1;
+    let isTerminator = 1;
+}
+
+def B : T18<(outs), (ins bTarget:$offset11),
+    "b  \t$offset11", [(br bb:$offset11)]> {
     let isBranch = 1;
     let isTerminator = 1;
 }
@@ -79,68 +79,189 @@ def CMOV : Pseudo<(outs GPReg:$Rd), (ins GPReg:$T, GPReg:$F, CCop:$cc),
  * Data processing instructions
  */
 
-def MOVSi : T3<(outs GPReg:$Rd), (ins i32imm:$offset8),
-    "movs\t$Rd, #$offset8", [(set GPReg:$Rd, imm8:$offset8)]> {
-    let opB = 0;
-    let isAsCheapAsAMove = 1;
-    let Defs = [CPSR];
-}
+// Format 1
 
 def MOVSr : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
     "movs\t$Rd, $Rs", []> {
     let opB = 0;
     let offset5 = 0;
-    let isAsCheapAsAMove = 1;
-    let Defs = [CPSR];
 }
 
-def SUBSi : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
-    "subs\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, imm8:$Rn))]> {
+def LSLi5 : T1<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$offset5),
+    "lsl\t$Rd, $Rs, #$offset5",
+    [(set GPReg:$Rd, (shl GPReg:$Rs, imm5:$offset5))]> {
+    let opB = 0;
+}
+
+def LSRi5 : T1<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$offset5),
+    "lsr\t$Rd, $Rs, #$offset5",
+    [(set GPReg:$Rd, (srl GPReg:$Rs, imm5:$offset5))]> {
+    let opB = 1;
+}
+
+def ASRi5 : T1<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$offset5),
+    "asr\t$Rd, $Rs, #$offset5",
+    [(set GPReg:$Rd, (sra GPReg:$Rs, imm5:$offset5))]> {
+    let opB = 2;
+}
+
+// Format 2
+
+def SUBSi3 : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
+    "subs\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, imm3:$Rn))]> {
     let imm = 1;
     let opB = 1;
-    let Defs = [CPSR];
 }
 
 def SUBSr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
     "subs\t$Rd, $Rs, $Rn", [(set GPReg:$Rd, (sub GPReg:$Rs, GPReg:$Rn))]> {
     let imm = 0;
     let opB = 1;
-    let Defs = [CPSR];
 }
 
-def ADDSi : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
-    "adds\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (add GPReg:$Rs, imm8:$Rn))]> {
+def ADDSi3 : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$Rn),
+    "adds\t$Rd, $Rs, #$Rn", [(set GPReg:$Rd, (add GPReg:$Rs, imm3:$Rn))]> {
     let imm = 1;
     let opB = 0;
-    let Defs = [CPSR];
 }
 
 def ADDSr : T2<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
     "adds\t$Rd, $Rs, $Rn", [(set GPReg:$Rd, (add GPReg:$Rs, GPReg:$Rn))]> {
     let imm = 0;
     let opB = 0;
-    let Defs = [CPSR];
 }
 
 def : Pat<(subc GPReg:$Rs, GPReg:$Rn),  (SUBSr GPReg:$Rs, GPReg:$Rn)>;
-def : Pat<(subc GPReg:$Rs, imm8:$Rn),   (SUBSi GPReg:$Rs, imm8:$Rn)>;
+def : Pat<(subc GPReg:$Rs, imm3:$Rn),   (SUBSi3 GPReg:$Rs, imm3:$Rn)>;
 def : Pat<(addc GPReg:$Rs, GPReg:$Rn),  (ADDSr GPReg:$Rs, GPReg:$Rn)>;
-def : Pat<(addc GPReg:$Rs, imm8:$Rn),   (ADDSi GPReg:$Rs, imm8:$Rn)>;
-  
-def SBCr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
-    "sbc\t$Rd, $Rn", [(set GPReg:$Rd, (sube GPReg:$Rs, GPReg:$Rn))]> {
-    let opB = 0b0110;
-    let Uses = [CPSR];
-    let Defs = [CPSR];
+def : Pat<(addc GPReg:$Rs, imm3:$Rn),   (ADDSi3 GPReg:$Rs, imm3:$Rn)>;
+
+// Format 3
+
+def MOVSi8 : T3<(outs GPReg:$Rd), (ins i32imm:$offset8),
+    "movs\t$Rd, #$offset8", [(set GPReg:$Rd, imm8:$offset8)]> {
+    let opB = 0;
+    let isAsCheapAsAMove = 1;
+}
+
+def CMPi8 : T3<(outs), (ins GPReg:$Rd, i32imm:$offset8),
+    "cmp\t$Rd, #$offset8", [(SVMCmp GPReg:$Rd, imm8:$offset8)]> {
+    let opB = 1;
+    let isCompare = 1;
+}
+
+def ADDSi8 : T3<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$offset8),
+    "adds\t$Rd, #$offset8", [(set GPReg:$Rd, (add GPReg:$Rs, imm8:$offset8))]> {
+    let opB = 2;
     let Constraints = "$Rs = $Rd";
 }
 
-def B : T18<(outs), (ins bTarget:$offset11),
-    "b  \t$offset11", [(br bb:$offset11)]> {
-    let isBranch = 1;
-    let isTerminator = 1;
+def SUBSi8 : T3<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$offset8),
+    "subs\t$Rd, #$offset8", [(set GPReg:$Rd, (sub GPReg:$Rs, imm8:$offset8))]> {
+    let opB = 3;
+    let Constraints = "$Rs = $Rd";
 }
 
+def : Pat<(subc GPReg:$Rs, imm8:$Rn),   (SUBSi8 GPReg:$Rs, imm8:$Rn)>;
+def : Pat<(addc GPReg:$Rs, imm8:$Rn),   (ADDSi8 GPReg:$Rs, imm8:$Rn)>;
+
+// Format 4
+
+def ANDSr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "and\t$Rd, $Rn", [(set GPReg:$Rd, (and GPReg:$Rs, GPReg:$Rn))]> {
+    let opB = 0;
+    let Constraints = "$Rs = $Rd";
+}
+
+def EORSr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "eor\t$Rd, $Rn", [(set GPReg:$Rd, (xor GPReg:$Rs, GPReg:$Rn))]> {
+    let opB = 1;
+    let Constraints = "$Rs = $Rd";
+}
+
+def LSLr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "lsl\t$Rd, $Rn", [(set GPReg:$Rd, (shl GPReg:$Rs, GPReg:$Rn))]> {
+    let opB = 2;
+    let Constraints = "$Rs = $Rd";
+}
+
+def LSRr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "lsr\t$Rd, $Rn", [(set GPReg:$Rd, (srl GPReg:$Rs, GPReg:$Rn))]> {
+    let opB = 3;
+    let Constraints = "$Rs = $Rd";
+}
+
+def ASRr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "asr\t$Rd, $Rn", [(set GPReg:$Rd, (sra GPReg:$Rs, GPReg:$Rn))]> {
+    let opB = 4;
+    let Constraints = "$Rs = $Rd";
+}
+
+def ADCr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "adc\t$Rd, $Rn", [(set GPReg:$Rd, (adde GPReg:$Rs, GPReg:$Rn))]> {
+    let opB = 5;
+    let Uses = [CPSR];
+    let Constraints = "$Rs = $Rd";
+}
+
+def SBCr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "sbc\t$Rd, $Rn", [(set GPReg:$Rd, (sube GPReg:$Rs, GPReg:$Rn))]> {
+    let opB = 6;
+    let Uses = [CPSR];
+    let Constraints = "$Rs = $Rd";
+}
+
+def RORr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "ror\t$Rd, $Rn", [(set GPReg:$Rd, (rotr GPReg:$Rs, GPReg:$Rn))]> {
+    let opB = 7;
+    let Constraints = "$Rs = $Rd";
+}
+
+def TSTr : T4<(outs), (ins GPReg:$Rs, GPReg:$Rn),
+    "tst\t$Rs, $Rn", [(SVMCmp (and_su GPReg:$Rs, GPReg:$Rn), 0)]> {
+    let opB = 8;
+    let isCompare = 1;
+}
+
+def NEGr : T4<(outs GPReg:$Rs), (ins GPReg:$Rn),
+    "neg\t$Rs, $Rn", [(set GPReg:$Rs, (ineg GPReg:$Rn))]> {
+    let opB = 9;
+}
+
+def CMPr : T4<(outs), (ins GPReg:$Rs, GPReg:$Rn),
+    "cmp\t$Rs, $Rn", [(SVMCmp GPReg:$Rs, GPReg:$Rn)]> {
+    let opB = 10;
+    let isCompare = 1;
+}
+
+def CMNr : T4<(outs), (ins GPReg:$Rs, GPReg:$Rn),
+    "cmn\t$Rs, $Rn", [(SVMCmp GPReg:$Rs, (ineg GPReg:$Rn))]> {
+    let opB = 11;
+    let isCompare = 1;
+}
+
+def ORRr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "orr\t$Rd, $Rn", [(set GPReg:$Rd, (or GPReg:$Rs, GPReg:$Rn))]> {
+    let opB = 12;
+    let Constraints = "$Rs = $Rd";
+}
+
+def MULr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "orr\t$Rd, $Rn", [(set GPReg:$Rd, (mul GPReg:$Rn, GPReg:$Rs))]> {
+    let opB = 13;
+    let Constraints = "$Rs = $Rd";
+}
+
+def BICr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
+    "bic\t$Rd, $Rn", [(set GPReg:$Rd, (and GPReg:$Rs, (not GPReg:$Rn)))]> {
+    let opB = 14;
+    let Constraints = "$Rs = $Rd";
+}
+
+def MVNr : T4<(outs GPReg:$Rs), (ins GPReg:$Rn),
+    "mvn\t$Rs, $Rn", [(set GPReg:$Rs, (not GPReg:$Rn))]> {
+    let opB = 15;
+}
 
 /****************************************************************
  * Stack operations

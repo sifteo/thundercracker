@@ -35,7 +35,7 @@ StringRef SVMInstPrinter::getOpcodeName(unsigned Opcode) const
 
 void SVMInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const
 {
-    OS << '%' << LowercaseString(getRegisterName(RegNo));
+    OS << LowercaseString(getRegisterName(RegNo));
 }
 
 void SVMInstPrinter::printInst(const MCInst *MI, raw_ostream &O, StringRef Annot)
