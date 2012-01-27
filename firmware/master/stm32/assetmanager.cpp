@@ -34,6 +34,8 @@ void AssetManager::onData(const uint8_t *buf, unsigned len)
         // make sure enough sectors are erased for this asset
         // XXX: just starting from 0 for now, assuming only one game's assets
         for (unsigned i = 0; i < installation.size; i += flash.SECTOR_SIZE) {
+            status = 2;
+            Usb::write(&status, 1);
             if (flash.eraseSector(i) != MacronixMX25::Ok) {
                 ; // TODO
             }
