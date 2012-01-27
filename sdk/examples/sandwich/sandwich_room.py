@@ -13,21 +13,6 @@ SIDE_RIGHT = 3
 def iswalkable(tile): 
 	return "wall" not in tile.props and "obstacle" not in tile.props
 
-class Door:
-	def __init__(self, room):
-		self.id = "_door_%s_%d" % (room.map.id, room.lid)
-		self.room = room
-		room.door = self
-		self.flag = room.map.quest.add_flag_if_undefined(self.id) \
-			if room.map.quest is not None \
-			else room.map.world.script.add_flag_if_undefined(self.id)
-
-class AnimatedTile:
-	def __init__(self, tile):
-		self.tile = tile
-		self.numframes = int(tile.props["animated"])
-		assert self.numframes < 16, "tile animation too long (capacity 15)"
-
 class Room:
 	def __init__(self, map, lid):
 		self.map = map
