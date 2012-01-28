@@ -1,6 +1,6 @@
 #!/bin/bash
 #make
-tc-siftulator -n 3 &
-#tc-siftulator -n 3 -f ../../../../firmware/cube/cube.ihx &
+../../../emulator/tc-siftulator.app/Contents/MacOS/tc-siftulator -n 3 &
+#../../../emulator/tc-siftulator.app/Contents/MacOS/tc-siftulator -n 3 -f ../../../../firmware/cube/cube.ihx &
 sleep 1s
 ./sandwichcraft.sim

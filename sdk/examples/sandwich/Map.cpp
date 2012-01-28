@@ -31,6 +31,10 @@ void Map::SetData(const MapData& map) {
         mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &(p->trigger));
       }
     }
+    for(const DiagonalSubdivisionData* p = mData->diagonalSubdivisions; p != mData->diagonalSubdivisions+mData->diagonalSubdivisionCount; ++p) {
+      LOG(("ASSIGNING DIAGONAL SUBDIVISION\n"));
+    }
+
     for(const DoorData* p = mData->doors; p != mData->doors + mData->doorCount; ++p) {
       mRooms[p->roomId].SetDoor(p);
     }
