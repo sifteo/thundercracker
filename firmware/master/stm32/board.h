@@ -53,6 +53,14 @@
 #define VCC20_ENABLE_GPIO   GPIOPin(&GPIOC, 13)
 #define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 14)
 
+// A U D I O
+#define AUDIO_DAC_GPIO      GPIOPin(&GPIOA, 4)
+#define AUDIO_DAC_CHAN      1
+
+#define AUDIO_PWMA_GPIO     GPIOPin(&GPIOA, 7)
+#define AUDIO_PWMB_GPIO     GPIOPin(&GPIOA, 8)
+#define AUDIO_PWM_CHAN      1
+
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
 
