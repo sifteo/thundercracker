@@ -42,11 +42,30 @@ class Room:
 	def iswalkable(self, x, y): return iswalkable(self.tileat(x, y))
 	def overlaytileat(self, x, y): return self.map.overlay.tileat(8*self.x + x, 8*self.y + y)
 
-	def center(self):
-		for (x,y) in misc.spiral_into_madness():
-			if iswalkable(self.tileat(x-1, y)) and iswalkable(self.tileat(x,y)):
-				return self.adjust(x,y)
+	def primary_center(self):
+		# todo bridges
+		if self.subdiv_type == SUBDIV_NONE:
+			for (x,y) in misc.spiral_into_madness():
+				if self.iswalkable(x-1, y) and self.iswalkable(x,y):
+					return self.adjust(x,y)
+			return (0,0)
+		elif self.subdiv_type == SUBDIV_DIAG_POS or self.subdiv_type == SUBDIV_DIAG_NEG:
+			# in this case, we pick the "center" which is reachable from the top
+			for (x,y) in misc.spiral_into_madness():
+				if self.iswalkable(x-1, y) and self.iswalkable(x,y) and self.subdiv_masks[x+(y<<3)] & 1:
+					return (x,y)
+	
+	def secondary_center(self):
+		# todo bridges
+		assert self.subdiv_type != SUBDIV_NONE, "non-subdivided rooms don't have a secondary center"
+		if self.subdiv_type == SUBDIV_DIAG_POS or self.subdiv_type == SUBDIV_DIAG_NEG:
+			for (x,y) in misc.spiral_into_madness():
+				if self.iswalkable(x-1, y) and self.iswalkable(x,y) and not self.subdiv_masks[x+(y<<3)] & 1:
+					return (x,y)
 		return (0,0)
+
+	def subdiv_center(self):
+		pass
 	
 	def ispath(self, x, y):
 		return "path" in self.tileat(x,y).props
@@ -59,7 +78,7 @@ class Room:
 			x+=1
 		return (x,y)
 	
-	def isblocked(self): return self.center() == (0,0)
+	def isblocked(self): return self.primary_center() == (0,0)
 
 	def hasoverlay(self):
 		if self.map.overlay is None: return False
@@ -80,25 +99,27 @@ class Room:
 				((x,7) for x in range(8) if self.iswalkable(x,7)).next(),
 				((7,y) for y in range(8) if self.iswalkable(7,y)).next()
 			]
-			slots = dict(((x,y),0) for x in range(8) for y in range(8))
+			slots = [ 0 for _ in range(64) ]
 			# flood-fill "reachable" tiles
 			for side,(x,y) in enumerate(cardinals): 
 				self._subdiv_visit(slots, 1<<side, x, y)
-			for cnt in (bit_count(slots[t]) for t in cardinals): 
+			for cnt in (bit_count(slots[x+(y<<3)]) for (x,y) in cardinals): 
 				assert cnt == 2 or cnt == 4, "Unusual subdivision in map: " + self.map.id
-			maskTop = slots[cardinals[SIDE_TOP]]
+			tx,ty = cardinals[SIDE_TOP]
+			maskTop = slots[tx+(ty<<3)]
 			if bit_count(maskTop) == 2:
+				self.subdiv_masks = slots
 				if maskTop & (1<<SIDE_LEFT):
 					self.subdiv_type = SUBDIV_DIAG_POS
-				elif maskTop & (1<<ISIDE_RIGHT):
+				elif maskTop & (1<<SIDE_RIGHT):
 					self.subdiv_type = SUBDIV_DIAG_NEG
 				else:
 					raise Exception("unusual subdivision in map: " + self.map.id)
 		
 	
 	def _subdiv_visit(self, slots, mask, x, y):
-		if x >= 0 and y >= 0 and x < 8 and y < 8 and self.iswalkable(x,y) and slots[(x,y)] & mask == 0:
-			slots[(x,y)] |= mask
+		if x >= 0 and y >= 0 and x < 8 and y < 8 and self.iswalkable(x,y) and slots[x+(y<<3)] & mask == 0:
+			slots[x+(y<<3)] |= mask
 			self._subdiv_visit(slots, mask, x+1, y)
 			self._subdiv_visit(slots, mask, x-1, y)
 			self._subdiv_visit(slots, mask, x, y+1)
@@ -124,7 +145,7 @@ class Room:
 			#src.write("\n")
 		src.write("},\n")
 		# centerx, centery
-		cx,cy = self.center()
+		cx,cy = self.primary_center()
 		src.write("        %d, %d, \n" % (cx, cy))
 		src.write("    },\n")		
 

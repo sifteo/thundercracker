@@ -185,7 +185,8 @@ class Map:
 			src.write("static const DiagonalSubdivisionData %s_diag[] = { " % self.id)
 			for r in self.diagRooms:
 				is_pos = 0 if r.subdiv_type == SUBDIV_DIAG_NEG else 1
-				src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }, " % (is_pos, r.lid, 0, 0))
+				cx,cy = r.secondary_center()
+				src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }, " % (is_pos, r.lid, cx, cy))
 			src.write("};\n")
 
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
