@@ -386,6 +386,7 @@ void GameView::DrawBackground() {
     mode.BG0_drawAsset(Vec2(0,0), *(pGame->GetMap()->Data()->blankImage));
     BG1Helper(*GetCube()).Flush();
   } else {
+    
     const Room *pRoom = GetRoom();
     for(int y=0; y<8; ++y) {
       for(int x=0; x<8; ++x) {

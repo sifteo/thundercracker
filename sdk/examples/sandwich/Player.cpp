@@ -14,8 +14,8 @@ void Player::Init() {
   const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
   pCurrent = pGame->ViewBegin();
   pTarget = 0;
-  mPosition.x = 128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerx;
-  mPosition.y = 128 * (gQuestData->roomId / gMapData[gQuestData->mapId].width) + 16 * room.centery;
+  mPosition.x = 128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerX;
+  mPosition.y = 128 * (gQuestData->roomId / gMapData[gQuestData->mapId].width) + 16 * room.centerY;
   mStatus = PLAYER_STATUS_IDLE;
   mDir = 2;
   mKeyCount = 0;

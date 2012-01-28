@@ -71,11 +71,18 @@ struct AnimatedTileData {
     uint8_t frameCount;
 };
 
-struct RoomData {
+struct RoomData { // expect to support about 1,000 rooms max (10 maps * 81 rooms rounded up)
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
-    uint8_t centerx;
-    uint8_t centery;
+    uint8_t centerX : 4;
+    uint8_t centerY : 4;
+};
+
+struct DiagonalSubdivisionData {
+    uint8_t positiveSlope : 1
+    uint8_t roomId : 7;
+    uint8_t altCenterX : 4;
+    uint8_t altCenterY : 4;
 };
 
 struct MapData {
@@ -91,12 +98,14 @@ struct MapData {
     const NpcData* npcs;
     const DoorData* doors;
     const AnimatedTileData* animatedTiles;
+    const DiagonalSubdivisionData* diagonalSubdivisions;
     uint8_t itemCount;
     uint8_t gateCount;
     uint8_t npcCount;
     uint8_t doorQuestId; // 0xff if doors are all global (probably not intentional)
     uint8_t doorCount;
     uint8_t animatedTileCount;
+    uint8_t diagonalSubdivisionCount;
     uint8_t width : 4;
     uint8_t height : 4;
 };
