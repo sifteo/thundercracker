@@ -61,8 +61,9 @@ class Map:
 			for y in range(self.height-1):
 				assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id
 		# find subdivisions
-		for r in self.rooms:
-			r.find_subdivisions()
+		for r in self.rooms: r.find_subdivisions()
+		self.diagRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_DIAG_POS or r.subdiv_type == SUBDIV_DIAG_NEG ]
+		self.bridgeRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_BRDG_HOR or r.subdiv_type == SUBDIV_BRDG_VER]
 		# validate animated tile capacity (max 4 per room)
 		for r in self.rooms:
 			assert len([(x,y) for x in range(8) for y in range(8) if "animated" in r.tileat(x,y).props]) <= 4, "too many tiles in room in map: " + self.id
@@ -180,6 +181,13 @@ class Map:
 				src.write("0xff, 0x%x, " % emptycount)
 				emptycount = 0
 			src.write("};\n")
+		if len(self.diagRooms) > 0:
+			src.write("static const DiagonalSubdivisionData %s_diag[] = { " % self.id)
+			for r in self.diagRooms:
+				is_pos = 0 if r.subdiv_type == SUBDIV_DIAG_NEG else 1
+				src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }, " % (is_pos, r.lid, 0, 0))
+			src.write("};\n")
+
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
 		for y in range(self.height):
 			for x in range(self.width):
@@ -202,7 +210,7 @@ class Map:
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
-				"diagsubdivs": "0",
+				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",
 				"w": self.width,
 				"h": self.height,
 				"nitems": len(self.item_dict),
@@ -211,7 +219,7 @@ class Map:
 				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
 				"ndoors": len(self.doors),
 				"nanimtiles": len(self.animatedtiles),
-				"ndiags": 0
+				"ndiags": len(self.diagRooms)
 			})
 
 
