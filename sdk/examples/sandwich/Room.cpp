@@ -31,10 +31,16 @@ const uint8_t* Room::OverlayBegin() const {
   return pGame->GetMap()->Data()->rle_overlay + mOverlayIndex;
 }
 
+void Room::SetDiagonalSubdivision(const DiagonalSubdivisionData* diag) {
+  mSubdivType = diag->positiveSlope ? SUBDIV_DIAG_POS : SUBDIV_DIAG_NEG;
+  mSubdiv = (const void*)diag;
+}
 
 void Room::Clear() { 
   mTriggerType = TRIGGER_UNDEFINED;
   mTrigger = 0; 
   mDoor = 0;
   mOverlayIndex = 0xffff;
+  mSubdivType = SUBDIV_NONE;
+  mSubdiv = 0;
 }

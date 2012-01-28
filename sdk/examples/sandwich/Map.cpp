@@ -32,9 +32,8 @@ void Map::SetData(const MapData& map) {
       }
     }
     for(const DiagonalSubdivisionData* p = mData->diagonalSubdivisions; p != mData->diagonalSubdivisions+mData->diagonalSubdivisionCount; ++p) {
-      LOG(("ASSIGNING DIAGONAL SUBDIVISION\n"));
+      mRooms[p->roomId].SetDiagonalSubdivision(p);
     }
-
     for(const DoorData* p = mData->doors; p != mData->doors + mData->doorCount; ++p) {
       mRooms[p->roomId].SetDoor(p);
     }

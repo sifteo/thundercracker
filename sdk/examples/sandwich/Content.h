@@ -18,6 +18,13 @@ using namespace Sifteo;
 #define TRIGGER_NPC         3
 #define TRIGGER_TYPE_COUNT  4
 
+#define SUBDIV_NONE         0
+#define SUBDIV_DIAG_POS     1
+#define SUBDIV_DIAG_NEG     2
+#define SUBDIV_BRDG_HOR     3
+#define SUBDIV_BRDG_VER     4
+
+
 struct QuestData {
     uint8_t mapId;
     uint8_t roomId;
