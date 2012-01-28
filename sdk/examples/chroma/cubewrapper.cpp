@@ -767,7 +767,7 @@ void CubeWrapper::testMatches()
                     }
                     else if( theirGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
                     {
-                        theirGems[j]->FillColor( theirGems[j]->getColor() );
+                        theirGems[j]->FillColor( ourGems[j]->getColor() );
                         ourGems[j]->mark();
                         theirGems[j]->mark();
                     }
