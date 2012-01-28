@@ -101,6 +101,8 @@ GetFileNameRoot(const std::string &InputFilename) {
       ((IFN[Len-2] == 'b' && IFN[Len-1] == 'c') ||
        (IFN[Len-2] == 'l' && IFN[Len-1] == 'l'))) {
     outputFilename = std::string(IFN.begin(), IFN.end()-3); // s/.bc/.s/
+  } else if ((Len > 1) && IFN[Len-2] == '.' && IFN[Len-1] == 'o') {
+    outputFilename = std::string(IFN.begin(), IFN.end()-2);
   } else {
     outputFilename = IFN;
   }

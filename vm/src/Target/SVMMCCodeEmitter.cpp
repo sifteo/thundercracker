@@ -6,6 +6,7 @@
  */
 
 #include "SVMMCTargetDesc.h"
+#include "SVMFixupKinds.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -42,6 +43,7 @@ public:
         if (MO.isImm())
             return static_cast<unsigned>(MO.getImm());
 
+        llvm_unreachable("Unable to encode MCOperand");
         return 0;
     }
 
@@ -68,6 +70,38 @@ public:
             uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
             EmitConstant(Binary, Size, OS);
         }
+    }
+    
+    uint32_t fixupBranch(const MCInst &MI, unsigned OpIdx,
+        SmallVectorImpl<MCFixup> &Fixups, SVM::Fixups kind) const
+    {
+        const MCOperand MO = MI.getOperand(OpIdx);
+
+        if (MO.isExpr()) {
+            Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                MCFixupKind(kind)));
+            return 0;
+        }
+
+        return MO.getImm() >> 1;
+    }
+    
+    uint32_t getBCCTargetOpValue(const MCInst &MI, unsigned OpIdx,
+        SmallVectorImpl<MCFixup> &Fixups) const
+    {
+        return fixupBranch(MI, OpIdx, Fixups, SVM::fixup_bcc);
+    }
+
+    uint32_t getBTargetOpValue(const MCInst &MI, unsigned OpIdx,
+        SmallVectorImpl<MCFixup> &Fixups) const
+    {
+        return fixupBranch(MI, OpIdx, Fixups, SVM::fixup_b);
+    }
+
+    uint32_t getCallTargetOpValue(const MCInst &MI, unsigned OpIdx,
+        SmallVectorImpl<MCFixup> &Fixups) const
+    {
+        return fixupBranch(MI, OpIdx, Fixups, SVM::fixup_call);
     }
 };
 

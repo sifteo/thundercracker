@@ -3,7 +3,7 @@
 *.bc
 *.inc
 test.o
-test.o.s
+test.s
 test.elf
 test.png
 test.out

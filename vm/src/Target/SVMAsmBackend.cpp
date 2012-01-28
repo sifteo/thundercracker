@@ -6,6 +6,7 @@
  */
 
 #include "SVMMCTargetDesc.h"
+#include "SVMFixupKinds.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCELFObjectWriter.h"
@@ -49,12 +50,65 @@ public:
 
     unsigned getNumFixupKinds() const
     {
-        return 1;
+        return SVM::NumTargetFixupKinds;
+    }
+    
+    const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const
+    {
+        const static MCFixupKindInfo Infos[SVM::NumTargetFixupKinds] = {
+            DEFINE_FIXUP_KIND_INFO
+        };
+
+        if (Kind < FirstTargetFixupKind)
+            return MCAsmBackend::getFixupKindInfo(Kind);
+        assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
+               "Invalid kind!");
+        return Infos[Kind - FirstTargetFixupKind];
+    }
+
+    int64_t adjustFixup(const MCFixup &Fixup, int64_t Value) const
+    {
+        const MCFixupKindInfo &KI = getFixupKindInfo(Fixup.getKind());
+
+        if (KI.Flags & MCFixupKindInfo::FKF_IsPCRel) {
+            // Offset due to ARM pipelining
+            Value -= 4;
+        }
+
+        switch (Fixup.getKind()) {
+
+        case SVM::fixup_bcc:
+        case SVM::fixup_b:
+            // Halfword count
+            Value /= 2;
+            break;
+            
+        default:
+            break;
+        }
+
+        return Value;
     }
 
     void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                     uint64_t Value) const
     {
+        const MCFixupKindInfo &KI = getFixupKindInfo(Fixup.getKind());
+
+        Value = adjustFixup(Fixup, Value);
+
+        int bits = KI.TargetSize;
+        uint64_t bitMask = (1 << bits) - 1;
+        assert((Value & bitMask) == 0 || (Value | bitMask) == (uint64_t)-1);
+        Value &= bitMask;
+
+        unsigned offset = Fixup.getOffset();
+        while (bits > 0) {
+            Data[offset] |= Value;
+            bits -= 8;
+            offset++;
+            Value >>= 8;
+        }
     }
 
     bool MayNeedRelaxation(const MCInst &Inst) const

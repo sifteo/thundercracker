@@ -22,8 +22,9 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeqStart,
 def callseq_end : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
     [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
-def bTarget : Operand<OtherVT>;
-def callTarget : Operand<i32>;
+def callTarget : Operand<i32> {
+    let EncoderMethod = "getCallTargetOpValue";
+}
 
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
     "!ADJCALLSTACKDOWN $amt", [(callseq_start timm:$amt)]>;
@@ -47,6 +48,14 @@ def CALL : SVC<2, (outs), (ins callTarget:$offset11),
 def CCop : Operand<i32> {
     let PrintMethod = "printCCOperand";
 }
+
+def bTarget : Operand<OtherVT> { 
+    let EncoderMethod = "getBTargetOpValue";
+}
+
+def bccTarget : Operand<OtherVT> { 
+    let EncoderMethod = "getBTargetOpValue";
+}
  
 def SDT_SVMCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_SVMBrcond : SDTypeProfile<0, 2,
@@ -59,8 +68,8 @@ def SVMBrcond : SDNode<"SVMISD::BRCOND", SDT_SVMBrcond,
     [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
 def SVMCmov : SDNode<"SVMISD::CMOV", SDT_SVMCmov, []>;
 
-def Bcc : T16<(outs), (ins bTarget:$offset11, CCop:$cc),
-    "b$cc\t$offset11", [(SVMBrcond bb:$offset11, imm:$cc)]> {
+def Bcc : T16<(outs), (ins bccTarget:$offset8, CCop:$cc),
+    "b$cc\t$offset8", [(SVMBrcond bb:$offset8, imm:$cc)]> {
     let isBranch = 1;
     let isTerminator = 1;
 }

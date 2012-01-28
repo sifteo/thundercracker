@@ -15,7 +15,7 @@ dot -Tpng $DOTFILE > test.png
 
 echo ------------------------
 
-cat test.o.s
+cat test.s
 
 echo ------------------------
 
