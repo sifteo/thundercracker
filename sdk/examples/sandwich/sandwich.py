@@ -72,8 +72,7 @@ class World:
 			# validate triggers
 			for m in self.maps:
 				for r in m.rooms:
-					r.validate_triggers_for_quest(quest)
-
+					assert len([t for t in r.triggers if t.is_active_for(quest)]) < 2, "Too many triggers in room in map: " + m.id
 
 	def export(self):
 		with open(os.path.join(self.dir,"content.gen.lua"), "w") as lua:

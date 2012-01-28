@@ -58,8 +58,7 @@ void GameView::Init() {
 }
 
 Cube* GameView::GetCube() const {
-  const int id = (int)(this - pGame->ViewBegin());
-  return gCubes + id;
+  return gCubes + (this - pGame->ViewBegin());
 }
 
 void GameView::Update() {
@@ -387,6 +386,7 @@ void GameView::DrawBackground() {
     mode.BG0_drawAsset(Vec2(0,0), *(pGame->GetMap()->Data()->blankImage));
     BG1Helper(*GetCube()).Flush();
   } else {
+    const Room *pRoom = GetRoom();
     for(int y=0; y<8; ++y) {
       for(int x=0; x<8; ++x) {
         mode.BG0_drawAsset(
@@ -397,7 +397,7 @@ void GameView::DrawBackground() {
       }
     }
     // hack alert!
-    if (GetRoom()->HasOpenDoor()) {
+    if (pRoom->HasOpenDoor()) {
       for(int y=0; y<3; ++y) {
         for(int x=3; x<=4; ++x) {
           mode.BG0_drawAsset(
@@ -409,17 +409,18 @@ void GameView::DrawBackground() {
       }
     }
 
-
     BG1Helper ovrly(*GetCube());
-    const uint8_t *p = GetRoom()->Data()->overlay;
-    if (p) {
-      while(*p != 0xff) {
-        uint8_t pos = p[0];
-        uint8_t frm = p[1];
-        p+=2;
-        if (pos != 0xff && frm != 0xff) {
-          Vec2 position = Vec2(pos>>4, pos & 0xf);
-          ovrly.DrawAsset(2*position, *(pGame->GetMap()->Data()->overlay), frm);
+    if (pRoom->HasOverlay()) {
+      unsigned tid = pRoom->OverlayTile();
+      const uint8_t *pRle = pRoom->OverlayBegin();
+      while(tid < 64) {
+        if (*pRle == 0xff) {
+          tid += pRle[1];
+          pRle+=2;
+        } else {
+          ovrly.DrawAsset(2*Vec2(tid%8, tid>>3), *(pGame->GetMap()->Data()->overlay), *pRle);
+          tid++;
+          pRle++;
         }
       }
     }

@@ -205,10 +205,8 @@ void Player::Update(float dt) {
           }          
         }
       } else { // general case - A*
-		{
-			bool result = pGame->GetMap()->FindPath(pCurrent->Location(), mDir, &mMoves);
-			ASSERT(result);
-		}
+  			{bool result = pGame->GetMap()->FindPath(pCurrent->Location(), mDir, &mMoves);
+	   		ASSERT(result);}
         mProgress = 0;
         for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
           mDir = *pNextMove;  

@@ -4,14 +4,14 @@
 
 class Room {
 private:
-
-  uint32_t mTriggerType : 4;
-  uint32_t mUnused : 28;
 	const TriggerData* mTrigger;
   const DoorData* mDoor;
+  uint16_t mOverlayIndex;
+  uint8_t mOverlayTile;
+  uint8_t mTriggerType; // 4 bits unused
 
   void _Asserts() {
-    STATIC_ASSERT((1<<4) >= TRIGGER_TYPE_COUNT ); // did we give mTriggerType enough bits?
+    STATIC_ASSERT((1<<8) >= TRIGGER_TYPE_COUNT ); // did we give mTriggerType enough bits?
   }
 
 
@@ -44,9 +44,14 @@ public:
   bool HasOpenDoor() const;
   bool HasClosedDoor() const;
 
+  bool HasOverlay() const { return mOverlayIndex != 0xffff; }
+  const uint8_t* OverlayBegin() const;
+  unsigned OverlayTile() const { return mOverlayTile; }
+
   // methods
   void SetTrigger(int type, const TriggerData* p) { mTriggerType = type; mTrigger = p; }
   void SetDoor(const DoorData* p) { mDoor = p; }
+  void SetOverlay(uint16_t rleIndex, uint8_t firstTile) { mOverlayIndex = rleIndex; mOverlayTile = firstTile; }
   void Clear();
   void ClearTrigger() { mTriggerType = TRIGGER_UNDEFINED; mTrigger = 0; }
   bool OpenDoor();

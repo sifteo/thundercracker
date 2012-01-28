@@ -14,7 +14,7 @@ struct MapPath {
 
 class Map {
 private:
-  MapData* mData;
+  const MapData* mData;
   Room mRooms[ROOM_CAPACITY];
 
 public:

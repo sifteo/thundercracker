@@ -27,8 +27,14 @@ bool Room::OpenDoor() {
   return pGame->GetState()->Flag(pGame->GetMap()->Data()->doorQuestId, mDoor->flagId);
 }
 
+const uint8_t* Room::OverlayBegin() const {
+  return pGame->GetMap()->Data()->rle_overlay + mOverlayIndex;
+}
+
+
 void Room::Clear() { 
   mTriggerType = TRIGGER_UNDEFINED;
   mTrigger = 0; 
   mDoor = 0;
+  mOverlayIndex = 0xffff;
 }

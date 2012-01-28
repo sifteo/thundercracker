@@ -528,7 +528,7 @@
   </tile>
  </tileset>
  <tileset firstgid="185" name="dungeon_overlay" tilewidth="16" tileheight="16">
-  <image source="dungeon_overlay.png" width="64" height="80"/>
+  <image source="dungeon_overlay.png" width="64" height="64"/>
  </tileset>
  <layer name="background" width="48" height="72">
   <data encoding="csv">
@@ -606,7 +606,7 @@
 3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,36,24,101,102,24,58,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
 </data>
  </layer>
- <layer name="grid" width="48" height="72" opacity="0.2">
+ <layer name="grid" width="48" height="72" visible="0" opacity="0.25">
   <data encoding="csv">
 0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
 0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
@@ -758,7 +758,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup name="triggers" width="48" height="72">
+ <objectgroup name="triggers" width="48" height="72" visible="0">
   <object name="DungeonGate" type="Gateway" x="416" y="1104" width="64" height="64">
    <properties>
     <property name="target" value="forest:DungeonGate"/>

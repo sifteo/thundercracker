@@ -60,6 +60,9 @@ class Map:
 		for x in range(self.width):
 			for y in range(self.height-1):
 				assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id
+		# find subdivisions
+		for r in self.rooms:
+			r.find_subdivisions()
 		# validate animated tile capacity (max 4 per room)
 		for r in self.rooms:
 			assert len([(x,y) for x in range(8) for y in range(8) if "animated" in r.tileat(x,y).props]) <= 4, "too many tiles in room in map: " + self.id
@@ -157,15 +160,36 @@ class Map:
 			src.write("};\n")
 
 		if self.overlay is not None:
-			for room in self.rooms:
-				if room.hasoverlay():
-					src.write("static const uint8_t %s_overlay_%d_%d[] = { " % (self.id, room.x, room.y))
-					for y in range(8):
-						for x in range(8):
-							tile = room.overlaytileat(x,y)
-							if tile is not None:
-								src.write("0x%x, 0x%x, " % (x<<4|y, tile.lid))
-					src.write("0xff };\n")
+			src.write("static const uint8_t %s_overlay_rle[] = { " % self.id)
+			emptycount = 0
+			for t in (r.overlaytileat(tid%8,tid/8) for r in self.rooms for tid in range(64)):
+				if t is not None:
+					while emptycount >= 0xff:
+						src.write("0xff, 0xff, ")
+						emptycount -= 0xff
+					if emptycount > 0:
+						src.write("0xff, 0x%x, " % emptycount)
+						emptycount = 0
+					src.write("0x%x, " % t.lid)
+				else:
+					emptycount += 1
+			while emptycount >= 0xff:
+				src.write("0xff, 0xff, ")
+				emptycount -= 0xff
+			if emptycount > 0:
+				src.write("0xff, 0x%x, " % emptycount)
+				emptycount = 0
+			src.write("};\n")
+
+			#for room in self.rooms:
+			#	if room.hasoverlay():
+			#		src.write("static const uint8_t %s_overlay_%d_%d[] = { " % (self.id, room.x, room.y))
+			#		for y in range(8):
+			#			for x in range(8):
+			#				tile = room.overlaytileat(x,y)
+			#				if tile is not None:
+			#					src.write("0x%x, 0x%x, " % (x<<4|y, tile.lid))
+			#		src.write("0xff };\n")
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
 		for y in range(self.height):
 			for x in range(self.width):
@@ -176,12 +200,13 @@ class Map:
 	
 	def write_decl_to(self, src):
 		src.write(
-			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, " \
+			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, %(overlay_rle)s, " \
 			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, " \
 			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(w)x, 0x%(h)x },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
+				"overlay_rle": self.id + "_overlay_rle" if self.overlay is not None else "0",
 				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",

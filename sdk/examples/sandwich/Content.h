@@ -74,7 +74,6 @@ struct AnimatedTileData {
 struct RoomData {
     uint8_t collisionMaskRows[8];
     uint8_t tiles[64];
-    const uint8_t* overlay; // format: alternate 0bXXXXYYYY, tileId, 0bXXXXYYYY, tileId, etc
     uint8_t centerx;
     uint8_t centery;
 };
@@ -84,6 +83,7 @@ struct MapData {
     const AssetImage* overlay;
     const AssetImage* blankImage;
     const RoomData* rooms;
+    const uint8_t* rle_overlay; // overlay layer w/ empty-tiles RLE-encoded (tileId, tileId, 0xff, emptyCount, tileId, ...)
     const uint8_t* xportals; // bit array of portals between rooms (x,y) and (x+1,y)
     const uint8_t* yportals; // bit array of portals between rooms (x,y) and (x,y+1)
     const ItemData* items; 

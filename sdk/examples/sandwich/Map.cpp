@@ -6,8 +6,8 @@ void Map::Init() {
 }
 
 void Map::SetData(const MapData& map) { 
-  if (mData != (MapData*)&map) {
-    mData = (MapData*)&map; 
+  if (mData != &map) {
+    mData = &map; 
 
     const Room* pEnd = mRooms + (map.width*map.height);
     for(Room* p=mRooms; p!=pEnd; ++p) { p->Clear(); }
@@ -33,6 +33,27 @@ void Map::SetData(const MapData& map) {
     }
     for(const DoorData* p = mData->doors; p != mData->doors + mData->doorCount; ++p) {
       mRooms[p->roomId].SetDoor(p);
+    }
+    // walk the overlay RLE to find room breaks
+    if (mData->rle_overlay) {
+      const unsigned tend = map.width * map.height * 64; // 64 tiles per room
+      unsigned tid=0;
+      int prevRoomId = -1;
+      const uint8_t *p = mData->rle_overlay;
+      while (tid < tend) {
+        if (*p == 0xff) {
+          tid += p[1];
+          p+=2;
+        } else {
+          const int roomId = (tid >> 6);
+          if (roomId > prevRoomId) {
+            prevRoomId = roomId;
+            mRooms[roomId].SetOverlay(p - mData->rle_overlay, tid - (roomId<<6));
+          }
+          p++;
+          tid++;
+        }
+      }
     }
   }
 }
