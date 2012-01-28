@@ -79,7 +79,7 @@ struct RoomData { // expect to support about 1,000 rooms max (10 maps * 81 rooms
 };
 
 struct DiagonalSubdivisionData {
-    uint8_t positiveSlope : 1
+    uint8_t positiveSlope : 1;
     uint8_t roomId : 7;
     uint8_t altCenterX : 4;
     uint8_t altCenterY : 4;

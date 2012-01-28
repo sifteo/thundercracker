@@ -180,16 +180,6 @@ class Map:
 				src.write("0xff, 0x%x, " % emptycount)
 				emptycount = 0
 			src.write("};\n")
-
-			#for room in self.rooms:
-			#	if room.hasoverlay():
-			#		src.write("static const uint8_t %s_overlay_%d_%d[] = { " % (self.id, room.x, room.y))
-			#		for y in range(8):
-			#			for x in range(8):
-			#				tile = room.overlaytileat(x,y)
-			#				if tile is not None:
-			#					src.write("0x%x, 0x%x, " % (x<<4|y, tile.lid))
-			#		src.write("0xff };\n")
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
 		for y in range(self.height):
 			for x in range(self.width):
@@ -201,8 +191,8 @@ class Map:
 	def write_decl_to(self, src):
 		src.write(
 			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, %(overlay_rle)s, " \
-			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, " \
-			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(w)x, 0x%(h)x },\n" % \
+			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, %(diagsubdivs)s, " \
+			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(w)x, 0x%(h)x },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
@@ -212,6 +202,7 @@ class Map:
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
+				"diagsubdivs": "0",
 				"w": self.width,
 				"h": self.height,
 				"nitems": len(self.item_dict),
@@ -219,7 +210,8 @@ class Map:
 				"nnpcs": len(self.npc_dict),
 				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
 				"ndoors": len(self.doors),
-				"nanimtiles": len(self.animatedtiles)
+				"nanimtiles": len(self.animatedtiles),
+				"ndiags": 0
 			})
 
 
