@@ -445,6 +445,9 @@ void GridSlot::mark()
 	m_state = STATE_MARKED;
 	m_eventTime = System::clock();
     Game::Inst().playSound(match2);
+
+    if( m_color < NUM_COLORS )
+        Game::Inst().SetUsedColor( m_color );
 }
 
 

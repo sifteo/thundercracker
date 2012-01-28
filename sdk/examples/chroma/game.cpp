@@ -206,6 +206,11 @@ void Game::Reset()
         m_cubes[i].Reset();
 	}
 
+    for( unsigned int i = 0; i < GridSlot::NUM_COLORS; i++ )
+    {
+        m_aColorsUsed[i] = false;
+    }
+
 	m_timer.Reset();
 
     m_bStabilized = false;
@@ -243,6 +248,21 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 		else
         {
             bool bannered = false;
+            int numColors = 0;
+
+            //count how many colors we used for this combo
+            for( unsigned int i = 0; i < GridSlot::NUM_COLORS; i++ )
+            {
+                if( m_aColorsUsed[i] )
+                {
+                    numColors++;
+                    m_aColorsUsed[i] = false;
+                }
+            }
+
+            if( numColors >= NUM_COLORS_FOR_HYPER )
+                pWrapper->SpawnSpecial( GridSlot::HYPERCOLOR );
+
 
             //free shake
             /*if( m_mode == MODE_SHAKES && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
@@ -265,9 +285,9 @@ void Game::CheckChain( CubeWrapper *pWrapper )
                 playSound(clear3);
 
                 //is it dangerous to add one here?  do we need to queue it?
-                if( /*!m_bHyperDotMatched && */!DoesHyperDotExist() )
+                //if( !m_bHyperDotMatched && !DoesHyperDotExist() )
+                if( numColors < NUM_COLORS_FOR_HYPER )
                     pWrapper->SpawnSpecial( GridSlot::RAINBALLCOLOR );
-                    //pWrapper->SpawnSpecial( GridSlot::HYPERCOLOR );
             }
             else if( m_iDotsCleared >= DOT_THRESHOLD2 )
                 playSound(clear2);

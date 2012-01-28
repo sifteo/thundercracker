@@ -53,6 +53,7 @@ public:
     static const int NUM_SLOSH_SOUNDS = 2;
     static const unsigned int INT_MAX = 0x7fff;
     static const float SLOSH_THRESHOLD;
+    static const int NUM_COLORS_FOR_HYPER = 3;
 
     //number of dots needed for certain thresholds
     enum
@@ -121,6 +122,8 @@ public:
     bool AreNoCubesEmpty() const;
     unsigned int CountEmptyCubes() const;
 
+    inline void SetUsedColor( unsigned int color ) { m_aColorsUsed[color] = true; }
+
 private:
 	void TestMatches();
     bool DoesHyperDotExist();
@@ -131,6 +134,8 @@ private:
 	unsigned int m_iDotScoreSum;
 	unsigned int m_iScore;
 	unsigned int m_iDotsCleared;
+    //how many colors were involved in this
+    bool m_aColorsUsed[ GridSlot::NUM_COLORS ];
 	//for progression in shakes mode
 	unsigned int m_iLevel;
 	GameState m_state;
