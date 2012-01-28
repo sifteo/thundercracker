@@ -759,6 +759,18 @@ void CubeWrapper::testMatches()
                         ourGems[j]->mark();
                         theirGems[j]->mark();
                     }
+                    else if( ourGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
+                    {
+                        ourGems[j]->FillColor( theirGems[j]->getColor() );
+                        ourGems[j]->mark();
+                        theirGems[j]->mark();
+                    }
+                    else if( theirGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
+                    {
+                        theirGems[j]->FillColor( theirGems[j]->getColor() );
+                        ourGems[j]->mark();
+                        theirGems[j]->mark();
+                    }
 				}
 			}
         }
@@ -1392,7 +1404,7 @@ void CubeWrapper::QueueClear( Vec2 &pos )
 
 
 //look for an empty spot to put a hyper dot
-void CubeWrapper::SpawnHyper()
+void CubeWrapper::SpawnSpecial( unsigned int color )
 {
     for( int i = 0; i < NUM_ROWS; i++ )
     {
@@ -1402,7 +1414,7 @@ void CubeWrapper::SpawnHyper()
 
             if( slot.isEmpty() )
             {
-                slot.MakeHyper();
+                slot.FillColor( color );
                 return;
             }
         }

@@ -23,6 +23,7 @@ public:
     {
         HYPERCOLOR = NUM_COLORS,
         ROCKCOLOR,
+        RAINBALLCOLOR,
         AFTERLASTSPECIAL,
         NUM_SPECIALS = AFTERLASTSPECIAL - NUM_COLORS
     };
@@ -90,8 +91,6 @@ public:
 	void MakeFixed() { m_bFixed = true; }
     void setFixedAttempt();
 
-    inline void MakeHyper() { FillColor( HYPERCOLOR ); }
-    inline bool IsHyper() const { return m_color == HYPERCOLOR; }
     inline bool IsSpecial() const { return m_color >= NUM_COLORS; }
 
 	//copy color and some other attributes from target.  Used when tilting

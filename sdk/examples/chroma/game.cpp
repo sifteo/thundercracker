@@ -266,7 +266,8 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 
                 //is it dangerous to add one here?  do we need to queue it?
                 if( /*!m_bHyperDotMatched && */!DoesHyperDotExist() )
-                    pWrapper->SpawnHyper();
+                    pWrapper->SpawnSpecial( GridSlot::RAINBALLCOLOR );
+                    //pWrapper->SpawnSpecial( GridSlot::HYPERCOLOR );
             }
             else if( m_iDotsCleared >= DOT_THRESHOLD2 )
                 playSound(clear2);

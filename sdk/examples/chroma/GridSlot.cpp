@@ -77,7 +77,8 @@ const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
 {
     &hyperdot,
-    &rockdot
+    &rockdot,
+    &rainball
 };
 
 

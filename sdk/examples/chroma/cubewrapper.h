@@ -110,7 +110,7 @@ public:
     //queue a location to be cleared by gemEmpty.
     //This exists because we need to do all our clears first, and then do our draws
     void QueueClear( Vec2 &pos );
-    void SpawnHyper();
+    void SpawnSpecial( unsigned int color );
     //destroy all dots of the given color
     void BlowAll( unsigned int color );
     bool HasHyperDot() const;

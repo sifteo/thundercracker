@@ -42,6 +42,7 @@ Cover = image{"cover.png"}
 --special dots
 hyperdot = image{"hyper.png"}
 rockdot = image{"rock.png", height=32}
+rainball = image{"rainball.png"}
 --timer
 TimerUp = image{"TimerUp.png", height=8}
 TimerLeft = image{"TimerLeft.png"}
@@ -82,8 +83,8 @@ BannerPoints = image{"Bannerpoints.png", height=16}
 
 --sounds
 astrokraut = sound{"astrokraut.raw"}
-bubble_pop_02 = sound{"bubble_pop_02.raw"}
-charge_03 = sound{"charge_03.raw"}
+--bubble_pop_02 = sound{"bubble_pop_02.raw"}
+--charge_03 = sound{"charge_03.raw"}
 clear1 = sound{"clear1.raw"}
 clear2 = sound{"clear2.raw"}
 clear3 = sound{"clear3.raw"}
