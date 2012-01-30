@@ -44,8 +44,7 @@ private:
 
 public:
   void Init();
-  
-  bool IsShowing(const MapData& map) const { return mData == &map; }
+
   void SetData(const MapData& map);
   
   Room* GetRoom(int roomId) const { return (Room*)mRooms + roomId; }
