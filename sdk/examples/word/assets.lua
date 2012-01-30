@@ -6,6 +6,7 @@ EyeLeftBlink = image{"wc_eyeball_left_blink.png", width=16, height=16, quality=1
 EyeRightBlink = image{"wc_eyeball_right_blink.png", width=16, height=16, quality=10, pinned=true}
 LetterZzZ = image{"wc_zzz.png", width=8, height=16, quality=10, pinned=true}
 Font1Letter = image{"WC_letters.png", width=120, height=88, quality=10}
+Font2Letter = image{"font_2ltr.png", width=56, height=56, quality=10}
 LetterBG = image{"wc_background.png", quality=10}
 StartPrompt = image{"wc_shaketoplay.png", width=48, height=56, quality=10}
 Title = image{"wc_title.png", quality=10}

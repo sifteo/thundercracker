@@ -1,23 +1,65 @@
 #!/usr/bin/env python
-import time, random
+import math, random
 from itertools import *
 import os, sys
 import fileinput
 import sys
 from ctypes import *
+import operator
 
-
-max_seed_word_len = 5
+seed_word_lens = [4, 6]#, 9]
+letters_per_cube = 2
 
 def find_anagrams(string, dictionary):
-
     words = {}
-    for k in range(len(string) + 1):
-        if k >= 2:
-            for subword in permutations(string, k):
-                if ''.join(subword) in dictionary and not''.join(subword) in words:
-                    # Check if it's a max lengthword and a bad word
-                    words[''.join(subword).upper()] = True
+    if letters_per_cube == 1:
+        for k in range(len(string) + 1):
+            if k in seed_word_lens:
+                for subword in permutations(string, k):			
+                    sw = ''.join(subword).upper()
+                    if sw in dictionary and not sw in words:
+                        # Check if it's a max lengthword and a bad word
+                        words[sw] = True
+    else:
+        #print string
+        # for all the seed_word_lens, up to the length of this string
+        for k in range(len(string) + 1):
+            if k in seed_word_lens:        
+                # count up a number to figure out how to shift each cube set of letters
+                for sub_perm_index in range(int(math.pow(letters_per_cube, len(string)/letters_per_cube))):
+                    #print sub_perm_index
+                    s = string
+                    cube_ltrs = []
+                    cube_index = 0
+                    # break the string into cube sets of letters, and shift
+                    while len(s) > 0:
+                        st = s[:letters_per_cube]
+                        shift = (sub_perm_index / math.pow(letters_per_cube, cube_index)) % letters_per_cube
+                        shift = int(shift)
+                        #print shift
+                        #print "bef: " + st
+                        st = st[shift:] + st[:shift]
+                        #print "af: " + st
+                        cube_ltrs.append(st)
+                        s = s[letters_per_cube:]
+                        cube_index += 1
+                        #print s
+                    #print cube_ltrs
+                    # for all the permuations of cube sets of letters
+                    for cube_ltr_set in permutations(cube_ltrs, k/letters_per_cube):			
+                        #print cube_ltr_set
+                        # form the string
+                        sw = ''
+                        for cltrs in cube_ltr_set:
+                            #print cltrs
+                            sw += cltrs
+                        #print sw
+                        # if it's in the dictionary, save it
+                        if sw in dictionary and not sw in words:
+                            #print sw + "\n"
+                            # Check if it's a max lengthword and a bad word
+                            words[sw] = True
+                            
     #print string
     #print words
     return words
@@ -29,7 +71,7 @@ def generate_word_list_file():
     word_list = {}
     for line in fi:
         word = line.strip()
-        if len(word) <= max_seed_word_len and word.find("'") == -1:
+        if len(word) in seed_word_lens and word.find("'") == -1 and word.find(".") == -1:
             #print "word list: " + line
             word_list[word.upper()] = True        
     fi.close()
@@ -65,7 +107,7 @@ def generate_dict():
     word_list = {}
     for line in fi:
         word = line.strip()
-        if len(word) <= max_seed_word_len and word.find("'") == -1 and word.find(".") == -1:
+        if len(word) in seed_word_lens and word.find("'") == -1 and word.find(".") == -1:
             #print "word list: " + line
             word_list[word.upper()] = True        
     fi.close()
@@ -75,22 +117,31 @@ def generate_dict():
     output_dictionary = {}
     max_anagrams = 0
     word_list_used = {}
+    #find_anagrams("LISTEN", dictionary)
+    #return
     for word in word_list:
         anagrams = find_anagrams(word, dictionary)
-        min_anagrams = [999, 1, 3, 14, 25, 25]
+        min_anagrams = [999, 999, 999, 999, 999, 1]
         #min_anagrams = [999, 999, 4, 15, 25, 25]
+        #print "checking word " + word
         if len(anagrams) > min_anagrams[len(word) - 1]:
+            #print word + " " + str(anagrams)
             num_seed_repeats = 0
             # skip it if a pre-existing seed word has the same anagram set 
             bad = False
+            num_common_anagrams = 0
             for w in anagrams:
                 if len(w) == len(word) and w.upper() in word_list_used.keys():
                     num_seed_repeats += 1
+                    break
                 if w in bad_words.keys():
                     bad = True
+                    break
+                if w in word_list:
+                    num_common_anagrams += 1
             if num_seed_repeats == 0 and not bad:
                 #print word + ": " + str(len(anagrams))
-                word_list_used[word.upper()] = True
+                word_list_used[word.upper()] = len(anagrams) - num_common_anagrams
                 num_anagrams = len(anagrams)
                 if max_anagrams < num_anagrams:
                     max_anagrams = num_anagrams
@@ -118,18 +169,27 @@ def generate_dict():
             bits |= ((1 + ord(letter) - ord('A')) << (letter_index * letter_bits))
             letter_index += 1
         if word in word_list_used.keys():
-            bits |= (len(word) << 29)
+            bits |= (1 << 31)
             #print "533D: " + word
             fi.write(hex(bits) + ",\t\t// " + word + ", seed word (533D: " + str(len(word)) + ")\n")
         else:
             fi.write(hex(bits) + ",\t\t// " + word + "\n")
     fi.close()
     
-    fi = open("word_list_used.txt", "w")
-    for word in word_list_used.keys():
-        fi.write(word + "\n")
+    # sort word list used by value numeric (keys by values in dict)
+    sorted_word_list_used = sorted(word_list_used.iteritems(), key=operator.itemgetter(1), reverse=False)    
+    #print sorted_word_list_used
+    fi = open("word_list_used.cpp", "w")
+    ficnt = open("word_list_used_anagram_count.cpp", "w")
+    for word, value in sorted_word_list_used:
+        fi.write("    \"" + word + "\",\n")
+        ficnt.write("    " + str(len(find_anagrams(word, dictionary))) + ",\t// " + word + ", uncommon anagrams: " + str(word_list_used[word]) + "\n")
     fi.close()    
+    ficnt.close()
 
+    # skip the prototype code below, it just generates the word lists for the demo, if 
+    # the seeds are set for each pick at run time
+    return;
     fi = open("anagram_seeds.txt", "w")
     seed_inc = 88
     seed = 0

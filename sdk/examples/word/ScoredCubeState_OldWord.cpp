@@ -23,6 +23,7 @@ unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& dat
 
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
+    case EventID_LetterOrderChange:
         {
             bool isOldWord = false;
             if (getStateMachine().canBeginWord())
@@ -103,7 +104,17 @@ void ScoredCubeState_OldWord::paint()
     Cube& c = getStateMachine().getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    paintLetters(vid, Font1Letter, true);
+
+    switch (MAX_LETTERS_PER_CUBE)
+    {
+    case 2:
+        paintLetters(vid, Font2Letter, true);
+        break;
+
+    default:
+        paintLetters(vid, Font1Letter, true);
+        break;
+    }
 
     ImageIndex ii = ImageIndex_Connected;
     if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&

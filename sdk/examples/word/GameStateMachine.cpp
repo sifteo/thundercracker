@@ -10,15 +10,16 @@
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
 #ifdef DEBUG
 
-const float ROUND_TIME = 38.0f;
+float ROUND_TIME = (MAX_LETTERS_PER_CUBE > 1) ? 999999.0f : 38.f;
 #else
-const float ROUND_TIME = 120.0f;
+float ROUND_TIME = (MAX_LETTERS_PER_CUBE > 1) ? 120.f : 999999.0f;
 #endif
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(Cube cubes[]) :
-    StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0)
+    StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
+    mNumAnagramsRemaining(0)
 {
     ASSERT(cubes != 0);
     sInstance = this;
@@ -65,6 +66,7 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewAnagram:
         mAnagramCooldown = ANAGRAM_COOLDOWN;
+        mNumAnagramsRemaining = data.mNewAnagram.mNumAnagrams;
         break;
 
     case EventID_NewWordFound:
@@ -72,6 +74,7 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             unsigned len = _SYS_strnlen(data.mWordFound.mWord, 32);
             mScore += len;
             mNewWordLength = len;
+            --mNumAnagramsRemaining;
             // TODO multiple letters per cube
             // TODO count active cubes
             /* TODO extra time sound
@@ -158,4 +161,19 @@ void GameStateMachine::setState(unsigned newStateIndex, State& oldState)
     data.mGameStateChanged.mNewStateIndex = newStateIndex;
     StateMachine::setState(newStateIndex, oldState);
     onEvent(EventID_GameStateChanged, data);
+}
+
+
+unsigned GameStateMachine::getNumCubesInState(CubeStateIndex stateIndex)
+{
+    ASSERT(sInstance);
+    unsigned count = 0;
+    for (unsigned i = 0; i < arraysize(sInstance->mCubeStateMachines); ++i)
+    {
+        if (sInstance->mCubeStateMachines[i].getCurrentStateIndex() == stateIndex)
+        {
+            ++count;
+        }
+    }
+    return count;
 }

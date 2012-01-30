@@ -3,14 +3,14 @@
 
 #include "CubeStateMachine.h"
 
-const unsigned MAX_OLD_WORDS = 66; // as determined by offline check
+const unsigned MAX_OLD_WORDS = 16; // as determined by offline check
 
 class Dictionary
 {
 public:
     Dictionary();
 
-    static bool pickWord(char* buffer);
+    static bool pickWord(char* buffer, unsigned& numAnagrams);
     static bool isWord(const char* string);
     static bool isOldWord(const char* word);
 
@@ -21,6 +21,7 @@ private:
     static unsigned sNumOldWords;
     static unsigned sRandSeed;
     static unsigned sRound;
+    static unsigned sPickIndex;
 };
 
 #endif // DICTIONARY_H
