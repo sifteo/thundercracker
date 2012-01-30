@@ -5,6 +5,14 @@ int Room::RoomId() const {
   return (int)(this - pGame->GetMap()->GetRoom(0));
 }
 
+Vec2 Room::LocalCenter(unsigned subdiv) const { 
+  if (subdiv && (mSubdivType == SUBDIV_DIAG_POS || mSubdivType == SUBDIV_DIAG_NEG)) {
+    const DiagonalSubdivisionData* p = SubdivAsDiagonal();
+    return Vec2(p->altCenterX, p->altCenterY); 
+  }
+  return Vec2(Data()->centerX, Data()->centerY); 
+}
+
 Vec2 Room::Location() const {
   int id = RoomId();
   return Vec2(id % pGame->GetMap()->Data()->width, id / pGame->GetMap()->Data()->width);

@@ -160,7 +160,7 @@ void Player::Update(float dt) {
     do {
       if (mPath.IsDefined()) {
         mDir = mPath.steps[0];
-        mTarget.view = mCurrent.view->VirtualNeighborAt(mDir);
+        pGame->GetMap()->GetBroadLocationNeighbor(mCurrent, mDir, &mTarget);
       }
       // animate walking to target
       PlaySfx(sfx_running);
@@ -192,7 +192,7 @@ void Player::Update(float dt) {
             CORO_YIELD;
           }
           // fill in the remainder
-          mPosition = mTarget.view->GetRoom()->Center();
+          mPosition = mTarget.view->GetRoom()->Center(mTarget.subdivision);
         } else {
           PlaySfx(sfx_doorBlock);
           mPath.Cancel();
@@ -240,7 +240,7 @@ void Player::Update(float dt) {
         mCurrent.view->HidePlayer();
         mCurrent.view = mTarget.view;
         mTarget.view = 0;  
-        mPosition = mCurrent.view->GetRoom()->Center();
+        mPosition = mCurrent.view->GetRoom()->Center(mCurrent.subdivision);
         mCurrent.view->UpdatePlayer();        
         if (mCurrent.view->GetRoom()->HasItem()) {
           const ItemData* pItem = mCurrent.view->GetRoom()->TriggerAsItem();

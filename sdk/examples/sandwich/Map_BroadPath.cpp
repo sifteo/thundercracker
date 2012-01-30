@@ -24,11 +24,11 @@ bool Map::CanTraverse(BroadLocation bloc, Cube::Side side) {
         case SIDE_RIGHT: return loc.x < mData->width-1 && GetPortalX(loc.x, loc.y);
       }
   }
-  ASSERT(false);
   return false;
 }
 
 bool Map::GetBroadLocationNeighbor(BroadLocation loc, Cube::Side side, BroadLocation* outNeighbor) {
+  if (!CanTraverse(loc, side)) { return false; }
   outNeighbor->view = loc.view->VirtualNeighborAt(side);
   if (!outNeighbor->view) { return false; }
   const Room* room = outNeighbor->view->GetRoom();
@@ -91,7 +91,7 @@ if (next.view->VirtualTiltDirection() != -1/* || view->touched*/) {
   } else {
     for(int side=0; side<NUM_SIDES; ++side) {
       steps[depth] = side;
-      if (pGame->GetMap()->CanTraverse(next, side) && Visit(next, side, depth+1)) {
+      if (Visit(next, side, depth+1)) {
         return true;
       } else {
         steps[depth] = -1;
@@ -108,7 +108,7 @@ bool Map::FindBroadPath(BroadPath* outPath) {
   sVisitMask[pRoot->view->GetCubeID()] = (1 << pRoot->subdivision);
   for(int side=0; side<NUM_SIDES; ++side) {
     outPath->steps[0] = side;
-    if (CanTraverse(*pRoot, side) && outPath->Visit(*pRoot, side, 1)) {
+    if (outPath->Visit(*pRoot, side, 1)) {
       return true;
     }
   }

@@ -147,7 +147,7 @@ void GameView::Update() {
   // item hover
   if (GetRoom()->HasItem()) {
     const unsigned hoverTime = (pGame->AnimFrame() - mScene.room.startFrame) % HOVER_COUNT;
-    Vec2 p = 16 * GetRoom()->LocalCenter();
+    Vec2 p = 16 * GetRoom()->LocalCenter(0);
     mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + sHoverTable[hoverTime]);
   }
 
@@ -226,7 +226,7 @@ bool GameView::ShowLocation(Vec2 room) {
         mode.setSpriteImage(TRIGGER_SPRITE_ID, Items.index + (r->TriggerAsItem()->itemId - 1) * Items.width * Items.height);
         mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
         {
-          Vec2 p = 16 * GetRoom()->LocalCenter();
+          Vec2 p = 16 * GetRoom()->LocalCenter(0);
           mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
         }
         break;
@@ -301,7 +301,7 @@ void GameView::HidePlayer() {
 }
   
 void GameView::SetItemPosition(Vec2 p) {
-  p += 16 * GetRoom()->LocalCenter();
+  p += 16 * GetRoom()->LocalCenter(0);
   VidMode_BG0_SPR_BG1(GetCube()->vbuf).moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
 

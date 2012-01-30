@@ -27,8 +27,8 @@ public:
 
   // telem getters
   inline Vec2 Position() const { return 128 * Location(); }
-  inline Vec2 LocalCenter() const { return Vec2(Data()->centerX, Data()->centerY); }
-  inline Vec2 Center() const { return Position() + 16 * LocalCenter(); }
+  Vec2 LocalCenter(unsigned subdiv) const;
+  inline Vec2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
   //uint8_t GetTile(Vec2 position);
 
   // triggers

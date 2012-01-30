@@ -213,7 +213,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   PlayMusic(mMap.Data() == &gMapData[1] ? music_dungeon : music_castle);
 
   // walk out of the in-gate
-  Vec2 target = mMap.GetRoom(room)->Center();
+  Vec2 target = mMap.GetRoom(room)->Center(0);
   mPlayer.SetLocation(position, InferDirection(target - position));
   view->Init();
   WalkTo(target);

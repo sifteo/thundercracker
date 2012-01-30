@@ -73,7 +73,9 @@ void AStar::VisitNeighbor(ARecord* parent, Cube::Side dir) {
 }
 
 bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath) {
-  if (!CanTraverse(bloc, dir)) { return false; }
+  BroadLocation dbloc;
+  if (!GetBroadLocationNeighbor(bloc, dir, &dbloc)) { return false; }
+
   Vec2 loc = bloc.view->Location();
   Vec2 dloc = loc + kSideToUnit[dir];
   Room* src = GetRoom(loc);
@@ -84,8 +86,8 @@ bool Map::FindNarrowPath(BroadLocation bloc, Cube::Side dir, NarrowPath* outPath
 
   // convert src/dst tile positions to normalized coordinates relative to the 65-tile pathfinding grid
   as.offset = dir == SIDE_TOP || dir == SIDE_LEFT ? dloc : loc;
-  as.src = src->LocalCenter() + 8 * (loc - as.offset) - Vec2(2,2);
-  as.dst = dst->LocalCenter() + 8 * (dloc - as.offset) - Vec2(2,2);
+  as.src = src->LocalCenter(bloc.subdivision) + 8 * (loc - as.offset) - Vec2(2,2);
+  as.dst = dst->LocalCenter(dbloc.subdivision) + 8 * (dloc - as.offset) - Vec2(2,2);
   as.cellPitch = dir % 2 == 0 ? 5 : 13; // vertical or horizontal?
   as.cellRowCount = dir % 2 == 0 ? 13 : 5; // vertical or horizontal?
 
