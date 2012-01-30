@@ -24,6 +24,9 @@ namespace llvm {
         virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;
         virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
 
+        // Custom print functions
+        void printAddrSPValue(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+
     private:
         static const char *getCCName(int cc);
         void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);

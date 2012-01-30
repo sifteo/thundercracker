@@ -67,3 +67,10 @@ void SVMInstPrinter::printCCOperand(const MCInst *MI, int opNum, raw_ostream &O)
     const MCOperand& MO = MI->getOperand(opNum);
     O << getCCName((int)MO.getImm());
 }
+
+void SVMInstPrinter::printAddrSPValue(const MCInst *MI, unsigned OpNum, raw_ostream &O)
+{
+    const MCOperand &baseFI = MI->getOperand(OpNum);
+    const MCOperand &offset = MI->getOperand(OpNum + 1);
+    O << (baseFI.getImm() + offset.getImm());
+}

@@ -290,6 +290,14 @@ def LDRpc : T6<(outs GPReg:$Rd), (ins i32imm:$offset8),
 
 def ADDRsp : Operand<i32>,
     ComplexPattern<iPTR, 2, "SelectAddrSP", [frameindex], []> {
+    /*
+     * SelectAddrSP gives us two separate MIOperands, one with a FrameIndex
+     * and one with an immediate offset. The FrameIndex gets lowered very late
+     * in code generation, and we at the very last minute (during encoding
+     * or printing) combine the lowered FI with the offset.
+     */
+    let PrintMethod = "printAddrSPValue";
+    let EncoderMethod = "getAddrSPValue";
     let MIOperandInfo = (ops GPReg:$base, i32imm:$offset10);
 }
 

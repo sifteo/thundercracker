@@ -32,7 +32,7 @@ void siftmain() {
 	}
 }
 
-#endif
+#else
 
 void siftmain() {
     int64_t now = 0;
@@ -41,3 +41,5 @@ void siftmain() {
         _SYS_paint();
     }
 }
+
+#endif

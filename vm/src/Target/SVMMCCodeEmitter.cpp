@@ -103,6 +103,14 @@ public:
     {
         return fixupBranch(MI, OpIdx, Fixups, SVM::fixup_call);
     }
+    
+    uint32_t getAddrSPValue(const MCInst &MI, unsigned OpIdx,
+        SmallVectorImpl<MCFixup> &Fixups) const
+    {
+        const MCOperand &baseFI = MI.getOperand(OpIdx);
+        const MCOperand &offset = MI.getOperand(OpIdx + 1);
+        return baseFI.getImm() + offset.getImm();
+    }
 };
 
 }  // end namespace
