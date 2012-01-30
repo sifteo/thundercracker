@@ -43,18 +43,21 @@ static const Vec2 sBffTable[] = {
 // methods
 
 void GameView::Init() {
-  visited = false;
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   mode.set();
   mode.clear();
   mode.setWindow(0, 128);
-  if (pGame->GetPlayer()->CurrentView() == this) {
+  if (pGame->GetPlayer()->View() == this) {
     mRoomId = ROOM_UNDEFINED;
     ShowLocation(pGame->GetPlayer()->Location());
   } else {
     mRoomId = 0;
     ShowLocation(Vec2(-1,-1));
   }
+}
+
+Cube::ID GameView::GetCubeID() const {
+  return this - pGame->ViewBegin();
 }
 
 Cube* GameView::GetCube() const {
@@ -235,7 +238,7 @@ bool GameView::ShowLocation(Vec2 room) {
         mode.moveSprite(TRIGGER_SPRITE_ID, npc->x-16, npc->y-16);
         break;
     }
-    if (this == pGame->GetPlayer()->CurrentView()) { ShowPlayer(); }
+    if (this == pGame->GetPlayer()->View()) { ShowPlayer(); }
     DrawBackground();
 
     // h4cky scene-specific stuff
@@ -289,7 +292,7 @@ void GameView::SetPlayerFrame(unsigned frame) {
 void GameView::UpdatePlayer() {
   Vec2 localPosition = pGame->GetPlayer()->Position() - 128 * Location();
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
-  mode.setSpriteImage(PLAYER_SPRITE_ID, pGame->GetPlayer()->CurrentFrame());
+  mode.setSpriteImage(PLAYER_SPRITE_ID, pGame->GetPlayer()->AnimFrame());
   mode.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
 }
 

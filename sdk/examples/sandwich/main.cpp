@@ -88,7 +88,7 @@ void siftmain() {
 			pGame = 0;
 		}
 		PlayMusic(music_winscreen, false);
-		WinScreen(pGame->GetPlayer()->CurrentView()->GetCube());
+		WinScreen(pGame->GetPlayer()->View()->GetCube());
 	}
 	
 }

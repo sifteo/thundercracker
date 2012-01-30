@@ -41,7 +41,7 @@ void Game::MainLoop() {
   { 
     gChannelMusic.stop();
     PlaySfx(sfx_zoomIn);
-    GameView* view = mPlayer.CurrentView();
+    GameView* view = mPlayer.View();
     view->HidePlayer();
     Vec2 room = mPlayer.Location();
     VidMode_BG2 vid(view->GetCube()->vbuf);
@@ -114,7 +114,7 @@ float Game::UpdateDeltaTime() {
 void Game::MovePlayerAndRedraw(int dx, int dy) {
   mPlayer.Move(dx, dy);
   mPlayer.UpdateAnimation(UpdateDeltaTime());
-  mPlayer.CurrentView()->UpdatePlayer();
+  mPlayer.View()->UpdatePlayer();
   System::paint();
 }
 
@@ -148,7 +148,7 @@ void Game::WalkTo(Vec2 position) {
 void Game::TeleportTo(const MapData& m, Vec2 position) {
   gChannelMusic.stop();
   Vec2 room = position/128;
-  GameView* view = mPlayer.CurrentView();
+  GameView* view = mPlayer.View();
   view->HidePlayer();
   // blank other cubes
   for(GameView* p = ViewBegin(); p != ViewEnd(); ++p) {
@@ -245,9 +245,9 @@ void Game::OnInventoryChanged() {
 // NEIGHBOR HANDLING
 //------------------------------------------------------------------
 
-static void VisitMapView(GameView* view, Vec2 loc, GameView* origin=0) {
-  if (!view || view->visited) { return; }
-  view->visited = true;
+static void VisitMapView(uint8_t* visited, GameView* view, Vec2 loc, GameView* origin=0) {
+  if (!view || visited[view->GetCubeID()]) { return; }
+  visited[view->GetCubeID()] = true;
   if (view->ShowLocation(loc)) {
     PlaySfx(sfx_neighbor);
   }
@@ -255,17 +255,16 @@ static void VisitMapView(GameView* view, Vec2 loc, GameView* origin=0) {
     view->GetCube()->orientTo(*(origin->GetCube()));
   }
   for(Cube::Side i=0; i<NUM_SIDES; ++i) {
-    VisitMapView(view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
+    VisitMapView(visited, view->VirtualNeighborAt(i), loc+kSideToUnit[i], view);
   }
 }
 
 void Game::CheckMapNeighbors() {
+  uint8_t visited[NUM_CUBES];
+  for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
+  VisitMapView(visited, mPlayer.View(), mPlayer.View()->Location());
   for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    v->visited = false;
-  }
-  VisitMapView(mPlayer.KeyView(), mPlayer.KeyView()->Location());
-  for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
-    if (!v->visited) { 
+    if (!visited[v->GetCubeID()]) { 
       if (v->HideRoom()) {
         PlaySfx(sfx_deNeighbor);
       }

@@ -6,11 +6,6 @@ class Room;
 #define ANIM_TILE_CAPACITY 4
 
 class GameView {
-public:
-
-  // hack
-  bool visited;
-
 private:
   unsigned mRoomId;
 
@@ -33,6 +28,7 @@ private:
 
 public:  
   // getters
+  Cube::ID GetCubeID() const;
   Cube* GetCube() const;
   bool IsShowingRoom() const;
   bool InSpriteMode() const;
