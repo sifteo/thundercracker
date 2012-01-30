@@ -53,7 +53,7 @@ bool Map::GetBroadLocationNeighbor(BroadLocation loc, Cube::Side side, BroadLoca
 static uint8_t sVisitMask[NUM_CUBES];
 
 BroadPath::BroadPath() {
-  for(int i=0; i<NUM_CUBES-1; ++i) {
+  for(int i=0; i<2*NUM_CUBES; ++i) {
     steps[i] = -1;
   }
 }
@@ -63,11 +63,11 @@ bool BroadPath::PopStep(BroadLocation newRoot, BroadLocation* outNext) {
     steps[0] = -1;
     return false;
   }
-  for(int i=0; i<NUM_CUBES-2; ++i) {
+  for(int i=0; i<2*NUM_CUBES; ++i) {
     steps[i] = steps[i+1];
   }
   steps[NUM_CUBES-2] = -1;
-  if (*steps != -1 && pGame->GetMap()->GetBroadLocationNeighbor(newRoot, *steps, outNext)) {
+  if (*steps >= 0 && pGame->GetMap()->GetBroadLocationNeighbor(newRoot, *steps, outNext)) {
     return true;
   }
   steps[0] = -1;

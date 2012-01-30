@@ -146,7 +146,7 @@ void Player::Update(float dt) {
     mPath.Cancel();
     mAnimFrame = 0;
     mAnimTime = 0.f;
-    while(!pGame->GetMap()->CanTraverse(mCurrent, mNextDir) || !pGame->GetMap()->GetBroadLocationNeighbor(mCurrent, mNextDir, &mTarget)) {
+    while(mNextDir == -1 || !pGame->GetMap()->GetBroadLocationNeighbor(mCurrent, mNextDir, &mTarget)) {
       CORO_YIELD;
       mNextDir = mCurrent.view->VirtualTiltDirection();
       #if SIFTEO_SIMULATOR
@@ -238,7 +238,7 @@ void Player::Update(float dt) {
       }
       if (mTarget.view) { // did we land on the target?
         mCurrent.view->HidePlayer();
-        mCurrent.view = mTarget.view;
+        mCurrent = mTarget;
         mTarget.view = 0;  
         mPosition = mCurrent.view->GetRoom()->Center(mCurrent.subdivision);
         mCurrent.view->UpdatePlayer();        
