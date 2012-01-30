@@ -15,13 +15,10 @@ namespace llvm {
 
 class SVMFrameLowering : public TargetFrameLowering {
 public:
-    SVMFrameLowering()
-        : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8, 0) {}
-
+    SVMFrameLowering();
     void emitPrologue(MachineFunction &MF) const;
     void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-
-    virtual bool hasFP(const llvm::MachineFunction&) const { return false; }
+    bool hasFP(const llvm::MachineFunction&) const;
 };
 
 } // llvm namespace

@@ -109,7 +109,12 @@ public:
     {
         const MCOperand &baseFI = MI.getOperand(OpIdx);
         const MCOperand &offset = MI.getOperand(OpIdx + 1);
-        return baseFI.getImm() + offset.getImm();
+        unsigned value = baseFI.getImm() + offset.getImm();
+
+        assert((value & 3) == 0 &&
+            "LDRsp, STRsp, and ADDsp require 4-byte-aligned values");
+
+        return value;
     }
 };
 

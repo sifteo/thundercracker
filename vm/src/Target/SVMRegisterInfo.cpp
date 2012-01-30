@@ -47,9 +47,12 @@ void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
     int FrameIndex = MI.getOperand(i).getIndex();
     MachineFunction &MF = *MI.getParent()->getParent();
-    int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+    MachineFrameInfo *MFI = MF.getFrameInfo();
 
-    //assert(Offset >= 0 && Offset < 256);
+    int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+    Offset += MFI->getOffsetAdjustment();
+
+    assert(Offset >= 0 && Offset < 256);
     MI.getOperand(i).ChangeToImmediate(Offset);
 }
 

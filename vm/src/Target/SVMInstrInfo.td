@@ -280,7 +280,7 @@ def MVNr : T4<(outs GPReg:$Rs), (ins GPReg:$Rn),
  * Constant Pool
  */
  
-def LDRpc : T6<(outs GPReg:$Rd), (ins i32imm:$offset8),
+def LDRpc : T6<(outs GPReg:$Rd), (ins tconstpool:$offset8),
     "ldr\t$Rd, [PC, #$offset8]", [(set GPReg:$Rd, tconstpool:$offset8)]>;
 
 

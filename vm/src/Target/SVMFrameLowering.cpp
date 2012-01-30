@@ -20,10 +20,27 @@
 
 using namespace llvm;
 
+SVMFrameLowering::SVMFrameLowering()
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8, 0, 8) {}
+
 void SVMFrameLowering::emitPrologue(MachineFunction &MF) const
 {
+    MachineFrameInfo *MFI = MF.getFrameInfo();
+    unsigned stackSize = MFI->getStackSize();
+    unsigned alignMask = getStackAlignment() - 1;
+
+    stackSize = (stackSize + alignMask) & ~alignMask;
+    MFI->setStackSize(stackSize);
+
+    // On SVM, the 'call' SVC includes an SP adjustment
+    MFI->setOffsetAdjustment(stackSize);
 }
 
 void SVMFrameLowering::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
 {
+}
+
+bool SVMFrameLowering::hasFP(const llvm::MachineFunction&) const
+{
+    return false;
 }
