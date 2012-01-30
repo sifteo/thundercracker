@@ -54,6 +54,8 @@ public:
     static const unsigned int INT_MAX = 0x7fff;
     static const float SLOSH_THRESHOLD;
     static const int NUM_COLORS_FOR_HYPER = 3;
+    //timer constants
+    static const float TIME_TO_RESPAWN;
 
     //number of dots needed for certain thresholds
     enum
@@ -127,6 +129,9 @@ public:
 private:
 	void TestMatches();
     bool DoesHyperDotExist();
+    //add one piece to the game
+    void RespawnOnePiece();
+
 	bool m_bTestMatches;
 	//how much our current dot is worth
 	unsigned int m_iDotScore;
@@ -158,6 +163,10 @@ private:
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
     unsigned int m_ShakesRemaining;
+    //how long until we respawn one piece in timer mode
+    float m_fTimeTillRespawn;
+    //which cube to respawn to next
+    unsigned int m_cubeToRespawn;
 
     //force a 1 frame paint sync before/after drawing
     bool m_bForcePaintSync;

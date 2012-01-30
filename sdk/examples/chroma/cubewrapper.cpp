@@ -1159,6 +1159,34 @@ void CubeWrapper::Refill( bool bAddLevel )
 
 
 
+//add one piece
+void CubeWrapper::RespawnOnePiece()
+{
+    //grab a random empty location
+    unsigned int numEmpties = 0;
+    Vec2 aEmptyLocs[NUM_ROWS * NUM_COLS];
+
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+            if( !slot.isAlive() )
+                aEmptyLocs[numEmpties++] = Vec2( i, j );
+        }
+    }
+
+    ASSERT( numEmpties > 0 );
+
+    int toSpawn = Game::random.randrange( numEmpties );
+
+    GridSlot &slot = m_grid[aEmptyLocs[toSpawn].x][aEmptyLocs[toSpawn].y];
+    slot.FillColor( Game::random.randrange( Game::Inst().getLevel().m_numColors ) );
+}
+
+
+
+
 //get the number of dots that are marked or exploding
 unsigned int CubeWrapper::getNumMarked() const
 {

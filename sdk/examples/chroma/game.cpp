@@ -14,6 +14,7 @@ unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
 
 
 const float Game::SLOSH_THRESHOLD = 0.4f;
+const float Game::TIME_TO_RESPAWN = 2.5f;
 
 Math::Random Game::random;
 
@@ -26,9 +27,11 @@ Game &Game::Inst()
 }
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
-                m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_splashTime( 0.0f ),
+                m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
-                m_ShakesRemaining( STARTING_SHAKES ), m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
+                m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
+                m_cubeToRespawn ( 0 ),
+                m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
                 , m_bStabilized( false )
 {
 	//Reset();
@@ -138,6 +141,11 @@ void Game::Update()
             {
                 m_timer.Update( dt );
                 checkGameOver();
+
+                m_fTimeTillRespawn -= dt;
+
+                if( m_fTimeTillRespawn <= 0.0f )
+                    RespawnOnePiece();
             }
             else if( m_mode == MODE_SHAKES )
             {
@@ -212,6 +220,7 @@ void Game::Reset()
     }
 
 	m_timer.Reset();
+    m_fTimeTillRespawn = TIME_TO_RESPAWN;
 
     m_bStabilized = false;
 }
@@ -301,9 +310,6 @@ void Game::CheckChain( CubeWrapper *pWrapper )
                 pWrapper->getBanner().SetMessage( aBuf, true );
             }
 		}
-
-		if( m_mode == MODE_TIMED )
-			m_timer.AddTime(m_iDotScore);
 
 		m_iDotScore = 0;
 		m_iDotScoreSum = 0;
@@ -749,3 +755,31 @@ unsigned int Game::CountEmptyCubes() const
 
     return count;
 }
+
+
+//add one piece to the game
+void Game::RespawnOnePiece()
+{
+    //cycle through our cubes
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[m_cubeToRespawn].isFull() )
+        {
+            m_cubeToRespawn++;
+            if( m_cubeToRespawn >= NUM_CUBES )
+                m_cubeToRespawn = 0;
+        }
+        else
+        {
+            m_cubes[m_cubeToRespawn].RespawnOnePiece();
+            break;
+        }
+    }
+
+    m_cubeToRespawn++;
+    if( m_cubeToRespawn >= NUM_CUBES )
+        m_cubeToRespawn = 0;
+
+    m_fTimeTillRespawn = TIME_TO_RESPAWN;
+}
+

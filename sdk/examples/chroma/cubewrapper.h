@@ -118,6 +118,9 @@ public:
     //pretend to tilt this cube in a series of tilts, and update whether we see the given color on corners or side patterns 1 or 2
     void UpdateColorPositions( unsigned int color, bool &bCorners, bool &side1, bool &side2 ) const;
 
+    //add one piece
+    void RespawnOnePiece();
+
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
