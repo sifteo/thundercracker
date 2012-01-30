@@ -70,7 +70,7 @@ namespace TotalsGame {
       }
     }
 
-    bool operator==(const Fraction &f)
+    bool operator==(Fraction &f)
     {
       Reduce();
       f.Reduce();

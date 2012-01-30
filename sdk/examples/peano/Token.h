@@ -1,4 +1,4 @@
-#include "IExpresson.h"
+#include "IExpression.h"
 
 namespace TotalsGame {
 	
@@ -67,59 +67,61 @@ namespace TotalsGame {
     }
 
     void PopGroup() {
-      var grp = current as TokenGroup;
-      if (grp != null) { current = grp.GetSubExpressionContaining(this); }
+      if (current->ContainsSubExpressions())
+	  {
+		  current = current->GetSubExpressionContaining(this);
+	  }
     }
 
-    public SideStatus StatusOfSide(Cube.Side side, IExpression current) {
+    SideStatus StatusOfSide(Cube::Side side, IExpression *current) {
       if (current == this) { return SideStatus.Open; }
-      Int2 pos;
-      current.PositionOf(this, out pos);
-      Int2 del = Int2.Side(side);
-      if (!current.Mask.BitAt(pos+del)) {
-        return SideStatus.Open;
+      Vec2 pos;
+      current->PositionOf(this, &pos);
+      Vec2 del = Vec2.Side(side);
+      if (!current->Mask.BitAt(pos+del)) {
+        return SideStatus::Open;
       }
-      var grp = current as TokenGroup;
-      if (side.IsSource()) {
-        while(grp != null) {
-          if (grp.srcToken == this && grp.srcSide == side) { return SideStatus.Connected; }
-          grp = grp.GetSubExpressionContaining(this) as TokenGroup;
+      IExpression *grp = current;
+      if (side->IsSource()) {
+        while(grp->ContainsSubExpressions()) {
+          if (grp->srcToken == this && grp->srcSide == side) { return SideStatus::Connected; }
+          grp = grp->GetSubExpressionContaining(this);
         }
       } else {
-        side = CubeHelper.InvertSide(side);
-        while(grp != null) {
-          if (grp.dstToken == this && grp.srcSide == side) { return SideStatus.Connected; }
-          grp = grp.GetSubExpressionContaining(this) as TokenGroup;
+        side = CubeHelper::InvertSide(side);
+        while(grp->ContainsSubExpressions()) {
+          if (grp->dstToken == this && grp->srcSide == side) { return SideStatus::Connected; }
+          grp = grp->GetSubExpressionContaining(this);
         }
       }
-      return SideStatus.Blocked;
+      return SideStatus::Blocked;
     }
 
-    public bool ConnectsOnSideAtDepth(Cube.Side s, int depth, IExpression exp) {
+    bool ConnectsOnSideAtDepth(Cube::Side s, int depth, IExpression *exp) {
       if (exp == null) {
         exp = current;
       }
-      var grp = exp as TokenGroup;
-      if (s.IsSource()) {
-        while(grp != null) {
-          if (grp.srcToken == this && grp.srcSide == s && depth >= grp.Depth && CheckDepth(depth, exp)) { return true; }
-          grp = grp.GetSubExpressionContaining(this) as TokenGroup;
+      IExpression *grp = exp;
+      if (s->IsSource()) {
+        while(grp.ContainsSubExpressions()) {
+          if (grp->srcToken == this && grp->srcSide == s && depth >= grp->GetDepth() && CheckDepth(depth, exp)) { return true; }
+          grp = grp->GetSubExpressionContaining(this);
         }
       } else {
-        s = CubeHelper.InvertSide(s);
-        while(grp != null) {
-          if (grp.dstToken == this && grp.srcSide == s && depth >= grp.Depth && CheckDepth(depth, exp)) { return true; }
-          grp = grp.GetSubExpressionContaining(this) as TokenGroup;
+        s = CubeHelper::InvertSide(s);
+        while(grp->ContainsSubExpressions()) {
+          if (grp->dstToken == this && grp->srcSide == s && depth >= grp->GetDepth() && CheckDepth(depth, exp)) { return true; }
+          grp = grp->GetSubExpressionContaining(this);
         }
       }
       return false;
     }
 
-    bool CheckDepth(int depth, IExpression exp) {
-      var grp = exp as TokenGroup;
-      while (grp != null) {
-        if (grp.Depth == depth) { return true; }
-        grp = grp.GetSubExpressionContaining(this) as TokenGroup;
+    bool CheckDepth(int depth, IExpression *exp) {
+      IExpression *grp = exp;
+      while (grp.ContainsSubExpressions()) {
+        if (grp->GetDepth() == depth) { return true; }
+        grp = grp->GetSubExpressionContaining(this);
       }
       return false;
     }
@@ -132,31 +134,40 @@ namespace TotalsGame {
     //-------------------------------------------------------------------------
     // CONVENIENCE PROPERTIES
     //-------------------------------------------------------------------------
+	public:
 
-    public Op OpRight {
-      get { return opRight[(int)puzzle.Difficulty]; }
-      set {
-        opRight[(int)Difficulty.Easy] = value;
+    Op GetOpRight() {
+		return opRight[(int)puzzle.Difficulty];
+	}
+
+	void SetOpRight(Op value) {
+		opRight[(int)Difficulty.Easy] = value;
         opRight[(int)Difficulty.Medium] = value;
         opRight[(int)Difficulty.Hard] = value;
-      }
     }
-    public Op OpBottom {
-      get { return opBottom[(int)puzzle.Difficulty]; }
-      set {
+
+    Op GetOpBottom { 
+		return opBottom[(int)puzzle.Difficulty]; 
+	}
+
+	void SetOpBottom(Op value)
+	{
         opBottom[(int)Difficulty.Easy] = value;
         opBottom[(int)Difficulty.Medium] = value;
         opBottom[(int)Difficulty.Hard] = value;
-      }
     }
 
   }
 
-  public static class SideHelper {
-    public static bool IsSource(this Cube.Side side) {
-      return side == Cube.Side.RIGHT || side == Cube.Side.BOTTOM;
+  class SideHelper 
+  {
+  public:
+	static bool IsSource(Cube::Side side) {
+      return side == Cube::Side::RIGHT || side == Cube::Side::BOTTOM;
     }
-  }
+  private:
+	  SideHelper();
+  };
 
 }
 

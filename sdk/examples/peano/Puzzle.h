@@ -1,3 +1,5 @@
+#include "Guid.h"
+
 namespace TotalsGame {
 	
 	enum Difficulty {
@@ -19,15 +21,26 @@ namespace TotalsGame {
   public:
 
     // option parameters
-    void* userData = null;
-    Guid guid = Guid.Empty;
-    PuzzleChapter *chapter = null;
-    Difficulty difficulty = Difficulty.Hard;
+    void *userData;
+    Guid guid;
+    PuzzleChapter *chapter;
+    Difficulty difficulty;
 
     // game parameters
     Token *GetToken(int index) {assert(index < numTokens); return tokens[index];}
     TokenGroup *target;
-    Token *focus = null;
+    Token *focus;
+
+	Puzzle()
+	{
+		userData = NULL;
+		guid = Guid::Empty;
+		chapter = NULL;
+		difficulty = Difficulty::Hard;
+		focus = NULL;
+		target = NULL;
+		focus = NULL;
+	}
 
     int hintsUsed = 0;
     bool unlimitedHints = false;

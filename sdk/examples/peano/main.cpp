@@ -1,6 +1,10 @@
 #include <sifteo.h>
 #include "assets.gen.h"
 
+#include "Fraction.h"
+#include "Puzzle.h"
+#include "Token.h"
+
 using namespace Sifteo;
 
 enum Bits { // tmp

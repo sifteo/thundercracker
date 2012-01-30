@@ -11,6 +11,9 @@ namespace TotalsGame {
     virtual bool PositionOf(Token *t, Int2 *p) = 0;
     virtual bool Contains(Token *t) = 0;
     virtual void SetCurrent(IExpression *exp) = 0;
+
+	virtual bool ContainsSubExpressions() {return false;}
+	virtual IExpression *GetSubExpressionContaining(Token *token) {return null;}
   }
   
   struct Connection {
