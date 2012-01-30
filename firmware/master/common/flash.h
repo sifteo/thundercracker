@@ -15,6 +15,9 @@ public:
     static bool write(uint32_t address, const uint8_t *buf, unsigned len);
     static bool eraseSector(uint32_t address);
     static bool chipErase();
+
+    // sim only
+    static bool flush();
 };
 
 #endif // FLASH_H

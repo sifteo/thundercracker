@@ -63,12 +63,11 @@ private:
     }
     
 #ifdef SIFTEO_SIMULATOR
-    static FILE * mFile;
     struct Stats {
         unsigned hits;
         unsigned misses;
     };
-    static struct Stats stats;
+    static Stats stats;
 #endif
 
 };

@@ -28,3 +28,6 @@ bool Flash::chipErase() {
     return flash.chipErase();
 }
 
+bool Flash::flush() {
+    return flash.flush();
+}

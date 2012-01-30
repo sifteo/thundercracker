@@ -2,67 +2,72 @@
 #include "flashstorage.h"
 #include <sifteo.h>
 
-#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 const char *FlashStorage::filename = "flashstorage.bin";
 
-void FlashStorage::init()
+bool FlashStorage::init()
 {
-    FILE *file = fopen(filename, "rb");
+    // TODO: might be nicer to mmap this, especially if it gets any larger,
+    // but no easy cross platform way
+    data = static_cast<uint8_t*>(malloc(Flash::CAPACITY));
+    ASSERT(data != NULL && "malloc fail");
+
+    file = fopen(filename, "r+b");
     if (file == NULL) {
-        chipErase();
+        file = fopen(filename, "w+b");
     }
-}
+    ASSERT(file != NULL && "couldn't access backing file for FlashStorage");
 
-void FlashStorage::read(uint32_t address, uint8_t *buf, unsigned len)
-{
-    FILE *file = fopen(filename, "rb");
-    ASSERT(file != NULL && "ERROR: FlashLayer failed to open asset segment - make sure asegment.bin is next to your executable.\n");
-    if (fseek(file, address, SEEK_SET) != 0) {
-        LOG(("FlashStorage::read() seek error\n"));
-    }
-    unsigned rxed = fread(buf, 1, len, file);
-    if (rxed != len) {
-        LOG(("FlashStorage: read error, got %d expected %d\n", rxed, len));
-    }
-}
-
-bool FlashStorage::write(uint32_t address, const uint8_t *buf, unsigned len)
-{
-    // TODO: verify file exists
-    FILE *file = fopen(filename, "wb");
-    ASSERT(fseek(file, address, SEEK_SET) == 0 && "FlashStorage::write() - seek err\n");
-
-    unsigned written = fwrite(buf, 1, len, file);
-    if (written != len) {
-        LOG(("FlashStorage::write() - write err, got %d expected %d\n", written, len));
+    memset(data, 0xFF, Flash::CAPACITY);  // in case file is somehow smaller than we want
+    size_t rxed = fread(data, 1, Flash::CAPACITY, file);
+    if (rxed < 0) {
         return false;
     }
     return true;
 }
 
+void FlashStorage::read(uint32_t address, uint8_t *buf, unsigned len)
+{
+    ASSERT((address + len < Flash::CAPACITY) && "invalid address");
+    memcpy(buf, data + address, len);
+}
+
+bool FlashStorage::write(uint32_t address, const uint8_t *buf, unsigned len)
+{
+    ASSERT((address + len < Flash::CAPACITY) && "writing off the end of flash");
+    memcpy(data + address, buf, len);
+
+    return true;
+}
+
 bool FlashStorage::eraseSector(uint32_t address)
 {
-    return false;
+    ASSERT(address < Flash::CAPACITY && "invalid address");
+    // address can be anywhere inside the actual sector
+    unsigned sector = address - (address % Flash::SECTOR_SIZE);
+    memset(data + sector, 0xFF, Flash::SECTOR_SIZE);
+
+    return true;
 }
 
 bool FlashStorage::chipErase()
 {
-    FILE *file = fopen(filename, "wb");
     ASSERT(file != NULL);
+    memset(data, 0xFF, Flash::CAPACITY);
 
-    uint8_t filler[Flash::SECTOR_SIZE];
-    memset(filler, 0xFF, sizeof(filler));
-
-    for (unsigned i = 0; i < Flash::CAPACITY; i += Flash::SECTOR_SIZE) {
-        unsigned written = fwrite(filler, 1, sizeof(filler), file);
-        if (written != sizeof(filler)) {
-            LOG(("FlashStorage: write error, wrote %d expected %d\n", written, Flash::SECTOR_SIZE));
-            return false;
-        }
-    }
-    fclose(file);
     return true;
 }
 
+bool FlashStorage::flush()
+{
+    fseek(file, 0, SEEK_SET);
+    size_t result = fwrite(data, Flash::CAPACITY, 1, file);
+    if (result != 1) {
+        LOG(("Error writing flash\n"));
+        return false;
+    }
+    fflush(file);
+    return true;
+}
