@@ -79,26 +79,26 @@ void BroadPath::Cancel() {
 }
 
 
-bool BroadPath::Visit(BroadLocation loc, Cube::Side side, int depth) {
+static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int depth) {
   BroadLocation next;
   if (!pGame->GetMap()->GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->GetCubeID()] & (1<<next.subdivision)) {
     return false;
   }
   sVisitMask[next.view->GetCubeID()] |= (1<<next.subdivision);
 if (next.view->VirtualTiltDirection() != -1/* || view->touched*/) {
-    steps[depth] = -1;
+    outPath->steps[depth] = -1;
     return true;
   } else {
     for(int side=0; side<NUM_SIDES; ++side) {
-      steps[depth] = side;
-      if (Visit(next, side, depth+1)) {
+      outPath->steps[depth] = side;
+      if (Visit(outPath,next, side, depth+1)) {
         return true;
       } else {
-        steps[depth] = -1;
+        outPath->steps[depth] = -1;
       }
     }
   }
-  steps[depth] = -1;
+  outPath->steps[depth] = -1;
   return false;
 }
 
@@ -108,7 +108,7 @@ bool Map::FindBroadPath(BroadPath* outPath) {
   sVisitMask[pRoot->view->GetCubeID()] = (1 << pRoot->subdivision);
   for(int side=0; side<NUM_SIDES; ++side) {
     outPath->steps[0] = side;
-    if (outPath->Visit(*pRoot, side, 1)) {
+    if (Visit(outPath, *pRoot, side, 1)) {
       return true;
     }
   }

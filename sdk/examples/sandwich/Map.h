@@ -24,7 +24,6 @@ struct BroadPath {
   bool IsDefined() const { return *steps >= 0; }
   bool PopStep(BroadLocation newRoot, BroadLocation* outNext);
   void Cancel();
-  bool Visit(BroadLocation loc, Cube::Side side, int depth);
 };
 
 struct NarrowPath {
@@ -61,7 +60,7 @@ public:
 
   // Map Data Getters
 
-  const MapData* Data() const { return mData; }
+  inline const MapData* Data() const { return mData; }
   
   inline const bool GetPortalX(int x, int y) const {
       // note that the pitch here is one less than the width because 
