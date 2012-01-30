@@ -8,6 +8,7 @@
 FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
 uint32_t FlashLayer::validBlocksMask = 0;
 uint32_t FlashLayer::freeBlocksMask = 0;
+
 #ifdef SIFTEO_SIMULATOR
 FlashLayer::Stats FlashLayer::stats;
 #endif
@@ -64,4 +65,34 @@ void* FlashLayer::getRegionFromOffset(unsigned offset, unsigned len, unsigned *s
     }
 
     return b->data + boff;
+}
+
+void FlashLayer::releaseRegionFromOffset(int offset) {
+    if (CachedBlock *b = getCachedBlock(offset)) {
+        unsigned idx = b - blocks;
+        ASSERT(idx < NUM_BLOCKS);
+        Atomic::SetLZ(freeBlocksMask, idx);
+    }
+}
+
+FlashLayer::CachedBlock* FlashLayer::getCachedBlock(uintptr_t address) {
+    uint32_t mask = validBlocksMask;
+    while (mask) {
+        unsigned idx = Intrinsic::CLZ(mask);
+        CachedBlock *b = &blocks[idx];
+        if (address >= b->address && address < b->address + BLOCK_SIZE) {
+            return b;
+        }
+        Atomic::ClearLZ(mask, idx);
+    }
+    return 0;
+}
+
+FlashLayer::CachedBlock* FlashLayer::getFreeBlock() {
+    if (freeBlocksMask == 0) {
+        return 0;
+    }
+
+    unsigned idx = Intrinsic::CLZ(freeBlocksMask);
+    return &blocks[idx];
 }
