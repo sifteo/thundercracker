@@ -29,6 +29,9 @@ using namespace llvm;
 SVMTargetLowering::SVMTargetLowering(TargetMachine &TM)
     : TargetLowering(TM, new TargetLoweringObjectFileELF())
 {
+    // XXX: Kludge to put functions into flash blocks
+    //setPrefFunctionAlignment(8);
+    
     // Register classes
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
 

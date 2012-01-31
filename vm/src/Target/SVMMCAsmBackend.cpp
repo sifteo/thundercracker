@@ -83,6 +83,11 @@ public:
             Value /= 2;
             break;
             
+        case SVM::fixup_cpi:
+            // Word count
+            Value /= 4;
+            break;
+            
         default:
             break;
         }
@@ -99,7 +104,7 @@ public:
 
         int bits = KI.TargetSize;
         uint64_t bitMask = (1 << bits) - 1;
-        assert((Value & bitMask) == 0 || (Value | bitMask) == (uint64_t)-1);
+        assert((Value & ~bitMask) == 0 || (Value | bitMask) == (uint64_t)-1);
         Value &= bitMask;
 
         unsigned offset = Fixup.getOffset();
@@ -123,8 +128,11 @@ public:
     bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const
     {
         assert((Count % 2) == 0);
+        
+        // Our ISA only has one kind of nop currently
         for (unsigned i = 0, c = Count/2; i < c; i++)
             OW->Write16(0xbf00);
+
         return true;
     }
 };

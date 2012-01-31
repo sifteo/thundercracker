@@ -25,6 +25,8 @@ namespace llvm {
 
         virtual void EmitInstruction(const MachineInstr *MI);
         virtual void EmitFunctionEntryLabel();
+        virtual void EmitConstantPool();
+        virtual void EmitFunctionBodyEnd();
     };
 
 } // end namespace

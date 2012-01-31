@@ -15,6 +15,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
@@ -40,3 +41,35 @@ void SVMAsmPrinter::EmitFunctionEntryLabel()
 
     OutStreamer.EmitLabel(CurrentFnSym);
 }
+
+void SVMAsmPrinter::EmitConstantPool()
+{
+    /*
+     * Do nothing. We disable the default implementation and do this
+     * ourselves, since constants need to be placed at the end of each
+     * memory block.
+     */
+}
+
+void SVMAsmPrinter::EmitFunctionBodyEnd()
+{
+    /* XXX: Kludge to emit constants at the end of each function */
+
+    const MachineConstantPool *MCP = MF->getConstantPool();
+    const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
+
+    // Ensure we're at a 32-bit boundary
+    EmitAlignment(2);
+    
+    for (unsigned i = 0, end = CP.size(); i != end; i++) {
+       MachineConstantPoolEntry CPE = CP[i];
+
+       OutStreamer.EmitLabel(GetCPISymbol(i));
+
+       if (CPE.isMachineConstantPoolEntry())
+           EmitMachineConstantPoolValue(CPE.Val.MachineCPVal);
+       else
+           EmitGlobalConstant(CPE.Val.ConstVal);
+    }
+}
+
