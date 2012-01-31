@@ -57,6 +57,7 @@ public:
     //timer constants
     static const float TIME_TO_RESPAWN;
     static const float COMBO_TIME_THRESHOLD;
+    static const unsigned int MAX_COMBO = 9;
 
     //number of dots needed for certain thresholds
     enum
@@ -128,6 +129,7 @@ public:
     inline void SetUsedColor( unsigned int color ) { m_aColorsUsed[color] = true; }
     void UpCombo();
     inline unsigned int GetComboCount() const { return m_comboCount; }
+    float getScoreMult() const;
 
 private:
 	void TestMatches();
