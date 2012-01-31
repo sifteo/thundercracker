@@ -922,7 +922,7 @@ void CubeWrapper::checkRefill()
 	{
         setState( STATE_REFILL );
         m_intro.Reset( true );
-		Refill( true );
+        Refill( Game::Inst().getMode() == Game::MODE_SHAKES );
 
 		if( Game::Inst().getMode() == Game::MODE_SHAKES && Game::Inst().getScore() > 0 )
 		{
@@ -935,7 +935,7 @@ void CubeWrapper::checkRefill()
 		{
             setState( STATE_REFILL );
             m_intro.Reset( true );
-            Refill( true );
+            Refill( false );
 		}
         else if( Game::Inst().getShakesLeft() > 0 )
 		{
