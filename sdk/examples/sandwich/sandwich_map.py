@@ -68,6 +68,10 @@ class Map:
 		for r in self.rooms: r.find_subdivisions()
 		self.diagRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_DIAG_POS or r.subdiv_type == SUBDIV_DIAG_NEG ]
 		self.bridgeRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_BRDG_HOR or r.subdiv_type == SUBDIV_BRDG_VER]
+		# no vertical bridges, for now
+		for bridge in self.bridgeRooms:
+			assert bridge.subdiv_type == SUBDIV_BRDG_HOR, "no vertical bridges for now, dudes: " + self.id
+
 		# validate animated tile capacity (max 4 per room)
 		for r in self.rooms:
 			assert len([(x,y) for x in range(8) for y in range(8) if "animated" in r.tileat(x,y).props]) <= 4, "too many tiles in room in map: " + self.id
