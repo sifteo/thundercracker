@@ -39,7 +39,7 @@ void ScoredCubeState_Shuffle::paint()
     if (getStateMachine().getTime() <= TEETH_ANIM_LENGTH)
     {
         // teeth closing animation
-        if (MAX_LETTERS_PER_CUBE == 1)
+        if (GameStateMachine::getCurrentMaxLettersPerCube() == 1)
         {
             paintLetters(vid, Font1Letter);
         }

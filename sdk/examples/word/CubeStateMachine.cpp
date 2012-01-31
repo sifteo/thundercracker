@@ -29,7 +29,7 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
     case EventID_Tilt:
         if (data.mInput.mCubeID == getCube().id())
         {
-            switch (MAX_LETTERS_PER_CUBE)
+            switch (GameStateMachine::getCurrentMaxLettersPerCube())
             {
             case 2:
                 if (!mBG0PanningLocked)
@@ -84,9 +84,9 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             mLetters[i] = '\0';
         }
         // TODO multiple letters: variable
-        for (unsigned i = 0; i < MAX_LETTERS_PER_CUBE; ++i)
+        for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
         {
-            mLetters[i] = data.mNewAnagram.mWord[cubeIndex * MAX_LETTERS_PER_CUBE + i];
+            mLetters[i] = data.mNewAnagram.mWord[cubeIndex * GameStateMachine::getCurrentMaxLettersPerCube() + i];
         }
         // TODO substrings of length 1 to 3
         break;
@@ -102,7 +102,7 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
     {
         return false;
     }
-    switch (MAX_LETTERS_PER_CUBE)
+    switch (GameStateMachine::getCurrentMaxLettersPerCube())
     {
     case 2:
         if (!forPaint && fmodf(mBG0TargetPanning, 144.f) != 0.f)
@@ -111,12 +111,12 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
             swapped[0] = mLetters[1];
             swapped[1] = mLetters[0];
             swapped[2] = '\0';
-            _SYS_strlcpy(buffer, swapped, MAX_LETTERS_PER_CUBE + 1);
+            _SYS_strlcpy(buffer, swapped, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
             return true;
         }
         // else fall through
     default:
-        _SYS_strlcpy(buffer, mLetters, MAX_LETTERS_PER_CUBE + 1);
+        _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
         return true;
     }
 }
@@ -146,7 +146,7 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
             }
             char str[MAX_LETTERS_PER_CUBE + 1];
             csm->getLetters(str, false);
-            _SYS_strlcat(wordBuffer, str, MAX_LETTERS_PER_WORD + 1);
+            _SYS_strlcat(wordBuffer, str, GameStateMachine::getCurrentMaxLettersPerWord() + 1);
             neighborLetters = true;
         }
         if (neighborLetters)

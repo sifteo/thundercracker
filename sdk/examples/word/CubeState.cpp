@@ -33,7 +33,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                            bool paintTime,
                            float animStartTime)
 {
-    if (MAX_LETTERS_PER_CUBE > 1)
+    if (GameStateMachine::getCurrentMaxLettersPerCube() > 1)
     {
         paintTime = false;
     }
@@ -71,7 +71,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     const AssetImage* teeth = teethImages[teethImageIndex];
     const AssetImage* teethNumber = 0;
 
-    unsigned teethNumberIndex = GameStateMachine::getNewWordLength() / MAX_LETTERS_PER_CUBE;
+    unsigned teethNumberIndex = GameStateMachine::getNewWordLength() / GameStateMachine::getCurrentMaxLettersPerCube();
     if (teethNumberIndex > 2)
     {
         teethNumberIndex -= 3;
@@ -178,7 +178,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
             switch (getTransparencyType(teethImageIndex, frame, j, i))
             {
             case TransparencyType_None:
-                if (MAX_LETTERS_PER_CUBE == 1 ||
+                if (GameStateMachine::getCurrentMaxLettersPerCube() == 1 ||
                     (animate && (teethImageIndex == ImageIndex_ConnectedRightWord ||
                                 teethImageIndex == ImageIndex_ConnectedLeftWord ||
                                 teethImageIndex == ImageIndex_ConnectedWord ||
@@ -308,7 +308,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     }
 
     // TODO merge in 2 ltr cube proto code
-    if (MAX_LETTERS_PER_CUBE > 1 &&
+    if (GameStateMachine::getCurrentMaxLettersPerCube() > 1 &&
         !(animate &&
             (teethImageIndex == ImageIndex_ConnectedRightWord ||
             teethImageIndex == ImageIndex_ConnectedLeftWord ||
@@ -329,7 +329,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
 {
     char str[MAX_LETTERS_PER_CUBE + 1];
     getStateMachine().getLetters(str, true);
-    switch (_SYS_strnlen(str, MAX_LETTERS_PER_CUBE))
+    switch (GameStateMachine::getCurrentMaxLettersPerCube())
     {
     case 2:
         vid.BG0_drawAsset(Vec2(0,0), ScreenOff);

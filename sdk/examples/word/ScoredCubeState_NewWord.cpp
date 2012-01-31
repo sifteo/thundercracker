@@ -137,7 +137,7 @@ void ScoredCubeState_NewWord::paint()
     Cube& c = getStateMachine().getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    if (MAX_LETTERS_PER_CUBE == 1)
+    if (GameStateMachine::getCurrentMaxLettersPerCube() == 1)
     {
         paintLetters(vid, Font1Letter, true);
     }

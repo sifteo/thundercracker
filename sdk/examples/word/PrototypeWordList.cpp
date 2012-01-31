@@ -586,9 +586,10 @@ bool PrototypeWordList::pickWord(char* buffer)
                 return false;
             }
 
-            if (_SYS_strnlen(word, MAX_LETTERS_PER_WORD + 1) == MAX_LETTERS_PER_WORD)
+            if (_SYS_strnlen(word, GameStateMachine::getCurrentMaxLettersPerWord() + 1) ==
+                    GameStateMachine::getCurrentMaxLettersPerWord())
             {
-                 _SYS_strlcpy(buffer, word, MAX_LETTERS_PER_WORD + 1);
+                 _SYS_strlcpy(buffer, word, GameStateMachine::getCurrentMaxLettersPerWord() + 1);
                 return true;
             }
         }
@@ -612,7 +613,7 @@ static int bsearch_strcmp(const void*a,const void*b)
     char word[MAX_LETTERS_PER_WORD + 1];
     if (PrototypeWordList::bitsToString(*pb, word))
     {
-        return _SYS_strncmp(*(const char **)a, word, MAX_LETTERS_PER_WORD + 1);
+        return _SYS_strncmp(*(const char **)a, word, GameStateMachine::getCurrentMaxLettersPerWord() + 1);
     }
     ASSERT(0);
     return 0;
@@ -643,7 +644,7 @@ bool PrototypeWordList::bitsToString(uint32_t bits, char* buffer)
     _SYS_memset8((uint8_t*)word, 0, sizeof(word));
     const unsigned LTR_MASK = 0x1f; // 5 bits per letter
     const unsigned BITS_PER_LETTER = 5;
-    for (unsigned j = 0; j < MAX_LETTERS_PER_WORD; ++j)
+    for (unsigned j = 0; j < GameStateMachine::getCurrentMaxLettersPerWord(); ++j)
     {
         char letter = 'A' - 1 + ((bits >> (j * BITS_PER_LETTER)) & LTR_MASK);
         if (letter < 'A' || letter > 'Z')
@@ -652,6 +653,6 @@ bool PrototypeWordList::bitsToString(uint32_t bits, char* buffer)
         }
         word[j] = letter;
     }
-    _SYS_strlcpy(buffer, word, MAX_LETTERS_PER_WORD + 1);
+    _SYS_strlcpy(buffer, word, GameStateMachine::getCurrentMaxLettersPerWord() + 1);
     return buffer[0] != '\0';
 }

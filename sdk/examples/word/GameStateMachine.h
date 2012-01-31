@@ -43,6 +43,8 @@ public:
     static unsigned char getNewWordLength() { return sInstance->mNewWordLength; }
     static unsigned getNumAnagramsRemaining() { return sInstance->mNumAnagramsRemaining; }
     static unsigned getNumCubesInState(CubeStateIndex stateIndex);
+    static unsigned getCurrentMaxLettersPerCube();
+    static unsigned getCurrentMaxLettersPerWord();
 
 protected:
     virtual State& getState(unsigned index);

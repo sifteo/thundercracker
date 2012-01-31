@@ -8,12 +8,6 @@
 
 
 const float ANAGRAM_COOLDOWN = 2.0f; // TODO reduce when tilt bug is gone
-#ifdef DEBUG
-
-float ROUND_TIME = (MAX_LETTERS_PER_CUBE > 1) ? 999999.0f : 38.f;
-#else
-float ROUND_TIME = (MAX_LETTERS_PER_CUBE > 1) ? 120.f : 999999.0f;
-#endif
 
 GameStateMachine* GameStateMachine::sInstance = 0;
 
@@ -58,7 +52,11 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
         if (data.mGameStateChanged.mNewStateIndex == GameStateIndex_PlayScored &&
             data.mGameStateChanged.mPreviousStateIndex != GameStateIndex_ShuffleScored)
         {
-            mTimeLeft = ROUND_TIME;
+#ifdef DEBUG
+            mTimeLeft = (GameStateMachine::getCurrentMaxLettersPerCube() > 1) ? 999999.0f : 38.f;
+#else
+            mTimeLeft = (GameStateMachine::getCurrentMaxLettersPerCube() > 1) ? 999999.0f : 120.f;
+#endif
             mAnagramCooldown = .0f;
             mScore = 0;
         }
@@ -176,4 +174,18 @@ unsigned GameStateMachine::getNumCubesInState(CubeStateIndex stateIndex)
         }
     }
     return count;
+}
+
+
+unsigned GameStateMachine::getCurrentMaxLettersPerCube()
+{
+    ASSERT(sInstance);
+    // TODO switch modes
+    return 2;
+}
+
+unsigned GameStateMachine::getCurrentMaxLettersPerWord()
+{
+    ASSERT(sInstance);
+    return getCurrentMaxLettersPerCube() * NUM_CUBES;
 }

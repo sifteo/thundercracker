@@ -216,9 +216,9 @@ bool Dictionary::pickWord(char* buffer, unsigned& numAnagrams)
     //strcpy(buffer, "WONDER");
     //return true;
 
-    if (MAX_LETTERS_PER_CUBE > 1)
+    if (GameStateMachine::getCurrentMaxLettersPerCube() > 1)
     {
-        _SYS_strlcpy(buffer, picks[sPickIndex], MAX_LETTERS_PER_WORD + 1);
+        _SYS_strlcpy(buffer, picks[sPickIndex], GameStateMachine::getCurrentMaxLettersPerWord() + 1);
 
         numAnagrams = pickAnagrams[sPickIndex];
         sPickIndex = (sPickIndex + 1) % arraysize(picks);
@@ -242,7 +242,7 @@ bool Dictionary::isOldWord(const char* word)
 {
     for (unsigned i = 0; i < sNumOldWords; ++i)
     {
-        if (_SYS_strncmp(sOldWords[i], word, MAX_LETTERS_PER_WORD) == 0)
+        if (_SYS_strncmp(sOldWords[i], word, GameStateMachine::getCurrentMaxLettersPerWord()) == 0)
         {
             return true;
         }
@@ -263,7 +263,7 @@ void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
         if (sNumOldWords + 1 < MAX_OLD_WORDS)
         {
             _SYS_strlcpy(sOldWords[sNumOldWords++], data.mWordFound.mWord,
-                         MAX_LETTERS_PER_WORD + 1);
+                         GameStateMachine::getCurrentMaxLettersPerWord() + 1);
         }
         break;
 

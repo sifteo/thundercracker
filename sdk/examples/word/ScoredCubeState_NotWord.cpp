@@ -105,7 +105,7 @@ void ScoredCubeState_NotWord::paint()
             c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    switch (MAX_LETTERS_PER_CUBE)
+    switch (GameStateMachine::getCurrentMaxLettersPerCube())
     {
     case 2:
         paintLetters(vid, Font2Letter, true);
