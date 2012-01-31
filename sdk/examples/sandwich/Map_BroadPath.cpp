@@ -85,7 +85,7 @@ static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int de
     return false;
   }
   sVisitMask[next.view->GetCubeID()] |= (1<<next.subdivision);
-if (next.view->VirtualTiltDirection() != -1/* || view->touched*/) {
+  if (next.view->Touched()) {
     outPath->steps[depth] = -1;
     return true;
   } else {

@@ -89,7 +89,7 @@ void Game::MainLoop() {
 void Game::Paint(bool sync) {
   for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->Update();
-    #ifdef KLUDGES
+    #if KLUDGES
     p->GetCube()->vbuf.touch();
     #endif
   }
