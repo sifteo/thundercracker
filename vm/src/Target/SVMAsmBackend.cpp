@@ -124,7 +124,7 @@ public:
     {
         assert((Count % 2) == 0);
         for (unsigned i = 0, c = Count/2; i < c; i++)
-            OW->Write16(0);
+            OW->Write16(0xbf00);
         return true;
     }
 };

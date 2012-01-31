@@ -280,8 +280,12 @@ def MVNr : T4<(outs GPReg:$Rs), (ins GPReg:$Rn),
  * Constant Pool
  */
  
-def LDRpc : T6<(outs GPReg:$Rd), (ins tconstpool:$offset8),
-    "ldr\t$Rd, [PC, #$offset8]", [(set GPReg:$Rd, tconstpool:$offset8)]>;
+def CPIop : Operand<i32> {
+    let EncoderMethod = "getCPIOpValue";
+}
+
+def LDRpc : T6<(outs GPReg:$Rd), (ins CPIop:$offset10),
+    "ldr\t$Rd, [PC, #$offset10]", [(set GPReg:$Rd, tconstpool:$offset10)]>;
 
 
 /****************************************************************

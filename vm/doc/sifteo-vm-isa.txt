@@ -184,10 +184,12 @@ When the MSB of the SVC immediate is clear, the other 7 bits are multiplied by
 four and added to the base of the current page, to form the address of a
 32-bit literal. This 32-bit literal encodes an indirect operation to perform:
 
-  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (1) Call validate(F+a), SP -= n*4
-  10nnnnnn nnnnnnnn iiiiiiii iiiiiiii   (2) Syscall #0-16383, with #imm16
-  110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (3) Addrop #0-31 on validate(a)
-  111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (4) Addrop #0-31 on validate(F+a)
+  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa00   (1) Call validate(F+a*4), SP -= n*4
+  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa01   (2) Tail call validate(F+a*4), SP -= n*4
+  0xxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x   (3) Reserved
+  10nnnnnn nnnnnnnn iiiiiiii iiiiiiii   (4) Syscall #0-16383, with #imm16
+  110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (5) Addrop #0-31 on validate(a)
+  111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (6) Addrop #0-31 on validate(F+a)
 
   (F = 0x80000000, flash segment virtual address)
 

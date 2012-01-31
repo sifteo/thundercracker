@@ -72,7 +72,7 @@ public:
         }
     }
     
-    uint32_t fixupBranch(const MCInst &MI, unsigned OpIdx,
+    uint32_t simpleFixup(const MCInst &MI, unsigned OpIdx,
         SmallVectorImpl<MCFixup> &Fixups, SVM::Fixups kind) const
     {
         const MCOperand MO = MI.getOperand(OpIdx);
@@ -89,19 +89,25 @@ public:
     uint32_t getBCCTargetOpValue(const MCInst &MI, unsigned OpIdx,
         SmallVectorImpl<MCFixup> &Fixups) const
     {
-        return fixupBranch(MI, OpIdx, Fixups, SVM::fixup_bcc);
+        return simpleFixup(MI, OpIdx, Fixups, SVM::fixup_bcc);
     }
 
     uint32_t getBTargetOpValue(const MCInst &MI, unsigned OpIdx,
         SmallVectorImpl<MCFixup> &Fixups) const
     {
-        return fixupBranch(MI, OpIdx, Fixups, SVM::fixup_b);
+        return simpleFixup(MI, OpIdx, Fixups, SVM::fixup_b);
     }
 
     uint32_t getCallTargetOpValue(const MCInst &MI, unsigned OpIdx,
         SmallVectorImpl<MCFixup> &Fixups) const
     {
-        return fixupBranch(MI, OpIdx, Fixups, SVM::fixup_call);
+        return simpleFixup(MI, OpIdx, Fixups, SVM::fixup_call);
+    }
+
+    uint32_t getCPIOpValue(const MCInst &MI, unsigned OpIdx,
+        SmallVectorImpl<MCFixup> &Fixups) const
+    {
+        return simpleFixup(MI, OpIdx, Fixups, SVM::fixup_cpi);
     }
     
     uint32_t getAddrSPValue(const MCInst &MI, unsigned OpIdx,
