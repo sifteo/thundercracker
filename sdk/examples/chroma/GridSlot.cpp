@@ -149,10 +149,16 @@ void GridSlot::Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col )
     m_RockHealth = MAX_ROCK_HEALTH;
 }
 
-
-void GridSlot::FillColor(unsigned int color)
+//bsetspawn to force spawning state, only used for timer respawning currently
+void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
 {
-	m_state = STATE_LIVING;
+    if( bSetSpawn )
+    {
+        m_state = STATE_SPAWNING;
+        m_animFrame = 0;
+    }
+    else
+        m_state = STATE_LIVING;
 	m_color = color;
 	m_bFixed = false;
 
@@ -202,6 +208,11 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
 	Vec2 vec( m_col * 4, m_row * 4 );
 	switch( m_state )
 	{
+        case STATE_SPAWNING:
+        {
+            DrawIntroFrame( vid, m_animFrame );
+            break;
+        }
 		case STATE_LIVING:
 		{
             if( IsSpecial() )
@@ -309,6 +320,16 @@ void GridSlot::Update(float t)
 {
 	switch( m_state )
 	{
+        case STATE_SPAWNING:
+        {
+            m_animFrame++;
+            if( m_animFrame >= NUM_SPAWN_FRAMES )
+            {
+                m_animFrame = 0;
+                m_state = STATE_LIVING;
+            }
+            break;
+        }
         case STATE_LIVING:
         {
             /*if( m_pWrapper->IsIdle() )

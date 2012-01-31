@@ -17,6 +17,7 @@ class GridSlot
 {
 public:
     static const unsigned int NUM_COLORS = 8;
+    static const unsigned int NUM_SPAWN_FRAMES = 4;
 
     //these are special dots
     enum
@@ -55,6 +56,8 @@ public:
 
 	typedef enum 
 	{
+        //only used for timer mode independent spawning currently
+        STATE_SPAWNING,
 		STATE_LIVING,
 		STATE_PENDINGMOVE,
 		STATE_MOVING,
@@ -80,7 +83,7 @@ public:
     bool isMatchable() const { return isAlive() || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING || isMarked(); }
     void setEmpty() { m_state = STATE_GONE; m_bFixed = false; }
 	unsigned int getColor() const { return m_color; }
-	void FillColor(unsigned int color);
+    void FillColor( unsigned int color, bool bSetSpawn = false );
 
 	void mark();
 	void spread_mark();

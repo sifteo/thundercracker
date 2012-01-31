@@ -1181,7 +1181,7 @@ void CubeWrapper::RespawnOnePiece()
     int toSpawn = Game::random.randrange( numEmpties );
 
     GridSlot &slot = m_grid[aEmptyLocs[toSpawn].x][aEmptyLocs[toSpawn].y];
-    slot.FillColor( Game::random.randrange( Game::Inst().getLevel().m_numColors ) );
+    slot.FillColor( Game::random.randrange( Game::Inst().getLevel().m_numColors ), true );
 }
 
 
