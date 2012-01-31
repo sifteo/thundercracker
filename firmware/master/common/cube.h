@@ -94,6 +94,8 @@ class CubeSlot {
     }
 
     void getRawNeighbors(uint8_t buf[4]);
+
+    bool isTouching() const;
     
     _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
         /*

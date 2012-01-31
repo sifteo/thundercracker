@@ -315,9 +315,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         int8_t x = -ack->accel[0];
         int8_t y = -ack->accel[1];
 
-		//test for gestures
-		AccelState &accel = AccelState::getInstance( id() );
-		accel.update(x, y);
+        //test for gestures
+        AccelState &accel = AccelState::getInstance( id() );
+        accel.update(x, y);
 
         if (x != accelState.x || y != accelState.y) {
             accelState.x = x;
@@ -331,13 +331,13 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
         if (CubeSlots::neighborACKValid & bit()) {
             // Look for valid touches, signified by any edge on the touch toggle bit
-            
+
             if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
                 Event::setPending(EventBits::TOUCH, id());
             }
 
-			Event::setPending(EventBits::NEIGHBOR, id());
-            
+            Event::setPending(EventBits::NEIGHBOR, id());
+
         } else {
             Atomic::SetLZ(CubeSlots::neighborACKValid, id());
         }
@@ -368,6 +368,13 @@ void CubeSlot::getRawNeighbors(uint8_t buf[4]) {
     buf[1] = neighbors[1];
     buf[2] = neighbors[2];
     buf[3] = neighbors[3];
+}
+
+// Are we being touched right now?
+bool CubeSlot::isTouching() const {
+    // touch state is transmitted in the NB0_FLAG_TOUCH bit
+    // of the first neighbor value
+    return neighbors[0] & NB0_FLAG_TOUCH;
 }
 
 void CubeSlot::radioTimeout()
