@@ -30,11 +30,7 @@ static void OnTouch(Cube::ID cid) {
 }
 
 void siftmain() {
-	#ifdef SIFTEO_SIMULATOR
-	_SYS_memset8(gTouchFlags, 2, NUM_CUBES);
-	#else
-	_SYS_memset8(gTouchFlags, 0, NUM_CUBES);
-	#endif
+	_SYS_memset8(gTouchFlags, 0, NUM_CUBES); // hack for "false touch" on init
 	_SYS_vectors.cubeEvents.touch = OnTouch;
 
 	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
