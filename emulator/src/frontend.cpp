@@ -500,13 +500,14 @@ void Frontend::onMouseDown(int button)
 
                      // max: only do touch-stuff if CTRL is held down
                     if (glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RCTRL) == GLFW_PRESS) {
-                        // max: for some reason setTouch(0) was still causing an touch event, even if we didn't
-                        // setTouch here, so HACK ALERT I flagged the cube as having been triggered by ctrl using
+                        // max: TEMPORARY HACK ALERT I flagged the cube as having been triggered by ctrl using
                         // the b2Body's userData LIKE A DUMBASS because I didn't want to touch other files ;)
+                        // this will be removed when we solve a "false initial touch" problem.
                         mousePicker.mCube->body->SetUserData((void*)1);
                         mousePicker.mCube->setTouch(1.0f - centerDist / centerSize);
                     } else {
-                        // max: flag the cube as not-triggered-by-ctrl to be read later
+                        // max: TEMPORARY HACK ALERT flag the cube as not-triggered-by-ctrl to be read later, 
+                        // see former comment
                         mousePicker.mCube->body->SetUserData(0);
                     }
                     

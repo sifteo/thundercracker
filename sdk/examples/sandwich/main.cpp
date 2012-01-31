@@ -18,12 +18,23 @@ static bool AnyNeighbors(const Cube& c) {
 		c.hasPhysicalNeighborAt(3);
 }
 
+uint8_t gTouchFlags[NUM_CUBES];
+
 static void OnTouch(Cube::ID cid) {
-	LOG(("TOUCH: 0x%x\n", cid));
+	gTouchFlags[cid] = !gTouchFlags[cid];
+	if (gTouchFlags[cid] == 1) {
+		LOG(("TOUCH %d\n", cid));
+	} else if (gTouchFlags[cid] == 0) {
+		LOG(("RELEASE %d\n", cid));
+	}
 }
 
 void siftmain() {
-
+	#ifdef SIFTEO_SIMULATOR
+	_SYS_memset8(gTouchFlags, 2, NUM_CUBES);
+	#else
+	_SYS_memset8(gTouchFlags, 0, NUM_CUBES);
+	#endif
 	_SYS_vectors.cubeEvents.touch = OnTouch;
 
 	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
