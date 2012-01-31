@@ -1,94 +1,55 @@
-#include "Guid.h"
+#pragma once
 
-namespace TotalsGame {
-	
-	enum Difficulty {
+#include "Guid.h"
+#include "Token.h"
+
+namespace TotalsGame 
+{
+
+	class PuzzleChapter;
+	class Token;
+	class TokenGroup;
+
+	enum Difficulty 
+	{
 		Easy = 0, Medium = 1, Hard = 2
 	};
-	
-	enum NumericMode {
+
+	enum NumericMode
+	{
 		Fraction, Decimal
 	};
-	
-	enum Op {
-		Add = 0,
-		Subtract = 1,
-		Multiply = 2,
-		Divide = 3
-	};
-	
+
 	class Puzzle {
-  public:
+	public:
+		Puzzle(int tokenCount);
 
-    // option parameters
-    void *userData;
-    Guid guid;
-    PuzzleChapter *chapter;
-    Difficulty difficulty;
+		void ClearUserdata();
+		void ClearGroups();
+		bool IsComplete();
+		Difficulty GetDifficulty();
 
-    // game parameters
-    Token *GetToken(int index) {assert(index < numTokens); return tokens[index];}
-    TokenGroup *target;
-    Token *focus;
 
-	Puzzle()
-	{
-		userData = NULL;
-		guid = Guid::Empty;
-		chapter = NULL;
-		difficulty = Difficulty::Hard;
-		focus = NULL;
-		target = NULL;
-		focus = NULL;
-	}
+		// option parameters
+		void *userData;
+		Guid guid;
+		PuzzleChapter *chapter;
+		Difficulty difficulty;
 
-    int hintsUsed = 0;
-    bool unlimitedHints = false;
+		// game parameters
+		Token *GetToken(int index);
+		TokenGroup *target;
+		Token *focus;
 
-		Puzzle(int tokenCount) {
-			assert(tokenCount <= MAX_TOKENS);
-			numTokens = tokenCount;
-			for (int i=0; i<tokenCount; ++i) {
-				new(tokens+i) Token(this, i);
-			}
-		}
+		int hintsUsed;
+		bool unlimitedHints;
 
-    void ClearUserdata() {
-      for(int i=0; i<numTokens; ++i) {
-        tokens[i].current = tokens[i];
-        tokens[i].userData = null;
-      }
-    }
-
-    void ClearGroups() {
-      for(int i=0; i<numTokens; ++i) {
-        tokens[i].current = tokens[i];
-      }
-    }
-		
-		bool IsComplete() {
-			if (target == null) { return false; }
-			var soln = tokens[0].current;
-			// have we hit the target value?
-			if (!soln.Value.Equals(target.Value)) { return false; }
-			// are all the other tokens participating?
-			for(int i=1; i<numTokens; ++i) {
-			  if (tokens[i].current != soln) {
-			    return false;
-			  }
-			}
-			return true;
-		}
-
-    Difficulty GetDifficulty() {
-      return Game.Inst == null ? difficulty : Game.Inst.difficulty;
-    }
-		
 	private:
-			static const int MAX_TOKENS = 32;
-			Token tokens[MAX_TOKENS];
-			int numTokens;
-	}
-  
+		static const int MAX_TOKENS = 32;
+		char tokenBufferHack[];
+		Token tokens[MAX_TOKENS];
+		int numTokens;
+	};
+
 }
 

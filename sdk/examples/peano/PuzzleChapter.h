@@ -1,21 +1,24 @@
+#include "PuzzleDatabase.h"
+#include "Puzzle.h"
 
 namespace TotalsGame {
 
   class PuzzleChapter 
   {
-    PuzzleDatabase *db = null;
+    PuzzleDatabase *db;
     Guid guid;
-    const char *id = "";
-    const char *name = "";
+    const char *id;
+    const char *name;
     
 	PuzzleChapter()
 	{
 		db = NULL;
 		id = "";
 		name = "";
+		numPuzzles = 0;
 
 	}
-
+	/*
     public static PuzzleChapter CreateFromXML(XmlNode chapter) {
       var result = new PuzzleChapter() {
         id = chapter.Attributes["id"].InnerText,
@@ -29,7 +32,7 @@ namespace TotalsGame {
       }
       return result;
     }
-
+	*/
 
 	size_t NumPuzzles() { return numPuzzles;}
 	Puzzle *GetPuzzle(size_t index)
