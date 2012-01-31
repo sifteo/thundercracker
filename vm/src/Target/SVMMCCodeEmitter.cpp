@@ -98,16 +98,16 @@ public:
         return simpleFixup(MI, OpIdx, Fixups, SVM::fixup_b);
     }
 
-    uint32_t getCallTargetOpValue(const MCInst &MI, unsigned OpIdx,
+    uint32_t getRelCPIOpValue(const MCInst &MI, unsigned OpIdx,
         SmallVectorImpl<MCFixup> &Fixups) const
     {
-        return simpleFixup(MI, OpIdx, Fixups, SVM::fixup_call);
+        return simpleFixup(MI, OpIdx, Fixups, SVM::fixup_relcpi);
     }
 
-    uint32_t getCPIOpValue(const MCInst &MI, unsigned OpIdx,
+    uint32_t getAbsCPIOpValue(const MCInst &MI, unsigned OpIdx,
         SmallVectorImpl<MCFixup> &Fixups) const
     {
-        return simpleFixup(MI, OpIdx, Fixups, SVM::fixup_cpi);
+        return simpleFixup(MI, OpIdx, Fixups, SVM::fixup_abscpi);
     }
     
     uint32_t getAddrSPValue(const MCInst &MI, unsigned OpIdx,

@@ -83,9 +83,14 @@ public:
             Value /= 2;
             break;
             
-        case SVM::fixup_cpi:
+        case SVM::fixup_relcpi:
             // Word count
             Value /= 4;
+            break;
+
+        case SVM::fixup_abscpi:
+            // Word count from beginning of block
+            Value = (Value / 4) & 0x7F;
             break;
             
         default:

@@ -172,7 +172,7 @@ SVC encodings:
 
   11011111 0xxxxxxx     (1) Indirect operation
   11011111 10xxxxxx     (2) Direct syscall #0-63
-  11011111 110xxxxx     (3) SP = validate(SP - imm5)
+  11011111 110xxxxx     (3) SP = validate(SP - imm5*4)
   11011111 11100rrr     (4) r8 = validate(rN)
   11011111 11101rrr     (5) r9 = validate(rN)
   11011111 1111xxxx     (6) Reserved
@@ -200,5 +200,9 @@ is always interpreted as a validated flash address:
   0x81  Asynchronous preload
   0x82  Assign to r8
   0x83  Assign to r9
+  
+Assigned syscall numbers:
+
+  0x0000   Return from function call
 
 --

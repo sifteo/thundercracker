@@ -19,12 +19,14 @@ enum Fixups {
 { "fixup_bcc",               0,      8,    MCFixupKindInfo::FKF_IsPCRel }, \
 { "fixup_b",                 0,      11,   MCFixupKindInfo::FKF_IsPCRel }, \
 { "fixup_call",              0,      8,    0 }, \
-{ "fixup_cpi",               0,      8,    MCFixupKindInfo::FKF_IsPCRel }, \
+{ "fixup_relcpi",            0,      8,    MCFixupKindInfo::FKF_IsPCRel }, \
+{ "fixup_abscpi",            0,      7,    0 }, \
 
 fixup_bcc = FirstTargetFixupKind,
 fixup_b,
 fixup_call,
-fixup_cpi,
+fixup_relcpi,
+fixup_abscpi,
 
 LastTargetFixupKind,
 NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind

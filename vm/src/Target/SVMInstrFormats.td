@@ -5,6 +5,11 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+
+/****************************************************************
+ * Base classes
+ */
+
 class InstSVM<dag outs, dag ins, string asmstr, list<dag> pattern> : Instruction
 {
     let Namespace = "SVM";
@@ -22,7 +27,16 @@ class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
    let Size = 0;
 }
 
-/*
+class ThumbInst16<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : InstSVM<outs, ins, asmstr, pattern>
+{
+    field bits<16> Inst;
+    bits<3> opA;
+    let Inst{15-13} = opA;
+}
+
+
+/****************************************************************
  * Patterns
  */
 
@@ -35,23 +49,15 @@ def imm3 : PatLeaf<(imm), [{ return (unsigned)N->getZExtValue() < 8; }]>;
 def and_su : PatFrag<(ops node:$lhs, node:$rhs), (and node:$lhs, node:$rhs),
     [{ return N->hasOneUse(); }]>;
 
-/*
- * A 16-bit Thumb instruction. The top three bits are always a constant
- * "major" opcode. The individual formats here are numbered accoRding to
- * Figure 5-1 in the ARM7TDMI data sheet.
+
+/****************************************************************
+ * 16-bit Thumb-1 Formats
+ * (Named according to the ARM7TDMI manual)
  */
- 
-class ThumbInst<dag outs, dag ins, string asmstr, list<dag> pattern>
-    : InstSVM<outs, ins, asmstr, pattern>
-{
-    field bits<16> Inst;
-    bits<3> opA;
-    let Inst{15-13} = opA;
-}
 
 // Format 1: move shifted register
 class T1<dag outs, dag ins, string asmstr, list<dag> pattern>
-    : ThumbInst<outs, ins, asmstr, pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
 {
     let opA = 0;
     bits<2> opB;
@@ -67,7 +73,7 @@ class T1<dag outs, dag ins, string asmstr, list<dag> pattern>
 }
 
 class T2<dag outs, dag ins, string asmstr, list<dag> pattern>
-    : ThumbInst<outs, ins, asmstr, pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
 {
     let opA = 0;
     bits<1> imm;
@@ -85,7 +91,7 @@ class T2<dag outs, dag ins, string asmstr, list<dag> pattern>
 }
 
 class T3<dag outs, dag ins, string asmstr, list<dag> pattern>
-    : ThumbInst<outs, ins, asmstr, pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
 {
     let opA = 1;
     bits<2> opB;
@@ -98,7 +104,7 @@ class T3<dag outs, dag ins, string asmstr, list<dag> pattern>
 }
 
 class T4<dag outs, dag ins, string asmstr, list<dag> pattern>
-    : ThumbInst<outs, ins, asmstr, pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
 {
     let opA = 2;
     bits<4> opB;
@@ -112,7 +118,7 @@ class T4<dag outs, dag ins, string asmstr, list<dag> pattern>
 }
 
 class T6<dag outs, dag ins, string asmstr, list<dag> pattern>
-    : ThumbInst<outs, ins, asmstr, pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
 {
     bits<3> Rd;
     bits<8> word8;
@@ -125,7 +131,7 @@ class T6<dag outs, dag ins, string asmstr, list<dag> pattern>
 }
 
 class T11<bits<1> isLoad, dag outs, dag ins, string asmstr, list<dag> pattern>
-    : ThumbInst<outs, ins, asmstr, pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
 {
     bits<3> Rd;
     bits<8> word8;
@@ -139,7 +145,7 @@ class T11<bits<1> isLoad, dag outs, dag ins, string asmstr, list<dag> pattern>
 }
 
 class T12<bits<1> isSP, dag outs, dag ins, string asmstr, list<dag> pattern>
-    : ThumbInst<outs, ins, asmstr, pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
 {
     bits<3> Rd;
     bits<8> word8;
@@ -153,7 +159,7 @@ class T12<bits<1> isSP, dag outs, dag ins, string asmstr, list<dag> pattern>
 }
 
 class T16<dag outs, dag ins, string asmstr, list<dag> pattern>
-    : ThumbInst<outs, ins, asmstr, pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
 {
     let opA = 6;
     bits<4> cc;
@@ -164,7 +170,7 @@ class T16<dag outs, dag ins, string asmstr, list<dag> pattern>
 }
 
 class T17<dag outs, dag ins, string asmstr, list<dag> pattern>
-    : ThumbInst<outs, ins, asmstr, pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
 {
     let opA = 6;
     bits<8> value8;
@@ -173,7 +179,7 @@ class T17<dag outs, dag ins, string asmstr, list<dag> pattern>
 }
 
 class T18<dag outs, dag ins, string asmstr, list<dag> pattern>
-    : ThumbInst<outs, ins, asmstr, pattern>
+    : ThumbInst16<outs, ins, asmstr, pattern>
 {
     let opA = 7;
     bits<11> offset11;
@@ -181,8 +187,48 @@ class T18<dag outs, dag ins, string asmstr, list<dag> pattern>
     let Inst{10-0} = offset11;
 }
 
-class SVC<bits<8> num, dag outs, dag ins, string asmstr, list<dag> pattern>
+
+/****************************************************************
+ * SVC Formats
+ */
+
+class S_ind<dag outs, dag ins, string asmstr, list<dag> pattern>
     : T17<outs, ins, asmstr, pattern>
 {
-    let value8 = num;
+    // Indirect SVC instruction
+    bits<9> addr9;
+    let value8{7} = 0;
+    let value8{6-0} = addr9{8-2};
+}
+
+class S_call<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : T17<outs, ins, asmstr, pattern>
+{
+    // Direct syscall #0-63
+    bits<6> imm6;
+    let imm6 = op;
+    let value8{7-6} = 0b10;
+    let value8{5-0} = imm6;
+}
+
+class S_subsp<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : T17<outs, ins, asmstr, pattern>
+{
+    // Validated subtract from SP
+    bits<7> offset7;
+    bits<5> imm5;
+    let imm5 = offset7{6-2};
+    let value8{7-5} = 0b110;
+    let value8{4-0} = imm5;
+}
+
+class S_ptr<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : T17<outs, ins, asmstr, pattern>
+{
+    // Validate pointer
+    bits<3> Rd;
+    bits<3> Rs;
+    let value8{7-4} = 0b1110;
+    let value8{3} = Rd{0};
+    let value8{2-0} = Rs;
 }

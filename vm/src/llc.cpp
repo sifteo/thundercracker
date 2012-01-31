@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
 
   std::auto_ptr<TargetMachine>
     target(TheTarget->createTargetMachine(TheTriple.getTriple(),
-           "", "", Reloc::Default, CodeModel::Default));
+           "", "", Reloc::Static, CodeModel::Default));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
 

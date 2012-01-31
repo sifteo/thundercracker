@@ -5,6 +5,23 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+
+/****************************************************************
+ * Constant Pool
+ */
+ 
+def RelCPIop : Operand<i32> {
+    let EncoderMethod = "getRelCPIOpValue";
+}
+
+def AbsCPIop : Operand<i32> {
+    let EncoderMethod = "getAbsCPIOpValue";
+}
+
+def LDRpc : T6<(outs GPReg:$Rd), (ins RelCPIop:$offset10),
+    "ldr\t$Rd, [PC, #$offset10]", [(set GPReg:$Rd, tconstpool:$offset10)]>;
+
+
 /****************************************************************
  * Function Calls
  */
@@ -22,8 +39,9 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeqStart,
 def callseq_end : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
     [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
-def callTarget : Operand<i32> {
-    let EncoderMethod = "getCallTargetOpValue";
+def callTarget : Operand<i32>,
+    ComplexPattern<iPTR, 1, "SelectCallTarget", [tglobaladdr], []> {
+    let MIOperandInfo = (ops tconstpool);
 }
 
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
@@ -31,13 +49,13 @@ def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
 def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
     "!ADJCALLSTACKUP $amt1", [(callseq_end timm:$amt1, timm:$amt2)]>;
 
-def RET : SVC<1, (outs), (ins), "s.ret", [(SVMRet)]> {
+def RET : S_call<0x0000, (outs), (ins), "s.ret", [(SVMRet)]> {
     let isReturn = 1;
     let isTerminator = 1;
 }
 
-def CALL : SVC<2, (outs), (ins callTarget:$offset11),
-    "s.call\t$offset11", [(SVMCall tglobaladdr:$offset11)]> {
+def CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
+    "s.call\t$offset11", [(SVMCall callTarget:$offset11)]> {
     let isCall = 1;
 }
 
@@ -277,15 +295,8 @@ def MVNr : T4<(outs GPReg:$Rs), (ins GPReg:$Rn),
 
 
 /****************************************************************
- * Constant Pool
+ * Memory operations
  */
- 
-def CPIop : Operand<i32> {
-    let EncoderMethod = "getCPIOpValue";
-}
-
-def LDRpc : T6<(outs GPReg:$Rd), (ins CPIop:$offset10),
-    "ldr\t$Rd, [PC, #$offset10]", [(set GPReg:$Rd, tconstpool:$offset10)]>;
 
 
 /****************************************************************

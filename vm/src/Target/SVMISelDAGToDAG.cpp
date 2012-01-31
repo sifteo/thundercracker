@@ -8,6 +8,7 @@
 #include "SVMTargetMachine.h"
 #include "SVMMCTargetDesc.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -33,7 +34,8 @@ namespace {
         void moveConstantToPool(SDNode *N, uint32_t val);
         
         // Complex patterns
-        bool SelectAddrSP(SDValue N, SDValue &Base, SDValue &Offset);
+        bool SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset);
+        bool SelectCallTarget(SDValue Addr, SDValue &CP);
 
         #include "SVMGenDAGISel.inc"
     };
@@ -98,9 +100,7 @@ void SVMDAGToDAGISel::moveConstantToPool(SDNode *N, uint32_t val)
 
 bool SVMDAGToDAGISel::SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset)
 {
-    /*
-     * Complex pattern to select valid stack addresses for LDRsp/STRsp.
-     */
+    // Complex pattern to select valid stack addresses for LDRsp/STRsp.
 
     EVT ValTy = Addr.getValueType();
 
@@ -130,6 +130,17 @@ bool SVMDAGToDAGISel::SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset)
     Base = Addr;
     Offset = CurDAG->getTargetConstant(0, ValTy);
     return true;
+}
+
+bool SVMDAGToDAGISel::SelectCallTarget(SDValue Addr, SDValue &CP)
+{
+    
+    if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
+        CP = CurDAG->getTargetConstantPool(GA->getGlobal(), MVT::i32);
+        return true;
+    }
+    
+    return false;
 }
 
 FunctionPass *llvm::createSVMISelDag(SVMTargetMachine &TM) {

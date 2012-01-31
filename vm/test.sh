@@ -18,5 +18,5 @@ cat test.s
 
 echo ------------------------
 
-./svmc -debug test.o $*
+./svmc test.o $*
 arm-none-eabi-objdump -d test.elf
