@@ -10,7 +10,7 @@ OBJS = \
 	src/Target/SVMMCTargetDesc.o \
 	src/Target/SVMMCCodeEmitter.o \
 	src/Target/SVMMCInstLower.o \
-	src/Target/SVMAsmBackend.o \
+	src/Target/SVMMCAsmBackend.o \
 	src/Target/SVMMachineFunctionInfo.o \
 	src/Target/SVMRegisterInfo.o \
 	src/Target/SVMSelectionDAGInfo.o \
