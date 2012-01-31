@@ -24,9 +24,18 @@ AudioMixer::AudioMixer() :
 void AudioMixer::init()
 {
     memset(channelSlots, 0, sizeof(channelSlots));
+    // NOTE: several games are failing their builds for hardware because the
+    // speex libs & their own asset metadata overflow MCU internal flash.
+    // Disabling this init allows the linker to strip all the speex code, and
+    // for many games to fit in flash - of course, if you try to run on HW with
+    // speex encoded samples, it will go up in flames. run on HW with uncompressed
+    // samples for now, until absolutely everything is being pulled from external
+    // flash, in which case we should be able to pull speex back in.
+#ifdef SIFTEO_SIMULATOR
     for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         decoders[i].init();
     }
+#endif
 }
 
 /*
