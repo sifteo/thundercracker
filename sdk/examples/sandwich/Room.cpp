@@ -6,9 +6,14 @@ int Room::RoomId() const {
 }
 
 Vec2 Room::LocalCenter(unsigned subdiv) const { 
-  if (subdiv && (mSubdivType == SUBDIV_DIAG_POS || mSubdivType == SUBDIV_DIAG_NEG)) {
-    const DiagonalSubdivisionData* p = SubdivAsDiagonal();
-    return Vec2(p->altCenterX, p->altCenterY); 
+  if (subdiv) {
+    if (mSubdivType == SUBDIV_DIAG_POS || mSubdivType == SUBDIV_DIAG_NEG) {
+      const DiagonalSubdivisionData* p = SubdivAsDiagonal();
+      return Vec2(p->altCenterX, p->altCenterY); 
+    } else if (mSubdivType == SUBDIV_BRDG_HOR || mSubdivType == SUBDIV_BRDG_VER) {
+      const BridgeSubdivisionData* p = SubdivAsBridge();
+      return Vec2(p->altCenterX, p->altCenterY);
+    }
   }
   return Vec2(Data()->centerX, Data()->centerY); 
 }
