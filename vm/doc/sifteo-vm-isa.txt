@@ -1,6 +1,7 @@
-============
-Sifteo TC VM
-============
+===============================
+Sifteo TC Virtual Machine (SVM)
+===============================
+
 
 What is it?
 -----------
@@ -11,36 +12,62 @@ What is it?
  - A safe Direct Execution environment for untrusted code
  - A hardware-assisted sandboxing interpreter
 
+
 Memory Protection
 -----------------
 
-We use SP (r13) as a trusted base register. It can only be updated by trusted
-code. It may only point to RAM within the sandbox. Safe instructions are
-allowed to apply a small positive offset to SP.
+The register file is divided into a trusted portion (r8-r15) and an untrusted
+portion (r0-r7). Trusted registers cannot be directly modified by valid VM
+instructions, whereas untrusted registers can be modified arbitrarily.
 
-To catch NULL pointers, other bad pointers, or out-of-range indexing (SP in
-range, SP + offset out of range) we use a simple technique that requires only
-trivial hardware assistance.
+Register r8 is used as a read only base (BRO) and r9 is used as a read/write
+base address (BRW). The set of valid VM instructions includes instructions:
 
-When a pointer is loaded into SP, it is sanitized using the following algorithm:
+  ldr   rN, r8, #imm12
+  ldrh  rN, r8, #imm12
+  ldrb  rN, r8, #imm12
+  ldrsh rN, r8, #imm12
+  ldrsb rN, r8, #imm12
 
-  SP = ((pointer - 0x10000) & 0xFFFFF) + 0x20008000;
+  ldr   rN, r9, #imm12
+  ldrh  rN, r9, #imm12
+  ldrb  rN, r9, #imm12
+  ldrsh rN, r9, #imm12
+  ldrsb rN, r9, #imm12
+  
+  str   rN, r9, #imm12
+  strh  rN, r9, #imm12
+  strb  rN, r9, #imm12
 
-This assumes the VM's memory layout is as follows:
+The two base registers may be updated using a SVC which copies any r0-r7
+to r8-r9 after performing address translation and validation.
 
-  00000000 - 0000FFFF     Invalid (guard region to catch NULL pointers)
-  00010000 - 00017FFF     32 kB of user RAM for stack and data
-  00018000 - 7FFFFFFF     Invalid
-  80000000 - FFFFFFFF     External data (Flash) virtual address space
+Virtual memory map:
 
-And the physical machine's layout is:
+  00000000 - 0000FFFF     1. Invalid (guard region to catch NULL pointers)
+  00010000 - 00017FFF     2. 32 kB of user RAM for stack and data
+  00018000 - 7FFFFFFF     3. Invalid
+  80000000 - FFFFFFFF     4. External data (Flash) virtual address space
 
-  00000000 - 1FFFFFFF     System code space
-  20000000 - 20007FFF     32 kB system data space
-  20008000 - 2000FFFF     32 kB user data space
-  20010000 - 21FFFFFF     Unimplemented in hardware, causes trap
+Sample physical memory map:
 
-Example virtual to physical translations:
+  00000000 - 1FFFFFFF     A. System code space
+  20000000 - 20003FFF     B. 16 kB system data space
+  20004000 - 20007FFF     C. 16 kB flash memory cache
+  20008000 - 2000FFFF     D. 32 kB user data space
+  20010000 - 21FFFFFF     E. Unimplemented in hardware, causes trap
+  
+Region (1) is guaranteed to fault on read or write. A NULL pointer plus any
+imm12 will land in this region. Any invalid pointers will fault on load/store,
+not on validate, so that the fault occurs only at actual time of use.
+
+Address translation for regions (1-3) can be performed using:
+
+  physical = ((virtual - 0x10000) & 0xFFFFF) + 0x20008000
+
+Region (3) is not guaranteed to fault. Some invalid user pointers will
+silently alias to other valid user RAM addresses. Example virtual to physical
+translations:
 
   00000000 -> 200F8000    Invalid, causes trap
   0000FFFF -> 20107FFF    Invalid, causes trap
@@ -52,62 +79,122 @@ Example virtual to physical translations:
   00110000 -> 20008000    Invalid, causes aliasing
   FFFFFFFF -> 200F7FFF    Invalid, causes trap
 
-This approach allows the most common pointer errors to be caught at load/store
-time. Uncaught pointer errors can reference the wrong address, but they can't
-escape the sandbox. By placing the user RAM at the end of mapped SRAM, the
-hardware's unimplemented memory region creates a natural guard which catches
-errors in which a valid SP has been added to a too-large offset. (These errors
-cannot be caught statically)
+The validate SVCs are responsible for detecting addresses in region (4) and
+routing them through the system's flash cache. Userspace code may 'check out'
+a flash page in this manner. The pointer saved to r8-r9 will be to a temporary
+copy of the flash page, in region (C). The page is only guaranteed to stay at
+that address until the next SVC. This means that function calls, long jumps,
+and other validate SVCs will invalidate the contents of r8-r9.
+
+By placing the cache region (C) immediately prior to user data region (D), we
+can make out-of-range imm12 values harmless. The worst that a malicious or
+buggy app can do is to read user data or other cache pages, both of which it
+could already access. For the same reason, thehis also means we can allow
+literal pool loads without checking the immediate.
+
+The flash memory cache (C) is always treated as a read-only region in this
+scheme. Actual writes to flash, e.g. for saved game data, must be performed
+using special-purpose system calls. This simplifies the design, as well as
+adding a layer of protection against inadvertent writes.
+
 
 Instruction Set Architecture
 ----------------------------
 
-IT blocks and 32-bit Thumb-2 instruction words are forbidden for now. Perhaps
-they will be allowed later, but right now it's a nice simplifying assumption
-to make all instructions 16-bit and to assume all instruction boundaries are
-valid jump targets:
+The SVM architecture uses a reduced subset of Thumb-2, which contains only
+operations which are always safe for unprivileged code to perform.
 
-  10111111 xxxxxxxx     # IT block
+Most importantly, the architecture is designed such that any page of code can
+be quickly validated, at load time, to determine which portion of the page
+contains valid instructions. Any page can be divided into a data portion at
+the end, and a code portion at the beginning. By walking the page from
+beginning to end, at load time we determine the highest address that
+represents valid code. This final instruction must be an unconditional near or
+far branch.
 
-  11101xxx xxxxxxxx     # Prefixes
-  11110xxx xxxxxxxx
-  11111xxx xxxxxxxx
+This address is saved in a look-aside buffer, for validating SVC-assisted
+calls and far branches. Near branches are validated at load time, in a second
+pass.
 
-Thumb encoding that are always allowed:
+In order to support the use of 32-bit Thumb-2 instructions without
+overcomplicating the validation algorithm, we require all basic blocks and all
+32-bit instructions to be aligned on a 32-bit boundary. This means that
+validation can proceed 32 bits at a time, checking whether each word contains
+either a single valid 32-bit instruction or two valid 16-bit instructions. No
+type of branch is allowed to enter an address which is not 32-bit aligned.
 
-  '00xxxxxx xxxxxxxx',  # Shift, add, subtract, mov, cmp
-  '010000xx xxxxxxxx',  # Data processing (r0-r7)
-  '1001xxxx xxxxxxxx',  # Load/store [SP, #imm8]
-  '10110010 xxxxxxxx',  # Sign/zero extend
-  '10111010 0xxxxxxx',  # REV / REV16
-  '10111010 11xxxxxx',  # REVSH
+Allowed 32-bit instruction encodings:
 
-Encodings we may allow as hypercalls / pseudo-ops:
+  11111000 11001001, 0xxxxxxx xxxxxxxx      str         r0-r7, [r9, #imm12]
+  11111000 10x01001, 0xxxxxxx xxxxxxxx      str[bh]     r0-r7, [r9, #imm12]
 
-  '10111110 xxxxxxxx',  # Breakpoint
-  '11011110 xxxxxxxx',  # Undefined instruction
-  '11011111 xxxxxxxx',  # Supervisor call
+  1111100x 10x1100x, 0xxxxxxx xxxxxxxx      ldr(s)[bh]  r0-r7, [r8-9, #imm12]
+  11111000 1101100x, 0xxxxxxx xxxxxxxx      ldr         r0-r7, [r8-9, #imm12]
 
-Encodings that are allowed pending static bounds checks:
+Allowed 16-bit instruction encodings:
 
-  '01001xxx xxxxxxxx',  # Load literal
-  '1011x0x1 xxxxxxxx',  # CBZ / CBNZ
-  '1101xxxx xxxxxxxx',  # Conditional branch
-  '11100xxx xxxxxxxx',  # Unconditional branch
+  00xxxxxx xxxxxxxx     lsl, lsr, asr, add, sub, mov, cmp
+  010000xx xxxxxxxx     and, eor, lsl, lsr, asr, adc, sbc, ror,
+                        tst, rsb, cmp, cmn, orr, mul, bic, mvn
+  
+  10110010 xxxxxxxx     uxth, sxth, uxtb, sxtb
+  10111111 00000000     nop
+  11011111 xxxxxxxx     svc
+
+  01001xxx xxxxxxxx     ldr r0-r7, [PC, #imm8]
+  1001xxxx xxxxxxxx     ldr/str r0-r7, [SP, #imm8]
+  10101xxx xxxxxxxx     add r0-r7, SP, #imm8
+
+Near branches are allowed, assuming the target address is within the code
+region of the same page, and the target is 32-bit aligned:
+
+  1011x0x1 xxxxxxxx     cb(n)z
+  1101xxxx xxxxxxxx     bcc
+  11100xxx xxxxxxxx     b
+
 
 Assisted operations
 -------------------
 
 Many common operations require hypercall assistance:
 
- - Word or byte-wide loads/stores
- - Loading SP with an arbitrary pointer
- - Loading SP with the current stack frame
- - Procedure call and return
+ - Stack frame adjustments
  - Long branches
+ - Procedure call and return
+ - Pointer validation
+ - Application-visible system calls
 
-Since we have a relatively large space (at least 512 codes) for hypercall use,
-we may choose to use some of these codes for direct (function-like)
-hypercalls, and some of them for indirect operations in which the parameter,
-Rather than being a hypercall ID, is actually an offset to arguments in the
-literal pool.
+All hypercalls are implemented using SVC. We could optionally use the
+BKPT or the permanently undefined regions as well, if we require more than
+8 bits of parameter space.
+
+SVC encodings:
+
+  11011111 0xxxxxxx     (1) Indirect operation
+  11011111 10xxxxxx     (2) Direct syscall #0-63
+  11011111 110xxxxx     (3) SP = validate(SP - imm5)
+  11011111 11100rrr     (4) r8 = validate(rN)
+  11011111 11101rrr     (5) r9 = validate(rN)
+  11011111 1111xxxx     (6) Reserved
+
+Direct syscalls shall be used for very common operations: memcpy, memset,
+floating point, return, SP adjust, etc.
+
+When the MSB of the SVC immediate is clear, the other 7 bits are multiplied by
+four and added to the base of the current page, to form the address of a
+32-bit literal. This 32-bit literal encodes an indirect operation to perform:
+
+  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (1) Call validate(F+a), SP -= n*4
+  10nnnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (2) Addrop #0-63 on validate(F+a)
+  11nnnnnn nnnnnnnn iiiiiiii iiiiiiii   (7) Syscall #0-16383, with #imm16
+
+  (F = 0x80000000, flash segment virtual address)
+
+Address operations are like syscalls, but they have a 24-bit immediate which
+is always interpreted as a validated flash address:
+
+  0x80  Long branch
+  0x81  Asynchronous preload
+  0x82  Assign to r8
+
+--
