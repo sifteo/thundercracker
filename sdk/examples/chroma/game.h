@@ -56,6 +56,7 @@ public:
     static const int NUM_COLORS_FOR_HYPER = 3;
     //timer constants
     static const float TIME_TO_RESPAWN;
+    static const float COMBO_TIME_THRESHOLD
 
     //number of dots needed for certain thresholds
     enum
@@ -125,6 +126,8 @@ public:
     unsigned int CountEmptyCubes() const;
 
     inline void SetUsedColor( unsigned int color ) { m_aColorsUsed[color] = true; }
+    void UpCombo();
+    inline unsigned int GetComboCount() const { return m_comboCount; }
 
 private:
 	void TestMatches();
@@ -167,6 +170,8 @@ private:
     float m_fTimeTillRespawn;
     //which cube to respawn to next
     unsigned int m_cubeToRespawn;
+    unsigned int m_comboCount;
+    float m_fTimeSinceCombo;
 
     //force a 1 frame paint sync before/after drawing
     bool m_bForcePaintSync;

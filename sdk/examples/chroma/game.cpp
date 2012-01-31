@@ -15,6 +15,7 @@ unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
 
 const float Game::SLOSH_THRESHOLD = 0.4f;
 const float Game::TIME_TO_RESPAWN = 0.7f;
+const float Game::COMBO_TIME_THRESHOLD = 2.5f;
 
 Math::Random Game::random;
 
@@ -30,7 +31,7 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
                 m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
-                m_cubeToRespawn ( 0 ),
+                m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
                 m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
                 , m_bStabilized( false )
 {
@@ -145,6 +146,10 @@ void Game::Update()
                 checkGameOver();
 
                 m_fTimeTillRespawn -= dt;
+                m_fTimeSinceCombo += dt;
+
+                if( m_fTimeSinceCombo > COMBO_TIME_THRESHOLD )
+                    m_comboCount = 0;
 
                 if( m_fTimeTillRespawn <= 0.0f )
                     RespawnOnePiece();
@@ -228,6 +233,8 @@ void Game::Reset()
 
 	m_timer.Reset();
     m_fTimeTillRespawn = TIME_TO_RESPAWN;
+    m_comboCount = 0;
+    m_fTimeSinceCombo = 0.0f;
 
     m_bStabilized = false;
 }
@@ -790,3 +797,18 @@ void Game::RespawnOnePiece()
     m_fTimeTillRespawn = TIME_TO_RESPAWN;
 }
 
+
+void Game::UpCombo()
+{
+    if( m_mode == MODE_TIMED )
+    {
+        if( m_fTimeSinceCombo > 0.0f )
+        {
+            if( m_fTimeSinceCombo > COMBO_TIME_THRESHOLD )
+                m_comboCount = 0;
+
+            m_comboCount++;
+            m_fTimeSinceCombo = 0.0f;
+        }
+    }
+}

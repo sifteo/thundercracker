@@ -163,6 +163,10 @@ void CubeWrapper::Draw()
                     //super debug code!
                     //Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, m_cube.id() );
 
+                    //for debugging combo count
+                    if( Game::Inst().getMode() == Game::MODE_TIMED )
+                        Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, Game::Inst().GetComboCount() );
+
 					break;
 				}
                 case STATE_MESSAGING:
@@ -738,6 +742,8 @@ void CubeWrapper::testMatches()
 			{
                 if( ourGems[j]->isMatchable() && theirGems[j]->isMatchable() )
 				{
+                    bool bMatched = true;
+
                     //hypercolor madness
                     if( ourGems[j]->getColor() == GridSlot::HYPERCOLOR )
                     {
@@ -752,7 +758,7 @@ void CubeWrapper::testMatches()
                     //rocks can't match
                     else if( ourGems[j]->getColor() == GridSlot::ROCKCOLOR )
                     {
-
+                        bMatched = false;
                     }
                     else if( ourGems[j]->getColor() == theirGems[j]->getColor() )
                     {
@@ -771,6 +777,13 @@ void CubeWrapper::testMatches()
                         ourGems[j]->mark();
                         theirGems[j]->mark();
                     }
+                    else
+                    {
+                        bMatched = false;
+                    }
+
+                    if( bMatched )
+                        Game::Inst().UpCombo();
 				}
 			}
         }
