@@ -32,6 +32,9 @@ public:
                      StringRef CPU, StringRef FS,
                      Reloc::Model RM, CodeModel::Model CM);
 
+    unsigned getBlockSize();
+    unsigned getBundleSize();
+
     virtual const SVMInstrInfo *getInstrInfo() const { return &InstrInfo; }
     virtual const TargetFrameLowering  *getFrameLowering() const { return &FrameLowering; }
     virtual const SVMRegisterInfo *getRegisterInfo() const { return &InstrInfo.getRegisterInfo(); }
@@ -41,6 +44,7 @@ public:
     virtual const SVMSubtarget *getSubtargetImpl() const { return &Subtarget; }
 
     virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
+    virtual bool addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
 };
 
 }

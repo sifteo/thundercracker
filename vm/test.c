@@ -37,7 +37,8 @@ void siftmain() {
 
 void f1() {
     _SYS_ticks_ns(0x12345678);
-    _SYS_ticks_ns(0xf00fbabe);
+    while (1)
+        _SYS_ticks_ns(0xf00fbabe);
 }
 
 void f2() {

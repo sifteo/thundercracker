@@ -24,10 +24,12 @@ namespace llvm {
             CMOV,
         };
     }
+    
+    class SVMTargetMachine;
 
     class SVMTargetLowering : public TargetLowering {
     public:
-        SVMTargetLowering(TargetMachine &TM);
+        SVMTargetLowering(SVMTargetMachine &TM);
 
         virtual const char *getTargetNodeName(unsigned Opcode) const;
 

@@ -30,3 +30,19 @@ bool SVMTargetMachine::addInstSelector(PassManagerBase &PM, CodeGenOpt::Level Op
     PM.add(createSVMISelDag(*this));
     return false;
 }
+
+bool SVMTargetMachine::addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
+{
+    PM.add(createSVMAlignPass(*this));
+    return true;
+}
+
+unsigned SVMTargetMachine::getBlockSize()
+{
+    return 256;
+}
+
+unsigned SVMTargetMachine::getBundleSize()
+{
+    return 4;
+}

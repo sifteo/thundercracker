@@ -26,11 +26,11 @@ using namespace llvm;
 #include "SVMGenCallingConv.inc"
 
 
-SVMTargetLowering::SVMTargetLowering(TargetMachine &TM)
+SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     : TargetLowering(TM, new TargetLoweringObjectFileELF())
 {
     // XXX: Kludge to put functions into flash blocks
-    //setPrefFunctionAlignment(8);
+    setPrefFunctionAlignment(Log2_32(TM.getBlockSize()));
     
     // Register classes
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);

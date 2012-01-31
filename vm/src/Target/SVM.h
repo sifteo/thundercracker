@@ -12,8 +12,9 @@ namespace llvm {
 
     class FunctionPass;
     class SVMTargetMachine;
-
+    
     FunctionPass *createSVMISelDag(SVMTargetMachine &TM);
+    FunctionPass *createSVMAlignPass(SVMTargetMachine &TM);
 
 } // namespace llvm
 

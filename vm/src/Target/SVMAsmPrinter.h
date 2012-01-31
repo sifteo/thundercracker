@@ -19,14 +19,14 @@ namespace llvm {
         explicit SVMAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
             : AsmPrinter(TM, Streamer) {}
 
-        virtual const char *getPassName() const {
+        const char *getPassName() const {
             return "SVM Assembly Printer";
         }
 
-        virtual void EmitInstruction(const MachineInstr *MI);
-        virtual void EmitFunctionEntryLabel();
-        virtual void EmitConstantPool();
-        virtual void EmitFunctionBodyEnd();
+        void EmitInstruction(const MachineInstr *MI);
+        void EmitFunctionEntryLabel();
+        void EmitConstantPool();
+        void EmitFunctionBodyEnd();
     };
 
 } // end namespace
