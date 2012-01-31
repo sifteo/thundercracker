@@ -56,7 +56,7 @@ public:
     static const int NUM_COLORS_FOR_HYPER = 3;
     //timer constants
     static const float TIME_TO_RESPAWN;
-    static const float COMBO_TIME_THRESHOLD
+    static const float COMBO_TIME_THRESHOLD;
 
     //number of dots needed for certain thresholds
     enum
