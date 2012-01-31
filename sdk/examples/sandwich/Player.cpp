@@ -146,13 +146,20 @@ void Player::Update(float dt) {
     mPath.Cancel();
     mAnimFrame = 0;
     mAnimTime = 0.f;
-    while(mNextDir == -1 || !pGame->GetMap()->GetBroadLocationNeighbor(mCurrent, mNextDir, &mTarget)) {
-      CORO_YIELD;
-      mNextDir = mCurrent.view->VirtualTiltDirection();
-      #if SIFTEO_SIMULATOR
-      if (pGame->GetMap()->FindBroadPath(&mPath)) { break; }
-      #endif
-    }
+
+    #ifdef TOUCH_ONLY
+      while (!pGame->GetMap()->FindBroadPath(&mPath)) {
+        CORO_YIELD;
+      }
+    #else
+      while(mNextDir == -1 || !pGame->GetMap()->GetBroadLocationNeighbor(mCurrent, mNextDir, &mTarget)) {
+        CORO_YIELD;
+        mNextDir = mCurrent.view->VirtualTiltDirection();
+        #if SIFTEO_SIMULATOR
+          if (pGame->GetMap()->FindBroadPath(&mPath)) { break; }
+        #endif
+      }
+    #endif
     // go to the target
     mStatus = PLAYER_STATUS_WALKING;
     mAnimFrame = 0;

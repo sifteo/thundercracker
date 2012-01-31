@@ -280,9 +280,10 @@ class Cube {
 	}
 
   bool touching() const {
-    uint8_t nbuf[4];
-    _SYS_getRawNeighbors(mID, nbuf);
-    return nbuf[0] & 0x40;
+    return _SYS_isTouching(mID);
+    //uint8_t nbuf[4];
+    //_SYS_getRawNeighbors(mID, nbuf);
+    //return nbuf[0] & 0x40;
   }
 
     VideoBuffer vbuf;

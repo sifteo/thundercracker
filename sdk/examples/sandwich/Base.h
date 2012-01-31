@@ -8,6 +8,8 @@
 #define KLUDGES
 #endif
 
+#define TOUCH_ONLY
+
 extern Cube gCubes[NUM_CUBES];
 extern uint8_t gTouchFlags[NUM_CUBES];
 extern AudioChannel gChannelSfx;

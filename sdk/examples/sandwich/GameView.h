@@ -41,6 +41,7 @@ public:
   Room* GetRoom() const;
   Cube::Side VirtualTiltDirection() const;
   GameView* VirtualNeighborAt(Cube::Side side) const;
+  bool Touched() const;
   
   // methods
   void Init();

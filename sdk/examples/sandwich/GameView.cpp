@@ -66,6 +66,10 @@ Cube* GameView::GetCube() const {
   return gCubes + (this - pGame->ViewBegin());
 }
 
+bool GameView::Touched() const {
+  return !flags.prevTouch && GetCube()->touching();
+}
+
 void GameView::Update() {
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   if (!IsShowingRoom()) { 
@@ -84,75 +88,77 @@ void GameView::Update() {
         }
       }
     }
-    return; 
-  }
+  } else {
 
-  // update animated tiles (could suffer some optimization)
-  const unsigned t = pGame->AnimFrame() - mScene.room.startFrame;
-  for(unsigned i=0; i<mScene.room.animTileCount; ++i) {
-    const AnimTileView& view = mScene.room.animTiles[i];
-    const unsigned localt = t % (view.frameCount << 2);
-    if (localt % 4 == 0) {
-        mode.BG0_drawAsset(
-          Vec2((view.lid%8)<<1,(view.lid>>3)<<1),
-          *(pGame->GetMap()->Data()->tileset),
-          pGame->GetMap()->Data()->rooms[mRoomId].tiles[view.lid] + (localt>>2)
-        );
+    // update animated tiles (could suffer some optimization)
+    const unsigned t = pGame->AnimFrame() - mScene.room.startFrame;
+    for(unsigned i=0; i<mScene.room.animTileCount; ++i) {
+      const AnimTileView& view = mScene.room.animTiles[i];
+      const unsigned localt = t % (view.frameCount << 2);
+      if (localt % 4 == 0) {
+          mode.BG0_drawAsset(
+            Vec2((view.lid%8)<<1,(view.lid>>3)<<1),
+            *(pGame->GetMap()->Data()->tileset),
+            pGame->GetMap()->Data()->rooms[mRoomId].tiles[view.lid] + (localt>>2)
+          );
+      }
     }
-  }
 
-  // begin h4cky scene-specific stuff
-  /*
-  const RoomData *p = Room()->Data();
-  if (pGame->GetMap()->Data() == &forest_data && mScene.forest.hasBff) {
-    // butterfly stuff
-    Vec2 delta = sBffTable[mScene.forest.bffDir];
-    mScene.forest.bffX += (uint8_t) delta.x;
-    mScene.forest.bffY += (uint8_t) delta.y;
-    MoveSprite(GetCube(), BFF_SPRITE_ID, mScene.forest.bffX-68, mScene.forest.bffY-68);
-    // hack - assumes butterflies and items are not rendered on same cube
-    mIdleHoverIndex = (mIdleHoverIndex + 1) % (BFF_FRAME_COUNT * FRAMES_PER_TORCH_FRAME);
-    SetSpriteImage(GetCube(), BFF_SPRITE_ID, 
-      Butterfly.index + 4 * mScene.forest.bffDir + mIdleHoverIndex / FRAMES_PER_TORCH_FRAME
-    );
-    using namespace BffDir;
-    switch(mScene.forest.bffDir) {
-      case S:
-        if (mScene.forest.bffY > 196) { RandomizeBff(); }
-        break;
-      case SW:
-        if (mScene.forest.bffX < 60 || mScene.forest.bffY > 196) { RandomizeBff(); }
-        break;
-      case W:
-        if (mScene.forest.bffX < 60) { RandomizeBff(); }
-        break;
-      case NW:
-        if (mScene.forest.bffX < 60 || mScene.forest.bffY < 60) { RandomizeBff(); }
-        break;
-      case N:
-      if (mScene.forest.bffY < 60) { RandomizeBff(); }
-        break;
-      case NE:
-      if (mScene.forest.bffX > 196 || mScene.forest.bffY < 60) { RandomizeBff(); }
-        break;
-      case E:
-      if (mScene.forest.bffX > 196) { RandomizeBff(); }
-        break;
-      case SE:
-      if (mScene.forest.bffX > 196 || mScene.forest.bffY > 196) { RandomizeBff(); }
-        break;
+    // begin h4cky scene-specific stuff
+    /*
+    const RoomData *p = Room()->Data();
+    if (pGame->GetMap()->Data() == &forest_data && mScene.forest.hasBff) {
+      // butterfly stuff
+      Vec2 delta = sBffTable[mScene.forest.bffDir];
+      mScene.forest.bffX += (uint8_t) delta.x;
+      mScene.forest.bffY += (uint8_t) delta.y;
+      MoveSprite(GetCube(), BFF_SPRITE_ID, mScene.forest.bffX-68, mScene.forest.bffY-68);
+      // hack - assumes butterflies and items are not rendered on same cube
+      mIdleHoverIndex = (mIdleHoverIndex + 1) % (BFF_FRAME_COUNT * FRAMES_PER_TORCH_FRAME);
+      SetSpriteImage(GetCube(), BFF_SPRITE_ID, 
+        Butterfly.index + 4 * mScene.forest.bffDir + mIdleHoverIndex / FRAMES_PER_TORCH_FRAME
+      );
+      using namespace BffDir;
+      switch(mScene.forest.bffDir) {
+        case S:
+          if (mScene.forest.bffY > 196) { RandomizeBff(); }
+          break;
+        case SW:
+          if (mScene.forest.bffX < 60 || mScene.forest.bffY > 196) { RandomizeBff(); }
+          break;
+        case W:
+          if (mScene.forest.bffX < 60) { RandomizeBff(); }
+          break;
+        case NW:
+          if (mScene.forest.bffX < 60 || mScene.forest.bffY < 60) { RandomizeBff(); }
+          break;
+        case N:
+        if (mScene.forest.bffY < 60) { RandomizeBff(); }
+          break;
+        case NE:
+        if (mScene.forest.bffX > 196 || mScene.forest.bffY < 60) { RandomizeBff(); }
+          break;
+        case E:
+        if (mScene.forest.bffX > 196) { RandomizeBff(); }
+          break;
+        case SE:
+        if (mScene.forest.bffX > 196 || mScene.forest.bffY > 196) { RandomizeBff(); }
+          break;
+      }
     }
-  }
-  */
-  // end h4cky section
+    */
+    // end h4cky section
 
-  // item hover
-  if (GetRoom()->HasItem()) {
-    const unsigned hoverTime = (pGame->AnimFrame() - mScene.room.startFrame) % HOVER_COUNT;
-    Vec2 p = 16 * GetRoom()->LocalCenter(0);
-    mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + sHoverTable[hoverTime]);
+    // item hover
+    if (GetRoom()->HasItem()) {
+      const unsigned hoverTime = (pGame->AnimFrame() - mScene.room.startFrame) % HOVER_COUNT;
+      Vec2 p = 16 * GetRoom()->LocalCenter(0);
+      mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + sHoverTable[hoverTime]);
+    }
+
   }
 
+  flags.prevTouch = GetCube()->touching();
 }
 
 //----------------------------------------------------------------

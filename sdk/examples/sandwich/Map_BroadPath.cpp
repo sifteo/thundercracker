@@ -91,7 +91,7 @@ if (next.view->VirtualTiltDirection() != -1/* || view->touched*/) {
   } else {
     for(int side=0; side<NUM_SIDES; ++side) {
       outPath->steps[depth] = side;
-      if (Visit(outPath,next, side, depth+1)) {
+      if (Visit(outPath, next, side, depth+1)) {
         return true;
       } else {
         outPath->steps[depth] = -1;
