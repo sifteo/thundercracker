@@ -261,7 +261,7 @@ static int FASTCALL sbt_block_00dd(em8051 *aCPU)
 	unsigned pc = 0x00dd;
 	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0x95,0xff);
 	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0x80,0x00);
-	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0x90,0x1c);
+	clk += Opcodes::mov_mem_imm         (aCPU, pc, 0x75,0x90,0x0c);
 	aCPU->mPC = pc & PC_MASK;
 	return clk;
 }
