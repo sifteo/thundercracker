@@ -92,6 +92,13 @@ struct DiagonalSubdivisionData {
     uint8_t altCenterY : 4;
 };
 
+struct BridgeSubdivisionData {
+    uint8_t isHorizontal : 1;
+    uint8_t roomId : 7;
+    uint8_t altCenterX : 4;
+    uint8_t altCenterY : 4;
+};
+
 struct MapData {
     const AssetImage* tileset;
     const AssetImage* overlay;
@@ -106,6 +113,7 @@ struct MapData {
     const DoorData* doors;
     const AnimatedTileData* animatedTiles;
     const DiagonalSubdivisionData* diagonalSubdivisions;
+    const BridgeSubdivisionData* bridgeSubdivisions;
     uint8_t itemCount;
     uint8_t gateCount;
     uint8_t npcCount;
@@ -113,6 +121,7 @@ struct MapData {
     uint8_t doorCount;
     uint8_t animatedTileCount;
     uint8_t diagonalSubdivisionCount;
+    uint8_t bridgeSubdivisionCount;
     uint8_t width : 4;
     uint8_t height : 4;
 };

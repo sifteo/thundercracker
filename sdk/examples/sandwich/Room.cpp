@@ -41,7 +41,12 @@ const uint8_t* Room::OverlayBegin() const {
 
 void Room::SetDiagonalSubdivision(const DiagonalSubdivisionData* diag) {
   mSubdivType = diag->positiveSlope ? SUBDIV_DIAG_POS : SUBDIV_DIAG_NEG;
-  mSubdiv = (const void*)diag;
+  mSubdiv = (const void*) diag;
+}
+
+void Room::SetBridgeSubdivision(const BridgeSubdivisionData* bridge) {
+  mSubdivType = bridge->isHorizontal ? SUBDIV_BRDG_HOR : SUBDIV_BRDG_VER;
+  mSubdiv = (const void*) bridge;
 }
 
 void Room::Clear() { 

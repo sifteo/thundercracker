@@ -44,7 +44,9 @@ class Room:
 
 	def primary_center(self):
 		# todo bridges
-		if self.subdiv_type == SUBDIV_NONE:
+		if self.subdiv_type == SUBDIV_BRDG_VER:
+			return (self.first_bridge_col+1, 4)
+		elif self.subdiv_type == SUBDIV_NONE or self.subdiv_type == SUBDIV_BRDG_HOR:
 			for (x,y) in misc.spiral_into_madness():
 				if self.iswalkable(x-1, y) and self.iswalkable(x,y):
 					return self.adjust(x,y)
@@ -61,6 +63,12 @@ class Room:
 		if self.subdiv_type == SUBDIV_DIAG_POS or self.subdiv_type == SUBDIV_DIAG_NEG:
 			for (x,y) in misc.spiral_into_madness():
 				if self.iswalkable(x-1, y) and self.iswalkable(x,y) and not self.subdiv_masks[x+(y<<3)] & 1:
+					return (x,y)
+		elif self.subdiv_type == SUBDIV_BRDG_HOR:
+			return (4,self.first_bridge_row)
+		elif self.subdiv_type == SUBDIV_BRDG_VER:
+			for (x,y) in misc.spiral_into_madness():
+				if self.iswalkable(x-1, y) and self.iswalkable(x,y):
 					return (x,y)
 		return (0,0)
 
@@ -90,8 +98,17 @@ class Room:
 	
 	def find_subdivisions(self):
 		if all((portal == PORTAL_OPEN for portal in self.portals)):
-			# TODO - DETECT BRIDGES
-			# either we're totally open, a bridge, a +diagonal, a -diagonal, or an error
+			#first bridge-rows or cols
+			for y in range(8):
+				if all(("bridge" in self.tileat(x,y).props for x in range(8))):
+					self.subdiv_type = SUBDIV_BRDG_HOR
+					self.first_bridge_row = y
+					return
+				elif all(("bridge" in self.tileat(y,x).props for x in range(8))):
+					self.subdiv_type = SUBDIV_BRDG_VER
+					self.first_bridge_col = y
+					return
+			# let's try looking for diagonals
 			# start by listing the "canonical" cardinal open tiles
 			cardinals = [
 				((x,0) for x in range(8) if self.iswalkable(x,0)).next(),

@@ -34,6 +34,9 @@ void Map::SetData(const MapData& map) {
     for(const DiagonalSubdivisionData* p = mData->diagonalSubdivisions; p != mData->diagonalSubdivisions+mData->diagonalSubdivisionCount; ++p) {
       mRooms[p->roomId].SetDiagonalSubdivision(p);
     }
+    for(const BridgeSubdivisionData* p = mData->bridgeSubdivisions; p != mData->bridgeSubdivisions+mData->bridgeSubdivisionCount; ++p) {
+      mRooms[p->roomId].SetBridgeSubdivision(p);
+    }
     for(const DoorData* p = mData->doors; p != mData->doors + mData->doorCount; ++p) {
       mRooms[p->roomId].SetDoor(p);
     }

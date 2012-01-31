@@ -47,11 +47,10 @@ public:
   // subdivs
   bool IsSubdivided() const { return mSubdivType != SUBDIV_NONE; }
   int SubdivType() const { return mSubdivType; }
-  const DiagonalSubdivisionData* SubdivAsDiagonal() const { 
-    ASSERT(mSubdivType == SUBDIV_DIAG_POS || mSubdivType == SUBDIV_DIAG_NEG); 
-    return (const DiagonalSubdivisionData*)mSubdiv;
-  }
+  const DiagonalSubdivisionData* SubdivAsDiagonal() const { ASSERT(mSubdivType == SUBDIV_DIAG_POS || mSubdivType == SUBDIV_DIAG_NEG);  return (const DiagonalSubdivisionData*)mSubdiv; }
+  const BridgeSubdivisionData* SubdivAsBridge() const { ASSERT(mSubdivType == SUBDIV_BRDG_VER || mSubdivType == SUBDIV_BRDG_HOR); return (const BridgeSubdivisionData*)mSubdiv; }
   void SetDiagonalSubdivision(const DiagonalSubdivisionData* diag);
+  void SetBridgeSubdivision(const BridgeSubdivisionData* bridge);
 
   // general getters
   bool HasDoor() const { return mDoor != 0; }

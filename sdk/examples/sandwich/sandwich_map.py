@@ -25,6 +25,10 @@ class Map:
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
 		assert self.background.gettileset().count < 256, "Map is too large (must have < 256 tiles): " + self.id
+		# validate tiles
+		for tile in (self.raw.gettile(tid) for tid in self.background.tiles):
+			if "bridge" in tile.props: 
+				assert iswalkable(tile), "unwalkable bridge tile detected in map: " + self.id
 		self.animatedtiles = [ AnimatedTile(t) for t in self.background.gettileset().tiles if "animated" in t.props ]
 		self.overlay = self.raw.layer_dict.get("overlay", None)
 		self.width = self.raw.pw / 128
@@ -188,6 +192,13 @@ class Map:
 				cx,cy = r.secondary_center()
 				src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }, " % (is_pos, r.lid, cx, cy))
 			src.write("};\n")
+		if len(self.bridgeRooms) > 0:
+			src.write("static const BridgeSubdivisionData %s_bridges[] = { " % self.id)
+			for r in self.bridgeRooms:
+				is_hor = 0 if r.subdiv_type == SUBDIV_BRDG_VER else 1
+				cx,cy = r.secondary_center()
+				src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }, " % (is_hor, r.lid, cx, cy))
+			src.write("};\n")
 
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
 		for y in range(self.height):
@@ -200,8 +211,8 @@ class Map:
 	def write_decl_to(self, src):
 		src.write(
 			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, %(overlay_rle)s, " \
-			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, %(diagsubdivs)s, " \
-			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(w)x, 0x%(h)x },\n" % \
+			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
+			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(w)x, 0x%(h)x },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
@@ -212,6 +223,7 @@ class Map:
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",
+				"bridgesubdivs": self.id + "_bridges" if len(self.bridgeRooms) > 0 else "0",
 				"w": self.width,
 				"h": self.height,
 				"nitems": len(self.item_dict),
@@ -220,7 +232,8 @@ class Map:
 				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
 				"ndoors": len(self.doors),
 				"nanimtiles": len(self.animatedtiles),
-				"ndiags": len(self.diagRooms)
+				"ndiags": len(self.diagRooms),
+				"nbridges": len(self.bridgeRooms)
 			})
 
 
