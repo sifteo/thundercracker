@@ -305,14 +305,6 @@ enum _SYSAudioLoopType {
     LoopRepeat = 1
 };
 
-#if 0
-struct _SYSAudioModule {
-    enum _SYSAudioType type;
-    uint32_t size;
-    const uint8_t *buf;
-};
-#endif
-
 struct _SYSAudioModule {
     uint32_t id;
     uint32_t offset;
