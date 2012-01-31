@@ -62,6 +62,8 @@ void Game::Init()
 	}
     PRINT( "done loading" );
 #endif
+    Reset();
+
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Reset();
 
@@ -202,7 +204,12 @@ void Game::Reset()
 	m_iDotScoreSum = 0;
 	m_iScore = 0;
 	m_iDotsCleared = 0;
-	m_iLevel = 0;
+
+    if( m_mode == MODE_SHAKES )
+        m_iLevel = 0;
+    else if( m_mode == MODE_TIMED )
+        m_iLevel = 3;
+
     //m_bHyperDotMatched = false;
 
     m_state = STATE_INTRO;
