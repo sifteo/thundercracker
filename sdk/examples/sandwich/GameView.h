@@ -27,8 +27,8 @@ private:
   } mScene;
 
   struct {
-    uint8_t hideOverlay : 1;
-    uint8_t unused : 7;
+    unsigned hideOverlay : 1;
+    unsigned prevTouch : 1;
   } flags;
 
 public:  

@@ -18,24 +18,12 @@ static bool AnyNeighbors(const Cube& c) {
 		c.hasPhysicalNeighborAt(3);
 }
 
-uint8_t gTouchFlags[NUM_CUBES];
-
-static void OnTouch(Cube::ID cid) {
-	gTouchFlags[cid] = !gTouchFlags[cid];
-	if (gTouchFlags[cid] == 1) {
-		LOG(("TOUCH %d\n", cid));
-	} else if (gTouchFlags[cid] == 0) {
-		LOG(("RELEASE %d\n", cid));
-	}
-}
-
 void siftmain() {
-	_SYS_memset8(gTouchFlags, 0, NUM_CUBES); // hack for "false touch" on init
-	_SYS_vectors.cubeEvents.touch = OnTouch;
 
 	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
     	gCubes[i].enable(i + CUBE_ID_BASE);
   	}
+
 #if LOAD_ASSETS
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {

@@ -44,6 +44,7 @@ static const Vec2 sBffTable[] = {
 
 void GameView::Init() {
   flags.hideOverlay = false;
+  flags.prevTouch = GetCube()->touching();
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   mode.set();
   mode.clear();

@@ -9,6 +9,7 @@
 #endif
 
 extern Cube gCubes[NUM_CUBES];
+extern uint8_t gTouchFlags[NUM_CUBES];
 extern AudioChannel gChannelSfx;
 extern AudioChannel gChannelMusic;
 extern Math::Random gRandom;
