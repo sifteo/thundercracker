@@ -341,6 +341,13 @@ void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
         CubeSlots::instances[cid].getRawNeighbors(buf);
 }
 
+void _SYS_isTouching(_SYSCubeID cid)
+{
+    if (CubeSlots::validID(cid)) {
+        CubeSlots::instances[cid].isTouching();
+    }
+}
+
 void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v)
 {
     // XXX: Temporary for testing. Master firmware should give cooked battery percentage.
