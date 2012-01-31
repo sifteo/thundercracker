@@ -18,12 +18,17 @@ static bool AnyNeighbors(const Cube& c) {
 		c.hasPhysicalNeighborAt(3);
 }
 
-
+static void OnTouch(Cube::ID cid) {
+	LOG(("TOUCH: 0x%x\n", cid));
+}
 
 void siftmain() {
-  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-    gCubes[i].enable(i + CUBE_ID_BASE);
-  }
+
+	_SYS_vectors.cubeEvents.touch = OnTouch;
+
+	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
+    	gCubes[i].enable(i + CUBE_ID_BASE);
+  	}
 #if LOAD_ASSETS
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {

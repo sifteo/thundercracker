@@ -498,7 +498,18 @@ void Frontend::onMouseDown(int button)
                      * determine what counts as a touch.
                      */
 
-                    mousePicker.mCube->setTouch(1.0f - centerDist / centerSize);
+                     // max: only do touch-stuff if CTRL is held down
+                    if (glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RCTRL) == GLFW_PRESS) {
+                        // max: for some reason setTouch(0) was still causing an touch event, even if we didn't
+                        // setTouch here, so HACK ALERT I flagged the cube as having been triggered by ctrl using
+                        // the b2Body's userData LIKE A DUMBASS because I didn't want to touch other files ;)
+                        mousePicker.mCube->body->SetUserData((void*)1);
+                        mousePicker.mCube->setTouch(1.0f - centerDist / centerSize);
+                    } else {
+                        // max: flag the cube as not-triggered-by-ctrl to be read later
+                        mousePicker.mCube->body->SetUserData(0);
+                    }
+                    
                 }
 
                 // Glue it to the point we picked, with a revolute joint
@@ -550,7 +561,11 @@ void Frontend::onMouseUp(int button)
     
         if (mousePicker.mCube) {
             mousePicker.mCube->setTiltTarget(b2Vec2(0.0f, 0.0f));
-            mousePicker.mCube->setTouch(0.0f);            
+
+            // max: read the userdata which I overloaded to mean was-triggered-by-ctrl (see former comment)
+            if (mousePicker.mCube->body->GetUserData()) {
+                mousePicker.mCube->setTouch(0.0f);            
+            }
             mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_NONE);                
         }
 
