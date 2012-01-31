@@ -260,7 +260,11 @@ void Game::CheckChain( CubeWrapper *pWrapper )
     //chain is finished
     if( total_marked == 0 )
 	{
-        unsigned int comboScore = m_iDotScoreSum * getScoreMult();
+        unsigned int comboScore = m_iDotScoreSum;
+
+        if( m_mode == MODE_TIMED )
+            comboScore += 10 * m_comboCount;
+
         m_iScore += comboScore;
 		m_iDotsCleared += m_iDotScore;
 
@@ -812,31 +816,4 @@ void Game::UpCombo()
             m_fTimeSinceCombo = 0.0f;
         }
     }
-}
-
-
-
-float Game::getScoreMult() const
-{
-    if( m_mode == MODE_TIMED )
-    {
-        float MULTS_PER_COMBO[ MAX_COMBO ] = {
-            1.0f,
-            1.2f,
-            1.5f,
-            1.8f,
-            2.0f,
-            2.6f,
-            3.3f,
-            4.1f,
-            5.0f
-        };
-
-        if( m_comboCount < MAX_COMBO )
-            return MULTS_PER_COMBO[ m_comboCount ];
-        else
-            return MULTS_PER_COMBO[ MAX_COMBO - 1 ];
-    }
-    else
-        return 1.0f;
 }
