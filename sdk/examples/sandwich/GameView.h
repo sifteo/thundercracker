@@ -26,6 +26,11 @@ private:
     } room;
   } mScene;
 
+  struct {
+    uint8_t hideOverlay : 1;
+    uint8_t unused : 7;
+  } flags;
+
 public:  
   // getters
   Cube::ID GetCubeID() const;
@@ -42,6 +47,7 @@ public:
   void Update();
   
   bool ShowLocation(Vec2 loc);
+  void HideOverlay(bool flag);
   bool HideRoom();
   
   void ShowPlayer();

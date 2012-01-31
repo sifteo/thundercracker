@@ -79,42 +79,12 @@
   </tile>
   <tile id="32">
    <properties>
-    <property name="bridge" value=""/>
-   </properties>
-  </tile>
-  <tile id="33">
-   <properties>
-    <property name="bridge" value=""/>
-   </properties>
-  </tile>
-  <tile id="34">
-   <properties>
-    <property name="bridge" value=""/>
-   </properties>
-  </tile>
-  <tile id="35">
-   <properties>
-    <property name="bridge" value=""/>
-   </properties>
-  </tile>
-  <tile id="36">
-   <properties>
-    <property name="bridge" value=""/>
-   </properties>
-  </tile>
-  <tile id="37">
-   <properties>
-    <property name="bridge" value=""/>
-   </properties>
-  </tile>
-  <tile id="38">
-   <properties>
-    <property name="bridge" value=""/>
+    <property name="wall" value=""/>
    </properties>
   </tile>
   <tile id="39">
    <properties>
-    <property name="bridge" value=""/>
+    <property name="wall" value=""/>
    </properties>
   </tile>
  </tileset>

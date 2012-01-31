@@ -46,6 +46,7 @@ public:
 
   // subdivs
   bool IsSubdivided() const { return mSubdivType != SUBDIV_NONE; }
+  bool IsBridge() const { return mSubdivType == SUBDIV_BRDG_VER || mSubdivType == SUBDIV_BRDG_HOR; }
   int SubdivType() const { return mSubdivType; }
   const DiagonalSubdivisionData* SubdivAsDiagonal() const { ASSERT(mSubdivType == SUBDIV_DIAG_POS || mSubdivType == SUBDIV_DIAG_NEG);  return (const DiagonalSubdivisionData*)mSubdiv; }
   const BridgeSubdivisionData* SubdivAsBridge() const { ASSERT(mSubdivType == SUBDIV_BRDG_VER || mSubdivType == SUBDIV_BRDG_HOR); return (const BridgeSubdivisionData*)mSubdiv; }

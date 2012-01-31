@@ -43,6 +43,7 @@ static const Vec2 sBffTable[] = {
 // methods
 
 void GameView::Init() {
+  flags.hideOverlay = false;
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   mode.set();
   mode.clear();
@@ -265,6 +266,7 @@ bool GameView::ShowLocation(Vec2 room) {
 
 bool GameView::HideRoom() {
   bool result = mRoomId != ROOM_UNDEFINED;
+  flags.hideOverlay = false;
   mRoomId = ROOM_UNDEFINED;
   // hide sprites
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
@@ -278,6 +280,14 @@ bool GameView::HideRoom() {
   DrawInventorySprites();
   DrawBackground();
   return result;
+}
+
+void GameView::HideOverlay(bool flag) {
+  if (flags.hideOverlay != flag) {
+    flags.hideOverlay = flag;
+    DrawBackground();
+    pGame->NeedsSync();
+  }
 }
 
 void GameView::ShowPlayer() {
@@ -414,7 +424,7 @@ void GameView::DrawBackground() {
     }
 
     BG1Helper ovrly(*GetCube());
-    if (pRoom->HasOverlay()) {
+    if (!flags.hideOverlay && pRoom->HasOverlay()) {
       unsigned tid = pRoom->OverlayTile();
       const uint8_t *pRle = pRoom->OverlayBegin();
       while(tid < 64) {

@@ -206,6 +206,9 @@ void Player::Update(float dt) {
           }          
         }
       } else { // general case - A*
+        if (mTarget.view->GetRoom()->IsBridge()) {
+          mTarget.view->HideOverlay(mDir%2 == 1);
+        }
   			{bool result = pGame->GetMap()->FindNarrowPath(mCurrent, mDir, &mMoves);
 	   		ASSERT(result);}
         mProgress = 0;
