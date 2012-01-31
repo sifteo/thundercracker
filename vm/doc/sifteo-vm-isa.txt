@@ -185,8 +185,9 @@ four and added to the base of the current page, to form the address of a
 32-bit literal. This 32-bit literal encodes an indirect operation to perform:
 
   0nnnnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (1) Call validate(F+a), SP -= n*4
-  10nnnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (2) Addrop #0-63 on validate(F+a)
-  11nnnnnn nnnnnnnn iiiiiiii iiiiiiii   (7) Syscall #0-16383, with #imm16
+  10nnnnnn nnnnnnnn iiiiiiii iiiiiiii   (2) Syscall #0-16383, with #imm16
+  110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (3) Addrop #0-31 on validate(a)
+  111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (4) Addrop #0-31 on validate(F+a)
 
   (F = 0x80000000, flash segment virtual address)
 
@@ -196,5 +197,6 @@ is always interpreted as a validated flash address:
   0x80  Long branch
   0x81  Asynchronous preload
   0x82  Assign to r8
+  0x83  Assign to r9
 
 --
