@@ -229,7 +229,20 @@ void Hardware::setTouch(float amount)
      * module. It truncates them and justifies them according to the ADC configuration.
      */
 
+    // Newer note :) (leaving above in case we return to ADC based touch sensing)
+    // We're emulating a Qtouch style touch input here - gpio input gets polled
+    // in the sensors loop - it's high during a touch event, and low otherwise.
+    // So, just set the touch gpio high here if our amount is non-zero.
+
+#if 0
+    // re-enable if we go back to ADC touch sensing
     adc.setInput(12, 1600 - 320 * amount);
+#endif
+
+    if (amount == 0.0f)
+        cpu.mSFR[MISC_PORT] &= ~MISC_TOUCH;
+    else
+        cpu.mSFR[MISC_PORT] |= MISC_TOUCH;
 }
 
 bool Hardware::isDebugging()
