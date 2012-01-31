@@ -214,6 +214,7 @@ void GameView::RandomizeBff() {
 bool GameView::ShowLocation(Vec2 room) {
   const unsigned roomId = pGame->GetMap()->Contains(room) ? pGame->GetMap()->GetRoomId(room) : ROOM_UNDEFINED;
   if (roomId == mRoomId) { return false; }
+  flags.hideOverlay = false;
   mRoomId = roomId;
   // are we showing an items?
   if (IsShowingRoom()) {
@@ -276,7 +277,6 @@ bool GameView::HideRoom() {
   if(result) {
     mScene.idle.startFrame = pGame->AnimFrame();
   }
-
   DrawInventorySprites();
   DrawBackground();
   return result;
