@@ -35,11 +35,27 @@ void siftmain() {
 }
 #endif
 
-void f1() {
-//    while (1);
-//        _SYS_ticks_ns(0xf00fbabe);
+
+void x1() {}
+void x2() {}
+void x3() {}
+void x4() {}
+
+void f2() { x1(); }
+void f3() { x2(); }
+void f4() { x3(); }
+void f5() { x4(); }
+
+void main() {
+    while (1) {
+        _SYS_ticks_ns(0xf00fbabe);
+        _SYS_paint();
+        _SYS_paint();
+        _SYS_paint();
+        f2();
+        f3();
+        f4();
+        f5();
+    }
 }
 
-void f2() {
-//    f1();
-}

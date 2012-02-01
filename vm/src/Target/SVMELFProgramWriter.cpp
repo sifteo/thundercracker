@@ -52,32 +52,35 @@ public:
     
     void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
         const MCFragment *Fragment, const MCFixup &Fixup, MCValue Target,
-        uint64_t &FixedValue)
-    {
-        // Nothing to do
-    }
+        uint64_t &FixedValue);
 
     void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
 
 private:
-    unsigned GetEntryAddress();
-    void CollectProgramSections(MCAssembler &Asm, SectionDataList &Sections);
+    uint32_t getEntryAddress(const MCAssembler &Asm,
+        const MCAsmLayout &Layout);
+    uint32_t getSymbolAddress(const MCAssembler &Asm,
+        const MCAsmLayout &Layout, const MCSymbol *S);
+    
+    void collectProgramSections(const MCAssembler &Asm,
+        SectionDataList &Sections);
 
-    void WritePadding(unsigned N);
-    void WriteELFHeader(unsigned Entry, unsigned PHNum, uint64_t &HdrSize);
-    void WriteProgramHeader(const MCAsmLayout &Layout,
+    void writePadding(unsigned N);
+    void writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout,
+        unsigned PHNum, uint64_t &HdrSize);
+    void writeProgramHeader(const MCAsmLayout &Layout,
         const MCSectionData &SD, uint64_t &FileOff);
-    void WriteStrtabSectionHeader();
-    void WriteProgSectionHeader(const MCAsmLayout &Layout,
+    void writeStrtabSectionHeader();
+    void writeProgSectionHeader(const MCAsmLayout &Layout,
         const MCSectionData &SD, uint64_t &FileOff);
-    void WriteProgramData(MCAssembler &Asm, const MCAsmLayout &Layout,
+    void writeProgramData(MCAssembler &Asm, const MCAsmLayout &Layout,
         const MCSectionData &SD, uint64_t &FileOff);
 };
 
 }  // end namespace
 
 
-void SVMELFProgramWriter::WritePadding(unsigned N)
+void SVMELFProgramWriter::writePadding(unsigned N)
 {
     /*
      * Instead of padding with zeroes, pad with ones.
@@ -96,8 +99,8 @@ void SVMELFProgramWriter::WritePadding(unsigned N)
     OS << StringRef(Ones, N % 16);
 }
 
-void SVMELFProgramWriter::WriteELFHeader(unsigned Entry, unsigned PHNum,
-    uint64_t &HdrSize)
+void SVMELFProgramWriter::writeELFHeader(const MCAssembler &Asm,
+    const MCAsmLayout &Layout, unsigned PHNum, uint64_t &HdrSize)
 {
     unsigned SHNum = PHNum + 1;
     unsigned PHSize = PHNum * sizeof(ELF::Elf32_Phdr);
@@ -121,7 +124,7 @@ void SVMELFProgramWriter::WriteELFHeader(unsigned Entry, unsigned PHNum,
     Write16(ELF::ET_EXEC);                          // e_type
     Write16(ELF::EM_ARM);                           // e_machine
     Write32(ELF::EV_CURRENT);                       // e_version
-    Write32(Entry);                                 // e_entry
+    Write32(getEntryAddress(Asm, Layout));          // e_entry
     Write32(PHOff);                                 // e_phoff
     Write32(SHOff);                                 // e_shoff
     Write32(0);                                     // e_flags
@@ -133,7 +136,7 @@ void SVMELFProgramWriter::WriteELFHeader(unsigned Entry, unsigned PHNum,
     Write16(PHNum);                                 // e_shstrndx
 }
 
-void SVMELFProgramWriter::WriteProgramHeader(const MCAsmLayout &Layout,
+void SVMELFProgramWriter::writeProgramHeader(const MCAsmLayout &Layout,
     const MCSectionData &SD, uint64_t &FileOff)
 {
     /*
@@ -145,7 +148,7 @@ void SVMELFProgramWriter::WriteProgramHeader(const MCAsmLayout &Layout,
     uint64_t AddressSize = Layout.getSectionAddressSize(&SD);
     uint64_t FileSize = Layout.getSectionFileSize(&SD);
     unsigned Alignment = SD.getAlignment();
-    unsigned VirtualAddr = 0x1234;
+    unsigned VirtualAddr = 0x1000;  // XXX
     SectionKind Kind = SD.getSection().getKind();
     uint32_t Flags = ELF::PF_R;
 
@@ -166,7 +169,7 @@ void SVMELFProgramWriter::WriteProgramHeader(const MCAsmLayout &Layout,
     FileOff += FileSize;
 }
 
-void SVMELFProgramWriter::WriteStrtabSectionHeader()
+void SVMELFProgramWriter::writeStrtabSectionHeader()
 {
     /*
      * We don't really care about section names yet, but this is just
@@ -185,7 +188,7 @@ void SVMELFProgramWriter::WriteStrtabSectionHeader()
      Write32(0);                                     // sh_entsize
 }
 
-void SVMELFProgramWriter::WriteProgSectionHeader(const MCAsmLayout &Layout,
+void SVMELFProgramWriter::writeProgSectionHeader(const MCAsmLayout &Layout,
     const MCSectionData &SD, uint64_t &FileOff)
 {
     /*
@@ -196,7 +199,7 @@ void SVMELFProgramWriter::WriteProgSectionHeader(const MCAsmLayout &Layout,
     
     uint64_t FileSize = Layout.getSectionFileSize(&SD);
     unsigned Alignment = SD.getAlignment();
-    unsigned VirtualAddr = 0x1234;
+    unsigned VirtualAddr = 0x1000;  // XXX
     SectionKind Kind = SD.getSection().getKind();
     uint32_t Flags = ELF::SHF_ALLOC;
 
@@ -218,75 +221,127 @@ void SVMELFProgramWriter::WriteProgSectionHeader(const MCAsmLayout &Layout,
 
     FileOff += FileSize;
 }
-void SVMELFProgramWriter::WriteProgramData(MCAssembler &Asm,
+void SVMELFProgramWriter::writeProgramData(MCAssembler &Asm,
     const MCAsmLayout &Layout, const MCSectionData &SD, uint64_t &FileOff)
 {
     unsigned Alignment = SD.getAlignment();
     unsigned Padding = OffsetToAlignment(FileOff, Alignment);
     
-    WritePadding(Padding);
+    writePadding(Padding);
     FileOff += Padding;
     FileOff += Layout.getSectionFileSize(&SD);
 
     Asm.WriteSectionData(&SD, Layout);
 }   
 
-void SVMELFProgramWriter::CollectProgramSections(MCAssembler &Asm, SectionDataList &Sections)
+void SVMELFProgramWriter::collectProgramSections(const MCAssembler &Asm,
+    SectionDataList &Sections)
 {
     // All RAM data
-    for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
+    for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
+        it != ie; ++it) {
         SectionKind k = it->getSection().getKind();
         if (k.isGlobalWriteableData() && !k.isBSS())
             Sections.push_back(&*it);
     }
 
     // All read-only data
-    for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
+    for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
+        it != ie; ++it) {
         SectionKind k = it->getSection().getKind();
         if (k.isReadOnly())
             Sections.push_back(&*it);
     }
 
     // All text sections
-    for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
+    for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
+        it != ie; ++it) {
         SectionKind k = it->getSection().getKind();
         if (k.isText())
             Sections.push_back(&*it);
     }
 }
 
-unsigned SVMELFProgramWriter::GetEntryAddress()
-{
-    // XXX
-    return 0x12345678;
-}
-
 void SVMELFProgramWriter::WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout)
 {
     SectionDataList ProgSections;
-    CollectProgramSections(Asm, ProgSections);
+    collectProgramSections(Asm, ProgSections);
     
     uint64_t FileOff, HdrSize;
-    WriteELFHeader(GetEntryAddress(), ProgSections.size(), HdrSize);
+    writeELFHeader(Asm, Layout, ProgSections.size(), HdrSize);
     
     FileOff = HdrSize;
     for (SectionDataList::iterator it = ProgSections.begin(), ie = ProgSections.end();
         it != ie; ++it)
-        WriteProgramHeader(Layout, **it, FileOff);
+        writeProgramHeader(Layout, **it, FileOff);
 
     FileOff = HdrSize;
     for (SectionDataList::iterator it = ProgSections.begin(), ie = ProgSections.end();
         it != ie; ++it)
-        WriteProgSectionHeader(Layout, **it, FileOff);
+        writeProgSectionHeader(Layout, **it, FileOff);
 
-    WriteStrtabSectionHeader();
+    writeStrtabSectionHeader();
 
     FileOff = HdrSize;
     for (SectionDataList::iterator it = ProgSections.begin(), ie = ProgSections.end();
         it != ie; ++it)
-        WriteProgramData(Asm, Layout, **it, FileOff);
+        writeProgramData(Asm, Layout, **it, FileOff);
 }
 
+void SVMELFProgramWriter::RecordRelocation(const MCAssembler &Asm,
+    const MCAsmLayout &Layout, const MCFragment *Fragment,
+    const MCFixup &Fixup, MCValue Target, uint64_t &FixedValue)
+{
+    // Evaluate SymA - SymB + Constant
+
+    int64_t value = Target.getConstant();
+    
+    if (Target.getSymA())
+        value += getSymbolAddress(Asm, Layout,
+            &Target.getSymA()->getSymbol());
+
+    if (Target.getSymB())
+        value -= getSymbolAddress(Asm, Layout,
+            &Target.getSymB()->getSymbol());
+    
+    FixedValue = value;
+}
+
+uint32_t SVMELFProgramWriter::getEntryAddress(const MCAssembler &Asm,
+    const MCAsmLayout &Layout)
+{
+    const char *compatEntryName = "siftmain";
+    const char *entryName = "main";
+    
+    const MCContext &context = Asm.getContext();
+    MCSymbol *S;
+    
+    S = context.LookupSymbol(entryName);
+
+    // Backwards compatibility
+    if (!S || !S->isDefined())
+        S = context.LookupSymbol(compatEntryName);
+
+    if (!S || !S->isDefined())
+        report_fatal_error("No entry point exists. Is " +
+            Twine(entryName) + "() defined?");
+
+    return getSymbolAddress(Asm, Layout, S);
+}
+
+uint32_t SVMELFProgramWriter::getSymbolAddress(const MCAssembler &Asm,
+    const MCAsmLayout &Layout, const MCSymbol *S)
+{
+    const MCSymbolData *SD = &Asm.getSymbolData(*S);
+
+    if (!S->isDefined())
+        report_fatal_error("Taking address of undefined symbol '" +
+            Twine(S->getName()) +"'");
+
+    assert(!S->isVariable());
+    
+    return 0x8000000 + Layout.getSymbolOffset(SD);
+}
 
 MCObjectWriter *llvm::createSVMELFProgramWriter(raw_ostream &OS)
 {

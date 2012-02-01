@@ -96,7 +96,8 @@ public:
         Value = adjustFixup(Fixup, Value);
 
         int bits = KI.TargetSize;
-        uint64_t bitMask = (1 << bits) - 1;
+        assert(bits > 0);
+        uint64_t bitMask = ((uint64_t)1 << bits) - 1;
         assert((Value & ~bitMask) == 0 || (Value | bitMask) == (uint64_t)-1);
         Value &= bitMask;
 
