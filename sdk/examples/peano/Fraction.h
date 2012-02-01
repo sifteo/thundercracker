@@ -10,12 +10,14 @@ namespace TotalsGame {
 
 		Fraction(int n, int d=1);
 		Fraction(int x);
+		Fraction();
 
 		Fraction operator+(const Fraction f);
 		Fraction operator-(const Fraction f);
 		Fraction operator*(const Fraction f);
 		Fraction operator/(const Fraction f);
-		bool operator==(Fraction &f);
+		bool operator==(const Fraction &f);
+		bool operator!=(const Fraction &f);
 
 		bool IsNan();
 		bool IsZero();

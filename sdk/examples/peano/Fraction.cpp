@@ -13,6 +13,11 @@ namespace TotalsGame {
 		Fraction(x, 1);
 	}
 
+	Fraction::Fraction()
+	{
+		Fraction(0);
+	}
+
 	Fraction Fraction::operator+(const Fraction f)
 	{
 		return Fraction(nu * f.de + f.nu * de, de * f.de);
@@ -65,11 +70,18 @@ namespace TotalsGame {
 		}
 	}
 
-	bool Fraction::operator==(Fraction &f)
+	bool Fraction::operator==(const Fraction &f)
 	{
 		Reduce();
 		f.Reduce();
 		return nu == f.nu && de == f.de;
+	}
+
+	bool Fraction::operator!=(const Fraction &f)
+	{
+		Reduce();
+		f.Reduce();
+		return nu != f.nu || de != f.de;
 	}
 
 	void Fraction::ToString(char *s, int length)

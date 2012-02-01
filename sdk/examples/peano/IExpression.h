@@ -1,3 +1,5 @@
+#pragma once
+
 #include "sifteo.h"
 #include "ShapeMask.h"
 #include "Fraction.h"
@@ -17,7 +19,7 @@ namespace TotalsGame {
 		virtual bool Contains(Token *t) = 0;
 		virtual void SetCurrent(IExpression *exp) = 0;
 
-		virtual bool ContainsSubExpressions() {return false;}
+		virtual bool IsTokenGroup() {return false;}
 		virtual IExpression *GetSubExpressionContaining(Token *token) {return NULL;}
 	};
 

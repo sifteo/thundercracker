@@ -1,3 +1,5 @@
+#pragma once
+
 #include "sifteo.h"
 
 
@@ -27,6 +29,11 @@ namespace TotalsGame {
 		ShapeMask(Vec2 size, long bits) {
 			this->size = size;
 			this->bits = bits;
+		}
+
+		ShapeMask() : size(0,0)
+		{
+			bits = 0;
 		}
 
 		ShapeMask GetRotation() {
@@ -111,47 +118,53 @@ namespace TotalsGame {
 		}
 		}
 		}
-
-		public static bool TryConcat(
-		ShapeMask m1, ShapeMask m2, Int2 offset, 
-		out ShapeMask result, out Int2 d1, out Int2 d2
-		) {
-		var min = new Int2(
-		Math.Min(offset.x, 0),
-		Math.Min(offset.y, 0)
-		);
-		var max = new Int2(
-		Math.Max(m1.size.x, offset.x + m2.size.x),
-		Math.Max(m1.size.y, offset.y + m2.size.y)
-		);
-		long newbits = 0L;
-		var newsize = max - min;
-		Int2 p = Int2.Zero;
-		for(p.x = min.x; p.x < max.x; ++p.x) {
-		for(p.y = min.y; p.y < max.y; ++p.y) {
-		var b1 = m1.BitAt(p);
-		var b2 = m2.BitAt(p - offset);
-		if (b1 && b2) { 
-		result = Zero;
-		d1 = Int2.Zero;
-		d2 = Int2.Zero;
-		return false; 
-		}
-		if (b1 || b2) {
-		var d = p - min;
-		int shift = d.y * newsize.x + d.x;
-		newbits |= (1L<<shift);
-		}
-		}
-		}
-		result = new ShapeMask(newsize, newbits);
-		//d1 = min - Int2.Zero;
-		d1 = Int2.Zero - min;
-
-		d2 = offset - min;
-		return true;
-		}
 		*/
+
+		static bool TryConcat(
+			ShapeMask m1, ShapeMask m2, Vec2 offset, 
+			ShapeMask *result,Vec2 *d1, Vec2 *d2
+			) 
+		{
+			Vec2 min = Vec2(
+				Math::min(offset.x, 0),
+				Math::min(offset.y, 0)
+				);
+			Vec2 max = Vec2(
+				Math::max(m1.size.x, offset.x + m2.size.x),
+				Math::max(m1.size.y, offset.y + m2.size.y)
+				);
+			long newbits = 0L;
+			Vec2 newsize = max - min;
+			Vec2 p;
+			for(p.x = min.x; p.x < max.x; ++p.x)
+			{
+				for(p.y = min.y; p.y < max.y; ++p.y)
+				{
+					bool b1 = m1.BitAt(p);
+					bool b2 = m2.BitAt(p - offset);
+					if (b1 && b2)
+					{ 
+						*result = Zero;
+						d1->set(0,0);
+						d2->set(0,0);
+						return false; 
+					}
+					if (b1 || b2) 
+					{
+						Vec2 d = p - min;
+						int shift = d.y * newsize.x + d.x;
+						newbits |= (1L<<shift);
+					}
+				}
+			}
+			*result = ShapeMask(newsize, newbits);
+			//d1 = min - Int2.Zero;
+			*d1 = Vec2(0,0) - min;
+
+			*d2 = offset - min;
+			return true;
+		}
+
 
 	};
 

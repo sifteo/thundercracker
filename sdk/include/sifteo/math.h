@@ -117,6 +117,7 @@ struct Vec2 {
     int x, y;
 };
 
+inline Vec2 operator-(const Vec2& u) { return Vec2(-u.x, -u.y); }
 inline Vec2 operator+(const Vec2& u, const Vec2& v) { return Vec2(u.x+v.x, u.y+v.y); }
 inline Vec2 operator += (Vec2& u, const Vec2& v) { return Vec2(u.x+=v.x, u.y+=v.y); }
 inline Vec2 operator-(const Vec2& u, const Vec2& v) { return Vec2(u.x-v.x, u.y-v.y); }
@@ -398,6 +399,15 @@ void inline sincosf(float x, float *s, float *c)
     _SYS_sincosf(x, s, c);
 }
 
+int inline max(int a, int b)
+{
+	return a > b ? a : b;
+}
+
+int inline min(int a, int b)
+{
+	return a < b ? a : b;
+}
 
 }   // namespace Math
 }   // namespace Sifteo

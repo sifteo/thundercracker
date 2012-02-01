@@ -46,8 +46,7 @@ namespace TotalsGame
 
 	private:
 		static const int MAX_TOKENS = 32;
-		char tokenBufferHack[];
-		Token tokens[MAX_TOKENS];
+		Token *tokens[MAX_TOKENS];
 		int numTokens;
 	};
 

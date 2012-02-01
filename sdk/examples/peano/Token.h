@@ -2,6 +2,7 @@
 
 #include "sifteo.h"
 #include "IExpression.h"
+#include "ObjectPool.h"
 
 void * operator new (size_t, void * p) throw();
 
@@ -23,6 +24,9 @@ namespace TotalsGame {
 	};
 
 	class Token : public IExpression {
+
+		DECLARE_POOL(Token, 32)
+
 	public:
 
 		Puzzle *GetPuzzle();
@@ -38,6 +42,7 @@ namespace TotalsGame {
 		//ONLY FOR PUZZLE.H USE
 		Token(Puzzle *p, int i);
 		Token();
+		virtual ~Token();
 
 		// IExpression impl
 

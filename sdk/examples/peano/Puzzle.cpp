@@ -1,5 +1,7 @@
+#include "TokenGroup.h"
 #include "Guid.h"
 #include "Puzzle.h"
+
 
 namespace TotalsGame {
 		
@@ -17,22 +19,22 @@ namespace TotalsGame {
 		assert(tokenCount <= MAX_TOKENS);
 		numTokens = tokenCount;
 		for (int i=0; i<tokenCount; ++i) {
-			new(tokens+i) Token(this, i);
+			tokens[i] = new Token(this, i);
 		}
 	}
 
 	Token *Puzzle::Puzzle::GetToken(int index)
 	{
 		assert(index < numTokens); 
-		return tokens + index;
+		return tokens[index];
 	}
 
 	void Puzzle::ClearUserdata()
 	{
 		for(int i=0; i<numTokens; ++i)
 		{
-			tokens[i].current = tokens + i;
-			tokens[i].userData = NULL;
+			tokens[i]->current = tokens[i];
+			tokens[i]->userData = NULL;
 		}
 	}
 
@@ -40,7 +42,7 @@ namespace TotalsGame {
 	{
 		for(int i=0; i<numTokens; ++i)
 		{
-			tokens[i].current = tokens + i;
+			tokens[i]->current = tokens[i];
 		}
 	}
 
@@ -51,7 +53,7 @@ namespace TotalsGame {
 			return false; 
 		}
 
-		IExpression *soln = tokens[0].current;
+		IExpression *soln = tokens[0]->current;
 		// have we hit the target value?
 		if (soln->GetValue() != target->GetValue()) 
 		{
@@ -60,7 +62,7 @@ namespace TotalsGame {
 		// are all the other tokens participating?
 		for(int i=1; i<numTokens; ++i)
 		{
-			if (tokens[i].current != soln)
+			if (tokens[i]->current != soln)
 			{
 				return false;
 			}
