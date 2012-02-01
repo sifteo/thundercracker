@@ -7,14 +7,14 @@ import sys
 from ctypes import *
 import operator
 
-seed_word_lens = [4, 6]#, 9]
-letters_per_cube = 2
+seed_word_lens = [3, 4, 6]#, 9]
+min_common_anagrams = 2
 
-def find_anagrams(string, dictionary):
+def find_anagrams(string, dictionary, letters_per_cube):
     words = {}
     if letters_per_cube == 1:
         for k in range(len(string) + 1):
-            if k in seed_word_lens:
+            if k > 1:
                 for subword in permutations(string, k):			
                     sw = ''.join(subword).upper()
                     if sw in dictionary and not sw in words:
@@ -23,7 +23,7 @@ def find_anagrams(string, dictionary):
     else:
         #print string
         # for all the seed_word_lens, up to the length of this string
-        for k in range(len(string) + 1):
+        for k in range(0, len(string) + 1, letters_per_cube):
             if k in seed_word_lens:        
                 # count up a number to figure out how to shift each cube set of letters
                 for sub_perm_index in range(int(math.pow(letters_per_cube, len(string)/letters_per_cube))):
@@ -119,12 +119,13 @@ def generate_dict():
     word_list_used = {}
     #find_anagrams("LISTEN", dictionary)
     #return
+    letters_per_cube = [1, 1, 1, 2, 2, 2]
+    min_anagrams = [999, 999, 1, 999, 999, 2]	
     for word in word_list:
-        anagrams = find_anagrams(word, dictionary)
-        min_anagrams = [999, 999, 999, 999, 999, 1]
+        anagrams = find_anagrams(word, dictionary, letters_per_cube[len(word) - 1])
         #min_anagrams = [999, 999, 4, 15, 25, 25]
         #print "checking word " + word
-        if len(anagrams) > min_anagrams[len(word) - 1]:
+        if len(anagrams) >= min_anagrams[len(word) - 1]:
             #print word + " " + str(anagrams)
             num_seed_repeats = 0
             # skip it if a pre-existing seed word has the same anagram set 
@@ -139,7 +140,7 @@ def generate_dict():
                     break
                 if w in word_list:
                     num_common_anagrams += 1
-            if num_seed_repeats == 0 and not bad:
+            if num_seed_repeats == 0 and not bad and num_common_anagrams >= min_common_anagrams:
                 #print word + ": " + str(len(anagrams))
                 word_list_used[word.upper()] = len(anagrams) - num_common_anagrams
                 num_anagrams = len(anagrams)
@@ -182,8 +183,9 @@ def generate_dict():
     fi = open("word_list_used.cpp", "w")
     ficnt = open("word_list_used_anagram_count.cpp", "w")
     for word, value in sorted_word_list_used:
-        fi.write("    \"" + word + "\",\n")
-        ficnt.write("    " + str(len(find_anagrams(word, dictionary))) + ",\t// " + word + ", uncommon anagrams: " + str(word_list_used[word]) + "\n")
+        if letters_per_cube[len(word) - 1] > 1:
+            fi.write("    \"" + word + "\",\n")
+            ficnt.write("    " + str(len(find_anagrams(word, dictionary, letters_per_cube[len(word) - 1]))) + ",\t// " + word + ", uncommon anagrams: " + str(word_list_used[word]) + "\n")
     fi.close()    
     ficnt.close()
 
