@@ -5,6 +5,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "SVM.h"
 #include "SVMMCTargetDesc.h"
 #include "SVMFixupKinds.h"
 #include "llvm/MC/MCAssembler.h"
@@ -22,14 +23,6 @@
 using namespace llvm;
 
 namespace {
-    
-class SVMELFObjectWriter : public MCELFObjectTargetWriter {
-public:
-    SVMELFObjectWriter(bool is64Bit, Triple::OSType OSType, uint16_t EMachine,
-        bool HasRelocationAddend)
-        : MCELFObjectTargetWriter(is64Bit, OSType, EMachine,
-            HasRelocationAddend) {}
-};
 
 class SVMAsmBackend : public MCAsmBackend {
 public:    
@@ -38,14 +31,9 @@ public:
 
     Triple::OSType OSType;
 
-    MCELFObjectTargetWriter *createELFObjectTargetWriter() const
-    {
-        return new SVMELFObjectWriter(false, OSType, ELF::EM_ARM, false);
-    }
-
     MCObjectWriter *createObjectWriter(raw_ostream &OS) const
     {
-        return createELFObjectWriter(createELFObjectTargetWriter(), OS, true);
+        return createSVMELFProgramWriter(OS);
     }
 
     unsigned getNumFixupKinds() const

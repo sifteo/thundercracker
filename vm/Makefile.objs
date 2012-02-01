@@ -17,7 +17,8 @@ OBJS = \
 	src/Target/SVMTargetInfo.o \
 	src/Target/SVMTargetMachine.o \
 	src/Target/SVMSubtarget.o \
-	src/Target/SVMAlignPass.o
+	src/Target/SVMAlignPass.o \
+	src/Target/SVMELFProgramWriter.o
 
 TABLES := \
 	src/Target/SVMGenAsmWriter.inc \

@@ -12,7 +12,10 @@ namespace llvm {
 
     class FunctionPass;
     class SVMTargetMachine;
+    class MCObjectWriter;
+    class raw_ostream;
     
+    MCObjectWriter *createSVMELFProgramWriter(raw_ostream &OS);
     FunctionPass *createSVMISelDag(SVMTargetMachine &TM);
     FunctionPass *createSVMAlignPass(SVMTargetMachine &TM);
 
