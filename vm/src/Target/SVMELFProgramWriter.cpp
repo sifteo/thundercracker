@@ -67,6 +67,7 @@ private:
     void WriteELFHeader(unsigned Entry, unsigned PHNum, uint64_t &HdrSize);
     void WriteProgramHeader(const MCAsmLayout &Layout,
         const MCSectionData &SD, uint64_t &FileOff);
+    void WriteStrtabSectionHeader();
     void WriteProgSectionHeader(const MCAsmLayout &Layout,
         const MCSectionData &SD, uint64_t &FileOff);
     void WriteProgramData(MCAssembler &Asm, const MCAsmLayout &Layout,
@@ -98,8 +99,9 @@ void SVMELFProgramWriter::WritePadding(unsigned N)
 void SVMELFProgramWriter::WriteELFHeader(unsigned Entry, unsigned PHNum,
     uint64_t &HdrSize)
 {
+    unsigned SHNum = PHNum + 1;
     unsigned PHSize = PHNum * sizeof(ELF::Elf32_Phdr);
-    unsigned SHSize = PHNum * sizeof(ELF::Elf32_Shdr);
+    unsigned SHSize = SHNum * sizeof(ELF::Elf32_Shdr);
     HdrSize = sizeof(ELF::Elf32_Ehdr) + PHSize + SHSize;
     
     unsigned PHOff = sizeof(ELF::Elf32_Ehdr);
@@ -127,8 +129,8 @@ void SVMELFProgramWriter::WriteELFHeader(unsigned Entry, unsigned PHNum,
     Write16(sizeof(ELF::Elf32_Phdr));               // e_phentsize
     Write16(PHNum);                                 // e_phnum
     Write16(sizeof(ELF::Elf32_Shdr));               // e_shentsize
-    Write16(PHNum);                                 // e_shnum
-    Write16(0);                                     // e_shstrndx
+    Write16(SHNum);                                 // e_shnum
+    Write16(PHNum);                                 // e_shstrndx
 }
 
 void SVMELFProgramWriter::WriteProgramHeader(const MCAsmLayout &Layout,
@@ -162,6 +164,25 @@ void SVMELFProgramWriter::WriteProgramHeader(const MCAsmLayout &Layout,
     Write32(Alignment);                             // p_align
 
     FileOff += FileSize;
+}
+
+void SVMELFProgramWriter::WriteStrtabSectionHeader()
+{
+    /*
+     * We don't really care about section names yet, but this is just
+     * a stub so that tools like objdump will work.
+     */
+
+     Write32(0);                                     // sh_name
+     Write32(ELF::SHT_STRTAB);                       // sh_type
+     Write32(0);                                     // sh_flags
+     Write32(0);                                     // sh_addr
+     Write32(8);                                     // sh_offset
+     Write32(1);                                     // sh_size
+     Write32(0);                                     // sh_link
+     Write32(0);                                     // sh_info
+     Write32(1);                                     // sh_addralign
+     Write32(0);                                     // sh_entsize
 }
 
 void SVMELFProgramWriter::WriteProgSectionHeader(const MCAsmLayout &Layout,
@@ -212,10 +233,10 @@ void SVMELFProgramWriter::WriteProgramData(MCAssembler &Asm,
 
 void SVMELFProgramWriter::CollectProgramSections(MCAssembler &Asm, SectionDataList &Sections)
 {
-    // All text sections
+    // All RAM data
     for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
         SectionKind k = it->getSection().getKind();
-        if (k.isText())
+        if (k.isGlobalWriteableData() && !k.isBSS())
             Sections.push_back(&*it);
     }
 
@@ -225,11 +246,11 @@ void SVMELFProgramWriter::CollectProgramSections(MCAssembler &Asm, SectionDataLi
         if (k.isReadOnly())
             Sections.push_back(&*it);
     }
-    
-    // All RAM data
+
+    // All text sections
     for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
         SectionKind k = it->getSection().getKind();
-        if (k.isGlobalWriteableData() && !k.isBSS())
+        if (k.isText())
             Sections.push_back(&*it);
     }
 }
@@ -257,6 +278,8 @@ void SVMELFProgramWriter::WriteObject(MCAssembler &Asm, const MCAsmLayout &Layou
     for (SectionDataList::iterator it = ProgSections.begin(), ie = ProgSections.end();
         it != ie; ++it)
         WriteProgSectionHeader(Layout, **it, FileOff);
+
+    WriteStrtabSectionHeader();
 
     FileOff = HdrSize;
     for (SectionDataList::iterator it = ProgSections.begin(), ie = ProgSections.end();

@@ -21,4 +21,4 @@ echo ------------------------
 
 ./svmc test.o $*
 arm-none-eabi-readelf -a test.elf
-arm-none-eabi-objdump -d test.elf
+arm-none-eabi-objdump -d -M force-thumb test.elf
