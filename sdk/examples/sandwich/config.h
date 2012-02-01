@@ -7,4 +7,12 @@
 #define SFX_ON        	1
 #define LOAD_ASSETS   	1
 
+#ifndef SIFTEO_SIMULATOR
+#define KLUDGES			1
+#else
+#define KLUDGES			0
+#endif
+
+#define TOUCH_ONLY		1
+
 #endif

@@ -27,11 +27,17 @@ if __name__ == '__main__':
         for c in [size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF]:
             sz = sz + chr(c)
 
-        print "erasing (please wait)..."
         port.write(sz)
-        status = waitForStatus(port)
-        if status != 0:
-            print "sad status", status
+        sys.stderr.write("erasing (please wait)...")
+        # once we hear 0 back, erase is complete
+        count = 0
+        while True:
+            if ord(port.read()) == 0:
+                break
+            count = count + 1
+            if count % 10 == 0:
+                sys.stderr.write(".")
+        sys.stderr.write("\n")
 
         sys.stderr.write("loading %s, %d bytes" % (filepath, size))
         while blob:
@@ -47,7 +53,7 @@ if __name__ == '__main__':
         if status == 0:
             print "success!"
         else:
-            print "verification failed", status
+            print "failed:", status
 
     except KeyboardInterrupt:
         print "keyboard interrupt"

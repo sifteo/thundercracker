@@ -67,7 +67,7 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define MISC_NB_MASK1   (MISC_NB_0_TOP | MISC_NB_2_BOTTOM)
 
 #define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_I2C_SDA) | MISC_TOUCH)
-#define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA | MISC_TOUCH)
+#define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)
 
 #define CTRL_LCD_DCX    (1 << 0)
 #define CTRL_FLASH_LAT1 (1 << 2)    // NOTE: mid (LAT1) & high (LAT2) are swapped on rev 1

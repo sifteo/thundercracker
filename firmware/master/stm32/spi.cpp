@@ -60,13 +60,11 @@ void SPIMaster::init()
     dmaRxChan->CCR = 0;
     dmaTxChan->CCR = 0;
 
-    hw->CR2 |=  (1 << 5) |  // ERRIE
-                (1 << 2);   // SSOE
+    hw->CR1 =   (1 << 2);   // MSTR - master configuration
 
-    hw->CR1 |=  (1 << 9) |  // SSM - software slave management
-                (1 << 8) |  // SSI - internal slave select
-                (1 << 6) |  // SPE - enable the spi device
-                (1 << 2);   // MSTR - master configuration
+    hw->CR2 =   (1 << 2);   // SSOE
+
+    hw->CR1 |=  (1 << 6);   // SPE - enable the spi device
 }
 
 void SPIMaster::begin()
@@ -138,19 +136,8 @@ void SPIMaster::transferTable(const uint8_t *table)
 */
 void SPIMaster::transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
 {
-    dmaTxChan->CNDTR = len;
-    dmaTxChan->CMAR = (uint32_t)txbuf;
-
     dmaRxChan->CNDTR = len;
     dmaRxChan->CMAR = (uint32_t)rxbuf;
-
-    dmaTxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
-                        (1 << 7) |  // MINC - memory pointer increment
-                        (1 << 4) |  // DIR - direction, 1 == read from memory
-                        (1 << 3) |  // TEIE - transfer error ISR enable
-                        (0 << 1) |  // TCIE - transfer complete ISR enable
-                        (1 << 0);   // EN - enable DMA channel
-
     dmaRxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
                         (1 << 7) |  // MINC - memory pointer increment
                         (0 << 4) |  // DIR - direction, 0 == read from peripheral
@@ -159,26 +146,50 @@ void SPIMaster::transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
                         (1 << 1) |  // TCIE - transfer complete ISR enable
                         (1 << 0);   // EN - enable DMA channel
 
+    dmaTxChan->CNDTR = len;
+    dmaTxChan->CMAR = (uint32_t)txbuf;
+    dmaTxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
+                        (1 << 7) |  // MINC - memory pointer increment
+                        (1 << 4) |  // DIR - direction, 1 == read from memory
+                        (1 << 3) |  // TEIE - transfer error ISR enable
+                        (0 << 1) |  // TCIE - transfer complete ISR enable
+                        (1 << 0);   // EN - enable DMA channel
+
     hw->CR2 |= (1 << 0) |           // RXDMAEN
                (1 << 1);            // TXDMAEN
 }
 
 /*
-    Useful when you don't care about rx data, since it allows us to keep
-    the RX DMA channel disabled.
+    possible TODO: I attempted to enable only the TX DMA channel in this case,
+    which mostly works, but there are some scenarios in which a TX DMA transaction
+    following an RX DMA transaction would never fire the completion ISR.
+
+    For now, enable both channels, and provide a dummy mem pointer for RX and
+    disable its MINC bit.
 */
 void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
 {
+    static uint8_t dummy;
+    dmaRxChan->CNDTR = len;
+    dmaRxChan->CMAR = (uint32_t)&dummy;
+    dmaRxChan->CCR =    (0 << 12)|  // PL - priority level, 0 == LOW
+                        (0 << 7) |  // MINC - memory pointer increment
+                        (0 << 4) |  // DIR - direction, 0 == read from peripheral
+                        (1 << 3) |  // TEIE - transfer error ISR enable
+                        (1 << 1) |  // TCIE - transfer complete ISR enable
+                        (1 << 0);   // EN - enable DMA channel
+
     dmaTxChan->CNDTR = len;
     dmaTxChan->CMAR = (uint32_t)txbuf;
-
     dmaTxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
                         (1 << 7) |  // MINC - memory pointer increment
                         (1 << 4) |  // DIR - direction, 1 == read from memory
                         (1 << 3) |  // TEIE - transfer error ISR enable
-                        (1 << 1) |  // TCIE - transfer complete ISR enable
+                        (0 << 1) |  // TCIE - transfer complete ISR enable
                         (1 << 0);   // EN - enable DMA channel
-    hw->CR2 |= (1 << 1);            // TXDMAEN
+
+    hw->CR2 |= (1 << 0) |           // RXDMAEN
+               (1 << 1);            // TXDMAEN
 }
 
 /*
@@ -212,11 +223,22 @@ bool SPIMaster::dmaInProgress() const
     Static routine to dispatch DMA events to the appropriate SPIMaster
     instance. It's assumed that the instance was passed as the param to
     Dma::registerHandler().
+
+    We also assume that we're only getting called here on either transfer complete
+    events or error events, but not half transfer events.
 */
 void SPIMaster::dmaCallback(void *p, uint8_t flags)
 {
     SPIMaster *spi = static_cast<SPIMaster*>(p);
     // TODO: error handling
+
+    // if this transfer was TX only our RX data register likely has an overrun error.
+    // we need to read a dummy element out of the data register
+    // to clear the status register so subsequent operations can proceed
+    if (spi->hw->SR & (1 << 6)) {   // OVR - overrun flag
+        (void)spi->hw->DR;
+    }
+
     spi->dmaTxChan->CCR = 0;
     spi->dmaRxChan->CCR = 0;
     spi->hw->CR2 &= ~((1 << 1) | (1 << 0)); // disable DMA RX & TX
