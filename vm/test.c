@@ -37,12 +37,17 @@ void siftmain() {
 }
 #endif
 
+
+void p3() {
+    _SYS_paint();
+    _SYS_paint();
+    _SYS_paint();
+}
+    
 void main() {
     while (1) {
         _SYS_ticks_ns(0xf00fbabe);
-        _SYS_paint();
-        _SYS_paint();
-        _SYS_paint();
+        p3();
     }
 }
 
