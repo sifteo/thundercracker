@@ -2,7 +2,7 @@
 
 namespace TotalsGame
 {
-	DEFINE_POOL(TotalsGame)
+	DEFINE_POOL(TokenGroup)
 
 	
     bool TokenGroup::TokenAt(const Vec2 &p, Token **t) 
@@ -16,12 +16,12 @@ namespace TotalsGame
 	{
       if (src->PositionOf(t, p)) 
 	  {
-        p = p + srcPos;
+        *p = *p + srcPos;
         return true;
       } 
 	  else if (dst->PositionOf(t, p)) 
 	  {
-        p = p + dstPos;
+        *p = *p + dstPos;
         return true;
       }
       return false;
@@ -32,7 +32,7 @@ namespace TotalsGame
       return src->Contains(t) || dst->Contains(t);
     }
 
-	 IExpression *GetSubExpressionContaining(Token *t) 
+	 IExpression *TokenGroup::GetSubExpressionContaining(Token *t) 
 	{
       if (src->Contains(t)) 
 	  {

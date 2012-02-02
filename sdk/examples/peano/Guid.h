@@ -8,8 +8,12 @@ namespace TotalsGame
 	public:
 		Guid();
 
+		bool operator!=(const Guid &right);
+
+		static const Guid Empty;
+
 	private:
-		char data[40];
+		unsigned long guid[4];
 	};
 
 

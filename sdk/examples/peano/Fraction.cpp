@@ -1,8 +1,10 @@
 #include "Fraction.h"
 
+#include <stdio.h>
+
 namespace TotalsGame {
 
-	Fraction::Fraction(int n, int d=1)
+	Fraction::Fraction(int n, int d)
 	{
 		nu = n;
 		de = d;
@@ -72,16 +74,18 @@ namespace TotalsGame {
 
 	bool Fraction::operator==(const Fraction &f)
 	{
+		Fraction t = f;
 		Reduce();
-		f.Reduce();
-		return nu == f.nu && de == f.de;
+		t.Reduce();
+		return nu == t.nu && de == t.de;
 	}
 
 	bool Fraction::operator!=(const Fraction &f)
 	{
+		Fraction t = f;
 		Reduce();
-		f.Reduce();
-		return nu != f.nu || de != f.de;
+		t.Reduce();
+		return nu != t.nu || de != t.de;
 	}
 
 	void Fraction::ToString(char *s, int length)
@@ -94,7 +98,7 @@ namespace TotalsGame {
 		snprintf(s, length, "%s/%s", numString, denString);
 	}
 
-	static int Fraction::GCD(int a, int b) 
+	int Fraction::GCD(int a, int b) 
 	{
 		int c;
 		if (a < b) {

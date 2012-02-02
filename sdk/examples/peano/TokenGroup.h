@@ -1,10 +1,12 @@
 #pragma once
 
+#include "Fraction.h"
 #include "IExpression.h"
 #include "Token.h"
 #include "ObjectPool.h"
 
-namespace TotalsGame {
+namespace TotalsGame 
+{
 
 	class TokenGroup : public IExpression 
 	{
@@ -142,13 +144,13 @@ namespace TotalsGame {
 			{
 				switch(op)
 				{
-				case Add:
+				case OpAdd:
 					return left + right;
-				case Subtract:
+				case OpSubtract:
 					return left - right;
-				case Multiply:
+				case OpMultiply:
 					return left * right;
-				case Divide:
+				case OpDivide:
 					return left / right;
 				}
 			}

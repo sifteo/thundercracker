@@ -4,23 +4,21 @@
 #include "IExpression.h"
 #include "ObjectPool.h"
 
-void * operator new (size_t, void * p) throw();
-
 namespace TotalsGame {
 
 	class Puzzle;
 
 	enum SideStatus {
-		Open,       // physically no tokens are on this side
-		Connected,  // this side is participating in the solution
-		Blocked     // this side is NOT participating in the solution, but it physically blocked
+		SideStatusOpen,       // physically no tokens are on this side
+		SideStatusConnected,  // this side is participating in the solution
+		SideStatusBlocked     // this side is NOT participating in the solution, but it physically blocked
 	};
 
 	enum Op {
-		Add = 0,
-		Subtract = 1,
-		Multiply = 2,
-		Divide = 3
+		OpAdd = 0,
+		OpSubtract = 1,
+		OpMultiply = 2,
+		OpDivide = 3
 	};
 
 	class Token : public IExpression {

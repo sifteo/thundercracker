@@ -1,6 +1,7 @@
 #pragma once
 
-namespace TotalsGame {
+namespace TotalsGame 
+{
 
 	class Fraction
 	{
@@ -8,7 +9,7 @@ namespace TotalsGame {
 		int nu;
 		int de;
 
-		Fraction(int n, int d=1);
+		Fraction(int n, int d);
 		Fraction(int x);
 		Fraction();
 

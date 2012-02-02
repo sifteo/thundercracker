@@ -1,10 +1,6 @@
-#include "Puzzle.h"
 #include "Token.h"
-
-void * operator new (size_t, void * p) throw() 
-{
-	return p;
-}
+#include "TokenGroup.h"
+#include "Puzzle.h"
 
 namespace TotalsGame {
 
@@ -15,7 +11,7 @@ namespace TotalsGame {
 
 	int Token::GetIndex() 
 	{
-		return indexer;
+		return index;
 	}
 
 	Token::Token(Puzzle *p, int i) 
@@ -28,46 +24,46 @@ namespace TotalsGame {
 		userData = NULL;
 		for(int i = 0; i < 3; i++)
 		{
-			opRight[i] = Op::Add;
-			opBottom[i] = Op::Subtract
+			opRight[i] = OpAdd;
+			opBottom[i] = OpSubtract;
 		}
 	}
 
 	// IExpression impl
-	Fraction Token::GetValue 
+	TotalsGame::Fraction Token::GetValue()
 	{
 		return val;
 	}
 
-	int Token::GetDepth 
+	int Token::GetDepth()
 	{
 		return -1;
 	}
 
-	int Token::GetCount 
+	int Token::GetCount()
 	{
 		return 1;
 	}
 
-	ShapeMask Token::GetMask 
+	ShapeMask Token::GetMask()
 	{
-		return ShapeMask.Unity;
+		return ShapeMask::Unity;
 	}
 
-	bool Token::TokenAt(const Int2 &p, Token **t) 
+	bool Token::TokenAt(const Vec2 &p, Token **t) 
 	{
 		if (p.x == 0 && p.y == 0) 
 		{
 			*t = this;
 			return true;
 		}
-		*t = null;
+		*t = NULL;
 		return false;
 	}
 
-	bool Token::PositionOf(Token *t, Int2 *p) 
+	bool Token::PositionOf(Token *t, Vec2 *p) 
 	{
-		*p = Vec2.Zero;
+		p->set(0,0);
 		return t == this;
 	}
 
@@ -85,7 +81,7 @@ namespace TotalsGame {
 
 	Fraction Token::GetCurrentTotal() 
 	{
-		if (puzzle->target == null) 
+		if (puzzle->target == NULL) 
 		{
 			return current->GetValue();
 		}
@@ -93,9 +89,9 @@ namespace TotalsGame {
 	}
 
 	void Token::PopGroup() {
-		if (current->ContainsSubExpressions())
+		if (current->IsTokenGroup())
 		{
-			current = current->GetSubExpressionContaining(this);
+			current = ((TokenGroup*)current)->GetSubExpressionContaining(this);
 		}
 	}
 
@@ -103,70 +99,74 @@ namespace TotalsGame {
 	{
 		if (current == this)
 		{ 
-			return SideStatus.Open;
+			return SideStatusOpen;
 		}
 		Vec2 pos;
 		current->PositionOf(this, &pos);
-		Vec2 del = Vec2.Side(side);
-		if (!current->Mask.BitAt(pos+del))
+		Vec2 del = kSideToUnit[side];
+		if (!current->GetMask().BitAt(pos+del))
 		{
-			return SideStatus::Open;
+			return SideStatusOpen;
 		}
 		IExpression *grp = current;
-		if (side->IsSource()) 
+		if (SideHelper::IsSource(side)) 
 		{
-			while(grp->ContainsSubExpressions())
+			while(grp->IsTokenGroup())
 			{
-				if (grp->srcToken == this && grp->srcSide == side) 
+				TokenGroup *tokenGroup = (TokenGroup*)grp;
+				if (tokenGroup->GetSrcToken() == this && tokenGroup->GetSrcSide() == side) 
 				{ 
-					return SideStatus::Connected; 
+					return SideStatusConnected; 
 				}
-				grp = grp->GetSubExpressionContaining(this);
+				grp = tokenGroup->GetSubExpressionContaining(this);
 			}
 		} 
 		else
 		{
-			side = CubeHelper::InvertSide(side);
-			while(grp->ContainsSubExpressions()) 
+			side = (side + 2)&3;	//invert side
+			while(grp->IsTokenGroup()) 
 			{
-				if (grp->dstToken == this && grp->srcSide == side)
+				TokenGroup *tokenGroup = (TokenGroup*)grp;
+				if (tokenGroup->GetDstToken() == this && tokenGroup->GetSrcSide() == side)
 				{
-					return SideStatus::Connected;
+					return SideStatusConnected;
 				}
-				grp = grp->GetSubExpressionContaining(this);
+				grp = tokenGroup->GetSubExpressionContaining(this);
 			}
 		}
-		return SideStatus::Blocked;
+		return SideStatusBlocked;
 	}
 
 	bool Token::ConnectsOnSideAtDepth(Cube::Side s, int depth, IExpression *exp) 
 	{
-		if (exp == null)
+		if (exp == NULL)
 		{
 			exp = current;
 		}
 		IExpression *grp = exp;
-		if (s->IsSource())
+		if (SideHelper::IsSource(s))
 		{
-			while(grp.ContainsSubExpressions())
+			while(grp->IsTokenGroup())
 			{
-				if (grp->srcToken == this && grp->srcSide == s && depth >= grp->GetDepth() && CheckDepth(depth, exp))
+				TokenGroup *tokenGroup = (TokenGroup*)grp;
+				if (tokenGroup->GetSrcToken() == this && tokenGroup->GetSrcSide() == s && depth >= tokenGroup->GetDepth() && CheckDepth(depth, exp))
 				{ 
 					return true;
 				}
-				grp = grp->GetSubExpressionContaining(this);
+				grp = tokenGroup->GetSubExpressionContaining(this);
 			}
 		} 
 		else
 		{
-			s = CubeHelper::InvertSide(s);
-			while(grp->ContainsSubExpressions())
+			s = (s+2)&3; //invert side
+			while(grp->IsTokenGroup())
 			{
-				if (grp->dstToken == this && grp->srcSide == s && depth >= grp->GetDepth() && CheckDepth(depth, exp))
+				TokenGroup *tokenGroup = (TokenGroup*)grp;
+				if (tokenGroup->GetDstToken() == this && tokenGroup->GetSrcSide() == s && depth >= tokenGroup->GetDepth() && CheckDepth(depth, exp))
 				{
 					return true; 
 				}
-				grp = grp->GetSubExpressionContaining(this);
+				grp = tokenGroup->GetSubExpressionContaining(this);
 			}
 		}
 		return false;
@@ -175,13 +175,13 @@ namespace TotalsGame {
 	bool Token::CheckDepth(int depth, IExpression *exp)
 	{
 		IExpression *grp = exp;
-		while (grp.ContainsSubExpressions())
+		while (grp->IsTokenGroup())
 		{
 			if (grp->GetDepth() == depth)
 			{ 
 				return true; 
 			}
-			grp = grp->GetSubExpressionContaining(this);
+			grp = ((TokenGroup*)grp)->GetSubExpressionContaining(this);
 		}
 		return false;
 	}
@@ -194,36 +194,32 @@ namespace TotalsGame {
 
 	Op Token::GetOpRight()
 	{
-		return opRight[(int)puzzle.Difficulty];
+		return opRight[(int)puzzle->GetDifficulty()];
 	}
 
 	void Token::SetOpRight(Op value)
 	{
-		opRight[(int)Difficulty.Easy] = value;
-		opRight[(int)Difficulty.Medium] = value;
-		opRight[(int)Difficulty.Hard] = value;
+		opRight[(int)DifficultyEasy] = value;
+		opRight[(int)DifficultyMedium] = value;
+		opRight[(int)DifficultyHard] = value;
 	}
 
-	Op Token::GetOpBottom 
+	Op Token::GetOpBottom()
 	{ 
-		return opBottom[(int)puzzle.Difficulty]; 
+		return opBottom[(int)puzzle->GetDifficulty()]; 
 	}
 
 	void Token::SetOpBottom(Op value)
 	{
-		opBottom[(int)Difficulty.Easy] = value;
-		opBottom[(int)Difficulty.Medium] = value;
-		opBottom[(int)Difficulty.Hard] = value;
+		opBottom[(int)DifficultyEasy] = value;
+		opBottom[(int)DifficultyMedium] = value;
+		opBottom[(int)DifficultyHard] = value;
 	}
 
 
-	static bool SideHelper::IsSource(Cube::Side side)
+	bool SideHelper::IsSource(Cube::Side side)
 	{
-		return side == Cube::Side::RIGHT || side == Cube::Side::BOTTOM;
+		return side == SIDE_RIGHT || side == SIDE_BOTTOM;
 	}
-};
 
 }
-
-
-

@@ -1,15 +1,18 @@
 #include "TokenGroup.h"
 #include "Guid.h"
+#include "Game.h"
 #include "Puzzle.h"
 
 
 namespace TotalsGame {
 		
+	DEFINE_POOL(Puzzle)
+
 	Puzzle::Puzzle(int tokenCount) 
 	{
 		userData = NULL;
 		chapter = NULL;
-		difficulty = Hard;
+		difficulty = DifficultyHard;
 		focus = NULL;
 		target = NULL;
 		focus = NULL;
@@ -72,9 +75,36 @@ namespace TotalsGame {
 
 	Difficulty Puzzle::GetDifficulty()
 	{
-		return Game::Instance() == NULL ? difficulty : Game::Instance.difficulty;
+		return Game::GetInstance().difficulty;
 	}
 
+
+	//from SaveDataHelper in c#
+	/*
+	    public static bool HasBeenSolved(this Puzzle p) {
+      if (p == null || Game.Inst == null) { return false; }
+      return p.guid != Guid.Empty && Game.Inst.saveData.solved.Contains(p.guid);
+    }*/
+
+	void Puzzle::SaveAsSolved() 
+	{
+		if (guid != Guid::Empty) 
+		{
+			Game::GetInstance().saveData.AddSolved(guid);
+			Game::GetInstance().saveData.Save();
+		}
+	}
+	/*
+    public static int CountAfterThisInChapterWithCurrentCubeSet(this Puzzle p) {
+      if (p == null || p.chapter == null || Game.Inst == null) { return 0; }
+      int result = 0;
+      for(int i=p.chapter.Puzzles.IndexOf(p)+1; i<p.chapter.Puzzles.Count; ++i) {
+        if (p.chapter.Puzzles[i].tokens.Length <= Game.Inst.CubeSet.Count) {
+          result++;
+        }
+      }
+      return result;
+    }*/
 
 }
 

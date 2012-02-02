@@ -2,25 +2,28 @@
 
 #include "Guid.h"
 #include "Token.h"
+#include "ObjectPool.h"
 
 namespace TotalsGame 
 {
-
 	class PuzzleChapter;
 	class Token;
 	class TokenGroup;
 
 	enum Difficulty 
 	{
-		Easy = 0, Medium = 1, Hard = 2
+		DifficultyEasy = 0, DifficultyMedium = 1, DifficultyHard = 2
 	};
 
 	enum NumericMode
 	{
-		Fraction, Decimal
+		NumericModeFraction, NumericModeDecimal
 	};
 
 	class Puzzle {
+
+		DECLARE_POOL(Puzzle, 4)
+
 	public:
 		Puzzle(int tokenCount);
 
@@ -43,6 +46,8 @@ namespace TotalsGame
 
 		int hintsUsed;
 		bool unlimitedHints;
+
+		void SaveAsSolved();
 
 	private:
 		static const int MAX_TOKENS = 32;
