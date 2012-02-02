@@ -1,195 +1,195 @@
-    3,	// WITHIN, uncommon anagrams: 0
-    2,	// ROYAL, uncommon anagrams: 0
-    2,	// DANCE, uncommon anagrams: 0
-    2,	// BESIDE, uncommon anagrams: 0
-    2,	// UNLESS, uncommon anagrams: 0
-    2,	// MIDDLE, uncommon anagrams: 0
-    2,	// VESSEL, uncommon anagrams: 0
-    3,	// TERMS, uncommon anagrams: 0
-    4,	// WHOLE, uncommon anagrams: 0
-    2,	// TURNED, uncommon anagrams: 0
-    2,	// MEMBER, uncommon anagrams: 0
-    2,	// SECOND, uncommon anagrams: 0
-    2,	// FIGHT, uncommon anagrams: 0
-    2,	// WRONG, uncommon anagrams: 0
-    2,	// NOTICE, uncommon anagrams: 0
-    2,	// OCCUPY, uncommon anagrams: 0
-    2,	// BECOME, uncommon anagrams: 0
-    2,	// AFFAIR, uncommon anagrams: 0
-    2,	// WINDOW, uncommon anagrams: 0
-    3,	// DURING, uncommon anagrams: 1
-    3,	// VOICE, uncommon anagrams: 1
-    3,	// ORDER, uncommon anagrams: 1
-    4,	// MOTION, uncommon anagrams: 1
-    3,	// FRONT, uncommon anagrams: 1
-    5,	// SHOWN, uncommon anagrams: 1
-    3,	// FIGURE, uncommon anagrams: 1
-    3,	// FLOOR, uncommon anagrams: 1
-    3,	// FAVOR, uncommon anagrams: 1
-    3,	// ISSUE, uncommon anagrams: 1
-    4,	// READY, uncommon anagrams: 1
-    3,	// UNABLE, uncommon anagrams: 1
-    3,	// RETURN, uncommon anagrams: 1
-    3,	// TOUCH, uncommon anagrams: 1
-    3,	// STAND, uncommon anagrams: 1
-    3,	// BELONG, uncommon anagrams: 1
-    3,	// PASSED, uncommon anagrams: 1
-    3,	// PRESS, uncommon anagrams: 1
-    3,	// FINISH, uncommon anagrams: 1
-    3,	// THANK, uncommon anagrams: 1
-    3,	// AHEAD, uncommon anagrams: 1
-    4,	// ALLOW, uncommon anagrams: 1
-    3,	// VISIT, uncommon anagrams: 1
-    3,	// CAREER, uncommon anagrams: 1
-    5,	// DROWN, uncommon anagrams: 1
-    4,	// THESE, uncommon anagrams: 1
-    3,	// SPRING, uncommon anagrams: 1
-    3,	// CORNER, uncommon anagrams: 1
-    3,	// HEARD, uncommon anagrams: 1
-    4,	// PUSHED, uncommon anagrams: 1
-    3,	// REPLY, uncommon anagrams: 1
-    3,	// THICK, uncommon anagrams: 1
-    3,	// THING, uncommon anagrams: 1
-    3,	// WINTER, uncommon anagrams: 1
-    3,	// ISLAND, uncommon anagrams: 1
-    3,	// AWFUL, uncommon anagrams: 1
-    3,	// QUIET, uncommon anagrams: 1
-    3,	// EMPIRE, uncommon anagrams: 1
-    3,	// CRIED, uncommon anagrams: 1
-    4,	// REACH, uncommon anagrams: 1
-    3,	// HOURS, uncommon anagrams: 1
-    3,	// FRUIT, uncommon anagrams: 1
-    3,	// RETIRE, uncommon anagrams: 1
-    3,	// STRING, uncommon anagrams: 1
-    3,	// NEARLY, uncommon anagrams: 1
-    3,	// TOWARD, uncommon anagrams: 1
-    3,	// ELECT, uncommon anagrams: 1
-    3,	// BEING, uncommon anagrams: 1
-    3,	// BECAME, uncommon anagrams: 1
-    4,	// INFORM, uncommon anagrams: 2
-    5,	// DELAY, uncommon anagrams: 2
-    6,	// WOMAN, uncommon anagrams: 2
-    4,	// FORCE, uncommon anagrams: 2
-    4,	// OFFER, uncommon anagrams: 2
-    4,	// CAUSE, uncommon anagrams: 2
-    4,	// HUMAN, uncommon anagrams: 2
-    4,	// FORTY, uncommon anagrams: 2
-    6,	// PARTY, uncommon anagrams: 2
-    4,	// HOUSE, uncommon anagrams: 2
-    4,	// WATER, uncommon anagrams: 2
-    4,	// INCOME, uncommon anagrams: 2
-    4,	// DEATH, uncommon anagrams: 2
-    4,	// GUEST, uncommon anagrams: 2
-    6,	// DESIGN, uncommon anagrams: 2
-    4,	// SUFFER, uncommon anagrams: 2
-    4,	// CENTS, uncommon anagrams: 2
-    4,	// ASKED, uncommon anagrams: 2
-    4,	// EIGHT, uncommon anagrams: 2
-    4,	// FILLED, uncommon anagrams: 2
-    5,	// BROWN, uncommon anagrams: 2
-    5,	// WORTH, uncommon anagrams: 2
-    4,	// UNTIL, uncommon anagrams: 2
-    4,	// EXTRA, uncommon anagrams: 2
-    4,	// FOURTH, uncommon anagrams: 2
-    4,	// ALONE, uncommon anagrams: 2
-    4,	// SOLVE, uncommon anagrams: 2
-    4,	// SUMMER, uncommon anagrams: 2
-    4,	// SMALL, uncommon anagrams: 2
-    4,	// CATCH, uncommon anagrams: 2
-    6,	// KNOWN, uncommon anagrams: 2
-    6,	// WOMEN, uncommon anagrams: 2
-    4,	// LESSON, uncommon anagrams: 2
-    4,	// DIVIDE, uncommon anagrams: 2
-    4,	// YOUNG, uncommon anagrams: 2
-    5,	// SINGLE, uncommon anagrams: 2
-    4,	// LEARN, uncommon anagrams: 2
-    4,	// OFTEN, uncommon anagrams: 2
-    4,	// ALIKE, uncommon anagrams: 2
-    4,	// MOTHER, uncommon anagrams: 2
-    4,	// CLOUD, uncommon anagrams: 2
-    4,	// THEIR, uncommon anagrams: 2
-    4,	// OTHER, uncommon anagrams: 2
-    4,	// THINK, uncommon anagrams: 2
-    4,	// INSIDE, uncommon anagrams: 2
-    4,	// CARRY, uncommon anagrams: 2
-    6,	// WHOSE, uncommon anagrams: 3
-    5,	// OBTAIN, uncommon anagrams: 3
-    5,	// REPAIR, uncommon anagrams: 3
-    6,	// MEANT, uncommon anagrams: 3
-    5,	// EVERY, uncommon anagrams: 3
-    6,	// TEACH, uncommon anagrams: 3
-    5,	// BUILT, uncommon anagrams: 3
-    5,	// CLEAN, uncommon anagrams: 3
-    5,	// AFTER, uncommon anagrams: 3
-    6,	// STICK, uncommon anagrams: 3
-    5,	// BEGUN, uncommon anagrams: 3
-    6,	// THOSE, uncommon anagrams: 3
-    5,	// DOZEN, uncommon anagrams: 3
-    5,	// HORSE, uncommon anagrams: 3
-    5,	// SELECT, uncommon anagrams: 3
-    5,	// REALLY, uncommon anagrams: 3
-    5,	// BEGIN, uncommon anagrams: 3
-    5,	// DOCTOR, uncommon anagrams: 3
-    5,	// SIGHT, uncommon anagrams: 3
-    5,	// SHARP, uncommon anagrams: 3
-    5,	// RESULT, uncommon anagrams: 3
-    6,	// UNDER, uncommon anagrams: 3
-    5,	// RAISE, uncommon anagrams: 3
-    6,	// RECENT, uncommon anagrams: 3
-    7,	// HEART, uncommon anagrams: 3
-    5,	// COLOR, uncommon anagrams: 3
-    5,	// WORDS, uncommon anagrams: 3
-    6,	// STILL, uncommon anagrams: 3
-    5,	// ASSURE, uncommon anagrams: 3
-    5,	// SINCE, uncommon anagrams: 3
-    5,	// SHALL, uncommon anagrams: 3
-    5,	// TRACK, uncommon anagrams: 3
-    6,	// EVENT, uncommon anagrams: 3
-    5,	// DOUBT, uncommon anagrams: 3
-    5,	// NORTH, uncommon anagrams: 3
-    5,	// NEVER, uncommon anagrams: 3
-    5,	// CALLED, uncommon anagrams: 3
-    5,	// LOCAL, uncommon anagrams: 3
-    5,	// WROTE, uncommon anagrams: 3
-    6,	// RAPID, uncommon anagrams: 4
-    6,	// PEOPLE, uncommon anagrams: 4
-    6,	// REMAIN, uncommon anagrams: 4
-    6,	// MAYOR, uncommon anagrams: 4
-    6,	// FOREST, uncommon anagrams: 4
-    7,	// LEAST, uncommon anagrams: 4
-    6,	// CHART, uncommon anagrams: 4
-    6,	// STAMP, uncommon anagrams: 4
-    6,	// TODAY, uncommon anagrams: 4
-    6,	// SENSE, uncommon anagrams: 4
-    6,	// STONE, uncommon anagrams: 4
-    6,	// COAST, uncommon anagrams: 4
-    6,	// SHAPE, uncommon anagrams: 4
-    6,	// SPREAD, uncommon anagrams: 4
-    6,	// CLOSE, uncommon anagrams: 4
-    6,	// EARLY, uncommon anagrams: 4
-    6,	// SPEED, uncommon anagrams: 4
-    6,	// ENTIRE, uncommon anagrams: 4
-    6,	// METAL, uncommon anagrams: 4
-    7,	// THREE, uncommon anagrams: 4
-    7,	// LEDGE, uncommon anagrams: 4
-    7,	// FIELD, uncommon anagrams: 4
-    7,	// LATER, uncommon anagrams: 5
-    7,	// CLEAR, uncommon anagrams: 5
-    7,	// ESCAPE, uncommon anagrams: 5
-    8,	// TRAIN, uncommon anagrams: 5
-    7,	// TABLE, uncommon anagrams: 5
-    7,	// PAPER, uncommon anagrams: 5
-    8,	// LISTEN, uncommon anagrams: 5
-    8,	// TRADE, uncommon anagrams: 5
-    8,	// EARTH, uncommon anagrams: 5
-    8,	// ALMOST, uncommon anagrams: 5
-    7,	// SEVEN, uncommon anagrams: 5
-    8,	// SISTER, uncommon anagrams: 6
-    8,	// SERVE, uncommon anagrams: 6
-    8,	// RELIEF, uncommon anagrams: 6
-    9,	// START, uncommon anagrams: 7
-    10,	// STREET, uncommon anagrams: 7
-    9,	// STREAM, uncommon anagrams: 7
-    9,	// DESIRE, uncommon anagrams: 7
-    12,	// STEEL, uncommon anagrams: 10
-    13,	// ARREST, uncommon anagrams: 11
+    3,	// WITHIN, nonbonus anagrams: ['WITHIN', 'WITH', 'THIN']
+    2,	// ROYAL, nonbonus anagrams: ['ROYAL', 'LAY']
+    2,	// DANCE, nonbonus anagrams: ['AND', 'DANCE']
+    2,	// BESIDE, nonbonus anagrams: ['BESIDE', 'SIDE']
+    2,	// UNLESS, nonbonus anagrams: ['UNLESS', 'LESS']
+    2,	// MIDDLE, nonbonus anagrams: ['MIDDLE', 'MILE']
+    2,	// VESSEL, nonbonus anagrams: ['VESSEL', 'LESS']
+    3,	// TERMS, nonbonus anagrams: ['TERM', 'SET', 'TERMS']
+    4,	// WHOLE, nonbonus anagrams: ['HOW', 'HOLE', 'WHO', 'WHOLE']
+    2,	// TURNED, nonbonus anagrams: ['TURN', 'TURNED']
+    2,	// MEMBER, nonbonus anagrams: ['MEMBER', 'MERE']
+    2,	// SECOND, nonbonus anagrams: ['SECOND', 'SEND']
+    2,	// FIGHT, nonbonus anagrams: ['FIT', 'FIGHT']
+    2,	// WRONG, nonbonus anagrams: ['WRONG', 'ROW']
+    2,	// NOTICE, nonbonus anagrams: ['NOTICE', 'ONCE']
+    2,	// OCCUPY, nonbonus anagrams: ['OCCUPY', 'COPY']
+    2,	// BECOME, nonbonus anagrams: ['BECOME', 'COME']
+    2,	// AFFAIR, nonbonus anagrams: ['AFFAIR', 'FAIR']
+    2,	// WINDOW, nonbonus anagrams: ['WINDOW', 'WIND']
+    2,	// DURING, nonbonus anagrams: ['DURING', 'RING']
+    2,	// VOICE, nonbonus anagrams: ['VOICE', 'ICE']
+    2,	// ORDER, nonbonus anagrams: ['ORDER', 'RED']
+    3,	// MOTION, nonbonus anagrams: ['MOTION', 'OMIT', 'MOON']
+    2,	// FRONT, nonbonus anagrams: ['NOT', 'FRONT']
+    4,	// SHOWN, nonbonus anagrams: ['SHOWN', 'OWN', 'NOW', 'SHOW']
+    2,	// FIGURE, nonbonus anagrams: ['FIRE', 'FIGURE']
+    2,	// FLOOR, nonbonus anagrams: ['FOR', 'FLOOR']
+    2,	// FAVOR, nonbonus anagrams: ['FAVOR', 'FOR']
+    2,	// ISSUE, nonbonus anagrams: ['ISSUE', 'USE']
+    3,	// READY, nonbonus anagrams: ['READ', 'READY', 'DAY']
+    2,	// UNABLE, nonbonus anagrams: ['UNABLE', 'ABLE']
+    2,	// RETURN, nonbonus anagrams: ['TURN', 'RETURN']
+    2,	// TOUCH, nonbonus anagrams: ['TOUCH', 'OUT']
+    2,	// STAND, nonbonus anagrams: ['SAT', 'STAND']
+    2,	// BELONG, nonbonus anagrams: ['BELONG', 'LONG']
+    2,	// PASSED, nonbonus anagrams: ['PASSED', 'PASS']
+    2,	// PRESS, nonbonus anagrams: ['PRESS', 'PER']
+    2,	// FINISH, nonbonus anagrams: ['FISH', 'FINISH']
+    2,	// THANK, nonbonus anagrams: ['HAT', 'THANK']
+    2,	// AHEAD, nonbonus anagrams: ['HAD', 'AHEAD']
+    3,	// ALLOW, nonbonus anagrams: ['LAW', 'LOW', 'ALLOW']
+    2,	// VISIT, nonbonus anagrams: ['VISIT', 'SIT']
+    2,	// CAREER, nonbonus anagrams: ['CAREER', 'CARE']
+    4,	// DROWN, nonbonus anagrams: ['DROWN', 'OWN', 'WORD', 'NOW']
+    3,	// THESE, nonbonus anagrams: ['THESE', 'THE', 'SEE']
+    2,	// SPRING, nonbonus anagrams: ['SPRING', 'RING']
+    2,	// CORNER, nonbonus anagrams: ['CORN', 'CORNER']
+    2,	// HEARD, nonbonus anagrams: ['HEARD', 'HEAR']
+    3,	// PUSHED, nonbonus anagrams: ['PUSH', 'PUSHED', 'SHED']
+    2,	// REPLY, nonbonus anagrams: ['REPLY', 'PER']
+    2,	// THICK, nonbonus anagrams: ['THICK', 'HIT']
+    2,	// THING, nonbonus anagrams: ['THIN', 'THING']
+    2,	// WINTER, nonbonus anagrams: ['WIRE', 'WINTER']
+    2,	// ISLAND, nonbonus anagrams: ['LAND', 'ISLAND']
+    2,	// AWFUL, nonbonus anagrams: ['AWFUL', 'LAW']
+    2,	// QUIET, nonbonus anagrams: ['QUIET', 'QUITE']
+    2,	// EMPIRE, nonbonus anagrams: ['EMPIRE', 'MERE']
+    2,	// CRIED, nonbonus anagrams: ['RIDE', 'CRIED']
+    3,	// REACH, nonbonus anagrams: ['CARE', 'REACH', 'HER']
+    2,	// HOURS, nonbonus anagrams: ['HOURS', 'HOUR']
+    2,	// FRUIT, nonbonus anagrams: ['FRUIT', 'FIT']
+    2,	// RETIRE, nonbonus anagrams: ['RETIRE', 'TIRE']
+    2,	// STRING, nonbonus anagrams: ['RING', 'STRING']
+    2,	// NEARLY, nonbonus anagrams: ['NEAR', 'NEARLY']
+    2,	// TOWARD, nonbonus anagrams: ['TOWARD', 'DRAW']
+    2,	// ELECT, nonbonus anagrams: ['LET', 'ELECT']
+    2,	// BEING, nonbonus anagrams: ['BEING', 'BEG']
+    2,	// BECAME, nonbonus anagrams: ['BECAME', 'CAME']
+    2,	// INFORM, nonbonus anagrams: ['FORM', 'INFORM']
+    3,	// DELAY, nonbonus anagrams: ['LAY', 'DEAL', 'DELAY']
+    4,	// WOMAN, nonbonus anagrams: ['WOMAN', 'OWN', 'NOW', 'MAN']
+    2,	// FORCE, nonbonus anagrams: ['FOR', 'FORCE']
+    2,	// OFFER, nonbonus anagrams: ['FOR', 'OFFER']
+    2,	// CAUSE, nonbonus anagrams: ['USE', 'CAUSE']
+    2,	// HUMAN, nonbonus anagrams: ['HUMAN', 'MAN']
+    2,	// FORTY, nonbonus anagrams: ['FORTY', 'FOR']
+    4,	// PARTY, nonbonus anagrams: ['PAY', 'TRY', 'PART', 'PARTY']
+    2,	// HOUSE, nonbonus anagrams: ['HOUSE', 'USE']
+    2,	// WATER, nonbonus anagrams: ['WATER', 'WAR']
+    2,	// INCOME, nonbonus anagrams: ['COME', 'INCOME']
+    2,	// DEATH, nonbonus anagrams: ['DEATH', 'HAT']
+    2,	// GUEST, nonbonus anagrams: ['SET', 'GUEST']
+    4,	// DESIGN, nonbonus anagrams: ['DESIGN', 'SIGN', 'SING', 'SIDE']
+    2,	// SUFFER, nonbonus anagrams: ['SUFFER', 'SURE']
+    2,	// CENTS, nonbonus anagrams: ['CENTS', 'CENT']
+    2,	// ASKED, nonbonus anagrams: ['ASK', 'ASKED']
+    2,	// EIGHT, nonbonus anagrams: ['EIGHT', 'THE']
+    2,	// FILLED, nonbonus anagrams: ['FILLED', 'FILL']
+    3,	// BROWN, nonbonus anagrams: ['BROWN', 'OWN', 'NOW']
+    3,	// WORTH, nonbonus anagrams: ['THROW', 'WORTH', 'ROW']
+    2,	// UNTIL, nonbonus anagrams: ['UNTIL', 'UNIT']
+    2,	// EXTRA, nonbonus anagrams: ['EXTRA', 'ARE']
+    2,	// FOURTH, nonbonus anagrams: ['FOUR', 'FOURTH']
+    2,	// ALONE, nonbonus anagrams: ['ALONE', 'ONE']
+    2,	// SOLVE, nonbonus anagrams: ['SOLVE', 'LOVE']
+    2,	// SUMMER, nonbonus anagrams: ['SUMMER', 'SURE']
+    2,	// SMALL, nonbonus anagrams: ['SMALL', 'ALL']
+    2,	// CATCH, nonbonus anagrams: ['CATCH', 'CAT']
+    4,	// KNOWN, nonbonus anagrams: ['OWN', 'KNOW', 'KNOWN', 'NOW']
+    4,	// WOMEN, nonbonus anagrams: ['OWN', 'MEN', 'NOW', 'WOMEN']
+    2,	// LESSON, nonbonus anagrams: ['LESSON', 'LESS']
+    2,	// DIVIDE, nonbonus anagrams: ['DIED', 'DIVIDE']
+    2,	// YOUNG, nonbonus anagrams: ['YOUNG', 'GUN']
+    3,	// SINGLE, nonbonus anagrams: ['SING', 'SINGLE', 'SIGN']
+    2,	// LEARN, nonbonus anagrams: ['RAN', 'LEARN']
+    2,	// OFTEN, nonbonus anagrams: ['TEN', 'OFTEN']
+    2,	// ALIKE, nonbonus anagrams: ['LIKE', 'ALIKE']
+    2,	// MOTHER, nonbonus anagrams: ['MOTHER', 'MORE']
+    2,	// CLOUD, nonbonus anagrams: ['LOUD', 'CLOUD']
+    2,	// THEIR, nonbonus anagrams: ['THEIR', 'THE']
+    2,	// OTHER, nonbonus anagrams: ['OTHER', 'HER']
+    2,	// THINK, nonbonus anagrams: ['THINK', 'THIN']
+    2,	// INSIDE, nonbonus anagrams: ['INSIDE', 'SIDE']
+    2,	// CARRY, nonbonus anagrams: ['CARRY', 'CAR']
+    3,	// WHOSE, nonbonus anagrams: ['WHOSE', 'WHO', 'HOW']
+    2,	// OBTAIN, nonbonus anagrams: ['OBTAIN', 'BOAT']
+    2,	// REPAIR, nonbonus anagrams: ['PAIR', 'REPAIR']
+    3,	// MEANT, nonbonus anagrams: ['MEANT', 'NAME', 'MEAN']
+    2,	// EVERY, nonbonus anagrams: ['VERY', 'EVERY']
+    3,	// TEACH, nonbonus anagrams: ['EACH', 'TEACH', 'EAT']
+    2,	// BUILT, nonbonus anagrams: ['BUILT', 'BUT']
+    2,	// CLEAN, nonbonus anagrams: ['CAN', 'CLEAN']
+    2,	// AFTER, nonbonus anagrams: ['AFTER', 'ARE']
+    3,	// STICK, nonbonus anagrams: ['SIT', 'STICK', 'ITS']
+    2,	// BEGUN, nonbonus anagrams: ['BEG', 'BEGUN']
+    3,	// THOSE, nonbonus anagrams: ['SET', 'HOT', 'THOSE']
+    2,	// DOZEN, nonbonus anagrams: ['END', 'DOZEN']
+    2,	// HORSE, nonbonus anagrams: ['ROSE', 'HORSE']
+    2,	// SELECT, nonbonus anagrams: ['SELECT', 'ELSE']
+    2,	// REALLY, nonbonus anagrams: ['REAL', 'REALLY']
+    2,	// BEGIN, nonbonus anagrams: ['BEGIN', 'BEG']
+    2,	// DOCTOR, nonbonus anagrams: ['DOOR', 'DOCTOR']
+    2,	// SIGHT, nonbonus anagrams: ['SIGHT', 'SIT']
+    2,	// SHARP, nonbonus anagrams: ['HAS', 'SHARP']
+    2,	// RESULT, nonbonus anagrams: ['RESULT', 'SURE']
+    3,	// UNDER, nonbonus anagrams: ['RUN', 'UNDER', 'RED']
+    2,	// RAISE, nonbonus anagrams: ['RAISE', 'AIR']
+    3,	// RECENT, nonbonus anagrams: ['CENTER', 'CENT', 'RECENT']
+    4,	// HEART, nonbonus anagrams: ['HEART', 'ART', 'HEAR', 'THE']
+    2,	// COLOR, nonbonus anagrams: ['COLOR', 'COOL']
+    2,	// WORDS, nonbonus anagrams: ['WORDS', 'WORD']
+    3,	// STILL, nonbonus anagrams: ['SIT', 'STILL', 'ITS']
+    2,	// ASSURE, nonbonus anagrams: ['ASSURE', 'SURE']
+    2,	// SINCE, nonbonus anagrams: ['SINCE', 'NICE']
+    2,	// SHALL, nonbonus anagrams: ['HAS', 'SHALL']
+    2,	// TRACK, nonbonus anagrams: ['TRACK', 'ART']
+    3,	// EVENT, nonbonus anagrams: ['EVEN', 'TEN', 'EVENT']
+    2,	// DOUBT, nonbonus anagrams: ['DOUBT', 'BUT']
+    2,	// NORTH, nonbonus anagrams: ['NORTH', 'NOR']
+    2,	// NEVER, nonbonus anagrams: ['NEVER', 'EVER']
+    2,	// CALLED, nonbonus anagrams: ['CALLED', 'CALL']
+    2,	// LOCAL, nonbonus anagrams: ['ALL', 'LOCAL']
+    2,	// WROTE, nonbonus anagrams: ['WROTE', 'ROW']
+    2,	// RAPID, nonbonus anagrams: ['RAPID', 'PAID']
+    2,	// PEOPLE, nonbonus anagrams: ['PEOPLE', 'POLE']
+    2,	// REMAIN, nonbonus anagrams: ['REMAIN', 'MAIN']
+    2,	// MAYOR, nonbonus anagrams: ['MAY', 'MAYOR']
+    2,	// FOREST, nonbonus anagrams: ['REST', 'FOREST']
+    3,	// LEAST, nonbonus anagrams: ['LEAST', 'LET', 'SAT']
+    2,	// CHART, nonbonus anagrams: ['ART', 'CHART']
+    2,	// STAMP, nonbonus anagrams: ['MAP', 'STAMP']
+    2,	// TODAY, nonbonus anagrams: ['DAY', 'TODAY']
+    2,	// SENSE, nonbonus anagrams: ['SEEN', 'SENSE']
+    2,	// STONE, nonbonus anagrams: ['STONE', 'TONE']
+    2,	// COAST, nonbonus anagrams: ['COAST', 'SAT']
+    2,	// SHAPE, nonbonus anagrams: ['SHAPE', 'HAS']
+    2,	// SPREAD, nonbonus anagrams: ['READ', 'SPREAD']
+    2,	// CLOSE, nonbonus anagrams: ['LOSE', 'CLOSE']
+    2,	// EARLY, nonbonus anagrams: ['EARLY', 'ARE']
+    2,	// SPEED, nonbonus anagrams: ['DEEP', 'SPEED']
+    2,	// ENTIRE, nonbonus anagrams: ['ENTIRE', 'TIRE']
+    2,	// METAL, nonbonus anagrams: ['MEAT', 'METAL']
+    3,	// THREE, nonbonus anagrams: ['THERE', 'THREE', 'THE']
+    3,	// LEDGE, nonbonus anagrams: ['LED', 'EDGE', 'LEDGE']
+    3,	// FIELD, nonbonus anagrams: ['LED', 'FIELD', 'FILE']
+    2,	// LATER, nonbonus anagrams: ['LATER', 'LATE']
+    2,	// CLEAR, nonbonus anagrams: ['CAR', 'CLEAR']
+    2,	// ESCAPE, nonbonus anagrams: ['CASE', 'ESCAPE']
+    3,	// TRAIN, nonbonus anagrams: ['ART', 'RAIN', 'TRAIN']
+    2,	// TABLE, nonbonus anagrams: ['TABLE', 'EAT']
+    2,	// PAPER, nonbonus anagrams: ['PER', 'PAPER']
+    3,	// LISTEN, nonbonus anagrams: ['LIST', 'LINE', 'LISTEN']
+    3,	// TRADE, nonbonus anagrams: ['ART', 'TRADE', 'DEAR']
+    3,	// EARTH, nonbonus anagrams: ['ARE', 'EARTH', 'THE']
+    3,	// ALMOST, nonbonus anagrams: ['LAST', 'ALMOST', 'MOST']
+    2,	// SEVEN, nonbonus anagrams: ['EVEN', 'SEVEN']
+    2,	// SISTER, nonbonus anagrams: ['SISTER', 'REST']
+    2,	// SERVE, nonbonus anagrams: ['SERVE', 'EVER']
+    2,	// RELIEF, nonbonus anagrams: ['LIFE', 'RELIEF']
+    2,	// START, nonbonus anagrams: ['START', 'ART']
+    3,	// STREET, nonbonus anagrams: ['REST', 'STREET', 'TEST']
+    2,	// STREAM, nonbonus anagrams: ['STREAM', 'REST']
+    2,	// DESIRE, nonbonus anagrams: ['DESIRE', 'SIDE']
+    2,	// STEEL, nonbonus anagrams: ['STEEL', 'SET']
+    2,	// ARREST, nonbonus anagrams: ['REST', 'ARREST']

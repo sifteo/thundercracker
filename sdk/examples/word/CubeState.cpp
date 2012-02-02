@@ -316,7 +316,23 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
             teethImageIndex == ImageIndex_Teeth ||
             teethImageIndex == ImageIndex_Teeth_NoBlip)))
     {
-        bg1.DrawAsset(Vec2(8,11), FontSmall, GameStateMachine::getNumAnagramsRemaining());
+        ASSERT(GameStateMachine::getNumAnagramsRemaining() < 100);
+        unsigned tensDigit = GameStateMachine::getNumAnagramsRemaining() / 10;
+        if (tensDigit)
+        {
+            bg1.DrawAsset(Vec2(7,11), FontSmall, tensDigit);
+        }
+        bg1.DrawAsset(Vec2(8,11), FontSmall, GameStateMachine::getNumAnagramsRemaining() % 10);
+
+        if (GameStateMachine::getNumBonusAnagramsRemaining())
+        {
+            tensDigit = GameStateMachine::getNumBonusAnagramsRemaining() / 10;
+            if (tensDigit)
+            {
+                bg1.DrawAsset(Vec2(1,11), FontBonus, tensDigit);
+            }
+            bg1.DrawAsset(Vec2(2,11), FontBonus, GameStateMachine::getNumBonusAnagramsRemaining() % 10);
+        }
     }
 
     bg1.Flush(); // TODO only flush if mask has changed recently

@@ -8,7 +8,7 @@ from ctypes import *
 import operator
 
 seed_word_lens = [3, 4, 5, 6]#, 9]
-min_common_anagrams = 2
+min_nonbonus_anagrams = 2
 word_list_leading_spaces = {}
 
 def find_anagrams(string, dictionary, letters_per_cube):
@@ -154,7 +154,7 @@ def generate_dict():
             num_seed_repeats = 0
             # skip it if a pre-existing seed word has the same anagram set 
             bad = False
-            num_common_anagrams = 0
+            num_nonbonus_anagrams = 0
             for w in anagrams:
                 if len(w) == len(word) and w.upper() in word_list_used.keys():
                     num_seed_repeats += 1
@@ -163,10 +163,10 @@ def generate_dict():
                     bad = True
                     break
                 if w in word_list:
-                    num_common_anagrams += 1
-            if num_seed_repeats == 0 and not bad and num_common_anagrams >= min_common_anagrams:
+                    num_nonbonus_anagrams += 1
+            if num_seed_repeats == 0 and not bad and num_nonbonus_anagrams >= min_nonbonus_anagrams:
                 #print word + ": " + str(len(anagrams))
-                word_list_used[word.upper()] = len(anagrams) - num_common_anagrams
+                word_list_used[word.upper()] = len(anagrams) - num_nonbonus_anagrams
                 num_anagrams = len(anagrams)
                 if max_anagrams < num_anagrams:
                     max_anagrams = num_anagrams
@@ -193,12 +193,12 @@ def generate_dict():
         for letter in word:
             bits |= ((1 + ord(letter) - ord('A')) << (letter_index * letter_bits))
             letter_index += 1
-        if word in word_list_used.keys():
+        if word in word_list.keys():
             bits |= (1 << 31)
             #print "533D: " + word
-            fi.write(hex(bits) + ",\t\t// " + word + ", seed word (533D: " + str(len(word)) + ")\n")
+            fi.write(hex(bits) + ",\t\t// " + word + ", length: " + str(len(word)) + ")\n")
         else:
-            fi.write(hex(bits) + ",\t\t// " + word + "\n")
+            fi.write(hex(bits) + ",\t\t// " + word + ", (bonus), length: " + str(len(word)) + ")\n")
     fi.close()
     
     # sort word list used by value numeric (keys by values in dict)
@@ -207,14 +207,29 @@ def generate_dict():
 	# TODO pack puzzles somehow
     fi = open("word_list_used.cpp", "w")
     ficnt = open("word_list_used_anagram_count.cpp", "w")
+    ficntu = open("word_list_used_anagram_count_bonus.cpp", "w")
     filead = open("word_list_leading_spaces.cpp", "w")
     for word, value in sorted_word_list_used:
         if letters_per_cube[len(word) - 1] > 1:
+            anagrams = find_anagrams(word, dictionary, letters_per_cube[len(word) - 1]).keys()
+            anagrams_nonbonus = []
+            anagrams_bonus = []
+            for a in anagrams:
+                if a in word_list.keys():
+                    anagrams_nonbonus.append(a)
+                else:
+                    anagrams_bonus.append(a)
+            #print word + " anagrams:" + str(anagrams)
+            #print " c. anagrams:" + str(anagrams_nonbonus) 
+            #print " u. anagrams:" + str(anagrams_bonus)
+            num_anagrams = len(anagrams)
             fi.write("    \"" + word + "\",\n")
-            ficnt.write("    " + str(len(find_anagrams(word, dictionary, letters_per_cube[len(word) - 1]))) + ",\t// " + word + ", uncommon anagrams: " + str(word_list_used[word]) + "\n")
-            filead.write("    " + str(word in word_list_leading_spaces.keys()).lower() + ",\t// " + word + ", uncommon anagrams: " + str(word_list_used[word]) + "\n")
+            ficnt.write("    " + str(len(anagrams_nonbonus)) + ",\t// " + word + ", nonbonus anagrams: " + str(anagrams_nonbonus) + "\n")
+            ficntu.write("    " + str(len(anagrams_bonus)) + ",\t// " + word + ", bonus anagrams: " + str(anagrams_bonus) + "\n")
+            filead.write("    " + str(word in word_list_leading_spaces.keys()).lower() + ",\t// " + word + ", bonus anagrams: " + str(word_list_used[word]) + "\n")
     fi.close()    
     ficnt.close()
+    ficntu.close()
     filead.close()
 
     # skip the prototype code below, it just generates the word lists for the demo, if 

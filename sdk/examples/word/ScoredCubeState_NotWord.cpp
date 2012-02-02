@@ -32,26 +32,26 @@ unsigned ScoredCubeState_NotWord::onEvent(unsigned eventID, const EventData& dat
             {
 
                 char wordBuffer[MAX_LETTERS_PER_WORD + 1];
-                if (getStateMachine().beginsWord(isOldWord, wordBuffer))
+                EventData wordFoundData;
+                if (getStateMachine().beginsWord(isOldWord, (char*)wordBuffer, wordFoundData.mWordFound.mBonus))
                 {
-                    EventData data;
-                    data.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
-                    data.mWordFound.mWord = wordBuffer;
+                    wordFoundData.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
+                    wordFoundData.mWordFound.mWord = wordBuffer;
 
                     if (isOldWord)
                     {
-                        GameStateMachine::sOnEvent(EventID_OldWordFound, data);
+                        GameStateMachine::sOnEvent(EventID_OldWordFound, wordFoundData);
                         return CubeStateIndex_OldWordScored;
                     }
 
-                    GameStateMachine::sOnEvent(EventID_NewWordFound, data);
+                    GameStateMachine::sOnEvent(EventID_NewWordFound, wordFoundData);
                     return CubeStateIndex_NewWordScored;
                 }
                 else
                 {
-                    EventData data;
-                    data.mWordBroken.mCubeIDStart = getStateMachine().getCube().id();
-                    GameStateMachine::sOnEvent(EventID_WordBroken, data);
+                    EventData wordBrokenData;
+                    wordBrokenData.mWordBroken.mCubeIDStart = getStateMachine().getCube().id();
+                    GameStateMachine::sOnEvent(EventID_WordBroken, wordBrokenData);
 
                     return CubeStateIndex_NotWordScored;
                 }

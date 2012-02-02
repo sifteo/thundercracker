@@ -126,7 +126,9 @@ void ScoredGameState::createNewAnagram()
 {
     // make a new anagram of letters halfway through the shuffle animation
     EventData data;
-    Dictionary::pickWord(data.mNewAnagram.mWord, data.mNewAnagram.mNumAnagrams);
+    Dictionary::pickWord(data.mNewAnagram.mWord,
+                         data.mNewAnagram.mNumAnagrams,
+                         data.mNewAnagram.mNumBonusAnagrams);
 
     // add any leading and/or trailing spaces to odd-length words
     char spacesAdded[MAX_LETTERS_PER_WORD + 1];

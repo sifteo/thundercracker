@@ -5,7 +5,7 @@ EyeRight = image{"wc_eyeball_right.png", width=16, height=16, quality=10, pinned
 EyeLeftBlink = image{"wc_eyeball_left_blink.png", width=16, height=16, quality=10, pinned=true}
 EyeRightBlink = image{"wc_eyeball_right_blink.png", width=16, height=16, quality=10, pinned=true}
 LetterZzZ = image{"wc_zzz.png", width=8, height=16, quality=10, pinned=true}
-Font1Letter = image{"WC_letters.png", width=120, height=88, quality=10}
+Font1Letter = image{"WC_letters.png", width=120, height=88, quality=0}
 Font2Letter = image{"font_2ltr.png", width=56, height=56, quality=10}
 LetterBG = image{"wc_background.png", quality=10}
 StartPrompt = image{"wc_shaketoplay.png", width=48, height=56, quality=10}
@@ -32,6 +32,7 @@ TeethNewWord3 = image{"WC_letters_connected_3.png", width=56, height=32, quality
 TeethNewWord4 = image{"WC_letters_connected_4.png", width=56, height=32, quality=10}
 TeethNewWord5 = image{"WC_letters_connected_5.png", width=56, height=32, quality=10}
 FontSmall = image{"score_font.png", width=8, height=16, quality=10}
+FontBonus = image{"score_font_bonus.png", width=8, height=16, quality=10}
 FontTeeth = image{"teeth_numbers.png", width=16, height=16, quality=10}
 TeethClockPulse3 = image{"teeth_3.png", width=16, height=16, quality=10}
 TeethClockPulse2 = image{"teeth_2.png", width=16, height=16, quality=10}

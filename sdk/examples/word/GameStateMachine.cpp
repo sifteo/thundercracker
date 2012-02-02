@@ -13,7 +13,7 @@ GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(Cube cubes[]) :
     StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
-    mNumAnagramsRemaining(0)
+    mNumAnagramsRemaining(0), mNumBonusAnagramsRemaining(0)
 {
     ASSERT(cubes != 0);
     sInstance = this;
@@ -65,6 +65,7 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
     case EventID_NewAnagram:
         mAnagramCooldown = ANAGRAM_COOLDOWN;
         mNumAnagramsRemaining = data.mNewAnagram.mNumAnagrams;
+        mNumBonusAnagramsRemaining = data.mNewAnagram.mNumBonusAnagrams;
         break;
 
     case EventID_NewWordFound:
@@ -72,7 +73,14 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             unsigned len = _SYS_strnlen(data.mWordFound.mWord, 32);
             mScore += len;
             mNewWordLength = len;
-            --mNumAnagramsRemaining;
+            if (data.mWordFound.mBonus)
+            {
+                --mNumBonusAnagramsRemaining;
+            }
+            else
+            {
+                --mNumAnagramsRemaining;
+            }
             // TODO multiple letters per cube
             // TODO count active cubes
             /* TODO extra time sound

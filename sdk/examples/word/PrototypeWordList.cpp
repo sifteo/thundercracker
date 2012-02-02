@@ -29,744 +29,742 @@ static const char sList[][7] =
 // 5 bits per letter, up to 6 letter words, plus flags
 static const uint32_t sList[] =
 {
-    0x2b041,		// ABLE
-    0x1461,		// ACE
-    0x21461,		// ACED
-    0x99461,		// ACES
-    0x2b461,		// ACME
-    0x2c861,		// ACRE
-    0x5061,		// ACT
-    0xa49098c1L,		// AFFAIR, seed word (533D: 6)
-    0x50c1,		// AFT
-    0x8122d0c1L,		// AFTER, seed word (533D: 5)
-    0x80409501L,		// AHEAD, seed word (533D: 5)
-    0x3121,		// AIL
-    0x4921,		// AIR
-    0x1581,		// ALE
-    0x8055a581L,		// ALIKE, seed word (533D: 5)
-    0x3181,		// ALL
-    0x8177b181L,		// ALLOW, seed word (533D: 5)
-    0xcb181,		// ALLY
-    0xa937b581L,		// ALMOST, seed word (533D: 6)
-    0x9b581,		// ALMS
-    0x80573d81L,		// ALONE, seed word (533D: 5)
-    0x122d181,		// ALTER
-    0x9d181,		// ALTS
-    0x725a1,		// AMIN
-    0x41a1,		// AMP
-    0x11c1,		// AND
-    0x51c1,		// ANT
-    0x21601,		// APED
-    0x91601,		// APER
-    0xe41,		// ARC
-    0x40e41,		// ARCH
-    0x1641,		// ARE
-    0xa932ca41L,		// ARREST, seed word (533D: 6)
-    0x5241,		// ART
-    0x9d241,		// ARTS
-    0x66641,		// ARYL
-    0x261,		// AS
-    0x1478e61,		// ASCOT
-    0x2e61,		// ASK
-    0x8042ae61L,		// ASKED, seed word (533D: 5)
-    0x8b2ace61L,		// ASSURE, seed word (533D: 6)
-    0x281,		// AT
-    0x1681,		// ATE
-    0x2e1,		// AW
-    0x80ca9ae1L,		// AWFUL, seed word (533D: 5)
-    0x32e1,		// AWL
-    0x2b022,		// BALE
-    0x8ad08ca2L,		// BECAME, seed word (533D: 6)
-    0x8ad78ca2L,		// BECOME, seed word (533D: 6)
-    0x1ca2,		// BEG
-    0x80e49ca2L,		// BEGIN, seed word (533D: 5)
-    0x80ea9ca2L,		// BEGUN, seed word (533D: 5)
-    0x807724a2L,		// BEING, seed word (533D: 5)
-    0x8ee7b0a2L,		// BELONG, seed word (533D: 6)
-    0x8a44cca2L,		// BESIDE, seed word (533D: 6)
-    0x3922,		// BIN
-    0x53b922,		// BINGE
-    0xa0582,		// BLAT
-    0x5a0582,		// BLATE
-    0xa05e2,		// BOAT
-    0x344b9e2,		// BONITA
-    0xd1e2,		// BOTA
-    0xbbe42,		// BROW
-    0x80ebbe42L,		// BROWN, seed word (533D: 5)
-    0x814626a2L,		// BUILT, seed word (533D: 5)
-    0x3aa2,		// BUN
-    0x52a2,		// BUT
-    0x29023,		// CADE
-    0x63023,		// CALL
-    0x88563023L,		// CALLED, seed word (533D: 6)
-    0x2b423,		// CAME
-    0x3823,		// CAN
-    0x2c023,		// CAPE
-    0x4823,		// CAR
-    0x2c823,		// CARE
-    0xa452c823L,		// CAREER, seed word (533D: 6)
-    0x564823,		// CARLE
-    0x81994823L,		// CARRY, seed word (533D: 5)
-    0x2cc23,		// CASE
-    0x80005023L,		// CAT, seed word (533D: 3)
-    0x8081d023L,		// CATCH, seed word (533D: 5)
-    0x8059d423L,		// CAUSE, seed word (533D: 5)
-    0x30a3,		// CEL
-    0xa38a3,		// CENT
-    0x245a38a3,		// CENTER
-    0xb2a38a3,		// CENTRE
-    0x813a38a3L,		// CENTS, seed word (533D: 5)
-    0x2c8a3,		// CERE
-    0x7c8a3,		// CERO
-    0x90503,		// CHAR
-    0x81490503L,		// CHART, seed word (533D: 5)
-    0xa0503,		// CHAT
-    0x1409503,		// CHEAT
-    0x80e09583L,		// CLEAN, seed word (533D: 5)
-    0x81209583L,		// CLEAR, seed word (533D: 5)
-    0x8059bd83L,		// CLOSE, seed word (533D: 5)
-    0x804abd83L,		// CLOUD, seed word (533D: 5)
-    0x605e3,		// COAL
-    0x814985e3L,		// COAST, seed word (533D: 5)
-    0x725e3,		// COIN
-    0x31e3,		// COL
-    0xb1e3,		// COLA
-    0x132b1e3,		// COLES
-    0x8127b1e3L,		// COLOR, seed word (533D: 5)
-    0x2b5e3,		// COME
-    0x4b9e3,		// CONI
-    0x63de3,		// COOL
-    0xcc1e3,		// COPY
-    0x49e3,		// COR
-    0x2c9e3,		// CORE
-    0x749e3,		// CORN
-    0xa45749e3L,		// CORNER, seed word (533D: 6)
-    0x51e3,		// COT
-    0x8042a643L,		// CRIED, seed word (533D: 5)
-    0x6643,		// CRY
-    0x12a3,		// CUD
-    0x2024,		// DAH
-    0x8051b824L,		// DANCE, seed word (533D: 5)
-    0x9c024,		// DAPS
-    0x2c824,		// DARE
-    0x7d024,		// DATO
-    0x6424,		// DAY
-    0x604a4,		// DEAL
-    0x904a4,		// DEAR
-    0x808a04a4L,		// DEATH, seed word (533D: 5)
-    0x814a4,		// DEEP
-    0x13814a4,		// DEEPS
-    0x914a4,		// DEER
-    0x498a4,		// DEFI
-    0x30a4,		// DEL
-    0x8190b0a4L,		// DELAY, seed word (533D: 5)
-    0x630a4,		// DELL
-    0x38a4,		// DEN
-    0x140c8a4,		// DERAT
-    0x2c8a4,		// DERE
-    0x9c74cca4L,		// DESIGN, seed word (533D: 6)
-    0x8b24cca4L,		// DESIRE, seed word (533D: 6)
-    0x5cca4,		// DESK
-    0x64a4,		// DEY
-    0x21524,		// DIED
-    0x8a44d924L,		// DIVIDE, seed word (533D: 6)
-    0x1e4,		// DO
-    0xa4fa0de4L,		// DOCTOR, seed word (533D: 6)
-    0x80001de4L,		// DOG, seed word (533D: 3)
-    0x93de4,		// DOOR
-    0x51e4,		// DOT
-    0x814155e4L,		// DOUBT, seed word (533D: 5)
-    0x80e2e9e4L,		// DOZEN, seed word (533D: 5)
-    0xb8644,		// DRAW
-    0x80ebbe44L,		// DROWN, seed word (533D: 5)
-    0x3baa4,		// DUNG
-    0x8ee4caa4L,		// DURING, seed word (533D: 6)
-    0x40c25,		// EACH
-    0x4825,		// EAR
-    0x81964825L,		// EARLY, seed word (533D: 5)
-    0x808a4825L,		// EARTH, seed word (533D: 5)
-    0x5025,		// EAT
-    0x29c85,		// EDGE
-    0x2085,		// EDH
-    0x9a085,		// EDHS
-    0x81441d25L,		// EIGHT, seed word (533D: 5)
-    0x70585,		// ELAN
-    0x1185,		// ELD
-    0x81419585L,		// ELECT, seed word (533D: 5)
-    0x4d85,		// ELS
-    0x2cd85,		// ELSE
-    0x8b24c1a5L,		// EMPIRE, seed word (533D: 6)
-    0x11c5,		// END
-    0x2934b1c5,		// ENLIST
-    0x4dc5,		// ENS
-    0x8b24d1c5L,		// ENTIRE, seed word (533D: 6)
-    0x39e5,		// EON
-    0xa205,		// EPHA
-    0x130a205,		// EPHAS
-    0x645,		// ERA
-    0x98645,		// ERAS
-    0x1645,		// ERE
-    0x3a45,		// ERN
-    0x2ba45,		// ERNE
-    0x4e45,		// ERS
-    0xa4e45,		// ERST
-    0x8b008e65L,		// ESCAPE, seed word (533D: 6)
-    0x4e65,		// ESS
-    0x685,		// ETA
-    0x2285,		// ETH
-    0x122a285,		// ETHER
-    0x4d685,		// ETUI
-    0x16c5,		// EVE
-    0x716c5,		// EVEN
-    0x13716c5,		// EVENS
-    0x814716c5L,		// EVENT, seed word (533D: 5)
-    0x916c5,		// EVER
-    0x819916c5L,		// EVERY, seed word (533D: 5)
-    0x80195305L,		// EXTRA, seed word (533D: 5)
-    0x92426,		// FAIR
-    0x8127d826L,		// FAVOR, seed word (533D: 5)
-    0x48a6,		// FER
-    0x2c8a6,		// FERE
-    0x1126,		// FID
-    0x80461526L,		// FIELD, seed word (533D: 5)
-    0x81441d26L,		// FIGHT, seed word (533D: 5)
-    0x8b2a9d26L,		// FIGURE, seed word (533D: 6)
-    0x2b126,		// FILE
-    0x42b126,		// FILED
-    0x63126,		// FILL
-    0x88563126L,		// FILLED, seed word (533D: 6)
-    0x9134b926L,		// FINISH, seed word (533D: 6)
-    0x2c926,		// FIRE
-    0x44d26,		// FISH
-    0x5126,		// FIT
-    0x8127bd86L,		// FLOOR, seed word (533D: 5)
-    0x725e6,		// FOIN
-    0x39e6,		// FON
-    0x49e6,		// FOR
-    0x8051c9e6L,		// FORCE, seed word (533D: 5)
-    0x2c9e6,		// FORE
-    0xa932c9e6L,		// FOREST, seed word (533D: 6)
-    0x6c9e6,		// FORM
-    0x819a49e6L,		// FORTY, seed word (533D: 5)
-    0x245a4de6,		// FOSTER
-    0x955e6,		// FOUR
-    0x914955e6L,		// FOURTH, seed word (533D: 6)
-    0x3e46,		// FRO
-    0x81473e46L,		// FRONT, seed word (533D: 5)
-    0x8144d646L,		// FRUIT, seed word (533D: 5)
-    0x4aa6,		// FUR
-    0x214a7,		// GEED
-    0x30a7,		// GEL
-    0xab8a7,		// GENU
-    0x9a507,		// GHIS
-    0x1527,		// GIE
-    0x3927,		// GIN
-    0x55c7,		// GNU
-    0x1e7,		// GO
-    0x11e7,		// GOD
-    0x65e7,		// GOY
-    0x814996a7L,		// GUEST, seed word (533D: 5)
-    0x3aa7,		// GUN
-    0x52a7,		// GUT
-    0x1028,		// HAD
-    0x63028,		// HALL
-    0x1363028,		// HALLS
-    0x5b828,		// HANK
-    0x84828,		// HARP
-    0x1384828,		// HARPS
-    0x4c28,		// HAS
-    0x5028,		// HAT
-    0x42d028,		// HATED
-    0x904a8,		// HEAR
-    0x804904a8L,		// HEARD, seed word (533D: 5)
-    0x814904a8L,		// HEART, seed word (533D: 5)
-    0x924a8,		// HEIR
-    0x48a8,		// HER
-    0x4ca8,		// HES
-    0x50a8,		// HET
-    0x58d28,		// HICK
-    0x5128,		// HIT
-    0x1e8,		// HO
-    0x15e8,		// HOE
-    0x995e8,		// HOES
-    0x2b1e8,		// HOLE
-    0x8059c9e8L,		// HORSE, seed word (533D: 5)
-    0x2cde8,		// HOSE
-    0x51e8,		// HOT
-    0x955e8,		// HOUR
-    0x813955e8L,		// HOURS, seed word (533D: 5)
-    0x8059d5e8L,		// HOUSE, seed word (533D: 5)
-    0x5de8,		// HOW
-    0x80e0b6a8L,		// HUMAN, seed word (533D: 5)
-    0x3aa8,		// HUN
-    0x1469,		// ICE
-    0x8ad78dc9L,		// INCOME, seed word (533D: 6)
-    0x799c9,		// INFO
-    0x9b2799c9L,		// INFORM, seed word (533D: 6)
-    0x2dc9,		// INK
-    0x4dc9,		// INS
-    0x8a44cdc9L,		// INSIDE, seed word (533D: 6)
-    0x21649,		// IRED
-    0x269,		// IS
-    0x88e0b269L,		// ISLAND, seed word (533D: 6)
-    0x2b269,		// ISLE
-    0x805ace69L,		// ISSUE, seed word (533D: 5)
-    0x289,		// IT
-    0x4e89,		// ITS
-    0x4ab,		// KEA
-    0x392b,		// KIN
-    0xbbdcb,		// KNOW
-    0x80ebbdcbL,		// KNOWN, seed word (533D: 5)
-    0x2902c,		// LADE
-    0x9b42c,		// LAMS
-    0x2382c,		// LAND
-    0x482c,		// LAR
-    0xa4c2c,		// LAST
-    0x502c,		// LAT
-    0x2d02c,		// LATE
-    0x8122d02cL,		// LATER, seed word (533D: 5)
-    0x9d02c,		// LATS
-    0x5c2c,		// LAW
-    0x642c,		// LAY
-    0x704ac,		// LEAN
-    0x904ac,		// LEAR
-    0x80e904acL,		// LEARN, seed word (533D: 5)
-    0x984ac,		// LEAS
-    0x814984acL,		// LEAST, seed word (533D: 5)
-    0x10ac,		// LED
-    0x805390acL,		// LEDGE, seed word (533D: 5)
-    0x994ac,		// LEES
-    0xa14ac,		// LEET
-    0x13a14ac,		// LEETS
-    0x1cac,		// LEG
-    0x9a4ac,		// LEIS
-    0x7b8ac,		// LENO
-    0x9ccac,		// LESS
-    0x9cf9ccacL,		// LESSON, seed word (533D: 6)
-    0x50ac,		// LET
-    0x3152c,		// LIEF
-    0x2453152c,		// LIEFER
-    0x7152c,		// LIEN
-    0x9152c,		// LIER
-    0x2992c,		// LIFE
-    0x2ad2c,		// LIKE
-    0x2b92c,		// LINE
-    0x2c92c,		// LIRE
-    0xa4d2c,		// LIST
-    0x9c5a4d2cL,		// LISTEN, seed word (533D: 6)
-    0x512c,		// LIT
-    0x9d12c,		// LITS
-    0x289ec,		// LOBE
-    0x80c08decL,		// LOCAL, seed word (533D: 5)
-    0x78dec,		// LOCO
-    0x3b9ec,		// LONG
-    0x2cdec,		// LOSE
-    0x255ec,		// LOUD
-    0x2d9ec,		// LOVE
-    0x132d9ec,		// LOVES
-    0x5dec,		// LOW
-    0x172c,		// LYE
-    0x2cb2c,		// LYRE
-    0x7242d,		// MAIN
-    0x382d,		// MAN
-    0x402d,		// MAP
-    0x2c82d,		// MARE
-    0xa4c2d,		// MAST
-    0x245a4c2d,		// MASTER
-    0x9d02d,		// MATS
-    0x642d,		// MAY
-    0x8127e42dL,		// MAYOR, seed word (533D: 5)
-    0x704ad,		// MEAN
-    0x814704adL,		// MEANT, seed word (533D: 5)
-    0xa04ad,		// MEAT
-    0x30ad,		// MEL
-    0xa45134adL,		// MEMBER, seed word (533D: 6)
-    0x38ad,		// MEN
-    0xbbcad,		// MEOW
-    0x2c8ad,		// MERE
-    0x50ad,		// MET
-    0xd0ad,		// META
-    0x80c0d0adL,		// METAL, seed word (533D: 5)
-    0x8ac2112dL,		// MIDDLE, seed word (533D: 6)
-    0x2b12d,		// MILE
-    0xb1ed,		// MOLA
-    0x7b9ed,		// MONO
-    0x73ded,		// MOON
-    0x49ed,		// MOR
-    0x190c9ed,		// MORAY
-    0x2c9ed,		// MORE
-    0xa4ded,		// MOST
-    0x451ed,		// MOTH
-    0xa45451edL,		// MOTHER, seed word (533D: 6)
-    0x9cf4d1edL,		// MOTION, seed word (533D: 6)
-    0x9d1ed,		// MOTS
-    0x342e,		// NAM
-    0x2b42e,		// NAME
-    0x904ae,		// NEAR
-    0xb2c904aeL,		// NEARLY, seed word (533D: 6)
-    0x5b48ae,		// NERVE
-    0xa4cae,		// NEST
-    0x50ae,		// NET
-    0x9d0ae,		// NETS
-    0x2d8ae,		// NEVE
-    0x8122d8aeL,		// NEVER, seed word (533D: 5)
-    0x132d8ae,		// NEVES
-    0x92e,		// NIB
-    0x28d2e,		// NICE
-    0x2912e,		// NIDE
-    0x4cd2e,		// NISI
-    0x512e,		// NIT
-    0x1ee,		// NO
-    0x615ee,		// NOEL
-    0x49ee,		// NOR
-    0x808a49eeL,		// NORTH, seed word (533D: 5)
-    0x51ee,		// NOT
-    0x8a34d1eeL,		// NOTICE, seed word (533D: 6)
-    0x80005deeL,		// NOW, seed word (533D: 3)
-    0x228e,		// NTH
-    0xaae,		// NUB
-    0x292ae,		// NUDE
-    0x12292ae,		// NUDER
-    0x9c90d04fL,		// OBTAIN, seed word (533D: 6)
-    0x9846f,		// OCAS
-    0xb30a8c6fL,		// OCCUPY, seed word (533D: 6)
-    0x8f,		// OD
-    0x93c8f,		// ODOR
-    0x812298cfL,		// OFFER, seed word (533D: 5)
-    0x80e2d0cfL,		// OFTEN, seed word (533D: 5)
-    0x10f,		// OH
-    0x4d0f,		// OHS
-    0x9958f,		// OLES
-    0xb18f,		// OLLA
-    0x915af,		// OMER
-    0xa25af,		// OMIT
-    0x1cf,		// ON
-    0x28dcf,		// ONCE
-    0x15cf,		// ONE
-    0x8122924fL,		// ORDER, seed word (533D: 5)
-    0x7924f,		// ORDO
-    0x9964f,		// ORES
-    0x8122a28fL,		// OTHER, seed word (533D: 5)
-    0x40eaf,		// OUCH
-    0x52af,		// OUT
-    0x2ef,		// OW
-    0x3aef,		// OWN
-    0x49030,		// PADI
-    0x22430,		// PAID
-    0x92430,		// PAIR
-    0x3430,		// PAM
-    0x4030,		// PAP
-    0x8122c030L,		// PAPER, seed word (533D: 5)
-    0x4830,		// PAR
-    0x2c830,		// PARE
-    0xa4830,		// PART
-    0x819a4830L,		// PARTY, seed word (533D: 5)
-    0x9cc30,		// PASS
-    0x8859cc30L,		// PASSED, seed word (533D: 6)
-    0x6430,		// PAY
-    0x265184b0,		// PEACES
-    0x13290b0,		// PEDES
-    0x214b0,		// PEED
-    0x614b0,		// PEEL
-    0x994b0,		// PEES
-    0x2b0b0,		// PELE
-    0x8ac83cb0L,		// PEOPLE, seed word (533D: 6)
-    0x7c0b0,		// PEPO
-    0x48b0,		// PER
-    0x4cb0,		// PES
-    0x91530,		// PIER
-    0x2b1f0,		// POLE
-    0x2c1f0,		// POPE
-    0x81399650L,		// PRESS, seed word (533D: 5)
-    0x44eb0,		// PUSH
-    0x88544eb0L,		// PUSHED, seed word (533D: 6)
-    0x8142a6b1L,		// QUIET, seed word (533D: 5)
-    0x5a26b1,		// QUITE
-    0x58c32,		// RACK
-    0x1032,		// RAD
-    0x72432,		// RAIN
-    0x8059a432L,		// RAISE, seed word (533D: 5)
-    0x2b032,		// RALE
-    0x3832,		// RAN
-    0x4b832,		// RANI
-    0x4032,		// RAP
-    0x8044c032L,		// RAPID, seed word (533D: 5)
-    0x2c832,		// RARE
-    0x2932c832,		// RAREST
-    0x245a4c32,		// RASTER
-    0x5032,		// RAT
-    0x45032,		// RATH
-    0x545032,		// RATHE
-    0x9d032,		// RATS
-    0x5c32,		// RAW
-    0x808184b2L,		// REACH, seed word (533D: 5)
-    0x204b2,		// READ
-    0x819204b2L,		// READY, seed word (533D: 5)
-    0x604b2,		// REAL
-    0xb2c604b2L,		// REALLY, seed word (533D: 6)
-    0x684b2,		// REAM
-    0x804b2,		// REAP
-    0x904b2,		// REAR
-    0xa8e28cb2L,		// RECENT, seed word (533D: 6)
-    0x10b2,		// RED
-    0x290b2,		// REDE
-    0x14b2,		// REE
-    0x214b2,		// REED
-    0x314b2,		// REEF
-    0x18b2,		// REF
-    0xa18b2,		// REFT
-    0x324b2,		// REIF
-    0x724b2,		// REIN
-    0x9a4b2,		// REIS
-    0x8c54b0b2L,		// RELIEF, seed word (533D: 6)
-    0xcb0b2,		// RELY
-    0x9c90b4b2L,		// REMAIN, seed word (533D: 6)
-    0xa38b2,		// RENT
-    0x40b2,		// REP
-    0xa490c0b2L,		// REPAIR, seed word (533D: 6)
-    0x819640b2L,		// REPLY, seed word (533D: 5)
-    0x9c0b2,		// REPS
-    0x4cb2,		// RES
-    0xa44ccb2,		// RESIDE
-    0x2934ccb2,		// RESIST
-    0xa4cb2,		// REST
-    0xa8caccb2L,		// RESULT, seed word (533D: 6)
-    0x50b2,		// RET
-    0x2d0b2,		// RETE
-    0x2932d0b2,		// RETEST
-    0xae4d0b2,		// RETINE
-    0x8b24d0b2L,		// RETIRE, seed word (533D: 6)
-    0x9d0b2,		// RETS
-    0x9d2ad0b2L,		// RETURN, seed word (533D: 6)
-    0x532,		// RIA
-    0x1132,		// RID
-    0x29132,		// RIDE
-    0x3b932,		// RING
-    0x9c132,		// RIPS
-    0xdf2,		// ROC
-    0x291f2,		// RODE
-    0x995f2,		// ROES
-    0x35f2,		// ROM
-    0x23df2,		// ROOD
-    0x2cdf2,		// ROSE
-    0x51f2,		// ROT
-    0x2d1f2,		// ROTE
-    0x5df2,		// ROW
-    0x80c0e5f2L,		// ROYAL, seed word (533D: 5)
-    0x3ab2,		// RUN
-    0x452b2,		// RUTH
-    0x1732,		// RYE
-    0x2b033,		// SALE
-    0x5033,		// SAT
-    0x80005c33L,		// SAW, seed word (533D: 3)
-    0x1471473,		// SCENT
-    0xcb3,		// SEC
-    0x88e78cb3L,		// SECOND, seed word (533D: 6)
-    0xa0cb3,		// SECT
-    0x14b3,		// SEE
-    0x614b3,		// SEEL
-    0x714b3,		// SEEN
-    0x814b3,		// SEEP
-    0x30b3,		// SEL
-    0xa832b0b3L,		// SELECT, seed word (533D: 6)
-    0x38b3,		// SEN
-    0x238b3,		// SEND
-    0x2b8b3,		// SENE
-    0x8059b8b3L,		// SENSE, seed word (533D: 5)
-    0x48b3,		// SER
-    0x805b48b3L,		// SERVE, seed word (533D: 5)
-    0x50b3,		// SET
-    0x80e2d8b3L,		// SEVEN, seed word (533D: 5)
-    0x122d8b3,		// SEVER
-    0x5cb3,		// SEW
-    0x513,		// SHA
-    0x80c60513L,		// SHALL, seed word (533D: 5)
-    0x80580513L,		// SHAPE, seed word (533D: 5)
-    0x81090513L,		// SHARP, seed word (533D: 5)
-    0x21513,		// SHED
-    0x72513,		// SHIN
-    0xbbd13,		// SHOW
-    0x80ebbd13L,		// SHOWN, seed word (533D: 5)
-    0x133,		// SI
-    0x60533,		// SIAL
-    0x29133,		// SIDE
-    0x41d33,		// SIGH
-    0x81441d33L,		// SIGHT, seed word (533D: 5)
-    0x71d33,		// SIGN
-    0x8571d33,		// SIGNED
-    0x3933,		// SIN
-    0x8051b933L,		// SINCE, seed word (533D: 5)
-    0x3b933,		// SING
-    0x853b933,		// SINGED
-    0x8ac3b933L,		// SINGLE, seed word (533D: 6)
-    0x2c933,		// SIRE
-    0xa45a4d33L,		// SISTER, seed word (533D: 6)
-    0x80005133L,		// SIT, seed word (533D: 3)
-    0x9d133,		// SITS
-    0x573,		// SKA
-    0x1429593,		// SLEET
-    0x80c605b3L,		// SMALL, seed word (533D: 5)
-    0x31f3,		// SOL
-    0x805b31f3L,		// SOLVE, seed word (533D: 5)
-    0x51f3,		// SOT
-    0x5df3,		// SOW
-    0x24520613,		// SPADER
-    0x80429613L,		// SPEED, seed word (533D: 5)
-    0x8812ca13L,		// SPREAD, seed word (533D: 6)
-    0x8ee4ca13L,		// SPRING, seed word (533D: 6)
-    0x81068693L,		// STAMP, seed word (533D: 5)
-    0x80470693L,		// STAND, seed word (533D: 5)
-    0x90693,		// STAR
-    0x24590693,		// STARER
-    0x81490693L,		// START, seed word (533D: 5)
-    0x80c29693L,		// STEEL, seed word (533D: 5)
-    0x561693,		// STELE
-    0xa1693,		// STET
-    0x80b1a693L,		// STICK, seed word (533D: 5)
-    0x80c62693L,		// STILL, seed word (533D: 5)
-    0x92693,		// STIR
-    0x1816be93,		// STOMAL
-    0x80573e93L,		// STONE, seed word (533D: 5)
-    0x9a12ca93L,		// STREAM, seed word (533D: 6)
-    0xa852ca93L,		// STREET, seed word (533D: 6)
-    0x8ee4ca93L,		// STRING, seed word (533D: 6)
-    0x16b3,		// SUE
-    0x916b3,		// SUER
-    0xa4531ab3L,		// SUFFER, seed word (533D: 6)
-    0xa456b6b3L,		// SUMMER, seed word (533D: 6)
-    0x2cab3,		// SURE
-    0x245652b3,		// SUTLER
-    0x493ef3,		// SWORD
-    0x34,		// TA
-    0x80560834L,		// TABLE, seed word (533D: 5)
-    0x40c34,		// TACH
-    0x1434,		// TAE
-    0x72434,		// TAIN
-    0x2b434,		// TAME
-    0x3834,		// TAN
-    0x4834,		// TAR
-    0x42c834,		// TARED
-    0x13a4834,		// TARTS
-    0x4c34,		// TAS
-    0x4b4,		// TEA
-    0x808184b4L,		// TEACH, seed word (533D: 5)
-    0x604b4,		// TEAL
-    0x10b4,		// TED
-    0x614b4,		// TEEL
-    0x13614b4,		// TEELS
-    0x30b4,		// TEL
-    0xb0b4,		// TELA
-    0x2b0b4,		// TELE
-    0x132b0b4,		// TELES
-    0x38b4,		// TEN
-    0x6c8b4,		// TERM
-    0x8136c8b4L,		// TERMS, seed word (533D: 5)
-    0xa4cb4,		// TEST
-    0x245a4cb4,		// TESTER
-    0x9d0b4,		// TETS
-    0x5cb4,		// TEW
-    0x80b70514L,		// THANK, seed word (533D: 5)
-    0x1514,		// THE
-    0x81249514L,		// THEIR, seed word (533D: 5)
-    0x591514,		// THERE
-    0x80599514L,		// THESE, seed word (533D: 5)
-    0x80b1a514L,		// THICK, seed word (533D: 5)
-    0x72514,		// THIN
-    0x80772514L,		// THING, seed word (533D: 5)
-    0x80b72514L,		// THINK, seed word (533D: 5)
-    0x3d14,		// THO
-    0xe93d14,		// THORN
-    0x8059bd14L,		// THOSE, seed word (533D: 5)
-    0x8052c914L,		// THREE, seed word (533D: 5)
-    0x7c914,		// THRO
-    0x177c914,		// THROW
-    0xac914,		// THRU
-    0x134,		// TI
-    0x58d34,		// TICK
-    0x1358d34,		// TICKS
-    0x91534,		// TIER
-    0x3134,		// TIL
-    0x63134,		// TILL
-    0x1363134,		// TILLS
-    0x3934,		// TIN
-    0x2b934,		// TINE
-    0x2c934,		// TIRE
-    0x4d34,		// TIS
-    0x205f4,		// TOAD
-    0x19205f4,		// TOADY
-    0x11f4,		// TOD
-    0x819091f4L,		// TODAY, seed word (533D: 5)
-    0x39f4,		// TON
-    0x2b9f4,		// TONE
-    0x132b9f4,		// TONES
-    0x49f4,		// TOR
-    0x8081d5f4L,		// TOUCH, seed word (533D: 5)
-    0x8920ddf4L,		// TOWARD, seed word (533D: 6)
-    0x65f4,		// TOY
-    0x80b18654L,		// TRACK, seed word (533D: 5)
-    0x80520654L,		// TRADE, seed word (533D: 5)
-    0x80e48654L,		// TRAIN, seed word (533D: 5)
-    0x80654,		// TRAP
-    0x6654,		// TRY
-    0x90674,		// TSAR
-    0xab4,		// TUB
-    0x1eb4,		// TUG
-    0x74ab4,		// TURN
-    0x88574ab4L,		// TURNED, seed word (533D: 6)
-    0x24574ab4,		// TURNER
-    0x7cb34,		// TYRO
-    0x8ac105d5L,		// UNABLE, seed word (533D: 6)
-    0x291d5,		// UNDE
-    0x812291d5L,		// UNDER, seed word (533D: 5)
-    0xa25d5,		// UNIT
-    0xa732b1d5L,		// UNLESS, seed word (533D: 6)
-    0x80c4d1d5L,		// UNTIL, seed word (533D: 5)
-    0x1675,		// USE
-    0x91675,		// USER
-    0x14b6,		// VEE
-    0x914b6,		// VEER
-    0x13914b6,		// VEERS
-    0xcc8b6,		// VERY
-    0x9859ccb6L,		// VESSEL, seed word (533D: 6)
-    0x50b6,		// VET
-    0x29136,		// VIDE
-    0x21536,		// VIED
-    0x8144cd36L,		// VISIT, seed word (533D: 5)
-    0x15f6,		// VOE
-    0x8051a5f6L,		// VOICE, seed word (533D: 5)
-    0x4837,		// WAR
-    0x24837,		// WARD
-    0x4c37,		// WAS
-    0x8122d037L,		// WATER, seed word (533D: 5)
-    0x50b7,		// WET
-    0x80003d17L,		// WHO, seed word (533D: 3)
-    0x80563d17L,		// WHOLE, seed word (533D: 5)
-    0x8059bd17L,		// WHOSE, seed word (533D: 5)
-    0x23937,		// WIND
-    0xaef23937L,		// WINDOW, seed word (533D: 6)
-    0xa45a3937L,		// WINTER, seed word (533D: 6)
-    0x2c937,		// WIRE
-    0x45137,		// WITH
-    0x9c945137L,		// WITHIN, seed word (533D: 6)
-    0x1f7,		// WO
-    0x80e0b5f7L,		// WOMAN, seed word (533D: 5)
-    0x80e2b5f7L,		// WOMEN, seed word (533D: 5)
-    0x39f7,		// WON
-    0x5b9f7,		// WONK
-    0x249f7,		// WORD
-    0x813249f7L,		// WORDS, seed word (533D: 5)
-    0x808a49f7L,		// WORTH, seed word (533D: 5)
-    0x4df7,		// WOS
-    0x80773e57L,		// WRONG, seed word (533D: 5)
-    0x805a3e57L,		// WROTE, seed word (533D: 5)
-    0x8a3e57,		// WROTH
-    0x3439,		// YAM
-    0x4039,		// YAP
-    0x807755f9L,		// YOUNG, seed word (533D: 5)
-    0x2b9fa,		// ZONE
-    0x42b9fa,		// ZONED
-
-
+    0x8002b041L,		// ABLE, length: 4)
+    0x1461,		// ACE, (bonus), length: 3)
+    0x21461,		// ACED, (bonus), length: 4)
+    0x99461,		// ACES, (bonus), length: 4)
+    0x2b461,		// ACME, (bonus), length: 4)
+    0x2c861,		// ACRE, (bonus), length: 4)
+    0x80005061L,		// ACT, length: 3)
+    0xa49098c1L,		// AFFAIR, length: 6)
+    0x50c1,		// AFT, (bonus), length: 3)
+    0x8122d0c1L,		// AFTER, length: 5)
+    0x80409501L,		// AHEAD, length: 5)
+    0x3121,		// AIL, (bonus), length: 3)
+    0x80004921L,		// AIR, length: 3)
+    0x1581,		// ALE, (bonus), length: 3)
+    0x8055a581L,		// ALIKE, length: 5)
+    0x80003181L,		// ALL, length: 3)
+    0x8177b181L,		// ALLOW, length: 5)
+    0xcb181,		// ALLY, (bonus), length: 4)
+    0xa937b581L,		// ALMOST, length: 6)
+    0x9b581,		// ALMS, (bonus), length: 4)
+    0x80573d81L,		// ALONE, length: 5)
+    0x122d181,		// ALTER, (bonus), length: 5)
+    0x9d181,		// ALTS, (bonus), length: 4)
+    0x725a1,		// AMIN, (bonus), length: 4)
+    0x41a1,		// AMP, (bonus), length: 3)
+    0x800011c1L,		// AND, length: 3)
+    0x51c1,		// ANT, (bonus), length: 3)
+    0x21601,		// APED, (bonus), length: 4)
+    0x91601,		// APER, (bonus), length: 4)
+    0xe41,		// ARC, (bonus), length: 3)
+    0x40e41,		// ARCH, (bonus), length: 4)
+    0x80001641L,		// ARE, length: 3)
+    0xa932ca41L,		// ARREST, length: 6)
+    0x80005241L,		// ART, length: 3)
+    0x9d241,		// ARTS, (bonus), length: 4)
+    0x66641,		// ARYL, (bonus), length: 4)
+    0x261,		// AS, (bonus), length: 2)
+    0x1478e61,		// ASCOT, (bonus), length: 5)
+    0x80002e61L,		// ASK, length: 3)
+    0x8042ae61L,		// ASKED, length: 5)
+    0x8b2ace61L,		// ASSURE, length: 6)
+    0x281,		// AT, (bonus), length: 2)
+    0x1681,		// ATE, (bonus), length: 3)
+    0x2e1,		// AW, (bonus), length: 2)
+    0x80ca9ae1L,		// AWFUL, length: 5)
+    0x32e1,		// AWL, (bonus), length: 3)
+    0x2b022,		// BALE, (bonus), length: 4)
+    0x8ad08ca2L,		// BECAME, length: 6)
+    0x8ad78ca2L,		// BECOME, length: 6)
+    0x80001ca2L,		// BEG, length: 3)
+    0x80e49ca2L,		// BEGIN, length: 5)
+    0x80ea9ca2L,		// BEGUN, length: 5)
+    0x807724a2L,		// BEING, length: 5)
+    0x8ee7b0a2L,		// BELONG, length: 6)
+    0x8a44cca2L,		// BESIDE, length: 6)
+    0x3922,		// BIN, (bonus), length: 3)
+    0x53b922,		// BINGE, (bonus), length: 5)
+    0xa0582,		// BLAT, (bonus), length: 4)
+    0x5a0582,		// BLATE, (bonus), length: 5)
+    0x800a05e2L,		// BOAT, length: 4)
+    0x344b9e2,		// BONITA, (bonus), length: 6)
+    0xd1e2,		// BOTA, (bonus), length: 4)
+    0xbbe42,		// BROW, (bonus), length: 4)
+    0x80ebbe42L,		// BROWN, length: 5)
+    0x814626a2L,		// BUILT, length: 5)
+    0x3aa2,		// BUN, (bonus), length: 3)
+    0x800052a2L,		// BUT, length: 3)
+    0x29023,		// CADE, (bonus), length: 4)
+    0x80063023L,		// CALL, length: 4)
+    0x88563023L,		// CALLED, length: 6)
+    0x8002b423L,		// CAME, length: 4)
+    0x80003823L,		// CAN, length: 3)
+    0x2c023,		// CAPE, (bonus), length: 4)
+    0x80004823L,		// CAR, length: 3)
+    0x8002c823L,		// CARE, length: 4)
+    0xa452c823L,		// CAREER, length: 6)
+    0x564823,		// CARLE, (bonus), length: 5)
+    0x81994823L,		// CARRY, length: 5)
+    0x8002cc23L,		// CASE, length: 4)
+    0x80005023L,		// CAT, length: 3)
+    0x8081d023L,		// CATCH, length: 5)
+    0x8059d423L,		// CAUSE, length: 5)
+    0x30a3,		// CEL, (bonus), length: 3)
+    0x800a38a3L,		// CENT, length: 4)
+    0xa45a38a3L,		// CENTER, length: 6)
+    0xb2a38a3,		// CENTRE, (bonus), length: 6)
+    0x813a38a3L,		// CENTS, length: 5)
+    0x2c8a3,		// CERE, (bonus), length: 4)
+    0x7c8a3,		// CERO, (bonus), length: 4)
+    0x90503,		// CHAR, (bonus), length: 4)
+    0x81490503L,		// CHART, length: 5)
+    0xa0503,		// CHAT, (bonus), length: 4)
+    0x1409503,		// CHEAT, (bonus), length: 5)
+    0x80e09583L,		// CLEAN, length: 5)
+    0x81209583L,		// CLEAR, length: 5)
+    0x8059bd83L,		// CLOSE, length: 5)
+    0x804abd83L,		// CLOUD, length: 5)
+    0x605e3,		// COAL, (bonus), length: 4)
+    0x814985e3L,		// COAST, length: 5)
+    0x725e3,		// COIN, (bonus), length: 4)
+    0x31e3,		// COL, (bonus), length: 3)
+    0xb1e3,		// COLA, (bonus), length: 4)
+    0x132b1e3,		// COLES, (bonus), length: 5)
+    0x8127b1e3L,		// COLOR, length: 5)
+    0x8002b5e3L,		// COME, length: 4)
+    0x4b9e3,		// CONI, (bonus), length: 4)
+    0x80063de3L,		// COOL, length: 4)
+    0x800cc1e3L,		// COPY, length: 4)
+    0x49e3,		// COR, (bonus), length: 3)
+    0x2c9e3,		// CORE, (bonus), length: 4)
+    0x800749e3L,		// CORN, length: 4)
+    0xa45749e3L,		// CORNER, length: 6)
+    0x51e3,		// COT, (bonus), length: 3)
+    0x8042a643L,		// CRIED, length: 5)
+    0x6643,		// CRY, (bonus), length: 3)
+    0x12a3,		// CUD, (bonus), length: 3)
+    0x2024,		// DAH, (bonus), length: 3)
+    0x8051b824L,		// DANCE, length: 5)
+    0x9c024,		// DAPS, (bonus), length: 4)
+    0x2c824,		// DARE, (bonus), length: 4)
+    0x7d024,		// DATO, (bonus), length: 4)
+    0x80006424L,		// DAY, length: 3)
+    0x800604a4L,		// DEAL, length: 4)
+    0x800904a4L,		// DEAR, length: 4)
+    0x808a04a4L,		// DEATH, length: 5)
+    0x800814a4L,		// DEEP, length: 4)
+    0x13814a4,		// DEEPS, (bonus), length: 5)
+    0x914a4,		// DEER, (bonus), length: 4)
+    0x498a4,		// DEFI, (bonus), length: 4)
+    0x30a4,		// DEL, (bonus), length: 3)
+    0x8190b0a4L,		// DELAY, length: 5)
+    0x630a4,		// DELL, (bonus), length: 4)
+    0x38a4,		// DEN, (bonus), length: 3)
+    0x140c8a4,		// DERAT, (bonus), length: 5)
+    0x2c8a4,		// DERE, (bonus), length: 4)
+    0x9c74cca4L,		// DESIGN, length: 6)
+    0x8b24cca4L,		// DESIRE, length: 6)
+    0x5cca4,		// DESK, (bonus), length: 4)
+    0x64a4,		// DEY, (bonus), length: 3)
+    0x80021524L,		// DIED, length: 4)
+    0x8a44d924L,		// DIVIDE, length: 6)
+    0x1e4,		// DO, (bonus), length: 2)
+    0xa4fa0de4L,		// DOCTOR, length: 6)
+    0x80001de4L,		// DOG, length: 3)
+    0x80093de4L,		// DOOR, length: 4)
+    0x51e4,		// DOT, (bonus), length: 3)
+    0x814155e4L,		// DOUBT, length: 5)
+    0x80e2e9e4L,		// DOZEN, length: 5)
+    0x800b8644L,		// DRAW, length: 4)
+    0x80ebbe44L,		// DROWN, length: 5)
+    0x3baa4,		// DUNG, (bonus), length: 4)
+    0x8ee4caa4L,		// DURING, length: 6)
+    0x80040c25L,		// EACH, length: 4)
+    0x4825,		// EAR, (bonus), length: 3)
+    0x81964825L,		// EARLY, length: 5)
+    0x808a4825L,		// EARTH, length: 5)
+    0x80005025L,		// EAT, length: 3)
+    0x80029c85L,		// EDGE, length: 4)
+    0x2085,		// EDH, (bonus), length: 3)
+    0x9a085,		// EDHS, (bonus), length: 4)
+    0x81441d25L,		// EIGHT, length: 5)
+    0x70585,		// ELAN, (bonus), length: 4)
+    0x1185,		// ELD, (bonus), length: 3)
+    0x81419585L,		// ELECT, length: 5)
+    0x4d85,		// ELS, (bonus), length: 3)
+    0x8002cd85L,		// ELSE, length: 4)
+    0x8b24c1a5L,		// EMPIRE, length: 6)
+    0x800011c5L,		// END, length: 3)
+    0x2934b1c5,		// ENLIST, (bonus), length: 6)
+    0x4dc5,		// ENS, (bonus), length: 3)
+    0x8b24d1c5L,		// ENTIRE, length: 6)
+    0x39e5,		// EON, (bonus), length: 3)
+    0xa205,		// EPHA, (bonus), length: 4)
+    0x130a205,		// EPHAS, (bonus), length: 5)
+    0x645,		// ERA, (bonus), length: 3)
+    0x98645,		// ERAS, (bonus), length: 4)
+    0x1645,		// ERE, (bonus), length: 3)
+    0x3a45,		// ERN, (bonus), length: 3)
+    0x2ba45,		// ERNE, (bonus), length: 4)
+    0x4e45,		// ERS, (bonus), length: 3)
+    0xa4e45,		// ERST, (bonus), length: 4)
+    0x8b008e65L,		// ESCAPE, length: 6)
+    0x4e65,		// ESS, (bonus), length: 3)
+    0x685,		// ETA, (bonus), length: 3)
+    0x2285,		// ETH, (bonus), length: 3)
+    0x122a285,		// ETHER, (bonus), length: 5)
+    0x4d685,		// ETUI, (bonus), length: 4)
+    0x16c5,		// EVE, (bonus), length: 3)
+    0x800716c5L,		// EVEN, length: 4)
+    0x13716c5,		// EVENS, (bonus), length: 5)
+    0x814716c5L,		// EVENT, length: 5)
+    0x800916c5L,		// EVER, length: 4)
+    0x819916c5L,		// EVERY, length: 5)
+    0x80195305L,		// EXTRA, length: 5)
+    0x80092426L,		// FAIR, length: 4)
+    0x8127d826L,		// FAVOR, length: 5)
+    0x48a6,		// FER, (bonus), length: 3)
+    0x2c8a6,		// FERE, (bonus), length: 4)
+    0x1126,		// FID, (bonus), length: 3)
+    0x80461526L,		// FIELD, length: 5)
+    0x81441d26L,		// FIGHT, length: 5)
+    0x8b2a9d26L,		// FIGURE, length: 6)
+    0x8002b126L,		// FILE, length: 4)
+    0x42b126,		// FILED, (bonus), length: 5)
+    0x80063126L,		// FILL, length: 4)
+    0x88563126L,		// FILLED, length: 6)
+    0x9134b926L,		// FINISH, length: 6)
+    0x8002c926L,		// FIRE, length: 4)
+    0x80044d26L,		// FISH, length: 4)
+    0x80005126L,		// FIT, length: 3)
+    0x8127bd86L,		// FLOOR, length: 5)
+    0x725e6,		// FOIN, (bonus), length: 4)
+    0x39e6,		// FON, (bonus), length: 3)
+    0x800049e6L,		// FOR, length: 3)
+    0x8051c9e6L,		// FORCE, length: 5)
+    0x2c9e6,		// FORE, (bonus), length: 4)
+    0xa932c9e6L,		// FOREST, length: 6)
+    0x8006c9e6L,		// FORM, length: 4)
+    0x819a49e6L,		// FORTY, length: 5)
+    0x245a4de6,		// FOSTER, (bonus), length: 6)
+    0x800955e6L,		// FOUR, length: 4)
+    0x914955e6L,		// FOURTH, length: 6)
+    0x3e46,		// FRO, (bonus), length: 3)
+    0x81473e46L,		// FRONT, length: 5)
+    0x8144d646L,		// FRUIT, length: 5)
+    0x4aa6,		// FUR, (bonus), length: 3)
+    0x214a7,		// GEED, (bonus), length: 4)
+    0x30a7,		// GEL, (bonus), length: 3)
+    0xab8a7,		// GENU, (bonus), length: 4)
+    0x9a507,		// GHIS, (bonus), length: 4)
+    0x1527,		// GIE, (bonus), length: 3)
+    0x3927,		// GIN, (bonus), length: 3)
+    0x55c7,		// GNU, (bonus), length: 3)
+    0x1e7,		// GO, (bonus), length: 2)
+    0x800011e7L,		// GOD, length: 3)
+    0x65e7,		// GOY, (bonus), length: 3)
+    0x814996a7L,		// GUEST, length: 5)
+    0x80003aa7L,		// GUN, length: 3)
+    0x52a7,		// GUT, (bonus), length: 3)
+    0x80001028L,		// HAD, length: 3)
+    0x63028,		// HALL, (bonus), length: 4)
+    0x1363028,		// HALLS, (bonus), length: 5)
+    0x5b828,		// HANK, (bonus), length: 4)
+    0x84828,		// HARP, (bonus), length: 4)
+    0x1384828,		// HARPS, (bonus), length: 5)
+    0x80004c28L,		// HAS, length: 3)
+    0x80005028L,		// HAT, length: 3)
+    0x42d028,		// HATED, (bonus), length: 5)
+    0x800904a8L,		// HEAR, length: 4)
+    0x804904a8L,		// HEARD, length: 5)
+    0x814904a8L,		// HEART, length: 5)
+    0x924a8,		// HEIR, (bonus), length: 4)
+    0x800048a8L,		// HER, length: 3)
+    0x4ca8,		// HES, (bonus), length: 3)
+    0x50a8,		// HET, (bonus), length: 3)
+    0x58d28,		// HICK, (bonus), length: 4)
+    0x80005128L,		// HIT, length: 3)
+    0x1e8,		// HO, (bonus), length: 2)
+    0x15e8,		// HOE, (bonus), length: 3)
+    0x995e8,		// HOES, (bonus), length: 4)
+    0x8002b1e8L,		// HOLE, length: 4)
+    0x8059c9e8L,		// HORSE, length: 5)
+    0x2cde8,		// HOSE, (bonus), length: 4)
+    0x800051e8L,		// HOT, length: 3)
+    0x800955e8L,		// HOUR, length: 4)
+    0x813955e8L,		// HOURS, length: 5)
+    0x8059d5e8L,		// HOUSE, length: 5)
+    0x80005de8L,		// HOW, length: 3)
+    0x80e0b6a8L,		// HUMAN, length: 5)
+    0x3aa8,		// HUN, (bonus), length: 3)
+    0x80001469L,		// ICE, length: 3)
+    0x8ad78dc9L,		// INCOME, length: 6)
+    0x799c9,		// INFO, (bonus), length: 4)
+    0x9b2799c9L,		// INFORM, length: 6)
+    0x2dc9,		// INK, (bonus), length: 3)
+    0x4dc9,		// INS, (bonus), length: 3)
+    0x8a44cdc9L,		// INSIDE, length: 6)
+    0x21649,		// IRED, (bonus), length: 4)
+    0x269,		// IS, (bonus), length: 2)
+    0x88e0b269L,		// ISLAND, length: 6)
+    0x2b269,		// ISLE, (bonus), length: 4)
+    0x805ace69L,		// ISSUE, length: 5)
+    0x289,		// IT, (bonus), length: 2)
+    0x80004e89L,		// ITS, length: 3)
+    0x4ab,		// KEA, (bonus), length: 3)
+    0x392b,		// KIN, (bonus), length: 3)
+    0x800bbdcbL,		// KNOW, length: 4)
+    0x80ebbdcbL,		// KNOWN, length: 5)
+    0x2902c,		// LADE, (bonus), length: 4)
+    0x9b42c,		// LAMS, (bonus), length: 4)
+    0x8002382cL,		// LAND, length: 4)
+    0x482c,		// LAR, (bonus), length: 3)
+    0x800a4c2cL,		// LAST, length: 4)
+    0x502c,		// LAT, (bonus), length: 3)
+    0x8002d02cL,		// LATE, length: 4)
+    0x8122d02cL,		// LATER, length: 5)
+    0x9d02c,		// LATS, (bonus), length: 4)
+    0x80005c2cL,		// LAW, length: 3)
+    0x8000642cL,		// LAY, length: 3)
+    0x704ac,		// LEAN, (bonus), length: 4)
+    0x904ac,		// LEAR, (bonus), length: 4)
+    0x80e904acL,		// LEARN, length: 5)
+    0x984ac,		// LEAS, (bonus), length: 4)
+    0x814984acL,		// LEAST, length: 5)
+    0x800010acL,		// LED, length: 3)
+    0x805390acL,		// LEDGE, length: 5)
+    0x994ac,		// LEES, (bonus), length: 4)
+    0xa14ac,		// LEET, (bonus), length: 4)
+    0x13a14ac,		// LEETS, (bonus), length: 5)
+    0x1cac,		// LEG, (bonus), length: 3)
+    0x9a4ac,		// LEIS, (bonus), length: 4)
+    0x7b8ac,		// LENO, (bonus), length: 4)
+    0x8009ccacL,		// LESS, length: 4)
+    0x9cf9ccacL,		// LESSON, length: 6)
+    0x800050acL,		// LET, length: 3)
+    0x3152c,		// LIEF, (bonus), length: 4)
+    0x2453152c,		// LIEFER, (bonus), length: 6)
+    0x7152c,		// LIEN, (bonus), length: 4)
+    0x9152c,		// LIER, (bonus), length: 4)
+    0x8002992cL,		// LIFE, length: 4)
+    0x8002ad2cL,		// LIKE, length: 4)
+    0x8002b92cL,		// LINE, length: 4)
+    0x2c92c,		// LIRE, (bonus), length: 4)
+    0x800a4d2cL,		// LIST, length: 4)
+    0x9c5a4d2cL,		// LISTEN, length: 6)
+    0x512c,		// LIT, (bonus), length: 3)
+    0x9d12c,		// LITS, (bonus), length: 4)
+    0x289ec,		// LOBE, (bonus), length: 4)
+    0x80c08decL,		// LOCAL, length: 5)
+    0x78dec,		// LOCO, (bonus), length: 4)
+    0x8003b9ecL,		// LONG, length: 4)
+    0x8002cdecL,		// LOSE, length: 4)
+    0x800255ecL,		// LOUD, length: 4)
+    0x8002d9ecL,		// LOVE, length: 4)
+    0x132d9ec,		// LOVES, (bonus), length: 5)
+    0x80005decL,		// LOW, length: 3)
+    0x172c,		// LYE, (bonus), length: 3)
+    0x2cb2c,		// LYRE, (bonus), length: 4)
+    0x8007242dL,		// MAIN, length: 4)
+    0x8000382dL,		// MAN, length: 3)
+    0x8000402dL,		// MAP, length: 3)
+    0x2c82d,		// MARE, (bonus), length: 4)
+    0xa4c2d,		// MAST, (bonus), length: 4)
+    0x245a4c2d,		// MASTER, (bonus), length: 6)
+    0x9d02d,		// MATS, (bonus), length: 4)
+    0x8000642dL,		// MAY, length: 3)
+    0x8127e42dL,		// MAYOR, length: 5)
+    0x800704adL,		// MEAN, length: 4)
+    0x814704adL,		// MEANT, length: 5)
+    0x800a04adL,		// MEAT, length: 4)
+    0x30ad,		// MEL, (bonus), length: 3)
+    0xa45134adL,		// MEMBER, length: 6)
+    0x800038adL,		// MEN, length: 3)
+    0xbbcad,		// MEOW, (bonus), length: 4)
+    0x8002c8adL,		// MERE, length: 4)
+    0x50ad,		// MET, (bonus), length: 3)
+    0xd0ad,		// META, (bonus), length: 4)
+    0x80c0d0adL,		// METAL, length: 5)
+    0x8ac2112dL,		// MIDDLE, length: 6)
+    0x8002b12dL,		// MILE, length: 4)
+    0xb1ed,		// MOLA, (bonus), length: 4)
+    0x7b9ed,		// MONO, (bonus), length: 4)
+    0x80073dedL,		// MOON, length: 4)
+    0x49ed,		// MOR, (bonus), length: 3)
+    0x190c9ed,		// MORAY, (bonus), length: 5)
+    0x8002c9edL,		// MORE, length: 4)
+    0x800a4dedL,		// MOST, length: 4)
+    0x451ed,		// MOTH, (bonus), length: 4)
+    0xa45451edL,		// MOTHER, length: 6)
+    0x9cf4d1edL,		// MOTION, length: 6)
+    0x9d1ed,		// MOTS, (bonus), length: 4)
+    0x342e,		// NAM, (bonus), length: 3)
+    0x8002b42eL,		// NAME, length: 4)
+    0x800904aeL,		// NEAR, length: 4)
+    0xb2c904aeL,		// NEARLY, length: 6)
+    0x5b48ae,		// NERVE, (bonus), length: 5)
+    0xa4cae,		// NEST, (bonus), length: 4)
+    0x50ae,		// NET, (bonus), length: 3)
+    0x9d0ae,		// NETS, (bonus), length: 4)
+    0x2d8ae,		// NEVE, (bonus), length: 4)
+    0x8122d8aeL,		// NEVER, length: 5)
+    0x132d8ae,		// NEVES, (bonus), length: 5)
+    0x92e,		// NIB, (bonus), length: 3)
+    0x80028d2eL,		// NICE, length: 4)
+    0x2912e,		// NIDE, (bonus), length: 4)
+    0x4cd2e,		// NISI, (bonus), length: 4)
+    0x512e,		// NIT, (bonus), length: 3)
+    0x1ee,		// NO, (bonus), length: 2)
+    0x615ee,		// NOEL, (bonus), length: 4)
+    0x800049eeL,		// NOR, length: 3)
+    0x808a49eeL,		// NORTH, length: 5)
+    0x800051eeL,		// NOT, length: 3)
+    0x8a34d1eeL,		// NOTICE, length: 6)
+    0x80005deeL,		// NOW, length: 3)
+    0x228e,		// NTH, (bonus), length: 3)
+    0xaae,		// NUB, (bonus), length: 3)
+    0x292ae,		// NUDE, (bonus), length: 4)
+    0x12292ae,		// NUDER, (bonus), length: 5)
+    0x9c90d04fL,		// OBTAIN, length: 6)
+    0x9846f,		// OCAS, (bonus), length: 4)
+    0xb30a8c6fL,		// OCCUPY, length: 6)
+    0x8f,		// OD, (bonus), length: 2)
+    0x93c8f,		// ODOR, (bonus), length: 4)
+    0x812298cfL,		// OFFER, length: 5)
+    0x80e2d0cfL,		// OFTEN, length: 5)
+    0x10f,		// OH, (bonus), length: 2)
+    0x4d0f,		// OHS, (bonus), length: 3)
+    0x9958f,		// OLES, (bonus), length: 4)
+    0xb18f,		// OLLA, (bonus), length: 4)
+    0x915af,		// OMER, (bonus), length: 4)
+    0x800a25afL,		// OMIT, length: 4)
+    0x1cf,		// ON, (bonus), length: 2)
+    0x80028dcfL,		// ONCE, length: 4)
+    0x800015cfL,		// ONE, length: 3)
+    0x8122924fL,		// ORDER, length: 5)
+    0x7924f,		// ORDO, (bonus), length: 4)
+    0x9964f,		// ORES, (bonus), length: 4)
+    0x8122a28fL,		// OTHER, length: 5)
+    0x40eaf,		// OUCH, (bonus), length: 4)
+    0x800052afL,		// OUT, length: 3)
+    0x2ef,		// OW, (bonus), length: 2)
+    0x80003aefL,		// OWN, length: 3)
+    0x49030,		// PADI, (bonus), length: 4)
+    0x80022430L,		// PAID, length: 4)
+    0x80092430L,		// PAIR, length: 4)
+    0x3430,		// PAM, (bonus), length: 3)
+    0x4030,		// PAP, (bonus), length: 3)
+    0x8122c030L,		// PAPER, length: 5)
+    0x4830,		// PAR, (bonus), length: 3)
+    0x2c830,		// PARE, (bonus), length: 4)
+    0x800a4830L,		// PART, length: 4)
+    0x819a4830L,		// PARTY, length: 5)
+    0x8009cc30L,		// PASS, length: 4)
+    0x8859cc30L,		// PASSED, length: 6)
+    0x80006430L,		// PAY, length: 3)
+    0x265184b0,		// PEACES, (bonus), length: 6)
+    0x13290b0,		// PEDES, (bonus), length: 5)
+    0x214b0,		// PEED, (bonus), length: 4)
+    0x614b0,		// PEEL, (bonus), length: 4)
+    0x994b0,		// PEES, (bonus), length: 4)
+    0x2b0b0,		// PELE, (bonus), length: 4)
+    0x8ac83cb0L,		// PEOPLE, length: 6)
+    0x7c0b0,		// PEPO, (bonus), length: 4)
+    0x800048b0L,		// PER, length: 3)
+    0x4cb0,		// PES, (bonus), length: 3)
+    0x91530,		// PIER, (bonus), length: 4)
+    0x8002b1f0L,		// POLE, length: 4)
+    0x2c1f0,		// POPE, (bonus), length: 4)
+    0x81399650L,		// PRESS, length: 5)
+    0x80044eb0L,		// PUSH, length: 4)
+    0x88544eb0L,		// PUSHED, length: 6)
+    0x8142a6b1L,		// QUIET, length: 5)
+    0x805a26b1L,		// QUITE, length: 5)
+    0x58c32,		// RACK, (bonus), length: 4)
+    0x1032,		// RAD, (bonus), length: 3)
+    0x80072432L,		// RAIN, length: 4)
+    0x8059a432L,		// RAISE, length: 5)
+    0x2b032,		// RALE, (bonus), length: 4)
+    0x80003832L,		// RAN, length: 3)
+    0x4b832,		// RANI, (bonus), length: 4)
+    0x4032,		// RAP, (bonus), length: 3)
+    0x8044c032L,		// RAPID, length: 5)
+    0x2c832,		// RARE, (bonus), length: 4)
+    0x2932c832,		// RAREST, (bonus), length: 6)
+    0x245a4c32,		// RASTER, (bonus), length: 6)
+    0x5032,		// RAT, (bonus), length: 3)
+    0x45032,		// RATH, (bonus), length: 4)
+    0x545032,		// RATHE, (bonus), length: 5)
+    0x9d032,		// RATS, (bonus), length: 4)
+    0x5c32,		// RAW, (bonus), length: 3)
+    0x808184b2L,		// REACH, length: 5)
+    0x800204b2L,		// READ, length: 4)
+    0x819204b2L,		// READY, length: 5)
+    0x800604b2L,		// REAL, length: 4)
+    0xb2c604b2L,		// REALLY, length: 6)
+    0x684b2,		// REAM, (bonus), length: 4)
+    0x804b2,		// REAP, (bonus), length: 4)
+    0x904b2,		// REAR, (bonus), length: 4)
+    0xa8e28cb2L,		// RECENT, length: 6)
+    0x800010b2L,		// RED, length: 3)
+    0x290b2,		// REDE, (bonus), length: 4)
+    0x14b2,		// REE, (bonus), length: 3)
+    0x214b2,		// REED, (bonus), length: 4)
+    0x314b2,		// REEF, (bonus), length: 4)
+    0x18b2,		// REF, (bonus), length: 3)
+    0xa18b2,		// REFT, (bonus), length: 4)
+    0x324b2,		// REIF, (bonus), length: 4)
+    0x724b2,		// REIN, (bonus), length: 4)
+    0x9a4b2,		// REIS, (bonus), length: 4)
+    0x8c54b0b2L,		// RELIEF, length: 6)
+    0xcb0b2,		// RELY, (bonus), length: 4)
+    0x9c90b4b2L,		// REMAIN, length: 6)
+    0xa38b2,		// RENT, (bonus), length: 4)
+    0x40b2,		// REP, (bonus), length: 3)
+    0xa490c0b2L,		// REPAIR, length: 6)
+    0x819640b2L,		// REPLY, length: 5)
+    0x9c0b2,		// REPS, (bonus), length: 4)
+    0x4cb2,		// RES, (bonus), length: 3)
+    0xa44ccb2,		// RESIDE, (bonus), length: 6)
+    0x2934ccb2,		// RESIST, (bonus), length: 6)
+    0x800a4cb2L,		// REST, length: 4)
+    0xa8caccb2L,		// RESULT, length: 6)
+    0x50b2,		// RET, (bonus), length: 3)
+    0x2d0b2,		// RETE, (bonus), length: 4)
+    0x2932d0b2,		// RETEST, (bonus), length: 6)
+    0xae4d0b2,		// RETINE, (bonus), length: 6)
+    0x8b24d0b2L,		// RETIRE, length: 6)
+    0x9d0b2,		// RETS, (bonus), length: 4)
+    0x9d2ad0b2L,		// RETURN, length: 6)
+    0x532,		// RIA, (bonus), length: 3)
+    0x1132,		// RID, (bonus), length: 3)
+    0x80029132L,		// RIDE, length: 4)
+    0x8003b932L,		// RING, length: 4)
+    0x9c132,		// RIPS, (bonus), length: 4)
+    0xdf2,		// ROC, (bonus), length: 3)
+    0x291f2,		// RODE, (bonus), length: 4)
+    0x995f2,		// ROES, (bonus), length: 4)
+    0x35f2,		// ROM, (bonus), length: 3)
+    0x23df2,		// ROOD, (bonus), length: 4)
+    0x8002cdf2L,		// ROSE, length: 4)
+    0x51f2,		// ROT, (bonus), length: 3)
+    0x2d1f2,		// ROTE, (bonus), length: 4)
+    0x80005df2L,		// ROW, length: 3)
+    0x80c0e5f2L,		// ROYAL, length: 5)
+    0x80003ab2L,		// RUN, length: 3)
+    0x452b2,		// RUTH, (bonus), length: 4)
+    0x1732,		// RYE, (bonus), length: 3)
+    0x2b033,		// SALE, (bonus), length: 4)
+    0x80005033L,		// SAT, length: 3)
+    0x80005c33L,		// SAW, length: 3)
+    0x1471473,		// SCENT, (bonus), length: 5)
+    0xcb3,		// SEC, (bonus), length: 3)
+    0x88e78cb3L,		// SECOND, length: 6)
+    0xa0cb3,		// SECT, (bonus), length: 4)
+    0x800014b3L,		// SEE, length: 3)
+    0x614b3,		// SEEL, (bonus), length: 4)
+    0x800714b3L,		// SEEN, length: 4)
+    0x814b3,		// SEEP, (bonus), length: 4)
+    0x30b3,		// SEL, (bonus), length: 3)
+    0xa832b0b3L,		// SELECT, length: 6)
+    0x38b3,		// SEN, (bonus), length: 3)
+    0x800238b3L,		// SEND, length: 4)
+    0x2b8b3,		// SENE, (bonus), length: 4)
+    0x8059b8b3L,		// SENSE, length: 5)
+    0x48b3,		// SER, (bonus), length: 3)
+    0x805b48b3L,		// SERVE, length: 5)
+    0x800050b3L,		// SET, length: 3)
+    0x80e2d8b3L,		// SEVEN, length: 5)
+    0x122d8b3,		// SEVER, (bonus), length: 5)
+    0x5cb3,		// SEW, (bonus), length: 3)
+    0x513,		// SHA, (bonus), length: 3)
+    0x80c60513L,		// SHALL, length: 5)
+    0x80580513L,		// SHAPE, length: 5)
+    0x81090513L,		// SHARP, length: 5)
+    0x80021513L,		// SHED, length: 4)
+    0x72513,		// SHIN, (bonus), length: 4)
+    0x800bbd13L,		// SHOW, length: 4)
+    0x80ebbd13L,		// SHOWN, length: 5)
+    0x133,		// SI, (bonus), length: 2)
+    0x60533,		// SIAL, (bonus), length: 4)
+    0x80029133L,		// SIDE, length: 4)
+    0x41d33,		// SIGH, (bonus), length: 4)
+    0x81441d33L,		// SIGHT, length: 5)
+    0x80071d33L,		// SIGN, length: 4)
+    0x8571d33,		// SIGNED, (bonus), length: 6)
+    0x3933,		// SIN, (bonus), length: 3)
+    0x8051b933L,		// SINCE, length: 5)
+    0x8003b933L,		// SING, length: 4)
+    0x853b933,		// SINGED, (bonus), length: 6)
+    0x8ac3b933L,		// SINGLE, length: 6)
+    0x2c933,		// SIRE, (bonus), length: 4)
+    0xa45a4d33L,		// SISTER, length: 6)
+    0x80005133L,		// SIT, length: 3)
+    0x9d133,		// SITS, (bonus), length: 4)
+    0x573,		// SKA, (bonus), length: 3)
+    0x1429593,		// SLEET, (bonus), length: 5)
+    0x80c605b3L,		// SMALL, length: 5)
+    0x31f3,		// SOL, (bonus), length: 3)
+    0x805b31f3L,		// SOLVE, length: 5)
+    0x51f3,		// SOT, (bonus), length: 3)
+    0x5df3,		// SOW, (bonus), length: 3)
+    0x24520613,		// SPADER, (bonus), length: 6)
+    0x80429613L,		// SPEED, length: 5)
+    0x8812ca13L,		// SPREAD, length: 6)
+    0x8ee4ca13L,		// SPRING, length: 6)
+    0x81068693L,		// STAMP, length: 5)
+    0x80470693L,		// STAND, length: 5)
+    0x90693,		// STAR, (bonus), length: 4)
+    0x24590693,		// STARER, (bonus), length: 6)
+    0x81490693L,		// START, length: 5)
+    0x80c29693L,		// STEEL, length: 5)
+    0x561693,		// STELE, (bonus), length: 5)
+    0xa1693,		// STET, (bonus), length: 4)
+    0x80b1a693L,		// STICK, length: 5)
+    0x80c62693L,		// STILL, length: 5)
+    0x92693,		// STIR, (bonus), length: 4)
+    0x1816be93,		// STOMAL, (bonus), length: 6)
+    0x80573e93L,		// STONE, length: 5)
+    0x9a12ca93L,		// STREAM, length: 6)
+    0xa852ca93L,		// STREET, length: 6)
+    0x8ee4ca93L,		// STRING, length: 6)
+    0x16b3,		// SUE, (bonus), length: 3)
+    0x916b3,		// SUER, (bonus), length: 4)
+    0xa4531ab3L,		// SUFFER, length: 6)
+    0xa456b6b3L,		// SUMMER, length: 6)
+    0x8002cab3L,		// SURE, length: 4)
+    0x245652b3,		// SUTLER, (bonus), length: 6)
+    0x493ef3,		// SWORD, (bonus), length: 5)
+    0x34,		// TA, (bonus), length: 2)
+    0x80560834L,		// TABLE, length: 5)
+    0x40c34,		// TACH, (bonus), length: 4)
+    0x1434,		// TAE, (bonus), length: 3)
+    0x72434,		// TAIN, (bonus), length: 4)
+    0x2b434,		// TAME, (bonus), length: 4)
+    0x3834,		// TAN, (bonus), length: 3)
+    0x4834,		// TAR, (bonus), length: 3)
+    0x42c834,		// TARED, (bonus), length: 5)
+    0x13a4834,		// TARTS, (bonus), length: 5)
+    0x4c34,		// TAS, (bonus), length: 3)
+    0x4b4,		// TEA, (bonus), length: 3)
+    0x808184b4L,		// TEACH, length: 5)
+    0x604b4,		// TEAL, (bonus), length: 4)
+    0x10b4,		// TED, (bonus), length: 3)
+    0x614b4,		// TEEL, (bonus), length: 4)
+    0x13614b4,		// TEELS, (bonus), length: 5)
+    0x30b4,		// TEL, (bonus), length: 3)
+    0xb0b4,		// TELA, (bonus), length: 4)
+    0x2b0b4,		// TELE, (bonus), length: 4)
+    0x132b0b4,		// TELES, (bonus), length: 5)
+    0x800038b4L,		// TEN, length: 3)
+    0x8006c8b4L,		// TERM, length: 4)
+    0x8136c8b4L,		// TERMS, length: 5)
+    0x800a4cb4L,		// TEST, length: 4)
+    0x245a4cb4,		// TESTER, (bonus), length: 6)
+    0x9d0b4,		// TETS, (bonus), length: 4)
+    0x5cb4,		// TEW, (bonus), length: 3)
+    0x80b70514L,		// THANK, length: 5)
+    0x80001514L,		// THE, length: 3)
+    0x81249514L,		// THEIR, length: 5)
+    0x80591514L,		// THERE, length: 5)
+    0x80599514L,		// THESE, length: 5)
+    0x80b1a514L,		// THICK, length: 5)
+    0x80072514L,		// THIN, length: 4)
+    0x80772514L,		// THING, length: 5)
+    0x80b72514L,		// THINK, length: 5)
+    0x3d14,		// THO, (bonus), length: 3)
+    0xe93d14,		// THORN, (bonus), length: 5)
+    0x8059bd14L,		// THOSE, length: 5)
+    0x8052c914L,		// THREE, length: 5)
+    0x7c914,		// THRO, (bonus), length: 4)
+    0x8177c914L,		// THROW, length: 5)
+    0xac914,		// THRU, (bonus), length: 4)
+    0x134,		// TI, (bonus), length: 2)
+    0x58d34,		// TICK, (bonus), length: 4)
+    0x1358d34,		// TICKS, (bonus), length: 5)
+    0x91534,		// TIER, (bonus), length: 4)
+    0x3134,		// TIL, (bonus), length: 3)
+    0x63134,		// TILL, (bonus), length: 4)
+    0x1363134,		// TILLS, (bonus), length: 5)
+    0x3934,		// TIN, (bonus), length: 3)
+    0x2b934,		// TINE, (bonus), length: 4)
+    0x8002c934L,		// TIRE, length: 4)
+    0x4d34,		// TIS, (bonus), length: 3)
+    0x205f4,		// TOAD, (bonus), length: 4)
+    0x19205f4,		// TOADY, (bonus), length: 5)
+    0x11f4,		// TOD, (bonus), length: 3)
+    0x819091f4L,		// TODAY, length: 5)
+    0x39f4,		// TON, (bonus), length: 3)
+    0x8002b9f4L,		// TONE, length: 4)
+    0x132b9f4,		// TONES, (bonus), length: 5)
+    0x49f4,		// TOR, (bonus), length: 3)
+    0x8081d5f4L,		// TOUCH, length: 5)
+    0x8920ddf4L,		// TOWARD, length: 6)
+    0x65f4,		// TOY, (bonus), length: 3)
+    0x80b18654L,		// TRACK, length: 5)
+    0x80520654L,		// TRADE, length: 5)
+    0x80e48654L,		// TRAIN, length: 5)
+    0x80654,		// TRAP, (bonus), length: 4)
+    0x80006654L,		// TRY, length: 3)
+    0x90674,		// TSAR, (bonus), length: 4)
+    0xab4,		// TUB, (bonus), length: 3)
+    0x1eb4,		// TUG, (bonus), length: 3)
+    0x80074ab4L,		// TURN, length: 4)
+    0x88574ab4L,		// TURNED, length: 6)
+    0x24574ab4,		// TURNER, (bonus), length: 6)
+    0x7cb34,		// TYRO, (bonus), length: 4)
+    0x8ac105d5L,		// UNABLE, length: 6)
+    0x291d5,		// UNDE, (bonus), length: 4)
+    0x812291d5L,		// UNDER, length: 5)
+    0x800a25d5L,		// UNIT, length: 4)
+    0xa732b1d5L,		// UNLESS, length: 6)
+    0x80c4d1d5L,		// UNTIL, length: 5)
+    0x80001675L,		// USE, length: 3)
+    0x91675,		// USER, (bonus), length: 4)
+    0x14b6,		// VEE, (bonus), length: 3)
+    0x914b6,		// VEER, (bonus), length: 4)
+    0x13914b6,		// VEERS, (bonus), length: 5)
+    0x800cc8b6L,		// VERY, length: 4)
+    0x9859ccb6L,		// VESSEL, length: 6)
+    0x50b6,		// VET, (bonus), length: 3)
+    0x29136,		// VIDE, (bonus), length: 4)
+    0x21536,		// VIED, (bonus), length: 4)
+    0x8144cd36L,		// VISIT, length: 5)
+    0x15f6,		// VOE, (bonus), length: 3)
+    0x8051a5f6L,		// VOICE, length: 5)
+    0x80004837L,		// WAR, length: 3)
+    0x24837,		// WARD, (bonus), length: 4)
+    0x80004c37L,		// WAS, length: 3)
+    0x8122d037L,		// WATER, length: 5)
+    0x50b7,		// WET, (bonus), length: 3)
+    0x80003d17L,		// WHO, length: 3)
+    0x80563d17L,		// WHOLE, length: 5)
+    0x8059bd17L,		// WHOSE, length: 5)
+    0x80023937L,		// WIND, length: 4)
+    0xaef23937L,		// WINDOW, length: 6)
+    0xa45a3937L,		// WINTER, length: 6)
+    0x8002c937L,		// WIRE, length: 4)
+    0x80045137L,		// WITH, length: 4)
+    0x9c945137L,		// WITHIN, length: 6)
+    0x1f7,		// WO, (bonus), length: 2)
+    0x80e0b5f7L,		// WOMAN, length: 5)
+    0x80e2b5f7L,		// WOMEN, length: 5)
+    0x39f7,		// WON, (bonus), length: 3)
+    0x5b9f7,		// WONK, (bonus), length: 4)
+    0x800249f7L,		// WORD, length: 4)
+    0x813249f7L,		// WORDS, length: 5)
+    0x808a49f7L,		// WORTH, length: 5)
+    0x4df7,		// WOS, (bonus), length: 3)
+    0x80773e57L,		// WRONG, length: 5)
+    0x805a3e57L,		// WROTE, length: 5)
+    0x8a3e57,		// WROTH, (bonus), length: 5)
+    0x3439,		// YAM, (bonus), length: 3)
+    0x4039,		// YAP, (bonus), length: 3)
+    0x807755f9L,		// YOUNG, length: 5)
+    0x2b9fa,		// ZONE, (bonus), length: 4)
+    0x42b9fa,		// ZONED, (bonus), length: 5)
 
 };
 #endif
@@ -807,7 +805,7 @@ bool PrototypeWordList::pickWord(char* buffer)
     return false;
 }
 
-static int bsearch_strcmp(const void*a,const void*b)
+static int bsearch_strcmp(const void*a, const void*b)
 {
     // a is pKey in previous call, char**
     //STATIC_ASSERT(sizeof(uint32_t) == sizeof(unsigned));
@@ -817,6 +815,8 @@ static int bsearch_strcmp(const void*a,const void*b)
     //printf("a %s, b %s\n", *(const char **)a, (const char *)b);
 #endif
 
+    // FIXME, if using a bsearch with compressed string in the future, don't
+    // reconstruct strings, just make the hash and compare the smaller rep (assuming cheaper)
     char word[MAX_LETTERS_PER_WORD + 1];
     if (PrototypeWordList::bitsToString(*pb, word))
     {
@@ -826,7 +826,7 @@ static int bsearch_strcmp(const void*a,const void*b)
     return 0;
 }
 
-bool PrototypeWordList::isWord(const char* string)
+bool PrototypeWordList::isWord(const char* string, bool& isBonus)
 {
 #ifndef DAWG_TEST
     //STATIC_ASSERT(arraysize(sList) == 28839);
@@ -834,15 +834,20 @@ bool PrototypeWordList::isWord(const char* string)
     const char** pKey = &string;
     const uint32_t* array = (uint32_t*)sList;
     //const char** pArray = &array;
-    const char* pItem =
-            (const char*) bsearch(
+    const uint32_t* pItem =
+            (const uint32_t*) bsearch(
                 pKey,
                 array,
                 arraysize(sList),
                 sizeof(sList[0]),
                 (int(*)(const void*,const void*)) bsearch_strcmp);
 
-    return (pItem!=NULL);
+    if (pItem != NULL)
+    {
+        isBonus = !((*pItem) & (1 << 31));
+        return true;
+    }
+    return false;
 }
 
 bool PrototypeWordList::bitsToString(uint32_t bits, char* buffer)

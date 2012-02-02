@@ -40,7 +40,7 @@ public:
 
     bool getLetters(char *buffer, bool forPaint=false);
     bool canBeginWord();
-    bool beginsWord(bool& isOld, char* wordBuffer);
+    bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);
     unsigned findRowLength();
     bool isConnectedToCubeOnSide(Cube::ID cubeIDStart, Cube::Side side=SIDE_LEFT);
     bool hasNoNeighbors() const;

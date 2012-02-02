@@ -42,6 +42,7 @@ public:
     static float getTime() { return sInstance->StateMachine::getTime(); }
     static unsigned char getNewWordLength() { return sInstance->mNewWordLength; }
     static unsigned getNumAnagramsRemaining() { return sInstance->mNumAnagramsRemaining; }
+    static unsigned getNumBonusAnagramsRemaining() { return sInstance->mNumBonusAnagramsRemaining; }
     static unsigned getNumCubesInState(CubeStateIndex stateIndex);
     static unsigned getCurrentMaxLettersPerCube();
     static unsigned getCurrentMaxLettersPerWord();
@@ -64,6 +65,7 @@ private:
     unsigned mScore;
     unsigned char mNewWordLength;
     unsigned mNumAnagramsRemaining;
+    unsigned mNumBonusAnagramsRemaining;
 
     static GameStateMachine* sInstance;
 };

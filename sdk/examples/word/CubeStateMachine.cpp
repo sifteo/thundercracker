@@ -128,7 +128,7 @@ bool CubeStateMachine::canBeginWord()
             mCube->physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
 }
 
-bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
+bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer, bool& isBonus)
 {
     if (canBeginWord())
     {        
@@ -155,7 +155,7 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
             if (Dictionary::trim(wordBuffer, trimmedWord))
             {
                 _SYS_strlcpy(wordBuffer, trimmedWord, sizeof trimmedWord);
-                if (Dictionary::isWord(trimmedWord))
+                if (Dictionary::isWord(trimmedWord, isBonus))
                 {
                     isOld = Dictionary::isOldWord(trimmedWord);
                     return true;
