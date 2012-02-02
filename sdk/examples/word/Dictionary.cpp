@@ -16,40 +16,48 @@ const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
 const static char* picks[] =
 {
-    "TERMS",
+    "ROYAL",
     "WITHIN",
+    "DANCE",
     "BESIDE",
     "UNLESS",
     "MIDDLE",
     "VESSEL",
+    "TERMS",
+    "WHOLE",
     "TURNED",
     "MEMBER",
-    "OCCUPY",
     "SECOND",
+    "FIGHT",
+    "WRONG",
     "NOTICE",
+    "OCCUPY",
     "BECOME",
     "AFFAIR",
     "WINDOW",
-
 };
 
 const static unsigned char pickAnagrams[] =
 {
-    2,	// TERMS, uncommon anagrams: 0
+    2,	// ROYAL, uncommon anagrams: 0
     3,	// WITHIN, uncommon anagrams: 0
+    2,	// DANCE, uncommon anagrams: 0
     2,	// BESIDE, uncommon anagrams: 0
     2,	// UNLESS, uncommon anagrams: 0
     2,	// MIDDLE, uncommon anagrams: 0
     2,	// VESSEL, uncommon anagrams: 0
+    3,	// TERMS, uncommon anagrams: 0
+    4,	// WHOLE, uncommon anagrams: 0
     2,	// TURNED, uncommon anagrams: 0
     2,	// MEMBER, uncommon anagrams: 0
-    2,	// OCCUPY, uncommon anagrams: 0
     2,	// SECOND, uncommon anagrams: 0
+    2,	// FIGHT, uncommon anagrams: 0
+    2,	// WRONG, uncommon anagrams: 0
     2,	// NOTICE, uncommon anagrams: 0
+    2,	// OCCUPY, uncommon anagrams: 0
     2,	// BECOME, uncommon anagrams: 0
     2,	// AFFAIR, uncommon anagrams: 0
     2,	// WINDOW, uncommon anagrams: 0
-
 };
 
 Dictionary::Dictionary()

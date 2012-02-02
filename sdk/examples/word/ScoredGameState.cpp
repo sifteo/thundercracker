@@ -143,7 +143,10 @@ void ScoredGameState::createNewAnagram()
     }
     else
     {
-        leadingBlanks = WordGame::random.randrange(numBlanks + 1);
+        leadingBlanks = 0;
+        // TODO no puzzles currently have leading blanks, but the offline
+        // dict tool is aware of the alternate
+        //WordGame::random.randrange(numBlanks + 1);
 
         unsigned i;
         for (i = 0;

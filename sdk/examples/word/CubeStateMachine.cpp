@@ -154,6 +154,7 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
             char trimmedWord[MAX_LETTERS_PER_WORD + 1];
             if (Dictionary::trim(wordBuffer, trimmedWord))
             {
+                _SYS_strlcpy(wordBuffer, trimmedWord, sizeof trimmedWord);
                 if (Dictionary::isWord(trimmedWord))
                 {
                     isOld = Dictionary::isOldWord(trimmedWord);

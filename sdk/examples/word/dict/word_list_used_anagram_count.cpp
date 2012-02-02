@@ -1,88 +1,195 @@
     3,	// WITHIN, uncommon anagrams: 0
-    2,	// TERMS, uncommon anagrams: 0
+    2,	// ROYAL, uncommon anagrams: 0
+    2,	// DANCE, uncommon anagrams: 0
     2,	// BESIDE, uncommon anagrams: 0
     2,	// UNLESS, uncommon anagrams: 0
     2,	// MIDDLE, uncommon anagrams: 0
     2,	// VESSEL, uncommon anagrams: 0
+    3,	// TERMS, uncommon anagrams: 0
+    4,	// WHOLE, uncommon anagrams: 0
     2,	// TURNED, uncommon anagrams: 0
     2,	// MEMBER, uncommon anagrams: 0
-    2,	// OCCUPY, uncommon anagrams: 0
     2,	// SECOND, uncommon anagrams: 0
+    2,	// FIGHT, uncommon anagrams: 0
+    2,	// WRONG, uncommon anagrams: 0
     2,	// NOTICE, uncommon anagrams: 0
+    2,	// OCCUPY, uncommon anagrams: 0
     2,	// BECOME, uncommon anagrams: 0
     2,	// AFFAIR, uncommon anagrams: 0
     2,	// WINDOW, uncommon anagrams: 0
     3,	// DURING, uncommon anagrams: 1
+    3,	// VOICE, uncommon anagrams: 1
+    3,	// ORDER, uncommon anagrams: 1
     4,	// MOTION, uncommon anagrams: 1
-    4,	// SHOWN, uncommon anagrams: 1
+    3,	// FRONT, uncommon anagrams: 1
+    5,	// SHOWN, uncommon anagrams: 1
     3,	// FIGURE, uncommon anagrams: 1
-    3,	// READY, uncommon anagrams: 1
+    3,	// FLOOR, uncommon anagrams: 1
+    3,	// FAVOR, uncommon anagrams: 1
+    3,	// ISSUE, uncommon anagrams: 1
+    4,	// READY, uncommon anagrams: 1
     3,	// UNABLE, uncommon anagrams: 1
     3,	// RETURN, uncommon anagrams: 1
+    3,	// TOUCH, uncommon anagrams: 1
+    3,	// STAND, uncommon anagrams: 1
     3,	// BELONG, uncommon anagrams: 1
     3,	// PASSED, uncommon anagrams: 1
+    3,	// PRESS, uncommon anagrams: 1
     3,	// FINISH, uncommon anagrams: 1
+    3,	// THANK, uncommon anagrams: 1
+    3,	// AHEAD, uncommon anagrams: 1
+    4,	// ALLOW, uncommon anagrams: 1
+    3,	// VISIT, uncommon anagrams: 1
     3,	// CAREER, uncommon anagrams: 1
-    4,	// DROWN, uncommon anagrams: 1
-    3,	// THESE, uncommon anagrams: 1
+    5,	// DROWN, uncommon anagrams: 1
+    4,	// THESE, uncommon anagrams: 1
     3,	// SPRING, uncommon anagrams: 1
     3,	// CORNER, uncommon anagrams: 1
-    3,	// RETIRE, uncommon anagrams: 1
+    3,	// HEARD, uncommon anagrams: 1
+    4,	// PUSHED, uncommon anagrams: 1
+    3,	// REPLY, uncommon anagrams: 1
+    3,	// THICK, uncommon anagrams: 1
+    3,	// THING, uncommon anagrams: 1
     3,	// WINTER, uncommon anagrams: 1
     3,	// ISLAND, uncommon anagrams: 1
-    3,	// WAVES, uncommon anagrams: 1
+    3,	// AWFUL, uncommon anagrams: 1
+    3,	// QUIET, uncommon anagrams: 1
     3,	// EMPIRE, uncommon anagrams: 1
-    3,	// REACH, uncommon anagrams: 1
+    3,	// CRIED, uncommon anagrams: 1
+    4,	// REACH, uncommon anagrams: 1
+    3,	// HOURS, uncommon anagrams: 1
+    3,	// FRUIT, uncommon anagrams: 1
+    3,	// RETIRE, uncommon anagrams: 1
     3,	// STRING, uncommon anagrams: 1
     3,	// NEARLY, uncommon anagrams: 1
-    3,	// ALLOW, uncommon anagrams: 1
-    4,	// PUSHED, uncommon anagrams: 1
-    3,	// BECAME, uncommon anagrams: 1
     3,	// TOWARD, uncommon anagrams: 1
-    4,	// DELAY, uncommon anagrams: 2
-    4,	// SUFFER, uncommon anagrams: 2
-    5,	// WOMAN, uncommon anagrams: 2
-    5,	// PARTY, uncommon anagrams: 2
-    4,	// INCOME, uncommon anagrams: 2
-    6,	// DESIGN, uncommon anagrams: 2
-    4,	// FILLED, uncommon anagrams: 2
-    4,	// DIVIDE, uncommon anagrams: 2
-    4,	// BROWN, uncommon anagrams: 2
-    4,	// UNDER, uncommon anagrams: 2
-    4,	// FOURTH, uncommon anagrams: 2
-    4,	// SUMMER, uncommon anagrams: 2
-    5,	// KNOWN, uncommon anagrams: 2
-    5,	// WOMEN, uncommon anagrams: 2
-    4,	// LESSON, uncommon anagrams: 2
-    5,	// SINGLE, uncommon anagrams: 2
+    3,	// ELECT, uncommon anagrams: 1
+    3,	// BEING, uncommon anagrams: 1
+    3,	// BECAME, uncommon anagrams: 1
     4,	// INFORM, uncommon anagrams: 2
+    5,	// DELAY, uncommon anagrams: 2
+    6,	// WOMAN, uncommon anagrams: 2
+    4,	// FORCE, uncommon anagrams: 2
+    4,	// OFFER, uncommon anagrams: 2
+    4,	// CAUSE, uncommon anagrams: 2
+    4,	// HUMAN, uncommon anagrams: 2
+    4,	// FORTY, uncommon anagrams: 2
+    6,	// PARTY, uncommon anagrams: 2
+    4,	// HOUSE, uncommon anagrams: 2
+    4,	// WATER, uncommon anagrams: 2
+    4,	// INCOME, uncommon anagrams: 2
+    4,	// DEATH, uncommon anagrams: 2
+    4,	// GUEST, uncommon anagrams: 2
+    6,	// DESIGN, uncommon anagrams: 2
+    4,	// SUFFER, uncommon anagrams: 2
+    4,	// CENTS, uncommon anagrams: 2
+    4,	// ASKED, uncommon anagrams: 2
+    4,	// EIGHT, uncommon anagrams: 2
+    4,	// FILLED, uncommon anagrams: 2
+    5,	// BROWN, uncommon anagrams: 2
+    5,	// WORTH, uncommon anagrams: 2
+    4,	// UNTIL, uncommon anagrams: 2
+    4,	// EXTRA, uncommon anagrams: 2
+    4,	// FOURTH, uncommon anagrams: 2
+    4,	// ALONE, uncommon anagrams: 2
+    4,	// SOLVE, uncommon anagrams: 2
+    4,	// SUMMER, uncommon anagrams: 2
+    4,	// SMALL, uncommon anagrams: 2
+    4,	// CATCH, uncommon anagrams: 2
+    6,	// KNOWN, uncommon anagrams: 2
+    6,	// WOMEN, uncommon anagrams: 2
+    4,	// LESSON, uncommon anagrams: 2
+    4,	// DIVIDE, uncommon anagrams: 2
+    4,	// YOUNG, uncommon anagrams: 2
+    5,	// SINGLE, uncommon anagrams: 2
+    4,	// LEARN, uncommon anagrams: 2
+    4,	// OFTEN, uncommon anagrams: 2
+    4,	// ALIKE, uncommon anagrams: 2
     4,	// MOTHER, uncommon anagrams: 2
+    4,	// CLOUD, uncommon anagrams: 2
+    4,	// THEIR, uncommon anagrams: 2
+    4,	// OTHER, uncommon anagrams: 2
+    4,	// THINK, uncommon anagrams: 2
     4,	// INSIDE, uncommon anagrams: 2
-    5,	// REPAIR, uncommon anagrams: 3
+    4,	// CARRY, uncommon anagrams: 2
+    6,	// WHOSE, uncommon anagrams: 3
     5,	// OBTAIN, uncommon anagrams: 3
-    5,	// ASSURE, uncommon anagrams: 3
-    5,	// MEANT, uncommon anagrams: 3
+    5,	// REPAIR, uncommon anagrams: 3
+    6,	// MEANT, uncommon anagrams: 3
+    5,	// EVERY, uncommon anagrams: 3
+    6,	// TEACH, uncommon anagrams: 3
+    5,	// BUILT, uncommon anagrams: 3
+    5,	// CLEAN, uncommon anagrams: 3
+    5,	// AFTER, uncommon anagrams: 3
+    6,	// STICK, uncommon anagrams: 3
+    5,	// BEGUN, uncommon anagrams: 3
+    6,	// THOSE, uncommon anagrams: 3
+    5,	// DOZEN, uncommon anagrams: 3
+    5,	// HORSE, uncommon anagrams: 3
     5,	// SELECT, uncommon anagrams: 3
     5,	// REALLY, uncommon anagrams: 3
+    5,	// BEGIN, uncommon anagrams: 3
     5,	// DOCTOR, uncommon anagrams: 3
+    5,	// SIGHT, uncommon anagrams: 3
+    5,	// SHARP, uncommon anagrams: 3
     5,	// RESULT, uncommon anagrams: 3
+    6,	// UNDER, uncommon anagrams: 3
+    5,	// RAISE, uncommon anagrams: 3
     6,	// RECENT, uncommon anagrams: 3
-    6,	// HEART, uncommon anagrams: 3
-    5,	// EVENT, uncommon anagrams: 3
+    7,	// HEART, uncommon anagrams: 3
+    5,	// COLOR, uncommon anagrams: 3
+    5,	// WORDS, uncommon anagrams: 3
+    6,	// STILL, uncommon anagrams: 3
+    5,	// ASSURE, uncommon anagrams: 3
+    5,	// SINCE, uncommon anagrams: 3
+    5,	// SHALL, uncommon anagrams: 3
+    5,	// TRACK, uncommon anagrams: 3
+    6,	// EVENT, uncommon anagrams: 3
+    5,	// DOUBT, uncommon anagrams: 3
+    5,	// NORTH, uncommon anagrams: 3
+    5,	// NEVER, uncommon anagrams: 3
     5,	// CALLED, uncommon anagrams: 3
-    5,	// FIELD, uncommon anagrams: 3
+    5,	// LOCAL, uncommon anagrams: 3
+    5,	// WROTE, uncommon anagrams: 3
+    6,	// RAPID, uncommon anagrams: 4
     6,	// PEOPLE, uncommon anagrams: 4
     6,	// REMAIN, uncommon anagrams: 4
-    6,	// LEAST, uncommon anagrams: 4
-    6,	// SPREAD, uncommon anagrams: 4
-    6,	// ENTIRE, uncommon anagrams: 4
+    6,	// MAYOR, uncommon anagrams: 4
     6,	// FOREST, uncommon anagrams: 4
+    7,	// LEAST, uncommon anagrams: 4
+    6,	// CHART, uncommon anagrams: 4
+    6,	// STAMP, uncommon anagrams: 4
+    6,	// TODAY, uncommon anagrams: 4
+    6,	// SENSE, uncommon anagrams: 4
+    6,	// STONE, uncommon anagrams: 4
+    6,	// COAST, uncommon anagrams: 4
+    6,	// SHAPE, uncommon anagrams: 4
+    6,	// SPREAD, uncommon anagrams: 4
+    6,	// CLOSE, uncommon anagrams: 4
+    6,	// EARLY, uncommon anagrams: 4
+    6,	// SPEED, uncommon anagrams: 4
+    6,	// ENTIRE, uncommon anagrams: 4
+    6,	// METAL, uncommon anagrams: 4
+    7,	// THREE, uncommon anagrams: 4
+    7,	// LEDGE, uncommon anagrams: 4
+    7,	// FIELD, uncommon anagrams: 4
+    7,	// LATER, uncommon anagrams: 5
+    7,	// CLEAR, uncommon anagrams: 5
     7,	// ESCAPE, uncommon anagrams: 5
+    8,	// TRAIN, uncommon anagrams: 5
+    7,	// TABLE, uncommon anagrams: 5
+    7,	// PAPER, uncommon anagrams: 5
     8,	// LISTEN, uncommon anagrams: 5
+    8,	// TRADE, uncommon anagrams: 5
+    8,	// EARTH, uncommon anagrams: 5
     8,	// ALMOST, uncommon anagrams: 5
+    7,	// SEVEN, uncommon anagrams: 5
     8,	// SISTER, uncommon anagrams: 6
+    8,	// SERVE, uncommon anagrams: 6
     8,	// RELIEF, uncommon anagrams: 6
+    9,	// START, uncommon anagrams: 7
     10,	// STREET, uncommon anagrams: 7
     9,	// STREAM, uncommon anagrams: 7
     9,	// DESIRE, uncommon anagrams: 7
+    12,	// STEEL, uncommon anagrams: 10
     13,	// ARREST, uncommon anagrams: 11
