@@ -133,6 +133,21 @@ void Game::Update()
 				TestMatches();
             else if( m_state == STATE_POSTGAME )
             {
+                //SUPERHACK..  if all the cubes are tilted to the left, change game modes
+                //TODO, REMOVE!
+                bool changemode = true;
+                for( int i = 0; i < NUM_CUBES; i++ )
+                {
+                    if( m_cubes[i].GetCube().getTiltState().x != _SYS_TILT_NEGATIVE )
+                    {
+                        changemode = false;
+                        break;
+                    }
+                }
+
+                if( changemode )
+                    m_mode = ( GameMode )( 1 - (int)m_mode );
+
                 Reset();
             }
 			m_bTestMatches = false;
