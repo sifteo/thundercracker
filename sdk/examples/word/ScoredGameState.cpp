@@ -127,15 +127,50 @@ void ScoredGameState::createNewAnagram()
     // make a new anagram of letters halfway through the shuffle animation
     EventData data;
     Dictionary::pickWord(data.mNewAnagram.mWord, data.mNewAnagram.mNumAnagrams);
+
+    // add any leading and/or trailing spaces to odd-length words
+    char spacesAdded[MAX_LETTERS_PER_WORD + 1];
+    _SYS_memset8((uint8_t*)spacesAdded, 0, sizeof(spacesAdded));
+
+    unsigned wordLen = _SYS_strnlen(data.mNewAnagram.mWord, MAX_LETTERS_PER_WORD + 1);
+    ASSERT(GameStateMachine::getCurrentMaxLettersPerWord() >= wordLen);
+    unsigned numBlanks =
+            GameStateMachine::getCurrentMaxLettersPerWord() - wordLen;
+    unsigned leadingBlanks = 0;
+    if (numBlanks == 0)
+    {
+        _SYS_strlcpy(spacesAdded, data.mNewAnagram.mWord, sizeof spacesAdded);
+    }
+    else
+    {
+        leadingBlanks = WordGame::random.randrange(numBlanks + 1);
+
+        unsigned i;
+        for (i = 0;
+             i < GameStateMachine::getCurrentMaxLettersPerWord();
+             ++i)
+        {
+            if (i < leadingBlanks || i >= leadingBlanks + wordLen)
+            {
+                spacesAdded[i] = ' ';
+            }
+            else
+            {
+                spacesAdded[i] = data.mNewAnagram.mWord[i - leadingBlanks];
+            }
+        }
+        spacesAdded[i] = '\0';
+    }
     // scramble the string (random permutation)
     char scrambled[MAX_LETTERS_PER_WORD + 1];
     _SYS_memset8((uint8_t*)scrambled, 0, sizeof(scrambled));
+
     switch (GameStateMachine::getCurrentMaxLettersPerCube())
     {
-    default:
+    case 1:
         for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerWord(); ++i)
         {
-            if (data.mNewAnagram.mWord[i] == '\0')
+            if (spacesAdded[i] == '\0')
             {
                 break;
             }
@@ -147,14 +182,14 @@ void ScoredGameState::createNewAnagram()
             {
                 if (scrambled[j] == '\0')
                 {
-                    scrambled[j] = data.mNewAnagram.mWord[i];
+                    scrambled[j] = spacesAdded[i];
                     break;
                 }
             }
         }
         break;
 
-    case 2:
+    default:
         {
             // first scramble the cube to word fragments mapping
             int normal[NUM_CUBES];
@@ -187,7 +222,7 @@ void ScoredGameState::createNewAnagram()
                 unsigned ltrStartDest = ci * GameStateMachine::getCurrentMaxLettersPerCube();
                 for (unsigned i = ltrStartSrc; i < GameStateMachine::getCurrentMaxLettersPerCube() + ltrStartSrc; ++i)
                 {
-                    if (data.mNewAnagram.mWord[i] == '\0')
+                    if (spacesAdded[i] == '\0')
                     {
                         break;
                     }
@@ -198,7 +233,7 @@ void ScoredGameState::createNewAnagram()
                     {
                         if (scrambled[j] == '\0')
                         {
-                            scrambled[j] = data.mNewAnagram.mWord[i];
+                            scrambled[j] = spacesAdded[i];
                             break;
                         }
                     }
@@ -207,11 +242,13 @@ void ScoredGameState::createNewAnagram()
         }
         break;
     }
-    LOG(("scrambled %s to %s\n", data.mNewAnagram.mWord, scrambled));
-    ASSERT(_SYS_strnlen(scrambled, GameStateMachine::getCurrentMaxLettersPerWord() + 1) == _SYS_strnlen(data.mNewAnagram.mWord, GameStateMachine::getCurrentMaxLettersPerWord() + 1));
+    LOG(("scrambled %s to %s\n", spacesAdded, scrambled));
+    ASSERT(_SYS_strnlen(scrambled, GameStateMachine::getCurrentMaxLettersPerWord() + 1) ==
+           _SYS_strnlen(spacesAdded, GameStateMachine::getCurrentMaxLettersPerWord() + 1));
     _SYS_strlcpy(data.mNewAnagram.mWord, scrambled, sizeof data.mNewAnagram.mWord);
-    unsigned wordLen = _SYS_strnlen(data.mNewAnagram.mWord, sizeof data.mNewAnagram.mWord);
+    wordLen = _SYS_strnlen(data.mNewAnagram.mWord, sizeof data.mNewAnagram.mWord);
     unsigned numCubes = GameStateMachine::GetNumCubes();
+    // TODO revisit the mOffLengthIndex stuff
     if ((wordLen % numCubes) == 0)
     {
         // all cubes have word fragments of the same length

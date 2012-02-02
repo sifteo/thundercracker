@@ -7,7 +7,7 @@ import sys
 from ctypes import *
 import operator
 
-seed_word_lens = [3, 4, 6]#, 9]
+seed_word_lens = [3, 4, 5, 6]#, 9]
 min_common_anagrams = 2
 
 def find_anagrams(string, dictionary, letters_per_cube):
@@ -99,7 +99,7 @@ def generate_dict():
     fi.close()
     
     # uncomment to regenerate: 
-    #generate_word_list_file()
+    generate_word_list_file()
     
     fi = open("word_list.txt", "r")
     #print "second file " + fi.filename()
@@ -120,7 +120,7 @@ def generate_dict():
     #find_anagrams("LISTEN", dictionary)
     #return
     letters_per_cube = [1, 1, 1, 2, 2, 2]
-    min_anagrams = [999, 999, 1, 999, 999, 2]	
+    min_anagrams = [999, 999, 1, 999, 2, 2]	
     for word in word_list:
         anagrams = find_anagrams(word, dictionary, letters_per_cube[len(word) - 1])
         #min_anagrams = [999, 999, 4, 15, 25, 25]

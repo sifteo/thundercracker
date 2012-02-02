@@ -16,37 +16,40 @@ const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
 const static char* picks[] =
 {
-    "NOTICE",
+    "TERMS",
     "WITHIN",
-    "TURNED",
     "BESIDE",
+    "UNLESS",
+    "MIDDLE",
+    "VESSEL",
+    "TURNED",
     "MEMBER",
     "OCCUPY",
+    "SECOND",
+    "NOTICE",
     "BECOME",
     "AFFAIR",
-    "UNLESS",
-    "SECOND",
-    "VESSEL",
-    "MIDDLE",
     "WINDOW",
 
 };
 
 const static unsigned char pickAnagrams[] =
 {
-    2,	// NOTICE, uncommon anagrams: 0
+    2,	// TERMS, uncommon anagrams: 0
     3,	// WITHIN, uncommon anagrams: 0
-    2,	// TURNED, uncommon anagrams: 0
     2,	// BESIDE, uncommon anagrams: 0
+    2,	// UNLESS, uncommon anagrams: 0
+    2,	// MIDDLE, uncommon anagrams: 0
+    2,	// VESSEL, uncommon anagrams: 0
+    2,	// TURNED, uncommon anagrams: 0
     2,	// MEMBER, uncommon anagrams: 0
     2,	// OCCUPY, uncommon anagrams: 0
+    2,	// SECOND, uncommon anagrams: 0
+    2,	// NOTICE, uncommon anagrams: 0
     2,	// BECOME, uncommon anagrams: 0
     2,	// AFFAIR, uncommon anagrams: 0
-    2,	// UNLESS, uncommon anagrams: 0
-    2,	// SECOND, uncommon anagrams: 0
-    2,	// VESSEL, uncommon anagrams: 0
-    2,	// MIDDLE, uncommon anagrams: 0
     2,	// WINDOW, uncommon anagrams: 0
+
 };
 
 Dictionary::Dictionary()
@@ -56,8 +59,6 @@ Dictionary::Dictionary()
 bool Dictionary::pickWord(char* buffer, unsigned& numAnagrams)
 {
     ASSERT(buffer);
-    //strcpy(buffer, "WONDER");
-    //return true;
 
     if (GameStateMachine::getCurrentMaxLettersPerCube() > 1)
     {
@@ -94,6 +95,41 @@ bool Dictionary::isOldWord(const char* word)
     return false;
 }
 
+bool Dictionary::trim(const char* word, char* buffer)
+{
+    ASSERT(word);
+    ASSERT(buffer);
+    int firstLetter;
+    int wordLen = _SYS_strnlen(word, MAX_LETTERS_PER_WORD + 1);
+    for (firstLetter = 0; firstLetter < wordLen; ++firstLetter)
+    {
+        if (word[firstLetter] >= 'A' && word[firstLetter] <= 'Z')
+        {
+            break;
+        }
+    }
+    ASSERT(firstLetter < wordLen);
+    int lastLetter;
+    for (lastLetter = wordLen - 1; lastLetter >= firstLetter; --lastLetter)
+    {
+        if (word[lastLetter] >= 'A' && word[lastLetter] <= 'Z')
+        {
+            break;
+        }
+    }
+    ASSERT(lastLetter >= 0);
+    ASSERT(lastLetter >= firstLetter);
+
+    int i;
+    for (i = firstLetter; i <= lastLetter; ++i)
+    {
+        buffer[i - firstLetter] = word[i];
+    }
+    buffer[i] = '\0';
+    ASSERT(_SYS_strnlen(buffer, MAX_LETTERS_PER_WORD + 1) > 0);
+    ASSERT((int)_SYS_strnlen(buffer, MAX_LETTERS_PER_WORD + 1) <= wordLen);
+    return (firstLetter < wordLen && lastLetter >= 0 && lastLetter >= firstLetter);
+}
 
 void Dictionary::sOnEvent(unsigned eventID, const EventData& data)
 {

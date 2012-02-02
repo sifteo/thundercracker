@@ -558,10 +558,11 @@ void CubeState::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, cons
 {
     Vec2 position(position_RHS);
     const AssetImage& font = FontSmall;
-    unsigned len = _SYS_strnlen(string, 8);
 
     const unsigned MAX_SCORE_STRLEN = 7;
     const char* MAX_SCORE_STR = "9999999";
+
+    unsigned len = _SYS_strnlen(string, MAX_SCORE_STRLEN + 1);
 
     if (len > MAX_SCORE_STRLEN)
     {

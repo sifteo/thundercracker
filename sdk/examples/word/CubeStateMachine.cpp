@@ -151,10 +151,14 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
         }
         if (neighborLetters)
         {
-            if (Dictionary::isWord(wordBuffer))
+            char trimmedWord[MAX_LETTERS_PER_WORD + 1];
+            if (Dictionary::trim(wordBuffer, trimmedWord))
             {
-                isOld = Dictionary::isOldWord(wordBuffer);
-                return true;
+                if (Dictionary::isWord(trimmedWord))
+                {
+                    isOld = Dictionary::isOldWord(trimmedWord);
+                    return true;
+                }
             }
         }
     }

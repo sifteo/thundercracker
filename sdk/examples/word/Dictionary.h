@@ -13,6 +13,7 @@ public:
     static bool pickWord(char* buffer, unsigned& numAnagrams);
     static bool isWord(const char* string);
     static bool isOldWord(const char* word);
+    static bool trim(const char* word, char* buffer);
 
     static void sOnEvent(unsigned eventID, const EventData& data);
 
