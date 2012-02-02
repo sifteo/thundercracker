@@ -279,6 +279,13 @@ class Cube {
 	  	return physicalAccel() * kSideToQ[rot];
 	}
 
+  bool touching() const {
+    return _SYS_isTouching(mID);
+    //uint8_t nbuf[4];
+    //_SYS_getRawNeighbors(mID, nbuf);
+    //return nbuf[0] & 0x40;
+  }
+
     VideoBuffer vbuf;
 
  private:

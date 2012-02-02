@@ -18,12 +18,12 @@ static bool AnyNeighbors(const Cube& c) {
 		c.hasPhysicalNeighborAt(3);
 }
 
-
-
 void siftmain() {
-  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-    gCubes[i].enable(i + CUBE_ID_BASE);
-  }
+
+	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
+    	gCubes[i].enable(i + CUBE_ID_BASE);
+  	}
+
 #if LOAD_ASSETS
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
@@ -88,7 +88,7 @@ void siftmain() {
 			pGame = 0;
 		}
 		PlayMusic(music_winscreen, false);
-		WinScreen(pGame->GetPlayer()->CurrentView()->GetCube());
+		WinScreen(pGame->GetPlayer()->View()->GetCube());
 	}
 	
 }

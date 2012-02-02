@@ -6,11 +6,6 @@ class Room;
 #define ANIM_TILE_CAPACITY 4
 
 class GameView {
-public:
-
-  // hack
-  bool visited;
-
 private:
   unsigned mRoomId;
 
@@ -21,31 +16,39 @@ private:
 
   union {
     struct {
-      unsigned start_frame;
+      unsigned startFrame;
       unsigned count;
     } idle;
     struct {
-      unsigned start_frame;
-      unsigned anim_tile_count;
-      AnimTileView anim_tiles[ANIM_TILE_CAPACITY];
+      unsigned startFrame;
+      unsigned animTileCount;
+      AnimTileView animTiles[ANIM_TILE_CAPACITY];
     } room;
   } mScene;
 
+  struct {
+    unsigned hideOverlay : 1;
+    unsigned prevTouch : 1;
+  } flags;
+
 public:  
   // getters
+  Cube::ID GetCubeID() const;
   Cube* GetCube() const;
   bool IsShowingRoom() const;
   bool InSpriteMode() const;
   Vec2 Location() const;
-  Room* CurrentRoom() const;
+  Room* GetRoom() const;
   Cube::Side VirtualTiltDirection() const;
   GameView* VirtualNeighborAt(Cube::Side side) const;
+  bool Touched() const;
   
   // methods
   void Init();
   void Update();
   
   bool ShowLocation(Vec2 loc);
+  void HideOverlay(bool flag);
   bool HideRoom();
   
   void ShowPlayer();

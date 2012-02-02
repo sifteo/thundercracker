@@ -4,11 +4,8 @@
 #include "assets.gen.h"
 #include "config.h"
 
-#ifndef SIFTEO_SIMULATOR
-#define KLUDGES
-#endif
-
 extern Cube gCubes[NUM_CUBES];
+extern uint8_t gTouchFlags[NUM_CUBES];
 extern AudioChannel gChannelSfx;
 extern AudioChannel gChannelMusic;
 extern Math::Random gRandom;
