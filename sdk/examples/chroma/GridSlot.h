@@ -73,7 +73,7 @@ public:
 
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	//draw self on given vid at given vec
-    void Draw( VidMode_BG0 &vid, Float2 &tiltState );
+    void Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState );
     void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
     void Update(float t);
     bool isAlive() const { return m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_MOVING || m_state == STATE_FINISHINGMOVE || m_state == STATE_FIXEDATTEMPT; }
@@ -104,6 +104,8 @@ public:
     void finishFakeMove();
 
     void DamageRock();
+    inline void setMultiplier( unsigned int mult ) { m_multiplier = mult; }
+    void UpMultiplier();
 
 private:
 	void markNeighbor( int row, int col );
@@ -134,6 +136,9 @@ private:
 	unsigned int m_score;
 	//fixed dot
 	bool		 m_bFixed;
+
+    //only fixed dots can have multipliers
+    unsigned int m_multiplier;
 
 	unsigned int m_animFrame;
     unsigned int m_RockHealth;

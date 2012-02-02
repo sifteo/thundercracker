@@ -1463,6 +1463,37 @@ void CubeWrapper::SpawnSpecial( unsigned int color )
 }
 
 
+void CubeWrapper::SpawnMultiplier( unsigned int mult )
+{
+    //search the central locations for a fixed dot
+    for( int i = 1; i < NUM_ROWS - 1; i++ )
+    {
+        for( int j = 1; j < NUM_COLS - 1; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+
+            if( slot.isAlive() && slot.IsFixed() )
+            {
+                slot.setMultiplier( mult );
+                return;
+            }
+        }
+    }
+
+    //no fixed dot, either spawn one or convert a regular dot into one
+    int i = Game::random.random() > 0.5f ? 2 : 1;
+    int j = Game::random.random() > 0.5f ? 2 : 1;
+
+    GridSlot &slot = m_grid[i][j];
+
+    if( !slot.isAlive() )
+        slot.FillColor( Game::random.randrange( Game::Inst().getLevel().m_numColors ) );
+
+    slot.MakeFixed();
+    slot.setMultiplier( mult );
+}
+
+
 //destroy all dots of the given color
 void CubeWrapper::BlowAll( unsigned int color )
 {
@@ -1649,4 +1680,25 @@ bool CubeWrapper::HasFloatingDots() const
     }
 
     return false;
+}
+
+
+
+//search for a multiplier dot and increase it
+void CubeWrapper::UpMultiplier()
+{
+    for( int i = 1; i < NUM_ROWS - 1; i++ )
+    {
+        for( int j = 1; j < NUM_COLS - 1; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+            slot.UpMultiplier();
+        }
+    }
+}
+
+
+void CubeWrapper::ClearSprites()
+{
+    m_vid.resizeSprite( 0, 0, 0 );
 }

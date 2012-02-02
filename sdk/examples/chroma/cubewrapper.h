@@ -111,6 +111,7 @@ public:
     //This exists because we need to do all our clears first, and then do our draws
     void QueueClear( Vec2 &pos );
     void SpawnSpecial( unsigned int color );
+    void SpawnMultiplier( unsigned int mult );
     //destroy all dots of the given color
     void BlowAll( unsigned int color );
     bool HasHyperDot() const;
@@ -120,6 +121,9 @@ public:
 
     //add one piece
     void RespawnOnePiece();
+    //search for a multiplier dot and increase it
+    void UpMultiplier();
+    void ClearSprites();
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -135,7 +139,7 @@ private:
     bool HasFloatingDots() const;
 
 	Cube m_cube;
-	VidMode_BG0 m_vid;
+    VidMode_BG0_SPR_BG1 m_vid;
 	VidMode_BG0_ROM m_rom;
 	BG1Helper m_bg1helper;
 

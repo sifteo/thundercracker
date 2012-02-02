@@ -43,6 +43,7 @@ Cover = image{"cover.png"}
 hyperdot = image{"hyper.png"}
 rockdot = image{"rock.png", height=32}
 rainball = image{"rainball.png"}
+mults = image{"mults.png", height=16, pinned=true}
 --timer
 TimerUp = image{"TimerUp.png", height=8}
 TimerLeft = image{"TimerLeft.png"}

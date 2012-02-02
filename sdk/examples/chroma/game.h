@@ -57,12 +57,15 @@ public:
     //timer constants
     static const float TIME_TO_RESPAWN;
     static const float COMBO_TIME_THRESHOLD;
+    static const int MAX_MULTIPLIER = 7;
 
     //number of dots needed for certain thresholds
     enum
     {
         DOT_THRESHOLD1 = 2,
         DOT_THRESHOLD2 = 4,
+        DOT_THRESHOLD_TIMED_RAINBALL = 6,
+        DOT_THRESHOLD_TIMED_MULT = 9,
         DOT_THRESHOLD3 = 9,
         DOT_THRESHOLD4 = 14,
         DOT_THRESHOLD5 = 15,
@@ -128,6 +131,7 @@ public:
     inline void SetUsedColor( unsigned int color ) { m_aColorsUsed[color] = true; }
     void UpCombo();
     inline unsigned int GetComboCount() const { return m_comboCount; }
+    void UpMultiplier();
 
 private:
 	void TestMatches();
@@ -172,6 +176,7 @@ private:
     unsigned int m_cubeToRespawn;
     unsigned int m_comboCount;
     float m_fTimeSinceCombo;
+    unsigned int m_Multiplier;
 
     //force a 1 frame paint sync before/after drawing
     bool m_bForcePaintSync;

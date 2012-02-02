@@ -22,8 +22,6 @@ const float GridSlot::START_FADING_TIME = 1.75f;
 const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot::START_FADING_TIME ) / GridSlot::NUM_POINTS_FRAMES;
 
 
-
-
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
 {
     &Gem0,
@@ -81,8 +79,6 @@ const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
     &rainball
 };
 
-
-
 //order of our frames
 enum
 {
@@ -133,6 +129,7 @@ GridSlot::GridSlot() :
 	m_eventTime( 0.0f ),
 	m_score( 0 ),
 	m_bFixed( false ),
+    m_multiplier( 1 ),
 	m_animFrame( 0 )
 {
 	m_color = Game::random.randrange(NUM_COLORS);
@@ -161,6 +158,7 @@ void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
         m_state = STATE_LIVING;
 	m_color = color;
 	m_bFixed = false;
+    m_multiplier = 1;
 
     if( color == ROCKCOLOR )
         m_RockHealth = MAX_ROCK_HEALTH;
@@ -203,7 +201,7 @@ unsigned int GridSlot::GetSpecialFrame() const
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
+void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState )
 {
 	Vec2 vec( m_col * 4, m_row * 4 );
 	switch( m_state )
@@ -218,7 +216,17 @@ void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
             if( IsSpecial() )
                 vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
             else if( IsFixed() )
+            {
                 vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
+
+                if( m_multiplier > 1 )
+                {
+                    //always use sprite 0, only 1 multiplier allowed per cube?
+                    vid.setSpriteImage( 0, mults, m_multiplier - 2 );
+                    vid.resizeSprite( 0, 32, 16 );
+                    vid.moveSprite( 0, m_col * 32, m_row * 32 + 8 );
+                }
+            }
 			else
 			{
                 const AssetImage &animtex = *TEXTURES[ m_color ];
@@ -492,6 +500,13 @@ void GridSlot::explode()
     hurtNeighboringRock( m_row + 1, m_col );
     hurtNeighboringRock( m_row, m_col + 1 );
 
+    if( m_multiplier > 1 )
+    {
+        Game::Inst().UpMultiplier();
+        m_multiplier = 0;
+        m_pWrapper->ClearSprites();
+    }
+
 	m_eventTime = System::clock();
 }
 
@@ -705,4 +720,12 @@ void GridSlot::setFixedAttempt()
     m_state = STATE_FIXEDATTEMPT;
     m_animFrame = 0;
     Game::Inst().playSound(frozen_06);
+}
+
+
+
+void GridSlot::UpMultiplier()
+{
+    if( isAlive() && IsFixed() && m_multiplier > 1 )
+        m_multiplier++;
 }

@@ -32,7 +32,7 @@ Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), 
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
-                m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
+                m_Multiplier(1), m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
                 , m_bStabilized( false )
 {
 	//Reset();
@@ -235,6 +235,7 @@ void Game::Reset()
     m_fTimeTillRespawn = TIME_TO_RESPAWN;
     m_comboCount = 0;
     m_fTimeSinceCombo = 0.0f;
+    m_Multiplier = 1;
 
     m_bStabilized = false;
 }
@@ -263,7 +264,10 @@ void Game::CheckChain( CubeWrapper *pWrapper )
         unsigned int comboScore = m_iDotScoreSum;
 
         if( m_mode == MODE_TIMED )
+        {
             comboScore += 10 * m_comboCount;
+            comboScore *= m_Multiplier;
+        }
 
         m_iScore += comboScore;
 		m_iDotsCleared += m_iDotScore;
@@ -276,6 +280,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 		else
         {
             bool bannered = false;
+            bool specialSpawned = false;
             int numColors = 0;
 
             //count how many colors we used for this combo
@@ -289,38 +294,67 @@ void Game::CheckChain( CubeWrapper *pWrapper )
             }
 
             if( numColors >= NUM_COLORS_FOR_HYPER )
+            {
                 pWrapper->SpawnSpecial( GridSlot::HYPERCOLOR );
-
-
-            //free shake
-            /*if( m_mode == MODE_SHAKES && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
-            {
-
+                specialSpawned = true;
             }
-            else if( m_iDotsCleared >= DOT_THRESHOLD4 )
-            {
-                playSound(clear4);
 
-                if( m_mode == MODE_SHAKES && !m_bHyperDotMatched )
+            if( !specialSpawned )
+            {
+                if( m_mode == MODE_SHAKES )
                 {
-                    pWrapper->getBanner().SetMessage( "Bonus Shake!" );
-                    bannered = true;
-                    m_ShakesRemaining++;
+                    //free shake
+                    /*if( m_mode == MODE_SHAKES && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
+                    {
+
+                    }
+                    else if( m_iDotsCleared >= DOT_THRESHOLD4 )
+                    {
+                        playSound(clear4);
+
+                        if( m_mode == MODE_SHAKES && !m_bHyperDotMatched )
+                        {
+                            pWrapper->getBanner().SetMessage( "Bonus Shake!" );
+                            bannered = true;
+                            m_ShakesRemaining++;
+                        }
+                    }
+                    else */if( m_iDotsCleared >= DOT_THRESHOLD3 )
+                    {
+                        playSound(clear3);
+
+                        //is it dangerous to add one here?  do we need to queue it?
+                        //if( !m_bHyperDotMatched && !DoesHyperDotExist() )
+                        pWrapper->SpawnSpecial( GridSlot::RAINBALLCOLOR );
+                        specialSpawned = true;
+                    }
+                }
+                else if( m_mode == MODE_TIMED )
+                {
+                    if( m_iDotsCleared >= DOT_THRESHOLD_TIMED_MULT )
+                    {
+                        playSound(clear4);
+
+                        pWrapper->SpawnMultiplier( m_Multiplier + 1 );
+                        specialSpawned = true;
+                    }
+                    else if( m_iDotsCleared >= DOT_THRESHOLD_TIMED_RAINBALL )
+                    {
+                        playSound(clear3);
+
+                        pWrapper->SpawnSpecial( GridSlot::RAINBALLCOLOR );
+                        specialSpawned = true;
+                    }
+                }
+
+                if( !specialSpawned )
+                {
+                    if( m_iDotsCleared >= DOT_THRESHOLD2 )
+                        playSound(clear2);
+                    else if( m_iDotsCleared >= DOT_THRESHOLD1 )
+                        playSound(clear1);
                 }
             }
-            else */if( m_iDotsCleared >= DOT_THRESHOLD3 )
-            {
-                playSound(clear3);
-
-                //is it dangerous to add one here?  do we need to queue it?
-                //if( !m_bHyperDotMatched && !DoesHyperDotExist() )
-                if( numColors < NUM_COLORS_FOR_HYPER )
-                    pWrapper->SpawnSpecial( GridSlot::RAINBALLCOLOR );
-            }
-            else if( m_iDotsCleared >= DOT_THRESHOLD2 )
-                playSound(clear2);
-            else if( m_iDotsCleared >= DOT_THRESHOLD1 )
-                playSound(clear1);
 
             if( !bannered )
             {
@@ -816,4 +850,17 @@ void Game::UpCombo()
             m_fTimeSinceCombo = 0.0f;
         }
     }
+}
+
+
+void Game::UpMultiplier()
+{
+    ASSERT( m_mode == MODE_TIMED );
+    ASSERT( m_Multiplier < MAX_MULTIPLIER - 1 );
+
+    m_Multiplier++;
+
+    //find all existing multpilier dots and tick them up one
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].UpMultiplier();
 }
