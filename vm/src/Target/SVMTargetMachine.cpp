@@ -37,12 +37,28 @@ bool SVMTargetMachine::addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level Opt
     return true;
 }
 
-unsigned SVMTargetMachine::getBlockSize()
+uint32_t SVMTargetMachine::getBlockSize()
 {
     return 256;
 }
 
-unsigned SVMTargetMachine::getBundleSize()
+uint32_t SVMTargetMachine::getBundleSize()
 {
     return 4;
+}
+
+uint32_t SVMTargetMachine::getFlashBase()
+{
+    return 0x80000000;
+}
+
+uint32_t SVMTargetMachine::getRAMBase()
+{
+    return 0x10000;
+}
+
+void SVMTargetMachine::buildSysCallMap(StringMap<uint16_t> &Map)
+{
+    Map["_SYS_paint"] = 0x0100;   
+    Map["_SYS_ticks_ns"] = 0x0101;
 }

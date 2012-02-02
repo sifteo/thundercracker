@@ -4,80 +4,9 @@
  * M. Elizabeth Scott <beth@sifteo.com>
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
- 
-/*
- * The SVMELFProgramWriter class is analogous to ELFObjectWriter, but
- * this class writes fully loadable programs, instead of relocatable objects.
- *
- * Luckily, our job is much easier since we don't need to worry about
- * relocations at all. All symbols are written with a fully resolved address.
- */
 
-#include "SVM.h"
-#include "SVMMCTargetDesc.h"
-#include "llvm/MC/MCAssembler.h"
-#include "llvm/MC/MCELFObjectWriter.h"
-#include "llvm/MC/MCValue.h"
-#include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCObjectWriter.h"
-#include "llvm/MC/MCSectionELF.h"
-#include "llvm/MC/MCAsmBackend.h"
-#include "llvm/MC/MCAsmLayout.h"
-#include "llvm/Support/ELF.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
+#include "SVMELFProgramWriter.h"
 using namespace llvm;
-
-namespace {
-    
-typedef std::vector<const MCSectionData*> SectionDataList;    
-    
-class SVMELFProgramWriter : public MCObjectWriter {
-public:    
-    SVMELFProgramWriter(raw_ostream &OS)
-        : MCObjectWriter(OS, true) {}
-
-    bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
-        const MCSymbolData &DataA, const MCFragment &FB,
-        bool InSet, bool IsPCRel) const
-    {
-        // All symbols are fully resolved
-        return true;
-    }
-    
-    void ExecutePostLayoutBinding(MCAssembler &Asm, const MCAsmLayout &Layout)
-    {
-        // Nothing to do
-    }
-    
-    void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
-        const MCFragment *Fragment, const MCFixup &Fixup, MCValue Target,
-        uint64_t &FixedValue);
-
-    void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
-
-private:
-    uint32_t getEntryAddress(const MCAssembler &Asm,
-        const MCAsmLayout &Layout);
-    uint32_t getSymbolAddress(const MCAssembler &Asm,
-        const MCAsmLayout &Layout, const MCSymbol *S);
-    
-    void collectProgramSections(const MCAssembler &Asm,
-        SectionDataList &Sections);
-
-    void writePadding(unsigned N);
-    void writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout,
-        unsigned PHNum, uint64_t &HdrSize);
-    void writeProgramHeader(const MCAsmLayout &Layout,
-        const MCSectionData &SD, uint64_t &FileOff);
-    void writeStrtabSectionHeader();
-    void writeProgSectionHeader(const MCAsmLayout &Layout,
-        const MCSectionData &SD, uint64_t &FileOff);
-    void writeProgramData(MCAssembler &Asm, const MCAsmLayout &Layout,
-        const MCSectionData &SD, uint64_t &FileOff);
-};
-
-}  // end namespace
 
 
 void SVMELFProgramWriter::writePadding(unsigned N)
@@ -292,19 +221,8 @@ void SVMELFProgramWriter::RecordRelocation(const MCAssembler &Asm,
     const MCAsmLayout &Layout, const MCFragment *Fragment,
     const MCFixup &Fixup, MCValue Target, uint64_t &FixedValue)
 {
-    // Evaluate SymA - SymB + Constant
-
-    int64_t value = Target.getConstant();
-    
-    if (Target.getSymA())
-        value += getSymbolAddress(Asm, Layout,
-            &Target.getSymA()->getSymbol());
-
-    if (Target.getSymB())
-        value -= getSymbolAddress(Asm, Layout,
-            &Target.getSymB()->getSymbol());
-    
-    FixedValue = value;
+    SVMSymbolInfo SI = getSymbol(Asm, Layout, Target);
+    FixedValue = SI.Value;
 }
 
 uint32_t SVMELFProgramWriter::getEntryAddress(const MCAssembler &Asm,
@@ -312,10 +230,10 @@ uint32_t SVMELFProgramWriter::getEntryAddress(const MCAssembler &Asm,
 {
     const char *compatEntryName = "siftmain";
     const char *entryName = "main";
-    
+
     const MCContext &context = Asm.getContext();
     MCSymbol *S;
-    
+
     S = context.LookupSymbol(entryName);
 
     // Backwards compatibility
@@ -326,21 +244,89 @@ uint32_t SVMELFProgramWriter::getEntryAddress(const MCAssembler &Asm,
         report_fatal_error("No entry point exists. Is " +
             Twine(entryName) + "() defined?");
 
-    return getSymbolAddress(Asm, Layout, S);
+    SVMSymbolInfo SI = getSymbol(Asm, Layout, S);
+    assert(SI.Kind == SVMSymbolInfo::LOCAL);
+    return SI.Value;
 }
 
-uint32_t SVMELFProgramWriter::getSymbolAddress(const MCAssembler &Asm,
+SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
+    const MCAsmLayout &Layout, MCValue Value)
+{
+    /*
+     * Convert an MCValue into a resolved SVMSymbolInfo,
+     * by evaluating (SymA - SymB + Constant).
+     */
+
+    int64_t CValue = Value.getConstant();
+    const MCSymbolRefExpr *SA = Value.getSymA();
+    const MCSymbolRefExpr *SB = Value.getSymB();
+    SVMSymbolInfo SIA, SIB;
+    
+    if (SA) SIA = getSymbol(Asm, Layout, &SA->getSymbol());
+    if (SB) SIB = getSymbol(Asm, Layout, &SB->getSymbol());
+
+    if ((SIA.Kind == SVMSymbolInfo::NONE || SIA.Kind == SVMSymbolInfo::LOCAL) &&
+        (SIB.Kind == SVMSymbolInfo::NONE || SIB.Kind == SVMSymbolInfo::LOCAL)) {
+
+        // Arithmetic is allowed.
+        SIA.Kind = SVMSymbolInfo::LOCAL;
+        SIA.Value = CValue + SIA.Value - SIB.Value;
+        return SIA;
+    }
+
+    if (SIA.Kind == SIB.Kind && SIA.Value == SIB.Value) {
+        // Two special symbols cancel out, yield a normal constant
+        SIA.Kind = SVMSymbolInfo::LOCAL;
+        SIA.Value = CValue;
+        return SIA;
+    }
+
+    if (SIA.Kind != SVMSymbolInfo::NONE && SIB.Kind != SVMSymbolInfo::NONE)
+        report_fatal_error("Can't take the difference of special symbols '"
+            + Twine(SA->getSymbol().getName()) + "' and '"
+            + Twine(SB->getSymbol().getName()) + "'");
+
+    if (SIB.Kind != SVMSymbolInfo::NONE)
+        report_fatal_error("Can't negate special symbol '"
+            + Twine(SB->getSymbol().getName()) + "'");
+
+    if (CValue != 0)
+        report_fatal_error("Can't add constant to special symbol '"
+            + Twine(SA->getSymbol().getName()) + "'");
+
+    return SIA;
+}
+
+SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
     const MCAsmLayout &Layout, const MCSymbol *S)
 {
     const MCSymbolData *SD = &Asm.getSymbolData(*S);
+    SVMSymbolInfo SI;
 
-    if (!S->isDefined())
-        report_fatal_error("Taking address of undefined symbol '" +
-            Twine(S->getName()) +"'");
+    if (S->isDefined()) {
+        // Symbol has a value in our module
+        SI.Value = 0x12340000 + Layout.getSymbolOffset(SD);
+        SI.Kind = SVMSymbolInfo::LOCAL;
+        return SI;
+    }
 
-    assert(!S->isVariable());
-    
-    return 0x8000000 + Layout.getSymbolOffset(SD);
+    StringMap<uint16_t>::const_iterator it = sysCallMap.find(S->getName());
+    if (it != sysCallMap.end()) {
+        // This undefined symbol is a system call
+        SI.Value = it->second;
+        SI.Kind = SVMSymbolInfo::SYS;
+        return SI;
+    }
+
+    // Actually undefined
+    report_fatal_error("Taking address of undefined symbol '" +
+        Twine(S->getName()) +"'");
+}
+
+SVMELFProgramWriter::SVMELFProgramWriter(raw_ostream &OS)
+    : MCObjectWriter(OS, true)
+{
+    SVMTargetMachine::buildSysCallMap(sysCallMap);
 }
 
 MCObjectWriter *llvm::createSVMELFProgramWriter(raw_ostream &OS)

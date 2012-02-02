@@ -13,6 +13,7 @@
 #include "SVMFrameLowering.h"
 #include "SVMSelectionDAGInfo.h"
 #include "SVMSubtarget.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -32,9 +33,13 @@ public:
                      StringRef CPU, StringRef FS,
                      Reloc::Model RM, CodeModel::Model CM);
 
-    unsigned getBlockSize();
-    unsigned getBundleSize();
+    static uint32_t getBlockSize();
+    static uint32_t getBundleSize();
+    static uint32_t getFlashBase();
+    static uint32_t getRAMBase();
 
+    static void buildSysCallMap(StringMap<uint16_t> &Map);
+    
     virtual const SVMInstrInfo *getInstrInfo() const { return &InstrInfo; }
     virtual const TargetFrameLowering  *getFrameLowering() const { return &FrameLowering; }
     virtual const SVMRegisterInfo *getRegisterInfo() const { return &InstrInfo.getRegisterInfo(); }
