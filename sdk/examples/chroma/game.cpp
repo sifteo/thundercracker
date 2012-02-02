@@ -131,10 +131,10 @@ void Game::Update()
 		{
 			if( m_state == STATE_PLAYING )
 				TestMatches();
-			else
-			{
-				Reset();
-			}
+            else if( m_state == STATE_POSTGAME )
+            {
+                Reset();
+            }
 			m_bTestMatches = false;
 		}
 

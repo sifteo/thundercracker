@@ -270,7 +270,7 @@ void CubeWrapper::Draw()
             }
             else if( m_cube.id() == 2 + CUBE_ID_BASE )
             {
-                m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeOrNeighbor, 0);
+                m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeNewGame, 0);
                 //m_bg1helper.DrawTextf( Vec2( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
             }
 
@@ -402,6 +402,31 @@ void CubeWrapper::Update(float t, float dt)
             if( oldvel.x * m_curFluidVel.x < 0.0f || oldvel.y * m_curFluidVel.y < 0.0f )
                 Game::Inst().playSlosh();
         }
+
+        for( Cube::Side i = 0; i < NUM_SIDES; i++ )
+        {
+            bool newValue = m_cube.hasPhysicalNeighborAt(i);
+            Cube::ID id = m_cube.physicalNeighborAt(i);
+
+            /*if( newValue )
+            {
+                PRINT( "we have a neighbor.  it is %d\n", id );
+            }*/
+
+            //newly neighbored
+            if( newValue )
+            {
+                if( id != m_neighbors[i] )
+                {
+                    Game::Inst().setTestMatchFlag();
+                    m_neighbors[i] = id - CUBE_ID_BASE;
+
+                    //PRINT( "neighbor on side %d is %d", i, id );
+                }
+            }
+            else
+                m_neighbors[i] = -1;
+        }
     }
     else if( Game::Inst().getState() == Game::STATE_POSTGAME )
     {
@@ -410,31 +435,6 @@ void CubeWrapper::Update(float t, float dt)
             Game::Inst().setTestMatchFlag();
             m_fShakeTime = -1.0f;
         }
-    }
-
-	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
-	{
-		bool newValue = m_cube.hasPhysicalNeighborAt(i);
-		Cube::ID id = m_cube.physicalNeighborAt(i);
-
-        /*if( newValue )
-		{
-			PRINT( "we have a neighbor.  it is %d\n", id );
-        }*/
-
-		//newly neighbored
-		if( newValue )
-		{
-			if( id != m_neighbors[i] )
-			{
-				Game::Inst().setTestMatchFlag();
-                m_neighbors[i] = id - CUBE_ID_BASE;
-
-                //PRINT( "neighbor on side %d is %d", i, id );
-			}
-		}
-		else
-            m_neighbors[i] = -1;
     }
 }
 
@@ -449,7 +449,7 @@ void CubeWrapper::Tilt( int dir )
 {
 	bool bChanged = false;
 
-	if( m_fShakeTime > 0.0f )
+    if( Game::Inst().getState() != Game::STATE_PLAYING || m_fShakeTime > 0.0f )
 		return;
 
 	//hastily ported from the python

@@ -15,7 +15,7 @@ MessageBox4 = image{"message4.png"}
 --just for CES messages
 MsgGameOver = image{"gameover.png"}
 MsgHighScores = image{"highscores.png"}
-MsgShakeOrNeighbor = image{"shakeorneighbor.png"}
+MsgShakeNewGame = image{"shakenewgame.png"}
 MsgShakeToRefill = image{"shaketorefill.png"}
 --the gems
 Gem0 = image{"Gem0.png", height=32}
