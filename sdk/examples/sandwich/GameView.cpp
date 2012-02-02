@@ -3,10 +3,10 @@
 
 // Constants
 
-#define LOCATION_UNDEFINED  (Vec2(-1,-1))
+#define ROOM_UNDEFINED  (0xff)
 #define BFF_SPRITE_ID       0
 #define TRIGGER_SPRITE_ID   1
-#define PLAYER_SPRITE_ID    3
+#define PLAYER_SPRITE_ID    2
 
 static const int8_t sHoverTable[] = { 
   0, 0, 1, 2, 2, 3, 3, 3, 
@@ -21,9 +21,9 @@ const static uint8_t sHopTable[] = { 0, 0, 0, 1, 3, 4, 6, 6, 7, 7, 8, 7, 7, 6, 6
 #define HOP_COUNT 18
 #define HOP_PHASE 9
 
-#define FRAMES_PER_TORCH_FRAME 4
 #define BFF_FRAME_COUNT 4
 
+/*
 namespace BffDir {
   enum ID { E, SE, S, SW, W, NW, N, NE };
 }
@@ -38,158 +38,146 @@ static const Vec2 sBffTable[] = {
   Vec2(0, -1),
   Vec2(1, -1),
 };
+*/
 
 // methods
 
-GameView::GameView() : 
-visited(0), mRoom(LOCATION_UNDEFINED), mIdleHoverIndex(0) {
-}
-
 void GameView::Init() {
+  flags.hideOverlay = false;
+  flags.prevTouch = GetCube()->touching();
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   mode.set();
   mode.clear();
   mode.setWindow(0, 128);
-  if (pGame->player.CurrentView() == this) {
-    mRoom = Vec2(-1,-1);
-    ShowLocation(pGame->player.Location());
+  if (pGame->GetPlayer()->View() == this) {
+    mRoomId = ROOM_UNDEFINED;
+    ShowLocation(pGame->GetPlayer()->Location());
   } else {
-    mRoom.x = -2; // h4ck
-    ShowLocation(LOCATION_UNDEFINED);
+    mRoomId = 0;
+    ShowLocation(Vec2(-1,-1));
   }
 }
 
+Cube::ID GameView::GetCubeID() const {
+  return this - pGame->ViewBegin();
+}
+
 Cube* GameView::GetCube() const {
-  int id = (int)(this - pGame->ViewBegin());
-  return gCubes + id;
+  return gCubes + (this - pGame->ViewBegin());
+}
+
+bool GameView::Touched() const {
+  return !flags.prevTouch && GetCube()->touching();
 }
 
 void GameView::Update() {
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   if (!IsShowingRoom()) { 
     // compute position of each inventory item based on phase and current time
-    if (mScene.idle.count > 0 && mScene.idle.time <= HOP_PHASE * (mScene.idle.count-1) + HOP_COUNT) {
+    const unsigned t = pGame->AnimFrame() - mScene.idle.startFrame;
+    if (mScene.idle.count > 0 && t <= HOP_PHASE * (mScene.idle.count-1) + HOP_COUNT) {
       int count = 0;
       const int pad = 24;
       const int innerPad = (128-pad-pad)/3;
-      for(int i=0; i<mScene.idle.count; ++i) {
-        int localTime = mScene.idle.time - HOP_PHASE * i;
+      for(unsigned i=0; i<mScene.idle.count; ++i) {
+        int localTime = t - HOP_PHASE * i;
         if (localTime < HOP_COUNT) {
           mode.moveSprite(i, pad + innerPad * i - 8, 108  - sHopTable[localTime]);
         } else {
           mode.moveSprite(i, pad + innerPad * i - 8, 108);
         }
       }
-      mScene.idle.time++;
     }
-    return; 
-  }
+  } else {
 
-  // begin h4cky scene-specific stuff
-  /*
-  RoomData *p = Room()->Data();
-  if (pGame->map.Data() == &dungeon_data) {
-    if (p->torch0 != 0xff) {
-      mScene.dungeon.torchTime = (mScene.dungeon.torchTime + 1) % (6 * FRAMES_PER_TORCH_FRAME);
-      unsigned torchFrame = mScene.dungeon.torchTime / FRAMES_PER_TORCH_FRAME;
-      if (torchFrame * FRAMES_PER_TORCH_FRAME == mScene.dungeon.torchTime) {
-        // advancing the frame
-        Vec2 tt0 = p->TorchTile0();
-        VidMode_BG0 mode(GetCube()->vbuf);
-        mode.BG0_drawAsset(
-          Vec2(tt0.x<<1,tt0.y<<1),
-          *(pGame->map.Data()->tileset),
-          pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
-        );
-        tt0.y++;
-        mode.BG0_drawAsset(
-          Vec2(tt0.x<<1,tt0.y<<1),
-          *(pGame->map.Data()->tileset),
-          pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
-        );
-        if (p->torch1 != 0xff) {
-          tt0 = p->TorchTile1();
+    // update animated tiles (could suffer some optimization)
+    const unsigned t = pGame->AnimFrame() - mScene.room.startFrame;
+    for(unsigned i=0; i<mScene.room.animTileCount; ++i) {
+      const AnimTileView& view = mScene.room.animTiles[i];
+      const unsigned localt = t % (view.frameCount << 2);
+      if (localt % 4 == 0) {
           mode.BG0_drawAsset(
-            Vec2(tt0.x<<1,tt0.y<<1),
-            *(pGame->map.Data()->tileset),
-            pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
+            Vec2((view.lid%8)<<1,(view.lid>>3)<<1),
+            *(pGame->GetMap()->Data()->tileset),
+            pGame->GetMap()->Data()->rooms[mRoomId].tiles[view.lid] + (localt>>2)
           );
-          tt0.y++;
-          mode.BG0_drawAsset(
-            Vec2(tt0.x<<1,tt0.y<<1),
-            *(pGame->map.Data()->tileset),
-            pGame->map.Data()->GetTileId(mRoom, tt0) + torchFrame
-          );
-        }
       }
-    }    
-  } else if (pGame->map.Data() == &forest_data && mScene.forest.hasBff) {
-    // butterfly stuff
-    Vec2 delta = sBffTable[mScene.forest.bffDir];
-    mScene.forest.bffX += (uint8_t) delta.x;
-    mScene.forest.bffY += (uint8_t) delta.y;
-    MoveSprite(GetCube(), BFF_SPRITE_ID, mScene.forest.bffX-68, mScene.forest.bffY-68);
-    // hack - assumes butterflies and items are not rendered on same cube
-    mIdleHoverIndex = (mIdleHoverIndex + 1) % (BFF_FRAME_COUNT * FRAMES_PER_TORCH_FRAME);
-    SetSpriteImage(GetCube(), BFF_SPRITE_ID, 
-      Butterfly.index + 4 * mScene.forest.bffDir + mIdleHoverIndex / FRAMES_PER_TORCH_FRAME
-    );
-    using namespace BffDir;
-    switch(mScene.forest.bffDir) {
-      case S:
-        if (mScene.forest.bffY > 196) { RandomizeBff(); }
-        break;
-      case SW:
-        if (mScene.forest.bffX < 60 || mScene.forest.bffY > 196) { RandomizeBff(); }
-        break;
-      case W:
-        if (mScene.forest.bffX < 60) { RandomizeBff(); }
-        break;
-      case NW:
-        if (mScene.forest.bffX < 60 || mScene.forest.bffY < 60) { RandomizeBff(); }
-        break;
-      case N:
-      if (mScene.forest.bffY < 60) { RandomizeBff(); }
-        break;
-      case NE:
-      if (mScene.forest.bffX > 196 || mScene.forest.bffY < 60) { RandomizeBff(); }
-        break;
-      case E:
-      if (mScene.forest.bffX > 196) { RandomizeBff(); }
-        break;
-      case SE:
-      if (mScene.forest.bffX > 196 || mScene.forest.bffY > 196) { RandomizeBff(); }
-        break;
     }
-  }
-  */
-  // end h4cky section
 
-  // item hover
-  if (CurrentRoom()->HasItem()) {
-    mIdleHoverIndex = (mIdleHoverIndex + 1) % HOVER_COUNT;
-    Vec2 p = 16 * CurrentRoom()->LocalCenter();
-    mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + sHoverTable[mIdleHoverIndex]);
+    // begin h4cky scene-specific stuff
+    /*
+    const RoomData *p = Room()->Data();
+    if (pGame->GetMap()->Data() == &forest_data && mScene.forest.hasBff) {
+      // butterfly stuff
+      Vec2 delta = sBffTable[mScene.forest.bffDir];
+      mScene.forest.bffX += (uint8_t) delta.x;
+      mScene.forest.bffY += (uint8_t) delta.y;
+      MoveSprite(GetCube(), BFF_SPRITE_ID, mScene.forest.bffX-68, mScene.forest.bffY-68);
+      // hack - assumes butterflies and items are not rendered on same cube
+      mIdleHoverIndex = (mIdleHoverIndex + 1) % (BFF_FRAME_COUNT * FRAMES_PER_TORCH_FRAME);
+      SetSpriteImage(GetCube(), BFF_SPRITE_ID, 
+        Butterfly.index + 4 * mScene.forest.bffDir + mIdleHoverIndex / FRAMES_PER_TORCH_FRAME
+      );
+      using namespace BffDir;
+      switch(mScene.forest.bffDir) {
+        case S:
+          if (mScene.forest.bffY > 196) { RandomizeBff(); }
+          break;
+        case SW:
+          if (mScene.forest.bffX < 60 || mScene.forest.bffY > 196) { RandomizeBff(); }
+          break;
+        case W:
+          if (mScene.forest.bffX < 60) { RandomizeBff(); }
+          break;
+        case NW:
+          if (mScene.forest.bffX < 60 || mScene.forest.bffY < 60) { RandomizeBff(); }
+          break;
+        case N:
+        if (mScene.forest.bffY < 60) { RandomizeBff(); }
+          break;
+        case NE:
+        if (mScene.forest.bffX > 196 || mScene.forest.bffY < 60) { RandomizeBff(); }
+          break;
+        case E:
+        if (mScene.forest.bffX > 196) { RandomizeBff(); }
+          break;
+        case SE:
+        if (mScene.forest.bffX > 196 || mScene.forest.bffY > 196) { RandomizeBff(); }
+          break;
+      }
+    }
+    */
+    // end h4cky section
+
+    // item hover
+    if (GetRoom()->HasItem()) {
+      const unsigned hoverTime = (pGame->AnimFrame() - mScene.room.startFrame) % HOVER_COUNT;
+      Vec2 p = 16 * GetRoom()->LocalCenter(0);
+      mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + sHoverTable[hoverTime]);
+    }
+
   }
 
+  flags.prevTouch = GetCube()->touching();
 }
 
 //----------------------------------------------------------------
 // ROOM METHODS
 //----------------------------------------------------------------
 
+Vec2 GameView::Location() const {
+  return pGame->GetMap()->GetLocation(mRoomId);
+}
+
 bool GameView::IsShowingRoom() const {
-  return mRoom.x >= 0 && 
-    mRoom.y >= 0 && 
-    mRoom.x < pGame->map.Data()->width && 
-    mRoom.y < pGame->map.Data()->height; 
+  return mRoomId != ROOM_UNDEFINED;
 }
 
-Room* GameView::CurrentRoom() const { 
+Room* GameView::GetRoom() const { 
   ASSERT(IsShowingRoom()); 
-  return pGame->map.GetRoom(mRoom); 
+  return pGame->GetMap()->GetRoom(mRoomId);
 }
-
+/*
 void GameView::RandomizeBff() {
   using namespace BffDir;
   mScene.forest.bffDir = (uint8_t) gRandom.randrange(8);
@@ -228,21 +216,26 @@ void GameView::RandomizeBff() {
       break;
   }
 }
+*/
 
 bool GameView::ShowLocation(Vec2 room) {
-  if (room == mRoom) { return false; }
-  mRoom = room;
+  const unsigned roomId = pGame->GetMap()->Contains(room) ? pGame->GetMap()->GetRoomId(room) : ROOM_UNDEFINED;
+  if (roomId == mRoomId) { return false; }
+  flags.hideOverlay = false;
+  mRoomId = roomId;
   // are we showing an items?
   if (IsShowingRoom()) {
+    mScene.room.startFrame = pGame->AnimFrame();
+    ComputeAnimatedTiles();
     VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
     HideInventorySprites();
-    Room* r = CurrentRoom();
+    Room* r = GetRoom();
     switch(r->TriggerType()) {
       case TRIGGER_ITEM: 
         mode.setSpriteImage(TRIGGER_SPRITE_ID, Items.index + (r->TriggerAsItem()->itemId - 1) * Items.width * Items.height);
         mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
         {
-          Vec2 p = 16 * CurrentRoom()->LocalCenter();
+          Vec2 p = 16 * GetRoom()->LocalCenter(0);
           mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
         }
         break;
@@ -254,15 +247,12 @@ bool GameView::ShowLocation(Vec2 room) {
         mode.moveSprite(TRIGGER_SPRITE_ID, npc->x-16, npc->y-16);
         break;
     }
-    if (this == pGame->player.CurrentView()) { ShowPlayer(); }
+    if (this == pGame->GetPlayer()->View()) { ShowPlayer(); }
     DrawBackground();
-    mIdleHoverIndex = 0;
 
     // h4cky scene-specific stuff
     /*
-    if (pGame->map.Data() == &dungeon_data) {
-      mScene.dungeon.torchTime = 0;
-    } else if (pGame->map.Data() == &forest_data) {
+    if (pGame->GetMap()->Data() == &forest_data) {
       if (mr->itemId) {
         mScene.forest.hasBff = 0;
       } else if ( (mScene.forest.hasBff = (gRandom.randrange(3) == 0)) ) {
@@ -283,20 +273,28 @@ bool GameView::ShowLocation(Vec2 room) {
 }
 
 bool GameView::HideRoom() {
-  bool result = mRoom != LOCATION_UNDEFINED;
-  mRoom = LOCATION_UNDEFINED;
+  bool result = mRoomId != ROOM_UNDEFINED;
+  flags.hideOverlay = false;
+  mRoomId = ROOM_UNDEFINED;
   // hide sprites
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
   mode.hideSprite(PLAYER_SPRITE_ID);
   mode.hideSprite(TRIGGER_SPRITE_ID);
   mode.hideSprite(BFF_SPRITE_ID);
   if(result) {
-    mScene.idle.time = 0;
+    mScene.idle.startFrame = pGame->AnimFrame();
   }
-
   DrawInventorySprites();
   DrawBackground();
   return result;
+}
+
+void GameView::HideOverlay(bool flag) {
+  if (flags.hideOverlay != flag) {
+    flags.hideOverlay = flag;
+    DrawBackground();
+    pGame->NeedsSync();
+  }
 }
 
 void GameView::ShowPlayer() {
@@ -309,9 +307,9 @@ void GameView::SetPlayerFrame(unsigned frame) {
 }
 
 void GameView::UpdatePlayer() {
-  Vec2 localPosition = pGame->player.Position() - 128 * mRoom;
+  Vec2 localPosition = pGame->GetPlayer()->Position() - 128 * Location();
   VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
-  mode.setSpriteImage(PLAYER_SPRITE_ID, pGame->player.CurrentFrame());
+  mode.setSpriteImage(PLAYER_SPRITE_ID, pGame->GetPlayer()->AnimFrame());
   mode.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
 }
 
@@ -320,7 +318,7 @@ void GameView::HidePlayer() {
 }
   
 void GameView::SetItemPosition(Vec2 p) {
-  p += 16 * CurrentRoom()->LocalCenter();
+  p += 16 * GetRoom()->LocalCenter(0);
   VidMode_BG0_SPR_BG1(GetCube()->vbuf).moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
 
@@ -330,7 +328,7 @@ void GameView::HideItem() {
 
 void GameView::RefreshInventory() {
   if (!IsShowingRoom()) {
-    mScene.idle.time = 0;
+    mScene.idle.startFrame = pGame->AnimFrame();
     DrawInventorySprites();
   }
 }
@@ -343,14 +341,14 @@ void GameView::DrawInventorySprites() {
   const int firstSandwichId = 2;
   const int sandwichTypeCount = 4;
   for(int itemId=firstSandwichId; itemId<firstSandwichId+sandwichTypeCount; ++itemId) {
-    if (pGame->player.HasItem(itemId)) {
+    if (pGame->GetPlayer()->HasItem(itemId)) {
       mode.resizeSprite(mScene.idle.count, 16, 16);
       mode.moveSprite(mScene.idle.count, pad + innerPad * mScene.idle.count - 8, 108);
       mode.setSpriteImage(mScene.idle.count, Items.index + (itemId-1) * Items.width * Items.height);
       mScene.idle.count++;
     }
   }
-  if (pGame->player.HaveBasicKey()) {
+  if (pGame->GetPlayer()->HaveBasicKey()) {
       mode.resizeSprite(mScene.idle.count, 16, 16);
       mode.moveSprite(mScene.idle.count, pad + innerPad * mScene.idle.count - 8, 108);
       mode.setSpriteImage(mScene.idle.count, Items.index + (ITEM_BASIC_KEY-1) * Items.width * Items.height);
@@ -399,51 +397,75 @@ Cube::Side GameView::VirtualTiltDirection() const {
 
 GameView* GameView::VirtualNeighborAt(Cube::Side side) const {
   Cube::ID neighbor = GetCube()->virtualNeighborAt(side);
-  return neighbor == CUBE_ID_UNDEFINED ? 0 : pGame->views + (neighbor-CUBE_ID_BASE);
+  return neighbor == CUBE_ID_UNDEFINED ? 0 : pGame->ViewAt(neighbor-CUBE_ID_BASE);
 }
 
 void GameView::DrawBackground() {
   VidMode_BG0 mode(GetCube()->vbuf);
   if (!IsShowingRoom()) {
-    mode.BG0_drawAsset(Vec2(0,0), *(pGame->map.Data()->blankImage));
+    mode.BG0_drawAsset(Vec2(0,0), *(pGame->GetMap()->Data()->blankImage));
     BG1Helper(*GetCube()).Flush();
   } else {
+    
+    const Room *pRoom = GetRoom();
     for(int y=0; y<8; ++y) {
       for(int x=0; x<8; ++x) {
         mode.BG0_drawAsset(
           Vec2(x<<1,y<<1),
-          *(pGame->map.Data()->tileset),
-          pGame->map.GetTileId(mRoom, Vec2(x, y))
+          *(pGame->GetMap()->Data()->tileset),
+          pGame->GetMap()->GetTileId(mRoomId, Vec2(x, y))
         );
       }
     }
     // hack alert!
-    if (CurrentRoom()->HasOpenDoor()) {
+    if (pRoom->HasOpenDoor()) {
       for(int y=0; y<3; ++y) {
         for(int x=3; x<=4; ++x) {
           mode.BG0_drawAsset(
             Vec2(x<<1,y<<1),
-            *(pGame->map.Data()->tileset),
-            pGame->map.GetTileId(mRoom, Vec2(x, y))+2
+            *(pGame->GetMap()->Data()->tileset),
+            pGame->GetMap()->GetTileId(mRoomId, Vec2(x, y))+2
           );
         }
       }
     }
 
-
     BG1Helper ovrly(*GetCube());
-    const uint8_t *p = CurrentRoom()->Data()->overlay;
-    if (p) {
-      while(*p != 0xff) {
-        uint8_t pos = p[0];
-        uint8_t frm = p[1];
-        p+=2;
-        if (pos != 0xff && frm != 0xff) {
-          Vec2 position = Vec2(pos>>4, pos & 0xf);
-          ovrly.DrawAsset(2*position, *(pGame->map.Data()->overlay), frm);
+    if (!flags.hideOverlay && pRoom->HasOverlay()) {
+      unsigned tid = pRoom->OverlayTile();
+      const uint8_t *pRle = pRoom->OverlayBegin();
+      while(tid < 64) {
+        if (*pRle == 0xff) {
+          tid += pRle[1];
+          pRle+=2;
+        } else {
+          ovrly.DrawAsset(2*Vec2(tid%8, tid>>3), *(pGame->GetMap()->Data()->overlay), *pRle);
+          tid++;
+          pRle++;
         }
       }
     }
     ovrly.Flush();
+  }
+}
+
+void GameView::ComputeAnimatedTiles() {
+  mScene.room.animTileCount = 0;
+  const unsigned tc = pGame->GetMap()->Data()->animatedTileCount;
+  if (mRoomId == ROOM_UNDEFINED || tc == 0) { return; }
+  const AnimatedTileData* pAnims = pGame->GetMap()->Data()->animatedTiles;
+  for(unsigned lid=0; lid<64; ++lid) {
+    uint8_t tid = pGame->GetMap()->Data()->rooms[mRoomId].tiles[lid];
+    bool is_animated = false;
+    for(unsigned i=0; i<tc; ++i) {
+      if (pAnims[i].tileId == tid) {
+        AnimTileView& view = mScene.room.animTiles[mScene.room.animTileCount];
+        view.lid = lid;
+        view.frameCount = pAnims[i].frameCount;
+        mScene.room.animTileCount++;
+        break;
+      }
+    }
+    if (mScene.room.animTileCount == ANIM_TILE_CAPACITY) { break; }
   }
 }

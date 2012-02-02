@@ -5,8 +5,8 @@ Cube gCubes[NUM_CUBES];
 AudioChannel gChannelSfx;
 AudioChannel gChannelMusic;
 
-static Game sGame;
-Game* pGame = &sGame;
+//static Game sGame;
+Game* pGame = 0;
 
 void IntroCutscene();
 void WinScreen(Cube* primaryCube);
@@ -18,12 +18,12 @@ static bool AnyNeighbors(const Cube& c) {
 		c.hasPhysicalNeighborAt(3);
 }
 
-
-
 void siftmain() {
-  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
-    gCubes[i].enable(i + CUBE_ID_BASE);
-  }
+
+	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
+    	gCubes[i].enable(i + CUBE_ID_BASE);
+  	}
+
 #if LOAD_ASSETS
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
@@ -81,10 +81,14 @@ void siftmain() {
 	for(;;) {
 		PlayMusic(music_sting, false);
 		//IntroCutscene();
-		{ *pGame = Game(); } // re-initialize memory
-		pGame->MainLoop();
+		{
+			Game game;
+			pGame = &game;
+			game.MainLoop();
+			pGame = 0;
+		}
 		PlayMusic(music_winscreen, false);
-		WinScreen(pGame->player.CurrentView()->GetCube());
+		WinScreen(pGame->GetPlayer()->View()->GetCube());
 	}
 	
 }

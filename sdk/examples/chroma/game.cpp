@@ -374,7 +374,7 @@ bool Game::no_match_color_imbalance() const
     */
 	for( unsigned int i = 0; i < GridSlot::NUM_COLORS; i++ )
 	{
-        if( IsColorUnmatchable(i) )
+        if( NumCubesWithColor(i) == 1 )
             return true;
 	}
 
@@ -394,20 +394,85 @@ bool Game::AreAllColorsUnmatchable() const
 }
 
 
+//this only checks if a cube has a color that no other cubes have
 bool Game::IsColorUnmatchable( unsigned int color ) const
+{
+    int total = 0;
+    bool aHasColor[ NUM_CUBES ];
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[i].hasColor(color) )
+        {
+            total++;
+            aHasColor[i] = true;
+        }
+        else
+            aHasColor[i] = false;
+    }
+
+    if( total <= 1 )
+        return true;
+
+    int numCorners = 0;
+    bool side1 = false;
+    bool side2 = false;
+
+    //also, make sure these colors on these cubes can possibly match
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( aHasColor[i] )
+        {
+            bool localCorners = false;
+            bool localside1 = false;
+            bool localside2 = false;
+
+            m_cubes[i].UpdateColorPositions( color, localCorners, localside1, localside2 );
+
+            if( localCorners )
+            {
+                numCorners++;
+                //this color has corners on multiple cubes, there's a match!
+                if( numCorners >= 2 )
+                    return false;
+            }
+
+            //side1 on one cube can match side2 on another
+            if( localside1 )
+            {
+                if( side2 )
+                    return false;
+            }
+            if( localside2 )
+            {
+                if( side1 )
+                    return false;
+            }
+
+            if( localside1 )
+                side1 = true;
+            if( localside2 )
+                side2 = true;
+        }
+    }
+
+    return true;
+}
+
+//return the number of cubes with the given color
+unsigned int Game::NumCubesWithColor( unsigned int color ) const
 {
     int total = 0;
 
     for( int i = 0; i < NUM_CUBES; i++ )
     {
         if( m_cubes[i].hasColor(color) )
+        {
             total++;
+        }
     }
 
-    if( total == 1 )
-        return true;
-
-    return false;
+    return total;
 }
 
 
@@ -539,6 +604,9 @@ void Game::enterScore()
             if( i < (int)NUM_HIGH_SCORES - 1 )
             {
                 s_HighScores[i+1] = s_HighScores[i];
+
+                if( i == 0 )
+                    s_HighScores[0] = m_iScore;
             }
         }
         else
@@ -624,6 +692,16 @@ void Game::EndGame()
 {
     enterScore();
     m_state = STATE_DYING;
+
+    if( m_mode == MODE_SHAKES )
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            m_cubes[i].getBanner().SetMessage( "NO MORE MATCHES" );
+        }
+
+    }
+
     playSound(timer_explode);
 }
 
@@ -638,3 +716,15 @@ bool Game::AreNoCubesEmpty() const
     return true;
 }
 
+unsigned int Game::CountEmptyCubes() const
+{
+    int count = 0;
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[i].isEmpty() )
+            count++;
+    }
+
+    return count;
+}

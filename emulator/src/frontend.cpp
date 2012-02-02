@@ -498,7 +498,10 @@ void Frontend::onMouseDown(int button)
                      * determine what counts as a touch.
                      */
 
-                    mousePicker.mCube->setTouch(1.0f - centerDist / centerSize);
+                     // max: only do touch-stuff if CTRL is held down
+                    if (glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RCTRL) == GLFW_PRESS) {
+                        mousePicker.mCube->setTouch(1.0f - centerDist / centerSize);
+                    }
                 }
 
                 // Glue it to the point we picked, with a revolute joint

@@ -94,6 +94,8 @@ class CubeSlot {
     }
 
     void getRawNeighbors(uint8_t buf[4]);
+
+    bool isTouching() const;
     
     _SYSAssetGroupCube *assetCube(const struct _SYSAssetGroup *group) {
         /*
@@ -128,7 +130,7 @@ class CubeSlot {
     // NOTE: must be synced with NB_BIT_TICKS * NB_TX_BITS in firmware/cube/sensors.c
     // XXX: at the moment, NB_TX_BITS is 18 on the cube, but making it waaaaay wider
     // here (40) since we are observing failures to neighbor otherwise :(
-    static const unsigned NEIGHBOR_TX_SLOT_TICKS = 70 * 19;
+    static const unsigned NEIGHBOR_TX_SLOT_TICKS = 60 * 40;
     // rollover duration of cube timer, in cube ticks
     static const unsigned NEIGHBOR_TIMER_PERIOD_TICKS = 0x1FFF; // 13 bit
     

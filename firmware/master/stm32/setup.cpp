@@ -155,6 +155,8 @@ extern "C" void _start()
 
 #ifndef DEBUG
     AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
+    MacronixMX25::instance.init();
+#else
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
                  (1 << 29) |        // TIM13 ""
                  (1 << 28) |        // TIM12 ""
@@ -169,7 +171,6 @@ extern "C" void _start()
                  (1 << 12) |        // TIM3 ""
                  (1 << 11) |        // TIM2 ""
                  (1 << 10);         // TIM1 ""
-    MacronixMX25::instance.init();
 #endif
 
     /*
@@ -204,7 +205,7 @@ extern "C" void _start()
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
 
-#if 0
+#ifdef USB_LOAD
     // ALERT! ST's usb library appears to overwrite registers related to
     // SysTick and as such, cannot be used while you want to talk to cubes
     // over the radio. It's fine for loading data over USB, though.

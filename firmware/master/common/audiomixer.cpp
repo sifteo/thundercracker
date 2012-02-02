@@ -24,9 +24,18 @@ AudioMixer::AudioMixer() :
 void AudioMixer::init()
 {
     memset(channelSlots, 0, sizeof(channelSlots));
+    // NOTE: several games are failing their builds for hardware because the
+    // speex libs & their own asset metadata overflow MCU internal flash.
+    // Disabling this init allows the linker to strip all the speex code, and
+    // for many games to fit in flash - of course, if you try to run on HW with
+    // speex encoded samples, it will go up in flames. run on HW with uncompressed
+    // samples for now, until absolutely everything is being pulled from external
+    // flash, in which case we should be able to pull speex back in.
+#ifdef SIFTEO_SIMULATOR
     for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         decoders[i].init();
     }
+#endif
 }
 
 /*
@@ -150,15 +159,16 @@ int AudioMixer::pullAudio(int16_t *buffer, int numsamples)
     uint32_t mask = activeChannelMask & ~stoppedChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
-        AudioChannelSlot *ch = &channelSlots[idx];
+        ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
+        AudioChannelSlot &ch = channelSlots[idx];
         Atomic::ClearLZ(mask, idx);
 
-        if (ch->isPaused()) {
+        if (ch.isPaused()) {
             continue;
         }
         
         // Each channel individually mixes itself with the existing buffer contents
-        int mixed = ch->mixAudio(buffer, numsamples);
+        int mixed = ch.mixAudio(buffer, numsamples);
 
         // Update size of overall mixed audio buffer
         if (mixed > samplesMixed) {
@@ -248,55 +258,46 @@ bool AudioMixer::populateModuleMetaData(struct _SYSAudioModule *mod)
 
 bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYSAudioLoopType loopMode)
 {
-    if (enabledChannelMask == 0 || activeChannelMask == 0xFF000000) {
-        return false; // no free channels
+    // find channels that are enabled, not active & not marked as stopped
+    uint32_t selector = enabledChannelMask & ~activeChannelMask & ~stoppedChannelMask;
+    if (selector == 0) {
+        return false;
     }
 
     if (!populateModuleMetaData(mod)) {
         return false;
     }
 
-    // find the next channel that's both enabled and inactive
-    int idx;
-    for (idx = 0; idx < _SYS_AUDIO_MAX_CHANNELS; idx++) {
-        if ((enabledChannelMask & Intrinsic::LZ(idx)) &&
-           !(activeChannelMask  & Intrinsic::LZ(idx))) {
-            break;
-        }
-    }
-
-    // does this module require a decoder? if so, get one
-    SpeexDecoder *dec;
-    PCMDecoder *pcmdec = 0;
-    if (mod->type == Sample) {
-        dec = getDecoder();
-        if (dec == NULL) {
-            LOG(("ERROR: No channels available.\n"));
-            return false; // no decoders available
-        }
-    } else if (mod->type == PCM) {
-        pcmdec = getPCMDecoder();
-        if (pcmdec == NULL) {
-            LOG(("ERROR: No channels available.\n"));
-            return false; // no decoders available
-        }
-    }
-    else {
-        LOG(("ERROR: Unknown audio encoding. id: %d type: %d.\n", mod->id, mod->type));
-        dec = 0;
-    }
-
+    unsigned idx = Intrinsic::CLZ(selector);
+    ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
     AudioChannelSlot &ch = channelSlots[idx];
     ch.handle = nextHandle++;
     *handle = ch.handle;
-    if (pcmdec) {
-        ch.play(mod, loopMode, pcmdec);
-    } else {
+
+    // does this module require a decoder? if so, get one
+    if (mod->type == Sample) {
+        SpeexDecoder *dec = getDecoder();
+        if (dec == NULL) {
+            LOG(("ERROR: No SpeexDecoder available.\n"));
+            return false;
+        }
         ch.play(mod, loopMode, dec);
     }
-    
+    else if (mod->type == PCM) {
+        PCMDecoder *pcmdec = getPCMDecoder();
+        if (pcmdec == NULL) {
+            LOG(("ERROR: No PCMDecoder available.\n"));
+            return false;
+        }
+        ch.play(mod, loopMode, pcmdec);
+    }
+    else {
+        LOG(("ERROR: Unknown audio encoding. id: %d type: %d.\n", mod->id, mod->type));
+        return false;
+    }
+
     Atomic::SetLZ(activeChannelMask, idx);
-    
+
     return true;
 }
 

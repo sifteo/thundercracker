@@ -1,6 +1,7 @@
 
 #include "pwmaudioout.h"
 #include "audiomixer.h"
+#include "tasks.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -17,13 +18,13 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
     tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
 #endif
     this->mixer = mixer;
-    memset(audioBufs, 0, sizeof(audioBufs));
+    buf.init(&this->sys);
     outA.setControl(GPIOPin::OUT_ALT_50MHZ);
     outB.setControl(GPIOPin::OUT_ALT_50MHZ);
 
     switch (samplerate) {
     case AudioOutDevice::kHz8000: sampleTimer.init(2200, 0); break;
-    case AudioOutDevice::kHz16000: sampleTimer.init(1100, 0); break;
+    case AudioOutDevice::kHz16000: sampleTimer.init(2200, 0); break;
     case AudioOutDevice::kHz32000: sampleTimer.init(550, 0); break;
     }
 
@@ -56,19 +57,6 @@ void PwmAudioOut::resume()
     pwmTimer.enableChannel(this->pwmChan);
 }
 
-#if 0
-void PwmAudioOut::dmaIsr(uint32_t flags)
-{
-    // figure out which of our buffers to pull into
-    AudioOutBuffer *b = &audioBufs[0]; // TODO: ping pong
-    b->remaining = mixer->pullAudio(b->data, sizeof(b->data));
-    // kick off next DMA transfer
-    if (!b->remaining) {
-        suspend();
-    }
-}
-#endif
-
 /*
  * Called when our sample rate timer's update ISR has fired.
  * Push the next sample into the output device.
@@ -78,15 +66,14 @@ void PwmAudioOut::tmrIsr()
 #ifdef SAMPLE_RATE_GPIO
     tim4TestPin.toggle();
 #endif
-    AudioOutBuffer *b = &audioBufs[0];
-    if (b->offset >= b->count) {
-        b->offset = 0;
-        b->count = mixer->pullAudio(b->data, arraysize(b->data));
-        if (!b->count) {
+    // TODO - tune the refill threshold if needed
+    if (buf.readAvailable() < buf.capacity() / 2) {
+        Tasks::setPending(Tasks::AudioOutEmpty, &buf);
+        if (buf.readAvailable() < 2)
             return;
-        }
     }
-    uint16_t duty = b->data[b->offset++] + 0x8000;
+
+    uint16_t duty = (buf.dequeue() | (buf.dequeue() << 8)) + 0x8000;
     duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
     pwmTimer.setDuty(this->pwmChan, duty);
 }

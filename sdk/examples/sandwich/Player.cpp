@@ -10,11 +10,22 @@ inline int fast_abs(int x) {
 	return x<0?-x:x;
 }
 
-Player::Player() : mStatus(PLAYER_STATUS_IDLE),
-pCurrent(pGame->views), pTarget(0), 
-mDir(2), mKeyCount(0), mItemMask(0), 
-mAnimFrame(0), mAnimTime(0.f), mProgress(0), mNextDir(-1), 
-mApproachingLockedDoor(false) {
+void Player::Init() {
+  const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
+  mCurrent.view = pGame->ViewBegin();
+  mCurrent.subdivision = 0;
+  mTarget.view = 0;
+  mPosition.x = 128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerX;
+  mPosition.y = 128 * (gQuestData->roomId / gMapData[gQuestData->mapId].width) + 16 * room.centerY;
+  mStatus = PLAYER_STATUS_IDLE;
+  mDir = 2;
+  mKeyCount = 0;
+  mItemMask = 0;
+  mAnimFrame = 0;
+  mAnimTime = 0.f;
+  mProgress = 0;
+  mNextDir = -1;
+  mApproachingLockedDoor = false;
   CORO_RESET;
 }
 
@@ -30,7 +41,7 @@ void Player::Reset() {
 }
 
 Room* Player::CurrentRoom() const {
-  return pGame->map.GetRoom(Location());
+  return pGame->GetMap()->GetRoom(Location());
 }
 
 void Player::PickupItem(int itemId) {
@@ -75,7 +86,7 @@ void Player::Move(int dx, int dy) {
   mDir = InferDirection(Vec2(dx, dy));
 }
 
-int Player::CurrentFrame() {
+int Player::AnimFrame() {
   switch(mStatus) {
     case PLAYER_STATUS_IDLE: {
       if (mAnimFrame == 1) {
@@ -116,7 +127,7 @@ void Player::UpdateAnimation(float dt) {
       mAnimFrame = 0;
     }
     if (before != mAnimFrame) {
-      pCurrent->UpdatePlayer();
+      mCurrent.view->UpdatePlayer();
     }
   }  
 }
@@ -130,18 +141,21 @@ void Player::Update(float dt) {
   for(;;) {
     // wait for tilt
     mStatus = PLAYER_STATUS_IDLE;
-    pCurrent->UpdatePlayer();
-    mNextDir = pCurrent->VirtualTiltDirection();
+    mCurrent.view->UpdatePlayer();
+    mNextDir = mCurrent.view->VirtualTiltDirection();
     mPath.Cancel();
     mAnimFrame = 0;
     mAnimTime = 0.f;
-    while(!pGame->map.CanTraverse(pCurrent->Location(),mNextDir) || !(pTarget=pCurrent->VirtualNeighborAt(mNextDir))) {
-      CORO_YIELD;
-      mNextDir = pCurrent->VirtualTiltDirection();
-      #if SIFTEO_SIMULATOR
-      if (PathDetect()) { break; }
-      #endif
-    }
+    #if TOUCH_ONLY
+      do {
+        CORO_YIELD;
+      } while (!pGame->GetMap()->FindBroadPath(&mPath));
+    #else
+      do {
+        CORO_YIELD;
+        mNextDir = mCurrent.view->VirtualTiltDirection();
+      } while(mNextDir == -1 || !pGame->GetMap()->GetBroadLocationNeighbor(mCurrent, mNextDir, &mTarget));
+    #endif
     // go to the target
     mStatus = PLAYER_STATUS_WALKING;
     mAnimFrame = 0;
@@ -149,24 +163,24 @@ void Player::Update(float dt) {
     do {
       if (mPath.IsDefined()) {
         mDir = mPath.steps[0];
-        pTarget = pCurrent->VirtualNeighborAt(mDir);
+        pGame->GetMap()->GetBroadLocationNeighbor(mCurrent, mDir, &mTarget);
       }
       // animate walking to target
       PlaySfx(sfx_running);
-      pTarget->ShowPlayer();
-      if (mDir == SIDE_TOP && pCurrent->CurrentRoom()->HasClosedDoor()) {
+      mTarget.view->ShowPlayer();
+      if (mDir == SIDE_TOP && mCurrent.view->GetRoom()->HasClosedDoor()) {
         for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
           mPosition.y -= WALK_SPEED;
-          pCurrent->UpdatePlayer();
+          mCurrent.view->UpdatePlayer();
           CORO_YIELD;
         }
         if (HaveBasicKey()) {
           DecrementBasicKeyCount();
           // check the door
-          pCurrent->CurrentRoom()->OpenDoor();
-          pCurrent->DrawBackground();
-          pCurrent->GetCube()->vbuf.touch();
-          pCurrent->UpdatePlayer();
+          mCurrent.view->GetRoom()->OpenDoor();
+          mCurrent.view->DrawBackground();
+          mCurrent.view->GetCube()->vbuf.touch();
+          mCurrent.view->UpdatePlayer();
           mTimeout = System::clock();
           pGame->NeedsSync();
           do {
@@ -176,43 +190,44 @@ void Player::Update(float dt) {
           // finish up
           for(; mProgress+WALK_SPEED<=128; mProgress+=WALK_SPEED) {
             mPosition.y -= WALK_SPEED;
-            pCurrent->UpdatePlayer();
-            pTarget->UpdatePlayer();
+            mCurrent.view->UpdatePlayer();
+            mTarget.view->UpdatePlayer();
             CORO_YIELD;
           }
           // fill in the remainder
-          mPosition = pTarget->CurrentRoom()->Center();
+          mPosition = mTarget.view->GetRoom()->Center(mTarget.subdivision);
         } else {
           PlaySfx(sfx_doorBlock);
           mPath.Cancel();
-          pTarget->HidePlayer();
-          pTarget = 0;
+          mTarget.view->HidePlayer();
+          mTarget.view = 0;
           mDir = (mDir+2)%4;
           for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
             CORO_YIELD;
             mPosition.y += WALK_SPEED;
-            pCurrent->UpdatePlayer();
+            mCurrent.view->UpdatePlayer();
           }          
         }
       } else { // general case - A*
-		{
-			bool result = pGame->map.FindPath(pCurrent->Location(), mDir, &mMoves);
-			ASSERT(result);
-		}
+        if (mTarget.view->GetRoom()->IsBridge()) {
+          mTarget.view->HideOverlay(mDir%2 == 1);
+        }
+  			{bool result = pGame->GetMap()->FindNarrowPath(mCurrent, mDir, &mMoves);
+	   		ASSERT(result);}
         mProgress = 0;
         for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
           mDir = *pNextMove;  
           if (mProgress != 0) {
             mPosition += mProgress * kSideToUnit[*pNextMove];
-            pCurrent->UpdatePlayer();
-            pTarget->UpdatePlayer();
+            mCurrent.view->UpdatePlayer();
+            mTarget.view->UpdatePlayer();
             CORO_YIELD;
           }
           while(mProgress+WALK_SPEED < 16) {
             mProgress += WALK_SPEED;
             mPosition += WALK_SPEED * kSideToUnit[*pNextMove];
-            pCurrent->UpdatePlayer();
-            pTarget->UpdatePlayer();
+            mCurrent.view->UpdatePlayer();
+            mTarget.view->UpdatePlayer();
             CORO_YIELD;
           }
           mPosition += (16 - mProgress) * kSideToUnit[*pNextMove];
@@ -222,24 +237,24 @@ void Player::Update(float dt) {
           pNextMove--;
           mPosition += mProgress * kSideToUnit[*pNextMove];
           mProgress = 0;
-          pCurrent->UpdatePlayer();
-          pTarget->UpdatePlayer();
+          mCurrent.view->UpdatePlayer();
+          mTarget.view->UpdatePlayer();
           CORO_YIELD;
         }
       }
-      if (pTarget) { // did we land on the target?
-        pCurrent->HidePlayer();
-        pCurrent = pTarget;
-        pTarget = 0;  
-        mPosition = pCurrent->CurrentRoom()->Center();
-        pCurrent->UpdatePlayer();        
-        if (pCurrent->CurrentRoom()->HasItem()) {
-          const ItemData* pItem = pCurrent->CurrentRoom()->TriggerAsItem();
-          if (pGame->state.FlagTrigger(pItem->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
+      if (mTarget.view) { // did we land on the target?
+        mCurrent.view->HidePlayer();
+        mCurrent = mTarget;
+        mTarget.view = 0;  
+        mPosition = mCurrent.view->GetRoom()->Center(mCurrent.subdivision);
+        mCurrent.view->UpdatePlayer();        
+        if (mCurrent.view->GetRoom()->HasItem()) {
+          const ItemData* pItem = mCurrent.view->GetRoom()->TriggerAsItem();
+          if (pGame->GetState()->FlagTrigger(pItem->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
           PickupItem(pItem->itemId);
           // do a pickup animation
           for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
-            pCurrent->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
+            mCurrent.view->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
             
             for(float t=System::clock(); System::clock()-t<0.075f;) {
               // this calc is kinda annoyingly complex
@@ -248,108 +263,42 @@ void Player::Update(float dt) {
               u = (frame + u) * du;
               u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
               pGame->Paint();
-              pCurrent->SetItemPosition(Vec2(0, -36.f * u) );
+              mCurrent.view->SetItemPosition(Vec2(0, -36.f * u) );
             }
           }
-          pCurrent->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
+          mCurrent.view->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
           for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
-          pCurrent->HideItem();        
+          mCurrent.view->HideItem();        
         }
       }
-    } while(mPath.PopStep(pCurrent));
-    if (pCurrent->CurrentRoom()->HasGateway()) {
-      const GatewayData* pGate = pCurrent->CurrentRoom()->TriggerAsGate();
+    } while(mPath.PopStep(mCurrent, &mTarget));
+    if (mCurrent.view->GetRoom()->HasGateway()) {
+      const GatewayData* pGate = mCurrent.view->GetRoom()->TriggerAsGate();
       const MapData& targetMap = gMapData[pGate->targetMap];
       const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
-      if (pGame->state.FlagTrigger(pGate->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); } 
-      pGame->WalkTo(128 * pCurrent->CurrentRoom()->Location() + Vec2(pGate->x, pGate->y));
+      if (pGame->GetState()->FlagTrigger(pGate->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); } 
+      pGame->WalkTo(128 * mCurrent.view->GetRoom()->Location() + Vec2(pGate->x, pGate->y));
       pGame->TeleportTo(gMapData[pGate->targetMap], Vec2(
         128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
         128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
       ));
-    } else if (pCurrent->CurrentRoom()->HasNPC()) {
+    } else if (mCurrent.view->GetRoom()->HasNPC()) {
       ////////
       mStatus = PLAYER_STATUS_IDLE;
-      pCurrent->UpdatePlayer();
+      mCurrent.view->UpdatePlayer();
       for(int i=0; i<16; ++i) {
         pGame->Paint(true);
       }
-      const NpcData* pNpc = pCurrent->CurrentRoom()->TriggerAsNPC();
-      if (pGame->state.FlagTrigger(pNpc->trigger)) { pCurrent->CurrentRoom()->ClearTrigger(); }
-      DoDialog(gDialogData[pNpc->dialog], pCurrent->GetCube());
+      const NpcData* pNpc = mCurrent.view->GetRoom()->TriggerAsNPC();
+      if (pGame->GetState()->FlagTrigger(pNpc->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
+      DoDialog(gDialogData[pNpc->dialog], mCurrent.view->GetCube());
       System::paintSync();
-      pCurrent->Init();
+      mCurrent.view->Init();
       System::paintSync();
     }
     mDir = SIDE_BOTTOM;
-    pCurrent->UpdatePlayer();
+    mCurrent.view->UpdatePlayer();
   }
   
   CORO_END;
 }
-
-//------------------------------------------------------------------------
-// PATH DETECTION
-//------------------------------------------------------------------------
-
-Path::Path() {
-  for(int i=0; i<NUM_CUBES-1; ++i) {
-    steps[i] = -1;
-  }
-}
-
-bool Path::PopStep(GameView* newRoot) {
-  if (steps[0] == -1 || steps[1] == -1) {
-    steps[0] = -1;
-    return false;
-  }
-  for(int i=0; i<NUM_CUBES-2; ++i) {
-    steps[i] = steps[i+1];
-  }
-  steps[NUM_CUBES-2] = -1;
-  if (*steps != -1 && newRoot->VirtualNeighborAt(*steps)) {
-    return true;
-  }
-  steps[0] = -1;
-  return false;
-}
-
-void Path::Cancel() {
-  steps[0] = -1;
-}
-
-bool Player::PathDetect() {
-  if (pTarget) { return false; }
-  for(GameView *p = pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) { p->visited = false; }
-  pCurrent->visited = true;
-  for(int side=0; side<NUM_SIDES; ++side) {
-    mPath.steps[0] = side;
-    if (pGame->map.CanTraverse(pCurrent->Location(), side) && PathVisit(pCurrent->VirtualNeighborAt(side), 1)) {
-      return true;
-    }
-  }
-  mPath.steps[0] = -1;
-  return false;
-}
-
-bool Player::PathVisit(GameView* view, int depth) {
-  if (!view || view->visited) { return false; }
-  view->visited = true;
-  if (view->VirtualTiltDirection() != -1) {
-    mPath.steps[depth] = -1;
-    return true;
-  } else {
-    for(int side=0; side<NUM_SIDES; ++side) {
-      mPath.steps[depth] = side;
-      if (pGame->map.CanTraverse(view->Location(), side) && PathVisit(view->VirtualNeighborAt(side), depth+1)) {
-        return true;
-      } else {
-        mPath.steps[depth] = -1;
-      }
-    }
-  }
-  mPath.steps[depth] = -1;
-  return false;
-}
-
-

@@ -15,6 +15,8 @@ OBJS = \
 	GameState.o \
 	GameView.o \
 	Map.o \
+	Map_NarrowPath.o \
+	Map_BroadPath.o \
 	Player.o \
 	Room.o
 

@@ -3,49 +3,52 @@
 #include "Content.h"
 
 class Room;
+#define ANIM_TILE_CAPACITY 4
 
 class GameView {
-public:
-  int visited;
-
 private:
-  Vec2 mRoom;
+  unsigned mRoomId;
 
-  int mIdleHoverIndex;
-  // h4cky scene-specific stuff
+  struct AnimTileView {
+    uint8_t lid;
+    uint8_t frameCount;
+  };
+
   union {
     struct {
-      uint16_t count;
-      uint16_t time;
+      unsigned startFrame;
+      unsigned count;
     } idle;
     struct {
-      uint32_t torchTime;
-    } dungeon;
-    struct {
-      uint8_t hasBff;
-      uint8_t bffDir;
-      uint8_t bffX;
-      uint8_t bffY;
-    } forest;
+      unsigned startFrame;
+      unsigned animTileCount;
+      AnimTileView animTiles[ANIM_TILE_CAPACITY];
+    } room;
   } mScene;
 
+  struct {
+    unsigned hideOverlay : 1;
+    unsigned prevTouch : 1;
+  } flags;
+
 public:  
-  GameView();
-  
   // getters
+  Cube::ID GetCubeID() const;
   Cube* GetCube() const;
   bool IsShowingRoom() const;
   bool InSpriteMode() const;
-  Vec2 Location() const { return mRoom; }
-  Room* CurrentRoom() const;
+  Vec2 Location() const;
+  Room* GetRoom() const;
   Cube::Side VirtualTiltDirection() const;
   GameView* VirtualNeighborAt(Cube::Side side) const;
+  bool Touched() const;
   
   // methods
   void Init();
   void Update();
   
-  bool ShowLocation(Vec2 room);
+  bool ShowLocation(Vec2 loc);
+  void HideOverlay(bool flag);
   bool HideRoom();
   
   void ShowPlayer();
@@ -62,6 +65,8 @@ public:
 private:
   void DrawInventorySprites();
   void HideInventorySprites();
+
+  void ComputeAnimatedTiles();
 
   // misc hacky stuff
   void RandomizeBff();

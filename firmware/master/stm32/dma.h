@@ -14,7 +14,13 @@
 class Dma
 {
 public:
-    typedef void (*DmaIsr_t)(void *p, uint32_t flags);
+    typedef void (*DmaIsr_t)(void *p, uint8_t flags);
+
+    enum IsrFlags {
+        Complete        = (1 << 1),
+        HalfComplete    = (1 << 2),
+        Error           = (1 << 3)
+    };
 
     static void registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param);
     static void unregisterHandler(volatile DMA_t *dma, int channel);
@@ -25,13 +31,13 @@ private:
         void *param;
     };
 
-    static void serveIsr(volatile DMA_t *dma, int ch, struct DmaHandler_t *handlers);
+    static void serveIsr(volatile DMA_t *dma, int ch, DmaHandler_t &handler);
 
     static uint32_t Ch1Mask;
-    static struct DmaHandler_t Ch1Handlers[7];
+    static DmaHandler_t Ch1Handlers[7];
 
     static uint32_t Ch2Mask;
-    static struct DmaHandler_t Ch2Handlers[5];
+    static DmaHandler_t Ch2Handlers[5];
 
     friend void ISR_DMA1_Channel1();
     friend void ISR_DMA1_Channel2();
