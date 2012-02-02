@@ -1,9 +1,11 @@
 #include <stdint.h>
 
-void _SYS_paint(void);
-void _SYS_ticks_ns(int64_t *nanosec);
-void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize);
-void _SYS_strlcat_int(char *dest, int src, uint32_t destSize);
+#define _SC(n)  __asm__ ("_SYS_" #n)
+
+void _SYS_paint(void) _SC(0x0100);
+void _SYS_ticks_ns(int64_t *nanosec) _SC(0x0101);
+void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(0x0102);
+void _SYS_strlcat_int(char *dest, int src, uint32_t destSize) _SC(0x0103);
 
 #if 0
 int func(char *buf, int a) {
@@ -35,27 +37,12 @@ void siftmain() {
 }
 #endif
 
-
-void x1() {}
-void x2() {}
-void x3() {}
-void x4() {}
-
-void f2() { x1(); }
-void f3() { x2(); }
-void f4() { x3(); }
-void f5() { x4(); }
-
 void main() {
     while (1) {
         _SYS_ticks_ns(0xf00fbabe);
         _SYS_paint();
         _SYS_paint();
         _SYS_paint();
-        f2();
-        f3();
-        f4();
-        f5();
     }
 }
 

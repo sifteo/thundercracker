@@ -56,9 +56,3 @@ uint32_t SVMTargetMachine::getRAMBase()
 {
     return 0x10000;
 }
-
-void SVMTargetMachine::buildSysCallMap(StringMap<uint16_t> &Map)
-{
-    Map["_SYS_paint"] = 0x0100;   
-    Map["_SYS_ticks_ns"] = 0x0101;
-}

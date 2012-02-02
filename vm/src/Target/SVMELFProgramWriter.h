@@ -51,7 +51,8 @@ namespace llvm {
 
     class SVMELFProgramWriter : public MCObjectWriter {
     public:    
-        SVMELFProgramWriter(raw_ostream &OS);
+        SVMELFProgramWriter(raw_ostream &OS)
+            : MCObjectWriter(OS, true) {}
 
         bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
             const MCSymbolData &DataA, const MCFragment &FB,
@@ -73,8 +74,6 @@ namespace llvm {
         void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
 
     private:
-        StringMap<uint16_t> sysCallMap;
-    
         uint32_t getEntryAddress(const MCAssembler &Asm,
             const MCAsmLayout &Layout);
         SVMSymbolInfo getSymbol(const MCAssembler &Asm,

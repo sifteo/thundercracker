@@ -301,6 +301,7 @@ SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
     const MCAsmLayout &Layout, const MCSymbol *S)
 {
     const MCSymbolData *SD = &Asm.getSymbolData(*S);
+    StringRef Name = S->getName();
     SVMSymbolInfo SI;
 
     if (S->isDefined()) {
@@ -310,23 +311,23 @@ SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
         return SI;
     }
 
-    StringMap<uint16_t>::const_iterator it = sysCallMap.find(S->getName());
-    if (it != sysCallMap.end()) {
-        // This undefined symbol is a system call
-        SI.Value = it->second;
-        SI.Kind = SVMSymbolInfo::SYS;
-        return SI;
+    // Is this a valid numeric SYS symbol?
+    const char prefix[] = "_SYS_";
+    if (Name.startswith(prefix)) {
+        std::string str = Name.substr(sizeof prefix - 1).str();
+        if (str.size() > 0) {
+            char *end;
+            SI.Value = strtol(str.c_str(), &end, 0);
+            if (*end == '\0') {
+                SI.Kind = SVMSymbolInfo::SYS;
+                return SI;
+            }
+        }
     }
 
     // Actually undefined
     report_fatal_error("Taking address of undefined symbol '" +
-        Twine(S->getName()) +"'");
-}
-
-SVMELFProgramWriter::SVMELFProgramWriter(raw_ostream &OS)
-    : MCObjectWriter(OS, true)
-{
-    SVMTargetMachine::buildSysCallMap(sysCallMap);
+        Twine(Name) +"'");
 }
 
 MCObjectWriter *llvm::createSVMELFProgramWriter(raw_ostream &OS)
