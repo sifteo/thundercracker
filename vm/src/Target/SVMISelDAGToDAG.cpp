@@ -36,8 +36,15 @@ namespace {
         // Complex patterns
         bool SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset);
         bool SelectCallTarget(SDValue Addr, SDValue &CP);
+        bool SelectTailCallTarget(SDValue Addr, SDValue &CP);
 
         #include "SVMGenDAGISel.inc"
+        
+    private:
+        ConstantInt *const32(uint32_t val) {
+            return ConstantInt::get(
+                Type::getInt32Ty(*CurDAG->getContext()), val);
+        }
     };
 }
 
@@ -85,11 +92,7 @@ void SVMDAGToDAGISel::moveConstantToPool(SDNode *N, uint32_t val)
      * automatically for constants that are too large for a MOVSi8.
      */
     
-    SDValue CPIdx =
-        CurDAG->getTargetConstantPool(ConstantInt::get(
-                               Type::getInt32Ty(*CurDAG->getContext()), val),
-                               TLI.getPointerTy());
-
+    SDValue CPIdx = CurDAG->getTargetConstantPool(const32(val), TLI.getPointerTy());
     DebugLoc dl = N->getDebugLoc();
     SDNode *newNode = CurDAG->getMachineNode(SVM::LDRpc, dl, MVT::i32,
                                              MVT::Other, CPIdx,
@@ -134,12 +137,21 @@ bool SVMDAGToDAGISel::SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset)
 
 bool SVMDAGToDAGISel::SelectCallTarget(SDValue Addr, SDValue &CP)
 {
-    
     if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
-        CP = CurDAG->getTargetConstantPool(GA->getGlobal(), MVT::i32);
+        CP = CurDAG->getTargetConstantPool(
+            GA->getGlobal(), MVT::i32, 0, 0, SVMTOF::CALL);
         return true;
     }
-    
+    return false;
+}
+
+bool SVMDAGToDAGISel::SelectTailCallTarget(SDValue Addr, SDValue &CP)
+{
+    if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
+        CP = CurDAG->getTargetConstantPool(
+            GA->getGlobal(), MVT::i32, 0, 0, SVMTOF::TAIL_CALL);
+        return true;
+    }
     return false;
 }
 

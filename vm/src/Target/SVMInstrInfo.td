@@ -32,6 +32,8 @@ def SDT_SPCallSeqEnd : SDCallSeqEnd<[ SDTCisVT<0, i32>, SDTCisVT<1, i32> ]>;
 
 def SVMCall : SDNode<"SVMISD::CALL", SDT_SVMCall,
     [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
+def SVMTailCall : SDNode<"SVMISD::TAIL_CALL", SDT_SVMCall,
+    [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
 def SVMRet : SDNode<"SVMISD::RETURN", SDTNone,
     [SDNPHasChain, SDNPOptInGlue]>;
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeqStart,
@@ -41,6 +43,11 @@ def callseq_end : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
 
 def callTarget : Operand<i32>,
     ComplexPattern<iPTR, 1, "SelectCallTarget", [tglobaladdr], []> {
+    let MIOperandInfo = (ops tconstpool);
+}
+
+def tailCallTarget : Operand<i32>,
+    ComplexPattern<iPTR, 1, "SelectTailCallTarget", [tglobaladdr], []> {
     let MIOperandInfo = (ops tconstpool);
 }
 
@@ -56,6 +63,11 @@ def RET : S_call<0x0000, (outs), (ins), "s.ret", [(SVMRet)]> {
 
 def CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
     "s.call\t$offset11", [(SVMCall callTarget:$offset11)]> {
+    let isCall = 1;
+}
+
+def TAIL_CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
+    "s.tcall\t$offset11", [(SVMTailCall tailCallTarget:$offset11)]> {
     let isCall = 1;
 }
 

@@ -222,6 +222,8 @@ void SVMELFProgramWriter::RecordRelocation(const MCAssembler &Asm,
     const MCFixup &Fixup, MCValue Target, uint64_t &FixedValue)
 {
     SVMSymbolInfo SI = getSymbol(Asm, Layout, Target);
+    
+    printf("--- Fixup kind: %d, Symbol kind: %d\n", Fixup.getKind(), SI.Kind);
     FixedValue = SI.Value;
 }
 

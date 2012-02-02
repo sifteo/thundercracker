@@ -18,6 +18,7 @@ namespace llvm {
         enum NodeType {
             FIRST_NUMBER = ISD::BUILTIN_OP_END,
             CALL,
+            TAIL_CALL,
             RETURN,
             CMP,
             BRCOND,

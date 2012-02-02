@@ -18,12 +18,21 @@
 
 namespace llvm {
     
+// Condition codes
 namespace SVMCC {
     enum CondCodes {
         EQ, NE, HS, LO, MI, PL, VS, VC, HI, LS, GE, LT, GT, LE, AL
     };
-    
     CondCodes mapTo(ISD::CondCode CC);
+}
+
+// Target operand flags
+namespace SVMTOF {
+    enum TFlags {
+        NONE = 0,
+        CALL,
+        TAIL_CALL,
+    };
 }
 
 class SVMInstrInfo : public SVMGenInstrInfo {

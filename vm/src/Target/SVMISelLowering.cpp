@@ -184,7 +184,8 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       Ops.push_back(InFlag);
 
     SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
-    Chain = DAG.getNode(SVMISD::CALL, dl, NodeTys, &Ops[0], Ops.size());
+    Chain = DAG.getNode(isTailCall ? SVMISD::TAIL_CALL : SVMISD::CALL,
+        dl, NodeTys, &Ops[0], Ops.size());
     InFlag = Chain.getValue(1);
 
     Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(0, true),
