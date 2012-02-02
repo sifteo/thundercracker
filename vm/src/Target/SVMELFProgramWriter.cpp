@@ -302,29 +302,67 @@ SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
 SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
     const MCAsmLayout &Layout, const MCSymbol *S)
 {
-    const MCSymbolData *SD = &Asm.getSymbolData(*S);
     StringRef Name = S->getName();
+    const MCSymbolData *SD = &Asm.getSymbolData(*S);
     SVMSymbolInfo SI;
+    bool isCall = false;
+    bool isTailCall = false;
+
+    /*
+     * Strip off special prefixes.
+     * These prefixes can apply to any kind of symbol below
+     */
+
+    if (Name.startswith(SVMPrefix::CALL)) {
+        Name = Name.substr(sizeof SVMPrefix::CALL - 1);
+        isCall = true;
+    }
+
+    if (Name.startswith(SVMPrefix::TCALL)) {
+        Name = Name.substr(sizeof SVMPrefix::TCALL - 1);
+        isCall = true;
+        isTailCall = true;
+    }
+    
+    // XXX: Not sure why, but Clang is prepending this to __asm__ symbols
+    const char clangASM[] = "_01_";
+    if (Name.startswith(clangASM)) {
+        Name = Name.substr(sizeof clangASM - 1);
+    }
+
+    /*
+     * Detect the symbol kind
+     */
+
+    // Is this a valid numeric SYS symbol?
+    if (Name.startswith(SVMPrefix::SYS)) {
+        std::string str = Name.substr(sizeof SVMPrefix::SYS - 1).str();
+        if (str.size() > 0) {
+            char *end;
+            long value = strtol(str.c_str(), &end, 0);
+            if (*end == '\0' && value < 0x8000) {
+
+                // Decorated SYS symbol
+                SI.Kind = SVMSymbolInfo::SYS;
+                SI.Value = 0x80000000 | (value << 1) | isTailCall;
+
+                return SI;
+            }
+        }
+    }
 
     if (S->isDefined()) {
         // Symbol has a value in our module
         SI.Value = 0x12340000 + Layout.getSymbolOffset(SD);
         SI.Kind = SVMSymbolInfo::LOCAL;
-        return SI;
-    }
 
-    // Is this a valid numeric SYS symbol?
-    const char prefix[] = "_SYS_";
-    if (Name.startswith(prefix)) {
-        std::string str = Name.substr(sizeof prefix - 1).str();
-        if (str.size() > 0) {
-            char *end;
-            SI.Value = strtol(str.c_str(), &end, 0);
-            if (*end == '\0') {
-                SI.Kind = SVMSymbolInfo::SYS;
-                return SI;
-            }
+        // Is it decorated as a call?
+        if (isCall) {
+            SI.Value |= isTailCall;
+            SI.Kind = SVMSymbolInfo::CALL;
         }
+
+        return SI;
     }
 
     // Actually undefined

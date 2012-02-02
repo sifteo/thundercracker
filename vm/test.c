@@ -38,7 +38,7 @@ void siftmain() {
 #endif
 
 
-void p3() {
+void __attribute__ ((noinline)) p3() {
     _SYS_paint();
     _SYS_paint();
     _SYS_paint();

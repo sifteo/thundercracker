@@ -7,8 +7,11 @@
 
 #include "SVMTargetMachine.h"
 #include "SVMMCTargetDesc.h"
+#include "SVMELFProgramWriter.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/GlobalValue.h"
+#include "llvm/GlobalAlias.h"
+#include "llvm/Module.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -21,12 +24,17 @@ namespace {
         SVMTargetMachine& TM;
     public:
         explicit SVMDAGToDAGISel(SVMTargetMachine &tm)
-            : SelectionDAGISel(tm), TM(tm) {}
+            : SelectionDAGISel(tm), TM(tm), M(0) {}
 
         SDNode *Select(SDNode *N);
 
         virtual const char *getPassName() const {
             return "SVM DAG->DAG Pattern Instruction Selection";
+        }
+
+        bool doInitialization(Module &Mod) {
+            M = &Mod;
+            return false;
         }
         
         // Custom selectors
@@ -41,6 +49,10 @@ namespace {
         #include "SVMGenDAGISel.inc"
         
     private:
+        Module *M;
+        
+        Constant *decorateSymbol(const GlobalValue *Value, StringRef Prefix);
+        
         ConstantInt *const32(uint32_t val) {
             return ConstantInt::get(
                 Type::getInt32Ty(*CurDAG->getContext()), val);
@@ -138,7 +150,8 @@ bool SVMDAGToDAGISel::SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset)
 bool SVMDAGToDAGISel::SelectCallTarget(SDValue Addr, SDValue &CP)
 {
     if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
-        CP = CurDAG->getTargetConstantPool(GA->getGlobal(), MVT::i32);
+        CP = CurDAG->getTargetConstantPool(
+            decorateSymbol(GA->getGlobal(), SVMPrefix::CALL), MVT::i32);
         return true;
     }
     return false;
@@ -147,10 +160,33 @@ bool SVMDAGToDAGISel::SelectCallTarget(SDValue Addr, SDValue &CP)
 bool SVMDAGToDAGISel::SelectTailCallTarget(SDValue Addr, SDValue &CP)
 {
     if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
-        CP = CurDAG->getTargetConstantPool(GA->getGlobal(), MVT::i32);
+        CP = CurDAG->getTargetConstantPool(
+            decorateSymbol(GA->getGlobal(), SVMPrefix::TCALL), MVT::i32);
         return true;
     }
     return false;
+}
+
+Constant *SVMDAGToDAGISel::decorateSymbol(const GlobalValue *Value,
+    StringRef Prefix)
+{
+    /*
+     * Get or create a Constant that represents a decorated version of
+     * the given GlobalValue. The decorated symbol is 'Prefix' concatenated
+     * with the original symbol value.
+     */
+
+    GlobalValue *GV = (GlobalValue*) Value;
+    Twine Name = Twine(Prefix) + GV->getName();
+    GlobalAlias *GA = M->getNamedAlias(Name.str());
+
+    if (!GA) {
+        GA = new GlobalAlias(GV->getType(),
+            GlobalValue::ExternalLinkage, Name, GV, M);
+        GA->copyAttributesFrom(GV);
+    }
+
+    return GA;
 }
 
 FunctionPass *llvm::createSVMISelDag(SVMTargetMachine &TM) {

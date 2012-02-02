@@ -35,6 +35,29 @@
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
+
+    /*
+     * Magic symbol prefixes.
+     *
+     * These are used as an ad-hoc way of passing annotations to the
+     * "linker" in SVMELFProgramWriter. We have some very nonstandard
+     * features in the SVM architecture: syscalls that look like functions,
+     * function calls and tail calls that encode the instruction op into
+     * the target pointer, etc.
+     *
+     * Since LLVM has no native way to represent these types cleanly, as
+     * far as I'm aware, this approach lets us pass custom info to our
+     * linker without patching the LLVM core.
+     */
+    
+    namespace SVMPrefix {
+        // Prefixes that are intended for use in source code
+        static const char SYS[] = "_SYS_";
+        
+        // For internal use
+        static const char CALL[] = "_call$";
+        static const char TCALL[] = "_tcall$";
+    }
     
     typedef std::vector<const MCSectionData*> SectionDataList;    
 
@@ -44,6 +67,7 @@ namespace llvm {
             NONE = 0,
             LOCAL,
             SYS,
+            CALL,
         } Kind;
         
         SVMSymbolInfo() : Value(0), Kind(NONE) {}
