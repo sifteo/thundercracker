@@ -341,12 +341,12 @@ void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
         CubeSlots::instances[cid].getRawNeighbors(buf);
 }
 
-bool _SYS_isTouching(_SYSCubeID cid)
+uint8_t _SYS_isTouching(_SYSCubeID cid)
 {
     if (CubeSlots::validID(cid)) {
         return CubeSlots::instances[cid].isTouching();
     }
-    return false;
+    return 0;
 }
 
 void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v)
