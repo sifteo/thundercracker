@@ -331,7 +331,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
                 }
                 else if( m_mode == MODE_TIMED )
                 {
-                    if( m_iDotsCleared >= DOT_THRESHOLD_TIMED_MULT )
+                    if( m_iDotsCleared >= DOT_THRESHOLD_TIMED_MULT && m_Multiplier < MAX_MULTIPLIER - 1 )
                     {
                         playSound(clear4);
 
