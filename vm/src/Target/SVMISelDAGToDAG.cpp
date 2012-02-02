@@ -138,8 +138,7 @@ bool SVMDAGToDAGISel::SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset)
 bool SVMDAGToDAGISel::SelectCallTarget(SDValue Addr, SDValue &CP)
 {
     if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
-        CP = CurDAG->getTargetConstantPool(
-            GA->getGlobal(), MVT::i32, 0, 0, SVMTOF::CALL);
+        CP = CurDAG->getTargetConstantPool(GA->getGlobal(), MVT::i32);
         return true;
     }
     return false;
@@ -148,8 +147,7 @@ bool SVMDAGToDAGISel::SelectCallTarget(SDValue Addr, SDValue &CP)
 bool SVMDAGToDAGISel::SelectTailCallTarget(SDValue Addr, SDValue &CP)
 {
     if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
-        CP = CurDAG->getTargetConstantPool(
-            GA->getGlobal(), MVT::i32, 0, 0, SVMTOF::TAIL_CALL);
+        CP = CurDAG->getTargetConstantPool(GA->getGlobal(), MVT::i32);
         return true;
     }
     return false;

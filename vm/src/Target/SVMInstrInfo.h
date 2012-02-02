@@ -26,15 +26,6 @@ namespace SVMCC {
     CondCodes mapTo(ISD::CondCode CC);
 }
 
-// Target operand flags
-namespace SVMTOF {
-    enum TFlags {
-        NONE = 0,
-        CALL,
-        TAIL_CALL,
-    };
-}
-
 class SVMInstrInfo : public SVMGenInstrInfo {
 public:
     explicit SVMInstrInfo();

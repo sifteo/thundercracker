@@ -8,7 +8,6 @@
 #include "SVMMCInstLower.h"
 #include "SVMAsmPrinter.h"
 #include "SVMInstrInfo.h"
-#include "SVMMCExpr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
@@ -92,14 +91,8 @@ MCOperand SVMMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
         break;
     }
 
-    SVMTOF::TFlags TF = (SVMTOF::TFlags) MO.getTargetFlags();
     const MCExpr *Expr =
         MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, Ctx);
-
-    if (TF) {
-        // Wrap in an SVMMCExpr which can hold the TargetFlags until fixup time
-        Expr = SVMMCExpr::Create(TF, Expr, Ctx);
-    }
 
     if (Offset) {
         // Add any nonzero offset
