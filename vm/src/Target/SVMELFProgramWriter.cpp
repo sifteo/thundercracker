@@ -9,6 +9,13 @@
 using namespace llvm;
 
 
+SVMELFProgramWriter::SVMELFProgramWriter(raw_ostream &OS)
+    : MCObjectWriter(OS, true)
+{
+    ramTopAddr = SVMTargetMachine::getRAMBase();
+    flashTopAddr = SVMTargetMachine::getFlashBase();    
+}
+
 void SVMELFProgramWriter::writePadding(unsigned N)
 {
     /*
@@ -77,7 +84,7 @@ void SVMELFProgramWriter::writeProgramHeader(const MCAsmLayout &Layout,
     uint64_t AddressSize = Layout.getSectionAddressSize(&SD);
     uint64_t FileSize = Layout.getSectionFileSize(&SD);
     unsigned Alignment = SD.getAlignment();
-    unsigned VirtualAddr = 0x1000;  // XXX
+    unsigned VirtualAddr = SectionAddr[&SD];
     SectionKind Kind = SD.getSection().getKind();
     uint32_t Flags = ELF::PF_R;
 
@@ -128,7 +135,7 @@ void SVMELFProgramWriter::writeProgSectionHeader(const MCAsmLayout &Layout,
     
     uint64_t FileSize = Layout.getSectionFileSize(&SD);
     unsigned Alignment = SD.getAlignment();
-    unsigned VirtualAddr = 0x1000;  // XXX
+    unsigned VirtualAddr = SectionAddr[&SD];
     SectionKind Kind = SD.getSection().getKind();
     uint32_t Flags = ELF::SHF_ALLOC;
 
@@ -164,37 +171,47 @@ void SVMELFProgramWriter::writeProgramData(MCAssembler &Asm,
 }   
 
 void SVMELFProgramWriter::collectProgramSections(const MCAssembler &Asm,
-    SectionDataList &Sections)
+    const MCAsmLayout &Layout, SectionDataList &Sections)
 {
+    /*
+     * Put all sections in order, and assign addresses as needed.
+     */
+    
     // All RAM data
     for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
         it != ie; ++it) {
         SectionKind k = it->getSection().getKind();
-        if (k.isGlobalWriteableData() && !k.isBSS())
-            Sections.push_back(&*it);
+        if (k.isGlobalWriteableData() && !k.isBSS()) {
+            const MCSectionData *SD = &*it;
+            Sections.push_back(SD);
+
+            if (!SectionAddr.count(SD)) {
+                SectionAddr[SD] = ramTopAddr;
+                ramTopAddr += Layout.getSectionAddressSize(SD);
+            }
+        }
     }
 
-    // All read-only data
+    // All flash data
     for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
         it != ie; ++it) {
         SectionKind k = it->getSection().getKind();
-        if (k.isReadOnly())
-            Sections.push_back(&*it);
-    }
+        if (k.isReadOnly() || k.isText()) {
+            const MCSectionData *SD = &*it;
+            Sections.push_back(SD);
 
-    // All text sections
-    for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
-        it != ie; ++it) {
-        SectionKind k = it->getSection().getKind();
-        if (k.isText())
-            Sections.push_back(&*it);
+            if (!SectionAddr.count(SD)) {
+                SectionAddr[SD] = flashTopAddr;
+                flashTopAddr += Layout.getSectionAddressSize(SD);
+            }
+        }
     }
 }
 
 void SVMELFProgramWriter::WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout)
 {
     SectionDataList ProgSections;
-    collectProgramSections(Asm, ProgSections);
+    collectProgramSections(Asm, Layout, ProgSections);
     
     uint64_t FileOff, HdrSize;
     writeELFHeader(Asm, Layout, ProgSections.size(), HdrSize);
@@ -222,8 +239,6 @@ void SVMELFProgramWriter::RecordRelocation(const MCAssembler &Asm,
     const MCFixup &Fixup, MCValue Target, uint64_t &FixedValue)
 {
     SVMSymbolInfo SI = getSymbol(Asm, Layout, Target);
-    
-    printf("--- Fixup kind: %d, Symbol kind: %d\n", Fixup.getKind(), SI.Kind);
     FixedValue = SI.Value;
 }
 
@@ -353,8 +368,23 @@ SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
 
     if (S->isDefined()) {
         // Symbol has a value in our module
-        SI.Value = 0x12340000 + Layout.getSymbolOffset(SD);
+        SI.Value = Layout.getSymbolOffset(SD);
         SI.Kind = SVMSymbolInfo::LOCAL;
+
+        // We need to find the base address of this section
+        const MCSectionData *Section = &Asm.getSectionData(S->getSection());
+        SectionBaseAddrMap::iterator it = SectionAddr.find(Section);
+        if (it == SectionAddr.end()) {
+            SectionDataList ProgSections;
+            collectProgramSections(Asm, Layout, ProgSections);
+            it = SectionAddr.find(Section);
+        }
+        if (it == SectionAddr.end()) {
+            report_fatal_error("Cannot determine section for symbol '" +
+                Twine(Name) + "'");
+        } else {
+            SI.Value += it->second;
+        }
 
         // Is it decorated as a call?
         if (isCall) {
@@ -367,7 +397,7 @@ SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
 
     // Actually undefined
     report_fatal_error("Taking address of undefined symbol '" +
-        Twine(Name) +"'");
+        Twine(Name) + "'");
 }
 
 MCObjectWriter *llvm::createSVMELFProgramWriter(raw_ostream &OS)

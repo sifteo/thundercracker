@@ -33,6 +33,9 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include <map>
+#include <vector>
+
 
 namespace llvm {
 
@@ -60,6 +63,7 @@ namespace llvm {
     }
     
     typedef std::vector<const MCSectionData*> SectionDataList;    
+    typedef std::map<const MCSectionData*, uint32_t> SectionBaseAddrMap;
 
     struct SVMSymbolInfo {
         uint32_t Value;
@@ -75,8 +79,7 @@ namespace llvm {
 
     class SVMELFProgramWriter : public MCObjectWriter {
     public:    
-        SVMELFProgramWriter(raw_ostream &OS)
-            : MCObjectWriter(OS, true) {}
+        SVMELFProgramWriter(raw_ostream &OS);
 
         bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
             const MCSymbolData &DataA, const MCFragment &FB,
@@ -98,6 +101,10 @@ namespace llvm {
         void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
 
     private:
+        SectionBaseAddrMap SectionAddr;
+        uint32_t ramTopAddr;
+        uint32_t flashTopAddr;
+
         uint32_t getEntryAddress(const MCAssembler &Asm,
             const MCAsmLayout &Layout);
         SVMSymbolInfo getSymbol(const MCAssembler &Asm,
@@ -106,7 +113,7 @@ namespace llvm {
             const MCAsmLayout &Layout, MCValue Value);
     
         void collectProgramSections(const MCAssembler &Asm,
-            SectionDataList &Sections);
+            const MCAsmLayout &Layout, SectionDataList &Sections);
 
         void writePadding(unsigned N);
         void writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout,
