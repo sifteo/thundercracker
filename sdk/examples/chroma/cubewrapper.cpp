@@ -9,7 +9,6 @@
 #include "assets.gen.h"
 #include "utils.h"
 #include "string.h"
-#include "sprite.h"
 #include "config.h"
 
 static _SYSCubeID s_id = CUBE_ID_BASE;
@@ -116,7 +115,7 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_INTRO:
         {
-            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
+            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_vid, this );
             m_queuedFlush = true;
             break;
         }
@@ -216,7 +215,7 @@ void CubeWrapper::Draw()
 
                 case STATE_REFILL:
                 {
-                    m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
+                    m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_vid, this );
                     m_queuedFlush = true;
                     break;
                 }
@@ -228,7 +227,7 @@ void CubeWrapper::Draw()
             if( m_banner.IsActive() )
                 m_banner.Draw( m_bg1helper );
             else
-                m_gameover.Draw( m_cube );
+                m_gameover.Draw( m_vid );
             m_queuedFlush = true;
             break;
         }
@@ -275,7 +274,7 @@ void CubeWrapper::Draw()
             }
 
             for( int i = 0; i < GameOver::NUM_ARROWS; i++ )
-                resizeSprite(m_cube, i, 0, 0);
+                m_vid.resizeSprite(i, 0, 0);
 
             m_queuedFlush = true;
             m_dirty = false;
