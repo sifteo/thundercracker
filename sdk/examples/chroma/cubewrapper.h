@@ -111,7 +111,7 @@ public:
     //This exists because we need to do all our clears first, and then do our draws
     void QueueClear( Vec2 &pos );
     void SpawnSpecial( unsigned int color );
-    void SpawnMultiplier( unsigned int mult );
+    bool SpawnMultiplier( unsigned int mult );
     //destroy all dots of the given color
     void BlowAll( unsigned int color );
     bool HasHyperDot() const;

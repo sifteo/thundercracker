@@ -335,7 +335,18 @@ void Game::CheckChain( CubeWrapper *pWrapper )
                     {
                         playSound(clear4);
 
-                        pWrapper->SpawnMultiplier( m_Multiplier + 1 );
+                        if( !pWrapper->SpawnMultiplier( m_Multiplier + 1 ) )
+                        {
+                            //find another cube to spawn multiplier on
+                            for( int i = 0; i < NUM_CUBES; i++ )
+                            {
+                                if( &m_cubes[i] != pWrapper )
+                                {
+                                    if( m_cubes[i].SpawnMultiplier( m_Multiplier + 1 ) )
+                                        break;
+                                }
+                            }
+                        }
                         specialSpawned = true;
                     }
                     else if( m_iDotsCleared >= DOT_THRESHOLD_TIMED_RAINBALL )

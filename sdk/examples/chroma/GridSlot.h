@@ -104,6 +104,7 @@ public:
     void finishFakeMove();
 
     void DamageRock();
+    inline unsigned int getMultiplier() { return m_multiplier; }
     inline void setMultiplier( unsigned int mult ) { m_multiplier = mult; }
     void UpMultiplier();
 

@@ -1463,8 +1463,20 @@ void CubeWrapper::SpawnSpecial( unsigned int color )
 }
 
 
-void CubeWrapper::SpawnMultiplier( unsigned int mult )
+bool CubeWrapper::SpawnMultiplier( unsigned int mult )
 {
+    //if we already have a multiplier, try a different cube
+    for( int i = 1; i < NUM_ROWS - 1; i++ )
+    {
+        for( int j = 1; j < NUM_COLS - 1; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+
+            if( slot.isAlive() && slot.IsFixed() && slot.getMultiplier() > 1 )
+                return false;
+        }
+    }
+
     //search the central locations for a fixed dot
     for( int i = 1; i < NUM_ROWS - 1; i++ )
     {
@@ -1475,7 +1487,7 @@ void CubeWrapper::SpawnMultiplier( unsigned int mult )
             if( slot.isAlive() && slot.IsFixed() )
             {
                 slot.setMultiplier( mult );
-                return;
+                return true;
             }
         }
     }
@@ -1491,6 +1503,8 @@ void CubeWrapper::SpawnMultiplier( unsigned int mult )
 
     slot.MakeFixed();
     slot.setMultiplier( mult );
+
+    return true;
 }
 
 
