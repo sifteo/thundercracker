@@ -67,3 +67,5 @@ ScoredGameState_StartOfRound.h
 ScoredGameState_StartOfRound.cpp
 config.h
 ../../include/sifteo/BG1Helper.h
+PrototypeWordListData.h
+DictionaryData.h

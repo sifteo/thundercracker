@@ -14,6 +14,7 @@ TileTransparencyLookupData.sim.o PartialAnimationData.sim.o \
 ScoredCubeState_Shuffle.sim.o ScoredGameState_Shuffle.sim.o \
 ScoredCubeState_StartOfRound.sim.o ScoredGameState_StartOfRound.sim.o
 
+
 BIN_STM32 = word.stm32
 OBJS_STM32 = $(ASSETS).gen.stm32.o main.stm32.o StateMachine.stm32.o \
 GameStateMachine.stm32.o State.stm32.o ScoredGameState.stm32.o \
