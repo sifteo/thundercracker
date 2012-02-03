@@ -4,6 +4,8 @@
 
 namespace TotalsGame {
 
+    DEFINE_POOL(Token)
+    
 	Puzzle *Token::GetPuzzle() 
 	{
 		return puzzle;

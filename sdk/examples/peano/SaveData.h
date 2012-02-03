@@ -8,10 +8,19 @@ namespace TotalsGame
   class SaveData 
   {
   public:
+      SaveData();
+      
 	  void AddSolved(const Guid &guid);
 	  void Save();
       
       bool IsSolved(const Guid &guid);
+      
+  private:
+      static const int MAX_GUIDS = 100;
+      
+      Guid solvedGuids[MAX_GUIDS];
+      int numSolvedGuids;
+      
 
 	  /*
     public readonly PuzzleDatabase Db;

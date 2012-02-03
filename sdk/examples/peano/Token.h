@@ -40,7 +40,7 @@ namespace TotalsGame {
 		//ONLY FOR PUZZLE.H USE
 		Token(Puzzle *p, int i);
 		Token();
-		virtual ~Token();
+		virtual ~Token() {}
 
 		// IExpression impl
 

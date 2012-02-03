@@ -4,6 +4,25 @@ namespace TotalsGame
 {
 	DEFINE_POOL(TokenGroup)
 
+    Fraction TokenGroup::GetValue()
+    {
+        return mValue;
+    }
+    
+    ShapeMask TokenGroup::GetMask()
+    {
+        return mMask;
+    }
+    
+    int TokenGroup::GetDepth()
+    {
+        return mDepth;
+    }
+    
+    int TokenGroup::GetCount()
+    {
+        return src->GetCount() + dst->GetCount();
+    }
 	
     bool TokenGroup::TokenAt(const Vec2 &p, Token **t) 
 	{

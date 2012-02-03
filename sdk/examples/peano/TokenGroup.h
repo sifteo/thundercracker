@@ -24,19 +24,19 @@ namespace TotalsGame
 
 		void *userData;
 
-		Fraction GetValue() { return mValue; }
-		ShapeMask GetMask() { return mMask; }
-		int GetDepth() { return mDepth;}
-		int GetCount() { return src->GetCount() + dst->GetCount();}
-
-		bool TokenAt(const Vec2 &p, Token **t);
-
-		bool PositionOf(Token *t, Vec2 *p);
-
-		bool Contains(Token *t);
-
+        //IExpression
+		virtual Fraction GetValue();
+		virtual ShapeMask GetMask();
+		virtual int GetDepth();
+		virtual int GetCount();
+		virtual bool TokenAt(const Vec2 &p, Token **t);
+		virtual bool PositionOf(Token *t, Vec2 *p);
+		virtual bool Contains(Token *t);
+        virtual void SetCurrent(IExpression *exp);
+		virtual bool IsTokenGroup() {return true;}
+        
 		IExpression *GetSubExpressionContaining(Token *t);
-		bool IsTokenGroup() {return true;}
+
 		/*
 		public IEnumerable<Token> Tokens {
 		get {
@@ -51,7 +51,6 @@ namespace TotalsGame
 		}
 		}
 		*/
-		void SetCurrent(IExpression *exp);
 
 		static TokenGroup *Connect(Token *st, Vec2 d, Token *dt) { return Connect(st, st, d, dt, dt); }
 		static TokenGroup *Connect(IExpression *src, Token *st, Vec2 d, Token *dt) { return Connect(src, st, d, dt, dt); }
