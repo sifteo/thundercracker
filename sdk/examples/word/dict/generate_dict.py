@@ -29,7 +29,7 @@ def find_anagrams(string, dictionary, letters_per_cube):
             padded_strings.append(string)
         else:
             padded_strings.append(string + " ")
-            padded_strings.append(" " + string)
+            #padded_strings.append(" " + string)
         padded_string_anagrams_dict = {}
         for padded_string in padded_strings:
             padded_string_anagrams_dict[padded_string] = {}
@@ -147,7 +147,7 @@ def generate_dict():
     #find_anagrams("LISTEN", dictionary)
     #return
     letters_per_cube = [1, 1, 1, 2, 2, 2, 3, 3, 3]
-    min_anagrams = [999, 999, 1, 999, 2, 2, 2, 2, 2]	
+    min_anagrams = [999, 999, 1, 999, 2, 2, 999, 999, 999]	
     for word in word_list:#dictionary.keys():
         if len(word) in seed_word_lens:
             anagrams = find_anagrams(word, dictionary, letters_per_cube[len(word) - 1])
