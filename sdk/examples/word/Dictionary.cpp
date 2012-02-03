@@ -16,8 +16,6 @@ const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
 const static char* picks[] =
 {
-    "HOUSE",
-    "WITHIN",
     "ROYAL",
     "DANCE",
     "BESIDE",
@@ -36,6 +34,8 @@ const static char* picks[] =
     "BECOME",
     "AFFAIR",
     "WINDOW",
+    "HOUSE",
+    "WITHIN",
     "DURING",
     "VOICE",
     "ORDER",
@@ -216,8 +216,6 @@ const static char* picks[] =
 
 const static unsigned char pickAnagrams[] =
 {
-    2,	// HOUSE, nonbonus anagrams: ['HOUSE', 'USE']
-    3,	// WITHIN, nonbonus anagrams: ['WITHIN', 'WITH', 'THIN']
     2,	// ROYAL, nonbonus anagrams: ['ROYAL', 'LAY']
     2,	// DANCE, nonbonus anagrams: ['AND', 'DANCE']
     2,	// BESIDE, nonbonus anagrams: ['BESIDE', 'SIDE']
@@ -236,6 +234,8 @@ const static unsigned char pickAnagrams[] =
     2,	// BECOME, nonbonus anagrams: ['BECOME', 'COME']
     2,	// AFFAIR, nonbonus anagrams: ['AFFAIR', 'FAIR']
     2,	// WINDOW, nonbonus anagrams: ['WINDOW', 'WIND']
+    2,	// HOUSE, nonbonus anagrams: ['HOUSE', 'USE']
+    3,	// WITHIN, nonbonus anagrams: ['WITHIN', 'WITH', 'THIN']
     2,	// DURING, nonbonus anagrams: ['DURING', 'RING']
     2,	// VOICE, nonbonus anagrams: ['VOICE', 'ICE']
     2,	// ORDER, nonbonus anagrams: ['ORDER', 'RED']
@@ -416,8 +416,6 @@ const static unsigned char pickAnagrams[] =
 
 const static unsigned char pickAnagramsBonus[] =
 {
-    2,	// HOUSE, bonus anagrams: ['HOE', 'SUE']
-    0,	// WITHIN, bonus anagrams: []
     0,	// ROYAL, bonus anagrams: []
     0,	// DANCE, bonus anagrams: []
     0,	// BESIDE, bonus anagrams: []
@@ -436,6 +434,8 @@ const static unsigned char pickAnagramsBonus[] =
     0,	// BECOME, bonus anagrams: []
     0,	// AFFAIR, bonus anagrams: []
     0,	// WINDOW, bonus anagrams: []
+    2,	// HOUSE, bonus anagrams: ['HOE', 'SUE']
+    0,	// WITHIN, bonus anagrams: []
     1,	// DURING, bonus anagrams: ['DUNG']
     1,	// VOICE, bonus anagrams: ['VOE']
     1,	// ORDER, bonus anagrams: ['RODE']

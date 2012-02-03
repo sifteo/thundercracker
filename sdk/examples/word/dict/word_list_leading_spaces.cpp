@@ -1,37 +1,63 @@
+    false,	// EVERYONE, bonus anagrams: 0
     false,	// WITHIN, bonus anagrams: 0
     false,	// ROYAL, bonus anagrams: 0
+    false,	// DIRECTION, bonus anagrams: 0
+    false,	// OCCUPY, bonus anagrams: 0
     false,	// DANCE, bonus anagrams: 0
+    false,	// DIRECTOR, bonus anagrams: 0
+    false,	// CHILDREN, bonus anagrams: 0
+    false,	// PROPERTY, bonus anagrams: 0
+    false,	// HAPPENED, bonus anagrams: 0
+    false,	// AFFAIR, bonus anagrams: 0
+    false,	// PRACTICE, bonus anagrams: 0
+    false,	// WONDERFUL, bonus anagrams: 0
     false,	// BESIDE, bonus anagrams: 0
     false,	// UNLESS, bonus anagrams: 0
     false,	// MIDDLE, bonus anagrams: 0
     false,	// VESSEL, bonus anagrams: 0
     false,	// TERMS, bonus anagrams: 0
     false,	// WHOLE, bonus anagrams: 0
+    false,	// ANYTHING, bonus anagrams: 0
+    false,	// SURFACE, bonus anagrams: 0
+    false,	// COMPOUND, bonus anagrams: 0
     false,	// TURNED, bonus anagrams: 0
+    false,	// REMEMBER, bonus anagrams: 0
     false,	// MEMBER, bonus anagrams: 0
+    false,	// OBJECTION, bonus anagrams: 0
     false,	// SECOND, bonus anagrams: 0
     false,	// FIGHT, bonus anagrams: 0
+    false,	// PERSONAL, bonus anagrams: 0
+    false,	// MAJORITY, bonus anagrams: 0
     false,	// WRONG, bonus anagrams: 0
     false,	// NOTICE, bonus anagrams: 0
-    false,	// OCCUPY, bonus anagrams: 0
+    false,	// TRIANGLE, bonus anagrams: 0
+    false,	// ELECTRIC, bonus anagrams: 0
+    false,	// SUDDENLY, bonus anagrams: 0
+    false,	// ELECTION, bonus anagrams: 0
     false,	// BECOME, bonus anagrams: 0
-    false,	// AFFAIR, bonus anagrams: 0
+    false,	// SOUTHERN, bonus anagrams: 0
+    false,	// BUILDING, bonus anagrams: 0
+    false,	// NORTHERN, bonus anagrams: 0
     false,	// WINDOW, bonus anagrams: 0
+    false,	// ALTHOUGH, bonus anagrams: 1
     false,	// DURING, bonus anagrams: 1
     false,	// VOICE, bonus anagrams: 1
     false,	// ORDER, bonus anagrams: 1
     false,	// MOTION, bonus anagrams: 1
+    false,	// ISSUE, bonus anagrams: 1
     false,	// FRONT, bonus anagrams: 1
     false,	// SHOWN, bonus anagrams: 1
     false,	// FIGURE, bonus anagrams: 1
     false,	// FLOOR, bonus anagrams: 1
+    false,	// NATIONAL, bonus anagrams: 1
     false,	// FAVOR, bonus anagrams: 1
-    false,	// ISSUE, bonus anagrams: 1
+    false,	// SHOULDER, bonus anagrams: 1
     false,	// READY, bonus anagrams: 1
-    false,	// UNABLE, bonus anagrams: 1
+    false,	// PROGRESS, bonus anagrams: 1
     false,	// RETURN, bonus anagrams: 1
     false,	// TOUCH, bonus anagrams: 1
     false,	// STAND, bonus anagrams: 1
+    false,	// FOLLOWING, bonus anagrams: 1
     false,	// BELONG, bonus anagrams: 1
     false,	// PASSED, bonus anagrams: 1
     false,	// PRESS, bonus anagrams: 1
@@ -46,6 +72,8 @@
     false,	// SPRING, bonus anagrams: 1
     false,	// CORNER, bonus anagrams: 1
     false,	// HEARD, bonus anagrams: 1
+    false,	// RESTRAIN, bonus anagrams: 1
+    false,	// UNABLE, bonus anagrams: 1
     false,	// PUSHED, bonus anagrams: 1
     false,	// REPLY, bonus anagrams: 1
     false,	// THICK, bonus anagrams: 1
@@ -59,8 +87,10 @@
     false,	// REACH, bonus anagrams: 1
     false,	// HOURS, bonus anagrams: 1
     false,	// FRUIT, bonus anagrams: 1
+    false,	// IMPRISON, bonus anagrams: 1
     false,	// RETIRE, bonus anagrams: 1
     false,	// STRING, bonus anagrams: 1
+    false,	// PLEASANT, bonus anagrams: 1
     false,	// NEARLY, bonus anagrams: 1
     false,	// TOWARD, bonus anagrams: 1
     false,	// ELECT, bonus anagrams: 1
@@ -70,11 +100,11 @@
     false,	// DELAY, bonus anagrams: 2
     false,	// WOMAN, bonus anagrams: 2
     false,	// FORCE, bonus anagrams: 2
-    false,	// OFFER, bonus anagrams: 2
-    false,	// CAUSE, bonus anagrams: 2
     false,	// HUMAN, bonus anagrams: 2
+    false,	// MOTHER, bonus anagrams: 2
     false,	// FORTY, bonus anagrams: 2
     false,	// PARTY, bonus anagrams: 2
+    false,	// CAUSE, bonus anagrams: 2
     false,	// HOUSE, bonus anagrams: 2
     false,	// WATER, bonus anagrams: 2
     false,	// INCOME, bonus anagrams: 2
@@ -90,6 +120,7 @@
     false,	// WORTH, bonus anagrams: 2
     false,	// UNTIL, bonus anagrams: 2
     false,	// EXTRA, bonus anagrams: 2
+    false,	// OFFER, bonus anagrams: 2
     false,	// FOURTH, bonus anagrams: 2
     false,	// ALONE, bonus anagrams: 2
     false,	// SOLVE, bonus anagrams: 2
@@ -99,24 +130,23 @@
     false,	// KNOWN, bonus anagrams: 2
     false,	// WOMEN, bonus anagrams: 2
     false,	// LESSON, bonus anagrams: 2
+    false,	// FINISHED, bonus anagrams: 2
     false,	// DIVIDE, bonus anagrams: 2
     false,	// YOUNG, bonus anagrams: 2
     false,	// SINGLE, bonus anagrams: 2
     false,	// LEARN, bonus anagrams: 2
     false,	// OFTEN, bonus anagrams: 2
     false,	// ALIKE, bonus anagrams: 2
-    false,	// MOTHER, bonus anagrams: 2
     false,	// CLOUD, bonus anagrams: 2
     false,	// THEIR, bonus anagrams: 2
     false,	// OTHER, bonus anagrams: 2
     false,	// THINK, bonus anagrams: 2
-    false,	// INSIDE, bonus anagrams: 2
     false,	// CARRY, bonus anagrams: 2
     false,	// WHOSE, bonus anagrams: 3
     false,	// OBTAIN, bonus anagrams: 3
     false,	// REPAIR, bonus anagrams: 3
-    false,	// MEANT, bonus anagrams: 3
     false,	// EVERY, bonus anagrams: 3
+    false,	// TRACK, bonus anagrams: 3
     false,	// TEACH, bonus anagrams: 3
     false,	// BUILT, bonus anagrams: 3
     false,	// CLEAN, bonus anagrams: 3
@@ -124,33 +154,34 @@
     false,	// STICK, bonus anagrams: 3
     false,	// BEGUN, bonus anagrams: 3
     false,	// THOSE, bonus anagrams: 3
-    false,	// DOZEN, bonus anagrams: 3
     false,	// HORSE, bonus anagrams: 3
     false,	// SELECT, bonus anagrams: 3
     false,	// REALLY, bonus anagrams: 3
     false,	// BEGIN, bonus anagrams: 3
+    false,	// CENTER, bonus anagrams: 3
     false,	// DOCTOR, bonus anagrams: 3
     false,	// SIGHT, bonus anagrams: 3
     false,	// SHARP, bonus anagrams: 3
     false,	// RESULT, bonus anagrams: 3
     false,	// UNDER, bonus anagrams: 3
     false,	// RAISE, bonus anagrams: 3
-    false,	// RECENT, bonus anagrams: 3
     false,	// HEART, bonus anagrams: 3
     false,	// COLOR, bonus anagrams: 3
     false,	// WORDS, bonus anagrams: 3
     false,	// STILL, bonus anagrams: 3
-    false,	// ASSURE, bonus anagrams: 3
+    false,	// DOZEN, bonus anagrams: 3
     false,	// SINCE, bonus anagrams: 3
     false,	// SHALL, bonus anagrams: 3
-    false,	// TRACK, bonus anagrams: 3
     false,	// EVENT, bonus anagrams: 3
     false,	// DOUBT, bonus anagrams: 3
     false,	// NORTH, bonus anagrams: 3
     false,	// NEVER, bonus anagrams: 3
+    false,	// ASSURE, bonus anagrams: 3
     false,	// CALLED, bonus anagrams: 3
+    false,	// MEANT, bonus anagrams: 3
     false,	// LOCAL, bonus anagrams: 3
     false,	// WROTE, bonus anagrams: 3
+    false,	// INSIDE, bonus anagrams: 3
     false,	// RAPID, bonus anagrams: 4
     false,	// PEOPLE, bonus anagrams: 4
     false,	// REMAIN, bonus anagrams: 4
@@ -159,6 +190,7 @@
     false,	// LEAST, bonus anagrams: 4
     false,	// CHART, bonus anagrams: 4
     false,	// STAMP, bonus anagrams: 4
+    false,	// METAL, bonus anagrams: 4
     false,	// TODAY, bonus anagrams: 4
     false,	// SENSE, bonus anagrams: 4
     false,	// STONE, bonus anagrams: 4
@@ -167,29 +199,28 @@
     false,	// SPREAD, bonus anagrams: 4
     false,	// CLOSE, bonus anagrams: 4
     false,	// EARLY, bonus anagrams: 4
-    false,	// SPEED, bonus anagrams: 4
     false,	// ENTIRE, bonus anagrams: 4
-    false,	// METAL, bonus anagrams: 4
     false,	// THREE, bonus anagrams: 4
     false,	// LEDGE, bonus anagrams: 4
     false,	// FIELD, bonus anagrams: 4
     false,	// LATER, bonus anagrams: 5
-    false,	// CLEAR, bonus anagrams: 5
     false,	// ESCAPE, bonus anagrams: 5
     false,	// TRAIN, bonus anagrams: 5
-    false,	// TABLE, bonus anagrams: 5
+    false,	// CLEAR, bonus anagrams: 5
+    false,	// EARTH, bonus anagrams: 5
     false,	// PAPER, bonus anagrams: 5
     false,	// LISTEN, bonus anagrams: 5
     false,	// TRADE, bonus anagrams: 5
-    false,	// EARTH, bonus anagrams: 5
+    false,	// TABLE, bonus anagrams: 5
+    false,	// SPEED, bonus anagrams: 5
     false,	// ALMOST, bonus anagrams: 5
     false,	// SEVEN, bonus anagrams: 5
-    false,	// SISTER, bonus anagrams: 6
     false,	// SERVE, bonus anagrams: 6
     false,	// RELIEF, bonus anagrams: 6
+    false,	// SISTER, bonus anagrams: 6
     false,	// START, bonus anagrams: 7
-    false,	// STREET, bonus anagrams: 7
     false,	// STREAM, bonus anagrams: 7
+    false,	// STREET, bonus anagrams: 7
     false,	// DESIRE, bonus anagrams: 7
     false,	// STEEL, bonus anagrams: 10
     false,	// ARREST, bonus anagrams: 11

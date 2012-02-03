@@ -111,6 +111,10 @@ void ScoredCubeState_OldWord::paint()
         paintLetters(vid, Font2Letter, true);
         break;
 
+    case 3:
+        paintLetters(vid, Font3Letter, true);
+        break;
+
     default:
         paintLetters(vid, Font1Letter, true);
         break;

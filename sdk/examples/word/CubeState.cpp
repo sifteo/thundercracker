@@ -373,9 +373,37 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
         }
       break;
 
-    //case 3:
-        // TODO
-      //  break;
+    case 3:
+        vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
+        vid.BG0_drawPartialAsset(Vec2(17, 0),
+                                 Vec2(0, 0),
+                                 Vec2(1, 16),
+                                 ScreenOff);
+        vid.BG0_drawPartialAsset(Vec2(16, 0),
+                                 Vec2(0, 0),
+                                 Vec2(1, 16),
+                                 ScreenOff);
+        {
+            unsigned frame = str[0] - (int)'A';
+
+            if (frame < font.frames)
+            {
+                vid.BG0_drawAsset(Vec2(0,6), font, frame);
+            }
+
+            frame = str[1] - (int)'A';
+            if (frame < font.frames)
+            {
+                vid.BG0_drawAsset(Vec2(6,6), font, frame);
+            }
+
+            frame = str[3] - (int)'A';
+            if (frame < font.frames)
+            {
+                vid.BG0_drawAsset(Vec2(12,6), font, frame);
+            }
+        }
+      break;
 
     default:
         vid.BG0_drawAsset(Vec2(0,0), LetterBG);

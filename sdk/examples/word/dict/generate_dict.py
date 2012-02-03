@@ -7,7 +7,7 @@ import sys
 from ctypes import *
 import operator
 
-seed_word_lens = [3, 4, 5, 6]#, 9]
+seed_word_lens = [3, 4, 5, 6, 7, 8, 9]
 min_nonbonus_anagrams = 2
 word_list_leading_spaces = {}
 
@@ -33,7 +33,7 @@ def find_anagrams(string, dictionary, letters_per_cube):
         padded_string_anagrams_dict = {}
         for padded_string in padded_strings:
             padded_string_anagrams_dict[padded_string] = {}
-            for k in range(0, len(padded_string) + 1, letters_per_cube):
+            for k in range(letters_per_cube * 2, len(padded_string) + 1, letters_per_cube):
                 if k in seed_word_lens:        
                     # count up a number to figure out how to shift each cube set of letters
                     for sub_perm_index in range(int(math.pow(letters_per_cube, len(padded_string)/letters_per_cube))):
@@ -57,16 +57,18 @@ def find_anagrams(string, dictionary, letters_per_cube):
                         #print cube_ltrs
                         # for all the permuations of cube sets of letters
                         for cube_ltr_set in permutations(cube_ltrs, k/letters_per_cube):			
-                            #print cube_ltr_set
+                            #if k/letters_per_cube == 3 and len(string) == 9:
+                             #   print cube_ltr_set
                             # form the padded_string
                             sw = ''
                             for cltrs in cube_ltr_set:
                                 #print cltrs
                                 sw += cltrs
-                            #print sw
                             # if it's in the dictionary, save it
                             trimmed_sw = sw.strip()
-                            if trimmed_sw in dictionary and not trimmed_sw in padded_string_anagrams_dict[padded_string]:
+                            if trimmed_sw in dictionary and not trimmed_sw in padded_string_anagrams_dict[padded_string].keys():
+                                #if len(string) == 9:
+                                 #   print sw
                                 #print trimmed_sw + "\n"
                                 # Check if it's a max lengthword and a bad word
                                 padded_string_anagrams_dict[padded_string][trimmed_sw] = True
@@ -85,7 +87,8 @@ def find_anagrams(string, dictionary, letters_per_cube):
             words = padded_string_anagrams_dict[max_anagram_padded_string]
 								
     #print string
-    #print words
+    #if len(string) == 9:
+     #   print string +": " + str(words)
     return words
 
 def generate_word_list_file():
@@ -143,39 +146,40 @@ def generate_dict():
     word_list_used = {}
     #find_anagrams("LISTEN", dictionary)
     #return
-    letters_per_cube = [1, 1, 1, 2, 2, 2]
-    min_anagrams = [999, 999, 1, 999, 2, 2]	
-    for word in word_list:
-        anagrams = find_anagrams(word, dictionary, letters_per_cube[len(word) - 1])
-        #min_anagrams = [999, 999, 4, 15, 25, 25]
-        #print "checking word " + word
-        if len(anagrams) >= min_anagrams[len(word) - 1]:
-            #print word + " " + str(anagrams)
-            num_seed_repeats = 0
-            # skip it if a pre-existing seed word has the same anagram set 
-            bad = False
-            num_nonbonus_anagrams = 0
-            for w in anagrams:
-                if len(w) == len(word) and w.upper() in word_list_used.keys():
-                    num_seed_repeats += 1
-                    break
-                if w in bad_words.keys():
-                    bad = True
-                    break
-                if w in word_list:
-                    num_nonbonus_anagrams += 1
-            if num_seed_repeats == 0 and not bad and num_nonbonus_anagrams >= min_nonbonus_anagrams:
-                #print word + ": " + str(len(anagrams))
-                word_list_used[word.upper()] = len(anagrams) - num_nonbonus_anagrams
-                num_anagrams = len(anagrams)
-                if max_anagrams < num_anagrams:
-                    max_anagrams = num_anagrams
-                output_dictionary[word.upper()] = True
+    letters_per_cube = [1, 1, 1, 2, 2, 2, 3, 3, 3]
+    min_anagrams = [999, 999, 1, 999, 2, 2, 2, 2, 2]	
+    for word in word_list:#dictionary.keys():
+        if len(word) in seed_word_lens:
+            anagrams = find_anagrams(word, dictionary, letters_per_cube[len(word) - 1])
+            #min_anagrams = [999, 999, 4, 15, 25, 25]
+            #print "checking word " + word
+            if len(anagrams) >= min_anagrams[len(word) - 1]:
+                #print word + " " + str(anagrams)
+                num_seed_repeats = 0
+                # skip it if a pre-existing seed word has the same anagram set 
+                bad = False
+                num_nonbonus_anagrams = 0
                 for w in anagrams:
-                    output_dictionary[w.upper()] = True
+                    if len(w) == len(word) and w.upper() in word_list_used.keys():
+                        num_seed_repeats += 1
+                        break
+                    if w in bad_words.keys():
+                        bad = True
+                        break
+                    if w in word_list:
+                        num_nonbonus_anagrams += 1
+                if num_seed_repeats == 0 and not bad and num_nonbonus_anagrams >= min_nonbonus_anagrams:
+                    #print word + ": " + str(len(anagrams))
+                    word_list_used[word.upper()] = len(anagrams) - num_nonbonus_anagrams
+                    num_anagrams = len(anagrams)
+                    if max_anagrams < num_anagrams:
+                        max_anagrams = num_anagrams
+                    output_dictionary[word.upper()] = True
+                    for w in anagrams:
+                        output_dictionary[w.upper()] = True
             
     # write dict to file
-    num_words = [0, 0, 0, 0, 0, 0]
+    num_words = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     for w in word_list_used:
         num_words[len(w) - 1] += 1
     print "seed words with enough anagrams  " + str(num_words)

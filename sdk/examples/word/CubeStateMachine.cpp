@@ -32,17 +32,21 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             switch (GameStateMachine::getCurrentMaxLettersPerCube())
             {
             case 2:
+            case 3:
                 if (!mBG0PanningLocked)
                 {
+                    const float BG0_PANNING_WRAP = 144.f;
+
                     _SYSTiltState state;
                     _SYS_getTilt(getCube().id(), &state);
                     if (state.x != 1)
                     {
-                        mBG0TargetPanning -= 72.f * (state.x - 1);
+                        mBG0TargetPanning -=
+                                BG0_PANNING_WRAP/GameStateMachine::getCurrentMaxLettersPerCube() * (state.x - 1);
                         while (mBG0TargetPanning < 0.f)
                         {
-                            mBG0TargetPanning += 144.f;
-                            mBG0Panning += 144.f;
+                            mBG0TargetPanning += BG0_PANNING_WRAP;
+                            mBG0Panning += BG0_PANNING_WRAP;
                         }
                         VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
                         setPanning(vid, mBG0Panning);
@@ -114,7 +118,36 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
             _SYS_strlcpy(buffer, swapped, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
             return true;
         }
-        // else fall through
+        _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+        return true;
+
+    case 3:
+        {
+            float panMod = fmodf(mBG0TargetPanning, 144.f);
+            if (!forPaint && panMod != 0.f)
+            {
+                char swapped[MAX_LETTERS_PER_CUBE + 1];
+                if (panMod > 72.f)
+                {
+                    swapped[0] = mLetters[1];
+                    swapped[1] = mLetters[2];
+                    swapped[2] = mLetters[0];
+                    swapped[3] = '\0';
+                }
+                else
+                {
+                    swapped[0] = mLetters[2];
+                    swapped[1] = mLetters[0];
+                    swapped[2] = mLetters[1];
+                    swapped[3] = '\0';
+                }
+                _SYS_strlcpy(buffer, swapped, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+                return true;
+            }
+        }
+        _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+        return true;
+
     default:
         _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
         return true;
