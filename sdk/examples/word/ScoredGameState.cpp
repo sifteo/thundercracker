@@ -128,7 +128,8 @@ void ScoredGameState::createNewAnagram()
     EventData data;
     Dictionary::pickWord(data.mNewAnagram.mWord,
                          data.mNewAnagram.mNumAnagrams,
-                         data.mNewAnagram.mNumBonusAnagrams);
+                         data.mNewAnagram.mNumBonusAnagrams,
+                         data.mNewAnagram.mLeadingSpaces);
 
     // add any leading and/or trailing spaces to odd-length words
     char spacesAdded[MAX_LETTERS_PER_WORD + 1];
@@ -145,7 +146,14 @@ void ScoredGameState::createNewAnagram()
     }
     else
     {
-        leadingBlanks = 0;
+        if (data.mNewAnagram.mLeadingSpaces)
+        {
+            leadingBlanks = numBlanks;
+        }
+        else
+        {
+            leadingBlanks = 0;
+        }
         // TODO no puzzles currently have leading blanks, but the offline
         // dict tool is aware of the alternate
         //WordGame::random.randrange(numBlanks + 1);

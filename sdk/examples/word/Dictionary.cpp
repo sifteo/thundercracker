@@ -5,6 +5,7 @@
 #include "EventID.h"
 #include "EventData.h"
 #include "WordGame.h"
+#include "DictionaryData.h"
 
 char Dictionary::sOldWords[MAX_OLD_WORDS][MAX_LETTERS_PER_WORD + 1];
 unsigned Dictionary::sNumOldWords = 0;
@@ -14,21 +15,15 @@ unsigned Dictionary::sPickIndex = 0;
 const unsigned WORD_RAND_SEED_INCREMENT = 88;
 const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
-// generated into DictionaryData.cpp
-/*extern const char* puzzles[];
-extern const unsigned char puzzlesNumGoalAnagrams[];
-extern const unsigned char puzzlesNumBonusAnagrams[];
-extern const bool puzzlesUseLeadingSpaces[];
-extern const unsigned NUM_PUZZLES;
-*/
-
-#include "DictionaryData.h"
 
 Dictionary::Dictionary()
 {
 }
 
-bool Dictionary::pickWord(char* buffer, unsigned& numAnagrams, unsigned& numBonusAnagrams)
+bool Dictionary::pickWord(char* buffer,
+                          unsigned& numAnagrams,
+                          unsigned& numBonusAnagrams,
+                          bool& leadingSpaces)
 {
     ASSERT(buffer);
 
@@ -38,7 +33,7 @@ bool Dictionary::pickWord(char* buffer, unsigned& numAnagrams, unsigned& numBonu
 
         numAnagrams = puzzlesNumGoalAnagrams[sPickIndex];
         numBonusAnagrams = puzzlesNumBonusAnagrams[sPickIndex];
-        // TODO puzzlesUseLeadingSpaces
+        leadingSpaces = puzzlesUseLeadingSpaces[sPickIndex];
         sPickIndex = (sPickIndex + 1) % NUM_PUZZLES;
         return true;
     }
