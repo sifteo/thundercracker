@@ -46,17 +46,20 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 
 #define MISC_I2C_SCL    (1 << 2)
 #define MISC_I2C_SDA    (1 << 3)
-#define MISC_TOUCH      (1 << 4)   // AIN12 and GPINT2
+#define MISC_TOUCH      (1 << 7)
 #define MISC_NB_IN      (1 << 6)   // T1 input
+
+// Touch is on a wakeup-capable pin
+#define TOUCH_WUPOC     WUOPC1
+#define TOUCH_WUOPC_BIT (1 << 7)
 
 // Numbered according to the standard side enum.
 // Both the number and name are represented here; due to the binary masking, both are critical.
 #define MISC_NB_0_TOP       (1 << 0)
 #define MISC_NB_1_LEFT      (1 << 1)
-#define MISC_NB_2_BOTTOM    (1 << 7)
+#define MISC_NB_2_BOTTOM    (1 << 4)
 #define MISC_NB_3_RIGHT     (1 << 5)
 
-#define TOUCH_ADC_CH    12
 #define BATTERY_ADC_CH  0
 
 #define MISC_I2C        (MISC_I2C_SCL | MISC_I2C_SDA)

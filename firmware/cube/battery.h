@@ -11,9 +11,6 @@
 
 #include "hardware.h"
 
-// Battery poller is trying to acquire exclusive access to the A/D converter
-extern volatile __bit battery_adc_lock;
-
 void battery_poll();
 
 #endif
