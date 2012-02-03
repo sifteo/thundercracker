@@ -8,20 +8,12 @@ class Room;
 #define PLAYER_STATUS_IDLE 0
 #define PLAYER_STATUS_WALKING 1
 
-struct Path {
-  Cube::Side steps[NUM_CUBES-1];
-  Path();
-  bool IsDefined() const { return *steps >= 0; }
-  bool PopStep(GameView* newRoot);
-  void Cancel();
-};
-
 class Player {
 private:
   CORO_PARAMS
   int mStatus;
-  GameView* pCurrent;
-  GameView* pTarget;
+  BroadLocation mCurrent;
+  BroadLocation mTarget;
   Vec2 mPosition;
   int mDir;
   int mKeyCount;
@@ -35,16 +27,16 @@ private:
   bool mApproachingLockedDoor;
   float mTimeout;
 
-  Path mPath;
-  MapPath mMoves;
+  BroadPath mPath;
+  NarrowPath mMoves;
   uint8_t* pNextMove;
     
 public:
   void Init();
-  int CurrentFrame();
-  GameView* CurrentView() { return pCurrent; }
-  GameView* TargetView() { return pTarget; }
-  GameView* KeyView() { return pTarget==0?pCurrent:pTarget; }
+  int AnimFrame();
+  const BroadLocation* Current() { return &mCurrent; }
+  const BroadLocation* Target() { return &mTarget; }
+  GameView* View() { return mTarget.view==0?mCurrent.view:mTarget.view; }
   Cube::Side Direction() { return mDir; }
   Vec2 Position() const { return mPosition; }
   Vec2 Location() const { return mPosition/128; }
@@ -63,8 +55,4 @@ public:
   void Update(float dt);
   void UpdateAnimation(float dt);
   void Reset();
-  
-private:
-  bool PathDetect();
-  bool PathVisit(GameView* view, int depth);
 };

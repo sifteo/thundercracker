@@ -443,8 +443,8 @@ void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state);
 void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state);
 void _SYS_getShake(_SYSCubeID cid, _SYSShakeState *state);
 
-// XXX: Temporary for testing/demoing
-void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);
+void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);  // XXX: Temporary for testing/demoing
+uint8_t _SYS_isTouching(_SYSCubeID cid);
 void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v);
 void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid);
 

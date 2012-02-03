@@ -20,7 +20,7 @@ public:
     GameOver();
     void Reset();
     void Update( float dt );
-    void Draw( Cube &cube );
+    void Draw( VidMode_BG0_SPR_BG1 &vid );
 	
 private:
     unsigned int m_frame;

@@ -1,12 +1,9 @@
+#!/usr/bin/python
 # implementation of sandwich kingdom content specification
-
+import lxml.etree, os, os.path, re, traceback, sys, zlib, tmx, misc
 from sandwich_map import *
 from sandwich_dialog import *
 from sandwich_script import *
-
-import lxml.etree
-import os, os.path, re, traceback, sys, zlib
-import tmx, misc
 
 def load():
 	try:
@@ -75,8 +72,7 @@ class World:
 			# validate triggers
 			for m in self.maps:
 				for r in m.rooms:
-					r.validate_triggers_for_quest(quest)
-
+					assert len([t for t in r.triggers if t.is_active_for(quest)]) < 2, "Too many triggers in room in map: " + m.id
 
 	def export(self):
 		with open(os.path.join(self.dir,"content.gen.lua"), "w") as lua:
@@ -127,5 +123,3 @@ class World:
 
 if __name__ == "__main__": 
 	export()
-
-

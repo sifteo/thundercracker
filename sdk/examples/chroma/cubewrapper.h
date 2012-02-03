@@ -110,13 +110,20 @@ public:
     //queue a location to be cleared by gemEmpty.
     //This exists because we need to do all our clears first, and then do our draws
     void QueueClear( Vec2 &pos );
-    void SpawnHyper();
+    void SpawnSpecial( unsigned int color );
+    bool SpawnMultiplier( unsigned int mult );
     //destroy all dots of the given color
     void BlowAll( unsigned int color );
     bool HasHyperDot() const;
 
     //pretend to tilt this cube in a series of tilts, and update whether we see the given color on corners or side patterns 1 or 2
     void UpdateColorPositions( unsigned int color, bool &bCorners, bool &side1, bool &side2 ) const;
+
+    //add one piece
+    void RespawnOnePiece();
+    //search for a multiplier dot and increase it
+    void UpMultiplier();
+    void ClearSprites();
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
@@ -132,7 +139,7 @@ private:
     bool HasFloatingDots() const;
 
 	Cube m_cube;
-	VidMode_BG0 m_vid;
+    VidMode_BG0_SPR_BG1 m_vid;
 	VidMode_BG0_ROM m_rom;
 	BG1Helper m_bg1helper;
 

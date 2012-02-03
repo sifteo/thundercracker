@@ -53,12 +53,19 @@ public:
     static const int NUM_SLOSH_SOUNDS = 2;
     static const unsigned int INT_MAX = 0x7fff;
     static const float SLOSH_THRESHOLD;
+    static const int NUM_COLORS_FOR_HYPER = 3;
+    //timer constants
+    static const float TIME_TO_RESPAWN;
+    static const float COMBO_TIME_THRESHOLD;
+    static const int MAX_MULTIPLIER = 7;
 
     //number of dots needed for certain thresholds
     enum
     {
         DOT_THRESHOLD1 = 2,
         DOT_THRESHOLD2 = 4,
+        DOT_THRESHOLD_TIMED_RAINBALL = 6,
+        DOT_THRESHOLD_TIMED_MULT = 9,
         DOT_THRESHOLD3 = 9,
         DOT_THRESHOLD4 = 14,
         DOT_THRESHOLD5 = 15,
@@ -121,9 +128,17 @@ public:
     bool AreNoCubesEmpty() const;
     unsigned int CountEmptyCubes() const;
 
+    inline void SetUsedColor( unsigned int color ) { m_aColorsUsed[color] = true; }
+    void UpCombo();
+    inline unsigned int GetComboCount() const { return m_comboCount; }
+    void UpMultiplier();
+
 private:
 	void TestMatches();
     bool DoesHyperDotExist();
+    //add one piece to the game
+    void RespawnOnePiece();
+
 	bool m_bTestMatches;
 	//how much our current dot is worth
 	unsigned int m_iDotScore;
@@ -131,6 +146,8 @@ private:
 	unsigned int m_iDotScoreSum;
 	unsigned int m_iScore;
 	unsigned int m_iDotsCleared;
+    //how many colors were involved in this
+    bool m_aColorsUsed[ GridSlot::NUM_COLORS ];
 	//for progression in shakes mode
 	unsigned int m_iLevel;
 	GameState m_state;
@@ -153,6 +170,13 @@ private:
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
     unsigned int m_ShakesRemaining;
+    //how long until we respawn one piece in timer mode
+    float m_fTimeTillRespawn;
+    //which cube to respawn to next
+    unsigned int m_cubeToRespawn;
+    unsigned int m_comboCount;
+    float m_fTimeSinceCombo;
+    unsigned int m_Multiplier;
 
     //force a 1 frame paint sync before/after drawing
     bool m_bForcePaintSync;

@@ -217,19 +217,12 @@ NEVER_INLINE void Hardware::hwDeadlineWork()
     spi.radio.tick(rfcken, &cpu);
 }
 
-void Hardware::setTouch(float amount)
+void Hardware::setTouch(bool touching)
 {
-    /*
-     * The A/D converter measures the remaining charge on Chold after some
-     * charge is transferred to the touch plate. So, lower values mean higher
-     * capacitance. The scaling here is a really rough estimate based on Hakim's
-     * bench tests so far.
-     *
-     * Note taht these are 16-bit full-scale values we're passing to the ADC
-     * module. It truncates them and justifies them according to the ADC configuration.
-     */
-
-    adc.setInput(12, 1600 - 320 * amount);
+    if (touching)
+        cpu.mSFR[MISC_PORT] |= MISC_TOUCH;
+    else
+        cpu.mSFR[MISC_PORT] &= ~MISC_TOUCH;
 }
 
 bool Hardware::isDebugging()
