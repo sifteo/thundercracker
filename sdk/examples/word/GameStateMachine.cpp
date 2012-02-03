@@ -176,7 +176,7 @@ unsigned GameStateMachine::getNumCubesInState(CubeStateIndex stateIndex)
     unsigned count = 0;
     for (unsigned i = 0; i < arraysize(sInstance->mCubeStateMachines); ++i)
     {
-        if (sInstance->mCubeStateMachines[i].getCurrentStateIndex() == stateIndex)
+        if ((int)sInstance->mCubeStateMachines[i].getCurrentStateIndex() == stateIndex)
         {
             ++count;
         }
