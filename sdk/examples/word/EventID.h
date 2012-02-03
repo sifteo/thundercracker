@@ -16,6 +16,7 @@ enum EventID
     EventID_OldWordFound,
     EventID_WordBroken,
     EventID_GameStateChanged,
+    EventID_LetterOrderChange,
 
     NumEventIds
 };

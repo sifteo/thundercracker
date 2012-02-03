@@ -15,13 +15,16 @@
 
 using namespace Sifteo;
 
-const unsigned MAX_LETTERS_PER_CUBE = 1;
-const unsigned MAX_LETTERS_PER_WORD = MAX_LETTERS_PER_CUBE * NUM_CUBES;// TODO longer words post CES: _SYS_NUM_CUBE_SLOTS * MAX_LETTERS_PER_CUBE;
+const unsigned MAX_LETTERS_PER_CUBE = 3;
+const unsigned MAX_LETTERS_PER_WORD = MAX_LETTERS_PER_CUBE * NUM_CUBES;// TODO longer words post CES: _SYS_NUM_CUBE_SLOTS * GameStateMachine::getCurrentMaxLettersPerCube();
 
 class CubeStateMachine : public StateMachine
 {
 public:
-    CubeStateMachine() : StateMachine(0), mNumLetters(1), mIdleTime(0.f), mCube(0) {}
+    CubeStateMachine() :
+        StateMachine(0), mNumLetters(1), mIdleTime(0.f),
+        mBG0Panning(0.f), mBG0TargetPanning(0.f), mBG0PanningLocked(true),
+        mCube(0) {}
 
     void setCube(Cube& cube);
     Cube& getCube();
@@ -35,19 +38,27 @@ public:
 
     void resetStateTime() { mStateTime = 0.0f; }
 
-    const char* getLetters();
+    bool getLetters(char *buffer, bool forPaint=false);
     bool canBeginWord();
-    bool beginsWord(bool& isOld, char* wordBuffer);
+    bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);
     unsigned findRowLength();
     bool isConnectedToCubeOnSide(Cube::ID cubeIDStart, Cube::Side side=SIDE_LEFT);
     bool hasNoNeighbors() const;
     float getIdleTime() const { return mIdleTime; }
+    bool canNeighbor() const { return (int)mBG0Panning == (int)mBG0TargetPanning; }
+    int getPanning() const { return (int)mBG0Panning; }
 
 private:
+    void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
+
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
     unsigned mNumLetters;
     float mIdleTime;
+
+    float mBG0Panning;
+    float mBG0TargetPanning;
+    bool mBG0PanningLocked;
 
     Cube* mCube;
     TitleCubeState mTitleState;

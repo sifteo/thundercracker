@@ -9,7 +9,6 @@
 #include "assets.gen.h"
 #include "utils.h"
 #include "string.h"
-#include "sprite.h"
 #include "config.h"
 
 static _SYSCubeID s_id = CUBE_ID_BASE;
@@ -116,7 +115,7 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_INTRO:
         {
-            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
+            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_vid, this );
             m_queuedFlush = true;
             break;
         }
@@ -216,7 +215,7 @@ void CubeWrapper::Draw()
 
                 case STATE_REFILL:
                 {
-                    m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
+                    m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_vid, this );
                     m_queuedFlush = true;
                     break;
                 }
@@ -228,7 +227,7 @@ void CubeWrapper::Draw()
             if( m_banner.IsActive() )
                 m_banner.Draw( m_bg1helper );
             else
-                m_gameover.Draw( m_cube );
+                m_gameover.Draw( m_vid );
             m_queuedFlush = true;
             break;
         }
@@ -270,12 +269,12 @@ void CubeWrapper::Draw()
             }
             else if( m_cube.id() == 2 + CUBE_ID_BASE )
             {
-                m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeOrNeighbor, 0);
+                m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeNewGame, 0);
                 //m_bg1helper.DrawTextf( Vec2( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
             }
 
             for( int i = 0; i < GameOver::NUM_ARROWS; i++ )
-                resizeSprite(m_cube, i, 0, 0);
+                m_vid.resizeSprite(i, 0, 0);
 
             m_queuedFlush = true;
             m_dirty = false;
@@ -402,6 +401,31 @@ void CubeWrapper::Update(float t, float dt)
             if( oldvel.x * m_curFluidVel.x < 0.0f || oldvel.y * m_curFluidVel.y < 0.0f )
                 Game::Inst().playSlosh();
         }
+
+        for( Cube::Side i = 0; i < NUM_SIDES; i++ )
+        {
+            bool newValue = m_cube.hasPhysicalNeighborAt(i);
+            Cube::ID id = m_cube.physicalNeighborAt(i);
+
+            /*if( newValue )
+            {
+                PRINT( "we have a neighbor.  it is %d\n", id );
+            }*/
+
+            //newly neighbored
+            if( newValue )
+            {
+                if( id != m_neighbors[i] )
+                {
+                    Game::Inst().setTestMatchFlag();
+                    m_neighbors[i] = id - CUBE_ID_BASE;
+
+                    //PRINT( "neighbor on side %d is %d", i, id );
+                }
+            }
+            else
+                m_neighbors[i] = -1;
+        }
     }
     else if( Game::Inst().getState() == Game::STATE_POSTGAME )
     {
@@ -410,31 +434,6 @@ void CubeWrapper::Update(float t, float dt)
             Game::Inst().setTestMatchFlag();
             m_fShakeTime = -1.0f;
         }
-    }
-
-	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
-	{
-		bool newValue = m_cube.hasPhysicalNeighborAt(i);
-		Cube::ID id = m_cube.physicalNeighborAt(i);
-
-        /*if( newValue )
-		{
-			PRINT( "we have a neighbor.  it is %d\n", id );
-        }*/
-
-		//newly neighbored
-		if( newValue )
-		{
-			if( id != m_neighbors[i] )
-			{
-				Game::Inst().setTestMatchFlag();
-                m_neighbors[i] = id - CUBE_ID_BASE;
-
-                //PRINT( "neighbor on side %d is %d", i, id );
-			}
-		}
-		else
-            m_neighbors[i] = -1;
     }
 }
 
@@ -449,7 +448,7 @@ void CubeWrapper::Tilt( int dir )
 {
 	bool bChanged = false;
 
-	if( m_fShakeTime > 0.0f )
+    if( Game::Inst().getState() != Game::STATE_PLAYING || m_fShakeTime > 0.0f )
 		return;
 
 	//hastily ported from the python
@@ -1195,6 +1194,8 @@ void CubeWrapper::RespawnOnePiece()
 
     GridSlot &slot = m_grid[aEmptyLocs[toSpawn].x][aEmptyLocs[toSpawn].y];
     slot.FillColor( Game::random.randrange( Game::Inst().getLevel().m_numColors ), true );
+
+    Game::Inst().playSound(bubble_pop_02);
 }
 
 
