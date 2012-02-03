@@ -80,7 +80,7 @@ void siftmain() {
 	#endif
 	for(;;) {
 		PlayMusic(music_sting, false);
-		//IntroCutscene();
+		IntroCutscene();
 		{
 			Game game;
 			pGame = &game;
@@ -88,7 +88,7 @@ void siftmain() {
 			pGame = 0;
 		}
 		PlayMusic(music_winscreen, false);
-		WinScreen(pGame->GetPlayer()->View()->GetCube());
+		WinScreen(gCubes);
 	}
 	
 }
