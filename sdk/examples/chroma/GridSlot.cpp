@@ -20,6 +20,7 @@ const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * GridSlot::NUM_FRAMES_PER_ROL
 //const unsigned int GridSlot::NUM_IDLE_FRAMES = 4 * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME;
 const float GridSlot::START_FADING_TIME = 1.75f;
 const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot::START_FADING_TIME ) / GridSlot::NUM_POINTS_FRAMES;
+const float GridSlot::MULTIPLIER_MOTION_PERIOD_MODIFIER = 15.0f;
 
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
@@ -224,7 +225,7 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState )
                     //always use sprite 0, only 1 multiplier allowed per cube?
                     vid.setSpriteImage( 0, mults, m_multiplier - 2 );
                     vid.resizeSprite( 0, 32, 16 );
-                    vid.moveSprite( 0, m_col * 32, m_row * 32 + 8 );
+                    vid.moveSprite( 0, m_col * 32, m_row * 32 + 8 + ( MULTIPLIER_MOTION_AMPLITUDE * sinf( (float)System::clock() * MULTIPLIER_MOTION_PERIOD_MODIFIER )) );
                 }
             }
 			else

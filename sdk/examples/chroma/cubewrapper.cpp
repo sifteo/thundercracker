@@ -1194,6 +1194,8 @@ void CubeWrapper::RespawnOnePiece()
 
     GridSlot &slot = m_grid[aEmptyLocs[toSpawn].x][aEmptyLocs[toSpawn].y];
     slot.FillColor( Game::random.randrange( Game::Inst().getLevel().m_numColors ), true );
+
+    Game::Inst().playSound(bubble_pop_02);
 }
 
 
