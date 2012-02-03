@@ -14,6 +14,8 @@ namespace TotalsGame {
 		Game() {};	//singleton
 
 	public:
+        static const int NUMBER_OF_CUBES = 4;
+        
 		static Game &GetInstance();
 		StateMachine sceneMgr;
 

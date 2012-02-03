@@ -1,10 +1,15 @@
-#include "PuzzleDatabase.h"
+#pragma once
+
 #include "Puzzle.h"
 
 namespace TotalsGame {
 
+    class PuzzleDatabase;
+    
   class PuzzleChapter 
   {
+  public:
+      
     PuzzleDatabase *db;
     Guid guid;
     const char *id;
@@ -16,6 +21,7 @@ namespace TotalsGame {
 		id = "";
 		name = "";
 		numPuzzles = 0;
+        puzzles = (Puzzle*)puzzleBuffer;
 
 	}
 	/*
@@ -34,8 +40,8 @@ namespace TotalsGame {
     }
 	*/
 
-	size_t NumPuzzles() { return numPuzzles;}
-	Puzzle *GetPuzzle(size_t index)
+	int NumPuzzles() { return numPuzzles;}
+	Puzzle *GetPuzzle(int index)
 	{
 		assert(index < numPuzzles);
 		if(index < numPuzzles) 
@@ -43,11 +49,28 @@ namespace TotalsGame {
 		else
 			return NULL;
 	}
+      
+    int IndexOfPuzzle(Puzzle *p)
+      {
+          for(int i = 0; i < numPuzzles; i++)
+          {
+              if(puzzles+i == p)
+                  return i;
+          }
+          return -1;
+      }
 
+      bool HasBeenSolved();
+      bool CanBePlayedWithCurrentCubeSet();
+      void SaveAsSolved();
+      Puzzle *FirstPuzzleForCurrentCubeSet();
+
+      
 	private:
 		enum {MAX_PUZZLES = 100};
-		Puzzle puzzles[MAX_PUZZLES];
-		size_t numPuzzles;
+      Puzzle *puzzles;
+      char puzzleBuffer[sizeof(Puzzle) * MAX_PUZZLES];
+		int numPuzzles;
   };
 
 }

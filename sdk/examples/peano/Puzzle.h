@@ -40,6 +40,7 @@ namespace TotalsGame
 		Difficulty difficulty;
 
 		// game parameters
+        int GetNumTokens();
 		Token *GetToken(int index);
 		TokenGroup *target;
 		Token *focus;
@@ -48,6 +49,9 @@ namespace TotalsGame
 		bool unlimitedHints;
 
 		void SaveAsSolved();
+        
+        Puzzle *GetNext();
+        Puzzle *GetNext(int maxCubeCount);
 
 	private:
 		static const int MAX_TOKENS = 32;

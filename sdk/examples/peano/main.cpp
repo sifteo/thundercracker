@@ -1,8 +1,7 @@
 #include <sifteo.h>
 #include "assets.gen.h"
 
-#include "Puzzle.h"
-#include "Token.h"
+#include "Game.h"
 
 using namespace Sifteo;
 

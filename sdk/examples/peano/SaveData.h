@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Guid.h"
 
 namespace TotalsGame 
 {
@@ -9,6 +10,8 @@ namespace TotalsGame
   public:
 	  void AddSolved(const Guid &guid);
 	  void Save();
+      
+      bool IsSolved(const Guid &guid);
 
 	  /*
     public readonly PuzzleDatabase Db;

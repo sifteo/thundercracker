@@ -2,6 +2,7 @@
 #include "Guid.h"
 #include "Game.h"
 #include "Puzzle.h"
+#include "PuzzleChapter.h"
 
 
 namespace TotalsGame {
@@ -26,6 +27,11 @@ namespace TotalsGame {
 		}
 	}
 
+    int Puzzle::GetNumTokens()
+    {
+        return numTokens;
+    }
+    
 	Token *Puzzle::Puzzle::GetToken(int index)
 	{
 		assert(index < numTokens); 
@@ -105,6 +111,29 @@ namespace TotalsGame {
       }
       return result;
     }*/
+    
+    Puzzle *Puzzle::GetNext()
+    {
+        if (chapter == NULL) { return NULL; }
+        int localIndex = chapter->IndexOfPuzzle(this);
+        if (localIndex < chapter->NumPuzzles()-1) {
+            return chapter->GetPuzzle(localIndex+1);
+        }
+        if (chapter->db == NULL) { return NULL; }
+        int globalIndex = chapter->db->IndexOfChapter(chapter);
+        if (globalIndex < chapter->db->NumChapters()-1) {
+            return chapter->db->GetChapter(globalIndex+1)->GetPuzzle(0);
+        }
+        return NULL;
+    }
+    
+    Puzzle *Puzzle::GetNext(int maxCubeCount) {
+        Puzzle *puzzle = this;
+        do {
+            puzzle = puzzle->GetNext();
+        } while(puzzle != NULL && puzzle->numTokens > maxCubeCount);
+        return puzzle;
+    }
 
 }
 

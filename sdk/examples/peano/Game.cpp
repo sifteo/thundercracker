@@ -100,7 +100,7 @@ namespace TotalsGame
 			return "RandComplete";
 		}
 		currentPuzzle->SaveAsSolved();
-		var nextPuzzle = currentPuzzle->GetNext(CubeSet.Count);
+		Puzzle *nextPuzzle = currentPuzzle->GetNext(NUMBER_OF_CUBES);
 		if (nextPuzzle == NULL)
 		{
 			currentPuzzle->chapter->SaveAsSolved();
@@ -123,31 +123,6 @@ namespace TotalsGame
 	const char *Game::IsGameOver(const char *transitionId)
 	{
 		return currentPuzzle == NULL ? "Yes" : "No";
-	}
-
-	void Game::OnPause() 
-	{
-		IsPaused = true;
-		mTimer.Stop();
-		foreach(var cube in CubeSet) 
-		{
-			cube.Image("pause");
-			cube.Paint();
-		}
-	}
-
-	void Game::OnUnpause() 
-	{
-		mTimer.Start();
-		IsPaused = false;
-		mDirty = true;
-	}
-
-
-	void Game::OnStopped()
-	{
-		mTimer.Stop();
-		Inst = null;
 	}
 
 	void Game::Main() 

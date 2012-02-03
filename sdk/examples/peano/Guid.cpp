@@ -2,7 +2,7 @@
 
 namespace TotalsGame
 {
-	static const Guid Guid::Empty;
+	const Guid Guid::Empty;
 
 	Guid::Guid()
 	{
