@@ -8,7 +8,6 @@
 #include "string.h"
 #include "assets.gen.h"
 //#include "audio.gen.h"
-#include "sprite.h"
 #include "game.h"
 
 GameOver::GameOver()
@@ -53,7 +52,7 @@ Vec2 SPRITEPOS[ Intro::NUM_ARROWS ] = {
     Vec2( 128 - DieRight.width * 8, 64 - DieLeft.height * 8 / 2 ),
 };
 
-void GameOver::Draw( Cube &cube )
+void GameOver::Draw( VidMode_BG0_SPR_BG1 &vid )
 {
     //arrow sprites
     for( int i = 0; i < NUM_ARROWS; i++ )
@@ -65,9 +64,9 @@ void GameOver::Draw( Cube &cube )
         else if ( frame >= (int)DIE_SPRITES[i]->frames )
             frame = DIE_SPRITES[i]->frames;
 
-        resizeSprite(cube, i, DIE_SPRITES[i]->width*8, DIE_SPRITES[i]->height*8);
-        setSpriteImage(cube, i, *DIE_SPRITES[i], frame);
-        moveSprite(cube, i, SPRITEPOS[i].x, SPRITEPOS[i].y);
+        vid.resizeSprite(i, DIE_SPRITES[i]->width*8, DIE_SPRITES[i]->height*8);
+        vid.setSpriteImage(i, *DIE_SPRITES[i], frame);
+        vid.moveSprite(i, SPRITEPOS[i].x, SPRITEPOS[i].y);
     }
 }
 

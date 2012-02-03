@@ -15,7 +15,6 @@ class TimeKeeper
 {
 public:
     static const float TIME_INITIAL;
-    static const float TIME_RETURN_PER_GEM;
     static const int TIMER_TILES = 7;
     static const unsigned int BLINK_OFF_FRAMES = 7;
     static const unsigned int BLINK_ON_FRAMES = 10;
@@ -29,7 +28,6 @@ public:
 	
     void DrawMeter( float amount, BG1Helper &bg1helper );
 	float getTime() const { return m_fTimer; }
-	void AddTime( int numGems );
 
 private:
 	float m_fTimer;

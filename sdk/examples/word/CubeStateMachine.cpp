@@ -4,7 +4,7 @@
 #include "Dictionary.h"
 #include "GameStateMachine.h"
 #include "config.h"
-
+#include "WordGame.h"
 
 void CubeStateMachine::setCube(Cube& cube)
 {
@@ -26,16 +26,56 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
-    case EventID_Input:
     case EventID_Tilt:
+        if (data.mInput.mCubeID == getCube().id())
+        {
+            switch (GameStateMachine::getCurrentMaxLettersPerCube())
+            {
+            case 2:
+            case 3:
+                if (!mBG0PanningLocked)
+                {
+                    const float BG0_PANNING_WRAP = 144.f;
+
+                    _SYSTiltState state;
+                    _SYS_getTilt(getCube().id(), &state);
+                    if (state.x != 1)
+                    {
+                        mBG0TargetPanning -=
+                                BG0_PANNING_WRAP/GameStateMachine::getCurrentMaxLettersPerCube() * (state.x - 1);
+                        while (mBG0TargetPanning < 0.f)
+                        {
+                            mBG0TargetPanning += BG0_PANNING_WRAP;
+                            mBG0Panning += BG0_PANNING_WRAP;
+                        }
+                        VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
+                        setPanning(vid, mBG0Panning);
+                        WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
+                    }
+                }
+                break;
+
+            default:
+                break;
+            }
+        }
+        // fall through
+    case EventID_Input:
         if (data.mInput.mCubeID == mCube->id())
         {
             mIdleTime = 0.f;
         }
         break;
 
-    case EventID_EnterState:
     case EventID_GameStateChanged:
+        mBG0PanningLocked = (data.mGameStateChanged.mNewStateIndex != GameStateIndex_PlayScored);
+        mBG0TargetPanning = 0.f;
+        {
+            VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
+            setPanning(vid, 0.f);
+        }
+        // fall through
+    case EventID_EnterState:
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
         mIdleTime = 0.f;
@@ -47,9 +87,10 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
             mLetters[i] = '\0';
         }
-        for (unsigned i = 0; i < mNumLetters; ++i)
+        // TODO multiple letters: variable
+        for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
         {
-            mLetters[i] = data.mNewAnagram.mWord[cubeIndex + i];
+            mLetters[i] = data.mNewAnagram.mWord[cubeIndex * GameStateMachine::getCurrentMaxLettersPerCube() + i];
         }
         // TODO substrings of length 1 to 3
         break;
@@ -58,10 +99,59 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 }
 
 
-const char* CubeStateMachine::getLetters()
+bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
 {
     ASSERT(mNumLetters > 0);
-    return mLetters;
+    if (mNumLetters <= 0)
+    {
+        return false;
+    }
+    switch (GameStateMachine::getCurrentMaxLettersPerCube())
+    {
+    case 2:
+        if (!forPaint && fmodf(mBG0TargetPanning, 144.f) != 0.f)
+        {
+            char swapped[MAX_LETTERS_PER_CUBE + 1];
+            swapped[0] = mLetters[1];
+            swapped[1] = mLetters[0];
+            swapped[2] = '\0';
+            _SYS_strlcpy(buffer, swapped, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+            return true;
+        }
+        _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+        return true;
+
+    case 3:
+        {
+            float panMod = fmodf(mBG0TargetPanning, 144.f);
+            if (!forPaint && panMod != 0.f)
+            {
+                char swapped[MAX_LETTERS_PER_CUBE + 1];
+                if (panMod > 72.f)
+                {
+                    swapped[0] = mLetters[1];
+                    swapped[1] = mLetters[2];
+                    swapped[2] = mLetters[0];
+                    swapped[3] = '\0';
+                }
+                else
+                {
+                    swapped[0] = mLetters[2];
+                    swapped[1] = mLetters[0];
+                    swapped[2] = mLetters[1];
+                    swapped[3] = '\0';
+                }
+                _SYS_strlcpy(buffer, swapped, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+                return true;
+            }
+        }
+        _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+        return true;
+
+    default:
+        _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+        return true;
+    }
 }
 
 bool CubeStateMachine::canBeginWord()
@@ -71,7 +161,7 @@ bool CubeStateMachine::canBeginWord()
             mCube->physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
 }
 
-bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
+bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer, bool& isBonus)
 {
     if (canBeginWord())
     {        
@@ -87,15 +177,22 @@ bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer)
             {
                 break;
             }
-            _SYS_strlcat(wordBuffer, csm->mLetters, MAX_LETTERS_PER_WORD + 1);
+            char str[MAX_LETTERS_PER_CUBE + 1];
+            csm->getLetters(str, false);
+            _SYS_strlcat(wordBuffer, str, GameStateMachine::getCurrentMaxLettersPerWord() + 1);
             neighborLetters = true;
         }
         if (neighborLetters)
         {
-            if (Dictionary::isWord(wordBuffer))
+            char trimmedWord[MAX_LETTERS_PER_WORD + 1];
+            if (Dictionary::trim(wordBuffer, trimmedWord))
             {
-                isOld = Dictionary::isOldWord(wordBuffer);
-                return true;
+                _SYS_strlcpy(wordBuffer, trimmedWord, sizeof trimmedWord);
+                if (Dictionary::isWord(trimmedWord, isBonus))
+                {
+                    isOld = Dictionary::isOldWord(trimmedWord);
+                    return true;
+                }
             }
         }
     }
@@ -202,4 +299,16 @@ void CubeStateMachine::update(float dt)
 {
     mIdleTime += dt;
     StateMachine::update(dt);
+    if ((int)mBG0Panning != (int)mBG0TargetPanning)
+    {
+        mBG0Panning += (mBG0TargetPanning - mBG0Panning) * dt * 7.5f;
+        VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
+        setPanning(vid, mBG0Panning);
+    }
+}
+
+void CubeStateMachine::setPanning(VidMode_BG0_SPR_BG1& vid, float panning)
+{
+    mBG0Panning = panning;
+    vid.BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
 }

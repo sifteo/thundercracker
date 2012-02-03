@@ -10,8 +10,7 @@
 #include "assets.gen.h"
 //#include "audio.gen.h"
 
-const float TimeKeeper::TIME_INITIAL = 140.0f;
-const float TimeKeeper::TIME_RETURN_PER_GEM = 1.0f;
+const float TimeKeeper::TIME_INITIAL = 60.0f;
 
 
 TimeKeeper::TimeKeeper()
@@ -105,10 +104,4 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper )
         }
     }
 
-}
-
-
-void TimeKeeper::AddTime( int numGems )
-{
-	m_fTimer += numGems * TIME_RETURN_PER_GEM;
 }

@@ -44,12 +44,17 @@ void StateMachine::onEvent(unsigned eventID, const EventData& data)
 void StateMachine::setState(unsigned newStateIndex, State& oldState)
 {
     ASSERT(newStateIndex < getNumStates());
-    oldState.onEvent(EventID_ExitState, EventData());
+    unsigned newAttemptedStateIndex =
+            oldState.onEvent(EventID_ExitState, EventData());
+    ASSERT(newAttemptedStateIndex == newStateIndex ||
+           newAttemptedStateIndex == mStateIndex); // can't change state on this event
     EventData data;
     data.mEnterState.mFirst = false;
     data.mEnterState.mPreviousStateIndex = mStateIndex;
     mStateIndex = newStateIndex;
     mStateTime = .0f;
-    State& newState = getState(mStateIndex);
-    newState.onEvent(EventID_EnterState, data);
+    State& newState = getState(mStateIndex);    
+    newAttemptedStateIndex =
+        newState.onEvent(EventID_EnterState, data);
+    ASSERT(newAttemptedStateIndex == newStateIndex); // can't change state on this event
 }

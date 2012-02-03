@@ -6,14 +6,12 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include <stdint.h>
-#include "radio.h"
 #include "sensors.h"
+#include "radio.h"
 #include "graphics.h"
 #include "hardware.h"
 #include "flash.h"
 #include "params.h"
-//#include "touch.h"
 #include "battery.h"
 #include "demo.h"
 
@@ -82,12 +80,6 @@ static void gpio_init(void)
     ADDR_DIR = 0;
     MISC_DIR = MISC_DIR_VALUE;
     CTRL_DIR = CTRL_DIR_VALUE;
-
-    /*
-     * Setting pull down on input so it doesn't float.
-     */
-
-    // MISC_CON = 0x34;
 
     /*
      * Neighbor TX pins

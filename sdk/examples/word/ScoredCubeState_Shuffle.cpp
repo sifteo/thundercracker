@@ -15,6 +15,8 @@ unsigned ScoredCubeState_Shuffle::onEvent(unsigned eventID, const EventData& dat
     switch (eventID)
     {
     case EventID_EnterState:
+        WordGame::instance()->setNeedsPaintSync();
+        // fall through
     case EventID_Paint:
         paint();
         break;
@@ -34,10 +36,17 @@ void ScoredCubeState_Shuffle::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     WordGame::hideSprites(vid);
-    if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
+    if (getStateMachine().getTime() <= TEETH_ANIM_LENGTH)
     {
         // teeth closing animation
-        paintLetters(vid, Font1Letter);
+        if (GameStateMachine::getCurrentMaxLettersPerCube() == 1)
+        {
+            paintLetters(vid, Font1Letter);
+        }
+        else
+        {
+            vid.BG0_drawAsset(Vec2(0, 0), LetterBG);
+        }
         paintTeeth(vid, ImageIndex_Teeth, true, true);
         //DEBUG_LOG(("shuffle: [c: %d] teeth closing %f\n", c.id(), GameStateMachine::getTime()));
     }

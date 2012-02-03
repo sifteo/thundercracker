@@ -8,7 +8,7 @@ class PrototypeWordList
 public:
     PrototypeWordList();
     static bool pickWord(char* buffer);
-    static bool isWord(const char* string);
+    static bool isWord(const char* string, bool& isCommon);
     static bool bitsToString(uint32_t bits, char* buffer);
 
 private:

@@ -95,7 +95,7 @@ class Neighbors {
     static const unsigned PIN_IN        = (1 << 6);
     static const unsigned PIN_0_TOP     = (1 << 0);
     static const unsigned PIN_1_LEFT    = (1 << 1);
-    static const unsigned PIN_2_BOTTOM  = (1 << 7);
+    static const unsigned PIN_2_BOTTOM  = (1 << 4);
     static const unsigned PIN_3_RIGHT   = (1 << 5);
     
     uint8_t inputMask;
