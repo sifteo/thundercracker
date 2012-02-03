@@ -84,7 +84,7 @@ BannerPoints = image{"Bannerpoints.png", height=16}
 
 --sounds
 astrokraut = sound{"astrokraut.raw", encode="PCM"}
---bubble_pop_02 = sound{"bubble_pop_02.raw", encode="PCM"}
+bubble_pop_02 = sound{"bubble_pop_02.raw", encode="PCM"}
 --charge_03 = sound{"charge_03.raw", encode="PCM"}
 clear1 = sound{"clear1.raw", encode="PCM"}
 clear2 = sound{"clear2.raw", encode="PCM"}

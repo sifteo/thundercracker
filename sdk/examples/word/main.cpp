@@ -56,13 +56,6 @@ void accel(_SYSCubeID c)
     DEBUG_LOG(("accelerometer changed\n"));
 }
 
-static bool anyNeighbors(const Cube& c) {
-    return c.hasPhysicalNeighborAt(0) ||
-        c.hasPhysicalNeighborAt(1) ||
-        c.hasPhysicalNeighborAt(2) ||
-        c.hasPhysicalNeighborAt(3);
-}
-
 void siftmain()
 {
     DEBUG_LOG(("Hello, Word Play 2\n"));
@@ -97,7 +90,11 @@ void siftmain()
             for (unsigned i = 0; i < arraysize(cubes); i++)
             {
                 VidMode_BG0_ROM rom(cubes[i].vbuf);
-                rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0_SPR_BG1::LCD_width), 2);
+                rom.BG0_progressBar(Vec2(0,7),
+                                    cubes[i].assetProgress(GameAssets,
+                                                           VidMode_BG0_SPR_BG1::LCD_width),
+                                    2);
+
                 if (!cubes[i].assetDone(GameAssets))
                 {
                     done = false;
@@ -112,30 +109,6 @@ void siftmain()
             }
         }
     }
-
-    { // fake power-on
-            for(unsigned hack=0; hack<4; ++hack) {
-                for(unsigned i=0; i<NUM_CUBES; ++i) {
-                    VidMode_BG0 mode(cubes[i].vbuf);
-                    mode.init();
-                    mode.BG0_drawAsset(Vec2(0,0), ScreenOff);
-                    cubes[i].vbuf.touch();
-                }
-                System::paintSync();
-            }
-            unsigned cnt = 0;
-            while(cnt < 2 * (NUM_CUBES-1)) {
-                System::paint();
-                cnt = 0;
-                for(unsigned i=0; i<NUM_CUBES; ++i) {
-                    for(Cube::Side s=0; s<4; ++s) {
-                        cnt += cubes[i].hasPhysicalNeighborAt(s);
-                    }
-                    VidMode_BG0(cubes[i].vbuf)
-                        .BG0_drawAsset(Vec2(0,0), anyNeighbors(cubes[i]) ? Title : ScreenOff);
-                }
-            }
-        }
 
     // main loop
     WordGame game(cubes); // must not be static!

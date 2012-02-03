@@ -18,6 +18,8 @@ class GridSlot
 public:
     static const unsigned int NUM_COLORS = 8;
     static const unsigned int NUM_SPAWN_FRAMES = 4;
+    static const unsigned int MULTIPLIER_MOTION_AMPLITUDE = 2;
+    static const float MULTIPLIER_MOTION_PERIOD_MODIFIER;
 
     //these are special dots
     enum
