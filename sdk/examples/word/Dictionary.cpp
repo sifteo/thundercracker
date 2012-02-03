@@ -16,7 +16,6 @@ const unsigned DEMO_MAX_DETERMINISTIC_ROUNDS = 5;
 
 const static char* picks[] =
 {
-    "ROYAL",
     "TERMS",
     "TRULY",
     "PRICE",
@@ -39,6 +38,7 @@ const static char* picks[] =
     "OCCUPY",
     "BECOME",
     "WINDOW",
+    "ROYAL",
     "GRAND",
     "DURING",
     "VOICE",
@@ -190,7 +190,6 @@ const static char* picks[] =
 
 const static unsigned char pickAnagrams[] =
 {
-    2,	// ROYAL, nonbonus anagrams: ['ROYAL', 'LAY']
     3,	// TERMS, nonbonus anagrams: ['TERM', 'SET', 'TERMS']
     2,	// TRULY, nonbonus anagrams: ['TRY', 'TRULY']
     2,	// PRICE, nonbonus anagrams: ['PRICE', 'ICE']
@@ -213,6 +212,7 @@ const static unsigned char pickAnagrams[] =
     2,	// OCCUPY, nonbonus anagrams: ['OCCUPY', 'COPY']
     2,	// BECOME, nonbonus anagrams: ['BECOME', 'COME']
     2,	// WINDOW, nonbonus anagrams: ['WINDOW', 'WIND']
+    2,	// ROYAL, nonbonus anagrams: ['ROYAL', 'LAY']
     2,	// GRAND, nonbonus anagrams: ['AND', 'GRAND']
     2,	// DURING, nonbonus anagrams: ['DURING', 'RING']
     2,	// VOICE, nonbonus anagrams: ['VOICE', 'ICE']
@@ -365,7 +365,6 @@ const static unsigned char pickAnagrams[] =
 
 const static unsigned char pickAnagramsBonus[] =
 {
-    0,	// ROYAL, bonus anagrams: []
     0,	// TERMS, bonus anagrams: []
     0,	// TRULY, bonus anagrams: []
     0,	// PRICE, bonus anagrams: []
@@ -388,6 +387,7 @@ const static unsigned char pickAnagramsBonus[] =
     0,	// OCCUPY, bonus anagrams: []
     0,	// BECOME, bonus anagrams: []
     0,	// WINDOW, bonus anagrams: []
+    0,	// ROYAL, bonus anagrams: []
     1,	// GRAND, bonus anagrams: ['GRAN']
     1,	// DURING, bonus anagrams: ['DUNG']
     1,	// VOICE, bonus anagrams: ['VOE']
