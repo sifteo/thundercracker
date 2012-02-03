@@ -71,7 +71,7 @@ static const uint8_t MISC_PORT_DIR   = REG_P1DIR;
 static const uint8_t BUS_PORT_DIR    = REG_P2DIR;
 static const uint8_t CTRL_PORT_DIR   = REG_P3DIR;
 
-static const uint8_t MISC_TOUCH      = (1 << 4);
+static const uint8_t MISC_TOUCH      = (1 << 7);
 
 static const uint8_t CTRL_LCD_DCX    = (1 << 0);
 static const uint8_t CTRL_FLASH_LAT1 = (1 << 2);   // LAT1 and LAT2 swapped on current rev PCBs vs. prototype
@@ -135,7 +135,7 @@ class Hardware {
     }
 
     void setAcceleration(float xG, float yG, float zG);
-    void setTouch(float amount);
+    void setTouch(bool touching);
 
     bool isDebugging();
     void initVCD(VCDWriter &vcd);
