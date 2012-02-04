@@ -34,7 +34,7 @@ void power_sleep();
 #define POWER_IDLE_RESET_ASM() \
     mov     _power_sleep_timer, _sensor_tick_counter_high
 
-// Potentially enter deep sleep. Must be called from main idle loop.
+// Potentially enter deep sleep. Must be called from main loop.
 #define power_idle_poll() { \
     uint8_t a = sensor_tick_counter_high; \
     a -= power_sleep_timer; \

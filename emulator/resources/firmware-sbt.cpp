@@ -232,29 +232,29 @@ static int FASTCALL sbt_block_00d5(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	unsigned pc = 0x00d5;
-	clk += Opcodes::jb_bitaddr_offset   (aCPU, pc, 0x20,0x00,0xf5);
-	aCPU->mPC = pc & PC_MASK;
-	return clk;
-}
-
-static int FASTCALL sbt_block_00d8(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	unsigned pc = 0x00d8;
-	clk += Opcodes::lcall_address       (aCPU, pc, 0x12,0x16,0x2a);
-	aCPU->mPC = pc & PC_MASK;
-	return clk;
-}
-
-static int FASTCALL sbt_block_00db(em8051 *aCPU)
-{
-	unsigned clk = 0;
-	unsigned pc = 0x00db;
 	clk += Opcodes::mov_a_mem           (aCPU, pc, 0xe5,0x56,0x00);
 	clk += Opcodes::clr_c               (aCPU, pc, 0xc3,0x00,0x00);
 	clk += Opcodes::subb_a_mem          (aCPU, pc, 0x95,0x18,0x00);
 	clk += Opcodes::mov_rx_a            (aCPU, pc, 0xfa,0x00,0x00);
-	clk += Opcodes::cjne_rx_imm_offset  (aCPU, pc, 0xba,0x26,0xe9);
+	clk += Opcodes::cjne_rx_imm_offset  (aCPU, pc, 0xba,0x26,0x03);
+	aCPU->mPC = pc & PC_MASK;
+	return clk;
+}
+
+static int FASTCALL sbt_block_00de(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	unsigned pc = 0x00de;
+	clk += Opcodes::lcall_address       (aCPU, pc, 0x12,0x0e,0xf5);
+	aCPU->mPC = pc & PC_MASK;
+	return clk;
+}
+
+static int FASTCALL sbt_block_00e1(em8051 *aCPU)
+{
+	unsigned clk = 0;
+	unsigned pc = 0x00e1;
+	clk += Opcodes::jb_bitaddr_offset   (aCPU, pc, 0x20,0x00,0xe9);
 	aCPU->mPC = pc & PC_MASK;
 	return clk;
 }
@@ -263,7 +263,7 @@ static int FASTCALL sbt_block_00e4(em8051 *aCPU)
 {
 	unsigned clk = 0;
 	unsigned pc = 0x00e4;
-	clk += Opcodes::lcall_address       (aCPU, pc, 0x12,0x0e,0xf5);
+	clk += Opcodes::lcall_address       (aCPU, pc, 0x12,0x16,0x2a);
 	aCPU->mPC = pc & PC_MASK;
 	return clk;
 }
@@ -21037,16 +21037,16 @@ const sbt_block_t sbt_rom_code[] = {
 	&sbt_block_00d5,
 	&sbt_exception,
 	&sbt_exception,
-	&sbt_block_00d8,
-	&sbt_exception,
-	&sbt_exception,
-	&sbt_block_00db,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_exception,
+	&sbt_block_00de,
+	&sbt_exception,
+	&sbt_exception,
+	&sbt_block_00e1,
 	&sbt_exception,
 	&sbt_exception,
 	&sbt_block_00e4,
