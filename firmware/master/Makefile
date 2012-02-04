@@ -18,6 +18,7 @@ include stm32/st-usb/st-usb.mk
 OBJS_STM32 +=   $(OBJS_USB_STM32) \
                 $(SPEEX_OBJS_STM32)
 
+
 ifeq ($(BUILD_PLATFORM), windows32)
 	# TBD if there's a better way, but windows ar or libtool needs to have all the
 	# individual object files available from any static libs you want to merge
@@ -36,6 +37,12 @@ CFLAGS_STM32 := -Istm32 $(SPEEX_INC) $(INC_USB_STM32) -DHAVE_CONFIG_H -D_BUILD_S
 CFLAGS_STM32 += -DUSE_STM3210C_EVAL -DSTM32F10X_CL -DUSE_STDPERIPH_DRIVER
 CFLAGS_SIM = -I$(DEPS_DIR)/portaudio/include \
              -I$(DEPS_DIR)/speex/include
+
+#Determines whether USB blocks the execution of the master firmware
+#in order to load assets. 
+ifeq ($(USB_LOAD), 1)
+	CFLAGS_STM32 += -DUSB_LOAD
+endif
 
 include Makefile.defs
 

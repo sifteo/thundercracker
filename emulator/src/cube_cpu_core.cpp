@@ -103,15 +103,17 @@ int em8051_decode(em8051 *aCPU, int aPosition, char *aBuffer)
 
 void em8051_reset(em8051 *aCPU, int aWipe)
 {
-    // clear memory, set registers to bootup values, etc    
-    if (aWipe)
-    {
-        memset(aCPU->mCodeMem, 0, sizeof aCPU->mCodeMem);
+    if (aWipe) {
         memset(aCPU->mExtData, 0, sizeof aCPU->mExtData);
         memset(aCPU->mData, 0, sizeof aCPU->mData);
     }
 
     memset(aCPU->mSFR, 0, 128);
+
+    // If we wake up from deep sleep, set PWRDWN accordingly.
+    // XXX: Currently the only wakeup source is Wakeup From Pin.
+    aCPU->mSFR[REG_PWRDWN] = aCPU->deepSleep ? 0x81 : 0x00;
+    aCPU->deepSleep = false;
 
     aCPU->mPC = 0;
     aCPU->mTickDelay = 1;
@@ -142,6 +144,26 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     // Clean internal variables
     aCPU->irq_count = 0;
     aCPU->needInterruptDispatch = false;
+}
+
+void wakeup_test(em8051 *aCPU)
+{
+    // XXX: Only handles wakeup-from-pin.
+
+    if (!aCPU->deepSleep)
+        return;
+
+    if ((aCPU->mSFR[REG_WUCON] & 0x0C) == 0x08) {
+        // Handle unconditional WUOPIRQ wakeup
+
+        uint8_t c0 = aCPU->mSFR[REG_WUOPC0];
+        uint8_t c1 = aCPU->mSFR[REG_WUOPC1];
+        uint8_t p0 = aCPU->mSFR[REG_P2];
+        uint8_t p1 = (aCPU->mSFR[REG_P1] & 0x80) | (aCPU->mSFR[REG_P3] & 0x7F);
+
+        if ((c0 & p0) | (c1 & p1))
+             em8051_reset(aCPU, true);
+    }
 }
 
 static int readbyte(FILE * f)

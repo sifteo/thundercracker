@@ -14,6 +14,8 @@ unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
 
 
 const float Game::SLOSH_THRESHOLD = 0.4f;
+const float Game::TIME_TO_RESPAWN = 0.7f;
+const float Game::COMBO_TIME_THRESHOLD = 2.5f;
 
 Math::Random Game::random;
 
@@ -26,9 +28,11 @@ Game &Game::Inst()
 }
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
-                m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_splashTime( 0.0f ),
+                m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
-                m_ShakesRemaining( STARTING_SHAKES ), m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
+                m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
+                m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
+                m_Multiplier(1), m_bForcePaintSync( false )//, m_bHyperDotMatched( false ),
                 , m_bStabilized( false )
 {
 	//Reset();
@@ -59,6 +63,8 @@ void Game::Init()
 	}
     PRINT( "done loading" );
 #endif
+    Reset();
+
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Reset();
 
@@ -125,10 +131,25 @@ void Game::Update()
 		{
 			if( m_state == STATE_PLAYING )
 				TestMatches();
-			else
-			{
-				Reset();
-			}
+            else if( m_state == STATE_POSTGAME )
+            {
+                //SUPERHACK..  if all the cubes are tilted to the left, change game modes
+                //TODO, REMOVE!
+                bool changemode = true;
+                for( int i = 0; i < NUM_CUBES; i++ )
+                {
+                    if( m_cubes[i].GetCube().getTiltState().x != _SYS_TILT_NEGATIVE )
+                    {
+                        changemode = false;
+                        break;
+                    }
+                }
+
+                if( changemode )
+                    m_mode = ( GameMode )( 1 - (int)m_mode );
+
+                Reset();
+            }
 			m_bTestMatches = false;
 		}
 
@@ -138,6 +159,15 @@ void Game::Update()
             {
                 m_timer.Update( dt );
                 checkGameOver();
+
+                m_fTimeTillRespawn -= dt;
+                m_fTimeSinceCombo += dt;
+
+                if( m_fTimeSinceCombo > COMBO_TIME_THRESHOLD )
+                    m_comboCount = 0;
+
+                if( m_fTimeTillRespawn <= 0.0f )
+                    RespawnOnePiece();
             }
             else if( m_mode == MODE_SHAKES )
             {
@@ -194,7 +224,12 @@ void Game::Reset()
 	m_iDotScoreSum = 0;
 	m_iScore = 0;
 	m_iDotsCleared = 0;
-	m_iLevel = 0;
+
+    if( m_mode == MODE_SHAKES )
+        m_iLevel = 0;
+    else if( m_mode == MODE_TIMED )
+        m_iLevel = 3;
+
     //m_bHyperDotMatched = false;
 
     m_state = STATE_INTRO;
@@ -206,7 +241,16 @@ void Game::Reset()
         m_cubes[i].Reset();
 	}
 
+    for( unsigned int i = 0; i < GridSlot::NUM_COLORS; i++ )
+    {
+        m_aColorsUsed[i] = false;
+    }
+
 	m_timer.Reset();
+    m_fTimeTillRespawn = TIME_TO_RESPAWN;
+    m_comboCount = 0;
+    m_fTimeSinceCombo = 0.0f;
+    m_Multiplier = 1;
 
     m_bStabilized = false;
 }
@@ -232,7 +276,15 @@ void Game::CheckChain( CubeWrapper *pWrapper )
     //chain is finished
     if( total_marked == 0 )
 	{
-		m_iScore += m_iDotScoreSum;
+        unsigned int comboScore = m_iDotScoreSum;
+
+        if( m_mode == MODE_TIMED )
+        {
+            comboScore += 10 * m_comboCount;
+            comboScore *= m_Multiplier;
+        }
+
+        m_iScore += comboScore;
 		m_iDotsCleared += m_iDotScore;
 
 		if( m_mode == MODE_PUZZLE )
@@ -243,46 +295,100 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 		else
         {
             bool bannered = false;
+            bool specialSpawned = false;
+            int numColors = 0;
 
-            //free shake
-            /*if( m_mode == MODE_SHAKES && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
+            //count how many colors we used for this combo
+            for( unsigned int i = 0; i < GridSlot::NUM_COLORS; i++ )
             {
-
-            }
-            else if( m_iDotsCleared >= DOT_THRESHOLD4 )
-            {
-                playSound(clear4);
-
-                if( m_mode == MODE_SHAKES && !m_bHyperDotMatched )
+                if( m_aColorsUsed[i] )
                 {
-                    pWrapper->getBanner().SetMessage( "Bonus Shake!" );
-                    bannered = true;
-                    m_ShakesRemaining++;
+                    numColors++;
+                    m_aColorsUsed[i] = false;
                 }
             }
-            else */if( m_iDotsCleared >= DOT_THRESHOLD3 )
-            {
-                playSound(clear3);
 
-                //is it dangerous to add one here?  do we need to queue it?
-                if( /*!m_bHyperDotMatched && */!DoesHyperDotExist() )
-                    pWrapper->SpawnHyper();
+            if( numColors >= NUM_COLORS_FOR_HYPER )
+            {
+                pWrapper->SpawnSpecial( GridSlot::HYPERCOLOR );
+                specialSpawned = true;
             }
-            else if( m_iDotsCleared >= DOT_THRESHOLD2 )
-                playSound(clear2);
-            else if( m_iDotsCleared >= DOT_THRESHOLD1 )
-                playSound(clear1);
+
+            if( !specialSpawned )
+            {
+                if( m_mode == MODE_SHAKES )
+                {
+                    //free shake
+                    /*if( m_mode == MODE_SHAKES && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
+                    {
+
+                    }
+                    else if( m_iDotsCleared >= DOT_THRESHOLD4 )
+                    {
+                        playSound(clear4);
+
+                        if( m_mode == MODE_SHAKES && !m_bHyperDotMatched )
+                        {
+                            pWrapper->getBanner().SetMessage( "Bonus Shake!" );
+                            bannered = true;
+                            m_ShakesRemaining++;
+                        }
+                    }
+                    else */if( m_iDotsCleared >= DOT_THRESHOLD3 )
+                    {
+                        playSound(clear3);
+
+                        //is it dangerous to add one here?  do we need to queue it?
+                        //if( !m_bHyperDotMatched && !DoesHyperDotExist() )
+                        pWrapper->SpawnSpecial( GridSlot::RAINBALLCOLOR );
+                        specialSpawned = true;
+                    }
+                }
+                else if( m_mode == MODE_TIMED )
+                {
+                    if( m_iDotsCleared >= DOT_THRESHOLD_TIMED_MULT && m_Multiplier < MAX_MULTIPLIER - 1 )
+                    {
+                        playSound(clear4);
+
+                        if( !pWrapper->SpawnMultiplier( m_Multiplier + 1 ) )
+                        {
+                            //find another cube to spawn multiplier on
+                            for( int i = 0; i < NUM_CUBES; i++ )
+                            {
+                                if( &m_cubes[i] != pWrapper )
+                                {
+                                    if( m_cubes[i].SpawnMultiplier( m_Multiplier + 1 ) )
+                                        break;
+                                }
+                            }
+                        }
+                        specialSpawned = true;
+                    }
+                    else if( m_iDotsCleared >= DOT_THRESHOLD_TIMED_RAINBALL )
+                    {
+                        playSound(clear3);
+
+                        pWrapper->SpawnSpecial( GridSlot::RAINBALLCOLOR );
+                        specialSpawned = true;
+                    }
+                }
+
+                if( !specialSpawned )
+                {
+                    if( m_iDotsCleared >= DOT_THRESHOLD2 )
+                        playSound(clear2);
+                    else if( m_iDotsCleared >= DOT_THRESHOLD1 )
+                        playSound(clear1);
+                }
+            }
 
             if( !bannered )
             {
                 String<16> aBuf;
-                aBuf << m_iDotScoreSum;
+                aBuf << comboScore;
                 pWrapper->getBanner().SetMessage( aBuf, true );
             }
 		}
-
-		if( m_mode == MODE_TIMED )
-			m_timer.AddTime(m_iDotScore);
 
 		m_iDotScore = 0;
 		m_iDotScoreSum = 0;
@@ -727,4 +833,60 @@ unsigned int Game::CountEmptyCubes() const
     }
 
     return count;
+}
+
+
+//add one piece to the game
+void Game::RespawnOnePiece()
+{
+    //cycle through our cubes
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[m_cubeToRespawn].isFull() )
+        {
+            m_cubeToRespawn++;
+            if( m_cubeToRespawn >= NUM_CUBES )
+                m_cubeToRespawn = 0;
+        }
+        else
+        {
+            m_cubes[m_cubeToRespawn].RespawnOnePiece();
+            break;
+        }
+    }
+
+    m_cubeToRespawn++;
+    if( m_cubeToRespawn >= NUM_CUBES )
+        m_cubeToRespawn = 0;
+
+    m_fTimeTillRespawn = TIME_TO_RESPAWN;
+}
+
+
+void Game::UpCombo()
+{
+    if( m_mode == MODE_TIMED )
+    {
+        if( m_fTimeSinceCombo > 0.0f )
+        {
+            if( m_fTimeSinceCombo > COMBO_TIME_THRESHOLD )
+                m_comboCount = 0;
+
+            m_comboCount++;
+            m_fTimeSinceCombo = 0.0f;
+        }
+    }
+}
+
+
+void Game::UpMultiplier()
+{
+    ASSERT( m_mode == MODE_TIMED );
+    ASSERT( m_Multiplier < MAX_MULTIPLIER - 1 );
+
+    m_Multiplier++;
+
+    //find all existing multpilier dots and tick them up one
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].UpMultiplier();
 }

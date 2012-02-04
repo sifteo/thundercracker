@@ -8,7 +8,6 @@
 #include "string.h"
 #include "assets.gen.h"
 //#include "audio.gen.h"
-#include "sprite.h"
 #include "game.h"
 
 const float Intro::INTRO_ARROW_TIME = 0.4f;
@@ -74,10 +73,8 @@ Vec2 ENDPOS[ Intro::NUM_ARROWS ] = {
 };
 
 //return whether we touched bg1 or not
-bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapper *pWrapper )
+bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper )
 {
-    VidMode_BG0 vid( cube.vbuf );
-    _SYS_vbuf_pokeb(&cube.vbuf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
     vid.clear(GemEmpty.tiles[0]);
 
     if( m_fTimer < INTRO_ARROW_TIME )
@@ -88,16 +85,16 @@ bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, Cube &cube, CubeWrapp
         for( int i = 0; i < NUM_ARROWS; i++ )
         {
             Vec2 pos = LerpPosition( STARTPOS[i], ENDPOS[i], timePercent );
-            resizeSprite(cube, i, ARROW_SPRITES[i]->width*8, ARROW_SPRITES[i]->height*8);
-            setSpriteImage(cube, i, *ARROW_SPRITES[i], 0);
-            moveSprite(cube, i, pos.x, pos.y);
+            vid.resizeSprite(i, ARROW_SPRITES[i]->width*8, ARROW_SPRITES[i]->height*8);
+            vid.setSpriteImage(i, *ARROW_SPRITES[i], 0);
+            vid.moveSprite(i, pos.x, pos.y);
         }
     }
     else if( m_fTimer < INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME )
     {
         for( int i = 0; i < NUM_ARROWS; i++ )
         {
-            resizeSprite(cube, i, 0, 0);
+            vid.resizeSprite(i, 0, 0);
         }
 
         //charge up timers

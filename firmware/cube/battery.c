@@ -11,8 +11,6 @@
 #include "sensors.h"
 #include "radio.h"
 
-// Battery poller is trying to acquire exclusive access to the A/D converter
-volatile __bit battery_adc_lock;
 
 static void adc_busy_wait()
 {
@@ -68,14 +66,8 @@ void battery_poll()
      * The code in lcd_end_frame is responsible for putting the LCD into
      * a state where additional write strobes will be harmless. So here,
      * we don't have to worry about clocking out extra pixels.
-     *
-     * We share the A/D converter with the touch sensor, which runs from
-     * the timer and A/D ISRs. To claim access to the ISR, we need to set
-     * the battery_adc_lock, which prevents new touch samples from starting,
-     * and we need to wait for any existing touch A/D conversion to finish.
      */
      
-    battery_adc_lock = 1;
     adc_busy_wait();
     
     ADDR_PORT = 0;      // Pre-discharge WR net capacitance
@@ -104,6 +96,5 @@ void battery_poll()
     } radio_irq_enable();
     
     // Release ownership of the ADC
-    battery_adc_lock = 0;
     ADDR_DIR = 0;
 }

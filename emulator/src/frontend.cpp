@@ -448,12 +448,21 @@ void Frontend::onMouseDown(int button)
             mouseBody = world.CreateBody(&mouseDef);
 
             bool shift = glfwGetKey(GLFW_KEY_LSHIFT) || glfwGetKey(GLFW_KEY_RSHIFT);
+            bool ctrl = glfwGetKey(GLFW_KEY_LCTRL) || glfwGetKey(GLFW_KEY_RCTRL);
+            
             if (button == GLFW_MOUSE_BUTTON_RIGHT || shift) {
                 /*
                  * If this was a right-click or shift-click, go into tilting mode
                  */
                 
                 mouseIsTilting = true;
+                
+            } else if (button == GLFW_MOUSE_BUTTON_MIDDLE || ctrl) {
+                /*
+                 * Ctrl-click or middle-click taps the cube's touch sensor
+                 */
+
+                mousePicker.mCube->setTouch(true);
 
             } else {
                 /*
@@ -480,28 +489,9 @@ void Frontend::onMouseDown(int button)
                 const float centerSize = FrontendCube::SIZE * FrontendCube::CENTER_SIZE;
 
                 if (centerDist < centerSize) {
+                    // Center-drag to align
                     anchor = center;
                     mouseIsAligning = true;
-                    
-                    /*
-                     * This notion of center distance is also used to
-                     * simulate touch. The closer to the exact center,
-                     * the stronger the touch signal will be. This is
-                     * a bit of a hack, but I'm hoping it mimicks what
-                     * happens with actual hardware- you get a lot of
-                     * false 'touch' signals when users manipulate the
-                     * cubes, since you'd like to be able to fling
-                     * cubes around by their faces without worrying
-                     * about whether you're 'touching' them or
-                     * not. So, the cube firmware will be responsible
-                     * for doing various kinds of filtering to
-                     * determine what counts as a touch.
-                     */
-
-                     // max: only do touch-stuff if CTRL is held down
-                    if (glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RCTRL) == GLFW_PRESS) {
-                        mousePicker.mCube->setTouch(1.0f - centerDist / centerSize);
-                    }
                 }
 
                 // Glue it to the point we picked, with a revolute joint
@@ -553,7 +543,7 @@ void Frontend::onMouseUp(int button)
     
         if (mousePicker.mCube) {
             mousePicker.mCube->setTiltTarget(b2Vec2(0.0f, 0.0f));
-            mousePicker.mCube->setTouch(0.0f);            
+            mousePicker.mCube->setTouch(false);
             mousePicker.mCube->setHoverTarget(FrontendCube::HOVER_NONE);                
         }
 

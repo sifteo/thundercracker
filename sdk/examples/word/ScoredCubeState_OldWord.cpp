@@ -23,32 +23,33 @@ unsigned ScoredCubeState_OldWord::onEvent(unsigned eventID, const EventData& dat
 
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
+    case EventID_LetterOrderChange:
         {
             bool isOldWord = false;
             if (getStateMachine().canBeginWord())
             {
                 char wordBuffer[MAX_LETTERS_PER_WORD + 1];
-                if (getStateMachine().beginsWord(isOldWord, wordBuffer))
+                EventData wordFoundData;
+                if (getStateMachine().beginsWord(isOldWord, wordBuffer, wordFoundData.mWordFound.mBonus))
                 {
-                    EventData data;
-                    data.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
-                    data.mWordFound.mWord = wordBuffer;
+                    wordFoundData.mWordFound.mCubeIDStart = getStateMachine().getCube().id();
+                    wordFoundData.mWordFound.mWord = wordBuffer;
                     if (isOldWord)
                     {
-                        GameStateMachine::sOnEvent(EventID_OldWordFound, data);
+                        GameStateMachine::sOnEvent(EventID_OldWordFound, wordFoundData);
                         return CubeStateIndex_OldWordScored;
                     }
                     else
                     {
-                        GameStateMachine::sOnEvent(EventID_NewWordFound, data);
+                        GameStateMachine::sOnEvent(EventID_NewWordFound, wordFoundData);
                         return CubeStateIndex_NewWordScored;
                     }
                 }
                 else
                 {
-                    EventData data;
-                    data.mWordBroken.mCubeIDStart = getStateMachine().getCube().id();
-                    GameStateMachine::sOnEvent(EventID_WordBroken, data);
+                    EventData wordBrokenData;
+                    wordBrokenData.mWordBroken.mCubeIDStart = getStateMachine().getCube().id();
+                    GameStateMachine::sOnEvent(EventID_WordBroken, wordBrokenData);
 
                     return CubeStateIndex_NotWordScored;
                 }
@@ -103,7 +104,21 @@ void ScoredCubeState_OldWord::paint()
     Cube& c = getStateMachine().getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    paintLetters(vid, Font1Letter, true);
+
+    switch (GameStateMachine::getCurrentMaxLettersPerCube())
+    {
+    case 2:
+        paintLetters(vid, Font2Letter, true);
+        break;
+
+    case 3:
+        paintLetters(vid, Font3Letter, true);
+        break;
+
+    default:
+        paintLetters(vid, Font1Letter, true);
+        break;
+    }
 
     ImageIndex ii = ImageIndex_Connected;
     if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&

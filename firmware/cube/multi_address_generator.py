@@ -18,7 +18,7 @@ date = datetime.date.today().isoformat()
 
 print "\nCube Binary Generator\nCompiling firmare 0x00 to 0x02...\n"
 
-for chan in ["0x00","0x10","0x20"]:
+for chan in ["0x02","0x10","0x20"]:
 	
 	for addr in ["0x00","0x01","0x02"]:
 		subprocess.check_call(["make","clean"])

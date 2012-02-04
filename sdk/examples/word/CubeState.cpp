@@ -7,6 +7,8 @@
 #include "TileTransparencyLookup.h"
 #include "PartialAnimationData.h"
 #include "config.h"
+#include <string.h>
+#include <stdio.h>
 
 void CubeState::setStateMachine(CubeStateMachine& csm)
 {
@@ -31,6 +33,11 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
                            bool paintTime,
                            float animStartTime)
 {
+    if (GameStateMachine::getCurrentMaxLettersPerCube() > 1)
+    {
+        paintTime = false;
+    }
+
     if (teethImageIndex == ImageIndex_Teeth && reverseAnim)
     {
         // no blip when reversing teeth anim (use the same anim, but
@@ -64,7 +71,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     const AssetImage* teeth = teethImages[teethImageIndex];
     const AssetImage* teethNumber = 0;
 
-    unsigned teethNumberIndex = GameStateMachine::getNewWordLength();
+    unsigned teethNumberIndex = GameStateMachine::getNewWordLength() / GameStateMachine::getCurrentMaxLettersPerCube();
     if (teethNumberIndex > 2)
     {
         teethNumberIndex -= 3;
@@ -111,6 +118,7 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
     }
 
     BG1Helper bg1(mStateMachine->getCube());
+    unsigned bg1Tiles = 2;
     for (unsigned int i = 0; i < 16; ++i) // rows
     {
         for (unsigned j=0; j < 16; ++j) // columns
@@ -170,44 +178,57 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
             switch (getTransparencyType(teethImageIndex, frame, j, i))
             {
             case TransparencyType_None:
-                // paint this opaque tile
-                // paint BG0
-                if (teethNumber &&
-                    frame >= 2 && frame - 2 < teethNumber->frames &&
-                    j >= ((unsigned) TEETH_NUM_POS.x) &&
-                    j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
-                    i >= ((unsigned) TEETH_NUM_POS.y) &&
-                    i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
+                if (GameStateMachine::getCurrentMaxLettersPerCube() == 1 ||
+                    (animate && (teethImageIndex == ImageIndex_ConnectedRightWord ||
+                                teethImageIndex == ImageIndex_ConnectedLeftWord ||
+                                teethImageIndex == ImageIndex_ConnectedWord ||
+                                teethImageIndex == ImageIndex_Teeth ||
+                                teethImageIndex == ImageIndex_Teeth_NoBlip)))
                 {
-                    vid.BG0_drawPartialAsset(Vec2(j, i),
+                    // paint this opaque tile
+                    // paint BG0
+                    if (teethNumber &&
+                        frame >= 2 && frame - 2 < teethNumber->frames &&
+                        j >= ((unsigned) TEETH_NUM_POS.x) &&
+                        j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
+                        i >= ((unsigned) TEETH_NUM_POS.y) &&
+                        i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
+                    {
+                        vid.BG0_drawPartialAsset(Vec2(j, i),
+                                                 Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
+                                                 Vec2(1, 1),
+                                                 *teethNumber,
+                                                 frame - 2);
+                    }
+                    else
+                    {
+                        vid.BG0_drawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                    }
+                    break;
+                }
+                // else fall through
+
+            case TransparencyType_Some:
+                if (bg1Tiles < 144)
+                {
+                    if (teethNumber &&
+                        frame >= 2 && frame - 2 < teethNumber->frames &&
+                        j >= ((unsigned) TEETH_NUM_POS.x) &&
+                        j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
+                        i >= ((unsigned) TEETH_NUM_POS.y) &&
+                        i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
+                    {
+                        bg1.DrawPartialAsset(Vec2(j, i),
                                              Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
                                              Vec2(1, 1),
                                              *teethNumber,
                                              frame - 2);
-                }
-                else
-                {
-                    vid.BG0_drawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
-                }
-                break;
-
-            case TransparencyType_Some:
-                if (teethNumber &&
-                    frame >= 2 && frame - 2 < teethNumber->frames &&
-                    j >= ((unsigned) TEETH_NUM_POS.x) &&
-                    j < teethNumber->width + ((unsigned) TEETH_NUM_POS.x) &&
-                    i >= ((unsigned) TEETH_NUM_POS.y) &&
-                    i < teethNumber->height + ((unsigned) TEETH_NUM_POS.y))
-                {
-                    bg1.DrawPartialAsset(Vec2(j, i),
-                                         Vec2(j - TEETH_NUM_POS.x, i - TEETH_NUM_POS.y),
-                                         Vec2(1, 1),
-                                         *teethNumber,
-                                         frame - 2);
-                }
-                else
-                {
-                    bg1.DrawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                    }
+                    else
+                    {
+                        bg1.DrawPartialAsset(Vec2(j, i), texCoord, Vec2(1, 1), *teeth, frame);
+                    }
+                    ++bg1Tiles;
                 }
                 break;
 
@@ -286,17 +307,106 @@ void CubeState::paintTeeth(VidMode_BG0_SPR_BG1& vid,
         }
     }
 
+    // TODO merge in 2 ltr cube proto code
+    if (GameStateMachine::getCurrentMaxLettersPerCube() > 1 &&
+        !(animate &&
+            (teethImageIndex == ImageIndex_ConnectedRightWord ||
+            teethImageIndex == ImageIndex_ConnectedLeftWord ||
+            teethImageIndex == ImageIndex_ConnectedWord ||
+            teethImageIndex == ImageIndex_Teeth ||
+            teethImageIndex == ImageIndex_Teeth_NoBlip)))
+    {
+        ASSERT(GameStateMachine::getNumAnagramsRemaining() < 100);
+        unsigned tensDigit = GameStateMachine::getNumAnagramsRemaining() / 10;
+        if (tensDigit)
+        {
+            bg1.DrawAsset(Vec2(7,11), FontSmall, tensDigit);
+        }
+        bg1.DrawAsset(Vec2(8,11), FontSmall, GameStateMachine::getNumAnagramsRemaining() % 10);
+
+        if (GameStateMachine::getNumBonusAnagramsRemaining())
+        {
+            tensDigit = GameStateMachine::getNumBonusAnagramsRemaining() / 10;
+            if (tensDigit)
+            {
+                bg1.DrawAsset(Vec2(1,11), FontBonus, tensDigit);
+            }
+            bg1.DrawAsset(Vec2(2,11), FontBonus, GameStateMachine::getNumBonusAnagramsRemaining() % 10);
+        }
+    }
+
     bg1.Flush(); // TODO only flush if mask has changed recently
     WordGame::instance()->setNeedsPaintSync();
 }
 
-void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, bool paintSprites)
+void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
+                             const AssetImage &font,
+                             bool paintSprites)
 {
-    vid.BG0_drawAsset(Vec2(0,0), LetterBG);
-    const char *str = getStateMachine().getLetters();
-    switch (_SYS_strnlen(str, 16))
+    char str[MAX_LETTERS_PER_CUBE + 1];
+    getStateMachine().getLetters(str, true);
+    switch (GameStateMachine::getCurrentMaxLettersPerCube())
     {
+    case 2:
+        vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
+        vid.BG0_drawPartialAsset(Vec2(17, 0),
+                                 Vec2(0, 0),
+                                 Vec2(1, 16),
+                                 ScreenOff);
+        vid.BG0_drawPartialAsset(Vec2(16, 0),
+                                 Vec2(0, 0),
+                                 Vec2(1, 16),
+                                 ScreenOff);
+        {
+            unsigned frame = str[0] - (int)'A';
+
+            if (frame < font.frames)
+            {
+                vid.BG0_drawAsset(Vec2(0,4), font, frame);
+            }
+            frame = str[1] - (int)'A';
+
+            if (frame < font.frames)
+            {
+                vid.BG0_drawAsset(Vec2(9,4), font, frame);
+            }
+        }
+      break;
+
+    case 3:
+        vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
+        vid.BG0_drawPartialAsset(Vec2(17, 0),
+                                 Vec2(0, 0),
+                                 Vec2(1, 16),
+                                 ScreenOff);
+        vid.BG0_drawPartialAsset(Vec2(16, 0),
+                                 Vec2(0, 0),
+                                 Vec2(1, 16),
+                                 ScreenOff);
+        {
+            unsigned frame = str[0] - (int)'A';
+
+            if (frame < font.frames)
+            {
+                vid.BG0_drawAsset(Vec2(0,6), font, frame);
+            }
+
+            frame = str[1] - (int)'A';
+            if (frame < font.frames)
+            {
+                vid.BG0_drawAsset(Vec2(6,6), font, frame);
+            }
+
+            frame = str[3] - (int)'A';
+            if (frame < font.frames)
+            {
+                vid.BG0_drawAsset(Vec2(12,6), font, frame);
+            }
+        }
+      break;
+
     default:
+        vid.BG0_drawAsset(Vec2(0,0), LetterBG);
         {
             unsigned frame = *str - (int)'A';
 
@@ -476,7 +586,6 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
                         }
                         break;
                     }
-
                 }
                 else
                 {
@@ -485,41 +594,19 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid, const AssetImage &font, b
             }
         }
         break;
-
-    //case 2:
-        // TODO
-        /*    while ((c = *str))
-    {
-        if (c == '\n')
-        {
-            p.x = point.x;
-            p.y += Font.width;
-        }
-        else
-        {
-            BG0_text(p, Font, c);
-            p.x += Font.height;
-        }
-        str++;
     }
-*/
-      //  break;
-
-    //case 3:
-        // TODO
-      //  break;
-    }
-
+    vid.BG0_setPanning(Vec2(getStateMachine().getPanning(), 0));
 }
 
 void CubeState::paintScoreNumbers(BG1Helper &bg1, const Vec2& position_RHS, const char* string)
 {
     Vec2 position(position_RHS);
     const AssetImage& font = FontSmall;
-    unsigned len = _SYS_strnlen(string, 8);
 
     const unsigned MAX_SCORE_STRLEN = 7;
     const char* MAX_SCORE_STR = "9999999";
+
+    unsigned len = _SYS_strnlen(string, MAX_SCORE_STRLEN + 1);
 
     if (len > MAX_SCORE_STRLEN)
     {

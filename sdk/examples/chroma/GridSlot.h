@@ -17,12 +17,16 @@ class GridSlot
 {
 public:
     static const unsigned int NUM_COLORS = 8;
+    static const unsigned int NUM_SPAWN_FRAMES = 4;
+    static const unsigned int MULTIPLIER_MOTION_AMPLITUDE = 2;
+    static const float MULTIPLIER_MOTION_PERIOD_MODIFIER;
 
     //these are special dots
     enum
     {
         HYPERCOLOR = NUM_COLORS,
         ROCKCOLOR,
+        RAINBALLCOLOR,
         AFTERLASTSPECIAL,
         NUM_SPECIALS = AFTERLASTSPECIAL - NUM_COLORS
     };
@@ -54,6 +58,8 @@ public:
 
 	typedef enum 
 	{
+        //only used for timer mode independent spawning currently
+        STATE_SPAWNING,
 		STATE_LIVING,
 		STATE_PENDINGMOVE,
 		STATE_MOVING,
@@ -69,7 +75,7 @@ public:
 
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	//draw self on given vid at given vec
-    void Draw( VidMode_BG0 &vid, Float2 &tiltState );
+    void Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState );
     void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
     void Update(float t);
     bool isAlive() const { return m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_MOVING || m_state == STATE_FINISHINGMOVE || m_state == STATE_FIXEDATTEMPT; }
@@ -79,7 +85,7 @@ public:
     bool isMatchable() const { return isAlive() || m_state == STATE_FINISHINGMOVE || m_state == STATE_MOVING || isMarked(); }
     void setEmpty() { m_state = STATE_GONE; m_bFixed = false; }
 	unsigned int getColor() const { return m_color; }
-	void FillColor(unsigned int color);
+    void FillColor( unsigned int color, bool bSetSpawn = false );
 
 	void mark();
 	void spread_mark();
@@ -90,8 +96,6 @@ public:
 	void MakeFixed() { m_bFixed = true; }
     void setFixedAttempt();
 
-    inline void MakeHyper() { FillColor( HYPERCOLOR ); }
-    inline bool IsHyper() const { return m_color == HYPERCOLOR; }
     inline bool IsSpecial() const { return m_color >= NUM_COLORS; }
 
 	//copy color and some other attributes from target.  Used when tilting
@@ -102,6 +106,9 @@ public:
     void finishFakeMove();
 
     void DamageRock();
+    inline unsigned int getMultiplier() { return m_multiplier; }
+    inline void setMultiplier( unsigned int mult ) { m_multiplier = mult; }
+    void UpMultiplier();
 
 private:
 	void markNeighbor( int row, int col );
@@ -132,6 +139,9 @@ private:
 	unsigned int m_score;
 	//fixed dot
 	bool		 m_bFixed;
+
+    //only fixed dots can have multipliers
+    unsigned int m_multiplier;
 
 	unsigned int m_animFrame;
     unsigned int m_RockHealth;

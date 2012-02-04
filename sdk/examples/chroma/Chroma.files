@@ -62,7 +62,6 @@ C:/projects/sifteo/thundercracker/sdk/examples/chroma/utils.h
 assets.lua
 utils.h
 TimeKeeper.h
-sprite.h
 Intro.h
 GridSlot.h
 Glimmer.h
@@ -72,7 +71,6 @@ cubewrapper.h
 banner.h
 assets.gen.h
 TimeKeeper.cpp
-sprite.cpp
 main.cpp
 Intro.cpp
 GridSlot.cpp
