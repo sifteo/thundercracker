@@ -245,21 +245,27 @@ void SVMELFProgramWriter::RecordRelocation(const MCAssembler &Asm,
 uint32_t SVMELFProgramWriter::getEntryAddress(const MCAssembler &Asm,
     const MCAsmLayout &Layout)
 {
-    const char *compatEntryName = "siftmain";
-    const char *entryName = "main";
+    static const char *entryNames[] = {
+        "main",                 // Main C name
+        "siftmain",             // Backwards-compatible C name
+        "_Z4mainv",             // Main C++ mangled name
+        "_Z8siftmainv",         // Backwards-compatible C++ mangled name
+        NULL,
+    };
 
     const MCContext &context = Asm.getContext();
-    MCSymbol *S;
+    MCSymbol *S = NULL;
+    
+    for (unsigned i = 0; entryNames[i]; i++) {
+        MCSymbol *Entry = context.LookupSymbol(entryNames[i]);
+        if (Entry && Entry->isDefined()) {
+            S = Entry;
+            break;
+        }
+    }
 
-    S = context.LookupSymbol(entryName);
-
-    // Backwards compatibility
-    if (!S || !S->isDefined())
-        S = context.LookupSymbol(compatEntryName);
-
-    if (!S || !S->isDefined())
-        report_fatal_error("No entry point exists. Is " +
-            Twine(entryName) + "() defined?");
+    if (!S)
+        report_fatal_error("No entry point exists. Is \"void main()\" defined?");
 
     SVMSymbolInfo SI = getSymbol(Asm, Layout, S);
     assert(SI.Kind == SVMSymbolInfo::LOCAL);
