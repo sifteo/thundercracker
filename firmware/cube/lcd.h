@@ -32,7 +32,7 @@ static __xdata __at 0x0000 union _SYSVideoRAM vram;
  * LCD Bus Operations
  */
 
- void lcd_sleep();
+void lcd_sleep();
 void lcd_begin_frame();
 void lcd_end_frame();
 
