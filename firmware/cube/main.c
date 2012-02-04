@@ -55,12 +55,12 @@ void main(void)
         // Main tasks
         graphics_render();
         flash_handle_fifo();
+        power_idle_poll();
         
         if (global_busy_flag)
             continue;
         
         // Idle-only tasks
         battery_poll();
-        power_idle_poll();
     }
 }
