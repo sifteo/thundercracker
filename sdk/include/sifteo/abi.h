@@ -26,7 +26,6 @@
 extern "C" {
 #endif
 
-
 /**
  * Data types which are valid across the user/system boundary.
  *
@@ -392,87 +391,85 @@ struct _SYSPseudoRandomState {
 };
 
 /**
- * Entry point to the game binary.
- */
-
-void siftmain(void);
-
-
-/**
  * Low-level system call interface.
  */
- 
-void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count);
-void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count);
-void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count);
-void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count);
-void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count);
-void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count);
-int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count);
 
-uint32_t _SYS_strnlen(const char *str, uint32_t maxLen);
-void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize);
-void _SYS_strlcat(char *dest, const char *src, uint32_t destSize);
-void _SYS_strlcat_int(char *dest, int src, uint32_t destSize);
-void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
-void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize);
-int _SYS_strncmp(const char *a, const char *b, uint32_t count);
+#define _SC(n)  __asm__ ("_SYS_" #n)
 
-void _SYS_sincosf(float x, float *sinOut, float *cosOut);
-float _SYS_fmodf(float a, float b);
+void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(0);
+void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(1);
+void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) _SC(2);
+void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) _SC(3);
+void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(4);
+void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(5);
+int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(6);
 
-void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed);
-uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state);
-uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit);
+void _SYS_sincosf(float x, float *sinOut, float *cosOut) _SC(7);
+float _SYS_fmodf(float a, float b) _SC(8);
 
-void _SYS_exit(void);                           /// Equivalent to return from siftmain()
-void _SYS_yield(void);                          /// Temporarily cede control to the firmware
-void _SYS_paint(void);                          /// Enqueue a new rendering frame
-void _SYS_finish(void);                         /// Wait for enqueued frames to finish
-void _SYS_ticks_ns(int64_t *nanosec);           /// Return the monotonic system timer, in nanoseconds
+uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(64);
+void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(65);
+void _SYS_strlcat(char *dest, const char *src, uint32_t destSize) _SC(66);
+void _SYS_strlcat_int(char *dest, int src, uint32_t destSize) _SC(67);
+void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(68);
+void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(69);
+int _SYS_strncmp(const char *a, const char *b, uint32_t count) _SC(70);
 
-void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max);
-void _SYS_enableCubes(_SYSCubeIDVector cv);     /// Which cubes will be trying to connect?
-void _SYS_disableCubes(_SYSCubeIDVector cv);
+void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed) _SC(71);
+uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state) _SC(72);
+uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit) _SC(73);
 
-void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf);
-void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group);
+void _SYS_exit(void) _SC(74);    /// Equivalent to return from siftmain()
+void _SYS_yield(void) _SC(75);   /// Temporarily cede control to the firmware
+void _SYS_paint(void) _SC(76);   /// Enqueue a new rendering frame
+void _SYS_finish(void) _SC(77);  /// Wait for enqueued frames to finish
 
-void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state);
-void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state);
-void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state);
-void _SYS_getShake(_SYSCubeID cid, _SYSShakeState *state);
+void _SYS_ticks_ns(int64_t *nanosec) _SC(78);    /// Return the monotonic system timer, in nanoseconds
 
-void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]);  // XXX: Temporary for testing/demoing
-uint8_t _SYS_isTouching(_SYSCubeID cid);
-void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v);
-void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid);
+void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max) _SC(79);
+void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(80);  /// Which cubes will be trying to connect?
+void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(81);
 
-void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf);
-void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr);
-void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf);
-void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word);
-void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte);
-void _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word);
-void _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte);
-void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count);
-void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count);
-void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count);
-void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count);
+void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(82);
+void _SYS_loadAssets(_SYSCubeID cid, struct _SYSAssetGroup *group) _SC(83);
+
+void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state) _SC(84);
+void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) _SC(85);
+void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state) _SC(86);
+void _SYS_getShake(_SYSCubeID cid, _SYSShakeState *state) _SC(87);
+
+// XXX: Temporary for testing/demoing
+void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v) _SC(88);
+void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4]) _SC(89);
+
+uint8_t _SYS_isTouching(_SYSCubeID cid) _SC(90);
+void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid) _SC(91);
+
+void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf) _SC(92);
+void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(93);
+void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(94);
+void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word) _SC(95);
+void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(96);
+void _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word) _SC(97);
+void _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte) _SC(98);
+void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count) _SC(99);
+void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count) _SC(100);
+void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count) _SC(101);
+void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count) _SC(102);
 void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count,
-                     uint16_t lines, uint16_t src_stride, uint16_t addr_stride);
-void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height);
-void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y);
+                     uint16_t lines, uint16_t src_stride, uint16_t addr_stride) _SC(103);
+void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(104);
+void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(105);
                      
-void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer);
-uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop);
-uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h);
-void _SYS_audio_stop(_SYSAudioHandle h);
-void _SYS_audio_pause(_SYSAudioHandle h);
-void _SYS_audio_resume(_SYSAudioHandle h);
-int  _SYS_audio_volume(_SYSAudioHandle h);
-void _SYS_audio_setVolume(_SYSAudioHandle h, int volume);
-uint32_t _SYS_audio_pos(_SYSAudioHandle h);
+void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer) _SC(106);
+uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(107);
+uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(108);
+void _SYS_audio_stop(_SYSAudioHandle h) _SC(109);
+void _SYS_audio_pause(_SYSAudioHandle h) _SC(110);
+void _SYS_audio_resume(_SYSAudioHandle h) _SC(111);
+int  _SYS_audio_volume(_SYSAudioHandle h) _SC(112);
+void _SYS_audio_setVolume(_SYSAudioHandle h, int volume) _SC(113);
+uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(114);
 
 #ifdef __cplusplus
 }  // extern "C"
