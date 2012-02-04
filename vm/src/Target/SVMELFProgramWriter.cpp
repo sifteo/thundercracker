@@ -7,6 +7,7 @@
 
 #include "SVMELFProgramWriter.h"
 #include "SVMSymbolDecoration.h"
+#include "SVMMCAsmBackend.h"
 using namespace llvm;
 
 
@@ -85,7 +86,7 @@ void SVMELFProgramWriter::writeProgramHeader(const MCAsmLayout &Layout,
     uint64_t AddressSize = Layout.getSectionAddressSize(&SD);
     uint64_t FileSize = Layout.getSectionFileSize(&SD);
     unsigned Alignment = SD.getAlignment();
-    unsigned VirtualAddr = SectionAddr[&SD];
+    unsigned VirtualAddr = SectionBaseAddrMap[&SD];
     SectionKind Kind = SD.getSection().getKind();
     uint32_t Flags = ELF::PF_R;
 
@@ -136,7 +137,7 @@ void SVMELFProgramWriter::writeProgSectionHeader(const MCAsmLayout &Layout,
     
     uint64_t FileSize = Layout.getSectionFileSize(&SD);
     unsigned Alignment = SD.getAlignment();
-    unsigned VirtualAddr = SectionAddr[&SD];
+    unsigned VirtualAddr = SectionBaseAddrMap[&SD];
     SectionKind Kind = SD.getSection().getKind();
     uint32_t Flags = ELF::SHF_ALLOC;
 
@@ -186,8 +187,8 @@ void SVMELFProgramWriter::collectProgramSections(const MCAssembler &Asm,
             const MCSectionData *SD = &*it;
             Sections.push_back(SD);
 
-            if (!SectionAddr.count(SD)) {
-                SectionAddr[SD] = ramTopAddr;
+            if (!SectionBaseAddrMap.count(SD)) {
+                SectionBaseAddrMap[SD] = ramTopAddr;
                 ramTopAddr += Layout.getSectionAddressSize(SD);
             }
         }
@@ -201,8 +202,8 @@ void SVMELFProgramWriter::collectProgramSections(const MCAssembler &Asm,
             const MCSectionData *SD = &*it;
             Sections.push_back(SD);
 
-            if (!SectionAddr.count(SD)) {
-                SectionAddr[SD] = flashTopAddr;
+            if (!SectionBaseAddrMap.count(SD)) {
+                SectionBaseAddrMap[SD] = flashTopAddr;
                 flashTopAddr += Layout.getSectionAddressSize(SD);
             }
         }
@@ -213,6 +214,7 @@ void SVMELFProgramWriter::WriteObject(MCAssembler &Asm, const MCAsmLayout &Layou
 {
     SectionDataList ProgSections;
     collectProgramSections(Asm, Layout, ProgSections);
+    applyLateFixups(Asm, Layout);
     
     uint64_t FileOff, HdrSize;
     writeELFHeader(Asm, Layout, ProgSections.size(), HdrSize);
@@ -239,8 +241,86 @@ void SVMELFProgramWriter::RecordRelocation(const MCAssembler &Asm,
     const MCAsmLayout &Layout, const MCFragment *Fragment,
     const MCFixup &Fixup, MCValue Target, uint64_t &FixedValue)
 {
-    SVMSymbolInfo SI = getSymbol(Asm, Layout, Target);
-    FixedValue = SI.Value;
+    SVM::Fixups kind = (SVM::Fixups) Fixup.getKind();
+        
+    switch (kind) {
+        
+    case SVM::fixup_fnstack:
+        /*
+         * Function stack adjustment annotation. The adjustment amount is
+         * stored in the first argument of a binary op.
+         * (See SVMMCCodeEmitter::EncodeInstruction)
+         *
+         * We store this offset for later, in our FNStackMap, indexed
+         * by the address of the FNStack pseudo-op itself.
+         */
+        FNStackMap[Layout.getFragmentOffset(Fragment)] =
+            (int) Target.getConstant();
+        break;
+    
+    default:
+        /*
+         * All other fixups are applied later, in ApplyLateFixups().
+         * This is necessary because other fixup types can depend on
+         * the FNStack values collected above.
+         */
+        SVMLateFixup LF((MCFragment *) Fragment, Fixup, Target);
+        LateFixupList.push_back(LF);
+        break;
+    }
+}
+
+void SVMELFProgramWriter::applyLateFixups(const MCAssembler &Asm,
+    const MCAsmLayout &Layout)
+{
+    for (LateFixupList_t::iterator i = LateFixupList.begin();
+        i != LateFixupList.end(); ++i) {
+        SVMLateFixup &F = *i;
+
+        SVMSymbolInfo SI = getSymbol(Asm, Layout, F.Target);
+        uint32_t Value = SI.Value;
+
+        const MCFixupKindInfo &KI = SVMAsmBackend::getStaticFixupKindInfo(F.Kind);
+        int Bits = KI.TargetSize;
+        unsigned Offset = F.Offset;
+
+        switch (F.Kind) {
+
+        case SVM::fixup_bcc:
+        case SVM::fixup_b:
+            // PC-relative halfword count
+            Value = (Value - 4) / 2;
+            break;
+
+        case SVM::fixup_relcpi:
+            // PC-relative word count
+            Value = (Value - 4) / 4;
+            break;
+
+        case SVM::fixup_abscpi:
+            // Word count from beginning of block
+            Value = (Value / 4) & 0x7F;
+            break;
+
+        default:
+            break;
+        }
+
+        MCDataFragment *DF = dyn_cast<MCDataFragment>(F.Fragment);
+        assert(DF);
+
+        assert(Bits > 0);
+        uint64_t BitMask = ((uint64_t)1 << Bits) - 1;
+        assert((Value & ~BitMask) == 0 || (Value | BitMask) == (uint64_t)-1);
+        Value &= BitMask;
+
+        do {
+            DF->getContents().data()[Offset] |= Value;
+            Bits -= 8;
+            Offset++;
+            Value >>= 8;
+        } while (Bits > 0);
+    }
 }
 
 uint32_t SVMELFProgramWriter::getEntryAddress(const MCAssembler &Asm,
@@ -321,38 +401,65 @@ SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
         return SI;
     }
 
-    if (S->isDefined()) {
-        // Symbol has a value in our module
-        SI.Value = Layout.getSymbolOffset(SD);
+    if (!S->isDefined())
+        report_fatal_error("Taking address of undefined symbol '" +
+            Twine(Name) + "'");
+    
+    // Symbol has a value in our module
+    uint32_t Offset = Layout.getSymbolOffset(SD);
+
+    if (S->getSection().getKind().isText()) {
+        /*
+         * Code address:
+         *   - Relative to segment base
+         *   - Must be 32-bit aligned
+         *   - Includes optional SP adjustment from FNSTACK pseudo-ops
+         *   - Includes optional call / tail-call decoration
+         */
+
+        if ((Offset & 0xfffffc) != Offset)
+            report_fatal_error("Code symbol '" + Twine(Name) +
+                "' has illegal address " + Twine::utohexstr(Offset));
+    
+        int SPAdj = FNStackMap[Offset];
+        if (SPAdj < 0 || (SPAdj & 3) || SPAdj >= 512)
+            report_fatal_error("Code symbol '" + Twine(Name) +
+                "' has unsupported stack size of " + Twine(Offset) + " bytes");
+        
+        SI.Value = Offset | (SPAdj << 22) | Deco.isTailCall;
+        SI.Kind = Deco.isCall ? SVMSymbolInfo::CALL : SVMSymbolInfo::LOCAL;
+
+    } else {
+        /*
+         * Data address
+         */
+
+        SI.Value = getSectionBaseForSymbol(Asm, Layout, S) + Offset;
         SI.Kind = SVMSymbolInfo::LOCAL;
+    }
+        
+    return SI;
+}
 
-        // We need to find the base address of this section
-        const MCSectionData *Section = &Asm.getSectionData(S->getSection());
-        SectionBaseAddrMap::iterator it = SectionAddr.find(Section);
-        if (it == SectionAddr.end()) {
-            SectionDataList ProgSections;
-            collectProgramSections(Asm, Layout, ProgSections);
-            it = SectionAddr.find(Section);
-        }
-        if (it == SectionAddr.end()) {
-            report_fatal_error("Cannot determine section for symbol '" +
-                Twine(Name) + "'");
-        } else {
-            SI.Value += it->second;
-        }
+uint32_t SVMELFProgramWriter::getSectionBaseForSymbol(const MCAssembler &Asm,
+    const MCAsmLayout &Layout, const MCSymbol *S)
+{    
+    // Is there already a memoized address for this section?
+    const MCSectionData *Section = &Asm.getSectionData(S->getSection());
+    SectionBaseAddrMap_t::iterator it = SectionBaseAddrMap.find(Section);
 
-        // Is it decorated as a call?
-        if (Deco.isCall) {
-            SI.Value = (SI.Value & 0xfffffc) | Deco.isTailCall;
-            SI.Kind = SVMSymbolInfo::CALL;
-        }
-
-        return SI;
+    if (it == SectionBaseAddrMap.end()) {
+        // Generate SectionAddrs for all sections in the layout
+        SectionDataList ProgSections;
+        collectProgramSections(Asm, Layout, ProgSections);
+        it = SectionBaseAddrMap.find(Section);
     }
 
-    // Actually undefined
-    report_fatal_error("Taking address of undefined symbol '" +
-        Twine(Name) + "'");
+    if (it == SectionBaseAddrMap.end())
+        report_fatal_error("Cannot determine section for symbol '" +
+            Twine(S->getName()) + "'");
+    
+    return it->second;
 }
 
 MCObjectWriter *llvm::createSVMELFProgramWriter(raw_ostream &OS)

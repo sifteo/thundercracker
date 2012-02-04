@@ -39,9 +39,6 @@
 
 namespace llvm {
     
-    typedef std::vector<const MCSectionData*> SectionDataList;    
-    typedef std::map<const MCSectionData*, uint32_t> SectionBaseAddrMap;
-
     struct SVMSymbolInfo {
         uint32_t Value;
         enum SymbolKind {
@@ -53,6 +50,23 @@ namespace llvm {
         
         SVMSymbolInfo() : Value(0), Kind(NONE) {}
     };
+    
+    struct SVMLateFixup {
+        MCFragment *Fragment;
+        uint32_t Offset;
+        MCFixupKind Kind;
+        MCValue Target;
+        
+        SVMLateFixup(MCFragment *Fragment, const MCFixup &Fixup, MCValue Target)
+            : Fragment(Fragment), Offset(Fixup.getOffset()),
+              Kind(Fixup.getKind()), Target(Target) {}
+    };
+
+    typedef std::vector<const MCSectionData*> SectionDataList;
+    typedef std::vector<SVMLateFixup> LateFixupList_t;
+    typedef std::map<const MCSectionData*, uint32_t> SectionBaseAddrMap_t;
+    typedef std::map<uint32_t, int> FNStackMap_t;
+
 
     class SVMELFProgramWriter : public MCObjectWriter {
     public:    
@@ -78,7 +92,9 @@ namespace llvm {
         void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
 
     private:
-        SectionBaseAddrMap SectionAddr;
+        LateFixupList_t LateFixupList;
+        FNStackMap_t FNStackMap;
+        SectionBaseAddrMap_t SectionBaseAddrMap;
         uint32_t ramTopAddr;
         uint32_t flashTopAddr;
 
@@ -88,9 +104,12 @@ namespace llvm {
             const MCAsmLayout &Layout, const MCSymbol *S);
         SVMSymbolInfo getSymbol(const MCAssembler &Asm,
             const MCAsmLayout &Layout, MCValue Value);
+        uint32_t getSectionBaseForSymbol(const MCAssembler &Asm,
+            const MCAsmLayout &Layout, const MCSymbol *S);
     
         void collectProgramSections(const MCAssembler &Asm,
             const MCAsmLayout &Layout, SectionDataList &Sections);
+        void applyLateFixups(const MCAssembler &Asm, const MCAsmLayout &Layout);
 
         void writePadding(unsigned N);
         void writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout,

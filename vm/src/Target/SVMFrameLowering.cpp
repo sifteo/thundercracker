@@ -16,24 +16,40 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Support/CommandLine.h"
-
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
+
 
 SVMFrameLowering::SVMFrameLowering()
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8, 0, 8) {}
 
 void SVMFrameLowering::emitPrologue(MachineFunction &MF) const
 {
+    MachineBasicBlock &MBB = MF.front();
+    MachineBasicBlock::iterator MBBI = MBB.begin();
     MachineFrameInfo *MFI = MF.getFrameInfo();
+    DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+    const SVMInstrInfo &TII =
+        *static_cast<const SVMInstrInfo*>(MF.getTarget().getInstrInfo());
+
+    /*
+     * Align both the top and bottom of the stack frame, so that our frame
+     * size and frame indices are always word-aligned.
+     */
+
     unsigned stackSize = MFI->getStackSize();
     unsigned alignMask = getStackAlignment() - 1;
-
     stackSize = (stackSize + alignMask) & ~alignMask;
     MFI->setStackSize(stackSize);
 
-    // On SVM, the 'call' SVC includes an SP adjustment
+    /*
+     * On SVM, the 'call' SVC includes an SP adjustment. We emit this
+     * as a FNSTACK pseudo-instruction, which is used by SVMELFProgramWriter
+     * to generate the proper relocations.
+     */
+
     MFI->setOffsetAdjustment(stackSize);
+    BuildMI(MBB, MBBI, dl, TII.get(SVM::FNSTACK)).addImm(stackSize);
 }
 
 void SVMFrameLowering::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const

@@ -9,6 +9,7 @@
 #include "SVMFixupKinds.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -24,10 +25,11 @@ class SVMMCCodeEmitter : public MCCodeEmitter {
     void operator=(const SVMMCCodeEmitter &);       // Leave unimplemented!
     const MCInstrInfo &MCII;
     const MCSubtargetInfo &STI;
+    MCContext &Ctx;
 
 public:
     SVMMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti, MCContext &ctx)
-        : MCII(mcii), STI(sti) {}
+        : MCII(mcii), STI(sti), Ctx(ctx) {}
 
     ~SVMMCCodeEmitter() {}
 
@@ -64,11 +66,44 @@ public:
     void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
         SmallVectorImpl<MCFixup> &Fixups) const
     {
-        const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
-        int Size = Desc.getSize();
-        if (Size > 0) {
-            uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
-            EmitConstant(Binary, Size, OS);
+        unsigned Op = MI.getOpcode();
+        
+        switch (Op) {
+        
+        case SVM::FNSTACK_R: 
+        case SVM::FNSTACK: {
+            /*
+             * The FNSTACK pseudo-op is used, at the top of each function,
+             * to annotate the amount of stack adjustment required on entry.
+             *
+             * FNSTACK ops are added during frame lowering. Since we need to
+             * pass them on to the linker, so that it can assemble the proper
+             * function addresses, we create a target-specific fixup here.
+             *
+             * XXX: We use an expression containing a dummy symbol here,
+             *      to ensure the fixup isn't relaxed by MCAssembler before
+             *      our linker has a chance to see it. Bleh. This will convert
+             *      to an MCValue with our Adj available via getConstant()
+             */
+
+            unsigned Adj = MI.getOperand(0).getImm();
+            const MCExpr *AdjExpr = MCConstantExpr::Create(Adj, Ctx);
+            const MCExpr *SymExpr = MCSymbolRefExpr::Create(Ctx.CreateTempSymbol(), Ctx);
+            const MCExpr *E = MCBinaryExpr::CreateAdd(AdjExpr, SymExpr, Ctx);
+            Fixups.push_back(MCFixup::Create(0, E, MCFixupKind(SVM::fixup_fnstack)));
+            break;
+        }
+            
+        default: {
+            // Encode a normal instruction (16 or 32 bits)
+            const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
+            int Size = Desc.getSize();
+            if (Size > 0) {
+                uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
+                EmitConstant(Binary, Size, OS);
+            }
+            break;
+        }
         }
     }
     

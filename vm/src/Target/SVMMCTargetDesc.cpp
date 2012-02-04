@@ -50,8 +50,8 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     bool RelaxAll,
                                     bool NoExecStack)
 {
-  Triple TheTriple(TT);
-  return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
+    Triple TheTriple(TT);
+    return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
 }
 
 static MCInstPrinter *createSVMMCInstPrinter(const Target &T, unsigned SyntaxVariant,

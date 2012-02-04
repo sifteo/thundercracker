@@ -5,126 +5,111 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "SVM.h"
-#include "SVMMCTargetDesc.h"
-#include "SVMFixupKinds.h"
-#include "llvm/MC/MCAssembler.h"
-#include "llvm/MC/MCDirectives.h"
-#include "llvm/MC/MCELFObjectWriter.h"
-#include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCObjectWriter.h"
-#include "llvm/MC/MCSectionELF.h"
-#include "llvm/MC/MCAsmBackend.h"
-#include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/Support/ELF.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/Triple.h"
+#include "SVMMCAsmBackend.h"
 using namespace llvm;
 
-namespace {
 
-class SVMAsmBackend : public MCAsmBackend {
-public:    
-    SVMAsmBackend(const Target &T, Triple::OSType O)
-        : MCAsmBackend(), OSType(O) {}
+MCObjectWriter *SVMAsmBackend::createObjectWriter(raw_ostream &OS) const
+{
+    return createSVMELFProgramWriter(OS);
+}
 
-    Triple::OSType OSType;
+unsigned SVMAsmBackend::getNumFixupKinds() const
+{
+    return SVM::NumTargetFixupKinds;
+}
 
-    MCObjectWriter *createObjectWriter(raw_ostream &OS) const
-    {
-        return createSVMELFProgramWriter(OS);
-    }
+const MCFixupKindInfo &SVMAsmBackend::getStaticFixupKindInfo(MCFixupKind Kind)
+{
+    /*
+     * XXX: This duplicates functionality from MCAsmBackend::getFixupKindInfo
+     *      in order to provide a static function that can be used in our
+     *      SVMELFProgramWriter.
+     */
+    
+    static const MCFixupKindInfo Builtins[] = {
+      { "FK_Data_1", 0, 8, 0 },
+      { "FK_Data_2", 0, 16, 0 },
+      { "FK_Data_4", 0, 32, 0 },
+      { "FK_Data_8", 0, 64, 0 },
+      { "FK_PCRel_1", 0, 8, MCFixupKindInfo::FKF_IsPCRel },
+      { "FK_PCRel_2", 0, 16, MCFixupKindInfo::FKF_IsPCRel },
+      { "FK_PCRel_4", 0, 32, MCFixupKindInfo::FKF_IsPCRel },
+      { "FK_PCRel_8", 0, 64, MCFixupKindInfo::FKF_IsPCRel }
+    };
 
-    unsigned getNumFixupKinds() const
-    {
-        return SVM::NumTargetFixupKinds;
+    const static MCFixupKindInfo Locals[SVM::NumTargetFixupKinds] = {
+        DEFINE_FIXUP_KIND_INFO
+    };
+
+    size_t Index = (size_t)Kind;
+
+    if (Kind < FirstTargetFixupKind) {
+        assert(Index < sizeof Builtins / sizeof Builtins[0] &&
+            "Unknown fixup kind");
+        return Builtins[Index];
     }
     
-    const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const
-    {
-        const static MCFixupKindInfo Infos[SVM::NumTargetFixupKinds] = {
-            DEFINE_FIXUP_KIND_INFO
-        };
+    Index -= FirstTargetFixupKind;
+    assert(Index < sizeof Locals / sizeof Locals[0] &&
+        "Unknown fixup kind");
+    return Locals[Index];
+}
 
-        if (Kind < FirstTargetFixupKind)
-            return MCAsmBackend::getFixupKindInfo(Kind);
-        assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
-               "Invalid kind!");
-        return Infos[Kind - FirstTargetFixupKind];
-    }
+const MCFixupKindInfo &SVMAsmBackend::getFixupKindInfo(MCFixupKind Kind) const
+{
+    return getStaticFixupKindInfo(Kind);
+}
 
-    int64_t adjustFixup(const MCFixup &Fixup, int64_t Value) const
-    {
-        switch (Fixup.getKind()) {
+void SVMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+                uint64_t Value) const
+{
+    // All fixups are applied late, as linker relocations, by SVMELFProgramWriter.
+}
 
-        case SVM::fixup_bcc:
-        case SVM::fixup_b:
-            // PC-relative halfword count
-            Value = (Value - 4) / 2;
-            break;
-            
-        case SVM::fixup_relcpi:
-            // PC-relative word count
-            Value = (Value - 4) / 4;
-            break;
+bool SVMAsmBackend::MayNeedRelaxation(const MCInst &Inst) const
+{
+    switch (Inst.getOpcode()) {
 
-        case SVM::fixup_abscpi:
-            // Word count from beginning of block
-            Value = (Value / 4) & 0x7F;
-            break;
-            
-        default:
-            break;
-        }
+    /*
+     * XXX: Put FNSTACK in its own MCFragment, since LLVM doesn't handle
+     *      overlapping fixups within the same fragment, and it's quite
+     *      possible for our special zero-size FNSTACK fixup to coincide
+     *      with a real fixup. We do this by running FNSTACK through
+     *      RelaxInstruction once.
+     */
+    case SVM::FNSTACK:
+        return true;
 
-        return Value;
-    }
-
-    void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                    uint64_t Value) const
-    {
-        const MCFixupKindInfo &KI = getFixupKindInfo(Fixup.getKind());
-
-        Value = adjustFixup(Fixup, Value);
-
-        int bits = KI.TargetSize;
-        assert(bits > 0);
-        uint64_t bitMask = ((uint64_t)1 << bits) - 1;
-        assert((Value & ~bitMask) == 0 || (Value | bitMask) == (uint64_t)-1);
-        Value &= bitMask;
-
-        unsigned offset = Fixup.getOffset();
-        while (bits > 0) {
-            Data[offset] |= Value;
-            bits -= 8;
-            offset++;
-            Value >>= 8;
-        }
-    }
-
-    bool MayNeedRelaxation(const MCInst &Inst) const
-    {
+    default:
         return false;
     }
+}
 
-    void RelaxInstruction(const MCInst &Inst, MCInst &Res) const
-    {
-    }
-
-    bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const
-    {
-        assert((Count % 2) == 0);
+void SVMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const
+{
+    Res = Inst;
+    switch (Inst.getOpcode()) {
         
-        // Our ISA only has one kind of nop currently
-        for (unsigned i = 0, c = Count/2; i < c; i++)
-            OW->Write16(0xbf00);
-
-        return true;
+    case SVM::FNSTACK:
+        Res.setOpcode(SVM::FNSTACK_R);
+        break;
+    
+    default:
+        assert(0 && "Not implemented");
     }
-};
+}
 
-}  // end namespace
+bool SVMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const
+{
+    assert((Count % 2) == 0);
+    
+    // Our ISA only has one kind of nop currently
+    for (unsigned i = 0, c = Count/2; i < c; i++)
+        OW->Write16(0xbf00);
+
+    return true;
+}
 
 MCAsmBackend *llvm::createSVMAsmBackend(const Target &T, StringRef TT)
 {

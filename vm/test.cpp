@@ -13,7 +13,18 @@ using namespace Sifteo;
 
 //static Cube cubes[NUM_CUBES];
 
-void siftmain()
+void main();
+
+void __attribute__ ((noinline)) f3()
+{
+    uint8_t buffer[60];
+    _SYS_memset8(buffer, 0, sizeof buffer);
+
+    System::yield();
+    main();
+}
+
+void __attribute__ ((noinline)) main()
 {
     uint8_t buffer[16];
     _SYS_memset8(buffer, 0, sizeof buffer);
@@ -26,6 +37,7 @@ void siftmain()
     }
 
     while (1) {
-       System::paint();
+        f3();
+        System::paint();
     }
 }

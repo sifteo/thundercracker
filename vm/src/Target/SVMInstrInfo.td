@@ -55,11 +55,20 @@ def tailCallTarget : Operand<i32>,
     let MIOperandInfo = (ops tconstpool);
 }
 
+// Explicit stack adjustments
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
     "!ADJCALLSTACKDOWN $amt", [(callseq_start timm:$amt)]>;
 def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
     "!ADJCALLSTACKUP $amt1", [(callseq_end timm:$amt1, timm:$amt2)]>;
 
+// Implicit adjustment encoded into a function's address.
+// These are emitted during frame lowering, and converted to target-specific
+// relocations that are passed to our ELF linker (SVMELFProgramWriter).
+def FNSTACK : Pseudo<(outs), (ins i32imm:$amt), ".fnstack $amt", []>;
+
+// "Relaxed" version of FNSTACK, for the fragment hack in SVMAsmBackend.
+def FNSTACK_R : Pseudo<(outs), (ins i32imm:$amt), ".fnstack $amt", []>;
+    
 def RET : S_call<(outs), (ins), "s.ret", [(SVMRet)]> {
     // _SYS_ret() _SC(0)
     let imm6 = 0;
