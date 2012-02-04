@@ -24,8 +24,8 @@ volatile uint8_t sensor_tick_counter;
 volatile uint8_t sensor_tick_counter_high;
 
 /*
-    LIS3DH accelerometer.
-*/
+ * LIS3DH accelerometer.
+ */
 
 #define ACCEL_ADDR              0x30    // 00110010 - SDO is tied LOW
 #define ACCEL_ADDR_RX           0x31    // 00110011 - SDO is tied LOW

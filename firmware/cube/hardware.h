@@ -89,6 +89,7 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define CTRL_FLASH_CMD  (CTRL_BACKLIGHT | CTRL_FLASH_OE | CTRL_LCD_DCX | CTRL_3V3_EN)
 #define CTRL_LCD_CMD    (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_3V3_EN)
 #define CTRL_FLASH_OUT  (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_LCD_DCX | CTRL_3V3_EN)
+#define CTRL_SLEEP      (CTRL_FLASH_WE | CTRL_FLASH_OE)
 
 /*
  * Debug UART (P1.0, 38400 baud)
@@ -188,8 +189,8 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define rr(x)   (((x) >> 1) | ((x) << 7))
 #define swap(x) (((x) >> 4) | ((x) << 4))
 
-// Global interrupt enable. We never disable interrupts globally.
 #define sti()   { IEN_EN = 1; }
+#define cli()   { IEN_EN = 0; }
 
 /*
  * CPU Special Function Registers

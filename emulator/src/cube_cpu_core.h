@@ -44,6 +44,7 @@ namespace CPU {
 NEVER_INLINE void trace_execution(em8051 *mCPU);
 NEVER_INLINE void profile_tick(em8051 *mCPU);
 NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12);
+NEVER_INLINE void wakeup_test(em8051 *aCPU);
 
 static ALWAYS_INLINE void timer_tick(em8051 *aCPU, unsigned numTicks)
 {
@@ -70,8 +71,13 @@ static ALWAYS_INLINE void em8051_tick(em8051 *aCPU, unsigned numTicks,
                                       bool sbt, bool isProfiling, bool isTracing, bool hasBreakpoint,
                                       bool *ticked)
 {
-    aCPU->mTickDelay -= numTicks;
-    
+    int32_t tickDelay = aCPU->mTickDelay - numTicks;
+    if (tickDelay < 0) {
+        // Can happen when waking up from deep sleep
+        tickDelay = 0;
+    }
+    aCPU->mTickDelay = tickDelay;
+
     /*
      * Interrupts are sent if the following cases are not true:
      *   1. interrupt of equal or higher priority is in progress (tested inside function)

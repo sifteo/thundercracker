@@ -24,9 +24,9 @@ bool Hardware::init(VirtualTime *masterTimer,
     prev_ctrl_port = 0;
     exceptionCount = 0;
     
+    memset(&cpu, 0, sizeof cpu);
     cpu.callbackData = this;
     cpu.vtime = masterTimer;
-    cpu.mProfileData = NULL;
     
     CPU::em8051_reset(&cpu, true);
 
@@ -39,7 +39,6 @@ bool Hardware::init(VirtualTime *masterTimer,
         CPU::em8051_init_sbt(&cpu);
     }
 
- 
     if (!flashStorage.init(flashFile)) {
         fprintf(stderr, "Error: Failed to initialize flash memory\n");
         return false;
@@ -55,7 +54,7 @@ bool Hardware::init(VirtualTime *masterTimer,
     rng.init();
     neighbors.init();
     
-    setTouch(0.0f);
+    setTouch(false);
     
     // XXX: Simulated battery level
     adc.setInput(0, 0x8760);
@@ -219,10 +218,12 @@ NEVER_INLINE void Hardware::hwDeadlineWork()
 
 void Hardware::setTouch(bool touching)
 {
-    if (touching)
+    if (touching) {
         cpu.mSFR[MISC_PORT] |= MISC_TOUCH;
-    else
+        CPU::wakeup_test(&cpu);
+    } else {
         cpu.mSFR[MISC_PORT] &= ~MISC_TOUCH;
+    }
 }
 
 bool Hardware::isDebugging()
