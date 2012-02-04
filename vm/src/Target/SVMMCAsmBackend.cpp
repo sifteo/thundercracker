@@ -56,24 +56,17 @@ public:
 
     int64_t adjustFixup(const MCFixup &Fixup, int64_t Value) const
     {
-        const MCFixupKindInfo &KI = getFixupKindInfo(Fixup.getKind());
-
-        if (KI.Flags & MCFixupKindInfo::FKF_IsPCRel) {
-            // Offset due to ARM pipelining
-            Value -= 4;
-        }
-
         switch (Fixup.getKind()) {
 
         case SVM::fixup_bcc:
         case SVM::fixup_b:
-            // Halfword count
-            Value /= 2;
+            // PC-relative halfword count
+            Value = (Value - 4) / 2;
             break;
             
         case SVM::fixup_relcpi:
-            // Word count
-            Value /= 4;
+            // PC-relative word count
+            Value = (Value - 4) / 4;
             break;
 
         case SVM::fixup_abscpi:
