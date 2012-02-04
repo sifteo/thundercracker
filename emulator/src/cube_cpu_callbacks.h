@@ -111,6 +111,12 @@ struct SFR {
         case REG_RNGCTL:
             self->rng.controlWrite(*self->time, *cpu);
             break;
+            
+        case REG_PWRDWN:
+            // XXX: Only handle deep sleep mode
+            if (cpu->mSFR[reg] == 0x01)
+                cpu->deepSleep = true;
+            break;
         
         }
     }
