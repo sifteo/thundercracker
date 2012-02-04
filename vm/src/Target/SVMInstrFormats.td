@@ -201,12 +201,11 @@ class S_ind<dag outs, dag ins, string asmstr, list<dag> pattern>
     let value8{6-0} = addr9{8-2};
 }
 
-class S_call<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+class S_call<dag outs, dag ins, string asmstr, list<dag> pattern>
     : T17<outs, ins, asmstr, pattern>
 {
     // Direct syscall #0-63
     bits<6> imm6;
-    let imm6 = op;
     let value8{7-6} = 0b10;
     let value8{5-0} = imm6;
 }

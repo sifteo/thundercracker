@@ -6,6 +6,7 @@
  */
 
 #include "SVMELFProgramWriter.h"
+#include "SVMSymbolDecoration.h"
 using namespace llvm;
 
 
@@ -245,27 +246,10 @@ void SVMELFProgramWriter::RecordRelocation(const MCAssembler &Asm,
 uint32_t SVMELFProgramWriter::getEntryAddress(const MCAssembler &Asm,
     const MCAsmLayout &Layout)
 {
-    static const char *entryNames[] = {
-        "main",                 // Main C name
-        "siftmain",             // Backwards-compatible C name
-        "_Z4mainv",             // Main C++ mangled name
-        "_Z8siftmainv",         // Backwards-compatible C++ mangled name
-        NULL,
-    };
-
-    const MCContext &context = Asm.getContext();
-    MCSymbol *S = NULL;
-    
-    for (unsigned i = 0; entryNames[i]; i++) {
-        MCSymbol *Entry = context.LookupSymbol(entryNames[i]);
-        if (Entry && Entry->isDefined()) {
-            S = Entry;
-            break;
-        }
-    }
-
+    MCSymbol *S = SVMEntryPoint::findEntry(Asm.getContext());
     if (!S)
-        report_fatal_error("No entry point exists. Is \"void main()\" defined?");
+        report_fatal_error("No entry point exists. Is \"" +
+            Twine(SVMEntryPoint::getPreferredSignature()) + "\" defined?");
 
     SVMSymbolInfo SI = getSymbol(Asm, Layout, S);
     assert(SI.Kind == SVMSymbolInfo::LOCAL);
@@ -323,53 +307,18 @@ SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
 SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
     const MCAsmLayout &Layout, const MCSymbol *S)
 {
-    StringRef Name = S->getName();
     const MCSymbolData *SD = &Asm.getSymbolData(*S);
     SVMSymbolInfo SI;
-    bool isCall = false;
-    bool isTailCall = false;
+    SVMDecorations Deco;
+    StringRef Name = Deco.Decode(S->getName());
 
-    /*
-     * Strip off special prefixes.
-     * These prefixes can apply to any kind of symbol below
-     */
-
-    if (Name.startswith(SVMPrefix::CALL)) {
-        Name = Name.substr(sizeof SVMPrefix::CALL - 1);
-        isCall = true;
-    }
-
-    if (Name.startswith(SVMPrefix::TCALL)) {
-        Name = Name.substr(sizeof SVMPrefix::TCALL - 1);
-        isCall = true;
-        isTailCall = true;
-    }
-    
-    // XXX: Not sure why, but Clang is prepending this to __asm__ symbols
-    const char clangASM[] = "_01_";
-    if (Name.startswith(clangASM)) {
-        Name = Name.substr(sizeof clangASM - 1);
-    }
-
-    /*
-     * Detect the symbol kind
-     */
-
-    // Is this a valid numeric SYS symbol?
-    if (Name.startswith(SVMPrefix::SYS)) {
-        std::string str = Name.substr(sizeof SVMPrefix::SYS - 1).str();
-        if (str.size() > 0) {
-            char *end;
-            long value = strtol(str.c_str(), &end, 0);
-            if (*end == '\0' && value < 0x8000) {
-
-                // Decorated SYS symbol
-                SI.Kind = SVMSymbolInfo::SYS;
-                SI.Value = 0x80000000 | (value << 1) | isTailCall;
-
-                return SI;
-            }
-        }
+    if (Deco.isSys) {
+        // Numeric syscall
+        SI.Kind = SVMSymbolInfo::SYS;
+        SI.Value = 0x80000000
+            | ((Deco.sysNumber & 0x7FFF) << 1)
+            | Deco.isTailCall;
+        return SI;
     }
 
     if (S->isDefined()) {
@@ -393,8 +342,8 @@ SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
         }
 
         // Is it decorated as a call?
-        if (isCall) {
-            SI.Value |= isTailCall;
+        if (Deco.isCall) {
+            SI.Value = (SI.Value & 0xfffffc) | Deco.isTailCall;
             SI.Kind = SVMSymbolInfo::CALL;
         }
 

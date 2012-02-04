@@ -7,7 +7,7 @@
 
 #include "SVMTargetMachine.h"
 #include "SVMMCTargetDesc.h"
-#include "SVMELFProgramWriter.h"
+#include "SVMSymbolDecoration.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/GlobalAlias.h"
@@ -51,8 +51,6 @@ namespace {
         
     private:
         Module *M;
-        
-        Constant *decorateSymbol(const GlobalValue *Value, StringRef Prefix);
         
         ConstantInt *const32(uint32_t val) {
             return ConstantInt::get(
@@ -152,7 +150,7 @@ bool SVMDAGToDAGISel::SelectCallTarget(SDValue Addr, SDValue &CP)
 {
     if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
         CP = CurDAG->getTargetConstantPool(
-            decorateSymbol(GA->getGlobal(), SVMPrefix::CALL), MVT::i32);
+            SVMDecorations::Apply(M, GA->getGlobal(), SVMDecorations::CALL), MVT::i32);
         return true;
     }
     return false;
@@ -162,7 +160,7 @@ bool SVMDAGToDAGISel::SelectTailCallTarget(SDValue Addr, SDValue &CP)
 {
     if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
         CP = CurDAG->getTargetConstantPool(
-            decorateSymbol(GA->getGlobal(), SVMPrefix::TCALL), MVT::i32);
+            SVMDecorations::Apply(M, GA->getGlobal(), SVMDecorations::TCALL), MVT::i32);
         return true;
     }
     return false;
@@ -176,28 +174,6 @@ bool SVMDAGToDAGISel::SelectLDAddrTarget(SDValue Addr, SDValue &CP)
         return true;
     }
     return false;
-}
-
-Constant *SVMDAGToDAGISel::decorateSymbol(const GlobalValue *Value,
-    StringRef Prefix)
-{
-    /*
-     * Get or create a Constant that represents a decorated version of
-     * the given GlobalValue. The decorated symbol is 'Prefix' concatenated
-     * with the original symbol value.
-     */
-
-    GlobalValue *GV = (GlobalValue*) Value;
-    Twine Name = Twine(Prefix) + GV->getName();
-    GlobalAlias *GA = M->getNamedAlias(Name.str());
-
-    if (!GA) {
-        GA = new GlobalAlias(GV->getType(),
-            GlobalValue::ExternalLinkage, Name, GV, M);
-        GA->copyAttributesFrom(GV);
-    }
-
-    return GA;
 }
 
 FunctionPass *llvm::createSVMISelDag(SVMTargetMachine &TM) {

@@ -34,8 +34,12 @@ def SVMCall : SDNode<"SVMISD::CALL", SDT_SVMCall,
     [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
 def SVMTailCall : SDNode<"SVMISD::TAIL_CALL", SDT_SVMCall,
     [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
+def SVMSys64Call : SDNode<"SVMISD::SYS64_CALL", SDT_SVMCall,
+    [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
+
 def SVMRet : SDNode<"SVMISD::RETURN", SDTNone,
     [SDNPHasChain, SDNPOptInGlue]>;
+
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeqStart,
     [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
@@ -56,7 +60,9 @@ def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
 def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
     "!ADJCALLSTACKUP $amt1", [(callseq_end timm:$amt1, timm:$amt2)]>;
 
-def RET : S_call<0x0000, (outs), (ins), "s.ret", [(SVMRet)]> {
+def RET : S_call<(outs), (ins), "s.ret", [(SVMRet)]> {
+    // _SYS_ret() _SC(0)
+    let imm6 = 0;
     let isReturn = 1;
     let isTerminator = 1;
 }
@@ -69,7 +75,15 @@ def CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
 def TAIL_CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
     "s.tcall\t$offset11", [(SVMTailCall tailCallTarget:$offset11)]> {
     let isCall = 1;
+    let isReturn = 1;
+    let isTerminator = 1;
 }
+
+def SYS64_CALL : S_call<(outs), (ins i32imm:$imm6),
+    "s.sys\t$imm6", [(SVMSys64Call imm:$imm6)]> {
+    let isCall = 1;
+}
+
 
 /****************************************************************
  * Control Flow

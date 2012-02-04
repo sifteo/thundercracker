@@ -396,16 +396,18 @@ struct _SYSPseudoRandomState {
 
 #define _SC(n)  __asm__ ("_SYS_" #n)
 
-void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(0);
-void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(1);
-void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) _SC(2);
-void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) _SC(3);
-void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(4);
-void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(5);
-int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(6);
+void _SYS_ret() _SC(0);
 
-void _SYS_sincosf(float x, float *sinOut, float *cosOut) _SC(7);
-float _SYS_fmodf(float a, float b) _SC(8);
+void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(1);
+void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(2);
+void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) _SC(3);
+void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) _SC(4);
+void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(5);
+void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(6);
+int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(7);
+
+void _SYS_sincosf(float x, float *sinOut, float *cosOut) _SC(8);
+float _SYS_fmodf(float a, float b) _SC(9);
 
 uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(64);
 void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(65);

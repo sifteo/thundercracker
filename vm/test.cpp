@@ -5,17 +5,19 @@
  */
 
 #include <sifteo.h>
-
 using namespace Sifteo;
 
 #ifndef NUM_CUBES
 #  define NUM_CUBES 3
 #endif
 
-static Cube cubes[NUM_CUBES];
+//static Cube cubes[NUM_CUBES];
 
 void siftmain()
 {
+    uint8_t buffer[16];
+    _SYS_memset8(buffer, 0, sizeof buffer);
+    
     for (unsigned i = 0; i < NUM_CUBES; i++) {
         //cubes[i].enable(i);
 

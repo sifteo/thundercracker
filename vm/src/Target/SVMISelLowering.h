@@ -24,6 +24,7 @@ namespace llvm {
             BRCOND,
             CMOV,
             WRAPPER,
+            SYS64_CALL,
         };
     }
     

@@ -9,6 +9,7 @@
 #include "SVMTargetMachine.h"
 #include "SVMMCTargetDesc.h"
 #include "SVMMachineFunctionInfo.h"
+#include "SVMSymbolDecoration.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -67,11 +68,13 @@ const char *SVMTargetLowering::getTargetNodeName(unsigned Opcode) const
     switch (Opcode) {
     default: return 0;
     case SVMISD::CALL:          return "SVMISD::CALL";
+    case SVMISD::TAIL_CALL:     return "SVMISD::TAIL_CALL";
     case SVMISD::RETURN:        return "SVMISD::RETURN";
     case SVMISD::CMP:           return "SVMISD::CMP";
     case SVMISD::BRCOND:        return "SVMISD::BRCOND";
     case SVMISD::CMOV:          return "SVMISD::CMOV";
     case SVMISD::WRAPPER:       return "SVMISD::WRAPPER";
+    case SVMISD::SYS64_CALL:    return "SVMISD::SYS64_CALL";
     }
 }
 
@@ -136,15 +139,45 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     Chain = DAG.getCALLSEQ_START(Chain,
         DAG.getIntPtrConstant(ArgsStackSize, true));
 
-    // Resolve address of callee
-    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-        Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32);
+    /*
+     * Resolve address of callee, and detect syscalls.
+     * This generates an opcode and argument list for our DAG node.
+     */
 
+    SVMDecorations Deco;
+    Deco.isSys = false;
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+        const GlobalValue *GV = G->getGlobal();
+        Deco.Decode(GV->getName());
+        Callee = DAG.getTargetGlobalAddress(GV, dl, MVT::i32);        
+    }
+
+    unsigned Opcode;
     std::vector<SDValue> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(Callee);
 
-    // Copy input parameters
+    if (isTailCall) {
+        // Generic tail-call
+        Opcode = SVMISD::TAIL_CALL;
+        Ops.push_back(Chain);
+        Ops.push_back(Callee);
+    
+    } else if (Deco.isSys && Deco.sysNumber < 64) {
+        // Inline syscall #0-63
+        Opcode = SVMISD::SYS64_CALL;
+        Ops.push_back(Chain);
+        Ops.push_back(DAG.getConstant(Deco.sysNumber, MVT::i32));
+
+    } else {
+        // Generic call
+        Opcode = SVMISD::CALL;
+        Ops.push_back(Chain);
+        Ops.push_back(Callee);
+    }
+
+    /*
+     * Copy input parameters
+     */
+
     SDValue InFlag;
     for (unsigned i = 0, end = ArgLocs.size(); i != end; i++) {
         CCValAssign &VA = ArgLocs[i];
@@ -187,9 +220,12 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     if (InFlag.getNode())
       Ops.push_back(InFlag);
 
+    /*
+     * Emit the call DAG node
+     */
+    
     SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
-    Chain = DAG.getNode(isTailCall ? SVMISD::TAIL_CALL : SVMISD::CALL,
-        dl, NodeTys, &Ops[0], Ops.size());
+    Chain = DAG.getNode(Opcode, dl, NodeTys, &Ops[0], Ops.size());
     InFlag = Chain.getValue(1);
 
     Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(0, true),
