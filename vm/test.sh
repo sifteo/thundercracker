@@ -1,7 +1,15 @@
 set -e
 
+CLANG=../deps/osx/x86_64/llvm-3.0/bin/clang
+DIS=../deps/osx/x86_64/llvm-3.0/bin/llvm-dis
+
 make DEBUG=1 LLVM_LIB=~/src/llvm-3.0/Debug+Asserts/lib -j 4
-clang -emit-llvm -m32 -ffreestanding -O2 -c test.c
+
+$CLANG -emit-llvm -m32 -fno-stack-protector -ffreestanding \
+    -fno-exceptions -fno-threadsafe-statics -fno-rtti -O2 -c \
+    -I ../sdk/include test.cpp
+    
+$DIS test.o
 
 echo ------------------------
 
@@ -21,4 +29,4 @@ echo ------------------------
 
 ./svmc test.o $*
 arm-none-eabi-readelf -a test.elf
-arm-none-eabi-objdump -d -M force-thumb test.elf
+arm-none-eabi-objdump -D -M force-thumb test.elf
