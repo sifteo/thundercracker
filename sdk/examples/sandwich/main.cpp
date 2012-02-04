@@ -19,7 +19,6 @@ static bool AnyNeighbors(const Cube& c) {
 }
 
 void siftmain() {
-
 	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
     	gCubes[i].enable(i + CUBE_ID_BASE);
   	}
@@ -45,8 +44,6 @@ void siftmain() {
 	}
 #endif
   
-  //DialogData data;
-  //DoDialog(data);
   /*
 	{ // fake power-on
 		for(unsigned hack=0; hack<4; ++hack) {
@@ -80,7 +77,7 @@ void siftmain() {
 	#endif
 	for(;;) {
 		PlayMusic(music_sting, false);
-		IntroCutscene();
+		//IntroCutscene();
 		{
 			Game game;
 			pGame = &game;

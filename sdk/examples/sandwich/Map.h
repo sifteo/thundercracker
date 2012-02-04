@@ -11,10 +11,10 @@
 // if this becomes a material problem.
 //-----------------------------------------------------------------------------
 
-class GameView;
+class RoomView;
 
 struct BroadLocation {
-  GameView *view; // uses views instead of rooms because it only applies to visible rooms (for now?)
+  RoomView *view; // uses views instead of rooms because it only applies to visible rooms (for now?)
   unsigned subdivision;
 };
 

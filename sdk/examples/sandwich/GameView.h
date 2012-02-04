@@ -1,73 +1,47 @@
 #pragma once
-#include "Base.h"
-#include "Content.h"
+#include "RoomView.h"
+#include "IdleView.h"
+#include "InventoryView.h"
 
-class Room;
-#define ANIM_TILE_CAPACITY 4
+#define VIEW_IDLE		0
+#define VIEW_ROOM		1
+#define VIEW_INVENTORY	2
 
 class GameView {
 private:
-  unsigned mRoomId;
-
-  struct AnimTileView {
-    uint8_t lid;
-    uint8_t frameCount;
-  };
-
-  union {
-    struct {
-      unsigned startFrame;
-      unsigned count;
-    } idle;
-    struct {
-      unsigned startFrame;
-      unsigned animTileCount;
-      AnimTileView animTiles[ANIM_TILE_CAPACITY];
-    } room;
-  } mScene;
-
+	union { // modal views must be first in order to allow casting
+		IdleView idle;
+		RoomView room;
+		InventoryView inventory;
+	} mSubview;
+	uint8_t mStatus;
   struct {
-    unsigned hideOverlay : 1;
+    unsigned subview : 2;
     unsigned prevTouch : 1;
-  } flags;
+  } mFlags;
 
-public:  
-  // getters
-  Cube::ID GetCubeID() const;
-  Cube* GetCube() const;
-  bool IsShowingRoom() const;
-  bool InSpriteMode() const;
-  Vec2 Location() const;
-  Room* GetRoom() const;
-  Cube::Side VirtualTiltDirection() const;
-  GameView* VirtualNeighborAt(Cube::Side side) const;
-  bool Touched() const;
+public:
+
+	Cube* GetCube() const;
+	Cube::ID GetCubeID() const;
+	bool Touched() const;
+	inline unsigned Subview() const { return mFlags.subview ; }
+	inline bool IsShowingRoom() const { return mFlags.subview == VIEW_ROOM; }
+	inline IdleView* GetIdleView() { ASSERT(mFlags.subview == VIEW_IDLE); return &(mSubview.idle); }
+	inline RoomView* GetRoomView() { ASSERT(mFlags.subview == VIEW_ROOM); return &(mSubview.room); }
+	inline InventoryView* GetInventoryView() { ASSERT(mFlags.subview == VIEW_INVENTORY); return &(mSubview.inventory); }
+
+	void Init();
+	void Restore();
+	void Update();
   
-  // methods
-  void Init();
-  void Update();
-  
-  bool ShowLocation(Vec2 loc);
-  void HideOverlay(bool flag);
-  bool HideRoom();
-  
-  void ShowPlayer();
-  void SetPlayerFrame(unsigned frame);
-  void UpdatePlayer();
-  void HidePlayer();
-  
-  void SetItemPosition(Vec2 p);
-  void HideItem();
+  	void HideSprites();
 
-  void RefreshInventory();
-  void DrawBackground();
+	bool ShowLocation(Vec2 location);
+	bool HideLocation();
+	void RefreshInventory();
 
-private:
-  void DrawInventorySprites();
-  void HideInventorySprites();
+	Cube::Side VirtualTiltDirection() const;
+	GameView* VirtualNeighborAt(Cube::Side side) const;
 
-  void ComputeAnimatedTiles();
-
-  // misc hacky stuff
-  void RandomizeBff();
 };
