@@ -26,10 +26,9 @@ bool Dictionary::pickWord(char* buffer,
                           bool& leadingSpaces)
 {
     ASSERT(buffer);
-
-    if (GameStateMachine::getCurrentMaxLettersPerCube() > 1)
+    if (true || GameStateMachine::getCurrentMaxLettersPerCube() > 1)
     {
-        _SYS_strlcpy(buffer, puzzles[sPickIndex], GameStateMachine::getCurrentMaxLettersPerWord() + 1);
+        _SYS_strlcpy(buffer, puzzles[sPickIndex], MAX_LETTERS_PER_WORD + 1);
 
         numAnagrams = puzzlesNumGoalAnagrams[sPickIndex];
         numBonusAnagrams = puzzlesNumBonusAnagrams[sPickIndex];

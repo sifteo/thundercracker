@@ -29,7 +29,7 @@ static const char protoWordList[][7] =
 // (possibly pieces of a DAWG dictionary representation, up to 15 letters or so)
 //
 // 5 bits per letter, up to 6 letter words, plus flags
-extern const uint32_t protoWordList[];
+extern const uint64_t protoWordList[];
 extern const unsigned PROTO_WORD_LIST_LENGTH;
 
 #endif
@@ -46,7 +46,7 @@ bool PrototypeWordList::pickWord(char* buffer)
     do
     {
         // if the 3 seed word bits are set to this num cubes
-        if (((protoWordList[i] >> 31)))
+        if (((protoWordList[i] >> 63)))
         {
             char word[MAX_LETTERS_PER_WORD + 1];
             if (!bitsToString(protoWordList[i], word))
@@ -72,8 +72,8 @@ bool PrototypeWordList::pickWord(char* buffer)
 static int bsearch_strcmp(const void*a, const void*b)
 {
     // a is pKey in previous call, char**
-    //STATIC_ASSERT(sizeof(uint32_t) == sizeof(unsigned));
-    uint32_t* pb = (uint32_t*)b;
+    //STATIC_ASSERT(sizeof(uint64_t) == sizeof(unsigned));
+    uint64_t* pb = (uint64_t*)b;
 #if DEBUG
     const char** pa = (const char**)a;
     //printf("a %s, b %s\n", *(const char **)a, (const char *)b);
@@ -96,10 +96,10 @@ bool PrototypeWordList::isWord(const char* string, bool& isBonus)
     //STATIC_ASSERT(arraysize(protoWordList) == 28839);
 #endif
     const char** pKey = &string;
-    const uint32_t* array = (uint32_t*)protoWordList;
+    const uint64_t* array = (uint64_t*)protoWordList;
     //const char** pArray = &array;
-    const uint32_t* pItem =
-            (const uint32_t*) bsearch(
+    const uint64_t* pItem =
+            (const uint64_t*) bsearch(
                 pKey,
                 array,
                 PROTO_WORD_LIST_LENGTH,
@@ -108,20 +108,20 @@ bool PrototypeWordList::isWord(const char* string, bool& isBonus)
 
     if (pItem != NULL)
     {
-        isBonus = !((*pItem) & (1 << 31));
+        isBonus = !((*pItem) & (1ULL << 63));
         return true;
     }
     return false;
 }
 
-bool PrototypeWordList::bitsToString(uint32_t bits, char* buffer)
+bool PrototypeWordList::bitsToString(uint64_t bits, char* buffer)
 {
     char word[MAX_LETTERS_PER_WORD + 1];
     _SYS_memset8((uint8_t*)word, 0, sizeof(word));
     const unsigned LTR_MASK = 0x1f; // 5 bits per letter
     const unsigned BITS_PER_LETTER = 5;
     // TODO store dictionary differently to allow for longer than 6 letter words
-    for (unsigned j = 0; j < MAX_LETTERS_PER_WORD && j < 32/BITS_PER_LETTER; ++j)
+    for (unsigned j = 0; j < MAX_LETTERS_PER_WORD && j < 64/BITS_PER_LETTER; ++j)
     {
         char letter = 'A' - 1 + ((bits >> (j * BITS_PER_LETTER)) & LTR_MASK);
         if (letter < 'A' || letter > 'Z')

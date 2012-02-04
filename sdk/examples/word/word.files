@@ -69,3 +69,5 @@ config.h
 ../../include/sifteo/BG1Helper.h
 PrototypeWordListData.h
 DictionaryData.h
+Utility.h
+Utility.cpp

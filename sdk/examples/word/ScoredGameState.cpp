@@ -5,6 +5,7 @@
 #include "GameStateMachine.h"
 #include "assets.gen.h"
 #include "WordGame.h"
+#include "Utility.h"
 
 unsigned ScoredGameState::update(float dt, float stateTime)
 {
@@ -131,6 +132,9 @@ void ScoredGameState::createNewAnagram()
                          data.mNewAnagram.mNumBonusAnagrams,
                          data.mNewAnagram.mLeadingSpaces);
 
+    GameStateMachine::setCurrentMaxLettersPerCube(
+            (unsigned)_ceilf(_SYS_strnlen(data.mNewAnagram.mWord, MAX_LETTERS_PER_WORD + 1) / 3.f));
+
     // add any leading and/or trailing spaces to odd-length words
     char spacesAdded[MAX_LETTERS_PER_WORD + 1];
     _SYS_memset8((uint8_t*)spacesAdded, 0, sizeof(spacesAdded));
@@ -205,10 +209,10 @@ void ScoredGameState::createNewAnagram()
     default:
         {
             // first scramble the cube to word fragments mapping
-            int normal[NUM_CUBES];
-            for (int i = 0; i < (int)arraysize(normal); ++i)
+            int cubeIndexes[NUM_CUBES];
+            for (int i = 0; i < (int)arraysize(cubeIndexes); ++i)
             {
-                normal[i] = i;
+                cubeIndexes[i] = i;
             }
 
             int scrambledCubes[NUM_CUBES];
@@ -218,10 +222,10 @@ void ScoredGameState::createNewAnagram()
                      true;
                      j = ((j + 1) % NUM_CUBES))
                 {
-                    if (normal[j] >= 0)
+                    if (cubeIndexes[j] >= 0)
                     {
-                        scrambledCubes[i] = normal[j];
-                        normal[j] = -1;
+                        scrambledCubes[i] = cubeIndexes[j];
+                        cubeIndexes[j] = -1;
                         break;
                     }
                 }
@@ -233,23 +237,14 @@ void ScoredGameState::createNewAnagram()
                 unsigned cubeIndex = (unsigned)scrambledCubes[ci];
                 unsigned ltrStartSrc = cubeIndex * GameStateMachine::getCurrentMaxLettersPerCube();
                 unsigned ltrStartDest = ci * GameStateMachine::getCurrentMaxLettersPerCube();
-                for (unsigned i = ltrStartSrc; i < GameStateMachine::getCurrentMaxLettersPerCube() + ltrStartSrc; ++i)
+                unsigned shift =
+                        WordGame::random.randrange(GameStateMachine::getCurrentMaxLettersPerCube());
+                for (unsigned i = ltrStartSrc;
+                     i < GameStateMachine::getCurrentMaxLettersPerCube() + ltrStartSrc;
+                     ++i)
                 {
-                    if (spacesAdded[i] == '\0')
-                    {
-                        break;
-                    }
-
-                    for (unsigned j = WordGame::random.randrange(GameStateMachine::getCurrentMaxLettersPerCube()) + ltrStartDest;
-                         true;
-                         j = ((j + 1) % (GameStateMachine::getCurrentMaxLettersPerCube() + ltrStartDest)))
-                    {
-                        if (scrambled[j] == '\0')
-                        {
-                            scrambled[j] = spacesAdded[i];
-                            break;
-                        }
-                    }
+                    scrambled[ltrStartDest + ((i - ltrStartSrc) + shift) % GameStateMachine::getCurrentMaxLettersPerCube()] =
+                            spacesAdded[i];
                 }
             }
         }
