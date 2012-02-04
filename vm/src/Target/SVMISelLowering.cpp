@@ -32,6 +32,9 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     // Register classes
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
 
+    // Wrapped constants
+    setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+
     // Unsupported conditional operations
     setOperationAction(ISD::BRCOND, MVT::Other, Expand);
     setOperationAction(ISD::BRIND, MVT::Other, Expand);
@@ -68,6 +71,7 @@ const char *SVMTargetLowering::getTargetNodeName(unsigned Opcode) const
     case SVMISD::CMP:           return "SVMISD::CMP";
     case SVMISD::BRCOND:        return "SVMISD::BRCOND";
     case SVMISD::CMOV:          return "SVMISD::CMOV";
+    case SVMISD::WRAPPER:       return "SVMISD::WRAPPER";
     }
 }
 
@@ -254,11 +258,22 @@ SDValue SVMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
         DAG.getConstant(SVMCC::mapTo(CC), MVT::i32), CCR, Cmp);
 }
 
+SDValue SVMTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
+{
+    DebugLoc dl = Op.getDebugLoc();
+    EVT ValTy = Op.getValueType();
+    const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal(); 
+
+    SDValue GA = DAG.getTargetGlobalAddress(GV, dl, ValTy, 0, 0);
+    return DAG.getNode(SVMISD::WRAPPER, dl, ValTy, GA);
+}
+
 SDValue SVMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
 {
     switch (Op.getOpcode()) {
     default: llvm_unreachable("Should not custom lower this!");
     case ISD::BR_CC:         return LowerBR_CC(Op, DAG);
     case ISD::SELECT_CC:     return LowerSELECT_CC(Op, DAG);
+    case ISD::GlobalAddress: return LowerGlobalAddress(Op, DAG);
     }
 }

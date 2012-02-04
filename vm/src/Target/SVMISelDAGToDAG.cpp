@@ -45,6 +45,7 @@ namespace {
         bool SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset);
         bool SelectCallTarget(SDValue Addr, SDValue &CP);
         bool SelectTailCallTarget(SDValue Addr, SDValue &CP);
+        bool SelectLDAddrTarget(SDValue Addr, SDValue &CP);
 
         #include "SVMGenDAGISel.inc"
         
@@ -162,6 +163,16 @@ bool SVMDAGToDAGISel::SelectTailCallTarget(SDValue Addr, SDValue &CP)
     if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
         CP = CurDAG->getTargetConstantPool(
             decorateSymbol(GA->getGlobal(), SVMPrefix::TCALL), MVT::i32);
+        return true;
+    }
+    return false;
+}
+
+bool SVMDAGToDAGISel::SelectLDAddrTarget(SDValue Addr, SDValue &CP)
+{
+    if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
+        // Use an undecorated address
+        CP = CurDAG->getTargetConstantPool(GA->getGlobal(), MVT::i32);
         return true;
     }
     return false;

@@ -310,6 +310,18 @@ def MVNr : T4<(outs GPReg:$Rs), (ins GPReg:$Rn),
  * Memory operations
  */
 
+// Wrapper for matching address operands
+def SVMWrapper : SDNode<"SVMISD::WRAPPER", SDTIntUnaryOp>;
+
+// Selector for addresses, converts them to const pool entries
+def ldAddrTarget : Operand<i32>,
+    ComplexPattern<iPTR, 1, "SelectLDAddrTarget", [tglobaladdr], []> {
+    let MIOperandInfo = (ops tconstpool);
+}
+
+// Match wrapped and converted addresses, convert to LDRpc instruction
+def : Pat<(SVMWrapper ldAddrTarget:$a), (LDRpc ldAddrTarget:$a)>;
+
 
 /****************************************************************
  * Stack operations

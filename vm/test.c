@@ -39,14 +39,17 @@ void siftmain() {
 
 
 void __attribute__ ((noinline)) p3() {
+    char buffer[64];
     _SYS_paint();
     _SYS_paint();
     _SYS_paint();
+    _SYS_strlcpy(buffer, "Hellos!", sizeof buffer);
 }
     
 void main() {
+    static int64_t t = 5;
     while (1) {
-        _SYS_ticks_ns(0xf00fbabe);
+        _SYS_ticks_ns(&t);
         p3();
     }
 }

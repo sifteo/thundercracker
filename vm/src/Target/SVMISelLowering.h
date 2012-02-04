@@ -23,6 +23,7 @@ namespace llvm {
             CMP,
             BRCOND,
             CMOV,
+            WRAPPER,
         };
     }
     
@@ -65,6 +66,7 @@ namespace llvm {
         // Custom lowering
         static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
         static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
+        static SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
     };
 }
 
