@@ -183,7 +183,7 @@ void SVMELFProgramWriter::collectProgramSections(const MCAssembler &Asm,
     for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
         it != ie; ++it) {
         SectionKind k = it->getSection().getKind();
-        if (k.isGlobalWriteableData() && !k.isBSS()) {
+        if (k.isGlobalWriteableData()) {
             const MCSectionData *SD = &*it;
             Sections.push_back(SD);
 
@@ -276,50 +276,12 @@ void SVMELFProgramWriter::applyLateFixups(const MCAssembler &Asm,
     for (LateFixupList_t::iterator i = LateFixupList.begin();
         i != LateFixupList.end(); ++i) {
         SVMLateFixup &F = *i;
-
-        SVMSymbolInfo SI = getSymbol(Asm, Layout, F.Target);
-        uint32_t Value = SI.Value;
-
-        const MCFixupKindInfo &KI = SVMAsmBackend::getStaticFixupKindInfo(F.Kind);
-        int Bits = KI.TargetSize;
-        unsigned Offset = F.Offset;
-
-        switch (F.Kind) {
-
-        case SVM::fixup_bcc:
-        case SVM::fixup_b:
-            // PC-relative halfword count
-            Value = (Value - 4) / 2;
-            break;
-
-        case SVM::fixup_relcpi:
-            // PC-relative word count
-            Value = (Value - 4) / 4;
-            break;
-
-        case SVM::fixup_abscpi:
-            // Word count from beginning of block
-            Value = (Value / 4) & 0x7F;
-            break;
-
-        default:
-            break;
-        }
-
         MCDataFragment *DF = dyn_cast<MCDataFragment>(F.Fragment);
         assert(DF);
 
-        assert(Bits > 0);
-        uint64_t BitMask = ((uint64_t)1 << Bits) - 1;
-        assert((Value & ~BitMask) == 0 || (Value | BitMask) == (uint64_t)-1);
-        Value &= BitMask;
-
-        do {
-            DF->getContents().data()[Offset] |= Value;
-            Bits -= 8;
-            Offset++;
-            Value >>= 8;
-        } while (Bits > 0);
+        SVMAsmBackend::ApplyStaticFixup(F.Kind,
+            &DF->getContents().data()[F.Offset],
+            getSymbol(Asm, Layout, F.Target).Value);
     }
 }
 

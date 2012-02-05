@@ -41,6 +41,7 @@ public:
 
     void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
         uint64_t Value) const;
+    static void ApplyStaticFixup(MCFixupKind Kind, char *Data, int32_t Value);
 
     bool MayNeedRelaxation(const MCInst &Inst) const;
     void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;

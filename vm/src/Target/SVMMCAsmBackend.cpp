@@ -61,10 +61,51 @@ const MCFixupKindInfo &SVMAsmBackend::getFixupKindInfo(MCFixupKind Kind) const
     return getStaticFixupKindInfo(Kind);
 }
 
-void SVMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                uint64_t Value) const
+void SVMAsmBackend::ApplyStaticFixup(MCFixupKind Kind, char *Data, int32_t Value)
 {
-    // All fixups are applied late, as linker relocations, by SVMELFProgramWriter.
+    const MCFixupKindInfo &KI = getStaticFixupKindInfo(Kind);
+    int Bits = KI.TargetSize;
+    if (!Bits)
+        return;
+
+    switch (Kind) {
+
+    case SVM::fixup_bcc:
+    case SVM::fixup_b:
+        // PC-relative halfword count
+        Value = (Value - 4) / 2;
+        break;
+
+    case SVM::fixup_relcpi:
+        // Aligned-PC-relative word count
+        Value = (Value - 4) / 4;
+        break;
+
+    case SVM::fixup_abscpi:
+        // Word count from beginning of block
+        Value = (Value / 4) & 0x7F;
+        break;
+
+    default:
+        break;
+    }
+
+    uint32_t BitMask = ((uint64_t)1 << Bits) - 1;
+    assert((Value & ~BitMask) == 0 || (Value | BitMask) == 0xFFFFFFFF);
+    Value &= BitMask;
+
+    do {
+        *Data |= Value;
+        Bits -= 8;
+        Data++;
+        Value >>= 8;
+    } while (Bits > 0);
+}
+
+void SVMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
+    unsigned DataSize, uint64_t Value) const
+{
+    ApplyStaticFixup(Fixup.getKind(), Data + Fixup.getOffset(), Value);
 }
 
 bool SVMAsmBackend::MayNeedRelaxation(const MCInst &Inst) const

@@ -26,7 +26,7 @@ void __attribute__ ((noinline)) f3()
 
 void __attribute__ ((noinline)) main()
 {
-    uint8_t buffer[16];
+    static uint8_t buffer[16];
     _SYS_memset8(buffer, 0, sizeof buffer);
     
     for (unsigned i = 0; i < NUM_CUBES; i++) {
