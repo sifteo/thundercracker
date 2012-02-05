@@ -13,31 +13,8 @@ using namespace Sifteo;
 
 //static Cube cubes[NUM_CUBES];
 
-void main();
-
-void __attribute__ ((noinline)) f3()
+void main()
 {
-    uint8_t buffer[60];
-    _SYS_memset8(buffer, 0, sizeof buffer);
-
-    System::yield();
-    main();
-}
-
-void __attribute__ ((noinline)) main()
-{
-    static uint8_t buffer[16];
-    _SYS_memset8(buffer, 0, sizeof buffer);
-    
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        //cubes[i].enable(i);
-
-        //VidMode_BG0_ROM vid(cubes[i].vbuf);
-        //vid.init();
-    }
-
-    while (1) {
-        f3();
-        System::paint();
-    }
+    static volatile uint32_t buffer[8];
+    buffer[5] = 1;
 }

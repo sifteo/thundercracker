@@ -140,10 +140,7 @@ bool SVMDAGToDAGISel::SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset)
         return true;
     }
 
-    // No transformation
-    Base = Addr;
-    Offset = CurDAG->getTargetConstant(0, ValTy);
-    return true;
+    return false;
 }
 
 bool SVMDAGToDAGISel::SelectCallTarget(SDValue Addr, SDValue &CP)

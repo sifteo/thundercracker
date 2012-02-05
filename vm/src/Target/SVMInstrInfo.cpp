@@ -93,11 +93,20 @@ void SVMInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                unsigned DestReg, unsigned SrcReg,
                                bool KillSrc) const
 {
-    if (!SVM::GPRegRegClass.contains(DestReg, SrcReg))
-        llvm_unreachable("Impossible reg-to-reg copy");
+    if (SVM::GPRegRegClass.contains(DestReg, SrcReg)) {
+        // GPR <- GPR
+        BuildMI(MBB, MBBI, DL, get(SVM::MOVSr), DestReg)
+            .addReg(SrcReg, getKillRegState(KillSrc));
 
-    BuildMI(MBB, MBBI, DL, get(SVM::MOVSr), DestReg)
-          .addReg(SrcReg, getKillRegState(KillSrc));
+    } else if (SVM::GPRegRegClass.contains(SrcReg) &&
+        SVM::BPRegRegClass.contains(DestReg)) {
+        // BP <- GPR
+        BuildMI(MBB, MBBI, DL, get(SVM::MOVptr), DestReg)
+            .addReg(SrcReg, getKillRegState(KillSrc));
+    
+    } else {
+        llvm_unreachable("Impossible reg-to-reg copy");
+    }
 }
 
 bool SVMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,

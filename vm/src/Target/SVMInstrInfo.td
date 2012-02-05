@@ -345,6 +345,26 @@ def ldAddrTarget : Operand<i32>,
 // Match wrapped and converted addresses, convert to LDRpc instruction
 def : Pat<(SVMWrapper ldAddrTarget:$a), (LDRpc ldAddrTarget:$a)>;
 
+// Base pointer validation, represented as a reg-to-reg copy
+def MOVptr : S_ptr<(outs BPReg:$Rd), (ins GPReg:$Rs),
+    "s.mov\t$Rd, $Rs", []>;
+
+def STR : T32_LDSTi<(outs),
+    (ins GPReg:$Rt, BPWriteReg:$Rn),
+    "str\t$Rt, [$Rn]",
+    [(store BPWriteReg:$Rn, GPReg:$Rt)]> {
+    let offset12 = 0;
+    let op2 = 0b0001100;
+}
+
+def STRi : T32_LDSTi<(outs),
+    (ins GPReg:$Rt, BPWriteReg:$Rn, i32imm:$offset12),
+    "str\t$Rt, [$Rn, #$offset12]",
+    [(store (add BPWriteReg:$Rn, imm12:$offset12), GPReg:$Rt)]> {
+    let op2 = 0b0001100;
+}
+
+
 
 /****************************************************************
  * Stack operations

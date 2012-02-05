@@ -32,6 +32,8 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
 {
     // Register classes
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
+    addRegisterClass(MVT::i32, SVM::BPRegRegisterClass);
+    addRegisterClass(MVT::i32, SVM::BPWriteRegRegisterClass);
 
     // Wrapped constants
     setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);

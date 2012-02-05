@@ -17,7 +17,6 @@ class InstSVM<dag outs, dag ins, string asmstr, list<dag> pattern> : Instruction
     dag InOperandList = ins;
     let AsmString = asmstr;
     let Pattern = pattern;
-    let Size = 2;
 }
 
 class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
@@ -30,9 +29,29 @@ class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
 class ThumbInst16<dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstSVM<outs, ins, asmstr, pattern>
 {
+    let Size = 2;
     field bits<16> Inst;
     bits<3> opA;
     let Inst{15-13} = opA;
+}
+
+class ThumbInst32<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : InstSVM<outs, ins, asmstr, pattern>
+{
+    let Size = 4;
+    field bits<32> Inst;
+    bits<16> firstWord;
+    bits<16> secondWord;
+
+    // Little endian
+    let Inst{31-16} = secondWord;
+    let Inst{15-0} = firstWord;
+
+    bits<2> op1;
+    bits<7> op2;
+    let firstWord{15-13} = 0b111;
+    let firstWord{12-11} = op1;
+    let firstWord{10-4} = op2;
 }
 
 
@@ -41,6 +60,7 @@ class ThumbInst16<dag outs, dag ins, string asmstr, list<dag> pattern>
  */
 
 // Small immediates
+def imm12 : PatLeaf<(imm), [{ return (unsigned)N->getZExtValue() < 4096; }]>;
 def imm8 : PatLeaf<(imm), [{ return (unsigned)N->getZExtValue() < 256; }]>;
 def imm5 : PatLeaf<(imm), [{ return (unsigned)N->getZExtValue() < 32; }]>;
 def imm3 : PatLeaf<(imm), [{ return (unsigned)N->getZExtValue() < 8; }]>;
@@ -185,6 +205,29 @@ class T18<dag outs, dag ins, string asmstr, list<dag> pattern>
     bits<11> offset11;
     let Inst{12-11} = 0b00;
     let Inst{10-0} = offset11;
+}
+
+
+/****************************************************************
+ * 32-bit Thumb21 Formats
+ */
+
+// Load/store immediate
+class T32_LDSTi<dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst32<outs, ins, asmstr, pattern>
+{
+    bits<3> Rn;
+    bits<3> Rt;
+    bits<12> offset12;
+
+    let op1 = 0b11;
+
+    let firstWord{3} = 1;    // Pointer in high reg
+    let firstWord{2-0} = Rn;
+
+    let secondWord{15} = 0;  // Source/dest in low reg
+    let secondWord{14-12} = Rt;
+    let secondWord{11-0} = offset12;
 }
 
 

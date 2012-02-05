@@ -28,6 +28,15 @@ void SVMAsmPrinter::EmitInstruction(const MachineInstr *MI)
     SVMMCInstLower MCInstLowering(Mang, *MF, *this);
     MCInst MCI;
     MCInstLowering.Lower(MI, MCI);
+
+    const TargetInstrInfo &TII = *TM.getInstrInfo();
+    const MCInstrDesc &Desc = TII.get(MCI.getOpcode());
+    int Size = Desc.getSize();
+
+    // Word-align 32-bit instructions, halfword-align 16-bit instructions
+    if (Size > 1)
+        OutStreamer.EmitCodeAlignment(Size);
+    
     OutStreamer.EmitInstruction(MCI);
 }
 
