@@ -11,10 +11,8 @@ using namespace Sifteo;
 #  define NUM_CUBES 3
 #endif
 
-//static Cube cubes[NUM_CUBES];
+static Cube cubes[NUM_CUBES];
 
 void main()
 {
-    static volatile uint32_t buffer[8];
-    buffer[5] = 1;
 }

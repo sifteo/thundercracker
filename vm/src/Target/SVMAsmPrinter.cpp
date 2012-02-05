@@ -33,8 +33,8 @@ void SVMAsmPrinter::EmitInstruction(const MachineInstr *MI)
     const MCInstrDesc &Desc = TII.get(MCI.getOpcode());
     int Size = Desc.getSize();
 
-    // Word-align 32-bit instructions, halfword-align 16-bit instructions
-    if (Size > 1)
+    // Word-align 32-bit instructions
+    if (Size > 2)
         OutStreamer.EmitCodeAlignment(Size);
     
     OutStreamer.EmitInstruction(MCI);

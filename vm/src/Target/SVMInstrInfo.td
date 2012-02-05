@@ -349,21 +349,50 @@ def : Pat<(SVMWrapper ldAddrTarget:$a), (LDRpc ldAddrTarget:$a)>;
 def MOVptr : S_ptr<(outs BPReg:$Rd), (ins GPReg:$Rs),
     "s.mov\t$Rd, $Rs", []>;
 
+def STRi : T32_LDSTi<(outs),
+    (ins GPReg:$Rt, BPWriteReg:$Rn, i32imm:$offset12),
+    "str\t$Rt, [$Rn, #$offset12]",
+    [(store GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]> {
+    let op2 = 0b0001100;
+}
+
 def STR : T32_LDSTi<(outs),
     (ins GPReg:$Rt, BPWriteReg:$Rn),
     "str\t$Rt, [$Rn]",
-    [(store BPWriteReg:$Rn, GPReg:$Rt)]> {
+    [(store GPReg:$Rt, BPWriteReg:$Rn)]> {
     let offset12 = 0;
     let op2 = 0b0001100;
 }
 
-def STRi : T32_LDSTi<(outs),
+def STRHi : T32_LDSTi<(outs),
     (ins GPReg:$Rt, BPWriteReg:$Rn, i32imm:$offset12),
-    "str\t$Rt, [$Rn, #$offset12]",
-    [(store (add BPWriteReg:$Rn, imm12:$offset12), GPReg:$Rt)]> {
-    let op2 = 0b0001100;
+    "strh\t$Rt, [$Rn, #$offset12]",
+    [(truncstorei16 GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]> {
+    let op2 = 0b0001010;
 }
 
+def STRH : T32_LDSTi<(outs),
+    (ins GPReg:$Rt, BPWriteReg:$Rn),
+    "strh\t$Rt, [$Rn]",
+    [(truncstorei16 GPReg:$Rt, BPWriteReg:$Rn)]> {
+    let offset12 = 0;
+    let op2 = 0b0001010;
+}
+
+def STRBi : T32_LDSTi<(outs),
+    (ins GPReg:$Rt, BPWriteReg:$Rn, i32imm:$offset12),
+    "strb\t$Rt, [$Rn, #$offset12]",
+    [(truncstorei8 GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]> {
+    let op2 = 0b0001000;
+}
+
+def STRB : T32_LDSTi<(outs),
+    (ins GPReg:$Rt, BPWriteReg:$Rn),
+    "strb\t$Rt, [$Rn]",
+    [(truncstorei8 GPReg:$Rt, BPWriteReg:$Rn)]> {
+    let offset12 = 0;
+    let op2 = 0b0001000;
+}
 
 
 /****************************************************************

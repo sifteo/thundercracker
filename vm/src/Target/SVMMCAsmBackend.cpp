@@ -78,7 +78,7 @@ void SVMAsmBackend::ApplyStaticFixup(MCFixupKind Kind, char *Data, int32_t Value
 
     case SVM::fixup_relcpi:
         // Aligned-PC-relative word count
-        Value = (Value - 4) / 4;
+        Value = (Value - 2) / 4;
         break;
 
     case SVM::fixup_abscpi:

@@ -48,8 +48,10 @@ void SVMFrameLowering::emitPrologue(MachineFunction &MF) const
      * to generate the proper relocations.
      */
 
-    MFI->setOffsetAdjustment(stackSize);
-    BuildMI(MBB, MBBI, dl, TII.get(SVM::FNSTACK)).addImm(stackSize);
+    if (stackSize) {
+        MFI->setOffsetAdjustment(stackSize);
+        BuildMI(MBB, MBBI, dl, TII.get(SVM::FNSTACK)).addImm(stackSize);
+    }
 }
 
 void SVMFrameLowering::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
