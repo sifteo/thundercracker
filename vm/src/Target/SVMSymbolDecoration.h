@@ -8,6 +8,8 @@
 #ifndef SVM_SYMBOLDECORATION_H
 #define SVM_SYMBOLDECORATION_H
 
+#include "llvm/ADT/Twine.h"
+
 /*
  * Magic symbol prefixes.
  *
@@ -37,13 +39,17 @@ namespace llvm {
         bool isTailCall;
         bool isSys;
         unsigned sysNumber;
+        int32_t offset;
 
         static const char SYS[];
         static const char CALL[];
         static const char TCALL[];
-        
+        static const char OFFSET[];
+        static const char SEPARATOR[];
+
         StringRef Decode(StringRef Name);
-        static Constant *Apply(Module *M, const GlobalValue *Value, StringRef Prefix);
+        static Constant *Apply(Module *M, const GlobalValue *Value, Twine Prefix);
+        static Constant *ApplyOffset(Module *M, const GlobalValue *Value, int32_t offset);
 
     private:
         static bool testAndStripPrefix(StringRef &Name, StringRef Prefix);

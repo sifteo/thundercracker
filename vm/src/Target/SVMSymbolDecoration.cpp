@@ -25,6 +25,8 @@ const char SVMDecorations::SYS[] = "_SYS_";
 // For internal use
 const char SVMDecorations::CALL[] = "_call$";
 const char SVMDecorations::TCALL[] = "_tcall$";
+const char SVMDecorations::OFFSET[] = "_o$";
+const char SVMDecorations::SEPARATOR[] = "$";
 
 const char *SVMEntryPoint::nameTable[] = {
     "main",                 // Main C name
@@ -59,7 +61,7 @@ MCSymbol *SVMEntryPoint::findEntry(const MCContext &Ctx)
     return NULL;
 }
 
-Constant *SVMDecorations::Apply(Module *M, const GlobalValue *Value, StringRef Prefix)
+Constant *SVMDecorations::Apply(Module *M, const GlobalValue *Value, Twine Prefix)
 {
     /*
      * Get or create a Constant that represents a decorated version of
@@ -68,7 +70,7 @@ Constant *SVMDecorations::Apply(Module *M, const GlobalValue *Value, StringRef P
      */
 
     GlobalValue *GV = (GlobalValue*) Value;
-    Twine Name = Twine(Prefix) + GV->getName();
+    Twine Name = Prefix + GV->getName();
     GlobalAlias *GA = M->getNamedAlias(Name.str());
 
     if (!GA) {
@@ -79,11 +81,26 @@ Constant *SVMDecorations::Apply(Module *M, const GlobalValue *Value, StringRef P
     return GA;
 }
 
+Constant *SVMDecorations::ApplyOffset(Module *M, const GlobalValue *Value, int32_t offset)
+{
+    if (offset)
+        return Apply(M, Value, Twine(OFFSET) + Twine(offset) + Twine(SEPARATOR));
+    else
+        return (Constant*) Value;
+}
+
 StringRef SVMDecorations::Decode(StringRef Name)
 {
     // Internal prefixes are always stripped
     isTailCall = testAndStripPrefix(Name, TCALL);
     isCall = isTailCall || testAndStripPrefix(Name, CALL);
+    
+    // Offset prefix includes a number and a separator
+    if (testAndStripPrefix(Name, OFFSET)) {
+        size_t len = Name.find(SEPARATOR[0]);
+        if (len != Name.npos && !Name.substr(0, len).getAsInteger(0, offset))
+            Name = Name.substr(len+1);
+    }
 
     // XXX: Not sure why, but Clang is prepending this junk to __asm__ symbols
     testAndStripPrefix(Name, "\x01");

@@ -300,9 +300,11 @@ SDValue SVMTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
 {
     DebugLoc dl = Op.getDebugLoc();
     EVT ValTy = Op.getValueType();
-    const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal(); 
+    GlobalAddressSDNode *SGA = cast<GlobalAddressSDNode>(Op);
+    const GlobalValue *GV = SGA->getGlobal(); 
+    int64_t Offset = SGA->getOffset();
 
-    SDValue GA = DAG.getTargetGlobalAddress(GV, dl, ValTy, 0, 0);
+    SDValue GA = DAG.getTargetGlobalAddress(GV, dl, ValTy, Offset);
     return DAG.getNode(SVMISD::WRAPPER, dl, ValTy, GA);
 }
 

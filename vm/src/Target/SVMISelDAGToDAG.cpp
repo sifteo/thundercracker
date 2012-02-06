@@ -52,6 +52,8 @@ namespace {
     private:
         Module *M;
         
+        bool SelectDecoratedTarget(SDValue Addr, SDValue &CP, const char *Prefix);
+        
         ConstantInt *const32(uint32_t val) {
             return ConstantInt::get(
                 Type::getInt32Ty(*CurDAG->getContext()), val);
@@ -143,31 +145,42 @@ bool SVMDAGToDAGISel::SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset)
     return false;
 }
 
-bool SVMDAGToDAGISel::SelectCallTarget(SDValue Addr, SDValue &CP)
+bool SVMDAGToDAGISel::SelectDecoratedTarget(SDValue Addr,
+    SDValue &CP, const char *Prefix)
 {
+    // Decorated address, no offset support
     if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
+        assert(GA->getOffset() == 0);
         CP = CurDAG->getTargetConstantPool(
-            SVMDecorations::Apply(M, GA->getGlobal(), SVMDecorations::CALL), MVT::i32);
+            SVMDecorations::Apply(M, GA->getGlobal(), Prefix), MVT::i32);
         return true;
     }
     return false;
 }
 
+bool SVMDAGToDAGISel::SelectCallTarget(SDValue Addr, SDValue &CP)
+{
+    return SelectDecoratedTarget(Addr, CP, SVMDecorations::CALL);
+}
+
 bool SVMDAGToDAGISel::SelectTailCallTarget(SDValue Addr, SDValue &CP)
 {
-    if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
-        CP = CurDAG->getTargetConstantPool(
-            SVMDecorations::Apply(M, GA->getGlobal(), SVMDecorations::TCALL), MVT::i32);
-        return true;
-    }
-    return false;
+    return SelectDecoratedTarget(Addr, CP, SVMDecorations::TCALL);
 }
 
 bool SVMDAGToDAGISel::SelectLDAddrTarget(SDValue Addr, SDValue &CP)
 {
     if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
-        // Use an undecorated address
-        CP = CurDAG->getTargetConstantPool(GA->getGlobal(), MVT::i32);
+        /*
+         * Fold the GlobalValue into a constant pool entry.
+         *
+         * XXX: We should prefer to keep the offset in the load/store imm12
+         *      instead of baking it into a constant pool entry! How do we
+         *      do that?
+         */
+        CP = CurDAG->getTargetConstantPool(
+            SVMDecorations::ApplyOffset(M, GA->getGlobal(), GA->getOffset()),
+            MVT::i32);
         return true;
     }
     return false;

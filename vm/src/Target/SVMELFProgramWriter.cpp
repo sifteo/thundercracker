@@ -396,7 +396,7 @@ SVMSymbolInfo SVMELFProgramWriter::getSymbol(const MCAssembler &Asm,
          * Data address
          */
 
-        SI.Value = getSectionBaseForSymbol(Asm, Layout, S) + Offset;
+        SI.Value = getSectionBaseForSymbol(Asm, Layout, S) + Offset + Deco.offset;
         SI.Kind = SVMSymbolInfo::LOCAL;
     }
         
