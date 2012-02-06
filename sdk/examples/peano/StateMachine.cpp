@@ -57,8 +57,8 @@ namespace TotalsGame
 		assert(currentState);
 
 		if(currentState->isController)
-		{
-			currentState->controller->OnTick(dt);
+		{			
+			currentState->controller->OnTick(dt);		
 		}
 		else
 		{

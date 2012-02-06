@@ -14,12 +14,14 @@ namespace TotalsGame {
 		Game() {};	//singleton
 
 	public:
-        static const int NUMBER_OF_CUBES = 4;
+        static const int NUMBER_OF_CUBES = 4;		
         
 		static Game &GetInstance();
 		StateMachine sceneMgr;
 
 		static const int FrameRate = 15;
+
+		Sifteo::Cube *cubes;
 
 		Puzzle *currentPuzzle;
 		Puzzle *previousPuzzle;
@@ -35,9 +37,11 @@ namespace TotalsGame {
 		float dt;
 		bool IsPaused;
 
-		void Setup();
+		void Setup(Sifteo::Cube *cubes, int nCubes);
 
 		void Tick();
+		void CoroutineYield();
+		static void Yield() {Game::GetInstance().CoroutineYield();}
 
 		bool IsPlayingRandom();
 
@@ -54,7 +58,6 @@ namespace TotalsGame {
 
 		void OnStopped();
 
-		static void Main();
 	};
 
 }

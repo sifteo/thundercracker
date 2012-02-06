@@ -2,6 +2,8 @@ GameAssets = group{quality=10}
 Background = image{"background.png"}
 --BackgroundLit = image{"background_lit.png"}
 
+VaultDoor = image{"vault_door.png", width=128, height=128}
+
 Center = image{"assets_center.png", width=8, height=8}
 Horizontal = image{"assets_horizontal.png", width=64, height=8}
 Vertical = image{"assets_vertical.png", width=8, height=64}

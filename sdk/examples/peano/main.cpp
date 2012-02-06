@@ -5,6 +5,49 @@
 
 using namespace Sifteo;
 
+static Cube cubes[TotalsGame::Game::NUMBER_OF_CUBES];
+
+void siftmain() {
+  for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
+    cubes[i].enable(i);
+    cubes[i].loadAssets(GameAssets);
+    VidMode_BG0_ROM rom(cubes[i].vbuf);
+    rom.init();
+    rom.BG0_text(Vec2(1,1), "Loading...");
+  }
+  for (;;) {
+    bool done = true;
+    for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
+      VidMode_BG0_ROM rom(cubes[i].vbuf);
+      rom.BG0_progressBar(Vec2(0,7), cubes[i].assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+      done &= cubes[i].assetDone(GameAssets);
+    }
+    System::paint();
+    if (done) break;
+  }
+  for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
+    VidMode_BG0 mode(cubes[i].vbuf);
+    mode.init();
+    mode.BG0_drawAsset(Vec2(0,0), Background);
+  }
+  //_SYS_vectors.neighborEvents.add = OnNeighborAdd;
+  //_SYS_vectors.neighborEvents.remove = OnNeighborRem;
+  
+  TotalsGame::Game &theGame = TotalsGame::Game::GetInstance();
+  theGame.Setup(cubes, TotalsGame::Game::NUMBER_OF_CUBES);
+
+  for(;;) 
+  {
+	theGame.Tick();
+    System::paint();
+  }
+}
+
+/////////////////////////////////old code starts here
+#if 0
+
+using namespace Sifteo;
+
 enum Bits { // tmp
   B00000, B00001, B00010, B00011, B00100, B00101, B00110, B00111,
   B01000, B01001, B01010, B01011, B01100, B01101, B01110, B01111,
@@ -216,3 +259,5 @@ void siftmain() {
     System::paint();
   }
 }
+
+#endif

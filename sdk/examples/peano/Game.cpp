@@ -1,6 +1,8 @@
 #include "sifteo.h"
 #include "Game.h"
 
+#include "StingController.h"
+
 namespace TotalsGame
 {
 
@@ -11,8 +13,12 @@ namespace TotalsGame
 	}
 
 
-	void Game::Setup()
+	void Game::Setup(Sifteo::Cube *_cubes, int nCubes)
 	{
+		assert(nCubes == Game::NUMBER_OF_CUBES);
+		cubes = _cubes;
+
+
 		mDirty = false;
 		IsPaused = false;
 		difficulty = DifficultyHard;
@@ -33,9 +39,11 @@ namespace TotalsGame
 
 //TODO		saveData.Load();
 
+		static StingController stingController(this);
+
 		sceneMgr
-/*			.State("sting", new StingController(this))                //
-			.State("init", Initialize)
+			.State("sting", &stingController)                //
+/*			.State("init", Initialize)
 			.State("menu", new MenuController(this))                  //
 			.State("tutorial", new TutorialController(this))          //
 			.State("interstitial", new InterstitialController(this))  //
@@ -77,6 +85,14 @@ namespace TotalsGame
 		sceneMgr.Tick(dt);
 		sceneMgr.Paint(mDirty);
 		mDirty = false;
+	}
+
+	void Game::CoroutineYield()
+	{
+		System::paint();
+		float time = System::clock();
+		dt = time - mTime;
+		mTime = time;
 	}
 
 	bool Game::IsPlayingRandom() 
@@ -125,12 +141,5 @@ namespace TotalsGame
 		return currentPuzzle == NULL ? "Yes" : "No";
 	}
 
-	void Game::Main() 
-	{
-		GetInstance().Setup();
-		while(1)
-		{
-			GetInstance().Tick();
-		}
-	}
+
 }

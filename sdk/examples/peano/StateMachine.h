@@ -1,12 +1,14 @@
+#pragma once
+
 namespace TotalsGame
 {
 	class IStateController
 	{
 	public:
-		virtual void OnSetup() = 0;
-		virtual void OnDispose() = 0;
-		virtual void OnTick(float dt) = 0;
-		virtual void OnPaint(bool dirty) = 0;
+		virtual void OnSetup();// = 0;
+		virtual void OnDispose();// = 0;
+		virtual void OnTick(float dt);// = 0;
+		virtual void OnPaint(bool dirty);// = 0;
 	};
 
 	typedef const char *(*StateTransitionCallback)(void);
