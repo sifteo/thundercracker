@@ -14,10 +14,12 @@ $DIS test.o
 echo ------------------------
 
 rm -f test.s
-./svmc -filetype=asm -show-mc-encoding test.o $* 2>&1 | tee test.out
-DOTFILE=`grep \.dot test.out | tail -n 1 | cut -d "'" -f 2`
-dot -Tpng $DOTFILE > test.png < /dev/null
-open test.png&
+./svmc -filetype=asm -show-mc-encoding test.o 
+
+#$* 2>&1 | tee test.out
+#DOTFILE=`grep \.dot test.out | tail -n 1 | cut -d "'" -f 2`
+#dot -Tpng $DOTFILE > test.png < /dev/null
+#open test.png&
 
 echo ------------------------
 
