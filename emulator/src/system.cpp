@@ -349,9 +349,12 @@ NEVER_INLINE void System::tickLoopFastSBT()
                 cubes[2].cpu.mTickDelay, cubes[2].cpu.mPC);        
 #endif
         
-        for (unsigned i = 0; i < nCubes; i++)
-            nextStep = std::min(nextStep, cubes[i].tickFastSBT(stepSize));
-        
+        for (unsigned i = 0; i < nCubes; i++) {
+            Cube::Hardware &cube = cubes[i];
+            if (!cube.isSleeping())
+                nextStep = std::min(nextStep, cubes[i].tickFastSBT(stepSize));
+        }
+
         tick(stepSize);
         stepSize = std::min(nextStep, (unsigned)network.deadlineRemaining());
     }

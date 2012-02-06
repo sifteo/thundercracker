@@ -31,34 +31,7 @@ namespace Cube {
 
 /*
  * This file simulates the hardware peripherals that we have directly
- * attached to the 8051:
- *
- *  - NOR Flash (Design supports up to 16 megabits, 21-bit addressing)
- *  - LCD Controller
- *
- * We have four 8-bit I/O ports:
- *
- *  P3.6     Flash OE
- *  P3.5     Flash WE
- *  P3.4     LCD Backlight / Reset
- *  P3.3     3.3v Enable
- *  P3.2     Latch A20-A14 from P1.7-1 on rising edge
- *  P3.1     Latch A13-A7 from P1.7-1 on rising edge
- *  P3.0     LCD DCX
- *
- *  P2.7-0   Shared data bus, Flash + LCD
- *
- *  P1.7     Neighbor Out 4
- *  P1.6     Neighbor Out 3
- *  P1.5     Neighbor Out 2
- *  P1.4     Neighbor In  (INT2)
- *  P1.3     Accelerometer SDA
- *  P1.2     Accelerometer SCL
- *  P1.1     Neighbor Out 1
- *  P1.0     Touch sense in (AIN8)
- *
- *  P0.7-1   Flash A6-A0
- *  P0.0     LCD WRX
+ * attached to the 8051.
  */
 
 static const uint8_t ADDR_PORT       = REG_P0;
@@ -74,7 +47,7 @@ static const uint8_t CTRL_PORT_DIR   = REG_P3DIR;
 static const uint8_t MISC_TOUCH      = (1 << 7);
 
 static const uint8_t CTRL_LCD_DCX    = (1 << 0);
-static const uint8_t CTRL_FLASH_LAT1 = (1 << 2);   // LAT1 and LAT2 swapped on current rev PCBs vs. prototype
+static const uint8_t CTRL_FLASH_LAT1 = (1 << 2);
 static const uint8_t CTRL_FLASH_LAT2 = (1 << 1);
 static const uint8_t CTRL_FLASH_WE   = (1 << 5);
 static const uint8_t CTRL_FLASH_OE   = (1 << 6);
@@ -105,9 +78,15 @@ class Hardware {
     
     void reset();
 
+    ALWAYS_INLINE bool isSleeping() {
+        return cpu.deepSleep;
+    }
+
     ALWAYS_INLINE void tick(bool *cpuTicked=NULL) {
-        CPU::em8051_tick(&cpu, 1, cpu.sbt, cpu.mProfileData != NULL, Tracer::isEnabled(), cpu.mBreakpoint != 0, cpuTicked);
-        hardwareTick();
+        if (!isSleeping()) {
+            CPU::em8051_tick(&cpu, 1, cpu.sbt, cpu.mProfileData != NULL, Tracer::isEnabled(), cpu.mBreakpoint != 0, cpuTicked);
+            hardwareTick();
+        }
     }
 
     ALWAYS_INLINE unsigned tickFastSBT(unsigned tickBatch=1) {
@@ -121,6 +100,8 @@ class Hardware {
          * 32 bits, but even if it does cause overflow the worst case is that we'll end up skipping
          * fewer ticks than possible. So, this is always safe, and it's highly important for performance
          * when we're running on 32-bit platforms.
+         *
+         * Assumes the caller has already checked isSleeping().
          */
         
         CPU::em8051_tick(&cpu, tickBatch, true, false, false, false, NULL);
