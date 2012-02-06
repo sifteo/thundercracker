@@ -14,7 +14,7 @@
  *
  * The ABI is defined in plain C, and all symbols are namespaced with
  * '_SYS' so that it's clear they aren't meant to be used directly by
- * game code. The one exception is siftmain(), the user entry point.
+ * game code.
  */
 
 #ifndef _SIFTEO_ABI_H
@@ -38,6 +38,16 @@ extern "C" {
 typedef uint8_t _SYSCubeID;             /// Cube slot index
 typedef int8_t _SYSSideID;              /// Cube side index
 typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-first
+
+/**
+ * Entry point. Our standard entry point is main(), with no arguments
+ * or return values, declared using C linkage.
+ *
+ * The old name "siftmain" is supported for backward compatibility only.
+ */
+
+#define siftmain main
+void main(void);
 
 /*
  * XXX: It would be nice to further compress the loadstream when storing

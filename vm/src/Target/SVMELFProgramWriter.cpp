@@ -288,10 +288,9 @@ void SVMELFProgramWriter::applyLateFixups(const MCAssembler &Asm,
 uint32_t SVMELFProgramWriter::getEntryAddress(const MCAssembler &Asm,
     const MCAsmLayout &Layout)
 {
-    MCSymbol *S = SVMEntryPoint::findEntry(Asm.getContext());
-    if (!S)
-        report_fatal_error("No entry point exists. Is \"" +
-            Twine(SVMEntryPoint::getPreferredSignature()) + "\" defined?");
+    MCSymbol *S = Asm.getContext().LookupSymbol("main");
+    if (!S || !S->isDefined())
+        report_fatal_error("No entry point exists. Is main() defined?");
 
     SVMSymbolInfo SI = getSymbol(Asm, Layout, S);
     assert(SI.Kind == SVMSymbolInfo::LOCAL);

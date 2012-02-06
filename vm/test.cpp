@@ -14,7 +14,17 @@ using namespace Sifteo;
 static Cube cubes[NUM_CUBES];
 volatile int x;
 
-void foobar()
+static void staticThing()
+{
+    x = 7;
+}
+
+void anotherThing()
+{
+    x = (int) &staticThing;
+}
+
+void siftmain()
 {
     x = 5;
 }

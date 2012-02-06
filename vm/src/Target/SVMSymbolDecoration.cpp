@@ -28,38 +28,6 @@ const char SVMDecorations::TCALL[] = "_tcall$";
 const char SVMDecorations::OFFSET[] = "_o$";
 const char SVMDecorations::SEPARATOR[] = "$";
 
-const char *SVMEntryPoint::nameTable[] = {
-    "main",                 // Main C name
-    "siftmain",             // Backwards-compatible C name
-    "_Z4mainv",             // Main C++ mangled name
-    "_Z8siftmainv",         // Backwards-compatible C++ mangled name
-    NULL,
-};
-
-StringRef SVMEntryPoint::getPreferredSignature()
-{
-    return "void main()";
-}
-
-bool SVMEntryPoint::isEntry(StringRef Name)
-{
-    for (unsigned i = 0; nameTable[i]; i++) {
-        StringRef candidate = nameTable[i];
-        if (candidate == Name)
-            return true;
-    }
-    return false;
-}
-
-MCSymbol *SVMEntryPoint::findEntry(const MCContext &Ctx)
-{
-    for (unsigned i = 0; nameTable[i]; i++) {
-        MCSymbol *Entry = Ctx.LookupSymbol(nameTable[i]);
-        if (Entry && Entry->isDefined())
-            return Entry;
-    }
-    return NULL;
-}
 
 Constant *SVMDecorations::Apply(Module *M, const GlobalValue *Value, Twine Prefix)
 {

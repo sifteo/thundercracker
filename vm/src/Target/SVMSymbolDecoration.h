@@ -55,17 +55,6 @@ namespace llvm {
         static bool testAndStripPrefix(StringRef &Name, StringRef Prefix);
     };
 
-    struct SVMEntryPoint {
-        // Compatible entry point names
-
-        static bool isEntry(StringRef Name);
-        static MCSymbol *findEntry(const MCContext &Ctx);
-        static StringRef getPreferredSignature();
-
-    private:
-        static const char *nameTable[];
-    };
-
 }  // end namespace
 
 #endif
