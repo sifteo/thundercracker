@@ -99,6 +99,8 @@ struct BridgeSubdivisionData {
     uint8_t altCenterY : 4;
 };
 
+// todo - microoptimize bits
+// todo - replace pointers with <32bit offsets-from-known-locations?
 struct MapData {
     const AssetImage* tileset;
     const AssetImage* overlay;
@@ -122,8 +124,9 @@ struct MapData {
     uint8_t animatedTileCount;
     uint8_t diagonalSubdivisionCount;
     uint8_t bridgeSubdivisionCount;
-    uint8_t width : 4;
-    uint8_t height : 4;
+    uint8_t width;
+    uint8_t height;
+    uint8_t ambientType; // 0 - None
 };
 
 extern const unsigned gMapCount;

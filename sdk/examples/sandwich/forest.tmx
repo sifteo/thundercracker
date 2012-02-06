@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="48" height="56" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="ambient" value="butterfly"/>
+ </properties>
  <tileset firstgid="1" name="forest" tilewidth="16" tileheight="16">
   <image source="forest.png" width="128" height="208"/>
   <tile id="2">
@@ -613,7 +616,7 @@
 0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1
 </data>
  </layer>
- <objectgroup name="triggers" width="48" height="56">
+ <objectgroup name="triggers" width="48" height="56" visible="0">
   <object name="CastleGate" type="Gateway" x="176" y="16" width="32" height="32">
    <properties>
     <property name="target" value="castle:ForestGate"/>
