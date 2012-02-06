@@ -8,7 +8,8 @@ const static uint8_t sHopTable[] = { 0, 0, 0, 1, 3, 4, 6, 6, 7, 7, 8, 7, 7, 6, 6
 void IdleView::Init() {
   mStartFrame = pGame->AnimFrame();
   DrawInventorySprites();
-  DrawBackground();
+  Parent()->Graphics().BG0_drawAsset(Vec2(0,0), *(pGame->GetMap()->Data()->blankImage));
+  Parent()->Overlay().Flush();
 }
 
 void IdleView::Restore() {
@@ -63,10 +64,5 @@ void IdleView::DrawInventorySprites() {
   for(int i=mCount; i<4; ++i) {
     mode.hideSprite(i);
   }
-}
-
-void IdleView::DrawBackground() {
-  Parent()->Graphics().BG0_drawAsset(Vec2(0,0), *(pGame->GetMap()->Data()->blankImage));
-  Parent()->Overlay().Flush();
 }
 

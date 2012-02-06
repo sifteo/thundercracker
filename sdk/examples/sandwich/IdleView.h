@@ -12,6 +12,7 @@ public:
 	void Restore();
 	void Update();
 	void OnInventoryChanged();
+
+private:
 	void DrawInventorySprites();
-	void DrawBackground();
 };
