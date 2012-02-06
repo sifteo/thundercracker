@@ -6,6 +6,8 @@
 #define VIEW_IDLE		0
 #define VIEW_ROOM		1
 #define VIEW_INVENTORY	2
+#define VIEW_TYPE_COUNT	3
+#define BITS_FOR_VIEW_TYPE 2 // invariant: 2 ^ BITS_FOR_VIEW_TYPE >= VIEW_TYPE_COUNT
 
 class ViewSlot {
 private:
@@ -14,10 +16,10 @@ private:
 		RoomView room;
 		InventoryView inventory;
 	} mView;
-  struct {
-    unsigned view : 2;
-    unsigned prevTouch : 1;
-  } mFlags;
+  	struct {
+    	unsigned view : BITS_FOR_VIEW_TYPE;
+    	unsigned prevTouch : 1;
+  	} mFlags;
 
 public:
 
