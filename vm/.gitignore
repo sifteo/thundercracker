@@ -2,10 +2,5 @@
 *.o
 *.bc
 *.inc
-test.o
-test.s
-test.elf
-test.png
-test.out
-svmc
+slinky
 

@@ -12,7 +12,9 @@ using namespace Sifteo;
 #endif
 
 static Cube cubes[NUM_CUBES];
+volatile int x;
 
-void main()
+void foobar()
 {
+    x = 5;
 }

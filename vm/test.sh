@@ -14,7 +14,7 @@ $DIS test.o
 echo ------------------------
 
 rm -f test.s
-./svmc -filetype=asm -show-mc-encoding test.o 
+./slinky -show-mc-encoding -asm test.o 
 
 #$* 2>&1 | tee test.out
 #DOTFILE=`grep \.dot test.out | tail -n 1 | cut -d "'" -f 2`
@@ -23,10 +23,10 @@ rm -f test.s
 
 echo ------------------------
 
-cat test.s
+cat program.s
 
 echo ------------------------
 
-./svmc test.o $*
-arm-none-eabi-readelf -a test.elf
-arm-none-eabi-objdump -D -M force-thumb test.elf
+./slinky test.o $*
+arm-none-eabi-readelf -a program.elf
+arm-none-eabi-objdump -D -M force-thumb program.elf

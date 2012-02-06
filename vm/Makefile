@@ -1,7 +1,7 @@
 TC_DIR := ..
 include $(TC_DIR)/Makefile.platform
 
-BIN = svmc
+BIN = slinky
 all: $(BIN)
 
 include Makefile.objs
@@ -15,6 +15,10 @@ WARNFLAGS := -Werror -Wall -Wno-uninitialized
 FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -fno-rtti
 INCLUDES += -I$(LLVM_INC)
 LIBS += \
+	$(LLVM_LIB)/libLLVMInstCombine.a \
+	$(LLVM_LIB)/libLLVMipa.a \
+	$(LLVM_LIB)/libLLVMipo.a \
+	$(LLVM_LIB)/libLLVMLinker.a \
 	$(LLVM_LIB)/libLLVMScalarOpts.a \
 	$(LLVM_LIB)/libLLVMTransformUtils.a \
 	$(LLVM_LIB)/libLLVMSelectionDAG.a \
