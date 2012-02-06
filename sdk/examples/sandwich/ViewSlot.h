@@ -26,6 +26,7 @@ public:
 	Cube* GetCube() const;
 	Cube::ID GetCubeID() const;
 	ViewMode Graphics() const { return ViewMode(GetCube()->vbuf); }
+	BG1Helper Overlay() const { return BG1Helper(*GetCube()); }
 	bool Touched() const; // cube->touching && !prevTouch
 	inline unsigned ViewType() const { return mFlags.view ; }
 	inline bool IsShowingRoom() const { return mFlags.view == VIEW_ROOM; }

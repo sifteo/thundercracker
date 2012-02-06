@@ -67,6 +67,6 @@ void IdleView::DrawInventorySprites() {
 
 void IdleView::DrawBackground() {
   Parent()->Graphics().BG0_drawAsset(Vec2(0,0), *(pGame->GetMap()->Data()->blankImage));
-  BG1Helper(*Parent()->GetCube()).Flush();
+  Parent()->Overlay().Flush();
 }
 
