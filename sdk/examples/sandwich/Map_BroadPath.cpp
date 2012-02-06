@@ -29,8 +29,9 @@ bool Map::CanTraverse(BroadLocation bloc, Cube::Side side) {
 
 bool Map::GetBroadLocationNeighbor(BroadLocation loc, Cube::Side side, BroadLocation* outNeighbor) {
   if (!CanTraverse(loc, side)) { return false; }
-  outNeighbor->view = loc.view->VirtualNeighborAt(side);
-  if (!outNeighbor->view) { return false; }
+  ViewSlot* gv = loc.view->Parent()->VirtualNeighborAt(side);
+  if (!gv || !gv->IsShowingRoom()) { return false; }
+  outNeighbor->view = gv->GetRoomView();
   const Room* room = outNeighbor->view->GetRoom();
   switch(room->SubdivType()) {
     case SUBDIV_DIAG_POS:
@@ -81,11 +82,11 @@ void BroadPath::Cancel() {
 
 static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int depth) {
   BroadLocation next;
-  if (!pGame->GetMap()->GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->GetCubeID()] & (1<<next.subdivision)) {
+  if (!pGame->GetMap()->GetBroadLocationNeighbor(loc, side, &next) || sVisitMask[next.view->Parent()->GetCubeID()] & (1<<next.subdivision)) {
     return false;
   }
-  sVisitMask[next.view->GetCubeID()] |= (1<<next.subdivision);
-  if (next.view->Touched()) {
+  sVisitMask[next.view->Parent()->GetCubeID()] |= (1<<next.subdivision);
+  if (next.view->Parent()->Touched()) {
     outPath->steps[depth] = -1;
     return true;
   } else {
@@ -105,7 +106,7 @@ static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int de
 bool Map::FindBroadPath(BroadPath* outPath) {
   for(unsigned i=0; i<NUM_CUBES; ++i) { sVisitMask[i] = 0; }
   const BroadLocation* pRoot = pGame->GetPlayer()->Current();
-  sVisitMask[pRoot->view->GetCubeID()] = (1 << pRoot->subdivision);
+  sVisitMask[pRoot->view->Parent()->GetCubeID()] = (1 << pRoot->subdivision);
   for(int side=0; side<NUM_SIDES; ++side) {
     outPath->steps[0] = side;
     if (Visit(outPath, *pRoot, side, 1)) {

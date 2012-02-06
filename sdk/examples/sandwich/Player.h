@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Map.h"
-class GameView;
+class RoomView;
 class Room;
 
 #define WALK_SPEED 3
@@ -36,7 +36,7 @@ public:
   int AnimFrame();
   const BroadLocation* Current() { return &mCurrent; }
   const BroadLocation* Target() { return &mTarget; }
-  GameView* View() { return mTarget.view==0?mCurrent.view:mTarget.view; }
+  RoomView* View() { return mTarget.view==0?mCurrent.view:mTarget.view; }
   Cube::Side Direction() { return mDir; }
   Vec2 Position() const { return mPosition; }
   Vec2 Location() const { return mPosition/128; }

@@ -1,7 +1,7 @@
 #include "Room.h"
 #include "Game.h"
 
-int Room::RoomId() const {
+unsigned Room::Id() const {
   return (int)(this - pGame->GetMap()->GetRoom(0));
 }
 
@@ -19,12 +19,11 @@ Vec2 Room::LocalCenter(unsigned subdiv) const {
 }
 
 Vec2 Room::Location() const {
-  int id = RoomId();
-  return Vec2(id % pGame->GetMap()->Data()->width, id / pGame->GetMap()->Data()->width);
+  return pGame->GetMap()->GetLocation(Id());
 }
 
 const RoomData* Room::Data() const {
-  return pGame->GetMap()->GetRoomData(RoomId());
+  return pGame->GetMap()->GetRoomData(Id());
 }
 
 bool Room::HasOpenDoor() const {
