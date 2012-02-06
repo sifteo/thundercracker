@@ -14,7 +14,6 @@ private:
 		RoomView room;
 		InventoryView inventory;
 	} mSubview;
-	uint8_t mStatus;
   struct {
     unsigned subview : 2;
     unsigned prevTouch : 1;

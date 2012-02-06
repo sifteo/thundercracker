@@ -30,6 +30,7 @@ public:
   
   // methods
   void Init(unsigned rid);
+  void Restore();
   void Update();
 
   void HideOverlay(bool flag);

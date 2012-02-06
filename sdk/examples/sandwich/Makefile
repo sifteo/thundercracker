@@ -12,6 +12,8 @@ OBJS = \
 	Game.o \
 	GameState.o \
 	GameView.o \
+	IdleView.o \
+	InventoryView.o \
 	Map.o \
 	Map_NarrowPath.o \
 	Map_BroadPath.o \

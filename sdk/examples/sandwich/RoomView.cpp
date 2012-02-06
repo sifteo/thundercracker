@@ -17,10 +17,6 @@ static const int8_t sHoverTable[] = {
 };
 #define HOVER_COUNT 32
 
-const static uint8_t sHopTable[] = { 0, 0, 0, 1, 3, 4, 6, 6, 7, 7, 8, 7, 7, 6, 6, 4, 3, 1, };
-#define HOP_COUNT 18
-#define HOP_PHASE 9
-
 #define BFF_FRAME_COUNT 4
 
 /*
@@ -91,6 +87,10 @@ void RoomView::Init(unsigned roomId) {
   */
   // end h4cky stuff
   pGame->NeedsSync();
+}
+
+void RoomView::Restore() {
+  Init(mRoomId);
 }
 
 void RoomView::Update() {

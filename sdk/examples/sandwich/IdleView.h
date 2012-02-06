@@ -9,6 +9,7 @@ private:
 
 public:
 	void Init();
+	void Restore();
 	void Update();
 	void OnInventoryChanged();
 	void DrawInventorySprites();

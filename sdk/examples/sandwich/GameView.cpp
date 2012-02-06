@@ -13,7 +13,7 @@ bool GameView::Touched() const {
 }
 
 void GameView::Init() {
-	mStatus = GetCubeID() == 0 ? VIEW_ROOM : VIEW_IDLE;
+	mFlags.subview = (this == pGame->ViewBegin()) ? VIEW_ROOM : VIEW_IDLE;
 	if (IsShowingRoom()) {
 		mSubview.room.Init(pGame->GetMap()->GetRoomId(pGame->GetPlayer()->Location()));
 	} else {
@@ -29,7 +29,17 @@ void GameView::HideSprites() {
 }
 
 void GameView::Restore() {
-	ASSERT(false); // todo
+	switch(mFlags.subview) {
+	case VIEW_IDLE:
+		mSubview.idle.Restore();
+		break;
+	case VIEW_ROOM:
+		mSubview.room.Restore();
+		break;
+	case VIEW_INVENTORY:
+		mSubview.inventory.Restore();
+		break;
+	}
 }
 
 void GameView::Update() {
@@ -57,7 +67,7 @@ bool GameView::ShowLocation(Vec2 loc) {
 	} else {
 		unsigned rid = pGame->GetMap()->GetRoomId(loc);
 		if (!IsShowingRoom() || mSubview.room.GetRoom()->Id() != rid) {
-			mStatus = VIEW_ROOM;
+			mFlags.subview = VIEW_ROOM;
 			mSubview.room.Init(rid);
 		}
 		return true;
@@ -66,7 +76,7 @@ bool GameView::ShowLocation(Vec2 loc) {
 
 bool GameView::HideLocation() {
 	if (IsShowingRoom()) {
-		mStatus = VIEW_IDLE;
+		mFlags.subview = VIEW_IDLE;
 		mSubview.idle.Init();
 		return true;
 	}
@@ -74,7 +84,7 @@ bool GameView::HideLocation() {
 }
 
 void GameView::RefreshInventory() {
-  if (mStatus == VIEW_IDLE) {
+  if (mFlags.subview == VIEW_IDLE) {
   	mSubview.idle.OnInventoryChanged();
   }
 }

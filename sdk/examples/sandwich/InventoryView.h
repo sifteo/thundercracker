@@ -4,5 +4,6 @@
 class InventoryView : public View {
 public:
 	void Init();
+	void Restore();
 	void Update();
 };
