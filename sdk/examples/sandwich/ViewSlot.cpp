@@ -14,17 +14,25 @@ bool ViewSlot::Touched() const {
 
 void ViewSlot::Init() {
 	mFlags.view = VIEW_IDLE;
+	ViewMode mode = Graphics();
+	mode.set();
+	mode.clear();
+  	mode.setWindow(0, 128);
 	mView.idle.Init();
 }
 
 void ViewSlot::HideSprites() {
-	VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
+	ViewMode mode = Graphics();
 	for(unsigned i=0; i<8; ++i) {
 		mode.hideSprite(i);
 	}
 }
 
 void ViewSlot::Restore() {
+	ViewMode mode = Graphics();
+	mode.set();
+	mode.clear();
+  	mode.setWindow(0, 128);
 	switch(mFlags.view) {
 	case VIEW_IDLE:
 		mView.idle.Restore();

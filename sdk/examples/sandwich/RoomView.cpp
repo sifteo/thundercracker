@@ -40,10 +40,7 @@ static const Vec2 sBffTable[] = {
 
 void RoomView::Init(unsigned roomId) {
   flags.hideOverlay = false;
-  VidMode_BG0_SPR_BG1 mode(Parent()->GetCube()->vbuf);
-  mode.set();
-  mode.clear();
-  mode.setWindow(0, 128);
+  ViewMode mode = Parent()->Graphics();
   flags.hideOverlay = false;
   mRoomId = roomId;
   // are we showing an items?
@@ -94,7 +91,7 @@ void RoomView::Restore() {
 }
 
 void RoomView::Update() {
-  VidMode_BG0_SPR_BG1 mode(Parent()->GetCube()->vbuf);
+  ViewMode mode = Parent()->Graphics();
   // update animated tiles (could suffer some optimization)
   const unsigned t = pGame->AnimFrame() - mStartFrame;
   for(unsigned i=0; i<mAnimTileCount; ++i) {
@@ -224,32 +221,32 @@ void RoomView::HideOverlay(bool flag) {
 }
 
 void RoomView::ShowPlayer() {
-  VidMode_BG0_SPR_BG1(Parent()->GetCube()->vbuf).resizeSprite(PLAYER_SPRITE_ID, 32, 32);
+  Parent()->Graphics().resizeSprite(PLAYER_SPRITE_ID, 32, 32);
   UpdatePlayer();
 }
 
 void RoomView::SetPlayerFrame(unsigned frame) {
-  VidMode_BG0_SPR_BG1(Parent()->GetCube()->vbuf).setSpriteImage(PLAYER_SPRITE_ID, frame);
+  Parent()->Graphics().setSpriteImage(PLAYER_SPRITE_ID, frame);
 }
 
 void RoomView::UpdatePlayer() {
   Vec2 localPosition = pGame->GetPlayer()->Position() - 128 * Location();
-  VidMode_BG0_SPR_BG1 mode(Parent()->GetCube()->vbuf);
+  ViewMode mode = Parent()->Graphics();
   mode.setSpriteImage(PLAYER_SPRITE_ID, pGame->GetPlayer()->AnimFrame());
   mode.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
 }
 
 void RoomView::HidePlayer() {
-  VidMode_BG0_SPR_BG1(Parent()->GetCube()->vbuf).hideSprite(PLAYER_SPRITE_ID);
+  Parent()->Graphics().hideSprite(PLAYER_SPRITE_ID);
 }
   
 void RoomView::SetItemPosition(Vec2 p) {
   p += 16 * GetRoom()->LocalCenter(0);
-  VidMode_BG0_SPR_BG1(Parent()->GetCube()->vbuf).moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
+  Parent()->Graphics().moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
 }
 
 void RoomView::HideItem() {
-  VidMode_BG0_SPR_BG1(Parent()->GetCube()->vbuf).hideSprite(TRIGGER_SPRITE_ID);
+  Parent()->Graphics().hideSprite(TRIGGER_SPRITE_ID);
 }
 
 
@@ -258,7 +255,7 @@ void RoomView::HideItem() {
 //----------------------------------------------------------------------
 
 void RoomView::DrawBackground() {
-  VidMode_BG0 mode(Parent()->GetCube()->vbuf);
+  VidMode_BG0 mode = Parent()->Graphics();
   const Room *pRoom = GetRoom();
   for(int y=0; y<8; ++y) {
     for(int x=0; x<8; ++x) {

@@ -1,6 +1,9 @@
 #pragma once
+#include <sifteo.h>
 
 class ViewSlot;
+
+typedef VidMode_BG0_SPR_BG1 ViewMode;
 
 class View {
 public:
