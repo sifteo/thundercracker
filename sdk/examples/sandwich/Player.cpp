@@ -20,7 +20,7 @@ void Player::Init() {
   mStatus = PLAYER_STATUS_IDLE;
   mDir = 2;
   mKeyCount = 0;
-  mItemMask = 0xff;//0;
+  mItemMask = 0;
   mAnimFrame = 0;
   mAnimTime = 0.f;
   mProgress = 0;
