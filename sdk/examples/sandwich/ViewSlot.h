@@ -13,9 +13,9 @@ private:
 		IdleView idle;
 		RoomView room;
 		InventoryView inventory;
-	} mSubview;
+	} mView;
   struct {
-    unsigned subview : 2;
+    unsigned view : 2;
     unsigned prevTouch : 1;
   } mFlags;
 
@@ -24,11 +24,11 @@ public:
 	Cube* GetCube() const;
 	Cube::ID GetCubeID() const;
 	bool Touched() const;
-	inline unsigned Subview() const { return mFlags.subview ; }
-	inline bool IsShowingRoom() const { return mFlags.subview == VIEW_ROOM; }
-	inline IdleView* GetIdleView() { ASSERT(mFlags.subview == VIEW_IDLE); return &(mSubview.idle); }
-	inline RoomView* GetRoomView() { ASSERT(mFlags.subview == VIEW_ROOM); return &(mSubview.room); }
-	inline InventoryView* GetInventoryView() { ASSERT(mFlags.subview == VIEW_INVENTORY); return &(mSubview.inventory); }
+	inline unsigned View() const { return mFlags.view ; }
+	inline bool IsShowingRoom() const { return mFlags.view == VIEW_ROOM; }
+	inline IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
+	inline RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
+	inline InventoryView* GetInventoryView() { ASSERT(mFlags.view == VIEW_INVENTORY); return &(mView.inventory); }
 
 	void Init();
 	void Restore();

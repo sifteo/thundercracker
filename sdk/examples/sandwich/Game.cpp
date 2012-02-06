@@ -70,7 +70,7 @@ void Game::MainLoop() {
       System::paint();
     }    
     System::paintSync();
-    view->Init();
+    view->ShowLocation(mPlayer.Location());
     System::paintSync();
   }  
 
