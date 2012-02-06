@@ -73,9 +73,10 @@ class Hardware {
     RNG rng;
     
     bool init(VirtualTime *masterTimer,
-              const char *firmwareFile, const char *flashFile);
-    void exit();
-    
+              const char *firmwareFile, const char *flashFile,
+              bool wakeFromSleep);
+
+    void exit();    
     void reset();
 
     ALWAYS_INLINE bool isSleeping() {
