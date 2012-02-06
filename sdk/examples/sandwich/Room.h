@@ -1,5 +1,5 @@
 #pragma once
-#include "Base.h"
+#include "Common.h"
 #include "Content.h"
 
 class Room {
@@ -21,7 +21,7 @@ private:
 public:
 
   // basic getters
-  int RoomId() const;
+  unsigned Id() const;
   Vec2 Location() const;
   const RoomData* Data() const;
 
