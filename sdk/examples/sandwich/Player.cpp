@@ -1,5 +1,5 @@
 #include "Player.h"
-#include "GameView.h"
+#include "RoomView.h"
 #include "Game.h"
 #include "Dialog.h"
 
@@ -12,7 +12,7 @@ inline int fast_abs(int x) {
 
 void Player::Init() {
   const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  mCurrent.view = pGame->ViewBegin();
+  mCurrent.view = (RoomView*)(pGame->ViewBegin());
   mCurrent.subdivision = 0;
   mTarget.view = 0;
   mPosition.x = 128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerX;
@@ -142,7 +142,7 @@ void Player::Update(float dt) {
     // wait for tilt
     mStatus = PLAYER_STATUS_IDLE;
     mCurrent.view->UpdatePlayer();
-    mNextDir = mCurrent.view->VirtualTiltDirection();
+    mNextDir = mCurrent.view->Parent()->VirtualTiltDirection();
     mPath.Cancel();
     mAnimFrame = 0;
     mAnimTime = 0.f;
@@ -179,7 +179,7 @@ void Player::Update(float dt) {
           // check the door
           mCurrent.view->GetRoom()->OpenDoor();
           mCurrent.view->DrawBackground();
-          mCurrent.view->GetCube()->vbuf.touch();
+          mCurrent.view->Parent()->GetCube()->vbuf.touch();
           mCurrent.view->UpdatePlayer();
           mTimeout = System::clock();
           pGame->NeedsSync();
@@ -291,9 +291,9 @@ void Player::Update(float dt) {
       }
       const NpcData* pNpc = mCurrent.view->GetRoom()->TriggerAsNPC();
       if (pGame->GetState()->FlagTrigger(pNpc->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
-      DoDialog(gDialogData[pNpc->dialog], mCurrent.view->GetCube());
+      DoDialog(gDialogData[pNpc->dialog], mCurrent.view->Parent()->GetCube());
       System::paintSync();
-      mCurrent.view->Init();
+      mCurrent.view->Restore();
       System::paintSync();
     }
     mDir = SIDE_BOTTOM;
