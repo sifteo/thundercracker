@@ -13,7 +13,7 @@ namespace TotalsGame
 	}
 
 
-	void Game::Setup(Sifteo::Cube *_cubes, int nCubes)
+	void Game::Setup(TotalsCube *_cubes, int nCubes)
 	{
 		assert(nCubes == Game::NUMBER_OF_CUBES);
 		cubes = _cubes;

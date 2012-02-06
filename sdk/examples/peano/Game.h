@@ -5,6 +5,7 @@
 #include "PuzzleDatabase.h"
 #include "StateMachine.h"
 #include "SaveData.h"
+#include "TotalsCube.h"
 
 namespace TotalsGame {
 
@@ -21,7 +22,7 @@ namespace TotalsGame {
 
 		static const int FrameRate = 15;
 
-		Sifteo::Cube *cubes;
+		TotalsCube *cubes;
 
 		Puzzle *currentPuzzle;
 		Puzzle *previousPuzzle;
@@ -37,7 +38,7 @@ namespace TotalsGame {
 		float dt;
 		bool IsPaused;
 
-		void Setup(Sifteo::Cube *cubes, int nCubes);
+		void Setup(TotalsCube *cubes, int nCubes);
 
 		void Tick();
 		void CoroutineYield();

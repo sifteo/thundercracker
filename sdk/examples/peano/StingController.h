@@ -1,5 +1,7 @@
 #include "StateMachine.h"
 #include "View.h"
+#include "BlankView.h"
+#include "coroutine.h"
 
 namespace TotalsGame 
 {
@@ -8,7 +10,9 @@ namespace TotalsGame
 	{
 	private:
 		Game *mGame;
+		BlankView *views[Game::NUMBER_OF_CUBES];
 
+		CORO_PARAMS
 
 	public:
 		StingController(Game *game) 
@@ -20,55 +24,65 @@ namespace TotalsGame
 
 		virtual void OnSetup () 
 		{
-/*			foreach(Cube cube in mGame.CubeSet) {
-				new BlankView(cube);
-				cube.ShakeStoppedEvent += delegate { Skip(); };
-				cube.ButtonEvent += delegate(Cube c, bool pressed) { if (!pressed) Skip();  };
+			CORO_RESET;
+
+			for(int i = 0; i < Game::NUMBER_OF_CUBES; i++) 
+			{
+				views[i] = new BlankView(&Game::GetInstance().cubes[i], NULL);
+				//TODO
+				//cube.ShakeStoppedEvent += delegate { Skip(); };
+				//cube.ButtonEvent += delegate(Cube c, bool pressed) { if (!pressed) Skip();  };
 			}
-*/
+
 			//mGame.CubeSet.LostCubeEvent += delegate { Skip(); };
 			//mGame.CubeSet.NewCubeEvent += delegate { Skip(); };
 		}
 
-/*		void Skip() {
-			mGame.CubeSet.ClearEvents();
-			mCoro = null;
-			mGame.sceneMgr.QueueTransition("Next");
+		void Skip() 
+	{
+			//TODO mGame.CubeSet.ClearEvents();
+			mGame->sceneMgr.QueueTransition("Next");
 		}
-*/
-	/*	IEnumerator<float> Coroutine() {
-			yield return 0.1f;
-			Jukebox.Sfx("PV_stinger_02");
-			foreach(var cube in mGame.CubeSet) {
-				foreach(var dt in cube.OpenShutters("title")) { yield return dt; }
-				var bv = cube.userData as BlankView;
-				bv.SetImage("title");
-				yield return 0f;
-			}
-			yield return 3f;
-			foreach(var cube in mGame.CubeSet) {
-				foreach(var dt in cube.CloseShutters()) { yield return dt; }
-				var bv = cube.userData as BlankView;
-				bv.SetImage("");
-				yield return 0f;
-			}
-			yield return 0.5f;
-		}
-		*/
+
 		void OnTick (float dt) 
 		{
-			static View v1(&Game::GetInstance().cubes[0]);
-			static View v2(&Game::GetInstance().cubes[1]);
-			static View v3(&Game::GetInstance().cubes[2]);
-			static View v4(&Game::GetInstance().cubes[3]);
+			CORO_BEGIN
 
-			v1.OpenShutters("");
-			v2.OpenShutters("");
-			v3.OpenShutters("");
-			v4.OpenShutters("");
+			//yield return 0.1f;
+			CORO_YIELD;
+			//TODO Jukebox.Sfx("PV_stinger_02");
 
+			{
+				bool anyOpen = false;
+				for(int i = 0; i < Game::NUMBER_OF_CUBES; i++) 
+				{
+					views[i]->cube->OpenShutters(NULL/*TOTO title*/);
+					anyOpen |= views[i]->cube->AreShuttersOpen();
+				}
+				if(!anyOpen)
+					return;
+			}
 
+			CORO_YIELD;
+			//yield return 3f;
 
+			{
+				bool anyClosed = false;
+				for(int i = 0; i < Game::NUMBER_OF_CUBES; i++) 
+				{
+					views[i]->cube->CloseShutters();
+					anyClosed |= views[i]->cube->AreShuttersClosed();
+				}				
+				if(!anyClosed)
+					return;
+			}
+			
+			CORO_YIELD;
+			//yield return 0.5f;
+			printf("NEXT!\n");
+			mGame->sceneMgr.QueueTransition("Next");
+
+			CORO_END
 
 
 /*			if (mCoro != null) {
@@ -90,7 +104,12 @@ namespace TotalsGame
 
 		void OnDispose () 
 		{
-		/*	mCoro = null;
+			for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
+			{
+				delete views[i];
+				views[i] = NULL;
+			}
+		/*	//TODO
 			mGame.CubeSet.ClearEvents();
 			mGame.CubeSet.ClearUserData(); */
 		}

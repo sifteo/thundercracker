@@ -5,7 +5,7 @@
 
 using namespace Sifteo;
 
-static Cube cubes[TotalsGame::Game::NUMBER_OF_CUBES];
+static TotalsGame::TotalsCube cubes[TotalsGame::Game::NUMBER_OF_CUBES];
 
 void siftmain() {
   for (int i = 0; i < TotalsGame::Game::NUMBER_OF_CUBES; i++) {
