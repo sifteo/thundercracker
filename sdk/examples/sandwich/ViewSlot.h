@@ -25,7 +25,7 @@ public:
 
 	Cube* GetCube() const;
 	Cube::ID GetCubeID() const;
-	bool Touched() const;
+	bool Touched() const; // cube->touching && !prevTouch
 	inline unsigned View() const { return mFlags.view ; }
 	inline bool IsShowingRoom() const { return mFlags.view == VIEW_ROOM; }
 	inline IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }

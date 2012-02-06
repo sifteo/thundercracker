@@ -10,8 +10,6 @@ static void onTouch(_SYSCubeID cid) {
     // /pGame->ViewAt(cid)->touched = !pGame->ViewAt(cid)->touched;
 }
 
-
-
 void Game::ObserveNeighbors(bool flag) {
   if (flag) {
     _SYS_vectors.neighborEvents.add = onNeighbor;

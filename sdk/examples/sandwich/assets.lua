@@ -28,6 +28,8 @@ ScrollRight = image{"scroll_right.png", width=16, height=128}
 ScrollBubble = image{"scroll_bubble.png", width=80, height=32}
 ScrollThoughts = image{"scroll_thoughts.png", width=16, height=16}
 
+InventoryBackground = image{"inventory_background.png"}
+
 dofile "content.gen.lua"
 
 music_castle = sound{ "music_castle.raw" }
