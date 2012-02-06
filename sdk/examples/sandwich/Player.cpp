@@ -293,7 +293,7 @@ void Player::Update(float dt) {
       if (pGame->GetState()->FlagTrigger(pNpc->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
       DoDialog(gDialogData[pNpc->dialog], mCurrent.view->Parent()->GetCube());
       System::paintSync();
-      mCurrent.view->Restore();
+      mCurrent.view->Parent()->Restore();
       System::paintSync();
     }
     mDir = SIDE_BOTTOM;

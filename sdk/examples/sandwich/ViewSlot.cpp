@@ -71,6 +71,15 @@ bool ViewSlot::ShowLocation(Vec2 loc) {
 	} else {
 		unsigned rid = pGame->GetMap()->GetRoomId(loc);
 		if (!IsShowingRoom() || mView.room.GetRoom()->Id() != rid) {
+			if (mFlags.view == VIEW_INVENTORY) {
+				for (ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
+					if (p->ViewType() == VIEW_IDLE) {
+						p->mFlags.view = VIEW_INVENTORY;
+						p->mView.inventory.Init();
+						break;
+					}
+				}
+			}
 			mFlags.view = VIEW_ROOM;
 			mView.room.Init(rid);
 		}
@@ -80,8 +89,17 @@ bool ViewSlot::ShowLocation(Vec2 loc) {
 
 bool ViewSlot::HideLocation() {
 	if (IsShowingRoom()) {
-		mFlags.view = VIEW_IDLE;
-		mView.idle.Init();
+		bool invShowing = false;
+		for(ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
+			if (invShowing = p->ViewType() == VIEW_INVENTORY) { break; }
+		}
+		if (invShowing) {
+			mFlags.view = VIEW_IDLE;
+			mView.idle.Init();
+		} else {
+			mFlags.view = VIEW_INVENTORY;
+			mView.inventory.Init();
+		}
 		return true;
 	}
 	return false;

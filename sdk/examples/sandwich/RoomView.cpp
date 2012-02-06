@@ -37,14 +37,13 @@ static const Vec2 sBffTable[] = {
 // methods
 
 void RoomView::Init(unsigned roomId) {
-  flags.hideOverlay = false;
+  Parent()->HideSprites();
   ViewMode mode = Parent()->Graphics();
   flags.hideOverlay = false;
   mRoomId = roomId;
   // are we showing an items?
   mStartFrame = pGame->AnimFrame();
   ComputeAnimatedTiles();
-  Parent()->HideSprites();
   Room* r = GetRoom();
   switch(r->TriggerType()) {
     case TRIGGER_ITEM: 

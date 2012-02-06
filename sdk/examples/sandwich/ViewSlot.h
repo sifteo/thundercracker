@@ -27,7 +27,7 @@ public:
 	Cube::ID GetCubeID() const;
 	ViewMode Graphics() const { return ViewMode(GetCube()->vbuf); }
 	bool Touched() const; // cube->touching && !prevTouch
-	inline unsigned View() const { return mFlags.view ; }
+	inline unsigned ViewType() const { return mFlags.view ; }
 	inline bool IsShowingRoom() const { return mFlags.view == VIEW_ROOM; }
 	inline IdleView* GetIdleView() { ASSERT(mFlags.view == VIEW_IDLE); return &(mView.idle); }
 	inline RoomView* GetRoomView() { ASSERT(mFlags.view == VIEW_ROOM); return &(mView.room); }
