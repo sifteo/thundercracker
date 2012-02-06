@@ -48,6 +48,51 @@ extern "C" void LLVMInitializeSVMTarget();
 extern "C" void LLVMInitializeSVMTargetMC();
 extern "C" void LLVMInitializeSVMTargetInfo();
 
+static cl::extrahelp LicenseText(
+    "\n"
+    "LICENSE:\n"
+    "\n"
+    "    The Sifteo Linker tool and its code generation backend are\n"
+    "    Copyright (c) 2012 Sifteo, Inc. All rights reserved.\n"
+    "\n"
+    "    Based on the open source LLVM project. Portions \n"
+    "    Copyright (c) 2003-2012 University of Illinois at Urbana-Champaign.\n"
+    "    All rights reserved.\n"
+    "\n"
+    "    Contains code that was originalyl released under the Univeristy of\n"
+    "    Illinois/NCSA Open Source License, reproduced below.\n"
+    "\n"
+    "OPEN SOURCE LICENSE:\n"
+    "\n"
+    "    Permission is hereby granted, free of charge, to any person obtaining a copy of\n"
+    "    this software and associated documentation files (the \"Software\"), to deal with\n"
+    "    the Software without restriction, including without limitation the rights to\n"
+    "    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies\n"
+    "    of the Software, and to permit persons to whom the Software is furnished to do\n"
+    "    so, subject to the following conditions:\n"
+    "\n"
+    "        * Redistributions of source code must retain the above copyright notice,\n"
+    "          this list of conditions and the following disclaimers.\n"
+    "\n"
+    "        * Redistributions in binary form must reproduce the above copyright notice,\n"
+    "          this list of conditions and the following disclaimers in the\n"
+    "          documentation and/or other materials provided with the distribution.\n"
+    "\n"
+    "        * Neither the names of the LLVM Team, University of Illinois at\n"
+    "          Urbana-Champaign, nor the names of its contributors may be used to\n"
+    "          endorse or promote products derived from this Software without specific\n"
+    "          prior written permission.\n"
+    "\n"
+    "    THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n"
+    "    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS\n"
+    "    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE\n"
+    "    CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n"
+    "    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n"
+    "    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE\n"
+    "    SOFTWARE.\n"
+    "\n"
+);
+
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
     cl::desc("<input bitcode files>"));
