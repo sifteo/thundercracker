@@ -10,14 +10,28 @@
 //#include "audio.gen.h"
 #include "game.h"
 
-const float Intro::INTRO_ARROW_TIME = 0.4f;
-const float Intro::INTRO_TIMEREXPANSION_TIME = 0.5f;
-const float Intro::INTRO_BALLEXPLODE_TIME = 0.5f;
+const float Intro::READYSETGO_BANNER_TIME = 0.9f;
+
+const float STATE_TIMES[ Intro::STATE_CNT ] = {
+    //STATE_ARROWS,
+    0.4f,
+    //STATE_TIMERGROWTH,
+    0.5f,
+    //STATE_BALLEXPLOSION,
+    0.5f,
+    //STATE_READY,
+    1.0f,
+    //STATE_SET,
+    1.0f,
+    //STATE_GO,
+    1.0f,
+};
 
 
 Intro::Intro()
 {
     m_fTimer = 0.0f;
+    m_state = STATE_ARROWS;
 }
 
 
@@ -25,26 +39,52 @@ void Intro::Reset( bool ingamereset)
 {
     if( ingamereset )
     {
-        m_fTimer = INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME;
+        m_state = STATE_BALLEXPLOSION;
         Game::Inst().playSound(glom_delay);
     }
     else
-        m_fTimer = 0.0f;
+        m_state = STATE_ARROWS;
+
+    m_fTimer = 0.0f;
 }
 
 
-bool Intro::Update( float dt )
+bool Intro::Update( float dt, Banner &banner )
 {
-    if( m_fTimer <= INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME && m_fTimer + dt > INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME )
-        Game::Inst().playSound(glom_delay);
-
     m_fTimer += dt;
 
-    if( m_fTimer > INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME + INTRO_BALLEXPLODE_TIME )
+    if( m_fTimer >= STATE_TIMES[ m_state ] )
     {
-        Game::Inst().setState( Game::STATE_PLAYING );
-        return false;
+        m_state = (IntroState)( (int)m_state + 1 );
+        m_fTimer = 0.0f;
+
+        //special cases
+        switch( m_state )
+        {
+            case STATE_BALLEXPLOSION:
+                Game::Inst().playSound(glom_delay);
+                break;
+            case STATE_READY:
+                if( Game::Inst().getState() == Game::STATE_PLAYING )
+                    return false;
+                else
+                    banner.SetMessage( "Ready", READYSETGO_BANNER_TIME );
+                break;
+            case STATE_SET:
+                banner.SetMessage( "Set", READYSETGO_BANNER_TIME );
+                break;
+            case STATE_GO:
+                banner.SetMessage( "Go!", READYSETGO_BANNER_TIME );
+                break;
+            case STATE_CNT:
+                Game::Inst().setState( Game::STATE_PLAYING );
+                return false;
+            default:
+                break;
+        }
     }
+
+    banner.Update( dt );
 
     return true;
 }
@@ -75,54 +115,63 @@ Vec2 ENDPOS[ Intro::NUM_ARROWS ] = {
 //return whether we touched bg1 or not
 bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper )
 {
-    vid.clear(GemEmpty.tiles[0]);
+    float timePercent = m_fTimer / STATE_TIMES[ m_state ];
 
-    if( m_fTimer < INTRO_ARROW_TIME )
+    switch( m_state )
     {
-        float timePercent = m_fTimer / INTRO_ARROW_TIME;
-
-        //arrow sprites
-        for( int i = 0; i < NUM_ARROWS; i++ )
+        case STATE_ARROWS:
         {
-            Vec2 pos = LerpPosition( STARTPOS[i], ENDPOS[i], timePercent );
-            vid.resizeSprite(i, ARROW_SPRITES[i]->width*8, ARROW_SPRITES[i]->height*8);
-            vid.setSpriteImage(i, *ARROW_SPRITES[i], 0);
-            vid.moveSprite(i, pos.x, pos.y);
-        }
-    }
-    else if( m_fTimer < INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME )
-    {
-        for( int i = 0; i < NUM_ARROWS; i++ )
-        {
-            vid.resizeSprite(i, 0, 0);
-        }
+            vid.clear(GemEmpty.tiles[0]);
 
-        //charge up timers
-        float amount = ( m_fTimer - INTRO_ARROW_TIME ) / INTRO_TIMEREXPANSION_TIME;
-        timer.DrawMeter( amount, bg1helper );
-        return true;
-    }
-    else
-    {
-        int baseFrame = ( m_fTimer - ( INTRO_ARROW_TIME + INTRO_TIMEREXPANSION_TIME ) ) / INTRO_BALLEXPLODE_TIME * NUM_TOTAL_EXPLOSION_FRAMES;
-
-        for( int i = 0; i < CubeWrapper::NUM_ROWS; i++ )
-        {
-            for( int j = 0; j < CubeWrapper::NUM_COLS; j++ )
+            //arrow sprites
+            for( int i = 0; i < NUM_ARROWS; i++ )
             {
-                GridSlot *pSlot = pWrapper->GetSlot( i, j );
-                int frame = baseFrame;
-
-                //middle ones are first
-                if( i >= 1 && i < 3 && j >= 1 && j < 3 )
-                    frame++;
-                //corner ones are last
-                if( frame > 0 && ( i == 0 || i == 3 ) && ( j == 0 || j == 3 ) )
-                    frame--;
-
-                pSlot->DrawIntroFrame( vid, frame );
+                Vec2 pos = LerpPosition( STARTPOS[i], ENDPOS[i], timePercent );
+                vid.resizeSprite(i, ARROW_SPRITES[i]->width*8, ARROW_SPRITES[i]->height*8);
+                vid.setSpriteImage(i, *ARROW_SPRITES[i], 0);
+                vid.moveSprite(i, pos.x, pos.y);
             }
+            break;
         }
+        case STATE_TIMERGROWTH:
+        {
+            vid.clear(GemEmpty.tiles[0]);
+
+            for( int i = 0; i < NUM_ARROWS; i++ )
+            {
+                vid.resizeSprite(i, 0, 0);
+            }
+
+            //charge up timers
+            timer.DrawMeter( timePercent, bg1helper );
+            return true;
+        }
+        case STATE_BALLEXPLOSION:
+        {
+            int baseFrame = timePercent * NUM_TOTAL_EXPLOSION_FRAMES;
+
+            for( int i = 0; i < CubeWrapper::NUM_ROWS; i++ )
+            {
+                for( int j = 0; j < CubeWrapper::NUM_COLS; j++ )
+                {
+                    GridSlot *pSlot = pWrapper->GetSlot( i, j );
+                    int frame = baseFrame;
+
+                    //middle ones are first
+                    if( i >= 1 && i < 3 && j >= 1 && j < 3 )
+                        frame++;
+                    //corner ones are last
+                    if( frame > 0 && ( i == 0 || i == 3 ) && ( j == 0 || j == 3 ) )
+                        frame--;
+
+                    pSlot->DrawIntroFrame( vid, frame );
+                }
+            }
+            break;
+        }
+        default:
+            pWrapper->getBanner().Draw( bg1helper );
+            return true;
     }
 
     return false;

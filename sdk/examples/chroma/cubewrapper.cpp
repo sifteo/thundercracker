@@ -23,7 +23,7 @@ const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
 const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 const float CubeWrapper::TIME_PER_MESSAGE_FRAME = 0.25f / NUM_MESSAGE_FRAMES;
-const float CubeWrapper::TILT_SOUND_EPSILON = 1.0f;
+const float CubeWrapper::TILT_SOUND_EPSILON = 5.0f;
 const float CubeWrapper::SHOW_BONUS_TIME = 3.1f;
 
 
@@ -296,7 +296,7 @@ void CubeWrapper::Update(float t, float dt)
 
     if( Game::Inst().getState() == Game::STATE_INTRO || m_state == STATE_REFILL )
     {
-        if( !m_intro.Update( dt ) )
+        if( !m_intro.Update( dt, m_banner ) )
         {
             if( m_state == STATE_REFILL )
                 m_state = STATE_PLAYING;
@@ -306,7 +306,7 @@ void CubeWrapper::Update(float t, float dt)
     else if( Game::Inst().getState() == Game::STATE_DYING )
     {
         if( m_banner.IsActive() )
-            m_banner.Update(t, m_cube);
+            m_banner.Update(t);
         else
             m_gameover.Update( dt );
         return;
@@ -363,7 +363,7 @@ void CubeWrapper::Update(float t, float dt)
             }
         }
 
-        m_banner.Update(t, m_cube);
+        m_banner.Update(t);
 
         //tilt state
         _SYSAccelState state;
@@ -964,7 +964,7 @@ void CubeWrapper::checkRefill()
 			{
                 String<16> buf;
                 buf << Game::Inst().getShakesLeft() << " SHAKES LEFT";
-                m_banner.SetMessage( buf, false );
+                m_banner.SetMessage( buf );
 			}
 		}
 		else
