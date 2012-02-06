@@ -35,7 +35,11 @@ void Game::MainLoop() {
   mState.Init();
   mMap.Init();
   mPlayer.Init();
-  for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) { v->Init(); }
+  for(GameView* v = ViewBegin()+1; v!=ViewEnd(); ++v) { 
+    if (v != mPlayer.View()->Parent()) {
+      v->Init(); 
+    }
+  }
 
   // initial zoom out (yoinked and modded from TeleportTo)
   { 
@@ -66,7 +70,7 @@ void Game::MainLoop() {
       System::paint();
     }    
     System::paintSync();
-    view->Restore();
+    view->Init();
     System::paintSync();
   }  
 
