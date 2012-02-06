@@ -24,7 +24,7 @@ const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 const float CubeWrapper::TIME_PER_MESSAGE_FRAME = 0.25f / NUM_MESSAGE_FRAMES;
 const float CubeWrapper::TILT_SOUND_EPSILON = 5.0f;
-const float CubeWrapper::SHOW_BONUS_TIME = 3.1f;
+//const float CubeWrapper::SHOW_BONUS_TIME = 3.1f;
 
 
 static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] = {
@@ -181,10 +181,10 @@ void CubeWrapper::Draw()
 				case STATE_EMPTY:
 				{
                     m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeToRefill, 0);
-                    int score = Game::Inst().getScore();
+                    int level = Game::Inst().getDisplayedLevel();
 
                     Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 10 ),
-                                       Banner::CENTER, score );
+                                       Banner::CENTER, level );
 
                     /*m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
                     m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "SHAKE TO" );
@@ -195,7 +195,7 @@ void CubeWrapper::Draw()
                     m_queuedFlush = true;
 					break;
 				}
-                case STATE_CUBEBONUS:
+                /*case STATE_CUBEBONUS:
                 {
                     m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
 
@@ -211,7 +211,7 @@ void CubeWrapper::Draw()
 
                     m_queuedFlush = true;
                     break;
-                }
+                }*/
 
                 case STATE_REFILL:
                 {
@@ -246,25 +246,43 @@ void CubeWrapper::Draw()
             {
                 m_vid.BG0_drawAsset(Vec2(0,0), MsgGameOver, 0);
 
-                int score = Game::Inst().getScore();
+                if( Game::Inst().getMode() == Game::MODE_TIMED )
+                {
+                    int score = Game::Inst().getScore();
 
-                //m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
-                //m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
-                Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 11 ),
-                                   Banner::CENTER, score );
+                    //m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
+                    //m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
+                    Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 11 ),
+                                       Banner::CENTER, score );
+                }
+                else
+                {
+                    m_vid.BG0_drawPartialAsset( Vec2( 0, 7), Vec2( 0, 7), Vec2( 16, 9), MessageBox4 );
+                }
             }
             else if( m_cube.id() == 1 + CUBE_ID_BASE )
             {
-                m_vid.BG0_drawAsset(Vec2(0,0), MsgHighScores, 0);
-                //m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
-
-                for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
+                if( Game::Inst().getMode() == Game::MODE_TIMED )
                 {
-                    int score = Game::Inst().getHighScore(i);
-                    
-                    //m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
-                    Banner::DrawScore( m_bg1helper, Vec2( 8, 5+2*i ), Banner::RIGHT, score );
+                    m_vid.BG0_drawAsset(Vec2(0,0), MsgHighScores, 0);
+                    //m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
 
+                    for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
+                    {
+                        int score = Game::Inst().getHighScore(i);
+
+                        //m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
+                        Banner::DrawScore( m_bg1helper, Vec2( 8, 5+2*i ), Banner::RIGHT, score );
+
+                    }
+                }
+                else
+                {
+                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+                    m_bg1helper.DrawText( Vec2( 4, 3 ), Font, "Reached" );
+                    m_bg1helper.DrawText( Vec2( 5, 5 ), Font, "Level" );
+
+                    Banner::DrawScore( m_bg1helper, Vec2( 7, 9 ), Banner::CENTER, Game::Inst().getDisplayedLevel() - 1 );
                 }
             }
             else if( m_cube.id() == 2 + CUBE_ID_BASE )
@@ -329,20 +347,20 @@ void CubeWrapper::Update(float t, float dt)
         {
             int count = Game::Inst().CountEmptyCubes();
             //bonuses for multiple cubes being empty
-            if( count > 1 )
+            /*if( count > 1 )
             {
                 setState( STATE_CUBEBONUS );
                 Game::Inst().addScore( count * PTS_PER_EMPTIED_CUBE );
             }
-            else
+            else*/
                 setState( STATE_EMPTY );
         }
     }
-    else if( m_state == STATE_CUBEBONUS )
+    /*else if( m_state == STATE_CUBEBONUS )
     {
         if( m_stateTime > SHOW_BONUS_TIME )
             setState( STATE_EMPTY );
-    }
+    }*/
 
     if( Game::Inst().getState() == Game::STATE_PLAYING )
     {
@@ -936,10 +954,10 @@ void CubeWrapper::checkRefill()
         m_intro.Reset( true );
         Refill( Game::Inst().getMode() == Game::MODE_SHAKES );
 
-		if( Game::Inst().getMode() == Game::MODE_SHAKES && Game::Inst().getScore() > 0 )
+        /*if( Game::Inst().getMode() == Game::MODE_SHAKES && Game::Inst().getScore() > 0 )
 		{
 			m_banner.SetMessage( "FREE SHAKE!" );
-		}
+        }*/
 	}
 	else
 	{
