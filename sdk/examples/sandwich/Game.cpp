@@ -35,7 +35,7 @@ void Game::MainLoop() {
   mState.Init();
   mMap.Init();
   mPlayer.Init();
-  for(GameView* v = ViewBegin()+1; v!=ViewEnd(); ++v) { 
+  for(ViewSlot* v = ViewBegin()+1; v!=ViewEnd(); ++v) { 
     if (v != mPlayer.View()->Parent()) {
       v->Init(); 
     }
@@ -45,7 +45,7 @@ void Game::MainLoop() {
   { 
     gChannelMusic.stop();
     PlaySfx(sfx_zoomIn);
-    GameView* view = mPlayer.View()->Parent();
+    ViewSlot* view = mPlayer.View()->Parent();
     view->HideSprites();
     Vec2 room = mPlayer.Location();
     VidMode_BG2 vid(view->GetCube()->vbuf);
@@ -91,7 +91,7 @@ void Game::MainLoop() {
 }
 
 void Game::Paint(bool sync) {
-  for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
+  for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->Update();
     #if KLUDGES
     p->GetCube()->vbuf.touch();
@@ -152,11 +152,11 @@ void Game::WalkTo(Vec2 position) {
 void Game::TeleportTo(const MapData& m, Vec2 position) {
   gChannelMusic.stop();
   Vec2 room = position/128;
-  GameView* view = (GameView*)(mPlayer.View());
+  ViewSlot* view = (ViewSlot*)(mPlayer.View());
   Vec2 loc = mPlayer.Location();
   view->HideSprites();
   // blank other cubes
-  for(GameView* p = ViewBegin(); p != ViewEnd(); ++p) {
+  for(ViewSlot* p = ViewBegin(); p != ViewEnd(); ++p) {
     if (p != view) { p->HideLocation(); }
   }
   // zoom in
@@ -186,7 +186,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
     }
   }
   mMap.SetData(m);
-  for(GameView* p = ViewBegin(); p!= ViewEnd(); ++p) {
+  for(ViewSlot* p = ViewBegin(); p!= ViewEnd(); ++p) {
     if (p != view) { p->Restore(); }
   }
   // zoom out
@@ -233,7 +233,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 //------------------------------------------------------------------
 
 void Game::OnInventoryChanged() {
-  for(GameView *p=ViewBegin(); p!=ViewEnd(); ++p) {
+  for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->RefreshInventory();
   }
   const int firstSandwichId = 2;
@@ -250,7 +250,7 @@ void Game::OnInventoryChanged() {
 // NEIGHBOR HANDLING
 //------------------------------------------------------------------
 
-static void VisitMapView(uint8_t* visited, GameView* view, Vec2 loc, GameView* origin=0) {
+static void VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* origin=0) {
   if (!view || visited[view->GetCubeID()]) { return; }
   visited[view->GetCubeID()] = true;
   if (view->ShowLocation(loc)) {
@@ -268,7 +268,7 @@ void Game::CheckMapNeighbors() {
   uint8_t visited[NUM_CUBES];
   for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
   VisitMapView(visited, mPlayer.View()->Parent(), mPlayer.View()->GetRoom()->Location());
-  for(GameView* v = ViewBegin(); v!=ViewEnd(); ++v) {
+  for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) {
     if (!visited[v->GetCubeID()]) { 
       if (v->HideLocation()) {
         PlaySfx(sfx_deNeighbor);

@@ -1,18 +1,18 @@
 #include "Game.h"
 
-Cube* GameView::GetCube() const {
+Cube* ViewSlot::GetCube() const {
 	return gCubes + (this - pGame->ViewBegin());
 }
 
-Cube::ID GameView::GetCubeID() const {
+Cube::ID ViewSlot::GetCubeID() const {
 	return this - pGame->ViewBegin();
 }
 
-bool GameView::Touched() const {
+bool ViewSlot::Touched() const {
   return !mFlags.prevTouch && GetCube()->touching();
 }
 
-void GameView::Init() {
+void ViewSlot::Init() {
 	mFlags.subview = (this == pGame->ViewBegin()) ? VIEW_ROOM : VIEW_IDLE;
 	if (IsShowingRoom()) {
 		mSubview.room.Init(pGame->GetMap()->GetRoomId(pGame->GetPlayer()->Location()));
@@ -21,14 +21,14 @@ void GameView::Init() {
 	}
 }
 
-void GameView::HideSprites() {
+void ViewSlot::HideSprites() {
 	VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
 	for(unsigned i=0; i<8; ++i) {
 		mode.hideSprite(i);
 	}
 }
 
-void GameView::Restore() {
+void ViewSlot::Restore() {
 	switch(mFlags.subview) {
 	case VIEW_IDLE:
 		mSubview.idle.Restore();
@@ -42,7 +42,7 @@ void GameView::Restore() {
 	}
 }
 
-void GameView::Update() {
+void ViewSlot::Update() {
 	mFlags.prevTouch = GetCube()->touching();
 	switch(mFlags.subview) {
 	case VIEW_IDLE:
@@ -57,7 +57,7 @@ void GameView::Update() {
 	}
 }
   
-bool GameView::ShowLocation(Vec2 loc) {
+bool ViewSlot::ShowLocation(Vec2 loc) {
 	const Map* m = pGame->GetMap();
 	if (!pGame->GetMap()->Contains(loc)) {
 		if (IsShowingRoom()) {
@@ -74,7 +74,7 @@ bool GameView::ShowLocation(Vec2 loc) {
 	}
 }
 
-bool GameView::HideLocation() {
+bool ViewSlot::HideLocation() {
 	if (IsShowingRoom()) {
 		mFlags.subview = VIEW_IDLE;
 		mSubview.idle.Init();
@@ -83,13 +83,13 @@ bool GameView::HideLocation() {
 	return false;
 }
 
-void GameView::RefreshInventory() {
+void ViewSlot::RefreshInventory() {
   if (mFlags.subview == VIEW_IDLE) {
   	mSubview.idle.OnInventoryChanged();
   }
 }
 
-GameView* GameView::VirtualNeighborAt(Cube::Side side) const {
+ViewSlot* ViewSlot::VirtualNeighborAt(Cube::Side side) const {
   Cube::ID neighbor = GetCube()->virtualNeighborAt(side);
   return neighbor == CUBE_ID_UNDEFINED ? 0 : pGame->ViewAt(neighbor-CUBE_ID_BASE);
 }
@@ -104,7 +104,7 @@ GameView* GameView::VirtualNeighborAt(Cube::Side side) const {
 #define TILT_THRESHOLD 35
 #endif
 
-Cube::Side GameView::VirtualTiltDirection() const {
+Cube::Side ViewSlot::VirtualTiltDirection() const {
   Vec2 accel = GetCube()->virtualAccel();
   if (accel.y < -TILT_THRESHOLD) {
     return 0;

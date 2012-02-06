@@ -29,7 +29,7 @@ bool Map::CanTraverse(BroadLocation bloc, Cube::Side side) {
 
 bool Map::GetBroadLocationNeighbor(BroadLocation loc, Cube::Side side, BroadLocation* outNeighbor) {
   if (!CanTraverse(loc, side)) { return false; }
-  GameView* gv = loc.view->Parent()->VirtualNeighborAt(side);
+  ViewSlot* gv = loc.view->Parent()->VirtualNeighborAt(side);
   if (!gv || !gv->IsShowingRoom()) { return false; }
   outNeighbor->view = gv->GetRoomView();
   const Room* room = outNeighbor->view->GetRoom();

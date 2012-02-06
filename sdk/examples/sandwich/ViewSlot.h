@@ -7,7 +7,7 @@
 #define VIEW_ROOM		1
 #define VIEW_INVENTORY	2
 
-class GameView {
+class ViewSlot {
 private:
 	union { // modal views must be first in order to allow casting
 		IdleView idle;
@@ -41,6 +41,6 @@ public:
 	void RefreshInventory();
 
 	Cube::Side VirtualTiltDirection() const;
-	GameView* VirtualNeighborAt(Cube::Side side) const;
+	ViewSlot* VirtualNeighborAt(Cube::Side side) const;
 
 };

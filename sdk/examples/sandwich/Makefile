@@ -11,7 +11,6 @@ OBJS = \
 	Dialog.o \
 	Game.o \
 	GameState.o \
-	GameView.o \
 	IdleView.o \
 	InventoryView.o \
 	Map.o \
@@ -20,6 +19,7 @@ OBJS = \
 	Player.o \
 	Room.o \
 	RoomView.o \
+	ViewSlot.o \
 
 include $(TC_DIR)/firmware/master/Makefile.defs
 

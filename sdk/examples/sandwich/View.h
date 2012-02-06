@@ -1,13 +1,13 @@
 #pragma once
 
-class GameView;
+class ViewSlot;
 
 class View {
 public:
-	inline GameView* Parent() const { 
+	inline ViewSlot* Parent() const { 
 		// this works because the union of all subviews is the
-		// first parameter in GameView.  Otherwise, we'd
+		// first parameter in ViewSlot.  Otherwise, we'd
 		// need to implemented some offsetof() magic here :P
-		return (GameView*)this; 
+		return (ViewSlot*)this; 
 	}
 };
