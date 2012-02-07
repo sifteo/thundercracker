@@ -7,22 +7,17 @@
 #include <sifteo.h>
 using namespace Sifteo;
 
-volatile int x, y;
+Cube cube(5);
 
-struct Fizzbin {
-    Fizzbin() {
-        x = 10;
-        y = 18;
-    }
-    
-    ~Fizzbin() {
-        x = 11;
-    }
-};
+volatile int x;
 
-Fizzbin fluff;
+void __attribute__ ((noinline)) arbl(volatile int*base)
+{
+    base[500] = 1;
+}
 
 void siftmain()
 {
-    x = 5;
+    arbl(&x);
+    arbl(1 + &x);
 }
