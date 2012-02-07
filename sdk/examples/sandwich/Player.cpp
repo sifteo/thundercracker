@@ -152,6 +152,9 @@ void Player::Update(float dt) {
         }
         if (pGame->GetState()->HasBasicKey()) {
           pGame->GetState()->DecrementBasicKeyCount();
+          if (!pGame->GetState()->HasBasicKey()) {
+            pGame->OnInventoryChanged(); // move to call site?
+          }
           // check the door
           mCurrent.view->GetRoom()->OpenDoor();
           mCurrent.view->DrawBackground();
@@ -227,7 +230,10 @@ void Player::Update(float dt) {
         if (mCurrent.view->GetRoom()->HasItem()) {
           const ItemData* pItem = mCurrent.view->GetRoom()->TriggerAsItem();
           if (pGame->GetState()->FlagTrigger(pItem->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
-          pGame->GetState()->PickupItem(pItem->itemId);
+          if (pGame->GetState()->PickupItem(pItem->itemId)) {
+            PlaySfx(sfx_pickup);
+            pGame->OnInventoryChanged();
+          }
           // do a pickup animation
           for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
             mCurrent.view->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));

@@ -1,5 +1,4 @@
 #include "GameState.h"
-#include "Game.h"
 
 void GameState::Init() {
 	mQuest = 0;
@@ -71,16 +70,13 @@ bool GameState::Flag(uint8_t questId, uint8_t flagId) {
 
 bool GameState::PickupItem(int itemId) {
   if (itemId == 0) { return false; }
-  PlaySfx(sfx_pickup); // move to call site?
   if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
     mKeyCount++;
     if (mKeyCount == 1) {
-      pGame->OnInventoryChanged(); // move to call site?
     }
   } else if (!HasItem(itemId)) {
     mItemSet |= (1<<itemId);
     ASSERT(HasItem(itemId));
-    pGame->OnInventoryChanged(); // move to call site?
   } else {
   	return false;
   }
@@ -90,9 +86,6 @@ bool GameState::PickupItem(int itemId) {
 bool GameState::DecrementBasicKeyCount() { 
   ASSERT(mKeyCount>0); 
   mKeyCount--; 
-  if (mKeyCount == 0) {
-    pGame->OnInventoryChanged(); // move to call site?
-  }
   return true;
 }
 
