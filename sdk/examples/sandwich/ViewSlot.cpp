@@ -106,8 +106,8 @@ bool ViewSlot::HideLocation() {
 }
 
 void ViewSlot::RefreshInventory() {
-  if (mFlags.view == VIEW_IDLE) {
-  	mView.idle.OnInventoryChanged();
+  if (mFlags.view == VIEW_INVENTORY) {
+  	mView.inventory.OnInventoryChanged();
   }
 }
 

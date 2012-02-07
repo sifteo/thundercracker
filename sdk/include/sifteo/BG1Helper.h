@@ -96,6 +96,26 @@ public:
         ASSERT( getBitSetCount() <= MAX_TILES );
     }
 
+    NEVER_INLINE void DrawAsset( const Vec2 &point, const Sifteo::PinnedAssetImage &asset, unsigned frame=0 )
+    {
+        ASSERT( frame < asset.frames );
+        unsigned offset = asset.width * asset.height * frame;
+
+        for (unsigned y = 0; y < asset.height; y++)
+        {
+            const unsigned yOff = y + point.y;
+            SetBitRange( yOff, point.x, asset.width );
+
+            //_SYS_memcpy16( m_tileset[yOff] + point.x, asset.tiles + offset, asset.width );
+            //offset += asset.width;
+            for(unsigned x=0; x<asset.height; ++x) {
+                m_tileset[yOff][point.x+x] = asset.index + offset;
+                offset++;
+            }
+        }
+
+        ASSERT( getBitSetCount() <= MAX_TILES );
+    }
 
 	//draw a partial asset.  Pass in the position, xy min points, and width/height
     NEVER_INLINE void DrawPartialAsset( const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0 )
