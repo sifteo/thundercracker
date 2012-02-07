@@ -71,6 +71,7 @@ void Game::MainLoop() {
     view->ShowLocation(mPlayer.Location());
     System::paintSync();
   }  
+  (ViewBegin()+1)->ShowInventory();
 
   PlayMusic(music_castle);
   mSimTime = System::clock();

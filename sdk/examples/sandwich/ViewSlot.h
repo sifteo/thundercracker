@@ -42,6 +42,8 @@ public:
 
 	bool ShowLocation(Vec2 location);
 	bool HideLocation();
+
+	void ShowInventory();
 	void RefreshInventory();
 
 	Cube::Side VirtualTiltDirection() const;

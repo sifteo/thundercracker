@@ -105,6 +105,13 @@ bool ViewSlot::HideLocation() {
 	return false;
 }
 
+void ViewSlot::ShowInventory() {
+	if (mFlags.view != VIEW_INVENTORY) {
+		mFlags.view = VIEW_INVENTORY;
+		mView.inventory.Init();
+	}
+}
+
 void ViewSlot::RefreshInventory() {
   if (mFlags.view == VIEW_INVENTORY) {
   	mView.inventory.OnInventoryChanged();
