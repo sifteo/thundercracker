@@ -2,6 +2,7 @@
 #include "assets.gen.h"
 
 #include "Game.h"
+#include "AudioPlayer.h"
 
 using namespace Sifteo;
 
@@ -33,6 +34,8 @@ void siftmain() {
   //_SYS_vectors.neighborEvents.add = OnNeighborAdd;
   //_SYS_vectors.neighborEvents.remove = OnNeighborRem;
   
+  TotalsGame::AudioPlayer::Init();
+
   TotalsGame::Game &theGame = TotalsGame::Game::GetInstance();
   theGame.Setup(cubes, TotalsGame::Game::NUMBER_OF_CUBES);
 

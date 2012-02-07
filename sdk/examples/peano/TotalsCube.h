@@ -15,23 +15,24 @@ namespace TotalsGame
 
 	public:
 		TotalsCube();
-		static const float kTransitionTime = 1.1f;
+		static const float kTransitionTime = 0.1f;
 
-		void OpenShutters(const char *image);
-		void CloseShutters();
+		void OpenShutters(const AssetImage *image);
+		void CloseShutters(const AssetImage *image);
 
 		bool AreShuttersOpen();
 		bool AreShuttersClosed();
 				
 		void DrawVaultDoorsClosed();
 
-		void Image(AssetImage *image);
+		void Image(const AssetImage *image);
+		void Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size);
 	
 	private:
 
 		// for these methods, 0 <= offset <= 32
-		void DrawVaultDoorsOpenStep1(int offset, const char*);
-		void DrawVaultDoorsOpenStep2(int offset, const char*);
+		void DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage);
+		void DrawVaultDoorsOpenStep2(int offset, const AssetImage *innerImage);
 	};
 
 }

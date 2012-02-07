@@ -2,6 +2,8 @@ GameAssets = group{quality=10}
 Background = image{"background.png"}
 --BackgroundLit = image{"background_lit.png"}
 
+
+Title = image{"title.png", width=128, height=128}
 VaultDoor = image{"vault_door.png", width=128, height=128}
 
 Center = image{"assets_center.png", width=8, height=8}
@@ -22,3 +24,6 @@ MinorNW = image{"assets_minorNW.png", width=8, height=8}
 MinorSW = image{"assets_minorSW.png", width=8, height=8}
 MinorSE = image{"assets_minorSE.png", width=8, height=8}
 MinorNE = image{"assets_minorNE.png", width=8, height=8}
+
+
+sfx_Stinger2 = sound{ "PV_Stinger_02.raw" }

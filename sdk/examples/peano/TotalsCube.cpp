@@ -11,7 +11,7 @@ namespace TotalsGame
 		shuttersClosed = false;
 	}
 
-	void TotalsCube::OpenShutters(const char *image)
+	void TotalsCube::OpenShutters(const AssetImage *image)
 	{						
 		CORO_BEGIN
 
@@ -42,7 +42,7 @@ namespace TotalsGame
 				CORO_RESET;
 	}
 
-	void TotalsCube::CloseShutters()
+	void TotalsCube::CloseShutters(const AssetImage *image)
 	{
 		CORO_BEGIN
 
@@ -51,16 +51,16 @@ namespace TotalsGame
 			//TODO Jukebox.PlayShutterClose();
 			for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
 			{
-				DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, "");
+				DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, image);
 				CORO_YIELD;
 			}
 
-			DrawVaultDoorsOpenStep2(0, "");
+			DrawVaultDoorsOpenStep2(0, image);
 			CORO_YIELD;
 
 			for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
 			{
-				DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime, "");				
+				DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime, image);				
 				CORO_YIELD;
 			}			
 
@@ -81,13 +81,19 @@ namespace TotalsGame
 		return shuttersClosed;
 	}
 
-	void TotalsCube::Image(AssetImage *image)
+	void TotalsCube::Image(const AssetImage *image)
 	{
 		VidMode_BG0 mode(vbuf);
 		mode.init();
 		mode.BG0_drawAsset(Vec2(0,0), *image, 0);
 	}
 
+	void TotalsCube::Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size)
+	{
+		VidMode_BG0 mode(vbuf);
+		mode.init();
+		mode.BG0_drawPartialAsset(coord, offset, size, *image, 0);
+	}
 
 	// for these methods, 0 <= offset <= 32
 
@@ -102,7 +108,7 @@ namespace TotalsGame
 		mode.BG0_drawPartialAsset(Vec2(7,7),Vec2(0,0),Vec2(9,9), VaultDoor, 0);
 	}
 
-	void TotalsCube::DrawVaultDoorsOpenStep1(int offset, const char*) 
+	void TotalsCube::DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage) 
 	{
 		VidMode_BG0 mode(vbuf);
 		mode.init();
@@ -110,18 +116,23 @@ namespace TotalsGame
 		int yTop = /*TokenView.Mid.y*/7 - (offset+4)/8;
 		int yBottom = /*TokenView.Mid.y*/7 + (offset+4)/8;
 
+		if(innerImage)
+			mode.BG0_drawAsset(Vec2(0,0), *innerImage);
+
 		mode.BG0_drawPartialAsset(Vec2(0,0), Vec2(9,16-yTop), Vec2(7,yTop), VaultDoor);			//Top left
 		mode.BG0_drawPartialAsset(Vec2(7,0), Vec2(0,16-yTop), Vec2(9,yTop), VaultDoor);			//top right
 		mode.BG0_drawPartialAsset(Vec2(0,yBottom), Vec2(9,0), Vec2(7,16-yBottom), VaultDoor);	//bottom left
 		mode.BG0_drawPartialAsset(Vec2(7,yBottom), Vec2(0,0), Vec2(9,16-yBottom), VaultDoor);	//bottom right
 
-		//TODO
-		//if (innerImage.Length > 0 && offset > 0) {
-		//	cube.Image(innerImage, 0, yTop, 0, yTop, 8, yBottom-yTop); // "inner" row
-		//} 
+		/*
+		if (innerImage && yTop != yBottom) 
+		{
+			mode.BG0_drawPartialAsset(Vec2(0,yTop), Vec2(0,yTop), Vec2(16,yBottom-yTop), *innerImage); // "inner" row
+		} 
+		*/
 	}
 
-	void TotalsCube::DrawVaultDoorsOpenStep2(int offset, const char*) 
+	void TotalsCube::DrawVaultDoorsOpenStep2(int offset, const AssetImage *innerImage) 
 	{
 		VidMode_BG0 mode(vbuf);
 		mode.init();
@@ -129,15 +140,19 @@ namespace TotalsGame
 		int xLeft = /*TokenView.Mid.x*/7 - (offset+4)/8;
 		int xRight = /*TokenView.Mid.x*/7 + (offset+4)/8;
 
+		if(innerImage)
+			mode.BG0_drawAsset(Vec2(0,0), *innerImage);
+
 		mode.BG0_drawPartialAsset(Vec2(0,0), Vec2(16-xLeft,16-(7-4)), Vec2(xLeft,7-4), VaultDoor);			//Top left
 		mode.BG0_drawPartialAsset(Vec2(xRight,0), Vec2(0,16-(7-4)), Vec2(16-xRight,7-4), VaultDoor);		//Top right
 		mode.BG0_drawPartialAsset(Vec2(0,7+4), Vec2(16-xLeft,0), Vec2(xLeft,16-(7+4)), VaultDoor);			//bottom left
 		mode.BG0_drawPartialAsset(Vec2(xRight,7+4), Vec2(0,0), Vec2(16-xRight,16-(7+4)), VaultDoor);			//bottom right
-
-		//TODO
-		//if (innerImage.Length > 0 && offset > 0) {
-		//	cube.Image(innerImage, xLeft, 0, xLeft, 0, xRight-xLeft, 128); // "inner" column
-		//}
+		
+		/*
+		if (innerImage && xLeft != xRight) {
+			mode.BG0_drawPartialAsset(Vec2(xLeft,0), Vec2(xLeft,0), Vec2(xRight-xLeft,16), *innerImage); // "inner" column
+		}
+		*/
 	}
 
 }

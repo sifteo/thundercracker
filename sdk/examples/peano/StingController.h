@@ -2,6 +2,8 @@
 #include "View.h"
 #include "BlankView.h"
 #include "coroutine.h"
+#include "assets.gen.h"
+#include "AudioPlayer.h"
 
 namespace TotalsGame 
 {
@@ -13,6 +15,7 @@ namespace TotalsGame
 		BlankView *views[Game::NUMBER_OF_CUBES];
 
 		CORO_PARAMS
+		float time;
 
 	public:
 		StingController(Game *game) 
@@ -48,53 +51,38 @@ namespace TotalsGame
 		{
 			CORO_BEGIN
 
-			//yield return 0.1f;
-			CORO_YIELD;
-			//TODO Jukebox.Sfx("PV_stinger_02");
+			CORO_WAIT(0.1f);
+			AudioPlayer::PlaySfx(sfx_Stinger2);
 
 			{
 				bool anyOpen = false;
 				for(int i = 0; i < Game::NUMBER_OF_CUBES; i++) 
 				{
-					views[i]->cube->OpenShutters(NULL/*TOTO title*/);
+					views[i]->cube->OpenShutters(&Title);
 					anyOpen |= views[i]->cube->AreShuttersOpen();
 				}
 				if(!anyOpen)
 					return;
 			}
 
-			CORO_YIELD;
-			//yield return 3f;
+			CORO_WAIT(3.0);
 
 			{
 				bool anyClosed = false;
 				for(int i = 0; i < Game::NUMBER_OF_CUBES; i++) 
 				{
-					views[i]->cube->CloseShutters();
+					views[i]->cube->CloseShutters(&Title);
 					anyClosed |= views[i]->cube->AreShuttersClosed();
 				}				
 				if(!anyClosed)
 					return;
 			}
 			
-			CORO_YIELD;
+			CORO_WAIT(0.5f);
 			//yield return 0.5f;
-			printf("NEXT!\n");
 			mGame->sceneMgr.QueueTransition("Next");
 
 			CORO_END
-
-
-/*			if (mCoro != null) {
-				mCoro.Update(dt);
-				if (mCoro.IsDone) {
-					mCoro = null;
-					mGame.sceneMgr.QueueTransition("Next");
-				} else {
-					mGame.CubeSet.UpdateViews(Mathf.Min(dt, 0.2f));
-				}
-			}
-			*/
 		}
 
 		void OnPaint (bool canvasDirty)
