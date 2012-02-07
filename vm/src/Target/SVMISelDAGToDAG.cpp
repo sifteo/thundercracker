@@ -131,15 +131,13 @@ bool SVMDAGToDAGISel::SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset)
     // Note that OR is often used when the base FI has guaranteed alignment.
     if (CurDAG->isBaseWithConstantOffset(Addr)) {
         // Optional base portion, from the FI
-        if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr.getOperand(0)))
+        if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
             Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
-        else
-            Base = Addr.getOperand(0);
 
-        // Offset portion
-        ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
-        Offset = CurDAG->getTargetConstant(CN->getZExtValue(), ValTy);
-        return true;
+            ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
+            Offset = CurDAG->getTargetConstant(CN->getZExtValue(), ValTy);
+            return true;
+        }
     }
 
     return false;
