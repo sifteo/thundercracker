@@ -26,14 +26,14 @@ void InventoryView::RenderInventory() {
 	const int firstSandwichId = 2;
 	const int sandwichTypeCount = 4;
 	for(int itemId=firstSandwichId; itemId<firstSandwichId+sandwichTypeCount; ++itemId) {
-		if (pGame->GetPlayer()->HasItem(itemId)) {
+		if (pGame->GetState()->HasItem(itemId)) {
 		  const int x = count % 4;
 		  const int y = count >> 2;
 		  overlay.DrawAsset(Vec2(1 + (x<<2),1 + (y<<2)), Items, itemId-1);
 		  count++;
 		}
 	}
-	if (pGame->GetPlayer()->HaveBasicKey()) {
+	if (pGame->GetState()->HasBasicKey()) {
 		const int x = count % 4;
 		const int y = count >> 2;
 		overlay.DrawAsset(Vec2(1 + (x<<2),1 + (y<<2)), Items, ITEM_BASIC_KEY-1);

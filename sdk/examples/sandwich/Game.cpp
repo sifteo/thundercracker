@@ -238,7 +238,7 @@ void Game::OnInventoryChanged() {
   const int firstSandwichId = 2;
   int count = 0;
   for(int i=firstSandwichId; i<firstSandwichId+4; ++i) {
-    if(!mPlayer.HasItem(i)) {
+    if(!mState.HasItem(i)) {
       return;
     }
   }

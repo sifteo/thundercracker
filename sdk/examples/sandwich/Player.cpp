@@ -19,8 +19,6 @@ void Player::Init() {
   mPosition.y = 128 * (gQuestData->roomId / gMapData[gQuestData->mapId].width) + 16 * room.centerY;
   mStatus = PLAYER_STATUS_IDLE;
   mDir = 2;
-  mKeyCount = 0;
-  mItemMask = 0;
   mAnimFrame = 0;
   mAnimTime = 0.f;
   mProgress = 0;
@@ -44,28 +42,6 @@ Room* Player::CurrentRoom() const {
   return pGame->GetMap()->GetRoom(Location());
 }
 
-void Player::PickupItem(int itemId) {
-  if (itemId == 0) { return; }
-  PlaySfx(sfx_pickup);
-  if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
-    mKeyCount++;
-    if (mKeyCount == 1) {
-      pGame->OnInventoryChanged();
-    }
-  } else if (!HasItem(itemId)) {
-    mItemMask |= (1<<itemId);
-    ASSERT(HasItem(itemId));
-    pGame->OnInventoryChanged();
-  }
-}
-
-void Player::DecrementBasicKeyCount() { 
-  ASSERT(mKeyCount>0); 
-  mKeyCount--; 
-  if (mKeyCount == 0) {
-    pGame->OnInventoryChanged();
-  }
-}
 
 void Player::SetLocation(Vec2 position, Cube::Side direction) {
   CORO_RESET;
@@ -174,8 +150,8 @@ void Player::Update(float dt) {
           mCurrent.view->UpdatePlayer();
           CORO_YIELD;
         }
-        if (HaveBasicKey()) {
-          DecrementBasicKeyCount();
+        if (pGame->GetState()->HasBasicKey()) {
+          pGame->GetState()->DecrementBasicKeyCount();
           // check the door
           mCurrent.view->GetRoom()->OpenDoor();
           mCurrent.view->DrawBackground();
@@ -251,7 +227,7 @@ void Player::Update(float dt) {
         if (mCurrent.view->GetRoom()->HasItem()) {
           const ItemData* pItem = mCurrent.view->GetRoom()->TriggerAsItem();
           if (pGame->GetState()->FlagTrigger(pItem->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
-          PickupItem(pItem->itemId);
+          pGame->GetState()->PickupItem(pItem->itemId);
           // do a pickup animation
           for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
             mCurrent.view->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
