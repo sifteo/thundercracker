@@ -52,7 +52,17 @@ namespace llvm {
     ModulePass *createInlineGlobalCtorsPass();
 }
 
-
+static const char HelpText[] =
+    "\n"
+    "    slinky \\/\\/\\ Sifteo Linker and Code Generator\n"
+    "\n"
+    "    This tool is a combination linker, whole-program optimizer, and\n"
+    "    code generator. It converts one or more LLVM object files (.o) to\n"
+    "    a single fully-linked Sifteo VM executable, in ELF format.\n"
+    "\n"
+    "    This tool takes many of the standard LLVM code generation and\n"
+    "    diagnostic command line options, detailed below.\n"
+    ;
 static cl::extrahelp LicenseText(
     "\n"
     "LICENSE:\n"
@@ -95,8 +105,7 @@ static cl::extrahelp LicenseText(
     "    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n"
     "    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE\n"
     "    SOFTWARE.\n"
-    "\n"
-);
+    "\n");
 
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
@@ -274,19 +283,7 @@ int main(int argc, char **argv)
     LLVMInitializeSVMTargetMC();
     LLVMInitializeSVMTargetInfo();
 
-    // Register the target printer for --version.
-    cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
-
-    cl::ParseCommandLineOptions(argc, argv,
-        "Sifteo Linker and Code Generator (Slinky)\n"
-        "\n"
-        "    This tool is a combination linker, whole-program optimizer, and\n"
-        "    code generator. It converts one or more LLVM object files (.o) to\n"
-        "    a single fully-linked Sifteo VM executable, in ELF format.\n"
-        "\n"
-        "    This tool takes many of the standard LLVM code generation and\n"
-        "    diagnostic command line options, detailed below.\n"
-    );
+    cl::ParseCommandLineOptions(argc, argv, HelpText);
     
     // Load and link the input modules
     std::auto_ptr<Module> Composite = LoadInputs(argv[0], Context);
