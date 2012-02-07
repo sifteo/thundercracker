@@ -177,7 +177,8 @@ SVC encodings:
   11011111 110xxxxx     (3) SP = validate(SP - imm5*4)
   11011111 11100rrr     (4) r8 = validate(rN)
   11011111 11101rrr     (5) r9 = validate(rN)
-  11011111 1111xxxx     (6) Reserved
+  11011111 11110rrr     (6) Call validate(rN), with SP adjust
+  11011111 11111rrr     (7) Tail call validate(rN), with SP adjust
 
 Direct syscalls shall be used for very common operations: memcpy, memset,
 floating point, return, SP adjust, etc.

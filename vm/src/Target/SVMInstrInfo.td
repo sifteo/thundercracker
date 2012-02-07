@@ -93,6 +93,18 @@ def TAIL_CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
     let isTerminator = 1;
 }
 
+def CALLr : S_ind<(outs), (ins GPReg:$Rs),
+    "s.call\t$Rs", [(SVMCall GPReg:$Rs)]> {
+    let isCall = 1;
+}
+
+def TAIL_CALLr : S_ind<(outs), (ins GPReg:$Rs),
+    "s.tcall\t$Rs", [(SVMTailCall GPReg:$Rs)]> {
+    let isCall = 1;
+    let isReturn = 1;
+    let isTerminator = 1;
+}
+
 def SYS64_CALL : S_call<(outs), (ins i32imm:$imm6),
     "s.sys\t$imm6", [(SVMSys64Call imm:$imm6)]> {
     let isCall = 1;

@@ -41,10 +41,8 @@ Constant *SVMDecorations::Apply(Module *M, const GlobalValue *Value, Twine Prefi
     Twine Name = Prefix + GV->getName();
     GlobalAlias *GA = M->getNamedAlias(Name.str());
 
-    if (!GA) {
+    if (!GA)
         GA = new GlobalAlias(GV->getType(), GlobalValue::ExternalLinkage, Name, GV, M);
-        GA->copyAttributesFrom(GV);
-    }
 
     return GA;
 }

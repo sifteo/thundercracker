@@ -331,3 +331,13 @@ class S_ptr<dag outs, dag ins, string asmstr, list<dag> pattern>
     let value8{3} = Rd{0};
     let value8{2-0} = Rs;
 }
+
+class S_callr<bits<1> tail, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : T17<outs, ins, asmstr, pattern>
+{
+    // Indirect call
+    bits<3> Rs;
+    let value8{7-4} = 0b1111;
+    let value8{3} = tail;
+    let value8{2-0} = Rs;
+}
