@@ -11,16 +11,6 @@
 #include <sifteo/machine.h>
 #include <sifteo/math.h>
 
-/*
- * XXX: This is a kludge to save memory for the moment, by not inlining
- *      frequently used but complex functions. The long-term solution is
- *      to refactor code into system calls as necessary to avoid unnecessary
- *      inlining. (If there's one copy of this code, it should live in the firmware
- *      instead of in each game binary)
- */
-#ifndef NEVER_INLINE
-#define NEVER_INLINE    __attribute__ ((noinline))
-#endif
 
 namespace Sifteo {
 
@@ -174,7 +164,7 @@ class VidMode {
         buf.poke(offsetof(_SYSVideoRAM, first_line) / 2, firstLine | (numLines << 8));
     }
 
-    NEVER_INLINE void setRotation(enum Rotation r) {
+    void setRotation(enum Rotation r) {
         const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
         uint8_t flags = buf.peekb(offsetof(_SYSVideoRAM, flags));
         flags &= ~mask;
@@ -219,7 +209,7 @@ class VidMode_BG0 : public VidMode {
     static const unsigned BG0_width = _SYS_VRAM_BG0_WIDTH;
     static const unsigned BG0_height = _SYS_VRAM_BG0_WIDTH;
 
-    NEVER_INLINE void BG0_setPanning(Vec2 pixels) {
+    void BG0_setPanning(Vec2 pixels) {
         pixels.x = pixels.x % (int)(BG0_width * TILE);
         pixels.y = pixels.y % (int)(BG0_height * TILE);
         if (pixels.x < 0) pixels.x += BG0_width * TILE;
@@ -271,13 +261,13 @@ class VidMode_BG0 : public VidMode {
      *      here! Ugh.
      */
 
-    NEVER_INLINE void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, char c) {
+    void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, char c) {
         unsigned index = c - (int)' ';
         if (index < font.frames)
             BG0_drawAsset(point, font, index);
     }
 
-    NEVER_INLINE void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, const char *str) {
+    void BG0_text(const Vec2 &point, const Sifteo::AssetImage &font, const char *str) {
         Vec2 p = point;
         char c;
 
@@ -334,7 +324,7 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         BG0_putTile(point, c - ' ');
     }
 
-    NEVER_INLINE void BG0_text(const Vec2 &point, const char *str) {
+    void BG0_text(const Vec2 &point, const char *str) {
         Vec2 p = point;
         char c;
 
@@ -350,7 +340,7 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         }
     }
 
-    NEVER_INLINE void BG0_progressBar(const Vec2 &point, int pixelWidth, int tileHeight=1) {
+    void BG0_progressBar(const Vec2 &point, int pixelWidth, int tileHeight=1) {
         /*
          * XXX: This is kind of the hugest hack.. we should have some good way
          *      of using "well-known assets" from ROM somehow. This could either
