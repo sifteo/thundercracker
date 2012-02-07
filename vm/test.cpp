@@ -7,22 +7,20 @@
 #include <sifteo.h>
 using namespace Sifteo;
 
-#ifndef NUM_CUBES
-#  define NUM_CUBES 3
-#endif
+volatile int x, y;
 
-static Cube cubes[NUM_CUBES];
-volatile int x;
+struct Fizzbin {
+    Fizzbin() {
+        x = 10;
+        y = 18;
+    }
+    
+    ~Fizzbin() {
+        x = 11;
+    }
+};
 
-static void staticThing()
-{
-    x = 7;
-}
-
-void anotherThing()
-{
-    x = (int) &staticThing;
-}
+Fizzbin fluff;
 
 void siftmain()
 {

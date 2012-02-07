@@ -48,6 +48,11 @@ extern "C" void LLVMInitializeSVMTarget();
 extern "C" void LLVMInitializeSVMTargetMC();
 extern "C" void LLVMInitializeSVMTargetInfo();
 
+namespace llvm {
+    ModulePass *createInlineGlobalCtorsPass();
+}
+
+
 static cl::extrahelp LicenseText(
     "\n"
     "LICENSE:\n"
@@ -59,7 +64,7 @@ static cl::extrahelp LicenseText(
     "    Copyright (c) 2003-2012 University of Illinois at Urbana-Champaign.\n"
     "    All rights reserved.\n"
     "\n"
-    "    Contains code that was originalyl released under the Univeristy of\n"
+    "    Contains code that was originally released under the Univeristy of\n"
     "    Illinois/NCSA Open Source License, reproduced below.\n"
     "\n"
     "OPEN SOURCE LICENSE:\n"
@@ -232,6 +237,15 @@ static void AddStandardLinkPasses(PassManagerBase &PM, unsigned OptLevel)
     }
 }
 
+// Custom passes that occur between two rounds of optimization.
+static void AddMiddlePasses(PassManagerBase &PM)
+{
+    // After IPO, which may completely eliminate constructors, convert
+    // any remaining constructors into calls at the top of main().
+    // This may result in additional inlining and dead code elimination.
+    PM.add(createInlineGlobalCtorsPass());
+}
+
 int main(int argc, char **argv)
 {
     sys::PrintStackTraceOnErrorSignal();
@@ -318,11 +332,17 @@ int main(int argc, char **argv)
     PassManager PM;
     FunctionPassManager FPM(&mod);
     FPM.add(new TargetData(*Target.getTargetData()));
-    AddStandardLinkPasses(PM, OLvl);
-    AddOptimizationPasses(PM, FPM, OLvl);
-    PM.add(new TargetData(*Target.getTargetData()));
 
-    // Ask the target to add backend passes as necessary.
+    // Link-time optimization
+    AddStandardLinkPasses(PM, OLvl);
+
+    // Additional optimizations, both before and after our custom 'middle' passes
+    AddOptimizationPasses(PM, FPM, OLvl);
+    AddMiddlePasses(PM);
+    AddOptimizationPasses(PM, FPM, OLvl);
+
+    // Target passes
+    PM.add(new TargetData(*Target.getTargetData()));
     OwningPtr<tool_output_file> Out(GetOutputStream());
     if (!Out)
         return 1;
