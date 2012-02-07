@@ -44,13 +44,30 @@ SVMInstrInfo::SVMInstrInfo()
 unsigned SVMInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                            int &FrameIndex) const
 {
-    return MI->getOpcode() == SVM::LDRsp;
+    switch (MI->getOpcode()) {
+        
+    case SVM::LDRsp:
+    case SVM::LDRBRsp:
+        FrameIndex = MI->getOperand(1).getIndex();
+        return true;
+
+    }
+    return false;
 }
+
 
 unsigned SVMInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                           int &FrameIndex) const
 {
-    return MI->getOpcode() == SVM::STRsp;
+    switch (MI->getOpcode()) {
+        
+    case SVM::STRsp:
+    case SVM::STRBRsp:
+        FrameIndex = MI->getOperand(1).getIndex();
+        return true;
+
+    }
+    return false;
 }
 
 void SVMInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
@@ -63,12 +80,20 @@ void SVMInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     if (MBBI != MBB.end())
         DL = MBBI->getDebugLoc();
 
-    if (RC != SVM::GPRegRegisterClass)
-        llvm_unreachable("Can't store this register to stack slot");   
+    if (RC == SVM::GPRegRegisterClass)
+        BuildMI(MBB, MBBI, DL, get(SVM::STRsp))
+            .addReg(SrcReg, getKillRegState(isKill))
+            .addFrameIndex(FrameIndex)      // SelectAddrSP - Base
+            .addImm(0);                     // SelectAddrSP - Offset
 
-    BuildMI(MBB, MBBI, DL, get(SVM::STRsp))
-        .addReg(SrcReg, getKillRegState(isKill))
-        .addFrameIndex(FrameIndex);
+    else if (RC == SVM::BPRegRegisterClass || RC == SVM::BPWriteRegRegisterClass)
+        BuildMI(MBB, MBBI, DL, get(SVM::STRBRsp))
+            .addReg(SrcReg, getKillRegState(isKill))
+            .addFrameIndex(FrameIndex)      // SelectAddrSP - Base
+            .addImm(0);                     // SelectAddrSP - Offset
+
+    else
+        llvm_unreachable("Can't store this register to stack slot");   
 }
 
 void SVMInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -81,11 +106,18 @@ void SVMInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     if (MBBI != MBB.end())
         DL = MBBI->getDebugLoc();
 
-    if (RC != SVM::GPRegRegisterClass)
-        llvm_unreachable("Can't load this register from stack slot");   
+    if (RC == SVM::GPRegRegisterClass)
+        BuildMI(MBB, MBBI, DL, get(SVM::LDRsp), DestReg)
+            .addFrameIndex(FrameIndex)      // SelectAddrSP - Base
+            .addImm(0);                     // SelectAddrSP - Offset
 
-    BuildMI(MBB, MBBI, DL, get(SVM::LDRsp), DestReg)
-        .addFrameIndex(FrameIndex);
+    else if (RC == SVM::BPRegRegisterClass || RC == SVM::BPWriteRegRegisterClass)
+        BuildMI(MBB, MBBI, DL, get(SVM::LDRBRsp), DestReg)
+            .addFrameIndex(FrameIndex)      // SelectAddrSP - Base
+            .addImm(0);                     // SelectAddrSP - Offset
+
+    else
+        llvm_unreachable("Can't load this register from stack slot");   
 }
 
 void SVMInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
@@ -103,7 +135,13 @@ void SVMInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         // BP <- GPR
         BuildMI(MBB, MBBI, DL, get(SVM::MOVptr), DestReg)
             .addReg(SrcReg, getKillRegState(KillSrc));
-    
+
+    } else if (SVM::BPRegRegClass.contains(SrcReg) &&
+        SVM::GPRegRegClass.contains(DestReg)) {
+        // GPR <- BP
+        BuildMI(MBB, MBBI, DL, get(SVM::MOVrptr), DestReg)
+            .addReg(SrcReg, getKillRegState(KillSrc));
+
     } else {
         llvm_unreachable("Impossible reg-to-reg copy");
     }
@@ -115,7 +153,7 @@ bool SVMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB
                                  bool AllowModify) const
 {
     /*
-     * Find the last instruction in the block. If there is no termiantor,
+     * Find the last instruction in the block. If there is no terminator,
      * it implicitly falls through to the next block.
      */
     

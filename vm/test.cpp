@@ -17,13 +17,12 @@ static Cube cubes[NUM_CUBES];
 void siftmain()
 {
     for (unsigned i = 0; i < NUM_CUBES; i++) {
-        //cubes[i].enable(i);
+        cubes[i].enable(i);
 
         VidMode_BG0_ROM vid(cubes[i].vbuf);
-        vid.clear();
-        vid.set();
-        //vid.BG0_setPanning(Vec2(0,0));
-        //vid.setWindow(0, vid.LCD_height);
+        vid.init();
+        
+        vid.BG0_text(Vec2(1,1), "Hello World");
     }
 
     while (1) {

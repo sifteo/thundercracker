@@ -14,3 +14,13 @@ Optimization opportunities:
 - Try to fill NOP padding slots with useful 16-bit instructions
 
 - Use MOVWi16 instead of LDRpc for RAM symbols (we know they fit in 16 bits)
+
+Debugging support:
+
+- Explicit command line options, debug vs. release
+
+- In release builds, emit *nothing* that isn't necessary. Can probably
+  omit the ELF segment table entirely, and include only the necessary
+  sections.
+  
+- Debug builds: symbol tables, segment table, dwarf-2 symbols, etc.

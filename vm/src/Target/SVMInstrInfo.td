@@ -351,8 +351,10 @@ def ldAddrTarget : Operand<i32>,
 def : Pat<(SVMWrapper ldAddrTarget:$a), (LDRpc ldAddrTarget:$a)>;
 
 // Base pointer validation, represented as a reg-to-reg copy
-def MOVptr : S_ptr<(outs BPReg:$Rd), (ins GPReg:$Rs),
-    "s.mov\t$Rd, $Rs", []>;
+def MOVptr : S_ptr<(outs BPReg:$Rd), (ins GPReg:$Rs), "s.mov\t$Rd, $Rs", []>;
+
+// Pseudo-ops for disallowed operations
+def MOVrptr : Pseudo<(outs GPReg:$Rd), (ins BPReg:$Rs), "!MOV\t$Rd, $Rs", []>;
 
 def STRi   : T32_STi<0b0001100, "str",   [(store GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]>;
 def STR    : T32_ST <0b0001100, "str",   [(store GPReg:$Rt, BPWriteReg:$Rn)]>;
@@ -405,5 +407,17 @@ def STRsp : T11<0, (outs), (ins GPReg:$Rd, ADDRsp:$offset10),
 
 def ADDsp : T12<1, (outs GPReg:$Rd), (ins ADDRsp:$offset10),
     "add\t$Rd, SP, #$offset10", [(set GPReg:$Rd, ADDRsp:$offset10)]> {
+    let Uses = [SP];
+}
+
+// Pseudo-ops for disallowed operations
+def LDRBRsp : Pseudo<(outs BPReg:$Rd), (ins ADDRsp:$offset),
+    "!LDRBR\t$Rd, [SP, #$offset]",
+    [(set BPReg:$Rd, (load ADDRsp:$offset))]> {
+    let Uses = [SP];
+}
+def STRBRsp : Pseudo<(outs), (ins BPReg:$Rd, ADDRsp:$offset),
+    "!STRBR\t$Rd, [SP, #$offset]",
+    [(store BPReg:$Rd, ADDRsp:$offset)]> {
     let Uses = [SP];
 }

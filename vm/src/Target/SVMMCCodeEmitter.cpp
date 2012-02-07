@@ -77,6 +77,17 @@ public:
         
         switch (Op) {
         
+        case SVM::ADJCALLSTACKDOWN:
+        case SVM::ADJCALLSTACKUP:
+        case SVM::LDRBRsp:
+        case SVM::STRBRsp:
+            /*
+             * Some pseudoinstructions are illegal if they make it this far!
+             */
+            llvm_unreachable("Illegal pseudo-instruction remaining! Check"
+                " the -asm outputs for opcodes beginning with '!'.");
+            break;
+        
         case SVM::FNSTACK_R: 
         case SVM::FNSTACK: {
             /*
