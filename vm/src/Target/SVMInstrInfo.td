@@ -7,7 +7,7 @@
 
 
 /****************************************************************
- * Constant Pool
+ * Constants
  */
  
 def RelCPIop : Operand<i32> {
@@ -19,7 +19,12 @@ def AbsCPIop : Operand<i32> {
 }
 
 def LDRpc : T6<(outs GPReg:$Rd), (ins RelCPIop:$offset10),
-    "ldr\t$Rd, [PC, #$offset10]", [(set GPReg:$Rd, tconstpool:$offset10)]>;
+    "ldr\t$Rd, [PC, #$offset10]", [(set GPReg:$Rd, tconstpool:$offset10)]> {
+    let isAsCheapAsAMove = 1;
+}
+
+def MOVWi16 : T32_imm16<0b100100, (outs GPReg:$Rd), (ins i32imm:$value16),
+    "movw\t$Rd, #$value16", [(set GPReg:$Rd, imm256_65535:$value16)]>;
 
 
 /****************************************************************

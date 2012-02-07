@@ -5,25 +5,28 @@
  */
 
 #include <sifteo.h>
+
 using namespace Sifteo;
 
-Cube cube(5);
+#ifndef NUM_CUBES
+#  define NUM_CUBES 1
+#endif
 
-volatile int x;
-
-void __attribute__ ((noinline)) a1(volatile int*base)
-{
-    base[500] = 1;
-}
-
-void __attribute__ ((noinline)) a2(volatile int*base)
-{
-    base[500] = 2;
-}
+static Cube cubes[NUM_CUBES];
 
 void siftmain()
 {
-    a1(&x);
-    a2(1 + &x);
-    a2(3 + &x);
+    for (unsigned i = 0; i < NUM_CUBES; i++) {
+        //cubes[i].enable(i);
+
+        VidMode_BG0_ROM vid(cubes[i].vbuf);
+        vid.clear();
+        vid.set();
+        //vid.BG0_setPanning(Vec2(0,0));
+        //vid.setWindow(0, vid.LCD_height);
+    }
+
+    while (1) {
+       System::paint();
+    }
 }

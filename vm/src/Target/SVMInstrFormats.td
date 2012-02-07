@@ -59,6 +59,12 @@ class ThumbInst32<dag outs, dag ins, string asmstr, list<dag> pattern>
  * Patterns
  */
 
+// Immediate ranges
+def imm256_65535 : PatLeaf<(imm), [{
+    return (unsigned)N->getZExtValue() <= 65535
+        && (unsigned)N->getZExtValue() >= 256;
+}]>;
+
 // Small immediates
 def imm12 : PatLeaf<(imm), [{ return (unsigned)N->getZExtValue() < 4096; }]>;
 def imm8 : PatLeaf<(imm), [{ return (unsigned)N->getZExtValue() < 256; }]>;
@@ -229,6 +235,24 @@ class T32_LDSTbase<bits<7> op2v, dag outs, dag ins, string asmstr, list<dag> pat
     let secondWord{15} = 0;  // Source/dest in low reg
     let secondWord{14-12} = Rt;
     let secondWord{11-0} = offset12;
+}
+
+// 16-bit immediate (MOVT/MOVW)
+class T32_imm16<bits<6> op2v, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst32<outs, ins, asmstr, pattern>
+{
+    bits<16> value16;
+    bits<3> Rd;
+
+    let op1 = 0b10;
+    let op2{6} = value16{11};
+    let op2{5-0} = op2v;
+    let firstWord{3-0} = value16{15-12};
+    let secondWord{15} = 0;
+    let secondWord{14-12} = value16{10-8};
+    let secondWord{11} = 0;  // Dest in low reg
+    let secondWord{10-8} = Rd;
+    let secondWord{7-0} = value16{7-0};
 }
 
 // Store with operand immediate

@@ -155,6 +155,7 @@ public:
     uint32_t getAddrSPValue(const MCInst &MI, unsigned OpIdx,
         SmallVectorImpl<MCFixup> &Fixups) const
     {
+        assert(MI.getNumOperands() > OpIdx + 1);
         const MCOperand &baseFI = MI.getOperand(OpIdx);
         const MCOperand &offset = MI.getOperand(OpIdx + 1);
         unsigned value = baseFI.getImm() + offset.getImm();

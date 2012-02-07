@@ -1,0 +1,16 @@
+Optimization opportunities:
+
+- Preserve r1-r7 across function calls. Right now these regs
+  are being marked as killed, causing shared parameters to spill
+  into other registers unnecessarily.
+
+- More work on identifying opportunities to use imm12 addressing
+
+- Equal optimization weight for all 16-bit instructions? LDRpc alone is
+  better than LDRpc plus MOVs, for example.
+
+- Flash block packing and alignment!
+
+- Try to fill NOP padding slots with useful 16-bit instructions
+
+- Use MOVWi16 instead of LDRpc for RAM symbols (we know they fit in 16 bits)

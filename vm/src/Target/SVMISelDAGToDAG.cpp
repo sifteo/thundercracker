@@ -89,13 +89,8 @@ bool SVMDAGToDAGISel::shouldUseConstantPool(uint32_t val)
     /*
      * Is this value more efficient or only possible to express using a
      * constant pool?
-     *
-     * Right now we only consider the range of MOVSi8. All constants
-     * over 255 are moved to the pool. In the future it may make more sense
-     * to generate some values programmatically using negation or shifting,
-     * if this can be done using fewer unshared bytes than a const pool entry.
      */
-    return val > 0xFF;
+    return val >= 0x10000;
 }
 
 void SVMDAGToDAGISel::moveConstantToPool(SDNode *N, uint32_t val)
@@ -132,9 +127,8 @@ bool SVMDAGToDAGISel::SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset)
     if (CurDAG->isBaseWithConstantOffset(Addr)) {
         // Optional base portion, from the FI
         if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
-            Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
-
             ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
+            Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
             Offset = CurDAG->getTargetConstant(CN->getZExtValue(), ValTy);
             return true;
         }
