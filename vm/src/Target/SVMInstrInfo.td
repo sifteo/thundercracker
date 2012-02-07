@@ -349,50 +349,24 @@ def : Pat<(SVMWrapper ldAddrTarget:$a), (LDRpc ldAddrTarget:$a)>;
 def MOVptr : S_ptr<(outs BPReg:$Rd), (ins GPReg:$Rs),
     "s.mov\t$Rd, $Rs", []>;
 
-def STRi : T32_LDSTi<(outs),
-    (ins GPReg:$Rt, BPWriteReg:$Rn, i32imm:$offset12),
-    "str\t$Rt, [$Rn, #$offset12]",
-    [(store GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]> {
-    let op2 = 0b0001100;
-}
+def STRi   : T32_STi<0b0001100, "str",   [(store GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]>;
+def STR    : T32_ST <0b0001100, "str",   [(store GPReg:$Rt, BPWriteReg:$Rn)]>;
+def STRHi  : T32_STi<0b0001010, "strh",  [(truncstorei16 GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]>;
+def STRH   : T32_ST <0b0001010, "strh",  [(truncstorei16 GPReg:$Rt, BPWriteReg:$Rn)]>;
+def STRBi  : T32_STi<0b0001000, "strb",  [(truncstorei8 GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]>;
+def STRB   : T32_ST <0b0001000, "strb",  [(truncstorei8 GPReg:$Rt, BPWriteReg:$Rn)]>;
 
-def STR : T32_LDSTi<(outs),
-    (ins GPReg:$Rt, BPWriteReg:$Rn),
-    "str\t$Rt, [$Rn]",
-    [(store GPReg:$Rt, BPWriteReg:$Rn)]> {
-    let offset12 = 0;
-    let op2 = 0b0001100;
-}
+def LDRi   : T32_LDi<0b0001101, "ldr",   [(set GPReg:$Rt, (load (add BPReg:$Rn, imm12:$offset12)))]>;
+def LDR    : T32_LD <0b0001101, "ldr",   [(set GPReg:$Rt, (load BPReg:$Rn))]>;
+def LDRHi  : T32_LDi<0b0001011, "ldrh",  [(set GPReg:$Rt, (zextloadi16 (add BPReg:$Rn, imm12:$offset12)))]>;
+def LDRH   : T32_LD <0b0001011, "ldrh",  [(set GPReg:$Rt, (zextloadi16 BPReg:$Rn))]>;
+def LDRBi  : T32_LDi<0b0001001, "ldrb",  [(set GPReg:$Rt, (zextloadi8 (add BPReg:$Rn, imm12:$offset12)))]>;
+def LDRB   : T32_LD <0b0001001, "ldrb",  [(set GPReg:$Rt, (zextloadi8 BPReg:$Rn))]>;
 
-def STRHi : T32_LDSTi<(outs),
-    (ins GPReg:$Rt, BPWriteReg:$Rn, i32imm:$offset12),
-    "strh\t$Rt, [$Rn, #$offset12]",
-    [(truncstorei16 GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]> {
-    let op2 = 0b0001010;
-}
-
-def STRH : T32_LDSTi<(outs),
-    (ins GPReg:$Rt, BPWriteReg:$Rn),
-    "strh\t$Rt, [$Rn]",
-    [(truncstorei16 GPReg:$Rt, BPWriteReg:$Rn)]> {
-    let offset12 = 0;
-    let op2 = 0b0001010;
-}
-
-def STRBi : T32_LDSTi<(outs),
-    (ins GPReg:$Rt, BPWriteReg:$Rn, i32imm:$offset12),
-    "strb\t$Rt, [$Rn, #$offset12]",
-    [(truncstorei8 GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]> {
-    let op2 = 0b0001000;
-}
-
-def STRB : T32_LDSTi<(outs),
-    (ins GPReg:$Rt, BPWriteReg:$Rn),
-    "strb\t$Rt, [$Rn]",
-    [(truncstorei8 GPReg:$Rt, BPWriteReg:$Rn)]> {
-    let offset12 = 0;
-    let op2 = 0b0001000;
-}
+def LDRSHi : T32_LDi<0b0011011, "ldrsh", [(set GPReg:$Rt, (sextloadi16 (add BPReg:$Rn, imm12:$offset12)))]>;
+def LDRSH  : T32_LD <0b0011011, "ldrsh", [(set GPReg:$Rt, (sextloadi16 BPReg:$Rn))]>;
+def LDRSBi : T32_LDi<0b0011001, "ldrsb", [(set GPReg:$Rt, (sextloadi8 (add BPReg:$Rn, imm12:$offset12)))]>;
+def LDRSB  : T32_LD <0b0011001, "ldrsb", [(set GPReg:$Rt, (sextloadi8 BPReg:$Rn))]>;
 
 
 /****************************************************************

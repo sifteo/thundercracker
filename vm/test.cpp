@@ -11,13 +11,19 @@ Cube cube(5);
 
 volatile int x;
 
-void __attribute__ ((noinline)) arbl(volatile int*base)
+void __attribute__ ((noinline)) a1(volatile int*base)
 {
     base[500] = 1;
 }
 
+void __attribute__ ((noinline)) a2(volatile int*base)
+{
+    base[500] = 2;
+}
+
 void siftmain()
 {
-    arbl(&x);
-    arbl(1 + &x);
+    a1(&x);
+    a2(1 + &x);
+    a2(3 + &x);
 }

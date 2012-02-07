@@ -212,8 +212,8 @@ class T18<dag outs, dag ins, string asmstr, list<dag> pattern>
  * 32-bit Thumb21 Formats
  */
 
-// Load/store immediate
-class T32_LDSTi<dag outs, dag ins, string asmstr, list<dag> pattern>
+// Load/store with immediate, base class
+class T32_LDSTbase<bits<7> op2v, dag outs, dag ins, string asmstr, list<dag> pattern>
     : ThumbInst32<outs, ins, asmstr, pattern>
 {
     bits<3> Rn;
@@ -221,6 +221,7 @@ class T32_LDSTi<dag outs, dag ins, string asmstr, list<dag> pattern>
     bits<12> offset12;
 
     let op1 = 0b11;
+    let op2 = op2v;
 
     let firstWord{3} = 1;    // Pointer in high reg
     let firstWord{2-0} = Rn;
@@ -228,6 +229,38 @@ class T32_LDSTi<dag outs, dag ins, string asmstr, list<dag> pattern>
     let secondWord{15} = 0;  // Source/dest in low reg
     let secondWord{14-12} = Rt;
     let secondWord{11-0} = offset12;
+}
+
+// Store with operand immediate
+class T32_STi<bits<7> op2v, string opstr, list<dag> pattern>
+    : T32_LDSTbase<op2v, (outs),
+        (ins GPReg:$Rt, BPWriteReg:$Rn, i32imm:$offset12),
+        !strconcat(opstr, "\t$Rt, [$Rn, #$offset12]"),
+        pattern>;
+
+// Store with zero immediate
+class T32_ST<bits<7> op2v, string opstr, list<dag> pattern>
+    : T32_LDSTbase<op2v, (outs),
+        (ins GPReg:$Rt, BPWriteReg:$Rn),
+        !strconcat(opstr, "\t$Rt, [$Rn]"),
+        pattern> {
+    let offset12 = 0;
+}
+
+// Load with operand immediate
+class T32_LDi<bits<7> op2v, string opstr, list<dag> pattern>
+    : T32_LDSTbase<op2v, (outs GPReg:$Rt),
+        (ins BPReg:$Rn, i32imm:$offset12),
+        !strconcat(opstr, "\t$Rt, [$Rn, #$offset12]"),
+        pattern>;
+
+// Load with zero immediate
+class T32_LD<bits<7> op2v, string opstr, list<dag> pattern>
+    : T32_LDSTbase<op2v, (outs GPReg:$Rt),
+        (ins BPReg:$Rn),
+        !strconcat(opstr, "\t$Rt, [$Rn]"),
+        pattern> {
+    let offset12 = 0;
 }
 
 

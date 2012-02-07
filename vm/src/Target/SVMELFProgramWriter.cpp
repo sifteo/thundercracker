@@ -266,6 +266,9 @@ void SVMELFProgramWriter::RecordRelocation(const MCAssembler &Asm,
          */
         SVMLateFixup LF((MCFragment *) Fragment, Fixup, Target);
         LateFixupList.push_back(LF);
+
+        // This gets OR'ed with the fixup later. Zero it.
+        FixedValue = 0;
         break;
     }
 }
