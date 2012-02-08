@@ -16,16 +16,23 @@ static Cube cubes[NUM_CUBES];
 
 void siftmain()
 {
+    int64_t ns;
+    _SYS_ticks_ns(&ns);
+    if ((int32_t)ns < 1000)
+        System::paint();
+
+#if 0
     for (unsigned i = 0; i < NUM_CUBES; i++) {
-        cubes[i].enable(i);
+        //cubes[i].enable(i);
 
         VidMode_BG0_ROM vid(cubes[i].vbuf);
-        vid.init();
-        
-        vid.BG0_text(Vec2(1,1), "Hello World");
+        //vid.init();
+        //vid.BG0_text(Vec2(1,1), "Hello World");
     }
 
     while (1) {
        System::paint();
     }
+#endif
+
 }

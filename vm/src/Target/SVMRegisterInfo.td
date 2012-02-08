@@ -37,6 +37,8 @@ def BRW : SVMRegHigh< 1, "brw" >;
 def SP : SVMReg< "sp" >;
 def CPSR : SVMReg< "cpsr" >;
 
+def CPSRReg : RegisterClass<"SVM", [i32], 32, (add CPSR)>;
+
 // General purpose registers
 def GPReg : RegisterClass<"SVM", [i32], 32, (sequence "R%u", 0, 7)>;
     

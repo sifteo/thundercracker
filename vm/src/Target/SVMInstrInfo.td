@@ -124,7 +124,7 @@ def bTarget : Operand<OtherVT> {
 }
 
 def bccTarget : Operand<OtherVT> { 
-    let EncoderMethod = "getBTargetOpValue";
+    let EncoderMethod = "getBCCTargetOpValue";
 }
  
 def SDT_SVMCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
@@ -138,8 +138,10 @@ def SVMBrcond : SDNode<"SVMISD::BRCOND", SDT_SVMBrcond,
     [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
 def SVMCmov : SDNode<"SVMISD::CMOV", SDT_SVMCmov, []>;
 
-def Bcc : T16<(outs), (ins bccTarget:$offset8, CCop:$cc),
-    "b$cc\t$offset8", [(SVMBrcond bb:$offset8, imm:$cc)]> {
+// Should have pattern (SVMBrcond bb:$offset8, imm:$cc), but we have
+// to do this programmatically so we can glue the CMP instruction properly.
+def Bcc : T16<(outs), (ins bccTarget:$offset8, CCop:$cc, CPSRReg:$c),
+    "b$cc\t$offset8", []> {
     let isBranch = 1;
     let isTerminator = 1;
 }

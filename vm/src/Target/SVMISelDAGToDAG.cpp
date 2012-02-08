@@ -67,7 +67,10 @@ SDNode *SVMDAGToDAGISel::Select(SDNode *N)
         return NULL;
 
     switch (N->getOpcode()) {
+    default:
+        break;
 
+    // Convert inline constants to constpool entries when needed
     case ISD::Constant: {
         uint32_t val = cast<ConstantSDNode>(N)->getZExtValue();
         if (shouldUseConstantPool(val)) {
@@ -76,9 +79,38 @@ SDNode *SVMDAGToDAGISel::Select(SDNode *N)
         }
         break;
     }
+    
+    /*
+     * Pattern (SVMBrcond bb:$offset8, imm:$cc)
+     * Emits (Bcc bccTarget:$offset8, CCop:$cc)
+     * We must do this programmatically so we can glue the CMP instruction properly.
+     */
+    case SVMISD::BRCOND: {
+        DebugLoc dl = N->getDebugLoc();
+        SDValue Chain = N->getOperand(0);
+        SDValue N1 = N->getOperand(1);
+        SDValue N2 = N->getOperand(2);
+        SDValue N3 = N->getOperand(3);
+        SDValue InGlue = N->getOperand(4);
+        assert(N1.getOpcode() == ISD::BasicBlock);  // Target
+        assert(N2.getOpcode() == ISD::Constant);    // CC
+        assert(N3.getOpcode() == ISD::Register);    // CPSR
+        
+        // Make a new condition code constant
+        SDValue CCval = CurDAG->getTargetConstant(((unsigned)
+            cast<ConstantSDNode>(N2)->getZExtValue()), MVT::i32);
 
-    default:
-        break;
+        SDValue Ops[] = { N1, CCval, N3, Chain, InGlue };
+        SDNode *R = CurDAG->getMachineNode(SVM::Bcc, dl, MVT::Other,
+            MVT::Glue, Ops, 5);
+        Chain = SDValue(R, 0);
+        InGlue = SDValue(R, 1);
+
+        if (N->getNumValues() == 2)
+            ReplaceUses(SDValue(N, 1), InGlue);
+        ReplaceUses(SDValue(N, 0), Chain);
+        return NULL;
+    }
     }
 
     return SelectCode(N);

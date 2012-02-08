@@ -265,10 +265,11 @@ SDValue SVMTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG)
     DebugLoc dl = Op.getDebugLoc();
 
     SDValue Cmp = DAG.getNode(SVMISD::CMP, dl, MVT::Glue, LHS, RHS);
+    SDValue SVMcc = DAG.getConstant(SVMCC::mapTo(CC), MVT::i32);
     SDValue CCR = DAG.getRegister(SVM::CPSR, MVT::i32);
 
     return DAG.getNode(SVMISD::BRCOND, dl, MVT::Other,
-        Chain, Dest, DAG.getConstant(SVMCC::mapTo(CC), MVT::i32), CCR, Cmp);
+        Chain, Dest, SVMcc, CCR, Cmp);
 }
 
 SDValue SVMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
