@@ -26,4 +26,8 @@ MinorSE = image{"assets_minorSE.png", width=8, height=8}
 MinorNE = image{"assets_minorNE.png", width=8, height=8}
 
 
-sfx_Stinger2 = sound{ "PV_Stinger_02.raw" }
+sfx_Stinger_02 = sound{ "PV_Stinger_02.raw" }
+sfx_Slide_LessScrape_01 = sound{ "PV_slide_lessScrape_01.raw" }
+sfx_Slide_LessScrape_02 = sound{ "PV_slide_lessScrape_02.raw" }
+sfx_Slide_LessScrape_Close_01 = sound{ "PV_slide_lessScrape_close_01.raw" }
+

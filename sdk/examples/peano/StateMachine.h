@@ -58,6 +58,8 @@ namespace TotalsGame
 
 		StateNode *currentState;
 
+		float nextFrameDelay;
+
 	};
 
 

@@ -65,7 +65,7 @@ namespace TotalsGame {
 		void OnStopped();
 
 	private:
-		static void OnCubeTouched(_SYSCubeID cid);
+		static void OnCubeTouch(_SYSCubeID cid);
 		static void OnCubeShake(_SYSCubeID cid);
 	};
 

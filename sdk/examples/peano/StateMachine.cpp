@@ -11,6 +11,7 @@ namespace TotalsGame
 		numStateTransitions = 0;
 		pendingTransition = NULL;
 		currentState = NULL;
+		nextFrameDelay = 0;
 	}
 
 	StateMachine &StateMachine::State(const char *name, IStateController *controller)
@@ -57,8 +58,13 @@ namespace TotalsGame
 		assert(currentState);
 
 		if(currentState->isController)
-		{			
-			currentState->controller->OnTick(dt);		
+		{		
+			nextFrameDelay -= dt;
+			if(nextFrameDelay <= 0)
+			{
+				float delay = currentState->controller->OnTick(dt);		
+				nextFrameDelay = delay > 0 ? delay : 0;
+			}
 		}
 		else
 		{

@@ -15,18 +15,18 @@ namespace TotalsGame
 		return instance;
 	}
 
-	void Game::OnCubeTouched(_SYSCubeID cid)
-	{printf("touch event\n");
-		TotalsCube::EventHandler *h = Game::GetInstance().cubes[cid].eventHandler;
-		if(h)
-			h->OnCubeTouched();
+	void Game::OnCubeTouch(_SYSCubeID cid)
+	{
+		TotalsCube &cube = Game::GetInstance().cubes[cid];		
+		if(cube.eventHandler)
+			cube.eventHandler->OnCubeTouch(&cube, cube.touching());
 	}
 
 	void Game::OnCubeShake(_SYSCubeID cid)
 	{
-		TotalsCube::EventHandler *h = Game::GetInstance().cubes[cid].eventHandler;
-		if(h)
-			h->OnCubeShake();
+		TotalsCube &cube = Game::GetInstance().cubes[cid];		
+		if(cube.eventHandler)
+			cube.eventHandler->OnCubeShake(&cube);
 	}
 
 	void Game::ClearCubeViews()
@@ -50,7 +50,7 @@ namespace TotalsGame
 		assert(nCubes == Game::NUMBER_OF_CUBES);
 		cubes = _cubes;
 
-		_SYS_vectors.cubeEvents.touch = &OnCubeTouched;
+		_SYS_vectors.cubeEvents.touch = &OnCubeTouch;
 		_SYS_vectors.cubeEvents.shake = &OnCubeShake;
 
 		currentPuzzle = NULL;

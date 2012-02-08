@@ -21,8 +21,8 @@ namespace TotalsGame
 		class EventHandler
 		{
 		public:
-			virtual void OnCubeShake() {}
-			virtual void OnCubeTouched() {}
+			virtual void OnCubeShake(TotalsCube *cube) {}
+			virtual void OnCubeTouch(TotalsCube *cube, bool touching) {}
 		};
 
 		TotalsCube();

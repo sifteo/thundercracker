@@ -1,26 +1,42 @@
 #include "AudioPlayer.h"
+#include "assets.gen.h"
 
 namespace TotalsGame
 {
+	AudioChannel AudioPlayer::channelSfx[NumSfxChannels];
+	AudioChannel AudioPlayer::channelMusic;
+
 	void AudioPlayer::Init()
 	{
-		channelSfx.init();
+		for(int i = 0; i < NumSfxChannels; i++)
+			channelSfx[i].init();
 		channelMusic.init();
 	}
 
 	void AudioPlayer::PlaySfx(_SYSAudioModule& handle, bool preempt)
 	{
-		if (channelSfx.isPlaying()) {
+		//find a nonplaying channel
+		int index = 0;
+		for(int i = 0; i < NumSfxChannels; i++)
+		{
+			if(!channelSfx[i].isPlaying())
+			{
+				index = i;
+			}
+		}
+
+
+		if (channelSfx[index].isPlaying()) {
 			if (preempt)
 			{
-				channelSfx.stop();
+				channelSfx[index].stop();
 			} 
 			else
 			{
 				return;
 			}
 		}
-		channelSfx.play(handle);
+		channelSfx[index].play(handle);
 	}
 
 	void AudioPlayer::PlayMusic(_SYSAudioModule& music, bool loop)
@@ -32,6 +48,21 @@ namespace TotalsGame
 		channelMusic.play(music, loop ? LoopRepeat : LoopOnce);
 	}
 
-	AudioChannel AudioPlayer::channelSfx;
-	AudioChannel AudioPlayer::channelMusic;
+
+
+
+    void AudioPlayer::PlayShutterOpen() 
+	{
+		static int parity = 0;
+		parity = 1-parity;
+		if(parity)
+			PlaySfx(sfx_Slide_LessScrape_02);
+		else
+			PlaySfx(sfx_Slide_LessScrape_01);
+    }
+
+    void AudioPlayer::PlayShutterClose() 
+	{ 
+		PlaySfx(sfx_Slide_LessScrape_Close_01); 
+	}
 }

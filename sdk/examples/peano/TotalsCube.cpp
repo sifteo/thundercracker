@@ -1,6 +1,7 @@
 #include "TotalsCube.h"
 #include "assets.gen.h"
 #include "Game.h"
+#include "AudioPlayer.h"
 
 namespace TotalsGame
 {
@@ -15,7 +16,7 @@ namespace TotalsGame
 	{						
 		CORO_BEGIN
 
-		//TODO Jukebox.PlayShutterOpen();
+		AudioPlayer::PlayShutterOpen();
 		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
 		{
 			DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime, image);
@@ -40,7 +41,7 @@ namespace TotalsGame
 	{
 		CORO_BEGIN
 
-		//TODO Jukebox.PlayShutterClose();
+		AudioPlayer::PlayShutterClose();
 		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
 		{
 			DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, image);
