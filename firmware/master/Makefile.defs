@@ -18,8 +18,7 @@ ifneq ($(BUILD_STM32),)
 endif
 
 ASSETS = assets
-AUDIO = audio
-GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html $(AUDIO).gen.h $(AUDIO).gen.cpp MAPFILE.map
+GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html MAPFILE.map
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 
 # Only disable this in debugging emergencies!
