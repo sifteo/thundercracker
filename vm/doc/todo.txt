@@ -1,26 +1,27 @@
+Correctness:
+
+- Flash block packing and alignment!
+- CMP
+- Never spill BR to stack
+
 Optimization opportunities:
 
 - Preserve r1-r7 across function calls. Right now these regs
   are being marked as killed, causing shared parameters to spill
   into other registers unnecessarily.
-
 - More work on identifying opportunities to use imm12 addressing
-
 - Equal optimization weight for all 16-bit instructions? LDRpc alone is
   better than LDRpc plus MOVs, for example.
-
-- Flash block packing and alignment!
-
 - Try to fill NOP padding slots with useful 16-bit instructions
-
 - Use MOVWi16 instead of LDRpc for RAM symbols (we know they fit in 16 bits)
+- More efficient comparison generation (See ARMTargetLowering::getARMCmp)
 
 Debugging support:
 
 - Explicit command line options, debug vs. release
-
 - In release builds, emit *nothing* that isn't necessary. Can probably
   omit the ELF segment table entirely, and include only the necessary
   sections.
-  
 - Debug builds: symbol tables, segment table, dwarf-2 symbols, etc.
+- gdb stub! (Would this work with stock ARM gdb, or would we need a
+  special build?)
