@@ -6,6 +6,9 @@
 
 namespace TotalsGame
 {
+
+	
+
 	class TotalsCube: public Sifteo::Cube
 	{
 		CORO_PARAMS;
@@ -14,12 +17,21 @@ namespace TotalsGame
 		View *view;
 
 	public:
+
+		class EventHandler
+		{
+		public:
+			virtual void OnCubeShake() {}
+			virtual void OnCubeTouched() {}
+		};
+
 		TotalsCube();
 		static const float kTransitionTime = 0.1f;
 
 		void SetView(View *v) {delete view;view = v;}
 		View *GetView(void) {return view;}
 
+		EventHandler *eventHandler;
 
 		float OpenShutters(const AssetImage *image);
 		float CloseShutters(const AssetImage *image);

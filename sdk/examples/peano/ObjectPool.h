@@ -15,10 +15,11 @@
 			if(!(mask & allocationMask)) \
 			{ \
 				allocationMask |= mask; \
+				printf("NEW %s\t%x\n", #classname, (unsigned int)allocationMask); \
 				return &allocationPool[bit * sizeof(classname)]; \
 			} \
 		} \
-		return NULL; printf("allocation failure type" #classname "\n");\
+		return NULL; \
 	} \
 	static void operator delete(void *p) \
 	{ \
@@ -28,6 +29,7 @@
 		size_t index = offset / sizeof(classname); \
 		assert(index < MAX_POOL); \
 		allocationMask &= ~(1 << index); \
+		printf("DEL %s\t%x\n", #classname, (unsigned int)allocationMask); \
 	}
 
 	

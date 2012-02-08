@@ -11,11 +11,20 @@ namespace TotalsGame
 	class StingController : public IStateController 
 	{
 	private:
+		class EventHandler: public TotalsCube::EventHandler
+		{
+		public:
+			void OnCubeTouched() {printf("touched\n");}
+			void OnCubeShake() {printf("shake\n");}
+		};
+
 		Game *mGame;
 
 		CORO_PARAMS
 		float time;
 		int i;
+
+		EventHandler eventHandler;
 
 	public:
 		StingController(Game *game) 
@@ -32,9 +41,7 @@ namespace TotalsGame
 			for(int i = 0; i < Game::NUMBER_OF_CUBES; i++) 
 			{
 				new BlankView(&Game::GetInstance().cubes[i], NULL);
-				//TODO
-				//cube.ShakeStoppedEvent += delegate { Skip(); };
-				//cube.ButtonEvent += delegate(Cube c, bool pressed) { if (!pressed) Skip();  };
+				Game::GetInstance().cubes[i].eventHandler = &eventHandler;
 			}
 
 			//mGame.CubeSet.LostCubeEvent += delegate { Skip(); };
@@ -80,7 +87,7 @@ namespace TotalsGame
 			
 			CORO_YIELD(0.5f);
 
-			mGame->sceneMgr.QueueTransition("Next");
+			//mGame->sceneMgr.QueueTransition("Next");
 
 			CORO_END
 
@@ -94,9 +101,8 @@ namespace TotalsGame
 
 		void OnDispose () 
 		{
-		/*	//TODO
-			mGame.CubeSet.ClearEvents(); */
-
+			//TODO purge pending events?
+			Game::ClearCubeEventHandlers();
 			Game::ClearCubeViews();
 			
 		}

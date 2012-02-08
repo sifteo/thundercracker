@@ -8,6 +8,7 @@ namespace TotalsGame
 	{
 		CORO_RESET;
 		view = NULL;
+		eventHandler = NULL;
 	}
 
 	float TotalsCube::OpenShutters(const AssetImage *image)
