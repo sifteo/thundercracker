@@ -204,9 +204,5 @@ is always interpreted as a validated flash address:
   0x81  Asynchronous preload
   0x82  Assign to r8
   0x83  Assign to r9
-  
-Assigned syscall numbers:
-
-  0x0000   Return from function call
 
 --

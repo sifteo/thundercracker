@@ -419,24 +419,24 @@ int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(7);
 void _SYS_sincosf(float x, float *sinOut, float *cosOut) _SC(8);
 float _SYS_fmodf(float a, float b) _SC(9);
 
-uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(64);
-void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(65);
-void _SYS_strlcat(char *dest, const char *src, uint32_t destSize) _SC(66);
-void _SYS_strlcat_int(char *dest, int src, uint32_t destSize) _SC(67);
+uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(17);
+void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(18);
+void _SYS_strlcat(char *dest, const char *src, uint32_t destSize) _SC(19);
+void _SYS_strlcat_int(char *dest, int src, uint32_t destSize) _SC(20);
 void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(68);
 void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize) _SC(69);
 int _SYS_strncmp(const char *a, const char *b, uint32_t count) _SC(70);
 
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed) _SC(71);
-uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state) _SC(72);
-uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit) _SC(73);
+uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state) _SC(10);
+uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit) _SC(11);
 
 void _SYS_exit(void) _SC(74);    /// Equivalent to return from siftmain()
 void _SYS_yield(void) _SC(75);   /// Temporarily cede control to the firmware
 void _SYS_paint(void) _SC(76);   /// Enqueue a new rendering frame
 void _SYS_finish(void) _SC(77);  /// Wait for enqueued frames to finish
 
-void _SYS_ticks_ns(int64_t *nanosec) _SC(78);    /// Return the monotonic system timer, in nanoseconds
+void _SYS_ticks_ns(int64_t *nanosec) _SC(12);    /// Return the monotonic system timer, in nanoseconds
 
 void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max) _SC(79);
 void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(80);  /// Which cubes will be trying to connect?
@@ -460,28 +460,27 @@ void _SYS_getCubeHWID(_SYSCubeID cid, struct _SYSCubeHWID *hwid) _SC(91);
 void _SYS_vbuf_init(struct _SYSVideoBuffer *vbuf) _SC(92);
 void _SYS_vbuf_lock(struct _SYSVideoBuffer *vbuf, uint16_t addr) _SC(93);
 void _SYS_vbuf_unlock(struct _SYSVideoBuffer *vbuf) _SC(94);
-void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word) _SC(95);
-void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(96);
-void _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word) _SC(97);
-void _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte) _SC(98);
+void _SYS_vbuf_poke(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word) _SC(13);
+void _SYS_vbuf_pokeb(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte) _SC(14);
+void _SYS_vbuf_peek(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word) _SC(15);
+void _SYS_vbuf_peekb(const struct _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte) _SC(16);
 void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word, uint16_t count) _SC(99);
 void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count) _SC(100);
 void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count) _SC(101);
 void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count) _SC(102);
-void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count,
-                     uint16_t lines, uint16_t src_stride, uint16_t addr_stride) _SC(103);
-void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(104);
-void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(105);
+void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count, uint16_t lines, uint16_t src_stride, uint16_t addr_stride) _SC(103);
+void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(98);
+void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(97);
                      
-void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer) _SC(106);
-uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(107);
-uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(108);
-void _SYS_audio_stop(_SYSAudioHandle h) _SC(109);
-void _SYS_audio_pause(_SYSAudioHandle h) _SC(110);
-void _SYS_audio_resume(_SYSAudioHandle h) _SC(111);
-int  _SYS_audio_volume(_SYSAudioHandle h) _SC(112);
-void _SYS_audio_setVolume(_SYSAudioHandle h, int volume) _SC(113);
-uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(114);
+void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer) _SC(96);
+uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(95);
+uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(78);
+void _SYS_audio_stop(_SYSAudioHandle h) _SC(73);
+void _SYS_audio_pause(_SYSAudioHandle h) _SC(72);
+void _SYS_audio_resume(_SYSAudioHandle h) _SC(67);
+int  _SYS_audio_volume(_SYSAudioHandle h) _SC(66);
+void _SYS_audio_setVolume(_SYSAudioHandle h, int volume) _SC(65);
+uint32_t _SYS_audio_pos(_SYSAudioHandle h) _SC(64);
 
 #ifdef __cplusplus
 }  // extern "C"
