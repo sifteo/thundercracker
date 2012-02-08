@@ -9,7 +9,7 @@ void IdleView::Init() {
   mStartFrame = pGame->AnimFrame();
   //DrawInventorySprites();
   Parent()->HideSprites();
-  Parent()->Graphics().BG0_drawAsset(Vec2(0,0), *(pGame->GetMap()->Data()->blankImage));
+  Parent()->Graphics().BG0_drawAsset(Vec2(0,0), Blank);
   Parent()->Overlay().Flush();
 }
 

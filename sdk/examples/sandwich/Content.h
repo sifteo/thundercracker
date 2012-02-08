@@ -104,7 +104,6 @@ struct BridgeSubdivisionData {
 struct MapData {
     const AssetImage* tileset;
     const AssetImage* overlay;
-    const AssetImage* blankImage;
     const RoomData* rooms;
     const uint8_t* rle_overlay; // overlay layer w/ empty-tiles RLE-encoded (tileId, tileId, 0xff, emptyCount, tileId, ...)
     const uint8_t* xportals; // bit array of portals between rooms (x,y) and (x+1,y)

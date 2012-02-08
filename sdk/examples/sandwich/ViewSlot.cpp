@@ -19,6 +19,7 @@ void ViewSlot::Init() {
 	mode.clear();
   	mode.setWindow(0, 128);
 	mView.idle.Init();
+	pGame->NeedsSync();
 }
 
 void ViewSlot::HideSprites() {
@@ -44,6 +45,7 @@ void ViewSlot::Restore() {
 		mView.inventory.Restore();
 		break;
 	}
+	pGame->NeedsSync();
 }
 
 void ViewSlot::Update() {
@@ -82,6 +84,7 @@ bool ViewSlot::ShowLocation(Vec2 loc) {
 			}
 			mFlags.view = VIEW_ROOM;
 			mView.room.Init(rid);
+			pGame->NeedsSync();
 		}
 		return true;
 	}
@@ -96,9 +99,11 @@ bool ViewSlot::HideLocation() {
 		if (invShowing) {
 			mFlags.view = VIEW_IDLE;
 			mView.idle.Init();
+			pGame->NeedsSync();
 		} else {
 			mFlags.view = VIEW_INVENTORY;
 			mView.inventory.Init();
+			pGame->NeedsSync();
 		}
 		return true;
 	}
@@ -109,6 +114,7 @@ void ViewSlot::ShowInventory() {
 	if (mFlags.view != VIEW_INVENTORY) {
 		mFlags.view = VIEW_INVENTORY;
 		mView.inventory.Init();
+		pGame->NeedsSync();
 	}
 }
 

@@ -2,6 +2,8 @@ GameAssets = group{quality=10}
 
 ScreenOff = image{"PowerOff.png", width=128, height=128}
 
+Blank = image{"Blank.png", width=128, height=128}
+
 PlayerStand = image{"stand.png", width=32, height=32,pinned=true}
 PlayerWalk = image{"walk.png", width=32, height=32,pinned=true}
 PlayerPickup = image{"pickup.png", width=32, height=32, pinned=true}
@@ -12,7 +14,7 @@ Items = image{"items.png", width=16, height=16, pinned=true}
 
 Winscreen = image{"winscreen.png", width=128, height=128}
 WinscreenBackground = image{"winscreen_background.png", width=128, height=128}
-WinscreenAnim = image{"winscreen_anim.png", width=56, height=80, quality=2}
+WinscreenAnim = image{"winscreen_anim.png", width=56, height=80, quality=6}
 
 Sparkle = image{"sparkle.png", width=8, height=8, pinned=true}
 

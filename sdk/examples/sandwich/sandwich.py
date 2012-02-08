@@ -83,7 +83,7 @@ class World:
 				lua.write("TileSet_%s = image{ \"%s.png\", width=16, height=16 }\n" % (name,name))
 				if os.path.exists(name + "_overlay.png"):
 					lua.write("Overlay_%s = image{ \"%s_overlay.png\", width=16, height=16 }\n" % (name,name))
-				lua.write("Blank_%s = image{ \"%s_blank.png\", width=128, height=128 }\n" % (name,name))
+				#lua.write("Blank_%s = image{ \"%s_blank.png\", width=128, height=128 }\n" % (name,name))
 			lua.write("\n-- DIALOG IMAGES\n")
 			for name in self.dialog.list_npc_image_names():
 				lua.write("NPC_%s = image{ \"%s.png\", width=32, height=32, pinned=true }\n" % (name,name))

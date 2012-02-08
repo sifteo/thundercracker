@@ -40,4 +40,5 @@ void InventoryView::RenderInventory() {
 		count++;
 	}
 	overlay.Flush();	
+	pGame->NeedsSync();
 }

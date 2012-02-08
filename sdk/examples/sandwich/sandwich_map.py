@@ -20,7 +20,7 @@ class Map:
 	def __init__(self, world, path):
 		self.world = world
 		self.id = os.path.basename(path)[:-4].lower()
-		assert os.path.exists(path[:-4]+"_blank.png"), "Map missing blank image: " + self.id
+		#assert os.path.exists(path[:-4]+"_blank.png"), "Map missing blank image: " + self.id
 		self.raw = tmx.Map(path)
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
@@ -215,7 +215,7 @@ class Map:
 	
 	def write_decl_to(self, src):
 		src.write(
-			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, %(overlay_rle)s, " \
+			"    { &TileSet_%(name)s, %(overlay)s, %(name)s_rooms, %(overlay_rle)s, " \
 			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
 			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(w)x, 0x%(h)x, 0x%(ambient)x },\n" % \
 			{ 
