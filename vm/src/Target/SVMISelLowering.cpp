@@ -30,6 +30,65 @@ using namespace llvm;
 SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     : TargetLowering(TM, new TargetLoweringObjectFileELF())
 {
+    // Standard library
+    setLibcallName(RTLIB::MEMCPY, "_SYS_4");  // _SYS_memcpy8
+    setLibcallName(RTLIB::MEMSET, "_SYS_1");  // _SYS_memset8
+
+    // Software floating point library
+    setLibcallName(RTLIB::ADD_F32, "_SYS_63");
+    setLibcallName(RTLIB::ADD_F64, "_SYS_62");
+    setLibcallName(RTLIB::SUB_F32, "_SYS_61");
+    setLibcallName(RTLIB::SUB_F64, "_SYS_60");
+    setLibcallName(RTLIB::MUL_F32, "_SYS_59");
+    setLibcallName(RTLIB::MUL_F64, "_SYS_58");
+    setLibcallName(RTLIB::DIV_F32, "_SYS_57");
+    setLibcallName(RTLIB::DIV_F64, "_SYS_56");
+
+    setLibcallName(RTLIB::FPEXT_F32_F64, "_SYS_55");
+    setLibcallName(RTLIB::FPROUND_F64_F32, "_SYS_54");
+
+    setLibcallName(RTLIB::FPTOSINT_F32_I8, "_SYS_53");
+    setLibcallName(RTLIB::FPTOSINT_F32_I16, "_SYS_53");
+    setLibcallName(RTLIB::FPTOSINT_F32_I32, "_SYS_53");
+    setLibcallName(RTLIB::FPTOSINT_F32_I64, "_SYS_52");
+
+    setLibcallName(RTLIB::FPTOSINT_F64_I8, "_SYS_51");
+    setLibcallName(RTLIB::FPTOSINT_F64_I16, "_SYS_51");
+    setLibcallName(RTLIB::FPTOSINT_F64_I32, "_SYS_51");
+    setLibcallName(RTLIB::FPTOSINT_F64_I64, "_SYS_50");
+
+    setLibcallName(RTLIB::FPTOUINT_F32_I8, "_SYS_49");
+    setLibcallName(RTLIB::FPTOUINT_F32_I16, "_SYS_49");
+    setLibcallName(RTLIB::FPTOUINT_F32_I32, "_SYS_49");
+    setLibcallName(RTLIB::FPTOUINT_F32_I64, "_SYS_48");
+
+    setLibcallName(RTLIB::FPTOUINT_F64_I8, "_SYS_47");
+    setLibcallName(RTLIB::FPTOUINT_F64_I16, "_SYS_47");
+    setLibcallName(RTLIB::FPTOUINT_F64_I32, "_SYS_47");
+    setLibcallName(RTLIB::FPTOUINT_F64_I64, "_SYS_46");
+
+    setLibcallName(RTLIB::SINTTOFP_I32_F32, "_SYS_45");
+    setLibcallName(RTLIB::SINTTOFP_I32_F64, "_SYS_44");
+    setLibcallName(RTLIB::SINTTOFP_I64_F32, "_SYS_43");
+    setLibcallName(RTLIB::SINTTOFP_I64_F64, "_SYS_42");
+    setLibcallName(RTLIB::UINTTOFP_I32_F32, "_SYS_41");
+    setLibcallName(RTLIB::UINTTOFP_I32_F64, "_SYS_40");
+    setLibcallName(RTLIB::UINTTOFP_I64_F32, "_SYS_39");
+    setLibcallName(RTLIB::UINTTOFP_I64_F64, "_SYS_38");
+
+    setLibcallName(RTLIB::OEQ_F32, "_SYS_37");
+    setLibcallName(RTLIB::OEQ_F64, "_SYS_36");
+    setLibcallName(RTLIB::UNE_F32, "_SYS_35");
+    setLibcallName(RTLIB::UNE_F64, "_SYS_34");
+    setLibcallName(RTLIB::OGE_F32, "_SYS_33");
+    setLibcallName(RTLIB::OGE_F64, "_SYS_32");
+    setLibcallName(RTLIB::OLT_F32, "_SYS_31");
+    setLibcallName(RTLIB::OLT_F64, "_SYS_30");
+    setLibcallName(RTLIB::OLE_F32, "_SYS_29");
+    setLibcallName(RTLIB::OLE_F64, "_SYS_28");
+    setLibcallName(RTLIB::OGT_F32, "_SYS_27");
+    setLibcallName(RTLIB::OGT_F64, "_SYS_26");
+
     // Register classes
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
     addRegisterClass(MVT::i32, SVM::BPRegRegisterClass);
@@ -237,6 +296,41 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(0, true),
         DAG.getIntPtrConstant(0, true), InFlag);
+    if (!Ins.empty())
+        InFlag = Chain.getValue(1);
+
+    return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins,
+                           dl, DAG, InVals);
+}
+
+SDValue SVMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
+    CallingConv::ID CallConv, bool isVarArg, const SmallVectorImpl<ISD::InputArg> &Ins,
+    DebugLoc dl, SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const
+{
+    SmallVector<CCValAssign, 16> RVLocs;
+    CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+        getTargetMachine(), RVLocs, *DAG.getContext());
+    CCInfo.AnalyzeCallResult(Ins, RetCC_SVM);
+
+    // Copy return values to vregs
+    for (unsigned i = 0; i != RVLocs.size(); ++i) {
+        CCValAssign VA = RVLocs[i];
+        SDValue Val = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
+            VA.getLocVT(), InFlag);
+        Chain = Val.getValue(1);
+        InFlag = Val.getValue(2);
+
+        // Value casting (type demotion)
+        switch (VA.getLocInfo()) {
+        default: llvm_unreachable("Unknown loc info!");
+        case CCValAssign::Full: break;
+        case CCValAssign::BCvt:
+            Val = DAG.getNode(ISD::BITCAST, dl, VA.getValVT(), Val);
+            break;
+        }
+
+        InVals.push_back(Val);
+    }
 
     return Chain;
 }

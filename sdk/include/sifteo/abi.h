@@ -402,11 +402,59 @@ struct _SYSPseudoRandomState {
 
 /**
  * Low-level system call interface.
+ *
+ * System calls #0-63 are faster and smaller than normal function calls,
+ * whereas all other syscalls (#64-8191) are similar in cost to a normal
+ * call. System calls use a simplified calling convention that supports
+ * only 32-bit values, with at most one return value and 8 arguments.
  */
 
 #define _SC(n)  __asm__ ("_SYS_" #n)
 
 void _SYS_ret() _SC(0);
+
+// XXX: Compiler floating point support
+uint32_t _SYS_add_f32() _SC(63);
+uint32_t _SYS_add_f64() _SC(62);
+uint32_t _SYS_sub_f32() _SC(61);
+uint32_t _SYS_sub_f64() _SC(60);
+uint32_t _SYS_mul_f32() _SC(59);
+uint32_t _SYS_mul_f64() _SC(58);
+uint32_t _SYS_div_f32() _SC(57);
+uint32_t _SYS_div_f64() _SC(56);
+uint32_t _SYS_fpext_f32_f64() _SC(55);
+uint32_t _SYS_fpround_f64_f32() _SC(54);
+uint32_t _SYS_fptosint_f32_i32() _SC(53);
+uint32_t _SYS_fptosint_f32_i64() _SC(52);
+uint32_t _SYS_fptosint_f64_i32() _SC(51);
+uint32_t _SYS_fptosint_f64_i64() _SC(50);
+uint32_t _SYS_fptouint_f32_i32() _SC(49);
+uint32_t _SYS_fptouint_f32_i64() _SC(48);
+uint32_t _SYS_fptouint_f64_i32() _SC(47);
+uint32_t _SYS_fptouint_f64_i64() _SC(46);
+uint32_t _SYS_sinttofp_i32_f32() _SC(45);
+uint32_t _SYS_sinttofp_i32_f64() _SC(44);
+uint32_t _SYS_sinttofp_i64_f32() _SC(43);
+uint32_t _SYS_sinttofp_i64_f64() _SC(42);
+uint32_t _SYS_uinttofp_i32_f32() _SC(41);
+uint32_t _SYS_uinttofp_i32_f64() _SC(40);
+uint32_t _SYS_uinttofp_i64_f32() _SC(39);
+uint32_t _SYS_uinttofp_i64_f64() _SC(38);
+uint32_t _SYS_oeq_f32() _SC(37);
+uint32_t _SYS_oeq_f64() _SC(36);
+uint32_t _SYS_une_f32() _SC(35);
+uint32_t _SYS_une_f64() _SC(34);
+uint32_t _SYS_oge_f32() _SC(33);
+uint32_t _SYS_oge_f64() _SC(32);
+uint32_t _SYS_olt_f32() _SC(31);
+uint32_t _SYS_olt_f64() _SC(30);
+uint32_t _SYS_ole_f32() _SC(29);
+uint32_t _SYS_ole_f64() _SC(28);
+uint32_t _SYS_ogt_f32() _SC(27);
+uint32_t _SYS_ogt_f64() _SC(26);
+
+void _SYS_sincosf(float x, float *sinOut, float *cosOut) _SC(8);
+float _SYS_fmodf(float a, float b) _SC(9);
 
 void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(1);
 void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(2);
@@ -415,9 +463,6 @@ void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) _SC(4);
 void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(5);
 void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(6);
 int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(7);
-
-void _SYS_sincosf(float x, float *sinOut, float *cosOut) _SC(8);
-float _SYS_fmodf(float a, float b) _SC(9);
 
 uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(17);
 void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(18);
