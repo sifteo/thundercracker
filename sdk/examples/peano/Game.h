@@ -23,9 +23,13 @@ namespace TotalsGame {
 		static const int FrameRate = 15;
 
 		TotalsCube *cubes;
+		static TotalsCube *GetCube(int i) {return &Game::GetInstance().cubes[i];}
+		static void ClearCubeViews();
 
 		Puzzle *currentPuzzle;
 		Puzzle *previousPuzzle;
+
+		static Random rand;
 
 		Difficulty difficulty;
 		NumericMode mode;
@@ -46,7 +50,7 @@ namespace TotalsGame {
 
 		bool IsPlayingRandom();
 
-		const char *Initialize(const char *transitionId);
+		static const char *Initialize();
 
 		const char *Advance(const char *transitionId);
 

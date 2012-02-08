@@ -7,80 +7,60 @@ namespace TotalsGame
 	TotalsCube::TotalsCube(): Sifteo::Cube()
 	{
 		CORO_RESET;
-		shuttersOpen = false;
-		shuttersClosed = false;
+		view = NULL;
 	}
 
-	void TotalsCube::OpenShutters(const AssetImage *image)
+	float TotalsCube::OpenShutters(const AssetImage *image)
 	{						
 		CORO_BEGIN
 
-			shuttersOpen = false;
+		//TODO Jukebox.PlayShutterOpen();
+		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
+		{
+			DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime, image);
+			CORO_YIELD(0);
+		}
 
-			//TODO Jukebox.PlayShutterOpen();
-			for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
-			{
-				DrawVaultDoorsOpenStep1(32.0f * t/kTransitionTime, image);
-				//Game::Yield();
-				CORO_YIELD;
-			}
+		DrawVaultDoorsOpenStep1(32, image);			
+		CORO_YIELD(0);
 
-			DrawVaultDoorsOpenStep1(32, image);			
-			//Game::Yield();
-			CORO_YIELD;
+		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt)
+		{
+			DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime, image);
+			CORO_YIELD(0);
+		}
+		CORO_END
+		CORO_RESET;
 
-			for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt)
-			{
-				DrawVaultDoorsOpenStep2(32.0f * t/kTransitionTime, image);
-				//Game::Yield();
-				CORO_YIELD;
-			}
-			CORO_END
-
-				shuttersOpen = true;
-
-				CORO_RESET;
+		return -1;
 	}
 
-	void TotalsCube::CloseShutters(const AssetImage *image)
+	float TotalsCube::CloseShutters(const AssetImage *image)
 	{
 		CORO_BEGIN
 
-			shuttersClosed = false;
+		//TODO Jukebox.PlayShutterClose();
+		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
+		{
+			DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, image);
+			CORO_YIELD(0);
+		}
 
-			//TODO Jukebox.PlayShutterClose();
-			for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
-			{
-				DrawVaultDoorsOpenStep2(32.0f - 32.0f * t/kTransitionTime, image);
-				CORO_YIELD;
-			}
+		DrawVaultDoorsOpenStep2(0, image);
+		CORO_YIELD(0);
 
-			DrawVaultDoorsOpenStep2(0, image);
-			CORO_YIELD;
+		for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
+		{
+			DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime, image);				
+			CORO_YIELD(0);
+		}			
 
-			for(t=0.0f; t<kTransitionTime; t+=Game::GetInstance().dt) 
-			{
-				DrawVaultDoorsOpenStep1(32.0f - 32.0f * t/kTransitionTime, image);				
-				CORO_YIELD;
-			}			
+		CORO_END
+		CORO_RESET;
 
-			CORO_END
-
-			shuttersClosed = true;
-
-			CORO_RESET;
+		return -1;
 	}
-
-	bool TotalsCube::AreShuttersOpen()
-	{
-		return shuttersOpen;
-	}
-
-	bool TotalsCube::AreShuttersClosed()
-	{
-		return shuttersClosed;
-	}
-
+	
 	void TotalsCube::Image(const AssetImage *image)
 	{
 		VidMode_BG0 mode(vbuf);

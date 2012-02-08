@@ -53,6 +53,8 @@ namespace TotalsGame
         Puzzle *GetNext();
         Puzzle *GetNext(int maxCubeCount);
 
+		bool SelectRandomTarget();
+
 	private:
 		static const int MAX_TOKENS = 32;
 		Token *tokens[MAX_TOKENS];

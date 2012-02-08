@@ -12,10 +12,10 @@ namespace TotalsGame
 	{
 	private:
 		Game *mGame;
-		BlankView *views[Game::NUMBER_OF_CUBES];
 
 		CORO_PARAMS
 		float time;
+		int i;
 
 	public:
 		StingController(Game *game) 
@@ -31,7 +31,7 @@ namespace TotalsGame
 
 			for(int i = 0; i < Game::NUMBER_OF_CUBES; i++) 
 			{
-				views[i] = new BlankView(&Game::GetInstance().cubes[i], NULL);
+				new BlankView(&Game::GetInstance().cubes[i], NULL);
 				//TODO
 				//cube.ShakeStoppedEvent += delegate { Skip(); };
 				//cube.ButtonEvent += delegate(Cube c, bool pressed) { if (!pressed) Skip();  };
@@ -47,59 +47,58 @@ namespace TotalsGame
 			mGame->sceneMgr.QueueTransition("Next");
 		}
 
-		void OnTick (float dt) 
+		float OnTick (float dt) 
 		{
 			CORO_BEGIN
 
-			CORO_WAIT(0.1f);
+			CORO_YIELD(0.1f);
 			AudioPlayer::PlaySfx(sfx_Stinger2);
 
+			for(i = 0; i < Game::NUMBER_OF_CUBES; i++) 
 			{
-				bool anyOpen = false;
-				for(int i = 0; i < Game::NUMBER_OF_CUBES; i++) 
+				float dt;
+				while((dt=Game::GetCube(i)->OpenShutters(&Title)) >= 0) 
 				{
-					views[i]->cube->OpenShutters(&Title);
-					anyOpen |= views[i]->cube->AreShuttersOpen();
+					CORO_YIELD(dt);
 				}
-				if(!anyOpen)
-					return;
+				((BlankView*)Game::GetCube(i)->GetView())->SetImage(&Title);
+				CORO_YIELD(0);
 			}
 
-			CORO_WAIT(3.0);
+			CORO_YIELD(3.0);
 
+			for(i = 0; i < Game::NUMBER_OF_CUBES; i++) 
 			{
-				bool anyClosed = false;
-				for(int i = 0; i < Game::NUMBER_OF_CUBES; i++) 
+				float dt;
+				while((dt=Game::GetCube(i)->CloseShutters(&Title)) >= 0) 
 				{
-					views[i]->cube->CloseShutters(&Title);
-					anyClosed |= views[i]->cube->AreShuttersClosed();
-				}				
-				if(!anyClosed)
-					return;
-			}
+					CORO_YIELD(dt);
+				}
+				((BlankView*)Game::GetCube(i)->GetView())->SetImage(NULL);
+				CORO_YIELD(0);
+			}			
 			
-			CORO_WAIT(0.5f);
-			//yield return 0.5f;
+			CORO_YIELD(0.5f);
+
 			mGame->sceneMgr.QueueTransition("Next");
 
 			CORO_END
+
+			return -1;
 		}
 
 		void OnPaint (bool canvasDirty)
 		{
-		//	if (canvasDirty) { mGame.CubeSet.PaintViews(); }
+			if (canvasDirty) { View::PaintViews(Game::GetInstance().cubes, Game::NUMBER_OF_CUBES); }
 		}
 
 		void OnDispose () 
 		{
-			for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
-			{
-				delete views[i];
-				views[i] = NULL;
-			}
 		/*	//TODO
-			mGame.CubeSet.ClearEvents();
-			mGame.CubeSet.ClearUserData(); */
+			mGame.CubeSet.ClearEvents(); */
+
+			Game::ClearCubeViews();
+			
 		}
 
 	};

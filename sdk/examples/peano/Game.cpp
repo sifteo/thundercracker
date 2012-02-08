@@ -2,9 +2,12 @@
 #include "Game.h"
 
 #include "StingController.h"
+#include "PuzzleController.h"
 
 namespace TotalsGame
 {
+
+	Random Game::rand;
 
 	Game &Game::GetInstance()
 	{
@@ -12,12 +15,21 @@ namespace TotalsGame
 		return instance;
 	}
 
+	void Game::ClearCubeViews()
+	{
+		for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
+		{
+			Game::GetInstance().cubes[i].SetView(NULL);
+		}
+	}
 
 	void Game::Setup(TotalsCube *_cubes, int nCubes)
 	{
 		assert(nCubes == Game::NUMBER_OF_CUBES);
 		cubes = _cubes;
 
+		currentPuzzle = NULL;
+		previousPuzzle = NULL;
 
 		mDirty = false;
 		IsPaused = false;
@@ -40,21 +52,22 @@ namespace TotalsGame
 //TODO		saveData.Load();
 
 		static StingController stingController(this);
+		static PuzzleController puzzleController(this);
 
 		sceneMgr
 			.State("sting", &stingController)                //
-/*			.State("init", Initialize)
-			.State("menu", new MenuController(this))                  //
+			.State("init", &Game::Initialize)
+/*			.State("menu", &menuController)                  //
 			.State("tutorial", new TutorialController(this))          //
 			.State("interstitial", new InterstitialController(this))  //
-*/		//	.State("puzzle", new PuzzleController(this))
+*/			.State("puzzle", &puzzleController)
 /*			.State("advance", Advance)
 			.State("victory", new VictoryController(this))            //
 			.State("isover", IsGameOver)
 */
 			.Transition("sting", "Next", "init")
 			.Transition("init", "NewPlayer", "tutorial")
-			.Transition("init", "ReturningPlayer", "menu")
+			.Transition("init", "ReturningPlayer", "puzzle")//TODO"menu")
 			.Transition("menu", "Tutorial", "tutorial")
 			.Transition("menu", "Play", "interstitial")
 			.Transition("tutorial", "Next", "interstitial")
@@ -83,7 +96,7 @@ namespace TotalsGame
 		dt = time - mTime;
 		mTime = time;
 		sceneMgr.Tick(dt);
-		sceneMgr.Paint(mDirty);
+		sceneMgr.Paint(true);
 		mDirty = false;
 	}
 
@@ -100,7 +113,7 @@ namespace TotalsGame
 		return currentPuzzle == NULL; 
 	}
 
-	const char *Game::Initialize(const char *transitionId) 
+	const char *Game::Initialize() 
 	{/* TODO
 		return saveData.hasDoneTutorial ?
 			"ReturningPlayer" : "NewPlayer";

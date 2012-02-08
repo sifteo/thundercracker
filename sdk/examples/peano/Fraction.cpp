@@ -1,41 +1,33 @@
 #include "Fraction.h"
 
 #include <stdio.h>
+#include <assert.h>
 
 namespace TotalsGame {
 
 	Fraction::Fraction(int n, int d)
 	{
 		nu = n;
-		de = d;
+		de = d;		
 	}
 
-	Fraction::Fraction(int x)
-	{
-		Fraction(x, 1);
-	}
-
-	Fraction::Fraction()
-	{
-		Fraction(0);
-	}
-
-	Fraction Fraction::operator+(const Fraction f)
+	
+	Fraction Fraction::operator+(const Fraction &f)
 	{
 		return Fraction(nu * f.de + f.nu * de, de * f.de);
 	}
 
-	Fraction Fraction::operator-(const Fraction f)
+	Fraction Fraction::operator-(const Fraction &f)
 	{
 		return Fraction(nu * f.de - f.nu * de, de * f.de);
 	}
 
-	Fraction Fraction::operator*(const Fraction f)
+	Fraction Fraction::operator*(const Fraction &f)
 	{
 		return Fraction(nu * f.nu, de * f.de);
 	}
 
-	Fraction Fraction::operator/(const Fraction f)
+	Fraction Fraction::operator/(const Fraction &f)
 	{
 		return Fraction(nu * f.de, de * f.nu);
 	}
@@ -69,7 +61,7 @@ namespace TotalsGame {
 		if (de < 0) {
 			nu *= -1;
 			de *= -1;
-		}
+		}	
 	}
 
 	bool Fraction::operator==(const Fraction &f)
@@ -92,7 +84,6 @@ namespace TotalsGame {
 	{
 		char numString[8];
 		char denString[8];
-
 		snprintf(numString, 8, "%d", nu);
 		snprintf(denString, 8, "%d", de);
 		snprintf(s, length, "%s/%s", numString, denString);

@@ -6,12 +6,12 @@ namespace TotalsGame
 	DEFINE_POOL(BlankView)
 
 
-		BlankView::BlankView(TotalsCube *c, Sifteo::AssetImage *image) : View(c)
+	BlankView::BlankView(TotalsCube *c, const Sifteo::AssetImage *image) : View(c)
 	{
 		assetImage = image;
 	}
 
-	void BlankView::SetImage(Sifteo::AssetImage *image, bool andPaint) 
+	void BlankView::SetImage(const Sifteo::AssetImage *image, bool andPaint) 
 	{
 		if (assetImage != image) 
 		{

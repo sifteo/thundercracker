@@ -18,7 +18,7 @@
 				return &allocationPool[bit * sizeof(classname)]; \
 			} \
 		} \
-		return NULL; \
+		return NULL; printf("allocation failure type" #classname "\n");\
 	} \
 	static void operator delete(void *p) \
 	{ \

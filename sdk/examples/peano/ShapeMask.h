@@ -5,6 +5,28 @@
 
 namespace TotalsGame {
 
+	struct Connection {
+		Vec2 pos;
+		Vec2 dir;
+
+		bool Matches(const Connection &c) {
+			//return (dir - c.dir).Norm() == 0;
+			return dir.x == c.dir.x && dir.y == c.dir.y;
+		}
+
+		bool IsFromOrigin() {
+			return pos.x == 0 && pos.y == 0;
+		}
+
+		bool IsBottom() {
+			return dir.x == 0 && dir.y == 1;
+		}
+
+		bool IsRight() {
+			return dir.x == 1 && dir.y == 0;
+		}
+	};
+
 	struct ShapeMask {
 		Vec2 size;
 		long bits;
@@ -86,39 +108,67 @@ namespace TotalsGame {
 		bool Matches(const ShapeMask &mask) {
 			return size.x == mask.size.x && size.y == mask.size.y && bits == mask.bits;
 		}
-		/*
-		public IEnumerable<Connection> ListOutConnections() {
-		Int2 p;
-		for(p.x=0; p.x<size.x; ++p.x) {
-		for(p.y=0; p.y<size.y; ++p.y) {
-		if (BitAt(p)) {
-		if (!BitAt(p+Int2.Right)) {
-		yield return new Connection() { pos = p, dir = Int2.Right };
-		}
-		if (!BitAt(p+Int2.Down)) {
-		yield return new Connection() { pos = p, dir = Int2.Down };
-		}
-		}
-		}
-		}
+		
+		void ListOutConnections(Connection *connections, int *numConnections, int maxConnections)
+		{
+			*numConnections = 0;
+
+			Vec2 p;
+			for(p.x=0; p.x<size.x; ++p.x) 
+			{
+				for(p.y=0; p.y<size.y; ++p.y)
+				{
+					if (BitAt(p))
+					{
+						if (!BitAt(p+Vec2(1,0))) 
+						{
+							assert(*numConnections < maxConnections);
+							connections[*numConnections].pos = p;
+							connections[*numConnections].dir.set(1,0);
+							(*numConnections)++;
+						}
+						if (!BitAt(p+Vec2(0,1))) 
+						{
+							assert(*numConnections < maxConnections);
+							connections[*numConnections].pos = p;
+							connections[*numConnections].dir.set(0,1);
+							(*numConnections)++;							
+						}
+					}
+				}
+			}
 		}
 
-		public IEnumerable<Connection> ListInConnections() {
-		Int2 p;
-		for(p.x=0; p.x<size.x; ++p.x) {
-		for(p.y=0; p.y<size.y; ++p.y) {
-		if (BitAt(p)) {
-		if (!BitAt(p-Int2.Right)) {
-		yield return new Connection() { pos = p, dir = Int2.Right };
+		void ListInConnections(Connection *connections, int *numConnections, int maxConnections)
+		{
+			*numConnections = 0;
+
+			Vec2 p;
+			for(p.x=0; p.x<size.x; ++p.x) 
+			{
+				for(p.y=0; p.y<size.y; ++p.y)
+				{
+					if (BitAt(p))
+					{
+						if (!BitAt(p-Vec2(1,0))) 
+						{
+							assert(*numConnections < maxConnections);
+							connections[*numConnections].pos = p;
+							connections[*numConnections].dir.set(1,0);
+							(*numConnections)++;
+						}
+						if (!BitAt(p-Vec2(0,1))) 
+						{
+							assert(*numConnections < maxConnections);
+							connections[*numConnections].pos = p;
+							connections[*numConnections].dir.set(0,1);
+							(*numConnections)++;							
+						}
+					}
+				}
+			}
 		}
-		if (!BitAt(p-Int2.Down)) {
-		yield return new Connection() { pos = p, dir = Int2.Down };
-		}
-		}
-		}
-		}
-		}
-		*/
+
 
 		static bool TryConcat(
 			ShapeMask m1, ShapeMask m2, Vec2 offset, 
@@ -167,6 +217,5 @@ namespace TotalsGame {
 
 
 	};
-
 
 }

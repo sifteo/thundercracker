@@ -23,26 +23,4 @@ namespace TotalsGame {
 		virtual bool IsTokenGroup() {return false;}		
 	};
 
-	struct Connection {
-		Vec2 pos;
-		Vec2 dir;
-
-		bool Matches(const Connection &c) {
-			//return (dir - c.dir).Norm() == 0;
-			return dir.x == c.dir.x && dir.y == c.dir.y;
-		}
-
-		bool IsFromOrigin() {
-			return pos.x == 0 && pos.y == 0;
-		}
-
-		bool IsBottom() {
-			return dir.x == 0 && dir.y == 1;
-		}
-
-		bool IsRight() {
-			return dir.x == 1 && dir.y == 0;
-		}
-	};
-
 }

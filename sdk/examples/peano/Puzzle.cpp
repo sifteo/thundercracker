@@ -3,6 +3,7 @@
 #include "Game.h"
 #include "Puzzle.h"
 #include "PuzzleChapter.h"
+#include "PuzzleHelper.h"
 
 
 namespace TotalsGame {
@@ -13,7 +14,7 @@ namespace TotalsGame {
 	{
 		userData = NULL;
 		chapter = NULL;
-		difficulty = DifficultyHard;
+		difficulty = DifficultyEasy;
 		focus = NULL;
 		target = NULL;
 		focus = NULL;
@@ -134,6 +135,52 @@ namespace TotalsGame {
         } while(puzzle != NULL && puzzle->numTokens > maxCubeCount);
         return puzzle;
     }
+
+	bool Puzzle::SelectRandomTarget() 
+	{		
+		IExpression *expressions[6];
+		int numExpressions = 0;
+
+		for(int i = 0; i < numTokens; i++)
+		{
+			expressions[numExpressions++] = (tokens[i]);
+		}
+
+		//mix up the epxressions
+		for(int i = 0; i < numExpressions; i++)
+		{
+			int a = Game::rand.randrange(numExpressions);
+			IExpression *temp = expressions[i];
+			expressions[i] = expressions[a];
+			expressions[a] = temp;
+		}
+		
+		while(numExpressions > 1)
+		{
+			// remove two random expressions
+			IExpression *src = expressions[--numExpressions];
+			IExpression *dst = expressions[--numExpressions];
+			// possibly flip
+			if(Game::rand.randrange(2) == 0)
+			{
+				IExpression *tmp  = src;
+				src = dst;
+				dst = tmp;
+			}
+			TokenGroup *comp = PuzzleHelper::ConnectRandomly(src, dst);
+			
+			if (comp != NULL) 
+			{
+				expressions[numExpressions++] = comp;
+			} 
+			else if (numExpressions == 0) 
+			{
+				return false;
+			}
+		}
+		target = (TokenGroup*)expressions[0];
+		return true;
+	}
 
 }
 

@@ -2,26 +2,27 @@
 
 #include "sifteo.h"
 #include "coroutine.h"
+#include "View.h"
 
 namespace TotalsGame
 {
 	class TotalsCube: public Sifteo::Cube
 	{
-		CORO_PARAMS
+		CORO_PARAMS;
 		float t;
 
-		bool shuttersClosed;
-		bool shuttersOpen;
+		View *view;
 
 	public:
 		TotalsCube();
 		static const float kTransitionTime = 0.1f;
 
-		void OpenShutters(const AssetImage *image);
-		void CloseShutters(const AssetImage *image);
+		void SetView(View *v) {delete view;view = v;}
+		View *GetView(void) {return view;}
 
-		bool AreShuttersOpen();
-		bool AreShuttersClosed();
+
+		float OpenShutters(const AssetImage *image);
+		float CloseShutters(const AssetImage *image);
 				
 		void DrawVaultDoorsClosed();
 

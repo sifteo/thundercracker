@@ -6,17 +6,14 @@ namespace TotalsGame
 	class Fraction
 	{
 	public:
-		int nu;
-		int de;
 
-		Fraction(int n, int d);
-		Fraction(int x);
-		Fraction();
 
-		Fraction operator+(const Fraction f);
-		Fraction operator-(const Fraction f);
-		Fraction operator*(const Fraction f);
-		Fraction operator/(const Fraction f);
+		Fraction(int n = 0, int d = 1);
+
+		Fraction operator+(const Fraction &f);
+		Fraction operator-(const Fraction &f);
+		Fraction operator*(const Fraction &f);
+		Fraction operator/(const Fraction &f);
 		bool operator==(const Fraction &f);
 		bool operator!=(const Fraction &f);
 
@@ -28,6 +25,9 @@ namespace TotalsGame
 		void ToString(char *s, int length);
 
 		static int GCD(int a, int b);
+
+		int nu;
+		int de;
 	};
 }
 

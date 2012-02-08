@@ -66,6 +66,7 @@ namespace TotalsGame
 				return NULL;
 			}
 			Cube::Side srcSide = d.x == 1 ? SIDE_RIGHT : SIDE_BOTTOM;
+
 			return new TokenGroup(
 				src, d1, srcToken, srcSide,
 				dst, d2, dstToken,
@@ -115,7 +116,7 @@ namespace TotalsGame
 				this->dstPos = dstPos;
 				this->dstToken = dstToken;
 				void *userData = NULL;
-				mValue = val;				
+				mValue = val;
 				mMask = mask;
 				mDepth = max(src->GetDepth(), dst->GetDepth()) +1;
 		}
@@ -139,19 +140,25 @@ namespace TotalsGame
 
 		class OpHelper {
 		public:
-			static Fraction Compute(Fraction left, Op op, Fraction right) 
+			static Fraction Compute(Fraction left, Op op, Fraction right) 		
 			{
+				Fraction ret;
 				switch(op)
 				{
 				case OpAdd:
-					return left + right;
+					ret = left + right;
+					break;
 				case OpSubtract:
-					return left - right;
+					ret = left - right;
+					break;
 				case OpMultiply:
-					return left * right;
+					ret = left * right;
+					break;
 				case OpDivide:
-					return left / right;
-				}
+					ret = left / right;
+					break;
+				}				
+				return ret;
 			}
 		};
 
