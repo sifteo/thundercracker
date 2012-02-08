@@ -2,6 +2,7 @@
 #define SCOREDCUBESTATE_NEWWORD_H
 
 #include "ScoredCubeState.h"
+#include "TileTransparencyLookup.h"
 
 class ScoredCubeState_NewWord : public ScoredCubeState
 {
@@ -13,6 +14,8 @@ public:
 
 private:
     void paint();
+
+    ImageIndex mImageIndex;
 
 };
 

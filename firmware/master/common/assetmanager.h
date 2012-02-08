@@ -1,7 +1,7 @@
 #ifndef ASSETMANAGER_H
 #define ASSETMANAGER_H
 
-#include "macronixmx25.h"
+#include <stdint.h>
 
 class AssetManager
 {
@@ -25,7 +25,6 @@ private:
         State state;
     };
 
-    static MacronixMX25 &flash;
     static struct AssetInstallation installation;
 
     static void addToCrc(const uint8_t *buf, unsigned len);

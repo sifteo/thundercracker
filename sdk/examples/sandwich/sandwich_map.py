@@ -1,22 +1,20 @@
 import lxml.etree, os, os.path, re, tmx, misc, math
+from sandwich_room import *
 
-# constants
-PORTAL_OPEN = 0
-PORTAL_WALL = 1
-PORTAL_DOOR = 2
-SIDE_TOP = 0
-SIDE_LEFT = 1
-SIDE_BOTTOM = 2
-SIDE_RIGHT = 3
-EXP_GATEWAY = re.compile(r"^(\w+):(\w+)$")
-TRIGGER_GATEWAY = 0
-TRIGGER_ITEM = 1
-TRIGGER_NPC = 2
-KEYWORD_TO_TRIGGER_TYPE = {
-	"gateway": TRIGGER_GATEWAY,
-	"item": TRIGGER_ITEM,
-	"npc": TRIGGER_NPC
-}
+class Door:
+	def __init__(self, room):
+		self.id = "_door_%s_%d" % (room.map.id, room.lid)
+		self.room = room
+		room.door = self
+		self.flag = room.map.quest.add_flag_if_undefined(self.id) \
+			if room.map.quest is not None \
+			else room.map.world.script.add_flag_if_undefined(self.id)
+
+class AnimatedTile:
+	def __init__(self, tile):
+		self.tile = tile
+		self.numframes = int(tile.props["animated"])
+		assert self.numframes < 16, "tile animation too long (capacity 15)"
 
 class Map:
 	def __init__(self, world, path):
@@ -27,6 +25,10 @@ class Map:
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
 		assert self.background.gettileset().count < 256, "Map is too large (must have < 256 tiles): " + self.id
+		# validate tiles
+		for tile in (self.raw.gettile(tid) for tid in self.background.tiles):
+			if "bridge" in tile.props: 
+				assert iswalkable(tile), "unwalkable bridge tile detected in map: " + self.id
 		self.animatedtiles = [ AnimatedTile(t) for t in self.background.gettileset().tiles if "animated" in t.props ]
 		self.overlay = self.raw.layer_dict.get("overlay", None)
 		self.width = self.raw.pw / 128
@@ -62,6 +64,17 @@ class Map:
 		for x in range(self.width):
 			for y in range(self.height-1):
 				assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id
+		# find subdivisions
+		for r in self.rooms: r.find_subdivisions()
+		self.diagRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_DIAG_POS or r.subdiv_type == SUBDIV_DIAG_NEG ]
+		self.bridgeRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_BRDG_HOR or r.subdiv_type == SUBDIV_BRDG_VER]
+		# no vertical bridges, for now
+		for bridge in self.bridgeRooms:
+			assert bridge.subdiv_type == SUBDIV_BRDG_HOR, "no vertical bridges for now, dudes: " + self.id
+
+		# validate animated tile capacity (max 4 per room)
+		for r in self.rooms:
+			assert len([(x,y) for x in range(8) for y in range(8) if "animated" in r.tileat(x,y).props]) <= 4, "too many tiles in room in map: " + self.id
 		# unpack triggers
 		for obj in self.raw.objects:
 			if obj.type in KEYWORD_TO_TRIGGER_TYPE:
@@ -156,15 +169,41 @@ class Map:
 			src.write("};\n")
 
 		if self.overlay is not None:
-			for room in self.rooms:
-				if room.hasoverlay():
-					src.write("static const uint8_t %s_overlay_%d_%d[] = { " % (self.id, room.x, room.y))
-					for y in range(8):
-						for x in range(8):
-							tile = room.overlaytileat(x,y)
-							if tile is not None:
-								src.write("0x%x, 0x%x, " % (x<<4|y, tile.lid))
-					src.write("0xff };\n")
+			src.write("static const uint8_t %s_overlay_rle[] = { " % self.id)
+			emptycount = 0
+			for t in (r.overlaytileat(tid%8,tid/8) for r in self.rooms for tid in range(64)):
+				if t is not None:
+					while emptycount >= 0xff:
+						src.write("0xff, 0xff, ")
+						emptycount -= 0xff
+					if emptycount > 0:
+						src.write("0xff, 0x%x, " % emptycount)
+						emptycount = 0
+					src.write("0x%x, " % t.lid)
+				else:
+					emptycount += 1
+			while emptycount >= 0xff:
+				src.write("0xff, 0xff, ")
+				emptycount -= 0xff
+			if emptycount > 0:
+				src.write("0xff, 0x%x, " % emptycount)
+				emptycount = 0
+			src.write("};\n")
+		if len(self.diagRooms) > 0:
+			src.write("static const DiagonalSubdivisionData %s_diag[] = { " % self.id)
+			for r in self.diagRooms:
+				is_pos = 0 if r.subdiv_type == SUBDIV_DIAG_NEG else 1
+				cx,cy = r.secondary_center()
+				src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }, " % (is_pos, r.lid, cx, cy))
+			src.write("};\n")
+		if len(self.bridgeRooms) > 0:
+			src.write("static const BridgeSubdivisionData %s_bridges[] = { " % self.id)
+			for r in self.bridgeRooms:
+				is_hor = 0 if r.subdiv_type == SUBDIV_BRDG_VER else 1
+				cx,cy = r.secondary_center()
+				src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }, " % (is_hor, r.lid, cx, cy))
+			src.write("};\n")
+
 		src.write("static const RoomData %s_rooms[] = {\n" % self.id)
 		for y in range(self.height):
 			for x in range(self.width):
@@ -175,17 +214,20 @@ class Map:
 	
 	def write_decl_to(self, src):
 		src.write(
-			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, " \
-			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, " \
-			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(w)x, 0x%(h)x },\n" % \
+			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, %(overlay_rle)s, " \
+			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
+			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(w)x, 0x%(h)x },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
+				"overlay_rle": self.id + "_overlay_rle" if self.overlay is not None else "0",
 				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
+				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",
+				"bridgesubdivs": self.id + "_bridges" if len(self.bridgeRooms) > 0 else "0",
 				"w": self.width,
 				"h": self.height,
 				"nitems": len(self.item_dict),
@@ -193,203 +235,16 @@ class Map:
 				"nnpcs": len(self.npc_dict),
 				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
 				"ndoors": len(self.doors),
-				"nanimtiles": len(self.animatedtiles)
+				"nanimtiles": len(self.animatedtiles),
+				"ndiags": len(self.diagRooms),
+				"nbridges": len(self.bridgeRooms)
 			})
-		
-class AnimatedTile:
-	def __init__(self, tile):
-		self.tile = tile
-		self.numframes = int(tile.props["animated"])
-		assert self.numframes < 16, "tile animation too long (capacity 15)"
 
-class Room:
-	def __init__(self, map, lid):
-		self.map = map
-		self.lid = lid
-		self.x = lid % map.width
-		self.y = lid / map.width
-		self.portals = [ PORTAL_WALL, PORTAL_WALL, PORTAL_WALL, PORTAL_WALL ]
-		self.triggers = []
-		self.trigger_dict = {}
-		self.door = None
-
-	def hasitem(self): return len(self.item) > 0 and self.item != "ITEM_NONE"
-	def tileat(self, x, y): return self.map.background.tileat(8*self.x + x, 8*self.y + y)
-	def overlaytileat(self, x, y): return self.map.overlay.tileat(8*self.x + x, 8*self.y + y)
-
-	def listtorchtiles(self):
-		for x in range(8):
-			for y in range(8):
-				if istorch(self.tileat(x,y)) and (y == 0 or not istorch(self.tileat(x,y-1))):
-					yield (x,y) 
-	
-	def center(self):
-		for (x,y) in misc.spiral_into_madness():
-			if iswalkable(self.tileat(x-1, y)) and iswalkable(self.tileat(x,y)):
-				return self.adjust(x,y)
-		return (0,0)
-	
-	def adjust(self, x, y):
-		if ispath(self.tileat(x-1,y)):
-			if not ispath(self.tileat(x,y)) and ispath(self.tileat(x-2,y)):
-				x-=1
-		elif ispath(self.tileat(x,y)) and ispath(self.tileat(x+1,y)):
-			x+=1
-		return (x,y)
-	
-	def isblocked(self): return self.center() == (0,0)
-
-	def hasoverlay(self):
-		if self.map.overlay is None: return False
-		for y in range(8):
-			for x in range(8):
-				if self.overlaytileat(x,y) is not None:
-					return True
-		return False
-	
-	def validate_triggers_for_quest(self, quest):
-		assert len([t for t in self.triggers if t.is_active_for(quest)]) < 2, "Too many triggers in room in map: " + self.map.id
-
-	def write_source_to(self, src):
-		src.write("    {\n")
-		# collision mask rows
-		src.write("        { ")
-		for row in range(8):
-			rowMask = 0
-			for col in range(8):
-				if not iswalkable(self.tileat(col, row)):
-					rowMask |= (1<<col)
-			src.write("0x%x, " % rowMask)
-		src.write("},\n")
-		# tiles
-		src.write("        { ")
-		for ty in range(8):
-			#src.write("            ")
-			for tx in range(8):
-				src.write("0x%x, " % self.tileat(tx,ty).lid)
-			#src.write("\n")
-		src.write("},\n")
-		# overlay
-		if self.hasoverlay():
-			src.write("        %s_overlay_%d_%d, " % (self.map.id, self.x, self.y))
-		else:
-			src.write("        0, ")
-		# centerx, centery, reserved
-		cx,cy = self.center()
-		src.write("%d, %d, \n" % (cx, cy))
-		src.write("    },\n")		
-
-class Door:
-	def __init__(self, room):
-		self.id = "_door_%s_%d" % (room.map.id, room.lid)
-		self.room = room
-		room.door = self
-		self.flag = room.map.quest.add_flag_if_undefined(self.id) \
-			if room.map.quest is not None \
-			else room.map.world.script.add_flag_if_undefined(self.id)
-
-class Trigger:
-	def __init__(self, room, obj):
-		self.id = obj.name.lower()
-		self.room = room
-		self.raw = obj
-		self.type = KEYWORD_TO_TRIGGER_TYPE[obj.type]
-		# deterine quest state
-		self.quest = None
-		self.minquest = None
-		self.maxquest = None
-		self.qflag = None
-		self.unlockflag = None
-		if "quest" in obj.props:
-			self.quest = room.map.world.script.getquest(obj.props["quest"])
-			self.minquest = self.quest
-			self.maxquest = self.quest
-			if "questflag" in obj.props:
-				self.qflag = self.quest.flag_dict[obj.props["questflag"]]
-		else:
-			self.minquest = room.map.world.script.getquest(obj.props["minquest"]) if "minquest" in obj.props else None
-			self.maxquest = room.map.world.script.getquest(obj.props["maxquest"]) if "maxquest" in obj.props else None
-			if self.minquest is not None and self.maxquest is not None:
-				assert self.minquest.index <= self.maxquest.index, "MaxQuest > MinQuest for object in map: " + room.map.id
-		if self.quest is None and self.minquest is None and self.maxquest is None and room.map.quest is not None:
-			self.quest = room.map.quest
-			self.minquest = room.map.quest
-			self.maxquest = room.map.quest
-			self.qflag = self.quest.add_flag_if_undefined(obj.props["questflag"]) if "questflag" in obj.props else None
-		if self.quest is None and "unlockflag" in obj.props:
-			self.unlockflag = room.map.world.script.add_flag_if_undefined(obj.props["unlockflag"])
-		# type-specific initialization
-		if self.type == TRIGGER_ITEM:
-			self.itemid = int(obj.props["id"])
-			if self.quest is not None:
-				if self.qflag is None:
-					self.qflag = self.quest.add_flag_if_undefined(self.id)
-			elif self.unlockflag is None:
-				self.unlockflag = room.map.world.script.add_flag_if_undefined(self.id)
-		elif self.type == TRIGGER_GATEWAY:
-			m = EXP_GATEWAY.match(obj.props.get("target", ""))
-			assert m is not None, "Malformed Gateway Target in Map: " + room.map.id
-			self.target_map = m.group(1).lower()
-			self.target_gate = m.group(2).lower()
-		elif self.type == TRIGGER_NPC:
-			did = obj.props["id"].lower()
-			assert did in room.map.world.dialog.dialog_dict, "Invalid Dialog ID in Map: " + room.map.id
-			self.dialog = room.map.world.dialog.dialog_dict[did]
-		
-				
-		self.qbegin = self.minquest.index if self.minquest is not None else 0xff
-		self.qend = self.maxquest.index if self.maxquest is not None else 0xff
-		if self.qflag is not None: self.flagid = self.qflag.gindex
-		elif self.unlockflag is not None: self.flagid = self.unlockflag.gindex
-		else: self.flagid = 0
-
-
-	def is_active_for(self, quest):
-		if self.qbegin != 0xff and self.qbegin < quest.index: return False
-		if self.qend != 0xff and self.qend > quest.index: return False
-		return True
-
-	def local_position(self):
-		return (self.raw.px + (self.raw.pw >> 1) - 128 * self.room.x, 
-				self.raw.py + (self.raw.ph >> 1) - 128 * self.room.y)
-
-	
-	def write_trigger_to(self, src):
-		src.write("{ 0x%x, 0x%x, 0x%x, 0x%x }" % (self.qbegin, self.qend, self.flagid, self.room.lid))
-
-	def write_item_to(self, src):
-		src.write("{ ")
-		self.write_trigger_to(src)
-		src.write(", %d }, " % self.itemid)
-	
-	def write_gateway_to(self, src):
-		src.write("{ ")
-		self.write_trigger_to(src)
-		mapid = self.room.map.world.map_dict[self.target_map].index
-		gateid = self.room.map.world.map_dict[self.target_map].gate_dict[self.target_gate].index
-		x,y = self.local_position()
-		src.write(", 0x%x, 0x%x, 0x%x, 0x%x }, " % (mapid, gateid, x, y))
-	
-	def write_npc_to(self, src):
-		src.write("{ ")
-		self.write_trigger_to(src)
-		x,y = self.local_position()
-		src.write(", 0x%x, 0x%x, 0x%x }, " % (self.dialog.index, x, y))
-
-
-
-def istorch(tile): return "torch" in tile.props
-def isobst(tile): return "obstacle" in tile.props or istorch(tile)
-def iswall(tile): return "wall" in tile.props
-def isdoor(tile): return "door" in tile.props
-def isopen(tile): return not isdoor(tile) and not isobst(tile) and not iswall(tile)
-def iswalkable(tile): return not iswall(tile) and not isobst(tile)
-def ispath(tile): return "path" in tile.props
 
 def portal_type(tile):
-	if isdoor(tile):
+	if "door" in tile.props:
 		return PORTAL_DOOR
-	elif iswall(tile) or isobst(tile):
+	elif "wall" in tile.props or "obstacle" in tile.props:
 		return PORTAL_WALL
 	else:
 		return PORTAL_OPEN

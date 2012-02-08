@@ -59,8 +59,9 @@ bool System::init()
         tracer.vcd.leaveScope();
     }
 
+    // Initialize default cubes, and wake them from sleep
     for (unsigned i = 0; i < opt_numCubes; i++)
-        if (!initCube(i))
+        if (!initCube(i, true))
             return false;
     
     time.init();
@@ -106,10 +107,11 @@ void System::setNumCubes(unsigned n)
     startThread();
 }
 
-bool System::initCube(unsigned id)
+bool System::initCube(unsigned id, bool wakeFromSleep)
 {
     if (!cubes[id].init(&time, opt_cubeFirmware.empty() ? NULL : opt_cubeFirmware.c_str(),
-                        (id != 0 || opt_cube0Flash.empty()) ? NULL : opt_cube0Flash.c_str()))
+                        (id != 0 || opt_cube0Flash.empty()) ? NULL : opt_cube0Flash.c_str(),
+                        wakeFromSleep))
         return false;
 
     cubes[id].cpu.id = id;
@@ -349,9 +351,12 @@ NEVER_INLINE void System::tickLoopFastSBT()
                 cubes[2].cpu.mTickDelay, cubes[2].cpu.mPC);        
 #endif
         
-        for (unsigned i = 0; i < nCubes; i++)
-            nextStep = std::min(nextStep, cubes[i].tickFastSBT(stepSize));
-        
+        for (unsigned i = 0; i < nCubes; i++) {
+            Cube::Hardware &cube = cubes[i];
+            if (!cube.isSleeping())
+                nextStep = std::min(nextStep, cubes[i].tickFastSBT(stepSize));
+        }
+
         tick(stepSize);
         stepSize = std::min(nextStep, (unsigned)network.deadlineRemaining());
     }

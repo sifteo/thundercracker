@@ -155,6 +155,8 @@ extern "C" void _start()
 
 #ifndef DEBUG
     AFIO.MAPR |= (0x4 << 24);       // disable JTAG so we can talk to flash
+    MacronixMX25::instance.init();
+#else
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
                  (1 << 29) |        // TIM13 ""
                  (1 << 28) |        // TIM12 ""
@@ -169,7 +171,6 @@ extern "C" void _start()
                  (1 << 12) |        // TIM3 ""
                  (1 << 11) |        // TIM2 ""
                  (1 << 10);         // TIM1 ""
-    MacronixMX25::instance.init();
 #endif
 
     /*

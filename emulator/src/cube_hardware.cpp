@@ -13,7 +13,8 @@
 namespace Cube {
 
 bool Hardware::init(VirtualTime *masterTimer,
-                    const char *firmwareFile, const char *flashFile)
+                    const char *firmwareFile, const char *flashFile,
+                    bool wakeFromSleep)
 {
     time = masterTimer;
     hwDeadline.init(time);
@@ -24,9 +25,16 @@ bool Hardware::init(VirtualTime *masterTimer,
     prev_ctrl_port = 0;
     exceptionCount = 0;
     
+    memset(&cpu, 0, sizeof cpu);
     cpu.callbackData = this;
     cpu.vtime = masterTimer;
-    cpu.mProfileData = NULL;
+    
+    /*
+     * If true, the cube acts like it's been awakened from deep sleep by
+     * a touch, and it will power on immediately. If false, it acts like a
+     * battery insertion occurred, and the cube will immediately sleep again.
+     */
+    cpu.deepSleep = wakeFromSleep;
     
     CPU::em8051_reset(&cpu, true);
 
@@ -39,7 +47,6 @@ bool Hardware::init(VirtualTime *masterTimer,
         CPU::em8051_init_sbt(&cpu);
     }
 
- 
     if (!flashStorage.init(flashFile)) {
         fprintf(stderr, "Error: Failed to initialize flash memory\n");
         return false;
@@ -55,7 +62,7 @@ bool Hardware::init(VirtualTime *masterTimer,
     rng.init();
     neighbors.init();
     
-    setTouch(0.0f);
+    setTouch(false);
     
     // XXX: Simulated battery level
     adc.setInput(0, 0x8760);
@@ -217,19 +224,14 @@ NEVER_INLINE void Hardware::hwDeadlineWork()
     spi.radio.tick(rfcken, &cpu);
 }
 
-void Hardware::setTouch(float amount)
+void Hardware::setTouch(bool touching)
 {
-    /*
-     * The A/D converter measures the remaining charge on Chold after some
-     * charge is transferred to the touch plate. So, lower values mean higher
-     * capacitance. The scaling here is a really rough estimate based on Hakim's
-     * bench tests so far.
-     *
-     * Note taht these are 16-bit full-scale values we're passing to the ADC
-     * module. It truncates them and justifies them according to the ADC configuration.
-     */
-
-    adc.setInput(12, 1600 - 320 * amount);
+    if (touching) {
+        cpu.mSFR[MISC_PORT] |= MISC_TOUCH;
+        CPU::wakeup_test(&cpu);
+    } else {
+        cpu.mSFR[MISC_PORT] &= ~MISC_TOUCH;
+    }
 }
 
 bool Hardware::isDebugging()

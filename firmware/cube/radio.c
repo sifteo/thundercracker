@@ -10,6 +10,7 @@
 #include "radio.h"
 #include "flash.h"
 #include "params.h"
+#include "power.h"
 #include <protocol.h>
 
 RF_MemACKType __near ack_data;
@@ -744,6 +745,10 @@ rx_complete_0:
         mov     _SPIRDAT, #RF_STATUS_RX_DR                      ; Clear interrupt flag
         SPI_WAIT                                                ; RX STATUS byte
         mov     a, _SPIRDAT
+        
+        ; Reset powerdown timer
+        
+        POWER_IDLE_RESET_ASM()
 
         ; We may have had multiple packets queued. Typically we can handle incoming
         ; packets at line rate, but if there is a particularly long VRAM write that

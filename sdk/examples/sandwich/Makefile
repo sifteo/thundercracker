@@ -7,14 +7,19 @@ OBJS = \
 	$(ASSETS).gen.o \
 	content.gen.o \
 	main.o \
-	Base.o \
+	Common.o \
 	Dialog.o \
 	Game.o \
 	GameState.o \
-	GameView.o \
+	IdleView.o \
+	InventoryView.o \
 	Map.o \
+	Map_NarrowPath.o \
+	Map_BroadPath.o \
 	Player.o \
-	Room.o
+	Room.o \
+	RoomView.o \
+	ViewSlot.o \
 
 include $(TC_DIR)/firmware/master/Makefile.defs
 

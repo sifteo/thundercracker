@@ -20,13 +20,7 @@ public:
 
     static void init();
     static void* getRegionFromOffset(unsigned offset, unsigned len, unsigned *size);
-    static void releaseRegionFromOffset(int offset) {
-        if (CachedBlock *b = getCachedBlock(offset)) {
-            unsigned idx = b - blocks;
-            ASSERT(idx < NUM_BLOCKS);
-            Atomic::SetLZ(freeBlocksMask, idx);
-        }
-    }
+    static void releaseRegionFromOffset(int offset);
 
 private:
     struct CachedBlock {
@@ -40,35 +34,15 @@ private:
     static uint32_t validBlocksMask;    // TODO: invalidation?
 
     // Try to find an existing cached block for the given address.
-    static CachedBlock* getCachedBlock(uintptr_t address) {
-        uint32_t mask = validBlocksMask;
-        while (mask) {
-            unsigned idx = Intrinsic::CLZ(mask);
-            CachedBlock *b = &blocks[idx];
-            if (address >= b->address && address < b->address + BLOCK_SIZE) {
-                return b;
-            }
-            Atomic::ClearLZ(mask, idx);
-        }
-        return 0;
-    }
-
-    static CachedBlock* getFreeBlock() {
-        if (freeBlocksMask == 0) {
-            return 0;
-        }
-
-        unsigned idx = Intrinsic::CLZ(freeBlocksMask);
-        return &blocks[idx];
-    }
+    static CachedBlock* getCachedBlock(uintptr_t address);
+    static CachedBlock* getFreeBlock();
     
 #ifdef SIFTEO_SIMULATOR
-    static FILE * mFile;
     struct Stats {
         unsigned hits;
         unsigned misses;
     };
-    static struct Stats stats;
+    static Stats stats;
 #endif
 
 };

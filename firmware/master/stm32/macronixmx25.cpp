@@ -57,16 +57,23 @@ void MacronixMX25::init()
 */
 void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
 {
+    const uint8_t cmd[] = { FastRead,
+                            address >> 16,
+                            address >> 8,
+                            address >> 0,
+                            Nop };  // dummy
     spi.begin();
-    spi.transfer(FastRead);
-    spi.transfer(address >> 16);
-    spi.transfer(address >> 8);
-    spi.transfer(address >> 0);
-    spi.transfer(Nop);  // dummy
 
-    while (len--) {
-        *buf++ = spi.transfer(Nop);
+    spi.txDma(cmd, sizeof(cmd));
+    while (spi.dmaInProgress()) {
+        ;
     }
+
+    spi.transferDma(buf, buf, len);
+    while (spi.dmaInProgress()) {
+        ;
+    }
+
     spi.end();
 }
 
@@ -76,26 +83,31 @@ void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
 */
 MacronixMX25::Status MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
 {
-    uint32_t pagelen;
-
     while (len) {
         // align writes to PAGE_SIZE chunks
-        pagelen = PAGE_SIZE - (address & (PAGE_SIZE - 1));
+        uint32_t pagelen = PAGE_SIZE - (address & (PAGE_SIZE - 1));
         if (pagelen > len) pagelen = len;
 
         ensureWriteEnabled();
 
+        const uint8_t cmd[] = { PageProgram,
+                                address >> 16,
+                                address >> 8,
+                                address >> 0 };
         spi.begin();
-        spi.transfer(PageProgram);
-        spi.transfer(address >> 16);
-        spi.transfer(address >> 8);
-        spi.transfer(address >> 0);
+        spi.txDma(cmd, sizeof(cmd));
 
         len -= pagelen;
         address += pagelen;
 
-        while (pagelen--) {
-            spi.transfer(*buf++);
+        while (spi.dmaInProgress()) {
+            ;
+        }
+
+        spi.txDma(buf, pagelen);
+        buf += pagelen;
+        while (spi.dmaInProgress()) {
+            ;
         }
         spi.end();
 
@@ -125,6 +137,44 @@ MacronixMX25::Status MacronixMX25::eraseSector(uint32_t address)
     spi.transfer(address >> 16);
     spi.transfer(address >> 8);
     spi.transfer(address >> 0);
+    spi.end();
+
+    // wait for erase complete
+    while (readReg(ReadStatusReg) & WriteInProgress) {
+        ; // do something better here :/
+    }
+
+    return (Status)(readReg(ReadSecurityReg) & (EraseFail | WriteProtected));
+}
+
+/*
+ * Any address within a block is valid to erase that block.
+ */
+MacronixMX25::Status MacronixMX25::eraseBlock(uint32_t address)
+{
+    ensureWriteEnabled();
+
+    spi.begin();
+    spi.transfer(BlockErase64);
+    spi.transfer(address >> 16);
+    spi.transfer(address >> 8);
+    spi.transfer(address >> 0);
+    spi.end();
+
+    // wait for erase complete
+    while (readReg(ReadStatusReg) & WriteInProgress) {
+        ; // do something better here :/
+    }
+
+    return (Status)(readReg(ReadSecurityReg) & (EraseFail | WriteProtected));
+}
+
+MacronixMX25::Status MacronixMX25::chipErase()
+{
+    ensureWriteEnabled();
+
+    spi.begin();
+    spi.transfer(ChipErase);
     spi.end();
 
     // wait for erase complete

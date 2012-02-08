@@ -20,8 +20,7 @@ const unsigned int GridSlot::NUM_ROLL_FRAMES = 16 * GridSlot::NUM_FRAMES_PER_ROL
 //const unsigned int GridSlot::NUM_IDLE_FRAMES = 4 * GridSlot::NUM_FRAMES_PER_IDLE_ANIM_FRAME;
 const float GridSlot::START_FADING_TIME = 1.75f;
 const float GridSlot::FADE_FRAME_TIME = ( GridSlot::SCORE_FADE_DELAY - GridSlot::START_FADING_TIME ) / GridSlot::NUM_POINTS_FRAMES;
-
-
+const float GridSlot::MULTIPLIER_MOTION_PERIOD_MODIFIER = 15.0f;
 
 
 const AssetImage *GridSlot::TEXTURES[ GridSlot::NUM_COLORS ] =
@@ -64,23 +63,22 @@ const AssetImage *GridSlot::FIXED_TEXTURES[ GridSlot::NUM_COLORS ] =
 const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 {
     &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
+    &FixedExplode1,
+    &FixedExplode2,
+    &FixedExplode3,
+    &FixedExplode4,
+    &FixedExplode5,
+    &FixedExplode6,
+    &FixedExplode7,
 };
 
 
 const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
 {
     &hyperdot,
-    &rockdot
+    &rockdot,
+    &rainball
 };
-
-
 
 //order of our frames
 enum
@@ -132,6 +130,7 @@ GridSlot::GridSlot() :
 	m_eventTime( 0.0f ),
 	m_score( 0 ),
 	m_bFixed( false ),
+    m_multiplier( 1 ),
 	m_animFrame( 0 )
 {
 	m_color = Game::random.randrange(NUM_COLORS);
@@ -148,12 +147,19 @@ void GridSlot::Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col )
     m_RockHealth = MAX_ROCK_HEALTH;
 }
 
-
-void GridSlot::FillColor(unsigned int color)
+//bsetspawn to force spawning state, only used for timer respawning currently
+void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
 {
-	m_state = STATE_LIVING;
+    if( bSetSpawn )
+    {
+        m_state = STATE_SPAWNING;
+        m_animFrame = 0;
+    }
+    else
+        m_state = STATE_LIVING;
 	m_color = color;
 	m_bFixed = false;
+    m_multiplier = 1;
 
     if( color == ROCKCOLOR )
         m_RockHealth = MAX_ROCK_HEALTH;
@@ -196,17 +202,32 @@ unsigned int GridSlot::GetSpecialFrame() const
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VidMode_BG0 &vid, Float2 &tiltState )
+void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState )
 {
 	Vec2 vec( m_col * 4, m_row * 4 );
 	switch( m_state )
 	{
+        case STATE_SPAWNING:
+        {
+            DrawIntroFrame( vid, m_animFrame );
+            break;
+        }
 		case STATE_LIVING:
 		{
             if( IsSpecial() )
                 vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
             else if( IsFixed() )
+            {
                 vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
+
+                if( m_multiplier > 1 )
+                {
+                    //always use sprite 0, only 1 multiplier allowed per cube?
+                    vid.setSpriteImage( 0, mults, m_multiplier - 2 );
+                    vid.resizeSprite( 0, 32, 16 );
+                    vid.moveSprite( 0, m_col * 32, m_row * 32 + 8 + ( MULTIPLIER_MOTION_AMPLITUDE * sinf( (float)System::clock() * MULTIPLIER_MOTION_PERIOD_MODIFIER )) );
+                }
+            }
 			else
 			{
                 const AssetImage &animtex = *TEXTURES[ m_color ];
@@ -308,6 +329,16 @@ void GridSlot::Update(float t)
 {
 	switch( m_state )
 	{
+        case STATE_SPAWNING:
+        {
+            m_animFrame++;
+            if( m_animFrame >= NUM_SPAWN_FRAMES )
+            {
+                m_animFrame = 0;
+                m_state = STATE_LIVING;
+            }
+            break;
+        }
         case STATE_LIVING:
         {
             /*if( m_pWrapper->IsIdle() )
@@ -438,10 +469,15 @@ void GridSlot::Update(float t)
 
 void GridSlot::mark()
 {
+    if( m_state == STATE_MARKED || m_state == STATE_EXPLODING )
+        return;
     m_animFrame = 0;
 	m_state = STATE_MARKED;
 	m_eventTime = System::clock();
     Game::Inst().playSound(match2);
+
+    if( m_color < NUM_COLORS )
+        Game::Inst().SetUsedColor( m_color );
 }
 
 
@@ -464,6 +500,13 @@ void GridSlot::explode()
     hurtNeighboringRock( m_row, m_col - 1 );
     hurtNeighboringRock( m_row + 1, m_col );
     hurtNeighboringRock( m_row, m_col + 1 );
+
+    if( m_multiplier > 1 )
+    {
+        Game::Inst().UpMultiplier();
+        m_multiplier = 0;
+        m_pWrapper->ClearSprites();
+    }
 
 	m_eventTime = System::clock();
 }
@@ -525,8 +568,6 @@ void GridSlot::TiltFrom(GridSlot &src)
 	m_curMovePos.x = src.m_col * 4;
 	m_curMovePos.y = src.m_row * 4;
     m_RockHealth = src.m_RockHealth;
-
-    Game::Inst().Stabilize();
 }
 
 
@@ -539,6 +580,16 @@ void GridSlot::startPendingMove()
 		m_state = STATE_MOVING;
 		m_animFrame = 0;
 	}
+}
+
+
+//fake moves don't animate or take time, just finish them
+void GridSlot::finishFakeMove()
+{
+    if( m_state == STATE_PENDINGMOVE )
+    {
+        m_state = STATE_LIVING;
+    }
 }
 
 
@@ -670,4 +721,12 @@ void GridSlot::setFixedAttempt()
     m_state = STATE_FIXEDATTEMPT;
     m_animFrame = 0;
     Game::Inst().playSound(frozen_06);
+}
+
+
+
+void GridSlot::UpMultiplier()
+{
+    if( isAlive() && IsFixed() && m_multiplier > 1 )
+        m_multiplier++;
 }

@@ -24,8 +24,8 @@ volatile uint8_t sensor_tick_counter;
 volatile uint8_t sensor_tick_counter_high;
 
 /*
-    LIS3DH accelerometer.
-*/
+ * LIS3DH accelerometer.
+ */
 
 #define ACCEL_ADDR              0x30    // 00110010 - SDO is tied LOW
 #define ACCEL_ADDR_RX           0x31    // 00110011 - SDO is tied LOW
@@ -426,7 +426,6 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 		jnb _touch, 8$
 		clr _touch
 7$:	
-		// xrl _CTRL_PORT, #CTRL_BACKLIGHT
 
 		xrl (_ack_data + RF_ACK_NEIGHBOR + 0), #(NB0_FLAG_TOUCH)
 		orl _ack_len, #RF_ACK_LEN_NEIGHBOR
@@ -706,24 +705,6 @@ nb_tx_handoff:
         mov     _W2CON0, #1               ;   Turn on I2C controller
         mov     _W2CON0, #7               ;   Master mode, 100 kHz.
         mov     _W2DAT, #ACCEL_ADDR       ; Trigger the next I2C transaction
-
-        // 
-        // ; Start the touch sensing process. This method uses the A/D converter
-        // ; as a capacitance meter, by first charging the hold capacitor to a
-        // ; known level, then transferring a portion of that charge to the external
-        // ; touch plate. By measuring the remaining charge on the hold cap, we can
-        // ; measure the capacitance ratio between the touch plate and the internal
-        // ; hold capacitor.
-        //        
-        // jb      _battery_adc_lock, nb_packet_done
-        // 
-        // mov     _ADCCON2, #0x0c         ; Single-step, no auto-powerdown
-        // mov     _ADCCON3, #0xc0         ; 12-bit, left justified
-        // mov     _ADCCON1, #0xbd         ; 1 0 1111 01, Measure 2/3 VDD reference
-        // 
-        // ; Continue in the ADC interrupt, after conversion finishes.
-        // 
-        // setb    _IEN_MISC
         
         ;--------------------------------------------------------------------
 
@@ -843,13 +824,6 @@ void sensors_init()
      *       priority (in a different prio group). But let's wait to
      *       see if this is even a problem. So far in practice it doesn't
      *       seem to be.
-     *
-     *    Touch (A/D converter)
-     *
-     *       Predicatble latency here is important so that we don't introduce
-     *       a lot of extra noise into our touch measurements. But the
-     *       consequences of failure here are much lower than if we mess up
-     *       our neighbor timing...
      *
      *  - Prio 3 (highest)
      *

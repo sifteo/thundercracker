@@ -101,6 +101,7 @@ public:
     NEVER_INLINE void DrawPartialAsset( const Vec2 &point, const Vec2 &offset, const Vec2 &size, const Sifteo::AssetImage &asset, unsigned frame=0 )
     {
         ASSERT( frame < asset.frames );
+        ASSERT( size.x > 0 && size.y > 0 );
         unsigned tileOffset = asset.width * asset.height * frame + ( asset.width * offset.y ) + offset.x;
 
         for (int y = 0; y < size.y; y++)

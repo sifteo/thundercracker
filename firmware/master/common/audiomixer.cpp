@@ -24,9 +24,18 @@ AudioMixer::AudioMixer() :
 void AudioMixer::init()
 {
     memset(channelSlots, 0, sizeof(channelSlots));
+    // NOTE: several games are failing their builds for hardware because the
+    // speex libs & their own asset metadata overflow MCU internal flash.
+    // Disabling this init allows the linker to strip all the speex code, and
+    // for many games to fit in flash - of course, if you try to run on HW with
+    // speex encoded samples, it will go up in flames. run on HW with uncompressed
+    // samples for now, until absolutely everything is being pulled from external
+    // flash, in which case we should be able to pull speex back in.
+#ifdef SIFTEO_SIMULATOR
     for (int i = 0; i < _SYS_AUDIO_MAX_CHANNELS; i++) {
         decoders[i].init();
     }
+#endif
 }
 
 /*
@@ -266,10 +275,8 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
     *handle = ch.handle;
 
     // does this module require a decoder? if so, get one
-    SpeexDecoder *dec;
-    PCMDecoder *pcmdec = 0;
     if (mod->type == Sample) {
-        dec = getDecoder();
+        SpeexDecoder *dec = getDecoder();
         if (dec == NULL) {
             LOG(("ERROR: No SpeexDecoder available.\n"));
             return false;
@@ -277,7 +284,7 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
         ch.play(mod, loopMode, dec);
     }
     else if (mod->type == PCM) {
-        pcmdec = getPCMDecoder();
+        PCMDecoder *pcmdec = getPCMDecoder();
         if (pcmdec == NULL) {
             LOG(("ERROR: No PCMDecoder available.\n"));
             return false;
@@ -288,9 +295,9 @@ bool AudioMixer::play(struct _SYSAudioModule *mod, _SYSAudioHandle *handle, _SYS
         LOG(("ERROR: Unknown audio encoding. id: %d type: %d.\n", mod->id, mod->type));
         return false;
     }
-    
+
     Atomic::SetLZ(activeChannelMask, idx);
-    
+
     return true;
 }
 

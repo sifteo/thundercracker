@@ -33,8 +33,12 @@ public:
     static const float MAX_GLIMMER_TIME;
     static const float TIME_PER_MESSAGE_FRAME;
     static const int NUM_MESSAGE_FRAMES = 4;
+
+    static const int TEST_TILT_ITERATIONS = 4;
     //anything below this we don't care about
     static const float TILT_SOUND_EPSILON;
+    static const int PTS_PER_EMPTIED_CUBE = 100;
+    //static const float SHOW_BONUS_TIME;
 
 	typedef enum
 	{
@@ -42,6 +46,7 @@ public:
         STATE_MESSAGING,
 		STATE_EMPTY,
         STATE_REFILL,
+        //STATE_CUBEBONUS,
 	} CubeState;
 
 	CubeWrapper();
@@ -54,11 +59,12 @@ public:
     void Update(float t, float dt);
 	void vidInit();
 	void Tilt( int dir );
+    static bool FakeTilt( int dir, GridSlot grid[][NUM_COLS] );
 	void Shake( bool bShaking );
 
     Banner &getBanner() { return m_banner; }
 
-	bool isFull();
+    bool isFull() const;
     bool isEmpty() const;
 	void checkEmpty();
 
@@ -104,18 +110,36 @@ public:
     //queue a location to be cleared by gemEmpty.
     //This exists because we need to do all our clears first, and then do our draws
     void QueueClear( Vec2 &pos );
-    void SpawnHyper();
+    void SpawnSpecial( unsigned int color );
+    bool SpawnMultiplier( unsigned int mult );
     //destroy all dots of the given color
     void BlowAll( unsigned int color );
     bool HasHyperDot() const;
+
+    //pretend to tilt this cube in a series of tilts, and update whether we see the given color on corners or side patterns 1 or 2
+    void UpdateColorPositions( unsigned int color, bool &bCorners, bool &side1, bool &side2 ) const;
+
+    //add one piece
+    void RespawnOnePiece();
+    //search for a multiplier dot and increase it
+    void UpMultiplier();
+    void ClearSprites();
 
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful
 	bool TryMove( int row1, int col1, int row2, int col2 );
+    static bool FakeTryMove( int row1, int col1, int row2, int col2, GridSlot grid[][NUM_COLS] );
+
+    //check different parts of the given grid for the given color
+    static void TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 );
+    //recursive function to tilt and test grid
+    static void TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations );
+
+    bool HasFloatingDots() const;
 
 	Cube m_cube;
-	VidMode_BG0 m_vid;
+    VidMode_BG0_SPR_BG1 m_vid;
 	VidMode_BG0_ROM m_rom;
 	BG1Helper m_bg1helper;
 

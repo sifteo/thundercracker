@@ -9,7 +9,6 @@
 #include "assets.gen.h"
 #include "utils.h"
 #include "string.h"
-#include "sprite.h"
 #include "config.h"
 
 static _SYSCubeID s_id = CUBE_ID_BASE;
@@ -24,8 +23,8 @@ const float CubeWrapper::MOVEMENT_THRESHOLD = 4.7f;
 const float CubeWrapper::MIN_GLIMMER_TIME = 20.0f;
 const float CubeWrapper::MAX_GLIMMER_TIME = 30.0f;
 const float CubeWrapper::TIME_PER_MESSAGE_FRAME = 0.25f / NUM_MESSAGE_FRAMES;
-const float CubeWrapper::TILT_SOUND_EPSILON = 1.0f;
-
+const float CubeWrapper::TILT_SOUND_EPSILON = 5.0f;
+//const float CubeWrapper::SHOW_BONUS_TIME = 3.1f;
 
 
 static const Sifteo::AssetImage *MESSAGE_IMGS[CubeWrapper::NUM_MESSAGE_FRAMES] = {
@@ -116,7 +115,7 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_INTRO:
         {
-            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
+            m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_vid, this );
             m_queuedFlush = true;
             break;
         }
@@ -160,6 +159,13 @@ void CubeWrapper::Draw()
 
                     m_queuedFlush = true;
 
+                    //super debug code!
+                    //Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, m_cube.id() );
+
+                    //for debugging combo count
+                    //if( Game::Inst().getMode() == Game::MODE_TIMED )
+                      //  Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, Game::Inst().GetComboCount() );
+
 					break;
 				}
                 case STATE_MESSAGING:
@@ -175,10 +181,10 @@ void CubeWrapper::Draw()
 				case STATE_EMPTY:
 				{
                     m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeToRefill, 0);
-                    int score = Game::Inst().getScore();
+                    int level = Game::Inst().getDisplayedLevel();
 
                     Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 10 ),
-                                       Banner::CENTER, score );
+                                       Banner::CENTER, level );
 
                     /*m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
                     m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "SHAKE TO" );
@@ -187,11 +193,32 @@ void CubeWrapper::Draw()
                     m_bg1helper.DrawTextf( Vec2( 4, 9 ), Font, "%d PTS", Game::Inst().getScore() );*/
 
                     m_queuedFlush = true;
+
+                    //TODO REMOVE THIS!
+                    m_cube.vbuf.touch();
 					break;
 				}
+                /*case STATE_CUBEBONUS:
+                {
+                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+
+                    String<3> bufCubes;
+
+                    unsigned int numCubes = Game::Inst().CountEmptyCubes();
+                    bufCubes << numCubes;
+
+                    m_bg1helper.DrawText( Vec2( 5, 3 ), Font, bufCubes );
+                    m_bg1helper.DrawText( Vec2( 7, 3 ), Font, "Cube" );
+                    m_bg1helper.DrawText( Vec2( 4, 5 ), Font, "Bonus:" );
+                    Banner::DrawScore( m_bg1helper, Vec2( 7, 7 ), Banner::CENTER, numCubes * PTS_PER_EMPTIED_CUBE );
+
+                    m_queuedFlush = true;
+                    break;
+                }*/
+
                 case STATE_REFILL:
                 {
-                    m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_cube, this );
+                    m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_vid, this );
                     m_queuedFlush = true;
                     break;
                 }
@@ -200,7 +227,10 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_DYING:
         {
-            m_gameover.Draw( m_cube );
+            if( m_banner.IsActive() )
+                m_banner.Draw( m_bg1helper );
+            else
+                m_gameover.Draw( m_vid );
             m_queuedFlush = true;
             break;
         }
@@ -219,35 +249,53 @@ void CubeWrapper::Draw()
             {
                 m_vid.BG0_drawAsset(Vec2(0,0), MsgGameOver, 0);
 
-                int score = Game::Inst().getScore();
+                if( Game::Inst().getMode() == Game::MODE_TIMED )
+                {
+                    int score = Game::Inst().getScore();
 
-                //m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
-                //m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
-                Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 11 ),
-                                   Banner::CENTER, score );
+                    //m_bg1helper.DrawText( Vec2( 3, 3 ), Font, "GAME OVER" );
+                    //m_bg1helper.DrawTextf( Vec2( xPos, 7 ), Font, "%d PTS", Game::Inst().getScore() );
+                    Banner::DrawScore( m_bg1helper, Vec2( Banner::CENTER_PT, 11 ),
+                                       Banner::CENTER, score );
+                }
+                else
+                {
+                    m_vid.BG0_drawPartialAsset( Vec2( 0, 7), Vec2( 0, 7), Vec2( 16, 9), MessageBox4 );
+                }
             }
             else if( m_cube.id() == 1 + CUBE_ID_BASE )
             {
-                m_vid.BG0_drawAsset(Vec2(0,0), MsgHighScores, 0);
-                //m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
-
-                for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
+                if( Game::Inst().getMode() == Game::MODE_TIMED )
                 {
-                    int score = Game::Inst().getHighScore(i);
-                    
-                    //m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
-                    Banner::DrawScore( m_bg1helper, Vec2( 8, 5+2*i ), Banner::RIGHT, score );
+                    m_vid.BG0_drawAsset(Vec2(0,0), MsgHighScores, 0);
+                    //m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
 
+                    for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
+                    {
+                        int score = Game::Inst().getHighScore(i);
+
+                        //m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
+                        Banner::DrawScore( m_bg1helper, Vec2( 8, 5+2*i ), Banner::RIGHT, score );
+
+                    }
+                }
+                else
+                {
+                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+                    m_bg1helper.DrawText( Vec2( 4, 3 ), Font, "Reached" );
+                    m_bg1helper.DrawText( Vec2( 5, 5 ), Font, "Level" );
+
+                    Banner::DrawScore( m_bg1helper, Vec2( 7, 9 ), Banner::CENTER, Game::Inst().getDisplayedLevel() - 1 );
                 }
             }
             else if( m_cube.id() == 2 + CUBE_ID_BASE )
             {
-                m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeOrNeighbor, 0);
+                m_vid.BG0_drawAsset(Vec2(0,0), MsgShakeNewGame, 0);
                 //m_bg1helper.DrawTextf( Vec2( 4, 3 ), Font, "Shake or\nNeighbor\nfor new\n game" );
             }
 
             for( int i = 0; i < GameOver::NUM_ARROWS; i++ )
-                resizeSprite(m_cube, i, 0, 0);
+                m_vid.resizeSprite(i, 0, 0);
 
             m_queuedFlush = true;
             m_dirty = false;
@@ -269,7 +317,7 @@ void CubeWrapper::Update(float t, float dt)
 
     if( Game::Inst().getState() == Game::STATE_INTRO || m_state == STATE_REFILL )
     {
-        if( !m_intro.Update( dt ) )
+        if( !m_intro.Update( dt, m_banner ) )
         {
             if( m_state == STATE_REFILL )
                 m_state = STATE_PLAYING;
@@ -278,7 +326,10 @@ void CubeWrapper::Update(float t, float dt)
     }
     else if( Game::Inst().getState() == Game::STATE_DYING )
     {
-        m_gameover.Update( dt );
+        if( m_banner.IsActive() )
+            m_banner.Update(t);
+        else
+            m_gameover.Update( dt );
         return;
     }
     else if( Game::Inst().getState() == Game::STATE_PLAYING )
@@ -296,8 +347,23 @@ void CubeWrapper::Update(float t, float dt)
     if( m_state == STATE_MESSAGING )
     {
         if( m_stateTime / TIME_PER_MESSAGE_FRAME >= NUM_MESSAGE_FRAMES )
-            setState( STATE_EMPTY );
+        {
+            int count = Game::Inst().CountEmptyCubes();
+            //bonuses for multiple cubes being empty
+            /*if( count > 1 )
+            {
+                setState( STATE_CUBEBONUS );
+                Game::Inst().addScore( count * PTS_PER_EMPTIED_CUBE );
+            }
+            else*/
+                setState( STATE_EMPTY );
+        }
     }
+    /*else if( m_state == STATE_CUBEBONUS )
+    {
+        if( m_stateTime > SHOW_BONUS_TIME )
+            setState( STATE_EMPTY );
+    }*/
 
     if( Game::Inst().getState() == Game::STATE_PLAYING )
     {
@@ -318,7 +384,7 @@ void CubeWrapper::Update(float t, float dt)
             }
         }
 
-        m_banner.Update(t, m_cube);
+        m_banner.Update(t);
 
         //tilt state
         _SYSAccelState state;
@@ -356,6 +422,31 @@ void CubeWrapper::Update(float t, float dt)
             if( oldvel.x * m_curFluidVel.x < 0.0f || oldvel.y * m_curFluidVel.y < 0.0f )
                 Game::Inst().playSlosh();
         }
+
+        for( Cube::Side i = 0; i < NUM_SIDES; i++ )
+        {
+            bool newValue = m_cube.hasPhysicalNeighborAt(i);
+            Cube::ID id = m_cube.physicalNeighborAt(i);
+
+            /*if( newValue )
+            {
+                PRINT( "we have a neighbor.  it is %d\n", id );
+            }*/
+
+            //newly neighbored
+            if( newValue )
+            {
+                if( id != m_neighbors[i] )
+                {
+                    Game::Inst().setTestMatchFlag();
+                    m_neighbors[i] = id - CUBE_ID_BASE;
+
+                    //PRINT( "neighbor on side %d is %d", i, id );
+                }
+            }
+            else
+                m_neighbors[i] = -1;
+        }
     }
     else if( Game::Inst().getState() == Game::STATE_POSTGAME )
     {
@@ -364,31 +455,6 @@ void CubeWrapper::Update(float t, float dt)
             Game::Inst().setTestMatchFlag();
             m_fShakeTime = -1.0f;
         }
-    }
-
-	for( Cube::Side i = 0; i < NUM_SIDES; i++ )
-	{
-		bool newValue = m_cube.hasPhysicalNeighborAt(i);
-		Cube::ID id = m_cube.physicalNeighborAt(i);
-
-        /*if( newValue )
-		{
-			PRINT( "we have a neighbor.  it is %d\n", id );
-        }*/
-
-		//newly neighbored
-		if( newValue )
-		{
-			if( id != m_neighbors[i] )
-			{
-				Game::Inst().setTestMatchFlag();
-                m_neighbors[i] = id - CUBE_ID_BASE;
-
-                //PRINT( "neighbor on side %d is %d", i, id );
-			}
-		}
-		else
-            m_neighbors[i] = -1;
     }
 }
 
@@ -403,9 +469,7 @@ void CubeWrapper::Tilt( int dir )
 {
 	bool bChanged = false;
 
-	PRINT( "tilting" );
-
-	if( m_fShakeTime > 0.0f )
+    if( Game::Inst().getState() != Game::STATE_PLAYING || m_fShakeTime > 0.0f )
 		return;
 
 	//hastily ported from the python
@@ -485,20 +549,122 @@ void CubeWrapper::Tilt( int dir )
 		}
 	}        
 
-	//change all pending movers to movers
-	for( int i = 0; i < NUM_ROWS; i++ )
-	{
-		for( int j = 0; j < NUM_COLS; j++ )
-		{
-			GridSlot &slot = m_grid[i][j];
-			slot.startPendingMove();
-		}
-	}
+    if( bChanged )
+    {
 
-	if( bChanged )
+        //change all pending movers to movers
+        for( int i = 0; i < NUM_ROWS; i++ )
+        {
+            for( int j = 0; j < NUM_COLS; j++ )
+            {
+                GridSlot &slot = m_grid[i][j];
+                slot.startPendingMove();
+            }
+        }
+
+
 		Game::Inst().setTestMatchFlag();
+    }
 
     m_lastTiltDir = dir;
+}
+
+
+bool CubeWrapper::FakeTilt( int dir, GridSlot grid[][NUM_COLS] )
+{
+    bool bChanged = false;
+
+    //hastily ported from the python
+    switch( dir )
+    {
+        case 0:
+        {
+            for( int i = 0; i < NUM_COLS; i++ )
+            {
+                for( int j = 0; j < NUM_ROWS; j++ )
+                {
+                    //start shifting it over
+                    for( int k = j - 1; k >= 0; k-- )
+                    {
+                        if( FakeTryMove( k+1, i, k, i, grid ) )
+                            bChanged = true;
+                        else
+                            break;
+                    }
+                }
+            }
+            break;
+        }
+        case 1:
+        {
+            for( int i = 0; i < NUM_ROWS; i++ )
+            {
+                for( int j = 0; j < NUM_COLS; j++ )
+                {
+                    //start shifting it over
+                    for( int k = j - 1; k >= 0; k-- )
+                    {
+                        if( FakeTryMove( i, k+1, i, k, grid ) )
+                            bChanged = true;
+                        else
+                            break;
+                    }
+                }
+            }
+            break;
+        }
+        case 2:
+        {
+            for( int i = 0; i < NUM_COLS; i++ )
+            {
+                for( int j = NUM_ROWS - 1; j >= 0; j-- )
+                {
+                    //start shifting it over
+                    for( int k = j + 1; k < NUM_ROWS; k++ )
+                    {
+                        if( FakeTryMove( k-1, i, k, i, grid ) )
+                            bChanged = true;
+                        else
+                            break;
+                    }
+                }
+            }
+            break;
+        }
+        case 3:
+        {
+            for( int i = 0; i < NUM_ROWS; i++ )
+            {
+                for( int j = NUM_COLS - 1; j >= 0; j-- )
+                {
+                    //start shifting it over
+                    for( int k = j + 1; k < NUM_COLS; k++ )
+                    {
+                        if( FakeTryMove( i, k-1, i, k, grid ) )
+                            bChanged = true;
+                        else
+                            break;
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    if( bChanged )
+    {
+        //change all pending movers to movers
+        for( int i = 0; i < NUM_ROWS; i++ )
+        {
+            for( int j = 0; j < NUM_COLS; j++ )
+            {
+                GridSlot &slot = grid[i][j];
+                slot.finishFakeMove();
+            }
+        }
+    }
+
+    return bChanged;
 }
 
 
@@ -519,7 +685,7 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
 	GridSlot &slot = m_grid[row1][col1];
 	GridSlot &dest = m_grid[row2][col2];
 
-    if( !dest.isOccupiable() )
+    if( !dest.isEmpty() )
 		return false;
 
     if( slot.isTiltable() )
@@ -533,11 +699,35 @@ bool CubeWrapper::TryMove( int row1, int col1, int row2, int col2 )
         {
             dest.TiltFrom(slot);
             slot.setEmpty();
+            Game::Inst().Stabilize();
             return true;
         }
 	}
 
 	return false;
+}
+
+
+bool CubeWrapper::FakeTryMove( int row1, int col1, int row2, int col2, GridSlot grid[][NUM_COLS] )
+{
+    //start shifting it over
+    GridSlot &slot = grid[row1][col1];
+    GridSlot &dest = grid[row2][col2];
+
+    if( !dest.isEmpty() )
+        return false;
+
+    if( slot.isTiltable() )
+    {
+        if( !slot.IsFixed() )
+        {
+            dest.TiltFrom(slot);
+            slot.setEmpty();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 
@@ -572,6 +762,8 @@ void CubeWrapper::testMatches()
 			{
                 if( ourGems[j]->isMatchable() && theirGems[j]->isMatchable() )
 				{
+                    bool bMatched = true;
+
                     //hypercolor madness
                     if( ourGems[j]->getColor() == GridSlot::HYPERCOLOR )
                     {
@@ -586,13 +778,32 @@ void CubeWrapper::testMatches()
                     //rocks can't match
                     else if( ourGems[j]->getColor() == GridSlot::ROCKCOLOR )
                     {
-
+                        bMatched = false;
                     }
                     else if( ourGems[j]->getColor() == theirGems[j]->getColor() )
                     {
                         ourGems[j]->mark();
                         theirGems[j]->mark();
                     }
+                    else if( ourGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
+                    {
+                        ourGems[j]->FillColor( theirGems[j]->getColor() );
+                        ourGems[j]->mark();
+                        theirGems[j]->mark();
+                    }
+                    else if( theirGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
+                    {
+                        theirGems[j]->FillColor( ourGems[j]->getColor() );
+                        ourGems[j]->mark();
+                        theirGems[j]->mark();
+                    }
+                    else
+                    {
+                        bMatched = false;
+                    }
+
+                    if( bMatched )
+                        Game::Inst().UpCombo();
 				}
 			}
         }
@@ -695,13 +906,13 @@ GridSlot *CubeWrapper::GetSlot( int row, int col )
 }
 
 
-bool CubeWrapper::isFull()
+bool CubeWrapper::isFull() const
 {
 	for( int i = 0; i < NUM_ROWS; i++ )
 	{
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
-			GridSlot &slot = m_grid[i][j];
+            const GridSlot &slot = m_grid[i][j];
 			if( slot.isEmpty() )
 				return false;
 		}
@@ -733,7 +944,10 @@ void CubeWrapper::checkRefill()
     else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
 	{
         if( isEmpty() )
-            setState( STATE_MESSAGING );
+        {
+            if( m_state != STATE_MESSAGING )
+                setState( STATE_MESSAGING );
+        }
         else
             setState( STATE_PLAYING );
 	}
@@ -741,12 +955,12 @@ void CubeWrapper::checkRefill()
 	{
         setState( STATE_REFILL );
         m_intro.Reset( true );
-		Refill( true );
+        Refill( Game::Inst().getMode() == Game::MODE_SHAKES );
 
-		if( Game::Inst().getMode() == Game::MODE_SHAKES && Game::Inst().getScore() > 0 )
+        /*if( Game::Inst().getMode() == Game::MODE_SHAKES && Game::Inst().getScore() > 0 )
 		{
 			m_banner.SetMessage( "FREE SHAKE!" );
-		}
+        }*/
 	}
 	else
 	{
@@ -754,7 +968,7 @@ void CubeWrapper::checkRefill()
 		{
             setState( STATE_REFILL );
             m_intro.Reset( true );
-            Refill( true );
+            Refill( false );
 		}
         else if( Game::Inst().getShakesLeft() > 0 )
 		{
@@ -771,7 +985,7 @@ void CubeWrapper::checkRefill()
 			{
                 String<16> buf;
                 buf << Game::Inst().getShakesLeft() << " SHAKES LEFT";
-                m_banner.SetMessage( buf, false );
+                m_banner.SetMessage( buf );
 			}
 		}
 		else
@@ -978,6 +1192,36 @@ void CubeWrapper::Refill( bool bAddLevel )
 
 
 
+//add one piece
+void CubeWrapper::RespawnOnePiece()
+{
+    //grab a random empty location
+    unsigned int numEmpties = 0;
+    Vec2 aEmptyLocs[NUM_ROWS * NUM_COLS];
+
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+            if( !slot.isAlive() )
+                aEmptyLocs[numEmpties++] = Vec2( i, j );
+        }
+    }
+
+    ASSERT( numEmpties > 0 );
+
+    int toSpawn = Game::random.randrange( numEmpties );
+
+    GridSlot &slot = m_grid[aEmptyLocs[toSpawn].x][aEmptyLocs[toSpawn].y];
+    slot.FillColor( Game::random.randrange( Game::Inst().getLevel().m_numColors ), true );
+
+    Game::Inst().playSound(bubble_pop_02);
+}
+
+
+
+
 //get the number of dots that are marked or exploding
 unsigned int CubeWrapper::getNumMarked() const
 {
@@ -1179,7 +1423,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 
 void CubeWrapper::checkEmpty()
 {
-    if( isEmpty() )
+    if( isEmpty() && m_state != STATE_MESSAGING )
         setState( STATE_MESSAGING );
 }
 
@@ -1223,7 +1467,7 @@ void CubeWrapper::QueueClear( Vec2 &pos )
 
 
 //look for an empty spot to put a hyper dot
-void CubeWrapper::SpawnHyper()
+void CubeWrapper::SpawnSpecial( unsigned int color )
 {
     for( int i = 0; i < NUM_ROWS; i++ )
     {
@@ -1231,13 +1475,58 @@ void CubeWrapper::SpawnHyper()
         {
             GridSlot &slot = m_grid[i][j];
 
-            if( slot.isOccupiable() )
+            if( slot.isEmpty() )
             {
-                slot.MakeHyper();
+                slot.FillColor( color );
                 return;
             }
         }
     }
+}
+
+
+bool CubeWrapper::SpawnMultiplier( unsigned int mult )
+{
+    //if we already have a multiplier, try a different cube
+    for( int i = 1; i < NUM_ROWS - 1; i++ )
+    {
+        for( int j = 1; j < NUM_COLS - 1; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+
+            if( slot.isAlive() && slot.IsFixed() && slot.getMultiplier() > 1 )
+                return false;
+        }
+    }
+
+    //search the central locations for a fixed dot
+    for( int i = 1; i < NUM_ROWS - 1; i++ )
+    {
+        for( int j = 1; j < NUM_COLS - 1; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+
+            if( slot.isAlive() && slot.IsFixed() )
+            {
+                slot.setMultiplier( mult );
+                return true;
+            }
+        }
+    }
+
+    //no fixed dot, either spawn one or convert a regular dot into one
+    int i = Game::random.random() > 0.5f ? 2 : 1;
+    int j = Game::random.random() > 0.5f ? 2 : 1;
+
+    GridSlot &slot = m_grid[i][j];
+
+    if( !slot.isAlive() )
+        slot.FillColor( Game::random.randrange( Game::Inst().getLevel().m_numColors ) );
+
+    slot.MakeFixed();
+    slot.setMultiplier( mult );
+
+    return true;
 }
 
 
@@ -1273,4 +1562,179 @@ bool CubeWrapper::HasHyperDot() const
     }
 
     return false;
+}
+
+
+//pretend to tilt this cube in a series of tilts, and update whether we see the given color on corners or side patterns 1 or 2
+void CubeWrapper::UpdateColorPositions( unsigned int color, bool &bCorners, bool &side1, bool &side2 ) const
+{
+    TestGridForColor( m_grid, color, bCorners, side1, side2 );
+
+    //we've already satisfied everything
+    if( bCorners && side1 && side2 )
+        return;
+
+    if( !isFull() && HasFloatingDots() )
+    {
+        GridSlot grid[NUM_ROWS][NUM_COLS];
+
+        _SYS_memcpy8( (uint8_t *)grid, (uint8_t *)m_grid, sizeof( grid ) );
+
+        //recursive function to tilt and test grid
+        TiltAndTestGrid( grid, color, bCorners, side1, side2, TEST_TILT_ITERATIONS );
+
+        //we've already satisfied everything
+        if( bCorners && side1 && side2 )
+            return;
+    }
+}
+
+
+//check different parts of the given grid for the given color
+void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2 )
+{
+    //only check for spots that haven't been found already
+    if( !bCorners )
+    {
+        const Vec2 cornerLocs[] = {
+            Vec2( 0, 0 ),
+            Vec2( 0, NUM_COLS - 1 ),
+            Vec2( NUM_ROWS - 1, 0 ),
+            Vec2( NUM_ROWS - 1, NUM_COLS - 1 )
+        };
+
+        for( int i = 0; i < 4; i++ )
+        {
+            const GridSlot &slot = grid[ cornerLocs[i].x ][ cornerLocs[i].y ];
+            if( slot.isAlive() && slot.getColor() == color )
+            {
+                bCorners = true;
+                break;
+            }
+        }
+    }
+
+    //side 1 looks like a spinning star spinning left
+    /*
+      XOXX
+      XXXO
+      OXXX
+      XXOX
+
+      only works with 4x4!
+      */
+    if( !side1 )
+    {
+        STATIC_ASSERT( ( NUM_ROWS == 4 ) && ( NUM_COLS == 4 ) );
+        const Vec2 locs[] = {
+            Vec2( 0, 1 ),
+            Vec2( 1, 3 ),
+            Vec2( 2, 0 ),
+            Vec2( 3, 2 )
+        };
+
+        for( int i = 0; i < 4; i++ )
+        {
+            const GridSlot &slot = grid[ locs[i].x ][ locs[i].y ];
+            if( slot.isAlive() && slot.getColor() == color )
+            {
+                side1 = true;
+                break;
+            }
+        }
+    }
+
+    //side 2 looks like a spinning star spinning right
+    /*
+      XXOX
+      OXXX
+      XXXO
+      XOXX
+
+      only works with 4x4!
+      */
+    if( !side2 )
+    {
+        const Vec2 locs[] = {
+            Vec2( 0, 2 ),
+            Vec2( 1, 0 ),
+            Vec2( 2, 3 ),
+            Vec2( 3, 1 )
+        };
+
+        for( int i = 0; i < 4; i++ )
+        {
+            const GridSlot &slot = grid[ locs[i].x ][ locs[i].y ];
+            if( slot.isAlive() && slot.getColor() == color )
+            {
+                side2 = true;
+                break;
+            }
+        }
+    }
+}
+
+
+//recursive function to tilt and test grid
+void CubeWrapper::TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations )
+{
+    for( int i = 0; i < NUM_SIDES; i++ )
+    {
+        //copy the grid
+        GridSlot childgrid[NUM_ROWS][NUM_COLS];
+
+        _SYS_memcpy8( (uint8_t *)childgrid, (uint8_t *)grid, sizeof( childgrid ) );
+
+        //tilt it
+        if( FakeTilt( i, childgrid ) )
+        {
+            TestGridForColor( childgrid, color, bCorners, side1, side2 );
+
+            //we've already satisfied everything
+            if( bCorners && side1 && side2 )
+                return;
+
+            //recurse
+            if( iterations > 0 )
+                TiltAndTestGrid( childgrid, color, bCorners, side1, side2, iterations - 1 );
+        }
+    }
+}
+
+
+
+bool CubeWrapper::HasFloatingDots() const
+{
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            const GridSlot &slot = m_grid[i][j];
+            if( slot.isAlive() && !slot.IsFixed() )
+                return true;
+        }
+    }
+
+    return false;
+}
+
+
+
+//search for a multiplier dot and increase it
+void CubeWrapper::UpMultiplier()
+{
+    for( int i = 1; i < NUM_ROWS - 1; i++ )
+    {
+        for( int j = 1; j < NUM_COLS - 1; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+            slot.UpMultiplier();
+        }
+    }
+}
+
+
+void CubeWrapper::ClearSprites()
+{
+    m_vid.resizeSprite( 0, 0, 0 );
 }
