@@ -55,6 +55,13 @@ namespace llvm {
                     const SmallVectorImpl<ISD::InputArg> &Ins,
                     DebugLoc dl, SelectionDAG &DAG,
                     SmallVectorImpl<SDValue> &InVals) const;
+                    
+        virtual SDValue
+          LowerCallResult(SDValue Chain, SDValue InFlag,
+                          CallingConv::ID CallConv, bool isVarArg,
+                          const SmallVectorImpl<ISD::InputArg> &Ins,
+                          DebugLoc dl, SelectionDAG &DAG,
+                          SmallVectorImpl<SDValue> &InVals) const;
 
         virtual SDValue
           LowerReturn(SDValue Chain,

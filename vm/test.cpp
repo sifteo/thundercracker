@@ -16,9 +16,7 @@ static Cube cubes[NUM_CUBES];
 
 void siftmain()
 {
-    int64_t ns;
-    _SYS_ticks_ns(&ns);
-    if ((int32_t)ns < 1000)
+    if (System::clock() < 10)
         System::paint();
 
 #if 0
@@ -34,5 +32,4 @@ void siftmain()
        System::paint();
     }
 #endif
-
 }

@@ -179,6 +179,17 @@ bool SVMDAGToDAGISel::SelectDecoratedTarget(SDValue Addr,
             SVMDecorations::Apply(M, GA->getGlobal(), Prefix), MVT::i32);
         return true;
     }
+    
+    // Wrap ExternalSymbols in a GlobalValue, so we can uniquely alias them
+    if (ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Addr)) {
+        Type *T = FunctionType::get(Type::getVoidTy(*CurDAG->getContext()), false);
+        GlobalValue *GV = dyn_cast<GlobalValue>
+            (M->getOrInsertGlobal(ES->getSymbol(), T));            
+        CP = CurDAG->getTargetConstantPool(
+            SVMDecorations::Apply(M, GV, Prefix), MVT::i32);
+        return true;
+    }
+
     return false;
 }
 

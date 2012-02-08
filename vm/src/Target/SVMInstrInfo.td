@@ -51,12 +51,14 @@ def callseq_end : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
     [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 def callTarget : Operand<i32>,
-    ComplexPattern<iPTR, 1, "SelectCallTarget", [tglobaladdr], []> {
+    ComplexPattern<iPTR, 1, "SelectCallTarget",
+    [tglobaladdr, texternalsym], []> {
     let MIOperandInfo = (ops tconstpool);
 }
 
 def tailCallTarget : Operand<i32>,
-    ComplexPattern<iPTR, 1, "SelectTailCallTarget", [tglobaladdr], []> {
+    ComplexPattern<iPTR, 1, "SelectTailCallTarget",
+    [tglobaladdr, texternalsym], []> {
     let MIOperandInfo = (ops tconstpool);
 }
 
