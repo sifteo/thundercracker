@@ -163,8 +163,8 @@ void CubeWrapper::Draw()
                     //Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, m_cube.id() );
 
                     //for debugging combo count
-                    if( Game::Inst().getMode() == Game::MODE_TIMED )
-                        Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, Game::Inst().GetComboCount() );
+                    //if( Game::Inst().getMode() == Game::MODE_TIMED )
+                      //  Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, Game::Inst().GetComboCount() );
 
 					break;
 				}
@@ -193,6 +193,9 @@ void CubeWrapper::Draw()
                     m_bg1helper.DrawTextf( Vec2( 4, 9 ), Font, "%d PTS", Game::Inst().getScore() );*/
 
                     m_queuedFlush = true;
+
+                    //TODO REMOVE THIS!
+                    m_cube.vbuf.touch();
 					break;
 				}
                 /*case STATE_CUBEBONUS:

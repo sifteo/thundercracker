@@ -67,11 +67,15 @@ bool Intro::Update( float dt, Banner &banner )
             case STATE_READY:
                 if( Game::Inst().getState() == Game::STATE_PLAYING )
                     return false;
+                else if( Game::Inst().getMode() == Game::MODE_SHAKES )
+                    banner.SetMessage( "Clear the cubes!", READYSETGO_BANNER_TIME );
                 else
-                    banner.SetMessage( "Ready", READYSETGO_BANNER_TIME );
+                    banner.SetMessage( "60 seconds", READYSETGO_BANNER_TIME );
                 break;
             case STATE_SET:
-                banner.SetMessage( "Set", READYSETGO_BANNER_TIME );
+                if( Game::Inst().getMode() == Game::MODE_SHAKES )
+                    return false;
+                banner.SetMessage( "Ready", READYSETGO_BANNER_TIME );
                 break;
             case STATE_GO:
                 banner.SetMessage( "Go!", READYSETGO_BANNER_TIME );
