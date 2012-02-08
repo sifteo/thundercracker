@@ -452,6 +452,10 @@ uint32_t _SYS_ole_f32() _SC(29);
 uint32_t _SYS_ole_f64() _SC(28);
 uint32_t _SYS_ogt_f32() _SC(27);
 uint32_t _SYS_ogt_f64() _SC(26);
+uint32_t _SYS_uo_f32() _SC(25);
+uint32_t _SYS_uo_f64() _SC(24);
+uint32_t _SYS_o_f32() _SC(23);
+uint32_t _SYS_o_f64() _SC(22);
 
 void _SYS_sincosf(float x, float *sinOut, float *cosOut) _SC(8);
 float _SYS_fmodf(float a, float b) _SC(9);

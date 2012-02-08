@@ -88,6 +88,10 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     setLibcallName(RTLIB::OLE_F64, "_SYS_28");
     setLibcallName(RTLIB::OGT_F32, "_SYS_27");
     setLibcallName(RTLIB::OGT_F64, "_SYS_26");
+    setLibcallName(RTLIB::UO_F32, "_SYS_25");
+    setLibcallName(RTLIB::UO_F64, "_SYS_24");
+    setLibcallName(RTLIB::O_F32, "_SYS_23");
+    setLibcallName(RTLIB::O_F64, "_SYS_22");
 
     // Register classes
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
