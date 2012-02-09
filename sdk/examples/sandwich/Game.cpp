@@ -78,9 +78,9 @@ void Game::MainLoop(Cube* pPrimary) {
 
   while(!mIsDone) {
     float dt = UpdateDeltaTime();
-    if (sNeighborDirty) { 
-      CheckMapNeighbors(); 
-    }
+    //if (sNeighborDirty) { 
+    //  CheckMapNeighbors(); 
+    //}
     mPlayer.Update(dt);
     Paint();
     mSimFrames++;
@@ -88,7 +88,10 @@ void Game::MainLoop(Cube* pPrimary) {
 }
 
 void Game::Paint(bool sync) {
-  for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+    if (sNeighborDirty) { 
+      CheckMapNeighbors(); 
+    }
+    for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->Update();
     #if KLUDGES
     p->GetCube()->vbuf.touch();
