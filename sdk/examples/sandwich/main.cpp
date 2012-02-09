@@ -61,6 +61,7 @@ void siftmain() {
 			game.MainLoop(pPrimary);
 			pGame = 0;
 		}
+		for(unsigned i=0; i<100; ++i) { System::paint(); }
 		//PlayMusic(music_winscreen, false);
 		//WinScreen(gCubes);
 	}
