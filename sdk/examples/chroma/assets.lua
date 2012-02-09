@@ -16,7 +16,7 @@ MessageBox4 = image{"message4.png"}
 MsgGameOver = image{"gameover.png"}
 MsgHighScores = image{"highscores.png"}
 MsgShakeNewGame = image{"shakenewgame.png"}
-MsgShakeToRefill = image{"shakeforlevel.png"}
+MsgShakeToRefill = image{"shaketorefill.png"}
 --the gems
 Gem0 = image{"Gem0.png", height=32}
 Gem1 = image{"Gem1.png", height=32}
