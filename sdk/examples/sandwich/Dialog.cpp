@@ -238,10 +238,10 @@ void DoDialog(const DialogData& data, Cube* cube) {
     if (!cube) cube = gCubes;
     DialogView view(cube);
 
+    PlaySfx(sfx_neighbor);
     ViewMode mode(view.GetCube()->vbuf);
     for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
     mode.BG0_drawAsset(Vec2(0,10), DialogBox);
-
     for(unsigned line=0; line<data.lineCount; ++line) {
         const DialogTextData& txt = data.lines[line];
 
@@ -264,10 +264,12 @@ void DoDialog(const DialogData& data, Cube* cube) {
         
         view.Erase();
         pGame->Paint(true);
-        PlaySfx(sfx_neighbor);
         const char* pNextChar = txt.line;
         while(*pNextChar) {
             pNextChar = view.Show(pNextChar);
+        }
+        if (line > 0) {
+            PlaySfx(sfx_neighbor);
         }
         view.Fade();
     }

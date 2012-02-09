@@ -165,7 +165,7 @@ Cube* IntroCutscene() {
 		mode.setSpriteImage(i+1, Items.index + Items.width * Items.height * (i+1));
 		mode.resizeSprite(i+1, 16, 16);
 		// jump
-		PlaySfx(sfx_pickup);
+		//PlaySfx(sfx_pickup);
 		for(int j=0; j<6; j++) {
 			mode.moveSprite(i+1, x, 42 - j);
 			System::paint();

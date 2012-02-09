@@ -66,12 +66,10 @@ void ViewSlot::Update() {
 }
   
 bool ViewSlot::ShowLocation(Vec2 loc) {
-	const Map* m = pGame->GetMap();
 	if (!pGame->GetMap()->Contains(loc)) {
 		if (IsShowingRoom()) {
 			HideLocation();
 		}
-		return false;
 	} else {
 		unsigned rid = pGame->GetMap()->GetRoomId(loc);
 		if (!IsShowingRoom() || mView.room.GetRoom()->Id() != rid) {
@@ -87,9 +85,10 @@ bool ViewSlot::ShowLocation(Vec2 loc) {
 			mFlags.view = VIEW_ROOM;
 			mView.room.Init(rid);
 			pGame->NeedsSync();
+			return true;
 		}
-		return true;
 	}
+	return false;
 }
 
 bool ViewSlot::HideLocation() {
