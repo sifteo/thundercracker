@@ -1,5 +1,5 @@
 #include "Dialog.h"
-#include "View.h"
+#include "Game.h"
 
 static const uint8_t font_data[] = {
     0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -214,23 +214,23 @@ void DialogView::Erase() {
 
 void DialogView::Fade() {
     const unsigned speed = 4;
-    const unsigned hold = 100;
+    const unsigned hold = 250;
     for (unsigned i = 0; i < 128; i += speed) {
         mCube->vbuf.poke(
             offsetof(_SYSVideoRAM, colormap) / 2 + 1,
             color_lerp(2*i)
         );
-        System::paint();
+        pGame->Paint();
     }
     for (unsigned i = 0; i < hold; i++) {
-        System::paint();
+        pGame->Paint();
     }
     for (unsigned i = 0; i < 128; i += speed) {
         mCube->vbuf.poke(
             offsetof(_SYSVideoRAM, colormap) / 2 + 1,
             color_lerp(0xFF - 2*i)
         );
-        System::paint();
+        pGame->Paint();
     }
 }
 
@@ -263,7 +263,8 @@ void DoDialog(const DialogData& data, Cube* cube) {
         }
         
         view.Erase();
-        System::paintSync();
+        pGame->Paint(true);
+        PlaySfx(sfx_neighbor);
         const char* pNextChar = txt.line;
         while(*pNextChar) {
             pNextChar = view.Show(pNextChar);
@@ -271,6 +272,7 @@ void DoDialog(const DialogData& data, Cube* cube) {
         view.Fade();
     }
     for(unsigned i=0; i<16; ++i) {
-        System::paint();
+        pGame->Paint();
     }
+    PlaySfx(sfx_deNeighbor);
 }

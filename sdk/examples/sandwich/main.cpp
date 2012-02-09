@@ -101,6 +101,7 @@ Cube* IntroCutscene() {
 		for(unsigned i=0; i<NUM_CUBES; ++i) {
 			if (gCubes[i].touching()) {
 				pCube = gCubes + i;
+				PlaySfx(sfx_neighbor);
 				break;
 			}
 		}
@@ -125,11 +126,12 @@ Cube* IntroCutscene() {
 	}
 	WaitForSeconds(0.1f);
 	// pearl walks up from bottom
+	PlaySfx(sfx_running);
 	int framesPerCycle = PlayerWalk.frames >> 2;
 	int tilesPerFrame = PlayerWalk.width * PlayerWalk.height;
 	mode.resizeSprite(0, 32, 32);
 	for(unsigned i=0; i<48/2; ++i) {
-		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * ((i/2)%framesPerCycle));
+		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
 		mode.moveSprite(0, 64-16, 128-i-i);
 		System::paintSync();
 	}
@@ -163,6 +165,7 @@ Cube* IntroCutscene() {
 		mode.setSpriteImage(i+1, Items.index + Items.width * Items.height * (i+1));
 		mode.resizeSprite(i+1, 16, 16);
 		// jump
+		PlaySfx(sfx_pickup);
 		for(int j=0; j<6; j++) {
 			mode.moveSprite(i+1, x, 42 - j);
 			System::paint();
@@ -194,10 +197,10 @@ Cube* IntroCutscene() {
 	System::paintSync();
 
 	// walk off
+	PlaySfx(sfx_running);
 	unsigned downIndex = PlayerWalk.index + SIDE_BOTTOM * tilesPerFrame * framesPerCycle;
 	for(unsigned i=0; i<76/2; ++i) {
-		//mode.setSpriteImage(0, downIndex + tilesPerFrame * (i%framesPerCycle));
-		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * ((i/2)%framesPerCycle));
+		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
 		mode.moveSprite(0, 64-16, 80-i-i);
 		System::paintSync();
 	}
