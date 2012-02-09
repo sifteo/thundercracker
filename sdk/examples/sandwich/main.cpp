@@ -75,8 +75,10 @@ Cube* IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
 		ViewMode gfx(gCubes[i].vbuf);
 		gfx.set();
-		gfx.clear();
 		gfx.BG0_drawAsset(Vec2(0,0), Sting);
+		for(unsigned s=0; s<8; ++s) {
+			gfx.hideSprite(s);
+		}
 		BG1Helper overlay(gCubes[i]);
 		overlay.DrawAsset(Vec2(0,0), Title);
 		overlay.Flush();
