@@ -136,7 +136,7 @@ void ViewSlot::RefreshInventory() {
   	} else {
   		mView.inventory.OnInventoryChanged();
   	}
-  } else if (pGame->GetState()->HasAnyItems()) { 
+  } else if (mFlags.view == VIEW_IDLE && pGame->GetState()->HasAnyItems()) { 
 	bool invShowing = false;
 	for(ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
 		if (invShowing = p->ViewType() == VIEW_INVENTORY) { break; }

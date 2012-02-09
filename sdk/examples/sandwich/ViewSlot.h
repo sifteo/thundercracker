@@ -3,9 +3,10 @@
 #include "IdleView.h"
 #include "InventoryView.h"
 
-#define VIEW_IDLE		0
-#define VIEW_ROOM		1
-#define VIEW_INVENTORY	2
+#define VIEW_NONE		0
+#define VIEW_IDLE		1
+#define VIEW_ROOM		2
+#define VIEW_INVENTORY	3
 #define VIEW_TYPE_COUNT	3
 #define BITS_FOR_VIEW_TYPE 2 // invariant: 2 ^ BITS_FOR_VIEW_TYPE >= VIEW_TYPE_COUNT
 
