@@ -1,5 +1,5 @@
 <dialog-database>
-	<dialog id="zelda_hello" npc="zelda">
+	<!--dialog id="zelda_hello" npc="zelda">
 		<text image="zelda_detail">
 			Hello, Princess Pearl!
 			It's me, Zelda!
@@ -8,5 +8,5 @@
 			Fancy meeting you
 			here in the woods!
 		</text>
-	</dialog>
+	</dialog-->
 </dialog-database>
