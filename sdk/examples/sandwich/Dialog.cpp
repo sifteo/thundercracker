@@ -222,8 +222,13 @@ void DialogView::Fade() {
         );
         pGame->Paint();
     }
+    bool prev = mCube->touching();
     for (unsigned i = 0; i < hold; i++) {
         pGame->Paint();
+        bool next = mCube->touching();
+        if (next && !prev) { break; }
+        prev = next;
+
     }
     for (unsigned i = 0; i < 128; i += speed) {
         mCube->vbuf.poke(

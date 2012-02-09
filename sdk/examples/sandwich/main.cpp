@@ -49,8 +49,12 @@ void siftmain() {
 	gChannelMusic.init();
 	#endif
 	for(;;) {
+		#ifndef SIFTEO_SIMULATOR
 		PlayMusic(music_sting, false);
 		Cube* pPrimary = IntroCutscene();
+		#else 
+		Cube* pPrimary = gCubes;
+		#endif
 		{
 			Game game;
 			pGame = &game;
