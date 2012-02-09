@@ -49,7 +49,6 @@ public:
         tim(_hw) {}
 
     void init(int period, int prescaler);
-    void setUpdateIsrEnabled(bool enabled);
     void deinit();
 
     uint16_t status() const {

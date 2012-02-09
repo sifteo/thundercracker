@@ -48,16 +48,6 @@ void HwTimer::init(int period, int prescaler)
                 (1 << 0);       // EN - enable
 }
 
-void HwTimer::setUpdateIsrEnabled(bool enabled)
-{
-    if (enabled) {
-        tim->DIER |= (1 << 0);
-    }
-    else {
-        tim->DIER &= ~(1 << 0);
-    }
-}
-
 void HwTimer::deinit()
 {
     tim->CR1  = 0;  // control disabled

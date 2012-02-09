@@ -36,13 +36,13 @@ void DacAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
 
 void DacAudioOut::start()
 {
-    sampleTimer.setUpdateIsrEnabled(true);
+    sampleTimer.enableUpdateIsr();
     dac.enableChannel(this->dacChan);
 }
 
 void DacAudioOut::stop()
 {
-    sampleTimer.setUpdateIsrEnabled(false);
+    sampleTimer.disableUpdateIsr();
     suspend(); // TODO - full shut down?
 }
 
