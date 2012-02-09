@@ -48,4 +48,8 @@ public:
   void Update(float dt);
   void UpdateAnimation(float dt);
   void Reset();
+
+private:
+  void CheckForPassiveTrigger();
+  void CheckForActiveTrigger();
 };

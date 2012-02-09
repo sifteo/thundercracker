@@ -126,6 +126,9 @@ void Player::Update(float dt) {
     #if TOUCH_ONLY
       do {
         CORO_YIELD;
+        if (mCurrent.view->Parent()->Touched()) {
+          CheckForActiveTrigger();
+        }
       } while (!pGame->GetMap()->FindBroadPath(&mPath));
     #else
       do {
@@ -228,60 +231,74 @@ void Player::Update(float dt) {
         mTarget.view = 0;  
         mPosition = mCurrent.view->GetRoom()->Center(mCurrent.subdivision);
         mCurrent.view->UpdatePlayer();        
-        if (mCurrent.view->GetRoom()->HasItem()) {
-          const ItemData* pItem = mCurrent.view->GetRoom()->TriggerAsItem();
-          if (pGame->GetState()->FlagTrigger(pItem->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
-          if (pGame->GetState()->PickupItem(pItem->itemId)) {
-            PlaySfx(sfx_pickup);
-            pGame->OnInventoryChanged();
-          }
-          // do a pickup animation
-          for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
-            mCurrent.view->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
-            
-            for(float t=System::clock(); System::clock()-t<0.075f;) {
-              // this calc is kinda annoyingly complex
-              float u = (System::clock() - t) / 0.075f;
-              const float du = 1.f / (float) PlayerPickup.frames;
-              u = (frame + u) * du;
-              u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-              pGame->Paint();
-              mCurrent.view->SetItemPosition(Vec2(0, -36.f * u) );
-            }
-          }
-          mCurrent.view->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
-          for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
-          mCurrent.view->HideItem();        
-        }
-      }
+        CheckForPassiveTrigger();
+      }  
     } while(mPath.PopStep(mCurrent, &mTarget));
-    if (mCurrent.view->GetRoom()->HasGateway()) {
-      const GatewayData* pGate = mCurrent.view->GetRoom()->TriggerAsGate();
-      const MapData& targetMap = gMapData[pGate->targetMap];
-      const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
-      if (pGame->GetState()->FlagTrigger(pGate->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); } 
-      pGame->WalkTo(128 * mCurrent.view->GetRoom()->Location() + Vec2(pGate->x, pGate->y));
-      pGame->TeleportTo(gMapData[pGate->targetMap], Vec2(
-        128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
-        128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
-      ));
-    } else if (mCurrent.view->GetRoom()->HasNPC()) {
-      ////////
-      mStatus = PLAYER_STATUS_IDLE;
-      mCurrent.view->UpdatePlayer();
-      for(int i=0; i<16; ++i) {
-        pGame->Paint(true);
-      }
-      const NpcData* pNpc = mCurrent.view->GetRoom()->TriggerAsNPC();
-      if (pGame->GetState()->FlagTrigger(pNpc->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
-      DoDialog(gDialogData[pNpc->dialog], mCurrent.view->Parent()->GetCube());
-      System::paintSync();
-      mCurrent.view->Parent()->Restore();
-      System::paintSync();
-    }
-    mDir = SIDE_BOTTOM;
-    mCurrent.view->UpdatePlayer();
+    CheckForActiveTrigger();
   }
   
   CORO_END;
 }
+
+void Player::CheckForPassiveTrigger() {
+  if (mCurrent.view->GetRoom()->HasItem()) {
+    const ItemData* pItem = mCurrent.view->GetRoom()->TriggerAsItem();
+    if (pGame->GetState()->FlagTrigger(pItem->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
+    if (pGame->GetState()->PickupItem(pItem->itemId)) {
+      PlaySfx(sfx_pickup);
+      pGame->OnInventoryChanged();
+    }
+    // do a pickup animation
+    for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
+      mCurrent.view->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
+      
+      for(float t=System::clock(); System::clock()-t<0.075f;) {
+        // this calc is kinda annoyingly complex
+        float u = (System::clock() - t) / 0.075f;
+        const float du = 1.f / (float) PlayerPickup.frames;
+        u = (frame + u) * du;
+        u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
+        pGame->Paint();
+        mCurrent.view->SetItemPosition(Vec2(0, -36.f * u) );
+      }
+    }
+    mCurrent.view->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
+    for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
+    mCurrent.view->HideItem();        
+  }
+}
+
+void Player::CheckForActiveTrigger() {
+  if (mCurrent.view->GetRoom()->HasGateway()) {
+    const GatewayData* pGate = mCurrent.view->GetRoom()->TriggerAsGate();
+    const MapData& targetMap = gMapData[pGate->targetMap];
+    const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
+    if (pGame->GetState()->FlagTrigger(pGate->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); } 
+    pGame->WalkTo(128 * mCurrent.view->GetRoom()->Location() + Vec2(pGate->x, pGate->y));
+    pGame->TeleportTo(gMapData[pGate->targetMap], Vec2(
+      128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
+      128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
+    ));
+  } else if (mCurrent.view->GetRoom()->HasNPC()) {
+    ////////
+    mStatus = PLAYER_STATUS_IDLE;
+    mCurrent.view->UpdatePlayer();
+    for(int i=0; i<16; ++i) {
+      pGame->Paint(true);
+    }
+    const NpcData* pNpc = mCurrent.view->GetRoom()->TriggerAsNPC();
+    if (pGame->GetState()->FlagTrigger(pNpc->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
+    DoDialog(gDialogData[pNpc->dialog], mCurrent.view->Parent()->GetCube());
+    System::paintSync();
+    mCurrent.view->Parent()->Restore();
+    System::paintSync();
+  }  
+  if (mDir != SIDE_BOTTOM || mStatus != PLAYER_STATUS_IDLE) {
+    mDir = SIDE_BOTTOM;
+    mStatus = PLAYER_STATUS_IDLE;
+    mCurrent.view->UpdatePlayer();
+  }
+}
+
+
+
