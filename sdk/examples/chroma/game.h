@@ -48,7 +48,7 @@ public:
 
     //static const int NUM_CUBES = 3;
     static const unsigned int NUM_HIGH_SCORES = 5;
-    static const int STARTING_SHAKES = 3;
+    static const int STARTING_SHAKES = 0;
     static const unsigned int NUM_SFX_CHANNELS = 3;
     static const int NUM_SLOSH_SOUNDS = 2;
     static const unsigned int INT_MAX = 0x7fff;
@@ -90,7 +90,8 @@ public:
 	inline unsigned int getScore() const { return m_iScore; }
     inline void addScore( unsigned int score ) { m_iScore += score; }
     inline const Level &getLevel() const { return Level::GetLevel( m_iLevel ); }
-	inline void addLevel() { m_iLevel++; }
+    inline void addLevel() { m_iLevel++; }
+    inline unsigned int getDisplayedLevel() const { return m_iLevel + 2; }
 
 	TimeKeeper &getTimer() { return m_timer; }
     unsigned int getHighScore( unsigned int index ) const;

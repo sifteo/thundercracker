@@ -9,6 +9,7 @@
 
 #include <sifteo.h>
 #include "TimeKeeper.h"
+#include "banner.h"
 
 using namespace Sifteo;
 
@@ -17,21 +18,31 @@ class CubeWrapper;
 class Intro
 {
 public:
+    typedef enum
+    {
+        STATE_ARROWS,
+        STATE_TIMERGROWTH,
+        STATE_BALLEXPLOSION,
+        STATE_READY,
+        STATE_SET,
+        STATE_GO,
+        STATE_CNT,
+    } IntroState;
+
     static const int NUM_ARROWS = 4;
-    static const float INTRO_ARROW_TIME;
-    static const float INTRO_TIMEREXPANSION_TIME;
-    static const float INTRO_BALLEXPLODE_TIME;
     static const int NUM_TOTAL_EXPLOSION_FRAMES = 5;
+    static const float READYSETGO_BANNER_TIME;
 
     Intro();
     void Reset( bool ingamereset = false );
-    bool Update( float dt );
+    bool Update( float dt, Banner &banner );
     //return whether we touched bg1 or not
     bool Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper );
 	
 private:
     Vec2 LerpPosition( Vec2 &start, Vec2 &end, float timePercent );
 
+    IntroState m_state;
 	float m_fTimer;
 };
 
