@@ -4,6 +4,7 @@ void InventoryView::Init() {
 	Parent()->HideSprites();
 	Parent()->Graphics().BG0_drawAsset(Vec2(0,0), InventoryBackground);
 	RenderInventory();
+	Parent()->GetCube()->vbuf.touch();
 }
 
 void InventoryView::Restore() {

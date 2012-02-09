@@ -1,4 +1,5 @@
 #include "Dialog.h"
+#include "View.h"
 
 static const uint8_t font_data[] = {
     0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -237,15 +238,18 @@ void DoDialog(const DialogData& data, Cube* cube) {
     if (!cube) cube = gCubes;
     DialogView view(cube);
 
-    VidMode_BG0 mode(view.GetCube()->vbuf);
+    ViewMode mode(view.GetCube()->vbuf);
+    for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
+    mode.BG0_drawAsset(Vec2(0,10), DialogBox);
 
     for(unsigned line=0; line<data.lineCount; ++line) {
         const DialogTextData& txt = data.lines[line];
 
         if (line == 0 || data.lines[line-1].detail != txt.detail) {
             System::paintSync();
-            mode.init();
-            mode.BG0_drawAsset(Vec2(0,0), *(txt.detail));
+            BG1Helper ovrly(*cube);
+            ovrly.DrawAsset(Vec2(5,0), *(txt.detail));
+            ovrly.Flush();
             System::paintSync();
             for(unsigned i=0; i<4; ++i) {
                 view.GetCube()->vbuf.touch();

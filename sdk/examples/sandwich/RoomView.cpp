@@ -54,6 +54,7 @@ void RoomView::Init(unsigned roomId) {
         mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
       }
       break;
+    /*
     case TRIGGER_NPC:
       const NpcData* npc = r->TriggerAsNPC();
       const DialogData& dialog = gDialogData[npc->dialog];
@@ -61,6 +62,7 @@ void RoomView::Init(unsigned roomId) {
       mode.resizeSprite(TRIGGER_SPRITE_ID, 32, 32);
       mode.moveSprite(TRIGGER_SPRITE_ID, npc->x-16, npc->y-16);
       break;
+    */
   }
   if (this == pGame->GetPlayer()->View()) { 
     ShowPlayer(); 
@@ -68,7 +70,7 @@ void RoomView::Init(unsigned roomId) {
   DrawBackground();
   // initialize ambient fx?
   if (pGame->GetMap()->Data()->ambientType) {
-    if (r->HasItem()) {
+    if (r->HasTrigger()) {
       mAmbient.bff.active = 0;
     } else if ( (mAmbient.bff.active = (gRandom.randrange(3) == 0)) ) {
       RandomizeBff();
@@ -281,6 +283,12 @@ void RoomView::DrawBackground() {
       }
     }
   }
+  if (pRoom->TriggerType() == TRIGGER_NPC) {
+      const NpcData* npc = pRoom->TriggerAsNPC();
+      const DialogData& dialog = gDialogData[npc->dialog];
+      ovrly.DrawAsset(Vec2((npc->x-16)>>3, (npc->y-16)>>3), *dialog.npc);
+  }
+
   ovrly.Flush();
 }
 

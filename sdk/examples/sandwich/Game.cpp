@@ -183,9 +183,9 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
     }
   }
   mMap.SetData(m);
-  for(ViewSlot* p = ViewBegin(); p!= ViewEnd(); ++p) {
-    if (p != view) { p->Restore(); }
-  }
+  //for(ViewSlot* p = ViewBegin(); p!= ViewEnd(); ++p) {
+  //  if (p != view) { p->Restore(); }
+  //}
   // zoom out
   { 
     PlaySfx(sfx_zoomIn);

@@ -633,9 +633,9 @@
     <property name="quest" value="tutorial"/>
    </properties>
   </object>
-  <object name="zelda" type="_NPC" x="16" y="176" width="32" height="32">
+  <object name="Sprout" type="NPC" x="16" y="176" width="32" height="32">
    <properties>
-    <property name="id" value="zelda_hello"/>
+    <property name="id" value="sprout_hello"/>
    </properties>
   </object>
  </objectgroup>

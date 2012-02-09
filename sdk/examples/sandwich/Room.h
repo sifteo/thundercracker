@@ -40,9 +40,9 @@ public:
   bool HasGateway() const { return mTriggerType == TRIGGER_GATEWAY; }
   bool HasItem() const { return mTriggerType == TRIGGER_ITEM; }
   bool HasNPC() const { return mTriggerType == TRIGGER_NPC; }
-  const GatewayData* TriggerAsGate() { ASSERT(mTriggerType == TRIGGER_GATEWAY); return (const GatewayData*) mTrigger; }
-  const ItemData* TriggerAsItem() { ASSERT(mTriggerType == TRIGGER_ITEM); return (const ItemData*) mTrigger; }
-  const NpcData* TriggerAsNPC() { ASSERT(mTriggerType == TRIGGER_NPC); return (const NpcData*) mTrigger; }
+  const GatewayData* TriggerAsGate() const { ASSERT(mTriggerType == TRIGGER_GATEWAY); return (const GatewayData*) mTrigger; }
+  const ItemData* TriggerAsItem() const { ASSERT(mTriggerType == TRIGGER_ITEM); return (const ItemData*) mTrigger; }
+  const NpcData* TriggerAsNPC() const { ASSERT(mTriggerType == TRIGGER_NPC); return (const NpcData*) mTrigger; }
 
   // subdivs
   bool IsSubdivided() const { return mSubdivType != SUBDIV_NONE; }

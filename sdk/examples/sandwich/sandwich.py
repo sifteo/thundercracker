@@ -86,7 +86,7 @@ class World:
 				#lua.write("Blank_%s = image{ \"%s_blank.png\", width=128, height=128 }\n" % (name,name))
 			lua.write("\n-- DIALOG IMAGES\n")
 			for name in self.dialog.list_npc_image_names():
-				lua.write("NPC_%s = image{ \"%s.png\", width=32, height=32, pinned=true }\n" % (name,name))
+				lua.write("NPC_%s = image{ \"%s.png\", width=32, height=32 }\n" % (name,name))
 			for name in self.dialog.list_detail_image_names():
 				lua.write("NPC_Detail_%s = image{ \"%s.png\" }\n" % (name,name))
 		
