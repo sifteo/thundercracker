@@ -63,9 +63,12 @@ void installAssetsToMaster()
     AssetManager::onData((const uint8_t*)&fsize, sizeof(fsize));
 
     uint8_t buf[64];    // 64 bytes == USB max packet size
-    while (!feof(file)) {
-        unsigned rxed = fread(buf, 1, sizeof(buf), file);
-        AssetManager::onData(buf, rxed);
+    while (fsize) {
+        unsigned chunk = MIN(fsize, sizeof(buf));
+        unsigned rxed = fread(buf, 1, chunk, file);
+        ASSERT(rxed == chunk);
+        AssetManager::onData(buf, chunk);
+        fsize -= chunk;
     }
     fclose(file);
 

@@ -386,7 +386,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
             {
                 String<16> aBuf;
                 aBuf << comboScore;
-                pWrapper->getBanner().SetMessage( aBuf, true );
+                pWrapper->getBanner().SetMessage( aBuf, Banner::SCORE_TIME, true );
             }
 		}
 

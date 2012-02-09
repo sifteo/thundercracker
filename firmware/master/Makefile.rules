@@ -30,11 +30,13 @@ $(BIN_SIM): $(OBJS_SIM) $(LIBS_SIM)
 $(BIN_STM32): $(OBJS_STM32) $(LIBS_STM32) $(LDSCRIPT_STM32)
 	$(CC_STM32) -o $@ $(OBJS_STM32) $(LIBS_STM32) $(LDFLAGS_STM32)
 
-$(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
-	$(STIR) $(ASSETS).lua -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h -v #-o $(ASSETS).html
+ASSET_GEN_FILES := -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h
+ifneq ($(ASSETS_BUILD_PROOF),)
+    ASSET_GEN_FILES += -o $(ASSETS).html
+endif
 
-$(AUDIO).gen.cpp: $(SPEEXENC) $(AUDIODEPS)
-	$(SPEEXENC) -o $(AUDIO).gen.cpp -o $(AUDIO).gen.h $(AUDIO).txt
+$(ASSETS).gen.cpp: $(STIR) $(ASSETDEPS)
+	$(STIR) $(ASSETS).lua -v $(ASSET_GEN_FILES)
 
 .PHONY: clean all ocd program gdb
 

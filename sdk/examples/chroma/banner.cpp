@@ -8,6 +8,10 @@
 #include "string.h"
 #include "assets.gen.h"
 
+
+const float Banner::DEFAULT_FADE_DELAY = 2.0f;
+const float Banner::SCORE_TIME = 1.0f;
+
 Banner::Banner()
 {
 	m_fEndTime = -1.0f;
@@ -21,6 +25,9 @@ void Banner::Draw( BG1Helper &bg1helper )
     int iLen = m_Msg.size();
     if( iLen == 0 )
 		return;
+
+    if( m_tiles == 0 )
+        return;
 
     //bg1helper.DrawAsset( Vec2( 0, 6 ), BannerImg );
     bg1helper.DrawPartialAsset( Vec2( CENTER_PT - m_tiles, 6 ), Vec2( CENTER_PT - m_tiles, 0 ), Vec2( m_tiles * 2, BANNER_ROWS ), BannerImg );
@@ -39,7 +46,7 @@ void Banner::Draw( BG1Helper &bg1helper )
 }
 
 
-void Banner::Update(float t, Cube &cube)
+void Banner::Update(float t)
 {
     int iLen = m_Msg.size();
     if( iLen > 0 )
@@ -57,10 +64,10 @@ void Banner::Update(float t, Cube &cube)
 }
 
 
-void Banner::SetMessage( const char *pMsg, bool bScoreMsg )
+void Banner::SetMessage( const char *pMsg, float fTime, bool bScoreMsg )
 {
     m_Msg = pMsg;
-    float msgTime = bScoreMsg ? SCORE_FADE_DELAY/2.0f : SCORE_FADE_DELAY;
+    float msgTime = fTime;
     m_fEndTime = System::clock() + msgTime;
     m_tiles = 0;
     m_bIsScoreMsg = bScoreMsg;

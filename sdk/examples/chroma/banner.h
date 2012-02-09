@@ -17,7 +17,8 @@ public:
     static const unsigned int BANNER_WIDTH = 16;
     static const unsigned int CENTER_PT = 8;
 	static const int BANNER_ROWS = 4;
-	static const float SCORE_FADE_DELAY = 2.0f;
+    static const float DEFAULT_FADE_DELAY;
+    static const float SCORE_TIME;
 
     enum Anchor {
         LEFT,
@@ -28,9 +29,9 @@ public:
 	Banner();
 
     void Draw( BG1Helper &bg1helper );
-	void Update(float t, Cube &cube);
+    void Update(float t);
 
-    void SetMessage( const char *pMsg, bool bScoreMsg = false );
+    void SetMessage( const char *pMsg, float fTime = DEFAULT_FADE_DELAY, bool bScoreMsg = false );
 	bool IsActive() const;
 
     static void DrawScore( BG1Helper &bg1helper, const Vec2 &pos, Anchor anchor, int score );

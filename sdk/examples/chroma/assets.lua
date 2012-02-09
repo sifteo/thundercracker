@@ -16,7 +16,7 @@ MessageBox4 = image{"message4.png"}
 MsgGameOver = image{"gameover.png"}
 MsgHighScores = image{"highscores.png"}
 MsgShakeNewGame = image{"shakenewgame.png"}
-MsgShakeToRefill = image{"shaketorefill.png"}
+MsgShakeToRefill = image{"shakeforlevel.png"}
 --the gems
 Gem0 = image{"Gem0.png", height=32}
 Gem1 = image{"Gem1.png", height=32}
@@ -37,6 +37,13 @@ FixedGem5 = image{"fixedGem5.png", height=32}
 FixedGem6 = image{"fixedGem6.png", height=32}
 FixedGem7 = image{"fixedGem7.png", height=32}
 FixedExplode0 = image{"fixedExplode0.png", height=32}
+FixedExplode1 = image{"fixedExplode1.png", height=32}
+FixedExplode2 = image{"fixedExplode2.png", height=32}
+FixedExplode3 = image{"fixedExplode3.png", height=32}
+FixedExplode4 = image{"fixedExplode4.png", height=32}
+FixedExplode5 = image{"fixedExplode5.png", height=32}
+FixedExplode6 = image{"fixedExplode6.png", height=32}
+FixedExplode7 = image{"fixedExplode7.png", height=32}
 FixedGlimmer = image{"FixedGlimmer.png", height=32}
 Cover = image{"cover.png"}
 --special dots

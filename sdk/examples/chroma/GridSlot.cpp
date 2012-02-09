@@ -63,13 +63,13 @@ const AssetImage *GridSlot::FIXED_TEXTURES[ GridSlot::NUM_COLORS ] =
 const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 {
     &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
-    &FixedExplode0,
+    &FixedExplode1,
+    &FixedExplode2,
+    &FixedExplode3,
+    &FixedExplode4,
+    &FixedExplode5,
+    &FixedExplode6,
+    &FixedExplode7,
 };
 
 
