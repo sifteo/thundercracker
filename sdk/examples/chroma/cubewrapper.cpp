@@ -967,7 +967,7 @@ void CubeWrapper::checkRefill()
             m_intro.Reset( true );
             Refill( false );
 		}
-        else if( Game::Inst().getShakesLeft() > 0 )
+        /*else if( Game::Inst().getShakesLeft() > 0 )
 		{
             setState( STATE_REFILL );
             m_intro.Reset( true );
@@ -988,7 +988,7 @@ void CubeWrapper::checkRefill()
 		else
 		{
             m_banner.SetMessage( "NO SHAKES LEFT" );
-		}
+        }*/
 	}
 }
  
