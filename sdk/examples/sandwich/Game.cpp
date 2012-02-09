@@ -24,7 +24,7 @@ void Game::ObserveNeighbors(bool flag) {
 // BOOTSTRAP API
 //------------------------------------------------------------------
 
-void Game::MainLoop() {
+void Game::MainLoop(Cube* pPrimary) {
   // reset everything
   mSimFrames = 0;
   mAnimFrames = 0;
@@ -32,7 +32,7 @@ void Game::MainLoop() {
   mNeedsSync = 0;
   mState.Init();
   mMap.Init();
-  mPlayer.Init();
+  mPlayer.Init(pPrimary);
   for(ViewSlot* v = ViewBegin()+1; v!=ViewEnd(); ++v) { 
     if (v != mPlayer.View()->Parent()) {
       v->Init(); 

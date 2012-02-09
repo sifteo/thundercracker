@@ -10,9 +10,10 @@ inline int fast_abs(int x) {
 	return x<0?-x:x;
 }
 
-void Player::Init() {
+void Player::Init(Cube* pPrimary) {
   const RoomData& room = gMapData[gQuestData->mapId].rooms[gQuestData->roomId];
-  mCurrent.view = (RoomView*)(pGame->ViewBegin());
+  ViewSlot *pView = pGame->ViewBegin() + (pPrimary - gCubes);
+  mCurrent.view = (RoomView*)(pView);
   mCurrent.subdivision = 0;
   mTarget.view = 0;
   mPosition.x = 128 * (gQuestData->roomId % gMapData[gQuestData->mapId].width) + 16 * room.centerX;

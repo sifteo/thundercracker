@@ -30,7 +30,7 @@ private:
   uint8_t* pNextMove;
     
 public:
-  void Init();
+  void Init(Cube* pPrimary);
   int AnimFrame();
   const BroadLocation* Current() { return &mCurrent; }
   const BroadLocation* Target() { return &mTarget; }

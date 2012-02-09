@@ -8,7 +8,7 @@ AudioChannel gChannelMusic;
 //static Game sGame;
 Game* pGame = 0;
 
-void IntroCutscene();
+Cube* IntroCutscene();
 void WinScreen(Cube* primaryCube);
 
 static bool AnyNeighbors(const Cube& c) {
@@ -50,11 +50,11 @@ void siftmain() {
 	#endif
 	for(;;) {
 		PlayMusic(music_sting, false);
-		IntroCutscene();
+		Cube* pPrimary = IntroCutscene();
 		{
 			Game game;
 			pGame = &game;
-			game.MainLoop();
+			game.MainLoop(pPrimary);
 			pGame = 0;
 		}
 		//PlayMusic(music_winscreen, false);
@@ -71,7 +71,7 @@ static void WaitForSeconds(float dt) {
 	do { System::paint(); } while(System::clock() - t < dt);
 }
 
-void IntroCutscene() {
+Cube* IntroCutscene() {
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
 		ViewMode gfx(gCubes[i].vbuf);
 		gfx.set();
@@ -92,15 +92,35 @@ void IntroCutscene() {
 		}
 		System::paintSync();
 	}
-	WaitForSeconds(2.f);
-	ViewMode mode(gCubes[0].vbuf);
+	
+	// wait for a touch
+	Cube* pCube = 0;
+	while(!pCube) {
+		for(unsigned i=0; i<NUM_CUBES; ++i) {
+			if (gCubes[i].touching()) {
+				pCube = gCubes + i;
+				break;
+			}
+		}
+		System::yield();
+	}
+	// blank other cubes
+	for(unsigned i=0; i<NUM_CUBES; ++i) {
+		if (gCubes+i != pCube) {
+			BG1Helper(gCubes[i]).Flush();
+			ViewMode gfx(gCubes[i].vbuf);
+			gfx.BG1_setPanning(Vec2(0,0));
+			gfx.BG0_drawAsset(Vec2(0,0), Blank);
+		}
+	}
+	ViewMode mode(pCube->vbuf);
+	// hide banner
 	for(float t=System::clock(); (dt=(System::clock()-t))<0.9f;) {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
 		mode.BG1_setPanning(Vec2(0, -64 + 128*u));
 		System::paintSync();
 	}
-	//WaitForSeconds(5.f);
 	WaitForSeconds(0.1f);
 	// pearl walks up from bottom
 	int framesPerCycle = PlayerWalk.frames >> 2;
@@ -193,11 +213,10 @@ void IntroCutscene() {
 		}
 		System::paintSync();
 	}
-	for(unsigned i=0; i<NUM_CUBES; ++i) {
-		BG1Helper(gCubes[i]).Flush();
-		ViewMode(gCubes[i].vbuf).BG1_setPanning(Vec2(0,0));
-	}
+	BG1Helper(*pCube).Flush();
+	ViewMode(pCube->vbuf).BG1_setPanning(Vec2(0,0));
 	WaitForSeconds(0.5f);
+	return pCube;
 }
 
 /*
