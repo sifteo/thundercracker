@@ -21,6 +21,7 @@ public:
 	bool IsActive(const TriggerData& trigger) const;
 	bool IsActive(uint8_t questId, uint8_t flagId) const;
 
+	bool HasAnyItems() const { return mItemSet || mKeyCount > 0; }
   	bool PickupItem(int itemId);
   	bool HasBasicKey() const { return mKeyCount > 0; }
   	bool HasItem(int itemId) const { return (mItemSet & (1<<itemId)) != 0; }

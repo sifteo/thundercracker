@@ -1,5 +1,7 @@
 #include "Game.h"
 
+// the whole way that I "search for inventory views" kinda sucks - should cache a pointer of something...
+
 Cube* ViewSlot::GetCube() const {
 	return gCubes + (this - pGame->ViewBegin());
 }
@@ -92,17 +94,24 @@ bool ViewSlot::ShowLocation(Vec2 loc) {
 
 bool ViewSlot::HideLocation() {
 	if (IsShowingRoom()) {
-		bool invShowing = false;
-		for(ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
-			if (invShowing = p->ViewType() == VIEW_INVENTORY) { break; }
-		}
-		if (invShowing) {
+
+		if (pGame->GetState()->HasAnyItems()) {
+			bool invShowing = false;
+			for(ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
+				if (invShowing = p->ViewType() == VIEW_INVENTORY) { break; }
+			}
+			if (invShowing) {
+				mFlags.view = VIEW_IDLE;
+				mView.idle.Init();
+				pGame->NeedsSync();
+			} else {
+				mFlags.view = VIEW_INVENTORY;
+				mView.inventory.Init();
+				pGame->NeedsSync();
+			}
+		} else {
 			mFlags.view = VIEW_IDLE;
 			mView.idle.Init();
-			pGame->NeedsSync();
-		} else {
-			mFlags.view = VIEW_INVENTORY;
-			mView.inventory.Init();
 			pGame->NeedsSync();
 		}
 		return true;
@@ -120,7 +129,23 @@ void ViewSlot::ShowInventory() {
 
 void ViewSlot::RefreshInventory() {
   if (mFlags.view == VIEW_INVENTORY) {
-  	mView.inventory.OnInventoryChanged();
+  	if (!pGame->GetState()->HasAnyItems()) {
+		mFlags.view = VIEW_IDLE;
+		mView.idle.Init();
+		pGame->NeedsSync();
+  	} else {
+  		mView.inventory.OnInventoryChanged();
+  	}
+  } else if (pGame->GetState()->HasAnyItems()) { 
+	bool invShowing = false;
+	for(ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
+		if (invShowing = p->ViewType() == VIEW_INVENTORY) { break; }
+	}
+	if (!invShowing) {
+		mFlags.view = VIEW_INVENTORY;
+		mView.inventory.Init();
+		pGame->NeedsSync();
+  	}
   }
 }
 
