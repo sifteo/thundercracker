@@ -40,22 +40,57 @@ public:
         ComplementaryOutput
     };
 
+    enum InputCaptureEdge {
+        RisingEdge          = 0,
+        FallingEdge         = 1 << 1
+    };
+
     HwTimer(volatile TIM_t *_hw) :
         tim(_hw) {}
 
     void init(int period, int prescaler);
     void setUpdateIsrEnabled(bool enabled);
-    void end();
+    void deinit();
+
+    uint16_t status() const {
+        return tim->SR;
+    }
+    void clearStatus() {
+        tim->SR = 0;
+    }
 
     void configureChannel(int ch, Polarity p, TimerMode timmode, OutputMode outmode = SingleOutput, DmaMode dmamode = DmaDisabled);
+    void configureChannelAsInput(int ch, InputCaptureEdge edge, uint8_t filterFreq = 0, uint8_t prescaler = 0);
+
     void enableChannel(int ch);
     void disableChannel(int ch);
     bool channelIsEnabled(int ch);
 
-    int period() const;
-    void setPeriod(int period, int prescaler);
+    void enableCompareCaptureIsr(int ch) {
+        tim->DIER |= (1 << ch);
+    }
+    void disableCompareCaptureIsr(int ch) {
+        tim->DIER &= ~(1 << ch);
+    }
+    void enableUpdateIsr() {
+        tim->DIER |= (1 << 0);
+    }
+    void disableUpdateIsr() {
+        tim->DIER &= ~(1 << 0);
+    }
 
-    void setDuty(int ch, int duty);
+    uint16_t lastCapture(int ch) const {
+        return tim->CCR[ch - 1];
+    }
+
+    uint16_t count() const {
+        return tim->CNT;
+    }
+
+    uint16_t period() const;
+    void setPeriod(uint16_t period, uint16_t prescaler);
+
+    void setDuty(int ch, uint16_t duty);
     void setDutyDma(int ch, const uint16_t *data, uint16_t len);
 
 private:
