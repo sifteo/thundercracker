@@ -33,8 +33,8 @@ void Game::MainLoop(Cube* pPrimary) {
   mState.Init();
   mMap.Init();
   mPlayer.Init(pPrimary);
-  for(ViewSlot* v = ViewBegin()+1; v!=ViewEnd(); ++v) { 
-    if (v != mPlayer.View()->Parent()) {
+  for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) { 
+    if (v->GetCube() != pPrimary) {
       v->Init(); 
     }
   }

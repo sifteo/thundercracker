@@ -3,7 +3,7 @@
 #include "IdleView.h"
 #include "InventoryView.h"
 
-#define VIEW_NONE		0 // needs to be zero
+//#define VIEW_NONE		0 // needs to be zero
 #define VIEW_IDLE		1
 #define VIEW_ROOM		2
 #define VIEW_INVENTORY	3
