@@ -1,6 +1,6 @@
-GameAssets = group{quality=9}
+GameAssets = group{quality=10}
 
-Blank = image{"Blank.png", width=128, height=128, quality=7}
+Blank = image{"Blank.png", width=128, height=128}
 Sting = image{"sting.png",width=128,height=128}
 Title = image{"title.png"}
 TitleBalloon = image{"title_bubble.png"}

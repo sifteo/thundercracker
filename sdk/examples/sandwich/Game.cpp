@@ -44,7 +44,6 @@ void Game::MainLoop(Cube* pPrimary) {
     gChannelMusic.stop();
     PlaySfx(sfx_zoomIn);
     ViewSlot* view = mPlayer.View()->Parent();
-    view->HideSprites();
     Vec2 room = mPlayer.Location();
     VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {

@@ -26,8 +26,8 @@ public:
 
 	Cube* GetCube() const;
 	Cube::ID GetCubeID() const;
-	ViewMode Graphics() const { return ViewMode(GetCube()->vbuf); }
-	BG1Helper Overlay() const { return BG1Helper(*GetCube()); }
+	ViewMode Graphics() const { ASSERT(mFlags.view); return ViewMode(GetCube()->vbuf); }
+	BG1Helper Overlay() const { ASSERT(mFlags.view); return BG1Helper(*GetCube()); }
 	bool Touched() const; // cube->touching && !prevTouch
 	bool Active() const { return mFlags.view; }
 	inline unsigned ViewType() const { return mFlags.view ; }
