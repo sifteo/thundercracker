@@ -1,6 +1,8 @@
 #include "AudioPlayer.h"
 #include "assets.gen.h"
 
+#include "Game.h"
+
 namespace TotalsGame
 {
 	AudioChannel AudioPlayer::channelSfx[NumSfxChannels];
@@ -64,5 +66,26 @@ namespace TotalsGame
     void AudioPlayer::PlayShutterClose() 
 	{ 
 		PlaySfx(sfx_Slide_LessScrape_Close_01); 
+	}
+
+	void AudioPlayer::PlayInGameMusic() 
+	{
+		static const int musicCount = 3;
+		static _SYSAudioModule *sInGameMusic[3] = 
+		{
+			&sfx_PeanosVaultCrimeWave,
+			&sfx_PeanosVaultInsideJob,
+			&sfx_PeanosVaultSneakers
+		};
+
+		if (Game::GetInstance().currentPuzzle == NULL) 
+		{
+			PlayMusic(*sInGameMusic[Game::rand.randrange(musicCount)]);
+		} 
+		else
+		{
+			int i = Game::GetInstance().database.IndexOfChapter(Game::GetInstance().currentPuzzle->chapter);
+			PlayMusic(*sInGameMusic[i % musicCount]);
+		}
 	}
 }

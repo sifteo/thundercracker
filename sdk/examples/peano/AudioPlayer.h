@@ -14,6 +14,7 @@ namespace TotalsGame
 
 		static void PlayShutterOpen();
 		static void PlayShutterClose();
+		static void PlayInGameMusic();
 
 	private:
 		static const int NumSfxChannels = 3;

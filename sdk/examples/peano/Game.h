@@ -26,6 +26,7 @@ namespace TotalsGame {
 		static TotalsCube *GetCube(int i) {return &Game::GetInstance().cubes[i];}
 		static void ClearCubeViews();
 		static void ClearCubeEventHandlers();
+		static void DrawVaultDoorsClosed();
 
 		Puzzle *currentPuzzle;
 		Puzzle *previousPuzzle;

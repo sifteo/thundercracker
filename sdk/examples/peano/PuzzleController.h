@@ -2,6 +2,8 @@
 
 #include "StateMachine.h"
 #include "PuzzleHelper.h"
+#include "AudioPlayer.h"
+#include "TokenView.h"
 
 #include <string.h>
 
@@ -10,8 +12,14 @@ namespace TotalsGame {
 	{
 	private:
 		CORO_PARAMS;
-		float time;
-		int theRememberedi;
+		int static_i;
+
+		class EventHandler: public TotalsCube::EventHandler
+		{
+			void OnCubeShake(TotalsCube *cube) {}
+			void OnCubeTouch(TotalsCube *cube, bool touching) {}
+		};
+		EventHandler eventHandler;
 
 	public:
 		//-------------------------------------------------------------------------
@@ -38,13 +46,13 @@ namespace TotalsGame {
 		{
 			CORO_RESET;
 
-			//  Jukebox.PlayInGameMusic();
+			AudioPlayer::PlayInGameMusic();
 			mHasTransitioned = false;
 			char stringRep[10];
 			int stringRepLength;
 			if (game->IsPlayingRandom()) 
 			{
-				int nCubes = 3;//TODO + ( Game::NUMBER_OF_CUBES > 3 ? Random().randrange(Game::NUMBER_OF_CUBES-3+1) : 0 );
+				int nCubes = 3 + ( Game::NUMBER_OF_CUBES > 3 ? Random().randrange(Game::NUMBER_OF_CUBES-3+1) : 0 );
 				puzzle = PuzzleHelper::SelectRandomTokens(game->difficulty, nCubes);
 				// hacky reliability :P
 				int retries = 0;
@@ -71,13 +79,18 @@ namespace TotalsGame {
 				puzzle->target->RecomputeValue(); // in case the difficulty changed
 			}
 			mPaused = false;
-			puzzle->hintsUsed = 0;
-			//TODO      
-			/*	  game.CubeSet.NewCubeEvent += cb => new BlankView(cb);
-			game.CubeSet.LostCubeEvent += OnCubeLost;
-			*/  
+			puzzle->hintsUsed = 0;			
+
+			for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
+			{
+                Game::GetCube(i)->AddEventHandler(&eventHandler);
+			}
+			
+			//TODO game.CubeSet.LostCubeEvent += OnCubeLost;
 		}
+
 		/* TODO
+		on cube found put a blank view on it
 		void OnCubeLost(Cube c) {
 		if (!c.IsUnused()) {
 		// for now, let's just return to the main menu
@@ -89,54 +102,55 @@ namespace TotalsGame {
 		// MAIN CORO
 		//-------------------------------------------------------------------------
 
-		void TheBigCoroutine(float dt)
+		float TheBigCoroutine(float dt)
 		{
-#if 0
+
 			CORO_BEGIN
 
-			{ // transition in
-		/*TODO		for(int i=puzzle->GetNumTokens(); i<Game::NUMBER_OF_CUBES; ++i)
-				{
-					new BlankView(game.CubeSet[i]);
-				} */
+			for(int i = puzzle->GetNumTokens(); i < Game::NUMBER_OF_CUBES; i++)
+			{
+				new BlankView(Game::GetCube(i), NULL);
+			}
+			Game::DrawVaultDoorsClosed();
+			CORO_YIELD(0.25);
 
-				CORO_YIELD;
+			for(static_i = 0; static_i < puzzle->GetNumTokens(); static_i++)
+			{
+				float dt;
+				while((dt = Game::GetCube(static_i)->OpenShutters(&Background)) >= 0)
 				{
-					bool allClosed = true;
-					for(int i = 0; i < puzzle->GetNumTokens(); i++)
-					{
-						if(!game->cubes[i].AreShuttersClosed())
-							game->cubes[i].CloseShutters(NULL);
-						allClosed &= game->cubes[i].AreShuttersClosed();
-					}
-					if(!allClosed)
-						return;
+					CORO_YIELD(dt);
 				}
 
-				CORO_WAIT(0.25f);
+				new TokenView(Game::GetCube(static_i), puzzle->GetToken(static_i), true);
+				CORO_YIELD(0.1f);
 
-				theRememberedi = 1;
-				time = System::clock();
-				while(theRememberedi<=puzzle->GetNumTokens())
-				{
-					for(int i = 0; i < theRememberedi; i++)
-					{
-						//if(!game->cubes[i].AreShuttersOpen())					
-							game->cubes[i].OpenShutters(&Background);
-					}
+			}
 
-					//new TokenView(puzzle.tokens[i], true).Cube = game.CubeSet[i];
-					if(System::clock() - time >= 1.1f)
-					{
-						theRememberedi++;
-						time = System::clock();
-					}
-					//CORO_YIELD;
-					System::paint();
-				}
-			} 
-#endif
+
 #if 0
+			theRememberedi = 1;
+			time = System::clock();
+			while(static_i<=puzzle->GetNumTokens())
+			{
+				for(int i = 0; i < i; i++)
+				{
+
+						game->cubes[i].OpenShutters(&Background);
+				}
+
+				//new TokenView(puzzle.tokens[i], true).Cube = game.CubeSet[i];
+				if(System::clock() - time >= 1.1f)
+				{
+					theRememberedi++;
+					time = System::clock();
+				}
+				//CORO_YIELD;
+				System::paint();
+			}
+
+
+
 			{ // flourish in
 				yield return 1.1f;
 				// show total
@@ -252,9 +266,10 @@ namespace TotalsGame {
 			}
 
 			Transition("Complete");
+#endif
 
 			CORO_END
-#endif
+			return -1;
 		}
 
 		//-------------------------------------------------------------------------
@@ -338,13 +353,12 @@ namespace TotalsGame {
 
 		virtual float OnTick (float dt) {
 			if (mHasTransitioned) { return -1; }
-/* TODO			if (!IsPaused && mRemoveEventBuffer.Count > 0) {
-				ProcessRemoveEventBuffer();
+			/* TODO			if (!IsPaused && mRemoveEventBuffer.Count > 0) {
+			ProcessRemoveEventBuffer();
 			} */
-			TheBigCoroutine(dt);
-			return 0;
-/*			if (mMainCoro.Update(dt)) {
-				game.CubeSet.UpdateViews(dt);
+			return TheBigCoroutine(dt);
+			/*			if (mMainCoro.Update(dt)) {
+			game.CubeSet.UpdateViews(dt);
 			} */
 		}
 
@@ -365,8 +379,8 @@ namespace TotalsGame {
 			//puzzle.ClearUserdata();
 			//puzzle = null;
 			//mPaused = false;
-			//game.CubeSet.ClearEvents();
-			//game.CubeSet.ClearUserData();
+            Game::ClearCubeEventHandlers();
+            Game::ClearCubeViews();
 		}
 	};
 }

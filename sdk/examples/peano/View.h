@@ -11,16 +11,21 @@ namespace TotalsGame
 	{	
 		DECLARE_POOL(View, 0)		
 
+		TotalsCube *mCube;
+
 	public:
 		View(TotalsCube *_cube);
 
 		virtual void Paint() {}
 		virtual void Update(float dt) {}
+		virtual void DidAttachToCube(TotalsCube *c) {}
+		virtual void WillDetachFromCube(TotalsCube *c) {}
 		virtual ~View() {};
 
 		static void PaintViews(TotalsCube *cubes, int numCubes);
 
-		TotalsCube *cube;
+		void SetCube(TotalsCube *c);
+		TotalsCube *GetCube();
 	};
 
 }

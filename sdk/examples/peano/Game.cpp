@@ -17,23 +17,21 @@ namespace TotalsGame
 
 	void Game::OnCubeTouch(_SYSCubeID cid)
 	{
-		TotalsCube &cube = Game::GetInstance().cubes[cid];		
-		if(cube.eventHandler)
-			cube.eventHandler->OnCubeTouch(&cube, cube.touching());
+        TotalsCube *c = GetCube(cid);
+        c->DispatchOnCubeTouch(c, c->touching());
 	}
 
 	void Game::OnCubeShake(_SYSCubeID cid)
 	{
-		TotalsCube &cube = Game::GetInstance().cubes[cid];		
-		if(cube.eventHandler)
-			cube.eventHandler->OnCubeShake(&cube);
+        TotalsCube *cube = GetCube(cid);
+        cube->DispatchOnCubeShake(cube);
 	}
 
 	void Game::ClearCubeViews()
 	{
 		for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
 		{
-			Game::GetInstance().cubes[i].SetView(NULL);
+            GetCube(i)->SetView(NULL);
 		}
 	}
 
@@ -41,7 +39,15 @@ namespace TotalsGame
 	{
 		for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
 		{
-			Game::GetInstance().cubes[i].eventHandler = NULL;
+            GetCube(i)->ResetEventHandlers();
+		}
+	}
+
+	void Game::DrawVaultDoorsClosed()
+	{
+		for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
+		{
+			Game::GetInstance().cubes[i].DrawVaultDoorsClosed();
 		}
 	}
 

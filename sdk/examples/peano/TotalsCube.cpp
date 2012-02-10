@@ -2,6 +2,7 @@
 #include "assets.gen.h"
 #include "Game.h"
 #include "AudioPlayer.h"
+#include "TokenView.h"
 
 namespace TotalsGame
 {
@@ -11,6 +12,59 @@ namespace TotalsGame
 		view = NULL;
 		eventHandler = NULL;
 	}
+
+    void TotalsCube::AddEventHandler(EventHandler *e)
+    {
+        e->next = eventHandler;
+        e->prev = NULL;
+        if(e->next)
+        {
+            e->next->prev = e;
+        }
+        eventHandler = e;
+    }
+
+    void TotalsCube::RemoveEventHandler(EventHandler *e)
+    {
+        if(e->prev)
+        {
+            e->prev->next = e->next;
+        }
+        else
+        {
+            assert(e == eventHandler);
+            eventHandler = e->next;
+        }
+
+        if(e->next)
+        {
+            e->next->prev = e->prev;
+        }
+        e->next = e->prev = NULL;
+    }
+
+    void TotalsCube::ResetEventHandlers()
+    {
+        while(eventHandler)
+        {
+            RemoveEventHandler(eventHandler);
+        }
+    }
+
+    void TotalsCube::DispatchOnCubeShake(TotalsCube *c)
+    {
+        EventHandler *e = eventHandler;
+        while(e)
+            e->OnCubeShake(c);
+    }
+
+    void TotalsCube::DispatchOnCubeTouch(TotalsCube *c, bool touching)
+    {
+        EventHandler *e = eventHandler;
+        while(e)
+            e->OnCubeTouch(c, touching);
+    }
+
 
 	float TotalsCube::OpenShutters(const AssetImage *image)
 	{						
@@ -84,10 +138,13 @@ namespace TotalsGame
 		VidMode_BG0 mode(vbuf);
 		mode.init();
 
-		mode.BG0_drawPartialAsset(Vec2(0,0),Vec2(9,9),Vec2(7,7), VaultDoor, 0);
-		mode.BG0_drawPartialAsset(Vec2(7,0),Vec2(0,9),Vec2(9,7), VaultDoor, 0);
-		mode.BG0_drawPartialAsset(Vec2(0,7),Vec2(9,0),Vec2(7,9), VaultDoor, 0);
-		mode.BG0_drawPartialAsset(Vec2(7,7),Vec2(0,0),Vec2(9,9), VaultDoor, 0);
+		const int x = TokenView::Mid.x;
+		const int y = TokenView::Mid.y;
+
+		mode.BG0_drawPartialAsset(Vec2(0,0),Vec2(9,9),Vec2(x,y), VaultDoor, 0);
+		mode.BG0_drawPartialAsset(Vec2(x,0),Vec2(0,9),Vec2(16-x,y), VaultDoor, 0);
+		mode.BG0_drawPartialAsset(Vec2(0,y),Vec2(9,0),Vec2(x,16-y), VaultDoor, 0);
+		mode.BG0_drawPartialAsset(Vec2(x,y),Vec2(0,0),Vec2(16-x,16-y), VaultDoor, 0);
 	}
 
 	void TotalsCube::DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage) 
@@ -95,16 +152,19 @@ namespace TotalsGame
 		VidMode_BG0 mode(vbuf);
 		mode.init();
 
-		int yTop = /*TokenView.Mid.y*/7 - (offset+4)/8;
-		int yBottom = /*TokenView.Mid.y*/7 + (offset+4)/8;
+		const int x = TokenView::Mid.x;
+		const int y = TokenView::Mid.y;
+
+		int yTop = x - (offset+4)/8;
+		int yBottom = y + (offset+4)/8;
 
 		if(innerImage)
 			mode.BG0_drawAsset(Vec2(0,0), *innerImage);
 
-		mode.BG0_drawPartialAsset(Vec2(0,0), Vec2(9,16-yTop), Vec2(7,yTop), VaultDoor);			//Top left
-		mode.BG0_drawPartialAsset(Vec2(7,0), Vec2(0,16-yTop), Vec2(9,yTop), VaultDoor);			//top right
-		mode.BG0_drawPartialAsset(Vec2(0,yBottom), Vec2(9,0), Vec2(7,16-yBottom), VaultDoor);	//bottom left
-		mode.BG0_drawPartialAsset(Vec2(7,yBottom), Vec2(0,0), Vec2(9,16-yBottom), VaultDoor);	//bottom right
+		mode.BG0_drawPartialAsset(Vec2(0,0), Vec2(16-x,16-yTop), Vec2(x,yTop), VaultDoor);			//Top left
+		mode.BG0_drawPartialAsset(Vec2(x,0), Vec2(0,16-yTop), Vec2(16-x,yTop), VaultDoor);			//top right
+		mode.BG0_drawPartialAsset(Vec2(0,yBottom), Vec2(16-x,0), Vec2(x,16-yBottom), VaultDoor);	//bottom left
+		mode.BG0_drawPartialAsset(Vec2(x,yBottom), Vec2(0,0), Vec2(16-x,16-yBottom), VaultDoor);	//bottom right
 
 		/*
 		if (innerImage && yTop != yBottom) 
@@ -119,16 +179,19 @@ namespace TotalsGame
 		VidMode_BG0 mode(vbuf);
 		mode.init();
 
-		int xLeft = /*TokenView.Mid.x*/7 - (offset+4)/8;
-		int xRight = /*TokenView.Mid.x*/7 + (offset+4)/8;
+		const int x = TokenView::Mid.x;
+		const int y = TokenView::Mid.y;
+
+		int xLeft = x - (offset+4)/8;
+		int xRight = y + (offset+4)/8;
 
 		if(innerImage)
 			mode.BG0_drawAsset(Vec2(0,0), *innerImage);
 
-		mode.BG0_drawPartialAsset(Vec2(0,0), Vec2(16-xLeft,16-(7-4)), Vec2(xLeft,7-4), VaultDoor);			//Top left
-		mode.BG0_drawPartialAsset(Vec2(xRight,0), Vec2(0,16-(7-4)), Vec2(16-xRight,7-4), VaultDoor);		//Top right
-		mode.BG0_drawPartialAsset(Vec2(0,7+4), Vec2(16-xLeft,0), Vec2(xLeft,16-(7+4)), VaultDoor);			//bottom left
-		mode.BG0_drawPartialAsset(Vec2(xRight,7+4), Vec2(0,0), Vec2(16-xRight,16-(7+4)), VaultDoor);			//bottom right
+		mode.BG0_drawPartialAsset(Vec2(0,0), Vec2(16-xLeft,16-(y-4)), Vec2(xLeft,y-4), VaultDoor);			//Top left
+		mode.BG0_drawPartialAsset(Vec2(xRight,0), Vec2(0,16-(y-4)), Vec2(16-xRight,y-4), VaultDoor);		//Top right
+		mode.BG0_drawPartialAsset(Vec2(0,y+4), Vec2(16-xLeft,0), Vec2(xLeft,16-(y+4)), VaultDoor);			//bottom left
+		mode.BG0_drawPartialAsset(Vec2(xRight,y+4), Vec2(0,0), Vec2(16-xRight,16-(y+4)), VaultDoor);			//bottom right
 		
 		/*
 		if (innerImage && xLeft != xRight) {

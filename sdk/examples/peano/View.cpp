@@ -7,8 +7,8 @@ namespace TotalsGame
 
 	View::View(TotalsCube *_cube)
 	{
-		cube = _cube;	
-		cube->SetView(this);
+		SetCube(_cube);
+		mCube->SetView(this);
 	}
 
 	void View::PaintViews(TotalsCube *cubes, int numCubes)
@@ -18,5 +18,37 @@ namespace TotalsGame
 			View *v = cubes[i].GetView();
 			if(v) v->Paint();
 		}
+	}
+
+	void View::SetCube(TotalsCube *c)
+	{
+		if (mCube != c)
+		{
+			if (mCube != NULL) 
+			{
+				WillDetachFromCube(mCube);
+				//if (willDetachFromCube != null) { willDetachFromCube(this); }
+				mCube->SetView(NULL);
+			}
+			mCube = c;
+			if (mCube != NULL)
+			{
+				View *view = mCube->GetView();
+				if (view != NULL)
+				{ 
+					SetCube(NULL);
+				}
+				GetCube()->SetView(this);
+				DidAttachToCube(GetCube());
+				//if (didAttachToCube != null) { didAttachToCube(this); }
+				Paint();
+			}
+		}
+
+	}
+	
+	TotalsCube *View::GetCube()
+	{
+		return mCube;
 	}
 }

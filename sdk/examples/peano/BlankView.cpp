@@ -32,11 +32,11 @@ namespace TotalsGame
 	{
 		if (assetImage) 
 		{
-			cube->Image(assetImage);
+			GetCube()->Image(assetImage);
 		} 
 		else 
 		{
-			cube->DrawVaultDoorsClosed();
+			GetCube()->DrawVaultDoorsClosed();
 		}
 	}
 

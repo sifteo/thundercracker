@@ -34,7 +34,7 @@ namespace TotalsGame
 		for(int i = 0; i < Game::NUMBER_OF_CUBES; i++) 
 		{
 			new BlankView(&Game::GetInstance().cubes[i], NULL);
-			Game::GetInstance().cubes[i].eventHandler = &eventHandler;
+            Game::GetCube(i)->AddEventHandler(&eventHandler);
 		}
 
 		//TODO
