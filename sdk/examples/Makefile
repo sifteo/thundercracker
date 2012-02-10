@@ -1,7 +1,7 @@
 SUBDIRS = \
 	hello text gfxdemo chroma nyan sensors \
 	scroller-bg0 scroller-bg1 sprites stars tiltShake \
-	pairing word membrane
+	pairing word membrane buddies
 
 .PHONY: clean subdirs $(SUBDIRS)
 

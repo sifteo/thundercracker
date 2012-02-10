@@ -1,3 +1,5 @@
+REM TODO: Port to shell script instead, so we can use this on any platform
+
 @echo off
 SETLOCAL ENABLEDELAYEDEXPANSION
 
@@ -86,7 +88,9 @@ for /f %%a IN ('dir /b %INPUT_FOLDER%\parts*.png') do (
 goto done
 
 :noinput
-echo Please pass a PNG file as the argument
+echo Slice Parts: Converts a folder of folder of Gen1 buddy face
+echo              parts PNGs for use with the Thundercracker version.
+echo - Usage: SliceParts INPUT_FOLDER OUTPUT_FOLDER
 goto done
 
 :done
