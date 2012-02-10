@@ -166,6 +166,12 @@ void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
 }
 
 
+bool GridSlot::matchesColor( unsigned int color ) const
+{
+    return isAlive() && ( getColor() == color || getColor() == GridSlot::RAINBALLCOLOR || getColor() == GridSlot::HYPERCOLOR );
+}
+
+
 const AssetImage &GridSlot::GetTexture() const
 {
 	return *TEXTURES[ m_color ];

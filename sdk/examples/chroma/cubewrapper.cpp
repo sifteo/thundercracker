@@ -1261,7 +1261,7 @@ bool CubeWrapper::hasColor( unsigned int color ) const
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
 			const GridSlot &slot = m_grid[i][j];
-			if( slot.isAlive() && slot.getColor() == color )
+            if( slot.matchesColor( color ) )
 				return true;
 		}
 	}
@@ -1603,7 +1603,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
         for( int i = 0; i < 4; i++ )
         {
             const GridSlot &slot = grid[ cornerLocs[i].x ][ cornerLocs[i].y ];
-            if( slot.isAlive() && slot.getColor() == color )
+            if( slot.matchesColor( color ) )
             {
                 bCorners = true;
                 break;
@@ -1633,7 +1633,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
         for( int i = 0; i < 4; i++ )
         {
             const GridSlot &slot = grid[ locs[i].x ][ locs[i].y ];
-            if( slot.isAlive() && slot.getColor() == color )
+            if( slot.matchesColor( color ) )
             {
                 side1 = true;
                 break;
@@ -1662,7 +1662,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
         for( int i = 0; i < 4; i++ )
         {
             const GridSlot &slot = grid[ locs[i].x ][ locs[i].y ];
-            if( slot.isAlive() && slot.getColor() == color )
+            if( slot.matchesColor( color ) )
             {
                 side2 = true;
                 break;

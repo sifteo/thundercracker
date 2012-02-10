@@ -86,6 +86,7 @@ public:
     void setEmpty() { m_state = STATE_GONE; m_bFixed = false; }
 	unsigned int getColor() const { return m_color; }
     void FillColor( unsigned int color, bool bSetSpawn = false );
+    bool matchesColor( unsigned int color ) const;
 
 	void mark();
 	void spread_mark();
