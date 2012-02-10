@@ -1,0 +1,15 @@
+*~
+*.o
+*.gen.h
+*.gen.cpp
+*.sim
+*.sim.exe
+*.stm32
+assets.html
+
+# Qt Creator
+*.config
+*.creator
+*.creator.user
+*.files
+*.includes
