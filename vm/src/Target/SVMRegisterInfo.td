@@ -16,7 +16,6 @@ class SVMRegLow<bits<3> num, string n> : SVMReg<n> {
 
 class SVMRegHigh<bits<3> num, string n> : SVMReg<n> {
     field bits<3> Num;
-    let CostPerUse = 10;
     let Num = num;
 }
 
@@ -43,5 +42,7 @@ def CPSRReg : RegisterClass<"SVM", [i32], 32, (add CPSR)>;
 def GPReg : RegisterClass<"SVM", [i32], 32, (sequence "R%u", 0, 7)>;
     
 // Base pointer registers
-def BPReg : RegisterClass<"SVM", [i32], 32, (add BRO, BRW)>;
-def BPWriteReg : RegisterClass<"SVM", [i32], 32, (add BRW)>;
+let CopyCost = -1 in {
+    def BPReg : RegisterClass<"SVM", [iPTR], 32, (add BRO, BRW)>;
+    def BPWriteReg : RegisterClass<"SVM", [iPTR], 32, (add BRW)>;
+}
