@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{2857B73E-F847-4B02-9238-064979017E93}") = "TCPeanoMac", "TCPeanoMac.cproj", "{9FC1CCB3-0251-40A3-99DC-6B2B64E76141}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9FC1CCB3-0251-40A3-99DC-6B2B64E76141}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FC1CCB3-0251-40A3-99DC-6B2B64E76141}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FC1CCB3-0251-40A3-99DC-6B2B64E76141}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FC1CCB3-0251-40A3-99DC-6B2B64E76141}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = TCPeanoMac.cproj
+	EndGlobalSection
+EndGlobal
