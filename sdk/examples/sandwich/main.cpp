@@ -49,12 +49,12 @@ void siftmain() {
 	gChannelMusic.init();
 	#endif
 	for(;;) {
-		#ifndef SIFTEO_SIMULATOR
+		//#ifndef SIFTEO_SIMULATOR
 		PlayMusic(music_sting, false);
 		Cube* pPrimary = IntroCutscene();
-		#else 
-		Cube* pPrimary = gCubes;
-		#endif
+		//#else 
+		//Cube* pPrimary = gCubes;
+		//#endif
 		{
 			Game game;
 			pGame = &game;
@@ -95,7 +95,7 @@ Cube* IntroCutscene() {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
 		for(unsigned i=0; i<NUM_CUBES; ++i) {
-			ViewMode(gCubes[i].vbuf).BG1_setPanning(Vec2(0, 64 - 128*u));
+			ViewMode(gCubes[i].vbuf).BG1_setPanning(Vec2(0, 72 - 128*u));
 		}
 		System::paintSync();
 	}
@@ -126,7 +126,7 @@ Cube* IntroCutscene() {
 	for(float t=System::clock(); (dt=(System::clock()-t))<0.9f;) {
 		float u = 1.f - (dt / 0.9f);
 		u = 1.f - (u*u*u*u);
-		mode.BG1_setPanning(Vec2(0, -64 + 128*u));
+		mode.BG1_setPanning(Vec2(0, -56 + 128*u));
 		System::paintSync();
 	}
 	WaitForSeconds(0.1f);
