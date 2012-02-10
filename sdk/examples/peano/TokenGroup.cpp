@@ -1,4 +1,6 @@
 #include "TokenGroup.h"
+#include "View.h"
+#include "TokenView.h"
 
 namespace TotalsGame
 {
@@ -69,4 +71,68 @@ namespace TotalsGame
       src->SetCurrent(exp);
       dst->SetCurrent(exp);
     }
+
+    void TokenGroup::AlertWillJoinGroup()
+    {
+        if(src->IsTokenGroup())
+        {
+            ((TokenGroup*)src)->AlertWillJoinGroup();
+        }
+        else
+        {
+            ((TokenView*)((Token*)src)->view)->WillJoinGroup();
+        }
+
+        if(dst->IsTokenGroup())
+        {
+            ((TokenGroup*)dst)->AlertWillJoinGroup();
+        }
+        else
+        {
+            ((TokenView*)((Token*)dst)->view)->WillJoinGroup();
+        }
+    }
+
+    void TokenGroup::AlertDidJoinGroup()
+    {
+        if(src->IsTokenGroup())
+        {
+            ((TokenGroup*)src)->AlertDidJoinGroup();
+        }
+        else
+        {
+            ((TokenView*)((Token*)src)->view)->DidJoinGroup();
+        }
+
+        if(dst->IsTokenGroup())
+        {
+            ((TokenGroup*)dst)->AlertDidJoinGroup();
+        }
+        else
+        {
+            ((TokenView*)((Token*)dst)->view)->DidJoinGroup();
+        }
+    }
+
+    void TokenGroup::AlertDidGroupDisconnect()
+    {
+        if(src->IsTokenGroup())
+        {
+            ((TokenGroup*)src)->AlertDidGroupDisconnect();
+        }
+        else
+        {
+            ((TokenView*)((Token*)src)->view)->DidGroupDisconnect();
+        }
+
+        if(dst->IsTokenGroup())
+        {
+            ((TokenGroup*)dst)->AlertDidGroupDisconnect();
+        }
+        else
+        {
+            ((TokenView*)((Token*)dst)->view)->DidGroupDisconnect();
+        }
+    }
+
 }

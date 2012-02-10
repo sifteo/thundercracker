@@ -7,6 +7,8 @@
 namespace TotalsGame {
 
 	class Puzzle;
+    class View;
+    class TokenView;
 
 	enum SideStatus {
 		SideStatusOpen,       // physically no tokens are on this side
@@ -35,7 +37,8 @@ namespace TotalsGame {
 		int val;
 		IExpression *current;
 
-		void *userData;
+        View *view;
+        TokenView *GetTokenView() {return (TokenView*)view;}
 
 		//ONLY FOR PUZZLE.H USE
 		Token(Puzzle *p, int i);
@@ -63,10 +66,9 @@ namespace TotalsGame {
 
 		bool CheckDepth(int depth, IExpression *exp);
 
-	private:
+    private:
 		Puzzle *puzzle;
 		int index;
-
 
 		//-------------------------------------------------------------------------
 		// CONVENIENCE PROPERTIES

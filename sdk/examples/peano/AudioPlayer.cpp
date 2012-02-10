@@ -88,4 +88,15 @@ namespace TotalsGame
 			PlayMusic(*sInGameMusic[i % musicCount]);
 		}
 	}
+
+    void AudioPlayer::PlayNeighborAdd()
+    {
+        PlaySfx(sfx_Connect);
+    }
+
+    void AudioPlayer::PlayNeighborRemove()
+    {
+        PlaySfx(sfx_Fast_Tick);
+    }
+
 }

@@ -23,7 +23,7 @@ namespace TotalsGame
 	{
 		token = _token;
 		mCurrentExpression = token;
-		token->userData = this;
+        token->view = this;
 		mStyle = DefaultStyle;
 		mLit = false;
 

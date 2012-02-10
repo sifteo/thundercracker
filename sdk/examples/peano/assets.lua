@@ -38,7 +38,12 @@ sfx_Hint_Deny_01 = sound { "PV_hint_deny_01.raw" }
 sfx_Hint_Deny_02 = sound { "PV_hint_deny_02.raw" }
 sfx_Hint_Stinger_01 = sound { "PV_hint_stinger_01.raw" }
 sfx_Hint_Stinger_02 = sound { "PV_hint_stinger_02.raw" }
-sfx_Target_Overlay = sound { "PV_Target_Overlay.raw" }
+sfx_Target_Overlay = sound { "PV_target_overlay.raw" }
+sfx_Tutorial_Mix_Nums = sound {"PV_tutorial_mix_nums.raw" }
+sfx_Level_Clear = sound {"PV_level_clear.raw" }
+sfx_Connect = sound { "PV_connect.raw" }
+sfx_Fast_Tick = sound{ "PV_fast_tick.raw" }
+
 
 
 

@@ -44,7 +44,7 @@ namespace TotalsGame {
 		for(int i=0; i<numTokens; ++i)
 		{
 			tokens[i]->current = tokens[i];
-			tokens[i]->userData = NULL;
+            tokens[i]->view = NULL;
 		}
 	}
 
@@ -134,6 +134,20 @@ namespace TotalsGame {
             puzzle = puzzle->GetNext();
         } while(puzzle != NULL && puzzle->numTokens > maxCubeCount);
         return puzzle;
+    }
+
+    int Puzzle::CountAfterThisInChapterWithCurrentCubeSet()
+    {
+      if (chapter == NULL) { return 0; }
+      int result = 0;
+      for(int i=chapter->IndexOfPuzzle(this)+1; i<chapter->NumPuzzles(); ++i)
+      {
+        if (chapter->GetPuzzle(i)->GetNumTokens() <= Game::NUMBER_OF_CUBES)
+        {
+          result++;
+        }
+      }
+      return result;
     }
 
 	bool Puzzle::SelectRandomTarget() 

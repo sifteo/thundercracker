@@ -51,6 +51,9 @@ namespace TotalsGame
 		}
 		}
 		*/
+        void AlertWillJoinGroup();
+        void AlertDidJoinGroup();
+        void AlertDidGroupDisconnect();
 
 		static TokenGroup *Connect(Token *st, Vec2 d, Token *dt) { return Connect(st, st, d, dt, dt); }
 		static TokenGroup *Connect(IExpression *src, Token *st, Vec2 d, Token *dt) { return Connect(src, st, d, dt, dt); }

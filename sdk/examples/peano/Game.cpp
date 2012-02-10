@@ -15,6 +15,21 @@ namespace TotalsGame
 		return instance;
 	}
 
+    void Game::OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+    {
+        if(GetInstance().neighborEventHandler)
+            GetInstance().neighborEventHandler->OnNeighborAdd(c0, s0, c1, s1);
+    }
+
+    void Game::OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+    {
+        {
+            if(GetInstance().neighborEventHandler)
+                GetInstance().neighborEventHandler->OnNeighborRemove(c0, s0, c1, s1);
+        }
+
+    }
+
 	void Game::OnCubeTouch(_SYSCubeID cid)
 	{
         TotalsCube *c = GetCube(cid);
@@ -56,15 +71,19 @@ namespace TotalsGame
 		assert(nCubes == Game::NUMBER_OF_CUBES);
 		cubes = _cubes;
 
+        _SYS_vectors.neighborEvents.add = &OnNeighborAdd;
+        _SYS_vectors.neighborEvents.remove = &OnNeighborRemove;
 		_SYS_vectors.cubeEvents.touch = &OnCubeTouch;
 		_SYS_vectors.cubeEvents.shake = &OnCubeShake;
+
+        neighborEventHandler = NULL;
 
 		currentPuzzle = NULL;
 		previousPuzzle = NULL;
 
 		mDirty = false;
 		IsPaused = false;
-		difficulty = DifficultyHard;
+        difficulty = DifficultyEasy;//TODO Hard;
 		mode = NumericModeFraction;
 
 /* TODO

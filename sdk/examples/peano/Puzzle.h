@@ -52,6 +52,7 @@ namespace TotalsGame
         
         Puzzle *GetNext();
         Puzzle *GetNext(int maxCubeCount);
+        int CountAfterThisInChapterWithCurrentCubeSet();
 
 		bool SelectRandomTarget();
 
