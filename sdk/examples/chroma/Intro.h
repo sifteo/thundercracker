@@ -20,8 +20,6 @@ class Intro
 public:
     typedef enum
     {
-        STATE_ARROWS,
-        STATE_TIMERGROWTH,
         STATE_BALLEXPLOSION,
         STATE_READY,
         STATE_SET,

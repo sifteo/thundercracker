@@ -151,7 +151,7 @@ void CubeWrapper::Draw()
 
                     if( Game::Inst().getMode() == Game::MODE_TIMED )
                     {
-                        Game::Inst().getTimer().Draw( m_bg1helper );
+                        Game::Inst().getTimer().Draw( m_bg1helper, m_vid );
                     }
                     if( m_banner.IsActive() )
                         m_banner.Draw( m_bg1helper );

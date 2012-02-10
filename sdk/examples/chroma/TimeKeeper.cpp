@@ -23,14 +23,15 @@ void TimeKeeper::Reset()
 {
 	m_fTimer = TIME_INITIAL;
     m_blinkCounter = 0;
+    m_timerFrame = 0;
 }
 
-void TimeKeeper::Draw( BG1Helper &bg1helper )
+void TimeKeeper::Draw( BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid )
 {
 	//find out what proportion of our timer is left, then multiply by number of tiles
 	float fTimerProportion = m_fTimer / TIME_INITIAL;
 
-    DrawMeter( fTimerProportion, bg1helper );
+    DrawMeter( fTimerProportion, bg1helper, vid );
 }
 
 
@@ -47,61 +48,36 @@ void TimeKeeper::Init( float t )
 }
 
 
-void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper )
+void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid )
 {
     if( amount > 1.0f )
         amount = 1.0f;
 
-    int numTiles = TIMER_TILES * amount;
+    //always draw the sprite component
+    vid.resizeSprite(0, timerSprite.width*8, timerSprite.height*8);
+    vid.setSpriteImage(0, timerSprite, m_timerFrame);
+    vid.moveSprite(0, TIMER_SPRITE_POS, TIMER_SPRITE_POS);
 
-    int offset = TIMER_TILES - numTiles + 1;
+    m_timerFrame++;
 
-    if( numTiles > 0 )
+    if( m_timerFrame >= timerSprite.frames )
+        m_timerFrame = 0;
+
+    int numStems = TIMER_STEMS * amount;
+
+    if( numStems > 0 )
     {
-        bg1helper.DrawPartialAsset( Vec2(offset,0), Vec2(offset,0), Vec2(numTiles * 2,TimerUp.height), TimerUp );
-        bg1helper.DrawPartialAsset( Vec2(0,offset), Vec2(0,offset), Vec2(TimerLeft.width,numTiles * 2), TimerLeft );
-        bg1helper.DrawPartialAsset( Vec2(offset,15), Vec2(offset,0), Vec2(numTiles * 2,TimerDown.height), TimerDown );
-        bg1helper.DrawPartialAsset( Vec2(15,offset), Vec2(0,offset), Vec2(TimerRight.width,numTiles * 2), TimerRight );
-
-        if( numTiles < TIMER_TILES )
+        if( numStems > 2 )
+            bg1helper.DrawAsset( Vec2( TIMER_POS, TIMER_POS ), timerStem, TIMER_STEMS - numStems );
+        else if( m_blinkCounter >= BLINK_OFF_FRAMES )
         {
-            //draw partial timer bits
-            int numSubTiles = ( ( TIMER_TILES * amount ) - numTiles ) * TIMER_TILES;
+            bg1helper.DrawAsset( Vec2( TIMER_POS, TIMER_POS ), timerStem, TIMER_STEMS - numStems );
 
-            if( numSubTiles >= TIMER_TILES )
-                numSubTiles = TIMER_TILES - 1;
-
-            bg1helper.DrawAsset( Vec2( offset - 1, 0 ), TimerEdgeUpLeft, numSubTiles );
-            bg1helper.DrawAsset( Vec2( ( TIMER_TILES * 2 ) - ( offset ) + 2, 0 ), TimerEdgeUpRight, numSubTiles );
-
-            bg1helper.DrawAsset( Vec2( offset - 1, 15 ), TimerEdgeDownLeft, numSubTiles );
-            bg1helper.DrawAsset( Vec2( ( TIMER_TILES * 2 ) - ( offset ) + 2, 15 ), TimerEdgeDownRight, numSubTiles );
-
-            bg1helper.DrawAsset( Vec2( 0, offset - 1 ), TimerEdgeLeftUp, numSubTiles );
-            bg1helper.DrawAsset( Vec2( 0, ( TIMER_TILES * 2 ) - ( offset ) + 2 ), TimerEdgeLeftDown, numSubTiles );
-
-            bg1helper.DrawAsset( Vec2( 15, offset - 1 ), TimerEdgeRightUp, numSubTiles );
-            bg1helper.DrawAsset( Vec2( 15, ( TIMER_TILES * 2 ) - ( offset ) + 2 ), TimerEdgeRightDown, numSubTiles );
+            if( m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )
+            {
+                m_blinkCounter = 0;
+                Game::Inst().playSound(timer_blink);
+            }
         }
     }
-    else if( m_blinkCounter >= BLINK_OFF_FRAMES )
-    {
-        //draw the low on timer sprites
-        int frame =  TIMER_TILES - ( ( TIMER_TILES * amount ) - numTiles ) * TIMER_TILES;
-
-        if( frame >= TIMER_TILES )
-            frame = TIMER_TILES - 1;
-
-        bg1helper.DrawAsset( Vec2( 7, 0 ), TimerLowUp, frame );
-        bg1helper.DrawAsset( Vec2( 7, 15 ), TimerLowDown, frame );
-        bg1helper.DrawAsset( Vec2( 0, 7 ), TimerLowLeft, frame );
-        bg1helper.DrawAsset( Vec2( 15, 7 ), TimerLowRight, frame );
-
-        if( m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )
-        {
-            m_blinkCounter = 0;
-            Game::Inst().playSound(timer_blink);
-        }
-    }
-
 }

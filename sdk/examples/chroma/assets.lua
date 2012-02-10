@@ -1,9 +1,4 @@
 GameAssets = group{quality=10}
---for game start cutscene
-ArrowUp = image{"ArrowUp.png", pinned=true}
-ArrowDown = image{"ArrowDown.png", pinned=true}
-ArrowLeft = image{"ArrowLeft.png", pinned=true}
-ArrowRight = image{"ArrowRight.png", pinned=true}
 --UI
 Font = image{"font-8x16.png", width=8, height=16}
 BannerImg = image{"banner.png"}
@@ -52,23 +47,8 @@ rockdot = image{"rock.png", height=32}
 rainball = image{"rainball.png"}
 mults = image{"mults.png", height=16, pinned=true}
 --timer
-TimerUp = image{"TimerUp.png", height=8}
-TimerLeft = image{"TimerLeft.png"}
-TimerDown = image{"TimerDown.png"}
-TimerRight = image{"TimerRight.png"}
-TimerEdgeUpLeft = image{"TimerEdgeUpLeft.png", height=8}
-TimerEdgeUpRight = image{"TimerEdgeUpRight.png", height=8}
-TimerEdgeLeftUp = image{"TimerEdgeLeftUp.png", height=8}
-TimerEdgeLeftDown = image{"TimerEdgeLeftDown.png", height=8}
-TimerEdgeDownLeft = image{"TimerEdgeDownLeft.png", height=8}
-TimerEdgeDownRight = image{"TimerEdgeDownRight.png", height=8}
-TimerEdgeRightUp = image{"TimerEdgeRightUp.png", height=8}
-TimerEdgeRightDown = image{"TimerEdgeRightDown.png", height=8}
---timer running out
-TimerLowUp = image{"TimerLowUp.png", height=8}
-TimerLowLeft = image{"TimerLowLeft.png", height=16}
-TimerLowDown = image{"TimerLowDown.png", height=8}
-TimerLowRight = image{"TimerLowRight.png", height=16}
+timerStem = image{"timerstem.png", height=32}
+timerSprite = image{"timerSprite.png", height=32, pinned=true}
 --explosions
 ExplodeGem0 = image{"Gem0Explode.png", height=32}
 ExplodeGem1 = image{"Gem1Explode.png", height=32}
