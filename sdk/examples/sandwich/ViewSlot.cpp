@@ -97,7 +97,7 @@ bool ViewSlot::HideLocation() {
 		if (pGame->GetState()->HasAnyItems()) {
 			bool invShowing = false;
 			for(ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
-				if ((invShowing = p->ViewType()) == VIEW_INVENTORY) { break; }
+				if ((invShowing = p->ViewType() == VIEW_INVENTORY)) { break; }
 			}
 			if (invShowing) {
 				mFlags.view = VIEW_IDLE;
