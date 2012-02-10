@@ -1,10 +1,10 @@
 <dialog-database>
-	<dialog id="zelda_hello" npc="zelda">
-		<text image="zelda_detail">
+	<dialog id="sprout_hello" npc="sprout">
+		<text image="sprout_detail">
 			Hello, Princess Pearl!
-			It's me, Zelda!
+			It's me, Sprout!
 		</text>
-		<text image="zelda_happy">
+		<text image="sprout_detail">
 			Fancy meeting you
 			here in the woods!
 		</text>

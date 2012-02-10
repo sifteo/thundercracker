@@ -47,4 +47,5 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/audiooutdevice.stm32.o \
     $(MASTER_DIR)/stm32/macronixmx25.stm32.o \
     $(MASTER_DIR)/stm32/dac.stm32.o \
+    $(MASTER_DIR)/stm32/rctimer.stm32.o \
     $(MASTER_DIR)/stm32/usb.stm32.o

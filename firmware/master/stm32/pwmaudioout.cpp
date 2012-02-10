@@ -37,13 +37,13 @@ void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer,
 
 void PwmAudioOut::start()
 {
-    sampleTimer.setUpdateIsrEnabled(true);
+    sampleTimer.enableUpdateIsr();
     pwmTimer.enableChannel(this->pwmChan);
 }
 
 void PwmAudioOut::stop()
 {
-    sampleTimer.setUpdateIsrEnabled(false);
+    sampleTimer.disableUpdateIsr();
     suspend(); // TODO - full shut down?
 }
 

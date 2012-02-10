@@ -16,8 +16,6 @@ private:
   BroadLocation mTarget;
   Vec2 mPosition;
   int mDir;
-  int mKeyCount;
-  int mItemMask;
   int mAnimFrame;
   float mAnimTime;
 
@@ -32,7 +30,7 @@ private:
   uint8_t* pNextMove;
     
 public:
-  void Init();
+  void Init(Cube* pPrimary);
   int AnimFrame();
   const BroadLocation* Current() { return &mCurrent; }
   const BroadLocation* Target() { return &mTarget; }
@@ -43,11 +41,6 @@ public:
   Room* CurrentRoom() const;
   int Status() const { return mStatus; }
 
-  void PickupItem(int itemId);
-  bool HaveBasicKey() const { return mKeyCount > 0; }
-  bool HasItem(int itemId) const { return (mItemMask & (1<<itemId)) != 0; }
-  void DecrementBasicKeyCount();
-
   void SetLocation(Vec2 position, Cube::Side direction);
   void SetPosition(Vec2 position) { mPosition = position; }
 
@@ -55,4 +48,8 @@ public:
   void Update(float dt);
   void UpdateAnimation(float dt);
   void Reset();
+
+private:
+  void CheckForPassiveTrigger();
+  void CheckForActiveTrigger();
 };
