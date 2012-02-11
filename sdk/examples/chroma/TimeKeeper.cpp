@@ -11,6 +11,7 @@
 //#include "audio.gen.h"
 
 const float TimeKeeper::TIME_INITIAL = 60.0f;
+const float TimeKeeper::TIMER_SPRITE_PERIOD = 2.0f;
 
 
 TimeKeeper::TimeKeeper()
@@ -23,7 +24,6 @@ void TimeKeeper::Reset()
 {
 	m_fTimer = TIME_INITIAL;
     m_blinkCounter = 0;
-    m_timerFrame = 0;
 }
 
 void TimeKeeper::Draw( BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid )
@@ -61,14 +61,17 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_
         return;
     }
 
+    //figure out what frame we're on
+    float spritePerc = 1.0f - Math::fmodf( m_fTimer, TIMER_SPRITE_PERIOD ) / TIMER_SPRITE_PERIOD;
+    unsigned int spriteframe = spritePerc * ( timerSprite.frames + 1 );
+
+    if( spriteframe >= timerSprite.frames )
+        spriteframe = timerSprite.frames - 1;
+
     vid.resizeSprite(0, timerSprite.width*8, timerSprite.height*8);
-    vid.setSpriteImage(0, timerSprite, m_timerFrame);
+    vid.setSpriteImage(0, timerSprite, spriteframe);
     vid.moveSprite(0, TIMER_SPRITE_POS, TIMER_SPRITE_POS);
 
-    m_timerFrame++;
-
-    if( m_timerFrame >= timerSprite.frames )
-        m_timerFrame = 0;
 
     if( numStems > 0 )
     {
