@@ -77,7 +77,7 @@ const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
 {
     &hyperdot,
     &rockdot,
-    &rainball
+    &rainball_idle
 };
 
 //order of our frames
@@ -193,7 +193,7 @@ const AssetImage &GridSlot::GetSpecialTexture() const
 }
 
 
-unsigned int GridSlot::GetSpecialFrame() const
+unsigned int GridSlot::GetSpecialFrame()
 {
     if( m_color == ROCKCOLOR )
     {
@@ -201,6 +201,15 @@ unsigned int GridSlot::GetSpecialFrame() const
             return MAX_ROCK_HEALTH - m_RockHealth;
         else
             return 0;
+    }
+    else if( m_color == RAINBALLCOLOR )
+    {
+        m_animFrame++;
+
+        if( m_animFrame >= rainball_idle.frames )
+            m_animFrame = 0;
+
+        return m_animFrame;
     }
     else
         return 0;
@@ -228,10 +237,9 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState )
 
                 if( m_multiplier > 1 )
                 {
-                    //always use sprite 0, only 1 multiplier allowed per cube?
-                    vid.setSpriteImage( 0, mults, m_multiplier - 2 );
-                    vid.resizeSprite( 0, 32, 16 );
-                    vid.moveSprite( 0, m_col * 32, m_row * 32 + 8 + ( MULTIPLIER_MOTION_AMPLITUDE * sinf( (float)System::clock() * MULTIPLIER_MOTION_PERIOD_MODIFIER )) );
+                    vid.setSpriteImage( MULT_SPRITE_ID, mults, m_multiplier - 2 );
+                    vid.resizeSprite( MULT_SPRITE_ID, 32, 16 );
+                    vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 + 8 + ( MULTIPLIER_MOTION_AMPLITUDE * sinf( (float)System::clock() * MULTIPLIER_MOTION_PERIOD_MODIFIER )) );
                 }
             }
 			else

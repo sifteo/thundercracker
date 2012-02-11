@@ -19,6 +19,7 @@ public:
     static const unsigned int NUM_COLORS = 8;
     static const unsigned int NUM_SPAWN_FRAMES = 4;
     static const unsigned int MULTIPLIER_MOTION_AMPLITUDE = 2;
+    static const unsigned int MULT_SPRITE_ID = 1;
     static const float MULTIPLIER_MOTION_PERIOD_MODIFIER;
 
     //these are special dots
@@ -119,7 +120,7 @@ private:
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
     const AssetImage &GetSpecialTexture() const;
-    unsigned int GetSpecialFrame() const;
+    unsigned int GetSpecialFrame();
     //convert from [-128, 128] to [0, 6] via non-linear quantization
     unsigned int QuantizeTiltValue( float value ) const;
     //get the rolling frame of the given index

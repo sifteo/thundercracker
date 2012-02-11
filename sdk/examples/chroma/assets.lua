@@ -44,7 +44,8 @@ Cover = image{"cover.png"}
 --special dots
 hyperdot = image{"hyper.png"}
 rockdot = image{"rock.png", height=32}
-rainball = image{"rainball.png"}
+rainball_idle = image{"rainball_idle.png", height=32}
+rainball_activation = image{"rainball_activation.png", height=32}
 mults = image{"mults.png", height=16, pinned=true}
 --timer
 timerStem = image{"timerstem.png", height=32}
