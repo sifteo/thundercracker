@@ -198,11 +198,11 @@ class VidMode_BG0 : public VidMode {
         setWindow(0, LCD_height);
     }
 
-    virtual void set() {
+    void set() {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0);
     }
 
-    virtual void clear(uint16_t tile=0) {
+    void clear(uint16_t tile=0) {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
     }
 
@@ -316,7 +316,7 @@ class VidMode_BG0_ROM : public VidMode_BG0 {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_ROM);
     }
 
-    virtual void clear(uint16_t tile=0) {
+    void clear(uint16_t tile=0) {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
     }
 
@@ -376,12 +376,20 @@ public:
     VidMode_BG0_SPR_BG1(VideoBuffer &vbuf)
         : VidMode_BG0(vbuf) {}
 
-    virtual void set()
+    void init()
+    {
+        clear();
+        set();
+        BG0_setPanning(Vec2(0,0));
+        setWindow(0, LCD_height);
+    }
+
+    void set()
     {
         _SYS_vbuf_pokeb(&buf.sys, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_SPR_BG1);
     }
 
-    virtual void clear(uint16_t tile=0)
+    void clear(uint16_t tile=0)
     {
         _SYS_vbuf_fill(&buf.sys, 0, buf.indexWord(tile), BG0_width * BG0_height);
 

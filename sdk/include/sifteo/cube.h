@@ -89,10 +89,12 @@ class Cube {
     typedef _SYSSideID Side;
     typedef _SYSNeighborState Neighborhood;
 	typedef _SYSTiltState  TiltState;
-	
-	Cube()
-		: mID(CUBE_ID_UNDEFINED) {}
-	
+
+	/*
+	 * Default constructor leaves mID zero'ed, so that Cubes do not
+	 * are allocated in the BSS segment rather than read-write data.
+	 */
+	Cube() {}
     Cube(ID id)
         : mID(id) {}
 
@@ -279,12 +281,9 @@ class Cube {
 	  	return physicalAccel() * kSideToQ[rot];
 	}
 
-  bool touching() const {
-    return _SYS_isTouching(mID);
-    //uint8_t nbuf[4];
-    //_SYS_getRawNeighbors(mID, nbuf);
-    //return nbuf[0] & 0x40;
-  }
+    bool touching() const {
+        return _SYS_isTouching(mID);
+    }
 
     VideoBuffer vbuf;
 
