@@ -75,7 +75,7 @@ const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 
 const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
 {
-    &hyperdot,
+    &hyperdot_idle,
     &rockdot,
     &rainball_idle
 };
@@ -84,7 +84,7 @@ const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
 
 const AssetImage *GridSlot::SPECIALEXPLODINGTEXTURES[ NUM_SPECIALS ] =
 {
-    &hyperdot,
+    &hyperdot_explode,
     &rockdot,
     &rainball_explode
 };
@@ -218,17 +218,15 @@ unsigned int GridSlot::GetSpecialFrame()
         else
             return 0;
     }
-    else if( m_color == RAINBALLCOLOR )
+    else
     {
         m_animFrame++;
 
-        if( m_animFrame >= rainball_idle.frames )
+        if( m_animFrame >= GetSpecialTexture().frames )
             m_animFrame = 0;
 
         return m_animFrame;
     }
-    else
-        return 0;
 }
 
 

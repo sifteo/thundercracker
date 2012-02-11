@@ -42,7 +42,8 @@ FixedExplode7 = image{"fixedExplode7.png", height=32}
 FixedGlimmer = image{"FixedGlimmer.png", height=32}
 Cover = image{"cover.png"}
 --special dots
-hyperdot = image{"hyper.png"}
+hyperdot_idle = image{"hyperball_idle.png", height=32}
+hyperdot_explode = image{"hyperball_explode.png", height=32}
 rockdot = image{"rock.png", height=32}
 rainball_idle = image{"rainball_idle.png", height=32}
 rainball_explode = image{"rainball_explode.png", height=32}
