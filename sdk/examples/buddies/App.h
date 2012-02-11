@@ -39,16 +39,22 @@ public:
     CubeWrapper &GetWrapper(Sifteo::Cube::ID cubeId);
     
     void OnNeighborAdd(Sifteo::Cube::ID cubeId0, Sifteo::Cube::Side cubeSide0, Sifteo::Cube::ID cubeId1, Sifteo::Cube::Side cubeSide1);
+    void OnTilt(Sifteo::Cube::ID cubeId);
     void OnShake(Sifteo::Cube::ID cubeId);
     
 private:
     bool AnyTouching() const;
+    bool AllSolved() const;
+    
+    void Reset();
     void ShufflePieces();
     
     CubeWrapper mWrappers[kNumCubes];
     Sifteo::AudioChannel mChannel;
     float mResetTimer;
-    float mShakeThottleTimer;
+    
+    ShuffleState mShuffleState;
+    float mShuffleStateTimer;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -20,7 +20,18 @@ namespace Buddies {
 enum BuddyMode
 {
     BUDDY_MODE_NORMAL = 0,
-    BUDDY_MODE_HINT,
+    BUDDY_MODE_HINT
+};
+
+enum ShuffleState
+{
+    SHUFFLE_STATE_START = 0,
+    SHUFFLE_STATE_SHAKE_TO_SCRAMBLE,
+    SHUFFLE_STATE_SCRAMBLING,
+    SHUFFLE_STATE_UNSCRAMBLE_THE_FACES,
+    SHUFFLE_STATE_PLAY,
+    SHUFFLE_STATE_SOLVED,
+    SHUFFLE_STATE_SCORE
 };
 
 const bool kLoadAssets = true;
@@ -29,7 +40,7 @@ const bool kShuffleMode = true;
 const unsigned int kNumCubes = 2;
 const unsigned int kMaxBuddies = 6;
 const float kResetTimerDuration = 3.0f;
-const float kShakeThottleTimerDuration = 2.0f;
+const float kShuffleStateTimeDelay = 1.0f;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -93,7 +93,8 @@ App::App()
     : mWrappers()
     , mChannel()
     , mResetTimer(0.0f)
-    , mShakeThottleTimer(0.0f)
+    , mShuffleState(SHUFFLE_STATE_START)
+    , mShuffleStateTimer(kShuffleStateTimeDelay)
 {
 }
 
@@ -109,7 +110,9 @@ void App::Setup()
     
     mChannel.init();
     
-    mResetTimer = kResetTimerDuration;
+    mShuffleState = SHUFFLE_STATE_START;
+    mShuffleStateTimer = kShuffleStateTimeDelay;
+    DEBUG_LOG(("State = START\n"));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -117,6 +120,43 @@ void App::Setup()
 
 void App::Tick(float dt)
 {
+    switch (mShuffleState)
+    {
+        case SHUFFLE_STATE_START:
+        {
+            if (mShuffleStateTimer > 0.0f)
+            {
+                mShuffleStateTimer -= dt;
+                if (mShuffleStateTimer <= 0.0f)
+                {
+                    mShuffleStateTimer = 0.0f;
+                    mShuffleState = SHUFFLE_STATE_SHAKE_TO_SCRAMBLE;
+                    DEBUG_LOG(("State = SHAKE_TO_SCRAMBLE\n"));
+                }
+            }
+            break;
+        }
+        case SHUFFLE_STATE_SOLVED:
+        {
+            if (mShuffleStateTimer > 0.0f)
+            {
+                mShuffleStateTimer -= dt;
+                if (mShuffleStateTimer <= 0.0f)
+                {
+                    mShuffleStateTimer = 0.0f;
+                    mShuffleState = SHUFFLE_STATE_SCORE;
+                    DEBUG_LOG(("State = SCORE\n"));
+                }
+            }
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+    
+    // Cube Ticks
     for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
     {
         if (mWrappers[i].IsEnabled())
@@ -125,6 +165,7 @@ void App::Tick(float dt)
         }
     }
     
+    // Reset Detection
     if (AnyTouching())
     {
         mResetTimer -= dt;
@@ -132,31 +173,12 @@ void App::Tick(float dt)
         if (mResetTimer <= 0.0f)
         {
             mResetTimer = kResetTimerDuration;
-            
-            for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
-            {
-                if (mWrappers[i].IsEnabled())
-                {
-                    mWrappers[i].Reset();
-                    mWrappers[i].Paint();
-                }
-            }
-            
-            mChannel.play(gems1_4A9);
+            Reset();
         }
     }
     else
     {
         mResetTimer = kResetTimerDuration;
-    }
-    
-    if (mShakeThottleTimer > 0.0f)
-    {
-        mShakeThottleTimer -= dt;
-        if (mShakeThottleTimer < 0.0f)
-        {
-            mShakeThottleTimer = 0.0f;
-        }
     }
 }
 
@@ -213,32 +235,68 @@ CubeWrapper &App::GetWrapper(Cube::ID cubeId)
 
 void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1, Cube::Side cubeSide1)
 {
-    CubeWrapper &buddy0 = GetWrapper(cubeId0);
-    CubeWrapper &buddy1 = GetWrapper(cubeId1);
-    
-    if (buddy0.GetMode() == BUDDY_MODE_HINT || buddy1.GetMode() == BUDDY_MODE_HINT)
+    if (!kShuffleMode ||
+        mShuffleState == SHUFFLE_STATE_UNSCRAMBLE_THE_FACES ||
+        mShuffleState == SHUFFLE_STATE_PLAY)
     {
-        return;
+        if (kShuffleMode && mShuffleState != SHUFFLE_STATE_PLAY)
+        {
+            mShuffleState = SHUFFLE_STATE_PLAY;
+            DEBUG_LOG(("State = PLAY\n"));
+        }
+        
+        CubeWrapper &buddy0 = GetWrapper(cubeId0);
+        CubeWrapper &buddy1 = GetWrapper(cubeId1);
+        
+        if (buddy0.GetMode() == BUDDY_MODE_HINT || buddy1.GetMode() == BUDDY_MODE_HINT)
+        {
+            return;
+        }
+        
+        Piece piece0 = buddy0.GetPiece(cubeSide0);
+        Piece piece1 = buddy1.GetPiece(cubeSide1);
+        
+        SwapPieces(piece0, cubeSide0, piece1, cubeSide1);
+        
+        buddy0.SetPiece(cubeSide0, piece0);
+        buddy1.SetPiece(cubeSide1, piece1);
+        
+        // If we have solved a face, play the sound.
+        if (buddy0.IsSolved() || buddy1.IsSolved())
+        {
+            mChannel.play(gems1_4A9);
+        }
+        
+        if (kShuffleMode)
+        {
+            if (AllSolved())
+            {
+                mShuffleState = SHUFFLE_STATE_SOLVED;
+                mShuffleStateTimer = kShuffleStateTimeDelay;
+                DEBUG_LOG(("State = SOLVED\n"));
+            }
+        }
+        
+        // Paint
+        buddy0.Paint();
+        buddy1.Paint();
+        System::paint();
     }
-    
-    Piece piece0 = buddy0.GetPiece(cubeSide0);
-    Piece piece1 = buddy1.GetPiece(cubeSide1);
-    
-    SwapPieces(piece0, cubeSide0, piece1, cubeSide1);
-    
-    buddy0.SetPiece(cubeSide0, piece0);
-    buddy1.SetPiece(cubeSide1, piece1);
-    
-    // If we have solved a face, play the sound.
-    if (buddy0.IsSolved() || buddy1.IsSolved())
+}
+                    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::OnTilt(Cube::ID cubeId)
+{
+    if (kShuffleMode)
     {
-        mChannel.play(gems1_4A9);
+        if(mShuffleState == SHUFFLE_STATE_UNSCRAMBLE_THE_FACES)
+        {
+            mShuffleState = SHUFFLE_STATE_PLAY;
+            DEBUG_LOG(("State = PLAY\n"));
+        }
     }
-    
-    // Paint
-    buddy0.Paint();
-    buddy1.Paint();
-    System::paint();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -246,10 +304,21 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
 
 void App::OnShake(Cube::ID cubeId)
 {
-    if (kShuffleMode && mShakeThottleTimer <= 0.0f)
+    if (kShuffleMode)
     {
-        mShakeThottleTimer = kShakeThottleTimerDuration;
-        ShufflePieces();
+        if( mShuffleState == SHUFFLE_STATE_SHAKE_TO_SCRAMBLE ||
+            mShuffleState == SHUFFLE_STATE_SCORE)
+        {
+            ShufflePieces();
+            
+            mShuffleState = SHUFFLE_STATE_SCRAMBLING;
+            DEBUG_LOG(("State = SCRAMBLING\n"));
+            
+            // TODO: Aniamtions
+            
+            mShuffleState = SHUFFLE_STATE_UNSCRAMBLE_THE_FACES;
+            DEBUG_LOG(("State = UNSCRAMBLE_THE_FACES\n"));
+        }
     }
 }
 
@@ -268,13 +337,46 @@ bool App::AnyTouching() const
     
     return false;
 }
+                    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool App::AllSolved() const
+{
+    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
+    {
+        if (mWrappers[i].IsEnabled() && !mWrappers[i].IsSolved())
+        {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::Reset()
+{
+    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
+    {
+        if (mWrappers[i].IsEnabled())
+        {
+            mWrappers[i].Reset();
+            mWrappers[i].Paint();
+        }
+    }
+    
+    mChannel.play(gems1_4A9);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::ShufflePieces()
 {
-    // Make a list of each part on each face (NUM_SIDES * kNumCubes)
+    // Make a list of each part on each face
     const unsigned int kNumPieces = NUM_SIDES * kNumCubes;
     
     Piece pieces[kNumPieces];
