@@ -331,7 +331,7 @@ def ORRr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
 }
 
 def MULr : T4<(outs GPReg:$Rd), (ins GPReg:$Rs, GPReg:$Rn),
-    "orr\t$Rd, $Rn", [(set GPReg:$Rd, (mul GPReg:$Rn, GPReg:$Rs))]> {
+    "mul\t$Rd, $Rn", [(set GPReg:$Rd, (mul GPReg:$Rn, GPReg:$Rs))]> {
     let opB = 13;
     let Constraints = "$Rs = $Rd";
 }
