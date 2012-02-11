@@ -95,6 +95,7 @@ App::App()
     , mResetTimer(0.0f)
     , mShuffleState(SHUFFLE_STATE_START)
     , mShuffleStateTimer(kShuffleStateTimeDelay)
+    , mShuffleScoreTime(0.0f)
 {
 }
 
@@ -112,6 +113,7 @@ void App::Setup()
     
     mShuffleState = SHUFFLE_STATE_START;
     mShuffleStateTimer = kShuffleStateTimeDelay;
+    mShuffleScoreTime = 0.0;
     DEBUG_LOG(("State = START\n"));
 }
 
@@ -136,6 +138,12 @@ void App::Tick(float dt)
             }
             break;
         }
+        case SHUFFLE_STATE_UNSCRAMBLE_THE_FACES:
+        case SHUFFLE_STATE_PLAY:
+        {
+            mShuffleScoreTime += dt;
+            break;
+        }
         case SHUFFLE_STATE_SOLVED:
         {
             if (mShuffleStateTimer > 0.0f)
@@ -145,7 +153,11 @@ void App::Tick(float dt)
                 {
                     mShuffleStateTimer = 0.0f;
                     mShuffleState = SHUFFLE_STATE_SCORE;
-                    DEBUG_LOG(("State = SCORE\n"));
+                    
+                    int minutes = int(mShuffleScoreTime) / 60;
+                    int seconds = int(mShuffleScoreTime - (minutes * 60.0f));
+                    
+                    DEBUG_LOG(("State = SCORE (Score = %02d:%02d)\n", minutes, seconds));
                 }
             }
             break;
@@ -317,6 +329,7 @@ void App::OnShake(Cube::ID cubeId)
             // TODO: Aniamtions
             
             mShuffleState = SHUFFLE_STATE_UNSCRAMBLE_THE_FACES;
+            mShuffleScoreTime = 0.0f;
             DEBUG_LOG(("State = UNSCRAMBLE_THE_FACES\n"));
         }
     }
