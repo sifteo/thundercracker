@@ -47,7 +47,7 @@ private:
     bool AllSolved() const;
     
     void Reset();
-    void ShufflePieces();
+    void ShufflePiece();
     
     CubeWrapper mWrappers[kNumCubes];
     Sifteo::AudioChannel mChannel;
@@ -55,6 +55,8 @@ private:
     
     ShuffleState mShuffleState;
     float mShuffleStateTimer;
+    float mShuffleScrambleTimer;
+    bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     float mShuffleScoreTime;
 };
 

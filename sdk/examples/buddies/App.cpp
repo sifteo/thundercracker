@@ -95,6 +95,7 @@ App::App()
     , mResetTimer(0.0f)
     , mShuffleState(SHUFFLE_STATE_START)
     , mShuffleStateTimer(kShuffleStateTimeDelay)
+    , mShuffleScrambleTimer(0.0f)
     , mShuffleScoreTime(0.0f)
 {
 }
@@ -134,6 +135,31 @@ void App::Tick(float dt)
                     mShuffleStateTimer = 0.0f;
                     mShuffleState = SHUFFLE_STATE_SHAKE_TO_SCRAMBLE;
                     DEBUG_LOG(("State = SHAKE_TO_SCRAMBLE\n"));
+                }
+            }
+            break;
+        }
+        case SHUFFLE_STATE_SCRAMBLING:
+        {
+            if (mShuffleScrambleTimer > 0.0f)
+            {
+                mShuffleScrambleTimer -= dt;
+                if (mShuffleScrambleTimer <= 0.0f)
+                {
+                    ShufflePiece();
+                    
+                    if (GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved))
+                    {
+                        mShuffleScrambleTimer = 0.0f;
+                        
+                        mShuffleState = SHUFFLE_STATE_UNSCRAMBLE_THE_FACES;
+                        mShuffleScoreTime = 0.0f;
+                        DEBUG_LOG(("State = UNSCRAMBLE_THE_FACES\n"));
+                    }
+                    else
+                    {
+                        mShuffleScrambleTimer += kShuffleScrambleTimerDelay;
+                    }
                 }
             }
             break;
@@ -321,16 +347,15 @@ void App::OnShake(Cube::ID cubeId)
         if( mShuffleState == SHUFFLE_STATE_SHAKE_TO_SCRAMBLE ||
             mShuffleState == SHUFFLE_STATE_SCORE)
         {
-            ShufflePieces();
+            for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
+            {
+                mShufflePiecesMoved[i] = false;
+            }
             
             mShuffleState = SHUFFLE_STATE_SCRAMBLING;
             DEBUG_LOG(("State = SCRAMBLING\n"));
             
-            // TODO: Aniamtions
-            
-            mShuffleState = SHUFFLE_STATE_UNSCRAMBLE_THE_FACES;
-            mShuffleScoreTime = 0.0f;
-            DEBUG_LOG(("State = UNSCRAMBLE_THE_FACES\n"));
+            mShuffleScrambleTimer = kShuffleScrambleTimerDelay;
         }
     }
 }
@@ -386,7 +411,7 @@ void App::Reset()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-
+/*
 void App::ShufflePieces()
 {
     // Make a list of each part on each face
@@ -437,6 +462,35 @@ void App::ShufflePieces()
             }
         }
     }
+}
+*/
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::ShufflePiece()
+{
+    DEBUG_LOG(("ShufflePiece (%d left)\n", arraysize(mShufflePiecesMoved) - GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved))));
+    
+    // Pick two random pieces...
+    ASSERT((arraysize(mShufflePiecesMoved) - GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved))) >= 2);
+    unsigned int iPiece0 = GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved));
+    unsigned int iPiece1 = GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved), iPiece0);
+    
+    // Swap them...
+    Piece temp = mWrappers[iPiece0 / NUM_SIDES].GetPiece(iPiece0 % kNumCubes);
+    Piece piece0 = mWrappers[iPiece1 / NUM_SIDES].GetPiece(iPiece1 % kNumCubes);
+    Piece piece1 = temp;
+    
+    NormalizeRotation(piece0, iPiece0 % kNumCubes);
+    NormalizeRotation(piece1, iPiece1 % kNumCubes);
+    
+    mWrappers[iPiece0 / NUM_SIDES].SetPiece(iPiece0 % kNumCubes, piece0);
+    mWrappers[iPiece1 / NUM_SIDES].SetPiece(iPiece1 % kNumCubes, piece1);
+    
+    // Mark both as moved...
+    mShufflePiecesMoved[iPiece0] = true;
+    mShufflePiecesMoved[iPiece1] = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
