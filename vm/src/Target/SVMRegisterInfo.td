@@ -28,21 +28,15 @@ def R5 : SVMRegLow< 5, "r5" >;
 def R6 : SVMRegLow< 6, "r6" >;
 def R7 : SVMRegLow< 7, "r7" >;
 
-// Base pointers
-def BRO : SVMRegHigh< 0, "bro" >;
-def BRW : SVMRegHigh< 1, "brw" >;
-
 // Hidden registers
 def SP : SVMReg< "sp" >;
 def CPSR : SVMReg< "cpsr" >;
+def BP : SVMReg< "bp" >;
 
-def CPSRReg : RegisterClass<"SVM", [i32], 32, (add CPSR)>;
+let isAllocatable = 0 in {
+    def CPSRReg : RegisterClass<"SVM", [i32], 32, (add CPSR)>;
+    def BPReg : RegisterClass<"SVM", [i32], 32, (add BP)>;
+}
 
 // General purpose registers
 def GPReg : RegisterClass<"SVM", [i32], 32, (sequence "R%u", 0, 7)>;
-    
-// Base pointer registers
-let CopyCost = -1 in {
-    def BPReg : RegisterClass<"SVM", [iPTR], 32, (add BRO, BRW)>;
-    def BPWriteReg : RegisterClass<"SVM", [iPTR], 32, (add BRW)>;
-}

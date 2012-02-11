@@ -37,10 +37,6 @@ namespace {
             return false;
         }
         
-        // Custom selectors
-        bool shouldUseConstantPool(uint32_t val);
-        void moveConstantToPool(SDNode *N, uint32_t val);
-        
         // Complex patterns
         bool SelectAddrSP(SDValue Addr, SDValue &Base, SDValue &Offset);
         bool SelectCallTarget(SDValue Addr, SDValue &CP);
@@ -53,6 +49,8 @@ namespace {
         Module *M;
         
         bool SelectDecoratedTarget(SDValue Addr, SDValue &CP, const char *Prefix);
+        bool shouldUseConstantPool(uint32_t val);
+        void moveConstantToPool(SDNode *N, uint32_t val);
         
         ConstantInt *const32(uint32_t val) {
             return ConstantInt::get(
@@ -63,6 +61,8 @@ namespace {
 
 SDNode *SVMDAGToDAGISel::Select(SDNode *N)
 {
+    DebugLoc dl = N->getDebugLoc();
+
     if (N->isMachineOpcode())
         return NULL;
 
@@ -79,14 +79,13 @@ SDNode *SVMDAGToDAGISel::Select(SDNode *N)
         }
         break;
     }
-    
+
     /*
      * Pattern (SVMBrcond bb:$offset8, imm:$cc)
      * Emits (Bcc bccTarget:$offset8, CCop:$cc)
      * We must do this programmatically so we can glue the CMP instruction properly.
      */
     case SVMISD::BRCOND: {
-        DebugLoc dl = N->getDebugLoc();
         SDValue Chain = N->getOperand(0);
         SDValue N1 = N->getOperand(1);
         SDValue N2 = N->getOperand(2);

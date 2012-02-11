@@ -93,10 +93,8 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     setLibcallName(RTLIB::O_F32, "_SYS_23");
     setLibcallName(RTLIB::O_F64, "_SYS_22");
 
-    // Register classes
+    // Register classes to allocate into
     addRegisterClass(MVT::i32, SVM::GPRegRegisterClass);
-    addRegisterClass(MVT::i32, SVM::BPRegRegisterClass);
-    addRegisterClass(MVT::i32, SVM::BPWriteRegRegisterClass);
 
     // Wrapped constants
     setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);

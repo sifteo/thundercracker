@@ -19,9 +19,7 @@ def AbsCPIop : Operand<i32> {
 }
 
 def LDRpc : T6<(outs GPReg:$Rd), (ins RelCPIop:$offset10),
-    "ldr\t$Rd, [PC, #$offset10]", [(set GPReg:$Rd, tconstpool:$offset10)]> {
-    let isAsCheapAsAMove = 1;
-}
+    "ldr\t$Rd, [PC, #$offset10]", [(set GPReg:$Rd, tconstpool:$offset10)]>;
 
 def MOVWi16 : T32_imm16<0b100100, (outs GPReg:$Rd), (ins i32imm:$value16),
     "movw\t$Rd, #$value16", [(set GPReg:$Rd, imm256_65535:$value16)]>;
@@ -366,31 +364,40 @@ def ldAddrTarget : Operand<i32>,
 // Match wrapped and converted addresses, convert to LDRpc instruction
 def : Pat<(SVMWrapper ldAddrTarget:$a), (LDRpc ldAddrTarget:$a)>;
 
-// Base pointer validation, represented as a reg-to-reg copy
-def MOVptr : S_ptr<(outs BPReg:$Rd), (ins GPReg:$Rs), "s.mov\t$Rd, $Rs", []>;
+def PTR : S_ptr<(outs BPReg:$Rb), (ins GPReg:$Rs), "s.ptr\t$Rs">;
 
-// Pseudo-ops for disallowed operations
-def MOVrptr : Pseudo<(outs GPReg:$Rd), (ins BPReg:$Rs), "!MOV\t$Rd, $Rs", []>;
+class T32_LD<bits<7> op2v, string opstr>
+    : T32_LDSTbase<op2v, 0, (outs GPReg:$Rt),
+        (ins BPReg:$Rb, i32imm:$offset12),
+        !strconcat(opstr, "\t$Rt, [$Rb, #$offset12]"), []>;
 
-def STRi   : T32_STi<0b0001100, "str",   [(store GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]>;
-def STR    : T32_ST <0b0001100, "str",   [(store GPReg:$Rt, BPWriteReg:$Rn)]>;
-def STRHi  : T32_STi<0b0001010, "strh",  [(truncstorei16 GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]>;
-def STRH   : T32_ST <0b0001010, "strh",  [(truncstorei16 GPReg:$Rt, BPWriteReg:$Rn)]>;
-def STRBi  : T32_STi<0b0001000, "strb",  [(truncstorei8 GPReg:$Rt, (add BPWriteReg:$Rn, imm12:$offset12))]>;
-def STRB   : T32_ST <0b0001000, "strb",  [(truncstorei8 GPReg:$Rt, BPWriteReg:$Rn)]>;
+class T32_ST<bits<7> op2v, string opstr>
+    : T32_LDSTbase<op2v, 1, (outs),
+        (ins GPReg:$Rt, BPReg:$Rb, i32imm:$offset12),
+        !strconcat(opstr, "\t$Rt, [$Rb, #$offset12]"), []>;
 
-def LDRi   : T32_LDi<0b0001101, "ldr",   [(set GPReg:$Rt, (load (add BPReg:$Rn, imm12:$offset12)))]>;
-def LDR    : T32_LD <0b0001101, "ldr",   [(set GPReg:$Rt, (load BPReg:$Rn))]>;
-def LDRHi  : T32_LDi<0b0001011, "ldrh",  [(set GPReg:$Rt, (zextloadi16 (add BPReg:$Rn, imm12:$offset12)))]>;
-def LDRH   : T32_LD <0b0001011, "ldrh",  [(set GPReg:$Rt, (zextloadi16 BPReg:$Rn))]>;
-def LDRBi  : T32_LDi<0b0001001, "ldrb",  [(set GPReg:$Rt, (zextloadi8 (add BPReg:$Rn, imm12:$offset12)))]>;
-def LDRB   : T32_LD <0b0001001, "ldrb",  [(set GPReg:$Rt, (zextloadi8 BPReg:$Rn))]>;
+// Basic load/store opcodes
+def STRB   : T32_ST <0b0001000, "strb">;
+def STRH   : T32_ST <0b0001010, "strh">;
+def STR    : T32_ST <0b0001100, "str">;
+def LDRB   : T32_LD <0b0001001, "ldrb">;
+def LDRH   : T32_LD <0b0001011, "ldrh">;
+def LDR    : T32_LD <0b0001101, "ldr">;
+def LDRSB  : T32_LD <0b0011001, "ldrsb">;
+def LDRSH  : T32_LD <0b0011011, "ldrsh">;
 
-def LDRSHi : T32_LDi<0b0011011, "ldrsh", [(set GPReg:$Rt, (sextloadi16 (add BPReg:$Rn, imm12:$offset12)))]>;
-def LDRSH  : T32_LD <0b0011011, "ldrsh", [(set GPReg:$Rt, (sextloadi16 BPReg:$Rn))]>;
-def LDRSBi : T32_LDi<0b0011001, "ldrsb", [(set GPReg:$Rt, (sextloadi8 (add BPReg:$Rn, imm12:$offset12)))]>;
-def LDRSB  : T32_LD <0b0011001, "ldrsb", [(set GPReg:$Rt, (sextloadi8 BPReg:$Rn))]>;
+def : Pat< (store GPReg:$Rt, BP), (STR GPReg:$Rt, BP, 0)>;
 
+/*
+,   [(store GPReg:$Rt, baseRW:$Rn)]>;
+,  [(truncstorei16 GPReg:$Rt, baseRW:$Rn)]>;
+,  [(truncstorei8 GPReg:$Rt, baseRW:$Rn)]>;
+,   [(set GPReg:$Rt, (load baseRO:$Rn))]>;
+,  [(set GPReg:$Rt, (zextloadi16 baseRO:$Rn))]>;
+,  [(set GPReg:$Rt, (zextloadi8 baseRO:$Rn))]>;
+, [(set GPReg:$Rt, (sextloadi16 baseRO:$Rn))]>;
+, [(set GPReg:$Rt, (sextloadi8 baseRO:$Rn))]>;
+*/
 
 /****************************************************************
  * Stack operations
@@ -423,17 +430,5 @@ def STRsp : T11<0, (outs), (ins GPReg:$Rd, ADDRsp:$offset10),
 
 def ADDsp : T12<1, (outs GPReg:$Rd), (ins ADDRsp:$offset10),
     "add\t$Rd, SP, #$offset10", [(set GPReg:$Rd, ADDRsp:$offset10)]> {
-    let Uses = [SP];
-}
-
-// Pseudo-ops for disallowed operations
-def LDRBRsp : Pseudo<(outs BPReg:$Rd), (ins ADDRsp:$offset),
-    "!LDRBR\t$Rd, [SP, #$offset]",
-    [(set BPReg:$Rd, (load ADDRsp:$offset))]> {
-    let Uses = [SP];
-}
-def STRBRsp : Pseudo<(outs), (ins BPReg:$Rd, ADDRsp:$offset),
-    "!STRBR\t$Rd, [SP, #$offset]",
-    [(store BPReg:$Rd, ADDRsp:$offset)]> {
     let Uses = [SP];
 }

@@ -154,6 +154,9 @@ class T6<dag outs, dag ins, string asmstr, list<dag> pattern>
     let Inst{12-11} = 1;
     let Inst{10-8} = Rd;
     let Inst{7-0} = word8;
+
+    let isReMaterializable = 1;
+    let isAsCheapAsAMove = 1;
 }
 
 class T11<bits<1> isLoad, dag outs, dag ins, string asmstr, list<dag> pattern>
@@ -219,18 +222,18 @@ class T18<dag outs, dag ins, string asmstr, list<dag> pattern>
  */
 
 // Load/store with immediate, base class
-class T32_LDSTbase<bits<7> op2v, dag outs, dag ins, string asmstr, list<dag> pattern>
+class T32_LDSTbase<bits<7> op2v, bits<3> bpReg, dag outs, dag ins, string asmstr, list<dag> pattern>
     : ThumbInst32<outs, ins, asmstr, pattern>
 {
-    bits<3> Rn;
+    bits<3> Rb;
     bits<3> Rt;
     bits<12> offset12;
 
     let op1 = 0b11;
     let op2 = op2v;
 
-    let firstWord{3} = 1;    // Pointer in high reg
-    let firstWord{2-0} = Rn;
+    let firstWord{3} = 1;    // Base pointer in high reg
+    let firstWord{2-0} = bpReg;
 
     let secondWord{15} = 0;  // Source/dest in low reg
     let secondWord{14-12} = Rt;
@@ -253,38 +256,9 @@ class T32_imm16<bits<6> op2v, dag outs, dag ins, string asmstr, list<dag> patter
     let secondWord{11} = 0;  // Dest in low reg
     let secondWord{10-8} = Rd;
     let secondWord{7-0} = value16{7-0};
-}
 
-// Store with operand immediate
-class T32_STi<bits<7> op2v, string opstr, list<dag> pattern>
-    : T32_LDSTbase<op2v, (outs),
-        (ins GPReg:$Rt, BPWriteReg:$Rn, i32imm:$offset12),
-        !strconcat(opstr, "\t$Rt, [$Rn, #$offset12]"),
-        pattern>;
-
-// Store with zero immediate
-class T32_ST<bits<7> op2v, string opstr, list<dag> pattern>
-    : T32_LDSTbase<op2v, (outs),
-        (ins GPReg:$Rt, BPWriteReg:$Rn),
-        !strconcat(opstr, "\t$Rt, [$Rn]"),
-        pattern> {
-    let offset12 = 0;
-}
-
-// Load with operand immediate
-class T32_LDi<bits<7> op2v, string opstr, list<dag> pattern>
-    : T32_LDSTbase<op2v, (outs GPReg:$Rt),
-        (ins BPReg:$Rn, i32imm:$offset12),
-        !strconcat(opstr, "\t$Rt, [$Rn, #$offset12]"),
-        pattern>;
-
-// Load with zero immediate
-class T32_LD<bits<7> op2v, string opstr, list<dag> pattern>
-    : T32_LDSTbase<op2v, (outs GPReg:$Rt),
-        (ins BPReg:$Rn),
-        !strconcat(opstr, "\t$Rt, [$Rn]"),
-        pattern> {
-    let offset12 = 0;
+    let isReMaterializable = 1;
+    let isAsCheapAsAMove = 1;
 }
 
 
@@ -321,15 +295,17 @@ class S_subsp<dag outs, dag ins, string asmstr, list<dag> pattern>
     let value8{4-0} = imm5;
 }
 
-class S_ptr<dag outs, dag ins, string asmstr, list<dag> pattern>
-    : T17<outs, ins, asmstr, pattern>
+class S_ptr<dag outs, dag ins, string asmstr>
+    : T17<outs, ins, asmstr, []>
 {
     // Validate pointer
-    bits<3> Rd;
+    bits<3> Rb;
     bits<3> Rs;
-    let value8{7-4} = 0b1110;
-    let value8{3} = Rd{0};
+    let value8{7-3} = 0b11100;
     let value8{2-0} = Rs;
+    
+    let isReMaterializable = 1;
+    let neverHasSideEffects = 1;
 }
 
 class S_callr<bits<1> tail, dag outs, dag ins, string asmstr, list<dag> pattern>

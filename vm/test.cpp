@@ -1,35 +1,9 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
- * Sifteo SDK Example.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
- */
-
-#include <sifteo.h>
-
-using namespace Sifteo;
-
-#ifndef NUM_CUBES
-#  define NUM_CUBES 1
-#endif
-
-static Cube cubes[NUM_CUBES];
+#include <sifteo/abi.h>
 
 void siftmain()
 {
-    if (System::clock() < 10)
-        System::paint();
-
-#if 0
-    for (unsigned i = 0; i < NUM_CUBES; i++) {
-        //cubes[i].enable(i);
-
-        VidMode_BG0_ROM vid(cubes[i].vbuf);
-        //vid.init();
-        //vid.BG0_text(Vec2(1,1), "Hello World");
-    }
-
-    while (1) {
-       System::paint();
-    }
-#endif
+    static volatile int x[5];
+    x[0] = 1;
+    x[0] = 2;
+    x[1] = 3;
 }

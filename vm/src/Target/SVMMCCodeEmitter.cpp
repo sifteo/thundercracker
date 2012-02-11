@@ -41,12 +41,8 @@ public:
     {
         if (MO.isReg()) {
             unsigned N = MO.getReg();
-            
             if (N >= SVM::R0 && N <= SVM::R7)
                 return N - SVM::R0;
-            
-            if (N >= SVM::BRO && N <= SVM::BRW)
-                return N - SVM::BRO;
         }
 
         if (MO.isImm())
@@ -79,8 +75,6 @@ public:
         
         case SVM::ADJCALLSTACKDOWN:
         case SVM::ADJCALLSTACKUP:
-        case SVM::LDRBRsp:
-        case SVM::STRBRsp:
             /*
              * Some pseudoinstructions are illegal if they make it this far!
              */
