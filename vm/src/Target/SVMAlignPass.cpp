@@ -40,7 +40,7 @@ FunctionPass *llvm::createSVMAlignPass(SVMTargetMachine &TM)
 bool SVMAlignPass::runOnMachineFunction(MachineFunction &MF)
 {
     // XXX: Kludge to put functions into flash blocks
-    //MF.EnsureAlignment(Log2_32(TM.getBlockSize()));
+    MF.EnsureAlignment(Log2_32(TM.getBlockSize()));
 
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
         MachineBasicBlock &MBB = *I;
