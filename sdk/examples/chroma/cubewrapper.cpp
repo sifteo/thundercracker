@@ -142,7 +142,7 @@ void CubeWrapper::Draw()
 						for( int j = 0; j < NUM_COLS; j++ )
 						{
 							GridSlot &slot = m_grid[i][j];
-                            slot.Draw( m_vid, m_curFluidDir );
+                            slot.Draw( m_vid, m_bg1helper, m_curFluidDir );
 						}
 					}
 
@@ -784,13 +784,13 @@ void CubeWrapper::testMatches()
                     }
                     else if( ourGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
                     {
-                        ourGems[j]->FillColor( theirGems[j]->getColor() );
+                        ourGems[j]->RainballMorph( theirGems[j]->getColor() );
                         ourGems[j]->mark();
                         theirGems[j]->mark();
                     }
                     else if( theirGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
                     {
-                        theirGems[j]->FillColor( ourGems[j]->getColor() );
+                        theirGems[j]->RainballMorph( ourGems[j]->getColor() );
                         ourGems[j]->mark();
                         theirGems[j]->mark();
                     }

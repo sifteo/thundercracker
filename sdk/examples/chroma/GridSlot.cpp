@@ -80,6 +80,15 @@ const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
     &rainball_idle
 };
 
+
+
+const AssetImage *GridSlot::SPECIALEXPLODINGTEXTURES[ NUM_SPECIALS ] =
+{
+    &hyperdot,
+    &rockdot,
+    &rainball_explode
+};
+
 //order of our frames
 enum
 {
@@ -159,6 +168,7 @@ void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
         m_state = STATE_LIVING;
 	m_color = color;
 	m_bFixed = false;
+    m_bWasRainball = false;
     m_multiplier = 1;
 
     if( color == ROCKCOLOR )
@@ -193,6 +203,12 @@ const AssetImage &GridSlot::GetSpecialTexture() const
 }
 
 
+const AssetImage &GridSlot::GetSpecialExplodingTexture() const
+{
+    return *SPECIALEXPLODINGTEXTURES[ m_color - NUM_COLORS ];
+}
+
+
 unsigned int GridSlot::GetSpecialFrame()
 {
     if( m_color == ROCKCOLOR )
@@ -217,7 +233,7 @@ unsigned int GridSlot::GetSpecialFrame()
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState )
+void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState )
 {
 	Vec2 vec( m_col * 4, m_row * 4 );
 	switch( m_state )
@@ -287,19 +303,33 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState )
 		case STATE_MARKED:
         {
             if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
+            {
+                //vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
+                const AssetImage &exTex = GetSpecialExplodingTexture();
+
+                //TODO, remove hack
+                if( m_color == RAINBALLCOLOR )
+                    vid.BG0_drawAsset(vec, exTex, m_animFrame);
+                else
+                    vid.BG0_drawAsset(vec, exTex, GetSpecialFrame());
+            }
             else
             {
                 const AssetImage &exTex = GetExplodingTexture();
                 vid.BG0_drawAsset(vec, exTex, m_animFrame);
+
+                if( m_bWasRainball )
+                {
+                    bg1helper.DrawAsset( vec, rainball_explode, m_animFrame );
+                }
             }
 			break;
 		}
 		case STATE_EXPLODING:
 		{
-            if( IsSpecial() )
+            /*if( IsSpecial() )
                 vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
-            else
+            else*/
             {
                 vid.BG0_drawAsset(vec, GemEmpty, 0);
                 //const AssetImage &exTex = GetExplodingTexture();
@@ -743,4 +773,12 @@ void GridSlot::UpMultiplier()
 {
     if( isAlive() && IsFixed() && m_multiplier > 1 )
         m_multiplier++;
+}
+
+
+//morph from rainball to given color
+void GridSlot::RainballMorph( unsigned int color )
+{
+    FillColor( color );
+    m_bWasRainball = true;
 }
