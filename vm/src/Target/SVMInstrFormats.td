@@ -205,6 +205,9 @@ class T17<dag outs, dag ins, string asmstr, list<dag> pattern>
     bits<8> value8;
     let Inst{12-8} = 0b11111;
     let Inst{7-0} = value8;
+    
+    // Syscalls are not required to preserve the base pointer
+    let Defs = [BP];
 }
 
 class T18<dag outs, dag ins, string asmstr, list<dag> pattern>
