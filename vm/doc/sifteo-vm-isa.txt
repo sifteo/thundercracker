@@ -20,6 +20,16 @@ The register file is divided into a trusted portion (r8-r15) and an untrusted
 portion (r0-r7). Trusted registers cannot be directly modified by valid VM
 instructions, whereas untrusted registers can be modified arbitrarily.
 
+Registers r8-r9 are used as trusted base addresses. To simplify the paging
+mechanism, only one base pointer may be loaded into these trusted registers
+at any given time. Any validation operation may choose to evict pages from
+the cache.
+
+To maintain separate read and write permissions, the validation operation
+creates separate base pointers in r8 and r9 used for loads and stores,
+respectively. If an address is valid for read only, r8 will be valid but r9
+will be set to an address that produces hardware faults.
+
 Register r8 is used as a read only base (BRO) and r9 is used as a read/write
 base address (BRW). The set of valid VM instructions includes instructions:
 
@@ -175,8 +185,8 @@ SVC encodings:
   11011111 0xxxxxxx     (1) Indirect operation
   11011111 10xxxxxx     (2) Direct syscall #0-63
   11011111 110xxxxx     (3) SP = validate(SP - imm5*4)
-  11011111 11100rrr     (4) r8 = validate(rN)
-  11011111 11101rrr     (5) r9 = validate(rN)
+  11011111 11100rrr     (4) r8-9 = validate(rN)
+  11011111 11101rrr     (5) Reserved
   11011111 11110rrr     (6) Call validate(rN), with SP adjust
   11011111 11111rrr     (7) Tail call validate(rN), with SP adjust
 
@@ -202,7 +212,6 @@ is always interpreted as a validated flash address:
 
   0x80  Long branch
   0x81  Asynchronous preload
-  0x82  Assign to r8
-  0x83  Assign to r9
+  0x82  Assign to r8-9
 
 --
