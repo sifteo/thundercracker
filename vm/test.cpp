@@ -1,14 +1,14 @@
-#include <sifteo/abi.h>
+#include <sifteo.h>
+using namespace Sifteo;
 
-void __attribute__ ((noinline)) foo(int *x)
-{
-    x[0] = 1;
-    x[0] = 2;
-    x[1] = 3;    
-}
+Cube c;
 
 void siftmain()
 {
-    int x[5];
-    foo(x);
+    c.enable(0);
+    VidMode_BG0_ROM vid(c.vbuf);
+    vid.init();
+    vid.BG0_text(Vec2(1,1), "Hello World");
+    while (1)
+        System::paint();
 }

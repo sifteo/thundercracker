@@ -86,7 +86,7 @@ public:
         ASSERT( getBitSetCount() <= MAX_TILES );
     }
 
-    NEVER_INLINE void DrawAsset( const Vec2 &point, const Sifteo::PinnedAssetImage &asset, unsigned frame=0 )
+    void DrawAsset( const Vec2 &point, const Sifteo::PinnedAssetImage &asset, unsigned frame=0 )
     {
         ASSERT( frame < asset.frames );
         unsigned offset = asset.width * asset.height * frame;

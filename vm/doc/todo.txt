@@ -1,11 +1,10 @@
 Correctness:
 
 - Flash block packing and alignment!
-- CMP
-- Never spill BR to stack
 
 Optimization opportunities:
 
+- Optimize out redundant base pointer validations
 - Preserve r1-r7 across function calls. Right now these regs
   are being marked as killed, causing shared parameters to spill
   into other registers unnecessarily.

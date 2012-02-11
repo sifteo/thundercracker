@@ -116,7 +116,7 @@ void SVMInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         BuildMI(MBB, MBBI, DL, get(SVM::MOVSr), DestReg)
             .addReg(SrcReg, getKillRegState(KillSrc));
 
-    if (SVM::GPRegRegClass.contains(SrcReg) && SVM::BPRegRegClass.contains(DestReg))
+    else if (SVM::GPRegRegClass.contains(SrcReg) && SVM::BPRegRegClass.contains(DestReg))
         // BP <- GPR
         BuildMI(MBB, MBBI, DL, get(SVM::PTR), DestReg)
             .addReg(SrcReg, getKillRegState(KillSrc));
