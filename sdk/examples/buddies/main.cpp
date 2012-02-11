@@ -46,11 +46,22 @@ bool AllDoneLoading()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+void OnNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
     if (sApp.GetWrapper(c0).IsEnabled() && sApp.GetWrapper(c1).IsEnabled())
     {
         sApp.OnNeighborAdd(c0, s0, c1, s1);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void OnShake(_SYSCubeID cid)
+{
+    if (sApp.GetWrapper(cid).IsEnabled())
+    {
+        sApp.OnShake(cid);
     }
 }
 
@@ -67,6 +78,7 @@ void LoadAssets()
         }
     }
     
+    // TODO: kLoadAssets=false results in some graphical glitches
     while (Buddies::kLoadAssets && !AllDoneLoading())
     {
         for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
@@ -87,6 +99,7 @@ void LoadAssets()
 void SetupEvents()
 {
     _SYS_vectors.neighborEvents.add = OnNeighborAdd;
+    _SYS_vectors.cubeEvents.shake = OnShake;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

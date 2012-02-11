@@ -14,7 +14,77 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace Buddies {
+namespace Buddies { namespace {
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void NormalizeRotation(Piece &piece, unsigned int side)
+{
+    piece.mRotation = side - piece.mPart;
+    if (piece.mRotation < 0)
+    {
+        piece.mRotation += 4;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void SwapPieces(Piece &piece0, unsigned int side0, Piece &piece1, unsigned int side1)
+{
+    // Swap position, maintain rotation (most difficult)
+    // piece0.mRotation = piece0.mRotation + SIDE_ROTATIONS[side0][side1];
+    // piece1.mRotation = piece1.mRotation + SIDE_ROTATIONS[side1][side0];
+    
+    Piece temp = piece0;
+    piece0 = piece1;
+    piece1 = temp;
+    
+    NormalizeRotation(piece0, side0);
+    NormalizeRotation(piece1, side1);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned int GetNumMovedPieces(bool moved[], size_t num_pieces)
+{
+    unsigned int num_moved = 0;
+    
+    for (size_t i = 0; i < num_pieces; ++i)
+    {
+        if (moved[i])
+        {
+            ++num_moved;
+        }
+    }
+    
+    return num_moved;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned int GetRandomNonMovedPiece(
+    bool moved[], size_t num_moved,
+    unsigned int skip = -1)
+{
+    Random random;
+    
+    unsigned int pieceIndex = random.randrange(num_moved);
+    while (moved[pieceIndex] || pieceIndex == skip)
+    {
+        pieceIndex = random.randrange(num_moved);
+    }
+    
+    return pieceIndex;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,6 +93,7 @@ App::App()
     : mWrappers()
     , mChannel()
     , mResetTimer(0.0f)
+    , mShakeThottleTimer(0.0f)
 {
 }
 
@@ -77,6 +148,15 @@ void App::Tick(float dt)
     else
     {
         mResetTimer = kResetTimerDuration;
+    }
+    
+    if (mShakeThottleTimer > 0.0f)
+    {
+        mShakeThottleTimer -= dt;
+        if (mShakeThottleTimer < 0.0f)
+        {
+            mShakeThottleTimer = 0.0f;
+        }
     }
 }
 
@@ -144,28 +224,10 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
     Piece piece0 = buddy0.GetPiece(cubeSide0);
     Piece piece1 = buddy1.GetPiece(cubeSide1);
     
-    // Swap position, maintain rotation (most difficult)
-    // piece0.mRotation = cube0Piece.mRotation + SIDE_ROTATIONS[cubeSide0][cubeSide1];
-    // if (piece0.mRotation < 0) piece0.mRotation += 4;
-    // piece1.mRotation = cube1Piece.mRotation + SIDE_ROTATIONS[cubeSide1][cubeSide0];
-    // if (piece1.mRotation < 0) piece1.mRotation += 4;
+    SwapPieces(piece0, cubeSide0, piece1, cubeSide1);
     
-    // Change rotation based on new position
-    piece0.mRotation = cubeSide1 - piece0.mPart;
-    if (piece0.mRotation < 0)
-    {
-        piece0.mRotation += 4;
-    }
-    
-    piece1.mRotation = cubeSide0 - piece1.mPart;
-    if (piece1.mRotation < 0)
-    {
-        piece1.mRotation += 4;
-    }
-    
-    // Swap pieces
-    buddy0.SetPiece(cubeSide0, piece1);
-    buddy1.SetPiece(cubeSide1, piece0);
+    buddy0.SetPiece(cubeSide0, piece0);
+    buddy1.SetPiece(cubeSide1, piece1);
     
     // If we have solved a face, play the sound.
     if (buddy0.IsSolved() || buddy1.IsSolved())
@@ -182,6 +244,18 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void App::OnShake(Cube::ID cubeId)
+{
+    if (kShuffleMode && mShakeThottleTimer <= 0.0f)
+    {
+        mShakeThottleTimer = kShakeThottleTimerDuration;
+        ShufflePieces();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool App::AnyTouching() const
 {
     for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
@@ -193,6 +267,61 @@ bool App::AnyTouching() const
     }
     
     return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::ShufflePieces()
+{
+    // Make a list of each part on each face (NUM_SIDES * kNumCubes)
+    const unsigned int kNumPieces = NUM_SIDES * kNumCubes;
+    
+    Piece pieces[kNumPieces];
+    bool moved[kNumPieces];
+    
+    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
+    {
+        if (mWrappers[i].IsEnabled())
+        {
+            for (unsigned int side = 0; side < NUM_SIDES; ++side)
+            {
+                pieces[(i * NUM_SIDES) + side] = mWrappers[i].GetPiece(side);
+                moved[(i * NUM_SIDES) + side] = false;
+            }
+        }
+    }
+    
+    // While not all pieces are moved...
+    while(GetNumMovedPieces(moved, arraysize(moved)) < kNumPieces)
+    {
+        // Pick two random pieces...
+        ASSERT((kNumPieces - GetNumMovedPieces(moved, arraysize(moved))) >= 2);
+        unsigned int iPiece0 = GetRandomNonMovedPiece(moved, arraysize(moved));
+        unsigned int iPiece1 = GetRandomNonMovedPiece(moved, arraysize(moved), iPiece0);
+        
+        // Swap them...
+        Piece temp = pieces[iPiece0];
+        pieces[iPiece0] = pieces[iPiece1];
+        pieces[iPiece1] = temp;
+        
+        // Mark both as moved...
+        moved[iPiece0] = true;
+        moved[iPiece1] = true;
+    }
+    
+    // Copy data back into the cubes
+    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
+    {
+        if (mWrappers[i].IsEnabled())
+        {
+            for (unsigned int side = 0; side < NUM_SIDES; ++side)
+            {
+                NormalizeRotation(pieces[(i * NUM_SIDES) + side], side);
+                mWrappers[i].SetPiece(side, pieces[(i * NUM_SIDES) + side]);
+            }
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
