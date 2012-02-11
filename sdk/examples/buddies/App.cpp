@@ -66,20 +66,32 @@ unsigned int GetNumMovedPieces(bool moved[], size_t num_pieces)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned int GetRandomNonMovedPiece(
-    bool moved[], size_t num_moved,
-    int otherPiece = -1)
+unsigned int GetRandomNonMovedPiece(bool moved[], size_t num_moved)
 {
     Random random;
     
     unsigned int pieceIndex = random.randrange(num_moved);
     
-    if (otherPiece != -1)
+    while (moved[pieceIndex])
     {
-        while (pieceIndex / NUM_SIDES == unsigned(otherPiece) / NUM_SIDES)
-        {
-            pieceIndex = random.randrange(num_moved);
-        }
+        pieceIndex = random.randrange(num_moved);
+    }
+    
+    return pieceIndex;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned int GetRandomOtherPiece(bool moved[], size_t num_moved, unsigned int notThisPiece)
+{
+    Random random;
+    
+    unsigned int pieceIndex = random.randrange(num_moved);
+    
+    while (pieceIndex / NUM_SIDES == notThisPiece / NUM_SIDES)
+    {
+        pieceIndex = random.randrange(num_moved);
     }
     
     return pieceIndex;
@@ -422,7 +434,7 @@ void App::ShufflePiece()
     
     // Pick two random pieces...
     unsigned int iPiece0 = GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved));
-    unsigned int iPiece1 = GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved), iPiece0);
+    unsigned int iPiece1 = GetRandomOtherPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved), iPiece0);
     
     // Swap them...
     Piece temp = mWrappers[iPiece0 / NUM_SIDES].GetPiece(iPiece0 % NUM_SIDES);
