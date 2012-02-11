@@ -53,7 +53,14 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_
     if( amount > 1.0f )
         amount = 1.0f;
 
-    //always draw the sprite component
+    int numStems = TIMER_STEMS * amount;
+
+    if( numStems <= 2 && m_blinkCounter < BLINK_OFF_FRAMES )
+    {
+        vid.resizeSprite(0, 0, 0);
+        return;
+    }
+
     vid.resizeSprite(0, timerSprite.width*8, timerSprite.height*8);
     vid.setSpriteImage(0, timerSprite, m_timerFrame);
     vid.moveSprite(0, TIMER_SPRITE_POS, TIMER_SPRITE_POS);
@@ -63,21 +70,14 @@ void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_
     if( m_timerFrame >= timerSprite.frames )
         m_timerFrame = 0;
 
-    int numStems = TIMER_STEMS * amount;
-
     if( numStems > 0 )
     {
-        if( numStems > 2 )
-            bg1helper.DrawAsset( Vec2( TIMER_POS, TIMER_POS ), timerStem, TIMER_STEMS - numStems );
-        else if( m_blinkCounter >= BLINK_OFF_FRAMES )
-        {
-            bg1helper.DrawAsset( Vec2( TIMER_POS, TIMER_POS ), timerStem, TIMER_STEMS - numStems );
+        bg1helper.DrawAsset( Vec2( TIMER_POS, TIMER_POS ), timerStem, TIMER_STEMS - numStems );
+    }
 
-            if( m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )
-            {
-                m_blinkCounter = 0;
-                Game::Inst().playSound(timer_blink);
-            }
-        }
+    if( m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )
+    {
+        m_blinkCounter = 0;
+        Game::Inst().playSound(timer_blink);
     }
 }
