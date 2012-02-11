@@ -68,14 +68,18 @@ unsigned int GetNumMovedPieces(bool moved[], size_t num_pieces)
 
 unsigned int GetRandomNonMovedPiece(
     bool moved[], size_t num_moved,
-    unsigned int skip = -1)
+    int otherPiece = -1)
 {
     Random random;
     
     unsigned int pieceIndex = random.randrange(num_moved);
-    while (moved[pieceIndex] || pieceIndex == skip)
+    
+    if (otherPiece != -1)
     {
-        pieceIndex = random.randrange(num_moved);
+        while (pieceIndex / NUM_SIDES == unsigned(otherPiece) / NUM_SIDES)
+        {
+            pieceIndex = random.randrange(num_moved);
+        }
     }
     
     return pieceIndex;
@@ -411,82 +415,25 @@ void App::Reset()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-void App::ShufflePieces()
-{
-    // Make a list of each part on each face
-    const unsigned int kNumPieces = NUM_SIDES * kNumCubes;
-    
-    Piece pieces[kNumPieces];
-    bool moved[kNumPieces];
-    
-    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
-    {
-        if (mWrappers[i].IsEnabled())
-        {
-            for (unsigned int side = 0; side < NUM_SIDES; ++side)
-            {
-                pieces[(i * NUM_SIDES) + side] = mWrappers[i].GetPiece(side);
-                moved[(i * NUM_SIDES) + side] = false;
-            }
-        }
-    }
-    
-    // While not all pieces are moved...
-    while(GetNumMovedPieces(moved, arraysize(moved)) < kNumPieces)
-    {
-        // Pick two random pieces...
-        ASSERT((kNumPieces - GetNumMovedPieces(moved, arraysize(moved))) >= 2);
-        unsigned int iPiece0 = GetRandomNonMovedPiece(moved, arraysize(moved));
-        unsigned int iPiece1 = GetRandomNonMovedPiece(moved, arraysize(moved), iPiece0);
-        
-        // Swap them...
-        Piece temp = pieces[iPiece0];
-        pieces[iPiece0] = pieces[iPiece1];
-        pieces[iPiece1] = temp;
-        
-        // Mark both as moved...
-        moved[iPiece0] = true;
-        moved[iPiece1] = true;
-    }
-    
-    // Copy data back into the cubes
-    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
-    {
-        if (mWrappers[i].IsEnabled())
-        {
-            for (unsigned int side = 0; side < NUM_SIDES; ++side)
-            {
-                NormalizeRotation(pieces[(i * NUM_SIDES) + side], side);
-                mWrappers[i].SetPiece(side, pieces[(i * NUM_SIDES) + side]);
-            }
-        }
-    }
-}
-*/
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::ShufflePiece()
 {
     DEBUG_LOG(("ShufflePiece (%d left)\n", arraysize(mShufflePiecesMoved) - GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved))));
     
     // Pick two random pieces...
-    ASSERT((arraysize(mShufflePiecesMoved) - GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved))) >= 2);
     unsigned int iPiece0 = GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved));
     unsigned int iPiece1 = GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved), iPiece0);
     
     // Swap them...
-    Piece temp = mWrappers[iPiece0 / NUM_SIDES].GetPiece(iPiece0 % kNumCubes);
-    Piece piece0 = mWrappers[iPiece1 / NUM_SIDES].GetPiece(iPiece1 % kNumCubes);
+    Piece temp = mWrappers[iPiece0 / NUM_SIDES].GetPiece(iPiece0 % NUM_SIDES);
+    Piece piece0 = mWrappers[iPiece1 / NUM_SIDES].GetPiece(iPiece1 % NUM_SIDES);
     Piece piece1 = temp;
     
-    NormalizeRotation(piece0, iPiece0 % kNumCubes);
-    NormalizeRotation(piece1, iPiece1 % kNumCubes);
+    NormalizeRotation(piece0, iPiece0 % NUM_SIDES);
+    NormalizeRotation(piece1, iPiece1 % NUM_SIDES);
     
-    mWrappers[iPiece0 / NUM_SIDES].SetPiece(iPiece0 % kNumCubes, piece0);
-    mWrappers[iPiece1 / NUM_SIDES].SetPiece(iPiece1 % kNumCubes, piece1);
+    mWrappers[iPiece0 / NUM_SIDES].SetPiece(iPiece0 % NUM_SIDES, piece0);
+    mWrappers[iPiece1 / NUM_SIDES].SetPiece(iPiece1 % NUM_SIDES, piece1);
     
     // Mark both as moved...
     mShufflePiecesMoved[iPiece0] = true;
