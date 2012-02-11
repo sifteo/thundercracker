@@ -1,9 +1,14 @@
 #include <sifteo/abi.h>
 
-void siftmain()
+void __attribute__ ((noinline)) foo(int *x)
 {
-    static volatile int x[5];
     x[0] = 1;
     x[0] = 2;
-    x[1] = 3;
+    x[1] = 3;    
+}
+
+void siftmain()
+{
+    int x[5];
+    foo(x);
 }

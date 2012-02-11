@@ -387,17 +387,29 @@ def LDRSB  : T32_LD <0b0011001, "ldrsb">;
 def LDRSH  : T32_LD <0b0011011, "ldrsh">;
 
 def : Pat< (store GPReg:$Rt, BP), (STR GPReg:$Rt, BP, 0)>;
+def : Pat< (store GPReg:$Rt, (add BP, imm12:$off)), (STR GPReg:$Rt, BP, imm12:$off)>;
 
-/*
-,   [(store GPReg:$Rt, baseRW:$Rn)]>;
-,  [(truncstorei16 GPReg:$Rt, baseRW:$Rn)]>;
-,  [(truncstorei8 GPReg:$Rt, baseRW:$Rn)]>;
-,   [(set GPReg:$Rt, (load baseRO:$Rn))]>;
-,  [(set GPReg:$Rt, (zextloadi16 baseRO:$Rn))]>;
-,  [(set GPReg:$Rt, (zextloadi8 baseRO:$Rn))]>;
-, [(set GPReg:$Rt, (sextloadi16 baseRO:$Rn))]>;
-, [(set GPReg:$Rt, (sextloadi8 baseRO:$Rn))]>;
-*/
+def : Pat< (truncstorei16 GPReg:$Rt, BP), (STRH GPReg:$Rt, BP, 0)>;
+def : Pat< (truncstorei16 GPReg:$Rt, (add BP, imm12:$off)), (STRH GPReg:$Rt, BP, imm12:$off)>;
+
+def : Pat< (truncstorei8 GPReg:$Rt, BP), (STRB GPReg:$Rt, BP, 0)>;
+def : Pat< (truncstorei8 GPReg:$Rt, (add BP, imm12:$off)), (STRB GPReg:$Rt, BP, imm12:$off)>;
+
+def : Pat< (load BP), (LDR BP, 0)>;
+def : Pat< (load (add BP, imm12:$off)), (LDR BP, imm12:$off)>;
+
+def : Pat< (zextloadi16 BP), (LDRH BP, 0)>;
+def : Pat< (zextloadi16 (add BP, imm12:$off)), (LDRH BP, imm12:$off)>;
+
+def : Pat< (zextloadi8 BP), (LDRB BP, 0)>;
+def : Pat< (zextloadi8 (add BP, imm12:$off)), (LDRB BP, imm12:$off)>;
+
+def : Pat< (sextloadi16 BP), (LDRSH BP, 0)>;
+def : Pat< (sextloadi16 (add BP, imm12:$off)), (LDRSH BP, imm12:$off)>;
+
+def : Pat< (sextloadi8 BP), (LDRSB BP, 0)>;
+def : Pat< (sextloadi8 (add BP, imm12:$off)), (LDRSB BP, imm12:$off)>;
+
 
 /****************************************************************
  * Stack operations
