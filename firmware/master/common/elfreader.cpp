@@ -28,6 +28,12 @@ void ElfReader::load(unsigned addr, unsigned len)
     Elf::FileHeader header;
     memcpy(&header, block, sizeof header);
 
+    // ensure the file is the correct Elf version
+    if (header.e_ident[Elf::EI_VERSION] != Elf::EV_CURRENT) {
+        LOG(("incorrect elf file version\n"));
+        return;
+    }
+
     // ensure the file is the correct data format
     union {
         int32_t l;
@@ -44,21 +50,38 @@ void ElfReader::load(unsigned addr, unsigned len)
         return;
     }
 
-    dumpHeader(header);
+//    dumpHeader(header);
 
 
+    /*
+        We're looking for 3 segments, identified by the following profiles:
+        - text segment - executable & read-only
+        - data segment - read/write & non-zero size on disk
+        - bss segment - read only, zero size on disk, and non-zero size in memory
+    */
     unsigned offset = header.e_phoff;
     for (unsigned i = 0; i < header.e_phnum; ++i, offset += header.e_phentsize) {
         Elf::ProgramHeader pHeader;
         memcpy(&pHeader, block + offset, header.e_phentsize);
-        dumpProgramHeader(pHeader);
-    }
+        if (pHeader.p_type != Elf::PT_LOAD)
+            continue;
 
-    offset = header.e_shoff;
-    for (unsigned i = 0; i < header.e_shnum; ++i, offset += header.e_shentsize) {
-        Elf::SectionHeader sHeader;
-        memcpy(&sHeader, block + offset, header.e_shentsize);
-        dumpSectionHeader(sHeader);
+        switch (pHeader.p_flags) {
+        case (Elf::PF_Exec | Elf::PF_Read):
+            LOG(("rodata/text segment found\n"));
+            break;
+        case (Elf::PF_Read | Elf::PF_Write):
+            if (pHeader.p_filesz > 0) {
+                LOG(("found rwdata segment\n"));
+            }
+            break;
+        case Elf::PF_Read:
+            if (pHeader.p_memsz >= 0 && pHeader.p_filesz == 0) {
+                LOG(("bss segment found\n"));
+            }
+            break;
+        }
+        dumpProgramHeader(pHeader);
     }
 
     FlashLayer::releaseRegionFromOffset(addr);

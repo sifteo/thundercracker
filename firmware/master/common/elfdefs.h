@@ -54,6 +54,29 @@ enum OsAbi {
     // lots more ...
 };
 
+enum AccessFlags {
+    PF_Exec     = 0x1,          // Execute
+    PF_Write    = 0x2,          // Write
+    PF_Read     = 0x4,          // Read
+    PF_MASKOS   = 0x0ff00000,   // Unspecified
+    PF_MASKPROC = 0xf0000000    // Unspecified
+};
+
+enum SegmentType {
+    PT_NULL     = 0,
+    PT_LOAD     = 1,
+    PT_DYNAMIC  = 2,
+    PT_INTERP   = 3,
+    PT_NOTE     = 4,
+    PT_SHLIB    = 5,
+    PT_PHDR     = 6,
+    PT_TLS      = 7,
+    PT_LOOS     = 0x60000000,
+    PT_HIOS     = 0x6fffffff,
+    PT_LOPROC   = 0x70000000,
+    PT_HIPROC   = 0x7fffffff
+};
+
 // indexes for the e_ident section
 static const uint8_t EI_MAG0        = 0;    // File identification
 static const uint8_t EI_MAG1        = 1;    // File identification
@@ -126,6 +149,15 @@ typedef struct {
     Elf32_Word sh_addralign;
     Elf32_Word sh_entsize;
 } SectionHeader;
+
+typedef struct {
+    Elf32_Word    st_name;
+    Elf32_Addr    st_value;
+    Elf32_Word    st_size;
+    unsigned char st_info;
+    unsigned char st_other;
+    Elf32_Half    st_shndx;
+} Symbol;
 
 // values for sh_type
 static const Elf32_Word SHT_NULL            = 0;
