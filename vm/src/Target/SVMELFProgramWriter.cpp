@@ -122,8 +122,11 @@ void SVMELFProgramWriter::writeProgramHeader(SVMProgramSection S)
      */
 
     uint32_t Flags = ELF::PF_R;
-    if (S == SPS_RO)   Flags |= ELF::PF_X;
-    if (S == SPS_RW)   Flags |= ELF::PF_W;
+
+    if (S == SPS_RO)
+        Flags |= ELF::PF_X;
+    else
+        Flags |= ELF::PF_W;
 
     Write32(ELF::PT_LOAD);                          // p_type
     Write32(ML.getSectionDiskOffset(S, HdrSize));   // p_offset
