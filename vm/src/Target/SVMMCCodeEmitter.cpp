@@ -75,6 +75,7 @@ public:
         
         case SVM::ADJCALLSTACKDOWN:
         case SVM::ADJCALLSTACKUP:
+        case SVM::CMOV: // XXX temporary
             /*
              * Some pseudoinstructions are illegal if they make it this far!
              */
