@@ -47,6 +47,7 @@ public:
     
     const Piece &GetPiece(unsigned int side) const;
     void SetPiece(unsigned int side, const Piece &piece);
+    void SetPieceOffset(unsigned int side, int offset);
     
     BuddyMode GetMode() const;
     bool IsTouching() const;
@@ -68,6 +69,7 @@ private:
     unsigned int mBuddyId;
     Piece mPieces[NUM_SIDES];
     Piece mPiecesSolution[NUM_SIDES];
+    int mPieceOffsets[NUM_SIDES];
     BuddyMode mMode;
     bool mTouching;
 };

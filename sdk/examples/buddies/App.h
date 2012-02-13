@@ -58,6 +58,11 @@ private:
     float mShuffleScrambleTimer;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     float mShuffleScoreTime;
+    
+    SwapState mSwapState;
+    unsigned int mSwapPiece0;
+    unsigned int mSwapPiece1;
+    int mSwapAnimationCounter;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

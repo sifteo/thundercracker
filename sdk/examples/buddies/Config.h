@@ -34,14 +34,25 @@ enum ShuffleState
     SHUFFLE_STATE_SCORE
 };
 
+enum SwapState
+{
+    SWAP_STATE_NONE = 0,
+    SWAP_STATE_OUT,
+    SWAP_STATE_IN,
+};
+
 const bool kLoadAssets = true;
 const bool kShuffleMode = true;
 
 const unsigned int kNumCubes = 2;
 const unsigned int kMaxBuddies = 6;
 const float kResetTimerDuration = 3.0f;
+
 const float kShuffleStateTimeDelay = 1.0f;
-const float kShuffleScrambleTimerDelay = 1.0f;
+const float kShuffleScrambleTimerDelay = 0.5f;
+
+const int kSwapAnimationSpeed = 8;
+const int kSwapAnimationCount = 56;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////

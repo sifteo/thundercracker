@@ -83,6 +83,7 @@ CubeWrapper::CubeWrapper()
     , mBuddyId(0)
     , mPieces()
     , mPiecesSolution()
+    , mPieceOffsets()
     , mMode(BUDDY_MODE_NORMAL)
     , mTouching(false)
 {
@@ -112,6 +113,11 @@ void CubeWrapper::Reset()
     for (unsigned int i = 0; i < arraysize(mPiecesSolution); ++i)
     {
         mPieces[i] = mPiecesSolution[i];
+    }
+    
+    for (unsigned int i = 0; i < arraysize(mPieceOffsets); ++i)
+    {
+        mPieceOffsets[i] = 0;
     }
     
     mMode = BUDDY_MODE_NORMAL;
@@ -288,6 +294,16 @@ void CubeWrapper::SetPiece(unsigned int side, const Piece &piece)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CubeWrapper::SetPieceOffset(unsigned int side, int offset)
+{
+    ASSERT(side < arraysize(mPieceOffsets));
+    
+    mPieceOffsets[side] = offset;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 BuddyMode CubeWrapper::GetMode() const
 {
     return mMode;
@@ -354,6 +370,31 @@ void CubeWrapper::PaintPiece(const Piece &piece, unsigned int side)
     
     ASSERT(frame < asset.frames);
     Video().setSpriteImage(side, getPartsAsset(piece.mBuddy), frame);
+    
+    switch(side)
+    {
+        case SIDE_TOP:
+        {
+            point.y += mPieceOffsets[side];
+            break;
+        }
+        case SIDE_LEFT:
+        {
+            point.x += mPieceOffsets[side];
+            break;
+        }
+        case SIDE_BOTTOM:
+        {
+            point.y -= mPieceOffsets[side];
+            break;
+        }
+        case SIDE_RIGHT:
+        {
+            point.x -= mPieceOffsets[side];
+            break;
+        }
+    }
+    
     Video().moveSprite(side, point);
 }
 
