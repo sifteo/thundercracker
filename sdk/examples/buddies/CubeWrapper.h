@@ -51,6 +51,8 @@ public:
     BuddyMode GetMode() const;
     bool IsTouching() const;
     
+    void PaintBanner(const Sifteo::AssetImage &asset);
+    
 private:
     Sifteo::VidMode_BG0_SPR_BG1 Video();
     

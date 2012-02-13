@@ -246,6 +246,38 @@ void App::Paint()
         if (mWrappers[i].IsEnabled())
         {
             mWrappers[i].Paint();
+            
+            switch (mShuffleState)
+            {
+                case SHUFFLE_STATE_SHAKE_TO_SCRAMBLE:
+                {
+                    mWrappers[i].PaintBanner(BannerShakeToScramble);
+                    break;
+                }
+                case SHUFFLE_STATE_UNSCRAMBLE_THE_FACES:
+                {
+                    mWrappers[i].PaintBanner(BannerUnscrambleTheFaces);
+                    break;
+                }
+                case SHUFFLE_STATE_PLAY:
+                {
+                    if (mWrappers[i].IsSolved())
+                    {
+                        mWrappers[i].PaintBanner(BannerFaceComplete);
+                    }
+                    break;
+                }
+                case SHUFFLE_STATE_SCORE:
+                {
+                    // TODO: Use font to print real score
+                    mWrappers[i].PaintBanner(i == 0 ? BannerYourTime : BannerShakeToScramble);
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
         }
     }
     

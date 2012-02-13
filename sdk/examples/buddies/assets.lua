@@ -14,4 +14,9 @@ parts4 = image{"assets/parts4.png", height = 64, pinned = true}
 parts5 = image{"assets/parts5.png", height = 64, pinned = true}
 parts6 = image{"assets/parts6.png", height = 64, pinned = true}
 
+BannerShakeToScramble = image{"assets/BannerShakeToScramble.png"}
+BannerUnscrambleTheFaces = image{"assets/BannerUnscrambleTheFaces.png"}
+BannerFaceComplete = image{"assets/BannerFaceComplete.png"}
+BannerYourTime = image{"assets/BannerYourTime.png"}
+
 gems1_4A9 = sound{"assets/gems1_4A9.raw"}
