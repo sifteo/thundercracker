@@ -243,7 +243,6 @@ class Cube {
         ASSERT(rot != SIDE_UNDEFINED);
         side = (side - rot) % NUM_SIDES;
         return side < 0 ? side + NUM_SIDES : side;
-        
 	}
 	
 	Side virtualToPhysical(Side side) const {

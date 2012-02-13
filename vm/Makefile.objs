@@ -20,7 +20,9 @@ OBJS = \
 	src/Target/SVMSubtarget.o \
 	src/Target/SVMAlignPass.o \
 	src/Target/SVMELFProgramWriter.o \
-	src/Target/SVMSymbolDecoration.o
+	src/Target/SVMSymbolDecoration.o \
+	src/Target/SVMMemoryLayout.o \
+	src/Target/SVMELFMetadataBuilder.o
 
 TABLES := \
 	src/Target/SVMGenAsmWriter.inc \

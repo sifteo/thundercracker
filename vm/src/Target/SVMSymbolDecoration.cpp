@@ -62,6 +62,7 @@ StringRef SVMDecorations::Decode(StringRef Name)
     isCall = isTailCall || testAndStripPrefix(Name, CALL);
     
     // Offset prefix includes a number and a separator
+    offset = 0;
     if (testAndStripPrefix(Name, OFFSET)) {
         size_t len = Name.find(SEPARATOR[0]);
         if (len != Name.npos && !Name.substr(0, len).getAsInteger(0, offset))

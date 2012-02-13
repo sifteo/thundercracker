@@ -27,6 +27,6 @@ cat program.s
 
 echo ------------------------
 
-./slinky test.o $*
+./slinky -g test.o $*
 arm-none-eabi-readelf -a program.elf
-arm-none-eabi-objdump -D -M force-thumb program.elf
+arm-none-eabi-objdump -d program.elf

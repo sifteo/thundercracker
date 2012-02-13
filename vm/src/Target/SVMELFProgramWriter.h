@@ -22,6 +22,8 @@
 #include "SVM.h"
 #include "SVMMCTargetDesc.h"
 #include "SVMTargetMachine.h"
+#include "SVMMemoryLayout.h"
+#include "SVMELFMetadataBuilder.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCValue.h"
@@ -38,35 +40,6 @@
 
 
 namespace llvm {
-    
-    struct SVMSymbolInfo {
-        uint32_t Value;
-        enum SymbolKind {
-            NONE = 0,
-            LOCAL,
-            SYS,
-            CALL,
-        } Kind;
-        
-        SVMSymbolInfo() : Value(0), Kind(NONE) {}
-    };
-    
-    struct SVMLateFixup {
-        MCFragment *Fragment;
-        uint32_t Offset;
-        MCFixupKind Kind;
-        MCValue Target;
-        
-        SVMLateFixup(MCFragment *Fragment, const MCFixup &Fixup, MCValue Target)
-            : Fragment(Fragment), Offset(Fixup.getOffset()),
-              Kind(Fixup.getKind()), Target(Target) {}
-    };
-
-    typedef std::vector<const MCSectionData*> SectionDataList;
-    typedef std::vector<SVMLateFixup> LateFixupList_t;
-    typedef std::map<const MCSectionData*, uint32_t> SectionBaseAddrMap_t;
-    typedef std::map<uint32_t, int> FNStackMap_t;
-
 
     class SVMELFProgramWriter : public MCObjectWriter {
     public:    
@@ -92,35 +65,19 @@ namespace llvm {
         void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
 
     private:
-        LateFixupList_t LateFixupList;
-        FNStackMap_t FNStackMap;
-        SectionBaseAddrMap_t SectionBaseAddrMap;
-        uint32_t ramTopAddr;
-        uint32_t flashTopAddr;
-
-        uint32_t getEntryAddress(const MCAssembler &Asm,
-            const MCAsmLayout &Layout);
-        SVMSymbolInfo getSymbol(const MCAssembler &Asm,
-            const MCAsmLayout &Layout, const MCSymbol *S);
-        SVMSymbolInfo getSymbol(const MCAssembler &Asm,
-            const MCAsmLayout &Layout, MCValue Value);
-        uint32_t getSectionBaseForSymbol(const MCAssembler &Asm,
-            const MCAsmLayout &Layout, const MCSymbol *S);
-    
-        void collectProgramSections(const MCAssembler &Asm,
-            const MCAsmLayout &Layout, SectionDataList &Sections);
-        void applyLateFixups(const MCAssembler &Asm, const MCAsmLayout &Layout);
+        SVMMemoryLayout ML;
+        SVMELFMetadataBuilder EMB;
+        uint32_t SHOffset;
+        uint32_t HdrSize;
 
         void writePadding(unsigned N);
-        void writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout,
-            unsigned PHNum, uint64_t &HdrSize);
-        void writeProgramHeader(const MCAsmLayout &Layout,
-            const MCSectionData &SD, uint64_t &FileOff);
-        void writeStrtabSectionHeader();
-        void writeProgSectionHeader(const MCAsmLayout &Layout,
-            const MCSectionData &SD, uint64_t &FileOff);
-        void writeProgramData(MCAssembler &Asm, const MCAsmLayout &Layout,
-            const MCSectionData &SD, uint64_t &FileOff);
+        void padToOffset(uint32_t O);
+
+        void writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout);
+        void writeProgramHeader(SVMProgramSection S);
+        void writeSectionHeader(const MCAsmLayout &Layout, const MCSectionData *SD);  
+
+        void buildSectionStringTable(const MCAssembler &Asm, const MCAsmLayout &Layout);  
     };
 
 }  // end namespace
