@@ -66,6 +66,20 @@ namespace TotalsGame
 		}
 	}
 
+	void Game::PaintCubeViews()
+	{
+		for(int i = 0; i < NUMBER_OF_CUBES; i++)
+		{
+			TotalsCube *c = Game::GetCube(i);
+			if(c)
+			{
+				View *v = c->GetView();
+				if(v)
+					v->Paint();
+			}
+		}
+	}
+
 	void Game::Setup(TotalsCube *_cubes, int nCubes)
 	{
 		assert(nCubes == Game::NUMBER_OF_CUBES);

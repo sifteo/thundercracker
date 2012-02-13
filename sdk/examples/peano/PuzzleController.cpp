@@ -327,6 +327,7 @@ float PuzzleController::OnTick (float dt)
 void PuzzleController::OnPaint (bool canvasDirty)
 {
     //if (canvasDirty) { game.CubeSet.PaintViews(); }
+    Game::PaintCubeViews();
 }
 
 void PuzzleController::Transition(const char *id)

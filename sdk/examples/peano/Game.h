@@ -37,6 +37,7 @@ namespace TotalsGame {
 		static void ClearCubeViews();
 		static void ClearCubeEventHandlers();
 		static void DrawVaultDoorsClosed();
+		static void PaintCubeViews();
 
 		Puzzle *currentPuzzle;
 		Puzzle *previousPuzzle;

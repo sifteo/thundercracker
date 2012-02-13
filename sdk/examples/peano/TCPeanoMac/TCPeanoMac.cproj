@@ -41,6 +41,7 @@
           <GacRefVar />
           <AsmRefVar />
           <ProjectRefVar />
+          <MessageRegex Name="gcc" />
         </MonoDevelop.Autotools.MakefileInfo>
       </Properties>
     </MonoDevelop>

@@ -113,7 +113,9 @@ public:
     // HELPER METHODS
     //-------------------------------------------------------------------------
 	private:
-    void PaintRect(Color color, Cube::Side direction, int halfWidth);
+
+      void PaintCenterCap(uint8_t masks[4]);
+      static int CountBits(uint8_t mask);
 
 
     // // // //

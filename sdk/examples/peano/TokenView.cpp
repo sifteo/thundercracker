@@ -287,34 +287,48 @@ namespace TotalsGame
 				if (NotHiding(SIDE_RIGHT) && rightStatus == SideStatusOpen) { PaintRight(false); }
 			}
 		}
-		bool isInGroup = mCurrentExpression != token;
-		if (isInGroup) 
+	//	bool isInGroup = mCurrentExpression != token;
+	//	if (isInGroup) 
 		{
-			//TODO     mDigit.data = mStyle.accentDigits[token.val];
-			for(int i=mCurrentExpression->GetDepth(); i>=0; --i) 
+			uint8_t masks[Game::NUMBER_OF_CUBES][NUM_SIDES];
+			for(int i=0; i<token->GetPuzzle()->GetNumTokens(); ++i) {
+				masks[i][0] = 0;
+				masks[i][1] = 0;
+				masks[i][2] = 0;
+				masks[i][3] = 0;
+			}
+
+			for(int i=0; i<token->GetPuzzle()->GetNumTokens(); ++i) 
 			{
-				int mask = 0;
-				int connCount = 0;
-				for(int j=0; j<4; ++j) {
-					Cube::Side s = (Cube::Side)j;
-					if (token->ConnectsOnSideAtDepth(s, i, mCurrentExpression))
+				Token *t = token->GetPuzzle()->GetToken(i);
+				if(t->current->IsTokenGroup())
+				{
+					TokenGroup *grp = (TokenGroup*)t->current;
+					Vec2 p;
+					grp->PositionOf(t, &p);
+					
+				
+					for(int side = 0; side < NUM_SIDES; side++)
 					{
-						//TODO            PaintRect(mStyle.colors[i], s, 16 + 4 * i);
-						mask |= (0x1<<j);
-						connCount++;
+						Token *other;
+						 if(grp->TokenAt(p + kSideToUnit[side], &other))
+						 {
+							 int otherId = other->view->GetCube()->id();
+							
+							uint8_t connectionId = otherId < i ? otherId : i;
+							 masks[i][side] |= 1 << connectionId;
+							 masks[otherId][(side+2)%4] |= 1 << connectionId;
+						 }
 					}
 				}
-				if (connCount > 0) 
-				{
-					/*TODO            mCenterCap.data = mStyle.circles[i];
-					mCenterCap.Paint(c); */
-				}
-			}
+            }
+				PaintCenterCap(masks[GetCube()->id()]);
+			
 		}
-		else 
-		{
+		//else 
+		//{
 			//TODO        mDigit.data = mStyle.normalDigits[token.val];
-		}
+		//}
 		if (mDigitId == -1) 
 		{
 			if (NotHiding(SIDE_TOP) && topStatus == SideStatusConnected) { PaintTop(true); }
@@ -338,42 +352,6 @@ namespace TotalsGame
 			} else {
 			mDigit.Paint(c); */
 		} 
-	}
-
-	void TokenView::PaintRect(Color color, Cube::Side direction, int halfWidth) 
-	{
-		if (mStatus == StatusOverlay && (direction == SIDE_LEFT || direction == SIDE_RIGHT))
-		{
-			return;
-		}
-		/* TODO
-		Int2 p = Int2.Zero;
-		Int2 s = Int2.Zero;
-		switch(direction) {
-		case Cube.Side.TOP:
-		p.x = Mid.x - halfWidth;
-		s.x = 2 * halfWidth;
-		s.y = Mid.y;
-		break;
-		case Cube.Side.LEFT:
-		p.y = Mid.y - halfWidth;
-		s.x = Mid.x;
-		s.y = 2 * halfWidth;
-		break;
-		case Cube.Side.BOTTOM:
-		p.x = Mid.x - halfWidth;
-		p.y = Mid.y;
-		s.x = 2 * halfWidth;
-		s.y = 128 - p.y;
-		break;
-		case Cube.Side.RIGHT:
-		p.x = Mid.x;
-		p.y = Mid.y - halfWidth;
-		s.x = 128 - p.x;
-		s.y = 2 * halfWidth;
-		break;
-		}
-		Cube.FillRect(color, p.x, p.y, s.x, s.y); */
 	}
 
 
@@ -427,5 +405,97 @@ namespace TotalsGame
 		}
 		}*/
 	}
+    
+    void TokenView::PaintCenterCap(uint8_t masks[4])
+    {
+	    //uint8_t masks[4] = {15,15,15,15};
+	    
+        // compute the screen state union (assuming it's valid)
+        uint8_t vunion = masks[0] | masks[1] | masks[2] | masks[3];
+        TotalsCube *c = GetCube();
+        
+        ASSERT(vunion < (1<<6));
+        
+        // flood fill the background to start (not optimal, but this is a demo, dogg)
+        VidMode_BG0 mode(c->vbuf);
+        mode.BG0_drawAsset(Vec2(0,0), Background);
+        if (vunion == 0x00) { return; }
+        
+        // determine the "lowest" bit
+        unsigned lowestBit = 0;
+        while(!(vunion & (1<<lowestBit))) { lowestBit++; }
+        
+        // Center
+        for(unsigned i=5; i<9; ++i) {
+            mode.BG0_drawAsset(Vec2(i,4), Center, lowestBit);
+            mode.BG0_drawAsset(Vec2(i,9), Center, lowestBit);
+        }
+        for(unsigned i=5; i<9; ++i)
+            for(unsigned j=4; j<10; ++j) {
+                mode.BG0_drawAsset(Vec2(j,i), Center, lowestBit);
+            }
+        
+        // Horizontal
+        mode.BG0_drawAsset(Vec2(3,0), Horizontal, masks[SIDE_TOP]);
+        mode.BG0_drawAsset(Vec2(3,13), Horizontal, masks[SIDE_BOTTOM]);
+        mode.BG0_drawAsset(Vec2(3,14), Horizontal, masks[SIDE_BOTTOM]);
+        mode.BG0_drawAsset(Vec2(3,15), Horizontal, masks[SIDE_BOTTOM]);
+        
+        // Vertical
+        mode.BG0_drawAsset(Vec2(0,3), Vertical, masks[SIDE_LEFT]);
+        mode.BG0_drawAsset(Vec2(13,3), Vertical, masks[SIDE_RIGHT]);
+        mode.BG0_drawAsset(Vec2(14,3), Vertical, masks[SIDE_RIGHT]);
+        mode.BG0_drawAsset(Vec2(15,3), Vertical, masks[SIDE_RIGHT]);
+        
+        // Minor Diagonals
+        if (vunion & 0x10) {
+            mode.BG0_drawAsset(Vec2(2,2), MinorNW, 1);
+            mode.BG0_drawAsset(Vec2(2,11), MinorSW, 1);
+            mode.BG0_drawAsset(Vec2(11,11), MinorSE, 0);
+            mode.BG0_drawAsset(Vec2(11,2), MinorNE, 0);
+        }
+        
+        // Major Diagonals
+        if (lowestBit > 1) {
+            mode.BG0_drawAsset(Vec2(4,4), Center, lowestBit);
+            mode.BG0_drawAsset(Vec2(4,9), Center, lowestBit);
+            mode.BG0_drawAsset(Vec2(9,9), Center, lowestBit);
+            mode.BG0_drawAsset(Vec2(9,4), Center, lowestBit);
+        } else {
+            mode.BG0_drawAsset(Vec2(4,4), MajorNW, vunion & 0x03);
+            mode.BG0_drawAsset(Vec2(4,9), MajorSW, vunion & 0x03);
+            mode.BG0_drawAsset(Vec2(9,9), MajorSE, 3 - (vunion & 0x03));
+            mode.BG0_drawAsset(Vec2(9,4), MajorNE, 3 - (vunion & 0x03));
+        }
+        
+        static const uint8_t keyIndices[] = { 0, 1, 3, 5, 8, 10, 13, 16, 20, 22, 25, 28, 32, 35, 39, 43, 48, 50, 53, 56, 60, 63, 67, 71, 76, 79, 83, 87, 92, 96, 101, 106, };
+        
+        // Major Joints
+        mode.BG0_drawAsset(Vec2(3,1), MajorN, keyIndices[vunion] + CountBits(vunion ^ masks[0]));
+        mode.BG0_drawAsset(Vec2(1,3), MajorW, keyIndices[vunion] + CountBits(vunion ^ masks[1]));
+        mode.BG0_drawAsset(Vec2(3,10), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
+        mode.BG0_drawAsset(Vec2(10,3), MajorE, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[3]));
+    }
+    
+    
+    int TokenView::CountBits(uint8_t mask) {
+        unsigned result = 0;
+        for(unsigned i=0; i<5; ++i) {
+            if (mask & (1<<i)) { result++; }
+        }
+        return result;
+    }
+    
+    
 	// // // //
 }
+
+
+
+
+
+
+
+
+
+
