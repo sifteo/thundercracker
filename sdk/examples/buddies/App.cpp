@@ -325,45 +325,52 @@ void App::Paint()
         {
             mWrappers[i].Paint();
             
-            switch (mShuffleState)
+            if (kShuffleMode)
             {
-                case SHUFFLE_STATE_SHAKE_TO_SCRAMBLE:
+                switch (mShuffleState)
                 {
-                    mWrappers[i].PaintBanner(BannerShakeToScramble);
-                    break;
-                }
-                case SHUFFLE_STATE_UNSCRAMBLE_THE_FACES:
-                {
-                    mWrappers[i].PaintBanner(BannerUnscrambleTheFaces);
-                    break;
-                }
-                case SHUFFLE_STATE_PLAY:
-                {
-                    if (mWrappers[i].IsSolved())
-                    {
-                        mWrappers[i].PaintBanner(BannerFaceComplete);
-                    }
-                    break;
-                }
-                case SHUFFLE_STATE_SCORE:
-                {
-                    if (i == 0)
-                    {
-                        int minutes = int(mShuffleScoreTime) / 60;
-                        int seconds = int(mShuffleScoreTime - (minutes * 60.0f));
-                        
-                        mWrappers[i].PaintBannerScore(BannerYourTime, minutes, seconds);
-                    }
-                    else
+                    case SHUFFLE_STATE_SHAKE_TO_SCRAMBLE:
                     {
                         mWrappers[i].PaintBanner(BannerShakeToScramble);
+                        break;
                     }
-                    break;
+                    case SHUFFLE_STATE_UNSCRAMBLE_THE_FACES:
+                    {
+                        mWrappers[i].PaintBanner(BannerUnscrambleTheFaces);
+                        break;
+                    }
+                    case SHUFFLE_STATE_PLAY:
+                    {
+                        if (mWrappers[i].IsSolved())
+                        {
+                            mWrappers[i].PaintBanner(BannerFaceComplete);
+                        }
+                        break;
+                    }
+                    case SHUFFLE_STATE_SCORE:
+                    {
+                        if (i == 0)
+                        {
+                            int minutes = int(mShuffleScoreTime) / 60;
+                            int seconds = int(mShuffleScoreTime - (minutes * 60.0f));
+                            
+                            mWrappers[i].PaintBannerScore(BannerYourTime, minutes, seconds);
+                        }
+                        else
+                        {
+                            mWrappers[i].PaintBanner(BannerShakeToScramble);
+                        }
+                        break;
+                    }
+                    default:
+                    {
+                        break;
+                    }
                 }
-                default:
-                {
-                    break;
-                }
+            }
+            else
+            {
+                mWrappers[i].ForceFlush();
             }
         }
     }

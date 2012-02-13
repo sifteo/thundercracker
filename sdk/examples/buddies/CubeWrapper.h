@@ -32,6 +32,7 @@ public:
     void Reset();
     void Paint();
     void Tick();
+    void ForceFlush();
     
     bool IsSolved() const;
         
