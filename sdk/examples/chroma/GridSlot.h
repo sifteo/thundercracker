@@ -114,6 +114,7 @@ public:
     void UpMultiplier();
     //morph from rainball to given color
     void RainballMorph( unsigned int color );
+    void Infect() { m_bWasInfected = true; }
 
 private:
 	void markNeighbor( int row, int col );
@@ -147,6 +148,8 @@ private:
 	bool		 m_bFixed;
     //used to tell if this dot was a rainball (for a special animation)
     bool         m_bWasRainball;
+    //was this infected by a hyperball?
+    bool         m_bWasInfected;
 
     //only fixed dots can have multipliers
     unsigned int m_multiplier;

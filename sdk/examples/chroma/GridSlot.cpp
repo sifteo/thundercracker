@@ -166,10 +166,13 @@ void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
     }
     else
         m_state = STATE_LIVING;
+
 	m_color = color;
 	m_bFixed = false;
     m_bWasRainball = false;
+    m_bWasInfected = false;
     m_multiplier = 1;
+    m_eventTime = System::clock();
 
     if( color == ROCKCOLOR )
         m_RockHealth = MAX_ROCK_HEALTH;
@@ -316,9 +319,32 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                 const AssetImage &exTex = GetExplodingTexture();
                 vid.BG0_drawAsset(vec, exTex, m_animFrame);
 
-                if( m_bWasRainball )
+                if( m_bWasRainball || m_bWasInfected )
                 {
-                    bg1helper.DrawAsset( vec, rainball_explode, m_animFrame );
+                    const AssetImage *pImg = 0;
+
+                    if( m_bWasRainball )
+                    {
+                        pImg = &rainball_explode;
+                    }
+                    else if( m_bWasInfected )
+                    {
+                        pImg = &hyperdot_activation;
+                        vec.x += 1;
+                        vec.y += 1;
+                    }
+
+                    float timeDiff = System::clock() - (float)m_eventTime;
+                    float perc = timeDiff / MARK_BREAK_DELAY;
+
+                    //for some reason I'm seeing extremely small negative values at times.
+                    if( perc >= 0.0f && perc < 1.0f )
+                    {
+                        //figure out frame based on mark break delay
+                        unsigned int frame = pImg->frames * perc;
+
+                        bg1helper.DrawAsset( vec, *pImg, frame );
+                    }
                 }
             }
 			break;
@@ -547,7 +573,7 @@ void GridSlot::explode()
     {
         Game::Inst().UpMultiplier();
         m_multiplier = 0;
-        m_pWrapper->ClearSprites();
+        m_pWrapper->ClearSprite( MULT_SPRITE_ID );
     }
 
 	m_eventTime = System::clock();
@@ -603,9 +629,8 @@ void GridSlot::DamageRock()
 //copy color and some other attributes from target.  Used when tilting
 void GridSlot::TiltFrom(GridSlot &src)
 {
-    m_bFixed = false;
+    FillColor( src.m_color );
 	m_state = STATE_PENDINGMOVE;
-	m_color = src.m_color;
 	m_eventTime = src.m_eventTime;
 	m_curMovePos.x = src.m_col * 4;
 	m_curMovePos.y = src.m_row * 4;

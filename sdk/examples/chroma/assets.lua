@@ -44,6 +44,7 @@ Cover = image{"cover.png"}
 --special dots
 hyperdot_idle = image{"hyperball_idle.png", height=32}
 hyperdot_explode = image{"hyperball_explode.png", height=32}
+hyperdot_activation = image{"hyperball_activation.png", height=16}
 rockdot = image{"rock.png", height=32}
 rainball_idle = image{"rainball_idle.png", height=32}
 rainball_explode = image{"rainball_explode.png", height=32}

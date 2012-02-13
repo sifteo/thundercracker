@@ -1539,6 +1539,7 @@ void CubeWrapper::BlowAll( unsigned int color )
             if( slot.isMatchable() && slot.getColor() == color )
             {
                 slot.mark();
+                slot.Infect();
             }
         }
     }
@@ -1731,7 +1732,7 @@ void CubeWrapper::UpMultiplier()
 }
 
 
-void CubeWrapper::ClearSprites()
+void CubeWrapper::ClearSprite( unsigned int id )
 {
-    m_vid.resizeSprite( 0, 0, 0 );
+    m_vid.resizeSprite( id, 0, 0 );
 }
