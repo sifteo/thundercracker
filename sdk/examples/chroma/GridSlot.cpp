@@ -572,8 +572,9 @@ void GridSlot::explode()
     if( m_multiplier > 1 )
     {
         Game::Inst().UpMultiplier();
-        m_multiplier = 0;
+        m_multiplier = 1;
         m_pWrapper->ClearSprite( MULT_SPRITE_ID );
+        DEBUG_LOG(( "clearing out sprite\n" ));
     }
 
 	m_eventTime = System::clock();
