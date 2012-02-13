@@ -29,10 +29,10 @@ const int kScale = 128 / kBgSize;
 
 const int kPartSideRegions[4][4] =
 {
-    { 40 / kScale,           0, 48 / kScale, 48 / kScale },
-    {           0, 40 / kScale, 48 / kScale, 48 / kScale },
-    { 40 / kScale, 80 / kScale, 48 / kScale, 48 / kScale },
-    { 80 / kScale, 40 / kScale, 48 / kScale, 48 / kScale },
+    { 32 / kScale,          -8, 64 / kScale, 64 / kScale },
+    {          -8, 32 / kScale, 64 / kScale, 64 / kScale },
+    { 32 / kScale, 72 / kScale, 64 / kScale, 64 / kScale },
+    { 72 / kScale, 32 / kScale, 64 / kScale, 64 / kScale },
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +55,7 @@ const Sifteo::AssetImage &getBgAsset(int buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Sifteo::AssetImage &getPartsAsset(int buddyId)
+const Sifteo::PinnedAssetImage &getPartsAsset(int buddyId)
 {
     switch (buddyId)
     {
@@ -128,23 +128,22 @@ void CubeWrapper::Paint()
     Video().clear();
     Video().BG0_drawAsset(Vec2(0, 0), getBgAsset(mBuddyId));
     
-    BG1Helper bg1helper(mCube);
-    
     if (mMode == BUDDY_MODE_HINT)
     {
-        PaintPiece(bg1helper, mPiecesSolution[SIDE_TOP], SIDE_TOP);
-        PaintPiece(bg1helper, mPiecesSolution[SIDE_LEFT], SIDE_LEFT);
-        PaintPiece(bg1helper, mPiecesSolution[SIDE_BOTTOM], SIDE_BOTTOM);
-        PaintPiece(bg1helper, mPiecesSolution[SIDE_RIGHT], SIDE_RIGHT);
+        PaintPiece(mPiecesSolution[SIDE_TOP], SIDE_TOP);
+        PaintPiece(mPiecesSolution[SIDE_LEFT], SIDE_LEFT);
+        PaintPiece(mPiecesSolution[SIDE_BOTTOM], SIDE_BOTTOM);
+        PaintPiece(mPiecesSolution[SIDE_RIGHT], SIDE_RIGHT);
     }
     else
     {
-        PaintPiece(bg1helper, mPieces[SIDE_TOP], SIDE_TOP);
-        PaintPiece(bg1helper, mPieces[SIDE_LEFT], SIDE_LEFT);
-        PaintPiece(bg1helper, mPieces[SIDE_BOTTOM], SIDE_BOTTOM);
-        PaintPiece(bg1helper, mPieces[SIDE_RIGHT], SIDE_RIGHT);
+        PaintPiece(mPieces[SIDE_TOP], SIDE_TOP);
+        PaintPiece(mPieces[SIDE_LEFT], SIDE_LEFT);
+        PaintPiece(mPieces[SIDE_BOTTOM], SIDE_BOTTOM);
+        PaintPiece(mPieces[SIDE_RIGHT], SIDE_RIGHT);
     }
     
+    BG1Helper bg1helper(mCube);
     bg1helper.Flush();
 }
 
@@ -316,17 +315,18 @@ Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::PaintPiece(BG1Helper &bg1Helper, const Piece &piece, unsigned int side)
+void CubeWrapper::PaintPiece(const Piece &piece, unsigned int side)
 {
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
     ASSERT(piece.mRotation >= 0 && piece.mRotation < 4);
     
-    Vec2 point = Vec2(kPartSideRegions[side][0] * kScale / 8, kPartSideRegions[side][1] * kScale / 8);
-    const Sifteo::AssetImage &asset = getPartsAsset(piece.mBuddy);
+    Vec2 point = Vec2(kPartSideRegions[side][0] * kScale, kPartSideRegions[side][1] * kScale);
+    const Sifteo::PinnedAssetImage &asset = getPartsAsset(piece.mBuddy);
     unsigned int frame = (piece.mRotation * NUM_SIDES) + piece.mPart;
     
     ASSERT(frame < asset.frames);
-    bg1Helper.DrawAsset(point, asset, frame);
+    Video().setSpriteImage(side, getPartsAsset(piece.mBuddy), frame);
+    Video().moveSprite(side, point);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
