@@ -249,7 +249,6 @@ SDValue SVMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     SDValue InFlag;
     for (unsigned i = 0, end = ArgLocs.size(); i != end; i++) {
         CCValAssign &VA = ArgLocs[i];
-        ISD::ArgFlagsTy Flags = Outs[i].Flags;
         SDValue Arg = OutVals[i];
         
         // Optional type promotion

@@ -68,7 +68,7 @@ void SVMAsmBackend::ApplyStaticFixup(MCFixupKind Kind, char *Data, int32_t Value
     if (!Bits)
         return;
 
-    switch (Kind) {
+    switch ((int) Kind) {
 
     case SVM::fixup_bcc:
     case SVM::fixup_b:

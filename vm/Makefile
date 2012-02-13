@@ -1,7 +1,7 @@
 TC_DIR := ..
 include $(TC_DIR)/Makefile.platform
 
-BIN = slinky
+BIN = slinky$(BIN_EXT)
 all: $(BIN)
 
 include Makefile.objs
@@ -35,6 +35,9 @@ LIBS += \
 	$(LLVM_LIB)/libLLVMMC.a \
 	$(LLVM_LIB)/libLLVMCore.a \
 	$(LLVM_LIB)/libLLVMSupport.a
+    
+# LLVM deps
+LDFLAGS += -ldebughelp
 
 # The DEBUG-ness of this build must match what LLVM was compiled with.
 # Our libraries in deps are release builds, but if you want to set LLVM_LIB
@@ -48,7 +51,7 @@ endif
 FLAGS += -MMD
 
 CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
-LDFLAGS := $(LIB_STDCPP) $(FLAGS) $(LIBS)
+LDFLAGS := $(FLAGS) $(LIBS) $(LIB_STDCPP)
 
 $(BIN): $(OBJS) $(TABLES)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)

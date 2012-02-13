@@ -10,7 +10,9 @@
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
-Target llvm::TheSVMTarget;
+namespace llvm {
+    Target TheSVMTarget;
+}
 
 extern "C" void LLVMInitializeSVMTargetInfo()
 { 

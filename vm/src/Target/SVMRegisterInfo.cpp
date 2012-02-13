@@ -39,7 +39,6 @@ void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
     unsigned i = 0;
     MachineInstr &MI = *II;
-    DebugLoc dl = MI.getDebugLoc();
     while (!MI.getOperand(i).isFI()) {
         ++i;
         assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
