@@ -253,7 +253,7 @@ void DoDialog(const DialogData& data, Cube* cube) {
         if (line == 0 || data.lines[line-1].detail != txt.detail) {
             System::paintSync();
             BG1Helper ovrly(*cube);
-            ovrly.DrawAsset(Vec2(5,0), *(txt.detail));
+            ovrly.DrawAsset(Vec2(2,0), *(txt.detail));
             ovrly.Flush();
             System::paintSync();
             for(unsigned i=0; i<4; ++i) {
