@@ -14,6 +14,8 @@ parts4 = image{"assets/parts4.png", height = 64, pinned = true}
 parts5 = image{"assets/parts5.png", height = 64, pinned = true}
 parts6 = image{"assets/parts6.png", height = 64, pinned = true}
 
+FontScore = image{"assets/FontScore.png", height = 16}
+
 BannerShakeToScramble = image{"assets/BannerShakeToScramble.png"}
 BannerUnscrambleTheFaces = image{"assets/BannerUnscrambleTheFaces.png"}
 BannerFaceComplete = image{"assets/BannerFaceComplete.png"}

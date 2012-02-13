@@ -316,6 +316,25 @@ void CubeWrapper::PaintBanner(const Sifteo::AssetImage &asset)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CubeWrapper::PaintBannerScore(const Sifteo::AssetImage &asset, int minutes, int seconds)
+{
+    BG1Helper bg1helper(mCube);
+    
+    bg1helper.DrawAsset(Vec2(0, 0), asset);
+    
+    int x = 10;
+    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, minutes / 10);
+    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, minutes % 10);
+    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, 10); // ":"
+    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, seconds / 10);
+    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, seconds % 10);
+    
+    bg1helper.Flush();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 {
     return VidMode_BG0_SPR_BG1(mCube.vbuf);

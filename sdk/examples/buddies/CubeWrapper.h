@@ -52,6 +52,7 @@ public:
     bool IsTouching() const;
     
     void PaintBanner(const Sifteo::AssetImage &asset);
+    void PaintBannerScore(const Sifteo::AssetImage &asset, int minutes, int seconds);
     
 private:
     Sifteo::VidMode_BG0_SPR_BG1 Video();

@@ -269,8 +269,17 @@ void App::Paint()
                 }
                 case SHUFFLE_STATE_SCORE:
                 {
-                    // TODO: Use font to print real score
-                    mWrappers[i].PaintBanner(i == 0 ? BannerYourTime : BannerShakeToScramble);
+                    if (i == 0)
+                    {
+                        int minutes = int(mShuffleScoreTime) / 60;
+                        int seconds = int(mShuffleScoreTime - (minutes * 60.0f));
+                        
+                        mWrappers[i].PaintBannerScore(BannerYourTime, minutes, seconds);
+                    }
+                    else
+                    {
+                        mWrappers[i].PaintBanner(BannerShakeToScramble);
+                    }
                     break;
                 }
                 default:
