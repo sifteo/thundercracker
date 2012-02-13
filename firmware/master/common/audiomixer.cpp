@@ -227,32 +227,33 @@ void AudioMixer::handleAudioOutEmpty(void *p) {
 bool AudioMixer::populateModuleMetaData(struct _SYSAudioModule *mod)
 {
     // TODO: can we tag these as already populated and avoid subsequent lookups?
-    unsigned size = 0;
-    AssetIndexEntry *entry;
-
-    entry = static_cast<AssetIndexEntry*>(FlashLayer::getRegionFromOffset(0, FlashLayer::BLOCK_SIZE, &size));
-    if (!entry) {
+    FlashRegion ar;
+    unsigned entryOffset = mod->id * sizeof(AssetIndexEntry);
+    // XXX: this is assuming an offset of 0 for the whole asset segment.
+    // 'entryOffset' will eventually need to be applied to the offset of the segment itself in flash
+    if (!FlashLayer::getRegion(0 + entryOffset, FlashLayer::BLOCK_SIZE, &ar)) {
         LOG(("got null AssetIndexEntry from flash"));
         return false;
     }
-    entry += mod->id;
 
-    unsigned offset = entry->offset;
+    AssetIndexEntry entry;
+    memcpy(&entry, ar.data(), sizeof(AssetIndexEntry));
+    FlashLayer::releaseRegion(ar);
 
-    FlashLayer::releaseRegionFromOffset(0);
-
-    SoundHeader *header;
-    header = static_cast<SoundHeader*>(FlashLayer::getRegionFromOffset(offset, sizeof(SoundHeader), &size));
-    if (!header) {
+    unsigned offset = entry.offset;
+    FlashRegion hr;
+    if (!FlashLayer::getRegion(offset, sizeof(SoundHeader), &hr)) {
         LOG(("Got null SoundHeader from flashlayer\n"));
         return false;
     }
 
-    mod->offset = offset + sizeof(SoundHeader);
-    mod->size = header->dataSize;
-    mod->type = (_SYSAudioType)header->encoding;
+    SoundHeader header;
+    memcpy(&header, hr.data(), sizeof(SoundHeader));
+    FlashLayer::releaseRegion(hr);
 
-    FlashLayer::releaseRegionFromOffset(offset);
+    mod->offset = offset + sizeof(SoundHeader);
+    mod->size = header.dataSize;
+    mod->type = (_SYSAudioType)header.encoding;
     return true;
 }
 

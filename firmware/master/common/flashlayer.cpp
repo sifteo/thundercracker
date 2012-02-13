@@ -22,7 +22,7 @@ void FlashLayer::init()
     }
 }
 
-void* FlashLayer::getRegionFromOffset(unsigned offset, unsigned len, unsigned *size)
+bool FlashLayer::getRegion(unsigned offset, unsigned len, FlashRegion *r)
 {
     CachedBlock *b = getCachedBlock(offset);
     if (b == 0) {
@@ -31,7 +31,7 @@ void* FlashLayer::getRegionFromOffset(unsigned offset, unsigned len, unsigned *s
 #endif
         b = getFreeBlock();
         if (b == 0) {
-            return 0;
+            return false;
         }
 
         // find the start address of the block that contains this offset,
@@ -56,19 +56,21 @@ void* FlashLayer::getRegionFromOffset(unsigned offset, unsigned len, unsigned *s
     }
 #endif
 
-    unsigned boff = offset % BLOCK_SIZE;
-    *size = len;
-
     if (offset + len > b->address + sizeof(b->data)) {
         // requested region crosses block boundary :(
-        *size = b->address + BLOCK_SIZE - offset;
+        r->_size = b->address + BLOCK_SIZE - offset;
+    }
+    else {
+        r->_size = len;
     }
 
-    return b->data + boff;
+    r->_address = offset;
+    r->_data = b->data + (offset % BLOCK_SIZE);
+    return true;
 }
 
-void FlashLayer::releaseRegionFromOffset(int offset) {
-    if (CachedBlock *b = getCachedBlock(offset)) {
+void FlashLayer::releaseRegion(const FlashRegion &r) {
+    if (CachedBlock *b = getCachedBlock(r._address)) {
         unsigned idx = b - blocks;
         ASSERT(idx < NUM_BLOCKS);
         Atomic::SetLZ(freeBlocksMask, idx);

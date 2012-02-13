@@ -79,24 +79,30 @@ void CubeSlot::loadAssets(_SYSAssetGroup *a)
         // In debug builds, we log the asset download time
         assetLoadTimestamp = SysTime::ticks();
     });
-    
-    unsigned size = 0;
-    AssetIndexEntry *entry;
 
-    entry = static_cast<AssetIndexEntry*>(FlashLayer::getRegionFromOffset(0, 512, &size));
-    entry += a->id;
-    
-    unsigned offset = entry->offset;
-    
-    FlashLayer::releaseRegionFromOffset(0);
+    FlashRegion region;
+    unsigned entryOffset = a->id * sizeof(AssetIndexEntry);
+    // XXX: this is assuming an offset of 0 for the whole asset segment.
+    // 'entryOffset' will eventually need to be applied to the offset of the segment itself in flash
+    if (!FlashLayer::getRegion(0 + entryOffset, FlashLayer::BLOCK_SIZE, &region)) {
+        LOG(("failed to get flash block for asset index entry\n"));
+        return;
+    }
+    AssetIndexEntry entry;
+    memcpy(&entry, region.data(), sizeof(AssetIndexEntry));
+    FlashLayer::releaseRegion(region);
 
-    AssetGroupHeader *header;
-    header = static_cast<AssetGroupHeader*>(FlashLayer::getRegionFromOffset(offset, sizeof(AssetGroupHeader), &size));
-    
+    unsigned offset = entry.offset;
+    if (!FlashLayer::getRegion(offset, sizeof(AssetGroupHeader), &region)) {
+        LOG(("failed to get flash block for asset group header\n"));
+        return;
+    }
+    AssetGroupHeader header;
+    memcpy(&header, region.data(), sizeof(AssetGroupHeader));
+    FlashLayer::releaseRegion(region);
+
     a->offset = offset + sizeof(AssetGroupHeader);
-    a->size = header->dataSize;
-    
-    FlashLayer::releaseRegionFromOffset(offset);
+    a->size = header.dataSize;
     
     // Start by resetting the flash decoder. This must happen before we set 'loadGroup'.
     Atomic::And(CubeSlots::flashResetSent, ~bit());
@@ -322,7 +328,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         if (x != accelState.x || y != accelState.y) {
             accelState.x = x;
             accelState.y = y;
-            Event::setPending(EventBits::ACCELCHANGE, id());			
+            Event::setPending(EventBits::ACCELCHANGE, id());
         }
     }
 
