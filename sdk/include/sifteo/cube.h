@@ -91,9 +91,10 @@ class Cube {
 	typedef _SYSTiltState  TiltState;
 
 	/*
-	 * Default constructor leaves mID zero'ed, so that Cubes do not
+	 * Default constructor leaves mID zero'ed, so that Cube objects
 	 * are allocated in the BSS segment rather than read-write data.
 	 */
+
 	Cube() {}
     Cube(ID id)
         : mID(id) {}
