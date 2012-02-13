@@ -2,5 +2,7 @@
 *.o
 *.bc
 *.inc
+*.elf
+*.s
+*.ll
 slinky
-
