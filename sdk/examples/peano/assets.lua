@@ -2,6 +2,27 @@ GameAssets = group{quality=10}
 Background = image{"background.png"}
 BackgroundLit = image{"background_lit.png"}
 
+NormalDigit_0 = image { "0.png" }
+NormalDigit_1 = image { "1.png" }
+NormalDigit_2 = image { "2.png" }
+NormalDigit_3 = image { "3.png" }
+NormalDigit_4 = image { "4.png" }
+NormalDigit_5 = image { "5.png" }
+NormalDigit_6 = image { "6.png" }
+NormalDigit_7 = image { "7.png" }
+NormalDigit_8 = image { "8.png" }
+NormalDigit_9 = image { "9.png" }
+
+AccentDigit_0 = image { "0w.png" }
+AccentDigit_1 = image { "1w.png" }
+AccentDigit_2 = image { "2w.png" }
+AccentDigit_3 = image { "3w.png" }
+AccentDigit_4 = image { "4w.png" }
+AccentDigit_5 = image { "5w.png" }
+AccentDigit_6 = image { "6w.png" }
+AccentDigit_7 = image { "7w.png" }
+AccentDigit_8 = image { "8w.png" }
+AccentDigit_9 = image { "9w.png" }
 
 Title = image{"title.png", width=128, height=128}
 VaultDoor = image{"vault_door.png", width=128, height=128}

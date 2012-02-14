@@ -105,7 +105,7 @@ static void RenderView(Cube& c, ViewState view) {
   ASSERT(vunion < (1<<6));
 
   // flood fill the background to start (not optimal, but this is a demo, dogg)
-  VidMode_BG0 mode(c.vbuf);
+  VidMode_BG0_SPR_BG1 mode(c.vbuf);
   mode.BG0_drawAsset(Vec2(0,0), Background);
   if (vunion == 0x00) { return; }
   

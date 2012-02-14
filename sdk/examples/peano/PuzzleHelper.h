@@ -235,7 +235,6 @@ public:
             {
                 int r = Game::rand.randrange(6) + 1;
                 token->val = r;
-                printf("r %d\n", r);
 
                 if (Game::rand.randrange(2) == 0)
                 {

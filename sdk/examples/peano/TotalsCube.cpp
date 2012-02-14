@@ -119,14 +119,14 @@ namespace TotalsGame
 	
 	void TotalsCube::Image(const AssetImage *image)
 	{
-		VidMode_BG0 mode(vbuf);
+        VidMode_BG0_SPR_BG1 mode(vbuf);
 		mode.init();
 		mode.BG0_drawAsset(Vec2(0,0), *image, 0);
 	}
 
 	void TotalsCube::Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size)
 	{
-		VidMode_BG0 mode(vbuf);
+        VidMode_BG0_SPR_BG1 mode(vbuf);
 		mode.init();
 		mode.BG0_drawPartialAsset(coord, offset, size, *image, 0);
 	}
@@ -135,7 +135,7 @@ namespace TotalsGame
 
 	void TotalsCube::DrawVaultDoorsClosed()
 	{
-		VidMode_BG0 mode(vbuf);
+        VidMode_BG0_SPR_BG1 mode(vbuf);
 		mode.init();
 
 		const int x = TokenView::Mid.x;
@@ -149,7 +149,7 @@ namespace TotalsGame
 
 	void TotalsCube::DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage) 
 	{
-		VidMode_BG0 mode(vbuf);
+        VidMode_BG0_SPR_BG1 mode(vbuf);
 		mode.init();
 
 		const int x = TokenView::Mid.x;
@@ -176,7 +176,7 @@ namespace TotalsGame
 
 	void TotalsCube::DrawVaultDoorsOpenStep2(int offset, const AssetImage *innerImage) 
 	{
-		VidMode_BG0 mode(vbuf);
+        VidMode_BG0_SPR_BG1 mode(vbuf);
 		mode.init();
 
 		const int x = TokenView::Mid.x;

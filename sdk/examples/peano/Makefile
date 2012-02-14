@@ -17,7 +17,6 @@ OBJS_STM32 = $(ASSETS).gen.stm32.o \
 	BlankView.stm32.o AudioPlayer.stm32.o View.stm32.o StingController.stm32.o \
 	TokenView.stm32.o PuzzleController.stm32.o
 
-
 ASSETDEPS += *.png $(ASSETS).lua
 
 include $(TC_DIR)/firmware/master/Makefile.rules
