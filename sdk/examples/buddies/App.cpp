@@ -145,6 +145,7 @@ App::App()
     , mChannel()
     , mResetTimer(0.0f)
     , mShuffleState(SHUFFLE_STATE_NONE)
+    , mShuffleMoveCounter(0)
     , mShuffleScoreTime(0.0f)
     , mShuffleDelayTimer(0.0f)
     , mSwapState(SWAP_STATE_NONE)
@@ -357,6 +358,7 @@ void App::StartShuffleState(ShuffleState shuffleState)
         }
         case SHUFFLE_STATE_SCRAMBLING:
         {
+            mShuffleMoveCounter = 0;
             for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
             {
                 mShufflePiecesMoved[i] = false;
@@ -441,6 +443,8 @@ void App::UpdateShuffle(float dt)
 void App::ShufflePieces()
 {   
     DEBUG_LOG(("ShufflePiece... %d left\n", arraysize(mShufflePiecesMoved) - GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved))));
+    
+    ++mShuffleMoveCounter;
     
     unsigned int piece0 = GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved));
     unsigned int piece1 = GetRandomOtherPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved), piece0);
@@ -538,7 +542,13 @@ void App::OnSwapFinish()
     
     if (mShuffleState == SHUFFLE_STATE_SCRAMBLING)
     {
-        if (GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved))
+        bool done = GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved);
+        if (kShuffleMaxMoves > 0)
+        {
+            done = done || mShuffleMoveCounter == kShuffleMaxMoves;
+        }
+    
+        if (done)
         {
             StartShuffleState(SHUFFLE_STATE_UNSCRAMBLE_THE_FACES);
         }

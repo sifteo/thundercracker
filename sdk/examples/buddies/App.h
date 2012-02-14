@@ -63,6 +63,7 @@ private:
     float mResetTimer;
     
     ShuffleState mShuffleState;
+    int mShuffleMoveCounter;
     float mShuffleScoreTime;
     float mShuffleDelayTimer;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
