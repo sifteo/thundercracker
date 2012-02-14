@@ -93,7 +93,7 @@ void ButterflyFriend::Update() {
       case SE:
       if (x > 196 || y > 196) { Randomize(); }
         break;
-    }	
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -102,12 +102,27 @@ void ButterflyFriend::Update() {
 
 void DrawRoom(ViewMode* gfx, const MapData* pMap, int roomId) {
 	const uint8_t *pTile = pMap->rooms[roomId].tiles;
+	const AssetImage& tileset = *pMap->tileset;
 	Vec2 p;
 	for(p.y=0; p.y<16; p.y+=2)
 	for(p.x=0; p.x<16; p.x+=2) {
 		// inline and optimize this function?
-		gfx->BG0_drawAsset(p, *(pMap->tileset), *(pTile++));
+		gfx->BG0_drawAsset(p, tileset, *(pTile++));
 	}
+}
+
+void DrawRoomOverlay(BG1Helper* ovrly, const MapData* pMap, unsigned tid, const uint8_t *pRle) {
+  const AssetImage& img = *(pMap->overlay);
+    while(tid < 64) {
+      if (*pRle == 0xff) {
+        tid += pRle[1];
+        pRle+=2;
+      } else {
+        ovrly->DrawAsset(2*Vec2(tid%8, tid>>3), img, *pRle);
+        tid++;
+        pRle++;
+      }
+    }  
 }
 
 bool DrawOffsetMapFromTo(ViewMode* gfx, const MapData* pMap, Vec2 from, Vec2 to) {

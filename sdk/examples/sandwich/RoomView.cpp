@@ -167,18 +167,7 @@ void RoomView::DrawBackground() {
   }
   BG1Helper ovrly(*(Parent()->GetCube()));
   if (!flags.hideOverlay && pRoom->HasOverlay()) {
-    unsigned tid = pRoom->OverlayTile();
-    const uint8_t *pRle = pRoom->OverlayBegin();
-    while(tid < 64) {
-      if (*pRle == 0xff) {
-        tid += pRle[1];
-        pRle+=2;
-      } else {
-        ovrly.DrawAsset(2*Vec2(tid%8, tid>>3), *(pGame->GetMap()->Data()->overlay), *pRle);
-        tid++;
-        pRle++;
-      }
-    }
+    DrawRoomOverlay(&ovrly, pGame->GetMap()->Data(), pRoom->OverlayTile(), pRoom->OverlayBegin());
   }
   if (pRoom->TriggerType() == TRIGGER_NPC) {
       const NpcData* npc = pRoom->TriggerAsNPC();
