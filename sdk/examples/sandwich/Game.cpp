@@ -44,14 +44,14 @@ void Game::MainLoop(Cube* pPrimary) {
     gChannelMusic.stop();
     PlaySfx(sfx_zoomIn);
     ViewSlot* view = mPlayer.View()->Parent();
-    Vec2 room = mPlayer.Location();
+    unsigned roomId = mPlayer.CurrentRoom()->Id();
     VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(mMap.Data()->tileset),
-          mMap.GetTileId(room, Vec2(x, y))
+          mMap.GetTileId(roomId, Vec2(x, y))
         );
       }
     }
@@ -153,7 +153,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
   gChannelMusic.stop();
   Vec2 room = position/128;
   ViewSlot* view = (ViewSlot*)(mPlayer.View());
-  Vec2 loc = mPlayer.Location();
+  unsigned roomId = mPlayer.CurrentRoom()->Id();
   view->HideSprites();
   // blank other cubes
   for(ViewSlot* p = ViewBegin(); p != ViewEnd(); ++p) {
@@ -169,7 +169,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(mMap.Data()->tileset),
-          mMap.GetTileId(loc, Vec2(x, y))
+          mMap.GetTileId(roomId, Vec2(x, y))
         );
       }
     }
@@ -198,7 +198,7 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
         vid.BG2_drawAsset(
           Vec2(x<<1,y<<1),
           *(mMap.Data()->tileset),
-          mMap.GetTileId(room, Vec2(x, y))
+          mMap.GetTileId(roomId, Vec2(x, y))
         );
       }
     }

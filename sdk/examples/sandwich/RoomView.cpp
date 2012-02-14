@@ -1,5 +1,6 @@
 #include "RoomView.h"
 #include "Game.h"
+#include "DrawingHelpers.h"
 
 // Constants
 
@@ -16,24 +17,6 @@ static const int8_t sHoverTable[] = {
   -3, -3, -2, -1
 };
 #define HOVER_COUNT 32
-
-#define BFF_FRAME_COUNT 4
-
-namespace BffDir {
-  enum ID { E, SE, S, SW, W, NW, N, NE };
-}
-
-static const Vec2 sBffTable[] = {
-  Vec2(1, 0),
-  Vec2(1, 1),
-  Vec2(0, 1),
-  Vec2(-1, 1),
-  Vec2(-1, 0),
-  Vec2(-1, -1),
-  Vec2(0, -1),
-  Vec2(1, -1),
-};
-
 // methods
 
 void RoomView::Init(unsigned roomId) {
@@ -54,15 +37,6 @@ void RoomView::Init(unsigned roomId) {
         mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
       }
       break;
-    /*
-    case TRIGGER_NPC:
-      const NpcData* npc = r->TriggerAsNPC();
-      const DialogData& dialog = gDialogData[npc->dialog];
-      mode.setSpriteImage(TRIGGER_SPRITE_ID, dialog.npc->index);
-      mode.resizeSprite(TRIGGER_SPRITE_ID, 32, 32);
-      mode.moveSprite(TRIGGER_SPRITE_ID, npc->x-16, npc->y-16);
-      break;
-    */
   }
   if (this == pGame->GetPlayer()->View()) { 
     ShowPlayer(); 
@@ -73,7 +47,7 @@ void RoomView::Init(unsigned roomId) {
     if (r->HasTrigger()) {
       mAmbient.bff.active = 0;
     } else if ( (mAmbient.bff.active = (gRandom.randrange(3) == 0)) ) {
-      RandomizeBff();
+      mAmbient.bff.Randomize();
       mode.resizeSprite(BFF_SPRITE_ID, 8, 8);
       mode.setSpriteImage(BFF_SPRITE_ID, Butterfly.index + 4 * mAmbient.bff.dir);
       mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.x-68, mAmbient.bff.y-68);
@@ -103,44 +77,12 @@ void RoomView::Update() {
   }
 
   if (pGame->GetMap()->Data()->ambientType && mAmbient.bff.active) {
-    // butterfly stuff
-    Vec2 delta = sBffTable[mAmbient.bff.dir];
-    mAmbient.bff.x += (uint8_t) delta.x;
-    mAmbient.bff.y += (uint8_t) delta.y;
+    mAmbient.bff.Update();
     mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.x-68, mAmbient.bff.y-68);
-    // hack - assumes butterflies and items are not rendered on same cube
-    mAmbient.bff.frame = (mAmbient.bff.frame + 1) % (BFF_FRAME_COUNT * 3);
     mode.setSpriteImage(
       BFF_SPRITE_ID, 
       Butterfly.index + 4 * mAmbient.bff.dir + mAmbient.bff.frame / 3
     );
-    using namespace BffDir;
-    switch(mAmbient.bff.dir) {
-      case S:
-        if (mAmbient.bff.y > 196) { RandomizeBff(); }
-        break;
-      case SW:
-        if (mAmbient.bff.x < 60 || mAmbient.bff.y > 196) { RandomizeBff(); }
-        break;
-      case W:
-        if (mAmbient.bff.x < 60) { RandomizeBff(); }
-        break;
-      case NW:
-        if (mAmbient.bff.x < 60 || mAmbient.bff.y < 60) { RandomizeBff(); }
-        break;
-      case N:
-      if (mAmbient.bff.y < 60) { RandomizeBff(); }
-        break;
-      case NE:
-      if (mAmbient.bff.x > 196 || mAmbient.bff.y < 60) { RandomizeBff(); }
-        break;
-      case E:
-      if (mAmbient.bff.x > 196) { RandomizeBff(); }
-        break;
-      case SE:
-      if (mAmbient.bff.x > 196 || mAmbient.bff.y > 196) { RandomizeBff(); }
-        break;
-    }
   }
 
   // item hover
@@ -163,44 +105,6 @@ Vec2 RoomView::Location() const {
   return pGame->GetMap()->GetLocation(mRoomId);
 }
 
-void RoomView::RandomizeBff() {
-  using namespace BffDir;
-  mAmbient.bff.dir = (uint8_t) gRandom.randrange(8);
-  switch(mAmbient.bff.dir) {
-    case S:
-      mAmbient.bff.x = 64 + (uint8_t) gRandom.randrange(128);
-      mAmbient.bff.y = (uint8_t) gRandom.randrange(64);
-      break;
-    case SE:
-      mAmbient.bff.x = (uint8_t) gRandom.randrange(64);
-      mAmbient.bff.y = (uint8_t) gRandom.randrange(64);
-      break;
-    case E:
-      mAmbient.bff.x = (uint8_t) gRandom.randrange(64);
-      mAmbient.bff.y = 64 + (uint8_t) gRandom.randrange(128);
-      break;
-    case NE:
-      mAmbient.bff.x = (uint8_t) gRandom.randrange(64);
-      mAmbient.bff.y = 192 + (uint8_t) gRandom.randrange(64);
-      break;
-    case N:
-      mAmbient.bff.x = 64 + (uint8_t) gRandom.randrange(128);
-      mAmbient.bff.y = 192 + (uint8_t) gRandom.randrange(64);
-      break;
-    case NW:
-      mAmbient.bff.x = 192 + (uint8_t) gRandom.randrange(64);
-      mAmbient.bff.y = 192 + (uint8_t) gRandom.randrange(64);
-      break;
-    case W:
-      mAmbient.bff.x = 192 + (uint8_t) gRandom.randrange(64);
-      mAmbient.bff.y = 64 + (uint8_t) gRandom.randrange(128);
-      break;
-    case SW:
-      mAmbient.bff.x = 192 + (uint8_t) gRandom.randrange(128);
-      mAmbient.bff.y = (uint8_t) gRandom.randrange(64);
-      break;
-  }
-}
 
 void RoomView::HideOverlay(bool flag) {
   if (flags.hideOverlay != flag) {
@@ -246,17 +150,10 @@ void RoomView::HideItem() {
 
 void RoomView::DrawBackground() {
   ViewMode mode = Parent()->Graphics();
-  const Room *pRoom = GetRoom();
-  for(int y=0; y<8; ++y) {
-    for(int x=0; x<8; ++x) {
-      mode.BG0_drawAsset(
-        Vec2(x<<1,y<<1),
-        *(pGame->GetMap()->Data()->tileset),
-        pGame->GetMap()->GetTileId(mRoomId, Vec2(x, y))
-      );
-    }
-  }
+  DrawRoom(&mode, pGame->GetMap()->Data(), mRoomId)  ;
+
   // hack alert!
+  const Room *pRoom = GetRoom();
   if (pRoom->HasOpenDoor()) {
     for(int y=0; y<3; ++y) {
       for(int x=3; x<=4; ++x) {

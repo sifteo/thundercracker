@@ -62,52 +62,43 @@ public:
   inline const MapData* Data() const { return mData; }
   
   inline const bool GetPortalX(int x, int y) const {
-      // note that the pitch here is one less than the width because 
-      // we're only counting walls in between
-      ASSERT(0 <= x && x < mData->width-1);
-      ASSERT(0 <= y && y < mData->height);
-      const int idx = (y * (mData->width-1) + x);
-      return mData->xportals[idx>>3] & (1<<(idx%8));
+    // note that the pitch here is one less than the width because 
+    // we're only counting walls in between
+    ASSERT(0 <= x && x < mData->width-1);
+    ASSERT(0 <= y && y < mData->height);
+    const int idx = (y * (mData->width-1) + x);
+    return mData->xportals[idx>>3] & (1<<(idx%8));
   }
 
   inline const bool GetPortalY(int x, int y) const {
-      // Like GetPortalX except we're in column-major order
-      ASSERT(0 <= x && x < mData->width);
-      ASSERT(0 <= y && y < mData->height-1);
-      const int idx = (x * (mData->height-1) + y);
-      return mData->yportals[idx>>3] & (1<<(idx%8));
+    // Like GetPortalX except we're in column-major order
+    ASSERT(0 <= x && x < mData->width);
+    ASSERT(0 <= y && y < mData->height-1);
+    const int idx = (x * (mData->height-1) + y);
+    return mData->yportals[idx>>3] & (1<<(idx%8));
   }
   
-  inline const RoomData* GetRoomData(uint8_t roomId) const {
+  inline const RoomData* GetRoomData(unsigned roomId) const {
       ASSERT(roomId < mData->width * mData->height);
       return mData->rooms + roomId;
   }
 
   inline const RoomData* GetRoomData(Vec2 location) const {
-      return GetRoomData(GetRoomId(location));
+    return GetRoomData(GetRoomId(location));
   }
 
   inline uint8_t GetTileId(unsigned roomId, Vec2 tile) const {
     ASSERT(0 <= tile.x && tile.x < 8);
     ASSERT(0 <= tile.y && tile.y < 8);
-  return mData->rooms[roomId].tiles[(tile.y<<3) + tile.x];
+    return mData->rooms[roomId].tiles[(tile.y<<3) + tile.x];
   }
 
-  inline uint8_t GetTileId(Vec2 location, Vec2 tile) const {
-    // this value indexes into tileset.frames
+  inline bool IsTileOpen(Vec2 location, Vec2 tile) const {
     ASSERT(0 <= location.x && location.x < mData->width);
     ASSERT(0 <= location.y && location.y < mData->height);
     ASSERT(0 <= tile.x && tile.x < 8);
     ASSERT(0 <= tile.y && tile.y < 8);
-    return mData->rooms[location.y * mData->width + location.x].tiles[(tile.y<<3) + tile.x];
-  }
-
-  inline bool IsTileOpen(Vec2 location, Vec2 tile) const {
-      ASSERT(0 <= location.x && location.x < mData->width);
-      ASSERT(0 <= location.y && location.y < mData->height);
-      ASSERT(0 <= tile.x && tile.x < 8);
-      ASSERT(0 <= tile.y && tile.y < 8);
-      return ( mData->rooms[location.y * mData->width + location.x].collisionMaskRows[tile.y] & (1<<tile.x) ) == 0;
+    return ( mData->rooms[location.y * mData->width + location.x].collisionMaskRows[tile.y] & (1<<tile.x) ) == 0;
   }
 
   inline uint8_t GetRoomId(Vec2 location) const {

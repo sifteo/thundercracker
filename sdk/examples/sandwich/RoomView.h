@@ -2,6 +2,7 @@
 #include "Common.h"
 #include "View.h"
 #include "Content.h"
+#include "DrawingHelpers.h"
 
 class Room;
 #define ANIM_TILE_CAPACITY 4
@@ -23,13 +24,7 @@ private:
   AnimTile mAnimTiles[ANIM_TILE_CAPACITY];
 
   union {
-    struct {
-        uint8_t active : 1;
-        uint8_t dir : 3;
-        uint8_t frame : 4;
-        uint8_t x;
-        uint8_t y;
-    } bff; // butterfly friend ;)
+    ButterflyFriend bff;
   } mAmbient;
 
 public:  
@@ -56,5 +51,4 @@ public:
 
 private:
   void ComputeAnimatedTiles();
-  void RandomizeBff();
 };

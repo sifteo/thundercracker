@@ -9,6 +9,7 @@ OBJS = \
 	main.o \
 	Common.o \
 	Dialog.o \
+	DrawingHelpers.o \
 	Game.o \
 	GameState.o \
 	IdleView.o \

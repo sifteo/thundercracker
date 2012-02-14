@@ -29,7 +29,6 @@ public:
   inline Vec2 Position() const { return 128 * Location(); }
   Vec2 LocalCenter(unsigned subdiv) const;
   inline Vec2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
-  //uint8_t GetTile(Vec2 position);
 
   // triggers
   void SetTrigger(int type, const TriggerData* p) { mTriggerType = type; mTrigger = p; }
