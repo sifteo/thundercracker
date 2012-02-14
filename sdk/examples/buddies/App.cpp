@@ -262,8 +262,8 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
     bool swapping = mSwapState != SWAP_STATE_NONE;
     
     bool isHinting =
-        GetCubeWrapper(cubeId0).GetMode() == BUDDY_MODE_HINT ||
-        GetCubeWrapper(cubeId1).GetMode() == BUDDY_MODE_HINT;
+        GetCubeWrapper(cubeId0).IsHinting() ||
+        GetCubeWrapper(cubeId1).IsHinting();
     
     bool isValidShuffleState =
         mShuffleState == SHUFFLE_STATE_NONE ||

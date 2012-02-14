@@ -29,23 +29,6 @@ Buddies::App sApp;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool AllDoneLoading()
-{
-    for (unsigned i = 0; i < Buddies::kNumCubes; ++i)
-    {
-        if ( sApp.GetCubeWrapper(i).IsEnabled() &&
-            !sApp.GetCubeWrapper(i).IsDoneLoading())
-        {
-           return false;
-        }
-    }
-    
-    return true;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 void Init()
 {
     sApp.Init();
@@ -56,17 +39,25 @@ void Init()
         {
             if (sApp.GetCubeWrapper(i).IsEnabled())
             {
-                sApp.GetCubeWrapper(i).InitVideoRom();
+                sApp.GetCubeWrapper(i).LoadAssets();
             }
         }
         
-        while (!AllDoneLoading())
+        bool allLoaded = false;
+        
+        while (!allLoaded)
         {
+            allLoaded = true;
+            
             for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
             {
                 if (sApp.GetCubeWrapper(i).IsEnabled())
                 {
-                    sApp.GetCubeWrapper(i).PaintProgressBar();
+                    if (!sApp.GetCubeWrapper(i).IsLoadingAssets())
+                    {
+                        allLoaded = false;
+                    }
+                    sApp.GetCubeWrapper(i).DrawLoadingAssets();
                 }
             }
             

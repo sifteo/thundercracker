@@ -81,7 +81,6 @@ CubeWrapper::CubeWrapper()
     , mPieces()
     , mPiecesSolution()
     , mPieceOffsets()
-    , mMode(BUDDY_MODE_NORMAL)
     , mTouching(false)
 {
 }
@@ -117,7 +116,6 @@ void CubeWrapper::Reset()
         mPieceOffsets[i] = 0;
     }
     
-    mMode = BUDDY_MODE_NORMAL;
     mTouching = false;
 }
 
@@ -132,7 +130,6 @@ void CubeWrapper::Update()
     {
         if (!mCube.touching())
         {
-            mMode = BUDDY_MODE_NORMAL;
             mTouching = false;
         }
     }
@@ -140,7 +137,6 @@ void CubeWrapper::Update()
     {
         if (mCube.touching())
         {
-            mMode = BUDDY_MODE_HINT;
             mTouching = true;
         }
     }
@@ -156,19 +152,19 @@ void CubeWrapper::Draw()
     Video().clear();
     Video().BG0_drawAsset(Vec2(0, 0), getBgAsset(mBuddyId));
     
-    if (mMode == BUDDY_MODE_HINT)
+    if (IsHinting())
     {
-        DrawFacePart(mPiecesSolution[SIDE_TOP], SIDE_TOP);
-        DrawFacePart(mPiecesSolution[SIDE_LEFT], SIDE_LEFT);
-        DrawFacePart(mPiecesSolution[SIDE_BOTTOM], SIDE_BOTTOM);
-        DrawFacePart(mPiecesSolution[SIDE_RIGHT], SIDE_RIGHT);
+        DrawPiece(mPiecesSolution[SIDE_TOP], SIDE_TOP);
+        DrawPiece(mPiecesSolution[SIDE_LEFT], SIDE_LEFT);
+        DrawPiece(mPiecesSolution[SIDE_BOTTOM], SIDE_BOTTOM);
+        DrawPiece(mPiecesSolution[SIDE_RIGHT], SIDE_RIGHT);
     }
     else
     {
-        DrawFacePart(mPieces[SIDE_TOP], SIDE_TOP);
-        DrawFacePart(mPieces[SIDE_LEFT], SIDE_LEFT);
-        DrawFacePart(mPieces[SIDE_BOTTOM], SIDE_BOTTOM);
-        DrawFacePart(mPieces[SIDE_RIGHT], SIDE_RIGHT);
+        DrawPiece(mPieces[SIDE_TOP], SIDE_TOP);
+        DrawPiece(mPieces[SIDE_LEFT], SIDE_LEFT);
+        DrawPiece(mPieces[SIDE_BOTTOM], SIDE_BOTTOM);
+        DrawPiece(mPieces[SIDE_RIGHT], SIDE_RIGHT);
     }
 }  
 
@@ -231,54 +227,36 @@ void CubeWrapper::DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTim
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool CubeWrapper::IsSolved() const
+bool CubeWrapper::IsLoadingAssets()
 {
     ASSERT(IsEnabled());
     
-    for (unsigned int i = 0; i < arraysize(mPiecesSolution); ++i)
-    {
-        if (mPieces[i].mBuddy != mPiecesSolution[i].mBuddy ||
-            mPieces[i].mPart != mPiecesSolution[i].mPart ||
-            mPieces[i].mRotation != mPiecesSolution[i].mRotation)
-        {
-            return false;
-        }
-    }
-    
-    return true;
+    return mCube.assetDone(GameAssets);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::InitVideoRom()
+void CubeWrapper::LoadAssets()
 {
     ASSERT(IsEnabled());
     
     VidMode_BG0_ROM rom(mCube.vbuf);
     rom.init();
     rom.clear();
+    
+    mCube.loadAssets(GameAssets);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::PaintProgressBar()
+void CubeWrapper::DrawLoadingAssets()
 {
     ASSERT(IsEnabled());
     
     VidMode_BG0_ROM rom(mCube.vbuf);
     rom.BG0_progressBar(Vec2(0, 7), mCube.assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool CubeWrapper::IsDoneLoading()
-{
-    ASSERT(IsEnabled());
-    
-    return mCube.assetDone(GameAssets);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -297,8 +275,7 @@ void CubeWrapper::Enable(Cube::ID cubeId, unsigned int buddyId)
     ASSERT(!IsEnabled());
     
     mCube.enable(cubeId);
-    mCube.loadAssets(GameAssets);
-            
+    
     mEnabled = true;
     mBuddyId = buddyId;
     
@@ -314,14 +291,6 @@ void CubeWrapper::Disable()
     
     mEnabled = false;
     mCube.disable();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-unsigned int CubeWrapper::GetBuddyId() const
-{
-    return mBuddyId;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -357,9 +326,29 @@ void CubeWrapper::SetPieceOffset(unsigned int side, int offset)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-BuddyMode CubeWrapper::GetMode() const
+bool CubeWrapper::IsSolved() const
 {
-    return mMode;
+    ASSERT(IsEnabled());
+    
+    for (unsigned int i = 0; i < arraysize(mPiecesSolution); ++i)
+    {
+        if (mPieces[i].mBuddy != mPiecesSolution[i].mBuddy ||
+            mPieces[i].mPart != mPiecesSolution[i].mPart ||
+            mPieces[i].mRotation != mPiecesSolution[i].mRotation)
+        {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool CubeWrapper::IsHinting() const
+{
+    return IsTouching();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -373,33 +362,6 @@ bool CubeWrapper::IsTouching() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawBanner(const Sifteo::AssetImage &asset)
-{
-    BG1Helper bg1helper(mCube);
-    bg1helper.DrawAsset(Vec2(0, 0), asset);
-    bg1helper.Flush();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds)
-{
-    int x = 10;
-    
-    BG1Helper bg1helper(mCube);
-    bg1helper.DrawAsset(Vec2(0, 0), asset); // Banner Background
-    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, minutes / 10); // Mintues (10s)
-    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, minutes % 10); // Minutes ( 1s)
-    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, 10); // ":"
-    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, seconds / 10); // Seconds (10s)
-    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, seconds % 10); // Seconds ( 1s)
-    bg1helper.Flush();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 {
     return VidMode_BG0_SPR_BG1(mCube.vbuf);
@@ -408,7 +370,7 @@ Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawFacePart(const Piece &piece, unsigned int side)
+void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
 {
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
     ASSERT(piece.mRotation >= 0 && piece.mRotation < 4);
@@ -446,6 +408,34 @@ void CubeWrapper::DrawFacePart(const Piece &piece, unsigned int side)
     }
     
     Video().moveSprite(side, point);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawBanner(const Sifteo::AssetImage &asset)
+{
+    BG1Helper bg1helper(mCube);
+    bg1helper.DrawAsset(Vec2(0, 0), asset);
+    bg1helper.Flush();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds)
+{
+    BG1Helper bg1helper(mCube);
+    bg1helper.DrawAsset(Vec2(0, 0), asset); // Banner Background
+    
+    int x = 10;
+    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, minutes / 10); // Mintues (10s)
+    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, minutes % 10); // Minutes ( 1s)
+    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, 10); // ":"
+    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, seconds / 10); // Seconds (10s)
+    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, seconds % 10); // Seconds ( 1s)
+    
+    bg1helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

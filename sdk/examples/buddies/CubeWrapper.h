@@ -34,32 +34,29 @@ public:
     void Draw();
     void DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime);
     
-    bool IsSolved() const;
-    
-    void InitVideoRom();
-    void PaintProgressBar();
-    bool IsDoneLoading();
+    bool IsLoadingAssets();
+    void LoadAssets();
+    void DrawLoadingAssets();
     
     bool IsEnabled() const;
     void Enable(Sifteo::Cube::ID cubeId, unsigned int buddyId);
     void Disable();
     
-    unsigned int GetBuddyId() const;
-    
+    // Pieces
     const Piece &GetPiece(unsigned int side) const;
     void SetPiece(unsigned int side, const Piece &piece);
     void SetPieceOffset(unsigned int side, int offset);
     
-    BuddyMode GetMode() const;
+    // State
+    bool IsSolved() const;
+    bool IsHinting() const;
     bool IsTouching() const;
-    
-    void DrawBanner(const Sifteo::AssetImage &asset);
-    void DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds);
     
 private:
     Sifteo::VidMode_BG0_SPR_BG1 Video();
-    
-    void DrawFacePart(const Piece &piece, unsigned int side);
+    void DrawPiece(const Piece &piece, unsigned int side);
+    void DrawBanner(const Sifteo::AssetImage &asset);
+    void DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds);
     
     Sifteo::Cube mCube;
     bool mEnabled;
@@ -67,7 +64,6 @@ private:
     Piece mPieces[NUM_SIDES];
     Piece mPiecesSolution[NUM_SIDES];
     int mPieceOffsets[NUM_SIDES];
-    BuddyMode mMode;
     bool mTouching;
 };
 
