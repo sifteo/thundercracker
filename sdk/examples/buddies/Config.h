@@ -25,13 +25,16 @@ enum BuddyMode
 
 enum ShuffleState
 {
-    SHUFFLE_STATE_START = 0,
+    SHUFFLE_STATE_NONE = 0,
+    SHUFFLE_STATE_START,
     SHUFFLE_STATE_SHAKE_TO_SCRAMBLE,
     SHUFFLE_STATE_SCRAMBLING,
     SHUFFLE_STATE_UNSCRAMBLE_THE_FACES,
     SHUFFLE_STATE_PLAY,
     SHUFFLE_STATE_SOLVED,
-    SHUFFLE_STATE_SCORE
+    SHUFFLE_STATE_SCORE,
+    
+    NUM_SHUFFLE_STATES
 };
 
 enum SwapState
@@ -39,6 +42,8 @@ enum SwapState
     SWAP_STATE_NONE = 0,
     SWAP_STATE_OUT,
     SWAP_STATE_IN,
+    
+    NUM_SWAP_STATES
 };
 
 const bool kLoadAssets = true;
@@ -46,13 +51,14 @@ const bool kShuffleMode = true;
 
 const unsigned int kNumCubes = 2;
 const unsigned int kMaxBuddies = 6;
+
 const float kResetTimerDuration = 3.0f;
 
 const float kShuffleStateTimeDelay = 1.0f;
-const float kShuffleScrambleTimerDelay = 0.5f;
+const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap animation and beginning of next
 
 const int kSwapAnimationSpeed = 8;
-const int kSwapAnimationCount = 56;
+const int kSwapAnimationCount = 64 - 8; // Sprites are offset by 8 pixels by design
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////

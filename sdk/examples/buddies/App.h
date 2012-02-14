@@ -29,9 +29,10 @@ class App
 public:
     App();
     
+    void Init();
     void Setup();
-    void Tick(float dt);
-    void Paint();
+    void Update(float dt);
+    void Draw();
     
     void AddCube(Sifteo::Cube::ID cubeId);
     void RemoveCube(Sifteo::Cube::ID cubeId);
@@ -47,7 +48,15 @@ private:
     bool AllSolved() const;
     
     void Reset();
+    
+    void StartShuffleState(ShuffleState shuffleState);
+    void UpdateShuffle(float dt);
+    
     void ShufflePiece();
+    
+    void UpdateSwap(float dt);
+    
+    void SwapPieces(unsigned int swapPiece0, unsigned int swapPiece1);
     
     CubeWrapper mWrappers[kNumCubes];
     Sifteo::AudioChannel mChannel;

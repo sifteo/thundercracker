@@ -125,8 +125,8 @@ void MainLoop()
         float dt = System::clock() - time;
         time += dt;
         
-        sApp.Tick(dt);
-        sApp.Paint();
+        sApp.Update(dt);
+        sApp.Draw();
     }
 }
 
@@ -140,9 +140,11 @@ void MainLoop()
 
 void siftmain()
 {
-    sApp.Setup();
+    sApp.Init();
     LoadAssets();
     SetupEvents();
+    
+    sApp.Setup();
     MainLoop();
 }
 

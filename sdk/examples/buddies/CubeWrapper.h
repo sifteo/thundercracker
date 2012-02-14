@@ -30,9 +30,8 @@ public:
     CubeWrapper();
     
     void Reset();
-    void Paint();
-    void Tick();
-    void ForceFlush();
+    void Update();
+    void Draw(ShuffleState shuffleState, float shuffleScoreTime);
     
     bool IsSolved() const;
         
@@ -59,7 +58,7 @@ public:
 private:
     Sifteo::VidMode_BG0_SPR_BG1 Video();
     
-    void PaintPiece(const Piece &piece, unsigned int side);
+    void PaintFacePart(const Piece &piece, unsigned int side);
     
     void OnButtonPress();
     void OnButtonRelease();
