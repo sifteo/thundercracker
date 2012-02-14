@@ -50,14 +50,11 @@ void ElfReader::load(unsigned addr, unsigned len)
         return;
     }
 
-//    dumpHeader(header);
-
-
     /*
         We're looking for 3 segments, identified by the following profiles:
         - text segment - executable & read-only
         - data segment - read/write & non-zero size on disk
-        - bss segment - read only, zero size on disk, and non-zero size in memory
+        - bss segment - read/write, zero size on disk, and non-zero size in memory
     */
     unsigned offset = header.e_phoff;
     for (unsigned i = 0; i < header.e_phnum; ++i, offset += header.e_phentsize) {
@@ -71,13 +68,11 @@ void ElfReader::load(unsigned addr, unsigned len)
             LOG(("rodata/text segment found\n"));
             break;
         case (Elf::PF_Read | Elf::PF_Write):
-            if (pHeader.p_filesz > 0) {
-                LOG(("found rwdata segment\n"));
-            }
-            break;
-        case Elf::PF_Read:
             if (pHeader.p_memsz >= 0 && pHeader.p_filesz == 0) {
                 LOG(("bss segment found\n"));
+            }
+            else if (pHeader.p_filesz > 0) {
+                LOG(("found rwdata segment\n"));
             }
             break;
         }
