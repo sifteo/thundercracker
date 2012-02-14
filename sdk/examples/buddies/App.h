@@ -78,6 +78,7 @@ private:
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     
     AuthoredState mAuthoredState;
+    unsigned int mAuthoredPuzzleIndex;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

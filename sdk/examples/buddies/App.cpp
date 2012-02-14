@@ -131,12 +131,6 @@ const char *kShuffleStateNames[NUM_SHUFFLE_STATES] =
     "SHUFFLE_STATE_SCORE",
 };
 
-Piece kDefaultState[kNumCubes][NUM_SIDES] =
-{
-    { Piece(0, 0), Piece(0, 1), Piece(0, 2), Piece(0, 3) }, // Buddy 0: Top, Left, Bottom, Right
-    { Piece(1, 0), Piece(1, 1), Piece(1, 2), Piece(1, 3) },
-};
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Authored Mode
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,19 +148,36 @@ const char *kAuthoredStateNames[NUM_AUTHORED_STATES] =
 // - BuddyId = [0, kNumBuddies]
 // - FacePart = [0 = Hair, 1 = Left Eye, 2 = Mouth, 4 = Right Eye]
 
-Piece kAuthoredStartState[kMaxBuddies][NUM_SIDES] =
+Piece kDefaultState[kNumCubes][NUM_SIDES] =
 {
     { Piece(0, 0), Piece(0, 1), Piece(0, 2), Piece(0, 3) }, // Buddy 0: Top, Left, Bottom, Right
     { Piece(1, 0), Piece(1, 1), Piece(1, 2), Piece(1, 3) },
 };
 
-Piece kAuthoredEndState[kMaxBuddies][NUM_SIDES] =
+Piece kAuthoredEndStateMouths[kMaxBuddies][NUM_SIDES] =
 {
     { Piece(0, 0), Piece(0, 1), Piece(1, 2), Piece(0, 3) },
     { Piece(1, 0), Piece(1, 1), Piece(0, 2), Piece(1, 3) },
 };
 
-const Puzzle kPuzzle(kNumCubes, "SWAP MOUTHS", kAuthoredStartState, kAuthoredEndState);
+Piece kAuthoredEndStateHair[kMaxBuddies][NUM_SIDES] =
+{
+    { Piece(1, 0), Piece(0, 1), Piece(0, 2), Piece(0, 3) },
+    { Piece(0, 0), Piece(1, 1), Piece(1, 2), Piece(1, 3) },
+};
+
+Piece kAuthoredEndStateEyes[kMaxBuddies][NUM_SIDES] =
+{
+    { Piece(0, 0), Piece(1, 1), Piece(0, 2), Piece(1, 3) },
+    { Piece(1, 0), Piece(0, 1), Piece(1, 2), Piece(0, 3) },
+};
+
+const Puzzle kPuzzles[] =
+{
+    Puzzle(kNumCubes, "SWAP MOUTHS", kDefaultState, kAuthoredEndStateMouths),
+    Puzzle(kNumCubes, "SWAP HAIR", kDefaultState, kAuthoredEndStateHair),
+    Puzzle(kNumCubes, "SWAP EYES", kDefaultState, kAuthoredEndStateEyes),
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,6 +205,7 @@ App::App()
     , mShuffleMoveCounter(0)
     , mShuffleScoreTime(0.0f)
     , mAuthoredState(AUTHORED_STATE_NONE)
+    , mAuthoredPuzzleIndex(0)
 {
 }
 
@@ -277,7 +289,7 @@ void App::Draw()
             
             if (mAuthoredState == AUTHORED_STATE_INSTRUCTIONS)
             {
-                mCubeWrappers[i].DrawTextBanner(kPuzzle.GetInstructions());
+                mCubeWrappers[i].DrawTextBanner(kPuzzles[mAuthoredPuzzleIndex].GetInstructions());
             }
             else if (mShuffleState != SHUFFLE_STATE_NONE)
             {
@@ -401,13 +413,14 @@ void App::ResetCubes()
             {
                 if (kGameMode == GAME_MODE_AUTHORED)
                 {
-                    mCubeWrappers[i].SetPiece(j, kPuzzle.GetStartState(i, j));
-                    mCubeWrappers[i].SetPieceSolution(j, kPuzzle.GetEndState(i, j));
+                    ASSERT(mAuthoredPuzzleIndex < arraysize(kPuzzles));
+                    mCubeWrappers[i].SetPiece(j, kPuzzles[mAuthoredPuzzleIndex].GetStartState(i, j));
+                    mCubeWrappers[i].SetPieceSolution(j, kPuzzles[mAuthoredPuzzleIndex].GetEndState(i, j));
                 }
                 else
                 {
-                    ASSERT(i < arraysize(kAuthoredStartState));
-                    ASSERT(j < arraysize(kAuthoredStartState[i]));
+                    ASSERT(i < arraysize(kDefaultState));
+                    ASSERT(j < arraysize(kDefaultState[i]));
                     
                     mCubeWrappers[i].SetPiece(j, kDefaultState[i][j]);
                     mCubeWrappers[i].SetPieceSolution(j, kDefaultState[i][j]);
@@ -533,6 +546,7 @@ void App::StartAuthoredState(AuthoredState authoredState)
     {
         case AUTHORED_STATE_START:
         {
+            mAuthoredPuzzleIndex = 0;
             mDelayTimer = kShuffleStateTimeDelay;
             break;
         }
@@ -582,6 +596,10 @@ void App::UpdateAuthored(float dt)
             {
                 mDelayTimer = 0.0f;
                 
+                if (++mAuthoredPuzzleIndex == arraysize(kPuzzles))
+                {
+                    mAuthoredPuzzleIndex = 0;
+                }
                 ResetCubes();
                 
                 StartAuthoredState(AUTHORED_STATE_INSTRUCTIONS);
