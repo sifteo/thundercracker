@@ -338,6 +338,9 @@ int main(int argc, char **argv)
     AddMiddlePasses(PM);
     AddOptimizationPasses(PM, FPM, OLvl);
 
+    // Override default to generate verbose assembly.
+    Target.setAsmVerbosityDefault(true);
+
     // Target passes
     PM.add(new TargetData(*Target.getTargetData()));
     OwningPtr<tool_output_file> Out(GetOutputStream());
@@ -350,7 +353,7 @@ int main(int argc, char **argv)
 
     // Before executing passes, print the final values of the LLVM options.
     cl::PrintOptionValues();
-
+    
     // Run function passes
     FPM.doInitialization();
     for (Module::iterator F = mod.begin(), E = mod.end(); F != E; ++F)
