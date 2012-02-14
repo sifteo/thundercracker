@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+struct FlashRegion;
+
 class FlashLayer
 {
 public:
@@ -19,8 +21,9 @@ public:
     static const unsigned BLOCK_SIZE = 512;
 
     static void init();
-    static void* getRegionFromOffset(unsigned offset, unsigned len, unsigned *size);
-    static void releaseRegionFromOffset(int offset);
+
+    static bool getRegion(unsigned offset, unsigned len, FlashRegion *r);
+    static void releaseRegion(const FlashRegion &r);
 
 private:
     struct CachedBlock {
@@ -45,6 +48,40 @@ private:
     static Stats stats;
 #endif
 
+};
+
+struct FlashRegion {
+    FlashRegion() :
+        _address(0xFFFFFFFF),   // default to invalid address
+        _size(0),
+        _data(0)
+    {}
+
+    ~FlashRegion() {
+//        TODO: auto release?
+//        FlashLayer::releaseRegion(*this);
+    }
+
+    unsigned size() const {
+        return _size;
+    }
+
+    void* data() const {
+        return _data;
+    }
+
+    void reset() {
+        _address = 0xFFFFFFFF;
+        _size = 0;
+        _data = 0;
+    }
+
+private:
+    unsigned _address;
+    unsigned _size;
+    void *_data;
+
+    friend class FlashLayer;
 };
 
 #endif // FLASH_LAYER_H_
