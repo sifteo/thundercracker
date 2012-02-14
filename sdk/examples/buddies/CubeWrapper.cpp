@@ -296,6 +296,7 @@ void CubeWrapper::SetPiece(unsigned int side, const Piece &piece)
     ASSERT(side < arraysize(mPieces));
     
     mPieces[side] = piece;
+    DEBUG_LOG(("%d - SetPiece(%u, %u)\n", mCube.id(), side, piece.mPart));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -306,6 +307,7 @@ void CubeWrapper::SetPieceSolution(unsigned int side, const Piece &piece)
     ASSERT(side < arraysize(mPiecesSolution));
     
     mPiecesSolution[side] = piece;
+    DEBUG_LOG(("%d - SetPieceSolution(%u, %u)\n", mCube.id(), side, piece.mPart));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

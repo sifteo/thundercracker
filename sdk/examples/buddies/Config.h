@@ -61,7 +61,7 @@ enum AuthoredState
 };
 
 const bool kLoadAssets = true;
-const GameMode kGameMode = GAME_MODE_SHUFFLE;
+const GameMode kGameMode = GAME_MODE_AUTHORED;
 
 const unsigned int kNumCubes = 2; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters
