@@ -31,29 +31,29 @@ const Sifteo::AssetImage &getBgAsset(int buddyId)
     switch (buddyId)
     {
         default:
-        case 0: return bg1;
-        case 1: return bg2;
-        case 2: return bg3;
-        case 3: return bg4;
-        case 4: return bg5;
-        case 5: return bg6;
+        case 0: return Bg1;
+        case 1: return Bg2;
+        case 2: return Bg3;
+        case 3: return Bg4;
+        case 4: return Bg5;
+        case 5: return Bg6;
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Sifteo::PinnedAssetImage &getPartsAsset(int buddyId)
+const Sifteo::PinnedAssetImage &getPieceAsset(int buddyId)
 {
     switch (buddyId)
     {
         default:
-        case 0: return parts1;
-        case 1: return parts2;
-        case 2: return parts3;
-        case 3: return parts4;
-        case 4: return parts5;
-        case 5: return parts6;
+        case 0: return Parts1;
+        case 1: return Parts2;
+        case 2: return Parts3;
+        case 3: return Parts4;
+        case 4: return Parts5;
+        case 5: return Parts6;
     }
 }
 
@@ -360,7 +360,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
     ASSERT(piece.mRotation >= 0 && piece.mRotation < 4);
     
-    const Sifteo::PinnedAssetImage &asset = getPartsAsset(piece.mBuddy);
+    const Sifteo::PinnedAssetImage &asset = getPieceAsset(piece.mBuddy);
     unsigned int frame = (piece.mRotation * NUM_SIDES) + piece.mPart;
     
     ASSERT(frame < asset.frames);

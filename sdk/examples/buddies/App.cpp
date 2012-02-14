@@ -337,7 +337,7 @@ void App::RemoveCube(Cube::ID cubeId)
 
 void App::PlaySound()
 {
-    mChannel.play(gems1_4A9);
+    mChannel.play(GemsSound);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
