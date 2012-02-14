@@ -13,3 +13,6 @@ assets.html
 *.creator.user
 *.files
 *.includes
+
+# Xcode
+*.xcodeproj

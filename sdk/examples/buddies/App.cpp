@@ -55,11 +55,11 @@ unsigned int GetRandomNonMovedPiece(bool moved[], size_t num_moved)
 {
     Random random;
     
-    unsigned int pieceIndex = random.randrange(num_moved);
+    unsigned int pieceIndex = random.randrange(unsigned(num_moved));
     
     while (moved[pieceIndex])
     {
-        pieceIndex = random.randrange(num_moved);
+        pieceIndex = random.randrange(unsigned(num_moved));
     }
     
     return pieceIndex;
@@ -72,11 +72,11 @@ unsigned int GetRandomOtherPiece(bool moved[], size_t num_moved, unsigned int no
 {
     Random random;
     
-    unsigned int pieceIndex = random.randrange(num_moved);
+    unsigned int pieceIndex = random.randrange(unsigned(num_moved));
     
     while (pieceIndex / NUM_SIDES == notThisPiece / NUM_SIDES)
     {
-        pieceIndex = random.randrange(num_moved);
+        pieceIndex = random.randrange(unsigned(num_moved));
     }
     
     return pieceIndex;
