@@ -76,22 +76,36 @@ void power_sleep(void)
      * Order matters, don't cause bus contention.
      */
 
+    /*
+     * XXX: For the changes in Rev 2, we need to worry about sequencing
+     *      3.3v and 2.0v supply shutdown. We should also sequence the
+     *      2.0v shutdown and the flash WE/OE lines such that we can
+     *      get WE/OE driven low while in deep sleep (to avoid back-powering
+     *      the flash) without getting into any transient states where there
+     *      is contention on the data bus.
+     */
+
     lcd_sleep();                // Sleep sequence for LCD controller
     cli();                      // Stop all interrupt handlers
     radio_rx_disable();         // Take the radio out of RX mode
+
     RF_CKEN = 0;                // Stop the radio clock
     RNGCTL = 0;                 // RNG peripheral off
     ADCCON1 = 0;                // ADC peripheral off
+    W2CON0 = 0;                 // I2C peripheral off
+    S0CON = 0;                  // UART peripheral off
+    SPIMCON0 = 0;               // External SPI disabled
+    SPIRCON0 = 0;               // Radio SPI disabled
 
     BUS_DIR = 0xFF;             // Float the bus before we've set CTRL_PORT
 
-    ADDR_PORT = 0;              // Drive address bus low
+    ADDR_PORT = 0;              // Address bus must be all zero
     MISC_PORT = MISC_IDLE;      // Neighbor hardware idle
     CTRL_PORT = CTRL_SLEEP;     // Turns off DC-DC converters
 
-    ADDR_DIR = 0;               // Default drive values
-    MISC_DIR = MISC_DIR_VALUE;
-    CTRL_DIR = CTRL_DIR_VALUE;  
+    ADDR_DIR = 0;               // Drive address bus
+    MISC_DIR = 0xFF;            // All MISC pins as inputs (I2C bus pulled up)
+    CTRL_DIR = CTRL_DIR_VALUE;  // All CTRL pins driven
     
     BUS_PORT = 0;               // Drive bus port low
     BUS_DIR = 0;

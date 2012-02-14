@@ -77,7 +77,8 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define MISC_NB_MASK0   (MISC_NB_0_TOP | MISC_NB_1_LEFT)
 #define MISC_NB_MASK1   (MISC_NB_0_TOP | MISC_NB_2_BOTTOM)
 
-#define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_I2C_SDA) | MISC_TOUCH)
+// When idle, MISC port is only driving the I2C bus.
+#define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_I2C_SDA))
 #define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)
 
 #define CTRL_LCD_DCX    (1 << 0)
@@ -88,9 +89,8 @@ __sbit __at 0xA0 CTRL_LCD_TE;      // XXX: Hardware not ready for TE yet
 #define CTRL_FLASH_WE   (1 << 5)
 #define CTRL_FLASH_OE   (1 << 6)
 
-#define CTRL_DIR_VALUE  (~(CTRL_LCD_DCX | CTRL_FLASH_LAT1 | CTRL_FLASH_LAT2 | \
-                           CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT | \
-                           CTRL_3V3_EN ))
+// All CTRL pins are outputs
+#define CTRL_DIR_VALUE  0x00
 
 #define CTRL_IDLE       (CTRL_BACKLIGHT | CTRL_FLASH_WE | CTRL_FLASH_OE | \
                          CTRL_LCD_DCX | CTRL_3V3_EN)
