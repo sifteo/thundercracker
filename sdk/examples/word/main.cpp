@@ -73,7 +73,7 @@ void siftmain()
         cubes[i].enable(i + CUBE_ID_BASE);
     }
 
-    if (false &&LOAD_ASSETS)
+    if (LOAD_ASSETS)
     {
         // start loading assets
         for (unsigned i = 0; i < arraysize(cubes); i++)
