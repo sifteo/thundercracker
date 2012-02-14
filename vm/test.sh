@@ -14,7 +14,7 @@ $DIS test.o
 echo ------------------------
 
 rm -f test.s
-./slinky -debug -show-mc-encoding -asm -asm-verbose test.o 
+./slinky -asm-verbose -asm test.o 
 
 #$* 2>&1 | tee test.out
 #DOTFILE=`grep \.dot test.out | tail -n 1 | cut -d "'" -f 2`

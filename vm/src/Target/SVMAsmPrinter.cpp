@@ -28,7 +28,36 @@ void SVMAsmPrinter::EmitInstruction(const MachineInstr *MI)
     SVMMCInstLower MCInstLowering(Mang, *MF, *this);
     MCInst MCI;
     MCInstLowering.Lower(MI, MCI);
+
+    if (OutStreamer.isVerboseAsm()) {
+        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
+            emitOperandComment(MI, MI->getOperand(i));
+    }
+
     OutStreamer.EmitInstruction(MCI);
+}
+
+void SVMAsmPrinter::emitOperandComment(const MachineInstr *MI, const MachineOperand &OP)
+{
+    if (OP.isCPI()) {
+        raw_ostream &OS = OutStreamer.GetCommentOS();
+
+        const std::vector<MachineConstantPoolEntry> &Constants =
+            MI->getParent()->getParent()->getConstantPool()->getConstants();
+
+        assert((unsigned)OP.getIndex() < Constants.size());
+        const MachineConstantPoolEntry &Entry = Constants[OP.getIndex()];
+
+        OS << "pool: ";
+
+        if (Entry.isMachineConstantPoolEntry())
+            Entry.Val.MachineCPVal->print(OS);
+        else if (Entry.Val.ConstVal->hasName())
+            OS << Entry.Val.ConstVal->getName();
+        else
+            OS << *(Value*)Entry.Val.ConstVal;            
+        OS << "\n";
+    }
 }
 
 void SVMAsmPrinter::EmitFunctionEntryLabel()
