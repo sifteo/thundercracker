@@ -121,7 +121,11 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
      *      the emulator will come up with.
      */
 
-    address.channel = 0x02;
+#ifdef MASTER_RF_CHAN
+    address.channel = MASTER_RF_CHAN;
+#else
+    address.channel = 0x2;
+#endif
     address.id[0] = id();
     address.id[1] = 0xe7;
     address.id[2] = 0xe7;
