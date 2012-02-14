@@ -64,17 +64,15 @@ void Init()
             System::paint();
         }
     }
-        
-        // TODO: This covers up some glitches when switching from loading to the game,
-        // but why does it work?
-        for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
+    
+    for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
+    {
+        if (sApp.GetCubeWrapper(i).IsEnabled())
         {
-            if (sApp.GetCubeWrapper(i).IsEnabled())
-            {
-                sApp.GetCubeWrapper(i).ForceBg1Flush();
-            }
+            sApp.GetCubeWrapper(i).EnableBg0SprBg1Video();
         }
-        System::paint();
+    }
+    System::paint();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

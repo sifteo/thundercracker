@@ -134,7 +134,7 @@ void CubeWrapper::Draw()
 {
     ASSERT(IsEnabled());
     
-    Video().clear();
+    EnableBg0SprBg1Video();
     Video().BG0_drawAsset(Vec2(0, 0), getBgAsset(mBuddyId));
     
     if (IsHinting())
@@ -201,20 +201,14 @@ void CubeWrapper::DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTim
             }
         }
     }
-    else
-    {
-        // TODO: Why do I need to do this?
-        ForceBg1Flush();
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::ForceBg1Flush()
+void CubeWrapper::EnableBg0SprBg1Video()
 {
-    BG1Helper bg1helper(mCube);
-    bg1helper.Flush();
+    Video().set();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
