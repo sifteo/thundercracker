@@ -19,6 +19,8 @@ OBJS_STM32 = $(ASSETS).gen.stm32.o \
 
 ASSETDEPS += *.png $(ASSETS).lua
 
+ASSETS_BUILD_PROOF = TRUE
+
 include $(TC_DIR)/firmware/master/Makefile.rules
 
 

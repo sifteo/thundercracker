@@ -31,6 +31,7 @@ namespace TotalsGame
 		mTimeout = -1.0f;
 		mDigitId = -1;
 		mHideMask = 0;
+        useAccentDigit = false;
 
         //TODO      normal style
         if (showDigitOnInit)
@@ -50,12 +51,7 @@ namespace TotalsGame
 	{
 		int d = mDigitId;
 		while (d == mDigitId) { mDigitId = Game::rand.randrange(9) + 1; }
-		/* TODO
-		mDigit.data = mStyle.normalDigits[mDigitId];
-		if (mDigit.HasDirtyRect) {
-		var aabb = mDigit.DirtyRect;
-		Cube.FillRect(new Color(0, 36, 85), aabb.position.x, aabb.position.y, aabb.size.x, aabb.size.y);
-        } */
+        useAccentDigit = false;
         PaintDigit();
 
 		//Cube.Paint();
@@ -64,13 +60,8 @@ namespace TotalsGame
 	void TokenView::ResetNumeral() 
 	{
 		if (mDigitId != token->val) {
-			/* TODO
-			mDigit.data = mStyle.normalDigits[token.val];
-			var aabb = mDigit.DirtyRect;
-			Cube.FillRect(new Color(0, 36, 85), aabb.position.x, aabb.position.y, aabb.size.x, aabb.size.y);
-            */
+            useAccentDigit = false;
             PaintDigit();
-
 		}
 		mDigitId = -1;
 		PaintBottom(false);
@@ -300,7 +291,7 @@ namespace TotalsGame
         if (isInGroup)
         {
             uint8_t masks[4] = {0};
-            //                mDigit.data = mStyle.accentDigits[token.val];
+            useAccentDigit = true;
             for(int i=mCurrentExpression->GetDepth(); i>=0; --i)
             {
                 int connCount = 0;
@@ -308,8 +299,6 @@ namespace TotalsGame
                 {
                     if (token->ConnectsOnSideAtDepth(j, i, mCurrentExpression))
                     {
-                        //                      PaintRect(mStyle.colors[i], s, 16 + 4 * i);
-                        //mask |= (0x1<<j);
                         masks[j] |= 1 << i;
                         connCount++;
                     }
@@ -320,10 +309,10 @@ namespace TotalsGame
         }
 
 
-		//else 
-		//{
-			//TODO        mDigit.data = mStyle.normalDigits[token.val];
-		//}
+        else
+        {
+            useAccentDigit = false;
+        }
 		if (mDigitId == -1) 
 		{
 			if (NotHiding(SIDE_TOP) && topStatus == SideStatusConnected) { PaintTop(true); }
@@ -345,7 +334,7 @@ namespace TotalsGame
 			c.DrawFraction(result, 64, yPos+32);
 			}
             } else {*/
-            PaintDigit();
+            //PaintDigit();
 		} 
         PaintDigit();
 	}
@@ -484,7 +473,7 @@ namespace TotalsGame
 
     void TokenView::PaintDigit()
     {
-        static const AssetImage * const assets[10] =
+        static const AssetImage * const assets[20] =
         {
             &NormalDigit_0,
             &NormalDigit_1,
@@ -496,6 +485,17 @@ namespace TotalsGame
             &NormalDigit_7,
             &NormalDigit_8,
             &NormalDigit_9,
+            &AccentDigit_0,
+            &AccentDigit_1,
+            &AccentDigit_2,
+            &AccentDigit_3,
+            &AccentDigit_4,
+            &AccentDigit_5,
+            &AccentDigit_6,
+            &AccentDigit_7,
+            &AccentDigit_8,
+            &AccentDigit_9,
+
         };
 
         BG1Helper bg1(*GetCube());
@@ -505,7 +505,7 @@ namespace TotalsGame
             Vec2 p;
             p.x = TokenView::Mid.x - assets[mDigitId]->width / 2;
             p.y = TokenView::Mid.y - assets[mDigitId]->height / 2;
-            bg1.DrawAsset(p, *assets[mDigitId]);
+            bg1.DrawAsset(p, *assets[useAccentDigit? mDigitId + 10 : mDigitId]);
         }
         bg1.Flush();
 
