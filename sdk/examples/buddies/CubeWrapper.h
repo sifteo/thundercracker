@@ -22,6 +22,8 @@
 namespace Buddies {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+/// CubeWrapper contains state for each Sifteo::Cube. Instead of exposing the Cube directly, this
+/// class manages all access so it can enforce the game logic.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CubeWrapper
@@ -34,10 +36,12 @@ public:
     void Draw();
     void DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime);
     
+    // Asset Loading
     bool IsLoadingAssets();
     void LoadAssets();
     void DrawLoadingAssets();
     
+    // Enable/Disable
     bool IsEnabled() const;
     void Enable(Sifteo::Cube::ID cubeId, unsigned int buddyId);
     void Disable();
@@ -64,7 +68,6 @@ private:
     Piece mPieces[NUM_SIDES];
     Piece mPiecesSolution[NUM_SIDES];
     int mPieceOffsets[NUM_SIDES];
-    bool mTouching;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -43,16 +43,15 @@ enum SwapState
 const bool kLoadAssets = true;
 const bool kShuffleMode = true;
 
-const unsigned int kNumCubes = 2;
-const unsigned int kMaxBuddies = 6;
+const unsigned int kNumCubes = 2; // Number of cubes used in this game
+const unsigned int kMaxBuddies = 6; // Number of characters
 
-const float kResetTimerDuration = 3.0f;
+const float kResetTimerDuration = 3.0f; // Touch a cube for this many seconds to reset the game
 
-const float kShuffleStateTimeDelay = 1.0f;
+const float kShuffleStateTimeDelay = 1.0f; // Amount of delay when switching between shuffle states
 const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap animation and beginning of next
 
-const int kSwapAnimationSpeed = 8;
-const int kSwapAnimationCount = 64 - 8; // Sprites are offset by 8 pixels by design
+const int kSwapAnimationSpeed = 8; // Number of frames animated during swap on each update
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -22,6 +22,8 @@
 namespace Buddies {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+/// App holds all the state necessary to run CubeBuddies. System events are forward directly
+/// to this class. A single instance should live in main.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class App
@@ -29,13 +31,14 @@ class App
 public:
     App();
     
-    void Init();
-    void Reset();
+    void Init(); /// Called on program initialization
+    void Reset(); /// Called after assets are loaded, or when game is reset
     void Update(float dt);
     void Draw();
     
     CubeWrapper &GetCubeWrapper(Sifteo::Cube::ID cubeId);
     
+    // Event Notifications
     void OnNeighborAdd(Sifteo::Cube::ID cubeId0, Sifteo::Cube::Side cubeSide0, Sifteo::Cube::ID cubeId1, Sifteo::Cube::Side cubeSide1);
     void OnTilt(Sifteo::Cube::ID cubeId);
     void OnShake(Sifteo::Cube::ID cubeId);
@@ -43,6 +46,8 @@ public:
 private:
     void AddCube(Sifteo::Cube::ID cubeId);
     void RemoveCube(Sifteo::Cube::ID cubeId);
+    
+    void PlaySound();
     
     void StartShuffleState(ShuffleState shuffleState);
     void UpdateShuffle(float dt);

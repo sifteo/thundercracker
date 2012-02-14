@@ -17,6 +17,8 @@
 namespace Buddies { namespace {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// || Various convenience functions...
+// \/ 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void NormalizeRotation(Piece &piece, unsigned int side)
@@ -113,6 +115,8 @@ bool AllSolved(App& app)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// ||
+// \/ Static data
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const char *kShuffleStateNames[NUM_SHUFFLE_STATES] =
@@ -126,12 +130,7 @@ const char *kShuffleStateNames[NUM_SHUFFLE_STATES] =
     "SHUFFLE_STATE_SCORE",
 };
 
-const char *kSwapStateNames[NUM_SHUFFLE_STATES] =
-{
-    "SWAP_STATE_NONE",
-    "SWAP_STATE_OUT",
-    "SWAP_STATE_IN",
-};
+const int kSwapAnimationCount = 64 - 8; // Note: sprites are offset by 8 pixels by design
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -195,7 +194,7 @@ void App::Update(float dt)
     UpdateShuffle(dt);
     UpdateSwap(dt);
     
-    // Cube Updates
+    // Cubes
     for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
     {
         if (mCubeWrappers[i].IsEnabled())
@@ -213,7 +212,7 @@ void App::Update(float dt)
         {
             mResetTimer = kResetTimerDuration;
             
-            mChannel.play(gems1_4A9);
+            PlaySound();
             Reset();
         }
     }
@@ -241,6 +240,7 @@ void App::Draw()
         }
     }
     
+    // TODO: paintSync?
     System::paint();
 }
 
@@ -330,6 +330,14 @@ void App::RemoveCube(Cube::ID cubeId)
     ASSERT(mCubeWrappers[cubeId].IsEnabled());
     
     mCubeWrappers[cubeId].Disable();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::PlaySound()
+{
+    mChannel.play(gems1_4A9);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -551,7 +559,7 @@ void App::OnSwapFinish()
     if (mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() ||
         mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved())
     {
-        mChannel.play(gems1_4A9);
+        PlaySound();
     }
 }
 
