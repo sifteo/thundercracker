@@ -397,7 +397,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
                 vid.BG0_drawAsset(Vec2(6,6), font, frame);
             }
 
-            frame = str[3] - (int)'A';
+            frame = str[2] - (int)'A';
             if (frame < font.frames)
             {
                 vid.BG0_drawAsset(Vec2(12,6), font, frame);

@@ -9,7 +9,8 @@ public:
     PrototypeWordList();
     static bool pickWord(char* buffer);
     static bool isWord(const char* string, bool& isCommon);
-    static bool bitsToString(uint32_t bits, char* buffer);
+
+    static bool bitsToString(uint64_t bits, char* buffer);
 
 private:
     //static const char* sList[];

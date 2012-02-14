@@ -3,6 +3,7 @@
 
 #include <sifteo.h>
 #include "GameStateMachine.h"
+
 using namespace Sifteo;
 
 union EventData;
