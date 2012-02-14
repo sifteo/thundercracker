@@ -241,7 +241,6 @@ void App::Draw()
         }
     }
     
-    // TODO: paintSync?
     System::paint();
 }
 

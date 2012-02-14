@@ -36,6 +36,8 @@ public:
     void Draw();
     void DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime);
     
+    void ForceBg1Flush(); // HACK!
+    
     // Asset Loading
     bool IsLoadingAssets();
     void LoadAssets();
