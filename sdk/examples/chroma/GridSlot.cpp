@@ -317,7 +317,10 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
             else
             {
                 const AssetImage &exTex = GetExplodingTexture();
-                vid.BG0_drawAsset(vec, exTex, m_animFrame);
+
+                unsigned int markFrame = m_bWasRainball ? 0 : m_animFrame;
+
+                vid.BG0_drawAsset(vec, exTex, markFrame);
 
                 if( m_bWasRainball || m_bWasInfected )
                 {
