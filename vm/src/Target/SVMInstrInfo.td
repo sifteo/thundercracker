@@ -163,12 +163,18 @@ def CMOV : Pseudo<(outs GPReg:$Rd), (ins GPReg:$T, GPReg:$F, CCop:$cc),
  * Data processing instructions
  */
 
+def NOP : ThumbInst16<(outs), (ins), "nop", []> {
+    let opA = 5;
+    let Inst{12-0} = 0b1111100000000;
+}
+
 // Format 1
 
 def MOVSr : T1<(outs GPReg:$Rd), (ins GPReg:$Rs),
     "movs\t$Rd, $Rs", []> {
     let opB = 0;
     let offset5 = 0;
+    let neverHasSideEffects = 1;
 }
 
 def LSLi5 : T1<(outs GPReg:$Rd), (ins GPReg:$Rs, i32imm:$offset5),

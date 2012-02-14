@@ -94,7 +94,9 @@ class T1<dag outs, dag ins, string asmstr, list<dag> pattern>
     let Inst{10-6} = offset5;
     let Inst{5-3} = Rs;
     let Inst{2-0} = Rd;
+
     let isAsCheapAsAMove = 1;
+    let isReMaterializable = 1;
     let Defs = [CPSR];
 }
 
@@ -113,6 +115,8 @@ class T2<dag outs, dag ins, string asmstr, list<dag> pattern>
     let Inst{8-6} = Rn;
     let Inst{5-3} = Rs;
     let Inst{2-0} = Rd;
+
+    let isReMaterializable = 1;
     let Defs = [CPSR];
 }
 
@@ -126,6 +130,8 @@ class T3<dag outs, dag ins, string asmstr, list<dag> pattern>
     let Inst{12-11} = opB;
     let Inst{10-8} = Rd;
     let Inst{7-0} = offset8;
+
+    let isReMaterializable = 1;
     let Defs = [CPSR];
 }
 
@@ -140,6 +146,8 @@ class T4<dag outs, dag ins, string asmstr, list<dag> pattern>
     let Inst{9-6} = opB;
     let Inst{5-3} = Rs;
     let Inst{2-0} = Rn;
+
+    let isReMaterializable = 1;
     let Defs = [CPSR];
 }
 
@@ -241,6 +249,9 @@ class T32_LDSTbase<bits<7> op2v, bits<3> bpReg, dag outs, dag ins, string asmstr
     let secondWord{15} = 0;  // Source/dest in low reg
     let secondWord{14-12} = Rt;
     let secondWord{11-0} = offset12;
+    
+    let neverHasSideEffects = 1;
+    // Not marked rematerializable, LD/ST is expensive relative to spilling.
 }
 
 // 16-bit immediate (MOVT/MOVW)
