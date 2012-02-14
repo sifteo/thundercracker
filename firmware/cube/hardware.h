@@ -245,8 +245,8 @@ __sfr __at 0xA9 IP0;
 __sfr __at 0xAA S0RELL;
 __sfr __at 0xAB RTC2CPT01;
 __sfr __at 0xAC RTC2CPT10;
-__sfr __at 0xAD CLKLFCTRL;
-__sfr __at 0xAE OPMCON;
+__sfr __at 0xAD volatile CLKLFCTRL;
+__sfr __at 0xAE volatile OPMCON;
 __sfr __at 0xAF WDSV;
 __sfr __at 0xB0 P3;
 __sfr __at 0xB1 RSTREAS;
@@ -414,6 +414,16 @@ __sbit __at 0xEA RF_CKEN;
 // W2CON1 bits
 #define W2CON1_NACK     0x02
 #define W2CON1_READY    0x01
+
+// OPMCON bits
+#define OPMCON_WDT_ENABLE       0x01
+#define OPMCON_LATCH_LOCKED     0x02
+#define OPMCON_WUP_ACTIVE_LOW   0x04
+
+// CLKLFCTRL bits
+#define CLKLFCTRL_XOSC16M       0x08
+#define CLKLFCTRL_READY         0x40
+#define CLKLFCTRL_PHASE         0x80
 
 
 #endif // __HARDWARE_H

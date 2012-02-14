@@ -24,8 +24,14 @@ void power_init(void)
      * This default can be overridden by compiling with -DWAKE_ON_POWERUP.
      */
 
-    // Data sheet specifies that we need to rest PWRDWN to 0 after reading it.
+    /*
+     * First, clean up after any possible sleep state we were just in. The
+     * data sheet specifies that we need to rest PWRDWN to 0 after reading it,
+     * and we need to re-open the I/O latch.
+     */
     uint8_t powerupReason = PWRDWN;
+    OPMCON = 0;
+    TOUCH_WUPOC = 0;
     PWRDWN = 0;
 
 #ifndef WAKE_ON_POWERUP
@@ -95,7 +101,10 @@ void power_sleep(void)
      */
 
     TOUCH_WUPOC = TOUCH_WUOPC_BIT;
-    WUCON = 0xFB;
+
+    // We must latch these port states, to preserve them during sleep.
+    // This latch stays locked until early wakeup, in power_init().
+    OPMCON = OPMCON_LATCH_LOCKED;
 
     while (1) {
         PWRDWN = 1;
