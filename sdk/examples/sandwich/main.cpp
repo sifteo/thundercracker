@@ -11,6 +11,102 @@ Game* pGame = 0;
 Cube* IntroCutscene();
 void WinScreen(Cube* primaryCube);
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+static void ScrollMap(const MapData* pMap) {
+	const int xmin = 0;
+	const int ymin = 0;
+	const int xmax = 128 * (pMap->width-1);
+	const int ymax = 128 * (pMap->height-1);
+	int x = 0;
+	int y = 0;
+	VidMode_BG0 gfx(gCubes->vbuf);
+	gfx.init();
+	while(1) {
+		Vec2 accel = gCubes->virtualAccel();
+		x += accel.x / 10;
+		y += accel.y / 10;
+		if (x < xmin) { x = xmin; } else if (x > xmax) { x = xmax; }
+		if (y < ymin) { y = ymin; } else if (y > ymax) { y = ymax; }
+		unsigned rx = x >> 7;
+		unsigned ry = y >> 7;
+
+
+		Vec2 pan = Vec2(x - (rx << 7), y - (ry << 7));
+		gfx.BG0_setPanning(pan);
+		unsigned start_tile_x = pan.x >> 4;
+		unsigned start_tile_y = pan.y >> 4;
+
+
+		for(unsigned tx=0; tx<18; ++tx) {
+			for(unsigned ty=0; ty<18; ++ty) {
+				gfx.BG0_drawAsset(Vec2(tx, ty), Black);
+			}
+		}
+
+		// top-left room
+		for(unsigned ty=start_tile_y; ty<8; ++ty) {
+			for(unsigned tx=start_tile_x; tx<8; ++tx) {
+				gfx.BG0_drawAsset(
+					Vec2(tx<<1, ty<<1),
+					*pMap->tileset,
+					pMap->rooms[rx + ry * pMap->width].tiles[tx + (ty<<3)]
+				);
+			}
+		}
+		
+		if (pan.x) {
+			// top-right room
+			for(unsigned ty=start_tile_y; ty<8; ++ty) {
+				for(unsigned tx=0; tx<=start_tile_x; ++tx) {
+					gfx.BG0_drawAsset(
+						Vec2((8 + tx)%9<<1, ty<<1),
+						*pMap->tileset,
+						pMap->rooms[(rx+1) + ry * pMap->width].tiles[tx + (ty<<3)]
+					);
+				}
+			}
+
+			if (pan.y) {
+				// bottom-right room
+				for(unsigned ty=0; ty<=start_tile_y; ++ty) {
+					for(unsigned tx=0; tx<=start_tile_x; ++tx) {
+						gfx.BG0_drawAsset(
+							Vec2((8 + tx)%9<<1, (8 + ty)%9<<1),
+							*pMap->tileset,
+							pMap->rooms[(rx+1) + (ry+1) * pMap->width].tiles[tx + (ty<<3)]
+						);
+					}
+				}
+			}
+
+		}
+		
+		if (pan.y) {
+			// bottom-left room
+			for(unsigned ty=0; ty<=start_tile_y; ++ty) {
+				for(unsigned tx=start_tile_x; tx<8; ++tx) {
+					gfx.BG0_drawAsset(
+						Vec2(tx<<1, (8 + ty)%9<<1),
+						*pMap->tileset,
+						pMap->rooms[rx + (ry+1) * pMap->width].tiles[tx + (ty<<3)]
+					);
+				}
+			}
+		}
+		
+
+		System::paintSync();
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
 static bool AnyNeighbors(const Cube& c) {
 	return c.hasPhysicalNeighborAt(0) || 
 		c.hasPhysicalNeighborAt(1) || 
@@ -48,6 +144,9 @@ void siftmain() {
 	#if MUSIC_ON
 	gChannelMusic.init();
 	#endif
+
+	ScrollMap(gMapData+1);
+
 	for(;;) {
 		//#ifndef SIFTEO_SIMULATOR
 		PlayMusic(music_sting, false);
