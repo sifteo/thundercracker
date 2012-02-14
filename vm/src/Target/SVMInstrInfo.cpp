@@ -150,16 +150,40 @@ bool SVMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB
     if (!isUnpredicatedTerminator(I))
         return false;
     
-    // Actually the last instruction
+    // Last and next-to-last branch instructions
     MachineInstr *lastI = I;
-    unsigned lastOp = lastI->getOpcode();
-    
-    if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
+    MachineInstr *prevI = NULL;
+    if (I != MBB.begin()) {
+        --I;
+        if (isUnpredicatedTerminator(I))
+            prevI = I;
+    }
+
+    if (prevI == NULL) {
         // Only a single terminator instruction
         
-        if (isUncondBranchOpcode(lastOp)) {
+        if (isUncondBranchOpcode(lastI->getOpcode())) {
             // Unconditional branch
             TBB = lastI->getOperand(0).getMBB();
+            return false;
+        }
+        
+        if (isCondBranchOpcode(lastI->getOpcode())) {
+            // Conditional branch with fall-through
+            TBB = lastI->getOperand(0).getMBB();
+            Cond.push_back(lastI->getOperand(1));
+            return false;
+        }
+
+    } else {
+        // Multiple terminators
+
+        if (isUncondBranchOpcode(lastI->getOpcode()) &&
+            isCondBranchOpcode(prevI->getOpcode())) {
+            // Conditional branch followed by unconditional
+            TBB = prevI->getOperand(0).getMBB();
+            FBB = lastI->getOperand(0).getMBB();
+            Cond.push_back(prevI->getOperand(1));
             return false;
         }
     }
@@ -173,7 +197,7 @@ unsigned SVMInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const
     unsigned removedInstructions = 0;
     MachineBasicBlock::iterator I = MBB.end();
     if (I == MBB.begin()) 
-        return false;
+        return 0;
     --I;
 
     do {
@@ -183,6 +207,9 @@ unsigned SVMInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const
             I->eraseFromParent();
             removedInstructions++;
             I = MBB.end();
+            if (I == MBB.begin()) 
+                break;
+            --I;
         } else {
             break;
         }
@@ -195,8 +222,27 @@ unsigned SVMInstrInfo::InsertBranch(MachineBasicBlock &MBB,
     MachineBasicBlock *TBB, MachineBasicBlock *FBB,
     const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const
 {
-    assert(FBB == NULL && "Conditional branch analysis not yet implemented");
+    unsigned Count = 0;
     
-    BuildMI(&MBB, DL, get(SVM::B)).addMBB(TBB);
-    return 1;
+    if (Cond.empty()) {
+        // Unconditional
+        assert(TBB != 0);
+        assert(FBB == 0);
+        BuildMI(&MBB, DL, get(SVM::B)).addMBB(TBB);
+        Count++;
+
+    } else {
+        // Insert the first conditional branch
+        assert(TBB != 0);
+        BuildMI(&MBB, DL, get(SVM::Bcc)).addMBB(TBB).addOperand(Cond[0]);
+        Count++;
+    
+        if (FBB != 0) {
+            // Unconditional False branch
+            BuildMI(&MBB, DL, get(SVM::B)).addMBB(FBB);
+            Count++;
+        }
+    }
+    
+    return Count;
 }

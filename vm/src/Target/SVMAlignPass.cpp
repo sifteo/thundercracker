@@ -208,10 +208,8 @@ MachineBasicBlock::iterator SVMAlignPass::findAlignSlotFiller(
         // Can this instruction be a filler?
         if (!I->isDebugValue() && Desc.getSize() == 2 &&
             !Desc.mayLoad() && !Desc.mayStore() &&
-            !hasRegHazard(*I, RegDefs, RegUses)) {
-            printf("--- end (succeed)\n");
+            !hasRegHazard(*I, RegDefs, RegUses))
             return I;
-        }
 
         insertRegDefsUses(*I, RegDefs, RegUses);
     }

@@ -11,16 +11,11 @@ Optimization opportunities:
 - More work on identifying opportunities to use imm12 addressing
 - Equal optimization weight for all 16-bit instructions? LDRpc alone is
   better than LDRpc plus MOVs, for example.
-- Try to fill NOP padding slots with useful 16-bit instructions
 - Use MOVWi16 instead of LDRpc for RAM symbols (we know they fit in 16 bits)
 - More efficient comparison generation (See ARMTargetLowering::getARMCmp)
 
 Debugging support:
 
-- Explicit command line options, debug vs. release
-- In release builds, emit *nothing* that isn't necessary. Can probably
-  omit the ELF segment table entirely, and include only the necessary
-  sections.
-- Debug builds: symbol tables, segment table, dwarf-2 symbols, etc.
+- What's left to implement in order to get working Dwarf symbols?
 - gdb stub! (Would this work with stock ARM gdb, or would we need a
   special build?)
