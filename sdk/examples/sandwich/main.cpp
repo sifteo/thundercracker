@@ -145,7 +145,7 @@ void siftmain() {
 	gChannelMusic.init();
 	#endif
 
-	ScrollMap(gMapData+1);
+	//ScrollMap(gMapData+1);
 
 	for(;;) {
 		//#ifndef SIFTEO_SIMULATOR
