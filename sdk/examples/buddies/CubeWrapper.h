@@ -31,10 +31,11 @@ public:
     
     void Reset();
     void Update();
-    void Draw(ShuffleState shuffleState, float shuffleScoreTime);
+    void Draw();
+    void DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime);
     
     bool IsSolved() const;
-        
+    
     void InitVideoRom();
     void PaintProgressBar();
     bool IsDoneLoading();
@@ -52,19 +53,15 @@ public:
     BuddyMode GetMode() const;
     bool IsTouching() const;
     
-    void PaintBanner(const Sifteo::AssetImage &asset);
-    void PaintBannerScore(const Sifteo::AssetImage &asset, int minutes, int seconds);
+    void DrawBanner(const Sifteo::AssetImage &asset);
+    void DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds);
     
 private:
     Sifteo::VidMode_BG0_SPR_BG1 Video();
     
-    void PaintFacePart(const Piece &piece, unsigned int side);
-    
-    void OnButtonPress();
-    void OnButtonRelease();
+    void DrawFacePart(const Piece &piece, unsigned int side);
     
     Sifteo::Cube mCube;
-    
     bool mEnabled;
     unsigned int mBuddyId;
     Piece mPieces[NUM_SIDES];

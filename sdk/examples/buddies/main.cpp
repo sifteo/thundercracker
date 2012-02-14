@@ -7,9 +7,9 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <sifteo.h>
-#include "assets.gen.h"
 #include "App.h"
 #include "Config.h"
+#include "assets.gen.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,8 +33,8 @@ bool AllDoneLoading()
 {
     for (unsigned i = 0; i < Buddies::kNumCubes; ++i)
     {
-        if ( sApp.GetWrapper(i).IsEnabled() &&
-            !sApp.GetWrapper(i).IsDoneLoading())
+        if ( sApp.GetCubeWrapper(i).IsEnabled() &&
+            !sApp.GetCubeWrapper(i).IsDoneLoading())
         {
            return false;
         }
@@ -46,9 +46,41 @@ bool AllDoneLoading()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void Init()
+{
+    sApp.Init();
+    
+    if (Buddies::kLoadAssets)
+    {
+        for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
+        {
+            if (sApp.GetCubeWrapper(i).IsEnabled())
+            {
+                sApp.GetCubeWrapper(i).InitVideoRom();
+            }
+        }
+        
+        while (!AllDoneLoading())
+        {
+            for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
+            {
+                if (sApp.GetCubeWrapper(i).IsEnabled())
+                {
+                    sApp.GetCubeWrapper(i).PaintProgressBar();
+                }
+            }
+            
+            System::paint();
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void OnNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
-    if (sApp.GetWrapper(c0).IsEnabled() && sApp.GetWrapper(c1).IsEnabled())
+    if (sApp.GetCubeWrapper(c0).IsEnabled() && sApp.GetCubeWrapper(c1).IsEnabled())
     {
         sApp.OnNeighborAdd(c0, s0, c1, s1);
     }
@@ -59,7 +91,7 @@ void OnNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 
 void OnTilt(_SYSCubeID cid)
 {
-    if (sApp.GetWrapper(cid).IsEnabled())
+    if (sApp.GetCubeWrapper(cid).IsEnabled())
     {
         sApp.OnTilt(cid);
     }
@@ -70,7 +102,7 @@ void OnTilt(_SYSCubeID cid)
 
 void OnShake(_SYSCubeID cid)
 {
-    if (sApp.GetWrapper(cid).IsEnabled())
+    if (sApp.GetCubeWrapper(cid).IsEnabled())
     {
         sApp.OnShake(cid);
     }
@@ -79,39 +111,13 @@ void OnShake(_SYSCubeID cid)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void LoadAssets()
-{
-    for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
-    {
-        if (sApp.GetWrapper(i).IsEnabled())
-        {
-            sApp.GetWrapper(i).InitVideoRom();
-        }
-    }
-    
-    // TODO: kLoadAssets=false results in some graphical glitches
-    while (Buddies::kLoadAssets && !AllDoneLoading())
-    {
-        for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
-        {
-            if (sApp.GetWrapper(i).IsEnabled())
-            {
-                sApp.GetWrapper(i).PaintProgressBar();
-            }
-        }
-        
-        System::paint();
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void SetupEvents()
+void Setup()
 {
     _SYS_vectors.neighborEvents.add = OnNeighborAdd;
     _SYS_vectors.cubeEvents.tilt = OnTilt;
     _SYS_vectors.cubeEvents.shake = OnShake;
+    
+    sApp.Reset();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,11 +146,8 @@ void MainLoop()
 
 void siftmain()
 {
-    sApp.Init();
-    LoadAssets();
-    SetupEvents();
-    
-    sApp.Setup();
+    Init();
+    Setup();
     MainLoop();
 }
 

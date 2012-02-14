@@ -132,7 +132,7 @@ void CubeWrapper::Update()
     {
         if (!mCube.touching())
         {
-            OnButtonRelease();
+            mMode = BUDDY_MODE_NORMAL;
             mTouching = false;
         }
     }
@@ -140,15 +140,16 @@ void CubeWrapper::Update()
     {
         if (mCube.touching())
         {
-            OnButtonPress();
+            mMode = BUDDY_MODE_HINT;
             mTouching = true;
         }
     }
 }
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::Draw(ShuffleState shuffleState, float shuffleScoreTime)
+void CubeWrapper::Draw()
 {
     ASSERT(IsEnabled());
     
@@ -157,38 +158,44 @@ void CubeWrapper::Draw(ShuffleState shuffleState, float shuffleScoreTime)
     
     if (mMode == BUDDY_MODE_HINT)
     {
-        PaintFacePart(mPiecesSolution[SIDE_TOP], SIDE_TOP);
-        PaintFacePart(mPiecesSolution[SIDE_LEFT], SIDE_LEFT);
-        PaintFacePart(mPiecesSolution[SIDE_BOTTOM], SIDE_BOTTOM);
-        PaintFacePart(mPiecesSolution[SIDE_RIGHT], SIDE_RIGHT);
+        DrawFacePart(mPiecesSolution[SIDE_TOP], SIDE_TOP);
+        DrawFacePart(mPiecesSolution[SIDE_LEFT], SIDE_LEFT);
+        DrawFacePart(mPiecesSolution[SIDE_BOTTOM], SIDE_BOTTOM);
+        DrawFacePart(mPiecesSolution[SIDE_RIGHT], SIDE_RIGHT);
     }
     else
     {
-        PaintFacePart(mPieces[SIDE_TOP], SIDE_TOP);
-        PaintFacePart(mPieces[SIDE_LEFT], SIDE_LEFT);
-        PaintFacePart(mPieces[SIDE_BOTTOM], SIDE_BOTTOM);
-        PaintFacePart(mPieces[SIDE_RIGHT], SIDE_RIGHT);
+        DrawFacePart(mPieces[SIDE_TOP], SIDE_TOP);
+        DrawFacePart(mPieces[SIDE_LEFT], SIDE_LEFT);
+        DrawFacePart(mPieces[SIDE_BOTTOM], SIDE_BOTTOM);
+        DrawFacePart(mPieces[SIDE_RIGHT], SIDE_RIGHT);
     }
-    
+}  
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime)
+{
     if (kShuffleMode)
     {
         switch (shuffleState)
         {
             case SHUFFLE_STATE_SHAKE_TO_SCRAMBLE:
             {
-                PaintBanner(BannerShakeToScramble);
+                DrawBanner(BannerShakeToScramble);
                 break;
             }
             case SHUFFLE_STATE_UNSCRAMBLE_THE_FACES:
             {
-                PaintBanner(BannerUnscrambleTheFaces);
+                DrawBanner(BannerUnscrambleTheFaces);
                 break;
             }
             case SHUFFLE_STATE_PLAY:
             {
                 if (IsSolved())
                 {
-                    PaintBanner(BannerFaceComplete);
+                    DrawBanner(BannerFaceComplete);
                 }
                 break;
             }
@@ -199,11 +206,11 @@ void CubeWrapper::Draw(ShuffleState shuffleState, float shuffleScoreTime)
                     int minutes = int(shuffleScoreTime) / 60;
                     int seconds = int(shuffleScoreTime - (minutes * 60.0f));
                     
-                    PaintBannerScore(BannerYourTime, minutes, seconds);
+                    DrawScoreBanner(BannerYourTime, minutes, seconds);
                 }
                 else
                 {
-                    PaintBanner(BannerShakeToScramble);
+                    DrawBanner(BannerShakeToScramble);
                 }
                 break;
             }
@@ -366,7 +373,7 @@ bool CubeWrapper::IsTouching() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::PaintBanner(const Sifteo::AssetImage &asset)
+void CubeWrapper::DrawBanner(const Sifteo::AssetImage &asset)
 {
     BG1Helper bg1helper(mCube);
     bg1helper.DrawAsset(Vec2(0, 0), asset);
@@ -376,7 +383,7 @@ void CubeWrapper::PaintBanner(const Sifteo::AssetImage &asset)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::PaintBannerScore(const Sifteo::AssetImage &asset, int minutes, int seconds)
+void CubeWrapper::DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds)
 {
     int x = 10;
     
@@ -401,7 +408,7 @@ Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::PaintFacePart(const Piece &piece, unsigned int side)
+void CubeWrapper::DrawFacePart(const Piece &piece, unsigned int side)
 {
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
     ASSERT(piece.mRotation >= 0 && piece.mRotation < 4);
@@ -439,22 +446,6 @@ void CubeWrapper::PaintFacePart(const Piece &piece, unsigned int side)
     }
     
     Video().moveSprite(side, point);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::OnButtonPress()
-{
-    mMode = BUDDY_MODE_HINT;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::OnButtonRelease()
-{
-    mMode = BUDDY_MODE_NORMAL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -30,43 +30,37 @@ public:
     App();
     
     void Init();
-    void Setup();
+    void Reset();
     void Update(float dt);
     void Draw();
     
-    void AddCube(Sifteo::Cube::ID cubeId);
-    void RemoveCube(Sifteo::Cube::ID cubeId);
-    
-    CubeWrapper &GetWrapper(Sifteo::Cube::ID cubeId);
+    CubeWrapper &GetCubeWrapper(Sifteo::Cube::ID cubeId);
     
     void OnNeighborAdd(Sifteo::Cube::ID cubeId0, Sifteo::Cube::Side cubeSide0, Sifteo::Cube::ID cubeId1, Sifteo::Cube::Side cubeSide1);
     void OnTilt(Sifteo::Cube::ID cubeId);
     void OnShake(Sifteo::Cube::ID cubeId);
     
 private:
-    bool AnyTouching() const;
-    bool AllSolved() const;
-    
-    void Reset();
+    void AddCube(Sifteo::Cube::ID cubeId);
+    void RemoveCube(Sifteo::Cube::ID cubeId);
     
     void StartShuffleState(ShuffleState shuffleState);
     void UpdateShuffle(float dt);
-    
-    void ShufflePiece();
+    void ShufflePieces();
     
     void UpdateSwap(float dt);
+    void OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1);
+    void OnSwapExchange();
+    void OnSwapFinish();
     
-    void SwapPieces(unsigned int swapPiece0, unsigned int swapPiece1);
-    
-    CubeWrapper mWrappers[kNumCubes];
+    CubeWrapper mCubeWrappers[kNumCubes];
     Sifteo::AudioChannel mChannel;
     float mResetTimer;
     
     ShuffleState mShuffleState;
-    float mShuffleStateTimer;
-    float mShuffleScrambleTimer;
-    bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     float mShuffleScoreTime;
+    float mShuffleDelayTimer;
+    bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     
     SwapState mSwapState;
     unsigned int mSwapPiece0;

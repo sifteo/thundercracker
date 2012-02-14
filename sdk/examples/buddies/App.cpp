@@ -83,6 +83,38 @@ unsigned int GetRandomOtherPiece(bool moved[], size_t num_moved, unsigned int no
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool AnyTouching(App& app)
+{
+    for (unsigned int i = 0; i < kNumCubes; ++i)
+    {
+        if (app.GetCubeWrapper(i).IsEnabled() && app.GetCubeWrapper(i).IsTouching())
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+                    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool AllSolved(App& app)
+{
+    for (unsigned int i = 0; i < kNumCubes; ++i)
+    {
+        if (app.GetCubeWrapper(i).IsEnabled() && !app.GetCubeWrapper(i).IsSolved())
+        {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const char *kShuffleStateNames[NUM_SHUFFLE_STATES] =
 {
     "SHUFFLE_STATE_START",
@@ -110,13 +142,12 @@ const char *kSwapStateNames[NUM_SHUFFLE_STATES] =
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 App::App()
-    : mWrappers()
+    : mCubeWrappers()
     , mChannel()
     , mResetTimer(0.0f)
     , mShuffleState(SHUFFLE_STATE_NONE)
-    , mShuffleStateTimer(0.0f)
-    , mShuffleScrambleTimer(0.0f)
     , mShuffleScoreTime(0.0f)
+    , mShuffleDelayTimer(0.0f)
     , mSwapState(SWAP_STATE_NONE)
     , mSwapPiece0(0)
     , mSwapPiece1(0)
@@ -140,8 +171,16 @@ void App::Init()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::Setup()
+void App::Reset()
 {
+    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+    {
+        if (mCubeWrappers[i].IsEnabled())
+        {
+            mCubeWrappers[i].Reset();
+        }
+    }
+    
     if (kShuffleMode)
     {
         StartShuffleState(SHUFFLE_STATE_START);
@@ -157,22 +196,24 @@ void App::Update(float dt)
     UpdateSwap(dt);
     
     // Cube Updates
-    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
+    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
     {
-        if (mWrappers[i].IsEnabled())
+        if (mCubeWrappers[i].IsEnabled())
         {
-            mWrappers[i].Update();
+            mCubeWrappers[i].Update();
         }
     }
     
     // Reset Detection
-    if (AnyTouching())
+    if (AnyTouching(*this))
     {
         mResetTimer -= dt;
         
         if (mResetTimer <= 0.0f)
         {
             mResetTimer = kResetTimerDuration;
+            
+            mChannel.play(gems1_4A9);
             Reset();
         }
     }
@@ -187,12 +228,16 @@ void App::Update(float dt)
 
 void App::Draw()
 {
-    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
+    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
     {
-        if (mWrappers[i].IsEnabled())
+        if (mCubeWrappers[i].IsEnabled())
         {
-            // TODO: Weird that I pass in shuffle data in non-shuffle mode...
-            mWrappers[i].Draw(mShuffleState, mShuffleScoreTime);
+            mCubeWrappers[i].Draw();
+            
+            if (mShuffleState != SHUFFLE_STATE_NONE)
+            {
+                mCubeWrappers[i].DrawShuffleUi(mShuffleState, mShuffleScoreTime);
+            }
         }
     }
     
@@ -202,33 +247,11 @@ void App::Draw()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::AddCube(Cube::ID cubeId)
+CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId)
 {
-    ASSERT(cubeId < arraysize(mWrappers));
-    ASSERT(!mWrappers[cubeId].IsEnabled());
+    ASSERT(cubeId < arraysize(mCubeWrappers));
     
-    mWrappers[cubeId].Enable(cubeId, cubeId % kMaxBuddies);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void App::RemoveCube(Cube::ID cubeId)
-{
-    ASSERT(cubeId < arraysize(mWrappers));
-    ASSERT(mWrappers[cubeId].IsEnabled());
-    
-    mWrappers[cubeId].Disable();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-CubeWrapper &App::GetWrapper(Cube::ID cubeId)
-{
-    ASSERT(cubeId < arraysize(mWrappers));
-    
-    return mWrappers[cubeId];
+    return mCubeWrappers[cubeId];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -239,8 +262,8 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
     bool swapping = mSwapState != SWAP_STATE_NONE;
     
     bool isHinting =
-        GetWrapper(cubeId0).GetMode() == BUDDY_MODE_HINT ||
-        GetWrapper(cubeId1).GetMode() == BUDDY_MODE_HINT;
+        GetCubeWrapper(cubeId0).GetMode() == BUDDY_MODE_HINT ||
+        GetCubeWrapper(cubeId1).GetMode() == BUDDY_MODE_HINT;
     
     bool isValidShuffleState =
         mShuffleState == SHUFFLE_STATE_NONE ||
@@ -254,7 +277,7 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
             StartShuffleState(SHUFFLE_STATE_PLAY);
         }
         
-        SwapPieces(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
+        OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
     }
 }
 
@@ -290,49 +313,23 @@ void App::OnShake(Cube::ID cubeId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool App::AnyTouching() const
+void App::AddCube(Cube::ID cubeId)
 {
-    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
-    {
-        if (mWrappers[i].IsEnabled() && mWrappers[i].IsTouching())
-        {
-            return true;
-        }
-    }
+    ASSERT(cubeId < arraysize(mCubeWrappers));
+    ASSERT(!mCubeWrappers[cubeId].IsEnabled());
     
-    return false;
-}
-                    
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool App::AllSolved() const
-{
-    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
-    {
-        if (mWrappers[i].IsEnabled() && !mWrappers[i].IsSolved())
-        {
-            return false;
-        }
-    }
-    
-    return true;
+    mCubeWrappers[cubeId].Enable(cubeId, cubeId % kMaxBuddies);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::Reset()
+void App::RemoveCube(Cube::ID cubeId)
 {
-    for (unsigned int i = 0; i < arraysize(mWrappers); ++i)
-    {
-        if (mWrappers[i].IsEnabled())
-        {
-            mWrappers[i].Reset();
-        }
-    }
+    ASSERT(cubeId < arraysize(mCubeWrappers));
+    ASSERT(mCubeWrappers[cubeId].IsEnabled());
     
-    mChannel.play(gems1_4A9);
+    mCubeWrappers[cubeId].Disable();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -343,12 +340,11 @@ void App::StartShuffleState(ShuffleState shuffleState)
     mShuffleState = shuffleState;
     DEBUG_LOG(("State = %s", kShuffleStateNames[mShuffleState]));
     
-    switch (shuffleState)
+    switch (mShuffleState)
     {
         case SHUFFLE_STATE_START:
         {
-            mShuffleStateTimer = kShuffleStateTimeDelay;
-            mShuffleScoreTime = 0.0f;
+            mShuffleDelayTimer = kShuffleStateTimeDelay;
             break;
         }
         case SHUFFLE_STATE_SCRAMBLING:
@@ -357,7 +353,7 @@ void App::StartShuffleState(ShuffleState shuffleState)
             {
                 mShufflePiecesMoved[i] = false;
             }
-            ShufflePiece();
+            ShufflePieces();
             break;
         }
         case SHUFFLE_STATE_UNSCRAMBLE_THE_FACES:
@@ -381,12 +377,12 @@ void App::UpdateShuffle(float dt)
     {
         case SHUFFLE_STATE_START:
         {
-            ASSERT(mShuffleStateTimer > 0.0f);
-            mShuffleStateTimer -= dt;
+            ASSERT(mShuffleDelayTimer > 0.0f);
+            mShuffleDelayTimer -= dt;
             
-            if (mShuffleStateTimer <= 0.0f)
+            if (mShuffleDelayTimer <= 0.0f)
             {
-                mShuffleStateTimer = 0.0f;
+                mShuffleDelayTimer = 0.0f;
                 StartShuffleState(SHUFFLE_STATE_SHAKE_TO_SCRAMBLE);
             }
             break;
@@ -395,13 +391,13 @@ void App::UpdateShuffle(float dt)
         {
             if (mSwapAnimationCounter == 0)
             {
-                ASSERT(mShuffleScrambleTimer > 0.0f);
-                mShuffleScrambleTimer -= dt;
+                ASSERT(mShuffleDelayTimer > 0.0f);
+                mShuffleDelayTimer -= dt;
                 
-                if (mShuffleScrambleTimer <= 0.0f)
+                if (mShuffleDelayTimer <= 0.0f)
                 {
-                    mShuffleScrambleTimer = 0.0f;
-                    ShufflePiece();
+                    mShuffleDelayTimer = 0.0f;
+                    ShufflePieces();
                 }
             }
             break;
@@ -414,12 +410,12 @@ void App::UpdateShuffle(float dt)
         }
         case SHUFFLE_STATE_SOLVED:
         {
-            ASSERT(mShuffleStateTimer > 0.0f);
-            mShuffleStateTimer -= dt;
+            ASSERT(mShuffleDelayTimer > 0.0f);
+            mShuffleDelayTimer -= dt;
             
-            if (mShuffleStateTimer <= 0.0f)
+            if (mShuffleDelayTimer <= 0.0f)
             {
-                mShuffleStateTimer = 0.0f;
+                mShuffleDelayTimer = 0.0f;
                 StartShuffleState(SHUFFLE_STATE_SCORE);
             }
             break;
@@ -434,16 +430,14 @@ void App::UpdateShuffle(float dt)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::ShufflePiece()
+void App::ShufflePieces()
 {   
     DEBUG_LOG(("ShufflePiece... %d left\n", arraysize(mShufflePiecesMoved) - GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved))));
     
     unsigned int piece0 = GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved));
     unsigned int piece1 = GetRandomOtherPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved), piece0);
     
-    SwapPieces(piece0, piece1);
-    
-    mShuffleScrambleTimer = kShuffleScrambleTimerDelay;
+    OnSwapBegin(piece0, piece1);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -461,31 +455,12 @@ void App::UpdateSwap(float dt)
             mSwapAnimationCounter = 0;
         }
         
-        mWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, -kSwapAnimationCount + mSwapAnimationCounter);
-        mWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, -kSwapAnimationCount + mSwapAnimationCounter);
+        mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, -kSwapAnimationCount + mSwapAnimationCounter);
+        mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, -kSwapAnimationCount + mSwapAnimationCounter);
         
         if (mSwapAnimationCounter == 0)
         {
-            mSwapState = SWAP_STATE_IN;
-            mSwapAnimationCounter = kSwapAnimationCount;
-            
-            // Swap position, maintain rotation (most difficult)
-            // piece0.mRotation = piece0.mRotation + SIDE_ROTATIONS[side0][side1];
-            // piece1.mRotation = piece1.mRotation + SIDE_ROTATIONS[side1][side0];
-            
-            Piece temp = mWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
-            Piece piece0 = mWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
-            Piece piece1 = temp;
-            
-            NormalizeRotation(piece0, mSwapPiece0 % NUM_SIDES);
-            NormalizeRotation(piece1, mSwapPiece1 % NUM_SIDES);
-            
-            mWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
-            mWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
-            
-            // Mark both as moved...
-            mShufflePiecesMoved[mSwapPiece0] = true;
-            mShufflePiecesMoved[mSwapPiece1] = true;
+            OnSwapExchange();
         }
     }
     else if (mSwapState == SWAP_STATE_IN)
@@ -498,39 +473,12 @@ void App::UpdateSwap(float dt)
             mSwapAnimationCounter = 0;
         }
         
-        mWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, -mSwapAnimationCounter);
-        mWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, -mSwapAnimationCounter);
+        mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, -mSwapAnimationCounter);
+        mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, -mSwapAnimationCounter);
         
         if (mSwapAnimationCounter == 0)
         {
-            mSwapState = SWAP_STATE_NONE;
-            
-            if (mShuffleState == SHUFFLE_STATE_SCRAMBLING)
-            {
-                if (GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved))
-                {
-                    StartShuffleState(SHUFFLE_STATE_UNSCRAMBLE_THE_FACES);
-                }
-                else
-                {
-                    mShuffleScrambleTimer += kShuffleScrambleTimerDelay;
-                }
-            }
-            
-            // If we have solved a face, play the sound.
-            if (mWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() || mWrappers[mSwapPiece1 / NUM_SIDES].IsSolved())
-            {
-                mChannel.play(gems1_4A9);
-            }
-            
-            if (kShuffleMode)
-            {
-                if (AllSolved())
-                {
-                    StartShuffleState(SHUFFLE_STATE_SOLVED);
-                    mShuffleStateTimer = kShuffleStateTimeDelay;
-                }
-            }
+            OnSwapFinish();
         }
     }
 }
@@ -538,12 +486,73 @@ void App::UpdateSwap(float dt)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::SwapPieces(unsigned int swapPiece0, unsigned int swapPiece1)
+void App::OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1)
 {
     mSwapPiece0 = swapPiece0;
     mSwapPiece1 = swapPiece1;
     mSwapState = SWAP_STATE_OUT;
     mSwapAnimationCounter = kSwapAnimationCount;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////              
+
+void App::OnSwapExchange()
+{
+    mSwapState = SWAP_STATE_IN;
+    mSwapAnimationCounter = kSwapAnimationCount;
+    
+    // Swap position, maintain rotation (most difficult)
+    // piece0.mRotation = piece0.mRotation + SIDE_ROTATIONS[side0][side1];
+    // piece1.mRotation = piece1.mRotation + SIDE_ROTATIONS[side1][side0];
+    
+    Piece temp = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
+    Piece piece0 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
+    Piece piece1 = temp;
+    
+    NormalizeRotation(piece0, mSwapPiece0 % NUM_SIDES);
+    NormalizeRotation(piece1, mSwapPiece1 % NUM_SIDES);
+    
+    mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
+    mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
+    
+    // Mark both as moved...
+    mShufflePiecesMoved[mSwapPiece0] = true;
+    mShufflePiecesMoved[mSwapPiece1] = true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::OnSwapFinish()
+{
+    mSwapState = SWAP_STATE_NONE;
+    
+    if (mShuffleState == SHUFFLE_STATE_SCRAMBLING)
+    {
+        if (GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved))
+        {
+            StartShuffleState(SHUFFLE_STATE_UNSCRAMBLE_THE_FACES);
+        }
+        else
+        {
+            mShuffleDelayTimer += kShuffleScrambleTimerDelay;
+        }
+    }
+    else if (mShuffleState == SHUFFLE_STATE_PLAY)
+    {
+        if (AllSolved(*this))
+        {
+            StartShuffleState(SHUFFLE_STATE_SOLVED);
+            mShuffleDelayTimer = kShuffleStateTimeDelay;
+        }
+    }
+    
+    if (mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() ||
+        mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved())
+    {
+        mChannel.play(gems1_4A9);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
