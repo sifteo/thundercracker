@@ -46,12 +46,16 @@ public:
 private:
     void AddCube(Sifteo::Cube::ID cubeId);
     void RemoveCube(Sifteo::Cube::ID cubeId);
+    void ResetCubes();
     
     void PlaySound();
     
     void StartShuffleState(ShuffleState shuffleState);
     void UpdateShuffle(float dt);
     void ShufflePieces();
+    
+    void StartAuthoredState(AuthoredState authoredState);
+    void UpdateAuthored(float dt);
     
     void UpdateSwap(float dt);
     void OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1);
@@ -61,17 +65,19 @@ private:
     CubeWrapper mCubeWrappers[kNumCubes];
     Sifteo::AudioChannel mChannel;
     float mResetTimer;
-    
-    ShuffleState mShuffleState;
-    int mShuffleMoveCounter;
-    float mShuffleScoreTime;
-    float mShuffleDelayTimer;
-    bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
+    float mDelayTimer;
     
     SwapState mSwapState;
     unsigned int mSwapPiece0;
     unsigned int mSwapPiece1;
     int mSwapAnimationCounter;
+    
+    ShuffleState mShuffleState;
+    int mShuffleMoveCounter;
+    float mShuffleScoreTime;
+    bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
+    
+    AuthoredState mAuthoredState;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

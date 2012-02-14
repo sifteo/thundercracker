@@ -19,9 +19,16 @@ namespace Buddies {
 
 struct Piece
 {
+    Piece(int buddy = 0, int part = 0)
+        : mBuddy(buddy)
+        , mPart(part)
+        , mRotation(0)
+    {
+    }
+    
     int mBuddy;
     int mPart;
-    int mRotation;
+    int mRotation; // TODO: We don't need this if we have fixed rotation
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

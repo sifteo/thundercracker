@@ -35,8 +35,10 @@ public:
     void Update();
     void Draw();
     void DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime);
+    void DrawTextBanner(const char *text);
     
     void EnableBg0SprBg1Video(); // HACK!
+    void ClearBg1(); // HACK!
     
     // Asset Loading
     bool IsLoadingAssets();
@@ -51,6 +53,7 @@ public:
     // Pieces
     const Piece &GetPiece(unsigned int side) const;
     void SetPiece(unsigned int side, const Piece &piece);
+    void SetPieceSolution(unsigned int side, const Piece &piece);
     void SetPieceOffset(unsigned int side, int offset);
     
     // State

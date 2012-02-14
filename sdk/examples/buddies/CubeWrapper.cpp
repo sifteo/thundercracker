@@ -93,27 +93,6 @@ CubeWrapper::CubeWrapper()
 
 void CubeWrapper::Reset()
 {
-    mPiecesSolution[0].mBuddy = mBuddyId;
-    mPiecesSolution[0].mPart = 0;
-    mPiecesSolution[0].mRotation = 0;
-    
-    mPiecesSolution[1].mBuddy = mBuddyId;
-    mPiecesSolution[1].mPart = 1;
-    mPiecesSolution[1].mRotation = 0;
-    
-    mPiecesSolution[2].mBuddy = mBuddyId;
-    mPiecesSolution[2].mPart = 2;
-    mPiecesSolution[2].mRotation = 0;
-    
-    mPiecesSolution[3].mBuddy = mBuddyId;
-    mPiecesSolution[3].mPart = 3;
-    mPiecesSolution[3].mRotation = 0;
-    
-    for (unsigned int i = 0; i < arraysize(mPiecesSolution); ++i)
-    {
-        mPieces[i] = mPiecesSolution[i];
-    }
-    
     for (unsigned int i = 0; i < arraysize(mPieceOffsets); ++i)
     {
         mPieceOffsets[i] = 0;
@@ -158,7 +137,7 @@ void CubeWrapper::Draw()
 
 void CubeWrapper::DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime)
 {
-    if (kShuffleMode)
+    if (kGameMode == GAME_MODE_SHUFFLE)
     {
         switch (shuffleState)
         {
@@ -206,9 +185,31 @@ void CubeWrapper::DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTim
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CubeWrapper::DrawTextBanner(const char *text)
+{
+    ASSERT(text != NULL);
+    
+    BG1Helper bg1helper(mCube);
+    bg1helper.DrawAsset(Vec2(0, 0), BannerEmpty);
+    bg1helper.DrawText(Vec2(0, 0), Font, text);
+    bg1helper.Flush();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CubeWrapper::EnableBg0SprBg1Video()
 {
     Video().set();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::ClearBg1()
+{
+    BG1Helper bg1helper(mCube);
+    bg1helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -264,8 +265,6 @@ void CubeWrapper::Enable(Cube::ID cubeId, unsigned int buddyId)
     
     mEnabled = true;
     mBuddyId = buddyId;
-    
-    Reset();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -297,6 +296,16 @@ void CubeWrapper::SetPiece(unsigned int side, const Piece &piece)
     ASSERT(side < arraysize(mPieces));
     
     mPieces[side] = piece;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::SetPieceSolution(unsigned int side, const Piece &piece)
+{
+    ASSERT(side < arraysize(mPiecesSolution));
+    
+    mPiecesSolution[side] = piece;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

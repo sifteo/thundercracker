@@ -115,12 +115,12 @@ bool AllSolved(App& app)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// ||
-// \/ Static data
+// Shuffle Mode
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const char *kShuffleStateNames[NUM_SHUFFLE_STATES] =
 {
+    "SHUFFLE_STATE_NONE",
     "SHUFFLE_STATE_START",
     "SHUFFLE_STATE_SHAKE_TO_SCRAMBLE",
     "SHUFFLE_STATE_SCRAMBLING",
@@ -129,6 +129,46 @@ const char *kShuffleStateNames[NUM_SHUFFLE_STATES] =
     "SHUFFLE_STATE_SOLVED",
     "SHUFFLE_STATE_SCORE",
 };
+
+Piece kDefaultState[kNumCubes][NUM_SIDES] =
+{
+    { Piece(0, 0), Piece(0, 1), Piece(0, 2), Piece(0, 3) }, // Buddy 0: Top, Left, Bottom, Right
+    { Piece(1, 0), Piece(1, 1), Piece(1, 2), Piece(1, 3) },
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Authored Mode
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char *kAuthoredStateNames[NUM_AUTHORED_STATES] =
+{
+    "AUTHORED_STATE_NONE",
+    "AUTHORED_STATE_START",
+    "AUTHORED_STATE_INSTRUCTIONS",
+    "AUTHORED_STATE_PLAY",
+    "AUTHORED_STATE_SOLVED",
+};
+
+// Piece(BuddyId, FacePart)
+// - BuddyId = [0, kNumBuddies]
+// - FacePart = [0 = Hair, 1 = Left Eye, 2 = Mouth, 4 = Right Eye]
+
+Piece kAuthoredStartState[kNumCubes][NUM_SIDES] =
+{
+    { Piece(0, 0), Piece(0, 1), Piece(0, 2), Piece(0, 3) }, // Buddy 0: Top, Left, Bottom, Right
+    { Piece(1, 0), Piece(1, 1), Piece(1, 2), Piece(1, 3) },
+};
+
+Piece kAuthoredEndState[kNumCubes][NUM_SIDES] =
+{
+    { Piece(0, 0), Piece(0, 1), Piece(1, 2), Piece(0, 3) },
+    { Piece(1, 0), Piece(1, 1), Piece(0, 2), Piece(1, 3) },
+};
+
+const char kAuthoredInstructions[] = "SWAP\nMOUTHS";
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const int kSwapAnimationCount = 64 - 8; // Note: sprites are offset by 8 pixels by design
 
@@ -144,14 +184,15 @@ App::App()
     : mCubeWrappers()
     , mChannel()
     , mResetTimer(0.0f)
-    , mShuffleState(SHUFFLE_STATE_NONE)
-    , mShuffleMoveCounter(0)
-    , mShuffleScoreTime(0.0f)
-    , mShuffleDelayTimer(0.0f)
+    , mDelayTimer(0.0f)
     , mSwapState(SWAP_STATE_NONE)
     , mSwapPiece0(0)
     , mSwapPiece1(0)
     , mSwapAnimationCounter(0)
+    , mShuffleState(SHUFFLE_STATE_NONE)
+    , mShuffleMoveCounter(0)
+    , mShuffleScoreTime(0.0f)
+    , mAuthoredState(AUTHORED_STATE_NONE)
 {
 }
 
@@ -173,17 +214,15 @@ void App::Init()
 
 void App::Reset()
 {
-    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-    {
-        if (mCubeWrappers[i].IsEnabled())
-        {
-            mCubeWrappers[i].Reset();
-        }
-    }
+    ResetCubes();
     
-    if (kShuffleMode)
+    if (kGameMode == GAME_MODE_SHUFFLE)
     {
         StartShuffleState(SHUFFLE_STATE_START);
+    }
+    else if (kGameMode == GAME_MODE_AUTHORED)
+    {
+        StartAuthoredState(AUTHORED_STATE_START);
     }
 }
 
@@ -193,6 +232,7 @@ void App::Reset()
 void App::Update(float dt)
 {
     UpdateShuffle(dt);
+    UpdateAuthored(dt);
     UpdateSwap(dt);
     
     // Cubes
@@ -234,7 +274,11 @@ void App::Draw()
         {
             mCubeWrappers[i].Draw();
             
-            if (mShuffleState != SHUFFLE_STATE_NONE)
+            if (mAuthoredState == AUTHORED_STATE_INSTRUCTIONS)
+            {
+                mCubeWrappers[i].DrawTextBanner(kAuthoredInstructions);
+            }
+            else if (mShuffleState != SHUFFLE_STATE_NONE)
             {
                 mCubeWrappers[i].DrawShuffleUi(mShuffleState, mShuffleScoreTime);
             }
@@ -270,11 +314,20 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
         mShuffleState == SHUFFLE_STATE_UNSCRAMBLE_THE_FACES ||
         mShuffleState == SHUFFLE_STATE_PLAY;
     
-    if (!swapping && !isHinting && isValidShuffleState)
+    bool isValidAuthoredState =
+        mAuthoredState == AUTHORED_STATE_NONE ||
+        mAuthoredState == AUTHORED_STATE_INSTRUCTIONS ||
+        mAuthoredState == AUTHORED_STATE_PLAY;
+    
+    if (!swapping && !isHinting && isValidShuffleState && isValidAuthoredState)
     {
-        if (kShuffleMode && mShuffleState != SHUFFLE_STATE_PLAY)
+        if (kGameMode == GAME_MODE_SHUFFLE && mShuffleState != SHUFFLE_STATE_PLAY)
         {
             StartShuffleState(SHUFFLE_STATE_PLAY);
+        }
+        else if (kGameMode == GAME_MODE_AUTHORED && mAuthoredState != AUTHORED_STATE_PLAY)
+        {
+            StartAuthoredState(AUTHORED_STATE_PLAY);
         }
         
         OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
@@ -286,7 +339,7 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
 
 void App::OnTilt(Cube::ID cubeId)
 {
-    if (kShuffleMode)
+    if (kGameMode == GAME_MODE_SHUFFLE)
     {
         if(mShuffleState == SHUFFLE_STATE_UNSCRAMBLE_THE_FACES)
         {
@@ -300,7 +353,7 @@ void App::OnTilt(Cube::ID cubeId)
 
 void App::OnShake(Cube::ID cubeId)
 {
-    if (kShuffleMode)
+    if (kGameMode == GAME_MODE_SHUFFLE)
     {
         if( mShuffleState == SHUFFLE_STATE_SHAKE_TO_SCRAMBLE ||
             mShuffleState == SHUFFLE_STATE_SCORE)
@@ -335,6 +388,40 @@ void App::RemoveCube(Cube::ID cubeId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void App::ResetCubes()
+{
+    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+    {
+        if (mCubeWrappers[i].IsEnabled())
+        {
+            mCubeWrappers[i].Reset();
+            
+            for (unsigned int j = 0; j < NUM_SIDES; ++j)
+            {
+                if (kGameMode == GAME_MODE_AUTHORED)
+                {
+                    ASSERT(i < arraysize(kAuthoredStartState));
+                    ASSERT(j < arraysize(kAuthoredStartState[i]));
+                    
+                    mCubeWrappers[i].SetPiece(j, kAuthoredStartState[i][j]);
+                    mCubeWrappers[i].SetPieceSolution(j, kAuthoredEndState[i][j]);
+                }
+                else
+                {
+                    ASSERT(i < arraysize(kAuthoredStartState));
+                    ASSERT(j < arraysize(kAuthoredStartState[i]));
+                    
+                    mCubeWrappers[i].SetPiece(j, kDefaultState[i][j]);
+                    mCubeWrappers[i].SetPieceSolution(j, kDefaultState[i][j]);
+                }
+            }
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void App::PlaySound()
 {
     mChannel.play(GemsSound);
@@ -352,7 +439,7 @@ void App::StartShuffleState(ShuffleState shuffleState)
     {
         case SHUFFLE_STATE_START:
         {
-            mShuffleDelayTimer = kShuffleStateTimeDelay;
+            mDelayTimer = kShuffleStateTimeDelay;
             break;
         }
         case SHUFFLE_STATE_SCRAMBLING:
@@ -386,12 +473,12 @@ void App::UpdateShuffle(float dt)
     {
         case SHUFFLE_STATE_START:
         {
-            ASSERT(mShuffleDelayTimer > 0.0f);
-            mShuffleDelayTimer -= dt;
+            ASSERT(mDelayTimer > 0.0f);
+            mDelayTimer -= dt;
             
-            if (mShuffleDelayTimer <= 0.0f)
+            if (mDelayTimer <= 0.0f)
             {
-                mShuffleDelayTimer = 0.0f;
+                mDelayTimer = 0.0f;
                 StartShuffleState(SHUFFLE_STATE_SHAKE_TO_SCRAMBLE);
             }
             break;
@@ -400,12 +487,12 @@ void App::UpdateShuffle(float dt)
         {
             if (mSwapAnimationCounter == 0)
             {
-                ASSERT(mShuffleDelayTimer > 0.0f);
-                mShuffleDelayTimer -= dt;
+                ASSERT(mDelayTimer > 0.0f);
+                mDelayTimer -= dt;
                 
-                if (mShuffleDelayTimer <= 0.0f)
+                if (mDelayTimer <= 0.0f)
                 {
-                    mShuffleDelayTimer = 0.0f;
+                    mDelayTimer = 0.0f;
                     ShufflePieces();
                 }
             }
@@ -419,13 +506,87 @@ void App::UpdateShuffle(float dt)
         }
         case SHUFFLE_STATE_SOLVED:
         {
-            ASSERT(mShuffleDelayTimer > 0.0f);
-            mShuffleDelayTimer -= dt;
+            ASSERT(mDelayTimer > 0.0f);
+            mDelayTimer -= dt;
             
-            if (mShuffleDelayTimer <= 0.0f)
+            if (mDelayTimer <= 0.0f)
             {
-                mShuffleDelayTimer = 0.0f;
+                mDelayTimer = 0.0f;
                 StartShuffleState(SHUFFLE_STATE_SCORE);
+            }
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::StartAuthoredState(AuthoredState authoredState)
+{
+    mAuthoredState = authoredState;
+    DEBUG_LOG(("State = %s\n", kAuthoredStateNames[mAuthoredState]));
+    
+    switch (mAuthoredState)
+    {
+        case AUTHORED_STATE_START:
+        {
+            mDelayTimer = kShuffleStateTimeDelay;
+            break;
+        }
+        case AUTHORED_STATE_PLAY:
+        {
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].ClearBg1();
+                }
+            }
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::UpdateAuthored(float dt)
+{
+    switch (mAuthoredState)
+    {
+        case AUTHORED_STATE_START:
+        {
+            ASSERT(mDelayTimer > 0.0f);
+            mDelayTimer -= dt;
+            
+            if (mDelayTimer <= 0.0f)
+            {
+                mDelayTimer = 0.0f;
+                StartAuthoredState(AUTHORED_STATE_INSTRUCTIONS);
+            }
+            break;
+        }
+        case AUTHORED_STATE_SOLVED:
+        {
+            ASSERT(mDelayTimer > 0.0f);
+            mDelayTimer -= dt;
+            
+            if (mDelayTimer <= 0.0f)
+            {
+                mDelayTimer = 0.0f;
+                
+                ResetCubes();
+                
+                StartAuthoredState(AUTHORED_STATE_INSTRUCTIONS);
             }
             break;
         }
@@ -553,7 +714,7 @@ void App::OnSwapFinish()
         }
         else
         {
-            mShuffleDelayTimer += kShuffleScrambleTimerDelay;
+            mDelayTimer += kShuffleScrambleTimerDelay;
         }
     }
     else if (mShuffleState == SHUFFLE_STATE_PLAY)
@@ -561,7 +722,15 @@ void App::OnSwapFinish()
         if (AllSolved(*this))
         {
             StartShuffleState(SHUFFLE_STATE_SOLVED);
-            mShuffleDelayTimer = kShuffleStateTimeDelay;
+            mDelayTimer = kShuffleStateTimeDelay;
+        }
+    }
+    else if (mAuthoredState == AUTHORED_STATE_PLAY)
+    {
+        if (AllSolved(*this))
+        {
+            StartAuthoredState(AUTHORED_STATE_SOLVED);
+            mDelayTimer = kShuffleStateTimeDelay;
         }
     }
     

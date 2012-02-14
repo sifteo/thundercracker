@@ -15,10 +15,12 @@ Parts5 = image{"assets/parts5.png", height = 64, pinned = true}
 Parts6 = image{"assets/parts6.png", height = 64, pinned = true}
 
 FontScore = image{"assets/FontScore.png", height = 16}
+Font = image{"assets/font-8x16.png", height = 16}
 
 BannerShakeToScramble = image{"assets/BannerShakeToScramble.png"}
 BannerUnscrambleTheFaces = image{"assets/BannerUnscrambleTheFaces.png"}
 BannerFaceComplete = image{"assets/BannerFaceComplete.png"}
 BannerYourTime = image{"assets/BannerYourTime.png"}
+BannerEmpty = image{"assets/BannerEmpty.png"}
 
 GemsSound = sound{"assets/gems1_4A9.raw"}

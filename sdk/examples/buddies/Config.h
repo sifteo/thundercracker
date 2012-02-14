@@ -17,6 +17,24 @@ namespace Buddies {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+enum GameMode
+{
+    GAME_MODE_FREE_PLAY = 0,
+    GAME_MODE_SHUFFLE,
+    GAME_MODE_AUTHORED,
+    
+    NUM_GAME_MODES
+};
+
+enum SwapState
+{
+    SWAP_STATE_NONE = 0,
+    SWAP_STATE_OUT,
+    SWAP_STATE_IN,
+    
+    NUM_SWAP_STATES
+};
+
 enum ShuffleState
 {
     SHUFFLE_STATE_NONE = 0,
@@ -31,17 +49,19 @@ enum ShuffleState
     NUM_SHUFFLE_STATES
 };
 
-enum SwapState
+enum AuthoredState
 {
-    SWAP_STATE_NONE = 0,
-    SWAP_STATE_OUT,
-    SWAP_STATE_IN,
+    AUTHORED_STATE_NONE = 0,
+    AUTHORED_STATE_START,
+    AUTHORED_STATE_INSTRUCTIONS,
+    AUTHORED_STATE_PLAY,
+    AUTHORED_STATE_SOLVED,
     
-    NUM_SWAP_STATES
+    NUM_AUTHORED_STATES
 };
 
 const bool kLoadAssets = true;
-const bool kShuffleMode = true;
+const GameMode kGameMode = GAME_MODE_SHUFFLE;
 
 const unsigned int kNumCubes = 2; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters
