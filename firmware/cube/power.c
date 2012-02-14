@@ -29,10 +29,8 @@ void power_init(void)
     PWRDWN = 0;
 
 #ifndef WAKE_ON_POWERUP
-    if (!(powerupReason & 0x80)) {
+    if (!(powerupReason & 0x80))
         power_sleep();
-        return;
-    }
 #endif
 
     /*
@@ -66,6 +64,7 @@ void power_init(void)
 
 void power_sleep(void)
 {
+#ifndef REV1
     /*
      * Turn off all peripherals, and put the CPU into Deep Sleep mode.
      * Order matters, don't cause bus contention.
@@ -106,4 +105,5 @@ void power_sleep(void)
          * On wakeup, the system experiences a soft reset.
          */
     }
+#endif
 }
