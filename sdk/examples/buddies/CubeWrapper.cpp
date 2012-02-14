@@ -226,11 +226,10 @@ void CubeWrapper::LoadAssets()
 {
     ASSERT(IsEnabled());
     
+    mCube.loadAssets(GameAssets);
+    
     VidMode_BG0_ROM rom(mCube.vbuf);
     rom.init();
-    rom.clear();
-    
-    mCube.loadAssets(GameAssets);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -241,7 +240,7 @@ void CubeWrapper::DrawLoadingAssets()
     ASSERT(IsEnabled());
     
     VidMode_BG0_ROM rom(mCube.vbuf);
-    rom.BG0_progressBar(Vec2(0, 7), mCube.assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+    rom.BG0_progressBar(Vec2(0, 0), mCube.assetProgress(GameAssets, VidMode_BG0::LCD_width), 16);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
