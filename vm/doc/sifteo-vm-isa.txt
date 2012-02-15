@@ -210,8 +210,8 @@ four and added to the base of the current page, to form the address of a
 Address operations are like syscalls, but they have a 24-bit immediate which
 is always interpreted as a validated flash address:
 
-  0x80  Long branch
-  0x81  Asynchronous preload
-  0x82  Assign to r8-9
+  0  Long branch
+  1  Asynchronous preload
+  2  Assign to r8-9
 
 --
