@@ -26,6 +26,8 @@ enum GameMode
     NUM_GAME_MODES
 };
 
+// TODO: Merge ShuffleState and AuthoredState into GameState
+
 enum ShuffleState
 {
     SHUFFLE_STATE_NONE = 0,

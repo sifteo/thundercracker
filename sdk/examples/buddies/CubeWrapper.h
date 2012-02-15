@@ -33,8 +33,10 @@ public:
     
     void Reset();
     void Update(float dt);
-    void Draw();
+    
+    void DrawBuddy();
     void DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime);
+    void DrawTitleCard(const char *text);
     void DrawTextBanner(const char *text);
     
     void EnableBg0SprBg1Video(); // HACK!

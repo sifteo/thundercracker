@@ -1,5 +1,7 @@
 GameAssets = group{quality = 10}
 
+TitleCard = image{"assets/TitleCard.png"}
+
 Bg1 = image{"assets/bg1.png"}
 Bg2 = image{"assets/bg2.png"}
 Bg3 = image{"assets/bg3.png"}

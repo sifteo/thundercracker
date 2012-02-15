@@ -239,16 +239,19 @@ void App::Draw()
     {
         if (mCubeWrappers[i].IsEnabled())
         {
-            mCubeWrappers[i].Draw();
-            
             if (mAuthoredState == AUTHORED_STATE_INSTRUCTIONS)
             {
                 ASSERT(mAuthoredPuzzleIndex < GetNumPuzzles());
-                mCubeWrappers[i].DrawTextBanner(GetPuzzle(mAuthoredPuzzleIndex).GetInstructions());
+                mCubeWrappers[i].DrawTitleCard(GetPuzzle(mAuthoredPuzzleIndex).GetInstructions());
             }
-            else if (mShuffleState != SHUFFLE_STATE_NONE)
+            else
             {
-                mCubeWrappers[i].DrawShuffleUi(mShuffleState, mShuffleScoreTime);
+                mCubeWrappers[i].DrawBuddy();
+                
+                if (mShuffleState != SHUFFLE_STATE_NONE)
+                {
+                    mCubeWrappers[i].DrawShuffleUi(mShuffleState, mShuffleScoreTime);
+                }
             }
         }
     }
