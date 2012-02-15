@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Map.h"
+#include "ViewSlot.h"
 class RoomView;
 class Room;
 
@@ -29,7 +30,7 @@ public:
   inline RoomView* CurrentView() { return mCurrent.view; }
   inline RoomView* TargetView() { return mTarget.view; }
 
-  inline RoomView* View() { return mTarget.view==0?mCurrent.view:mTarget.view; }
+  inline ViewSlot* View() { return mTarget.view==0?mCurrent.view->Parent():mTarget.view->Parent(); }
   inline Cube::Side Direction() { return mDir; }
   inline Vec2 Position() const { return mPosition; }
   inline Vec2 Location() const { return mPosition/128; }

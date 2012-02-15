@@ -38,7 +38,7 @@ void RoomView::Init(unsigned roomId) {
       }
       break;
   }
-  if (this == pGame->GetPlayer()->View()) { 
+  if (this->Parent() == pGame->GetPlayer()->View()) { 
     ShowPlayer(); 
   }
   DrawBackground();

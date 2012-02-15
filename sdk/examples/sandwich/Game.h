@@ -53,7 +53,7 @@ private:
   void CheckMapNeighbors();
   void MovePlayerAndRedraw(int dx, int dy);
 
-  void WalkTo(Vec2 position);
+  void WalkTo(Vec2 position, bool dosfx=true);
   void TeleportTo(const MapData& m, Vec2 position);
 
   void OnPassiveTrigger();

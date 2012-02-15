@@ -40,11 +40,11 @@ void Game::MainLoop(Cube* pPrimary) {
     }
   }
 
-  // initial zoom out (yoinked and modded from TeleportTo)
+  // initial zoom (yoinked and modded from TeleportTo)
   { 
     gChannelMusic.stop();
     PlaySfx(sfx_zoomIn);
-    ViewSlot* view = mPlayer.View()->Parent();
+    ViewSlot* view = mPlayer.View();
     unsigned roomId = mPlayer.GetRoom()->Id();
     VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
@@ -218,8 +218,10 @@ void Game::MovePlayerAndRedraw(int dx, int dy) {
   System::paint();
 }
 
-void Game::WalkTo(Vec2 position) {
-  PlaySfx(sfx_running);
+void Game::WalkTo(Vec2 position, bool dosfx) {
+  if (dosfx) {
+    PlaySfx(sfx_running);
+  }
   Vec2 delta = position - mPlayer.Position();
   while(delta.x > WALK_SPEED) {
     MovePlayerAndRedraw(WALK_SPEED, 0);
@@ -248,44 +250,46 @@ void Game::WalkTo(Vec2 position) {
 void Game::TeleportTo(const MapData& m, Vec2 position) {
   gChannelMusic.stop();
   Vec2 room = position/128;
-  ViewSlot* view = (ViewSlot*)(mPlayer.View());
+  ViewSlot* view = mPlayer.View();
   unsigned roomId = mPlayer.GetRoom()->Id();
-  view->HideSprites();
+  
   // blank other cubes
   for(ViewSlot* p = ViewBegin(); p != ViewEnd(); ++p) {
     if (p != view) { p->HideLocation(); }
   }
-  // zoom in
-  { 
-    System::paintSync();
-    PlaySfx(sfx_zoomOut);
-    VidMode_BG2 vid(view->GetCube()->vbuf);
-    for(int x=0; x<8; ++x) {
-      for(int y=0; y<8; ++y) {
-        vid.BG2_drawAsset(
-          Vec2(x<<1,y<<1),
-          *(mMap.Data()->tileset),
-          mMap.GetTileId(roomId, Vec2(x, y))
-        );
+
+  // iris
+  {
+    view->HideSprites();
+    view->Overlay().Flush();
+    ViewMode mode = view->Graphics();
+    for(unsigned i=0; i<8; ++i) {
+      for(unsigned x=i; x<16-i; ++x) {
+        mode.BG0_putTile(Vec2(x, i), *Black.tiles);
+        mode.BG0_putTile(Vec2(x, 16-i-1), *Black.tiles);
       }
-    }
-    vid.BG2_setBorder(0x0000);
-    vid.set();
-    for (float t = 0; t < 1.0f; t += 0.05f) {
-      AffineMatrix m = AffineMatrix::identity();
-      m.translate(64, 64);
-      m.scale(1.f+9.f*t);
-      m.rotate(t * 1.1f);
-      m.translate(-64, -64);
-      vid.BG2_setMatrix(m);
-      System::paint();
+      for(unsigned y=i+1; y<16-i-1; ++y) {
+        mode.BG0_putTile(Vec2(i, y), *Black.tiles);
+        mode.BG0_putTile(Vec2(16-i-1, y), *Black.tiles);
+      }
+      System::paintSync();
     }
   }
+  for(unsigned i=0; i<8; ++i) {
+    for(ViewSlot* p = ViewBegin(); p != ViewEnd(); ++p) {
+      p->GetCube()->vbuf.touch();
+    }
+    System::paintSync();
+  }
+
   mMap.SetData(m);
-  // zoom out
+  
+  // zoom
   { 
     PlaySfx(sfx_zoomIn);
     VidMode_BG2 vid(view->GetCube()->vbuf);
+    vid.BG2_setBorder(0x0000);
+    vid.set();
     roomId = room.x + room.y * mMap.Data()->width;
     for(int x=0; x<8; ++x) {
       for(int y=0; y<8; ++y) {
@@ -309,13 +313,14 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
     System::paintSync();
   }
   
+  // todo: expose music in level editor?
   PlayMusic(mMap.Data() == &gMapData[1] ? music_dungeon : music_castle);
 
   // walk out of the in-gate
   Vec2 target = mMap.GetRoom(room)->Center(0);
   mPlayer.SetLocation(position, InferDirection(target - position));
   view->ShowLocation(room);
-  WalkTo(target);
+  WalkTo(target, false);
   CheckMapNeighbors();
 
   // clear out any accumulated time
@@ -420,7 +425,7 @@ static void VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* o
 void Game::CheckMapNeighbors() {
   uint8_t visited[NUM_CUBES];
   for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
-  VisitMapView(visited, mPlayer.View()->Parent(), mPlayer.Location());
+  VisitMapView(visited, mPlayer.View(), mPlayer.Location());
   for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) {
     if (!visited[v->GetCubeID()]) { 
       if (v->HideLocation()) {
