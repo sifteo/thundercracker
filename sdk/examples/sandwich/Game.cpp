@@ -39,39 +39,8 @@ void Game::MainLoop(Cube* pPrimary) {
       v->Init(); 
     }
   }
-
-  // initial zoom (yoinked and modded from TeleportTo)
-  { 
-    gChannelMusic.stop();
-    PlaySfx(sfx_zoomIn);
-    ViewSlot* view = mPlayer.View();
-    unsigned roomId = mPlayer.GetRoom()->Id();
-    VidMode_BG2 vid(view->GetCube()->vbuf);
-    for(int x=0; x<8; ++x) {
-      for(int y=0; y<8; ++y) {
-        vid.BG2_drawAsset(
-          Vec2(x<<1,y<<1),
-          *(mMap.Data()->tileset),
-          mMap.GetTileId(roomId, Vec2(x, y))
-        );
-      }
-    }
-    vid.BG2_setBorder(0x0000);
-    vid.set();
-    for (float t = 1.0f; t > 0.0f; t -= 0.05f) {
-      AffineMatrix m = AffineMatrix::identity();
-      m.translate(64, 64);
-      m.scale(1.f + 9.f*t);
-      m.rotate(t * 1.1f);
-      m.translate(-64, -64);
-      vid.BG2_setMatrix(m);
-      System::paint();
-    }    
-    System::paintSync();
-    view->ShowLocation(mPlayer.Location());
-    System::paintSync();
-  }  
-
+  Zoom(mPlayer.View(), mPlayer.GetRoom()->Id());
+  mPlayer.View()->ShowLocation(mPlayer.Location());
   PlayMusic(music_castle);
   mSimTime = System::clock();
   ObserveNeighbors(true);
@@ -258,60 +227,9 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
     if (p != view) { p->HideLocation(); }
   }
 
-  // iris
-  {
-    view->HideSprites();
-    view->Overlay().Flush();
-    ViewMode mode = view->Graphics();
-    for(unsigned i=0; i<8; ++i) {
-      for(unsigned x=i; x<16-i; ++x) {
-        mode.BG0_putTile(Vec2(x, i), *Black.tiles);
-        mode.BG0_putTile(Vec2(x, 16-i-1), *Black.tiles);
-      }
-      for(unsigned y=i+1; y<16-i-1; ++y) {
-        mode.BG0_putTile(Vec2(i, y), *Black.tiles);
-        mode.BG0_putTile(Vec2(16-i-1, y), *Black.tiles);
-      }
-      System::paintSync();
-    }
-  }
-  for(unsigned i=0; i<8; ++i) {
-    for(ViewSlot* p = ViewBegin(); p != ViewEnd(); ++p) {
-      p->GetCube()->vbuf.touch();
-    }
-    System::paintSync();
-  }
-
+  IrisOut(view);
   mMap.SetData(m);
-  
-  // zoom
-  { 
-    PlaySfx(sfx_zoomIn);
-    VidMode_BG2 vid(view->GetCube()->vbuf);
-    vid.BG2_setBorder(0x0000);
-    vid.set();
-    roomId = room.x + room.y * mMap.Data()->width;
-    for(int x=0; x<8; ++x) {
-      for(int y=0; y<8; ++y) {
-        vid.BG2_drawAsset(
-          Vec2(x<<1,y<<1),
-          *(mMap.Data()->tileset),
-          mMap.GetTileId(roomId, Vec2(x, y))
-        );
-      }
-    }
-    for (float t = 1.0f; t > 0.0f; t -= 0.05f) {
-      AffineMatrix m = AffineMatrix::identity();
-      m.translate(64, 64);
-      m.scale(1.f+9.f*t);
-      m.rotate(t * 1.1f);
-      m.translate(-64, -64);
-      vid.BG2_setMatrix(m);
-      System::paint();
-    }    
-
-    System::paintSync();
-  }
+  Zoom(view, room.x + room.y * mMap.Data()->width);
   
   // todo: expose music in level editor?
   PlayMusic(mMap.Data() == &gMapData[1] ? music_dungeon : music_castle);
@@ -325,6 +243,53 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 
   // clear out any accumulated time
   UpdateDeltaTime();
+}
+
+void Game::IrisOut(ViewSlot* view) {
+  view->HideSprites();
+  view->Overlay().Flush();
+  ViewMode mode = view->Graphics();
+  for(unsigned i=0; i<8; ++i) {
+    for(unsigned x=i; x<16-i; ++x) {
+      mode.BG0_putTile(Vec2(x, i), *Black.tiles);
+      mode.BG0_putTile(Vec2(x, 16-i-1), *Black.tiles);
+    }
+    for(unsigned y=i+1; y<16-i-1; ++y) {
+      mode.BG0_putTile(Vec2(i, y), *Black.tiles);
+      mode.BG0_putTile(Vec2(16-i-1, y), *Black.tiles);
+    }
+    System::paintSync();
+  }
+  for(unsigned i=0; i<8; ++i) {
+    view->GetCube()->vbuf.touch();
+    System::paintSync();
+  }
+}
+
+void Game::Zoom(ViewSlot* view, int roomId) {
+  PlaySfx(sfx_zoomIn);
+  VidMode_BG2 vid(view->GetCube()->vbuf);
+  vid.BG2_setBorder(0x0000);
+  vid.set();
+  for(int x=0; x<8; ++x) {
+    for(int y=0; y<8; ++y) {
+      vid.BG2_drawAsset(
+        Vec2(x<<1,y<<1),
+        *(mMap.Data()->tileset),
+        mMap.GetTileId(roomId, Vec2(x, y))
+      );
+    }
+  }
+  for (float t = 1.0f; t > 0.0f; t -= 0.05f) {
+    AffineMatrix m = AffineMatrix::identity();
+    m.translate(64, 64);
+    m.scale(1.f+9.f*t);
+    m.rotate(t * 1.1f);
+    m.translate(-64, -64);
+    vid.BG2_setMatrix(m);
+    System::paint();
+  }    
+  System::paintSync();
 }
 
 //------------------------------------------------------------------

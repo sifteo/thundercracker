@@ -15,11 +15,9 @@ private:
   unsigned mSimFrames;
   unsigned mAnimFrames;
   unsigned mNeedsSync;
-  bool mIsDone;
-
   BroadPath mPath;
   NarrowPath mMoves;
-
+  bool mIsDone;
 
 public:
 
@@ -43,7 +41,6 @@ public:
   // events
   void OnNeighborAdd(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
   void OnNeighborRemove(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
-  void OnInventoryChanged();
 
 private:
 
@@ -51,13 +48,17 @@ private:
   float UpdateDeltaTime();
   void ObserveNeighbors(bool flag);
   void CheckMapNeighbors();
-  void MovePlayerAndRedraw(int dx, int dy);
 
   void WalkTo(Vec2 position, bool dosfx=true);
+  void MovePlayerAndRedraw(int dx, int dy);
+
   void TeleportTo(const MapData& m, Vec2 position);
+  void IrisOut(ViewSlot* view);
+  void Zoom(ViewSlot* view, int roomId);
 
   void OnPassiveTrigger();
   void OnActiveTrigger();
+  void OnInventoryChanged();
 
 };
 
