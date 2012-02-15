@@ -21,29 +21,37 @@ struct Piece
 {
     enum Attribute
     {
-        ATTRIBUTE_NORMAL = 0,
-        ATTRIBUTE_FIXED,
-        ATTRIBUTE_HIDDEN,
+        ATTR_NONE = 0,
+        ATTR_FIXED,
+        ATTR_HIDDEN,
         
         NUM_ATTRIBUTES
     };
     
+    Piece()
+        : mBuddy(0)
+        , mPart(0)
+        , mMustSolve(true)
+        , mAttribute(ATTR_NONE)
+    {
+    }
+    
     Piece(
-        int buddy = 0,
-        int part = 0,
-        Attribute attribute = ATTRIBUTE_NORMAL,
-        bool must_solve = true)
+        int buddy,
+        int part,
+        bool must_solve,
+        Attribute attribute = ATTR_NONE)
         : mBuddy(buddy)
         , mPart(part)
-        , mAttribute(attribute)
         , mMustSolve(must_solve)
+        , mAttribute(attribute)
     {
     }
     
     int mBuddy;
     int mPart;
-    Attribute mAttribute;
     bool mMustSolve;
+    Attribute mAttribute;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

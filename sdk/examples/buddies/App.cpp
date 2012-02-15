@@ -278,8 +278,8 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
         GetCubeWrapper(cubeId1).IsHinting();
     
     bool isFixed =
-        GetCubeWrapper(cubeId0).GetPiece(cubeSide0).mAttribute == Piece::ATTRIBUTE_FIXED ||
-        GetCubeWrapper(cubeId1).GetPiece(cubeSide1).mAttribute == Piece::ATTRIBUTE_FIXED;
+        GetCubeWrapper(cubeId0).GetPiece(cubeSide0).mAttribute == Piece::ATTR_FIXED ||
+        GetCubeWrapper(cubeId1).GetPiece(cubeSide1).mAttribute == Piece::ATTR_FIXED;
     
     bool isValidShuffleState =
         mShuffleState == SHUFFLE_STATE_NONE ||

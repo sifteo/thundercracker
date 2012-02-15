@@ -14,17 +14,15 @@ namespace Buddies { namespace {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // These arrays represent different configurations of the puzzle space. The first dimension of
 // the array is the number of cubes in play, the second dimension are the sides of the cube.
-// 
+//  
 // So in other words, each side of each cube is assigned a instance of a "Piece" class. A Piece
 // represents a part of the face (holding which buddy it originated from, which face part it is,
-// which attributes it has, and whether or not the piece must be in place to solve the puzzle). 
-//
-// For example: Piece(1, 2, ATTRIBUTE_HIDDEN, true) would be the mouth of Buddy 1 (the blue cat)
-// but it is a tricky hidden piece and it is necessary to be in the right spot to solve the puzzle.
-// Attributes default to ATTRIBUTE_NORMAL and "must solve" defaults to true.
-//
-// Attributes are: ATTRIBUTE_NORMAL, ATTRIBUTE_FIXED, and ATTRIBUTE_HIDDEN.
-//
+// whether or not the piece must be in place to solve the puzzle and which attribute it has). 
+// 
+// For example: Piece(1, 2, true, ATTR_HIDDEN) would be the mouth of Buddy 1 (the blue cat),
+// it is necessary to be in the right spot to solve the puzzle, but it is a tricky hidden piece!
+// Attributes default to ATTR_NONE.
+// 
 // Define each possible configuation puzzles can have up here. We will assign them to the 
 // start and end state of puzzle below.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,90 +31,90 @@ namespace Buddies { namespace {
 Piece kDefaultState[kNumCubes][NUM_SIDES] =
 {
     {
-        Piece(0, 0, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(0, 1, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(0, 2, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(0, 3, Piece::ATTRIBUTE_NORMAL, true),
+        Piece(0, 0, true),
+        Piece(0, 1, true),
+        Piece(0, 2, true),
+        Piece(0, 3, true),
     },
     {
-        Piece(1, 0, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(1, 1, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(1, 2, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(1, 3, Piece::ATTRIBUTE_NORMAL, true),
+        Piece(1, 0, true),
+        Piece(1, 1, true),
+        Piece(1, 2, true),
+        Piece(1, 3, true),
     },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Piece(BuddyId, PartId, Attribute, MustSolve)
+// Piece(BuddyId, PartId, MustSolve, Attribute = ATTR_NONE)
 // - BuddyId = [0...kNumCubes)
 // - PartId = [0...NUM_SIDES)
-// - Attribute = [Piece::ATTRIBUTE_NORMAL, Piece::ATTRIBUTE_FIXED, Piece::ATTRIBUTE_HIDDEN]
 // - MustSolve = true/false
+// - Attribute = [Piece::ATTR_NONE, Piece::ATTR_FIXED, Piece::ATTR_HIDDEN]
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Piece kStartStateAttributeTest[kNumCubes][NUM_SIDES] =
 {
     // Buddy 0
     {
-        Piece(0, 0, Piece::ATTRIBUTE_NORMAL, true), // Top
-        Piece(0, 1, Piece::ATTRIBUTE_NORMAL, true), // Left
-        Piece(0, 2, Piece::ATTRIBUTE_HIDDEN, true), // Bottom
-        Piece(0, 3, Piece::ATTRIBUTE_NORMAL, true), // Right
+        Piece(0, 0, true),                      // Top (Hair)
+        Piece(0, 1, true),                      // Left (Left Eye)
+        Piece(0, 2, true, Piece::ATTR_HIDDEN),  // Bottom (Mouth)
+        Piece(0, 3, true),                      // Right (Right Eye)
     },
     // Buddy 1
     {   
-        Piece(1, 0, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(1, 1, Piece::ATTRIBUTE_FIXED,  true),
-        Piece(1, 2, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(1, 3, Piece::ATTRIBUTE_FIXED,  true),
+        Piece(1, 0, true),
+        Piece(1, 1, true, Piece::ATTR_FIXED),
+        Piece(1, 2, true),
+        Piece(1, 3, true, Piece::ATTR_FIXED),
     },
 };
 
 Piece kAuthoredEndStateMouths[kMaxBuddies][NUM_SIDES] =
 {
     {
-        Piece(0, 0, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(0, 1, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(1, 2, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(0, 3, Piece::ATTRIBUTE_NORMAL, false),
+        Piece(0, 0, false),
+        Piece(0, 1, false),
+        Piece(1, 2, true),
+        Piece(0, 3, false),
     },
     {
-        Piece(1, 0, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(1, 1, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(0, 2, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(1, 3, Piece::ATTRIBUTE_NORMAL, false),
+        Piece(1, 0, false),
+        Piece(1, 1, false),
+        Piece(0, 2, true),
+        Piece(1, 3, false),
     },
 };
 
 Piece kAuthoredEndStateHair[kMaxBuddies][NUM_SIDES] =
 {
     {
-        Piece(1, 0, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(0, 1, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(0, 2, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(0, 3, Piece::ATTRIBUTE_NORMAL, false),
+        Piece(1, 0, true),
+        Piece(0, 1, false),
+        Piece(0, 2, false),
+        Piece(0, 3, false),
     },
     {
-        Piece(0, 0, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(1, 1, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(1, 2, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(1, 3, Piece::ATTRIBUTE_NORMAL, false),
+        Piece(0, 0, true),
+        Piece(1, 1, false),
+        Piece(1, 2, false),
+        Piece(1, 3, false),
     },
 };
 
 Piece kAuthoredEndStateEyes[kMaxBuddies][NUM_SIDES] =
 {
     {
-        Piece(0, 0, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(1, 1, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(0, 2, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(1, 3, Piece::ATTRIBUTE_NORMAL, true),
+        Piece(0, 0, false),
+        Piece(1, 1, true),
+        Piece(0, 2, false),
+        Piece(1, 3, true),
     },
     {
-        Piece(1, 0, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(0, 1, Piece::ATTRIBUTE_NORMAL, true),
-        Piece(1, 2, Piece::ATTRIBUTE_NORMAL, false),
-        Piece(0, 3, Piece::ATTRIBUTE_NORMAL, true),
+        Piece(1, 0, false),
+        Piece(0, 1, true),
+        Piece(1, 2, false),
+        Piece(0, 3, true),
     },
 };
 
