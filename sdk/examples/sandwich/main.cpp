@@ -6,7 +6,7 @@ Cube gCubes[NUM_CUBES];
 AudioChannel gChannelSfx;
 AudioChannel gChannelMusic;
 
-//static Game sGame;
+static Game sGame;
 Game* pGame = 0;
 
 Cube* IntroCutscene();
@@ -73,12 +73,9 @@ void siftmain() {
 		PlayMusic(music_sting, false);
 		Cube* pPrimary = IntroCutscene();
 		#endif
-		{
-			Game game;
-			pGame = &game;
-			game.MainLoop(pPrimary);
-			pGame = 0;
-		}
+		pGame = &sGame;
+		pGame->MainLoop(pPrimary);
+		pGame = 0;
 		for(unsigned i=0; i<100; ++i) { System::paint(); }
 		//PlayMusic(music_winscreen, false);
 		//WinScreen(gCubes);
