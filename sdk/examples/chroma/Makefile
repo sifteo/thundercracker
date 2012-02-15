@@ -16,5 +16,8 @@ GENERATED_FILES += PuzzleData.h
 PUZZLE_TOOLS = \
 	convertpuzzles.py
 
+Puzzle.sim.o: PuzzleData.h
+Puzzle.stm32.o: PuzzleData.h
+
 PuzzleData.h: $(PUZZLE_TOOLS) puzzles.json
 	python convertpuzzles.py puzzles.json PuzzleData.h	
