@@ -33,7 +33,13 @@ bool SVMTargetMachine::addInstSelector(PassManagerBase &PM, CodeGenOpt::Level Op
 
 bool SVMTargetMachine::addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
 {
+    // The Alignment pass may change the size of functions by inserting no-ops,
+    // so it must come before the LateFunctionSplitPass.
     PM.add(createSVMAlignPass(*this));
+    
+    // Last-resort function splitting. Must come after AlignPass.
+    PM.add(createSVMLateFunctionSplitPass(*this));
+    
     return true;
 }
 

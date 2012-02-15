@@ -73,7 +73,10 @@ def FNSTACK : Pseudo<(outs), (ins i32imm:$amt), ".fnstack $amt", []>;
 
 // "Relaxed" version of FNSTACK, for the fragment hack in SVMAsmBackend.
 def FNSTACK_R : Pseudo<(outs), (ins i32imm:$amt), ".fnstack $amt", []>;
-    
+
+// Pseudo-op for splitting functions across multiple flash blocks
+def SPLIT : Pseudo<(outs), (ins), ".split", []>;
+
 def RET : S_call<(outs), (ins), "s.ret", [(SVMRet)]> {
     // _SYS_ret() _SC(0)
     let imm6 = 0;

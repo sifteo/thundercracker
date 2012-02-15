@@ -11,6 +11,7 @@
 namespace llvm {
 
     class FunctionPass;
+    class ModulePass;
     class SVMTargetMachine;
     class MCObjectWriter;
     class raw_ostream;
@@ -18,6 +19,7 @@ namespace llvm {
     MCObjectWriter *createSVMELFProgramWriter(raw_ostream &OS);
     FunctionPass *createSVMISelDag(SVMTargetMachine &TM);
     FunctionPass *createSVMAlignPass(SVMTargetMachine &TM);
+    FunctionPass *createSVMLateFunctionSplitPass(SVMTargetMachine &TM);
 
 } // namespace llvm
 

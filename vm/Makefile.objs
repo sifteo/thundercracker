@@ -22,7 +22,8 @@ OBJS = \
 	src/Target/SVMELFProgramWriter.o \
 	src/Target/SVMSymbolDecoration.o \
 	src/Target/SVMMemoryLayout.o \
-	src/Target/SVMELFMetadataBuilder.o
+	src/Target/SVMELFMetadataBuilder.o \
+	src/Target/SVMLateFunctionSplitPass.o
 
 TABLES := \
 	src/Target/SVMGenAsmWriter.inc \
