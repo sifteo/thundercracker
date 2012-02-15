@@ -83,49 +83,44 @@ region of the same page, and the target is 32-bit aligned:
 bool SvmProgram::isValid16(uint16_t halfword)
 {
     if ((halfword & AluMask) == AluTest) {
-        // 00xxxxxx xxxxxxxx     lsl, lsr, asr, add, sub, mov, cmp
         LOG(("arithmetic\n"));
         return true;
     }
     if ((halfword & DataProcMask) == DataProcTest) {
-        // 010000xx xxxxxxxx    and, eor, lsl, lsr, asr, adc, sbc, ror,
-        //                      tst, rsb, cmp, cmn, orr, mul, bic, mvn
         LOG(("data processing\n"));
         return true;
     }
     if ((halfword & MiscMask) == MiscTest) {
-        // 10110010 xxxxxxxx     uxth, sxth, uxtb, sxtb
         LOG(("miscellaneous\n"));
         return true;
     }
     if ((halfword & SvcMask) == SvcTest) {
-        // 11011111 xxxxxxxx     svc
         LOG(("svc\n"));
         return true;
     }
     if ((halfword & PcRelLdrMask) == PcRelLdrTest) {
-        // 01001xxx xxxxxxxx     ldr r0-r7, [PC, #imm8]
         LOG(("pc relative ldr\n"));
         return true;
     }
     if ((halfword & SpRelLdrStrMask) == SpRelLdrStrTest) {
-        // 1001xxxx xxxxxxxx     ldr/str r0-r7, [SP, #imm8]
         LOG(("sp relative ldr/str\n"));
         return true;
     }
     if ((halfword & SpRelAddMask) == SpRelAddTest) {
-        // 10101xxx xxxxxxxx     add r0-r7, SP, #imm8
         LOG(("sp relative add\n"));
         return true;
     }
     if ((halfword & UncondBranchMask) == UncondBranchTest) {
-        // 11100xxx xxxxxxxx     b
         LOG(("unconditional branch\n"));
         // TODO: must validate target
         return true;
     }
+    if ((halfword & CompareBranchMask) == CompareBranchTest) {
+        LOG(("compare and branch\n"));
+        // TODO: must validate target
+        return true;
+    }
     if ((halfword & CondBranchMask) == CondBranchTest) {
-        // 1101xxxx xxxxxxxx     bcc
         LOG(("branchcc\n"));
         // TODO: must validate target
         return true;
