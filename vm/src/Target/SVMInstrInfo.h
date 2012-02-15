@@ -66,20 +66,20 @@ public:
                                   const SmallVectorImpl<MachineOperand> &Cond,
                                   DebugLoc DL) const;                        
 
-private:
-    const SVMRegisterInfo RI;
-
-    bool inline isUncondBranchOpcode(unsigned op) const {
+    static bool inline isUncondNearBranchOpcode(unsigned op) {
         return op == SVM::B;
     }
 
-    bool inline isCondBranchOpcode(unsigned op) const {
+    static bool inline isCondNearBranchOpcode(unsigned op) {
         return op == SVM::Bcc;
     }
 
-    bool inline isBranchOpcode(unsigned op) const {
-        return isCondBranchOpcode(op) || isUncondBranchOpcode(op);
+    static bool inline isNearBranchOpcode(unsigned op) {
+        return isCondNearBranchOpcode(op) || isUncondNearBranchOpcode(op);
     }
+
+private:
+    const SVMRegisterInfo RI;
 };
 
 }

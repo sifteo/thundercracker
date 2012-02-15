@@ -21,7 +21,9 @@
 
 namespace llvm {
 
+    class TargetData;
     class MachineInstr;
+    class MachineConstantPoolEntry;
 
     class SVMBlockSizeAccumulator {
     public:
@@ -29,12 +31,19 @@ namespace llvm {
         unsigned getByteCount() const;
 
         void AddInstr(const MachineInstr *MI);
+        void AddInstr(unsigned bytes);
+        void AddInstrPrefix(unsigned bytes);
+        void AddInstrSuffix(unsigned bytes);
+        void AddConstant(const TargetData &TD, const MachineConstantPoolEntry &CPE);
+        void AddConstant(unsigned bytes, unsigned align=1);
         void InstrAlign(unsigned A);
 
     private:
         unsigned InstrSizeTotal;
+        unsigned InstrPrefixTotal;
+        unsigned InstrSuffixTotal;
         unsigned ConstSizeTotal;
-        int ConstAlignment; 
+        unsigned ConstAlignment; 
         SmallSet<unsigned, 128> UsedCPI;
     };
 

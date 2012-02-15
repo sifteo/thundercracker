@@ -30,6 +30,7 @@
 #include "SVM.h"
 #include "SVMTargetMachine.h"
 #include "SVMBlockSizeAccumulator.h"
+#include "SVMInstrInfo.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Module.h"
 #include "llvm/codeGen/MachineInstr.h"
@@ -51,10 +52,30 @@ namespace {
             : MachineFunctionPass(ID), TM(tm) {}
 
         bool runOnMachineFunction(MachineFunction &MF);
+        void releaseMemory();
 
         const char *getPassName() const {
             return "SVM late function splitter pass";
         }
+        
+    private:
+        SVMBlockSizeAccumulator BSA;
+        SmallSet<MachineBasicBlock*, 32> PriorBlockBB;
+        SmallSet<MachineBasicBlock*, 32> CurrentBlockBB;
+        bool Changed;
+        
+        void beginBlock();
+        void visitBasicBlock(MachineBasicBlock &MBB);
+        void visitInstrBundle(MachineBasicBlock &MBB,
+            MachineBasicBlock::iterator &FirstI,
+            MachineBasicBlock::iterator &EndI);
+        void visitInstr(MachineBasicBlock &MBB,
+            MachineBasicBlock::iterator &I);
+            
+        void splitBeforeInstruction(MachineBasicBlock &MBB,
+            MachineBasicBlock::iterator &I);
+        void rewriteBranch(MachineBasicBlock &MBB,
+            MachineBasicBlock::iterator &I, MachineBasicBlock &TBB);
     };
   
     char SVMLateFunctionSplitPass::ID = 0;
@@ -65,39 +86,141 @@ FunctionPass *llvm::createSVMLateFunctionSplitPass(SVMTargetMachine &TM)
     return new SVMLateFunctionSplitPass(TM);
 }
 
+void SVMLateFunctionSplitPass::releaseMemory()
+{
+    BSA.clear();
+    PriorBlockBB.clear();
+    CurrentBlockBB.clear();
+}
+
+void SVMLateFunctionSplitPass::beginBlock()
+{
+    // Blocks start out (almost) empty
+    BSA.clear();
+    
+    // Always save space for a long branch to link this with the next block
+    BSA.AddConstant(4, 4);
+    BSA.AddInstrSuffix(2);
+}
+
 bool SVMLateFunctionSplitPass::runOnMachineFunction(MachineFunction &MF)
 {
-    const TargetInstrInfo &TII = *TM.getInstrInfo();
-    SVMBlockSizeAccumulator BSA;
-    bool Changed = false;
+    releaseMemory();
+    beginBlock();
+    Changed = false;
 
-    // Start measuring from the beginning of the function
-    BSA.clear();
+    for (MachineFunction::iterator MBB = MF.begin(); MBB != MF.end(); ++MBB)
+        visitBasicBlock(*MBB);
 
-    // Iterate over basic blocks...
-    for (MachineFunction::iterator MBB = MF.begin(); MBB != MF.end(); ++MBB) {
+    return Changed;
+}
 
-        // All basic blocks must align to a bundle boundary
-        BSA.InstrAlign(TM.getBundleSize());
+void SVMLateFunctionSplitPass::visitBasicBlock(MachineBasicBlock &MBB)
+{
+    unsigned bundleSize = TM.getBundleSize();
 
-        // Iterate over instructions...
-        for (MachineBasicBlock::iterator I = MBB->begin(); I != MBB->end(); ++I) {
+    // Remember every BB that we visit, so we can keep track of BBs
+    // behind an already-split portion of the function.
+    CurrentBlockBB.insert(&MBB);
 
-            // Look for the first instruction that puts us over-budget
-            BSA.AddInstr(I);
-            if (BSA.getByteCount() <= TM.getBlockSize())
-                continue;
+    // All basic blocks must align to a bundle boundary
+    BSA.InstrAlign(bundleSize);
 
-            Changed = true;
+    // We can only split on a bundle boundary, so visit a bundle at a time.
+    MachineBasicBlock::iterator FirstI = MBB.begin();
+    while (FirstI != MBB.end()) {
+        MachineBasicBlock::iterator NextI = FirstI;
+        unsigned Bytes = 0;
+        
+        do {
+            Bytes += NextI->getDesc().getSize();
+            assert(Bytes <= bundleSize);
+            NextI++;
+        } while (Bytes < bundleSize && NextI != MBB.end());
+        
+        visitInstrBundle(MBB, FirstI, NextI);
+        FirstI = NextI;
+    }
+}
 
-            // The new block begins with instruction I
-            BSA.clear();
-            BSA.AddInstr(I);
-    
-            // Insert a split just prior to I
-            BuildMI(*MBB, I, I->getDebugLoc(), TII.get(SVM::SPLIT));
+void SVMLateFunctionSplitPass::visitInstrBundle(MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator &FirstI,
+    MachineBasicBlock::iterator &EndI)
+{
+    // Visit each instruction, doing early branch rewriting and tracking fn size
+    for (MachineBasicBlock::iterator I = FirstI; I != EndI; ++I)
+        visitInstr(MBB, I);
+
+    // If any instruction in this bundle put us over budget, split before
+    // the whole bundle.
+    if (BSA.getByteCount() >= TM.getBlockSize()) {
+        splitBeforeInstruction(MBB, FirstI);
+
+        // The new block begins with this bundle
+        BSA.clear();
+        for (MachineBasicBlock::iterator I = FirstI; I != EndI; ++I)
+            visitInstr(MBB, I);
+    }
+}
+
+void SVMLateFunctionSplitPass::visitInstr(MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator &I)
+{   
+    if (SVMInstrInfo::isNearBranchOpcode(I->getOpcode())) {
+        /*
+         * Near branches may require additional work. At this point, we can
+         * categorize a branch in one of three ways:
+         *
+         *   1. It points to a prior block. In this case, we can immediately
+         *      rewrite it as a long branch.
+         *
+         *   2. It points to a prior BB in the current flash block. In this
+         *      case, we're guaranteed that it can stay as a near branch.
+         *
+         *   3. It points to a future BB. We don't know whether there will be
+         *      a split yet between us and the target, so we need to account
+         *      for the potential space cost of a long branch.
+         */
+
+        // Branch target is always the first opcode
+        MachineBasicBlock *TBB = I->getOperand(0).getMBB();
+
+        if (PriorBlockBB.count(TBB)) {
+            // (1) Rewrite it immediately
+            rewriteBranch(MBB, I, *TBB);
+
+        } else if (!CurrentBlockBB.count(TBB)) {
+            // (3) May need to rewrite it later, save space for it.
+
+            if (SVMInstrInfo::isCondNearBranchOpcode(I->getOpcode())) {
+                // Conditional branches may use a 16-bit trampoline,
+                // prefixed at the beginning of the block.
+                BSA.AddInstrPrefix(2);
+            }
+
+            // All branches may need a 32-bit constant
+            BSA.AddConstant(4, 4);
         }
     }
-    
-    return Changed;
+
+    BSA.AddInstr(I);
+}
+
+void SVMLateFunctionSplitPass::splitBeforeInstruction(MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator &I)
+{
+    // Current BBs become prior
+    PriorBlockBB.insert(CurrentBlockBB.begin(), CurrentBlockBB.end());
+    CurrentBlockBB.clear();
+
+    // Add the SPLIT instruction itself, telling future passes where to change blocks
+    const TargetInstrInfo &TII = *TM.getInstrInfo();
+    BuildMI(MBB, I, I->getDebugLoc(), TII.get(SVM::SPLIT));
+
+    Changed = true;
+}
+
+void SVMLateFunctionSplitPass::rewriteBranch(MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator &I, MachineBasicBlock &TBB)
+{
 }

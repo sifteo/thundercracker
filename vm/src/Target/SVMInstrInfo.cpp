@@ -162,13 +162,13 @@ bool SVMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB
     if (prevI == NULL) {
         // Only a single terminator instruction
         
-        if (isUncondBranchOpcode(lastI->getOpcode())) {
+        if (isUncondNearBranchOpcode(lastI->getOpcode())) {
             // Unconditional branch
             TBB = lastI->getOperand(0).getMBB();
             return false;
         }
         
-        if (isCondBranchOpcode(lastI->getOpcode())) {
+        if (isCondNearBranchOpcode(lastI->getOpcode())) {
             // Conditional branch with fall-through
             TBB = lastI->getOperand(0).getMBB();
             Cond.push_back(lastI->getOperand(1));
@@ -178,8 +178,8 @@ bool SVMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB
     } else {
         // Multiple terminators
 
-        if (isUncondBranchOpcode(lastI->getOpcode()) &&
-            isCondBranchOpcode(prevI->getOpcode())) {
+        if (isUncondNearBranchOpcode(lastI->getOpcode()) &&
+            isCondNearBranchOpcode(prevI->getOpcode())) {
             // Conditional branch followed by unconditional
             TBB = prevI->getOperand(0).getMBB();
             FBB = lastI->getOperand(0).getMBB();
@@ -203,7 +203,7 @@ unsigned SVMInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const
     do {
         if (I->isDebugValue()) {
             --I;
-        } else if (isBranchOpcode(I->getOpcode())) {
+        } else if (isNearBranchOpcode(I->getOpcode())) {
             I->eraseFromParent();
             removedInstructions++;
             I = MBB.end();

@@ -155,6 +155,13 @@ def B : T18<(outs), (ins bTarget:$offset11),
     let isTerminator = 1;
 }
 
+// Long unconditional branch (via indirect svc)
+def LB : S_ind<(outs), (ins AbsCPIop:$offset11),
+    "s.lb\t$offset11", []> {
+    let isBranch = 1;
+    let isTerminator = 1;
+}
+
 def CMOV : Pseudo<(outs GPReg:$Rd), (ins GPReg:$T, GPReg:$F, CCop:$cc),
     "!CMOV$cc\t$Rd, $T, $F",
     [(set GPReg:$Rd, (SVMCmov GPReg:$T, GPReg:$F, imm:$cc))]> {
