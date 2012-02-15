@@ -55,11 +55,6 @@ namespace {
         const char *getPassName() const {
             return "SVM late function splitter pass";
         }
-
-    private:
-        SVMBlockSizeAccumulator BSA;
-
-        bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
     };
   
     char SVMLateFunctionSplitPass::ID = 0;
@@ -72,28 +67,36 @@ FunctionPass *llvm::createSVMLateFunctionSplitPass(SVMTargetMachine &TM)
 
 bool SVMLateFunctionSplitPass::runOnMachineFunction(MachineFunction &MF)
 {
+    const TargetInstrInfo &TII = *TM.getInstrInfo();
+    SVMBlockSizeAccumulator BSA;
     bool Changed = false;
 
     // Start measuring from the beginning of the function
     BSA.clear();
 
-    for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-        if (runOnMachineBasicBlock(*I))
+    // Iterate over basic blocks...
+    for (MachineFunction::iterator MBB = MF.begin(); MBB != MF.end(); ++MBB) {
+
+        // All basic blocks must align to a bundle boundary
+        BSA.InstrAlign(TM.getBundleSize());
+
+        // Iterate over instructions...
+        for (MachineBasicBlock::iterator I = MBB->begin(); I != MBB->end(); ++I) {
+
+            // Look for the first instruction that puts us over-budget
+            BSA.AddInstr(I);
+            if (BSA.getByteCount() <= TM.getBlockSize())
+                continue;
+
             Changed = true;
 
-    return Changed;
-}
-
-bool SVMLateFunctionSplitPass::runOnMachineBasicBlock(MachineBasicBlock &MBB)
-{
-    bool Changed = false;
-
-    // All basic blocks must align to a bundle boundary
-    BSA.InstrAlign(TM.getBundleSize());
-
-    for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I) {
-        BSA.AddInstr(I);
-        //printf("Size: %d\n", BSA.getByteCount());
+            // The new block begins with instruction I
+            BSA.clear();
+            BSA.AddInstr(I);
+    
+            // Insert a split just prior to I
+            BuildMI(*MBB, I, I->getDebugLoc(), TII.get(SVM::SPLIT));
+        }
     }
     
     return Changed;
