@@ -85,3 +85,5 @@ audio.gen.cpp
 config.h
 Level.h
 Level.cpp
+Puzzle.h
+Puzzle.cpp
