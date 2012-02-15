@@ -108,29 +108,20 @@ bool AllSolved(App& app)
 // Shuffle Mode
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char *kShuffleStateNames[NUM_SHUFFLE_STATES] =
+const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "SHUFFLE_STATE_NONE",
     "SHUFFLE_STATE_START",
-    "SHUFFLE_STATE_SHAKE_TO_SCRAMBLE",
-    "SHUFFLE_STATE_SCRAMBLING",
-    "SHUFFLE_STATE_UNSCRAMBLE_THE_FACES",
-    "SHUFFLE_STATE_PLAY",
-    "SHUFFLE_STATE_SOLVED",
-    "SHUFFLE_STATE_SCORE",
-};
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Authored Mode
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-const char *kAuthoredStateNames[NUM_AUTHORED_STATES] =
-{
-    "AUTHORED_STATE_NONE",
-    "AUTHORED_STATE_START",
-    "AUTHORED_STATE_INSTRUCTIONS",
-    "AUTHORED_STATE_PLAY",
-    "AUTHORED_STATE_SOLVED",
+    "GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE",
+    "GAME_STATE_SHUFFLE_SCRAMBLING",
+    "GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES",
+    "GAME_STATE_SHUFFLE_PLAY",
+    "GAME_STATE_SHUFFLE_SOLVED",
+    "GAME_STATE_SHUFFLE_SCORE",
+    "GAME_STATE_PUZZLE_START",
+    "GAME_STATE_PUZZLE_INSTRUCTIONS",
+    "GAME_STATE_PUZZLE_PLAY",
+    "GAME_STATE_PUZZLE_SOLVED",
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,11 +146,10 @@ App::App()
     , mSwapPiece0(0)
     , mSwapPiece1(0)
     , mSwapAnimationCounter(0)
-    , mShuffleState(SHUFFLE_STATE_NONE)
+    , mGameState(GAME_STATE_NONE)
     , mShuffleMoveCounter(0)
     , mShuffleScoreTime(0.0f)
-    , mAuthoredState(AUTHORED_STATE_NONE)
-    , mAuthoredPuzzleIndex(0)
+    , mPuzzleIndex(0)
 {
 }
 
@@ -185,11 +175,11 @@ void App::Reset()
     
     if (kGameMode == GAME_MODE_SHUFFLE)
     {
-        StartShuffleState(SHUFFLE_STATE_START);
+        StartGameState(GAME_STATE_SHUFFLE_START);
     }
-    else if (kGameMode == GAME_MODE_AUTHORED)
+    else if (kGameMode == GAME_MODE_PUZZLE)
     {
-        StartAuthoredState(AUTHORED_STATE_START);
+        StartGameState(GAME_STATE_PUZZLE_START);
     }
 }
 
@@ -198,8 +188,7 @@ void App::Reset()
 
 void App::Update(float dt)
 {
-    UpdateShuffle(dt);
-    UpdateAuthored(dt);
+    UpdateGameState(dt);
     UpdateSwap(dt);
     
     // Cubes
@@ -239,18 +228,18 @@ void App::Draw()
     {
         if (mCubeWrappers[i].IsEnabled())
         {
-            if (mAuthoredState == AUTHORED_STATE_INSTRUCTIONS)
+            if (mGameState == GAME_STATE_PUZZLE_INSTRUCTIONS)
             {
-                ASSERT(mAuthoredPuzzleIndex < GetNumPuzzles());
-                mCubeWrappers[i].DrawTitleCard(GetPuzzle(mAuthoredPuzzleIndex).GetInstructions());
+                ASSERT(mPuzzleIndex < GetNumPuzzles());
+                mCubeWrappers[i].DrawTitleCard(GetPuzzle(mPuzzleIndex).GetInstructions());
             }
             else
             {
                 mCubeWrappers[i].DrawBuddy();
                 
-                if (mShuffleState != SHUFFLE_STATE_NONE)
+                if (kGameMode == GAME_MODE_SHUFFLE)
                 {
-                    mCubeWrappers[i].DrawShuffleUi(mShuffleState, mShuffleScoreTime);
+                    mCubeWrappers[i].DrawShuffleUi(mGameState, mShuffleScoreTime);
                 }
             }
         }
@@ -274,9 +263,9 @@ CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId)
 
 void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1, Cube::Side cubeSide1)
 {
-    if (mAuthoredState == AUTHORED_STATE_INSTRUCTIONS)
+    if (mGameState == GAME_STATE_PUZZLE_INSTRUCTIONS)
     {
-        StartAuthoredState(AUTHORED_STATE_PLAY);
+        StartGameState(GAME_STATE_PUZZLE_PLAY);
     }
     else
     {
@@ -290,24 +279,20 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
             GetCubeWrapper(cubeId0).GetPiece(cubeSide0).mAttribute == Piece::ATTR_FIXED ||
             GetCubeWrapper(cubeId1).GetPiece(cubeSide1).mAttribute == Piece::ATTR_FIXED;
         
-        bool isValidShuffleState =
-            mShuffleState == SHUFFLE_STATE_NONE ||
-            mShuffleState == SHUFFLE_STATE_UNSCRAMBLE_THE_FACES ||
-            mShuffleState == SHUFFLE_STATE_PLAY;
+        bool isValidGameState =
+            mGameState == GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES ||
+            mGameState == GAME_STATE_SHUFFLE_PLAY ||
+            mGameState == GAME_STATE_PUZZLE_PLAY;
         
-        bool isValidAuthoredState =
-            mAuthoredState == AUTHORED_STATE_NONE ||
-            mAuthoredState == AUTHORED_STATE_PLAY;
-        
-        if (!isSwapping && !isHinting && !isFixed && isValidShuffleState && isValidAuthoredState)
+        if (!isSwapping && !isHinting && !isFixed && isValidGameState)
         {
-            if (kGameMode == GAME_MODE_SHUFFLE && mShuffleState != SHUFFLE_STATE_PLAY)
+            if (kGameMode == GAME_MODE_SHUFFLE && mGameState != GAME_STATE_SHUFFLE_PLAY)
             {
-                StartShuffleState(SHUFFLE_STATE_PLAY);
+                StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
-            else if (kGameMode == GAME_MODE_AUTHORED && mAuthoredState != AUTHORED_STATE_PLAY)
+            else if (kGameMode == GAME_MODE_PUZZLE && mGameState != GAME_STATE_PUZZLE_PLAY)
             {
-                StartAuthoredState(AUTHORED_STATE_PLAY);
+                StartGameState(GAME_STATE_PUZZLE_PLAY);
             }
             
             OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
@@ -320,13 +305,13 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
 
 void App::OnTilt(Cube::ID cubeId)
 {
-    if(mShuffleState == SHUFFLE_STATE_UNSCRAMBLE_THE_FACES)
+    if(mGameState == GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES)
     {
-        StartShuffleState(SHUFFLE_STATE_PLAY);
+        StartGameState(GAME_STATE_SHUFFLE_PLAY);
     }
-    else if (mAuthoredState == AUTHORED_STATE_INSTRUCTIONS)
+    else if (mGameState == GAME_STATE_PUZZLE_INSTRUCTIONS)
     {
-        StartAuthoredState(AUTHORED_STATE_PLAY);
+        StartGameState(GAME_STATE_PUZZLE_PLAY);
     }
 }
 
@@ -337,10 +322,10 @@ void App::OnShake(Cube::ID cubeId)
 {
     if (kGameMode == GAME_MODE_SHUFFLE)
     {
-        if( mShuffleState == SHUFFLE_STATE_SHAKE_TO_SCRAMBLE ||
-            mShuffleState == SHUFFLE_STATE_SCORE)
+        if( mGameState == GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE ||
+            mGameState == GAME_STATE_SHUFFLE_SCORE)
         {
-            StartShuffleState(SHUFFLE_STATE_SCRAMBLING);
+            StartGameState(GAME_STATE_SHUFFLE_SCRAMBLING);
         }
     }
 }
@@ -380,11 +365,11 @@ void App::ResetCubes()
             
             for (unsigned int j = 0; j < NUM_SIDES; ++j)
             {
-                if (kGameMode == GAME_MODE_AUTHORED)
+                if (kGameMode == GAME_MODE_PUZZLE)
                 {
-                    ASSERT(mAuthoredPuzzleIndex < GetNumPuzzles());
-                    mCubeWrappers[i].SetPiece(j, GetPuzzle(mAuthoredPuzzleIndex).GetStartState(i, j));
-                    mCubeWrappers[i].SetPieceSolution(j, GetPuzzle(mAuthoredPuzzleIndex).GetEndState(i, j));
+                    ASSERT(mPuzzleIndex < GetNumPuzzles());
+                    mCubeWrappers[i].SetPiece(j, GetPuzzle(mPuzzleIndex).GetStartState(i, j));
+                    mCubeWrappers[i].SetPieceSolution(j, GetPuzzle(mPuzzleIndex).GetEndState(i, j));
                 }
                 else
                 {
@@ -407,19 +392,19 @@ void App::PlaySound()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::StartShuffleState(ShuffleState shuffleState)
+void App::StartGameState(GameState shuffleState)
 {
-    mShuffleState = shuffleState;
-    DEBUG_LOG(("State = %s\n", kShuffleStateNames[mShuffleState]));
+    mGameState = shuffleState;
+    DEBUG_LOG(("State = %s\n", kShuffleStateNames[mGameState]));
     
-    switch (mShuffleState)
+    switch (mGameState)
     {
-        case SHUFFLE_STATE_START:
+        case GAME_STATE_SHUFFLE_START:
         {
             mDelayTimer = kShuffleStateTimeDelay;
             break;
         }
-        case SHUFFLE_STATE_SCRAMBLING:
+        case GAME_STATE_SHUFFLE_SCRAMBLING:
         {
             mShuffleMoveCounter = 0;
             for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
@@ -429,94 +414,18 @@ void App::StartShuffleState(ShuffleState shuffleState)
             ShufflePieces();
             break;
         }
-        case SHUFFLE_STATE_UNSCRAMBLE_THE_FACES:
+        case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
         {
             mShuffleScoreTime = 0.0f;
             break;
         }
-        default:
+        case GAME_STATE_PUZZLE_START:
         {
-            break;
-        }
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void App::UpdateShuffle(float dt)
-{
-    switch (mShuffleState)
-    {
-        case SHUFFLE_STATE_START:
-        {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
-            {
-                mDelayTimer = 0.0f;
-                StartShuffleState(SHUFFLE_STATE_SHAKE_TO_SCRAMBLE);
-            }
-            break;
-        }
-        case SHUFFLE_STATE_SCRAMBLING:
-        {
-            if (mSwapAnimationCounter == 0)
-            {
-                ASSERT(mDelayTimer > 0.0f);
-                mDelayTimer -= dt;
-                
-                if (mDelayTimer <= 0.0f)
-                {
-                    mDelayTimer = 0.0f;
-                    ShufflePieces();
-                }
-            }
-            break;
-        }
-        case SHUFFLE_STATE_UNSCRAMBLE_THE_FACES:
-        case SHUFFLE_STATE_PLAY:
-        {
-            mShuffleScoreTime += dt;
-            break;
-        }
-        case SHUFFLE_STATE_SOLVED:
-        {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
-            {
-                mDelayTimer = 0.0f;
-                StartShuffleState(SHUFFLE_STATE_SCORE);
-            }
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void App::StartAuthoredState(AuthoredState authoredState)
-{
-    mAuthoredState = authoredState;
-    DEBUG_LOG(("State = %s\n", kAuthoredStateNames[mAuthoredState]));
-    
-    switch (mAuthoredState)
-    {
-        case AUTHORED_STATE_START:
-        {
-            mAuthoredPuzzleIndex = 0;
+            mPuzzleIndex = 0;
             mDelayTimer = kShuffleStateTimeDelay;
             break;
         }
-        case AUTHORED_STATE_PLAY:
+        case GAME_STATE_PUZZLE_PLAY:
         {
             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
             {
@@ -537,11 +446,11 @@ void App::StartAuthoredState(AuthoredState authoredState)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::UpdateAuthored(float dt)
+void App::UpdateGameState(float dt)
 {
-    switch (mAuthoredState)
+    switch (mGameState)
     {
-        case AUTHORED_STATE_START:
+        case GAME_STATE_SHUFFLE_START:
         {
             ASSERT(mDelayTimer > 0.0f);
             mDelayTimer -= dt;
@@ -549,11 +458,56 @@ void App::UpdateAuthored(float dt)
             if (mDelayTimer <= 0.0f)
             {
                 mDelayTimer = 0.0f;
-                StartAuthoredState(AUTHORED_STATE_INSTRUCTIONS);
+                StartGameState(GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE);
             }
             break;
         }
-        case AUTHORED_STATE_SOLVED:
+        case GAME_STATE_SHUFFLE_SCRAMBLING:
+        {
+            if (mSwapAnimationCounter == 0)
+            {
+                ASSERT(mDelayTimer > 0.0f);
+                mDelayTimer -= dt;
+                
+                if (mDelayTimer <= 0.0f)
+                {
+                    mDelayTimer = 0.0f;
+                    ShufflePieces();
+                }
+            }
+            break;
+        }
+        case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
+        case GAME_STATE_SHUFFLE_PLAY:
+        {
+            mShuffleScoreTime += dt;
+            break;
+        }
+        case GAME_STATE_SHUFFLE_SOLVED:
+        {
+            ASSERT(mDelayTimer > 0.0f);
+            mDelayTimer -= dt;
+            
+            if (mDelayTimer <= 0.0f)
+            {
+                mDelayTimer = 0.0f;
+                StartGameState(GAME_STATE_SHUFFLE_SCORE);
+            }
+            break;
+        }
+        case GAME_STATE_PUZZLE_START:
+        {
+            ASSERT(mDelayTimer > 0.0f);
+            mDelayTimer -= dt;
+            
+            if (mDelayTimer <= 0.0f)
+            {
+                mDelayTimer = 0.0f;
+                StartGameState(GAME_STATE_PUZZLE_INSTRUCTIONS);
+            }
+            break;
+        }
+        case GAME_STATE_PUZZLE_SOLVED:
         {
             ASSERT(mDelayTimer > 0.0f);
             mDelayTimer -= dt;
@@ -562,13 +516,13 @@ void App::UpdateAuthored(float dt)
             {
                 mDelayTimer = 0.0f;
                 
-                if (++mAuthoredPuzzleIndex == GetNumPuzzles())
+                if (++mPuzzleIndex == GetNumPuzzles())
                 {
-                    mAuthoredPuzzleIndex = 0;
+                    mPuzzleIndex = 0;
                 }
                 ResetCubes();
                 
-                StartAuthoredState(AUTHORED_STATE_INSTRUCTIONS);
+                StartGameState(GAME_STATE_PUZZLE_INSTRUCTIONS);
             }
             break;
         }
@@ -675,7 +629,7 @@ void App::OnSwapFinish()
 {
     mSwapState = SWAP_STATE_NONE;
     
-    if (mShuffleState == SHUFFLE_STATE_SCRAMBLING)
+    if (mGameState == GAME_STATE_SHUFFLE_SCRAMBLING)
     {
         bool done = GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved);
         if (kShuffleMaxMoves > 0)
@@ -685,26 +639,26 @@ void App::OnSwapFinish()
     
         if (done)
         {
-            StartShuffleState(SHUFFLE_STATE_UNSCRAMBLE_THE_FACES);
+            StartGameState(GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES);
         }
         else
         {
             mDelayTimer += kShuffleScrambleTimerDelay;
         }
     }
-    else if (mShuffleState == SHUFFLE_STATE_PLAY)
+    else if (mGameState == GAME_STATE_SHUFFLE_PLAY)
     {
         if (AllSolved(*this))
         {
-            StartShuffleState(SHUFFLE_STATE_SOLVED);
+            StartGameState(GAME_STATE_SHUFFLE_SOLVED);
             mDelayTimer = kShuffleStateTimeDelay;
         }
     }
-    else if (mAuthoredState == AUTHORED_STATE_PLAY)
+    else if (mGameState == GAME_STATE_PUZZLE_PLAY)
     {
         if (AllSolved(*this))
         {
-            StartAuthoredState(AUTHORED_STATE_SOLVED);
+            StartGameState(GAME_STATE_PUZZLE_SOLVED);
             mDelayTimer = kShuffleStateTimeDelay;
         }
     }

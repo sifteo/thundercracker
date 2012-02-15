@@ -50,12 +50,10 @@ private:
     
     void PlaySound();
     
-    void StartShuffleState(ShuffleState shuffleState);
-    void UpdateShuffle(float dt);
-    void ShufflePieces();
+    void StartGameState(GameState shuffleState);
+    void UpdateGameState(float dt);
     
-    void StartAuthoredState(AuthoredState authoredState);
-    void UpdateAuthored(float dt);
+    void ShufflePieces();
     
     void UpdateSwap(float dt);
     void OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1);
@@ -80,13 +78,13 @@ private:
     unsigned int mSwapPiece1;
     int mSwapAnimationCounter;
     
-    ShuffleState mShuffleState;
+    GameState mGameState;
+    
     int mShuffleMoveCounter;
     float mShuffleScoreTime;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     
-    AuthoredState mAuthoredState;
-    unsigned int mAuthoredPuzzleIndex;
+    unsigned int mPuzzleIndex;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

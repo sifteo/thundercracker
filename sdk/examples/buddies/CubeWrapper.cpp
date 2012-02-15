@@ -143,49 +143,48 @@ void CubeWrapper::DrawBuddy()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime)
+void CubeWrapper::DrawShuffleUi(GameState shuffleState, float shuffleScoreTime)
 {
-    if (kGameMode == GAME_MODE_SHUFFLE)
+    ASSERT(kGameMode == GAME_MODE_SHUFFLE);
+    
+    switch (shuffleState)
     {
-        switch (shuffleState)
+        case GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE:
         {
-            case SHUFFLE_STATE_SHAKE_TO_SCRAMBLE:
+            DrawBanner(BannerShakeToScramble);
+            break;
+        }
+        case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
+        {
+            DrawBanner(BannerUnscrambleTheFaces);
+            break;
+        }
+        case GAME_STATE_SHUFFLE_PLAY:
+        {
+            if (IsSolved())
+            {
+                DrawBanner(BannerFaceComplete);
+            }
+            break;
+        }
+        case GAME_STATE_SHUFFLE_SCORE:
+        {
+            if (mCube.id() == 0)
+            {
+                int minutes = int(shuffleScoreTime) / 60;
+                int seconds = int(shuffleScoreTime - (minutes * 60.0f));
+                
+                DrawScoreBanner(BannerYourTime, minutes, seconds);
+            }
+            else
             {
                 DrawBanner(BannerShakeToScramble);
-                break;
             }
-            case SHUFFLE_STATE_UNSCRAMBLE_THE_FACES:
-            {
-                DrawBanner(BannerUnscrambleTheFaces);
-                break;
-            }
-            case SHUFFLE_STATE_PLAY:
-            {
-                if (IsSolved())
-                {
-                    DrawBanner(BannerFaceComplete);
-                }
-                break;
-            }
-            case SHUFFLE_STATE_SCORE:
-            {
-                if (mCube.id() == 0)
-                {
-                    int minutes = int(shuffleScoreTime) / 60;
-                    int seconds = int(shuffleScoreTime - (minutes * 60.0f));
-                    
-                    DrawScoreBanner(BannerYourTime, minutes, seconds);
-                }
-                else
-                {
-                    DrawBanner(BannerShakeToScramble);
-                }
-                break;
-            }
-            default:
-            {
-                break;
-            }
+            break;
+        }
+        default:
+        {
+            break;
         }
     }
 }

@@ -35,7 +35,7 @@ public:
     void Update(float dt);
     
     void DrawBuddy();
-    void DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime);
+    void DrawShuffleUi(GameState shuffleState, float shuffleScoreTime);
     void DrawTitleCard(const char *text);
     void DrawTextBanner(const char *text);
     
