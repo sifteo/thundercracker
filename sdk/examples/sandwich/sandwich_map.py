@@ -87,7 +87,6 @@ class Map:
 		self.item_dict = {}
 		self.gate_dict = {}
 		self.npc_dict = {}
-		self.trapdoor_dict = {}
 		for i,item in enumerate(self.list_triggers_of_type(TRIGGER_ITEM)):
 			item.index = i
 			self.item_dict[item.id] = item
@@ -101,6 +100,7 @@ class Map:
 		for i,d in enumerate(self.doors):
 			d.index = i
 		self.ambientType = 1 if "ambient" in self.raw.props else 0
+		self.trapped_rooms = [ room for room in self.rooms if room.its_a_trap ]
 				
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
@@ -158,9 +158,9 @@ class Map:
 				npc.write_npc_to(src)
 			src.write("};\n")
 		
-		if len(self.trapdoor_dict) > 0:
+		if len(self.trapped_rooms) > 0 and False:
 			src.write("static const Trapdoordata %s_trapdoors[] = { " % self.id)
-			for trapdoor in self.trapdoor_dict.itervalues():
+			for trapdoor in self.trapped_rooms:
 				assert false, "dont have data yet"
 			src.write("};\n")
 		
@@ -236,7 +236,7 @@ class Map:
 				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
-				"trapdoor": self.id + "_trapdoors" if len(self.trapdoor_dict) > 0 else "0",
+				"trapdoor": self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",
@@ -246,7 +246,7 @@ class Map:
 				"nitems": len(self.item_dict),
 				"ngates": len(self.gate_dict),
 				"nnpcs": len(self.npc_dict),
-				"ntrapdoors": len(self.trapdoor_dict),
+				"ntrapdoors": len(self.trapped_rooms),
 				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
 				"ndoors": len(self.doors),
 				"nanimtiles": len(self.animatedtiles),
