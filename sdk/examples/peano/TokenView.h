@@ -25,7 +25,14 @@ namespace TotalsGame {
 	  //junk to make compile
 	  class Color {};
 
-	  class EventHandler: public TotalsCube::EventHandler {};
+      class EventHandler: public TotalsCube::EventHandler
+      {
+          TokenView *owner;
+      public:
+          EventHandler(TokenView *_owner): owner(_owner) {}
+          void OnCubeTouch(TotalsCube *c, bool isPressed) {owner->OnButtonEvent(c, isPressed);}
+          void OnCubeShake(TotalsCube *c) {owner->OnShakeStarted(c);}
+      };
 	  EventHandler eventHandler;
 
   public:

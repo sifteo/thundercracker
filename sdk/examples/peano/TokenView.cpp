@@ -19,8 +19,16 @@ namespace TotalsGame
 	}
 
 	TokenView::TokenView(TotalsCube *cube, Token *_token, bool showDigitOnInit) 
-		: View(cube)
+        : View(cube), eventHandler(this)
 	{
+        /* warning: big hack TODO
+          view constructor calls virtual DidAttachToCube
+          since we're currently in a constructor the virtual call
+          goes to the base class, not *this* class.
+          I'll just call it manually to make it work.
+          */
+        TokenView::DidAttachToCube(cube);
+
 		token = _token;
 		mCurrentExpression = token;
         token->view = this;
@@ -251,7 +259,7 @@ namespace TotalsGame
 	void TokenView::Paint() 
 	{
 		TotalsCube *c = GetCube();
-		c->Image(mLit ? &BackgroundLit : &Background);
+        c->Image(mLit ? &BackgroundLit : &Background, Vec2(0,0));
 		SideStatus bottomStatus = SideStatusOpen;
 		SideStatus rightStatus = SideStatusOpen;
 		SideStatus topStatus = SideStatusOpen;
@@ -316,16 +324,25 @@ namespace TotalsGame
 		if (mStatus == StatusOverlay)
 		{
 			Fraction result = token->GetCurrentTotal();
-			const int yPos = 24;
-			//TODO        c->Image("accent", 0, yPos, 0, 0, 128, 64);
-			/*        var img = Game.Inst.Images[isInGroup ? "accent_current" : "accent_target"];
-			c.Image(img.name, (128-img.width)>>1, yPos+8);
-			if (result.IsNAN) {
-			var nanData = Game.Inst.Images["nan"];
-			c.Image("nan", (128-nanData.width)>>1, yPos+32-nanData.height/2);
+            const int yPos = 3;
+            //TODO
+            c->Image(&Accent, Vec2(0,yPos));
+            if(isInGroup)
+            {
+                c->foregroundLayer.DrawAsset(Vec2(8-Accent_Current.width/2, yPos+1), Accent_Current);
+            }
+            else
+            {
+                c->foregroundLayer.DrawAsset(Vec2(8-Accent_Target.width/2, yPos+1), Accent_Target);
+            }
+
+            if (result.IsNan())
+            {
+                c->foregroundLayer.DrawAsset(Vec2(8-Nan.width/2, yPos+4-Nan.height/2), Nan);
 			} else {
-			c.DrawFraction(result, 64, yPos+32);
-            } */
+                //uses sprites -> pixel coords
+                c->DrawFraction(result, Vec2(64, yPos*8+32));
+            }
 		} 
         else
         {
@@ -535,6 +552,7 @@ namespace TotalsGame
         }
 
     }
+
 
     
 	// // // //

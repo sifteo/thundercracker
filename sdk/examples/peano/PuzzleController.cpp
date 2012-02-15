@@ -318,10 +318,9 @@ float PuzzleController::OnTick (float dt)
     /* TODO			if (!IsPaused && mRemoveEventBuffer.Count > 0) {
             ProcessRemoveEventBuffer();
             } */
-    return TheBigCoroutine(dt);
-    /*			if (mMainCoro.Update(dt)) {
-            game.CubeSet.UpdateViews(dt);
-            } */
+    float rval = TheBigCoroutine(dt);
+    Game::UpdateCubeViews(dt);
+    return rval;
 }
 
 void PuzzleController::OnPaint (bool canvasDirty)

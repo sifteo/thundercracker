@@ -80,6 +80,20 @@ namespace TotalsGame
 		}
 	}
 
+    void Game::UpdateCubeViews(float dt)
+    {
+        for(int i = 0; i < NUMBER_OF_CUBES; i++)
+        {
+            TotalsCube *c = Game::GetCube(i);
+            if(c)
+            {
+                View *v = c->GetView();
+                if(v)
+                    v->Update(dt);
+            }
+        }
+    }
+
 	void Game::Setup(TotalsCube *_cubes, int nCubes)
 	{
 		assert(nCubes == Game::NUMBER_OF_CUBES);
@@ -164,6 +178,8 @@ namespace TotalsGame
         for(int i = 0; i < NUMBER_OF_CUBES; i++)
         {
             cubes[i].foregroundLayer.Clear();
+            for(int s = 0 ; s < _SYS_VRAM_SPRITES; s++)
+                cubes[i].backgroundLayer.hideSprite(s);
         }
 
         sceneMgr.Tick(dt);

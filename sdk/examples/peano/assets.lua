@@ -2,6 +2,14 @@ GameAssets = group{quality=10}
 Background = image{"background.png"}
 BackgroundLit = image{"background_lit.png"}
 
+Accent = image{ "accent.png" }
+Accent_Current = image{ "accent_current.png" }
+Accent_Target = image{ "accent_target.png" }
+
+Nan = image { "nan.png" }
+
+Digits = image { "digits.png", width=16, height=16, pinned=true }
+
 NormalDigit_0 = image { "0.png" }
 NormalDigit_1 = image { "1.png" }
 NormalDigit_2 = image { "2.png" }

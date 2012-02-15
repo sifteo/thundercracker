@@ -84,10 +84,19 @@ namespace TotalsGame {
 	{
 		char numString[8];
 		char denString[8];
-		snprintf(numString, 8, "%d", nu);
-		snprintf(denString, 8, "%d", de);
-		snprintf(s, length, "%s/%s", numString, denString);
-	}
+
+        snprintf(numString, 8, "%d", nu);
+        snprintf(denString, 8, "%d", de);
+
+        if(de != 1)
+        {
+            snprintf(s, length, "%s/%s", numString, denString);
+        }
+        else
+        {
+            snprintf(s, length, "%s", numString);
+        }
+    }
 
 	int Fraction::GCD(int a, int b) 
 	{

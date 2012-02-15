@@ -3,6 +3,7 @@
 #include "Game.h"
 #include "AudioPlayer.h"
 #include "TokenView.h"
+#include "string.h"
 
 namespace TotalsGame
 {
@@ -60,14 +61,20 @@ namespace TotalsGame
     {
         EventHandler *e = eventHandler;
         while(e)
+        {
             e->OnCubeShake(c);
+            e = e->next;
+        }
     }
 
     void TotalsCube::DispatchOnCubeTouch(TotalsCube *c, bool touching)
     {
         EventHandler *e = eventHandler;
         while(e)
+        {
             e->OnCubeTouch(c, touching);
+            e = e->next;
+        }
     }
 
 
@@ -122,9 +129,9 @@ namespace TotalsGame
 		return -1;
 	}
 	
-	void TotalsCube::Image(const AssetImage *image)
+    void TotalsCube::Image(const AssetImage *image, const Vec2 &pos)
 	{
-        backgroundLayer.BG0_drawAsset(Vec2(0,0), *image, 0);
+        backgroundLayer.BG0_drawAsset(pos, *image, 0);
 	}
 
 	void TotalsCube::Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size)
@@ -200,5 +207,95 @@ namespace TotalsGame
 		}
 		*/
 	}
+
+
+    void TotalsCube::DrawFraction(Fraction f, const Vec2 &pos)
+    {
+        char string[10];
+        f.ToString(string, 10);
+        DrawString(string, pos);
+    }
+
+    void TotalsCube::DrawDecimal(float d, const Vec2 &pos)
+    {
+        char string[10];
+        snprintf(string, 10, "%f", d);
+
+        char *dot = strchr(string, '.');
+        if (!dot)
+        {
+                DrawString(string, pos);
+        }
+        else
+        {
+            int decimalCount = 1;
+            while(decimalCount < 3 && *(dot+decimalCount))
+                decimalCount++;
+            *(dot+decimalCount) = 0;
+            DrawString(string, pos);
+        }
+
+    }
+
+    void TotalsCube::DrawString(const char *string, const Vec2 &center)
+    {
+        int hw = 0;
+        const char *s = string;
+        //find string halfwidth
+        while(*s)
+        {
+            switch(*s)
+            {
+            case '-':
+                hw += 5;
+                break;
+            case '/':
+                hw += 6;
+                break;
+            case '.':
+                hw += 4;
+                break;
+            default:
+                hw += 6;
+                break;
+            }
+            s++;
+        }
+        Vec2 p = center - Vec2(hw, 8);
+
+        int curSprite = 0;
+        s = string;
+        while(*s)
+        {
+            switch(*s)
+            {
+            case '-':
+                backgroundLayer.setSpriteImage(curSprite, Digits, 10);
+                backgroundLayer.moveSprite(curSprite, p + Vec2(0,3));
+                p.x += 10-1;
+                break;
+            case '/':
+                backgroundLayer.setSpriteImage(curSprite, Digits, 12);
+                backgroundLayer.moveSprite(curSprite, p);
+                p.x += 12-1;
+                break;
+            case '.':
+                backgroundLayer.setSpriteImage(curSprite, Digits, 11);
+                backgroundLayer.moveSprite(curSprite, p + Vec2(0,12-7));
+                p.x += 8-1;
+                break;
+            default:
+                backgroundLayer.setSpriteImage(curSprite, Digits, (*s)-'0');
+                backgroundLayer.moveSprite(curSprite, p);
+                p.x += 12-1;
+                break;
+            }
+            s++;
+            curSprite++;
+        }
+
+
+    }
+
 
 }

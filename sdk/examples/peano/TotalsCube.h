@@ -3,6 +3,7 @@
 #include "sifteo.h"
 #include "coroutine.h"
 #include "View.h"
+#include "Fraction.h"
 
 namespace TotalsGame
 {
@@ -17,7 +18,8 @@ namespace TotalsGame
 		View *view;
 
 	public:
-        VidMode_BG0 backgroundLayer;
+        //TODO duplicate work in processing bg1!
+        VidMode_BG0_SPR_BG1 backgroundLayer;
         BG1Helper foregroundLayer;
 
 		class EventHandler
@@ -58,9 +60,12 @@ public:
 				
 		void DrawVaultDoorsClosed();
 
-		void Image(const AssetImage *image);
+        void Image(const AssetImage *image, const Vec2 &pos);
 		void Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size);
 	
+        void DrawFraction(Fraction f, const Vec2 &pos);
+        void DrawDecimal(float d, const Vec2 &pos);
+        void DrawString(const char *string, const Vec2 &center);
 
         void DispatchOnCubeShake(TotalsCube *c);
         void DispatchOnCubeTouch(TotalsCube *c, bool touching);

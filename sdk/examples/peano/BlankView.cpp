@@ -32,7 +32,7 @@ namespace TotalsGame
 	{
 		if (assetImage) 
 		{
-			GetCube()->Image(assetImage);
+            GetCube()->Image(assetImage, Vec2(0,0));
 		} 
 		else 
 		{

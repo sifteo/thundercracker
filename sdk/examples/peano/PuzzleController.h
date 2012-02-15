@@ -18,6 +18,7 @@ private:
     {
         void OnCubeShake(TotalsCube *cube) {};
         void OnCubeTouch(TotalsCube *cube, bool touching) {};
+        //TODO connect, disconnect
     };
     EventHandler eventHandler;
 
