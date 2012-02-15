@@ -330,8 +330,7 @@ bool CubeWrapper::IsSolved() const
     for (unsigned int i = 0; i < arraysize(mPiecesSolution); ++i)
     {
         if (mPieces[i].mBuddy != mPiecesSolution[i].mBuddy ||
-            mPieces[i].mPart != mPiecesSolution[i].mPart ||
-            mPieces[i].mRotation != mPiecesSolution[i].mRotation)
+            mPieces[i].mPart != mPiecesSolution[i].mPart)
         {
             return false;
         }
@@ -370,10 +369,15 @@ Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
 {
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
-    ASSERT(piece.mRotation >= 0 && piece.mRotation < 4);
+    
+    int rotation = side - piece.mPart;
+    if (rotation < 0)
+    {
+        rotation += 4;
+    }
     
     const Sifteo::PinnedAssetImage &asset = getPieceAsset(piece.mBuddy);
-    unsigned int frame = (piece.mRotation * NUM_SIDES) + piece.mPart;
+    unsigned int frame = (rotation * NUM_SIDES) + piece.mPart;
     
     ASSERT(frame < asset.frames);
     Video().setSpriteImage(side, asset, frame);

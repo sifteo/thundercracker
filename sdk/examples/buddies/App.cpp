@@ -23,18 +23,6 @@ namespace Buddies { namespace {
 // \/ 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void NormalizeRotation(Piece &piece, unsigned int side)
-{
-    piece.mRotation = side - piece.mPart;
-    if (piece.mRotation < 0)
-    {
-        piece.mRotation += 4;
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 unsigned int GetNumMovedPieces(bool moved[], size_t num_pieces)
 {
     unsigned int num_moved = 0;
@@ -654,16 +642,9 @@ void App::OnSwapExchange()
     mSwapState = SWAP_STATE_IN;
     mSwapAnimationCounter = kSwapAnimationCount;
     
-    // Swap position, maintain rotation (most difficult)
-    // piece0.mRotation = piece0.mRotation + SIDE_ROTATIONS[side0][side1];
-    // piece1.mRotation = piece1.mRotation + SIDE_ROTATIONS[side1][side0];
-    
     Piece temp = mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES);
     Piece piece0 = mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES);
     Piece piece1 = temp;
-    
-    NormalizeRotation(piece0, mSwapPiece0 % NUM_SIDES);
-    NormalizeRotation(piece1, mSwapPiece1 % NUM_SIDES);
     
     mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPiece(mSwapPiece0 % NUM_SIDES, piece0);
     mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPiece(mSwapPiece1 % NUM_SIDES, piece1);
