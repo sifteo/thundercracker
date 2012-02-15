@@ -14,6 +14,9 @@ Parts4 = image{"assets/parts4.png", height = 64, pinned = true}
 Parts5 = image{"assets/parts5.png", height = 64, pinned = true}
 Parts6 = image{"assets/parts6.png", height = 64, pinned = true}
 
+AttributeHidden = image{"assets/hidden.png", pinned = true}
+AttributeFixed = image{"assets/fixed.png", pinned = true}
+
 FontScore = image{"assets/FontScore.png", height = 16}
 Font = image{"assets/font-8x16.png", height = 16}
 

@@ -375,9 +375,16 @@ Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
 {
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
+    
+    int spriteLayer0 = side * 1;
+    int spriteLayer1 = side * 2;
  
-    if (piece.mAttribute != Piece::ATTRIBUTE_HIDDEN)
-    {     
+    if (piece.mAttribute == Piece::ATTRIBUTE_HIDDEN)
+    {
+        Video().setSpriteImage(spriteLayer1, AttributeHidden);
+    }
+    else
+    {
         int rotation = side - piece.mPart;
         if (rotation < 0)
         {
@@ -388,43 +395,49 @@ void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
         unsigned int frame = (rotation * NUM_SIDES) + piece.mPart;
         
         ASSERT(frame < asset.frames);
-        Video().setSpriteImage(side, asset, frame);
-         
-        Vec2 point = kPartPositions[side];
-        
-        switch(side)
+        Video().setSpriteImage(spriteLayer1, asset, frame);
+    }
+     
+    Vec2 point = kPartPositions[side];
+    
+    switch(side)
+    {
+        case SIDE_TOP:
         {
-            case SIDE_TOP:
-            {
-                point.y += mPieceOffsets[side];
-                break;
-            }
-            case SIDE_LEFT:
-            {
-                point.x += mPieceOffsets[side];
-                break;
-            }
-            case SIDE_BOTTOM:
-            {
-                point.y -= mPieceOffsets[side];
-                break;
-            }
-            case SIDE_RIGHT:
-            {
-                point.x -= mPieceOffsets[side];
-                break;
-            }
+            point.y += mPieceOffsets[side];
+            break;
         }
-        
-        ASSERT(kPieceAnimPeriod > 0.0f);
-        float w = 2.0f * M_PI / kPieceAnimPeriod;
-        float x = kPieceAnimX * cosf(w * mPieceAnimT);
-        float y = kPieceAnimY * sinf(w * mPieceAnimT);
-        
-        point.x += int(x);
-        point.y += int(y);
-        
-        Video().moveSprite(side, point);
+        case SIDE_LEFT:
+        {
+            point.x += mPieceOffsets[side];
+            break;
+        }
+        case SIDE_BOTTOM:
+        {
+            point.y -= mPieceOffsets[side];
+            break;
+        }
+        case SIDE_RIGHT:
+        {
+            point.x -= mPieceOffsets[side];
+            break;
+        }
+    }
+    
+    ASSERT(kPieceAnimPeriod > 0.0f);
+    float w = 2.0f * M_PI / kPieceAnimPeriod;
+    float x = kPieceAnimX * cosf(w * mPieceAnimT);
+    float y = kPieceAnimY * sinf(w * mPieceAnimT);
+    
+    point.x += int(x);
+    point.y += int(y);
+    
+    Video().moveSprite(spriteLayer1, point);
+    
+    if (piece.mAttribute == Piece::ATTRIBUTE_FIXED)
+    {
+        Video().setSpriteImage(spriteLayer0, AttributeFixed);
+        Video().moveSprite(spriteLayer0, point);
     }
 }
 
