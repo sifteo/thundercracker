@@ -271,11 +271,15 @@ CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId)
 
 void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1, Cube::Side cubeSide1)
 {
-    bool swapping = mSwapState != SWAP_STATE_NONE;
+    bool isSwapping = mSwapState != SWAP_STATE_NONE;
     
     bool isHinting =
         GetCubeWrapper(cubeId0).IsHinting() ||
         GetCubeWrapper(cubeId1).IsHinting();
+    
+    bool isFixed =
+        GetCubeWrapper(cubeId0).GetPiece(cubeSide0).mAttribute == Piece::ATTRIBUTE_FIXED ||
+        GetCubeWrapper(cubeId1).GetPiece(cubeSide1).mAttribute == Piece::ATTRIBUTE_FIXED;
     
     bool isValidShuffleState =
         mShuffleState == SHUFFLE_STATE_NONE ||
@@ -287,7 +291,7 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
         mAuthoredState == AUTHORED_STATE_INSTRUCTIONS ||
         mAuthoredState == AUTHORED_STATE_PLAY;
     
-    if (!swapping && !isHinting && isValidShuffleState && isValidAuthoredState)
+    if (!isSwapping && !isHinting && !isFixed && isValidShuffleState && isValidAuthoredState)
     {
         if (kGameMode == GAME_MODE_SHUFFLE && mShuffleState != SHUFFLE_STATE_PLAY)
         {

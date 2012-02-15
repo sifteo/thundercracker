@@ -30,6 +30,24 @@ Piece kDefaultState[kNumCubes][NUM_SIDES] =
     { Piece(1, 0), Piece(1, 1), Piece(1, 2), Piece(1, 3) }, // Buddy 1: ...
 };
 
+Piece kStartStateAttributeTest[kNumCubes][NUM_SIDES] =
+{
+    // Buddy 0
+    {
+        Piece(0, 0, Piece::ATTRIBUTE_NORMAL), // Top
+        Piece(0, 1, Piece::ATTRIBUTE_NORMAL), // Left
+        Piece(0, 2, Piece::ATTRIBUTE_HIDDEN), // Bottom
+        Piece(0, 3, Piece::ATTRIBUTE_NORMAL)  // Right
+    },
+    // Buddy 1
+    {   
+        Piece(1, 0, Piece::ATTRIBUTE_NORMAL),
+        Piece(1, 1, Piece::ATTRIBUTE_FIXED),
+        Piece(1, 2, Piece::ATTRIBUTE_NORMAL),
+        Piece(1, 3, Piece::ATTRIBUTE_FIXED)
+    },
+};
+
 Piece kAuthoredEndStateMouths[kMaxBuddies][NUM_SIDES] =
 {
     { Piece(0, 0), Piece(0, 1), Piece(1, 2), Piece(0, 3) },
@@ -71,6 +89,7 @@ const Puzzle kPuzzles[] =
     Puzzle(kNumCubes, "SWAP MOUTHS", kDefaultState, kAuthoredEndStateMouths),
     Puzzle(kNumCubes, "SWAP HAIR",   kDefaultState, kAuthoredEndStateHair),
     Puzzle(kNumCubes, "SWAP EYES",   kDefaultState, kAuthoredEndStateEyes),
+    Puzzle(kNumCubes, "ATTRIBUTE\nTEST", kStartStateAttributeTest, kAuthoredEndStateMouths),
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

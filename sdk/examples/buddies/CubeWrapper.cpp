@@ -296,7 +296,6 @@ void CubeWrapper::SetPiece(unsigned int side, const Piece &piece)
     ASSERT(side < arraysize(mPieces));
     
     mPieces[side] = piece;
-    DEBUG_LOG(("%d - SetPiece(%u, %u)\n", mCube.id(), side, piece.mPart));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -307,7 +306,6 @@ void CubeWrapper::SetPieceSolution(unsigned int side, const Piece &piece)
     ASSERT(side < arraysize(mPiecesSolution));
     
     mPiecesSolution[side] = piece;
-    DEBUG_LOG(("%d - SetPieceSolution(%u, %u)\n", mCube.id(), side, piece.mPart));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -369,46 +367,49 @@ Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
 {
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
-    
-    int rotation = side - piece.mPart;
-    if (rotation < 0)
-    {
-        rotation += 4;
+ 
+    if (piece.mAttribute != Piece::ATTRIBUTE_HIDDEN)
+    {     
+        int rotation = side - piece.mPart;
+        if (rotation < 0)
+        {
+            rotation += 4;
+        }
+        
+        const Sifteo::PinnedAssetImage &asset = getPieceAsset(piece.mBuddy);
+        unsigned int frame = (rotation * NUM_SIDES) + piece.mPart;
+        
+        ASSERT(frame < asset.frames);
+        Video().setSpriteImage(side, asset, frame);
+         
+        Vec2 point = kPartPositions[side];
+        
+        switch(side)
+        {
+            case SIDE_TOP:
+            {
+                point.y += mPieceOffsets[side];
+                break;
+            }
+            case SIDE_LEFT:
+            {
+                point.x += mPieceOffsets[side];
+                break;
+            }
+            case SIDE_BOTTOM:
+            {
+                point.y -= mPieceOffsets[side];
+                break;
+            }
+            case SIDE_RIGHT:
+            {
+                point.x -= mPieceOffsets[side];
+                break;
+            }
+        }
+        
+        Video().moveSprite(side, point);
     }
-    
-    const Sifteo::PinnedAssetImage &asset = getPieceAsset(piece.mBuddy);
-    unsigned int frame = (rotation * NUM_SIDES) + piece.mPart;
-    
-    ASSERT(frame < asset.frames);
-    Video().setSpriteImage(side, asset, frame);
-    
-    Vec2 point = kPartPositions[side];
-    
-    switch(side)
-    {
-        case SIDE_TOP:
-        {
-            point.y += mPieceOffsets[side];
-            break;
-        }
-        case SIDE_LEFT:
-        {
-            point.x += mPieceOffsets[side];
-            break;
-        }
-        case SIDE_BOTTOM:
-        {
-            point.y -= mPieceOffsets[side];
-            break;
-        }
-        case SIDE_RIGHT:
-        {
-            point.x -= mPieceOffsets[side];
-            break;
-        }
-    }
-    
-    Video().moveSprite(side, point);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
