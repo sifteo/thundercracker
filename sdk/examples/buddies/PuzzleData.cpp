@@ -141,7 +141,7 @@ const Puzzle kPuzzles[] =
     Puzzle(kNumCubes, "SWAP MOUTHS", kDefaultState, kAuthoredEndStateMouths),
     Puzzle(kNumCubes, "SWAP HAIR",   kDefaultState, kAuthoredEndStateHair),
     Puzzle(kNumCubes, "SWAP EYES",   kDefaultState, kAuthoredEndStateEyes),
-    Puzzle(kNumCubes, "ATTRIBUTE\nTEST", kStartStateAttributeTest, kAuthoredEndStateMouths),
+    Puzzle(kNumCubes, "ATTRIBUTE TEST\n(SWAP MOUTHS)", kStartStateAttributeTest, kAuthoredEndStateMouths),
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

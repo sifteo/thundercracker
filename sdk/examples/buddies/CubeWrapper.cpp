@@ -379,9 +379,18 @@ void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
 {
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
     
-    int spriteLayer0 = side * 1;
-    int spriteLayer1 = side * 2;
- 
+    int spriteLayer0 = side;
+    int spriteLayer1 = side + NUM_SIDES;
+    
+    if (piece.mAttribute == Piece::ATTR_FIXED)
+    {
+        Video().setSpriteImage(spriteLayer0, AttributeFixed);
+    }
+    else
+    {
+        Video().hideSprite(spriteLayer0);
+    }
+    
     if (piece.mAttribute == Piece::ATTR_HIDDEN)
     {
         Video().setSpriteImage(spriteLayer1, AttributeHidden);
@@ -400,7 +409,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
         ASSERT(frame < asset.frames);
         Video().setSpriteImage(spriteLayer1, asset, frame);
     }
-     
+    
     Vec2 point = kPartPositions[side];
     
     switch(side)
@@ -435,13 +444,9 @@ void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
     point.x += int(x);
     point.y += int(y);
     
+    Video().moveSprite(spriteLayer0, point);
     Video().moveSprite(spriteLayer1, point);
     
-    if (piece.mAttribute == Piece::ATTR_FIXED)
-    {
-        Video().setSpriteImage(spriteLayer0, AttributeFixed);
-        Video().moveSprite(spriteLayer0, point);
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
