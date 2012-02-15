@@ -28,16 +28,22 @@ struct Piece
         NUM_ATTRIBUTES
     };
     
-    Piece(int buddy = 0, int part = 0, Attribute attribute = ATTRIBUTE_NORMAL)
+    Piece(
+        int buddy = 0,
+        int part = 0,
+        Attribute attribute = ATTRIBUTE_NORMAL,
+        bool must_solve = true)
         : mBuddy(buddy)
         , mPart(part)
         , mAttribute(attribute)
+        , mMustSolve(must_solve)
     {
     }
     
     int mBuddy;
     int mPart;
     Attribute mAttribute;
+    bool mMustSolve;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -335,10 +335,13 @@ bool CubeWrapper::IsSolved() const
     
     for (unsigned int i = 0; i < arraysize(mPiecesSolution); ++i)
     {
-        if (mPieces[i].mBuddy != mPiecesSolution[i].mBuddy ||
-            mPieces[i].mPart != mPiecesSolution[i].mPart)
+        if (mPiecesSolution[i].mMustSolve)
         {
-            return false;
+            if (mPieces[i].mBuddy != mPiecesSolution[i].mBuddy ||
+                mPieces[i].mPart != mPiecesSolution[i].mPart)
+            {
+                return false;
+            }
         }
     }
     
