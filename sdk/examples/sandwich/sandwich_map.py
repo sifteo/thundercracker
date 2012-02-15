@@ -236,7 +236,7 @@ class Map:
 				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
-				"trapdoor": self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
+				"trapdoor": "0",#self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",

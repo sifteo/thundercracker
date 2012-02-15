@@ -11,10 +11,15 @@ private:
   Map mMap;
   Player mPlayer;
   float mSimTime;
+  float mDeltaTime;
   unsigned mSimFrames;
   unsigned mAnimFrames;
   unsigned mNeedsSync;
   bool mIsDone;
+
+  BroadPath mPath;
+  NarrowPath mMoves;
+
 
 public:
 
@@ -31,10 +36,9 @@ public:
 
   // methods  
   void MainLoop(Cube* pPrimary);
+  void Update(bool sync=false);
   void Paint(bool sync=false);
   void NeedsSync() { mNeedsSync = 1; }
-  void WalkTo(Vec2 position);
-  void TeleportTo(const MapData& m, Vec2 position);
 
   // events
   void OnNeighborAdd(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
@@ -48,6 +52,13 @@ private:
   void ObserveNeighbors(bool flag);
   void CheckMapNeighbors();
   void MovePlayerAndRedraw(int dx, int dy);
+
+  void WalkTo(Vec2 position);
+  void TeleportTo(const MapData& m, Vec2 position);
+
+  void OnPassiveTrigger();
+  void OnActiveTrigger();
+
 };
 
 extern Game* pGame;
