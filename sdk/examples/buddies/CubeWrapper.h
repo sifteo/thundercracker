@@ -32,7 +32,7 @@ public:
     CubeWrapper();
     
     void Reset();
-    void Update();
+    void Update(float dt);
     void Draw();
     void DrawShuffleUi(ShuffleState shuffleState, float shuffleScoreTime);
     void DrawTextBanner(const char *text);
@@ -73,6 +73,7 @@ private:
     Piece mPieces[NUM_SIDES];
     Piece mPiecesSolution[NUM_SIDES];
     int mPieceOffsets[NUM_SIDES];
+    float mPieceAnimT;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

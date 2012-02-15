@@ -207,7 +207,7 @@ void App::Update(float dt)
     {
         if (mCubeWrappers[i].IsEnabled())
         {
-            mCubeWrappers[i].Update();
+            mCubeWrappers[i].Update(dt);
         }
     }
     

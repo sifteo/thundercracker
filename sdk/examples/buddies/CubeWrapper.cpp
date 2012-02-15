@@ -85,6 +85,7 @@ CubeWrapper::CubeWrapper()
     , mPieces()
     , mPiecesSolution()
     , mPieceOffsets()
+    , mPieceAnimT(0.0f)
 {
 }
 
@@ -97,13 +98,20 @@ void CubeWrapper::Reset()
     {
         mPieceOffsets[i] = 0;
     }
+    
+    mPieceAnimT = 0.0f;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::Update()
+void CubeWrapper::Update(float dt)
 {
+    mPieceAnimT += dt;
+    while (mPieceAnimT > kPieceAnimPeriod)
+    {
+        mPieceAnimT -= kPieceAnimPeriod;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -407,6 +415,14 @@ void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
                 break;
             }
         }
+        
+        ASSERT(kPieceAnimPeriod > 0.0f);
+        float w = 2.0f * M_PI / kPieceAnimPeriod;
+        float x = kPieceAnimX * cosf(w * mPieceAnimT);
+        float y = kPieceAnimY * sinf(w * mPieceAnimT);
+        
+        point.x += int(x);
+        point.y += int(y);
         
         Video().moveSprite(side, point);
     }

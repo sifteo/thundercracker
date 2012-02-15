@@ -74,6 +74,10 @@ const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap anima
 
 const int kSwapAnimationSpeed = 8; // Number of frames animated during swap on each update
 
+const float kPieceAnimX = 0.0f;
+const float kPieceAnimY = 0.0f;
+const float kPieceAnimPeriod = 1.0f;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
