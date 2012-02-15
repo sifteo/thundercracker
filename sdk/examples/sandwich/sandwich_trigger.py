@@ -5,12 +5,12 @@ EXP_LOCATION = re.compile(r"^(\d+),(\d+)$")
 TRIGGER_GATEWAY = 0
 TRIGGER_ITEM = 1
 TRIGGER_NPC = 2
-TRIGGER_TRAPDOOR = 3
+#TRIGGER_TRAPDOOR = 3
 KEYWORD_TO_TRIGGER_TYPE = {
 	"gateway": TRIGGER_GATEWAY,
 	"item": TRIGGER_ITEM,
-	"npc": TRIGGER_NPC,
-	"trapdoor": TRIGGER_TRAPDOOR
+	"npc": TRIGGER_NPC
+#	"trapdoor": TRIGGER_TRAPDOOR
 }
 
 
@@ -110,10 +110,5 @@ class Trigger:
 		self.write_trigger_to(src)
 		x,y = self.local_position()
 		src.write(", 0x%x, 0x%x, 0x%x }, " % (self.dialog.index, x, y))
-	
-	def write_trapdoor_to(self, src):
-		src.write("{ ")
-		self.write_trigger_to(src)
-		src.write(", 0x%x }, " % (self.respawnRoomId))
 
 

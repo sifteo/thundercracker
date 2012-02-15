@@ -32,10 +32,7 @@ void Map::SetData(const MapData& map) {
       }
     }
     for(const TrapdoorData* p = mData->trapdoors; p != mData->trapdoors + mData->trapdoorCount; ++p) {
-      if (pGame->GetState()->IsActive(p->trigger)) {
-        ASSERT(!mRooms[p->trigger.room].HasTrigger());
-        mRooms[p->trigger.room].SetTrigger(TRIGGER_TRAPDOOR, &p->trigger);
-      }
+      // TODO
     }
     for(const DiagonalSubdivisionData* p = mData->diagonalSubdivisions; p != mData->diagonalSubdivisions+mData->diagonalSubdivisionCount; ++p) {
       mRooms[p->roomId].SetDiagonalSubdivision(p);

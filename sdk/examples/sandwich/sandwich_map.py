@@ -97,9 +97,6 @@ class Map:
 		for i,npc in enumerate(self.list_triggers_of_type(TRIGGER_NPC)):
 			npc.index = i
 			self.npc_dict[npc.id] = npc
-		for i,trapdoor in enumerate(self.list_triggers_of_type(TRIGGER_TRAPDOOR)):
-			trapdoor.index = i
-			self.trapdoor_dict[trapdoor.id] = trapdoor
 		self.doors = [Door(r) for r in self.rooms if r.portals[0] == PORTAL_DOOR]
 		for i,d in enumerate(self.doors):
 			d.index = i
@@ -163,8 +160,8 @@ class Map:
 		
 		if len(self.trapdoor_dict) > 0:
 			src.write("static const Trapdoordata %s_trapdoors[] = { " % self.id)
-			for trapdoor in self.list_triggers_of_type(TRIGGER_TRAPDOOR):
-				trapdoor.write_npc_to(src)
+			for trapdoor in self.trapdoor_dict.itervalues():
+				assert false, "dont have data yet"
 			src.write("};\n")
 		
 		if len(self.doors) > 0:
