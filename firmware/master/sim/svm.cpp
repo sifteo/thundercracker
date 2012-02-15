@@ -40,23 +40,22 @@ void SvmProgram::validate()
         return;
     }
 
-    uint32_t *instr = static_cast<uint32_t*>(block);
-    for (; fsize != 0; fsize -= sizeof(uint32_t), ++instr) {
+    uint16_t *instr = static_cast<uint16_t*>(block);
+    for (; fsize != 0; fsize -= sizeof(uint32_t), instr += 2) {
         // if bits [15:11] are 0b11101, 0b11110 or 0b11111, it's a 32-bit instruction
-        // otherwise it's 16-bit
-        uint16_t high5bits = *instr & (0b11111 << 11);
-        if (high5bits >= (0b11101 << 11)) {
-            if (!isValid32(*instr)) {
-                return;
-            }
+        if ((instr[0] & 0xf800) >= 0xe800) { // 0xe800 == 0b11101 << 11
+            // swap nibbles
+            if (!isValid32((instr[0] << 16) | instr[1]))
+                break;
         }
         else {
-            if (!isValid16(*instr & 0xFFFF))
-                return;
-            if (!isValid16((*instr >> 16) & 0xFFFF))
-                return;
+            if (!isValid16(instr[0]))
+                break;
+            if (!isValid16(instr[1]))
+                break;
         }
     }
+    LOG(("validation complete\n"));
 }
 
 /*
@@ -136,7 +135,7 @@ bool SvmProgram::isValid16(uint16_t halfword)
         LOG(("nop\n"));
         return true;
     }
-    LOG(("*********************************** invalid instruction: 0x%x\n", halfword));
+    LOG(("*********************************** invalid 16bit instruction: 0x%x\n", halfword));
     return false;
 }
 
@@ -153,8 +152,28 @@ Allowed 32-bit instruction encodings:
 */
 bool SvmProgram::isValid32(uint32_t inst)
 {
-    LOG(("----------------------- 32-bit instruction\n"));
-    return true;
+    if ((inst & StrMask) == StrTest) {
+        LOG(("32bit str\n"));
+        return true;
+    }
+    if ((inst & StrBhMask) == StrBhTest) {
+        LOG(("32bit str[bh]\n"));
+        return true;
+    }
+    if ((inst & LdrBhMask) == LdrBhTest) {
+        LOG(("32bit ldr(s)[bh]\n"));
+        return true;
+    }
+    if ((inst & LdrMask) == LdrTest) {
+        LOG(("32bit ldr(s)[bh]\n"));
+        return true;
+    }
+    if ((inst & MovWtMask) == MovWtTest) {
+        LOG(("32bit mov[wt]\n"));
+        return true;
+    }
+    LOG(("----------------------- invalid 32-bit instruction: 0x%x\n", inst));
+    return false;
 }
 
 bool SvmProgram::loadElfFile(unsigned addr, unsigned len)
