@@ -34,11 +34,12 @@ void Player::SetLocation(Vec2 position, Cube::Side direction) {
   mStatus = PLAYER_STATUS_IDLE;
 }
 
-void Player::Move(int dx, int dy) {
-  mStatus = PLAYER_STATUS_WALKING;
+void Player::Move(int dx, int dy) { 
+  SetStatus(PLAYER_STATUS_WALKING);
   mPosition.x += dx;
   mPosition.y += dy;
-  mDir = InferDirection(Vec2(dx, dy));
+  if (mCurrent.view) { mCurrent.view->UpdatePlayer(); }
+  if (mTarget.view) { mTarget.view->UpdatePlayer(); }
 }
 
 void Player::ClearTarget() {
@@ -50,7 +51,8 @@ void Player::AdvanceToTarget() {
   mCurrent.view->HidePlayer();
   mCurrent = mTarget;
   mTarget.view = 0;  
-  mPosition = mCurrent.view->GetRoom()->Center(mCurrent.subdivision);
+  mPosition = GetRoom()->Center(mCurrent.subdivision);
+  mCurrent.view->UpdatePlayer();
 }
 
 int Player::AnimFrame() {

@@ -38,12 +38,12 @@ public:
   void SetStatus(int status);
   void SetDirection(Cube::Side dir) { mDir = dir; }
   void SetLocation(Vec2 position, Cube::Side direction);
-  void OffsetPosition(Vec2 offset) { mPosition += offset; }
   void SetPosition(Vec2 position) { mPosition = position; }
 
   void ClearTarget();
   void AdvanceToTarget();
 
   void Move(int dx, int dy);
+  inline void Move(Vec2 delta) { Move(delta.x, delta.y); }
   void Update(float dt);
 };

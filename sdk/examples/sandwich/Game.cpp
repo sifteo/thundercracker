@@ -100,15 +100,12 @@ void Game::MainLoop(Cube* pPrimary) {
       if (mPlayer.Direction() == SIDE_TOP && mPlayer.GetRoom()->HasClosedDoor()) {
         int progress;
         for(progress=0; progress<24; progress+=WALK_SPEED) {
-          mPlayer.OffsetPosition(Vec2(0, -WALK_SPEED));
-          mPlayer.CurrentView()->UpdatePlayer();
+          mPlayer.Move(0, -WALK_SPEED);
           Update();
         }
         if (mState.HasBasicKey()) {
           mState.DecrementBasicKeyCount();
-          if (!mState.HasBasicKey()) {
-            OnInventoryChanged(); // move to call site?
-          }
+          if (!mState.HasBasicKey()) { OnInventoryChanged(); }
           // check the door
           mPlayer.GetRoom()->OpenDoor();
           mPlayer.CurrentView()->DrawBackground();
@@ -122,9 +119,7 @@ void Game::MainLoop(Cube* pPrimary) {
           PlaySfx(sfx_doorOpen);
           // finish up
           for(; progress+WALK_SPEED<=128; progress+=WALK_SPEED) {
-            mPlayer.OffsetPosition(Vec2(0,-WALK_SPEED));
-            mPlayer.CurrentView()->UpdatePlayer();
-            mPlayer.TargetView()->UpdatePlayer();
+            mPlayer.Move(0,-WALK_SPEED);
             Update();
           }
           // fill in the remainder
@@ -138,8 +133,7 @@ void Game::MainLoop(Cube* pPrimary) {
           mPlayer.SetDirection( (mPlayer.Direction()+2)%4 );
           for(progress=0; progress<24; progress+=WALK_SPEED) {
             Update();
-            mPlayer.OffsetPosition(Vec2(0, WALK_SPEED));
-            mPlayer.CurrentView()->UpdatePlayer();
+            mPlayer.Move(0, WALK_SPEED);
           }          
         }
       } else { // general case - A*
@@ -153,33 +147,26 @@ void Game::MainLoop(Cube* pPrimary) {
         for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
           mPlayer.SetDirection(*pNextMove);
           if (progress != 0) {
-            mPlayer.OffsetPosition(progress * kSideToUnit[*pNextMove]);
-            mPlayer.CurrentView()->UpdatePlayer();
-            mPlayer.TargetView()->UpdatePlayer();
+            mPlayer.Move(progress * kSideToUnit[*pNextMove]);
             Update();
           }
           while(progress+WALK_SPEED < 16) {
             progress += WALK_SPEED;
-            mPlayer.OffsetPosition(WALK_SPEED * kSideToUnit[*pNextMove]);
-            mPlayer.CurrentView()->UpdatePlayer();
-            mPlayer.TargetView()->UpdatePlayer();
+            mPlayer.Move(WALK_SPEED * kSideToUnit[*pNextMove]);
             Update();
           }
-          mPlayer.OffsetPosition((16 - progress) * kSideToUnit[*pNextMove]);
+          mPlayer.Move((16 - progress) * kSideToUnit[*pNextMove]);
           progress = WALK_SPEED - (16-progress);
         }
         if (progress != 0) {
           pNextMove--;
-          mPlayer.OffsetPosition(progress * kSideToUnit[*pNextMove]);
+          mPlayer.Move(progress * kSideToUnit[*pNextMove]);
           progress = 0;
-          mPlayer.CurrentView()->UpdatePlayer();
-          mPlayer.TargetView()->UpdatePlayer();
           Update();
         }
       }
       if (mPlayer.TargetView()) { // did we land on the target?
         mPlayer.AdvanceToTarget();
-        mPlayer.CurrentView()->UpdatePlayer();        
         OnPassiveTrigger();
       }  
     } while(mPath.PopStep(*mPlayer.Current(), mPlayer.Target()));
@@ -225,9 +212,9 @@ float Game::UpdateDeltaTime() {
 }
 
 void Game::MovePlayerAndRedraw(int dx, int dy) {
+  mPlayer.SetDirection(InferDirection(Vec2(dx, dy)));
   mPlayer.Move(dx, dy);
   mPlayer.Update(UpdateDeltaTime());
-  mPlayer.View()->UpdatePlayer();
   System::paint();
 }
 
