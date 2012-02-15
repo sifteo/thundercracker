@@ -19,14 +19,25 @@ namespace Buddies {
 
 struct Piece
 {
-    Piece(int buddy = 0, int part = 0)
+    enum Attribute
+    {
+        ATTRIBUTE_NORMAL = 0,
+        ATTRIBUTE_FIXED,
+        ATTRIBUTE_HIDDEN,
+        
+        NUM_ATTRIBUTES
+    };
+    
+    Piece(int buddy = 0, int part = 0, Attribute attribute = ATTRIBUTE_NORMAL)
         : mBuddy(buddy)
         , mPart(part)
+        , mAttribute(attribute)
     {
     }
     
     int mBuddy;
     int mPart;
+    Attribute mAttribute;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
