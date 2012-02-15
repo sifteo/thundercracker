@@ -148,22 +148,18 @@ void em8051_reset(em8051 *aCPU, int aWipe)
 
 void wakeup_test(em8051 *aCPU)
 {
-    // XXX: Only handles wakeup-from-pin.
+    // Check for a pin state that would wake us from deep sleep
 
     if (!aCPU->deepSleep)
         return;
+    
+    uint8_t c0 = aCPU->mSFR[REG_WUOPC0];
+    uint8_t c1 = aCPU->mSFR[REG_WUOPC1];
+    uint8_t p0 = aCPU->mSFR[REG_P2];
+    uint8_t p1 = (aCPU->mSFR[REG_P1] & 0x80) | (aCPU->mSFR[REG_P3] & 0x7F);
 
-    if ((aCPU->mSFR[REG_WUCON] & 0x0C) == 0x08) {
-        // Handle unconditional WUOPIRQ wakeup
-
-        uint8_t c0 = aCPU->mSFR[REG_WUOPC0];
-        uint8_t c1 = aCPU->mSFR[REG_WUOPC1];
-        uint8_t p0 = aCPU->mSFR[REG_P2];
-        uint8_t p1 = (aCPU->mSFR[REG_P1] & 0x80) | (aCPU->mSFR[REG_P3] & 0x7F);
-
-        if ((c0 & p0) | (c1 & p1))
-             em8051_reset(aCPU, true);
-    }
+    if ((c0 & p0) | (c1 & p1))
+        em8051_reset(aCPU, true);
 }
 
 static int readbyte(FILE * f)
