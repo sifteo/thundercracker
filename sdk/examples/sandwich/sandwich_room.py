@@ -96,6 +96,15 @@ class Room:
 					return True
 		return False
 	
+	def find_is_it_a_trap(self):
+		traptiles = [ (x,y) for y in range(8) for x in range(8) if "trapdoor" in self.tileat(x,y).props ]
+		self.is_a_trap = len(traptiles) > 0
+		if self.is_a_trap:
+			assert len(traptiles) == 16, "each trap is a 4x4 grid"
+			x,y = traptiles[0]
+			self.trapx = x + 2
+			self.trapy = y + 2
+
 	def find_subdivisions(self):
 		if all((portal == PORTAL_OPEN for portal in self.portals)):
 			#first bridge-rows or cols
