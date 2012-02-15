@@ -271,38 +271,44 @@ CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId)
 
 void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1, Cube::Side cubeSide1)
 {
-    bool isSwapping = mSwapState != SWAP_STATE_NONE;
-    
-    bool isHinting =
-        GetCubeWrapper(cubeId0).IsHinting() ||
-        GetCubeWrapper(cubeId1).IsHinting();
-    
-    bool isFixed =
-        GetCubeWrapper(cubeId0).GetPiece(cubeSide0).mAttribute == Piece::ATTR_FIXED ||
-        GetCubeWrapper(cubeId1).GetPiece(cubeSide1).mAttribute == Piece::ATTR_FIXED;
-    
-    bool isValidShuffleState =
-        mShuffleState == SHUFFLE_STATE_NONE ||
-        mShuffleState == SHUFFLE_STATE_UNSCRAMBLE_THE_FACES ||
-        mShuffleState == SHUFFLE_STATE_PLAY;
-    
-    bool isValidAuthoredState =
-        mAuthoredState == AUTHORED_STATE_NONE ||
-        mAuthoredState == AUTHORED_STATE_INSTRUCTIONS ||
-        mAuthoredState == AUTHORED_STATE_PLAY;
-    
-    if (!isSwapping && !isHinting && !isFixed && isValidShuffleState && isValidAuthoredState)
+    if (mAuthoredState == AUTHORED_STATE_INSTRUCTIONS)
     {
-        if (kGameMode == GAME_MODE_SHUFFLE && mShuffleState != SHUFFLE_STATE_PLAY)
-        {
-            StartShuffleState(SHUFFLE_STATE_PLAY);
-        }
-        else if (kGameMode == GAME_MODE_AUTHORED && mAuthoredState != AUTHORED_STATE_PLAY)
-        {
-            StartAuthoredState(AUTHORED_STATE_PLAY);
-        }
+        StartAuthoredState(AUTHORED_STATE_PLAY);
+    }
+    else
+    {
+        bool isSwapping = mSwapState != SWAP_STATE_NONE;
         
-        OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
+        bool isHinting =
+            GetCubeWrapper(cubeId0).IsHinting() ||
+            GetCubeWrapper(cubeId1).IsHinting();
+        
+        bool isFixed =
+            GetCubeWrapper(cubeId0).GetPiece(cubeSide0).mAttribute == Piece::ATTR_FIXED ||
+            GetCubeWrapper(cubeId1).GetPiece(cubeSide1).mAttribute == Piece::ATTR_FIXED;
+        
+        bool isValidShuffleState =
+            mShuffleState == SHUFFLE_STATE_NONE ||
+            mShuffleState == SHUFFLE_STATE_UNSCRAMBLE_THE_FACES ||
+            mShuffleState == SHUFFLE_STATE_PLAY;
+        
+        bool isValidAuthoredState =
+            mAuthoredState == AUTHORED_STATE_NONE ||
+            mAuthoredState == AUTHORED_STATE_PLAY;
+        
+        if (!isSwapping && !isHinting && !isFixed && isValidShuffleState && isValidAuthoredState)
+        {
+            if (kGameMode == GAME_MODE_SHUFFLE && mShuffleState != SHUFFLE_STATE_PLAY)
+            {
+                StartShuffleState(SHUFFLE_STATE_PLAY);
+            }
+            else if (kGameMode == GAME_MODE_AUTHORED && mAuthoredState != AUTHORED_STATE_PLAY)
+            {
+                StartAuthoredState(AUTHORED_STATE_PLAY);
+            }
+            
+            OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
+        }
     }
 }
 
@@ -311,12 +317,13 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
 
 void App::OnTilt(Cube::ID cubeId)
 {
-    if (kGameMode == GAME_MODE_SHUFFLE)
+    if(mShuffleState == SHUFFLE_STATE_UNSCRAMBLE_THE_FACES)
     {
-        if(mShuffleState == SHUFFLE_STATE_UNSCRAMBLE_THE_FACES)
-        {
-            StartShuffleState(SHUFFLE_STATE_PLAY);
-        }
+        StartShuffleState(SHUFFLE_STATE_PLAY);
+    }
+    else if (mAuthoredState == AUTHORED_STATE_INSTRUCTIONS)
+    {
+        StartAuthoredState(AUTHORED_STATE_PLAY);
     }
 }
 

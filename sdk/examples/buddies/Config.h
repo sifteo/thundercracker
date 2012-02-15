@@ -26,15 +26,6 @@ enum GameMode
     NUM_GAME_MODES
 };
 
-enum SwapState
-{
-    SWAP_STATE_NONE = 0,
-    SWAP_STATE_OUT,
-    SWAP_STATE_IN,
-    
-    NUM_SWAP_STATES
-};
-
 enum ShuffleState
 {
     SHUFFLE_STATE_NONE = 0,

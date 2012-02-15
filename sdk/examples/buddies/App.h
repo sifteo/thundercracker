@@ -67,6 +67,14 @@ private:
     float mResetTimer;
     float mDelayTimer;
     
+    enum SwapState
+    {
+        SWAP_STATE_NONE = 0,
+        SWAP_STATE_OUT,
+        SWAP_STATE_IN,
+        
+        NUM_SWAP_STATES
+    };
     SwapState mSwapState;
     unsigned int mSwapPiece0;
     unsigned int mSwapPiece1;
