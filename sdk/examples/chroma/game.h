@@ -14,6 +14,7 @@
 #include "config.h"
 
 using namespace Sifteo;
+struct PuzzleCubeData;
 
 //singleton class
 class Game
@@ -33,6 +34,7 @@ public:
 		STATE_PLAYING,		
         STATE_DYING,
 		STATE_POSTGAME,
+        STATE_NEXTPUZZLE,
 	} GameState;
 
 	typedef enum
@@ -133,12 +135,14 @@ public:
     void UpCombo();
     inline unsigned int GetComboCount() const { return m_comboCount; }
     void UpMultiplier();
+    const PuzzleCubeData *GetPuzzleData( unsigned int id );
 
 private:
 	void TestMatches();
     bool DoesHyperDotExist();
     //add one piece to the game
     void RespawnOnePiece();
+    void check_puzzle();
 
 	bool m_bTestMatches;
 	//how much our current dot is worth

@@ -27,6 +27,10 @@ public:
 
     Puzzle( const char *pName, const char *pInstr, const PuzzleCubeData *pData, unsigned int numCubes, bool bTiltAllowed = true );
 	
+    static const Puzzle *GetPuzzle( unsigned int index );
+
+    const PuzzleCubeData *getCubeData( unsigned int cubeIndex ) const;
+
     const char *m_pName;
     const char *m_pInstr;
     const PuzzleCubeData *m_pData;

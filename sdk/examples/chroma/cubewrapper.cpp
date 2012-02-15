@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "string.h"
 #include "config.h"
+#include "puzzle.h"
 
 static _SYSCubeID s_id = CUBE_ID_BASE;
 
@@ -53,8 +54,6 @@ CubeWrapper::CubeWrapper() : m_cube(s_id++), m_vid(m_cube.vbuf), m_rom(m_cube.vb
 			slot.Init( this, i, j );
 		}
 	}
-
-	//Refill();
 }
 
 
@@ -996,6 +995,12 @@ void CubeWrapper::checkRefill()
 //massively ugly, but wanted to stick to the python functionality 
 void CubeWrapper::Refill( bool bAddLevel )
 {
+    if( Game::Inst().getMode() == Game::MODE_PUZZLE )
+    {
+        fillPuzzleCube();
+        return;
+    }
+
     const Level &level = Game::Inst().getLevel();
 	
 	if( bAddLevel )
@@ -1735,4 +1740,27 @@ void CubeWrapper::UpMultiplier()
 void CubeWrapper::ClearSprite( unsigned int id )
 {
     m_vid.resizeSprite( id, 0, 0 );
+}
+
+
+
+void CubeWrapper::fillPuzzleCube()
+{
+    const PuzzleCubeData *pData = Game::Inst().GetPuzzleData( m_cube.id() - CUBE_ID_BASE );
+
+    if( !pData )
+        return;
+
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_ROWS; j++ )
+        {
+            GridSlot &slot = m_grid[j][i];
+
+            ASSERT( !slot.isAlive() );
+
+            if( pData->m_aData[i][j] > 0 )
+                slot.FillColor( pData->m_aData[i][j] - 1 );
+        }
+    }
 }

@@ -7,6 +7,7 @@
 #include "game.h"
 #include "utils.h"
 #include "assets.gen.h"
+#include "Puzzle.h"
 
 //TODO, load this from save file
 unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
@@ -28,7 +29,7 @@ Game &Game::Inst()
 }
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
-                m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_splashTime( 0.0f ),
+                m_state( STARTING_STATE ), m_mode( MODE_PUZZLE ), m_splashTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
@@ -225,10 +226,10 @@ void Game::Reset()
 	m_iScore = 0;
 	m_iDotsCleared = 0;
 
-    if( m_mode == MODE_SHAKES )
-        m_iLevel = 0;
-    else if( m_mode == MODE_TIMED )
+    if( m_mode == MODE_TIMED )
         m_iLevel = 3;
+    else
+        m_iLevel = 0;
 
     //m_bHyperDotMatched = false;
 
@@ -289,8 +290,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 
 		if( m_mode == MODE_PUZZLE )
 		{
-			//TODO puzzle mode
-			//check_puzzle();
+            check_puzzle();
 		}
 		else
         {
@@ -886,4 +886,34 @@ void Game::UpMultiplier()
     //find all existing multpilier dots and tick them up one
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].UpMultiplier();
+}
+
+
+void Game::check_puzzle()
+{
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( !m_cubes[i].isEmpty() )
+        {
+            //did we lose?
+            if( NoMatches() )
+                setState( STATE_POSTGAME );
+            return;
+        }
+    }
+
+    //win!
+    setState( STATE_NEXTPUZZLE );
+}
+
+
+const PuzzleCubeData *Game::GetPuzzleData( unsigned int id )
+{
+    const Puzzle *pPuzzle = Puzzle::GetPuzzle( m_iLevel );
+
+    if( !pPuzzle )
+        return NULL;
+
+    //TODO, make this work with sparse ids
+    return pPuzzle->getCubeData( id );
 }

@@ -137,6 +137,7 @@ private:
     static void TiltAndTestGrid( GridSlot grid[][NUM_COLS], unsigned int color, bool &bCorners, bool &side1, bool &side2, int iterations );
 
     bool HasFloatingDots() const;
+    void fillPuzzleCube();
 
 	Cube m_cube;
     VidMode_BG0_SPR_BG1 m_vid;

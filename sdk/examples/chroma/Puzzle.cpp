@@ -24,3 +24,22 @@ Puzzle::Puzzle( const char *pName, const char *pInstr, const PuzzleCubeData *pDa
 {
 }
 
+
+const Puzzle *Puzzle::GetPuzzle( unsigned int index )
+{
+    unsigned int numPuzzles = sizeof( s_puzzles ) / sizeof( Puzzle );
+
+    if( index >= numPuzzles )
+        return NULL;
+
+    return &s_puzzles[ index ];
+}
+
+
+const PuzzleCubeData *Puzzle::getCubeData( unsigned int cubeIndex ) const
+{
+    if( cubeIndex >= m_numCubes )
+        return NULL;
+
+    return &m_pData[ cubeIndex ];
+}
