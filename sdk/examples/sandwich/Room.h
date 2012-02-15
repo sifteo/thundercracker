@@ -31,17 +31,21 @@ public:
   inline Vec2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
 
   // triggers
-  void SetTrigger(int type, const TriggerData* p) { mTriggerType = type; mTrigger = p; }
-  void ClearTrigger() { mTriggerType = TRIGGER_UNDEFINED; mTrigger = 0; }
-  const TriggerData* Trigger() const { return mTrigger; }
-  int TriggerType() const { return mTriggerType; }
-  bool HasTrigger() const { return mTrigger != 0; }
-  bool HasGateway() const { return mTriggerType == TRIGGER_GATEWAY; }
-  bool HasItem() const { return mTriggerType == TRIGGER_ITEM; }
-  bool HasNPC() const { return mTriggerType == TRIGGER_NPC; }
-  const GatewayData* TriggerAsGate() const { ASSERT(mTriggerType == TRIGGER_GATEWAY); return (const GatewayData*) mTrigger; }
-  const ItemData* TriggerAsItem() const { ASSERT(mTriggerType == TRIGGER_ITEM); return (const ItemData*) mTrigger; }
-  const NpcData* TriggerAsNPC() const { ASSERT(mTriggerType == TRIGGER_NPC); return (const NpcData*) mTrigger; }
+  inline void SetTrigger(int type, const TriggerData* p) { mTriggerType = type; mTrigger = p; }
+  inline void ClearTrigger() { mTriggerType = TRIGGER_UNDEFINED; mTrigger = 0; }
+  
+  inline const TriggerData* Trigger() const { return mTrigger; }
+  inline int TriggerType() const { return mTriggerType; }
+  inline bool HasTrigger() const { return mTrigger != 0; }
+  inline bool HasGateway() const { return mTriggerType == TRIGGER_GATEWAY; }
+  inline bool HasItem() const { return mTriggerType == TRIGGER_ITEM; }
+  inline bool HasNPC() const { return mTriggerType == TRIGGER_NPC; }
+  inline bool HasTrapdoor() const { return mTriggerType == TRIGGER_TRAPDOOR; }
+  
+  inline const GatewayData* TriggerAsGate() const { ASSERT(mTriggerType == TRIGGER_GATEWAY); return (const GatewayData*) mTrigger; }
+  inline const ItemData* TriggerAsItem() const { ASSERT(mTriggerType == TRIGGER_ITEM); return (const ItemData*) mTrigger; }
+  inline const NpcData* TriggerAsNPC() const { ASSERT(mTriggerType == TRIGGER_NPC); return (const NpcData*) mTrigger; }
+  inline const TrapdoorData* TriggerAsTrapdoor() const { ASSERT(mTriggerType == TRIGGER_TRAPDOOR); return (const TrapdoorData*) mTrigger; }
 
   // subdivs
   bool IsSubdivided() const { return mSubdivType != SUBDIV_NONE; }

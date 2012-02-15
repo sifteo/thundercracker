@@ -16,19 +16,25 @@ void Map::SetData(const MapData& map) {
     for(const ItemData* p = mData->items; p!= mData->items + mData->itemCount; ++p) {
       if (pGame->GetState()->IsActive(p->trigger)) {
         ASSERT(!mRooms[p->trigger.room].HasTrigger());
-        mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &(p->trigger));
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &p->trigger);
       }
     }
     for(const GatewayData* p = mData->gates; p != mData->gates + mData->gateCount; ++p) {
       if (pGame->GetState()->IsActive(p->trigger)) {
         ASSERT(!mRooms[p->trigger.room].HasTrigger());
-        mRooms[p->trigger.room].SetTrigger(TRIGGER_GATEWAY, &(p->trigger));
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_GATEWAY, &p->trigger);
       }
     }
     for(const NpcData* p = mData->npcs; p != mData->npcs + mData->npcCount; ++p) {
       if (pGame->GetState()->IsActive(p->trigger)) {
         ASSERT(!mRooms[p->trigger.room].HasTrigger());
-        mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &(p->trigger));
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_NPC, &p->trigger);
+      }
+    }
+    for(const TrapdoorData* p = mData->trapdoors; p != mData->trapdoors + mData->trapdoorCount; ++p) {
+      if (pGame->GetState()->IsActive(p->trigger)) {
+        ASSERT(!mRooms[p->trigger.room].HasTrigger());
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_TRAPDOOR, &p->trigger);
       }
     }
     for(const DiagonalSubdivisionData* p = mData->diagonalSubdivisions; p != mData->diagonalSubdivisions+mData->diagonalSubdivisionCount; ++p) {

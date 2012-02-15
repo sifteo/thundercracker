@@ -16,7 +16,8 @@ using namespace Sifteo;
 #define TRIGGER_GATEWAY     1
 #define TRIGGER_ITEM        2
 #define TRIGGER_NPC         3
-#define TRIGGER_TYPE_COUNT  4
+#define TRIGGER_TRAPDOOR    4
+#define TRIGGER_TYPE_COUNT  5
 
 #define SUBDIV_NONE         0
 #define SUBDIV_DIAG_POS     1
