@@ -44,6 +44,10 @@ ifeq ($(USB_LOAD), 1)
 	CFLAGS_STM32 += -DUSB_LOAD
 endif
 
+ifneq ($(MASTER_RF_CHAN),)
+    CFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
+endif
+
 include Makefile.defs
 
 # Override default CDEPS

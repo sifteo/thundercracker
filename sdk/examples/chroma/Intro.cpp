@@ -13,10 +13,6 @@
 const float Intro::READYSETGO_BANNER_TIME = 0.9f;
 
 const float STATE_TIMES[ Intro::STATE_CNT ] = {
-    //STATE_ARROWS,
-    0.4f,
-    //STATE_TIMERGROWTH,
-    0.5f,
     //STATE_BALLEXPLOSION,
     0.5f,
     //STATE_READY,
@@ -31,19 +27,17 @@ const float STATE_TIMES[ Intro::STATE_CNT ] = {
 Intro::Intro()
 {
     m_fTimer = 0.0f;
-    m_state = STATE_ARROWS;
+    m_state = STATE_BALLEXPLOSION;
 }
 
 
 void Intro::Reset( bool ingamereset)
 {
+    m_state = STATE_BALLEXPLOSION;
     if( ingamereset )
     {
-        m_state = STATE_BALLEXPLOSION;
         Game::Inst().playSound(glom_delay);
     }
-    else
-        m_state = STATE_ARROWS;
 
     m_fTimer = 0.0f;
 }
@@ -101,29 +95,6 @@ bool Intro::Update( float dt, Banner &banner )
     return true;
 }
 
-const Sifteo::PinnedAssetImage *ARROW_SPRITES[ Intro::NUM_ARROWS ] =
-{
-    &ArrowUp,
-    &ArrowLeft,
-    &ArrowDown,
-    &ArrowRight,
-};
-
-Vec2 STARTPOS[ Intro::NUM_ARROWS ] = {
-    Vec2( 64 - ArrowUp.width * 8 / 2, 64 - ArrowUp.height * 8 / 2 ),
-    Vec2( 64 - ArrowLeft.width * 8 / 2, 64 - ArrowLeft.height * 8 / 2 ),
-    Vec2( 64 - ArrowDown.width * 8 / 2, 64 - ArrowDown.height * 8 / 2 ),
-    Vec2( 64 - ArrowRight.width * 8 / 2, 64 - ArrowRight.height * 8 / 2 ),
-};
-
-
-Vec2 ENDPOS[ Intro::NUM_ARROWS ] = {
-    Vec2( 64 - ArrowUp.width * 8 /2 , 0 ),
-    Vec2( 0, 64 - ArrowLeft.height * 8 / 2  ),
-    Vec2( 64 - ArrowDown.width * 8 / 2, 128 - ArrowDown.height * 8 ),
-    Vec2( 128 - ArrowRight.width * 8, 64 - ArrowRight.height * 8 / 2 ),
-};
-
 //return whether we touched bg1 or not
 bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid, CubeWrapper *pWrapper )
 {
@@ -131,33 +102,6 @@ bool Intro::Draw( TimeKeeper &timer, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &
 
     switch( m_state )
     {
-        case STATE_ARROWS:
-        {
-            vid.clear(GemEmpty.tiles[0]);
-
-            //arrow sprites
-            for( int i = 0; i < NUM_ARROWS; i++ )
-            {
-                Vec2 pos = LerpPosition( STARTPOS[i], ENDPOS[i], timePercent );
-                vid.resizeSprite(i, ARROW_SPRITES[i]->width*8, ARROW_SPRITES[i]->height*8);
-                vid.setSpriteImage(i, *ARROW_SPRITES[i], 0);
-                vid.moveSprite(i, pos.x, pos.y);
-            }
-            break;
-        }
-        case STATE_TIMERGROWTH:
-        {
-            vid.clear(GemEmpty.tiles[0]);
-
-            for( int i = 0; i < NUM_ARROWS; i++ )
-            {
-                vid.resizeSprite(i, 0, 0);
-            }
-
-            //charge up timers
-            timer.DrawMeter( timePercent, bg1helper );
-            return true;
-        }
         case STATE_BALLEXPLOSION:
         {
             int baseFrame = timePercent * NUM_TOTAL_EXPLOSION_FRAMES;

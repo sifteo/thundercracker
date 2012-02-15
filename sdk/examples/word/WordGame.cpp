@@ -100,3 +100,5 @@ void WordGame::hideSprites(VidMode_BG0_SPR_BG1 &vid)
         vid.hideSprite(i);
     }
 }
+
+

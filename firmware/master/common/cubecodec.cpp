@@ -386,20 +386,11 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     if (!ac)
         return false;
 
-    // Group data header pointer is invalid
-    //const _SYSAssetGroupHeader *ghdr = group->hdr;
-    //if (!Runtime::checkUserPointer(ghdr, sizeof *ghdr))
-    //    return false;
-
-    // Inconsistent sizes
-    //uint32_t dataSize = ghdr->dataSize;
-    //uint32_t dataSize = 16563;
     uint32_t dataSize = group->size;
     uint32_t progress = ac->progress;
     if (progress > dataSize)
         return false;
     
-    //uint8_t *src = (uint8_t *)ghdr + ghdr->hdrSize + progress;
     uint32_t count;
 
     flashEscape(buf);
@@ -408,19 +399,17 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetGroup *group,
     count = MIN(buf.bytesFree(), dataSize - progress);
     count = MIN(count, loadBufferAvail);
 
+    FlashRegion fr;
+    if (!FlashLayer::getRegion(progress + group->offset, count, &fr)) {
+        return false;
+    }
+    uint8_t *region = static_cast<uint8_t*>(fr.data());
+    buf.appendUser(region, fr.size());
+    progress += fr.size();
+    loadBufferAvail -= fr.size();
+    FlashLayer::releaseRegion(fr);
 
-    //uint32_t offset = 512;
-    uint32_t offset = group->offset;
-    unsigned size = 0;
-    uint8_t *region = static_cast<uint8_t*>(FlashLayer::getRegionFromOffset(progress + offset, count, &size));
-    buf.appendUser(region, size);
-    
-    FlashLayer::releaseRegionFromOffset(progress + offset);
-
-    progress += size;
-    loadBufferAvail -= size;
     ac->progress = progress;
-
     ASSERT(progress <= dataSize);
     if (progress >= dataSize)
         done = true;

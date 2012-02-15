@@ -9,6 +9,7 @@
 #include "ScoredGameState_EndOfRound.h"
 #include "ScoredGameState_Shuffle.h"
 #include "CubeStateMachine.h"
+#include "Utility.h"
 
 using namespace Sifteo;
 
@@ -36,7 +37,7 @@ public:
     static CubeStateMachine* findCSMFromID(Cube::ID cubeID);
 
     static float getAnagramCooldown() { return sInstance->mAnagramCooldown; }
-    static unsigned getSecondsLeft() { return (unsigned) (sInstance->mTimeLeft + 0.999f); }
+    static unsigned getSecondsLeft() { return (unsigned) _ceilf(sInstance->mTimeLeft); }
     static float getSecondsLeftFloat() { return sInstance->mTimeLeft; }
     static unsigned getScore() { return (unsigned) sInstance->mScore; }
     static float getTime() { return sInstance->StateMachine::getTime(); }
@@ -45,6 +46,7 @@ public:
     static unsigned getNumBonusAnagramsRemaining() { return sInstance->mNumBonusAnagramsRemaining; }
     static unsigned getNumCubesInState(CubeStateIndex stateIndex);
     static unsigned getCurrentMaxLettersPerCube();
+    static void setCurrentMaxLettersPerCube(unsigned max);
     static unsigned getCurrentMaxLettersPerWord();
 
 protected:
@@ -66,6 +68,7 @@ private:
     unsigned char mNewWordLength;
     unsigned mNumAnagramsRemaining;
     unsigned mNumBonusAnagramsRemaining;
+    unsigned mCurrentMaxLettersPerCube;
 
     static GameStateMachine* sInstance;
 };

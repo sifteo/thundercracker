@@ -52,6 +52,7 @@ void ScoredCubeState_EndOfRound::paint()
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
     WordGame::hideSprites(vid);
+    const AssetImage& ScoreBackground = ScreenOff;
     if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH)
     {
         switch (GameStateMachine::getCurrentMaxLettersPerCube())
@@ -71,14 +72,13 @@ void ScoredCubeState_EndOfRound::paint()
     else if (GameStateMachine::getTime() <= TEETH_ANIM_LENGTH * 2.f)
     {
         const float ANIM_LENGTH = TEETH_ANIM_LENGTH;
-        const AssetImage& anim = ScorePan;
         float animTime =
                 (getStateMachine().getTime() - TEETH_ANIM_LENGTH) / ANIM_LENGTH;
         animTime = MIN(animTime, 1.f);
-        unsigned frame = (unsigned) (animTime * anim.frames);
-        frame = MIN(frame, anim.frames - 1);
+        unsigned frame = (unsigned) (animTime * ScoreBackground.frames);
+        frame = MIN(frame, ScoreBackground.frames - 1);
 
-        vid.BG0_drawAsset(Vec2(0, 0), anim, frame);
+        vid.BG0_drawAsset(Vec2(0, 0), ScoreBackground, frame);
         return;
     }
 
@@ -86,7 +86,7 @@ void ScoredCubeState_EndOfRound::paint()
     {
     default:
         // paint "Score" asset
-        vid.BG0_drawAsset(Vec2(0,0), ScorePan, ScorePan.frames - 1);
+        vid.BG0_drawAsset(Vec2(0,0), ScoreBackground, ScoreBackground.frames - 1);
         vid.BG0_drawAsset(Vec2(4,0), Score);
         {
             String<17> string;
@@ -99,7 +99,7 @@ void ScoredCubeState_EndOfRound::paint()
         break;
 
     case START_SCREEN_CUBE_INDEX:
-        vid.BG0_drawAsset(Vec2(0,0), ScorePan, ScorePan.frames - 1);
+        vid.BG0_drawAsset(Vec2(0,0), ScoreBackground, ScoreBackground.frames - 1);
         {
             const float ANIM_LENGTH = 1.0f;
             const AssetImage& anim = StartPrompt;
@@ -118,7 +118,7 @@ void ScoredCubeState_EndOfRound::paint()
 
     case 0:
         // paint "high scores" asset
-        vid.BG0_drawAsset(Vec2(0,0), ScorePan, ScorePan.frames - 1);
+        vid.BG0_drawAsset(Vec2(0,0), ScoreBackground, ScoreBackground.frames - 1);
         vid.BG0_drawAsset(Vec2(1,0), HighScores);
         BG1Helper bg1(getStateMachine().getCube());
 

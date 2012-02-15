@@ -13,7 +13,8 @@ GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(Cube cubes[]) :
     StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
-    mNumAnagramsRemaining(0), mNumBonusAnagramsRemaining(0)
+    mNumAnagramsRemaining(0), mNumBonusAnagramsRemaining(0),
+    mCurrentMaxLettersPerCube(1)
 {
     ASSERT(cubes != 0);
     sInstance = this;
@@ -189,11 +190,19 @@ unsigned GameStateMachine::getCurrentMaxLettersPerCube()
 {
     ASSERT(sInstance);
     // TODO switch modes
-    return 2;
+    return sInstance->mCurrentMaxLettersPerCube;
 }
+
+void GameStateMachine::setCurrentMaxLettersPerCube(unsigned max)
+{
+    ASSERT(sInstance);
+    sInstance->mCurrentMaxLettersPerCube = max;
+}
+
 
 unsigned GameStateMachine::getCurrentMaxLettersPerWord()
 {
     ASSERT(sInstance);
-    return getCurrentMaxLettersPerCube() * NUM_CUBES;
+    // TODO switch modes
+    return sInstance->getCurrentMaxLettersPerCube() * NUM_CUBES;
 }

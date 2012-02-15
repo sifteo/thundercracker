@@ -82,47 +82,45 @@ int SpeexDecoder::decodeFrame(uint8_t *buf, int size)
         return 0;
     }
 
-    unsigned rsize = 0;
-
-    //char *localAddr = FlashLayer::getRegion(this->srcaddr, DECODED_FRAME_SIZE + sizeof(uint8_t));
-    char *localAddr = static_cast<char*>(FlashLayer::getRegionFromOffset(this->srcaddr, DECODED_FRAME_SIZE + sizeof(uint8_t), &rsize));
-    if (!localAddr) {
+    FlashRegion fr1;
+    if (!FlashLayer::getRegion(this->srcaddr, DECODED_FRAME_SIZE + 1, &fr1)) {
         return 0; // ruh roh, TODO error handling
     }
 
+    char contiguous[FlashLayer::BLOCK_SIZE];
+    char *localAddr = static_cast<char*>(fr1.data());
+
     // format: uint8_t of framesize, followed by framesize bytes of frame data
     unsigned sz = *localAddr++;
-    memcpy(contiguous, localAddr, rsize - 1);
-    if (sz > rsize - 1) {
-        //LOG(("WARNING: Flash boundary crossed reading audio data: %d, %d\n", sz, rsize));
-        
-        unsigned nsize = 0;
-        char *nlocalAddr = static_cast<char*>(FlashLayer::getRegionFromOffset(this->srcaddr + rsize, DECODED_FRAME_SIZE + sizeof(uint8_t), &nsize));
-        if (!nlocalAddr) {
-            return 0; // ruh roh, TODO error handling
-        }
-        
-        memcpy(contiguous + rsize - 1, nlocalAddr, sz - rsize);
-        FlashLayer::releaseRegionFromOffset(this->srcaddr + rsize);
-    }
-    if ((unsigned)this->srcBytesRemaining < (sz + sizeof(uint8_t))) {
+    unsigned fr1size = fr1.size();
+    memcpy(contiguous, localAddr, fr1size - 1);
+    FlashLayer::releaseRegion(fr1);
+
+    // for the given sz, do we have enough left?
+    if ((unsigned)this->srcBytesRemaining < (sz + 1)) {
         status = EndOfStream;
         return 0;   // not enough data left
     }
 
-    //speex_bits_read_from(&this->bits, localAddr, sz);
+    if (sz > fr1size - 1) {
+        // the requested size straddles flash block boundaries. fetch a second
+        // block so we can stich them together
+        FlashRegion fr2;
+        if (!FlashLayer::getRegion(this->srcaddr + fr1size, DECODED_FRAME_SIZE + 1, &fr2)) {
+            return 0; // ruh roh, TODO error handling
+        }
+        memcpy(contiguous + fr1size - 1, fr2.data(), sz - fr1size);
+        FlashLayer::releaseRegion(fr2);
+    }
+
     speex_bits_read_from(&this->bits, contiguous, sz);
-    this->srcBytesRemaining -= (sz + sizeof(uint8_t));
+    this->srcBytesRemaining -= (sz + 1);
+    this->srcaddr += (sz + 1);
 
     this->status = (DecodeStatus)speex_decode_int(this->decodeState, &this->bits, (spx_int16_t*)buf);
     if (this->srcBytesRemaining <= 0) {
         status = EndOfStream;
     }
-
-    // might be able to do this before the decode step
-    //FlashLayer::releaseRegion(this->srcaddr);
-    FlashLayer::releaseRegionFromOffset(this->srcaddr);
-    this->srcaddr += (sz + sizeof(uint8_t));
 
     return DECODED_FRAME_SIZE;
 }
@@ -173,22 +171,21 @@ int PCMDecoder::decodeFrame(uint8_t *buf, int size)
         return 0;   // not enough data left
     }
     
-    unsigned rsize = 0;
-    
-    char *localAddr = static_cast<char*>(FlashLayer::getRegionFromOffset(this->srcaddr, FRAME_SIZE, &rsize));
-    if (!localAddr) {
+    FlashRegion r;
+    if (!FlashLayer::getRegion(this->srcaddr, FRAME_SIZE, &r)) {
         LOG(("ERROR: Failed to read from flash layer.\n"));
         return 0; // ruh roh, TODO error handling
     }
     
-    memcpy(buf, localAddr, rsize);
+    unsigned rsize = r.size();
+    memcpy(buf, r.data(), rsize);
+    FlashLayer::releaseRegion(r);
+
     this->srcBytesRemaining -= rsize;
+    this->srcaddr += rsize;
     if (this->srcBytesRemaining < (int)FRAME_SIZE) {
         status = EndOfStream;
     }
-    
-    FlashLayer::releaseRegionFromOffset(this->srcaddr);
-    this->srcaddr += rsize;
 
     return rsize;
 }
