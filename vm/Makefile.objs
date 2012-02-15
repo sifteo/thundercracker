@@ -23,7 +23,8 @@ OBJS = \
 	src/Target/SVMSymbolDecoration.o \
 	src/Target/SVMMemoryLayout.o \
 	src/Target/SVMELFMetadataBuilder.o \
-	src/Target/SVMLateFunctionSplitPass.o
+	src/Target/SVMLateFunctionSplitPass.o \
+	src/Target/SVMBlockSizeAccumulator.o
 
 TABLES := \
 	src/Target/SVMGenAsmWriter.inc \

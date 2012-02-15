@@ -29,6 +29,8 @@
 
 #include "SVM.h"
 #include "SVMTargetMachine.h"
+#include "SVMBlockSizeAccumulator.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Module.h"
 #include "llvm/codeGen/MachineInstr.h"
 #include "llvm/codeGen/MachineInstrBuilder.h"
@@ -42,7 +44,7 @@ namespace {
 
     class SVMLateFunctionSplitPass : public MachineFunctionPass {
         SVMTargetMachine& TM;
-        public:
+
     public:
         static char ID;
         explicit SVMLateFunctionSplitPass(SVMTargetMachine &tm)
@@ -53,6 +55,11 @@ namespace {
         const char *getPassName() const {
             return "SVM late function splitter pass";
         }
+
+    private:
+        SVMBlockSizeAccumulator BSA;
+
+        bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
     };
   
     char SVMLateFunctionSplitPass::ID = 0;
@@ -67,7 +74,27 @@ bool SVMLateFunctionSplitPass::runOnMachineFunction(MachineFunction &MF)
 {
     bool Changed = false;
 
-    // XXX.
+    // Start measuring from the beginning of the function
+    BSA.clear();
 
+    for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
+        if (runOnMachineBasicBlock(*I))
+            Changed = true;
+
+    return Changed;
+}
+
+bool SVMLateFunctionSplitPass::runOnMachineBasicBlock(MachineBasicBlock &MBB)
+{
+    bool Changed = false;
+
+    // All basic blocks must align to a bundle boundary
+    BSA.InstrAlign(TM.getBundleSize());
+
+    for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I) {
+        BSA.AddInstr(I);
+        //printf("Size: %d\n", BSA.getByteCount());
+    }
+    
     return Changed;
 }
