@@ -17,7 +17,6 @@ OBJS_COMMON = \
 	$(MASTER_DIR)/common/prng.o \
     $(MASTER_DIR)/common/flashlayer.o \
     $(MASTER_DIR)/common/assetmanager.o \
-    $(MASTER_DIR)/common/elfreader.o \
 
 OBJS_SIM = \
 	$(OBJS_COMMON:.o=.sim.o) \

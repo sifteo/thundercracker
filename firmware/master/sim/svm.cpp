@@ -32,16 +32,15 @@ void SvmProgram::cycle()
 
 void SvmProgram::validate()
 {
-    unsigned fsize;
-
-    void *block = FlashLayer::getRegionFromOffset(progInfo.textRodata.start + progInfo.entry, FlashLayer::BLOCK_SIZE, &fsize);
-    if (!block) {
+    FlashRegion r;
+    if (!FlashLayer::getRegion(progInfo.textRodata.start + progInfo.entry, FlashLayer::BLOCK_SIZE, &r)) {
         LOG(("failed to get entry block\n"));
         return;
     }
 
-    uint16_t *instr = static_cast<uint16_t*>(block);
-    for (; fsize != 0; fsize -= sizeof(uint32_t), instr += 2) {
+    uint16_t *instr = static_cast<uint16_t*>(r.data());
+    unsigned bsize = r.size();
+    for (; bsize != 0; bsize -= sizeof(uint32_t), instr += 2) {
         // if bits [15:11] are 0b11101, 0b11110 or 0b11111, it's a 32-bit instruction
         if ((instr[0] & 0xf800) >= 0xe800) { // 0xe800 == 0b11101 << 11
             // swap nibbles
@@ -173,9 +172,12 @@ bool SvmProgram::isValid32(uint32_t inst)
 
 bool SvmProgram::loadElfFile(unsigned addr, unsigned len)
 {
-    unsigned sz;
-    void *b = FlashLayer::getRegionFromOffset(addr, FlashLayer::BLOCK_SIZE, &sz);
-    uint8_t *block = static_cast<uint8_t*>(b);
+    FlashRegion r;
+    if (!FlashLayer::getRegion(addr, FlashLayer::BLOCK_SIZE, &r)) {
+        LOG(("couldn't get flash region for elf file\n"));
+        return false;
+    }
+    uint8_t *block = static_cast<uint8_t*>(r.data());
 
     // verify magicality
     if ((block[Elf::EI_MAG0] != Elf::Magic0) ||
@@ -248,6 +250,6 @@ bool SvmProgram::loadElfFile(unsigned addr, unsigned len)
         }
     }
 
-    FlashLayer::releaseRegionFromOffset(addr);
+    FlashLayer::releaseRegion(r);
     return true;
 }
