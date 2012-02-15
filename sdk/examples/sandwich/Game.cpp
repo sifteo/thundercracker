@@ -236,7 +236,8 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
 
   // walk out of the in-gate
   Vec2 target = mMap.GetRoom(room)->Center(0);
-  mPlayer.SetLocation(position, InferDirection(target - position));
+  mPlayer.SetPosition(position);
+  mPlayer.SetDirection(InferDirection(target - position));
   view->ShowLocation(room);
   WalkTo(target, false);
   CheckMapNeighbors();

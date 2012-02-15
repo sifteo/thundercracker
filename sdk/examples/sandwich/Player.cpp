@@ -27,13 +27,6 @@ Room* Player::GetRoom() const {
   return pGame->GetMap()->GetRoom(Location());
 }
 
-void Player::SetLocation(Vec2 position, Cube::Side direction) {
-  //mPath.steps[0] = -1;
-  mDir = direction;
-  mPosition = position;
-  mStatus = PLAYER_STATUS_IDLE;
-}
-
 void Player::Move(int dx, int dy) { 
   SetStatus(PLAYER_STATUS_WALKING);
   mPosition.x += dx;

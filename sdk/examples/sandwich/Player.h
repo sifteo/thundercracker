@@ -38,7 +38,6 @@ public:
 
   void SetStatus(int status);
   void SetDirection(Cube::Side dir) { mDir = dir; }
-  void SetLocation(Vec2 position, Cube::Side direction);
   void SetPosition(Vec2 position) { mPosition = position; }
 
   void ClearTarget();
