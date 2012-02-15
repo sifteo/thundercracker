@@ -67,12 +67,12 @@ void siftmain() {
 	//ScrollMap(gMapData+1);
 
 	for(;;) {
-		//#ifndef SIFTEO_SIMULATOR
+		#if FAST_FORWARD
+		Cube* pPrimary = gCubes;
+		#else
 		PlayMusic(music_sting, false);
 		Cube* pPrimary = IntroCutscene();
-		//#else 
-		//Cube* pPrimary = gCubes;
-		//#endif
+		#endif
 		{
 			Game game;
 			pGame = &game;

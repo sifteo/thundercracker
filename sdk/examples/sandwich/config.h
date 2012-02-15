@@ -9,8 +9,10 @@
 
 #ifndef SIFTEO_SIMULATOR
 #define KLUDGES			1
+#define FAST_FORWARD	1
 #else
 #define KLUDGES			1
+#define FAST_FORWARD	1
 #endif
 
 #define TOUCH_ONLY		1
