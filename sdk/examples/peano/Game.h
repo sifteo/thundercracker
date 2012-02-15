@@ -58,10 +58,8 @@ namespace TotalsGame {
 		void Setup(TotalsCube *cubes, int nCubes);
 
 		void Tick();
-		void CoroutineYield();
-		static void Yield() {Game::GetInstance().CoroutineYield();}
 
-		bool IsPlayingRandom();
+        bool IsPlayingRandom();
 
 		static const char *Initialize();
 

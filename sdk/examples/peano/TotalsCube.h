@@ -17,6 +17,8 @@ namespace TotalsGame
 		View *view;
 
 	public:
+        VidMode_BG0 backgroundLayer;
+        BG1Helper foregroundLayer;
 
 		class EventHandler
 		{            

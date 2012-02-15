@@ -53,6 +53,7 @@ namespace TotalsGame {
     float mTimeout;
     int mDigitId;
     bool useAccentDigit;
+    int renderedDigit;
     int mHideMask;
 /*    Sprite mDigit = new Sprite(null) { position = Mid };
     Sprite mCenterCap = new Sprite(null) { position = Mid };

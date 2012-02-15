@@ -17,6 +17,8 @@ namespace TotalsGame
 		bool operator==(const Fraction &f);
 		bool operator!=(const Fraction &f);
 
+        operator float(){return nu/(float)de;}
+
 		bool IsNan();
 		bool IsZero();
 		bool IsNonZero();

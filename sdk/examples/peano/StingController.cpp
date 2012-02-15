@@ -48,7 +48,7 @@ namespace TotalsGame
 	}
 
 	float StingController::OnTick (float dt) 
-	{
+	{               
 		CORO_BEGIN
 
 			CORO_YIELD(0.1f);

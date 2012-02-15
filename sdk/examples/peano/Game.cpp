@@ -156,20 +156,25 @@ namespace TotalsGame
 		{ 
 			return;
 		} */
-		float time = System::clock();
-		dt = time - mTime;
-		mTime = time;
-		sceneMgr.Tick(dt);
-		sceneMgr.Paint(true);
-		mDirty = false;
-	}
 
-	void Game::CoroutineYield()
-	{
-		System::paint();
 		float time = System::clock();
 		dt = time - mTime;
 		mTime = time;
+
+        for(int i = 0; i < NUMBER_OF_CUBES; i++)
+        {
+            cubes[i].foregroundLayer.Clear();
+        }
+
+        sceneMgr.Tick(dt);
+        sceneMgr.Paint(true);
+
+        for(int i = 0; i < NUMBER_OF_CUBES; i++)
+        {
+            cubes[i].foregroundLayer.Flush();
+        }
+
+		mDirty = false;
 	}
 
 	bool Game::IsPlayingRandom() 

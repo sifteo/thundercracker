@@ -24,6 +24,35 @@ AccentDigit_7 = image { "7w.png" }
 AccentDigit_8 = image { "8w.png" }
 AccentDigit_9 = image { "9w.png" }
 
+Lit_Bottom = image { "lit_bottom.png" }
+Lit_Bottom_Add = image { "lit_bottom_add.png" }
+Lit_Bottom_Div = image { "lit_bottom_div.png" }
+Lit_Bottom_Mul = image { "lit_bottom_mul.png" }
+Lit_Bottom_Sub = image { "lit_bottom_sub.png" }
+Lit_Left = image { "lit_left.png" }
+Lit_Right = image { "lit_right.png" }
+Lit_Right_Add = image { "lit_right_add.png" }
+Lit_Right_Div = image { "lit_right_div.png" }
+Lit_Right_Mul = image { "lit_right_mul.png" }
+Lit_Right_Sub = image { "lit_right_sub.png" }
+Lit_Top = image { "lit_top.png" }
+
+Unlit_Bottom = image { "unlit_bottom.png" }
+Unlit_Bottom_Add = image { "unlit_bottom_add.png" }
+Unlit_Bottom_Div = image { "unlit_bottom_div.png" }
+Unlit_Bottom_Mul = image { "unlit_bottom_mul.png" }
+Unlit_Bottom_Sub = image { "unlit_bottom_sub.png" }
+Unlit_Left = image { "unlit_left.png" }
+Unlit_Right = image { "unlit_right.png" }
+Unlit_Right_Add = image { "unlit_right_add.png" }
+Unlit_Right_Div = image { "unlit_right_div.png" }
+Unlit_Right_Mul = image { "unlit_right_mul.png" }
+Unlit_Right_Sub = image { "unlit_right_sub.png" }
+Unlit_Top = image { "unlit_top.png" }
+
+
+
+
 Title = image{"title.png", width=128, height=128}
 VaultDoor = image{"vault_door.png", width=128, height=128}
 
