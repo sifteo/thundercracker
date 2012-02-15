@@ -87,6 +87,7 @@ class Map:
 		self.item_dict = {}
 		self.gate_dict = {}
 		self.npc_dict = {}
+		self.trapdoor_dict = {}
 		for i,item in enumerate(self.list_triggers_of_type(TRIGGER_ITEM)):
 			item.index = i
 			self.item_dict[item.id] = item
@@ -96,6 +97,9 @@ class Map:
 		for i,npc in enumerate(self.list_triggers_of_type(TRIGGER_NPC)):
 			npc.index = i
 			self.npc_dict[npc.id] = npc
+		for i,trapdoor in enumerate(self.list_triggers_of_type(TRIGGER_TRAPDOOR)):
+			trapdoor.index = i
+			self.trapdoor_dict[trapdoor.id] = trapdoor
 		self.doors = [Door(r) for r in self.rooms if r.portals[0] == PORTAL_DOOR]
 		for i,d in enumerate(self.doors):
 			d.index = i
@@ -157,6 +161,12 @@ class Map:
 				npc.write_npc_to(src)
 			src.write("};\n")
 		
+		if len(self.trapdoor_dict) > 0:
+			src.write("static const Trapdoordata %s_trapdoors[] = { " % self.id)
+			for trapdoor in self.list_triggers_of_type(TRIGGER_TRAPDOOR):
+				trapdoor.write_npc_to(src)
+			src.write("};\n")
+		
 		if len(self.doors) > 0:
 			src.write("static const DoorData %s_doors[] = { " % self.id)
 			for door in self.doors:
@@ -216,8 +226,12 @@ class Map:
 	def write_decl_to(self, src):
 		src.write(
 			"    { &TileSet_%(name)s, %(overlay)s, %(name)s_rooms, %(overlay_rle)s, " \
-			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
-			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(w)x, 0x%(h)x, 0x%(ambient)x },\n" % \
+			"%(name)s_xportals, %(name)s_yportals, " \
+			"%(item)s, %(gate)s, %(npc)s, %(trapdoor)s, %(door)s, " \
+			"%(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
+			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(ntrapdoors)x, " \
+			"0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(ambient)x, " \
+			"0x%(w)x, 0x%(h)x },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
@@ -225,6 +239,7 @@ class Map:
 				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
+				"trapdoor": self.id + "_trapdoors" if len(self.trapdoor_dict) > 0 else "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",
@@ -234,6 +249,7 @@ class Map:
 				"nitems": len(self.item_dict),
 				"ngates": len(self.gate_dict),
 				"nnpcs": len(self.npc_dict),
+				"ntrapdoors": len(self.trapdoor_dict),
 				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
 				"ndoors": len(self.doors),
 				"nanimtiles": len(self.animatedtiles),

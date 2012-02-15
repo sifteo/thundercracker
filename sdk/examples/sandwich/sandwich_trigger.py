@@ -1,13 +1,16 @@
 import lxml.etree, os, os.path, re, tmx, misc, math
 
 EXP_GATEWAY = re.compile(r"^(\w+):(\w+)$")
+EXP_LOCATION = re.compile(r"^(\d+),(\d+)$")
 TRIGGER_GATEWAY = 0
 TRIGGER_ITEM = 1
 TRIGGER_NPC = 2
+TRIGGER_TRAPDOOR = 3
 KEYWORD_TO_TRIGGER_TYPE = {
 	"gateway": TRIGGER_GATEWAY,
 	"item": TRIGGER_ITEM,
-	"npc": TRIGGER_NPC
+	"npc": TRIGGER_NPC,
+	"trapdoor": TRIGGER_TRAPDOOR
 }
 
 
@@ -42,6 +45,7 @@ class Trigger:
 		if self.quest is None and "unlockflag" in obj.props:
 			self.unlockflag = room.map.world.script.add_flag_if_undefined(obj.props["unlockflag"])
 		# type-specific initialization
+		
 		if self.type == TRIGGER_ITEM:
 			self.itemid = int(obj.props["id"])
 			if self.quest is not None:
@@ -49,16 +53,24 @@ class Trigger:
 					self.qflag = self.quest.add_flag_if_undefined(self.id)
 			elif self.unlockflag is None:
 				self.unlockflag = room.map.world.script.add_flag_if_undefined(self.id)
+		
 		elif self.type == TRIGGER_GATEWAY:
 			m = EXP_GATEWAY.match(obj.props.get("target", ""))
 			assert m is not None, "Malformed Gateway Target in Map: " + room.map.id
 			self.target_map = m.group(1).lower()
 			self.target_gate = m.group(2).lower()
+		
 		elif self.type == TRIGGER_NPC:
 			did = obj.props["id"].lower()
 			assert did in room.map.world.dialog.dialog_dict, "Invalid Dialog ID in Map: " + room.map.id
 			self.dialog = room.map.world.dialog.dialog_dict[did]
 		
+		elif self.type == TRIGGER_TRAPDOOR:
+			m = EXP_LOCATION.match(obj.props.get("respawn"))
+			assert m is not None, "Malformed Respawn Location in Map: " + room.map.id
+			x = int(m.group(1))
+			y = int(m.group(2))
+			self.respawnRoomId = x + room.map.width * y
 				
 		self.qbegin = self.minquest.index if self.minquest is not None else 0xff
 		self.qend = self.maxquest.index if self.maxquest is not None else 0xff
@@ -98,5 +110,10 @@ class Trigger:
 		self.write_trigger_to(src)
 		x,y = self.local_position()
 		src.write(", 0x%x, 0x%x, 0x%x }, " % (self.dialog.index, x, y))
+	
+	def write_trapdoor_to(self, src):
+		src.write("{ ")
+		self.write_trigger_to(src)
+		src.write(", 0x%x }, " % (self.respawnRoomId))
 
 

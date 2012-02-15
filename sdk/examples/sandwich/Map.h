@@ -78,7 +78,7 @@ public:
     return mData->yportals[idx>>3] & (1<<(idx%8));
   }
   
-  inline const RoomData* GetRoomData(unsigned roomId) const {
+  inline const RoomData* GetRoomData(int roomId) const {
       ASSERT(roomId < mData->width * mData->height);
       return mData->rooms + roomId;
   }
