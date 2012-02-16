@@ -250,15 +250,14 @@ void SvmProgram::execute16(uint16_t instr)
 //        LOG(("sp relative ldr/str\n"));
 //        return true;
 //    }
-//    if ((instr & SpRelAddMask) == SpRelAddTest) {
-//        LOG(("sp relative add\n"));
-//        return true;
-//    }
-//    if ((instr & UncondBranchMask) == UncondBranchTest) {
-//        LOG(("unconditional branch\n"));
-//        // TODO: must validate target
-//        return true;
-//    }
+    if ((instr & SpRelAddMask) == SpRelAddTest) {
+        emulateADDSpImm(instr);
+        return;
+    }
+    if ((instr & UncondBranchMask) == UncondBranchTest) {
+        emulateB(instr);
+        return;
+    }
 //    if ((instr & CompareBranchMask) == CompareBranchTest) {
 //        LOG(("compare and branch\n"));
 //        // TODO: must validate target
@@ -406,6 +405,8 @@ void SvmProgram::emulateSUB8Imm(uint16_t instr)
     // TODO
 }
 
+// D A T A   P R O C E S S I N G
+
 void SvmProgram::emulateANDReg(uint16_t instr)
 {
     // TODO
@@ -506,6 +507,24 @@ void SvmProgram::emulateUXTH(uint16_t isntr)
 void SvmProgram::emulateUXTB(uint16_t isntr)
 {
     // TODO
+}
+
+void SvmProgram::emulateB(uint16_t instr)
+{
+    // encoding T2 only
+    unsigned imm11 = instr & 0x3FF;
+    BranchWritePC(imm11);
+}
+
+void SvmProgram::emulateADDSpImm(uint16_t instr)
+{
+    // encoding T1 only
+    unsigned Rd = (instr >> 8) & 0x7;
+    unsigned imm8 = instr & 0xff;
+
+    // "Allowed constant values are multiples of 4 in the range of 0-1020 for
+    // encoding T1", so shift it on over.
+    regs[Rd] = regs[REG_SP] + (imm8 << 2);
 }
 
 void SvmProgram::emulateSVC(uint16_t instr)
