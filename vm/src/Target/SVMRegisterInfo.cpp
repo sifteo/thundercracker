@@ -51,7 +51,7 @@ void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
     Offset += MFI->getOffsetAdjustment();
 
-    assert(Offset >= 0 && Offset < 256);
+    assert(Offset >= 0 && Offset < 256 && "Large frame indices not implemeted!");
     MI.getOperand(i).ChangeToImmediate(Offset);
 }
 
