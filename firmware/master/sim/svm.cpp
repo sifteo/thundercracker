@@ -25,9 +25,24 @@ void SvmProgram::run()
     cpsr = 0;
 
     // TODO: do all of our instructions support conditional execution?
-//    for () {
-//        cycle();
-//    }
+    FlashRegion r;
+    if (!FlashLayer::getRegion(progInfo.textRodata.start + progInfo.entry, FlashLayer::BLOCK_SIZE, &r)) {
+        LOG(("failed to get entry block\n"));
+        return;
+    }
+
+    uint16_t *instr = static_cast<uint16_t*>(r.data());
+    unsigned bsize = r.size();
+    for (; bsize != 0; bsize -= sizeof(uint32_t), instr += 2) {
+        if (instructionSize(instr[0]) == InstrBits32) {
+            // swap nibbles
+            execute32((instr[0] << 16) | instr[1]);
+        }
+        else {
+            execute16(instr[0]);
+            execute16(instr[1]);
+        }
+    }
 }
 
 void SvmProgram::cycle()
@@ -192,22 +207,39 @@ void SvmProgram::execute16(uint16_t instr)
         }
         ASSERT(0 && "unhandled ALU instruction!");
     }
-//    if ((instr & DataProcMask) == DataProcTest) {
-//        LOG(("data processing\n"));
-//        return true;
-//    }
+    if ((instr & DataProcMask) == DataProcTest) {
+        uint8_t opcode = (instr >> 6) & 0xf;
+        switch (opcode) {
+        case 0:  emulateANDReg(instr); return;
+        case 1:  emulateEORReg(instr); return;
+        case 2:  emulateLSLReg(instr); return;
+        case 3:  emulateLSRReg(instr); return;
+        case 4:  emulateASRReg(instr); return;
+        case 5:  emulateADCReg(instr); return;
+        case 6:  emulateSBCReg(instr); return;
+        case 7:  emulateRORReg(instr); return;
+        case 8:  emulateTSTReg(instr); return;
+        case 9:  emulateRSBImm(instr); return;
+        case 10: emulateCMPReg(instr); return;
+        case 11: emulateCMNReg(instr); return;
+        case 12: emulateORRReg(instr); return;
+        case 13: emulateMUL(instr);    return;
+        case 14: emulateBICReg(instr); return;
+        case 15: emulateMVNReg(instr); return;
+        }
+    }
 //    if ((instr & MiscMask) == MiscTest) {
 //        LOG(("miscellaneous\n"));
 //        return true;
 //    }
-//    if ((instr & SvcMask) == SvcTest) {
-//        LOG(("svc\n"));
-//        return true;
-//    }
-//    if ((instr & PcRelLdrMask) == PcRelLdrTest) {
-//        LOG(("pc relative ldr\n"));
-//        return true;
-//    }
+    if ((instr & SvcMask) == SvcTest) {
+        emulateSVC(instr);
+        return;
+    }
+    if ((instr & PcRelLdrMask) == PcRelLdrTest) {
+        emulateLDRLitPool(instr);
+        return;
+    }
 //    if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
 //        LOG(("sp relative ldr/str\n"));
 //        return true;
@@ -231,11 +263,10 @@ void SvmProgram::execute16(uint16_t instr)
 //        // TODO: must validate target
 //        return true;
 //    }
-//    if (instr == Nop) {
-//        // 10111111 00000000     nop
-//        LOG(("nop\n"));
-//        return true;
-//    }
+    if (instr == Nop) {
+        // nothing to do
+        return;
+    }
     // should never get here since we should only be executing validated instructions
     LOG(("*********************************** invalid 16bit instruction: 0x%x\n", instr));
     ASSERT(0 && "unhandled instruction group!");
@@ -369,9 +400,90 @@ void SvmProgram::emulateSUB8Imm(uint16_t instr)
     // TODO
 }
 
+void SvmProgram::emulateANDReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateEORReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateLSLReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateLSRReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateASRReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateADCReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateSBCReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateRORReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateTSTReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateRSBImm(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateCMPReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateCMNReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateORRReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateMUL(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateBICReg(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateMVNReg(uint16_t instr)
+{
+    // TODO
+}
+
 void SvmProgram::emulateSVC(uint16_t instr)
 {
     unsigned imm8 = instr & 0xFF;
+    LOG(("SVC #%d\n", imm8));
     // TODO: find params
     // syscall(imm8);
 }

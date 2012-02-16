@@ -107,6 +107,9 @@ private:
     ProgramInfo progInfo;
 
     static const unsigned NUM_GP_REGS = 16;
+    static const unsigned REG_PC = 15;
+    static const unsigned REG_LR = 14;
+    static const unsigned REG_SP = 13;
     uint32_t regs[NUM_GP_REGS];     // general purpose registers
     uint32_t cpsr;                  // current program status register
 
@@ -155,6 +158,7 @@ private:
         cpsr &= ~(1 << 28);
     }
 
+    // shift/add/subtract/move/compare
     void emulateLSLImm(uint16_t inst);      // LSL (immediate)
     void emulateLSRImm(uint16_t inst);      // LSR (immediate)
     void emulateASRImm(uint16_t instr);     // ASR (immediate)
@@ -166,6 +170,26 @@ private:
     void emulateCmpImm(uint16_t instr);     // CMP (immediate)
     void emulateADD8Imm(uint16_t instr);    // ADD (immediate)
     void emulateSUB8Imm(uint16_t instr);    // SUB (immediate)
+
+    // data processing
+    void emulateANDReg(uint16_t instr);     // AND (register)
+    void emulateEORReg(uint16_t instr);     // EOR (register)
+    void emulateLSLReg(uint16_t instr);     // LSL (register)
+    void emulateLSRReg(uint16_t instr);     // LSR (register)
+    void emulateASRReg(uint16_t instr);     // ASR (register)
+    void emulateADCReg(uint16_t instr);     // ADC (register)
+    void emulateSBCReg(uint16_t instr);     // SBC (register)
+    void emulateRORReg(uint16_t instr);     // ROR (register)
+    void emulateTSTReg(uint16_t instr);     // TST (register)
+    void emulateRSBImm(uint16_t instr);     // RSB (immediate)
+    void emulateCMPReg(uint16_t instr);     // CMP (register)
+    void emulateCMNReg(uint16_t instr);     // CMN (register)
+    void emulateORRReg(uint16_t instr);     // ORR (register)
+    void emulateMUL(uint16_t instr);        // MUL
+    void emulateBICReg(uint16_t instr);     // BIC (register)
+    void emulateMVNReg(uint16_t instr);     // MVN (register)
+
+    void emulateLDRLitPool(uint16_t instr); // LDR (literal)
 
     void emulateSVC(uint16_t instr);
 };
