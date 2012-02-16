@@ -272,8 +272,8 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
         bool isSwapping = mSwapState != SWAP_STATE_NONE;
         
         bool isHinting =
-            GetCubeWrapper(cubeId0).IsHinting() ||
-            GetCubeWrapper(cubeId1).IsHinting();
+            GetCubeWrapper(cubeId0).IsTouching() ||
+            GetCubeWrapper(cubeId1).IsTouching();
         
         bool isFixed =
             GetCubeWrapper(cubeId0).GetPiece(cubeSide0).mAttribute == Piece::ATTR_FIXED ||

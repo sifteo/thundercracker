@@ -60,7 +60,6 @@ public:
     
     // State
     bool IsSolved() const;
-    bool IsHinting() const;
     bool IsTouching() const;
     
 private:

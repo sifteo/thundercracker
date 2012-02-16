@@ -26,24 +26,24 @@ namespace {
 // \/ 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Sifteo::AssetImage &getBgAsset(int buddyId)
+const Sifteo::AssetImage &GetBuddyFaceBackgroundAsset(int buddyId)
 {
     switch (buddyId)
     {
         default:
-        case 0: return BuddyFace0;
-        case 1: return BuddyFace1;
-        case 2: return BuddyFace2;
-        case 3: return BuddyFace3;
-        case 4: return BuddyFace4;
-        case 5: return BuddyFace5;
+        case 0: return BuddyFaceBackground0;
+        case 1: return BuddyFaceBackground1;
+        case 2: return BuddyFaceBackground2;
+        case 3: return BuddyFaceBackground3;
+        case 4: return BuddyFaceBackground4;
+        case 5: return BuddyFaceBackground5;
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Sifteo::PinnedAssetImage &getPieceAsset(int buddyId)
+const Sifteo::PinnedAssetImage &GetBuddyFacePartsAsset(int buddyId)
 {
     switch (buddyId)
     {
@@ -122,22 +122,12 @@ void CubeWrapper::DrawBuddy()
     ASSERT(IsEnabled());
     
     EnableBg0SprBg1Video();
-    Video().BG0_drawAsset(Vec2(0, 0), getBgAsset(mBuddyId));
+    Video().BG0_drawAsset(Vec2(0, 0), GetBuddyFaceBackgroundAsset(mBuddyId));
     
-    if (IsHinting())
-    {
-        DrawPiece(mPiecesSolution[SIDE_TOP], SIDE_TOP);
-        DrawPiece(mPiecesSolution[SIDE_LEFT], SIDE_LEFT);
-        DrawPiece(mPiecesSolution[SIDE_BOTTOM], SIDE_BOTTOM);
-        DrawPiece(mPiecesSolution[SIDE_RIGHT], SIDE_RIGHT);
-    }
-    else
-    {
-        DrawPiece(mPieces[SIDE_TOP], SIDE_TOP);
-        DrawPiece(mPieces[SIDE_LEFT], SIDE_LEFT);
-        DrawPiece(mPieces[SIDE_BOTTOM], SIDE_BOTTOM);
-        DrawPiece(mPieces[SIDE_RIGHT], SIDE_RIGHT);
-    }
+    DrawPiece(mPieces[SIDE_TOP], SIDE_TOP);
+    DrawPiece(mPieces[SIDE_LEFT], SIDE_LEFT);
+    DrawPiece(mPieces[SIDE_BOTTOM], SIDE_BOTTOM);
+    DrawPiece(mPieces[SIDE_RIGHT], SIDE_RIGHT);
 }  
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -173,7 +163,6 @@ void CubeWrapper::DrawShuffleUi(GameState shuffleState, float shuffleScoreTime)
             {
                 int minutes = int(shuffleScoreTime) / 60;
                 int seconds = int(shuffleScoreTime - (minutes * 60.0f));
-                
                 DrawScoreBanner(ScoreTimeBlue, minutes, seconds);
             }
             else
@@ -371,14 +360,6 @@ bool CubeWrapper::IsSolved() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool CubeWrapper::IsHinting() const
-{
-    return IsTouching();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 bool CubeWrapper::IsTouching() const
 {
     return mCube.touching();
@@ -423,7 +404,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
             rotation += 4;
         }
         
-        const Sifteo::PinnedAssetImage &asset = getPieceAsset(piece.mBuddy);
+        const Sifteo::PinnedAssetImage &asset = GetBuddyFacePartsAsset(piece.mBuddy);
         unsigned int frame = (rotation * NUM_SIDES) + piece.mPart;
         
         ASSERT(frame < asset.frames);

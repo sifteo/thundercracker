@@ -1,12 +1,12 @@
 GameAssets = group{quality = 10}
 
 -- Faces (BG0)
-BuddyFace0 = image{"assets/bg1.png"}
-BuddyFace1 = image{"assets/bg2.png"}
-BuddyFace2 = image{"assets/bg3.png"}
-BuddyFace3 = image{"assets/bg4.png"}
-BuddyFace4 = image{"assets/bg5.png"}
-BuddyFace5 = image{"assets/bg6.png"}
+BuddyFaceBackground0 = image{"assets/bg1.png"}
+BuddyFaceBackground1 = image{"assets/bg2.png"}
+BuddyFaceBackground2 = image{"assets/bg3.png"}
+BuddyFaceBackground3 = image{"assets/bg4.png"}
+BuddyFaceBackground4 = image{"assets/bg5.png"}
+BuddyFaceBackground5 = image{"assets/bg6.png"}
 
 -- Face Parts (Sprites)
 BuddyFaceParts0 = image{"assets/parts1.png", height = 64, pinned = true}
