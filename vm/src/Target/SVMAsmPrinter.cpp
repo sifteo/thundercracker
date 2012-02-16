@@ -40,9 +40,7 @@ void SVMAsmPrinter::EmitInstruction(const MachineInstr *MI)
     switch (MI->getOpcode()) {
         
     case SVM::SPLIT:
-        // XXX: Need to fix constpool split
-        //emitBlockEnd();
-        emitBlockBegin();
+        emitBlockSplit(MI);
         break;
     
     default:
@@ -86,6 +84,7 @@ void SVMAsmPrinter::EmitFunctionEntryLabel()
     OutStreamer.EmitAssemblerFlag(MCAF_Code16);
     OutStreamer.EmitThumbFunc(CurrentFnSym);
 
+    CurrentFnSplitOrdinal = 0;
     OutStreamer.EmitLabel(CurrentFnSym);
 }
 
@@ -128,6 +127,20 @@ void SVMAsmPrinter::emitBlockEnd()
        else
            EmitGlobalConstant(CPE.Val.ConstVal);
     }
+}
+
+void SVMAsmPrinter::emitBlockSplit(const MachineInstr *MI)
+{
+    // XXX: Need to fix constpool split
+    //emitBlockEnd();
+    emitBlockBegin();
+
+    // Create a global label for the split-off portion of this function.
+    // These labels are never used by us, they're just for debugging.
+    assert(CurrentFnSym);
+    Twine Name(CurrentFnSym->getName() + Twine(".")
+        + Twine(++CurrentFnSplitOrdinal));
+    OutStreamer.EmitLabel(OutContext.GetOrCreateSymbol(Name));
 }
 
 void SVMAsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV)
