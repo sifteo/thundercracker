@@ -62,9 +62,7 @@ namespace TotalsGame {
     bool useAccentDigit;
     int renderedDigit;
     int mHideMask;
-/*    Sprite mDigit = new Sprite(null) { position = Mid };
-    Sprite mCenterCap = new Sprite(null) { position = Mid };
-TODO */
+
     Status GetCurrentStatus();
     bool mLit;
 

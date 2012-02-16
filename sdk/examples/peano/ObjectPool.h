@@ -5,8 +5,7 @@
 	static char *allocationPool; \
 	public: \
 	static void *operator new(size_t size) throw() \
-	{ \
-		printf("NEW %s\t%x\n", #classname, (unsigned int)allocationMask); \
+    { \
 		static char chunk[MAX_POOL * sizeof(classname)]; \
 		if(!allocationPool) allocationPool = chunk; \
         ASSERT(size == sizeof(classname)); \
@@ -16,21 +15,26 @@
 			if(!(mask & allocationMask)) \
 			{ \
 				allocationMask |= mask; \
+                printf("NEW %s\t%x\n", #classname, (unsigned int)allocationMask); \
 				return &allocationPool[bit * sizeof(classname)]; \
 			} \
 		} \
 		return NULL; \
 	} \
 	static void operator delete(void *p) \
-	{ \
-		printf("DEL %s\t%x\n", #classname, (unsigned int)allocationMask); \
+    { \
 		if(!p) return; \
 		size_t offset = (char*)p - (char*)&allocationPool[0]; \
         ASSERT((offset % sizeof(classname)) == 0); \
 		size_t index = offset / sizeof(classname); \
 		assert(index < MAX_POOL); \
 		allocationMask &= ~(1 << index); \
-	}
+        printf("DEL %s\t%x\n", #classname, (unsigned int)allocationMask); \
+    }\
+    static void ResetAllocationPool()\
+    {\
+        allocationMask = 0;\
+    }\
 
 	
 

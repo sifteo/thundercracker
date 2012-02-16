@@ -28,6 +28,20 @@ namespace TotalsGame {
 		}
 	}
 
+    Puzzle::~Puzzle()
+    {
+        //clean up the tokens and token groups
+        // groups contained by token tree and also target
+        Token::ResetAllocationPool();
+        TokenGroup::ResetAllocationPool();
+
+   /*
+        numTokens = tokenCount;
+        for (int i=0; i<tokenCount; ++i) {
+            delete tokens[i];
+*/
+    }
+
     int Puzzle::GetNumTokens()
     {
         return numTokens;

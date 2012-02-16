@@ -34,6 +34,7 @@ void PuzzleController::OnSetup ()
             if (retries == 100)
             {
                 retries = 0;
+                delete puzzle;  //selectrandomtokens does a new
                 puzzle = PuzzleHelper::SelectRandomTokens(game->difficulty, nCubes);
             }
             else
@@ -295,9 +296,15 @@ void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube:
                 token->PopGroup();
             }
         }
+        IExpression *current = t->current;
         t->PopGroup();
+        if(current != grp && current->IsTokenGroup())
+        {   //save the root delete until after the below alertDidDisconnect
+            delete (TokenGroup*)current;
+        }
     }
     grp->AlertDidGroupDisconnect();
+    delete grp;
 }
 /*TODO
         void ProcessRemoveEventBuffer() {
@@ -345,6 +352,7 @@ void PuzzleController::OnDispose ()
     //mPaused = false;
     Game::ClearCubeEventHandlers();
     Game::ClearCubeViews();
+    delete puzzle;
 }
 
 }

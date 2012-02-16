@@ -26,6 +26,7 @@ namespace TotalsGame
 
 	public:
 		Puzzle(int tokenCount);
+        ~Puzzle();
 
 		void ClearUserdata();
 		void ClearGroups();
