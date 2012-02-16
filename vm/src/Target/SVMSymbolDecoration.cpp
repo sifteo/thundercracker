@@ -25,6 +25,7 @@ const char SVMDecorations::SYS[] = "_SYS_";
 // For internal use
 const char SVMDecorations::CALL[] = "_call$";
 const char SVMDecorations::TCALL[] = "_tcall$";
+const char SVMDecorations::LB[] = "_lb$";
 const char SVMDecorations::OFFSET[] = "_o$";
 const char SVMDecorations::SEPARATOR[] = "$";
 
@@ -58,6 +59,7 @@ Constant *SVMDecorations::ApplyOffset(Module *M, const GlobalValue *Value, int32
 StringRef SVMDecorations::Decode(StringRef Name)
 {
     // Internal prefixes are always stripped
+    isLongBranch = testAndStripPrefix(Name, LB);
     isTailCall = testAndStripPrefix(Name, TCALL);
     isCall = isTailCall || testAndStripPrefix(Name, CALL);
     

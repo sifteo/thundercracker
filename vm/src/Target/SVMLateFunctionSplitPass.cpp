@@ -29,10 +29,12 @@
 
 #include "SVM.h"
 #include "SVMTargetMachine.h"
+#include "SVMConstantPoolValue.h"
 #include "SVMBlockSizeAccumulator.h"
 #include "SVMInstrInfo.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Module.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/codeGen/MachineInstr.h"
 #include "llvm/codeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -57,25 +59,27 @@ namespace {
         const char *getPassName() const {
             return "SVM late function splitter pass";
         }
-        
+
     private:
         SVMBlockSizeAccumulator BSA;
         SmallSet<MachineBasicBlock*, 32> PriorBlockBB;
         SmallSet<MachineBasicBlock*, 32> CurrentBlockBB;
-        bool Changed;
-        
+
         void beginBlock();
-        void visitBasicBlock(MachineBasicBlock &MBB);
-        void visitInstrBundle(MachineBasicBlock &MBB,
+        bool visitBasicBlock(MachineFunction::iterator &MBB);
+        bool visitInstrBundle(MachineFunction::iterator &MBB,
             MachineBasicBlock::iterator &FirstI,
             MachineBasicBlock::iterator &EndI);
-        void visitInstr(MachineBasicBlock &MBB,
+        void visitInstr(MachineFunction::iterator &MBB,
             MachineBasicBlock::iterator &I);
-            
-        void splitBeforeInstruction(MachineBasicBlock &MBB,
+
+        void splitBeforeInstruction(MachineFunction::iterator &MBB,
             MachineBasicBlock::iterator &I);
-        void rewriteBranch(MachineBasicBlock &MBB,
+        void rewriteBranch(MachineFunction::iterator &MBB,
             MachineBasicBlock::iterator &I, MachineBasicBlock &TBB);
+            
+        unsigned getLongBranchCPI(MachineFunction *MF,
+            MachineBasicBlock *DestMBB);
     };
   
     char SVMLateFunctionSplitPass::ID = 0;
@@ -105,30 +109,32 @@ void SVMLateFunctionSplitPass::beginBlock()
 
 bool SVMLateFunctionSplitPass::runOnMachineFunction(MachineFunction &MF)
 {
+    bool Changed = false;
+
     releaseMemory();
     beginBlock();
-    Changed = false;
 
     for (MachineFunction::iterator MBB = MF.begin(); MBB != MF.end(); ++MBB)
-        visitBasicBlock(*MBB);
+        if (visitBasicBlock(MBB))
+            Changed = true;
 
     return Changed;
 }
 
-void SVMLateFunctionSplitPass::visitBasicBlock(MachineBasicBlock &MBB)
+bool SVMLateFunctionSplitPass::visitBasicBlock(MachineFunction::iterator &MBB)
 {
     unsigned bundleSize = TM.getBundleSize();
 
     // Remember every BB that we visit, so we can keep track of BBs
     // behind an already-split portion of the function.
-    CurrentBlockBB.insert(&MBB);
+    CurrentBlockBB.insert(&*MBB);
 
     // All basic blocks must align to a bundle boundary
     BSA.InstrAlign(bundleSize);
 
     // We can only split on a bundle boundary, so visit a bundle at a time.
-    MachineBasicBlock::iterator FirstI = MBB.begin();
-    while (FirstI != MBB.end()) {
+    MachineBasicBlock::iterator FirstI = MBB->begin();
+    while (FirstI != MBB->end()) {
         MachineBasicBlock::iterator NextI = FirstI;
         unsigned Bytes = 0;
         
@@ -136,14 +142,19 @@ void SVMLateFunctionSplitPass::visitBasicBlock(MachineBasicBlock &MBB)
             Bytes += NextI->getDesc().getSize();
             assert(Bytes <= bundleSize);
             NextI++;
-        } while (Bytes < bundleSize && NextI != MBB.end());
+        } while (Bytes < bundleSize && NextI != MBB->end());
         
-        visitInstrBundle(MBB, FirstI, NextI);
+        // If this visit ends up causing a split, this basic block is over.
+        if (visitInstrBundle(MBB, FirstI, NextI))
+            return true;
+            
         FirstI = NextI;
     }
+    
+    return false;
 }
 
-void SVMLateFunctionSplitPass::visitInstrBundle(MachineBasicBlock &MBB,
+bool SVMLateFunctionSplitPass::visitInstrBundle(MachineFunction::iterator &MBB,
     MachineBasicBlock::iterator &FirstI,
     MachineBasicBlock::iterator &EndI)
 {
@@ -155,15 +166,14 @@ void SVMLateFunctionSplitPass::visitInstrBundle(MachineBasicBlock &MBB,
     // the whole bundle.
     if (BSA.getByteCount() >= TM.getBlockSize()) {
         splitBeforeInstruction(MBB, FirstI);
-
-        // The new block begins with this bundle
         BSA.clear();
-        for (MachineBasicBlock::iterator I = FirstI; I != EndI; ++I)
-            visitInstr(MBB, I);
+        return true;
     }
+    
+    return false;
 }
 
-void SVMLateFunctionSplitPass::visitInstr(MachineBasicBlock &MBB,
+void SVMLateFunctionSplitPass::visitInstr(MachineFunction::iterator &MBB,
     MachineBasicBlock::iterator &I)
 {   
     if (SVMInstrInfo::isNearBranchOpcode(I->getOpcode())) {
@@ -206,21 +216,53 @@ void SVMLateFunctionSplitPass::visitInstr(MachineBasicBlock &MBB,
     BSA.AddInstr(I);
 }
 
-void SVMLateFunctionSplitPass::splitBeforeInstruction(MachineBasicBlock &MBB,
-    MachineBasicBlock::iterator &I)
+unsigned SVMLateFunctionSplitPass::getLongBranchCPI(MachineFunction *MF,
+    MachineBasicBlock *DestMBB)
 {
-    // Current BBs become prior
+    Function *F = const_cast<Function *>(MF->getFunction());
+    BasicBlock *BB = const_cast<BasicBlock*>(DestMBB->getBasicBlock());
+
+    // Take the address of the MBB and BB.
+    DestMBB->setHasAddressTaken();
+    BlockAddress::get(F, BB);
+
+    // Build a constant pool entry for a long branch
+    LLVMContext &Ctx = MF->getFunction()->getContext();
+    SVMConstantPoolMBB *CPV =
+        SVMConstantPoolMBB::Create(Ctx, DestMBB, SVMCP::LB);
+    return MF->getConstantPool()->getConstantPoolIndex(CPV, 4);
+}
+
+void SVMLateFunctionSplitPass::splitBeforeInstruction(
+    MachineFunction::iterator &MBB, MachineBasicBlock::iterator &I)
+{
+    MachineFunction *MF = MBB->getParent();
+    Function *F = const_cast<Function *>(MF->getFunction());
+    MachineFunction::iterator insertionPoint = MBB;
+    ++insertionPoint;
+
+    // Current MBBs become prior
     PriorBlockBB.insert(CurrentBlockBB.begin(), CurrentBlockBB.end());
     CurrentBlockBB.clear();
 
-    // Add the SPLIT instruction itself, telling future passes where to change blocks
-    const TargetInstrInfo &TII = *TM.getInstrInfo();
-    BuildMI(MBB, I, I->getDebugLoc(), TII.get(SVM::SPLIT));
+    // Split this MBB in two, by creating a new BB and MBB to insert afterward.
+    BasicBlock *nextBB = BasicBlock::Create(F->getContext());
+    MachineBasicBlock *nextMBB = MF->CreateMachineBasicBlock(nextBB);
+    MF->insert(insertionPoint, nextMBB);
 
-    Changed = true;
+    // First instruction in the new MBB is a SPLIT
+    const TargetInstrInfo &TII = *TM.getInstrInfo();
+    BuildMI(nextMBB, I->getDebugLoc(), TII.get(SVM::SPLIT));
+
+    // Next comes I and all subsequent instructions
+    nextMBB->splice(nextMBB->end(), MBB, I, MBB->end());
+    
+    // Insert a long branch from MBB to nextMBB
+    BuildMI(MBB, I->getDebugLoc(), TII.get(SVM::LB))
+        .addConstantPoolIndex(getLongBranchCPI(MF, nextMBB));
 }
 
-void SVMLateFunctionSplitPass::rewriteBranch(MachineBasicBlock &MBB,
+void SVMLateFunctionSplitPass::rewriteBranch(MachineFunction::iterator &MBB,
     MachineBasicBlock::iterator &I, MachineBasicBlock &TBB)
 {
 }

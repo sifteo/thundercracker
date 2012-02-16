@@ -27,6 +27,7 @@ namespace llvm {
         void EmitFunctionEntryLabel();
         void EmitConstantPool();
         void EmitFunctionBodyEnd();
+        void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
 
     private:
         void emitOperandComment(const MachineInstr *MI, const MachineOperand &OP);

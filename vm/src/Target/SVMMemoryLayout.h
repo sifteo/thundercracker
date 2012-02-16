@@ -40,6 +40,7 @@ namespace llvm {
             LOCAL,
             SYS,
             CALL,
+            LB,
         } Kind;
         
         SVMSymbolInfo() : Value(0), Kind(NONE) {}

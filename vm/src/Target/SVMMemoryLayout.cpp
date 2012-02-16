@@ -193,6 +193,8 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
          *   - Includes optional SP adjustment from FNSTACK pseudo-ops
          *   - Includes optional call / tail-call decoration
          */
+         
+        assert(Deco.offset == 0);
 
         if ((Offset & 0xfffffc) != Offset)
             report_fatal_error("Code symbol '" + Twine(Name) +
@@ -204,8 +206,21 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
             report_fatal_error("Code symbol '" + Twine(Name) +
                 "' has unsupported stack size of " + Twine(Offset) + " bytes");
 
-        SI.Value = Offset | (SPAdj << 22) | Deco.isTailCall;
-        SI.Kind = Deco.isCall ? SVMSymbolInfo::CALL : SVMSymbolInfo::LOCAL;
+        if (Deco.isLongBranch) {
+            // Encode the Long Branch addrop
+            SI.Value = 0xE0000000 | Offset;
+            SI.Kind = SVMSymbolInfo::LB;
+
+        } else if (Deco.isCall) {
+            // A Call, with SP adjustment and tail-call flag
+            SI.Value = Offset | (SPAdj << 22) | Deco.isTailCall;
+            SI.Kind = SVMSymbolInfo::CALL;
+
+        } else {
+            // Normal undecorated address
+            SI.Value = Offset;
+            SI.Kind = SVMSymbolInfo::LOCAL;
+        }
 
     } else {
         /*

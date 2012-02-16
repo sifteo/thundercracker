@@ -37,6 +37,7 @@ namespace llvm {
         // Attributes of a decorated symbol
         bool isCall;
         bool isTailCall;
+        bool isLongBranch;
         bool isSys;
         unsigned sysNumber;
         int32_t offset;
@@ -44,6 +45,7 @@ namespace llvm {
         static const char SYS[];
         static const char CALL[];
         static const char TCALL[];
+        static const char LB[];
         static const char OFFSET[];
         static const char SEPARATOR[];
 

@@ -11,9 +11,12 @@
 #include "SVMMCTargetDesc.h"
 #include "SVMMCInstLower.h"
 #include "SVMAsmPrinter.h"
+#include "SVMConstantPoolValue.h"
+#include "SVMSymbolDecoration.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -100,5 +103,35 @@ void SVMAsmPrinter::EmitFunctionBodyEnd()
        else
            EmitGlobalConstant(CPE.Val.ConstVal);
     }
+}
+
+void SVMAsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV)
+{
+    int Size = TM.getTargetData()->getTypeAllocSize(MCPV->getType());
+    const SVMConstantPoolValue *SCPV = static_cast<SVMConstantPoolValue*>(MCPV);
+    MCSymbol *MCSym;
+
+    if (SCPV->isMachineBasicBlock()) {
+        const MachineBasicBlock *MBB = cast<SVMConstantPoolMBB>(SCPV)->getMBB();
+        MCSym = GetBlockAddressSymbol(MBB->getBasicBlock());
+        MCSym->setUsed(true);
+    } else {
+        assert(false && "Unrecognized SVMConstantPoolValue type");
+    }
+
+    switch (SCPV->getModifier()) {
+    
+    default:
+        assert(false && "Unrecognized SVMConstantPoolValue modifier");
+    case SVMCP::no_modifier:
+        break;
+    
+    case SVMCP::LB:   // Long branch decoration
+        MCSym = OutContext.GetOrCreateSymbol(SVMDecorations::LB + MCSym->getName());
+        break;
+    }
+    
+    const MCExpr *Expr = MCSymbolRefExpr::Create(MCSym, OutContext);
+    OutStreamer.EmitValue(Expr, Size);  
 }
 
