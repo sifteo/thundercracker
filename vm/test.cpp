@@ -1,10 +1,11 @@
 #include <sifteo.h>
 using namespace Sifteo;
 
-//Cube c;
+Cube c;
 
 void siftmain()
 {
+#if 0    // For split testing...
     _SYS_enableCubes(1);
     _SYS_enableCubes(2);
     _SYS_enableCubes(3);
@@ -105,14 +106,14 @@ void siftmain()
     _SYS_enableCubes(98);
     _SYS_enableCubes(99);
     _SYS_enableCubes(100);
+#endif
     
-#if 0
+#if 1
     c.enable(0);
     VidMode_BG0_ROM vid(c.vbuf);
 
     vid.init();
     vid.BG0_text(Vec2(1,1), "Hello World!");
-    vid.BG0_text(Vec2(0,3), "This is a longer\ntest ^_^");
 
     while (1)
         System::paint();
