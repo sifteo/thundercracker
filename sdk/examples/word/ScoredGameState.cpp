@@ -33,12 +33,15 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_Input:
+#ifndef SIFTEO_SIMULATOR
+        // skip to next puzzle
         if (GameStateMachine::getAnagramCooldown() <= .0f &&
             GameStateMachine::getSecondsLeft() > 3)
         {
             WordGame::playAudio(shake, AudioChannelIndex_Shake);
             return GameStateIndex_ShuffleScored;
         }
+#endif
         break;
 
     default:

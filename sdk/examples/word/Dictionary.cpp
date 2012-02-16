@@ -92,7 +92,7 @@ bool Dictionary::trim(const char* word, char* buffer)
     {
         buffer[i - firstLetter] = word[i];
     }
-    buffer[i] = '\0';
+    buffer[i- firstLetter] = '\0';
     ASSERT(_SYS_strnlen(buffer, MAX_LETTERS_PER_WORD + 1) > 0);
     ASSERT((int)_SYS_strnlen(buffer, MAX_LETTERS_PER_WORD + 1) <= wordLen);
     return (firstLetter < wordLen && lastLetter >= 0 && lastLetter >= firstLetter);
