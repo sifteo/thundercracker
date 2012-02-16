@@ -17,6 +17,8 @@ unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
 const float Game::SLOSH_THRESHOLD = 0.4f;
 const float Game::TIME_TO_RESPAWN = 0.7f;
 const float Game::COMBO_TIME_THRESHOLD = 2.5f;
+const float Game::GOODJOB_TIME = 2.0f;
+
 
 Math::Random Game::random;
 
@@ -29,7 +31,7 @@ Game &Game::Inst()
 }
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
-                m_state( STARTING_STATE ), m_mode( MODE_PUZZLE ), m_splashTime( 0.0f ),
+                m_state( STARTING_STATE ), m_mode( MODE_PUZZLE ), m_stateTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
@@ -72,8 +74,7 @@ void Game::Init()
 	for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].vidInit();
 
-	m_splashTime = System::clock();
-    m_fLastTime = m_splashTime;
+    m_fLastTime = System::clock();
 
 #if SFX_ON
     for( unsigned int i = 0; i < NUM_SFX_CHANNELS; i++ )
@@ -93,6 +94,8 @@ void Game::Init()
     m_musicChannel.play( astrokraut, LoopRepeat );
 #endif
 #endif
+
+    m_stateTime = 0.0f;
 }
 
 
@@ -101,6 +104,7 @@ void Game::Update()
     float t = System::clock();
     float dt = t - m_fLastTime;
     m_fLastTime = t;
+    m_stateTime += dt;
 
     bool needsync = false;
 
@@ -113,12 +117,9 @@ void Game::Update()
 
 	if( m_state == STATE_SPLASH )
 	{
-		for( int i = 0; i < NUM_CUBES; i++ )
-            m_cubes[i].Draw();
-
-        if( System::clock() - m_splashTime > 7.0f )
+        if( m_stateTime > 7.0f )
 		{
-            m_state = STATE_INTRO;
+            setState( STATE_INTRO );
 #if MUSIC_ON
             m_musicChannel.stop();
             m_musicChannel.play( astrokraut, LoopRepeat );
@@ -126,6 +127,13 @@ void Game::Update()
 			m_timer.Init( System::clock() );
 		}
 	}
+    else if( m_state == STATE_GOODJOB )
+    {
+        if( m_stateTime > GOODJOB_TIME )
+        {
+            gotoNextPuzzle();
+        }
+    }
 	else 
 	{
 		if( m_bTestMatches )
@@ -178,33 +186,33 @@ void Game::Update()
                 m_bStabilized = false;
             }
         }
-
-		for( int i = 0; i < NUM_CUBES; i++ )
-            m_cubes[i].Update( System::clock(), dt );
-
-        for( int i = 0; i < NUM_CUBES; i++ )
-            m_cubes[i].Draw();
-
-        //always finishing works
-        //System::finish();
-#if !SLOW_MODE
-        //if any of our cubes have messed with bg1's bitmaps,
-        //force a finish here
-        for( int i = 0; i < NUM_CUBES; i++ )
-        {
-            if( m_cubes[i].getBG1Helper().NeedFinish() )
-            {
-                //System::finish();
-                System::paintSync();
-                needsync = true;
-                //printf( "finishing\n" );
-                break;
-            }
-        }
-#endif
-        for( int i = 0; i < NUM_CUBES; i++ )
-            m_cubes[i].FlushBG1();
 	}
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].Update( System::clock(), dt );
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].Draw();
+
+    //always finishing works
+    //System::finish();
+#if !SLOW_MODE
+    //if any of our cubes have messed with bg1's bitmaps,
+    //force a finish here
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        if( m_cubes[i].getBG1Helper().NeedFinish() )
+        {
+            //System::finish();
+            System::paintSync();
+            needsync = true;
+            //printf( "finishing\n" );
+            break;
+        }
+    }
+#endif
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].FlushBG1();
 
 #if SLOW_MODE
     System::paintSync();
@@ -233,7 +241,7 @@ void Game::Reset()
 
     //m_bHyperDotMatched = false;
 
-    m_state = STATE_INTRO;
+    setState( STATE_INTRO );
     m_ShakesRemaining = STARTING_SHAKES;
     //m_musicChannel.play( astrokraut, LoopRepeat );
 
@@ -255,6 +263,13 @@ void Game::Reset()
 
     m_bStabilized = false;
 }
+
+void Game::setState( GameState state )
+{
+    m_state = state;
+    m_stateTime = 0.0f;
+}
+
 
 void Game::TestMatches()
 {
@@ -794,7 +809,7 @@ bool Game::DoesHyperDotExist()
 void Game::EndGame()
 {
     enterScore();
-    m_state = STATE_DYING;
+    setState( STATE_DYING );
 
     if( m_mode == MODE_SHAKES )
     {
@@ -903,7 +918,7 @@ void Game::check_puzzle()
     }
 
     //win!
-    setState( STATE_NEXTPUZZLE );
+    setState( STATE_GOODJOB );
 }
 
 
@@ -916,4 +931,26 @@ const PuzzleCubeData *Game::GetPuzzleData( unsigned int id )
 
     //TODO, make this work with sparse ids
     return pPuzzle->getCubeData( id );
+}
+
+
+void Game::gotoNextPuzzle()
+{
+    m_iLevel++;
+
+    //TODO, check if all puzzles were completed
+    const Puzzle *pPuzzle = Puzzle::GetPuzzle( m_iLevel );
+
+    //TODO, end game celebration!
+    if( !pPuzzle )
+        return;
+
+    //intro puzzles (<3 cubes) will jump straight into the next puzzle
+    if( pPuzzle->m_numCubes < 3 )
+        setState( STATE_INTRO );
+    else
+        setState( STATE_NEXTPUZZLE );
+
+    for( int i = 0; i < NUM_CUBES; i++ )
+        m_cubes[i].Refill();
 }

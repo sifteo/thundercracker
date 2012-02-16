@@ -34,6 +34,7 @@ public:
 		STATE_PLAYING,		
         STATE_DYING,
 		STATE_POSTGAME,
+        STATE_GOODJOB,
         STATE_NEXTPUZZLE,
 	} GameState;
 
@@ -60,6 +61,8 @@ public:
     static const float TIME_TO_RESPAWN;
     static const float COMBO_TIME_THRESHOLD;
     static const int MAX_MULTIPLIER = 7;
+    static const float GOODJOB_TIME;
+
 
     //number of dots needed for certain thresholds
     enum
@@ -86,7 +89,7 @@ public:
 	unsigned int getIncrementScore() { m_iDotScoreSum += ++m_iDotScore; return m_iDotScore; }
 
 	inline GameState getState() const { return m_state; }
-    inline void setState( GameState state ) { m_state = state; }
+    void setState( GameState state );
 	inline GameMode getMode() const { return m_mode; }
 
 	inline unsigned int getScore() const { return m_iScore; }
@@ -143,6 +146,7 @@ private:
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
+    void gotoNextPuzzle();
 
 	bool m_bTestMatches;
 	//how much our current dot is worth
@@ -157,7 +161,7 @@ private:
 	unsigned int m_iLevel;
 	GameState m_state;
 	GameMode m_mode;
-	float m_splashTime;
+    float m_stateTime;
 	TimeKeeper m_timer;
     float m_fLastTime;
     float m_fLastSloshTime;

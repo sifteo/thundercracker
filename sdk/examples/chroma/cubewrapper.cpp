@@ -298,6 +298,14 @@ void CubeWrapper::Draw()
 
 			break;
 		}
+        case Game::STATE_GOODJOB:
+        {
+            m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+            m_bg1helper.DrawText( Vec2( 7, 5 ), Font, "Good" );
+            m_bg1helper.DrawText( Vec2( 8, 7 ), Font, "Job" );
+            m_queuedFlush = true;
+            break;
+        }
 		default:
 			break;
 	}
