@@ -140,18 +140,18 @@ const int kSwapAnimationCount = 64 - 8; // Note: sprites are offset by 8 pixels 
 App::App()
     : mCubeWrappers()
     , mChannel()
+    , mGameState(GAME_STATE_NONE)
     , mResetTimer(0.0f)
     , mDelayTimer(0.0f)
-    , mHintTimer(0.0f)
-    , mHintEnabled(false)
     , mTouching(false)
     , mSwapState(SWAP_STATE_NONE)
     , mSwapPiece0(0)
     , mSwapPiece1(0)
     , mSwapAnimationCounter(0)
-    , mGameState(GAME_STATE_NONE)
     , mShuffleMoveCounter(0)
     , mShuffleScoreTime(0.0f)
+    , mShuffleHintTimer(0.0f)
+    , mShuffleHintEnabled(false)
     , mShuffleHintSkipPiece(-1)
     , mPuzzleIndex(0)
 {
@@ -241,7 +241,7 @@ void App::Draw()
             {
                 mCubeWrappers[i].DrawBuddy();
                 
-                if (kGameMode == GAME_MODE_SHUFFLE && !mHintEnabled)
+                if (kGameMode == GAME_MODE_SHUFFLE && !mShuffleHintEnabled)
                 {
                     mCubeWrappers[i].DrawShuffleUi(mGameState, mShuffleScoreTime);
                 }
@@ -249,7 +249,7 @@ void App::Draw()
         }
     }
     
-    if (mGameState == GAME_STATE_SHUFFLE_PLAY && mHintEnabled)
+    if (mGameState == GAME_STATE_SHUFFLE_PLAY && mShuffleHintEnabled)
     {
         DrawShuffleHintBars();
     }
@@ -308,7 +308,7 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
         }
     }
     
-    mHintTimer = kHintTimerOnDuration;
+    mShuffleHintTimer = kHintTimerOnDuration;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -325,7 +325,7 @@ void App::OnTilt(Cube::ID cubeId)
         StartGameState(GAME_STATE_PUZZLE_PLAY);
     }
     
-    mHintTimer = kHintTimerOnDuration;
+    mShuffleHintTimer = kHintTimerOnDuration;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,7 +342,7 @@ void App::OnShake(Cube::ID cubeId)
         }
     }
     
-    mHintTimer = kHintTimerOnDuration;
+    mShuffleHintTimer = kHintTimerOnDuration;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -417,8 +417,8 @@ void App::StartGameState(GameState shuffleState)
         case GAME_STATE_SHUFFLE_START:
         {
             mDelayTimer = kShuffleStateTimeDelay;
-            mHintTimer = kHintTimerOnDuration;
-            mHintEnabled = false;
+            mShuffleHintTimer = kHintTimerOnDuration;
+            mShuffleHintEnabled = false;
             mTouching = false;
             break;
         }
@@ -439,7 +439,7 @@ void App::StartGameState(GameState shuffleState)
         }
         case GAME_STATE_SHUFFLE_SOLVED:
         {
-            mHintEnabled = false;
+            mShuffleHintEnabled = false;
             break;
         }
         case GAME_STATE_PUZZLE_START:
@@ -516,22 +516,22 @@ void App::UpdateGameState(float dt)
         {
             mShuffleScoreTime += dt;
             
-            if (mHintTimer > 0.0f)
+            if (mShuffleHintTimer > 0.0f)
             {
-                mHintTimer -= dt;
-                if (mHintTimer <= 0.0f)
+                mShuffleHintTimer -= dt;
+                if (mShuffleHintTimer <= 0.0f)
                 {
-                    mHintTimer = 0.0f;
+                    mShuffleHintTimer = 0.0f;
                     
-                    if (mHintEnabled)
+                    if (mShuffleHintEnabled)
                     {
-                        mHintTimer = kHintTimerOnDuration;
-                        mHintEnabled = false;
+                        mShuffleHintTimer = kHintTimerOnDuration;
+                        mShuffleHintEnabled = false;
                     }
                     else
                     {
-                        mHintTimer = kHintTimerOffDuration;
-                        mHintEnabled = true;
+                        mShuffleHintTimer = kHintTimerOffDuration;
+                        mShuffleHintEnabled = true;
                     }
                 }
             }
@@ -541,8 +541,8 @@ void App::UpdateGameState(float dt)
                 if (!AnyTouching(*this))
                 {
                     mTouching = false;
-                    mHintTimer = kHintTimerOnDuration;
-                    mHintEnabled = false;
+                    mShuffleHintTimer = kHintTimerOnDuration;
+                    mShuffleHintEnabled = false;
                 }
             }
             else
@@ -550,8 +550,8 @@ void App::UpdateGameState(float dt)
                 if (AnyTouching(*this))
                 {
                     mTouching = true;
-                    mHintTimer = kHintTimerOffDuration;
-                    mHintEnabled = true;
+                    mShuffleHintTimer = kHintTimerOffDuration;
+                    mShuffleHintEnabled = true;
                 }
             }
             

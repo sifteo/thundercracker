@@ -63,14 +63,15 @@ private:
     void OnSwapExchange();
     void OnSwapFinish();
     
+    // State
     CubeWrapper mCubeWrappers[kNumCubes];
     Sifteo::AudioChannel mChannel;
+    GameState mGameState;
     float mResetTimer;
     float mDelayTimer;
-    float mHintTimer;
-    bool mHintEnabled;
     bool mTouching;
     
+    // Swapping
     enum SwapState
     {
         SWAP_STATE_NONE = 0,
@@ -84,13 +85,15 @@ private:
     unsigned int mSwapPiece1;
     int mSwapAnimationCounter;
     
-    GameState mGameState;
-    
+    // Shuffle Mode
     int mShuffleMoveCounter;
     float mShuffleScoreTime;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
+    float mShuffleHintTimer;
+    bool mShuffleHintEnabled;
     int mShuffleHintSkipPiece;
     
+    // Puzzle Mode
     unsigned int mPuzzleIndex;
 };
 
