@@ -85,13 +85,15 @@ private:
     unsigned int mSwapPiece1;
     int mSwapAnimationCounter;
     
-    // Shuffle Mode
+    // Shuffle Mode (I'm sure all this can be refactored...)
     int mShuffleMoveCounter;
     float mShuffleScoreTime;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     float mShuffleHintTimer;
     bool mShuffleHintEnabled;
-    int mShuffleHintSkipPiece;
+    int mShuffleHintSkipPiece; // Hacky...?
+    int mShuffleHintCube0; // Hacky...
+    int mShuffleHintCube1; // Hacky...
     
     // Puzzle Mode
     unsigned int mPuzzleIndex;
