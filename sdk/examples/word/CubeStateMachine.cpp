@@ -127,7 +127,7 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
             if (!forPaint && panMod != 0.f)
             {
                 char swapped[MAX_LETTERS_PER_CUBE + 1];
-                if (panMod > 72.f)
+                if (panMod <= 72.f)
                 {
                     swapped[0] = mLetters[1];
                     swapped[1] = mLetters[2];

@@ -123,7 +123,7 @@ public:
     void RespawnOnePiece();
     //search for a multiplier dot and increase it
     void UpMultiplier();
-    void ClearSprites();
+    void ClearSprite( unsigned int id );
 
 private:
 	//try moving a gem from row1/col1 to row2/col2

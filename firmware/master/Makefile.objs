@@ -17,7 +17,6 @@ OBJS_COMMON = \
 	$(MASTER_DIR)/common/prng.o \
     $(MASTER_DIR)/common/flashlayer.o \
     $(MASTER_DIR)/common/assetmanager.o \
-    $(MASTER_DIR)/common/elfreader.o \
 
 OBJS_SIM = \
 	$(OBJS_COMMON:.o=.sim.o) \
@@ -25,6 +24,7 @@ OBJS_SIM = \
 	$(MASTER_DIR)/sim/portaudiooutdevice.sim.o \
     $(MASTER_DIR)/sim/flashstorage.sim.o \
     $(MASTER_DIR)/sim/flash.sim.o \
+    $(MASTER_DIR)/sim/svm.sim.o \
 	$(MASTER_DIR)/sim/siftulator.sim.o \
 	$(MASTER_DIR)/sim/main.sim.o
 

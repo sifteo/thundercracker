@@ -142,7 +142,7 @@ void CubeWrapper::Draw()
 						for( int j = 0; j < NUM_COLS; j++ )
 						{
 							GridSlot &slot = m_grid[i][j];
-                            slot.Draw( m_vid, m_curFluidDir );
+                            slot.Draw( m_vid, m_bg1helper, m_curFluidDir );
 						}
 					}
 
@@ -151,7 +151,7 @@ void CubeWrapper::Draw()
 
                     if( Game::Inst().getMode() == Game::MODE_TIMED )
                     {
-                        Game::Inst().getTimer().Draw( m_bg1helper );
+                        Game::Inst().getTimer().Draw( m_bg1helper, m_vid );
                     }
                     if( m_banner.IsActive() )
                         m_banner.Draw( m_bg1helper );
@@ -784,13 +784,13 @@ void CubeWrapper::testMatches()
                     }
                     else if( ourGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
                     {
-                        ourGems[j]->FillColor( theirGems[j]->getColor() );
+                        ourGems[j]->RainballMorph( theirGems[j]->getColor() );
                         ourGems[j]->mark();
                         theirGems[j]->mark();
                     }
                     else if( theirGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
                     {
-                        theirGems[j]->FillColor( ourGems[j]->getColor() );
+                        theirGems[j]->RainballMorph( ourGems[j]->getColor() );
                         ourGems[j]->mark();
                         theirGems[j]->mark();
                     }
@@ -967,7 +967,7 @@ void CubeWrapper::checkRefill()
             m_intro.Reset( true );
             Refill( false );
 		}
-        else if( Game::Inst().getShakesLeft() > 0 )
+        /*else if( Game::Inst().getShakesLeft() > 0 )
 		{
             setState( STATE_REFILL );
             m_intro.Reset( true );
@@ -988,7 +988,7 @@ void CubeWrapper::checkRefill()
 		else
 		{
             m_banner.SetMessage( "NO SHAKES LEFT" );
-		}
+        }*/
 	}
 }
  
@@ -1261,7 +1261,7 @@ bool CubeWrapper::hasColor( unsigned int color ) const
 		for( int j = 0; j < NUM_COLS; j++ )
 		{
 			const GridSlot &slot = m_grid[i][j];
-			if( slot.isAlive() && slot.getColor() == color )
+            if( slot.matchesColor( color ) )
 				return true;
 		}
 	}
@@ -1539,6 +1539,7 @@ void CubeWrapper::BlowAll( unsigned int color )
             if( slot.isMatchable() && slot.getColor() == color )
             {
                 slot.mark();
+                slot.Infect();
             }
         }
     }
@@ -1603,7 +1604,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
         for( int i = 0; i < 4; i++ )
         {
             const GridSlot &slot = grid[ cornerLocs[i].x ][ cornerLocs[i].y ];
-            if( slot.isAlive() && slot.getColor() == color )
+            if( slot.matchesColor( color ) )
             {
                 bCorners = true;
                 break;
@@ -1633,7 +1634,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
         for( int i = 0; i < 4; i++ )
         {
             const GridSlot &slot = grid[ locs[i].x ][ locs[i].y ];
-            if( slot.isAlive() && slot.getColor() == color )
+            if( slot.matchesColor( color ) )
             {
                 side1 = true;
                 break;
@@ -1662,7 +1663,7 @@ void CubeWrapper::TestGridForColor( const GridSlot grid[][NUM_COLS], unsigned in
         for( int i = 0; i < 4; i++ )
         {
             const GridSlot &slot = grid[ locs[i].x ][ locs[i].y ];
-            if( slot.isAlive() && slot.getColor() == color )
+            if( slot.matchesColor( color ) )
             {
                 side2 = true;
                 break;
@@ -1731,7 +1732,7 @@ void CubeWrapper::UpMultiplier()
 }
 
 
-void CubeWrapper::ClearSprites()
+void CubeWrapper::ClearSprite( unsigned int id )
 {
-    m_vid.resizeSprite( 0, 0, 0 );
+    m_vid.resizeSprite( id, 0, 0 );
 }

@@ -419,9 +419,6 @@ void Game::checkGameOver()
 
 bool Game::NoMatches()
 {
-    if( DoesHyperDotExist() )
-        return false;
-
     //shakes mode checks for no possible moves, whereas puzzle mode checks if the puzzle is lost
     if( m_mode == MODE_SHAKES )
     {

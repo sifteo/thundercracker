@@ -11,6 +11,7 @@
 //#include "audio.gen.h"
 
 const float TimeKeeper::TIME_INITIAL = 60.0f;
+const float TimeKeeper::TIMER_SPRITE_PERIOD = 2.0f;
 
 
 TimeKeeper::TimeKeeper()
@@ -25,12 +26,12 @@ void TimeKeeper::Reset()
     m_blinkCounter = 0;
 }
 
-void TimeKeeper::Draw( BG1Helper &bg1helper )
+void TimeKeeper::Draw( BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid )
 {
 	//find out what proportion of our timer is left, then multiply by number of tiles
 	float fTimerProportion = m_fTimer / TIME_INITIAL;
 
-    DrawMeter( fTimerProportion, bg1helper );
+    DrawMeter( fTimerProportion, bg1helper, vid );
 }
 
 
@@ -47,61 +48,39 @@ void TimeKeeper::Init( float t )
 }
 
 
-void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper )
+void TimeKeeper::DrawMeter( float amount, BG1Helper &bg1helper, VidMode_BG0_SPR_BG1 &vid )
 {
     if( amount > 1.0f )
         amount = 1.0f;
 
-    int numTiles = TIMER_TILES * amount;
+    int numStems = TIMER_STEMS * amount;
 
-    int offset = TIMER_TILES - numTiles + 1;
-
-    if( numTiles > 0 )
+    if( numStems <= 2 && m_blinkCounter < BLINK_OFF_FRAMES )
     {
-        bg1helper.DrawPartialAsset( Vec2(offset,0), Vec2(offset,0), Vec2(numTiles * 2,TimerUp.height), TimerUp );
-        bg1helper.DrawPartialAsset( Vec2(0,offset), Vec2(0,offset), Vec2(TimerLeft.width,numTiles * 2), TimerLeft );
-        bg1helper.DrawPartialAsset( Vec2(offset,15), Vec2(offset,0), Vec2(numTiles * 2,TimerDown.height), TimerDown );
-        bg1helper.DrawPartialAsset( Vec2(15,offset), Vec2(0,offset), Vec2(TimerRight.width,numTiles * 2), TimerRight );
-
-        if( numTiles < TIMER_TILES )
-        {
-            //draw partial timer bits
-            int numSubTiles = ( ( TIMER_TILES * amount ) - numTiles ) * TIMER_TILES;
-
-            if( numSubTiles >= TIMER_TILES )
-                numSubTiles = TIMER_TILES - 1;
-
-            bg1helper.DrawAsset( Vec2( offset - 1, 0 ), TimerEdgeUpLeft, numSubTiles );
-            bg1helper.DrawAsset( Vec2( ( TIMER_TILES * 2 ) - ( offset ) + 2, 0 ), TimerEdgeUpRight, numSubTiles );
-
-            bg1helper.DrawAsset( Vec2( offset - 1, 15 ), TimerEdgeDownLeft, numSubTiles );
-            bg1helper.DrawAsset( Vec2( ( TIMER_TILES * 2 ) - ( offset ) + 2, 15 ), TimerEdgeDownRight, numSubTiles );
-
-            bg1helper.DrawAsset( Vec2( 0, offset - 1 ), TimerEdgeLeftUp, numSubTiles );
-            bg1helper.DrawAsset( Vec2( 0, ( TIMER_TILES * 2 ) - ( offset ) + 2 ), TimerEdgeLeftDown, numSubTiles );
-
-            bg1helper.DrawAsset( Vec2( 15, offset - 1 ), TimerEdgeRightUp, numSubTiles );
-            bg1helper.DrawAsset( Vec2( 15, ( TIMER_TILES * 2 ) - ( offset ) + 2 ), TimerEdgeRightDown, numSubTiles );
-        }
-    }
-    else if( m_blinkCounter >= BLINK_OFF_FRAMES )
-    {
-        //draw the low on timer sprites
-        int frame =  TIMER_TILES - ( ( TIMER_TILES * amount ) - numTiles ) * TIMER_TILES;
-
-        if( frame >= TIMER_TILES )
-            frame = TIMER_TILES - 1;
-
-        bg1helper.DrawAsset( Vec2( 7, 0 ), TimerLowUp, frame );
-        bg1helper.DrawAsset( Vec2( 7, 15 ), TimerLowDown, frame );
-        bg1helper.DrawAsset( Vec2( 0, 7 ), TimerLowLeft, frame );
-        bg1helper.DrawAsset( Vec2( 15, 7 ), TimerLowRight, frame );
-
-        if( m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )
-        {
-            m_blinkCounter = 0;
-            Game::Inst().playSound(timer_blink);
-        }
+        vid.resizeSprite(0, 0, 0);
+        return;
     }
 
+    //figure out what frame we're on
+    float spritePerc = 1.0f - Math::fmodf( m_fTimer, TIMER_SPRITE_PERIOD ) / TIMER_SPRITE_PERIOD;
+    unsigned int spriteframe = spritePerc * ( timerSprite.frames + 1 );
+
+    if( spriteframe >= timerSprite.frames )
+        spriteframe = timerSprite.frames - 1;
+
+    vid.resizeSprite(0, timerSprite.width*8, timerSprite.height*8);
+    vid.setSpriteImage(0, timerSprite, spriteframe);
+    vid.moveSprite(0, TIMER_SPRITE_POS, TIMER_SPRITE_POS);
+
+
+    if( numStems > 0 )
+    {
+        bg1helper.DrawAsset( Vec2( TIMER_POS, TIMER_POS ), timerStem, TIMER_STEMS - numStems );
+    }
+
+    if( m_blinkCounter - BLINK_OFF_FRAMES >= BLINK_ON_FRAMES )
+    {
+        m_blinkCounter = 0;
+        Game::Inst().playSound(timer_blink);
+    }
 }
