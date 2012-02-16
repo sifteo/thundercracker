@@ -98,11 +98,11 @@ private:
 
     bool loadElfFile(unsigned addr, unsigned len);
 
-    bool decode16(uint16_t halfword);
-    bool decode32();
+    void execute16(uint16_t instr);
+    void execute32(uint32_t instr);
 
-    bool isValid16(uint16_t halfword);
-    bool isValid32(uint32_t word);
+    bool isValid16(uint16_t instr);
+    bool isValid32(uint32_t instr);
 
     ProgramInfo progInfo;
 

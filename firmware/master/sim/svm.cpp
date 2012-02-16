@@ -90,58 +90,160 @@ region of the same page, and the target is 32-bit aligned:
   1101xxxx xxxxxxxx     bcc
   11100xxx xxxxxxxx     b
 */
-bool SvmProgram::isValid16(uint16_t halfword)
+bool SvmProgram::isValid16(uint16_t instr)
 {
-    if ((halfword & AluMask) == AluTest) {
+    if ((instr & AluMask) == AluTest) {
         LOG(("arithmetic\n"));
         return true;
     }
-    if ((halfword & DataProcMask) == DataProcTest) {
+    if ((instr & DataProcMask) == DataProcTest) {
         LOG(("data processing\n"));
         return true;
     }
-    if ((halfword & MiscMask) == MiscTest) {
+    if ((instr & MiscMask) == MiscTest) {
         LOG(("miscellaneous\n"));
         return true;
     }
-    if ((halfword & SvcMask) == SvcTest) {
+    if ((instr & SvcMask) == SvcTest) {
         LOG(("svc\n"));
         return true;
     }
-    if ((halfword & PcRelLdrMask) == PcRelLdrTest) {
+    if ((instr & PcRelLdrMask) == PcRelLdrTest) {
         LOG(("pc relative ldr\n"));
         return true;
     }
-    if ((halfword & SpRelLdrStrMask) == SpRelLdrStrTest) {
+    if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
         LOG(("sp relative ldr/str\n"));
         return true;
     }
-    if ((halfword & SpRelAddMask) == SpRelAddTest) {
+    if ((instr & SpRelAddMask) == SpRelAddTest) {
         LOG(("sp relative add\n"));
         return true;
     }
-    if ((halfword & UncondBranchMask) == UncondBranchTest) {
+    if ((instr & UncondBranchMask) == UncondBranchTest) {
         LOG(("unconditional branch\n"));
         // TODO: must validate target
         return true;
     }
-    if ((halfword & CompareBranchMask) == CompareBranchTest) {
+    if ((instr & CompareBranchMask) == CompareBranchTest) {
         LOG(("compare and branch\n"));
         // TODO: must validate target
         return true;
     }
-    if ((halfword & CondBranchMask) == CondBranchTest) {
+    if ((instr & CondBranchMask) == CondBranchTest) {
         LOG(("branchcc\n"));
         // TODO: must validate target
         return true;
     }
-    if (halfword == Nop) {
+    if (instr == Nop) {
         // 10111111 00000000     nop
         LOG(("nop\n"));
         return true;
     }
-    LOG(("*********************************** invalid 16bit instruction: 0x%x\n", halfword));
+    LOG(("*********************************** invalid 16bit instruction: 0x%x\n", instr));
     return false;
+}
+
+void SvmProgram::execute16(uint16_t instr)
+{
+    if ((instr & AluMask) == AluTest) {
+        // lsl, lsr, asr, add, sub, mov, cmp
+        // take bits [13:11] to group these
+        uint8_t prefix = (instr >> 11) & 0x7;
+        switch (prefix) {
+        case 0: // 0b000 - LSL
+            emulateLSLImm(instr);
+            return;
+        case 1: // 0b001 - LSR
+            emulateLSRImm(instr);
+            return;
+        case 2: // 0b010 - ASR
+            emulateASRImm(instr);
+            return;
+        case 3: { // 0b011 - ADD/SUB reg/imm
+            uint8_t subop = (instr >> 9) & 0x3;
+            switch (subop) {
+            case 0:
+                emulateADDReg(instr);
+                return;
+            case 1:
+                emulateSUBReg(instr);
+                return;
+            case 2:
+                emulateADD3Imm(instr);
+                return;
+            case 3:
+                emulateADD8Imm(instr);
+                return;
+            }
+        }
+        case 4: // 0b100 - MOV
+            emulateMovImm(instr);
+            return;
+        case 5: // 0b101
+            emulateCmpImm(instr);
+            return;
+        case 6: // 0b110 - ADD 8bit
+            emulateADD8Imm(instr);
+            return;
+        case 7: // 0b111 - SUB 8bit
+            emulateSUB8Imm(instr);
+            return;
+        }
+        ASSERT(0 && "unhandled ALU instruction!");
+    }
+//    if ((instr & DataProcMask) == DataProcTest) {
+//        LOG(("data processing\n"));
+//        return true;
+//    }
+//    if ((instr & MiscMask) == MiscTest) {
+//        LOG(("miscellaneous\n"));
+//        return true;
+//    }
+//    if ((instr & SvcMask) == SvcTest) {
+//        LOG(("svc\n"));
+//        return true;
+//    }
+//    if ((instr & PcRelLdrMask) == PcRelLdrTest) {
+//        LOG(("pc relative ldr\n"));
+//        return true;
+//    }
+//    if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
+//        LOG(("sp relative ldr/str\n"));
+//        return true;
+//    }
+//    if ((instr & SpRelAddMask) == SpRelAddTest) {
+//        LOG(("sp relative add\n"));
+//        return true;
+//    }
+//    if ((instr & UncondBranchMask) == UncondBranchTest) {
+//        LOG(("unconditional branch\n"));
+//        // TODO: must validate target
+//        return true;
+//    }
+//    if ((instr & CompareBranchMask) == CompareBranchTest) {
+//        LOG(("compare and branch\n"));
+//        // TODO: must validate target
+//        return true;
+//    }
+//    if ((instr & CondBranchMask) == CondBranchTest) {
+//        LOG(("branchcc\n"));
+//        // TODO: must validate target
+//        return true;
+//    }
+//    if (instr == Nop) {
+//        // 10111111 00000000     nop
+//        LOG(("nop\n"));
+//        return true;
+//    }
+    // should never get here since we should only be executing validated instructions
+    LOG(("*********************************** invalid 16bit instruction: 0x%x\n", instr));
+    ASSERT(0 && "unhandled instruction group!");
+}
+
+void SvmProgram::execute32(uint32_t instr)
+{
+
 }
 
 bool SvmProgram::conditionPassed(uint32_t instr)
@@ -285,29 +387,29 @@ Allowed 32-bit instruction encodings:
 
   11110x10 x100xxxx, 0xxx0xxx xxxxxxxx      mov[wt]     r0-r7, #imm16
 */
-bool SvmProgram::isValid32(uint32_t inst)
+bool SvmProgram::isValid32(uint32_t instr)
 {
-    if ((inst & StrMask) == StrTest) {
+    if ((instr & StrMask) == StrTest) {
         LOG(("32bit str\n"));
         return true;
     }
-    if ((inst & StrBhMask) == StrBhTest) {
+    if ((instr & StrBhMask) == StrBhTest) {
         LOG(("32bit str[bh]\n"));
         return true;
     }
-    if ((inst & LdrBhMask) == LdrBhTest) {
+    if ((instr & LdrBhMask) == LdrBhTest) {
         LOG(("32bit ldr(s)[bh]\n"));
         return true;
     }
-    if ((inst & LdrMask) == LdrTest) {
+    if ((instr & LdrMask) == LdrTest) {
         LOG(("32bit ldr(s)[bh]\n"));
         return true;
     }
-    if ((inst & MovWtMask) == MovWtTest) {
+    if ((instr & MovWtMask) == MovWtTest) {
         LOG(("32bit mov[wt]\n"));
         return true;
     }
-    LOG(("----------------------- invalid 32-bit instruction: 0x%x\n", inst));
+    LOG(("----------------------- invalid 32-bit instruction: 0x%x\n", instr));
     return false;
 }
 
