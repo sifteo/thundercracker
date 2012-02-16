@@ -80,12 +80,8 @@ void SVMAsmPrinter::EmitFunctionEntryLabel()
     // XXX: For now, all functions start in new blocks
     emitBlockBegin();
 
-    // Always flag this as a thumb function
-    OutStreamer.EmitAssemblerFlag(MCAF_Code16);
-    OutStreamer.EmitThumbFunc(CurrentFnSym);
-
     CurrentFnSplitOrdinal = 0;
-    OutStreamer.EmitLabel(CurrentFnSym);
+    emitFunctionLabelImpl(CurrentFnSym);
 }
 
 void SVMAsmPrinter::EmitConstantPool()
@@ -101,6 +97,17 @@ void SVMAsmPrinter::EmitFunctionBodyEnd()
 {
     // XXX: For now, all functions end a block
     emitBlockEnd();
+}
+
+void SVMAsmPrinter::emitFunctionLabelImpl(MCSymbol *Sym)
+{
+    // Emit a label, annotated for function-ness.
+
+    OutStreamer.EmitAssemblerFlag(MCAF_Code16);
+    OutStreamer.EmitThumbFunc(Sym);
+    OutStreamer.EmitLabel(Sym); 
+    OutStreamer.EmitSymbolAttribute(Sym, MCSA_Global);
+    OutStreamer.EmitSymbolAttribute(Sym, MCSA_ELF_TypeFunction);    
 }
 
 void SVMAsmPrinter::emitBlockBegin()
@@ -140,7 +147,7 @@ void SVMAsmPrinter::emitBlockSplit(const MachineInstr *MI)
     assert(CurrentFnSym);
     Twine Name(CurrentFnSym->getName() + Twine(".")
         + Twine(++CurrentFnSplitOrdinal));
-    OutStreamer.EmitLabel(OutContext.GetOrCreateSymbol(Name));
+    emitFunctionLabelImpl(OutContext.GetOrCreateSymbol(Name));
 }
 
 void SVMAsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV)

@@ -35,6 +35,7 @@ namespace llvm {
         void emitBlockBegin();
         void emitBlockEnd();
         void emitBlockSplit(const MachineInstr *MI);
+        void emitFunctionLabelImpl(MCSymbol *Sym);
 
         void emitOperandComment(const MachineInstr *MI, const MachineOperand &OP);
     };
