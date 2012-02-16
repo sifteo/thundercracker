@@ -30,6 +30,9 @@ namespace llvm {
         void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
 
     private:
+        void emitBlockBegin();
+        void emitBlockEnd();
+
         void emitOperandComment(const MachineInstr *MI, const MachineOperand &OP);
     };
 

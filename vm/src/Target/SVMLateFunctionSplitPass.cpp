@@ -35,6 +35,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Module.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/codeGen/MachineInstr.h"
 #include "llvm/codeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -236,6 +237,7 @@ unsigned SVMLateFunctionSplitPass::getLongBranchCPI(MachineFunction *MF,
 void SVMLateFunctionSplitPass::splitBeforeInstruction(
     MachineFunction::iterator &MBB, MachineBasicBlock::iterator &I)
 {
+    const TargetInstrInfo &TII = *TM.getInstrInfo();
     MachineFunction *MF = MBB->getParent();
     Function *F = const_cast<Function *>(MF->getFunction());
     MachineFunction::iterator insertionPoint = MBB;
@@ -250,16 +252,16 @@ void SVMLateFunctionSplitPass::splitBeforeInstruction(
     MachineBasicBlock *nextMBB = MF->CreateMachineBasicBlock(nextBB);
     MF->insert(insertionPoint, nextMBB);
 
-    // First instruction in the new MBB is a SPLIT
-    const TargetInstrInfo &TII = *TM.getInstrInfo();
-    BuildMI(nextMBB, I->getDebugLoc(), TII.get(SVM::SPLIT));
-
-    // Next comes I and all subsequent instructions
+    // Move I and all subsequent instructions to the new MBB
     nextMBB->splice(nextMBB->end(), MBB, I, MBB->end());
     
     // Insert a long branch from MBB to nextMBB
     BuildMI(MBB, I->getDebugLoc(), TII.get(SVM::LB))
         .addConstantPoolIndex(getLongBranchCPI(MF, nextMBB));
+
+    // *Last* instruction in the prior MBB is a SPLIT.
+    // This ensures that the next MBB's label points to the right page.
+    BuildMI(MBB, I->getDebugLoc(), TII.get(SVM::SPLIT));
 }
 
 void SVMLateFunctionSplitPass::rewriteBranch(MachineFunction::iterator &MBB,

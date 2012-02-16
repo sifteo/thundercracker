@@ -82,12 +82,6 @@ bool SVMAlignPass::runOnMachineFunction(MachineFunction &MF)
 {
     bool Changed = false;
 
-    {
-        // XXX: Kludge to put functions into flash blocks
-        MF.EnsureAlignment(Log2_32(TM.getBlockSize()));
-        Changed = true;
-    }
-
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
         if (runOnMachineBasicBlock(*I))
             Changed = true;

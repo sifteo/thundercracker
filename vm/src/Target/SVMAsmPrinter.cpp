@@ -36,6 +36,18 @@ void SVMAsmPrinter::EmitInstruction(const MachineInstr *MI)
         for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
             emitOperandComment(MI, MI->getOperand(i));
     }
+    
+    switch (MI->getOpcode()) {
+        
+    case SVM::SPLIT:
+        // XXX: Need to fix constpool split
+        //emitBlockEnd();
+        emitBlockBegin();
+        break;
+    
+    default:
+        break;
+    }
 
     OutStreamer.EmitInstruction(MCI);
 }
@@ -67,6 +79,9 @@ void SVMAsmPrinter::EmitFunctionEntryLabel()
 {
     OutStreamer.ForceCodeRegion();
 
+    // XXX: For now, all functions start in new blocks
+    emitBlockBegin();
+
     // Always flag this as a thumb function
     OutStreamer.EmitAssemblerFlag(MCAF_Code16);
     OutStreamer.EmitThumbFunc(CurrentFnSym);
@@ -85,13 +100,23 @@ void SVMAsmPrinter::EmitConstantPool()
 
 void SVMAsmPrinter::EmitFunctionBodyEnd()
 {
-    /* XXX: Kludge to emit constants at the end of each function */
+    // XXX: For now, all functions end a block
+    emitBlockEnd();
+}
 
+void SVMAsmPrinter::emitBlockBegin()
+{
+    OutStreamer.EmitValueToAlignment(
+        SVMTargetMachine::getBlockSize(),
+        SVMTargetMachine::getPaddingByte());    
+}
+
+void SVMAsmPrinter::emitBlockEnd()
+{
     const MachineConstantPool *MCP = MF->getConstantPool();
     const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
 
-    // Ensure we're at a 32-bit boundary
-    EmitAlignment(2);
+    OutStreamer.EmitCodeAlignment(sizeof(uint32_t));
     
     for (unsigned i = 0, end = CP.size(); i != end; i++) {
        MachineConstantPoolEntry CPE = CP[i];

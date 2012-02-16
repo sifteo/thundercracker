@@ -180,21 +180,9 @@ void SVMELFProgramWriter::RecordRelocation(const MCAssembler &Asm,
 
 void SVMELFProgramWriter::writePadding(unsigned N)
 {
-    /*
-     * Instead of padding with zeroes, pad with ones.
-     * These programs get stored in flash memory, and 0xFF
-     * is what the flash erases to.
-     */
-
-    const char Ones[16] = {
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    };
-
-    for (unsigned i = 0, e = N / 16; i != e; ++i)
-        OS << StringRef(Ones, 16);
-
-    OS << StringRef(Ones, N % 16);
+    const char Pad = SVMTargetMachine::getPaddingByte();
+    while (N--)
+        OS << StringRef(&Pad, 1);
 }
 
 void SVMELFProgramWriter::padToOffset(uint32_t O)

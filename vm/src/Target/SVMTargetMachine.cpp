@@ -62,3 +62,14 @@ uint32_t SVMTargetMachine::getRAMBase()
 {
     return 0x10000;
 }
+
+uint8_t SVMTargetMachine::getPaddingByte()
+{
+    /*
+     * Instead of padding with zeroes, pad with ones.
+     * These programs get stored in flash memory, and 0xFF
+     * is what the flash erases to.
+     */
+    return 0xFF;
+}
+
