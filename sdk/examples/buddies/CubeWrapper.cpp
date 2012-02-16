@@ -31,12 +31,12 @@ const Sifteo::AssetImage &getBgAsset(int buddyId)
     switch (buddyId)
     {
         default:
-        case 0: return Bg1;
-        case 1: return Bg2;
-        case 2: return Bg3;
-        case 3: return Bg4;
-        case 4: return Bg5;
-        case 5: return Bg6;
+        case 0: return BuddyFace0;
+        case 1: return BuddyFace1;
+        case 2: return BuddyFace2;
+        case 3: return BuddyFace3;
+        case 4: return BuddyFace4;
+        case 5: return BuddyFace5;
     }
 }
 
@@ -48,12 +48,12 @@ const Sifteo::PinnedAssetImage &getPieceAsset(int buddyId)
     switch (buddyId)
     {
         default:
-        case 0: return Parts1;
-        case 1: return Parts2;
-        case 2: return Parts3;
-        case 3: return Parts4;
-        case 4: return Parts5;
-        case 5: return Parts6;
+        case 0: return BuddyFaceParts0;
+        case 1: return BuddyFaceParts1;
+        case 2: return BuddyFaceParts2;
+        case 3: return BuddyFaceParts3;
+        case 4: return BuddyFaceParts4;
+        case 5: return BuddyFaceParts5;
     }
 }
 
@@ -151,19 +151,19 @@ void CubeWrapper::DrawShuffleUi(GameState shuffleState, float shuffleScoreTime)
     {
         case GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE:
         {
-            DrawBanner(mCube.id() == 0 ? ui_top_shakeshuffle_blue :  ui_top_shakeshuffle_orange);
+            DrawBanner(mCube.id() == 0 ? ShakeToShuffleBlue :  ShakeToShuffleOrange);
             break;
         }
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
         {
-            DrawBanner(mCube.id() == 0 ? ui_top_unscramble_blue : ui_top_unscramble_orange);
+            DrawBanner(mCube.id() == 0 ? UnscrableTheFacesBlue : UnscrableTheFacesOrange);
             break;
         }
         case GAME_STATE_SHUFFLE_PLAY:
         {
             if (IsSolved())
             {
-                DrawBanner(mCube.id() == 0 ? ui_top_facecomplete_blue : ui_top_facecomplete_orange);
+                DrawBanner(mCube.id() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
             }
             break;
         }
@@ -174,11 +174,11 @@ void CubeWrapper::DrawShuffleUi(GameState shuffleState, float shuffleScoreTime)
                 int minutes = int(shuffleScoreTime) / 60;
                 int seconds = int(shuffleScoreTime - (minutes * 60.0f));
                 
-                DrawScoreBanner(ui_top_time_blue, minutes, seconds);
+                DrawScoreBanner(ScoreTimeBlue, minutes, seconds);
             }
             else
             {
-                DrawBanner(ui_top_shakeshuffle_orange);
+                DrawBanner(ShakeToShuffleOrange);
             }
             break;
         }
@@ -197,7 +197,7 @@ void CubeWrapper::DrawTitleCard(const char *text)
     ASSERT(text != NULL);
     
     EnableBg0SprBg1Video();
-    Video().BG0_drawAsset(Vec2(0, 0), TitleCard);
+    Video().BG0_drawAsset(Vec2(0, 0), PuzzleTitleCard);
     
     for (int i = 0; i < (NUM_SIDES * 2); ++i)
     {
@@ -404,7 +404,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
     
     if (piece.mAttribute == Piece::ATTR_FIXED)
     {
-        Video().setSpriteImage(spriteLayer0, AttributeFixed);
+        Video().setSpriteImage(spriteLayer0, BuddyFacePartFixed);
     }
     else
     {
@@ -413,7 +413,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
     
     if (piece.mAttribute == Piece::ATTR_HIDDEN)
     {
-        Video().setSpriteImage(spriteLayer1, AttributeHidden);
+        Video().setSpriteImage(spriteLayer1, BuddyFacePartHidden);
     }
     else
     {
