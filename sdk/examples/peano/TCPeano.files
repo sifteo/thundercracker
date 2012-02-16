@@ -64,3 +64,11 @@ C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/vault_door.png
 C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/View.cpp
 C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/View.h
 PuzzleController.cpp
+MenuController.h
+TiltFlowDetailView.h
+InterstitialView.h
+TiltFlowDetailView.cpp
+InterstitialView.cpp
+MenuController.cpp
+TiltFlowItem.h
+TiltFlowMenu.h

@@ -32,7 +32,6 @@ namespace TotalsGame
 		token = _token;
 		mCurrentExpression = token;
         token->view = this;
-		mStyle = DefaultStyle;
 		mLit = false;
 
 		mStatus = StatusIdle;
@@ -325,7 +324,6 @@ namespace TotalsGame
 		{
 			Fraction result = token->GetCurrentTotal();
             const int yPos = 3;
-            //TODO
             c->Image(&Accent, Vec2(0,yPos));
             if(isInGroup)
             {

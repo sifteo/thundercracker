@@ -18,13 +18,6 @@ namespace TotalsGame {
   private:
 	  static int sHintParity;
 
-	  //from TokenView.data.cs  big todo
-	  class PuzzleStyleData {};
-	  static const PuzzleStyleData DefaultStyle;
-
-	  //junk to make compile
-	  class Color {};
-
       class EventHandler: public TotalsCube::EventHandler
       {
           TokenView *owner;
@@ -55,8 +48,7 @@ namespace TotalsGame {
 
     Token *token;
     Status mStatus;
-    IExpression *mCurrentExpression;
-    PuzzleStyleData mStyle;
+    IExpression *mCurrentExpression;    
     float mTimeout;
     int mDigitId;
     bool useAccentDigit;

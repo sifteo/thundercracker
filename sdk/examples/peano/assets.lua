@@ -6,6 +6,20 @@ Accent = image{ "accent.png" }
 Accent_Current = image{ "accent_current.png" }
 Accent_Target = image{ "accent_target.png" }
 
+Hint_0 = image { "hint_0.png" }
+Hint_1 = image { "hint_1.png" }
+Hint_2 = image { "hint_2.png" }
+Hint_3 = image { "hint_3.png" }
+Hint_4 = image { "hint_4.png" }
+Hint_5 = image { "hint_5.png" }
+Hint_6 = image { "hint_6.png" }
+
+Icon_Continue = image { "icon_continue.png" }
+Icon_Random = image { "icon_random.png" }
+Icon_Howtoplay = image { "icon_howtoplay.png" }
+Icon_Level_Select = image { "icon_level_select.png" }
+Icon_Setup = image { "icon_setup.png" }
+
 Nan = image { "nan.png" }
 
 Digits = image { "digits.png", width=16, height=16, pinned=true }
@@ -101,6 +115,7 @@ sfx_Tutorial_Mix_Nums = sound {"PV_tutorial_mix_nums.raw" }
 sfx_Level_Clear = sound {"PV_level_clear.raw" }
 sfx_Connect = sound { "PV_connect.raw" }
 sfx_Fast_Tick = sound{ "PV_fast_tick.raw" }
+sfx_PeanosVaultMenu = sound { "PeanosVaultMenu.raw" }
 
 
 

@@ -3,6 +3,7 @@
 
 #include "StingController.h"
 #include "PuzzleController.h"
+#include "MenuController.h"
 
 namespace TotalsGame
 {
@@ -111,7 +112,7 @@ namespace TotalsGame
 
 		mDirty = false;
 		IsPaused = false;
-        difficulty = DifficultyEasy;//TODO Hard;
+        difficulty = DifficultyHard;
 		mode = NumericModeFraction;
 
 /* TODO
@@ -131,12 +132,13 @@ namespace TotalsGame
 
 		static StingController stingController(this);
 		static PuzzleController puzzleController(this);
+        static MenuController menuController(this);
 
 		sceneMgr
 			.State("sting", &stingController)                //
 			.State("init", &Game::Initialize)
-/*			.State("menu", &menuController)                  //
-			.State("tutorial", new TutorialController(this))          //
+            .State("menu", &menuController)
+/*			.State("tutorial", new TutorialController(this))          //
 			.State("interstitial", new InterstitialController(this))  //
 */			.State("puzzle", &puzzleController)
 /*			.State("advance", Advance)
@@ -145,7 +147,7 @@ namespace TotalsGame
 */
 			.Transition("sting", "Next", "init")
 			.Transition("init", "NewPlayer", "tutorial")
-			.Transition("init", "ReturningPlayer", "puzzle")//TODO"menu")
+            .Transition("init", "ReturningPlayer", "menu")
 			.Transition("menu", "Tutorial", "tutorial")
 			.Transition("menu", "Play", "interstitial")
 			.Transition("tutorial", "Next", "interstitial")
@@ -191,6 +193,8 @@ namespace TotalsGame
         }
 
 		mDirty = false;
+
+        //TODO System::paintSync();
 	}
 
 	bool Game::IsPlayingRandom() 
