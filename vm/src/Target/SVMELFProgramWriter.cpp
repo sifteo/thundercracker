@@ -82,11 +82,12 @@ void SVMELFProgramWriter::writeELFHeader(const MCAssembler &Asm, const MCAsmLayo
     unsigned Strtab = ELFDebug ? EMB.getShstrtabIndex() : 0;
 
     // Place program headers and ELF headers in the proper 'header' block,
-    // but keep the section headers at the beginning of the SPS_DEBUG section.
+    // but keep the section headers at the end of the SPS_DEBUG section.
     unsigned PHOffset = sizeof(ELF::Elf32_Ehdr);
     HdrSize = RoundUpToAlignment(PHOffset + PHSize, Align);
-    SHOffset = ELFDebug ? ML.getSectionDiskOffset(SPS_END, HdrSize) : 0;
-    
+    SHOffset = ELFDebug ?
+        RoundUpToAlignment(ML.getSectionDiskOffset(SPS_END, HdrSize), 4) : 0;
+
     Write8(0x7f);                                   // e_ident
     Write8('E');
     Write8('L');

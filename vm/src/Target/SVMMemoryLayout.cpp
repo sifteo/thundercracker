@@ -77,7 +77,7 @@ uint32_t SVMMemoryLayout::getSectionDiskOffset(enum SVMProgramSection s, uint32_
     case SPS_DEBUG: return getSectionDiskOffset(SPS_RW, base) +
                            RoundUpToAlignment(spsSize[SPS_RW], align);
     case SPS_END:   return getSectionDiskOffset(SPS_DEBUG, base) +
-                           RoundUpToAlignment(spsSize[SPS_DEBUG], align);
+                           spsSize[SPS_DEBUG];
     default:        llvm_unreachable("Bad SVM Program Section");
     }
 }
