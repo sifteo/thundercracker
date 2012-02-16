@@ -45,8 +45,8 @@ void SvmProgram::validate()
     uint16_t *instr = static_cast<uint16_t*>(r.data());
     unsigned bsize = r.size();
     for (; bsize != 0; bsize -= sizeof(uint32_t), instr += 2) {
-        // if bits [15:11] are 0b11101, 0b11110 or 0b11111, it's a 32-bit instruction
-        if ((instr[0] & 0xf800) >= 0xe800) { // 0xe800 == 0b11101 << 11
+
+        if (instructionSize(instr[0]) == InstrBits32) {
             // swap nibbles
             if (!isValid32((instr[0] << 16) | instr[1]))
                 break;
@@ -59,6 +59,13 @@ void SvmProgram::validate()
         }
     }
     LOG(("validation complete\n"));
+}
+
+SvmProgram::InstructionSize SvmProgram::instructionSize(uint16_t instr) const
+{
+    // if bits [15:11] are 0b11101, 0b11110 or 0b11111, it's a 32-bit instruction
+    // 0xe800 == 0b11101 << 11
+    return (instr & 0xf800) >= 0xe800 ? InstrBits32 : InstrBits16;
 }
 
 /*

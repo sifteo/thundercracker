@@ -91,6 +91,11 @@ private:
         Segment rwdata;
     };
 
+    enum InstructionSize {
+        InstrBits16,
+        InstrBits32
+    };
+
     bool loadElfFile(unsigned addr, unsigned len);
 
     bool decode16(uint16_t halfword);
@@ -106,6 +111,8 @@ private:
     uint32_t cpsr;                  // current program status register
 
     bool conditionPassed(uint32_t instr);
+
+    InstructionSize instructionSize(uint16_t instr) const;
 
     // status flag helpers
     inline bool getNeg() const {
