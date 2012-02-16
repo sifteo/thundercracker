@@ -266,11 +266,10 @@ void SvmProgram::execute16(uint16_t instr)
         emulateCBZ_CBNZ(instr);
         return;
     }
-//    if ((instr & CondBranchMask) == CondBranchTest) {
-//        LOG(("branchcc\n"));
-//        // TODO: must validate target
-//        return true;
-//    }
+    if ((instr & CondBranchMask) == CondBranchTest) {
+        emulateCondB(instr);
+        return;
+    }
     if (instr == Nop) {
         // nothing to do
         return;
@@ -285,18 +284,33 @@ void SvmProgram::execute32(uint32_t instr)
 
 }
 
-bool SvmProgram::conditionPassed(uint32_t instr)
+bool SvmProgram::conditionPassed(uint8_t cond)
 {
-    // eventually check cond regs to provide conditional execution
-    return true;
+    switch (cond) {
+    case EQ: return  getZero();
+    case NE: return !getZero();
+    case CS: return  getCarry();
+    case CC: return !getCarry();
+    case MI: return  getNeg();
+    case PL: return !getNeg();
+    case VS: return  getOverflow();
+    case VC: return !getOverflow();
+    case HI: return  getCarry() && !getZero();
+    case LS: return !getCarry() || getZero();
+    case GE: return  getNeg() == getOverflow();
+    case LT: return  getNeg() != getOverflow();
+    case GT: return (getZero() == 0) && (getNeg() == getOverflow());
+    case LE: return (getZero() == 1) || (getNeg() != getOverflow());
+    case NoneAL: return true;
+    default:
+        ASSERT(0 && "invalid condition code");
+        return false;
+    }
 }
 
 // left shift
 void SvmProgram::emulateLSLImm(uint16_t inst)
 {
-    if (!conditionPassed(inst))
-        return;
-
     unsigned imm5 = (inst >> 6) & 0x1f;
     unsigned Rm = (inst >> 3) & 0x7;
     unsigned Rd = inst & 0x7;
@@ -517,6 +531,17 @@ void SvmProgram::emulateB(uint16_t instr)
     // encoding T2 only
     unsigned imm11 = instr & 0x3FF;
     BranchWritePC(regs[REG_PC] + imm11);
+}
+
+void SvmProgram::emulateCondB(uint16_t instr)
+{
+    unsigned cond = (instr >> 8) & 0xf;
+    unsigned imm8 = instr & 0xff;
+
+    if (conditionPassed(cond)) {
+        uint32_t offset = SignExtend<uint32_t, 9>(imm8 << 1);
+        BranchWritePC(regs[REG_PC] + offset);
+    }
 }
 
 void SvmProgram::emulateCBZ_CBNZ(uint16_t instr)

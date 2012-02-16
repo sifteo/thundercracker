@@ -113,7 +113,7 @@ private:
     uint32_t regs[NUM_GP_REGS];     // general purpose registers
     uint32_t cpsr;                  // current program status register
 
-    bool conditionPassed(uint32_t instr);
+    bool conditionPassed(uint8_t cond);
 
     InstructionSize instructionSize(uint16_t instr) const;
 
@@ -196,6 +196,7 @@ private:
     void emulateUXTB(uint16_t isntr);       // UXTB
 
     void emulateB(uint16_t instr);          // B
+    void emulateCondB(uint16_t instr);      // B
     void emulateCBZ_CBNZ(uint16_t instr);   // CBNZ, CBZ
 
     void emulateSTRImm(uint16_t instr);     // STR (immediate)
@@ -206,8 +207,16 @@ private:
 
     void emulateSVC(uint16_t instr);
 
-    void BranchWritePC(uint32_t addr) {
+    // utils
+    inline void BranchWritePC(uint32_t addr) {
         regs[REG_PC] = addr & 0xfffffffe;
+    }
+
+    // http://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
+    template <typename T, unsigned B>
+    inline T SignExtend(const T x) {
+      struct { T x:B; } s;
+      return s.x = x;
     }
 };
 
