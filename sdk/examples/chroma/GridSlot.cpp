@@ -759,7 +759,9 @@ void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
 {
     Vec2 vec( m_col * 4, m_row * 4 );
 
-    if( IsSpecial() )
+    if( !isAlive() )
+        vid.BG0_drawAsset(vec, GemEmpty, 0);
+    else if( IsSpecial() )
         vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
     else
     {
