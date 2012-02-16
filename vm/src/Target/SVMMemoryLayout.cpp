@@ -169,6 +169,9 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
     SVMDecorations Deco;
     StringRef Name = Deco.Decode(S->getName());
 
+    // Follow aliases after capturing the original Name.
+    S = &S->AliasedSymbol();
+
     if (Deco.isSys) {
         // Numeric syscall
         SI.Kind = SVMSymbolInfo::SYS;

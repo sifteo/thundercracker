@@ -124,7 +124,9 @@ void SVMAsmPrinter::emitBlockBegin()
 
 void SVMAsmPrinter::emitBlockEnd()
 {
-    OutStreamer.EmitCodeAlignment(sizeof(uint32_t));
+    OutStreamer.EmitValueToAlignment(sizeof(uint32_t),
+        SVMTargetMachine::getPaddingByte());    
+
     emitBlockConstPool();
 }
 

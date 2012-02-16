@@ -6,6 +6,7 @@
  */
 
 #include "SVMMCAsmBackend.h"
+#include "SVMTargetMachine.h"
 using namespace llvm;
 
 
@@ -83,7 +84,7 @@ void SVMAsmBackend::ApplyStaticFixup(MCFixupKind Kind, char *Data, int32_t Value
 
     case SVM::fixup_abscpi:
         // Word count from beginning of block
-        Value = (Value / 4) & 0x7F;
+        Value = (Value % SVMTargetMachine::getBlockSize()) / 4;
         break;
 
     default:
