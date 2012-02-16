@@ -246,10 +246,14 @@ void SvmProgram::execute16(uint16_t instr)
         emulateLDRLitPool(instr);
         return;
     }
-//    if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
-//        LOG(("sp relative ldr/str\n"));
-//        return true;
-//    }
+    if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
+        uint8_t isLoad = instr & (1 << 11);
+        if (isLoad)
+            emulateLDRImm(instr);
+        else
+            emulateSTRImm(instr);
+        return;
+    }
     if ((instr & SpRelAddMask) == SpRelAddTest) {
         emulateADDSpImm(instr);
         return;
@@ -514,6 +518,28 @@ void SvmProgram::emulateB(uint16_t instr)
     // encoding T2 only
     unsigned imm11 = instr & 0x3FF;
     BranchWritePC(imm11);
+}
+
+void SvmProgram::emulateSTRImm(uint16_t instr)
+{
+    // encoding T2 only
+    unsigned Rt = (instr >> 8) & 0x7;
+    unsigned imm8 = instr & 0xff;
+
+    // TODO: store to mem
+    // "Allowed constant values are multiples of 4 in the range of 0-1020 for
+    // encoding T1", so shift it on over.
+}
+
+void SvmProgram::emulateLDRImm(uint16_t instr)
+{
+    // encoding T2 only
+    unsigned Rt = (instr >> 8) & 0x7;
+    unsigned imm8 = instr & 0xff;
+
+    // TODO: load from mem
+    // "Allowed constant values are multiples of 4 in the range of 0-1020 for
+    // encoding T1", so shift it on over.
 }
 
 void SvmProgram::emulateADDSpImm(uint16_t instr)

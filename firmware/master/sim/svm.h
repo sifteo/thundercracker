@@ -197,6 +197,8 @@ private:
 
     void emulateB(uint16_t instr);          // B
 
+    void emulateSTRImm(uint16_t instr);     // STR (immediate)
+    void emulateLDRImm(uint16_t instr);     // LDR (immediate)
     void emulateADDSpImm(uint16_t instr);   // ADD (SP plus immediate)
 
     void emulateLDRLitPool(uint16_t instr); // LDR (literal)
