@@ -9,6 +9,7 @@
 #define SVM_ASMPRINTER_H
 
 #include "SVMMCInstlower.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
@@ -30,14 +31,27 @@ namespace llvm {
         void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
 
     private:
+        struct CPEInfo {
+            CPEInfo(MCSymbol *Symbol, const MachineConstantPoolEntry *MCPE)
+                : Symbol(Symbol), MCPE(MCPE) {}
+
+            MCSymbol *Symbol;
+            const MachineConstantPoolEntry *MCPE;
+        };
+
+        typedef DenseMap<const MCSymbol*, CPEInfo> BlockConstPoolTy;
+        BlockConstPoolTy BlockConstPool;
+
         unsigned CurrentFnSplitOrdinal;
-        
+
         void emitBlockBegin();
         void emitBlockEnd();
         void emitBlockSplit(const MachineInstr *MI);
         void emitFunctionLabelImpl(MCSymbol *Sym);
 
-        void emitOperandComment(const MachineInstr *MI, const MachineOperand &OP);
+        void emitBlockConstPool();
+        void emitConstRefComment(const MachineOperand &MO);
+        void rewriteConstForCurrentBlock(const MachineOperand &MO, MCOperand &MCO);
     };
 
 } // end namespace

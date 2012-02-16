@@ -4,6 +4,27 @@
  * M. Elizabeth Scott <beth@sifteo.com>
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
+ 
+/*
+ * Our AsmPrinter has some responsibilities that are peculiar to SVM.
+ * This is where we handle actually placing code and data into flash blocks.
+ * We rely on annotations and fixups from previous passes, such as
+ * SVMLateFunctionSplitPass, but this is where we actually:
+ *
+ *  1. Replace 'split' pseudo-instructions with actual block alignment.
+ *  2. Split LLVM constpools into per-block constant pools.
+ *
+ * There are some substantial similarities between this and the ARM target's
+ * ARMConstantIslandPass, but we divide the work between LateFunctionSplitPass
+ * and the AsmPrinter so that we can do our lower-level and non-per-function
+ * tasks here. For example, two small functions that get output into the
+ * same flash block must be able to share a constant pool.
+ *
+ * It turns out that this all makes our job substantially simpler than
+ * ARMConstantIslandPass, since we already know exactly where the splits go,
+ * and we have no BB reshuffing or branch rewriting to take care of at this
+ * point.
+ */
 
 #include "SVM.h"
 #include "SVMInstrInfo.h"
@@ -32,11 +53,16 @@ void SVMAsmPrinter::EmitInstruction(const MachineInstr *MI)
     MCInst MCI;
     MCInstLowering.Lower(MI, MCI);
 
-    if (OutStreamer.isVerboseAsm()) {
-        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-            emitOperandComment(MI, MI->getOperand(i));
+    // Rewrite CPI operands
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        const MachineOperand &MO = MI->getOperand(i);
+        if (MO.isCPI()) {
+            emitConstRefComment(MO);
+            rewriteConstForCurrentBlock(MO, MCI.getOperand(i));
+        }
     }
-    
+
+    // Special pseudo-operations
     switch (MI->getOpcode()) {
         
     case SVM::SPLIT:
@@ -48,29 +74,6 @@ void SVMAsmPrinter::EmitInstruction(const MachineInstr *MI)
     }
 
     OutStreamer.EmitInstruction(MCI);
-}
-
-void SVMAsmPrinter::emitOperandComment(const MachineInstr *MI, const MachineOperand &OP)
-{
-    if (OP.isCPI()) {
-        raw_ostream &OS = OutStreamer.GetCommentOS();
-
-        const std::vector<MachineConstantPoolEntry> &Constants =
-            MI->getParent()->getParent()->getConstantPool()->getConstants();
-
-        assert((unsigned)OP.getIndex() < Constants.size());
-        const MachineConstantPoolEntry &Entry = Constants[OP.getIndex()];
-
-        OS << "pool: ";
-
-        if (Entry.isMachineConstantPoolEntry())
-            Entry.Val.MachineCPVal->print(OS);
-        else if (Entry.Val.ConstVal->hasName())
-            OS << Entry.Val.ConstVal->getName();
-        else
-            OS << *(Value*)Entry.Val.ConstVal;            
-        OS << "\n";
-    }
 }
 
 void SVMAsmPrinter::EmitFunctionEntryLabel()
@@ -112,6 +115,8 @@ void SVMAsmPrinter::emitFunctionLabelImpl(MCSymbol *Sym)
 
 void SVMAsmPrinter::emitBlockBegin()
 {
+    BlockConstPool.clear();
+
     OutStreamer.EmitValueToAlignment(
         SVMTargetMachine::getBlockSize(),
         SVMTargetMachine::getPaddingByte());    
@@ -119,27 +124,13 @@ void SVMAsmPrinter::emitBlockBegin()
 
 void SVMAsmPrinter::emitBlockEnd()
 {
-    const MachineConstantPool *MCP = MF->getConstantPool();
-    const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
-
     OutStreamer.EmitCodeAlignment(sizeof(uint32_t));
-    
-    for (unsigned i = 0, end = CP.size(); i != end; i++) {
-       MachineConstantPoolEntry CPE = CP[i];
-
-       OutStreamer.EmitLabel(GetCPISymbol(i));
-
-       if (CPE.isMachineConstantPoolEntry())
-           EmitMachineConstantPoolValue(CPE.Val.MachineCPVal);
-       else
-           EmitGlobalConstant(CPE.Val.ConstVal);
-    }
+    emitBlockConstPool();
 }
 
 void SVMAsmPrinter::emitBlockSplit(const MachineInstr *MI)
 {
-    // XXX: Need to fix constpool split
-    //emitBlockEnd();
+    emitBlockEnd();
     emitBlockBegin();
 
     // Create a global label for the split-off portion of this function.
@@ -186,3 +177,82 @@ void SVMAsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV)
     OutStreamer.EmitValue(Expr, Size);  
 }
 
+void SVMAsmPrinter::emitConstRefComment(const MachineOperand &MO)
+{
+    assert(MO.isCPI());
+    raw_ostream &OS = OutStreamer.GetCommentOS();
+
+    const std::vector<MachineConstantPoolEntry> &Constants =
+        MF->getConstantPool()->getConstants();
+
+    assert((unsigned)MO.getIndex() < Constants.size());
+    const MachineConstantPoolEntry &Entry = Constants[MO.getIndex()];
+
+    OS << "pool: ";
+
+    if (Entry.isMachineConstantPoolEntry())
+        Entry.Val.MachineCPVal->print(OS);
+    else if (Entry.Val.ConstVal->hasName())
+        OS << Entry.Val.ConstVal->getName();
+    else
+        OS << *(Value*)Entry.Val.ConstVal;            
+    OS << "\n";
+}
+
+void SVMAsmPrinter::rewriteConstForCurrentBlock(const MachineOperand &MO, MCOperand &MCO)
+{
+    /*
+     * Rewrite a constant pool expression such that instead of referring to LLVM's
+     * per-function constant pool (which we don't actually emit) it refers to our
+     * own per-block constant pool.
+     *
+     * On entry, MO is the original CPI operand, and MCO has been lowered as a
+     * MCSymbolRefExpr pointing to LLVM's CPI label. We overwrite MCO with a
+     * new MCSymbolRefExpr referring to the entry that we'll emit later in
+     * emitBlockConstPool().
+     *
+     * For convenience, we internally unique the per-block CP entries according
+     * to this original MCSymbol, since LLVM has already gone to the trouble to
+     * unique these.
+     */
+
+    assert(MO.isCPI());
+    assert(MCO.isExpr());
+
+    const MachineConstantPool *MCP = MF->getConstantPool();
+    const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
+
+    const MCSymbolRefExpr *SRE = dyn_cast<MCSymbolRefExpr>(MCO.getExpr());
+    assert(SRE);
+    const MCSymbol *Key = &SRE->getSymbol();
+
+    BlockConstPoolTy::iterator I = BlockConstPool.find(Key);
+    if (I == BlockConstPool.end()) {
+        // Add a new constant to this block's pool
+        CPEInfo Info(OutContext.CreateTempSymbol(), &CP[MO.getIndex()]);
+        I = BlockConstPool.insert(std::make_pair(Key, Info)).first;
+    }
+
+    MCO.setExpr(MCSymbolRefExpr::Create(I->second.Symbol, OutContext));
+}
+
+void SVMAsmPrinter::emitBlockConstPool()
+{
+    /*
+     * Emit all of the CPEs created by rewriteConstForCurrentBlock.
+     * This is a SVM-specific per-block constant pool, distinct from
+     * LLVM's usual per-function constant pools.
+     */
+
+    for (BlockConstPoolTy::iterator I = BlockConstPool.begin(),
+        E = BlockConstPool.end(); I != E; ++I) {
+        CPEInfo &Info = I->second;
+
+        OutStreamer.EmitLabel(Info.Symbol);
+
+        if (Info.MCPE->isMachineConstantPoolEntry())
+            EmitMachineConstantPoolValue(Info.MCPE->Val.MachineCPVal);
+        else
+            EmitGlobalConstant(Info.MCPE->Val.ConstVal);
+    }
+}
