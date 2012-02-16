@@ -39,7 +39,9 @@ public:
     CubeWrapper &GetCubeWrapper(Sifteo::Cube::ID cubeId);
     
     // Event Notifications
-    void OnNeighborAdd(Sifteo::Cube::ID cubeId0, Sifteo::Cube::Side cubeSide0, Sifteo::Cube::ID cubeId1, Sifteo::Cube::Side cubeSide1);
+    void OnNeighborAdd(
+        Sifteo::Cube::ID cubeId0, Sifteo::Cube::Side cubeSide0,
+        Sifteo::Cube::ID cubeId1, Sifteo::Cube::Side cubeSide1);
     void OnTilt(Sifteo::Cube::ID cubeId);
     void OnShake(Sifteo::Cube::ID cubeId);
     
@@ -87,6 +89,7 @@ private:
     int mShuffleMoveCounter;
     float mShuffleScoreTime;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
+    int mShuffleHintSkipPiece;
     
     unsigned int mPuzzleIndex;
 };

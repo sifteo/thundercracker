@@ -152,6 +152,7 @@ App::App()
     , mGameState(GAME_STATE_NONE)
     , mShuffleMoveCounter(0)
     , mShuffleScoreTime(0.0f)
+    , mShuffleHintSkipPiece(-1)
     , mPuzzleIndex(0)
 {
 }
@@ -626,7 +627,8 @@ void App::ShufflePieces()
 
 void App::DrawShuffleHintBars()
 {
-    // Is there a swap that puts two pieces into the correct spot?
+    // Check all sides of all cubes against each other, looking for a perfect double swap!
+    
     for (unsigned int iCube0 = 0; iCube0 < arraysize(mCubeWrappers); ++iCube0)
     {
         if (mCubeWrappers[iCube0].IsEnabled())
@@ -669,7 +671,8 @@ void App::DrawShuffleHintBars()
         }
     }
     
-    // If not, look for a single swap...
+    // If there are no double swaps, look for a good single swap.
+    
     for (unsigned int iCube0 = 0; iCube0 < arraysize(mCubeWrappers); ++iCube0)
     {
         if (mCubeWrappers[iCube0].IsEnabled())
@@ -687,13 +690,16 @@ void App::DrawShuffleHintBars()
                         {
                             for (Cube::Side iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
                             {
-                                const Piece &pieceSolution1 = mCubeWrappers[iCube1].GetPieceSolution(iSide1);
-                                
-                                if (Compare(piece0, pieceSolution1))
+                                if (mShuffleHintSkipPiece != int(iCube1 * NUM_SIDES + iSide1))
                                 {
-                                    mCubeWrappers[iCube0].DrawHintBar(iSide0);
-                                    mCubeWrappers[iCube1].DrawHintBar(iSide1);
-                                    return;
+                                    const Piece &pieceSolution1 = mCubeWrappers[iCube1].GetPieceSolution(iSide1);
+                                    
+                                    if (Compare(piece0, pieceSolution1))
+                                    {
+                                        mCubeWrappers[iCube0].DrawHintBar(iSide0);
+                                        mCubeWrappers[iCube1].DrawHintBar(iSide1);
+                                        return;
+                                    }
                                 }
                             }
                         }
@@ -703,10 +709,11 @@ void App::DrawShuffleHintBars()
         }
     }
     
-    // This last case if for when one buddy is solved, but the other is not. Hmm....
+    // Clear our skip piece, see note below...
+    mShuffleHintSkipPiece = -1;
     
-    /*
-    // If there are no swaps, just move something that isn't in place.
+    // If there are no single swaps, just move any piece that isn't positioned correctly.
+    
     for (unsigned int iCube0 = 0; iCube0 < arraysize(mCubeWrappers); ++iCube0)
     {
         if (mCubeWrappers[iCube0].IsEnabled())
@@ -718,14 +725,22 @@ void App::DrawShuffleHintBars()
                 
                 if (piece0.mAttribute != Piece::ATTR_FIXED && !Compare(piece0, pieceSolution0))
                 {
+                    // Once we found a piece that's not in the correct spot, we know that there
+                    // isn't a "right" place to swap it this turn (since the above loop failed)
+                    // so just swap it anywhere. But make sure to remember where we swapped it
+                    // so we don't just swap it back here next turn.
+                    
+                    Cube::ID iCube1 = (iCube0 + 1) % kNumCubes;
+                    Cube::Side iSide1 = iSide0;
+                    
                     mCubeWrappers[iCube0].DrawHintBar(iSide0);
-                    mCubeWrappers[(iCube0 + 1) % kNumCubes].DrawHintBar(iSide0);
+                    mCubeWrappers[iCube1].DrawHintBar(iSide0);
+                    mShuffleHintSkipPiece = iCube1 * NUM_SIDES + iSide1;
                     return;
                 }
             }
         }
     }
-    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
