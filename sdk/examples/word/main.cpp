@@ -73,6 +73,7 @@ void siftmain()
         cubes[i].enable(i + CUBE_ID_BASE);
     }
 
+#ifndef DEBUGzzz
     if (LOAD_ASSETS)
     {
         // start loading assets
@@ -113,6 +114,7 @@ void siftmain()
             }
         }
     }
+#endif // ifndef DEBUG
 
     // main loop
     WordGame game(cubes); // must not be static!
