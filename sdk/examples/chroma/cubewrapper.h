@@ -138,6 +138,8 @@ private:
 
     bool HasFloatingDots() const;
     void fillPuzzleCube();
+    //draw a message box with centered text
+    void DrawMessageBoxWithText( const char *pTxt );
 
 	Cube m_cube;
     VidMode_BG0_SPR_BG1 m_vid;

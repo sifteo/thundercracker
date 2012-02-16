@@ -5,7 +5,6 @@
  */
 
 #include "Intro.h"
-#include "string.h"
 #include "assets.gen.h"
 //#include "audio.gen.h"
 #include "game.h"

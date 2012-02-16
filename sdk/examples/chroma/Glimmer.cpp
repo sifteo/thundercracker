@@ -5,7 +5,6 @@
  */
 
 #include "Glimmer.h"
-//#include "string.h"
 #include "assets.gen.h"
 //#include "audio.gen.h"
 //#include "sprite.h"

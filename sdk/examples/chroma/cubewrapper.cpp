@@ -300,10 +300,7 @@ void CubeWrapper::Draw()
 		}
         case Game::STATE_GOODJOB:
         {
-            m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
-            m_bg1helper.DrawText( Vec2( 7, 5 ), Font, "Good" );
-            m_bg1helper.DrawText( Vec2( 8, 7 ), Font, "Job" );
-            m_queuedFlush = true;
+            DrawMessageBoxWithText( "Good Job" );
             break;
         }
 		default:
@@ -1771,4 +1768,77 @@ void CubeWrapper::fillPuzzleCube()
                 slot.FillColor( pData->m_aData[i][j] - 1 );
         }
     }
+}
+
+
+
+//draw a message box with centered text
+void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
+{
+    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+
+    //count how many lines of text we have
+    int charCnt = 0;
+    int index = 0;
+    int lastspaceseen = -1;
+    int numLines = 1;
+    const int MAX_LINES = 8;
+    const int MAX_LINE_LENGTH = 16;
+    int lineBreakIndices[ MAX_LINES ];
+
+    lineBreakIndices[0] = -1;
+
+    while( pTxt[index] && pTxt[index] != '\n' )
+    {
+        if( pTxt[index] == ' ' )
+            lastspaceseen = index;
+
+        charCnt++;
+        index++;
+
+        //break at last space seen
+        if( charCnt >= MAX_LINE_LENGTH )
+        {
+            ASSERT( lastspaceseen >= 0 );
+            if( lastspaceseen < 0 )
+            {
+                return;
+            }
+
+            lineBreakIndices[ numLines ] = lastspaceseen;
+            lastspaceseen = -1;
+            charCnt = 0;
+            numLines++;
+
+            if( numLines > MAX_LINES )
+            {
+                ASSERT( 0 );
+                return;
+            }
+        }
+    }
+
+    int yOffset = MAX_LINES - numLines;
+
+    for( int i = 0; i < numLines; i++ )
+    {
+        char aBuf[ MAX_LINE_LENGTH ];
+
+        int endlineindex = i < numLines -1 ? lineBreakIndices[i + 1] : index;
+        int length = endlineindex - lineBreakIndices[i];
+
+        ASSERT( length >= 0 && length <= MAX_LINE_LENGTH );
+
+        if( length < 0 || length > MAX_LINE_LENGTH )
+            return;
+
+        int xOffset = MAX_LINES - ( length / 2 );
+
+        _SYS_strlcpy( aBuf, pTxt + lineBreakIndices[i] + 1, length );
+        m_bg1helper.DrawText( Vec2( xOffset, yOffset ), Font, aBuf );
+
+        yOffset += 2;
+    }
+
+    m_queuedFlush = true;
 }
