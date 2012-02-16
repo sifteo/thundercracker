@@ -63,8 +63,7 @@ namespace {
 
     private:
         SVMBlockSizeAccumulator BSA;
-        SmallSet<MachineBasicBlock*, 32> PriorBlockBB;
-        SmallSet<MachineBasicBlock*, 32> CurrentBlockBB;
+        int FirstLocalBB;
 
         void beginBlock();
         bool visitBasicBlock(MachineFunction::iterator &MBB);
@@ -94,8 +93,6 @@ FunctionPass *llvm::createSVMLateFunctionSplitPass(SVMTargetMachine &TM)
 void SVMLateFunctionSplitPass::releaseMemory()
 {
     BSA.clear();
-    PriorBlockBB.clear();
-    CurrentBlockBB.clear();
 }
 
 void SVMLateFunctionSplitPass::beginBlock()
@@ -112,8 +109,14 @@ bool SVMLateFunctionSplitPass::runOnMachineFunction(MachineFunction &MF)
 {
     bool Changed = false;
 
-    releaseMemory();
+    // We require that BB numbers are sequential
+    MF.RenumberBlocks();
+
+    // At this point, assume that every MF begins on a flash block.
+    // This is only necessarily true of multi-block functions, but it won't
+    // do any harm if this function does turn out to be smaller than one block.
     beginBlock();
+    FirstLocalBB = 0;
 
     for (MachineFunction::iterator MBB = MF.begin(); MBB != MF.end(); ++MBB)
         if (visitBasicBlock(MBB))
@@ -125,10 +128,6 @@ bool SVMLateFunctionSplitPass::runOnMachineFunction(MachineFunction &MF)
 bool SVMLateFunctionSplitPass::visitBasicBlock(MachineFunction::iterator &MBB)
 {
     unsigned bundleSize = TM.getBundleSize();
-
-    // Remember every BB that we visit, so we can keep track of BBs
-    // behind an already-split portion of the function.
-    CurrentBlockBB.insert(&*MBB);
 
     // All basic blocks must align to a bundle boundary
     BSA.InstrAlign(bundleSize);
@@ -165,9 +164,8 @@ bool SVMLateFunctionSplitPass::visitInstrBundle(MachineFunction::iterator &MBB,
 
     // If any instruction in this bundle put us over budget, split before
     // the whole bundle.
-    if (BSA.getByteCount() >= TM.getBlockSize()) {
+    if (BSA.getByteCount() > TM.getBlockSize()) {
         splitBeforeInstruction(MBB, FirstI);
-        BSA.clear();
         return true;
     }
     
@@ -195,13 +193,14 @@ void SVMLateFunctionSplitPass::visitInstr(MachineFunction::iterator &MBB,
 
         // Branch target is always the first opcode
         MachineBasicBlock *TBB = I->getOperand(0).getMBB();
+        assert(TBB->getParent() == MBB->getParent());
 
-        if (PriorBlockBB.count(TBB)) {
-            // (1) Rewrite it immediately
+        if (TBB->getNumber() < FirstLocalBB) {
+            // (1) In an earlier block. Rewrite it immediately
             rewriteBranch(MBB, I, *TBB);
 
-        } else if (!CurrentBlockBB.count(TBB)) {
-            // (3) May need to rewrite it later, save space for it.
+        } else if (TBB->getNumber() > MBB->getNumber()) {
+            // (3) Forward ref. May need to rewrite it later, save space for it.
 
             if (SVMInstrInfo::isCondNearBranchOpcode(I->getOpcode())) {
                 // Conditional branches may use a 16-bit trampoline,
@@ -244,14 +243,11 @@ void SVMLateFunctionSplitPass::splitBeforeInstruction(
     MachineFunction::iterator insertionPoint = MBB;
     ++insertionPoint;
 
-    // Current MBBs become prior
-    PriorBlockBB.insert(CurrentBlockBB.begin(), CurrentBlockBB.end());
-    CurrentBlockBB.clear();
-
     // Split this MBB in two, by creating a new BB and MBB to insert afterward.
     BasicBlock *nextBB = BasicBlock::Create(F->getContext());
     MachineBasicBlock *nextMBB = MF->CreateMachineBasicBlock(nextBB);
     MF->insert(insertionPoint, nextMBB);
+    MF->RenumberBlocks(MBB);
 
     // Move I and all subsequent instructions to the new MBB
     nextMBB->splice(nextMBB->end(), MBB, I, MBB->end());
@@ -263,6 +259,10 @@ void SVMLateFunctionSplitPass::splitBeforeInstruction(
     // *Last* instruction in the prior MBB is a SPLIT.
     // This ensures that the next MBB's label points to the right page.
     BuildMI(MBB, DL, TII.get(SVM::SPLIT));
+    
+    // Now we're at the beginning of a block again.
+    beginBlock();
+    FirstLocalBB = nextMBB->getNumber();
 }
 
 void SVMLateFunctionSplitPass::rewriteBranch(MachineFunction::iterator &MBB,
