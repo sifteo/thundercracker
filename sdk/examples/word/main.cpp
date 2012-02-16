@@ -15,9 +15,10 @@ static const char* sideNames[] =
 void onCubeEventTouch(_SYSCubeID cid)
 {
     DEBUG_LOG(("cube event touch:\t%d\n", cid));
-    EventData data;
+/* TODO Touch    EventData data;
     data.mInput.mCubeID = cid;
     WordGame::onEvent(EventID_Input, data);
+    */
 }
 
 void onCubeEventShake(_SYSCubeID cid)
