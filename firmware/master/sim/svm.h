@@ -189,6 +189,12 @@ private:
     void emulateBICReg(uint16_t instr);     // BIC (register)
     void emulateMVNReg(uint16_t instr);     // MVN (register)
 
+    // misc
+    void emulateSXTH(uint16_t isntr);       // SXTH
+    void emulateSXTB(uint16_t isntr);       // SXTB
+    void emulateUXTH(uint16_t isntr);       // UXTH
+    void emulateUXTB(uint16_t isntr);       // UXTB
+
     void emulateLDRLitPool(uint16_t instr); // LDR (literal)
 
     void emulateSVC(uint16_t instr);

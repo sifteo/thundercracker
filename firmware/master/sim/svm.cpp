@@ -60,7 +60,6 @@ void SvmProgram::validate()
     uint16_t *instr = static_cast<uint16_t*>(r.data());
     unsigned bsize = r.size();
     for (; bsize != 0; bsize -= sizeof(uint32_t), instr += 2) {
-
         if (instructionSize(instr[0]) == InstrBits32) {
             // swap nibbles
             if (!isValid32((instr[0] << 16) | instr[1]))
@@ -228,10 +227,17 @@ void SvmProgram::execute16(uint16_t instr)
         case 15: emulateMVNReg(instr); return;
         }
     }
-//    if ((instr & MiscMask) == MiscTest) {
-//        LOG(("miscellaneous\n"));
-//        return true;
-//    }
+    if ((instr & MiscMask) == MiscTest) {
+        uint8_t opcode = (instr >> 5) & 0x7f;
+        if ((opcode & 0x78) == 0x2) {   // bits [6:3] of opcode identify this group
+            switch (opcode & 0x6) {     // bits [2:1] of the opcode identify the instr
+            case 0: emulateSXTH(instr); return;
+            case 1: emulateSXTB(instr); return;
+            case 2: emulateUXTH(instr); return;
+            case 3: emulateUXTB(instr); return;
+            }
+        }
+    }
     if ((instr & SvcMask) == SvcTest) {
         emulateSVC(instr);
         return;
@@ -476,6 +482,28 @@ void SvmProgram::emulateBICReg(uint16_t instr)
 }
 
 void SvmProgram::emulateMVNReg(uint16_t instr)
+{
+    // TODO
+}
+
+// M I S C   I N S T R U C T I O N S
+
+void SvmProgram::emulateSXTH(uint16_t isntr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateSXTB(uint16_t isntr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateUXTH(uint16_t isntr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateUXTB(uint16_t isntr)
 {
     // TODO
 }
