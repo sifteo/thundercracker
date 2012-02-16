@@ -64,6 +64,8 @@ private:
     Sifteo::AudioChannel mChannel;
     float mResetTimer;
     float mDelayTimer;
+    float mHintTimer;
+    bool mTouching;
     
     enum SwapState
     {

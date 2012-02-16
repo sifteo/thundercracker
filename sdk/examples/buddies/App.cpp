@@ -142,6 +142,8 @@ App::App()
     , mChannel()
     , mResetTimer(0.0f)
     , mDelayTimer(0.0f)
+    , mHintTimer(0.0f)
+    , mTouching(false)
     , mSwapState(SWAP_STATE_NONE)
     , mSwapPiece0(0)
     , mSwapPiece1(0)
@@ -245,6 +247,12 @@ void App::Draw()
         }
     }
     
+    if (mGameState == GAME_STATE_SHUFFLE_PLAY && mHintTimer <= 0.0f)
+    {
+        mCubeWrappers[0].DrawHintBar(0);
+        mCubeWrappers[1].DrawHintBar(1);
+    }
+    
     System::paint();
 }
 
@@ -298,6 +306,8 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
             OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
         }
     }
+    
+    mHintTimer = kHintTimerDuration;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -313,6 +323,8 @@ void App::OnTilt(Cube::ID cubeId)
     {
         StartGameState(GAME_STATE_PUZZLE_PLAY);
     }
+    
+    mHintTimer = kHintTimerDuration;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -328,6 +340,8 @@ void App::OnShake(Cube::ID cubeId)
             StartGameState(GAME_STATE_SHUFFLE_SCRAMBLING);
         }
     }
+    
+    mHintTimer = kHintTimerDuration;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -402,6 +416,8 @@ void App::StartGameState(GameState shuffleState)
         case GAME_STATE_SHUFFLE_START:
         {
             mDelayTimer = kShuffleStateTimeDelay;
+            mHintTimer = kHintTimerDuration;
+            mTouching = false;
             break;
         }
         case GAME_STATE_SHUFFLE_SCRAMBLING:
@@ -478,9 +494,45 @@ void App::UpdateGameState(float dt)
             break;
         }
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
+        {
+            mShuffleScoreTime += dt;
+            
+            if (AnyTouching(*this))
+            {
+                StartGameState(GAME_STATE_SHUFFLE_PLAY);
+            }
+            
+            break;
+        }
         case GAME_STATE_SHUFFLE_PLAY:
         {
             mShuffleScoreTime += dt;
+            
+            if (mHintTimer > 0.0f)
+            {
+                mHintTimer -= dt;
+                if (mHintTimer <= 0.0f)
+                {
+                    mHintTimer = 0.0f;
+                }
+            }
+            
+            if (mTouching)
+            {
+                if (!AnyTouching(*this))
+                {
+                    mTouching = false;
+                }
+            }
+            else
+            {
+                if (AnyTouching(*this))
+                {
+                    mHintTimer = mHintTimer > 0.0f ? 0.0f : kHintTimerDuration;
+                    mTouching = true;
+                }
+            }
+            
             break;
         }
         case GAME_STATE_SHUFFLE_SOLVED:

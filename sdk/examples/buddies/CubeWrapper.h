@@ -38,6 +38,7 @@ public:
     void DrawShuffleUi(GameState shuffleState, float shuffleScoreTime);
     void DrawTitleCard(const char *text);
     void DrawTextBanner(const char *text);
+    void DrawHintBar(unsigned int side);
     
     void EnableBg0SprBg1Video(); // HACK!
     void ClearBg1(); // HACK!
