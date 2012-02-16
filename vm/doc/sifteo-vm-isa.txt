@@ -200,8 +200,8 @@ four and added to the base of the current page, to form the address of a
   0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa00   (1) Call validate(F+a*4), SP -= n*4
   0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa01   (2) Tail call validate(F+a*4), SP -= n*4
   0xxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x   (3) Reserved
-  10nnnnnn nnnnnnnn iiiiiiii iiiiiii0   (4) Syscall #0-8191, with #imm16
-  10nnnnnn nnnnnnnn iiiiiiii iiiiiii1   (4) Tail syscall #0-8191, with #imm16
+  10nnnnnn nnnnnnnn iiiiiiii iiiiiii0   (4) Syscall #0-8191, with #imm15
+  10nnnnnn nnnnnnnn iiiiiiii iiiiiii1   (4) Tail syscall #0-8191, with #imm15
   110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (5) Addrop #0-31 on validate(a)
   111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (6) Addrop #0-31 on validate(F+a)
 

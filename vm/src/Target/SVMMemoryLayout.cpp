@@ -174,10 +174,13 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
 
     if (Deco.isSys) {
         // Numeric syscall
+
+        if (Deco.sysNumber> 0x3FFF)
+            report_fatal_error("Syscall number " + Twine(Deco.sysNumber) +
+                " is out of range.");
+
         SI.Kind = SVMSymbolInfo::SYS;
-        SI.Value = 0x80000000
-            | ((Deco.sysNumber & 0x7FFF) << 1)
-            | Deco.isTailCall;
+        SI.Value = 0x80000000 | (Deco.sysNumber << 16) | Deco.isTailCall;
         return SI;
     }
 
