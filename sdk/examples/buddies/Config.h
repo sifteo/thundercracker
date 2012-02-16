@@ -45,7 +45,7 @@ enum GameState
 };
 
 const bool kLoadAssets = true;
-const GameMode kGameMode = GAME_MODE_PUZZLE;
+const GameMode kGameMode = GAME_MODE_SHUFFLE;
 
 const unsigned int kNumCubes = 2; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters

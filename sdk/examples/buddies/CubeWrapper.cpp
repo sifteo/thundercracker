@@ -151,19 +151,19 @@ void CubeWrapper::DrawShuffleUi(GameState shuffleState, float shuffleScoreTime)
     {
         case GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE:
         {
-            DrawBanner(BannerShakeToScramble);
+            DrawBanner(mCube.id() == 0 ? ui_top_shakeshuffle_blue :  ui_top_shakeshuffle_orange);
             break;
         }
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
         {
-            DrawBanner(BannerUnscrambleTheFaces);
+            DrawBanner(mCube.id() == 0 ? ui_top_unscramble_blue : ui_top_unscramble_orange);
             break;
         }
         case GAME_STATE_SHUFFLE_PLAY:
         {
             if (IsSolved())
             {
-                DrawBanner(BannerFaceComplete);
+                DrawBanner(mCube.id() == 0 ? ui_top_facecomplete_blue : ui_top_facecomplete_orange);
             }
             break;
         }
@@ -174,11 +174,11 @@ void CubeWrapper::DrawShuffleUi(GameState shuffleState, float shuffleScoreTime)
                 int minutes = int(shuffleScoreTime) / 60;
                 int seconds = int(shuffleScoreTime - (minutes * 60.0f));
                 
-                DrawScoreBanner(BannerYourTime, minutes, seconds);
+                DrawScoreBanner(ui_top_time_blue, minutes, seconds);
             }
             else
             {
-                DrawBanner(BannerShakeToScramble);
+                DrawBanner(ui_top_shakeshuffle_orange);
             }
             break;
         }
@@ -487,12 +487,15 @@ void CubeWrapper::DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, 
     BG1Helper bg1helper(mCube);
     bg1helper.DrawAsset(Vec2(0, 0), asset); // Banner Background
     
-    int x = 10;
-    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, minutes / 10); // Mintues (10s)
-    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, minutes % 10); // Minutes ( 1s)
-    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, 10); // ":"
-    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, seconds / 10); // Seconds (10s)
-    bg1helper.DrawAsset(Vec2(x++, 1), FontScore, seconds % 10); // Seconds ( 1s)
+    const AssetImage &font = mCube.id() == 0 ? FontScoreBlue : FontScoreOrange;
+    
+    int x = 11;
+    int y = 0;
+    bg1helper.DrawAsset(Vec2(x++, y), font, minutes / 10); // Mintues (10s)
+    bg1helper.DrawAsset(Vec2(x++, y), font, minutes % 10); // Minutes ( 1s)
+    bg1helper.DrawAsset(Vec2(x++, y), font, 10); // ":"
+    bg1helper.DrawAsset(Vec2(x++, y), font, seconds / 10); // Seconds (10s)
+    bg1helper.DrawAsset(Vec2(x++, y), font, seconds % 10); // Seconds ( 1s)
     
     bg1helper.Flush();
 }
