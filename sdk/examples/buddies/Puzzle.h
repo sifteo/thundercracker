@@ -35,8 +35,8 @@ public:
     
     unsigned int GetNumBuddies() const;
     const char *GetInstructions() const;
-    const Piece &GetStartState(unsigned int buddy, unsigned int side) const;
-    const Piece &GetEndState(unsigned int buddy, unsigned int side) const;
+    const Piece &GetStartState(unsigned int buddy, Sifteo::Cube::Side side) const;
+    const Piece &GetEndState(unsigned int buddy, Sifteo::Cube::Side side) const;
     
 private:
     unsigned int mNumBuddies;

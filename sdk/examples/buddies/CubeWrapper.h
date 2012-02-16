@@ -54,11 +54,10 @@ public:
     void Disable();
     
     // Pieces
-    // TODO: Use Cube::Side
-    const Piece &GetPiece(unsigned int side) const;
-    void SetPiece(unsigned int side, const Piece &piece);
-    void SetPieceSolution(unsigned int side, const Piece &piece);
-    void SetPieceOffset(unsigned int side, int offset);
+    const Piece &GetPiece(Sifteo::Cube::Side side) const;
+    void SetPiece(Sifteo::Cube::Side side, const Piece &piece);
+    void SetPieceSolution(Sifteo::Cube::Side, const Piece &piece);
+    void SetPieceOffset(Sifteo::Cube::Side side, int offset);
     
     // State
     bool IsSolved() const;
@@ -66,7 +65,7 @@ public:
     
 private:
     Sifteo::VidMode_BG0_SPR_BG1 Video();
-    void DrawPiece(const Piece &piece, unsigned int side);
+    void DrawPiece(const Piece &piece, Sifteo::Cube::Side side);
     void DrawBanner(const Sifteo::AssetImage &asset);
     void DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds);
     

@@ -344,9 +344,9 @@ void CubeWrapper::Disable()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Piece &CubeWrapper::GetPiece(unsigned int side) const
+const Piece &CubeWrapper::GetPiece(Cube::Side side) const
 {
-    ASSERT(side < arraysize(mPieces));
+    ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
     return mPieces[side];
 }
@@ -354,9 +354,9 @@ const Piece &CubeWrapper::GetPiece(unsigned int side) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::SetPiece(unsigned int side, const Piece &piece)
+void CubeWrapper::SetPiece(Cube::Side side, const Piece &piece)
 {
-    ASSERT(side < arraysize(mPieces));
+    ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
     mPieces[side] = piece;
 }
@@ -364,9 +364,9 @@ void CubeWrapper::SetPiece(unsigned int side, const Piece &piece)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::SetPieceSolution(unsigned int side, const Piece &piece)
+void CubeWrapper::SetPieceSolution(Cube::Side side, const Piece &piece)
 {
-    ASSERT(side < arraysize(mPiecesSolution));
+    ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
     mPiecesSolution[side] = piece;
 }
@@ -374,9 +374,9 @@ void CubeWrapper::SetPieceSolution(unsigned int side, const Piece &piece)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::SetPieceOffset(unsigned int side, int offset)
+void CubeWrapper::SetPieceOffset(Cube::Side side, int offset)
 {
-    ASSERT(side < arraysize(mPieceOffsets));
+    ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
     mPieceOffsets[side] = offset;
 }
@@ -422,9 +422,10 @@ Sifteo::VidMode_BG0_SPR_BG1 CubeWrapper::Video()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawPiece(const Piece &piece, unsigned int side)
+void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
+    ASSERT(side >= 0 && side < NUM_SIDES);
     
     int spriteLayer0 = side;
     int spriteLayer1 = side + NUM_SIDES;
