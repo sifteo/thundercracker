@@ -28,7 +28,7 @@ namespace Buddies { namespace {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // The default configuration: all buddies with their parts in the proper place
-Piece kDefaultState[kNumCubes][NUM_SIDES] =
+Piece kDefaultState[kMaxBuddies][NUM_SIDES] =
 {
     {
         Piece(0, 0, true),
@@ -41,6 +41,30 @@ Piece kDefaultState[kNumCubes][NUM_SIDES] =
         Piece(1, 1, true),
         Piece(1, 2, true),
         Piece(1, 3, true),
+    },
+    {
+        Piece(2, 0, true),
+        Piece(2, 1, true),
+        Piece(2, 2, true),
+        Piece(2, 3, true),
+    },
+    {
+        Piece(3, 0, true),
+        Piece(3, 1, true),
+        Piece(3, 2, true),
+        Piece(3, 3, true),
+    },
+    {
+        Piece(4, 0, true),
+        Piece(4, 1, true),
+        Piece(4, 2, true),
+        Piece(4, 3, true),
+    },
+    {
+        Piece(5, 0, true),
+        Piece(5, 1, true),
+        Piece(5, 2, true),
+        Piece(5, 3, true),
     },
 };
 
