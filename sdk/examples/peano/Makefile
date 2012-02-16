@@ -8,7 +8,8 @@ OBJS_SIM = $(ASSETS).gen.sim.o \
 	PuzzleChapter.sim.o PuzzleDatabase.sim.o SaveData.sim.o TotalsCube.sim.o \
 	BlankView.sim.o AudioPlayer.sim.o View.sim.o StingController.sim.o \
 	TokenView.sim.o PuzzleController.sim.o TiltFlowDetailView.sim.o \
-	InterstitialView.sim.o MenuController.sim.o
+	InterstitialView.sim.o MenuController.sim.o TiltFlowMenu.sim.o \
+	TiltFlowView.sim.o
 
 BIN_STM32 = hello.stm32
 OBJS_STM32 = $(ASSETS).gen.stm32.o \
@@ -17,7 +18,8 @@ OBJS_STM32 = $(ASSETS).gen.stm32.o \
 	PuzzleChapter.stm32.o PuzzleDatabase.stm32.o SaveData.stm32.o TotalsCube.stm32.o \
 	BlankView.stm32.o AudioPlayer.stm32.o View.stm32.o StingController.stm32.o \
 	TokenView.stm32.o PuzzleController.stm32.o TiltFlowDetailView.stm32.o \
-	InterstitialView.stm32.o MenuController.stm32.o
+	InterstitialView.stm32.o MenuController.stm32.o TiltFlowMenu.stm32.o \
+	TiltFlowView.stm32.o
 
 ASSETDEPS += *.png $(ASSETS).lua
 

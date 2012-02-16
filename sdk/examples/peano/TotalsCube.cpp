@@ -139,6 +139,40 @@ namespace TotalsGame
         backgroundLayer.BG0_drawPartialAsset(coord, offset, size, *image, 0);
 	}
 
+    void TotalsCube::ClipImage(const AssetImage *image, const Vec2 &pos)
+    {
+        Vec2 p = pos;
+        Vec2 o(0,0);
+        Vec2 s(image->width, image->height);
+
+        if(p.x < 0)
+        {
+            o.x -= p.x;
+            s.x -= p.x;
+            p.x = 0;
+        }
+
+        if(p.y < 0)
+        {
+            o.y -= p.y;
+            s.y -= p.y;
+            p.y = 0;
+        }
+
+        if(s.x == 0 && s.y == 0)
+        {
+            return;
+        }
+
+        if(p.x > 16 || p.y > 16)
+        {
+            return;
+        }
+
+        Image(image, p, o, s);
+
+    }
+
 	// for these methods, 0 <= offset <= 32
 
 	void TotalsCube::DrawVaultDoorsClosed()

@@ -4,6 +4,7 @@
 #include "View.h"
 #include "coroutine.h"
 #include "TiltFlowDetailView.h"
+#include "TiltFlowMenu.h"
 #include "BlankView.h"
 #include "ObjectPool.h"
 
@@ -53,6 +54,7 @@ private:
 
      TransitionView *tv;
      TiltFlowDetailView *labelView;
+     TiltFlowMenu *menu;
 
     Game *mGame;
   public:

@@ -21,7 +21,7 @@ namespace TotalsGame
     const char *description;
     const AssetImage *GetImages();
     int GetNumImages();
-    Vec2 GetSourcePosition();
+    Vec2 GetSourcePosition() {return sourcePosition;}
 
     TiltFlowItem (/*Color color TODO */)
     {
@@ -41,6 +41,8 @@ namespace TotalsGame
       //TODO this.color = Color.Mask;
         imageIndex = 0;
     }
+
+    void IncrementImageIndex() {imageIndex = (imageIndex+1)%numImages;}
 
     TiltFlowItem(const AssetImage *_images, int _numImages)
     {

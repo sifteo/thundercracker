@@ -20,6 +20,9 @@ Icon_Howtoplay = image { "icon_howtoplay.png" }
 Icon_Level_Select = image { "icon_level_select.png" }
 Icon_Setup = image { "icon_setup.png" }
 
+Press_To_Select = image { "press_to_select.png" }
+Tilt_For_More = image { "tilt_for_more.png" }
+
 Nan = image { "nan.png" }
 
 Digits = image { "digits.png", width=16, height=16, pinned=true }
@@ -116,6 +119,8 @@ sfx_Level_Clear = sound {"PV_level_clear.raw" }
 sfx_Connect = sound { "PV_connect.raw" }
 sfx_Fast_Tick = sound{ "PV_fast_tick.raw" }
 sfx_PeanosVaultMenu = sound { "PeanosVaultMenu.raw" }
+sfx_Menu_Tilt_Stop = sound { "PV_menu_tilt_stop.raw" }
+sfx_Menu_Tilt = sound { "PV_menu_tilt.raw" }
 
 
 

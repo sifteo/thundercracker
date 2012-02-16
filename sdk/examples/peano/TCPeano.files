@@ -72,3 +72,6 @@ InterstitialView.cpp
 MenuController.cpp
 TiltFlowItem.h
 TiltFlowMenu.h
+TiltFlowView.h
+TiltFlowMenu.cpp
+TiltFlowView.cpp

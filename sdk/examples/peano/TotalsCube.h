@@ -47,6 +47,18 @@ namespace TotalsGame
 
 		View *GetView(void) {return view;}
 
+        bool DoesNeighbor(TotalsCube *other)
+        {
+            for(int i = 0; i < NUM_SIDES; i++)
+            {
+                if(physicalNeighborAt(i) == other->id())
+                    return true;
+            }
+            return false;
+        }
+
+        Vec2 GetTilt() {Cube::TiltState s = getTiltState();return Vec2(s.x, s.y);}
+
 private:
 		EventHandler *eventHandler;
 
@@ -62,6 +74,7 @@ public:
 
         void Image(const AssetImage *image, const Vec2 &pos);
 		void Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size);
+        void ClipImage(const AssetImage *image, const Vec2 &pos);
 	
         void DrawFraction(Fraction f, const Vec2 &pos);
         void DrawDecimal(float d, const Vec2 &pos);

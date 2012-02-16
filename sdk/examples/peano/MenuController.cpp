@@ -2,6 +2,7 @@
 #include "AudioPlayer.h"
 #include "TiltFlowItem.h"
 #include "TiltFlowMenu.h"
+#include "TiltFlowView.h"
 
 namespace TotalsGame {
 
@@ -104,6 +105,7 @@ DEFINE_POOL(MenuController::TransitionView);
     float MenuController::Coroutine(float dt)
     {
         static const float kDuration = 0.333f;
+        int numInitialItems=0;
 
         CORO_BEGIN
 
@@ -148,7 +150,8 @@ DEFINE_POOL(MenuController::TransitionView);
     numInitialItems++;
 
       static TiltFlowItem initialItems[5];
-      int numInitialItems = 0;
+      numInitialItems = 0;
+
       if (mGame->currentPuzzle != NULL /* TODO || !mGame->saveData.AllChaptersSolved() */)
       {
           ADD_ITEM(Icon_Continue, 0,0) //"continue", "Continue from your auto-save data.")
@@ -163,12 +166,13 @@ DEFINE_POOL(MenuController::TransitionView);
 
       {
           static char menuBuffer[sizeof(TiltFlowMenu)];
-          menu = new (menuBuffer) TiltFlowMenu(gGame, initialItems, numInitialItems);
-          while(!tiltFlowMenu->IsDone())
+          menu = new (menuBuffer) TiltFlowMenu(initialItems, numInitialItems);
+          while(!menu->IsDone())
           {
           menu->Tick(mGame->dt);
           CORO_YIELD(0);
         }
+
 #if 0
         // close labelView
         Jukebox.PlayShutterClose();
