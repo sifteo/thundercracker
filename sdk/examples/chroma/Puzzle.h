@@ -14,9 +14,9 @@
 struct PuzzleCubeData
 {
 public:
-    PuzzleCubeData( unsigned int *pValues );
+    PuzzleCubeData( uint8_t *pValues );
 
-    unsigned int m_aData[CubeWrapper::NUM_ROWS][CubeWrapper::NUM_COLS];
+    uint8_t m_aData[CubeWrapper::NUM_ROWS][CubeWrapper::NUM_COLS];
 };
 
 
@@ -25,7 +25,7 @@ struct Puzzle
 public:
     static const unsigned int MAX_PUZZLE_CUBES = 6;
 
-    Puzzle( const char *pName, const char *pInstr, const PuzzleCubeData *pData, unsigned int numCubes, bool bTiltAllowed = true );
+    Puzzle( const char *pName, const char *pInstr, unsigned int dataIndex, unsigned int numCubes, bool bTiltAllowed = true );
 	
     static const Puzzle *GetPuzzle( unsigned int index );
 
@@ -33,7 +33,7 @@ public:
 
     const char *m_pName;
     const char *m_pInstr;
-    const PuzzleCubeData *m_pData;
+    unsigned int m_dataIndex;
     unsigned int m_numCubes;
     bool m_bTiltAllowed;
 

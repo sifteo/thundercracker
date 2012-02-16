@@ -26,28 +26,42 @@ def main():
             fout.write( '#include "puzzle.h"\n\n' )
             fout.write( "static const Puzzle s_puzzles[] =\n" )
             fout.write( '{\n' )
+
+            cubeDataIndex = 0
+            cubeDataStrs = []
             
             #dump all puzzles
             for i,p in enumerate(data):
-                fout.write( '\tPuzzle( \"' + p["title"] + '\", \"' + p["instructions"] + '\",\n' );
-                fout.write( '\t(PuzzleCubeData []){\n' );
+                fout.write( '\tPuzzle( \"' + p["title"] + '\", \"' + p["instructions"] + '\", ' );
                 
                 numcubes = 0
                 #each puzzle has n cubes worth of data
                 for j,cubedata in enumerate(p["data"]):
                     numcubes += 1
-                    fout.write( '\t\tPuzzleCubeData(\n' );
-                    fout.write( '\t\t\t(unsigned int [] ){\n' );
-                    fout.write( '\t\t\t' );
+		    datastr = ""
+                    datastr += '\tPuzzleCubeData(\n'
+                    datastr += '\t\t(uint8_t [] ){\n'
+                    datastr += '\t\t\t' 
                     for k,d in enumerate(cubedata):
-                        fout.write( str( d ) + ", " );
+                        datastr += str( d ) + ", "
                         
-                    fout.write( '\n\t\t\t}\n\t\t),\n' );
+                    datastr += '\n\t\t\t}\n\t\t),\n'
+		    cubeDataStrs.append( datastr )
                     
-                fout.write( '\t\t},\n' );
-                fout.write( '\t\t' + str( numcubes ) + '\n\t),\n' );
+                fout.write( str( cubeDataIndex ) + ", " );
+                fout.write( str( numcubes ) + ' ),\n' );
+		cubeDataIndex += numcubes
             
-            fout.write( '};\n' )
+            fout.write( '};\n\n' )
+	    
+	    #dump all the cubeDatastrings
+	    fout.write( "static const PuzzleCubeData s_puzzledata[] =\n" )
+	    fout.write( '{\n' )
+	    
+	    for i in cubeDataStrs:
+		fout.write( i + '\n' )
+	    
+	    fout.write( '};\n' )
         
 
 if __name__ == "__main__":

@@ -7,20 +7,21 @@
 #include "Puzzle.h"
 #include "PuzzleData.h"
 
-PuzzleCubeData::PuzzleCubeData( unsigned int *pValues )
+PuzzleCubeData::PuzzleCubeData( uint8_t *pValues )
 {
     for( int i = 0; i < CubeWrapper::NUM_ROWS; i++ )
     {
         for( int j = 0; j < CubeWrapper::NUM_COLS; j++ )
         {
             m_aData[i][j] = *( pValues + ( CubeWrapper::NUM_COLS * i ) + j );
+            ASSERT( m_aData[i][j] >= 0 && m_aData[i][j] <= GridSlot::NUM_COLORS_INCLUDING_SPECIALS )
         }
     }
 }
 
 
-Puzzle::Puzzle( const char *pName, const char *pInstr, const PuzzleCubeData *pData, unsigned int numCubes, bool bTiltAllowed ) :
-    m_pName( pName ), m_pInstr( pInstr ), m_pData( pData ), m_numCubes( numCubes ), m_bTiltAllowed( bTiltAllowed )
+Puzzle::Puzzle( const char *pName, const char *pInstr, unsigned int dataIndex, unsigned int numCubes, bool bTiltAllowed ) :
+    m_pName( pName ), m_pInstr( pInstr ), m_dataIndex( dataIndex ), m_numCubes( numCubes ), m_bTiltAllowed( bTiltAllowed )
 {
 }
 
@@ -41,5 +42,5 @@ const PuzzleCubeData *Puzzle::getCubeData( unsigned int cubeIndex ) const
     if( cubeIndex >= m_numCubes )
         return NULL;
 
-    return &m_pData[ cubeIndex ];
+    return &s_puzzledata[ m_dataIndex + cubeIndex ];
 }

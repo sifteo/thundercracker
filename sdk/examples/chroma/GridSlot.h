@@ -32,6 +32,8 @@ public:
         NUM_SPECIALS = AFTERLASTSPECIAL - NUM_COLORS
     };
 
+    static const unsigned int NUM_COLORS_INCLUDING_SPECIALS = NUM_COLORS + NUM_SPECIALS;
+
     static const AssetImage *TEXTURES[ NUM_COLORS ];
     static const AssetImage *EXPLODINGTEXTURES[ NUM_COLORS ];
     static const AssetImage *FIXED_TEXTURES[ NUM_COLORS ];
