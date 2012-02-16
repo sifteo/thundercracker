@@ -178,7 +178,7 @@
  <objectgroup name="triggers" width="40" height="24">
   <object name="TestTrap2" type="Trapdoor" x="288" y="304" width="64" height="64">
    <properties>
-    <property name="respawn" value="2,1"/>
+    <property name="respawn" value="2,0"/>
    </properties>
   </object>
   <object name="TestTrap1" type="Trapdoor" x="160" y="288" width="64" height="64">

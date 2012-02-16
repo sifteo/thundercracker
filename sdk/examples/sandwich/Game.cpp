@@ -387,11 +387,12 @@ unsigned Game::OnPassiveTrigger() {
     ViewMode mode = pView->Graphics();
     float t=System::clock(); 
     do {
-      float u = (System::clock()-t) / 1.0f;
+      float u = (System::clock()-t) / 2.333f;
+      u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
       Vec2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
       DrawOffsetMap(&mode, mMap.Data(), pos);
       Paint(true);
-    } while(System::clock()-t<1.0f);
+    } while(System::clock()-t<2.333f);
     // walk out TODO
     mPlayer.SetPosition(targetRoom->Center(0));
     mPlayer.SetDirection(SIDE_BOTTOM);
