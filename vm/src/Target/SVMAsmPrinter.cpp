@@ -119,19 +119,25 @@ void SVMAsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV)
         assert(false && "Unrecognized SVMConstantPoolValue type");
     }
 
+    MCSymbol *MCDecoratedSym;
     switch (SCPV->getModifier()) {
     
     default:
         assert(false && "Unrecognized SVMConstantPoolValue modifier");
     case SVMCP::no_modifier:
+        MCDecoratedSym = MCSym;
         break;
     
-    case SVMCP::LB:   // Long branch decoration
-        MCSym = OutContext.GetOrCreateSymbol(SVMDecorations::LB + MCSym->getName());
+    case SVMCP::LB:
+        // Long branch decoration
+        MCDecoratedSym = OutContext.GetOrCreateSymbol(
+            SVMDecorations::LB + MCSym->getName());
+        MCDecoratedSym->setVariableValue(
+            MCSymbolRefExpr::Create(MCSym, OutContext));
         break;
     }
     
-    const MCExpr *Expr = MCSymbolRefExpr::Create(MCSym, OutContext);
+    const MCExpr *Expr = MCSymbolRefExpr::Create(MCDecoratedSym, OutContext);
     OutStreamer.EmitValue(Expr, Size);  
 }
 
