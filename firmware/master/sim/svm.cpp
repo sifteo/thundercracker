@@ -21,6 +21,10 @@ void SvmProgram::run()
 
     validate();
 
+    memset(regs, 0, sizeof(regs));  // zero out general purpose regs
+    cpsr = 0;
+
+    // TODO: do all of our instructions support conditional execution?
 //    for () {
 //        cycle();
 //    }
@@ -131,6 +135,136 @@ bool SvmProgram::isValid16(uint16_t halfword)
     }
     LOG(("*********************************** invalid 16bit instruction: 0x%x\n", halfword));
     return false;
+}
+
+bool SvmProgram::conditionPassed(uint32_t instr)
+{
+    // eventually check cond regs to provide conditional execution
+    return true;
+}
+
+// left shift
+void SvmProgram::emulateLSLImm(uint16_t inst)
+{
+    if (!conditionPassed(inst))
+        return;
+
+    unsigned imm5 = (inst >> 6) & 0x1f;
+    unsigned Rm = (inst >> 3) & 0x7;
+    unsigned Rd = inst & 0x7;
+
+    // no immediate? default to mov
+    if (imm5 == 0) {
+        regs[Rd] = regs[Rm];
+    }
+    else {
+        regs[Rd] = regs[Rm] << imm5;
+        // TODO: carry flags
+    }
+    // TODO: N, Z flags - V unaffected
+}
+
+void SvmProgram::emulateLSRImm(uint16_t inst)
+{
+    if (!conditionPassed(inst))
+        return;
+
+    unsigned imm5 = (inst >> 6) & 0x1f;
+    unsigned Rm = (inst >> 3) & 0x7;
+    unsigned Rd = inst & 0x7;
+
+    if (imm5 == 0)
+        imm5 = 32;
+
+    regs[Rd] = regs[Rm] >> imm5;
+    // TODO: C, N, Z flags - V is unaffected
+}
+
+void SvmProgram::emulateASRImm(uint16_t instr)
+{
+    if (!conditionPassed(instr))
+        return;
+
+    unsigned imm5 = (instr >> 6) & 0x1f;
+    unsigned Rm = (instr >> 3) & 0x7;
+    unsigned Rd = instr & 0x7;
+
+    if (imm5 == 0)
+        imm5 = 32;
+
+    // TODO: verify sign bit is being shifted in
+    regs[Rd] = regs[Rm] >> imm5;
+    // TODO: C, Z, N flags - V flag unchanged
+}
+
+void SvmProgram::emulateADDReg(uint16_t instr)
+{
+    if (!conditionPassed(instr))
+        return;
+
+    unsigned Rm = (instr >> 6) & 0x7;
+    unsigned Rn = (instr >> 3) & 0x7;
+    unsigned Rd = instr & 0x7;
+
+    regs[Rd] = regs[Rn] + regs[Rm];
+    // TODO: set N, Z, C and V flags
+}
+
+void SvmProgram::emulateSUBReg(uint16_t instr)
+{
+    if (!conditionPassed(instr))
+        return;
+
+    unsigned Rm = (instr >> 6) & 0x7;
+    unsigned Rn = (instr >> 3) & 0x7;
+    unsigned Rd = instr & 0x7;
+
+    regs[Rd] = regs[Rn] - regs[Rm];
+    // TODO: set N, Z, C and V flags
+}
+
+void SvmProgram::emulateADD3Imm(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateSUB3Imm(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateMovImm(uint16_t instr)
+{
+    unsigned Rd = (instr >> 8) & 0x7;
+    unsigned imm8 = instr & 0xff;
+
+    regs[Rd] = imm8;
+}
+
+void SvmProgram::emulateCmpImm(uint16_t instr)
+{
+    unsigned Rn = (instr >> 8) & 0x7;
+    unsigned imm8 = instr & 0xff;
+
+    unsigned out = regs[Rn] - imm8;
+    // TODO: set N, Z, C, V flags accordingly
+}
+
+void SvmProgram::emulateADD8Imm(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateSUB8Imm(uint16_t instr)
+{
+    // TODO
+}
+
+void SvmProgram::emulateSVC(uint16_t instr)
+{
+    unsigned imm8 = instr & 0xFF;
+    // TODO: find params
+    // syscall(imm8);
 }
 
 /*

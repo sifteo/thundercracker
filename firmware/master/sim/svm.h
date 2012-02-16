@@ -100,6 +100,67 @@ private:
     bool isValid32(uint32_t word);
 
     ProgramInfo progInfo;
+
+    static const unsigned NUM_GP_REGS = 16;
+    uint32_t regs[NUM_GP_REGS];     // general purpose registers
+    uint32_t cpsr;                  // current program status register
+
+    bool conditionPassed(uint32_t instr);
+
+    // status flag helpers
+    inline bool getNeg() const {
+        return cpsr & (1 << 31);
+    }
+    inline void setNeg() {
+        cpsr |= (1 << 31);
+    }
+    inline void clrNeg() {
+        cpsr &= ~(1 << 31);
+    }
+
+    inline bool getZero() const {
+        return cpsr & (1 << 30);
+    }
+    inline void setZero() {
+        cpsr |= 1 << 30;
+    }
+    inline void clrZero() {
+        cpsr &= ~(1 << 30);
+    }
+
+    inline bool getCarry() const {
+        return cpsr & (1 << 29);
+    }
+    inline void setCarry() {
+        cpsr |= 1 << 29;
+    }
+    inline void clrCarry() {
+        cpsr &= ~(1 << 29);
+    }
+
+    inline int getOverflow() const {
+        return cpsr & (1 << 28);
+    }
+    inline void setOverflow() {
+        cpsr |= (1 << 28);
+    }
+    inline void clrOverflow() {
+        cpsr &= ~(1 << 28);
+    }
+
+    void emulateLSLImm(uint16_t inst);      // LSL (immediate)
+    void emulateLSRImm(uint16_t inst);      // LSR (immediate)
+    void emulateASRImm(uint16_t instr);     // ASR (immediate)
+    void emulateADDReg(uint16_t instr);     // ADD (register)
+    void emulateSUBReg(uint16_t instr);     // SUB (register)
+    void emulateADD3Imm(uint16_t instr);    // ADD (immediate)
+    void emulateSUB3Imm(uint16_t instr);    // SUB (immediate)
+    void emulateMovImm(uint16_t instr);     // MOV (immediate)
+    void emulateCmpImm(uint16_t instr);     // CMP (immediate)
+    void emulateADD8Imm(uint16_t instr);    // ADD (immediate)
+    void emulateSUB8Imm(uint16_t instr);    // SUB (immediate)
+
+    void emulateSVC(uint16_t instr);
 };
 
 class Svm
