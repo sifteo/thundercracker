@@ -240,7 +240,7 @@ void App::Draw()
             {
                 mCubeWrappers[i].DrawBuddy();
                 
-                if (kGameMode == GAME_MODE_SHUFFLE)
+                if (kGameMode == GAME_MODE_SHUFFLE && !mHintEnabled)
                 {
                     mCubeWrappers[i].DrawShuffleUi(mGameState, mShuffleScoreTime);
                 }
@@ -436,6 +436,11 @@ void App::StartGameState(GameState shuffleState)
             mShuffleScoreTime = 0.0f;
             break;
         }
+        case GAME_STATE_SHUFFLE_SOLVED:
+        {
+            mHintEnabled = false;
+            break;
+        }
         case GAME_STATE_PUZZLE_START:
         {
             mPuzzleIndex = 0;
@@ -621,8 +626,106 @@ void App::ShufflePieces()
 
 void App::DrawShuffleHintBars()
 {
-    mCubeWrappers[0].DrawHintBar(2);
-    mCubeWrappers[1].DrawHintBar(3);
+    // Is there a swap that puts two pieces into the correct spot?
+    for (unsigned int iCube0 = 0; iCube0 < arraysize(mCubeWrappers); ++iCube0)
+    {
+        if (mCubeWrappers[iCube0].IsEnabled())
+        {
+            for (Cube::Side iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
+            {
+                for (unsigned int iCube1 = 0; iCube1 < arraysize(mCubeWrappers); ++iCube1)
+                {
+                    if (mCubeWrappers[iCube1].IsEnabled() && iCube0 != iCube1)
+                    {
+                        for (Cube::Side iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
+                        {
+                            const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
+                            const Piece &piece1 = mCubeWrappers[iCube1].GetPiece(iSide1);
+                            
+                            if (piece0.mMustSolve && piece0.mAttribute != Piece::ATTR_FIXED &&
+                                piece1.mMustSolve && piece1.mAttribute != Piece::ATTR_FIXED)
+                            {
+                                const Piece &pieceSolution0 =
+                                    mCubeWrappers[iCube0].GetPieceSolution(iSide0);
+                                const Piece &pieceSolution1 =
+                                    mCubeWrappers[iCube1].GetPieceSolution(iSide1);
+                                
+                                if (!Compare(piece0, pieceSolution0) &&
+                                    !Compare(piece1, pieceSolution1))
+                                {
+                                    if (Compare(piece0, pieceSolution1) &&
+                                        Compare(piece1, pieceSolution0))
+                                    {
+                                        mCubeWrappers[iCube0].DrawHintBar(iSide0);
+                                        mCubeWrappers[iCube1].DrawHintBar(iSide1);
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // If not, look for a single swap...
+    for (unsigned int iCube0 = 0; iCube0 < arraysize(mCubeWrappers); ++iCube0)
+    {
+        if (mCubeWrappers[iCube0].IsEnabled())
+        {
+            for (Cube::Side iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
+            {
+                const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
+                const Piece &pieceSolution0 = mCubeWrappers[iCube0].GetPieceSolution(iSide0);
+                
+                if (piece0.mAttribute != Piece::ATTR_FIXED && !Compare(piece0, pieceSolution0))
+                {
+                    for (unsigned int iCube1 = 0; iCube1 < arraysize(mCubeWrappers); ++iCube1)
+                    {
+                        if (mCubeWrappers[iCube1].IsEnabled() && iCube0 != iCube1)
+                        {
+                            for (Cube::Side iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
+                            {
+                                const Piece &pieceSolution1 = mCubeWrappers[iCube1].GetPieceSolution(iSide1);
+                                
+                                if (Compare(piece0, pieceSolution1))
+                                {
+                                    mCubeWrappers[iCube0].DrawHintBar(iSide0);
+                                    mCubeWrappers[iCube1].DrawHintBar(iSide1);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // This last case if for when one buddy is solved, but the other is not. Hmm....
+    
+    /*
+    // If there are no swaps, just move something that isn't in place.
+    for (unsigned int iCube0 = 0; iCube0 < arraysize(mCubeWrappers); ++iCube0)
+    {
+        if (mCubeWrappers[iCube0].IsEnabled())
+        {
+            for (Cube::Side iSide0 = 0; iSide0 < NUM_SIDES; ++iSide0)
+            {
+                const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
+                const Piece &pieceSolution0 = mCubeWrappers[iCube0].GetPieceSolution(iSide0);
+                
+                if (piece0.mAttribute != Piece::ATTR_FIXED && !Compare(piece0, pieceSolution0))
+                {
+                    mCubeWrappers[iCube0].DrawHintBar(iSide0);
+                    mCubeWrappers[(iCube0 + 1) % kNumCubes].DrawHintBar(iSide0);
+                    return;
+                }
+            }
+        }
+    }
+    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

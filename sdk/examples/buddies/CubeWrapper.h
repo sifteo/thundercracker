@@ -56,7 +56,11 @@ public:
     // Pieces
     const Piece &GetPiece(Sifteo::Cube::Side side) const;
     void SetPiece(Sifteo::Cube::Side side, const Piece &piece);
+    
+    const Piece &GetPieceSolution(Sifteo::Cube::Side side) const;
     void SetPieceSolution(Sifteo::Cube::Side, const Piece &piece);
+    
+    int GetPieceOffset(Sifteo::Cube::Side side) const;
     void SetPieceOffset(Sifteo::Cube::Side side, int offset);
     
     // State
