@@ -262,11 +262,10 @@ void SvmProgram::execute16(uint16_t instr)
         emulateB(instr);
         return;
     }
-//    if ((instr & CompareBranchMask) == CompareBranchTest) {
-//        LOG(("compare and branch\n"));
-//        // TODO: must validate target
-//        return true;
-//    }
+    if ((instr & CompareBranchMask) == CompareBranchTest) {
+        emulateCBZ_CBNZ(instr);
+        return;
+    }
 //    if ((instr & CondBranchMask) == CondBranchTest) {
 //        LOG(("branchcc\n"));
 //        // TODO: must validate target
@@ -517,7 +516,22 @@ void SvmProgram::emulateB(uint16_t instr)
 {
     // encoding T2 only
     unsigned imm11 = instr & 0x3FF;
-    BranchWritePC(imm11);
+    BranchWritePC(regs[REG_PC] + imm11);
+}
+
+void SvmProgram::emulateCBZ_CBNZ(uint16_t instr)
+{
+    bool nonzero = instr & (1 << 11);
+    unsigned i = instr & (1 << 9);
+    unsigned imm5 = (instr >> 3) & 0x1f;
+    unsigned Rn = instr & 0x7;
+
+    // ZeroExtend(i:imm5:'0')
+    unsigned offset = (i << 6) | (imm5 << 1);
+
+    if (nonzero ^ (regs[Rn] == 0)) {
+        BranchWritePC(regs[REG_PC] + offset);
+    }
 }
 
 void SvmProgram::emulateSTRImm(uint16_t instr)

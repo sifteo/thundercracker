@@ -196,6 +196,7 @@ private:
     void emulateUXTB(uint16_t isntr);       // UXTB
 
     void emulateB(uint16_t instr);          // B
+    void emulateCBZ_CBNZ(uint16_t instr);   // CBNZ, CBZ
 
     void emulateSTRImm(uint16_t instr);     // STR (immediate)
     void emulateLDRImm(uint16_t instr);     // LDR (immediate)
