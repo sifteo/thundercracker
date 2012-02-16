@@ -237,6 +237,7 @@ unsigned SVMLateFunctionSplitPass::getLongBranchCPI(MachineFunction *MF,
 void SVMLateFunctionSplitPass::splitBeforeInstruction(
     MachineFunction::iterator &MBB, MachineBasicBlock::iterator &I)
 {
+    DebugLoc DL;
     const TargetInstrInfo &TII = *TM.getInstrInfo();
     MachineFunction *MF = MBB->getParent();
     Function *F = const_cast<Function *>(MF->getFunction());
@@ -256,12 +257,12 @@ void SVMLateFunctionSplitPass::splitBeforeInstruction(
     nextMBB->splice(nextMBB->end(), MBB, I, MBB->end());
     
     // Insert a long branch from MBB to nextMBB
-    BuildMI(MBB, I->getDebugLoc(), TII.get(SVM::LB))
+    BuildMI(MBB, DL, TII.get(SVM::LB))
         .addConstantPoolIndex(getLongBranchCPI(MF, nextMBB));
 
     // *Last* instruction in the prior MBB is a SPLIT.
     // This ensures that the next MBB's label points to the right page.
-    BuildMI(MBB, I->getDebugLoc(), TII.get(SVM::SPLIT));
+    BuildMI(MBB, DL, TII.get(SVM::SPLIT));
 }
 
 void SVMLateFunctionSplitPass::rewriteBranch(MachineFunction::iterator &MBB,
