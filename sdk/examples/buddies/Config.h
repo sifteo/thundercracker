@@ -50,12 +50,13 @@ const GameMode kGameMode = GAME_MODE_SHUFFLE;
 const unsigned int kNumCubes = 2; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters
 
-const float kResetTimerDuration = 3.0f; // Touch a cube for this many seconds to reset the game
-const float kHintTimerDuration = 10.0f; // Amount of seconds before a hint shows up
+const float kResetTimerDuration = 5.0f; // Touch a cube for this many seconds to reset the game
+const float kHintTimerOnDuration = 10.0f; // Seconds before hint appears
+const float kHintTimerOffDuration = 3.0f; // Seconds before hint disappears
 
-const int kShuffleMaxMoves = -1; // Number of moves for each shuffle. -1 keeps it going until all are shuffled.
-const float kShuffleStateTimeDelay = 1.0f; // Amount of delay when switching between shuffle states
-const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap animation and beginning of next
+const int kShuffleMaxMoves = -1; // Number of shuffles. -1 keeps going until all are shuffled.
+const float kShuffleStateTimeDelay = 1.0f; // Delay when switching between shuffle states
+const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap animation and next
 
 const int kSwapAnimationSpeed = 8; // Number of frames animated during swap on each update
 

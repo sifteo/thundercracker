@@ -54,6 +54,7 @@ private:
     void UpdateGameState(float dt);
     
     void ShufflePieces();
+    void DrawShuffleHintBars();
     
     void UpdateSwap(float dt);
     void OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1);
@@ -65,6 +66,7 @@ private:
     float mResetTimer;
     float mDelayTimer;
     float mHintTimer;
+    bool mHintEnabled;
     bool mTouching;
     
     enum SwapState

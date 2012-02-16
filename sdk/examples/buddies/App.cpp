@@ -143,6 +143,7 @@ App::App()
     , mResetTimer(0.0f)
     , mDelayTimer(0.0f)
     , mHintTimer(0.0f)
+    , mHintEnabled(false)
     , mTouching(false)
     , mSwapState(SWAP_STATE_NONE)
     , mSwapPiece0(0)
@@ -247,10 +248,9 @@ void App::Draw()
         }
     }
     
-    if (mGameState == GAME_STATE_SHUFFLE_PLAY && mHintTimer <= 0.0f)
+    if (mGameState == GAME_STATE_SHUFFLE_PLAY && mHintEnabled)
     {
-        mCubeWrappers[0].DrawHintBar(2);
-        mCubeWrappers[1].DrawHintBar(3);
+        DrawShuffleHintBars();
     }
     
     System::paint();
@@ -307,7 +307,7 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
         }
     }
     
-    mHintTimer = kHintTimerDuration;
+    mHintTimer = kHintTimerOnDuration;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -324,7 +324,7 @@ void App::OnTilt(Cube::ID cubeId)
         StartGameState(GAME_STATE_PUZZLE_PLAY);
     }
     
-    mHintTimer = kHintTimerDuration;
+    mHintTimer = kHintTimerOnDuration;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -341,7 +341,7 @@ void App::OnShake(Cube::ID cubeId)
         }
     }
     
-    mHintTimer = kHintTimerDuration;
+    mHintTimer = kHintTimerOnDuration;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -416,7 +416,8 @@ void App::StartGameState(GameState shuffleState)
         case GAME_STATE_SHUFFLE_START:
         {
             mDelayTimer = kShuffleStateTimeDelay;
-            mHintTimer = kHintTimerDuration;
+            mHintTimer = kHintTimerOnDuration;
+            mHintEnabled = false;
             mTouching = false;
             break;
         }
@@ -515,6 +516,17 @@ void App::UpdateGameState(float dt)
                 if (mHintTimer <= 0.0f)
                 {
                     mHintTimer = 0.0f;
+                    
+                    if (mHintEnabled)
+                    {
+                        mHintTimer = kHintTimerOnDuration;
+                        mHintEnabled = false;
+                    }
+                    else
+                    {
+                        mHintTimer = kHintTimerOffDuration;
+                        mHintEnabled = true;
+                    }
                 }
             }
             
@@ -523,6 +535,8 @@ void App::UpdateGameState(float dt)
                 if (!AnyTouching(*this))
                 {
                     mTouching = false;
+                    mHintTimer = kHintTimerOnDuration;
+                    mHintEnabled = false;
                 }
             }
             else
@@ -530,7 +544,8 @@ void App::UpdateGameState(float dt)
                 if (AnyTouching(*this))
                 {
                     mTouching = true;
-                    mHintTimer = mHintTimer > 0.0f ? 0.0f : kHintTimerDuration;
+                    mHintTimer = kHintTimerOffDuration;
+                    mHintEnabled = true;
                 }
             }
             
@@ -599,6 +614,15 @@ void App::ShufflePieces()
     unsigned int piece1 = GetRandomOtherPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved), piece0);
     
     OnSwapBegin(piece0, piece1);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::DrawShuffleHintBars()
+{
+    mCubeWrappers[0].DrawHintBar(2);
+    mCubeWrappers[1].DrawHintBar(3);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
