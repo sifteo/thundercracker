@@ -198,7 +198,7 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
 
         if ((Offset & 0xfffffc) != Offset)
             report_fatal_error("Code symbol '" + Twine(Name) +
-                "' has illegal address " + Twine::utohexstr(Offset));
+                "' has illegal address 0x" + Twine::utohexstr(Offset));
 
         FNStackMap_t::const_iterator I = FNStackMap.find(Offset);
         int SPAdj = I == FNStackMap.end() ? 0 : I->second;
