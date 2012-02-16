@@ -376,6 +376,10 @@ void App::RemoveCube(Cube::ID cubeId)
 
 void App::ResetCubes()
 {
+    // TODO: Allow kNumCubes > GetPuzzle(mPuzzleIndex).GetNumBuddies() by disabling the other
+    // buddies.
+    ASSERT(kNumCubes == GetPuzzle(mPuzzleIndex).GetNumBuddies());
+    
     for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
     {
         if (mCubeWrappers[i].IsEnabled())
