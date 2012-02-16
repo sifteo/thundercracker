@@ -38,7 +38,7 @@ public:
     void DrawShuffleUi(GameState shuffleState, float shuffleScoreTime);
     void DrawTitleCard(const char *text);
     void DrawTextBanner(const char *text);
-    void DrawHintBar(unsigned int side);
+    void DrawHintBar(Sifteo::Cube::Side side);
     
     void EnableBg0SprBg1Video(); // HACK!
     void ClearBg1(); // HACK!
@@ -54,6 +54,7 @@ public:
     void Disable();
     
     // Pieces
+    // TODO: Use Cube::Side
     const Piece &GetPiece(unsigned int side) const;
     void SetPiece(unsigned int side, const Piece &piece);
     void SetPieceSolution(unsigned int side, const Piece &piece);

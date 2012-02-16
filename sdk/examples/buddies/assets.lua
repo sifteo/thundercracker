@@ -22,8 +22,14 @@ BuddyFacePartHidden = image{"assets/hidden.png", pinned = true}
 PuzzleTitleCard = image{"assets/TitleCard.png"}
 
 -- UI (BG1)
-HintBarBlue = image{"assets/ui_hintbar_blue.png"}
-HintBarOrange = image{"assets/ui_hintbar_orange.png"}
+HintBarBlueTop = image{"assets/ui_hintbar_blue_top.png"}
+HintBarBlueLeft = image{"assets/ui_hintbar_blue_left.png"}
+HintBarBlueBottom = image{"assets/ui_hintbar_blue_bottom.png"}
+HintBarBlueRight = image{"assets/ui_hintbar_blue_right.png"}
+HintBarOrangeTop = image{"assets/ui_hintbar_orange_top.png"}
+HintBarOrangeLeft = image{"assets/ui_hintbar_orange_left.png"}
+HintBarOrangeBottom = image{"assets/ui_hintbar_orange_bottom.png"}
+HintBarOrangeRight = image{"assets/ui_hintbar_orange_right.png"}
 FaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
 FaceCompleteOrange = image{"assets/ui_top_facecomplete_orange.png"}
 ShakeToShuffleBlue = image{"assets/ui_top_shakeshuffle_blue.png"}

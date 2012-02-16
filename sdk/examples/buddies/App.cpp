@@ -249,8 +249,8 @@ void App::Draw()
     
     if (mGameState == GAME_STATE_SHUFFLE_PLAY && mHintTimer <= 0.0f)
     {
-        mCubeWrappers[0].DrawHintBar(0);
-        mCubeWrappers[1].DrawHintBar(1);
+        mCubeWrappers[0].DrawHintBar(2);
+        mCubeWrappers[1].DrawHintBar(3);
     }
     
     System::paint();
@@ -499,6 +499,7 @@ void App::UpdateGameState(float dt)
             
             if (AnyTouching(*this))
             {
+                mTouching = true;
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
             
@@ -528,8 +529,8 @@ void App::UpdateGameState(float dt)
             {
                 if (AnyTouching(*this))
                 {
-                    mHintTimer = mHintTimer > 0.0f ? 0.0f : kHintTimerDuration;
                     mTouching = true;
+                    mHintTimer = mHintTimer > 0.0f ? 0.0f : kHintTimerDuration;
                 }
             }
             

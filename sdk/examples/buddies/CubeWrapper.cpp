@@ -26,7 +26,7 @@ namespace {
 // \/ 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Sifteo::AssetImage &GetBuddyFaceBackgroundAsset(int buddyId)
+const AssetImage &GetBuddyFaceBackgroundAsset(int buddyId)
 {
     switch (buddyId)
     {
@@ -43,7 +43,7 @@ const Sifteo::AssetImage &GetBuddyFaceBackgroundAsset(int buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Sifteo::PinnedAssetImage &GetBuddyFacePartsAsset(int buddyId)
+const PinnedAssetImage &GetBuddyFacePartsAsset(int buddyId)
 {
     switch (buddyId)
     {
@@ -54,6 +54,40 @@ const Sifteo::PinnedAssetImage &GetBuddyFacePartsAsset(int buddyId)
         case 3: return BuddyFaceParts3;
         case 4: return BuddyFaceParts4;
         case 5: return BuddyFaceParts5;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+Vec2 GetHintBarPoint(Cube::Side side)
+{
+    ASSERT(side >= 0 && side < NUM_SIDES);
+    
+    switch (side)
+    {
+        default:
+        case SIDE_TOP:    return Vec2( 0,  0);
+        case SIDE_LEFT:   return Vec2( 0,  0);
+        case SIDE_BOTTOM: return Vec2( 0, 11);
+        case SIDE_RIGHT:  return Vec2(11,  0);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+const AssetImage &GetHintBarAsset(Cube::ID cubeId, Cube::Side side)
+{
+    ASSERT(side >= 0 && side < NUM_SIDES);
+    
+    switch (side)
+    {
+        default:
+        case SIDE_TOP:    return cubeId == 0 ? HintBarBlueTop    : HintBarOrangeTop;
+        case SIDE_LEFT:   return cubeId == 0 ? HintBarBlueLeft   : HintBarOrangeLeft;
+        case SIDE_BOTTOM: return cubeId == 0 ? HintBarBlueBottom : HintBarOrangeBottom;
+        case SIDE_RIGHT:  return cubeId == 0 ? HintBarBlueRight  : HintBarOrangeRight;
     }
 }
 
@@ -214,10 +248,12 @@ void CubeWrapper::DrawTextBanner(const char *text)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawHintBar(unsigned int side)
+void CubeWrapper::DrawHintBar(Cube::Side side)
 {
+    ASSERT(side >= 0 && side < NUM_SIDES);
+    
     BG1Helper bg1helper(mCube);
-    bg1helper.DrawAsset(Vec2(11, 0), mCube.id() == 0 ? HintBarBlue : HintBarOrange);
+    bg1helper.DrawAsset(GetHintBarPoint(side), GetHintBarAsset(mCube.id(), side));
     bg1helper.Flush();
 }
 
