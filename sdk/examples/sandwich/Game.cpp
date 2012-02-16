@@ -393,7 +393,13 @@ unsigned Game::OnPassiveTrigger() {
       DrawOffsetMap(&mode, mMap.Data(), pos);
       Paint(true);
     } while(System::clock()-t<2.333f);
-    // walk out TODO
+    // fall
+    DrawRoom(&mode, mMap.Data(), targetRoom->Id());
+    int animHeights[] = { 48, 32, 16, 0, 8, 12, 16, 12, 8, 0 };
+    for(unsigned i=0; i<arraysize(animHeights); ++i) {
+      mPlayer.CurrentView()->DrawPlayerFalling(animHeights[i]);
+      Paint(true);
+    }
     mPlayer.SetPosition(targetRoom->Center(0));
     mPlayer.SetDirection(SIDE_BOTTOM);
     pView->ShowLocation(mPlayer.Location());

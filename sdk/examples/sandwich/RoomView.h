@@ -42,7 +42,9 @@ public:
   void ShowPlayer();
   void SetPlayerFrame(unsigned frame);
   void UpdatePlayer();
+  void DrawPlayerFalling(int height);
   void HidePlayer();
+
   
   void SetItemPosition(Vec2 p);
   void HideItem();

@@ -130,6 +130,14 @@ void RoomView::UpdatePlayer() {
   mode.moveSprite(PLAYER_SPRITE_ID, localPosition.x-16, localPosition.y-16);
 }
 
+void RoomView::DrawPlayerFalling(int height) {
+  ViewMode mode = Parent()->Graphics();
+  Vec2 localCenter = 16 * GetRoom()->LocalCenter(0);
+  mode.setSpriteImage(PLAYER_SPRITE_ID, PlayerStand.index + (2<<4));
+  mode.moveSprite(PLAYER_SPRITE_ID, localCenter.x-16, localCenter.y-32-height);
+  mode.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
+}
+
 void RoomView::HidePlayer() {
   Parent()->Graphics().hideSprite(PLAYER_SPRITE_ID);
 }
