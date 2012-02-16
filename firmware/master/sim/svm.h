@@ -195,9 +195,19 @@ private:
     void emulateUXTH(uint16_t isntr);       // UXTH
     void emulateUXTB(uint16_t isntr);       // UXTB
 
+    void emulateB(uint16_t instr);          // B
+
+    void emulateSTRImm(uint16_t instr);     // STR (immediate)
+    void emulateLDRImm(uint16_t instr);     // LDR (immediate)
+    void emulateADDSpImm(uint16_t instr);   // ADD (SP plus immediate)
+
     void emulateLDRLitPool(uint16_t instr); // LDR (literal)
 
     void emulateSVC(uint16_t instr);
+
+    void BranchWritePC(uint32_t addr) {
+        regs[REG_PC] = addr & 0xfffffffe;
+    }
 };
 
 class Svm
