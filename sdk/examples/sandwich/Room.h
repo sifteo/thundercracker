@@ -2,69 +2,155 @@
 #include "Common.h"
 #include "Content.h"
 
+#define USERDATA_NONE 0
+#define USERDATA_TRIGGER 1
+#define USERDATA_SUBDIV 2
+#define USERDATA_TRAPDOOR 3
+
 class Room {
 private:
-	const TriggerData* mTrigger;
+  const void* mUserdata; // pointer to a trigger or subdivision or trapdoor
   const DoorData* mDoor;
-  const void* mSubdiv;
   uint16_t mOverlayIndex;
   uint8_t mOverlayTile;
-  uint8_t mTriggerType : 4;
-  uint8_t mSubdivType : 4;
-
-
-  void _Asserts() {
-    STATIC_ASSERT((1<<8) >= TRIGGER_TYPE_COUNT ); // did we give mTriggerType enough bits?
-  }
-
+  uint8_t mUserdataType : 4;
+  uint8_t mInnerType : 4;
 
 public:
 
-  // basic getters
+  //---------------------------------------------------------------------------
+  // generic methods
+  //---------------------------------------------------------------------------
+
   unsigned Id() const;
   Vec2 Location() const;
   const RoomData* Data() const;
-
-  // telem getters
   inline Vec2 Position() const { return 128 * Location(); }
   Vec2 LocalCenter(unsigned subdiv) const;
   inline Vec2 Center(unsigned subdiv) const { return Position() + 16 * LocalCenter(subdiv); }
+  inline bool HasUserdata() const { return mUserdataType; }
+  void Clear();
 
+  //---------------------------------------------------------------------------
   // triggers
-  inline void SetTrigger(int type, const TriggerData* p) { mTriggerType = type; mTrigger = p; }
-  inline void ClearTrigger() { mTriggerType = TRIGGER_UNDEFINED; mTrigger = 0; }
-  
-  inline const TriggerData* Trigger() const { return mTrigger; }
-  inline int TriggerType() const { return mTriggerType; }
-  inline bool HasTrigger() const { return mTrigger != 0; }
-  inline bool HasGateway() const { return mTriggerType == TRIGGER_GATEWAY; }
-  inline bool HasItem() const { return mTriggerType == TRIGGER_ITEM; }
-  inline bool HasNPC() const { return mTriggerType == TRIGGER_NPC; }
-  
-  inline const GatewayData* TriggerAsGate() const { ASSERT(mTriggerType == TRIGGER_GATEWAY); return (const GatewayData*) mTrigger; }
-  inline const ItemData* TriggerAsItem() const { ASSERT(mTriggerType == TRIGGER_ITEM); return (const ItemData*) mTrigger; }
-  inline const NpcData* TriggerAsNPC() const { ASSERT(mTriggerType == TRIGGER_NPC); return (const NpcData*) mTrigger; }
+  //---------------------------------------------------------------------------
 
+  inline int TriggerType() const { 
+    return mUserdataType == USERDATA_TRIGGER ? mInnerType : 0; 
+  }
+
+  inline bool HasTrigger() const {
+    return mUserdataType == USERDATA_TRIGGER && mInnerType; 
+  }
+
+  inline bool HasGateway() const { 
+    return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_GATEWAY; 
+  }
+
+  inline bool HasItem() const { 
+    return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_ITEM; 
+  }
+
+  inline bool HasNPC() const { 
+    return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_NPC; 
+  }
+  
+  inline const GatewayData* TriggerAsGate() const { 
+    ASSERT(mUserdataType == USERDATA_TRIGGER);
+    ASSERT(mInnerType == TRIGGER_GATEWAY); 
+    return (const GatewayData*) mUserdata; 
+  }
+
+  inline const ItemData* TriggerAsItem() const { 
+    ASSERT(mUserdataType == USERDATA_TRIGGER);
+    ASSERT(mInnerType == TRIGGER_ITEM); 
+    return (const ItemData*) mUserdata; 
+  }
+
+  inline const NpcData* TriggerAsNPC() const { 
+    ASSERT(mUserdataType == USERDATA_TRIGGER);
+    ASSERT(mInnerType == TRIGGER_NPC); 
+    return (const NpcData*) mUserdata; 
+  }
+
+inline void SetTrigger(int type, const TriggerData* p) { 
+    mUserdataType = USERDATA_TRIGGER;
+    mInnerType = type; 
+    mUserdata = p; 
+  }
+  
+  inline void ClearTrigger() { 
+    ASSERT(mUserdataType == USERDATA_TRIGGER);
+    mInnerType = TRIGGER_UNDEFINED; 
+  }
+  
+  //---------------------------------------------------------------------------
   // subdivs
-  bool IsSubdivided() const { return mSubdivType != SUBDIV_NONE; }
-  bool IsBridge() const { return mSubdivType == SUBDIV_BRDG_VER || mSubdivType == SUBDIV_BRDG_HOR; }
-  int SubdivType() const { return mSubdivType; }
-  const DiagonalSubdivisionData* SubdivAsDiagonal() const { ASSERT(mSubdivType == SUBDIV_DIAG_POS || mSubdivType == SUBDIV_DIAG_NEG);  return (const DiagonalSubdivisionData*)mSubdiv; }
-  const BridgeSubdivisionData* SubdivAsBridge() const { ASSERT(mSubdivType == SUBDIV_BRDG_VER || mSubdivType == SUBDIV_BRDG_HOR); return (const BridgeSubdivisionData*)mSubdiv; }
+  //---------------------------------------------------------------------------
+
+  bool IsSubdivided() const { 
+    return mUserdataType == USERDATA_SUBDIV && mInnerType; 
+  }
+
+  bool IsBridge() const { 
+    return mUserdataType == USERDATA_SUBDIV && (
+      mInnerType == SUBDIV_BRDG_VER || mInnerType == SUBDIV_BRDG_HOR
+    ); 
+  }
+
+  int SubdivType() const { 
+    return mUserdataType == USERDATA_SUBDIV ? mInnerType : 0; 
+  }
+
+  const DiagonalSubdivisionData* SubdivAsDiagonal() const { 
+    ASSERT(mUserdataType == USERDATA_SUBDIV);
+    ASSERT(mInnerType == SUBDIV_DIAG_POS || mInnerType == SUBDIV_DIAG_NEG);  
+    return (const DiagonalSubdivisionData*)mUserdata; 
+  }
+
+  const BridgeSubdivisionData* SubdivAsBridge() const { 
+    ASSERT(mUserdataType == USERDATA_SUBDIV);
+    ASSERT(mInnerType == SUBDIV_BRDG_VER || mInnerType == SUBDIV_BRDG_HOR); 
+    return (const BridgeSubdivisionData*)mUserdata; 
+  }
+
   void SetDiagonalSubdivision(const DiagonalSubdivisionData* diag);
   void SetBridgeSubdivision(const BridgeSubdivisionData* bridge);
 
-  // general getters
+  //---------------------------------------------------------------------------
+  // trapdoors
+  //---------------------------------------------------------------------------
+
+  inline bool HasTrapdoor() const {
+    return mUserdataType == USERDATA_TRAPDOOR;
+  }
+
+  inline void SetTrapdoor(const TrapdoorData* trapDoorData) {
+    mUserdataType = USERDATA_TRAPDOOR;
+    mUserdata = trapDoorData;
+  }
+
+  const TrapdoorData* Trapdoor() const {
+    ASSERT(mUserdataType == USERDATA_TRAPDOOR);
+    return (const TrapdoorData*) mUserdata;
+  }
+
+  //---------------------------------------------------------------------------
+  // doors
+  //---------------------------------------------------------------------------
+
   bool HasDoor() const { return mDoor != 0; }
   bool HasOpenDoor() const;
   bool HasClosedDoor() const;
+  void SetDoor(const DoorData* p) { mDoor = p; }
+  bool OpenDoor();
+
+  //---------------------------------------------------------------------------
+  // overlays
+  //---------------------------------------------------------------------------
+
   bool HasOverlay() const { return mOverlayIndex != 0xffff; }
   const uint8_t* OverlayBegin() const;
   unsigned OverlayTile() const { return mOverlayTile; }
-
-  // general methods
-  void SetDoor(const DoorData* p) { mDoor = p; }
   void SetOverlay(uint16_t rleIndex, uint8_t firstTile) { mOverlayIndex = rleIndex; mOverlayTile = firstTile; }
-  void Clear();
-  bool OpenDoor();
 };

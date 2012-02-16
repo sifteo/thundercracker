@@ -74,8 +74,7 @@ struct NpcData {
 };
 
 struct TrapdoorData {
-    uint8_t x : 4;
-    uint8_t y : 4;
+    uint8_t roomId;
     uint8_t respawnRoomId;
 };
 

@@ -65,7 +65,10 @@ class Map:
 			for y in range(self.height-1):
 				assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id
 		# find subdivisions
-		for r in self.rooms: r.find_subdivisions()
+		for r in self.rooms: 
+			r.find_subdivisions()
+			if r.subdiv_type != SUBDIV_NONE:
+				assert r.its_a_trap == False, "traps cannot be placed in subdivisions"
 		self.diagRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_DIAG_POS or r.subdiv_type == SUBDIV_DIAG_NEG ]
 		self.bridgeRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_BRDG_HOR or r.subdiv_type == SUBDIV_BRDG_VER]
 		# no vertical bridges, for now
@@ -158,10 +161,10 @@ class Map:
 				npc.write_npc_to(src)
 			src.write("};\n")
 		
-		if len(self.trapped_rooms) > 0 and False:
-			src.write("static const Trapdoordata %s_trapdoors[] = { " % self.id)
-			for trapdoor in self.trapped_rooms:
-				assert false, "dont have data yet"
+		if len(self.trapped_rooms) > 0:
+			src.write("static const TrapdoorData %s_trapdoors[] = { " % self.id)
+			for room in self.trapped_rooms:
+				src.write("{ 0x%x, 0x%x }, " % (room.lid, room.trapRespawnRoomId))
 			src.write("};\n")
 		
 		if len(self.doors) > 0:
@@ -236,7 +239,7 @@ class Map:
 				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
-				"trapdoor": "0",#self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
+				"trapdoor": self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",

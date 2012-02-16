@@ -143,6 +143,22 @@ void RoomView::HideItem() {
   Parent()->Graphics().hideSprite(TRIGGER_SPRITE_ID);
 }
 
+//----------------------------------------------------------------------
+// TRAPDOOR METHODS
+//----------------------------------------------------------------------
+
+void RoomView::DrawTrapdoorFrame(int frame) {
+  ViewMode mode = Parent()->Graphics();
+  Vec2 firstTile = GetRoom()->LocalCenter(0) - Vec2(2,2);
+  for(unsigned y=0; y<4; ++y)
+  for(unsigned x=0; x<4; ++x) {
+    mode.BG0_drawAsset(
+      Vec2(firstTile.x + x, firstTile.y + y) << 1,
+      *(pGame->GetMap()->Data()->tileset),
+      pGame->GetMap()->GetTileId(mRoomId, Vec2(firstTile.x + x, firstTile.y + y))+frame
+    );    
+  }
+}
 
 //----------------------------------------------------------------------
 // HELPERS
@@ -150,6 +166,7 @@ void RoomView::HideItem() {
 
 void RoomView::DrawBackground() {
   ViewMode mode = Parent()->Graphics();
+  mode.BG0_setPanning(Vec2(0,0));
   DrawRoom(&mode, pGame->GetMap()->Data(), mRoomId)  ;
 
   // hack alert!
@@ -158,7 +175,7 @@ void RoomView::DrawBackground() {
     for(int y=0; y<3; ++y) {
       for(int x=3; x<=4; ++x) {
         mode.BG0_drawAsset(
-          Vec2(x<<1,y<<1),
+          Vec2(x,y) << 1,
           *(pGame->GetMap()->Data()->tileset),
           pGame->GetMap()->GetTileId(mRoomId, Vec2(x, y))+2
         );

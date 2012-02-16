@@ -56,7 +56,7 @@ private:
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
 
-  void OnPassiveTrigger();
+  unsigned OnPassiveTrigger();
   void OnActiveTrigger();
   void OnInventoryChanged();
 

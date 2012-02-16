@@ -47,6 +47,8 @@ public:
   void SetItemPosition(Vec2 p);
   void HideItem();
 
+  void DrawTrapdoorFrame(int delta);
+
   void DrawBackground();
 
 private:

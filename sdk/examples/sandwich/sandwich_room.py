@@ -36,8 +36,9 @@ class Room:
 		self.trigger_dict = {}
 		self.door = None
 		self.subdiv_type = SUBDIV_NONE
-		traptiles = [ (x,y) for y in range(8) for x in range(8) if "trapdoor" in self.tileat(x,y).props ]
-		self.its_a_trap = len(traptiles) > 0
+		
+		trapdoors = [obj for obj in map.raw.objects if obj.type == "trapdoor" and self.contains_obj(obj)]
+		self.its_a_trap = len(trapdoors) > 0
 		if self.its_a_trap:
 			#                                       IT'S A TRAP!
 			# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -65,11 +66,23 @@ class Room:
 			# ./ : : : : :'-, :: | :: :: :: _,,-''''- : ,---'' : : : : : : : : : : : / : : : : : : :''-
 			# / : : : : : -, :-'''''''''''- : : _,,---'' : : : : : : : : : : : : : :| : : : : : : : : :
 			# . : : : : : : :-''------------''' : : : : : : : : : : : : : : : : : : | : : : : : : : : :
-			assert len(traptiles) == 16, "each trap is a 4x4 grid"
-			x,y = traptiles[0]
-			self.trapx = x + 2
-			self.trapy = y + 2
+			obj = trapdoors[0]
+			#print "pix position = %d, %d" % (obj.px, obj.py)
+			assert obj.pw/16 == 4 and obj.ph/16 == 4, "Trapdoor must be 4x4 tiles: " + self.map.id
+			m = EXP_LOCATION.match(obj.props.get("respawn", ""))
+			assert m is not None, "Malformed Respawn Location in Map: " + self.map.id
+			self.trapRespawnRoomId = int(m.group(1)) + int(m.group(2)) * map.width
+			self.trapx = (obj.px / 16) - self.x * 8 + 2
+			self.trapy = (obj.py / 16) - self.y * 8 + 2
+			#print "trap position: %d, %d" % (self.trapx, self.trapy)
 
+
+	def contains_obj(self, obj):
+		cx = obj.px + obj.pw/2
+		cy = obj.py + obj.ph/2;
+		px = 128 * self.x
+		py = 128 * self.y
+		return cx >= px and cy >= py and cx < px+128 and cy < py+128
 
 	def hasitem(self): return len(self.item) > 0 and self.item != "ITEM_NONE"
 	def tileat(self, x, y): return self.map.background.tileat(8*self.x + x, 8*self.y + y)
@@ -77,7 +90,7 @@ class Room:
 	def overlaytileat(self, x, y): return self.map.overlay.tileat(8*self.x + x, 8*self.y + y)
 
 	def primary_center(self):
-		# todo bridges
+		if self.its_a_trap: return (self.trapx, self.trapy)
 		if self.subdiv_type == SUBDIV_BRDG_VER:
 			return (self.first_bridge_col+1, 4)
 		elif self.subdiv_type == SUBDIV_NONE or self.subdiv_type == SUBDIV_BRDG_HOR:
@@ -197,6 +210,6 @@ class Room:
 		src.write("},\n")
 		# centerx, centery
 		cx,cy = self.primary_center()
-		src.write("        %d, %d, \n" % (cx, cy))
+		src.write("        0x%x, 0x%x, \n" % (cx, cy))
 		src.write("    },\n")		
 

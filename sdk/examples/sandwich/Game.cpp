@@ -1,5 +1,9 @@
 #include "Game.h"
 #include "Dialog.h"
+#include "DrawingHelpers.h"
+
+#define RESULT_NONE             0
+#define RESULT_PATH_INTERRUPTED 1
 
 static bool sNeighborDirty = false;
 
@@ -22,7 +26,7 @@ void Game::ObserveNeighbors(bool flag) {
 }
 
 //------------------------------------------------------------------
-// BOOTSTRAP API
+// MAIN PLAYER INTERACTION LOOP
 //------------------------------------------------------------------
 
 void Game::MainLoop(Cube* pPrimary) {
@@ -136,12 +140,18 @@ void Game::MainLoop(Cube* pPrimary) {
       }
       if (mPlayer.TargetView()) { // did we land on the target?
         mPlayer.AdvanceToTarget();
-        OnPassiveTrigger();
+        if (OnPassiveTrigger() == RESULT_PATH_INTERRUPTED) {
+          mPath.Cancel();
+        }
       }  
     } while(mPath.PopStep(*mPlayer.Current(), mPlayer.Target()));
     OnActiveTrigger();
   }
 }
+
+//------------------------------------------------------------------
+// UPDATE CONTROLLERS AND PAINT (yielded from MainLoop)
+//------------------------------------------------------------------
 
 void Game::Update(bool sync) {
   mDeltaTime = UpdateDeltaTime();
@@ -150,8 +160,11 @@ void Game::Update(bool sync) {
   mSimFrames++;
 }
 
+//------------------------------------------------------------------
+// JUST UPDATE VIEWS
+//------------------------------------------------------------------
+
 void Game::Paint(bool sync) {
-  //just paint the game w/o updating other controllers
     if (sNeighborDirty) { 
       CheckMapNeighbors(); 
     }
@@ -172,6 +185,10 @@ void Game::Paint(bool sync) {
   }
   mAnimFrames++;
 }
+
+//------------------------------------------------------------------
+// HELPERS
+//------------------------------------------------------------------
 
 float Game::UpdateDeltaTime() {
   float now = System::clock();
@@ -294,7 +311,7 @@ void Game::Zoom(ViewSlot* view, int roomId) {
 }
 
 //------------------------------------------------------------------
-// MISC EVENTS
+// EVENTS
 //------------------------------------------------------------------
 
 void Game::OnInventoryChanged() {
@@ -312,10 +329,11 @@ void Game::OnInventoryChanged() {
 }
 
 
-void Game::OnPassiveTrigger() {
-  if (mPlayer.GetRoom()->HasItem()) {
-    const ItemData* pItem = mPlayer.GetRoom()->TriggerAsItem();
-    if (mState.FlagTrigger(pItem->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
+unsigned Game::OnPassiveTrigger() {
+  Room* pRoom = mPlayer.GetRoom();
+  if (pRoom->HasItem()) {
+    const ItemData* pItem = pRoom->TriggerAsItem();
+    if (mState.FlagTrigger(pItem->trigger)) { pRoom->ClearTrigger(); }
     if (mState.PickupItem(pItem->itemId)) {
       PlaySfx(sfx_pickup);
       OnInventoryChanged();
@@ -323,8 +341,8 @@ void Game::OnPassiveTrigger() {
     // do a pickup animation
     for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
       mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
-      
-      for(float t=System::clock(); System::clock()-t<0.075f;) {
+      float t=System::clock();
+      do {
         // this calc is kinda annoyingly complex
         float u = (System::clock() - t) / 0.075f;
         const float du = 1.f / (float) PlayerPickup.frames;
@@ -332,12 +350,58 @@ void Game::OnPassiveTrigger() {
         u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
         Paint();
         mPlayer.CurrentView()->SetItemPosition(Vec2(0, -36.f * u) );
-      }
+      } while(System::clock()-t<0.075);
     }
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
     for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
     mPlayer.CurrentView()->HideItem();        
+  } else if (pRoom->HasTrapdoor()) {
+    // animate the tiles opening
+    Vec2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
+    for(unsigned i=1; i<=7; ++i) { // magic
+      mPlayer.CurrentView()->DrawTrapdoorFrame(i);
+      Paint(true);
+    }
+    // animate pearl falling TODO
+    mPlayer.CurrentView()->HidePlayer();
+    for(unsigned i=0; i<16; ++i) {
+      Paint(true);
+    }
+    // animate the tiles closing
+    for(int i=6; i>=0; --i) { // magic
+      mPlayer.CurrentView()->DrawTrapdoorFrame(i);
+      Paint(true);
+    }
+    // pan to respawn point
+    ViewSlot *pView = mPlayer.CurrentView()->Parent();
+    for(ViewSlot* p=ViewBegin(); p!=ViewEnd(); ++p) {
+      if (p != pView) { p->HideLocation(); }
+    }
+    pView->HideSprites();
+    pView->Overlay().Flush();
+    Paint(true);
+
+    Room* targetRoom = mMap.GetRoom(pRoom->Trapdoor()->respawnRoomId);
+    Vec2 start = 128 * pRoom->Location();
+    Vec2 delta = 128 * (targetRoom->Location() - pRoom->Location());
+    ViewMode mode = pView->Graphics();
+    float t=System::clock(); 
+    do {
+      float u = (System::clock()-t) / 1.0f;
+      Vec2 pos = Vec2(start.x + int(u * delta.x), start.y + int(u * delta.y));
+      DrawOffsetMap(&mode, mMap.Data(), pos);
+      Paint(true);
+    } while(System::clock()-t<1.0f);
+    // walk out TODO
+    mPlayer.SetPosition(targetRoom->Center(0));
+    mPlayer.SetDirection(SIDE_BOTTOM);
+    pView->ShowLocation(mPlayer.Location());
+    CheckMapNeighbors();
+    Paint(true);
+    return RESULT_PATH_INTERRUPTED;
   }
+
+  return RESULT_NONE;
 }
 
 void Game::OnActiveTrigger() {
@@ -371,7 +435,7 @@ void Game::OnActiveTrigger() {
 }
 
 //------------------------------------------------------------------
-// NEIGHBOR HANDLING
+// NEIGHBOR WALKING
 //------------------------------------------------------------------
 
 static void VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* origin=0) {
