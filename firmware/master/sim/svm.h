@@ -22,7 +22,7 @@ public:
     SvmProgram();
 
     uint16_t fetch();
-    void run();
+    void run(uint16_t appId);
     void cycle();
     void validate();
 
@@ -79,6 +79,8 @@ private:
     struct Segment {
         uint32_t start;
         uint32_t size;
+        uint32_t vaddr;
+        uint32_t paddr;
     };
 
     struct ProgramInfo {
@@ -102,7 +104,7 @@ private:
     bool isValid32(uint32_t instr);
 
     FlashRegion flashRegion;
-    uint16_t currentRegionOffset;
+    unsigned currentAppPhysAddr;    // where does this app start in external flash?
     ProgramInfo progInfo;
 
     static const unsigned NUM_GP_REGS = 16;

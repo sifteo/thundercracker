@@ -12,26 +12,27 @@ SvmProgram::SvmProgram()
 {
 }
 
-void SvmProgram::run()
+void SvmProgram::run(uint16_t appId)
 {
-    if (!loadElfFile(0, 12345))
+    currentAppPhysAddr = 0;  // TODO: look this up via appId
+    if (!loadElfFile(currentAppPhysAddr, 12345))
         return;
 
     LOG(("loaded. entry: 0x%x text start: 0x%x\n", progInfo.entry, progInfo.textRodata.start));
 
+    BranchWritePC(progInfo.textRodata.vaddr);  // write the program counter with entry point
     validate();
 
     memset(regs, 0, sizeof(regs));  // zero out general purpose regs
     cpsr = 0;
 
-    // TODO: do all of our instructions support conditional execution?
     unsigned entryPoint = progInfo.textRodata.start + progInfo.entry;
     if (!FlashLayer::getRegion(entryPoint, FlashLayer::BLOCK_SIZE, &flashRegion)) {
         LOG(("failed to get entry block\n"));
         return;
     }
-    currentRegionOffset = 0;
-    BranchWritePC(entryPoint);  // write the program counter with entry point
+
+    BranchWritePC(progInfo.textRodata.vaddr);  // write the program counter with entry point
 
     for (;;) {
         uint16_t instr = fetch();
@@ -50,15 +51,17 @@ void SvmProgram::run()
     We can return 16bit values unconditionally, since all our instructions are Thumb,
     and the first nibble of a 32-bit instruction must be checked regardless
     in order to determine its bitness.
+
+    TODO - handle transitions into other flash regions!
 */
 uint16_t SvmProgram::fetch()
 {
-    ASSERT(currentRegionOffset <= FlashLayer::BLOCK_SIZE);
-    uint16_t *instr = static_cast<uint16_t*>(flashRegion.data()) + currentRegionOffset;
-    regs[REG_PC] += 2;
-    currentRegionOffset++;
-    // TODO - handle transitions into other flash regions!
-    return *instr;
+    // translate PC to an offset from our current flash block
+    unsigned pc = (regs[REG_PC] - progInfo.textRodata.vaddr) / sizeof(uint16_t);
+    uint16_t *tst = static_cast<uint16_t*>(flashRegion.data()) + pc;
+
+    regs[REG_PC] += sizeof(uint16_t);
+    return *tst;
 }
 
 void SvmProgram::cycle()
@@ -300,7 +303,6 @@ void SvmProgram::execute32(uint32_t instr)
 
 bool SvmProgram::conditionPassed(uint8_t cond)
 {
-    LOG(("condition code: %d\n", cond));
     switch (cond) {
     case EQ: return  getZero();
     case NE: return !getZero();
@@ -595,10 +597,20 @@ void SvmProgram::emulateADDSpImm(uint16_t instr)
     regs[Rd] = regs[REG_SP] + (imm8 << 2);
 }
 
+void SvmProgram::emulateLDRLitPool(uint16_t instr)
+{
+    unsigned Rt = (instr >> 8) & 0x7;
+    unsigned imm8 = instr & 0xFF;
+
+    // TODO: verify this is correct!
+    unsigned addr = ((regs[REG_PC] + 2 /* pipeline */) & 0xfffffffc) + (imm8 * 4);
+
+//    regs[Rt] = mem.word(addr);
+}
+
 void SvmProgram::emulateSVC(uint16_t instr)
 {
     unsigned imm8 = instr & 0xFF;
-    LOG(("SVC #%d\n", imm8));
     // TODO: find params
     // syscall(imm8);
 }
@@ -704,6 +716,8 @@ bool SvmProgram::loadElfFile(unsigned addr, unsigned len)
             LOG(("rodata/text segment found\n"));
             progInfo.textRodata.start = pHeader.p_offset;
             progInfo.textRodata.size = pHeader.p_filesz;
+            progInfo.textRodata.vaddr = pHeader.p_vaddr;
+            progInfo.textRodata.paddr = pHeader.p_paddr;
             break;
         case (Elf::PF_Read | Elf::PF_Write):
             if (pHeader.p_memsz >= 0 && pHeader.p_filesz == 0) {
