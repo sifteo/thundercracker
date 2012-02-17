@@ -17,8 +17,8 @@ struct FlashRegion;
 class FlashLayer
 {
 public:
-    static const unsigned NUM_BLOCKS = 2;
-    static const unsigned BLOCK_SIZE = 512;
+    static const unsigned NUM_BLOCKS = 16;
+    static const unsigned BLOCK_SIZE = 256;
 
     static void init();
 
