@@ -68,7 +68,7 @@ namespace TotalsGame
 	}
 
 	void Game::PaintCubeViews()
-	{
+    {
 		for(int i = 0; i < NUMBER_OF_CUBES; i++)
 		{
 			TotalsCube *c = Game::GetCube(i);
@@ -92,7 +92,7 @@ namespace TotalsGame
                 if(v)
                     v->Update(dt);
             }
-        }
+        }       
     }
 
 	void Game::Setup(TotalsCube *_cubes, int nCubes)
@@ -162,7 +162,7 @@ namespace TotalsGame
 			.Transition("isover", "Yes", "menu")
 			.Transition("isover", "No", "interstitial")
 
-			.SetState("sting");
+            .SetState("menu");//todo sting");
 
 	}
 

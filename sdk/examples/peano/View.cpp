@@ -36,10 +36,10 @@ namespace TotalsGame
 				View *view = mCube->GetView();
 				if (view != NULL)
 				{ 
-					SetCube(NULL);
+                    view->SetCube(NULL);
 				}
-				GetCube()->SetView(this);
-				DidAttachToCube(GetCube());
+                c->SetView(this);
+                DidAttachToCube(c);
 				//if (didAttachToCube != null) { didAttachToCube(this); }
 				Paint();
 			}

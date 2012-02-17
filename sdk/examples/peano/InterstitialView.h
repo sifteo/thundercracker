@@ -22,7 +22,7 @@ public:
 public:
     const char *message;
 
-    const AssetImage *image;
+    const PinnedAssetImage *image;
 private:
     int mOffset;
     bool mBackwards;

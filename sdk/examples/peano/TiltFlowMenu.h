@@ -29,7 +29,7 @@ private:
   public:
     TiltFlowDetailView *GetDetails();
 
-    TiltFlowMenu(TiltFlowItem *_items, int _numItems);
+    TiltFlowMenu(TiltFlowItem *_items, int _numItems, TiltFlowDetailView *_details);
 /* TODO
     public void Dispose() {
       view.Cube = null;

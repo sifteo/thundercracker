@@ -3,11 +3,14 @@
 #include "View.h"
 #include "TiltFlowMenu.h"
 #include "TotalsCube.h"
+#include "ObjectPool.h"
 
 namespace TotalsGame {
 
   class TiltFlowView : public View
   {
+      DECLARE_POOL(TiltFlowView, 2);
+
       class EventHandler: public TotalsCube::EventHandler
       {
           TiltFlowView *owner;
@@ -24,7 +27,7 @@ namespace TotalsGame {
     static const float kDeepTiltAccel = 2;
     static const float kGravity = 1.03f;
     static const float kMarqueeDelay = 4;
-    static const AssetImage *kMarquee[2];
+    static const PinnedAssetImage *kMarquee[2];
 
 private:
     TiltFlowMenu *menu;
@@ -55,7 +58,7 @@ public:
 
     void WillDetachFromCube(TotalsCube *c);
 
-    void Paint(TotalsCube *c);
+    void Paint();
 private:
     void PaintFooter(TotalsCube *c);
 public:

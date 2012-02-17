@@ -44,7 +44,7 @@ class TotalsCube;
 
       int CollapsesPauses(int off);
   public:
-      void Paint (TotalsCube *c);
+      void Paint();
     };
 
 private:

@@ -26,14 +26,14 @@ namespace TotalsGame
         return details;
     }
 
-    TiltFlowMenu::TiltFlowMenu(TiltFlowItem *_items, int _numItems)
+    TiltFlowMenu::TiltFlowMenu(TiltFlowItem *_items, int _numItems, TiltFlowDetailView *_details)
     {
         mSimTime = 0;
         mPickTime = 0;
       items = _items;
       numItems = _numItems;
       view = new TiltFlowView(Game::GetCube(0), this);
-//TODO      details = app.CubeSet.Find(cb => cb.userData is TiltFlowDetailView).GetView() as TiltFlowDetailView;
+    details = _details;
     }
 /* TODO
     public void TiltFlowMenu::Dispose() {

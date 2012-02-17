@@ -8,7 +8,7 @@ namespace TotalsGame {
     InterstitialView::InterstitialView(TotalsCube *c) : View(c)
     {
         message = "Starting Simple";
-        image = &Hint_5;
+        image = NULL;
         mOffset = 0;
         mBackwards = false;
         mImageOffset = 0;
@@ -64,7 +64,8 @@ namespace TotalsGame {
 
             if (image)
             {
-                GetCube()->Image(image, Vec2(8-image->width/2, 11 - image->height/2 + mImageOffset));
+                GetCube()->backgroundLayer.setSpriteImage(0, *image, 0);
+                GetCube()->backgroundLayer.moveSprite(0, Vec2(64-8*image->width/2, 88 - 8*image->height/2 + mImageOffset));
             }
         }
     }
@@ -81,25 +82,25 @@ namespace TotalsGame {
     {
         if (off < 7) {
             // moving to the left
-            c->Image(&VaultDoor, Vec2(7-off, 7), Vec2(0,0), Vec2(16-7+off, 9));
-            c->Image(&VaultDoor, Vec2(0,7), Vec2(16-7+off, 7), Vec2(7-off, 9));
-            c->Image(&VaultDoor, Vec2(7-off, 0), Vec2(off-7 ,0), Vec2(16-7+off, 7));
-            c->Image(&VaultDoor, Vec2(7-off, 0), Vec2(9+off, 9), Vec2(7-off, 7));
+            c->ClipImage(&VaultDoor, Vec2(7-off, 7));
+            c->ClipImage(&VaultDoor, Vec2(7-17-off,7));
+            c->ClipImage(&VaultDoor, Vec2(7-off, 7-16));
+            c->ClipImage(&VaultDoor, Vec2(7-16-off, 7-16));
         } else if (off < 7+6)
         {
             // moving up
             off -= 7;
-            c->Image(&VaultDoor, Vec2(0, 7-off), Vec2(0,0), Vec2(16, 16-7-off));
-            c->Image(&VaultDoor, Vec2(0, 0), Vec2(0, 9+off), Vec2(16, 7-off));
+            c->ClipImage(&VaultDoor, Vec2(0, 7-off));
+            c->ClipImage(&VaultDoor, Vec2(0, 7-off-16));
         } else {
             // opening
             off -= (7 + 6);
-            c->Image(&VaultDoor, Vec2(0, 0), Vec2(0,15), Vec2(16,1));
+            c->ClipImage(&VaultDoor, Vec2(0, 1-16));
             if (!backwards && off > 0)
             {
-//TODO                c.FillRect(new Color(75, 0, 85), 0, 8, 128, off);
+                c->Image(&Dark_Purple, Vec2(0, 1), Vec2(0,0), Vec2(16, off));
             }
-            c->Image(&VaultDoor, Vec2(0, 1+off), Vec2(0,0), Vec2(16,16-1-off));
+            c->ClipImage(&VaultDoor, Vec2(0, 1+off));
         }
     }
 

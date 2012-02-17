@@ -20,8 +20,11 @@ Icon_Howtoplay = image { "icon_howtoplay.png" }
 Icon_Level_Select = image { "icon_level_select.png" }
 Icon_Setup = image { "icon_setup.png" }
 
-Press_To_Select = image { "press_to_select.png" }
-Tilt_For_More = image { "tilt_for_more.png" }
+Press_To_Select = image { "press_to_select.png", pinned=true }
+Tilt_For_More = image { "tilt_for_more.png", pinned=true}
+Neighbor_For_Details = image { "neighbor_for_details.png", pinned=true }
+
+Dark_Purple = image { "dark_purple.png" }
 
 Nan = image { "nan.png" }
 

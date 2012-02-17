@@ -148,23 +148,28 @@ namespace TotalsGame
         if(p.x < 0)
         {
             o.x -= p.x;
-            s.x -= p.x;
+            s.x += p.x;
             p.x = 0;
         }
 
         if(p.y < 0)
         {
             o.y -= p.y;
-            s.y -= p.y;
+            s.y += p.y;
             p.y = 0;
         }
 
-        if(s.x == 0 && s.y == 0)
+        if(p.x + s.x > 16)
         {
-            return;
+            s.x = 16 - p.x;
         }
 
-        if(p.x > 16 || p.y > 16)
+        if(p.y + s.y > 16)
+        {
+            s.y = 16 - p.y;
+        }
+
+        if(s.x == 0 || s.y == 0)
         {
             return;
         }
@@ -177,9 +182,6 @@ namespace TotalsGame
 
 	void TotalsCube::DrawVaultDoorsClosed()
 	{
-        VidMode_BG0_SPR_BG1 mode(vbuf);
-		mode.init();
-
 		const int x = TokenView::Mid.x;
 		const int y = TokenView::Mid.y;
 
@@ -191,9 +193,6 @@ namespace TotalsGame
 
 	void TotalsCube::DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage) 
 	{
-        VidMode_BG0_SPR_BG1 mode(vbuf);
-		mode.init();
-
 		const int x = TokenView::Mid.x;
 		const int y = TokenView::Mid.y;
 
@@ -218,9 +217,6 @@ namespace TotalsGame
 
 	void TotalsCube::DrawVaultDoorsOpenStep2(int offset, const AssetImage *innerImage) 
 	{
-        VidMode_BG0_SPR_BG1 mode(vbuf);
-        backgroundLayer.init();
-
 		const int x = TokenView::Mid.x;
 		const int y = TokenView::Mid.y;
 

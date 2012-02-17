@@ -5,9 +5,11 @@
 
 namespace TotalsGame {
 
+    DEFINE_POOL(TiltFlowView);
+
 static bool OkayToPaint(){return true;} //todo member of view perhaps?
 
-    const AssetImage *TiltFlowView::kMarquee[2] = {&Tilt_For_More, &Press_To_Select };
+    const PinnedAssetImage *TiltFlowView::kMarquee[2] = {&Tilt_For_More, &Press_To_Select };
 
     TiltFlowMenu *TiltFlowView::GetTiltFlowMenu()
     {
@@ -91,20 +93,22 @@ static bool OkayToPaint(){return true;} //todo member of view perhaps?
       c->RemoveEventHandler(&eventHandler);
     }
 
-    void TiltFlowView::Paint(TotalsCube *c) {
+    void TiltFlowView::Paint() {
+        TotalsCube *c = GetCube();
       PaintInner(c);
       c->ClipImage(&VaultDoor, Vec2(0, 1-16)); // header image
       PaintFooter(c);
     }
 
     void TiltFlowView::PaintFooter(TotalsCube *c) {
-      c->ClipImage(&VaultDoor, Vec2(0, 128-32));
-      const AssetImage *image = kMarquee[mMarquee % 2];
-      c->Image(image, Vec2((16-image->width)>>1, 16-3)/* TODO approximation! 26/8 != 3*/);
+      c->ClipImage(&VaultDoor, Vec2(0, 16-4));
+      const PinnedAssetImage *image = kMarquee[mMarquee % 2];
+      c->backgroundLayer.setSpriteImage(0, *image, 0);
+      c->backgroundLayer.moveSprite(0, Vec2((128-8*image->width)>>1, 128-26));
     }
 
     void TiltFlowView::PaintInner(TotalsCube *c) {
-      //TODO c.FillRect(new Color(75, 0, 85), 0, 8, 128, 128-32-8);
+      c->Image(&Dark_Purple, Vec2(0, 1), Vec2(0,0), Vec2(16, 16-4-1));
         if (menu->IsPicked()) {
         int x, w;
         ClipIt(24, &x, &w); // magic
@@ -132,7 +136,7 @@ static bool OkayToPaint(){return true;} //todo member of view perhaps?
     void TiltFlowView::PixelToTileImage(const AssetImage *image, const Vec2 &p, const Vec2 &o, const Vec2 &s)
     {
         //todo tiles or sprites?
-        GetCube()->Image(image, p/8, o/8, s/8);
+        GetCube()->ClipImage(image, p/8);//, o/8, s/8);
     }
 
     void TiltFlowView::DoPaintItem(TiltFlowItem *item, int x, int w) {
@@ -140,7 +144,7 @@ static bool OkayToPaint(){return true;} //todo member of view perhaps?
       const int h = 80; // magic
       if (item->HasImage()) {
         if (x==0 && w<80) {
-            PixelToTileImage(item->GetImage(), Vec2(w-80, y), item->GetSourcePosition(), Vec2(80, h)); //todo wtf is this?! , 1, 0);
+            PixelToTileImage(item->GetImage(), Vec2(w-80, y), item->GetSourcePosition(), Vec2(80, h)); //todo wtf is this extra parameters?! , 1, 0);
         } else {
             PixelToTileImage(item->GetImage(), Vec2(x, y), item->GetSourcePosition(), Vec2(w, h));//TODO same as above!, 1, 0);
         }
