@@ -40,7 +40,7 @@ class World:
 	def __init__(self, dir):
 		self.dir = dir
 		self.script = GameScript(self, os.path.join(dir, "game-script.xml"))
-		self.dialog = DialogDatabase(self, os.path.join(dir, "dialog-database.xml"))
+		self.dialogs = DialogDatabase(self, os.path.join(dir, "dialog-database.xml"))
 		self.items = ItemDatabase(self, os.path.join(dir,"item-database.xml"))
 
 		# list maps in alphabetical order
@@ -97,9 +97,9 @@ class World:
 			#	if os.path.exists(name + "_overlay.png"):
 			#		lua.write("Overlay_%s = image{ \"%s_overlay.png\", width=16, height=16 }\n" % (name,name))
 			lua.write("\n-- DIALOG IMAGES\n")
-			for name in self.dialog.list_npc_image_names():
+			for name in self.dialogs.list_npc_image_names():
 				lua.write("NPC_%s = image{ \"%s.png\", width=32, height=32 }\n" % (name,name))
-			for name in self.dialog.list_detail_image_names():
+			for name in self.dialogs.list_detail_image_names():
 				lua.write("NPC_Detail_%s = image{ \"%s.png\" }\n" % (name,name))
 		
 		with open(os.path.join(self.dir,"content.gen.cpp"), "w") as src:
@@ -107,7 +107,7 @@ class World:
 			src.write("#include \"Content.h\"\n#include \"assets.gen.h\"\n\n")
 			src.write("const unsigned gMapCount = %d;\n" % len(self.maps))
 			src.write("const unsigned gQuestCount = %d;\n" % len(self.script.quests))
-			src.write("const unsigned gDialogCount = %d;\n\n" % len(self.dialog.dialogs))
+			src.write("const unsigned gDialogCount = %d;\n\n" % len(self.dialogs.dialogs))
 			for map in self.maps:
 				map.write_source_to(src)
 			src.write("\nconst MapData gMapData[] = {\n")
@@ -121,16 +121,18 @@ class World:
 				src.write("    { 0x%x, 0x%x },\n" % (m.index, m.roomat(q.x, q.y).lid))
 			src.write("};\n\n")
 			
-			for d in self.dialog.dialogs:
+			for d in self.dialogs.dialogs:
 				src.write("static const DialogTextData %s_lines[] = {\n" % d.id)
 				for l in d.lines:
 					src.write("    { &NPC_Detail_%s, \"%s\" },\n" % (l.image, l.text))
 				src.write("};\n")
 			src.write("\nconst DialogData gDialogData[] = {\n")
-			for d in self.dialog.dialogs:
+			for d in self.dialogs.dialogs:
 				src.write("    { &NPC_%s, %d, %s_lines },\n" % (d.npc, len(d.lines), d.id))
 
 			src.write("};\n\n")
+			self.items.write(src)
+
 
 
 if __name__ == "__main__": 

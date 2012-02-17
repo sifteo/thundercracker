@@ -47,7 +47,9 @@ class Trigger:
 		# type-specific initialization
 		
 		if self.type == TRIGGER_ITEM:
-			self.itemid = int(obj.props["id"])
+			itemid = obj.props["id"]
+			assert itemid in room.map.world.items.item_dict, "Item is undefined (" + itemid + " ) in map: " + room.map.id
+			self.item = room.map.world.items.item_dict[itemid]
 			if self.quest is not None:
 				if self.qflag is None:
 					self.qflag = self.quest.add_flag_if_undefined(self.id)
@@ -62,8 +64,8 @@ class Trigger:
 		
 		elif self.type == TRIGGER_NPC:
 			did = obj.props["id"].lower()
-			assert did in room.map.world.dialog.dialog_dict, "Invalid Dialog ID in Map: " + room.map.id
-			self.dialog = room.map.world.dialog.dialog_dict[did]
+			assert did in room.map.world.dialogs.dialog_dict, "Invalid Dialog ID in Map: " + room.map.id
+			self.dialog = room.map.world.dialogs.dialog_dict[did]
 		
 		elif self.type == TRIGGER_TRAPDOOR:
 			m = EXP_LOCATION.match(obj.props.get("respawn"))
@@ -95,7 +97,7 @@ class Trigger:
 	def write_item_to(self, src):
 		src.write("{ ")
 		self.write_trigger_to(src)
-		src.write(", %d }, " % self.itemid)
+		src.write(", %d }, " % self.item.index)
 	
 	def write_gateway_to(self, src):
 		src.write("{ ")

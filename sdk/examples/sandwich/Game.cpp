@@ -361,6 +361,7 @@ unsigned Game::OnPassiveTrigger() {
     for(unsigned i=1; i<=7; ++i) { // magic
       mPlayer.CurrentView()->DrawTrapdoorFrame(i);
       Paint(true);
+      Paint(true);
     }
     // animate pearl falling TODO
     mPlayer.CurrentView()->HidePlayer();
@@ -370,6 +371,7 @@ unsigned Game::OnPassiveTrigger() {
     // animate the tiles closing
     for(int i=6; i>=0; --i) { // magic
       mPlayer.CurrentView()->DrawTrapdoorFrame(i);
+      Paint(true);
       Paint(true);
     }
     // pan to respawn point

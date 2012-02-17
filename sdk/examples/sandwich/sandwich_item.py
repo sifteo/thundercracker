@@ -5,20 +5,19 @@ class ItemDatabase:
 		self.world = world
 		self.path = path
 		doc = lxml.etree.parse(path)
-		items = [ Item(xml) for xml in doc.findall("item") ]
-		self.items = [ None for _ in range(len(items)) ]
-		for item in items:
-			assert item.icon < len(items), "Icon out of range"
-			self.items[item.icon] = item
-		
-		self.item_dict = dict((item.id, item) for item in items)
+		self.items = [ Item(xml, i) for i,xml in enumerate(doc.findall("item")) ]
+		self.item_dict = dict((item.id, item) for item in self.items)
 
-
+	def write(self, src):
+		src.write("const InventoryData gInventoryData[] = { \n")
+		for item in self.items:
+			src.write("  { \"%s\", \"%s\" },\n" % (item.name, item.description))
+		src.write("};\n\n")
 
 class Item:
-	def __init__(self, xml):
-		self.icon = int(xml.get("icon", ""))
+	def __init__(self, xml, index):
 		self.id = xml.get("id").lower()
 		self.name = xml.find("name").text.strip()
 		self.description = "\\n".join((line.strip() for line in xml.find("description").text.strip().splitlines()))
-		print self.description
+		self.index = index
+		#print self.description

@@ -30,6 +30,11 @@ struct QuestData {
     uint8_t roomId;
 };
 
+struct InventoryData {
+    const char* name;
+    const char* description;
+};
+
 struct DialogTextData {
     const AssetImage* detail;
     const char* line;
@@ -154,3 +159,4 @@ extern const unsigned gDialogCount;
 extern const MapData gMapData[];
 extern const QuestData gQuestData[];
 extern const DialogData gDialogData[];
+extern const InventoryData gInventoryData[];
