@@ -427,7 +427,9 @@ void SvmProgram::emulateSUB8Imm(uint16_t instr)
     // TODO
 }
 
+///////////////////////////////////
 // D A T A   P R O C E S S I N G
+///////////////////////////////////
 
 void SvmProgram::emulateANDReg(uint16_t instr)
 {
@@ -557,27 +559,45 @@ void SvmProgram::emulateMVNReg(uint16_t instr)
     regs[Rdn] = ~regs[Rm];
 }
 
+/////////////////////////////////////
 // M I S C   I N S T R U C T I O N S
+/////////////////////////////////////
 
-void SvmProgram::emulateSXTH(uint16_t isntr)
+void SvmProgram::emulateSXTH(uint16_t instr)
 {
-    // TODO
+    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rdn = instr & 0x7;
+
+    regs[Rdn] = SignExtend<int32_t, 16>(regs[Rm]);
 }
 
-void SvmProgram::emulateSXTB(uint16_t isntr)
+void SvmProgram::emulateSXTB(uint16_t instr)
 {
-    // TODO
+    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rdn = instr & 0x7;
+
+    regs[Rdn] = SignExtend<int32_t, 8>(regs[Rm]);
 }
 
-void SvmProgram::emulateUXTH(uint16_t isntr)
+void SvmProgram::emulateUXTH(uint16_t instr)
 {
-    // TODO
+    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rdn = instr & 0x7;
+
+    regs[Rdn] = regs[Rm] & 0xFFFF;
 }
 
-void SvmProgram::emulateUXTB(uint16_t isntr)
+void SvmProgram::emulateUXTB(uint16_t instr)
 {
-    // TODO
+    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rdn = instr & 0x7;
+
+    regs[Rdn] = regs[Rm] & 0xFF;
 }
+
+///////////////////////////////////////////////
+// B R A N C H I N G   I N S T R U C T I O N S
+///////////////////////////////////////////////
 
 void SvmProgram::emulateB(uint16_t instr)
 {

@@ -213,10 +213,10 @@ private:
     void emulateMVNReg(uint16_t instr);     // MVN (register)
 
     // misc
-    void emulateSXTH(uint16_t isntr);       // SXTH
-    void emulateSXTB(uint16_t isntr);       // SXTB
-    void emulateUXTH(uint16_t isntr);       // UXTH
-    void emulateUXTB(uint16_t isntr);       // UXTB
+    void emulateSXTH(uint16_t instr);       // SXTH
+    void emulateSXTB(uint16_t instr);       // SXTB
+    void emulateUXTH(uint16_t instr);       // UXTH
+    void emulateUXTB(uint16_t instr);       // UXTB
 
     void emulateB(uint16_t instr);          // B
     void emulateCondB(uint16_t instr);      // B
