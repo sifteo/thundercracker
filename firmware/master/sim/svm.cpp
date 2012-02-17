@@ -264,7 +264,7 @@ void SvmProgram::execute16(uint16_t instr)
         return;
     }
     if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
-        uint8_t isLoad = instr & (1 << 11);
+        uint16_t isLoad = instr & (1 << 11);
         if (isLoad)
             emulateLDRImm(instr);
         else
