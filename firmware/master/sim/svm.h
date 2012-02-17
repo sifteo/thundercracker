@@ -231,6 +231,10 @@ private:
     void emulateSVC(uint16_t instr);
 
     // utils
+    uint32_t ROR(uint32_t data, uint32_t ror) {
+        return (data << (32 - ror)) | (data >> ror);
+    }
+
     inline void BranchWritePC(uint32_t addr) {
         regs[REG_PC] = addr & 0xfffffffe;
     }
