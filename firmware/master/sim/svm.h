@@ -29,7 +29,7 @@ public:
 private:
     // 16-bit thumb instruction validators
     static const uint16_t AluMask           = 0x3 << 14;    // 0b11xxxxxx xxxxxxxx
-    static const uint16_t AluTest           = 0;
+    static const uint16_t AluTest           = 0x0;          // 0b00xxxxxx xxxxxxxx
 
     static const uint16_t DataProcMask      = 0x3f << 10;   // 0b111111xx xxxxxxxx
     static const uint16_t DataProcTest      = 0x10 << 10;   // 0b010000xx xxxxxxxx
@@ -114,7 +114,7 @@ private:
     uint32_t regs[NUM_GP_REGS];     // general purpose registers
     uint32_t cpsr;                  // current program status register
 
-    uint32_t phys2virtAddr(uint32_t virtualAddr) {
+    uint32_t virt2physAddr(uint32_t virtualAddr) {
         return ((virtualAddr - 0x10000) & 0xFFFFF) + 0x20008000;
     }
 
