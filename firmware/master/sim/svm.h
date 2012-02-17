@@ -76,6 +76,25 @@ private:
     static const uint32_t MovWtMask = 0x1f6e11 << 11;   // 0b11111011 01110000, 10001xxx xxxxxxxx
     static const uint32_t MovWtTest = 0x1e4800 << 11;   // 0b11110x10 x100xxxx, 0xxx0xxx xxxxxxxx
 
+    // indirect operation masks
+    static const uint32_t CallMask = (1 << 31) | 0x3;               // 1xxxxxxx xxxxxxxx xxxxxxxx xxxxxx11
+    static const uint32_t CallTest = 0x0;                           // 0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa00
+
+    static const uint32_t TailCallMask = (1 << 31) | 0x1;           // 1xxxxxxx xxxxxxxx xxxxxxxx xxxxxx01
+    static const uint32_t TailCallTest = 0x1;                       // 0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa01
+
+    static const uint32_t IndirectSyscallMask = (0x3 << 30) | 0x1;  // 11xxxxxx xxxxxxxx xxxxxxxx xxxxxxx1
+    static const uint32_t IndirectSyscallTest = (0x1 << 31);        // 10nnnnnn nnnnnnnn iiiiiiii iiiiiii0
+
+    static const uint32_t TailSyscallMask = (0x3 << 30) | 0x1;      // 11xxxxxx xxxxxxxx xxxxxxxx xxxxxxx1
+    static const uint32_t TailSyscallTest = (0x1 << 31) | 0x1;      // 10nnnnnn nnnnnnnn iiiiiiii iiiiiii1
+
+    static const uint32_t AddropMask = 0x7 << 29;                   // 111xxxxx xxxxxxxx xxxxxxxx xxxxxxxx
+    static const uint32_t AddropTest = 0x3 << 30;                   // 110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa
+
+    static const uint32_t AddropFlashMask = 0x7 << 29;              // 111xxxxx xxxxxxxx xxxxxxxx xxxxxxxx
+    static const uint32_t AddropFlashTest = 0x7 << 29;              // 111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa
+
     struct Segment {
         uint32_t start;
         uint32_t size;
@@ -229,6 +248,7 @@ private:
     void emulateLDRLitPool(uint16_t instr); // LDR (literal)
 
     void emulateSVC(uint16_t instr);
+    void svcIndirectOperation(uint8_t imm8);
 
     // utils
     uint32_t ROR(uint32_t data, uint32_t ror) {
@@ -242,8 +262,8 @@ private:
     // http://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
     template <typename T, unsigned B>
     inline T SignExtend(const T x) {
-      struct { T x:B; } s;
-      return s.x = x;
+        struct { T x:B; } s;
+        return s.x = x;
     }
 };
 

@@ -676,11 +676,95 @@ void SvmProgram::emulateLDRLitPool(uint16_t instr)
 //    regs[Rt] = mem.word(addr);
 }
 
+/*
+SVC encodings:
+
+  11011111 0xxxxxxx     (1) Indirect operation
+  11011111 10xxxxxx     (2) Direct syscall #0-63
+  11011111 110xxxxx     (3) SP = validate(SP - imm5*4)
+  11011111 11100rrr     (4) r8-9 = validate(rN)
+  11011111 11101rrr     (5) Reserved
+  11011111 11110rrr     (6) Call validate(rN), with SP adjust
+  11011111 11111rrr     (7) Tail call validate(rN), with SP adjust
+*/
 void SvmProgram::emulateSVC(uint16_t instr)
 {
     unsigned imm8 = instr & 0xFF;
-    // TODO: find params
-    // syscall(imm8);
+    if ((imm8 & (1 << 7)) == 0) {
+        svcIndirectOperation(imm8);
+        LOG(("indirect syscall\n"));
+        return;
+    }
+    if ((imm8 & (0x2 << 6)) == (0x2 << 6)) {
+        LOG(("direct syscall\n"));
+        return;
+    }
+    if ((imm8 & (0x6 << 5)) == (0x6 << 5)) {
+        LOG(("SP = validate(SP - imm5*4)\n"));
+        return;
+    }
+
+    uint8_t sub = (imm8 >> 3) & 0x1f;
+    switch (sub) {
+    case 0x1c:  // 0b11100
+        LOG(("svc: r8-9 = validate(rN)\n"));
+        return;
+    case 0x1d:  // 0b11101
+        LOG(("svc: reserved\n"));
+        return;
+    case 0x1e:  // 0b11110
+        LOG(("svc: Call validate(rN), with SP adjust\n"));
+        return;
+    case 0x1f:  // 0b11110
+        LOG(("svc: Tail call validate(rN), with SP adjust\n"));
+        return;
+    default:
+        ASSERT(0 && "unknown sub op for svc");
+        break;
+    }
+    ASSERT(0 && "unhandled SVC");
+}
+
+/*
+When the MSB of the SVC immediate is clear, the other 7 bits are multiplied by
+four and added to the base of the current page, to form the address of a
+32-bit literal. This 32-bit literal encodes an indirect operation to perform:
+
+  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa00   (1) Call validate(F+a*4), SP -= n*4
+  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa01   (2) Tail call validate(F+a*4), SP -= n*4
+  0xxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x   (3) Reserved
+  10nnnnnn nnnnnnnn iiiiiiii iiiiiii0   (4) Syscall #0-8191, with #imm15
+  10nnnnnn nnnnnnnn iiiiiiii iiiiiii1   (4) Tail syscall #0-8191, with #imm15
+  110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (5) Addrop #0-31 on validate(a)
+  111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (6) Addrop #0-31 on validate(F+a)
+
+  (F = 0x80000000, flash segment virtual address)
+*/
+void SvmProgram::svcIndirectOperation(uint8_t imm8)
+{
+    // we already know the MSB of imm8 is clear by the fact that we're being called here.
+    uint32_t literal = (imm8 * 4) + flashRegion.baseAddress();
+    if ((literal & CallMask) == CallTest) {
+        LOG(("indirect call\n"));
+    }
+    else if ((literal & TailCallMask) == TailCallTest) {
+        LOG(("indirect tail call\n"));
+    }
+    else if ((literal & IndirectSyscallMask) == IndirectSyscallTest) {
+        LOG(("indirect syscall\n"));
+    }
+    else if ((literal & TailSyscallMask) == TailSyscallTest) {
+        LOG(("indirect tail syscall\n"));
+    }
+    else if ((literal & AddropMask) == AddropTest) {
+        LOG(("Addrop #0-31 on validate(a)\n"));
+    }
+    else if ((literal & AddropFlashMask) == AddropFlashTest) {
+        LOG(("Addrop #0-31 on validate(F+a)\n"));
+    }
+    else {
+        ASSERT(0 && "unhandled svc Indirect Operation");
+    }
 }
 
 /*
@@ -788,7 +872,7 @@ bool SvmProgram::loadElfFile(unsigned addr, unsigned len)
             progInfo.textRodata.paddr = pHeader.p_paddr;
             break;
         case (Elf::PF_Read | Elf::PF_Write):
-            if (pHeader.p_memsz >= 0 && pHeader.p_filesz == 0) {
+            if (pHeader.p_memsz > 0 && pHeader.p_filesz == 0) {
                 LOG(("bss segment found\n"));
                 progInfo.bss.start = pHeader.p_offset;
                 progInfo.bss.size = pHeader.p_memsz;
