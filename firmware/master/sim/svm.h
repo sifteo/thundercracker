@@ -2,29 +2,26 @@
 #define SVM_H
 
 #include <stdint.h>
+#include "flashlayer.h"
 
-enum Conditions {
-    EQ = 0,    // Equal
-    NE = 1,    // Not Equal
-    CS = 2,    // Carry Set
-    CC = 3,    // Carry Clear
-    MI = 4,    // Minus, Negative
-    PL = 5,    // Plus, positive, or zero
-    VS = 6,    // Overflow
-    VC = 7,    // No overflow
-    HI = 8,    // Unsigned higher
-    LS = 9,    // Unsigned lower or same
-    GE = 10,    // Signed greater than or equal
-    LT = 11,    // Signed less than
-    GT = 12,    // Signed greater than
-    LE = 13,    // Signed less than or equal
-    NoneAL = 14 // None, always, unconditional
+class SvmProgram;
+
+class SvmMemory {
+public:
+    uint32_t word(uint32_t address);
+
+private:
+    static const unsigned MEM_SIZE = 16 * 1024;
+    uint8_t mem[MEM_SIZE];
+
+    friend class SvmProgram;
 };
 
 class SvmProgram {
 public:
     SvmProgram();
 
+    uint16_t fetch();
     void run();
     void cycle();
     void validate();
@@ -104,6 +101,8 @@ private:
     bool isValid16(uint16_t instr);
     bool isValid32(uint32_t instr);
 
+    FlashRegion flashRegion;
+    uint16_t currentRegionOffset;
     ProgramInfo progInfo;
 
     static const unsigned NUM_GP_REGS = 16;
@@ -113,9 +112,31 @@ private:
     uint32_t regs[NUM_GP_REGS];     // general purpose registers
     uint32_t cpsr;                  // current program status register
 
-    bool conditionPassed(uint32_t instr);
+    uint32_t phys2virtAddr(uint32_t virtualAddr) {
+        return ((virtualAddr - 0x10000) & 0xFFFFF) + 0x20008000;
+    }
+
+    bool conditionPassed(uint8_t cond);
 
     InstructionSize instructionSize(uint16_t instr) const;
+
+    enum Conditions {
+        EQ = 0,    // Equal
+        NE = 1,    // Not Equal
+        CS = 2,    // Carry Set
+        CC = 3,    // Carry Clear
+        MI = 4,    // Minus, Negative
+        PL = 5,    // Plus, positive, or zero
+        VS = 6,    // Overflow
+        VC = 7,    // No overflow
+        HI = 8,    // Unsigned higher
+        LS = 9,    // Unsigned lower or same
+        GE = 10,    // Signed greater than or equal
+        LT = 11,    // Signed less than
+        GT = 12,    // Signed greater than
+        LE = 13,    // Signed less than or equal
+        NoneAL = 14 // None, always, unconditional
+    };
 
     // status flag helpers
     inline bool getNeg() const {
@@ -196,6 +217,8 @@ private:
     void emulateUXTB(uint16_t isntr);       // UXTB
 
     void emulateB(uint16_t instr);          // B
+    void emulateCondB(uint16_t instr);      // B
+    void emulateCBZ_CBNZ(uint16_t instr);   // CBNZ, CBZ
 
     void emulateSTRImm(uint16_t instr);     // STR (immediate)
     void emulateLDRImm(uint16_t instr);     // LDR (immediate)
@@ -205,8 +228,16 @@ private:
 
     void emulateSVC(uint16_t instr);
 
-    void BranchWritePC(uint32_t addr) {
+    // utils
+    inline void BranchWritePC(uint32_t addr) {
         regs[REG_PC] = addr & 0xfffffffe;
+    }
+
+    // http://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
+    template <typename T, unsigned B>
+    inline T SignExtend(const T x) {
+      struct { T x:B; } s;
+      return s.x = x;
     }
 };
 
