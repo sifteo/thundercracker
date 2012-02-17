@@ -47,7 +47,10 @@ typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-firs
  */
 
 #define siftmain main
+
+#ifdef __clang__     // Workaround for gcc's complaints about main() not returning int
 void main(void);
+#endif
 
 /*
  * XXX: It would be nice to further compress the loadstream when storing
