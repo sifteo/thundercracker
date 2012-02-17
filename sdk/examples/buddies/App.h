@@ -56,7 +56,7 @@ private:
     void UpdateGameState(float dt);
     
     void ShufflePieces();
-    void DrawShuffleHintBars();
+    void ChooseShuffleHint();
     
     void UpdateSwap(float dt);
     void OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1);
@@ -90,10 +90,9 @@ private:
     float mShuffleScoreTime;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     float mShuffleHintTimer;
-    bool mShuffleHintEnabled;
-    int mShuffleHintSkipPiece; // Hacky...?
-    int mShuffleHintCube0; // Hacky...
-    int mShuffleHintCube1; // Hacky...
+    int mShuffleHintPieceSkip;
+    int mShuffleHintPiece0;
+    int mShuffleHintPiece1;
     
     // Puzzle Mode
     unsigned int mPuzzleIndex;
