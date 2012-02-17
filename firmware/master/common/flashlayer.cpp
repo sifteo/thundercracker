@@ -5,7 +5,8 @@
 
 #include <string.h>
 
-FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
+
+FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS] BLOCK_ALIGN;
 uint32_t FlashLayer::validBlocksMask = 0;
 uint32_t FlashLayer::freeBlocksMask = 0;
 

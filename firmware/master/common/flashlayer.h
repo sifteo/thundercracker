@@ -19,6 +19,7 @@ class FlashLayer
 public:
     static const unsigned NUM_BLOCKS = 16;
     static const unsigned BLOCK_SIZE = 256;
+    #define BLOCK_ALIGN __attribute__((aligned(256)))
 
     static void init();
 
@@ -30,7 +31,7 @@ private:
         uint32_t address;
         char data[BLOCK_SIZE];
         // TODO - track multiple references? timestamp?
-    }  __attribute__((aligned(sizeof(uint32_t))));
+    };
 
     static CachedBlock blocks[NUM_BLOCKS];
     static uint32_t freeBlocksMask;
