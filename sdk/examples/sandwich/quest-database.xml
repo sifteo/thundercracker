@@ -1,4 +1,4 @@
-<game-script>
+<quest-database>
 	<quest id="test" map="sandbox" x="2" y="1" />
 	<quest id="tutorial" map="castle" x="1" y="2" />
-</game-script>
+</quest-database>

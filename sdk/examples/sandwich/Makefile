@@ -50,11 +50,12 @@ content.gen.lua: content_crc.txt
 CONTENT_TOOLS = \
 	sandwich.py \
 	sandwich_dialog.py \
+	sandwich_item.py \
 	sandwich_map.py \
-	sandwich_script.py \
+	sandwich_quest.py \
 	tmx.py \
 	misc.py
 
 
-content_crc.txt: $(CONTENT_TOOLS) *.tmx game-script.xml dialog-database.xml
+content_crc.txt: $(CONTENT_TOOLS) *.tmx *-database.xml
 	python sandwich.py

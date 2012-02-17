@@ -27,14 +27,14 @@ class Trigger:
 		self.qflag = None
 		self.unlockflag = None
 		if "quest" in obj.props:
-			self.quest = room.map.world.script.getquest(obj.props["quest"])
+			self.quest = room.map.world.quests.getquest(obj.props["quest"])
 			self.minquest = self.quest
 			self.maxquest = self.quest
 			if "questflag" in obj.props:
 				self.qflag = self.quest.flag_dict[obj.props["questflag"]]
 		else:
-			self.minquest = room.map.world.script.getquest(obj.props["minquest"]) if "minquest" in obj.props else None
-			self.maxquest = room.map.world.script.getquest(obj.props["maxquest"]) if "maxquest" in obj.props else None
+			self.minquest = room.map.world.quests.getquest(obj.props["minquest"]) if "minquest" in obj.props else None
+			self.maxquest = room.map.world.quests.getquest(obj.props["maxquest"]) if "maxquest" in obj.props else None
 			if self.minquest is not None and self.maxquest is not None:
 				assert self.minquest.index <= self.maxquest.index, "MaxQuest > MinQuest for object in map: " + room.map.id
 		if self.quest is None and self.minquest is None and self.maxquest is None and room.map.quest is not None:
@@ -43,7 +43,7 @@ class Trigger:
 			self.maxquest = room.map.quest
 			self.qflag = self.quest.add_flag_if_undefined(obj.props["questflag"]) if "questflag" in obj.props else None
 		if self.quest is None and "unlockflag" in obj.props:
-			self.unlockflag = room.map.world.script.add_flag_if_undefined(obj.props["unlockflag"])
+			self.unlockflag = room.map.world.quests.add_flag_if_undefined(obj.props["unlockflag"])
 		# type-specific initialization
 		
 		if self.type == TRIGGER_ITEM:
@@ -54,7 +54,7 @@ class Trigger:
 				if self.qflag is None:
 					self.qflag = self.quest.add_flag_if_undefined(self.id)
 			elif self.unlockflag is None:
-				self.unlockflag = room.map.world.script.add_flag_if_undefined(self.id)
+				self.unlockflag = room.map.world.quests.add_flag_if_undefined(self.id)
 		
 		elif self.type == TRIGGER_GATEWAY:
 			m = EXP_GATEWAY.match(obj.props.get("target", ""))

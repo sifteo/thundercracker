@@ -8,7 +8,7 @@ class Door:
 		room.door = self
 		self.flag = room.map.quest.add_flag_if_undefined(self.id) \
 			if room.map.quest is not None \
-			else room.map.world.script.add_flag_if_undefined(self.id)
+			else room.map.world.quests.add_flag_if_undefined(self.id)
 
 class AnimatedTile:
 	def __init__(self, tile):
@@ -36,7 +36,7 @@ class Map:
 		self.count = self.width * self.height
 		assert self.count > 0, "map is empty: " + self.id
 		assert self.count <= 81, "too many rooms in map (max 72): " + self.id
-		self.quest = world.script.getquest(self.raw.props["quest"]) if "quest" in self.raw.props else None
+		self.quest = world.quests.getquest(self.raw.props["quest"]) if "quest" in self.raw.props else None
 		self.rooms = [Room(self, i) for i in range(self.count)]
 		# infer portals
 		for r in self.rooms:
