@@ -5,7 +5,7 @@ DIS=../deps/osx/x86_64/llvm-3.0/bin/llvm-dis
 
 make DEBUG=1 LLVM_LIB=~/src/llvm-3.0/Debug+Asserts/lib -j 4
 
-$CLANG -emit-llvm -m32 -fno-stack-protector -ffreestanding \
+$CLANG -emit-llvm -m32 -fno-stack-protector -ffreestanding -Wno-gnu \
     -fno-exceptions -fno-threadsafe-statics -fno-rtti -O2 -c \
     -I ../sdk/include test.cpp
     
