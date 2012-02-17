@@ -31,6 +31,7 @@ class TotalsCube;
     public:
 
         TransitionView(TotalsCube *c);
+        virtual ~TransitionView() {}
 
       void SetTransitionAmount(float u);
 

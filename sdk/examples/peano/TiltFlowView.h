@@ -16,6 +16,7 @@ namespace TotalsGame {
           TiltFlowView *owner;
       public:
           EventHandler(TiltFlowView* v) {owner = v;}
+          void OnCubeTouch(TotalsCube *cube, bool touching) {owner->OnButton(cube, touching);}
       };
       EventHandler eventHandler;
 
@@ -44,6 +45,7 @@ private:
     float mLastUpdate;
 public:
     TiltFlowView(TotalsCube *c, TiltFlowMenu *_menu);
+    virtual ~TiltFlowView() {}
 
     int GetItemIndex();
     TiltFlowItem *GetItem();

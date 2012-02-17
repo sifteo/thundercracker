@@ -7,6 +7,7 @@ namespace TotalsGame
 
 	View::View(TotalsCube *_cube)
 	{
+        mCube = NULL;
 		SetCube(_cube);
 		mCube->SetView(this);
 	}

@@ -47,7 +47,7 @@ private:
     bool IsDone();
 
     void Tick(float dt);
-private:
+
     void Pick();
 
   public:

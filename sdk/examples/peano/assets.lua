@@ -6,13 +6,13 @@ Accent = image{ "accent.png" }
 Accent_Current = image{ "accent_current.png" }
 Accent_Target = image{ "accent_target.png" }
 
-Hint_0 = image { "hint_0.png" }
-Hint_1 = image { "hint_1.png" }
-Hint_2 = image { "hint_2.png" }
-Hint_3 = image { "hint_3.png" }
-Hint_4 = image { "hint_4.png" }
-Hint_5 = image { "hint_5.png" }
-Hint_6 = image { "hint_6.png" }
+Hint_0 = image { "hint_0.png", pinned=true }
+Hint_1 = image { "hint_1.png", pinned=true }
+Hint_2 = image { "hint_2.png", pinned=true }
+Hint_3 = image { "hint_3.png", pinned=true }
+Hint_4 = image { "hint_4.png", pinned=true }
+Hint_5 = image { "hint_5.png", pinned=true }
+Hint_6 = image { "hint_6.png", pinned=true }
 
 Icon_Continue = image { "icon_continue.png" }
 Icon_Random = image { "icon_random.png" }
@@ -124,6 +124,7 @@ sfx_Fast_Tick = sound{ "PV_fast_tick.raw" }
 sfx_PeanosVaultMenu = sound { "PeanosVaultMenu.raw" }
 sfx_Menu_Tilt_Stop = sound { "PV_menu_tilt_stop.raw" }
 sfx_Menu_Tilt = sound { "PV_menu_tilt.raw" }
+sfx_Tutorial_Correct = sound { "PV_tutorial_correct.raw" }
 
 
 

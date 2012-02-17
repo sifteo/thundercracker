@@ -4,6 +4,7 @@
 #include "StingController.h"
 #include "PuzzleController.h"
 #include "MenuController.h"
+#include "InterstitialController.h"
 
 namespace TotalsGame
 {
@@ -133,16 +134,17 @@ namespace TotalsGame
 		static StingController stingController(this);
 		static PuzzleController puzzleController(this);
         static MenuController menuController(this);
+        static InterstitialController interstitialController(this);
 
 		sceneMgr
 			.State("sting", &stingController)                //
 			.State("init", &Game::Initialize)
             .State("menu", &menuController)
-/*			.State("tutorial", new TutorialController(this))          //
-			.State("interstitial", new InterstitialController(this))  //
-*/			.State("puzzle", &puzzleController)
-/*			.State("advance", Advance)
-			.State("victory", new VictoryController(this))            //
+//			.State("tutorial", new TutorialController(this))          //
+            .State("interstitial", &interstitialController)  //
+            .State("puzzle", &puzzleController)
+            .State("advance", &Game::Advance)
+/*			.State("victory", new VictoryController(this))            //
 			.State("isover", IsGameOver)
 */
 			.Transition("sting", "Next", "init")
@@ -162,7 +164,7 @@ namespace TotalsGame
 			.Transition("isover", "Yes", "menu")
 			.Transition("isover", "No", "interstitial")
 
-            .SetState("menu");//todo sting");
+            .SetState("sting");
 
 	}
 
@@ -210,30 +212,31 @@ namespace TotalsGame
 		return "ReturningPlayer";
 	}
 
-	const char *Game::Advance(const char *transitionId)
+    const char *Game::Advance()
 	{
-		previousPuzzle = currentPuzzle;
-		if (currentPuzzle == NULL)
+        Game &g = Game::GetInstance();
+        g.previousPuzzle = g.currentPuzzle;
+        if (g.currentPuzzle == NULL)
 		{ 
 			return "RandComplete";
 		}
-		currentPuzzle->SaveAsSolved();
-		Puzzle *nextPuzzle = currentPuzzle->GetNext(NUMBER_OF_CUBES);
+        g.currentPuzzle->SaveAsSolved();
+        Puzzle *nextPuzzle = g.currentPuzzle->GetNext(NUMBER_OF_CUBES);
 		if (nextPuzzle == NULL)
 		{
-			currentPuzzle->chapter->SaveAsSolved();
-			currentPuzzle = NULL;
+            g.currentPuzzle->chapter->SaveAsSolved();
+            g.currentPuzzle = NULL;
 			return "GameComplete";
 		} 
-		else if (nextPuzzle->chapter == currentPuzzle->chapter)
+        else if (nextPuzzle->chapter == g.currentPuzzle->chapter)
 		{
-			currentPuzzle = nextPuzzle;
+            g.currentPuzzle = nextPuzzle;
 			return "NextPuzzle";
 		}
 		else 
 		{
-			currentPuzzle->chapter->SaveAsSolved();
-			currentPuzzle = nextPuzzle;
+            g.currentPuzzle->chapter->SaveAsSolved();
+            g.currentPuzzle = nextPuzzle;
 			return "NextChapter";
 		}
 	}

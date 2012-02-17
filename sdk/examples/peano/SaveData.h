@@ -1,39 +1,42 @@
 #pragma once
 
+#include "sifteo.h"
 #include "Guid.h"
 
 namespace TotalsGame 
 {
-	
-  class SaveData 
-  {
-  public:
-      SaveData();
-      
-	  void AddSolved(const Guid &guid);
-	  void Save();
-      
-      bool IsSolved(const Guid &guid);
-      
-  private:
-      static const int MAX_GUIDS = 100;
-      
-      Guid solvedGuids[MAX_GUIDS];
-      int numSolvedGuids;
-      
 
-	  /*
+class Puzzle;
+
+class SaveData
+{
+public:
+    SaveData();
+
+    void AddSolved(const Guid &guid);
+    void Save();
+
+    bool IsSolved(const Guid &guid);
+
+private:
+    static const int MAX_GUIDS = 100;
+
+    Guid solvedGuids[MAX_GUIDS];
+    int numSolvedGuids;
+
+
+    /*
     public readonly PuzzleDatabase Db;
     public readonly HashSet<Guid> solved = new HashSet<Guid>();
     public bool hasDoneTutorial = false;
 
     public SaveData(PuzzleDatabase database)
-	{
+    {
       Db = database;
     }
 
     public bool AllChaptersSolved
-	{
+    {
       get {
         return !Db.Chapters.Exists( chapter =>
           chapter.CanBePlayedWithCurrentCubeSet() && !chapter.HasBeenSolved()
@@ -42,7 +45,7 @@ namespace TotalsGame
     }
 
     public bool IsChapterUnlockedWithCurrentCubeSet(int i)
-	{
+    {
 
       // the first chapter is always unlocked
       if (i == 0) { return true; }
@@ -53,40 +56,43 @@ namespace TotalsGame
       // if the previous chapter (subject to the current cubeset) has been solved
       int j = i-1;
       while(j > 0 && !Db.Chapters[j].CanBePlayedWithCurrentCubeSet())
-	  {
+      {
         --j;
       }
       return Db.Chapters[j].HasBeenSolved();
 
     }
 
-    public void CompleteTutorial() 
-	{
+    public void CompleteTutorial()
+    {
       if (!hasDoneTutorial) {
         hasDoneTutorial = true;
         Save();
       }
     }
 
-    public void Reset() 
-	{
+    public void Reset()
+    {
       Game.Inst.currentPuzzle = null;
       Game.Inst.previousPuzzle = null;
       solved.Clear();
       Save();
-    }
+    } */
 
-    public Puzzle FindNextPuzzle() 
-	{
-      foreach(var chapter in Db.Chapters) 
-	  {
-        if (!chapter.HasBeenSolved()) 
-		{
+public:
+    Puzzle *FindNextPuzzle() {return NULL;}
+    /*
+    public Puzzle FindNextPuzzle()
+    {
+      foreach(var chapter in Db.Chapters)
+      {
+        if (!chapter.HasBeenSolved())
+        {
           var puzzle = chapter.Puzzles.Find(p => !p.HasBeenSolved() && p.tokens.Length <= Game.Inst.CubeSet.Count);
           if (puzzle != null)
-		  {
-			  return puzzle; 
-		  }
+          {
+              return puzzle;
+          }
         }
       }
       return null;
@@ -103,10 +109,10 @@ namespace TotalsGame
 
       #else
       if (Game.Inst.StoredData.IsValid)
-	  {
+      {
         var xml = Game.Inst.StoredData.Load();
-        if (xml.Length > 0) 
-		{
+        if (xml.Length > 0)
+        {
           LoadXML(xml);
         }
       }
@@ -114,12 +120,12 @@ namespace TotalsGame
     }
 
     public string ToXML()
-	{
+    {
       var result = new StringBuilder();
       result.AppendFormat("<save hasDoneTutorial=\"{0}\">\n", hasDoneTutorial?"true":"false");
       result.AppendLine("<solved>");
       foreach(var guid in solved)
-	  {
+      {
         result.AppendLine(guid.ToString());
       }
       result.AppendLine("</solved>");
@@ -128,7 +134,7 @@ namespace TotalsGame
     }
 
     public void LoadXML(string xml)
-	{
+    {
       var doc = new XmlDocument();
       try {
         doc.LoadXml(xml);
@@ -149,12 +155,12 @@ namespace TotalsGame
       }
     }
 
-    public void Save() 
-	{
+    public void Save()
+    {
       Game.Inst.StoredData.Store(ToXML());
     }
-	*/
+    */
 
-  };
+};
 }
 

@@ -107,6 +107,7 @@ float MenuController::Coroutine(float dt)
 {
     static const float kDuration = 0.333f;
     int numInitialItems=0;
+    const char *result = NULL;
 
     CORO_BEGIN
 
@@ -173,54 +174,54 @@ WelcomeBack:
             CORO_YIELD(0);
         }
 
-#if 0
         // close labelView
-        Jukebox.PlayShutterClose();
-        for(var t=0f; t<kDuration; t+=mGame.dt) {
-            labelView.SetTransitionAmount(1-t/kDuration);
-            yield return 0;
+        AudioPlayer::PlayShutterClose();
+        for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
+            labelView->SetTransitionAmount(1-rememberedT/kDuration);
+            CORO_YIELD(0);
         }
-        labelView.SetTransitionAmount(0);
-        yield return 0;
-
+        labelView->SetTransitionAmount(0);
+        CORO_YIELD(0);
         // transition out
-        Jukebox.PlayShutterClose();
-        tv.Cube = menu.view.Cube;
-        for(var t=0f; t<kDuration; t+=mGame.dt) {
-            tv.SetTransitionAmount(1f-t/kDuration);
-            yield return 0;
+        AudioPlayer::PlayShutterClose();
+        /* putting the tilt menu on cube 0 secretly deletes the transition view. remake.
+          */
+        tv = new TransitionView(Game::GetCube(0));
+        tv->SetCube(menu->GetView()->GetCube());
+        for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
+            tv->SetTransitionAmount(1.0f-rememberedT/kDuration);
+            CORO_YIELD(0);
         }
-        tv.SetTransitionAmount(0f);
-        yield return 0;
+        tv->SetTransitionAmount(0);
+        CORO_YIELD(0);
 
-        var result = (string) menu.ResultItem.userData;
-        if (result == "continue") {
-            if (mGame.currentPuzzle == null) {
-                mGame.currentPuzzle = mGame.saveData.FindNextPuzzle();
+        result = (const char*)menu->GetResultItem()->userData;
+        if (!strcmp(result,"continue")) {
+            if (mGame->currentPuzzle == NULL) {
+                mGame->currentPuzzle = mGame->saveData.FindNextPuzzle();
             }
-            mGame.sceneMgr.QueueTransition("Play");
-            yield break;
-        } else if (menu.ResultItem.userData.ToString() == "random") {
-            mGame.currentPuzzle = null;
-            mGame.sceneMgr.QueueTransition("Play");
-            yield break;
-        } else if (result == "tutorial") {
-            mGame.sceneMgr.QueueTransition("Tutorial");
-            yield break;
-        } else if (result == "level") {
+            mGame->sceneMgr.QueueTransition("Play");
+            CORO_YIELD(0);
+        } else if (!strcmp(result,"random")) {
+            mGame->currentPuzzle = NULL;
+            mGame->sceneMgr.QueueTransition("Play");
+            CORO_YIELD(0);
+        } else if (!strcmp(result,"tutorial")) {
+            mGame->sceneMgr.QueueTransition("Tutorial");
+            CORO_YIELD(0);
+        } else if (!strcmp(result,"level")) {
             goto ChapterSelect;
-        } else if (result == "setup") {
+        } else if (!strcmp(result,"setup")) {
             goto Setup;
         }
-#endif
     }
 
-#if 0 //TODO
     //-----------------------------------------------------------------------
     // GAME SETUP OPTIONS
     //-----------------------------------------------------------------------
 
 Setup:
+#if 0
     yield return 0.25f;
     labelView.message = "Game Setup";
     Jukebox.PlayShutterOpen();
@@ -320,8 +321,9 @@ goto Setup;
 //-----------------------------------------------------------------------
 // CHAPTER SELECT
 //-----------------------------------------------------------------------
-
+#endif
 ChapterSelect:
+#if 0
 yield return 0.25f;
 labelView.message = "Select a Level";
 Jukebox.PlayShutterOpen();

@@ -15,8 +15,9 @@
 			if(!(mask & allocationMask)) \
 			{ \
 				allocationMask |= mask; \
-                printf("NEW %s\t%x\n", #classname, (unsigned int)allocationMask); \
-				return &allocationPool[bit * sizeof(classname)]; \
+                void *addr=&allocationPool[bit * sizeof(classname)];\
+                printf("NEW %s\t%x\t%x\n", #classname, (unsigned int)addr, (unsigned int)allocationMask); \
+                return addr;\
 			} \
 		} \
 		return NULL; \
@@ -24,12 +25,12 @@
 	static void operator delete(void *p) \
     { \
 		if(!p) return; \
+        printf("DEL %s\t%x\t%x\n", #classname, (unsigned int)p,(unsigned int)allocationMask); \
 		size_t offset = (char*)p - (char*)&allocationPool[0]; \
         ASSERT((offset % sizeof(classname)) == 0); \
 		size_t index = offset / sizeof(classname); \
 		assert(index < MAX_POOL); \
-		allocationMask &= ~(1 << index); \
-        printf("DEL %s\t%x\n", #classname, (unsigned int)allocationMask); \
+        allocationMask &= ~(1 << index); \
     }\
     static void ResetAllocationPool()\
     {\

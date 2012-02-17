@@ -16,6 +16,7 @@ namespace TotalsGame {
     const char *mDescription;
 public:
     TiltFlowDetailView(TotalsCube *c);
+    virtual ~TiltFlowDetailView() {}
 
     void ShowDescription(const char * desc);
 

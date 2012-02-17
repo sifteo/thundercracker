@@ -34,6 +34,7 @@ namespace TotalsGame
       numItems = _numItems;
       view = new TiltFlowView(Game::GetCube(0), this);
     details = _details;
+    toggledItem = NULL;
     }
 /* TODO
     public void TiltFlowMenu::Dispose() {
@@ -48,20 +49,6 @@ namespace TotalsGame
     {
         return IsDone() ? view->GetItem() : NULL;
     }
-   //TODO what is this?! TiltFlowItem ToggledItem { get; set; }
-    void TiltFlowMenu::ClearToggledItem()
-    {
-        //TODO wuuuut? SetToggledItem(NULL);
-    }
-    bool TiltFlowMenu::IsPicked()
-    {
-        return mPickTime > 0;
-    }
-    bool TiltFlowMenu::IsDone()
-    {
-        return IsPicked() && mSimTime - mPickTime > kPickDelay;
-    }
-
     TiltFlowItem *TiltFlowMenu::GetToggledItem()
     {
         return toggledItem;
@@ -70,6 +57,19 @@ namespace TotalsGame
     void TiltFlowMenu::SetToggledItem(TiltFlowItem *item)
     {
         toggledItem = item;
+    }
+
+    void TiltFlowMenu::ClearToggledItem()
+    {
+        SetToggledItem(NULL);
+    }
+    bool TiltFlowMenu::IsPicked()
+    {
+        return mPickTime > 0;
+    }
+    bool TiltFlowMenu::IsDone()
+    {
+        return IsPicked() && mSimTime - mPickTime > kPickDelay;
     }
 
     void TiltFlowMenu::Tick(float dt)

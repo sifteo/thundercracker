@@ -3,6 +3,7 @@
 #include "sifteo.h"
 #include "View.h"
 #include "assets.gen.h"
+#include "ObjectPool.h"
 
 namespace TotalsGame {
 
@@ -10,9 +11,11 @@ namespace TotalsGame {
 
 class InterstitialView : public View
 {
+    DECLARE_POOL(InterstitialView, 2);
+
 public:
     InterstitialView(TotalsCube *c);
-
+    virtual ~InterstitialView() {};
 
     static const int kPad = 1;
     static const int kMaxOffset = 17 + kPad + kPad;
