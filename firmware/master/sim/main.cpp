@@ -23,19 +23,56 @@
 
 static void installAssetsToMaster();
 
+//#define SVM_TEST
+
+#ifdef SVM_TEST
+#include "svm.h"
+
+static void installElfFile()
+{
+    FILE *elfFile = fopen("../../vm/program.elf", "rb");
+    if (elfFile == NULL) {
+        LOG(("couldn't open elf file, bail.\n"));
+        return;
+    }
+
+    // write the file to external flash
+    uint8_t buf[512];
+    Flash::chipErase();
+
+    unsigned addr = 0;
+    while (!feof(elfFile)) {
+        unsigned rxed = fread(buf, 1, sizeof(buf), elfFile);
+        if (rxed > 0) {
+            Flash::write(addr, buf, rxed);
+            addr += rxed;
+        }
+    }
+    fclose(elfFile);
+    Flash::flush();
+}
+#endif // SVM_TEST
+
 int main(int argc, char **argv)
 {
     SysTime::init();
 
+    Flash::init();
+    FlashLayer::init();
+    AssetManager::init();
+
+#ifdef SVM_TEST
+    installElfFile();
+    SvmProgram program;
+    program.run(111);
+    return 0;
+#endif
+
+    installAssetsToMaster();    // normally this would happen over USB
+
     AudioMixer::instance.init();
     AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
     AudioOutDevice::start();
-
-    Flash::init();
-    AssetManager::init();
-    installAssetsToMaster();    // normally this would happen over USB
-
-    FlashLayer::init();
 
     Radio::open();
 
