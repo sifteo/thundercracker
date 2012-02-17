@@ -25,24 +25,40 @@ void SvmProgram::run()
     cpsr = 0;
 
     // TODO: do all of our instructions support conditional execution?
-    FlashRegion r;
-    if (!FlashLayer::getRegion(progInfo.textRodata.start + progInfo.entry, FlashLayer::BLOCK_SIZE, &r)) {
+    unsigned entryPoint = progInfo.textRodata.start + progInfo.entry;
+    if (!FlashLayer::getRegion(entryPoint, FlashLayer::BLOCK_SIZE, &flashRegion)) {
         LOG(("failed to get entry block\n"));
         return;
     }
+    currentRegionOffset = 0;
+    BranchWritePC(entryPoint);  // write the program counter with entry point
 
-    uint16_t *instr = static_cast<uint16_t*>(r.data());
-    unsigned bsize = r.size();
-    for (; bsize != 0; bsize -= sizeof(uint32_t), instr += 2) {
-        if (instructionSize(instr[0]) == InstrBits32) {
-            // swap nibbles
-            execute32((instr[0] << 16) | instr[1]);
+    for (;;) {
+        uint16_t instr = fetch();
+        if (instructionSize(instr) == InstrBits16) {
+            execute16(instr);
         }
         else {
-            execute16(instr[0]);
-            execute16(instr[1]);
+            uint16_t instrLow = fetch();
+            execute32(instr << 16 | instrLow);
         }
     }
+}
+
+/*
+    Fetch the next instruction.
+    We can return 16bit values unconditionally, since all our instructions are Thumb,
+    and the first nibble of a 32-bit instruction must be checked regardless
+    in order to determine its bitness.
+*/
+uint16_t SvmProgram::fetch()
+{
+    ASSERT(currentRegionOffset <= FlashLayer::BLOCK_SIZE);
+    uint16_t *instr = static_cast<uint16_t*>(flashRegion.data()) + currentRegionOffset;
+    regs[REG_PC] += 2;
+    currentRegionOffset++;
+    // TODO - handle transitions into other flash regions!
+    return *instr;
 }
 
 void SvmProgram::cycle()
@@ -51,24 +67,22 @@ void SvmProgram::cycle()
 
 void SvmProgram::validate()
 {
-    FlashRegion r;
-    if (!FlashLayer::getRegion(progInfo.textRodata.start + progInfo.entry, FlashLayer::BLOCK_SIZE, &r)) {
+    unsigned entryPoint = progInfo.textRodata.start + progInfo.entry;
+    if (!FlashLayer::getRegion(entryPoint, FlashLayer::BLOCK_SIZE, &flashRegion)) {
         LOG(("failed to get entry block\n"));
         return;
     }
 
-    uint16_t *instr = static_cast<uint16_t*>(r.data());
-    unsigned bsize = r.size();
-    for (; bsize != 0; bsize -= sizeof(uint32_t), instr += 2) {
-        if (instructionSize(instr[0]) == InstrBits32) {
-            // swap nibbles
-            if (!isValid32((instr[0] << 16) | instr[1]))
+    unsigned bsize = flashRegion.size();
+    while (bsize) {
+        uint16_t instr = fetch();
+        if (instructionSize(instr) == InstrBits16) {
+            if (!isValid16(instr))
                 break;
         }
         else {
-            if (!isValid16(instr[0]))
-                break;
-            if (!isValid16(instr[1]))
+            uint16_t instrLow = fetch();
+            if (!isValid32(instr << 16 | instrLow))
                 break;
         }
     }
@@ -286,6 +300,7 @@ void SvmProgram::execute32(uint32_t instr)
 
 bool SvmProgram::conditionPassed(uint8_t cond)
 {
+    LOG(("condition code: %d\n", cond));
     switch (cond) {
     case EQ: return  getZero();
     case NE: return !getZero();
@@ -328,9 +343,6 @@ void SvmProgram::emulateLSLImm(uint16_t inst)
 
 void SvmProgram::emulateLSRImm(uint16_t inst)
 {
-    if (!conditionPassed(inst))
-        return;
-
     unsigned imm5 = (inst >> 6) & 0x1f;
     unsigned Rm = (inst >> 3) & 0x7;
     unsigned Rd = inst & 0x7;
@@ -344,9 +356,6 @@ void SvmProgram::emulateLSRImm(uint16_t inst)
 
 void SvmProgram::emulateASRImm(uint16_t instr)
 {
-    if (!conditionPassed(instr))
-        return;
-
     unsigned imm5 = (instr >> 6) & 0x1f;
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
@@ -361,9 +370,6 @@ void SvmProgram::emulateASRImm(uint16_t instr)
 
 void SvmProgram::emulateADDReg(uint16_t instr)
 {
-    if (!conditionPassed(instr))
-        return;
-
     unsigned Rm = (instr >> 6) & 0x7;
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
@@ -374,9 +380,6 @@ void SvmProgram::emulateADDReg(uint16_t instr)
 
 void SvmProgram::emulateSUBReg(uint16_t instr)
 {
-    if (!conditionPassed(instr))
-        return;
-
     unsigned Rm = (instr >> 6) & 0x7;
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
