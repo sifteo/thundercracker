@@ -77,6 +77,7 @@ unsigned int GetRandomOtherPiece(bool moved[], size_t num_moved, unsigned int no
 
 bool AnyTouching(App& app)
 {
+    /*
     for (unsigned int i = 0; i < kNumCubes; ++i)
     {
         if (app.GetCubeWrapper(i).IsEnabled() && app.GetCubeWrapper(i).IsTouching())
@@ -84,6 +85,7 @@ bool AnyTouching(App& app)
             return true;
         }
     }
+    */
     
     return false;
 }
