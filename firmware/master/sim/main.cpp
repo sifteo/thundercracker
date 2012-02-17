@@ -23,7 +23,7 @@
 
 static void installAssetsToMaster();
 
-//#define SVM_TEST
+#define SVM_TEST
 
 #ifdef SVM_TEST
 #include "svm.h"

@@ -95,6 +95,9 @@ private:
     static const uint32_t AddropFlashMask = 0x7 << 29;              // 111xxxxx xxxxxxxx xxxxxxxx xxxxxxxx
     static const uint32_t AddropFlashTest = 0x7 << 29;              // 111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa
 
+    // Registers are wide enough to hold a native pointer
+    typedef uintptr_t reg_t;
+
     struct Segment {
         uint32_t start;
         uint32_t size;
@@ -130,8 +133,8 @@ private:
     static const unsigned REG_PC = 15;
     static const unsigned REG_LR = 14;
     static const unsigned REG_SP = 13;
-    uint32_t regs[NUM_GP_REGS];     // general purpose registers
-    uint32_t cpsr;                  // current program status register
+    reg_t regs[NUM_GP_REGS];     // general purpose registers
+    reg_t cpsr;                  // current program status register
 
     uint32_t virt2physAddr(uint32_t virtualAddr) {
         return ((virtualAddr - 0x10000) & 0xFFFFF) + 0x20008000;
@@ -241,8 +244,8 @@ private:
     void emulateCondB(uint16_t instr);      // B
     void emulateCBZ_CBNZ(uint16_t instr);   // CBNZ, CBZ
 
-    void emulateSTRImm(uint16_t instr);     // STR (immediate)
-    void emulateLDRImm(uint16_t instr);     // LDR (immediate)
+    void emulateSTRSPImm(uint16_t instr);   // STR (SP plus immediate)
+    void emulateLDRSPImm(uint16_t instr);   // LDR (SP plus immediate)
     void emulateADDSpImm(uint16_t instr);   // ADD (SP plus immediate)
 
     void emulateLDRLitPool(uint16_t instr); // LDR (literal)
@@ -255,8 +258,8 @@ private:
         return (data << (32 - ror)) | (data >> ror);
     }
 
-    inline void BranchWritePC(uint32_t addr) {
-        regs[REG_PC] = addr & 0xfffffffe;
+    inline void BranchWritePC(reg_t addr) {
+        regs[REG_PC] = addr & ~(reg_t)1;
     }
 
     // http://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend

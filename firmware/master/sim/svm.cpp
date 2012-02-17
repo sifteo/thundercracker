@@ -20,7 +20,6 @@ void SvmProgram::run(uint16_t appId)
 
     LOG(("loaded. entry: 0x%x text start: 0x%x\n", progInfo.entry, progInfo.textRodata.start));
 
-    BranchWritePC(progInfo.textRodata.vaddr);  // write the program counter with entry point
     validate();
 
     memset(regs, 0, sizeof(regs));  // zero out general purpose regs
@@ -32,7 +31,9 @@ void SvmProgram::run(uint16_t appId)
         return;
     }
 
-    BranchWritePC(progInfo.textRodata.vaddr);  // write the program counter with entry point
+    // TODO: This actually needs to be like a call SVC, not just a branch
+    regs[REG_PC] = reinterpret_cast<reg_t>(flashRegion.data())
+        + (progInfo.textRodata.vaddr & 0xFFFFFF);
 
     for (;;) {
         uint16_t instr = fetch();
@@ -51,15 +52,10 @@ void SvmProgram::run(uint16_t appId)
     We can return 16bit values unconditionally, since all our instructions are Thumb,
     and the first nibble of a 32-bit instruction must be checked regardless
     in order to determine its bitness.
-
-    TODO - handle transitions into other flash regions!
 */
 uint16_t SvmProgram::fetch()
 {
-    // translate PC to an offset from our current flash block
-    unsigned pc = (regs[REG_PC] - progInfo.textRodata.vaddr) / sizeof(uint16_t);
-    uint16_t *tst = static_cast<uint16_t*>(flashRegion.data()) + pc;
-
+    uint16_t *tst = reinterpret_cast<uint16_t*>(regs[REG_PC]);
     regs[REG_PC] += sizeof(uint16_t);
     return *tst;
 }
@@ -75,6 +71,9 @@ void SvmProgram::validate()
         LOG(("failed to get entry block\n"));
         return;
     }
+    
+    // TODO: This shouldn't depend on PC, which is part of the execution state.
+    regs[REG_PC] = reinterpret_cast<reg_t>(flashRegion.data());
 
     unsigned bsize = flashRegion.size();
     while (bsize) {
@@ -266,9 +265,9 @@ void SvmProgram::execute16(uint16_t instr)
     if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
         uint16_t isLoad = instr & (1 << 11);
         if (isLoad)
-            emulateLDRImm(instr);
+            emulateLDRSPImm(instr);
         else
-            emulateSTRImm(instr);
+            emulateSTRSPImm(instr);
         return;
     }
     if ((instr & SpRelAddMask) == SpRelAddTest) {
@@ -337,7 +336,7 @@ void SvmProgram::emulateLSLImm(uint16_t inst)
         regs[Rd] = regs[Rm];
     }
     else {
-        regs[Rd] = regs[Rm] << imm5;
+        regs[Rd] = (uint32_t) (regs[Rm] << imm5);
         // TODO: carry flags
     }
     // TODO: N, Z flags - V unaffected
@@ -352,7 +351,7 @@ void SvmProgram::emulateLSRImm(uint16_t inst)
     if (imm5 == 0)
         imm5 = 32;
 
-    regs[Rd] = regs[Rm] >> imm5;
+    regs[Rd] = (uint32_t) (regs[Rm] >> imm5);
     // TODO: C, N, Z flags - V is unaffected
 }
 
@@ -366,7 +365,7 @@ void SvmProgram::emulateASRImm(uint16_t instr)
         imm5 = 32;
 
     // TODO: verify sign bit is being shifted in
-    regs[Rd] = regs[Rm] >> imm5;
+    regs[Rd] = (uint32_t) (regs[Rm] >> imm5);
     // TODO: C, Z, N flags - V flag unchanged
 }
 
@@ -376,7 +375,7 @@ void SvmProgram::emulateADDReg(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = regs[Rn] + regs[Rm];
+    regs[Rd] = (uint32_t) (regs[Rn] + regs[Rm]);
     // TODO: set N, Z, C and V flags
 }
 
@@ -386,7 +385,7 @@ void SvmProgram::emulateSUBReg(uint16_t instr)
     unsigned Rn = (instr >> 3) & 0x7;
     unsigned Rd = instr & 0x7;
 
-    regs[Rd] = regs[Rn] - regs[Rm];
+    regs[Rd] = (uint32_t) (regs[Rn] - regs[Rm]);
     // TODO: set N, Z, C and V flags
 }
 
@@ -436,7 +435,7 @@ void SvmProgram::emulateANDReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = regs[Rdn] & regs[Rm];
+    regs[Rdn] = (uint32_t) (regs[Rdn] & regs[Rm]);
 }
 
 void SvmProgram::emulateEORReg(uint16_t instr)
@@ -444,7 +443,7 @@ void SvmProgram::emulateEORReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = regs[Rdn] ^ regs[Rm];
+    regs[Rdn] = (uint32_t) (regs[Rdn] ^ regs[Rm]);
 }
 
 void SvmProgram::emulateLSLReg(uint16_t instr)
@@ -453,7 +452,7 @@ void SvmProgram::emulateLSLReg(uint16_t instr)
     unsigned Rdn = instr & 0x7;
 
     unsigned shift = regs[Rm] & 0xff;
-    regs[Rdn] = regs[Rdn] << shift;
+    regs[Rdn] = (uint32_t) (regs[Rdn] << shift);
 }
 
 void SvmProgram::emulateLSRReg(uint16_t instr)
@@ -462,7 +461,7 @@ void SvmProgram::emulateLSRReg(uint16_t instr)
     unsigned Rdn = instr & 0x7;
 
     unsigned shift = regs[Rm] & 0xff;
-    regs[Rdn] = regs[Rdn] >> shift;
+    regs[Rdn] = (uint32_t) (regs[Rdn] >> shift);
 }
 
 void SvmProgram::emulateASRReg(uint16_t instr)
@@ -470,8 +469,7 @@ void SvmProgram::emulateASRReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    // TODO: verify sign bit is being shifted in
-    regs[Rdn] = regs[Rdn] >> regs[Rm];
+    regs[Rdn] = (int32_t)regs[Rdn] >> regs[Rm];
 }
 
 void SvmProgram::emulateADCReg(uint16_t instr)
@@ -479,7 +477,7 @@ void SvmProgram::emulateADCReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] += regs[Rm];  // TODO: must also add carry flag
+    regs[Rdn] = (uint32_t) (regs[Rdn] + regs[Rm] + (getCarry() ? 1 : 0));
 }
 
 void SvmProgram::emulateSBCReg(uint16_t instr)
@@ -487,7 +485,7 @@ void SvmProgram::emulateSBCReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] -= regs[Rm];  // TODO: must also substract !carryFlag()
+    regs[Rdn] = (uint32_t) (regs[Rdn] - regs[Rm] - (getCarry() ? 0 : 1));
 }
 
 void SvmProgram::emulateRORReg(uint16_t instr)
@@ -532,15 +530,18 @@ void SvmProgram::emulateORRReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] |= regs[Rm];
+    regs[Rdn] = (uint32_t) (regs[Rdn] | regs[Rm]);
 }
 
 void SvmProgram::emulateMUL(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
+    
+    uint64_t result = (uint64_t)regs[Rdn] * (uint64_t)regs[Rm];
+    // TODO: Set Z and N flags. Z seems to be set based on full 64-bit result
 
-    regs[Rdn] = (uint64_t)regs[Rdn] * (uint64_t)regs[Rm];
+    regs[Rdn] = (uint32_t) result;
 }
 
 void SvmProgram::emulateBICReg(uint16_t instr)
@@ -548,7 +549,7 @@ void SvmProgram::emulateBICReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] &= ~(regs[Rm]);
+    regs[Rdn] = (uint32_t) (regs[Rdn] & ~(regs[Rm]));
 }
 
 void SvmProgram::emulateMVNReg(uint16_t instr)
@@ -556,7 +557,7 @@ void SvmProgram::emulateMVNReg(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = ~regs[Rm];
+    regs[Rdn] = (uint32_t) ~regs[Rm];
 }
 
 /////////////////////////////////////
@@ -568,7 +569,7 @@ void SvmProgram::emulateSXTH(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = SignExtend<int32_t, 16>(regs[Rm]);
+    regs[Rdn] = (uint32_t) SignExtend<int32_t, 16>(regs[Rm]);
 }
 
 void SvmProgram::emulateSXTB(uint16_t instr)
@@ -576,7 +577,7 @@ void SvmProgram::emulateSXTB(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = SignExtend<int32_t, 8>(regs[Rm]);
+    regs[Rdn] = (uint32_t) SignExtend<int32_t, 8>(regs[Rm]);
 }
 
 void SvmProgram::emulateUXTH(uint16_t instr)
@@ -603,7 +604,8 @@ void SvmProgram::emulateB(uint16_t instr)
 {
     // encoding T2 only
     unsigned imm11 = instr & 0x3FF;
-    BranchWritePC(regs[REG_PC] + imm11);
+    uint32_t offset = SignExtend<uint32_t, 11>(imm11);
+    BranchWritePC(regs[REG_PC] + offset);
 }
 
 void SvmProgram::emulateCondB(uint16_t instr)
@@ -632,26 +634,24 @@ void SvmProgram::emulateCBZ_CBNZ(uint16_t instr)
     }
 }
 
-void SvmProgram::emulateSTRImm(uint16_t instr)
+void SvmProgram::emulateSTRSPImm(uint16_t instr)
 {
     // encoding T2 only
     unsigned Rt = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
 
-    // TODO: store to mem
-    // "Allowed constant values are multiples of 4 in the range of 0-1020 for
-    // encoding T1", so shift it on over.
+    uint32_t *addr = reinterpret_cast<uint32_t*>(regs[REG_SP] + (imm8 << 2));
+    *addr = regs[Rt];
 }
 
-void SvmProgram::emulateLDRImm(uint16_t instr)
+void SvmProgram::emulateLDRSPImm(uint16_t instr)
 {
     // encoding T2 only
     unsigned Rt = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
 
-    // TODO: load from mem
-    // "Allowed constant values are multiples of 4 in the range of 0-1020 for
-    // encoding T1", so shift it on over.
+    uint32_t *addr = reinterpret_cast<uint32_t*>(regs[REG_SP] + (imm8 << 2));
+    regs[Rt] = *addr;
 }
 
 void SvmProgram::emulateADDSpImm(uint16_t instr)
@@ -670,10 +670,11 @@ void SvmProgram::emulateLDRLitPool(uint16_t instr)
     unsigned Rt = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xFF;
 
-    // TODO: verify this is correct!
-    unsigned addr = ((regs[REG_PC] + 2 /* pipeline */) & 0xfffffffc) + (imm8 * 4);
+    // Round up to the next 32-bit boundary
+    uint32_t *addr = reinterpret_cast<uint32_t*>
+        (((regs[REG_PC] + 3) & ~3) + (imm8 << 2));
 
-//    regs[Rt] = mem.word(addr);
+    regs[Rt] = *addr;
 }
 
 /*
@@ -743,7 +744,12 @@ four and added to the base of the current page, to form the address of a
 void SvmProgram::svcIndirectOperation(uint8_t imm8)
 {
     // we already know the MSB of imm8 is clear by the fact that we're being called here.
-    uint32_t literal = (imm8 * 4) + flashRegion.baseAddress();
+
+    reg_t instructionBase = regs[REG_PC] - 2;
+    uintptr_t blockMask = ~(uintptr_t)(FlashLayer::BLOCK_SIZE - 1);
+    uint32_t *blockBase = reinterpret_cast<uint32_t*>(instructionBase & blockMask);
+    uint32_t literal = blockBase[imm8];
+
     if ((literal & CallMask) == CallTest) {
         LOG(("indirect call\n"));
     }
