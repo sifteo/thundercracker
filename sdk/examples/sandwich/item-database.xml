@@ -9,7 +9,7 @@
 	<item id="bread">
 		<name>Lembas Bread</name>
 		<description>
-			Over-Fresh Lembas Bread.
+			Oven-Fresh Lembas Bread.
 			Fresh from Middle-Earth.
 		</description>
 	</item>
@@ -38,7 +38,7 @@
 		<name>Skeleton Key</name>
 		<description>
 			A skeleton key.
-			It's slimey -- ew!
+			It's slimey! Ew!
 		</description>
 	</item>
 </item-database>
