@@ -15,7 +15,13 @@ OBJS_SIM = \
     main.sim.o
 
 BIN_STM32 = $(APP).stm32
-OBJS_STM32 = $(OBJS_SIM,.sim.o=.stm32.o)
+OBJS_STM32 = \
+    $(ASSETS).gen.stm32.o \
+    App.stm32.o \
+    CubeWrapper.stm32.o \
+    Puzzle.stm32.o \
+    PuzzleData.stm32.o \
+    main.stm32.o
 
 ASSETDEPS += assets/*.png $(ASSETS).lua
 CDEPS += *.h
