@@ -86,25 +86,6 @@ ifeq ($(BUILD_PLATFORM), Linux)
 	LDFLAGS_SIM += -lspeex -lportaudio
 endif
 
-# LLVM Runtime
-CCFLAGS_SIM += \
-	-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
-	-I$(LLVM_INC)
-LDFLAGS_SIM += -lstdc++ -lpthread
-ifeq ($(BUILD_PLATFORM), windows32)
-    LDFLAGS_SIM += -limagehlp -lpsapi
-endif
-SIM_STATIC_LIBS += \
-	$(LLVM_LIB)/libLLVMBitReader.a \
-	$(LLVM_LIB)/libLLVMInterpreter.a \
-	$(LLVM_LIB)/libLLVMExecutionEngine.a \
-	$(LLVM_LIB)/libLLVMCodeGen.a \
-	$(LLVM_LIB)/libLLVMTarget.a \
-	$(LLVM_LIB)/libLLVMAsmParser.a \
-	$(LLVM_LIB)/libLLVMMC.a \
-	$(LLVM_LIB)/libLLVMCore.a \
-	$(LLVM_LIB)/libLLVMSupport.a
-
 LIBS_SIM := $(MASTER_DIR)/master-sim.a
 CFLAGS_SIM += $(CFLAGS) -DSIFTEO_SIMULATOR
 CCFLAGS_SIM += $(CFLAGS_SIM) $(CCFLAGS) # inherit all SIM CFLAGS plus CCFLAGS
