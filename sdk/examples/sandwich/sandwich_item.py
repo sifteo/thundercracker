@@ -12,7 +12,7 @@ class Item:
 	def __init__(self, index, xml):
 		self.index = index
 		self.icon = int(xml.get("icon", ""))
-		self.id = xml.get("id").lower().strip()
-		self.name = xml.find("name").text
+		self.id = xml.get("id").lower()
+		self.name = xml.find("name").text.strip()
 		self.description = "\\n".join((line.strip() for line in xml.find("description").text.strip().splitlines()))
 		print self.description
