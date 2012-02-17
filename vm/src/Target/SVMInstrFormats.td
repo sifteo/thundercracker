@@ -254,6 +254,27 @@ class T32_LDSTbase<bits<7> op2v, bits<3> bpReg, dag outs, dag ins, string asmstr
     // Not marked rematerializable, LD/ST is expensive relative to spilling.
 }
 
+// Integer divide
+class T32_DIV<bits<1> isUnsigned, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : ThumbInst32<outs, ins, asmstr, pattern>
+{
+    bits<3> Rn;
+    bits<3> Rd;
+    bits<3> Rm;
+
+    let op1 = 0b11;
+    let op2{6-2} = 0b01110;
+    let op2{1} = isUnsigned;
+    let op2{0} = 0b1;
+
+    let firstWord{3} = 0b1;
+    let firstWord{2-0} = Rn;
+    let secondWord{15-11} = 0b11110;
+    let secondWord{10-8} = Rd;
+    let secondWord{7-3} = 0b11110;
+    let secondWord{2-0} = Rm;
+}
+
 // 16-bit immediate (MOVT/MOVW)
 class T32_imm16<bits<6> op2v, dag outs, dag ins, string asmstr, list<dag> pattern>
     : ThumbInst32<outs, ins, asmstr, pattern>

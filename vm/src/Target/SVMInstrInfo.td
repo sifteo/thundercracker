@@ -363,6 +363,14 @@ def MVNr : T4<(outs GPReg:$Rs), (ins GPReg:$Rn),
     let opB = 15;
 }
 
+// 32-bit data processing instructions
+
+def UDIVr : T32_DIV<0b1, (outs GPReg:$Rd), (ins GPReg:$Rn, GPReg:$Rm),
+    "udiv\t$Rd, $Rn, $Rm", [(set GPReg:$Rd, (udiv GPReg:$Rn, GPReg:$Rm))]>;
+
+def SDIVr : T32_DIV<0b0, (outs GPReg:$Rd), (ins GPReg:$Rn, GPReg:$Rm),
+    "sdiv\t$Rd, $Rn, $Rm", [(set GPReg:$Rd, (sdiv GPReg:$Rn, GPReg:$Rm))]>;
+
 
 /****************************************************************
  * Memory operations

@@ -143,6 +143,8 @@ Allowed 32-bit instruction encodings:
 
   11110x10 x100xxxx, 0xxx0xxx xxxxxxxx      mov[wt]     r0-r7, #imm16
 
+  11111011 10x10xxx, 11110xxx 11110xxx      [su]div     r0-r7, r0-r7, r0-r7
+
 Allowed 16-bit instruction encodings:
 
   00xxxxxx xxxxxxxx     lsl, lsr, asr, add, sub, mov, cmp
