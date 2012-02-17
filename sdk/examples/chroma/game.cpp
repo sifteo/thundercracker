@@ -269,6 +269,11 @@ void Game::setState( GameState state )
     m_state = state;
     m_stateTime = 0.0f;
 
+    for( int i = 0; i < NUM_CUBES; i++ )
+    {
+        m_cubes[i].setDirty();
+    }
+
     if( m_state == STATE_INTRO )
     {
         for( int i = 0; i < NUM_CUBES; i++ )

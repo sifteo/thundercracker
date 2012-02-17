@@ -125,6 +125,7 @@ public:
     void UpMultiplier();
     void ClearSprite( unsigned int id );
     inline void resetIntro() { m_intro.Reset(); }
+    inline void setDirty() { m_dirty = true; }
 
 private:
 	//try moving a gem from row1/col1 to row2/col2

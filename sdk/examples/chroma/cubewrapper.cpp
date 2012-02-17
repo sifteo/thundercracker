@@ -92,6 +92,7 @@ void CubeWrapper::Reset()
     m_gameover.Reset();
     m_glimmer.Reset();
     m_numQueuedClears = 0;
+
     m_dirty = true;
 	Refill();
 }
@@ -124,6 +125,17 @@ void CubeWrapper::Draw()
 			{
 				case STATE_PLAYING:
 				{
+                    //special case - this cube shows instructions
+                    if( Game::Inst().getMode() == Game::MODE_PUZZLE)
+                    {
+                        const Puzzle *pPuzzle = Game::Inst().GetPuzzle();
+                        if( m_cube.id() == 2 + CUBE_ID_BASE && pPuzzle->m_numCubes < 3 )
+                        {
+                            DrawMessageBoxWithText( pPuzzle->m_pInstr );
+                            break;
+                        }
+                    }
+
 					//clear out grid first (somewhat wasteful, optimize if necessary)
                     //m_vid.clear(GemEmpty.tiles[0]);
 
@@ -1811,6 +1823,12 @@ void CubeWrapper::fillPuzzleCube()
 //draw a message box with centered text
 void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
 {
+    if( !m_dirty )
+        return;
+
+    m_queuedFlush = true;
+    m_dirty = false;
+
     m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
 
     //count how many lines of text we have
@@ -1875,6 +1893,4 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
 
         yOffset += 2;
     }
-
-    m_queuedFlush = true;
 }
