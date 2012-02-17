@@ -121,7 +121,13 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
      *      the emulator will come up with.
      */
 
-    address.channel = 0x02;
+    // always want to run on channel 0x2 in the sim, but allow the channel to
+    // be configured when building for hardware
+#if defined(MASTER_RF_CHAN) && !defined(SIFTEO_SIMULATOR)
+    address.channel = MASTER_RF_CHAN;
+#else
+    address.channel = 0x2;
+#endif
     address.id[0] = id();
     address.id[1] = 0xe7;
     address.id[2] = 0xe7;

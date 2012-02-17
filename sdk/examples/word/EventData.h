@@ -14,6 +14,7 @@ union EventData
         int mOffLengthIndex;
         unsigned mNumAnagrams;
         unsigned mNumBonusAnagrams;
+        bool mLeadingSpaces;
     } mNewAnagram;
 
     struct
