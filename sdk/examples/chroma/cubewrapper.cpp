@@ -303,6 +303,34 @@ void CubeWrapper::Draw()
             DrawMessageBoxWithText( "Good Job" );
             break;
         }
+        case Game::STATE_NEXTPUZZLE:
+        {
+            if( m_cube.id() == 0 + CUBE_ID_BASE)
+            {
+                const Puzzle *pPuzzle = Game::Inst().GetPuzzle();
+
+                if( pPuzzle )
+                {
+                    String<64> buf;
+                    buf << "Puzzle: " << pPuzzle->m_pName << " (" << Game::Inst().GetPuzzleIndex() << "/" << Puzzle::GetNumPuzzles() << ")";
+                    DrawMessageBoxWithText( buf );
+                }
+            }
+            else if( m_cube.id() == 1 + CUBE_ID_BASE)
+            {
+                const Puzzle *pPuzzle = Game::Inst().GetPuzzle();
+
+                if( pPuzzle )
+                {
+                    DrawMessageBoxWithText( pPuzzle->m_pInstr );
+                }
+            }
+            else if( m_cube.id() == 2 + CUBE_ID_BASE)
+            {
+                DrawMessageBoxWithText( "Shake to Begin" );
+            }
+            break;
+        }
 		default:
 			break;
 	}
@@ -454,6 +482,14 @@ void CubeWrapper::Update(float t, float dt)
         if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
         {
             Game::Inst().setTestMatchFlag();
+            m_fShakeTime = -1.0f;
+        }
+    }
+    else if( Game::Inst().getState() == Game::STATE_NEXTPUZZLE )
+    {
+        if( m_fShakeTime > 0.0f && t - m_fShakeTime > SHAKE_FILL_DELAY )
+        {
+            Game::Inst().setState( Game::STATE_INTRO );
             m_fShakeTime = -1.0f;
         }
     }
@@ -1783,7 +1819,7 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
     int lastspaceseen = -1;
     int numLines = 1;
     const int MAX_LINES = 8;
-    const int MAX_LINE_LENGTH = 16;
+    const int MAX_LINE_LENGTH = 12;
     int lineBreakIndices[ MAX_LINES ];
 
     lineBreakIndices[0] = -1;

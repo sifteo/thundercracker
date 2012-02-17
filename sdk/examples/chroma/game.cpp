@@ -31,7 +31,7 @@ Game &Game::Inst()
 }
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
-                m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_stateTime( 0.0f ),
+                m_state( STARTING_STATE ), m_mode( MODE_PUZZLE ), m_stateTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
@@ -268,6 +268,14 @@ void Game::setState( GameState state )
 {
     m_state = state;
     m_stateTime = 0.0f;
+
+    if( m_state == STATE_INTRO )
+    {
+        for( int i = 0; i < NUM_CUBES; i++ )
+        {
+            m_cubes[i].resetIntro();
+        }
+    }
 }
 
 
@@ -922,9 +930,14 @@ void Game::check_puzzle()
 }
 
 
+const Puzzle *Game::GetPuzzle()
+{
+    return Puzzle::GetPuzzle( m_iLevel );
+}
+
 const PuzzleCubeData *Game::GetPuzzleData( unsigned int id )
 {
-    const Puzzle *pPuzzle = Puzzle::GetPuzzle( m_iLevel );
+    const Puzzle *pPuzzle = GetPuzzle();
 
     if( !pPuzzle )
         return NULL;

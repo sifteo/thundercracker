@@ -15,6 +15,7 @@
 
 using namespace Sifteo;
 struct PuzzleCubeData;
+struct Puzzle;
 
 //singleton class
 class Game
@@ -138,7 +139,9 @@ public:
     void UpCombo();
     inline unsigned int GetComboCount() const { return m_comboCount; }
     void UpMultiplier();
+    const Puzzle *GetPuzzle();
     const PuzzleCubeData *GetPuzzleData( unsigned int id );
+    inline unsigned int GetPuzzleIndex() const { return m_iLevel; }
 
 private:
 	void TestMatches();

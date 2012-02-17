@@ -28,12 +28,18 @@ Puzzle::Puzzle( const char *pName, const char *pInstr, unsigned int dataIndex, u
 
 const Puzzle *Puzzle::GetPuzzle( unsigned int index )
 {
-    unsigned int numPuzzles = sizeof( s_puzzles ) / sizeof( Puzzle );
+    unsigned int numPuzzles = GetNumPuzzles();
 
     if( index >= numPuzzles )
         return NULL;
 
     return &s_puzzles[ index ];
+}
+
+
+unsigned int Puzzle::GetNumPuzzles()
+{
+    return sizeof( s_puzzles ) / sizeof( Puzzle );
 }
 
 
