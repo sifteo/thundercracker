@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="48" height="56" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="ambient" value="butterfly"/>
+ </properties>
  <tileset firstgid="1" name="forest" tilewidth="16" tileheight="16">
   <image source="forest.png" width="128" height="208"/>
   <tile id="2">
@@ -630,9 +633,9 @@
     <property name="quest" value="tutorial"/>
    </properties>
   </object>
-  <object name="zelda" type="NPC" x="16" y="176" width="32" height="32">
+  <object name="Sprout" type="NPC" x="16" y="176" width="32" height="32">
    <properties>
-    <property name="id" value="zelda_hello"/>
+    <property name="id" value="sprout_hello"/>
    </properties>
   </object>
  </objectgroup>

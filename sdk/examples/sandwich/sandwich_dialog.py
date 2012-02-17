@@ -5,6 +5,8 @@ import re
 import tmx
 import misc
 
+import Image # easy_install pil
+
 class DialogDatabase:
 	def __init__(self, world, path):
 		self.world = world
@@ -17,6 +19,7 @@ class DialogDatabase:
 					assert d.id != otherd.id, "duplicate dialog id"
 		# todo: validate dialog images
 		self.dialog_dict = dict((d.id, d) for d in self.dialogs)
+		self.detail_images = dict((name, DialogDetailImage(name)) for name in self.list_detail_image_names())
 
 	def list_npc_image_names(self):
 		hash = {}
@@ -49,3 +52,30 @@ class DialogText:
 		#print self.text
 		# validate text length (prerender?)
 		self.image = xml.get("image")
+
+class DialogDetailImage:
+	def __init__(self, filename):
+		self.image = Image.open(filename+".png")
+		w,h = self.image.size
+		assert w==112 and h==80, "NPC Details currently restricted to 112x80 crappy dimensions"
+		# assert h<=80, "detail image is taller than 80px"
+		# assert w%8 == 0 and h%8 == 0, "detail image dimensions not multiples of 8"
+		# w = w>>3
+		# h = h>>3
+		# pix = self.image.load()
+		# self.mask_pitch = h
+		# self.mask = [ False for x in range(w) for y in range(h) ]
+		# nonblank_count = 0
+		# for row in range(h):
+		# 	for col in range(w):
+		# 		for y in range(8):
+		# 			for x in range(8):
+		# 				if pix[8*col + x, 8*row + y][3] != 0:
+		# 					self.mask[self.mask_pitch * row + col] = True
+		# 					nonblank_count += 1
+		# 					break
+		# 					break
+		# 					break
+		# assert nonblank_count<=144, "bg1 detail images can only contain 144 tiles"
+		
+

@@ -1,5 +1,7 @@
 #include "Game.h"
 
+// the whole way that I "search for inventory views" kinda sucks - should cache a pointer of something...
+
 Cube* ViewSlot::GetCube() const {
 	return gCubes + (this - pGame->ViewBegin());
 }
@@ -14,17 +16,26 @@ bool ViewSlot::Touched() const {
 
 void ViewSlot::Init() {
 	mFlags.view = VIEW_IDLE;
+	ViewMode mode = Graphics();
+	mode.set();
+	mode.clear();
+  	mode.setWindow(0, 128);
 	mView.idle.Init();
+	pGame->NeedsSync();
 }
 
 void ViewSlot::HideSprites() {
-	VidMode_BG0_SPR_BG1 mode(GetCube()->vbuf);
+	ViewMode mode = Graphics();
 	for(unsigned i=0; i<8; ++i) {
 		mode.hideSprite(i);
 	}
 }
 
 void ViewSlot::Restore() {
+	ViewMode mode = Graphics();
+	mode.set();
+	mode.clear();
+  	mode.setWindow(0, 128);
 	switch(mFlags.view) {
 	case VIEW_IDLE:
 		mView.idle.Restore();
@@ -36,6 +47,7 @@ void ViewSlot::Restore() {
 		mView.inventory.Restore();
 		break;
 	}
+	pGame->NeedsSync();
 }
 
 void ViewSlot::Update() {
@@ -54,34 +66,85 @@ void ViewSlot::Update() {
 }
   
 bool ViewSlot::ShowLocation(Vec2 loc) {
-	const Map* m = pGame->GetMap();
 	if (!pGame->GetMap()->Contains(loc)) {
 		if (IsShowingRoom()) {
 			HideLocation();
 		}
-		return false;
 	} else {
 		unsigned rid = pGame->GetMap()->GetRoomId(loc);
 		if (!IsShowingRoom() || mView.room.GetRoom()->Id() != rid) {
+			if (mFlags.view == VIEW_INVENTORY) {
+				for (ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
+					if (p->ViewType() == VIEW_IDLE) {
+						p->mFlags.view = VIEW_INVENTORY;
+						p->mView.inventory.Init();
+						break;
+					}
+				}
+			}
 			mFlags.view = VIEW_ROOM;
 			mView.room.Init(rid);
+			pGame->NeedsSync();
+			return true;
 		}
-		return true;
 	}
+	return false;
 }
 
 bool ViewSlot::HideLocation() {
 	if (IsShowingRoom()) {
-		mFlags.view = VIEW_IDLE;
-		mView.idle.Init();
+
+		if (pGame->GetState()->HasAnyItems()) {
+			bool invShowing = false;
+			for(ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
+				if ((invShowing = (p->ViewType() == VIEW_INVENTORY))) { break; }
+			}
+			if (invShowing) {
+				mFlags.view = VIEW_IDLE;
+				mView.idle.Init();
+				pGame->NeedsSync();
+			} else {
+				mFlags.view = VIEW_INVENTORY;
+				mView.inventory.Init();
+				pGame->NeedsSync();
+			}
+		} else {
+			mFlags.view = VIEW_IDLE;
+			mView.idle.Init();
+			pGame->NeedsSync();
+		}
 		return true;
 	}
 	return false;
 }
 
+void ViewSlot::ShowInventory() {
+	if (mFlags.view != VIEW_INVENTORY) {
+		mFlags.view = VIEW_INVENTORY;
+		mView.inventory.Init();
+		pGame->NeedsSync();
+	}
+}
+
 void ViewSlot::RefreshInventory() {
-  if (mFlags.view == VIEW_IDLE) {
-  	mView.idle.OnInventoryChanged();
+  if (mFlags.view == VIEW_INVENTORY) {
+  	if (!pGame->GetState()->HasAnyItems()) {
+		mFlags.view = VIEW_IDLE;
+		mView.idle.Init();
+		pGame->NeedsSync();
+  	} else {
+  		mView.inventory.OnInventoryChanged();
+  	}
+  } else if (mFlags.view == VIEW_IDLE && pGame->GetState()->HasAnyItems()) { 
+	bool invShowing = false;
+	for(ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
+		if ((invShowing = p->ViewType() == VIEW_INVENTORY)) { break; }
+	}
+	if (!invShowing) {
+		mFlags.view = VIEW_INVENTORY;
+		mView.inventory.Init();
+		pGame->NeedsSync();
+  	}
   }
 }
 

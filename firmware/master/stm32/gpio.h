@@ -45,6 +45,18 @@ class GPIOPin {
         port()->ODR &= ~bit();
     }
 
+    /*
+        Pull up and pull down are controlled via ODR when the pin
+        is configured as an input.
+    */
+    void pullup() const {
+        port()->ODR |= bit();
+    }
+
+    void pulldown() const {
+        port()->ODR &= ~bit();
+    }
+
     void toggle() const {
         port()->ODR ^= bit();
     }

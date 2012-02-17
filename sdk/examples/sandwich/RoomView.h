@@ -22,6 +22,15 @@ private:
   };
   AnimTile mAnimTiles[ANIM_TILE_CAPACITY];
 
+  union {
+    struct {
+        uint8_t active : 1;
+        uint8_t dir : 3;
+        uint8_t frame : 4;
+        uint8_t x;
+        uint8_t y;
+    } bff; // butterfly friend ;)
+  } mAmbient;
 
 public:  
   // getters
@@ -47,7 +56,5 @@ public:
 
 private:
   void ComputeAnimatedTiles();
-
-  // misc hacky stuff
-  //void RandomizeBff();
+  void RandomizeBff();
 };

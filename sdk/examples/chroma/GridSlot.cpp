@@ -75,9 +75,18 @@ const AssetImage *GridSlot::FIXED_EXPLODINGTEXTURES[ GridSlot::NUM_COLORS ] =
 
 const AssetImage *GridSlot::SPECIALTEXTURES[ NUM_SPECIALS ] =
 {
-    &hyperdot,
+    &hyperdot_idle,
     &rockdot,
-    &rainball
+    &rainball_idle
+};
+
+
+
+const AssetImage *GridSlot::SPECIALEXPLODINGTEXTURES[ NUM_SPECIALS ] =
+{
+    &hyperdot_explode,
+    &rockdot,
+    &rainball_explode
 };
 
 //order of our frames
@@ -157,12 +166,22 @@ void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
     }
     else
         m_state = STATE_LIVING;
+
 	m_color = color;
 	m_bFixed = false;
+    m_bWasRainball = false;
+    m_bWasInfected = false;
     m_multiplier = 1;
+    m_eventTime = System::clock();
 
     if( color == ROCKCOLOR )
         m_RockHealth = MAX_ROCK_HEALTH;
+}
+
+
+bool GridSlot::matchesColor( unsigned int color ) const
+{
+    return isAlive() && ( getColor() == color || getColor() == GridSlot::RAINBALLCOLOR || getColor() == GridSlot::HYPERCOLOR );
 }
 
 
@@ -187,7 +206,13 @@ const AssetImage &GridSlot::GetSpecialTexture() const
 }
 
 
-unsigned int GridSlot::GetSpecialFrame() const
+const AssetImage &GridSlot::GetSpecialExplodingTexture() const
+{
+    return *SPECIALEXPLODINGTEXTURES[ m_color - NUM_COLORS ];
+}
+
+
+unsigned int GridSlot::GetSpecialFrame()
 {
     if( m_color == ROCKCOLOR )
     {
@@ -197,12 +222,19 @@ unsigned int GridSlot::GetSpecialFrame() const
             return 0;
     }
     else
-        return 0;
+    {
+        m_animFrame++;
+
+        if( m_animFrame >= GetSpecialTexture().frames )
+            m_animFrame = 0;
+
+        return m_animFrame;
+    }
 }
 
 
 //draw self on given vid at given vec
-void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState )
+void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState )
 {
 	Vec2 vec( m_col * 4, m_row * 4 );
 	switch( m_state )
@@ -222,10 +254,9 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState )
 
                 if( m_multiplier > 1 )
                 {
-                    //always use sprite 0, only 1 multiplier allowed per cube?
-                    vid.setSpriteImage( 0, mults, m_multiplier - 2 );
-                    vid.resizeSprite( 0, 32, 16 );
-                    vid.moveSprite( 0, m_col * 32, m_row * 32 + 8 + ( MULTIPLIER_MOTION_AMPLITUDE * sinf( (float)System::clock() * MULTIPLIER_MOTION_PERIOD_MODIFIER )) );
+                    vid.setSpriteImage( MULT_SPRITE_ID, mults, m_multiplier - 2 );
+                    vid.resizeSprite( MULT_SPRITE_ID, 32, 16 );
+                    vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 + 8 + ( MULTIPLIER_MOTION_AMPLITUDE * sinf( (float)System::clock() * MULTIPLIER_MOTION_PERIOD_MODIFIER )) );
                 }
             }
 			else
@@ -273,19 +304,56 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState )
 		case STATE_MARKED:
         {
             if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
+            {
+                //vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
+                const AssetImage &exTex = GetSpecialExplodingTexture();
+
+                //TODO, remove hack
+                if( m_color == RAINBALLCOLOR )
+                    vid.BG0_drawAsset(vec, exTex, m_animFrame);
+                else
+                    vid.BG0_drawAsset(vec, exTex, GetSpecialFrame());
+            }
             else
             {
                 const AssetImage &exTex = GetExplodingTexture();
                 vid.BG0_drawAsset(vec, exTex, m_animFrame);
+
+                if( m_bWasRainball || m_bWasInfected )
+                {
+                    const AssetImage *pImg = 0;
+
+                    if( m_bWasRainball )
+                    {
+                        pImg = &rainball_explode;
+                    }
+                    else if( m_bWasInfected )
+                    {
+                        pImg = &hyperdot_activation;
+                        vec.x += 1;
+                        vec.y += 1;
+                    }
+
+                    float timeDiff = System::clock() - (float)m_eventTime;
+                    float perc = timeDiff / MARK_BREAK_DELAY;
+
+                    //for some reason I'm seeing extremely small negative values at times.
+                    if( perc >= 0.0f && perc < 1.0f )
+                    {
+                        //figure out frame based on mark break delay
+                        unsigned int frame = pImg->frames * perc;
+
+                        bg1helper.DrawAsset( vec, *pImg, frame );
+                    }
+                }
             }
 			break;
 		}
 		case STATE_EXPLODING:
 		{
-            if( IsSpecial() )
+            /*if( IsSpecial() )
                 vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
-            else
+            else*/
             {
                 vid.BG0_drawAsset(vec, GemEmpty, 0);
                 //const AssetImage &exTex = GetExplodingTexture();
@@ -504,8 +572,9 @@ void GridSlot::explode()
     if( m_multiplier > 1 )
     {
         Game::Inst().UpMultiplier();
-        m_multiplier = 0;
-        m_pWrapper->ClearSprites();
+        m_multiplier = 1;
+        m_pWrapper->ClearSprite( MULT_SPRITE_ID );
+        DEBUG_LOG(( "clearing out sprite\n" ));
     }
 
 	m_eventTime = System::clock();
@@ -561,9 +630,8 @@ void GridSlot::DamageRock()
 //copy color and some other attributes from target.  Used when tilting
 void GridSlot::TiltFrom(GridSlot &src)
 {
-    m_bFixed = false;
+    FillColor( src.m_color );
 	m_state = STATE_PENDINGMOVE;
-	m_color = src.m_color;
 	m_eventTime = src.m_eventTime;
 	m_curMovePos.x = src.m_col * 4;
 	m_curMovePos.y = src.m_row * 4;
@@ -729,4 +797,12 @@ void GridSlot::UpMultiplier()
 {
     if( isAlive() && IsFixed() && m_multiplier > 1 )
         m_multiplier++;
+}
+
+
+//morph from rainball to given color
+void GridSlot::RainballMorph( unsigned int color )
+{
+    FillColor( color );
+    m_bWasRainball = true;
 }

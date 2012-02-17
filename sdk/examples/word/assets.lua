@@ -15,7 +15,6 @@ TitleSmoke = image{"wc_title_smoke.png", width=64, height=64, quality=10}
 HighScores = image{"score_highscores.png", quality=10}
 Score = image{"score_endscore.png", quality=10}
 Teeth = image{"wc_transition.png", width=128, height=128, quality=10}
-ScorePan = image{"score_endgame.png", width=128, height=128, quality=10}
 TeethLoopNeighboredTop = image{"wc_letters_neighbored_top.png", width=128, height=16, quality=10}
 TeethLoopNeighboredBottom = image{"wc_letters_neighbored_bottom.png", width=128, height=16, quality=10}
 TeethLoopWordTop = image{"wc_letters_connected_center_top.png", width=128, height=16, quality=10}

@@ -19,6 +19,7 @@ public:
     static const unsigned int NUM_COLORS = 8;
     static const unsigned int NUM_SPAWN_FRAMES = 4;
     static const unsigned int MULTIPLIER_MOTION_AMPLITUDE = 2;
+    static const unsigned int MULT_SPRITE_ID = 1;
     static const float MULTIPLIER_MOTION_PERIOD_MODIFIER;
 
     //these are special dots
@@ -36,6 +37,7 @@ public:
     static const AssetImage *FIXED_TEXTURES[ NUM_COLORS ];
     static const AssetImage *FIXED_EXPLODINGTEXTURES[ NUM_COLORS ];
     static const AssetImage *SPECIALTEXTURES[ NUM_SPECIALS ];
+    static const AssetImage *SPECIALEXPLODINGTEXTURES[ NUM_SPECIALS ];
 
 
     static const unsigned int NUM_QUANTIZED_TILT_VALUES = 7;
@@ -75,7 +77,7 @@ public:
 
 	void Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col ); 
 	//draw self on given vid at given vec
-    void Draw( VidMode_BG0_SPR_BG1 &vid, Float2 &tiltState );
+    void Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &tiltState );
     void DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame );
     void Update(float t);
     bool isAlive() const { return m_state == STATE_LIVING || m_state == STATE_PENDINGMOVE || m_state == STATE_MOVING || m_state == STATE_FINISHINGMOVE || m_state == STATE_FIXEDATTEMPT; }
@@ -86,6 +88,7 @@ public:
     void setEmpty() { m_state = STATE_GONE; m_bFixed = false; }
 	unsigned int getColor() const { return m_color; }
     void FillColor( unsigned int color, bool bSetSpawn = false );
+    bool matchesColor( unsigned int color ) const;
 
 	void mark();
 	void spread_mark();
@@ -109,6 +112,9 @@ public:
     inline unsigned int getMultiplier() { return m_multiplier; }
     inline void setMultiplier( unsigned int mult ) { m_multiplier = mult; }
     void UpMultiplier();
+    //morph from rainball to given color
+    void RainballMorph( unsigned int color );
+    void Infect() { m_bWasInfected = true; }
 
 private:
 	void markNeighbor( int row, int col );
@@ -118,7 +124,8 @@ private:
     const AssetImage &GetTexture() const;
     const AssetImage &GetExplodingTexture() const;
     const AssetImage &GetSpecialTexture() const;
-    unsigned int GetSpecialFrame() const;
+    const AssetImage &GetSpecialExplodingTexture() const;
+    unsigned int GetSpecialFrame();
     //convert from [-128, 128] to [0, 6] via non-linear quantization
     unsigned int QuantizeTiltValue( float value ) const;
     //get the rolling frame of the given index
@@ -139,6 +146,10 @@ private:
 	unsigned int m_score;
 	//fixed dot
 	bool		 m_bFixed;
+    //used to tell if this dot was a rainball (for a special animation)
+    bool         m_bWasRainball;
+    //was this infected by a hyperball?
+    bool         m_bWasInfected;
 
     //only fixed dots can have multipliers
     unsigned int m_multiplier;

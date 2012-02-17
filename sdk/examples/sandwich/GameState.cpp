@@ -4,6 +4,8 @@ void GameState::Init() {
 	mQuest = 0;
 	mQuestMask = 0;
 	mUnlockMask = 0;
+	mKeyCount = 0;
+	mItemSet = 0;
 }
 
 bool GameState::AdvanceQuest() {
@@ -65,6 +67,28 @@ bool GameState::Flag(uint8_t questId, uint8_t flagId) {
 	}
 	return false;
 }
+
+bool GameState::PickupItem(int itemId) {
+  if (itemId == 0) { return false; }
+  if (itemId == ITEM_BASIC_KEY || itemId == ITEM_SKELETON_KEY) {
+    mKeyCount++;
+    //if (mKeyCount == 1) {
+    //}
+  } else if (!HasItem(itemId)) {
+    mItemSet |= (1<<itemId);
+    ASSERT(HasItem(itemId));
+  } else {
+  	return false;
+  }
+  return true;
+}
+
+bool GameState::DecrementBasicKeyCount() { 
+  ASSERT(mKeyCount>0); 
+  mKeyCount--; 
+  return true;
+}
+
 
 void GameState::Save() {
 	// TODO

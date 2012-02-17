@@ -36,7 +36,7 @@ struct DialogTextData {
 };
 
 struct DialogData {
-    const PinnedAssetImage* npc;
+    const AssetImage* npc;
     uint32_t lineCount;
     const DialogTextData* lines;
 };
@@ -99,10 +99,11 @@ struct BridgeSubdivisionData {
     uint8_t altCenterY : 4;
 };
 
+// todo - microoptimize bits
+// todo - replace pointers with <32bit offsets-from-known-locations?
 struct MapData {
     const AssetImage* tileset;
     const AssetImage* overlay;
-    const AssetImage* blankImage;
     const RoomData* rooms;
     const uint8_t* rle_overlay; // overlay layer w/ empty-tiles RLE-encoded (tileId, tileId, 0xff, emptyCount, tileId, ...)
     const uint8_t* xportals; // bit array of portals between rooms (x,y) and (x+1,y)
@@ -122,8 +123,9 @@ struct MapData {
     uint8_t animatedTileCount;
     uint8_t diagonalSubdivisionCount;
     uint8_t bridgeSubdivisionCount;
-    uint8_t width : 4;
-    uint8_t height : 4;
+    uint8_t width;
+    uint8_t height;
+    uint8_t ambientType; // 0 - None
 };
 
 extern const unsigned gMapCount;

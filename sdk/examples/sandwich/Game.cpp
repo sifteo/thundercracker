@@ -24,7 +24,7 @@ void Game::ObserveNeighbors(bool flag) {
 // BOOTSTRAP API
 //------------------------------------------------------------------
 
-void Game::MainLoop() {
+void Game::MainLoop(Cube* pPrimary) {
   // reset everything
   mSimFrames = 0;
   mAnimFrames = 0;
@@ -32,9 +32,9 @@ void Game::MainLoop() {
   mNeedsSync = 0;
   mState.Init();
   mMap.Init();
-  mPlayer.Init();
-  for(ViewSlot* v = ViewBegin()+1; v!=ViewEnd(); ++v) { 
-    if (v != mPlayer.View()->Parent()) {
+  mPlayer.Init(pPrimary);
+  for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) { 
+    if (v->GetCube() != pPrimary) {
       v->Init(); 
     }
   }
@@ -44,7 +44,6 @@ void Game::MainLoop() {
     gChannelMusic.stop();
     PlaySfx(sfx_zoomIn);
     ViewSlot* view = mPlayer.View()->Parent();
-    view->HideSprites();
     Vec2 room = mPlayer.Location();
     VidMode_BG2 vid(view->GetCube()->vbuf);
     for(int x=0; x<8; ++x) {
@@ -79,9 +78,9 @@ void Game::MainLoop() {
 
   while(!mIsDone) {
     float dt = UpdateDeltaTime();
-    if (sNeighborDirty) { 
-      CheckMapNeighbors(); 
-    }
+    //if (sNeighborDirty) { 
+    //  CheckMapNeighbors(); 
+    //}
     mPlayer.Update(dt);
     Paint();
     mSimFrames++;
@@ -89,7 +88,10 @@ void Game::MainLoop() {
 }
 
 void Game::Paint(bool sync) {
-  for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+    if (sNeighborDirty) { 
+      CheckMapNeighbors(); 
+    }
+    for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->Update();
     #if KLUDGES
     p->GetCube()->vbuf.touch();
@@ -184,9 +186,9 @@ void Game::TeleportTo(const MapData& m, Vec2 position) {
     }
   }
   mMap.SetData(m);
-  for(ViewSlot* p = ViewBegin(); p!= ViewEnd(); ++p) {
-    if (p != view) { p->Restore(); }
-  }
+  //for(ViewSlot* p = ViewBegin(); p!= ViewEnd(); ++p) {
+  //  if (p != view) { p->Restore(); }
+  //}
   // zoom out
   { 
     PlaySfx(sfx_zoomIn);
@@ -237,7 +239,7 @@ void Game::OnInventoryChanged() {
   const int firstSandwichId = 2;
   int count = 0;
   for(int i=firstSandwichId; i<firstSandwichId+4; ++i) {
-    if(!mPlayer.HasItem(i)) {
+    if(!mState.HasItem(i)) {
       return;
     }
   }

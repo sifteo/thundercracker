@@ -7,8 +7,11 @@ const static uint8_t sHopTable[] = { 0, 0, 0, 1, 3, 4, 6, 6, 7, 7, 8, 7, 7, 6, 6
 
 void IdleView::Init() {
   mStartFrame = pGame->AnimFrame();
-  DrawInventorySprites();
-  DrawBackground();
+  //DrawInventorySprites();
+  Parent()->HideSprites();
+  Parent()->Graphics().BG0_drawAsset(Vec2(0,0), Blank);
+  Parent()->Overlay().Flush();
+  Parent()->GetCube()->vbuf.touch();
 }
 
 void IdleView::Restore() {
@@ -16,7 +19,8 @@ void IdleView::Restore() {
 }
 
 void IdleView::Update() {
-  VidMode_BG0_SPR_BG1 mode(Parent()->GetCube()->vbuf);
+  /*
+  ViewMode mode = Parent()->Graphics();
   // compute position of each inventory item based on phase and current time
   const unsigned t = pGame->AnimFrame() - mStartFrame;
   if (mCount > 0 && t <= HOP_PHASE * (mCount-1) + HOP_COUNT) {
@@ -32,15 +36,17 @@ void IdleView::Update() {
       }
     }
   }
+  */
 }
 
+/*
 void IdleView::OnInventoryChanged() {
 	mStartFrame = pGame->AnimFrame();
   DrawInventorySprites();
 }
 
 void IdleView::DrawInventorySprites() {
-  VidMode_BG0_SPR_BG1 mode(Parent()->GetCube()->vbuf);
+  ViewMode mode = Parent()->Graphics();
   mCount = 0;
   const int pad = 24;
   const int innerPad = (128-pad-pad)/3;
@@ -64,10 +70,5 @@ void IdleView::DrawInventorySprites() {
     mode.hideSprite(i);
   }
 }
-
-void IdleView::DrawBackground() {
-  VidMode_BG0 mode(Parent()->GetCube()->vbuf);
-  mode.BG0_drawAsset(Vec2(0,0), *(pGame->GetMap()->Data()->blankImage));
-  BG1Helper(*Parent()->GetCube()).Flush();
-}
+*/
 

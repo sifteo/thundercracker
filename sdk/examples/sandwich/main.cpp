@@ -8,7 +8,7 @@ AudioChannel gChannelMusic;
 //static Game sGame;
 Game* pGame = 0;
 
-void IntroCutscene();
+Cube* IntroCutscene();
 void WinScreen(Cube* primaryCube);
 
 static bool AnyNeighbors(const Cube& c) {
@@ -22,8 +22,7 @@ void siftmain() {
 	for (Cube::ID i = 0; i < NUM_CUBES; i++) {
     	gCubes[i].enable(i + CUBE_ID_BASE);
   	}
-
-#if LOAD_ASSETS
+	#if LOAD_ASSETS
 	{ // initialize assets
 	  for (Cube::ID i = 0; i < NUM_CUBES; i++) {
       gCubes[i].loadAssets(GameAssets);
@@ -42,33 +41,7 @@ void siftmain() {
 	    System::paint();
 	  }
 	}
-#endif
-  
-  /*
-	{ // fake power-on
-		for(unsigned hack=0; hack<4; ++hack) {
-			for(unsigned i=0; i<NUM_CUBES; ++i) {
-				VidMode_BG0 mode(gCubes[i].vbuf);
-				mode.init();
-				mode.BG0_drawAsset(Vec2(0,0), ScreenOff);
-				gCubes[i].vbuf.touch();
-			}
-			System::paintSync();
-		}
-		unsigned cnt = 0;
-		while(cnt < 2 * (NUM_CUBES-1)) {
-			System::paint();
-			cnt = 0;
-			for(unsigned i=0; i<NUM_CUBES; ++i) {
-				for(Cube::Side s=0; s<4; ++s) {
-					cnt += gCubes[i].hasPhysicalNeighborAt(s);
-				}
-				VidMode_BG0(gCubes[i].vbuf)
-					.BG0_drawAsset(Vec2(0,0), AnyNeighbors(gCubes[i]) ? Sting : ScreenOff);
-			}
-		}
-	}
-	*/
+	#endif
 	#if SFX_ON
 	gChannelSfx.init();
 	#endif
@@ -76,18 +49,22 @@ void siftmain() {
 	gChannelMusic.init();
 	#endif
 	for(;;) {
+		//#ifndef SIFTEO_SIMULATOR
 		PlayMusic(music_sting, false);
-		//IntroCutscene();
+		Cube* pPrimary = IntroCutscene();
+		//#else 
+		//Cube* pPrimary = gCubes;
+		//#endif
 		{
 			Game game;
 			pGame = &game;
-			game.MainLoop();
+			game.MainLoop(pPrimary);
 			pGame = 0;
 		}
-		PlayMusic(music_winscreen, false);
-		WinScreen(gCubes);
+		for(unsigned i=0; i<100; ++i) { System::paint(); }
+		//PlayMusic(music_winscreen, false);
+		//WinScreen(gCubes);
 	}
-	
 }
 
 //-----------------------------------------------------------------------------
@@ -99,66 +76,68 @@ static void WaitForSeconds(float dt) {
 	do { System::paint(); } while(System::clock() - t < dt);
 }
 
-void IntroCutscene() {
-	for(int i=0; i<NUM_CUBES; ++i) {
-		VidMode_BG0 stingMode(gCubes[i].vbuf);
-		stingMode.init();
-		stingMode.BG0_drawAsset(Vec2(0,0), Sting);
+Cube* IntroCutscene() {
+	for(unsigned i=0; i<NUM_CUBES; ++i) {
+		ViewMode gfx(gCubes[i].vbuf);
+		gfx.set();
+		gfx.BG0_drawAsset(Vec2(0,0), Sting);
+		for(unsigned s=0; s<8; ++s) {
+			gfx.hideSprite(s);
+		}
+		BG1Helper overlay(gCubes[i]);
+		overlay.DrawAsset(Vec2(0,0), Title);
+		overlay.Flush();
+		gfx.BG1_setPanning(Vec2(0,64));
 		gCubes[i].vbuf.touch();
 	}
-	//System::paintSync();
-	WaitForSeconds(5.f);
-	VidMode_BG0_SPR_BG1 mode(gCubes->vbuf);
-	mode.set();
-	//mode.clear();
+	float dt;
+	for(float t=System::clock(); (dt=(System::clock()-t))<0.9f;) {
+		float u = 1.f - (dt / 0.9f);
+		u = 1.f - (u*u*u*u);
+		for(unsigned i=0; i<NUM_CUBES; ++i) {
+			ViewMode(gCubes[i].vbuf).BG1_setPanning(Vec2(0, 72 - 128*u));
+		}
+		System::paintSync();
+	}
+	
+	// wait for a touch
+	Cube* pCube = 0;
+	while(!pCube) {
+		for(unsigned i=0; i<NUM_CUBES; ++i) {
+			if (gCubes[i].touching()) {
+				pCube = gCubes + i;
+				PlaySfx(sfx_neighbor);
+				break;
+			}
+		}
+		System::yield();
+	}
+	// blank other cubes
 	for(unsigned i=0; i<NUM_CUBES; ++i) {
-		VidMode_BG0_SPR_BG1 m(gCubes[i].vbuf);
-		for(unsigned j=0; j<8; ++j) {
-			m.hideSprite(j);
+		if (gCubes+i != pCube) {
+			BG1Helper(gCubes[i]).Flush();
+			ViewMode gfx(gCubes[i].vbuf);
+			gfx.BG1_setPanning(Vec2(0,0));
+			gfx.BG0_drawAsset(Vec2(0,0), Blank);
 		}
 	}
-
-	// iris out
-	for(unsigned i=0; i<8; ++i) {
-		for(unsigned x=i; x<16-i; ++x) {
-			mode.BG0_putTile(Vec2(x, i), *Black.tiles);
-			mode.BG0_putTile(Vec2(x, 16-i-1), *Black.tiles);
-		}
-		for(unsigned y=i+1; y<16-i-1; ++y) {
-			mode.BG0_putTile(Vec2(i, y), *Black.tiles);
-			mode.BG0_putTile(Vec2(16-i-1, y), *Black.tiles);
-		}
+	ViewMode mode(pCube->vbuf);
+	// hide banner
+	for(float t=System::clock(); (dt=(System::clock()-t))<0.9f;) {
+		float u = 1.f - (dt / 0.9f);
+		u = 1.f - (u*u*u*u);
+		mode.BG1_setPanning(Vec2(0, -56 + 128*u));
 		System::paintSync();
 	}
-	// scroll transitions in
-	for(unsigned i=1; i<=16; ++i) {
-		mode.BG0_drawPartialAsset(Vec2(6,16-i), Vec2(0,0), Vec2(2,i), ScrollLeft);
-		mode.BG0_drawPartialAsset(Vec2(8,16-i), Vec2(0,0), Vec2(2,i), ScrollRight);
-		System::paintSync();
-	}
-	// scroll opens
-	mode.BG0_drawAsset(Vec2(5,0), ScrollLeft);
-	mode.BG0_drawAsset(Vec2(7,0), ScrollLeftAccent);
-	mode.BG0_drawAsset(Vec2(8,0), ScrollRightAccent);
-	mode.BG0_drawAsset(Vec2(9,0), ScrollRight);
-	System::paintSync();
-	for(unsigned i=2; i<7; ++i) {
-		mode.BG0_drawAsset(Vec2(6-i,0), ScrollLeft);
-		mode.BG0_drawAsset(Vec2(6-i+2,0), ScrollLeftAccent);
-		mode.BG0_drawAsset(Vec2(6-i+3,0), ScrollMiddle);
-		mode.BG0_drawAsset(Vec2(8+i-2,0), ScrollMiddle);
-		mode.BG0_drawAsset(Vec2(8+i-1,0), ScrollRightAccent);
-		mode.BG0_drawAsset(Vec2(8+i,0), ScrollRight);
-		System::paintSync();
-	}
-
+	WaitForSeconds(0.1f);
 	// pearl walks up from bottom
+	PlaySfx(sfx_running);
 	int framesPerCycle = PlayerWalk.frames >> 2;
 	int tilesPerFrame = PlayerWalk.width * PlayerWalk.height;
 	mode.resizeSprite(0, 32, 32);
-	for(unsigned i=0; i<48; ++i) {
+	for(unsigned i=0; i<48/2; ++i) {
 		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
-		mode.moveSprite(0, 64-16, 128-i);
+		mode.moveSprite(0, 64-16, 128-i-i);
 		System::paintSync();
 	}
 	// face front
@@ -178,9 +157,9 @@ void IntroCutscene() {
 	WaitForSeconds(0.5f);
 
 	// thought bubble appears
-	mode.BG0_drawAsset(Vec2(8,8), ScrollThoughts);
+	mode.BG0_drawAsset(Vec2(10,8), TitleThoughts);
 	WaitForSeconds(0.5f);
-	mode.BG0_drawAsset(Vec2(3,4), ScrollBubble);
+	mode.BG0_drawAsset(Vec2(3,4), TitleBalloon);
 	WaitForSeconds(0.5f);
 
 	// items appear
@@ -191,6 +170,7 @@ void IntroCutscene() {
 		mode.setSpriteImage(i+1, Items.index + Items.width * Items.height * (i+1));
 		mode.resizeSprite(i+1, 16, 16);
 		// jump
+		//PlaySfx(sfx_pickup);
 		for(int j=0; j<6; j++) {
 			mode.moveSprite(i+1, x, 42 - j);
 			System::paint();
@@ -218,14 +198,15 @@ void IntroCutscene() {
 	mode.hideSprite(2);
 	mode.hideSprite(3);
 	mode.hideSprite(4);
-	for(int x=3; x<13; ++x) { mode.BG0_drawAsset(Vec2(x, 0), ScrollMiddle); }
+	mode.BG0_drawAsset(Vec2(0,0), Sting);
 	System::paintSync();
 
 	// walk off
+	PlaySfx(sfx_running);
 	unsigned downIndex = PlayerWalk.index + SIDE_BOTTOM * tilesPerFrame * framesPerCycle;
-	for(unsigned i=48; i>0; --i) {
-		mode.setSpriteImage(0, downIndex + tilesPerFrame * (i%framesPerCycle));
-		mode.moveSprite(0, 64-16, 128-i);
+	for(unsigned i=0; i<76/2; ++i) {
+		mode.setSpriteImage(0, PlayerWalk.index + tilesPerFrame * (i%framesPerCycle));
+		mode.moveSprite(0, 64-16, 80-i-i);
 		System::paintSync();
 	}
 	mode.hideSprite(0);
@@ -242,10 +223,13 @@ void IntroCutscene() {
 		}
 		System::paintSync();
 	}
-
+	BG1Helper(*pCube).Flush();
+	ViewMode(pCube->vbuf).BG1_setPanning(Vec2(0,0));
 	WaitForSeconds(0.5f);
+	return pCube;
 }
 
+/*
 //-----------------------------------------------------------------------------
 // WIN SCREEN FX
 //-----------------------------------------------------------------------------
@@ -338,3 +322,4 @@ void WinScreen(Cube* primaryCube) {
     System::paintSync();
     WaitForSeconds(2.f);
 }
+*/

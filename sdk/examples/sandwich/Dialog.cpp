@@ -1,4 +1,5 @@
 #include "Dialog.h"
+#include "Game.h"
 
 static const uint8_t font_data[] = {
     0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -213,23 +214,28 @@ void DialogView::Erase() {
 
 void DialogView::Fade() {
     const unsigned speed = 4;
-    const unsigned hold = 100;
+    const unsigned hold = 250;
     for (unsigned i = 0; i < 128; i += speed) {
         mCube->vbuf.poke(
             offsetof(_SYSVideoRAM, colormap) / 2 + 1,
             color_lerp(2*i)
         );
-        System::paint();
+        pGame->Paint();
     }
+    bool prev = mCube->touching();
     for (unsigned i = 0; i < hold; i++) {
-        System::paint();
+        pGame->Paint();
+        bool next = mCube->touching();
+        if (next && !prev) { break; }
+        prev = next;
+
     }
     for (unsigned i = 0; i < 128; i += speed) {
         mCube->vbuf.poke(
             offsetof(_SYSVideoRAM, colormap) / 2 + 1,
             color_lerp(0xFF - 2*i)
         );
-        System::paint();
+        pGame->Paint();
     }
 }
 
@@ -237,15 +243,18 @@ void DoDialog(const DialogData& data, Cube* cube) {
     if (!cube) cube = gCubes;
     DialogView view(cube);
 
-    VidMode_BG0 mode(view.GetCube()->vbuf);
-
+    PlaySfx(sfx_neighbor);
+    ViewMode mode(view.GetCube()->vbuf);
+    for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
+    mode.BG0_drawAsset(Vec2(0,10), DialogBox);
     for(unsigned line=0; line<data.lineCount; ++line) {
         const DialogTextData& txt = data.lines[line];
 
         if (line == 0 || data.lines[line-1].detail != txt.detail) {
             System::paintSync();
-            mode.init();
-            mode.BG0_drawAsset(Vec2(0,0), *(txt.detail));
+            BG1Helper ovrly(*cube);
+            ovrly.DrawAsset(Vec2(2,0), *(txt.detail));
+            ovrly.Flush();
             System::paintSync();
             for(unsigned i=0; i<4; ++i) {
                 view.GetCube()->vbuf.touch();
@@ -259,14 +268,18 @@ void DoDialog(const DialogData& data, Cube* cube) {
         }
         
         view.Erase();
-        System::paintSync();
+        pGame->Paint(true);
         const char* pNextChar = txt.line;
         while(*pNextChar) {
             pNextChar = view.Show(pNextChar);
         }
+        if (line > 0) {
+            PlaySfx(sfx_neighbor);
+        }
         view.Fade();
     }
     for(unsigned i=0; i<16; ++i) {
-        System::paint();
+        pGame->Paint();
     }
+    PlaySfx(sfx_deNeighbor);
 }

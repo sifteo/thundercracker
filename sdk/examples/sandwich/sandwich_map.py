@@ -20,7 +20,7 @@ class Map:
 	def __init__(self, world, path):
 		self.world = world
 		self.id = os.path.basename(path)[:-4].lower()
-		assert os.path.exists(path[:-4]+"_blank.png"), "Map missing blank image: " + self.id
+		#assert os.path.exists(path[:-4]+"_blank.png"), "Map missing blank image: " + self.id
 		self.raw = tmx.Map(path)
 		assert "background" in self.raw.layer_dict, "Map does not contain background layer: " + self.id
 		self.background = self.raw.layer_dict["background"]
@@ -99,6 +99,7 @@ class Map:
 		self.doors = [Door(r) for r in self.rooms if r.portals[0] == PORTAL_DOOR]
 		for i,d in enumerate(self.doors):
 			d.index = i
+		self.ambientType = 1 if "ambient" in self.raw.props else 0
 				
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
@@ -214,9 +215,9 @@ class Map:
 	
 	def write_decl_to(self, src):
 		src.write(
-			"    { &TileSet_%(name)s, %(overlay)s, &Blank_%(name)s, %(name)s_rooms, %(overlay_rle)s, " \
+			"    { &TileSet_%(name)s, %(overlay)s, %(name)s_rooms, %(overlay_rle)s, " \
 			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
-			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(w)x, 0x%(h)x },\n" % \
+			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(w)x, 0x%(h)x, 0x%(ambient)x },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
@@ -237,7 +238,8 @@ class Map:
 				"ndoors": len(self.doors),
 				"nanimtiles": len(self.animatedtiles),
 				"ndiags": len(self.diagRooms),
-				"nbridges": len(self.bridgeRooms)
+				"nbridges": len(self.bridgeRooms),
+				"ambient": self.ambientType
 			})
 
 

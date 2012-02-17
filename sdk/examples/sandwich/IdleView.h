@@ -11,7 +11,8 @@ public:
 	void Init();
 	void Restore();
 	void Update();
-	void OnInventoryChanged();
-	void DrawInventorySprites();
-	void DrawBackground();
+	//void OnInventoryChanged();
+
+private:
+	//void DrawInventorySprites();
 };

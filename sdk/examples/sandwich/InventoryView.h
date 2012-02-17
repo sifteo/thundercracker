@@ -6,4 +6,9 @@ public:
 	void Init();
 	void Restore();
 	void Update();
+
+	void OnInventoryChanged();
+
+private:
+	void RenderInventory();
 };

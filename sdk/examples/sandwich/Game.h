@@ -30,7 +30,7 @@ public:
   inline unsigned AnimFrame() const { return mAnimFrames; }
 
   // methods  
-  void MainLoop();
+  void MainLoop(Cube* pPrimary);
   void Paint(bool sync=false);
   void NeedsSync() { mNeedsSync = 1; }
   void WalkTo(Vec2 position);

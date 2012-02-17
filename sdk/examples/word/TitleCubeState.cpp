@@ -66,8 +66,8 @@ void TitleCubeState::paint()
 
     switch (getStateMachine().getCube().id() - CUBE_ID_BASE)
     {
-    default:
-    case 0:
+    //default:
+    case 999:
         vid.BG0_drawAsset(Vec2(0,0), Title);
         if (mAnimDelay <= 0.f)
         {
@@ -107,6 +107,7 @@ void TitleCubeState::paint()
         }
         break;
 
+    default:
     case 1:
         vid.BG0_drawAsset(Vec2(0, 0), Teeth);
         if (getStateMachine().getTime() > SMOKE_ANIM_LENGTH)
