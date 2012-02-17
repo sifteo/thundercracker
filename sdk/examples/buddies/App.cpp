@@ -305,10 +305,6 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
     {
         bool isSwapping = mSwapState != SWAP_STATE_NONE;
         
-        bool isHinting =
-            GetCubeWrapper(cubeId0).IsTouching() ||
-            GetCubeWrapper(cubeId1).IsTouching();
-        
         bool isFixed =
             GetCubeWrapper(cubeId0).GetPiece(cubeSide0).mAttribute == Piece::ATTR_FIXED ||
             GetCubeWrapper(cubeId1).GetPiece(cubeSide1).mAttribute == Piece::ATTR_FIXED;
@@ -324,7 +320,7 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
             (   cubeId0 < GetPuzzle(mPuzzleIndex).GetNumBuddies() &&
                 cubeId1 < GetPuzzle(mPuzzleIndex).GetNumBuddies());
         
-        if (!isSwapping && !isHinting && !isFixed && isValidGameState && isValidCube)
+        if (!isSwapping && !isFixed && isValidGameState && isValidCube)
         {
             if (kGameMode == GAME_MODE_SHUFFLE && mGameState != GAME_STATE_SHUFFLE_PLAY)
             {
@@ -340,6 +336,8 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
     }
     
     mShuffleHintTimer = kHintTimerOnDuration;
+    mShuffleHintPiece0 = -1;
+    mShuffleHintPiece1 = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -357,6 +355,8 @@ void App::OnTilt(Cube::ID cubeId)
     }
     
     mShuffleHintTimer = kHintTimerOnDuration;
+    mShuffleHintPiece0 = -1;
+    mShuffleHintPiece1 = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -374,6 +374,8 @@ void App::OnShake(Cube::ID cubeId)
     }
     
     mShuffleHintTimer = kHintTimerOnDuration;
+    mShuffleHintPiece0 = -1;
+    mShuffleHintPiece1 = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -518,7 +520,7 @@ void App::StartGameState(GameState shuffleState)
         case GAME_STATE_PUZZLE_PLAY:
         {
             ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
-            for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
@@ -591,18 +593,7 @@ void App::UpdateGameState(float dt)
                 if (mShuffleHintTimer <= 0.0f)
                 {
                     mShuffleHintTimer = 0.0f;
-                    
-                    if (mShuffleHintPiece0 != -1 && mShuffleHintPiece1 != -1)
-                    {
-                        mShuffleHintTimer = kHintTimerOnDuration;
-                        mShuffleHintPiece0 = -1;
-                        mShuffleHintPiece1 = -1;
-                    }
-                    else
-                    {
-                        mShuffleHintTimer = kHintTimerOffDuration;
-                        ChooseShuffleHint();
-                    }
+                    ChooseShuffleHint();
                 }
             }
             
@@ -622,7 +613,6 @@ void App::UpdateGameState(float dt)
                 if (AnyTouching(*this))
                 {
                     mTouching = true;
-                    mShuffleHintTimer = kHintTimerOffDuration;
                     ChooseShuffleHint();
                 }
             }

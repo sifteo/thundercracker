@@ -53,7 +53,6 @@ const unsigned int kMaxBuddies = 6; // Number of characters
 
 const float kResetTimerDuration = 5.0f; // Touch a cube for this many seconds to reset the game
 const float kHintTimerOnDuration = 10.0f; // Seconds before hint appears
-const float kHintTimerOffDuration = 3.0f; // Seconds before hint disappears
 
 const int kShuffleMaxMoves = -1; // Number of shuffles. -1 keeps going until all are shuffled.
 const float kShuffleStateTimeDelay = 1.0f; // Delay when switching between shuffle states
