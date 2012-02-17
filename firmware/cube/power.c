@@ -35,7 +35,7 @@ void power_init(void)
     PWRDWN = 0;
 
 #ifndef WAKE_ON_POWERUP
-    if (!(powerupReason & 0x80))
+    if (!powerupReason)
         power_sleep();
 #endif
 
