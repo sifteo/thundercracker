@@ -27,7 +27,7 @@ void Runtime::run()
     if (setjmp(jmpExit))
         return;
 
-    siftmain();
+    // siftmain;
 }
 
 void Runtime::exit()
