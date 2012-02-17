@@ -140,5 +140,5 @@ bool SVMConstantPoolMBB::hasSameValue(SVMConstantPoolValue *CPV)
 
 void SVMConstantPoolMBB::print(raw_ostream &O) const {
     SVMConstantPoolValue::print(O);
-    O << MBB->getSymbol()->getName();
+    O << MBB->getSymbol()->AliasedSymbol().getName();
 }
