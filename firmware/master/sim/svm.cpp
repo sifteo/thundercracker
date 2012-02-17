@@ -872,7 +872,7 @@ bool SvmProgram::loadElfFile(unsigned addr, unsigned len)
             progInfo.textRodata.paddr = pHeader.p_paddr;
             break;
         case (Elf::PF_Read | Elf::PF_Write):
-            if (pHeader.p_memsz >= 0 && pHeader.p_filesz == 0) {
+            if (pHeader.p_memsz > 0 && pHeader.p_filesz == 0) {
                 LOG(("bss segment found\n"));
                 progInfo.bss.start = pHeader.p_offset;
                 progInfo.bss.size = pHeader.p_memsz;
