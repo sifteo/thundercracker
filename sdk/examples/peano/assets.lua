@@ -14,6 +14,13 @@ Hint_4 = image { "hint_4.png", pinned=true }
 Hint_5 = image { "hint_5.png", pinned=true }
 Hint_6 = image { "hint_6.png", pinned=true }
 
+Narrator_Base = image { "narrator_base.png" }
+Narrator_Coin = image { "narrator_coin.png" }
+Narrator_Diamond = image { "narrator_diamond.png" }
+Narrator_Emerald = image { "narrator_emerald.png" }
+Narrator_GetReady = image { "narrator_getready.png" }
+Narrator_Ruby = image { "narrator_ruby.png" }
+
 Icon_Continue = image { "icon_continue.png" }
 Icon_Random = image { "icon_random.png" }
 Icon_Howtoplay = image { "icon_howtoplay.png" }
@@ -125,6 +132,8 @@ sfx_PeanosVaultMenu = sound { "PeanosVaultMenu.raw" }
 sfx_Menu_Tilt_Stop = sound { "PV_menu_tilt_stop.raw" }
 sfx_Menu_Tilt = sound { "PV_menu_tilt.raw" }
 sfx_Tutorial_Correct = sound { "PV_tutorial_correct.raw" }
+sfx_Tutorial_Stinger_01 = sound { "PV_tutorial_stinger_01.raw" }
+sfx_Dialogue_Balloon = sound { "PV_dialogue_balloon.raw" }
 
 
 

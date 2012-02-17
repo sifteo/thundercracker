@@ -78,3 +78,7 @@ TiltFlowView.cpp
 assets.lua
 Makefile
 InterstitialController.h
+TutorialController.h
+NarratorView.h
+Makefile
+NarratorView.cpp

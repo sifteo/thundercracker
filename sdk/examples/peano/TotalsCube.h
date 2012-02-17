@@ -83,7 +83,7 @@ public:
         void DispatchOnCubeShake(TotalsCube *c);
         void DispatchOnCubeTouch(TotalsCube *c, bool touching);
 
-	private:
+//	private:
 
 		// for these methods, 0 <= offset <= 32
 		void DrawVaultDoorsOpenStep1(int offset, const AssetImage *innerImage);

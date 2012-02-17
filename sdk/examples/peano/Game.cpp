@@ -5,6 +5,7 @@
 #include "PuzzleController.h"
 #include "MenuController.h"
 #include "InterstitialController.h"
+#include "TutorialController.h"
 
 namespace TotalsGame
 {
@@ -135,12 +136,13 @@ namespace TotalsGame
 		static PuzzleController puzzleController(this);
         static MenuController menuController(this);
         static InterstitialController interstitialController(this);
+        static TutorialController tutorialController(this);
 
 		sceneMgr
 			.State("sting", &stingController)                //
 			.State("init", &Game::Initialize)
             .State("menu", &menuController)
-//			.State("tutorial", new TutorialController(this))          //
+            .State("tutorial", &tutorialController)          //
             .State("interstitial", &interstitialController)  //
             .State("puzzle", &puzzleController)
             .State("advance", &Game::Advance)

@@ -26,6 +26,8 @@ namespace TotalsGame
 
 		void SetCube(TotalsCube *c);
 		TotalsCube *GetCube();
+
+        static bool OkayToPaint(){return true;} //todo member of view perhaps?
 	};
 
 }
