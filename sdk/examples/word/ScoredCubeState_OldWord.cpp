@@ -131,5 +131,5 @@ void ScoredCubeState_OldWord::paint()
     {
         ii = ImageIndex_ConnectedRight;
     }
-    paintTeeth(vid, ii, true, false, true, false);
+    paintBorder(vid, ii, true, false, true, false);
 }

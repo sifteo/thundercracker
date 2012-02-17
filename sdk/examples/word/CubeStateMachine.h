@@ -39,6 +39,9 @@ public:
     void resetStateTime() { mStateTime = 0.0f; }
 
     bool getLetters(char *buffer, bool forPaint=false);
+    const Vec2& geTilePosition(unsigned index) const;
+    const AssetImage& getTileAsset(unsigned index) const;
+
     bool canBeginWord();
     bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);
     unsigned findRowLength();

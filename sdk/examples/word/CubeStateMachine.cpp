@@ -5,6 +5,7 @@
 #include "GameStateMachine.h"
 #include "config.h"
 #include "WordGame.h"
+#include "assets.gen.h"
 
 void CubeStateMachine::setCube(Cube& cube)
 {
@@ -152,6 +153,20 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
         _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
         return true;
     }
+}
+
+const Vec2& CubeStateMachine::geTilePosition(unsigned index) const
+{
+    static Vec2 hacks[] =
+    {
+        Vec2(2, 2), Vec2(8, 2), Vec2(8, 2)
+    };
+    return hacks[index];
+}
+
+const AssetImage& CubeStateMachine::getTileAsset(unsigned index) const
+{
+    return Tile2;
 }
 
 bool CubeStateMachine::canBeginWord()
@@ -309,6 +324,7 @@ void CubeStateMachine::update(float dt)
 
 void CubeStateMachine::setPanning(VidMode_BG0_SPR_BG1& vid, float panning)
 {
+    return;
     mBG0Panning = panning;
     vid.BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
 }

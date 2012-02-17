@@ -122,10 +122,10 @@ void ScoredCubeState_NotWord::paint()
 
     if (neighbored)
     {
-        paintTeeth(vid, ImageIndex_Neighbored, true, false, true, false);
+        paintBorder(vid, ImageIndex_Neighbored, true, false, true, false);
     }
     else
     {
-        paintTeeth(vid, ImageIndex_Teeth, false, true, false, true);
+        paintBorder(vid, ImageIndex_Teeth, false, true, false, true);
     }
 }

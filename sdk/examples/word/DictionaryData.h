@@ -4,7 +4,7 @@ const unsigned NUM_PUZZLES = 225;
 
 const static char* puzzles[] =
 {
-    "EVERYONE",    // pieces: [' EV', 'ERY', 'ONE'], solutions: ['EVERYONE', 'EVERY']
+    //"EVERYONE",    // pieces: [' EV', 'ERY', 'ONE'], solutions: ['EVERYONE', 'EVERY']
     "WITHIN",    // pieces: ['WI', 'TH', 'IN'], solutions: ['WITHIN', 'WITH', 'THIN']
     "ROYAL",    // pieces: ['RO', 'YA', 'L '], solutions: ['ROYAL', 'LAY']
     "DIRECTION",    // pieces: ['DIR', 'ECT', 'ION'], solutions: ['DIRECTION', 'DIRECT']
@@ -233,7 +233,7 @@ const static char* puzzles[] =
 
 const static unsigned char puzzlesNumGoalAnagrams[] =
 {
-    2,	// EVERYONE, nonbonus anagrams: ['EVERYONE', 'EVERY']
+    //2,	// EVERYONE, nonbonus anagrams: ['EVERYONE', 'EVERY']
     3,	// WITHIN, nonbonus anagrams: ['WITHIN', 'WITH', 'THIN']
     2,	// ROYAL, nonbonus anagrams: ['ROYAL', 'LAY']
     2,	// DIRECTION, nonbonus anagrams: ['DIRECTION', 'DIRECT']
@@ -462,7 +462,7 @@ const static unsigned char puzzlesNumGoalAnagrams[] =
 
 const static unsigned char puzzlesNumBonusAnagrams[] =
 {
-    0,	// EVERYONE, bonus anagrams: []
+ //   0,	// EVERYONE, bonus anagrams: []
     0,	// WITHIN, bonus anagrams: []
     0,	// ROYAL, bonus anagrams: []
     0,	// DIRECTION, bonus anagrams: []
@@ -691,7 +691,7 @@ const static unsigned char puzzlesNumBonusAnagrams[] =
 
 const static bool puzzlesUseLeadingSpaces[] =
 {
-    true,	// EVERYONE
+    //true,	// EVERYONE
     false,	// WITHIN
     false,	// ROYAL
     false,	// DIRECTION

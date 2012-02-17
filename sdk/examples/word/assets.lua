@@ -5,10 +5,16 @@ EyeRight = image{"wc_eyeball_right.png", width=16, height=16, quality=10, pinned
 EyeLeftBlink = image{"wc_eyeball_left_blink.png", width=16, height=16, quality=10, pinned=true}
 EyeRightBlink = image{"wc_eyeball_right_blink.png", width=16, height=16, quality=10, pinned=true}
 LetterZzZ = image{"wc_zzz.png", width=8, height=16, quality=10, pinned=true}
+BorderTop = image{"wp2_border_top.png", quality=10}
+BorderBottom = image{"wp2_border_bottom.png", quality=10}
+BorderLeft = image{"wp2_border_left.png", quality=10}
+Tile2 = image{"wp2_tile2.png", quality=10}
+Tile2Glow = image{"wp2_tile2_glow.png", quality=10}
+BorderRight = image{"wp2_border_right.png", quality=10}
 Font1Letter = image{"WC_letters.png", width=120, height=88, quality=0}
-Font2Letter = image{"font_2ltr.png", width=56, height=56, quality=10}
+Font2Letter = image{"font_2ltr.png", width=48, height=48, quality=10}
 Font3Letter = image{"font_3ltr.png", width=32, height=32, quality=10}
-LetterBG = image{"wc_background.png", quality=10}
+TileBG = image{"wp2_tile_background.png", quality=10}
 StartPrompt = image{"wc_shaketoplay.png", width=48, height=56, quality=10}
 Title = image{"wc_title.png", quality=10}
 TitleSmoke = image{"wc_title_smoke.png", width=64, height=64, quality=10}

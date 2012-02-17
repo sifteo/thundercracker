@@ -129,7 +129,7 @@ void TitleCubeState::paint()
         // TODO high scores
 #if BLAH
     default:
-        paintTeeth(vid, ImageIndex_Teeth);
+        paintBorder(vid, ImageIndex_Teeth);
         /* TODO load/save
         paintScoreNumbers(vid, Vec2(3,4), FontSmall, "High Scores");
 

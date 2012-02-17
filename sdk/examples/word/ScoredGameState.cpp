@@ -33,7 +33,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_Input:
-#ifndef SIFTEO_SIMULATOR
+#ifndef SIFTEO_SIMULATORzz
         // skip to next puzzle
         if (GameStateMachine::getAnagramCooldown() <= .0f &&
             GameStateMachine::getSecondsLeft() > 3)

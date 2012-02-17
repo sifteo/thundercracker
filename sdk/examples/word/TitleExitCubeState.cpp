@@ -37,5 +37,5 @@ void TitleExitCubeState::paint()
             */
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    paintTeeth(vid, ImageIndex_Teeth, true, false);
+    paintBorder(vid, ImageIndex_Teeth, true, false);
 }

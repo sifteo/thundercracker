@@ -146,6 +146,6 @@ void ScoredCubeState_NewWord::paint()
         vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
     }
 
-    paintTeeth(vid, mImageIndex, true, false, false, false);
+    paintBorder(vid, mImageIndex, true, false, false, false);
     vid.BG0_setPanning(Vec2(0.f, 0.f));
 }

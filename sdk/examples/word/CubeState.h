@@ -48,7 +48,15 @@ public:
     CubeStateMachine& getStateMachine();
 
 protected:
-    void paintTeeth(VidMode_BG0_SPR_BG1& vid,
+    void paintBorder(VidMode_BG0_SPR_BG1& vid,
+                     ImageIndex imageIndex = ImageIndex_Connected,
+                     bool animate=false,
+                     bool reverseAnim=false,
+                     bool loopAnim=false,
+                     bool paintTime=false,
+                     float animStartTime=0.f);
+
+    void paintScore(VidMode_BG0_SPR_BG1& vid,
                     ImageIndex teethImageIndex,
                     bool animate=false,
                     bool reverseAnim=false,
