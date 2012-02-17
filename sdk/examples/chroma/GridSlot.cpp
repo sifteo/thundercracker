@@ -167,7 +167,7 @@ void GridSlot::FillColor( unsigned int color, bool bSetSpawn )
     else
         m_state = STATE_LIVING;
 
-    ASSERT( m_color >= 0 && m_color < NUM_COLORS_INCLUDING_SPECIALS)
+    ASSERT( m_color >= 0 && m_color < NUM_COLORS_INCLUDING_SPECIALS);
 
 	m_color = color;
 	m_bFixed = false;
@@ -204,7 +204,7 @@ const AssetImage &GridSlot::GetExplodingTexture() const
 
 const AssetImage &GridSlot::GetSpecialTexture() const
 {
-    ASSERT( m_color >= NUM_COLORS && m_color < NUM_COLORS_INCLUDING_SPECIALS)
+    ASSERT( m_color >= NUM_COLORS && m_color < NUM_COLORS_INCLUDING_SPECIALS);
 
     return *SPECIALTEXTURES[ m_color - NUM_COLORS ];
 }
@@ -212,7 +212,7 @@ const AssetImage &GridSlot::GetSpecialTexture() const
 
 const AssetImage &GridSlot::GetSpecialExplodingTexture() const
 {
-    ASSERT( m_color >= NUM_COLORS && m_color < NUM_COLORS_INCLUDING_SPECIALS)
+    ASSERT( m_color >= NUM_COLORS && m_color < NUM_COLORS_INCLUDING_SPECIALS);
 
     return *SPECIALEXPLODINGTEXTURES[ m_color - NUM_COLORS ];
 }

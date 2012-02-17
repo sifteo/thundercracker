@@ -14,7 +14,7 @@ PuzzleCubeData::PuzzleCubeData( uint8_t *pValues )
         for( int j = 0; j < CubeWrapper::NUM_COLS; j++ )
         {
             m_aData[i][j] = *( pValues + ( CubeWrapper::NUM_COLS * i ) + j );
-            ASSERT( m_aData[i][j] >= 0 && m_aData[i][j] <= GridSlot::NUM_COLORS_INCLUDING_SPECIALS )
+            ASSERT( m_aData[i][j] >= 0 && m_aData[i][j] <= GridSlot::NUM_COLORS_INCLUDING_SPECIALS );
         }
     }
 }
