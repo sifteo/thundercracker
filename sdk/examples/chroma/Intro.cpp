@@ -70,6 +70,11 @@ bool Intro::Update( float dt, Banner &banner )
                 }
                 else if( Game::Inst().getMode() == Game::MODE_TIMED )
                     banner.SetMessage( "60 seconds", READYSETGO_BANNER_TIME );
+                else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
+                {
+                    Game::Inst().setState( Game::STATE_PLAYING );
+                    return false;
+                }
                 else
                     banner.SetMessage( "Clear the cubes!", READYSETGO_BANNER_TIME );
                 break;
