@@ -62,6 +62,10 @@ struct FlashRegion {
 //        FlashLayer::releaseRegion(*this);
     }
 
+    unsigned baseAddress() const {
+        return _address;
+    }
+
     unsigned size() const {
         return _size;
     }
