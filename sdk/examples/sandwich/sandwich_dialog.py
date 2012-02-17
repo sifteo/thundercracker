@@ -1,11 +1,4 @@
-import lxml.etree
-import os
-import os.path
-import re
-import tmx
-import misc
-
-import Image # easy_install pil
+import lxml.etree, os, os.path, re, tmx, misc, Image
 
 class DialogDatabase:
 	def __init__(self, world, path):

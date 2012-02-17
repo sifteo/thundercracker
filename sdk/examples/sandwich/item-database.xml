@@ -1,0 +1,44 @@
+<item-database>
+	<item icon="0" id="basic_key">
+		<name>Basic Key</name>
+		<description>
+			Just a plain-old Key.
+			Nothing fancy.
+		</description>
+	</item>
+	<item icon="5" id="skeleton_key">
+		<name>Skeleton Key</name>
+		<description>
+			A skeleton key.
+			It's slimey -- ew!
+		</description>
+	</item>
+	<item icon="1" id="bread">
+		<name>Lembas Bread</name>
+		<description>
+			Over-Fresh Lembas Bread.
+			Fresh from Middle-Earth.
+		</description>
+	</item>
+	<item icon="2" id="tomato">
+		<name>Heirluminous Tomato</name>
+		<description>
+			A Rare Heirluminous Tomato.
+			Glows in the dark!
+		</description>
+	</item>
+	<item icon="3" id="lettuce">
+		<name>Lettuce of Courage</name>
+		<description>
+			Fresh Lettuce of Courage.
+			Green.  Leafy.  Justice.
+		</description>
+	</item>
+	<item icon="4" id="ham">
+		<name>Moldy Ham</name>
+		<description>
+			Smelly Ham.
+			... probably still good.
+		</description>
+	</item>
+</item-database>

@@ -3,6 +3,7 @@
 import lxml.etree, os, os.path, re, traceback, sys, zlib, tmx, misc
 from sandwich_map import *
 from sandwich_dialog import *
+from sandwich_item import *
 from sandwich_script import *
 
 def load():
@@ -40,6 +41,7 @@ class World:
 		self.dir = dir
 		self.script = GameScript(self, os.path.join(dir, "game-script.xml"))
 		self.dialog = DialogDatabase(self, os.path.join(dir, "dialog-database.xml"))
+		self.items = ItemDatabase(self, os.path.join(dir,"item-database.xml"))
 
 		# list maps in alphabetical order
 		maps_by_name = [ (map.id, map) for map in (Map(self, os.path.join(dir, path)) for path in os.listdir(dir) if path.endswith(".tmx")) ]
