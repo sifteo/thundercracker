@@ -433,7 +433,7 @@ void SvmProgram::emulateSUB8Imm(uint16_t instr)
 
 void SvmProgram::emulateANDReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] = regs[Rdn] & regs[Rm];
@@ -441,7 +441,7 @@ void SvmProgram::emulateANDReg(uint16_t instr)
 
 void SvmProgram::emulateEORReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] = regs[Rdn] ^ regs[Rm];
@@ -449,7 +449,7 @@ void SvmProgram::emulateEORReg(uint16_t instr)
 
 void SvmProgram::emulateLSLReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     unsigned shift = regs[Rm] & 0xff;
@@ -458,7 +458,7 @@ void SvmProgram::emulateLSLReg(uint16_t instr)
 
 void SvmProgram::emulateLSRReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     unsigned shift = regs[Rm] & 0xff;
@@ -467,7 +467,7 @@ void SvmProgram::emulateLSRReg(uint16_t instr)
 
 void SvmProgram::emulateASRReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     // TODO: verify sign bit is being shifted in
@@ -476,7 +476,7 @@ void SvmProgram::emulateASRReg(uint16_t instr)
 
 void SvmProgram::emulateADCReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] += regs[Rm];  // TODO: must also add carry flag
@@ -484,7 +484,7 @@ void SvmProgram::emulateADCReg(uint16_t instr)
 
 void SvmProgram::emulateSBCReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] -= regs[Rm];  // TODO: must also substract !carryFlag()
@@ -492,7 +492,7 @@ void SvmProgram::emulateSBCReg(uint16_t instr)
 
 void SvmProgram::emulateRORReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] = ROR(regs[Rdn], regs[Rm]);
@@ -505,7 +505,7 @@ void SvmProgram::emulateTSTReg(uint16_t instr)
 
 void SvmProgram::emulateRSBImm(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     // TODO: encoding T1 only has effect via status flags
@@ -513,7 +513,7 @@ void SvmProgram::emulateRSBImm(uint16_t instr)
 
 void SvmProgram::emulateCMPReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     // TODO: only has effect on the status flags
@@ -521,7 +521,7 @@ void SvmProgram::emulateCMPReg(uint16_t instr)
 
 void SvmProgram::emulateCMNReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     // TODO: only has effect on the status flags
@@ -529,7 +529,7 @@ void SvmProgram::emulateCMNReg(uint16_t instr)
 
 void SvmProgram::emulateORRReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] |= regs[Rm];
@@ -537,7 +537,7 @@ void SvmProgram::emulateORRReg(uint16_t instr)
 
 void SvmProgram::emulateMUL(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] = (uint64_t)regs[Rdn] * (uint64_t)regs[Rm];
@@ -545,7 +545,7 @@ void SvmProgram::emulateMUL(uint16_t instr)
 
 void SvmProgram::emulateBICReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] &= ~(regs[Rm]);
@@ -553,7 +553,7 @@ void SvmProgram::emulateBICReg(uint16_t instr)
 
 void SvmProgram::emulateMVNReg(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] = ~regs[Rm];
@@ -565,7 +565,7 @@ void SvmProgram::emulateMVNReg(uint16_t instr)
 
 void SvmProgram::emulateSXTH(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] = SignExtend<int32_t, 16>(regs[Rm]);
@@ -573,7 +573,7 @@ void SvmProgram::emulateSXTH(uint16_t instr)
 
 void SvmProgram::emulateSXTB(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] = SignExtend<int32_t, 8>(regs[Rm]);
@@ -581,7 +581,7 @@ void SvmProgram::emulateSXTB(uint16_t instr)
 
 void SvmProgram::emulateUXTH(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] = regs[Rm] & 0xFFFF;
@@ -589,7 +589,7 @@ void SvmProgram::emulateUXTH(uint16_t instr)
 
 void SvmProgram::emulateUXTB(uint16_t instr)
 {
-    unsigned Rm = (instr > 3) & 0x7;
+    unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
     regs[Rdn] = regs[Rm] & 0xFF;
