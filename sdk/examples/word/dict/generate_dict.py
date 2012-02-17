@@ -160,18 +160,21 @@ def generate_dict():
     #find_anagrams(word, dictionary, letters_per_cube[len(word) - 1])
     #return
 
-    puzzles = {}
+    puzzles = []
     fi = open("puzzles.txt", "r")
     for line in fi:
-        puzzles[line.strip().upper()] = True
+        puzzles.append(line.strip().upper())
     fi.close()
+    print "puzzles file: " + str(puzzles)
 
     puzzles_to_use = word_list#dictionary.keys(): #word_list:#
     skip_tests = False
-    if len(puzzles.keys()) > 0:
-        puzzles_to_use = puzzles.keys()
+    sort_puzzles = True
+    if len(puzzles) > 0:
+        puzzles_to_use = puzzles
         skip_tests = True
-        print puzzles.keys()
+        sort_puzzles = False
+        print puzzles
 		
     
     for word in puzzles_to_use:
@@ -213,6 +216,7 @@ def generate_dict():
     sorted_output_dict = output_dictionary.keys()
     sorted_output_dict.sort()
     print "output dict will have " + str(len(sorted_output_dict))
+    print "******* wlu: " + str(word_list_used)
     
     fi = open("../PrototypeWordListData.h", "w")
     fi.write("#include <sifteo.h>\n\n")
@@ -240,7 +244,19 @@ def generate_dict():
     fi.close()
     
     # sort word list used by value numeric (keys by values in dict)
-    sorted_word_list_used = sorted(word_list_used.iteritems(), key=operator.itemgetter(1), reverse=False)    
+    if sort_puzzles:
+        sorted_word_list_used = sorted(word_list_used.iteritems(), key=operator.itemgetter(1), reverse=False)    
+    else:
+        sorted_word_list_used = []
+        print "******* wlu: " + str(word_list_used)
+        for w in puzzles_to_use:
+            print "puzzle: " + w
+            if w in word_list_used.keys():
+                sorted_word_list_used.append((w,word_list_used[w]))
+        #sorted_word_list_used = list(word_list_used.iteritems())    
+        print "swlu: " + str(sorted_word_list_used)
+        #print list(word_list_used.iteritems())    
+
     #print sorted_word_list_used
     # TODO pack puzzles somehow
     fi = open("../DictionaryData.h", "w")
