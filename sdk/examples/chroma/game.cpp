@@ -131,7 +131,7 @@ void Game::Update()
     {
         if( m_stateTime > GOODJOB_TIME )
         {
-            gotoNextPuzzle();
+            gotoNextPuzzle( true );
         }
     }
 	else 
@@ -925,7 +925,7 @@ void Game::check_puzzle()
         {
             //did we lose?
             if( NoMatches() )
-                setState( STATE_POSTGAME );
+                gotoNextPuzzle( false );
             return;
         }
     }
@@ -952,9 +952,10 @@ const PuzzleCubeData *Game::GetPuzzleData( unsigned int id )
 }
 
 
-void Game::gotoNextPuzzle()
+void Game::gotoNextPuzzle( bool bAdvance )
 {
-    m_iLevel++;
+    if( bAdvance )
+        m_iLevel++;
 
     //TODO, check if all puzzles were completed
     const Puzzle *pPuzzle = Puzzle::GetPuzzle( m_iLevel );

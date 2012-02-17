@@ -992,13 +992,14 @@ void CubeWrapper::checkRefill()
             setState( STATE_PLAYING );
     else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
 	{
-        if( isEmpty() )
+        //TODO - Smiley face replacement
+        /*if( isEmpty() )
         {
             if( m_state != STATE_MESSAGING )
                 setState( STATE_MESSAGING );
         }
         else
-            setState( STATE_PLAYING );
+            setState( STATE_PLAYING );*/
 	}
 	else if( isEmpty() )
 	{
@@ -1478,7 +1479,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 
 void CubeWrapper::checkEmpty()
 {
-    if( isEmpty() && m_state != STATE_MESSAGING )
+    if( Game::Inst().getMode() == Game::MODE_SHAKES && isEmpty() && m_state != STATE_MESSAGING && m_state != STATE_EMPTY )
         setState( STATE_MESSAGING );
 }
 
@@ -1824,7 +1825,12 @@ void CubeWrapper::fillPuzzleCube()
 void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
 {
     if( !m_dirty )
+    {
+        //TODO remove hack
+        //for now just touch every frame
+        m_cube.vbuf.touch();
         return;
+    }
 
     m_queuedFlush = true;
     m_dirty = false;
@@ -1851,7 +1857,7 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
         index++;
 
         //break at last space seen
-        if( charCnt >= MAX_LINE_LENGTH )
+        if( charCnt >= MAX_LINE_LENGTH - 2 )
         {
             ASSERT( lastspaceseen >= 0 );
             if( lastspaceseen < 0 )

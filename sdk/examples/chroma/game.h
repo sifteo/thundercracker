@@ -149,7 +149,7 @@ private:
     //add one piece to the game
     void RespawnOnePiece();
     void check_puzzle();
-    void gotoNextPuzzle();
+    void gotoNextPuzzle( bool bAdvance );
 
 	bool m_bTestMatches;
 	//how much our current dot is worth
