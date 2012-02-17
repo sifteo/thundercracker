@@ -42,7 +42,7 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             case 3:
                 if (!mBG0PanningLocked)
                 {
-                    const float BG0_PANNING_WRAP = 128.f;
+                    const float BG0_PANNING_WRAP = 144.f;
 
                     _SYSTiltState state;
                     _SYS_getTilt(getCube().id(), &state);
@@ -55,6 +55,7 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                             mBG0TargetPanning += BG0_PANNING_WRAP;
                             mBG0Panning += BG0_PANNING_WRAP;
                         }
+
                         VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
                         setPanning(vid, mBG0Panning);
                         WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
@@ -327,15 +328,15 @@ void CubeStateMachine::update(float dt)
 void CubeStateMachine::setPanning(VidMode_BG0_SPR_BG1& vid, float panning)
 {
     mBG0Panning = panning;
-    int tilePanning = fmodf(mBG0Panning, 128.f);
+    int tilePanning = fmodf(mBG0Panning, 144.f);
     tilePanning /= 8;
     // TODO clean this up
     int tileWidth = 12/GameStateMachine::getCurrentMaxLettersPerCube();
     for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
     {
         mTilePositions[i].x = 2 + tilePanning + i * tileWidth;
-        mTilePositions[i].x = ((mTilePositions[i].x + tileWidth) % (16 + 2 * tileWidth));
-        mTilePositions[i].x -= tileWidth;
+        mTilePositions[i].x = ((mTilePositions[i].x + tileWidth + 2) % (16 + 2 * tileWidth));
+        mTilePositions[i].x -= tileWidth + 2;
     }
     //vid.BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
 }
