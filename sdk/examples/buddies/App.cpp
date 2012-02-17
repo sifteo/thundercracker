@@ -242,10 +242,17 @@ void App::Draw()
     {
         if (mCubeWrappers[i].IsEnabled())
         {
-            if (mGameState == GAME_STATE_PUZZLE_INSTRUCTIONS)
+            if (kGameMode == GAME_MODE_PUZZLE)
             {
-                ASSERT(mPuzzleIndex < GetNumPuzzles());
-                mCubeWrappers[i].DrawTitleCard(GetPuzzle(mPuzzleIndex).GetInstructions());
+                if (mGameState == GAME_STATE_PUZZLE_INSTRUCTIONS || i >= GetPuzzle(mPuzzleIndex).GetNumBuddies())
+                {
+                    ASSERT(mPuzzleIndex < GetNumPuzzles());
+                    mCubeWrappers[i].DrawTitleCard(GetPuzzle(mPuzzleIndex).GetInstructions());
+                }
+                else
+                {
+                    mCubeWrappers[i].DrawBuddy();
+                }
             }
             else
             {
@@ -312,7 +319,12 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
             mGameState == GAME_STATE_SHUFFLE_PLAY ||
             mGameState == GAME_STATE_PUZZLE_PLAY;
         
-        if (!isSwapping && !isHinting && !isFixed && isValidGameState)
+        bool isValidCube =
+            kGameMode != GAME_MODE_PUZZLE ||
+            (   cubeId0 < GetPuzzle(mPuzzleIndex).GetNumBuddies() &&
+                cubeId1 < GetPuzzle(mPuzzleIndex).GetNumBuddies());
+        
+        if (!isSwapping && !isHinting && !isFixed && isValidGameState && isValidCube)
         {
             if (kGameMode == GAME_MODE_SHUFFLE && mGameState != GAME_STATE_SHUFFLE_PLAY)
             {
@@ -465,8 +477,8 @@ void App::StartGameState(GameState shuffleState)
         }
         case GAME_STATE_PUZZLE_START:
         {
-            ASSERT(kNumCubes == GetPuzzle(mPuzzleIndex).GetNumBuddies());
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
+            for (unsigned int i = 0; i < GetPuzzle(mPuzzleIndex).GetNumBuddies(); ++i)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
@@ -486,8 +498,8 @@ void App::StartGameState(GameState shuffleState)
         }
         case GAME_STATE_PUZZLE_INSTRUCTIONS:
         {
-            ASSERT(kNumCubes == GetPuzzle(mPuzzleIndex).GetNumBuddies());
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
+            for (unsigned int i = 0; i < GetPuzzle(mPuzzleIndex).GetNumBuddies(); ++i)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
@@ -505,13 +517,15 @@ void App::StartGameState(GameState shuffleState)
         }
         case GAME_STATE_PUZZLE_PLAY:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
+            for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
                     mCubeWrappers[i].ClearBg1();
                 }
             }
+            System::paintSync();
             break;
         }
         default:
