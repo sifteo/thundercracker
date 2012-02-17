@@ -87,16 +87,12 @@ void SVMBlockSizeAccumulator::AddConstant(unsigned bytes, unsigned align)
     ConstSizeTotal += bytes;
 }
 
-void SVMBlockSizeAccumulator::AddInstr(const MachineInstr *MI)
+void SVMBlockSizeAccumulator::AddConstantsForInstr(const MachineInstr *MI)
 {
-    // Add a specific instruction and all of its referenced constants
-
     const MachineFunction *MF = MI->getParent()->getParent();
     const MachineConstantPool *Pool = MF->getConstantPool();
     const TargetData *TD = MF->getTarget().getTargetData();
     const std::vector<MachineConstantPoolEntry> &Constants = Pool->getConstants();
-
-    AddInstr(MI->getDesc().getSize());
 
     // Look for any new constants used by this instr
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -112,4 +108,11 @@ void SVMBlockSizeAccumulator::AddInstr(const MachineInstr *MI)
         UsedCPI.insert(CPI);
         AddConstant(*TD, Constants[CPI]);
     }
+}
+
+void SVMBlockSizeAccumulator::AddInstr(const MachineInstr *MI)
+{
+    // Add a specific instruction and all of its referenced constants
+    AddInstr(MI->getDesc().getSize());
+    AddConstantsForInstr(MI);
 }

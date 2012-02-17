@@ -34,6 +34,7 @@ namespace llvm {
         void AddInstr(unsigned bytes);
         void AddInstrPrefix(unsigned bytes);
         void AddInstrSuffix(unsigned bytes);
+        void AddConstantsForInstr(const MachineInstr *MI);
         void AddConstant(const TargetData &TD, const MachineConstantPoolEntry &CPE);
         void AddConstant(unsigned bytes, unsigned align=1);
         void InstrAlign(unsigned A);

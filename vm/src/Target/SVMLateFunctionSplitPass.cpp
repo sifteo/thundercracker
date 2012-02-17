@@ -32,15 +32,15 @@
 #include "SVMConstantPoolValue.h"
 #include "SVMBlockSizeAccumulator.h"
 #include "SVMInstrInfo.h"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/Module.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/codeGen/MachineInstr.h"
-#include "llvm/codeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include <vector>
 using namespace llvm;
 
@@ -62,10 +62,18 @@ namespace {
         }
 
     private:
+        typedef std::vector<std::pair<MCSymbol*,MachineBasicBlock*> > AnonMBBFixupListTy;
+        
         SVMBlockSizeAccumulator BSA;
-        int FirstLocalBB;
+        AnonMBBFixupListTy AnonMBBFixupList;
+        unsigned FirstLocalBB;
 
         void beginBlock();
+        
+        MachineBasicBlock *createAnonymousMBB(MachineFunction *MF);
+        void fixupAnonymousMBB(MachineFunction *MF);
+        void setHasAddressTaken(MachineBasicBlock *MBB) const;
+
         bool visitBasicBlock(MachineFunction::iterator &MBB);
         bool visitInstrBundle(MachineFunction::iterator &MBB,
             MachineBasicBlock::iterator &FirstI,
@@ -75,11 +83,14 @@ namespace {
 
         void splitBeforeInstruction(MachineFunction::iterator &MBB,
             MachineBasicBlock::iterator &I);
-        void rewriteBranch(MachineFunction::iterator &MBB,
-            MachineBasicBlock::iterator &I, MachineBasicBlock &TBB);
+
+        void rewriteBranchesInRange(MachineFunction *MF, unsigned beginBB,
+            unsigned endBB, MachineFunction::iterator insertPoint);
+        void rewriteBranch(MachineBasicBlock *MBB,
+            MachineBasicBlock::iterator &I, MachineBasicBlock &TBB,
+            MachineFunction::iterator insertPoint);
             
-        unsigned getLongBranchCPI(MachineFunction *MF,
-            MachineBasicBlock *DestMBB);
+        unsigned getLongBranchCPI(MachineBasicBlock *MBB) const;
     };
   
     char SVMLateFunctionSplitPass::ID = 0;
@@ -92,6 +103,7 @@ FunctionPass *llvm::createSVMLateFunctionSplitPass(SVMTargetMachine &TM)
 
 void SVMLateFunctionSplitPass::releaseMemory()
 {
+    AnonMBBFixupList.clear();
     BSA.clear();
 }
 
@@ -118,9 +130,16 @@ bool SVMLateFunctionSplitPass::runOnMachineFunction(MachineFunction &MF)
     beginBlock();
     FirstLocalBB = 0;
 
-    for (MachineFunction::iterator MBB = MF.begin(); MBB != MF.end(); ++MBB)
+    // NB: visitBasicBlock() will update MBB appropriately
+    for (MachineFunction::iterator MBB = MF.begin(); MBB != MF.end();)
         if (visitBasicBlock(MBB))
             Changed = true;
+
+    // Rewrite branches in the last block, if necessary.
+    rewriteBranchesInRange(&MF, FirstLocalBB, MF.getNumBlockIDs(), MF.end());
+
+    // Fixup references to new anonymous MBBs
+    fixupAnonymousMBB(&MF);
 
     return Changed;
 }
@@ -145,12 +164,15 @@ bool SVMLateFunctionSplitPass::visitBasicBlock(MachineFunction::iterator &MBB)
         } while (Bytes < bundleSize && NextI != MBB->end());
         
         // If this visit ends up causing a split, this basic block is over.
+        // visitInstrBundle will have set MBB to the proper successor.
         if (visitInstrBundle(MBB, FirstI, NextI))
             return true;
             
         FirstI = NextI;
     }
     
+    // No split in this bundle. Next MBB.
+    ++MBB;
     return false;
 }
 
@@ -158,6 +180,9 @@ bool SVMLateFunctionSplitPass::visitInstrBundle(MachineFunction::iterator &MBB,
     MachineBasicBlock::iterator &FirstI,
     MachineBasicBlock::iterator &EndI)
 {
+    // If we have nothing to do, return false. If a split occurs, returns
+    // true and points 'MBB' at the correct MBB to handle next.
+    
     // Visit each instruction, doing early branch rewriting and tracking fn size
     for (MachineBasicBlock::iterator I = FirstI; I != EndI; ++I)
         visitInstr(MBB, I);
@@ -177,35 +202,21 @@ void SVMLateFunctionSplitPass::visitInstr(MachineFunction::iterator &MBB,
 {   
     if (SVMInstrInfo::isNearBranchOpcode(I->getOpcode())) {
         /*
-         * Near branches may require additional work. At this point, we can
-         * categorize a branch in one of three ways:
-         *
-         *   1. It points to a prior block. In this case, we can immediately
-         *      rewrite it as a long branch.
-         *
-         *   2. It points to a prior BB in the current flash block. In this
-         *      case, we're guaranteed that it can stay as a near branch.
-         *
-         *   3. It points to a future BB. We don't know whether there will be
-         *      a split yet between us and the target, so we need to account
-         *      for the potential space cost of a long branch.
+         * Unless we can guarantee that a branch target is in the current
+         * block, we need to reserve space for a worst-case rewriteBranch().
          */
 
         // Branch target is always the first opcode
         MachineBasicBlock *TBB = I->getOperand(0).getMBB();
         assert(TBB->getParent() == MBB->getParent());
+        unsigned TBBN = TBB->getNumber();
 
-        if (TBB->getNumber() < FirstLocalBB) {
-            // (1) In an earlier block. Rewrite it immediately
-            rewriteBranch(MBB, I, *TBB);
-
-        } else if (TBB->getNumber() > MBB->getNumber()) {
-            // (3) Forward ref. May need to rewrite it later, save space for it.
+        // In an earlier block? Possibly in a later block?
+        if (TBBN < FirstLocalBB || TBBN > (unsigned)MBB->getNumber()) {
 
             if (SVMInstrInfo::isCondNearBranchOpcode(I->getOpcode())) {
-                // Conditional branches may use a 16-bit trampoline,
-                // prefixed at the beginning of the block.
-                BSA.AddInstrPrefix(2);
+                // Trampoline MBB needed
+                BSA.AddInstrSuffix(SVMTargetMachine::getBundleSize());
             }
 
             // All branches may need a 32-bit constant
@@ -216,56 +227,182 @@ void SVMLateFunctionSplitPass::visitInstr(MachineFunction::iterator &MBB,
     BSA.AddInstr(I);
 }
 
-unsigned SVMLateFunctionSplitPass::getLongBranchCPI(MachineFunction *MF,
-    MachineBasicBlock *DestMBB)
+void SVMLateFunctionSplitPass::setHasAddressTaken(MachineBasicBlock *MBB) const
 {
-    Function *F = const_cast<Function *>(MF->getFunction());
-    BasicBlock *BB = const_cast<BasicBlock*>(DestMBB->getBasicBlock());
+    // Mark both the MBB and BB as having their address taken, therefore
+    // ensuring that we get a label for the MBB.
 
-    // Take the address of the MBB and BB.
-    DestMBB->setHasAddressTaken();
-    BlockAddress::get(F, BB);
+    MachineFunction *MF = MBB->getParent();
+    Function *F = const_cast<Function *>(MF->getFunction());
+    BasicBlock *BB = const_cast<BasicBlock *>(MBB->getBasicBlock());
+    
+    MBB->setHasAddressTaken();
+    BlockAddress::get(F, BB);    
+}
+
+MachineBasicBlock *SVMLateFunctionSplitPass::createAnonymousMBB(MachineFunction *MF)
+{
+    /*
+     * Create an anonymous MBB that we can use as an address operand.
+     * It has a distinct but useless BasicBlock attached to it,
+     * and the MBB symbol is aliased to the BB symbol.
+     *
+     * This is kind of annoying to do while we're constantly renumbering the
+     * MBBs. To actually set the alias, we remember the MMI address label
+     * symbol and the MBB address, and actually fixup the alias later.
+     */
+
+    Function *F = const_cast<Function *>(MF->getFunction());
+    BasicBlock *BB = BasicBlock::Create(F->getContext());
+    MachineBasicBlock *MBB = MF->CreateMachineBasicBlock(BB);
+    setHasAddressTaken(MBB);
+    
+    // Align the new MBB. On earlier MBBs, this was already set by SVMAlignPass.
+    MBB->setAlignment(SVMTargetMachine::getBundleSize());
+
+    AnonMBBFixupList.push_back(std::make_pair(
+        MF->getMMI().getAddrLabelSymbol(BB), MBB ));
+
+    return MBB;
+}
+
+void SVMLateFunctionSplitPass::fixupAnonymousMBB(MachineFunction *MF)
+{
+    // Fix up dangling symbols from earlier createAnonymousMBB() calls for
+    // this MF. Must be called after the MBB numbers have finished changing.
+    
+    MCContext &MCtx = MF->getContext();
+
+    for (AnonMBBFixupListTy::iterator I = AnonMBBFixupList.begin();
+        I != AnonMBBFixupList.end(); ++I) {
+
+        MCSymbol *Alias = I->first;
+        MachineBasicBlock *MBB = I->second;
+        
+        MBB->getSymbol()->setVariableValue(MCSymbolRefExpr::Create(Alias, MCtx));
+    }
+    
+    AnonMBBFixupList.clear();
+}
+
+unsigned SVMLateFunctionSplitPass::getLongBranchCPI(MachineBasicBlock *MBB) const
+{
+    MachineFunction *MF = MBB->getParent();
+
+    setHasAddressTaken(MBB);
 
     // Build a constant pool entry for a long branch
     LLVMContext &Ctx = MF->getFunction()->getContext();
-    SVMConstantPoolMBB *CPV =
-        SVMConstantPoolMBB::Create(Ctx, DestMBB, SVMCP::LB);
+    SVMConstantPoolMBB *CPV = SVMConstantPoolMBB::Create(Ctx, MBB, SVMCP::LB);
     return MF->getConstantPool()->getConstantPoolIndex(CPV, 4);
 }
 
 void SVMLateFunctionSplitPass::splitBeforeInstruction(
     MachineFunction::iterator &MBB, MachineBasicBlock::iterator &I)
 {
+    // Split a MBB at a block boundary. Updates 'MBB' to point to the
+    // next block that needs visiting.
+    
     DebugLoc DL;
     const TargetInstrInfo &TII = *TM.getInstrInfo();
-    MachineFunction *MF = MBB->getParent();
-    Function *F = const_cast<Function *>(MF->getFunction());
-    MachineFunction::iterator insertionPoint = MBB;
-    ++insertionPoint;
+    MachineBasicBlock *prevMBB = MBB;
+    MachineFunction *MF = prevMBB->getParent();
+
+    // Point to the next existing MBB, our insertion point for nextMBB.
+    ++MBB;
 
     // Split this MBB in two, by creating a new BB and MBB to insert afterward.
-    BasicBlock *nextBB = BasicBlock::Create(F->getContext());
-    MachineBasicBlock *nextMBB = MF->CreateMachineBasicBlock(nextBB);
-    MF->insert(insertionPoint, nextMBB);
-    MF->RenumberBlocks(MBB);
+    MachineBasicBlock *nextMBB = createAnonymousMBB(MF);
+    MF->insert(MBB, nextMBB);
+    MF->RenumberBlocks(prevMBB);
+
+    // Back up, point at nextMBB. This is the next MBB we'll visit.
+    // Trampolines get inserted before this point.
+    --MBB;
 
     // Move I and all subsequent instructions to the new MBB
-    nextMBB->splice(nextMBB->end(), MBB, I, MBB->end());
-    
-    // Insert a long branch from MBB to nextMBB
-    BuildMI(MBB, DL, TII.get(SVM::LB))
-        .addConstantPoolIndex(getLongBranchCPI(MF, nextMBB));
+    nextMBB->splice(nextMBB->end(), prevMBB, I, prevMBB->end());
 
-    // *Last* instruction in the prior MBB is a SPLIT.
+    // Insert a long branch from prevMBB to nextMBB
+    BuildMI(prevMBB, DL, TII.get(SVM::LB))
+        .addConstantPoolIndex(getLongBranchCPI(nextMBB));
+
+    // Rewrite branches in this block which refer to MBBs in past or future blocks.
+    // NB: This may insert additional Trampoline MBBs. We need to renumber again.
+    rewriteBranchesInRange(MF, FirstLocalBB, nextMBB->getNumber(), MBB);
+    MF->RenumberBlocks(prevMBB);
+
+    // *Last* instruction in the last MBB of a block is the SPLIT.
     // This ensures that the next MBB's label points to the right page.
+    --MBB;
     BuildMI(MBB, DL, TII.get(SVM::SPLIT));
-    
+    ++MBB;
+
     // Now we're at the beginning of a block again.
     beginBlock();
     FirstLocalBB = nextMBB->getNumber();
 }
 
-void SVMLateFunctionSplitPass::rewriteBranch(MachineFunction::iterator &MBB,
-    MachineBasicBlock::iterator &I, MachineBasicBlock &TBB)
+void SVMLateFunctionSplitPass::rewriteBranchesInRange(MachineFunction *MF,
+    unsigned beginBB, unsigned endBB, MachineFunction::iterator insertPoint)
 {
+    for (unsigned bb = beginBB; bb != endBB; ++bb) {
+        MachineBasicBlock *MBB = MF->getBlockNumbered(bb);
+        for (MachineBasicBlock::iterator I = MBB->begin(); I != MBB->end();) {
+
+            if (!SVMInstrInfo::isNearBranchOpcode(I->getOpcode())) {
+                ++I;
+                continue;
+            }
+            
+            // Branch target is always the first opcode
+            MachineBasicBlock *TBB = I->getOperand(0).getMBB();
+            assert(TBB->getParent() == MBB->getParent());
+            unsigned TBBN = TBB->getNumber();
+
+            if (TBBN < beginBB || TBBN >= endBB)
+                rewriteBranch(MBB, I, *TBB, insertPoint);
+            else
+                ++I;
+        }
+    }
+}
+
+void SVMLateFunctionSplitPass::rewriteBranch(MachineBasicBlock *MBB,
+    MachineBasicBlock::iterator &I, MachineBasicBlock &TBB,
+    MachineFunction::iterator insertPoint)
+{
+    // Rewrite the branch at 'I', and advance to the next instruction.
+    
+    const TargetInstrInfo &TII = *TM.getInstrInfo();
+    MachineFunction *MF = MBB->getParent();
+    DebugLoc DL = I->getDebugLoc();
+    
+    if (SVMInstrInfo::isCondNearBranchOpcode(I->getOpcode())) {
+        // Rewrite a conditional branch. Since we'd like the condition
+        // evaluation to happen in native code, with a svc only if the branch
+        // is taken, we redirect the branch to a small trampoline BB, inserted
+        // at the beginning of the block, which does an unconditional long
+        // branch to the real destination.
+
+        MachineBasicBlock *trMBB = createAnonymousMBB(MF);
+        MF->insert(insertPoint, trMBB);
+        I->getOperand(0).setMBB(trMBB);
+        
+        BuildMI(trMBB, DL, TII.get(SVM::LB))
+            .addConstantPoolIndex(getLongBranchCPI(&TBB));
+            
+        ++I;
+
+    } else {
+        // Rewrite an unconditional branch. This just replaces the original
+        // instruction with a new unconditional branch instruction.
+
+        BuildMI(*MBB, I, DL, TII.get(SVM::LB))
+            .addConstantPoolIndex(getLongBranchCPI(&TBB));
+
+        MachineBasicBlock::iterator replacedBranch = I;
+        ++I;
+        replacedBranch->eraseFromParent();
+    }
 }
