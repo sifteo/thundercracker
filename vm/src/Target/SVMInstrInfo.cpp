@@ -183,7 +183,8 @@ bool SVMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB
             // Conditional branch followed by unconditional
             TBB = prevI->getOperand(0).getMBB();
             FBB = lastI->getOperand(0).getMBB();
-            Cond.push_back(prevI->getOperand(1));
+            Cond.push_back(prevI->getOperand(1));   // CC
+            Cond.push_back(prevI->getOperand(2));   // CPSR
             return false;
         }
     }
@@ -234,7 +235,11 @@ unsigned SVMInstrInfo::InsertBranch(MachineBasicBlock &MBB,
     } else {
         // Insert the first conditional branch
         assert(TBB != 0);
-        BuildMI(&MBB, DL, get(SVM::Bcc)).addMBB(TBB).addOperand(Cond[0]);
+        assert(Cond.size() == 2);
+        BuildMI(&MBB, DL, get(SVM::Bcc))
+            .addMBB(TBB)            // Target
+            .addOperand(Cond[0])    // CC
+            .addOperand(Cond[1]);   // CPSR
         Count++;
     
         if (FBB != 0) {

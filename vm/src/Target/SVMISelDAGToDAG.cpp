@@ -82,7 +82,7 @@ SDNode *SVMDAGToDAGISel::Select(SDNode *N)
 
     /*
      * Pattern (SVMBrcond bb:$offset8, imm:$cc)
-     * Emits (Bcc bccTarget:$offset8, CCop:$cc)
+     * Emits (Bcc bccTarget:$offset8, CCop:$cc, CPSR)
      * We must do this programmatically so we can glue the CMP instruction properly.
      */
     case SVMISD::BRCOND: {
