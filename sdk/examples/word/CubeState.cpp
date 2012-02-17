@@ -39,18 +39,10 @@ void CubeState::paintBorder(VidMode_BG0_SPR_BG1& vid,
     {
         vid.BG0_drawAsset(Vec2(0, 0), BorderLeft);
     }
-    else
-    {
-        vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(2, 16), TileBG);
-    }
 
     if (c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
     {
         vid.BG0_drawAsset(Vec2(14, 0), BorderRight);
-    }
-    else
-    {
-        vid.BG0_drawPartialAsset(Vec2(14, 0), Vec2(14, 0), Vec2(2, 16), TileBG);
     }
 
     vid.BG0_drawAsset(Vec2(0, 0), BorderTop);
@@ -375,6 +367,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
                              const AssetImage &fontREMOVE,
                              bool paintSprites)
 {
+    vid.BG0_drawAsset(Vec2(0,0), TileBG);
     BG1Helper bg1(mStateMachine->getCube());
     char str[MAX_LETTERS_PER_CUBE + 1];
     getStateMachine().getLetters(str, true);
@@ -389,15 +382,28 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
         // TODO this loop for all
         for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
         {
-            const Vec2& pos = getStateMachine().geTilePosition(i);
-            Vec2 letterPos(pos);
-            letterPos.y += 3;
-            vid.BG0_drawAsset(pos, getStateMachine().getTileAsset(i));
-            unsigned frame = str[i] - (int)'A';
-
-            if (frame < font.frames)
+            Vec2 pos(getStateMachine().geTilePosition(i));
+            Vec2 size(12/GameStateMachine::getCurrentMaxLettersPerCube(), 12);
+            if (pos.x < 0)
             {
-                bg1.DrawAsset(letterPos, font, frame);
+                size.x += pos.x;
+                pos.x = 0;
+            }
+            if (pos.x + size.x > 16)
+            {
+                size.x -= (pos.x + size.x) - 16;
+            }
+            if (size.x > 0 && size.y > 0)
+            {
+                Vec2 letterPos(pos);
+                letterPos.y += 3;
+                vid.BG0_drawPartialAsset(pos, Vec2(0,0), size, getStateMachine().getTileAsset(i));
+                unsigned frame = str[i] - (int)'A';
+
+                if (frame < font.frames)
+                {
+                    bg1.DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, frame);
+                }
             }
         }
       break;

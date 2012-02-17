@@ -15,6 +15,12 @@ void CubeStateMachine::setCube(Cube& cube)
         CubeState& state = (CubeState&)getState(i);
         state.setStateMachine(*this);
     }
+
+    for (unsigned i = 0; i < arraysize(mTilePositions); ++i)
+    {
+        mTilePositions[i].x = 2 + i * 6;
+        mTilePositions[i].y = 2;
+    }
 }
 
 Cube& CubeStateMachine::getCube()
@@ -36,7 +42,7 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             case 3:
                 if (!mBG0PanningLocked)
                 {
-                    const float BG0_PANNING_WRAP = 144.f;
+                    const float BG0_PANNING_WRAP = 128.f;
 
                     _SYSTiltState state;
                     _SYS_getTilt(getCube().id(), &state);
@@ -157,11 +163,7 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
 
 const Vec2& CubeStateMachine::geTilePosition(unsigned index) const
 {
-    static Vec2 hacks[] =
-    {
-        Vec2(2, 2), Vec2(8, 2), Vec2(8, 2)
-    };
-    return hacks[index];
+    return mTilePositions[index];
 }
 
 const AssetImage& CubeStateMachine::getTileAsset(unsigned index) const
@@ -324,7 +326,16 @@ void CubeStateMachine::update(float dt)
 
 void CubeStateMachine::setPanning(VidMode_BG0_SPR_BG1& vid, float panning)
 {
-    return;
     mBG0Panning = panning;
-    vid.BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
+    int tilePanning = fmodf(mBG0Panning, 128.f);
+    tilePanning /= 8;
+    // TODO clean this up
+    int tileWidth = 12/GameStateMachine::getCurrentMaxLettersPerCube();
+    for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
+    {
+        mTilePositions[i].x = 2 + tilePanning + i * tileWidth;
+        mTilePositions[i].x = ((mTilePositions[i].x + tileWidth) % (16 + 2 * tileWidth));
+        mTilePositions[i].x -= tileWidth;
+    }
+    //vid.BG0_setPanning(Vec2((int)mBG0Panning, 0.f));
 }

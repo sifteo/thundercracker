@@ -56,6 +56,7 @@ private:
 
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];
+    Vec2 mTilePositions[MAX_LETTERS_PER_CUBE];
     unsigned mNumLetters;
     float mIdleTime;
 
