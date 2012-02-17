@@ -170,8 +170,9 @@ void SVMAsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV)
         // Long branch decoration
         MCDecoratedSym = OutContext.GetOrCreateSymbol(
             SVMDecorations::LB + MCSym->getName());
-        MCDecoratedSym->setVariableValue(
-            MCSymbolRefExpr::Create(MCSym, OutContext));
+        if (!MCDecoratedSym->isVariable())
+            MCDecoratedSym->setVariableValue(
+                MCSymbolRefExpr::Create(MCSym, OutContext));
         break;
     }
     
