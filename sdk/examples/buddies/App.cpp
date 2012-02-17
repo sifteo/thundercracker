@@ -176,16 +176,24 @@ void App::Init()
 
 void App::Reset()
 {
-    // TODO: Ditch ResetCubes in favor of mode Start events
-    ResetCubes();
-    
-    if (kGameMode == GAME_MODE_SHUFFLE)
+    switch (kGameMode)
     {
-        StartGameState(GAME_STATE_SHUFFLE_START);
-    }
-    else if (kGameMode == GAME_MODE_PUZZLE)
-    {
-        StartGameState(GAME_STATE_PUZZLE_START);
+        default:
+        case GAME_MODE_FREE_PLAY:
+        {
+            StartGameState(GAME_STATE_FREE_PLAY);
+            break;
+        }
+        case GAME_MODE_SHUFFLE:
+        {
+            StartGameState(GAME_STATE_SHUFFLE_START);
+            break;
+        }
+        case GAME_MODE_PUZZLE:
+        {
+            StartGameState(GAME_STATE_PUZZLE_START);
+            break;
+        }
     }
 }
 
@@ -299,6 +307,7 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
             GetCubeWrapper(cubeId1).GetPiece(cubeSide1).mAttribute == Piece::ATTR_FIXED;
         
         bool isValidGameState =
+            mGameState == GAME_STATE_FREE_PLAY ||
             mGameState == GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES ||
             mGameState == GAME_STATE_SHUFFLE_PLAY ||
             mGameState == GAME_STATE_PUZZLE_PLAY;
@@ -380,42 +389,6 @@ void App::RemoveCube(Cube::ID cubeId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::ResetCubes()
-{
-    // TODO: Allow kNumCubes > GetPuzzle(mPuzzleIndex).GetNumBuddies() by disabling the other
-    // buddies.
-    if (kGameMode == GAME_MODE_PUZZLE)
-    {
-        ASSERT(kNumCubes == GetPuzzle(mPuzzleIndex).GetNumBuddies());
-    }
-    
-    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-    {
-        if (mCubeWrappers[i].IsEnabled())
-        {
-            mCubeWrappers[i].Reset();
-            
-            for (unsigned int j = 0; j < NUM_SIDES; ++j)
-            {
-                if (kGameMode == GAME_MODE_PUZZLE)
-                {
-                    ASSERT(mPuzzleIndex < GetNumPuzzles());
-                    mCubeWrappers[i].SetPiece(j, GetPuzzle(mPuzzleIndex).GetStartState(i, j));
-                    mCubeWrappers[i].SetPieceSolution(j, GetPuzzle(mPuzzleIndex).GetEndState(i, j));
-                }
-                else
-                {
-                    mCubeWrappers[i].SetPiece(j, GetPuzzleDefault().GetStartState(i, j));
-                    mCubeWrappers[i].SetPieceSolution(j, GetPuzzleDefault().GetEndState(i, j));
-                }
-            }
-        }
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 void App::PlaySound()
 {
     mChannel.play(GemsSound);
@@ -431,8 +404,37 @@ void App::StartGameState(GameState shuffleState)
     
     switch (mGameState)
     {
+        case GAME_STATE_FREE_PLAY:
+        {
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].Reset();
+                    
+                    for (unsigned int j = 0; j < NUM_SIDES; ++j)
+                    {
+                        mCubeWrappers[i].SetPiece(j, GetPuzzleDefault().GetStartState(i, j));
+                        mCubeWrappers[i].SetPieceSolution(j, GetPuzzleDefault().GetEndState(i, j));
+                    }
+                }
+            }
+        }
         case GAME_STATE_SHUFFLE_START:
         {
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].Reset();
+                    
+                    for (unsigned int j = 0; j < NUM_SIDES; ++j)
+                    {
+                        mCubeWrappers[i].SetPiece(j, GetPuzzleDefault().GetStartState(i, j));
+                        mCubeWrappers[i].SetPieceSolution(j, GetPuzzleDefault().GetEndState(i, j));
+                    }
+                }
+            }
             mDelayTimer = kShuffleStateTimeDelay;
             mShuffleHintTimer = kHintTimerOnDuration;
             mShuffleHintPiece0 = -1;
@@ -463,8 +465,42 @@ void App::StartGameState(GameState shuffleState)
         }
         case GAME_STATE_PUZZLE_START:
         {
+            ASSERT(kNumCubes == GetPuzzle(mPuzzleIndex).GetNumBuddies());
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].Reset();
+                    
+                    for (unsigned int j = 0; j < NUM_SIDES; ++j)
+                    {
+                        ASSERT(mPuzzleIndex < GetNumPuzzles());
+                        mCubeWrappers[i].SetPiece(j, GetPuzzle(mPuzzleIndex).GetStartState(i, j));
+                        mCubeWrappers[i].SetPieceSolution(j, GetPuzzle(mPuzzleIndex).GetEndState(i, j));
+                    }
+                }
+            }
             mPuzzleIndex = 0;
             mDelayTimer = kShuffleStateTimeDelay;
+            break;
+        }
+        case GAME_STATE_PUZZLE_INSTRUCTIONS:
+        {
+            ASSERT(kNumCubes == GetPuzzle(mPuzzleIndex).GetNumBuddies());
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    mCubeWrappers[i].Reset();
+                    
+                    for (unsigned int j = 0; j < NUM_SIDES; ++j)
+                    {
+                        ASSERT(mPuzzleIndex < GetNumPuzzles());
+                        mCubeWrappers[i].SetPiece(j, GetPuzzle(mPuzzleIndex).GetStartState(i, j));
+                        mCubeWrappers[i].SetPieceSolution(j, GetPuzzle(mPuzzleIndex).GetEndState(i, j));
+                    }
+                }
+            }
             break;
         }
         case GAME_STATE_PUZZLE_PLAY:
@@ -616,8 +652,6 @@ void App::UpdateGameState(float dt)
                 {
                     mPuzzleIndex = 0;
                 }
-                ResetCubes();
-                
                 StartGameState(GAME_STATE_PUZZLE_INSTRUCTIONS);
             }
             break;

@@ -48,7 +48,6 @@ public:
 private:
     void AddCube(Sifteo::Cube::ID cubeId);
     void RemoveCube(Sifteo::Cube::ID cubeId);
-    void ResetCubes();
     
     void PlaySound();
     
