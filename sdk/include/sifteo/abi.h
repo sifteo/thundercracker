@@ -460,6 +460,13 @@ uint32_t _SYS_uo_f64() _SC(24);
 uint32_t _SYS_o_f32() _SC(23);
 uint32_t _SYS_o_f64() _SC(22);
 
+// syscall calling convention: 8 params, as provided by r0-r7,
+// and return a single value via r0
+typedef uint32_t (*SvmSyscall)(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3,
+                               uint32_t p4, uint32_t p5, uint32_t p6, uint32_t p7);
+
+extern const SvmSyscall SyscallTable[];
+
 void _SYS_sincosf(float x, float *sinOut, float *cosOut) _SC(8);
 float _SYS_fmodf(float a, float b) _SC(9);
 

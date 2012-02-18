@@ -31,6 +31,183 @@ extern "C" {
 
 struct _SYSEventVectors _SYS_vectors;
 
+const SvmSyscall SyscallTable[] = {
+    #include "syscall-table.def"
+};
+
+// TODO: implement!
+void _SYS_ret() {
+
+}
+
+// XXX: floating point support stubbed out for now
+uint32_t _SYS_add_f32() {
+    return 0;
+}
+
+uint32_t _SYS_add_f64() {
+    return 0;
+}
+
+uint32_t _SYS_sub_f32() {
+    return 0;
+}
+
+uint32_t _SYS_sub_f64() {
+    return 0;
+}
+
+uint32_t _SYS_mul_f32() {
+    return 0;
+}
+
+uint32_t _SYS_mul_f64() {
+    return 0;
+}
+
+uint32_t _SYS_div_f32() {
+    return 0;
+}
+
+uint32_t _SYS_div_f64() {
+    return 0;
+}
+
+uint32_t _SYS_fpext_f32_f64() {
+    return 0;
+}
+
+uint32_t _SYS_fpround_f64_f32() {
+    return 0;
+}
+
+uint32_t _SYS_fptosint_f32_i32() {
+    return 0;
+}
+
+uint32_t _SYS_fptosint_f32_i64() {
+    return 0;
+}
+
+uint32_t _SYS_fptosint_f64_i32() {
+    return 0;
+}
+
+uint32_t _SYS_fptosint_f64_i64() {
+    return 0;
+}
+
+uint32_t _SYS_fptouint_f32_i32() {
+    return 0;
+}
+
+uint32_t _SYS_fptouint_f32_i64() {
+    return 0;
+}
+
+uint32_t _SYS_fptouint_f64_i32() {
+    return 0;
+}
+
+uint32_t _SYS_fptouint_f64_i64() {
+    return 0;
+}
+
+uint32_t _SYS_sinttofp_i32_f32() {
+    return 0;
+}
+
+uint32_t _SYS_sinttofp_i32_f64() {
+    return 0;
+}
+
+uint32_t _SYS_sinttofp_i64_f32() {
+    return 0;
+}
+
+uint32_t _SYS_sinttofp_i64_f64() {
+    return 0;
+}
+
+uint32_t _SYS_uinttofp_i32_f32() {
+    return 0;
+}
+
+uint32_t _SYS_uinttofp_i32_f64() {
+    return 0;
+}
+
+uint32_t _SYS_uinttofp_i64_f32() {
+    return 0;
+}
+
+uint32_t _SYS_uinttofp_i64_f64() {
+    return 0;
+}
+
+uint32_t _SYS_oeq_f32() {
+    return 0;
+}
+
+uint32_t _SYS_oeq_f64() {
+    return 0;
+}
+
+uint32_t _SYS_une_f32() {
+    return 0;
+}
+
+uint32_t _SYS_une_f64() {
+    return 0;
+}
+
+uint32_t _SYS_oge_f32() {
+    return 0;
+}
+
+uint32_t _SYS_oge_f64() {
+    return 0;
+}
+
+uint32_t _SYS_olt_f32() {
+    return 0;
+}
+
+uint32_t _SYS_olt_f64() {
+    return 0;
+}
+
+uint32_t _SYS_ole_f32() {
+    return 0;
+}
+
+uint32_t _SYS_ole_f64() {
+    return 0;
+}
+
+uint32_t _SYS_ogt_f32() {
+    return 0;
+}
+
+uint32_t _SYS_ogt_f64() {
+    return 0;
+}
+
+uint32_t _SYS_uo_f32() {
+    return 0;
+}
+
+uint32_t _SYS_uo_f64() {
+    return 0;
+}
+
+uint32_t _SYS_o_f32() {
+    return 0;
+}
+
+uint32_t _SYS_o_f64() {
+    return 0;
+}
 
 #define MEMSET_BODY() {                                                 \
     if (Runtime::checkUserArrayPointer(dest, sizeof *dest, count)) {    \
@@ -39,7 +216,7 @@ struct _SYSEventVectors _SYS_vectors;
             count--;                                                    \
         }                                                               \
     }                                                                   \
-}   
+}
 
 void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) MEMSET_BODY()
 void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) MEMSET_BODY()

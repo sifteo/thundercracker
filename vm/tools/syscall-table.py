@@ -12,6 +12,7 @@ import sys, re
 regex = re.compile(r"^\s*\w+\s+(\w+)\s*\(.*\)\s+_SC\((\d+)\);");
 highestNum = 0
 callMap = {}
+typedef = "(SvmSyscall)"
 
 for line in sys.stdin:
     m = regex.match(line)
@@ -23,4 +24,4 @@ for line in sys.stdin:
         callMap[num] = name
 
 for i in range(highestNum+1):
-    print "    /* %4d */ %s," % (i, callMap.get(i) or "0")
+    print "    /* %4d */ %s%s," % (i, typedef, callMap.get(i) or "0")
