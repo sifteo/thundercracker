@@ -61,7 +61,8 @@ uint16_t SvmProgram::fetch()
         assert((uint32_t)regs[r] == regs[r]);
         LOG((" r%d=%08x", r, (uint32_t) regs[r]));
     }
-    LOG(("\n"));
+    LOG((" | r8=%p r9=%p sp=%p\n",
+        (void*)regs[8], (void*)regs[9], (void*)regs[REG_SP]));
 #endif
     
     regs[REG_PC] += sizeof(uint16_t);
