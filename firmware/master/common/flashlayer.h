@@ -29,11 +29,17 @@ public:
 private:
     struct CachedBlock {
         uint32_t address;
-        char data[BLOCK_SIZE];
+
+        inline uint8_t *getData() {
+            return &blockMem[(this - &blocks[0]) * BLOCK_SIZE];
+        }
+
         // TODO - track multiple references? timestamp?
     };
 
     static CachedBlock blocks[NUM_BLOCKS];
+    static uint8_t blockMem[NUM_BLOCKS * BLOCK_SIZE];
+
     static uint32_t freeBlocksMask;
     static uint32_t validBlocksMask;    // TODO: invalidation?
 

@@ -56,6 +56,7 @@ void SvmProgram::run(uint16_t appId)
 uint16_t SvmProgram::fetch()
 {
     uint16_t *tst = reinterpret_cast<uint16_t*>(regs[REG_PC]);
+    LOG(("[%p] %04x\n", tst, *tst));
     regs[REG_PC] += sizeof(uint16_t);
     return *tst;
 }
@@ -569,7 +570,7 @@ void SvmProgram::emulateSXTH(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = (uint32_t) SignExtend<int32_t, 16>(regs[Rm]);
+    regs[Rdn] = (uint32_t) SignExtend<signed int, 16>(regs[Rm]);
 }
 
 void SvmProgram::emulateSXTB(uint16_t instr)
@@ -577,7 +578,7 @@ void SvmProgram::emulateSXTB(uint16_t instr)
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
 
-    regs[Rdn] = (uint32_t) SignExtend<int32_t, 8>(regs[Rm]);
+    regs[Rdn] = (uint32_t) SignExtend<signed int, 8>(regs[Rm]);
 }
 
 void SvmProgram::emulateUXTH(uint16_t instr)
@@ -603,8 +604,8 @@ void SvmProgram::emulateUXTB(uint16_t instr)
 void SvmProgram::emulateB(uint16_t instr)
 {
     // encoding T2 only
-    unsigned imm11 = instr & 0x3FF;
-    uint32_t offset = SignExtend<uint32_t, 11>(imm11);
+    unsigned imm11 = instr & 0x7FF;
+    int offset = SignExtend<signed int, 11>(imm11);
     BranchWritePC(regs[REG_PC] + offset);
 }
 
@@ -614,7 +615,7 @@ void SvmProgram::emulateCondB(uint16_t instr)
     unsigned imm8 = instr & 0xff;
 
     if (conditionPassed(cond)) {
-        uint32_t offset = SignExtend<uint32_t, 9>(imm8 << 1);
+        int offset = SignExtend<signed int, 9>(imm8 << 1);
         BranchWritePC(regs[REG_PC] + offset);
     }
 }
@@ -627,7 +628,7 @@ void SvmProgram::emulateCBZ_CBNZ(uint16_t instr)
     unsigned Rn = instr & 0x7;
 
     // ZeroExtend(i:imm5:'0')
-    unsigned offset = (i << 6) | (imm5 << 1);
+    reg_t offset = (i << 6) | (imm5 << 1);
 
     if (nonzero ^ (regs[Rn] == 0)) {
         BranchWritePC(regs[REG_PC] + offset);

@@ -6,7 +6,8 @@
 #include <string.h>
 
 
-FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS] BLOCK_ALIGN;
+FlashLayer::CachedBlock FlashLayer::blocks[NUM_BLOCKS];
+uint8_t FlashLayer::blockMem[NUM_BLOCKS * BLOCK_SIZE] BLOCK_ALIGN;
 uint32_t FlashLayer::validBlocksMask = 0;
 uint32_t FlashLayer::freeBlocksMask = 0;
 
@@ -38,7 +39,7 @@ bool FlashLayer::getRegion(unsigned offset, unsigned len, FlashRegion *r)
         // find the start address of the block that contains this offset,
         // and read in the entire block.
         b->address = (offset / BLOCK_SIZE) * BLOCK_SIZE;
-        Flash::read(b->address, (uint8_t*)b->data, BLOCK_SIZE);
+        Flash::read(b->address, b->getData(), BLOCK_SIZE);
 
         // mark it as both valid & no longer free
         unsigned idx = b - blocks;
@@ -57,7 +58,7 @@ bool FlashLayer::getRegion(unsigned offset, unsigned len, FlashRegion *r)
     }
 #endif
 
-    if (offset + len > b->address + sizeof(b->data)) {
+    if (offset + len > b->address + BLOCK_SIZE) {
         // requested region crosses block boundary :(
         r->_size = b->address + BLOCK_SIZE - offset;
     }
@@ -66,7 +67,7 @@ bool FlashLayer::getRegion(unsigned offset, unsigned len, FlashRegion *r)
     }
 
     r->_address = offset;
-    r->_data = b->data + (offset % BLOCK_SIZE);
+    r->_data = b->getData() + (offset % BLOCK_SIZE);
     return true;
 }
 
