@@ -2,7 +2,10 @@
 #define SVM_H
 
 #include <stdint.h>
+#include "svmutils.h"
 #include "flashlayer.h"
+
+using namespace Svm;
 
 class SvmProgram;
 
@@ -25,9 +28,6 @@ public:
     void run(uint16_t appId);
 
 private:
-    // Registers are wide enough to hold a native pointer
-    typedef uintptr_t reg_t;
-
     struct Segment {
         uint32_t start;
         uint32_t size;
