@@ -23,8 +23,6 @@ public:
 
     uint16_t fetch();
     void run(uint16_t appId);
-    void cycle();
-    void validate();
 
 private:
     // 16-bit thumb instruction validators
@@ -112,11 +110,6 @@ private:
         Segment rwdata;
     };
 
-    enum InstructionSize {
-        InstrBits16,
-        InstrBits32
-    };
-
     bool loadElfFile(unsigned addr, unsigned len);
 
     void execute16(uint16_t instr);
@@ -141,8 +134,6 @@ private:
     }
 
     bool conditionPassed(uint8_t cond);
-
-    InstructionSize instructionSize(uint16_t instr) const;
 
     enum Conditions {
         EQ = 0,    // Equal
@@ -268,12 +259,6 @@ private:
         struct { T x:B; } s;
         return s.x = x;
     }
-};
-
-class Svm
-{
-public:
-    Svm();
 };
 
 #endif // SVM_H

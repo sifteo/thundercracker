@@ -1,12 +1,10 @@
 #include "svm.h"
 #include "elfdefs.h"
 #include "flashlayer.h"
+#include "svmutils.h"
+#include "svmvalidator.h"
 
 #include <string.h>
-
-Svm::Svm()
-{
-}
 
 SvmProgram::SvmProgram()
 {
@@ -19,8 +17,6 @@ void SvmProgram::run(uint16_t appId)
         return;
 
     LOG(("loaded. entry: 0x%x text start: 0x%x\n", progInfo.entry, progInfo.textRodata.start));
-
-    validate();
 
     memset(regs, 0, sizeof(regs));  // zero out general purpose regs
     cpsr = 0;
@@ -35,9 +31,13 @@ void SvmProgram::run(uint16_t appId)
     regs[REG_PC] = reinterpret_cast<reg_t>(flashRegion.data())
         + (progInfo.textRodata.vaddr & 0xFFFFFF);
 
+    SvmValidator v;
+    unsigned size = v.validBytesInBlock(flashRegion.data(), flashRegion.size());
+    LOG(("validBytes in block: %d\n", size));
+
     for (;;) {
         uint16_t instr = fetch();
-        if (instructionSize(instr) == InstrBits16) {
+        if (Svm::instructionSize(instr) == Svm::InstrBits16) {
             execute16(instr);
         }
         else {
@@ -58,120 +58,6 @@ uint16_t SvmProgram::fetch()
     uint16_t *tst = reinterpret_cast<uint16_t*>(regs[REG_PC]);
     regs[REG_PC] += sizeof(uint16_t);
     return *tst;
-}
-
-void SvmProgram::cycle()
-{
-}
-
-void SvmProgram::validate()
-{
-    unsigned entryPoint = progInfo.textRodata.start + progInfo.entry;
-    if (!FlashLayer::getRegion(entryPoint, FlashLayer::BLOCK_SIZE, &flashRegion)) {
-        LOG(("failed to get entry block\n"));
-        return;
-    }
-    
-    // TODO: This shouldn't depend on PC, which is part of the execution state.
-    regs[REG_PC] = reinterpret_cast<reg_t>(flashRegion.data());
-
-    unsigned bsize = flashRegion.size();
-    while (bsize) {
-        uint16_t instr = fetch();
-        if (instructionSize(instr) == InstrBits16) {
-            if (!isValid16(instr))
-                break;
-        }
-        else {
-            uint16_t instrLow = fetch();
-            if (!isValid32(instr << 16 | instrLow))
-                break;
-        }
-    }
-    LOG(("validation complete\n"));
-}
-
-SvmProgram::InstructionSize SvmProgram::instructionSize(uint16_t instr) const
-{
-    // if bits [15:11] are 0b11101, 0b11110 or 0b11111, it's a 32-bit instruction
-    // 0xe800 == 0b11101 << 11
-    return (instr & 0xf800) >= 0xe800 ? InstrBits32 : InstrBits16;
-}
-
-/*
-Allowed 16-bit instruction encodings:
-
-  00xxxxxx xxxxxxxx     lsl, lsr, asr, add, sub, mov, cmp
-  010000xx xxxxxxxx     and, eor, lsl, lsr, asr, adc, sbc, ror,
-                        tst, rsb, cmp, cmn, orr, mul, bic, mvn
-
-  10110010 xxxxxxxx     uxth, sxth, uxtb, sxtb
-  10111111 00000000     nop
-  11011111 xxxxxxxx     svc
-
-  01001xxx xxxxxxxx     ldr r0-r7, [PC, #imm8]
-  1001xxxx xxxxxxxx     ldr/str r0-r7, [SP, #imm8]
-  10101xxx xxxxxxxx     add r0-r7, SP, #imm8
-
-Near branches are allowed, assuming the target address is within the code
-region of the same page, and the target is 32-bit aligned:
-
-  1011x0x1 xxxxxxxx     cb(n)z
-  1101xxxx xxxxxxxx     bcc
-  11100xxx xxxxxxxx     b
-*/
-bool SvmProgram::isValid16(uint16_t instr)
-{
-    if ((instr & AluMask) == AluTest) {
-        LOG(("arithmetic\n"));
-        return true;
-    }
-    if ((instr & DataProcMask) == DataProcTest) {
-        LOG(("data processing\n"));
-        return true;
-    }
-    if ((instr & MiscMask) == MiscTest) {
-        LOG(("miscellaneous\n"));
-        return true;
-    }
-    if ((instr & SvcMask) == SvcTest) {
-        LOG(("svc\n"));
-        return true;
-    }
-    if ((instr & PcRelLdrMask) == PcRelLdrTest) {
-        LOG(("pc relative ldr\n"));
-        return true;
-    }
-    if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
-        LOG(("sp relative ldr/str\n"));
-        return true;
-    }
-    if ((instr & SpRelAddMask) == SpRelAddTest) {
-        LOG(("sp relative add\n"));
-        return true;
-    }
-    if ((instr & UncondBranchMask) == UncondBranchTest) {
-        LOG(("unconditional branch\n"));
-        // TODO: must validate target
-        return true;
-    }
-    if ((instr & CompareBranchMask) == CompareBranchTest) {
-        LOG(("compare and branch\n"));
-        // TODO: must validate target
-        return true;
-    }
-    if ((instr & CondBranchMask) == CondBranchTest) {
-        LOG(("branchcc\n"));
-        // TODO: must validate target
-        return true;
-    }
-    if (instr == Nop) {
-        // 10111111 00000000     nop
-        LOG(("nop\n"));
-        return true;
-    }
-    LOG(("*********************************** invalid 16bit instruction: 0x%x\n", instr));
-    return false;
 }
 
 void SvmProgram::execute16(uint16_t instr)
@@ -771,43 +657,6 @@ void SvmProgram::svcIndirectOperation(uint8_t imm8)
     else {
         ASSERT(0 && "unhandled svc Indirect Operation");
     }
-}
-
-/*
-Allowed 32-bit instruction encodings:
-
-  11111000 11001001, 0xxxxxxx xxxxxxxx      str         r0-r7, [r9, #imm12]
-  11111000 10x01001, 0xxxxxxx xxxxxxxx      str[bh]     r0-r7, [r9, #imm12]
-
-  1111100x 10x1100x, 0xxxxxxx xxxxxxxx      ldr(s)[bh]  r0-r7, [r8-9, #imm12]
-  11111000 1101100x, 0xxxxxxx xxxxxxxx      ldr         r0-r7, [r8-9, #imm12]
-
-  11110x10 x100xxxx, 0xxx0xxx xxxxxxxx      mov[wt]     r0-r7, #imm16
-*/
-bool SvmProgram::isValid32(uint32_t instr)
-{
-    if ((instr & StrMask) == StrTest) {
-        LOG(("32bit str\n"));
-        return true;
-    }
-    if ((instr & StrBhMask) == StrBhTest) {
-        LOG(("32bit str[bh]\n"));
-        return true;
-    }
-    if ((instr & LdrBhMask) == LdrBhTest) {
-        LOG(("32bit ldr(s)[bh]\n"));
-        return true;
-    }
-    if ((instr & LdrMask) == LdrTest) {
-        LOG(("32bit ldr(s)[bh]\n"));
-        return true;
-    }
-    if ((instr & MovWtMask) == MovWtTest) {
-        LOG(("32bit mov[wt]\n"));
-        return true;
-    }
-    LOG(("----------------------- invalid 32-bit instruction: 0x%x\n", instr));
-    return false;
 }
 
 bool SvmProgram::loadElfFile(unsigned addr, unsigned len)
