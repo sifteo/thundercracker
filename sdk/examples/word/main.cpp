@@ -15,9 +15,10 @@ static const char* sideNames[] =
 void onCubeEventTouch(_SYSCubeID cid)
 {
     DEBUG_LOG(("cube event touch:\t%d\n", cid));
-    EventData data;
+/* TODO Touch    EventData data;
     data.mInput.mCubeID = cid;
     WordGame::onEvent(EventID_Input, data);
+    */
 }
 
 void onCubeEventShake(_SYSCubeID cid)
@@ -73,6 +74,7 @@ void siftmain()
         cubes[i].enable(i + CUBE_ID_BASE);
     }
 
+#ifndef DEBUGzzz
     if (LOAD_ASSETS)
     {
         // start loading assets
@@ -113,6 +115,7 @@ void siftmain()
             }
         }
     }
+#endif // ifndef DEBUG
 
     // main loop
     WordGame game(cubes); // must not be static!
