@@ -314,12 +314,22 @@ void SvmProgram::emulateSUBReg(uint16_t instr)
 
 void SvmProgram::emulateADD3Imm(uint16_t instr)
 {
-    // TODO
+    unsigned imm3 = (instr >> 6) & 0x7;
+    unsigned Rn = (instr >> 3) & 0x7;
+    unsigned Rd = instr & 0x7;
+
+    regs[Rd] = (uint32_t) (regs[Rn] + imm3);
+    // TODO: set N, Z, C and V flags
 }
 
 void SvmProgram::emulateSUB3Imm(uint16_t instr)
 {
-    // TODO
+    unsigned imm3 = (instr >> 6) & 0x7;
+    unsigned Rn = (instr >> 3) & 0x7;
+    unsigned Rd = instr & 0x7;
+
+    regs[Rd] = (uint32_t) (regs[Rn] - imm3);
+    // TODO: set N, Z, C and V flags
 }
 
 void SvmProgram::emulateMovImm(uint16_t instr)
@@ -341,12 +351,20 @@ void SvmProgram::emulateCmpImm(uint16_t instr)
 
 void SvmProgram::emulateADD8Imm(uint16_t instr)
 {
-    // TODO
+    unsigned Rdn = (instr >> 8) & 0x7;
+    unsigned imm8 = instr & 0xff;
+
+    regs[Rdn] = (uint32_t) (regs[Rdn] + imm8);
+    // TODO: set N, Z, C and V flags
 }
 
 void SvmProgram::emulateSUB8Imm(uint16_t instr)
 {
-    // TODO
+    unsigned Rdn = (instr >> 8) & 0x7;
+    unsigned imm8 = instr & 0xff;
+
+    regs[Rdn] = (uint32_t) (regs[Rdn] - imm8);
+    // TODO: set N, Z, C and V flags
 }
 
 ///////////////////////////////////
