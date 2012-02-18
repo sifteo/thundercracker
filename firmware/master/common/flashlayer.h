@@ -26,7 +26,8 @@ public:
     static bool getRegion(unsigned offset, unsigned len, FlashRegion *r);
     static void releaseRegion(const FlashRegion &r);
 
-private:
+// HACK - revert soon, please
+//private:
     struct CachedBlock {
         uint32_t address;
 

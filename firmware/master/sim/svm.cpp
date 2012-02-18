@@ -745,25 +745,41 @@ SVC encodings:
 void SvmProgram::emulateSVC(uint16_t instr)
 {
     unsigned imm8 = instr & 0xFF;
+    LOG(("svc, imm8 %d\n", imm8));
     if ((imm8 & (1 << 7)) == 0) {
         svcIndirectOperation(imm8);
-        LOG(("indirect syscall\n"));
         return;
     }
-    if ((imm8 & (0x2 << 6)) == (0x2 << 6)) {
-        LOG(("direct syscall\n"));
+    if ((imm8 & (0x3 << 6)) == (0x2 << 6)) {
+        uint8_t syscallNum = imm8 & 0x3f;
+        LOG(("direct syscall #%d\n", syscallNum));
+        regs[0] = SyscallTable[syscallNum](regs[0], regs[1], regs[2], regs[3],
+                                           regs[4], regs[5], regs[6], regs[7]);
         return;
     }
-    if ((imm8 & (0x6 << 5)) == (0x6 << 5)) {
+    if ((imm8 & (0x7 << 5)) == (0x6 << 5)) {
         LOG(("SP = validate(SP - imm5*4)\n"));
         return;
     }
 
     uint8_t sub = (imm8 >> 3) & 0x1f;
+    unsigned r = imm8 & 0x7;
     switch (sub) {
-    case 0x1c:  // 0b11100
+    case 0x1c:  { // 0b11100
         LOG(("svc: r8-9 = validate(rN)\n"));
+        uint32_t addr = regs[r];
+        // if flash address, get page if necessary & translate to appropriate address
+        if (addr & (1 << 31)) {
+            // SUPER HACK: need to get address of currently checked out flash block
+            regs[8] = reinterpret_cast<reg_t>(FlashLayer::blocks[0].getData()) + (addr & 0x7fffffff);
+            regs[9] = 0;
+        }
+        else {
+            regs[8] = virt2physAddr(regs[r]);
+            regs[9] = virt2physAddr(regs[r]);
+        }
         return;
+    }
     case 0x1d:  // 0b11101
         LOG(("svc: reserved\n"));
         return;
@@ -804,6 +820,8 @@ void SvmProgram::svcIndirectOperation(uint8_t imm8)
     uint32_t *blockBase = reinterpret_cast<uint32_t*>(instructionBase & blockMask);
     uint32_t literal = blockBase[imm8];
 
+    LOG(("indirect, literal 0x%x\n", literal));
+
     if ((literal & Svm::CallMask) == Svm::CallTest) {
         LOG(("indirect call\n"));
     }
@@ -811,7 +829,10 @@ void SvmProgram::svcIndirectOperation(uint8_t imm8)
         LOG(("indirect tail call\n"));
     }
     else if ((literal & Svm::IndirectSyscallMask) == Svm::IndirectSyscallTest) {
-        LOG(("indirect syscall\n"));
+        unsigned imm15 = (literal >> 16) & 0x3ff;
+        LOG(("indirect syscall #%d\n", imm15));
+        regs[0] = SyscallTable[imm15](regs[0], regs[1], regs[2], regs[3],
+                                      regs[4], regs[5], regs[6], regs[7]);
     }
     else if ((literal & Svm::TailSyscallMask) == Svm::TailSyscallTest) {
         LOG(("indirect tail syscall\n"));

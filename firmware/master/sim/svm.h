@@ -61,8 +61,12 @@ private:
     reg_t regs[NUM_GP_REGS];     // general purpose registers
     reg_t cpsr;                  // current program status register
 
-    uint32_t virt2physAddr(uint32_t virtualAddr) {
-        return ((virtualAddr - 0x10000) & 0xFFFFF) + 0x20008000;
+    static const unsigned MEM_SIZE = 16 * 1024;
+    uint8_t mem[MEM_SIZE];
+
+    reg_t virt2physAddr(uint32_t virtualAddr) {
+        // SUPER HACK: specify ram in a platform independent way
+        return ((virtualAddr - 0x10000) & 0xFFFFF) + reinterpret_cast<reg_t>(&mem); // 0x20008000;
     }
 
     bool conditionPassed(uint8_t cond);
