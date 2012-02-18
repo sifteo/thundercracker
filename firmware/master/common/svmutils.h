@@ -10,6 +10,9 @@
 namespace Svm
 {
 
+// Registers are wide enough to hold a native pointer
+typedef uintptr_t reg_t;
+
 enum InstructionSize {
     InstrBits16,
     InstrBits32
