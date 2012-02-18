@@ -56,7 +56,16 @@ void SvmProgram::run(uint16_t appId)
 uint16_t SvmProgram::fetch()
 {
     uint16_t *tst = reinterpret_cast<uint16_t*>(regs[REG_PC]);
-    LOG(("[%p] %04x\n", tst, *tst));
+
+#if 1
+    LOG(("[%p] %04x", tst, *tst));
+    for (unsigned r = 0; r < 8; r++) {
+        assert((uint32_t)regs[r] == regs[r]);
+        LOG((" r%d=%08x", r, (uint32_t) regs[r]));
+    }
+    LOG(("\n"));
+#endif
+    
     regs[REG_PC] += sizeof(uint16_t);
     return *tst;
 }
@@ -491,8 +500,7 @@ void SvmProgram::emulateB(uint16_t instr)
 {
     // encoding T2 only
     unsigned imm11 = instr & 0x7FF;
-    int offset = SignExtend<signed int, 11>(imm11);
-    BranchWritePC(regs[REG_PC] + offset);
+    BranchOffsetPC(SignExtend<signed int, 12>(imm11 << 1));
 }
 
 void SvmProgram::emulateCondB(uint16_t instr)
@@ -501,8 +509,7 @@ void SvmProgram::emulateCondB(uint16_t instr)
     unsigned imm8 = instr & 0xff;
 
     if (conditionPassed(cond)) {
-        int offset = SignExtend<signed int, 9>(imm8 << 1);
-        BranchWritePC(regs[REG_PC] + offset);
+        BranchOffsetPC(SignExtend<signed int, 9>(imm8 << 1));
     }
 }
 
@@ -513,11 +520,9 @@ void SvmProgram::emulateCBZ_CBNZ(uint16_t instr)
     unsigned imm5 = (instr >> 3) & 0x1f;
     unsigned Rn = instr & 0x7;
 
-    // ZeroExtend(i:imm5:'0')
-    reg_t offset = (i << 6) | (imm5 << 1);
-
     if (nonzero ^ (regs[Rn] == 0)) {
-        BranchWritePC(regs[REG_PC] + offset);
+        // ZeroExtend(i:imm5:'0')
+        BranchOffsetPC((i << 6) | (imm5 << 1));
     }
 }
 

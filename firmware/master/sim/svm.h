@@ -181,8 +181,8 @@ private:
         return (data << (32 - ror)) | (data >> ror);
     }
 
-    inline void BranchWritePC(reg_t addr) {
-        regs[REG_PC] = addr & ~(reg_t)1;
+    inline void BranchOffsetPC(int offset) {
+        regs[REG_PC] = (regs[REG_PC] + offset + 2) & ~(reg_t)1;
     }
 
     // http://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
