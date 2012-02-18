@@ -521,6 +521,9 @@ void CubeWrapper::Tilt( int dir )
     if( Game::Inst().getState() != Game::STATE_PLAYING || m_fShakeTime > 0.0f )
 		return;
 
+    if( !Game::Inst().AreMovesLegal() )
+        return;
+
 	//hastily ported from the python
 	switch( dir )
 	{

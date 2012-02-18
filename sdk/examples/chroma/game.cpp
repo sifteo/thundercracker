@@ -287,6 +287,9 @@ void Game::setState( GameState state )
 
 void Game::TestMatches()
 {
+    if( !Game::Inst().AreMovesLegal() )
+        return;
+
 	//for every cube test matches with every other cube
 	for( int i = 0; i < NUM_CUBES; i++ )
 	{
@@ -973,4 +976,14 @@ void Game::gotoNextPuzzle( bool bAdvance )
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Refill();
+}
+
+
+
+bool Game::AreMovesLegal() const
+{
+    if( m_mode == MODE_TIMED && m_timer.getTime() < 0.0f )
+        return false;
+
+    return true;
 }

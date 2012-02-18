@@ -143,6 +143,7 @@ public:
     const PuzzleCubeData *GetPuzzleData( unsigned int id );
     inline unsigned int GetPuzzleIndex() const { return m_iLevel; }
     inline void SetChain( bool bValue ) { m_bIsChainHappening = bValue; }
+    bool AreMovesLegal() const;
 
 private:
 	void TestMatches();
