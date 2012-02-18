@@ -186,6 +186,7 @@ void SvmProgram::execute16(uint16_t instr)
         // nothing to do
         return;
     }
+
     // should never get here since we should only be executing validated instructions
     LOG(("*********************************** invalid 16bit instruction: 0x%x\n", instr));
     ASSERT(0 && "unhandled instruction group!");
@@ -193,7 +194,34 @@ void SvmProgram::execute16(uint16_t instr)
 
 void SvmProgram::execute32(uint32_t instr)
 {
-
+    if ((instr & Svm::StrMask) == Svm::StrTest) {
+        emulateSTR(instr);
+        return;
+    }
+    if ((instr & Svm::StrBhMask) == Svm::StrBhTest) {
+        emulateSTRBH(instr);
+        return;
+    }
+    if ((instr & Svm::LdrBhMask) == Svm::LdrBhTest) {
+        emulateLDRBH(instr);
+        return;
+    }
+    if ((instr & Svm::LdrMask) == Svm::LdrTest) {
+        emulateLDR(instr);
+        return;
+    }
+    if ((instr & Svm::MovWtMask) == Svm::MovWtTest) {
+        emulateMOVWT(instr);
+        return;
+    }
+    if ((instr & Svm::DivMask) == Svm::DivTest) {
+        emulateDIV(instr);
+        return;
+    }
+    
+    // should never get here since we should only be executing validated instructions
+    LOG(("*********************************** invalid 32bit instruction: 0x%x\n", instr));
+    ASSERT(0 && "unhandled instruction group!");
 }
 
 bool SvmProgram::conditionPassed(uint8_t cond)
@@ -526,6 +554,11 @@ void SvmProgram::emulateCBZ_CBNZ(uint16_t instr)
     }
 }
 
+
+/////////////////////////////////////////
+// M E M O R Y  I N S T R U C T I O N S
+/////////////////////////////////////////
+
 void SvmProgram::emulateSTRSPImm(uint16_t instr)
 {
     // encoding T2 only
@@ -568,6 +601,118 @@ void SvmProgram::emulateLDRLitPool(uint16_t instr)
 
     regs[Rt] = *addr;
 }
+
+
+////////////////////////////////////////
+// 3 2 - B I T  I N S T R U C T I O N S
+////////////////////////////////////////
+
+void SvmProgram::emulateSTR(uint32_t instr)
+{
+    unsigned imm12 = instr & 0xFFF;
+    unsigned Rn = (instr >> 16) & 0xF;
+    unsigned Rt = (instr >> 12) & 0xF;
+    reg_t addr = regs[Rn] + imm12;
+    
+    *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
+}
+
+void SvmProgram::emulateLDR(uint32_t instr)
+{
+    unsigned imm12 = instr & 0xFFF;
+    unsigned Rn = (instr >> 16) & 0xF;
+    unsigned Rt = (instr >> 12) & 0xF;
+    reg_t addr = regs[Rn] + imm12;
+    
+    regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
+}
+
+void SvmProgram::emulateSTRBH(uint32_t instr)
+{
+    const unsigned HalfwordBit = 1 << 21;
+
+    unsigned imm12 = instr & 0xFFF;
+    unsigned Rn = (instr >> 16) & 0xF;
+    unsigned Rt = (instr >> 12) & 0xF;
+    reg_t addr = regs[Rn] + imm12;
+    
+    if (instr & HalfwordBit) {
+        *reinterpret_cast<uint16_t*>(addr) = regs[Rt];
+    } else {
+        *reinterpret_cast<uint8_t*>(addr) = regs[Rt];
+    }
+}
+
+void SvmProgram::emulateLDRBH(uint32_t instr)
+{
+    const unsigned HalfwordBit = 1 << 21;
+    const unsigned SignExtBit = 1 << 24;
+
+    unsigned imm12 = instr & 0xFFF;
+    unsigned Rn = (instr >> 16) & 0xF;
+    unsigned Rt = (instr >> 12) & 0xF;
+    reg_t addr = regs[Rn] + imm12;
+
+    switch (instr & (HalfwordBit | SignExtBit)) {
+    case 0:
+        regs[Rt] = *reinterpret_cast<uint8_t*>(addr);
+        break;
+    case HalfwordBit:
+        regs[Rt] = *reinterpret_cast<uint16_t*>(addr);
+        break;
+    case SignExtBit:
+        regs[Rt] = (uint32_t) SignExtend<signed int, 8>
+            (*reinterpret_cast<uint8_t*>(addr));
+        break;
+    case HalfwordBit | SignExtBit:
+        regs[Rt] = (uint32_t) SignExtend<signed int, 16>
+            (*reinterpret_cast<uint16_t*>(addr));
+        break;
+    }
+}
+
+void SvmProgram::emulateMOVWT(uint32_t instr)
+{
+    const unsigned TopBit = 1 << 23;
+
+    unsigned Rd = (instr >> 8) & 0xF;
+    unsigned imm16 =
+        (instr & 0x000000FF) |
+        (instr & 0x00007000) >> 4 |
+        (instr & 0x04000000) >> 15 |
+        (instr & 0x000F0000) >> 4;
+
+    if (TopBit) {
+        regs[Rd] = (regs[Rd] & 0xFFFF) | (imm16 << 16);
+    } else {
+        regs[Rd] = imm16;
+    }
+}
+
+void SvmProgram::emulateDIV(uint32_t instr)
+{
+    const unsigned UnsignedBit = 1 << 21;
+    
+    unsigned Rn = (instr >> 16) & 0xF;
+    unsigned Rd = (instr >> 8) & 0xF;
+    unsigned Rm = instr & 0xF;
+
+    uint32_t m32 = (uint32_t) regs[Rm];
+
+    if (m32 == 0) {
+        // Divide by zero, defined to return 0
+        regs[Rd] = 0;
+    } else if (UnsignedBit) {
+        regs[Rd] = (uint32_t)regs[Rn] / m32;
+    } else {
+        regs[Rd] = (int32_t)regs[Rn] / (int32_t)m32;
+    }
+}
+
+
+//////////////////////////
+// S Y S T E M  C A L L S
+//////////////////////////
 
 /*
 SVC encodings:

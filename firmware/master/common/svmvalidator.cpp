@@ -117,6 +117,8 @@ Allowed 32-bit instruction encodings:
   11111000 1101100x, 0xxxxxxx xxxxxxxx      ldr         r0-r7, [r8-9, #imm12]
 
   11110x10 x100xxxx, 0xxx0xxx xxxxxxxx      mov[wt]     r0-r7, #imm16
+    
+  11111011 10x10xxx, 11110xxx 11110xxx      [su]div     r0-r7, r0-r7, r0-r7
 */
 bool SvmValidator::isValid32(uint32_t instr)
 {
@@ -138,6 +140,10 @@ bool SvmValidator::isValid32(uint32_t instr)
     }
     if ((instr & Svm::MovWtMask) == Svm::MovWtTest) {
         LOG(("32bit mov[wt]\n"));
+        return true;
+    }
+    if ((instr & Svm::DivMask) == Svm::DivTest) {
+        LOG(("32bit [su]div\n"));
         return true;
     }
     LOG(("----------------------- invalid 32-bit instruction: 0x%x\n", instr));

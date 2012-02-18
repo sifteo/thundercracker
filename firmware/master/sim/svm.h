@@ -176,6 +176,14 @@ private:
     void emulateSVC(uint16_t instr);
     void svcIndirectOperation(uint8_t imm8);
 
+    // 32-bit instructions
+    void emulateSTR(uint32_t instr);
+    void emulateSTRBH(uint32_t instr);
+    void emulateLDRBH(uint32_t instr);
+    void emulateLDR(uint32_t instr);
+    void emulateMOVWT(uint32_t instr);
+    void emulateDIV(uint32_t instr);
+
     // utils
     uint32_t ROR(uint32_t data, uint32_t ror) {
         return (data << (32 - ror)) | (data >> ror);
