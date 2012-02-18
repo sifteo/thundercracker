@@ -16,6 +16,7 @@ OBJS_COMMON = \
 	$(MASTER_DIR)/common/tasks.o \
 	$(MASTER_DIR)/common/prng.o \
     $(MASTER_DIR)/common/flashlayer.o \
+    $(MASTER_DIR)/common/svmvalidator.o \
     $(MASTER_DIR)/common/assetmanager.o \
 
 OBJS_SIM = \
