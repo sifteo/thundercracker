@@ -6,6 +6,7 @@
 
 #include <sifteo.h>
 #include "fontdata.h"
+#include "assets.gen.h"
 
 using namespace Sifteo;
 
@@ -134,18 +135,52 @@ static void fade_in_and_out() {
 
 void siftmain()
 {
+{
     cube.enable();
+    cube.loadAssets(GameAssets);
+    VidMode_BG0_ROM rom(cube.vbuf);
+    rom.init();
+    rom.BG0_text(Vec2(1,1), "Loading...");
+  for (;;) {
+    bool done = true;
+      VidMode_BG0_ROM rom(cube.vbuf);
+      rom.BG0_progressBar(Vec2(0,7), cube.assetProgress(GameAssets, VidMode_BG0::LCD_width), 2);
+      done &= cube.assetDone(GameAssets);
+    
+    System::paint();
+    if (done) break;
+}/*
+    VidMode_BG0 mode(cubes[i].vbuf);
+    mode.init();
+    mode.BG0_drawAsset(Vec2(0,0), Background);
+*/
+
+
+}
+    
 
     /*
      * Init framebuffer, paint a solid background
      */
 
-    cube.vbuf.init();
+/*    cube.vbuf.init();
     cube.vbuf.sys.vram.mode = _SYS_VM_SOLID;
     cube.vbuf.sys.vram.num_lines = 128;
     cube.vbuf.sys.vram.colormap[0] = color_lerp(0);
     cube.vbuf.sys.vram.colormap[1] = color_lerp(0);
-    cube.vbuf.touch();
+    cube.vbuf.touch(); */
+
+	VidMode_BG0_SPR_BG1 vid(cube.vbuf);
+	vid.init();
+	vid.BG0_drawAsset(Vec2(0,0), Narrator_Base);
+	BG1Helper bg1(cube);
+	bg1.DrawAsset(Vec2(0,0), Narrator_Balloon);
+	bg1.Flush();
+for(int i = 0; i < 60; i++)
+{
+System::paint();
+System::paintSync();
+}
 
     // And wait for it to fully draw
     System::paintSync();

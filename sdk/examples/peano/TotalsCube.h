@@ -16,8 +16,12 @@ namespace TotalsGame
 		float t;
 
 		View *view;
+        const char *overlayText;
+        int overlayYTop, overlayYSize;
+        int overlayBg[3], overlayFg[3];
+        bool overlayShown;
 
-	public:
+    public:
         //TODO duplicate work in processing bg1!
         VidMode_BG0_SPR_BG1 backgroundLayer;
         BG1Helper foregroundLayer;
@@ -79,6 +83,11 @@ public:
         void DrawFraction(Fraction f, const Vec2 &pos);
         void DrawDecimal(float d, const Vec2 &pos);
         void DrawString(const char *string, const Vec2 &center);
+
+        void EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb);
+        void DisableTextOverlay();
+        void UpdateTextOverlay();
+        bool IsTextOverlayEnabled();
 
         void DispatchOnCubeShake(TotalsCube *c);
         void DispatchOnCubeTouch(TotalsCube *c, bool touching);

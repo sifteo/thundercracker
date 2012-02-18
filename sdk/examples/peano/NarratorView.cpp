@@ -13,12 +13,12 @@ const AssetImage *NarratorView::emotes[] =
     &Narrator_Diamond,
     &Narrator_Emerald,
     &Narrator_GetReady,
-    NULL,
-    NULL,
+    &Narrator_Mix01,
+    &Narrator_Mix02,
     &Narrator_Ruby,
-    NULL,
-    NULL,
-    NULL,
+    &Narrator_Sad,
+    &Narrator_Wave,
+    &Narrator_Yay,
     &Narrator_Base,
 };
 
@@ -33,6 +33,12 @@ void NarratorView::SetMessage(const char *msg, Emote emote) {
     if (!strcmp(mString,msg) && mEmote == emote) { return; }
     mString = msg;
     mEmote = emote;
+
+    if(mString[0])
+        GetCube()->EnableTextOverlay(msg, 8, 40, 255,255,255, 0,0,0);
+    else
+        GetCube()->DisableTextOverlay();
+
     /* TODO
   is it really necessary to draw the images here?
   theyll get drawnagain in Paint()
@@ -46,7 +52,7 @@ void NarratorView::SetMessage(const char *msg, Emote emote) {
         }
         if (mString[0]) {
             AudioPlayer::PlaySfx(emote == EmoteWave ? sfx_Tutorial_Stinger_01 : sfx_Dialogue_Balloon);
-            PaintText();
+//            PaintText();
         } else {
             //          Cube.Image("narrator_base", 6, 6, 6, 6, 116, 65);
         }
@@ -76,7 +82,7 @@ void NarratorView::SetTransitionAmount(float u) {
     } else {
         mOffset = (16-7)* u;
         if (OkayToPaint()) {
-            //          Cube.DrawVaultDoorsOpenStep1(mOffset, "narrator_base");
+                      GetCube()->DrawVaultDoorsOpenStep1(mOffset, &Narrator_Base);
             //          Cube.Paint();
         }
     }
@@ -91,10 +97,8 @@ void NarratorView::Paint() {
         return;
     }
 
-    c->Image(&Narrator_Base, Vec2(0,0));
-    if (mEmote != EmoteNone) {
-        c->Image(emotes[mEmote], Vec2(2,8));//TODO approximation here 16, 65);
-    }
+    c->Image(emotes[mEmote], Vec2(0,0));
+
     if (mOffset > 0) {
         c->DrawVaultDoorsOpenStep1(mOffset, &Narrator_Base);
     }
@@ -105,12 +109,14 @@ void NarratorView::Paint() {
     }
 }
 
-void NarratorView::PaintText() {
-    /* TODO
+void NarratorView::PaintText()
+{
       const int pad = 8;
-      Cube.Image("narrator_balloon", 6, 6, 0, 0, 116, 65);
-      Library.Verdana.Paint(Cube, mString, new Int2(6+pad,6), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(116-pad-pad, 45));
-*/
+      //GetCube()->Image(&Narrator_Balloon, Vec2(0,0));
+//TODO      GetCube()->foregroundLayer.DrawAsset(Vec2(0,0), Narrator_Balloon);
+  //    Library.Verdana.Paint(Cube, mString, new Int2(6+pad,6), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(116-pad-pad, 45));
+
+      //text wil actually be drawn after this frame completes
 }
 
 

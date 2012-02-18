@@ -2,20 +2,61 @@
 
 #include "StateMachine.h"
 #include "AudioPlayer.h"
-#include"coroutine.h"
+#include "coroutine.h"
 #include "Game.h"
 #include "NarratorView.h"
+#include "Puzzle.h"
+#include "assets.gen.h"
+
 
 namespace TotalsGame {
 
 class TutorialController : public IStateController {
 
+    class ConnectTwoCubesEventHandler: public Game::NeighborEventHandler
+    {
+        TutorialController *owner;
+    public:
+        ConnectTwoCubesEventHandler(TutorialController *_owner)
+        {
+            owner = _owner;
+        }
+
+        void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+        {
+            if ((s0 == SIDE_RIGHT && s1 == SIDE_LEFT && c1 == owner->secondToken->GetCube()->id())
+                ||(s0 == SIDE_LEFT && s1 == SIDE_RIGHT && c0 == owner->secondToken->GetCube()->id()))
+            {
+                Game::GetInstance().neighborEventHandler = NULL;
+                TokenGroup *grp = TokenGroup::Connect(owner->firstToken->token, kSideToUnit[SIDE_RIGHT], owner->secondToken->token);
+                if (grp != NULL)
+                {
+                    owner->firstToken->WillJoinGroup();
+                    owner->secondToken->WillJoinGroup();
+                    grp->SetCurrent(grp);
+                    owner->firstToken->DidJoinGroup();
+                    owner->secondToken->DidJoinGroup();
+                }
+                //TODO redundant? firstToken.Cube.ClearEvents();
+                AudioPlayer::PlaySfx(sfx_Tutorial_Correct);
+            }
+        }
+    };
+    ConnectTwoCubesEventHandler connectTwoCubesEventHandler;
+
+
+
     CORO_PARAMS;
+    float remembered_t;
+    Puzzle *puzzle;
+    TokenView *firstToken, *secondToken;
 
     NarratorView *narrator;
     Game *mGame;
 public:
-    TutorialController (Game *game) {
+    TutorialController (Game *game):
+        connectTwoCubesEventHandler(this)
+    {
         mGame = game;
     }
 
@@ -23,6 +64,9 @@ public:
         AudioPlayer::PlayMusic(sfx_PeanosVaultMenu);
         CORO_RESET;
         narrator = NULL;
+        puzzle = NULL;
+        firstToken = NULL;
+        secondToken = NULL;
         /* TODO
         mGame.CubeSet.LostCubeEvent += OnLostCube;
         mGame.CubeSet.NewCubeEvent += OnNewCube;
@@ -42,7 +86,7 @@ public:
     }
     */
     float Coroutine(float dt) {
-         const float kTransitionDuration = 0.2f;
+        const float kTransitionDuration = 0.2f;
 
         CORO_BEGIN;
 
@@ -57,93 +101,92 @@ public:
         CORO_YIELD(0);
 
         CORO_YIELD(0.5f);
-#if 0
 
-        Jukebox.PlayShutterOpen();
-        for(var t=0f; t<kTransitionDuration; t+=mGame.dt) {
-            narrator.SetTransitionAmount(t/kTransitionDuration);
-            yield return 0f;
+
+        AudioPlayer::PlayShutterOpen();
+        for(remembered_t=0; remembered_t<kTransitionDuration; remembered_t+=mGame->dt) {
+            narrator->SetTransitionAmount(remembered_t/kTransitionDuration);
+            CORO_YIELD(0);
         }
-        narrator.SetTransitionAmount(-1f);
+        narrator->SetTransitionAmount(-1);
 
         // wait a bit
-        yield return 0.5f;
-        narrator.SetMessage("Hi there! I'm Peano!", "wave");
-        yield return 3f;
-        narrator.SetMessage("We're going to learn to solve secret codes!");
-        yield return 3f;
-        narrator.SetMessage("These codes let you into the treasure vault!", "yay");
-        yield return 3f;
+        CORO_YIELD(0.5f);
+        narrator->SetMessage("Hi there! I'm Peano!", NarratorView::EmoteWave);
+        CORO_YIELD(3);
+        narrator->SetMessage("We're going to learn\nto solve secret codes!");
+        CORO_YIELD(3);
+        narrator->SetMessage("These codes let you\ninto the treasure vault!", NarratorView::EmoteYay);
+        CORO_YIELD(3);
 
         // initailize puzzle
-        var puzzle = new Puzzle(2) { unlimitedHints = true };
-    puzzle.tokens[0].val = 1;
-    puzzle.tokens[0].OpRight = Op.Add;
-    puzzle.tokens[0].OpBottom = Op.Subtract;
-    puzzle.tokens[1].val = 2;
-    puzzle.tokens[1].OpRight = Op.Add;
-    puzzle.tokens[1].OpBottom = Op.Subtract;
+        puzzle = new Puzzle(2);
+        puzzle->unlimitedHints = true;
+        puzzle->GetToken(0)->val = 1;
+        puzzle->GetToken(0)->SetOpRight(OpAdd);
+        puzzle->GetToken(0)->SetOpBottom(OpSubtract);
+        puzzle->GetToken(1)->val = 2;
+        puzzle->GetToken(1)->SetOpRight(OpAdd);
+        puzzle->GetToken(1)->SetOpBottom(OpSubtract);
 
-    // initialize two token views
-    var firstToken = new TokenView(puzzle.tokens[0], true);
-    firstToken.SetHideMode(TokenView.BIT_BOTTOM | TokenView.BIT_LEFT | TokenView.BIT_TOP);
-    var secondToken = new TokenView(puzzle.tokens[1], true);
-    secondToken.SetHideMode(TokenView.BIT_BOTTOM | TokenView.BIT_RIGHT | TokenView.BIT_TOP);
+        // open shutters
+        narrator->SetMessage("");
+        CORO_YIELD(1);
+        float dt;
+        while((dt=Game::GetCube(1)->OpenShutters(&Background)) >= 0)
+        {
+            CORO_YIELD(dt);
+        }
+        // initialize two token views
+        firstToken = new TokenView(Game::GetCube(1), puzzle->GetToken(0), true);
+        firstToken->SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_TOP);
+        CORO_YIELD(0.25f);
+        while((dt=Game::GetCube(2)->OpenShutters(&Background)) >= 0)
+        {
+            CORO_YIELD(dt);
+        }
+        secondToken = new TokenView(Game::GetCube(2), puzzle->GetToken(1), true);
+        secondToken->SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_RIGHT | TokenView::BIT_TOP);
+        CORO_YIELD(0.5f);
 
-    // open shutters
-    narrator.SetMessage("");
-    yield return 1f;
-    foreach(var dt in mGame.CubeSet[1].OpenShutters("background")) { yield return dt; }
-    firstToken.Cube = mGame.CubeSet[1];
-    yield return 0.25f;
-    foreach(var dt in mGame.CubeSet[2].OpenShutters("background")) { yield return dt; }
-    secondToken.Cube = mGame.CubeSet[2];
-    yield return 0.5f;
+        // wait for neighbor
+        narrator->SetMessage("These are called Keys.");
+        CORO_YIELD(3);
+        narrator->SetMessage("Notice how each Key\nhas a number.");
+        CORO_YIELD(3);
 
-    // wait for neighbor
-    narrator.SetMessage("These are called Keys.");
-    yield return 3;
-    narrator.SetMessage("Notice how each Key has a number.");
-    yield return 3;
+        narrator->SetMessage("Connect two Keys\nto combine them.");
+        Game::GetInstance().neighborEventHandler = &connectTwoCubesEventHandler;
 
-    narrator.SetMessage("Connect two Keys to combine them.");
-    firstToken.Cube.NeighborAddEvent += (c, side, neighbor, neighborSide) => {
-            if (side == Cube.Side.RIGHT && neighborSide == Cube.Side.LEFT && neighbor == secondToken.Cube) {
-            firstToken.Cube.ClearEvents();
-    var grp = TokenGroup.Connect(firstToken.token, Int2.Right, secondToken.token);
-    if (grp != null) {
-        foreach(var token in grp.Tokens) { token.GetView().WillJoinGroup(); }
-        grp.SetCurrent(grp);
-        foreach(var token in grp.Tokens) { token.GetView().DidJoinGroup(); }
-    }
-    firstToken.Cube.ClearEvents();
-    Jukebox.Sfx("PV_tutorial_correct");
-}
-};
-while(firstToken.token.current == firstToken.token) { yield return 0; }
+        while(firstToken->token->current == firstToken->token)
+        {
+            CORO_YIELD(0);
+        }
 
-// flourish 1
-yield return 0.5f;
-narrator.SetMessage("Awesome!", "yay");
-yield return 3f;
-narrator.SetMessage("The combined Key is 1+2=3!");
-yield return 3f;
+        // flourish 1
+        CORO_YIELD(0.5f);
+        narrator->SetMessage("Awesome!", NarratorView::EmoteYay);
+        CORO_YIELD(3);
+        narrator->SetMessage("The combined Key is\n1+2=3!");
+        CORO_YIELD(3);
 
-// now show top-down
-narrator.SetMessage("Try connecting Keys Top-to-Bottom...");
-firstToken.Lock();
-secondToken.Lock();
-{
-var grp = firstToken.token.current as TokenGroup;
-firstToken.token.PopGroup();
-secondToken.token.PopGroup();
-foreach(var token in grp.Tokens) { token.GetView().DidGroupDisconnect(); }
-firstToken.SetHideMode(TokenView.BIT_BOTTOM | TokenView.BIT_LEFT | TokenView.BIT_RIGHT);
-secondToken.SetHideMode(TokenView.BIT_TOP | TokenView.BIT_LEFT | TokenView.BIT_RIGHT);
-}
-firstToken.Unlock();
-secondToken.Unlock();
-
+        // now show top-down
+        narrator->SetMessage("Try connecting Keys\nTop-to-Bottom...");
+        firstToken->Lock();
+        secondToken->Lock();
+        {
+            TokenGroup *grp = (TokenGroup*)firstToken->token->current;
+            delete grp;
+            firstToken->token->PopGroup();
+            secondToken->token->PopGroup();
+            firstToken->DidGroupDisconnect();
+            secondToken->DidGroupDisconnect();
+            firstToken->SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_RIGHT);
+            secondToken->SetHideMode(TokenView::BIT_TOP | TokenView::BIT_LEFT | TokenView::BIT_RIGHT);
+        }
+        firstToken->Unlock();
+        secondToken->Unlock();
+#if 0
 // wait for neighbor
 firstToken.Cube.NeighborAddEvent += (c, side, neighbor, neighborSide) => {
         if (side == Cube.Side.TOP && neighborSide == Cube.Side.BOTTOM && neighbor == secondToken.Cube) {
@@ -332,6 +375,7 @@ if (mGame.currentPuzzle == null) {
 
 #endif
 
+narrator->SetMessage("");
 mGame->sceneMgr.QueueTransition("Next");
 
 CORO_END;
@@ -341,7 +385,7 @@ return -1;
 }
 
 void OnNeighborAdd(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns) {
-/* TODO
+    /* TODO
     // validate args
     var v = c.GetTokenView();
     var nv = nc.GetTokenView();
@@ -367,7 +411,7 @@ void OnNeighborAdd(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns) {
 }
 
 void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns) {
-/* TODO
+    /* TODO
     // validate args
     var v = c.userData as TokenView;
     var nv = nc.userData as TokenView;

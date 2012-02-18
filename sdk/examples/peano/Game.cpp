@@ -74,7 +74,7 @@ namespace TotalsGame
 		for(int i = 0; i < NUMBER_OF_CUBES; i++)
 		{
 			TotalsCube *c = Game::GetCube(i);
-			if(c)
+            if(c && !c->IsTextOverlayEnabled())
 			{
 				View *v = c->GetView();
 				if(v)
@@ -166,7 +166,7 @@ namespace TotalsGame
 			.Transition("isover", "Yes", "menu")
 			.Transition("isover", "No", "interstitial")
 
-            .SetState("sting");
+            .SetState("menu");//sting");
 
 	}
 
@@ -183,9 +183,14 @@ namespace TotalsGame
 
         for(int i = 0; i < NUMBER_OF_CUBES; i++)
         {
-            cubes[i].foregroundLayer.Clear();
-            for(int s = 0 ; s < _SYS_VRAM_SPRITES; s++)
-                cubes[i].backgroundLayer.hideSprite(s);
+            if(!cubes[i].IsTextOverlayEnabled())
+            {
+                cubes[i].backgroundLayer.set();
+                cubes[i].backgroundLayer.setWindow(0,128);
+                cubes[i].foregroundLayer.Clear();
+                for(int s = 0 ; s < _SYS_VRAM_SPRITES; s++)
+                    cubes[i].backgroundLayer.hideSprite(s);
+            }
         }
 
         sceneMgr.Tick(dt);
@@ -193,7 +198,11 @@ namespace TotalsGame
 
         for(int i = 0; i < NUMBER_OF_CUBES; i++)
         {
-            cubes[i].foregroundLayer.Flush();
+             if(!cubes[i].IsTextOverlayEnabled())
+             {
+                cubes[i].foregroundLayer.Flush();
+             }
+            cubes[i].UpdateTextOverlay();
         }
 
 		mDirty = false;

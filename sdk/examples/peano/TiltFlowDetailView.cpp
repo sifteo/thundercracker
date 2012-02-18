@@ -26,6 +26,7 @@ void TiltFlowDetailView::HideDescription() {
     if (mDescription[0]) {
         AudioPlayer::PlaySfx(sfx_Menu_Tilt_Stop);
         mDescription = "";
+        GetCube()->DisableTextOverlay();
     }
 }
 
@@ -41,6 +42,15 @@ void TiltFlowDetailView::Update (float dt) {
             //TODO    Paint();
         }
     }
+
+    if (mAmount == 1) {
+        GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
+        //TODO      Library.PskFont.Paint(c, mDescription, new Int2(8, 24), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128-8-8, 128-32-32));
+    }
+    else
+    {
+        GetCube()->DisableTextOverlay();
+    }
 }
 
 void TiltFlowDetailView::Paint() {
@@ -54,9 +64,7 @@ void TiltFlowDetailView::Paint() {
         c->Image(&Dark_Purple, Vec2(0,1), Vec2(0,0), Vec2(16,bottom));
         c->ClipImage(&VaultDoor, Vec2(0,1-16));
         c->ClipImage(&VaultDoor, Vec2(0, bottom));
-        if (mAmount == 1) {
-            //TODO      Library.PskFont.Paint(c, mDescription, new Int2(8, 24), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128-8-8, 128-32-32));
-        }
+
     }
 }
 }

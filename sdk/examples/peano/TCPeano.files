@@ -82,3 +82,7 @@ TutorialController.h
 NarratorView.h
 Makefile
 NarratorView.cpp
+Dialog.h
+Dialog.cpp
+DialogWindow.h
+DialogWindow.cpp
