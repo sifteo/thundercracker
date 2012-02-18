@@ -31,9 +31,7 @@ void SvmProgram::run(uint16_t appId)
     regs[REG_PC] = reinterpret_cast<reg_t>(flashRegion.data())
         + (progInfo.textRodata.vaddr & 0xFFFFFF);
 
-    SvmValidator v;
-    unsigned size = v.validBytesInBlock(flashRegion.data(), flashRegion.size());
-    LOG(("validBytes in block: %d\n", size));
+    unsigned size = SvmValidator::validBytes(flashRegion.data(), flashRegion.size());
 
     for (;;) {
         uint16_t instr = fetch();

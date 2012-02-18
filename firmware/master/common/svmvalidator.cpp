@@ -2,33 +2,34 @@
 #include "svmutils.h"
 #include "sifteo.h"
 
-SvmValidator::SvmValidator()
-{
-}
 
-unsigned SvmValidator::validBytesInBlock(void *block, unsigned lenInBytes)
+unsigned SvmValidator::validBytes(void *block, unsigned lenInBytes)
 {
     unsigned numValidBytes = 0;
     uint16_t *b = static_cast<uint16_t*>(block);
 
-    while (lenInBytes) {
+    uint16_t *end = b + lenInBytes;
+    while (b < end) {
         uint16_t instr = *b++;
         if (Svm::instructionSize(instr) == Svm::InstrBits16) {
             if (!isValid16(instr))
                 break;
             numValidBytes++;
-            lenInBytes--;
         }
         else {
             uint16_t instrLow = *b++;
             if (!isValid32(instr << 16 | instrLow))
                 break;
             numValidBytes += 2;
-            lenInBytes -= 2;
         }
     }
-    LOG(("validation complete\n"));
+    LOG(("validation complete, valid: %d\n", numValidBytes));
     return numValidBytes;
+}
+
+bool SvmValidator::addressIsValid(uintptr_t address)
+{
+    return true;
 }
 
 /*

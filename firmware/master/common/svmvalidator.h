@@ -7,11 +7,10 @@ class SvmValidator
 {
 public:
     SvmValidator();
-    unsigned validBytesInBlock(void *block, unsigned lenInBytes);
-
-private:
-    bool isValid16(uint16_t instr);
-    bool isValid32(uint32_t instr);
+    static unsigned validBytes(void *block, unsigned lenInBytes);
+    static bool addressIsValid(uintptr_t address);
+    static bool isValid16(uint16_t instr);
+    static bool isValid32(uint32_t instr);
 };
 
 #endif // SVMVALIDATOR_H
