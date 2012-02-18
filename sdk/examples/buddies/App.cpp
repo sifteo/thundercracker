@@ -416,7 +416,7 @@ void App::PlaySound()
 void App::StartGameState(GameState shuffleState)
 {
     mGameState = shuffleState;
-    DEBUG_LOG(("State = %s\n", kShuffleStateNames[mGameState]));
+    DEBUG_LOG(("State = %s\n", kGameStateNames[mGameState]));
     
     switch (mGameState)
     {

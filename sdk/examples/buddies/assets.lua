@@ -38,8 +38,8 @@ ScoreTimeBlue = image{"assets/ui_top_time_blue.png"}
 ScoreTimeOrange = image{"assets/ui_top_time_orange.png"}
 UnscrableTheFacesBlue = image{"assets/ui_top_unscramble_blue.png"}
 UnscrableTheFacesOrange = image{"assets/ui_top_unscramble_orange.png"}
-FontScoreBlue = image{"assets/FontScoreBlue.png", height = 16}
-FontScoreOrange = image{"assets/FontScoreOrange.png", height = 16}
+FontScoreBlue = image{"assets/ui_numbers_blue.png", height = 16}
+FontScoreOrange = image{"assets/ui_numbers_orange.png", height = 16}
 Font = image{"assets/font-8x16.png", height = 16}
 BannerEmpty = image{"assets/BannerEmpty.png"}
 
