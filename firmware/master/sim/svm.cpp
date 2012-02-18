@@ -62,7 +62,7 @@ uint16_t SvmProgram::fetch()
 
 void SvmProgram::execute16(uint16_t instr)
 {
-    if ((instr & AluMask) == AluTest) {
+    if ((instr & Svm::AluMask) == Svm::AluTest) {
         // lsl, lsr, asr, add, sub, mov, cmp
         // take bits [13:11] to group these
         uint8_t prefix = (instr >> 11) & 0x7;
@@ -108,7 +108,7 @@ void SvmProgram::execute16(uint16_t instr)
         }
         ASSERT(0 && "unhandled ALU instruction!");
     }
-    if ((instr & DataProcMask) == DataProcTest) {
+    if ((instr & Svm::DataProcMask) == Svm::DataProcTest) {
         uint8_t opcode = (instr >> 6) & 0xf;
         switch (opcode) {
         case 0:  emulateANDReg(instr); return;
@@ -129,7 +129,7 @@ void SvmProgram::execute16(uint16_t instr)
         case 15: emulateMVNReg(instr); return;
         }
     }
-    if ((instr & MiscMask) == MiscTest) {
+    if ((instr & Svm::MiscMask) == Svm::MiscTest) {
         uint8_t opcode = (instr >> 5) & 0x7f;
         if ((opcode & 0x78) == 0x2) {   // bits [6:3] of opcode identify this group
             switch (opcode & 0x6) {     // bits [2:1] of the opcode identify the instr
@@ -140,15 +140,15 @@ void SvmProgram::execute16(uint16_t instr)
             }
         }
     }
-    if ((instr & SvcMask) == SvcTest) {
+    if ((instr & Svm::SvcMask) == Svm::SvcTest) {
         emulateSVC(instr);
         return;
     }
-    if ((instr & PcRelLdrMask) == PcRelLdrTest) {
+    if ((instr & Svm::PcRelLdrMask) == Svm::PcRelLdrTest) {
         emulateLDRLitPool(instr);
         return;
     }
-    if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
+    if ((instr & Svm::SpRelLdrStrMask) == Svm::SpRelLdrStrTest) {
         uint16_t isLoad = instr & (1 << 11);
         if (isLoad)
             emulateLDRSPImm(instr);
@@ -156,23 +156,23 @@ void SvmProgram::execute16(uint16_t instr)
             emulateSTRSPImm(instr);
         return;
     }
-    if ((instr & SpRelAddMask) == SpRelAddTest) {
+    if ((instr & Svm::SpRelAddMask) == Svm::SpRelAddTest) {
         emulateADDSpImm(instr);
         return;
     }
-    if ((instr & UncondBranchMask) == UncondBranchTest) {
+    if ((instr & Svm::UncondBranchMask) == Svm::UncondBranchTest) {
         emulateB(instr);
         return;
     }
-    if ((instr & CompareBranchMask) == CompareBranchTest) {
+    if ((instr & Svm::CompareBranchMask) == Svm::CompareBranchTest) {
         emulateCBZ_CBNZ(instr);
         return;
     }
-    if ((instr & CondBranchMask) == CondBranchTest) {
+    if ((instr & Svm::CondBranchMask) == Svm::CondBranchTest) {
         emulateCondB(instr);
         return;
     }
-    if (instr == Nop) {
+    if (instr == Svm::Nop) {
         // nothing to do
         return;
     }
@@ -636,22 +636,22 @@ void SvmProgram::svcIndirectOperation(uint8_t imm8)
     uint32_t *blockBase = reinterpret_cast<uint32_t*>(instructionBase & blockMask);
     uint32_t literal = blockBase[imm8];
 
-    if ((literal & CallMask) == CallTest) {
+    if ((literal & Svm::CallMask) == Svm::CallTest) {
         LOG(("indirect call\n"));
     }
-    else if ((literal & TailCallMask) == TailCallTest) {
+    else if ((literal & Svm::TailCallMask) == Svm::TailCallTest) {
         LOG(("indirect tail call\n"));
     }
-    else if ((literal & IndirectSyscallMask) == IndirectSyscallTest) {
+    else if ((literal & Svm::IndirectSyscallMask) == Svm::IndirectSyscallTest) {
         LOG(("indirect syscall\n"));
     }
-    else if ((literal & TailSyscallMask) == TailSyscallTest) {
+    else if ((literal & Svm::TailSyscallMask) == Svm::TailSyscallTest) {
         LOG(("indirect tail syscall\n"));
     }
-    else if ((literal & AddropMask) == AddropTest) {
+    else if ((literal & Svm::AddropMask) == Svm::AddropTest) {
         LOG(("Addrop #0-31 on validate(a)\n"));
     }
-    else if ((literal & AddropFlashMask) == AddropFlashTest) {
+    else if ((literal & Svm::AddropFlashMask) == Svm::AddropFlashTest) {
         LOG(("Addrop #0-31 on validate(F+a)\n"));
     }
     else {
