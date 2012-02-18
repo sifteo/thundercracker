@@ -296,6 +296,7 @@ void CubeWrapper::LoadAssets()
     
     VidMode_BG0_ROM rom(mCube.vbuf);
     rom.init();
+    
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -325,6 +326,8 @@ void CubeWrapper::Enable(Cube::ID cubeId, unsigned int buddyId)
     ASSERT(!IsEnabled());
     
     mCube.enable(cubeId);
+    
+    Video().setWindow(0, VidMode::LCD_height);
     
     mEnabled = true;
     mBuddyId = buddyId;

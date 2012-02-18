@@ -23,11 +23,11 @@ namespace Buddies { namespace {
 // \/ 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned int GetNumMovedPieces(bool moved[], size_t num_pieces)
+unsigned int GetNumMovedPieces(bool moved[], unsigned int num_pieces)
 {
     unsigned int num_moved = 0;
     
-    for (size_t i = 0; i < num_pieces; ++i)
+    for (unsigned int i = 0; i < num_pieces; ++i)
     {
         if (moved[i])
         {
@@ -41,7 +41,7 @@ unsigned int GetNumMovedPieces(bool moved[], size_t num_pieces)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned int GetRandomNonMovedPiece(bool moved[], size_t num_moved)
+unsigned int GetRandomNonMovedPiece(bool moved[], unsigned int num_moved)
 {
     Random random;
     
@@ -58,7 +58,7 @@ unsigned int GetRandomNonMovedPiece(bool moved[], size_t num_moved)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned int GetRandomOtherPiece(bool moved[], size_t num_moved, unsigned int notThisPiece)
+unsigned int GetRandomOtherPiece(bool moved[], unsigned int num_moved, unsigned int notThisPiece)
 {
     Random random;
     
