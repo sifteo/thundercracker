@@ -142,6 +142,7 @@ public:
     const Puzzle *GetPuzzle();
     const PuzzleCubeData *GetPuzzleData( unsigned int id );
     inline unsigned int GetPuzzleIndex() const { return m_iLevel; }
+    inline void SetChain( bool bValue ) { m_bIsChainHappening = bValue; }
 
 private:
 	void TestMatches();
@@ -196,6 +197,7 @@ private:
     //bool m_bHyperDotMatched;
     //set to true every time the state of the game is stabilized to run checks on
     bool m_bStabilized;
+    bool m_bIsChainHappening;
 };
 
 #endif
