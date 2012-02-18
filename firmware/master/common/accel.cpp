@@ -61,7 +61,7 @@ bool AccelState::updateTiltState() {
 	//DEBUG_LOG(("Updating tilt: x = %d, y = %d\n", tiltState.x, tiltState.y));
   
 	if (tiltChanged) {
-		Event::setPending(EventBits::TILT, id());
+		Event::setPending(_SYS_CUBE_TILT, id());
 		return true;
 	}
 
@@ -106,7 +106,7 @@ void AccelState::updateShakeState() {
 	if (shakeState != newGlobalShakeState) {
 		shakeState = newGlobalShakeState;
 		//DEBUG_LOG(("shake state changing to %d\n", shakeState));
-		Event::setPending(EventBits::SHAKE, id());
+		Event::setPending(_SYS_CUBE_SHAKE, id());
 	}
 }
 

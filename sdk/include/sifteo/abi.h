@@ -373,31 +373,40 @@ struct _SYSCubeHWID {
 
 /**
  * Event vectors. These can be changed at runtime in order to handle
- * events within the game binary. All vectors are NULL (no-op) by
- * default. The vector table lives at an agreed-upon address in
- * game-accessable RAM.
+ * events within the game binary, via _SYS_setVector / _SYS_getVector.
  */
 
-typedef void (*_SYSCubeEvent)(_SYSCubeID cid);
-typedef void (*_SYSNeighborEvent)(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
+typedef void (*_SYSCubeEvent)(void *context, _SYSCubeID cid);
+typedef void (*_SYSNeighborEvent)(void *context,
+    _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
 
-struct _SYSEventVectors {
-	struct {
-		_SYSNeighborEvent add;
-		_SYSNeighborEvent remove;
-	} neighborEvents;
-	struct {
-		_SYSCubeEvent found;
-		_SYSCubeEvent lost;
-		_SYSCubeEvent assetDone;
-		_SYSCubeEvent accelChange;
-		_SYSCubeEvent touch;
-		_SYSCubeEvent tilt;
-		_SYSCubeEvent shake;
-	} cubeEvents;
-};
+typedef enum {
+    _SYS_NEIGHBOR_ADD = 0,
+    _SYS_NEIGHBOR_REMOVE,
+    _SYS_CUBE_FOUND,
+    _SYS_CUBE_LOST,
+    _SYS_CUBE_ASSETDONE,
+    _SYS_CUBE_ACCELCHANGE,
+    _SYS_CUBE_TOUCH,
+    _SYS_CUBE_TILT,
+    _SYS_CUBE_SHAKE,
+    
+    _SYS_NUM_VECTORS,   // Must be last
+} _SYSVectorID;
 
-extern struct _SYSEventVectors _SYS_vectors;
+#define _SYS_NEIGHBOR_EVENTS    ( Sifteo::Intrinsic::LZ(_SYS_NEIGHBOR_ADD) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_NEIGHBOR_REMOVE) )
+#define _SYS_CUBE_EVENTS        ( Sifteo::Intrinsic::LZ(_SYS_CUBE_FOUND) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_LOST) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_ASSETDONE) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_ACCELCHANGE) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_TOUCH) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_TILT) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_SHAKE) )
+
+/**
+ * Internal state of the Pseudorandom Number Generator, maintained in user RAM.
+ */
 
 struct _SYSPseudoRandomState {
     uint32_t a, b, c, d;
@@ -497,6 +506,10 @@ void _SYS_finish(void) _SC(77);  /// Wait for enqueued frames to finish
 
 void _SYS_ticks_ns(int64_t *nanosec) _SC(12);    /// Return the monotonic system timer, in nanoseconds
 
+void _SYS_setVector(_SYSVectorID vid, void *handler, void *context) _SC(104);
+void *_SYS_getVectorHandler(_SYSVectorID vid) _SC(105);
+void *_SYS_getVectorContext(_SYSVectorID vid) _SC(106);
+
 void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max) _SC(79);
 void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(80);  /// Which cubes will be trying to connect?
 void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(81);
@@ -530,7 +543,7 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
 void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t offset, uint16_t count, uint16_t lines, uint16_t src_stride, uint16_t addr_stride) _SC(103);
 void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(98);
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(97);
-                     
+
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer) _SC(96);
 uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop) _SC(95);
 uint8_t _SYS_audio_isPlaying(_SYSAudioHandle h) _SC(78);

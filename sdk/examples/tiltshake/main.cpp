@@ -16,7 +16,7 @@ using namespace Sifteo;
 static Cube cubes[] = { Cube(0), Cube(1) };
 static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf), VidMode_BG0(cubes[1].vbuf) };
 
-static void onAccelChange(_SYSCubeID cid)
+static void onAccelChange(void *context, _SYSCubeID cid)
 {
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
@@ -26,7 +26,7 @@ static void onAccelChange(_SYSCubeID cid)
     vid[cid].BG0_text(Vec2(2,2), Font, str);
 }
 
-static void onTilt(_SYSCubeID cid)
+static void onTilt(void *context, _SYSCubeID cid)
 {
     _SYSTiltState state;
     _SYS_getTilt(cid, &state);
@@ -36,7 +36,7 @@ static void onTilt(_SYSCubeID cid)
     vid[cid].BG0_text(Vec2(2,4), Font, str);
 }
 
-static void onShake(_SYSCubeID cid)
+static void onShake(void *context, _SYSCubeID cid)
 {
     _SYSShakeState state;
     _SYS_getShake(cid, &state);
@@ -84,19 +84,17 @@ void siftmain()
 {
     init();
 
-	_SYS_vectors.cubeEvents.accelChange = onAccelChange;
-    _SYS_vectors.cubeEvents.tilt = onTilt;
-	_SYS_vectors.cubeEvents.shake = onShake;
+    _SYS_setVector(_SYS_CUBE_ACCELCHANGE, (void*) onAccelChange, NULL);
+    _SYS_setVector(_SYS_CUBE_TILT, (void*) onTilt, NULL);
+    _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, NULL);
 
     unsigned frame = 0;
     const unsigned rate = 2;
 
-	onTilt(0);
-	onShake(0);
+	onTilt(NULL, 0);
+	onShake(NULL, 0);
 
     while (1) {
-        float t = System::clock();
-           
         System::paint();
     }
 }
