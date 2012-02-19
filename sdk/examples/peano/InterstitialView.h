@@ -44,6 +44,9 @@ public:
     static void PaintWithOffsetNorm(TotalsCube *c, float u, bool backwards);
 
     static void PaintWithOffset(TotalsCube *c, int off, bool backwards);
+
+    //for placement new
+    void* operator new (size_t size, void* ptr) throw() {return ptr;}
 };
 }
 

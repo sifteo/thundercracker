@@ -3,6 +3,9 @@
 #include "TiltFlowItem.h"
 #include "TiltFlowMenu.h"
 #include "TiltFlowView.h"
+#include "ConfirmationMenu.h"
+
+
 
 namespace TotalsGame {
 
@@ -54,6 +57,11 @@ int MenuController::TransitionView::CollapsesPauses(int off)
     }
     return off;
 }
+
+bool MenuController::TransitionView::GetIsLastFrame() {
+      return mOffset == 7+6;
+    }
+
 
 void MenuController::TransitionView::Paint()
 {
@@ -108,13 +116,15 @@ float MenuController::Coroutine(float dt)
     static const float kDuration = 0.333f;
     int numInitialItems=0;
     const char *result = NULL;
+    static char menuBuffer[sizeof(TiltFlowMenu)];
+    ConfirmationMenu *confirm;
 
     CORO_BEGIN
 
 
 
             // transition in
-    tv = new TransitionView(Game::GetCube(0));
+            tv = new TransitionView(Game::GetCube(0));
     labelView = new TiltFlowDetailView(Game::GetCube(1));
     for(int i=2; i<Game::NUMBER_OF_CUBES; ++i)
     {
@@ -162,12 +172,11 @@ WelcomeBack:
             ADD_ITEM(Icon_Howtoplay, "tutorial", "Let Peano teach you how to play!")
             ADD_ITEM(Icon_Level_Select, "level", "Replay any level.")
             ADD_ITEM(Icon_Setup, "setup", "Change your game settings.")
-
         #undef ADD_ITEM
 
     {
-        static char menuBuffer[sizeof(TiltFlowMenu)];
-        menu = new (menuBuffer) TiltFlowMenu(initialItems, numInitialItems, labelView);
+        static TiltFlowItem *items[5]={&initialItems[0], &initialItems[1], &initialItems[2], &initialItems[3], &initialItems[4]};
+        menu = new (menuBuffer) TiltFlowMenu(items, numInitialItems, labelView);
         while(!menu->IsDone())
         {
             menu->Tick(mGame->dt);
@@ -221,107 +230,134 @@ WelcomeBack:
     //-----------------------------------------------------------------------
 
 Setup:
-#if 0
-    yield return 0.25f;
-    labelView.message = "Game Setup";
-    Jukebox.PlayShutterOpen();
-    for(var t=0f; t<kDuration; t+=mGame.dt) {
-        labelView.SetTransitionAmount(t/kDuration);
-        yield return 0;
-    }
-    labelView.SetTransitionAmount(1);
-    yield return 0.25f;
 
-    Jukebox.PlayShutterOpen();
-    for(var t=0f; t<kDuration; t+=mGame.dt) {
-        tv.SetTransitionAmount(t/kDuration);
-        yield return 0;
+    CORO_YIELD(0.25f);
+    labelView->message = "Game Setup";
+    AudioPlayer::PlayShutterOpen();
+    for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
+        labelView->SetTransitionAmount(rememberedT/kDuration);
+        CORO_YIELD(0);
     }
-    tv.SetTransitionAmount(1);
+    labelView->SetTransitionAmount(1);
+    CORO_YIELD(0.25f);
+
+    AudioPlayer::PlayShutterOpen();
+    for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
+        tv->SetTransitionAmount(rememberedT/kDuration);
+        CORO_YIELD(0);
+    }
+    tv->SetTransitionAmount(1);
     //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
 
-    using (var menu = new TiltFlowMenu(
-    mGame,
-    new TiltFlowItem("icon_easy", "icon_medium", "icon_hard") {
-    userData = "toggle_difficulty",
-    Opt = (int)mGame.difficulty,
-    description = "Toggle multiplication and division."
-},
-    new TiltFlowItem("icon_music_on", "icon_music_off") {
-    userData = "toggle_music",
-    Opt = Jukebox.MuteMusic ? 1 : 0,
-    description = "Toggle background music."
-},
-    new TiltFlowItem("icon_sfx_on", "icon_sfx_off") {
-    userData = "toggle_sfx",
-    Opt = Jukebox.MuteSFX ? 1 : 0,
-    description = "Toggle sound effects."
-},
-    new TiltFlowItem("icon_clear_data") { userData = "clear_data", description = "Clear your auto-save data." },
-    new TiltFlowItem("icon_back") { userData = "back", description = "Return to the main menu." }
-    )) {
-    while(!menu.Done) {
-    menu.Tick(mGame.dt);
-    yield return 0;
-    if (menu.ToggledItem != null) {
-        switch(menu.ToggledItem.Image) {
-        case "icon_easy": mGame.difficulty = Difficulty.Easy; break;
-        case "icon_medium": mGame.difficulty = Difficulty.Medium; break;
-        case "icon_hard": mGame.difficulty = Difficulty.Hard; break;
-        case "icon_music_on": Jukebox.MuteMusic = false; break;
-        case "icon_music_off": Jukebox.MuteMusic = true; break;
-        case "icon_sfx_on": Jukebox.MuteSFX = false; break;
-        case "icon_sfx_off": Jukebox.MuteSFX = true; break;
+    {
+        static const AssetImage *difficultyIcons[] = {&Icon_Easy, &Icon_Medium, &Icon_Hard};
+        static const AssetImage *musicIcons[] = {&Icon_Music_On, &Icon_Music_Off};
+        static const AssetImage *sfxIcons[] = {&Icon_Sfx_On, &Icon_Sfx_Off};
+        static TiltFlowItem difficultyItems(difficultyIcons, 3);
+        static TiltFlowItem musicItems(musicIcons, 2);
+        static TiltFlowItem sfxItems(sfxIcons, 2);
+        static TiltFlowItem clearDataItem(&Icon_Clear_Data);
+        static TiltFlowItem backItem(&Icon_Back);
+        static TiltFlowItem *items[] =
+        {
+            &difficultyItems, &musicItems, &sfxItems, &clearDataItem , &backItem
+        };
+
+#define SET_PARAMS(a,b,c,d) a.userData=b; a.SetOpt(c); a.description=d;
+        SET_PARAMS(difficultyItems, "toggle_difficulty", (int)mGame->difficulty, "Toggle multiplication and division.");
+        SET_PARAMS(musicItems, "toggle_music", AudioPlayer::MusicMuted(), "Toggle background music.");
+        SET_PARAMS(sfxItems, "toggle_sfx", AudioPlayer::SfxMuted(), "Toggle sound effects.");
+        SET_PARAMS(clearDataItem, "clear_data", 0, "Clear your auto-save data.");
+        SET_PARAMS(backItem, "back", 0, "Return to the main menu.");
+#undef SET_PARAMS
+
+        //static char menuBuffer[sizeof(TiltFlowMenu)];
+        menu = new (menuBuffer) TiltFlowMenu(items, 5, labelView);
+
+        while(!menu->IsDone())
+        {
+            menu->Tick(dt);
+            CORO_YIELD(0);
+            if (menu->GetToggledItem() != NULL) {
+                switch(menu->GetToggledItemIndex())
+                {
+                case 0:
+                    switch(menu->GetToggledItem()->GetOpt())
+                    {
+                    case 0: mGame->difficulty = DifficultyEasy; break;
+                    case 1: mGame->difficulty = DifficultyMedium; break;
+                    case 2: mGame->difficulty = DifficultyHard; break;
+                    }
+                    break;
+                case 1:
+                    switch(menu->GetToggledItem()->GetOpt())
+                    {
+                    case 0: AudioPlayer::MuteMusic(false); break;
+                    case 1: AudioPlayer::MuteMusic(true); break;
+                    }
+                    break;
+                case 2:
+                    switch(menu->GetToggledItem()->GetOpt())
+                    {
+                    case 0: AudioPlayer::MuteSfx(false); break;
+                    case 1: AudioPlayer::MuteSfx(true); break;
+                    }
+                }
+
+                menu->ClearToggledItem();
+            }
         }
-        menu.ClearToggledItem();
     }
-}
 
-// close labelView
-Jukebox.PlayShutterClose();
-for(var t=0f; t<kDuration; t+=mGame.dt) {
-    labelView.SetTransitionAmount(1-t/kDuration);
-    yield return 0;
-}
-labelView.SetTransitionAmount(0);
-yield return 0;
-// transition out
-Jukebox.PlayShutterClose();
-tv.Cube = menu.view.Cube;
-for(var t=0f; t<kDuration; t+=mGame.dt) {
-    tv.SetTransitionAmount(1f-t/kDuration);
-    yield return 0;
-}
-tv.SetTransitionAmount(0f);
-yield return 0;
+    // close labelView
+    AudioPlayer::PlayShutterClose();
+    for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
+        labelView->SetTransitionAmount(1.0f-rememberedT/kDuration);
+        CORO_YIELD(0);
+    }
+    labelView->SetTransitionAmount(0);
+    CORO_YIELD(0);
+    // transition out
+    AudioPlayer::PlayShutterClose();
+    tv->SetCube(menu->GetView()->GetCube());
+    for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
+        tv->SetTransitionAmount(1.0f-rememberedT/kDuration);
+        CORO_YIELD(0);
+    }
+    tv->SetTransitionAmount(0);
+    CORO_YIELD(0);
 
-if (menu.ResultItem.userData.ToString() == "back") {
-    goto WelcomeBack;
-}
-}
+    if (!strcmp((const char*)menu->GetResultItem()->userData, "back")) {
+        goto WelcomeBack;
+    }
 
-//-----------------------------------------------------------------------
-// CONFIRM CLEAR DATA
-//-----------------------------------------------------------------------
 
-using (var confirm = new ConfirmationMenu("Clear Data?", mGame)) {
-while(!confirm.IsDone) {
-confirm.Tick(mGame.dt);
-yield return 0;
-}
-if (confirm.Result) {
-    mGame.saveData.Reset();
-}
-yield return 0;
-tv.Cube = mGame.CubeSet[0];
-labelView.Cube = mGame.CubeSet[1];
-goto Setup;
-}
+    //-----------------------------------------------------------------------
+    // CONFIRM CLEAR DATA
+    //-----------------------------------------------------------------------
+    {
+        static char buffer[sizeof(ConfirmationMenu)];
+        confirm = new(buffer) ConfirmationMenu("Clear Data?");
+
+        while(!confirm->IsDone()) {
+            confirm->Tick(mGame->dt);
+            CORO_YIELD(0);
+        }
+        if (confirm->GetResult()) {
+            mGame->saveData.Reset();
+        }
+        CORO_YIELD(0);
+        tv->SetCube(Game::GetCube(0));
+        labelView->SetCube(Game::GetCube(1));
+        goto Setup;
+    }
+
+
 
 //-----------------------------------------------------------------------
 // CHAPTER SELECT
 //-----------------------------------------------------------------------
-#endif
+
 ChapterSelect:
 #if 0
 yield return 0.25f;
@@ -395,7 +431,7 @@ goto WelcomeBack;
 #endif
 mGame->sceneMgr.QueueTransition("Play");
 
-CORO_END
+CORO_END;
 
 return -1;
 }

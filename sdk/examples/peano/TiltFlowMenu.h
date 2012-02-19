@@ -13,7 +13,7 @@ public:
     static const float kPickDelay = 0.25f;
     static const float kRestDelay = 0.1f;
 private:
-    TiltFlowItem *items;
+    TiltFlowItem **items;
     int numItems;
   public:
     TiltFlowItem *GetItem(int i);
@@ -29,7 +29,7 @@ private:
   public:
     TiltFlowDetailView *GetDetails();
 
-    TiltFlowMenu(TiltFlowItem *_items, int _numItems, TiltFlowDetailView *_details);
+    TiltFlowMenu(TiltFlowItem **_items, int _numItems, TiltFlowDetailView *_details);
 /* TODO
     public void Dispose() {
       view.Cube = null;
@@ -38,6 +38,7 @@ private:
     float GetSimTime();
     TiltFlowItem *GetResultItem();
     TiltFlowItem *GetToggledItem();
+    int GetToggledItemIndex();
     void SetToggledItem(TiltFlowItem *item);
   private:
     TiltFlowItem *toggledItem;

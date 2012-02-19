@@ -12,6 +12,11 @@ namespace TotalsGame
 		static void PlaySfx(_SYSAudioModule& handle, bool preempt=true);
 		static void PlayMusic(_SYSAudioModule& music, bool loop=true);
 
+        static void MuteMusic(bool mute);
+        static void MuteSfx(bool mute);
+        static bool MusicMuted();
+        static bool SfxMuted();
+
 		static void PlayShutterOpen();
 		static void PlayShutterClose();
 		static void PlayInGameMusic();

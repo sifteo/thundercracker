@@ -70,14 +70,9 @@ private:
         Save();
       }
     }
-
-    public void Reset()
-    {
-      Game.Inst.currentPuzzle = null;
-      Game.Inst.previousPuzzle = null;
-      solved.Clear();
-      Save();
-    } */
+*/
+public:
+    void Reset();
 
 public:
     Puzzle *FindNextPuzzle() {return NULL;}

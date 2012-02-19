@@ -43,14 +43,7 @@ void TiltFlowDetailView::Update (float dt) {
         }
     }
 
-    if (mAmount == 1) {
-        GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
-        //TODO      Library.PskFont.Paint(c, mDescription, new Int2(8, 24), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128-8-8, 128-32-32));
-    }
-    else
-    {
-        GetCube()->DisableTextOverlay();
-    }
+
 }
 
 void TiltFlowDetailView::Paint() {
@@ -66,6 +59,16 @@ void TiltFlowDetailView::Paint() {
         c->ClipImage(&VaultDoor, Vec2(0, bottom));
 
     }
+/*
+    if (mAmount == 1) {
+        GetCube()->EnableTextOverlay(mDescription, 24, 40, 75,0,85, 255,255,255);
+        //TODO      Library.PskFont.Paint(c, mDescription, new Int2(8, 24), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(128-8-8, 128-32-32));
+    }
+    else
+    {
+        GetCube()->DisableTextOverlay();
+    }
+   */
 }
 }
 

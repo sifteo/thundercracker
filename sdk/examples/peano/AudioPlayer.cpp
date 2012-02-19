@@ -15,6 +15,29 @@ namespace TotalsGame
 		channelMusic.init();
 	}
 
+    void AudioPlayer::MuteMusic(bool mute)
+    {
+        channelMusic.setVolume(mute?0:Audio::MAX_VOLUME);
+    }
+
+    void AudioPlayer::MuteSfx(bool mute)
+    {
+        for(int i = 0; i < NumSfxChannels; i++)
+        {
+            channelSfx[i].setVolume(mute?0:Audio::MAX_VOLUME);
+        }
+    }
+
+    bool AudioPlayer::MusicMuted()
+    {
+        return channelMusic.volume() == 0;
+    }
+
+    bool AudioPlayer::SfxMuted()
+    {
+        return channelSfx[0].volume() == 0;
+    }
+
 	void AudioPlayer::PlaySfx(_SYSAudioModule& handle, bool preempt)
 	{
 		//find a nonplaying channel
@@ -42,7 +65,7 @@ namespace TotalsGame
 	}
 
 	void AudioPlayer::PlayMusic(_SYSAudioModule& music, bool loop)
-	{
+    {
 		if (channelMusic.isPlaying())
 		{
 			channelMusic.stop();

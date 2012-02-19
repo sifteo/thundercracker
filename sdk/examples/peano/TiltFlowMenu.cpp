@@ -8,7 +8,7 @@ namespace TotalsGame
 
     TiltFlowItem *TiltFlowMenu::GetItem(int i)
     {
-        return &items[i];
+        return items[i];
     }
 
     int TiltFlowMenu::GetNumItems()
@@ -26,7 +26,7 @@ namespace TotalsGame
         return details;
     }
 
-    TiltFlowMenu::TiltFlowMenu(TiltFlowItem *_items, int _numItems, TiltFlowDetailView *_details)
+    TiltFlowMenu::TiltFlowMenu(TiltFlowItem **_items, int _numItems, TiltFlowDetailView *_details)
     {
         mSimTime = 0;
         mPickTime = 0;
@@ -52,6 +52,16 @@ namespace TotalsGame
     TiltFlowItem *TiltFlowMenu::GetToggledItem()
     {
         return toggledItem;
+    }
+
+    int TiltFlowMenu::GetToggledItemIndex()
+    {
+        for(int i = 0; i < numItems; i++)
+        {
+            if(toggledItem == items[i])
+                return i;
+        }
+        return -1;
     }
 
     void TiltFlowMenu::SetToggledItem(TiltFlowItem *item)

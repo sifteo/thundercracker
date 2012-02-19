@@ -1,4 +1,5 @@
 #include "SaveData.h"
+#include "Game.h"
 
 namespace TotalsGame 
 {
@@ -16,6 +17,14 @@ namespace TotalsGame
         }
     }
     
+    void SaveData::Reset()
+    {
+        Game::GetInstance().currentPuzzle = NULL;
+        Game::GetInstance().previousPuzzle = NULL;
+        numSolvedGuids = 0;
+        Save();
+    }
+
     void SaveData::Save() 
     {
         //TODO

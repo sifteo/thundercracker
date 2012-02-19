@@ -21,7 +21,7 @@ class TotalsCube;
       void Paint(TotalsCube *c);
     };
 
-
+public:
     class TransitionView : public View
     {
         static const int kPad = 1;

@@ -8,7 +8,8 @@ namespace TotalsGame
       const char *name;
       Vec2 sourcePosition;
       int imageIndex;
-      const AssetImage *images;
+      const AssetImage **images;
+      const AssetImage *singleImage;
       int numImages;
       int opt;
 
@@ -34,7 +35,8 @@ namespace TotalsGame
 
     TiltFlowItem(const AssetImage *image)
     {
-      images = image;
+      singleImage = image;
+      images = &singleImage;
         numImages = 1;
       name = "";
       description = " ";
@@ -44,7 +46,7 @@ namespace TotalsGame
 
     void IncrementImageIndex() {imageIndex = (imageIndex+1)%numImages;}
 
-    TiltFlowItem(const AssetImage *_images, int _numImages)
+    TiltFlowItem(const AssetImage **_images, int _numImages)
     {
       images = _images;
       numImages = _numImages;
@@ -57,7 +59,7 @@ namespace TotalsGame
     int GetOpt() {return opt;}
     void SetOpt(int val) { imageIndex = val % numImages; }
 
-    const AssetImage *GetImage() {return images+imageIndex;}
+    const AssetImage *GetImage() {return images[imageIndex];}
 
     bool IsToggle() { return images != NULL && numImages > 1; }
 
