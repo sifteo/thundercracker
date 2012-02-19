@@ -14,7 +14,7 @@ namespace TotalsGame
       int opt;
 
   public:
-    //TODO public readonly static object Passive = new object();
+    static const int Passive = -2357;   //arbitrary value
 
     const void *userData;
 //TODO    public readonly Color color;
@@ -31,6 +31,7 @@ namespace TotalsGame
       description = "";
       images = NULL;
       imageIndex = 0;
+      userData = NULL;
     }
 
     TiltFlowItem(const AssetImage *image)
@@ -42,6 +43,7 @@ namespace TotalsGame
       description = " ";
       //TODO this.color = Color.Mask;
         imageIndex = 0;
+        userData = NULL;
     }
 
     void IncrementImageIndex() {imageIndex = (imageIndex+1)%numImages;}
@@ -54,6 +56,7 @@ namespace TotalsGame
       description = " ";
       //TODO this.color = Color.Mask;
       imageIndex = 0;
+      userData = NULL;
     }
 
     int GetOpt() {return opt;}

@@ -12,13 +12,14 @@ namespace TotalsGame {
       
     PuzzleDatabase *db;
     Guid guid;
-    const char *id;
+    //const char *id;
+    const AssetImage *idImage;
     const char *name;
     
 	PuzzleChapter()
 	{
 		db = NULL;
-		id = "";
+        idImage = NULL;
 		name = "";
 		numPuzzles = 0;
         puzzles = (Puzzle*)puzzleBuffer;

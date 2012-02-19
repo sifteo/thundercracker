@@ -6,6 +6,7 @@ namespace TotalsGame
     SaveData::SaveData()
     {
         numSolvedGuids = 0;
+        hasDoneTutorial = false;
     }
     
     void SaveData::AddSolved(const Guid &guid)

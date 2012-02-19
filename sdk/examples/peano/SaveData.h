@@ -23,13 +23,14 @@ private:
 
     Guid solvedGuids[MAX_GUIDS];
     int numSolvedGuids;
+    bool hasDoneTutorial;
+
 
 
     /*
     public readonly PuzzleDatabase Db;
     public readonly HashSet<Guid> solved = new HashSet<Guid>();
-    public bool hasDoneTutorial = false;
-
+    public
     public SaveData(PuzzleDatabase database)
     {
       Db = database;
@@ -43,10 +44,11 @@ private:
         );
       }
     }
-
-    public bool IsChapterUnlockedWithCurrentCubeSet(int i)
+*/
+public:
+    bool IsChapterUnlockedWithCurrentCubeSet(int i)
     {
-
+/*
       // the first chapter is always unlocked
       if (i == 0) { return true; }
 
@@ -60,17 +62,17 @@ private:
         --j;
       }
       return Db.Chapters[j].HasBeenSolved();
-
+      */return false;//TODO
     }
 
-    public void CompleteTutorial()
+    void CompleteTutorial()
     {
       if (!hasDoneTutorial) {
         hasDoneTutorial = true;
         Save();
       }
     }
-*/
+
 public:
     void Reset();
 
