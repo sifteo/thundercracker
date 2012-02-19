@@ -10,8 +10,6 @@ namespace TotalsGame {
   class TiltFlowDetailView : public InterstitialView
   {
 
-      DECLARE_POOL(TiltFlowDetailView, 2);
-
     float mAmount;
     const char *mDescription;
 public:
@@ -26,7 +24,9 @@ public:
 
     void Paint();
 
-
+    //for placement new
+    void* operator new (size_t size, void* ptr) throw() {return ptr;}
+    void operator delete(void *ptr) {}
 
   };
 }

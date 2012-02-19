@@ -87,3 +87,4 @@ Dialog.cpp
 DialogWindow.h
 DialogWindow.cpp
 ConfirmationMenu.h
+ConfirmationMenu.cpp

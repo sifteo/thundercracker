@@ -9,8 +9,6 @@ namespace TotalsGame
 
 	class View
 	{	
-		DECLARE_POOL(View, 0)		
-
 		TotalsCube *mCube;
         int mLockCount;
 
@@ -33,6 +31,10 @@ namespace TotalsGame
         bool IsLocked();
 
         bool OkayToPaint();
+
+        //for placement new
+        void* operator new (size_t size, void* ptr) throw() {return ptr;}
+        void operator delete(void *ptr) {}
 	};
 
 }

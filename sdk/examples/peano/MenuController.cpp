@@ -10,7 +10,7 @@
 namespace TotalsGame {
 
 
-DEFINE_POOL(MenuController::TransitionView);
+//DEFINE_POOL(MenuController::TransitionView);
 
 
 void MenuController::TextFieldView::Paint(TotalsCube *c)
@@ -116,19 +116,22 @@ float MenuController::Coroutine(float dt)
     static const float kDuration = 0.333f;
     int numInitialItems=0;
     const char *result = NULL;
-    static char menuBuffer[sizeof(TiltFlowMenu)];
-    ConfirmationMenu *confirm;
 
-    CORO_BEGIN
+    CORO_BEGIN;
 
 
 
             // transition in
-            tv = new TransitionView(Game::GetCube(0));
-    labelView = new TiltFlowDetailView(Game::GetCube(1));
+    static char tvBuffer[sizeof(TransitionView)];
+    tv = new(tvBuffer) TransitionView(Game::GetCube(0));
+
+    static char labelBuffer[sizeof(TiltFlowDetailView)];
+    labelView = new(labelBuffer) TiltFlowDetailView(Game::GetCube(1));
+
     for(int i=2; i<Game::NUMBER_OF_CUBES; ++i)
     {
-        new BlankView(Game::GetCube(i), NULL);
+        static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
+        new(blankViewBuffer[i]) BlankView(Game::GetCube(i), NULL);
     }
 
 WelcomeBack:
@@ -176,6 +179,7 @@ WelcomeBack:
 
     {
         static TiltFlowItem *items[5]={&initialItems[0], &initialItems[1], &initialItems[2], &initialItems[3], &initialItems[4]};
+        static char menuBuffer[sizeof(TiltFlowMenu)];
         menu = new (menuBuffer) TiltFlowMenu(items, numInitialItems, labelView);
         while(!menu->IsDone())
         {
@@ -195,8 +199,8 @@ WelcomeBack:
         AudioPlayer::PlayShutterClose();
         /* putting the tilt menu on cube 0 secretly deletes the transition view. remake.
           */
-        tv = new TransitionView(Game::GetCube(0));
-        tv->SetCube(menu->GetView()->GetCube());
+        tv = new(tvBuffer) TransitionView(Game::GetCube(0));
+        //tv->SetCube(menu->GetView()->GetCube());
         for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
             tv->SetTransitionAmount(1.0f-rememberedT/kDuration);
             CORO_YIELD(0);
@@ -230,6 +234,9 @@ WelcomeBack:
     //-----------------------------------------------------------------------
 
 Setup:
+
+    tv = new(tvBuffer) TransitionView(Game::GetCube(0));
+    labelView = new(labelBuffer) TiltFlowDetailView(Game::GetCube(1));
 
     CORO_YIELD(0.25f);
     labelView->message = "Game Setup";
@@ -271,7 +278,7 @@ Setup:
         SET_PARAMS(backItem, "back", 0, "Return to the main menu.");
 #undef SET_PARAMS
 
-        //static char menuBuffer[sizeof(TiltFlowMenu)];
+        static char menuBuffer[sizeof(TiltFlowMenu)];
         menu = new (menuBuffer) TiltFlowMenu(items, 5, labelView);
 
         while(!menu->IsDone())
@@ -318,8 +325,8 @@ Setup:
     labelView->SetTransitionAmount(0);
     CORO_YIELD(0);
     // transition out
+    tv = new(tvBuffer) TransitionView(Game::GetCube(0));
     AudioPlayer::PlayShutterClose();
-    tv->SetCube(menu->GetView()->GetCube());
     for(rememberedT=0; rememberedT<kDuration; rememberedT+=mGame->dt) {
         tv->SetTransitionAmount(1.0f-rememberedT/kDuration);
         CORO_YIELD(0);

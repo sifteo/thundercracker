@@ -5,8 +5,6 @@
 
 namespace TotalsGame {
 
-DEFINE_POOL(NarratorView);
-
 const AssetImage *NarratorView::emotes[] =
 {
     &Narrator_Coin,

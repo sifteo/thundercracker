@@ -78,12 +78,14 @@ void PuzzleController::OnSetup ()
 
 float PuzzleController::TheBigCoroutine(float dt)
 {
+    static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
+    static char tokenViewBuffer[Game::NUMBER_OF_CUBES][sizeof(TokenView)];
 
-    CORO_BEGIN
+    CORO_BEGIN;
 
-            for(int i = puzzle->GetNumTokens(); i < Game::NUMBER_OF_CUBES; i++)
+    for(int i = puzzle->GetNumTokens(); i < Game::NUMBER_OF_CUBES; i++)
     {
-        new BlankView(Game::GetCube(i), NULL);
+        new(blankViewBuffer[i]) BlankView(Game::GetCube(i), NULL);
     }
     Game::DrawVaultDoorsClosed();
     CORO_YIELD(0.25);
@@ -96,7 +98,7 @@ float PuzzleController::TheBigCoroutine(float dt)
             CORO_YIELD(dt);
         }
 
-        new TokenView(Game::GetCube(static_i), puzzle->GetToken(static_i), true);
+        new(tokenViewBuffer[static_i]) TokenView(Game::GetCube(static_i), puzzle->GetToken(static_i), true);
         CORO_YIELD(0.1f);
 
     }

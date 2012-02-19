@@ -3,8 +3,6 @@
 namespace TotalsGame 
 {
 
-	DEFINE_POOL(BlankView)
-
 
 	BlankView::BlankView(TotalsCube *c, const Sifteo::AssetImage *image) : View(c)
 	{

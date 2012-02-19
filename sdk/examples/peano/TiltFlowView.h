@@ -9,8 +9,6 @@ namespace TotalsGame {
 
   class TiltFlowView : public View
   {
-      DECLARE_POOL(TiltFlowView, 2);
-
       class EventHandler: public TotalsCube::EventHandler
       {
           TiltFlowView *owner;
@@ -51,6 +49,10 @@ public:
     TiltFlowItem *GetItem();
 
     void Tick();
+
+    //for placement new
+    void* operator new (size_t size, void* ptr) throw() {return ptr;}
+    void operator delete(void *ptr) {}
 
     //-------------------------------------------------------------------------
     // VIEW METHODS

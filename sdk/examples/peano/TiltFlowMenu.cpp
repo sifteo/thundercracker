@@ -28,11 +28,14 @@ namespace TotalsGame
 
     TiltFlowMenu::TiltFlowMenu(TiltFlowItem **_items, int _numItems, TiltFlowDetailView *_details)
     {
+
+
         mSimTime = 0;
         mPickTime = 0;
       items = _items;
       numItems = _numItems;
-      view = new TiltFlowView(Game::GetCube(0), this);
+      static char tiltFlowViewBuffer[sizeof(TiltFlowView)];
+      view = new(tiltFlowViewBuffer) TiltFlowView(Game::GetCube(0), this);
     details = _details;
     toggledItem = NULL;
     }

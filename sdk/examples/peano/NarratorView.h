@@ -8,8 +8,6 @@ namespace TotalsGame {
 
   class NarratorView : public View {
 
-      DECLARE_POOL(NarratorView, 1);
-
       static const AssetImage *emotes[];
 
   public:
@@ -47,6 +45,10 @@ private:
     void Paint();
 
     void PaintText();
+
+    //for placement new
+    void* operator new (size_t size, void* ptr) throw() {return ptr;}
+    void operator delete(void *ptr) {}
   };
 
 }

@@ -13,7 +13,6 @@ namespace TotalsGame {
 
   class TokenView : public View 
   {
-	  DECLARE_POOL(TokenView, Game::NUMBER_OF_CUBES);
 
   private:
 	  static int sHintParity;
@@ -85,6 +84,10 @@ namespace TotalsGame {
     void HideOverlay();
 
     void SetHideMode(int mask);
+
+    //for placement new
+    void* operator new (size_t size, void* ptr) throw() {return ptr;}
+    void operator delete(void *ptr) {}
 
 private:
     bool NotHiding(Cube::Side side) ;

@@ -22,7 +22,7 @@ namespace TotalsGame
 
 	class Puzzle {
 
-		DECLARE_POOL(Puzzle, 4)
+        DECLARE_POOL(Puzzle, 4)
 
 	public:
 		Puzzle(int tokenCount);

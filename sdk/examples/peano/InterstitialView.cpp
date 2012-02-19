@@ -3,7 +3,7 @@
 
 namespace TotalsGame {
 
-DEFINE_POOL(InterstitialView);
+//DEFINE_POOL(InterstitialView);
 
 InterstitialView::InterstitialView(TotalsCube *c) : View(c)
 {

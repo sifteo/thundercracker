@@ -40,10 +40,12 @@ public:
     float Coroutine(float dt) {
 
         const float kTransitionTime = 0.5f;
+        static char ivBuffer[sizeof(InterstitialView)];
+        static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
 
         CORO_BEGIN;
 
-        iv = new InterstitialView(Game::GetCube(0));
+        iv = new(ivBuffer) InterstitialView(Game::GetCube(0));
         if (mGame->IsPlayingRandom()) {
             iv->message = "Random!";
             iv->image = &Hint_6;
@@ -58,7 +60,7 @@ public:
 
         for(int i = 1; i < Game::NUMBER_OF_CUBES; i++)
         {
-            new BlankView(Game::GetCube(i), NULL);
+            new(blankViewBuffer[i]) BlankView(Game::GetCube(i), NULL);
         }
 
         CORO_YIELD(0.333f);
@@ -75,7 +77,7 @@ public:
             iv->SetTransitionAmount(1.0f-remembered_t/kTransitionTime);
             CORO_YIELD(0);
         }
-        new BlankView(Game::GetCube(0), NULL);
+        new(blankViewBuffer[0]) BlankView(Game::GetCube(0), NULL);
         CORO_YIELD(0.333f);
 
         CORO_END;

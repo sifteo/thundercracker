@@ -87,16 +87,19 @@ public:
     */
     float Coroutine(float dt) {
         const float kTransitionDuration = 0.2f;
+        static char narratorViewBuffer[sizeof(NarratorView)];
+        static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
+        static char tokenViewBuffer[2][sizeof(TokenView)];
 
         CORO_BEGIN;
 
         // initialize narrator
-        narrator = new NarratorView(Game::GetCube(0));
+        narrator = new(narratorViewBuffer) NarratorView(Game::GetCube(0));
 
         // initial blanks
         for(int i = 1; i < Game::NUMBER_OF_CUBES; i++)
         {
-            new BlankView(Game::GetCube(i), NULL);
+            new(blankViewBuffer[i]) BlankView(Game::GetCube(i), NULL);
         }
         CORO_YIELD(0);
 
@@ -138,14 +141,14 @@ public:
             CORO_YIELD(dt);
         }
         // initialize two token views
-        firstToken = new TokenView(Game::GetCube(1), puzzle->GetToken(0), true);
+        firstToken = new(tokenViewBuffer[0]) TokenView(Game::GetCube(1), puzzle->GetToken(0), true);
         firstToken->SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_LEFT | TokenView::BIT_TOP);
         CORO_YIELD(0.25f);
         while((dt=Game::GetCube(2)->OpenShutters(&Background)) >= 0)
         {
             CORO_YIELD(dt);
         }
-        secondToken = new TokenView(Game::GetCube(2), puzzle->GetToken(1), true);
+        secondToken = new(tokenViewBuffer[1]) TokenView(Game::GetCube(2), puzzle->GetToken(1), true);
         secondToken->SetHideMode(TokenView::BIT_BOTTOM | TokenView::BIT_RIGHT | TokenView::BIT_TOP);
         CORO_YIELD(0.5f);
 

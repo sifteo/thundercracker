@@ -5,8 +5,6 @@
 
 namespace TotalsGame {
 
-DEFINE_POOL(TiltFlowView);
-
 const PinnedAssetImage *TiltFlowView::kMarquee[2] = {&Tilt_For_More, &Press_To_Select };
 
 TiltFlowMenu *TiltFlowView::GetTiltFlowMenu()

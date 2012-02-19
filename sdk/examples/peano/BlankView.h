@@ -10,8 +10,6 @@ namespace TotalsGame
 
 	class BlankView : public View 
 	{
-		DECLARE_POOL(BlankView, Game::NUMBER_OF_CUBES)
-
 	public:
 
 		BlankView(TotalsCube *c, const Sifteo::AssetImage *image);
@@ -24,6 +22,10 @@ namespace TotalsGame
 
 		virtual void Paint();
 		virtual void Update (float dt);
+
+        //for placement new
+        void* operator new (size_t size, void* ptr) throw() {return ptr;}
+        void operator delete(void *ptr) {}
 	
 	private:		
 		const Sifteo::AssetImage *assetImage;

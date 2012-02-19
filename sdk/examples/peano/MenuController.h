@@ -11,6 +11,7 @@
 namespace TotalsGame {
 
 class TotalsCube;
+class ConfirmationMenu;
 
   class MenuController : public IStateController
   {
@@ -25,8 +26,6 @@ public:
     class TransitionView : public View
     {
         static const int kPad = 1;
-
-        DECLARE_POOL(TransitionView, 2);
 
     public:
 
@@ -46,6 +45,10 @@ public:
       int CollapsesPauses(int off);
   public:
       void Paint();
+
+      //for placement new
+      void* operator new (size_t size, void* ptr) throw() {return ptr;}
+      void operator delete(void *ptr) {}
     };
 
 private:
@@ -56,6 +59,7 @@ private:
      TransitionView *tv;
      TiltFlowDetailView *labelView;
      TiltFlowMenu *menu;
+     ConfirmationMenu *confirm;
 
     Game *mGame;
   public:

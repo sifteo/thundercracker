@@ -6,8 +6,6 @@
 
 namespace TotalsGame
 {
-	DEFINE_POOL(TokenView);
-
 	const Vec2 TokenView::Mid(7,7);
 	int TokenView::sHintParity = 0;
 	const char *TokenView::kOpNames[4] = { "add", "sub", "mul", "div" };

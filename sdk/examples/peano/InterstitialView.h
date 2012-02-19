@@ -11,7 +11,6 @@ namespace TotalsGame {
 
 class InterstitialView : public View
 {
-    DECLARE_POOL(InterstitialView, 2);
 
 public:
     InterstitialView(TotalsCube *c);
@@ -47,6 +46,7 @@ public:
 
     //for placement new
     void* operator new (size_t size, void* ptr) throw() {return ptr;}
+    void operator delete(void *ptr) {}
 };
 }
 

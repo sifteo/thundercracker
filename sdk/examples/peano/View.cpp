@@ -3,7 +3,6 @@
 
 namespace TotalsGame
 {
-DEFINE_POOL(View)
 
 View::View(TotalsCube *_cube)
 {
@@ -36,7 +35,7 @@ void View::SetCube(TotalsCube *c)
         if (mCube != NULL)
         {
             View *view = mCube->GetView();
-            if (view != NULL)
+            if (view != NULL && view != this)
             {
                 view->SetCube(NULL);
             }

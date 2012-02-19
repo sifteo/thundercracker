@@ -3,7 +3,7 @@
 
 namespace TotalsGame {
 
-DEFINE_POOL(TiltFlowDetailView);
+//DEFINE_POOL(TiltFlowDetailView);
 
 TiltFlowDetailView::TiltFlowDetailView(TotalsCube *c): InterstitialView(c)
 {

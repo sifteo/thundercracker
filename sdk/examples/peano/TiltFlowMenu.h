@@ -54,7 +54,7 @@ private:
   public:
     //for placement new
     void* operator new (size_t size, void* ptr) throw() {return ptr;}
-
+    void operator delete(void *ptr) {}
   };
 }
 
