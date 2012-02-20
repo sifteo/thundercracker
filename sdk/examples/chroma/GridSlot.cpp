@@ -136,6 +136,7 @@ unsigned int TILTTOFRAMES[GridSlot::NUM_QUANTIZED_TILT_VALUES][GridSlot::NUM_QUA
 
 GridSlot::GridSlot() : 
 	m_state( STATE_GONE ),
+    m_Movestate( MOVESTATE_STATIONARY ),
 	m_eventTime( 0.0f ),
 	m_score( 0 ),
 	m_bFixed( false ),
@@ -153,6 +154,7 @@ void GridSlot::Init( CubeWrapper *pWrapper, unsigned int row, unsigned int col )
 	m_row = row;
 	m_col = col;
 	m_state = STATE_GONE;
+    m_Movestate = MOVESTATE_STATIONARY;
     m_RockHealth = MAX_ROCK_HEALTH;
 }
 
@@ -256,57 +258,69 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
                 vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
             else if( IsFixed() )
             {
-                vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
-
-                if( m_multiplier > 1 )
+                if( m_Movestate == MOVESTATE_FIXEDATTEMPT )
                 {
-                    vid.setSpriteImage( MULT_SPRITE_ID, mults, m_multiplier - 2 );
-                    vid.resizeSprite( MULT_SPRITE_ID, 32, 16 );
-                    vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 + 8 + ( MULTIPLIER_MOTION_AMPLITUDE * sinf( (float)System::clock() * MULTIPLIER_MOTION_PERIOD_MODIFIER )) );
+                    vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
+                }
+                else
+                {
+                    vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ]);
+
+                    if( m_multiplier > 1 )
+                    {
+                        vid.setSpriteImage( MULT_SPRITE_ID, mults, m_multiplier - 2 );
+                        vid.resizeSprite( MULT_SPRITE_ID, 32, 16 );
+                        vid.moveSprite( MULT_SPRITE_ID, m_col * 32, m_row * 32 + 8 + ( MULTIPLIER_MOTION_AMPLITUDE * sinf( (float)System::clock() * MULTIPLIER_MOTION_PERIOD_MODIFIER )) );
+                    }
                 }
             }
 			else
 			{
-                const AssetImage &animtex = *TEXTURES[ m_color ];
-                unsigned int frame;
-                /*if( m_pWrapper->IsIdle() )
-                    frame = GetIdleFrame();
-                else*/
-                    frame = GetTiltFrame( tiltState, m_lastFrameDir );
-                vid.BG0_drawAsset(vec, animtex, frame);
+                switch( m_Movestate )
+                {
+                    case MOVESTATE_STATIONARY:
+                    case MOVESTATE_PENDINGMOVE:
+                    {
+                        const AssetImage &animtex = *TEXTURES[ m_color ];
+                        unsigned int frame;
+                        /*if( m_pWrapper->IsIdle() )
+                            frame = GetIdleFrame();
+                        else*/
+                            frame = GetTiltFrame( tiltState, m_lastFrameDir );
+                        vid.BG0_drawAsset(vec, animtex, frame);
+                        break;
+                    }
+                    case MOVESTATE_MOVING:
+                    {
+                        Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
+
+                        //PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
+                        if( IsSpecial() )
+                            vid.BG0_drawAsset(curPos, GetSpecialTexture(), GetSpecialFrame());
+                        else
+                        {
+                            const AssetImage &tex = *TEXTURES[m_color];
+                            vid.BG0_drawAsset(curPos, tex, GetRollingFrame( m_animFrame ));
+                        }
+                        break;
+                    }
+                    case MOVESTATE_FINISHINGMOVE:
+                    {
+                        if( IsSpecial() )
+                            vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
+                        else
+                        {
+                            const AssetImage &animtex = *TEXTURES[ m_color ];
+                            vid.BG0_drawAsset(vec, animtex, m_animFrame);
+                        }
+                        break;
+                    }
+                    default:
+                        ASSERT( 0 );
+                }
 			}
 			break;
 		}
-		case STATE_MOVING:
-		{
-			Vec2 curPos = Vec2( m_curMovePos.x, m_curMovePos.y );
-
-			//PRINT( "drawing dot x=%d, y=%d\n", m_curMovePos.x, m_curMovePos.y );
-            if( IsSpecial() )
-                vid.BG0_drawAsset(curPos, GetSpecialTexture(), GetSpecialFrame());
-            else
-            {
-                const AssetImage &tex = *TEXTURES[m_color];
-                vid.BG0_drawAsset(curPos, tex, GetRollingFrame( m_animFrame ));
-            }
-			break;
-		}
-		case STATE_FINISHINGMOVE:
-		{           
-            if( IsSpecial() )
-                vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame());
-            else
-            {
-                const AssetImage &animtex = *TEXTURES[ m_color ];
-                vid.BG0_drawAsset(vec, animtex, m_animFrame);
-            }
-			break;
-		}
-        case STATE_FIXEDATTEMPT:
-        {
-            vid.BG0_drawAsset(vec, *FIXED_TEXTURES[ m_color ], GetFixedFrame( m_animFrame ));
-            break;
-        }
 		case STATE_MARKED:
         {
             if( IsSpecial() )
@@ -418,82 +432,80 @@ void GridSlot::Update(float t)
         }
         case STATE_LIVING:
         {
-            /*if( m_pWrapper->IsIdle() )
+            switch( m_Movestate )
             {
-                m_animFrame++;
-                if( m_animFrame >= NUM_IDLE_FRAMES )
+                case MOVESTATE_MOVING:
                 {
-                    m_animFrame = 0;
+                    Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );
+
+                    if( vDiff.x != 0 )
+                    {
+                        m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
+                        //clear this out in update
+                        m_pWrapper->QueueClear( m_curMovePos );
+
+                        if( abs( vDiff.x ) == 1 )
+                            Game::Inst().playSound(collide_02);
+                    }
+                    else if( vDiff.y != 0 )
+                    {
+                        m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
+                        //clear this out in update
+                        m_pWrapper->QueueClear( m_curMovePos );
+
+                        if( abs( vDiff.y ) == 1 )
+                            Game::Inst().playSound(collide_02);
+                    }
+                    else
+                    {
+                        m_animFrame++;
+                        if( m_animFrame >= NUM_ROLL_FRAMES )
+                        {
+                            m_Movestate = MOVESTATE_FINISHINGMOVE;
+                            m_animFrame = GetRollingFrame( NUM_ROLL_FRAMES - 1 );
+                        }
+                    }
+
+                    break;
                 }
-            }*/
-            break;
-        }
-		case STATE_MOVING:
-		{
-			Vec2 vDiff = Vec2( m_col * 4 - m_curMovePos.x, m_row * 4 - m_curMovePos.y );           
-
-			if( vDiff.x != 0 )
-            {
-				m_curMovePos.x += ( vDiff.x / abs( vDiff.x ) );
-                //clear this out in update
-                m_pWrapper->QueueClear( m_curMovePos );
-
-                if( abs( vDiff.x ) == 1 )
-                    Game::Inst().playSound(collide_02);
-            }
-			else if( vDiff.y != 0 )
-            {
-				m_curMovePos.y += ( vDiff.y / abs( vDiff.y ) );
-                //clear this out in update
-                m_pWrapper->QueueClear( m_curMovePos );
-
-                if( abs( vDiff.y ) == 1 )
-                    Game::Inst().playSound(collide_02);
-            }
-            else
-			{
-				m_animFrame++;
-                if( m_animFrame >= NUM_ROLL_FRAMES )
+                case MOVESTATE_FINISHINGMOVE:
                 {
-                    m_state = STATE_FINISHINGMOVE;
-                    m_animFrame = GetRollingFrame( NUM_ROLL_FRAMES - 1 );
+                    //interpolate frames back to normal state
+                    Float2 cubeDir = m_pWrapper->getTiltDir();
+                    Vec2 curDir;
+
+                    GetTiltFrame( cubeDir, curDir );
+
+                    if( m_lastFrameDir == curDir )
+                        m_Movestate = MOVESTATE_STATIONARY;
+                    else
+                    {
+                        if( curDir.x > m_lastFrameDir.x )
+                            m_lastFrameDir.x++;
+                        else if( curDir.x < m_lastFrameDir.x )
+                            m_lastFrameDir.x--;
+                        if( curDir.y > m_lastFrameDir.y )
+                            m_lastFrameDir.y++;
+                        else if( curDir.y < m_lastFrameDir.y )
+                            m_lastFrameDir.y--;
+
+                        m_animFrame = TILTTOFRAMES[ m_lastFrameDir.y ][ m_lastFrameDir.x ];
+                    }
+
+                    break;
                 }
+                case MOVESTATE_FIXEDATTEMPT:
+                {
+                    ASSERT( IsFixed() );
+                    m_animFrame++;
+                    if( m_animFrame / NUM_FRAMES_PER_FIXED_ANIM_FRAME >= NUM_FIXED_FRAMES )
+                        m_Movestate = MOVESTATE_STATIONARY;
+
+                    break;
+                }
+                default:
+                    break;
             }
-
-			break;
-		}
-		case STATE_FINISHINGMOVE:
-		{
-            //interpolate frames back to normal state
-            Float2 cubeDir = m_pWrapper->getTiltDir();
-            Vec2 curDir;
-
-            GetTiltFrame( cubeDir, curDir );
-
-            if( m_lastFrameDir == curDir )
-                m_state = STATE_LIVING;
-            else
-            {
-                if( curDir.x > m_lastFrameDir.x )
-                    m_lastFrameDir.x++;
-                else if( curDir.x < m_lastFrameDir.x )
-                    m_lastFrameDir.x--;
-                if( curDir.y > m_lastFrameDir.y )
-                    m_lastFrameDir.y++;
-                else if( curDir.y < m_lastFrameDir.y )
-                    m_lastFrameDir.y--;
-
-                m_animFrame = TILTTOFRAMES[ m_lastFrameDir.y ][ m_lastFrameDir.x ];
-            }
-
-			break;
-		}
-        case STATE_FIXEDATTEMPT:
-        {
-            ASSERT( IsFixed() );
-            m_animFrame++;
-            if( m_animFrame / NUM_FRAMES_PER_FIXED_ANIM_FRAME >= NUM_FIXED_FRAMES )
-                m_state = STATE_LIVING;
 
             break;
         }
@@ -641,7 +653,8 @@ void GridSlot::DamageRock()
 void GridSlot::TiltFrom(GridSlot &src)
 {
     FillColor( src.m_color );
-	m_state = STATE_PENDINGMOVE;
+    m_Movestate = MOVESTATE_PENDINGMOVE;
+    m_state = src.m_state;
 	m_eventTime = src.m_eventTime;
 	m_curMovePos.x = src.m_col * 4;
 	m_curMovePos.y = src.m_row * 4;
@@ -652,22 +665,12 @@ void GridSlot::TiltFrom(GridSlot &src)
 //if we have a move pending, start it
 void GridSlot::startPendingMove()
 {
-	if( m_state == STATE_PENDINGMOVE )
+    if( m_Movestate == MOVESTATE_PENDINGMOVE )
 	{
         Game::Inst().playSound(slide_39);
-		m_state = STATE_MOVING;
+        m_Movestate = MOVESTATE_MOVING;
 		m_animFrame = 0;
 	}
-}
-
-
-//fake moves don't animate or take time, just finish them
-void GridSlot::finishFakeMove()
-{
-    if( m_state == STATE_PENDINGMOVE )
-    {
-        m_state = STATE_LIVING;
-    }
 }
 
 
@@ -798,7 +801,7 @@ void GridSlot::DrawIntroFrame( VidMode_BG0 &vid, unsigned int frame )
 
 void GridSlot::setFixedAttempt()
 {
-    m_state = STATE_FIXEDATTEMPT;
+    m_Movestate = MOVESTATE_FIXEDATTEMPT;
     m_animFrame = 0;
     Game::Inst().playSound(frozen_06);
 }

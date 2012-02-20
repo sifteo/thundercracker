@@ -699,19 +699,6 @@ bool CubeWrapper::FakeTilt( int dir, GridSlot grid[][NUM_COLS] )
         }
     }
 
-    if( bChanged )
-    {
-        //change all pending movers to movers
-        for( int i = 0; i < NUM_ROWS; i++ )
-        {
-            for( int j = 0; j < NUM_COLS; j++ )
-            {
-                GridSlot &slot = grid[i][j];
-                slot.finishFakeMove();
-            }
-        }
-    }
-
     return bChanged;
 }
 
