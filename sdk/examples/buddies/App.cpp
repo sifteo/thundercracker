@@ -120,10 +120,10 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_SHUFFLE_PLAY",
     "GAME_STATE_SHUFFLE_SOLVED",
     "GAME_STATE_SHUFFLE_SCORE",
-    "GAME_STATE_PUZZLE_START",
-    "GAME_STATE_PUZZLE_INSTRUCTIONS",
-    "GAME_STATE_PUZZLE_PLAY",
-    "GAME_STATE_PUZZLE_SOLVED",
+    "GAME_STATE_STORY_START",
+    "GAME_STATE_STORY_INSTRUCTIONS",
+    "GAME_STATE_STORY_PLAY",
+    "GAME_STATE_STORY_SOLVED",
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,9 +191,9 @@ void App::Reset()
             StartGameState(GAME_STATE_SHUFFLE_START);
             break;
         }
-        case GAME_MODE_PUZZLE:
+        case GAME_MODE_STORY:
         {
-            StartGameState(GAME_STATE_PUZZLE_CHAPTER_START);
+            StartGameState(GAME_STATE_STORY_CHAPTER_START);
             break;
         }
     }
@@ -260,9 +260,9 @@ CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId)
 
 void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1, Cube::Side cubeSide1)
 {
-    if (mGameState == GAME_STATE_PUZZLE_CLUE)
+    if (mGameState == GAME_STATE_STORY_CLUE)
     {
-        StartGameState(GAME_STATE_PUZZLE_PLAY);
+        StartGameState(GAME_STATE_STORY_PLAY);
     }
     else
     {
@@ -276,10 +276,10 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
             mGameState == GAME_STATE_FREE_PLAY ||
             mGameState == GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES ||
             mGameState == GAME_STATE_SHUFFLE_PLAY ||
-            mGameState == GAME_STATE_PUZZLE_PLAY;
+            mGameState == GAME_STATE_STORY_PLAY;
         
         bool isValidCube =
-            kGameMode != GAME_MODE_PUZZLE ||
+            kGameMode != GAME_MODE_STORY ||
             (   cubeId0 < GetPuzzle(mPuzzleIndex).GetNumBuddies() &&
                 cubeId1 < GetPuzzle(mPuzzleIndex).GetNumBuddies());
         
@@ -289,9 +289,9 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
             {
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
-            else if (kGameMode == GAME_MODE_PUZZLE && mGameState != GAME_STATE_PUZZLE_PLAY)
+            else if (kGameMode == GAME_MODE_STORY && mGameState != GAME_STATE_STORY_PLAY)
             {
-                StartGameState(GAME_STATE_PUZZLE_PLAY);
+                StartGameState(GAME_STATE_STORY_PLAY);
             }
             
             OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
@@ -312,9 +312,9 @@ void App::OnTilt(Cube::ID cubeId)
     {
         StartGameState(GAME_STATE_SHUFFLE_PLAY);
     }
-    else if (mGameState == GAME_STATE_PUZZLE_CLUE)
+    else if (mGameState == GAME_STATE_STORY_CLUE)
     {
-        StartGameState(GAME_STATE_PUZZLE_PLAY);
+        StartGameState(GAME_STATE_STORY_PLAY);
     }
     
     mShuffleHintTimer = kHintTimerOnDuration;
@@ -440,7 +440,7 @@ void App::StartGameState(GameState gameState)
             mShuffleHintPiece1 = -1;
             break;
         }
-        case GAME_STATE_PUZZLE_CHAPTER_START:
+        case GAME_STATE_STORY_CHAPTER_START:
         {
             ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
             for (unsigned int i = 0; i < GetPuzzle(mPuzzleIndex).GetNumBuddies(); ++i)
@@ -461,7 +461,7 @@ void App::StartGameState(GameState gameState)
             mDelayTimer = kShuffleStateTimeDelay;
             break;
         }
-        case GAME_STATE_PUZZLE_CLUE:
+        case GAME_STATE_STORY_CLUE:
         {
             ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
             for (unsigned int i = 0; i < GetPuzzle(mPuzzleIndex).GetNumBuddies(); ++i)
@@ -480,7 +480,7 @@ void App::StartGameState(GameState gameState)
             }
             break;
         }
-        case GAME_STATE_PUZZLE_PLAY:
+        case GAME_STATE_STORY_PLAY:
         {
             ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
@@ -594,7 +594,7 @@ void App::UpdateGameState(float dt)
             }
             break;
         }
-        case GAME_STATE_PUZZLE_CHAPTER_START:
+        case GAME_STATE_STORY_CHAPTER_START:
         {
             ASSERT(mDelayTimer > 0.0f);
             mDelayTimer -= dt;
@@ -602,11 +602,11 @@ void App::UpdateGameState(float dt)
             if (mDelayTimer <= 0.0f)
             {
                 mDelayTimer = 0.0f;
-                StartGameState(GAME_STATE_PUZZLE_CLUE);
+                StartGameState(GAME_STATE_STORY_CLUE);
             }
             break;
         }
-        case GAME_STATE_PUZZLE_SOLVED:
+        case GAME_STATE_STORY_SOLVED:
         {
             ASSERT(mDelayTimer > 0.0f);
             mDelayTimer -= dt;
@@ -619,7 +619,7 @@ void App::UpdateGameState(float dt)
                 {
                     mPuzzleIndex = 0;
                 }
-                StartGameState(GAME_STATE_PUZZLE_CLUE);
+                StartGameState(GAME_STATE_STORY_CLUE);
             }
             break;
         }
@@ -645,13 +645,13 @@ void App::DrawGameState()
             }
         }
     }
-    else if (kGameMode == GAME_MODE_PUZZLE)
+    else if (kGameMode == GAME_MODE_STORY)
     {
         for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
         {
             if (mCubeWrappers[i].IsEnabled())
             {
-                if (mGameState == GAME_STATE_PUZZLE_CLUE ||
+                if (mGameState == GAME_STATE_STORY_CLUE ||
                     i >= GetPuzzle(mPuzzleIndex).GetNumBuddies())
                 {
                     ASSERT(mPuzzleIndex < GetNumPuzzles());
@@ -922,11 +922,11 @@ void App::OnSwapFinish()
             mDelayTimer = kShuffleStateTimeDelay;
         }
     }
-    else if (mGameState == GAME_STATE_PUZZLE_PLAY)
+    else if (mGameState == GAME_STATE_STORY_PLAY)
     {
         if (AllSolved(*this))
         {
-            StartGameState(GAME_STATE_PUZZLE_SOLVED);
+            StartGameState(GAME_STATE_STORY_SOLVED);
             mDelayTimer = kShuffleStateTimeDelay;
         }
     }

@@ -94,7 +94,7 @@ private:
     int mShuffleHintPiece0;
     int mShuffleHintPiece1;
     
-    // Puzzle Mode
+    // Story Mode
     unsigned int mPuzzleIndex;
 };
 
