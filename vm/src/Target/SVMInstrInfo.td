@@ -245,6 +245,7 @@ def MOVSi8 : T3<(outs GPReg:$Rd), (ins i32imm:$offset8),
     "movs\t$Rd, #$offset8", [(set GPReg:$Rd, imm8:$offset8)]> {
     let opB = 0;
     let isAsCheapAsAMove = 1;
+    let isReMaterializable = 1;
 }
 
 def CMPi8 : T3<(outs), (ins GPReg:$Rd, i32imm:$offset8),
