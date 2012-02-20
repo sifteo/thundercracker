@@ -151,7 +151,7 @@ void SVMAsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV)
 
     if (SCPV->isMachineBasicBlock()) {
         const MachineBasicBlock *MBB = cast<SVMConstantPoolMBB>(SCPV)->getMBB();
-        MCSym = GetBlockAddressSymbol(MBB->getBasicBlock());
+        MCSym = MBB->getSymbol();
         MCSym->setUsed(true);
     } else {
         assert(false && "Unrecognized SVMConstantPoolValue type");

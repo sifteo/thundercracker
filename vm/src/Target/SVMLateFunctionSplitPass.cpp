@@ -69,10 +69,6 @@ namespace {
         unsigned FirstLocalBB;
 
         void beginBlock();
-        
-        MachineBasicBlock *createAnonymousMBB(MachineFunction *MF);
-        void fixupAnonymousMBB(MachineFunction *MF);
-        void setHasAddressTaken(MachineBasicBlock *MBB) const;
 
         bool visitBasicBlock(MachineFunction::iterator &MBB);
         bool visitInstrBundle(MachineFunction::iterator &MBB,
@@ -137,9 +133,6 @@ bool SVMLateFunctionSplitPass::runOnMachineFunction(MachineFunction &MF)
 
     // Rewrite branches in the last block, if necessary.
     rewriteBranchesInRange(&MF, FirstLocalBB, MF.getNumBlockIDs(), MF.end());
-
-    // Fixup references to new anonymous MBBs
-    fixupAnonymousMBB(&MF);
 
     return Changed;
 }
@@ -227,69 +220,9 @@ void SVMLateFunctionSplitPass::visitInstr(MachineFunction::iterator &MBB,
     BSA.AddInstr(I);
 }
 
-void SVMLateFunctionSplitPass::setHasAddressTaken(MachineBasicBlock *MBB) const
-{
-    // Mark both the MBB and BB as having their address taken, therefore
-    // ensuring that we get a label for the MBB.
-
-    MachineFunction *MF = MBB->getParent();
-    Function *F = const_cast<Function *>(MF->getFunction());
-    BasicBlock *BB = const_cast<BasicBlock *>(MBB->getBasicBlock());
-    
-    MBB->setHasAddressTaken();
-    BlockAddress::get(F, BB);    
-}
-
-MachineBasicBlock *SVMLateFunctionSplitPass::createAnonymousMBB(MachineFunction *MF)
-{
-    /*
-     * Create an anonymous MBB that we can use as an address operand.
-     * It has a distinct but useless BasicBlock attached to it,
-     * and the MBB symbol is aliased to the BB symbol.
-     *
-     * This is kind of annoying to do while we're constantly renumbering the
-     * MBBs. To actually set the alias, we remember the MMI address label
-     * symbol and the MBB address, and actually fixup the alias later.
-     */
-
-    Function *F = const_cast<Function *>(MF->getFunction());
-    BasicBlock *BB = BasicBlock::Create(F->getContext());
-    MachineBasicBlock *MBB = MF->CreateMachineBasicBlock(BB);
-    setHasAddressTaken(MBB);
-    
-    // Align the new MBB. On earlier MBBs, this was already set by SVMAlignPass.
-    MBB->setAlignment(SVMTargetMachine::getBundleSize());
-
-    AnonMBBFixupList.push_back(std::make_pair(
-        MF->getMMI().getAddrLabelSymbol(BB), MBB ));
-
-    return MBB;
-}
-
-void SVMLateFunctionSplitPass::fixupAnonymousMBB(MachineFunction *MF)
-{
-    // Fix up dangling symbols from earlier createAnonymousMBB() calls for
-    // this MF. Must be called after the MBB numbers have finished changing.
-    
-    MCContext &MCtx = MF->getContext();
-
-    for (AnonMBBFixupListTy::iterator I = AnonMBBFixupList.begin();
-        I != AnonMBBFixupList.end(); ++I) {
-
-        MCSymbol *Alias = I->first;
-        MachineBasicBlock *MBB = I->second;
-        
-        MBB->getSymbol()->setVariableValue(MCSymbolRefExpr::Create(Alias, MCtx));
-    }
-    
-    AnonMBBFixupList.clear();
-}
-
 unsigned SVMLateFunctionSplitPass::getLongBranchCPI(MachineBasicBlock *MBB) const
 {
     MachineFunction *MF = MBB->getParent();
-
-    setHasAddressTaken(MBB);
 
     // Build a constant pool entry for a long branch
     LLVMContext &Ctx = MF->getFunction()->getContext();
@@ -311,25 +244,44 @@ void SVMLateFunctionSplitPass::splitBeforeInstruction(
     // Point to the next existing MBB, our insertion point for nextMBB.
     ++MBB;
 
-    // Split this MBB in two, by creating a new BB and MBB to insert afterward.
-    MachineBasicBlock *nextMBB = createAnonymousMBB(MF);
+    // Create the new MBB. It shares the existing BB.
+    BasicBlock *BB = const_cast<BasicBlock*>(prevMBB->getBasicBlock());
+    MachineBasicBlock *nextMBB = MF->CreateMachineBasicBlock(BB);
+    nextMBB->setAlignment(prevMBB->getAlignment());
     MF->insert(MBB, nextMBB);
     MF->RenumberBlocks(prevMBB);
 
     // Back up, point at nextMBB. This is the next MBB we'll visit.
     // Trampolines get inserted before this point.
     --MBB;
+    
+    // Always insert at least one dummy block between prevMBB and nextMBB.
+    // There may be more if we're inserting trampolines below, but this
+    // minimum separation helps AsmPrinter avoid unintentionally seeing
+    // nextMBB as a fall-through successor to prevMBB.
+    MF->insert(MBB, MF->CreateMachineBasicBlock(BB));
 
     // Move I and all subsequent instructions to the new MBB
     nextMBB->splice(nextMBB->end(), prevMBB, I, prevMBB->end());
 
+    // Move CFG successors from prevMBB to nextMBB
+    while (!prevMBB->succ_empty()) {
+        MachineBasicBlock *Succ = *prevMBB->succ_begin();
+        prevMBB->removeSuccessor(Succ);
+        nextMBB->addSuccessor(Succ);
+    }
+
     // Insert a long branch from prevMBB to nextMBB
     BuildMI(prevMBB, DL, TII.get(SVM::LB))
         .addConstantPoolIndex(getLongBranchCPI(nextMBB));
+    prevMBB->addSuccessor(nextMBB);
 
     // Rewrite branches in this block which refer to MBBs in past or future blocks.
     // NB: This may insert additional Trampoline MBBs. We need to renumber again.
-    rewriteBranchesInRange(MF, FirstLocalBB, nextMBB->getNumber(), MBB);
+    // Also, insert another dummy MBB prior to the trampolines, also for preventing
+    // the false appearance of a fall-through.
+    rewriteBranchesInRange(MF, FirstLocalBB, nextMBB->getNumber(), MBB);    
+    MF->insert(MBB, MF->CreateMachineBasicBlock(BB));
     MF->RenumberBlocks(prevMBB);
 
     // *Last* instruction in the last MBB of a block is the SPLIT.
@@ -375,7 +327,6 @@ void SVMLateFunctionSplitPass::rewriteBranch(MachineBasicBlock *MBB,
     // Rewrite the branch at 'I', and advance to the next instruction.
     
     const TargetInstrInfo &TII = *TM.getInstrInfo();
-    MachineFunction *MF = MBB->getParent();
     DebugLoc DL = I->getDebugLoc();
     
     if (SVMInstrInfo::isCondNearBranchOpcode(I->getOpcode())) {
@@ -385,13 +336,20 @@ void SVMLateFunctionSplitPass::rewriteBranch(MachineBasicBlock *MBB,
         // at the beginning of the block, which does an unconditional long
         // branch to the real destination.
 
-        MachineBasicBlock *trMBB = createAnonymousMBB(MF);
+        MachineFunction *MF = MBB->getParent();
+        BasicBlock *BB = const_cast<BasicBlock*>(MBB->getBasicBlock());
+        MachineBasicBlock *trMBB = MF->CreateMachineBasicBlock(BB);
+        trMBB->setAlignment(TM.getBundleSize());
+
         MF->insert(insertPoint, trMBB);
         I->getOperand(0).setMBB(trMBB);
         
         BuildMI(trMBB, DL, TII.get(SVM::LB))
             .addConstantPoolIndex(getLongBranchCPI(&TBB));
-            
+
+        MBB->addSuccessor(trMBB);    
+        trMBB->addSuccessor(&TBB);
+
         ++I;
 
     } else {
