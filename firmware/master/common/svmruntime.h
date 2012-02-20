@@ -1,5 +1,5 @@
-#ifndef SVM_H
-#define SVM_H
+#ifndef SVM_RUNTIME_H
+#define SVM_RUNTIME_H
 
 #include <stdint.h>
 #include "svmutils.h"
@@ -42,4 +42,4 @@ private:
     void svcIndirectOperation(uint8_t imm8);
 };
 
-#endif // SVM_H
+#endif // SVM_RUNTIME_H

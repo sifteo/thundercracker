@@ -16,6 +16,7 @@ OBJS_COMMON = \
 	$(MASTER_DIR)/common/tasks.o \
 	$(MASTER_DIR)/common/prng.o \
     $(MASTER_DIR)/common/flashlayer.o \
+    $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
     $(MASTER_DIR)/common/assetmanager.o \
 
@@ -25,7 +26,6 @@ OBJS_SIM = \
 	$(MASTER_DIR)/sim/portaudiooutdevice.sim.o \
     $(MASTER_DIR)/sim/flashstorage.sim.o \
     $(MASTER_DIR)/sim/flash.sim.o \
-    $(MASTER_DIR)/sim/svm.sim.o \
     $(MASTER_DIR)/sim/svmcpu.sim.o \
 	$(MASTER_DIR)/sim/siftulator.sim.o \
 	$(MASTER_DIR)/sim/main.sim.o

@@ -1,4 +1,4 @@
-#include "svm.h"
+#include "svmruntime.h"
 #include "elfdefs.h"
 #include "flashlayer.h"
 #include "svmutils.h"

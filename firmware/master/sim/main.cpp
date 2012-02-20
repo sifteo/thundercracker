@@ -26,7 +26,7 @@ static void installAssetsToMaster();
 #define SVM_TEST
 
 #ifdef SVM_TEST
-#include "svm.h"
+#include "svmruntime.h"
 
 static void installElfFile()
 {
