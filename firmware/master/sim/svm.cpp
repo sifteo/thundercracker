@@ -8,11 +8,11 @@
 
 using namespace Svm;
 
-SvmProgram::SvmProgram()
+SvmRuntime::SvmRuntime()
 {
 }
 
-void SvmProgram::run(uint16_t appId)
+void SvmRuntime::run(uint16_t appId)
 {
     currentAppPhysAddr = 0;  // TODO: look this up via appId
     if (!loadElfFile(currentAppPhysAddr, 12345))
@@ -45,7 +45,7 @@ SVC encodings:
   11011111 11110rrr     (6) Call validate(rN), with SP adjust
   11011111 11111rrr     (7) Tail call validate(rN), with SP adjust
 */
-void SvmProgram::svc(uint8_t imm8)
+void SvmRuntime::svc(uint8_t imm8)
 {
     LOG(("svc, imm8 %d\n", imm8));
     if ((imm8 & (1 << 7)) == 0) {
@@ -111,7 +111,7 @@ four and added to the base of the current page, to form the address of a
 
   (F = 0x80000000, flash segment virtual address)
 */
-void SvmProgram::svcIndirectOperation(uint8_t imm8)
+void SvmRuntime::svcIndirectOperation(uint8_t imm8)
 {
     // we already know the MSB of imm8 is clear by the fact that we're being called here.
 
@@ -159,7 +159,7 @@ void SvmProgram::svcIndirectOperation(uint8_t imm8)
     - make sure any referenced memory has been loaded from external storage
     - if a RAM address, sanitize it to within the
 */
-reg_t SvmProgram::validate(uint32_t address)
+reg_t SvmRuntime::validate(uint32_t address)
 {
     if (address & (1 << 31)) {
         // TODO: load block from flash here if needed.
@@ -173,7 +173,7 @@ reg_t SvmProgram::validate(uint32_t address)
     }
 }
 
-bool SvmProgram::loadElfFile(unsigned addr, unsigned len)
+bool SvmRuntime::loadElfFile(unsigned addr, unsigned len)
 {
     FlashRegion r;
     if (!FlashLayer::getRegion(addr, FlashLayer::BLOCK_SIZE, &r)) {

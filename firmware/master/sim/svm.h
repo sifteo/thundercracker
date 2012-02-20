@@ -8,9 +8,9 @@
 
 using namespace Svm;
 
-class SvmProgram {
+class SvmRuntime {
 public:
-    SvmProgram();
+    SvmRuntime();
 
     void run(uint16_t appId);
     void svc(uint8_t imm8);
