@@ -26,6 +26,7 @@ OBJS_SIM = \
     $(MASTER_DIR)/sim/flashstorage.sim.o \
     $(MASTER_DIR)/sim/flash.sim.o \
     $(MASTER_DIR)/sim/svm.sim.o \
+    $(MASTER_DIR)/sim/svmcpu.sim.o \
 	$(MASTER_DIR)/sim/siftulator.sim.o \
 	$(MASTER_DIR)/sim/main.sim.o
 
