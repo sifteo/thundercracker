@@ -15,7 +15,7 @@ unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
 
 
 const float Game::SLOSH_THRESHOLD = 0.4f;
-const float Game::TIME_TO_RESPAWN = 0.7f;
+const float Game::TIME_TO_RESPAWN = 0.55f;
 const float Game::COMBO_TIME_THRESHOLD = 2.5f;
 const float Game::GOODJOB_TIME = 2.0f;
 
