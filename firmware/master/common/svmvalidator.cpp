@@ -2,6 +2,7 @@
 #include "svmutils.h"
 #include "sifteo.h"
 
+using namespace Svm;
 
 unsigned SvmValidator::validBytes(void *block, unsigned lenInBytes)
 {
@@ -11,7 +12,7 @@ unsigned SvmValidator::validBytes(void *block, unsigned lenInBytes)
     uint16_t *end = b + lenInBytes;
     while (b < end) {
         uint16_t instr = *b++;
-        if (Svm::instructionSize(instr) == Svm::InstrBits16) {
+        if (instructionSize(instr) == InstrBits16) {
             if (!isValid16(instr))
                 break;
             numValidBytes++;
@@ -56,50 +57,50 @@ region of the same page, and the target is 32-bit aligned:
 */
 bool SvmValidator::isValid16(uint16_t instr)
 {
-    if ((instr & Svm::AluMask) == Svm::AluTest) {
+    if ((instr & AluMask) == AluTest) {
         LOG(("arithmetic\n"));
         return true;
     }
-    if ((instr & Svm::DataProcMask) == Svm::DataProcTest) {
+    if ((instr & DataProcMask) == DataProcTest) {
         LOG(("data processing\n"));
         return true;
     }
-    if ((instr & Svm::MiscMask) == Svm::MiscTest) {
+    if ((instr & MiscMask) == MiscTest) {
         LOG(("miscellaneous\n"));
         return true;
     }
-    if ((instr & Svm::SvcMask) == Svm::SvcTest) {
+    if ((instr & SvcMask) == SvcTest) {
         LOG(("svc\n"));
         return true;
     }
-    if ((instr & Svm::PcRelLdrMask) == Svm::PcRelLdrTest) {
+    if ((instr & PcRelLdrMask) == PcRelLdrTest) {
         LOG(("pc relative ldr\n"));
         return true;
     }
-    if ((instr & Svm::SpRelLdrStrMask) == Svm::SpRelLdrStrTest) {
+    if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
         LOG(("sp relative ldr/str\n"));
         return true;
     }
-    if ((instr & Svm::SpRelAddMask) == Svm::SpRelAddTest) {
+    if ((instr & SpRelAddMask) == SpRelAddTest) {
         LOG(("sp relative add\n"));
         return true;
     }
-    if ((instr & Svm::UncondBranchMask) == Svm::UncondBranchTest) {
+    if ((instr & UncondBranchMask) == UncondBranchTest) {
         LOG(("unconditional branch\n"));
         // TODO: must validate target
         return true;
     }
-    if ((instr & Svm::CompareBranchMask) == Svm::CompareBranchTest) {
+    if ((instr & CompareBranchMask) == CompareBranchTest) {
         LOG(("compare and branch\n"));
         // TODO: must validate target
         return true;
     }
-    if ((instr & Svm::CondBranchMask) == Svm::CondBranchTest) {
+    if ((instr & CondBranchMask) == CondBranchTest) {
         LOG(("branchcc\n"));
         // TODO: must validate target
         return true;
     }
-    if (instr == Svm::Nop) {
+    if (instr == Nop) {
         // 10111111 00000000     nop
         LOG(("nop\n"));
         return true;
@@ -123,31 +124,30 @@ Allowed 32-bit instruction encodings:
 */
 bool SvmValidator::isValid32(uint32_t instr)
 {
-    if ((instr & Svm::StrMask) == Svm::StrTest) {
+    if ((instr & StrMask) == StrTest) {
         LOG(("32bit str\n"));
         return true;
     }
-    if ((instr & Svm::StrBhMask) == Svm::StrBhTest) {
+    if ((instr & StrBhMask) == StrBhTest) {
         LOG(("32bit str[bh]\n"));
         return true;
     }
-    if ((instr & Svm::LdrBhMask) == Svm::LdrBhTest) {
+    if ((instr & LdrBhMask) == LdrBhTest) {
         LOG(("32bit ldr(s)[bh]\n"));
         return true;
     }
-    if ((instr & Svm::LdrMask) == Svm::LdrTest) {
+    if ((instr & LdrMask) == LdrTest) {
         LOG(("32bit ldr(s)[bh]\n"));
         return true;
     }
-    if ((instr & Svm::MovWtMask) == Svm::MovWtTest) {
+    if ((instr & MovWtMask) == MovWtTest) {
         LOG(("32bit mov[wt]\n"));
         return true;
     }
-    if ((instr & Svm::DivMask) == Svm::DivTest) {
+    if ((instr & DivMask) == DivTest) {
         LOG(("32bit [su]div\n"));
         return true;
     }
     LOG(("----------------------- invalid 32-bit instruction: 0x%x\n", instr));
     return false;
 }
-
