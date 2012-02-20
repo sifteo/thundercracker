@@ -2,7 +2,7 @@
 #define SVM_RUNTIME_H
 
 #include <stdint.h>
-#include "svmutils.h"
+#include "svm.h"
 #include "svmcpu.h"
 #include "flashlayer.h"
 

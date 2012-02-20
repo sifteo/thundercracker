@@ -1,7 +1,7 @@
 #include "svmruntime.h"
 #include "elfdefs.h"
 #include "flashlayer.h"
-#include "svmutils.h"
+#include "svm.h"
 #include "svmvalidator.h"
 
 #include <string.h>

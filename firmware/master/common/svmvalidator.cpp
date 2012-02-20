@@ -1,5 +1,5 @@
 #include "svmvalidator.h"
-#include "svmutils.h"
+#include "svm.h"
 #include "sifteo.h"
 
 using namespace Svm;
