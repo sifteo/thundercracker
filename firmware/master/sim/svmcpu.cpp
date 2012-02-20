@@ -1,11 +1,13 @@
 
 #include "svmcpu.h"
+#include "svmruntime.h"
 #include "sifteo/macros.h"
 
 #include <string.h>
 
-void SvmCpu::init()
+void SvmCpu::init(SvmRuntime *runtime)
 {
+    this->runtime = runtime;
     memset(regs, 0, sizeof(regs));
     cpsr = 0;
 }
@@ -727,4 +729,5 @@ void SvmCpu::emulateDIV(uint32_t instr)
 void SvmCpu::emulateSVC(uint16_t instr)
 {
     uint8_t imm8 = instr & 0xff;
+    this->runtime->svc(imm8);
 }

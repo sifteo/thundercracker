@@ -26,6 +26,8 @@ void SvmRuntime::run(uint16_t appId)
         return;
     }
 
+    cpu.init(this);
+
     // TODO: This actually needs to be like a call SVC, not just a branch
     cpu.setReg(SvmCpu::REG_PC, reinterpret_cast<reg_t>(flashRegion.data())
         + (progInfo.textRodata.vaddr & 0xFFFFFF));
