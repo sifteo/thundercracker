@@ -169,14 +169,18 @@ void Game::Update()
                 m_timer.Update( dt );
                 checkGameOver();
 
-                m_fTimeTillRespawn -= dt;
                 m_fTimeSinceCombo += dt;
 
                 if( m_fTimeSinceCombo > COMBO_TIME_THRESHOLD )
                     m_comboCount = 0;
 
-                if( m_fTimeTillRespawn <= 0.0f )
-                    RespawnOnePiece();
+                if( !m_bIsChainHappening )
+                {
+                    m_fTimeTillRespawn -= dt;
+
+                    if( m_fTimeTillRespawn <= 0.0f )
+                        RespawnOnePiece();
+                }
             }
             else if( m_mode == MODE_SHAKES )
             {
