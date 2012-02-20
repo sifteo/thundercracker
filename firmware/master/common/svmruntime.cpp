@@ -146,13 +146,37 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
         LOG(("indirect tail syscall\n"));
     }
     else if ((literal & AddropMask) == AddropTest) {
-        LOG(("Addrop #0-31 on validate(a)\n"));
+        unsigned opnum = (literal >> 24) & 0x1f;
+        reg_t a = validate(literal & 0xffffff);
+        addrOp(opnum, a);
+        LOG(("Addrop #%d on validate(a)\n", opnum));
     }
     else if ((literal & AddropFlashMask) == AddropFlashTest) {
-        LOG(("Addrop #0-31 on validate(F+a)\n"));
+        unsigned opnum = (literal >> 24) & 0x1f;
+        reg_t a = validate(0x80000000 + (literal & 0xffffff));
+        LOG(("Addrop #%d on validate(F+a)\n", opnum));
+        addrOp(opnum, a);
     }
     else {
         ASSERT(0 && "unhandled svc Indirect Operation");
+    }
+}
+
+void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
+{
+    switch (opnum) {
+    case 0:
+        LOG(("addrOp: long branch\n"));
+        break;
+    case 1:
+        LOG(("addrOp: Asynchronous preload\n"));
+        break;
+    case 2:
+        LOG(("addrOp: Assign to r8-9\n"));
+        break;
+    default:
+        LOG(("unknown addrOp: %d (0x%x)\n", opnum, address));
+        break;
     }
 }
 

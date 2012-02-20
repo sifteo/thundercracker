@@ -40,6 +40,7 @@ private:
 
     reg_t validate(uint32_t address);
     void svcIndirectOperation(uint8_t imm8);
+    void addrOp(uint8_t opnum, reg_t address);
 };
 
 #endif // SVM_RUNTIME_H
