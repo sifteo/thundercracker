@@ -138,9 +138,9 @@ void Game::Update()
 	{
 		if( m_bTestMatches )
 		{
-			if( m_state == STATE_PLAYING )
-				TestMatches();
-            else if( m_state == STATE_POSTGAME )
+            TestMatches();
+
+            if( m_state == STATE_POSTGAME )
             {
                 //SUPERHACK..  if all the cubes are tilted to the left, change game modes
                 //TODO, REMOVE!
@@ -982,8 +982,13 @@ void Game::gotoNextPuzzle( bool bAdvance )
 
 bool Game::AreMovesLegal() const
 {
-    if( m_mode == MODE_TIMED && m_timer.getTime() < 0.0f )
-        return false;
+    if( m_mode == MODE_TIMED )
+    {
+        if( getState() == STATE_INTRO )
+            return true;
+        if( m_timer.getTime() < 0.0f )
+            return false;
+    }
 
-    return true;
+    return getState() == STATE_PLAYING;
 }

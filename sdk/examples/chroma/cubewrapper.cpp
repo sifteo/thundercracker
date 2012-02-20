@@ -116,6 +116,11 @@ void CubeWrapper::Draw()
         case Game::STATE_INTRO:
         {
             m_intro.Draw( Game::Inst().getTimer(), m_bg1helper, m_vid, this );
+
+            //possible to be already playing in intro mode
+            if( m_intro.getState() != Intro::STATE_BALLEXPLOSION )
+                DrawGrid();
+
             m_queuedFlush = true;
             break;
         }
@@ -136,26 +141,7 @@ void CubeWrapper::Draw()
                         }
                     }
 
-					//clear out grid first (somewhat wasteful, optimize if necessary)
-                    //m_vid.clear(GemEmpty.tiles[0]);
-
-                    ASSERT( m_numQueuedClears <= NUM_ROWS * NUM_COLS && m_numQueuedClears >= 0 );
-
-                    //flush our queued clears
-                    for( int i = 0; i < m_numQueuedClears; i++ )
-                    {
-                        m_vid.BG0_drawAsset(m_queuedClears[i], GemEmpty, 0);
-                    }
-
-					//draw grid
-					for( int i = 0; i < NUM_ROWS; i++ )
-					{
-						for( int j = 0; j < NUM_COLS; j++ )
-						{
-							GridSlot &slot = m_grid[i][j];
-                            slot.Draw( m_vid, m_bg1helper, m_curFluidDir );
-						}
-					}
+                    DrawGrid();
 
                     //draw glimmer before timer
                     m_glimmer.Draw( m_bg1helper, this );
@@ -356,8 +342,43 @@ void CubeWrapper::Update(float t, float dt)
 {
     m_stateTime += dt;
 
+    for( Cube::Side i = 0; i < NUM_SIDES; i++ )
+    {
+        bool newValue = m_cube.hasPhysicalNeighborAt(i);
+        Cube::ID id = m_cube.physicalNeighborAt(i);
+
+        /*if( newValue )
+        {
+            PRINT( "we have a neighbor.  it is %d\n", id );
+        }*/
+
+        //newly neighbored
+        if( newValue )
+        {
+            if( id != m_neighbors[i] )
+            {
+                Game::Inst().setTestMatchFlag();
+                m_neighbors[i] = id - CUBE_ID_BASE;
+
+                //PRINT( "neighbor on side %d is %d", i, id );
+            }
+        }
+        else
+            m_neighbors[i] = -1;
+    }
+
     if( Game::Inst().getState() == Game::STATE_INTRO || m_state == STATE_REFILL )
     {
+        //update all dots
+        for( int i = 0; i < NUM_ROWS; i++ )
+        {
+            for( int j = 0; j < NUM_COLS; j++ )
+            {
+                GridSlot &slot = m_grid[i][j];
+                slot.Update( t );
+            }
+        }
+
         if( !m_intro.Update( dt, m_banner ) )
         {
             if( m_state == STATE_REFILL )
@@ -462,31 +483,6 @@ void CubeWrapper::Update(float t, float dt)
         {
             if( oldvel.x * m_curFluidVel.x < 0.0f || oldvel.y * m_curFluidVel.y < 0.0f )
                 Game::Inst().playSlosh();
-        }
-
-        for( Cube::Side i = 0; i < NUM_SIDES; i++ )
-        {
-            bool newValue = m_cube.hasPhysicalNeighborAt(i);
-            Cube::ID id = m_cube.physicalNeighborAt(i);
-
-            /*if( newValue )
-            {
-                PRINT( "we have a neighbor.  it is %d\n", id );
-            }*/
-
-            //newly neighbored
-            if( newValue )
-            {
-                if( id != m_neighbors[i] )
-                {
-                    Game::Inst().setTestMatchFlag();
-                    m_neighbors[i] = id - CUBE_ID_BASE;
-
-                    //PRINT( "neighbor on side %d is %d", i, id );
-                }
-            }
-            else
-                m_neighbors[i] = -1;
         }
     }
     else if( Game::Inst().getState() == Game::STATE_POSTGAME )
@@ -1901,5 +1897,28 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
         m_bg1helper.DrawText( Vec2( xOffset, yOffset ), Font, aBuf );
 
         yOffset += 2;
+    }
+}
+
+
+
+void CubeWrapper::DrawGrid()
+{
+    ASSERT( m_numQueuedClears <= NUM_ROWS * NUM_COLS && m_numQueuedClears >= 0 );
+
+    //flush our queued clears
+    for( int i = 0; i < m_numQueuedClears; i++ )
+    {
+        m_vid.BG0_drawAsset(m_queuedClears[i], GemEmpty, 0);
+    }
+
+    //draw grid
+    for( int i = 0; i < NUM_ROWS; i++ )
+    {
+        for( int j = 0; j < NUM_COLS; j++ )
+        {
+            GridSlot &slot = m_grid[i][j];
+            slot.Draw( m_vid, m_bg1helper, m_curFluidDir );
+        }
     }
 }
