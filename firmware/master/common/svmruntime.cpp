@@ -168,7 +168,7 @@ reg_t SvmRuntime::validate(uint32_t address)
         // XXX: do we evict block from flash here as well?
 
         // SUPER HACK: need to get address of currently checked out flash block
-        return static_cast<reg_t>(FlashLayer::blocks[0].address) + (address & 0x7fffffff);
+        return reinterpret_cast<reg_t>(FlashLayer::blocks[0].getData()) + (address & 0x7fffffff);
     }
     else {
         return cpu.virt2physAddr(address);
