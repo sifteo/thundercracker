@@ -28,6 +28,8 @@ namespace TotalsGame
 
 		EventHandler eventHandler;
 
+        float Coroutine(float dt);
+
 	public:
 		StingController(Game *game);
 
@@ -35,7 +37,7 @@ namespace TotalsGame
 
 		//IStateController
 		virtual void OnSetup ();
-		virtual float OnTick (float dt);
+        virtual void OnTick (float dt);
 		virtual void OnPaint (bool canvasDirty);
 		virtual void OnDispose ();
 

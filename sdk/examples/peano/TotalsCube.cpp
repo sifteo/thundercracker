@@ -340,7 +340,7 @@ namespace TotalsGame
     }
 
     void TotalsCube::EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb)
-    {
+    {return;//TODO make text work
         overlayText = text;
         overlayYTop = yTop;
         overlayYSize = ySize;

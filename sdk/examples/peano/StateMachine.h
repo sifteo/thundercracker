@@ -7,7 +7,7 @@ namespace TotalsGame
 	public:
 		virtual void OnSetup();// = 0;
 		virtual void OnDispose();// = 0;
-		virtual float OnTick(float dt);// = 0;
+        virtual void OnTick(float dt);// = 0;
 		virtual void OnPaint(bool dirty);// = 0;
 	};
 
@@ -57,9 +57,6 @@ namespace TotalsGame
 		const char *pendingTransition;
 
 		StateNode *currentState;
-
-		float nextFrameDelay;
-
 	};
 
 

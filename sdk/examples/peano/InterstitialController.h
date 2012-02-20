@@ -84,7 +84,8 @@ public:
         return -1;
     }
 
-    float OnTick (float dt) {
+    void OnTick (float dt) {
+        /*
         if (mDone) { return -1; }
         float ret = Coroutine(dt);
         if(ret == -1) {
@@ -94,6 +95,9 @@ public:
             Game::UpdateCubeViews(dt);
         }
         return ret;
+        */
+        UPDATE_CORO(Coroutine, dt);
+        Game::UpdateCubeViews(dt);
     }
 
     void OnPaint (bool canvasDirty) {

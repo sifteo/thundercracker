@@ -467,11 +467,10 @@ ChapterSelect:
     return -1;
 }
 
-float MenuController::OnTick(float dt)
+void MenuController::OnTick(float dt)
 {
-    float r = Coroutine(dt);
+    UPDATE_CORO(Coroutine, dt);
     Game::UpdateCubeViews(dt);
-    return r;
 }
 
 void MenuController::OnPaint(bool canvasDirty)

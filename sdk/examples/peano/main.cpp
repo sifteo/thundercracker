@@ -43,6 +43,7 @@ void siftmain() {
   {
 	theGame.Tick();
     System::paint();
+    //TODO ? System::paintSync();
   }
 }
 

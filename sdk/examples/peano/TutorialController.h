@@ -13,11 +13,11 @@ namespace TotalsGame {
 
 class TutorialController : public IStateController {
 
-    class ConnectTwoCubesEventHandler: public Game::NeighborEventHandler
+    class ConnectTwoCubesHorizontalEventHandler: public Game::NeighborEventHandler
     {
         TutorialController *owner;
     public:
-        ConnectTwoCubesEventHandler(TutorialController *_owner)
+        ConnectTwoCubesHorizontalEventHandler(TutorialController *_owner)
         {
             owner = _owner;
         }
@@ -25,7 +25,7 @@ class TutorialController : public IStateController {
         void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
         {
             if ((s0 == SIDE_RIGHT && s1 == SIDE_LEFT && c1 == owner->secondToken->GetCube()->id())
-                ||(s0 == SIDE_LEFT && s1 == SIDE_RIGHT && c0 == owner->secondToken->GetCube()->id()))
+                    ||(s0 == SIDE_LEFT && s1 == SIDE_RIGHT && c0 == owner->secondToken->GetCube()->id()))
             {
                 Game::GetInstance().neighborEventHandler = NULL;
                 TokenGroup *grp = TokenGroup::Connect(owner->firstToken->token, kSideToUnit[SIDE_RIGHT], owner->secondToken->token);
@@ -42,20 +42,84 @@ class TutorialController : public IStateController {
             }
         }
     };
-    ConnectTwoCubesEventHandler connectTwoCubesEventHandler;
+    ConnectTwoCubesHorizontalEventHandler connectTwoCubesHorizontalEventHandler;
 
+
+    class ConnectTwoCubesVerticalEventHandler: public Game::NeighborEventHandler
+    {
+        TutorialController *owner;
+    public:
+        ConnectTwoCubesVerticalEventHandler(TutorialController *_owner)
+        {
+            owner = _owner;
+        }
+
+        void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+        {
+            if ((s0 == SIDE_TOP && s1 == SIDE_BOTTOM && c1 == owner->secondToken->GetCube()->id())
+                    ||(s0 == SIDE_BOTTOM && s1 == SIDE_TOP && c0 == owner->secondToken->GetCube()->id()))
+            {
+                Game::GetInstance().neighborEventHandler = NULL;
+                TokenGroup *grp = TokenGroup::Connect(owner->firstToken->token, kSideToUnit[SIDE_TOP], owner->secondToken->token);
+                if (grp != NULL)
+                {
+                    owner->firstToken->WillJoinGroup();
+                    owner->secondToken->WillJoinGroup();
+                    grp->SetCurrent(grp);
+                    owner->firstToken->DidJoinGroup();
+                    owner->secondToken->DidJoinGroup();
+                }
+                //TODO redundant? firstToken.Cube.ClearEvents();
+                AudioPlayer::PlaySfx(sfx_Tutorial_Correct);
+            }
+        }
+    };
+    ConnectTwoCubesVerticalEventHandler connectTwoCubesVerticalEventHandler;
+
+    class MakeSixEventHandler: public Game::NeighborEventHandler
+    {
+        TutorialController *owner;
+    public:
+        MakeSixEventHandler(TutorialController *_owner)
+        {
+            owner = _owner;
+        }
+
+        void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+        {
+            owner->OnNeighborAdd(Game::GetCube(c0), s0, Game::GetCube(c1), s1);
+            if (!owner->firstToken->token->current->GetValue() == Fraction(6)) {
+                AudioPlayer::PlaySfx(sfx_Tutorial_Oops, false);
+                owner->narrator->SetMessage("Oops, let's try again...", NarratorView::EmoteSad);
+            }
+        }
+
+        void OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+        {
+            owner->OnNeighborRemove(Game::GetCube(c0),s0, Game::GetCube(c1), s1);
+            if (owner->firstToken->token->current == owner->firstToken->token) {
+                owner->narrator->SetMessage("Can you build the number 6?");
+            }
+        }
+    };
+    MakeSixEventHandler makeSixEventHandler;
 
 
     CORO_PARAMS;
     float remembered_t;
     Puzzle *puzzle;
     TokenView *firstToken, *secondToken;
+    float rememberedTimeout;
+    int rememberedCubeId;
+    int rememberedFinishCountdown ;
 
     NarratorView *narrator;
     Game *mGame;
 public:
     TutorialController (Game *game):
-        connectTwoCubesEventHandler(this)
+        connectTwoCubesHorizontalEventHandler(this),
+        connectTwoCubesVerticalEventHandler(this),
+        makeSixEventHandler(this)
     {
         mGame = game;
     }
@@ -90,6 +154,8 @@ public:
         static char narratorViewBuffer[sizeof(NarratorView)];
         static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
         static char tokenViewBuffer[2][sizeof(TokenView)];
+
+        const float period = 0.05f;
 
         CORO_BEGIN;
 
@@ -159,7 +225,7 @@ public:
         CORO_YIELD(3);
 
         narrator->SetMessage("Connect two Keys\nto combine them.");
-        Game::GetInstance().neighborEventHandler = &connectTwoCubesEventHandler;
+        Game::GetInstance().neighborEventHandler = &connectTwoCubesHorizontalEventHandler;
 
         while(firstToken->token->current == firstToken->token)
         {
@@ -189,264 +255,271 @@ public:
         }
         firstToken->Unlock();
         secondToken->Unlock();
+
+        Game::GetInstance().neighborEventHandler = &connectTwoCubesVerticalEventHandler;
+
+        while(firstToken->token->current == firstToken->token)
+        {
+            CORO_YIELD(0);
+        }
+
+        // flourish 2
+        CORO_YIELD(0.5f);
+        narrator->SetMessage("Good job!", NarratorView::EmoteYay);
+        CORO_YIELD(3);
+        narrator->SetMessage("See how this\ncombination equals 2-1=1.");
+        CORO_YIELD(3);
+
+        // mix up
+        narrator->SetMessage("Okay, let's mix them up a little...", NarratorView::EmoteMix01);
+        firstToken->Lock();
+        secondToken->Lock();
+        {
+            TokenGroup *grp = (TokenGroup*)firstToken->token->current;
+            delete grp;
+            firstToken->token->PopGroup();
+            secondToken->token->PopGroup();
+            firstToken->DidGroupDisconnect();
+            secondToken->DidGroupDisconnect();
+            firstToken->SetHideMode(0);
+            secondToken->SetHideMode(0);
+            firstToken->HideOps();
+            secondToken->HideOps();
+        }
+        firstToken->Unlock();
+        secondToken->Unlock();
+
+
+        // press your luck flourish
+        {
+            AudioPlayer::PlaySfx(sfx_Tutorial_Mix_Nums);
+            rememberedTimeout = period;
+            rememberedCubeId = 0;
+            remembered_t=0;
+            while(remembered_t<3.0f) {
+                remembered_t += mGame->dt;
+                rememberedTimeout -= mGame->dt;
+                while (rememberedTimeout < 0) {
+                    (rememberedCubeId==0?firstToken:secondToken)->PaintRandomNumeral();
+                    narrator->SetEmote(rememberedCubeId==0? NarratorView::EmoteMix01 : NarratorView::EmoteMix02);
+                    rememberedCubeId = (rememberedCubeId+1) % 2;
+                    rememberedTimeout += period;
+                }
+                CORO_YIELD(0);
+            }
+            firstToken->token->val = 2;
+            firstToken->token->SetOpRight(OpMultiply);
+            secondToken->token->val = 3;
+            secondToken->token->SetOpBottom(OpDivide);
+            // thread in the real numbers
+            rememberedFinishCountdown = 2;
+            while(rememberedFinishCountdown > 0) {
+                CORO_YIELD(0);
+                rememberedTimeout -= mGame->dt;
+                while(rememberedFinishCountdown > 0 && rememberedTimeout < 0) {
+                    --rememberedFinishCountdown;
+                    (rememberedCubeId==1?firstToken:secondToken)->ResetNumeral();
+                    rememberedCubeId++;
+                    rememberedTimeout += period;
+                }
+            }
+        }
+
+        // can you make 42?
+        narrator->SetMessage("Can you build the number 6?");
+
+        mGame->neighborEventHandler = &makeSixEventHandler;
+
+
+        while(firstToken->token->current->GetValue() != Fraction(6))
+        {
+            CORO_YIELD(0);
+        }
+        AudioPlayer::PlaySfx(sfx_Tutorial_Correct);
+        AudioPlayer::PlaySfx(sfx_Tutorial_Oops, false);
+        Game::ClearCubeEventHandlers();
+        CORO_YIELD(0.5f);
+        narrator->SetMessage("Radical!", NarratorView::EmoteYay);
+        CORO_YIELD(3.5f);
 #if 0
-// wait for neighbor
-firstToken.Cube.NeighborAddEvent += (c, side, neighbor, neighborSide) => {
-        if (side == Cube.Side.TOP && neighborSide == Cube.Side.BOTTOM && neighbor == secondToken.Cube) {
-        firstToken.Cube.ClearEvents();
-var grp = TokenGroup.Connect(secondToken.token, Int2.Down, firstToken.token);
-if (grp != null) {
-    foreach(var token in grp.Tokens) { token.GetView().WillJoinGroup(); }
-    grp.SetCurrent(grp);
-    foreach(var token in grp.Tokens) { token.GetView().DidJoinGroup(); }
-}
-firstToken.Cube.ClearEvents();
-Jukebox.Sfx("PV_tutorial_correct");
-}
-};
-while(firstToken.token.current == firstToken.token) { yield return 0; }
+        // close shutters
+        narrator.SetMessage("");
+        yield return 1f;
+        foreach(var dt in mGame.CubeSet[2].CloseShutters()) { yield return dt; }
+        new BlankView(secondToken.Cube);
+        foreach(var dt in mGame.CubeSet[1].CloseShutters()) { yield return dt; }
+        new BlankView(firstToken.Cube);
+        yield return 1f;
+        narrator.SetMessage("Keep combining to build even more numbers!", "yay");
+        yield return 2f;
+        foreach(var dt in mGame.CubeSet[1].OpenShutters("tutorial_groups")) { yield return dt; }
+        new BlankView(mGame.CubeSet[1], "tutorial_groups");
+        yield return 5f;
+        narrator.SetMessage("");
+        yield return 1f;
+        foreach(var dt in mGame.CubeSet[1].CloseShutters()) { yield return dt; }
+        new BlankView(mGame.CubeSet[1]);
+        yield return 1f;
 
-// flourish 2
-yield return 0.5f;
-narrator.SetMessage("Good job!", "yay");
-yield return 3f;
-narrator.SetMessage("See how this combination equals 2-1=1.");
-yield return 3f;
+        narrator.SetMessage("If you get stuck, you can shake for a hint.");
+        puzzle.target = firstToken.token.current as TokenGroup;
+        firstToken.token.PopGroup();
+        secondToken.token.PopGroup();
+        firstToken.DidGroupDisconnect();
+        secondToken.DidGroupDisconnect();
+        yield return 2f;
+        foreach(var dt in mGame.CubeSet[1].OpenShutters("background")) { yield return dt; }
+        firstToken.Cube = mGame.CubeSet[1];
+        yield return 0.1f;
+        foreach(var dt in mGame.CubeSet[2].OpenShutters("background")) { yield return dt; }
+        secondToken.Cube = mGame.CubeSet[2];
+        yield return 1f;
 
-// mix up
-narrator.SetMessage("Okay, let's mix them up a little...", "mix01");
-firstToken.Lock();
-secondToken.Lock();
-{
-var grp = firstToken.token.current as TokenGroup;
-firstToken.token.PopGroup();
-secondToken.token.PopGroup();
-foreach(var token in grp.Tokens) { token.GetView().DidGroupDisconnect(); }
-firstToken.SetHideMode(0);
-secondToken.SetHideMode(0);
-firstToken.HideOps();
-secondToken.HideOps();
-}
-firstToken.Unlock();
-secondToken.Unlock();
-// press your luck flourish
-{
-Jukebox.Sfx("PV_tutorial_mix_nums");
-var period = 0.05f;
-var timeout = period;
-int cubeId = 0;
-var t=0f;
-while(t<3f) {
-    t += mGame.dt;
-    timeout -= mGame.dt;
-    while (timeout < 0f) {
-        (cubeId==0?firstToken:secondToken).PaintRandomNumeral();
-        narrator.SetEmote("mix0" + (cubeId+1));
-        cubeId = (cubeId+1) % 2;
-        timeout += period;
-    }
-    yield return 0f;
-}
-firstToken.token.val = 2;
-firstToken.token.OpRight = Op.Multiply;
-secondToken.token.val = 3;
-secondToken.token.OpBottom = Op.Divide;
-// thread in the real numbers
-int finishCountdown = 2;
-while(finishCountdown > 0) {
-    yield return 0f;
-    timeout -= mGame.dt;
-    while(finishCountdown > 0 && timeout < 0f) {
-        --finishCountdown;
-        (cubeId==1?firstToken:secondToken).ResetNumeral();
-        cubeId++;
-        timeout += period;
-    }
-}
-}
+        narrator.SetMessage("Try it out!  Shake one!");
+        while(!(firstToken.Cube.IsShaking || secondToken.Cube.IsShaking)) {
+            yield return 0f;
+        }
+        yield return 0.5f;
+        narrator.SetMessage("Nice!", "yay");
+        yield return 3f;
+        narrator.SetMessage("Careful! You only get a few hints!");
+        yield return 3f;
+        narrator.SetMessage("If you forget the target, press the screen.");
+        yield return 2f;
+        narrator.SetMessage("Try it out!  Press one!");
+        while(!(firstToken.Cube.ButtonIsPressed || secondToken.Cube.ButtonIsPressed)) {
+            yield return 0;
+        }
+        yield return 0.5f;
+        narrator.SetMessage("Great!", "yay");
+        yield return 3f;
+        firstToken.token.puzzle.target = null;
 
-// can you make 42?
-narrator.SetMessage("Can you build the number 6?");
-
-mGame.CubeSet.NeighborAddEvent += delegate(Cube c1, Cube.Side side1, Cube c2, Cube.Side side2) {
-        OnNeighborAdd(c1, side1, c2, side2);
-if (!firstToken.token.current.Value.Equals(new Fraction(6))) {
-    Jukebox.Sfx("PV_tutorial_oops", false);
-    narrator.SetMessage("Oops, let's try again...", "sad");
-}
-};
-mGame.CubeSet.NeighborRemoveEvent += delegate(Cube c1, Cube.Side side1, Cube c2, Cube.Side side2) {
-        OnNeighborRemove(c1, side1, c2, side2);
-if (firstToken.token.current == firstToken.token) {
-    narrator.SetMessage("Can you build the number 6?");
-}
-};
-while(!firstToken.token.current.Value.Equals(new Fraction(6))) {
-    yield return 0;
-}
-Jukebox.Sfx("PV_tutorial_correct");Jukebox.Sfx("PV_tutorial_oops", false);
-mGame.CubeSet.ClearEvents();
-yield return 0.5f;
-narrator.SetMessage("Radical!", "yay");
-yield return 3.5f;
-
-// close shutters
-narrator.SetMessage("");
-yield return 1f;
-foreach(var dt in mGame.CubeSet[2].CloseShutters()) { yield return dt; }
-new BlankView(secondToken.Cube);
-foreach(var dt in mGame.CubeSet[1].CloseShutters()) { yield return dt; }
-new BlankView(firstToken.Cube);
-yield return 1f;
-narrator.SetMessage("Keep combining to build even more numbers!", "yay");
-yield return 2f;
-foreach(var dt in mGame.CubeSet[1].OpenShutters("tutorial_groups")) { yield return dt; }
-new BlankView(mGame.CubeSet[1], "tutorial_groups");
-yield return 5f;
-narrator.SetMessage("");
-yield return 1f;
-foreach(var dt in mGame.CubeSet[1].CloseShutters()) { yield return dt; }
-new BlankView(mGame.CubeSet[1]);
-yield return 1f;
-
-narrator.SetMessage("If you get stuck, you can shake for a hint.");
-puzzle.target = firstToken.token.current as TokenGroup;
-firstToken.token.PopGroup();
-secondToken.token.PopGroup();
-firstToken.DidGroupDisconnect();
-secondToken.DidGroupDisconnect();
-yield return 2f;
-foreach(var dt in mGame.CubeSet[1].OpenShutters("background")) { yield return dt; }
-firstToken.Cube = mGame.CubeSet[1];
-yield return 0.1f;
-foreach(var dt in mGame.CubeSet[2].OpenShutters("background")) { yield return dt; }
-secondToken.Cube = mGame.CubeSet[2];
-yield return 1f;
-
-narrator.SetMessage("Try it out!  Shake one!");
-while(!(firstToken.Cube.IsShaking || secondToken.Cube.IsShaking)) {
-    yield return 0f;
-}
-yield return 0.5f;
-narrator.SetMessage("Nice!", "yay");
-yield return 3f;
-narrator.SetMessage("Careful! You only get a few hints!");
-yield return 3f;
-narrator.SetMessage("If you forget the target, press the screen.");
-yield return 2f;
-narrator.SetMessage("Try it out!  Press one!");
-while(!(firstToken.Cube.ButtonIsPressed || secondToken.Cube.ButtonIsPressed)) {
-    yield return 0;
-}
-yield return 0.5f;
-narrator.SetMessage("Great!", "yay");
-yield return 3f;
-firstToken.token.puzzle.target = null;
-
-foreach(var dt in mGame.CubeSet[2].CloseShutters()) { yield return dt; }
-new BlankView(secondToken.Cube);
-foreach(var dt in mGame.CubeSet[1].CloseShutters()) { yield return dt; }
-new BlankView(firstToken.Cube);
+        foreach(var dt in mGame.CubeSet[2].CloseShutters()) { yield return dt; }
+        new BlankView(secondToken.Cube);
+        foreach(var dt in mGame.CubeSet[1].CloseShutters()) { yield return dt; }
+        new BlankView(firstToken.Cube);
 
 
-// transition out narrator
-narrator.SetMessage("Let's try it for real, now!", "wave");
-yield return 3f;
-narrator.SetMessage("Remember, you need to use every Key!");
-yield return 3f;
-narrator.SetMessage("Press-and-hold a cube to access the main menu.");
-yield return 3f;
-narrator.SetMessage("Good luck!", "wave");
-yield return 3f;
+        // transition out narrator
+        narrator.SetMessage("Let's try it for real, now!", "wave");
+        yield return 3f;
+        narrator.SetMessage("Remember, you need to use every Key!");
+        yield return 3f;
+        narrator.SetMessage("Press-and-hold a cube to access the main menu.");
+        yield return 3f;
+        narrator.SetMessage("Good luck!", "wave");
+        yield return 3f;
 
-Jukebox.PlayShutterClose();
-for(var t=0f; t<kTransitionDuration; t+=mGame.dt) {
-    narrator.SetTransitionAmount(1f-t/kTransitionDuration);
-    yield return 0f;
-}
-new BlankView(narrator.Cube);
-yield return 0.5f;
+        Jukebox.PlayShutterClose();
+        for(var t=0f; t<kTransitionDuration; t+=mGame.dt) {
+            narrator.SetTransitionAmount(1f-t/kTransitionDuration);
+            yield return 0f;
+        }
+        new BlankView(narrator.Cube);
+        yield return 0.5f;
 
-mGame.saveData.CompleteTutorial();
-if (mGame.currentPuzzle == null) {
-    if (!mGame.saveData.AllChaptersSolved) {
-        mGame.currentPuzzle = mGame.saveData.FindNextPuzzle();
-    } else {
-        mGame.currentPuzzle = mGame.database.Chapters[0].Puzzles[0];
-    }
-}
+        mGame.saveData.CompleteTutorial();
+        if (mGame.currentPuzzle == null) {
+            if (!mGame.saveData.AllChaptersSolved) {
+                mGame.currentPuzzle = mGame.saveData.FindNextPuzzle();
+            } else {
+                mGame.currentPuzzle = mGame.database.Chapters[0].Puzzles[0];
+            }
+        }
 
 #endif
 
-narrator->SetMessage("");
-mGame->sceneMgr.QueueTransition("Next");
+        narrator->SetMessage("");
+        mGame->sceneMgr.QueueTransition("Next");
 
-CORO_END;
+        CORO_END;
 
-return -1;
+        return -1;
 
-}
-
-void OnNeighborAdd(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns) {
-    /* TODO
-    // validate args
-    var v = c.GetTokenView();
-    var nv = nc.GetTokenView();
-    if (v == null || nv == null) { return; }
-    if (s != CubeHelper.InvertSide(ns)) { return; }
-    if (s == Cube.Side.LEFT || s == Cube.Side.TOP) {
-        OnNeighborAdd(nc, ns, c, s);
-        return;
     }
-    var t = v.token;
-    var nt = nv.token;
-    // resolve solution
-    if (t.current != nt.current) {
-        var grp = TokenGroup.Connect(t.current, t, Int2.Side(s), nt.current, nt);
-        if (grp != null) {
-            foreach(var token in grp.Tokens) { token.GetView().WillJoinGroup(); }
-            grp.SetCurrent(grp);
-            foreach(var token in grp.Tokens) { token.GetView().DidJoinGroup(); }
+
+    void OnNeighborAdd(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns) {
+
+        // used to make sure token views attached to cubes.
+        // now this function is only called from one place (makesixeventhandler)
+        // and we know that if its cube 1 and 2 they have token views
+
+        if(s != ((ns+2)%4))
+        {
+            //opposing faces check
+            return;
         }
+
+        if (s == SIDE_LEFT || s == SIDE_TOP) {
+            OnNeighborAdd(nc, ns, c, s);
+            return;
+        }
+
+        if(!((c->id() == 1 || c->id() == 2) && (nc->id() == 1 || nc->id() == 2)))
+        {
+            //cubes 1 and 2 check
+            return;
+        }
+
+
+        TokenView *v = (TokenView*)c->GetView();
+        TokenView *nv = (TokenView*)nc->GetView();
+
+        Token *t = v->token;
+        Token *nt = nv->token;
+        // resolve solution
+        if (t->current != nt->current) {
+            TokenGroup *grp = TokenGroup::Connect(t, kSideToUnit[s], nt);
+            if (grp != NULL) {
+                v->WillJoinGroup();
+                nv->WillJoinGroup();
+                grp->SetCurrent(grp);
+                v->DidJoinGroup();
+                nv->DidJoinGroup();
+            }
+        }
+        //AudioPlayer::PlayNeighborAdd();
     }
-    //Jukebox.PlayNeighborAdd();
-*/
-}
 
-void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns) {
-    /* TODO
-    // validate args
-    var v = c.userData as TokenView;
-    var nv = nc.userData as TokenView;
-    if (v == null || nv == null) { return; }
-    var t = v.token;
-    var nt = nv.token;
-    // resolve soln
-    if (t.current == null || nt.current == null || t.current != nt.current) {
-        return;
+    void OnNeighborRemove(TotalsCube *c, Cube::Side s, TotalsCube *nc, Cube::Side ns) {
+
+        // validate args
+        if(!((c->id() == 1 || c->id() == 2) && (nc->id() == 1 || nc->id() == 2)))
+        {
+            //cubes 1 and 2 check
+            return;
+        }
+
+
+        Token *t = firstToken->token;
+        Token *nt = secondToken->token;
+        // resolve soln
+        if (t->current == NULL || nt->current == NULL || t->current != nt->current) {
+            return;
+        }
+        TokenGroup *grp = (TokenGroup*)t->current;
+        t->PopGroup();
+        nt->PopGroup();
+        firstToken->DidGroupDisconnect();
+        secondToken->DidGroupDisconnect();
+        delete grp;
+        //Jukebox.PlayNeighborRemove();
     }
-    var grp = t.current as TokenGroup;
-    t.PopGroup();
-    nt.PopGroup();
-    foreach(var token in grp.Tokens) { token.GetView().DidGroupDisconnect(); }
-    //Jukebox.PlayNeighborRemove();
-*/
-}
 
-float OnTick (float dt) {
-    float ret = Coroutine(dt);
-    Game::UpdateCubeViews(dt);
-    return ret;
-}
+    void OnTick (float dt) {
+        UPDATE_CORO(Coroutine, dt);
+        Game::UpdateCubeViews(dt);
+    }
 
-void OnPaint (bool canvasDirty) {
-    if (canvasDirty) { Game::PaintCubeViews(); }
-}
+    void OnPaint (bool canvasDirty) {
+        if (canvasDirty) { Game::PaintCubeViews(); }
+    }
 
-void OnDispose () {
-    Game::ClearCubeEventHandlers();
-    Game::ClearCubeViews();
-}
+    void OnDispose () {
+        Game::ClearCubeEventHandlers();
+        Game::ClearCubeViews();
+    }
 };
 }
 

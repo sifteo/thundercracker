@@ -79,7 +79,7 @@ private:
     float Coroutine(float dt);
 
 
-    float OnTick(float dt);
+    void OnTick(float dt);
 
     void OnPaint(bool canvasDirty);
 

@@ -166,7 +166,7 @@ namespace TotalsGame
 			.Transition("isover", "Yes", "menu")
 			.Transition("isover", "No", "interstitial")
 
-            .SetState("menu");//sting");
+            .SetState("tutorial");//sting");
 
 	}
 
@@ -206,8 +206,6 @@ namespace TotalsGame
         }
 
 		mDirty = false;
-
-        //TODO System::paintSync();
 	}
 
 	bool Game::IsPlayingRandom() 

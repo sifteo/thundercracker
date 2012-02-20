@@ -57,7 +57,7 @@ public:
     // CLEANUP
     //-------------------------------------------------------------------------
 
-    virtual float OnTick (float dt);
+    virtual void OnTick (float dt);
 
     virtual void OnPaint (bool canvasDirty);
 

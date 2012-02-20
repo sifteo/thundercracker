@@ -37,6 +37,10 @@ namespace TotalsGame
 		mDigitId = -1;
 		mHideMask = 0;
         useAccentDigit = false;
+
+        if (showDigitOnInit) { renderedDigit = token->val; }
+        if (!showDigitOnInit) { mDigitId = 0; }
+
 	}
 
 	void TokenView::HideOps() 
@@ -50,7 +54,8 @@ namespace TotalsGame
 		int d = mDigitId;
 		while (d == mDigitId) { mDigitId = Game::rand.randrange(9) + 1; }
         useAccentDigit = false;
-        PaintDigit();
+        renderedDigit = mDigitId;
+        //PaintDigit();
 
 		//Cube.Paint();
 	}
@@ -59,6 +64,7 @@ namespace TotalsGame
 	{
         if (renderedDigit != token->val) {
             useAccentDigit = false;
+            renderedDigit = token->val;
             PaintDigit();
 		}
 		mDigitId = -1;
@@ -290,6 +296,7 @@ namespace TotalsGame
         {
             uint8_t masks[4] = {0};
             useAccentDigit = true;
+            renderedDigit = token->val;
             for(int i=mCurrentExpression->GetDepth(); i>=0; --i)
             {
                 int connCount = 0;
@@ -305,14 +312,16 @@ namespace TotalsGame
 
             PaintCenterCap(masks);
         }
-
-
         else
         {
+            //used to set sprite.  moved into mDigitId !=- 1 just below
+            //so random numeral can render
             useAccentDigit = false;
         }
 		if (mDigitId == -1) 
-		{
+		{            
+            renderedDigit = token->val;
+
 			if (NotHiding(SIDE_TOP) && topStatus == SideStatusConnected) { PaintTop(true); }
 			if (NotHiding(SIDE_LEFT) && leftStatus == SideStatusConnected) { PaintLeft(true); }
 			if (NotHiding(SIDE_BOTTOM) && bottomStatus == SideStatusConnected) { PaintBottom(true); }
@@ -537,7 +546,7 @@ namespace TotalsGame
 
         };
 
-        int digit = token->val;
+        int digit = renderedDigit;//token->val;
         if(digit >=0 && digit <= 9)
         {
             int index = useAccentDigit? digit + 10 : digit;

@@ -322,15 +322,14 @@ void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube:
 // CLEANUP
 //-------------------------------------------------------------------------
 
-float PuzzleController::OnTick (float dt)
+void PuzzleController::OnTick (float dt)
 {
-    if (mHasTransitioned) { return -1; }
+    if (mHasTransitioned) { return; }
     /* TODO			if (!IsPaused && mRemoveEventBuffer.Count > 0) {
             ProcessRemoveEventBuffer();
             } */
-    float rval = TheBigCoroutine(dt);
+    UPDATE_CORO(TheBigCoroutine, dt);
     Game::UpdateCubeViews(dt);
-    return rval;
 }
 
 void PuzzleController::OnPaint (bool canvasDirty)
