@@ -296,7 +296,6 @@ void CubeWrapper::LoadAssets()
     
     VidMode_BG0_ROM rom(mCube.vbuf);
     rom.init();
-    
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -327,6 +326,7 @@ void CubeWrapper::Enable(Cube::ID cubeId, unsigned int buddyId)
     
     mCube.enable(cubeId);
     
+    // This ensure proper video state is set, even if we have kLoadAssets = false.
     Video().setWindow(0, VidMode::LCD_height);
     
     mEnabled = true;
