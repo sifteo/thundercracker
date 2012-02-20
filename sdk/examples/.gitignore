@@ -1,16 +1,6 @@
 *~
 *.o
-*.ll
-*.bc
+*.elf
 *.gen.h
 *.gen.cpp
 assets.html
-*.sim
-*.sim.exe
-*.stm32
-*.bin
-*.map
-*.user
-*.config
-*.bc
-*.ll

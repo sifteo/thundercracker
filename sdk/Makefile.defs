@@ -1,45 +1,32 @@
+# Tool definitions
 include $(TC_DIR)/Makefile.platform
-CC := $(LLVM_BIN)/clang
-LD := $(LLVM_BIN)/llvm-ld
-
 SDK_DIR := $(TC_DIR)/sdk
 STIR := $(TC_DIR)/stir/stir$(BIN_EXT)
+LD := $(TC_DIR)/vm/slinky$(BIN_EXT)
+CC := $(LLVM_BIN)/clang
 
-BIN := runtime.bc
+BIN := program.elf
 ASSETS = assets
 
 GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html asegment.bin
 CDEPS += $(SDK_DIR)/include/sifteo/*.h $(STIR)
 CFLAGS += -I$(SDK_DIR)/include
 
-# Compile for a minimal environment, but allow unresolved symbols
-CFLAGS += -ffreestanding -emit-llvm
-LDFLAGS += -strip-all -link-as-library
-
-# Link-time optimization passes
-LDFLAGS += \
-	-targetlibinfo -no-aa -tbaa -basicaa -preverify -domtree \
-	-verify -lowersetjmp -globalopt -ipsccp -deadargelim -instcombine \
-	-simplifycfg -basiccg -prune-eh -inline -functionattrs -argpromotion \
-	-scalarrepl-ssa -domtree -early-cse -simplify-libcalls -lazy-value-info \
-	-jump-threading -correlated-propagation -simplifycfg -instcombine \
-	-tailcallelim -simplifycfg -reassociate -domtree -loops -loop-simplify \
-	-lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine \
-	-scalar-evolution -loop-simplify -lcssa -iv-users -indvars -loop-idiom \
-	-loop-deletion -loop-unroll -instcombine -memdep -gvn -constprop \
-	-loweratomic -lowerswitch -mergefunc -mem2reg -memdep -memcpyopt \
-	-sccp -instcombine -lazy-value-info -jump-threading -correlated-propagation \
-	-domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes \
-	-print-used-types -globaldce -constmerge -preverify -domtree -verify
+# Compile for a minimal environment, generate LLVM object files
+CFLAGS += -ffreestanding -emit-llvm -m32 -fno-stack-protector
 
 # Disable unwanted warnings, but be generally pretty pedantic
 CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu
 
+# Disable unwanted C++ features
+CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+
 # generate dependency files
 CFLAGS += -MD -MP
 
-# Disable unwanted C++ features
-CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
+# Debug symbols
+CFLAGS += -g
+LDFLAGS += -g
 
 # C++ inherits CFLAGS too
 CCFLAGS += $(CFLAGS)
