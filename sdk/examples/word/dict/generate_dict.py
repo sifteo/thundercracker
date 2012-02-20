@@ -16,7 +16,7 @@ def find_anagrams(string, dictionary, letters_per_cube):
     if letters_per_cube == 1:
         for k in range(len(string) + 1):
             if k > 1:
-                for subword in permutations(string, k):			
+                for subword in permutations(string, k):            
                     sw = ''.join(subword).upper()
                     if sw in dictionary and not sw in words:
                         # Check if it's a max lengthword and a bad word
@@ -62,7 +62,7 @@ def find_anagrams(string, dictionary, letters_per_cube):
                         #print cube_ltrs
                         # for all the permuations of cube sets of letters
                         #print "ceil " + str(math.ceil(k/letters_per_cube))
-                        for cube_ltr_set in permutations(cube_ltrs, math.ceil(k/letters_per_cube)):			
+                        for cube_ltr_set in permutations(cube_ltrs, math.ceil(k/letters_per_cube)):            
                             #if k/letters_per_cube == 3 and len(string) == 9:
                             #print cube_ltr_set
                             # form the padded_string
@@ -92,7 +92,7 @@ def find_anagrams(string, dictionary, letters_per_cube):
                 word_list_leading_spaces[string] = True
                 #print word_list_leading_spaces
             words = padded_string_anagrams_dict[max_anagram_padded_string]
-								
+                                
     #print string
     #if len(string) == 9:
      #   print string +": " + str(words)
@@ -152,35 +152,52 @@ def generate_dict():
     max_anagrams = 0
     word_list_used = {}
     letters_per_cube = [1, 1, 1, 2, 2, 2, 3, 3, 3]
-    min_anagrams = [999, 999, 1, 999, 2, 2, 2, 2, 2]	
+    min_anagrams = [999, 999, 1, 999, 2, 2, 2, 2, 2]    
 
-	
-	# test code
+    
+    # test code
     #word = "DANCE"
     #find_anagrams(word, dictionary, letters_per_cube[len(word) - 1])
     #return
-	
-    for word in word_list:#dictionary.keys(): #word_list:#
-        if len(word) in seed_word_lens:
+
+    puzzles = []
+    fi = open("puzzles.txt", "r")
+    for line in fi:
+        puzzles.append(line.strip().upper())
+    fi.close()
+    print "puzzles file: " + str(puzzles)
+
+    puzzles_to_use = word_list#dictionary.keys(): #word_list:#
+    skip_tests = False
+    sort_puzzles = True
+    if len(puzzles) > 0:
+        puzzles_to_use = puzzles
+        skip_tests = True
+        sort_puzzles = False
+        print puzzles
+		
+    
+    for word in puzzles_to_use:
+        if skip_tests or len(word) in seed_word_lens:
             anagrams = find_anagrams(word, dictionary, letters_per_cube[len(word) - 1])
             #min_anagrams = [999, 999, 4, 15, 25, 25]
             #print "checking word " + word
-            if len(anagrams) >= min_anagrams[len(word) - 1]:
+            if skip_tests or len(anagrams) >= min_anagrams[len(word) - 1]:
                 #print word + " " + str(anagrams)
                 num_seed_repeats = 0
                 # skip it if a pre-existing seed word has the same anagram set 
                 bad = False
                 num_nonbonus_anagrams = 0
                 for w in anagrams:
-                    if len(w) == len(word) and w.upper() in word_list_used.keys():
+                    if not skip_tests and len(w) == len(word) and w.upper() in word_list_used.keys():
                         num_seed_repeats += 1
                         break
-                    if w in bad_words.keys():
+                    if not skip_tests and w in bad_words.keys():
                         bad = True
                         break
                     if w in word_list:
                         num_nonbonus_anagrams += 1
-                if num_seed_repeats == 0 and not bad and num_nonbonus_anagrams >= min_nonbonus_anagrams:
+                if skip_tests or (num_seed_repeats == 0 and not bad and num_nonbonus_anagrams >= min_nonbonus_anagrams):
                     #print word + ": " + str(len(anagrams))
                     word_list_used[word.upper()] = len(anagrams) - num_nonbonus_anagrams
                     num_anagrams = len(anagrams)
@@ -199,6 +216,7 @@ def generate_dict():
     sorted_output_dict = output_dictionary.keys()
     sorted_output_dict.sort()
     print "output dict will have " + str(len(sorted_output_dict))
+    print "******* wlu: " + str(word_list_used)
     
     fi = open("../PrototypeWordListData.h", "w")
     fi.write("#include <sifteo.h>\n\n")
@@ -226,9 +244,21 @@ def generate_dict():
     fi.close()
     
     # sort word list used by value numeric (keys by values in dict)
-    sorted_word_list_used = sorted(word_list_used.iteritems(), key=operator.itemgetter(1), reverse=False)    
+    if sort_puzzles:
+        sorted_word_list_used = sorted(word_list_used.iteritems(), key=operator.itemgetter(1), reverse=False)    
+    else:
+        sorted_word_list_used = []
+        print "******* wlu: " + str(word_list_used)
+        for w in puzzles_to_use:
+            print "puzzle: " + w
+            if w in word_list_used.keys():
+                sorted_word_list_used.append((w,word_list_used[w]))
+        #sorted_word_list_used = list(word_list_used.iteritems())    
+        print "swlu: " + str(sorted_word_list_used)
+        #print list(word_list_used.iteritems())    
+
     #print sorted_word_list_used
-	# TODO pack puzzles somehow
+    # TODO pack puzzles somehow
     fi = open("../DictionaryData.h", "w")
     fi.write("// This file is autogenerated from dict/generate_dict.py\n\n")
     num_puzzles = 0
@@ -329,7 +359,7 @@ def generate_dict():
     max_rounds = 5
     dict_len = len(output_dictionary.keys())
     print dict_len
-    cdll.LoadLibrary("libc.dylib") # doctest: +LINUX	
+    cdll.LoadLibrary("libc.dylib") # doctest: +LINUX    
     libc = CDLL("libc.dylib")     # doctest: +LINUX
     #libc = cdll.msvcrt # doctest: +WINDOWS
     while pick_length <= 5:

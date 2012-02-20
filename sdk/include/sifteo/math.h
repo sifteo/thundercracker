@@ -376,6 +376,13 @@ float inline fmodf(float a, float b)
     return _SYS_fmodf(a, b);
 }
 
+float inline fabs(float a)
+{
+    if (a < 0)
+        return -a;
+    return a;
+}
+
 
 /*
  * Trigonometry
