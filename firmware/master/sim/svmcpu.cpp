@@ -1,41 +1,22 @@
-#include "svm.h"
-#include "elfdefs.h"
-#include "flashlayer.h"
-#include "svmutils.h"
-#include "svmvalidator.h"
+
+#include "svmcpu.h"
+#include "svmruntime.h"
+#include "sifteo/macros.h"
 
 #include <string.h>
 
-SvmProgram::SvmProgram()
+void SvmCpu::init(SvmRuntime *runtime)
 {
+    this->runtime = runtime;
+    memset(regs, 0, sizeof(regs));
+    cpsr = 0;
 }
 
-void SvmProgram::run(uint16_t appId)
+void SvmCpu::run()
 {
-    currentAppPhysAddr = 0;  // TODO: look this up via appId
-    if (!loadElfFile(currentAppPhysAddr, 12345))
-        return;
-
-    LOG(("loaded. entry: 0x%x text start: 0x%x\n", progInfo.entry, progInfo.textRodata.start));
-
-    memset(regs, 0, sizeof(regs));  // zero out general purpose regs
-    cpsr = 0;
-
-    unsigned entryPoint = progInfo.textRodata.start + progInfo.entry;
-    if (!FlashLayer::getRegion(entryPoint, FlashLayer::BLOCK_SIZE, &flashRegion)) {
-        LOG(("failed to get entry block\n"));
-        return;
-    }
-
-    // TODO: This actually needs to be like a call SVC, not just a branch
-    regs[REG_PC] = reinterpret_cast<reg_t>(flashRegion.data())
-        + (progInfo.textRodata.vaddr & 0xFFFFFF);
-
-    unsigned size = SvmValidator::validBytes(flashRegion.data(), flashRegion.size());
-
     for (;;) {
         uint16_t instr = fetch();
-        if (Svm::instructionSize(instr) == Svm::InstrBits16) {
+        if (instructionSize(instr) == InstrBits16) {
             execute16(instr);
         }
         else {
@@ -45,13 +26,28 @@ void SvmProgram::run(uint16_t appId)
     }
 }
 
+reg_t SvmCpu::reg(uint8_t r) const
+{
+    return regs[r];
+}
+
+void SvmCpu::setReg(uint8_t r, uint32_t val)
+{
+    regs[r] = val;
+}
+
+reg_t SvmCpu::userRam() const
+{
+    return reinterpret_cast<reg_t>(&mem);
+}
+
 /*
     Fetch the next instruction.
     We can return 16bit values unconditionally, since all our instructions are Thumb,
     and the first nibble of a 32-bit instruction must be checked regardless
     in order to determine its bitness.
 */
-uint16_t SvmProgram::fetch()
+uint16_t SvmCpu::fetch()
 {
     uint16_t *tst = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
@@ -64,14 +60,14 @@ uint16_t SvmProgram::fetch()
     LOG((" | r8=%p r9=%p sp=%p\n",
         (void*)regs[8], (void*)regs[9], (void*)regs[REG_SP]));
 #endif
-    
+
     regs[REG_PC] += sizeof(uint16_t);
     return *tst;
 }
 
-void SvmProgram::execute16(uint16_t instr)
+void SvmCpu::execute16(uint16_t instr)
 {
-    if ((instr & Svm::AluMask) == Svm::AluTest) {
+    if ((instr & AluMask) == AluTest) {
         // lsl, lsr, asr, add, sub, mov, cmp
         // take bits [13:11] to group these
         uint8_t prefix = (instr >> 11) & 0x7;
@@ -117,7 +113,7 @@ void SvmProgram::execute16(uint16_t instr)
         }
         ASSERT(0 && "unhandled ALU instruction!");
     }
-    if ((instr & Svm::DataProcMask) == Svm::DataProcTest) {
+    if ((instr & DataProcMask) == DataProcTest) {
         uint8_t opcode = (instr >> 6) & 0xf;
         switch (opcode) {
         case 0:  emulateANDReg(instr); return;
@@ -138,7 +134,7 @@ void SvmProgram::execute16(uint16_t instr)
         case 15: emulateMVNReg(instr); return;
         }
     }
-    if ((instr & Svm::MiscMask) == Svm::MiscTest) {
+    if ((instr & MiscMask) == MiscTest) {
         uint8_t opcode = (instr >> 5) & 0x7f;
         if ((opcode & 0x78) == 0x2) {   // bits [6:3] of opcode identify this group
             switch (opcode & 0x6) {     // bits [2:1] of the opcode identify the instr
@@ -149,15 +145,15 @@ void SvmProgram::execute16(uint16_t instr)
             }
         }
     }
-    if ((instr & Svm::SvcMask) == Svm::SvcTest) {
+    if ((instr & SvcMask) == SvcTest) {
         emulateSVC(instr);
         return;
     }
-    if ((instr & Svm::PcRelLdrMask) == Svm::PcRelLdrTest) {
+    if ((instr & PcRelLdrMask) == PcRelLdrTest) {
         emulateLDRLitPool(instr);
         return;
     }
-    if ((instr & Svm::SpRelLdrStrMask) == Svm::SpRelLdrStrTest) {
+    if ((instr & SpRelLdrStrMask) == SpRelLdrStrTest) {
         uint16_t isLoad = instr & (1 << 11);
         if (isLoad)
             emulateLDRSPImm(instr);
@@ -165,23 +161,23 @@ void SvmProgram::execute16(uint16_t instr)
             emulateSTRSPImm(instr);
         return;
     }
-    if ((instr & Svm::SpRelAddMask) == Svm::SpRelAddTest) {
+    if ((instr & SpRelAddMask) == SpRelAddTest) {
         emulateADDSpImm(instr);
         return;
     }
-    if ((instr & Svm::UncondBranchMask) == Svm::UncondBranchTest) {
+    if ((instr & UncondBranchMask) == UncondBranchTest) {
         emulateB(instr);
         return;
     }
-    if ((instr & Svm::CompareBranchMask) == Svm::CompareBranchTest) {
+    if ((instr & CompareBranchMask) == CompareBranchTest) {
         emulateCBZ_CBNZ(instr);
         return;
     }
-    if ((instr & Svm::CondBranchMask) == Svm::CondBranchTest) {
+    if ((instr & CondBranchMask) == CondBranchTest) {
         emulateCondB(instr);
         return;
     }
-    if (instr == Svm::Nop) {
+    if (instr == Nop) {
         // nothing to do
         return;
     }
@@ -191,39 +187,39 @@ void SvmProgram::execute16(uint16_t instr)
     ASSERT(0 && "unhandled instruction group!");
 }
 
-void SvmProgram::execute32(uint32_t instr)
+void SvmCpu::execute32(uint32_t instr)
 {
-    if ((instr & Svm::StrMask) == Svm::StrTest) {
+    if ((instr & StrMask) == StrTest) {
         emulateSTR(instr);
         return;
     }
-    if ((instr & Svm::StrBhMask) == Svm::StrBhTest) {
+    if ((instr & StrBhMask) == StrBhTest) {
         emulateSTRBH(instr);
         return;
     }
-    if ((instr & Svm::LdrBhMask) == Svm::LdrBhTest) {
+    if ((instr & LdrBhMask) == LdrBhTest) {
         emulateLDRBH(instr);
         return;
     }
-    if ((instr & Svm::LdrMask) == Svm::LdrTest) {
+    if ((instr & LdrMask) == LdrTest) {
         emulateLDR(instr);
         return;
     }
-    if ((instr & Svm::MovWtMask) == Svm::MovWtTest) {
+    if ((instr & MovWtMask) == MovWtTest) {
         emulateMOVWT(instr);
         return;
     }
-    if ((instr & Svm::DivMask) == Svm::DivTest) {
+    if ((instr & DivMask) == DivTest) {
         emulateDIV(instr);
         return;
     }
-    
+
     // should never get here since we should only be executing validated instructions
     LOG(("*********************************** invalid 32bit instruction: 0x%x\n", instr));
     ASSERT(0 && "unhandled instruction group!");
 }
 
-bool SvmProgram::conditionPassed(uint8_t cond)
+bool SvmCpu::conditionPassed(uint8_t cond)
 {
     switch (cond) {
     case EQ: return  getZero();
@@ -248,7 +244,7 @@ bool SvmProgram::conditionPassed(uint8_t cond)
 }
 
 // left shift
-void SvmProgram::emulateLSLImm(uint16_t inst)
+void SvmCpu::emulateLSLImm(uint16_t inst)
 {
     unsigned imm5 = (inst >> 6) & 0x1f;
     unsigned Rm = (inst >> 3) & 0x7;
@@ -265,7 +261,7 @@ void SvmProgram::emulateLSLImm(uint16_t inst)
     // TODO: N, Z flags - V unaffected
 }
 
-void SvmProgram::emulateLSRImm(uint16_t inst)
+void SvmCpu::emulateLSRImm(uint16_t inst)
 {
     unsigned imm5 = (inst >> 6) & 0x1f;
     unsigned Rm = (inst >> 3) & 0x7;
@@ -278,7 +274,7 @@ void SvmProgram::emulateLSRImm(uint16_t inst)
     // TODO: C, N, Z flags - V is unaffected
 }
 
-void SvmProgram::emulateASRImm(uint16_t instr)
+void SvmCpu::emulateASRImm(uint16_t instr)
 {
     unsigned imm5 = (instr >> 6) & 0x1f;
     unsigned Rm = (instr >> 3) & 0x7;
@@ -292,7 +288,7 @@ void SvmProgram::emulateASRImm(uint16_t instr)
     // TODO: C, Z, N flags - V flag unchanged
 }
 
-void SvmProgram::emulateADDReg(uint16_t instr)
+void SvmCpu::emulateADDReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 6) & 0x7;
     unsigned Rn = (instr >> 3) & 0x7;
@@ -302,7 +298,7 @@ void SvmProgram::emulateADDReg(uint16_t instr)
     // TODO: set N, Z, C and V flags
 }
 
-void SvmProgram::emulateSUBReg(uint16_t instr)
+void SvmCpu::emulateSUBReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 6) & 0x7;
     unsigned Rn = (instr >> 3) & 0x7;
@@ -312,7 +308,7 @@ void SvmProgram::emulateSUBReg(uint16_t instr)
     // TODO: set N, Z, C and V flags
 }
 
-void SvmProgram::emulateADD3Imm(uint16_t instr)
+void SvmCpu::emulateADD3Imm(uint16_t instr)
 {
     unsigned imm3 = (instr >> 6) & 0x7;
     unsigned Rn = (instr >> 3) & 0x7;
@@ -322,7 +318,7 @@ void SvmProgram::emulateADD3Imm(uint16_t instr)
     // TODO: set N, Z, C and V flags
 }
 
-void SvmProgram::emulateSUB3Imm(uint16_t instr)
+void SvmCpu::emulateSUB3Imm(uint16_t instr)
 {
     unsigned imm3 = (instr >> 6) & 0x7;
     unsigned Rn = (instr >> 3) & 0x7;
@@ -332,7 +328,7 @@ void SvmProgram::emulateSUB3Imm(uint16_t instr)
     // TODO: set N, Z, C and V flags
 }
 
-void SvmProgram::emulateMovImm(uint16_t instr)
+void SvmCpu::emulateMovImm(uint16_t instr)
 {
     unsigned Rd = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
@@ -340,7 +336,7 @@ void SvmProgram::emulateMovImm(uint16_t instr)
     regs[Rd] = imm8;
 }
 
-void SvmProgram::emulateCmpImm(uint16_t instr)
+void SvmCpu::emulateCmpImm(uint16_t instr)
 {
     unsigned Rn = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
@@ -349,7 +345,7 @@ void SvmProgram::emulateCmpImm(uint16_t instr)
     // TODO: set N, Z, C, V flags accordingly
 }
 
-void SvmProgram::emulateADD8Imm(uint16_t instr)
+void SvmCpu::emulateADD8Imm(uint16_t instr)
 {
     unsigned Rdn = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
@@ -358,7 +354,7 @@ void SvmProgram::emulateADD8Imm(uint16_t instr)
     // TODO: set N, Z, C and V flags
 }
 
-void SvmProgram::emulateSUB8Imm(uint16_t instr)
+void SvmCpu::emulateSUB8Imm(uint16_t instr)
 {
     unsigned Rdn = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
@@ -371,7 +367,7 @@ void SvmProgram::emulateSUB8Imm(uint16_t instr)
 // D A T A   P R O C E S S I N G
 ///////////////////////////////////
 
-void SvmProgram::emulateANDReg(uint16_t instr)
+void SvmCpu::emulateANDReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -379,7 +375,7 @@ void SvmProgram::emulateANDReg(uint16_t instr)
     regs[Rdn] = (uint32_t) (regs[Rdn] & regs[Rm]);
 }
 
-void SvmProgram::emulateEORReg(uint16_t instr)
+void SvmCpu::emulateEORReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -387,7 +383,7 @@ void SvmProgram::emulateEORReg(uint16_t instr)
     regs[Rdn] = (uint32_t) (regs[Rdn] ^ regs[Rm]);
 }
 
-void SvmProgram::emulateLSLReg(uint16_t instr)
+void SvmCpu::emulateLSLReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -396,7 +392,7 @@ void SvmProgram::emulateLSLReg(uint16_t instr)
     regs[Rdn] = (uint32_t) (regs[Rdn] << shift);
 }
 
-void SvmProgram::emulateLSRReg(uint16_t instr)
+void SvmCpu::emulateLSRReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -405,7 +401,7 @@ void SvmProgram::emulateLSRReg(uint16_t instr)
     regs[Rdn] = (uint32_t) (regs[Rdn] >> shift);
 }
 
-void SvmProgram::emulateASRReg(uint16_t instr)
+void SvmCpu::emulateASRReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -413,7 +409,7 @@ void SvmProgram::emulateASRReg(uint16_t instr)
     regs[Rdn] = (int32_t)regs[Rdn] >> regs[Rm];
 }
 
-void SvmProgram::emulateADCReg(uint16_t instr)
+void SvmCpu::emulateADCReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -421,7 +417,7 @@ void SvmProgram::emulateADCReg(uint16_t instr)
     regs[Rdn] = (uint32_t) (regs[Rdn] + regs[Rm] + (getCarry() ? 1 : 0));
 }
 
-void SvmProgram::emulateSBCReg(uint16_t instr)
+void SvmCpu::emulateSBCReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -429,7 +425,7 @@ void SvmProgram::emulateSBCReg(uint16_t instr)
     regs[Rdn] = (uint32_t) (regs[Rdn] - regs[Rm] - (getCarry() ? 0 : 1));
 }
 
-void SvmProgram::emulateRORReg(uint16_t instr)
+void SvmCpu::emulateRORReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -437,12 +433,12 @@ void SvmProgram::emulateRORReg(uint16_t instr)
     regs[Rdn] = ROR(regs[Rdn], regs[Rm]);
 }
 
-void SvmProgram::emulateTSTReg(uint16_t instr)
+void SvmCpu::emulateTSTReg(uint16_t instr)
 {
     // nothing to do until handling status flags
 }
 
-void SvmProgram::emulateRSBImm(uint16_t instr)
+void SvmCpu::emulateRSBImm(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -450,7 +446,7 @@ void SvmProgram::emulateRSBImm(uint16_t instr)
     // TODO: encoding T1 only has effect via status flags
 }
 
-void SvmProgram::emulateCMPReg(uint16_t instr)
+void SvmCpu::emulateCMPReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -458,7 +454,7 @@ void SvmProgram::emulateCMPReg(uint16_t instr)
     // TODO: only has effect on the status flags
 }
 
-void SvmProgram::emulateCMNReg(uint16_t instr)
+void SvmCpu::emulateCMNReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -466,7 +462,7 @@ void SvmProgram::emulateCMNReg(uint16_t instr)
     // TODO: only has effect on the status flags
 }
 
-void SvmProgram::emulateORRReg(uint16_t instr)
+void SvmCpu::emulateORRReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -474,18 +470,18 @@ void SvmProgram::emulateORRReg(uint16_t instr)
     regs[Rdn] = (uint32_t) (regs[Rdn] | regs[Rm]);
 }
 
-void SvmProgram::emulateMUL(uint16_t instr)
+void SvmCpu::emulateMUL(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
-    
+
     uint64_t result = (uint64_t)regs[Rdn] * (uint64_t)regs[Rm];
     // TODO: Set Z and N flags. Z seems to be set based on full 64-bit result
 
     regs[Rdn] = (uint32_t) result;
 }
 
-void SvmProgram::emulateBICReg(uint16_t instr)
+void SvmCpu::emulateBICReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -493,7 +489,7 @@ void SvmProgram::emulateBICReg(uint16_t instr)
     regs[Rdn] = (uint32_t) (regs[Rdn] & ~(regs[Rm]));
 }
 
-void SvmProgram::emulateMVNReg(uint16_t instr)
+void SvmCpu::emulateMVNReg(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -505,7 +501,7 @@ void SvmProgram::emulateMVNReg(uint16_t instr)
 // M I S C   I N S T R U C T I O N S
 /////////////////////////////////////
 
-void SvmProgram::emulateSXTH(uint16_t instr)
+void SvmCpu::emulateSXTH(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -513,7 +509,7 @@ void SvmProgram::emulateSXTH(uint16_t instr)
     regs[Rdn] = (uint32_t) SignExtend<signed int, 16>(regs[Rm]);
 }
 
-void SvmProgram::emulateSXTB(uint16_t instr)
+void SvmCpu::emulateSXTB(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -521,7 +517,7 @@ void SvmProgram::emulateSXTB(uint16_t instr)
     regs[Rdn] = (uint32_t) SignExtend<signed int, 8>(regs[Rm]);
 }
 
-void SvmProgram::emulateUXTH(uint16_t instr)
+void SvmCpu::emulateUXTH(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -529,7 +525,7 @@ void SvmProgram::emulateUXTH(uint16_t instr)
     regs[Rdn] = regs[Rm] & 0xFFFF;
 }
 
-void SvmProgram::emulateUXTB(uint16_t instr)
+void SvmCpu::emulateUXTB(uint16_t instr)
 {
     unsigned Rm = (instr >> 3) & 0x7;
     unsigned Rdn = instr & 0x7;
@@ -541,14 +537,14 @@ void SvmProgram::emulateUXTB(uint16_t instr)
 // B R A N C H I N G   I N S T R U C T I O N S
 ///////////////////////////////////////////////
 
-void SvmProgram::emulateB(uint16_t instr)
+void SvmCpu::emulateB(uint16_t instr)
 {
     // encoding T2 only
     unsigned imm11 = instr & 0x7FF;
     BranchOffsetPC(SignExtend<signed int, 12>(imm11 << 1));
 }
 
-void SvmProgram::emulateCondB(uint16_t instr)
+void SvmCpu::emulateCondB(uint16_t instr)
 {
     unsigned cond = (instr >> 8) & 0xf;
     unsigned imm8 = instr & 0xff;
@@ -558,7 +554,7 @@ void SvmProgram::emulateCondB(uint16_t instr)
     }
 }
 
-void SvmProgram::emulateCBZ_CBNZ(uint16_t instr)
+void SvmCpu::emulateCBZ_CBNZ(uint16_t instr)
 {
     bool nonzero = instr & (1 << 11);
     unsigned i = instr & (1 << 9);
@@ -576,7 +572,7 @@ void SvmProgram::emulateCBZ_CBNZ(uint16_t instr)
 // M E M O R Y  I N S T R U C T I O N S
 /////////////////////////////////////////
 
-void SvmProgram::emulateSTRSPImm(uint16_t instr)
+void SvmCpu::emulateSTRSPImm(uint16_t instr)
 {
     // encoding T2 only
     unsigned Rt = (instr >> 8) & 0x7;
@@ -586,7 +582,7 @@ void SvmProgram::emulateSTRSPImm(uint16_t instr)
     *addr = regs[Rt];
 }
 
-void SvmProgram::emulateLDRSPImm(uint16_t instr)
+void SvmCpu::emulateLDRSPImm(uint16_t instr)
 {
     // encoding T2 only
     unsigned Rt = (instr >> 8) & 0x7;
@@ -596,7 +592,7 @@ void SvmProgram::emulateLDRSPImm(uint16_t instr)
     regs[Rt] = *addr;
 }
 
-void SvmProgram::emulateADDSpImm(uint16_t instr)
+void SvmCpu::emulateADDSpImm(uint16_t instr)
 {
     // encoding T1 only
     unsigned Rd = (instr >> 8) & 0x7;
@@ -607,7 +603,7 @@ void SvmProgram::emulateADDSpImm(uint16_t instr)
     regs[Rd] = regs[REG_SP] + (imm8 << 2);
 }
 
-void SvmProgram::emulateLDRLitPool(uint16_t instr)
+void SvmCpu::emulateLDRLitPool(uint16_t instr)
 {
     unsigned Rt = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xFF;
@@ -624,27 +620,27 @@ void SvmProgram::emulateLDRLitPool(uint16_t instr)
 // 3 2 - B I T  I N S T R U C T I O N S
 ////////////////////////////////////////
 
-void SvmProgram::emulateSTR(uint32_t instr)
+void SvmCpu::emulateSTR(uint32_t instr)
 {
     unsigned imm12 = instr & 0xFFF;
     unsigned Rn = (instr >> 16) & 0xF;
     unsigned Rt = (instr >> 12) & 0xF;
     reg_t addr = regs[Rn] + imm12;
-    
+
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
 }
 
-void SvmProgram::emulateLDR(uint32_t instr)
+void SvmCpu::emulateLDR(uint32_t instr)
 {
     unsigned imm12 = instr & 0xFFF;
     unsigned Rn = (instr >> 16) & 0xF;
     unsigned Rt = (instr >> 12) & 0xF;
     reg_t addr = regs[Rn] + imm12;
-    
+
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
 }
 
-void SvmProgram::emulateSTRBH(uint32_t instr)
+void SvmCpu::emulateSTRBH(uint32_t instr)
 {
     const unsigned HalfwordBit = 1 << 21;
 
@@ -652,7 +648,7 @@ void SvmProgram::emulateSTRBH(uint32_t instr)
     unsigned Rn = (instr >> 16) & 0xF;
     unsigned Rt = (instr >> 12) & 0xF;
     reg_t addr = regs[Rn] + imm12;
-    
+
     if (instr & HalfwordBit) {
         *reinterpret_cast<uint16_t*>(addr) = regs[Rt];
     } else {
@@ -660,7 +656,7 @@ void SvmProgram::emulateSTRBH(uint32_t instr)
     }
 }
 
-void SvmProgram::emulateLDRBH(uint32_t instr)
+void SvmCpu::emulateLDRBH(uint32_t instr)
 {
     const unsigned HalfwordBit = 1 << 21;
     const unsigned SignExtBit = 1 << 24;
@@ -688,7 +684,7 @@ void SvmProgram::emulateLDRBH(uint32_t instr)
     }
 }
 
-void SvmProgram::emulateMOVWT(uint32_t instr)
+void SvmCpu::emulateMOVWT(uint32_t instr)
 {
     const unsigned TopBit = 1 << 23;
 
@@ -706,10 +702,10 @@ void SvmProgram::emulateMOVWT(uint32_t instr)
     }
 }
 
-void SvmProgram::emulateDIV(uint32_t instr)
+void SvmCpu::emulateDIV(uint32_t instr)
 {
     const unsigned UnsignedBit = 1 << 21;
-    
+
     unsigned Rn = (instr >> 16) & 0xF;
     unsigned Rd = (instr >> 8) & 0xF;
     unsigned Rm = instr & 0xF;
@@ -726,210 +722,12 @@ void SvmProgram::emulateDIV(uint32_t instr)
     }
 }
 
-
 //////////////////////////
 // S Y S T E M  C A L L S
 //////////////////////////
 
-/*
-SVC encodings:
-
-  11011111 0xxxxxxx     (1) Indirect operation
-  11011111 10xxxxxx     (2) Direct syscall #0-63
-  11011111 110xxxxx     (3) SP = validate(SP - imm5*4)
-  11011111 11100rrr     (4) r8-9 = validate(rN)
-  11011111 11101rrr     (5) Reserved
-  11011111 11110rrr     (6) Call validate(rN), with SP adjust
-  11011111 11111rrr     (7) Tail call validate(rN), with SP adjust
-*/
-void SvmProgram::emulateSVC(uint16_t instr)
+void SvmCpu::emulateSVC(uint16_t instr)
 {
-    unsigned imm8 = instr & 0xFF;
-    LOG(("svc, imm8 %d\n", imm8));
-    if ((imm8 & (1 << 7)) == 0) {
-        svcIndirectOperation(imm8);
-        return;
-    }
-    if ((imm8 & (0x3 << 6)) == (0x2 << 6)) {
-        uint8_t syscallNum = imm8 & 0x3f;
-        LOG(("direct syscall #%d\n", syscallNum));
-        regs[0] = SyscallTable[syscallNum](regs[0], regs[1], regs[2], regs[3],
-                                           regs[4], regs[5], regs[6], regs[7]);
-        return;
-    }
-    if ((imm8 & (0x7 << 5)) == (0x6 << 5)) {
-        LOG(("SP = validate(SP - imm5*4)\n"));
-        return;
-    }
-
-    uint8_t sub = (imm8 >> 3) & 0x1f;
-    unsigned r = imm8 & 0x7;
-    switch (sub) {
-    case 0x1c:  { // 0b11100
-        LOG(("svc: r8-9 = validate(rN)\n"));
-        uint32_t addr = regs[r];
-        // if flash address, get page if necessary & translate to appropriate address
-        if (addr & (1 << 31)) {
-            // SUPER HACK: need to get address of currently checked out flash block
-            regs[8] = reinterpret_cast<reg_t>(FlashLayer::blocks[0].getData()) + (addr & 0x7fffffff);
-            regs[9] = 0;
-        }
-        else {
-            regs[8] = virt2physAddr(regs[r]);
-            regs[9] = virt2physAddr(regs[r]);
-        }
-        return;
-    }
-    case 0x1d:  // 0b11101
-        LOG(("svc: reserved\n"));
-        return;
-    case 0x1e:  // 0b11110
-        LOG(("svc: Call validate(rN), with SP adjust\n"));
-        return;
-    case 0x1f:  // 0b11110
-        LOG(("svc: Tail call validate(rN), with SP adjust\n"));
-        return;
-    default:
-        ASSERT(0 && "unknown sub op for svc");
-        break;
-    }
-    ASSERT(0 && "unhandled SVC");
-}
-
-/*
-When the MSB of the SVC immediate is clear, the other 7 bits are multiplied by
-four and added to the base of the current page, to form the address of a
-32-bit literal. This 32-bit literal encodes an indirect operation to perform:
-
-  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa00   (1) Call validate(F+a*4), SP -= n*4
-  0nnnnnnn aaaaaaaa aaaaaaaa aaaaaa01   (2) Tail call validate(F+a*4), SP -= n*4
-  0xxxxxxx xxxxxxxx xxxxxxxx xxxxxx1x   (3) Reserved
-  10nnnnnn nnnnnnnn iiiiiiii iiiiiii0   (4) Syscall #0-8191, with #imm15
-  10nnnnnn nnnnnnnn iiiiiiii iiiiiii1   (4) Tail syscall #0-8191, with #imm15
-  110nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (5) Addrop #0-31 on validate(a)
-  111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa   (6) Addrop #0-31 on validate(F+a)
-
-  (F = 0x80000000, flash segment virtual address)
-*/
-void SvmProgram::svcIndirectOperation(uint8_t imm8)
-{
-    // we already know the MSB of imm8 is clear by the fact that we're being called here.
-
-    reg_t instructionBase = regs[REG_PC] - 2;
-    uintptr_t blockMask = ~(uintptr_t)(FlashLayer::BLOCK_SIZE - 1);
-    uint32_t *blockBase = reinterpret_cast<uint32_t*>(instructionBase & blockMask);
-    uint32_t literal = blockBase[imm8];
-
-    LOG(("indirect, literal 0x%x\n", literal));
-
-    if ((literal & Svm::CallMask) == Svm::CallTest) {
-        LOG(("indirect call\n"));
-    }
-    else if ((literal & Svm::TailCallMask) == Svm::TailCallTest) {
-        LOG(("indirect tail call\n"));
-    }
-    else if ((literal & Svm::IndirectSyscallMask) == Svm::IndirectSyscallTest) {
-        unsigned imm15 = (literal >> 16) & 0x3ff;
-        LOG(("indirect syscall #%d\n", imm15));
-        regs[0] = SyscallTable[imm15](regs[0], regs[1], regs[2], regs[3],
-                                      regs[4], regs[5], regs[6], regs[7]);
-    }
-    else if ((literal & Svm::TailSyscallMask) == Svm::TailSyscallTest) {
-        LOG(("indirect tail syscall\n"));
-    }
-    else if ((literal & Svm::AddropMask) == Svm::AddropTest) {
-        LOG(("Addrop #0-31 on validate(a)\n"));
-    }
-    else if ((literal & Svm::AddropFlashMask) == Svm::AddropFlashTest) {
-        LOG(("Addrop #0-31 on validate(F+a)\n"));
-    }
-    else {
-        ASSERT(0 && "unhandled svc Indirect Operation");
-    }
-}
-
-bool SvmProgram::loadElfFile(unsigned addr, unsigned len)
-{
-    FlashRegion r;
-    if (!FlashLayer::getRegion(addr, FlashLayer::BLOCK_SIZE, &r)) {
-        LOG(("couldn't get flash region for elf file\n"));
-        return false;
-    }
-    uint8_t *block = static_cast<uint8_t*>(r.data());
-
-    // verify magicality
-    if ((block[Elf::EI_MAG0] != Elf::Magic0) ||
-        (block[Elf::EI_MAG1] != Elf::Magic1) ||
-        (block[Elf::EI_MAG2] != Elf::Magic2) ||
-        (block[Elf::EI_MAG3] != Elf::Magic3))
-    {
-        LOG(("incorrect elf magic number"));
-        return false;
-    }
-
-
-    Elf::FileHeader header;
-    memcpy(&header, block, sizeof header);
-
-    // ensure the file is the correct Elf version
-    if (header.e_ident[Elf::EI_VERSION] != Elf::EV_CURRENT) {
-        LOG(("incorrect elf file version\n"));
-        return false;
-    }
-
-    // ensure the file is the correct data format
-    union {
-        int32_t l;
-        char c[sizeof (int32_t)];
-    } u;
-    u.l = 1;
-    if ((u.c[sizeof(int32_t) - 1] + 1) != header.e_ident[Elf::EI_DATA]) {
-        LOG(("incorrect elf data format\n"));
-        return false;
-    }
-
-    if (header.e_machine != Elf::EM_ARM) {
-        LOG(("elf: incorrect machine format\n"));
-        return false;
-    }
-
-    progInfo.entry = header.e_entry;
-    /*
-        We're looking for 3 segments, identified by the following profiles:
-        - text segment - executable & read-only
-        - data segment - read/write & non-zero size on disk
-        - bss segment - read/write, zero size on disk, and non-zero size in memory
-    */
-    unsigned offset = header.e_phoff;
-    for (unsigned i = 0; i < header.e_phnum; ++i, offset += header.e_phentsize) {
-        Elf::ProgramHeader pHeader;
-        memcpy(&pHeader, block + offset, header.e_phentsize);
-        if (pHeader.p_type != Elf::PT_LOAD)
-            continue;
-
-        switch (pHeader.p_flags) {
-        case (Elf::PF_Exec | Elf::PF_Read):
-            LOG(("rodata/text segment found\n"));
-            progInfo.textRodata.start = pHeader.p_offset;
-            progInfo.textRodata.size = pHeader.p_filesz;
-            progInfo.textRodata.vaddr = pHeader.p_vaddr;
-            progInfo.textRodata.paddr = pHeader.p_paddr;
-            break;
-        case (Elf::PF_Read | Elf::PF_Write):
-            if (pHeader.p_memsz > 0 && pHeader.p_filesz == 0) {
-                LOG(("bss segment found\n"));
-                progInfo.bss.start = pHeader.p_offset;
-                progInfo.bss.size = pHeader.p_memsz;
-            }
-            else if (pHeader.p_filesz > 0) {
-                LOG(("found rwdata segment\n"));
-                progInfo.rwdata.start = pHeader.p_offset;
-                progInfo.rwdata.size = pHeader.p_memsz;
-            }
-            break;
-        }
-    }
-
-    FlashLayer::releaseRegion(r);
-    return true;
+    uint8_t imm8 = instr & 0xff;
+    this->runtime->svc(imm8);
 }

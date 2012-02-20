@@ -1,5 +1,5 @@
-#ifndef SVMUTILS_H
-#define SVMUTILS_H
+#ifndef SVM_H
+#define SVM_H
 
 #include <stdint.h>
 
@@ -103,4 +103,4 @@ static const uint32_t AddropFlashTest = 0x7 << 29;              // 111nnnnn aaaa
 
 }   // namespace Svm
 
-#endif // SVMUTILS_H
+#endif // SVM_H

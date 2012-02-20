@@ -26,7 +26,7 @@ static void installAssetsToMaster();
 #define SVM_TEST
 
 #ifdef SVM_TEST
-#include "svm.h"
+#include "svmruntime.h"
 
 static void installElfFile()
 {
@@ -63,8 +63,8 @@ int main(int argc, char **argv)
 
 #ifdef SVM_TEST
     installElfFile();
-    SvmProgram program;
-    program.run(111);
+    SvmRuntime runtime;
+    runtime.run(111);
     return 0;
 #endif
 
