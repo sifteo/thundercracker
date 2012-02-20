@@ -15,6 +15,12 @@ Optimization opportunities:
 - Use MOVWi16 instead of LDRpc for RAM symbols (we know they fit in 16 bits)
 - More efficient comparison generation (See ARMTargetLowering::getARMCmp)
 
+SDK optimization:
+
+- Optimize out double-precision math in System::clock() in most cases, by
+  having that function return a class with binop overloads. It can do integer
+  math in most cases, and return a float only when explicitly requested.
+
 Debugging support:
 
 - What's left to implement in order to get working Dwarf symbols?
