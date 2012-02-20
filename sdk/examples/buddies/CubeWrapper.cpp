@@ -167,7 +167,11 @@ void CubeWrapper::DrawBuddy()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawShuffleUi(GameState shuffleState, float shuffleScoreTime)
+void CubeWrapper::DrawShuffleUi(
+    GameState shuffleState,
+    float shuffleScoreTime,
+    int shuffleHintPiece0,
+    int shuffleHintPiece1)
 {
     ASSERT(kGameMode == GAME_MODE_SHUFFLE);
     
@@ -185,7 +189,15 @@ void CubeWrapper::DrawShuffleUi(GameState shuffleState, float shuffleScoreTime)
         }
         case GAME_STATE_SHUFFLE_PLAY:
         {
-            if (IsSolved())
+            if (shuffleHintPiece0 != -1 && (shuffleHintPiece0 / NUM_SIDES) == mCube.id())
+            {
+                DrawHintBar(shuffleHintPiece0 % NUM_SIDES);
+            }
+            else if (shuffleHintPiece1 != -1 && (shuffleHintPiece1 / NUM_SIDES) == mCube.id())
+            {
+                DrawHintBar(shuffleHintPiece1 % NUM_SIDES);
+            }
+            else if (IsSolved())
             {
                 DrawBanner(mCube.id() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
             }

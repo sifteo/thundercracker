@@ -35,7 +35,11 @@ public:
     void Update(float dt);
     
     void DrawBuddy();
-    void DrawShuffleUi(GameState shuffleState, float shuffleScoreTime);
+    void DrawShuffleUi(
+        GameState shuffleState,
+        float shuffleScoreTime,
+        int shuffleHintPiece0,
+        int shuffleHintPiece1);
     void DrawTitleCard(const char *text);
     void DrawTextBanner(const char *text);
     void DrawHintBar(Sifteo::Cube::Side side);

@@ -43,5 +43,17 @@ FontScoreOrange = image{"assets/ui_numbers_orange.png", height = 16}
 Font = image{"assets/font-8x16.png", height = 16}
 BannerEmpty = image{"assets/BannerEmpty.png"}
 
+-- Story Mode
+CutsceneBackground = image{"assets/cutscene_bg.png"}
+CutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = true}
+CutsceneTextBubble = image{"assets/cutscene_text_bubble.png"}
+ChapterSummary = image{"assets/ui_chapter_summary.png"}
+ChapterTitle = image{"assets/ui_chapter_title.png"}
+ClueMoreHints = image{"assets/ui_clue_and_more_hints.png"}
+ClueText = image{"assets/ui_clue_text.png"}
+ExitToMainMenu = image{"assets/ui_exit_to_main_menu.png"}
+NextChapter = image{"assets/ui_next_chapter.png"}
+Retry = image{"assets/ui_retry.png"}
+
 -- Sounds
 GemsSound = sound{"assets/gems1_4A9.raw"}

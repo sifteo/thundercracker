@@ -193,7 +193,7 @@ void App::Reset()
         }
         case GAME_MODE_PUZZLE:
         {
-            StartGameState(GAME_STATE_PUZZLE_START);
+            StartGameState(GAME_STATE_PUZZLE_CHAPTER_START);
             break;
         }
     }
@@ -240,47 +240,8 @@ void App::Update(float dt)
 
 void App::Draw()
 {
-    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-    {
-        if (mCubeWrappers[i].IsEnabled())
-        {
-            if (kGameMode == GAME_MODE_PUZZLE)
-            {
-                if (mGameState == GAME_STATE_PUZZLE_INSTRUCTIONS || i >= GetPuzzle(mPuzzleIndex).GetNumBuddies())
-                {
-                    ASSERT(mPuzzleIndex < GetNumPuzzles());
-                    mCubeWrappers[i].DrawTitleCard(GetPuzzle(mPuzzleIndex).GetInstructions());
-                }
-                else
-                {
-                    mCubeWrappers[i].DrawBuddy();
-                }
-            }
-            else
-            {
-                mCubeWrappers[i].DrawBuddy();
-                
-                if (kGameMode == GAME_MODE_SHUFFLE)
-                {
-                    if( (mShuffleHintPiece0 == -1 || (mShuffleHintPiece0 / NUM_SIDES) != int(i)) &&
-                        (mShuffleHintPiece1 == -1 || (mShuffleHintPiece1 / NUM_SIDES) != int(i)))
-                    {
-                        mCubeWrappers[i].DrawShuffleUi(mGameState, mShuffleScoreTime);
-                    }
-                }
-            }
-        }
-    }
-    
-    if (mGameState == GAME_STATE_SHUFFLE_PLAY && mShuffleHintPiece0 != -1 && mShuffleHintPiece1 != -1)
-    {
-        ASSERT(mShuffleHintPiece0 >= 0 && mShuffleHintPiece0 < int(kNumCubes * NUM_SIDES));
-        ASSERT(mShuffleHintPiece1 >= 0 && mShuffleHintPiece1 < int(kNumCubes * NUM_SIDES));
-        
-        mCubeWrappers[mShuffleHintPiece0 / NUM_SIDES].DrawHintBar(mShuffleHintPiece0 % NUM_SIDES);
-        mCubeWrappers[mShuffleHintPiece1 / NUM_SIDES].DrawHintBar(mShuffleHintPiece1 % NUM_SIDES);
-    }
-    
+    DrawGameState();
+    // TODO: paintSync() handling
     System::paint();
 }
 
@@ -299,7 +260,7 @@ CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId)
 
 void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1, Cube::Side cubeSide1)
 {
-    if (mGameState == GAME_STATE_PUZZLE_INSTRUCTIONS)
+    if (mGameState == GAME_STATE_PUZZLE_CLUE)
     {
         StartGameState(GAME_STATE_PUZZLE_PLAY);
     }
@@ -351,7 +312,7 @@ void App::OnTilt(Cube::ID cubeId)
     {
         StartGameState(GAME_STATE_SHUFFLE_PLAY);
     }
-    else if (mGameState == GAME_STATE_PUZZLE_INSTRUCTIONS)
+    else if (mGameState == GAME_STATE_PUZZLE_CLUE)
     {
         StartGameState(GAME_STATE_PUZZLE_PLAY);
     }
@@ -413,9 +374,9 @@ void App::PlaySound()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::StartGameState(GameState shuffleState)
+void App::StartGameState(GameState gameState)
 {
-    mGameState = shuffleState;
+    mGameState = gameState;
     DEBUG_LOG(("State = %s\n", kGameStateNames[mGameState]));
     
     switch (mGameState)
@@ -479,7 +440,7 @@ void App::StartGameState(GameState shuffleState)
             mShuffleHintPiece1 = -1;
             break;
         }
-        case GAME_STATE_PUZZLE_START:
+        case GAME_STATE_PUZZLE_CHAPTER_START:
         {
             ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
             for (unsigned int i = 0; i < GetPuzzle(mPuzzleIndex).GetNumBuddies(); ++i)
@@ -500,7 +461,7 @@ void App::StartGameState(GameState shuffleState)
             mDelayTimer = kShuffleStateTimeDelay;
             break;
         }
-        case GAME_STATE_PUZZLE_INSTRUCTIONS:
+        case GAME_STATE_PUZZLE_CLUE:
         {
             ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
             for (unsigned int i = 0; i < GetPuzzle(mPuzzleIndex).GetNumBuddies(); ++i)
@@ -633,7 +594,7 @@ void App::UpdateGameState(float dt)
             }
             break;
         }
-        case GAME_STATE_PUZZLE_START:
+        case GAME_STATE_PUZZLE_CHAPTER_START:
         {
             ASSERT(mDelayTimer > 0.0f);
             mDelayTimer -= dt;
@@ -641,7 +602,7 @@ void App::UpdateGameState(float dt)
             if (mDelayTimer <= 0.0f)
             {
                 mDelayTimer = 0.0f;
-                StartGameState(GAME_STATE_PUZZLE_INSTRUCTIONS);
+                StartGameState(GAME_STATE_PUZZLE_CLUE);
             }
             break;
         }
@@ -658,13 +619,64 @@ void App::UpdateGameState(float dt)
                 {
                     mPuzzleIndex = 0;
                 }
-                StartGameState(GAME_STATE_PUZZLE_INSTRUCTIONS);
+                StartGameState(GAME_STATE_PUZZLE_CLUE);
             }
             break;
         }
         default:
         {
             break;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::DrawGameState()
+{
+    if (kGameMode == GAME_MODE_FREE_PLAY)
+    {
+        for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+        {
+            if (mCubeWrappers[i].IsEnabled())
+            {
+                mCubeWrappers[i].DrawBuddy();
+            }
+        }
+    }
+    else if (kGameMode == GAME_MODE_PUZZLE)
+    {
+        for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+        {
+            if (mCubeWrappers[i].IsEnabled())
+            {
+                if (mGameState == GAME_STATE_PUZZLE_CLUE ||
+                    i >= GetPuzzle(mPuzzleIndex).GetNumBuddies())
+                {
+                    ASSERT(mPuzzleIndex < GetNumPuzzles());
+                    mCubeWrappers[i].DrawTitleCard(GetPuzzle(mPuzzleIndex).GetInstructions());
+                }
+                else
+                {
+                    mCubeWrappers[i].DrawBuddy();
+                }
+            }
+        }
+    }
+    else if (kGameMode == GAME_MODE_SHUFFLE)
+    {
+        for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+        {
+            if (mCubeWrappers[i].IsEnabled())
+            {
+                mCubeWrappers[i].DrawBuddy();
+                mCubeWrappers[i].DrawShuffleUi(
+                    mGameState,
+                    mShuffleScoreTime,
+                    mShuffleHintPiece0,
+                    mShuffleHintPiece1);
+            }
         }
     }
 }

@@ -51,8 +51,9 @@ private:
     
     void PlaySound();
     
-    void StartGameState(GameState shuffleState);
+    void StartGameState(GameState gameState);
     void UpdateGameState(float dt);
+    void DrawGameState();
     
     void ShufflePieces();
     void ChooseShuffleHint();
