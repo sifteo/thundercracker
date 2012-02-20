@@ -89,6 +89,18 @@ bool GameState::DecrementBasicKeyCount() {
   return true;
 }
 
+unsigned GameState::GetItems(uint8_t* buf) {
+	unsigned result = 0;
+	const int firstSandwichId = 2;
+	const int sandwichTypeCount = 4;
+	for(int8_t itemId=firstSandwichId; itemId<firstSandwichId+sandwichTypeCount; ++itemId) {
+		if (HasItem(itemId)) { buf[result++] = itemId; }
+	}
+	if (HasBasicKey()) {
+		buf[result++] = ITEM_BASIC_KEY;
+	}
+	return result;
+}
 
 void GameState::Save() {
 	// TODO

@@ -19,5 +19,5 @@ class Item:
 		self.id = xml.get("id").lower()
 		self.name = xml.find("name").text.strip()
 		self.description = "\\n".join((line.strip() for line in xml.find("description").text.strip().splitlines()))
-		self.index = index
+		self.numeric_id = index + 1
 		#print self.description

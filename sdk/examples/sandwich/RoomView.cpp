@@ -30,7 +30,7 @@ void RoomView::Init(unsigned roomId) {
   Room* r = GetRoom();
   switch(r->TriggerType()) {
     case TRIGGER_ITEM: 
-      mode.setSpriteImage(TRIGGER_SPRITE_ID, Items.index + (r->TriggerAsItem()->itemId - 1) * Items.width * Items.height);
+      mode.setSpriteImage(TRIGGER_SPRITE_ID, Items.index + (r->TriggerAsItem()->itemId - 1 << 2));
       mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
       {
         Vec2 p = 16 * GetRoom()->LocalCenter(0);

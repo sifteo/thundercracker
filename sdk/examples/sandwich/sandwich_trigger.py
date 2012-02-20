@@ -97,7 +97,7 @@ class Trigger:
 	def write_item_to(self, src):
 		src.write("{ ")
 		self.write_trigger_to(src)
-		src.write(", %d }, " % self.item.index)
+		src.write(", %d }, " % self.item.numeric_id)
 	
 	def write_gateway_to(self, src):
 		src.write("{ ")

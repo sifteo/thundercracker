@@ -124,25 +124,13 @@ static uint16_t color_lerp(uint8_t alpha) {
 }
 
 
-class DialogView {
-private:
-    Cube* mCube;
-    Vec2 mPosition;
-
-public:
-    DialogView(Cube *mCube);
-    Cube* GetCube() const { return mCube; }
-    const char* Show(const char* msg);
-    void DrawGlyph(char ch);
-    unsigned MeasureGlyph(char ch);
-    void DrawText(const char* msg);
-    void MeasureText(const char *str, unsigned *outCount, unsigned *outPx);
-    void Erase();
-    void Fade();
-
-};
-
 DialogView::DialogView(Cube* pCube) : mCube(pCube) {
+}
+
+void DialogView::Init() {
+    mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, color_lerp(0));
+    mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
+    mCube->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
 }
 
 const char* DialogView::Show(const char* str) {
@@ -239,17 +227,21 @@ void DialogView::Fade() {
     }
 }
 
+void DialogView::ShowAll(const char* lines) {
+    while(*lines) {
+        lines = Show(lines);
+    }
+}
+
 void DoDialog(const DialogData& data, Cube* cube) {
     if (!cube) cube = gCubes;
     DialogView view(cube);
-
     PlaySfx(sfx_neighbor);
-    ViewMode mode(view.GetCube()->vbuf);
+    ViewMode mode(cube->vbuf);
     for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
     mode.BG0_drawAsset(Vec2(0,10), DialogBox);
     for(unsigned line=0; line<data.lineCount; ++line) {
         const DialogTextData& txt = data.lines[line];
-
         if (line == 0 || data.lines[line-1].detail != txt.detail) {
             System::paintSync();
             BG1Helper ovrly(*cube);
@@ -257,22 +249,16 @@ void DoDialog(const DialogData& data, Cube* cube) {
             ovrly.Flush();
             System::paintSync();
             for(unsigned i=0; i<4; ++i) {
-                view.GetCube()->vbuf.touch();
+                cube->vbuf.touch();
                 System::paintSync();
             }
             //Now set up a letterboxed 128x48 mode
-            view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, color_lerp(0));
-            view.GetCube()->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
-            view.GetCube()->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
             mode.setWindow(80, 48);
+            view.Init();
         }
-        
         view.Erase();
         pGame->Paint(true);
-        const char* pNextChar = txt.line;
-        while(*pNextChar) {
-            pNextChar = view.Show(pNextChar);
-        }
+        view.ShowAll(txt.line);
         if (line > 0) {
             PlaySfx(sfx_neighbor);
         }
