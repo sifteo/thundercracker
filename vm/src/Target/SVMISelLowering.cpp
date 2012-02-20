@@ -422,3 +422,16 @@ SDValue SVMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::GlobalAddress: return LowerGlobalAddress(Op, DAG);
     }
 }
+
+MachineBasicBlock *SVMTargetLowering::EmitInstrWithCustomInserter(
+    MachineInstr *MI, MachineBasicBlock *BB) const
+{
+    switch (MI->getOpcode()) {
+    default:
+        assert(false && "Unexpected instr type to insert");
+        return NULL;
+    case SVM::CMOV:
+        return ExpandCMOV(MI, BB);
+    }
+    
+}

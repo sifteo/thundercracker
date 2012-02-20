@@ -133,13 +133,14 @@ def bccTarget : Operand<OtherVT> {
 def SDT_SVMCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_SVMBrcond : SDTypeProfile<0, 2,
     [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>]>;
-def SDT_SVMCmov : SDTypeProfile<0, 3,
-    [SDTCisSameAs<0, 1>, SDTCisVT<2, i32>]>;
+def SDT_SVMCmov : SDTypeProfile<1, 4,
+    [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2> ]>;
 
 def SVMCmp : SDNode<"SVMISD::CMP", SDT_SVMCmp, [SDNPOutGlue]>;
 def SVMBrcond : SDNode<"SVMISD::BRCOND", SDT_SVMBrcond,
     [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
-def SVMCmov : SDNode<"SVMISD::CMOV", SDT_SVMCmov, []>;
+def SVMCmov : SDNode<"SVMISD::CMOV", SDT_SVMCmov,
+    [SDNPInGlue, SDNPOutGlue]>;
 
 // Should have pattern (SVMBrcond bb:$offset8, imm:$cc), but we have
 // to do this programmatically so we can glue the CMP instruction properly.
@@ -162,10 +163,12 @@ def LB : S_ind<(outs), (ins AbsCPIop:$offset11),
     let isTerminator = 1;
 }
 
-def CMOV : Pseudo<(outs GPReg:$Rd), (ins GPReg:$T, GPReg:$F, CCop:$cc),
+def CMOV : Pseudo<(outs GPReg:$Rd),
+    (ins GPReg:$T, GPReg:$F, CCop:$cc, CPSRReg:$c),
     "!CMOV$cc\t$Rd, $T, $F",
-    [(set GPReg:$Rd, (SVMCmov GPReg:$T, GPReg:$F, imm:$cc))]> {
+    [(set GPReg:$Rd, (SVMCmov GPReg:$T, GPReg:$F, imm:$cc, CPSRReg:$c))]> {
     let Defs = [CPSR];
+    let usesCustomInserter = 1;
 }
 
 

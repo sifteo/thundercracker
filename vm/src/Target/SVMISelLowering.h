@@ -36,6 +36,10 @@ namespace llvm {
 
         virtual const char *getTargetNodeName(unsigned Opcode) const;
 
+        virtual MachineBasicBlock *
+          EmitInstrWithCustomInserter(MachineInstr *MI,
+                                      MachineBasicBlock *BB) const;
+
         virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 
         virtual SDValue
@@ -75,6 +79,9 @@ namespace llvm {
         static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
         static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
         static SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
+
+        // Custom inserters
+        MachineBasicBlock *ExpandCMOV(MachineInstr *MI, MachineBasicBlock *BB) const;
     };
 }
 

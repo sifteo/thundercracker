@@ -6,6 +6,7 @@ OBJS = \
 	src/Target/SVMFrameLowering.o \
 	src/Target/SVMISelDAGToDAG.o \
 	src/Target/SVMISelLowering.o \
+	src/Target/SVMISelLoweringCMOV.o \
 	src/Target/SVMInstrInfo.o \
 	src/Target/SVMMCAsmInfo.o \
 	src/Target/SVMMCTargetDesc.o \
