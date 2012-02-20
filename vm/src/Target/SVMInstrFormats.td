@@ -251,7 +251,10 @@ class T32_LDSTbase<bits<7> op2v, bits<3> bpReg, dag outs, dag ins, string asmstr
     let secondWord{11-0} = offset12;
     
     let neverHasSideEffects = 1;
+
     // Not marked rematerializable, LD/ST is expensive relative to spilling.
+    let isReMaterializable = 0;
+    let isAsCheapAsAMove = 0;
 }
 
 // Integer divide
