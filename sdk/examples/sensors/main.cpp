@@ -14,11 +14,10 @@ using namespace Sifteo;
 
 static Cube cubes[NUM_CUBES];
 
-static struct {
+struct counts_t {
     unsigned touch, neighborAdd, neighborRemove;
-} counts[_SYS_NUM_CUBE_SLOTS];
-    
-    
+};
+        
 void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
 {
     for (unsigned i = 0; i < 14; i++) {
@@ -29,18 +28,20 @@ void drawSide(int cube, bool filled, int x, int y, int dx, int dy)
     }
 }
 
-static void onTouch(_SYSCubeID cid)
+static void onTouch(counts_t *counts, _SYSCubeID cid)
 {    
     counts[cid].touch++;
 }
 
-static void onNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+static void onNeighborAdd(counts_t *counts,
+    Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
     counts[c0].neighborAdd++;
     counts[c1].neighborAdd++;
 }
 
-static void onNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+static void onNeighborRemove(counts_t *counts,
+    Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
 {
     counts[c0].neighborRemove++;
     counts[c1].neighborRemove++;
@@ -48,6 +49,8 @@ static void onNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side
 
 void siftmain()
 {
+    static counts_t counts[NUM_CUBES];
+    
     for (unsigned i = 0; i < NUM_CUBES; i++) {
         cubes[i].enable(i);
 
@@ -55,9 +58,9 @@ void siftmain()
         vid.init();
     }
 
-    _SYS_vectors.cubeEvents.touch = onTouch;
-    _SYS_vectors.neighborEvents.add = onNeighborAdd;
-    _SYS_vectors.neighborEvents.remove = onNeighborRemove;
+    _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onTouch, (void*) counts);
+    _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, (void*) counts);
+    _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighborRemove, (void*) counts);
 
     for (;;) {
         for (unsigned i = 0; i < NUM_CUBES; i++) {
@@ -78,7 +81,8 @@ void siftmain()
             _SYS_getRawBatteryV(id, &battery);
             _SYS_getCubeHWID(id, &hwid);
 
-            String<128> str;
+            static String<128> str;
+            str.clear();
 
             str << "I am cube #" << id << "\n";
             

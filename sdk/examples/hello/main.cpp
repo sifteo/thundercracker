@@ -16,7 +16,7 @@ using namespace Sifteo;
 static Cube cubes[] = { Cube(0), Cube(1) };
 static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf), VidMode_BG0(cubes[1].vbuf) };
 
-static void onAccelChange(_SYSCubeID cid)
+static void onAccelChange(void *context, _SYSCubeID cid)
 {
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
@@ -65,12 +65,12 @@ void siftmain()
 {
     init();
 
-    _SYS_vectors.cubeEvents.accelChange = onAccelChange;
+    _SYS_setVector(_SYS_CUBE_ACCELCHANGE, (void*)onAccelChange, NULL);
 
     for (unsigned i = 0; i < NUM_CUBES; i++) {
         vid[i].BG0_text(Vec2(2,1), Font, "Hello World!");
         vid[i].BG0_drawAsset(Vec2(1,10), Logo);
-        onAccelChange(cubes[i].id());
+        onAccelChange(NULL, cubes[i].id());
     } 
 
     unsigned frame = 0;
