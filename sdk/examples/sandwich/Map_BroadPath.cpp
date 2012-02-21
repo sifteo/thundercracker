@@ -86,8 +86,7 @@ static bool Visit(BroadPath* outPath, BroadLocation loc, Cube::Side side, int de
     return false;
   }
   sVisitMask[next.view->Parent()->GetCubeID()] |= (1<<next.subdivision);
-  //if (next.view->Parent()->Touched()) {
-  if (1) {
+  if (next.view->Parent()->Touched()) {
     outPath->steps[depth] = -1;
     return true;
   } else {
