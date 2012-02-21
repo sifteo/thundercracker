@@ -4,8 +4,8 @@ void GameState::Init() {
 	mQuest = 0;
 	mQuestMask = 0;
 	mUnlockMask = 0;
-	mKeyCount = 1;//0;
-	mItemSet = 0xff;
+	mKeyCount = 0;//1
+	mItemSet = 0;//0xff
 }
 
 bool GameState::AdvanceQuest() {
