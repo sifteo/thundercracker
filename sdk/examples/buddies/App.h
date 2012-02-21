@@ -22,6 +22,11 @@
 namespace Buddies {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+class Puzzle;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 /// App holds all the state necessary to run CubeBuddies. System events are forward directly
 /// to this class. A single instance should live in main.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,9 +41,11 @@ public:
     void Update(float dt);
     void Draw();
     
+    /// CubeWrapper Accessors
+    const CubeWrapper &GetCubeWrapper(Sifteo::Cube::ID cubeId) const;
     CubeWrapper &GetCubeWrapper(Sifteo::Cube::ID cubeId);
     
-    // Event Notifications
+    /// Event Notifications
     void OnNeighborAdd(
         Sifteo::Cube::ID cubeId0, Sifteo::Cube::Side cubeSide0,
         Sifteo::Cube::ID cubeId1, Sifteo::Cube::Side cubeSide1);
@@ -48,6 +55,7 @@ public:
 private:
     void AddCube(Sifteo::Cube::ID cubeId);
     void RemoveCube(Sifteo::Cube::ID cubeId);
+    void ResetCubesToPuzzle(const Puzzle &puzzle);
     
     void PlaySound();
     
@@ -64,13 +72,21 @@ private:
     void OnSwapExchange();
     void OnSwapFinish();
     
-    // State
+    // Cubes
     CubeWrapper mCubeWrappers[kNumCubes];
+    
+    // Audio
     Sifteo::AudioChannel mChannel;
+    
+    // State
     GameState mGameState;
     float mResetTimer;
     float mDelayTimer;
+    
+    // Input
     bool mTouching;
+    
+    // Scoring
     float mScoreTimer;
     unsigned int mScoreMoves;
     
@@ -88,17 +104,17 @@ private:
     unsigned int mSwapPiece1;
     int mSwapAnimationCounter;
     
-    // Shuffle Mode (I'm sure all this can be refactored...)
-    int mShuffleMoveCounter;
-    bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
-    float mShuffleHintTimer;
-    
     // Hinting
     int mHintPieceSkip;
     int mHintPiece0;
     int mHintPiece1;
-    float mBlinkTimer;
-    bool mBlinking;
+    float mHintBlinkTimer;
+    bool mHintBlinking;
+    
+    // Shuffle Mode
+    int mShuffleMoveCounter;
+    bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
+    float mShuffleHintTimer;
     
     // Story Mode
     unsigned int mPuzzleIndex;

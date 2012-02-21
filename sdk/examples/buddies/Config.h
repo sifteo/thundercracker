@@ -58,12 +58,12 @@ enum GameState
 const bool kLoadAssets = true;
 const GameMode kGameMode = GAME_MODE_STORY;
 
-const unsigned int kNumCubes = 3; // Number of cubes used in this game
+const unsigned int kNumCubes = 2; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters
 
 const float kResetTimerDuration = 5.0f; // Touch a cube for this many seconds to reset the game
 const float kHintTimerOnDuration = 10.0f; // Seconds before hint appears
-const float kBlinkTimerDuration = 0.5f;
+const float kHintBlinkTimerDuration = 0.5f; // Blink rate for story mode hints
 
 const int kShuffleMaxMoves = -1; // Number of shuffles. -1 keeps going until all are shuffled.
 const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap animation and next

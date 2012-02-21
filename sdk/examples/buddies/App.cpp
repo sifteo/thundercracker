@@ -7,7 +7,8 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "App.h"
-#include <sifteo.h>
+#include <sifteo/string.h>
+#include <sifteo/system.h>
 #include "Config.h"
 #include "Puzzle.h"
 #include "PuzzleData.h"
@@ -16,11 +17,14 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+using namespace Sifteo;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 namespace Buddies { namespace {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// || Various convenience functions...
-// \/ 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 unsigned int GetNumMovedPieces(bool moved[], unsigned int num_pieces)
@@ -155,7 +159,6 @@ void DrawRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Shuffle Mode
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const char *kGameStateNames[NUM_GAME_STATES] =
@@ -173,9 +176,6 @@ const char *kGameStateNames[NUM_GAME_STATES] =
     "GAME_STATE_STORY_PLAY",
     "GAME_STATE_STORY_SOLVED",
 };
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const int kSwapAnimationCount = 64 - 8; // Note: sprites are offset by 8 pixels by design
 
@@ -200,13 +200,13 @@ App::App()
     , mSwapPiece0(0)
     , mSwapPiece1(0)
     , mSwapAnimationCounter(0)
-    , mShuffleMoveCounter(0)
-    , mShuffleHintTimer(0.0f)
     , mHintPieceSkip(-1)
     , mHintPiece0(-1)
     , mHintPiece1(-1)
-    , mBlinkTimer(kBlinkTimerDuration)
-    , mBlinking(false)
+    , mHintBlinkTimer(kHintBlinkTimerDuration)
+    , mHintBlinking(false)
+    , mShuffleMoveCounter(0)
+    , mShuffleHintTimer(0.0f)
     , mPuzzleIndex(0)
 {
 }
@@ -216,6 +216,8 @@ App::App()
 
 void App::Init()
 {
+    // TODO: This causes loading assets if kNumCubes > the actual number of connected cubes.
+    // Is there anyway we can see how many are really connected before adding them?
     for (unsigned int i = 0; i < kNumCubes; ++i)
     {
         AddCube(i);
@@ -294,8 +296,19 @@ void App::Update(float dt)
 void App::Draw()
 {
     DrawGameState();
+    
     // TODO: paintSync() handling
     System::paint();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+const CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId) const
+{
+    ASSERT(cubeId < arraysize(mCubeWrappers));
+    
+    return mCubeWrappers[cubeId];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,21 +324,15 @@ CubeWrapper &App::GetCubeWrapper(Cube::ID cubeId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1, Cube::Side cubeSide1)
+void App::OnNeighborAdd(
+    Cube::ID cubeId0, Cube::Side cubeSide0,
+    Cube::ID cubeId1, Cube::Side cubeSide1)
 {
     if (mGameState == GAME_STATE_STORY_CLUE)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    else if (mGameState == GAME_STATE_STORY_CLUE)
-    {
-        StartGameState(GAME_STATE_STORY_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_HINT_1)
-    {
-        StartGameState(GAME_STATE_STORY_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_HINT_2)
+    else if (mGameState == GAME_STATE_STORY_HINT_1 || mGameState == GAME_STATE_STORY_HINT_2)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
@@ -354,10 +361,6 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
             {
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
-            else if (kGameMode == GAME_MODE_STORY && mGameState != GAME_STATE_STORY_PLAY)
-            {
-                StartGameState(GAME_STATE_STORY_PLAY);
-            }
             
             ++mScoreMoves;
             OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
@@ -382,11 +385,7 @@ void App::OnTilt(Cube::ID cubeId)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    else if (mGameState == GAME_STATE_STORY_HINT_1)
-    {
-        StartGameState(GAME_STATE_STORY_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_HINT_2)
+    else if (mGameState == GAME_STATE_STORY_HINT_1 || mGameState == GAME_STATE_STORY_HINT_2)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
@@ -401,11 +400,8 @@ void App::OnTilt(Cube::ID cubeId)
 
 void App::OnShake(Cube::ID cubeId)
 {
-    if( mGameState == GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE)
-    {
-        StartGameState(GAME_STATE_SHUFFLE_SCRAMBLING);
-    }
-    else if(mGameState == GAME_STATE_SHUFFLE_SCORE)
+    if( mGameState == GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE ||
+        mGameState == GAME_STATE_SHUFFLE_SCORE)
     {
         StartGameState(GAME_STATE_SHUFFLE_SCRAMBLING);
     }
@@ -413,11 +409,7 @@ void App::OnShake(Cube::ID cubeId)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    else if (mGameState == GAME_STATE_STORY_HINT_1)
-    {
-        StartGameState(GAME_STATE_STORY_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_HINT_2)
+    else if (mGameState == GAME_STATE_STORY_HINT_1 || mGameState == GAME_STATE_STORY_HINT_2)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
@@ -452,6 +444,29 @@ void App::RemoveCube(Cube::ID cubeId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void App::ResetCubesToPuzzle(const Puzzle &puzzle)
+{
+    ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
+    
+    for (unsigned int i = 0; i < puzzle.GetNumBuddies(); ++i)
+    {
+        ASSERT(i < arraysize(mCubeWrappers));
+        if (mCubeWrappers[i].IsEnabled())
+        {
+            mCubeWrappers[i].Reset();
+            
+            for (unsigned int j = 0; j < NUM_SIDES; ++j)
+            {
+                mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(i, j));
+                mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(i, j));
+            }
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void App::PlaySound()
 {
 #ifdef SIFTEO_SIMULATOR
@@ -465,41 +480,19 @@ void App::PlaySound()
 void App::StartGameState(GameState gameState)
 {
     mGameState = gameState;
+    
+    ASSERT(gameState < int(arraysize(kGameStateNames)));
     DEBUG_LOG(("State = %s\n", kGameStateNames[mGameState]));
     
     switch (mGameState)
     {
         case GAME_STATE_FREE_PLAY:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    mCubeWrappers[i].Reset();
-                    
-                    for (unsigned int j = 0; j < NUM_SIDES; ++j)
-                    {
-                        mCubeWrappers[i].SetPiece(j, GetPuzzleDefault().GetStartState(i, j));
-                        mCubeWrappers[i].SetPieceSolution(j, GetPuzzleDefault().GetEndState(i, j));
-                    }
-                }
-            }
+            ResetCubesToPuzzle(GetPuzzleDefault());
         }
         case GAME_STATE_SHUFFLE_START:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    mCubeWrappers[i].Reset();
-                    
-                    for (unsigned int j = 0; j < NUM_SIDES; ++j)
-                    {
-                        mCubeWrappers[i].SetPiece(j, GetPuzzleDefault().GetStartState(i, j));
-                        mCubeWrappers[i].SetPieceSolution(j, GetPuzzleDefault().GetEndState(i, j));
-                    }
-                }
-            }
+            ResetCubesToPuzzle(GetPuzzleDefault());
             mDelayTimer = kStateTimeDelayShort;
             mShuffleHintTimer = kHintTimerOnDuration;
             mHintPiece0 = -1;
@@ -537,21 +530,8 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_CHAPTER_START:
         {
-            ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
-            for (unsigned int i = 0; i < GetPuzzle(mPuzzleIndex).GetNumBuddies(); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    mCubeWrappers[i].Reset();
-                    
-                    for (unsigned int j = 0; j < NUM_SIDES; ++j)
-                    {
-                        ASSERT(mPuzzleIndex < GetNumPuzzles());
-                        mCubeWrappers[i].SetPiece(j, GetPuzzle(mPuzzleIndex).GetStartState(i, j));
-                        mCubeWrappers[i].SetPieceSolution(j, GetPuzzle(mPuzzleIndex).GetEndState(i, j));
-                    }
-                }
-            }
+            ASSERT(mPuzzleIndex < GetNumPuzzles());
+            ResetCubesToPuzzle(GetPuzzle(mPuzzleIndex));
             mDelayTimer = kStateTimeDelayLong;
             break;
         }
@@ -579,7 +559,7 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_HINT_2:
         {
             ChooseHint();
-            mBlinkTimer = kBlinkTimerDuration;
+            mHintBlinkTimer = kHintBlinkTimerDuration;
             break;
         }
         case GAME_STATE_STORY_SOLVED:
@@ -604,6 +584,7 @@ void App::StartGameState(GameState gameState)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Clean up repeated mDelayTimer and AnyTouching code.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::UpdateGameState(float dt)
@@ -816,12 +797,12 @@ void App::UpdateGameState(float dt)
         {
             mScoreTimer += dt;
             
-            ASSERT(mBlinkTimer > 0.0f);
-            mBlinkTimer -= dt;
-            if (mBlinkTimer <= 0.0f)
+            ASSERT(mHintBlinkTimer > 0.0f);
+            mHintBlinkTimer -= dt;
+            if (mHintBlinkTimer <= 0.0f)
             {
-                mBlinkTimer += kBlinkTimerDuration;
-                mBlinking = !mBlinking;
+                mHintBlinkTimer += kHintBlinkTimerDuration;
+                mHintBlinking = !mHintBlinking;
             }
             
             if (!mTouching)
@@ -915,6 +896,7 @@ void App::UpdateGameState(float dt)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Pull for loop to outside
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::DrawGameState()
@@ -1042,11 +1024,11 @@ void App::DrawGameState()
                     {
                         if (mHintPiece0 != -1 && (mHintPiece0 / NUM_SIDES) == int(i))
                         {
-                            mCubeWrappers[i].DrawBuddyWithStoryHint(mHintPiece0 % NUM_SIDES, mBlinking);
+                            mCubeWrappers[i].DrawBuddyWithStoryHint(mHintPiece0 % NUM_SIDES, mHintBlinking);
                         }
                         else if (mHintPiece1 != -1 && (mHintPiece1 / NUM_SIDES) == int(i))
                         {
-                            mCubeWrappers[i].DrawBuddyWithStoryHint(mHintPiece1 % NUM_SIDES, mBlinking);
+                            mCubeWrappers[i].DrawBuddyWithStoryHint(mHintPiece1 % NUM_SIDES, mHintBlinking);
                         }
                         else
                         {
@@ -1140,12 +1122,12 @@ void App::DrawGameState()
 
 void App::ShufflePieces()
 {   
-    DEBUG_LOG(("ShufflePiece... %d left\n", arraysize(mShufflePiecesMoved) - GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved))));
-    
     ++mShuffleMoveCounter;
     
-    unsigned int piece0 = GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved));
-    unsigned int piece1 = GetRandomOtherPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved), piece0);
+    unsigned int piece0 =
+        GetRandomNonMovedPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved));
+    unsigned int piece1 =
+        GetRandomOtherPiece(mShufflePiecesMoved, arraysize(mShufflePiecesMoved), piece0);
     
     OnSwapBegin(piece0, piece1);
 }
@@ -1271,6 +1253,7 @@ void App::ChooseHint()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Fix repeated code
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::UpdateSwap(float dt)
@@ -1285,8 +1268,10 @@ void App::UpdateSwap(float dt)
             mSwapAnimationCounter = 0;
         }
         
-        mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, -kSwapAnimationCount + mSwapAnimationCounter);
-        mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, -kSwapAnimationCount + mSwapAnimationCounter);
+        mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
+            mSwapPiece0 % NUM_SIDES, -kSwapAnimationCount + mSwapAnimationCounter);
+        mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
+            mSwapPiece1 % NUM_SIDES, -kSwapAnimationCount + mSwapAnimationCounter);
         
         if (mSwapAnimationCounter == 0)
         {
@@ -1303,8 +1288,10 @@ void App::UpdateSwap(float dt)
             mSwapAnimationCounter = 0;
         }
         
-        mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(mSwapPiece0 % NUM_SIDES, -mSwapAnimationCounter);
-        mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(mSwapPiece1 % NUM_SIDES, -mSwapAnimationCounter);
+        mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
+            mSwapPiece0 % NUM_SIDES, -mSwapAnimationCounter);
+        mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
+            mSwapPiece1 % NUM_SIDES, -mSwapAnimationCounter);
         
         if (mSwapAnimationCounter == 0)
         {

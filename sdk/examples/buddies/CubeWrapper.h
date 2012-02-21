@@ -13,7 +13,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <sifteo/cube.h>
-#include "Config.h"
+#include "Config.h" // For GameState
 #include "Piece.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,9 @@ public:
     void Reset();
     void Update(float dt);
     
-    // TODO: Clean up this crazy mess...
+    ////////////////////////////////////////
+    // TODO: Clean up this mess!!!
+    ////////////////////////////////////////
     void DrawBuddy();
     void DrawBuddyWithStoryHint(Sifteo::Cube::Side side, bool blink);
     void DrawShuffleUi(
@@ -49,9 +51,10 @@ public:
         const Sifteo::AssetImage &asset,
         const char *text, const Sifteo::Vec2 &textPosition);
     void DrawCutscene(const char *text);
-    
     void EnableBg0SprBg1Video(); // HACK!
     void ClearBg1(); // HACK!
+    ////////////////////////////////////////
+    ////////////////////////////////////////
     
     // Asset Loading
     bool IsLoadingAssets();
@@ -83,7 +86,8 @@ private:
     void DrawBanner(const Sifteo::AssetImage &asset);
     void DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds);
     void DrawHintBar(Sifteo::Cube::Side side);
-    
+    void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
+
     Sifteo::Cube mCube;
     bool mEnabled;
     unsigned int mBuddyId;
@@ -91,7 +95,9 @@ private:
     Piece mPiecesSolution[NUM_SIDES];
     int mPieceOffsets[NUM_SIDES];
     float mPieceAnimT;
-    Sifteo::Math::Random mRandom;
+    
+    // Cutscene Jump Animation
+    Sifteo::Math::Random mCutsceneSpriteJumpRandom;
     bool mCutsceneSpriteJump0;
     bool mCutsceneSpriteJump1;
 };

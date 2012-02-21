@@ -7,9 +7,15 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "CubeWrapper.h"
-#include <sifteo.h>
+#include <sifteo/asset.h>
+#include <sifteo/BG1Helper.h>
 #include "Config.h"
 #include "assets.gen.h"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+using namespace Sifteo;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,7 +126,7 @@ CubeWrapper::CubeWrapper()
     , mPiecesSolution()
     , mPieceOffsets()
     , mPieceAnimT(0.0f)
-    , mRandom()
+    , mCutsceneSpriteJumpRandom()
     , mCutsceneSpriteJump0(false)
     , mCutsceneSpriteJump1(false)
 {
@@ -131,12 +137,14 @@ CubeWrapper::CubeWrapper()
 
 void CubeWrapper::Reset()
 {
+    // TODO: Reset mPieces and mPiecesSolution too?
     for (unsigned int i = 0; i < arraysize(mPieceOffsets); ++i)
     {
         mPieceOffsets[i] = 0;
     }
-    
     mPieceAnimT = 0.0f;
+    mCutsceneSpriteJump0 = false;
+    mCutsceneSpriteJump1 = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -320,6 +328,7 @@ void CubeWrapper::DrawBackgroundWithText(
 void CubeWrapper::DrawCutscene(const char *text)
 {
     ASSERT(text != NULL);
+    ASSERT(2 <= _SYS_VRAM_SPRITES);
     
     EnableBg0SprBg1Video();
     
@@ -328,37 +337,9 @@ void CubeWrapper::DrawCutscene(const char *text)
     Video().setSpriteImage(0, CutsceneSprites, 0);
     Video().setSpriteImage(1, CutsceneSprites, 1);
     
-    // TODO: Put super-lame animation code elsewhere
-    
-    if (!mCutsceneSpriteJump0)
-    {
-        if (mRandom.randrange(8) == 0)
-        {
-            mCutsceneSpriteJump0 = true;
-        }
-    }
-    else
-    {
-        if (mRandom.randrange(1) == 0)
-        {
-            mCutsceneSpriteJump0 = false;
-        }
-    }
-    
-    if (!mCutsceneSpriteJump1)
-    {
-        if (mRandom.randrange(16) == 0)
-        {
-            mCutsceneSpriteJump1 = true;
-        }
-    }
-    else
-    {
-        if (mRandom.randrange(1) == 0)
-        {
-            mCutsceneSpriteJump1 = false;
-        }
-    }
+    // TODO: Put super-lame animation code elsewhere in an Update
+    UpdateCutsceneSpriteJump(mCutsceneSpriteJump0, 8, 1);
+    UpdateCutsceneSpriteJump(mCutsceneSpriteJump1, 16, 1);
     
     Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 64 : 72));
     Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 64 : 72));
@@ -377,7 +358,7 @@ void CubeWrapper::EnableBg0SprBg1Video()
     Video().set();
     Video().clear();
     
-    for (int i = 0; i < (NUM_SIDES * 2); ++i)
+    for (int i = 0; i < _SYS_VRAM_SPRITES; ++i)
     {
         Video().hideSprite(i);
     }
@@ -570,6 +551,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 {
     ASSERT(piece.mPart >= 0 && piece.mPart < NUM_SIDES);
     ASSERT(side >= 0 && side < NUM_SIDES);
+    ASSERT((NUM_SIDES * 2) <= _SYS_VRAM_SPRITES);
     
     int spriteLayer0 = side;
     int spriteLayer1 = side + NUM_SIDES;
@@ -592,7 +574,7 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
         int rotation = side - piece.mPart;
         if (rotation < 0)
         {
-            rotation += 4;
+            rotation += NUM_SIDES;
         }
         
         const Sifteo::PinnedAssetImage &asset = GetBuddyFacePartsAsset(piece.mBuddy);
@@ -682,6 +664,27 @@ void CubeWrapper::DrawHintBar(Cube::Side side)
     BG1Helper bg1helper(mCube);
     bg1helper.DrawAsset(GetHintBarPoint(side), GetHintBarAsset(mCube.id(), side));
     bg1helper.Flush();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance)
+{
+    if (!cutsceneSpriteJump)
+    {
+        if (mCutsceneSpriteJumpRandom.randrange(upChance) == 0)
+        {
+            cutsceneSpriteJump = true;
+        }
+    }
+    else
+    {
+        if (mCutsceneSpriteJumpRandom.randrange(downChance) == 0)
+        {
+            cutsceneSpriteJump = false;
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

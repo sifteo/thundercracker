@@ -9,7 +9,6 @@
 #include <sifteo.h>
 #include "App.h"
 #include "Config.h"
-#include "assets.gen.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,7 +43,6 @@ void Init()
         }
         
         bool allLoaded = false;
-        
         while (!allLoaded)
         {
             allLoaded = true;
@@ -65,6 +63,8 @@ void Init()
         }
     }
     
+    // TODO: This seems to make the transitions from loading to display
+    // the first assets a bit cleaner. Is there a better way?
     for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
     {
         if (sApp.GetCubeWrapper(i).IsEnabled())
@@ -113,6 +113,7 @@ void OnShake(void *, _SYSCubeID cid)
 
 void Setup()
 {
+    // TODO: Try ADD/REMOVE cube?
     _SYS_setVector(_SYS_NEIGHBOR_ADD, (void *)OnNeighborAdd, NULL);
     _SYS_setVector(_SYS_CUBE_TILT, (void *)OnTilt, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void *)OnShake, NULL);
