@@ -18,9 +18,6 @@ BuddyFaceParts5 = image{"assets/parts6.png", height = 64, pinned = true}
 BuddyFacePartFixed = image{"assets/fixed.png", pinned = true}
 BuddyFacePartHidden = image{"assets/hidden.png", pinned = true}
 
--- UI (BG0)
-PuzzleTitleCard = image{"assets/TitleCard.png"}
-
 -- UI (BG1)
 HintBarBlueTop = image{"assets/ui_hintbar_blue_top.png"}
 HintBarBlueLeft = image{"assets/ui_hintbar_blue_left.png"}

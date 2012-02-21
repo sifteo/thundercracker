@@ -40,9 +40,10 @@ public:
         float shuffleScoreTime,
         int shuffleHintPiece0,
         int shuffleHintPiece1);
-    void DrawTitleCard(const char *text);
+    void DrawClue(const char *text);
     void DrawTextBanner(const char *text);
-    void DrawHintBar(Sifteo::Cube::Side side);
+    void DrawBackground(const Sifteo::AssetImage &asset);
+    void DrawCutscene();
     
     void EnableBg0SprBg1Video(); // HACK!
     void ClearBg1(); // HACK!
@@ -76,6 +77,7 @@ private:
     void DrawPiece(const Piece &piece, Sifteo::Cube::Side side);
     void DrawBanner(const Sifteo::AssetImage &asset);
     void DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds);
+    void DrawHintBar(Sifteo::Cube::Side side);
     
     Sifteo::Cube mCube;
     bool mEnabled;

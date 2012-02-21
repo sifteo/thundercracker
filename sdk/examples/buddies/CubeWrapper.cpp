@@ -227,20 +227,14 @@ void CubeWrapper::DrawShuffleUi(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawTitleCard(const char *text)
+void CubeWrapper::DrawClue(const char *text)
 {
-    ASSERT(text != NULL);
-    
-    EnableBg0SprBg1Video();
-    Video().BG0_drawAsset(Vec2(0, 0), PuzzleTitleCard);
-    
-    for (int i = 0; i < (NUM_SIDES * 2); ++i)
-    {
-        Video().hideSprite(i);
-    }
-    
     BG1Helper bg1helper(mCube);
-    bg1helper.DrawText(Vec2(1, 1), Font, text);
+    bg1helper.DrawAsset(Vec2(0, 3), ClueText);
+    if (text != NULL)
+    {
+        bg1helper.DrawText(Vec2(1, 4), Font, text);
+    }
     bg1helper.Flush();
 }
 
@@ -260,12 +254,29 @@ void CubeWrapper::DrawTextBanner(const char *text)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawHintBar(Cube::Side side)
+void CubeWrapper::DrawBackground(const Sifteo::AssetImage &asset)
 {
-    ASSERT(side >= 0 && side < NUM_SIDES);
+    EnableBg0SprBg1Video();
+    Video().BG0_drawAsset(Vec2(0, 0), asset);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawCutscene()
+{
+    EnableBg0SprBg1Video();
+    
+    Video().BG0_drawAsset(Vec2(0, 0), CutsceneBackground);
+    
+    Video().setSpriteImage(0, CutsceneSprites, 0);
+    Video().setSpriteImage(1, CutsceneSprites, 1);
+    
+    Video().moveSprite(0, Vec2(0, 72));
+    Video().moveSprite(1, Vec2(64, 72));
     
     BG1Helper bg1helper(mCube);
-    bg1helper.DrawAsset(GetHintBarPoint(side), GetHintBarAsset(mCube.id(), side));
+    bg1helper.DrawAsset(Vec2(0, 0), CutsceneTextBubble);
     bg1helper.Flush();
 }
 
@@ -276,6 +287,11 @@ void CubeWrapper::EnableBg0SprBg1Video()
 {
     Video().set();
     Video().clear();
+    
+    for (int i = 0; i < (NUM_SIDES * 2); ++i)
+    {
+        Video().hideSprite(i);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -560,6 +576,18 @@ void CubeWrapper::DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, 
     bg1helper.DrawAsset(Vec2(x++, y), font, seconds / 10); // Seconds (10s)
     bg1helper.DrawAsset(Vec2(x++, y), font, seconds % 10); // Seconds ( 1s)
     
+    bg1helper.Flush();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawHintBar(Cube::Side side)
+{
+    ASSERT(side >= 0 && side < NUM_SIDES);
+    
+    BG1Helper bg1helper(mCube);
+    bg1helper.DrawAsset(GetHintBarPoint(side), GetHintBarAsset(mCube.id(), side));
     bg1helper.Flush();
 }
 

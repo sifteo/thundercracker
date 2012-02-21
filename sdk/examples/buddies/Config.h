@@ -40,6 +40,7 @@ enum GameState
     GAME_STATE_SHUFFLE_SOLVED,
     GAME_STATE_SHUFFLE_SCORE,
     
+    GAME_STATE_STORY_START,
     GAME_STATE_STORY_CHAPTER_START,
     GAME_STATE_STORY_CUTSCENE_START,
     GAME_STATE_STORY_DISPLAY_START_STATE,
@@ -53,7 +54,7 @@ enum GameState
 };
 
 const bool kLoadAssets = true;
-const GameMode kGameMode = GAME_MODE_SHUFFLE;
+const GameMode kGameMode = GAME_MODE_STORY;
 
 const unsigned int kNumCubes = 2; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters
@@ -62,8 +63,10 @@ const float kResetTimerDuration = 5.0f; // Touch a cube for this many seconds to
 const float kHintTimerOnDuration = 10.0f; // Seconds before hint appears
 
 const int kShuffleMaxMoves = -1; // Number of shuffles. -1 keeps going until all are shuffled.
-const float kShuffleStateTimeDelay = 1.0f; // Delay when switching between shuffle states
 const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap animation and next
+
+const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle states
+const float kStateTimeDelayLong = 5.0f;
 
 const int kSwapAnimationSpeed = 8; // Number of frames animated during swap on each update
 
