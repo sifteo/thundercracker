@@ -700,7 +700,7 @@ void SvmCpu::emulateMOVWT(uint32_t instr)
         (instr & 0x04000000) >> 15 |
         (instr & 0x000F0000) >> 4;
 
-    if (TopBit) {
+    if (TopBit & instr) {
         regs[Rd] = (regs[Rd] & 0xFFFF) | (imm16 << 16);
     } else {
         regs[Rd] = imm16;
@@ -720,7 +720,7 @@ void SvmCpu::emulateDIV(uint32_t instr)
     if (m32 == 0) {
         // Divide by zero, defined to return 0
         regs[Rd] = 0;
-    } else if (UnsignedBit) {
+    } else if (UnsignedBit & instr) {
         regs[Rd] = (uint32_t)regs[Rn] / m32;
     } else {
         regs[Rd] = (int32_t)regs[Rn] / (int32_t)m32;
