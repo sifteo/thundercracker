@@ -55,7 +55,7 @@ uint16_t SvmCpu::fetch()
     uint16_t *tst = reinterpret_cast<uint16_t*>(regs[REG_PC]);
 
 #if 1
-    LOG(("[%p] %04x", tst, *tst));
+    LOG(("[%x: %04x]", runtime->cache2virtFlash(reinterpret_cast<reg_t>(tst)), *tst));
     for (unsigned r = 0; r < 8; r++) {
         assert((uint32_t)regs[r] == regs[r]);
         LOG((" r%d=%08x", r, (uint32_t) regs[r]));

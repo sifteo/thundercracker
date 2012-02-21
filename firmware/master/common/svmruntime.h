@@ -15,6 +15,12 @@ public:
     void run(uint16_t appId);
     void svc(uint8_t imm8);
 
+    // translate from an address in our local flash block cache to the
+    // virtual address in the game's address space
+    reg_t cache2virtFlash(reg_t a) const {
+        return a - reinterpret_cast<reg_t>(flashRegion.data()) + VIRTUAL_FLASH_BASE + flashRegion.baseAddress() - progInfo.textRodata.start;
+    }
+
 private:
     static const unsigned VIRTUAL_FLASH_BASE = 0x80000000;
     struct Segment {
