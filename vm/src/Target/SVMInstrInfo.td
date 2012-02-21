@@ -84,35 +84,26 @@ def RET : S_call<(outs), (ins), "s.ret", [(SVMRet)]> {
     let isTerminator = 1;
 }
 
-def CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
-    "s.call\t$offset11", [(SVMCall callTarget:$offset11)]> {
-    let isCall = 1;
-}
+let isCall = 1, Defs = [R0, R1] in {
 
-def TAIL_CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
-    "s.tcall\t$offset11", [(SVMTailCall tailCallTarget:$offset11)]> {
-    let isCall = 1;
-    let isReturn = 1;
-    let isTerminator = 1;
-}
+    def CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
+        "s.call\t$offset11", [(SVMCall callTarget:$offset11)]>;
 
-def CALLr : S_ind<(outs), (ins GPReg:$Rs),
-    "s.call\t$Rs", [(SVMCall GPReg:$Rs)]> {
-    let isCall = 1;
-}
+    def CALLr : S_ind<(outs), (ins GPReg:$Rs),
+        "s.call\t$Rs", [(SVMCall GPReg:$Rs)]>;
 
-def TAIL_CALLr : S_ind<(outs), (ins GPReg:$Rs),
-    "s.tcall\t$Rs", [(SVMTailCall GPReg:$Rs)]> {
-    let isCall = 1;
-    let isReturn = 1;
-    let isTerminator = 1;
-}
+    def SYS64_CALL : S_call<(outs), (ins i32imm:$imm6),
+        "s.sys\t$imm6", [(SVMSys64Call imm:$imm6)]>; 
 
-def SYS64_CALL : S_call<(outs), (ins i32imm:$imm6),
-    "s.sys\t$imm6", [(SVMSys64Call imm:$imm6)]> {
-    let isCall = 1;
-}
+    let isReturn = 1, isTerminator = 1 in {
 
+        def TAIL_CALL : S_ind<(outs), (ins AbsCPIop:$offset11),
+            "s.tcall\t$offset11", [(SVMTailCall tailCallTarget:$offset11)]>;
+
+        def TAIL_CALLr : S_ind<(outs), (ins GPReg:$Rs),
+            "s.tcall\t$Rs", [(SVMTailCall GPReg:$Rs)]>;
+    }
+}
 
 /****************************************************************
  * Control Flow
