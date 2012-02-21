@@ -35,6 +35,8 @@ public:
     void Update(float dt);
     
     void DrawBuddy();
+    void DrawBuddyWithStoryHint(Sifteo::Cube::Side side, bool blink);
+    
     void DrawShuffleUi(
         GameState shuffleState,
         float shuffleScoreTime,

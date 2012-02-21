@@ -56,7 +56,8 @@ private:
     void DrawGameState();
     
     void ShufflePieces();
-    void ChooseShuffleHint();
+    
+    void ChooseHint();
     
     void UpdateSwap(float dt);
     void OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1);
@@ -91,9 +92,13 @@ private:
     int mShuffleMoveCounter;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     float mShuffleHintTimer;
-    int mShuffleHintPieceSkip;
-    int mShuffleHintPiece0;
-    int mShuffleHintPiece1;
+    
+    // Hinting
+    int mHintPieceSkip;
+    int mHintPiece0;
+    int mHintPiece1;
+    float mBlinkTimer;
+    bool mBlinking;
     
     // Story Mode
     unsigned int mPuzzleIndex;

@@ -204,9 +204,11 @@ App::App()
     , mSwapAnimationCounter(0)
     , mShuffleMoveCounter(0)
     , mShuffleHintTimer(0.0f)
-    , mShuffleHintPieceSkip(-1)
-    , mShuffleHintPiece0(-1)
-    , mShuffleHintPiece1(-1)
+    , mHintPieceSkip(-1)
+    , mHintPiece0(-1)
+    , mHintPiece1(-1)
+    , mBlinkTimer(kBlinkTimerDuration)
+    , mBlinking(false)
     , mPuzzleIndex(0)
 {
 }
@@ -221,7 +223,9 @@ void App::Init()
         AddCube(i);
     }
     
-    //mChannel.init();
+#ifdef SIFTEO_SIMULATOR
+    mChannel.init();
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -363,8 +367,8 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
     }
     
     mShuffleHintTimer = kHintTimerOnDuration;
-    mShuffleHintPiece0 = -1;
-    mShuffleHintPiece1 = -1;
+    mHintPiece0 = -1;
+    mHintPiece1 = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -390,8 +394,8 @@ void App::OnTilt(Cube::ID cubeId)
     }
     
     mShuffleHintTimer = kHintTimerOnDuration;
-    mShuffleHintPiece0 = -1;
-    mShuffleHintPiece1 = -1;
+    mHintPiece0 = -1;
+    mHintPiece1 = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -421,8 +425,8 @@ void App::OnShake(Cube::ID cubeId)
     }
     
     mShuffleHintTimer = kHintTimerOnDuration;
-    mShuffleHintPiece0 = -1;
-    mShuffleHintPiece1 = -1;
+    mHintPiece0 = -1;
+    mHintPiece1 = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -500,8 +504,8 @@ void App::StartGameState(GameState gameState)
             }
             mDelayTimer = kStateTimeDelayShort;
             mShuffleHintTimer = kHintTimerOnDuration;
-            mShuffleHintPiece0 = -1;
-            mShuffleHintPiece1 = -1;
+            mHintPiece0 = -1;
+            mHintPiece1 = -1;
             mTouching = false;
             break;
         }
@@ -523,8 +527,8 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_SOLVED:
         {
-            mShuffleHintPiece0 = -1;
-            mShuffleHintPiece1 = -1;
+            mHintPiece0 = -1;
+            mHintPiece1 = -1;
             break;
         }
         case GAME_STATE_STORY_START:
@@ -572,6 +576,12 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_HINT_1:
         {
             mDelayTimer = kStateTimeDelayLong;
+            break;
+        }
+        case GAME_STATE_STORY_HINT_2:
+        {
+            ChooseHint();
+            mBlinkTimer = kBlinkTimerDuration;
             break;
         }
         case GAME_STATE_STORY_SOLVED:
@@ -651,7 +661,7 @@ void App::UpdateGameState(float dt)
                 if (mShuffleHintTimer <= 0.0f)
                 {
                     mShuffleHintTimer = 0.0f;
-                    ChooseShuffleHint();
+                    ChooseHint();
                 }
             }
             
@@ -661,8 +671,8 @@ void App::UpdateGameState(float dt)
                 {
                     mTouching = false;
                     mShuffleHintTimer = kHintTimerOnDuration;
-                    mShuffleHintPiece0 = -1;
-                    mShuffleHintPiece1 = -1;
+                    mHintPiece0 = -1;
+                    mHintPiece1 = -1;
 
                 }
             }
@@ -671,7 +681,7 @@ void App::UpdateGameState(float dt)
                 if (AnyTouching(*this))
                 {
                     mTouching = true;
-                    ChooseShuffleHint();
+                    ChooseHint();
                 }
             }
             
@@ -807,6 +817,14 @@ void App::UpdateGameState(float dt)
         case GAME_STATE_STORY_HINT_2:
         {
             mScoreTimer += dt;
+            
+            ASSERT(mBlinkTimer > 0.0f);
+            mBlinkTimer -= dt;
+            if (mBlinkTimer <= 0.0f)
+            {
+                mBlinkTimer += kBlinkTimerDuration;
+                mBlinking = !mBlinking;
+            }
             
             if (!mTouching)
             {
@@ -1024,12 +1042,17 @@ void App::DrawGameState()
                 {
                     if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
                     {
-                        mCubeWrappers[i].DrawBuddy();
-                        
-                        if (i == 0)
+                        if (mHintPiece0 != -1 && (mHintPiece0 / NUM_SIDES) == int(i))
                         {
-                            // TODO: This is placeholder, it should blinks the pieces instead
-                            mCubeWrappers[i].DrawClue(NULL, false);
+                            mCubeWrappers[i].DrawBuddyWithStoryHint(mHintPiece0 % NUM_SIDES, mBlinking);
+                        }
+                        else if (mHintPiece1 != -1 && (mHintPiece1 / NUM_SIDES) == int(i))
+                        {
+                            mCubeWrappers[i].DrawBuddyWithStoryHint(mHintPiece1 % NUM_SIDES, mBlinking);
+                        }
+                        else
+                        {
+                            mCubeWrappers[i].DrawBuddy();
                         }
                     }
                     else
@@ -1107,8 +1130,8 @@ void App::DrawGameState()
                 mCubeWrappers[i].DrawShuffleUi(
                     mGameState,
                     mScoreTimer,
-                    mShuffleHintPiece0,
-                    mShuffleHintPiece1);
+                    mHintPiece0,
+                    mHintPiece1);
             }
         }
     }
@@ -1132,7 +1155,7 @@ void App::ShufflePieces()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void App::ChooseShuffleHint()
+void App::ChooseHint()
 {
     // Check all sides of all cubes against each other, looking for a perfect double swap!
     for (unsigned int iCube0 = 0; iCube0 < arraysize(mCubeWrappers); ++iCube0)
@@ -1164,8 +1187,8 @@ void App::ChooseShuffleHint()
                                     if (Compare(piece0, pieceSolution1) &&
                                         Compare(piece1, pieceSolution0))
                                     {
-                                        mShuffleHintPiece0 = iCube0 * NUM_SIDES + iSide0;
-                                        mShuffleHintPiece1 = iCube1 * NUM_SIDES + iSide1;
+                                        mHintPiece0 = iCube0 * NUM_SIDES + iSide0;
+                                        mHintPiece1 = iCube1 * NUM_SIDES + iSide1;
                                         return;
                                     }
                                 }
@@ -1195,15 +1218,15 @@ void App::ChooseShuffleHint()
                         {
                             for (Cube::Side iSide1 = 0; iSide1 < NUM_SIDES; ++iSide1)
                             {
-                                if (mShuffleHintPieceSkip != int(iCube1 * NUM_SIDES + iSide1))
+                                if (mHintPieceSkip != int(iCube1 * NUM_SIDES + iSide1))
                                 {
                                     const Piece &pieceSolution1 =
                                         mCubeWrappers[iCube1].GetPieceSolution(iSide1);
                                     
                                     if (Compare(piece0, pieceSolution1))
                                     {
-                                        mShuffleHintPiece0 = iCube0 * NUM_SIDES + iSide0;
-                                        mShuffleHintPiece1 = iCube1 * NUM_SIDES + iSide1;
+                                        mHintPiece0 = iCube0 * NUM_SIDES + iSide0;
+                                        mHintPiece1 = iCube1 * NUM_SIDES + iSide1;
                                         return;
                                     }
                                 }
@@ -1216,7 +1239,7 @@ void App::ChooseShuffleHint()
     }
     
     // Clear our skip piece, see note below...
-    mShuffleHintPieceSkip = -1;
+    mHintPieceSkip = -1;
     
     // If there are no single swaps, just move any piece that isn't positioned correctly.
     for (unsigned int iCube0 = 0; iCube0 < arraysize(mCubeWrappers); ++iCube0)
@@ -1238,10 +1261,10 @@ void App::ChooseShuffleHint()
                     Cube::ID iCube1 = (iCube0 + 1) % kNumCubes;
                     Cube::Side iSide1 = iSide0;
                     
-                    mShuffleHintPiece0 = iCube0 * NUM_SIDES + iSide0;
-                    mShuffleHintPiece1 = iCube1 * NUM_SIDES + iSide1;
+                    mHintPiece0 = iCube0 * NUM_SIDES + iSide0;
+                    mHintPiece1 = iCube1 * NUM_SIDES + iSide1;
                     
-                    mShuffleHintPieceSkip = iCube1 * NUM_SIDES + iSide1;
+                    mHintPieceSkip = iCube1 * NUM_SIDES + iSide1;
                     return;
                 }
             }
