@@ -236,7 +236,7 @@ void CubeWrapper::DrawClue(const char *text, bool moreHints)
         bg1helper.DrawAsset(Vec2(0, 3), MoreHints);
         if (text != NULL)
         {
-            bg1helper.DrawText(Vec2(1, 4), Font, text);
+            bg1helper.DrawText(Vec2(2, 4), Font, text);
         }
     }
     else
@@ -244,7 +244,7 @@ void CubeWrapper::DrawClue(const char *text, bool moreHints)
         bg1helper.DrawAsset(Vec2(0, 3), ClueText);
         if (text != NULL)
         {
-            bg1helper.DrawText(Vec2(1, 4), Font, text);
+            bg1helper.DrawText(Vec2(2, 4), Font, text);
         }
     }
     
@@ -270,7 +270,26 @@ void CubeWrapper::DrawTextBanner(const char *text)
 void CubeWrapper::DrawBackground(const Sifteo::AssetImage &asset)
 {
     EnableBg0SprBg1Video();
+    
     Video().BG0_drawAsset(Vec2(0, 0), asset);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawBackgroundWithText(
+    const Sifteo::AssetImage &asset,
+    const char *text, const Sifteo::Vec2 &textPosition)
+{
+    ASSERT(text != NULL);
+    
+    EnableBg0SprBg1Video();
+    
+    Video().BG0_drawAsset(Vec2(0, 0), asset);
+    
+    BG1Helper bg1helper(mCube);
+    bg1helper.DrawText(textPosition, Font, text);
+    bg1helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

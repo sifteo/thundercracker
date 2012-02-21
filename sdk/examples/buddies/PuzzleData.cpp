@@ -162,10 +162,10 @@ const Puzzle kPuzzleDefault = Puzzle(kNumCubes, "DEFAULT", kDefaultState, kDefau
 
 const Puzzle kPuzzles[] =
 {
-    Puzzle(2, "SWAP MOUTHS", kDefaultState, kAuthoredEndStateMouths),
-    Puzzle(2, "SWAP HAIR",   kDefaultState, kAuthoredEndStateHair),
-    Puzzle(2, "SWAP EYES",   kDefaultState, kAuthoredEndStateEyes),
-    Puzzle(2, "ATTRIBUTE TEST\n(SWAP MOUTHS)", kStartStateAttributeTest, kAuthoredEndStateMouths),
+    Puzzle(2, "Swap Mouths", kDefaultState, kAuthoredEndStateMouths),
+    Puzzle(2, "Swap Hair",   kDefaultState, kAuthoredEndStateHair),
+    Puzzle(2, "Swap Eyes",   kDefaultState, kAuthoredEndStateEyes),
+    Puzzle(2, "Attribute\nTest\n(Swap Mouths)", kStartStateAttributeTest, kAuthoredEndStateMouths),
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

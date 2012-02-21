@@ -103,6 +103,48 @@ bool AllSolved(App& app)
     
     return true;
 }
+                    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+{
+    char buffer[128];
+    sprintf(buffer, "Chapter %u", puzzleIndex + 1);
+    cubeWrapper.DrawBackgroundWithText(ChapterTitle, buffer, Vec2(3, 4));
+}
+                    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DrawChapterSummary(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+{
+    char buffer[128];
+    sprintf(buffer, "Chapter %u", puzzleIndex + 1);
+    cubeWrapper.DrawBackgroundWithText(ChapterSummary, buffer, Vec2(3, 4));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DrawChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+{
+    unsigned int nextPuzzleIndex = ++puzzleIndex % GetNumPuzzles();
+    
+    char buffer[128];
+    sprintf(buffer, "Chapter %u", nextPuzzleIndex + 1);
+    cubeWrapper.DrawBackgroundWithText(ChapterNext, buffer, Vec2(3, 8));
+}
+                    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DrawRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+{
+    char buffer[128];
+    sprintf(buffer, "Chapter %u", puzzleIndex + 1);
+    cubeWrapper.DrawBackgroundWithText(Retry, buffer, Vec2(3, 8));
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Shuffle Mode
@@ -867,7 +909,7 @@ void App::DrawGameState()
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    mCubeWrappers[i].DrawBackground(ChapterTitle);
+                    DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
                 }
             }
         }
@@ -883,7 +925,7 @@ void App::DrawGameState()
                     }
                     else
                     {
-                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
                     }
                 }
             }
@@ -900,7 +942,7 @@ void App::DrawGameState()
                     }
                     else
                     {
-                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
                     }
                 }
             }
@@ -914,11 +956,11 @@ void App::DrawGameState()
                     if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
                     {
                         mCubeWrappers[i].DrawBuddy();
-                        mCubeWrappers[i].DrawClue(NULL);
+                        mCubeWrappers[i].DrawClue(GetPuzzle(mPuzzleIndex).GetInstructions());
                     }
                     else
                     {
-                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
                     }
                 }
             }
@@ -935,7 +977,7 @@ void App::DrawGameState()
                     }
                     else
                     {
-                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
                     }
                 }
             }
@@ -952,12 +994,12 @@ void App::DrawGameState()
                         
                         if (i == 0)
                         {
-                            mCubeWrappers[i].DrawClue(NULL, true);
+                            mCubeWrappers[i].DrawClue(GetPuzzle(mPuzzleIndex).GetInstructions(), true);
                         }
                     }
                     else
                     {
-                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
                     }
                 }
             }
@@ -980,7 +1022,7 @@ void App::DrawGameState()
                     }
                     else
                     {
-                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
                     }
                 }
             }
@@ -997,7 +1039,7 @@ void App::DrawGameState()
                     }
                     else
                     {
-                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
                     }
                 }
             }
@@ -1014,8 +1056,7 @@ void App::DrawGameState()
                     }
                     else
                     {
-                        mCubeWrappers[i].EnableBg0SprBg1Video();
-                        mCubeWrappers[i].DrawBackground(ChapterSummary);
+                        DrawChapterSummary(mCubeWrappers[i], mPuzzleIndex);
                     }
                 }
             }
@@ -1030,11 +1071,11 @@ void App::DrawGameState()
                     
                     if (i == 0)
                     {
-                        mCubeWrappers[i].DrawBackground(NextChapter);
+                        DrawChapterNext(mCubeWrappers[i], mPuzzleIndex);
                     }
                     else if (i == 1)
                     {
-                        mCubeWrappers[i].DrawBackground(Retry);
+                        DrawRetry(mCubeWrappers[i], mPuzzleIndex);
                     }
                     else if (i == 2)
                     {
