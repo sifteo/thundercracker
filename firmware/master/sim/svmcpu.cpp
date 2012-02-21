@@ -10,6 +10,9 @@ void SvmCpu::init(SvmRuntime *runtime)
     this->runtime = runtime;
     memset(regs, 0, sizeof(regs));
     cpsr = 0;
+
+    // init sp to top of user data
+    regs[REG_SP] = reinterpret_cast<reg_t>(&mem[MEM_IN_BYTES - 4]);
 }
 
 void SvmCpu::run()
