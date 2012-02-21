@@ -233,7 +233,7 @@ void CubeWrapper::Draw()
             if( !m_dirty )
             {
                 //force touch of a cube, maybe it'll fix things
-                m_cube.vbuf.touch();
+                //m_cube.vbuf.touch();
                 break;
             }
 
@@ -334,7 +334,9 @@ void CubeWrapper::Draw()
 	}
 
     m_numQueuedClears = 0;
-	
+
+    //TODO, fix hack!
+    m_cube.vbuf.touch();
 }
 
 
@@ -1814,7 +1816,7 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
     {
         //TODO remove hack
         //for now just touch every frame
-        m_cube.vbuf.touch();
+        //m_cube.vbuf.touch();
         return;
     }
 
