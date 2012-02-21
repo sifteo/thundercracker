@@ -117,10 +117,20 @@ void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DrawChapterSummary(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
+void DrawChapterSummary(
+    CubeWrapper &cubeWrapper,
+    unsigned int puzzleIndex,
+    float scoreTime,
+    unsigned int scoreMoves)
 {
+    int minutes = int(scoreTime) / 60;
+    int seconds = int(scoreTime - (minutes * 60.0f));
+    
     char buffer[128];
-    sprintf(buffer, "Chapter %u", puzzleIndex + 1);
+    sprintf(
+        buffer,
+        "Chapter %u\nTime:%02u:%02u\nMoves:%u",
+        puzzleIndex + 1, minutes, seconds, scoreMoves);
     cubeWrapper.DrawBackgroundWithText(ChapterSummary, buffer, Vec2(3, 4));
 }
 
@@ -186,12 +196,13 @@ App::App()
     , mResetTimer(0.0f)
     , mDelayTimer(0.0f)
     , mTouching(false)
+    , mScoreTimer(0.0f)
+    , mScoreMoves(0)
     , mSwapState(SWAP_STATE_NONE)
     , mSwapPiece0(0)
     , mSwapPiece1(0)
     , mSwapAnimationCounter(0)
     , mShuffleMoveCounter(0)
-    , mShuffleScoreTime(0.0f)
     , mShuffleHintTimer(0.0f)
     , mShuffleHintPieceSkip(-1)
     , mShuffleHintPiece0(-1)
@@ -346,6 +357,7 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
                 StartGameState(GAME_STATE_STORY_PLAY);
             }
             
+            ++mScoreMoves;
             OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
         }
     }
@@ -505,7 +517,8 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
         {
-            mShuffleScoreTime = 0.0f;
+            mScoreTimer = 0.0f;
+            mScoreMoves = 0;
             break;
         }
         case GAME_STATE_SHUFFLE_SOLVED:
@@ -552,15 +565,8 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_PLAY:
         {
-            ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    mCubeWrappers[i].ClearBg1();
-                }
-            }
-            System::paintSync();
+            mScoreTimer = 0.0f;
+            mScoreMoves = 0;
             break;
         }
         case GAME_STATE_STORY_HINT_1:
@@ -625,7 +631,7 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
         {
-            mShuffleScoreTime += dt;
+            mScoreTimer += dt; // TODO: Should we count time here?
             
             if (AnyTouching(*this))
             {
@@ -637,7 +643,7 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_PLAY:
         {
-            mShuffleScoreTime += dt;
+            mScoreTimer += dt;
             
             if (mShuffleHintTimer > 0.0f)
             {
@@ -741,6 +747,8 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_PLAY:
         {
+            mScoreTimer += dt;
+            
             if (!mTouching)
             {
                 for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
@@ -764,6 +772,8 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_HINT_1:
         {
+            mScoreTimer += dt;
+            
             ASSERT(mDelayTimer > 0.0f);
             mDelayTimer -= dt;
             
@@ -796,6 +806,8 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_HINT_2:
         {
+            mScoreTimer += dt;
+            
             if (!mTouching)
             {
                 for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
@@ -1056,7 +1068,7 @@ void App::DrawGameState()
                     }
                     else
                     {
-                        DrawChapterSummary(mCubeWrappers[i], mPuzzleIndex);
+                        DrawChapterSummary(mCubeWrappers[i], mPuzzleIndex, mScoreTimer, mScoreMoves);
                     }
                 }
             }
@@ -1094,7 +1106,7 @@ void App::DrawGameState()
                 mCubeWrappers[i].DrawBuddy();
                 mCubeWrappers[i].DrawShuffleUi(
                     mGameState,
-                    mShuffleScoreTime,
+                    mScoreTimer,
                     mShuffleHintPiece0,
                     mShuffleHintPiece1);
             }

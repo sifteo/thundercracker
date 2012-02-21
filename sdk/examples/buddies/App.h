@@ -70,6 +70,8 @@ private:
     float mResetTimer;
     float mDelayTimer;
     bool mTouching;
+    float mScoreTimer;
+    unsigned int mScoreMoves;
     
     // Swapping
     enum SwapState
@@ -87,7 +89,6 @@ private:
     
     // Shuffle Mode (I'm sure all this can be refactored...)
     int mShuffleMoveCounter;
-    float mShuffleScoreTime;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     float mShuffleHintTimer;
     int mShuffleHintPieceSkip;
