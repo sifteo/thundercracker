@@ -16,9 +16,15 @@ public:
     void svc(uint8_t imm8);
 
     // translate from an address in our local flash block cache to the
-    // virtual address in the game's address space
+    // virtual address in the game's address space.
+    // currently only used for debugging in SvmCpu.
     reg_t cache2virtFlash(reg_t a) const {
         return a - reinterpret_cast<reg_t>(flashRegion.data()) + VIRTUAL_FLASH_BASE + flashRegion.baseAddress() - progInfo.textRodata.start;
+    }
+
+    // currently only used in debug asserts in SvmCpu.
+    reg_t flashBlockBase() const {
+        return reinterpret_cast<reg_t>(flashRegion.data());
     }
 
 private:

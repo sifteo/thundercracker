@@ -582,6 +582,7 @@ void SvmCpu::emulateSTRSPImm(uint16_t instr)
     unsigned imm8 = instr & 0xff;
 
     uint32_t *addr = reinterpret_cast<uint32_t*>(regs[REG_SP] + (imm8 << 2));
+    ASSERT((reinterpret_cast<uint8_t*>(addr) - &mem[0]) < MEM_IN_BYTES && "store to invalid memory address");
     *addr = regs[Rt];
 }
 
@@ -592,6 +593,7 @@ void SvmCpu::emulateLDRSPImm(uint16_t instr)
     unsigned imm8 = instr & 0xff;
 
     uint32_t *addr = reinterpret_cast<uint32_t*>(regs[REG_SP] + (imm8 << 2));
+    ASSERT((reinterpret_cast<uint8_t*>(addr) - &mem[0]) < MEM_IN_BYTES && "load from invalid memory address");
     regs[Rt] = *addr;
 }
 
@@ -601,8 +603,6 @@ void SvmCpu::emulateADDSpImm(uint16_t instr)
     unsigned Rd = (instr >> 8) & 0x7;
     unsigned imm8 = instr & 0xff;
 
-    // "Allowed constant values are multiples of 4 in the range of 0-1020 for
-    // encoding T1", so shift it on over.
     regs[Rd] = regs[REG_SP] + (imm8 << 2);
 }
 
@@ -615,6 +615,8 @@ void SvmCpu::emulateLDRLitPool(uint16_t instr)
     uint32_t *addr = reinterpret_cast<uint32_t*>
         (((regs[REG_PC] + 3) & ~3) + (imm8 << 2));
 
+    // this should only come from our current flash block
+    ASSERT((reinterpret_cast<reg_t>(addr) - runtime->flashBlockBase()) < FlashLayer::BLOCK_SIZE && "PC relative load from invalid address");
     regs[Rt] = *addr;
 }
 
