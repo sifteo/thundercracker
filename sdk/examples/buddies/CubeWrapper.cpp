@@ -360,8 +360,8 @@ void CubeWrapper::DrawCutscene(const char *text)
         }
     }
     
-    Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 80 : 72));
-    Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 80: 72));
+    Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 64 : 72));
+    Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 64 : 72));
     
     BG1Helper bg1helper(mCube);
     bg1helper.DrawAsset(Vec2(0, 0), CutsceneTextBubble);
