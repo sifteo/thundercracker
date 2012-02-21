@@ -156,13 +156,14 @@ uint32_t SVMMemoryLayout::getEntryAddress(const MCAssembler &Asm,
     if (!S || !S->isDefined())
         report_fatal_error("No entry point exists. Is main() defined?");
 
-    SVMSymbolInfo SI = getSymbol(Asm, Layout, S);
-    assert(SI.Kind == SVMSymbolInfo::LOCAL);
+    SVMSymbolInfo SI = getSymbol(Asm, Layout, S, true, true);
+    assert(SI.Kind == SVMSymbolInfo::CALL);
     return SI.Value;
 }
 
 SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
-    const MCAsmLayout &Layout, const MCSymbol *S, bool useCodeAddresses) const
+    const MCAsmLayout &Layout, const MCSymbol *S, bool useCodeAddresses,
+    bool forceCall) const
 {
     const MCSymbolData *SD = &Asm.getSymbolData(*S);
     SVMSymbolInfo SI;
@@ -212,15 +213,15 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
             report_fatal_error("Code symbol '" + Twine(Name) +
                 "' has unsupported stack size of " + Twine(Offset) + " bytes");
 
-        if (Deco.isLongBranch) {
-            // Encode the Long Branch addrop
-            SI.Value = 0xE0000000 | Offset;
-            SI.Kind = SVMSymbolInfo::LB;
-
-        } else if (Deco.isCall) {
+        if (Deco.isCall || forceCall) {
             // A Call, with SP adjustment and tail-call flag
             SI.Value = Offset | (SPAdj << 22) | Deco.isTailCall;
             SI.Kind = SVMSymbolInfo::CALL;
+
+        } else if (Deco.isLongBranch) {
+            // Encode the Long Branch addrop
+            SI.Value = 0xE0000000 | Offset;
+            SI.Kind = SVMSymbolInfo::LB;
 
         } else {
             // Normal undecorated address
