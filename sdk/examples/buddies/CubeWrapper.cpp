@@ -231,10 +231,13 @@ void CubeWrapper::DrawClue(const char *text, bool moreHints)
 {
     BG1Helper bg1helper(mCube);
     
-    // HACK to show distinct hint states. Actual design has both on at same time.
     if (moreHints)
     {
-        bg1helper.DrawAsset(Vec2(0, 0), MoreHints);
+        bg1helper.DrawAsset(Vec2(0, 3), MoreHints);
+        if (text != NULL)
+        {
+            bg1helper.DrawText(Vec2(1, 4), Font, text);
+        }
     }
     else
     {

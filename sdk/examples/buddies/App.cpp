@@ -952,7 +952,7 @@ void App::DrawGameState()
                         
                         if (i == 0)
                         {
-                            mCubeWrappers[i].DrawClue(NULL, false);
+                            mCubeWrappers[i].DrawClue(NULL, true);
                         }
                     }
                     else
@@ -974,7 +974,8 @@ void App::DrawGameState()
                         
                         if (i == 0)
                         {
-                            mCubeWrappers[i].DrawClue(NULL, true);
+                            // TODO: This is placeholder, it should blinks the pieces instead
+                            mCubeWrappers[i].DrawClue(NULL, false);
                         }
                     }
                     else
