@@ -109,13 +109,9 @@ bool AllSolved(App& app)
 
 void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
-    char buffer[128];
-    sprintf(
-        buffer,
-        "Chapter %u\n\"%s\"",
-        puzzleIndex + 1,
-        GetPuzzle(puzzleIndex).GetChapterTitle());
-    cubeWrapper.DrawBackgroundWithText(ChapterTitle, buffer, Vec2(3, 4));
+    String<128> buffer;
+    buffer << "Chapter " << (puzzleIndex + 1) << "\n" << "\"" << GetPuzzle(puzzleIndex).GetChapterTitle() << "\"";
+    cubeWrapper.DrawBackgroundWithText(ChapterTitle, buffer.c_str(), Vec2(3, 4));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,12 +126,10 @@ void DrawChapterSummary(
     int minutes = int(scoreTime) / 60;
     int seconds = int(scoreTime - (minutes * 60.0f));
     
-    char buffer[128];
-    sprintf(
-        buffer,
-        "Chapter %u\nTime:%02u:%02u\nMoves:%u",
-        puzzleIndex + 1, minutes, seconds, scoreMoves);
-    cubeWrapper.DrawBackgroundWithText(ChapterSummary, buffer, Vec2(3, 4));
+    String<128> buffer;
+    buffer << "Chapter " << (puzzleIndex + 1) << "\nTime:" << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true) << "\nMoves:" << scoreMoves;
+    
+    cubeWrapper.DrawBackgroundWithText(ChapterSummary, buffer.c_str(), Vec2(3, 4));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,9 +139,9 @@ void DrawChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
     unsigned int nextPuzzleIndex = ++puzzleIndex % GetNumPuzzles();
     
-    char buffer[128];
-    sprintf(buffer, "Chapter %u", nextPuzzleIndex + 1);
-    cubeWrapper.DrawBackgroundWithText(ChapterNext, buffer, Vec2(3, 8));
+    String<128> buffer;
+    buffer << "Chapter " << (nextPuzzleIndex + 1);
+    cubeWrapper.DrawBackgroundWithText(ChapterNext, buffer.c_str(), Vec2(3, 8));
 }
                     
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,9 +149,9 @@ void DrawChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 
 void DrawRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
-    char buffer[128];
-    sprintf(buffer, "Chapter %u", puzzleIndex + 1);
-    cubeWrapper.DrawBackgroundWithText(Retry, buffer, Vec2(3, 8));
+    String<128> buffer;
+    buffer << "Chapter " << (puzzleIndex + 1);
+    cubeWrapper.DrawBackgroundWithText(Retry, buffer.c_str(), Vec2(3, 8));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
