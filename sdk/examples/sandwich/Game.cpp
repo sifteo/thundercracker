@@ -12,10 +12,6 @@ static void onNeighbor(void *context,
   sNeighborDirty = true;
 }
 
-static void onTouch(_SYSCubeID cid) {    
-    // /pGame->ViewAt(cid)->touched = !pGame->ViewAt(cid)->touched;
-}
-
 void Game::ObserveNeighbors(bool flag) {
   if (flag) {
     _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighbor, NULL);
@@ -26,12 +22,14 @@ void Game::ObserveNeighbors(bool flag) {
   }
 }
 
-//------------------------------------------------------------------
+//----------------------------------------------------------------------------
 // MAIN PLAYER INTERACTION LOOP
-//------------------------------------------------------------------
+//----------------------------------------------------------------------------
 
 void Game::MainLoop(Cube* pPrimary) {
-  // reset everything
+  
+  //---------------------------------------------------------------------------
+  // RESET EVERYTHING
   mSimFrames = 0;
   mAnimFrames = 0;
   mIsDone = false;
@@ -51,7 +49,9 @@ void Game::MainLoop(Cube* pPrimary) {
   ObserveNeighbors(true);
   CheckMapNeighbors();
   while(!mIsDone) {
-    // wait for touch
+
+    //-------------------------------------------------------------------------
+    // WAIT FOR TOUCH
     mPlayer.SetStatus(PLAYER_STATUS_IDLE);
     mPlayer.CurrentView()->UpdatePlayer();
     mPath.Cancel();
@@ -61,17 +61,20 @@ void Game::MainLoop(Cube* pPrimary) {
         OnActiveTrigger();
       }
     } while (!pGame->GetMap()->FindBroadPath(&mPath));
-    // go to the target
+
+    //-------------------------------------------------------------------------
+    // PROCEED TO TARGET
     mPlayer.SetStatus(PLAYER_STATUS_WALKING);
     do {
-      if (mPath.IsDefined()) {
-        mPlayer.SetDirection(mPath.steps[0]);
-        mMap.GetBroadLocationNeighbor(*mPlayer.Current(), mPlayer.Direction(), mPlayer.Target());
-      }
       // animate walking to target
+      mPlayer.SetDirection(mPath.steps[0]);
+      mMap.GetBroadLocationNeighbor(*mPlayer.Current(), mPlayer.Direction(), mPlayer.Target());
       PlaySfx(sfx_running);
       mPlayer.TargetView()->ShowPlayer();
       if (mPlayer.Direction() == SIDE_TOP && mPlayer.GetRoom()->HasClosedDoor()) {
+
+        //---------------------------------------------------------------------
+        // WALKING NORTH THROUGH DOOR
         int progress;
         for(progress=0; progress<24; progress+=WALK_SPEED) {
           mPlayer.Move(0, -WALK_SPEED);
@@ -110,7 +113,10 @@ void Game::MainLoop(Cube* pPrimary) {
             mPlayer.Move(0, WALK_SPEED);
           }          
         }
-      } else { // general case - A*
+      } else { 
+
+        //---------------------------------------------------------------------
+        // A* PATHFINDING
         if (mPlayer.TargetView()->GetRoom()->IsBridge()) {
           mPlayer.TargetView()->HideOverlay(mPlayer.Direction()%2 == 1);
         }
@@ -138,7 +144,11 @@ void Game::MainLoop(Cube* pPrimary) {
           progress = 0;
           Update();
         }
+
       }
+
+      //-----------------------------------------------------------------------
+      // PASSIVE TRIGGER (passing-through room)
       if (mPlayer.TargetView()) { // did we land on the target?
         mPlayer.AdvanceToTarget();
         if (OnPassiveTrigger() == RESULT_PATH_INTERRUPTED) {
@@ -146,6 +156,9 @@ void Game::MainLoop(Cube* pPrimary) {
         }
       }  
     } while(mPath.PopStep(*mPlayer.Current(), mPlayer.Target()));
+
+    //-------------------------------------------------------------------------
+    // ACTIVE TRIGGER TRIGGER (landing-on room)
     OnActiveTrigger();
   }
 }
@@ -319,6 +332,8 @@ void Game::OnInventoryChanged() {
   for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->RefreshInventory();
   }
+
+  // demo end-condition hack
   const int firstSandwichId = 2;
   int count = 0;
   for(int i=firstSandwichId; i<firstSandwichId+4; ++i) {
@@ -327,12 +342,16 @@ void Game::OnInventoryChanged() {
     }
   }
   mIsDone = true;
+
 }
 
 
 unsigned Game::OnPassiveTrigger() {
   Room* pRoom = mPlayer.GetRoom();
   if (pRoom->HasItem()) {
+
+    //-------------------------------------------------------------------------
+    // PLAYER TRIGGERED ITEM PICKUP
     const ItemData* pItem = pRoom->TriggerAsItem();
     if (mState.FlagTrigger(pItem->trigger)) { pRoom->ClearTrigger(); }
     if (mState.PickupItem(pItem->itemId)) {
@@ -356,7 +375,11 @@ unsigned Game::OnPassiveTrigger() {
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
     for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
     mPlayer.CurrentView()->HideItem();        
+
   } else if (pRoom->HasTrapdoor()) {
+
+    //-------------------------------------------------------------------------
+    // PLAYER TRIGGERED TRAPDOOR
     // animate the tiles opening
     Vec2 firstTile = pRoom->LocalCenter(0) - Vec2(2,2);
     for(unsigned i=1; i<=7; ++i) { // magic
@@ -409,6 +432,7 @@ unsigned Game::OnPassiveTrigger() {
     CheckMapNeighbors();
     Paint(true);
     return RESULT_PATH_INTERRUPTED;
+
   }
 
   return RESULT_NONE;
@@ -416,6 +440,9 @@ unsigned Game::OnPassiveTrigger() {
 
 void Game::OnActiveTrigger() {
   if (mPlayer.GetRoom()->HasGateway()) {
+
+    //-------------------------------------------------------------------------
+    // PLAYER TRIGGERED GATEWAY
     const GatewayData* pGate = mPlayer.GetRoom()->TriggerAsGate();
     const MapData& targetMap = gMapData[pGate->targetMap];
     const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
@@ -425,8 +452,11 @@ void Game::OnActiveTrigger() {
       128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
       128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
     ));
+
   } else if (mPlayer.GetRoom()->HasNPC()) {
-    ////////
+    
+    //-------------------------------------------------------------------------
+    // PLAYER TRIGGERED NPC DIALOG
     mPlayer.SetStatus(PLAYER_STATUS_IDLE);
     mPlayer.CurrentView()->UpdatePlayer();
     for(int i=0; i<16; ++i) { Paint(true); }
@@ -436,8 +466,11 @@ void Game::OnActiveTrigger() {
     System::paintSync();
     mPlayer.CurrentView()->Parent()->Restore();
     System::paintSync();
+
   }  
+
   if (mPlayer.Direction() != SIDE_BOTTOM || mPlayer.Status() != PLAYER_STATUS_IDLE) {
+    // Always look "south" after an action
     mPlayer.SetDirection(SIDE_BOTTOM);
     mPlayer.SetStatus(PLAYER_STATUS_IDLE);
     mPlayer.CurrentView()->UpdatePlayer();

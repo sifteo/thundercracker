@@ -2,22 +2,10 @@
 #include "Game.h"
 #include "DrawingHelpers.h"
 
-// Constants
-
 #define ROOM_UNDEFINED  (0xff)
 #define BFF_SPRITE_ID       0
 #define TRIGGER_SPRITE_ID   1
 #define PLAYER_SPRITE_ID    2
-
-static const int8_t sHoverTable[] = { 
-  0, 0, 1, 2, 2, 3, 3, 3, 
-  4, 3, 3, 3, 2, 2, 1, 0, 
-  -1, -1, -2, -3, -3, -4, 
-  -4, -4, -4, -4, -4, -4, 
-  -3, -3, -2, -1
-};
-#define HOVER_COUNT 32
-// methods
 
 void RoomView::Init(unsigned roomId) {
   Parent()->HideSprites();
@@ -53,7 +41,6 @@ void RoomView::Init(unsigned roomId) {
       mode.moveSprite(BFF_SPRITE_ID, mAmbient.bff.x-68, mAmbient.bff.y-68);
     }
   }
-  pGame->NeedsSync();
 }
 
 void RoomView::Restore() {
@@ -89,7 +76,7 @@ void RoomView::Update() {
   if (GetRoom()->HasItem()) {
     const unsigned hoverTime = (pGame->AnimFrame() - mStartFrame) % HOVER_COUNT;
     Vec2 p = 16 * GetRoom()->LocalCenter(0);
-    mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + sHoverTable[hoverTime]);
+    mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y + kHoverTable[hoverTime]);
   }
 }
 

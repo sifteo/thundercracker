@@ -9,14 +9,12 @@
 
 #if SIFTEO_SIMULATOR
 	// these settings only applied to the emulator build
-	#define KLUDGES			0
+	#define KLUDGES			1
 	#define FAST_FORWARD	1
 #else
 	// these settings only applied to the real hardware build
 	#define KLUDGES			1
 	#define FAST_FORWARD	0
 #endif
-
-#define TOUCH_ONLY		1
 
 #endif

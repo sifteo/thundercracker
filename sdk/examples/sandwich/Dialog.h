@@ -16,6 +16,7 @@ public:
     const char* Show(const char* msg);
     void Erase();
     void Fade();
+    void SetFadeAmount(uint8_t alpha);
 
 private:    
     void DrawGlyph(char ch);

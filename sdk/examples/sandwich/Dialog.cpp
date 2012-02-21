@@ -1,5 +1,6 @@
 #include "Dialog.h"
 #include "Game.h"
+#include "DrawingHelpers.h"
 
 static const uint8_t font_data[] = {
     0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -96,32 +97,6 @@ static const uint8_t font_data[] = {
 };
 #define kFontHeight 9
 
-static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
-    // Round to the nearest 5/6 bit color. Note that simple
-    // bit truncation does NOT produce the best result!
-    uint16_t r5 = ((uint16_t)r * 31 + 128) / 255;
-    uint16_t g6 = ((uint16_t)g * 63 + 128) / 255;
-    uint16_t b5 = ((uint16_t)b * 31 + 128) / 255;
-    return (r5 << 11) | (g6 << 5) | b5;
-}
-
-static uint16_t color_lerp(uint8_t alpha) {
-    // Linear interpolation between foreground and background
-
-    const unsigned bg_r = 0xe8;
-    const unsigned bg_g = 0xdc;
-    const unsigned bg_b = 0xcc;
-
-    const unsigned fg_r = 0x0;//0xf4;
-    const unsigned fg_g = 0x0;//0xd8;
-    const unsigned fg_b = 0x0;//0xb7;
-    
-    const uint8_t invalpha = 0xff - alpha;
-
-    return rgb565( (bg_r * invalpha + fg_r * alpha) / 0xff,
-                   (bg_g * invalpha + fg_g * alpha) / 0xff,
-                   (bg_b * invalpha + fg_b * alpha) / 0xff );
-}
 
 
 DialogView::DialogView(Cube* pCube) : mCube(pCube) {
@@ -200,16 +175,21 @@ void DialogView::Erase() {
     }
 }
 
+void DialogView::SetFadeAmount(uint8_t i) {
+    mCube->vbuf.poke(
+        offsetof(_SYSVideoRAM, colormap) / 2 + 1,
+        color_lerp(i)
+    );
+}
+
 void DialogView::Fade() {
-    const unsigned speed = 4;
     const unsigned hold = 250;
-    for (unsigned i = 0; i < 128; i += speed) {
-        mCube->vbuf.poke(
-            offsetof(_SYSVideoRAM, colormap) / 2 + 1,
-            color_lerp(2*i)
-        );
+    for (unsigned i = 0; i < 16; i ++) {
+        SetFadeAmount(i<<4);
         pGame->Paint();
     }
+    SetFadeAmount(255);
+    pGame->Paint();
     bool prev = mCube->touching();
     for (unsigned i = 0; i < hold; i++) {
         pGame->Paint();
@@ -218,13 +198,12 @@ void DialogView::Fade() {
         prev = next;
 
     }
-    for (unsigned i = 0; i < 128; i += speed) {
-        mCube->vbuf.poke(
-            offsetof(_SYSVideoRAM, colormap) / 2 + 1,
-            color_lerp(0xFF - 2*i)
-        );
+    for (unsigned i = 0; i < 16; i ++) {
+        SetFadeAmount(0xff - (i<<4));
         pGame->Paint();
     }
+    SetFadeAmount(0);
+    pGame->Paint();
 }
 
 void DialogView::ShowAll(const char* lines) {
