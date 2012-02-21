@@ -31,7 +31,7 @@ Game &Game::Inst()
 }
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
-                m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_stateTime( 0.0f ),
+                m_state( STARTING_STATE ), m_mode( MODE_TIMED ), m_stateTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
@@ -418,7 +418,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
                 }
             }
 
-            if( !bannered )
+            if( m_mode == MODE_TIMED && !bannered )
             {
                 String<16> aBuf;
                 aBuf << comboScore;
