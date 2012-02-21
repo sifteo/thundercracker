@@ -1043,10 +1043,10 @@ void CubeWrapper::Refill( bool bAddLevel )
         return;
     }
 
-    const Level &level = Game::Inst().getLevel();
-	
 	if( bAddLevel )
 		Game::Inst().addLevel();
+
+    const Level &level = Game::Inst().getLevel();
 
     //Game::Inst().playSound(glom_delay);
 
