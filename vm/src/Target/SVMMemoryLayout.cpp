@@ -156,14 +156,13 @@ uint32_t SVMMemoryLayout::getEntryAddress(const MCAssembler &Asm,
     if (!S || !S->isDefined())
         report_fatal_error("No entry point exists. Is main() defined?");
 
-    SVMSymbolInfo SI = getSymbol(Asm, Layout, S, true, true);
-    assert(SI.Kind == SVMSymbolInfo::CALL);
+    SVMSymbolInfo SI = getSymbol(Asm, Layout, S);
+    assert(SI.Kind == SVMSymbolInfo::LOCAL);
     return SI.Value;
 }
 
 SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
-    const MCAsmLayout &Layout, const MCSymbol *S, bool useCodeAddresses,
-    bool forceCall) const
+    const MCAsmLayout &Layout, const MCSymbol *S, bool useCodeAddresses) const
 {
     const MCSymbolData *SD = &Asm.getSymbolData(*S);
     SVMSymbolInfo SI;
@@ -212,10 +211,11 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
         if (SPAdj < 0 || (SPAdj & 3) || SPAdj >= 512)
             report_fatal_error("Code symbol '" + Twine(Name) +
                 "' has unsupported stack size of " + Twine(Offset) + " bytes");
+        SPAdj <<= 22;
 
-        if (Deco.isCall || forceCall) {
+        if (Deco.isCall) {
             // A Call, with SP adjustment and tail-call flag
-            SI.Value = Offset | (SPAdj << 22) | Deco.isTailCall;
+            SI.Value = Offset | SPAdj | Deco.isTailCall;
             SI.Kind = SVMSymbolInfo::CALL;
 
         } else if (Deco.isLongBranch) {
@@ -224,14 +224,18 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
             SI.Kind = SVMSymbolInfo::LB;
 
         } else {
-            // Normal undecorated address
-            SI.Value = Offset;
+            // Normal undecorated address. Still includes an SP adjustment
+            // if one is present for this symbol's address, though.
+            // This is important for function pointers, including the entry
+            // point address for main().
+
+            SI.Value = Offset | SPAdj;
             SI.Kind = SVMSymbolInfo::LOCAL;
         }
 
     } else {
         /*
-         * Data address
+         * Data address. No decoration at all.
          */
 
         SI.Value = getSectionMemAddress(&Asm.getSectionData(S->getSection()))

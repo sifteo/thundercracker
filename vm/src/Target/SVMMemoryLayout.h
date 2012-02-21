@@ -67,7 +67,7 @@ namespace llvm {
 
         SVMSymbolInfo getSymbol(const MCAssembler &Asm,
             const MCAsmLayout &Layout, const MCSymbol *S,
-            bool useCodeAddresses = true, bool forceCall = false) const;
+            bool useCodeAddresses = true) const;
 
         uint32_t getEntryAddress(const MCAssembler &Asm,
             const MCAsmLayout &Layout) const;
