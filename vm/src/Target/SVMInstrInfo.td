@@ -397,12 +397,16 @@ def PTR : S_ptr<(outs BPReg:$Rb), (ins GPReg:$Rs), "s.ptr\t$Rs">;
 class T32_LD<bits<7> op2v, string opstr>
     : T32_LDSTbase<op2v, 0, (outs GPReg:$Rt),
         (ins BPReg:$Rb, i32imm:$offset12),
-        !strconcat(opstr, "\t$Rt, [$Rb, #$offset12]"), []>;
+        !strconcat(opstr, "\t$Rt, [$Rb, #$offset12]"), []> {
+    let mayLoad = 1;
+}
 
 class T32_ST<bits<7> op2v, string opstr>
     : T32_LDSTbase<op2v, 1, (outs),
         (ins GPReg:$Rt, BPReg:$Rb, i32imm:$offset12),
-        !strconcat(opstr, "\t$Rt, [$Rb, #$offset12]"), []>;
+        !strconcat(opstr, "\t$Rt, [$Rb, #$offset12]"), []> {
+    let mayStore = 1;
+}
 
 // Basic load/store opcodes
 def STRB   : T32_ST <0b0001000, "strb">;
