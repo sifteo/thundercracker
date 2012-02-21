@@ -48,6 +48,7 @@ ifneq ($(MASTER_RF_CHAN),)
     CFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
 endif
 
+
 include Makefile.defs
 
 # Override default CDEPS
