@@ -78,7 +78,7 @@ void Init()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void OnNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+void OnNeighborAdd(void *, _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
     if (sApp.GetCubeWrapper(c0).IsEnabled() && sApp.GetCubeWrapper(c1).IsEnabled())
     {
@@ -89,7 +89,7 @@ void OnNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void OnTilt(_SYSCubeID cid)
+void OnTilt(void *, _SYSCubeID cid)
 {
     if (sApp.GetCubeWrapper(cid).IsEnabled())
     {
@@ -100,7 +100,7 @@ void OnTilt(_SYSCubeID cid)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void OnShake(_SYSCubeID cid)
+void OnShake(void *, _SYSCubeID cid)
 {
     if (sApp.GetCubeWrapper(cid).IsEnabled())
     {
@@ -113,9 +113,9 @@ void OnShake(_SYSCubeID cid)
 
 void Setup()
 {
-    _SYS_vectors.neighborEvents.add = OnNeighborAdd;
-    _SYS_vectors.cubeEvents.tilt = OnTilt;
-    _SYS_vectors.cubeEvents.shake = OnShake;
+    _SYS_setVector(_SYS_NEIGHBOR_ADD, (void *)OnNeighborAdd, NULL);
+    _SYS_setVector(_SYS_CUBE_TILT, (void *)OnTilt, NULL);
+    _SYS_setVector(_SYS_CUBE_SHAKE, (void *)OnShake, NULL);
     
     sApp.Reset();
     sApp.Draw();
