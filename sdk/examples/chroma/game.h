@@ -130,7 +130,11 @@ public:
     void BlowAll( unsigned int color );
     void EndGame();
 
-    inline void Stabilize() { m_bStabilized = true; }
+    inline void Stabilize()
+    {
+        if( !m_bIsChainHappening )
+            m_bStabilized = true;
+    }
 
     bool AreNoCubesEmpty() const;
     unsigned int CountEmptyCubes() const;
