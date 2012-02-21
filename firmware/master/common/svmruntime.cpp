@@ -73,7 +73,7 @@ void SvmRuntime::svc(uint8_t imm8)
     unsigned r = imm8 & 0x7;
     switch (sub) {
     case 0x1c:  { // 0b11100
-        LOG(("svc: r8-9 = validate(rN)\n"));
+        LOG(("svc: r8-9 = validate(r%d)\n", r));
         uint32_t addr = validate(cpu.reg(r));
         setBasePtrs(addr);
         return;
@@ -119,7 +119,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     uint32_t *blockBase = reinterpret_cast<uint32_t*>(instructionBase & blockMask);
     uint32_t literal = blockBase[imm8];
 
-    LOG(("indirect, literal 0x%x\n", literal));
+    LOG(("indirect, literal 0x%x @ 0x%x\n", literal, cache2virtFlash(reinterpret_cast<reg_t>(blockBase + imm8))));
 
     if ((literal & CallMask) == CallTest) {
         LOG(("indirect call\n"));
