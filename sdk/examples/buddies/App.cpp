@@ -481,7 +481,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_DISPLAY_START_STATE:
         {
-            mDelayTimer = kStateTimeDelayLong;
+            mDelayTimer = kStateTimeDelayShort;
             break;
         }
         case GAME_STATE_STORY_CLUE:
@@ -500,6 +500,12 @@ void App::StartGameState(GameState gameState)
                 }
             }
             System::paintSync();
+            break;
+        }
+        case GAME_STATE_STORY_HINT_1:
+        case GAME_STATE_STORY_HINT_2:
+        {
+            mDelayTimer = kStateTimeDelayLong;
             break;
         }
         case GAME_STATE_STORY_SOLVED:
@@ -665,6 +671,93 @@ void App::UpdateGameState(float dt)
             }
             break;
         }
+        case GAME_STATE_STORY_PLAY:
+        {
+            if (!mTouching)
+            {
+                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                {
+                    if (mCubeWrappers[i].IsEnabled() && mCubeWrappers[i].IsTouching())
+                    {
+                        mTouching = true;
+                        StartGameState(GAME_STATE_STORY_HINT_1);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                if (!AnyTouching(*this))
+                {
+                    mTouching = false;
+                }
+            }
+            break;
+        }
+        case GAME_STATE_STORY_HINT_1:
+        {
+            ASSERT(mDelayTimer > 0.0f);
+            mDelayTimer -= dt;
+            
+            if (mDelayTimer <= 0.0f)
+            {
+                mDelayTimer = 0.0f;
+                StartGameState(GAME_STATE_STORY_PLAY);
+            }
+            
+            if (!mTouching)
+            {
+                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                {
+                    if (mCubeWrappers[i].IsEnabled() && mCubeWrappers[i].IsTouching())
+                    {
+                        mTouching = true;
+                        StartGameState(GAME_STATE_STORY_HINT_2);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                if (!AnyTouching(*this))
+                {
+                    mTouching = false;
+                }
+            }
+            break;
+        }
+        case GAME_STATE_STORY_HINT_2:
+        {
+            ASSERT(mDelayTimer > 0.0f);
+            mDelayTimer -= dt;
+            
+            if (mDelayTimer <= 0.0f)
+            {
+                mDelayTimer = 0.0f;
+                StartGameState(GAME_STATE_STORY_PLAY);
+            }
+            
+            if (!mTouching)
+            {
+                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                {
+                    if (mCubeWrappers[i].IsEnabled() && mCubeWrappers[i].IsTouching())
+                    {
+                        mTouching = true;
+                        StartGameState(GAME_STATE_STORY_PLAY);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                if (!AnyTouching(*this))
+                {
+                    mTouching = false;
+                }
+            }
+            break;
+        }
         case GAME_STATE_STORY_SOLVED:
         {
             ASSERT(mDelayTimer > 0.0f);
@@ -788,7 +881,50 @@ void App::DrawGameState()
                     if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
                     {
                         mCubeWrappers[i].DrawBuddy();
-                        //mCubeWrappers[i].DrawHints();
+                    }
+                    else
+                    {
+                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                    }
+                }
+            }
+        }
+        else if (mGameState == GAME_STATE_STORY_HINT_1)
+        {
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+                    {
+                        mCubeWrappers[i].DrawBuddy();
+                        
+                        if (i == 0)
+                        {
+                            mCubeWrappers[i].DrawClue(NULL, false);
+                        }
+                    }
+                    else
+                    {
+                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                    }
+                }
+            }
+        }
+        else if (mGameState == GAME_STATE_STORY_HINT_2)
+        {
+            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            {
+                if (mCubeWrappers[i].IsEnabled())
+                {
+                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+                    {
+                        mCubeWrappers[i].DrawBuddy();
+                        
+                        if (i == 0)
+                        {
+                            mCubeWrappers[i].DrawClue(NULL, true);
+                        }
                     }
                     else
                     {
