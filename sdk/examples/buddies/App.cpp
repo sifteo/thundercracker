@@ -103,17 +103,21 @@ bool AllSolved(App& app)
     
     return true;
 }
-                    
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
     char buffer[128];
-    sprintf(buffer, "Chapter %u", puzzleIndex + 1);
+    sprintf(
+        buffer,
+        "Chapter %u\n\"%s\"",
+        puzzleIndex + 1,
+        GetPuzzle(puzzleIndex).GetChapterTitle());
     cubeWrapper.DrawBackgroundWithText(ChapterTitle, buffer, Vec2(3, 4));
 }
-                    
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -951,7 +955,7 @@ void App::DrawGameState()
                 {
                     if (i == 0)
                     {
-                        mCubeWrappers[i].DrawCutscene();
+                        mCubeWrappers[i].DrawCutscene(GetPuzzle(mPuzzleIndex).GetCutsceneTextStart());
                     }
                     else
                     {
@@ -986,7 +990,7 @@ void App::DrawGameState()
                     if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
                     {
                         mCubeWrappers[i].DrawBuddy();
-                        mCubeWrappers[i].DrawClue(GetPuzzle(mPuzzleIndex).GetInstructions());
+                        mCubeWrappers[i].DrawClue(GetPuzzle(mPuzzleIndex).GetClue());
                     }
                     else
                     {
@@ -1024,7 +1028,7 @@ void App::DrawGameState()
                         
                         if (i == 0)
                         {
-                            mCubeWrappers[i].DrawClue(GetPuzzle(mPuzzleIndex).GetInstructions(), true);
+                            mCubeWrappers[i].DrawClue(GetPuzzle(mPuzzleIndex).GetClue(), true);
                         }
                     }
                     else
@@ -1087,7 +1091,7 @@ void App::DrawGameState()
                 {
                     if (i == 0)
                     {
-                        mCubeWrappers[i].DrawCutscene();
+                        mCubeWrappers[i].DrawCutscene(GetPuzzle(mPuzzleIndex).GetCutsceneTextEnd());
                     }
                     else
                     {

@@ -48,7 +48,7 @@ public:
     void DrawBackgroundWithText(
         const Sifteo::AssetImage &asset,
         const char *text, const Sifteo::Vec2 &textPosition);
-    void DrawCutscene();
+    void DrawCutscene(const char *text);
     
     void EnableBg0SprBg1Video(); // HACK!
     void ClearBg1(); // HACK!

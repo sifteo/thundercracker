@@ -314,8 +314,10 @@ void CubeWrapper::DrawBackgroundWithText(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawCutscene()
+void CubeWrapper::DrawCutscene(const char *text)
 {
+    ASSERT(text != NULL);
+    
     EnableBg0SprBg1Video();
     
     Video().BG0_drawAsset(Vec2(0, 0), CutsceneBackground);
@@ -328,6 +330,7 @@ void CubeWrapper::DrawCutscene()
     
     BG1Helper bg1helper(mCube);
     bg1helper.DrawAsset(Vec2(0, 0), CutsceneTextBubble);
+    bg1helper.DrawText(Vec2(1, 1), Font, text);
     bg1helper.Flush();
 }
 

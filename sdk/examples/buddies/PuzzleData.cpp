@@ -146,14 +146,29 @@ Piece kAuthoredEndStateEyes[kMaxBuddies][NUM_SIDES] =
 // This is the default state (all buddies with their original parts in the right position).
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const Puzzle kPuzzleDefault = Puzzle(kNumCubes, "DEFAULT", kDefaultState, kDefaultState);
+const Puzzle kPuzzleDefault =
+    Puzzle(
+        "Default",
+        "Default",
+        "Default",
+        "Default",
+        kNumCubes,
+        kDefaultState,
+        kDefaultState);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Here are all of our puzzles. Each puzzle has the number of cubes it uses, a string for
 // instrunctions, the start state, and the end state. Just use kNumCubes for the number of buddies
-// for now. Be aware that the instrunctions currently only support two lines of 16 characters each.
+// for now. Be aware that the instructions currently only support two lines of 16 characters each.
 //
-// Puzzle(NUMBER_OF_CUBES, INSTRUCTIONS, START_STATE, END_STATE);
+// Puzzle(
+//     CHAPTER_TITLE,
+//     CUTSCENE_TEXT_START,
+//     CUTSCENE_TEXT_END,
+//     CLUE,
+//     NUMBER_OF_CUBES,
+//     START_STATE,
+//     END_STATE);
 //
 // Just add new puzzles to this array to throw them into play. Puzzle mode starts at the first
 // puzzle and rotate through them all after each solve. It currently just loops back to puzzle 0 if
@@ -162,10 +177,38 @@ const Puzzle kPuzzleDefault = Puzzle(kNumCubes, "DEFAULT", kDefaultState, kDefau
 
 const Puzzle kPuzzles[] =
 {
-    Puzzle(2, "Swap Mouths", kDefaultState, kAuthoredEndStateMouths),
-    Puzzle(2, "Swap Hair",   kDefaultState, kAuthoredEndStateHair),
-    Puzzle(2, "Swap Eyes",   kDefaultState, kAuthoredEndStateEyes),
-    Puzzle(2, "Attribute\nTest\n(Swap Mouths)", kStartStateAttributeTest, kAuthoredEndStateMouths),
+    Puzzle(
+        "Big Mouth",
+        "I just LOVE\nyour mouth!",
+        "That's much\nbetter.",
+        "Swap Mouths",
+        2,
+        kDefaultState,
+        kAuthoredEndStateMouths),
+    Puzzle(
+        "Bad Hair\nDay",
+        "How do I get\ncool hair\nlike you?",
+        "That's much\nbetter.",
+        "Swap Hair",
+        2,
+        kDefaultState,
+        kAuthoredEndStateHair),
+    Puzzle(
+        "Private\nEyes",
+        "See the world\nfrom my eyes!",
+        "That's much\nbetter.",
+        "Swap Eyes",
+        2,
+        kDefaultState,
+        kAuthoredEndStateEyes),
+    Puzzle(
+        "Attribute\nTest",
+        "This is\nweird...",
+        "SO WEIRD\nright?",
+        "Swap Mouths",
+        2,
+        kStartStateAttributeTest,
+        kAuthoredEndStateMouths),
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

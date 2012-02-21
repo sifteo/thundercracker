@@ -28,19 +28,30 @@ class Puzzle
 {
 public:
     Puzzle(
+        const char *chapterTitle,
+        const char *cutsceneTextStart,
+        const char *cutsceneTextEnd,
+        const char *clue,
         unsigned int numBuddies,
-        const char *instrunctions,
         const Piece startState[kMaxBuddies][NUM_SIDES],
         const Piece endState[kMaxBuddies][NUM_SIDES]);
     
+    const char *GetChapterTitle() const;
+    const char *GetCutsceneTextStart() const;
+    const char *GetCutsceneTextEnd() const;
+    const char *GetClue() const;
+    
     unsigned int GetNumBuddies() const;
-    const char *GetInstructions() const;
+    
     const Piece &GetStartState(unsigned int buddy, Sifteo::Cube::Side side) const;
     const Piece &GetEndState(unsigned int buddy, Sifteo::Cube::Side side) const;
     
 private:
+    char mChapterTitle[64];
+    char mCutsceneTextStart[64];
+    char mCutsceneTextEnd[64];
+    char mClue[64];
     unsigned int mNumBuddies;
-    char mInstructions[64];
     Piece mStartState[kMaxBuddies][NUM_SIDES];
     Piece mEndState[kMaxBuddies][NUM_SIDES];    
 };
