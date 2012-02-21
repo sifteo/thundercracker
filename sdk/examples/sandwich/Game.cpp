@@ -324,6 +324,65 @@ void Game::Zoom(ViewSlot* view, int roomId) {
   System::paintSync();
 }
 
+
+void Game::NpcDialog(const DialogData& data, Cube* cube) {
+    if (!cube) cube = gCubes;
+    Dialog view(cube);
+    PlaySfx(sfx_neighbor);
+    ViewMode mode(cube->vbuf);
+    for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
+    mode.BG0_drawAsset(Vec2(0,10), DialogBox);
+    for(unsigned line=0; line<data.lineCount; ++line) {
+        const DialogTextData& txt = data.lines[line];
+        if (line == 0 || data.lines[line-1].detail != txt.detail) {
+            System::paintSync();
+            BG1Helper ovrly(*cube);
+            ovrly.DrawAsset(Vec2(2,0), *(txt.detail));
+            ovrly.Flush();
+            System::paintSync();
+            for(unsigned i=0; i<4; ++i) {
+                cube->vbuf.touch();
+                System::paintSync();
+            }
+            //Now set up a letterboxed 128x48 mode
+            mode.setWindow(80, 48);
+            view.Init();
+        }
+        view.Erase();
+        pGame->Paint(true);
+        view.ShowAll(txt.line);
+        if (line > 0) {
+            PlaySfx(sfx_neighbor);
+        }
+        // fade in and out
+        const unsigned hold = 250;
+        for (unsigned i = 0; i < 16; i ++) {
+            view.SetAlpha(i<<4);
+            pGame->Paint();
+        }
+        view.SetAlpha(255);
+        pGame->Paint();
+        bool prev = cube->touching();
+        for (unsigned i = 0; i < hold; i++) {
+            pGame->Paint();
+            bool next = cube->touching();
+            if (next && !prev) { break; }
+            prev = next;
+
+        }
+        for (unsigned i = 0; i < 16; i ++) {
+            view.SetAlpha(0xff - (i<<4));
+            pGame->Paint();
+        }
+        view.SetAlpha(0);
+        pGame->Paint();
+    }
+    for(unsigned i=0; i<16; ++i) {
+        pGame->Paint();
+    }
+    PlaySfx(sfx_deNeighbor);
+}
+
 //------------------------------------------------------------------
 // EVENTS
 //------------------------------------------------------------------
@@ -360,7 +419,7 @@ unsigned Game::OnPassiveTrigger() {
     }
     // do a pickup animation
     for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
-      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
+      mPlayer.CurrentView()->SetPlayerFrame(PlayerPickup.index + (frame<<4));
       float t=System::clock();
       do {
         // this calc is kinda annoyingly complex
@@ -372,7 +431,35 @@ unsigned Game::OnPassiveTrigger() {
         mPlayer.CurrentView()->SetItemPosition(Vec2(0, -36.f * u) );
       } while(System::clock()-t<0.075);
     }
-    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
+    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
+    
+    // show a dialog description
+    Cube *pCube = mPlayer.CurrentView()->Parent()->GetCube();
+    ViewMode gfx = mPlayer.CurrentView()->Parent()->Graphics();
+    Paint(true);
+    pCube->vbuf.touch();
+    Paint(true);
+    gfx.setWindow(80+16,128-80-16);
+    Dialog view(pCube);
+    view.Init();
+    view.Erase();
+    view.ShowAll(gInventoryData[pItem->itemId-1].description);
+    pCube->vbuf.touch();
+    Paint(true);
+    for(int t=0; t<16; t++) {
+      gfx.setWindow(80+15-(t),128-80-15+(t));
+      view.SetAlpha(t<<4);
+      Paint();
+    }
+    view.SetAlpha(255);
+    for(float t=System::clock(); System::clock()-t<4.f;) { System::paint(); }
+    mPlayer.CurrentView()->Parent()->Restore();
+    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
+    Paint(true);
+    pCube->vbuf.touch();
+    Paint(true);
+
+    // wait a sec
     for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
     mPlayer.CurrentView()->HideItem();        
 
@@ -462,7 +549,7 @@ void Game::OnActiveTrigger() {
     for(int i=0; i<16; ++i) { Paint(true); }
     const NpcData* pNpc = mPlayer.GetRoom()->TriggerAsNPC();
     if (mState.FlagTrigger(pNpc->trigger)) { mPlayer.GetRoom()->ClearTrigger(); }
-    DoDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent()->GetCube());
+    NpcDialog(gDialogData[pNpc->dialog], mPlayer.CurrentView()->Parent()->GetCube());
     System::paintSync();
     mPlayer.CurrentView()->Parent()->Restore();
     System::paintSync();

@@ -99,16 +99,16 @@ static const uint8_t font_data[] = {
 
 
 
-DialogView::DialogView(Cube* pCube) : mCube(pCube) {
+Dialog::Dialog(Cube* pCube) : mCube(pCube) {
 }
 
-void DialogView::Init() {
+void Dialog::Init() {
     mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 0, color_lerp(0));
     mCube->vbuf.poke(offsetof(_SYSVideoRAM, colormap) / 2 + 1, color_lerp(0));
     mCube->vbuf.pokeb(offsetof(_SYSVideoRAM, mode), _SYS_VM_FB128);
 }
 
-const char* DialogView::Show(const char* str) {
+const char* Dialog::Show(const char* str) {
     unsigned count, length;
     MeasureText(str, &count, &length);
 	mPosition.x = (128 - length) >> 1;
@@ -117,7 +117,7 @@ const char* DialogView::Show(const char* str) {
     return str + count;
 }
 
-void DialogView::DrawGlyph(char ch) {
+void Dialog::DrawGlyph(char ch) {
     uint8_t index = ch - ' ';
     const uint8_t *data = font_data + (index * kFontHeight) + index;
     uint8_t escapement = *(data++);
@@ -142,13 +142,13 @@ void DialogView::DrawGlyph(char ch) {
     mPosition.x += escapement;
 }
 
-unsigned DialogView::MeasureGlyph(char ch) {
+unsigned Dialog::MeasureGlyph(char ch) {
     uint8_t index = ch - ' ';
     const uint8_t *data = font_data + (index * kFontHeight) + index;
     return data[0];
 }
 
-void DialogView::DrawText(const char *str) {
+void Dialog::DrawText(const char *str) {
     char c;
     while ((c = *str) && c != '\n') {
         str++;
@@ -156,7 +156,7 @@ void DialogView::DrawText(const char *str) {
     }
 }
 
-void DialogView::MeasureText(const char *str, unsigned *outCount, unsigned *outPx) {
+void Dialog::MeasureText(const char *str, unsigned *outCount, unsigned *outPx) {
     *outPx = 0;
     *outCount = 0;
     char c;
@@ -168,83 +168,22 @@ void DialogView::MeasureText(const char *str, unsigned *outCount, unsigned *outP
     if (c) { (*outCount)++; }
 }
 
-void DialogView::Erase() {
+void Dialog::Erase() {
     mPosition.y = 8;
     for (unsigned i = 0; i < sizeof mCube->vbuf.sys.vram.fb / 2; i++) {
     	mCube->vbuf.poke(i, 0);
     }
 }
 
-void DialogView::SetFadeAmount(uint8_t i) {
+void Dialog::SetAlpha(uint8_t i) {
     mCube->vbuf.poke(
         offsetof(_SYSVideoRAM, colormap) / 2 + 1,
         color_lerp(i)
     );
 }
 
-void DialogView::Fade() {
-    const unsigned hold = 250;
-    for (unsigned i = 0; i < 16; i ++) {
-        SetFadeAmount(i<<4);
-        pGame->Paint();
-    }
-    SetFadeAmount(255);
-    pGame->Paint();
-    bool prev = mCube->touching();
-    for (unsigned i = 0; i < hold; i++) {
-        pGame->Paint();
-        bool next = mCube->touching();
-        if (next && !prev) { break; }
-        prev = next;
-
-    }
-    for (unsigned i = 0; i < 16; i ++) {
-        SetFadeAmount(0xff - (i<<4));
-        pGame->Paint();
-    }
-    SetFadeAmount(0);
-    pGame->Paint();
-}
-
-void DialogView::ShowAll(const char* lines) {
+void Dialog::ShowAll(const char* lines) {
     while(*lines) {
         lines = Show(lines);
     }
-}
-
-void DoDialog(const DialogData& data, Cube* cube) {
-    if (!cube) cube = gCubes;
-    DialogView view(cube);
-    PlaySfx(sfx_neighbor);
-    ViewMode mode(cube->vbuf);
-    for(unsigned i=0; i<8; ++i) { mode.hideSprite(i); }
-    mode.BG0_drawAsset(Vec2(0,10), DialogBox);
-    for(unsigned line=0; line<data.lineCount; ++line) {
-        const DialogTextData& txt = data.lines[line];
-        if (line == 0 || data.lines[line-1].detail != txt.detail) {
-            System::paintSync();
-            BG1Helper ovrly(*cube);
-            ovrly.DrawAsset(Vec2(2,0), *(txt.detail));
-            ovrly.Flush();
-            System::paintSync();
-            for(unsigned i=0; i<4; ++i) {
-                cube->vbuf.touch();
-                System::paintSync();
-            }
-            //Now set up a letterboxed 128x48 mode
-            mode.setWindow(80, 48);
-            view.Init();
-        }
-        view.Erase();
-        pGame->Paint(true);
-        view.ShowAll(txt.line);
-        if (line > 0) {
-            PlaySfx(sfx_neighbor);
-        }
-        view.Fade();
-    }
-    for(unsigned i=0; i<16; ++i) {
-        pGame->Paint();
-    }
-    PlaySfx(sfx_deNeighbor);
 }

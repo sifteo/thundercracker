@@ -55,7 +55,8 @@ private:
   void TeleportTo(const MapData& m, Vec2 position);
   void IrisOut(ViewSlot* view);
   void Zoom(ViewSlot* view, int roomId);
-
+  void NpcDialog(const DialogData& data, Cube* cube);
+  
   unsigned OnPassiveTrigger();
   void OnActiveTrigger();
   void OnInventoryChanged();

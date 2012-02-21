@@ -4,8 +4,8 @@
 
 #define HOVERING_ICON_ID	0
 
-// hack for now
-static DialogView mDialog(0);
+// hacks for now
+static Dialog mDialog(0);
 
 void InventoryView::Init() {
 	CORO_RESET;
@@ -23,7 +23,12 @@ void InventoryView::Init() {
 }
 
 void InventoryView::Restore() {
-	Init();
+	mAccumX = 0;
+	mAccumY = 0;
+	mTouch = Parent()->GetCube()->touching();
+	Parent()->HideSprites();
+	Parent()->Graphics().BG0_drawAsset(Vec2(0,0), InventoryBackground);
+	RenderInventory();
 }
 
 static const char* kLabels[4] = { "top", "left", "bottom", "right" };
@@ -67,7 +72,7 @@ void InventoryView::Update() {
 		Parent()->GetCube()->vbuf.touch();
 		CORO_YIELD;
 
-		mDialog = DialogView(Parent()->GetCube());
+		mDialog = Dialog(Parent()->GetCube());
 		{
 			uint8_t items[16];
 			int count = pGame->GetState()->GetItems(items);
@@ -82,19 +87,25 @@ void InventoryView::Update() {
 		CORO_YIELD;
 		for(t=0; t<16; t++) {
 			Parent()->Graphics().setWindow(80+15-(t),128-80-15+(t));
-			mDialog.SetFadeAmount(t<<4);
+			mDialog.SetAlpha(t<<4);
 			CORO_YIELD;
 		}
-		mDialog.SetFadeAmount(255);
+		mDialog.SetAlpha(255);
 		while(Parent()->GetCube()->touching()) {
 			CORO_YIELD;	
 		}
 		System::paintSync();
-		Parent()->Graphics().init();
-		Parent()->Graphics().setWindow(0, 128);
+		Parent()->Restore();
+		/*
+		{
+			ViewMode gfx = Parent()->Graphics();
+			gfx.init();
+			gfx.setWindow(0,128);
+			gfx.BG0_drawAsset(Vec2(0,0), InventoryBackground);
+		}
 		Parent()->HideSprites();
-		Parent()->Graphics().BG0_drawAsset(Vec2(0,0), InventoryBackground);
 		RenderInventory();
+		*/
 		mAccumX = 0;
 		mAccumY = 0;
 		pGame->NeedsSync();
