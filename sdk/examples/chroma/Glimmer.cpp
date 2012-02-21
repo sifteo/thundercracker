@@ -113,11 +113,13 @@ void Glimmer::Draw( BG1Helper &bg1helper, CubeWrapper *pWrapper )
         if( i < NUM_PER_GROUP[ m_group ] )
         {
             Vec2 &loc = GLIMMER_ORDER[ m_group ][i];
-            if( pWrapper->GetSlot( loc.x, loc.y )->isAlive() )
+            GridSlot *pSlot = pWrapper->GetSlot( loc.x, loc.y );
+
+            if( pSlot->isAlive() )
             {
-                if( pWrapper->GetSlot( loc.x, loc.y )->IsFixed() )
+                if( pSlot->IsFixed() )
                     bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), FixedGlimmer, m_frame );
-                else
+                else if( pSlot->getColor() != GridSlot::ROCKCOLOR )
                     bg1helper.DrawAsset( Vec2( loc.y * 4, loc.x * 4 ), GlimmerImg, m_frame );
             }
         }
