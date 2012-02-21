@@ -262,13 +262,17 @@ void App::OnNeighborAdd(Cube::ID cubeId0, Cube::Side cubeSide0, Cube::ID cubeId1
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    else if (mGameState == GAME_STATE_STORY_CHAPTER_END)
+    else if (mGameState == GAME_STATE_STORY_CLUE)
     {
-        if (++mPuzzleIndex == GetNumPuzzles())
-        {
-            mPuzzleIndex = 0;
-        }
-        StartGameState(GAME_STATE_STORY_CHAPTER_START);
+        StartGameState(GAME_STATE_STORY_PLAY);
+    }
+    else if (mGameState == GAME_STATE_STORY_HINT_1)
+    {
+        StartGameState(GAME_STATE_STORY_PLAY);
+    }
+    else if (mGameState == GAME_STATE_STORY_HINT_2)
+    {
+        StartGameState(GAME_STATE_STORY_PLAY);
     }
     else
     {
@@ -322,6 +326,14 @@ void App::OnTilt(Cube::ID cubeId)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
+    else if (mGameState == GAME_STATE_STORY_HINT_1)
+    {
+        StartGameState(GAME_STATE_STORY_PLAY);
+    }
+    else if (mGameState == GAME_STATE_STORY_HINT_2)
+    {
+        StartGameState(GAME_STATE_STORY_PLAY);
+    }
     
     mShuffleHintTimer = kHintTimerOnDuration;
     mShuffleHintPiece0 = -1;
@@ -333,13 +345,25 @@ void App::OnTilt(Cube::ID cubeId)
 
 void App::OnShake(Cube::ID cubeId)
 {
-    if (kGameMode == GAME_MODE_SHUFFLE)
+    if( mGameState == GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE)
     {
-        if( mGameState == GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE ||
-            mGameState == GAME_STATE_SHUFFLE_SCORE)
-        {
-            StartGameState(GAME_STATE_SHUFFLE_SCRAMBLING);
-        }
+        StartGameState(GAME_STATE_SHUFFLE_SCRAMBLING);
+    }
+    else if(mGameState == GAME_STATE_SHUFFLE_SCORE)
+    {
+        StartGameState(GAME_STATE_SHUFFLE_SCRAMBLING);
+    }
+    else if (mGameState == GAME_STATE_STORY_CLUE)
+    {
+        StartGameState(GAME_STATE_STORY_PLAY);
+    }
+    else if (mGameState == GAME_STATE_STORY_HINT_1)
+    {
+        StartGameState(GAME_STATE_STORY_PLAY);
+    }
+    else if (mGameState == GAME_STATE_STORY_HINT_2)
+    {
+        StartGameState(GAME_STATE_STORY_PLAY);
     }
     
     mShuffleHintTimer = kHintTimerOnDuration;
@@ -484,11 +508,6 @@ void App::StartGameState(GameState gameState)
             mDelayTimer = kStateTimeDelayShort;
             break;
         }
-        case GAME_STATE_STORY_CLUE:
-        {
-            mDelayTimer = kStateTimeDelayLong;
-            break;
-        }
         case GAME_STATE_STORY_PLAY:
         {
             ASSERT(kNumCubes >= GetPuzzle(mPuzzleIndex).GetNumBuddies());
@@ -503,7 +522,6 @@ void App::StartGameState(GameState gameState)
             break;
         }
         case GAME_STATE_STORY_HINT_1:
-        case GAME_STATE_STORY_HINT_2:
         {
             mDelayTimer = kStateTimeDelayLong;
             break;
@@ -661,14 +679,22 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CLUE:
         {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
+            if (!mTouching)
             {
-                mDelayTimer = 0.0f;
-                StartGameState(GAME_STATE_STORY_PLAY);
+                if (AnyTouching(*this))
+                {
+                    mTouching = true;
+                    StartGameState(GAME_STATE_STORY_PLAY);
+                }
             }
+            else
+            {
+                if (!AnyTouching(*this))
+                {
+                    mTouching = false;
+                }
+            }
+            
             break;
         }
         case GAME_STATE_STORY_PLAY:
@@ -728,15 +754,6 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_HINT_2:
         {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
-            {
-                mDelayTimer = 0.0f;
-                StartGameState(GAME_STATE_STORY_PLAY);
-            }
-            
             if (!mTouching)
             {
                 for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
@@ -784,6 +801,40 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CHAPTER_END:
         {
+            if (!mTouching)
+            {
+                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                {
+                    if (mCubeWrappers[i].IsEnabled() && mCubeWrappers[i].IsTouching())
+                    {
+                        mTouching = true;
+                        if (i == 0)
+                        {
+                            if (++mPuzzleIndex == GetNumPuzzles())
+                            {
+                                mPuzzleIndex = 0;
+                            }
+                            StartGameState(GAME_STATE_STORY_CHAPTER_START);
+                        }
+                        else if (i == 1)
+                        {
+                            StartGameState(GAME_STATE_STORY_CHAPTER_START);
+                        }
+                        else if (i == 2)
+                        {
+                            // TODO: go to main menu
+                        }
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                if (!AnyTouching(*this))
+                {
+                    mTouching = false;
+                }
+            }
             break;
         }
         default:
