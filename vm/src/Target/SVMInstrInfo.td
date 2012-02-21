@@ -438,6 +438,12 @@ def : Pat< (sextloadi16 (add BP, imm12:$off)), (LDRSH BP, imm12:$off)>;
 def : Pat< (sextloadi8 BP), (LDRSB BP, 0)>;
 def : Pat< (sextloadi8 (add BP, imm12:$off)), (LDRSB BP, imm12:$off)>;
 
+def : Pat< (extloadi16 BP), (LDRH BP, 0)>;
+def : Pat< (extloadi16 (add BP, imm12:$off)), (LDRH BP, imm12:$off)>;
+
+def : Pat< (extloadi8 BP), (LDRB BP, 0)>;
+def : Pat< (extloadi8 (add BP, imm12:$off)), (LDRB BP, imm12:$off)>;
+
 
 /****************************************************************
  * Stack operations
