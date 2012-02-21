@@ -120,6 +120,9 @@ CubeWrapper::CubeWrapper()
     , mPiecesSolution()
     , mPieceOffsets()
     , mPieceAnimT(0.0f)
+    , mRandom()
+    , mCutsceneSpriteJump0(false)
+    , mCutsceneSpriteJump1(false)
 {
 }
 
@@ -325,8 +328,40 @@ void CubeWrapper::DrawCutscene(const char *text)
     Video().setSpriteImage(0, CutsceneSprites, 0);
     Video().setSpriteImage(1, CutsceneSprites, 1);
     
-    Video().moveSprite(0, Vec2(0, 72));
-    Video().moveSprite(1, Vec2(64, 72));
+    // TODO: Put super-lame animation code elsewhere
+    
+    if (!mCutsceneSpriteJump0)
+    {
+        if (mRandom.randrange(8) == 0)
+        {
+            mCutsceneSpriteJump0 = true;
+        }
+    }
+    else
+    {
+        if (mRandom.randrange(1) == 0)
+        {
+            mCutsceneSpriteJump0 = false;
+        }
+    }
+    
+    if (!mCutsceneSpriteJump1)
+    {
+        if (mRandom.randrange(16) == 0)
+        {
+            mCutsceneSpriteJump1 = true;
+        }
+    }
+    else
+    {
+        if (mRandom.randrange(1) == 0)
+        {
+            mCutsceneSpriteJump1 = false;
+        }
+    }
+    
+    Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 80 : 72));
+    Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 80: 72));
     
     BG1Helper bg1helper(mCube);
     bg1helper.DrawAsset(Vec2(0, 0), CutsceneTextBubble);

@@ -34,9 +34,9 @@ public:
     void Reset();
     void Update(float dt);
     
+    // TODO: Clean up this crazy mess...
     void DrawBuddy();
     void DrawBuddyWithStoryHint(Sifteo::Cube::Side side, bool blink);
-    
     void DrawShuffleUi(
         GameState shuffleState,
         float shuffleScoreTime,
@@ -91,6 +91,9 @@ private:
     Piece mPiecesSolution[NUM_SIDES];
     int mPieceOffsets[NUM_SIDES];
     float mPieceAnimT;
+    Sifteo::Math::Random mRandom;
+    bool mCutsceneSpriteJump0;
+    bool mCutsceneSpriteJump1;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
