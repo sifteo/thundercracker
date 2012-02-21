@@ -47,12 +47,10 @@ public:
     const Piece &GetEndState(unsigned int buddy, Sifteo::Cube::Side side) const;
     
 private:
-    // TODO: Since we are referecing static char data, we don't need to copy them into here.
-    // Just reference a pointer instead.
-    char mChapterTitle[64];
-    char mCutsceneTextStart[64];
-    char mCutsceneTextEnd[64];
-    char mClue[64];
+    const char *mChapterTitle;
+    const char *mCutsceneTextStart;
+    const char *mCutsceneTextEnd;
+    const char *mClue;
     unsigned int mNumBuddies;
     Piece mStartState[kMaxBuddies][NUM_SIDES];
     Piece mEndState[kMaxBuddies][NUM_SIDES];    

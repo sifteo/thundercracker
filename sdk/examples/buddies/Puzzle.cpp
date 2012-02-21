@@ -7,7 +7,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "Puzzle.h"
-#include <cstring> // TODO: Ditch with stored char data
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,19 +29,14 @@ Puzzle::Puzzle(
     unsigned int numBuddies,
     const Piece startState[kMaxBuddies][NUM_SIDES],
     const Piece endState[kMaxBuddies][NUM_SIDES])
-    : mChapterTitle()
-    , mCutsceneTextStart()
-    , mCutsceneTextEnd()
-    , mClue()
+    : mChapterTitle(chapterTitle)
+    , mCutsceneTextStart(cutsceneTextStart)
+    , mCutsceneTextEnd(cutsceneTextEnd)
+    , mClue(clue)
     , mNumBuddies(numBuddies)
     , mStartState()
     , mEndState()
 {
-    std::strncpy(mChapterTitle, chapterTitle, sizeof(mChapterTitle));
-    std::strncpy(mCutsceneTextStart, cutsceneTextStart, sizeof(mCutsceneTextStart));
-    std::strncpy(mCutsceneTextEnd, cutsceneTextEnd, sizeof(mCutsceneTextEnd));
-    std::strncpy(mClue, clue, sizeof(mClue));
-    
     for (unsigned int i = 0; i < numBuddies; ++i)
     {
         for (unsigned int j = 0; j < NUM_SIDES; ++j)
