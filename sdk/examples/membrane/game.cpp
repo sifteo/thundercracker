@@ -4,7 +4,6 @@
 #include "game.h"
 
 Random Game::random;
-Game * Game::instance;
 
 Game::Game()
     : cube_0(0), cube_1(1), cube_2(2),
@@ -41,10 +40,8 @@ void Game::init()
     for (unsigned i = 0; i < NUM_PARTICLES; i++)
         particles[i].instantiate(&getGameCube(i % NUM_CUBES));
 
-	// Install event handlers
-	instance = this;
-	_SYS_vectors.neighborEvents.add = onNeighborAdd;
-	_SYS_vectors.neighborEvents.remove = onNeighborRemove;
+    _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, (void*) this);
+    _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighborRemove, (void*) this);
 }
 
 void Game::animate(float dt)
@@ -66,10 +63,11 @@ void Game::doPhysics(float dt)
     }
 }
 
-void Game::onNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+void Game::onNeighborAdd(Game *self,
+    _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
-	GameCube &gc0 = instance->getGameCube(c0);
-	GameCube &gc1 = instance->getGameCube(c1);
+	GameCube &gc0 = self->getGameCube(c0);
+	GameCube &gc1 = self->getGameCube(c1);
 
 	// Animate the portals opening
 	gc0.getPortal(s0).setOpen(true);
@@ -80,24 +78,25 @@ void Game::onNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID
 	PortalPair reverse = { &gc1, &gc0, s1, s0 };
 	
 	for (unsigned i = 0; i < NUM_PARTICLES; i++) {
-		Particle &p = instance->particles[i];
+		Particle &p = self->particles[i];
 		
 		p.portalNotify(forward);
 		p.portalNotify(reverse);
 	}
 }
 
-void Game::onNeighborRemove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+void Game::onNeighborRemove(Game *self,
+    _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
 	// Animate the portals closing
-	instance->getGameCube(c0).getPortal(s0).setOpen(false);
-	instance->getGameCube(c1).getPortal(s1).setOpen(false);
+	self->getGameCube(c0).getPortal(s0).setOpen(false);
+	self->getGameCube(c1).getPortal(s1).setOpen(false);
 
 	/*
 	 * When a cube is removed, that's when we check for matches. This lets you get a fourth
 	 * match if you can do it without removing a cube first.
 	 */
-	instance->checkMatches();
+	self->checkMatches();
 }
 
 void Game::draw()

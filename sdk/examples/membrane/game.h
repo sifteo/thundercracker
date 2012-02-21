@@ -235,13 +235,14 @@ private:
     
     Particle particles[NUM_PARTICLES];
     Ticker physicsClock;
-    
+
     void checkMatches();
-	
-	// Event handlers
-	static Game *instance;
-	static void onNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
-	static void onNeighborRemove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
+
+    // Event handlers
+    static void onNeighborAdd(Game *self,
+        _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
+    static void onNeighborRemove(Game *self,
+        _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
 };
 
 #endif

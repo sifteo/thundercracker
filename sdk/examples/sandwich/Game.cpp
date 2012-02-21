@@ -2,7 +2,8 @@
 
 static bool sNeighborDirty = false;
 
-static void onNeighbor(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
+static void onNeighbor(void *context,
+    Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
   sNeighborDirty = true;
 }
 
@@ -12,11 +13,11 @@ static void onTouch(_SYSCubeID cid) {
 
 void Game::ObserveNeighbors(bool flag) {
   if (flag) {
-    _SYS_vectors.neighborEvents.add = onNeighbor;
-    _SYS_vectors.neighborEvents.remove = onNeighbor;
+    _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighbor, NULL);
+    _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighbor, NULL);
   } else {
-    _SYS_vectors.neighborEvents.add = 0;
-    _SYS_vectors.neighborEvents.remove = 0;
+    _SYS_setVector(_SYS_NEIGHBOR_ADD, NULL, NULL);
+    _SYS_setVector(_SYS_NEIGHBOR_REMOVE, NULL, NULL);
   }
 }
 

@@ -15,9 +15,9 @@ using namespace Sifteo;
 jmp_buf Runtime::jmpExit;
 
 bool Event::dispatchInProgress;
-uint32_t Event::pending;
-uint32_t Event::eventCubes[EventBits::COUNT];
 bool Event::paused = false;
+uint32_t Event::pending;
+Event::VectorInfo Event::vectors[_SYS_NUM_VECTORS];
 
 
 void Runtime::run()
@@ -50,19 +50,34 @@ void Event::dispatch()
      */
 
     while (pending) {
-        EventBits::ID event = (EventBits::ID)Intrinsic::CLZ(pending);
+        _SYSVectorID vid = (_SYSVectorID) Intrinsic::CLZ(pending);
+        ASSERT(vid < _SYS_NUM_VECTORS);
+        uint32_t vidMask = Intrinsic::LZ(vid);
+        VectorInfo &vi = vectors[vid];
 
-		while (eventCubes[event]) {
-                _SYSCubeID slot = Intrinsic::CLZ(eventCubes[event]);
-                if (event <= EventBits::LAST_CUBE_EVENT) {
-                    callCubeEvent(event, slot);
-                } else if (event == EventBits::NEIGHBOR) {
-                    NeighborSlot::instances[slot].computeEvents();
-                }
-                
-                Atomic::And(eventCubes[event], ~Intrinsic::LZ(slot));
+        // Currently all events are dispatched per-cube, even the neighbor
+        // events. Loop over the Cube IDs from cubesPending.
+
+        uint32_t cubesPending = vi.cubesPending;
+	    while (cubesPending) {
+            _SYSCubeID cid = (_SYSCubeID) Intrinsic::CLZ(cubesPending);
+            
+            // Type-specific event dispatch
+
+            if (vidMask & _SYS_NEIGHBOR_EVENTS) {
+                // Handle all neighbor events for this cube slot
+                NeighborSlot::instances[cid].computeEvents();
+                vidMask = _SYS_NEIGHBOR_EVENTS;
+            } else {
+                // Handle one normal cube event
+                callCubeEvent(vid, cid);
             }
-        Atomic::And(pending, ~Intrinsic::LZ(event));
+
+            Atomic::And(cubesPending, ~Intrinsic::LZ(cid));
+        }
+        vi.cubesPending = 0;
+            
+        Atomic::And(pending, ~vidMask);
     }
 
     dispatchInProgress = false;
