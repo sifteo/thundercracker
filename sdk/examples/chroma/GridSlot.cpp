@@ -323,24 +323,27 @@ void GridSlot::Draw( VidMode_BG0_SPR_BG1 &vid, BG1Helper &bg1helper, Float2 &til
 		}
 		case STATE_MARKED:
         {
-            if( IsSpecial() )
+            if( m_color == HYPERCOLOR )
             {
                 //vid.BG0_drawAsset(vec, GetSpecialTexture(), GetSpecialFrame() );
                 const AssetImage &exTex = GetSpecialExplodingTexture();
 
-                //TODO, remove hack
-                if( m_color == RAINBALLCOLOR )
-                    vid.BG0_drawAsset(vec, exTex, m_animFrame);
-                else
-                    vid.BG0_drawAsset(vec, exTex, GetSpecialFrame());
+                vid.BG0_drawAsset(vec, exTex, GetSpecialFrame());
             }
             else
             {
-                const AssetImage &exTex = GetExplodingTexture();
+                if( m_color == RAINBALLCOLOR )
+                {
+                    vid.BG0_drawAsset(vec, rainball_idle, 0);
+                }
+                else
+                {
+                    const AssetImage &exTex = GetExplodingTexture();
 
-                unsigned int markFrame = m_bWasRainball ? 0 : m_animFrame;
+                    unsigned int markFrame = m_bWasRainball ? 0 : m_animFrame;
 
-                vid.BG0_drawAsset(vec, exTex, markFrame);
+                    vid.BG0_drawAsset(vec, exTex, markFrame);
+                }
 
                 if( m_bWasRainball || m_bWasInfected )
                 {

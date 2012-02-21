@@ -819,11 +819,6 @@ void CubeWrapper::testMatches()
                     {
                         bMatched = false;
                     }
-                    else if( ourGems[j]->getColor() == theirGems[j]->getColor() )
-                    {
-                        ourGems[j]->mark();
-                        theirGems[j]->mark();
-                    }
                     else if( ourGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
                     {
                         ourGems[j]->RainballMorph( theirGems[j]->getColor() );
@@ -833,6 +828,11 @@ void CubeWrapper::testMatches()
                     else if( theirGems[j]->getColor() == GridSlot::RAINBALLCOLOR )
                     {
                         theirGems[j]->RainballMorph( ourGems[j]->getColor() );
+                        ourGems[j]->mark();
+                        theirGems[j]->mark();
+                    }
+                    else if( ourGems[j]->getColor() == theirGems[j]->getColor() )
+                    {
                         ourGems[j]->mark();
                         theirGems[j]->mark();
                     }
