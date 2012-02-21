@@ -274,12 +274,14 @@ void CubeWrapper::Draw()
                     }
                 }
                 else
-                {
-                    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
-                    m_bg1helper.DrawText( Vec2( 4, 3 ), Font, "Reached" );
-                    m_bg1helper.DrawText( Vec2( 5, 5 ), Font, "Level" );
+                {                   
+                    String<64> buf;
 
-                    Banner::DrawScore( m_bg1helper, Vec2( 7, 9 ), Banner::CENTER, Game::Inst().getDisplayedLevel() );
+                    if( Game::Inst().getDisplayedLevel() == 1 )
+                        buf << "1 Cube cleared";
+                    else
+                        buf << Game::Inst().getDisplayedLevel() << " Cubes cleared";
+                    DrawMessageBoxWithText( buf );
                 }
             }
             else if( m_cube.id() == 2 + CUBE_ID_BASE )

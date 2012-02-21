@@ -97,7 +97,7 @@ public:
     inline void addScore( unsigned int score ) { m_iScore += score; }
     inline const Level &getLevel() const { return Level::GetLevel( m_iLevel ); }
     inline void addLevel() { m_iLevel++; }
-    inline unsigned int getDisplayedLevel() const { return m_iLevel + 1; }
+    inline unsigned int getDisplayedLevel() const { return m_iLevel; }
 
 	TimeKeeper &getTimer() { return m_timer; }
     unsigned int getHighScore( unsigned int index ) const;

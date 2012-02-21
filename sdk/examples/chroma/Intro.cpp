@@ -62,8 +62,11 @@ bool Intro::Update( float dt, Banner &banner )
                 {
                     if( Game::Inst().getMode() == Game::MODE_SHAKES )
                     {
-                        String<16> buf;
-                        buf << "Level " << Game::Inst().getDisplayedLevel();
+                        String<32> buf;
+                        if( Game::Inst().getDisplayedLevel() == 1 )
+                            buf << "1 Cube cleared";
+                        else
+                            buf << Game::Inst().getDisplayedLevel() << " Cubes cleared";
                         banner.SetMessage( buf, READYSETGO_BANNER_TIME );
                     }
                     return false;
