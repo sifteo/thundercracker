@@ -56,7 +56,7 @@ enum GameState
 const bool kLoadAssets = true;
 const GameMode kGameMode = GAME_MODE_STORY;
 
-const unsigned int kNumCubes = 2; // Number of cubes used in this game
+const unsigned int kNumCubes = 3; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters
 
 const float kResetTimerDuration = 5.0f; // Touch a cube for this many seconds to reset the game

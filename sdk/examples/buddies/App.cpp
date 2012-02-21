@@ -717,8 +717,6 @@ void App::DrawGameState()
     }
     else if (kGameMode == GAME_MODE_STORY)
     {
-        // TODO: Handle when numBuddies >= kNumBuddes
-        
         if (mGameState == GAME_STATE_STORY_CHAPTER_START)
         {
             for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
@@ -752,7 +750,14 @@ void App::DrawGameState()
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    mCubeWrappers[i].DrawBuddy();
+                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+                    {
+                        mCubeWrappers[i].DrawBuddy();
+                    }
+                    else
+                    {
+                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                    }
                 }
             }
         }
@@ -762,8 +767,15 @@ void App::DrawGameState()
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    mCubeWrappers[i].DrawBuddy();
-                    mCubeWrappers[i].DrawClue(NULL);
+                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+                    {
+                        mCubeWrappers[i].DrawBuddy();
+                        mCubeWrappers[i].DrawClue(NULL);
+                    }
+                    else
+                    {
+                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                    }
                 }
             }
         }
@@ -773,8 +785,15 @@ void App::DrawGameState()
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    mCubeWrappers[i].DrawBuddy();
-                    // TODO: Hints
+                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+                    {
+                        mCubeWrappers[i].DrawBuddy();
+                        //mCubeWrappers[i].DrawHints();
+                    }
+                    else
+                    {
+                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                    }
                 }
             }
         }
@@ -784,7 +803,14 @@ void App::DrawGameState()
             {
                 if (mCubeWrappers[i].IsEnabled())
                 {
-                    mCubeWrappers[i].DrawBuddy();
+                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+                    {
+                        mCubeWrappers[i].DrawBuddy();
+                    }
+                    else
+                    {
+                        mCubeWrappers[i].DrawBackground(ChapterTitle);
+                    }
                 }
             }
         }
