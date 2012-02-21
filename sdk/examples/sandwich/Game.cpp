@@ -499,7 +499,7 @@ void Game::CheckMapNeighbors() {
   uint8_t visited[NUM_CUBES];
   for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
   VisitMapView(visited, mPlayer.View(), mPlayer.Location());
-  /*
+  
   for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) {
     if (!visited[v->GetCubeID()]) { 
       if (v->HideLocation()) {
@@ -507,6 +507,6 @@ void Game::CheckMapNeighbors() {
       }
     }
   }
-  */
+  
   sNeighborDirty = false;
 }
