@@ -46,7 +46,7 @@ CutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = tru
 CutsceneTextBubble = image{"assets/cutscene_text_bubble.png"}
 ChapterSummary = image{"assets/ui_chapter_summary.png"}
 ChapterTitle = image{"assets/ui_chapter_title.png"}
-ClueMoreHints = image{"assets/ui_clue_and_more_hints.png"}
+MoreHints = image{"assets/ui_more_hints.png"}
 ClueText = image{"assets/ui_clue_text.png"}
 ExitToMainMenu = image{"assets/ui_exit_to_main_menu.png"}
 NextChapter = image{"assets/ui_next_chapter.png"}

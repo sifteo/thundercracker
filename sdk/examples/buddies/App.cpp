@@ -77,7 +77,6 @@ unsigned int GetRandomOtherPiece(bool moved[], unsigned int num_moved, unsigned 
 
 bool AnyTouching(App& app)
 {
-    /*
     for (unsigned int i = 0; i < kNumCubes; ++i)
     {
         if (app.GetCubeWrapper(i).IsEnabled() && app.GetCubeWrapper(i).IsTouching())
@@ -85,7 +84,6 @@ bool AnyTouching(App& app)
             return true;
         }
     }
-    */
     
     return false;
 }
@@ -376,7 +374,9 @@ void App::RemoveCube(Cube::ID cubeId)
 
 void App::PlaySound()
 {
-    //mChannel.play(GemsSound);
+#ifdef SIFTEO_SIMULATOR
+    mChannel.play(GemsSound);
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
