@@ -16,6 +16,7 @@ public:
     void svc(uint8_t imm8);
 
 private:
+    static const unsigned VIRTUAL_FLASH_BASE = 0x80000000;
     struct Segment {
         uint32_t start;
         uint32_t size;
