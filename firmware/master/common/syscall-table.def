@@ -102,3 +102,4 @@
     /*  101 */ (SvmSyscall)_SYS_vbuf_write,
     /*  102 */ (SvmSyscall)_SYS_vbuf_writei,
     /*  103 */ (SvmSyscall)_SYS_vbuf_wrect,
+    /*  104 */ (SvmSyscall)_SYS_setVector,
