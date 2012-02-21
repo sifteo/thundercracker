@@ -75,10 +75,7 @@ void SvmRuntime::svc(uint8_t imm8)
     case 0x1c:  { // 0b11100
         LOG(("svc: r8-9 = validate(rN)\n"));
         uint32_t addr = validate(cpu.reg(r));
-        cpu.setReg(8, addr);
-        // if addr is in flash space, set r9 to 0, since flash mem is read-only
-        // and r9 is used as a read-write base address, so we'll just fault.
-        cpu.setReg(9, (addr & (1 << 31)) ? 0 : addr);
+        setBasePtrs(addr);
         return;
     }
     case 0x1d:  // 0b11101
@@ -129,7 +126,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
         unsigned a = (literal >> 2) & 0x3fffff;
         unsigned n = (literal >> 24) & 0x7f;
 
-        reg_t addr = validate(0x80000000 + (a * 4));
+        reg_t addr = validate(VIRTUAL_FLASH_BASE + (a * 4));
         // TODO: call it
     }
     else if ((literal & TailCallMask) == TailCallTest) {
@@ -146,13 +143,38 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
         LOG(("indirect tail syscall\n"));
     }
     else if ((literal & AddropMask) == AddropTest) {
-        LOG(("Addrop #0-31 on validate(a)\n"));
+        unsigned opnum = (literal >> 24) & 0x1f;
+        reg_t a = validate(literal & 0xffffff);
+        addrOp(opnum, a);
     }
     else if ((literal & AddropFlashMask) == AddropFlashTest) {
-        LOG(("Addrop #0-31 on validate(F+a)\n"));
+        unsigned opnum = (literal >> 24) & 0x1f;
+        reg_t a = validate(VIRTUAL_FLASH_BASE + (literal & 0xffffff));
+        addrOp(opnum, a);
     }
     else {
         ASSERT(0 && "unhandled svc Indirect Operation");
+    }
+}
+
+// note: address has already been validate()d
+void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
+{
+    switch (opnum) {
+    case 0: {
+        cpu.setReg(SvmCpu::REG_PC, address);
+        LOG(("addrOp: long branch to 0x%x, result: 0x%x\n", address, cpu.reg(SvmCpu::REG_PC)));
+        break;
+    }
+//    case 1:
+//        LOG(("addrOp: Asynchronous preload\n"));
+//        break;
+//    case 2:
+//        LOG(("addrOp: Assign to r8-9\n"));
+//        break;
+    default:
+        LOG(("unknown addrOp: %d (0x%x)\n", opnum, address));
+        break;
     }
 }
 
@@ -161,18 +183,30 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     - make sure any referenced memory has been loaded from external storage
     - if a RAM address, sanitize it to within the
 */
-reg_t SvmRuntime::validate(uint32_t address)
+reg_t SvmRuntime::validate(reg_t address)
 {
-    if (address & (1 << 31)) {
-        // TODO: load block from flash here if needed.
-        // XXX: do we evict block from flash here as well?
+    reg_t result;
+    if (isFlashAddr(address)) {
+        reg_t virtFlashBase = reinterpret_cast<reg_t>(flashRegion.data());
+        if (address < virtFlashBase || address - virtFlashBase > FlashLayer::BLOCK_SIZE) {
+            FlashLayer::releaseRegion(flashRegion);
 
-        // SUPER HACK: need to get address of currently checked out flash block
-        return static_cast<reg_t>(FlashLayer::blocks[0].address) + (address & 0x7fffffff);
+            reg_t physFlashBase = ((address / FlashLayer::BLOCK_SIZE) * FlashLayer::BLOCK_SIZE) - VIRTUAL_FLASH_BASE + progInfo.textRodata.start;
+            LOG(("fetching physical data from 0x%x\n", physFlashBase));
+            bool f = FlashLayer::getRegion(physFlashBase, FlashLayer::BLOCK_SIZE, &flashRegion);
+            ASSERT(f && "validate() - couldn't retrieve new flash block\n");
+        }
+
+        result = reinterpret_cast<reg_t>(flashRegion.data());
+        LOG(("validated flash addr: 0x%x for address 0x%x\n", result, address));
     }
     else {
-        return cpu.virt2physAddr(address);
+        LOG(("validated ram addr: 0x%x usr data: 0x%x for address 0x%x\n", cpu.virt2physAddr(address), cpu.userRam(), address));
+        result = cpu.virt2physAddr(address);
+        ASSERT(result > cpu.userRam() && result - cpu.userRam() < SvmCpu::MEM_IN_BYTES);
     }
+    setBasePtrs(result);
+    return result;
 }
 
 bool SvmRuntime::loadElfFile(unsigned addr, unsigned len)
