@@ -171,7 +171,8 @@ bool SVMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB
         if (isCondNearBranchOpcode(lastI->getOpcode())) {
             // Conditional branch with fall-through
             TBB = lastI->getOperand(0).getMBB();
-            Cond.push_back(lastI->getOperand(1));
+            Cond.push_back(lastI->getOperand(1));   // CC
+            Cond.push_back(lastI->getOperand(2));   // CPSR
             return false;
         }
 
