@@ -14,7 +14,7 @@ namespace TotalsGame
       userData = NULL;
     }
 
-    TiltFlowItem::TiltFlowItem(const AssetImage *image)
+    TiltFlowItem::TiltFlowItem(const PinnedAssetImage *image)
     {
       singleImage = image;
       images = &singleImage;
@@ -28,7 +28,7 @@ namespace TotalsGame
 
     void TiltFlowItem::IncrementImageIndex() {imageIndex = (imageIndex+1)%numImages;}
 
-    TiltFlowItem::TiltFlowItem(const AssetImage **_images, int _numImages)
+    TiltFlowItem::TiltFlowItem(const PinnedAssetImage **_images, int _numImages)
     {
       images = _images;
       numImages = _numImages;
@@ -42,7 +42,7 @@ namespace TotalsGame
     int TiltFlowItem::GetOpt() {return opt;}
     void TiltFlowItem::SetOpt(int val) { imageIndex = val % numImages; }
 
-    const AssetImage *TiltFlowItem::GetImage() {return images[imageIndex];}
+    const PinnedAssetImage *TiltFlowItem::GetImage() {return images[imageIndex];}
 
     bool TiltFlowItem::IsToggle() { return images != NULL && numImages > 1; }
 

@@ -28,11 +28,17 @@ namespace TotalsGame
         overlayFg[0] = 0;
         overlayFg[1] = 0;
         overlayFg[2] = 0;
-        overlayShown = false;
+        overlayShown = false;        
 	}
 
     void TotalsCube::AddEventHandler(EventHandler *e)
     {
+        if(e->attached)
+        {
+            return;
+        }
+        e->attached = true;
+
         e->next = eventHandler;
         e->prev = NULL;
         if(e->next)
@@ -44,6 +50,12 @@ namespace TotalsGame
 
     void TotalsCube::RemoveEventHandler(EventHandler *e)
     {
+        if(!e->attached)
+        {
+            return;
+        }
+        e->attached = false;
+
         //make sure this guy is even part of our list before we go and do things
         EventHandler *c = eventHandler;
         while(c)
@@ -76,13 +88,21 @@ namespace TotalsGame
 
     void TotalsCube::SetView(View *v)
     {
-        if(v != view)
+        if(v != view)            
         {
+            if(view)
+            {
+                view->WillDetachFromCube(this);
+            }
             //now that all views are statically allocated, delete is useless.
             //in fact not deleting them is good because it mimics c#'s
             //behavior better.
             //delete view;
             view = v;
+            if(view)
+            {
+                view->DidAttachToCube(this);
+            }
         }
 
     }
@@ -130,7 +150,6 @@ namespace TotalsGame
             e = e->next;
         }
     }
-
 
 	float TotalsCube::OpenShutters(const AssetImage *image)
 	{						
@@ -183,9 +202,9 @@ namespace TotalsGame
 		return -1;
 	}
 	
-    void TotalsCube::Image(const AssetImage *image, const Vec2 &pos)
+    void TotalsCube::Image(const AssetImage *image, const Vec2 &pos, int frame)
 	{
-        backgroundLayer.BG0_drawAsset(pos, *image, 0);
+        backgroundLayer.BG0_drawAsset(pos, *image, frame);
 	}
 
 	void TotalsCube::Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size)
@@ -202,6 +221,46 @@ namespace TotalsGame
             {
                 backgroundLayer.BG0_putTile(Vec2(x,y), tile++);
             }
+        }
+    }
+
+    void TotalsCube::ClipImage(const PinnedAssetImage *image, const Vec2 &pos, int frame)
+    {
+        int tile = image->index + image->width * image->height * frame;
+        int y = pos.y;
+        int maxy = y + image->height;
+        if(y < 0)
+        {
+            tile += -y*image->width;
+            y = 0;
+        }
+        if(maxy > 16)
+        {
+            maxy = 16;
+        }
+        for(; y < maxy; y++)
+        {
+
+            int x = pos.x;
+            int maxx = x + image->width;
+            int tileSkip = tile + image->width;
+            if(x < 0)
+            {
+                tile += -x;
+                x = 0;
+            }
+            if(maxx > 16)
+            {
+                maxx = 16;
+            }
+
+            for(;x < maxx; x++)
+            {
+                backgroundLayer.BG0_putTile(Vec2(x,y), tile++);
+            }
+
+            tile = tileSkip;
+
         }
     }
 

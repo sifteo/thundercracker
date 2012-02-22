@@ -27,32 +27,32 @@ Narrator_Yay = image { "narrator_yay.png" }
 Narrator_Mix01 = image { "narrator_mix01.png" }
 Narrator_Mix02 = image { "narrator_mix02.png" }
 
-Icon_Back = image { "icon_back.png" }
-Icon_Bend_It = image { "icon_bend_it.png" }
-Icon_Clear_Data = image { "icon_clear_data.png" }
-Icon_Crosses = image { "icon_crosses.png" }
-Icon_Easy = image { "icon_easy.png" }
-Icon_Experts_Only = image { "icon_experts_only.png" }
-Icon_Hard = image { "icon_hard.png" }
-Icon_Locked = image { "icon_locked.png" }
-Icon_Main_Menu = image { "icon_main_menu.png" }
-Icon_Medium = image { "icon_medium.png" }
-Icon_Music_Off = image { "icon_music_off.png" }
-Icon_Music_On = image { "icon_music_on.png" }
-Icon_No = image { "icon_no.png" }
-Icon_Resume = image { "icon_resume.png" }
-Icon_Sfx_Off = image { "icon_sfx_off.png" }
-Icon_Sfx_On = image { "icon_sfx_on.png" }
-Icon_Squares = image { "icon_squares.png" }
-Icon_Stacking_Up = image { "icon_stacking_up.png" }
-Icon_Starting_Simple = image { "icon_starting_simple.png" }
-Icon_Two_Tuples = image { "icon_two_tuples.png" }
-Icon_Yes = image { "icon_yes.png" }
-Icon_Continue = image { "icon_continue.png" }
-Icon_Random = image { "icon_random.png" }
-Icon_Howtoplay = image { "icon_howtoplay.png" }
-Icon_Level_Select = image { "icon_level_select.png" }
-Icon_Setup = image { "icon_setup.png" }
+Icon_Back = image { "icon_back.png", pinned=true }
+Icon_Bend_It = image { "icon_bend_it.png" , pinned=true}
+Icon_Clear_Data = image { "icon_clear_data.png" , pinned=true}
+Icon_Crosses = image { "icon_crosses.png" , pinned=true}
+Icon_Easy = image { "icon_easy.png" , pinned=true}
+Icon_Experts_Only = image { "icon_experts_only.png" , pinned=true}
+Icon_Hard = image { "icon_hard.png" , pinned=true}
+Icon_Locked = image { "icon_locked.png" , pinned=true}
+Icon_Main_Menu = image { "icon_main_menu.png" , pinned=true}
+Icon_Medium = image { "icon_medium.png" , pinned=true}
+Icon_Music_Off = image { "icon_music_off.png" , pinned=true}
+Icon_Music_On = image { "icon_music_on.png" , pinned=true}
+Icon_No = image { "icon_no.png" , pinned=true}
+Icon_Resume = image { "icon_resume.png" , pinned=true}
+Icon_Sfx_Off = image { "icon_sfx_off.png" , pinned=true}
+Icon_Sfx_On = image { "icon_sfx_on.png" , pinned=true}
+Icon_Squares = image { "icon_squares.png" , pinned=true}
+Icon_Stacking_Up = image { "icon_stacking_up.png" , pinned=true}
+Icon_Starting_Simple = image { "icon_starting_simple.png" , pinned=true}
+Icon_Two_Tuples = image { "icon_two_tuples.png" , pinned=true}
+Icon_Yes = image { "icon_yes.png" , pinned=true}
+Icon_Continue = image { "icon_continue.png" , pinned=true}
+Icon_Random = image { "icon_random.png" , pinned=true}
+Icon_Howtoplay = image { "icon_howtoplay.png" , pinned=true}
+Icon_Level_Select = image { "icon_level_select.png" , pinned=true}
+Icon_Setup = image { "icon_setup.png" , pinned=true}
 
 Press_To_Select = image { "press_to_select.png", pinned=true }
 Tilt_For_More = image { "tilt_for_more.png", pinned=true}
@@ -123,9 +123,9 @@ Horizontal = image{"assets_horizontal.png", width=64, height=8}
 Vertical = image{"assets_vertical.png", width=8, height=64}
 
 MajorN = image{"assets_jointN.png", width=64, height=24, pinned=true}
-MajorW = image{"assets_jointW.png", width=24, height=64, pinned=true}
-MajorS = image{"assets_jointS.png", width=64, height=24, pinned=true}
-MajorE = image{"assets_jointE.png", width=24, height=64, pinned=true}
+MajorW = image{"assets_jointW.png", width=24, height=64}
+MajorS = image{"assets_jointS.png", width=64, height=24}
+MajorE = image{"assets_jointE.png", width=24, height=64}
 
 MajorNW = image{"assets_jointNW.png", width=8, height=8}
 MajorSW = image{"assets_jointSW.png", width=8, height=8}

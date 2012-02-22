@@ -68,7 +68,7 @@ private:
 public:
     void PaintInner(TotalsCube *c);
 private:
-    void PixelToTileImage(const AssetImage *image, const Vec2 &p, const Vec2 &o, const Vec2 &s);
+    void PixelToTileImage(const PinnedAssetImage *image, const Vec2 &p, const Vec2 &o, const Vec2 &s);
 
     void DoPaintItem(TiltFlowItem *item, int x, int w);
 

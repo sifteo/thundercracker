@@ -94,3 +94,4 @@ PuzzleHelper.cpp
 TiltFlowItem.cpp
 assets.gen.cpp
 assets.gen.h
+PauseHelper.h

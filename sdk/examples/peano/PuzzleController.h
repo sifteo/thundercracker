@@ -6,11 +6,18 @@
 #include "TokenView.h"
 
 namespace TotalsGame {
+
+class PauseHelper;
+class ConfirmationMenu;
+
 class PuzzleController: public IStateController
-{
+{       
 private:
     CORO_PARAMS;
     int static_i;
+
+    PauseHelper *pauseHelper;
+    ConfirmationMenu *menu;
 
     class EventHandler: public TotalsCube::EventHandler
     {
@@ -18,7 +25,7 @@ private:
         void OnCubeTouch(TotalsCube *cube, bool touching) {};
         //TODO connect, disconnect
     };
-    EventHandler eventHandler;
+    EventHandler eventHandlers[Game::NUMBER_OF_CUBES];
 
     class NeighborEventHandler: public Game::NeighborEventHandler
     {

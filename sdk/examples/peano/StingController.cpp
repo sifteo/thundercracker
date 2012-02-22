@@ -3,10 +3,6 @@
 namespace TotalsGame 
 {
 
-StingController::EventHandler::EventHandler(StingController *s)
-{
-    owner = s;
-}
 
 void StingController::EventHandler::OnCubeTouch(TotalsCube *cube, bool touching)
 {
@@ -19,9 +15,13 @@ void StingController::EventHandler::OnCubeShake(TotalsCube *cube)
     owner->Skip();
 }
 
-StingController::StingController(Game *game):
-    eventHandler(this)
+StingController::StingController(Game *game)
 {
+    for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
+    {
+        eventHandlers[i].owner = this;
+    }
+
     mGame = game;
 }
 
@@ -51,7 +51,7 @@ float StingController::Coroutine(float dt)
     for( i = 0; i < Game::NUMBER_OF_CUBES; i++)
     {
         new(blankViewBuffer[i]) BlankView(&Game::GetInstance().cubes[i], NULL);
-        Game::GetCube(i)->AddEventHandler(&eventHandler);
+        Game::GetCube(i)->AddEventHandler(&eventHandlers[i]);
     }
 
     CORO_YIELD(0.1f);

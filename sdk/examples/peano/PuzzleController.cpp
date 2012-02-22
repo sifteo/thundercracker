@@ -1,6 +1,8 @@
 #include "PuzzleController.h"
 #include "BlankView.h"
 #include "assets.gen.h"
+#include "PauseHelper.h"
+#include "ConfirmationMenu.h"
 
 namespace TotalsGame {
 
@@ -13,6 +15,7 @@ PuzzleController::PuzzleController(Game *_game) :
     neighborEventHandler(this)
 {
     game = _game; mPaused = false;
+    pauseHelper = NULL;
 }
 
 void PuzzleController::OnSetup ()
@@ -59,7 +62,7 @@ void PuzzleController::OnSetup ()
 
     for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
     {
-        Game::GetCube(i)->AddEventHandler(&eventHandler);
+        Game::GetCube(i)->AddEventHandler(&eventHandlers[i]);
     }
 
     //TODO game.CubeSet.LostCubeEvent += OnCubeLost;
@@ -82,6 +85,7 @@ float PuzzleController::TheBigCoroutine(float dt)
 {
     static char blankViewBuffer[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
     static char tokenViewBuffer[Game::NUMBER_OF_CUBES][sizeof(TokenView)];
+    static char pauseHelperBuffer[sizeof(PauseHelper)];
 
     CORO_BEGIN;
 
@@ -122,124 +126,146 @@ float PuzzleController::TheBigCoroutine(float dt)
     }
 
     { // gameplay
+        pauseHelper = new(pauseHelperBuffer) PauseHelper();
+
         // subscribe to events
         Game::GetInstance().neighborEventHandler = &neighborEventHandler;
         { // game loop
-            //TODO                    var pauseHelper = new PauseHelper();
             while(!puzzle->IsComplete()) {
                 // most stuff is handled by events and view updaters
                 CORO_YIELD(0);
-#if 0 //TODO
+
                 // should pause?
-                pauseHelper.Update();
-                if (pauseHelper.IsTriggered) {
+                pauseHelper->Update();
+                if (pauseHelper->IsTriggered())
+                {
                     mPaused = true;
 
                     // transition out
-                    for(var i=0; i<puzzle.tokens.Length; ++i) {
-                        foreach(var dt in game.CubeSet[i].CloseShutters()) { yield return dt; }
-                        new BlankView(game.CubeSet[i]);
+                    for(static_i=0; static_i<puzzle->GetNumTokens(); ++static_i)
+                    {
+                        Game::GetCube(static_i)->SetView(NULL);
+
+                        float dt;
+                        while((dt=Game::GetCube(static_i)->CloseShutters(&Background)) >= 0)
+                        {
+                            CORO_YIELD(dt);
+                        }
+                        new(blankViewBuffer[static_i]) BlankView(Game::GetCube(static_i), NULL);
                     }
 
                     // do menu
-                    using (var menu = new ConfirmationMenu("Return to Menu?", game)) {
-                    while(!menu.IsDone) {
-                    yield return 0;
-                    menu.Tick(game.dt);
-                }
-                if (menu.Result) {
-                    game.sceneMgr.QueueTransition("Quit");
-                    yield break;
+                    {
+                        static char confirmationBuffer[sizeof(ConfirmationMenu)];
+                        menu = new(confirmationBuffer) ConfirmationMenu("Return to Menu?");
+                        while(!menu->IsDone())
+                        {
+                            CORO_YIELD(0);
+                            menu->Tick(game->dt);
+                        }
+                    }
+
+                    if (menu->GetResult()) {
+                        Game::GetInstance().neighborEventHandler = NULL;
+                        game->sceneMgr.QueueTransition("Quit");
+                        CORO_YIELD(-1);
+                    }
+
+
+                    // transition back
+                    for(static_i=0; static_i<puzzle->GetNumTokens(); ++static_i)
+                    {
+                        Game::GetCube(static_i)->SetView(NULL);
+
+                        float dt;
+                        while((dt=Game::GetCube(static_i)->OpenShutters(&Background)) >= 0)
+                        {
+                            CORO_YIELD(dt);
+                        }
+
+                        Game::GetCube(static_i)->SetView(puzzle->GetToken(static_i)->GetTokenView());
+                        CORO_YIELD(0.1f);
+                    }
+
+                    pauseHelper->Reset();
+                    mPaused = false;
                 }
             }
-
-            // transition back
-            for(int i=0; i<puzzle.tokens.Length; ++i) {
-                foreach (var dt in game.CubeSet[i].OpenShutters("background")) { yield return dt; }
-                puzzle.tokens[i].GetView().Cube = game.CubeSet[i];
-                yield return 0.1f;
-            }
-
-            pauseHelper.Reset();
-            mPaused = false;
         }
-#endif
+
+    }
+    // unsubscribe
+    Game::GetInstance().neighborEventHandler = NULL;
+
+
+    { // flourish out
+        CORO_YIELD(1);
+        AudioPlayer::PlaySfx(sfx_Level_Clear);
+        for(int i = 0; i < puzzle->GetNumTokens(); i++)
+        {
+            puzzle->GetToken(i)->GetTokenView()->ShowLit();
+        }
+        CORO_YIELD(3);
     }
 
-}
-// unsubscribe
-Game::GetInstance().neighborEventHandler = NULL;
-}
+    mTransitioningOut = true;
 
-
-{ // flourish out
-CORO_YIELD(1);
-AudioPlayer::PlaySfx(sfx_Level_Clear);
-for(int i = 0; i < puzzle->GetNumTokens(); i++)
-{
-    puzzle->GetToken(i)->GetTokenView()->ShowLit();
-}
-CORO_YIELD(3);
-}
-
-mTransitioningOut = true;
-
-{ // transition out
-for(static_i = 0; static_i < puzzle->GetNumTokens(); static_i++)
-{
-    float dt;
-    while((dt = Game::GetCube(static_i)->CloseShutters(&Background)) >= 0)
-    {
-        CORO_YIELD(dt);
+    { // transition out
+        for(static_i = 0; static_i < puzzle->GetNumTokens(); static_i++)
+        {
+            float dt;
+            while((dt = Game::GetCube(static_i)->CloseShutters(&Background)) >= 0)
+            {
+                CORO_YIELD(dt);
+            }
+            CORO_YIELD(0.1f);
+        }
     }
-    CORO_YIELD(0.1f);
-}
-}
 
-if (!game->IsPlayingRandom())
-{ // closing remarks
-    int count = puzzle->CountAfterThisInChapterWithCurrentCubeSet();
-    if (count > 0)
-    {
+    if (!game->IsPlayingRandom())
+    { // closing remarks
+        int count = puzzle->CountAfterThisInChapterWithCurrentCubeSet();
+        if (count > 0)
+        {
 #if 0 //todo
-        var nv = new NarratorView();
-        nv.Cube = game.CubeSet[0];
-        const float kTransitionTime = 0.2f;
-        Jukebox.PlayShutterOpen();
-        for(var t=0f; t<kTransitionTime; t+=game.dt) {
-            nv.SetTransitionAmount(t/kTransitionTime);
-            yield return 0;
-        }
-        nv.SetTransitionAmount(1f);
-        yield return 0.5f;
-        if (count == 1) {
-            nv.SetMessage("1 code to go...", "mix01");
-            int i=0;
-            yield return 0;
-            for(var t=0f; t<3f; t+=game.dt) {
-                i = 1-i;
-                nv.SetEmote("mix0"+(i+1));
+            var nv = new NarratorView();
+            nv.Cube = game.CubeSet[0];
+            const float kTransitionTime = 0.2f;
+            Jukebox.PlayShutterOpen();
+            for(var t=0f; t<kTransitionTime; t+=game.dt) {
+                nv.SetTransitionAmount(t/kTransitionTime);
                 yield return 0;
             }
-        } else {
-            nv.SetMessage(string.Format("{0} codes to go...", count));
-            yield return 2f;
-        }
-        Jukebox.PlayShutterClose();
-        for(var t=0f; t<kTransitionTime; t+=game.dt) {
-            nv.SetTransitionAmount(1f-t/kTransitionTime);
-            yield return 0;
-        }
-        nv.SetTransitionAmount(0f);
+            nv.SetTransitionAmount(1f);
+            yield return 0.5f;
+            if (count == 1) {
+                nv.SetMessage("1 code to go...", "mix01");
+                int i=0;
+                yield return 0;
+                for(var t=0f; t<3f; t+=game.dt) {
+                    i = 1-i;
+                    nv.SetEmote("mix0"+(i+1));
+                    yield return 0;
+                }
+            } else {
+                nv.SetMessage(string.Format("{0} codes to go...", count));
+                yield return 2f;
+            }
+            Jukebox.PlayShutterClose();
+            for(var t=0f; t<kTransitionTime; t+=game.dt) {
+                nv.SetTransitionAmount(1f-t/kTransitionTime);
+                yield return 0;
+            }
+            nv.SetTransitionAmount(0f);
 #endif
+        }
     }
-}
 
-Transition("Complete");
+    Transition("Complete");
 
 
-CORO_END
-return -1;
+    CORO_END
+            return -1;
 }
 
 //-------------------------------------------------------------------------

@@ -26,8 +26,7 @@ void View::SetCube(TotalsCube *c)
     if (mCube != c)
     {
         if (mCube != NULL)
-        {
-            WillDetachFromCube(mCube);
+        {            
             //if (willDetachFromCube != null) { willDetachFromCube(this); }
             mCube->SetView(NULL);
         }
@@ -40,7 +39,6 @@ void View::SetCube(TotalsCube *c)
                 view->SetCube(NULL);
             }
             c->SetView(this);
-            DidAttachToCube(c);
             //if (didAttachToCube != null) { didAttachToCube(this); }
             Paint();
         }

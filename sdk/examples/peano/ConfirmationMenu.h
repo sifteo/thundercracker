@@ -11,7 +11,7 @@ namespace TotalsGame {
 
 
 class ConfirmationChoiceView : public MenuController::TransitionView {
-    const AssetImage *image;
+    const PinnedAssetImage *image;
     bool mTriggered;  
 
     class EventHandler: public TotalsCube::EventHandler
@@ -26,7 +26,7 @@ class ConfirmationChoiceView : public MenuController::TransitionView {
 public:
     bool Triggered();
 
-    ConfirmationChoiceView(TotalsCube *c, const AssetImage *_image);
+    ConfirmationChoiceView(TotalsCube *c, const PinnedAssetImage *_image);
 
     void DidAttachToCube (TotalsCube *c);
     void WillDetachFromCube (TotalsCube *c);

@@ -12,10 +12,9 @@ namespace TotalsGame
 	{
 	private:
 		class EventHandler: public TotalsCube::EventHandler
-		{
-			StingController *owner;
+		{			
 		public:
-			EventHandler(StingController *s);
+            StingController *owner;
 			virtual void OnCubeTouch(TotalsCube *cube, bool touching);
 			virtual void OnCubeShake(TotalsCube *cube);
 		};
@@ -26,7 +25,7 @@ namespace TotalsGame
 		float time;
 		int i;
 
-		EventHandler eventHandler;
+        EventHandler eventHandlers[Game::NUMBER_OF_CUBES];
 
         float Coroutine(float dt);
 

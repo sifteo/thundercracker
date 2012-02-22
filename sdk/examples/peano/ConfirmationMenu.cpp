@@ -19,7 +19,7 @@ bool ConfirmationChoiceView::Triggered()
     return mTriggered;
 }
 
-ConfirmationChoiceView::ConfirmationChoiceView(TotalsCube *c, const AssetImage *_image):
+ConfirmationChoiceView::ConfirmationChoiceView(TotalsCube *c, const PinnedAssetImage *_image):
     MenuController::TransitionView(c), eventHandler(this)
 {
     image = _image;

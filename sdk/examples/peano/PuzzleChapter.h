@@ -15,7 +15,7 @@ namespace TotalsGame {
     PuzzleDatabase *db;
     Guid guid;
     //const char *id;
-    const AssetImage *idImage;
+    const PinnedAssetImage *idImage;
     const char *name;
     
     PuzzleChapter();

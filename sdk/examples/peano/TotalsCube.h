@@ -30,8 +30,10 @@ namespace TotalsGame
 		{            
             //event handlers will be chained a linked list
             EventHandler *prev, *next;
+            bool attached;
             friend class TotalsCube;
 		public:
+            EventHandler():prev(0),next(0),attached(false) {}
 			virtual void OnCubeShake(TotalsCube *cube) {}
 			virtual void OnCubeTouch(TotalsCube *cube, bool touching) {}
 		};
@@ -60,10 +62,11 @@ public:
 				
 		void DrawVaultDoorsClosed();
 
-        void Image(const AssetImage *image, const Vec2 &pos);
+        void Image(const AssetImage *image, const Vec2 &pos, int frame=0);
 		void Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size);
-        void Image(const PinnedAssetImage *image, const Vec2 &coord, int frame);
+        void Image(const PinnedAssetImage *image, const Vec2 &coord, int frame=0);
         void ClipImage(const AssetImage *image, const Vec2 &pos);
+        void ClipImage(const PinnedAssetImage *image, const Vec2 &pos, int frame = 0);
         void FillScreen(const AssetImage *image);
 	
         void DrawFraction(Fraction f, const Vec2 &pos);
