@@ -8,6 +8,7 @@
 #include "SVM.h"
 #include "SVMMCTargetDesc.h"
 #include "SVMRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -45,14 +46,58 @@ void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
 
     int FrameIndex = MI.getOperand(i).getIndex();
+    DebugLoc dl = MI.getDebugLoc();
+    MachineBasicBlock &MBB = *MI.getParent();
     MachineFunction &MF = *MI.getParent()->getParent();
     MachineFrameInfo *MFI = MF.getFrameInfo();
 
     int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
     Offset += MFI->getOffsetAdjustment();
 
-    assert(Offset >= 0 && Offset < 256 && "Large frame indices not implemeted!");
-    MI.getOperand(i).ChangeToImmediate(Offset);
+    // Encode as much offset as possible into the original instruction.
+    switch (MI.getOpcode()) {
+
+        // Encodings with an 8-bit unsigned word offset.
+        // Supports multiples of four, from 0 to 1020.
+    case SVM::LDRsp:
+    case SVM::STRsp:
+    case SVM::ADDsp: {
+        unsigned Imm = std::min(Offset & ~3, 1020);
+        MI.getOperand(i).ChangeToImmediate(Imm);
+        Offset -= Imm;
+        break;
+    }
+    
+    default:
+        assert(0 && "Unsupported instruction in eliminateFrameIndex()");
+    }
+
+    // If there's a residual, rewrite the instruction further.
+    if (Offset == 0)
+        return;
+
+    switch (MI.getOpcode()) {
+
+        // ADDsp: Put in additional ADD instructions afterward, to cover
+        // the residual offset. Doesn't require any additional registers.
+    case SVM::ADDsp:
+        do {
+            unsigned Imm = std::min(Offset, 255);
+            II++;
+            BuildMI(MBB, II, dl, TII.get(SVM::ADDSi8))
+                .addReg(MI.getOperand(0).getReg())
+                .addReg(MI.getOperand(0).getReg())
+                .addImm(Imm);
+            II--;
+            Offset -= Imm;
+        } while (Offset != 0);
+        break;
+
+    default:
+        assert(0 && "Unsupported SP offset in eliminateFrameIndex()");
+    }
+
+    assert(Offset == 0);
 }
 
 unsigned int SVMRegisterInfo::getFrameRegister(const MachineFunction &MF) const
