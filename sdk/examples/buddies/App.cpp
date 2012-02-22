@@ -664,6 +664,16 @@ void App::StartGameState(GameState gameState)
             mDelayTimer = kStateTimeDelayShort;
             break;
         }
+        case GAME_STATE_STORY_SCRAMBLING:
+        {
+            mShuffleMoveCounter = 0;
+            for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
+            {
+                mShufflePiecesMoved[i] = false;
+            }
+            ShufflePieces();
+            break;
+        }
         case GAME_STATE_STORY_PLAY:
         {
             mScoreTimer = 0.0f;
@@ -808,7 +818,25 @@ void App::UpdateGameState(float dt)
         {
             if (UpdateTimer(mDelayTimer, dt))
             {
-                StartGameState(GAME_STATE_STORY_CLUE);
+                if (GetPuzzle(mStoryPuzzleIndex).IsShuffle())
+                {
+                    StartGameState(GAME_STATE_STORY_SCRAMBLING);
+                }
+                else
+                {
+                    StartGameState(GAME_STATE_STORY_CLUE);
+                }
+            }
+            break;
+        }
+        case GAME_STATE_STORY_SCRAMBLING:
+        {
+            if (mSwapAnimationCounter == 0)
+            {
+                if (UpdateTimer(mDelayTimer, dt))
+                {
+                    ShufflePieces();
+                }
             }
             break;
         }
@@ -1051,6 +1079,18 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             break;
         }
         case GAME_STATE_STORY_DISPLAY_START_STATE:
+        {
+            if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
+            {
+                cubeWrapper.DrawBuddy();
+            }
+            else
+            {
+                DrawChapterTitle(cubeWrapper, mStoryPuzzleIndex);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_SCRAMBLING:
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
@@ -1442,7 +1482,7 @@ void App::OnSwapFinish()
             PlaySound();
         }
     }
-    if (mGameState == GAME_STATE_SHUFFLE_SCRAMBLING)
+    else if (mGameState == GAME_STATE_SHUFFLE_SCRAMBLING)
     {
         bool done = GetNumMovedPieces(
             mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved);
@@ -1497,6 +1537,26 @@ void App::OnSwapFinish()
         if (AllSolved(*this))
         {
             StartGameState(GAME_STATE_SHUFFLE_SOLVED);
+        }
+    }
+    else if (mGameState == GAME_STATE_STORY_SCRAMBLING)
+    {
+        bool done = GetNumMovedPieces(
+            mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved);
+        
+        // TODO: Put num moves of shuffle in the puzzle?
+        if (kShuffleMaxMoves > 0)
+        {
+            done = done || mShuffleMoveCounter == kShuffleMaxMoves;
+        }
+        
+        if (done)
+        {
+            StartGameState(GAME_STATE_STORY_CLUE);
+        }
+        else
+        {
+            mDelayTimer += kShuffleScrambleTimerDelay;
         }
     }
     else if (mGameState == GAME_STATE_STORY_PLAY)

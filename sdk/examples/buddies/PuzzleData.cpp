@@ -153,6 +153,7 @@ const Puzzle kPuzzleDefault =
         "Default",
         "Default",
         kNumCubes,
+        false,
         kDefaultState,
         kDefaultState);
 
@@ -178,11 +179,21 @@ const Puzzle kPuzzleDefault =
 const Puzzle kPuzzles[] =
 {
     Puzzle(
+        "All Mixed\nUp",
+        "Let's get\nCRAZY!",
+        "My head\nhurts.",
+        "Unscramble",
+        2,
+        true,
+        kDefaultState,
+        kDefaultState),
+    Puzzle(
         "Big Mouth",
         "Gimme a kiss!",
         "Muuuahhh",
         "Swap Mouths",
         2,
+        false,
         kDefaultState,
         kAuthoredEndStateMouths),
     Puzzle(
@@ -191,6 +202,7 @@ const Puzzle kPuzzles[] =
         "That's much\nbetter.",
         "Swap Hair",
         2,
+        false,
         kDefaultState,
         kAuthoredEndStateHair),
     Puzzle(
@@ -199,6 +211,7 @@ const Puzzle kPuzzles[] =
         "That's much\nbetter.",
         "Swap Eyes",
         2,
+        false,
         kDefaultState,
         kAuthoredEndStateEyes),
     Puzzle(
@@ -207,6 +220,7 @@ const Puzzle kPuzzles[] =
         "SO WEIRD\nright?",
         "Swap Mouths",
         2,
+        false,
         kStartStateAttributeTest,
         kAuthoredEndStateMouths),
 };
