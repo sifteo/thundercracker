@@ -124,10 +124,11 @@ private:
     // Shuffle Mode
     int mShuffleMoveCounter;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
+    float mShuffleFaceCompleteTimers[kNumCubes];
     float mShuffleHintTimer;
     
     // Story Mode
-    unsigned int mPuzzleIndex;
+    unsigned int mStoryPuzzleIndex;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

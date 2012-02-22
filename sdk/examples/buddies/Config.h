@@ -43,6 +43,7 @@ const float kPieceAnimPeriod = 1.0f;
 const float kHintTimerOnDuration = 10.0f; // Seconds before hint appears in shuffle mode
 const int kShuffleMaxMoves = -1; // Number of shuffles. -1 keeps going until all are shuffled.
 const float kShuffleScrambleTimerDelay = 0.5f; // Time between end of swap animation and next
+const float kShuffleFaceCompleteTimerDuration = 2.0f;
 
 // Story Mode
 const float kHintBlinkTimerDuration = 0.5f; // Blink rate for story mode hints
