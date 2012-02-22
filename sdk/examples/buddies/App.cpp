@@ -115,13 +115,31 @@ bool NeedPaintSync(App& app)
 {
     for (unsigned int i = 0; i < kNumCubes; ++i)
     {
-        if (app.GetCubeWrapper(i).IsEnabled() && !app.GetCubeWrapper(i).NeedsPaintSync())
+        if (app.GetCubeWrapper(i).IsEnabled() && !app.GetCubeWrapper(i).DrawNeedsSync())
         {
             return true;
         }
     }
     
     return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DrawScoreBanner(CubeWrapper &cubeWrapper, int minutes, int seconds)
+{
+    cubeWrapper.DrawUiAsset(cubeWrapper.GetId() == 0 ? ScoreTimeBlue : ScoreTimeOrange, Vec2(0, 0)); // Banner Background
+    
+    const AssetImage &font = cubeWrapper.GetId() == 0 ? FontScoreBlue : FontScoreOrange;
+    
+    int x = 11;
+    int y = 0;
+    cubeWrapper.DrawUiAsset(font, Vec2(x++, y), minutes / 10); // Mintues (10s)
+    cubeWrapper.DrawUiAsset(font, Vec2(x++, y), minutes % 10); // Minutes ( 1s)
+    cubeWrapper.DrawUiAsset(font, Vec2(x++, y), 10); // ":"
+    cubeWrapper.DrawUiAsset(font, Vec2(x++, y), seconds / 10); // Seconds (10s)
+    cubeWrapper.DrawUiAsset(font, Vec2(x++, y), seconds % 10); // Seconds ( 1s)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -866,8 +884,9 @@ void App::DrawGameState()
     {
         if (mCubeWrappers[i].IsEnabled())
         {
-            mCubeWrappers[i].Clear();
+            mCubeWrappers[i].DrawClear();
             DrawGameStateCube(mCubeWrappers[i]);
+            mCubeWrappers[i].DrawFlush();
         }
     }
 }
@@ -893,8 +912,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         case GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE:
         {
             cubeWrapper.DrawBuddy();
-            cubeWrapper.DrawBanner(
-                cubeWrapper.GetId() == 0 ? ShakeToShuffleBlue :  ShakeToShuffleOrange);
+            cubeWrapper.DrawUiAsset(
+                cubeWrapper.GetId() == 0 ? ShakeToShuffleBlue :  ShakeToShuffleOrange,
+                Vec2(0, 0));
             break;
         }
         case GAME_STATE_SHUFFLE_SCRAMBLING:
@@ -905,8 +925,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
         {
             cubeWrapper.DrawBuddy();
-            cubeWrapper.DrawBanner(
-                cubeWrapper.GetId() ? UnscrableTheFacesBlue : UnscrableTheFacesOrange);
+            cubeWrapper.DrawUiAsset(
+                cubeWrapper.GetId() ? UnscrableTheFacesBlue : UnscrableTheFacesOrange,
+                Vec2(0, 0));
             break;
         }
         case GAME_STATE_SHUFFLE_PLAY:
@@ -923,8 +944,9 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             else if (cubeWrapper.IsSolved())
             {
-                cubeWrapper.DrawBanner(
-                    cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+                cubeWrapper.DrawUiAsset(
+                    cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange,
+                    Vec2(0, 0));
             }
             break;
         }
@@ -941,11 +963,11 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 int minutes = int(mScoreTimer) / 60;
                 int seconds = int(mScoreTimer - (minutes * 60.0f));
-                cubeWrapper.DrawScoreBanner(ScoreTimeBlue, minutes, seconds);
+                DrawScoreBanner(cubeWrapper, minutes, seconds);
             }
             else
             {
-                cubeWrapper.DrawBanner(ShakeToShuffleOrange);
+                cubeWrapper.DrawUiAsset(ShakeToShuffleOrange, Vec2(0, 0));
             }
             break;
         }
@@ -983,7 +1005,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             if (cubeWrapper.GetId() < GetPuzzle(mPuzzleIndex).GetNumBuddies())
             {
                 cubeWrapper.DrawBuddy();
-                cubeWrapper.DrawOverlay(ClueText, GetPuzzle(mPuzzleIndex).GetClue());
+                cubeWrapper.DrawUiAsset(ClueText, Vec2(0, 3));
+                cubeWrapper.DrawUiText(GetPuzzle(mPuzzleIndex).GetClue(), Vec2(2, 4));
             }
             else
             {
@@ -1011,7 +1034,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 
                 if (cubeWrapper.GetId() == 0)
                 {
-                    cubeWrapper.DrawOverlay(MoreHints, GetPuzzle(mPuzzleIndex).GetClue());
+                    cubeWrapper.DrawUiAsset(MoreHints, Vec2(0, 3));
+                    cubeWrapper.DrawUiText(GetPuzzle(mPuzzleIndex).GetClue(), Vec2(2, 4));
                 }
             }
             else

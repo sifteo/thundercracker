@@ -6,3 +6,5 @@
 failed-*.png
 *_enc.raw
 asegment.bin
+
+sdk/examples/buddies/report.html

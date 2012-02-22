@@ -63,7 +63,7 @@ void Init()
     {
         if (sApp.GetCubeWrapper(i).IsEnabled())
         {
-            sApp.GetCubeWrapper(i).Clear();
+            sApp.GetCubeWrapper(i).DrawClear();
         }
     }
     System::paintSync();

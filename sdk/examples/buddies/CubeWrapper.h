@@ -35,16 +35,20 @@ public:
     void Reset();
     void Update(float dt);
     
+    void DrawClear();
+    void DrawFlush();
+    bool DrawNeedsSync();
+    
     ////////////////////////////////////////
     // TODO: Clean up this mess!!!
     ////////////////////////////////////////
+    
     void DrawBuddy();
     
-    void DrawOverlay(const Sifteo::AssetImage &asset, const char *text);
+    // TODO: Swap param order to match API
+    void DrawUiAsset(const Sifteo::AssetImage &asset, const Vec2 &position, unsigned int frame = 0);
+    void DrawUiText(const char *text, const Vec2 &position);
     
-    void DrawTextBanner(const char *text);
-    void DrawBanner(const Sifteo::AssetImage &asset);
-    void DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds);
     void DrawHintBar(Sifteo::Cube::Side side);
     
     void DrawBackground(const Sifteo::AssetImage &asset);
@@ -54,9 +58,6 @@ public:
     
     void UpdateCutscene();
     void DrawCutscene(const char *text);
-    
-    void Clear();
-    bool NeedsPaintSync();
     ////////////////////////////////////////
     ////////////////////////////////////////
     
