@@ -456,15 +456,25 @@ void App::OnNeighborAdd(
     else if (mGameState == GAME_STATE_STORY_HINT_2)
     {
         ASSERT(mHintPiece0 != -1);
-        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-        
         ASSERT(mHintPiece1 != -1);
+        
+        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
         mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
+        
+        mHintPiece0 = -1;
+        mHintPiece1 = -1;
         
         StartGameState(GAME_STATE_STORY_PLAY);
     }
     else
     {
+        if (mGameState == GAME_STATE_SHUFFLE_PLAY)
+        {
+            mShuffleHintTimer = kHintTimerOnDuration;
+            mHintPiece0 = -1;
+            mHintPiece1 = -1;
+        }
+        
         bool isSwapping = mSwapState != SWAP_STATE_NONE;
         
         bool isFixed =
@@ -493,11 +503,6 @@ void App::OnNeighborAdd(
             OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
         }
     }
-    
-    // TODO: Put this into the correct cases
-    mShuffleHintTimer = kHintTimerOnDuration;
-    mHintPiece0 = -1;
-    mHintPiece1 = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -508,6 +513,12 @@ void App::OnTilt(Cube::ID cubeId)
     if(mGameState == GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES)
     {
         StartGameState(GAME_STATE_SHUFFLE_PLAY);
+    }
+    else if (mGameState == GAME_STATE_SHUFFLE_PLAY)
+    {
+        mShuffleHintTimer = kHintTimerOnDuration;
+        mHintPiece0 = -1;
+        mHintPiece1 = -1;
     }
     else if (mGameState == GAME_STATE_STORY_CLUE)
     {
@@ -520,18 +531,16 @@ void App::OnTilt(Cube::ID cubeId)
     else if (mGameState == GAME_STATE_STORY_HINT_2)
     {
         ASSERT(mHintPiece0 != -1);
-        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-        
         ASSERT(mHintPiece1 != -1);
+        
+        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
         mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
+        
+        mHintPiece0 = -1;
+        mHintPiece1 = -1;
         
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    
-    // TODO: Put this into the correct cases
-    mShuffleHintTimer = kHintTimerOnDuration;
-    mHintPiece0 = -1;
-    mHintPiece1 = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -542,6 +551,12 @@ void App::OnShake(Cube::ID cubeId)
     if(mGameState == GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE)
     {
         StartGameState(GAME_STATE_SHUFFLE_SCRAMBLING);
+    }
+    else if (mGameState == GAME_STATE_SHUFFLE_PLAY)
+    {
+        mShuffleHintTimer = kHintTimerOnDuration;
+        mHintPiece0 = -1;
+        mHintPiece1 = -1;
     }
     else if (mGameState == GAME_STATE_SHUFFLE_SCORE)
     {
@@ -558,18 +573,16 @@ void App::OnShake(Cube::ID cubeId)
     else if (mGameState == GAME_STATE_STORY_HINT_2)
     {
         ASSERT(mHintPiece0 != -1);
-        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-        
         ASSERT(mHintPiece1 != -1);
+        
+        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
         mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
+        
+        mHintPiece0 = -1;
+        mHintPiece1 = -1;
         
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    
-    // TODO: Put this into the correct cases
-    mShuffleHintTimer = kHintTimerOnDuration;
-    mHintPiece0 = -1;
-    mHintPiece1 = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -704,7 +717,11 @@ void App::StartGameState(GameState gameState)
         case GAME_STATE_STORY_HINT_2:
         {
             ChooseHint();
+            
+            ASSERT(mHintPiece0 != -1);
             mCubeWrappers[mHintPiece0 / NUM_SIDES].StartPieceBlinking(mHintPiece0 % NUM_SIDES);
+            
+            ASSERT(mHintPiece1 != -1);
             mCubeWrappers[mHintPiece1 / NUM_SIDES].StartPieceBlinking(mHintPiece1 % NUM_SIDES);
             
             break;
