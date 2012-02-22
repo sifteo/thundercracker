@@ -54,6 +54,11 @@ void SVMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
     Offset += MFI->getOffsetAdjustment();
 
+    if (MI.isDebugValue()) {
+        MI.getOperand(i).ChangeToImmediate(Offset);
+        return;
+    }
+
     // Encode as much offset as possible into the original instruction.
     switch (MI.getOpcode()) {
 
