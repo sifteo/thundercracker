@@ -122,10 +122,17 @@ CubeWrapper::CubeWrapper()
     , mPiecesSolution()
     , mPieceOffsets()
     , mPieceAnimT(0.0f)
+    , mPieceBlinking(SIDE_UNDEFINED)
+    , mPieceBlinkTimer(0.0f)
+    , mPieceBlinkingOn(false)
     , mCutsceneSpriteJumpRandom()
     , mCutsceneSpriteJump0(false)
     , mCutsceneSpriteJump1(false)
 {
+    for (unsigned int i = 0; i < NUM_SIDES; ++i)
+    {
+        mPieceOffsets[i] = 0;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,6 +147,9 @@ void CubeWrapper::Reset()
         mPieceOffsets[i] = 0;
     }
     mPieceAnimT = 0.0f;
+    mPieceBlinking = SIDE_UNDEFINED;
+    mPieceBlinkTimer = 0.0f;
+    mPieceBlinkingOn = false;
     mCutsceneSpriteJump0 = false;
     mCutsceneSpriteJump1 = false;
 }
@@ -154,6 +164,18 @@ void CubeWrapper::Update(float dt)
     {
         mPieceAnimT -= kPieceAnimPeriod;
     }
+    
+    if (mPieceBlinking >= 0 && mPieceBlinking < NUM_SIDES)
+    {
+        ASSERT(mPieceBlinkTimer > 0.0f);
+        
+        mPieceBlinkTimer -= dt;
+        if (mPieceBlinkTimer <= 0.0f)
+        {
+            mPieceBlinkingOn = !mPieceBlinkingOn;
+            mPieceBlinkTimer += kHintBlinkTimerDuration;
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -165,29 +187,14 @@ void CubeWrapper::DrawBuddy()
     
     Video().BG0_drawAsset(Vec2(0, 0), GetBuddyFaceBackgroundAsset(mBuddyId));
     
-    DrawPiece(mPieces[SIDE_TOP], SIDE_TOP);
-    DrawPiece(mPieces[SIDE_LEFT], SIDE_LEFT);
-    DrawPiece(mPieces[SIDE_BOTTOM], SIDE_BOTTOM);
-    DrawPiece(mPieces[SIDE_RIGHT], SIDE_RIGHT);
-}  
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawBuddyWithStoryHint(Sifteo::Cube::Side side, bool blink)
-{
-    ASSERT(IsEnabled());
-    
-    Video().BG0_drawAsset(Vec2(0, 0), GetBuddyFaceBackgroundAsset(mBuddyId));
-    
     for (unsigned int i = 0; i < NUM_SIDES; ++i)
     {
-        if (side != int(i) || !blink)
+        if (mPieceBlinking != int(i) || !mPieceBlinkingOn)
         {
             DrawPiece(mPieces[i], i);
         }
     }
-}
+}  
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -469,6 +476,26 @@ void CubeWrapper::SetPieceOffset(Cube::Side side, int offset)
     ASSERT(side >= 0 && side < int(arraysize(mPieceOffsets)));
     
     mPieceOffsets[side] = offset;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::StartPieceBlinking(Sifteo::Cube::Side side)
+{
+    mPieceBlinking = side;
+    mPieceBlinkTimer = kHintBlinkTimerDuration;
+    mPieceBlinkingOn = true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::StopPieceBlinking()
+{
+    mPieceBlinking = SIDE_UNDEFINED;
+    mPieceBlinkTimer = 0.0f;
+    mPieceBlinkingOn = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

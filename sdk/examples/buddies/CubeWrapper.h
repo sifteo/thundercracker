@@ -39,7 +39,6 @@ public:
     // TODO: Clean up this mess!!!
     ////////////////////////////////////////
     void DrawBuddy();
-    void DrawBuddyWithStoryHint(Sifteo::Cube::Side side, bool blink);
     
     void DrawOverlay(const Sifteo::AssetImage &asset, const char *text);
     
@@ -83,6 +82,9 @@ public:
     int GetPieceOffset(Sifteo::Cube::Side side) const;
     void SetPieceOffset(Sifteo::Cube::Side side, int offset);
     
+    void StartPieceBlinking(Sifteo::Cube::Side side);
+    void StopPieceBlinking();
+    
     // State
     bool IsSolved() const;
     bool IsTouching() const;
@@ -102,6 +104,9 @@ private:
     Piece mPiecesSolution[NUM_SIDES];
     int mPieceOffsets[NUM_SIDES];
     float mPieceAnimT;
+    Sifteo::Cube::Side mPieceBlinking;
+    float mPieceBlinkTimer;
+    bool mPieceBlinkingOn;
     
     // Cutscene Jump Animation
     Sifteo::Math::Random mCutsceneSpriteJumpRandom;

@@ -117,8 +117,6 @@ private:
     int mHintPieceSkip;
     int mHintPiece0;
     int mHintPiece1;
-    float mHintBlinkTimer;
-    bool mHintBlinking;
     
     // Shuffle Mode
     int mShuffleMoveCounter;
