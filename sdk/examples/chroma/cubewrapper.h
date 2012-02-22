@@ -141,7 +141,9 @@ private:
     bool HasFloatingDots() const;
     void fillPuzzleCube();
     //draw a message box with centered text
-    void DrawMessageBoxWithText( const char *pTxt );
+    //bDrawBox - draw the box or not
+    //in_yOffset - optional y offset for text
+    void DrawMessageBoxWithText( const char *pTxt, bool bDrawBox = true, int in_yOffset = 0 );
     void DrawGrid();
 
 	Cube m_cube;

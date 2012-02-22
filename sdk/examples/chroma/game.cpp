@@ -13,6 +13,9 @@
 unsigned int Game::s_HighScores[ Game::NUM_HIGH_SCORES ] =
         { 1000, 800, 600, 400, 200 };
 
+unsigned int Game::s_HighCubes[ Game::NUM_HIGH_SCORES ] =
+        { 20, 10, 8, 6, 4 };
+
 
 const float Game::SLOSH_THRESHOLD = 0.4f;
 const float Game::TIME_TO_RESPAWN = 0.55f;
@@ -726,7 +729,12 @@ unsigned int Game::getHighScore( unsigned int index ) const
     ASSERT( index < NUM_HIGH_SCORES );
 
     if( index < NUM_HIGH_SCORES )
-        return s_HighScores[ index ];
+    {
+        if( m_mode == MODE_TIMED )
+            return s_HighScores[ index ];
+        else
+            return s_HighCubes[ index ];
+    }
     else
         return 0;
 }
@@ -735,24 +743,38 @@ unsigned int Game::getHighScore( unsigned int index ) const
 
 void Game::enterScore()
 {
+    unsigned int *pScores;
+    unsigned int score;
+
+    if( m_mode == MODE_TIMED )
+    {
+        pScores = s_HighScores;
+        score = m_iScore;
+    }
+    else
+    {
+        pScores = s_HighCubes;
+        score = getDisplayedLevel();
+    }
+
     //walk backwards through the high score list and see which ones we can pick off
     for( int i = (int)NUM_HIGH_SCORES - 1; i >= 0; i-- )
     {
-        if( s_HighScores[i] < m_iScore )
+        if( pScores[i] < score )
         {
             if( i < (int)NUM_HIGH_SCORES - 1 )
             {
-                s_HighScores[i+1] = s_HighScores[i];
+                pScores[i+1] = pScores[i];
 
                 if( i == 0 )
-                    s_HighScores[0] = m_iScore;
+                    pScores[0] = score;
             }
         }
         else
         {
             if( i < (int)NUM_HIGH_SCORES - 1 )
             {
-                s_HighScores[i+1] = m_iScore;
+                pScores[i+1] = score;
             }
 
             break;

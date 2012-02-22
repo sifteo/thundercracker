@@ -255,33 +255,28 @@ void CubeWrapper::Draw()
                 else
                 {
                     m_vid.BG0_drawPartialAsset( Vec2( 0, 7), Vec2( 0, 7), Vec2( 16, 9), MessageBox4 );
-                }
-            }
-            else if( m_cube.id() == 1 + CUBE_ID_BASE )
-            {
-                if( Game::Inst().getMode() == Game::MODE_TIMED )
-                {
-                    m_vid.BG0_drawAsset(Vec2(0,0), MsgHighScores, 0);
-                    //m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
 
-                    for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
-                    {
-                        int score = Game::Inst().getHighScore(i);
-
-                        //m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
-                        Banner::DrawScore( m_bg1helper, Vec2( 8, 5+2*i ), Banner::RIGHT, score );
-
-                    }
-                }
-                else
-                {                   
                     String<64> buf;
 
                     if( Game::Inst().getDisplayedLevel() == 1 )
                         buf << "1 Cube cleared";
                     else
                         buf << Game::Inst().getDisplayedLevel() << " Cubes cleared";
-                    DrawMessageBoxWithText( buf );
+                    DrawMessageBoxWithText( buf, false, 2 );
+                }
+            }
+            else if( m_cube.id() == 1 + CUBE_ID_BASE )
+            {
+                m_vid.BG0_drawAsset(Vec2(0,0), MsgHighScores, 0);
+                //m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
+
+                //for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
+                for( unsigned int i = 0; i < 2; i++ )
+                {
+                    int score = Game::Inst().getHighScore(i);
+
+                    //m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
+                    Banner::DrawScore( m_bg1helper, Vec2( 8, 5+2*i ), Banner::RIGHT, score );
                 }
             }
             else if( m_cube.id() == 2 + CUBE_ID_BASE )
@@ -1812,7 +1807,9 @@ void CubeWrapper::fillPuzzleCube()
 
 
 //draw a message box with centered text
-void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
+//bDrawBox - draw the box or not
+//in_yOffset - optional y offset for text
+void CubeWrapper::DrawMessageBoxWithText( const char *pTxt, bool bDrawBox, int in_yOffset )
 {
     if( !m_dirty )
     {
@@ -1825,7 +1822,8 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
     m_queuedFlush = true;
     m_dirty = false;
 
-    m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
+    if( bDrawBox )
+        m_vid.BG0_drawAsset(Vec2(0,0), MessageBox4, 0);
 
     //count how many lines of text we have
     int charCnt = 0;
@@ -1868,7 +1866,7 @@ void CubeWrapper::DrawMessageBoxWithText( const char *pTxt )
         }
     }
 
-    int yOffset = MAX_LINES - numLines;
+    int yOffset = MAX_LINES - numLines + in_yOffset;
 
     for( int i = 0; i < numLines; i++ )
     {

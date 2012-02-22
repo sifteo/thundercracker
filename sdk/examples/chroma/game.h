@@ -187,6 +187,7 @@ private:
     const _SYSAudioModule *m_pSoundThisFrame;
 
     static unsigned int s_HighScores[ NUM_HIGH_SCORES ];
+    static unsigned int s_HighCubes[ NUM_HIGH_SCORES ];
     unsigned int m_ShakesRemaining;
     //how long until we respawn one piece in timer mode
     float m_fTimeTillRespawn;
