@@ -179,11 +179,11 @@ void Game::Update(bool sync) {
 //------------------------------------------------------------------
 
 void Game::Paint(bool sync) {
-    if (sNeighborDirty) { 
-      CheckMapNeighbors(); 
-    }
-    mPlayer.Update(mDeltaTime);
-    for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
+  if (sNeighborDirty) { 
+    CheckMapNeighbors(); 
+  }
+  mPlayer.Update(mDeltaTime);
+  for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->Update();
     #if KLUDGES
     p->GetCube()->vbuf.touch();
@@ -443,6 +443,7 @@ unsigned Game::OnPassiveTrigger() {
     Dialog view(pCube);
     view.Init();
     view.Erase();
+    view.Show("ITEM DISCOVERED!");
     view.ShowAll(gInventoryData[pItem->itemId-1].description);
     pCube->vbuf.touch();
     Paint(true);
@@ -452,7 +453,7 @@ unsigned Game::OnPassiveTrigger() {
       Paint();
     }
     view.SetAlpha(255);
-    for(float t=System::clock(); System::clock()-t<4.f;) { System::paint(); }
+    for(float t=System::clock(); System::clock()-t<4.f;) { Paint(); }
     mPlayer.CurrentView()->Parent()->Restore();
     mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
     Paint(true);
@@ -460,7 +461,7 @@ unsigned Game::OnPassiveTrigger() {
     Paint(true);
 
     // wait a sec
-    for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
+    for(float t=System::clock(); System::clock()-t<0.25f;) { Paint(); }
     mPlayer.CurrentView()->HideItem();        
 
   } else if (pRoom->HasTrapdoor()) {
