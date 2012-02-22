@@ -503,10 +503,10 @@ namespace TotalsGame
         static const uint8_t keyIndices[] = { 0, 1, 3, 5, 8, 10, 13, 16, 20, 22, 25, 28, 32, 35, 39, 43, 48, 50, 53, 56, 60, 63, 67, 71, 76, 79, 83, 87, 92, 96, 101, 106, };
         
         // Major Joints
-         GetCube()->backgroundLayer.BG0_drawAsset(Vec2(3,1), MajorN, keyIndices[vunion] + CountBits(vunion ^ masks[0]));
-         GetCube()->backgroundLayer.BG0_drawAsset(Vec2(1,3), MajorW, keyIndices[vunion] + CountBits(vunion ^ masks[1]));
-         GetCube()->backgroundLayer.BG0_drawAsset(Vec2(3,10), MajorS, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
-         GetCube()->backgroundLayer.BG0_drawAsset(Vec2(10,3), MajorE, 111 - keyIndices[vunion] - CountBits(vunion ^ masks[3]));
+         GetCube()->Image(&MajorN, Vec2(3,1), keyIndices[vunion] + CountBits(vunion ^ masks[0]));
+         GetCube()->Image(&MajorW, Vec2(1,3), keyIndices[vunion] + CountBits(vunion ^ masks[1]));
+         GetCube()->Image(&MajorS, Vec2(3,10), 111 - keyIndices[vunion] - CountBits(vunion ^ masks[2]));
+         GetCube()->Image(&MajorE, Vec2(10,3), 111 - keyIndices[vunion] - CountBits(vunion ^ masks[3]));
     }
     
     

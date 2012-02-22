@@ -193,6 +193,18 @@ namespace TotalsGame
         backgroundLayer.BG0_drawPartialAsset(coord, offset, size, *image, 0);
 	}
 
+    void TotalsCube::Image(const PinnedAssetImage *image, const Vec2 &coord, int frame)
+    {
+        int tile = image->index + image->width * image->height * frame;
+        for(int y = coord.y; y < coord.y + (int)image->height; y++)
+        {
+            for(int x = coord.x; x < coord.x + (int)image->width; x++)
+            {
+                backgroundLayer.BG0_putTile(Vec2(x,y), tile++);
+            }
+        }
+    }
+
     void TotalsCube::FillScreen(const AssetImage *image)
     {
         backgroundLayer.clear(image->tiles[0]);

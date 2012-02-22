@@ -62,6 +62,7 @@ public:
 
         void Image(const AssetImage *image, const Vec2 &pos);
 		void Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size);
+        void Image(const PinnedAssetImage *image, const Vec2 &coord, int frame);
         void ClipImage(const AssetImage *image, const Vec2 &pos);
         void FillScreen(const AssetImage *image);
 	

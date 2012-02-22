@@ -43,6 +43,7 @@ void PuzzleController::OnSetup ()
                 retries++;
             }
             puzzle->SelectRandomTarget();
+            stringRep.clear();
             puzzle->target->GetValue().ToString(&stringRep);
             stringRepLength = stringRep.size();
         } while(stringRepLength > 4 || puzzle->target->GetValue().IsNan());
