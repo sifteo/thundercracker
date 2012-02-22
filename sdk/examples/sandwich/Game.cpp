@@ -341,10 +341,10 @@ void Game::NpcDialog(const DialogData& data, Cube* cube) {
             ovrly.Flush();
             Paint(true);
             #if GFX_ARTIFACT_WORKAROUNDS
-            cube->vbuf.touch();
-            Paint(true);
-            cube->vbuf.touch();
-            Paint(true);
+              cube->vbuf.touch();
+              Paint(true);
+              cube->vbuf.touch();
+              Paint(true);
             #endif
             //Now set up a letterboxed 128x48 mode
             mode.setWindow(80, 48);
