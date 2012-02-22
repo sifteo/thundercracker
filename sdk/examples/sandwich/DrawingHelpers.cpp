@@ -208,31 +208,3 @@ void DrawOffsetMap(ViewMode* gfx, const MapData* pMap, Vec2 pos) {
 
 
 
-
-uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
-    // Round to the nearest 5/6 bit color. Note that simple
-    // bit truncation does NOT produce the best result!
-    uint16_t r5 = ((uint16_t)r * 31 + 128) / 255;
-    uint16_t g6 = ((uint16_t)g * 63 + 128) / 255;
-    uint16_t b5 = ((uint16_t)b * 31 + 128) / 255;
-    return (r5 << 11) | (g6 << 5) | b5;
-}
-
-uint16_t color_lerp(uint8_t alpha) {
-    // Linear interpolation between foreground and background
-
-    const unsigned bg_r = 0xe8;
-    const unsigned bg_g = 0xdc;
-    const unsigned bg_b = 0xcc;
-
-    const unsigned fg_r = 0x0;//0xf4;
-    const unsigned fg_g = 0x0;//0xd8;
-    const unsigned fg_b = 0x0;//0xb7;
-    
-    const uint8_t invalpha = 0xff - alpha;
-
-    return rgb565( (bg_r * invalpha + fg_r * alpha) / 0xff,
-                   (bg_g * invalpha + fg_g * alpha) / 0xff,
-                   (bg_b * invalpha + fg_b * alpha) / 0xff );
-}
-

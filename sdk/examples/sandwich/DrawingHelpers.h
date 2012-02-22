@@ -23,6 +23,3 @@ struct ButterflyFriend {
 
 #define HOVER_COUNT 32
 extern const int8_t kHoverTable[HOVER_COUNT];
-
-uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b);
-uint16_t color_lerp(uint8_t alpha);
