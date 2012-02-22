@@ -97,7 +97,7 @@ bool ViewSlot::ShowLocation(Vec2 loc) {
 			if (mFlags.view == VIEW_INVENTORY) {
 				for (ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
 					if (p->ViewType() == VIEW_IDLE) {
-						SetView(VIEW_INVENTORY);
+						p->SetView(VIEW_INVENTORY);
 						break;
 					}
 				}
