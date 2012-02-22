@@ -95,11 +95,11 @@ void InterstitialView::PaintWithOffset(TotalsCube *c, int off, bool backwards)
     } else {
         // opening
         off -= (7 + 6);
-        c->ClipImage(&VaultDoor, Vec2(0, 1-16));
         if (!backwards && off > 0)
         {
-            c->Image(&Dark_Purple, Vec2(0, 1), Vec2(0,0), Vec2(16, off));
+            c->FillScreen(&Dark_Purple);//, Vec2(0, 1), Vec2(0,0), Vec2(16, off));
         }
+        c->ClipImage(&VaultDoor, Vec2(0, 1-16));
         c->ClipImage(&VaultDoor, Vec2(0, 1+off));
     }
 }

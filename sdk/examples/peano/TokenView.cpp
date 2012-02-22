@@ -6,9 +6,9 @@
 
 namespace TotalsGame
 {
-	const Vec2 TokenView::Mid(7,7);
+    const Vec2 TokenView::Mid(7,7);
 	int TokenView::sHintParity = 0;
-	const char *TokenView::kOpNames[4] = { "add", "sub", "mul", "div" };
+    const char *TokenView::kOpNames[4] = { "add", "sub", "mul", "div" };
 
 
 	TokenView::Status TokenView::GetCurrentStatus()
@@ -183,7 +183,7 @@ namespace TotalsGame
 			}
 			if (resetTimer) { mTimeout = -1.0f; }
 			if (resetExpr) { mCurrentExpression = token->current; }
-			Paint();
+            //Paint();
 		}
 	}
 

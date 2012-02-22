@@ -63,6 +63,7 @@ public:
         void Image(const AssetImage *image, const Vec2 &pos);
 		void Image(const AssetImage *image, const Vec2 &coord, const Vec2 &offset, const Vec2 &size);
         void ClipImage(const AssetImage *image, const Vec2 &pos);
+        void FillScreen(const AssetImage *image);
 	
         void DrawFraction(Fraction f, const Vec2 &pos);
         //void DrawDecimal(float d, const Vec2 &pos);

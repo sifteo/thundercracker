@@ -10,7 +10,7 @@ namespace TotalsGame
 
 	class TokenGroup : public IExpression 
 	{
-        DECLARE_POOL(TokenGroup, Game::NUMBER_OF_CUBES)
+        DECLARE_POOL(TokenGroup, 2 * Game::NUMBER_OF_CUBES)
 
 	public:
 

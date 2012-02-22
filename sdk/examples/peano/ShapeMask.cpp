@@ -166,12 +166,12 @@ bool ShapeMask::TryConcat(
         )
 {
     Vec2 min = Vec2(
-                Math::min(offset.x, 0),
-                Math::min(offset.y, 0)
+                MIN(offset.x, 0),
+                MIN(offset.y, 0)
                 );
     Vec2 max = Vec2(
-                Math::max(m1.size.x, offset.x + m2.size.x),
-                Math::max(m1.size.y, offset.y + m2.size.y)
+                MAX(m1.size.x, offset.x + m2.size.x),
+                MAX(m1.size.y, offset.y + m2.size.y)
                 );
     long newbits = 0L;
     Vec2 newsize = max - min;

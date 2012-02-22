@@ -77,11 +77,13 @@ void MenuController::TransitionView::Paint()
         int off = mOffset - 7;
         int top = 7 - off;
         int bottom = 7 + MIN(5, off);
-        c->ClipImage(&VaultDoor, Vec2(0, top-16));
+
         if (!mBackwards && bottom-top > 0)
         {
-            c->Image(&Dark_Purple, Vec2(0, top), Vec2(0,0), Vec2(16, bottom-top));
+            c->FillScreen(&Dark_Purple);//, Vec2(0, top), Vec2(0,0), Vec2(16, bottom-top));
         }
+
+        c->ClipImage(&VaultDoor, Vec2(0, top-16));
         c->ClipImage(&VaultDoor, Vec2(0, bottom));
     }
 }

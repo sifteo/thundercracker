@@ -37,7 +37,7 @@ public:
 
     Game *game;
     Puzzle *puzzle;
-    bool mHasTransitioned;
+    bool mTransitioningOut;
     bool mPaused;
 
     bool IsPaused();

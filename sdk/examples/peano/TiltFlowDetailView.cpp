@@ -54,7 +54,7 @@ void TiltFlowDetailView::Paint() {
 #define INTERPOLATE(a,b,t)  ((a)*(1-(t))+(b)*(t))
         int bottom = /*Mathf.FloorToInt todo*/(INTERPOLATE(4, 16-4, clamp(1.1f * mAmount,0.0f,1.0f)));
 #undef INTERPOLATE
-        c->Image(&Dark_Purple, Vec2(0,1), Vec2(0,0), Vec2(16,bottom));
+        c->FillScreen(&Dark_Purple);//, Vec2(0,1), Vec2(0,0), Vec2(16,bottom));
         c->ClipImage(&VaultDoor, Vec2(0,1-16));
         c->ClipImage(&VaultDoor, Vec2(0, bottom));
 

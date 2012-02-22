@@ -20,7 +20,7 @@ void PuzzleController::OnSetup ()
     CORO_RESET;
 
     AudioPlayer::PlayInGameMusic();
-    mHasTransitioned = false;
+    mTransitioningOut = false;
     String<10> stringRep;
     int stringRepLength;
     if (game->IsPlayingRandom())
@@ -39,6 +39,7 @@ void PuzzleController::OnSetup ()
             }
             else
             {
+                TokenGroup::ResetAllocationPool();
                 retries++;
             }
             puzzle->SelectRandomTarget();
@@ -179,6 +180,8 @@ for(int i = 0; i < puzzle->GetNumTokens(); i++)
 }
 CORO_YIELD(3);
 }
+
+mTransitioningOut = true;
 
 { // transition out
 for(static_i = 0; static_i < puzzle->GetNumTokens(); static_i++)
@@ -324,7 +327,6 @@ void PuzzleController::NeighborEventHandler::OnNeighborRemove(Cube::ID c0, Cube:
 
 void PuzzleController::OnTick (float dt)
 {
-    if (mHasTransitioned) { return; }
     /* TODO			if (!IsPaused && mRemoveEventBuffer.Count > 0) {
             ProcessRemoveEventBuffer();
             } */
@@ -335,15 +337,15 @@ void PuzzleController::OnTick (float dt)
 void PuzzleController::OnPaint (bool canvasDirty)
 {
     //if (canvasDirty) { game.CubeSet.PaintViews(); }
-    Game::PaintCubeViews();
+    if(!mTransitioningOut)
+    {   //vault door drawing inside update during transitition out
+        Game::PaintCubeViews();
+    }
 }
 
 void PuzzleController::Transition(const char *id)
 {
-    if (!mHasTransitioned) {
-        mHasTransitioned = false;
-        game->sceneMgr.QueueTransition(id);
-    }
+    game->sceneMgr.QueueTransition(id);
 }
 
 void PuzzleController::OnDispose ()

@@ -92,3 +92,5 @@ Token.cpp
 InterstitialController.cpp
 PuzzleHelper.cpp
 TiltFlowItem.cpp
+assets.gen.cpp
+assets.gen.h

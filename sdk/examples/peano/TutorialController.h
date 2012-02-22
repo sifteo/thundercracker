@@ -393,19 +393,20 @@ public:
         narrator->SetMessage("");
         CORO_YIELD(1);
         secondToken->SetCube(NULL);
-//        Game::GetCube(2)->SetView(NULL);
+        //Game::GetCube(2)->SetView(NULL);
         while((remembered_t = Game::GetCube(2)->CloseShutters(&Background)) >= 0)
         {
             CORO_YIELD(remembered_t);
         }
-        new(blankViewBuffer[2]) BlankView(secondToken->GetCube(), NULL);
+        new(blankViewBuffer[2]) BlankView(Game::GetCube(2), NULL);
 
-        Game::GetCube(1)->SetView(NULL);
+        //Game::GetCube(1)->SetView(NULL);
+        firstToken->SetCube(NULL);
         while((remembered_t = Game::GetCube(1)->CloseShutters(&Background)) >= 0)
         {
             CORO_YIELD(remembered_t);
         }
-        new(blankViewBuffer[1]) BlankView(firstToken->GetCube(), NULL);
+        new(blankViewBuffer[1]) BlankView(Game::GetCube(1), NULL);
 
         CORO_YIELD(1);
         narrator->SetMessage("Keep combining to build even more numbers!", NarratorView::EmoteYay);
@@ -437,7 +438,8 @@ public:
         secondToken->DidGroupDisconnect();
         CORO_YIELD(2);
 
-        Game::GetCube(1)->SetView(NULL);
+        //Game::GetCube(1)->SetView(NULL);
+        firstToken->SetCube(NULL);
         while((remembered_t = Game::GetCube(1)->OpenShutters(&Background)) >= 0)
         {
             CORO_YIELD(remembered_t);
@@ -445,7 +447,8 @@ public:
         firstToken->SetCube(Game::GetCube(1));
         CORO_YIELD(0.1f);
 
-        Game::GetCube(2)->SetView(NULL);
+        //Game::GetCube(2)->SetView(NULL);
+        secondToken->SetCube(NULL);
         while(( remembered_t = Game::GetCube(2)->OpenShutters(&Background)) >= 0)
         {
             CORO_YIELD(remembered_t);
@@ -525,6 +528,11 @@ public:
         }
 
         mGame->sceneMgr.QueueTransition("Next");
+
+        delete firstToken;
+        delete secondToken;
+        delete puzzle->target;
+        delete puzzle;
 
         CORO_END;
 

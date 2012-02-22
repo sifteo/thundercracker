@@ -78,11 +78,11 @@ namespace TotalsGame {
 
 	private:
 
-        static void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
-        static void OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+        static void OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
+        static void OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1);
 
-		static void OnCubeTouch(_SYSCubeID cid);
-		static void OnCubeShake(_SYSCubeID cid);
+        static void OnCubeTouch(void*, _SYSCubeID cid);
+        static void OnCubeShake(void*, _SYSCubeID cid);
 	};
 
 }

@@ -83,7 +83,7 @@ namespace TotalsGame
              void *userData = NULL;
              mValue = val;
              mMask = mask;
-             mDepth = max(src->GetDepth(), dst->GetDepth()) +1;
+             mDepth = MAX(src->GetDepth(), dst->GetDepth()) +1;
      }
 
      void TokenGroup::RecomputeValue() {
@@ -109,11 +109,11 @@ namespace TotalsGame
              Vec2 d = kSideToUnit[srcSide];
              ShapeMask::TryConcat(src->GetMask(), dst->GetMask(), sp + d - dp, &mMask, &srcPos, &dstPos);
              mValue = OpHelper::Compute(src->GetValue(), srcSide == SIDE_RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue());
-             mDepth = max(src->GetDepth(), dst->GetDepth()) +1;
+             mDepth = MAX(src->GetDepth(), dst->GetDepth()) +1;
      }
 
      TokenGroup *TokenGroup::Connect(IExpression *src, Token *srcToken, Vec2 d, IExpression *dst, Token *dstToken) {
-         if (d.x < 0 || d.y < 0) { return Connect(dst, dstToken, -d, src, srcToken); }
+         if (d.x < 0 || d.y < 0) { return Connect(dst, dstToken, d * -1, src, srcToken); }
          ShapeMask mask;
          Vec2 d1, d2;
          Vec2 sp, dp;

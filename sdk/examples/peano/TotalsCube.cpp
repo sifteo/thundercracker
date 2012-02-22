@@ -193,6 +193,11 @@ namespace TotalsGame
         backgroundLayer.BG0_drawPartialAsset(coord, offset, size, *image, 0);
 	}
 
+    void TotalsCube::FillScreen(const AssetImage *image)
+    {
+        backgroundLayer.clear(image->tiles[0]);
+    }
+
     void TotalsCube::ClipImage(const AssetImage *image, const Vec2 &pos)
     {
         Vec2 p = pos;
@@ -383,7 +388,7 @@ namespace TotalsGame
     }
 
     void TotalsCube::EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb)
-    {
+    {return;//todo
         overlayText = text;
         overlayYTop = yTop;
         overlayYSize = ySize;

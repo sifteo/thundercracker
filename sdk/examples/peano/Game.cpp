@@ -18,13 +18,13 @@ namespace TotalsGame
 		return instance;
 	}
 
-    void Game::OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+    void Game::OnNeighborAdd(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
     {
         if(GetInstance().neighborEventHandler)
             GetInstance().neighborEventHandler->OnNeighborAdd(c0, s0, c1, s1);
     }
 
-    void Game::OnNeighborRemove(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
+    void Game::OnNeighborRemove(void*, Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1)
     {
         {
             if(GetInstance().neighborEventHandler)
@@ -33,13 +33,13 @@ namespace TotalsGame
 
     }
 
-	void Game::OnCubeTouch(_SYSCubeID cid)
+    void Game::OnCubeTouch(void*, _SYSCubeID cid)
 	{
         TotalsCube *c = GetCube(cid);
         c->DispatchOnCubeTouch(c, c->touching());
 	}
 
-	void Game::OnCubeShake(_SYSCubeID cid)
+    void Game::OnCubeShake(void*, _SYSCubeID cid)
 	{
         TotalsCube *cube = GetCube(cid);
         cube->DispatchOnCubeShake(cube);
@@ -49,7 +49,8 @@ namespace TotalsGame
 	{
 		for(int i = 0; i < Game::NUMBER_OF_CUBES; i++)
 		{
-            GetCube(i)->SetView(NULL);
+            //GetCube(i)->SetView(NULL);
+            GetCube(i)->GetView()->SetCube(NULL);
 		}
 	}
 
@@ -102,10 +103,10 @@ namespace TotalsGame
         ASSERT(nCubes == Game::NUMBER_OF_CUBES);
 		cubes = _cubes;
 
-        _SYS_vectors.neighborEvents.add = &OnNeighborAdd;
-        _SYS_vectors.neighborEvents.remove = &OnNeighborRemove;
-		_SYS_vectors.cubeEvents.touch = &OnCubeTouch;
-		_SYS_vectors.cubeEvents.shake = &OnCubeShake;
+        _SYS_setVector(_SYS_NEIGHBOR_ADD , (void*)&OnNeighborAdd, NULL);
+        _SYS_setVector(_SYS_NEIGHBOR_REMOVE , (void*)&OnNeighborRemove, NULL);
+        _SYS_setVector(_SYS_CUBE_TOUCH, (void*)&OnCubeTouch, NULL);
+        _SYS_setVector(_SYS_CUBE_SHAKE, (void*)&OnCubeShake, NULL);
 
         neighborEventHandler = NULL;
 
@@ -166,7 +167,7 @@ namespace TotalsGame
 			.Transition("isover", "Yes", "menu")
 			.Transition("isover", "No", "interstitial")
 
-            .SetState("tutorial");//sting");
+                .SetState("sting");
     }
 
 	void Game::Tick()
