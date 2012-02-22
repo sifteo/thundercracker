@@ -43,16 +43,19 @@ public:
         GameState shuffleState,
         float shuffleScoreTime,
         int shuffleHintPiece0,
-        int shuffleHintPiece1); // TODO: Bad... I don't like mode-specific functions in here
-    void DrawClue(const char *text, bool moreHints = false); // TODO: Bad... I don't like mode-specific functions in here
+        int shuffleHintPiece1);
+    void DrawClue(const char *text, bool moreHints = false);
     void DrawTextBanner(const char *text);
     void DrawBackground(const Sifteo::AssetImage &asset);
     void DrawBackgroundWithText(
         const Sifteo::AssetImage &asset,
         const char *text, const Sifteo::Vec2 &textPosition);
+    
+    void UpdateCutscene();
     void DrawCutscene(const char *text);
-    void EnableBg0SprBg1Video(); // HACK!
-    void ClearBg1(); // HACK!
+    
+    void EnableBg0SprBg1Video();
+    void ClearBg1();
     ////////////////////////////////////////
     ////////////////////////////////////////
     

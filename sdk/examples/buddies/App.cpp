@@ -698,6 +698,8 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CUTSCENE_START:
         {
+            mCubeWrappers[0].UpdateCutscene();
+            
             if (UpdateTimer(mDelayTimer, dt))
             {
                 StartGameState(GAME_STATE_STORY_DISPLAY_START_STATE);
@@ -770,6 +772,8 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_STORY_CUTSCENE_END:
         {
+            mCubeWrappers[0].UpdateCutscene();
+            
             if (UpdateTimer(mDelayTimer, dt))
             {
                 StartGameState(GAME_STATE_STORY_CHAPTER_END);

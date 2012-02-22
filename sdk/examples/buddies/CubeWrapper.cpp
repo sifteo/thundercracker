@@ -326,6 +326,15 @@ void CubeWrapper::DrawBackgroundWithText(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CubeWrapper::UpdateCutscene()
+{
+    UpdateCutsceneSpriteJump(mCutsceneSpriteJump0, 8, 1);
+    UpdateCutsceneSpriteJump(mCutsceneSpriteJump1, 16, 1);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CubeWrapper::DrawCutscene(const char *text)
 {
     ASSERT(text != NULL);
@@ -337,10 +346,6 @@ void CubeWrapper::DrawCutscene(const char *text)
     
     Video().setSpriteImage(0, CutsceneSprites, 0);
     Video().setSpriteImage(1, CutsceneSprites, 1);
-    
-    // TODO: Put super-lame animation code elsewhere in an Update
-    UpdateCutsceneSpriteJump(mCutsceneSpriteJump0, 8, 1);
-    UpdateCutsceneSpriteJump(mCutsceneSpriteJump1, 16, 1);
     
     Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 64 : 72));
     Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 64 : 72));

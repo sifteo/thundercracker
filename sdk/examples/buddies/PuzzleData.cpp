@@ -179,8 +179,8 @@ const Puzzle kPuzzles[] =
 {
     Puzzle(
         "Big Mouth",
-        "I just LOVE\nyour mouth!",
-        "That's much\nbetter.",
+        "Gimme a kiss!",
+        "Muuuahhh",
         "Swap Mouths",
         2,
         kDefaultState,
