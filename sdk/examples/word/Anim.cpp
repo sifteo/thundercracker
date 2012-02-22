@@ -1,5 +1,7 @@
 #include "Anim.h"
+#include "GameStateMachine.h"
 #include "assets.gen.h"
+
 /*
 enum AnimObjIndex
 {
@@ -129,6 +131,12 @@ bool animPaint(AnimIndex anim,
                float animTime,
                const AnimParams *params)
 {
+    const static AssetImage* fonts[] =
+    {
+        &Font1Letter, &Font2Letter, &Font3Letter,
+    };
+    const AssetImage& font = *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
+
     const AnimData &data = animData[anim];
     float animPct =
             data.mLoop ?
@@ -165,12 +173,27 @@ bool animPaint(AnimIndex anim,
         ASSERT(size.y > 0);
         ASSERT(objData.mAsset);
         unsigned assetFrame = 0;
-        if (animTime > 0.f)
+        /*if (animTime > 0.f)
         {
             DEBUG_LOG(("anim time:\t%f\tpct:%f\tframe:\t%d\n", animTime, animPct, frame));
-        }
+        }*/
 
         vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
+        if (params && params->mLetters && bg1)
+        {
+            if (i < GameStateMachine::getCurrentMaxLettersPerCube())
+            {
+                Vec2 letterPos(pos);
+                letterPos.y += 3; // TODO
+                unsigned frame = params->mLetters[i] - (int)'A';
+
+                if (frame < font.frames)
+                {
+                    bg1->DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, frame);
+                }
+            }
+        }
+
         switch (anim)
         {
         case AnimIndex_2TileSlideL:

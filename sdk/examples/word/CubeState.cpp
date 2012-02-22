@@ -367,47 +367,24 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
                              const AssetImage &fontREMOVE,
                              bool paintSprites)
 {
-    vid.BG0_drawAsset(Vec2(0,0), TileBG);
-    BG1Helper bg1(mStateMachine->getCube());
-    char str[MAX_LETTERS_PER_CUBE + 1];
-    getStateMachine().getLetters(str, true);
-    const AssetImage* fonts[] =
+    const static AssetImage* fonts[] =
     {
         &Font1Letter, &Font2Letter, &Font3Letter,
     };
     const AssetImage& font = *fonts[GameStateMachine::getCurrentMaxLettersPerCube() - 1];
+
+    vid.BG0_drawAsset(Vec2(0,0), TileBG);
+    BG1Helper bg1(mStateMachine->getCube());
+    char str[MAX_LETTERS_PER_CUBE + 1];
+    getStateMachine().getLetters(str, true);
     switch (GameStateMachine::getCurrentMaxLettersPerCube())
     {
     case 2:
-        getStateMachine().updateAnim(vid, &bg1);
-        /* TODO this loop for all
-        for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
         {
-            Vec2 pos(getStateMachine().geTilePosition(i));
-            Vec2 size(12/GameStateMachine::getCurrentMaxLettersPerCube(), 12);
-            if (pos.x < 0)
-            {
-                size.x += pos.x;
-                pos.x = 0;
-            }
-            if (pos.x + size.x > 16)
-            {
-                size.x -= (pos.x + size.x) - 16;
-            }
-            if (size.x > 0 && size.y > 0)
-            {
-                Vec2 letterPos(pos);
-                letterPos.y += 3;
-                vid.BG0_drawPartialAsset(pos, Vec2(0,0), size, getStateMachine().getTileAsset(i));
-                unsigned frame = str[i] - (int)'A';
-
-                if (frame < font.frames)
-                {
-                    bg1.DrawPartialAsset(letterPos, Vec2(0,0), Vec2(size.x, font.height), font, frame);
-                }
-            }
+            AnimParams params;
+            params.mLetters = str;
+            getStateMachine().updateAnim(vid, &bg1, &params);
         }
-        */
       break;
 
     case 3:
