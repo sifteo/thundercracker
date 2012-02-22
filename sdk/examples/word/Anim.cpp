@@ -58,6 +58,7 @@ struct AnimObjData
 {
     const AssetImage *mAsset;
     uint32_t mInvisibleFrames; // bitmask
+    unsigned char mNumFrames;
     const Vec2 *mPositions;
 };
 
@@ -65,7 +66,6 @@ struct AnimData
 {
     float mDuration;
     bool mLoop;
-    unsigned char mNumFrames;
     unsigned char mNumObjs;
     const AnimObjData *mObjs;
 };
@@ -78,30 +78,30 @@ const static Vec2 positions[] =
 
     Vec2(2, 2),
     Vec2(8, 2),
-    Vec2(2, 2),
+    Vec2(7, 2),
     Vec2(6, 2),
-    Vec2(2, 2),
+    Vec2(5, 2),
     Vec2(4, 2),
-    Vec2(2, 2),
+    Vec2(3, 2),
     Vec2(2, 2),
 };
 
 const static AnimObjData animObjData[] =
 {
-    { &Tile2, 0, &positions[0]},
-    { &Tile2, 0, &positions[1]},
+    { &Tile2, 0x0, 1, &positions[0]},
+    { &Tile2, 0x0, 1, &positions[1]},
 
-    { &Tile2, 0, &positions[0]},
-    { &Tile2, 0, &positions[1]},
+    { &Tile2, 0x0, 1, &positions[2]},
+    { &Tile2, 0x0, 7, &positions[3]},
 };
 
 const static AnimData animData[] =
 {
     // AnimIndex_2TileIdle
-    { 1.f, true, 1, 2, &animObjData[0]},
+    { 1.f, true, 2, &animObjData[0]},
 
     // AnimIndex_2TileSlideL
-    { 1.f, false, 4, 2, &animObjData[2]},
+    { 5.f, false, 2, &animObjData[2]},
 };
 
 bool animPaint(AnimIndex anim,
@@ -115,16 +115,17 @@ bool animPaint(AnimIndex anim,
             data.mLoop ?
                 fmodf(animTime, data.mDuration)/data.mDuration :
                 MAX(1.f, animTime/data.mDuration);
-    unsigned char frame = (unsigned char) ((float)data.mNumFrames * animPct);
     const int MAX_ROWS = 16, MAX_COLS = 16;
     for (unsigned i = 0; i < data.mNumObjs; ++i)
     {
         const AnimObjData &objData = data.mObjs[i];
+        unsigned char frame =
+                (unsigned char) ((float)objData.mNumFrames * animPct);
+        frame = MIN(frame, objData.mNumFrames - 1);
         // clip to screen
         Vec2 pos(objData.mPositions[frame]);
         // FIXME write utility AABB class
-        if (pos.x >= MAX_ROWS ||
-            pos.y >= MAX_COLS)
+        if (pos.x >= MAX_ROWS || pos.y >= MAX_COLS)
         {
             continue; // totally offscreen
         }
