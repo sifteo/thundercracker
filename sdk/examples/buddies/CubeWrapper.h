@@ -46,8 +46,10 @@ public:
     void DrawBuddy();
     
     // TODO: Swap param order to match API
-    void DrawUiAsset(const Sifteo::AssetImage &asset, const Vec2 &position, unsigned int frame = 0);
-    void DrawUiText(const char *text, const Vec2 &position);
+    void DrawUiAsset(
+        const Vec2 &position,
+        const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
+    void DrawUiText(const Vec2 &position, const char *text);
     
     void DrawHintBar(Sifteo::Cube::Side side);
     

@@ -232,15 +232,17 @@ void CubeWrapper::DrawBuddy()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawUiAsset(const Sifteo::AssetImage &asset, const Vec2 &position, unsigned int frame)
+void CubeWrapper::DrawUiAsset(
+    const Vec2 &position,
+    const Sifteo::AssetImage &asset, unsigned int assetFrame)
 {
-    mBg1Helper.DrawAsset(position, asset, frame);
+    mBg1Helper.DrawAsset(position, asset, assetFrame);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawUiText(const char *text, const Vec2 &position)
+void CubeWrapper::DrawUiText(const Vec2 &position, const char *text)
 {
     ASSERT(text != NULL);
     mBg1Helper.DrawText(position, Font, text);

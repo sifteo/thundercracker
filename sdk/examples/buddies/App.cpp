@@ -129,17 +129,17 @@ bool NeedPaintSync(App& app)
 
 void DrawScoreBanner(CubeWrapper &cubeWrapper, int minutes, int seconds)
 {
-    cubeWrapper.DrawUiAsset(cubeWrapper.GetId() == 0 ? ScoreTimeBlue : ScoreTimeOrange, Vec2(0, 0)); // Banner Background
+    cubeWrapper.DrawUiAsset(Vec2(0, 0), cubeWrapper.GetId() == 0 ? ScoreTimeBlue : ScoreTimeOrange); // Banner Background
     
     const AssetImage &font = cubeWrapper.GetId() == 0 ? FontScoreBlue : FontScoreOrange;
     
     int x = 11;
     int y = 0;
-    cubeWrapper.DrawUiAsset(font, Vec2(x++, y), minutes / 10); // Mintues (10s)
-    cubeWrapper.DrawUiAsset(font, Vec2(x++, y), minutes % 10); // Minutes ( 1s)
-    cubeWrapper.DrawUiAsset(font, Vec2(x++, y), 10); // ":"
-    cubeWrapper.DrawUiAsset(font, Vec2(x++, y), seconds / 10); // Seconds (10s)
-    cubeWrapper.DrawUiAsset(font, Vec2(x++, y), seconds % 10); // Seconds ( 1s)
+    cubeWrapper.DrawUiAsset(Vec2(x++, y), font, minutes / 10); // Mintues (10s)
+    cubeWrapper.DrawUiAsset(Vec2(x++, y), font, minutes % 10); // Minutes ( 1s)
+    cubeWrapper.DrawUiAsset(Vec2(x++, y), font, 10); // ":"
+    cubeWrapper.DrawUiAsset(Vec2(x++, y), font, seconds / 10); // Seconds (10s)
+    cubeWrapper.DrawUiAsset(Vec2(x++, y), font, seconds % 10); // Seconds ( 1s)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -913,8 +913,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             cubeWrapper.DrawBuddy();
             cubeWrapper.DrawUiAsset(
-                cubeWrapper.GetId() == 0 ? ShakeToShuffleBlue :  ShakeToShuffleOrange,
-                Vec2(0, 0));
+                Vec2(0, 0),
+                cubeWrapper.GetId() == 0 ? ShakeToShuffleBlue :  ShakeToShuffleOrange);
             break;
         }
         case GAME_STATE_SHUFFLE_SCRAMBLING:
@@ -926,8 +926,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             cubeWrapper.DrawBuddy();
             cubeWrapper.DrawUiAsset(
-                cubeWrapper.GetId() ? UnscrableTheFacesBlue : UnscrableTheFacesOrange,
-                Vec2(0, 0));
+                Vec2(0, 0),
+                cubeWrapper.GetId() ? UnscrableTheFacesBlue : UnscrableTheFacesOrange);
             break;
         }
         case GAME_STATE_SHUFFLE_PLAY:
@@ -945,8 +945,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             else if (cubeWrapper.IsSolved())
             {
                 cubeWrapper.DrawUiAsset(
-                    cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange,
-                    Vec2(0, 0));
+                    Vec2(0, 0),
+                    cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
             }
             break;
         }
@@ -967,7 +967,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             else
             {
-                cubeWrapper.DrawUiAsset(ShakeToShuffleOrange, Vec2(0, 0));
+                cubeWrapper.DrawUiAsset(Vec2(0, 0), ShakeToShuffleOrange);
             }
             break;
         }
@@ -1005,8 +1005,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             if (cubeWrapper.GetId() < GetPuzzle(mPuzzleIndex).GetNumBuddies())
             {
                 cubeWrapper.DrawBuddy();
-                cubeWrapper.DrawUiAsset(ClueText, Vec2(0, 3));
-                cubeWrapper.DrawUiText(GetPuzzle(mPuzzleIndex).GetClue(), Vec2(2, 4));
+                cubeWrapper.DrawUiAsset(Vec2(0, 3), ClueText);
+                cubeWrapper.DrawUiText(Vec2(2, 4), GetPuzzle(mPuzzleIndex).GetClue());
             }
             else
             {
@@ -1034,8 +1034,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 
                 if (cubeWrapper.GetId() == 0)
                 {
-                    cubeWrapper.DrawUiAsset(MoreHints, Vec2(0, 3));
-                    cubeWrapper.DrawUiText(GetPuzzle(mPuzzleIndex).GetClue(), Vec2(2, 4));
+                    cubeWrapper.DrawUiAsset(Vec2(0, 3), MoreHints);
+                    cubeWrapper.DrawUiText(Vec2(2, 4), GetPuzzle(mPuzzleIndex).GetClue());
                 }
             }
             else
