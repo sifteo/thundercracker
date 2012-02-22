@@ -53,8 +53,6 @@ public:
     void OnShake(Sifteo::Cube::ID cubeId);
     
 private:
-    void AddCube(Sifteo::Cube::ID cubeId);
-    void RemoveCube(Sifteo::Cube::ID cubeId);
     void ResetCubesToPuzzle(const Puzzle &puzzle);
     
     void PlaySound();

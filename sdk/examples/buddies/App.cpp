@@ -272,11 +272,12 @@ App::App()
 
 void App::Init()
 {
-    // TODO: This causes loading assets if kNumCubes > the actual number of connected cubes.
-    // Is there anyway we can see how many are really connected before adding them?
+    // Note: manually enabling all cubes until the found/lost events start working.
     for (unsigned int i = 0; i < kNumCubes; ++i)
     {
-        AddCube(i);
+        ASSERT(i < arraysize(mCubeWrappers));
+        ASSERT(!mCubeWrappers[i].IsEnabled());
+        mCubeWrappers[i].Enable(i, i % kMaxBuddies);
     }
     
 #ifdef SIFTEO_SIMULATOR
@@ -455,28 +456,6 @@ void App::OnShake(Cube::ID cubeId)
     mShuffleHintTimer = kHintTimerOnDuration;
     mHintPiece0 = -1;
     mHintPiece1 = -1;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void App::AddCube(Cube::ID cubeId)
-{
-    ASSERT(cubeId < arraysize(mCubeWrappers));
-    ASSERT(!mCubeWrappers[cubeId].IsEnabled());
-    
-    mCubeWrappers[cubeId].Enable(cubeId, cubeId % kMaxBuddies);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void App::RemoveCube(Cube::ID cubeId)
-{
-    ASSERT(cubeId < arraysize(mCubeWrappers));
-    ASSERT(mCubeWrappers[cubeId].IsEnabled());
-    
-    mCubeWrappers[cubeId].Disable();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -89,6 +89,28 @@ void OnNeighborAdd(void *, _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSide
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void OnFound(void *, _SYSCubeID cid)
+{
+    if (!sApp.GetCubeWrapper(cid).IsEnabled())
+    {
+        sApp.GetCubeWrapper(cid).Enable(cid, cid % Buddies::kMaxBuddies);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void OnLost(void *, _SYSCubeID cid)
+{
+    if (sApp.GetCubeWrapper(cid).IsEnabled())
+    {
+        sApp.GetCubeWrapper(cid).Disable();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void OnTilt(void *, _SYSCubeID cid)
 {
     if (sApp.GetCubeWrapper(cid).IsEnabled())
@@ -113,8 +135,9 @@ void OnShake(void *, _SYSCubeID cid)
 
 void Setup()
 {
-    // TODO: Try ADD/REMOVE cube?
     _SYS_setVector(_SYS_NEIGHBOR_ADD, (void *)OnNeighborAdd, NULL);
+    //_SYS_setVector(_SYS_CUBE_FOUND, (void *)OnFound, NULL);
+    //_SYS_setVector(_SYS_CUBE_LOST, (void *)OnLost, NULL);
     _SYS_setVector(_SYS_CUBE_TILT, (void *)OnTilt, NULL);
     _SYS_setVector(_SYS_CUBE_SHAKE, (void *)OnShake, NULL);
     
