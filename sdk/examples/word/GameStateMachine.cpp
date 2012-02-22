@@ -76,6 +76,7 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             mNewWordLength = len;
             if (data.mWordFound.mBonus)
             {
+                --mNumAnagramsRemaining;
                 --mNumBonusAnagramsRemaining;
             }
             else
