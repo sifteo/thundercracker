@@ -69,20 +69,38 @@ struct AnimData
     const AnimObjData *mObjs;
 };
 
+// FIXME write a tool to hide all this array/struct nesting ugliness
 const static Vec2 positions[] =
 {
-    Vec2(2, 2), Vec2(6, 2), Vec2(8, 2)
+    Vec2(2, 2),
+    Vec2(8, 2),
+
+    Vec2(2, 2),
+    Vec2(8, 2),
+    Vec2(2, 2),
+    Vec2(6, 2),
+    Vec2(2, 2),
+    Vec2(4, 2),
+    Vec2(2, 2),
+    Vec2(2, 2),
 };
 
 const static AnimObjData animObjData[] =
 {
-    { &Tile2, 0, &positions[0]}
+    { &Tile2, 0, &positions[0]},
+    { &Tile2, 0, &positions[1]},
+
+    { &Tile2, 0, &positions[0]},
+    { &Tile2, 0, &positions[1]},
 };
 
 const static AnimData animData[] =
 {
+    // AnimIndex_2TileIdle
+    { 1.f, 1, 2, &animObjData[0]},
+
     // AnimIndex_2TileSlideL
-    { 1.f, 3, 1, &animObjData[0]},
+    { 1.f, 4, 2, &animObjData[2]},
 };
 
 void animPaint(AnimIndex anim,

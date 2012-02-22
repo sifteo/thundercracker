@@ -379,7 +379,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
     switch (GameStateMachine::getCurrentMaxLettersPerCube())
     {
     case 2:
-        animPaint(getStateMachine().getAnimIndex(), vid, &bg1, getStateMachine().getAnimTime());
+        getStateMachine().updateAnim(vid, &bg1);
         /* TODO this loop for all
         for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
         {

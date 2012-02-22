@@ -5,6 +5,7 @@
 
 enum AnimIndex
 {
+    AnimIndex_2TileIdle,
     AnimIndex_2TileSlideL,
     AnimIndex_2TileSlideR,
 

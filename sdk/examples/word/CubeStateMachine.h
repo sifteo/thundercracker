@@ -23,7 +23,7 @@ class CubeStateMachine : public StateMachine
 {
 public:
     CubeStateMachine() :
-        StateMachine(0), mNumLetters(1), mIdleTime(0.f),mAnimTime(0.f),
+        StateMachine(0), mNumLetters(1), mIdleTime(0.f), mAnimTime(0.f), mAnimIndex(AnimIndex_2TileIdle),
         mBG0Panning(0.f), mBG0TargetPanning(0.f), mBG0PanningLocked(true),
         mCube(0) {}
 
@@ -40,8 +40,14 @@ public:
     void resetStateTime() { mStateTime = 0.0f; }
 
     bool getLetters(char *buffer, bool forPaint=false);
-    AnimIndex getAnimIndex() const;
-    float getAnimTime() const { return mAnimTime; }
+    void startAnim(AnimIndex anim,
+                    VidMode_BG0_SPR_BG1 &vid,
+                    BG1Helper *bg1 = 0,
+                    const AnimParams *params = 0);
+
+    void updateAnim(VidMode_BG0_SPR_BG1 &vid,
+                     BG1Helper *bg1 = 0,
+                     const AnimParams *params = 0) const;
 
     bool canBeginWord();
     bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);
@@ -61,6 +67,7 @@ private:
     unsigned mNumLetters;
     float mIdleTime;
     float mAnimTime;
+    AnimIndex mAnimIndex;
 
     float mBG0Panning;
     float mBG0TargetPanning;

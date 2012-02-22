@@ -162,9 +162,21 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
     }
 }
 
-AnimIndex CubeStateMachine::getAnimIndex() const
+void CubeStateMachine::startAnim(AnimIndex anim,
+                                 VidMode_BG0_SPR_BG1 &vid,
+                                 BG1Helper *bg1,
+                                 const AnimParams *params)
 {
-    return AnimIndex_2TileSlideL;
+    mAnimIndex = anim;
+    mAnimTime = 0.f;
+    animPaint(anim, vid, bg1, mAnimTime, params);
+}
+
+void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
+                                  BG1Helper *bg1,
+                                  const AnimParams *params) const
+{
+    animPaint(mAnimIndex, vid, bg1, mAnimTime, params);
 }
 
 bool CubeStateMachine::canBeginWord()
@@ -311,6 +323,7 @@ unsigned CubeStateMachine::getNumStates() const
 void CubeStateMachine::update(float dt)
 {
     mIdleTime += dt;
+    mAnimTime += dt;
     StateMachine::update(dt);
     if ((int)mBG0Panning != (int)mBG0TargetPanning)
     {
