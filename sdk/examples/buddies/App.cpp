@@ -79,17 +79,17 @@ unsigned int GetRandomOtherPiece(bool moved[], unsigned int num_moved, unsigned 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool AnyTouching(App& app)
+int AnyTouching(App& app)
 {
     for (unsigned int i = 0; i < kNumCubes; ++i)
     {
         if (app.GetCubeWrapper(i).IsEnabled() && app.GetCubeWrapper(i).IsTouching())
         {
-            return true;
+            return i;
         }
     }
     
-    return false;
+    return -1;
 }
                     
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,6 +161,44 @@ void DrawRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool UpdateTimer(float &timer, float dt)
+{
+    ASSERT(timer > 0.0f);
+    timer -= dt;
+    
+    if (timer <= 0.0f)
+    {
+        timer = 0.0f;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool UpdateTimerLoop(float &timer, float dt, float duration)
+{
+    ASSERT(timer > 0.0f);
+    timer -= dt;
+    
+    if (timer <= 0.0f)
+    {
+        timer += duration;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "SHUFFLE_STATE_NONE",
@@ -191,7 +229,6 @@ App::App()
     : mCubeWrappers()
     , mChannel()
     , mGameState(GAME_STATE_NONE)
-    , mResetTimer(0.0f)
     , mDelayTimer(0.0f)
     , mTouching(false)
     , mScoreTimer(0.0f)
@@ -269,24 +306,6 @@ void App::Update(float dt)
         {
             mCubeWrappers[i].Update(dt);
         }
-    }
-    
-    // Reset Detection
-    if (AnyTouching(*this))
-    {
-        mResetTimer -= dt;
-        
-        if (mResetTimer <= 0.0f)
-        {
-            mResetTimer = kResetTimerDuration;
-            
-            PlaySound();
-            Reset();
-        }
-    }
-    else
-    {
-        mResetTimer = kResetTimerDuration;
     }
 }
 
@@ -584,7 +603,6 @@ void App::StartGameState(GameState gameState)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: Clean up repeated mDelayTimer and AnyTouching code.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::UpdateGameState(float dt)
@@ -593,12 +611,8 @@ void App::UpdateGameState(float dt)
     {
         case GAME_STATE_SHUFFLE_START:
         {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
+            if (UpdateTimer(mDelayTimer, dt))
             {
-                mDelayTimer = 0.0f;
                 StartGameState(GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE);
             }
             break;
@@ -607,12 +621,8 @@ void App::UpdateGameState(float dt)
         {
             if (mSwapAnimationCounter == 0)
             {
-                ASSERT(mDelayTimer > 0.0f);
-                mDelayTimer -= dt;
-                
-                if (mDelayTimer <= 0.0f)
+                if (UpdateTimer(mDelayTimer, dt))
                 {
-                    mDelayTimer = 0.0f;
                     ShufflePieces();
                 }
             }
@@ -620,14 +630,10 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
         {
-            mScoreTimer += dt; // TODO: Should we count time here?
-            
-            if (AnyTouching(*this))
+            if (OnTouch() == TOUCH_EVENT_BEGIN)
             {
-                mTouching = true;
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
-            
             break;
         }
         case GAME_STATE_SHUFFLE_PLAY:
@@ -636,126 +642,72 @@ void App::UpdateGameState(float dt)
             
             if (mShuffleHintTimer > 0.0f)
             {
-                mShuffleHintTimer -= dt;
-                if (mShuffleHintTimer <= 0.0f)
+                if (UpdateTimer(mShuffleHintTimer, dt))
                 {
-                    mShuffleHintTimer = 0.0f;
                     ChooseHint();
                 }
             }
             
-            if (mTouching)
+            TouchEvent touch = OnTouch();
+            if (touch == TOUCH_EVENT_BEGIN)
             {
-                if (!AnyTouching(*this))
-                {
-                    mTouching = false;
-                    mShuffleHintTimer = kHintTimerOnDuration;
-                    mHintPiece0 = -1;
-                    mHintPiece1 = -1;
-
-                }
+                ChooseHint();
             }
-            else
+            else if (touch == TOUCH_EVENT_END)
             {
-                if (AnyTouching(*this))
-                {
-                    mTouching = true;
-                    ChooseHint();
-                }
+                mShuffleHintTimer = kHintTimerOnDuration;
+                mHintPiece0 = -1;
+                mHintPiece1 = -1;
             }
-            
             break;
         }
         case GAME_STATE_SHUFFLE_SOLVED:
         {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
+            if (UpdateTimer(mDelayTimer, dt))
             {
-                mDelayTimer = 0.0f;
                 StartGameState(GAME_STATE_SHUFFLE_SCORE);
             }
             break;
         }
         case GAME_STATE_STORY_CHAPTER_START:
         {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
+            if (UpdateTimer(mDelayTimer, dt))
             {
-                mDelayTimer = 0.0f;
                 StartGameState(GAME_STATE_STORY_CUTSCENE_START);
             }
             break;
         }
         case GAME_STATE_STORY_CUTSCENE_START:
         {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
+            if (UpdateTimer(mDelayTimer, dt))
             {
-                mDelayTimer = 0.0f;
                 StartGameState(GAME_STATE_STORY_DISPLAY_START_STATE);
             }
             break;
         }
         case GAME_STATE_STORY_DISPLAY_START_STATE:
         {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
+            if (UpdateTimer(mDelayTimer, dt))
             {
-                mDelayTimer = 0.0f;
                 StartGameState(GAME_STATE_STORY_CLUE);
             }
             break;
         }
         case GAME_STATE_STORY_CLUE:
         {
-            if (!mTouching)
+            if (OnTouch() == TOUCH_EVENT_BEGIN)
             {
-                if (AnyTouching(*this))
-                {
-                    mTouching = true;
-                    StartGameState(GAME_STATE_STORY_PLAY);
-                }
+                StartGameState(GAME_STATE_STORY_PLAY);
             }
-            else
-            {
-                if (!AnyTouching(*this))
-                {
-                    mTouching = false;
-                }
-            }
-            
             break;
         }
         case GAME_STATE_STORY_PLAY:
         {
             mScoreTimer += dt;
             
-            if (!mTouching)
+            if (OnTouch() == TOUCH_EVENT_BEGIN)
             {
-                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-                {
-                    if (mCubeWrappers[i].IsEnabled() && mCubeWrappers[i].IsTouching())
-                    {
-                        mTouching = true;
-                        StartGameState(GAME_STATE_STORY_HINT_1);
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                if (!AnyTouching(*this))
-                {
-                    mTouching = false;
-                }
+                StartGameState(GAME_STATE_STORY_HINT_1);
             }
             break;
         }
@@ -763,33 +715,14 @@ void App::UpdateGameState(float dt)
         {
             mScoreTimer += dt;
             
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
+            if (UpdateTimer(mDelayTimer, dt))
             {
-                mDelayTimer = 0.0f;
                 StartGameState(GAME_STATE_STORY_PLAY);
             }
             
-            if (!mTouching)
+            if (OnTouch() == TOUCH_EVENT_BEGIN)
             {
-                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-                {
-                    if (mCubeWrappers[i].IsEnabled() && mCubeWrappers[i].IsTouching())
-                    {
-                        mTouching = true;
-                        StartGameState(GAME_STATE_STORY_HINT_2);
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                if (!AnyTouching(*this))
-                {
-                    mTouching = false;
-                }
+                StartGameState(GAME_STATE_STORY_HINT_2);
             }
             break;
         }
@@ -797,93 +730,50 @@ void App::UpdateGameState(float dt)
         {
             mScoreTimer += dt;
             
-            ASSERT(mHintBlinkTimer > 0.0f);
-            mHintBlinkTimer -= dt;
-            if (mHintBlinkTimer <= 0.0f)
+            if (UpdateTimerLoop(mHintBlinkTimer, dt, kHintBlinkTimerDuration))
             {
-                mHintBlinkTimer += kHintBlinkTimerDuration;
                 mHintBlinking = !mHintBlinking;
             }
             
-            if (!mTouching)
+            if (OnTouch() == TOUCH_EVENT_BEGIN)
             {
-                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-                {
-                    if (mCubeWrappers[i].IsEnabled() && mCubeWrappers[i].IsTouching())
-                    {
-                        mTouching = true;
-                        StartGameState(GAME_STATE_STORY_PLAY);
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                if (!AnyTouching(*this))
-                {
-                    mTouching = false;
-                }
+                StartGameState(GAME_STATE_STORY_PLAY);
             }
             break;
         }
         case GAME_STATE_STORY_SOLVED:
         {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
+            if (UpdateTimer(mDelayTimer, dt))
             {
-                mDelayTimer = 0.0f;
                 StartGameState(GAME_STATE_STORY_CUTSCENE_END);
             }
             break;
         }
         case GAME_STATE_STORY_CUTSCENE_END:
         {
-            ASSERT(mDelayTimer > 0.0f);
-            mDelayTimer -= dt;
-            
-            if (mDelayTimer <= 0.0f)
+            if (UpdateTimer(mDelayTimer, dt))
             {
-                mDelayTimer = 0.0f;
                 StartGameState(GAME_STATE_STORY_CHAPTER_END);
             }
             break;
         }
         case GAME_STATE_STORY_CHAPTER_END:
         {
-            if (!mTouching)
+            Cube::ID cubeId;
+            if (OnTouch(&cubeId))
             {
-                for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+                if (cubeId == 0)
                 {
-                    if (mCubeWrappers[i].IsEnabled() && mCubeWrappers[i].IsTouching())
-                    {
-                        mTouching = true;
-                        if (i == 0)
-                        {
-                            if (++mPuzzleIndex == GetNumPuzzles())
-                            {
-                                mPuzzleIndex = 0;
-                            }
-                            StartGameState(GAME_STATE_STORY_CHAPTER_START);
-                        }
-                        else if (i == 1)
-                        {
-                            StartGameState(GAME_STATE_STORY_CHAPTER_START);
-                        }
-                        else if (i == 2)
-                        {
-                            // TODO: go to main menu
-                        }
-                        break;
-                    }
+                    mPuzzleIndex = (mPuzzleIndex + 1) % GetNumPuzzles();
+                    StartGameState(GAME_STATE_STORY_CHAPTER_START);
                 }
-            }
-            else
-            {
-                if (!AnyTouching(*this))
+                else if (cubeId == 1)
                 {
-                    mTouching = false;
+                    StartGameState(GAME_STATE_STORY_CHAPTER_START);
+                }
+                else if (cubeId == 2)
+                {
+                    // TODO: Go to main menu
                 }
             }
             break;
@@ -896,223 +786,191 @@ void App::UpdateGameState(float dt)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: Pull for loop to outside
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::DrawGameState()
 {
-    if (kGameMode == GAME_MODE_FREE_PLAY)
+    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
     {
-        for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+        if (mCubeWrappers[i].IsEnabled())
         {
-            if (mCubeWrappers[i].IsEnabled())
-            {
-                mCubeWrappers[i].DrawBuddy();
-            }
+            DrawGameStateCube(mCubeWrappers[i]);
         }
     }
-    else if (kGameMode == GAME_MODE_STORY)
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Still quite ugly... clean me up!
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
+{
+    switch (mGameState)
     {
-        if (mGameState == GAME_STATE_STORY_CHAPTER_START)
+        case GAME_STATE_FREE_PLAY:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            cubeWrapper.DrawBuddy();
+            break;
+        }
+        case GAME_STATE_STORY_CHAPTER_START:
+        {
+            DrawChapterTitle(cubeWrapper, mPuzzleIndex);
+        }
+        case GAME_STATE_STORY_CUTSCENE_START:
+        {
+            if (cubeWrapper.GetId() == 0)
             {
-                if (mCubeWrappers[i].IsEnabled())
+                cubeWrapper.DrawCutscene(GetPuzzle(mPuzzleIndex).GetCutsceneTextStart());
+            }
+            else
+            {
+                DrawChapterTitle(cubeWrapper, mPuzzleIndex);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_DISPLAY_START_STATE:
+        {
+            if (cubeWrapper.GetId() < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+            {
+                cubeWrapper.DrawBuddy();
+            }
+            else
+            {
+                DrawChapterTitle(cubeWrapper, mPuzzleIndex);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_CLUE:
+        {
+            if (cubeWrapper.GetId() < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+            {
+                cubeWrapper.DrawBuddy();
+                cubeWrapper.DrawClue(GetPuzzle(mPuzzleIndex).GetClue());
+            }
+            else
+            {
+                DrawChapterTitle(cubeWrapper, mPuzzleIndex);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_PLAY:
+        {
+            if (cubeWrapper.GetId() < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+            {
+                cubeWrapper.DrawBuddy();
+            }
+            else
+            {
+                DrawChapterTitle(cubeWrapper, mPuzzleIndex);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_HINT_1:
+        {
+            if (cubeWrapper.GetId() < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+            {
+                cubeWrapper.DrawBuddy();
+                
+                if (cubeWrapper.GetId() == 0)
                 {
-                    DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
+                    cubeWrapper.DrawClue(GetPuzzle(mPuzzleIndex).GetClue(), true);
                 }
             }
-        }
-        else if (mGameState == GAME_STATE_STORY_CUTSCENE_START)
-        {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            else
             {
-                if (mCubeWrappers[i].IsEnabled())
+                DrawChapterTitle(cubeWrapper, mPuzzleIndex);
+            }
+            break;
+        }
+        case GAME_STATE_STORY_HINT_2:
+        {
+            if (cubeWrapper.GetId() < GetPuzzle(mPuzzleIndex).GetNumBuddies())
+            {
+                bool isHint0 =
+                    mHintPiece0 != -1 && (mHintPiece0 / NUM_SIDES) == int(cubeWrapper.GetId());
+                bool isHint1 =
+                    mHintPiece1 != -1 && (mHintPiece1 / NUM_SIDES) == int(cubeWrapper.GetId());
+                
+                if (isHint0)
                 {
-                    if (i == 0)
-                    {
-                        mCubeWrappers[i].DrawCutscene(GetPuzzle(mPuzzleIndex).GetCutsceneTextStart());
-                    }
-                    else
-                    {
-                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
-                    }
+                    cubeWrapper.DrawBuddyWithStoryHint(mHintPiece0 % NUM_SIDES, mHintBlinking);
+                }
+                else if (isHint1)
+                {
+                    cubeWrapper.DrawBuddyWithStoryHint(mHintPiece1 % NUM_SIDES, mHintBlinking);
+                }
+                else
+                {
+                    cubeWrapper.DrawBuddy();
                 }
             }
-        }
-        else if (mGameState == GAME_STATE_STORY_DISPLAY_START_STATE)
-        {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            else
             {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
-                    {
-                        mCubeWrappers[i].DrawBuddy();
-                    }
-                    else
-                    {
-                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
-                    }
-                }
+                DrawChapterTitle(cubeWrapper, mPuzzleIndex);
             }
+            break;
         }
-        else if (mGameState == GAME_STATE_STORY_CLUE)
+        case GAME_STATE_STORY_SOLVED:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            if (cubeWrapper.GetId() < GetPuzzle(mPuzzleIndex).GetNumBuddies())
             {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
-                    {
-                        mCubeWrappers[i].DrawBuddy();
-                        mCubeWrappers[i].DrawClue(GetPuzzle(mPuzzleIndex).GetClue());
-                    }
-                    else
-                    {
-                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
-                    }
-                }
+                cubeWrapper.DrawBuddy();
             }
+            else
+            {
+                DrawChapterTitle(cubeWrapper, mPuzzleIndex);
+            }
+            break;
         }
-        else if (mGameState == GAME_STATE_STORY_PLAY)
+        case GAME_STATE_STORY_CUTSCENE_END:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            if (cubeWrapper.GetId() == 0)
             {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
-                    {
-                        mCubeWrappers[i].DrawBuddy();
-                    }
-                    else
-                    {
-                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
-                    }
-                }
+                cubeWrapper.DrawCutscene(GetPuzzle(mPuzzleIndex).GetCutsceneTextEnd());
             }
+            else
+            {
+                DrawChapterSummary(cubeWrapper, mPuzzleIndex, mScoreTimer, mScoreMoves);
+            }
+            break;
         }
-        else if (mGameState == GAME_STATE_STORY_HINT_1)
+        case GAME_STATE_STORY_CHAPTER_END:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+            cubeWrapper.EnableBg0SprBg1Video();
+            
+            if (cubeWrapper.GetId() == 0)
             {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
-                    {
-                        mCubeWrappers[i].DrawBuddy();
-                        
-                        if (i == 0)
-                        {
-                            mCubeWrappers[i].DrawClue(GetPuzzle(mPuzzleIndex).GetClue(), true);
-                        }
-                    }
-                    else
-                    {
-                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
-                    }
-                }
+                DrawChapterNext(cubeWrapper, mPuzzleIndex);
             }
+            else if (cubeWrapper.GetId() == 1)
+            {
+                DrawRetry(cubeWrapper, mPuzzleIndex);
+            }
+            else if (cubeWrapper.GetId() == 2)
+            {
+                cubeWrapper.DrawBackground(ExitToMainMenu);
+            }
+            break;
         }
-        else if (mGameState == GAME_STATE_STORY_HINT_2)
+        case GAME_STATE_SHUFFLE_START:
+        case GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE:
+        case GAME_STATE_SHUFFLE_SCRAMBLING:
+        case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
+        case GAME_STATE_SHUFFLE_PLAY:
+        case GAME_STATE_SHUFFLE_SOLVED:
+        case GAME_STATE_SHUFFLE_SCORE:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
-                    {
-                        if (mHintPiece0 != -1 && (mHintPiece0 / NUM_SIDES) == int(i))
-                        {
-                            mCubeWrappers[i].DrawBuddyWithStoryHint(mHintPiece0 % NUM_SIDES, mHintBlinking);
-                        }
-                        else if (mHintPiece1 != -1 && (mHintPiece1 / NUM_SIDES) == int(i))
-                        {
-                            mCubeWrappers[i].DrawBuddyWithStoryHint(mHintPiece1 % NUM_SIDES, mHintBlinking);
-                        }
-                        else
-                        {
-                            mCubeWrappers[i].DrawBuddy();
-                        }
-                    }
-                    else
-                    {
-                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
-                    }
-                }
-            }
+            cubeWrapper.DrawBuddy();
+            cubeWrapper.DrawShuffleUi(
+                mGameState,
+                mScoreTimer,
+                mHintPiece0,
+                mHintPiece1);
+            break;
         }
-        else if (mGameState == GAME_STATE_STORY_SOLVED)
+        default:
         {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    if (i < GetPuzzle(mPuzzleIndex).GetNumBuddies())
-                    {
-                        mCubeWrappers[i].DrawBuddy();
-                    }
-                    else
-                    {
-                        DrawChapterTitle(mCubeWrappers[i], mPuzzleIndex);
-                    }
-                }
-            }
-        }
-        else if (mGameState == GAME_STATE_STORY_CUTSCENE_END)
-        {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    if (i == 0)
-                    {
-                        mCubeWrappers[i].DrawCutscene(GetPuzzle(mPuzzleIndex).GetCutsceneTextEnd());
-                    }
-                    else
-                    {
-                        DrawChapterSummary(mCubeWrappers[i], mPuzzleIndex, mScoreTimer, mScoreMoves);
-                    }
-                }
-            }
-        }
-        else if (mGameState == GAME_STATE_STORY_CHAPTER_END)
-        {
-            for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-            {
-                if (mCubeWrappers[i].IsEnabled())
-                {
-                    mCubeWrappers[i].EnableBg0SprBg1Video();
-                    
-                    if (i == 0)
-                    {
-                        DrawChapterNext(mCubeWrappers[i], mPuzzleIndex);
-                    }
-                    else if (i == 1)
-                    {
-                        DrawRetry(mCubeWrappers[i], mPuzzleIndex);
-                    }
-                    else if (i == 2)
-                    {
-                        mCubeWrappers[i].DrawBackground(ExitToMainMenu);
-                    }
-                }
-            }
-        }
-    }
-    else if (kGameMode == GAME_MODE_SHUFFLE)
-    {
-        for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-        {
-            if (mCubeWrappers[i].IsEnabled())
-            {
-                mCubeWrappers[i].DrawBuddy();
-                mCubeWrappers[i].DrawShuffleUi(
-                    mGameState,
-                    mScoreTimer,
-                    mHintPiece0,
-                    mHintPiece1);
-            }
+            break;
         }
     }
 }
@@ -1377,6 +1235,36 @@ void App::OnSwapFinish()
     {
         PlaySound();
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+App::TouchEvent App::OnTouch(Sifteo::Cube::ID *cubeId)
+{
+    if (!mTouching)
+    {
+        int touching = AnyTouching(*this);
+        if (touching != -1)
+        {
+            if (cubeId != NULL)
+            {
+                *cubeId = touching;
+            }
+            mTouching = true;
+            return TOUCH_EVENT_BEGIN;
+        }
+    }
+    else
+    {
+        if (AnyTouching(*this) == -1)
+        {
+            mTouching = false;
+            return TOUCH_EVENT_END;
+        }
+    }
+    
+    return TOUCH_EVENT_NONE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

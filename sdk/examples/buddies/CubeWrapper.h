@@ -61,6 +61,8 @@ public:
     void LoadAssets();
     void DrawLoadingAssets();
     
+    Sifteo::Cube::ID GetId();
+    
     // Enable/Disable
     bool IsEnabled() const;
     void Enable(Sifteo::Cube::ID cubeId, unsigned int buddyId);

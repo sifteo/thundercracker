@@ -62,6 +62,7 @@ private:
     void StartGameState(GameState gameState);
     void UpdateGameState(float dt);
     void DrawGameState();
+    void DrawGameStateCube(CubeWrapper &cubeWrapper);
     
     void ShufflePieces();
     
@@ -72,6 +73,16 @@ private:
     void OnSwapExchange();
     void OnSwapFinish();
     
+    enum TouchEvent
+    {
+        TOUCH_EVENT_NONE = 0,
+        TOUCH_EVENT_BEGIN,
+        TOUCH_EVENT_END,
+        
+        NUM_TOUCH_EVENTS
+    };
+    TouchEvent OnTouch(Sifteo::Cube::ID *cubeId = NULL);
+    
     // Cubes
     CubeWrapper mCubeWrappers[kNumCubes];
     
@@ -80,7 +91,6 @@ private:
     
     // State
     GameState mGameState;
-    float mResetTimer;
     float mDelayTimer;
     
     // Input
