@@ -115,7 +115,7 @@ void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
 {
     String<128> buffer;
     buffer << "Chapter " << (puzzleIndex + 1) << "\n" << "\"" << GetPuzzle(puzzleIndex).GetChapterTitle() << "\"";
-    cubeWrapper.DrawBackgroundWithText(ChapterTitle, buffer.c_str(), Vec2(3, 4));
+    cubeWrapper.DrawBackgroundWithText(ChapterTitle, buffer.c_str(), Vec2(2, 4));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -133,7 +133,7 @@ void DrawChapterSummary(
     String<128> buffer;
     buffer << "Chapter " << (puzzleIndex + 1) << "\nTime:" << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true) << "\nMoves:" << scoreMoves;
     
-    cubeWrapper.DrawBackgroundWithText(ChapterSummary, buffer.c_str(), Vec2(3, 4));
+    cubeWrapper.DrawBackgroundWithText(ChapterSummary, buffer.c_str(), Vec2(2, 4));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

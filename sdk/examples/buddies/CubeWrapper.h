@@ -12,6 +12,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <sifteo/BG1Helper.h>
 #include <sifteo/cube.h>
 #include "Config.h" // For GameState
 #include "Piece.h"
@@ -87,6 +88,7 @@ public:
     
 private:
     Sifteo::VidMode_BG0_SPR_BG1 Video();
+    
     void DrawPiece(const Piece &piece, Sifteo::Cube::Side side);
     void DrawBanner(const Sifteo::AssetImage &asset);
     void DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds);
@@ -94,6 +96,8 @@ private:
     void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
 
     Sifteo::Cube mCube;
+    BG1Helper mBg1Helper;
+    
     bool mEnabled;
     unsigned int mBuddyId;
     Piece mPieces[NUM_SIDES];

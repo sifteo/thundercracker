@@ -8,7 +8,6 @@
 
 #include "CubeWrapper.h"
 #include <sifteo/asset.h>
-#include <sifteo/BG1Helper.h>
 #include "Config.h"
 #include "assets.gen.h"
 
@@ -28,8 +27,6 @@ namespace Buddies {
 namespace {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// || Various convenience functions...
-// \/ 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const AssetImage &GetBuddyFaceBackgroundAsset(int buddyId)
@@ -98,8 +95,6 @@ const AssetImage &GetHintBarAsset(Cube::ID cubeId, Cube::Side side)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// ||
-// \/ Static data
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const Vec2 kPartPositions[NUM_SIDES] =
@@ -120,6 +115,7 @@ const Vec2 kPartPositions[NUM_SIDES] =
 
 CubeWrapper::CubeWrapper()
     : mCube()
+    , mBg1Helper(mCube)
     , mEnabled(false)
     , mBuddyId(0)
     , mPieces()
@@ -260,26 +256,24 @@ void CubeWrapper::DrawShuffleUi(
 
 void CubeWrapper::DrawClue(const char *text, bool moreHints)
 {
-    BG1Helper bg1helper(mCube);
-    
     if (moreHints)
     {
-        bg1helper.DrawAsset(Vec2(0, 3), MoreHints);
+        mBg1Helper.DrawAsset(Vec2(0, 3), MoreHints);
         if (text != NULL)
         {
-            bg1helper.DrawText(Vec2(2, 4), Font, text);
+            mBg1Helper.DrawText(Vec2(2, 4), Font, text);
         }
     }
     else
     {
-        bg1helper.DrawAsset(Vec2(0, 3), ClueText);
+        mBg1Helper.DrawAsset(Vec2(0, 3), ClueText);
         if (text != NULL)
         {
-            bg1helper.DrawText(Vec2(2, 4), Font, text);
+            mBg1Helper.DrawText(Vec2(2, 4), Font, text);
         }
     }
     
-    bg1helper.Flush();
+    mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -289,10 +283,9 @@ void CubeWrapper::DrawTextBanner(const char *text)
 {
     ASSERT(text != NULL);
     
-    BG1Helper bg1helper(mCube);
-    bg1helper.DrawAsset(Vec2(0, 0), BannerEmpty);
-    bg1helper.DrawText(Vec2(0, 0), Font, text);
-    bg1helper.Flush();
+    mBg1Helper.DrawAsset(Vec2(0, 0), BannerEmpty);
+    mBg1Helper.DrawText(Vec2(0, 0), Font, text);
+    mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -318,9 +311,8 @@ void CubeWrapper::DrawBackgroundWithText(
     
     Video().BG0_drawAsset(Vec2(0, 0), asset);
     
-    BG1Helper bg1helper(mCube);
-    bg1helper.DrawText(textPosition, Font, text);
-    bg1helper.Flush();
+    mBg1Helper.DrawText(textPosition, Font, text);
+    mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -350,10 +342,9 @@ void CubeWrapper::DrawCutscene(const char *text)
     Video().moveSprite(0, Vec2( 0, mCutsceneSpriteJump0 ? 64 : 72));
     Video().moveSprite(1, Vec2(64, mCutsceneSpriteJump1 ? 64 : 72));
     
-    BG1Helper bg1helper(mCube);
-    bg1helper.DrawAsset(Vec2(0, 0), CutsceneTextBubble);
-    bg1helper.DrawText(Vec2(1, 1), Font, text);
-    bg1helper.Flush();
+    mBg1Helper.DrawAsset(Vec2(0, 0), CutsceneTextBubble);
+    mBg1Helper.DrawText(Vec2(1, 1), Font, text);
+    mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -375,8 +366,7 @@ void CubeWrapper::EnableBg0SprBg1Video()
 
 void CubeWrapper::ClearBg1()
 {
-    BG1Helper bg1helper(mCube);
-    bg1helper.Flush();
+    mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -642,9 +632,8 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
 
 void CubeWrapper::DrawBanner(const Sifteo::AssetImage &asset)
 {
-    BG1Helper bg1helper(mCube);
-    bg1helper.DrawAsset(Vec2(0, 0), asset);
-    bg1helper.Flush();
+    mBg1Helper.DrawAsset(Vec2(0, 0), asset);
+    mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -652,20 +641,19 @@ void CubeWrapper::DrawBanner(const Sifteo::AssetImage &asset)
 
 void CubeWrapper::DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds)
 {
-    BG1Helper bg1helper(mCube);
-    bg1helper.DrawAsset(Vec2(0, 0), asset); // Banner Background
+    mBg1Helper.DrawAsset(Vec2(0, 0), asset); // Banner Background
     
     const AssetImage &font = mCube.id() == 0 ? FontScoreBlue : FontScoreOrange;
     
     int x = 11;
     int y = 0;
-    bg1helper.DrawAsset(Vec2(x++, y), font, minutes / 10); // Mintues (10s)
-    bg1helper.DrawAsset(Vec2(x++, y), font, minutes % 10); // Minutes ( 1s)
-    bg1helper.DrawAsset(Vec2(x++, y), font, 10); // ":"
-    bg1helper.DrawAsset(Vec2(x++, y), font, seconds / 10); // Seconds (10s)
-    bg1helper.DrawAsset(Vec2(x++, y), font, seconds % 10); // Seconds ( 1s)
+    mBg1Helper.DrawAsset(Vec2(x++, y), font, minutes / 10); // Mintues (10s)
+    mBg1Helper.DrawAsset(Vec2(x++, y), font, minutes % 10); // Minutes ( 1s)
+    mBg1Helper.DrawAsset(Vec2(x++, y), font, 10); // ":"
+    mBg1Helper.DrawAsset(Vec2(x++, y), font, seconds / 10); // Seconds (10s)
+    mBg1Helper.DrawAsset(Vec2(x++, y), font, seconds % 10); // Seconds ( 1s)
     
-    bg1helper.Flush();
+    mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -675,9 +663,8 @@ void CubeWrapper::DrawHintBar(Cube::Side side)
 {
     ASSERT(side >= 0 && side < NUM_SIDES);
     
-    BG1Helper bg1helper(mCube);
-    bg1helper.DrawAsset(GetHintBarPoint(side), GetHintBarAsset(mCube.id(), side));
-    bg1helper.Flush();
+    mBg1Helper.DrawAsset(GetHintBarPoint(side), GetHintBarAsset(mCube.id(), side));
+    mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
