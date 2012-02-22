@@ -413,17 +413,7 @@ void App::OnNeighborAdd(
 {
     if (mGameState == GAME_STATE_SHUFFLE_HINT)
     {
-        ASSERT(mHintPiece0 != -1);
-        ASSERT(mHintPiece1 != -1);
-        
-        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-        mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
-        
-        mHintPiece0 = -1;
-        mHintPiece1 = -1;
-        
-        mShuffleHintTimer = kHintTimerOnDuration;
-        
+        StopHint();
         StartGameState(GAME_STATE_SHUFFLE_PLAY);
     }
     else if (mGameState == GAME_STATE_STORY_CLUE)
@@ -436,15 +426,7 @@ void App::OnNeighborAdd(
     }
     else if (mGameState == GAME_STATE_STORY_HINT_2)
     {
-        ASSERT(mHintPiece0 != -1);
-        ASSERT(mHintPiece1 != -1);
-        
-        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-        mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
-        
-        mHintPiece0 = -1;
-        mHintPiece1 = -1;
-        
+        StopHint();
         StartGameState(GAME_STATE_STORY_PLAY);
     }
     else
@@ -490,17 +472,7 @@ void App::OnTilt(Cube::ID cubeId)
     }
     else if (mGameState == GAME_STATE_SHUFFLE_HINT)
     {
-        ASSERT(mHintPiece0 != -1);
-        ASSERT(mHintPiece1 != -1);
-        
-        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-        mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
-        
-        mHintPiece0 = -1;
-        mHintPiece1 = -1;
-        
-        mShuffleHintTimer = kHintTimerOnDuration;
-        
+        StopHint();
         StartGameState(GAME_STATE_SHUFFLE_PLAY);
     }
     else if (mGameState == GAME_STATE_STORY_CLUE)
@@ -513,15 +485,7 @@ void App::OnTilt(Cube::ID cubeId)
     }
     else if (mGameState == GAME_STATE_STORY_HINT_2)
     {
-        ASSERT(mHintPiece0 != -1);
-        ASSERT(mHintPiece1 != -1);
-        
-        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-        mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
-        
-        mHintPiece0 = -1;
-        mHintPiece1 = -1;
-        
+        StopHint();
         StartGameState(GAME_STATE_STORY_PLAY);
     }
 }
@@ -537,17 +501,7 @@ void App::OnShake(Cube::ID cubeId)
     }
     else if (mGameState == GAME_STATE_SHUFFLE_HINT)
     {
-        ASSERT(mHintPiece0 != -1);
-        ASSERT(mHintPiece1 != -1);
-        
-        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-        mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
-        
-        mHintPiece0 = -1;
-        mHintPiece1 = -1;
-        
-        mShuffleHintTimer = kHintTimerOnDuration;
-        
+        StopHint();
         StartGameState(GAME_STATE_SHUFFLE_PLAY);
     }
     else if (mGameState == GAME_STATE_SHUFFLE_SCORE)
@@ -564,17 +518,7 @@ void App::OnShake(Cube::ID cubeId)
     }
     else if (mGameState == GAME_STATE_STORY_HINT_2)
     {
-        // TODO: Put hinting/unhinting into a function
-        
-        ASSERT(mHintPiece0 != -1);
-        ASSERT(mHintPiece1 != -1);
-        
-        mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-        mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
-        
-        mHintPiece0 = -1;
-        mHintPiece1 = -1;
-        
+        StopHint();
         StartGameState(GAME_STATE_STORY_PLAY);
     }
 }
@@ -670,14 +614,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_HINT:
         {
-            ChooseHint();
-            
-            ASSERT(mHintPiece0 != -1);
-            ASSERT(mHintPiece1 != -1);
-            
-            mCubeWrappers[mHintPiece0 / NUM_SIDES].StartPieceBlinking(mHintPiece0 % NUM_SIDES);
-            mCubeWrappers[mHintPiece1 / NUM_SIDES].StartPieceBlinking(mHintPiece1 % NUM_SIDES);
-            
+            StartHint();
             break;
         }
         case GAME_STATE_SHUFFLE_SOLVED:
@@ -720,14 +657,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_HINT_2:
         {
-            ChooseHint();
-            
-            ASSERT(mHintPiece0 != -1);
-            ASSERT(mHintPiece1 != -1);
-            
-            mCubeWrappers[mHintPiece0 / NUM_SIDES].StartPieceBlinking(mHintPiece0 % NUM_SIDES);
-            mCubeWrappers[mHintPiece1 / NUM_SIDES].StartPieceBlinking(mHintPiece1 % NUM_SIDES);
-            
+            StartHint();
             break;
         }
         case GAME_STATE_STORY_SOLVED:
@@ -802,15 +732,7 @@ void App::UpdateGameState(float dt)
         {
             if (OnTouch() == TOUCH_EVENT_BEGIN)
             {
-                ASSERT(mHintPiece0 != -1);
-                ASSERT(mHintPiece1 != -1);
-                
-                mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-                mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
-                
-                mHintPiece0 = -1;
-                mHintPiece1 = -1;
-                
+                StopHint();
                 StartGameState(GAME_STATE_SHUFFLE_PLAY);
             }
             break;
@@ -888,15 +810,7 @@ void App::UpdateGameState(float dt)
             
             if (OnTouch() == TOUCH_EVENT_BEGIN)
             {
-                ASSERT(mHintPiece0 != -1);
-                ASSERT(mHintPiece1 != -1);
-                
-                mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
-                mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
-                
-                mHintPiece0 = -1;
-                mHintPiece1 = -1;
-                
+                StopHint();
                 StartGameState(GAME_STATE_STORY_PLAY);
             }
             break;
@@ -1299,6 +1213,41 @@ void App::ChooseHint()
                 }
             }
         }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::StartHint()
+{
+    ChooseHint();
+    
+    ASSERT(mHintPiece0 != -1);
+    ASSERT(mHintPiece1 != -1);
+    
+    mCubeWrappers[mHintPiece0 / NUM_SIDES].StartPieceBlinking(mHintPiece0 % NUM_SIDES);
+    mCubeWrappers[mHintPiece1 / NUM_SIDES].StartPieceBlinking(mHintPiece1 % NUM_SIDES);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::StopHint()
+{
+    ASSERT(mHintPiece0 != -1);
+    ASSERT(mHintPiece1 != -1);
+    
+    mCubeWrappers[mHintPiece0 / NUM_SIDES].StopPieceBlinking();
+    mCubeWrappers[mHintPiece1 / NUM_SIDES].StopPieceBlinking();
+    
+    mHintPiece0 = -1;
+    mHintPiece1 = -1;
+    mHintPieceSkip = -1;
+    
+    if (kGameMode == GAME_MODE_SHUFFLE)
+    {
+        mShuffleHintTimer = kHintTimerOnDuration;
     }
 }
 

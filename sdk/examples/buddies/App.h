@@ -67,6 +67,8 @@ private:
     void ShufflePieces();
     
     void ChooseHint();
+    void StartHint();
+    void StopHint();
     
     void UpdateSwap(float dt);
     void OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1);
