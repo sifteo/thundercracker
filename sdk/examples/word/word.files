@@ -71,5 +71,5 @@ PrototypeWordListData.h
 DictionaryData.h
 Utility.h
 Utility.cpp
-AnimData.h
-AnimData.cpp
+Anim.h
+Anim.cpp

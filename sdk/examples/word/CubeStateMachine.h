@@ -12,6 +12,7 @@
 #include "ScoredCubeState_EndOfRound.h"
 #include "ScoredCubeState_Shuffle.h"
 #include "config.h"
+#include "Anim.h"
 
 using namespace Sifteo;
 
@@ -22,7 +23,7 @@ class CubeStateMachine : public StateMachine
 {
 public:
     CubeStateMachine() :
-        StateMachine(0), mNumLetters(1), mIdleTime(0.f),
+        StateMachine(0), mNumLetters(1), mIdleTime(0.f),mAnimTime(0.f),
         mBG0Panning(0.f), mBG0TargetPanning(0.f), mBG0PanningLocked(true),
         mCube(0) {}
 
@@ -39,8 +40,8 @@ public:
     void resetStateTime() { mStateTime = 0.0f; }
 
     bool getLetters(char *buffer, bool forPaint=false);
-    const Vec2& geTilePosition(unsigned index) const;
-    const AssetImage& getTileAsset(unsigned index) const;
+    AnimIndex getAnimIndex() const;
+    float getAnimTime() const { return mAnimTime; }
 
     bool canBeginWord();
     bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);
@@ -59,6 +60,7 @@ private:
     Vec2 mTilePositions[MAX_LETTERS_PER_CUBE];
     unsigned mNumLetters;
     float mIdleTime;
+    float mAnimTime;
 
     float mBG0Panning;
     float mBG0TargetPanning;

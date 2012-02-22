@@ -162,14 +162,9 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
     }
 }
 
-const Vec2& CubeStateMachine::geTilePosition(unsigned index) const
+AnimIndex CubeStateMachine::getAnimIndex() const
 {
-    return mTilePositions[index];
-}
-
-const AssetImage& CubeStateMachine::getTileAsset(unsigned index) const
-{
-    return Tile2;
+    return AnimIndex_2TileSlideL;
 }
 
 bool CubeStateMachine::canBeginWord()

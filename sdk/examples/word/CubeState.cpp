@@ -379,7 +379,8 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
     switch (GameStateMachine::getCurrentMaxLettersPerCube())
     {
     case 2:
-        // TODO this loop for all
+        animPaint(getStateMachine().getAnimIndex(), vid, &bg1, getStateMachine().getAnimTime());
+        /* TODO this loop for all
         for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
         {
             Vec2 pos(getStateMachine().geTilePosition(i));
@@ -406,6 +407,7 @@ void CubeState::paintLetters(VidMode_BG0_SPR_BG1 &vid,
                 }
             }
         }
+        */
       break;
 
     case 3:
