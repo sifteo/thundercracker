@@ -14,7 +14,7 @@
 
 #include <sifteo/BG1Helper.h>
 #include <sifteo/cube.h>
-#include "Config.h" // For GameState
+#include "GameState.h"
 #include "Piece.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
