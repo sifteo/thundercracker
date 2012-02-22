@@ -19,14 +19,6 @@ BuddyFacePartFixed = image{"assets/fixed.png", pinned = true}
 BuddyFacePartHidden = image{"assets/hidden.png", pinned = true}
 
 -- UI (BG1)
-HintBarBlueTop = image{"assets/ui_hintbar_blue_top.png"}
-HintBarBlueLeft = image{"assets/ui_hintbar_blue_left.png"}
-HintBarBlueBottom = image{"assets/ui_hintbar_blue_bottom.png"}
-HintBarBlueRight = image{"assets/ui_hintbar_blue_right.png"}
-HintBarOrangeTop = image{"assets/ui_hintbar_orange_top.png"}
-HintBarOrangeLeft = image{"assets/ui_hintbar_orange_left.png"}
-HintBarOrangeBottom = image{"assets/ui_hintbar_orange_bottom.png"}
-HintBarOrangeRight = image{"assets/ui_hintbar_orange_right.png"}
 FaceCompleteBlue = image{"assets/ui_top_facecomplete_blue.png"}
 FaceCompleteOrange = image{"assets/ui_top_facecomplete_orange.png"}
 ShakeToShuffleBlue = image{"assets/ui_top_shakeshuffle_blue.png"}
