@@ -163,7 +163,6 @@ void CubeWrapper::DrawBuddy()
 {
     ASSERT(IsEnabled());
     
-    EnableBg0SprBg1Video();
     Video().BG0_drawAsset(Vec2(0, 0), GetBuddyFaceBackgroundAsset(mBuddyId));
     
     DrawPiece(mPieces[SIDE_TOP], SIDE_TOP);
@@ -179,7 +178,6 @@ void CubeWrapper::DrawBuddyWithStoryHint(Sifteo::Cube::Side side, bool blink)
 {
     ASSERT(IsEnabled());
     
-    EnableBg0SprBg1Video();
     Video().BG0_drawAsset(Vec2(0, 0), GetBuddyFaceBackgroundAsset(mBuddyId));
     
     for (unsigned int i = 0; i < NUM_SIDES; ++i)
@@ -194,83 +192,13 @@ void CubeWrapper::DrawBuddyWithStoryHint(Sifteo::Cube::Side side, bool blink)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::DrawShuffleUi(
-    GameState shuffleState,
-    float shuffleScoreTime,
-    int shuffleHintPiece0,
-    int shuffleHintPiece1)
+void CubeWrapper::DrawOverlay(const Sifteo::AssetImage &asset, const char *text)
 {
-    ASSERT(kGameMode == GAME_MODE_SHUFFLE);
+    mBg1Helper.DrawAsset(Vec2(0, 3), asset);
     
-    switch (shuffleState)
+    if (text != NULL)
     {
-        case GAME_STATE_SHUFFLE_SHAKE_TO_SCRAMBLE:
-        {
-            DrawBanner(mCube.id() == 0 ? ShakeToShuffleBlue :  ShakeToShuffleOrange);
-            break;
-        }
-        case GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES:
-        {
-            DrawBanner(mCube.id() == 0 ? UnscrableTheFacesBlue : UnscrableTheFacesOrange);
-            break;
-        }
-        case GAME_STATE_SHUFFLE_PLAY:
-        {
-            if (shuffleHintPiece0 != -1 && (shuffleHintPiece0 / NUM_SIDES) == mCube.id())
-            {
-                DrawHintBar(shuffleHintPiece0 % NUM_SIDES);
-            }
-            else if (shuffleHintPiece1 != -1 && (shuffleHintPiece1 / NUM_SIDES) == mCube.id())
-            {
-                DrawHintBar(shuffleHintPiece1 % NUM_SIDES);
-            }
-            else if (IsSolved())
-            {
-                DrawBanner(mCube.id() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
-            }
-            break;
-        }
-        case GAME_STATE_SHUFFLE_SCORE:
-        {
-            if (mCube.id() == 0)
-            {
-                int minutes = int(shuffleScoreTime) / 60;
-                int seconds = int(shuffleScoreTime - (minutes * 60.0f));
-                DrawScoreBanner(ScoreTimeBlue, minutes, seconds);
-            }
-            else
-            {
-                DrawBanner(ShakeToShuffleOrange);
-            }
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawClue(const char *text, bool moreHints)
-{
-    if (moreHints)
-    {
-        mBg1Helper.DrawAsset(Vec2(0, 3), MoreHints);
-        if (text != NULL)
-        {
-            mBg1Helper.DrawText(Vec2(2, 4), Font, text);
-        }
-    }
-    else
-    {
-        mBg1Helper.DrawAsset(Vec2(0, 3), ClueText);
-        if (text != NULL)
-        {
-            mBg1Helper.DrawText(Vec2(2, 4), Font, text);
-        }
+        mBg1Helper.DrawText(Vec2(2, 4), Font, text);
     }
     
     mBg1Helper.Flush();
@@ -291,10 +219,48 @@ void CubeWrapper::DrawTextBanner(const char *text)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CubeWrapper::DrawBanner(const Sifteo::AssetImage &asset)
+{
+    mBg1Helper.DrawAsset(Vec2(0, 0), asset);
+    mBg1Helper.Flush();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds)
+{
+    mBg1Helper.DrawAsset(Vec2(0, 0), asset); // Banner Background
+    
+    const AssetImage &font = mCube.id() == 0 ? FontScoreBlue : FontScoreOrange;
+    
+    int x = 11;
+    int y = 0;
+    mBg1Helper.DrawAsset(Vec2(x++, y), font, minutes / 10); // Mintues (10s)
+    mBg1Helper.DrawAsset(Vec2(x++, y), font, minutes % 10); // Minutes ( 1s)
+    mBg1Helper.DrawAsset(Vec2(x++, y), font, 10); // ":"
+    mBg1Helper.DrawAsset(Vec2(x++, y), font, seconds / 10); // Seconds (10s)
+    mBg1Helper.DrawAsset(Vec2(x++, y), font, seconds % 10); // Seconds ( 1s)
+    
+    mBg1Helper.Flush();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawHintBar(Cube::Side side)
+{
+    ASSERT(side >= 0 && side < NUM_SIDES);
+    
+    mBg1Helper.DrawAsset(GetHintBarPoint(side), GetHintBarAsset(mCube.id(), side));
+    mBg1Helper.Flush();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CubeWrapper::DrawBackground(const Sifteo::AssetImage &asset)
 {
-    EnableBg0SprBg1Video();
-    
     Video().BG0_drawAsset(Vec2(0, 0), asset);
 }
 
@@ -306,8 +272,6 @@ void CubeWrapper::DrawBackgroundWithText(
     const char *text, const Sifteo::Vec2 &textPosition)
 {
     ASSERT(text != NULL);
-    
-    EnableBg0SprBg1Video();
     
     Video().BG0_drawAsset(Vec2(0, 0), asset);
     
@@ -332,8 +296,6 @@ void CubeWrapper::DrawCutscene(const char *text)
     ASSERT(text != NULL);
     ASSERT(2 <= _SYS_VRAM_SPRITES);
     
-    EnableBg0SprBg1Video();
-    
     Video().BG0_drawAsset(Vec2(0, 0), CutsceneBackground);
     
     Video().setSpriteImage(0, CutsceneSprites, 0);
@@ -350,7 +312,7 @@ void CubeWrapper::DrawCutscene(const char *text)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CubeWrapper::EnableBg0SprBg1Video()
+void CubeWrapper::Clear()
 {
     Video().set();
     Video().clear();
@@ -359,13 +321,8 @@ void CubeWrapper::EnableBg0SprBg1Video()
     {
         Video().hideSprite(i);
     }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::ClearBg1()
-{
+    
+    mBg1Helper.Clear();
     mBg1Helper.Flush();
 }
 
@@ -633,46 +590,6 @@ void CubeWrapper::DrawPiece(const Piece &piece, Cube::Side side)
     Video().moveSprite(spriteLayer0, point);
     Video().moveSprite(spriteLayer1, point);
     
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawBanner(const Sifteo::AssetImage &asset)
-{
-    mBg1Helper.DrawAsset(Vec2(0, 0), asset);
-    mBg1Helper.Flush();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds)
-{
-    mBg1Helper.DrawAsset(Vec2(0, 0), asset); // Banner Background
-    
-    const AssetImage &font = mCube.id() == 0 ? FontScoreBlue : FontScoreOrange;
-    
-    int x = 11;
-    int y = 0;
-    mBg1Helper.DrawAsset(Vec2(x++, y), font, minutes / 10); // Mintues (10s)
-    mBg1Helper.DrawAsset(Vec2(x++, y), font, minutes % 10); // Minutes ( 1s)
-    mBg1Helper.DrawAsset(Vec2(x++, y), font, 10); // ":"
-    mBg1Helper.DrawAsset(Vec2(x++, y), font, seconds / 10); // Seconds (10s)
-    mBg1Helper.DrawAsset(Vec2(x++, y), font, seconds % 10); // Seconds ( 1s)
-    
-    mBg1Helper.Flush();
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawHintBar(Cube::Side side)
-{
-    ASSERT(side >= 0 && side < NUM_SIDES);
-    
-    mBg1Helper.DrawAsset(GetHintBarPoint(side), GetHintBarAsset(mCube.id(), side));
-    mBg1Helper.Flush();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

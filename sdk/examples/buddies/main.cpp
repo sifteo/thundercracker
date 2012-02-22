@@ -59,15 +59,14 @@ void Init()
         }
     }
     
-    // TODO: This seems to make the transitions from loading to display
-    // the first assets a bit cleaner. Is there a better way?
     for (unsigned int i = 0; i < Buddies::kNumCubes; ++i)
     {
         if (sApp.GetCubeWrapper(i).IsEnabled())
         {
-            sApp.GetCubeWrapper(i).EnableBg0SprBg1Video();
+            sApp.GetCubeWrapper(i).Clear();
         }
     }
+    System::paintSync();
     System::paint();
 }
 

@@ -40,13 +40,14 @@ public:
     ////////////////////////////////////////
     void DrawBuddy();
     void DrawBuddyWithStoryHint(Sifteo::Cube::Side side, bool blink);
-    void DrawShuffleUi(
-        GameState shuffleState,
-        float shuffleScoreTime,
-        int shuffleHintPiece0,
-        int shuffleHintPiece1);
-    void DrawClue(const char *text, bool moreHints = false);
+    
+    void DrawOverlay(const Sifteo::AssetImage &asset, const char *text);
+    
     void DrawTextBanner(const char *text);
+    void DrawBanner(const Sifteo::AssetImage &asset);
+    void DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds);
+    void DrawHintBar(Sifteo::Cube::Side side);
+    
     void DrawBackground(const Sifteo::AssetImage &asset);
     void DrawBackgroundWithText(
         const Sifteo::AssetImage &asset,
@@ -55,8 +56,7 @@ public:
     void UpdateCutscene();
     void DrawCutscene(const char *text);
     
-    void EnableBg0SprBg1Video();
-    void ClearBg1();
+    void Clear();
     bool NeedsPaintSync();
     ////////////////////////////////////////
     ////////////////////////////////////////
@@ -91,9 +91,6 @@ private:
     Sifteo::VidMode_BG0_SPR_BG1 Video();
     
     void DrawPiece(const Piece &piece, Sifteo::Cube::Side side);
-    void DrawBanner(const Sifteo::AssetImage &asset);
-    void DrawScoreBanner(const Sifteo::AssetImage &asset, int minutes, int seconds);
-    void DrawHintBar(Sifteo::Cube::Side side);
     void UpdateCutsceneSpriteJump(bool &cutsceneSpriteJump, int upChance, int downChance);
 
     Sifteo::Cube mCube;
