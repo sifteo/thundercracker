@@ -13,12 +13,12 @@ static VidMode_BG0 vid[] = { VidMode_BG0(cubes[0].vbuf), VidMode_BG0(cubes[1].vb
 
 
 
-static void onCubeFound(_SYSCubeID cid)
+static void onCubeFound(void *context, _SYSCubeID cid)
 {
     LOG(("++ onCubeFound: %u\n", cid));
 }
 
-static void onCubeLost(_SYSCubeID cid)
+static void onCubeLost(void *context, _SYSCubeID cid)
 {
     LOG(("-- onCubeLost: %u\n", cid));
 }
@@ -49,8 +49,8 @@ void siftmain()
 
     init();
     
-    _SYS_vectors.cubeEvents.found = onCubeFound;
-    _SYS_vectors.cubeEvents.lost = onCubeLost;
+    _SYS_setVector(_SYS_CUBE_FOUND, (void*) onCubeFound, NULL);
+    _SYS_setVector(_SYS_CUBE_LOST, (void*) onCubeLost, NULL);
     
     while (1) {
         //float t = System::clock();

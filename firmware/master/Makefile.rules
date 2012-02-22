@@ -12,7 +12,7 @@ ocd:
 	openocd -f $(MASTER_DIR)/stm32/openocd.cfg
 
 program: $(BIN_STM32)
-	openocd -f $(MASTER_DIR)/stm32/openocd.cfg \
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
 		-c init \
 		-c "reset halt" \
 		-c "flash write_image erase $<" \

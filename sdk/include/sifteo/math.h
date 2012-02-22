@@ -117,6 +117,8 @@ struct Vec2 {
     int x, y;
 };
 
+inline Vec2 operator<<(const Vec2& u, int shift) { return Vec2(u.x<<shift, u.y<<shift); }
+inline Vec2 operator>>(const Vec2& u, int shift) { return Vec2(u.x>>shift, u.y>>shift); }
 inline Vec2 operator+(const Vec2& u, const Vec2& v) { return Vec2(u.x+v.x, u.y+v.y); }
 inline Vec2 operator += (Vec2& u, const Vec2& v) { return Vec2(u.x+=v.x, u.y+=v.y); }
 inline Vec2 operator-(const Vec2& u, const Vec2& v) { return Vec2(u.x-v.x, u.y-v.y); }
@@ -372,6 +374,13 @@ template <typename T> inline T abs(const T& value)
 float inline fmodf(float a, float b)
 {
     return _SYS_fmodf(a, b);
+}
+
+float inline fabs(float a)
+{
+    if (a < 0)
+        return -a;
+    return a;
 }
 
 

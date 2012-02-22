@@ -16,6 +16,7 @@
  */
 
 #include <math.h>
+#include <sifteo/machine.h>
 #include <sifteo/abi.h>
 #include "radio.h"
 #include "cubeslots.h"
@@ -28,9 +29,6 @@
 #include "prng.h"
 
 extern "C" {
-
-struct _SYSEventVectors _SYS_vectors;
-
 
 #define MEMSET_BODY() {                                                 \
     if (Runtime::checkUserArrayPointer(dest, sizeof *dest, count)) {    \
@@ -577,5 +575,26 @@ uint32_t _SYS_audio_pos(_SYSAudioHandle h)
 {
     return AudioMixer::instance.pos(h);
 }
+
+void _SYS_setVector(_SYSVectorID vid, void *handler, void *context)
+{
+    if (vid < _SYS_NUM_VECTORS)
+        Event::setVector(vid, handler, context);
+}
+
+void *_SYS_getVectorHandler(_SYSVectorID vid)
+{
+    if (vid < _SYS_NUM_VECTORS)
+        return Event::getVectorHandler(vid);
+    return NULL;
+}
+
+void *_SYS_getVectorContext(_SYSVectorID vid)
+{
+    if (vid < _SYS_NUM_VECTORS)
+        return Event::getVectorContext(vid);
+    return NULL;
+}
+
 
 }  // extern "C"

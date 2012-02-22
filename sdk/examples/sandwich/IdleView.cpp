@@ -11,7 +11,6 @@ void IdleView::Init() {
   Parent()->HideSprites();
   Parent()->Graphics().BG0_drawAsset(Vec2(0,0), Blank);
   Parent()->Overlay().Flush();
-  Parent()->GetCube()->vbuf.touch();
 }
 
 void IdleView::Restore() {

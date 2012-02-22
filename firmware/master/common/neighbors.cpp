@@ -113,9 +113,8 @@ void NeighborSlot::addNeighborToSide(_SYSCubeID dstId, _SYSSideID side) {
         instances[dstId].clearSide(dstSide);
         neighbors.sides[side] = dstId;
         instances[dstId].neighbors.sides[dstSide] = id();
-        if (_SYS_vectors.neighborEvents.add) {
-            _SYS_vectors.neighborEvents.add(id(), side, dstId, dstSide);
-        }
+
+        Event::callNeighborEvent(_SYS_NEIGHBOR_ADD, id(), side, dstId, dstSide);
     }
 }
 
@@ -126,9 +125,8 @@ void NeighborSlot::clearSide(_SYSSideID side) {
         for(_SYSSideID otherSide=0; otherSide<4; ++otherSide) {
             if (instances[otherId].neighbors.sides[otherSide] == id()) {
                 instances[otherId].neighbors.sides[otherSide] = 0xff;
-                if (_SYS_vectors.neighborEvents.remove) {
-                    _SYS_vectors.neighborEvents.remove(id(), side, otherId, otherSide);
-                }
+
+                Event::callNeighborEvent(_SYS_NEIGHBOR_REMOVE, id(), side, otherId, otherSide);
                 return;
             }
         }

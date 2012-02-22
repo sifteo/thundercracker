@@ -15,7 +15,7 @@ using namespace Sifteo;
 static Game &game = Game::Inst();
 
 /*
-static void onAccelChange(_SYSCubeID cid)
+static void onAccelChange(void *context, _SYSCubeID cid)
 {
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
@@ -35,7 +35,7 @@ static void onAccelChange(_SYSCubeID cid)
 }
 */
 
-static void onTilt(_SYSCubeID cid)
+static void onTilt(void *context, _SYSCubeID cid)
 {
     Cube::TiltState state = game.m_cubes[cid - CUBE_ID_BASE].GetCube().getTiltState();
 
@@ -49,7 +49,7 @@ static void onTilt(_SYSCubeID cid)
         game.m_cubes[cid - CUBE_ID_BASE].Tilt( UP);
 }
 
-static void onShake(_SYSCubeID cid)
+static void onShake(void *context, _SYSCubeID cid)
 {
     _SYSShakeState state;
     _SYS_getShake(cid, &state);
@@ -65,10 +65,9 @@ void siftmain()
 {
     init();
 
-    //_SYS_vectors.cubeEvents.accelChange = onAccelChange;
-    _SYS_vectors.cubeEvents.tilt = onTilt;
-	_SYS_vectors.cubeEvents.shake = onShake;
-    _SYS_vectors.neighborEvents.add = 0;
+    //_SYS_setVector(_SYS_CUBE_ACCELCHANGE, (void*) onAccelChange, NULL);
+    _SYS_setVector(_SYS_CUBE_TILT, (void*) onTilt, NULL);
+    _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, NULL);
 
     while (1) {
         game.Update();        

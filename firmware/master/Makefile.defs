@@ -104,3 +104,9 @@ LDFLAGS_STM32 := $(LDFLAGS) $(ARCH_STM32) \
               -Wl,-Map=MAPFILE.map,--cref,--gc-sections,-u,IVT \
               -T $(LDSCRIPT_STM32) -nostartfiles
 
+#Determines whether the jtagkey2 or the olimex cfg files should be used for programming
+ifeq ($(OLIMEX), 1)
+	PROG_CONFIG := olimex.cfg
+else 
+	PROG_CONFIG := jtagkey2.cfg
+endif

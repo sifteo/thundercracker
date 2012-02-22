@@ -12,7 +12,7 @@ static const char* sideNames[] =
   "top", "left", "bottom", "right"  
 };
 
-void onCubeEventTouch(_SYSCubeID cid)
+void onCubeEventTouch(void *context, _SYSCubeID cid)
 {
     DEBUG_LOG(("cube event touch:\t%d\n", cid));
 /* TODO Touch    EventData data;
@@ -21,7 +21,7 @@ void onCubeEventTouch(_SYSCubeID cid)
     */
 }
 
-void onCubeEventShake(_SYSCubeID cid)
+void onCubeEventShake(void *context, _SYSCubeID cid)
 {
     DEBUG_LOG(("cube event shake:\t%d\n", cid));
     EventData data;
@@ -29,7 +29,7 @@ void onCubeEventShake(_SYSCubeID cid)
     WordGame::onEvent(EventID_Input, data);
 }
 
-void onCubeEventTilt(_SYSCubeID cid)
+void onCubeEventTilt(void *context, _SYSCubeID cid)
 {
     DEBUG_LOG(("cube event tilt:\t%d\n", cid));
     //WordGame::onEvent(EventID_Input, EventData());
@@ -38,14 +38,16 @@ void onCubeEventTilt(_SYSCubeID cid)
     WordGame::onEvent(EventID_Tilt, data);
 }
 
-void onNeighborEventAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+void onNeighborEventAdd(void *context,
+    _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
     EventData data;
     WordGame::onEvent(EventID_AddNeighbor, data);
     LOG(("neighbor add:\t%d/%s\t%d/%s\n", c0, sideNames[s0], c1, sideNames[s1]));
 }
 
-void onNeighborEventRemove(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+void onNeighborEventRemove(void *context,
+    _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
     EventData data;
     WordGame::onEvent(EventID_RemoveNeighbor, data);
@@ -61,11 +63,11 @@ void siftmain()
 {
     DEBUG_LOG(("Hello, Word Play 2\n"));
 
-    _SYS_vectors.cubeEvents.touch = onCubeEventTouch;
-    _SYS_vectors.cubeEvents.shake = onCubeEventShake;
-    _SYS_vectors.cubeEvents.tilt = onCubeEventTilt;
-    _SYS_vectors.neighborEvents.add = onNeighborEventAdd;
-    _SYS_vectors.neighborEvents.remove = onNeighborEventRemove;
+    _SYS_setVector(_SYS_CUBE_TOUCH, (void*) onCubeEventTouch, NULL);
+    _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onCubeEventShake, NULL);
+    _SYS_setVector(_SYS_CUBE_TILT, (void*) onCubeEventTilt, NULL);
+    _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborEventAdd, NULL);
+    _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) onNeighborEventRemove, NULL);
 
     static Cube cubes[NUM_CUBES]; // must be static!
 
