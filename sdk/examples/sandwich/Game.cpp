@@ -593,7 +593,7 @@ static void VisitMapView(uint8_t* visited, ViewSlot* view, Vec2 loc, ViewSlot* o
 void Game::CheckMapNeighbors() {
   uint8_t visited[NUM_CUBES];
   for(unsigned i=0; i<NUM_CUBES; ++i) { visited[i] = 0; }
-  VisitMapView(visited, mPlayer.View(), mPlayer.Location());
+  VisitMapView(visited, mPlayer.View(), mPlayer.View()->GetRoomView()->Location());
   
   for(ViewSlot* v = ViewBegin(); v!=ViewEnd(); ++v) {
     if (!visited[v->GetCubeID()]) { 
