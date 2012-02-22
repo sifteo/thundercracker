@@ -199,6 +199,25 @@ bool UpdateTimerLoop(float &timer, float dt, float duration)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool UpdateCounter(int &counter, int speed)
+{
+    ASSERT(counter > 0);
+    counter -= speed;
+    
+    if (counter < 0)
+    {
+        counter = 0;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const char *kGameStateNames[NUM_GAME_STATES] =
 {
     "SHUFFLE_STATE_NONE",
@@ -1111,47 +1130,34 @@ void App::ChooseHint()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: Fix repeated code
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void App::UpdateSwap(float dt)
 {
     if (mSwapState == SWAP_STATE_OUT)
     {
-        ASSERT(mSwapAnimationCounter > 0);
-        
-        mSwapAnimationCounter -= kSwapAnimationSpeed;
-        if (mSwapAnimationCounter < 0)
-        {
-            mSwapAnimationCounter = 0;
-        }
+        bool done = UpdateCounter(mSwapAnimationCounter, kSwapAnimationSpeed);
         
         mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
             mSwapPiece0 % NUM_SIDES, -kSwapAnimationCount + mSwapAnimationCounter);
         mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
             mSwapPiece1 % NUM_SIDES, -kSwapAnimationCount + mSwapAnimationCounter);
         
-        if (mSwapAnimationCounter == 0)
+        if (done)
         {
             OnSwapExchange();
         }
     }
     else if (mSwapState == SWAP_STATE_IN)
     {
-        ASSERT(mSwapAnimationCounter > 0);
-        
-        mSwapAnimationCounter -= kSwapAnimationSpeed;
-        if (mSwapAnimationCounter < 0)
-        {
-            mSwapAnimationCounter = 0;
-        }
+        bool done = UpdateCounter(mSwapAnimationCounter, kSwapAnimationSpeed);
         
         mCubeWrappers[mSwapPiece0 / NUM_SIDES].SetPieceOffset(
             mSwapPiece0 % NUM_SIDES, -mSwapAnimationCounter);
         mCubeWrappers[mSwapPiece1 / NUM_SIDES].SetPieceOffset(
             mSwapPiece1 % NUM_SIDES, -mSwapAnimationCounter);
         
-        if (mSwapAnimationCounter == 0)
+        if (done)
         {
             OnSwapFinish();
         }
@@ -1198,7 +1204,9 @@ void App::OnSwapFinish()
     
     if (mGameState == GAME_STATE_SHUFFLE_SCRAMBLING)
     {
-        bool done = GetNumMovedPieces(mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved);
+        bool done = GetNumMovedPieces(
+            mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved);
+        
         if (kShuffleMaxMoves > 0)
         {
             done = done || mShuffleMoveCounter == kShuffleMaxMoves;
