@@ -23,7 +23,7 @@ TiltFlowItem MENUITEMS[ MenuController::NUM_MENU_ITEMS ] =
 MenuController &s_menu = MenuController::Inst();
 
 /*
-static void onAccelChange(_SYSCubeID cid)
+static void onAccelChange(void *context, _SYSCubeID cid)
 {
     _SYSAccelState state;
     _SYS_getAccel(cid, &state);
@@ -43,7 +43,7 @@ static void onAccelChange(_SYSCubeID cid)
 }
 */
 
-static void onTilt(_SYSCubeID cid)
+static void onTilt(void *context, _SYSCubeID cid)
 {
 	//TODO, make not reliant on id base
     Cube::TiltState state = s_menu.cubes[cid - CUBE_ID_BASE].GetCube().getTiltState();
@@ -58,7 +58,7 @@ static void onTilt(_SYSCubeID cid)
         s_menu.cubes[cid - CUBE_ID_BASE].Tilt( UP);
 }
 
-static void onShake(_SYSCubeID cid)
+static void onShake(void *context, _SYSCubeID cid)
 {
     _SYSShakeState state;
     _SYS_getShake(cid, &state);
@@ -66,7 +66,8 @@ static void onShake(_SYSCubeID cid)
 }
 
 
-static void onNeighborAdd(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
+static void onNeighborAdd(void *context,
+    _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1)
 {
     s_menu.checkNeighbors();
 }
@@ -76,9 +77,9 @@ void RunMenu()
 {
     s_menu.Init();
 
-    _SYS_vectors.cubeEvents.tilt = onTilt;
-    _SYS_vectors.cubeEvents.shake = onShake;
-    _SYS_vectors.neighborEvents.add = onNeighborAdd;
+    _SYS_setVector(_SYS_CUBE_TILT, (void*) onTilt, NULL);
+    _SYS_setVector(_SYS_CUBE_SHAKE, (void*) onShake, NULL);
+    _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) onNeighborAdd, NULL);
 
     while (s_menu.Update()) {}
 }

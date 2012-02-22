@@ -194,7 +194,8 @@ static void RenderViews() {
   }  
 }
 
-static void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
+static void OnNeighborAdd(void *context,
+    Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
   if (connectionCount == NUM_CUBES-1 || s0 != (s1+2)%4) {
     return;
   }
@@ -212,7 +213,8 @@ static void OnNeighborAdd(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1
   RenderViews();
 }
 
-static void OnNeighborRem(Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
+static void OnNeighborRem(void *context,
+    Cube::ID c0, Cube::Side s0, Cube::ID c1, Cube::Side s1) {
   Cube::ID c = s0 < 2 ? c0 : c1;
   Cube::ID oc = s0 < 2 ? c1 : c0;
   Cube::Side s = s0 < 2 ? s0 : s1;
@@ -253,8 +255,9 @@ void siftmain() {
     mode.init();
     mode.BG0_drawAsset(Vec2(0,0), Background);
   }
-  _SYS_vectors.neighborEvents.add = OnNeighborAdd;
-  _SYS_vectors.neighborEvents.remove = OnNeighborRem;
+  
+  _SYS_setVector(_SYS_NEIGHBOR_ADD, (void*) OnNeighborAdd, NULL);
+  _SYS_setVector(_SYS_NEIGHBOR_REMOVE, (void*) OnNeighborRem, NULL);
   
   /*{
     ViewState view = { { B10111, B10111, B10110, B00000 }  };

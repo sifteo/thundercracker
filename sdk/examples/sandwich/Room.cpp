@@ -7,10 +7,11 @@ unsigned Room::Id() const {
 
 Vec2 Room::LocalCenter(unsigned subdiv) const { 
   if (subdiv) {
-    if (mSubdivType == SUBDIV_DIAG_POS || mSubdivType == SUBDIV_DIAG_NEG) {
+    ASSERT(mUserdataType == USERDATA_SUBDIV);
+    if (mInnerType == SUBDIV_DIAG_POS || mInnerType == SUBDIV_DIAG_NEG) {
       const DiagonalSubdivisionData* p = SubdivAsDiagonal();
       return Vec2(p->altCenterX, p->altCenterY); 
-    } else if (mSubdivType == SUBDIV_BRDG_HOR || mSubdivType == SUBDIV_BRDG_VER) {
+    } else if (mInnerType == SUBDIV_BRDG_HOR || mInnerType == SUBDIV_BRDG_VER) {
       const BridgeSubdivisionData* p = SubdivAsBridge();
       return Vec2(p->altCenterX, p->altCenterY);
     }
@@ -44,20 +45,21 @@ const uint8_t* Room::OverlayBegin() const {
 }
 
 void Room::SetDiagonalSubdivision(const DiagonalSubdivisionData* diag) {
-  mSubdivType = diag->positiveSlope ? SUBDIV_DIAG_POS : SUBDIV_DIAG_NEG;
-  mSubdiv = (const void*) diag;
+  mUserdataType = USERDATA_SUBDIV;
+  mInnerType = diag->positiveSlope ? SUBDIV_DIAG_POS : SUBDIV_DIAG_NEG;
+  mUserdata = diag;
 }
 
 void Room::SetBridgeSubdivision(const BridgeSubdivisionData* bridge) {
-  mSubdivType = bridge->isHorizontal ? SUBDIV_BRDG_HOR : SUBDIV_BRDG_VER;
-  mSubdiv = (const void*) bridge;
+  mUserdataType = USERDATA_SUBDIV;
+  mInnerType = bridge->isHorizontal ? SUBDIV_BRDG_HOR : SUBDIV_BRDG_VER;
+  mUserdata = bridge;
 }
 
 void Room::Clear() { 
-  mTriggerType = TRIGGER_UNDEFINED;
-  mTrigger = 0; 
+  mUserdataType = 0;
+  mInnerType = 0;
+  mUserdata = 0;
   mDoor = 0;
   mOverlayIndex = 0xffff;
-  mSubdivType = SUBDIV_NONE;
-  mSubdiv = 0;
 }

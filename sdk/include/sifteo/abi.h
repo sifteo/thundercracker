@@ -361,31 +361,40 @@ struct _SYSCubeHWID {
 
 /**
  * Event vectors. These can be changed at runtime in order to handle
- * events within the game binary. All vectors are NULL (no-op) by
- * default. The vector table lives at an agreed-upon address in
- * game-accessable RAM.
+ * events within the game binary, via _SYS_setVector / _SYS_getVector.
  */
 
-typedef void (*_SYSCubeEvent)(_SYSCubeID cid);
-typedef void (*_SYSNeighborEvent)(_SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
+typedef void (*_SYSCubeEvent)(void *context, _SYSCubeID cid);
+typedef void (*_SYSNeighborEvent)(void *context,
+    _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1);
 
-struct _SYSEventVectors {
-	struct {
-		_SYSNeighborEvent add;
-		_SYSNeighborEvent remove;
-	} neighborEvents;
-	struct {
-		_SYSCubeEvent found;
-		_SYSCubeEvent lost;
-		_SYSCubeEvent assetDone;
-		_SYSCubeEvent accelChange;
-		_SYSCubeEvent touch;
-		_SYSCubeEvent tilt;
-		_SYSCubeEvent shake;
-	} cubeEvents;
-};
+typedef enum {
+    _SYS_NEIGHBOR_ADD = 0,
+    _SYS_NEIGHBOR_REMOVE,
+    _SYS_CUBE_FOUND,
+    _SYS_CUBE_LOST,
+    _SYS_CUBE_ASSETDONE,
+    _SYS_CUBE_ACCELCHANGE,
+    _SYS_CUBE_TOUCH,
+    _SYS_CUBE_TILT,
+    _SYS_CUBE_SHAKE,
+    
+    _SYS_NUM_VECTORS,   // Must be last
+} _SYSVectorID;
 
-extern struct _SYSEventVectors _SYS_vectors;
+#define _SYS_NEIGHBOR_EVENTS    ( Sifteo::Intrinsic::LZ(_SYS_NEIGHBOR_ADD) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_NEIGHBOR_REMOVE) )
+#define _SYS_CUBE_EVENTS        ( Sifteo::Intrinsic::LZ(_SYS_CUBE_FOUND) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_LOST) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_ASSETDONE) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_ACCELCHANGE) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_TOUCH) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_TILT) |\
+                                  Sifteo::Intrinsic::LZ(_SYS_CUBE_SHAKE) )
+
+/**
+ * Internal state of the Pseudorandom Number Generator, maintained in user RAM.
+ */
 
 struct _SYSPseudoRandomState {
     uint32_t a, b, c, d;
@@ -430,6 +439,10 @@ void _SYS_yield(void);                          /// Temporarily cede control to 
 void _SYS_paint(void);                          /// Enqueue a new rendering frame
 void _SYS_finish(void);                         /// Wait for enqueued frames to finish
 void _SYS_ticks_ns(int64_t *nanosec);           /// Return the monotonic system timer, in nanoseconds
+
+void _SYS_setVector(_SYSVectorID vid, void *handler, void *context);
+void *_SYS_getVectorHandler(_SYSVectorID vid);
+void *_SYS_getVectorContext(_SYSVectorID vid);
 
 void _SYS_solicitCubes(_SYSCubeID min, _SYSCubeID max);
 void _SYS_enableCubes(_SYSCubeIDVector cv);     /// Which cubes will be trying to connect?

@@ -758,7 +758,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup name="triggers" width="48" height="72" visible="0">
+ <objectgroup name="triggers" width="48" height="72">
   <object name="DungeonGate" type="Gateway" x="416" y="1104" width="64" height="64">
    <properties>
     <property name="target" value="forest:DungeonGate"/>
@@ -766,27 +766,27 @@
   </object>
   <object name="Key0" type="Item" x="432" y="960" width="32" height="32">
    <properties>
-    <property name="id" value="1"/>
+    <property name="id" value="basic_key"/>
    </properties>
   </object>
   <object name="Key1" type="Item" x="176" y="576" width="32" height="32">
    <properties>
-    <property name="id" value="1"/>
+    <property name="id" value="basic_key"/>
    </properties>
   </object>
   <object name="Key2" type="Item" x="176" y="288" width="32" height="32">
    <properties>
-    <property name="id" value="1"/>
+    <property name="id" value="basic_key"/>
    </properties>
   </object>
   <object name="Ham" type="Item" x="48" y="320" width="32" height="32">
    <properties>
-    <property name="id" value="5"/>
+    <property name="id" value="ham"/>
    </properties>
   </object>
   <object name="Lettuce" type="Item" x="432" y="544" width="32" height="32">
    <properties>
-    <property name="id" value="4"/>
+    <property name="id" value="lettuce"/>
    </properties>
   </object>
  </objectgroup>

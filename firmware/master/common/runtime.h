@@ -13,26 +13,6 @@
 #include <sifteo/abi.h>
 #include <sifteo/machine.h>
 
-namespace EventBits {
-	enum ID {
-	    // cube event bits first (will be used in pointer maths)
-	    CUBEFOUND,
-	    CUBELOST,
-	    ASSETDONE,
-	    ACCELCHANGE,
-	    TOUCH,
-	    TILT,
-	    SHAKE,
-	    LAST_CUBE_EVENT = SHAKE,
-	    
-	    // other event bits
-		NEIGHBOR,
-		
-		// Must be last
-	    COUNT      
-	};
-}
-
 /**
  * Game code runtime environment
  */
@@ -107,9 +87,49 @@ class Event {
  public:
     static void dispatch();
     
-    static void setPending(EventBits::ID t, _SYSCubeID id) {
-        Sifteo::Atomic::SetLZ(pending, t);
-        Sifteo::Atomic::SetLZ(eventCubes[t], id);
+    static void setPending(_SYSVectorID vid, _SYSCubeID cid) {
+        ASSERT(vid < _SYS_NUM_VECTORS);
+        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
+        Sifteo::Atomic::SetLZ(pending, vid);
+        Sifteo::Atomic::SetLZ(vectors[vid].cubesPending, cid);
+    }
+    
+    static void setVector(_SYSVectorID vid, void *handler, void *context) {
+        ASSERT(vid < _SYS_NUM_VECTORS);
+        vectors[vid].handler = handler;
+        vectors[vid].context = context;
+    }
+    
+    static void *getVectorHandler(_SYSVectorID vid) {
+        ASSERT(vid < _SYS_NUM_VECTORS);
+        return vectors[vid].handler;
+    }
+
+    static void *getVectorContext(_SYSVectorID vid) {
+        ASSERT(vid < _SYS_NUM_VECTORS);
+        return vectors[vid].context;
+    }
+	
+    static inline void callCubeEvent(_SYSVectorID vid, _SYSCubeID cid) {
+        ASSERT(vid < _SYS_NUM_VECTORS);
+        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
+        ASSERT(Sifteo::Intrinsic::LZ(vid) & _SYS_CUBE_EVENTS);
+
+        VectorInfo &vi = vectors[vid];
+        _SYSCubeEvent fn = (_SYSCubeEvent) vi.handler;
+        if (fn)
+            fn(vi.context, cid);
+    }
+
+    static inline void callNeighborEvent(_SYSVectorID vid,
+        _SYSCubeID c0, _SYSSideID s0, _SYSCubeID c1, _SYSSideID s1) {
+        ASSERT(vid < _SYS_NUM_VECTORS);
+        ASSERT(Sifteo::Intrinsic::LZ(vid) & _SYS_NEIGHBOR_EVENTS);
+
+        VectorInfo &vi = vectors[vid];
+        _SYSNeighborEvent fn = (_SYSNeighborEvent) vi.handler;
+        if (fn)
+            fn(vi.context, c0, s0, c1, s1);
     }
 	
 	static void pause() {
@@ -124,35 +144,21 @@ class Event {
 		paused = false;
 	}
 
-    static bool dispatchInProgress;     /// Reentrancy detector
     static uint32_t pending;            /// CLZ map of all pending events
+    static bool dispatchInProgress;     /// Reentrancy detector
     static bool paused;
 
-    /// Each event type has a map by cube slot
-    static uint32_t eventCubes[EventBits::COUNT];     
-    
  private:
-    /*
-     * Vector entry points.
-     *
-     * XXX: This is an ugly placeholder for something
-     *      probably-machine-specific and data-driven to enter the
-     *      interpreter quickly and make an asynchronous procedure call.
-     */
-    static void callCubeEvent(EventBits::ID event, _SYSCubeID cid) {
-        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::CUBEFOUND == &(_SYS_vectors.cubeEvents.found) );
-        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::CUBELOST == &(_SYS_vectors.cubeEvents.lost) );
-        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::ASSETDONE == &(_SYS_vectors.cubeEvents.assetDone) );
-        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::ACCELCHANGE == &(_SYS_vectors.cubeEvents.accelChange) );
-        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::TOUCH == &(_SYS_vectors.cubeEvents.touch) );
-        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::TILT == &(_SYS_vectors.cubeEvents.tilt) );
-        STATIC_ASSERT( &(_SYS_vectors.cubeEvents.found)+EventBits::SHAKE == &(_SYS_vectors.cubeEvents.shake) );
-        ASSERT(event <= EventBits::LAST_CUBE_EVENT);
-        ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-        _SYSCubeEvent* eventArray = (_SYSCubeEvent*) &(_SYS_vectors.cubeEvents);
-        if (eventArray[event])
-             eventArray[event](cid);
-    }
+     
+    struct VectorInfo {
+        void *handler;
+        void *context;
+        union {                                 /// Type-specific state:
+            _SYSCubeIDVector cubesPending;      /// CLZ map of pending cubes
+        };
+    };
+
+    static VectorInfo vectors[_SYS_NUM_VECTORS];
 };
 
 
