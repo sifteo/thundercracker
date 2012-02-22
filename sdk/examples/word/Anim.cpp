@@ -71,12 +71,25 @@ struct AnimData
 };
 
 // FIXME write a tool to hide all this array/struct nesting ugliness
+// FIXME reuse stuff with indexing
 const static Vec2 positions[] =
 {
     Vec2(2, 2),
     Vec2(8, 2),
 
     Vec2(2, 2),
+    Vec2(8, 2),
+    Vec2(7, 2),
+    Vec2(6, 2),
+    Vec2(5, 2),
+    Vec2(4, 2),
+    Vec2(3, 2),
+    Vec2(2, 2),
+    Vec2(3, 2), //[10]
+    Vec2(4, 2),
+    Vec2(5, 2),
+    Vec2(6, 2),
+    Vec2(7, 2),
     Vec2(8, 2),
     Vec2(7, 2),
     Vec2(6, 2),
@@ -92,7 +105,10 @@ const static AnimObjData animObjData[] =
     { &Tile2, 0x0, 1, &positions[1]},
 
     { &Tile2, 0x0, 1, &positions[2]},
-    { &Tile2, 0x0, 7, &positions[3]},
+    { &Tile2, 0x0, 13, &positions[3]},
+
+    { &Tile2, 0x0, 13, &positions[9]},
+    { &Tile2, 0x0, 1, &positions[3]},
 };
 
 const static AnimData animData[] =
@@ -101,7 +117,10 @@ const static AnimData animData[] =
     { 1.f, true, 2, &animObjData[0]},
 
     // AnimIndex_2TileSlideL
-    { 5.f, false, 2, &animObjData[2]},
+    { 1.f, false, 2, &animObjData[2]},
+
+    // AnimIndex_2TileSlideR
+    { 1.f, false, 2, &animObjData[4]},
 };
 
 bool animPaint(AnimIndex anim,
@@ -114,7 +133,7 @@ bool animPaint(AnimIndex anim,
     float animPct =
             data.mLoop ?
                 fmodf(animTime, data.mDuration)/data.mDuration :
-                MAX(1.f, animTime/data.mDuration);
+                MIN(1.f, animTime/data.mDuration);
     const int MAX_ROWS = 16, MAX_COLS = 16;
     for (unsigned i = 0; i < data.mNumObjs; ++i)
     {
@@ -146,6 +165,11 @@ bool animPaint(AnimIndex anim,
         ASSERT(size.y > 0);
         ASSERT(objData.mAsset);
         unsigned assetFrame = 0;
+        if (animTime > 0.f)
+        {
+            DEBUG_LOG(("anim time:\t%f\tpct:%f\tframe:\t%d\n", animTime, animPct, frame));
+        }
+
         vid.BG0_drawPartialAsset(pos, clipOffset, size, *objData.mAsset, assetFrame);
         switch (anim)
         {

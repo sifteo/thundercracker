@@ -58,7 +58,14 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
                         VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
                         setPanning(vid, mBG0Panning);
-                        startAnim(AnimIndex_2TileSlideL, vid); // FIXME
+                        if (state.x < 1)
+                        {
+                            startAnim(AnimIndex_2TileSlideL, vid); // FIXME
+                        }
+                        else
+                        {
+                            startAnim(AnimIndex_2TileSlideR, vid); // FIXME
+                        }
                         WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
                     }
 
