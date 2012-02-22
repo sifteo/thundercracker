@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Map.h"
+#include "ViewSlot.h"
 class RoomView;
 class Room;
 
@@ -10,7 +11,6 @@ class Room;
 
 class Player {
 private:
-  CORO_PARAMS
   int mStatus;
   BroadLocation mCurrent;
   BroadLocation mTarget;
@@ -18,38 +18,32 @@ private:
   int mDir;
   int mAnimFrame;
   float mAnimTime;
-
-  // stately variables
-  int mProgress;
-  int mNextDir;
-  bool mApproachingLockedDoor;
-  float mTimeout;
-
-  BroadPath mPath;
-  NarrowPath mMoves;
-  uint8_t* pNextMove;
     
 public:
   void Init(Cube* pPrimary);
   int AnimFrame();
-  const BroadLocation* Current() { return &mCurrent; }
-  const BroadLocation* Target() { return &mTarget; }
-  RoomView* View() { return mTarget.view==0?mCurrent.view:mTarget.view; }
-  Cube::Side Direction() { return mDir; }
-  Vec2 Position() const { return mPosition; }
-  Vec2 Location() const { return mPosition/128; }
-  Room* CurrentRoom() const;
-  int Status() const { return mStatus; }
 
-  void SetLocation(Vec2 position, Cube::Side direction);
+  Room* GetRoom() const;
+
+  inline BroadLocation* Current() { return &mCurrent; }
+  inline BroadLocation* Target() { return &mTarget; }
+  inline RoomView* CurrentView() { return mCurrent.view; }
+  inline RoomView* TargetView() { return mTarget.view; }
+
+  inline ViewSlot* View() { return mTarget.view==0?mCurrent.view->Parent():mTarget.view->Parent(); }
+  inline Cube::Side Direction() { return mDir; }
+  inline Vec2 Position() const { return mPosition; }
+  inline Vec2 Location() const { return mPosition/128; }
+  inline int Status() const { return mStatus; }
+
+  void SetStatus(int status);
+  void SetDirection(Cube::Side dir) { mDir = dir; }
   void SetPosition(Vec2 position) { mPosition = position; }
 
-  void Move(int dx, int dy);
-  void Update(float dt);
-  void UpdateAnimation(float dt);
-  void Reset();
+  void ClearTarget();
+  void AdvanceToTarget();
 
-private:
-  void CheckForPassiveTrigger();
-  void CheckForActiveTrigger();
+  void Move(int dx, int dy);
+  inline void Move(Vec2 delta) { Move(delta.x, delta.y); }
+  void Update(float dt);
 };
