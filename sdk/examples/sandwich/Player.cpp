@@ -1,7 +1,6 @@
 #include "Player.h"
 #include "RoomView.h"
 #include "Game.h"
-#include "Dialog.h"
 
 #define DOOR_PAD 10
 #define GAME_FRAMES_PER_ANIM_FRAME 2
@@ -22,45 +21,31 @@ void Player::Init(Cube* pPrimary) {
   mDir = 2;
   mAnimFrame = 0;
   mAnimTime = 0.f;
-  mProgress = 0;
-  mNextDir = -1;
-  mApproachingLockedDoor = false;
-  CORO_RESET;
 }
 
-void Player::Reset() {
-  CORO_RESET;
-  mPath.steps[0] = -1;
-  mDir = 2;
-  mProgress = 0;
-  mNextDir = -1;
-  mPosition = Vec2(64,64);
-  mStatus = PLAYER_STATUS_IDLE;
-  mApproachingLockedDoor = false;
-}
-
-Room* Player::CurrentRoom() const {
+Room* Player::GetRoom() const {
   return pGame->GetMap()->GetRoom(Location());
 }
 
-
-void Player::SetLocation(Vec2 position, Cube::Side direction) {
-  CORO_RESET;
-  mPath.steps[0] = -1;
-  mDir = direction;
-  mProgress = 0;
-  mNextDir = -1;
-  mPosition = position;
-  mStatus = PLAYER_STATUS_IDLE;
-  mApproachingLockedDoor = false;
-}
-
-void Player::Move(int dx, int dy) {
-  mStatus = PLAYER_STATUS_WALKING;
+void Player::Move(int dx, int dy) { 
+  SetStatus(PLAYER_STATUS_WALKING);
   mPosition.x += dx;
   mPosition.y += dy;
-  mProgress += fast_abs(dx) + fast_abs(dy);
-  mDir = InferDirection(Vec2(dx, dy));
+  if (mCurrent.view) { mCurrent.view->UpdatePlayer(); }
+  if (mTarget.view) { mTarget.view->UpdatePlayer(); }
+}
+
+void Player::ClearTarget() {
+  mTarget.view->HidePlayer();
+  mTarget.view = 0;
+}
+
+void Player::AdvanceToTarget() {
+  mCurrent.view->HidePlayer();
+  mCurrent = mTarget;
+  mTarget.view = 0;  
+  mPosition = GetRoom()->Center(mCurrent.subdivision);
+  mCurrent.view->UpdatePlayer();
 }
 
 int Player::AnimFrame() {
@@ -85,7 +70,14 @@ int Player::AnimFrame() {
   return 0;
 }
 
-void Player::UpdateAnimation(float dt) {
+void Player::SetStatus(int status) {
+  if (mStatus == status) { return; }
+  mStatus = status;
+  mAnimFrame = 0;
+  mAnimTime = 0.f;
+}
+
+void Player::Update(float dt) {
   if (mStatus == PLAYER_STATUS_WALKING) {
     mAnimFrame = (mAnimFrame + 1) % (GAME_FRAMES_PER_ANIM_FRAME * (PlayerWalk.frames>>2));
   } else { // PLAYER_STATUS_IDLE
@@ -108,197 +100,3 @@ void Player::UpdateAnimation(float dt) {
     }
   }  
 }
-
-void Player::Update(float dt) {
-  // every update code here
-  UpdateAnimation(dt);
-
-  CORO_BEGIN;
-  // stately update code here
-  for(;;) {
-    // wait for tilt
-    mStatus = PLAYER_STATUS_IDLE;
-    mCurrent.view->UpdatePlayer();
-    mNextDir = mCurrent.view->Parent()->VirtualTiltDirection();
-    mPath.Cancel();
-    mAnimFrame = 0;
-    mAnimTime = 0.f;
-    #if TOUCH_ONLY
-      do {
-        CORO_YIELD;
-        if (mCurrent.view->Parent()->Touched()) {
-          CheckForActiveTrigger();
-        }
-      } while (!pGame->GetMap()->FindBroadPath(&mPath));
-    #else
-      do {
-        CORO_YIELD;
-        mNextDir = mCurrent.view->VirtualTiltDirection();
-      } while(mNextDir == -1 || !pGame->GetMap()->GetBroadLocationNeighbor(mCurrent, mNextDir, &mTarget));
-    #endif
-    // go to the target
-    mStatus = PLAYER_STATUS_WALKING;
-    mAnimFrame = 0;
-    mDir = mNextDir;
-    do {
-      if (mPath.IsDefined()) {
-        mDir = mPath.steps[0];
-        pGame->GetMap()->GetBroadLocationNeighbor(mCurrent, mDir, &mTarget);
-      }
-      // animate walking to target
-      PlaySfx(sfx_running);
-      mTarget.view->ShowPlayer();
-      if (mDir == SIDE_TOP && mCurrent.view->GetRoom()->HasClosedDoor()) {
-        for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
-          mPosition.y -= WALK_SPEED;
-          mCurrent.view->UpdatePlayer();
-          CORO_YIELD;
-        }
-        if (pGame->GetState()->HasBasicKey()) {
-          pGame->GetState()->DecrementBasicKeyCount();
-          if (!pGame->GetState()->HasBasicKey()) {
-            pGame->OnInventoryChanged(); // move to call site?
-          }
-          // check the door
-          mCurrent.view->GetRoom()->OpenDoor();
-          mCurrent.view->DrawBackground();
-          mCurrent.view->Parent()->GetCube()->vbuf.touch();
-          mCurrent.view->UpdatePlayer();
-          mTimeout = System::clock();
-          pGame->NeedsSync();
-          do {
-            CORO_YIELD;
-          } while(System::clock() - mTimeout <  0.5f);
-          PlaySfx(sfx_doorOpen);
-          // finish up
-          for(; mProgress+WALK_SPEED<=128; mProgress+=WALK_SPEED) {
-            mPosition.y -= WALK_SPEED;
-            mCurrent.view->UpdatePlayer();
-            mTarget.view->UpdatePlayer();
-            CORO_YIELD;
-          }
-          // fill in the remainder
-          mPosition = mTarget.view->GetRoom()->Center(mTarget.subdivision);
-        } else {
-          PlaySfx(sfx_doorBlock);
-          mPath.Cancel();
-          mTarget.view->HidePlayer();
-          mTarget.view = 0;
-          mDir = (mDir+2)%4;
-          for(mProgress=0; mProgress<24; mProgress+=WALK_SPEED) {
-            CORO_YIELD;
-            mPosition.y += WALK_SPEED;
-            mCurrent.view->UpdatePlayer();
-          }          
-        }
-      } else { // general case - A*
-        if (mTarget.view->GetRoom()->IsBridge()) {
-          mTarget.view->HideOverlay(mDir%2 == 1);
-        }
-  			{bool result = pGame->GetMap()->FindNarrowPath(mCurrent, mDir, &mMoves);
-	   		ASSERT(result);}
-        mProgress = 0;
-        for(pNextMove=mMoves.pFirstMove; pNextMove!=mMoves.End(); ++pNextMove) {
-          mDir = *pNextMove;  
-          if (mProgress != 0) {
-            mPosition += mProgress * kSideToUnit[*pNextMove];
-            mCurrent.view->UpdatePlayer();
-            mTarget.view->UpdatePlayer();
-            CORO_YIELD;
-          }
-          while(mProgress+WALK_SPEED < 16) {
-            mProgress += WALK_SPEED;
-            mPosition += WALK_SPEED * kSideToUnit[*pNextMove];
-            mCurrent.view->UpdatePlayer();
-            mTarget.view->UpdatePlayer();
-            CORO_YIELD;
-          }
-          mPosition += (16 - mProgress) * kSideToUnit[*pNextMove];
-          mProgress = WALK_SPEED - (16-mProgress);
-        }
-        if (mProgress != 0) {
-          pNextMove--;
-          mPosition += mProgress * kSideToUnit[*pNextMove];
-          mProgress = 0;
-          mCurrent.view->UpdatePlayer();
-          mTarget.view->UpdatePlayer();
-          CORO_YIELD;
-        }
-      }
-      if (mTarget.view) { // did we land on the target?
-        mCurrent.view->HidePlayer();
-        mCurrent = mTarget;
-        mTarget.view = 0;  
-        mPosition = mCurrent.view->GetRoom()->Center(mCurrent.subdivision);
-        mCurrent.view->UpdatePlayer();        
-        CheckForPassiveTrigger();
-      }  
-    } while(mPath.PopStep(mCurrent, &mTarget));
-    CheckForActiveTrigger();
-  }
-  
-  CORO_END;
-}
-
-void Player::CheckForPassiveTrigger() {
-  if (mCurrent.view->GetRoom()->HasItem()) {
-    const ItemData* pItem = mCurrent.view->GetRoom()->TriggerAsItem();
-    if (pGame->GetState()->FlagTrigger(pItem->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
-    if (pGame->GetState()->PickupItem(pItem->itemId)) {
-      PlaySfx(sfx_pickup);
-      pGame->OnInventoryChanged();
-    }
-    // do a pickup animation
-    for(unsigned frame=0; frame<PlayerPickup.frames; ++frame) {
-      mCurrent.view->SetPlayerFrame(PlayerPickup.index + (frame * PlayerPickup.width * PlayerPickup.height));
-      
-      for(float t=System::clock(); System::clock()-t<0.075f;) {
-        // this calc is kinda annoyingly complex
-        float u = (System::clock() - t) / 0.075f;
-        const float du = 1.f / (float) PlayerPickup.frames;
-        u = (frame + u) * du;
-        u = 1.f - (1.f-u)*(1.f-u)*(1.f-u)*(1.f-u);
-        pGame->Paint();
-        mCurrent.view->SetItemPosition(Vec2(0, -36.f * u) );
-      }
-    }
-    mCurrent.view->SetPlayerFrame(PlayerStand.index+ SIDE_BOTTOM* PlayerStand.width * PlayerStand.height);
-    for(float t=System::clock(); System::clock()-t<0.25f;) { System::paint(); }
-    mCurrent.view->HideItem();        
-  }
-}
-
-void Player::CheckForActiveTrigger() {
-  if (mCurrent.view->GetRoom()->HasGateway()) {
-    const GatewayData* pGate = mCurrent.view->GetRoom()->TriggerAsGate();
-    const MapData& targetMap = gMapData[pGate->targetMap];
-    const GatewayData& pTargetGate = targetMap.gates[pGate->targetGate];
-    if (pGame->GetState()->FlagTrigger(pGate->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); } 
-    pGame->WalkTo(128 * mCurrent.view->GetRoom()->Location() + Vec2(pGate->x, pGate->y));
-    pGame->TeleportTo(gMapData[pGate->targetMap], Vec2(
-      128 * (pTargetGate.trigger.room % targetMap.width) + pTargetGate.x,
-      128 * (pTargetGate.trigger.room / targetMap.width) + pTargetGate.y
-    ));
-  } else if (mCurrent.view->GetRoom()->HasNPC()) {
-    ////////
-    mStatus = PLAYER_STATUS_IDLE;
-    mCurrent.view->UpdatePlayer();
-    for(int i=0; i<16; ++i) {
-      pGame->Paint(true);
-    }
-    const NpcData* pNpc = mCurrent.view->GetRoom()->TriggerAsNPC();
-    if (pGame->GetState()->FlagTrigger(pNpc->trigger)) { mCurrent.view->GetRoom()->ClearTrigger(); }
-    DoDialog(gDialogData[pNpc->dialog], mCurrent.view->Parent()->GetCube());
-    System::paintSync();
-    mCurrent.view->Parent()->Restore();
-    System::paintSync();
-  }  
-  if (mDir != SIDE_BOTTOM || mStatus != PLAYER_STATUS_IDLE) {
-    mDir = SIDE_BOTTOM;
-    mStatus = PLAYER_STATUS_IDLE;
-    mCurrent.view->UpdatePlayer();
-  }
-}
-
-
-

@@ -9,7 +9,7 @@ EXP_REGULAR = re.compile(r"^([a-z]+)$")
 EXP_PLUS = re.compile(r"^([a-z]+)\+(\d+)$")
 EXP_MINUS = re.compile(r"^([a-z]+)\-(\d+)$")
 
-class GameScript:
+class QuestDatabase:
 	def __init__(self, world, path):
 		self.world = world
 		self.path = path

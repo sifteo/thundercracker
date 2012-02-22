@@ -1,15 +1,30 @@
 #include "Game.h"
 #include "Dialog.h"
+#include "DrawingHelpers.h"
 
 Cube gCubes[NUM_CUBES];
 AudioChannel gChannelSfx;
 AudioChannel gChannelMusic;
 
-//static Game sGame;
+static Game sGame;
 Game* pGame = 0;
 
 Cube* IntroCutscene();
 void WinScreen(Cube* primaryCube);
+
+static void ScrollMap(const MapData* pMap) {
+	int x = 0;
+	int y = 0;
+	ViewMode gfx(gCubes->vbuf);
+	gfx.init();
+	while(1) {
+		Vec2 accel = gCubes->virtualAccel();
+		x += accel.x / 10;
+		y += accel.y / 10;
+		DrawOffsetMap(&gfx, pMap, Vec2(x,y));
+		System::paintSync();
+	}
+}
 
 static bool AnyNeighbors(const Cube& c) {
 	return c.hasPhysicalNeighborAt(0) || 
@@ -48,19 +63,19 @@ void siftmain() {
 	#if MUSIC_ON
 	gChannelMusic.init();
 	#endif
+
+	//ScrollMap(gMapData+1);
+
 	for(;;) {
-		//#ifndef SIFTEO_SIMULATOR
+		#if FAST_FORWARD
+		Cube* pPrimary = gCubes;
+		#else
 		PlayMusic(music_sting, false);
 		Cube* pPrimary = IntroCutscene();
-		//#else 
-		//Cube* pPrimary = gCubes;
-		//#endif
-		{
-			Game game;
-			pGame = &game;
-			game.MainLoop(pPrimary);
-			pGame = 0;
-		}
+		#endif
+		pGame = &sGame;
+		pGame->MainLoop(pPrimary);
+		pGame = 0;
 		for(unsigned i=0; i<100; ++i) { System::paint(); }
 		//PlayMusic(music_winscreen, false);
 		//WinScreen(gCubes);
