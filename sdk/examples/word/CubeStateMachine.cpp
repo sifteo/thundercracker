@@ -58,8 +58,10 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
                         VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
                         setPanning(vid, mBG0Panning);
+                        startAnim(AnimIndex_2TileSlideL, vid); // FIXME
                         WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
                     }
+
                 }
                 break;
 
@@ -167,16 +169,22 @@ void CubeStateMachine::startAnim(AnimIndex anim,
                                  BG1Helper *bg1,
                                  const AnimParams *params)
 {
-    mAnimIndex = anim;
-    mAnimTime = 0.f;
-    animPaint(anim, vid, bg1, mAnimTime, params);
+    if (anim != mAnimIndex)
+    {
+        mAnimIndex = anim;
+        mAnimTime = 0.f;
+        animPaint(anim, vid, bg1, mAnimTime, params);
+    }
 }
 
 void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
                                   BG1Helper *bg1,
-                                  const AnimParams *params) const
+                                  const AnimParams *params)
 {
-    animPaint(mAnimIndex, vid, bg1, mAnimTime, params);
+    if (!animPaint(mAnimIndex, vid, bg1, mAnimTime, params))
+    {
+        startAnim(AnimIndex_2TileIdle, vid, bg1, params);
+    }
 }
 
 bool CubeStateMachine::canBeginWord()

@@ -26,7 +26,7 @@ struct AnimParams
     //float mTimeLeft;
 };
 
-void animPaint(AnimIndex anim,
+bool animPaint(AnimIndex anim,
                VidMode_BG0_SPR_BG1 &vid,
                BG1Helper *bg1 = 0,
                float animTime = 0.f,

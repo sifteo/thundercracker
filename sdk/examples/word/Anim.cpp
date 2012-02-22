@@ -64,6 +64,7 @@ struct AnimObjData
 struct AnimData
 {
     float mDuration;
+    bool mLoop;
     unsigned char mNumFrames;
     unsigned char mNumObjs;
     const AnimObjData *mObjs;
@@ -97,20 +98,23 @@ const static AnimObjData animObjData[] =
 const static AnimData animData[] =
 {
     // AnimIndex_2TileIdle
-    { 1.f, 1, 2, &animObjData[0]},
+    { 1.f, true, 1, 2, &animObjData[0]},
 
     // AnimIndex_2TileSlideL
-    { 1.f, 4, 2, &animObjData[2]},
+    { 1.f, false, 4, 2, &animObjData[2]},
 };
 
-void animPaint(AnimIndex anim,
+bool animPaint(AnimIndex anim,
                VidMode_BG0_SPR_BG1 &vid,
                BG1Helper *bg1,
                float animTime,
                const AnimParams *params)
 {
     const AnimData &data = animData[anim];
-    float animPct = fmodf(animTime, data.mDuration)/data.mDuration;
+    float animPct =
+            data.mLoop ?
+                fmodf(animTime, data.mDuration)/data.mDuration :
+                MAX(1.f, animTime/data.mDuration);
     unsigned char frame = (unsigned char) ((float)data.mNumFrames * animPct);
     const int MAX_ROWS = 16, MAX_COLS = 16;
     for (unsigned i = 0; i < data.mNumObjs; ++i)
@@ -151,6 +155,9 @@ void animPaint(AnimIndex anim,
             break;
         }
     }
+
+    // finished?
+    return data.mLoop || animTime <= data.mDuration;
 }
 
 
