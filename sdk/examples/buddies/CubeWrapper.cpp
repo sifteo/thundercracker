@@ -137,9 +137,10 @@ CubeWrapper::CubeWrapper()
 
 void CubeWrapper::Reset()
 {
-    // TODO: Reset mPieces and mPiecesSolution too?
-    for (unsigned int i = 0; i < arraysize(mPieceOffsets); ++i)
+    for (unsigned int i = 0; i < NUM_SIDES; ++i)
     {
+        mPieces[i] = Piece();
+        mPiecesSolution[i] = Piece();
         mPieceOffsets[i] = 0;
     }
     mPieceAnimT = 0.0f;

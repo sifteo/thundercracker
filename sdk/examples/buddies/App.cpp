@@ -204,7 +204,7 @@ bool UpdateCounter(int &counter, int speed)
     ASSERT(counter > 0);
     counter -= speed;
     
-    if (counter < 0)
+    if (counter <= 0)
     {
         counter = 0;
         return true;
@@ -792,7 +792,7 @@ void App::UpdateGameState(float dt)
                 }
                 else if (cubeId == 2)
                 {
-                    // TODO: Go to main menu
+                    // Go to main menu...
                 }
             }
             break;
@@ -834,6 +834,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         case GAME_STATE_STORY_CHAPTER_START:
         {
             DrawChapterTitle(cubeWrapper, mPuzzleIndex);
+            break;
         }
         case GAME_STATE_STORY_CUTSCENE_START:
         {
