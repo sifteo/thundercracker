@@ -35,33 +35,21 @@ public:
     void Reset();
     void Update(float dt);
     
+    // Drawing
     void DrawClear();
     void DrawFlush();
     bool DrawNeedsSync();
     
-    ////////////////////////////////////////
-    // TODO: Clean up this mess!!!
-    ////////////////////////////////////////
-    
     void DrawBuddy();
-    
-    // TODO: Swap param order to match API
+    void DrawBackground(const Sifteo::AssetImage &asset);
     void DrawUiAsset(
         const Vec2 &position,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
     void DrawUiText(const Vec2 &position, const char *text);
     
-    void DrawHintBar(Sifteo::Cube::Side side);
-    
-    void DrawBackground(const Sifteo::AssetImage &asset);
-    void DrawBackgroundWithText(
-        const Sifteo::AssetImage &asset,
-        const char *text, const Sifteo::Vec2 &textPosition);
-    
+    // Special-Case Cutscene Stuff
     void UpdateCutscene();
     void DrawCutscene(const char *text);
-    ////////////////////////////////////////
-    ////////////////////////////////////////
     
     // Asset Loading
     bool IsLoadingAssets();

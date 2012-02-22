@@ -63,40 +63,6 @@ const PinnedAssetImage &GetBuddyFacePartsAsset(int buddyId)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Vec2 GetHintBarPoint(Cube::Side side)
-{
-    ASSERT(side >= 0 && side < NUM_SIDES);
-    
-    switch (side)
-    {
-        default:
-        case SIDE_TOP:    return Vec2( 0,  0);
-        case SIDE_LEFT:   return Vec2( 0,  0);
-        case SIDE_BOTTOM: return Vec2( 0, 11);
-        case SIDE_RIGHT:  return Vec2(11,  0);
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-const AssetImage &GetHintBarAsset(Cube::ID cubeId, Cube::Side side)
-{
-    ASSERT(side >= 0 && side < NUM_SIDES);
-    
-    switch (side)
-    {
-        default:
-        case SIDE_TOP:    return cubeId == 0 ? HintBarBlueTop    : HintBarOrangeTop;
-        case SIDE_LEFT:   return cubeId == 0 ? HintBarBlueLeft   : HintBarOrangeLeft;
-        case SIDE_BOTTOM: return cubeId == 0 ? HintBarBlueBottom : HintBarOrangeBottom;
-        case SIDE_RIGHT:  return cubeId == 0 ? HintBarBlueRight  : HintBarOrangeRight;
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 const Vec2 kPartPositions[NUM_SIDES] =
 {
     Vec2(32, -8),
@@ -218,7 +184,7 @@ void CubeWrapper::DrawBuddy()
 {
     ASSERT(IsEnabled());
     
-    Video().BG0_drawAsset(Vec2(0, 0), GetBuddyFaceBackgroundAsset(mBuddyId));
+    DrawBackground(GetBuddyFaceBackgroundAsset(mBuddyId));
     
     for (unsigned int i = 0; i < NUM_SIDES; ++i)
     {
@@ -227,6 +193,14 @@ void CubeWrapper::DrawBuddy()
             DrawPiece(mPieces[i], i);
         }
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CubeWrapper::DrawBackground(const Sifteo::AssetImage &asset)
+{
+    Video().BG0_drawAsset(Vec2(0, 0), asset);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -246,38 +220,6 @@ void CubeWrapper::DrawUiText(const Vec2 &position, const char *text)
 {
     ASSERT(text != NULL);
     mBg1Helper.DrawText(position, Font, text);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawHintBar(Cube::Side side)
-{
-    ASSERT(side >= 0 && side < NUM_SIDES);
-    
-    mBg1Helper.DrawAsset(GetHintBarPoint(side), GetHintBarAsset(mCube.id(), side));
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawBackground(const Sifteo::AssetImage &asset)
-{
-    Video().BG0_drawAsset(Vec2(0, 0), asset);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CubeWrapper::DrawBackgroundWithText(
-    const Sifteo::AssetImage &asset,
-    const char *text, const Sifteo::Vec2 &textPosition)
-{
-    ASSERT(text != NULL);
-    
-    Video().BG0_drawAsset(Vec2(0, 0), asset);
-    
-    mBg1Helper.DrawText(textPosition, Font, text);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

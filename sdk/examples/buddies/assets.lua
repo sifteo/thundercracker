@@ -50,7 +50,7 @@ MoreHints = image{"assets/ui_more_hints.png"}
 ClueText = image{"assets/ui_clue_text.png"}
 ExitToMainMenu = image{"assets/ui_exit_to_main_menu.png"}
 ChapterNext = image{"assets/ui_next_chapter.png"}
-Retry = image{"assets/ui_retry.png"}
+ChapterRetry = image{"assets/ui_retry.png"}
 
 -- Sounds
 GemsSound = sound{"assets/gems1_4A9.raw"}
