@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sifteo.h"
+#include <stddef.h>
 
 namespace TotalsGame
 {

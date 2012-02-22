@@ -16,6 +16,8 @@ class ConfirmationMenu;
   class MenuController : public IStateController
   {
 
+     static const int MAX_CHAPTERS=7;
+
     class TextFieldView : View
     {
     public:

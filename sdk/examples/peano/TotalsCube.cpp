@@ -11,7 +11,7 @@ namespace TotalsGame
     TotalsCube::TotalsCube():
         Sifteo::Cube(),
       backgroundLayer(this->vbuf),
-      foregroundLayer(*this)
+        foregroundLayer(*this)
 	{
 		CORO_RESET;
 		view = NULL;
@@ -44,22 +44,64 @@ namespace TotalsGame
 
     void TotalsCube::RemoveEventHandler(EventHandler *e)
     {
-        if(e->prev)
+        //make sure this guy is even part of our list before we go and do things
+        EventHandler *c = eventHandler;
+        while(c)
         {
-            e->prev->next = e->next;
-        }
-        else
-        {
-            assert(e == eventHandler);
-            eventHandler = e->next;
+            if(c == e)
+            {   //found it!
+                if(e->prev)
+                {
+                    e->prev->next = e->next;
+                }
+                else
+                {
+                    ASSERT(e == eventHandler);
+                    eventHandler = e->next;
+                }
+
+                if(e->next)
+                {
+                    e->next->prev = e->prev;
+                }
+                e->next = e->prev = NULL;
+                return;
+            }
+
+            c = c->next;
         }
 
-        if(e->next)
-        {
-            e->next->prev = e->prev;
-        }
-        e->next = e->prev = NULL;
+
     }
+
+    void TotalsCube::SetView(View *v)
+    {
+        if(v != view)
+        {
+            //now that all views are statically allocated, delete is useless.
+            //in fact not deleting them is good because it mimics c#'s
+            //behavior better.
+            //delete view;
+            view = v;
+        }
+
+    }
+
+    Vec2 TotalsCube::GetTilt()
+    {
+        Cube::TiltState s = getTiltState();return Vec2(s.x, s.y);
+    }
+
+    bool TotalsCube::DoesNeighbor(TotalsCube *other)
+    {
+        for(int i = 0; i < NUM_SIDES; i++)
+        {
+            if(physicalNeighborAt(i) == other->id())
+                return true;
+        }
+        return false;
+    }
+
 
     void TotalsCube::ResetEventHandlers()
     {
@@ -253,11 +295,11 @@ namespace TotalsGame
 
     void TotalsCube::DrawFraction(Fraction f, const Vec2 &pos)
     {
-        char string[10];
-        f.ToString(string, 10);
+        String<10> string;
+        f.ToString(&string);
         DrawString(string, pos);
     }
-
+/* never used.  removing is easier than fixing snprintf call
     void TotalsCube::DrawDecimal(float d, const Vec2 &pos)
     {
         char string[10];
@@ -278,6 +320,7 @@ namespace TotalsGame
         }
 
     }
+    */
 
     void TotalsCube::DrawString(const char *string, const Vec2 &center)
     {
@@ -340,7 +383,7 @@ namespace TotalsGame
     }
 
     void TotalsCube::EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb)
-    {return;//TODO make text work
+    {
         overlayText = text;
         overlayYTop = yTop;
         overlayYSize = ySize;
@@ -376,11 +419,12 @@ namespace TotalsGame
             System::paintSync();
             backgroundLayer.set();
             backgroundLayer.setWindow(0, 128);
-            foregroundLayer.Clear();
+            //is the paint necessary? it'll get painted next draw call
+/*            foregroundLayer.Clear();
             view->Paint();
             foregroundLayer.Flush();
             System::paint();
-            System::paintSync();
+            System::paintSync();    */
             overlayShown = false;
         }
 

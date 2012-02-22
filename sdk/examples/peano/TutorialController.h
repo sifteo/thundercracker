@@ -104,6 +104,48 @@ class TutorialController : public IStateController {
     };
     MakeSixEventHandler makeSixEventHandler;
 
+    class WaitForShakeEventHandler: public TotalsCube::EventHandler
+    {
+        bool shook;
+    public:
+        WaitForShakeEventHandler()
+        {
+            shook = false;
+        }
+
+        void OnCubeShake(TotalsCube *cube)
+        {
+            shook = true;
+        }
+
+        bool DidShake()
+        {
+            return shook;
+        }
+    };
+    WaitForShakeEventHandler waitForShakeEventHandler[2];
+
+    class WaitForTouchEventHanlder: public TotalsCube::EventHandler
+    {
+        bool touched;
+    public:
+        WaitForTouchEventHanlder()
+        {
+            touched = false;
+        }
+
+        void OnCubeTouch(TotalsCube *cube, bool _touched)
+        {
+            touched = touched | _touched;
+        }
+
+        bool DidTouch()
+        {
+            return touched;
+        }
+    };
+    WaitForTouchEventHanlder waitForTouchEventHandler[2];
+
 
     CORO_PARAMS;
     float remembered_t;
@@ -232,6 +274,8 @@ public:
             CORO_YIELD(0);
         }
 
+        Game::GetInstance().neighborEventHandler = NULL;
+
         // flourish 1
         CORO_YIELD(0.5f);
         narrator->SetMessage("Awesome!", NarratorView::EmoteYay);
@@ -262,6 +306,8 @@ public:
         {
             CORO_YIELD(0);
         }
+
+        Game::GetInstance().neighborEventHandler = NULL;
 
         // flourish 2
         CORO_YIELD(0.5f);
@@ -338,99 +384,146 @@ public:
         AudioPlayer::PlaySfx(sfx_Tutorial_Correct);
         AudioPlayer::PlaySfx(sfx_Tutorial_Oops, false);
         Game::ClearCubeEventHandlers();
+        mGame->neighborEventHandler = NULL;
         CORO_YIELD(0.5f);
         narrator->SetMessage("Radical!", NarratorView::EmoteYay);
         CORO_YIELD(3.5f);
-#if 0
+
         // close shutters
-        narrator.SetMessage("");
-        yield return 1f;
-        foreach(var dt in mGame.CubeSet[2].CloseShutters()) { yield return dt; }
-        new BlankView(secondToken.Cube);
-        foreach(var dt in mGame.CubeSet[1].CloseShutters()) { yield return dt; }
-        new BlankView(firstToken.Cube);
-        yield return 1f;
-        narrator.SetMessage("Keep combining to build even more numbers!", "yay");
-        yield return 2f;
-        foreach(var dt in mGame.CubeSet[1].OpenShutters("tutorial_groups")) { yield return dt; }
-        new BlankView(mGame.CubeSet[1], "tutorial_groups");
-        yield return 5f;
-        narrator.SetMessage("");
-        yield return 1f;
-        foreach(var dt in mGame.CubeSet[1].CloseShutters()) { yield return dt; }
-        new BlankView(mGame.CubeSet[1]);
-        yield return 1f;
-
-        narrator.SetMessage("If you get stuck, you can shake for a hint.");
-        puzzle.target = firstToken.token.current as TokenGroup;
-        firstToken.token.PopGroup();
-        secondToken.token.PopGroup();
-        firstToken.DidGroupDisconnect();
-        secondToken.DidGroupDisconnect();
-        yield return 2f;
-        foreach(var dt in mGame.CubeSet[1].OpenShutters("background")) { yield return dt; }
-        firstToken.Cube = mGame.CubeSet[1];
-        yield return 0.1f;
-        foreach(var dt in mGame.CubeSet[2].OpenShutters("background")) { yield return dt; }
-        secondToken.Cube = mGame.CubeSet[2];
-        yield return 1f;
-
-        narrator.SetMessage("Try it out!  Shake one!");
-        while(!(firstToken.Cube.IsShaking || secondToken.Cube.IsShaking)) {
-            yield return 0f;
+        narrator->SetMessage("");
+        CORO_YIELD(1);
+        secondToken->SetCube(NULL);
+//        Game::GetCube(2)->SetView(NULL);
+        while((remembered_t = Game::GetCube(2)->CloseShutters(&Background)) >= 0)
+        {
+            CORO_YIELD(remembered_t);
         }
-        yield return 0.5f;
-        narrator.SetMessage("Nice!", "yay");
-        yield return 3f;
-        narrator.SetMessage("Careful! You only get a few hints!");
-        yield return 3f;
-        narrator.SetMessage("If you forget the target, press the screen.");
-        yield return 2f;
-        narrator.SetMessage("Try it out!  Press one!");
-        while(!(firstToken.Cube.ButtonIsPressed || secondToken.Cube.ButtonIsPressed)) {
-            yield return 0;
-        }
-        yield return 0.5f;
-        narrator.SetMessage("Great!", "yay");
-        yield return 3f;
-        firstToken.token.puzzle.target = null;
+        new(blankViewBuffer[2]) BlankView(secondToken->GetCube(), NULL);
 
-        foreach(var dt in mGame.CubeSet[2].CloseShutters()) { yield return dt; }
-        new BlankView(secondToken.Cube);
-        foreach(var dt in mGame.CubeSet[1].CloseShutters()) { yield return dt; }
-        new BlankView(firstToken.Cube);
+        Game::GetCube(1)->SetView(NULL);
+        while((remembered_t = Game::GetCube(1)->CloseShutters(&Background)) >= 0)
+        {
+            CORO_YIELD(remembered_t);
+        }
+        new(blankViewBuffer[1]) BlankView(firstToken->GetCube(), NULL);
+
+        CORO_YIELD(1);
+        narrator->SetMessage("Keep combining to build even more numbers!", NarratorView::EmoteYay);
+        CORO_YIELD(2);
+
+        Game::GetCube(1)->SetView(NULL);
+        while((remembered_t = Game::GetCube(1)->OpenShutters(&Tutorial_Groups)) >= 0)
+        {
+            CORO_YIELD(remembered_t);
+        }
+        new(blankViewBuffer[1]) BlankView(Game::GetCube(1), &Tutorial_Groups);
+
+        CORO_YIELD(5);
+        narrator->SetMessage("");
+        CORO_YIELD(1);
+        Game::GetCube(1)->SetView(NULL);
+        while((remembered_t = Game::GetCube(1)->CloseShutters(&Tutorial_Groups)) >= 0)
+        {
+            CORO_YIELD(remembered_t);
+        }
+        new(blankViewBuffer[1]) BlankView(Game::GetCube(1), NULL);
+
+        CORO_YIELD(1);
+        narrator->SetMessage("If you get stuck, you can shake for a hint.");
+        puzzle->target = (TokenGroup*)firstToken->token->current;
+        firstToken->token->PopGroup();
+        secondToken->token->PopGroup();
+        firstToken->DidGroupDisconnect();
+        secondToken->DidGroupDisconnect();
+        CORO_YIELD(2);
+
+        Game::GetCube(1)->SetView(NULL);
+        while((remembered_t = Game::GetCube(1)->OpenShutters(&Background)) >= 0)
+        {
+            CORO_YIELD(remembered_t);
+        }
+        firstToken->SetCube(Game::GetCube(1));
+        CORO_YIELD(0.1f);
+
+        Game::GetCube(2)->SetView(NULL);
+        while(( remembered_t = Game::GetCube(2)->OpenShutters(&Background)) >= 0)
+        {
+            CORO_YIELD(remembered_t);
+        }
+        secondToken->SetCube(Game::GetCube(2));
+        CORO_YIELD(1);
+
+        narrator->SetMessage("Try it out!  Shake one!");
+        Game::GetCube(1)->AddEventHandler(&waitForShakeEventHandler[0]);
+        Game::GetCube(2)->AddEventHandler(&waitForShakeEventHandler[1]);
+        while(!(waitForShakeEventHandler[0].DidShake()||waitForShakeEventHandler[1].DidShake())) {
+            CORO_YIELD(0);
+        }
+        Game::ClearCubeEventHandlers();
+        CORO_YIELD(0.5f);
+        narrator->SetMessage("Nice!", NarratorView::EmoteYay);
+        CORO_YIELD(3);
+        narrator->SetMessage("Careful! You only get a few hints!");
+        CORO_YIELD(3);
+        narrator->SetMessage("If you forget the target, press the screen.");
+        CORO_YIELD(2);
+        narrator->SetMessage("Try it out!  Press one!");
+
+        Game::GetCube(1)->AddEventHandler(&waitForTouchEventHandler[0]);
+        Game::GetCube(2)->AddEventHandler(&waitForTouchEventHandler[1]);
+        while(!(waitForTouchEventHandler[0].DidTouch()||waitForTouchEventHandler[1].DidTouch())) {
+            CORO_YIELD(0);
+        }
+        CORO_YIELD(0.5f);
+        narrator->SetMessage("Great!", NarratorView::EmoteYay);
+        CORO_YIELD(3);
+        firstToken->token->GetPuzzle()->target = NULL;
+
+        Game::GetCube(2)->SetView(NULL);
+        while((remembered_t = Game::GetCube(2)->CloseShutters(&Background)) >= 0)
+        {
+            CORO_YIELD(remembered_t);
+        }
+        new(blankViewBuffer[2]) BlankView(Game::GetCube(2), NULL);
+
+        Game::GetCube(1)->SetView(NULL);
+        while((remembered_t = Game::GetCube(1)->CloseShutters(&Background)) >= 0)
+        {
+            CORO_YIELD(remembered_t);
+        }
+        new(blankViewBuffer[1]) BlankView(Game::GetCube(1), NULL);
 
 
         // transition out narrator
-        narrator.SetMessage("Let's try it for real, now!", "wave");
-        yield return 3f;
-        narrator.SetMessage("Remember, you need to use every Key!");
-        yield return 3f;
-        narrator.SetMessage("Press-and-hold a cube to access the main menu.");
-        yield return 3f;
-        narrator.SetMessage("Good luck!", "wave");
-        yield return 3f;
+        narrator->SetMessage("Let's try it for real, now!", NarratorView::EmoteWave);
+        CORO_YIELD(3);
+        narrator->SetMessage("Remember, you need to use every Key!");
+        CORO_YIELD(3);
+        narrator->SetMessage("Press-and-hold a cube to access the main menu.");
+        CORO_YIELD(3);
+        narrator->SetMessage("Good luck!", NarratorView::EmoteWave);
+        CORO_YIELD(3);
 
-        Jukebox.PlayShutterClose();
-        for(var t=0f; t<kTransitionDuration; t+=mGame.dt) {
-            narrator.SetTransitionAmount(1f-t/kTransitionDuration);
-            yield return 0f;
+        narrator->SetMessage("");
+
+        AudioPlayer::PlayShutterClose();
+        Game::GetCube(0)->SetView(NULL);
+        for(remembered_t=0; remembered_t<kTransitionDuration; remembered_t+=mGame->dt) {
+            narrator->SetTransitionAmount(1.0f-remembered_t/kTransitionDuration);
+            CORO_YIELD(0);
         }
-        new BlankView(narrator.Cube);
-        yield return 0.5f;
+        new(blankViewBuffer[0]) BlankView(Game::GetCube(0), NULL);
+        CORO_YIELD(0.5);
 
-        mGame.saveData.CompleteTutorial();
-        if (mGame.currentPuzzle == null) {
-            if (!mGame.saveData.AllChaptersSolved) {
-                mGame.currentPuzzle = mGame.saveData.FindNextPuzzle();
+        mGame->saveData.CompleteTutorial();
+        if (mGame->currentPuzzle == NULL) {
+            if (!mGame->saveData.AllChaptersSolved()) {
+                mGame->currentPuzzle = mGame->saveData.FindNextPuzzle();
             } else {
-                mGame.currentPuzzle = mGame.database.Chapters[0].Puzzles[0];
+                mGame->currentPuzzle = mGame->database.GetChapter(0)->GetPuzzle(0);
             }
         }
 
-#endif
-
-        narrator->SetMessage("");
         mGame->sceneMgr.QueueTransition("Next");
 
         CORO_END;

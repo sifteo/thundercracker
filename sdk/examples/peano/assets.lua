@@ -59,7 +59,7 @@ Tilt_For_More = image { "tilt_for_more.png", pinned=true}
 Neighbor_For_Details = image { "neighbor_for_details.png", pinned=true }
 
 Dark_Purple = image { "dark_purple.png" }
-
+Tutorial_Groups = image { "tutorial_groups.png" }
 Nan = image { "nan.png" }
 
 Digits = image { "digits.png", width=16, height=16, pinned=true }

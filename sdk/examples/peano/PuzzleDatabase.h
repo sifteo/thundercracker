@@ -8,8 +8,6 @@ class PuzzleDatabase {
 
 public:
 
-    static const int MAX_CHAPTERS = 16;
-
     int NumChapters();
     PuzzleChapter *GetChapter(int index);
     int IndexOfChapter(PuzzleChapter *chapter);
@@ -18,7 +16,7 @@ public:
 
 
 private:
-    PuzzleChapter chapters[MAX_CHAPTERS];
+    PuzzleChapter *chapters;
     int numChapters;
 };
 

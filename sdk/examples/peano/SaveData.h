@@ -35,17 +35,18 @@ private:
     {
       Db = database;
     }
-
-    public bool AllChaptersSolved
-    {
+*/
+public:
+    bool AllChaptersSolved()
+    {/* TODO
       get {
         return !Db.Chapters.Exists( chapter =>
           chapter.CanBePlayedWithCurrentCubeSet() && !chapter.HasBeenSolved()
         );
-      }
+      }*/
+        return false;
     }
-*/
-public:
+
     bool IsChapterUnlockedWithCurrentCubeSet(int i)
     {
 /*
@@ -65,13 +66,7 @@ public:
       */return false;//TODO
     }
 
-    void CompleteTutorial()
-    {
-      if (!hasDoneTutorial) {
-        hasDoneTutorial = true;
-        Save();
-      }
-    }
+    void CompleteTutorial();
 
 public:
     void Reset();

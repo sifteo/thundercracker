@@ -1,4 +1,5 @@
 #pragma once
+#include "sifteo.h"
 
 namespace TotalsGame 
 {
@@ -24,7 +25,16 @@ namespace TotalsGame
 		bool IsNonZero();
 		void Reduce();
 
-		void ToString(char *s, int length);
+        template <unsigned int capacity>
+        void ToString(String<capacity> *output)
+        {
+            *output << nu;
+
+            if(de != 1)
+            {
+                *output << "/" << de;
+            }
+        }
 
 		static int GCD(int a, int b);
 

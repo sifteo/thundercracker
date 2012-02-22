@@ -88,3 +88,7 @@ DialogWindow.h
 DialogWindow.cpp
 ConfirmationMenu.h
 ConfirmationMenu.cpp
+Token.cpp
+InterstitialController.cpp
+PuzzleHelper.cpp
+TiltFlowItem.cpp

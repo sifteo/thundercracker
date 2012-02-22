@@ -95,7 +95,7 @@ void NarratorView::Paint() {
         return;
     }
 
-    c->Image(emotes[mEmote], Vec2(0,0));
+    c->Image(emotes[mEmote], Vec2(0,16-emotes[mEmote]->height));
 
     if (mOffset > 0) {
         c->DrawVaultDoorsOpenStep1(mOffset, &Narrator_Base);

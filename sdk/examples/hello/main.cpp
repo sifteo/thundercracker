@@ -6,9 +6,21 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
+#include <stddef.h>
 
 using namespace Sifteo;
 
+void *operator new(size_t size) throw() {return NULL;};
+
+void siftmain()
+{
+volatile float a = 7;
+volatile float *b = new float(7);
+*b = a * 3.4f;
+}
+
+
+#if 0
 #ifndef NUM_CUBES
 #  define NUM_CUBES 1
 #endif
@@ -92,3 +104,6 @@ void siftmain()
         System::paint();
     }
 }
+
+
+#endif

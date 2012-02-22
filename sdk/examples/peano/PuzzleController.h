@@ -5,8 +5,6 @@
 #include "AudioPlayer.h"
 #include "TokenView.h"
 
-#include <string.h>
-
 namespace TotalsGame {
 class PuzzleController: public IStateController
 {

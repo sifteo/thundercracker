@@ -21,7 +21,7 @@ void PuzzleController::OnSetup ()
 
     AudioPlayer::PlayInGameMusic();
     mHasTransitioned = false;
-    char stringRep[10];
+    String<10> stringRep;
     int stringRepLength;
     if (game->IsPlayingRandom())
     {
@@ -42,8 +42,8 @@ void PuzzleController::OnSetup ()
                 retries++;
             }
             puzzle->SelectRandomTarget();
-            puzzle->target->GetValue().ToString(stringRep, 10);
-            stringRepLength = strlen(stringRep);
+            puzzle->target->GetValue().ToString(&stringRep);
+            stringRepLength = stringRep.size();
         } while(stringRepLength > 4 || puzzle->target->GetValue().IsNan());
     }
     else

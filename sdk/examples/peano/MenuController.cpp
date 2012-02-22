@@ -385,8 +385,8 @@ ChapterSelect:
     //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
 
     {
-        static char chapterItemBuffer[PuzzleDatabase::MAX_CHAPTERS][sizeof(TiltFlowItem)];
-        static TiltFlowItem *chapterItems[PuzzleDatabase::MAX_CHAPTERS+1] = {0};
+        static char chapterItemBuffer[MAX_CHAPTERS][sizeof(TiltFlowItem)];
+        static TiltFlowItem *chapterItems[MAX_CHAPTERS+1] = {0};
         static int numChapterItems;
         numChapterItems = 0;
 

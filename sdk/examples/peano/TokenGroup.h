@@ -10,7 +10,7 @@ namespace TotalsGame
 
 	class TokenGroup : public IExpression 
 	{
-		DECLARE_POOL(TokenGroup, 32)
+        DECLARE_POOL(TokenGroup, Game::NUMBER_OF_CUBES)
 
 	public:
 
@@ -58,71 +58,21 @@ namespace TotalsGame
 		static TokenGroup *Connect(Token *st, Vec2 d, Token *dt) { return Connect(st, st, d, dt, dt); }
 		static TokenGroup *Connect(IExpression *src, Token *st, Vec2 d, Token *dt) { return Connect(src, st, d, dt, dt); }
 
-		static TokenGroup *Connect(IExpression *src, Token *srcToken, Vec2 d, IExpression *dst, Token *dstToken) {
-			if (d.x < 0 || d.y < 0) { return Connect(dst, dstToken, -d, src, srcToken); }
-			ShapeMask mask;
-			Vec2 d1, d2;
-			Vec2 sp, dp;
-			src->PositionOf(srcToken, &sp);
-			dst->PositionOf(dstToken, &dp);
-			if (!ShapeMask::TryConcat(src->GetMask(), dst->GetMask(), sp + d - dp, &mask, &d1, &d2)) {
-				return NULL;
-			}
-			Cube::Side srcSide = d.x == 1 ? SIDE_RIGHT : SIDE_BOTTOM;
+        static TokenGroup *Connect(IExpression *src, Token *srcToken, Vec2 d, IExpression *dst, Token *dstToken);
 
-			return new TokenGroup(
-				src, d1, srcToken, srcSide,
-				dst, d2, dstToken,
-				OpHelper::Compute(src->GetValue(), srcSide == SIDE_RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue()),
-				mask
-				);
-		}
-
-		void RecomputeValue() {
-			if (src->IsTokenGroup()) { ((TokenGroup*)src)->RecomputeValue(); }
-			if (dst->IsTokenGroup()) { ((TokenGroup*)dst)->RecomputeValue(); }
-			mValue = OpHelper::Compute(src->GetValue(), srcSide == SIDE_RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue());
-		}
+        void RecomputeValue();
 
 		TokenGroup(
 			IExpression *src, Token *srcToken, Cube::Side srcSide,
 			IExpression *dst, Token *dstToken
-			)
-		{
-				this->src = src;
-				this->srcToken = srcToken;
-				this->srcSide = srcSide;
-				this->dst = dst;
-				this->dstToken = dstToken;
-				void *userData = NULL;
-				Vec2 sp, dp;
-				src->PositionOf(srcToken, &sp);
-				dst->PositionOf(dstToken, &dp);
-				Vec2 d = kSideToUnit[srcSide];
-				ShapeMask::TryConcat(src->GetMask(), dst->GetMask(), sp + d - dp, &mMask, &srcPos, &dstPos);
-				mValue = OpHelper::Compute(src->GetValue(), srcSide == SIDE_RIGHT ? srcToken->GetOpRight() : srcToken->GetOpBottom(), dst->GetValue());				
-				mDepth = max(src->GetDepth(), dst->GetDepth()) +1;
-		}
+            );
 
 		TokenGroup(
 			IExpression *src, Vec2 srcPos, Token *srcToken, Cube::Side srcSide,
 			IExpression *dst, Vec2 dstPos, Token *dstToken,
 			Fraction val,
 			ShapeMask mask
-			)
-		{
-				this->src = src;
-				this->srcPos = srcPos;
-				this->srcToken = srcToken;
-				this->srcSide = srcSide;
-				this->dst = dst;
-				this->dstPos = dstPos;
-				this->dstToken = dstToken;
-				void *userData = NULL;
-				mValue = val;
-				mMask = mask;
-				mDepth = max(src->GetDepth(), dst->GetDepth()) +1;
-		}
+            );
 
 		virtual ~TokenGroup() {}
 

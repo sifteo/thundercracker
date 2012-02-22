@@ -72,14 +72,14 @@ namespace TotalsGame
 	void Game::PaintCubeViews()
     {
 		for(int i = 0; i < NUMBER_OF_CUBES; i++)
-		{
-			TotalsCube *c = Game::GetCube(i);
+        {
+            TotalsCube *c = Game::GetCube(i);
             if(c && !c->IsTextOverlayEnabled())
 			{
 				View *v = c->GetView();
 				if(v)
 					v->Paint();
-			}
+            }
 		}
 	}
 
@@ -99,7 +99,7 @@ namespace TotalsGame
 
 	void Game::Setup(TotalsCube *_cubes, int nCubes)
 	{
-		assert(nCubes == Game::NUMBER_OF_CUBES);
+        ASSERT(nCubes == Game::NUMBER_OF_CUBES);
 		cubes = _cubes;
 
         _SYS_vectors.neighborEvents.add = &OnNeighborAdd;
@@ -167,8 +167,7 @@ namespace TotalsGame
 			.Transition("isover", "No", "interstitial")
 
             .SetState("tutorial");//sting");
-
-	}
+    }
 
 	void Game::Tick()
 	{

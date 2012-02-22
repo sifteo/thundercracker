@@ -39,29 +39,13 @@ namespace TotalsGame
 		TotalsCube();
 		static const float kTransitionTime = 0.1f;
 
-        void SetView(View *v)
-        {
-            if(v != view)
-            {
-                delete view;
-                view = v;
-            }
-
-        }
+        void SetView(View *v);
 
 		View *GetView(void) {return view;}
 
-        bool DoesNeighbor(TotalsCube *other)
-        {
-            for(int i = 0; i < NUM_SIDES; i++)
-            {
-                if(physicalNeighborAt(i) == other->id())
-                    return true;
-            }
-            return false;
-        }
+        bool DoesNeighbor(TotalsCube *other);
 
-        Vec2 GetTilt() {Cube::TiltState s = getTiltState();return Vec2(s.x, s.y);}
+        Vec2 GetTilt();
 
 private:
 		EventHandler *eventHandler;
@@ -81,7 +65,7 @@ public:
         void ClipImage(const AssetImage *image, const Vec2 &pos);
 	
         void DrawFraction(Fraction f, const Vec2 &pos);
-        void DrawDecimal(float d, const Vec2 &pos);
+        //void DrawDecimal(float d, const Vec2 &pos);
         void DrawString(const char *string, const Vec2 &center);
 
         void EnableTextOverlay(const char *text, int yTop, int ySize, int br, int bg, int bb, int fr, int fg, int fb);

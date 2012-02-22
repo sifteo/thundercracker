@@ -1,13 +1,14 @@
 #pragma once
 
 #include "sifteo.h"
-#include "Puzzle.h"
 #include "PuzzleDatabase.h"
 #include "StateMachine.h"
 #include "SaveData.h"
 #include "TotalsCube.h"
 
 namespace TotalsGame {
+
+    class Puzzle;
 
 	class Game
 	{

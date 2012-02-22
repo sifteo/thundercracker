@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Puzzle.h"
+#include "sifteo.h"
+
 
 namespace TotalsGame {
 
@@ -16,15 +18,7 @@ namespace TotalsGame {
     const AssetImage *idImage;
     const char *name;
     
-	PuzzleChapter()
-	{
-		db = NULL;
-        idImage = NULL;
-		name = "";
-		numPuzzles = 0;
-        puzzles = (Puzzle*)puzzleBuffer;
-
-	}
+    PuzzleChapter();
 	/*
     public static PuzzleChapter CreateFromXML(XmlNode chapter) {
       var result = new PuzzleChapter() {
@@ -41,25 +35,10 @@ namespace TotalsGame {
     }
 	*/
 
-	int NumPuzzles() { return numPuzzles;}
-	Puzzle *GetPuzzle(int index)
-	{
-		assert(index < numPuzzles);
-		if(index < numPuzzles) 
-			return puzzles+index;
-		else
-			return NULL;
-	}
+    int NumPuzzles();
+    Puzzle *GetPuzzle(int index);
       
-    int IndexOfPuzzle(Puzzle *p)
-      {
-          for(int i = 0; i < numPuzzles; i++)
-          {
-              if(puzzles+i == p)
-                  return i;
-          }
-          return -1;
-      }
+    int IndexOfPuzzle(Puzzle *p);
 
       bool HasBeenSolved();
       bool CanBePlayedWithCurrentCubeSet();
@@ -68,9 +47,7 @@ namespace TotalsGame {
 
       
 	private:
-		enum {MAX_PUZZLES = 100};
       Puzzle *puzzles;
-      char puzzleBuffer[sizeof(Puzzle) * MAX_PUZZLES];
 		int numPuzzles;
   };
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Guid.h"
-#include "Token.h"
 #include "ObjectPool.h"
+#include <stddef.h>
 
 namespace TotalsGame 
 {
@@ -22,7 +22,7 @@ namespace TotalsGame
 
 	class Puzzle {
 
-        DECLARE_POOL(Puzzle, 4)
+        DECLARE_POOL(Puzzle, 2)
 
 	public:
 		Puzzle(int tokenCount);

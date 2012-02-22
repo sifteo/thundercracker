@@ -3,6 +3,7 @@
 #include "sifteo.h"
 #include "IExpression.h"
 #include "ObjectPool.h"
+#include "Game.h"
 
 namespace TotalsGame {
 
@@ -25,7 +26,7 @@ namespace TotalsGame {
 
 	class Token : public IExpression {
 
-		DECLARE_POOL(Token, 32)
+        DECLARE_POOL(Token, Game::NUMBER_OF_CUBES);
 
 	public:
 

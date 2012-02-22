@@ -21,7 +21,7 @@ namespace TotalsGame {
 		hintsUsed = 0;
 		unlimitedHints = false;
 
-		assert(tokenCount <= MAX_TOKENS);
+        ASSERT(tokenCount <= MAX_TOKENS);
 		numTokens = tokenCount;
 		for (int i=0; i<tokenCount; ++i) {
 			tokens[i] = new Token(this, i);
@@ -49,7 +49,7 @@ namespace TotalsGame {
     
 	Token *Puzzle::Puzzle::GetToken(int index)
 	{
-		assert(index < numTokens); 
+        ASSERT(index < numTokens);
 		return tokens[index];
 	}
 

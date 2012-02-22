@@ -1,7 +1,5 @@
 #include "Fraction.h"
-
-#include <stdio.h>
-#include <assert.h>
+#include "sifteo.h"
 
 namespace TotalsGame {
 
@@ -79,24 +77,6 @@ namespace TotalsGame {
 		t.Reduce();
 		return nu != t.nu || de != t.de;
 	}
-
-	void Fraction::ToString(char *s, int length)
-	{
-		char numString[8];
-		char denString[8];
-
-        snprintf(numString, 8, "%d", nu);
-        snprintf(denString, 8, "%d", de);
-
-        if(de != 1)
-        {
-            snprintf(s, length, "%s/%s", numString, denString);
-        }
-        else
-        {
-            snprintf(s, length, "%s", numString);
-        }
-    }
 
 	int Fraction::GCD(int a, int b) 
 	{

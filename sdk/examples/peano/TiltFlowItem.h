@@ -1,5 +1,8 @@
 #pragma once
 
+#include "sifteo.h"
+#include <stddef.h>
+
 namespace TotalsGame
 {
 
@@ -22,51 +25,23 @@ namespace TotalsGame
     const char *description;
     const AssetImage *GetImages();
     int GetNumImages();
-    Vec2 GetSourcePosition() {return sourcePosition;}
+    Vec2 GetSourcePosition();
 
-    TiltFlowItem (/*Color color TODO */)
-    {
-      // TODO this.color = color;
-      name = "";
-      description = "";
-      images = NULL;
-      imageIndex = 0;
-      userData = NULL;
-    }
+    TiltFlowItem (/*Color color TODO */);
 
-    TiltFlowItem(const AssetImage *image)
-    {
-      singleImage = image;
-      images = &singleImage;
-        numImages = 1;
-      name = "";
-      description = " ";
-      //TODO this.color = Color.Mask;
-        imageIndex = 0;
-        userData = NULL;
-    }
+    TiltFlowItem(const AssetImage *image);
 
-    void IncrementImageIndex() {imageIndex = (imageIndex+1)%numImages;}
+    void IncrementImageIndex();
 
-    TiltFlowItem(const AssetImage **_images, int _numImages)
-    {
-      images = _images;
-      numImages = _numImages;
-      name = "";
-      description = " ";
-      //TODO this.color = Color.Mask;
-      imageIndex = 0;
-      userData = NULL;
-    }
+    TiltFlowItem(const AssetImage **_images, int _numImages);
+    int GetOpt();
+    void SetOpt(int val);
 
-    int GetOpt() {return opt;}
-    void SetOpt(int val) { imageIndex = val % numImages; }
+    const AssetImage *GetImage();
 
-    const AssetImage *GetImage() {return images[imageIndex];}
+    bool IsToggle();
 
-    bool IsToggle() { return images != NULL && numImages > 1; }
-
-    bool HasImage() { return images != NULL;  }
+    bool HasImage();
 
     //for placement new
     void* operator new (size_t size, void* ptr) throw() {return ptr;}

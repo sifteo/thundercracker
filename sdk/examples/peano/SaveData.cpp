@@ -41,6 +41,14 @@ namespace TotalsGame
         return false;
         
     }
+
+    void SaveData::CompleteTutorial()
+    {
+      if (!hasDoneTutorial) {
+        hasDoneTutorial = true;
+        Save();
+      }
+    }
     
 
 }

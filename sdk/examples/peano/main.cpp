@@ -6,6 +6,9 @@
 
 using namespace Sifteo;
 
+void *operator new(size_t) throw();
+void operator delete(void*) throw();
+
 static TotalsGame::TotalsCube cubes[TotalsGame::Game::NUMBER_OF_CUBES];
 
 void siftmain() {

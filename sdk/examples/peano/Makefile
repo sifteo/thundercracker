@@ -10,7 +10,8 @@ OBJS_SIM = $(ASSETS).gen.sim.o \
 	TokenView.sim.o PuzzleController.sim.o TiltFlowDetailView.sim.o \
 	InterstitialView.sim.o MenuController.sim.o TiltFlowMenu.sim.o \
         TiltFlowView.sim.o NarratorView.sim.o DialogWindow.sim.o \
-        ConfirmationMenu.sim.o
+        ConfirmationMenu.sim.o InterstitialController.sim.o PuzzleHelper.sim.o \
+        TiltFlowItem.sim.o
 
 BIN_STM32 = hello.stm32
 OBJS_STM32 = $(ASSETS).gen.stm32.o \
@@ -21,7 +22,8 @@ OBJS_STM32 = $(ASSETS).gen.stm32.o \
 	TokenView.stm32.o PuzzleController.stm32.o TiltFlowDetailView.stm32.o \
 	InterstitialView.stm32.o MenuController.stm32.o TiltFlowMenu.stm32.o \
         TiltFlowView.stm32.o NarratorView.stm32.o DialogWindow.stm32.o \
-        ConfirmationMenu.stm32.o
+        ConfirmationMenu.stm32.o InterstitialController.stm32.o PuzzleHelper.stm32.o \
+        TiltFlowItem.stm32.o
 
 ASSETDEPS += *.png $(ASSETS).lua
 
