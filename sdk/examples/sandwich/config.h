@@ -7,6 +7,8 @@
 #define SFX_ON        	1
 #define LOAD_ASSETS   	1
 
+#define GFX_ARTIFACT_WORKAROUNDS	1
+
 #if SIFTEO_SIMULATOR
 	// these settings only applied to the emulator build
 	#define KLUDGES			1

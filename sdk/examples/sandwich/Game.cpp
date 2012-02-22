@@ -339,11 +339,13 @@ void Game::NpcDialog(const DialogData& data, Cube* cube) {
             BG1Helper ovrly(*cube);
             ovrly.DrawAsset(Vec2(2,0), *(txt.detail));
             ovrly.Flush();
-            System::paintSync();
-            for(unsigned i=0; i<4; ++i) {
-                cube->vbuf.touch();
-                System::paintSync();
-            }
+            Paint(true);
+            #if GFX_ARTIFACT_WORKAROUNDS
+            cube->vbuf.touch();
+            Paint(true);
+            cube->vbuf.touch();
+            Paint(true);
+            #endif
             //Now set up a letterboxed 128x48 mode
             mode.setWindow(80, 48);
             view.Init();
@@ -436,9 +438,11 @@ unsigned Game::OnPassiveTrigger() {
     // show a dialog description
     Cube *pCube = mPlayer.CurrentView()->Parent()->GetCube();
     ViewMode gfx = mPlayer.CurrentView()->Parent()->Graphics();
-    Paint(true);
-    pCube->vbuf.touch();
-    Paint(true);
+    #if GFX_ARTIFACT_WORKAROUNDS    
+      Paint(true);
+      pCube->vbuf.touch();
+      Paint(true);
+    #endif
     gfx.setWindow(80+16,128-80-16);
     Dialog view(pCube);
     view.Init();
@@ -454,12 +458,15 @@ unsigned Game::OnPassiveTrigger() {
     }
     view.SetAlpha(255);
     for(float t=System::clock(); System::clock()-t<4.f;) { Paint(); }
-    mPlayer.CurrentView()->Parent()->Restore();
-    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
-    Paint(true);
     pCube->vbuf.touch();
     Paint(true);
-
+    mPlayer.CurrentView()->Parent()->Restore();
+    mPlayer.CurrentView()->SetPlayerFrame(PlayerStand.index+ (SIDE_BOTTOM<<4));
+    #if GFX_ARTIFACT_WORKAROUNDS    
+      Paint(true);
+      pCube->vbuf.touch();
+      Paint(true);
+    #endif
     // wait a sec
     for(float t=System::clock(); System::clock()-t<0.25f;) { Paint(); }
     mPlayer.CurrentView()->HideItem();        

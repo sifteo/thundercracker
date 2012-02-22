@@ -62,16 +62,17 @@ void InventoryView::Update() {
 
 		pGame->NeedsSync();
 		CORO_YIELD;
-		pGame->NeedsSync();
-		Parent()->GetCube()->vbuf.touch();
-		CORO_YIELD;
-		pGame->NeedsSync();
-		Parent()->GetCube()->vbuf.touch();
-		CORO_YIELD;
-		pGame->NeedsSync();
-		Parent()->GetCube()->vbuf.touch();
-		CORO_YIELD;
-
+		#if GFX_ARTIFACT_WORKAROUNDS		
+			pGame->NeedsSync();
+			Parent()->GetCube()->vbuf.touch();
+			CORO_YIELD;
+			pGame->NeedsSync();
+			Parent()->GetCube()->vbuf.touch();
+			CORO_YIELD;
+			pGame->NeedsSync();
+			Parent()->GetCube()->vbuf.touch();
+			CORO_YIELD;
+		#endif
 		mDialog = Dialog(Parent()->GetCube());
 		{
 			uint8_t items[16];
