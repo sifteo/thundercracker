@@ -93,6 +93,7 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     setLibcallName(RTLIB::O_F32, "_SYS_23");
     setLibcallName(RTLIB::O_F64, "_SYS_22");
     
+    // Atomic operations
     setLibcallName(RTLIB::SYNC_FETCH_AND_OR_4, "_SYS_107");
     setLibcallName(RTLIB::SYNC_FETCH_AND_XOR_4, "_SYS_108");
     setLibcallName(RTLIB::SYNC_FETCH_AND_NAND_4, "_SYS_109");
