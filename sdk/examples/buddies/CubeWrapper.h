@@ -57,6 +57,7 @@ public:
     
     void EnableBg0SprBg1Video();
     void ClearBg1();
+    bool NeedsPaintSync();
     ////////////////////////////////////////
     ////////////////////////////////////////
     

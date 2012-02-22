@@ -54,6 +54,7 @@ public:
     
 private:
     void ResetCubesToPuzzle(const Puzzle &puzzle);
+    void UpdateCubes(float dt);
     
     void PlaySound();
     

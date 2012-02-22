@@ -107,6 +107,22 @@ bool AllSolved(App& app)
     
     return true;
 }
+                    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool NeedPaintSync(App& app)
+{
+    for (unsigned int i = 0; i < kNumCubes; ++i)
+    {
+        if (app.GetCubeWrapper(i).IsEnabled() && !app.GetCubeWrapper(i).NeedsPaintSync())
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -318,15 +334,7 @@ void App::Update(float dt)
 {
     UpdateGameState(dt);
     UpdateSwap(dt);
-    
-    // Cubes
-    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
-    {
-        if (mCubeWrappers[i].IsEnabled())
-        {
-            mCubeWrappers[i].Update(dt);
-        }
-    }
+    UpdateCubes(dt);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -336,7 +344,10 @@ void App::Draw()
 {
     DrawGameState();
     
-    // TODO: paintSync() handling
+    if (NeedPaintSync(*this))
+    {
+        System::paintSync();
+    }
     System::paint();
 }
 
@@ -477,6 +488,20 @@ void App::ResetCubesToPuzzle(const Puzzle &puzzle)
                 mCubeWrappers[i].SetPiece(j, puzzle.GetStartState(i, j));
                 mCubeWrappers[i].SetPieceSolution(j, puzzle.GetEndState(i, j));
             }
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void App::UpdateCubes(float dt)
+{
+    for (unsigned int i = 0; i < arraysize(mCubeWrappers); ++i)
+    {
+        if (mCubeWrappers[i].IsEnabled())
+        {
+            mCubeWrappers[i].Update(dt);
         }
     }
 }
