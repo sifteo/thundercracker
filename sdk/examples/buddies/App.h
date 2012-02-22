@@ -122,6 +122,7 @@ private:
     int mHintPiece0;
     int mHintPiece1;
     int mHintPieceSkip;
+    Sifteo::Cube::ID mHintCubeTouched;
     
     // Shuffle Mode
     int mShuffleMoveCounter;

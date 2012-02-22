@@ -312,6 +312,7 @@ App::App()
     , mHintPiece0(-1)
     , mHintPiece1(-1)
     , mHintPieceSkip(-1)
+    , mHintCubeTouched(CUBE_ID_UNDEFINED)
     , mShuffleMoveCounter(0)
     , mStoryPuzzleIndex(0)
 {
@@ -421,26 +422,32 @@ void App::OnNeighborAdd(
     Cube::ID cubeId0, Cube::Side cubeSide0,
     Cube::ID cubeId1, Cube::Side cubeSide1)
 {
-    if (mGameState == GAME_STATE_SHUFFLE_HINT)
-    {
-        StopHint();
-        StartGameState(GAME_STATE_SHUFFLE_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_CLUE)
+    if (mGameState == GAME_STATE_STORY_CLUE)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    else if (mGameState == GAME_STATE_STORY_HINT_1)
+    else if (mGameState == GAME_STATE_STORY_HINT_CLUE)
     {
-        StartGameState(GAME_STATE_STORY_PLAY);
-    }
-    else if (mGameState == GAME_STATE_STORY_HINT_2)
-    {
-        StopHint();
+        mHintCubeTouched = CUBE_ID_UNDEFINED;
         StartGameState(GAME_STATE_STORY_PLAY);
     }
     else
     {
+        if (mGameState == GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES)
+        {
+            StartGameState(GAME_STATE_SHUFFLE_PLAY);
+        }
+        else if (mGameState == GAME_STATE_SHUFFLE_HINT)
+        {
+            StopHint();
+            StartGameState(GAME_STATE_SHUFFLE_PLAY);
+        }
+        else if (mGameState == GAME_STATE_STORY_HINT_MOVE)
+        {
+            StopHint();
+            StartGameState(GAME_STATE_STORY_PLAY);
+        }
+        
         bool isSwapping = mSwapState != SWAP_STATE_NONE;
         
         bool isFixed =
@@ -460,11 +467,6 @@ void App::OnNeighborAdd(
         
         if (!isSwapping && !isFixed && isValidGameState && isValidCube)
         {
-            if (kGameMode == GAME_MODE_SHUFFLE && mGameState != GAME_STATE_SHUFFLE_PLAY)
-            {
-                StartGameState(GAME_STATE_SHUFFLE_PLAY);
-            }
-            
             ++mScoreMoves;
             OnSwapBegin(cubeId0 * NUM_SIDES + cubeSide0, cubeId1 * NUM_SIDES + cubeSide1);
         }
@@ -489,11 +491,12 @@ void App::OnTilt(Cube::ID cubeId)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    else if (mGameState == GAME_STATE_STORY_HINT_1)
+    else if (mGameState == GAME_STATE_STORY_HINT_CLUE)
     {
+        mHintCubeTouched = CUBE_ID_UNDEFINED;
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    else if (mGameState == GAME_STATE_STORY_HINT_2)
+    else if (mGameState == GAME_STATE_STORY_HINT_MOVE)
     {
         StopHint();
         StartGameState(GAME_STATE_STORY_PLAY);
@@ -522,11 +525,12 @@ void App::OnShake(Cube::ID cubeId)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    else if (mGameState == GAME_STATE_STORY_HINT_1)
+    else if (mGameState == GAME_STATE_STORY_HINT_CLUE)
     {
+        mHintCubeTouched = CUBE_ID_UNDEFINED;
         StartGameState(GAME_STATE_STORY_PLAY);
     }
-    else if (mGameState == GAME_STATE_STORY_HINT_2)
+    else if (mGameState == GAME_STATE_STORY_HINT_MOVE)
     {
         StopHint();
         StartGameState(GAME_STATE_STORY_PLAY);
@@ -668,14 +672,15 @@ void App::StartGameState(GameState gameState)
             {
                 mFaceCompleteTimers[i] = 0.0f;
             }
+            mHintTimer = kHintTimerOnDuration;
             break;
         }
-        case GAME_STATE_STORY_HINT_1:
+        case GAME_STATE_STORY_HINT_CLUE:
         {
             mDelayTimer = kStateTimeDelayLong;
             break;
         }
-        case GAME_STATE_STORY_HINT_2:
+        case GAME_STATE_STORY_HINT_MOVE:
         {
             StartHint();
             break;
@@ -827,13 +832,23 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            if (OnTouch() == TOUCH_EVENT_BEGIN)
+            if (mHintTimer > 0.0f)
             {
-                StartGameState(GAME_STATE_STORY_HINT_1);
+                if (UpdateTimer(mHintTimer, dt))
+                {
+                    StartGameState(GAME_STATE_STORY_HINT_MOVE);
+                }
+            }
+            
+            Cube::ID cubeTouched;
+            if (OnTouch(&cubeTouched) == TOUCH_EVENT_BEGIN)
+            {
+                mHintCubeTouched = cubeTouched;
+                StartGameState(GAME_STATE_STORY_HINT_CLUE);
             }
             break;
         }
-        case GAME_STATE_STORY_HINT_1:
+        case GAME_STATE_STORY_HINT_CLUE:
         {
             mScoreTimer += dt;
             
@@ -847,16 +862,18 @@ void App::UpdateGameState(float dt)
             
             if (UpdateTimer(mDelayTimer, dt))
             {
+                mHintCubeTouched = CUBE_ID_UNDEFINED;
                 StartGameState(GAME_STATE_STORY_PLAY);
             }
             
             if (OnTouch() == TOUCH_EVENT_BEGIN)
             {
-                StartGameState(GAME_STATE_STORY_HINT_2);
+                mHintCubeTouched = CUBE_ID_UNDEFINED;
+                StartGameState(GAME_STATE_STORY_PLAY);
             }
             break;
         }
-        case GAME_STATE_STORY_HINT_2:
+        case GAME_STATE_STORY_HINT_MOVE:
         {
             mScoreTimer += dt;
             
@@ -1078,7 +1095,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             break;
         }
-        case GAME_STATE_STORY_HINT_1:
+        case GAME_STATE_STORY_HINT_CLUE:
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
@@ -1091,7 +1108,8 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                         cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
                 }
                 
-                if (cubeWrapper.GetId() == 0)
+                ASSERT(mHintCubeTouched != CUBE_ID_UNDEFINED);
+                if (cubeWrapper.GetId() == mHintCubeTouched)
                 {
                     cubeWrapper.DrawUiAsset(Vec2(0, 3), MoreHints);
                     cubeWrapper.DrawUiText(Vec2(2, 4), GetPuzzle(mStoryPuzzleIndex).GetClue());
@@ -1103,7 +1121,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             break;
         }
-        case GAME_STATE_STORY_HINT_2:
+        case GAME_STATE_STORY_HINT_MOVE:
         {
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
@@ -1338,11 +1356,6 @@ void App::StopHint()
     
     mHintPiece0 = -1;
     mHintPiece1 = -1;
-    
-    if (kGameMode == GAME_MODE_SHUFFLE)
-    {
-        mHintTimer = kHintTimerOnDuration;
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
