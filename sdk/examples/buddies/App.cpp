@@ -307,22 +307,22 @@ App::App()
     , mSwapPiece0(0)
     , mSwapPiece1(0)
     , mSwapAnimationCounter(0)
-    , mHintPieceSkip(-1)
+    , mFaceCompleteTimers()
+    , mHintTimer(0.0f)
     , mHintPiece0(-1)
     , mHintPiece1(-1)
+    , mHintPieceSkip(-1)
     , mShuffleMoveCounter(0)
-    , mShuffleFaceCompleteTimers()
-    , mShuffleHintTimer(0.0f)
     , mStoryPuzzleIndex(0)
 {
+    for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
+    {
+        mFaceCompleteTimers[i] = 0.0f;
+    }
+    
     for (unsigned int i = 0; i < arraysize(mShufflePiecesMoved); ++i)
     {
         mShufflePiecesMoved[i] = false;
-    }
-    
-    for (unsigned int i = 0; i < arraysize(mShuffleFaceCompleteTimers); ++i)
-    {
-        mShuffleFaceCompleteTimers[i] = 0.0f;
     }
 }
 
@@ -620,11 +620,11 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_PLAY:
         {
-            for (unsigned int i = 0; i < arraysize(mShuffleFaceCompleteTimers); ++i)
+            for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
-                mShuffleFaceCompleteTimers[i] = 0.0f;
+                mFaceCompleteTimers[i] = 0.0f;
             }
-            mShuffleHintTimer = kHintTimerOnDuration;
+            mHintTimer = kHintTimerOnDuration;
             break;
         }
         case GAME_STATE_SHUFFLE_HINT:
@@ -634,7 +634,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_SHUFFLE_SOLVED:
         {
-            mDelayTimer = kStateTimeDelayShort;
+            mDelayTimer = kStateTimeDelayLong;
             break;
         }
         case GAME_STATE_STORY_START:
@@ -664,6 +664,10 @@ void App::StartGameState(GameState gameState)
         {
             mScoreTimer = 0.0f;
             mScoreMoves = 0;
+            for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
+            {
+                mFaceCompleteTimers[i] = 0.0f;
+            }
             break;
         }
         case GAME_STATE_STORY_HINT_1:
@@ -678,7 +682,7 @@ void App::StartGameState(GameState gameState)
         }
         case GAME_STATE_STORY_SOLVED:
         {
-            mDelayTimer = kStateTimeDelayShort;
+            mDelayTimer = kStateTimeDelayLong;
             break;
         }
         case GAME_STATE_STORY_CUTSCENE_END:
@@ -735,17 +739,17 @@ void App::UpdateGameState(float dt)
         {
             mScoreTimer += dt;
             
-            for (unsigned int i = 0; i < arraysize(mShuffleFaceCompleteTimers); ++i)
+            for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
-                if (mShuffleFaceCompleteTimers[i] > 0.0f)
+                if (mFaceCompleteTimers[i] > 0.0f)
                 {
-                    UpdateTimer(mShuffleFaceCompleteTimers[i], dt);
+                    UpdateTimer(mFaceCompleteTimers[i], dt);
                 }
             }
             
-            if (mShuffleHintTimer > 0.0f)
+            if (mHintTimer > 0.0f)
             {
-                if (UpdateTimer(mShuffleHintTimer, dt))
+                if (UpdateTimer(mHintTimer, dt))
                 {
                     StartGameState(GAME_STATE_SHUFFLE_HINT);
                 }
@@ -754,11 +758,11 @@ void App::UpdateGameState(float dt)
         }
         case GAME_STATE_SHUFFLE_HINT:
         {
-            for (unsigned int i = 0; i < arraysize(mShuffleFaceCompleteTimers); ++i)
+            for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
             {
-                if (mShuffleFaceCompleteTimers[i] > 0.0f)
+                if (mFaceCompleteTimers[i] > 0.0f)
                 {
-                    UpdateTimer(mShuffleFaceCompleteTimers[i], dt);
+                    UpdateTimer(mFaceCompleteTimers[i], dt);
                 }
             }
             
@@ -815,6 +819,14 @@ void App::UpdateGameState(float dt)
         {
             mScoreTimer += dt;
             
+            for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
+            {
+                if (mFaceCompleteTimers[i] > 0.0f)
+                {
+                    UpdateTimer(mFaceCompleteTimers[i], dt);
+                }
+            }
+            
             if (OnTouch() == TOUCH_EVENT_BEGIN)
             {
                 StartGameState(GAME_STATE_STORY_HINT_1);
@@ -824,6 +836,14 @@ void App::UpdateGameState(float dt)
         case GAME_STATE_STORY_HINT_1:
         {
             mScoreTimer += dt;
+            
+            for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
+            {
+                if (mFaceCompleteTimers[i] > 0.0f)
+                {
+                    UpdateTimer(mFaceCompleteTimers[i], dt);
+                }
+            }
             
             if (UpdateTimer(mDelayTimer, dt))
             {
@@ -839,6 +859,14 @@ void App::UpdateGameState(float dt)
         case GAME_STATE_STORY_HINT_2:
         {
             mScoreTimer += dt;
+            
+            for (unsigned int i = 0; i < arraysize(mFaceCompleteTimers); ++i)
+            {
+                if (mFaceCompleteTimers[i] > 0.0f)
+                {
+                    UpdateTimer(mFaceCompleteTimers[i], dt);
+                }
+            }
             
             if (OnTouch() == TOUCH_EVENT_BEGIN)
             {
@@ -952,7 +980,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         {
             cubeWrapper.DrawBuddy();
             
-            if (mShuffleFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
+            if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
             {
                 cubeWrapper.DrawUiAsset(
                     Vec2(0, 0),
@@ -963,6 +991,13 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
         case GAME_STATE_SHUFFLE_SOLVED:
         {
             cubeWrapper.DrawBuddy();
+            
+            if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
+            {
+                cubeWrapper.DrawUiAsset(
+                    Vec2(0, 0),
+                    cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+            }
             break;
         }
         case GAME_STATE_SHUFFLE_SCORE:
@@ -1029,6 +1064,13 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
                 cubeWrapper.DrawBuddy();
+            
+                if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
+                {
+                    cubeWrapper.DrawUiAsset(
+                        Vec2(0, 0),
+                        cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+                }
             }
             else
             {
@@ -1041,6 +1083,13 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
                 cubeWrapper.DrawBuddy();
+                
+                if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
+                {
+                    cubeWrapper.DrawUiAsset(
+                        Vec2(0, 0),
+                        cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+                }
                 
                 if (cubeWrapper.GetId() == 0)
                 {
@@ -1059,6 +1108,13 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
                 cubeWrapper.DrawBuddy();
+                
+                if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
+                {
+                    cubeWrapper.DrawUiAsset(
+                        Vec2(0, 0),
+                        cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+                }
             }
             else
             {
@@ -1071,6 +1127,13 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
                 cubeWrapper.DrawBuddy();
+                
+                if (mFaceCompleteTimers[cubeWrapper.GetId()] > 0.0f)
+                {
+                    cubeWrapper.DrawUiAsset(
+                        Vec2(0, 0),
+                        cubeWrapper.GetId() == 0 ? FaceCompleteBlue : FaceCompleteOrange);
+                }
             }
             else
             {
@@ -1275,11 +1338,10 @@ void App::StopHint()
     
     mHintPiece0 = -1;
     mHintPiece1 = -1;
-    mHintPieceSkip = -1;
     
     if (kGameMode == GAME_MODE_SHUFFLE)
     {
-        mShuffleHintTimer = kHintTimerOnDuration;
+        mHintTimer = kHintTimerOnDuration;
     }
 }
 
@@ -1328,8 +1390,8 @@ void App::OnSwapBegin(unsigned int swapPiece0, unsigned int swapPiece1)
     mSwapState = SWAP_STATE_OUT;
     mSwapAnimationCounter = kSwapAnimationCount;
     
-    mShuffleFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = 0.0f;
-    mShuffleFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = 0.0f;
+    mFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = 0.0f;
+    mFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = 0.0f;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1388,20 +1450,35 @@ void App::OnSwapFinish()
     }
     else if (mGameState == GAME_STATE_SHUFFLE_PLAY)
     {
-        if (mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() ||
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved())
+        bool swap0Solved =
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() &&
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES).mMustSolve &&
+            Compare(
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES),
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES)) &&
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES).mMustSolve;
+        
+        bool swap1Solved =
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved() &&
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES).mMustSolve &&
+            Compare(
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES),
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES)) &&     
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES).mMustSolve;
+        
+        if (swap0Solved || swap1Solved)
         {
             PlaySound();
         }
         
-        if (mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved())
+        if (swap0Solved)
         {
-            mShuffleFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = kShuffleFaceCompleteTimerDuration;
+            mFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = kShuffleFaceCompleteTimerDuration;
         }
         
-        if (mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved())
+        if (swap1Solved)
         {
-            mShuffleFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = kShuffleFaceCompleteTimerDuration;
+            mFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = kShuffleFaceCompleteTimerDuration;
         }
         
         if (AllSolved(*this))
@@ -1411,10 +1488,33 @@ void App::OnSwapFinish()
     }
     else if (mGameState == GAME_STATE_STORY_PLAY)
     {
-        if (mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() ||
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved())
+        bool swap0Solved =
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() &&
+            Compare(
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES),
+                mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES)) &&
+            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES).mMustSolve;
+        
+        bool swap1Solved =
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved() &&
+            Compare(
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES),
+                mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES)) &&     
+            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES).mMustSolve;
+        
+        if (swap0Solved || swap1Solved)
         {
             PlaySound();
+        }
+        
+        if (swap0Solved)
+        {
+            mFaceCompleteTimers[mSwapPiece0 / NUM_SIDES] = kShuffleFaceCompleteTimerDuration;
+        }
+        
+        if (swap1Solved)
+        {
+            mFaceCompleteTimers[mSwapPiece1 / NUM_SIDES] = kShuffleFaceCompleteTimerDuration;
         }
         
         if (AllSolved(*this))

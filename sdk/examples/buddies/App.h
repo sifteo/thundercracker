@@ -115,17 +115,17 @@ private:
     unsigned int mSwapPiece0;
     unsigned int mSwapPiece1;
     int mSwapAnimationCounter;
+    float mFaceCompleteTimers[kNumCubes];
     
     // Hinting
-    int mHintPieceSkip;
+    float mHintTimer;
     int mHintPiece0;
     int mHintPiece1;
+    int mHintPieceSkip;
     
     // Shuffle Mode
     int mShuffleMoveCounter;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
-    float mShuffleFaceCompleteTimers[kNumCubes];
-    float mShuffleHintTimer;
     
     // Story Mode
     unsigned int mStoryPuzzleIndex;
