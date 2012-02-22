@@ -180,31 +180,35 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
 
 /*
     Given an address:
-    - make sure any referenced memory has been loaded from external storage
-    - if a RAM address, sanitize it to within the
+    - if address is in virtual flash
+        - make sure any referenced memory has been loaded.
+        - translate from virtual to cached data address
+    - otherwise, assume RAM address
+        - if already in range of physical RAM, pass through
+        - otherwise, assume virtual RAM address and translate to phys RAM
 */
 reg_t SvmRuntime::validate(reg_t address)
 {
     reg_t result;
     if (isFlashAddr(address)) {
-        reg_t virtFlashBase = reinterpret_cast<reg_t>(flashRegion.data());
-        if (address < virtFlashBase || address - virtFlashBase > FlashLayer::BLOCK_SIZE) {
+        if (!inRange(address, cacheBlockBase(), FlashLayer::BLOCK_SIZE)) {
             FlashLayer::releaseRegion(flashRegion);
 
-            reg_t physFlashBase = ((address / FlashLayer::BLOCK_SIZE) * FlashLayer::BLOCK_SIZE) - VIRTUAL_FLASH_BASE + progInfo.textRodata.start;
-            LOG(("fetching physical data from 0x%x\n", physFlashBase));
+            uint32_t flashBlock = (address / FlashLayer::BLOCK_SIZE) * FlashLayer::BLOCK_SIZE;
+            reg_t physFlashBase = flashBlock - VIRTUAL_FLASH_BASE + progInfo.textRodata.start;
             bool f = FlashLayer::getRegion(physFlashBase, FlashLayer::BLOCK_SIZE, &flashRegion);
             ASSERT(f && "validate() - couldn't retrieve new flash block\n");
         }
-
-        result = reinterpret_cast<reg_t>(flashRegion.data());
-        LOG(("validated flash addr: 0x%x for address 0x%x\n", result, address));
+        result = virt2cacheFlash(address);
     }
     else {
-        LOG(("validated ram addr: 0x%x usr data: 0x%x for address 0x%x\n", cpu.virt2physAddr(address), cpu.userRam(), address));
-        result = cpu.virt2physAddr(address);
-        ASSERT(result > cpu.userRam() && result - cpu.userRam() < SvmCpu::MEM_IN_BYTES);
+        if (inRange(address, cpu.userRam(), SvmCpu::MEM_IN_BYTES))
+            result = address;
+        else
+            result = virt2physRam(address);
+        ASSERT(inRange(result, cpu.userRam(), SvmCpu::MEM_IN_BYTES) && "validate failed");
     }
+    LOG(("validated: 0x%x for address 0x%x\n", result, address));
     setBasePtrs(result);
     return result;
 }
