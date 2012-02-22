@@ -76,8 +76,6 @@ struct AnimData
 // FIXME reuse stuff with indexing
 const static Vec2 positions[] =
 {
-    Vec2(2, 2),
-    Vec2(8, 2),
 
     Vec2(2, 2),
     Vec2(8, 2),
@@ -87,11 +85,17 @@ const static Vec2 positions[] =
     Vec2(4, 2),
     Vec2(3, 2),
     Vec2(2, 2),
-    Vec2(3, 2), //[10]
+    Vec2(2, 2),
+    Vec2(2, 2),
+    Vec2(2, 2),
+    Vec2(3, 2),
     Vec2(4, 2),
     Vec2(5, 2),
     Vec2(6, 2),
     Vec2(7, 2),
+    Vec2(8, 2),
+    Vec2(8, 2),
+    Vec2(8, 2),
     Vec2(8, 2),
     Vec2(7, 2),
     Vec2(6, 2),
@@ -106,11 +110,13 @@ const static AnimObjData animObjData[] =
     { &Tile2, 0x0, 1, &positions[0]},
     { &Tile2, 0x0, 1, &positions[1]},
 
-    { &Tile2, 0x0, 1, &positions[2]},
-    { &Tile2, 0x0, 13, &positions[3]},
+    // AnimIndex_2TileSlideL
+    { &Tile2, 0x0, 10, &positions[7]},
+    { &Tile2, 0x0, 7, &positions[2]},
 
-    { &Tile2, 0x0, 13, &positions[9]},
-    { &Tile2, 0x0, 1, &positions[3]},
+    // AnimIndex_2TileSlideR
+    { &Tile2, 0x0, 7, &positions[10]},
+    { &Tile2, 0x0, 10, &positions[16]},
 };
 
 const static AnimData animData[] =

@@ -24,7 +24,7 @@ class CubeStateMachine : public StateMachine
 public:
     CubeStateMachine() :
         StateMachine(0), mNumLetters(1), mIdleTime(0.f), mAnimTime(0.f), mAnimIndex(AnimIndex_2TileIdle),
-        mBG0Panning(0.f), mBG0TargetPanning(0.f), mBG0PanningLocked(true),
+        mBG0Panning(0.f), mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0), mLettersStartTarget(0),
         mCube(0) {}
 
     void setCube(Cube& cube);
@@ -72,6 +72,8 @@ private:
     float mBG0Panning;
     float mBG0TargetPanning;
     bool mBG0PanningLocked;
+    unsigned mLettersStart;
+    unsigned mLettersStartTarget;
 
     Cube* mCube;
     TitleCubeState mTitleState;

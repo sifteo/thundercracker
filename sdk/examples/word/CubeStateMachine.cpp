@@ -48,6 +48,9 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                     _SYS_getTilt(getCube().id(), &state);
                     if (state.x != 1)
                     {
+                        mLettersStartTarget += state.x - 1 + GameStateMachine::getCurrentMaxLettersPerCube();
+                        mLettersStartTarget = (mLettersStartTarget % GameStateMachine::getCurrentMaxLettersPerCube());
+
                         mBG0TargetPanning -=
                                 BG0_PANNING_WRAP/GameStateMachine::getCurrentMaxLettersPerCube() * (state.x - 1);
                         while (mBG0TargetPanning < 0.f)
@@ -123,52 +126,30 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
     {
         return false;
     }
-    switch (GameStateMachine::getCurrentMaxLettersPerCube())
+
+    switch (mAnimIndex)
     {
-    case 2:
-        if (!forPaint && fmodf(mBG0TargetPanning, 144.f) != 0.f)
-        {
-            char swapped[MAX_LETTERS_PER_CUBE + 1];
-            swapped[0] = mLetters[1];
-            swapped[1] = mLetters[0];
-            swapped[2] = '\0';
-            _SYS_strlcpy(buffer, swapped, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
-            return true;
-        }
-        _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
-        return true;
-
-    case 3:
-        {
-            float panMod = fmodf(mBG0TargetPanning, 144.f);
-            if (!forPaint && panMod != 0.f)
-            {
-                char swapped[MAX_LETTERS_PER_CUBE + 1];
-                if (panMod <= 72.f)
-                {
-                    swapped[0] = mLetters[1];
-                    swapped[1] = mLetters[2];
-                    swapped[2] = mLetters[0];
-                    swapped[3] = '\0';
-                }
-                else
-                {
-                    swapped[0] = mLetters[2];
-                    swapped[1] = mLetters[0];
-                    swapped[2] = mLetters[1];
-                    swapped[3] = '\0';
-                }
-                _SYS_strlcpy(buffer, swapped, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
-                return true;
-            }
-        }
-        _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
-        return true;
-
+    case AnimIndex_2TileSlideL:
+        DEBUG_LOG(("(anim)letters start: %d\n", mLettersStart));
     default:
-        _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
-        return true;
+        if (mLettersStart == 0)
+        {
+            _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+        }
+        else
+        {
+            DEBUG_LOG(("letters start: %d\n", mLettersStart));
+            _SYS_strlcpy(buffer, &mLetters[mLettersStart], GameStateMachine::getCurrentMaxLettersPerCube() + 1 - mLettersStart);
+            _SYS_strlcat(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+        }
+        break;
+
+    //default:
+      //  _SYS_strlcpy(buffer, mLetters, GameStateMachine::getCurrentMaxLettersPerCube() + 1);
+        //break;
     }
+
+    return true;
 }
 
 void CubeStateMachine::startAnim(AnimIndex anim,
@@ -180,7 +161,7 @@ void CubeStateMachine::startAnim(AnimIndex anim,
     {
         mAnimIndex = anim;
         mAnimTime = 0.f;
-        animPaint(anim, vid, bg1, mAnimTime, params);
+        // FIXME params aren't really sent through right now: animPaint(anim, vid, bg1, mAnimTime, params);
     }
 }
 
@@ -190,6 +171,7 @@ void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
 {
     if (!animPaint(mAnimIndex, vid, bg1, mAnimTime, params))
     {
+        mLettersStart = mLettersStartTarget;
         startAnim(AnimIndex_2TileIdle, vid, bg1, params);
     }
 }
