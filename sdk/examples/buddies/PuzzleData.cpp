@@ -180,15 +180,6 @@ const Puzzle kPuzzleDefault =
 const Puzzle kPuzzles[] =
 {
     Puzzle(
-        "All Mixed Up",
-        "Let's get\nCRAZY!",
-        "My head\nhurts.",
-        "Unscramble",
-        2,
-        3,
-        kDefaultState,
-        kDefaultState),
-    Puzzle(
         "Big Mouth",
         "Gimme a kiss!",
         "Muuuahhh",
@@ -197,6 +188,15 @@ const Puzzle kPuzzles[] =
         0,
         kDefaultState,
         kAuthoredEndStateMouths),
+    Puzzle(
+        "All Mixed Up",
+        "Let's get\nCRAZY!",
+        "My head\nhurts.",
+        "Unscramble",
+        2,
+        3,
+        kDefaultState,
+        kDefaultState),
     Puzzle(
         "Bad Hair Day",
         "How do I get\ncool hair\nlike you?",

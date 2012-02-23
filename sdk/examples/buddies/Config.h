@@ -29,7 +29,7 @@ enum GameMode
     
     NUM_GAME_MODES
 };
-const GameMode kGameMode = GAME_MODE_SHUFFLE;
+const GameMode kGameMode = GAME_MODE_STORY;
 
 // Tuning (All Modes)
 const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle states

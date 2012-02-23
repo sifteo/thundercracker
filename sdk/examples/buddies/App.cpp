@@ -153,7 +153,7 @@ void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     buffer << "Chapter " << (puzzleIndex + 1) << "\n" << "\"" << GetPuzzle(puzzleIndex).GetChapterTitle() << "\"";
     
     cubeWrapper.DrawBackground(ChapterTitle);
-    cubeWrapper.DrawUiText(Vec2(1, 6), buffer.c_str());
+    cubeWrapper.DrawUiText(Vec2(1, 6), FontOrange, buffer.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -172,7 +172,7 @@ void DrawChapterSummary(
     buffer << "Chapter " << (puzzleIndex + 1) << "\nTime:" << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true) << "\nMoves:" << scoreMoves;
     
     cubeWrapper.DrawBackground(ChapterTitle);
-    cubeWrapper.DrawUiText(Vec2(1, 6), buffer.c_str());
+    cubeWrapper.DrawUiText(Vec2(1, 6), FontOrange, buffer.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -186,7 +186,7 @@ void DrawChapterNext(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     buffer << "Chapter " << (nextPuzzleIndex + 1);
     
     cubeWrapper.DrawBackground(ChapterNext);
-    cubeWrapper.DrawUiText(Vec2(3, 8), buffer.c_str());
+    cubeWrapper.DrawUiText(Vec2(3, 8), FontOrange, buffer.c_str());
 }
                     
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -198,7 +198,7 @@ void DrawChapterRetry(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     buffer << "Chapter " << (puzzleIndex + 1);
     
     cubeWrapper.DrawBackground(ChapterRetry);
-    cubeWrapper.DrawUiText(Vec2(3, 8), buffer.c_str());
+    cubeWrapper.DrawUiText(Vec2(3, 8), FontOrange, buffer.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1108,7 +1108,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             {
                 cubeWrapper.DrawBuddy();
                 cubeWrapper.DrawUiAsset(Vec2(0, 3), ChapterOverlayNeighbor);
-                cubeWrapper.DrawUiText(Vec2(2, 4), GetPuzzle(mStoryPuzzleIndex).GetClue());
+                cubeWrapper.DrawUiText(Vec2(2, 4), FontOrange, GetPuzzle(mStoryPuzzleIndex).GetClue());
             }
             else
             {
@@ -1152,7 +1152,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 if (cubeWrapper.GetId() == mHintCubeTouched)
                 {
                     cubeWrapper.DrawUiAsset(Vec2(0, 3), ChapterOverlay);
-                    cubeWrapper.DrawUiText(Vec2(2, 4), GetPuzzle(mStoryPuzzleIndex).GetClue());
+                    cubeWrapper.DrawUiText(Vec2(2, 4), FontOrange, GetPuzzle(mStoryPuzzleIndex).GetClue());
                 }
             }
             else

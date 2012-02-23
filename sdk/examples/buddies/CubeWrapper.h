@@ -45,7 +45,10 @@ public:
     void DrawUiAsset(
         const Vec2 &position,
         const Sifteo::AssetImage &asset, unsigned int assetFrame = 0);
-    void DrawUiText(const Vec2 &position, const char *text);
+    void DrawUiText(
+        const Vec2 &position,
+        const Sifteo::AssetImage &assetFont,
+        const char *text);
     
     // Special-Case Cutscene Stuff
     void UpdateCutscene();
