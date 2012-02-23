@@ -127,6 +127,8 @@ public:
     inline void resetIntro() { m_intro.Reset(); }
     inline void setDirty() { m_dirty = true; }
 
+    void StopGlimmer();
+
 private:
 	//try moving a gem from row1/col1 to row2/col2
 	//return if successful

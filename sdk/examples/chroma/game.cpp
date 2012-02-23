@@ -826,9 +826,11 @@ void Game::playSlosh()
 
 //destroy all dots of the given color
 void Game::BlowAll( unsigned int color )
-{
+{    
     for( int i = 0; i < NUM_CUBES; i++ )
     {
+        //make sure no glimmers happen
+        m_cubes[i].StopGlimmer();
         m_cubes[i].BlowAll( color );
     }
 

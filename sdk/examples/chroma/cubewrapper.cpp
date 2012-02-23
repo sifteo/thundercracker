@@ -1912,3 +1912,12 @@ void CubeWrapper::DrawGrid()
         }
     }
 }
+
+
+
+void CubeWrapper::StopGlimmer()
+{
+    static const float GLIMMER_BUFFER_TIME = 2.0f;
+    m_glimmer.Stop();
+    m_timeTillGlimmer += GLIMMER_BUFFER_TIME;
+}
