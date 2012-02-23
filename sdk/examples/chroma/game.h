@@ -82,7 +82,7 @@ public:
 
 	void Init();
 	void Update();
-	void Reset();
+    void Reset( bool bInGame = true );
 
 	//flag self to test matches
 	void setTestMatchFlag() { m_bTestMatches = true; }

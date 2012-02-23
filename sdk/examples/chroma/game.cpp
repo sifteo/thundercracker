@@ -69,7 +69,7 @@ void Game::Init()
 	}
     PRINT( "done loading" );
 #endif
-    Reset();
+    Reset( false );
 
     for( int i = 0; i < NUM_CUBES; i++ )
         m_cubes[i].Reset();
@@ -234,7 +234,7 @@ void Game::Update()
 }
 
 
-void Game::Reset()
+void Game::Reset(  bool bInGame )
 {
 	m_iDotScore = 0;
 	m_iDotScoreSum = 0;
@@ -248,7 +248,10 @@ void Game::Reset()
 
     //m_bHyperDotMatched = false;
 
-    setState( STATE_INTRO );
+    if( bInGame )
+        setState( STATE_INTRO );
+    else
+        setState( STARTING_STATE );
     m_ShakesRemaining = STARTING_SHAKES;
     //m_musicChannel.play( astrokraut, LoopRepeat );
 
