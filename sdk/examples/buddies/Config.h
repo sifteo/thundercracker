@@ -21,16 +21,6 @@ const bool kLoadAssets = true;
 const unsigned int kNumCubes = 2; // Number of cubes used in this game
 const unsigned int kMaxBuddies = 6; // Number of characters
 
-enum GameMode
-{
-    GAME_MODE_FREE_PLAY = 0,
-    GAME_MODE_SHUFFLE,
-    GAME_MODE_STORY,
-    
-    NUM_GAME_MODES
-};
-const GameMode kGameMode = GAME_MODE_STORY;
-
 // Tuning (All Modes)
 const float kStateTimeDelayShort = 1.0f; // Delay when switching between shuffle states
 const float kStateTimeDelayLong = 5.0f;

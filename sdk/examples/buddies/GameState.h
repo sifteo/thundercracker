@@ -21,6 +21,8 @@ enum GameState
 {
     GAME_STATE_NONE = 0,
     
+    GAME_STATE_MAIN_MENU,
+    
     GAME_STATE_FREE_PLAY,
     
     GAME_STATE_SHUFFLE_START,

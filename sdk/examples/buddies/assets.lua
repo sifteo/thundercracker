@@ -33,6 +33,11 @@ Font = image{"assets/font-8x16.png", height = 16}
 FontOrange = image{"assets/font-8x16_orange.png", height = 16}
 BannerEmpty = image{"assets/BannerEmpty.png"}
 
+-- Main Menu
+UiBackground = image{"assets/ui_background.png"}
+MainMenuChoices = image{"assets/ui_main_menu_choices.png"}
+MainMenuSelector = image{"assets/ui_main_menu_selector.png"}
+
 -- Story Mode
 CutsceneBackground = image{"assets/cutscene_bg.png"}
 CutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = true}
@@ -44,5 +49,5 @@ ChapterExitToMenu = image{"assets/ui_chapter_exit_to_menu.png"}
 ChapterNext = image{"assets/ui_chapter_next.png"}
 ChapterRetry = image{"assets/ui_chapter_retry.png"}
 
--- Sounds
+-- Sounds (use encode="PCM" for PCM encoding)
 GemsSound = sound{"assets/gems1_4A9.raw"}

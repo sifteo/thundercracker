@@ -350,25 +350,7 @@ void App::Init()
 
 void App::Reset()
 {
-    switch (kGameMode)
-    {
-        default:
-        case GAME_MODE_FREE_PLAY:
-        {
-            StartGameState(GAME_STATE_FREE_PLAY);
-            break;
-        }
-        case GAME_MODE_SHUFFLE:
-        {
-            StartGameState(GAME_STATE_SHUFFLE_START);
-            break;
-        }
-        case GAME_MODE_STORY:
-        {
-            StartGameState(GAME_STATE_STORY_START);
-            break;
-        }
-    }
+    StartGameState(GAME_STATE_MAIN_MENU);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -422,7 +404,60 @@ void App::OnNeighborAdd(
     Cube::ID cubeId0, Cube::Side cubeSide0,
     Cube::ID cubeId1, Cube::Side cubeSide1)
 {
-    if (mGameState == GAME_STATE_STORY_CLUE)
+    if (mGameState == GAME_STATE_MAIN_MENU)
+    {
+        if (cubeId0 == 0 && cubeId1 == 1 && cubeSide1 == SIDE_TOP)
+        {
+            switch (cubeSide0)
+            {
+                case SIDE_TOP:
+                {
+                    StartGameState(GAME_STATE_FREE_PLAY);
+                    break;
+                }
+                case SIDE_LEFT:
+                {
+                    StartGameState(GAME_STATE_SHUFFLE_START);
+                    break;
+                }
+                case SIDE_BOTTOM:
+                {
+                    StartGameState(GAME_STATE_STORY_START);
+                    break;
+                }
+                case SIDE_RIGHT:
+                {
+                    break;
+                }
+            }
+        }
+        else if (cubeId1 == 0 && cubeId0 == 1 && cubeSide0 == SIDE_TOP)
+        {
+            switch (cubeSide1)
+            {
+                case SIDE_TOP:
+                {
+                    StartGameState(GAME_STATE_FREE_PLAY);
+                    break;
+                }
+                case SIDE_LEFT:
+                {
+                    StartGameState(GAME_STATE_SHUFFLE_START);
+                    break;
+                }
+                case SIDE_BOTTOM:
+                {
+                    StartGameState(GAME_STATE_STORY_START);
+                    break;
+                }
+                case SIDE_RIGHT:
+                {
+                    break;
+                }
+            }
+        }
+    }
+    else if (mGameState == GAME_STATE_STORY_CLUE)
     {
         StartGameState(GAME_STATE_STORY_PLAY);
     }
@@ -456,12 +491,11 @@ void App::OnNeighborAdd(
         
         bool isValidGameState =
             mGameState == GAME_STATE_FREE_PLAY ||
-            mGameState == GAME_STATE_SHUFFLE_UNSCRAMBLE_THE_FACES ||
             mGameState == GAME_STATE_SHUFFLE_PLAY ||
             mGameState == GAME_STATE_STORY_PLAY;
         
         bool isValidCube =
-            kGameMode != GAME_MODE_STORY ||
+            mGameState != GAME_STATE_STORY_PLAY ||
             (   cubeId0 < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies() &&
                 cubeId1 < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies());
         
@@ -954,7 +988,7 @@ void App::UpdateGameState(float dt)
                 }
                 else if (cubeId == 2)
                 {
-                    // Go to main menu...
+                    StartGameState(GAME_STATE_MAIN_MENU);
                 }
             }
             break;
@@ -989,6 +1023,23 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
 {
     switch (mGameState)
     {
+        case GAME_STATE_MAIN_MENU:
+        {
+            if (cubeWrapper.GetId() == 0)
+            {
+                cubeWrapper.DrawBackground(MainMenuChoices);
+            }
+            else if (cubeWrapper.GetId() == 1)
+            {
+                cubeWrapper.DrawBackground(MainMenuSelector);
+            }
+            else
+            {
+                cubeWrapper.DrawBackground(UiBackground);
+            }
+        
+            break;
+        }
         case GAME_STATE_FREE_PLAY:
         {
             cubeWrapper.DrawBuddy();
