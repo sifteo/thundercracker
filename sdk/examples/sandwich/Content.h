@@ -3,20 +3,12 @@
 
 using namespace Sifteo;
 
-#define ITEM_NONE           0
-#define ITEM_BASIC_KEY      1
-#define ITEM_BREAD          2
-#define ITEM_TOMATO         3
-#define ITEM_LETTUCE        4
-#define ITEM_HAM            5
-#define ITEM_SKELETON_KEY   6
-#define ITEM_TYPE_COUNT     7
-
 #define TRIGGER_UNDEFINED   0
 #define TRIGGER_GATEWAY     1
 #define TRIGGER_ITEM        2
 #define TRIGGER_NPC         3
-#define TRIGGER_TYPE_COUNT  4
+#define TRIGGER_EQUIP       4
+#define TRIGGER_TYPE_COUNT  5
 
 #define SUBDIV_NONE         0
 #define SUBDIV_DIAG_POS     1

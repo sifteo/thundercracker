@@ -6,6 +6,7 @@
 
 class Room;
 #define ANIM_TILE_CAPACITY 4
+#define ITEM_OFFSET 34
 
 class RoomView : public View {
 private:
@@ -35,7 +36,7 @@ public:
   // methods
   void Init(unsigned rid);
   void Restore();
-  void Update();
+  void Update(float dt);
 
   void HideOverlay(bool flag);
   
@@ -45,7 +46,7 @@ public:
   void DrawPlayerFalling(int height);
   void HidePlayer();
 
-  
+  void SetEquipPosition(Vec2 p);
   void SetItemPosition(Vec2 p);
   void HideItem();
 

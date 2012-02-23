@@ -71,17 +71,17 @@ void ViewSlot::Restore() {
 	pGame->NeedsSync();
 }
 
-void ViewSlot::Update() {
+void ViewSlot::Update(float dt) {
 	mFlags.prevTouch = GetCube()->touching();
 	switch(mFlags.view) {
 	case VIEW_IDLE:
-		mView.idle.Update();
+		mView.idle.Update(dt);
 		break;
 	case VIEW_ROOM:
-		mView.room.Update();
+		mView.room.Update(dt);
 		break;
 	case VIEW_INVENTORY:
-		mView.inventory.Update();
+		mView.inventory.Update(dt);
 		break;
 	}
 }

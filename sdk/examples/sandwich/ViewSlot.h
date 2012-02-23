@@ -38,7 +38,7 @@ public:
 
 	void Init();
 	void Restore();
-	void Update();
+	void Update(float dt);
   
   	void HideSprites();
 

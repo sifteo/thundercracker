@@ -5,7 +5,7 @@
 #define USERDATA_NONE 0
 #define USERDATA_TRIGGER 1
 #define USERDATA_SUBDIV 2
-#define USERDATA_TRAPDOOR 3
+#define USERDATA_TRAPDOOR 3 // generalize to EVENT(?)/TRAPDOOR
 
 class Room {
 private:
@@ -55,6 +55,11 @@ public:
     return mUserdataType == USERDATA_TRIGGER && mInnerType == TRIGGER_NPC; 
   }
   
+  inline const TriggerData* Trigger() const {
+    ASSERT(mUserdataType == USERDATA_TRIGGER);
+    return (const TriggerData*) mUserdata;
+  }
+
   inline const GatewayData* TriggerAsGate() const { 
     ASSERT(mUserdataType == USERDATA_TRIGGER);
     ASSERT(mInnerType == TRIGGER_GATEWAY); 
@@ -84,6 +89,7 @@ inline void SetTrigger(int type, const TriggerData* p) {
     mInnerType = TRIGGER_UNDEFINED; 
   }
   
+
   //---------------------------------------------------------------------------
   // subdivs
   //---------------------------------------------------------------------------

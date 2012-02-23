@@ -1,5 +1,14 @@
 #include "GameState.h"
 
+#define ITEM_NONE           0
+#define ITEM_BASIC_KEY      1
+#define ITEM_BREAD          2
+#define ITEM_TOMATO         3
+#define ITEM_LETTUCE        4
+#define ITEM_HAM            5
+#define ITEM_SKELETON_KEY   6
+#define ITEM_TYPE_COUNT     7
+
 void GameState::Init() {
 	mQuest = 0;
 	mQuestMask = 0;
