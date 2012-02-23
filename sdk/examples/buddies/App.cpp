@@ -1270,8 +1270,10 @@ void App::ChooseHint()
                             const Piece &piece0 = mCubeWrappers[iCube0].GetPiece(iSide0);
                             const Piece &piece1 = mCubeWrappers[iCube1].GetPiece(iSide1);
                             
-                            if (piece0.mMustSolve && piece0.mAttribute != Piece::ATTR_FIXED &&
-                                piece1.mMustSolve && piece1.mAttribute != Piece::ATTR_FIXED)
+                            if (mCubeWrappers[iCube0].GetPieceSolution(iSide0).mMustSolve &&
+                                piece0.mAttribute != Piece::ATTR_FIXED &&
+                                mCubeWrappers[iCube1].GetPieceSolution(iSide1).mMustSolve &&
+                                piece1.mAttribute != Piece::ATTR_FIXED)
                             {
                                 const Piece &pieceSolution0 =
                                     mCubeWrappers[iCube0].GetPieceSolution(iSide0);
@@ -1505,7 +1507,6 @@ void App::OnSwapFinish()
     {
         bool swap0Solved =
             mCubeWrappers[mSwapPiece0 / NUM_SIDES].IsSolved() &&
-            mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES).mMustSolve &&
             Compare(
                 mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPiece(mSwapPiece0 % NUM_SIDES),
                 mCubeWrappers[mSwapPiece0 / NUM_SIDES].GetPieceSolution(mSwapPiece0 % NUM_SIDES)) &&
@@ -1513,7 +1514,6 @@ void App::OnSwapFinish()
         
         bool swap1Solved =
             mCubeWrappers[mSwapPiece1 / NUM_SIDES].IsSolved() &&
-            mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES).mMustSolve &&
             Compare(
                 mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPiece(mSwapPiece1 % NUM_SIDES),
                 mCubeWrappers[mSwapPiece1 / NUM_SIDES].GetPieceSolution(mSwapPiece1 % NUM_SIDES)) &&     
