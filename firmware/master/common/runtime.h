@@ -22,6 +22,34 @@ class Runtime {
     static void run();
     static void exit();
 
+    /*
+        Ensure that a read-only pointer is valid, and translate if necessary.
+        Read-write pointers may reference any valid flash or ram memory.
+    */
+    template <typename T>
+    static const bool validateReadOnly(T &ptr, uint32_t size, bool allowNULL = false)
+    {
+        if (!allowNULL && !ptr)
+            return false;
+
+        ptr = ptr;
+        return true;
+    }
+
+    /*
+        Ensure that a read-write pointer is valid, and translate if necessary.
+        Read-write pointers cannot reference any flash memory.
+    */
+    template <typename T>
+    static const bool validateReadWrite(T &ptr, uint32_t size, bool allowNULL = false)
+    {
+        if (!allowNULL && !ptr)
+            return false;
+
+        ptr = ptr;
+        return true;
+    }
+
     static bool checkUserPointer(const void *ptr, uint32_t size, bool allowNULL=false)
     {
         /*
