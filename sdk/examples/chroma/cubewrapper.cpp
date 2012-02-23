@@ -270,13 +270,11 @@ void CubeWrapper::Draw()
                 m_vid.BG0_drawAsset(Vec2(0,0), MsgHighScores, 0);
                 //m_bg1helper.DrawText( Vec2( 2, 2 ), Font, "HIGH SCORES" );
 
-                //for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
-                for( unsigned int i = 0; i < 2; i++ )
+                for( unsigned int i = 0; i < Game::NUM_HIGH_SCORES; i++ )
                 {
                     int score = Game::Inst().getHighScore(i);
 
-                    //m_bg1helper.DrawTextf( Vec2( xPos, 5+2*i  ), Font, "%d", Game::Inst().getHighScore(i) );
-                    Banner::DrawScore( m_bg1helper, Vec2( 8, 5+2*i ), Banner::RIGHT, score );
+                    Banner::DrawScore( m_bg1helper, Vec2( 7, 5+2*i ), Banner::RIGHT, score );
                 }
             }
             else if( m_cube.id() == 2 + CUBE_ID_BASE )
