@@ -35,14 +35,13 @@ BannerEmpty = image{"assets/BannerEmpty.png"}
 -- Story Mode
 CutsceneBackground = image{"assets/cutscene_bg.png"}
 CutsceneSprites = image{"assets/cutscene_sprites.png", height = 64, pinned = true}
-CutsceneTextBubble = image{"assets/cutscene_text_bubble.png"}
-ChapterSummary = image{"assets/ui_chapter_summary.png"}
+CutsceneTextBubble = image{"assets/ui_textbox.png"}
 ChapterTitle = image{"assets/ui_chapter_title.png"}
-MoreHints = image{"assets/ui_more_hints.png"}
-ClueText = image{"assets/ui_clue_text.png"}
-ExitToMainMenu = image{"assets/ui_exit_to_main_menu.png"}
-ChapterNext = image{"assets/ui_next_chapter.png"}
-ChapterRetry = image{"assets/ui_retry.png"}
+ChapterOverlay = image{"assets/ui_chapter_overlay.png"}
+ChapterOverlayNeighbor = image{"assets/ui_chapter_overlay_neighbor.png"}
+ChapterExitToMenu = image{"assets/ui_chapter_exit_to_menu.png"}
+ChapterNext = image{"assets/ui_chapter_next.png"}
+ChapterRetry = image{"assets/ui_chapter_retry.png"}
 
 -- Sounds
 GemsSound = sound{"assets/gems1_4A9.raw"}

@@ -153,7 +153,7 @@ void DrawChapterTitle(CubeWrapper &cubeWrapper, unsigned int puzzleIndex)
     buffer << "Chapter " << (puzzleIndex + 1) << "\n" << "\"" << GetPuzzle(puzzleIndex).GetChapterTitle() << "\"";
     
     cubeWrapper.DrawBackground(ChapterTitle);
-    cubeWrapper.DrawUiText(Vec2(2, 4), buffer.c_str());
+    cubeWrapper.DrawUiText(Vec2(1, 6), buffer.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,8 +171,8 @@ void DrawChapterSummary(
     String<128> buffer;
     buffer << "Chapter " << (puzzleIndex + 1) << "\nTime:" << Fixed(minutes, 2, true) << ":" << Fixed(seconds, 2, true) << "\nMoves:" << scoreMoves;
     
-    cubeWrapper.DrawBackground(ChapterSummary);
-    cubeWrapper.DrawUiText(Vec2(2, 4), buffer.c_str());
+    cubeWrapper.DrawBackground(ChapterTitle);
+    cubeWrapper.DrawUiText(Vec2(1, 6), buffer.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1107,7 +1107,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             if (cubeWrapper.GetId() < GetPuzzle(mStoryPuzzleIndex).GetNumBuddies())
             {
                 cubeWrapper.DrawBuddy();
-                cubeWrapper.DrawUiAsset(Vec2(0, 3), ClueText);
+                cubeWrapper.DrawUiAsset(Vec2(0, 3), ChapterOverlayNeighbor);
                 cubeWrapper.DrawUiText(Vec2(2, 4), GetPuzzle(mStoryPuzzleIndex).GetClue());
             }
             else
@@ -1151,7 +1151,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
                 ASSERT(mHintCubeTouched != CUBE_ID_UNDEFINED);
                 if (cubeWrapper.GetId() == mHintCubeTouched)
                 {
-                    cubeWrapper.DrawUiAsset(Vec2(0, 3), MoreHints);
+                    cubeWrapper.DrawUiAsset(Vec2(0, 3), ChapterOverlay);
                     cubeWrapper.DrawUiText(Vec2(2, 4), GetPuzzle(mStoryPuzzleIndex).GetClue());
                 }
             }
@@ -1223,7 +1223,7 @@ void App::DrawGameStateCube(CubeWrapper &cubeWrapper)
             }
             else if (cubeWrapper.GetId() == 2)
             {
-                cubeWrapper.DrawBackground(ExitToMainMenu);
+                cubeWrapper.DrawBackground(ChapterExitToMenu);
             }
             break;
         }
