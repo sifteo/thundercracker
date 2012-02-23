@@ -3,20 +3,12 @@
 
 using namespace Sifteo;
 
-#define ITEM_NONE           0
-#define ITEM_BASIC_KEY      1
-#define ITEM_BREAD          2
-#define ITEM_TOMATO         3
-#define ITEM_LETTUCE        4
-#define ITEM_HAM            5
-#define ITEM_SKELETON_KEY   6
-#define ITEM_TYPE_COUNT     7
-
 #define TRIGGER_UNDEFINED   0
 #define TRIGGER_GATEWAY     1
 #define TRIGGER_ITEM        2
 #define TRIGGER_NPC         3
-#define TRIGGER_TYPE_COUNT  4
+#define TRIGGER_EQUIP       4
+#define TRIGGER_TYPE_COUNT  5
 
 #define SUBDIV_NONE         0
 #define SUBDIV_DIAG_POS     1
@@ -28,6 +20,11 @@ using namespace Sifteo;
 struct QuestData {
     uint8_t mapId;
     uint8_t roomId;
+};
+
+struct InventoryData {
+    const char* name;
+    const char* description;
 };
 
 struct DialogTextData {
@@ -73,6 +70,11 @@ struct NpcData {
     uint8_t y;
 };
 
+struct TrapdoorData {
+    uint8_t roomId;
+    uint8_t respawnRoomId;
+};
+
 struct AnimatedTileData {
     uint8_t tileId;
     uint8_t frameCount;
@@ -102,30 +104,45 @@ struct BridgeSubdivisionData {
 // todo - microoptimize bits
 // todo - replace pointers with <32bit offsets-from-known-locations?
 struct MapData {
+    // stir pointers
     const AssetImage* tileset;
     const AssetImage* overlay;
+
+    // tile buffers
     const RoomData* rooms;
     const uint8_t* rle_overlay; // overlay layer w/ empty-tiles RLE-encoded (tileId, tileId, 0xff, emptyCount, tileId, ...)
     const uint8_t* xportals; // bit array of portals between rooms (x,y) and (x+1,y)
     const uint8_t* yportals; // bit array of portals between rooms (x,y) and (x,y+1)
+
+    // triggers
     const ItemData* items; 
     const GatewayData* gates;
     const NpcData* npcs;
+    const TrapdoorData* trapdoors;
+
+    // other placeable entities
     const DoorData* doors;
     const AnimatedTileData* animatedTiles;
     const DiagonalSubdivisionData* diagonalSubdivisions;
     const BridgeSubdivisionData* bridgeSubdivisions;
+
+    // trigger counts
     uint8_t itemCount;
     uint8_t gateCount;
     uint8_t npcCount;
+    uint8_t trapdoorCount;
+
+    // other counts
     uint8_t doorQuestId; // 0xff if doors are all global (probably not intentional)
     uint8_t doorCount;
     uint8_t animatedTileCount;
     uint8_t diagonalSubdivisionCount;
     uint8_t bridgeSubdivisionCount;
-    uint8_t width;
-    uint8_t height;
     uint8_t ambientType; // 0 - None
+
+    // size
+    uint8_t width : 4;
+    uint8_t height : 4;
 };
 
 extern const unsigned gMapCount;
@@ -134,3 +151,4 @@ extern const unsigned gDialogCount;
 extern const MapData gMapData[];
 extern const QuestData gQuestData[];
 extern const DialogData gDialogData[];
+extern const InventoryData gInventoryData[];

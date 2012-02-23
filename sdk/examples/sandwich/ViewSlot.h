@@ -38,7 +38,7 @@ public:
 
 	void Init();
 	void Restore();
-	void Update();
+	void Update(float dt);
   
   	void HideSprites();
 
@@ -51,4 +51,6 @@ public:
 	Cube::Side VirtualTiltDirection() const;
 	ViewSlot* VirtualNeighborAt(Cube::Side side) const;
 
+private:
+	void SetView(unsigned viewId, unsigned rig=0);
 };

@@ -11,10 +11,11 @@ private:
   Map mMap;
   Player mPlayer;
   float mSimTime;
-  unsigned mSimFrames;
   unsigned mAnimFrames;
-  unsigned mNeedsSync;
-  bool mIsDone;
+  BroadPath mPath;
+  NarrowPath mMoves;
+  uint8_t mNeedsSync;
+  uint8_t mIsDone;
 
 public:
 
@@ -25,29 +26,33 @@ public:
   inline ViewSlot* ViewAt(int i) { return mViews+i; }
   inline ViewSlot* ViewBegin() { return mViews; }
   inline ViewSlot* ViewEnd() { return mViews+NUM_CUBES; }
-  inline float SimTime() const { return mSimTime; }
-  inline unsigned SimFrame() const { return mSimFrames; }
   inline unsigned AnimFrame() const { return mAnimFrames; }
 
   // methods  
   void MainLoop(Cube* pPrimary);
   void Paint(bool sync=false);
   void NeedsSync() { mNeedsSync = 1; }
-  void WalkTo(Vec2 position);
-  void TeleportTo(const MapData& m, Vec2 position);
 
   // events
   void OnNeighborAdd(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
   void OnNeighborRemove(RoomView* v1, Cube::Side s1, RoomView* v2, Cube::Side s2);
-  void OnInventoryChanged();
 
 private:
 
   // helpers
-  float UpdateDeltaTime();
-  void ObserveNeighbors(bool flag);
   void CheckMapNeighbors();
+
+  void WalkTo(Vec2 position, bool dosfx=true);
   void MovePlayerAndRedraw(int dx, int dy);
+  void TeleportTo(const MapData& m, Vec2 position);
+  void IrisOut(ViewSlot* view);
+  void Zoom(ViewSlot* view, int roomId);
+  void NpcDialog(const DialogData& data, Cube* cube);
+  
+  unsigned OnPassiveTrigger();
+  void OnActiveTrigger();
+  void OnInventoryChanged();
+
 };
 
 extern Game* pGame;

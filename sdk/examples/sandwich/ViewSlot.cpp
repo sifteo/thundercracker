@@ -31,6 +31,27 @@ void ViewSlot::HideSprites() {
 	}
 }
 
+void ViewSlot::SetView(unsigned viewId, unsigned rid) {
+	mFlags.view = viewId;
+	if (GetCube()->vbuf.peekb(offsetof(_SYSVideoRAM, mode)) != _SYS_VM_BG0_SPR_BG1) {
+		ViewMode gfx = Graphics();
+		gfx.setWindow(0,128);
+		gfx.init();
+	}
+	pGame->NeedsSync();
+	switch(viewId) {
+		case VIEW_IDLE:
+			mView.idle.Init();
+			break;
+		case VIEW_ROOM:
+			mView.room.Init(rid);
+			break;
+		case VIEW_INVENTORY:
+			mView.inventory.Init();
+			break;
+	}
+}
+
 void ViewSlot::Restore() {
 	ViewMode mode = Graphics();
 	mode.set();
@@ -50,17 +71,17 @@ void ViewSlot::Restore() {
 	pGame->NeedsSync();
 }
 
-void ViewSlot::Update() {
+void ViewSlot::Update(float dt) {
 	mFlags.prevTouch = GetCube()->touching();
 	switch(mFlags.view) {
 	case VIEW_IDLE:
-		mView.idle.Update();
+		mView.idle.Update(dt);
 		break;
 	case VIEW_ROOM:
-		mView.room.Update();
+		mView.room.Update(dt);
 		break;
 	case VIEW_INVENTORY:
-		mView.inventory.Update();
+		mView.inventory.Update(dt);
 		break;
 	}
 }
@@ -76,15 +97,12 @@ bool ViewSlot::ShowLocation(Vec2 loc) {
 			if (mFlags.view == VIEW_INVENTORY) {
 				for (ViewSlot* p=pGame->ViewBegin(); p!=pGame->ViewEnd(); ++p) {
 					if (p->ViewType() == VIEW_IDLE) {
-						p->mFlags.view = VIEW_INVENTORY;
-						p->mView.inventory.Init();
+						p->SetView(VIEW_INVENTORY);
 						break;
 					}
 				}
 			}
-			mFlags.view = VIEW_ROOM;
-			mView.room.Init(rid);
-			pGame->NeedsSync();
+			SetView(VIEW_ROOM, rid);
 			return true;
 		}
 	}
@@ -100,18 +118,12 @@ bool ViewSlot::HideLocation() {
 				if ((invShowing = (p->ViewType() == VIEW_INVENTORY))) { break; }
 			}
 			if (invShowing) {
-				mFlags.view = VIEW_IDLE;
-				mView.idle.Init();
-				pGame->NeedsSync();
+				SetView(VIEW_IDLE);
 			} else {
-				mFlags.view = VIEW_INVENTORY;
-				mView.inventory.Init();
-				pGame->NeedsSync();
+				SetView(VIEW_INVENTORY);
 			}
 		} else {
-			mFlags.view = VIEW_IDLE;
-			mView.idle.Init();
-			pGame->NeedsSync();
+			SetView(VIEW_IDLE);
 		}
 		return true;
 	}
@@ -120,18 +132,14 @@ bool ViewSlot::HideLocation() {
 
 void ViewSlot::ShowInventory() {
 	if (mFlags.view != VIEW_INVENTORY) {
-		mFlags.view = VIEW_INVENTORY;
-		mView.inventory.Init();
-		pGame->NeedsSync();
+		SetView(VIEW_INVENTORY);
 	}
 }
 
 void ViewSlot::RefreshInventory() {
   if (mFlags.view == VIEW_INVENTORY) {
   	if (!pGame->GetState()->HasAnyItems()) {
-		mFlags.view = VIEW_IDLE;
-		mView.idle.Init();
-		pGame->NeedsSync();
+  		SetView(VIEW_IDLE);
   	} else {
   		mView.inventory.OnInventoryChanged();
   	}
@@ -141,9 +149,7 @@ void ViewSlot::RefreshInventory() {
 		if ((invShowing = p->ViewType() == VIEW_INVENTORY)) { break; }
 	}
 	if (!invShowing) {
-		mFlags.view = VIEW_INVENTORY;
-		mView.inventory.Init();
-		pGame->NeedsSync();
+		SetView(VIEW_INVENTORY);
   	}
   }
 }

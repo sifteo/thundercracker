@@ -2,9 +2,11 @@
 #include "Common.h"
 #include "View.h"
 #include "Content.h"
+#include "DrawingHelpers.h"
 
 class Room;
 #define ANIM_TILE_CAPACITY 4
+#define ITEM_OFFSET 34
 
 class RoomView : public View {
 private:
@@ -23,13 +25,7 @@ private:
   AnimTile mAnimTiles[ANIM_TILE_CAPACITY];
 
   union {
-    struct {
-        uint8_t active : 1;
-        uint8_t dir : 3;
-        uint8_t frame : 4;
-        uint8_t x;
-        uint8_t y;
-    } bff; // butterfly friend ;)
+    ButterflyFriend bff;
   } mAmbient;
 
 public:  
@@ -40,21 +36,24 @@ public:
   // methods
   void Init(unsigned rid);
   void Restore();
-  void Update();
+  void Update(float dt);
 
   void HideOverlay(bool flag);
   
   void ShowPlayer();
   void SetPlayerFrame(unsigned frame);
   void UpdatePlayer();
+  void DrawPlayerFalling(int height);
   void HidePlayer();
-  
+
+  void SetEquipPosition(Vec2 p);
   void SetItemPosition(Vec2 p);
   void HideItem();
+
+  void DrawTrapdoorFrame(int delta);
 
   void DrawBackground();
 
 private:
   void ComputeAnimatedTiles();
-  void RandomizeBff();
 };

@@ -8,7 +8,7 @@ class Door:
 		room.door = self
 		self.flag = room.map.quest.add_flag_if_undefined(self.id) \
 			if room.map.quest is not None \
-			else room.map.world.script.add_flag_if_undefined(self.id)
+			else room.map.world.quests.add_flag_if_undefined(self.id)
 
 class AnimatedTile:
 	def __init__(self, tile):
@@ -36,7 +36,7 @@ class Map:
 		self.count = self.width * self.height
 		assert self.count > 0, "map is empty: " + self.id
 		assert self.count <= 81, "too many rooms in map (max 72): " + self.id
-		self.quest = world.script.getquest(self.raw.props["quest"]) if "quest" in self.raw.props else None
+		self.quest = world.quests.getquest(self.raw.props["quest"]) if "quest" in self.raw.props else None
 		self.rooms = [Room(self, i) for i in range(self.count)]
 		# infer portals
 		for r in self.rooms:
@@ -65,7 +65,10 @@ class Map:
 			for y in range(self.height-1):
 				assert self.roomat(x,y).portals[2] == self.roomat(x,y+1).portals[0], "Portal Mismatch in Map: " + self.id
 		# find subdivisions
-		for r in self.rooms: r.find_subdivisions()
+		for r in self.rooms: 
+			r.find_subdivisions()
+			if r.subdiv_type != SUBDIV_NONE:
+				assert r.its_a_trap == False, "traps cannot be placed in subdivisions"
 		self.diagRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_DIAG_POS or r.subdiv_type == SUBDIV_DIAG_NEG ]
 		self.bridgeRooms = [ r for r in self.rooms if r.subdiv_type == SUBDIV_BRDG_HOR or r.subdiv_type == SUBDIV_BRDG_VER]
 		# no vertical bridges, for now
@@ -100,6 +103,7 @@ class Map:
 		for i,d in enumerate(self.doors):
 			d.index = i
 		self.ambientType = 1 if "ambient" in self.raw.props else 0
+		self.trapped_rooms = [ room for room in self.rooms if room.its_a_trap ]
 				
 	
 	def roomat(self, x, y): return self.rooms[x + y * self.width]
@@ -155,6 +159,12 @@ class Map:
 			src.write("static const NpcData %s_npcs[] = { " % self.id)
 			for npc in self.list_triggers_of_type(TRIGGER_NPC):
 				npc.write_npc_to(src)
+			src.write("};\n")
+		
+		if len(self.trapped_rooms) > 0:
+			src.write("static const TrapdoorData %s_trapdoors[] = { " % self.id)
+			for room in self.trapped_rooms:
+				src.write("{ 0x%x, 0x%x }, " % (room.lid, room.trapRespawnRoomId))
 			src.write("};\n")
 		
 		if len(self.doors) > 0:
@@ -216,8 +226,12 @@ class Map:
 	def write_decl_to(self, src):
 		src.write(
 			"    { &TileSet_%(name)s, %(overlay)s, %(name)s_rooms, %(overlay_rle)s, " \
-			"%(name)s_xportals, %(name)s_yportals, %(item)s, %(gate)s, %(npc)s, %(door)s, %(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
-			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(w)x, 0x%(h)x, 0x%(ambient)x },\n" % \
+			"%(name)s_xportals, %(name)s_yportals, " \
+			"%(item)s, %(gate)s, %(npc)s, %(trapdoor)s, %(door)s, " \
+			"%(animtiles)s, %(diagsubdivs)s, %(bridgesubdivs)s, " \
+			"0x%(nitems)x, 0x%(ngates)x, 0x%(nnpcs)x, 0x%(ntrapdoors)x, " \
+			"0x%(doorQuestId)x, 0x%(ndoors)x, 0x%(nanimtiles)x, 0x%(ndiags)x, 0x%(nbridges)x, 0x%(ambient)x, " \
+			"0x%(w)x, 0x%(h)x },\n" % \
 			{ 
 				"name": self.id,
 				"overlay": "&Overlay_" + self.id if self.overlay is not None else "0",
@@ -225,6 +239,7 @@ class Map:
 				"item": self.id + "_items" if len(self.item_dict) > 0 else "0",
 				"gate": self.id + "_gateways" if len(self.gate_dict) > 0 else "0",
 				"npc": self.id + "_npcs" if len(self.npc_dict) > 0 else "0",
+				"trapdoor": self.id + "_trapdoors" if len(self.trapped_rooms) > 0 else "0",
 				"door": self.id + "_doors" if len(self.doors) > 0 else "0",
 				"animtiles": self.id + "_animtiles" if len(self.animatedtiles) > 0 else "0",
 				"diagsubdivs": self.id + "_diag" if len(self.diagRooms) > 0 else "0",
@@ -234,6 +249,7 @@ class Map:
 				"nitems": len(self.item_dict),
 				"ngates": len(self.gate_dict),
 				"nnpcs": len(self.npc_dict),
+				"ntrapdoors": len(self.trapped_rooms),
 				"doorQuestId": self.quest.index if self.quest is not None else 0xff,
 				"ndoors": len(self.doors),
 				"nanimtiles": len(self.animatedtiles),
