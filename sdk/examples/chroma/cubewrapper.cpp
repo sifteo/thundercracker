@@ -1504,6 +1504,9 @@ void CubeWrapper::QueueClear( Vec2 &pos )
 //look for an empty spot to put a hyper dot
 void CubeWrapper::SpawnSpecial( unsigned int color )
 {
+    unsigned int numEmpties = 0;
+    Vec2 aEmptyLocs[NUM_ROWS * NUM_COLS];
+
     for( int i = 0; i < NUM_ROWS; i++ )
     {
         for( int j = 0; j < NUM_COLS; j++ )
@@ -1512,11 +1515,15 @@ void CubeWrapper::SpawnSpecial( unsigned int color )
 
             if( slot.isEmpty() )
             {
-                slot.FillColor( color );
-                return;
+                aEmptyLocs[numEmpties++] = Vec2( i, j );
             }
         }
     }
+
+    unsigned int randIndex = Game::random.randrange( numEmpties );
+
+    GridSlot &slot = m_grid[ aEmptyLocs[randIndex].x ][ aEmptyLocs[randIndex].y ];
+    slot.FillColor( color );
 }
 
 
