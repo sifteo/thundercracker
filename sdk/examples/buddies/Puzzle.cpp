@@ -27,7 +27,7 @@ Puzzle::Puzzle(
     const char *cutsceneTextEnd,
     const char *clue,
     unsigned int numBuddies,
-    bool isShuffle,
+    unsigned int numShuffles,
     const Piece startState[kMaxBuddies][NUM_SIDES],
     const Piece endState[kMaxBuddies][NUM_SIDES])
     : mChapterTitle(chapterTitle)
@@ -35,7 +35,7 @@ Puzzle::Puzzle(
     , mCutsceneTextEnd(cutsceneTextEnd)
     , mClue(clue)
     , mNumBuddies(numBuddies)
-    , mIsShuffle(isShuffle)
+    , mNumShuffles(numShuffles)
     , mStartState()
     , mEndState()
 {
@@ -92,9 +92,9 @@ unsigned int Puzzle::GetNumBuddies() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Puzzle::IsShuffle() const
+unsigned int Puzzle::GetNumShuffles() const
 {
-    return mIsShuffle;
+    return mNumShuffles;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

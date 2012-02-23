@@ -818,7 +818,7 @@ void App::UpdateGameState(float dt)
         {
             if (UpdateTimer(mDelayTimer, dt))
             {
-                if (GetPuzzle(mStoryPuzzleIndex).IsShuffle())
+                if (GetPuzzle(mStoryPuzzleIndex).GetNumShuffles() > 0)
                 {
                     StartGameState(GAME_STATE_STORY_SCRAMBLING);
                 }
@@ -1489,7 +1489,7 @@ void App::OnSwapFinish()
         
         if (kShuffleMaxMoves > 0)
         {
-            done = done || mShuffleMoveCounter == kShuffleMaxMoves;
+            done = done || mShuffleMoveCounter == (unsigned int)kShuffleMaxMoves;
         }
         
         if (done)
@@ -1544,10 +1544,9 @@ void App::OnSwapFinish()
         bool done = GetNumMovedPieces(
             mShufflePiecesMoved, arraysize(mShufflePiecesMoved)) == arraysize(mShufflePiecesMoved);
         
-        // TODO: Put num moves of shuffle in the puzzle?
-        if (kShuffleMaxMoves > 0)
+        if (GetPuzzle(mStoryPuzzleIndex).GetNumShuffles() > 0)
         {
-            done = done || mShuffleMoveCounter == kShuffleMaxMoves;
+            done = done || mShuffleMoveCounter == GetPuzzle(mStoryPuzzleIndex).GetNumShuffles();
         }
         
         if (done)

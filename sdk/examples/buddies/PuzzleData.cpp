@@ -153,7 +153,7 @@ const Puzzle kPuzzleDefault =
         "Default",
         "Default",
         kNumCubes,
-        false,
+        0,
         kDefaultState,
         kDefaultState);
 
@@ -168,6 +168,7 @@ const Puzzle kPuzzleDefault =
 //     CUTSCENE_TEXT_END,
 //     CLUE,
 //     NUMBER_OF_CUBES,
+//     NUMBER_OF_SHUFFLES,
 //     START_STATE,
 //     END_STATE);
 //
@@ -184,7 +185,7 @@ const Puzzle kPuzzles[] =
         "My head\nhurts.",
         "Unscramble",
         2,
-        true,
+        3,
         kDefaultState,
         kDefaultState),
     Puzzle(
@@ -193,7 +194,7 @@ const Puzzle kPuzzles[] =
         "Muuuahhh",
         "Swap Mouths",
         2,
-        false,
+        0,
         kDefaultState,
         kAuthoredEndStateMouths),
     Puzzle(
@@ -202,7 +203,7 @@ const Puzzle kPuzzles[] =
         "That's much\nbetter.",
         "Swap Hair",
         2,
-        false,
+        0,
         kDefaultState,
         kAuthoredEndStateHair),
     Puzzle(
@@ -211,7 +212,7 @@ const Puzzle kPuzzles[] =
         "That's much\nbetter.",
         "Swap Eyes",
         2,
-        false,
+        0,
         kDefaultState,
         kAuthoredEndStateEyes),
     Puzzle(
@@ -220,7 +221,7 @@ const Puzzle kPuzzles[] =
         "SO WEIRD\nright?",
         "Swap Mouths",
         2,
-        false,
+        0,
         kStartStateAttributeTest,
         kAuthoredEndStateMouths),
 };

@@ -33,7 +33,7 @@ public:
         const char *cutsceneTextEnd,
         const char *clue,
         unsigned int numBuddies,
-        bool isShuffle,
+        unsigned int numShuffles,
         const Piece startState[kMaxBuddies][NUM_SIDES],
         const Piece endState[kMaxBuddies][NUM_SIDES]);
     
@@ -43,7 +43,7 @@ public:
     const char *GetClue() const;
     
     unsigned int GetNumBuddies() const;
-    bool IsShuffle() const;
+    unsigned int GetNumShuffles() const;
     
     const Piece &GetStartState(unsigned int buddy, Sifteo::Cube::Side side) const;
     const Piece &GetEndState(unsigned int buddy, Sifteo::Cube::Side side) const;
@@ -54,7 +54,7 @@ private:
     const char *mCutsceneTextEnd;
     const char *mClue;
     unsigned int mNumBuddies;
-    bool mIsShuffle;
+    unsigned int mNumShuffles;
     Piece mStartState[kMaxBuddies][NUM_SIDES];
     Piece mEndState[kMaxBuddies][NUM_SIDES];    
 };

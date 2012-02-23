@@ -125,7 +125,7 @@ private:
     Sifteo::Cube::ID mHintCubeTouched;
     
     // Shuffle Mode
-    int mShuffleMoveCounter;
+    unsigned int mShuffleMoveCounter;
     bool mShufflePiecesMoved[NUM_SIDES * kNumCubes];
     
     // Story Mode
