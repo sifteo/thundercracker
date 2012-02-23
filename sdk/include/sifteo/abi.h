@@ -421,7 +421,11 @@ struct _SYSPseudoRandomState {
  * only 32-bit values, with at most one return value and 8 arguments.
  */
 
-#define _SC(n)  __asm__ ("_SYS_" #n)
+#ifdef __clang__
+#  define _SC(n)  __asm__ ("_SYS_" #n)
+#else
+#  define _SC(n)
+#endif
 
 void _SYS_ret() _SC(0);
 
