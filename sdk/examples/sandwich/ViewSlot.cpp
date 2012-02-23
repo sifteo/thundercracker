@@ -38,7 +38,6 @@ void ViewSlot::SetView(unsigned viewId, unsigned rid) {
 		gfx.setWindow(0,128);
 		gfx.init();
 	}
-	pGame->NeedsSync();
 	switch(viewId) {
 		case VIEW_IDLE:
 			mView.idle.Init();
@@ -50,6 +49,11 @@ void ViewSlot::SetView(unsigned viewId, unsigned rid) {
 			mView.inventory.Init();
 			break;
 	}
+	#if GFX_ARTIFACT_WORKAROUNDS
+		pGame->Paint(true);
+		GetCube()->vbuf.touch();
+		pGame->Paint(true);
+	#endif	
 }
 
 void ViewSlot::Restore() {

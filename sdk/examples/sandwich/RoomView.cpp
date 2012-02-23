@@ -4,8 +4,8 @@
 
 #define ROOM_UNDEFINED  (0xff)
 #define BFF_SPRITE_ID       0
-#define EQUIP_SPRITE_ID   1
-#define TRIGGER_SPRITE_ID   2
+#define TRIGGER_SPRITE_ID   1
+#define EQUIP_SPRITE_ID     2
 #define PLAYER_SPRITE_ID    3
 
 void RoomView::Init(unsigned roomId) {

@@ -170,9 +170,6 @@ void Game::Paint(bool sync) {
   mPlayer.Update(dt);
   for(ViewSlot *p=ViewBegin(); p!=ViewEnd(); ++p) {
     p->Update(dt);
-    #if KLUDGES
-      p->GetCube()->vbuf.touch();
-    #endif
   }
   if (sync || mNeedsSync) {
     System::paintSync();
