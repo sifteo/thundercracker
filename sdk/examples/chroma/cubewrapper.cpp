@@ -339,29 +339,25 @@ void CubeWrapper::Update(float t, float dt)
 {
     m_stateTime += dt;
 
-    for( Cube::Side i = 0; i < NUM_SIDES; i++ )
+    if( Game::Inst().getState() == Game::STATE_PLAYING || Game::Inst().getState() == Game::STATE_INTRO )
     {
-        bool newValue = m_cube.hasPhysicalNeighborAt(i);
-        Cube::ID id = m_cube.physicalNeighborAt(i);
-
-        /*if( newValue )
+        for( Cube::Side i = 0; i < NUM_SIDES; i++ )
         {
-            PRINT( "we have a neighbor.  it is %d\n", id );
-        }*/
+            bool newValue = m_cube.hasPhysicalNeighborAt(i);
+            Cube::ID id = m_cube.physicalNeighborAt(i);
 
-        //newly neighbored
-        if( newValue )
-        {
-            if( id != m_neighbors[i] )
+            //newly neighbored
+            if( newValue )
             {
-                Game::Inst().setTestMatchFlag();
-                m_neighbors[i] = id - CUBE_ID_BASE;
-
-                //PRINT( "neighbor on side %d is %d", i, id );
+                if( id != m_neighbors[i] )
+                {
+                    Game::Inst().setTestMatchFlag();
+                    m_neighbors[i] = id - CUBE_ID_BASE;
+                }
             }
+            else
+                m_neighbors[i] = -1;
         }
-        else
-            m_neighbors[i] = -1;
     }
 
     if( Game::Inst().getState() == Game::STATE_INTRO || m_state == STATE_REFILL )
