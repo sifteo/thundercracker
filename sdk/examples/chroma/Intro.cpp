@@ -60,7 +60,7 @@ bool Intro::Update( float dt, Banner &banner )
             case STATE_READY:
                 if( Game::Inst().getState() == Game::STATE_PLAYING )
                 {
-                    if( Game::Inst().getMode() == Game::MODE_SHAKES )
+                    if( Game::Inst().getMode() == Game::MODE_SURVIVAL )
                     {
                         String<32> buf;
                         if( Game::Inst().getDisplayedLevel() == 1 )
@@ -71,7 +71,7 @@ bool Intro::Update( float dt, Banner &banner )
                     }
                     return false;
                 }
-                else if( Game::Inst().getMode() == Game::MODE_TIMED )
+                else if( Game::Inst().getMode() == Game::MODE_BLITZ )
                     banner.SetMessage( "60 seconds", READYSETGO_BANNER_TIME );
                 else if( Game::Inst().getMode() == Game::MODE_PUZZLE )
                 {
@@ -82,7 +82,7 @@ bool Intro::Update( float dt, Banner &banner )
                     banner.SetMessage( "Clear the cubes!", READYSETGO_BANNER_TIME );
                 break;
             case STATE_SET:
-                if( Game::Inst().getMode() == Game::MODE_TIMED )
+                if( Game::Inst().getMode() == Game::MODE_BLITZ )
                     banner.SetMessage( "Ready", READYSETGO_BANNER_TIME );
                 else
                     return false;

@@ -146,7 +146,7 @@ void CubeWrapper::Draw()
                     //draw glimmer before timer
                     m_glimmer.Draw( m_bg1helper, this );
 
-                    if( Game::Inst().getMode() == Game::MODE_TIMED )
+                    if( Game::Inst().getMode() == Game::MODE_BLITZ )
                     {
                         Game::Inst().getTimer().Draw( m_bg1helper, m_vid );
                     }
@@ -160,7 +160,7 @@ void CubeWrapper::Draw()
                     //Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, m_cube.id() );
 
                     //for debugging combo count
-                    //if( Game::Inst().getMode() == Game::MODE_TIMED )
+                    //if( Game::Inst().getMode() == Game::MODE_BLITZ )
                       //  Banner::DrawScore( m_bg1helper, Vec2( 0, 0 ), Banner::LEFT, Game::Inst().GetComboCount() );
 
 					break;
@@ -243,7 +243,7 @@ void CubeWrapper::Draw()
             {
                 m_vid.BG0_drawAsset(Vec2(0,0), MsgGameOver, 0);
 
-                if( Game::Inst().getMode() == Game::MODE_TIMED )
+                if( Game::Inst().getMode() == Game::MODE_BLITZ )
                 {
                     int score = Game::Inst().getScore();
 
@@ -984,16 +984,16 @@ void CubeWrapper::checkRefill()
 	{
         setState( STATE_REFILL );
         m_intro.Reset( true );
-        Refill( Game::Inst().getMode() == Game::MODE_SHAKES );
+        Refill( Game::Inst().getMode() == Game::MODE_SURVIVAL );
 
-        /*if( Game::Inst().getMode() == Game::MODE_SHAKES && Game::Inst().getScore() > 0 )
+        /*if( Game::Inst().getMode() == Game::MODE_SURVIVAL && Game::Inst().getScore() > 0 )
 		{
 			m_banner.SetMessage( "FREE SHAKE!" );
         }*/
 	}
 	else
 	{
-		if( Game::Inst().getMode() != Game::MODE_SHAKES )
+        if( Game::Inst().getMode() != Game::MODE_SURVIVAL )
 		{
             setState( STATE_REFILL );
             m_intro.Reset( true );
@@ -1458,7 +1458,7 @@ bool CubeWrapper::getFixedDot( Vec2 &pos ) const
 
 void CubeWrapper::checkEmpty()
 {
-    if( Game::Inst().getMode() == Game::MODE_SHAKES && isEmpty() && m_state != STATE_MESSAGING && m_state != STATE_EMPTY )
+    if( Game::Inst().getMode() == Game::MODE_SURVIVAL && isEmpty() && m_state != STATE_MESSAGING && m_state != STATE_EMPTY )
         setState( STATE_MESSAGING );
 }
 

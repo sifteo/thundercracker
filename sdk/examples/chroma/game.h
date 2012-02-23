@@ -41,8 +41,8 @@ public:
 
 	typedef enum
 	{
-		MODE_SHAKES,
-		MODE_TIMED,
+        MODE_SURVIVAL,
+        MODE_BLITZ,
 		MODE_PUZZLE,
 	} GameMode;
 

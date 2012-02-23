@@ -34,7 +34,7 @@ Game &Game::Inst()
 }
 
 Game::Game() : m_bTestMatches( false ), m_iDotScore ( 0 ), m_iDotScoreSum( 0 ), m_iScore( 0 ), m_iDotsCleared( 0 ),
-                m_state( STARTING_STATE ), m_mode( MODE_SHAKES ), m_stateTime( 0.0f ),
+                m_state( STARTING_STATE ), m_mode( MODE_BLITZ ), m_stateTime( 0.0f ),
                 m_fLastSloshTime( 0.0f ), m_curChannel( 0 ), m_pSoundThisFrame( NULL ),
                 m_ShakesRemaining( STARTING_SHAKES ), m_fTimeTillRespawn( TIME_TO_RESPAWN ),
                 m_cubeToRespawn ( 0 ), m_comboCount( 0 ), m_fTimeSinceCombo( 0.0f ),
@@ -167,7 +167,7 @@ void Game::Update()
 
         if( m_state == STATE_PLAYING )
         {
-            if( m_mode == MODE_TIMED )
+            if( m_mode == MODE_BLITZ )
             {
                 m_timer.Update( dt );
                 checkGameOver();
@@ -185,7 +185,7 @@ void Game::Update()
                         RespawnOnePiece();
                 }
             }
-            else if( m_mode == MODE_SHAKES )
+            else if( m_mode == MODE_SURVIVAL )
             {
                 if( m_bStabilized && m_ShakesRemaining == 0 && AreNoCubesEmpty() )
                     checkGameOver();
@@ -241,7 +241,7 @@ void Game::Reset()
 	m_iScore = 0;
 	m_iDotsCleared = 0;
 
-    if( m_mode == MODE_TIMED )
+    if( m_mode == MODE_BLITZ )
         m_iLevel = 3;
     else
         m_iLevel = 0;
@@ -318,7 +318,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 	{
         unsigned int comboScore = m_iDotScoreSum;
 
-        if( m_mode == MODE_TIMED )
+        if( m_mode == MODE_BLITZ )
         {
             comboScore += 10 * m_comboCount;
             comboScore *= m_Multiplier;
@@ -355,10 +355,10 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 
             if( !specialSpawned )
             {
-                if( m_mode == MODE_SHAKES )
+                if( m_mode == MODE_SURVIVAL )
                 {
                     //free shake
-                    /*if( m_mode == MODE_SHAKES && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
+                    /*if( m_mode == MODE_SURVIVAL && m_iDotsCleared >= DOT_THRESHOLD5 && !m_bHyperDotMatched )
                     {
 
                     }
@@ -366,7 +366,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
                     {
                         playSound(clear4);
 
-                        if( m_mode == MODE_SHAKES && !m_bHyperDotMatched )
+                        if( m_mode == MODE_SURVIVAL && !m_bHyperDotMatched )
                         {
                             pWrapper->getBanner().SetMessage( "Bonus Shake!" );
                             bannered = true;
@@ -383,7 +383,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
                         specialSpawned = true;
                     }
                 }
-                else if( m_mode == MODE_TIMED )
+                else if( m_mode == MODE_BLITZ )
                 {
                     if( m_iDotsCleared >= DOT_THRESHOLD_TIMED_MULT && m_Multiplier < MAX_MULTIPLIER - 1 )
                     {
@@ -421,7 +421,7 @@ void Game::CheckChain( CubeWrapper *pWrapper )
                 }
             }
 
-            if( m_mode == MODE_TIMED && !bannered )
+            if( m_mode == MODE_BLITZ && !bannered )
             {
                 String<16> aBuf;
                 aBuf << comboScore;
@@ -441,12 +441,12 @@ void Game::CheckChain( CubeWrapper *pWrapper )
 
 void Game::checkGameOver()
 {
-	if( m_mode == MODE_SHAKES )
+    if( m_mode == MODE_SURVIVAL )
 	{
         if( NoMatches() )
             EndGame();
 	}
-	else if( m_mode == MODE_TIMED )
+    else if( m_mode == MODE_BLITZ )
 	{
         if( m_timer.getTime() <= 0.0f && !m_bIsChainHappening )
         {
@@ -459,7 +459,7 @@ void Game::checkGameOver()
 bool Game::NoMatches()
 {
     //shakes mode checks for no possible moves, whereas puzzle mode checks if the puzzle is lost
-    if( m_mode == MODE_SHAKES )
+    if( m_mode == MODE_SURVIVAL )
     {
         if( AreAllColorsUnmatchable() )
             return true;
@@ -730,7 +730,7 @@ unsigned int Game::getHighScore( unsigned int index ) const
 
     if( index < NUM_HIGH_SCORES )
     {
-        if( m_mode == MODE_TIMED )
+        if( m_mode == MODE_BLITZ )
             return s_HighScores[ index ];
         else
             return s_HighCubes[ index ];
@@ -746,7 +746,7 @@ void Game::enterScore()
     unsigned int *pScores;
     unsigned int score;
 
-    if( m_mode == MODE_TIMED )
+    if( m_mode == MODE_BLITZ )
     {
         pScores = s_HighScores;
         score = m_iScore;
@@ -854,7 +854,7 @@ void Game::EndGame()
     enterScore();
     setState( STATE_DYING );
 
-    if( m_mode == MODE_SHAKES )
+    if( m_mode == MODE_SURVIVAL )
     {
         for( int i = 0; i < NUM_CUBES; i++ )
         {
@@ -920,7 +920,7 @@ void Game::RespawnOnePiece()
 
 void Game::UpCombo()
 {
-    if( m_mode == MODE_TIMED )
+    if( m_mode == MODE_BLITZ )
     {
         if( m_fTimeSinceCombo > 0.0f )
         {
@@ -936,7 +936,7 @@ void Game::UpCombo()
 
 void Game::UpMultiplier()
 {
-    ASSERT( m_mode == MODE_TIMED );
+    ASSERT( m_mode == MODE_BLITZ );
     ASSERT( m_Multiplier < MAX_MULTIPLIER - 1 );
 
     m_Multiplier++;
@@ -1008,7 +1008,7 @@ void Game::gotoNextPuzzle( bool bAdvance )
 
 bool Game::AreMovesLegal() const
 {
-    if( m_mode == MODE_TIMED )
+    if( m_mode == MODE_BLITZ )
     {
         if( getState() == STATE_INTRO )
             return true;
