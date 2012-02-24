@@ -1,9 +1,16 @@
 #include "NarratorView.h"
-#include "string.h"
 #include "assets.gen.h"
 #include "TotalsCube.h"
 
 namespace TotalsGame {
+/*
+static int strcmp(const char *a, const char *b)
+{
+    int dif = 0;
+    while(!dif && *a && *b)
+        dif = *a++ - *b++;
+    return dif;
+}*/
 
 const AssetImage *NarratorView::emotes[] =
 {
@@ -26,6 +33,8 @@ NarratorView::NarratorView(TotalsCube *c):View(c)
     mString="";
     mEmote=EmoteNone;
 }
+
+int strcmp(const char *a, const char *b);
 
 void NarratorView::SetMessage(const char *msg, Emote emote) {
     if (!strcmp(mString,msg) && mEmote == emote) { return; }

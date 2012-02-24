@@ -3,7 +3,7 @@
 
 namespace TotalsGame
 {
-static int strcmp(const char *a, const char *b)
+int strcmp(const char *a, const char *b)
 {
     int dif = 0;
     while(!dif && *a && *b)

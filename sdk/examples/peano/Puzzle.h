@@ -35,7 +35,6 @@ namespace TotalsGame
 
 
 		// option parameters
-		void *userData;
 		Guid guid;
 		PuzzleChapter *chapter;
 		Difficulty difficulty;

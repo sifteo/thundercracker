@@ -172,7 +172,7 @@ void TiltFlowView::OnButton(TotalsCube *c, bool pressed) {
             menu->SetToggledItem(GetItem());
             mDirty = true;
         }
-        else if (GetItem()->userData != (void*)TiltFlowItem::Passive)  // hack s.t. "locked" items won't be selectable
+        else if (GetItem()->id != TiltFlowItem::Passive)  // hack s.t. "locked" items won't be selectable
         {
             StopScrolling();
             menu->Pick();

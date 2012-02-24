@@ -12,7 +12,6 @@ namespace TotalsGame {
 
 	Puzzle::Puzzle(int tokenCount) 
 	{
-		userData = NULL;
 		chapter = NULL;
 		difficulty = DifficultyEasy;
 		focus = NULL;

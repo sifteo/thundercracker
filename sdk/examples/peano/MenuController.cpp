@@ -161,22 +161,33 @@ WelcomeBack:
 
 #define ADD_ITEM(graphic, name, desc)\
     new (&initialItems[numInitialItems]) TiltFlowItem(&graphic);\
-    initialItems[numInitialItems].userData = name;\
+    initialItems[numInitialItems].id = name;\
     initialItems[numInitialItems].description = desc;\
     numInitialItems++;
+
+
+    enum
+    {
+        Continue,
+        RandomPuzzle,
+        Tutorial,
+        Level,
+        Setup
+    };
+
 
     static TiltFlowItem initialItems[5];
     numInitialItems = 0;
 
     if (mGame->currentPuzzle != NULL /* TODO || !mGame->saveData.AllChaptersSolved() */)
     {
-        ADD_ITEM(Icon_Continue, 0,0) //"continue", "Continue from your auto-save data.")
+        ADD_ITEM(Icon_Continue, Continue,0) //"continue", "Continue from your auto-save data.")
     }
 
-    ADD_ITEM(Icon_Random, "random", "Create a random puzzle!")
-            ADD_ITEM(Icon_Howtoplay, "tutorial", "Let Peano teach you how to play!")
-            ADD_ITEM(Icon_Level_Select, "level", "Replay any level.")
-            ADD_ITEM(Icon_Setup, "setup", "Change your game settings.")
+    ADD_ITEM(Icon_Random, RandomPuzzle, "Create a random puzzle!")
+            ADD_ITEM(Icon_Howtoplay, Tutorial, "Let Peano teach you how to play!")
+            ADD_ITEM(Icon_Level_Select, Level, "Replay any level.")
+            ADD_ITEM(Icon_Setup, Setup, "Change your game settings.")
         #undef ADD_ITEM
 
     {
@@ -210,24 +221,40 @@ WelcomeBack:
         tv->SetTransitionAmount(0);
         CORO_YIELD(0);
 
-        result = (const char*)menu->GetResultItem()->userData;
-        if (!strcmp(result,"continue")) {
+        switch(menu->GetResultItem()->id)
+        {
+       case Continue:
+        {
             if (mGame->currentPuzzle == NULL) {
                 mGame->currentPuzzle = mGame->saveData.FindNextPuzzle();
             }
             mGame->sceneMgr.QueueTransition("Play");
             CORO_YIELD(0);
-        } else if (!strcmp(result,"random")) {
+            break;
+        }
+        case RandomPuzzle:
+        {
             mGame->currentPuzzle = NULL;
             mGame->sceneMgr.QueueTransition("Play");
             CORO_YIELD(0);
-        } else if (!strcmp(result,"tutorial")) {
+            break;
+        }
+        case Tutorial:
+        {
             mGame->sceneMgr.QueueTransition("Tutorial");
             CORO_YIELD(0);
-        } else if (!strcmp(result,"level")) {
+            break;
+        }
+        case Level:
+        {
             goto ChapterSelect;
-        } else if (!strcmp(result,"setup")) {
+            break;  //i like superfluous breaks.
+        }
+        case Setup:
+        {
             goto Setup;
+            break;
+        }
         }
     }
 
@@ -258,6 +285,15 @@ Setup:
     tv->SetTransitionAmount(1);
     //tv.Cube.Image("tilt_to_select", (128-tts.width)>>1, 128-26);
 
+    enum
+    {
+        Toggle_Difficulty,
+        Toggle_Music,
+        Toggle_Sfx,
+        Clear_Data,
+        Back
+    };
+
     {
         static const PinnedAssetImage *difficultyIcons[] = {&Icon_Easy, &Icon_Medium, &Icon_Hard};
         static const PinnedAssetImage *musicIcons[] = {&Icon_Music_On, &Icon_Music_Off};
@@ -272,12 +308,12 @@ Setup:
             &difficultyItems, &musicItems, &sfxItems, &clearDataItem , &backItem
         };
 
-#define SET_PARAMS(a,b,c,d) a.userData=b; a.SetOpt(c); a.description=d;
-        SET_PARAMS(difficultyItems, "toggle_difficulty", (int)mGame->difficulty, "Toggle multiplication and division.");
-        SET_PARAMS(musicItems, "toggle_music", AudioPlayer::MusicMuted(), "Toggle background music.");
-        SET_PARAMS(sfxItems, "toggle_sfx", AudioPlayer::SfxMuted(), "Toggle sound effects.");
-        SET_PARAMS(clearDataItem, "clear_data", 0, "Clear your auto-save data.");
-        SET_PARAMS(backItem, "back", 0, "Return to the main menu.");
+#define SET_PARAMS(a,b,c,d) a.id=b; a.SetOpt(c); a.description=d;
+        SET_PARAMS(difficultyItems, Toggle_Difficulty, (int)mGame->difficulty, "Toggle multiplication and division.");
+        SET_PARAMS(musicItems, Toggle_Music, AudioPlayer::MusicMuted(), "Toggle background music.");
+        SET_PARAMS(sfxItems, Toggle_Sfx, AudioPlayer::SfxMuted(), "Toggle sound effects.");
+        SET_PARAMS(clearDataItem, Clear_Data, 0, "Clear your auto-save data.");
+        SET_PARAMS(backItem, Back, 0, "Return to the main menu.");
 #undef SET_PARAMS
 
         static char menuBuffer[sizeof(TiltFlowMenu)];
@@ -336,7 +372,7 @@ Setup:
     tv->SetTransitionAmount(0);
     CORO_YIELD(0);
 
-    if (!strcmp((const char*)menu->GetResultItem()->userData, "back")) {
+    if (menu->GetResultItem()->id == Back) {
         goto WelcomeBack;
     }
 
@@ -398,13 +434,13 @@ ChapterSelect:
             if (chapter->CanBePlayedWithCurrentCubeSet()) {
                 if (mGame->saveData.IsChapterUnlockedWithCurrentCubeSet(i)) {
                     TiltFlowItem *item = new(chapterItemBuffer[numChapterItems]) TiltFlowItem(chapter->idImage);
-                    item->userData = (void*)i;
+                    item->id = i;
                     item->description="Replay this level from the beginning." ;
                     chapterItems[numChapterItems] = item;
                     numChapterItems++;
                 } else {
                     TiltFlowItem *item = new(chapterItemBuffer[numChapterItems]) TiltFlowItem(&Icon_Locked);
-                    item->userData = (void*)TiltFlowItem::Passive;
+                    item->id = TiltFlowItem::Passive;
                     item->description="Unlock this level by solving the previous levels." ;
                     chapterItems[numChapterItems] = item;
                     numChapterItems++;
@@ -413,7 +449,7 @@ ChapterSelect:
         }
 
         TiltFlowItem *item = new(chapterItemBuffer[numChapterItems]) TiltFlowItem(&Icon_Back);
-        item->userData = (void*)1977;  //anything to differentiate NULL from 0.  1977 is NULL
+        item->id = 1977;  //anything to differentiate NULL from 0.  1977 is NULL
         item->description="Return to the main menu.";
         chapterItems[numChapterItems] = item;
         numChapterItems++;
@@ -446,12 +482,12 @@ ChapterSelect:
     tv->SetTransitionAmount(0);
     CORO_YIELD(0);
 
-    if (menu->GetResultItem()->userData == (void*)1977) {
+    if (menu->GetResultItem()->id == 1977) {
         goto WelcomeBack;
     }
     else
     {
-        int chapter = (int32_t) menu->GetResultItem()->userData;
+        int chapter = (int32_t) menu->GetResultItem()->id;
         if(chapter < mGame->database.NumChapters())
         {
             mGame->currentPuzzle = mGame->database.GetChapter(chapter)->FirstPuzzleForCurrentCubeSet();

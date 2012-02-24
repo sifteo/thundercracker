@@ -19,7 +19,7 @@ namespace TotalsGame
   public:
     static const int Passive = -2357;   //arbitrary value
 
-    const void *userData;
+    int id;
 //TODO    public readonly Color color;
     const char *GetName();
     const char *description;

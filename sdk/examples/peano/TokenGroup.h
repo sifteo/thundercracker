@@ -22,7 +22,6 @@ namespace TotalsGame
 		Cube::Side GetSrcSide() {return srcSide;}
 		Token *GetDstToken() {return dstToken;}
 
-		void *userData;
 
         //IExpression
 		virtual Fraction GetValue();

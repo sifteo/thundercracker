@@ -11,7 +11,7 @@ namespace TotalsGame
       description = "";
       images = NULL;
       imageIndex = 0;
-      userData = NULL;
+      id = 0;
     }
 
     TiltFlowItem::TiltFlowItem(const PinnedAssetImage *image)
@@ -23,7 +23,7 @@ namespace TotalsGame
       description = " ";
       //TODO this.color = Color.Mask;
         imageIndex = 0;
-        userData = NULL;
+        id = 0;
     }
 
     void TiltFlowItem::IncrementImageIndex() {imageIndex = (imageIndex+1)%numImages;}
@@ -36,7 +36,7 @@ namespace TotalsGame
       description = " ";
       //TODO this.color = Color.Mask;
       imageIndex = 0;
-      userData = NULL;
+      id = 0;
     }
 
     int TiltFlowItem::GetOpt() {return opt;}
