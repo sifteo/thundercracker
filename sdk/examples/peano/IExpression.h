@@ -10,14 +10,14 @@ namespace TotalsGame {
 
 	class IExpression {
 	public:
-		virtual Fraction GetValue();// = 0;
-		virtual int GetDepth();// = 0;
-		virtual int GetCount();// = 0;
-		virtual ShapeMask GetMask();// = 0;
-		virtual bool TokenAt(const Vec2 &p, Token **t);// = 0;
-		virtual bool PositionOf(Token *t, Vec2 *p);// = 0;
-		virtual bool Contains(Token *t);// = 0;
-		virtual void SetCurrent(IExpression *exp);// = 0;
+        virtual Fraction GetValue() {return Fraction();}
+        virtual int GetDepth() {return 0;}
+        virtual int GetCount() {return 0;}
+        virtual ShapeMask GetMask() {return ShapeMask();}
+        virtual bool TokenAt(const Vec2 &p, Token **t) {return false;}
+        virtual bool PositionOf(Token *t, Vec2 *p) {return false;}
+        virtual bool Contains(Token *t) {return false;}
+        virtual void SetCurrent(IExpression *exp) {}
 
 		//ugh
 		virtual bool IsTokenGroup() {return false;}		

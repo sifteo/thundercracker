@@ -21,8 +21,8 @@ namespace TotalsGame {
 
     static const float kDriftVel = 1.5f;
     static const float kTiltVel = 3;
-    static const float kMinAccel = 1;
-    static const float kMaxAccel = 2.5f;
+    static const float kMinAccel;
+    static const float kMaxAccel;
     static const float kDeepTiltAccel = 2;
     static const float kGravity = 1.03f;
     static const float kMarqueeDelay = 4;

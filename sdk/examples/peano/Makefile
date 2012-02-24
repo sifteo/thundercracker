@@ -13,7 +13,7 @@ OBJS_SIM = $(ASSETS).gen.sim.o \
         ConfirmationMenu.sim.o InterstitialController.sim.o PuzzleHelper.sim.o \
         TiltFlowItem.sim.o
 
-BIN_STM32 = hello.stm32
+BIN_STM32 = peano.stm32
 OBJS_STM32 = $(ASSETS).gen.stm32.o \
 	main.stm32.o shapemask.stm32.o puzzle.stm32.o token.stm32.o fraction.stm32.o \
 	tokengroup.stm32.o game.stm32.o statemachine.stm32.o guid.stm32.o \
