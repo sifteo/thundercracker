@@ -476,8 +476,19 @@ struct NVIC_t {
         appInterruptControl =   (0x5FA << 16) |                     // reset key
                                 (appInterruptControl & (7 << 8)) |  // priority group unchanged
                                 (1 << 2);                           // issue system reset
-        __asm volatile ("dsb");                                     // paranoia - ensure memory access
+        asm volatile ("dsb");                                       // paranoia - ensure memory access
         while (1);                                                  // wait to reset
+    }
+
+    void deinit() volatile {
+        irqClearEnable[0]  = 0xFFFFFFFF;
+        irqClearEnable[1]  = 0x0FFFFFFF;
+        irqClearPending[0] = 0xFFFFFFFF;
+        irqClearPending[1] = 0x0FFFFFFF;
+
+        for (unsigned i = 0; i < 0x40; i++) {
+            irqPriority[i] = 0x0;
+        }
     }
 };
 
