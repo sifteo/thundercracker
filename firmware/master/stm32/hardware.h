@@ -29,7 +29,7 @@ struct RCC_t {
     uint32_t APB1ENR;
     uint32_t BDCR;
     uint32_t CSR;
-    uint32_t AHBSTR;
+    uint32_t AHBRSTR;
     uint32_t CFGR2;
 };
 
