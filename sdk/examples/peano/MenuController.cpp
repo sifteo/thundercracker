@@ -451,7 +451,7 @@ ChapterSelect:
     }
     else
     {
-        int chapter = (int) menu->GetResultItem()->userData;
+        int chapter = (int32_t) menu->GetResultItem()->userData;
         if(chapter < mGame->database.NumChapters())
         {
             mGame->currentPuzzle = mGame->database.GetChapter(chapter)->FirstPuzzleForCurrentCubeSet();
