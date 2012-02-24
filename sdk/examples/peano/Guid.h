@@ -1,4 +1,7 @@
 #pragma once
+
+#if 0
+
 #include "sifteo.h"
 
 namespace TotalsGame
@@ -21,3 +24,5 @@ namespace TotalsGame
 
 
 }
+
+#endif

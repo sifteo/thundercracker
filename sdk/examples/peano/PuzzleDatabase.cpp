@@ -24,14 +24,15 @@ int NumTokensInPuzzle(int chapter, int puzzle)
 {
     return TheData::everything.chapters[chapter]->puzzles[puzzle]->nTokens;
 }
-
+#if 0
 Guid GuidForPuzzle(int chapter, int puzzle)
 {
     if(chapter == -1 || puzzle == -1)
         return Guid::Empty;
     return Guid(TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
 }
-
+#endif
+    
 const PinnedAssetImage &ImageForChapter(int chapter)
 {
     return TheData::everything.chapters[chapter]->icon;
@@ -89,7 +90,7 @@ Puzzle *GetPuzzleInChapter(int chapter, int puzzle)
 
 bool HasPuzzleBeenSolved(int chapter, int puzzle)
 {
-    return Game::GetInstance().saveData.IsSolved(TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
+    return Game::GetInstance().saveData.IsPuzzleSolved(chapter, puzzle);//TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
 }
 
 bool CanBePlayedWithCurrentCubeSet(int chapter)
@@ -100,13 +101,13 @@ bool CanBePlayedWithCurrentCubeSet(int chapter)
 
 void SaveChapterAsSolved(int chapter)
 {
-      Game::GetInstance().saveData.AddSolved(TheData::everything.chapters[chapter]->guid);
+    Game::GetInstance().saveData.AddSolvedChapter(chapter);//TheData::everything.chapters[chapter]->guid);
       Game::GetInstance().saveData.Save();
 }
 
 void SavePuzzleAsSolved(int chapter, int puzzle)
 {
-      Game::GetInstance().saveData.AddSolved(TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
+    Game::GetInstance().saveData.AddSolvedPuzzle(chapter, puzzle);//TheData::everything.chapters[chapter]->puzzles[puzzle]->guid);
       Game::GetInstance().saveData.Save();
 }
 

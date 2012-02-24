@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Guid.h"
+//#include "Guid.h"
 #include "ObjectPool.h"
 #include <stddef.h>
 
@@ -35,7 +35,7 @@ namespace TotalsGame
 
 
 		// option parameters
-		Guid guid;
+		//Guid guid;
         int puzzleIndex, chapterIndex;
 		Difficulty difficulty;
 
