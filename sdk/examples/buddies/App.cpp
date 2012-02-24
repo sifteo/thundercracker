@@ -796,7 +796,7 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            if (mHintTimer > 0.0f)
+            if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
             {
                 if (UpdateTimer(mHintTimer, dt))
                 {
@@ -894,7 +894,7 @@ void App::UpdateGameState(float dt)
                 }
             }
             
-            if (mHintTimer > 0.0f)
+            if (mHintTimer > 0.0f && mSwapState == SWAP_STATE_NONE)
             {
                 if (UpdateTimer(mHintTimer, dt))
                 {
