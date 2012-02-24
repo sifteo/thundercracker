@@ -14,6 +14,23 @@ Hint_4 = image { "hint_4.png", pinned=true }
 Hint_5 = image { "hint_5.png", pinned=true }
 Hint_6 = image { "hint_6.png", pinned=true }
 
+Coin_8 = image { "coin_8.png", pinned=true } 
+Coin_16 = image { "coin_16.png", pinned=true } 
+Coin_24 = image { "coin_24.png", pinned=true } 
+Diamond_8 = image { "diamond_8.png", pinned=true } 
+Diamond_16 = image { "diamond_16.png", pinned=true } 
+Diamond_24 = image { "diamond_24.png", pinned=true } 
+Ruby_8 = image { "ruby_8.png", pinned=true } 
+Ruby_16 = image { "ruby_16.png", pinned=true } 
+Ruby_24 = image { "ruby_24.png", pinned=true } 
+Emerald_8 = image { "emerald_8.png", pinned=true } 
+Emerald_16 = image { "emerald_16.png", pinned=true } 
+Emerald_24 = image { "emerald_24.png", pinned=true } 
+
+
+
+
+
 Narrator_Balloon = image { "narrator_balloon.png" }
 Narrator_Base = image { "narrator_base.png" }
 Narrator_Coin = image { "narrator_coin.png" }

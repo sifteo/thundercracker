@@ -5,18 +5,29 @@ namespace TotalsGame
 {
     SaveData::SaveData()
     {
-        numSolvedGuids = 0;
+        for(int i = 0; i < 16; i++)
+        {
+            solvedPuzzles[i]=0;
+        }
+        solvedChapters = 0;
         hasDoneTutorial = false;
     }
     
-    void SaveData::AddSolved(const Guid &guid)
+    void SaveData::AddSolvedPuzzle(int chapter, int puzzle)
     {
-        if(guid != Guid::Empty && !IsSolved(guid))
+        if(chapter != -1 && puzzle != -1 && !IsPuzzleSolved(chapter, puzzle))
         {
-            solvedGuids[numSolvedGuids] = guid;
-            numSolvedGuids++;
+            solvedPuzzles[chapter] |= 1 << puzzle;
+            SaveData();
         }
     }
+    
+    void SaveData::AddSolvedChapter(int chapter)
+                                    {
+                                        if(chapter != -1)
+                                            solvedChapters |= 1 << chapter;
+                                
+                                    }
 
     void SaveData::Reset()
     {
@@ -24,7 +35,6 @@ namespace TotalsGame
         delete Game::GetInstance().previousPuzzle;
         Game::GetInstance().currentPuzzle = NULL;
         Game::GetInstance().previousPuzzle = NULL;
-        numSolvedGuids = 0;
         Save();
     }
 
@@ -33,17 +43,26 @@ namespace TotalsGame
         //TODO
     }
     
-    bool SaveData::IsSolved(const Guid &guid)
+    bool SaveData::IsPuzzleSolved(int chapter, int puzzle)
     {return true;//TODO
-        for(int i = 0; i < numSolvedGuids; i++)
-        {
-            if(solvedGuids[i] == guid)
-                return true;
-        }
+        
+
+            if(chapter != -1 && puzzle != -1)
+            {
+                return solvedPuzzles[chapter] & 1 << puzzle;
+
+            }
         return false;
         
     }
 
+    bool SaveData::IsChapterSolved(int chapter)
+    {
+        if(chapter != -1)
+            return solvedChapters & 1 << chapter;
+        return false;
+    }
+    
     void SaveData::CompleteTutorial()
     {
       if (!hasDoneTutorial) {

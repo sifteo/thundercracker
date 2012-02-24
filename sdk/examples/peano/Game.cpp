@@ -139,7 +139,7 @@ namespace TotalsGame
         static MenuController menuController(this);
         static InterstitialController interstitialController(this);
         static TutorialController tutorialController(this);
-//        static VictoryController victoryController(this);
+      //  static VictoryController victoryController(this);
 
 		sceneMgr
 			.State("sting", &stingController)                //
@@ -149,8 +149,8 @@ namespace TotalsGame
             .State("interstitial", &interstitialController)  //
             .State("puzzle", &puzzleController)
             .State("advance", &Game::Advance)
-//            .State("victory", &victoryController)            //
-//TODO			.State("isover", IsGameOver)
+          //  .State("victory", &victoryController)            //
+		//	.State("isover", IsGameOver)
 
 			.Transition("sting", "Next", "init")
 			.Transition("init", "NewPlayer", "tutorial")

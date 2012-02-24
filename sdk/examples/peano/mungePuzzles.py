@@ -1,23 +1,23 @@
 import xml.dom.minidom
-import uuid
+#import uuid
 import struct
 
 def op(text):
-	return ("Add", "Subtract", "Multiply", "Divide").index(text)
+	return ["Add", "Subtract", "Multiply", "Divide"].index(text)
 
 def side(text):
-	return ("TOP", "LEFT", "BOTTOM", "RIGHT").index(text)
+	return ["TOP", "LEFT", "BOTTOM", "RIGHT"].index(text)
 
 def guidToInts(s):
 	return struct.unpack("IIII", uuid.UUID(s).bytes)
 
-def writeGuid(s, f):
-	guid = uuid.UUID(s)
-	bytes = guid.bytes
-	int32s = struct.unpack("IIII", bytes)
-	hexes = map(hex, int32s)
-	hexes = map(lambda a:a.replace("L",""), hexes)
-	f.write( "{"+hexes[0] + ", " + hexes[1] + ", " + hexes[2] + ", " + hexes[3]+"}" )
+#def writeGuid(s, f):
+    #	guid = uuid.UUID(s)
+	#bytes = guid.bytes
+	#int32s = struct.unpack("IIII", bytes)
+	#hexes = map(hex, int32s)
+	#hexes = map(lambda a:a.replace("L",""), hexes)
+    #f.write( "{"+hexes[0] + ", " + hexes[1] + ", " + hexes[2] + ", " + hexes[3]+"}" )
 
 	
 
@@ -35,7 +35,7 @@ header.write("\t/* const */ uint8_t *tokens;\n")
 header.write("\t/* const */ uint8_t nTokens;\n")
 header.write("\t/* const */ uint16_t *groups;\n")
 header.write("\t/* const */ uint8_t nGroups;\n")
-header.write("\t/* const */ uint32_t guid[4];\n")
+#header.write("\t/* const */ uint32_t guid[4];\n")
 header.write("};\n")
 
 header.write("struct ChapterDef\n")
@@ -44,7 +44,7 @@ header.write("\t/* const */ PuzzleDef **puzzles;\n")
 header.write("\t/* const */ uint8_t nPuzzles;\n")
 header.write("\tconst PinnedAssetImage &icon;\n")
 header.write("\tconst char *name;\n")
-header.write("\t/* const */ uint32_t guid[4];\n")
+#header.write("\t/* const */ uint32_t guid[4];\n")
 header.write("};\n")
 
 header.write("struct EverythingDef\n")
@@ -111,7 +111,7 @@ for chapter in chapters:
 		f.write( str(len(tokens)) + ", " )
 		f.write( "c"+str(chapterIndex)+"p"+str(puzzleIndex)+"groups"+ ", " )
 		f.write( str(len(groups)) + ", " )
-		writeGuid(puzzleGuid, f)
+#		writeGuid(puzzleGuid, f)
 		f.write("\n};\n" )
 
 		puzzleIndex = puzzleIndex + 1
@@ -126,7 +126,7 @@ for chapter in chapters:
 	f.write( "\tc"+str(chapterIndex)+"puzzles" + ", ")
 	f.write( str(len(puzzles)) + ", ")
 	f.write( "icon_" + id + ", \"" + name + "\"" + ", ")
-	writeGuid(guid, f)
+#	writeGuid(guid, f)
 	f.write("\n};\n" )
 
 

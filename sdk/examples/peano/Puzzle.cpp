@@ -9,8 +9,7 @@ namespace TotalsGame {
 		
 	DEFINE_POOL(Puzzle)
 
-    Puzzle::Puzzle(int tokenCount, int chapter, int puzzle):
-        guid(Database::GuidForPuzzle(chapter, puzzle))
+    Puzzle::Puzzle(int tokenCount, int chapter, int puzzle)
 	{
         chapterIndex = chapter;
         puzzleIndex = puzzle;

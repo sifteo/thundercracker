@@ -8,12 +8,13 @@
 namespace TotalsGame {
 
 struct VictoryParticle {
-    uint8_t size;
+    uint8_t size, sizeIndex;
     Float2 position;
     Float2 velocity;
 
     void Initialize() {
-        size = 8 * (1 + Game::rand.randrange(3));
+        sizeIndex = 1 + Game::rand.randrange(3);
+        size = sizeIndex * 8;
         position.set(64, 92);
         velocity.setPolar(
                     Game::rand.uniform(-0.2f * M_PI, -0.8f * M_PI),
@@ -39,7 +40,7 @@ struct VictoryParticle {
                 position.y < 128 + hw;
     }
 
-    bool Paint(TotalsCube *c, int type) {
+    bool Paint(TotalsCube *c, int type, int id) {
         static const PinnedAssetImage *sprites[4][3] =
         {
             {&Diamond_8,&Diamond_16, &Diamond_24},
@@ -49,12 +50,8 @@ struct VictoryParticle {
         };
 
         if (IsOnScreen()) {
-            c.Image(
-                        &sprites[type][size],
-                        int(position.x - size/2),    //todo floor
-                        int(position.y - size/2),    //todo floor
-                        0, 0, size, size
-                        );
+            c->backgroundLayer.setSpriteImage(id, sprites[type][sizeIndex]);
+            c->backgroundLayer.moveSprite(id, position);
             return true;
         }
         return false;
@@ -115,7 +112,7 @@ public:
             c.Image(narratorTypes[mType]);
 
             for(int i=0; i<8; ++i) {
-                mParticles[i].Paint(GetCube(), mType);
+                mParticles[i].Paint(GetCube(), mType, i);
             }
         }
         else

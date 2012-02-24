@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sifteo.h"
-#include "Guid.h"
+//#include "Guid.h"
 
 namespace TotalsGame 
 {
@@ -13,16 +13,24 @@ class SaveData
 public:
     SaveData();
 
-    void AddSolved(const Guid &guid);
+    void AddSolvedPuzzle(int chapter, int puzzle);
+    void AddSolvedChapter(int chapter);
     void Save();
 
-    bool IsSolved(const Guid &guid);
+    bool IsPuzzleSolved(int chapter, int puzzle);
+    bool IsChapterSolved(int chapter);
 
 private:
+    
+    uint16_t solvedPuzzles[16];
+    uint16_t solvedChapters;
+    
+#if 0
     static const int MAX_GUIDS = 100;//TODO is this enough?!
 
     Guid solvedGuids[MAX_GUIDS];
     int numSolvedGuids;
+#endif    
     bool hasDoneTutorial;
 
 

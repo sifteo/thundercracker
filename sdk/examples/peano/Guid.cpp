@@ -1,3 +1,5 @@
+#if 0
+
 #include "Guid.h"
 
 namespace TotalsGame
@@ -37,3 +39,5 @@ namespace TotalsGame
 	}
 
 }
+
+#endif
