@@ -94,3 +94,5 @@ assets.gen.cpp
 assets.gen.h
 PauseHelper.h
 mungePuzzles.py
+VictoryView.h
+VictoryController.h
