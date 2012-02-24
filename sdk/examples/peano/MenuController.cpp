@@ -428,12 +428,11 @@ ChapterSelect:
         static int numChapterItems;
         numChapterItems = 0;
 
-        for(int i=0; i<mGame->database.NumChapters(); ++i) {
-            PuzzleChapter *chapter = mGame->database.GetChapter(i);
+        for(int i=0; i<Database::NumChapters(); ++i) {
             // only show chapters which can be played with the current cubeset
-            if (chapter->CanBePlayedWithCurrentCubeSet()) {
+            if (Database::CanBePlayedWithCurrentCubeSet(i)) {
                 if (mGame->saveData.IsChapterUnlockedWithCurrentCubeSet(i)) {
-                    TiltFlowItem *item = new(chapterItemBuffer[numChapterItems]) TiltFlowItem(chapter->idImage);
+                    TiltFlowItem *item = new(chapterItemBuffer[numChapterItems]) TiltFlowItem(&Database::ImageForChapter(i));
                     item->id = i;
                     item->description="Replay this level from the beginning." ;
                     chapterItems[numChapterItems] = item;
@@ -487,10 +486,11 @@ ChapterSelect:
     }
     else
     {
-        int chapter = (int32_t) menu->GetResultItem()->id;
-        if(chapter < mGame->database.NumChapters())
+        int chapter = menu->GetResultItem()->id;
+        if(chapter < Database::NumChapters())
         {
-            mGame->currentPuzzle = mGame->database.GetChapter(chapter)->FirstPuzzleForCurrentCubeSet();
+            int first = Database::FirstPuzzleForCurrentCubeSetInChapter(chapter);
+            mGame->currentPuzzle = Database::GetPuzzleInChapter(chapter, first);
         }
         else
         {

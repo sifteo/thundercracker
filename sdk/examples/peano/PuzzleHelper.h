@@ -6,6 +6,8 @@
 
 namespace TotalsGame {
 
+class Token;
+
 class PuzzleHelper {
 public:
     //-------------------------------------------------------------------------
@@ -16,6 +18,9 @@ public:
     static TokenGroup *ConnectRandomly(IExpression *grp1, IExpression *grp2, bool secondTime = false);
 
     static Puzzle *SelectRandomTokens(Difficulty difficulty, int nTokens);
+
+    static void ComputeDifficulties(Puzzle *p);
+    static void ComputeDifficulties(Token *t);
 
 };
 

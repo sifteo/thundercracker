@@ -523,7 +523,7 @@ public:
             if (!mGame->saveData.AllChaptersSolved()) {
                 mGame->currentPuzzle = mGame->saveData.FindNextPuzzle();
             } else {
-                mGame->currentPuzzle = mGame->database.GetChapter(0)->GetPuzzle(0);
+                mGame->currentPuzzle = Database::GetPuzzleInChapter(0, 0);
             }
         }
 

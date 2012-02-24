@@ -37,8 +37,6 @@ C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/NOTES.txt
 C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/ObjectPool.h
 C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/Puzzle.cpp
 C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/Puzzle.h
-C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/PuzzleChapter.cpp
-C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/PuzzleChapter.h
 C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/PuzzleController.h
 C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/PuzzleDatabase.cpp
 C:/Users/Kevin/Desktop/thundercracker kevin/sdk/examples/peano/PuzzleDatabase.h
@@ -95,3 +93,4 @@ TiltFlowItem.cpp
 assets.gen.cpp
 assets.gen.h
 PauseHelper.h
+mungePuzzles.py

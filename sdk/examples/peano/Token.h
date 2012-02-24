@@ -78,8 +78,10 @@ namespace TotalsGame {
 
 		Op GetOpRight();
 		void SetOpRight(Op value);
+        void SetOpRight(Difficulty dif, Op value);
 		Op GetOpBottom();
 		void SetOpBottom(Op value);
+        void SetOpBottom(Difficulty dif, Op value);
 	};
 
 	class SideHelper 

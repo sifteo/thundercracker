@@ -1,4 +1,6 @@
 #include "PuzzleHelper.h"
+#include "Token.h"
+
 namespace TotalsGame
 {
     //-------------------------------------------------------------------------
@@ -27,122 +29,51 @@ namespace TotalsGame
     }
 
     //-------------------------------------------------------------------------
-    // XML STUFF
-    //-------------------------------------------------------------------------
-
-    public static Puzzle CreateFromXML(XmlNode puzzleNode) {
-        var tokenNodes = puzzleNode.SelectNodes("token");
-        var result = new Puzzle(tokenNodes.Count);
-        {
-            var attr = puzzleNode.Attributes["guid"];
-            if (attr != null) { result.guid = new Guid(attr.InnerText); }
-        }
-        for(int i=0; i<tokenNodes.Count; ++i) {
-            var t = tokenNodes[i];
-            result.tokens[i].val = int.Parse(t.Attributes["val"].InnerText);
-            result.tokens[i].OpRight = (Op)Enum.Parse(typeof(Op), t.Attributes["opRight"].InnerText);
-            result.tokens[i].OpBottom = (Op)Enum.Parse(typeof(Op), t.Attributes["opBottom"].InnerText);
-        }
-        var groupNodes = puzzleNode.SelectNodes("group");
-        if (groupNodes.Count > 0) {
-            var groups = new TokenGroup[groupNodes.Count];
-            for(int i=0; i<groupNodes.Count; ++i) {
-                XmlNode gn = groupNodes[i];
-                var srcId = int.Parse(gn.Attributes["src"].InnerText);
-                var dstId = int.Parse(gn.Attributes["dst"].InnerText);
-                IExpression src;
-                if (srcId < result.tokens.Length) { src = result.tokens[srcId]; }
-                else { src = groups[srcId - result.tokens.Length]; }
-                IExpression dst;
-                if (dstId < result.tokens.Length) { dst = result.tokens[dstId]; }
-                else { dst = groups[dstId - result.tokens.Length]; }
-                groups[i] = new TokenGroup(
-                            src, result.tokens[int.Parse(gn.Attributes["srcToken"].InnerText)],
-                            (Cube.Side)Enum.Parse(typeof(Cube.Side), gn.Attributes["srcSide"].InnerText),
-                            dst, result.tokens[int.Parse(gn.Attributes["dstToken"].InnerText)]
-                            );
-            }
-            result.target = groups[groups.Length-1];
-        }
-        result.ComputeDifficulties();
-        return result;
-    }
-    
-    public static string ToXML(this Puzzle p) {
-        var result = new StringBuilder();
-        result.AppendFormat("<puzzle guid=\"{0}\">\n", p.guid.ToString());
-        foreach(var t in p.tokens) {
-            result.AppendFormat(
-                        "\t<token val=\"{0}\" opRight=\"{1}\" opBottom=\"{2}\" />\n",
-                        t.val,
-                        t.opRight,
-                        t.opBottom
-                        );
-        }
-        var li = new List<TokenGroup>(ListGroupsChildToParent(p.target));
-        foreach(var grp in li) {
-            int srcId = grp.src is Token ? Array.IndexOf(p.tokens, grp.src as Token) : p.tokens.Length + li.IndexOf(grp.src as TokenGroup);
-            int dstId = grp.dst is Token ? Array.IndexOf(p.tokens, grp.dst as Token) : p.tokens.Length + li.IndexOf(grp.dst as TokenGroup);
-            result.AppendFormat(
-                        "\t<group src=\"{0}\" srcToken=\"{1}\" srcSide=\"{2}\" dst=\"{3}\" dstToken=\"{4}\"/>\n",
-                        srcId,
-                        Array.IndexOf(p.tokens, grp.srcToken),
-                        grp.srcSide,
-                        dstId,
-                        Array.IndexOf(p.tokens, grp.dstToken)
-                        );
-        }
-        result.Append("</puzzle>\n");
-        return result.ToString();
-    }
-
-    //-------------------------------------------------------------------------
     // GRACEFUL DIFFICULTY DOWNGRADE
     //-------------------------------------------------------------------------
-
-    public static void ComputeDifficulties(this Puzzle p) {
-        foreach(var token in p.tokens) {
-            token.ComputeDifficulties();
-        }
+#endif
+    void PuzzleHelper::ComputeDifficulties(Puzzle *p) {
+        for(int i = 0; i < p->GetNumTokens(); i++)
+            ComputeDifficulties(p->GetToken(i));
     }
 
-    static void ComputeDifficulties(this Token t) {
-        var r = t.opRight[(int)Difficulty.Hard];
-        var b = t.opBottom[(int)Difficulty.Hard];
-        if (r == Op.Multiply) {
-            if (b == Op.Divide) {
+    void PuzzleHelper::ComputeDifficulties(Token *t) {
+        Op r = t->opRight[(int)DifficultyHard];
+        Op b = t->opBottom[(int)DifficultyHard];
+        if (r == OpMultiply) {
+            if (b == OpDivide) {
                 // MD
-                t.SetRight(Difficulty.Easy, Op.Add);
-                t.SetBottom(Difficulty.Easy, Op.Subtract);
-                t.SetBottom(Difficulty.Medium, Op.Add);
+                t->SetOpRight(DifficultyEasy, OpAdd);
+                t->SetOpBottom(DifficultyEasy, OpSubtract);
+                t->SetOpBottom(DifficultyMedium, OpAdd);
             } else {
                 // M*
-                t.SetRight(Difficulty.Easy, b == Op.Add ? Op.Subtract : Op.Add);
+                t->SetOpRight(DifficultyEasy, b == OpAdd ? OpSubtract : OpAdd);
             }
-        } else if (r == Op.Divide) {
-            if (b == Op.Multiply) {
+        } else if (r == OpDivide) {
+            if (b == OpMultiply) {
                 // DM
-                t.SetRight(Difficulty.Easy, Op.Subtract);
-                t.SetBottom(Difficulty.Easy, Op.Add);
-                t.SetRight(Difficulty.Medium, Op.Subtract);
+                t->SetOpRight(DifficultyEasy, OpSubtract);
+                t->SetOpBottom(DifficultyEasy, OpAdd);
+                t->SetOpRight(DifficultyMedium, OpSubtract);
             } else {
                 // D*
-                t.SetRight(Difficulty.Easy, b == Op.Add ? Op.Subtract : Op.Add);
-                t.SetRight(Difficulty.Medium, Op.Multiply);
+                t->SetOpRight(DifficultyEasy, b == OpAdd ? OpSubtract : OpAdd);
+                t->SetOpRight(DifficultyMedium, OpMultiply);
             }
         } else {
-            if (b == Op.Multiply) {
+            if (b == OpMultiply) {
                 // *M
-                t.SetBottom(Difficulty.Easy, r == Op.Add ? Op.Subtract : Op.Add);
-            } else if (b == Op.Divide) {
+                t->SetOpBottom(DifficultyEasy, r == OpAdd ? OpSubtract : OpAdd);
+            } else if (b == OpDivide) {
                 // *D
-                t.SetBottom(Difficulty.Easy, r == Op.Add ? Op.Subtract : Op.Add);
-                t.SetBottom(Difficulty.Medium, Op.Multiply);
+                t->SetOpBottom(DifficultyEasy, r == OpAdd ? OpSubtract : OpAdd);
+                t->SetOpBottom(DifficultyMedium, OpMultiply);
             }
         }
 
     }
-
+#if 0
     static void SetRight(this Token t, Difficulty d, Op op) { t.opRight[(int)d] = op; }
     static void SetBottom(this Token t, Difficulty d, Op op) { t.opBottom[(int)d] = op; }
 

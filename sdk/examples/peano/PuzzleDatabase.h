@@ -1,24 +1,26 @@
 #pragma once
 
-#include "PuzzleChapter.h"
+#include "Puzzle.h"
+#include "Guid.h"
 
-namespace TotalsGame {
-
-class PuzzleDatabase {
-
-public:
-
+namespace TotalsGame
+{
+namespace Database
+{
     int NumChapters();
-    PuzzleChapter *GetChapter(int index);
-    int IndexOfChapter(PuzzleChapter *chapter);
 
-    //rwrite as direct data access
+    int NumPuzzlesInChapter(int chapter);
+    int NumTokensInPuzzle(int chapter, int puzzle);
+    Guid GuidForPuzzle(int chapter, int puzzle);
+    const PinnedAssetImage &ImageForChapter(int chapter);
+    const char *NameOfChapter(int chapter);
+    Puzzle *GetPuzzleInChapter(int chapter, int puzzle);
 
-
-private:
-    PuzzleChapter *chapters;
-    int numChapters;
-};
-
+      bool HasPuzzleBeenSolved(int chapter, int puzzle);
+      bool CanBePlayedWithCurrentCubeSet(int chapter);
+      void SavePuzzleAsSolved(int chapter, int puzzle);
+      void SaveChapterAsSolved(int chapter);
+      int FirstPuzzleForCurrentCubeSetInChapter(int chapter);
+}
 }
 

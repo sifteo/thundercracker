@@ -34,12 +34,12 @@ namespace TotalsGame {
             iv->message = "Random!";
             iv->image = &Hint_6;
         } else {
-            iv->message = mGame->currentPuzzle->chapter->name;
+            iv->message = Database::NameOfChapter(mGame->currentPuzzle->chapterIndex);
             static const PinnedAssetImage *hints[] =
             {
                 &Hint_0,&Hint_1,&Hint_2,&Hint_3,&Hint_4,&Hint_5,&Hint_6
             };
-            iv->image = hints[mGame->database.IndexOfChapter(mGame->currentPuzzle->chapter)];
+            iv->image = hints[mGame->currentPuzzle->chapterIndex];
         }
 
         for(int i = 1; i < Game::NUMBER_OF_CUBES; i++)

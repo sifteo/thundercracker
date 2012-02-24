@@ -230,22 +230,27 @@ namespace TotalsGame
 			return "RandComplete";
 		}
         g.currentPuzzle->SaveAsSolved();
-        Puzzle *nextPuzzle = g.currentPuzzle->GetNext(NUMBER_OF_CUBES);
-		if (nextPuzzle == NULL)
+        int chapter, puzzle;
+        bool success;
+        success = g.currentPuzzle->GetNext(NUMBER_OF_CUBES, &chapter, &puzzle);
+        if (success)
 		{
-            g.currentPuzzle->chapter->SaveAsSolved();
+            Database::SavePuzzleAsSolved(g.currentPuzzle->chapterIndex, g.currentPuzzle->puzzleIndex);
+            delete g.currentPuzzle;
             g.currentPuzzle = NULL;
 			return "GameComplete";
 		} 
-        else if (nextPuzzle->chapter == g.currentPuzzle->chapter)
+        else if (chapter == g.currentPuzzle->chapterIndex)
 		{
-            g.currentPuzzle = nextPuzzle;
+            delete g.currentPuzzle;
+            g.currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
 			return "NextPuzzle";
 		}
 		else 
 		{
-            g.currentPuzzle->chapter->SaveAsSolved();
-            g.currentPuzzle = nextPuzzle;
+            Database::SaveChapterAsSolved(g.currentPuzzle->chapterIndex);
+            delete g.currentPuzzle;
+            g.currentPuzzle = Database::GetPuzzleInChapter(chapter, puzzle);
 			return "NextChapter";
 		}
 	}

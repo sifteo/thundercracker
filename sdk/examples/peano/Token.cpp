@@ -206,6 +206,11 @@ void Token::SetOpRight(Op value)
     opRight[(int)DifficultyHard] = value;
 }
 
+void Token::SetOpRight(Difficulty dif, Op value)
+{
+    opRight[(int)dif] = value;
+}
+
 Op Token::GetOpBottom()
 {
     return opBottom[(int)puzzle->GetDifficulty()];
@@ -216,6 +221,11 @@ void Token::SetOpBottom(Op value)
     opBottom[(int)DifficultyEasy] = value;
     opBottom[(int)DifficultyMedium] = value;
     opBottom[(int)DifficultyHard] = value;
+}
+
+void Token::SetOpBottom(Difficulty dif, Op value)
+{
+    opBottom[(int)dif] = value;
 }
 
 

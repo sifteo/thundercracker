@@ -28,11 +28,8 @@ Narrator_Mix01 = image { "narrator_mix01.png" }
 Narrator_Mix02 = image { "narrator_mix02.png" }
 
 Icon_Back = image { "icon_back.png", pinned=true }
-Icon_Bend_It = image { "icon_bend_it.png" , pinned=true}
 Icon_Clear_Data = image { "icon_clear_data.png" , pinned=true}
-Icon_Crosses = image { "icon_crosses.png" , pinned=true}
 Icon_Easy = image { "icon_easy.png" , pinned=true}
-Icon_Experts_Only = image { "icon_experts_only.png" , pinned=true}
 Icon_Hard = image { "icon_hard.png" , pinned=true}
 Icon_Locked = image { "icon_locked.png" , pinned=true}
 Icon_Main_Menu = image { "icon_main_menu.png" , pinned=true}
@@ -43,16 +40,20 @@ Icon_No = image { "icon_no.png" , pinned=true}
 Icon_Resume = image { "icon_resume.png" , pinned=true}
 Icon_Sfx_Off = image { "icon_sfx_off.png" , pinned=true}
 Icon_Sfx_On = image { "icon_sfx_on.png" , pinned=true}
-Icon_Squares = image { "icon_squares.png" , pinned=true}
-Icon_Stacking_Up = image { "icon_stacking_up.png" , pinned=true}
-Icon_Starting_Simple = image { "icon_starting_simple.png" , pinned=true}
-Icon_Two_Tuples = image { "icon_two_tuples.png" , pinned=true}
 Icon_Yes = image { "icon_yes.png" , pinned=true}
 Icon_Continue = image { "icon_continue.png" , pinned=true}
 Icon_Random = image { "icon_random.png" , pinned=true}
 Icon_Howtoplay = image { "icon_howtoplay.png" , pinned=true}
 Icon_Level_Select = image { "icon_level_select.png" , pinned=true}
 Icon_Setup = image { "icon_setup.png" , pinned=true}
+
+icon_starting_simple = image { "icon_starting_simple.png" , pinned=true}
+icon_two_tuples = image { "icon_two_tuples.png" , pinned=true}
+icon_bend_it = image { "icon_bend_it.png" , pinned=true}
+icon_crosses = image { "icon_crosses.png" , pinned=true}
+icon_experts_only = image { "icon_experts_only.png" , pinned=true}
+icon_squares = image { "icon_squares.png" , pinned=true}
+icon_stacking_up = image { "icon_stacking_up.png" , pinned=true}
 
 Press_To_Select = image { "press_to_select.png", pinned=true }
 Tilt_For_More = image { "tilt_for_more.png", pinned=true}

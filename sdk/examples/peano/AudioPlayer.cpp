@@ -134,7 +134,7 @@ namespace TotalsGame
 		} 
 		else
         {
-			int i = Game::GetInstance().database.IndexOfChapter(Game::GetInstance().currentPuzzle->chapter);
+            int i = Game::GetInstance().currentPuzzle->chapterIndex;
 			PlayMusic(*sInGameMusic[i % musicCount]);
 		}
 #endif

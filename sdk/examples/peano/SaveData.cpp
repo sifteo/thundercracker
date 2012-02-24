@@ -11,13 +11,13 @@ namespace TotalsGame
     
     void SaveData::AddSolved(const Guid &guid)
     {
-        if(!IsSolved(guid))
+        if(guid != Guid::Empty && !IsSolved(guid))
         {
             solvedGuids[numSolvedGuids] = guid;
             numSolvedGuids++;
         }
     }
-    
+
     void SaveData::Reset()
     {
         Game::GetInstance().currentPuzzle = NULL;
@@ -32,7 +32,7 @@ namespace TotalsGame
     }
     
     bool SaveData::IsSolved(const Guid &guid)
-    {
+    {return true;//TODO
         for(int i = 0; i < numSolvedGuids; i++)
         {
             if(solvedGuids[i] == guid)

@@ -49,7 +49,6 @@ namespace TotalsGame {
 		Difficulty difficulty;
 		NumericMode mode;
 		Random seed;
-		PuzzleDatabase database;		
 		SaveData saveData;
 		//Jukebox jukebox = new Jukebox();		
 		bool mDirty;

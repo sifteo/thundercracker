@@ -120,7 +120,7 @@ void NarratorView::PaintText()
 {
       const int pad = 8;
       //GetCube()->Image(&Narrator_Balloon, Vec2(0,0));
-//TODO      GetCube()->foregroundLayer.DrawAsset(Vec2(0,0), Narrator_Balloon);
+      GetCube()->foregroundLayer.DrawAsset(Vec2(0,0), Narrator_Balloon);
   //    Library.Verdana.Paint(Cube, mString, new Int2(6+pad,6), HorizontalAlignment.Center, VerticalAlignment.Middle, 1, 0, true, false, new Int2(116-pad-pad, 45));
 
       //text wil actually be drawn after this frame completes

@@ -1,4 +1,5 @@
 #pragma once
+#include "sifteo.h"
 
 namespace TotalsGame
 {
@@ -6,15 +7,16 @@ namespace TotalsGame
 	class Guid
 	{
 	public:
-		Guid();
+        static const Guid Empty;
 
-        bool operator==(const Guid &right);
-		bool operator!=(const Guid &right);
+        Guid();
+        Guid(const uint32_t *theInts);
 
-		static const Guid Empty;
+        bool operator==(const Guid &right) const;
+        bool operator!=(const Guid &right) const;
 
 	private:
-		unsigned long guid[4];
+        uint32_t guid[4];
 	};
 
 

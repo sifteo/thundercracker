@@ -2,17 +2,18 @@
 #include "Guid.h"
 #include "Game.h"
 #include "Puzzle.h"
-#include "PuzzleChapter.h"
 #include "PuzzleHelper.h"
-
+#include "PuzzleDatabase.h"
 
 namespace TotalsGame {
 		
 	DEFINE_POOL(Puzzle)
 
-	Puzzle::Puzzle(int tokenCount) 
+    Puzzle::Puzzle(int tokenCount, int chapter, int puzzle):
+        guid(Database::GuidForPuzzle(chapter, puzzle))
 	{
-		chapter = NULL;
+        chapterIndex = chapter;
+        puzzleIndex = puzzle;
 		difficulty = DifficultyEasy;
 		focus = NULL;
 		target = NULL;
@@ -108,11 +109,8 @@ namespace TotalsGame {
 
 	void Puzzle::SaveAsSolved() 
 	{
-		if (guid != Guid::Empty) 
-		{
-			Game::GetInstance().saveData.AddSolved(guid);
-			Game::GetInstance().saveData.Save();
-		}
+        Database::SavePuzzleAsSolved(chapterIndex, puzzleIndex);
+        Game::GetInstance().saveData.Save();
 	}
 	/*
     public static int CountAfterThisInChapterWithCurrentCubeSet(this Puzzle p) {
@@ -126,36 +124,40 @@ namespace TotalsGame {
       return result;
     }*/
     
-    Puzzle *Puzzle::GetNext()
+    bool Puzzle::GetNext(int *chapter, int *puzzle)
     {
-        if (chapter == NULL) { return NULL; }
-        int localIndex = chapter->IndexOfPuzzle(this);
-        if (localIndex < chapter->NumPuzzles()-1) {
-            return chapter->GetPuzzle(localIndex+1);
+        if (chapterIndex == -1) { *chapter = *puzzle = -1; return false; }
+        if (puzzleIndex < Database::NumPuzzlesInChapter(chapterIndex)-1) {
+            *chapter = chapterIndex;
+            *puzzle = puzzleIndex + 1;
+            return true;
         }
-        if (chapter->db == NULL) { return NULL; }
-        int globalIndex = chapter->db->IndexOfChapter(chapter);
-        if (globalIndex < chapter->db->NumChapters()-1) {
-            return chapter->db->GetChapter(globalIndex+1)->GetPuzzle(0);
+        if (chapterIndex == -1) { *chapter = *puzzle = -1; return false; }
+        if (chapterIndex < Database::NumChapters() - 1) {
+            *chapter = chapterIndex + 1;
+            *puzzle = 0;
+            return true;
         }
-        return NULL;
+        *chapter = *puzzle = -1;
+        return false;
     }
     
-    Puzzle *Puzzle::GetNext(int maxCubeCount) {
-        Puzzle *puzzle = this;
+    bool Puzzle::GetNext(int maxCubeCount, int *chapter, int *puzzle)
+    {
+        bool success;
         do {
-            puzzle = puzzle->GetNext();
-        } while(puzzle != NULL && puzzle->numTokens > maxCubeCount);
-        return puzzle;
+            success = GetNext(chapter, puzzle);
+        } while(success && Database::NumTokensInPuzzle(*chapter, *puzzle) > maxCubeCount);
+        return success;
     }
 
     int Puzzle::CountAfterThisInChapterWithCurrentCubeSet()
     {
-      if (chapter == NULL) { return 0; }
+      if (chapterIndex == -1) { return 0; }
       int result = 0;
-      for(int i=chapter->IndexOfPuzzle(this)+1; i<chapter->NumPuzzles(); ++i)
+      for(int i=puzzleIndex+1; i<Database::NumPuzzlesInChapter(chapterIndex); ++i)
       {
-        if (chapter->GetPuzzle(i)->GetNumTokens() <= Game::NUMBER_OF_CUBES)
+        if (Database::NumTokensInPuzzle(chapterIndex, i) <= Game::NUMBER_OF_CUBES)
         {
           result++;
         }

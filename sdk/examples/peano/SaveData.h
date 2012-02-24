@@ -19,7 +19,7 @@ public:
     bool IsSolved(const Guid &guid);
 
 private:
-    static const int MAX_GUIDS = 100;
+    static const int MAX_GUIDS = 100;//TODO is this enough?!
 
     Guid solvedGuids[MAX_GUIDS];
     int numSolvedGuids;
@@ -63,7 +63,7 @@ public:
         --j;
       }
       return Db.Chapters[j].HasBeenSolved();
-      */return false;//TODO
+      */return true;//TODO
     }
 
     void CompleteTutorial();

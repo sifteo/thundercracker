@@ -25,7 +25,7 @@ namespace TotalsGame
         DECLARE_POOL(Puzzle, 2)
 
 	public:
-		Puzzle(int tokenCount);
+        Puzzle(int tokenCount, int chapter=-1, int puzzle=-1);
         ~Puzzle();
 
 		void ClearUserdata();
@@ -36,7 +36,7 @@ namespace TotalsGame
 
 		// option parameters
 		Guid guid;
-		PuzzleChapter *chapter;
+        int puzzleIndex, chapterIndex;
 		Difficulty difficulty;
 
 		// game parameters
@@ -50,8 +50,8 @@ namespace TotalsGame
 
 		void SaveAsSolved();
         
-        Puzzle *GetNext();
-        Puzzle *GetNext(int maxCubeCount);
+        bool GetNext(int *chapter, int *puzzle);
+        bool GetNext(int maxCubeCount, int *chapter, int *puzzle);
         int CountAfterThisInChapterWithCurrentCubeSet();
 
 		bool SelectRandomTarget();
