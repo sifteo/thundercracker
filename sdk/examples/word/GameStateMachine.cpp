@@ -45,7 +45,7 @@ void GameStateMachine::update(float dt)
     }
 }
 
-void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
+unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
@@ -101,19 +101,21 @@ void GameStateMachine::onEvent(unsigned eventID, const EventData& data)
     Dictionary::sOnEvent(eventID, data);
     SavedData::sOnEvent(eventID, data);
 
-    StateMachine::onEvent(eventID, data);
+    unsigned result = StateMachine::onEvent(eventID, data);
     for (unsigned i = 0; i < arraysize(mCubeStateMachines); ++i)
     {
         mCubeStateMachines[i].onEvent(eventID, data);
     }
+    return result;
 }
 
-void GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
+unsigned GameStateMachine::sOnEvent(unsigned eventID, const EventData& data)
 {
     if (sInstance != 0)
     {
-        sInstance->onEvent(eventID, data);
+        return sInstance->onEvent(eventID, data);
     }
+    return 0;
 }
 
 CubeStateMachine* GameStateMachine::findCSMFromID(Cube::ID cubeID)

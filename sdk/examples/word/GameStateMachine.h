@@ -31,8 +31,8 @@ public:
     GameStateMachine(Cube cubes[]);
 
     virtual void update(float dt);
-    virtual void onEvent(unsigned eventID, const EventData& data);
-    static void sOnEvent(unsigned eventID, const EventData& data);
+    virtual unsigned onEvent(unsigned eventID, const EventData& data);
+    static unsigned sOnEvent(unsigned eventID, const EventData& data);
     static unsigned GetNumCubes() { return NUM_CUBES; }// TODO
     static CubeStateMachine* findCSMFromID(Cube::ID cubeID);
 

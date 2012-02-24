@@ -57,6 +57,7 @@ void CubeState::paintScore(VidMode_BG0_SPR_BG1& vid,
                            bool paintTime,
                            float animStartTime)
 {
+    return;
     if (GameStateMachine::getCurrentMaxLettersPerCube() > 1)
     {
         paintTime = false;

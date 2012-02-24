@@ -137,15 +137,7 @@ void ScoredCubeState_NewWord::paint()
     Cube& c = getStateMachine().getCube();
     VidMode_BG0_SPR_BG1 vid(c.vbuf);
     vid.init();
-    if (GameStateMachine::getCurrentMaxLettersPerCube() == 1)
-    {
-        paintLetters(vid, Font1Letter, true);
-    }
-    else
-    {
-        vid.BG0_drawAsset(Vec2(0,0), ScreenOff);
-    }
-
+    paintLetters(vid, Font1Letter, true);
     paintBorder(vid, mImageIndex, true, false, false, false);
     vid.BG0_setPanning(Vec2(0.f, 0.f));
 }

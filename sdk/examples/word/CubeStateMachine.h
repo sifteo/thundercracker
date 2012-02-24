@@ -23,7 +23,7 @@ class CubeStateMachine : public StateMachine
 {
 public:
     CubeStateMachine() :
-        StateMachine(0), mNumLetters(1), mIdleTime(0.f), mAnimTime(0.f), mAnimIndex(AnimIndex_2TileIdle),
+        StateMachine(0), mNumLetters(1), mIdleTime(0.f), mAnimTime(0.f), mAnimIndex(AnimIndex_Tile2Idle),
         mBG0Panning(0.f), mBG0TargetPanning(0.f), mBG0PanningLocked(true), mLettersStart(0), mLettersStartTarget(0),
         mCube(0) {}
 
@@ -33,17 +33,21 @@ public:
     virtual unsigned getNumStates() const;
     virtual State& getState(unsigned index);
 
-    virtual void onEvent(unsigned eventID, const EventData& data);    
+    virtual unsigned onEvent(unsigned eventID, const EventData& data);
     virtual void update(float dt);
     void sendEventToRow(unsigned eventID, const EventData& data);
 
     void resetStateTime() { mStateTime = 0.0f; }
 
     bool getLetters(char *buffer, bool forPaint=false);
-    void startAnim(AnimIndex anim,
-                    VidMode_BG0_SPR_BG1 &vid,
+    void queueAnim(AnimIndex anim);/*
+                   VidMode_BG0_SPR_BG1 &vid,
                     BG1Helper *bg1 = 0,
-                    const AnimParams *params = 0);
+                    const AnimParams *params = 0);*/
+    void queueDefaultAnimForState();
+            /*VidMode_BG0_SPR_BG1 &vid,
+                                  BG1Helper *bg1 = 0,
+                                  const AnimParams *params = 0);*/
 
     void updateAnim(VidMode_BG0_SPR_BG1 &vid,
                      BG1Helper *bg1 = 0,
@@ -60,6 +64,7 @@ public:
 
 private:
     void setPanning(VidMode_BG0_SPR_BG1& vid, float panning);
+    AnimIndex getAnimForCurrentState() const;
 
     // shared state data
     char mLetters[MAX_LETTERS_PER_CUBE + 1];

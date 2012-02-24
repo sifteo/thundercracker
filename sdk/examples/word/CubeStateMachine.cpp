@@ -29,7 +29,7 @@ Cube& CubeStateMachine::getCube()
     return *mCube;
 }
 
-void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
+unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 {
     switch (eventID)
     {
@@ -63,11 +63,11 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                         setPanning(vid, mBG0Panning);
                         if (state.x < 1)
                         {
-                            startAnim(AnimIndex_2TileSlideL, vid); // FIXME
+                            queueAnim(AnimIndex_Tile2SlideL);//, vid); // FIXME
                         }
                         else
                         {
-                            startAnim(AnimIndex_2TileSlideR, vid); // FIXME
+                            queueAnim(AnimIndex_Tile2SlideR);//, vid); // FIXME
                         }
                         WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
                     }
@@ -94,8 +94,19 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             VidMode_BG0_SPR_BG1 vid(getCube().vbuf);
             setPanning(vid, 0.f);
         }
-        // fall through
+        mIdleTime = 0.f;
+        break;
     case EventID_EnterState:
+        {
+            /*BG1Helper bg1(getCube());
+            char str[MAX_LETTERS_PER_CUBE + 1];
+            getLetters(str, true);
+            AnimParams params;
+            params.mLetters = str;
+            */
+            queueDefaultAnimForState();//vid, bg1, params);
+        }
+        // fall through
     case EventID_AddNeighbor:
     case EventID_RemoveNeighbor:
         mIdleTime = 0.f;
@@ -115,7 +126,7 @@ void CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         // TODO substrings of length 1 to 3
         break;
     }
-    StateMachine::onEvent(eventID, data);
+    return StateMachine::onEvent(eventID, data);
 }
 
 
@@ -129,7 +140,7 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
 
     switch (mAnimIndex)
     {
-    case AnimIndex_2TileSlideL:
+    case AnimIndex_Tile2SlideL:
         DEBUG_LOG(("(anim)letters start: %d\n", mLettersStart));
     default:
         if (mLettersStart == 0)
@@ -152,10 +163,7 @@ bool CubeStateMachine::getLetters(char *buffer, bool forPaint)
     return true;
 }
 
-void CubeStateMachine::startAnim(AnimIndex anim,
-                                 VidMode_BG0_SPR_BG1 &vid,
-                                 BG1Helper *bg1,
-                                 const AnimParams *params)
+void CubeStateMachine::queueAnim(AnimIndex anim)
 {
     if (anim != mAnimIndex)
     {
@@ -165,6 +173,12 @@ void CubeStateMachine::startAnim(AnimIndex anim,
     }
 }
 
+
+void CubeStateMachine::queueDefaultAnimForState()
+{
+    queueAnim(getAnimForCurrentState());//, vid, bg1, params);
+}
+
 void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
                                   BG1Helper *bg1,
                                   const AnimParams *params)
@@ -172,7 +186,7 @@ void CubeStateMachine::updateAnim(VidMode_BG0_SPR_BG1 &vid,
     if (!animPaint(mAnimIndex, vid, bg1, mAnimTime, params))
     {
         mLettersStart = mLettersStartTarget;
-        startAnim(AnimIndex_2TileIdle, vid, bg1, params);
+        queueDefaultAnimForState();//, vid, bg1, params);
     }
 }
 
@@ -181,6 +195,72 @@ bool CubeStateMachine::canBeginWord()
     return (mNumLetters > 0 &&
             mCube->physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
             mCube->physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED);
+}
+
+AnimIndex CubeStateMachine::getAnimForCurrentState() const
+{
+    AnimIndex anim = AnimIndex_Tile2Idle;
+    switch (GameStateMachine::getCurrentMaxLettersPerCube())
+    {
+    case 1:
+        switch (getCurrentStateIndex())
+        {
+        case CubeStateIndex_Title:
+        case CubeStateIndex_TitleExit:
+        case CubeStateIndex_NotWordScored:
+            break;
+        case CubeStateIndex_NewWordScored:
+        case CubeStateIndex_OldWordScored:
+            anim = AnimIndex_Tile2Glow;
+            break;
+        case CubeStateIndex_StartOfRoundScored:
+        case CubeStateIndex_EndOfRoundScored:
+        case CubeStateIndex_ShuffleScored:
+            break;
+        }
+        break;
+
+    case 2:
+        switch (getCurrentStateIndex())
+        {
+        case CubeStateIndex_Title:
+        case CubeStateIndex_TitleExit:
+        case CubeStateIndex_NotWordScored:
+            break;
+        case CubeStateIndex_NewWordScored:
+        case CubeStateIndex_OldWordScored:
+            anim = AnimIndex_Tile2Glow;
+            break;
+        case CubeStateIndex_StartOfRoundScored:
+        case CubeStateIndex_EndOfRoundScored:
+        case CubeStateIndex_ShuffleScored:
+            break;
+        }
+        break;
+
+    case 3:
+        switch (getCurrentStateIndex())
+        {
+        case CubeStateIndex_Title:
+        case CubeStateIndex_TitleExit:
+        case CubeStateIndex_NotWordScored:
+            break;
+        case CubeStateIndex_NewWordScored:
+        case CubeStateIndex_OldWordScored:
+            anim = AnimIndex_Tile2Glow;
+            break;
+        case CubeStateIndex_StartOfRoundScored:
+        case CubeStateIndex_EndOfRoundScored:
+        case CubeStateIndex_ShuffleScored:
+            break;
+        }
+        break;
+
+    default:
+        ASSERT(0);// && "unexpected number of letters per cube");
+    }
+
+    return anim;
 }
 
 bool CubeStateMachine::beginsWord(bool& isOld, char* wordBuffer, bool& isBonus)

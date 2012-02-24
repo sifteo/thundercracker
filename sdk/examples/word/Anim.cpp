@@ -107,28 +107,37 @@ const static Vec2 positions[] =
 
 const static AnimObjData animObjData[] =
 {
+    // AnimIndex_Tile2Idle
     { &Tile2, 0x0, 1, &positions[0]},
     { &Tile2, 0x0, 1, &positions[1]},
 
-    // AnimIndex_2TileSlideL
+    // AnimIndex_Tile2SlideL
     { &Tile2, 0x0, 10, &positions[7]},
     { &Tile2, 0x0, 7, &positions[2]},
 
-    // AnimIndex_2TileSlideR
+    // AnimIndex_Tile2SlideR
     { &Tile2, 0x0, 7, &positions[10]},
     { &Tile2, 0x0, 10, &positions[16]},
+
+    // AnimIndex_Tile2Glow
+    { &Tile2Glow, 0x0, 1, &positions[0]},
+    { &Tile2Glow, 0x0, 1, &positions[1]},
 };
 
 const static AnimData animData[] =
 {
-    // AnimIndex_2TileIdle
+    // AnimIndex_Tile2Idle
     { 1.f, true, 2, &animObjData[0]},
 
-    // AnimIndex_2TileSlideL
+    // AnimIndex_Tile2SlideL
     { 1.f, false, 2, &animObjData[2]},
 
-    // AnimIndex_2TileSlideR
+    // AnimIndex_Tile2SlideR
     { 1.f, false, 2, &animObjData[4]},
+
+    // AnimIndex_Tile2Glow
+    { 1.f, true, 2, &animObjData[6]},
+
 };
 
 bool animPaint(AnimIndex anim,
@@ -202,7 +211,7 @@ bool animPaint(AnimIndex anim,
 
         switch (anim)
         {
-        case AnimIndex_2TileSlideL:
+        case AnimIndex_Tile2SlideL:
             break;
 
         default:
