@@ -15,8 +15,8 @@ OBJS_SIM = $(ASSETS).gen.sim.o \
 
 BIN_STM32 = peano.stm32
 OBJS_STM32 = $(ASSETS).gen.stm32.o \
-	main.stm32.o Shapemask.stm32.o Puzzle.stm32.o Token.stm32.o Fraction.stm32.o \
-	Tokengroup.stm32.o Game.stm32.o Statemachine.stm32.o Guid.stm32.o \
+        main.stm32.o ShapeMask.stm32.o Puzzle.stm32.o Token.stm32.o Fraction.stm32.o \
+        TokenGroup.stm32.o Game.stm32.o StateMachine.stm32.o Guid.stm32.o \
 	PuzzleChapter.stm32.o PuzzleDatabase.stm32.o SaveData.stm32.o TotalsCube.stm32.o \
 	BlankView.stm32.o AudioPlayer.stm32.o View.stm32.o StingController.stm32.o \
 	TokenView.stm32.o PuzzleController.stm32.o TiltFlowDetailView.stm32.o \
