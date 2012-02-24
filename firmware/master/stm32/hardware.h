@@ -471,6 +471,14 @@ struct NVIC_t {
         unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.MemManage) >> 2;
         sysHandlerPriority[id >> 2] |= prio << ((id & 3) << 3);
     }
+
+    void systemReset() volatile {
+        appInterruptControl =   (0x5FA << 16) |                     // reset key
+                                (appInterruptControl & (7 << 8)) |  // priority group unchanged
+                                (1 << 2);                           // issue system reset
+        __asm volatile ("dsb");                                     // paranoia - ensure memory access
+        while (1);                                                  // wait to reset
+    }
 };
 
 extern volatile NVIC_t NVIC;
