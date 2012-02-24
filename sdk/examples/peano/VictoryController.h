@@ -5,10 +5,11 @@
 namespace TotalsGame {
 
   class VictoryController : public IStateController {
-    Game mGame;
+    Game *mGame;
 
     CORO_PARAMS;
     float remembered_t;
+      int remembered_i;
 
 
     NarratorView *nv;
@@ -39,6 +40,9 @@ namespace TotalsGame {
     }
 */
     float Coroutine(float dt) {
+        
+        bool isLast;
+        
         static char nvBuffer[sizeof(NarratorView)];
         static char blankBuffers[Game::NUMBER_OF_CUBES][sizeof(BlankView)];
         static char vvBuffer[sizeof(VictoryView)];
@@ -48,9 +52,9 @@ namespace TotalsGame {
         nv = new(nvBuffer) NarratorView(Game::GetCube(0));
 
       for(int i=1; i<Game::NUMBER_OF_CUBES; ++i) {
-          new(blankBuffers) BlankView(Game::GetCube(i));
+          new(blankBuffers) BlankView(Game::GetCube(i), NULL);
       }
-      static const kTransitionTime = 0.2f;
+      static const float kTransitionTime = 0.2f;
       CORO_YIELD(0.5f);
       AudioPlayer::PlayShutterOpen();
       for(remembered_t=0; remembered_t<kTransitionTime; remembered_t+=dt) {
@@ -59,13 +63,13 @@ namespace TotalsGame {
       }
       nv->SetTransitionAmount(1);
       CORO_YIELD(0.25f);
-      nv->SetMessage("Codes accepted!  Get ready!", EmoteYay);
+        nv->SetMessage("Codes accepted!  Get ready!", NarratorView::EmoteYay);
       CORO_YIELD(3);
 
       AudioPlayer::PlayNeighborRemove();
-      CORO_YIELD(0.1f)
-      AudioPlayer::PlaySfx(sfx_Chapter_Victory);
-      vv = new(vvBuffer) VictoryView(Game::GetCube(0), mGame->previousPuzzle.chapterIndex);
+        CORO_YIELD(0.1f);
+ //TODO     AudioPlayer::PlaySfx(sfx_Chapter_Victory);
+      vv = new(vvBuffer) VictoryView(Game::GetCube(0), mGame->previousPuzzle->chapterIndex);
       CORO_YIELD(1);
       vv->Open();
       //Jukebox.Sfx("win");
@@ -76,49 +80,50 @@ namespace TotalsGame {
       nv->SetCube(Game::GetCube(0));
       CORO_YIELD(0.5f);
 
-      bool isLast = mGame->previousPuzzle.chapterIndex == Database::NumChapters()-1;
+      isLast = mGame->previousPuzzle->chapterIndex == Database::NumChapters()-1;
       if (isLast && mGame->saveData.AllChaptersSolved()) {
         nv->SetMessage("You solved\nall the codes!");
         CORO_YIELD(2.5f);
-        nv->SetMessage("Congratulations!", EmoteYay);
+          nv->SetMessage("Congratulations!", NarratorView::EmoteYay);
         CORO_YIELD(2.25f);
         nv->SetMessage("We'll go to the home screen now.");
         CORO_YIELD(2.75f);
         nv->SetMessage("You can replay any chapter.");
         CORO_YIELD(2.75f);
-        nv->SetMessage("Or I can create random puzzles for you!", EmoteMix01);
-        int i=0;
+          nv->SetMessage("Or I can create random puzzles for you!", NarratorView::EmoteMix01);
+        remembered_i=0;
         CORO_YIELD(0);
         for(remembered_t=0; remembered_t<3; remembered_t+=mGame->dt) {
-          i = 1-i;
-          if(i==0)
+          remembered_i = 1-remembered_i;
+          if(remembered_i==0)
           {
-            nv->SetEmote(EmoteMix01);
+              nv->SetEmote(NarratorView::EmoteMix01);
           }
           else
           {
-              nv->SetEmote(EmoteMix02);
+              nv->SetEmote(NarratorView::EmoteMix02);
           }
           CORO_YIELD(0);
         }
-        nv->SetMessage("Thanks for playing!", EmoteYay);
+          nv->SetMessage("Thanks for playing!", NarratorView::EmoteYay);
         CORO_YIELD(3);
       } else {
-        nv->SetMessage("Are you ready for the next chapter?", EmoteMix01);
-        int i=0;
+          nv->SetMessage("Are you ready for the next chapter?", NarratorView::EmoteMix01);
+        remembered_i=0;
         CORO_YIELD(0);
         for(remembered_t=0; remembered_t<3; remembered_t+=mGame->dt) {
-            if(i==0)
+            remembered_i = 1 - remembered_i;
+            if(remembered_i==0)
             {
-              nv->SetEmote(EmoteMix01);
+                nv->SetEmote(NarratorView::EmoteMix01);
             }
             else
             {
-                nv->SetEmote(EmoteMix02);
+                nv->SetEmote(NarratorView::EmoteMix02);
             }
             CORO_YIELD(0);
         }
-        nv->SetMessage("Let's go!", EmoteYay);
+          nv->SetMessage("Let's go!", NarratorView::EmoteYay);
         CORO_YIELD(2.5f);
       }
 
@@ -158,7 +163,7 @@ namespace TotalsGame {
 */
     }
 
-  }
+  };
 
 }
 

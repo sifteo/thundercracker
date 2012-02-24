@@ -50,8 +50,8 @@ struct VictoryParticle {
         };
 
         if (IsOnScreen()) {
-            c->backgroundLayer.setSpriteImage(id, sprites[type][sizeIndex]);
-            c->backgroundLayer.moveSprite(id, position);
+            c->backgroundLayer.setSpriteImage(id, *sprites[type][sizeIndex], 0);
+            c->backgroundLayer.moveSprite(id, position.x, position.y);
             return true;
         }
         return false;
@@ -105,11 +105,11 @@ public:
     void Paint () {
         if(mOpen)
         {
-            static const AssetImage *narratorTypes =
+            static const AssetImage *narratorTypes[] =
             {
                 &Narrator_Diamond,   &Narrator_Ruby, &Narrator_Emerald, &Narrator_Coin
             };
-            c.Image(narratorTypes[mType]);
+            GetCube()->Image(narratorTypes[mType], Vec2(0,0));
 
             for(int i=0; i<8; ++i) {
                 mParticles[i].Paint(GetCube(), mType, i);
@@ -117,7 +117,7 @@ public:
         }
         else
         {
-            c.Image(&Narrator_Getready);
+            GetCube()->Image(&Narrator_GetReady, Vec2(0,0));
         }
     }
 

@@ -66,7 +66,7 @@ namespace TotalsGame {
 
         static const char *Advance();
 
-		const char *IsGameOver(const char *transitionId);
+		static const char *IsGameOver();
 
 		void OnPause();
 

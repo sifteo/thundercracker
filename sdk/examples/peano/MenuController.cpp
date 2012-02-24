@@ -186,7 +186,7 @@ WelcomeBack:
 
     ADD_ITEM(Icon_Random, RandomPuzzle, "Create a random puzzle!")
             ADD_ITEM(Icon_Howtoplay, Tutorial, "Let Peano teach you how to play!")
-            ADD_ITEM(Icon_Level_Select, Level, "Replay any level.")
+//TODO            ADD_ITEM(Icon_Level_Select, Level, "Replay any level.")
             ADD_ITEM(Icon_Setup, Setup, "Change your game settings.")
         #undef ADD_ITEM
 

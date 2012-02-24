@@ -6,7 +6,7 @@
 #include "MenuController.h"
 #include "InterstitialController.h"
 #include "TutorialController.h"
-//#include "VictoryController.h"
+#include "VictoryController.h"
 
 namespace TotalsGame
 {
@@ -139,7 +139,7 @@ namespace TotalsGame
         static MenuController menuController(this);
         static InterstitialController interstitialController(this);
         static TutorialController tutorialController(this);
-      //  static VictoryController victoryController(this);
+        static VictoryController victoryController(this);
 
 		sceneMgr
 			.State("sting", &stingController)                //
@@ -149,8 +149,8 @@ namespace TotalsGame
             .State("interstitial", &interstitialController)  //
             .State("puzzle", &puzzleController)
             .State("advance", &Game::Advance)
-          //  .State("victory", &victoryController)            //
-		//	.State("isover", IsGameOver)
+            .State("victory", &victoryController)            //
+			.State("isover", &IsGameOver)
 
 			.Transition("sting", "Next", "init")
 			.Transition("init", "NewPlayer", "tutorial")
@@ -258,9 +258,9 @@ namespace TotalsGame
 		}
 	}
 
-	const char *Game::IsGameOver(const char *transitionId)
+	const char *Game::IsGameOver()
 	{
-		return currentPuzzle == NULL ? "Yes" : "No";
+		return Game::GetInstance().currentPuzzle == NULL ? "Yes" : "No";
 	}
 
 
