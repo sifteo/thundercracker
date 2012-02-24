@@ -161,7 +161,7 @@ namespace TotalsGame
 			.Transition("interstitial", "Next", "puzzle")
 			.Transition("puzzle", "Quit", "menu")
 			.Transition("puzzle", "Complete", "advance")
-			.Transition("advance", "RandComplete", "menu")
+            .Transition("advance", "RandComplete", "interstitial")//TODO"menu")
 			.Transition("advance", "GameComplete", "victory")
 			.Transition("advance", "NextPuzzle", "puzzle")
 			.Transition("advance", "NextChapter", "victory")
