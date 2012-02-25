@@ -704,16 +704,16 @@ void CubeStateMachine::paintBorder(VidMode_BG0_SPR_BG1& vid,
     // TODO animations etc.
     if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED)
     {
-        vid.BG0_drawAsset(Vec2(0, 0), BorderLeft);
+        vid.BG0_drawPartialAsset(Vec2(0, 2), Vec2(0, 2), Vec2(2, 14), BorderLeft);
     }
 
     if (c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
     {
-        vid.BG0_drawAsset(Vec2(14, 0), BorderRight);
+        vid.BG0_drawPartialAsset(Vec2(14, 0), Vec2(0, 0), Vec2(2, 14), BorderRight);
     }
 
-    vid.BG0_drawAsset(Vec2(0, 0), BorderTop);
-    vid.BG0_drawAsset(Vec2(0, 14), BorderBottom);
+    vid.BG0_drawPartialAsset(Vec2(0, 0), Vec2(0, 0), Vec2(14, 2), BorderTop);
+    vid.BG0_drawPartialAsset(Vec2(2, 14), Vec2(2, 0), Vec2(14, 2), BorderBottom);
 }
 
 void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
