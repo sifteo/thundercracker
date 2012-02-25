@@ -28,6 +28,7 @@ public:
     static const unsigned REG_PC = 15;
     static const unsigned REG_LR = 14;
     static const unsigned REG_SP = 13;
+    static const unsigned REG_FP = 11;
 
     static const unsigned MEM_IN_BYTES = 32 * 1024;
 
