@@ -40,6 +40,11 @@ void SvmRuntime::run(uint16_t appId)
     cpu.run();
 }
 
+void SvmRuntime::exit()
+{
+
+}
+
 // translate a game's virtual RAM address to physical RAM
 reg_t SvmRuntime::virt2physRam(uint32_t vaddr)
 {

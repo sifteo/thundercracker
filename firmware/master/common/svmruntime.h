@@ -15,6 +15,7 @@ public:
     static SvmRuntime instance;
 
     void run(uint16_t appId);
+    void exit();
     void svc(uint8_t imm8);
 
     // address translation routines
@@ -25,6 +26,34 @@ public:
 
     inline bool inRange(reg_t val, reg_t start, reg_t sz) const {
         return (val - start < sz) ? true : false;
+    }
+
+    /*
+        Ensure that a read-only pointer is valid, and translate if necessary.
+        Read-write pointers may reference any valid flash or ram memory.
+    */
+    template <typename T>
+    bool validateReadOnly(T &ptr, uint32_t size, bool allowNULL = false) const
+    {
+        if (!allowNULL && !ptr)
+            return false;
+
+        ptr = ptr;
+        return true;
+    }
+
+    /*
+        Ensure that a read-write pointer is valid, and translate if necessary.
+        Read-write pointers cannot reference any flash memory.
+    */
+    template <typename T>
+    bool validateReadWrite(T &ptr, uint32_t size, bool allowNULL = false) const
+    {
+        if (!allowNULL && !ptr)
+            return false;
+
+        ptr = ptr;
+        return true;
     }
 
 private:

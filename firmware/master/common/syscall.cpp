@@ -28,6 +28,10 @@
 #include "audiomixer.h"
 #include "prng.h"
 
+#include "svmruntime.h"
+
+static SvmRuntime &rt = SvmRuntime::instance;
+
 extern "C" {
 
 const SvmSyscall SyscallTable[] = {
@@ -222,8 +226,8 @@ void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) MEMSET_BODY()
 void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) MEMSET_BODY()
 
 #define MEMCPY_BODY() {                                                 \
-    if (Runtime::validateReadWrite(dest, sizeof *dest, count) &&        \
-        Runtime::validateReadOnly(src,  sizeof *src, count)) {          \
+    if (rt.validateReadWrite(dest, sizeof *dest, count) &&              \
+        rt.validateReadOnly(src,  sizeof *src, count)) {                \
         while (count) {                                                 \
             *(dest++) = *(src++);                                       \
             count--;                                                    \
@@ -237,7 +241,7 @@ void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) MEMCPY_B
 
 int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)
 {
-    if (!Runtime::validateReadOnly(a, count) || !Runtime::validateReadOnly(b, count))
+    if (!rt.validateReadOnly(a, count) || !rt.validateReadOnly(b, count))
         return 0;
 
     while (count) {
@@ -251,7 +255,7 @@ int _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)
 
 uint32_t _SYS_strnlen(const char *str, uint32_t maxLen)
 {
-    if (!Runtime::validateReadOnly(str, maxLen))
+    if (!rt.validateReadOnly(str, maxLen))
         return 0;
 
     uint32_t len = 0;
@@ -269,11 +273,11 @@ void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize)
      * We check the src pointer as we go, since the size is not known ahead of time.
      */
 
-    if (destSize == 0 || !Runtime::validateReadWrite(dest, destSize))
+    if (destSize == 0 || !rt.validateReadWrite(dest, destSize))
         return;
 
     char *last = dest + destSize - 1;
-    while (dest < last && Runtime::validateReadOnly(src, 1)) {
+    while (dest < last && rt.validateReadOnly(src, 1)) {
         char c = *(src++);
         if (c)
             *(dest++) = c;
@@ -287,7 +291,7 @@ void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize)
 
 void _SYS_strlcat(char *dest, const char *src, uint32_t destSize)
 {
-    if (!destSize || !Runtime::validateReadWrite(dest, destSize))
+    if (!destSize || !rt.validateReadWrite(dest, destSize))
         return;
 
     char *last = dest + destSize - 1;
@@ -297,7 +301,7 @@ void _SYS_strlcat(char *dest, const char *src, uint32_t destSize)
         dest++;
 
     // Append all the bytes we can
-    while (dest < last && Runtime::validateReadOnly(src, 1)) {
+    while (dest < last && rt.validateReadOnly(src, 1)) {
         char c = *(src++);
         if (c)
             *(dest++) = c;
@@ -316,7 +320,7 @@ void _SYS_strlcat_int(char *dest, int src, uint32_t destSize)
      * (or sniprintf on embedded builds) but doesn't necessarily need to.
      */
 
-    if (!destSize || !Runtime::validateReadWrite(dest, destSize))
+    if (!destSize || !rt.validateReadWrite(dest, destSize))
         return;
 
     char *last = dest + destSize - 1;
@@ -334,7 +338,7 @@ void _SYS_strlcat_int(char *dest, int src, uint32_t destSize)
 
 void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize)
 {
-    if (!destSize || !Runtime::validateReadWrite(dest, destSize))
+    if (!destSize || !rt.validateReadWrite(dest, destSize))
         return;
 
     char *last = dest + destSize - 1;
@@ -352,7 +356,7 @@ void _SYS_strlcat_int_fixed(char *dest, int src, unsigned width, unsigned lz, ui
 
 void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint32_t destSize)
 {
-    if (!destSize || !Runtime::validateReadWrite(dest, destSize))
+    if (!destSize || !rt.validateReadWrite(dest, destSize))
         return;
 
     char *last = dest + destSize - 1;
@@ -370,7 +374,7 @@ void _SYS_strlcat_int_hex(char *dest, int src, unsigned width, unsigned lz, uint
 
 int _SYS_strncmp(const char *a, const char *b, uint32_t count)
 {
-    if (!Runtime::validateReadOnly(a, count) || !Runtime::validateReadOnly(b, count))
+    if (!rt.validateReadOnly(a, count) || !rt.validateReadOnly(b, count))
         return 0;
 
     while (count) {
@@ -400,43 +404,43 @@ void _SYS_sincosf(float x, float *sinOut, float *cosOut)
      * breaking compatibility.
      */
 
-    if (Runtime::validateReadWrite(sinOut, sizeof *sinOut))
-        *sinOut = sinf(x);
-    if (Runtime::validateReadWrite(cosOut, sizeof *cosOut))
-        *cosOut = cosf(x);
+    if (rt.validateReadWrite(sinOut, sizeof *sinOut))
+        *sinOut = ::sinf(x);
+    if (rt.validateReadWrite(cosOut, sizeof *cosOut))
+        *cosOut = ::cosf(x);
 }
 
 float _SYS_fmodf(float a, float b)
 {
     if (isfinite(a) && b != 0)
-        return fmodf(a, b);
+        return ::fmodf(a, b);
     else
         return NAN;
 }
 
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed)
 {
-    if (Runtime::validateReadWrite(state, sizeof *state))
+    if (rt.validateReadWrite(state, sizeof *state))
         PRNG::init(state, seed);
 }
 
 uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state)
 {
-    if (Runtime::validateReadWrite(state, sizeof *state))
+    if (rt.validateReadWrite(state, sizeof *state))
         return PRNG::value(state);
     return 0;
 }
 
 uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit)
 {
-    if (Runtime::validateReadWrite(state, sizeof *state))
+    if (rt.validateReadWrite(state, sizeof *state))
         return PRNG::valueBounded(state, limit);
     return 0;
 }
 
 void _SYS_exit(void)
 {
-    Runtime::exit();
+    rt.exit();
 }
 
 void _SYS_yield(void)
@@ -459,7 +463,7 @@ void _SYS_finish(void)
 
 void _SYS_ticks_ns(int64_t *nanosec)
 {
-    if (Runtime::validateReadWrite(nanosec, sizeof *nanosec))
+    if (rt.validateReadWrite(nanosec, sizeof *nanosec))
         *nanosec = SysTime::ticks();
 }
 
@@ -480,44 +484,44 @@ void _SYS_disableCubes(_SYSCubeIDVector cv)
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf) && CubeSlots::validID(cid))
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf) && CubeSlots::validID(cid))
         CubeSlots::instances[cid].setVideoBuffer(vbuf);
 }
 
 void _SYS_loadAssets(_SYSCubeID cid, _SYSAssetGroup *group)
 {
-    if (Runtime::validateReadWrite(group, sizeof *group) && CubeSlots::validID(cid))
+    if (rt.validateReadWrite(group, sizeof *group) && CubeSlots::validID(cid))
         CubeSlots::instances[cid].loadAssets(group);
 }
 
 void _SYS_getAccel(_SYSCubeID cid, struct _SYSAccelState *state)
 {
-    if (Runtime::validateReadWrite(state, sizeof *state) && CubeSlots::validID(cid))
+    if (rt.validateReadWrite(state, sizeof *state) && CubeSlots::validID(cid))
         CubeSlots::instances[cid].getAccelState(state);
 }
 
 void _SYS_getNeighbors(_SYSCubeID cid, struct _SYSNeighborState *state) {
-    if (Runtime::validateReadWrite(state, sizeof *state) && CubeSlots::validID(cid)) {
+    if (rt.validateReadWrite(state, sizeof *state) && CubeSlots::validID(cid)) {
         NeighborSlot::instances[cid].getNeighborState(state);
     }
 }
 
 void _SYS_getTilt(_SYSCubeID cid, struct _SYSTiltState *state)
 {
-    if (Runtime::validateReadWrite(state, sizeof *state) && CubeSlots::validID(cid))
+    if (rt.validateReadWrite(state, sizeof *state) && CubeSlots::validID(cid))
         AccelState::instances[cid].getTiltState(state);
 }
 
 void _SYS_getShake(_SYSCubeID cid, _SYSShakeState *state)
 {
-    if (Runtime::validateReadWrite(state, sizeof *state) && CubeSlots::validID(cid))
+    if (rt.validateReadWrite(state, sizeof *state) && CubeSlots::validID(cid))
         AccelState::instances[cid].getShakeState(state);
 }
 
 void _SYS_getRawNeighbors(_SYSCubeID cid, uint8_t buf[4])
 {
     // XXX: Temporary for testing/demoing
-    if (Runtime::validateReadWrite(buf, sizeof buf) && CubeSlots::validID(cid))
+    if (rt.validateReadWrite(buf, sizeof buf) && CubeSlots::validID(cid))
         CubeSlots::instances[cid].getRawNeighbors(buf);
 }
 
@@ -532,7 +536,7 @@ uint8_t _SYS_isTouching(_SYSCubeID cid)
 void _SYS_getRawBatteryV(_SYSCubeID cid, uint16_t *v)
 {
     // XXX: Temporary for testing. Master firmware should give cooked battery percentage.
-    if (Runtime::validateReadWrite(v, sizeof v) && CubeSlots::validID(cid))
+    if (rt.validateReadWrite(v, sizeof v) && CubeSlots::validID(cid))
         *v = CubeSlots::instances[cid].getRawBatteryV();
 }
 
@@ -543,20 +547,20 @@ void _SYS_getCubeHWID(_SYSCubeID cid, _SYSCubeHWID *hwid)
     // XXX: Right now this is only guaranteed to be known after asset downloading, since
     //      there is no code yet to explicitly request it (via a flash reset)
 
-    if (Runtime::validateReadWrite(hwid, sizeof hwid) && CubeSlots::validID(cid))
+    if (rt.validateReadWrite(hwid, sizeof hwid) && CubeSlots::validID(cid))
         *hwid = CubeSlots::instances[cid].getHWID();
 }
 
 void _SYS_vbuf_init(_SYSVideoBuffer *vbuf)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf)) {
         VRAM::init(*vbuf);
     }
 }
 
 void _SYS_vbuf_lock(_SYSVideoBuffer *vbuf, uint16_t addr)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf)) {
         VRAM::truncateWordAddr(addr);
         VRAM::lock(*vbuf, addr);
     }
@@ -564,14 +568,14 @@ void _SYS_vbuf_lock(_SYSVideoBuffer *vbuf, uint16_t addr)
 
 void _SYS_vbuf_unlock(_SYSVideoBuffer *vbuf)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf)) {
         VRAM::unlock(*vbuf);
     }
 }
 
 void _SYS_vbuf_poke(_SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf)) {
         VRAM::truncateWordAddr(addr);
         VRAM::poke(*vbuf, addr, word);
     }
@@ -579,7 +583,7 @@ void _SYS_vbuf_poke(_SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word)
 
 void _SYS_vbuf_pokeb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf)) {
         VRAM::truncateByteAddr(addr);
         VRAM::pokeb(*vbuf, addr, byte);
     }
@@ -587,7 +591,7 @@ void _SYS_vbuf_pokeb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
 
 void _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf)) {
         VRAM::truncateWordAddr(addr);
         *word = VRAM::peek(*vbuf, addr);
     }
@@ -595,7 +599,7 @@ void _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t *word)
 
 void _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf)) {
         VRAM::truncateByteAddr(addr);
         *byte = VRAM::peekb(*vbuf, addr);
     }
@@ -604,7 +608,7 @@ void _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr, uint8_t *byte)
 void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr,
                     uint16_t word, uint16_t count)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf)) {
         while (count) {
             VRAM::truncateWordAddr(addr);
             VRAM::poke(*vbuf, addr, word);
@@ -616,7 +620,7 @@ void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr,
 
 void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf) && Runtime::validateReadOnly(src, count << 1)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf) && rt.validateReadOnly(src, count << 1)) {
         while (count) {
             VRAM::truncateWordAddr(addr);
             VRAM::poke(*vbuf, addr, *src);
@@ -630,7 +634,7 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src,
                       uint16_t offset, uint16_t count)
 {
-    if (Runtime::validateReadWrite(vbuf, sizeof *vbuf) && Runtime::validateReadOnly(src, count << 1)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf) && rt.validateReadOnly(src, count << 1)) {
         while (count) {
             uint16_t index = offset + *src;
             VRAM::truncateWordAddr(addr);
@@ -644,7 +648,7 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
 
 void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count)
 {
-    if (Runtime::checkUserPointer(vbuf, sizeof *vbuf)) {
+    if (rt.validateReadWrite(vbuf, sizeof *vbuf)) {
         while (count) {
             VRAM::truncateWordAddr(addr);
             VRAM::poke(*vbuf, addr, VRAM::index14(index));
@@ -700,13 +704,13 @@ void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y)
 
 void _SYS_audio_enableChannel(struct _SYSAudioBuffer *buffer)
 {
-    if (Runtime::validateReadWrite(buffer, sizeof(*buffer)))
+    if (rt.validateReadWrite(buffer, sizeof(*buffer)))
         AudioMixer::instance.enableChannel(buffer);
 }
 
 uint8_t _SYS_audio_play(struct _SYSAudioModule *mod, _SYSAudioHandle *h, enum _SYSAudioLoopType loop)
 {
-    if (Runtime::checkUserPointer(mod, sizeof(*mod)) && Runtime::checkUserPointer(h, sizeof(*h))) {
+    if (rt.validateReadOnly(mod, sizeof(*mod)) && rt.validateReadWrite(h, sizeof(*h))) {
         return AudioMixer::instance.play(mod, h, loop);
     }
     return false;
