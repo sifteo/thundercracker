@@ -153,6 +153,13 @@ void CubeWrapper::Draw()
                     if( m_banner.IsActive() )
                         m_banner.Draw( m_bg1helper );
 
+                    //rocks
+                    if( Game::Inst().getMode() != Game::MODE_BLITZ )
+                    {
+                        for( int i = 0; i < RockExplosion::MAX_ROCK_EXPLOSIONS; i++ )
+                            m_aExplosions[i].Draw( m_vid, i );
+                    }
+
 
                     m_queuedFlush = true;
 
@@ -437,6 +444,13 @@ void CubeWrapper::Update(float t, float dt)
                 GridSlot &slot = m_grid[i][j];
                 slot.Update( t );
             }
+        }
+
+        //update rocks
+        if( Game::Inst().getMode() != Game::MODE_BLITZ )
+        {
+            for( int i = 0; i < RockExplosion::MAX_ROCK_EXPLOSIONS; i++ )
+                m_aExplosions[i].Update( dt );
         }
 
         m_banner.Update(t);

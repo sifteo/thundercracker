@@ -13,6 +13,7 @@
 #include "Intro.h"
 #include "GameOver.h"
 #include "Glimmer.h"
+#include "RockExplosion.h"
 
 using namespace Sifteo;
 
@@ -187,6 +188,9 @@ private:
     bool m_queuedFlush;
     //TODO, need to start using this for other screens
     bool m_dirty;
+
+    //allow up to 4 rock explosions simultaneously
+    RockExplosion m_aExplosions[ RockExplosion::MAX_ROCK_EXPLOSIONS ];
 };
 
 #endif
