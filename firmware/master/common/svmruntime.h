@@ -38,11 +38,7 @@ public:
     }
 
     inline bool inRange(reg_t val, reg_t start, reg_t sz) const {
-        if (val < start)
-            return false;
-        if (val >= start + sz)
-            return false;
-        return true;
+        return (val - start < sz) ? true : false;
     }
 
 private:
