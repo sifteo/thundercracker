@@ -4,7 +4,6 @@
 #include "svm.h"
 #include "svmvalidator.h"
 
-#include <inttypes.h>
 #include <string.h>
 
 using namespace Svm;
@@ -46,13 +45,13 @@ void SvmRuntime::exit()
 }
 
 // translate a game's virtual RAM address to physical RAM
-reg_t SvmRuntime::virt2physRam(uint32_t vaddr)
+reg_t SvmRuntime::virt2physRam(uint32_t vaddr) const
 {
     return ((vaddr - VIRTUAL_RAM_BASE) & 0xFFFFF) + cpu.userRam();
 }
 
 // translate a virtual flash address to its cache block
-reg_t SvmRuntime::virt2cacheFlash(uint32_t a)
+reg_t SvmRuntime::virt2cacheFlash(uint32_t a) const
 {
     return a - VIRTUAL_FLASH_BASE + cacheBlockBase() - flashRegion.baseAddress() + progInfo.textRodata.start;
 }
@@ -67,6 +66,16 @@ reg_t SvmRuntime::cache2virtFlash(reg_t a) const
 reg_t SvmRuntime::cacheBlockBase() const
 {
     return reinterpret_cast<reg_t>(flashRegion.data());
+}
+
+
+void SvmRuntime::fetchFlashBlock(reg_t addr)
+{
+    uint32_t flashBlock = (addr / FlashLayer::BLOCK_SIZE) * FlashLayer::BLOCK_SIZE;
+    reg_t physFlashBase = flashBlock - VIRTUAL_FLASH_BASE + progInfo.textRodata.start;
+    if (!FlashLayer::getRegion(physFlashBase, FlashLayer::BLOCK_SIZE, &flashRegion)) {
+        ASSERT(0 && "validate() - couldn't retrieve new flash block\n");
+    }
 }
 
 /*

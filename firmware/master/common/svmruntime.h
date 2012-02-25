@@ -2,6 +2,8 @@
 #define SVM_RUNTIME_H
 
 #include <stdint.h>
+#include <inttypes.h>
+
 #include "svm.h"
 #include "svmcpu.h"
 #include "flashlayer.h"
@@ -19,8 +21,8 @@ public:
     void svc(uint8_t imm8);
 
     // address translation routines
-    reg_t virt2physRam(uint32_t vaddr);
-    reg_t virt2cacheFlash(uint32_t a);
+    reg_t virt2physRam(uint32_t vaddr) const;
+    reg_t virt2cacheFlash(uint32_t a) const;
     reg_t cache2virtFlash(reg_t a) const;
     reg_t cacheBlockBase() const;
 
@@ -33,12 +35,29 @@ public:
         Read-write pointers may reference any valid flash or ram memory.
     */
     template <typename T>
-    bool validateReadOnly(T &ptr, uint32_t size, bool allowNULL = false) const
+    bool validateReadOnly(T &ptr, uint32_t size, bool allowNULL = false)
     {
         if (!allowNULL && !ptr)
             return false;
 
-        ptr = ptr;
+        reg_t addr = reinterpret_cast<reg_t>(ptr);
+        if (isFlashAddr(addr)) {
+            if (!inRange(addr, cacheBlockBase(), FlashLayer::BLOCK_SIZE)) {
+                FlashLayer::releaseRegion(flashRegion);
+                fetchFlashBlock(addr);
+            }
+            addr = virt2cacheFlash(addr);
+        }
+        else {
+            // if it's already in range, leave it be
+            if (!inRange(addr, cpu.userRam(), SvmCpu::MEM_IN_BYTES))
+                addr = virt2physRam(addr);
+            ASSERT(inRange(addr, cpu.userRam(), SvmCpu::MEM_IN_BYTES) && "validateReadOnly: bad address");
+        }
+
+        LOG(("validated: 0x%"PRIxPTR" for address 0x%"PRIxPTR"\n", addr, reinterpret_cast<reg_t>(ptr)));
+        setBasePtrs(addr);
+        ptr = reinterpret_cast<T>(addr);
         return true;
     }
 
@@ -47,12 +66,22 @@ public:
         Read-write pointers cannot reference any flash memory.
     */
     template <typename T>
-    bool validateReadWrite(T &ptr, uint32_t size, bool allowNULL = false) const
+    bool validateReadWrite(T &ptr, uint32_t size, bool allowNULL = false)
     {
         if (!allowNULL && !ptr)
             return false;
 
-        ptr = ptr;
+        reg_t addr = reinterpret_cast<reg_t>(ptr);
+        if (isFlashAddr(addr))
+            return false;
+
+        // if it's already in range, leave it be
+        if (!inRange(addr, cpu.userRam(), SvmCpu::MEM_IN_BYTES))
+            addr = virt2physRam(addr);
+        ASSERT(inRange(addr, cpu.userRam(), SvmCpu::MEM_IN_BYTES) && "validateReadWrite: bad address");
+
+        setBasePtrs(addr);
+        ptr = reinterpret_cast<T>(addr);
         return true;
     }
 
@@ -86,6 +115,8 @@ private:
         // and r9 is used as a read-write base address, so we'll just fault.
         cpu.setReg(9, isFlashAddr(a) ? 0 : a);
     }
+
+    void fetchFlashBlock(reg_t addr);
 
     SvmCpu cpu;
 
