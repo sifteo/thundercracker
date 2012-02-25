@@ -13,7 +13,7 @@ GameStateMachine* GameStateMachine::sInstance = 0;
 
 GameStateMachine::GameStateMachine(Cube cubes[]) :
     StateMachine(0), mAnagramCooldown(0.f), mTimeLeft(.0f), mScore(0),
-    mNumAnagramsRemaining(0), mNumBonusAnagramsRemaining(0),
+    mNumAnagramsLeft(0), mNumBonusAnagramsLeft(0),
     mCurrentMaxLettersPerCube(1)
 {
     ASSERT(cubes != 0);
@@ -65,8 +65,8 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
 
     case EventID_NewAnagram:
         mAnagramCooldown = ANAGRAM_COOLDOWN;
-        mNumAnagramsRemaining = data.mNewAnagram.mNumAnagrams;
-        mNumBonusAnagramsRemaining = data.mNewAnagram.mNumBonusAnagrams;
+        mNumAnagramsLeft = data.mNewAnagram.mNumAnagrams;
+        mNumBonusAnagramsLeft = data.mNewAnagram.mNumBonusAnagrams;
         break;
 
     case EventID_NewWordFound:
@@ -76,12 +76,12 @@ unsigned GameStateMachine::onEvent(unsigned eventID, const EventData& data)
             mNewWordLength = len;
             if (data.mWordFound.mBonus)
             {
-                --mNumAnagramsRemaining;
-                --mNumBonusAnagramsRemaining;
+                --mNumAnagramsLeft;
+                --mNumBonusAnagramsLeft;
             }
             else
             {
-                --mNumAnagramsRemaining;
+                --mNumAnagramsLeft;
             }
             // TODO multiple letters per cube
             // TODO count active cubes
@@ -174,13 +174,13 @@ void GameStateMachine::setState(unsigned newStateIndex, State& oldState)
 }
 
 
-unsigned GameStateMachine::getNumCubesInState(CubeStateIndex stateIndex)
+unsigned GameStateMachine::getNumCubesInAnim(AnimType animT)
 {
     ASSERT(sInstance);
     unsigned count = 0;
     for (unsigned i = 0; i < arraysize(sInstance->mCubeStateMachines); ++i)
     {
-        if ((int)sInstance->mCubeStateMachines[i].getCurrentStateIndex() == stateIndex)
+        if ((int)sInstance->mCubeStateMachines[i].getAnim() == animT)
         {
             ++count;
         }

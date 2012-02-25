@@ -180,7 +180,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
         case AnimType_SlideL:
         case AnimType_SlideR:
-        case AnimType_NewWord:
+        case AnimType_NewWord: // see ::update (wait for min display time)
             break;
 
         default:
@@ -227,6 +227,21 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         break;
 
     case EventID_NewWordFound:
+        {
+            Cube& c = getCube();
+            mImageIndex = ImageIndex_ConnectedWord;
+            if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
+                c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
+            {
+                mImageIndex = ImageIndex_ConnectedLeftWord;
+            }
+            else if (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
+                     c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
+            {
+                mImageIndex = ImageIndex_ConnectedRightWord;
+            }
+        }
+
         switch (mAnimType)
         {
         case AnimType_NewWord:
@@ -234,22 +249,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             {
                 resetStateTime();
             }
-            {
-                Cube& c = getCube();
-                mImageIndex = ImageIndex_ConnectedWord;
-                if (c.physicalNeighborAt(SIDE_LEFT) == CUBE_ID_UNDEFINED &&
-                    c.physicalNeighborAt(SIDE_RIGHT) != CUBE_ID_UNDEFINED)
-                {
-                    mImageIndex = ImageIndex_ConnectedLeftWord;
-                }
-                else if (c.physicalNeighborAt(SIDE_LEFT) != CUBE_ID_UNDEFINED &&
-                         c.physicalNeighborAt(SIDE_RIGHT) == CUBE_ID_UNDEFINED)
-                {
-                    mImageIndex = ImageIndex_ConnectedRightWord;
-                }
-            }
-            WordGame::instance()->setNeedsPaintSync();
-            paint();
             break;
 
         default:
@@ -260,6 +259,7 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
             }
             break;
         }
+        paint();
         break;
 
     case EventID_OldWordFound:
@@ -342,12 +342,9 @@ void CubeStateMachine::queueAnim(AnimType anim)
     // FIXME check for uninterruptible anim flag vs. interrupt override arg
     if (mLettersStart == mLettersStartTarget)
     {
-        if (anim != mAnimType)
-        {
-            mAnimType = anim;
-            mAnimTime = 0.f;
-            // FIXME params aren't really sent through right now: animPaint(anim, vid, bg1, mAnimTime, params);
-        }
+        mAnimType = anim;
+        mAnimTime = 0.f;
+        // FIXME params aren't really sent through right now: animPaint(anim, vid, bg1, mAnimTime, params);
     }
 }
 
@@ -545,11 +542,11 @@ void CubeStateMachine::update(float dt)
         break;
 
     case AnimType_NewWord:
-        if (getTime() <= TEETH_ANIM_LENGTH)
+        if (mAnimTime <= 3.f)
         {
-            queueAnim(AnimType_NewWord);
+            // do nothing
         }
-        else if (GameStateMachine::getNumAnagramsRemaining() <= 0)
+        else if (GameStateMachine::getNumAnagramsLeft() <= 0)
         {
             queueAnim(AnimType_Shuffle);
         }
@@ -581,14 +578,17 @@ void CubeStateMachine::update(float dt)
                     EventData wordBrokenData;
                     wordBrokenData.mWordBroken.mCubeIDStart = getCube().id();
                     GameStateMachine::sOnEvent(EventID_WordBroken, wordBrokenData);
-                    queueAnim(AnimType_NewWord);
+                    queueAnim(AnimType_NotWord);
                 }
             }
             else if (hasNoNeighbors())
             {
-                queueAnim(AnimType_NewWord);
+                queueAnim(AnimType_NotWord);
             }
-            queueAnim(AnimType_OldWord);
+            else
+            {
+                queueAnim(AnimType_OldWord);
+            }
         }
     break;
     }
@@ -1008,22 +1008,22 @@ void CubeStateMachine::paintScore(VidMode_BG0_SPR_BG1& vid,
             teethImageIndex == ImageIndex_Teeth ||
             teethImageIndex == ImageIndex_Teeth_NoBlip)))
     {
-        ASSERT(GameStateMachine::getNumAnagramsRemaining() < 100);
-        unsigned tensDigit = GameStateMachine::getNumAnagramsRemaining() / 10;
+        ASSERT(GameStateMachine::getNumAnagramsLeft() < 100);
+        unsigned tensDigit = GameStateMachine::getNumAnagramsLeft() / 10;
         if (tensDigit)
         {
             bg1.DrawAsset(Vec2(7,11), FontSmall, tensDigit);
         }
-        bg1.DrawAsset(Vec2(8,11), FontSmall, GameStateMachine::getNumAnagramsRemaining() % 10);
+        bg1.DrawAsset(Vec2(8,11), FontSmall, GameStateMachine::getNumAnagramsLeft() % 10);
 
-        if (GameStateMachine::getNumBonusAnagramsRemaining())
+        if (GameStateMachine::getNumBonusAnagramsLeft())
         {
-            tensDigit = GameStateMachine::getNumBonusAnagramsRemaining() / 10;
+            tensDigit = GameStateMachine::getNumBonusAnagramsLeft() / 10;
             if (tensDigit)
             {
                 bg1.DrawAsset(Vec2(1,11), FontBonus, tensDigit);
             }
-            bg1.DrawAsset(Vec2(2,11), FontBonus, GameStateMachine::getNumBonusAnagramsRemaining() % 10);
+            bg1.DrawAsset(Vec2(2,11), FontBonus, GameStateMachine::getNumBonusAnagramsLeft() % 10);
         }
     }
 

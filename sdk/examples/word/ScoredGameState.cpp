@@ -15,13 +15,14 @@ unsigned ScoredGameState::update(float dt, float stateTime)
     }
     else
     {
-        if (GameStateMachine::getNumAnagramsRemaining() <= 0 &&
-            GameStateMachine::getNumCubesInState(CubeStateIndex_NewWordScored) <= 0)
+        if (GameStateMachine::getNumAnagramsLeft() <= 0 &&
+            GameStateMachine::getNumCubesInAnim(AnimType_NewWord) <= 0)
         {
             // wait for all the cube states to exit the new word state
             // then shuffle
             WordGame::playAudio(shake, AudioChannelIndex_Shake);
-            return GameStateIndex_ShuffleScored;        }
+            return GameStateIndex_ShuffleScored;
+        }
 
         return GameStateIndex_PlayScored;
     }
@@ -33,7 +34,7 @@ unsigned ScoredGameState::onEvent(unsigned eventID, const EventData& data)
     switch (eventID)
     {
     case EventID_Input:
-#ifndef SIFTEO_SIMULATORzzz
+#ifndef SIFTEO_SIMULATOR
         // skip to next puzzle
         if (GameStateMachine::getAnagramCooldown() <= .0f &&
             GameStateMachine::getSecondsLeft() > 3)

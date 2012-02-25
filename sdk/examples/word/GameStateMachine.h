@@ -39,12 +39,12 @@ public:
     static float getAnagramCooldown() { return sInstance->mAnagramCooldown; }
     static unsigned getSecondsLeft() { return (unsigned) _ceilf(sInstance->mTimeLeft); }
     static float getSecondsLeftFloat() { return sInstance->mTimeLeft; }
+    static unsigned getNumAnagramsLeft() { return sInstance->mNumAnagramsLeft; }
+    static unsigned getNumBonusAnagramsLeft() { return sInstance->mNumBonusAnagramsLeft; }
     static unsigned getScore() { return (unsigned) sInstance->mScore; }
     static float getTime() { return sInstance->StateMachine::getTime(); }
     static unsigned char getNewWordLength() { return sInstance->mNewWordLength; }
-    static unsigned getNumAnagramsRemaining() { return sInstance->mNumAnagramsRemaining; }
-    static unsigned getNumBonusAnagramsRemaining() { return sInstance->mNumBonusAnagramsRemaining; }
-    static unsigned getNumCubesInState(CubeStateIndex stateIndex);
+    static unsigned getNumCubesInAnim(AnimType animT);
     static unsigned getCurrentMaxLettersPerCube();
     static void setCurrentMaxLettersPerCube(unsigned max);
     static unsigned getCurrentMaxLettersPerWord();
@@ -66,8 +66,8 @@ private:
     float mTimeLeft;
     unsigned mScore;
     unsigned char mNewWordLength;
-    unsigned mNumAnagramsRemaining;
-    unsigned mNumBonusAnagramsRemaining;
+    unsigned mNumAnagramsLeft;
+    unsigned mNumBonusAnagramsLeft;
     unsigned mCurrentMaxLettersPerCube;
 
     static GameStateMachine* sInstance;

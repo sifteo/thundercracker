@@ -56,6 +56,7 @@ public:
     void updateAnim(VidMode_BG0_SPR_BG1 &vid,
                      BG1Helper *bg1 = 0,
                      const AnimParams *params = 0);
+    AnimType getAnim() const { return mAnimType; }
 
     bool canBeginWord();
     bool beginsWord(bool& isOld, char* wordBuffer, bool& isBonus);

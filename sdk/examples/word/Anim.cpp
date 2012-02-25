@@ -132,7 +132,7 @@ const static AnimData animData[] =
     { 1.f, true, 2, &animObjData[6]},
 
     //AnimIndex_Tile2NewWord,
-    { 1.f, true, 2, &animObjData[0]},
+    { 1.f, true, 2, &animObjData[6]},
     //AnimIndex_Tile2EndofRoundScored,
     { 1.f, true, 2, &animObjData[0]},
     //AnimIndex_Tile2ShuffleScored,
@@ -206,12 +206,11 @@ bool animPaint(AnimType animT,
         ASSERT(size.y > 0);
         ASSERT(objData.mAsset);
         unsigned assetFrame = 0;
-        /* TODO why does this segfault now?
-if (anim != AnimIndex_Tile2Idle )
+        if (anim != AnimIndex_Tile2Idle )
         {
             DEBUG_LOG(("anim time:\t%f\tpct:%f\tframe:\t%d\n", animTime, animPct, frame));
         }
-*/
+
         unsigned fontFrame = font.frames + 1;
         if (params && params->mLetters && bg1)
         {
