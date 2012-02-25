@@ -64,10 +64,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                         _SYS_getTilt(getCube().id(), &state);
                         if (state.x != 1)
                         {
-                            // letters are unavailable until anim finishes, but
-                            // need to break word now
-                            WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
-
 
                             mBG0TargetPanning -=
                                     BG0_PANNING_WRAP/GameStateMachine::getCurrentMaxLettersPerCube() * (state.x - 1);
@@ -89,6 +85,9 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
                             }
                             mLettersStartTarget += state.x - 1 + GameStateMachine::getCurrentMaxLettersPerCube();
                             mLettersStartTarget = (mLettersStartTarget % GameStateMachine::getCurrentMaxLettersPerCube());
+                            // letters are unavailable until anim finishes, but
+                            // need to break word now
+                            WordGame::instance()->onEvent(EventID_LetterOrderChange, EventData());
                         }
 
                     }
@@ -285,11 +284,14 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
         {
             mLetters[i] = '\0';
         }
+
         // TODO multiple letters: variable
         for (unsigned i = 0; i < GameStateMachine::getCurrentMaxLettersPerCube(); ++i)
         {
-            mLetters[i] = data.mNewAnagram.mWord[cubeIndex * GameStateMachine::getCurrentMaxLettersPerCube() + i];
+            mLetters[i] =
+                    data.mNewAnagram.mWord[cubeIndex * GameStateMachine::getCurrentMaxLettersPerCube() + i];
         }
+        mNumLetters = GameStateMachine::getCurrentMaxLettersPerCube(); // FIXME this var name is misleading
         // TODO substrings of length 1 to 3
         paint();
         break;
@@ -300,7 +302,6 @@ unsigned CubeStateMachine::onEvent(unsigned eventID, const EventData& data)
 
 unsigned CubeStateMachine::getLetters(char *buffer, bool forPaint)
 {
-    ASSERT(mNumLetters > 0);
     if (mNumLetters <= 0)
     {
         return 0;
