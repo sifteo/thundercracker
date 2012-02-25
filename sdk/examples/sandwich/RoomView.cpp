@@ -107,7 +107,7 @@ void RoomView::ShowPlayer() {
   ViewMode gfx = Parent()->Graphics();
   gfx.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
   if (pGame->GetPlayer()->Equipment()) {
-    gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, 2); // TODO: PARAMETERIZE
+    gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, 1); // TODO: PARAMETERIZE
     gfx.resizeSprite(EQUIP_SPRITE_ID, 16, 16);
   }
   UpdatePlayer();
