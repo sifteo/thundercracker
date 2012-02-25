@@ -1,44 +1,56 @@
 <item-database>
-	<item id="basic_key">
-		<name>Basic Key</name>
-		<description>
-			Just a plain-old Key
-			Nothing fancy
-		</description>
-	</item>
-	<item id="bread">
+
+	<item id="bread" type="inventory">
 		<name>Lembas Bread</name>
 		<description>
 			Lembas Bread
 			Fresh from Middle-Earth
 		</description>
 	</item>
-	<item id="tomato">
+	<item id="tomato" type="inventory">
 		<name>Heirluminous Tomato</name>
 		<description>
 			An Heirluminous Tomato
 			Glows in the dark!
 		</description>
 	</item>
-	<item id="lettuce">
+	<item id="lettuce" type="inventory">
 		<name>Lettuce of Courage</name>
 		<description>
 			Lettuce of Courage.
 			Green. Leafy. Justice.
 		</description>
 	</item>
-	<item id="ham">
+	<item id="ham" type="inventory">
 		<name>Moldy Ham</name>
 		<description>
 			Smelly Ham.
 			... probably still good.
 		</description>
 	</item>
-	<item id="skeleton_key">
+
+	<item id="basic_key" type="key">
+		<name>Basic Key</name>
+		<description>
+			Just a plain-old Key
+			Nothing fancy
+		</description>
+	</item>
+	<item id="skeleton_key" type="key">
 		<name>Skeleton Key</name>
 		<description>
 			A skeleton key.
 			It's slimey! Ew!
 		</description>
 	</item>
+
+
+	<item id="bomb" type="equipment">
+		<name>Bomb</name>
+		<description>
+			Oh dear! Someone set
+			us up a bomb!
+		</description>
+	</item>
+
 </item-database>

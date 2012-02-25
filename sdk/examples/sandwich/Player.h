@@ -17,7 +17,7 @@ private:
   Vec2 mPosition;
   uint8_t mDir;
   uint8_t mAnimFrame;
-  uint8_t mEquipment;
+  const ItemData* mEquipment;
   float mAnimTime;
 
 public:
@@ -35,12 +35,12 @@ public:
   inline Vec2 Position() const { return mPosition; }
   inline Vec2 Location() const { return View()->IsShowingRoom() ? View()->GetRoomView()->Location() : mPosition/128; }
   inline int Status() const { return mStatus; }
-  inline uint8_t Equipment() const { return mEquipment; }
+  inline const ItemData* Equipment() const { return mEquipment; }
 
   void SetStatus(int status);
   inline void SetDirection(Cube::Side dir) { mDir = dir; }
   inline void SetPosition(Vec2 position) { mPosition = position; }
-  inline void SetEquipment(uint8_t equipId) { mEquipment = equipId; }
+  inline void SetEquipment(const ItemData *equipId) { mEquipment = equipId; }
 
   void ClearTarget();
   void AdvanceToTarget();

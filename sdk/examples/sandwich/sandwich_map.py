@@ -42,18 +42,20 @@ class Map:
 		for r in self.rooms:
 			if r.isblocked(): continue
 			tx,ty = (8*r.x, 8*r.y)
+			dd = str(PORTAL_DOOR)+str(PORTAL_DOOR)
+			oo = str(PORTAL_OPEN)+str(PORTAL_OPEN)
 			if r.y != 0 and not self.roomat(r.x, r.y-1).isblocked():
-				ports = [ portal_type(self.background.tileat(tx+i, ty)) for i in range(8) ]
-				r.portals[SIDE_TOP] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+				ports = "".join(( str(portal_type(self.background.tileat(tx+i, ty))) for i in range(1,7) ))
+				r.portals[SIDE_TOP] = PORTAL_DOOR if dd in ports else PORTAL_OPEN if oo in ports else PORTAL_WALL
 			if r.x != 0 and not self.roomat(r.x-1, r.y).isblocked():
-				ports = [ portal_type(self.background.tileat(tx, ty+i)) for i in range(8) ]
-				r.portals[SIDE_LEFT] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+				ports = [ portal_type(self.background.tileat(tx, ty+i)) for i in range(1,7) ]
+				r.portals[SIDE_LEFT] = PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
 			if r.y != self.height-1 and not self.roomat(r.x, r.y+1).isblocked():
-				ports = [ portal_type(self.background.tileat(tx+i, ty+7)) for i in range(8) ]
-				r.portals[SIDE_BOTTOM] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+				ports = "".join(( str(portal_type(self.background.tileat(tx+i, ty+7))) for i in range(1,7) ))
+				r.portals[SIDE_BOTTOM] = PORTAL_DOOR if dd in ports else PORTAL_OPEN if oo in ports else PORTAL_WALL
 			if r.x != self.width-1 and not self.roomat(r.x+1, r.y).isblocked():
-				ports = [ portal_type(self.background.tileat(tx+7, ty+i)) for i in range(8) ]
-				r.portals[SIDE_RIGHT] = PORTAL_DOOR if PORTAL_DOOR in ports else PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
+				ports = [ portal_type(self.background.tileat(tx+7, ty+i)) for i in range(1,7) ]
+				r.portals[SIDE_RIGHT] = PORTAL_OPEN if PORTAL_OPEN in ports else PORTAL_WALL
 		# validate portals
 		for r in self.rooms:
 			assert r.portals[SIDE_LEFT] != PORTAL_DOOR, "Horizontal Door in Map: " + self.id

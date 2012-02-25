@@ -80,7 +80,7 @@ void InventoryView::Update(float dt) {
 			Parent()->Graphics().setWindow(80+16,128-80-16);
 			mDialog.Init();
 			mDialog.Erase();
-			mDialog.ShowAll(gInventoryData[items[mSelected]-1].description);
+			mDialog.ShowAll(gInventoryData[items[mSelected]].description);
 		}
 		pGame->NeedsSync();
 		Parent()->GetCube()->vbuf.touch();
@@ -125,13 +125,17 @@ void InventoryView::RenderInventory() {
 		if (i == mSelected) {
 			overlay.DrawAsset(Vec2(x<<2,y<<2), InventoryReticle);
 		} else {
-			overlay.DrawAsset(Vec2(1 + (x<<2),1 + (y<<2)), Items, items[i]-1);
+			const InventoryData& inv = gInventoryData[items[i]];
+			overlay.DrawAsset(Vec2(1 + (x<<2),1 + (y<<2)), *kStorageTypeToIcon[inv.storageType], inv.storageId);
 		}
 	}
 	overlay.Flush();	
 	ViewMode gfx = Parent()->Graphics();
 	gfx.resizeSprite(HOVERING_ICON_ID, Vec2(16, 16));
-	gfx.setSpriteImage(HOVERING_ICON_ID, Items, items[mSelected]-1);
+	{
+		const InventoryData& inv = gInventoryData[items[mSelected]];
+		gfx.setSpriteImage(HOVERING_ICON_ID, *kStorageTypeToIcon[inv.storageType], inv.storageId);
+	}
 	ComputeHoveringIconPosition();
 	pGame->NeedsSync();
 }

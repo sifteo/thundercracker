@@ -19,19 +19,12 @@ void RoomView::Init(unsigned roomId) {
   Room* r = GetRoom();
   switch(r->TriggerType()) {
     case TRIGGER_ITEM: 
-      mode.setSpriteImage(TRIGGER_SPRITE_ID, Items.index + ((r->TriggerAsItem()->itemId - 1) << 2));
+      const InventoryData& inv = gInventoryData[r->TriggerAsItem()->itemId];
+      mode.setSpriteImage(TRIGGER_SPRITE_ID, *kStorageTypeToIcon[inv.storageType], inv.storageId);
       mode.resizeSprite(TRIGGER_SPRITE_ID, 16, 16);
       {
         Vec2 p = 16 * GetRoom()->LocalCenter(0);
         mode.moveSprite(TRIGGER_SPRITE_ID, p.x-8, p.y);
-      }
-      break;
-    case TRIGGER_EQUIP:
-      mode.setSpriteImage(EQUIP_SPRITE_ID, Bomb.index);
-      mode.resizeSprite(EQUIP_SPRITE_ID, 16, 16);
-      {
-        Vec2 p = 16 * GetRoom()->LocalCenter(0);
-        mode.moveSprite(EQUIP_SPRITE_ID, p.x-8, p.y);
       }
       break;
   }
@@ -114,7 +107,7 @@ void RoomView::ShowPlayer() {
   ViewMode gfx = Parent()->Graphics();
   gfx.resizeSprite(PLAYER_SPRITE_ID, 32, 32);
   if (pGame->GetPlayer()->Equipment()) {
-    gfx.setSpriteImage(EQUIP_SPRITE_ID, Bomb.index+4);
+    gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, 2); // TODO: PARAMETERIZE
     gfx.resizeSprite(EQUIP_SPRITE_ID, 16, 16);
   }
   UpdatePlayer();
@@ -154,7 +147,7 @@ void RoomView::HidePlayer() {
 void RoomView::SetEquipPosition(Vec2 p) {
   p += 16 * GetRoom()->LocalCenter(0);
   ViewMode gfx = Parent()->Graphics();
-  gfx.setSpriteImage(EQUIP_SPRITE_ID, Bomb.index+4);
+  gfx.setSpriteImage(EQUIP_SPRITE_ID, EquipmentIcons, 1);
   gfx.moveSprite(EQUIP_SPRITE_ID, p.x-8, p.y);
 }
   

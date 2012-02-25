@@ -16,16 +16,7 @@ void Map::SetData(const MapData& map) {
     for(const ItemData* p = mData->items; p!= mData->items + mData->itemCount; ++p) {
       if (pGame->GetState()->IsActive(p->trigger)) {
         ASSERT(!mRooms[p->trigger.room].HasUserdata());
-        #if NEW_FEATURE_PROTOYPES
-          // replace lembas bread with bombs
-          if (p->itemId == 2) {
-            mRooms[p->trigger.room].SetTrigger(TRIGGER_EQUIP, &p->trigger);
-          } else {
-            mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &p->trigger);
-          }
-        #else
-          mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &p->trigger);
-        #endif
+        mRooms[p->trigger.room].SetTrigger(TRIGGER_ITEM, &p->trigger);
       }
     }
     for(const GatewayData* p = mData->gates; p != mData->gates + mData->gateCount; ++p) {

@@ -1,13 +1,8 @@
 #include "GameState.h"
 
-#define ITEM_NONE           0
-#define ITEM_BASIC_KEY      1
-#define ITEM_BREAD          2
-#define ITEM_TOMATO         3
-#define ITEM_LETTUCE        4
-#define ITEM_HAM            5
-#define ITEM_SKELETON_KEY   6
-#define ITEM_TYPE_COUNT     7
+// hack
+#define ITEM_BASIC_KEY	4
+#define ITEM_SKELETON_KEY 5
 
 void GameState::Init() {
 	mQuest = 0;
@@ -100,9 +95,7 @@ bool GameState::DecrementBasicKeyCount() {
 
 unsigned GameState::GetItems(uint8_t* buf) {
 	unsigned result = 0;
-	const int firstSandwichId = 2;
-	const int sandwichTypeCount = 4;
-	for(int8_t itemId=firstSandwichId; itemId<firstSandwichId+sandwichTypeCount; ++itemId) {
+	for(int8_t itemId=0; itemId<4; ++itemId) {
 		if (HasItem(itemId)) { buf[result++] = itemId; }
 	}
 	if (HasBasicKey()) {
